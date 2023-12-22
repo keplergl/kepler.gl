@@ -27,8 +27,8 @@ const StyledEffectConfigurator = styled.div.attrs({
   className: 'effect-panel__config'
 })`
   position: relative;
-  margin: ${props => props.theme.effectConfiguratorMargin};
-  padding: ${props => props.theme.effectConfiguratorPadding};
+  margin: ${(props) => props.theme.effectConfiguratorMargin};
+  padding: ${(props) => props.theme.effectConfiguratorPadding};
 `;
 
 export const PanelLabelWrapper = styled.div.attrs({
@@ -53,7 +53,7 @@ export const StyledColorSelectorWrapper = styled.div`
 
 const StyledVerticalSeparator = styled.div`
   height: 1px;
-  background-color: ${props => props.theme.inputBgd};
+  background-color: ${(props) => props.theme.inputBgd};
   margin-top: 20px;
   margin-bottom: 20px;
   margin-left: -20px;
@@ -66,7 +66,7 @@ const StyledWrapper = styled.div<StyledWrapperProps>`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: ${props => props.marginBottom ?? 9}px;
+  margin-bottom: ${(props) => props.marginBottom ?? 9}px;
 `;
 
 const StyledConfigSection = styled.div`
@@ -75,15 +75,15 @@ const StyledConfigSection = styled.div`
 `;
 
 const SectionTitle = styled.div`
-  font-size: ${props => props.theme.inputFontSize};
-  color: ${props => props.theme.effectPanelTextSecondary1};
+  font-size: ${(props) => props.theme.inputFontSize};
+  color: ${(props) => props.theme.effectPanelTextSecondary1};
   margin-bottom: 5px;
   text-transform: capitalize;
 `;
 
 const SectionSubTitle = styled.div`
-  font-size: ${props => props.theme.inputFontSize};
-  color: ${props => props.theme.effectPanelTextSecondary2};
+  font-size: ${(props) => props.theme.inputFontSize};
+  color: ${(props) => props.theme.effectPanelTextSecondary2};
   margin-bottom: 8px;
   margin-left: 6px;
 `;
@@ -116,8 +116,8 @@ const RegularOuterWrapper = styled.div.attrs({
 const RegularSectionTitleWrapper = styled.div.attrs({
   className: 'effect-configurator__pp-section-title'
 })`
-  font-size: ${props => props.theme.inputFontSize};
-  color: ${props => props.theme.effectPanelTextSecondary1};
+  font-size: ${(props) => props.theme.inputFontSize};
+  color: ${(props) => props.theme.effectPanelTextSecondary1};
   text-transform: capitalize;
   margin-bottom: -3px;
 `;
@@ -169,7 +169,7 @@ export default function EffectConfiguratorFactory(
 
       const sliderProps = useMemo(() => {
         const propNames = ['shadowIntensity', 'ambientLightIntensity', 'sunLightIntensity'];
-        return propNames.map(propName => {
+        return propNames.map((propName) => {
           return {
             value1: parameters[propName],
             range: [0, 1],
@@ -182,7 +182,7 @@ export default function EffectConfiguratorFactory(
       }, [effect.id, parameters, updateEffectConfig]);
 
       const onTimeParametersChanged = useCallback(
-        parameters => {
+        (parameters) => {
           updateEffectConfig(null, effect.id, {
             parameters: {
               ...(parameters.timestamp ? {timestamp: parameters.timestamp} : null),
@@ -196,12 +196,12 @@ export default function EffectConfiguratorFactory(
 
       const colorPickerProps = useMemo(() => {
         const propNames = ['ambientLightColor', 'sunLightColor', 'shadowColor'];
-        return propNames.map(propName => {
+        return propNames.map((propName) => {
           return {
             colorSets: [
               {
                 selectedColor: parameters[propName],
-                setColor: v => updateEffectConfig(null, effect.id, {parameters: {[propName]: v}})
+                setColor: (v) => updateEffectConfig(null, effect.id, {parameters: {[propName]: v}})
               }
             ]
           };
@@ -305,7 +305,7 @@ export default function EffectConfiguratorFactory(
       }, [parameterDescriptions]);
 
       const controls = useMemo(() => {
-        return flatParameterDescriptions.map(desc => {
+        return flatParameterDescriptions.map((desc) => {
           const paramName = desc.name;
 
           const uniform = uniforms[desc.name];

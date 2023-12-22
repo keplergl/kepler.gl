@@ -13,9 +13,9 @@ type StyledSidePanelTitleProps = {className: string};
 const StyledSidePanelTitle = styled.div.attrs<StyledSidePanelTitleProps>({
   className: 'panel-title'
 })`
-  color: ${props => props.theme.titleTextColor};
-  font-size: ${props => props.theme.sidePanelTitleFontsize};
-  line-height: ${props => props.theme.sidePanelTitleLineHeight};
+  color: ${(props) => props.theme.titleTextColor};
+  font-size: ${(props) => props.theme.sidePanelTitleFontsize};
+  line-height: ${(props) => props.theme.sidePanelTitleLineHeight};
   font-weight: 400;
   letter-spacing: 1.25px;
 `;

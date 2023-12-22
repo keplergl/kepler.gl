@@ -115,7 +115,7 @@ const expectedFields = [
     fieldIdx: 0,
     analyzerType: 'FLOAT',
     format: '',
-    valueAccessor: values => values[1]
+    valueAccessor: (values) => values[1]
   },
   {
     name: 'start_point_lng',
@@ -125,7 +125,7 @@ const expectedFields = [
     fieldIdx: 1,
     analyzerType: 'FLOAT',
     format: '',
-    valueAccessor: values => values[1]
+    valueAccessor: (values) => values[1]
   },
   {
     name: 'end_point_lat',
@@ -135,7 +135,7 @@ const expectedFields = [
     fieldIdx: 2,
     analyzerType: 'FLOAT',
     format: '',
-    valueAccessor: values => values[2]
+    valueAccessor: (values) => values[2]
   },
   {
     name: 'end_point_lng',
@@ -145,7 +145,7 @@ const expectedFields = [
     fieldIdx: 3,
     analyzerType: 'FLOAT',
     format: '',
-    valueAccessor: values => values[3]
+    valueAccessor: (values) => values[3]
   }
 ];
 
@@ -229,7 +229,7 @@ const mockRawData = {
   ]
 };
 
-test('#visStateReducer', t => {
+test('#visStateReducer', (t) => {
   t.deepEqual(
     reducer(undefined, {}),
     {...INITIAL_VIS_STATE, initialState: {}},
@@ -239,7 +239,7 @@ test('#visStateReducer', t => {
   t.end();
 });
 
-test('#visStateReducer -> ADD_FILTER', t => {
+test('#visStateReducer -> ADD_FILTER', (t) => {
   const dataId = 'kitten';
   const newFilter = getDefaultFilter({dataId});
   const newReducer = reducer({filters: [mockFilter]}, VisStateActions.addFilter(dataId));
@@ -254,7 +254,7 @@ test('#visStateReducer -> ADD_FILTER', t => {
   t.end();
 });
 
-test('#visStateReducer -> ADD_LAYER.1', t => {
+test('#visStateReducer -> ADD_LAYER.1', (t) => {
   const oldState = {
     ...INITIAL_VIS_STATE,
     datasets: {
@@ -316,7 +316,7 @@ test('#visStateReducer -> ADD_LAYER.1', t => {
   t.end();
 });
 
-test('#visStateReducer -> LAYER_TYPE_CHANGE.0', t => {
+test('#visStateReducer -> LAYER_TYPE_CHANGE.0', (t) => {
   const layer = new Layer({id: 'blue'});
 
   const oldState = {
@@ -333,7 +333,7 @@ test('#visStateReducer -> LAYER_TYPE_CHANGE.0', t => {
   t.end();
 });
 
-test('#visStateReducer -> LAYER_TYPE_CHANGE.1', t => {
+test('#visStateReducer -> LAYER_TYPE_CHANGE.1', (t) => {
   const layer = new Layer({id: 'more_layer'});
   const oldState = {
     ...INITIAL_VIS_STATE,
@@ -403,7 +403,7 @@ test('#visStateReducer -> LAYER_TYPE_CHANGE.1', t => {
   t.end();
 });
 
-test('#visStateReducer -> LAYER_TYPE_CHANGE.2', t => {
+test('#visStateReducer -> LAYER_TYPE_CHANGE.2', (t) => {
   const pointLayer = new PointLayer({id: 'a', dataId: 'smoothie'});
   const mockColorRange = {
     name: 'abc',
@@ -425,7 +425,7 @@ test('#visStateReducer -> LAYER_TYPE_CHANGE.2', t => {
   };
 
   // set point layer colorField to a string field
-  let stringField = testFields.find(f => f.type === 'string');
+  let stringField = testFields.find((f) => f.type === 'string');
   stringField = {
     ...stringField,
     valueAccessor: stringField.valueAccessor(datasets.smoothie.dataContainer)
@@ -451,7 +451,7 @@ test('#visStateReducer -> LAYER_TYPE_CHANGE.2', t => {
   t.equal(newLayer.config.visConfig.colorRange, mockColorRange, 'should update color range');
 
   // set point layer sizeField to a int field
-  let intField = testFields.find(f => f.type === 'integer');
+  let intField = testFields.find((f) => f.type === 'integer');
   intField = {...intField, valueAccessor: intField.valueAccessor(datasets.smoothie.dataContainer)};
   let nextState2 = reducer(
     nextState,
@@ -512,7 +512,7 @@ test('#visStateReducer -> LAYER_TYPE_CHANGE.2', t => {
   t.end();
 });
 
-test('#visStateReducer -> LAYER_TYPE_CHANGE.3 -> animationConfig', t => {
+test('#visStateReducer -> LAYER_TYPE_CHANGE.3 -> animationConfig', (t) => {
   const layer = new GeojsonLayer({
     label: 'taro and blue',
     dataId: 'taro',
@@ -580,7 +580,7 @@ test('#visStateReducer -> LAYER_TYPE_CHANGE.3 -> animationConfig', t => {
   t.end();
 });
 
-test('#visStateReducer -> LAYER_CONFIG_CHANGE -> isVisible -> animationConfig', t => {
+test('#visStateReducer -> LAYER_CONFIG_CHANGE -> isVisible -> animationConfig', (t) => {
   const initialState = StateWTripGeojson;
   const layer = initialState.visState.layers[0];
 
@@ -620,7 +620,7 @@ test('#visStateReducer -> LAYER_CONFIG_CHANGE -> isVisible -> animationConfig', 
   t.end();
 });
 
-test('#visStateReducer -> LAYER_CONFIG_CHANGE -> isVisible -> splitMaps', t => {
+test('#visStateReducer -> LAYER_CONFIG_CHANGE -> isVisible -> splitMaps', (t) => {
   const initialState = StateWSplitMaps.visState;
   const layer = initialState.layers[0];
 
@@ -654,7 +654,7 @@ test('#visStateReducer -> LAYER_CONFIG_CHANGE -> isVisible -> splitMaps', t => {
   t.end();
 });
 
-test('visStateReducer -> layerDataIdChangeUpdater', t => {
+test('visStateReducer -> layerDataIdChangeUpdater', (t) => {
   const initialState = CloneDeep(StateWFilesFiltersLayerColor).visState;
   const pointLayer = initialState.layers[0];
 
@@ -704,7 +704,7 @@ test('visStateReducer -> layerDataIdChangeUpdater', t => {
   t.end();
 });
 
-test('visStateReducer -> layerDataIdChangeUpdater -> geojson', t => {
+test('visStateReducer -> layerDataIdChangeUpdater -> geojson', (t) => {
   const initialState = CloneDeep(StateWFilesFiltersLayerColor).visState;
   const nextState = reducer(
     initialState,
@@ -718,7 +718,7 @@ test('visStateReducer -> layerDataIdChangeUpdater -> geojson', t => {
   );
 
   // find geojson layer
-  const index = nextState.layers.findIndex(l => l.type === 'geojson');
+  const index = nextState.layers.findIndex((l) => l.type === 'geojson');
   const geojsonLayer = nextState.layers[index];
   const id = geojsonLayer.id;
   // change dataId
@@ -729,7 +729,7 @@ test('visStateReducer -> layerDataIdChangeUpdater -> geojson', t => {
     })
   );
 
-  const neextGeojsonLayer = nextState1.layers.find(l => l.id === id);
+  const neextGeojsonLayer = nextState1.layers.find((l) => l.id === id);
 
   t.equal(neextGeojsonLayer.config.dataId, 'geojson2', 'should update layer dataId');
   t.equal(neextGeojsonLayer.dataToFeature.length, 3, 'should calculate dataToFeature');
@@ -738,7 +738,7 @@ test('visStateReducer -> layerDataIdChangeUpdater -> geojson', t => {
   t.end();
 });
 
-test('visStateReducer -> layerDataIdChangeUpdater -> validation', t => {
+test('visStateReducer -> layerDataIdChangeUpdater -> validation', (t) => {
   const initialState = CloneDeep(StateWFilesFiltersLayerColor).visState;
   const pointLayer = initialState.layers[0];
   const textField = pointLayer.config.textLabel[0].field;
@@ -747,11 +747,11 @@ test('visStateReducer -> layerDataIdChangeUpdater -> validation', t => {
     id: 'new-data-csv',
     label: 'new Data'
   };
-  const fieldIdx = testFields.findIndex(f => f.name === textField.name);
+  const fieldIdx = testFields.findIndex((f) => f.name === textField.name);
 
   // remove 1 field from sample data
-  const fields = testFields.filter(f => f.name !== textField.name);
-  const rows = testAllData.map(row => [
+  const fields = testFields.filter((f) => f.name !== textField.name);
+  const rows = testAllData.map((row) => [
     ...row.slice(0, fieldIdx),
     ...row.slice(fieldIdx + 1, row.length)
   ]);
@@ -794,7 +794,7 @@ test('visStateReducer -> layerDataIdChangeUpdater -> validation', t => {
   t.end();
 });
 
-test('#visStateReducer -> LAYER_VIS_CONFIG_CHANGE -> opacity', t => {
+test('#visStateReducer -> LAYER_VIS_CONFIG_CHANGE -> opacity', (t) => {
   const initialState = StateWFiles.visState;
   const layer = initialState.layers[0];
 
@@ -807,7 +807,7 @@ test('#visStateReducer -> LAYER_VIS_CONFIG_CHANGE -> opacity', t => {
   t.end();
 });
 
-test('#visStateReducer -> LAYER_TEXT_LABEL_CHANGE', t => {
+test('#visStateReducer -> LAYER_TEXT_LABEL_CHANGE', (t) => {
   const initialState = StateWFiles.visState;
   // point layer
   const layer = initialState.layers[0];
@@ -926,7 +926,7 @@ test('#visStateReducer -> LAYER_TEXT_LABEL_CHANGE', t => {
   t.end();
 });
 
-test('#visStateReducer -> REORDER_LAYER', t => {
+test('#visStateReducer -> REORDER_LAYER', (t) => {
   const newReducer = reducer(
     {layers: [], layerOrder: [0, 1, 2]},
     VisStateActions.reorderLayer([0, 2, 1])
@@ -937,7 +937,7 @@ test('#visStateReducer -> REORDER_LAYER', t => {
   t.end();
 });
 
-test('#visStateReducer -> UPDATE_LAYER_BLENDING', t => {
+test('#visStateReducer -> UPDATE_LAYER_BLENDING', (t) => {
   const newReducer = reducer(
     {layerBlending: 'none'},
     VisStateActions.updateLayerBlending('additive')
@@ -948,7 +948,7 @@ test('#visStateReducer -> UPDATE_LAYER_BLENDING', t => {
   t.end();
 });
 
-test('#visStateReducer -> REMOVE_FILTER', t => {
+test('#visStateReducer -> REMOVE_FILTER', (t) => {
   const initialState = CloneDeep(StateWFilters.visState);
   // filter[0]: 'time' testCsvData
   // filter[1]: 'RATE' testGeoJsonData
@@ -1005,7 +1005,7 @@ test('#visStateReducer -> REMOVE_FILTER', t => {
   // remove smoothie filter - gpu: true, fixedDomain: false
   const newReducer = reducer(initialState, VisStateActions.removeFilter(1));
 
-  const expectedLayerData1 = {data: dataset1.dataContainer.mapIndex(d => d)};
+  const expectedLayerData1 = {data: dataset1.dataContainer.mapIndex((d) => d)};
   const expectedState = {
     ...initialState,
     filters: expectedFilters,
@@ -1018,7 +1018,7 @@ test('#visStateReducer -> REMOVE_FILTER', t => {
 
   cmpObjectKeys(t, expectedState, newReducer, 'After removing filter, visState');
 
-  Object.keys(newReducer).forEach(key => {
+  Object.keys(newReducer).forEach((key) => {
     switch (key) {
       case 'datasets':
         cmpDatasets(t, expectedState.datasets, newReducer.datasets);
@@ -1058,7 +1058,7 @@ test('#visStateReducer -> REMOVE_FILTER', t => {
   t.end();
 });
 
-test('#visStateReducer -> REMOVE_LAYER', t => {
+test('#visStateReducer -> REMOVE_LAYER', (t) => {
   const layer1 = new PointLayer({id: 'a'});
   const layer2 = new PointLayer({id: 'b'});
   const oldState = {
@@ -1100,7 +1100,7 @@ test('#visStateReducer -> REMOVE_LAYER', t => {
   t.end();
 });
 
-test('#visStateReducer -> DUPLICATE_LAYER', t => {
+test('#visStateReducer -> DUPLICATE_LAYER', (t) => {
   const oldState = CloneDeep(StateWFilesFiltersLayerColor.visState);
   // layers: ['point-0', 'geojson-1', 'hexagon-2'],
   const layerToCopy = serializeLayer(oldState.layers[0], oldState.schema);
@@ -1191,7 +1191,7 @@ test('#visStateReducer -> DUPLICATE_LAYER', t => {
   t.end();
 });
 
-test('#visStateReducer -> UPDATE_VIS_DATA.1 -> No data', t => {
+test('#visStateReducer -> UPDATE_VIS_DATA.1 -> No data', (t) => {
   const oldState = CloneDeep(InitialState).visState;
   const nextState1 = reducer(oldState, VisStateActions.updateVisData([{info: null, data: null}]));
   t.deepEqual(nextState1, oldState, 'should return current state if no data');
@@ -1209,7 +1209,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA.1 -> No data', t => {
   );
   t.deepEqual(nextState2, oldState, 'should return current state if no fields');
 
-  Object.keys(oldState).forEach(prop => {
+  Object.keys(oldState).forEach((prop) => {
     t.deepEqual(nextState2[prop], oldState[prop], `${prop} should be the same`);
   });
   t.deepEqual(
@@ -1231,7 +1231,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA.1 -> No data', t => {
   t.end();
 });
 
-test('#visStateReducer -> UPDATE_VIS_DATA.2 -> to empty state', t => {
+test('#visStateReducer -> UPDATE_VIS_DATA.2 -> to empty state', (t) => {
   const oldState = INITIAL_VIS_STATE;
 
   const newState = reducer(
@@ -1367,7 +1367,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA.2 -> to empty state', t => {
   t.end();
 });
 
-test('#visStateReducer -> UPDATE_VIS_DATA.3 -> merge w/ existing state', t => {
+test('#visStateReducer -> UPDATE_VIS_DATA.3 -> merge w/ existing state', (t) => {
   const mockLayer = new PointLayer({
     dataId: 'snowflake',
     columns: {
@@ -1477,7 +1477,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA.3 -> merge w/ existing state', t => {
     ])
   );
 
-  Object.keys(expectedDatasets).forEach(key =>
+  Object.keys(expectedDatasets).forEach((key) =>
     cmpDataset(t, expectedDatasets[key], newState.datasets[key])
   );
   t.equal(newState.layers.length, 5, 'should find 1 arc aline and 2 point layers');
@@ -1507,7 +1507,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA.3 -> merge w/ existing state', t => {
   t.end();
 });
 
-test('#visStateReducer -> UPDATE_VIS_DATA.4.Geojson -> geojson data', t => {
+test('#visStateReducer -> UPDATE_VIS_DATA.4.Geojson -> geojson data', (t) => {
   const initialVisState = CloneDeep(INITIAL_VIS_STATE);
 
   const {fields, rows} = processGeojson(CloneDeep(geojsonData));
@@ -1608,7 +1608,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA.4.Geojson -> geojson data', t => {
   t.end();
 });
 
-test('#visStateReducer -> UPDATE_VIS_DATA.4.Geojson -> with config', t => {
+test('#visStateReducer -> UPDATE_VIS_DATA.4.Geojson -> with config', (t) => {
   const initialVisState = CloneDeep(INITIAL_VIS_STATE);
 
   const {fields, rows} = processGeojson(CloneDeep(geojsonData));
@@ -1671,7 +1671,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA.4.Geojson -> with config', t => {
   t.end();
 });
 
-test('#visStateReducer -> UPDATE_VIS_DATA -> mergeFilters', t => {
+test('#visStateReducer -> UPDATE_VIS_DATA -> mergeFilters', (t) => {
   const oldState = CloneDeep(INITIAL_VIS_STATE);
   oldState.filterToBeMerged = [
     {
@@ -1749,7 +1749,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA -> mergeFilters', t => {
       type: '',
       supportedFilterTypes: null,
       disableDataOperation: false,
-      fields: expectedFields.map(f =>
+      fields: expectedFields.map((f) =>
         f.name === mockFilter.name
           ? {
               ...f,
@@ -1761,10 +1761,10 @@ test('#visStateReducer -> UPDATE_VIS_DATA -> mergeFilters', t => {
       filteredIndex: allIndexes,
       filteredIndexForDomain: [0],
       filterRecord: {
-        dynamicDomain: [newState.filters.find(f => f.id === '38chejr')],
+        dynamicDomain: [newState.filters.find((f) => f.id === '38chejr')],
         fixedDomain: [],
         cpu: [],
-        gpu: [newState.filters.find(f => f.id === '38chejr')]
+        gpu: [newState.filters.find((f) => f.id === '38chejr')]
       },
       gpuFilter: {
         filterRange: [
@@ -1813,7 +1813,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA -> mergeFilters', t => {
   t.end();
 });
 
-test('#visStateReducer -> UPDATE_VIS_DATA.SPLIT_MAPS', t => {
+test('#visStateReducer -> UPDATE_VIS_DATA.SPLIT_MAPS', (t) => {
   const layer0 = new PointLayer({
     dataId: 'snowflake',
     id: 'a',
@@ -1919,7 +1919,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA.SPLIT_MAPS', t => {
   t.end();
 });
 
-test('#visStateReducer -> setFilter.dynamicDomain & cpu', t => {
+test('#visStateReducer -> setFilter.dynamicDomain & cpu', (t) => {
   // get test data
   const {fields, rows} = processCsvData(testData);
   const payload = [
@@ -2139,7 +2139,7 @@ test('#visStateReducer -> setFilter.dynamicDomain & cpu', t => {
   t.end();
 });
 
-test('#visStateReducer -> RENAME_DATASET', t => {
+test('#visStateReducer -> RENAME_DATASET', (t) => {
   const initialState = StateWTripGeojson.visState;
 
   t.equal(
@@ -2157,7 +2157,7 @@ test('#visStateReducer -> RENAME_DATASET', t => {
   t.end();
 });
 
-test('#visStateReducer -> UPDATE_COLOR_TABLE', t => {
+test('#visStateReducer -> UPDATE_COLOR_TABLE', (t) => {
   const initialState = StateWTripGeojson.visState;
 
   t.deepEqual(
@@ -2178,7 +2178,7 @@ test('#visStateReducer -> UPDATE_COLOR_TABLE', t => {
   t.end();
 });
 
-test('#visStateReducer -> UPDATE_TABLE_PROPS', t => {
+test('#visStateReducer -> UPDATE_TABLE_PROPS', (t) => {
   const initialState = StateWTripGeojson.visState;
 
   // update label
@@ -2230,7 +2230,7 @@ test('#visStateReducer -> UPDATE_TABLE_PROPS', t => {
   t.end();
 });
 
-test('#visStateReducer -> SET_FILTER.name', t => {
+test('#visStateReducer -> SET_FILTER.name', (t) => {
   const oldState = CloneDeep(StateWFilters.visState);
   const oldFilter0 = oldState.filters[0];
   // change filter name from RATE to ZIP_CODE
@@ -2269,7 +2269,7 @@ test('#visStateReducer -> SET_FILTER.name', t => {
   t.end();
 });
 
-test('#visStateReducer -> SET_FILTER.dataId', t => {
+test('#visStateReducer -> SET_FILTER.dataId', (t) => {
   const oldState = CloneDeep(StateWFilters.visState);
   let newState = reducer(oldState, VisStateActions.setFilter(1, 'dataId', testCsvDataId));
 
@@ -2423,17 +2423,17 @@ function testSetFilterDynamicDomainGPU(t, setFilter) {
   cmpField(t, expectedField, actualTripField, 'trip field should be same');
   cmpDataset(t, expectedFilteredDataset, stateWithFilterValue.datasets.milkshake);
 }
-test('#visStateReducer -> setFilter.dynamicDomain & gpu', t => {
+test('#visStateReducer -> setFilter.dynamicDomain & gpu', (t) => {
   testSetFilterDynamicDomainGPU(t, VisStateActions.setFilter);
   t.end();
 });
 
-test('#visStateReducer -> SET_FILTER_ANIMATION_TIME', t => {
+test('#visStateReducer -> SET_FILTER_ANIMATION_TIME', (t) => {
   testSetFilterDynamicDomainGPU(t, VisStateActions.setFilterAnimationTime);
   t.end();
 });
 
-test('#visStateReducer -> SET_FILTER_ANIMATION_WINDOW', t => {
+test('#visStateReducer -> SET_FILTER_ANIMATION_WINDOW', (t) => {
   const initialState = CloneDeep(StateWFilters.visState);
   const nextState = reducer(
     initialState,
@@ -2448,7 +2448,7 @@ test('#visStateReducer -> SET_FILTER_ANIMATION_WINDOW', t => {
   t.end();
 });
 
-test('#visStateReducer -> UPDATE_FILTER_ANIMATION_SPEED', t => {
+test('#visStateReducer -> UPDATE_FILTER_ANIMATION_SPEED', (t) => {
   const initialState = CloneDeep(StateWFilters.visState);
 
   const nextState = reducer(initialState, VisStateActions.updateFilterAnimationSpeed(0, 4));
@@ -2458,7 +2458,7 @@ test('#visStateReducer -> UPDATE_FILTER_ANIMATION_SPEED', t => {
   t.end();
 });
 
-test('#visStateReducer -> setFilter.fixedDomain & DynamicDomain & gpu & cpu', t => {
+test('#visStateReducer -> setFilter.fixedDomain & DynamicDomain & gpu & cpu', (t) => {
   // get test data
   const {fields, rows} = processCsvData(testData);
   const payload = [
@@ -2518,30 +2518,10 @@ test('#visStateReducer -> setFilter.fixedDomain & DynamicDomain & gpu & cpu', t 
     interval: null,
     speed: 1,
     mappedValue: [
-      1474070995000,
-      1474071056000,
-      1474071116000,
-      1474071178000,
-      1474071240000,
-      1474071301000,
-      1474071363000,
-      1474071425000,
-      1474071489000,
-      1474071552000,
-      1474071567000,
-      1474071614000,
-      1474071677000,
-      1474071740000,
-      1474071802000,
-      1474071864000,
-      1474071928000,
-      1474071989000,
-      1474072051000,
-      1474072115000,
-      1474072180000,
-      1474072203000,
-      1474072203000,
-      1474072208000
+      1474070995000, 1474071056000, 1474071116000, 1474071178000, 1474071240000, 1474071301000,
+      1474071363000, 1474071425000, 1474071489000, 1474071552000, 1474071567000, 1474071614000,
+      1474071677000, 1474071740000, 1474071802000, 1474071864000, 1474071928000, 1474071989000,
+      1474072051000, 1474072115000, 1474072180000, 1474072203000, 1474072203000, 1474072208000
     ],
     histogram: [],
     enlargedHistogram: [],
@@ -2559,7 +2539,7 @@ test('#visStateReducer -> setFilter.fixedDomain & DynamicDomain & gpu & cpu', t 
   const expectedDatasetSmoothie = {
     ...datasetSmoothie,
     // add filter prop to fields
-    fields: datasetSmoothie.fields.map(f =>
+    fields: datasetSmoothie.fields.map((f) =>
       f.name === 'gps_data.utc_timestamp'
         ? {
             ...f,
@@ -2642,7 +2622,7 @@ test('#visStateReducer -> setFilter.fixedDomain & DynamicDomain & gpu & cpu', t 
 
   const expectedFilteredDataset = {
     ...stateWidthTsFilter.datasets.smoothie,
-    fields: stateWidthTsFilter.datasets.smoothie.fields.map(f =>
+    fields: stateWidthTsFilter.datasets.smoothie.fields.map((f) =>
       f.name === 'date'
         ? {
             ...f,
@@ -2699,7 +2679,7 @@ test('#visStateReducer -> setFilter.fixedDomain & DynamicDomain & gpu & cpu', t 
   t.end();
 });
 
-test('#visStateReducer -> SET_FILTER_PLOT', t => {
+test('#visStateReducer -> SET_FILTER_PLOT', (t) => {
   // get test data
   const {fields, rows} = processCsvData(testData);
   const payload = [
@@ -2726,7 +2706,7 @@ test('#visStateReducer -> SET_FILTER_PLOT', t => {
   );
 
   // find id which is an integer field
-  const yAxisField = stateWithFilterName.datasets.smoothie.fields.find(f => f.name === 'uid');
+  const yAxisField = stateWithFilterName.datasets.smoothie.fields.find((f) => f.name === 'uid');
 
   // set filterPlot yAxis
   const stateWithFilterPlot = reducer(
@@ -2770,30 +2750,10 @@ test('#visStateReducer -> SET_FILTER_PLOT', t => {
     },
     speed: 1,
     mappedValue: [
-      1474070995000,
-      1474071056000,
-      1474071116000,
-      1474071178000,
-      1474071240000,
-      1474071301000,
-      1474071363000,
-      1474071425000,
-      1474071489000,
-      1474071552000,
-      1474071567000,
-      1474071614000,
-      1474071677000,
-      1474071740000,
-      1474071802000,
-      1474071864000,
-      1474071928000,
-      1474071989000,
-      1474072051000,
-      1474072115000,
-      1474072180000,
-      1474072203000,
-      1474072203000,
-      1474072208000
+      1474070995000, 1474071056000, 1474071116000, 1474071178000, 1474071240000, 1474071301000,
+      1474071363000, 1474071425000, 1474071489000, 1474071552000, 1474071567000, 1474071614000,
+      1474071677000, 1474071740000, 1474071802000, 1474071864000, 1474071928000, 1474071989000,
+      1474072051000, 1474072115000, 1474072180000, 1474072203000, 1474072203000, 1474072208000
     ],
     histogram: [],
     enlargedHistogram: [],
@@ -2811,7 +2771,7 @@ test('#visStateReducer -> SET_FILTER_PLOT', t => {
   t.end();
 });
 
-test('#visStateReducer -> TOGGLE_FILTER_ANIMATION', t => {
+test('#visStateReducer -> TOGGLE_FILTER_ANIMATION', (t) => {
   const initialState = CloneDeep(StateWFilters.visState);
 
   const nextState = reducer(initialState, VisStateActions.toggleFilterAnimation(0));
@@ -2820,7 +2780,7 @@ test('#visStateReducer -> TOGGLE_FILTER_ANIMATION', t => {
   t.end();
 });
 
-test('#visStateReducer -> SET_FILTER_VIEW', t => {
+test('#visStateReducer -> SET_FILTER_VIEW', (t) => {
   const initialState = CloneDeep(StateWFilters.visState);
 
   const nextState = reducer(initialState, VisStateActions.setFilterView(0, FILTER_VIEW_TYPES.side));
@@ -2845,7 +2805,7 @@ test('#visStateReducer -> SET_FILTER_VIEW', t => {
   t.end();
 });
 
-test('#visStateReducer -> REMOVE_DATASET', t => {
+test('#visStateReducer -> REMOVE_DATASET', (t) => {
   const initialState = CloneDeep(StateWFilters.visState);
   const nextState = reducer(initialState, VisStateActions.removeDataset('not_me'));
 
@@ -2853,7 +2813,7 @@ test('#visStateReducer -> REMOVE_DATASET', t => {
   t.end();
 });
 
-test('#visStateReducer -> REMOVE_DATASET w filter and layer', t => {
+test('#visStateReducer -> REMOVE_DATASET w filter and layer', (t) => {
   const oldState = CloneDeep(StateWFilters.visState);
 
   const expectedState = {
@@ -2941,14 +2901,14 @@ test('#visStateReducer -> REMOVE_DATASET w filter and layer', t => {
     Object.keys(expectedState).sort(),
     `visState should have same keys`
   );
-  Object.keys(expectedState).forEach(key => {
+  Object.keys(expectedState).forEach((key) => {
     t.deepEqual(newReducer[key], expectedState[key], `newReducer.${key} should be correct`);
   });
 
   t.end();
 });
 
-test('#visStateReducer -> SPLIT_MAP: TOGGLE', t => {
+test('#visStateReducer -> SPLIT_MAP: TOGGLE', (t) => {
   const layer0 = new ArcLayer({id: 'a', dataId: 'puppy_0', isVisible: true});
   const layer1 = new ArcLayer({id: 'b', dataId: 'puppy_0', isVisible: false});
 
@@ -2975,7 +2935,7 @@ test('#visStateReducer -> SPLIT_MAP: TOGGLE', t => {
   t.end();
 });
 
-test('#visStateReducer -> SPLIT_MAP: REMOVE_LAYER', t => {
+test('#visStateReducer -> SPLIT_MAP: REMOVE_LAYER', (t) => {
   const layer1 = new PointLayer({id: 'a'});
   const layer2 = new PointLayer({id: 'b'});
   const layers = [layer1, layer2];
@@ -3041,7 +3001,7 @@ test('#visStateReducer -> SPLIT_MAP: REMOVE_LAYER', t => {
   t.end();
 });
 
-test('#visStateReducer -> SPLIT_MAP: REMOVE_LAYER. set animation domain', t => {
+test('#visStateReducer -> SPLIT_MAP: REMOVE_LAYER. set animation domain', (t) => {
   const layer1 = new PointLayer({id: 'a'});
   const layer2 = new PointLayer({id: 'b'});
   const layer3 = new TripLayer({id: 't1', isVisible: true});
@@ -3102,7 +3062,7 @@ test('#visStateReducer -> SPLIT_MAP: REMOVE_LAYER. set animation domain', t => {
   t.end();
 });
 
-test('#visStateReducer -> SPLIT_MAP: REMOVE_DATASET', t => {
+test('#visStateReducer -> SPLIT_MAP: REMOVE_DATASET', (t) => {
   const oldState = StateWSplitMaps.visState;
 
   const expectedState = {
@@ -3189,14 +3149,14 @@ test('#visStateReducer -> SPLIT_MAP: REMOVE_DATASET', t => {
     Object.keys(expectedState).sort(),
     `visState should have same keys`
   );
-  Object.keys(expectedState).forEach(key => {
+  Object.keys(expectedState).forEach((key) => {
     t.deepEqual(newReducer[key], expectedState[key], `newReducer.${key} should be correct`);
   });
 
   t.end();
 });
 
-test('#visStateReducer -> SPLIT_MAP: ADD_LAYER', t => {
+test('#visStateReducer -> SPLIT_MAP: ADD_LAYER', (t) => {
   const oldState = {
     datasets: {
       puppy: {
@@ -3255,7 +3215,7 @@ test('#visStateReducer -> SPLIT_MAP: ADD_LAYER', t => {
   t.end();
 });
 
-test('#visStateReducer -> SPLIT_MAP: TOGGLE_SPLIT_MAP', t => {
+test('#visStateReducer -> SPLIT_MAP: TOGGLE_SPLIT_MAP', (t) => {
   const layer0 = new ArcLayer({id: 'a', dataId: 'puppy_0', isVisible: true});
   const layer1 = new PointLayer({id: 'b', dataId: 'puppy_0', isVisible: true});
 
@@ -3293,7 +3253,7 @@ test('#visStateReducer -> SPLIT_MAP: TOGGLE_SPLIT_MAP', t => {
   t.end();
 });
 
-test('#visStateReducer -> SPLIT_MAP: HIDE LAYER', t => {
+test('#visStateReducer -> SPLIT_MAP: HIDE LAYER', (t) => {
   const oldState = {
     splitMaps: [
       {
@@ -3335,7 +3295,7 @@ test('#visStateReducer -> SPLIT_MAP: HIDE LAYER', t => {
   t.end();
 });
 
-test('#visStateReducer -> SET_LAYER_ANIMATION_TIME', t => {
+test('#visStateReducer -> SET_LAYER_ANIMATION_TIME', (t) => {
   const initialState = StateWTripGeojson.visState;
   const newState = reducer(initialState, VisStateActions.setLayerAnimationTime(1000));
 
@@ -3343,7 +3303,7 @@ test('#visStateReducer -> SET_LAYER_ANIMATION_TIME', t => {
   t.end();
 });
 
-test('#visStateReducer -> UPDATE_LAYER_ANIMATION_SPEED', t => {
+test('#visStateReducer -> UPDATE_LAYER_ANIMATION_SPEED', (t) => {
   const initialState = StateWTripGeojson.visState;
   const newState = reducer(initialState, VisStateActions.updateLayerAnimationSpeed(1.23));
 
@@ -3352,14 +3312,14 @@ test('#visStateReducer -> UPDATE_LAYER_ANIMATION_SPEED', t => {
   t.end();
 });
 
-test('#visStateReducer -> TOGGLE_LAYER_ANIMATION', t => {
+test('#visStateReducer -> TOGGLE_LAYER_ANIMATION', (t) => {
   const initialState = StateWTripGeojson.visState;
   const newState = reducer(initialState, VisStateActions.toggleLayerAnimation());
   t.equal(newState.animationConfig.isAnimating, true, 'should update animationConfig');
   t.end();
 });
 
-test('#visStateReducer -> INTERACTION_CONFIG_CHANGE', t => {
+test('#visStateReducer -> INTERACTION_CONFIG_CHANGE', (t) => {
   const brushConfig = {
     ...defaultInteractionConfig.brush,
     enabled: true
@@ -3388,7 +3348,7 @@ test('#visStateReducer -> INTERACTION_CONFIG_CHANGE', t => {
   t.end();
 });
 
-test('#visStateReducer -> SHOW_DATASET_TABLE', t => {
+test('#visStateReducer -> SHOW_DATASET_TABLE', (t) => {
   const initialState = StateWFiles.visState;
   const nextState = reducer(initialState, VisStateActions.showDatasetTable('abc'));
 
@@ -3396,7 +3356,7 @@ test('#visStateReducer -> SHOW_DATASET_TABLE', t => {
   t.end();
 });
 
-test('#visStateReducer -> MAP_CLICK', t => {
+test('#visStateReducer -> MAP_CLICK', (t) => {
   const initialState = StateWFiles.visState;
   const nextState = reducer(
     initialState,
@@ -3416,7 +3376,7 @@ test('#visStateReducer -> MAP_CLICK', t => {
   t.end();
 });
 
-test('#visStateReducer -> MOUSE_MOVE', t => {
+test('#visStateReducer -> MOUSE_MOVE', (t) => {
   const initialState = StateWFiles.visState;
   const evt = {
     point: [10, 20],
@@ -3461,7 +3421,7 @@ test('#visStateReducer -> MOUSE_MOVE', t => {
   t.end();
 });
 
-test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. show dropdown', t => {
+test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. show dropdown', (t) => {
   const initialState = CloneDeep(StateWFilesFiltersLayerColor.visState);
   const pointLayer = initialState.layers[0];
 
@@ -3534,7 +3494,7 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. show dropdown', t => {
   t.end();
 });
 
-test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. colorRangeConfig.step', t => {
+test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. colorRangeConfig.step', (t) => {
   const initialState = CloneDeep(StateWFilesFiltersLayerColor.visState);
   const pointLayer = initialState.layers[0];
 
@@ -3714,7 +3674,7 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. colorRangeConfig.step', t => {
   t.end();
 });
 
-test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom Palette', t => {
+test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom Palette', (t) => {
   const initialState = CloneDeep(StateWFilesFiltersLayerColor.visState);
   const pointLayer = initialState.layers[0];
 
@@ -3960,7 +3920,7 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom Palette', t => {
   t.end();
 });
 
-test('#visStateReducer -> setFeatures/delete', t => {
+test('#visStateReducer -> setFeatures/delete', (t) => {
   const expectedFeatures = [mockPolygonFeature];
   let newReducer = reducer(INITIAL_VIS_STATE, VisStateActions.setFeatures([mockPolygonFeature]));
 
@@ -3973,7 +3933,7 @@ test('#visStateReducer -> setFeatures/delete', t => {
   t.end();
 });
 
-test('#visStateReducer -> POLYGON: Add/Remove new polygon feature', t => {
+test('#visStateReducer -> POLYGON: Add/Remove new polygon feature', (t) => {
   const expectedFeatures = [mockPolygonFeature];
   let newReducer = reducer(INITIAL_VIS_STATE, VisStateActions.setFeatures([mockPolygonFeature]));
 
@@ -4021,7 +3981,7 @@ test('#visStateReducer -> POLYGON: Add/Remove new polygon feature', t => {
   t.end();
 });
 
-test('#visStateReducer -> POLYGON: Create polygon filter', t => {
+test('#visStateReducer -> POLYGON: Create polygon filter', (t) => {
   const state = {
     ...INITIAL_VIS_STATE
   };
@@ -4186,7 +4146,7 @@ test('#visStateReducer -> POLYGON: Create polygon filter', t => {
   t.end();
 });
 
-test('#visStateReducer -> POLYGON: Toggle filter feature', t => {
+test('#visStateReducer -> POLYGON: Toggle filter feature', (t) => {
   const state = {
     ...INITIAL_VIS_STATE
   };
@@ -4358,7 +4318,7 @@ test('#visStateReducer -> POLYGON: Toggle filter feature', t => {
   t.end();
 });
 
-test('#visStateReducer -> POLYGON: delete polygon filter', t => {
+test('#visStateReducer -> POLYGON: delete polygon filter', (t) => {
   const state = {
     ...INITIAL_VIS_STATE
   };
@@ -4488,7 +4448,7 @@ test('#visStateReducer -> POLYGON: delete polygon filter', t => {
   t.end();
 });
 
-test('#visStateReducer -> POLYGON: setPolygonFilterLayer: H3', t => {
+test('#visStateReducer -> POLYGON: setPolygonFilterLayer: H3', (t) => {
   const initialState = CloneDeep(StateWH3Layer).visState;
   const newState = reducer(
     initialState,
@@ -4502,14 +4462,14 @@ test('#visStateReducer -> POLYGON: setPolygonFilterLayer: H3', t => {
     'should filter data based on h3 layer'
   );
   t.deepEqual(
-    newState.layerData[0].data.map(d => d.index),
+    newState.layerData[0].data.map((d) => d.index),
     [1, 3, 5, 8],
     'should filter layer data'
   );
   t.end();
 });
 
-test('#uiStateReducer -> SET_EDITOR_MODE', t => {
+test('#uiStateReducer -> SET_EDITOR_MODE', (t) => {
   const newState = reducer(INITIAL_VIS_STATE, VisStateActions.setEditorMode(EDITOR_MODES.EDIT));
 
   t.equal(newState.editor.mode, EDITOR_MODES.EDIT, 'Editor mode should be set to vertex');
@@ -4517,7 +4477,7 @@ test('#uiStateReducer -> SET_EDITOR_MODE', t => {
   t.end();
 });
 
-test('#uiStateReducer -> TOGGLE_EDITOR_VISIBILITY', t => {
+test('#uiStateReducer -> TOGGLE_EDITOR_VISIBILITY', (t) => {
   let newState = reducer(INITIAL_VIS_STATE, VisStateActions.toggleEditorVisibility());
 
   t.equal(newState.editor.visible, false, 'Should set editor visibility to false');
@@ -4529,7 +4489,7 @@ test('#uiStateReducer -> TOGGLE_EDITOR_VISIBILITY', t => {
   t.end();
 });
 
-test('#visStateReducer -> APPLY_CPU_FILTER. no filter', t => {
+test('#visStateReducer -> APPLY_CPU_FILTER. no filter', (t) => {
   const initialState = CloneDeep(StateWFiles.visState);
   const dataId = testCsvDataId;
   const previousDataset = initialState.datasets[dataId];
@@ -4551,7 +4511,7 @@ test('#visStateReducer -> APPLY_CPU_FILTER. no filter', t => {
   t.end();
 });
 
-test('#visStateReducer -> APPLY_CPU_FILTER has gpu filter', t => {
+test('#visStateReducer -> APPLY_CPU_FILTER has gpu filter', (t) => {
   const initialState = CloneDeep(StateWFilters.visState);
   // dataset has gpu filter
   const dataId = testCsvDataId;
@@ -4584,7 +4544,7 @@ test('#visStateReducer -> APPLY_CPU_FILTER has gpu filter', t => {
   t.end();
 });
 
-test('#visStateReducer -> APPLY_CPU_FILTER has cpu filter', t => {
+test('#visStateReducer -> APPLY_CPU_FILTER has cpu filter', (t) => {
   const initialState = CloneDeep(StateWFilters.visState);
   // dataset has gpu filter
   const dataId = testGeoJsonDataId;
@@ -4617,7 +4577,7 @@ test('#visStateReducer -> APPLY_CPU_FILTER has cpu filter', t => {
   t.end();
 });
 
-test('#uiStateReducer -> SET_FEATURES/SET_SELECTED_FEATURE/DELETE_FEATURE', t => {
+test('#uiStateReducer -> SET_FEATURES/SET_SELECTED_FEATURE/DELETE_FEATURE', (t) => {
   let newState = reducer(INITIAL_VIS_STATE, VisStateActions.setFeatures([]));
 
   t.deepEqual(
@@ -4663,7 +4623,7 @@ test('#uiStateReducer -> SET_FEATURES/SET_SELECTED_FEATURE/DELETE_FEATURE', t =>
   t.end();
 });
 
-test('#visStateReducer -> APPLY_CPU_FILTER has multi datasets', t => {
+test('#visStateReducer -> APPLY_CPU_FILTER has multi datasets', (t) => {
   const initialState = CloneDeep(StateWFilters.visState);
   const previousDataset1 = initialState.datasets[testCsvDataId];
   const previousDataset2 = initialState.datasets[testGeoJsonDataId];
@@ -4707,7 +4667,7 @@ test('#visStateReducer -> APPLY_CPU_FILTER has multi datasets', t => {
   t.end();
 });
 
-test('#visStateReducer -> SORT_TABLE_COLUMN', t => {
+test('#visStateReducer -> SORT_TABLE_COLUMN', (t) => {
   const initialState = CloneDeep(StateWFiles.visState);
 
   // sort with default mode
@@ -4722,30 +4682,7 @@ test('#visStateReducer -> SORT_TABLE_COLUMN', t => {
   t.ok(nextState2.datasets[testCsvDataId].sortOrder, 'should create sortOrder');
 
   const expectedOrder = [
-    3,
-    0,
-    2,
-    4,
-    1,
-    5,
-    6,
-    7,
-    8,
-    9,
-    10,
-    11,
-    12,
-    13,
-    14,
-    15,
-    16,
-    17,
-    20,
-    19,
-    18,
-    23,
-    22,
-    21
+    3, 0, 2, 4, 1, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 19, 18, 23, 22, 21
   ];
   t.deepEqual(nextState2.datasets[testCsvDataId].sortOrder, expectedOrder, 'should sort correctly');
   t.deepEqual(
@@ -4802,7 +4739,7 @@ test('#visStateReducer -> SORT_TABLE_COLUMN', t => {
   t.end();
 });
 
-test('#visStateReducer -> PIN_TABLE_COLUMN', t => {
+test('#visStateReducer -> PIN_TABLE_COLUMN', (t) => {
   const initialState = CloneDeep(StateWFiles.visState);
 
   // pin with empty arg
@@ -4839,7 +4776,7 @@ test('#visStateReducer -> PIN_TABLE_COLUMN', t => {
   t.end();
 });
 
-test('#visStateReducer -> LOAD_FILES', async t => {
+test('#visStateReducer -> LOAD_FILES', async (t) => {
   const loadFilesSuccessSpy = sinon.spy(VisStateActions, 'loadFilesSuccess');
   const loadFileErrSpy = sinon.spy(Console, 'warn');
   const initialState = CloneDeep(InitialState).visState;
@@ -4857,7 +4794,7 @@ test('#visStateReducer -> LOAD_FILES', async t => {
   async function* run(fileName) {
     // Sleep for 100ms, see: https://masteringjs.io/tutorials/fundamentals/sleep
     let percent = 0;
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise((resolve) => setTimeout(resolve, 100));
     while (percent < 1) {
       percent += 1;
       yield {progress: {percent}, fileName, ...mockResults};
@@ -5157,7 +5094,7 @@ test('#visStateReducer -> LOAD_FILES', async t => {
   t.end();
 });
 
-test('#visStateReducer -> setLayerAnimationTimeConfig', t => {
+test('#visStateReducer -> setLayerAnimationTimeConfig', (t) => {
   // change Trip layer isVisible
   const nextState = reducer(
     StateWTripGeojson.visState,
@@ -5182,7 +5119,7 @@ test('#visStateReducer -> setLayerAnimationTimeConfig', t => {
   t.end();
 });
 
-test('#visStateReducer -> setFilterAnimationTimeConfig', t => {
+test('#visStateReducer -> setFilterAnimationTimeConfig', (t) => {
   // change Trip layer isVisible
   const nextState = reducer(
     StateWFilters.visState,
@@ -5199,7 +5136,7 @@ test('#visStateReducer -> setFilterAnimationTimeConfig', t => {
   t.end();
 });
 
-test('VisStateUpdater -> prepareStateForDatasetReplace', t => {
+test('VisStateUpdater -> prepareStateForDatasetReplace', (t) => {
   const oldTooltipConfigFields =
     StateWFilters.visState.interactionConfig.tooltip.config.fieldsToShow;
   const dataIdToUse = 'taro_and_blue';
@@ -5275,7 +5212,7 @@ test('VisStateUpdater -> prepareStateForDatasetReplace', t => {
   t.end();
 });
 
-test('VisStateUpdater -> addLayer with empty column', t => {
+test('VisStateUpdater -> addLayer with empty column', (t) => {
   const initialState = StateWFiles.visState;
   const oldLayers = initialState.layers;
   let nextState;
@@ -5313,7 +5250,7 @@ test('VisStateUpdater -> addLayer with empty column', t => {
   t.end();
 });
 
-test('VisStateUpdater -> applyLayerConfig', t => {
+test('VisStateUpdater -> applyLayerConfig', (t) => {
   const initialState = StateWFiles.visState;
   const oldLayers = initialState.layers;
 
@@ -5321,13 +5258,13 @@ test('VisStateUpdater -> applyLayerConfig', t => {
   const oldLayer = oldLayers[oldLayerIndex];
   const oldLayerId = oldLayer.id;
   const {schema} = initialState;
-  const layerToJson = layer =>
+  const layerToJson = (layer) =>
     schema.getConfigToSave({
       visState: {layers: [layer], layerOrder: [layer.id]}
     }).config.visState.layers?.[0];
   const oldLayerDataset = initialState.datasets[oldLayer.config.dataId];
-  const transformConfig = transform => transform(layerToJson(oldLayer, schema));
-  const getUpdatedLayerJson = state => layerToJson(state.layers[oldLayerIndex], schema);
+  const transformConfig = (transform) => transform(layerToJson(oldLayer, schema));
+  const getUpdatedLayerJson = (state) => layerToJson(state.layers[oldLayerIndex], schema);
 
   let nextState;
 
@@ -5335,7 +5272,7 @@ test('VisStateUpdater -> applyLayerConfig', t => {
     initialState,
     VisStateActions.applyLayerConfig(
       oldLayerId,
-      transformConfig(layer => {
+      transformConfig((layer) => {
         layer.config.isVisible = false;
         layer.config.label = 'New label';
         return layer;
@@ -5349,7 +5286,7 @@ test('VisStateUpdater -> applyLayerConfig', t => {
     initialState,
     VisStateActions.applyLayerConfig(
       oldLayerId,
-      transformConfig(layer => {
+      transformConfig((layer) => {
         layer.config.columns = {
           lng: 'gps_data.lat',
           lat: 'gps_data.lng'
@@ -5373,7 +5310,7 @@ test('VisStateUpdater -> applyLayerConfig', t => {
     initialState,
     VisStateActions.applyLayerConfig(
       oldLayerId,
-      transformConfig(layer => {
+      transformConfig((layer) => {
         layer.config.textLabel = {field: {name: 'gps_data.types', type: 'string'}};
         return layer;
       })
@@ -5389,7 +5326,7 @@ test('VisStateUpdater -> applyLayerConfig', t => {
     initialState,
     VisStateActions.applyLayerConfig(
       oldLayerId,
-      transformConfig(layer => {
+      transformConfig((layer) => {
         layer.visualChannels.colorField = {name: 'gps_data.lat', type: 'real'};
         layer.visualChannels.colorScale = 'quantize';
         return layer;
@@ -5410,7 +5347,7 @@ test('VisStateUpdater -> applyLayerConfig', t => {
   t.throws(() => {
     validateLayerWithData(
       oldLayerDataset,
-      transformConfig(layer => {
+      transformConfig((layer) => {
         layer.config.textLabel = {field: {name: 'INVALID', type: 'string'}};
         return layer;
       }),
@@ -5422,7 +5359,7 @@ test('VisStateUpdater -> applyLayerConfig', t => {
   t.throws(() => {
     validateLayerWithData(
       oldLayerDataset,
-      transformConfig(layer => {
+      transformConfig((layer) => {
         layer.config.columns = {
           lng: 'INVALID COLUMN'
         };
@@ -5437,7 +5374,7 @@ test('VisStateUpdater -> applyLayerConfig', t => {
     initialState,
     VisStateActions.applyLayerConfig(
       oldLayerId,
-      transformConfig(layer => {
+      transformConfig((layer) => {
         layer.config.dataId = 'INVALID DATA ID';
         return layer;
       })
@@ -5458,7 +5395,7 @@ test('VisStateUpdater -> applyLayerConfig', t => {
     initialState,
     VisStateActions.applyLayerConfig(
       oldLayerId,
-      transformConfig(layer => {
+      transformConfig((layer) => {
         layer.type = '3D';
         return layer;
       })
@@ -5469,7 +5406,7 @@ test('VisStateUpdater -> applyLayerConfig', t => {
   t.end();
 });
 
-test('#VisStateUpdater -> addEffect', t => {
+test('#VisStateUpdater -> addEffect', (t) => {
   const initialState = InitialState.visState;
 
   let nextState = reducer(initialState, VisStateActions.addEffect({}));
@@ -5531,7 +5468,7 @@ test('#VisStateUpdater -> addEffect', t => {
   t.end();
 });
 
-test('#VisStateUpdater -> updateEffect', t => {
+test('#VisStateUpdater -> updateEffect', (t) => {
   const initialState = InitialState.visState;
 
   let nextState = reducer(initialState, VisStateActions.addEffect({id: 'e_1'}));
@@ -5568,7 +5505,7 @@ test('#VisStateUpdater -> updateEffect', t => {
   t.end();
 });
 
-test('#VisStateUpdater -> addEffect: invalid effect parameters', t => {
+test('#VisStateUpdater -> addEffect: invalid effect parameters', (t) => {
   const initialState = InitialState.visState;
 
   let nextState = reducer(
@@ -5609,7 +5546,7 @@ test('#VisStateUpdater -> addEffect: invalid effect parameters', t => {
   t.end();
 });
 
-test('#VisStateUpdater -> reorderEffect', t => {
+test('#VisStateUpdater -> reorderEffect', (t) => {
   const initialState = InitialState.visState;
 
   let nextState = reducer(initialState, VisStateActions.addEffect({id: 'e_1'}));
@@ -5629,7 +5566,7 @@ test('#VisStateUpdater -> reorderEffect', t => {
   t.end();
 });
 
-test('#VisStateUpdater -> removeEffect', t => {
+test('#VisStateUpdater -> removeEffect', (t) => {
   const initialState = InitialState.visState;
 
   let nextState = reducer(initialState, VisStateActions.addEffect({id: 'e_1'}));

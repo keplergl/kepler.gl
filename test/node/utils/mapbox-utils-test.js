@@ -4,7 +4,7 @@
 import test from 'tape';
 import {isStyleUsingMapboxTiles} from '@kepler.gl/utils';
 
-test('mapbox-utils -> isStyleUsingMapboxTiles', t => {
+test('mapbox-utils -> isStyleUsingMapboxTiles', (t) => {
   t.notOk(isStyleUsingMapboxTiles({}), 'Empty style does not reference Mapbox');
   t.notOk(
     isStyleUsingMapboxTiles({stylesheet: {sources: {a: {}}}}),

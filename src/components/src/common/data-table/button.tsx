@@ -5,12 +5,12 @@ import React, {MouseEventHandler} from 'react';
 import styled from 'styled-components';
 
 const StyledButton = styled.button`
-  color: ${props => props.theme.optionButtonColor};
+  color: ${(props) => props.theme.optionButtonColor};
   background-color: transparent;
   border: none;
   cursor: pointer;
   outline: none;
-  transition: ${props => props.theme.transition};
+  transition: ${(props) => props.theme.transition};
   height: 2rem;
   display: flex;
   align-items: center;

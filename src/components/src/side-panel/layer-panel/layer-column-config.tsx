@@ -47,7 +47,7 @@ function getValidFieldPairsSuggestionsForColumn(
   if (enhancedFieldPairs && columnPairs?.[columnKey]) {
     const columnPair = columnPairs[columnKey];
     const matchingFieldPairs = enhancedFieldPairs.filter(({pair}) => {
-      return toArray(columnPair.fieldPairKey).some(fieldPairKey =>
+      return toArray(columnPair.fieldPairKey).some((fieldPairKey) =>
         pair.hasOwnProperty(fieldPairKey)
       );
     });
@@ -73,7 +73,7 @@ function LayerColumnConfigFactory(ColumnSelector: ReturnType<typeof ColumnSelect
     const enhancedFieldPairs: EnhancedFieldPair[] | null = useMemo(
       () =>
         columnPairs && fieldPairs
-          ? fieldPairs.map(fp => ({
+          ? fieldPairs.map((fp) => ({
               name: fp.defaultName,
               type: 'point',
               pair: fp.pair
@@ -111,7 +111,7 @@ function LayerColumnConfigFactory(ColumnSelector: ReturnType<typeof ColumnSelect
                 <FormattedMessage id="layer.required" />
               </PanelLabel>
             </TopRow>
-            {Object.keys(columns).map(key => (
+            {Object.keys(columns).map((key) => (
               <ColumnSelector
                 column={columns[key]}
                 columns={columns}
@@ -123,7 +123,7 @@ function LayerColumnConfigFactory(ColumnSelector: ReturnType<typeof ColumnSelect
                   columnPairs,
                   key
                 )}
-                onSelect={val => onUpdateColumn(key, val)}
+                onSelect={(val) => onUpdateColumn(key, val)}
               />
             ))}
           </div>

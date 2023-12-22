@@ -26,7 +26,7 @@ import {
 } from 'test/fixtures/geojson';
 import {processGeojson} from '@kepler.gl/processors';
 
-test('#GeojsonLayer -> constructor', t => {
+test('#GeojsonLayer -> constructor', (t) => {
   const TEST_CASES = {
     CREATE: [
       {
@@ -35,7 +35,7 @@ test('#GeojsonLayer -> constructor', t => {
           isVisible: true,
           label: 'test geojson layer'
         },
-        test: layer => {
+        test: (layer) => {
           t.ok(layer.config.dataId === 'smoothie', 'geojsonLayer dataId should be correct');
           t.ok(layer.type === 'geojson', 'type should be geojson');
           t.ok(layer.isAggregated === false, 'geojsonLayer is not aggregated');
@@ -48,7 +48,7 @@ test('#GeojsonLayer -> constructor', t => {
   t.end();
 });
 
-test('#GeojsonLayer -> formatLayerData', t => {
+test('#GeojsonLayer -> formatLayerData', (t) => {
   const filteredIndex = [0, 2, 4];
 
   const TEST_CASES = [
@@ -69,7 +69,7 @@ test('#GeojsonLayer -> formatLayerData', t => {
       datasets: {
         [dataId]: copyTableAndUpdate(preparedGeoDataset, {filteredIndex})
       },
-      assert: result => {
+      assert: (result) => {
         const {layerData, layer} = result;
         const expectedLayerData = {
           data: [updatedLayerV2.dataToFeature[2], updatedLayerV2.dataToFeature[4]]
@@ -177,19 +177,19 @@ test('#GeojsonLayer -> formatLayerData', t => {
             }
           },
           // color by c_zip_type(string)
-          colorField: preparedGeoDataset.fields.find(f => f.name === 'c_zip_type'),
-          strokeColorField: preparedGeoDataset.fields.find(f => f.name === 'c_zip_type'),
+          colorField: preparedGeoDataset.fields.find((f) => f.name === 'c_zip_type'),
+          strokeColorField: preparedGeoDataset.fields.find((f) => f.name === 'c_zip_type'),
 
           // stroke by c_number(real)
-          sizeField: preparedGeoDataset.fields.find(f => f.name === 'c_number'),
+          sizeField: preparedGeoDataset.fields.find((f) => f.name === 'c_number'),
           // stroke by a_zip(int)
-          heightField: preparedGeoDataset.fields.find(f => f.name === 'a_zip')
+          heightField: preparedGeoDataset.fields.find((f) => f.name === 'a_zip')
         }
       },
       datasets: {
         [dataId]: copyTableAndUpdate(preparedGeoDataset, {filteredIndex})
       },
-      assert: result => {
+      assert: (result) => {
         const {layerData, layer} = result;
         const expectedLayerData = {
           data: [updatedLayerV2.dataToFeature[2], updatedLayerV2.dataToFeature[4]]
@@ -298,7 +298,7 @@ test('#GeojsonLayer -> formatLayerData', t => {
       datasets: {
         [dataId]: copyTableAndUpdate(prepareGeojsonDataset, {filteredIndex})
       },
-      assert: result => {
+      assert: (result) => {
         const {layerData, layer} = result;
 
         const expectedLayerData = {
@@ -404,7 +404,7 @@ test('#GeojsonLayer -> formatLayerData', t => {
         info: {id: dataId},
         data: processGeojson(geoJsonWithStyle)
       }),
-      assert: result => {
+      assert: (result) => {
         const {layerData, layer} = result;
 
         const expectedLayerData = {
@@ -494,7 +494,7 @@ test('#GeojsonLayer -> formatLayerData', t => {
   t.end();
 });
 
-test('#GeojsonLayer -> renderLayer', t => {
+test('#GeojsonLayer -> renderLayer', (t) => {
   const filteredIndex = [0, 2, 4];
   const TEST_CASES = [
     {
@@ -522,10 +522,10 @@ test('#GeojsonLayer -> renderLayer', t => {
           filteredIndex
         }
       },
-      assert: deckLayers => {
+      assert: (deckLayers) => {
         const ids = ['test_layer_1', 'test_layer_1-polygons-fill', 'test_layer_1-polygons-stroke'];
         t.deepEqual(
-          deckLayers.map(l => l.id),
+          deckLayers.map((l) => l.id),
           ids,
           'Should render 3 deck layers'
         );
@@ -566,7 +566,7 @@ test('#GeojsonLayer -> renderLayer', t => {
           id: 'test_layer_1-polygons-stroke'
         };
 
-        Object.keys(expectedFillLayerProp).forEach(key => {
+        Object.keys(expectedFillLayerProp).forEach((key) => {
           t.deepEqual(
             fillLayerProp[key],
             expectedFillLayerProp[key],
@@ -574,7 +574,7 @@ test('#GeojsonLayer -> renderLayer', t => {
           );
         });
 
-        Object.keys(expectedStrokeLayerProp).forEach(key => {
+        Object.keys(expectedStrokeLayerProp).forEach((key) => {
           t.deepEqual(
             strokeLayerProp[key],
             expectedStrokeLayerProp[key],

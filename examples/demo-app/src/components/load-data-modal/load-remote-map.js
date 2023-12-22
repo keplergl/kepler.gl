@@ -16,7 +16,7 @@ const propTypes = {
 
 const StyledDescription = styled.div`
   font-size: 14px;
-  color: ${props => props.theme.labelColorLT};
+  color: ${(props) => props.theme.labelColorLT};
   line-height: 18px;
   margin-bottom: 12px;
 `;
@@ -24,17 +24,17 @@ const StyledDescription = styled.div`
 const InputForm = styled.div`
   flex-grow: 1;
   padding: 32px;
-  background-color: ${props => props.theme.panelBackgroundLT};
+  background-color: ${(props) => props.theme.panelBackgroundLT};
 `;
 
 const StyledInput = styled.input`
   width: 100%;
-  padding: ${props => props.theme.inputPadding};
-  color: ${props => (props.error ? 'red' : props.theme.titleColorLT)};
-  height: ${props => props.theme.inputBoxHeight};
+  padding: ${(props) => props.theme.inputPadding};
+  color: ${(props) => (props.error ? 'red' : props.theme.titleColorLT)};
+  height: ${(props) => props.theme.inputBoxHeight};
   border: 0;
   outline: 0;
-  font-size: ${props => props.theme.inputFontSize};
+  font-size: ${(props) => props.theme.inputFontSize};
 
   :active,
   :focus,
@@ -52,7 +52,7 @@ const StyledFromGroup = styled.div`
 
 export const StyledInputLabel = styled.div`
   font-size: 11px;
-  color: ${props => props.theme.textColorLT};
+  color: ${(props) => props.theme.textColorLT};
   letter-spacing: 0.2px;
   ul {
     padding-left: 12px;
@@ -83,7 +83,7 @@ class LoadRemoteMap extends Component {
     submitted: false
   };
 
-  onMapUrlChange = e => {
+  onMapUrlChange = (e) => {
     this.setState({
       dataUrl: e.target.value,
       error: !validateUrl(e.target.value) ? {message: 'Incorrect URL'} : null

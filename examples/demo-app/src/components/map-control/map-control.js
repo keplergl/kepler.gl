@@ -14,13 +14,13 @@ const StyledFloatingPanel = styled.div`
 `;
 
 const StyledProjectPanel = styled.div`
-  background: ${props => props.theme.panelBackground};
+  background: ${(props) => props.theme.panelBackground};
   padding: 16px 20px;
   width: 280px;
-  box-shadow: ${props => props.theme.panelBoxShadow};
+  box-shadow: ${(props) => props.theme.panelBoxShadow};
 
   .project-title {
-    color: ${props => props.theme.titleTextColor};
+    color: ${(props) => props.theme.titleTextColor};
     font-size: 13px;
     font-weight: 500;
     display: flex;
@@ -28,13 +28,13 @@ const StyledProjectPanel = styled.div`
   }
 
   .project-description {
-    color: ${props => props.theme.textColor};
+    color: ${(props) => props.theme.textColor};
     font-size: 11px;
     margin-top: 12px;
 
     a {
       font-weight: 500;
-      color: ${props => props.theme.titleTextColor};
+      color: ${(props) => props.theme.titleTextColor};
     }
   }
 
@@ -58,7 +58,7 @@ const StyledPanelAction = styled.div`
     display: flex;
     height: 16px;
     padding-right: 10px;
-    color: ${props => (props.active ? props.theme.textColorHl : props.theme.subtextColor)};
+    color: ${(props) => (props.active ? props.theme.textColorHl : props.theme.subtextColor)};
 
     svg {
       margin-right: 8px;
@@ -68,12 +68,12 @@ const StyledPanelAction = styled.div`
   :hover {
     cursor: pointer;
     a {
-      color: ${props => props.theme.textColorHl};
+      color: ${(props) => props.theme.textColorHl};
     }
   }
 `;
 
-export const LinkButton = props => (
+export const LinkButton = (props) => (
   <StyledPanelAction className="project-link__action">
     <a target="_blank" rel="noopener noreferrer" href={props.href}>
       <props.iconComponent height={props.height || '16px'} />
@@ -88,7 +88,7 @@ const CloseButton = ({onClick}) => (
   </IconRoundSmall>
 );
 
-const LinkRenderer = props => {
+const LinkRenderer = (props) => {
   return (
     <a href={props.href} target="_blank" rel="noopener noreferrer">
       {props.children}
@@ -141,7 +141,7 @@ export function SampleMapPanel(props) {
       ) : (
         <MapControlButton
           className={classnames('map-control-button', 'info-panel', {isActive})}
-          onClick={e => {
+          onClick={(e) => {
             e.preventDefault();
             setActive(true);
           }}

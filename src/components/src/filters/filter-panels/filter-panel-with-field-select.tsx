@@ -35,15 +35,15 @@ function FieldPanelWithFieldSelectFactory(
       setFilter,
       panelActions = []
     }) => {
-      const onFieldSelector = useCallback(field => setFilter(idx, 'name', field.name), [
-        idx,
-        setFilter
-      ]);
+      const onFieldSelector = useCallback(
+        (field) => setFilter(idx, 'name', field.name),
+        [idx, setFilter]
+      );
 
-      const onSourceDataSelector = useCallback(value => setFilter(idx, 'dataId', [value]), [
-        idx,
-        setFilter
-      ]);
+      const onSourceDataSelector = useCallback(
+        (value) => setFilter(idx, 'dataId', [value]),
+        [idx, setFilter]
+      );
 
       const fieldValue = useMemo(
         () => (Array.isArray(filter.name) ? filter.name[0] : filter.name),
@@ -65,7 +65,7 @@ function FieldPanelWithFieldSelectFactory(
               erasable={false}
               onSelect={onFieldSelector}
             />
-            {panelActions.map(panelAction => (
+            {panelActions.map((panelAction) => (
               <PanelHeaderAction
                 id={panelAction.id}
                 key={panelAction.id}

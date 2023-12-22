@@ -143,7 +143,7 @@ export function processCsvData(rawData: unknown[][] | string, header?: string[])
  */
 export function parseRowsByFields(rows: any[][], fields: Field[]) {
   // Edit rows in place
-  const geojsonFieldIdx = fields.findIndex(f => f.name === '_geojson');
+  const geojsonFieldIdx = fields.findIndex((f) => f.name === '_geojson');
   fields.forEach(parseCsvRowsByFieldType.bind(null, rows, geojsonFieldIdx));
 
   return rows;
@@ -187,11 +187,11 @@ export function parseCsvRowsByFieldType(
   const parser = PARSE_FIELD_VALUE_FROM_STRING[field.type];
   if (parser) {
     // check first not null value of it's already parsed
-    const first = rows.find(r => notNullorUndefined(r[i]));
+    const first = rows.find((r) => notNullorUndefined(r[i]));
     if (!first || parser.valid(first[i], field)) {
       return;
     }
-    rows.forEach(row => {
+    rows.forEach((row) => {
       // parse string value based on field type
       if (row[i] !== null) {
         row[i] = parser.parse(row[i], field);
@@ -245,7 +245,7 @@ export function processRowObject(rawData: unknown[]): ProcessorResult {
   }
 
   const keys = Object.keys(rawData[0]); // [lat, lng, value]
-  const rows = rawData.map(d => keys.map(key => d[key])); // [[31.27, 127.56, 3]]
+  const rows = rawData.map((d) => keys.map((key) => d[key])); // [[31.27, 127.56, 3]]
 
   // row object an still contain values like `Null` or `N/A`
   cleanUpFalsyCsvValue(rows);
@@ -316,7 +316,7 @@ export function processGeojson(rawData: unknown): ProcessorResult {
   }
   // get all the field
   const fields = allDataRows.reduce<string[]>((accu, curr) => {
-    Object.keys(curr).forEach(key => {
+    Object.keys(curr).forEach((key) => {
       if (!accu.includes(key)) {
         accu.push(key);
       }
@@ -325,8 +325,8 @@ export function processGeojson(rawData: unknown): ProcessorResult {
   }, []);
 
   // make sure each feature has exact same fields
-  allDataRows.forEach(d => {
-    fields.forEach(f => {
+  allDataRows.forEach((d) => {
+    fields.forEach((f) => {
       if (!(f in d)) {
         d[f] = null;
         if (d._geojson.properties) {
@@ -412,14 +412,14 @@ export function processArrowBatches(arrowBatches: arrow.RecordBatch[]): Processo
       analyzerType: isGeometryColumn
         ? AnalyzerDATA_TYPES.GEOMETRY
         : arrowDataTypeToAnalyzerDataType(field.type),
-      valueAccessor: (dc: any) => d => {
+      valueAccessor: (dc: any) => (d) => {
         return dc.valueAt(d.index, index);
       },
       metadata: field.metadata
     });
   });
 
-  const cols = [...Array(arrowTable.numCols).keys()].map(i => arrowTable.getChildAt(i));
+  const cols = [...Array(arrowTable.numCols).keys()].map((i) => arrowTable.getChildAt(i));
   // return empty rows and use raw arrow table to construct column-wise data container
   return {fields, rows: [], cols, metadata: arrowTable.schema.metadata};
 }

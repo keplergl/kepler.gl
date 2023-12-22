@@ -59,16 +59,20 @@ const brushingExtension = new BrushingExtension();
 
 export const SVG_ICON_URL = `${KEPLER_UNFOLDED_BUCKET}/icons/svg-icons.json`;
 
-export const iconPosAccessor = ({lat, lng, altitude}: IconLayerColumnsConfig) => (
-  dc: DataContainerInterface
-) => d => [
-  dc.valueAt(d.index, lng.fieldIdx),
-  dc.valueAt(d.index, lat.fieldIdx),
-  altitude?.fieldIdx > -1 ? dc.valueAt(d.index, altitude.fieldIdx) : 0
-];
+export const iconPosAccessor =
+  ({lat, lng, altitude}: IconLayerColumnsConfig) =>
+  (dc: DataContainerInterface) =>
+  (d) => [
+    dc.valueAt(d.index, lng.fieldIdx),
+    dc.valueAt(d.index, lat.fieldIdx),
+    altitude?.fieldIdx > -1 ? dc.valueAt(d.index, altitude.fieldIdx) : 0
+  ];
 
-export const iconAccessor = ({icon}: IconLayerColumnsConfig) => (dc: DataContainerInterface) => d =>
-  dc.valueAt(d.index, icon.fieldIdx);
+export const iconAccessor =
+  ({icon}: IconLayerColumnsConfig) =>
+  (dc: DataContainerInterface) =>
+  (d) =>
+    dc.valueAt(d.index, icon.fieldIdx);
 
 export const iconRequiredColumns: ['lat', 'lng', 'icon'] = ['lat', 'lng', 'icon'];
 export const iconOptionalColumns: ['altitude'] = ['altitude'];
@@ -90,7 +94,7 @@ export const pointVisConfigs: {
 function flatterIconPositions(icon) {
   // had to flip y, since @luma modal has changed
   return icon.mesh.cells.reduce((prev, cell) => {
-    cell.forEach(p => {
+    cell.forEach((p) => {
       prev.push(
         ...[icon.mesh.positions[p][0], -icon.mesh.positions[p][1], icon.mesh.positions[p][2]]
       );
@@ -119,7 +123,7 @@ export default class IconLayer extends Layer {
     this.registerVisConfig(pointVisConfigs);
     this.getPositionAccessor = (dataContainer: DataContainerInterface) =>
       iconPosAccessor(this.config.columns)(dataContainer);
-    this.getIconAccessor = dataContainer => iconAccessor(this.config.columns)(dataContainer);
+    this.getIconAccessor = (dataContainer) => iconAccessor(this.config.columns)(dataContainer);
 
     this._layerInfoModal = IconInfoModalFactory(props.svgIcons);
     this.iconGeometry = props.iconGeometry || null;
@@ -165,7 +169,7 @@ export default class IconLayer extends Layer {
       color: {
         ...super.visualChannels.color,
         accessor: 'getFillColor',
-        defaultValue: config => config.color
+        defaultValue: (config) => config.color
       },
       size: {
         ...super.visualChannels.size,
@@ -198,7 +202,7 @@ export default class IconLayer extends Layer {
     if (window.fetch && this.svgIconUrl) {
       window
         .fetch(this.svgIconUrl, fetchConfig)
-        .then(response => response.json())
+        .then((response) => response.json())
         .then((parsed: {svgIcons?: any[]} = {}) => {
           this.setSvgIcons(parsed.svgIcons);
         });
@@ -228,7 +232,7 @@ export default class IconLayer extends Layer {
         .replace(/[_,.]+/g, ' ')
         .trim()
         .split(' ')
-        .some(seg => ICON_FIELDS.icon.some(t => t.includes(seg)))
+        .some((seg) => ICON_FIELDS.icon.some((t) => t.includes(seg)))
     );
 
     if (!iconFields.length) {
@@ -239,7 +243,7 @@ export default class IconLayer extends Layer {
     const ptPair = fieldPairs[0];
     const columns = assignPointPairToLayerColumn(ptPair, true);
 
-    const props = iconFields.map(iconField => ({
+    const props = iconFields.map((iconField) => ({
       label: iconField.name.replace(/[_,.]+/g, ' ').trim(),
       columns: {
         ...columns,
@@ -370,7 +374,7 @@ export default class IconLayer extends Layer {
             ...layerProps,
             ...data,
             parameters,
-            getIconGeometry: id => this.iconGeometry?.[id],
+            getIconGeometry: (id) => this.iconGeometry?.[id],
 
             // update triggers
             updateTriggers,
@@ -390,7 +394,7 @@ export default class IconLayer extends Layer {
                   getPosition: data.getPosition,
                   getRadius: data.getRadius,
                   getFillColor: this.config.highlightColor,
-                  getIconGeometry: id => this.iconGeometry?.[id]
+                  getIconGeometry: (id) => this.iconGeometry?.[id]
                 })
               ]
             : []),

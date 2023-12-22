@@ -148,7 +148,7 @@ export default function ModalContainerFactory(
       document.removeEventListener('keyup', this._onKeyUp);
     }
 
-    _onKeyUp = event => {
+    _onKeyUp = (event) => {
       const keyCode = event.keyCode;
       if (keyCode === KeyEvent.DOM_VK_ESCAPE) {
         this._closeModal();
@@ -159,7 +159,7 @@ export default function ModalContainerFactory(
       this.props.uiStateActions.toggleModal(null);
     };
 
-    _deleteDataset = key => {
+    _deleteDataset = (key) => {
       this.props.visStateActions.removeDataset(key);
       this._closeModal();
     };
@@ -169,7 +169,7 @@ export default function ModalContainerFactory(
       this._closeModal();
     };
 
-    _onFileUpload = fileList => {
+    _onFileUpload = (fileList) => {
       this.props.visStateActions.loadFiles(fileList);
     };
 
@@ -226,7 +226,7 @@ export default function ModalContainerFactory(
       this._onSaveMap(true);
     };
 
-    _onShareMapUrl = provider => {
+    _onShareMapUrl = (provider) => {
       this._exportFileToCloud({provider, isPublic: true, overwrite: false, closeModal: false});
     };
 
@@ -235,7 +235,7 @@ export default function ModalContainerFactory(
       this._closeModal();
     };
 
-    _onLoadCloudMap = payload => {
+    _onLoadCloudMap = (payload) => {
       this.props.providerActions.loadCloudMap({
         ...payload,
         onSuccess: this.props.onLoadCloudMapSuccess,
@@ -449,7 +449,7 @@ export default function ModalContainerFactory(
                 cleanupExportImage={uiStateActions.cleanupExportImage}
                 onUpdateImageSetting={uiStateActions.setExportImageSetting}
                 onCancel={this._closeModal}
-                onConfirm={provider => this._onSaveMap(provider, false)}
+                onConfirm={(provider) => this._onSaveMap(provider, false)}
               />
             );
             modalProps = {

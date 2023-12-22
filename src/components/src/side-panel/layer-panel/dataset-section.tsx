@@ -27,19 +27,19 @@ type DatasetSectionProps = {
 };
 
 const StyledDatasetTitle = styled.div<{showDatasetList?: boolean}>`
-  line-height: ${props => props.theme.sidePanelTitleLineHeight};
+  line-height: ${(props) => props.theme.sidePanelTitleLineHeight};
   font-weight: 400;
   letter-spacing: 1.25px;
-  color: ${props => props.theme.subtextColor};
+  color: ${(props) => props.theme.subtextColor};
   font-size: 11px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: ${props => (props.showDatasetList ? '16px' : '4px')};
+  margin-bottom: ${(props) => (props.showDatasetList ? '16px' : '4px')};
 `;
 
 const StyledDatasetSection = styled.div`
-  border-bottom: 1px solid ${props => props.theme.sidePanelBorderColor};
+  border-bottom: 1px solid ${(props) => props.theme.sidePanelBorderColor};
 `;
 
 export function AddDataButtonFactory() {
@@ -65,7 +65,7 @@ function DatasetSectionFactory(
   SourceDataCatalog: ReturnType<typeof SourceDataCatalogFactory>,
   AddDataButton: ReturnType<typeof AddDataButtonFactory>
 ) {
-  const DatasetSection: React.FC<DatasetSectionProps> = props => {
+  const DatasetSection: React.FC<DatasetSectionProps> = (props) => {
     const {
       datasets,
       showDatasetTable,

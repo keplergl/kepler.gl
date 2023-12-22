@@ -39,7 +39,7 @@ class App extends Component {
     this.props.dispatch(showModal(null));
   };
 
-  _openModal = id => {
+  _openModal = (id) => {
     this.props.dispatch(showModal(id));
   };
 
@@ -73,7 +73,7 @@ class App extends Component {
   }
 }
 
-const mapStateToProps = state => state;
-const dispatchToProps = dispatch => ({dispatch});
+const mapStateToProps = (state) => state;
+const dispatchToProps = (dispatch) => ({dispatch});
 
 export default connect(mapStateToProps, dispatchToProps)(App);

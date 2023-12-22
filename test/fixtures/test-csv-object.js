@@ -22,7 +22,7 @@ export const objCsvFields = [
     format: '',
     fieldIdx: 0,
     analyzerType: 'OBJECT',
-    valueAccessor: values => values[0]
+    valueAccessor: (values) => values[0]
   },
   {
     type: 'array',
@@ -32,7 +32,7 @@ export const objCsvFields = [
     format: '',
     fieldIdx: 1,
     analyzerType: 'ARRAY',
-    valueAccessor: values => values[1]
+    valueAccessor: (values) => values[1]
   },
   {
     type: 'array',
@@ -42,7 +42,7 @@ export const objCsvFields = [
     format: '',
     fieldIdx: 2,
     analyzerType: 'ARRAY',
-    valueAccessor: values => values[2]
+    valueAccessor: (values) => values[2]
   },
   {
     type: 'array',
@@ -52,7 +52,7 @@ export const objCsvFields = [
     format: '',
     fieldIdx: 3,
     analyzerType: 'ARRAY',
-    valueAccessor: values => values[3]
+    valueAccessor: (values) => values[3]
   }
 ];
 

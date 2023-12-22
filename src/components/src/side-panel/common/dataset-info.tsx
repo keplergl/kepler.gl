@@ -19,7 +19,7 @@ export type DatasetInfoProps = {
 
 const StyledDataRowCount = styled.div`
   font-size: 11px;
-  color: ${props => props.theme.subtextColor};
+  color: ${(props) => props.theme.subtextColor};
   padding-left: 19px;
 `;
 

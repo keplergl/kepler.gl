@@ -18,7 +18,7 @@ const DropdownContainer = styled.div.attrs({
   className: 'add-layer-menu-dropdown'
 })`
   .list-selector {
-    border-top: 1px solid ${props => props.theme.secondaryInputBorderColor};
+    border-top: 1px solid ${(props) => props.theme.secondaryInputBorderColor};
     width: 100%;
     /* disable scrolling, currently set to 280px internally */
     max-height: unset;
@@ -52,7 +52,7 @@ const ListItemWrapper = styled.div.attrs({
   className: 'dropdown-menu-list-item-wrapper'
 })`
   display: flex;
-  color: ${props => props.theme.textColor};
+  color: ${(props) => props.theme.textColor};
   font-size: 11px;
   letter-spacing: 0.2px;
   overflow: auto;
@@ -99,7 +99,7 @@ const AddByDatasetButton: React.FC<AddByDatasetButtonProps> = ({
   const [tippyInstance, setTippyInstance] = useState();
 
   const options = useMemo(() => {
-    return Object.values(datasets).map(ds => ({
+    return Object.values(datasets).map((ds) => ({
       label: ds.label,
       value: ds.id,
       color: ds.color
@@ -115,7 +115,7 @@ const AddByDatasetButton: React.FC<AddByDatasetButtonProps> = ({
   }, [options, onAdd]);
 
   const onOptionSelected = useCallback(
-    option => {
+    (option) => {
       onAdd(option.value);
       if (tippyInstance) {
         // @ts-ignore
@@ -144,7 +144,7 @@ const AddByDatasetButton: React.FC<AddByDatasetButtonProps> = ({
     buttonRendered
   ) : (
     <RootContext.Consumer>
-      {context => (
+      {(context) => (
         <Tippy
           trigger="click"
           arrow={false}

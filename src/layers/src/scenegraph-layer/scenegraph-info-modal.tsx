@@ -10,8 +10,8 @@ export const Table = styled.table`
 
   thead {
     tr th {
-      background: ${props => props.theme.panelBackgroundLT};
-      color: ${props => props.theme.titleColorLT};
+      background: ${(props) => props.theme.panelBackgroundLT};
+      color: ${(props) => props.theme.titleColorLT};
       padding: 18px 12px;
       text-align: start;
     }
@@ -19,7 +19,7 @@ export const Table = styled.table`
 
   tbody {
     tr td {
-      border-bottom: ${props => props.theme.panelBorderLT};
+      border-bottom: ${(props) => props.theme.panelBorderLT};
       padding: 12px;
     }
   }
@@ -29,7 +29,7 @@ const StyledTitle = styled.div`
   font-size: 20px;
   letter-spacing: 1.25px;
   margin: 18px 0 14px 0;
-  color: ${props => props.theme.titleColorLT};
+  color: ${(props) => props.theme.titleColorLT};
 `;
 
 const ExampleTable = () => (

@@ -12,11 +12,11 @@ import {datetimeFormatter} from '@kepler.gl/utils';
 const StyledTimeDisplayWrapper = styled.div.attrs({
   className: 'floating-time-display'
 })`
-  bottom: ${props => `calc(100% + ${props.theme.bottomPanelGap}px)`};
+  bottom: ${(props) => `calc(100% + ${props.theme.bottomPanelGap}px)`};
   display: flex;
   position: absolute;
   width: 100%;
-  margin-left: -${props => props.theme.bottomInnerPdSide}px;
+  margin-left: -${(props) => props.theme.bottomInnerPdSide}px;
   justify-content: center;
   pointer-events: none; /* prevent padding from blocking input */
   & > * {
@@ -25,18 +25,18 @@ const StyledTimeDisplayWrapper = styled.div.attrs({
   }
 `;
 
-const StyledTimeDisplay = styled.div.attrs(props => ({
+const StyledTimeDisplay = styled.div.attrs((props) => ({
   className: classnames('floating-time-display__inner', props.className)
 }))`
-  background-color: ${props => props.theme.panelBackground};
-  border-radius: ${props => props.theme.timeDisplayBorderRadius}px;
-  color: ${props => props.theme.titleTextColor};
+  background-color: ${(props) => props.theme.panelBackground};
+  border-radius: ${(props) => props.theme.timeDisplayBorderRadius}px;
+  color: ${(props) => props.theme.titleTextColor};
   display: flex;
-  height: ${props => props.theme.timeDisplayHeight}px;
+  height: ${(props) => props.theme.timeDisplayHeight}px;
   justify-content: center;
-  min-width: ${props => props.theme.timeDisplayMinWidth}px;
-  opacity: ${props => props.theme.timeDisplayOpacity};
-  padding: ${props => props.theme.timeDisplayPadding};
+  min-width: ${(props) => props.theme.timeDisplayMinWidth}px;
+  opacity: ${(props) => props.theme.timeDisplayOpacity};
+  padding: ${(props) => props.theme.timeDisplayPadding};
 `;
 
 const StyledTimeDisplayGroups = styled.div`
@@ -54,7 +54,7 @@ const StyledTimeDisplayRows = styled.div`
 const StyledTimeDisplayTop = styled.div.attrs({
   className: 'animation-control__time-display__top'
 })`
-  color: ${props => props.theme.textColor};
+  color: ${(props) => props.theme.textColor};
   display: flex;
   font-size: 12px;
   font-weight: 500;
@@ -64,7 +64,7 @@ const StyledTimeDisplayTop = styled.div.attrs({
 const StyledTimeDisplayBottom = styled.div.attrs({
   className: 'animation-control__time-display__bottom'
 })`
-  color: ${props => props.theme.titleTextColor};
+  color: ${(props) => props.theme.titleTextColor};
   display: flex;
   font-size: 14px;
   font-weight: 500;

@@ -9,7 +9,7 @@ import {FormattedMessage} from '@kepler.gl/localization';
 const LayerErrorMessageContent = styled.div.attrs({
   className: 'layer-error-message-content'
 })`
-  background-color: ${props => props.theme.notificationColors.error || '#000'};
+  background-color: ${(props) => props.theme.notificationColors.error || '#000'};
   color: #fff;
   display: block;
   width: 100%;

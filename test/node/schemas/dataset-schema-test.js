@@ -17,7 +17,7 @@ import {savedStateV1, v0ExpectedInfo, v0ExpectedFields} from 'test/fixtures/stat
 import {stateSavedV1_2, v1expectedInfo_2, v1expectedFields_2} from 'test/fixtures/state-saved-v1-2';
 
 /* eslint-disable max-statements */
-test('#DatasetSchema -> SchemaManager.parseSavedData', t => {
+test('#DatasetSchema -> SchemaManager.parseSavedData', (t) => {
   const dataSaved = cloneDeep(savedStateV0).datasets;
   const parsedValid = SchemaManager.parseSavedData(dataSaved);
 
@@ -56,7 +56,7 @@ test('#DatasetSchema -> SchemaManager.parseSavedData', t => {
 });
 /* eslint-enable max-statements */
 
-test('#DatasetSchema -> SchemaManager.parseSavedData.v1', t => {
+test('#DatasetSchema -> SchemaManager.parseSavedData.v1', (t) => {
   const dataSaved = cloneDeep(savedStateV1).datasets;
   const parsedValid = SchemaManager.parseSavedData(dataSaved);
 
@@ -80,7 +80,7 @@ test('#DatasetSchema -> SchemaManager.parseSavedData.v1', t => {
   t.end();
 });
 
-test('#DatasetSchema -> SchemaManager.parseSavedData.v1 with ts', t => {
+test('#DatasetSchema -> SchemaManager.parseSavedData.v1 with ts', (t) => {
   const dataSaved = cloneDeep(stateSavedV1_2).datasets;
   const parsedValid = SchemaManager.parseSavedData(dataSaved);
 

@@ -62,7 +62,7 @@ function InteractionPanelFactory(
     const [isConfigActive, setIsConfigAction] = useState(false);
 
     const _updateConfig = useCallback(
-      newProp => {
+      (newProp) => {
         onConfigChange({
           ...config,
           ...newProp
@@ -87,7 +87,10 @@ function InteractionPanelFactory(
       _updateConfig({enabled: !enabled});
     }, [_updateConfig, enabled]);
 
-    const onChange = useCallback(newConfig => _updateConfig({config: newConfig}), [_updateConfig]);
+    const onChange = useCallback(
+      (newConfig) => _updateConfig({config: newConfig}),
+      [_updateConfig]
+    );
 
     const IconComponent = interactionConfigIcons[config.id];
 

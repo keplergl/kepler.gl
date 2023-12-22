@@ -66,7 +66,7 @@ class MapboxLayerGL extends Layer {
     (datasetId, columns) => `${datasetId}-${columns}`
   );
 
-  filterSelector = createSelector(this.gpuFilterSelector, gpuFilter =>
+  filterSelector = createSelector(this.gpuFilterSelector, (gpuFilter) =>
     gpuFilterToMapboxFilter(gpuFilter)
   );
 
@@ -110,14 +110,14 @@ class MapboxLayerGL extends Layer {
   }
 
   calculateDataAttribute({dataContainer, filteredIndex, gpuFilter}: KeplerTable, getPosition) {
-    const getGeometry = d => this.getGeometry(getPosition(d));
+    const getGeometry = (d) => this.getGeometry(getPosition(d));
 
     const vcFields = Object.values(this.visualChannels)
-      .map(v => this.config[v.field])
-      .filter(v => v);
+      .map((v) => this.config[v.field])
+      .filter((v) => v);
 
     const getPropertyFromVisualChanel = vcFields.length
-      ? d =>
+      ? (d) =>
           vcFields.reduce(
             (accu, field) => ({
               ...accu,
@@ -125,16 +125,16 @@ class MapboxLayerGL extends Layer {
             }),
             {}
           )
-      : d => ({});
+      : (d) => ({});
 
     const {filterValueUpdateTriggers, filterValueAccessor} = gpuFilter;
 
     // gpuField To property
-    const hasFilter = Object.values(filterValueUpdateTriggers).filter(d => d).length;
+    const hasFilter = Object.values(filterValueUpdateTriggers).filter((d) => d).length;
     const valueAccessor = filterValueAccessor(dataContainer)();
 
     const getPropertyFromFilter = hasFilter
-      ? d => {
+      ? (d) => {
           const filterValue = valueAccessor(d);
           return Object.values(filterValueUpdateTriggers).reduce(
             (accu: any, name, i) => ({
@@ -144,9 +144,9 @@ class MapboxLayerGL extends Layer {
             {}
           ) as any;
         }
-      : d => ({} as any);
+      : (d) => ({}) as any;
 
-    const getProperties = d => ({
+    const getProperties = (d) => ({
       ...getPropertyFromVisualChanel(d),
       ...getPropertyFromFilter(d)
     });

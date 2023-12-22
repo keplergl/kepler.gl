@@ -33,14 +33,14 @@ const PaletteWrapper = styled.div.attrs({
   overflow: hidden;
 `;
 
-const PaletteContainer = styled.div.attrs(props => ({
+const PaletteContainer = styled.div.attrs((props) => ({
   className: classnames('color-range-palette', props.className)
 }))<{isSelected?: boolean}>`
   display: flex;
   flex-grow: 1;
   border-width: 1px;
   border-style: solid;
-  border-color: ${props => (props.isSelected ? '#FFFFFF' : 'transparent')};
+  border-color: ${(props) => (props.isSelected ? '#FFFFFF' : 'transparent')};
   padding: 4px;
   border-radius: 4px;
 `;

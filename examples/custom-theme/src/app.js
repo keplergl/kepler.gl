@@ -66,7 +66,7 @@ function App(props) {
           type="checkbox"
           checked={customTheme}
           id="custom-theme"
-          onChange={e => setTheme(e.target.checked)}
+          onChange={(e) => setTheme(e.target.checked)}
         />
       </StyleSwitch>
       <KeplerGl
@@ -75,7 +75,7 @@ function App(props) {
         /*
          * Specify path to keplerGl state, because it is not mount at the root
          */
-        getState={state => state.demo.keplerGl}
+        getState={(state) => state.demo.keplerGl}
         width={windowDimension.width}
         height={windowDimension.height}
         theme={customTheme ? theme : emptyTheme}
@@ -85,7 +85,7 @@ function App(props) {
   // }
 }
 
-const mapStateToProps = state => state;
-const dispatchToProps = dispatch => ({dispatch});
+const mapStateToProps = (state) => state;
+const dispatchToProps = (dispatch) => ({dispatch});
 
 export default connect(mapStateToProps, dispatchToProps)(App);

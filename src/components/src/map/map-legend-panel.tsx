@@ -33,7 +33,7 @@ interface PinToBottomProps {
 const PinToBottom = styled.div<PinToBottomProps>`
   position: absolute;
   bottom: ${DIMENSIONS.mapControl.mapLegend.pinned.bottom}px;
-  right: ${props => (props.offsetRight || 0) + DIMENSIONS.mapControl.mapLegend.pinned.right}px;
+  right: ${(props) => (props.offsetRight || 0) + DIMENSIONS.mapControl.mapLegend.pinned.right}px;
   ${media.portable`
     bottom: 0px;
     right: 0px;
@@ -96,14 +96,14 @@ function MapLegendPanelFactory(MapControlTooltip, MapControlPanel, MapLegend) {
     }, [onClickControlBtn, onToggleMapControl, mapControls]);
     const [tippyInstance, setTippyInstance] = useState(null);
     const onCloseClick = useCallback(
-      e => {
+      (e) => {
         e.preventDefault();
         onToggleMapControl('mapLegend');
       },
       [onToggleMapControl]
     );
     const onPinClick = useCallback(
-      e => {
+      (e) => {
         e.preventDefault();
         if (tippyInstance) {
           // @ts-ignore
@@ -163,7 +163,7 @@ function MapLegendPanelFactory(MapControlTooltip, MapControlPanel, MapLegend) {
           trigger="click"
           placement="left-start"
           onCreate={setTippyInstance}
-          render={attrs => <div {...attrs}>{mapControlPanel}</div>}
+          render={(attrs) => <div {...attrs}>{mapControlPanel}</div>}
           appendTo="parent"
         >
           <div>

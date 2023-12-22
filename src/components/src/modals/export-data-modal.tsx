@@ -104,7 +104,7 @@ const ExportDataModalFactory = () => {
                 <select value={selectedDataset} onChange={this._onSelectDataset}>
                   {[intl.formatMessage({id: 'modal.exportData.allDatasets'})]
                     .concat(Object.keys(datasets))
-                    .map(d => (
+                    .map((d) => (
                       <option key={d} value={d}>
                         {(datasets[d] && datasets[d].label) || d}
                       </option>
@@ -122,7 +122,7 @@ const ExportDataModalFactory = () => {
                 </div>
               </div>
               <div className="selection">
-                {supportedDataTypes.map(op => (
+                {supportedDataTypes.map((op) => (
                   <StyledType
                     key={op.id}
                     selected={dataType === op.id}

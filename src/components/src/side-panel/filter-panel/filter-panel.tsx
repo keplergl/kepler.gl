@@ -83,7 +83,7 @@ function FilterPanelFactory(
             f.type &&
             f.type !== ALL_FIELD_TYPES.geojson &&
             (name.includes(f.name) ||
-              !filters.find(d => d.name.includes(f.name) && d.dataId.includes(dataId)))
+              !filters.find((d) => d.name.includes(f.name) && d.dataId.includes(dataId)))
         )
     );
 

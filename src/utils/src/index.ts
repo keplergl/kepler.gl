@@ -24,7 +24,12 @@ export {getFrequency, getMode, aggregate} from './aggregate-utils';
 // eslint-disable-next-line prettier/prettier
 export type {FieldFormatter} from './data-utils';
 export * from './data-utils';
-export {getTimelineFromAnimationConfig, getTimelineFromFilter, SAMPLE_TIMELINE, TIMELINE_MODES} from './time';
+export {
+  getTimelineFromAnimationConfig,
+  getTimelineFromFilter,
+  SAMPLE_TIMELINE,
+  TIMELINE_MODES
+} from './time';
 
 export {
   datasetColorMaker,
@@ -81,7 +86,12 @@ export * from './utils';
 export * from './split-map-utils';
 export {snapToMarks} from './plot';
 
-export {computeDeckEffects, fixEffectOrder, reorderEffectOrder, validateEffectParameters} from './effect-utils';
+export {
+  computeDeckEffects,
+  fixEffectOrder,
+  reorderEffectOrder,
+  validateEffectParameters
+} from './effect-utils';
 
 // Mapbox
 export {transformRequest, isStyleUsingMapboxTiles} from './map-style-utils/mapbox-utils';
@@ -89,18 +99,27 @@ export {transformRequest, isStyleUsingMapboxTiles} from './map-style-utils/mapbo
 // Map
 export * from './map-utils';
 
-export {createDataContainer, createIndexedDataContainer, getSampleData as getSampleContainerData, DataForm} from './data-container-utils';
-export type { DataContainerInterface } from './data-container-interface';
-export {ArrowDataContainer, arrowDataTypeToFieldType, arrowDataTypeToAnalyzerDataType} from './arrow-data-container';
-export type {FilterResult, FilterChanged, dataValueAccessor} from './filter-utils'
-export * from "./filter-utils";
+export {
+  createDataContainer,
+  createIndexedDataContainer,
+  getSampleData as getSampleContainerData,
+  DataForm
+} from './data-container-utils';
+export type {DataContainerInterface} from './data-container-interface';
+export {
+  ArrowDataContainer,
+  arrowDataTypeToFieldType,
+  arrowDataTypeToAnalyzerDataType
+} from './arrow-data-container';
+export type {FilterResult, FilterChanged, dataValueAccessor} from './filter-utils';
+export * from './filter-utils';
 
 export {
   getQuantileDomain,
   getOrdinalDomain,
   getLinearDomain,
   getLogDomain
-} from "./data-scale-utils";
+} from './data-scale-utils';
 
 export {DataRow} from './data-row';
 

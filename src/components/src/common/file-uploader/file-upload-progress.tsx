@@ -9,10 +9,10 @@ import {TruncatedTitleText} from '../styled-components';
 import {getError} from '@kepler.gl/utils';
 import {FileLoadingProgress} from '@kepler.gl/types';
 
-const StyledFileProgress = styled.div.attrs(props => ({
+const StyledFileProgress = styled.div.attrs((props) => ({
   className: classnames('file-upload__progress', props.className)
 }))`
-  color: ${props => props.theme.textColorLT};
+  color: ${(props) => props.theme.textColorLT};
   font-size: 12px;
   margin-top: 12px;
   border-image: initial;
@@ -47,7 +47,7 @@ const StyledContainer = styled.div`
   justify-content: center;
 `;
 
-const formatPercent = percent => `${Math.floor(percent * 100)}%`;
+const formatPercent = (percent) => `${Math.floor(percent * 100)}%`;
 
 interface UploadProgressProps {
   message?: string;
@@ -96,7 +96,7 @@ interface FileUploadProgressProps {
 const FileUploadProgress = ({fileLoadingProgress, theme}: FileUploadProgressProps) => (
   <StyledContainer>
     <StyledProgressWrapper>
-      {Object.values(fileLoadingProgress).map(item => (
+      {Object.values(fileLoadingProgress).map((item) => (
         <UploadProgress {...item} key={item.fileName} theme={theme} />
       ))}
     </StyledProgressWrapper>

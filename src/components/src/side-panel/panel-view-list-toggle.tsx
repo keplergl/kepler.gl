@@ -13,7 +13,7 @@ import {PANEL_VIEW_TOGGLES} from '@kepler.gl/constants';
 type ToggleOptionProps = {
   isActive: boolean;
   onClick: () => void;
-  option: typeof TOGGLE_OPTIONS[0];
+  option: (typeof TOGGLE_OPTIONS)[0];
 };
 
 type PanelViewListToggleProps = {
@@ -37,10 +37,10 @@ const PanelViewListToggleWrapper = styled.div.attrs({
 export const StyledToggleOption = styled.div.attrs({
   className: 'layer-panel-toggle-option'
 })<{active: boolean}>`
-  color: ${props => (props.active ? props.theme.subtextColorActive : props.theme.panelTabColor)};
+  color: ${(props) => (props.active ? props.theme.subtextColorActive : props.theme.panelTabColor)};
   :hover {
     cursor: pointer;
-    color: ${props => props.theme.subtextColorActive};
+    color: ${(props) => props.theme.subtextColorActive};
   }
 `;
 
@@ -81,17 +81,17 @@ PanelViewListToggleFactory.deps = [ToggleOptionFactory];
 
 function PanelViewListToggleFactory(ToggleOption: ReturnType<typeof ToggleOptionFactory>) {
   const PanelViewListToggle: React.FC<PanelViewListToggleProps> = ({mode, togglePanelListView}) => {
-    const toggleListView = listView => togglePanelListView(listView);
+    const toggleListView = (listView) => togglePanelListView(listView);
 
     const options = useMemo(
-      () => TOGGLE_OPTIONS.map(opt => ({...opt, isActive: mode === opt.id})),
+      () => TOGGLE_OPTIONS.map((opt) => ({...opt, isActive: mode === opt.id})),
       [mode]
     );
 
     return (
       <PanelViewListToggleContainer>
         <PanelViewListToggleWrapper>
-          {options.map(opt => (
+          {options.map((opt) => (
             <ToggleOption
               key={opt.id}
               onClick={() => toggleListView(opt.id)}

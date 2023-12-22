@@ -61,7 +61,7 @@ export default class DropboxProvider extends Provider {
 
       const authWindow = window.open(link, '_blank', 'width=1024,height=716');
 
-      const handleToken = async event => {
+      const handleToken = async (event) => {
         // if user has dev tools this will skip all the react-devtools events
         if (!event.data.token) {
           return;
@@ -116,12 +116,12 @@ export default class DropboxProvider extends Provider {
       // https://dropbox.github.io/dropbox-sdk-js/Dropbox.html#filesGetThumbnailBatch__anchor
       // up to 25 per request
       // TODO: implement pagination, so we don't need to get all the thumbs all at once
-      const thumbnails = await Promise.all(this._getThumbnailRequests(pngs)).then(results =>
+      const thumbnails = await Promise.all(this._getThumbnailRequests(pngs)).then((results) =>
         results.reduce((accu, r) => [...accu, ...(r.entries || [])], [])
       );
 
       // append to visualizations
-      (thumbnails || []).forEach(thb => {
+      (thumbnails || []).forEach((thb) => {
         if (thb['.tag'] === 'success' && thb.thumbnail) {
           const matchViz = visualizations[pngs[thb.metadata.id] && pngs[thb.metadata.id].name];
           if (matchViz) {
@@ -353,7 +353,7 @@ export default class DropboxProvider extends Provider {
         }
         return this._dropbox.sharingCreateSharedLinkWithSettings(shareArgs);
       })
-      .then(result => {
+      .then((result) => {
         // Update URL to avoid CORS issue
         // Unfortunately this is not the ideal scenario but it will make sure people
         // can share dropbox urls with users without the dropbox account (publish on twitter, facebook)
@@ -411,9 +411,9 @@ export default class DropboxProvider extends Provider {
       return accu;
     }, []);
 
-    return batches.map(batch =>
+    return batches.map((batch) =>
       this._dropbox.filesGetThumbnailBatch({
-        entries: batch.map(img => ({
+        entries: batch.map((img) => ({
           path: img.path_lower,
           format: 'png',
           size: 'w128h128'
@@ -435,7 +435,7 @@ export default class DropboxProvider extends Provider {
     const pngs = {};
     const visualizations = {};
 
-    entries.forEach(entry => {
+    entries.forEach((entry) => {
       const {name, path_lower, id, client_modified} = entry;
       if (name && name.endsWith('.json')) {
         // find json

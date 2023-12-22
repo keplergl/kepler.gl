@@ -46,7 +46,7 @@ const DEFAULT_FIELD_TEST_CASES = [
   }
 ];
 
-test('datasetUtils.findDefaultColorField', t => {
+test('datasetUtils.findDefaultColorField', (t) => {
   for (const tc of DEFAULT_FIELD_TEST_CASES) {
     const dataset = createNewDataEntry({
       info: {id: 'taro'},
@@ -63,7 +63,7 @@ test('datasetUtils.findDefaultColorField', t => {
   t.end();
 });
 
-test('datasetUtils.isHexWkb', t => {
+test('datasetUtils.isHexWkb', (t) => {
   t.notOk(isHexWkb(''), 'empty string is not a valid hex wkb');
 
   t.notOk(isHexWkb(null), 'null is not a valid hex wkb');

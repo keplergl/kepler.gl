@@ -84,14 +84,14 @@ export type PanelHeaderProps = {
   hideExportDropdown: () => void;
 } & DropdownCallbacks;
 
-const StyledPanelHeader = styled.div.attrs(props => ({
+const StyledPanelHeader = styled.div.attrs((props) => ({
   className: classnames('side-side-panel__header', props.className)
 }))`
-  background-color: ${props => props.theme.sidePanelHeaderBg};
+  background-color: ${(props) => props.theme.sidePanelHeaderBg};
   padding: 12px 16px 0 16px;
 `;
 
-const StyledPanelHeaderTop = styled.div.attrs(props => ({
+const StyledPanelHeaderTop = styled.div.attrs((props) => ({
   className: classnames('side-panel__header__top', props.className)
 }))`
   display: flex;
@@ -111,7 +111,7 @@ const StyledPanelAction = styled.div.attrs({
 })<StyledPanelActionProps>`
   align-items: center;
   border-radius: 2px;
-  color: ${props => (props.active ? props.theme.textColorHl : props.theme.subtextColor)};
+  color: ${(props) => (props.active ? props.theme.textColorHl : props.theme.subtextColor)};
   display: flex;
   height: 26px;
   justify-content: space-between;
@@ -128,10 +128,10 @@ const StyledPanelAction = styled.div.attrs({
 
   :hover {
     cursor: pointer;
-    color: ${props => props.theme.textColorHl};
+    color: ${(props) => props.theme.textColorHl};
 
     a {
-      color: ${props => props.theme.textColorHl};
+      color: ${(props) => props.theme.textColorHl};
     }
   }
 `;
@@ -180,7 +180,7 @@ export const PanelHeaderDropdownFactory = () => {
           show={show}
           onClose={onClose}
         >
-          {items.map(item => (
+          {items.map((item) => (
             <ToolbarItem
               id={item.key}
               key={item.key}
@@ -201,13 +201,13 @@ export const PanelHeaderDropdownFactory = () => {
 const getDropdownItemsSelector = () =>
   createSelector(
     (props: DropdownComponentProps) => props,
-    props =>
+    (props) =>
       (props.items || [])
-        .map(t => ({
+        .map((t) => ({
           ...t,
           onClick: t.onClick && t.onClick(props) ? t.onClick(props) : null
         }))
-        .filter(l => l.onClick)
+        .filter((l) => l.onClick)
   );
 
 export const SaveExportDropdownFactory = (
@@ -217,7 +217,7 @@ export const SaveExportDropdownFactory = (
 
   const SaveExportDropdown: React.FC<DropdownComponentProps> & {
     defaultProps: {items: ToolbarItemProps[]};
-  } = props => (
+  } = (props) => (
     <PanelHeaderDropdown
       items={dropdownItemsSelector(props)}
       show={props.show}
@@ -232,31 +232,31 @@ export const SaveExportDropdownFactory = (
         label: 'toolbar.exportImage',
         icon: Picture,
         key: 'image',
-        onClick: props => props.onExportImage
+        onClick: (props) => props.onExportImage
       },
       {
         label: 'toolbar.exportData',
         icon: DataTable,
         key: 'data',
-        onClick: props => props.onExportData
+        onClick: (props) => props.onExportData
       },
       {
         label: 'toolbar.exportMap',
         icon: MapIcon,
         key: 'map',
-        onClick: props => props.onExportMap
+        onClick: (props) => props.onExportMap
       },
       {
         label: 'toolbar.saveMap',
         icon: Save2,
         key: 'save',
-        onClick: props => props.onSaveMap!
+        onClick: (props) => props.onSaveMap!
       },
       {
         label: 'toolbar.shareMapURL',
         icon: Share,
         key: 'share',
-        onClick: props => props.onShareMap
+        onClick: (props) => props.onShareMap
       }
     ]
   };
@@ -270,7 +270,7 @@ export const CloudStorageDropdownFactory = (
 ) => {
   const dropdownItemsSelector = getDropdownItemsSelector();
 
-  const CloudStorageDropdown: React.FC<DropdownComponentProps> = props => (
+  const CloudStorageDropdown: React.FC<DropdownComponentProps> = (props) => (
     <PanelHeaderDropdown
       items={dropdownItemsSelector(props)}
       show={props.show}
@@ -284,13 +284,13 @@ export const CloudStorageDropdownFactory = (
         label: 'Save',
         icon: Save2,
         key: 'save',
-        onClick: props => props.onSaveToStorage
+        onClick: (props) => props.onSaveToStorage
       },
       {
         label: 'Save As',
         icon: Save2,
         key: 'saveAs',
-        onClick: props => props.onSaveAsToStorage
+        onClick: (props) => props.onSaveAsToStorage
       }
     ]
   };
@@ -340,7 +340,7 @@ function PanelHeaderFactory(
 
       // don't render cloud storage icon if onSaveToStorage is not provided
       if (typeof this.props.onSaveToStorage !== 'function') {
-        items = items.filter(ai => ai.id !== 'storage');
+        items = items.filter((ai) => ai.id !== 'storage');
       }
 
       return (
@@ -354,7 +354,7 @@ function PanelHeaderFactory(
               />
             )}
             <StyledPanelTopActions>
-              {items.map(item => (
+              {items.map((item) => (
                 <div
                   className="side-panel__panel-header__right"
                   key={item.id}

@@ -14,7 +14,7 @@ import {
 const LoadDataModal = appInjector.get(LoadDataModalFactory);
 const LoadStorageMap = appInjector.get(LoadStorageMapFactory);
 
-test('Components -> LoadDataModal.mount', t => {
+test('Components -> LoadDataModal.mount', (t) => {
   // mount
   let wrapper;
   t.doesNotThrow(() => {
@@ -31,7 +31,7 @@ test('Components -> LoadDataModal.mount', t => {
   t.end();
 });
 
-test('Components -> LoadDataModal -> custom loading method', t => {
+test('Components -> LoadDataModal -> custom loading method', (t) => {
   // mount
   const MockComp = () => <div className="taro" />;
   const MockTabComp = () => <div className="taro's tab" />;

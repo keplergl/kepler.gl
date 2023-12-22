@@ -59,7 +59,7 @@ function MapManagerFactory(
       (mapStyles: MapStyles, mapStyleActions) => {
         const actionsPerCustomStyle = {};
         Object.values(mapStyles)
-          .filter(mapStyle => {
+          .filter((mapStyle) => {
             return Boolean(mapStyle.custom);
           })
           .forEach(({id}) => {

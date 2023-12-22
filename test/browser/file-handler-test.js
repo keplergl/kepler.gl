@@ -26,7 +26,7 @@ import {cmpField} from '../helpers/comparison-utils';
 import {installFilePolyfills} from '@loaders.gl/polyfills';
 installFilePolyfills();
 
-test('#file-handler -> readFileInBatches.csv -> processFileData', async t => {
+test('#file-handler -> readFileInBatches.csv -> processFileData', async (t) => {
   const csvFile = new File([dataWithNulls], 'text-data.csv', {type: 'text/csv'});
 
   let gen = null;
@@ -146,7 +146,7 @@ test('#file-handler -> readFileInBatches.csv -> processFileData', async t => {
   t.end();
 });
 
-test('#file-handler -> readFileInBatches.GeoJSON FeatureCollection -> processFileData', async t => {
+test('#file-handler -> readFileInBatches.GeoJSON FeatureCollection -> processFileData', async (t) => {
   const geojsonFile = new File([geojsonString], 'text-data-1.geojson', {type: ''});
 
   let gen = null;
@@ -284,7 +284,7 @@ test('#file-handler -> readFileInBatches.GeoJSON FeatureCollection -> processFil
   t.end();
 });
 
-test('#file-handler -> readFileInBatches.GeoJSON Single Feature -> processFileData', async t => {
+test('#file-handler -> readFileInBatches.GeoJSON Single Feature -> processFileData', async (t) => {
   const geojsonFile = new File([featureString], 'text-data-1.geojson', {type: ''});
   let gen = null;
   try {
@@ -392,7 +392,7 @@ test('#file-handler -> readFileInBatches.GeoJSON Single Feature -> processFileDa
   t.end();
 });
 
-test('#file-handler -> readFileInBatches.row -> processFileData', async t => {
+test('#file-handler -> readFileInBatches.row -> processFileData', async (t) => {
   const fileName = 'row-data.json';
   const rowFile = new File([rowDataString], fileName, {type: ''});
 
@@ -526,7 +526,7 @@ test('#file-handler -> readFileInBatches.row -> processFileData', async t => {
   t.end();
 });
 
-test('#file-handler -> readFileInBatches.keplerMap -> processFileData', async t => {
+test('#file-handler -> readFileInBatches.keplerMap -> processFileData', async (t) => {
   const fileName = 'keplergl.json';
   const keplerGlMap = new File([JSON.stringify(keplerglMap)], fileName, {type: ''});
 

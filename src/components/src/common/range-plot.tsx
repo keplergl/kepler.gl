@@ -12,7 +12,7 @@ import {LineChart, Filter} from '@kepler.gl/types';
 import {Datasets} from '@kepler.gl/table';
 
 const StyledRangePlot = styled.div`
-  margin-bottom: ${props => props.theme.sliderBarHeight}px;
+  margin-bottom: ${(props) => props.theme.sliderBarHeight}px;
   display: flex;
   position: 'relative';
 `;

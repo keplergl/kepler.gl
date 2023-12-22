@@ -385,7 +385,7 @@ class ColumnSchemaV1 extends Schema {
 class TextLabelSchemaV1 extends Schema {
   save(textLabel) {
     return {
-      [this.key]: textLabel.map(tl => ({
+      [this.key]: textLabel.map((tl) => ({
         ...tl,
         field: tl.field ? pick(tl.field, ['name', 'type']) : null
       }))
@@ -570,14 +570,12 @@ export class LayerSchemaV0 extends Schema {
     };
   }
 
-  load(
-    layers: SavedLayer[] | MinSavedLayer[] | undefined
-  ): {
+  load(layers: SavedLayer[] | MinSavedLayer[] | undefined): {
     layers: ParsedLayer[] | undefined;
   } {
     return {
       [this.key as 'layers']: layers
-        ? layers.map(layer => this.loadPropertiesOrApplySchema(layer, layers).layers)
+        ? layers.map((layer) => this.loadPropertiesOrApplySchema(layer, layers).layers)
         : []
     };
   }
@@ -589,17 +587,17 @@ export class FilterSchemaV0 extends Schema {
     return {
       filters: filters
         .filter(isFilterValidToSave)
-        .map(filter => this.savePropertiesOrApplySchema(filter).filters)
+        .map((filter) => this.savePropertiesOrApplySchema(filter).filters)
     };
   }
-  load(
-    filters: SavedFilter[] | MinSavedFilter[] | undefined
-  ): {filters: ParsedFilter[] | undefined} {
+  load(filters: SavedFilter[] | MinSavedFilter[] | undefined): {
+    filters: ParsedFilter[] | undefined;
+  } {
     return {
       filters: filters
-        ?.map(filter => this.loadPropertiesOrApplySchema(filter).filters)
+        ?.map((filter) => this.loadPropertiesOrApplySchema(filter).filters)
         // backward compatible convert enlarged to view
-        .map(filter => {
+        .map((filter) => {
           const {enlarged, view, ...filterProps} = filter;
 
           const newFilter = {
@@ -660,9 +658,7 @@ const interactionPropsV1 = [...interactionPropsV0, 'geocoder', 'coordinate'];
 export class InteractionSchemaV1 extends Schema {
   key = 'interactionConfig';
 
-  save(
-    interactionConfig: InteractionConfig
-  ):
+  save(interactionConfig: InteractionConfig):
     | {
         interactionConfig: SavedInteractionConfig;
       }
@@ -683,21 +679,19 @@ export class InteractionSchemaV1 extends Schema {
         }
       : {};
   }
-  load(
-    interactionConfig: SavedInteractionConfig
-  ): {
+  load(interactionConfig: SavedInteractionConfig): {
     interactionConfig: Partial<SavedInteractionConfig>;
   } {
     const modifiedConfig = interactionConfig;
-    Object.keys(interactionConfig).forEach(configType => {
+    Object.keys(interactionConfig).forEach((configType) => {
       if (configType === 'tooltip') {
         const fieldsToShow = modifiedConfig[configType].fieldsToShow;
         if (!notNullorUndefined(fieldsToShow)) {
           return {[this.key]: modifiedConfig};
         }
-        Object.keys(fieldsToShow).forEach(key => {
+        Object.keys(fieldsToShow).forEach((key) => {
           // @ts-expect-error name: fieldData should be string
-          fieldsToShow[key] = fieldsToShow[key].map(fieldData => {
+          fieldsToShow[key] = fieldsToShow[key].map((fieldData) => {
             if (!fieldData.name) {
               return {
                 name: fieldData,
@@ -760,7 +754,7 @@ export class SplitMapsSchema extends Schema {
     }
 
     return {
-      splitMaps: splitMaps.map(settings => ({
+      splitMaps: splitMaps.map((settings) => ({
         ...settings,
         layers: Object.entries(settings.layers || {}).reduce(this.convertLayerSettings, {})
       }))
@@ -797,7 +791,7 @@ export class EffectsSchema extends Schema {
 
   load(effects) {
     return {
-      [this.key]: effects.map(effect => {
+      [this.key]: effects.map((effect) => {
         // handle older configs
         const outEffect = effect.config
           ? {
@@ -898,9 +892,7 @@ export class VisStateSchemaV1 extends Schema {
     return this.savePropertiesOrApplySchema(node, parents, accumulator);
   }
 
-  load(
-    node?: SavedVisState
-  ): {
+  load(node?: SavedVisState): {
     visState: ParsedVisState | undefined;
   } {
     // @ts-expect-error
@@ -926,8 +918,8 @@ export const visStateSchema: {
 } = {
   // @ts-expect-error
   [VERSIONS.v0]: {
-    save: toSave => visStateSchemaV0.save(toSave),
-    load: toLoad => visStateSchemaV1.load(visStateSchemaV0.load(toLoad)?.visState)
+    save: (toSave) => visStateSchemaV0.save(toSave),
+    load: (toLoad) => visStateSchemaV1.load(visStateSchemaV0.load(toLoad)?.visState)
   },
   [VERSIONS.v1]: visStateSchemaV1
 };

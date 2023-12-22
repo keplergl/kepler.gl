@@ -6,7 +6,7 @@ import cloneDeep from 'lodash.clonedeep';
 import SchemaManager from '@kepler.gl/schemas';
 import {InitialState} from 'test/helpers/mock-state';
 
-test('#mapStateSchema -> v1 -> save load mapState', t => {
+test('#mapStateSchema -> v1 -> save load mapState', (t) => {
   const initialState = cloneDeep(InitialState);
   const savedState = SchemaManager.getConfigToSave(initialState);
 

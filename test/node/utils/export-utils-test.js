@@ -14,7 +14,7 @@ import {
 } from '@kepler.gl/utils';
 import {EXPORT_IMG_RATIOS, RESOLUTIONS} from '@kepler.gl/constants';
 
-test('exportUtils -> ExportJson', t => {
+test('exportUtils -> ExportJson', (t) => {
   const state = keplerGlReducer(undefined, registerEntry({id: 'test'})).test;
   const body = exportToJsonString(getMapJSON(state));
   getScaleFromImageSize;
@@ -27,7 +27,7 @@ test('exportUtils -> ExportJson', t => {
   t.end();
 });
 
-test('exportUtils -> getScaleFromImageSize', t => {
+test('exportUtils -> getScaleFromImageSize', (t) => {
   t.equal(
     getScaleFromImageSize(800, 600, 1400, 990),
     0.5714285714285714,
@@ -47,7 +47,7 @@ test('exportUtils -> getScaleFromImageSize', t => {
   t.end();
 });
 
-test('exportUtils -> calculateExportImageSize', t => {
+test('exportUtils -> calculateExportImageSize', (t) => {
   t.deepEqual(
     calculateExportImageSize({
       mapW: 1400,
@@ -117,7 +117,7 @@ test('exportUtils -> calculateExportImageSize', t => {
   t.end();
 });
 
-test('exportUtils -> isMSEdge', t => {
+test('exportUtils -> isMSEdge', (t) => {
   t.equal(isMSEdge({}), false, 'Should return false because no navigator is defined');
   t.equal(
     isMSEdge({navigator: {}}),
@@ -132,7 +132,7 @@ test('exportUtils -> isMSEdge', t => {
   t.end();
 });
 
-test('exportUtils -> exportToJsonString', t => {
+test('exportUtils -> exportToJsonString', (t) => {
   t.equal(exportToJsonString({test: 1}), '{"test":1}', 'Should convert object to string');
   t.end();
 });

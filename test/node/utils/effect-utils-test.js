@@ -16,7 +16,7 @@ import {
 
 import {InitialState} from 'test/helpers/mock-state';
 
-test('effectUtils -> computeDeckEffects', t => {
+test('effectUtils -> computeDeckEffects', (t) => {
   const initialState = InitialState.visState;
   let nextState = visStateReducer(
     initialState,
@@ -57,7 +57,7 @@ test('effectUtils -> computeDeckEffects', t => {
   t.end();
 });
 
-test('effectUtils -> createEffect', t => {
+test('effectUtils -> createEffect', (t) => {
   const defaultEffect = createEffect({});
   const postProcessingEffect = createEffect({
     type: POSTPROCESSING_EFFECTS.hueSaturation.type
@@ -79,7 +79,7 @@ test('effectUtils -> createEffect', t => {
   t.end();
 });
 
-test('effectUtils -> validateEffectParameters', t => {
+test('effectUtils -> validateEffectParameters', (t) => {
   const testCases = [
     {
       input: {

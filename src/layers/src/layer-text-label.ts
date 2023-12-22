@@ -8,7 +8,7 @@ import uniq from 'lodash.uniq';
 export const defaultPadding = 20;
 
 export function getTextOffsetByRadius(radiusScale, getRadius, mapState) {
-  return textLabel => {
+  return (textLabel) => {
     const distanceScale = getDistanceScales(mapState);
     const xMult = textLabel.anchor === 'middle' ? 0 : textLabel.anchor === 'start' ? 1 : -1;
     const yMult = textLabel.alignment === 'center' ? 0 : textLabel.alignment === 'bottom' ? 1 : -1;
@@ -17,14 +17,14 @@ export function getTextOffsetByRadius(radiusScale, getRadius, mapState) {
       textLabel.alignment === 'center'
         ? 0
         : textLabel.alignment === 'bottom'
-        ? textLabel.size
-        : textLabel.size;
+          ? textLabel.size
+          : textLabel.size;
 
     const pixelRadius = radiusScale * distanceScale.pixelsPerMeter[0];
     const padding = defaultPadding;
 
     return typeof getRadius === 'function'
-      ? d => [
+      ? (d) => [
           xMult * (getRadius(d) * pixelRadius + padding),
           yMult * (getRadius(d) * pixelRadius + padding + sizeOffset)
         ]
@@ -35,7 +35,7 @@ export function getTextOffsetByRadius(radiusScale, getRadius, mapState) {
   };
 }
 
-export const textLabelAccessor = textLabel => dc => d => {
+export const textLabelAccessor = (textLabel) => (dc) => (d) => {
   const val = textLabel.field.valueAccessor(d);
   return notNullorUndefined(val) ? String(val) : '';
 };

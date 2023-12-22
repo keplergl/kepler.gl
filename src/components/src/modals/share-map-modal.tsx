@@ -23,7 +23,7 @@ import {dataTestIds} from '@kepler.gl/constants';
 
 export const StyledInputLabel = styled.label`
   font-size: 12px;
-  color: ${props => props.theme.textColorLT};
+  color: ${(props) => props.theme.textColorLT};
   letter-spacing: 0.2px;
 `;
 

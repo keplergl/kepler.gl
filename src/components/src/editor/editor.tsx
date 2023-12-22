@@ -70,7 +70,7 @@ export default function EditorFactory(
   }) => {
     return (
       <RootContext.Consumer>
-        {context => (
+        {(context) => (
           <>
             {createPortal(
               <StyledWrapper className={classnames('editor', className)} style={style}>
@@ -118,13 +118,14 @@ export default function EditorFactory(
     currentFilterSelector = createSelector(
       this.filterSelector,
       this.selectedFeatureIdSelector,
-      (filters, selectedFeatureId) => filters.find(f => f.value && f.value.id === selectedFeatureId)
+      (filters, selectedFeatureId) =>
+        filters.find((f) => f.value && f.value.id === selectedFeatureId)
     );
 
-    availableLayersSelector = createSelector(this.layerSelector, layers =>
+    availableLayersSelector = createSelector(this.layerSelector, (layers) =>
       layers
         .filter(editorLayerFilter)
-        .filter(layer => layer.config?.isVisible && layer.id !== GEOCODER_LAYER_ID)
+        .filter((layer) => layer.config?.isVisible && layer.id !== GEOCODER_LAYER_ID)
     );
 
     allFeaturesSelector = createSelector(
@@ -132,8 +133,8 @@ export default function EditorFactory(
       this.editorFeatureSelector,
       (filters, editorFeatures) =>
         filters
-          .filter(f => f.type === FILTER_TYPES.polygon)
-          .map(f => f.value)
+          .filter((f) => f.type === FILTER_TYPES.polygon)
+          .map((f) => f.value)
           .concat(editorFeatures)
     );
 
@@ -207,7 +208,7 @@ export default function EditorFactory(
     }
   }
 
-  const Editor = (React.memo(EditorUnmemoized) as unknown) as typeof EditorUnmemoized;
+  const Editor = React.memo(EditorUnmemoized) as unknown as typeof EditorUnmemoized;
   Editor.displayName = 'Editor';
   return Editor;
 }

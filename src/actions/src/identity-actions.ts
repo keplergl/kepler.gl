@@ -31,9 +31,7 @@ export type RegisterEntryUpdaterAction = {
  * @param payload.initialUiState - initial ui state
  * @public
  */
-export const registerEntry: (
-  entry: RegisterEntryUpdaterAction['payload']
-) => {
+export const registerEntry: (entry: RegisterEntryUpdaterAction['payload']) => {
   type: typeof ActionTypes.REGISTER_ENTRY;
   payload: RegisterEntryUpdaterAction['payload'];
 } = createAction(ActionTypes.REGISTER_ENTRY, (payload: RegisterEntryUpdaterAction['payload']) => ({
@@ -49,9 +47,7 @@ export const registerEntry: (
  * @param {string} id - the id of the instance to be deleted
  * @public
  */
-export const deleteEntry: (
-  id: string
-) => {
+export const deleteEntry: (id: string) => {
   type: typeof ActionTypes.DELETE_ENTRY;
   payload: string;
 } = createAction(ActionTypes.DELETE_ENTRY, (id: string) => ({payload: id}));

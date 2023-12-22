@@ -17,7 +17,7 @@ const SpeedSliderContainer = styled.div`
   right: calc(0% - 32px);
   width: 180px;
   padding: 2px 8px 2px 12px;
-  background-color: ${props => props.theme.bottomWidgetBgd};
+  background-color: ${(props) => props.theme.bottomWidgetBgd};
   box-shadow: -2px -2px 0 0 rgba(0, 0, 0, 0.1);
 
   .kg-range-slider__input {
@@ -38,11 +38,11 @@ export default function AnimationSpeedSliderFactory(
   RangeSlider: ReturnType<typeof RangeSliderFactory>
 ): ComponentType<AnimationSpeedSliderProps> {
   class AnimationSpeedSlider extends Component<AnimationSpeedSliderProps> {
-    handleClickOutside = e => {
+    handleClickOutside = (e) => {
       this.props.onHide();
     };
 
-    _onChange = v => this.props.updateAnimationSpeed(v[1]);
+    _onChange = (v) => this.props.updateAnimationSpeed(v[1]);
 
     render() {
       return (

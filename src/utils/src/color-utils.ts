@@ -43,7 +43,7 @@ function PadNum(c) {
  * @returns hex string
  */
 export function rgbToHex([r, g, b]: RGBColor): HexColor {
-  return `#${[r, g, b].map(n => PadNum(n)).join('')}`.toUpperCase();
+  return `#${[r, g, b].map((n) => PadNum(n)).join('')}`.toUpperCase();
 }
 
 /**
@@ -85,8 +85,9 @@ export function reverseColorRange(reversed: boolean, colorRange: ColorRange): Co
 export function createLinearGradient(direction: string, colors: RGBColor[]) {
   const step = parseFloat((100.0 / colors.length).toFixed(2));
   const bands = colors.map((rgb, index) => {
-    return `rgba(${rgb.join(',')}, 1) ${step * index}%, rgba(${rgb.join(',')}, 1) ${step *
-      (index + 1)}%`;
+    return `rgba(${rgb.join(',')}, 1) ${step * index}%, rgba(${rgb.join(',')}, 1) ${
+      step * (index + 1)
+    }%`;
   });
 
   return `linear-gradient(to ${direction}, ${bands.join(',')})`;
@@ -119,7 +120,7 @@ export function isRgbColor(color: unknown): boolean {
     color &&
       Array.isArray(color) &&
       color.length === 3 &&
-      color.every(n => Number.isFinite(n) && n <= 255 && n >= 0)
+      color.every((n) => Number.isFinite(n) && n <= 255 && n >= 0)
   );
 }
 
@@ -127,5 +128,5 @@ export function isRgbColor(color: unknown): boolean {
  * Take color values in 0-255 range and map to [0, 1]
  */
 export function normalizeColor(color: number[]): number[] {
-  return color.map(component => component / 255.0);
+  return color.map((component) => component / 255.0);
 }

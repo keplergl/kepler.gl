@@ -22,21 +22,21 @@ interface StyledDropdownSelectProps {
   className?: string;
 }
 
-export const StyledDropdownSelect = styled.div.attrs(props => ({
+export const StyledDropdownSelect = styled.div.attrs((props) => ({
   className: classnames('item-selector__dropdown', props.className)
 }))<StyledDropdownSelectProps>`
-  ${props =>
+  ${(props) =>
     props.inputTheme === 'secondary'
       ? props.theme.secondaryInput
       : props.inputTheme === 'light'
-      ? props.theme.inputLT
-      : props.theme.input};
+        ? props.theme.inputLT
+        : props.theme.input};
 
-  height: ${props =>
+  height: ${(props) =>
     props.size === 'small' ? props.theme.inputBoxHeightSmall : props.theme.inputBoxHeight};
 
   .list__item__anchor {
-    ${props => props.theme.dropdownListAnchor};
+    ${(props) => props.theme.dropdownListAnchor};
   }
 `;
 
@@ -47,25 +47,25 @@ interface DropdownSelectValueProps {
 }
 
 const DropdownSelectValue = styled.span<DropdownSelectValueProps>`
-  color: ${props =>
+  color: ${(props) =>
     props.hasPlaceholder && props.inputTheme === 'light'
       ? props.theme.selectColorPlaceHolderLT
       : props.hasPlaceholder
-      ? props.theme.selectColorPlaceHolder
-      : props.inputTheme === 'light'
-      ? props.theme.selectColorLT
-      : props.theme.selectColor};
+        ? props.theme.selectColorPlaceHolder
+        : props.inputTheme === 'light'
+          ? props.theme.selectColorLT
+          : props.theme.selectColor};
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 
   .list__item {
-    ${props =>
+    ${(props) =>
       props.inputTheme === 'light' ? props.theme.dropdownListItemLT : props.theme.dropdownListItem};
   }
 
   .list__item__anchor {
-    ${props =>
+    ${(props) =>
       props.inputTheme === 'light'
         ? props.theme.dropdownListAnchorLT
         : props.theme.dropdownListAnchor};
@@ -75,10 +75,10 @@ const DropdownSelectValue = styled.span<DropdownSelectValueProps>`
 const DropdownSelectActionRight = styled.div`
   margin-right: 6px;
   display: flex;
-  color: ${props => props.theme.subtextColor};
+  color: ${(props) => props.theme.subtextColor};
 
   :hover {
-    color: ${props => props.theme.textColor};
+    color: ${(props) => props.theme.textColor};
   }
 `;
 
@@ -91,8 +91,8 @@ const DropdownWrapper = styled.div<DropdownWrapperProps>`
   border: 0;
   width: 100%;
   left: 0;
-  z-index: ${props => props.theme.dropdownWrapperZ};
-  width: ${props => props.width}px;
+  z-index: ${(props) => props.theme.dropdownWrapperZ};
+  width: ${(props) => props.width}px;
 `;
 
 export type ItemSelectorProps = {
@@ -184,7 +184,7 @@ class ItemSelectorUnmemoized extends Component<ItemSelectorProps> {
     this._hideTypeahead();
   };
 
-  _handleResize = dimensions => {
+  _handleResize = (dimensions) => {
     this.setState({dimensions});
   };
 
@@ -206,7 +206,7 @@ class ItemSelectorUnmemoized extends Component<ItemSelectorProps> {
     e.preventDefault();
     e.stopPropagation();
     const multiSelectedItems = toArray(this.props.selectedItems);
-    const index = multiSelectedItems.findIndex(t => t === item);
+    const index = multiSelectedItems.findIndex((t) => t === item);
 
     if (index < 0) {
       return;
@@ -225,7 +225,7 @@ class ItemSelectorUnmemoized extends Component<ItemSelectorProps> {
     }
   };
 
-  _selectItem = item => {
+  _selectItem = (item) => {
     const getValue = Accessor.generateOptionToStringFor(
       this.props.getOptionValue || this.props.displayOption
     );
@@ -245,12 +245,12 @@ class ItemSelectorUnmemoized extends Component<ItemSelectorProps> {
     }
   };
 
-  _onErase: MouseEventHandler = e => {
+  _onErase: MouseEventHandler = (e) => {
     e.stopPropagation();
     this.props.onChange(null);
   };
 
-  _showTypeahead: MouseEventHandler = e => {
+  _showTypeahead: MouseEventHandler = (e) => {
     e.stopPropagation();
     if (!this.props.disabled) {
       if (this.props.onOpen) {
@@ -266,9 +266,8 @@ class ItemSelectorUnmemoized extends Component<ItemSelectorProps> {
     const {placement = 'bottom'} = this.props;
     const {dimensions} = this.state;
 
-    const DropDownWrapperComponent = this.props.DropDownWrapperComponent as React.ComponentType<
-      any
-    >;
+    const DropDownWrapperComponent = this.props
+      .DropDownWrapperComponent as React.ComponentType<any>;
 
     return (
       <Portaled left={0} top={0} isOpened={this.state.showTypeahead} onClose={this._hideTypeahead}>

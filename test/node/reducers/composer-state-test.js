@@ -60,7 +60,7 @@ const mockRawData = {
   ]
 };
 
-test('#composerStateReducer - addDataToMapUpdater: mapStyle', t => {
+test('#composerStateReducer - addDataToMapUpdater: mapStyle', (t) => {
   // init kepler.gl root and instance
   const state = keplerGlReducer(undefined, registerEntry({id: 'test'})).test;
 
@@ -86,7 +86,7 @@ test('#composerStateReducer - addDataToMapUpdater: mapStyle', t => {
   t.end();
 });
 
-test('#composerStateReducer - addDataToMapUpdater: mapState should be centered', t => {
+test('#composerStateReducer - addDataToMapUpdater: mapState should be centered', (t) => {
   // init kepler.gl root and instance
   const state = keplerGlReducer({}, registerEntry({id: 'test'})).test;
   const mapStateProperties = {
@@ -116,7 +116,7 @@ test('#composerStateReducer - addDataToMapUpdater: mapState should be centered',
   t.end();
 });
 
-test('#composerStateReducer - addDataToMapUpdater: uiState', t => {
+test('#composerStateReducer - addDataToMapUpdater: uiState', (t) => {
   // init kepler.gl root and instance
   const state = keplerGlReducer(undefined, registerEntry({id: 'test'})).test;
 
@@ -147,7 +147,7 @@ test('#composerStateReducer - addDataToMapUpdater: uiState', t => {
   t.end();
 });
 
-test('#composerStateReducer - addDataToMapUpdater: keepExistingConfig', t => {
+test('#composerStateReducer - addDataToMapUpdater: keepExistingConfig', (t) => {
   const data = processCsvData(testCsvData);
 
   const state = keplerGlReducer({}, registerEntry({id: 'test'})).test;
@@ -299,7 +299,7 @@ test('#composerStateReducer - addDataToMapUpdater: keepExistingConfig', t => {
   t.end();
 });
 
-test('#composerStateReducer - addDataToMapUpdater: readOnly', t => {
+test('#composerStateReducer - addDataToMapUpdater: readOnly', (t) => {
   const datasets = {
     data: processCsvData(testCsvData),
     info: {
@@ -338,7 +338,7 @@ test('#composerStateReducer - addDataToMapUpdater: readOnly', t => {
   t.end();
 });
 
-test('#composerStateReducer - addDataToMapUpdater: autoCreateLayers', t => {
+test('#composerStateReducer - addDataToMapUpdater: autoCreateLayers', (t) => {
   const datasets = {
     data: processCsvData(testCsvData),
     info: {
@@ -361,7 +361,7 @@ test('#composerStateReducer - addDataToMapUpdater: autoCreateLayers', t => {
   t.end();
 });
 
-test('#composerStateReducer - replaceDataInMapUpdater', t => {
+test('#composerStateReducer - replaceDataInMapUpdater', (t) => {
   const dataIdToReplace = 'dataset_to_replace';
   const datasets = {
     data: processCsvData(testCsvData),
@@ -394,7 +394,7 @@ test('#composerStateReducer - replaceDataInMapUpdater', t => {
   });
   const nextSavedConfig = nextState.visState.schema.getConfigToSave(nextState).config;
 
-  const expectedLayers = oldSavedConfig.visState.layers.map(l => ({
+  const expectedLayers = oldSavedConfig.visState.layers.map((l) => ({
     ...l,
     config: {
       ...l.config,
@@ -431,12 +431,12 @@ test('#composerStateReducer - replaceDataInMapUpdater', t => {
     'Should set corect filter domain'
   );
   // compare replaced state with old state
-  Object.keys(oldSavedConfig).forEach(key => {
+  Object.keys(oldSavedConfig).forEach((key) => {
     if (key === 'mapState') {
       // should center map
       t.deepEqual(nextState.mapState, expectedMapState, 'should center map to new layer;');
     } else if (key === 'visState') {
-      Object.keys(oldSavedConfig.visState).forEach(prop => {
+      Object.keys(oldSavedConfig.visState).forEach((prop) => {
         if (prop === 'layers') {
           t.deepEqual(
             nextSavedConfig.visState.layers,
@@ -476,7 +476,7 @@ test('#composerStateReducer - replaceDataInMapUpdater', t => {
   t.end();
 });
 
-test('#composerStateReducer - replaceDataInMapUpdater: same dataId', t => {
+test('#composerStateReducer - replaceDataInMapUpdater: same dataId', (t) => {
   const datasets = {
     data: processCsvData(testCsvData),
     info: {
@@ -512,7 +512,7 @@ test('#composerStateReducer - replaceDataInMapUpdater: same dataId', t => {
   t.ok(nextState.visState.datasets[sampleConfig.dataId], ' dataset should be replaced');
   const nextSavedConfig = nextState.visState.schema.getConfigToSave(nextState).config;
 
-  const expectedLayers = oldSavedConfig.visState.layers.map(l => ({
+  const expectedLayers = oldSavedConfig.visState.layers.map((l) => ({
     ...l,
     config: {
       ...l.config,

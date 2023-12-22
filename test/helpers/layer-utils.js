@@ -77,7 +77,7 @@ export function testFormatLayerData(t, layer, datasets) {
 }
 
 export function testCreateCases(t, LayerClass, testCases) {
-  testCases.forEach(tc => {
+  testCases.forEach((tc) => {
     const layer = testCreateLayer(t, LayerClass, tc.props);
     if (layer) {
       t.ok(typeof layer.type === 'string', 'layer type should be string');
@@ -103,7 +103,7 @@ export function testCreateCases(t, LayerClass, testCases) {
 }
 
 export function testFormatLayerDataCases(t, LayerClass, testCases) {
-  testCases.forEach(tc => {
+  testCases.forEach((tc) => {
     logStep(`---> Test Format Layer Data ${tc.name}`);
 
     // use provided LayerClass if present, otherwise default to KeplerLayerClasses
@@ -117,7 +117,7 @@ export function testFormatLayerDataCases(t, LayerClass, testCases) {
       const applyUpdates = Array.isArray(tc.updates) ? tc.updates : [tc.updates];
 
       // apply 1 or multiple updates
-      applyUpdates.forEach(update => {
+      applyUpdates.forEach((update) => {
         const updated = testLayerUpdate(t, updatedLayer, update.method, update.args);
         updatedLayer = updated.layer;
       });
@@ -134,7 +134,7 @@ export function testFormatLayerDataCases(t, LayerClass, testCases) {
 }
 
 export function testRenderLayerCases(t, LayerClass, testCases) {
-  testCases.forEach(tc => {
+  testCases.forEach((tc) => {
     logStep(`---> Test Render Layer ${tc.name}`);
 
     // use provided LayerClass if present, otherwise default to KeplerLayerClasses
@@ -217,7 +217,7 @@ export function testLayerUpdate(t, layer, updateMethod, updateArgs) {
 }
 
 function testAttributeUpdate(t, attributeValues, layer, shouldUpdate) {
-  Object.keys(attributeValues).forEach(key => {
+  Object.keys(attributeValues).forEach((key) => {
     const newValue = layer.state.attributeManager.attributes[key].value;
     if (shouldUpdate[key]) {
       t.notDeepEqual(attributeValues[key], newValue, `attribute${key} should update`);
@@ -340,7 +340,7 @@ export function testUpdateLayer(t, {layerConfig, shouldUpdate}) {
 export function getNextColorMakerValue(num = 1) {
   const results = [];
   const colorNow = colorMaker.next().value;
-  const index = layerColors.findIndex(c => c === colorNow);
+  const index = layerColors.findIndex((c) => c === colorNow);
 
   for (let n = 0; n < num; n++) {
     const next = index + n + 1;

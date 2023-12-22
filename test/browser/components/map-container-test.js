@@ -17,7 +17,7 @@ import {mockKeplerProps} from '../../helpers/mock-state';
 const MapContainer = appInjector.get(MapContainerFactory);
 const initialProps = mapFieldsSelector(mockKeplerProps);
 
-test('MapContainerFactory - display all options', t => {
+test('MapContainerFactory - display all options', (t) => {
   const onMapStyleLoaded = sinon.spy();
   const onLayerClick = sinon.spy();
 

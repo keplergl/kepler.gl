@@ -21,18 +21,19 @@ const StyledTileWrapper = styled.div.attrs({
   justify-content: flex-start;
   border-radius: 2px;
   border: 1px solid
-    ${props => (props.selected ? props.theme.primaryBtnBgd : props.theme.selectBorderColorLT)};
-  color: ${props => (props.selected ? props.theme.primaryBtnBgd : props.theme.selectBorderColorLT)};
+    ${(props) => (props.selected ? props.theme.primaryBtnBgd : props.theme.selectBorderColorLT)};
+  color: ${(props) =>
+    props.selected ? props.theme.primaryBtnBgd : props.theme.selectBorderColorLT};
   cursor: pointer;
   font-weight: 500;
   width: 120px;
   height: 168px;
   background-color: #ffffff;
-  transition: ${props => props.theme.transition};
+  transition: ${(props) => props.theme.transition};
   position: relative;
   :hover {
-    border: 1px solid ${props => props.theme.primaryBtnBgd};
-    color: ${props => props.theme.primaryBtnBgd};
+    border: 1px solid ${(props) => props.theme.primaryBtnBgd};
+    color: ${(props) => props.theme.primaryBtnBgd};
   }
 
   .button {
@@ -55,7 +56,7 @@ const StyledUserName = styled.div`
   font-size: 11px;
   margin-top: 8px;
   text-align: center;
-  color: ${props => props.theme.primaryBtnActBgd};
+  color: ${(props) => props.theme.primaryBtnActBgd};
   overflow: hidden;
   width: 100px;
   text-overflow: ellipsis;
@@ -98,8 +99,8 @@ const NewTag = styled.div`
 `;
 
 export const StyledWarning = styled.span`
-  color: ${props => props.theme.errorColor};
-  font-weight: ${props => props.theme.selectFontWeightBold};
+  color: ${(props) => props.theme.errorColor};
+  font-weight: ${(props) => props.theme.selectFontWeightBold};
 `;
 
 interface CloudTileProps {

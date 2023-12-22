@@ -19,7 +19,7 @@ import {
 } from '@kepler.gl/reducers';
 import MockProvider from 'test/helpers/mock-provider';
 
-test('#providerStateReducer', t => {
+test('#providerStateReducer', (t) => {
   t.deepEqual(
     reducer(undefined, {}),
     {...INITIAL_PROVIDER_STATE, initialState: {}},
@@ -28,7 +28,7 @@ test('#providerStateReducer', t => {
   t.end();
 });
 
-test('#providerStateReducerFactory', t => {
+test('#providerStateReducerFactory', (t) => {
   const providerStateReducer = providerStateReducerFactory({
     currentProvider: 'taro'
   });
@@ -45,7 +45,7 @@ test('#providerStateReducerFactory', t => {
   t.end();
 });
 
-test('#providerStateReducer -> EXPORT_FILE_TO_CLOUD', t => {
+test('#providerStateReducer -> EXPORT_FILE_TO_CLOUD', (t) => {
   const errSpy = sinon.spy(Console, 'error');
   drainTasksForTesting();
   // null
@@ -155,7 +155,7 @@ test('#providerStateReducer -> EXPORT_FILE_TO_CLOUD', t => {
 });
 
 // eslint-disable-next-line max-statements
-test('#providerStateReducer -> EXPORT_FILE_TO_CLOUD -> onSuccess : onError', t => {
+test('#providerStateReducer -> EXPORT_FILE_TO_CLOUD -> onSuccess : onError', (t) => {
   const mockResponse = {url: 'taro_and_blue'};
   const mockProvider = new MockProvider();
   const mockError = new Error('ooops');
@@ -182,7 +182,7 @@ test('#providerStateReducer -> EXPORT_FILE_TO_CLOUD -> onSuccess : onError', t =
     return reducer(state, action);
   };
 
-  const onSuccess = args => {
+  const onSuccess = (args) => {
     t.deepEqual(
       args,
       {
@@ -194,7 +194,7 @@ test('#providerStateReducer -> EXPORT_FILE_TO_CLOUD -> onSuccess : onError', t =
     );
     return {};
   };
-  const onError = args => {
+  const onError = (args) => {
     t.deepEqual(args, mockError, 'should call onError with arguments');
     return {};
   };
@@ -299,7 +299,7 @@ test('#providerStateReducer -> EXPORT_FILE_TO_CLOUD -> onSuccess : onError', t =
   t.end();
 });
 
-test('#providerStateReducer -> RESET_PROVIDER_STATUS', t => {
+test('#providerStateReducer -> RESET_PROVIDER_STATUS', (t) => {
   const mockProvider = new MockProvider();
   const nextState = reducer(
     undefined,

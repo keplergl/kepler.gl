@@ -61,7 +61,7 @@ const StyledSaveMapModal = styled.div.attrs({
   }
 `;
 
-const nop = _ => {};
+const nop = (_) => {};
 const TEXT_AREA_LIGHT_STYLE = {resize: 'none'};
 
 type CharacterLimits = {
@@ -106,7 +106,7 @@ export const MapInfoPanel: React.FC<MapInfoPanelProps> = ({
             id="map-title"
             type="text"
             value={title}
-            onChange={e => onChangeInput('title', e)}
+            onChange={(e) => onChangeInput('title', e)}
             placeholder="Type map title"
           />
         </div>
@@ -122,7 +122,7 @@ export const MapInfoPanel: React.FC<MapInfoPanelProps> = ({
             id="map-description"
             style={TEXT_AREA_LIGHT_STYLE as React.CSSProperties}
             value={description}
-            onChange={e => onChangeInput('description', e)}
+            onChange={(e) => onChangeInput('description', e)}
             placeholder="Type map description"
           />
         </div>

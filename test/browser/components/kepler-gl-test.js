@@ -49,7 +49,7 @@ const initialState = {
 
 const mockStore = configureStore();
 
-test('Components -> KeplerGl -> Mount', t => {
+test('Components -> KeplerGl -> Mount', (t) => {
   drainTasksForTesting();
   // mount with empty store
   const store = mockStore(initialState);
@@ -61,7 +61,7 @@ test('Components -> KeplerGl -> Mount', t => {
         <KeplerGl
           id="map"
           mapboxApiAccessToken="smoothie-the-cat"
-          selector={state => state.keplerGl.map}
+          selector={(state) => state.keplerGl.map}
           dispatch={store.dispatch}
         />
       </Provider>
@@ -80,7 +80,7 @@ test('Components -> KeplerGl -> Mount', t => {
   t.end();
 });
 
-test('Components -> KeplerGl -> Mount -> readOnly', t => {
+test('Components -> KeplerGl -> Mount -> readOnly', (t) => {
   drainTasksForTesting();
   // mount with readOnly true
   const initialStateReadonly = {
@@ -104,7 +104,7 @@ test('Components -> KeplerGl -> Mount -> readOnly', t => {
         <KeplerGl
           id="map"
           mapboxApiAccessToken="smoothie-the-cat"
-          selector={state => state.keplerGl.map}
+          selector={(state) => state.keplerGl.map}
           dispatch={store.dispatch}
         />
       </Provider>
@@ -123,7 +123,7 @@ test('Components -> KeplerGl -> Mount -> readOnly', t => {
   t.end();
 });
 
-test('Components -> KeplerGl -> Mount -> Plot', t => {
+test('Components -> KeplerGl -> Mount -> Plot', (t) => {
   drainTasksForTesting();
   // mount with readOnly true
   const initialStatePlots = {
@@ -150,7 +150,7 @@ test('Components -> KeplerGl -> Mount -> Plot', t => {
         <KeplerGl
           id="map"
           mapboxApiAccessToken="smoothie-the-cat"
-          selector={state => state.keplerGl.map}
+          selector={(state) => state.keplerGl.map}
           dispatch={store.dispatch}
         />
       </Provider>
@@ -169,7 +169,7 @@ test('Components -> KeplerGl -> Mount -> Plot', t => {
   t.end();
 });
 
-test('Components -> KeplerGl -> Mount -> Split Maps', t => {
+test('Components -> KeplerGl -> Mount -> Split Maps', (t) => {
   drainTasksForTesting();
   // mount with readOnly true
   const initialStateSplitMap = {
@@ -193,7 +193,7 @@ test('Components -> KeplerGl -> Mount -> Split Maps', t => {
         <KeplerGl
           id="map"
           mapboxApiAccessToken="smoothie-the-cat"
-          selector={state => state.keplerGl.map}
+          selector={(state) => state.keplerGl.map}
           dispatch={store.dispatch}
         />
       </Provider>
@@ -212,7 +212,7 @@ test('Components -> KeplerGl -> Mount -> Split Maps', t => {
   t.end();
 });
 
-test('Components -> KeplerGl -> Mount -> Load default map style task', t => {
+test('Components -> KeplerGl -> Mount -> Load default map style task', (t) => {
   // mount with empty store
   drainTasksForTesting();
   const store = mockStore(initialState);
@@ -223,7 +223,7 @@ test('Components -> KeplerGl -> Mount -> Load default map style task', t => {
         <KeplerGl
           id="map"
           mapboxApiAccessToken="smoothie-the-cat"
-          selector={state => state.keplerGl.map}
+          selector={(state) => state.keplerGl.map}
           dispatch={store.dispatch}
         />
       </Provider>
@@ -290,7 +290,7 @@ test('Components -> KeplerGl -> Mount -> Load default map style task', t => {
   t.end();
 });
 
-test('Components -> KeplerGl -> Mount -> Load custom map style task', t => {
+test('Components -> KeplerGl -> Mount -> Load custom map style task', (t) => {
   drainTasksForTesting();
   // mount with empty store
   // set initialState to custom styleType
@@ -340,7 +340,7 @@ test('Components -> KeplerGl -> Mount -> Load custom map style task', t => {
         <KeplerGl
           id="map"
           mapboxApiAccessToken="smoothie-the-cat"
-          selector={state => state.keplerGl.map}
+          selector={(state) => state.keplerGl.map}
           dispatch={store.dispatch}
           mapStyles={[customStyle1, customStyle2, customStyle3]}
         />
@@ -405,7 +405,7 @@ test('Components -> KeplerGl -> Mount -> Load custom map style task', t => {
     'Should load map style into reducer and create layer groups'
   );
 
-  Object.keys(resultState1.mapStyle).forEach(key => {
+  Object.keys(resultState1.mapStyle).forEach((key) => {
     t.deepEqual(
       resultState1.mapStyle[key],
       expectedMapStyleState1[key],
@@ -436,7 +436,7 @@ function findGeocoderDatasetName(wrapper) {
   return result;
 }
 
-test('Components -> KeplerGl -> SidePanel -> Geocoder dataset display', t => {
+test('Components -> KeplerGl -> SidePanel -> Geocoder dataset display', (t) => {
   drainTasksForTesting();
 
   const toggleSidePanel = sinon.spy();
@@ -444,7 +444,7 @@ test('Components -> KeplerGl -> SidePanel -> Geocoder dataset display', t => {
   // Create custom SidePanel that will accept toggleSidePanel as a spy
   function CustomSidePanelFactory(...deps) {
     const OriginalSidePanel = SidePanelFactory(...deps);
-    const CustomSidePanel = props => {
+    const CustomSidePanel = (props) => {
       const customUIStateActions = {
         ...props.uiStateActions,
         toggleSidePanel
@@ -474,7 +474,7 @@ test('Components -> KeplerGl -> SidePanel -> Geocoder dataset display', t => {
         <CustomKeplerGl
           id="map"
           mapboxApiAccessToken="smoothie-the-cat"
-          selector={state => state.keplerGl.map}
+          selector={(state) => state.keplerGl.map}
           dispatch={store.dispatch}
         />
       </Provider>

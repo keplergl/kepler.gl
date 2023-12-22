@@ -20,13 +20,13 @@ const DropdownWrapper = styled.div`
   border: 0;
   width: 100%;
   left: 0;
-  z-index: ${props => props.theme.dropdownWrapperZ};
+  z-index: ${(props) => props.theme.dropdownWrapperZ};
   width: 297px;
   margin-left: -194px;
   margin-top: 26px;
 
   .typeahead__input {
-    border-color: ${props => props.theme.activeColor};
+    border-color: ${(props) => props.theme.activeColor};
     border-radius: 4px 4px 0px 0px !important;
   }
   .typeahead__input_box {
@@ -41,21 +41,21 @@ const DropdownWrapper = styled.div`
 const StyledEffectTypeSelector = styled.div`
   .item-selector .item-selector__dropdown {
     padding: 4px 10px 4px 10px;
-    background-color: ${props => props.theme.secondaryBtnBgd};
-    border-radius: ${props => props.theme.primaryBtnRadius};
-    font-size: ${props => props.theme.primaryBtnFontSizeDefault};
+    background-color: ${(props) => props.theme.secondaryBtnBgd};
+    border-radius: ${(props) => props.theme.primaryBtnRadius};
+    font-size: ${(props) => props.theme.primaryBtnFontSizeDefault};
     border: none;
     :hover {
-      background-color: ${props => props.theme.secondaryBtnBgdHover};
+      background-color: ${(props) => props.theme.secondaryBtnBgdHover};
     }
     .item-selector__dropdown__value {
-      color: ${props => props.theme.secondaryBtnActColor};
+      color: ${(props) => props.theme.secondaryBtnActColor};
     }
   }
 `;
 
-const getDisplayOption = op => op.name;
-const getOptionValue = op => op.type;
+const getDisplayOption = (op) => op.name;
+const getOptionValue = (op) => op.type;
 
 EffectTypeSelectorFactory.deps = [EffectTypeListItemFactory, EffectTypeDropdownListFactory];
 

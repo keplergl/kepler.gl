@@ -31,27 +31,26 @@ export type AggregationLayerData = {
   index: number;
 };
 
-export const pointPosAccessor = ({lat, lng}: AggregationLayerColumns) => dc => d => [
-  dc.valueAt(d.index, lng.fieldIdx),
-  dc.valueAt(d.index, lat.fieldIdx)
-];
+export const pointPosAccessor =
+  ({lat, lng}: AggregationLayerColumns) =>
+  (dc) =>
+  (d) => [dc.valueAt(d.index, lng.fieldIdx), dc.valueAt(d.index, lat.fieldIdx)];
 
 export const pointPosResolver = ({lat, lng}: AggregationLayerColumns) =>
   `${lat.fieldIdx}-${lng.fieldIdx}`;
 
-export const getValueAggrFunc = getPointData => (field, aggregation) => points =>
+export const getValueAggrFunc = (getPointData) => (field, aggregation) => (points) =>
   field
     ? aggregate(
-        points.map(p => field.valueAccessor(getPointData(p))),
+        points.map((p) => field.valueAccessor(getPointData(p))),
         aggregation
       )
     : points.length;
 
-export const getFilterDataFunc = (
-  filterRange: number[][],
-  getFilterValue: (d: any) => number[]
-): ((d: any) => boolean) => pt =>
-  getFilterValue(pt).every((val, i) => val >= filterRange[i][0] && val <= filterRange[i][1]);
+export const getFilterDataFunc =
+  (filterRange: number[][], getFilterValue: (d: any) => number[]): ((d: any) => boolean) =>
+  (pt) =>
+    getFilterValue(pt).every((val, i) => val >= filterRange[i][0] && val <= filterRange[i][1]);
 
 const getLayerColorRange = (colorRange: ColorRange) => colorRange.colors.map(hexToRgb);
 
@@ -74,15 +73,15 @@ export default class AggregationLayer extends Layer {
   ) {
     super(props);
 
-    this.getPositionAccessor = dataContainer =>
+    this.getPositionAccessor = (dataContainer) =>
       pointPosAccessor(this.config.columns)(dataContainer);
     this.getColorRange = memoize(getLayerColorRange);
 
     // Access data of a point from aggregated bins, depends on how BinSorter works
     // Deck.gl's BinSorter puts data in point.source
-    this.getPointData = pt => pt.source;
+    this.getPointData = (pt) => pt.source;
 
-    this.gpuFilterGetIndex = pt => this.getPointData(pt).index;
+    this.gpuFilterGetIndex = (pt) => this.getPointData(pt).index;
     this.gpuFilterGetData = (dataContainer, data, fieldIndex) =>
       dataContainer.valueAt(data.index, fieldIndex);
   }
@@ -132,7 +131,7 @@ export default class AggregationLayer extends Layer {
       size: {
         aggregation: 'sizeAggregation',
         channelScaleType: CHANNEL_SCALES.sizeAggr,
-        condition: config => config.visConfig.enable3d,
+        condition: (config) => config.visConfig.enable3d,
         defaultMeasure: 'property.pointCount',
         domain: 'sizeDomain',
         field: 'sizeField',
@@ -161,8 +160,9 @@ export default class AggregationLayer extends Layer {
       label: typeof label === 'function' ? label(this.config) : label || '',
       measure:
         fieldConfig && aggregation
-          ? `${this.config.visConfig[aggregation]} of ${fieldConfig.displayName ||
-              fieldConfig.name}`
+          ? `${this.config.visConfig[aggregation]} of ${
+              fieldConfig.displayName || fieldConfig.name
+            }`
           : defaultMeasure
     };
   }
@@ -295,7 +295,7 @@ export default class AggregationLayer extends Layer {
       this.config.visConfig.sizeAggregation
     );
     const hasFilter = Object.values(gpuFilter.filterRange).some((arr: any) =>
-      arr.some(v => v !== 0)
+      arr.some((v) => v !== 0)
     );
 
     const getFilterValue = gpuFilter.filterValueAccessor(dataContainer)(

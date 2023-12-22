@@ -112,7 +112,7 @@ export function getEditorLayer({
     // prevent self-highlights with tentative features
     autoHighlight: !isDrawingActive(editorMenuActive, editorMode),
     // @ts-ignore
-    highlightColor: info => {
+    highlightColor: (info) => {
       // Note: lines are reported as parent polygon
       const {object} = info;
       if (object) {

@@ -8,7 +8,7 @@ import {editShader} from '../';
 
 const defaultProps = {
   ...LineLayer.defaultProps,
-  getTargetColor: x => x.color || [0, 0, 0, 255]
+  getTargetColor: (x) => x.color || [0, 0, 0, 255]
 };
 
 function addInstanceColorShader(vs) {

@@ -4,7 +4,7 @@
 import test from 'tape';
 import {getTimelineFromFilter, getTimelineFromAnimationConfig} from '@kepler.gl/utils';
 
-test('#timeline -> getTimelineFromFilter', t => {
+test('#timeline -> getTimelineFromFilter', (t) => {
   const filter = {
     dataId: ['test_trip_data'],
     id: 'lojgttzht',
@@ -69,7 +69,7 @@ test('#timeline -> getTimelineFromFilter', t => {
   t.end();
 });
 
-test('#timeline -> getTimelineFromAnimationConfig', t => {
+test('#timeline -> getTimelineFromAnimationConfig', (t) => {
   const animationConfig = {
     domain: [1565577697000, 1565578881000],
     currentTime: 1565577697000,

@@ -331,8 +331,8 @@ export function updateStateOnLayerVisibilityChange<S extends VisState>(state: S,
  */
 function pickChangedProps<T>(prev: T, next: T): Partial<T> {
   const changedProps: Partial<T> = {};
-  const pickPropsOf = obj => {
-    Object.keys(obj).forEach(key => {
+  const pickPropsOf = (obj) => {
+    Object.keys(obj).forEach((key) => {
       if (!changedProps.hasOwnProperty(key) && !isEqual(prev[key], next[key])) {
         changedProps[key] = next[key];
       }
@@ -359,7 +359,7 @@ export function applyLayerConfigUpdater(
   const newParsedLayer =
     // will move visualChannels to the config prop
     parseLayerConfig(state.schema, newLayerConfig);
-  const oldLayer = state.layers.find(l => l.id === oldLayerId);
+  const oldLayer = state.layers.find((l) => l.id === oldLayerId);
   if (!oldLayer || !newParsedLayer) {
     return state;
   }
@@ -380,7 +380,7 @@ export function applyLayerConfigUpdater(
   let nextState = state;
 
   if (newLayer.type && newLayer.type !== oldLayer.type) {
-    const oldLayerIndex = state.layers.findIndex(l => l.id === oldLayerId);
+    const oldLayerIndex = state.layers.findIndex((l) => l.id === oldLayerId);
     if (oldLayerIndex >= 0) {
       nextState = layerTypeChangeUpdater(nextState, layerTypeChange(oldLayer, newLayer.type));
       // layerTypeChangeUpdater changes the id of the layer, so we need to obtain the new id
@@ -416,10 +416,10 @@ export function applyLayerConfigUpdater(
       delete changed.visConfig;
     }
 
-    Object.keys(oldLayer.visualChannels).forEach(channelName => {
+    Object.keys(oldLayer.visualChannels).forEach((channelName) => {
       const channel = oldLayer.visualChannels[channelName];
-      const channelPropNames = VISUAL_CHANNEL_PROP_TYPES.map(prop => channel[prop]);
-      if (channelPropNames.some(prop => prop in changed)) {
+      const channelPropNames = VISUAL_CHANNEL_PROP_TYPES.map((prop) => channel[prop]);
+      if (channelPropNames.some((prop) => prop in changed)) {
         nextState = layerVisualChannelChangeUpdater(
           nextState,
           layerVisualChannelConfigChange(
@@ -456,7 +456,7 @@ export function layerConfigChangeUpdater(
   action: VisStateActions.LayerConfigChangeUpdaterAction
 ): VisState {
   const {oldLayer} = action;
-  const idx = state.layers.findIndex(l => l.id === oldLayer.id);
+  const idx = state.layers.findIndex((l) => l.id === oldLayer.id);
   const props = Object.keys(action.newConfig);
   if (
     typeof action.newConfig.dataId === 'string' &&
@@ -467,7 +467,7 @@ export function layerConfigChangeUpdater(
       oldLayer,
       newConfig: {dataId}
     });
-    const nextLayer = stateWithDataId.layers.find(l => l.id === oldLayer.id);
+    const nextLayer = stateWithDataId.layers.find((l) => l.id === oldLayer.id);
     return nextLayer && Object.keys(restConfig).length
       ? layerConfigChangeUpdater(stateWithDataId, {oldLayer: nextLayer, newConfig: restConfig})
       : stateWithDataId;
@@ -510,7 +510,7 @@ export function layerSetIsValidUpdater(
 ): VisState {
   const {oldLayer, isValid} = action;
 
-  const idx = state.layers.findIndex(l => l.id === oldLayer.id);
+  const idx = state.layers.findIndex((l) => l.id === oldLayer.id);
   const layerToUpdate = state.layers[idx];
   if (layerToUpdate) {
     let newLayer;
@@ -537,19 +537,19 @@ export function layerSetIsValidUpdater(
 function addOrRemoveTextLabels(newFields, textLabel, defaultTextLabel = DEFAULT_TEXT_LABEL) {
   let newTextLabel = textLabel.slice();
 
-  const currentFields = textLabel.map(tl => tl.field && tl.field.name).filter(d => d);
+  const currentFields = textLabel.map((tl) => tl.field && tl.field.name).filter((d) => d);
 
-  const addFields = newFields.filter(f => !currentFields.includes(f.name));
-  const deleteFields = currentFields.filter(f => !newFields.find(fd => fd.name === f));
+  const addFields = newFields.filter((f) => !currentFields.includes(f.name));
+  const deleteFields = currentFields.filter((f) => !newFields.find((fd) => fd.name === f));
 
   // delete
-  newTextLabel = newTextLabel.filter(tl => tl.field && !deleteFields.includes(tl.field.name));
+  newTextLabel = newTextLabel.filter((tl) => tl.field && !deleteFields.includes(tl.field.name));
   newTextLabel = !newTextLabel.length ? [defaultTextLabel] : newTextLabel;
 
   // add
   newTextLabel = [
-    ...newTextLabel.filter(tl => tl.field),
-    ...addFields.map(af => ({
+    ...newTextLabel.filter((tl) => tl.field),
+    ...addFields.map((af) => ({
       ...defaultTextLabel,
       field: af
     }))
@@ -639,7 +639,7 @@ export function layerDataIdChangeUpdater(
   if (!oldLayer || !state.datasets[dataId]) {
     return state;
   }
-  const idx = state.layers.findIndex(l => l.id === oldLayer.id);
+  const idx = state.layers.findIndex((l) => l.id === oldLayer.id);
 
   let newLayer = oldLayer.updateLayerConfig({dataId});
   // this may happen when a layer is new (type: null and no columns) but it's not ready to be saved
@@ -724,7 +724,7 @@ export function layerTypeChangeUpdater(
     return state;
   }
   const oldId = oldLayer.id;
-  const idx = state.layers.findIndex(l => l.id === oldId);
+  const idx = state.layers.findIndex((l) => l.id === oldId);
 
   if (!state.layerClasses[newType]) {
     Console.error(`${newType} is not a valid layer type`);
@@ -767,7 +767,7 @@ export function layerTypeChangeUpdater(
   if (state.splitMaps.length) {
     newState = {
       ...newState,
-      splitMaps: newState.splitMaps.map(settings => {
+      splitMaps: newState.splitMaps.map((settings) => {
         const {[oldId]: oldLayerMap, ...otherLayers} = settings.layers;
         return oldId in settings.layers
           ? {
@@ -785,7 +785,7 @@ export function layerTypeChangeUpdater(
   // update layerOrder with new id
   newState = {
     ...newState,
-    layerOrder: newState.layerOrder.map(layerId =>
+    layerOrder: newState.layerOrder.map((layerId) =>
       layerId === oldLayer.id ? newLayer.id : layerId
     )
   };
@@ -809,7 +809,7 @@ export function layerVisualChannelChangeUpdater(
   }
   const dataset = state.datasets[oldLayer.config.dataId];
 
-  const idx = state.layers.findIndex(l => l.id === oldLayer.id);
+  const idx = state.layers.findIndex((l) => l.id === oldLayer.id);
   const newLayer = oldLayer.updateLayerConfig(newConfig);
 
   newLayer.updateLayerVisualChannel(dataset, channel);
@@ -830,7 +830,7 @@ export function layerVisConfigChangeUpdater(
   action: VisStateActions.LayerVisConfigChangeUpdaterAction
 ): VisState {
   const {oldLayer} = action;
-  const idx = state.layers.findIndex(l => l.id === oldLayer.id);
+  const idx = state.layers.findIndex((l) => l.id === oldLayer.id);
   const props = Object.keys(action.newVisConfig);
   const newVisConfig = {
     ...oldLayer.config.visConfig,
@@ -871,7 +871,7 @@ export function setFilterAnimationWindowUpdater(
 ): VisState {
   return {
     ...state,
-    filters: state.filters.map(f =>
+    filters: state.filters.map((f) =>
       f.id === id
         ? {
             ...f,
@@ -950,13 +950,13 @@ export function setFilterUpdater(
 
       const layerDataIds = uniq<string>(
         layerIdDifference
-          .map(lid =>
+          .map((lid) =>
             get(
-              state.layers.find(l => l.id === lid),
+              state.layers.find((l) => l.id === lid),
               ['config', 'dataId']
             )
           )
-          .filter(d => d) as string[]
+          .filter((d) => d) as string[]
       );
 
       // only filter datasetsIds
@@ -965,13 +965,13 @@ export function setFilterUpdater(
       // Update newFilter dataIds
       const newDataIds = uniq<string>(
         newFilter.layerId
-          ?.map(lid =>
+          ?.map((lid) =>
             get(
-              state.layers.find(l => l.id === lid),
+              state.layers.find((l) => l.id === lid),
               ['config', 'dataId']
             )
           )
-          .filter(d => d) as string[]
+          .filter((d) => d) as string[]
       );
 
       newFilter = {
@@ -984,7 +984,7 @@ export function setFilterUpdater(
       break;
   }
 
-  const enlargedFilter = state.filters.find(f => f.view === FILTER_VIEW_TYPES.enlarged);
+  const enlargedFilter = state.filters.find((f) => f.view === FILTER_VIEW_TYPES.enlarged);
 
   if (enlargedFilter && enlargedFilter.id !== newFilter.id) {
     // there should be only one enlarged filter
@@ -1083,7 +1083,7 @@ export const layerColorUIChangeUpdater = (
   }
   return {
     ...state,
-    layers: state.layers.map(l => (l.id === oldLayer.id ? newLayer : l))
+    layers: state.layers.map((l) => (l.id === oldLayer.id ? newLayer : l))
   };
 };
 
@@ -1200,11 +1200,11 @@ export const setFilterViewUpdater = (
             view
           }
         : shouldResetOtherFiltersView
-        ? {
-            ...f,
-            view: FILTER_VIEW_TYPES.side
-          }
-        : f
+          ? {
+              ...f,
+              view: FILTER_VIEW_TYPES.side
+            }
+          : f
     )
   };
 };
@@ -1333,7 +1333,7 @@ export function removeLayerUpdater<T extends VisState>(
   const idx = Number.isFinite(id)
     ? // support older API, remove layer by idx
       Number(id)
-    : state.layers.findIndex(l => l.id === id);
+    : state.layers.findIndex((l) => l.id === id);
   if (idx < 0 || idx >= state.layers.length) {
     // invalid index
     Console.warn(`can not remove layer with invalid id|idx ${id}`);
@@ -1346,7 +1346,7 @@ export function removeLayerUpdater<T extends VisState>(
     ...state,
     layers: filterOutById(layerToRemove.id)(layers),
     layerData: removeElementAtIndex(idx)(layerData),
-    layerOrder: layerOrder.filter(layerId => layerId !== layerToRemove.id),
+    layerOrder: layerOrder.filter((layerId) => layerId !== layerToRemove.id),
     clicked: layerToRemove.isLayerHovered(clicked) ? undefined : clicked,
     hoverInfo: layerToRemove.isLayerHovered(hoverInfo) ? undefined : hoverInfo,
     splitMaps: removeLayerFromSplitMaps(state.splitMaps, layerToRemove)
@@ -1381,7 +1381,7 @@ export const duplicateLayerUpdater = (
   const idx = Number.isFinite(id)
     ? // support older API, remove layer by idx
       Number(id)
-    : state.layers.findIndex(l => l.id === id);
+    : state.layers.findIndex((l) => l.id === id);
   if (idx < 0 || !state.layers[idx]) {
     Console.warn(`layer ${idx} not found in layerOrder`);
     return state;
@@ -1390,11 +1390,11 @@ export const duplicateLayerUpdater = (
   const {layers} = state;
   const original = layers[idx];
 
-  const originalLayerOrderIdx = state.layerOrder.findIndex(lid => lid === original.id);
+  const originalLayerOrderIdx = state.layerOrder.findIndex((lid) => lid === original.id);
   let newLabel = `Copy of ${original.config.label}`;
   let postfix = 0;
   // eslint-disable-next-line no-loop-func
-  while (layers.find(l => l.config.label === newLabel)) {
+  while (layers.find((l) => l.config.label === newLabel)) {
     newLabel = `Copy of ${original.config.label} ${++postfix}`;
   }
 
@@ -1436,7 +1436,7 @@ export const addEffectUpdater = (
   const newEffect = createEffect(action.config);
 
   // collapse configurators for other effects
-  state.effects.forEach(effect => effect.setProps({isConfigActive: false}));
+  state.effects.forEach((effect) => effect.setProps({isConfigActive: false}));
 
   const effects = [...state.effects, newEffect];
   const effectOrder = fixEffectOrder(effects, [newEffect.id, ...state.effectOrder]);
@@ -1457,7 +1457,7 @@ export const removeEffectUpdater = (
   state: VisState,
   {id}: VisStateActions.RemoveEffectUpdaterAction
 ): VisState => {
-  const idx = state.effects.findIndex(l => l.id === id);
+  const idx = state.effects.findIndex((l) => l.id === id);
   if (idx < 0 || idx >= state.effects.length) {
     Console.warn(`can not remove effect with invalid id ${id}`);
     return state;
@@ -1469,7 +1469,7 @@ export const removeEffectUpdater = (
     ...state,
     // @ts-expect-error fixed in ts
     effects: filterOutById(effectToRemove.id)(effects),
-    effectOrder: effectOrder.filter(effectId => effectId !== effectToRemove.id)
+    effectOrder: effectOrder.filter((effectId) => effectId !== effectToRemove.id)
   };
 };
 
@@ -1495,7 +1495,7 @@ export const updateEffectUpdater = (
   state: VisState,
   {id, props}: VisStateActions.UpdateEffectUpdaterAction
 ): VisState => {
-  const idx = state.effects.findIndex(l => l.id === id);
+  const idx = state.effects.findIndex((l) => l.id === id);
   if (idx < 0 || idx >= state.effects.length) {
     Console.warn(`can not update effect with invalid id ${id}`);
     return state;
@@ -1503,13 +1503,13 @@ export const updateEffectUpdater = (
 
   let effectOrder = state.effectOrder;
   if (props.id !== undefined && props.id !== id) {
-    const idx2 = state.effects.findIndex(l => l.id === props.id);
+    const idx2 = state.effects.findIndex((l) => l.id === props.id);
     if (idx2 >= 0) {
       Console.warn(`can not update effect with existing effect id ${id}`);
       return state;
     }
 
-    effectOrder = effectOrder.map(effectOrderId =>
+    effectOrder = effectOrder.map((effectOrderId) =>
       effectOrderId === id ? (props.id as string) : effectOrderId
     );
   }
@@ -1549,7 +1549,7 @@ export function removeDatasetUpdater<T extends VisState>(
   } = state;
   /* eslint-enable no-unused-vars */
 
-  const layersToRemove = layers.filter(l => l.config.dataId === datasetKey).map(l => l.id);
+  const layersToRemove = layers.filter((l) => l.config.dataId === datasetKey).map((l) => l.id);
 
   // remove layers and datasets
   let newState = layersToRemove.reduce((accu, id) => removeLayerUpdater(accu, {id}), {
@@ -1558,7 +1558,7 @@ export function removeDatasetUpdater<T extends VisState>(
   });
 
   // remove filters
-  const filters = newState.filters.filter(filter => !filter.dataId.includes(datasetKey));
+  const filters = newState.filters.filter((filter) => !filter.dataId.includes(datasetKey));
 
   newState = {...newState, filters};
 
@@ -1725,7 +1725,7 @@ export function interactionConfigChangeUpdater(
     !state.interactionConfig[config.id].enabled
   ) {
     // only enable one interaction at a time
-    contradict.forEach(k => {
+    contradict.forEach((k) => {
       if (k !== config.id) {
         interactionConfig[k] = {...interactionConfig[k], enabled: false};
       }
@@ -1787,7 +1787,7 @@ export const mouseMoveUpdater = (
   state: VisState,
   {evt}: VisStateActions.OnMouseMoveUpdaterAction
 ): VisState => {
-  if (Object.values(state.interactionConfig).some(config => config.enabled)) {
+  if (Object.values(state.interactionConfig).some((config) => config.enabled)) {
     return {
       ...state,
       mousePos: {
@@ -1885,8 +1885,8 @@ export const updateVisDataUpdater = (
   };
 
   // merge state with config to be merged
-  const layerMergers = state.mergers.filter(m => m.waitForLayerData);
-  const datasetMergers = state.mergers.filter(m => !layerMergers.includes(m));
+  const layerMergers = state.mergers.filter((m) => m.waitForLayerData);
+  const datasetMergers = state.mergers.filter((m) => !layerMergers.includes(m));
 
   const newDataIds = Object.keys(newDataEntries);
   const postMergerPayload = {
@@ -1934,8 +1934,8 @@ export function applyMergersUpdater(
  */
 function postMergeUpdater(mergedState: VisState, postMergerPayload: PostMergerPayload): VisState {
   const {newDataIds, options, layerMergers} = postMergerPayload;
-  const newFilters = mergedState.filters.filter(f =>
-    f.dataId.find(fDataId => newDataIds.includes(fDataId))
+  const newFilters = mergedState.filters.filter((f) =>
+    f.dataId.find((fDataId) => newDataIds.includes(fDataId))
   );
   const datasetFiltered: string[] = uniq(
     newFilters.reduce((accu, f) => [...accu, ...f.dataId], [] as string[])
@@ -1943,7 +1943,7 @@ function postMergeUpdater(mergedState: VisState, postMergerPayload: PostMergerPa
   const dataEmpty = newDataIds.length < 1;
 
   let newLayers = !dataEmpty
-    ? mergedState.layers.filter(l => l.config.dataId && newDataIds.includes(l.config.dataId))
+    ? mergedState.layers.filter((l) => l.config.dataId && newDataIds.includes(l.config.dataId))
     : [];
 
   const newDataEntries = newDataIds.reduce(
@@ -1964,7 +1964,7 @@ function postMergeUpdater(mergedState: VisState, postMergerPayload: PostMergerPa
   if (mergedState.splitMaps.length) {
     // if map is split, add new layers to splitMaps
     newLayers = mergedState.layers.filter(
-      l => l.config.dataId && newDataIds.includes(l.config.dataId)
+      (l) => l.config.dataId && newDataIds.includes(l.config.dataId)
     );
     mergedState = {
       ...mergedState,
@@ -1973,7 +1973,7 @@ function postMergeUpdater(mergedState: VisState, postMergerPayload: PostMergerPa
   }
 
   // if no tooltips merged add default tooltips
-  newDataIds.forEach(dataId => {
+  newDataIds.forEach((dataId) => {
     const tooltipFields = mergedState.interactionConfig.tooltip.config.fieldsToShow[dataId];
     // loading dataset: autoCreateTooltips is false and we don't want to run addDefaultTooltips when tooltipFields is empty
     if (
@@ -2094,7 +2094,7 @@ export function closeSpecificMapAtIndex<S extends VisState>(
   const {layers} = state;
 
   // update layer visibility
-  const newLayers = layers.map(layer =>
+  const newLayers = layers.map((layer) =>
     mapLayers && !mapLayers[layer.id] && layer.config.isVisible
       ? layer.updateLayerConfig({
           // if layer.id is not in mapLayers, it should be inVisible
@@ -2207,11 +2207,11 @@ export function makeLoadFileTask(file, fileCache, loaders: Loader[] = [], loadOp
   return LOAD_FILE_TASK({file, fileCache, loaders, loadOptions}).bimap(
     // prettier ignore
     // success
-    gen =>
+    (gen) =>
       nextFileBatch({
         gen,
         fileName: file.name,
-        onFinish: result =>
+        onFinish: (result) =>
           processFileContent({
             content: result,
             fileCache
@@ -2219,7 +2219,7 @@ export function makeLoadFileTask(file, fileCache, loaders: Loader[] = [], loadOp
       }),
 
     // error
-    err => loadFilesErr(file.name, err)
+    (err) => loadFilesErr(file.name, err)
   );
 }
 
@@ -2242,8 +2242,8 @@ export function processFileContentUpdater(
   return withTask(
     stateWithProgress,
     PROCESS_FILE_DATA({content, fileCache}).bimap(
-      result => loadFileStepSuccess({fileName: content.fileName, fileCache: result}),
-      err => loadFilesErr(content.fileName, err)
+      (result) => loadFileStepSuccess({fileName: content.fileName, fileCache: result}),
+      (err) => loadFilesErr(content.fileName, err)
     )
   );
 }
@@ -2280,8 +2280,8 @@ export const nextFileBatchUpdater = (
     ...(fileName.endsWith('arrow') && accumulated?.data?.length > 0
       ? [
           PROCESS_FILE_DATA({content: accumulated, fileCache: []}).bimap(
-            result => loadFilesSuccess(result),
-            err => loadFilesErr(fileName, err)
+            (result) => loadFilesSuccess(result),
+            (err) => loadFilesErr(fileName, err)
           )
         ]
       : []),
@@ -2297,7 +2297,7 @@ export const nextFileBatchUpdater = (
               onFinish
             });
       },
-      err => loadFilesErr(fileName, err)
+      (err) => loadFilesErr(fileName, err)
     )
   ]);
 };
@@ -2465,7 +2465,7 @@ export function updateAllLayerDomainData(
 export function updateAnimationDomain<S extends VisState>(state: S): S {
   // merge all animatable layer domain and update global config
   const animatableLayers = state.layers.filter(
-    l =>
+    (l) =>
       l.config.isVisible &&
       l.config.animation &&
       l.config.animation.enabled &&
@@ -2540,7 +2540,7 @@ export function setFeaturesUpdater(
     editor: {
       ...state.editor,
       // only save none filter features to editor
-      features: features.filter(f => !getFilterIdInFeature(f)),
+      features: features.filter((f) => !getFilterIdInFeature(f)),
       mode: lastFeature && lastFeature.properties.isClosed ? EDITOR_MODES.EDIT : state.editor.mode
     }
   };
@@ -2554,7 +2554,7 @@ export function setFeaturesUpdater(
   }
 
   // TODO: check if the feature has changed
-  const feature = features.find(f => f.id === selectedFeature.id);
+  const feature = features.find((f) => f.id === selectedFeature.id);
 
   // if feature is part of a filter
   const filterId = feature && getFilterIdInFeature(feature);
@@ -2562,7 +2562,7 @@ export function setFeaturesUpdater(
     // add bbox for polygon filter to speed up filtering
     if (feature.properties) feature.properties.bbox = bbox(feature);
     const featureValue = featureToFilterValue(feature, filterId);
-    const filterIdx = state.filters.findIndex(fil => fil.id === filterId);
+    const filterIdx = state.filters.findIndex((fil) => fil.id === filterId);
     // @ts-ignore
     return setFilterUpdater(newState, {
       idx: filterIdx,
@@ -2615,7 +2615,7 @@ export function deleteFeatureUpdater(
   };
 
   if (getFilterIdInFeature(feature)) {
-    const filterIdx = newState.filters.findIndex(f => f.id === getFilterIdInFeature(feature));
+    const filterIdx = newState.filters.findIndex((f) => f.id === getFilterIdInFeature(feature));
 
     return filterIdx > -1 ? removeFilterUpdater(newState, {idx: filterIdx}) : newState;
   }
@@ -2623,7 +2623,7 @@ export function deleteFeatureUpdater(
   // modify editor object
   const newEditor = {
     ...state.editor,
-    features: state.editor.features.filter(f => f.id !== feature.id),
+    features: state.editor.features.filter((f) => f.id !== feature.id),
     selectedFeature: null
   };
 
@@ -2650,7 +2650,7 @@ export function setPolygonFilterLayerUpdater(
   let newState = state;
   // If polygon filter already exists, we need to find out if the current layer is already included
   if (filterId) {
-    filterIdx = state.filters.findIndex(f => f.id === filterId);
+    filterIdx = state.filters.findIndex((f) => f.id === filterId);
 
     if (!state.filters[filterIdx]) {
       // what if filter doesn't exist?... not possible.
@@ -2679,7 +2679,7 @@ export function setPolygonFilterLayerUpdater(
 
     newLayerId = isLayerIncluded
       ? // if layer is included, remove it
-        layerId.filter(l => l !== layer.id)
+        layerId.filter((l) => l !== layer.id)
       : [...layerId, layer.id];
   } else {
     // if we haven't create the polygon filter, create it
@@ -2692,7 +2692,7 @@ export function setPolygonFilterLayerUpdater(
       filters: [...state.filters, newFilter],
       editor: {
         ...state.editor,
-        features: state.editor.features.filter(f => f.id !== feature.id),
+        features: state.editor.features.filter((f) => f.id !== feature.id),
         selectedFeature: newFilter.value
       }
     };
@@ -2722,7 +2722,7 @@ export function sortTableColumnUpdater(
     const currentMode = get(dataset, ['sortColumn', column]);
     // @ts-ignore - should be fixable in a TS file
     sortMode = currentMode
-      ? Object.keys(SORT_ORDER).find(m => m !== currentMode)
+      ? Object.keys(SORT_ORDER).find((m) => m !== currentMode)
       : SORT_ORDER.ASCENDING;
   }
 
@@ -2760,13 +2760,13 @@ export function copyTableColumnUpdater(
   if (!dataset) {
     return state;
   }
-  const fieldIdx = dataset.fields.findIndex(f => f.name === column);
+  const fieldIdx = dataset.fields.findIndex((f) => f.name === column);
   if (fieldIdx < 0) {
     return state;
   }
   const {type} = dataset.fields[fieldIdx];
   const text = dataset.dataContainer
-    .map(row => parseFieldValue(row.valueAt(fieldIdx), type), true)
+    .map((row) => parseFieldValue(row.valueAt(fieldIdx), type), true)
     .join('\n');
 
   copy(text);
@@ -2788,8 +2788,8 @@ export function setColumnDisplayFormatUpdater(
     return state;
   }
   let newFields = dataset.fields;
-  Object.keys(formats).forEach(column => {
-    const fieldIdx = dataset.fields.findIndex(f => f.name === column);
+  Object.keys(formats).forEach((column) => {
+    const fieldIdx = dataset.fields.findIndex((f) => f.name === column);
     if (fieldIdx >= 0) {
       const displayFormat = formats[column];
       const field = newFields[fieldIdx];
@@ -2876,8 +2876,8 @@ function defaultReplaceParentDatasetIds(value: any, dataId: string, dataIdToRepl
   if (Array.isArray(value)) {
     // for layers, filters, call defaultReplaceParentDatasetIds on each item in array
     const replaced = value
-      .map(v => defaultReplaceParentDatasetIds(v, dataId, dataIdToReplace))
-      .filter(d => d);
+      .map((v) => defaultReplaceParentDatasetIds(v, dataId, dataIdToReplace))
+      .filter((d) => d);
     return replaced.length ? replaced : null;
   }
   if (typeof value.dataId === 'string' && value.dataId === dataId) {
@@ -2890,7 +2890,7 @@ function defaultReplaceParentDatasetIds(value: any, dataId: string, dataIdToRepl
     // filter
     return {
       ...value,
-      dataId: value.dataId.map(d => (d === dataId ? dataIdToReplace : d))
+      dataId: value.dataId.map((d) => (d === dataId ? dataIdToReplace : d))
     };
   } else if (value.config?.dataId && value.config?.dataId === dataId) {
     // layer
@@ -2913,7 +2913,7 @@ function defaultReplaceParentDatasetIds(value: any, dataId: string, dataIdToRepl
 function findChildDatasetIds(value) {
   if (Array.isArray(value)) {
     // for layers, filters, call defaultReplaceParentDatasetIds on each item in array
-    const childDataIds = value.map(findChildDatasetIds).filter(d => d);
+    const childDataIds = value.map(findChildDatasetIds).filter((d) => d);
     return childDataIds.length ? childDataIds : null;
   }
 
@@ -2932,12 +2932,14 @@ function moveValueToBeMerged(state, propValues, {prop, toMergeProp, saveUnmerged
     prop === 'layers'
       ? propValues.reduce((accu, propValue) => removeLayerUpdater(accu, {id: propValue.id}), state)
       : Array.isArray(state[prop])
-      ? {
-          ...state,
-          [prop]: state[prop].filter(p => !propValues.find(propValue => p.id === propValue.id))
-        }
-      : // if not array, we won't remove it, remove dataset should handle it
-        state;
+        ? {
+            ...state,
+            [prop]: state[prop].filter(
+              (p) => !propValues.find((propValue) => p.id === propValue.id)
+            )
+          }
+        : // if not array, we won't remove it, remove dataset should handle it
+          state;
 
   // move to stateToBeMerged
   const toBeMerged = {
@@ -2945,15 +2947,15 @@ function moveValueToBeMerged(state, propValues, {prop, toMergeProp, saveUnmerged
       ? // call merge saveUnmerged method
         saveUnmerged(stateRemoved, propValues)
       : // if toMergeProp is araay, append to it
-      Array.isArray(stateRemoved[toMergeProp])
-      ? [...stateRemoved[toMergeProp], ...propValues]
-      : // save propValues to toMerge
-      isObject(stateRemoved[toMergeProp])
-      ? {
-          ...stateRemoved[toMergeProp],
-          ...propValues
-        }
-      : stateRemoved[toMergeProp]
+        Array.isArray(stateRemoved[toMergeProp])
+        ? [...stateRemoved[toMergeProp], ...propValues]
+        : // save propValues to toMerge
+          isObject(stateRemoved[toMergeProp])
+          ? {
+              ...stateRemoved[toMergeProp],
+              ...propValues
+            }
+          : stateRemoved[toMergeProp]
   };
 
   return {
@@ -2984,7 +2986,7 @@ export function prepareStateForDatasetReplace<T extends VisState>(
   const preserveLayerOrder = [...state.layerOrder];
 
   // preserve dataset order
-  nextState.preserveDatasetOrder = Object.keys(state.datasets).map(d =>
+  nextState.preserveDatasetOrder = Object.keys(state.datasets).map((d) =>
     d === dataId ? dataIdToUse : d
   );
 
@@ -3012,7 +3014,7 @@ export function replaceDatasetDepsInState<T extends VisState>(
       // get dataset ids that are depends on this dataset
       const props = toArray(prop);
       const toMergeProps = toArray(toMergeProp);
-      const savedProps = serializedState ? props.map(p => serializedState[p]) : [];
+      const savedProps = serializedState ? props.map((p) => serializedState[p]) : [];
 
       let replacedState = accuState;
       savedProps.forEach((propValue, i) => {
@@ -3035,7 +3037,7 @@ export function replaceDatasetDepsInState<T extends VisState>(
           replacedState[mergerOptions.toMergeProp]?.length &&
           preserveOrder
         ) {
-          replacedState[preserveOrder] = propValue.map(item => item.id);
+          replacedState[preserveOrder] = propValue.map((item) => item.id);
         }
       });
 

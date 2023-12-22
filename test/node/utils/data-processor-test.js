@@ -46,7 +46,7 @@ import {formatCsv} from '@kepler.gl/reducers';
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 import {cmpFields} from '../../helpers/comparison-utils';
 
-test('Processor -> getFieldsFromData', t => {
+test('Processor -> getFieldsFromData', (t) => {
   const data = [
     {
       time: '2016-09-17 00:09:55',
@@ -73,8 +73,7 @@ test('Processor -> getFieldsFromData', t => {
       geojson:
         '{"type":"Polygon","coordinates":[[[-122.4194155,37.7749295],[-122.4194155,37.7749295],[-122.4194155,37.7749295]]]}',
       wkt: 'POLYGON ((-122.4194155 37.7749295, -122.4194155 37.7749295, -122.4194155 37.7749295))',
-      wkb:
-        '0103000020E61000000100000005000000E17A14AE47D25EC0F6F3F6F2F7F940400000000E17A14AE47D25EC0F6F3F6F2F7F940400000000E17A14AE47D25EC0F6F3F6F2F7F94040'
+      wkb: '0103000020E61000000100000005000000E17A14AE47D25EC0F6F3F6F2F7F940400000000E17A14AE47D25EC0F6F3F6F2F7F940400000000E17A14AE47D25EC0F6F3F6F2F7F94040'
     },
     {
       time: null,
@@ -88,8 +87,7 @@ test('Processor -> getFieldsFromData', t => {
       geojson:
         '{"type":"LineString","coordinates":[[-122.4194155,37.7749295],[-122.4194155,37.7749295]]}',
       wkt: 'LINESTRING (-122.4194155 37.7749295, -122.4194155 37.7749295)',
-      wkb:
-        '0102000020E610000002000000E17A14AE47D25EC0F6F3F6F2F7F94040E17A14AE47D25EC0F6F3F6F2F7F94040'
+      wkb: '0102000020E610000002000000E17A14AE47D25EC0F6F3F6F2F7F94040E17A14AE47D25EC0F6F3F6F2F7F94040'
     },
     {
       time: null,
@@ -103,8 +101,7 @@ test('Processor -> getFieldsFromData', t => {
       geojson:
         '{"type":"MultiPoint","coordinates":[[-122.4194155,37.7749295],[-122.4194155,37.7749295]]}',
       wkt: 'MULTIPOINT (-122.4194155 37.7749295, -122.4194155 37.7749295)',
-      wkb:
-        '0104000020E6100000020000000101000000E17A14AE47D25EC0F6F3F6F2F7F94040101000000E17A14AE47D25EC0F6F3F6F2F7F94040'
+      wkb: '0104000020E6100000020000000101000000E17A14AE47D25EC0F6F3F6F2F7F94040101000000E17A14AE47D25EC0F6F3F6F2F7F94040'
     }
   ];
 
@@ -130,7 +127,7 @@ test('Processor -> getFieldsFromData', t => {
   t.end();
 });
 
-test('Processor -> processCsvData', t => {
+test('Processor -> processCsvData', (t) => {
   t.throws(() => processCsvData(''), 'should throw if csv is empty');
 
   // load sample dataset csv as text
@@ -149,7 +146,7 @@ test('Processor -> processCsvData', t => {
   t.end();
 });
 
-test('Processor -> processCsvData -> duplicated field name', t => {
+test('Processor -> processCsvData -> duplicated field name', (t) => {
   const testData1 = `column1,column1,column1,column2\na,b,c,d\nc,d,e,f`;
 
   // load sample dataset csv as text
@@ -165,7 +162,7 @@ test('Processor -> processCsvData -> duplicated field name', t => {
         displayName: 'column1',
         type: 'string',
         analyzerType: 'STRING',
-        valueAccessor: values => values[0]
+        valueAccessor: (values) => values[0]
       },
       {
         name: 'column1-0',
@@ -175,7 +172,7 @@ test('Processor -> processCsvData -> duplicated field name', t => {
         displayName: 'column1-0',
         type: 'string',
         analyzerType: 'STRING',
-        valueAccessor: values => values[1]
+        valueAccessor: (values) => values[1]
       },
       {
         name: 'column1-1',
@@ -185,7 +182,7 @@ test('Processor -> processCsvData -> duplicated field name', t => {
         displayName: 'column1-1',
         type: 'string',
         analyzerType: 'STRING',
-        valueAccessor: values => values[2]
+        valueAccessor: (values) => values[2]
       },
       {
         name: 'column2',
@@ -195,7 +192,7 @@ test('Processor -> processCsvData -> duplicated field name', t => {
         displayName: 'column2',
         type: 'string',
         analyzerType: 'STRING',
-        valueAccessor: values => values[3]
+        valueAccessor: (values) => values[3]
       }
     ],
     rows: [
@@ -214,7 +211,7 @@ test('Processor -> processCsvData -> duplicated field name', t => {
   t.end();
 });
 
-test('Processor -> processCsvData -> with nulls', t => {
+test('Processor -> processCsvData -> with nulls', (t) => {
   const {fields, rows} = processCsvData(dataWithNulls);
   cmpFields(t, fields, testFields, 'should parse fields correctly');
 
@@ -225,7 +222,7 @@ test('Processor -> processCsvData -> with nulls', t => {
   t.end();
 });
 
-test('Processor -> processCsvData -> wkt', t => {
+test('Processor -> processCsvData -> wkt', (t) => {
   const {fields, rows} = processCsvData(wktCsv);
 
   cmpFields(t, fields, wktCsvFields, 'should find geometry fields as type:geojson');
@@ -238,7 +235,7 @@ test('Processor -> processCsvData -> wkt', t => {
   t.end();
 });
 
-test('Processor -> processCsvData -> w/ array and object', t => {
+test('Processor -> processCsvData -> w/ array and object', (t) => {
   const {fields, rows} = processCsvData(testCsvObjectData);
   cmpFields(t, fields, objCsvFields, 'should find csv object fields as type:object');
 
@@ -249,7 +246,7 @@ test('Processor -> processCsvData -> w/ array and object', t => {
   t.end();
 });
 
-test('Processor => processGeojson', t => {
+test('Processor => processGeojson', (t) => {
   const {fields, rows} = processGeojson(cloneDeep(geojsonData));
 
   cmpFields(t, fields, geojsonFields, 'should have same field length');
@@ -261,7 +258,7 @@ test('Processor => processGeojson', t => {
   t.end();
 });
 
-test('Processor => processGeojson: with style property', t => {
+test('Processor => processGeojson: with style property', (t) => {
   const {fields, rows} = processGeojson(cloneDeep(geoJsonWithStyle));
 
   cmpFields(t, fields, geoStyleFields, 'should preserve objects in geojson properties');
@@ -269,7 +266,7 @@ test('Processor => processGeojson: with style property', t => {
   t.end();
 });
 
-test('Processor => processGeojson:invalid geojson', t => {
+test('Processor => processGeojson:invalid geojson', (t) => {
   t.throws(
     () => processGeojson({fields: [], rows: []}),
     'Should throw error with invalid geojson type'
@@ -278,7 +275,7 @@ test('Processor => processGeojson:invalid geojson', t => {
   t.end();
 });
 
-test('Processor => processGeojson: parse rows', t => {
+test('Processor => processGeojson: parse rows', (t) => {
   const testGeoData = {
     type: 'FeatureCollection',
     features: [
@@ -309,7 +306,7 @@ test('Processor => processGeojson: parse rows', t => {
       fieldIdx: 0,
       type: 'geojson',
       analyzerType: 'GEOMETRY',
-      valueAccessor: values => values[0]
+      valueAccessor: (values) => values[0]
     },
     {
       name: 'TRIPS',
@@ -319,7 +316,7 @@ test('Processor => processGeojson: parse rows', t => {
       fieldIdx: 1,
       type: 'integer',
       analyzerType: 'INT',
-      valueAccessor: values => values[1]
+      valueAccessor: (values) => values[1]
     },
     {
       name: 'RATE',
@@ -329,7 +326,7 @@ test('Processor => processGeojson: parse rows', t => {
       fieldIdx: 2,
       type: 'string',
       analyzerType: 'STRING',
-      valueAccessor: values => values[2]
+      valueAccessor: (values) => values[2]
     },
     {
       name: 'TIME',
@@ -339,7 +336,7 @@ test('Processor => processGeojson: parse rows', t => {
       fieldIdx: 3,
       type: 'timestamp',
       analyzerType: 'TIME',
-      valueAccessor: values => values[3]
+      valueAccessor: (values) => values[3]
     }
   ];
 
@@ -394,7 +391,7 @@ test('Processor => processGeojson: parse rows', t => {
   t.end();
 });
 
-test('Processor -> parseCsvRowsByFieldType -> real', t => {
+test('Processor -> parseCsvRowsByFieldType -> real', (t) => {
   const field = {
     type: ALL_FIELD_TYPES.real
   };
@@ -417,7 +414,7 @@ test('Processor -> parseCsvRowsByFieldType -> real', t => {
   t.end();
 });
 
-test('Processor -> parseCsvRowsByFieldType -> integer', t => {
+test('Processor -> parseCsvRowsByFieldType -> integer', (t) => {
   const field = {
     type: ALL_FIELD_TYPES.integer
   };
@@ -431,7 +428,7 @@ test('Processor -> parseCsvRowsByFieldType -> integer', t => {
   t.end();
 });
 
-test('Processor -> parseCsvRowsByFieldType -> boolean', t => {
+test('Processor -> parseCsvRowsByFieldType -> boolean', (t) => {
   const field = {
     type: ALL_FIELD_TYPES.boolean
   };
@@ -446,7 +443,7 @@ test('Processor -> parseCsvRowsByFieldType -> boolean', t => {
   t.end();
 });
 
-test('Processor -> getSampleForTypeAnalyze', t => {
+test('Processor -> getSampleForTypeAnalyze', (t) => {
   const fields = ['string', 'int', 'bool', 'time'];
 
   const rows = [
@@ -499,7 +496,7 @@ test('Processor -> getSampleForTypeAnalyze', t => {
   t.end();
 });
 
-test('Processor -> validateInputData', t => {
+test('Processor -> validateInputData', (t) => {
   t.equal(validateInputData(null), null, 'Should throw error if data is null');
   t.equal(validateInputData({rows: 'hello'}), null, 'Should throw error if data.rows is null');
   t.equal(
@@ -576,7 +573,7 @@ test('Processor -> validateInputData', t => {
   t.end();
 });
 
-test('Processor -> processRowObject', t => {
+test('Processor -> processRowObject', (t) => {
   t.equal(processRowObject({}), null, 'Should return null when rawData is empty');
 
   const cases = [
@@ -601,7 +598,7 @@ test('Processor -> processRowObject', t => {
             format: '',
             fieldIdx: 0,
             analyzerType: 'INT',
-            valueAccessor: values => values[0]
+            valueAccessor: (values) => values[0]
           },
           {
             name: 'b',
@@ -611,7 +608,7 @@ test('Processor -> processRowObject', t => {
             format: '',
             fieldIdx: 1,
             analyzerType: 'STRING',
-            valueAccessor: values => values[1]
+            valueAccessor: (values) => values[1]
           },
           {
             name: 'c',
@@ -621,7 +618,7 @@ test('Processor -> processRowObject', t => {
             format: '',
             fieldIdx: 2,
             analyzerType: 'BOOLEAN',
-            valueAccessor: values => values[2]
+            valueAccessor: (values) => values[2]
           },
           {
             name: 'd',
@@ -631,7 +628,7 @@ test('Processor -> processRowObject', t => {
             format: '',
             fieldIdx: 3,
             analyzerType: 'FLOAT',
-            valueAccessor: values => values[3]
+            valueAccessor: (values) => values[3]
           }
         ]
       },
@@ -647,7 +644,7 @@ test('Processor -> processRowObject', t => {
   t.end();
 });
 
-test('Processor -> formatCsv', t => {
+test('Processor -> formatCsv', (t) => {
   const geojsonFc = {
     type: 'FeatureCollection',
     features: [
@@ -702,8 +699,8 @@ test('Processor -> formatCsv', t => {
   t.end();
 });
 
-test('Processor -> analyzerTypeToFieldType', t => {
-  Object.keys(DATA_TYPES).forEach(atype => {
+test('Processor -> analyzerTypeToFieldType', (t) => {
+  Object.keys(DATA_TYPES).forEach((atype) => {
     const spy = sinon.spy(Console, 'warn');
 
     if (!ACCEPTED_ANALYZER_TYPES.includes(atype)) {

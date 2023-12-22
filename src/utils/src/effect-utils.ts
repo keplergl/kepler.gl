@@ -27,7 +27,7 @@ export function computeDeckEffects({
 }): PostProcessEffect[] {
   // TODO: 1) deck effects per deck context 2) preserved between draws
   return visState.effectOrder
-    .map(effectId => {
+    .map((effectId) => {
       const effect = findById(effectId)(visState.effects) as Effect | undefined;
       if (effect?.isEnabled && effect.deckEffect) {
         updateEffect({visState, mapState, effect});
@@ -35,14 +35,14 @@ export function computeDeckEffects({
       }
       return null;
     })
-    .filter(effect => effect);
+    .filter((effect) => effect);
 }
 
 /**
  * Always keep light & shadow effect at the top
  */
 export const fixEffectOrder = (effects: Effect[], effectOrder: string[]): string[] => {
-  const lightShadowEffect = effects.find(effect => effect.type === LIGHT_AND_SHADOW_EFFECT.type);
+  const lightShadowEffect = effects.find((effect) => effect.type === LIGHT_AND_SHADOW_EFFECT.type);
   if (lightShadowEffect) {
     const ind = effectOrder.indexOf(lightShadowEffect.id);
     if (ind > 0) {
@@ -92,7 +92,7 @@ function updateEffect({visState, mapState, effect}) {
       timestamp = visState.animationConfig.currentTime ?? 0;
       if (!timestamp) {
         const filter = visState.filters.find(
-          filter =>
+          (filter) =>
             filter.type === FILTER_TYPES.timeRange &&
             (filter.view === FILTER_VIEW_TYPES.enlarged || filter.syncedWithLayerTimeline)
         );
@@ -127,7 +127,7 @@ export function validateEffectParameters(
   effectDescription: EffectDescription['parameters']
 ): EffectProps['parameters'] {
   const result = cloneDeep(parameters);
-  effectDescription.forEach(description => {
+  effectDescription.forEach((description) => {
     const {defaultValue, name, type, min, max} = description;
 
     if (!result.hasOwnProperty(name)) return;

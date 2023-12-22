@@ -19,7 +19,7 @@ const TEST_TIMESTAMP = 1690303570534;
 const mockStore = configureStore();
 const ititialState = {mapState: {latitude: 0, longitude: 0}};
 
-test('Components -> EffectTimeConfigurator -> render', t => {
+test('Components -> EffectTimeConfigurator -> render', (t) => {
   const store = mockStore(ititialState);
 
   const props = {
@@ -46,7 +46,7 @@ test('Components -> EffectTimeConfigurator -> render', t => {
   t.end();
 });
 
-test('Components -> EffectTimeConfigurator -> time type', t => {
+test('Components -> EffectTimeConfigurator -> time type', (t) => {
   const store = mockStore(ititialState);
 
   const onTimeModeChange = sinon.spy();
@@ -67,28 +67,19 @@ test('Components -> EffectTimeConfigurator -> time type', t => {
     );
   }, `EffectTimeConfigurator should not fail`);
 
-  wrapper
-    .find('Checkbox')
-    .at(0)
-    .invoke('onChange')();
+  wrapper.find('Checkbox').at(0).invoke('onChange')();
   t.ok(
     onTimeModeChange.calledWith({timeMode: LIGHT_AND_SHADOW_EFFECT_TIME_MODES.pick}),
     `Should set ${LIGHT_AND_SHADOW_EFFECT_TIME_MODES.pick} mode`
   );
 
-  wrapper
-    .find('Checkbox')
-    .at(1)
-    .invoke('onChange')();
+  wrapper.find('Checkbox').at(1).invoke('onChange')();
   t.ok(
     onTimeModeChange.calledWith({timeMode: LIGHT_AND_SHADOW_EFFECT_TIME_MODES.current}),
     `Should set ${LIGHT_AND_SHADOW_EFFECT_TIME_MODES.current} mode`
   );
 
-  wrapper
-    .find('Checkbox')
-    .at(2)
-    .invoke('onChange')();
+  wrapper.find('Checkbox').at(2).invoke('onChange')();
   t.ok(
     onTimeModeChange.calledWith({timeMode: LIGHT_AND_SHADOW_EFFECT_TIME_MODES.animation}),
     `Should set ${LIGHT_AND_SHADOW_EFFECT_TIME_MODES.animation} mode`
@@ -99,7 +90,7 @@ test('Components -> EffectTimeConfigurator -> time type', t => {
   t.end();
 });
 
-test('Components -> EffectTimeConfigurator -> pick time', t => {
+test('Components -> EffectTimeConfigurator -> pick time', (t) => {
   const store = mockStore(ititialState);
 
   const onDateTimeChange = sinon.spy();
@@ -163,10 +154,7 @@ test('Components -> EffectTimeConfigurator -> pick time', t => {
   );
 
   // pick current time button
-  wrapper
-    .find('Button')
-    .at(0)
-    .simulate('click');
+  wrapper.find('Button').at(0).simulate('click');
   t.ok(
     Math.abs(onDateTimeChange.getCall(7).args[0].timestamp - Date.now()) < 1000,
     `Should pick current date & time`
@@ -175,36 +163,18 @@ test('Components -> EffectTimeConfigurator -> pick time', t => {
   t.end();
 });
 
-const getDisplayedDateTimeValues = wrapper => {
+const getDisplayedDateTimeValues = (wrapper) => {
   return {
-    year: wrapper
-      .find('.react-date-picker__inputGroup__year')
-      .at(0)
-      .props().value,
-    month: wrapper
-      .find('.react-date-picker__inputGroup__month')
-      .at(0)
-      .props().value,
-    day: wrapper
-      .find('.react-date-picker__inputGroup__day')
-      .at(0)
-      .props().value,
-    hour: wrapper
-      .find('.react-time-picker__inputGroup__hour')
-      .at(0)
-      .props().value,
-    minute: wrapper
-      .find('.react-time-picker__inputGroup__minute')
-      .at(0)
-      .props().value,
-    amPm: wrapper
-      .find('.react-time-picker__inputGroup__amPm')
-      .at(0)
-      .props().value
+    year: wrapper.find('.react-date-picker__inputGroup__year').at(0).props().value,
+    month: wrapper.find('.react-date-picker__inputGroup__month').at(0).props().value,
+    day: wrapper.find('.react-date-picker__inputGroup__day').at(0).props().value,
+    hour: wrapper.find('.react-time-picker__inputGroup__hour').at(0).props().value,
+    minute: wrapper.find('.react-time-picker__inputGroup__minute').at(0).props().value,
+    amPm: wrapper.find('.react-time-picker__inputGroup__amPm').at(0).props().value
   };
 };
 
-test('Components -> EffectTimeConfigurator -> time zone update', t => {
+test('Components -> EffectTimeConfigurator -> time zone update', (t) => {
   const store = mockStore(ititialState);
 
   const onDateTimeChange = sinon.spy();
@@ -239,14 +209,8 @@ test('Components -> EffectTimeConfigurator -> time zone update', t => {
   t.equal(values.amPm, 'pm', `AM/PM should be correctly set`);
 
   // Change time zone
-  wrapper
-    .find('.item-selector__dropdown')
-    .at(1)
-    .simulate('click');
-  wrapper
-    .find({children: 'America/Barbados'})
-    .at(0)
-    .simulate('click');
+  wrapper.find('.item-selector__dropdown').at(1).simulate('click');
+  wrapper.find({children: 'America/Barbados'}).at(0).simulate('click');
 
   t.deepEqual(
     onDateTimeChange.getCall(0).args[0],
@@ -267,7 +231,7 @@ test('Components -> EffectTimeConfigurator -> time zone update', t => {
   t.end();
 });
 
-test('Components -> EffectTimeConfigurator -> time with custom timezone update', t => {
+test('Components -> EffectTimeConfigurator -> time with custom timezone update', (t) => {
   const store = mockStore(ititialState);
 
   const onDateTimeChange = sinon.spy();
@@ -305,7 +269,7 @@ test('Components -> EffectTimeConfigurator -> time with custom timezone update',
   t.end();
 });
 
-test('Components -> EffectTimeConfigurator -> date with custom timezone update', t => {
+test('Components -> EffectTimeConfigurator -> date with custom timezone update', (t) => {
   const store = mockStore(ititialState);
 
   const onDateTimeChange = sinon.spy();

@@ -19,7 +19,9 @@ export interface DeleteDatasetModalProps {
 
 export const DeleteDatasetModal: React.FC<DeleteDatasetModalProps> = ({dataset, layers = []}) => {
   // retrieve only layers related to the current dataset
-  const currDatasetLayers = layers.filter(layer => layer.config.dataId === (dataset && dataset.id));
+  const currDatasetLayers = layers.filter(
+    (layer) => layer.config.dataId === (dataset && dataset.id)
+  );
 
   return (
     <div className="delete-dataset-modal">

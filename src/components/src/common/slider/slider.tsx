@@ -17,9 +17,9 @@ interface StyledRangeSliderProps {
 
 const StyledRangeSlider = styled.div<StyledRangeSliderProps>`
   position: relative;
-  background-color: ${props => props.theme.sliderBarBgd};
-  ${props => `${props.vertical ? 'width' : 'height'}: ${props.theme.sliderBarHeight}px`};
-  ${props => `${props.vertical ? 'height' : 'width'}: 100%`};
+  background-color: ${(props) => props.theme.sliderBarBgd};
+  ${(props) => `${props.vertical ? 'width' : 'height'}: ${props.theme.sliderBarHeight}px`};
+  ${(props) => `${props.vertical ? 'height' : 'width'}: 100%`};
 `;
 
 export type StyleRangeSliderType = typeof StyledRangeSlider & HTMLDivElement;

@@ -12,7 +12,7 @@ const LogoTitle = styled.div`
 
 const LogoName = styled.div`
   .logo__link {
-    color: ${props => props.theme.logoColor};
+    color: ${(props) => props.theme.logoColor};
     font-size: 14px;
     font-weight: 600;
     letter-spacing: 1.17px;
@@ -20,7 +20,7 @@ const LogoName = styled.div`
 `;
 const LogoVersion = styled.div`
   font-size: 10px;
-  color: ${props => props.theme.subtextColor};
+  color: ${(props) => props.theme.subtextColor};
   letter-spacing: 0.83px;
   line-height: 14px;
 `;

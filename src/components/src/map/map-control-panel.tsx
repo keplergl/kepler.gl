@@ -11,7 +11,7 @@ import {MapState} from '@kepler.gl/types';
 import {ActionHandler, toggleSplitMapViewport} from '@kepler.gl/actions';
 
 const StyledMapControlPanel = styled.div`
-  background-color: ${props => props.theme.mapPanelBackgroundColor};
+  background-color: ${(props) => props.theme.mapPanelBackgroundColor};
   flex-grow: 1;
   z-index: 1;
   p {
@@ -22,10 +22,10 @@ const StyledMapControlPanel = styled.div`
 const StyledMapControlPanelContent = styled.div.attrs({
   className: 'map-control__panel-content'
 })`
-  ${props => props.theme.dropdownScrollBar};
+  ${(props) => props.theme.dropdownScrollBar};
   max-height: 500px;
   min-height: 100px;
-  min-width: ${props => props.theme.mapControl.width}px;
+  min-width: ${(props) => props.theme.mapControl.width}px;
   overflow: overlay;
 `;
 
@@ -38,12 +38,12 @@ const StyledMapControlPanelHeader = styled.div.attrs({
 })<MapControlPanelHeaderProps>`
   display: flex;
   justify-content: space-between;
-  background-color: ${props => props.theme.mapPanelHeaderBackgroundColor};
+  background-color: ${(props) => props.theme.mapPanelHeaderBackgroundColor};
   height: 32px;
   padding: 6px 12px;
-  font-family: ${props => props.theme.fontFamily};
+  font-family: ${(props) => props.theme.fontFamily};
   font-size: 11px;
-  color: ${props => props.theme.titleTextColor};
+  color: ${(props) => props.theme.titleTextColor};
   position: relative;
   box-sizing: border-box;
 
@@ -81,23 +81,23 @@ interface StyledDisableableTextProps {
 }
 
 const StyledDisableableText = styled.span<StyledDisableableTextProps>`
-  opacity: ${props => (props.disabled ? 0.4 : 1)};
-  pointer-events: ${props => (props.disabled ? 'none' : 'all')};
+  opacity: ${(props) => (props.disabled ? 0.4 : 1)};
+  pointer-events: ${(props) => (props.disabled ? 'none' : 'all')};
 `;
 
 const StyledDisableableSwitch = styled(Switch)`
-  opacity: ${props => (props.disabled ? 0.4 : 1)};
-  pointer-events: ${props => (props.disabled ? 'none' : 'all')};
+  opacity: ${(props) => (props.disabled ? 0.4 : 1)};
+  pointer-events: ${(props) => (props.disabled ? 'none' : 'all')};
 `;
 
 const StyledIcon = styled(IconRoundSmall)`
-  color: ${props => props.theme.activeColor};
+  color: ${(props) => props.theme.activeColor};
   background-color: transparent;
 
   :hover {
     cursor: pointer;
     background-color: transparent;
-    color: ${props => props.theme.linkBtnColor};
+    color: ${(props) => props.theme.linkBtnColor};
   }
 `;
 

@@ -25,10 +25,23 @@ import {
 import {appInjector} from './container';
 
 // Components
-export {default as KeplerGl, default, injectComponents, ContainerFactory, ERROR_MSG} from './container';
+export {
+  default as KeplerGl,
+  default,
+  injectComponents,
+  ContainerFactory,
+  ERROR_MSG
+} from './container';
 
 // factories
-export {default as KeplerGlFactory, DEFAULT_KEPLER_GL_PROPS, getVisibleDatasets, makeGetActionCreators, mapFieldsSelector, plotContainerSelector} from './kepler-gl';
+export {
+  default as KeplerGlFactory,
+  DEFAULT_KEPLER_GL_PROPS,
+  getVisibleDatasets,
+  makeGetActionCreators,
+  mapFieldsSelector,
+  plotContainerSelector
+} from './kepler-gl';
 export {default as SidePanelFactory} from './side-panel';
 export {default as PanelTitleFactory} from './side-panel/panel-title';
 export {default as MapContainerFactory, Attribution} from './map-container';
@@ -58,14 +71,19 @@ export {default as LayerManagerFactory, LayerBlendingSelector} from './side-pane
 export {ColorSelectorInput, ColorBlock} from './side-panel/layer-panel/color-selector';
 export {default as CustomSelector} from './side-panel/layer-panel/color-selector';
 export {default as ColorPalette} from './side-panel/layer-panel/color-palette';
-export {default as ColorRangeSelector, PaletteConfig, ColorPaletteGroup, ALL_TYPES} from './side-panel/layer-panel/color-range-selector';
+export {
+  default as ColorRangeSelector,
+  PaletteConfig,
+  ColorPaletteGroup,
+  ALL_TYPES
+} from './side-panel/layer-panel/color-range-selector';
 export {default as LayerPanelFactory} from './side-panel/layer-panel/layer-panel';
 export {default as SingleColorPalette} from './side-panel/layer-panel/single-color-palette';
 export {
   default as LayerConfiguratorFactory,
   getLayerConfiguratorProps,
   getLayerDataset,
-  getVisConfiguratorProps,
+  getVisConfiguratorProps
 } from './side-panel/layer-panel/layer-configurator';
 export {default as TextLabelPanelFactory} from './side-panel/layer-panel/text-label-panel';
 
@@ -133,7 +151,11 @@ export {default as MapControlToolbarFactory} from './map/map-control-toolbar';
 // // modal factories
 export {default as ModalDialogFactory} from './modals/modal-dialog';
 export {default as DeleteDatasetModalFactory} from './modals/delete-data-modal';
-export {default as DataTableModalFactory, DatasetTabs, DatasetModalTab} from './modals/data-table-modal';
+export {
+  default as DataTableModalFactory,
+  DatasetTabs,
+  DatasetModalTab
+} from './modals/data-table-modal';
 export {default as LoadDataModalFactory} from './modals/load-data-modal';
 export {default as SaveMapModalFactory} from './modals/save-map-modal';
 export {default as StatusPanel} from './modals/status-panel';
@@ -166,7 +188,12 @@ export {default as ImagePreview} from './common/image-preview';
 export {default as HistogramPlotFactory} from './common/histogram-plot';
 export {default as LineChartFactory} from './common/line-chart';
 export {default as RangeBrushFactory} from './common/range-brush';
-export {default as TimeSliderMarkerFactory, getTickFormat, getXAxis, updateAxis} from './common/time-slider-marker';
+export {
+  default as TimeSliderMarkerFactory,
+  getTickFormat,
+  getXAxis,
+  updateAxis
+} from './common/time-slider-marker';
 export {default as TimeRangeSliderTimeTitleFactory} from './common/time-range-slider-time-title';
 export {default as IconButton} from './common/icon-button';
 // // Filters factory
@@ -183,14 +210,21 @@ export {default as RangeFilterFactory} from './filters/range-filter';
 
 // // Editor Factory
 export {default as EditorFactory} from './editor/editor';
-export {default as FeatureActionPanelFactory, PureFeatureActionPanelFactory} from './editor/feature-action-panel';
+export {
+  default as FeatureActionPanelFactory,
+  PureFeatureActionPanelFactory
+} from './editor/feature-action-panel';
 
 // Injector
 export {injector, provideRecipesToInjector, withState} from './injector';
 
 // Common Components
 export {default as CloudTile} from './modals/cloud-tile';
-export {default as FileUploadFactory, FileUpload, WarningMsg} from './common/file-uploader/file-upload';
+export {
+  default as FileUploadFactory,
+  FileUpload,
+  WarningMsg
+} from './common/file-uploader/file-upload';
 export {default as FileDrop} from './common/file-uploader/file-drop';
 export {default as UploadButton} from './common/file-uploader/upload-button';
 export {default as DatasetLabel} from './common/dataset-label';
@@ -198,7 +232,11 @@ export {default as Accessor} from './common/item-selector/accessor';
 export {default as ChickletedInput, ChickletButton} from './common/item-selector/chickleted-input';
 export {default as ItemSelector} from './common/item-selector/item-selector';
 export {default as Typeahead} from './common/item-selector/typeahead';
-export {default as DropdownList, ListItem, classList as dropdownListClassList} from './common/item-selector/dropdown-list';
+export {
+  default as DropdownList,
+  ListItem,
+  classList as dropdownListClassList
+} from './common/item-selector/dropdown-list';
 export {default as FieldSelectorFactory} from './common/field-selector';
 export {default as Modal, ModalFooter, ModalTitle} from './common/modal';
 export {default as AppLogo} from './common/logo';
@@ -218,7 +256,10 @@ export {default as SliderHandle} from './common/slider/slider-handle';
 export {default as SliderBarHandle} from './common/slider/slider-bar-handle';
 export {default as ActionPanel, ActionPanelItem} from './common/action-panel';
 export {default as HeaderCellFactory} from './common/data-table/header-cell';
-export {default as DataTableConfigFactory, NumberFormatConfig} from './common/data-table/display-format';
+export {
+  default as DataTableConfigFactory,
+  NumberFormatConfig
+} from './common/data-table/display-format';
 export {default as DataTableFactory} from './common/data-table';
 export {default as CanvasHack} from './common/data-table/canvas';
 export {default as OptionDropdown, FormatterDropdown} from './common/data-table/option-dropdown';
@@ -231,7 +272,11 @@ export {default as TippyTooltip} from './common/tippy-tooltip';
 // side pane components
 export {default as LayerTypeSelectorFactory} from './side-panel/layer-panel/layer-type-selector';
 export {default as LayerTypeDropdownListFactory} from './side-panel/layer-panel/layer-type-dropdown-list';
-export {ConfigGroupCollapsibleContent, StyledConfigGroupHeader, LayerConfigGroupLabelFactory} from './side-panel/layer-panel/layer-config-group';
+export {
+  ConfigGroupCollapsibleContent,
+  StyledConfigGroupHeader,
+  LayerConfigGroupLabelFactory
+} from './side-panel/layer-panel/layer-config-group';
 export {default as ColumnSelectorFactory} from './side-panel/layer-panel/column-selector';
 export {default as StyledDropdownSelect} from './common/item-selector/item-selector';
 export {
@@ -252,11 +297,7 @@ export {default as EffectTimeConfiguratorFactory} from './effects/effect-time-co
 
 export {default as HowToButton} from './side-panel/layer-panel/how-to-button';
 // eslint-disable-next-line prettier/prettier
-export type {
-  ButtonProps,
-  StyledPanelHeaderProps,
-  StyledExportSectionProps
-} from './common';
+export type {ButtonProps, StyledPanelHeaderProps, StyledExportSectionProps} from './common';
 
 export type {CollapseButtonProps} from './side-panel/side-bar';
 export type {PanelTabProps} from './side-panel/panel-tab';
@@ -269,19 +310,33 @@ export type {SourceDataCatalogProps} from './side-panel/common/source-data-catal
 export type {DatasetInfoProps} from './side-panel/common/dataset-info';
 export type {DatasetTagProps} from './side-panel/common/dataset-tag';
 export type {CustomPanelsProps} from './side-panel/custom-panel';
-export type {LayerTypeListItemProps, LayerTypeListItemType} from './side-panel/layer-panel/layer-type-list-item';
+export type {
+  LayerTypeListItemProps,
+  LayerTypeListItemType
+} from './side-panel/layer-panel/layer-type-list-item';
 export type {LayerGroupColorPickerProps} from './side-panel/map-style-panel/map-layer-group-color-picker';
 export type {MapLegendPanelProps, MapLegendPanelFactoryDeps} from './map/map-legend-panel';
-export type {OptionDropdownProps, FormatterDropdownProps} from './common/data-table/option-dropdown';
+export type {
+  OptionDropdownProps,
+  FormatterDropdownProps
+} from './common/data-table/option-dropdown';
 export type {LayerListProps, LayerListFactoryDeps} from './side-panel/layer-panel/layer-list';
 export type {MapContainerProps} from './map-container';
 export type {MapControlProps} from './map/map-control';
 export type {MapDrawPanelProps} from './map/map-draw-panel';
 export type {PanelHeaderProps} from './side-panel/panel-header';
-export type {LayerLabelEditorProps, LayerTitleSectionProps, LayerPanelHeaderProps, LayerPanelHeaderActionSectionProps} from './side-panel/layer-panel/layer-panel-header';
+export type {
+  LayerLabelEditorProps,
+  LayerTitleSectionProps,
+  LayerPanelHeaderProps,
+  LayerPanelHeaderActionSectionProps
+} from './side-panel/layer-panel/layer-panel-header';
 export type {FilterPanelHeaderProps} from './side-panel/filter-panel/filter-panel-header';
 export type {LayerTypeOption} from './side-panel/layer-panel/layer-type-dropdown-list';
-export type {LayerConfigGroupLabelProps, LayerConfigGroupProps} from './side-panel/layer-panel/layer-config-group';
+export type {
+  LayerConfigGroupLabelProps,
+  LayerConfigGroupProps
+} from './side-panel/layer-panel/layer-config-group';
 export type {FilterManagerProps} from './side-panel/filter-manager';
 export type {PanelMeta} from './side-panel/common/types';
 export type {SideBarProps} from './side-panel/side-bar';
@@ -377,4 +432,3 @@ export {default as useFeatureFlags} from './hooks/use-feature-flags';
 export {default as useDndLayers} from './hooks/use-dnd-layers';
 export {default as useDndEffects} from './hooks/use-dnd-effects';
 export {CloudListProvider, useCloudListProvider} from './hooks/use-cloud-list-provider';
-

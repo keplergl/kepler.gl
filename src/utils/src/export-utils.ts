@@ -42,7 +42,7 @@ export function isMSEdge(window: Window): boolean {
 }
 
 export function getScaleFromImageSize(imageW = 0, imageH = 0, mapW = 0, mapH = 0) {
-  if ([imageW, imageH, mapW, mapH].some(d => d <= 0)) {
+  if ([imageW, imageH, mapW, mapH].some((d) => d <= 0)) {
     return 1;
   }
 
@@ -66,10 +66,10 @@ export function calculateExportImageSize({
     return null;
   }
 
-  const ratioItem = EXPORT_IMG_RATIO_OPTIONS.find(op => op.id === ratio) || defaultRatio;
+  const ratioItem = EXPORT_IMG_RATIO_OPTIONS.find((op) => op.id === ratio) || defaultRatio;
 
   const resolutionItem =
-    EXPORT_IMG_RESOLUTION_OPTIONS.find(op => op.id === resolution) || defaultResolution;
+    EXPORT_IMG_RESOLUTION_OPTIONS.find((op) => op.id === resolution) || defaultResolution;
 
   const {width: scaledWidth, height: scaledHeight} = resolutionItem.getSize(mapW, mapH);
 
@@ -92,10 +92,7 @@ export function dataURItoBlob(dataURI: string): Blob {
   const binary = atob(dataURI.split(',')[1]);
 
   // separate out the mime component
-  const mimeString = dataURI
-    .split(',')[0]
-    .split(':')[1]
-    .split(';')[0];
+  const mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
 
   // write the bytes of the string to an ArrayBuffer
   const ab = new ArrayBuffer(binary.length);

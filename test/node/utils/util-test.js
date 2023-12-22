@@ -12,7 +12,7 @@ import {
   arrayInsert
 } from '@kepler.gl/utils';
 
-test('Utils -> set', t => {
+test('Utils -> set', (t) => {
   const obj1 = {map: {map1: 'world'}};
   const obj2 = set(['map', 'map1'], 'hello', obj1);
 
@@ -33,7 +33,7 @@ test('Utils -> set', t => {
   t.end();
 });
 
-test('Utils -> toArray', t => {
+test('Utils -> toArray', (t) => {
   t.deepEqual(toArray(), [], 'Should return an empty array for undefined value');
 
   t.deepEqual(toArray([1, 2]), [1, 2], 'Should not change an existing array');
@@ -45,7 +45,7 @@ test('Utils -> toArray', t => {
   t.end();
 });
 
-test('Utils -> getError', t => {
+test('Utils -> getError', (t) => {
   t.equal(getError(new Error('oops')), 'oops', 'should find error message from Error object');
   t.equal(getError('sorry'), 'sorry', 'should find error message from string');
   t.equal(getError(), 'Something went wrong', 'should find error message from empty');
@@ -65,25 +65,25 @@ test('Utils -> getError', t => {
   t.end();
 });
 
-test('Utils -> camelToTitle', t => {
+test('Utils -> camelToTitle', (t) => {
   t.equal(camelToTitle('camelToTitle'), 'Camel To Title', 'should return titled string');
   t.equal(camelToTitle('strokeColor'), 'Stroke Color', 'should return titled string');
   t.end();
 });
 
-test('Utils -> camelize', t => {
+test('Utils -> camelize', (t) => {
   t.equal(camelize('hello world test string'), 'helloWorldTestString', 'should camelize string');
   t.equal(camelize('Hello World test String'), 'helloWorldTestString', 'should camelize string');
   t.end();
 });
 
-test('Utils -> capitalizeFirstLetter', t => {
+test('Utils -> capitalizeFirstLetter', (t) => {
   t.equal(capitalizeFirstLetter('hello world'), 'Hello world', 'should capitalize string');
   t.equal(capitalizeFirstLetter(1), 1, 'should ignore other types than string');
   t.end();
 });
 
-test('Utils -> arrayInsert', t => {
+test('Utils -> arrayInsert', (t) => {
   t.deepEqual(arrayInsert([], 1, 0), [0], 'should insert val at index');
   t.deepEqual(arrayInsert([1, 2, 3, 4], 1, 5), [1, 5, 2, 3, 4], 'should insert val at index');
   t.deepEqual(arrayInsert([1, 2, 3], 0, 6), [6, 1, 2, 3], 'should insert val at index');

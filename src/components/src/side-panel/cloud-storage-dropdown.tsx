@@ -9,13 +9,13 @@ const CloudStorageItems = [
     label: 'Save',
     icon: Icons.Save2,
     key: 'data',
-    onClick: props => props.onSaveMap
+    onClick: (props) => props.onSaveMap
   },
   {
     label: 'Settings',
     icon: Icons.Gear,
     key: 'settings',
-    onClick: props => props.onExportData
+    onClick: (props) => props.onExportData
   }
 ];
 

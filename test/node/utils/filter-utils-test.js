@@ -24,7 +24,7 @@ import {FILTER_TYPES} from '@kepler.gl/constants';
 import {mockPolygonFeature, mockPolygonData} from '../../fixtures/polygon';
 
 /* eslint-disable max-statements */
-test('filterUtils -> adjustValueToFilterDomain', t => {
+test('filterUtils -> adjustValueToFilterDomain', (t) => {
   // TODO: needs id
   const rangeFilter = getDefaultFilter();
   rangeFilter.type = FILTER_TYPES.range;
@@ -127,7 +127,7 @@ test('filterUtils -> adjustValueToFilterDomain', t => {
   t.end();
 });
 
-test('filterUtils -> getDatasetFieldIndexForFilter', t => {
+test('filterUtils -> getDatasetFieldIndexForFilter', (t) => {
   const dataId = 'test-this-id';
 
   let fieldIndex = getDatasetFieldIndexForFilter(dataId, {
@@ -150,7 +150,7 @@ test('filterUtils -> getDatasetFieldIndexForFilter', t => {
   t.end();
 });
 
-test('filterUtils -> isValidFilterValue', t => {
+test('filterUtils -> isValidFilterValue', (t) => {
   t.equal(isValidFilterValue(null, true), false, 'Should return false because type is null');
 
   t.equal(
@@ -204,7 +204,7 @@ test('filterUtils -> isValidFilterValue', t => {
   t.end();
 });
 
-test('filterUtils -> isInPolygon', t => {
+test('filterUtils -> isInPolygon', (t) => {
   t.equal(
     isInPolygon([120.47448, 23.667604], {
       type: 'Feature',
@@ -274,7 +274,7 @@ test('filterUtils -> isInPolygon', t => {
   t.end();
 });
 
-test('filterUtils -> validatePolygonFilter', t => {
+test('filterUtils -> validatePolygonFilter', (t) => {
   const filter = {
     layerId: ['layer1'],
     dataId: ['puppy'],
@@ -350,7 +350,7 @@ test('filterUtils -> validatePolygonFilter', t => {
   t.end();
 });
 
-test('filterUtils -> Polygon getFilterFunction ', t => {
+test('filterUtils -> Polygon getFilterFunction ', (t) => {
   const dataset = {
     id: 'puppy',
     data: mockPolygonData.data,
@@ -380,7 +380,7 @@ test('filterUtils -> Polygon getFilterFunction ', t => {
 
 /* eslint-enable max-statements */
 
-test('filterUtils -> diffFilters', t => {
+test('filterUtils -> diffFilters', (t) => {
   const testCases = [
     {
       filterRecord: {
@@ -456,7 +456,7 @@ test('filterUtils -> diffFilters', t => {
   t.end();
 });
 
-test('filterUtils -> getTimestampFieldDomain', t => {
+test('filterUtils -> getTimestampFieldDomain', (t) => {
   const timeData = {
     zero: {
       input: ['2016-10-01 09:45:39', '2016-10-01 09:45:39'],
@@ -517,9 +517,9 @@ test('filterUtils -> getTimestampFieldDomain', t => {
     }
   };
 
-  Object.keys(timeData).forEach(key => {
-    const dataContainer = createDataContainer(timeData[key].input.map(d => [d]));
-    const valueAccessor = dc => d => moment.utc(dc.valueAt(d.index, 0)).valueOf();
+  Object.keys(timeData).forEach((key) => {
+    const dataContainer = createDataContainer(timeData[key].input.map((d) => [d]));
+    const valueAccessor = (dc) => (d) => moment.utc(dc.valueAt(d.index, 0)).valueOf();
     const tsFieldDomain = getTimestampFieldDomain(dataContainer, valueAccessor(dataContainer));
 
     t.deepEqual(
@@ -528,7 +528,7 @@ test('filterUtils -> getTimestampFieldDomain', t => {
       'domain should have same keys'
     );
 
-    Object.keys(timeData[key].expect).forEach(k => {
+    Object.keys(timeData[key].expect).forEach((k) => {
       // histogram is created by d3, only need to test they exist
       if (k === 'histogram' || k === 'enlargedHistogram') {
         t.ok(tsFieldDomain[k].length, `should create ${k}`);

@@ -22,8 +22,8 @@ const ModalTab = styled.div`
   }
 
   .load-data-modal__tab__item.active {
-    color: ${props => props.theme.textColorLT};
-    border-bottom: 3px solid ${props => props.theme.textColorLT};
+    color: ${(props) => props.theme.textColorLT};
+    border-bottom: 3px solid ${(props) => props.theme.textColorLT};
     font-weight: 500;
   }
 
@@ -39,7 +39,7 @@ const StyledLoadDataModalTabItem = styled.div`
   padding: 16px 0;
   font-size: 14px;
   font-weight: 400;
-  color: ${props => props.theme.subtextColorLT};
+  color: ${(props) => props.theme.subtextColorLT};
 
   ${media.portable`
     margin-left: 16px;
@@ -52,7 +52,7 @@ const StyledLoadDataModalTabItem = styled.div`
   }
 
   :hover {
-    color: ${props => props.theme.textColorLT};
+    color: ${(props) => props.theme.textColorLT};
   }
 `;
 
@@ -90,7 +90,7 @@ function ModalTabsFactory() {
   const ModalTabs = ({currentMethod, toggleMethod, loadingMethods}) => (
     <ModalTab className="load-data-modal__tab">
       <div className="load-data-modal__tab__inner">
-        {loadingMethods.map(method => (
+        {loadingMethods.map((method) => (
           <ModalTabItem
             key={method.id}
             method={method}

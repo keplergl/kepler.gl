@@ -20,8 +20,8 @@ const StyledSideBarContainer = styled.div`
 const StyledCloseButton = styled.div`
   align-items: center;
   justify-content: center;
-  background-color: ${props => props.theme.primaryBtnBgd};
-  color: ${props => props.theme.primaryBtnColor};
+  background-color: ${(props) => props.theme.primaryBtnBgd};
+  color: ${(props) => props.theme.primaryBtnColor};
   display: flex;
   height: 46px;
   position: absolute;
@@ -31,7 +31,7 @@ const StyledCloseButton = styled.div`
 
   :hover {
     cursor: pointer;
-    background-color: ${props => props.theme.primaryBtnBgdHover};
+    background-color: ${(props) => props.theme.primaryBtnBgdHover};
   }
 `;
 
@@ -51,7 +51,7 @@ const CloseButtonFactory = () => {
 // adding a wrapper component to edit its style
 function CustomSidebarFactory(CloseButton) {
   const SideBar = SidebarFactory(CloseButton);
-  const CustomSidebar = props => (
+  const CustomSidebar = (props) => (
     <StyledSideBarContainer>
       <SideBar {...props} />
     </StyledSideBarContainer>

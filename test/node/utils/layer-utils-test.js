@@ -19,7 +19,7 @@ import {geoJsonWithStyle} from 'test/fixtures/geojson';
 import {KeplerTable, findPointFieldPairs, createNewDataEntry} from '@kepler.gl/table';
 import {createDataContainer} from '@kepler.gl/utils';
 
-test('layerUtils -> findDefaultLayer.1', t => {
+test('layerUtils -> findDefaultLayer.1', (t) => {
   const inputFields = [
     // layer 1
     {
@@ -267,7 +267,7 @@ test('layerUtils -> findDefaultLayer.1', t => {
   t.end();
 });
 
-test('layerUtils -> findDefaultLayer.2', t => {
+test('layerUtils -> findDefaultLayer.2', (t) => {
   const inputFields = [
     // layer 1
     {
@@ -325,7 +325,7 @@ test('layerUtils -> findDefaultLayer.2', t => {
   t.end();
 });
 
-test('layerUtils -> findDefaultLayer.3', t => {
+test('layerUtils -> findDefaultLayer.3', (t) => {
   const dataId = 'cool';
 
   const inputFields = [
@@ -372,7 +372,7 @@ test('layerUtils -> findDefaultLayer.3', t => {
   t.end();
 });
 
-test('layerUtils -> findDefaultLayer.4', t => {
+test('layerUtils -> findDefaultLayer.4', (t) => {
   // Since all defaults layers are scanned and they
   // share field names or patterns.  This set produces
   // multiple layers.
@@ -505,7 +505,7 @@ test('layerUtils -> findDefaultLayer.4', t => {
   t.end();
 });
 
-test('layerUtils -> findDefaultLayer.5', t => {
+test('layerUtils -> findDefaultLayer.5', (t) => {
   const inputFields = [
     // layer 1
     {
@@ -526,7 +526,7 @@ test('layerUtils -> findDefaultLayer.5', t => {
   t.end();
 });
 
-test('layerUtils -> findDefaultLayer:GeojsonLayer', t => {
+test('layerUtils -> findDefaultLayer:GeojsonLayer', (t) => {
   const dataset = new KeplerTable({
     info: {
       label: 'sf_zip_geo'
@@ -635,7 +635,7 @@ test('layerUtils -> findDefaultLayer:GeojsonLayer', t => {
   t.end();
 });
 
-test('layerUtils -> findDefaultLayer:GeojsonLayer.wkt', t => {
+test('layerUtils -> findDefaultLayer:GeojsonLayer.wkt', (t) => {
   const {fields, rows} = processCsvData(wktCsv);
 
   const dataId = '0dj3h';
@@ -682,7 +682,7 @@ test('layerUtils -> findDefaultLayer:GeojsonLayer.wkt', t => {
   t.end();
 });
 
-test('layerUtils -> findDefaultLayer:GeojsonWithStyle', t => {
+test('layerUtils -> findDefaultLayer:GeojsonWithStyle', (t) => {
   const {fields, rows} = processGeojson(geoJsonWithStyle);
 
   const dataContainer = createDataContainer(rows, {fields});
@@ -703,7 +703,7 @@ test('layerUtils -> findDefaultLayer:GeojsonWithStyle', t => {
   t.end();
 });
 
-test('layerUtils -> findDefaultLayer:IconLayer', t => {
+test('layerUtils -> findDefaultLayer:IconLayer', (t) => {
   const inputFields = [
     {
       name: 'begintrip_lat',
@@ -736,7 +736,7 @@ test('layerUtils -> findDefaultLayer:IconLayer', t => {
         allData: []
       },
       KeplerGlLayers
-    ).filter(l => l.type === 'icon').length,
+    ).filter((l) => l.type === 'icon').length,
     0,
     'should find no icon layer'
   );
@@ -751,7 +751,7 @@ test('layerUtils -> findDefaultLayer:IconLayer', t => {
       id: 'meow'
     },
     KeplerGlLayers
-  ).filter(l => l.type === 'icon');
+  ).filter((l) => l.type === 'icon');
 
   t.equal(iconLayers.length, 1, 'should find 1 icon layer');
   t.equal(iconLayers[0].config.label, 'event icon', 'should find 1 icon layer');
@@ -766,7 +766,7 @@ test('layerUtils -> findDefaultLayer:IconLayer', t => {
       id: 'meow'
     },
     KeplerGlLayers
-  ).filter(l => l.type === 'icon');
+  ).filter((l) => l.type === 'icon');
 
   t.equal(iconLayers.length, 2, 'should find 2 icon layers');
   t.equal(iconLayers[0].config.label, 'name icon', 'should find 2 icon layer');
@@ -774,7 +774,7 @@ test('layerUtils -> findDefaultLayer:IconLayer', t => {
   t.end();
 });
 
-test('layerUtils -> findDefaultLayer: TripLayer', t => {
+test('layerUtils -> findDefaultLayer: TripLayer', (t) => {
   const stateWTrip = StateWTripGeojson;
   t.equal(stateWTrip.visState.layers.length, 1, 'should find one layer');
   const foundLayer = stateWTrip.visState.layers[0];
@@ -793,13 +793,13 @@ test('layerUtils -> findDefaultLayer: TripLayer', t => {
   t.end();
 });
 
-test('layerUtils -> findDefaultLayer: TripLayer.1 -> no ts', t => {
+test('layerUtils -> findDefaultLayer: TripLayer.1 -> no ts', (t) => {
   // change 3rd coordinate to string
-  const modified = tripGeojson.features.map(f => ({
+  const modified = tripGeojson.features.map((f) => ({
     ...f,
     geometry: {
       ...f.geometry,
-      coordinates: f.geometry.coordinates.map(coord => [...coord.slice(0, 3), 'hello'])
+      coordinates: f.geometry.coordinates.map((coord) => [...coord.slice(0, 3), 'hello'])
     }
   }));
 
@@ -821,7 +821,7 @@ test('layerUtils -> findDefaultLayer: TripLayer.1 -> no ts', t => {
   t.end();
 });
 
-test('layerUtils -> findDefaultLayer: TripLayer.1 -> ts as string', t => {
+test('layerUtils -> findDefaultLayer: TripLayer.1 -> ts as string', (t) => {
   const tripData = {
     type: 'FeatureCollection',
     features: [
@@ -859,7 +859,7 @@ test('layerUtils -> findDefaultLayer: TripLayer.1 -> ts as string', t => {
   t.end();
 });
 
-test('layerUtils -> getLayerHoverProp', t => {
+test('layerUtils -> getLayerHoverProp', (t) => {
   const visState = cloneDeep(StateWFiles).visState;
   const layer = visState.layers[0];
   const layerData = visState.layerData[0];
@@ -911,7 +911,7 @@ test('layerUtils -> getLayerHoverProp', t => {
   t.end();
 });
 
-test('layerUtils -> getLayerOrderFromLayers', t => {
+test('layerUtils -> getLayerOrderFromLayers', (t) => {
   const visState = cloneDeep(StateWFiles).visState;
   const layerOrder = getLayerOrderFromLayers(visState.layers);
 

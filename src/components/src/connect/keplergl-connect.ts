@@ -8,24 +8,27 @@ import withLocalSelector from './with-local-selector';
 const defaultMapStateToProps = (state, _, __) => state;
 const defaultMapDispatchToProps = () => (dispatch, _, __) => ({dispatch});
 
-export const connect = <T extends JSXElementConstructor<Matching<any, GetProps<T>>>>(
-  mapStateToProps = defaultMapStateToProps,
-  makeMapDispatchToProps = defaultMapDispatchToProps,
-  reduxMergeProps?,
-  options?
-) => (BaseComponent: T) => {
-  const mapDispatchToProps = makeMapDispatchToProps();
-  const reduxMapState = (state, props) => mapStateToProps(props.selector(state), props, state);
+export const connect =
+  <T extends JSXElementConstructor<Matching<any, GetProps<T>>>>(
+    mapStateToProps = defaultMapStateToProps,
+    makeMapDispatchToProps = defaultMapDispatchToProps,
+    reduxMergeProps?,
+    options?
+  ) =>
+  (BaseComponent: T) => {
+    const mapDispatchToProps = makeMapDispatchToProps();
+    const reduxMapState = (state, props) => mapStateToProps(props.selector(state), props, state);
 
-  const reduxMapDispatch = (dispatch, props) => mapDispatchToProps(props.dispatch, props, dispatch);
+    const reduxMapDispatch = (dispatch, props) =>
+      mapDispatchToProps(props.dispatch, props, dispatch);
 
-  const ReduxComponent = reduxConnect(
-    reduxMapState,
-    reduxMapDispatch,
-    reduxMergeProps,
-    options
-  )(BaseComponent);
+    const ReduxComponent = reduxConnect(
+      reduxMapState,
+      reduxMapDispatch,
+      reduxMergeProps,
+      options
+    )(BaseComponent);
 
-  // save selector to context so it can be accessed by its children
-  return withLocalSelector(ReduxComponent);
-};
+    // save selector to context so it can be accessed by its children
+    return withLocalSelector(ReduxComponent);
+  };

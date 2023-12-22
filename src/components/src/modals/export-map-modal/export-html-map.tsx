@@ -18,8 +18,8 @@ import {setUserMapboxAccessToken, setExportHTMLMapMode, ActionHandler} from '@ke
 
 const ExportMapStyledExportSection = styled(StyledExportSection)`
   .disclaimer {
-    font-size: ${props => props.theme.inputFontSize};
-    color: ${props => props.theme.inputColor};
+    font-size: ${(props) => props.theme.inputFontSize};
+    color: ${(props) => props.theme.inputColor};
     margin-top: 12px;
   }
 `;
@@ -30,11 +30,11 @@ interface StyledInputProps {
 
 const StyledInput = styled.input<StyledInputProps>`
   width: 100%;
-  padding: ${props => props.theme.inputPadding};
-  color: ${props => (props.error ? 'red' : props.theme.titleColorLT)};
-  height: ${props => props.theme.inputBoxHeight};
+  padding: ${(props) => props.theme.inputPadding};
+  color: ${(props) => (props.error ? 'red' : props.theme.titleColorLT)};
+  height: ${(props) => props.theme.inputBoxHeight};
   outline: 0;
-  font-size: ${props => props.theme.inputFontSize};
+  font-size: ${(props) => props.theme.inputFontSize};
 
   :active,
   :focus,
@@ -69,8 +69,8 @@ type IntlProps = {
 function ExportHtmlMapFactory(): React.ComponentType<ExportHtmlMapProps> {
   /** @type {typeof import('./export-html-map').ExportHtmlMap} */
   const ExportHtmlMap: React.FC<ExportHtmlMapProps & IntlProps> = ({
-    onChangeExportMapHTMLMode = mode => {},
-    onEditUserMapboxAccessToken = token => {},
+    onChangeExportMapHTMLMode = (mode) => {},
+    onEditUserMapboxAccessToken = (token) => {},
     options = {},
     intl
   }) => (
@@ -92,7 +92,7 @@ function ExportHtmlMapFactory(): React.ComponentType<ExportHtmlMapProps> {
         </div>
         <div className="selection">
           <StyledInput
-            onChange={e => onEditUserMapboxAccessToken(e.target.value)}
+            onChange={(e) => onEditUserMapboxAccessToken(e.target.value)}
             type="text"
             placeholder={intl.formatMessage({id: 'modal.exportMap.html.tokenPlaceholder'})}
             value={options ? options.userMapboxToken : ''}
@@ -121,7 +121,7 @@ function ExportHtmlMapFactory(): React.ComponentType<ExportHtmlMapProps> {
           </div>
         </div>
         <div className="selection">
-          {EXPORT_HTML_MAP_MODE_OPTIONS.map(mode => (
+          {EXPORT_HTML_MAP_MODE_OPTIONS.map((mode) => (
             <BigStyledTile
               key={mode.id}
               selected={options.mode === mode.id}

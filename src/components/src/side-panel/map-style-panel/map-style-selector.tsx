@@ -29,7 +29,9 @@ const StyledMapDropdown = styled(StyledPanelHeader)<StyledMapDropdownProps>`
   margin-bottom: 5px;
   opacity: 1;
   position: relative;
-  transition: opacity 0.05s ease-in, height 0.25s ease-out;
+  transition:
+    opacity 0.05s ease-in,
+    height 0.25s ease-out;
 
   &.collapsed {
     height: 0;
@@ -39,7 +41,7 @@ const StyledMapDropdown = styled(StyledPanelHeader)<StyledMapDropdownProps>`
 
   :hover {
     cursor: pointer;
-    background-color: ${props => props.theme.panelBackgroundHover};
+    background-color: ${(props) => props.theme.panelBackgroundHover};
   }
 
   .map-title-block img {
@@ -138,14 +140,14 @@ function MapStyleSelectorFactory(PanelHeaderAction: ReturnType<typeof PanelHeade
               ) : null}
               {isSelecting && custom ? (
                 <div className="custom-style-actions">
-                  {(customMapStylesActions?.[id] || []).map(action => (
+                  {(customMapStylesActions?.[id] || []).map((action) => (
                     <PanelHeaderAction
                       key={action.id}
                       className="map-dropdown-option__enable-config"
                       id={action.id}
                       IconComponent={action.IconComponent}
                       tooltip={action.tooltip}
-                      onClick={e => {
+                      onClick={(e) => {
                         e.stopPropagation();
                         action.onClick();
                       }}

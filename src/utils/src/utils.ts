@@ -9,9 +9,7 @@ import window from 'global/window';
  * @returns {string} hash string
  */
 export function generateHashId(count: number = 6): string {
-  return Math.random()
-    .toString(36)
-    .substr(count);
+  return Math.random().toString(36).substr(count);
 }
 
 /**
@@ -190,10 +188,10 @@ export function getError(err?: Error | ErrorObject | string): string {
     return err.error
       ? getError(err.error)
       : err.err
-      ? getError(err.err)
-      : err.message
-      ? getError(err.message)
-      : JSON.stringify(err);
+        ? getError(err.err)
+        : err.message
+          ? getError(err.message)
+          : JSON.stringify(err);
   }
 
   // @ts-ignore
@@ -241,14 +239,14 @@ export function isFunction(func): boolean {
 }
 
 export function findById(id: string): <X extends {id: string}>(arr: X[]) => X | undefined {
-  return arr => arr.find(a => a.id === id);
+  return (arr) => arr.find((a) => a.id === id);
 }
 
 /**
  * Returns array difference from
  */
 export function arrayDifference<X extends {id: string}>(source: X[]): (compare: X[]) => X[] {
-  return compare =>
+  return (compare) =>
     source.reduce((acc, element) => {
       const foundElement = findById(element.id)(compare);
       return foundElement ? [...acc, foundElement] : acc;

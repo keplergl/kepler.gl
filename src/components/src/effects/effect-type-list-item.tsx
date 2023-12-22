@@ -25,21 +25,21 @@ const StyledListItem = styled.div`
   transition: background-color 0.4s;
 
   :hover {
-    background-color: ${props => props.theme.effectTypeIconBgHoverColor};
+    background-color: ${(props) => props.theme.effectTypeIconBgHoverColor};
   }
 
   .effect-type-selector__item__icon {
     display: flex;
     background-image: url(${`${KEPLER_UNFOLDED_BUCKET}/images/kepler.gl-layer-icon-bg.png`});
-    background-size: ${props => props.theme.effectTypeIconSizeL}px
-      ${props => props.theme.effectTypeIconSizeL}px;
-    height: ${props => props.theme.effectTypeIconSizeL}px;
-    width: ${props => props.theme.effectTypeIconSizeL}px;
+    background-size: ${(props) => props.theme.effectTypeIconSizeL}px
+      ${(props) => props.theme.effectTypeIconSizeL}px;
+    height: ${(props) => props.theme.effectTypeIconSizeL}px;
+    width: ${(props) => props.theme.effectTypeIconSizeL}px;
     border-radius: 2px;
 
     .effect-preview {
-      height: ${props => props.theme.effectTypeIconSizeL}px;
-      width: ${props => props.theme.effectTypeIconSizeL}px;
+      height: ${(props) => props.theme.effectTypeIconSizeL}px;
+      width: ${(props) => props.theme.effectTypeIconSizeL}px;
     }
   }
 
@@ -47,8 +47,8 @@ const StyledListItem = styled.div`
     text-transform: capitalize;
     font-size: 10px;
     text-align: center;
-    color: ${props => props.theme.effectPanelTextMain};
-    max-width: ${props => props.theme.effectTypeIconSizeL}px;
+    color: ${(props) => props.theme.effectPanelTextMain};
+    max-width: ${(props) => props.theme.effectTypeIconSizeL}px;
     line-height: 14px;
     padding-top: 2px;
   }
@@ -66,7 +66,7 @@ const StyledPlaceholderButton = styled.div`
   margin-left: 3px;
   margin-right: 3px;
   letter-spacing: 0.3px;
-  font-family: ${props => props.theme.effectPanelAddEffectFontFamily};
+  font-family: ${(props) => props.theme.effectPanelAddEffectFontFamily};
   font-weight: 500;
 `;
 
@@ -75,7 +75,7 @@ const StyledPlaceholderButton = styled.div`
  * @param {string} type
  * @returns {string}
  */
-const getImageUrl = type => {
+const getImageUrl = (type) => {
   const kebab = type.replace(
     /[A-Z]+(?![a-z])|[A-Z]/g,
     ($, ofs) => (ofs ? '-' : '') + $.toLowerCase()

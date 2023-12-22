@@ -59,7 +59,7 @@ const SingleColorPalette: React.FC<SingleColorPaletteProps> = ({selectedColor, o
             }}
             key={`${theme}_${key}`}
             selected={selectedColor === ColorsByTheme[theme][key].toUpperCase()}
-            onClick={e => onSelectColor(hexToRgb(ColorsByTheme[theme][key]), e)}
+            onClick={(e) => onSelectColor(hexToRgb(ColorsByTheme[theme][key]), e)}
           />
         ))}
       </StyledColorColumn>

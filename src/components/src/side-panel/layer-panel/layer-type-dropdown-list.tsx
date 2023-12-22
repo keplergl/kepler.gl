@@ -28,18 +28,19 @@ type LayerTypeDropdownListProps = {
 };
 
 const DropdownListWrapper = styled.div`
-  ${props => props.theme.dropdownList};
-  background-color: ${props => props.theme.dropdownListBgd};
-  border-top: 1px solid ${props => props.theme.dropdownListBorderTop};
+  ${(props) => props.theme.dropdownList};
+  background-color: ${(props) => props.theme.dropdownListBgd};
+  border-top: 1px solid ${(props) => props.theme.dropdownListBorderTop};
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
-  padding: ${props => props.theme.layerTypeIconPdL}px 0 0 ${props => props.theme.layerTypeIconPdL}px;
+  padding: ${(props) => props.theme.layerTypeIconPdL}px 0 0
+    ${(props) => props.theme.layerTypeIconPdL}px;
 `;
 
 const StyledDropdownListItem = styled.div`
-  padding-bottom: ${props => props.theme.layerTypeIconPdL}px;
-  padding-right: ${props => props.theme.layerTypeIconPdL}px;
+  padding-bottom: ${(props) => props.theme.layerTypeIconPdL}px;
+  padding-right: ${(props) => props.theme.layerTypeIconPdL}px;
 
   &.disabled {
     pointer-events: none;
@@ -56,11 +57,11 @@ const StyledDropdownListItem = styled.div`
   &.selected {
     cursor: pointer;
     .layer-type-selector__item__icon {
-      color: ${props => props.theme.activeColor};
+      color: ${(props) => props.theme.activeColor};
     }
 
     .layer-type-selector__item__label {
-      color: ${props => props.theme.textColor};
+      color: ${(props) => props.theme.textColor};
     }
   }
 `;
@@ -88,7 +89,7 @@ export function LayerTypeDropdownListFactory() {
         {options.map((value, i) => (
           <StyledDropdownListItem
             className={classNames('layer-type-selector__item', {
-              selected: selectedItems.find(it => it.id === value.id),
+              selected: selectedItems.find((it) => it.id === value.id),
               hover: selectionIndex === i,
               disabled: value.disabled
             })}

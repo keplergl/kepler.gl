@@ -19,15 +19,21 @@ type DndEffectsHook = {
   onDragEnd: (event: DragEndEvent) => void;
 };
 
-const useDndLayers: (layers: Layer[], layerOrder: string[]) => DndEffectsHook = (layers, layerOrder) => {
+const useDndLayers: (layers: Layer[], layerOrder: string[]) => DndEffectsHook = (
+  layers,
+  layerOrder
+) => {
   const dispatch = useDispatch();
 
-  const [activeLayer, setActiveLayer]: [activeEffect: Layer | undefined, setActiveEffect: (effect: Layer | undefined) => void] = useState();
+  const [activeLayer, setActiveLayer]: [
+    activeEffect: Layer | undefined,
+    setActiveEffect: (effect: Layer | undefined) => void
+  ] = useState();
 
   const onDragStart = useCallback(
-    event => {
+    (event) => {
       const {active} = event;
-      const newActiveLayer = layers.find(layer => layer.id === active.id);
+      const newActiveLayer = layers.find((layer) => layer.id === active.id);
       if (newActiveLayer) {
         setActiveLayer(newActiveLayer);
         if (newActiveLayer?.config.isConfigActive) {
@@ -39,7 +45,7 @@ const useDndLayers: (layers: Layer[], layerOrder: string[]) => DndEffectsHook = 
   );
 
   const onDragEnd = useCallback(
-    event => {
+    (event) => {
       const {active, over} = event;
 
       const {id: activeLayerId} = active;

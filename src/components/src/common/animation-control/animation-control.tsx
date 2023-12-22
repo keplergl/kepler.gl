@@ -15,13 +15,13 @@ import FloatingTimeDisplayFactory from './floating-time-display';
 const SLIDER_MARGIN_PALM = 6;
 
 const AnimationControlContainer = styled.div`
-  padding: ${props => `${props.theme.bottomInnerPdVert}px ${props.theme.bottomInnerPdSide}px`};
+  padding: ${(props) => `${props.theme.bottomInnerPdVert}px ${props.theme.bottomInnerPdSide}px`};
   position: relative;
-  margin-top: ${props => props.theme.bottomPanelGap}px;
+  margin-top: ${(props) => props.theme.bottomPanelGap}px;
 
   ${media.portable`
-    border-top: 1px solid ${props => props.theme.panelBorderColor};
-    border-left: 1px solid ${props => props.theme.panelBorderColor};
+    border-top: 1px solid ${(props) => props.theme.panelBorderColor};
+    border-left: 1px solid ${(props) => props.theme.panelBorderColor};
     padding: 12px 12px;
     margin-top: 0;
   `}

@@ -104,7 +104,7 @@ export class ArrowDataContainer implements DataContainerInterface {
 
   rowAsArray(rowIndex: number): any[] {
     // return this._colData.map(col => col[rowIndex]);
-    return this._cols.map(col => col.get(rowIndex));
+    return this._cols.map((col) => col.get(rowIndex));
   }
 
   rows(sharedRow: SharedRowOptions) {

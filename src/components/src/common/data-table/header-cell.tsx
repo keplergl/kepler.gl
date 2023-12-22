@@ -14,17 +14,17 @@ import FieldTokenFactory, {FieldTokenProps} from '../../common/field-token';
 import {DataTableProps} from './index';
 
 const StyledHeaderCell = styled.div`
-  border-bottom: 1px solid ${props => props.theme.headerCellBorderColor};
-  border-top: 1px solid ${props => props.theme.headerCellBorderColor};
-  padding-top: ${props => props.theme.headerPaddingTop}px;
+  border-bottom: 1px solid ${(props) => props.theme.headerCellBorderColor};
+  border-top: 1px solid ${(props) => props.theme.headerCellBorderColor};
+  padding-top: ${(props) => props.theme.headerPaddingTop}px;
   padding-right: 0;
-  padding-bottom: ${props => props.theme.headerPaddingBottom}px;
-  padding-left: ${props => props.theme.cellPaddingSide}px;
+  padding-bottom: ${(props) => props.theme.headerPaddingBottom}px;
+  padding-left: ${(props) => props.theme.cellPaddingSide}px;
   align-items: center;
   justify-content: space-between;
   display: flex;
   flex-direction: row;
-  background-color: ${props => props.theme.headerCellBackground};
+  background-color: ${(props) => props.theme.headerCellBackground};
 
   .n-sort-idx {
     font-size: 9px;
@@ -120,14 +120,14 @@ const HeaderCellFactory = (FieldToken: React.FC<FieldTokenProps>) => {
     const isFormatted = Boolean(colMeta[column]?.displayFormat);
     const formatLabels = isFormatted ? getFieldFormatLabels(colMeta[column].type) : [];
     const onSortTable = useCallback(() => sortTableColumn(column), [sortTableColumn, column]);
-    const onToggleOptionMenu = useCallback(() => toggleMoreOptions(column), [
-      toggleMoreOptions,
-      column
-    ]);
+    const onToggleOptionMenu = useCallback(
+      () => toggleMoreOptions(column),
+      [toggleMoreOptions, column]
+    );
     const onPin = useCallback(() => pinTableColumn(column), [pinTableColumn, column]);
     const onCopy = useCallback(() => copyTableColumn(column), [copyTableColumn, column]);
     const onSetDisplayFormat = useCallback(
-      displayFormat => {
+      (displayFormat) => {
         setColumnDisplayFormat({[column]: displayFormat.format});
       },
       [column, setColumnDisplayFormat]
@@ -146,7 +146,7 @@ const HeaderCellFactory = (FieldToken: React.FC<FieldTokenProps>) => {
         })}
         key={key}
         style={style}
-        onClick={e => {
+        onClick={(e) => {
           e.shiftKey ? sortTableColumn(column) : null;
         }}
         onDoubleClick={onSortTable}
@@ -195,7 +195,7 @@ const HeaderCellFactory = (FieldToken: React.FC<FieldTokenProps>) => {
                 column={column}
                 colMeta={colMeta}
                 toggleMoreOptions={toggleMoreOptions}
-                sortTableColumn={mode => sortTableColumn(column, mode)}
+                sortTableColumn={(mode) => sortTableColumn(column, mode)}
                 pinTableColumn={onPin}
                 copyTableColumn={onCopy}
                 setDisplayFormat={onSetDisplayFormat}

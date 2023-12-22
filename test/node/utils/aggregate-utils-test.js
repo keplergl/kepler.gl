@@ -5,7 +5,7 @@ import test from 'tape';
 import {getFrequency, getMode, aggregate} from '@kepler.gl/utils';
 import {AGGREGATION_TYPES} from '@kepler.gl/constants';
 
-test('AggregateUtils - GetFrequency', t => {
+test('AggregateUtils - GetFrequency', (t) => {
   t.deepEqual(
     getFrequency([2, 1, 2, 1]),
     {
@@ -20,13 +20,13 @@ test('AggregateUtils - GetFrequency', t => {
   t.end();
 });
 
-test('AggregateUtils - GetMode', t => {
+test('AggregateUtils - GetMode', (t) => {
   t.deepEqual(getMode([2, 1, 2, 1]), '1', 'should return 1 as Mode');
 
   t.end();
 });
 
-test('AggregateUtils - aggregate', t => {
+test('AggregateUtils - aggregate', (t) => {
   const data = [1, 2, 3, 1, 2, 3, 4, 3];
   const results = [8, 2.375, 4, 1, 2.5, 1.0606601717798212, 19, 1.125, '3', 4];
   Object.keys(AGGREGATION_TYPES).map((technique, index) => {

@@ -22,7 +22,7 @@ export const ProviderSelect: React.FC<ProviderSelectProps> = ({cloudProviders = 
   <div data-testid={dataTestIds.providerSelect}>
     {cloudProviders.length ? (
       <StyledProviderSection>
-        {cloudProviders.map(provider => (
+        {cloudProviders.map((provider) => (
           <CloudTile key={provider.name} provider={provider} />
         ))}
       </StyledProviderSection>

@@ -179,7 +179,7 @@ const mergedFields = [
     fieldIdx: 0,
     type: 'string',
     analyzerType: 'STRING',
-    valueAccessor: values => values[0]
+    valueAccessor: (values) => values[0]
   },
   {
     name: 'value',
@@ -189,7 +189,7 @@ const mergedFields = [
     fieldIdx: 1,
     type: 'integer',
     analyzerType: 'INT',
-    valueAccessor: values => values[1],
+    valueAccessor: (values) => values[1],
     filterProps: {
       domain: [1, 76],
       step: 0.01,
@@ -348,7 +348,7 @@ mergedH3Layer.config = {
     fieldIdx: 1,
     type: 'integer',
     analyzerType: 'INT',
-    valueAccessor: values => values[1]
+    valueAccessor: (values) => values[1]
   },
   colorScale: 'quantile',
   colorDomain: [18, 19, 26, 27],

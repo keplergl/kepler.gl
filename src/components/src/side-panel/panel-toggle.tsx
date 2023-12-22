@@ -15,8 +15,8 @@ type PanelToggleProps = {
 const PanelHeaderBottom = styled.div.attrs({
   className: 'side-side-panel__header__bottom'
 })`
-  background-color: ${props => props.theme.sidePanelHeaderBg};
-  border-bottom: 1px solid ${props => props.theme.sidePanelHeaderBorder};
+  background-color: ${(props) => props.theme.sidePanelHeaderBg};
+  border-bottom: 1px solid ${(props) => props.theme.sidePanelHeaderBorder};
   padding: 0 16px;
   display: flex;
   min-height: 30px;
@@ -27,7 +27,7 @@ PanelToggleFactory.deps = [PanelTabFactory];
 function PanelToggleFactory(PanelTab: ReturnType<typeof PanelTabFactory>) {
   const PanelToggle: React.FC<PanelToggleProps> = ({activePanel, panels, togglePanel}) => {
     const onClick = useCallback(
-      panel => {
+      (panel) => {
         const callback = panel.onClick || togglePanel;
         callback(panel.id);
       },
@@ -36,7 +36,7 @@ function PanelToggleFactory(PanelTab: ReturnType<typeof PanelTabFactory>) {
 
     return (
       <PanelHeaderBottom>
-        {panels.map(panel => (
+        {panels.map((panel) => (
           <PanelTab
             key={panel.id}
             panel={panel}

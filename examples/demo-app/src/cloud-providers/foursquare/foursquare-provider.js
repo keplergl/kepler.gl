@@ -135,7 +135,7 @@ export default class FoursquareProvider extends Provider {
       }
     );
     const data = await response.json();
-    return data.items.map(map => convertFSQModelToMapItem(map, `${this.apiURL}/v1/maps`));
+    return data.items.map((map) => convertFSQModelToMapItem(map, `${this.apiURL}/v1/maps`));
   }
 
   async downloadMap(loadParams) {

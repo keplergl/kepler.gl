@@ -34,7 +34,7 @@ const CLASS_FILTER = [
   'attrition-logo',
   'map-control__panel-split-viewport-tools'
 ];
-const DOM_FILTER_FUNC = node => !CLASS_FILTER.includes(node.className);
+const DOM_FILTER_FUNC = (node) => !CLASS_FILTER.includes(node.className);
 const OUT_OF_SCREEN_POSITION = -9999;
 
 PlotContainerFactory.deps = [MapContainerFactory, MapsLayoutFactory];
@@ -60,8 +60,8 @@ interface StyledMapContainerProps {
 }
 
 const StyledMapContainer = styled.div<StyledMapContainerProps>`
-  width: ${props => props.width}px;
-  height: ${props => props.height}px;
+  width: ${(props) => props.width}px;
+  height: ${(props) => props.height}px;
   display: flex;
 `;
 
@@ -97,7 +97,7 @@ export default function PlotContainerFactory(
       // re-fetch the new screenshot only when ratio legend or resolution changes
       const checks = ['ratio', 'resolution', 'legend'];
       const shouldRetrieveScreenshot = checks.some(
-        item => this.props.exportImageSetting[item] !== prevProps.exportImageSetting[item]
+        (item) => this.props.exportImageSetting[item] !== prevProps.exportImageSetting[item]
       );
       if (shouldRetrieveScreenshot) {
         this.props.setExportImageSetting({processing: true});
@@ -107,8 +107,8 @@ export default function PlotContainerFactory(
 
     plottingAreaRef = createRef<HTMLDivElement>();
 
-    mapStyleSelector = props => props.mapFields.mapStyle;
-    mapScaleSelector = props => {
+    mapStyleSelector = (props) => props.mapFields.mapStyle;
+    mapScaleSelector = (props) => {
       const {imageSize} = props.exportImageSetting;
       const {mapState} = props.mapFields;
       if (imageSize.scale) {
@@ -135,7 +135,7 @@ export default function PlotContainerFactory(
       })
     );
 
-    _onMapRender = map => {
+    _onMapRender = (map) => {
       if (map.isStyleLoaded()) {
         this._retrieveNewScreenshot();
       }
@@ -151,7 +151,7 @@ export default function PlotContainerFactory(
           escapeXhtmlForWebpack
         })
           .then(this.props.setExportImageDataUri)
-          .catch(err => {
+          .catch((err) => {
             this.props.setExportImageError(err);
             if (this.props.enableErrorNotification) {
               this.props.addNotification(exportImageError({err}));

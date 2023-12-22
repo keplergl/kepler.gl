@@ -32,20 +32,20 @@ const ButtonWrapper = styled.div`
 
   .button.clear-all {
     background: transparent;
-    color: ${props => props.theme.subtextColor};
+    color: ${(props) => props.theme.subtextColor};
     margin: 0 0 0 8px;
     padding: 0;
 
     &:hover {
-      color: ${props => props.theme.textColor};
+      color: ${(props) => props.theme.textColor};
     }
   }
 `;
 
 const CompareSwitchWrapper = styled.div`
-  color: ${props => props.theme.labelColor};
+  color: ${(props) => props.theme.labelColor};
   display: flex;
-  font-size: ${props => props.theme.inputFontSize};
+  font-size: ${(props) => props.theme.inputFontSize};
   justify-content: space-between;
   line-height: 11px;
   margin-bottom: 8px;
@@ -117,8 +117,8 @@ function TooltipConfigFactory(
 
     const findSelectedHelper = useCallback((selected, tooltipFields) => {
       return selected.map(
-        f =>
-          tooltipFields.find(tooltipField => tooltipField.name === f.name) || {
+        (f) =>
+          tooltipFields.find((tooltipField) => tooltipField.name === f.name) || {
             name: f.name,
             // default initial tooltip is null
             format: null
@@ -127,7 +127,7 @@ function TooltipConfigFactory(
     }, []);
 
     const handleSelect = useCallback(
-      selected => {
+      (selected) => {
         const newConfig: DatasetTooltipConfigProps['config'] = {
           ...config,
           fieldsToShow: {
@@ -141,7 +141,7 @@ function TooltipConfigFactory(
     );
 
     const handleReorderItems = useCallback(
-      newOrder =>
+      (newOrder) =>
         onChange({
           ...config,
           fieldsToShow: {
@@ -201,7 +201,7 @@ function TooltipConfigFactory(
 
     return (
       <TooltipConfigWrapper>
-        {Object.keys(config.fieldsToShow).map(dataId =>
+        {Object.keys(config.fieldsToShow).map((dataId) =>
           dataId === GEOCODER_DATASET_NAME ? null : (
             <DatasetTooltipConfig
               key={dataId}
@@ -233,7 +233,7 @@ function TooltipConfigFactory(
           </PanelLabel>
           <ItemSelector
             disabled={!config.compareMode}
-            displayOption={d =>
+            displayOption={(d) =>
               intl.formatMessage({
                 id: `compare.types.${d}`
               })
@@ -243,7 +243,7 @@ function TooltipConfigFactory(
             multiSelect={false}
             searchable={false}
             inputTheme={'secondary'}
-            getOptionValue={d => d}
+            getOptionValue={(d) => d}
             onChange={handleChange}
           />
         </SidePanelSection>

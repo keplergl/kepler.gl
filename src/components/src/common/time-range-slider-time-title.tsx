@@ -13,21 +13,21 @@ interface TimeValueWrapperProps {
 const TimeValueWrapper = styled.div<TimeValueWrapperProps>`
   display: flex;
   align-items: center;
-  font-size: ${props => props.theme.timeTitleFontSize};
-  justify-content: ${props => (props.isEnlarged ? 'center' : 'space-between')};
+  font-size: ${(props) => props.theme.timeTitleFontSize};
+  justify-content: ${(props) => (props.isEnlarged ? 'center' : 'space-between')};
 
   .horizontal-bar {
     padding: 0 12px;
-    color: ${props => props.theme.textColor};
+    color: ${(props) => props.theme.textColor};
   }
 
   .time-value {
     display: flex;
-    flex-direction: ${props => (props.isEnlarged ? 'row' : 'column')};
+    flex-direction: ${(props) => (props.isEnlarged ? 'row' : 'column')};
     align-items: flex-start;
-    max-width: ${props => (!props.isEnlarged ? '40%' : 'auto')};
+    max-width: ${(props) => (!props.isEnlarged ? '40%' : 'auto')};
     span {
-      color: ${props => props.theme.textColor};
+      color: ${(props) => props.theme.textColor};
     }
   }
 

@@ -31,7 +31,7 @@ const MOCK_CSS_4 = `div#header {
 }`;
 const BASE_HREF = 'http://mock.kepler.com/js/v1.1.1/main.css';
 
-test('dom-to-image: setStyleSheetBaseHref', t => {
+test('dom-to-image: setStyleSheetBaseHref', (t) => {
   const TEST_CASES = [
     {
       args: {
@@ -75,7 +75,7 @@ test('dom-to-image: setStyleSheetBaseHref', t => {
     }
   ];
 
-  TEST_CASES.forEach(tc => {
+  TEST_CASES.forEach((tc) => {
     const result = setStyleSheetBaseHref(tc.args.text, tc.args.base);
     t.equal(result, tc.expected, tc.msg);
   });

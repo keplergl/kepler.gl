@@ -15,39 +15,39 @@ interface StyledMapControlLegendProps {
 }
 
 export const StyledMapControlLegend = styled.div<StyledMapControlLegendProps>`
-  padding: 10px ${props => props.theme.mapControl.padding}px 10px
-    ${props => props.theme.mapControl.padding}px;
+  padding: 10px ${(props) => props.theme.mapControl.padding}px 10px
+    ${(props) => props.theme.mapControl.padding}px;
   font-size: 11px;
-  font-family: ${props => props.theme.fontFamily};
-  border-bottom-color: ${props => props.theme.panelBorderColor};
+  font-family: ${(props) => props.theme.fontFamily};
+  border-bottom-color: ${(props) => props.theme.panelBorderColor};
   border-bottom-style: solid;
-  border-bottom-width: ${props => (props.last ? 0 : '1px')};
-  width: ${props => props.width}px;
+  border-bottom-width: ${(props) => (props.last ? 0 : '1px')};
+  width: ${(props) => props.width}px;
   box-sizing: border-box;
 
   .legend--layer_name {
     font-size: 12px;
-    padding-right: ${props => props.theme.mapControl.padding}px;
-    color: ${props => props.theme.textColor};
+    padding-right: ${(props) => props.theme.mapControl.padding}px;
+    color: ${(props) => props.theme.textColor};
     font-weight: 500;
   }
   .legend--layer_type {
-    color: ${props => props.theme.subtextColor};
+    color: ${(props) => props.theme.subtextColor};
     font-weight: 500;
     font-size: 11px;
-    padding-right: ${props => props.theme.mapControl.padding}px;
+    padding-right: ${(props) => props.theme.mapControl.padding}px;
   }
 
   .legend--layer__title {
-    padding-right: ${props => props.theme.mapControl.padding}px;
+    padding-right: ${(props) => props.theme.mapControl.padding}px;
   }
 
   .legend--layer_by {
-    color: ${props => props.theme.subtextColor};
+    color: ${(props) => props.theme.subtextColor};
   }
 
   .legend--layer_color_field {
-    color: ${props => props.theme.textColorHl};
+    color: ${(props) => props.theme.textColorHl};
     font-weight: 500;
   }
 
@@ -116,7 +116,7 @@ export const LayerColorLegend: React.FC<LayerColorLegendProps> = React.memo(
   ({description, config, width, colorChannel}) => {
     const enableColorBy = description.measure;
     const {scale, field, domain, range, property} = colorChannel;
-    const [colorScale, colorField, colorDomain] = [scale, field, domain].map(k => config[k]);
+    const [colorScale, colorField, colorDomain] = [scale, field, domain].map((k) => config[k]);
     const colorRange = config.visConfig[range];
 
     return (
@@ -151,7 +151,7 @@ export const LayerColorLegend: React.FC<LayerColorLegendProps> = React.memo(
 // eslint-disable-next-line react/display-name
 LayerColorLegend.displayName = 'LayerColorLegend';
 
-const isColorChannel = visualChannel =>
+const isColorChannel = (visualChannel) =>
   [CHANNEL_SCALES.color, CHANNEL_SCALES.colorAggr].includes(visualChannel.channelScaleType);
 
 export type LayerLegendHeaderProps = {
@@ -180,11 +180,13 @@ export function LayerLegendContentFactory() {
   /** @type {typeof import('./map-legend').LayerLegendContent }> */
   const LayerLegendContent: React.FC<LayerLegendContentProps> = ({layer, containerW}) => {
     const colorChannels = Object.values(layer.visualChannels).filter(isColorChannel);
-    const nonColorChannels = Object.values(layer.visualChannels).filter(vc => !isColorChannel(vc));
+    const nonColorChannels = Object.values(layer.visualChannels).filter(
+      (vc) => !isColorChannel(vc)
+    );
 
     return (
       <>
-        {colorChannels.map(colorChannel =>
+        {colorChannels.map((colorChannel) =>
           !colorChannel.condition || colorChannel.condition(layer.config) ? (
             <LayerColorLegend
               key={colorChannel.key}
@@ -195,7 +197,7 @@ export function LayerLegendContentFactory() {
             />
           ) : null
         )}
-        {nonColorChannels.map(visualChannel => {
+        {nonColorChannels.map((visualChannel) => {
           const matchCondition = !visualChannel.condition || visualChannel.condition(layer.config);
           const enabled = layer.config[visualChannel.field] || visualChannel.defaultMeasure;
 

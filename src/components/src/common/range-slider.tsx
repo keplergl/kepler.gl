@@ -19,10 +19,10 @@ interface SliderInputProps {
 }
 
 const SliderInput = styled(Input)<SliderInputProps>`
-  width: ${props => props.theme.sliderInputWidth}px;
-  margin-left: ${props => (props.flush ? 0 : props.inputSize === 'tiny' ? 12 : 18)}px;
-  font-size: ${props => props.theme.sliderInputFontSize}; // 10px // 12px;
-  padding: ${props => props.theme.sliderInputPadding}; // 4px 6px; // 6px 12px;
+  width: ${(props) => props.theme.sliderInputWidth}px;
+  margin-left: ${(props) => (props.flush ? 0 : props.inputSize === 'tiny' ? 12 : 18)}px;
+  font-size: ${(props) => props.theme.sliderInputFontSize}; // 10px // 12px;
+  padding: ${(props) => props.theme.sliderInputPadding}; // 4px 6px; // 6px 12px;
 `;
 
 interface SliderWrapperProps {
@@ -33,7 +33,7 @@ interface SliderWrapperProps {
 const SliderWrapper = styled.div<SliderWrapperProps>`
   display: flex;
   position: relative;
-  align-items: ${props => (!props.isRanged && props.showInput ? 'center' : 'flex-start')};
+  align-items: ${(props) => (!props.isRanged && props.showInput ? 'center' : 'flex-start')};
 `;
 
 const RangeInputWrapper = styled.div`
@@ -119,27 +119,27 @@ export default function RangeSliderFactory(
       }
     }
 
-    setSliderContainer: React.LegacyRef<HTMLDivElement> = element => {
+    setSliderContainer: React.LegacyRef<HTMLDivElement> = (element) => {
       this.sliderContainer = element;
       this._resize();
     };
     inputValue0 = createRef<HTMLInputElement>();
     inputValue1 = createRef<HTMLInputElement>();
-    value0Selector = props => props.value0;
-    value1Selector = props => props.value1;
+    value0Selector = (props) => props.value0;
+    value1Selector = (props) => props.value1;
     filterValueSelector = createSelector(
       this.value0Selector,
       this.value1Selector,
       (value0, value1) => [value0, value1]
     );
 
-    _roundValToStep = val => {
+    _roundValToStep = (val) => {
       const {range, step} = this.props;
       if (!range || !step) return;
       return roundValToStep(range[0], step, val);
     };
 
-    _setRangeVal1 = val => {
+    _setRangeVal1 = (val) => {
       const {value0, range, onChange = () => {}} = this.props;
       if (!range) return;
       const val1 = Number(val);
@@ -147,7 +147,7 @@ export default function RangeSliderFactory(
       return true;
     };
 
-    _setRangeVal0 = val => {
+    _setRangeVal0 = (val) => {
       const {value1, range, onChange = () => {}} = this.props;
       if (!range) return;
       const val0 = Number(val);
@@ -171,7 +171,7 @@ export default function RangeSliderFactory(
     _renderInput(key) {
       const setRange = key === 'value0' ? this._setRangeVal0 : this._setRangeVal1;
       const ref = key === 'value0' ? this.inputValue0 : this.inputValue1;
-      const update = e => {
+      const update = (e) => {
         if (!setRange(e.target.value)) {
           this.setState({[key]: this.state[key]});
         }
@@ -188,7 +188,7 @@ export default function RangeSliderFactory(
           key={key}
           value={this.state[key]}
           onChange={onChange}
-          onKeyPress={e => {
+          onKeyPress={(e) => {
             if (e.key === 'Enter') {
               update(e);
               (ref.current as any).blur();

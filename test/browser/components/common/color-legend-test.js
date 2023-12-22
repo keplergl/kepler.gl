@@ -7,7 +7,7 @@ import {mountWithTheme} from 'test/helpers/component-utils';
 
 import {ColorLegend, LegendRow} from '@kepler.gl/components';
 
-test('Components -> ColorLegend.render', t => {
+test('Components -> ColorLegend.render', (t) => {
   t.doesNotThrow(() => {
     mountWithTheme(<ColorLegend />);
   }, 'Show not fail without props');
@@ -32,12 +32,7 @@ test('Components -> ColorLegend.render', t => {
 
   let wrapper = mountWithTheme(<ColorLegend {...props} />);
   t.equal(wrapper.find(LegendRow).length, 6, 'Should render 6 legends');
-  const row1 = wrapper
-    .find(LegendRow)
-    .at(0)
-    .find('rect')
-    .at(0)
-    .html();
+  const row1 = wrapper.find(LegendRow).at(0).find('rect').at(0).html();
 
   t.ok(row1.indexOf('fill: #5A1846'), 'should render color rect');
 
@@ -53,18 +48,13 @@ test('Components -> ColorLegend.render', t => {
   props.scaleType = 'quantile';
   wrapper = mountWithTheme(<ColorLegend {...props} />);
 
-  const row1Txt = wrapper
-    .find(LegendRow)
-    .at(0)
-    .find('text')
-    .at(0)
-    .text();
+  const row1Txt = wrapper.find(LegendRow).at(0).find('text').at(0).text();
   t.equal(row1Txt, '', 'should not render text');
 
   t.end();
 });
 
-test('Components -> ColorLegend.render', t => {
+test('Components -> ColorLegend.render', (t) => {
   t.doesNotThrow(() => {
     mountWithTheme(<ColorLegend />);
   }, 'Show not fail without props');
@@ -88,12 +78,7 @@ test('Components -> ColorLegend.render', t => {
 
   let wrapper = mountWithTheme(<ColorLegend {...props} />);
   t.equal(wrapper.find(LegendRow).length, 5, 'Should render 5 legends');
-  let row1 = wrapper
-    .find(LegendRow)
-    .at(0)
-    .find('rect')
-    .at(0)
-    .html();
+  let row1 = wrapper.find(LegendRow).at(0).find('rect').at(0).html();
 
   t.ok(row1.indexOf('fill: #C1C9CC'), 'should render color rect based on colorMap');
   t.ok(row1.indexOf('apple'), 'should render color text based on colorMap');
@@ -110,12 +95,7 @@ test('Components -> ColorLegend.render', t => {
 
   wrapper = mountWithTheme(<ColorLegend {...props} />);
   t.equal(wrapper.find(LegendRow).length, 5, 'Should render 5 legends');
-  row1 = wrapper
-    .find(LegendRow)
-    .at(0)
-    .find('rect')
-    .at(0)
-    .html();
+  row1 = wrapper.find(LegendRow).at(0).find('rect').at(0).html();
 
   t.ok(row1.indexOf('fill: #DFB02F'), 'should render color rect based on colorMap');
   t.ok(row1.indexOf('Apple'), 'should render color text based on colorMap');

@@ -11,7 +11,7 @@ import {
   StateWCustomMapStyleLegacy
 } from 'test/helpers/mock-state';
 
-test('#mapStyleSchema -> v1 -> save load mapStyle', t => {
+test('#mapStyleSchema -> v1 -> save load mapStyle', (t) => {
   const initialState = cloneDeep(InitialState);
   const savedState = SchemaManager.getConfigToSave(initialState);
 
@@ -54,7 +54,7 @@ test('#mapStyleSchema -> v1 -> save load mapStyle', t => {
   t.end();
 });
 
-test('#mapStyleSchema -> v1 -> save load mapStyle with custom local style', t => {
+test('#mapStyleSchema -> v1 -> save load mapStyle with custom local style', (t) => {
   const initialState = cloneDeep(StateWCustomMapStyleLocal);
   const savedState = SchemaManager.getConfigToSave(initialState);
 
@@ -76,8 +76,7 @@ test('#mapStyleSchema -> v1 -> save load mapStyle with custom local style', t =>
         id: 'smoothie_the_cat',
         accessToken: 'secret_token',
         label: 'Smoothie the Cat',
-        icon:
-          'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat/static/-122.3391,37.7922,9,0,0/400x300?access_token=secret_token&logo=false&attribution=false',
+        icon: 'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat/static/-122.3391,37.7922,9,0,0/400x300?access_token=secret_token&logo=false&attribution=false',
         custom: 'LOCAL',
         url: 'mapbox://styles/shanhe/smoothie.the.cat'
       }
@@ -89,7 +88,7 @@ test('#mapStyleSchema -> v1 -> save load mapStyle with custom local style', t =>
   t.end();
 });
 
-test('#mapStyleSchema -> v1 -> save load mapStyle with custom managed style', t => {
+test('#mapStyleSchema -> v1 -> save load mapStyle with custom managed style', (t) => {
   const initialState = cloneDeep(StateWCustomMapStyleManaged);
   const savedState = SchemaManager.getConfigToSave(initialState);
 
@@ -111,8 +110,7 @@ test('#mapStyleSchema -> v1 -> save load mapStyle with custom managed style', t 
         id: 'smoothie_the_cat',
         accessToken: 'secret_token',
         label: 'Smoothie the Cat',
-        icon:
-          'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat/static/-122.3391,37.7922,9,0,0/400x300?access_token=secret_token&logo=false&attribution=false',
+        icon: 'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat/static/-122.3391,37.7922,9,0,0/400x300?access_token=secret_token&logo=false&attribution=false',
         custom: 'MANAGED',
         url: 'mapbox://styles/shanhe/smoothie.the.cat'
       }
@@ -124,7 +122,7 @@ test('#mapStyleSchema -> v1 -> save load mapStyle with custom managed style', t 
   t.end();
 });
 
-test('#mapStyleSchema -> v1 -> save load mapStyle with custom local style (custom: true (legacy backwards support))', t => {
+test('#mapStyleSchema -> v1 -> save load mapStyle with custom local style (custom: true (legacy backwards support))', (t) => {
   const initialState = cloneDeep(StateWCustomMapStyleLegacy);
   const savedState = SchemaManager.getConfigToSave(initialState);
 
@@ -146,8 +144,7 @@ test('#mapStyleSchema -> v1 -> save load mapStyle with custom local style (custo
         id: 'smoothie_the_cat',
         accessToken: 'secret_token',
         label: 'Smoothie the Cat',
-        icon:
-          'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat/static/-122.3391,37.7922,9,0,0/400x300?access_token=secret_token&logo=false&attribution=false',
+        icon: 'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat/static/-122.3391,37.7922,9,0,0/400x300?access_token=secret_token&logo=false&attribution=false',
         custom: true,
         url: 'mapbox://styles/shanhe/smoothie.the.cat'
       }

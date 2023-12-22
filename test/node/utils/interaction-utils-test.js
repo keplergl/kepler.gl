@@ -51,11 +51,11 @@ const fields = [
   }
 ];
 
-test('interactionUtil -> findFieldsToShow', t => {
+test('interactionUtil -> findFieldsToShow', (t) => {
   const dataId = 'random_stuff';
 
   const someFields = [
-    ...DEFAULT_TOOLTIP_FIELDS.slice(0, 2).map(d => ({name: d})),
+    ...DEFAULT_TOOLTIP_FIELDS.slice(0, 2).map((d) => ({name: d})),
     ...[
       {
         name: 'random'
@@ -86,7 +86,7 @@ test('interactionUtil -> findFieldsToShow', t => {
   t.end();
 });
 
-test('interactionUtil -> autoFindTooltipFields', t => {
+test('interactionUtil -> autoFindTooltipFields', (t) => {
   const expectedFields = {
     test: [
       {
@@ -113,11 +113,11 @@ test('interactionUtil -> autoFindTooltipFields', t => {
   t.end();
 });
 
-test('interactionUtil -> getTooltipDisplayDeltaValue', t => {
+test('interactionUtil -> getTooltipDisplayDeltaValue', (t) => {
   const tooltipConfig = StateWTooltipFormat.visState.interactionConfig.tooltip.config;
   const dataset = StateWTooltipFormat.visState.datasets[testGeoJsonDataId];
-  const testFieldIdx = dataset.fields.findIndex(f => f.name === 'TRIPS');
-  const item = tooltipConfig.fieldsToShow[testGeoJsonDataId].find(fs => fs.name === 'TRIPS');
+  const testFieldIdx = dataset.fields.findIndex((f) => f.name === 'TRIPS');
+  const item = tooltipConfig.fieldsToShow[testGeoJsonDataId].find((fs) => fs.name === 'TRIPS');
 
   const TEST_CASES = [
     {
@@ -183,14 +183,14 @@ test('interactionUtil -> getTooltipDisplayDeltaValue', t => {
     }
   ];
 
-  TEST_CASES.forEach(tc => {
+  TEST_CASES.forEach((tc) => {
     t.equal(getTooltipDisplayDeltaValue(tc.input), tc.output, tc.message);
   });
 
   t.end();
 });
 
-test('interactionUtil -> getTooltipDisplayValue', t => {
+test('interactionUtil -> getTooltipDisplayValue', (t) => {
   const tooltipConfig = StateWTooltipFormat.visState.interactionConfig.tooltip.config;
   const dataset = StateWTooltipFormat.visState.datasets[testGeoJsonDataId];
   const items = tooltipConfig.fieldsToShow[testGeoJsonDataId];
@@ -213,16 +213,16 @@ test('interactionUtil -> getTooltipDisplayValue', t => {
     }
   ];
 
-  TEST_CASES.forEach(tc => {
+  TEST_CASES.forEach((tc) => {
     // field.displayFormat has been used to replace tooltipConfig.format
     const field = {
-      ...dataset.fields.find(f => f.name === tc.input.name),
+      ...dataset.fields.find((f) => f.name === tc.input.name),
       displayFormat: tc.input.format
     };
-    const fieldIdx = dataset.fields.findIndex(f => f.name === tc.input.name);
+    const fieldIdx = dataset.fields.findIndex((f) => f.name === tc.input.name);
 
     t.deepEqual(
-      dataset.dataContainer.map(data =>
+      dataset.dataContainer.map((data) =>
         getTooltipDisplayValue({
           field,
           value: data.valueAt(fieldIdx),

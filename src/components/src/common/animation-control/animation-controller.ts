@@ -96,7 +96,7 @@ function AnimationControllerFactory(): typeof AnimationControllerType {
       }
     }
 
-    _animate = delay => {
+    _animate = (delay) => {
       this._startTime = new Date().getTime();
 
       const loop = () => {

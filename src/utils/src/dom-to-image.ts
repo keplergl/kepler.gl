@@ -76,11 +76,11 @@ function toSvg(node, options) {
   options = options || {};
   copyOptions(options);
   return Promise.resolve(node)
-    .then(nd => cloneNode(nd, options.filter, true))
+    .then((nd) => cloneNode(nd, options.filter, true))
     .then(embedFonts)
     .then(inlineImages)
     .then(applyOptions)
-    .then(clone =>
+    .then((clone) =>
       makeSvgDataUri(
         clone,
         options.width || getWidth(node),
@@ -96,7 +96,7 @@ function toSvg(node, options) {
     if (options.height) clone.style.height = `${options.height}px`;
 
     if (options.style)
-      Object.keys(options.style).forEach(property => {
+      Object.keys(options.style).forEach((property) => {
         clone.style[property] = options.style[property];
       });
 
@@ -111,7 +111,7 @@ function toSvg(node, options) {
  * */
 function toPixelData(node, options) {
   return draw(node, options || {}).then(
-    canvas => canvas.getContext('2d').getImageData(0, 0, getWidth(node), getHeight(node)).data
+    (canvas) => canvas.getContext('2d').getImageData(0, 0, getWidth(node), getHeight(node)).data
   );
 }
 
@@ -121,7 +121,7 @@ function toPixelData(node, options) {
  * @return {Promise} - A promise that is fulfilled with a PNG image data URL
  * */
 function toPng(node, options) {
-  return draw(node, options || {}).then(canvas => canvas.toDataURL());
+  return draw(node, options || {}).then((canvas) => canvas.toDataURL());
 }
 
 /**
@@ -131,7 +131,9 @@ function toPng(node, options) {
  * */
 function toJpeg(node, options) {
   options = options || {};
-  return draw(node, options).then(canvas => canvas.toDataURL('image/jpeg', options.quality || 1.0));
+  return draw(node, options).then((canvas) =>
+    canvas.toDataURL('image/jpeg', options.quality || 1.0)
+  );
 }
 
 /**
@@ -162,7 +164,7 @@ function draw(domNode, options) {
   return toSvg(domNode, options)
     .then(makeImage)
     .then(delay(100))
-    .then(image => {
+    .then((image) => {
       const canvas = newCanvas(domNode);
       canvas.getContext('2d').drawImage(image, 0, 0);
       return canvas;
@@ -190,8 +192,8 @@ function cloneNode(node, filter, root) {
 
   return Promise.resolve(node)
     .then(makeNodeCopy)
-    .then(clone => cloneChildren(node, clone, filter))
-    .then(clone => processClone(node, clone));
+    .then((clone) => cloneChildren(node, clone, filter))
+    .then((clone) => processClone(node, clone));
 
   function makeNodeCopy(nd) {
     if (nd instanceof window.HTMLCanvasElement) {
@@ -202,10 +204,10 @@ function cloneNode(node, filter, root) {
 
   function cloneChildrenInOrder(parent, arrChildren, flt) {
     let done = Promise.resolve();
-    arrChildren.forEach(child => {
+    arrChildren.forEach((child) => {
       done = done
         .then(() => cloneNode(child, flt, null))
-        .then(childClone => {
+        .then((childClone) => {
           if (childClone) {
             parent.appendChild(childClone);
           }
@@ -225,7 +227,7 @@ function cloneNode(node, filter, root) {
 }
 
 function embedFonts(node) {
-  return fontFaces.resolveAll().then(cssText => {
+  return fontFaces.resolveAll().then((cssText) => {
     const styleNode = document.createElement('style');
     node.appendChild(styleNode);
     styleNode.appendChild(document.createTextNode(cssText));
@@ -238,7 +240,7 @@ function inlineImages(node) {
 }
 
 function makeSvgDataUri(node, width, height, escapeXhtmlForWebpack = true) {
-  return Promise.resolve(node).then(nd => {
+  return Promise.resolve(node).then((nd) => {
     nd.setAttribute('xmlns', 'http://www.w3.org/1999/xhtml');
     const serializedString = new window.XMLSerializer().serializeToString(nd);
 
@@ -276,7 +278,7 @@ function newInliner() {
     while ((match = URL_REGEX.exec(string)) !== null) {
       result.push(match[1]);
     }
-    return result.filter(url => {
+    return result.filter((url) => {
       return !isDataUrl(url);
     });
   }
@@ -287,10 +289,12 @@ function newInliner() {
 
   function inline(string, url, baseUrl, get) {
     return Promise.resolve(url)
-      .then(ul => (baseUrl ? resolveUrl(ul, baseUrl) : ul))
-      .then(ul => (typeof get === 'function' ? get(ul) : getAndEncode(ul, domtoimage.impl.options)))
-      .then(data => dataAsUrl(data, mimeType(url)))
-      .then(dataUrl => string.replace(urlAsRegex(url), `$1${dataUrl}$3`));
+      .then((ul) => (baseUrl ? resolveUrl(ul, baseUrl) : ul))
+      .then((ul) =>
+        typeof get === 'function' ? get(ul) : getAndEncode(ul, domtoimage.impl.options)
+      )
+      .then((data) => dataAsUrl(data, mimeType(url)))
+      .then((dataUrl) => string.replace(urlAsRegex(url), `$1${dataUrl}$3`));
   }
 
   function inlineAll(string, baseUrl, get) {
@@ -299,10 +303,10 @@ function newInliner() {
     }
     return Promise.resolve(string)
       .then(readUrls)
-      .then(urls => {
+      .then((urls) => {
         let done = Promise.resolve(string);
-        urls.forEach(url => {
-          done = done.then(str => inline(str, url, baseUrl, get));
+        urls.forEach((url) => {
+          done = done.then((str) => inline(str, url, baseUrl, get));
         });
         return done;
       });
@@ -317,10 +321,10 @@ function newFontFaces() {
 
   function resolveAll() {
     return readAll()
-      .then(webFonts => {
-        return Promise.all(webFonts.map(webFont => webFont.resolve()));
+      .then((webFonts) => {
+        return Promise.all(webFonts.map((webFont) => webFont.resolve()));
       })
-      .then(cssStrings => cssStrings.join('\n'));
+      .then((cssStrings) => cssStrings.join('\n'));
   }
 
   function readAll() {
@@ -328,29 +332,29 @@ function newFontFaces() {
       .then(loadExternalStyleSheets)
       .then(getCssRules)
       .then(selectWebFontRules)
-      .then(rules => rules.map(newWebFont));
+      .then((rules) => rules.map(newWebFont));
 
     function selectWebFontRules(cssRules) {
       return cssRules
-        .filter(rule => rule.type === window.CSSRule.FONT_FACE_RULE)
-        .filter(rule => inliner.shouldProcess(rule.style.getPropertyValue('src')));
+        .filter((rule) => rule.type === window.CSSRule.FONT_FACE_RULE)
+        .filter((rule) => inliner.shouldProcess(rule.style.getPropertyValue('src')));
     }
 
     function loadExternalStyleSheets(styleSheets) {
       return Promise.all(
-        styleSheets.map(sheet => {
+        styleSheets.map((sheet) => {
           if (sheet.href) {
             // cloudfont doesn't have allow origin header properly set
             // error response will remain in cache
             const cache = sheet.href.includes('uber-fonts') ? 'no-cache' : 'default';
             return window
               .fetch(sheet.href, {credentials: 'omit', cache})
-              .then(response => response.text())
-              .then(text => {
+              .then((response) => response.text())
+              .then((text) => {
                 const result = setStyleSheetBaseHref(text, sheet.href);
                 return toStyleSheet(result);
               })
-              .catch(err => {
+              .catch((err) => {
                 // Handle any error that occurred in any of the previous
                 // promises in the chain. stylesheet failed to load should not stop
                 // the process, hence result in only a warning, instead of reject
@@ -366,7 +370,7 @@ function newFontFaces() {
 
     function getCssRules(styleSheets) {
       const cssRules: any[] = [];
-      styleSheets.forEach(sheet => {
+      styleSheets.forEach((sheet) => {
         // try...catch because browser may not able to enumerate rules for cross-domain sheets
         if (!sheet) {
           return;
@@ -421,12 +425,12 @@ function newImages() {
         return Promise.resolve();
       }
       return Promise.resolve(element.src)
-        .then(ul =>
+        .then((ul) =>
           typeof get === 'function' ? get(ul) : getAndEncode(ul, domtoimage.impl.options)
         )
-        .then(data => dataAsUrl(data, mimeType(element.src)))
+        .then((data) => dataAsUrl(data, mimeType(element.src)))
         .then(
-          dataUrl =>
+          (dataUrl) =>
             new Promise((resolve, reject) => {
               element.onload = resolve;
               element.onerror = reject;
@@ -449,7 +453,7 @@ function newImages() {
       if (node instanceof HTMLImageElement) {
         return newImage(node).inline(null);
       }
-      return Promise.all(asArray(node.childNodes).map(child => inlineAll(child)));
+      return Promise.all(asArray(node.childNodes).map((child) => inlineAll(child)));
     });
 
     function inlineBackground(nd) {
@@ -461,7 +465,7 @@ function newImages() {
 
       return inliner
         .inlineAll(background, null, null)
-        .then(inlined => {
+        .then((inlined) => {
           nd.style.setProperty('background', inlined, nd.style.getPropertyPriority('background'));
         })
         .then(() => nd);

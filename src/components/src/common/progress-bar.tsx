@@ -13,7 +13,7 @@ interface StyledBarProps {
 const StyledBar = styled.span.attrs({
   className: 'progress-bar__bar'
 })<StyledBarProps>`
-  background-color: ${props => props.barColor || props.theme.progressBarColor};
+  background-color: ${(props) => props.barColor || props.theme.progressBarColor};
   /* transition: width 200ms; */
   display: block;
 `;
@@ -25,7 +25,7 @@ interface StyledTrackProps {
 const StyledTrack = styled.div.attrs({
   className: 'progress-bar'
 })<StyledTrackProps>`
-  background-color: ${props => props.trackColor || props.theme.progressBarTrackColor};
+  background-color: ${(props) => props.trackColor || props.theme.progressBarTrackColor};
 `;
 
 export type ProgressBarProps = {

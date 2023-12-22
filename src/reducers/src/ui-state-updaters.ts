@@ -98,9 +98,9 @@ const DEFAULT_MAP_CONTROLS_FEATURES: MapControlItem = {
  * @property mapLocale Default: `{show: false, active: false}`
  * @public
  */
-export const DEFAULT_MAP_CONTROLS: MapControls = (Object.keys(MAP_CONTROLS) as Array<
-  keyof typeof MAP_CONTROLS
->).reduce(
+export const DEFAULT_MAP_CONTROLS: MapControls = (
+  Object.keys(MAP_CONTROLS) as Array<keyof typeof MAP_CONTROLS>
+).reduce(
   (final, current) => ({
     ...final,
     [current]: DEFAULT_MAP_CONTROLS_FEATURES
@@ -261,7 +261,7 @@ export const INITIAL_UI_STATE: UiState = {
 export const initUiStateUpdater = (
   state: UiState,
   action: {
-    type?: typeof ActionTypes['INIT'];
+    type?: (typeof ActionTypes)['INIT'];
     payload: KeplerGlInitPayload;
   }
 ): UiState => ({
@@ -680,11 +680,11 @@ export const addNotificationUpdater = (
   const oldNotifications = state.notifications || [];
   // @ts-expect-error
   const payloadId = payload?.id;
-  const notificationToUpdate = payloadId ? oldNotifications.find(n => n.id === payloadId) : null;
+  const notificationToUpdate = payloadId ? oldNotifications.find((n) => n.id === payloadId) : null;
 
   let notifications;
   if (notificationToUpdate) {
-    notifications = oldNotifications.map(n =>
+    notifications = oldNotifications.map((n) =>
       n.id === payloadId ? createNotification({...payload, count: n.count + 1}) : n
     );
   } else {
@@ -708,7 +708,7 @@ export const removeNotificationUpdater = (
   {payload: id}: UIStateActions.RemoveNotificationUpdaterAction
 ): UiState => ({
   ...state,
-  notifications: state.notifications.filter(n => n.id !== id)
+  notifications: state.notifications.filter((n) => n.id !== id)
 });
 
 /**
@@ -832,8 +832,8 @@ export const togglePanelListViewUpdater = (
     panelId === 'layer'
       ? 'layerPanelListView'
       : panelId === 'filter'
-      ? 'filterPanelListView'
-      : null;
+        ? 'filterPanelListView'
+        : null;
   if (!stateProp || state[stateProp] === listView) {
     return state;
   }

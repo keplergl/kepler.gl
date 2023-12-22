@@ -44,7 +44,7 @@ const PreviewMap = styled.div`
   }
 
   .preview-title.error {
-    color: ${props => props.theme.errorColor};
+    color: ${(props) => props.theme.errorColor};
   }
 
   ${media.portable`
@@ -60,7 +60,7 @@ const PreviewMap = styled.div`
 `;
 
 const StyledPreviewImage = styled.div`
-  background: ${props => props.theme.modalImagePlaceHolder};
+  background: ${(props) => props.theme.modalImagePlaceHolder};
   border-radius: 4px;
   box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.18);
   width: ${MapW}px;
@@ -143,7 +143,7 @@ function AddMapStyleModalFactory() {
       }
     }
 
-    loadMapStyleJson = style => {
+    loadMapStyleJson = (style) => {
       this.props.loadCustomMapStyle({style, error: false});
     };
 
@@ -266,7 +266,7 @@ function AddMapStyleModalFactory() {
                   <StyledMapContainer>
                     <MapGLMap
                       {...mapProps}
-                      ref={el => {
+                      ref={(el) => {
                         this.mapRef = el;
                       }}
                       key={this.state.reRenderKey}

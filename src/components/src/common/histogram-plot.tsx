@@ -55,21 +55,15 @@ function HistogramPlotFactory() {
     const undefinedToZero = (x: number | undefined) => (x ? x : 0);
     const domain = useMemo(
       () =>
-        [histogram[0].x0, histogram[histogram.length - 1].x1].map(item => undefinedToZero(item)),
+        [histogram[0].x0, histogram[histogram.length - 1].x1].map((item) => undefinedToZero(item)),
       [histogram]
     );
-    const dataId = Object.keys(histogram[0]).filter(k => k !== 'x0' && k !== 'x1')[0];
+    const dataId = Object.keys(histogram[0]).filter((k) => k !== 'x0' && k !== 'x1')[0];
 
     // use 1st for now
-    const getValue = useMemo(() => d => d[dataId], [dataId]);
+    const getValue = useMemo(() => (d) => d[dataId], [dataId]);
 
-    const x = useMemo(
-      () =>
-        scaleLinear()
-          .domain(domain)
-          .range([0, width]),
-      [domain, width]
-    );
+    const x = useMemo(() => scaleLinear().domain(domain).range([0, width]), [domain, width]);
 
     const y = useMemo(
       () =>
@@ -84,7 +78,7 @@ function HistogramPlotFactory() {
     return (
       <HistogramWrapper width={width} height={height} style={{marginTop: `${margin.top}px`}}>
         <g className="histogram-bars">
-          {histogram.map(bar => {
+          {histogram.map((bar) => {
             const inRange =
               undefinedToZero(bar.x1) <= value[1] && undefinedToZero(bar.x0) >= value[0];
             const wRatio = inRange ? histogramStyle.highlightW : histogramStyle.unHighlightedW;
@@ -111,7 +105,7 @@ function HistogramPlotFactory() {
     );
   };
 
-  const EmpptyOrPlot = props =>
+  const EmpptyOrPlot = (props) =>
     !props.histogram || !props.histogram.length ? null : <HistogramPlot {...props} />;
 
   return EmpptyOrPlot;

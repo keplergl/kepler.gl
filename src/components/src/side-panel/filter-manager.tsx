@@ -74,13 +74,8 @@ function FilterManagerFactory(
     isAnyFilterAnimating,
     visStateActions
   }: FilterListProps) => {
-    const {
-      removeFilter,
-      setFilter,
-      toggleFilterAnimation,
-      toggleFilterFeature,
-      setFilterView
-    } = visStateActions;
+    const {removeFilter, setFilter, toggleFilterAnimation, toggleFilterFeature, setFilterView} =
+      visStateActions;
 
     const filterPanelCallbacks = useMemo(() => {
       return filtersByIndex.reduce(
@@ -176,8 +171,8 @@ function FilterManagerFactory(
   }) => {
     const {addFilter} = visStateActions;
     const {togglePanelListView} = uiStateActions;
-    const isAnyFilterAnimating = filters.some(f => f.isAnimating);
-    const onClickAddFilter = useCallback(dataset => addFilter(dataset), [addFilter]);
+    const isAnyFilterAnimating = filters.some((f) => f.isAnimating);
+    const onClickAddFilter = useCallback((dataset) => addFilter(dataset), [addFilter]);
     const isSortByDatasetMode = panelListView === PANEL_VIEW_TOGGLES.byDataset;
     const filtersByIndex = useMemo(
       () =>
@@ -194,7 +189,7 @@ function FilterManagerFactory(
             ...accu,
             // if synced filter, show it unfder its the first dataset
             [dataId]: filtersByIndex.filter(
-              fidx => fidx.filter.dataId && fidx.filter.dataId[0] === dataId
+              (fidx) => fidx.filter.dataId && fidx.filter.dataId[0] === dataId
             )
           }),
           {}
@@ -202,7 +197,7 @@ function FilterManagerFactory(
       [datasets, filtersByIndex]
     );
     const _TogglePanelListView = useCallback(
-      listView => {
+      (listView) => {
         togglePanelListView({panelId: 'filter', listView});
       },
       [togglePanelListView]
@@ -246,7 +241,7 @@ function FilterManagerFactory(
         </SidePanelSection>
         <SidePanelSection>
           {isSortByDatasetMode ? (
-            Object.keys(filtersByDatasets).map(dataId => (
+            Object.keys(filtersByDatasets).map((dataId) => (
               <DatasetFilterSection
                 key={dataId}
                 filtersByIndex={filtersByDatasets[dataId]}

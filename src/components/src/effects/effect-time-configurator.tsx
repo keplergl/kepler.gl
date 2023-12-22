@@ -44,45 +44,45 @@ const StyledWrapper = styled.div<StyledWrapperProps>`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: ${props => props.marginBottom ?? 9}px;
-  ${props => (props.hidden ? 'display: none;' : '')}
+  margin-bottom: ${(props) => props.marginBottom ?? 9}px;
+  ${(props) => (props.hidden ? 'display: none;' : '')}
 `;
 
 type SliderWrapperProps = {disabled?: boolean};
 const SliderWrapper = styled.div<SliderWrapperProps>`
   margin-top: 13px;
   margin-bottom: 12px;
-  ${props => (props.hidden ? 'display: none;' : '')}
+  ${(props) => (props.hidden ? 'display: none;' : '')}
 `;
 
 const StyledButton = styled(Button)`
-  color: ${props => props.theme.effectPanelTextSecondary2};
-  background-color: ${props => props.theme.inputBgd};
+  color: ${(props) => props.theme.effectPanelTextSecondary2};
+  background-color: ${(props) => props.theme.inputBgd};
   height: 32px;
   width: 32px;
   padding: 5px;
   border-radius: 4px;
   justify-content: center;
   :hover {
-    color: ${props => props.theme.effectPanelTextMain};
-    background-color: ${props => props.theme.inputBgdHover};
+    color: ${(props) => props.theme.effectPanelTextMain};
+    background-color: ${(props) => props.theme.inputBgdHover};
   }
 `;
 
 const StyledRadio = styled(Checkbox)`
   .kg-checkbox__label {
-    font-family: ${props => props.theme.fontFamily};
-    font-size: ${props => props.theme.inputFontSize};
+    font-family: ${(props) => props.theme.fontFamily};
+    font-size: ${(props) => props.theme.inputFontSize};
   }
   .kg-checkbox__label:before {
     background: transparent;
-    border-color: ${props => props.theme.effectPanelTextSecondary2};
+    border-color: ${(props) => props.theme.effectPanelTextSecondary2};
   }
   input:checked + .kg-checkbox__label:before {
-    border-color: ${props => props.theme.activeColor};
+    border-color: ${(props) => props.theme.activeColor};
   }
   .kg-checkbox__label:after {
-    background-color: ${props => props.theme.activeColor};
+    background-color: ${(props) => props.theme.activeColor};
   }
 `;
 
@@ -93,7 +93,7 @@ const StyledEffectTimeConfigurator = styled.div`
 
 const StyledDatePicker = styled.div`
   .react-date-picker--open .react-date-picker__wrapper .react-date-picker__inputGroup {
-    border: 1px solid ${props => props.theme.activeColor};
+    border: 1px solid ${(props) => props.theme.activeColor};
     border-radius: 4px 4px 0px 0px !important;
   }
   .react-calendar__navigation__prev2-button,
@@ -120,7 +120,7 @@ const StyledDatePicker = styled.div`
 type WithIconWrapperProps = {width?: string};
 const WithIconWrapper = styled.div<WithIconWrapperProps>`
   position: relative;
-  ${props => (props.width ? 'width: ' + props.width : '')}
+  ${(props) => (props.width ? 'width: ' + props.width : '')}
 `;
 
 const StyledExtraIcon = styled.div`
@@ -129,7 +129,7 @@ const StyledExtraIcon = styled.div`
   left: 8px;
   width: 0px;
   height: 32px;
-  color: ${props => props.theme.effectPanelTextSecondary2};
+  color: ${(props) => props.theme.effectPanelTextSecondary2};
   pointer-events: none;
 `;
 
@@ -137,9 +137,9 @@ type TextBlockProps = {
   width?: string;
 };
 const TextBlock = styled.div<TextBlockProps>`
-  color: ${props => props.theme.effectPanelTextSecondary2};
-  width: ${props => props.width};
-  font-size: ${props => props.theme.inputFontSize};
+  color: ${(props) => props.theme.effectPanelTextSecondary2};
+  width: ${(props) => props.width};
+  font-size: ${(props) => props.theme.inputFontSize};
 `;
 
 /**
@@ -190,31 +190,26 @@ export default function EffectTimeConfiguratorFactory(
       return moment.tz.names().includes(_timezone) ? _timezone : DEFAULT_TIMEZONE;
     }, [_timezone]);
 
-    const [
-      datePickerDate,
-      fullDate,
-      formattedTime,
-      formattedDate,
-      dayTimeProgress
-    ] = useMemo(() => {
-      const currentMoment = moment.tz(timestamp, timezone);
+    const [datePickerDate, fullDate, formattedTime, formattedDate, dayTimeProgress] =
+      useMemo(() => {
+        const currentMoment = moment.tz(timestamp, timezone);
 
-      // Slider value from 0 to 1
-      const dayProgress = getDayRatio(currentMoment);
+        // Slider value from 0 to 1
+        const dayProgress = getDayRatio(currentMoment);
 
-      // Date picker always renders Date in local timezone
-      const date = new Date();
-      date.setFullYear(currentMoment.year(), currentMoment.month(), currentMoment.date());
-      date.setHours(0, 0, 0, 0);
+        // Date picker always renders Date in local timezone
+        const date = new Date();
+        date.setFullYear(currentMoment.year(), currentMoment.month(), currentMoment.date());
+        date.setHours(0, 0, 0, 0);
 
-      return [
-        date,
-        currentMoment.toDate(),
-        currentMoment.format('HH:mm'),
-        currentMoment.format('YYYY-MM-DD'),
-        dayProgress
-      ];
-    }, [timestamp, timezone]);
+        return [
+          date,
+          currentMoment.toDate(),
+          currentMoment.format('HH:mm'),
+          currentMoment.format('YYYY-MM-DD'),
+          dayProgress
+        ];
+      }, [timestamp, timezone]);
 
     const timeSliderConfig = useMemo(() => {
       const times = SunCalc.getTimes(fullDate, mapState.latitude, mapState.longitude);
@@ -231,7 +226,7 @@ export default function EffectTimeConfiguratorFactory(
     }, [fullDate, timezone, mapState.latitude, mapState.longitude]);
 
     const onTimeSliderChange = useCallback(
-      value => {
+      (value) => {
         const hours = clamp([0, 23], Math.floor(value[1] * 24));
         const minutes = clamp([0, 59], Math.floor((value[1] * 24 - hours) * 60));
 
@@ -245,7 +240,7 @@ export default function EffectTimeConfiguratorFactory(
     );
 
     const setDate = useCallback(
-      newDate => {
+      (newDate) => {
         if (!newDate) return;
 
         const newFormattedDate = moment(newDate).format('YYYY-MM-DD');
@@ -256,7 +251,7 @@ export default function EffectTimeConfiguratorFactory(
     );
 
     const setTime = useCallback(
-      newTime => {
+      (newTime) => {
         if (!newTime) return;
 
         const newTimestamp = getTimestamp(formattedDate, newTime, timezone);
@@ -266,7 +261,7 @@ export default function EffectTimeConfiguratorFactory(
     );
 
     const setTimezone = useCallback(
-      newTimezone => {
+      (newTimezone) => {
         if (!newTimezone) return;
 
         const newTimestamp = getTimestamp(formattedDate, formattedTime, newTimezone);

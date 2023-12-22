@@ -32,10 +32,10 @@ export type FitBoundsUpdaterAction = {payload: Bounds};
  */
 export const fitBounds: (
   payload: Bounds
-) => Merge<
-  FitBoundsUpdaterAction,
-  {type: typeof ActionTypes.FIT_BOUNDS}
-> = createAction(ActionTypes.FIT_BOUNDS, (bounds: Bounds) => ({payload: bounds}));
+) => Merge<FitBoundsUpdaterAction, {type: typeof ActionTypes.FIT_BOUNDS}> = createAction(
+  ActionTypes.FIT_BOUNDS,
+  (bounds: Bounds) => ({payload: bounds})
+);
 
 export type UpdateMapUpdaterAction = {payload: {viewport: Viewport; mapIndex?: number}};
 /**
@@ -84,10 +84,10 @@ export type ToggleSplitMapUpdaterAction = {
  */
 export const toggleSplitMap: (
   payload: number
-) => Merge<
-  ToggleSplitMapUpdaterAction,
-  {type: typeof ActionTypes.TOGGLE_SPLIT_MAP}
-> = createAction(ActionTypes.TOGGLE_SPLIT_MAP, (index: number) => ({payload: index}));
+) => Merge<ToggleSplitMapUpdaterAction, {type: typeof ActionTypes.TOGGLE_SPLIT_MAP}> = createAction(
+  ActionTypes.TOGGLE_SPLIT_MAP,
+  (index: number) => ({payload: index})
+);
 
 export type ToggleSplitMapViewportUpdaterAction = {
   payload: {

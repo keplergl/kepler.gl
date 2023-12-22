@@ -17,7 +17,7 @@ const defaultValueOption = (d: Field) => d.name;
 
 const StyledToken = styled.div`
   display: inline-block;
-  margin: 0 ${props => props.theme.fieldTokenRightMargin}px 0 0;
+  margin: 0 ${(props) => props.theme.fieldTokenRightMargin}px 0 0;
 `;
 const StyledFieldListItem = styled.div`
   line-height: 0;
@@ -117,33 +117,34 @@ function FieldSelectorFactory(
       placeholder: 'placeholder.selectField'
     };
 
-    fieldsSelector = props => props.fields;
-    valueSelector = props => props.value;
+    fieldsSelector = (props) => props.fields;
+    valueSelector = (props) => props.value;
     filteredFieldsSelector = createSelector(
       this.fieldsSelector,
       this.valueSelector,
       (fields, value) => {
         return fields.filter(
-          field => !toArray(value).find(d => (d.name ? d.name === field.name : d === field.name))
+          (field) =>
+            !toArray(value).find((d) => (d.name ? d.name === field.name : d === field.name))
         );
       }
     );
-    filterFieldTypesSelector = props => props.filterFieldTypes;
-    showTokenSelector = props => props.showToken;
+    filterFieldTypesSelector = (props) => props.filterFieldTypes;
+    showTokenSelector = (props) => props.showToken;
 
     selectedItemsSelector = createSelector(
       this.fieldsSelector,
       this.valueSelector,
       (fields, value) =>
         toArray(value)
-          .map(d =>
-            fields.find(f =>
+          .map((d) =>
+            fields.find((f) =>
               notNullorUndefined(d) && d.name
                 ? d.name === defaultValueOption(f)
                 : d === defaultValueOption(f)
             )
           )
-          .filter(d => d)
+          .filter((d) => d)
     );
 
     fieldOptionsSelector = createSelector(
@@ -154,7 +155,7 @@ function FieldSelectorFactory(
           return fields;
         }
         const filters = Array.isArray(filterFieldTypes) ? filterFieldTypes : [filterFieldTypes];
-        return fields.filter(f => filters.includes(f.type));
+        return fields.filter((f) => filters.includes(f.type));
       }
     );
 
@@ -164,7 +165,7 @@ function FieldSelectorFactory(
       return (
         <div className="field-selector">
           <ItemSelector
-            getOptionValue={d => d}
+            getOptionValue={(d) => d}
             closeOnSelect={this.props.closeOnSelect}
             displayOption={defaultDisplayOption}
             filterOption="displayName"

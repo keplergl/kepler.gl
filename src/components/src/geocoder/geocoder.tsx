@@ -39,43 +39,43 @@ export const testForCoordinates = (query: string): [true, number, number] | [fal
 
 const StyledContainer = styled.div<StyledContainerProps>`
   position: relative;
-  color: ${props => props.theme.textColor};
+  color: ${(props) => props.theme.textColor};
 
   .geocoder-input {
-    box-shadow: ${props => props.theme.boxShadow};
+    box-shadow: ${(props) => props.theme.boxShadow};
 
     .geocoder-input__search {
       position: absolute;
-      height: ${props => props.theme.geocoderInputHeight}px;
+      height: ${(props) => props.theme.geocoderInputHeight}px;
       width: 30px;
       padding-left: 6px;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: ${props => props.theme.subtextColor};
+      color: ${(props) => props.theme.subtextColor};
     }
 
     input {
       padding: 4px 36px;
-      height: ${props => props.theme.geocoderInputHeight}px;
+      height: ${(props) => props.theme.geocoderInputHeight}px;
       caret-color: unset;
     }
   }
 
   .geocoder-results {
-    box-shadow: ${props => props.theme.boxShadow};
-    background-color: ${props => props.theme.panelBackground};
+    box-shadow: ${(props) => props.theme.boxShadow};
+    background-color: ${(props) => props.theme.panelBackground};
     position: absolute;
-    width: ${props => (Number.isFinite(props.width) ? props.width : props.theme.geocoderWidth)}px;
-    margin-top: ${props => props.theme.dropdownWapperMargin}px;
+    width: ${(props) => (Number.isFinite(props.width) ? props.width : props.theme.geocoderWidth)}px;
+    margin-top: ${(props) => props.theme.dropdownWapperMargin}px;
   }
 
   .geocoder-item {
-    ${props => props.theme.dropdownListItem};
-    ${props => props.theme.textTruncate};
+    ${(props) => props.theme.dropdownListItem};
+    ${(props) => props.theme.textTruncate};
 
     &.active {
-      background-color: ${props => props.theme.dropdownListHighlightBg};
+      background-color: ${(props) => props.theme.dropdownListHighlightBg};
     }
   }
 
@@ -83,13 +83,13 @@ const StyledContainer = styled.div<StyledContainerProps>`
     position: absolute;
     right: 16px;
     top: 0px;
-    height: ${props => props.theme.geocoderInputHeight}px;
+    height: ${(props) => props.theme.geocoderInputHeight}px;
     display: flex;
     align-items: center;
 
     :hover {
       cursor: pointer;
-      color: ${props => props.theme.textColorHl};
+      color: ${(props) => props.theme.textColorHl};
     }
   }
 `;
@@ -127,7 +127,7 @@ const GeoCoder: React.FC<GeocoderProps & IntlProps> = ({
   className = '',
   limit = 5,
   timeout = 300,
-  formatItem = item => item.place_name,
+  formatItem = (item) => item.place_name,
   viewport,
   onSelected,
   onDeleteMarker,
@@ -144,12 +144,13 @@ const GeoCoder: React.FC<GeocoderProps & IntlProps> = ({
   const [results, setResults] = useState(initialResults);
   const [selectedIndex, setSelectedIndex] = useState(0);
 
-  const client = useMemo(() => geocoderService({accessToken: mapboxApiAccessToken}), [
-    mapboxApiAccessToken
-  ]);
+  const client = useMemo(
+    () => geocoderService({accessToken: mapboxApiAccessToken}),
+    [mapboxApiAccessToken]
+  );
 
   const onChange = useCallback(
-    event => {
+    (event) => {
       const queryString = event.target.value;
       setInputValue(queryString);
       const resultCoordinates = testForCoordinates(queryString);
@@ -194,7 +195,7 @@ const GeoCoder: React.FC<GeocoderProps & IntlProps> = ({
   const onFocus = useCallback(() => setShowResults(true), [setShowResults]);
 
   const onItemSelected = useCallback(
-    item => {
+    (item) => {
       const newViewport = new WebMercatorViewport(viewport);
       const {bbox, center} = item;
 
@@ -227,7 +228,7 @@ const GeoCoder: React.FC<GeocoderProps & IntlProps> = ({
   }, [onDeleteMarker]);
 
   const onKeyDown = useCallback(
-    e => {
+    (e) => {
       if (!results || results.length === 0) {
         return;
       }

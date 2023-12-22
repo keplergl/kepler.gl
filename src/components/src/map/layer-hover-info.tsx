@@ -17,7 +17,7 @@ import {
 import {useIntl} from 'react-intl';
 
 export const StyledLayerName = styled(CenterFlexbox)`
-  color: ${props => props.theme.textColorHl};
+  color: ${(props) => props.theme.textColorHl};
   font-size: 12px;
   letter-spacing: 0.43px;
   text-transform: capitalize;
@@ -33,11 +33,11 @@ const StyledTable = styled.table`
     margin-left: 6px;
 
     &.positive {
-      color: ${props => props.theme.notificationColors.success};
+      color: ${(props) => props.theme.notificationColors.success};
     }
 
     &.negative {
-      color: ${props => props.theme.negativeBtnActBgd};
+      color: ${(props) => props.theme.negativeBtnActBgd};
     }
   }
   & .row__value,
@@ -52,7 +52,7 @@ const StyledDivider = styled.div`
   // offset divider to reach popover edge
   margin-left: -14px;
   margin-right: -14px;
-  border-bottom: 1px solid ${props => props.theme.panelBorderColor};
+  border-bottom: 1px solid ${(props) => props.theme.panelBorderColor};
 `;
 
 interface RowProps {
@@ -100,7 +100,7 @@ const Row: React.FC<RowProps> = ({name, value, deltaValue, url}) => {
 
 const EntryInfo = ({fieldsToShow, fields, data, primaryData, compareType}) => (
   <tbody>
-    {fieldsToShow.map(item => (
+    {fieldsToShow.map((item) => (
       <EntryInfoRow
         key={item.name}
         item={item}
@@ -114,7 +114,7 @@ const EntryInfo = ({fieldsToShow, fields, data, primaryData, compareType}) => (
 );
 
 const EntryInfoRow = ({item, fields, data, primaryData, compareType}) => {
-  const fieldIdx = fields.findIndex(f => f.name === item.name);
+  const fieldIdx = fields.findIndex((f) => f.name === item.name);
   if (fieldIdx < 0) {
     return null;
   }
@@ -155,7 +155,7 @@ const CellInfo = ({
 
   const colorValue = useMemo(() => {
     if (colorField && layer.visualChannels.color) {
-      const item = fieldsToShow.find(field => field.name === colorField.name);
+      const item = fieldsToShow.find((field) => field.name === colorField.name);
       return getTooltipDisplayValue({item, field: colorField, value: data.colorValue});
     }
     return null;
@@ -163,7 +163,7 @@ const CellInfo = ({
 
   const elevationValue = useMemo(() => {
     if (sizeField && layer.visualChannels.size) {
-      const item = fieldsToShow.find(field => field.name === sizeField.name);
+      const item = fieldsToShow.find((field) => field.name === sizeField.name);
       return getTooltipDisplayValue({item, field: sizeField, value: data.elevationValue});
     }
     return null;
@@ -185,7 +185,7 @@ const CellInfo = ({
 };
 
 const LayerHoverInfoFactory = () => {
-  const LayerHoverInfo = props => {
+  const LayerHoverInfo = (props) => {
     const {data, layer} = props;
     const intl = useIntl();
     if (!data || !layer) {

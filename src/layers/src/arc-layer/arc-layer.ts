@@ -68,16 +68,17 @@ export type ArcLayerData = {
 export type ArcLayerMeta = {
   bounds: LayerBounds;
 };
-export const arcPosAccessor = ({lat0, lng0, lat1, lng1}: ArcLayerColumnsConfig) => (
-  dc: DataContainerInterface
-) => d => [
-  dc.valueAt(d.index, lng0.fieldIdx),
-  dc.valueAt(d.index, lat0.fieldIdx),
-  0,
-  dc.valueAt(d.index, lng1.fieldIdx),
-  dc.valueAt(d.index, lat1.fieldIdx),
-  0
-];
+export const arcPosAccessor =
+  ({lat0, lng0, lat1, lng1}: ArcLayerColumnsConfig) =>
+  (dc: DataContainerInterface) =>
+  (d) => [
+    dc.valueAt(d.index, lng0.fieldIdx),
+    dc.valueAt(d.index, lat0.fieldIdx),
+    0,
+    dc.valueAt(d.index, lng1.fieldIdx),
+    dc.valueAt(d.index, lat1.fieldIdx),
+    0
+  ];
 
 export const arcRequiredColumns = ['lat0', 'lng0', 'lat1', 'lng1'];
 export const arcColumnLabels = {
@@ -144,14 +145,14 @@ export default class ArcLayer extends Layer {
         property: 'color',
         key: 'sourceColor',
         accessor: 'getSourceColor',
-        defaultValue: config => config.color
+        defaultValue: (config) => config.color
       },
       targetColor: {
         ...super.visualChannels.color,
         property: 'targetColor',
         key: 'targetColor',
         accessor: 'getTargetColor',
-        defaultValue: config => config.visConfig.targetColor || config.color
+        defaultValue: (config) => config.visConfig.targetColor || config.color
       },
       size: {
         ...super.visualChannels.size,
@@ -161,9 +162,9 @@ export default class ArcLayer extends Layer {
     };
   }
 
-  static findDefaultLayerProps({
-    fieldPairs = []
-  }: KeplerTable): {props: {color?: RGBColor; columns: ArcLayerColumnsConfig; label: string}[]} {
+  static findDefaultLayerProps({fieldPairs = []}: KeplerTable): {
+    props: {color?: RGBColor; columns: ArcLayerColumnsConfig; label: string}[];
+  } {
     if (fieldPairs.length < 2) {
       return {props: []};
     }
@@ -222,11 +223,11 @@ export default class ArcLayer extends Layer {
     // get bounds from arcs
     const getPosition = this.getPositionAccessor(dataContainer);
 
-    const sBounds = this.getPointsBounds(dataContainer, d => {
+    const sBounds = this.getPointsBounds(dataContainer, (d) => {
       const pos = getPosition(d);
       return [pos[0], pos[1]];
     });
-    const tBounds = this.getPointsBounds(dataContainer, d => {
+    const tBounds = this.getPointsBounds(dataContainer, (d) => {
       const pos = getPosition(d);
       return [pos[3], pos[4]];
     });

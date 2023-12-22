@@ -31,7 +31,7 @@ export const processedFeatureFields = [
     fieldIdx: 0,
     type: 'geojson',
     analyzerType: 'GEOMETRY',
-    valueAccessor: values => values[0]
+    valueAccessor: (values) => values[0]
   },
   {
     name: 'lat',
@@ -41,7 +41,7 @@ export const processedFeatureFields = [
     fieldIdx: 1,
     type: 'real',
     analyzerType: 'FLOAT',
-    valueAccessor: values => values[1]
+    valueAccessor: (values) => values[1]
   },
   {
     name: 'lng',
@@ -51,7 +51,7 @@ export const processedFeatureFields = [
     fieldIdx: 2,
     type: 'real',
     analyzerType: 'FLOAT',
-    valueAccessor: values => values[2]
+    valueAccessor: (values) => values[2]
   },
   {
     name: 'icon',
@@ -61,7 +61,7 @@ export const processedFeatureFields = [
     fieldIdx: 3,
     type: 'string',
     analyzerType: 'STRING',
-    valueAccessor: values => values[3]
+    valueAccessor: (values) => values[3]
   }
 ];
 
@@ -97,7 +97,7 @@ export const processedFields = [
     fieldIdx: 0,
     type: 'geojson',
     analyzerType: 'GEOMETRY',
-    valueAccessor: values => values[0]
+    valueAccessor: (values) => values[0]
   },
   {
     name: 'fillColor',
@@ -107,7 +107,7 @@ export const processedFields = [
     fieldIdx: 1,
     type: 'array',
     analyzerType: 'ARRAY',
-    valueAccessor: values => values[1]
+    valueAccessor: (values) => values[1]
   },
   {
     name: 'radius',
@@ -117,7 +117,7 @@ export const processedFields = [
     fieldIdx: 2,
     type: 'integer',
     analyzerType: 'INT',
-    valueAccessor: values => values[2]
+    valueAccessor: (values) => values[2]
   },
   {
     name: 'id',
@@ -127,7 +127,7 @@ export const processedFields = [
     fieldIdx: 3,
     type: 'string',
     analyzerType: 'STRING',
-    valueAccessor: values => values[3]
+    valueAccessor: (values) => values[3]
   }
 ];
 

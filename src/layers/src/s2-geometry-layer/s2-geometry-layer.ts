@@ -91,9 +91,11 @@ export const S2_TOKEN_FIELDS: {
 };
 
 export const s2RequiredColumns: ['token'] = ['token'];
-export const S2TokenAccessor = ({token}: S2GeometryLayerColumnsConfig) => (
-  dc: DataContainerInterface
-) => d => dc.valueAt(d.index, token.fieldIdx);
+export const S2TokenAccessor =
+  ({token}: S2GeometryLayerColumnsConfig) =>
+  (dc: DataContainerInterface) =>
+  (d) =>
+    dc.valueAt(d.index, token.fieldIdx);
 
 export const defaultElevation = 500;
 export const defaultLineWidth = 1;
@@ -189,7 +191,7 @@ export default class S2GeometryLayer extends Layer {
         ...visualChannels.size,
         property: 'stroke',
         accessor: 'getLineWidth',
-        condition: config => config.visConfig.stroked,
+        condition: (config) => config.visConfig.stroked,
         defaultValue: defaultLineWidth
       },
       strokeColor: {
@@ -201,9 +203,9 @@ export default class S2GeometryLayer extends Layer {
         key: 'strokeColor',
         channelScaleType: CHANNEL_SCALES.color,
         accessor: 'getLineColor',
-        condition: config => config.visConfig.stroked,
+        condition: (config) => config.visConfig.stroked,
         nullValue: visualChannels.color.nullValue,
-        defaultValue: config => config.visConfig.strokeColor || config.color
+        defaultValue: (config) => config.visConfig.strokeColor || config.color
       },
       height: {
         property: 'height',
@@ -214,7 +216,7 @@ export default class S2GeometryLayer extends Layer {
         key: 'height',
         channelScaleType: CHANNEL_SCALES.size,
         accessor: 'getElevation',
-        condition: config => config.visConfig.enable3d,
+        condition: (config) => config.visConfig.enable3d,
         nullValue: 0,
         defaultValue: defaultElevation
       }
@@ -244,7 +246,7 @@ export default class S2GeometryLayer extends Layer {
     }
 
     return {
-      props: foundColumns.map(columns => ({
+      props: foundColumns.map((columns) => ({
         isVisible: true,
         label: 'S2',
         columns

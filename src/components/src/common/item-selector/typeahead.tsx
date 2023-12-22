@@ -28,9 +28,9 @@ interface TypeaheadWrapperProps {
 const TypeaheadWrapper = styled.div<TypeaheadWrapperProps>`
   display: flex;
   flex-direction: column;
-  background-color: ${props =>
+  background-color: ${(props) =>
     props.light ? props.theme.dropdownListBgdLT : props.theme.dropdownListBgd};
-  box-shadow: ${props => props.theme.dropdownListShadow};
+  box-shadow: ${(props) => props.theme.dropdownListShadow};
 
   :focus {
     outline: 0;
@@ -44,9 +44,9 @@ const InputBox = styled.div.attrs({
 `;
 
 const TypeaheadInput = styled.input<TypeaheadWrapperProps>`
-  ${props => (props.light ? props.theme.inputLT : props.theme.secondaryInput)} :hover {
+  ${(props) => (props.light ? props.theme.inputLT : props.theme.secondaryInput)} :hover {
     cursor: pointer;
-    background-color: ${props =>
+    background-color: ${(props) =>
       props.light ? props.theme.selectBackgroundLT : props.theme.secondaryInputBgd};
   }
 `;
@@ -57,7 +57,7 @@ const InputIcon = styled.div.attrs({
   position: absolute;
   right: 15px;
   top: 14px;
-  color: ${props => props.theme.inputPlaceholderColor};
+  color: ${(props) => props.theme.inputPlaceholderColor};
 `;
 
 function generateSearchFunction(props: TypeaheadProps) {
@@ -69,7 +69,7 @@ function generateSearchFunction(props: TypeaheadProps) {
     return searchOptions;
   } else if (typeof filterOption === 'function') {
     // use custom filter option
-    return (value, options) => options.filter(o => filterOption(value, o));
+    return (value, options) => options.filter((o) => filterOption(value, o));
   }
 
   const mapper =
@@ -78,7 +78,7 @@ function generateSearchFunction(props: TypeaheadProps) {
       : Accessor.IDENTITY_FN;
 
   return (value, options) => {
-    return fuzzy.filter(value, options, {extract: mapper}).map(res => options[res.index]);
+    return fuzzy.filter(value, options, {extract: mapper}).map((res) => options[res.index]);
   };
 }
 
@@ -335,7 +335,7 @@ class Typeahead extends Component<TypeaheadProps, TypeaheadState> {
     }
   };
 
-  _onEnter = event => {
+  _onEnter = (event) => {
     const selection = this.getSelection();
     if (!selection) {
       this.props.onKeyDown?.(event);
@@ -349,13 +349,13 @@ class Typeahead extends Component<TypeaheadProps, TypeaheadState> {
     });
   };
 
-  _onTab = event => {
+  _onTab = (event) => {
     const selection = this.getSelection();
     let option = selection
       ? selection
       : this.state.searchResults.length > 0
-      ? this.state.searchResults[0]
-      : null;
+        ? this.state.searchResults[0]
+        : null;
 
     if (option === null && this._hasCustomValue()) {
       option = this._getCustomValue();
@@ -378,7 +378,7 @@ class Typeahead extends Component<TypeaheadProps, TypeaheadState> {
     return events;
   };
 
-  _nav = delta => {
+  _nav = (delta) => {
     if (!this._hasHint()) {
       return;
     }
@@ -412,7 +412,7 @@ class Typeahead extends Component<TypeaheadProps, TypeaheadState> {
     this._nav(-1);
   };
 
-  _onChange: React.ChangeEventHandler<HTMLInputElement> = event => {
+  _onChange: React.ChangeEventHandler<HTMLInputElement> = (event) => {
     if (this.props.onChange) {
       this.props.onChange(event);
     }
@@ -420,7 +420,7 @@ class Typeahead extends Component<TypeaheadProps, TypeaheadState> {
     this._onTextEntryUpdated();
   };
 
-  _onKeyDown: React.KeyboardEventHandler<HTMLDivElement> = event => {
+  _onKeyDown: React.KeyboardEventHandler<HTMLDivElement> = (event) => {
     // If there are no visible elements, don't perform selector navigation.
     // Just pass this up to the upstream onKeydown handler.
     // Also skip if the user is pressing the shift key, since none of our handlers are looking for shift
@@ -439,14 +439,14 @@ class Typeahead extends Component<TypeaheadProps, TypeaheadState> {
     event.preventDefault();
   };
 
-  _onFocus: React.FocusEventHandler<HTMLDivElement> = event => {
+  _onFocus: React.FocusEventHandler<HTMLDivElement> = (event) => {
     this.setState({isFocused: true});
     if (this.props.onFocus) {
       return this.props.onFocus(event);
     }
   };
 
-  _onBlur: React.FocusEventHandler<HTMLInputElement> = event => {
+  _onBlur: React.FocusEventHandler<HTMLInputElement> = (event) => {
     this.setState({isFocused: false});
     if (this.props.onBlur) {
       return this.props.onBlur(event);

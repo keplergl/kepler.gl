@@ -5,12 +5,12 @@ import React, {PropsWithChildren} from 'react';
 import styled from 'styled-components';
 import classnames from 'classnames';
 
-const StyledPanelTitle = styled.div.attrs(props => ({
+const StyledPanelTitle = styled.div.attrs((props) => ({
   className: classnames('panel-title', props.className)
 }))`
-  color: ${props => props.theme.titleTextColor};
-  font-size: ${props => props.theme.sidePanelTitleFontsize};
-  line-height: ${props => props.theme.sidePanelTitleLineHeight};
+  color: ${(props) => props.theme.titleTextColor};
+  font-size: ${(props) => props.theme.sidePanelTitleFontsize};
+  line-height: ${(props) => props.theme.sidePanelTitleLineHeight};
   font-weight: 400;
   letter-spacing: 1.25px;
 `;

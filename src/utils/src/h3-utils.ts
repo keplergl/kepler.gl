@@ -42,7 +42,7 @@ export const isHexField = (field, fieldIdx, dataContainer) => {
     return false;
   }
 
-  const firstDP = dataContainer.find(d => notNullorUndefined(d.valueAt(fieldIdx)), true);
+  const firstDP = dataContainer.find((d) => notNullorUndefined(d.valueAt(fieldIdx)), true);
   return firstDP && h3IsValid(firstDP.valueAt(fieldIdx));
 };
 

@@ -23,7 +23,7 @@ interface ExportMapModalFactoryProps {
 
 const style = {width: '100%'};
 
-const NO_OP = (...args: any[]) => ({} as any);
+const NO_OP = (...args: any[]) => ({}) as any;
 
 ExportMapModalFactory.deps = [ExportHtmlMapFactory, ExportJsonMapFactory];
 
@@ -50,7 +50,7 @@ function ExportMapModalFactory(
             </div>
           </div>
           <div className="selection">
-            {EXPORT_MAP_FORMAT_OPTIONS.map(op => (
+            {EXPORT_MAP_FORMAT_OPTIONS.map((op) => (
               <StyledType
                 key={op.id}
                 selected={options.format === op.id}

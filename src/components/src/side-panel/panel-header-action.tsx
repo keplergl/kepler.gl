@@ -35,16 +35,16 @@ type HeaderActionWrapperProps = {
 const HeaderActionWrapper = styled.div.attrs((props: HeaderActionWrapperProps) => ({
   dataTestId: props.testId
 }))<HeaderActionWrapperProps>`
-  margin-left: ${props => (props.flush ? 0 : 8)}px;
+  margin-left: ${(props) => (props.flush ? 0 : 8)}px;
   display: flex;
   align-items: center;
-  color: ${props =>
+  color: ${(props) =>
     props.active ? props.theme.panelHeaderIconActive : props.theme.panelHeaderIcon};
 
   cursor: pointer;
 
   :hover {
-    color: ${props =>
+    color: ${(props) =>
       props.hoverColor ? props.theme[props.hoverColor] : props.theme.panelHeaderIconHover};
   }
 

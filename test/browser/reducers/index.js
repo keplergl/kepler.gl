@@ -7,7 +7,7 @@ import test from 'tape-catch';
 import {StateWFiles, testCsvDataId, testGeoJsonDataId} from 'test/helpers/mock-state';
 import {VisStateActions} from '@kepler.gl/actions';
 
-test('#visStateReducer -> COPY_TABLE_COLUMN', t => {
+test('#visStateReducer -> COPY_TABLE_COLUMN', (t) => {
   const initialState = CloneDeep(StateWFiles.visState);
   const nextState = reducer(initialState, VisStateActions.copyTableColumn());
   t.equal(nextState, initialState, 'state should not change when input is not given');

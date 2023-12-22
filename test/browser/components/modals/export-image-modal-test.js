@@ -17,7 +17,7 @@ import {INITIAL_UI_STATE} from '@kepler.gl/reducers';
 
 const ExportImageModal = appInjector.get(ExportImageModalFactory);
 
-test('Components -> ExportImageModal.mount', t => {
+test('Components -> ExportImageModal.mount', (t) => {
   const onUpdateImageSetting = sinon.spy();
   const cleanupExportImage = () => {};
   let wrapper;
@@ -44,7 +44,7 @@ test('Components -> ExportImageModal.mount', t => {
     .find('#export-image-modal__option_ratio')
     .at(0)
     .find(SelectionButton)
-    .map(c => c.text());
+    .map((c) => c.text());
 
   t.deepEqual(ratioOpts, ['Original Screen', '4:3', '16:9'], 'should render correct ratio options');
 
@@ -70,7 +70,7 @@ test('Components -> ExportImageModal.mount', t => {
     .find('#export-image-modal__option_resolution')
     .at(0)
     .find(SelectionButton)
-    .map(c => c.text());
+    .map((c) => c.text());
 
   t.deepEqual(resolutionOpts, ['1x', '2x'], 'should render correct ratio options');
 
@@ -96,7 +96,7 @@ test('Components -> ExportImageModal.mount', t => {
   t.end();
 });
 
-test('Components -> ExportImageModal.preview image', t => {
+test('Components -> ExportImageModal.preview image', (t) => {
   const onUpdateImageSetting = sinon.spy();
   const cleanupExportImage = () => {};
 
@@ -139,7 +139,7 @@ test('Components -> ExportImageModal.preview image', t => {
   t.end();
 });
 
-test('Components -> ExportImageModal.unmount', t => {
+test('Components -> ExportImageModal.unmount', (t) => {
   const onUpdateImageSetting = () => {};
   const cleanupExportImage = sinon.spy();
 

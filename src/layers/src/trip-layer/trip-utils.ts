@@ -25,7 +25,7 @@ export function coordHasLength4(samples): boolean {
   for (let i = 0; i < samples.length; i += 1) {
     hasLength4 =
       Array.isArray(samples[i]?.geometry?.coordinates) &&
-      !samples[i].geometry.coordinates.find(c => c.length < 4);
+      !samples[i].geometry.coordinates.find((c) => c.length < 4);
 
     if (!hasLength4) {
       break;
@@ -40,9 +40,9 @@ export function coordHasLength4(samples): boolean {
  * @returns the type of timestamp: unix/datetime/invalid(not timestamp)
  */
 export function containValidTime(timestamps: string[]): Field | null {
-  const formattedTimeStamps = timestamps.map(ts => ({ts}));
+  const formattedTimeStamps = timestamps.map((ts) => ({ts}));
   const ignoredDataTypes = Object.keys(DATA_TYPES).filter(
-    type => ![DATA_TYPES.TIME, DATA_TYPES.DATETIME].includes(type)
+    (type) => ![DATA_TYPES.TIME, DATA_TYPES.DATETIME].includes(type)
   );
 
   // ignore all types but TIME to improve performance
@@ -89,7 +89,7 @@ export function isTripGeoJsonField(dataContainer: DataContainerInterface, field)
 
   // condition 3:the 4th coordinate of the first feature line strings is valid time
   // @ts-expect-error
-  const tsHolder = features[0].geometry.coordinates.map(coord => coord[3]);
+  const tsHolder = features[0].geometry.coordinates.map((coord) => coord[3]);
 
   return Boolean(containValidTime(tsHolder));
 }
@@ -103,24 +103,24 @@ export function parseTripGeoJsonTimestamp(dataToFeature: any[]) {
   // Analyze type based on coordinates of the 1st lineString
   // select a sample trip to analyze time format
   const empty = {dataToTimeStamp: [], animationDomain: null};
-  const sampleTrip = dataToFeature.find(f => f?.geometry?.coordinates?.[0]?.length > 3);
+  const sampleTrip = dataToFeature.find((f) => f?.geometry?.coordinates?.[0]?.length > 3);
 
   // if no valid geometry
   if (!sampleTrip) {
     return empty;
   }
 
-  const analyzedType = containValidTime(sampleTrip.geometry.coordinates.map(coord => coord[3]));
+  const analyzedType = containValidTime(sampleTrip.geometry.coordinates.map((coord) => coord[3]));
 
   if (!analyzedType) {
     return empty;
   }
 
   const {format} = analyzedType;
-  const getTimeValue = coord =>
+  const getTimeValue = (coord) =>
     coord && notNullorUndefined(coord[3]) ? timeToUnixMilli(coord[3], format) : null;
 
-  const dataToTimeStamp: number[][] = dataToFeature.map(f =>
+  const dataToTimeStamp: number[][] = dataToFeature.map((f) =>
     f && f.geometry && Array.isArray(f.geometry.coordinates)
       ? f.geometry.coordinates.map(getTimeValue)
       : null
@@ -133,7 +133,7 @@ export function parseTripGeoJsonTimestamp(dataToFeature: any[]) {
 
 function findMinFromSorted(list: number[]) {
   // check if list is null since the default value [] will only be applied when the param is undefined
-  return list?.find(d => notNullorUndefined(d) && Number.isFinite(d)) || null;
+  return list?.find((d) => notNullorUndefined(d) && Number.isFinite(d)) || null;
 }
 
 function findMaxFromSorted(list: number[] = []) {

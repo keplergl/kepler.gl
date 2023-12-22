@@ -47,7 +47,7 @@ const StyledSliderContainer = styled.div<StyledSliderContainerProps>`
   display: flex;
   flex-direction: row;
   justify-content: space-between;
-  padding-left: ${props => (props.isEnlarged ? 24 : 0)}px;
+  padding-left: ${(props) => (props.isEnlarged ? 24 : 0)}px;
 
   .timeline-container .kg-slider {
     display: none;
@@ -75,7 +75,7 @@ export default function TimeRangeSliderFactory(
   TimeRangeSliderTimeTitle: ReturnType<typeof TimeRangeSliderTimeTitleFactory>,
   AnimationControl: ReturnType<typeof AnimationControlFactory>
 ) {
-  const TimeRangeSlider: React.FC<TimeRangeSliderProps> = props => {
+  const TimeRangeSlider: React.FC<TimeRangeSliderProps> = (props) => {
     const {
       domain,
       value,

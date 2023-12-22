@@ -81,7 +81,7 @@ test('#BaseLayer -> updateLayerDomain', t => {
   t.end();
 });
 */
-test('#AggregationLayer -> updateLayerDomain', t => {
+test('#AggregationLayer -> updateLayerDomain', (t) => {
   const data = [
     ['a', 3],
     ['b', 4],
@@ -111,7 +111,7 @@ test('#AggregationLayer -> updateLayerDomain', t => {
   t.end();
 });
 
-test('#BaseLayer -> getAllPossibleColumnParis', t => {
+test('#BaseLayer -> getAllPossibleColumnParis', (t) => {
   const columnes1 = {
     a: [1, 2],
     b: [3, 4]

@@ -13,7 +13,7 @@ import DatasetTitleFactory from './dataset-title';
 import DatasetInfoFactory from './dataset-info';
 
 const SourceDataCatalogWrapper = styled.div`
-  transition: ${props => props.theme.transition};
+  transition: ${(props) => props.theme.transition};
 `;
 
 type MiniDataset = {
@@ -51,7 +51,7 @@ function SourceDataCatalogFactory(
     showDeleteDataset = false
   }: SourceDataCatalogProps) => (
     <SourceDataCatalogWrapper className="source-data-catalog">
-      {Object.values(datasets).map(dataset => (
+      {Object.values(datasets).map((dataset) => (
         <SidePanelSection key={dataset.id}>
           <DatasetTitle
             showDatasetTable={showDatasetTable}

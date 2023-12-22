@@ -74,7 +74,7 @@ export function getValueFunc(aggregation, accessor) {
   const op = AGGREGATION_OPERATION[aggregation.toUpperCase()] || AGGREGATION_OPERATION.SUM;
   const keplerOp = DECK_AGGREGATION_MAP[op];
 
-  return pts => aggregate(pts.map(accessor), keplerOp);
+  return (pts) => aggregate(pts.map(accessor), keplerOp);
 }
 
 export function getScaleFunctor(scaleType) {
@@ -210,7 +210,7 @@ export const defaultAggregation: AggregationType = {
 };
 
 function getSubLayerAccessor(dimensionState, dimension, layerProps) {
-  return cell => {
+  return (cell) => {
     const {sortedBins, scaleFunc} = dimensionState;
     const bin = sortedBins.binMap[cell.index];
 
@@ -421,12 +421,12 @@ export default class CPUAggregator {
       dimensionChanges = dimensionChanges.concat(updaters);
     }
 
-    dimensionChanges.forEach(f => typeof f === 'function' && f());
+    dimensionChanges.forEach((f) => typeof f === 'function' && f());
   }
 
   updateAggregation(props, aggregationParams) {
     const updaters = this._accumulateUpdaters(0, props, this.aggregationUpdater);
-    updaters.forEach(f => typeof f === 'function' && f(aggregationParams));
+    updaters.forEach((f) => typeof f === 'function' && f(aggregationParams));
   }
 
   updateState(opts, aggregationParams) {
@@ -445,12 +445,12 @@ export default class CPUAggregator {
 
     if (aggregationChanges && aggregationChanges.length) {
       // get aggregatedData
-      aggregationChanges.forEach(f => typeof f === 'function' && f(aggregationParams));
+      aggregationChanges.forEach((f) => typeof f === 'function' && f(aggregationParams));
       this.updateAllDimensions(props);
     } else {
       // only update dimensions
       dimensionChanges = this._getDimensionChanges(oldProps, props, changeFlags) || [];
-      dimensionChanges.forEach(f => typeof f === 'function' && f());
+      dimensionChanges.forEach((f) => typeof f === 'function' && f());
     }
 
     return this.state;
@@ -475,7 +475,7 @@ export default class CPUAggregator {
   }
 
   _addDimension(dimensions: DimensionType[] = []) {
-    dimensions.forEach(dimension => {
+    dimensions.forEach((dimension) => {
       const {key} = dimension;
       this.dimensionUpdaters[key] = dimension;
     });
@@ -491,7 +491,7 @@ export default class CPUAggregator {
     // dimension step is the value, domain, scaleFunction of each dimension
     // each step is an object with properties links to layer prop and whether the prop is
     // controlled by updateTriggers
-    return Object.values(dimensionStep.triggers).some(item => {
+    return Object.values(dimensionStep.triggers).some((item) => {
       if (item.updateTrigger) {
         // check based on updateTriggers change first
         return (
@@ -536,7 +536,7 @@ export default class CPUAggregator {
       ? BindedUpdaterType
       : BindedAggregatedUpdaterType;
     let updaters: LocalUpdaterType[] = [];
-    const needUpdateStep = dimension.updateSteps.findIndex(step =>
+    const needUpdateStep = dimension.updateSteps.findIndex((step) =>
       this._needUpdateStep(step, oldProps, props, changeFlags)
     );
 
@@ -571,14 +571,12 @@ export default class CPUAggregator {
     const updateTriggers = {};
 
     for (const key in this.dimensionUpdaters) {
-      const {
-        accessor,
-        updateSteps
-      }: {accessor; updateSteps: UpdateStepsType[]} = this.dimensionUpdaters[key];
+      const {accessor, updateSteps}: {accessor; updateSteps: UpdateStepsType[]} =
+        this.dimensionUpdaters[key];
       // fold dimension triggers into each accessor
       updateTriggers[accessor] = {};
 
-      updateSteps.forEach(step => {
+      updateSteps.forEach((step) => {
         Object.values(step.triggers || []).forEach(({prop, updateTrigger}) => {
           if (updateTrigger) {
             // if prop is based on updateTrigger e.g. getColorValue, getColorWeight

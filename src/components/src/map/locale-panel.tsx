@@ -29,20 +29,20 @@ function LocalePanelFactory(
       const {active: isActive, show} = mapControls.mapLocale || {};
 
       const onClickItem = useCallback(
-        locale => {
+        (locale) => {
           onSetLocale(locale);
         },
         [onSetLocale]
       );
 
       const onClickButton = useCallback(
-        e => {
+        (e) => {
           e.preventDefault();
           onToggleMapControl('mapLocale');
         },
         [onToggleMapControl]
       );
-      const getLabel = useCallback(locale => `toolbar.${locale}`, []);
+      const getLabel = useCallback((locale) => `toolbar.${locale}`, []);
 
       if (!show) {
         return null;
@@ -51,7 +51,7 @@ function LocalePanelFactory(
         <div className="locale-panel-controls" style={{position: 'relative'}}>
           {isActive ? (
             <MapControlToolbar show={isActive}>
-              {availableLocales.map(locale => (
+              {availableLocales.map((locale) => (
                 <ToolbarItem
                   key={locale}
                   onClick={() => onClickItem(locale)}

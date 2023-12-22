@@ -4,7 +4,7 @@
 import React, {createContext, RefObject, ReactNode, ReactElement} from 'react';
 import {Provider} from '@kepler.gl/cloud-providers';
 
-const identity = state => state;
+const identity = (state) => state;
 // New Context API only supported after 16.3
 const KeplerGlContext = createContext({
   selector: identity,

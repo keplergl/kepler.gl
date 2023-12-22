@@ -440,31 +440,31 @@ export const TABLE_OPTION_LIST = [
     value: TABLE_OPTION.SORT_ASC,
     display: 'Sort Ascending',
     icon: 'ArrowUp',
-    condition: props => props.sortMode !== SORT_ORDER.ASCENDING
+    condition: (props) => props.sortMode !== SORT_ORDER.ASCENDING
   },
   {
     value: TABLE_OPTION.SORT_DES,
     display: 'Sort Descending',
     icon: 'ArrowDown',
-    condition: props => props.sortMode !== SORT_ORDER.DESCENDING
+    condition: (props) => props.sortMode !== SORT_ORDER.DESCENDING
   },
   {
     value: TABLE_OPTION.UNSORT,
     display: 'Unsort Column',
     icon: 'Cancel',
-    condition: props => props.isSorted
+    condition: (props) => props.isSorted
   },
   {
     value: TABLE_OPTION.PIN,
     display: 'Pin Column',
     icon: 'Pin',
-    condition: props => !props.isPinned
+    condition: (props) => !props.isPinned
   },
   {
     value: TABLE_OPTION.UNPIN,
     display: 'Unpin Column',
     icon: 'Cancel',
-    condition: props => props.isPinned
+    condition: (props) => props.isPinned
   },
   {value: TABLE_OPTION.COPY, display: 'Copy Column', icon: 'Clipboard'},
   {value: TABLE_OPTION.FORMAT_COLUMN, display: 'Format Column', icon: 'Hash'}
@@ -579,10 +579,10 @@ export const AGGREGATION_TYPE_OPTIONS: {id: string; label: string}[] = Object.en
     key === 'stdev'
       ? 'Std Deviation'
       : key === 'countUnique'
-      ? 'Count Unique'
-      : typeof value === 'string'
-      ? value.charAt(0).toUpperCase() + value.slice(1)
-      : value
+        ? 'Count Unique'
+        : typeof value === 'string'
+          ? value.charAt(0).toUpperCase() + value.slice(1)
+          : value
 }));
 
 export const linearFieldScaleFunctions = {
@@ -664,7 +664,7 @@ export const FIELD_OPTS = {
       ...ordinalFieldAggrScaleFunctions
     },
     format: {
-      legend: d => d,
+      legend: (d) => d,
       tooltip: []
     }
   },
@@ -675,7 +675,7 @@ export const FIELD_OPTS = {
       ...linearFieldAggrScaleFunctions
     },
     format: {
-      legend: d => d,
+      legend: (d) => d,
       tooltip: [
         TOOLTIP_FORMAT_TYPES.NONE,
         TOOLTIP_FORMAT_TYPES.DECIMAL,
@@ -690,7 +690,7 @@ export const FIELD_OPTS = {
       ...notSupportAggrOpts
     },
     format: {
-      legend: d => d,
+      legend: (d) => d,
       tooltip: [
         TOOLTIP_FORMAT_TYPES.NONE,
         TOOLTIP_FORMAT_TYPES.DATE,
@@ -705,7 +705,7 @@ export const FIELD_OPTS = {
       ...linearFieldAggrScaleFunctions
     },
     format: {
-      legend: d => d,
+      legend: (d) => d,
       tooltip: [
         TOOLTIP_FORMAT_TYPES.NONE,
         TOOLTIP_FORMAT_TYPES.DECIMAL,
@@ -720,7 +720,7 @@ export const FIELD_OPTS = {
       ...ordinalFieldAggrScaleFunctions
     },
     format: {
-      legend: d => d,
+      legend: (d) => d,
       tooltip: [TOOLTIP_FORMAT_TYPES.NONE, TOOLTIP_FORMAT_TYPES.BOOLEAN]
     }
   },
@@ -731,7 +731,7 @@ export const FIELD_OPTS = {
       ...ordinalFieldAggrScaleFunctions
     },
     format: {
-      legend: d => d,
+      legend: (d) => d,
       tooltip: [TOOLTIP_FORMAT_TYPES.NONE, TOOLTIP_FORMAT_TYPES.DATE]
     }
   },
@@ -742,7 +742,7 @@ export const FIELD_OPTS = {
       ...notSupportAggrOpts
     },
     format: {
-      legend: d => '...',
+      legend: (d) => '...',
       tooltip: []
     }
   },
@@ -753,7 +753,7 @@ export const FIELD_OPTS = {
       ...notSupportAggrOpts
     },
     format: {
-      legend: d => '...',
+      legend: (d) => '...',
       tooltip: []
     }
   },
@@ -761,7 +761,7 @@ export const FIELD_OPTS = {
     type: 'numerical',
     scale: {},
     format: {
-      legend: d => '...',
+      legend: (d) => '...',
       tooltip: []
     }
   },
@@ -769,7 +769,7 @@ export const FIELD_OPTS = {
     type: 'numerical',
     scale: {},
     format: {
-      legend: d => '...',
+      legend: (d) => '...',
       tooltip: []
     }
   }
@@ -779,7 +779,7 @@ export const CHANNEL_SCALE_SUPPORTED_FIELDS = Object.keys(CHANNEL_SCALES).reduce
   (accu, key) => ({
     ...accu,
     [key]: Object.keys(FIELD_OPTS).filter(
-      ft => FIELD_OPTS[ft].scale[key] && Object.keys(FIELD_OPTS[ft].scale[key]).length
+      (ft) => FIELD_OPTS[ft].scale[key] && Object.keys(FIELD_OPTS[ft].scale[key]).length
     )
   }),
   {} as {[id: string]: string[]}
@@ -1415,7 +1415,7 @@ export const POSTPROCESSING_EFFECTS: {[key: string]: EffectDescription} = {
 
 export const EFFECT_DESCRIPTIONS: EffectDescription[] = [
   LIGHT_AND_SHADOW_EFFECT,
-  ...Object.keys(POSTPROCESSING_EFFECTS).map(keyName => POSTPROCESSING_EFFECTS[keyName])
+  ...Object.keys(POSTPROCESSING_EFFECTS).map((keyName) => POSTPROCESSING_EFFECTS[keyName])
 ];
 
 export type EffectType =

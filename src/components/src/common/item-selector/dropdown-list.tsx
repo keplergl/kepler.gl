@@ -17,7 +17,7 @@ export const classList = {
   listItemFixed: 'list__item__fixed'
 };
 
-const defaultDisplay = d => d;
+const defaultDisplay = (d) => d;
 export const ListItem = ({value, displayOption = defaultDisplay, disabled, light}) => {
   const displayValue = displayOption(value);
   return (
@@ -32,12 +32,12 @@ interface DropdownListWrapperProps {
 }
 
 const DropdownListWrapper = styled.div<DropdownListWrapperProps>`
-  background-color: ${props =>
+  background-color: ${(props) =>
     props.light ? props.theme.dropdownListBgdLT : props.theme.dropdownListBgd};
   border-top: 1px solid
-    ${props =>
+    ${(props) =>
       props.light ? props.theme.dropdownListBorderTopLT : props.theme.dropdownListBorderTop};
-  ${props => (props.light ? props.theme.dropdownListLT : props.theme.dropdownList)};
+  ${(props) => (props.light ? props.theme.dropdownListLT : props.theme.dropdownList)};
 `;
 
 const DropdownFooterWrapper = styled.div`
@@ -129,7 +129,7 @@ export default class DropdownList extends Component<DropdownListProps, DropdownL
     }
   }
 
-  handleObserver = entities => {
+  handleObserver = (entities) => {
     const y = entities[0].boundingClientRect.y;
     if (this.prevY > y) {
       const options = this._getOptions(this.page);
@@ -213,8 +213,8 @@ export default class DropdownList extends Component<DropdownListProps, DropdownL
                   this.props.customClasses?.listItem
                 )}
                 key={`${display(value)}_${i}`}
-                onMouseDown={e => this._onClick(value, e)}
-                onClick={e => this._onClick(value, e)}
+                onMouseDown={(e) => this._onClick(value, e)}
+                onClick={(e) => this._onClick(value, e)}
               >
                 <CustomListItemComponent value={value} displayOption={display} />
               </div>
@@ -232,8 +232,8 @@ export default class DropdownList extends Component<DropdownListProps, DropdownL
               this.props.customClasses?.listItem
             )}
             key={`${display(value)}_${i}`}
-            onMouseDown={e => this._onClick(value, e)}
-            onClick={e => this._onClick(value, e)}
+            onMouseDown={(e) => this._onClick(value, e)}
+            onClick={(e) => this._onClick(value, e)}
           >
             <CustomListItemComponent value={value} displayOption={display} />
           </div>

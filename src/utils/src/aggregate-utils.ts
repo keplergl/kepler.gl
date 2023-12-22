@@ -4,7 +4,7 @@
 import {deviation, min, max, mean, median, sum, variance} from 'd3-array';
 import {AGGREGATION_TYPES} from '@kepler.gl/constants';
 
-export const getFrequency = data =>
+export const getFrequency = (data) =>
   data.reduce(
     (uniques, val) => ({
       ...uniques,
@@ -13,7 +13,7 @@ export const getFrequency = data =>
     {}
   );
 
-export const getMode = data => {
+export const getMode = (data) => {
   const occur = getFrequency(data);
   return Object.keys(occur).reduce(
     (prev, key) => (occur[prev] >= occur[key] ? prev : key),

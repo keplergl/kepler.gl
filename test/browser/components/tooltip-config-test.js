@@ -46,7 +46,7 @@ const {Hash, Delete} = Icons;
 //   compareType: 'absolute'
 // };
 
-test('TooltipConfig - render', t => {
+test('TooltipConfig - render', (t) => {
   const datasets = StateWFiles.visState.datasets;
   const tooltipConfig = StateWFiles.visState.interactionConfig.tooltip.config;
 
@@ -68,25 +68,15 @@ test('TooltipConfig - render', t => {
   t.equal(wrapper.find(ChickletedInput).length, 2, 'Should render 2 ChickletedInput');
 
   // tooltip chicklets
-  const tooltipButtons = wrapper
-    .find(ChickletedInput)
-    .at(0)
-    .find(ChickletButton);
+  const tooltipButtons = wrapper.find(ChickletedInput).at(0).find(ChickletButton);
 
   t.equal(tooltipButtons.length, 5, 'should render 6 tooltip buttons');
-  t.equal(
-    tooltipButtons
-      .at(0)
-      .find('span')
-      .at(0)
-      .text(),
-    'gps_data.utc_timestamp'
-  );
+  t.equal(tooltipButtons.at(0).find('span').at(0).text(), 'gps_data.utc_timestamp');
 
   t.end();
 });
 
-test('TooltipConfig - render -> onSelect', t => {
+test('TooltipConfig - render -> onSelect', (t) => {
   const datasets = StateWFiles.visState.datasets;
   const tooltipConfig = StateWFiles.visState.interactionConfig.tooltip.config;
 
@@ -104,10 +94,7 @@ test('TooltipConfig - render -> onSelect', t => {
   t.equal(wrapper.find(ChickletedInput).length, 2, 'Should render 2 ChickletedInput');
 
   // click chicklet input to open dropdown
-  wrapper
-    .find(ChickletedInput)
-    .at(0)
-    .simulate('click');
+  wrapper.find(ChickletedInput).at(0).simulate('click');
 
   const dropdownSelect = wrapper.find(Typeahead);
   t.equal(dropdownSelect.length, 1, 'should render 1 Typeahead');
@@ -115,7 +102,7 @@ test('TooltipConfig - render -> onSelect', t => {
   const listItems = dropdownSelect.find('.field-selector_list-item');
 
   t.deepEqual(
-    dropdownSelect.find('.list__item__anchor').map(item => item.text()),
+    dropdownSelect.find('.list__item__anchor').map((item) => item.text()),
     ['gps_data.lat', 'gps_data.lng', 'time', 'begintrip_ts_utc', 'begintrip_ts_local', 'date'],
     'should filter out selected tooltip items'
   );
@@ -137,15 +124,9 @@ test('TooltipConfig - render -> onSelect', t => {
   t.deepEqual(onChange.args[0], [expectedArgs0], 'should call onchange with new tooltip appended');
 
   // delete 1 item
-  const tooltipButtons = wrapper
-    .find(ChickletedInput)
-    .at(0)
-    .find(ChickletButton);
+  const tooltipButtons = wrapper.find(ChickletedInput).at(0).find(ChickletButton);
 
-  tooltipButtons
-    .at(0)
-    .find(Delete)
-    .simulate('click');
+  tooltipButtons.at(0).find(Delete).simulate('click');
   const expectedArgs1 = {
     ...tooltipConfig,
     fieldsToShow: {
@@ -162,10 +143,7 @@ test('TooltipConfig - render -> onSelect', t => {
   t.equal(wrapper.find('.button.clear-all').length, 2, 'should render 2 clea all buttons');
 
   // click to clear all
-  wrapper
-    .find('.button.clear-all')
-    .at(0)
-    .simulate('click');
+  wrapper.find('.button.clear-all').at(0).simulate('click');
   const expectedArgs2 = {
     ...tooltipConfig,
     fieldsToShow: {
@@ -178,7 +156,7 @@ test('TooltipConfig - render -> onSelect', t => {
   t.end();
 });
 
-test('TooltipConfig - render -> tooltip format', t => {
+test('TooltipConfig - render -> tooltip format', (t) => {
   const datasets = StateWFiles.visState.datasets;
   const tooltipConfig = StateWFiles.visState.interactionConfig.tooltip.config;
 
@@ -200,16 +178,10 @@ test('TooltipConfig - render -> tooltip format', t => {
     );
   }, 'Should render');
 
-  const tooltipButtons = wrapper
-    .find(ChickletedInput)
-    .at(0)
-    .find(ChickletButton);
+  const tooltipButtons = wrapper.find(ChickletedInput).at(0).find(ChickletButton);
 
   // click on hash
-  tooltipButtons
-    .at(0)
-    .find(Hash)
-    .simulate('click');
+  tooltipButtons.at(0).find(Hash).simulate('click');
 
   const formatDropdown = wrapper.find(DropdownList);
   t.equal(formatDropdown.length, 1, 'should render 1 format dropdown');
@@ -217,7 +189,7 @@ test('TooltipConfig - render -> tooltip format', t => {
   const options = formatDropdown.at(0).props().options;
 
   t.deepEqual(
-    uniq(options.map(op => op.type)),
+    uniq(options.map((op) => op.type)),
     ['none', 'date', 'date_time'],
     'should render date type formats'
   );
@@ -225,10 +197,7 @@ test('TooltipConfig - render -> tooltip format', t => {
   const option1 = options[1].format;
 
   // click option1
-  formatDropdown
-    .find('.list__item')
-    .at(1)
-    .simulate('click');
+  formatDropdown.find('.list__item').at(1).simulate('click');
   const expectedArgs0 = {
     ...tooltipConfig,
     fieldsToShow: {
@@ -246,7 +215,7 @@ test('TooltipConfig - render -> tooltip format', t => {
   t.end();
 });
 
-test('TooltipConfig -> render -> do not display Geocoder dataset fields', t => {
+test('TooltipConfig -> render -> do not display Geocoder dataset fields', (t) => {
   // Contains only a single dataset which is the geocoder_dataset
   const datasets = StateWithGeocoderDataset.visState.datasets;
   const tooltipConfig = StateWithGeocoderDataset.visState.interactionConfig.tooltip.config;

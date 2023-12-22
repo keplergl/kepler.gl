@@ -7,10 +7,10 @@ import {Icons} from '@kepler.gl/components';
 
 const StyledBanner = styled.div`
   align-items: center;
-  background-color: ${props => props.bgColor};
-  color: ${props => props.fontColor};
+  background-color: ${(props) => props.bgColor};
+  color: ${(props) => props.fontColor};
   display: flex;
-  height: ${props => props.height}px;
+  height: ${(props) => props.height}px;
   justify-content: space-between;
   padding: 0 40px;
   position: absolute;
@@ -22,7 +22,7 @@ const StyledBanner = styled.div`
     cursor: pointer;
   }
 
-  top: ${props => (props.visible ? 0 : -100)}px;
+  top: ${(props) => (props.visible ? 0 : -100)}px;
 `;
 
 const Banner = ({

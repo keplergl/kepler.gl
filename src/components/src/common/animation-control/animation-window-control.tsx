@@ -33,7 +33,7 @@ function AnimationWindowControlFactory(): React.FC<AnimationWindowControlProps> 
     showAnimationWindowControl
   }: AnimationWindowControlProps) => {
     const onSelectAnimationControl = useCallback(
-      item => {
+      (item) => {
         setFilterAnimationWindow(item.id);
         toggleAnimationWindowControl();
       },
@@ -43,8 +43,8 @@ function AnimationWindowControlFactory(): React.FC<AnimationWindowControlProps> 
     return showAnimationWindowControl ? (
       <div className="animation-window-control">
         {Object.values(animationItems)
-          .filter(item => item.id !== animationWindow)
-          .map(item => (
+          .filter((item) => item.id !== animationWindow)
+          .map((item) => (
             <IconButton
               key={item.id}
               data-tip

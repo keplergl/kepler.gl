@@ -23,9 +23,9 @@ interface StyledMapControlProps {
 
 const StyledMapControl = styled.div<StyledMapControlProps>`
   right: 0;
-  padding: ${props => props.theme.mapControl.padding}px;
+  padding: ${(props) => props.theme.mapControl.padding}px;
   z-index: 10;
-  margin-top: ${props => props.top || 0}px;
+  margin-top: ${(props) => props.top || 0}px;
   position: absolute;
   display: grid;
   row-gap: 8px;

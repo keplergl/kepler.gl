@@ -28,7 +28,7 @@ export type FieldFormatter = (value: any) => string;
 export function unique<T>(values: T[]) {
   const results: T[] = [];
   const uniqueSet = new Set(values);
-  uniqueSet.forEach(v => {
+  uniqueSet.forEach((v) => {
     if (notNullorUndefined(v)) {
       results.push(v);
     }
@@ -42,7 +42,7 @@ export function getLatLngBounds(
   limit: [number, number]
 ): [number, number] | null {
   const lats = points
-    .map(d => Number(Array.isArray(d)) && d[idx])
+    .map((d) => Number(Array.isArray(d)) && d[idx])
     .filter(Number.isFinite)
     .sort(numberSort);
 
@@ -58,7 +58,7 @@ export function clamp([min, max]: [number, number], val: number = 0): number {
   return val <= min ? min : val >= max ? max : val;
 }
 
-export function getSampleData(data, sampleSize = 500, getValue = d => d) {
+export function getSampleData(data, sampleSize = 500, getValue = (d) => d) {
   const sampleStep = Math.max(Math.floor(data.length / sampleSize), 1);
   const output: any[] = [];
   for (let i = 0; i < data.length; i += sampleStep) {
@@ -235,9 +235,9 @@ export function roundValToStep(minValue: number, step: number, val: number): num
  * Get the value format based on field and format options
  * Used in render tooltip value
  */
-export const defaultFormatter: FieldFormatter = v => (notNullorUndefined(v) ? String(v) : '');
+export const defaultFormatter: FieldFormatter = (v) => (notNullorUndefined(v) ? String(v) : '');
 
-export const floatFormatter = v => (isNumber(v) ? String(roundToFour(v)) : '');
+export const floatFormatter = (v) => (isNumber(v) ? String(roundToFour(v)) : '');
 
 export const FIELD_DISPLAY_FORMAT: {
   [key: string]: FieldFormatter;
@@ -248,15 +248,15 @@ export const FIELD_DISPLAY_FORMAT: {
   [ALL_FIELD_TYPES.real]: defaultFormatter,
   [ALL_FIELD_TYPES.boolean]: defaultFormatter,
   [ALL_FIELD_TYPES.date]: defaultFormatter,
-  [ALL_FIELD_TYPES.geojson]: d =>
+  [ALL_FIELD_TYPES.geojson]: (d) =>
     typeof d === 'string'
       ? d
       : isPlainObject(d)
-      ? JSON.stringify(d)
-      : Array.isArray(d)
-      ? `[${String(d)}]`
-      : '',
-  [ALL_FIELD_TYPES.geoarrow]: d => d,
+        ? JSON.stringify(d)
+        : Array.isArray(d)
+          ? `[${String(d)}]`
+          : '',
+  [ALL_FIELD_TYPES.geoarrow]: (d) => d,
   [ALL_FIELD_TYPES.object]: JSON.stringify,
   [ALL_FIELD_TYPES.array]: JSON.stringify
 };
@@ -300,7 +300,7 @@ export function getFormatter(
   if (!format) {
     return defaultFormatter;
   }
-  const tooltipFormat = Object.values(TOOLTIP_FORMATS).find(f => f[TOOLTIP_KEY] === format);
+  const tooltipFormat = Object.values(TOOLTIP_FORMATS).find((f) => f[TOOLTIP_KEY] === format);
 
   if (tooltipFormat) {
     return applyDefaultFormat(tooltipFormat as TooltipFormat);
@@ -317,7 +317,9 @@ export function getColumnFormatter(colMeta: ColMetaProps): FieldFormatter {
   if (!format && !displayFormat) {
     return FIELD_DISPLAY_FORMAT[colMeta.type];
   }
-  const tooltipFormat = Object.values(TOOLTIP_FORMATS).find(f => f[TOOLTIP_KEY] === displayFormat);
+  const tooltipFormat = Object.values(TOOLTIP_FORMATS).find(
+    (f) => f[TOOLTIP_KEY] === displayFormat
+  );
 
   if (tooltipFormat) {
     return applyDefaultFormat(tooltipFormat);
@@ -331,7 +333,7 @@ export function getColumnFormatter(colMeta: ColMetaProps): FieldFormatter {
 }
 
 export function applyValueMap(format) {
-  return v => format[v];
+  return (v) => format[v];
 }
 
 export function applyDefaultFormat(tooltipFormat: TooltipFormat): (v: any) => string {
@@ -346,7 +348,7 @@ export function applyDefaultFormat(tooltipFormat: TooltipFormat): (v: any) => st
     case TOOLTIP_FORMAT_TYPES.DATE_TIME:
       return datetimeFormatter(null)(tooltipFormat.format);
     case TOOLTIP_FORMAT_TYPES.PERCENTAGE:
-      return v => `${d3Format(TOOLTIP_FORMATS.DECIMAL_DECIMAL_FIXED_2.format)(v)}%`;
+      return (v) => `${d3Format(TOOLTIP_FORMATS.DECIMAL_DECIMAL_FIXED_2.format)(v)}%`;
     case TOOLTIP_FORMAT_TYPES.BOOLEAN:
       return getBooleanFormatter(tooltipFormat.format);
     default:
@@ -374,7 +376,7 @@ export function applyCustomFormat(format, field): FieldFormatter {
     case ALL_FIELD_TYPES.timestamp:
       return datetimeFormatter(null)(format);
     default:
-      return v => v;
+      return (v) => v;
   }
 }
 
@@ -421,11 +423,7 @@ export function datetimeFormatter(
   timezone?: string | null
 ): (format?: string) => (ts: number) => string {
   return timezone
-    ? format => ts =>
-        moment
-          .utc(ts)
-          .tz(timezone)
-          .format(format)
+    ? (format) => (ts) => moment.utc(ts).tz(timezone).format(format)
     : // return empty string instead of 'Invalid date' if ts is undefined/null
-      format => ts => (ts ? moment.utc(ts).format(format) : '');
+      (format) => (ts) => (ts ? moment.utc(ts).format(format) : '');
 }

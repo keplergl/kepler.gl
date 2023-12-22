@@ -86,15 +86,14 @@ export const defaultProps = {
   showRemoveLayer: true
 };
 
-const getBorderCss = status =>
-  css`
-    border-top: 2px solid ${({theme}) => theme.notificationColors[status]};
-    border-bottom: 2px solid ${({theme}) => theme.notificationColors[status]};
-    border-right: 2px solid ${({theme}) => theme.notificationColors[status]};
-  `;
+const getBorderCss = (status) => css`
+  border-top: 2px solid ${({theme}) => theme.notificationColors[status]};
+  border-bottom: 2px solid ${({theme}) => theme.notificationColors[status]};
+  border-right: 2px solid ${({theme}) => theme.notificationColors[status]};
+`;
 
 const StyledLayerPanelHeader = styled(StyledPanelHeader)`
-  height: ${props => props.theme.layerPanelHeaderHeight}px;
+  height: ${(props) => props.theme.layerPanelHeaderHeight}px;
   position: relative;
   align-items: stretch;
 
@@ -107,11 +106,12 @@ const StyledLayerPanelHeader = styled(StyledPanelHeader)`
     padding: 10px;
   }
 
-  ${props => (props.warning ? getBorderCss('warning') : props.isValid ? '' : getBorderCss('error'))}
+  ${(props) =>
+    props.warning ? getBorderCss('warning') : props.isValid ? '' : getBorderCss('error')}
 
   :hover {
     cursor: pointer;
-    background-color: ${props => props.theme.panelBackgroundHover};
+    background-color: ${(props) => props.theme.panelBackgroundHover};
 
     .layer__drag-handle {
       opacity: 1;
@@ -125,7 +125,7 @@ const StyledLayerPanelHeader = styled(StyledPanelHeader)`
 
 const HeaderLabelSection = styled.div`
   display: flex;
-  color: ${props => props.theme.textColor};
+  color: ${(props) => props.theme.textColor};
   flex-grow: 1;
   align-items: stretch;
   // leave space for eye and collapse icon
@@ -138,11 +138,11 @@ const HeaderActionSection = styled.div<HeaderActionSectionProps>`
   height: 100%;
   align-items: stretch;
   right: 10px;
-  pointer-events: ${props => (props.isEditingLabel ? 'none' : 'all')};
+  pointer-events: ${(props) => (props.isEditingLabel ? 'none' : 'all')};
   :hover {
     .layer-panel__header__actions__hidden {
       opacity: 1;
-      background-color: ${props => props.theme.panelBackgroundHover};
+      background-color: ${(props) => props.theme.panelBackgroundHover};
     }
   }
 `;
@@ -158,9 +158,11 @@ const StyledPanelHeaderHiddenActions = styled.div.attrs({
   opacity: 0;
   display: flex;
   align-items: center;
-  background-color: ${props =>
+  background-color: ${(props) =>
     props.isConfigActive ? props.theme.panelBackgroundHover : props.theme.panelBackground};
-  transition: opacity 0.4s ease, background-color 0.4s ease;
+  transition:
+    opacity 0.4s ease,
+    background-color 0.4s ease;
 
   :hover {
     opacity: 1;
@@ -176,7 +178,7 @@ const StyledDragHandle = styled.div`
   :hover {
     cursor: move;
     opacity: 1;
-    color: ${props => props.theme.textColorHl};
+    color: ${(props) => props.theme.textColorHl};
   }
 `;
 
@@ -226,7 +228,7 @@ export function LayerTitleSectionFactory() {
     }
 
     .layer__title__type {
-      color: ${props => props.theme.subtextColor};
+      color: ${(props) => props.theme.subtextColor};
       font-size: 10px;
       line-height: 12px;
       letter-spacing: 0.37px;
@@ -371,7 +373,7 @@ function LayerPanelHeaderFactory(
   LayerTitleSection: ReturnType<typeof LayerTitleSectionFactory>,
   LayerPanelHeaderActionSection: ReturnType<typeof LayerPanelHeaderActionSectionFactory>
 ) {
-  const LayerPanelHeader: React.FC<LayerPanelHeaderProps> = props => {
+  const LayerPanelHeader: React.FC<LayerPanelHeaderProps> = (props) => {
     const {
       isConfigActive,
       isDragNDropEnabled,

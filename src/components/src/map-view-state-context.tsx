@@ -43,7 +43,7 @@ export const MapViewStateContextProvider = ({
     if (!mapState) return;
     const primaryState = viewStates[0];
     if (primaryState === mapState) return;
-    const props = Object.keys(primaryState).filter(key => !key.startsWith('transition'));
+    const props = Object.keys(primaryState).filter((key) => !key.startsWith('transition'));
     const hasChanged = (a, b) => !isEqual(pick(a, props), pick(b, props));
     if (isSplit && !isViewportSynced) {
       if (mapState.splitMapViewports?.some((s, i) => hasChanged(s, viewStates[i]))) {
@@ -61,7 +61,7 @@ export const MapViewStateContextProvider = ({
   const value = {
     getInternalViewState: (index = 0) => viewStates[index] ?? viewStates[0],
     setInternalViewState: (newViewState, index = 0) => {
-      setViewStates(prevViewStates => {
+      setViewStates((prevViewStates) => {
         if (isSplit && !isViewportSynced) {
           const nextViewStates = [...prevViewStates];
           nextViewStates[index] = newViewState as MapState;

@@ -9,8 +9,8 @@ const resolve = require('path').resolve;
 const join = require('path').join;
 const webpack = require('webpack');
 
-const WEBPACK_ENV_VARIABLES = require('../../webpack/shared-webpack-configuration')
-  .WEBPACK_ENV_VARIABLES;
+const WEBPACK_ENV_VARIABLES =
+  require('../../webpack/shared-webpack-configuration').WEBPACK_ENV_VARIABLES;
 
 const CONFIG = {
   // bundle app.js and everything it imports, recursively.
@@ -60,6 +60,6 @@ const CONFIG = {
 };
 
 // This line enables bundling against src in this repo rather than installed kepler.gl module
-module.exports = env => {
+module.exports = (env) => {
   return env ? require('../webpack.config.local')(CONFIG, __dirname)(env) : CONFIG;
 };

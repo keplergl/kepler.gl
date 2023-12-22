@@ -107,12 +107,12 @@ export function mockStateWithFileUpload() {
       l.config.visConfig.strokeColor = [i + 10, i + 10, i + 10];
     }
     // update layerOrder with newly created IDs
-    updatedState.visState.layerOrder = updatedState.visState.layerOrder.map(layerId =>
+    updatedState.visState.layerOrder = updatedState.visState.layerOrder.map((layerId) =>
       layerId === oldLayerId ? l.id : layerId
     );
   });
 
-  test(t => {
+  test((t) => {
     t.equal(updatedState.visState.layers.length, 2, 'should auto create 2 layers');
     t.end();
   });
@@ -137,7 +137,7 @@ function mockStateWithTripGeojson() {
     l.id = `${l.type}-${i}`;
     l.config.color = [i, i, i];
     // update layerOrder with newly created IDs
-    updatedState.visState.layerOrder = updatedState.visState.layerOrder.map(layerId =>
+    updatedState.visState.layerOrder = updatedState.visState.layerOrder.map((layerId) =>
       layerId === oldLayerId ? l.id : layerId
     );
   });
@@ -370,23 +370,23 @@ export function mockStateWithLayerDimensions(state) {
   const initialState = state || mockStateWithFileUpload();
 
   const layer0 = initialState.visState.layers.find(
-    l => l.config.dataId === testCsvDataId && l.type === 'point'
+    (l) => l.config.dataId === testCsvDataId && l.type === 'point'
   );
 
   const colorField = initialState.visState.datasets[testCsvDataId].fields.find(
-    f => f.name === 'gps_data.types'
+    (f) => f.name === 'gps_data.types'
   );
 
   const colorFieldPayload = [layer0, {colorField}, 'color'];
 
   const colorRangePayload = [
     layer0,
-    {colorRange: VizColorPalette.find(c => c.name === 'Uber Viz Sequential 2')},
+    {colorRange: VizColorPalette.find((c) => c.name === 'Uber Viz Sequential 2')},
     'color'
   ];
 
   const textLabelField = initialState.visState.datasets[testCsvDataId].fields.find(
-    f => f.name === 'date'
+    (f) => f.name === 'date'
   );
 
   const textLabelPayload1 = [layer0, 0, 'field', textLabelField];
@@ -452,8 +452,7 @@ function mockStateWithCustomMapStyle(customType = 'LOCAL') {
       name: 'Smoothie the Cat'
     },
     url: 'mapbox://styles/shanhe/smoothie.the.cat',
-    icon:
-      'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat/static/-122.3391,37.7922,9,0,0/400x300?access_token=secret_token&logo=false&attribution=false',
+    icon: 'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat/static/-122.3391,37.7922,9,0,0/400x300?access_token=secret_token&logo=false&attribution=false',
     custom: customType
   };
 
@@ -585,7 +584,7 @@ function mockStateWithGeocoderDataset() {
 function mockStateWithLayerStyling() {
   const initialState = mockStateWithFileUpload();
   const layer0 = initialState.visState.layers.find(
-    l => l.config.dataId === testCsvDataId && l.type === 'point'
+    (l) => l.config.dataId === testCsvDataId && l.type === 'point'
   );
   const mapCenter = {
     longitude: 31.2369645,

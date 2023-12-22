@@ -20,7 +20,7 @@ const LAYOVER_OFFSET = 4;
 const StyledActionsLayer = styled.div`
   position: absolute;
   .layer-panel-item-disabled {
-    color: ${props => props.theme.textColor};
+    color: ${(props) => props.theme.textColor};
   }
 `;
 const defaultActionIcons = {
@@ -70,7 +70,7 @@ export function PureFeatureActionPanelFactory(): React.FC<FeatureActionPanelProp
 
     const {refs, context} = useFloating({
       open: true,
-      onOpenChange: v => {
+      onOpenChange: (v) => {
         if (!v && onClose) {
           onClose();
         }

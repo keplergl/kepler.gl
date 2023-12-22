@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 const Accessor = {
-  IDENTITY_FN: input => input,
+  IDENTITY_FN: (input) => input,
 
   generateAccessor: (field: string) => (object: object) => object[field],
 

@@ -49,7 +49,7 @@ export function parseGeoJsonRawFeature(rawFeature: unknown): Feature | null {
       type: 'Feature',
       geometry: {
         // why do we need to flip it...
-        coordinates: rawFeature.map(pts => [pts[1], pts[0]]),
+        coordinates: rawFeature.map((pts) => [pts[1], pts[0]]),
         type: 'LineString'
       },
       properties: {}
@@ -71,7 +71,7 @@ export function getGeojsonLayerMeta({
   const bounds = getGeojsonBounds(dataToFeature);
   // if any of the feature has properties.radius set to be true
   const fixedRadius = Boolean(
-    dataToFeature.find(d => d && 'properties' in d && d.properties?.radius)
+    dataToFeature.find((d) => d && 'properties' in d && d.properties?.radius)
   );
 
   // keep a record of what type of geometry the collection has
@@ -199,7 +199,7 @@ export function getGeojsonBounds(features: GeojsonDataMaps = []): BBox | null {
   const samples = features.length > maxCount ? getSampleData(features, maxCount) : features;
 
   const nonEmpty = samples.filter(
-    d => d && d.geometry && d.geometry.coordinates && d.geometry.coordinates.length
+    (d) => d && d.geometry && d.geometry.coordinates && d.geometry.coordinates.length
   );
 
   try {

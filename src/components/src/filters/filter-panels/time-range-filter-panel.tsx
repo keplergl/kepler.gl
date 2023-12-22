@@ -32,7 +32,7 @@ function TimeRangeFilterPanelFactory(
       removeFilter,
       toggleAnimation
     }) => {
-      const onSetFilter = useCallback(value => setFilter(idx, 'value', value), [idx, setFilter]);
+      const onSetFilter = useCallback((value) => setFilter(idx, 'value', value), [idx, setFilter]);
 
       const isEnlarged = useMemo(() => !isSideFilter(filter), [filter]);
 

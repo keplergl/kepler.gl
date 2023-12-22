@@ -22,7 +22,7 @@ const columns = {
   lng: 'lng'
 };
 
-test('#HeatmapLayer -> contructor', t => {
+test('#HeatmapLayer -> contructor', (t) => {
   const TEST_CASES = {
     CREATE: [
       {
@@ -31,7 +31,7 @@ test('#HeatmapLayer -> contructor', t => {
           isVisible: true,
           label: 'test heatmap layer'
         },
-        test: layer => {
+        test: (layer) => {
           // test constructor
           t.equal(layer.config.visConfig.radius, 20, 'Heatmap default radius should be 20');
           t.ok(layer.config.dataId === 'taro', 'heatmaplayer dataId should be correct');
@@ -48,7 +48,7 @@ test('#HeatmapLayer -> contructor', t => {
   t.end();
 });
 
-test('#Heatmaplayer -> formatLayerData -> w/ GpuFilter', t => {
+test('#Heatmaplayer -> formatLayerData -> w/ GpuFilter', (t) => {
   const filteredIndex = [0, 2, 4];
 
   const expectedConfig = {
@@ -104,7 +104,7 @@ test('#Heatmaplayer -> formatLayerData -> w/ GpuFilter', t => {
       datasets: {
         [dataId]: copyTableAndUpdate(preparedDataset, {filteredIndex})
       },
-      assert: result => {
+      assert: (result) => {
         const {layerData, layer} = result;
 
         const expectedLayerData = {
@@ -177,7 +177,7 @@ test('#Heatmaplayer -> formatLayerData -> w/ GpuFilter', t => {
   t.end();
 });
 
-test('#Heatmaplayer -> formatLayerData -> w/o GpuFilter', t => {
+test('#Heatmaplayer -> formatLayerData -> w/o GpuFilter', (t) => {
   const testData = StateWFiles.visState.datasets[testCsvDataId];
   const gpsColumns = {
     lat: 'gps_data.lat',
@@ -231,7 +231,7 @@ test('#Heatmaplayer -> formatLayerData -> w/o GpuFilter', t => {
         }
       },
       datasets: StateWFiles.visState.datasets,
-      assert: result => {
+      assert: (result) => {
         const {layerData, layer} = result;
 
         const expectedLayerData = {

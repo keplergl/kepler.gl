@@ -21,7 +21,7 @@ function callFunctionGetTask(fn: () => any): [any, any] {
   const before = getGlobalTaskQueue();
   const ret = fn();
   const after = getGlobalTaskQueue();
-  const diff = after.filter(t => !before.includes(t));
+  const diff = after.filter((t) => !before.includes(t));
   return [ret, diff];
 }
 
@@ -82,7 +82,7 @@ export function hasPropsToMerge<State extends {}>(
   mergerProps: string | string[]
 ): boolean {
   return Array.isArray(mergerProps)
-    ? Boolean(mergerProps.some(p => state.hasOwnProperty(p)))
+    ? Boolean(mergerProps.some((p) => state.hasOwnProperty(p)))
     : typeof mergerProps === 'string' && state.hasOwnProperty(mergerProps);
 }
 

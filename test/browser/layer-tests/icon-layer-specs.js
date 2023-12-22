@@ -52,7 +52,7 @@ const mockSvgIcons = [
   }
 ];
 
-test('#IconLayer -> constructor', t => {
+test('#IconLayer -> constructor', (t) => {
   const TEST_CASES = {
     CREATE: [
       {
@@ -61,7 +61,7 @@ test('#IconLayer -> constructor', t => {
           isVisible: true,
           label: 'test icon layer'
         },
-        test: layer => {
+        test: (layer) => {
           t.ok(layer.config.dataId === 'smoothie', 'IconLayer dataId should be correct');
           t.ok(layer.type === 'icon', 'type should be icon');
           t.ok(layer.isAggregated === false, 'IconLayer is not aggregated');
@@ -78,7 +78,7 @@ test('#IconLayer -> constructor', t => {
   t.end();
 });
 
-test('#IconLayer -> formatLayerData', t => {
+test('#IconLayer -> formatLayerData', (t) => {
   const filteredIndex = [0, 2, 4];
 
   const TEST_CASES = [
@@ -111,7 +111,7 @@ test('#IconLayer -> formatLayerData', t => {
       datasets: {
         [dataId]: copyTableAndUpdate(preparedDataset, {filteredIndex})
       },
-      assert: result => {
+      assert: (result) => {
         const {layerData, layer} = result;
 
         const expectedLayerData = {
@@ -213,7 +213,7 @@ test('#IconLayer -> formatLayerData', t => {
       datasets: {
         [dataId]: copyTableAndUpdate(preparedDataset, {filteredIndex})
       },
-      assert: result => {
+      assert: (result) => {
         const {layerData} = result;
 
         // getSourceColor
@@ -247,7 +247,7 @@ test('#IconLayer -> formatLayerData', t => {
   t.end();
 });
 
-test('#IconLayer -> renderLayer', t => {
+test('#IconLayer -> renderLayer', (t) => {
   const filteredIndex = [0, 2, 4, 5];
 
   const TEST_CASES = [
@@ -287,7 +287,7 @@ test('#IconLayer -> renderLayer', t => {
           color: [1, 2, 3]
         }
       },
-      afterLayerInitialized: layer => {
+      afterLayerInitialized: (layer) => {
         layer.iconGeometry = iconGeometry;
       },
       datasets: {
@@ -303,7 +303,7 @@ test('#IconLayer -> renderLayer', t => {
         const expectedLayerIds = ['test_layer_1', 'test_layer_1-accel', 'test_layer_1-attach'];
 
         t.deepEqual(
-          deckLayers.map(l => l.id),
+          deckLayers.map((l) => l.id),
           expectedLayerIds,
           'should create 1 composite, 2 svg icon layer'
         );
@@ -317,7 +317,7 @@ test('#IconLayer -> renderLayer', t => {
           filterRange: preparedDataset.gpuFilter.filterRange,
           brushingEnabled: false
         };
-        Object.keys(expectedProps).forEach(key => {
+        Object.keys(expectedProps).forEach((key) => {
           t.deepEqual(props[key], expectedProps[key], `should have correct props.${key}`);
         });
       }
@@ -334,7 +334,7 @@ test('#IconLayer -> renderLayer', t => {
           color: [1, 2, 3]
         }
       },
-      afterLayerInitialized: layer => {
+      afterLayerInitialized: (layer) => {
         layer.iconGeometry = iconGeometry;
       },
       datasets: {
@@ -360,7 +360,7 @@ test('#IconLayer -> renderLayer', t => {
         const expectedLayerIds = ['test_layer_1', 'test_layer_1-accel', 'test_layer_1-attach'];
 
         t.deepEqual(
-          deckLayers.map(l => l.id),
+          deckLayers.map((l) => l.id),
           expectedLayerIds,
           'should create 1 composite, 2 svg icon layer'
         );
@@ -372,7 +372,7 @@ test('#IconLayer -> renderLayer', t => {
           brushingTarget: 'source',
           brushingEnabled: true
         };
-        Object.keys(expectedProps).forEach(key => {
+        Object.keys(expectedProps).forEach((key) => {
           t.deepEqual(props[key], expectedProps[key], `should have correct props.${key}`);
         });
       }
@@ -406,7 +406,7 @@ test('#IconLayer -> renderLayer', t => {
         type: 'icon',
         id: 'test_layer_1'
       },
-      afterLayerInitialized: layer => {
+      afterLayerInitialized: (layer) => {
         layer.iconGeometry = iconGeometry;
       },
       datasets: {
@@ -415,7 +415,7 @@ test('#IconLayer -> renderLayer', t => {
       assert: (deckLayers, layer, layerData) => {
         t.equal(deckLayers.length, 7, 'Should create 7 deck.gl layer');
         t.deepEqual(
-          deckLayers.map(l => l.id),
+          deckLayers.map((l) => l.id),
           [
             'test_layer_1',
             'test_layer_1-accel',
@@ -428,13 +428,8 @@ test('#IconLayer -> renderLayer', t => {
           'Should create 5 deck.gl layers'
         );
         // test test_layer_1-label-types
-        const {
-          getPosition,
-          getColor,
-          getSize,
-          getPixelOffset,
-          getFilterValue
-        } = deckLayers[4].props;
+        const {getPosition, getColor, getSize, getPixelOffset, getFilterValue} =
+          deckLayers[4].props;
         const {getPixelOffset: getPixelOffset1} = deckLayers[6].props;
 
         const distanceScale = getDistanceScales(INITIAL_MAP_STATE);
@@ -482,7 +477,7 @@ test('#IconLayer -> renderLayer', t => {
   t.end();
 });
 
-test('#IconLayer -> svg icons as constructor props -> renderIconModal', t => {
+test('#IconLayer -> svg icons as constructor props -> renderIconModal', (t) => {
   // initialize iconLayer
   const iconLayer = new IconLayer({dataId: '', svgIcons: mockSvgIcons});
   t.deepEqual(iconLayer.iconGeometry, iconLayer.iconGeometry, 'should create correct iconGeometry');
@@ -498,11 +493,7 @@ test('#IconLayer -> svg icons as constructor props -> renderIconModal', t => {
 
   t.equal(wrapper.find('.icon-table__item').length, 3, 'should render 1 icon');
   t.equal(
-    wrapper
-      .find('.icon-table_item__name')
-      .at(0)
-      .find('code')
-      .text(),
+    wrapper.find('.icon-table_item__name').at(0).find('code').text(),
     'alert',
     'should render alert icon'
   );

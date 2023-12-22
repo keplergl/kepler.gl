@@ -12,7 +12,7 @@ export const parsedFields = [
     fieldIdx: 0,
     type: 'integer',
     analyzerType: 'INT',
-    valueAccessor: values => values[0]
+    valueAccessor: (values) => values[0]
   },
   {
     name: 'bathrooms',
@@ -22,7 +22,7 @@ export const parsedFields = [
     fieldIdx: 1,
     type: 'integer',
     analyzerType: 'INT',
-    valueAccessor: values => values[1]
+    valueAccessor: (values) => values[1]
   },
   {
     name: 'effectiveyearbuilt',
@@ -32,7 +32,7 @@ export const parsedFields = [
     fieldIdx: 2,
     type: 'integer',
     analyzerType: 'INT',
-    valueAccessor: values => values[2]
+    valueAccessor: (values) => values[2]
   },
   {
     name: 'roll_landbaseyear',
@@ -42,7 +42,7 @@ export const parsedFields = [
     fieldIdx: 3,
     type: 'integer',
     analyzerType: 'INT',
-    valueAccessor: values => values[3]
+    valueAccessor: (values) => values[3]
   },
   {
     name: 'roll_totlandimp',
@@ -52,7 +52,7 @@ export const parsedFields = [
     fieldIdx: 4,
     type: 'integer',
     analyzerType: 'INT',
-    valueAccessor: values => values[4]
+    valueAccessor: (values) => values[4]
   },
   {
     name: 'nettaxablevalue',
@@ -62,7 +62,7 @@ export const parsedFields = [
     fieldIdx: 5,
     type: 'integer',
     analyzerType: 'INT',
-    valueAccessor: values => values[5]
+    valueAccessor: (values) => values[5]
   },
   {
     name: 'center_lon',
@@ -72,7 +72,7 @@ export const parsedFields = [
     fieldIdx: 6,
     type: 'real',
     analyzerType: 'FLOAT',
-    valueAccessor: values => values[6]
+    valueAccessor: (values) => values[6]
   },
   {
     name: 'roll_landvalue',
@@ -82,7 +82,7 @@ export const parsedFields = [
     fieldIdx: 7,
     type: 'integer',
     analyzerType: 'INT',
-    valueAccessor: values => values[7]
+    valueAccessor: (values) => values[7]
   },
   {
     name: 'usecodedescchar1',
@@ -92,7 +92,7 @@ export const parsedFields = [
     fieldIdx: 8,
     type: 'string',
     analyzerType: 'STRING',
-    valueAccessor: values => values[8]
+    valueAccessor: (values) => values[8]
   },
   {
     name: 'usetype',
@@ -102,7 +102,7 @@ export const parsedFields = [
     fieldIdx: 9,
     type: 'string',
     analyzerType: 'STRING',
-    valueAccessor: values => values[9]
+    valueAccessor: (values) => values[9]
   },
   {
     name: 'yearbuiltTS',
@@ -112,7 +112,7 @@ export const parsedFields = [
     fieldIdx: 10,
     type: 'timestamp',
     analyzerType: 'TIME',
-    valueAccessor: values => values[10]
+    valueAccessor: (values) => values[10]
   },
   {
     name: 'yearbuilt',
@@ -122,7 +122,7 @@ export const parsedFields = [
     fieldIdx: 11,
     type: 'integer',
     analyzerType: 'INT',
-    valueAccessor: values => values[11]
+    valueAccessor: (values) => values[11]
   },
   {
     name: 'roll_impvalue',
@@ -132,7 +132,7 @@ export const parsedFields = [
     fieldIdx: 12,
     type: 'integer',
     analyzerType: 'INT',
-    valueAccessor: values => values[12]
+    valueAccessor: (values) => values[12]
   },
   {
     name: 'istaxableparcel',
@@ -142,7 +142,7 @@ export const parsedFields = [
     fieldIdx: 13,
     type: 'boolean',
     analyzerType: 'BOOLEAN',
-    valueAccessor: values => values[13]
+    valueAccessor: (values) => values[13]
   },
   {
     name: 'propertylocation',
@@ -152,7 +152,7 @@ export const parsedFields = [
     fieldIdx: 14,
     type: 'string',
     analyzerType: 'STRING',
-    valueAccessor: values => values[14]
+    valueAccessor: (values) => values[14]
   },
   {
     name: 'units',
@@ -162,7 +162,7 @@ export const parsedFields = [
     fieldIdx: 15,
     type: 'integer',
     analyzerType: 'INT',
-    valueAccessor: values => values[15]
+    valueAccessor: (values) => values[15]
   },
   {
     name: 'sqftmain',
@@ -172,7 +172,7 @@ export const parsedFields = [
     fieldIdx: 16,
     type: 'integer',
     analyzerType: 'INT',
-    valueAccessor: values => values[16]
+    valueAccessor: (values) => values[16]
   },
   {
     name: 'roll_totalvalue',
@@ -182,7 +182,7 @@ export const parsedFields = [
     fieldIdx: 17,
     type: 'integer',
     analyzerType: 'INT',
-    valueAccessor: values => values[17]
+    valueAccessor: (values) => values[17]
   },
   {
     name: 'situszip5',
@@ -192,7 +192,7 @@ export const parsedFields = [
     fieldIdx: 18,
     type: 'integer',
     analyzerType: 'INT',
-    valueAccessor: values => values[18]
+    valueAccessor: (values) => values[18]
   },
   {
     name: 'center_lat',
@@ -202,7 +202,7 @@ export const parsedFields = [
     fieldIdx: 19,
     type: 'real',
     analyzerType: 'FLOAT',
-    valueAccessor: values => values[19]
+    valueAccessor: (values) => values[19]
   }
 ];
 

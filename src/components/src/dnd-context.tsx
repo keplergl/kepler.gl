@@ -27,8 +27,8 @@ export type DndContextProps = PropsWithChildren<{
 export type DndContextComponent = React.FC<DndContextProps>;
 
 export const DragItem = styled.div`
-  color: ${props => props.theme.textColorHl};
-  border-radius: ${props => props.theme.radioButtonRadius}px;
+  color: ${(props) => props.theme.textColorHl};
+  border-radius: ${(props) => props.theme.radioButtonRadius}px;
   padding: 5px 10px;
   display: inline;
 `;
@@ -69,10 +69,11 @@ function DndContextFactory(
   const DndContext = ({children, visState}: DndContextProps) => {
     const {datasets, layerOrder, layers, effects, effectOrder, splitMaps} = visState;
 
-    const {activeLayer, onDragStart: onLayerDragStart, onDragEnd: onLayerDragEnd} = useDndLayers(
-      layers,
-      layerOrder
-    );
+    const {
+      activeLayer,
+      onDragStart: onLayerDragStart,
+      onDragEnd: onLayerDragEnd
+    } = useDndLayers(layers, layerOrder);
     const {onDragStart: onEffectDragStart, onDragEnd: onEffectDragEnd} = useDndEffects(
       effects,
       effectOrder
@@ -82,7 +83,7 @@ function DndContextFactory(
     const dndModifiers = useMemo(() => (isSplit ? DND_EMPTY_MODIFIERS : DND_MODIFIERS), [isSplit]);
 
     const onDragStart = useCallback(
-      event => {
+      (event) => {
         const activeType = event.active.data?.current?.type;
         switch (activeType) {
           case SORTABLE_LAYER_TYPE:
@@ -99,7 +100,7 @@ function DndContextFactory(
     );
 
     const onDragEnd = useCallback(
-      event => {
+      (event) => {
         const activeType = event.active.data?.current?.type;
         switch (activeType) {
           case SORTABLE_LAYER_TYPE:
@@ -129,7 +130,7 @@ function DndContextFactory(
     );
   };
 
-  return withState([visStateLens], state => state)(DndContext) as React.FC<PropsWithChildren>;
+  return withState([visStateLens], (state) => state)(DndContext) as React.FC<PropsWithChildren>;
 }
 
 export default DndContextFactory;

@@ -6,9 +6,9 @@ import {createSelector} from 'reselect';
 import KeplerGlContext from '../context';
 import {KeplerGlState} from '@kepler.gl/reducers';
 
-const identity = state => state;
+const identity = (state) => state;
 
-const mergeSelectors = (parentSelector, childSelector) => state =>
+const mergeSelectors = (parentSelector, childSelector) => (state) =>
   childSelector(parentSelector(state));
 
 // store the parent selector in the parent context

@@ -6,7 +6,7 @@ import styled from 'styled-components';
 
 const Wrapper = styled.div`
   display: inline-block;
-  color: ${props => props.theme.textColorLT};
+  color: ${(props) => props.theme.textColorLT};
   font-size: 12px;
   text-decoration: underline;
 
@@ -39,7 +39,7 @@ const UploadButton: React.FC<UploadButtonProps> = ({onUpload, children}) => {
   }, [_fileInput]);
 
   const _onChange = useCallback(
-    event => {
+    (event) => {
       const {
         target: {files}
       } = event;

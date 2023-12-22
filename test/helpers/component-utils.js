@@ -35,19 +35,11 @@ export function mockHTMLElementClientSize(prop, value) {
 }
 
 export function clickItemSelector(itemSelector) {
-  itemSelector
-    .find('.item-selector__dropdown')
-    .at(0)
-    .simulate('click');
+  itemSelector.find('.item-selector__dropdown').at(0).simulate('click');
 }
 
 export function clickItemSelectList(itemSelector, itemIndex) {
-  itemSelector
-    .find(Typeahead)
-    .at(0)
-    .find('.list__item')
-    .at(itemIndex)
-    .simulate('click');
+  itemSelector.find(Typeahead).at(0).find('.list__item').at(itemIndex).simulate('click');
 }
 
 export function getItemSelectorListText(itemSelector, itemIndex) {

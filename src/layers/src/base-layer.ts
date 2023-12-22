@@ -188,7 +188,7 @@ const MAX_SAMPLE_SIZE = 5000;
 const defaultDomain: [number, number] = [0, 1];
 const dataFilterExtension = new DataFilterExtension({filterSize: MAX_GPU_FILTERS});
 
-const defaultDataAccessor = dc => d => d;
+const defaultDataAccessor = (dc) => (d) => d;
 const defaultGetFieldValue = (field, d) => field.valueAccessor(d);
 
 export const OVERLAY_TYPE_CONST = keymirror({
@@ -288,7 +288,7 @@ class Layer {
         key: 'color',
         channelScaleType: CHANNEL_SCALES.color,
         nullValue: NO_VALUE_COLOR,
-        defaultValue: config => config.color
+        defaultValue: (config) => config.color
       },
       size: {
         property: 'size',
@@ -380,11 +380,11 @@ class Layer {
     // find all matched fields for each required col
     const requiredColumns = Object.keys(defaultFields).reduce((prev, key) => {
       const requiredFields = allFields.filter(
-        f => f.name === defaultFields[key] || defaultFields[key].includes(f.name)
+        (f) => f.name === defaultFields[key] || defaultFields[key].includes(f.name)
       );
 
       prev[key] = requiredFields.length
-        ? requiredFields.map(f => ({
+        ? requiredFields.map((f) => ({
             value: f.name,
             fieldIdx: f.fieldIdx
           }))
@@ -406,7 +406,7 @@ class Layer {
     // 6 possible column pairs will be returned
     const allKeys = Object.keys(requiredColumns);
     const pointers = allKeys.map((k, i) => (i === allKeys.length - 1 ? -1 : 0));
-    const countPerKey = allKeys.map(k => requiredColumns[k].length);
+    const countPerKey = allKeys.map((k) => requiredColumns[k].length);
     // TODO: Better typings
     const pairs: any[] = [];
 
@@ -603,13 +603,13 @@ class Layer {
     // don't deep merge visualChannel field
     // don't deep merge color range, reversed: is not a key by default
     const shallowCopy = ['colorRange', 'strokeColorRange'].concat(
-      Object.values(this.visualChannels).map(v => v.field)
+      Object.values(this.visualChannels).map((v) => v.field)
     );
 
     // don't copy over domain and animation
-    const notToCopy = ['animation'].concat(Object.values(this.visualChannels).map(v => v.domain));
+    const notToCopy = ['animation'].concat(Object.values(this.visualChannels).map((v) => v.domain));
     // if range is for the same property group copy it, otherwise, not to copy
-    Object.values(this.visualChannels).forEach(v => {
+    Object.values(this.visualChannels).forEach((v) => {
       if (
         configToCopy.visConfig[v.range] &&
         this.visConfigSettings[v.range] &&
@@ -628,7 +628,7 @@ class Layer {
 
     this.updateLayerConfig(copied);
     // validate visualChannel field type and scale types
-    Object.keys(this.visualChannels).forEach(channel => {
+    Object.keys(this.visualChannels).forEach((channel) => {
       this.validateVisualChannel(channel);
     });
   }
@@ -649,7 +649,7 @@ class Layer {
     {shallowCopy = [], notToCopy = []}: {shallowCopy?: string[]; notToCopy?: string[]} = {}
   ) {
     const copied = {};
-    Object.keys(currentConfig).forEach(key => {
+    Object.keys(currentConfig).forEach((key) => {
       if (
         isPlainObject(currentConfig[key]) &&
         isPlainObject(configToCopy[key]) &&
@@ -676,7 +676,7 @@ class Layer {
   registerVisConfig(layerVisConfigs: {
     [key: string]: keyof LayerVisConfigSettings | ValueOf<LayerVisConfigSettings>;
   }) {
-    Object.keys(layerVisConfigs).forEach(item => {
+    Object.keys(layerVisConfigs).forEach((item) => {
       const configItem = layerVisConfigs[item];
       if (typeof configItem === 'string' && LAYER_VIS_CONFIGS[configItem]) {
         // if assigned one of default LAYER_CONFIGS
@@ -684,7 +684,7 @@ class Layer {
         this.visConfigSettings[item] = LAYER_VIS_CONFIGS[configItem];
       } else if (
         typeof configItem === 'object' &&
-        ['type', 'defaultValue'].every(p => configItem.hasOwnProperty(p))
+        ['type', 'defaultValue'].every((p) => configItem.hasOwnProperty(p))
       ) {
         // if provided customized visConfig, and has type && defaultValue
         // TODO: further check if customized visConfig is valid
@@ -814,7 +814,7 @@ class Layer {
     const shouldUpdate =
       newConfig.colorRangeConfig &&
       ['reversed', 'steps'].some(
-        key =>
+        (key) =>
           newConfig.colorRangeConfig.hasOwnProperty(key) &&
           newConfig.colorRangeConfig[key] !==
             (previous[prop] || DEFAULT_COLOR_UI).colorRangeConfig[key]
@@ -830,9 +830,9 @@ class Layer {
       const group = getColorGroupByName(colorRange);
 
       if (group) {
-        const sameGroup = COLOR_RANGES.filter(cr => getColorGroupByName(cr) === group);
+        const sameGroup = COLOR_RANGES.filter((cr) => getColorGroupByName(cr) === group);
 
-        update = sameGroup.find(cr => cr.colors.length === steps);
+        update = sameGroup.find((cr) => cr.colors.length === steps);
 
         if (update && colorRange.reversed) {
           update = reverseColorRange(true, update);
@@ -857,7 +857,7 @@ class Layer {
     const {columns} = this.config;
     return (
       columns &&
-      Object.values(columns).every(column => {
+      Object.values(columns).every((column) => {
         return Boolean(column && (column.optional || (column.value && column.fieldIdx > -1)));
       })
     );
@@ -921,7 +921,7 @@ class Layer {
   }) {
     const attributeAccessors: {[key: string]: any} = {};
 
-    Object.keys(this.visualChannels).forEach(channel => {
+    Object.keys(this.visualChannels).forEach((channel) => {
       const {
         field,
         fixed,
@@ -955,7 +955,7 @@ class Layer {
                   isFixed
                 );
 
-          attributeAccessors[accessor] = d =>
+          attributeAccessors[accessor] = (d) =>
             this.getEncodedChannelValue(
               scaleFunction,
               dataAccessor(dataContainer)(d),
@@ -1116,7 +1116,7 @@ class Layer {
     if (!table) {
       return this;
     }
-    Object.values(this.visualChannels).forEach(channel => {
+    Object.values(this.visualChannels).forEach((channel) => {
       const {scale} = channel;
       const scaleType = this.config[scale];
       // ordinal domain is based on dataContainer, if only filter changed
@@ -1206,7 +1206,7 @@ class Layer {
 
   getVisualChannelUpdateTriggers(): UpdateTriggers {
     const updateTriggers: UpdateTriggers = {};
-    Object.values(this.visualChannels).forEach(visualChannel => {
+    Object.values(this.visualChannels).forEach((visualChannel) => {
       // field range scale domain
       const {accessor, field, scale, domain, range, defaultValue, fixed} = visualChannel;
 
@@ -1247,7 +1247,7 @@ class Layer {
   }
 
   getRadiusScaleByZoom(mapState: MapState, fixedRadius?: boolean) {
-    const radiusChannel = Object.values(this.visualChannels).find(vc => vc.property === 'radius');
+    const radiusChannel = Object.values(this.visualChannels).find((vc) => vc.property === 'radius');
 
     if (!radiusChannel) {
       return 1;
@@ -1261,7 +1261,7 @@ class Layer {
   }
 
   shouldCalculateLayerData(props: string[]) {
-    return props.some(p => !this.noneLayerDataAffectingProps.includes(p));
+    return props.some((p) => !this.noneLayerDataAffectingProps.includes(p));
   }
 
   getBrushingExtensionProps(interactionConfig, brushingTarget?) {

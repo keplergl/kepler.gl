@@ -38,9 +38,10 @@ export type HeatmapLayerConfig = Merge<
 
 export const MAX_ZOOM_LEVEL = 18;
 
-export const pointPosAccessor = ({lat, lng}: HeatmapLayerColumnsConfig) => (
-  dc: DataContainerInterface
-) => d => [dc.valueAt(d.index, lng.fieldIdx), dc.valueAt(d.index, lat.fieldIdx)];
+export const pointPosAccessor =
+  ({lat, lng}: HeatmapLayerColumnsConfig) =>
+  (dc: DataContainerInterface) =>
+  (d) => [dc.valueAt(d.index, lng.fieldIdx), dc.valueAt(d.index, lat.fieldIdx)];
 
 export const pointColResolver = ({lat, lng}: HeatmapLayerColumnsConfig) =>
   `${lat.fieldIdx}-${lng.fieldIdx}`;
@@ -72,9 +73,7 @@ const heatmapDensity = (colorRange: ColorRange): (string | number)[] => {
 
   const colors: HexColor[] = ['#000000', ...colorRange.colors];
 
-  const scale = scaleFunction<HexColor>()
-    .domain([0, 1])
-    .range(colors);
+  const scale = scaleFunction<HexColor>().domain([0, 1]).range(colors);
 
   const colorDensity = scale.range().reduce((bands: (string | number)[], level) => {
     const invert = scale.invertExtent(level);
@@ -164,10 +163,10 @@ class HeatmapLayer extends MapboxGLLayer {
     this.updateMeta({bounds});
   }
 
-  columnsSelector = config => pointColResolver(config.columns);
-  visConfigSelector = config => config.visConfig;
-  weightFieldSelector = config => (config.weightField ? config.weightField.name : null);
-  weightDomainSelector = config => config.weightDomain;
+  columnsSelector = (config) => pointColResolver(config.columns);
+  visConfigSelector = (config) => config.visConfig;
+  weightFieldSelector = (config) => (config.weightField ? config.weightField.name : null);
+  weightDomainSelector = (config) => config.weightDomain;
 
   paintSelector = createSelector(
     this.visConfigSelector,

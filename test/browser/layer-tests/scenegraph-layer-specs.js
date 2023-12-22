@@ -22,7 +22,7 @@ import {KeplerGlLayers} from '@kepler.gl/layers';
 const {ScenegraphLayer} = KeplerGlLayers;
 const columns = {lat: 'lat', lng: 'lng'};
 
-test('#ScenegraphLayer -> constructor', t => {
+test('#ScenegraphLayer -> constructor', (t) => {
   const TEST_CASES = {
     CREATE: [
       {
@@ -31,7 +31,7 @@ test('#ScenegraphLayer -> constructor', t => {
           isVisible: true,
           label: 'test 3d layer'
         },
-        test: layer => {
+        test: (layer) => {
           t.ok(layer.config.dataId === 'smoothie', 'ScenegraphLayer dataId should be correct');
           t.ok(layer.type === '3D', 'type should be 3D');
           t.ok(layer.isAggregated === false, 'ScenegraphLayer is not aggregated');
@@ -46,7 +46,7 @@ test('#ScenegraphLayer -> constructor', t => {
   t.end();
 });
 
-test('#ScenegraphLayer -> formatLayerData', t => {
+test('#ScenegraphLayer -> formatLayerData', (t) => {
   const filteredIndex = [0, 2, 4];
 
   const TEST_CASES = [
@@ -67,7 +67,7 @@ test('#ScenegraphLayer -> formatLayerData', t => {
           filteredIndex
         }
       },
-      assert: result => {
+      assert: (result) => {
         const {layerData, layer} = result;
         const expectedLayerData = {
           data: [
@@ -121,7 +121,7 @@ test('#ScenegraphLayer -> formatLayerData', t => {
   t.end();
 });
 
-test('#ScenegraphLayer -> renderLayer', t => {
+test('#ScenegraphLayer -> renderLayer', (t) => {
   // TODO: mock actual gltf response
   const mockSuccessResponse = {};
   const mockJsonPromise = sinon.stub().returnsPromise();
@@ -161,7 +161,7 @@ test('#ScenegraphLayer -> renderLayer', t => {
           sizeScale: layer.config.visConfig.sizeScale,
           filterRange: preparedDataset.gpuFilter.filterRange
         };
-        Object.keys(expectedProps).forEach(key => {
+        Object.keys(expectedProps).forEach((key) => {
           t.equal(props[key], expectedProps[key], `should have correct props.${key}`);
         });
       }

@@ -56,8 +56,8 @@ interface StyledGeocoderPanelProps {
 
 const StyledGeocoderPanel = styled.div<StyledGeocoderPanelProps>`
   position: absolute;
-  top: ${props => props.theme.geocoderTop}px;
-  right: ${props =>
+  top: ${(props) => props.theme.geocoderTop}px;
+  right: ${(props) =>
     props.unsyncedViewports
       ? // 2 geocoders: split mode and unsynced viewports
         Number.isFinite(props.index) && props.index === 0
@@ -65,8 +65,8 @@ const StyledGeocoderPanel = styled.div<StyledGeocoderPanelProps>`
         : `${props.theme.geocoderRight}px` // unsynced right geocoder (index 1)
       : // 1 geocoder: single mode OR split mode and synced viewports
         `${props.theme.geocoderRight}px`};
-  width: ${props => (Number.isFinite(props.width) ? props.width : props.theme.geocoderWidth)}px;
-  box-shadow: ${props => props.theme.boxShadow};
+  width: ${(props) => (Number.isFinite(props.width) ? props.width : props.theme.geocoderWidth)}px;
+  box-shadow: ${(props) => props.theme.boxShadow};
   z-index: 100;
 `;
 
@@ -180,14 +180,8 @@ export default function GeocoderPanelFactory(): ComponentType<GeocoderPanelProps
     };
 
     render() {
-      const {
-        className,
-        isGeocoderEnabled,
-        mapboxApiAccessToken,
-        width,
-        index,
-        unsyncedViewports
-      } = this.props;
+      const {className, isGeocoderEnabled, mapboxApiAccessToken, width, index, unsyncedViewports} =
+        this.props;
       return (
         <StyledGeocoderPanel
           className={classnames('geocoder-panel', className)}

@@ -26,10 +26,10 @@ const ModalContentWrapper = styled.div<ModalContentWrapperProps>`
   margin: 0 auto;
   background-color: #ffffff;
   border-radius: 4px;
-  transition: ${props => props.theme.transition};
+  transition: ${(props) => props.theme.transition};
   box-sizing: border-box;
   font-size: 12px;
-  color: ${props => props.theme.labelColorLT};
+  color: ${(props) => props.theme.labelColorLT};
 
   ${media.portable`
     padding: 12px 36px 24px;
@@ -40,12 +40,12 @@ const ModalContentWrapper = styled.div<ModalContentWrapperProps>`
     max-width: 100vw;
   `}
 
-  ${props => props.cssStyle || ''};
+  ${(props) => props.cssStyle || ''};
 `;
 
 const ModalContent = styled.div`
   position: relative;
-  z-index: ${props => props.theme.modalContentZ};
+  z-index: ${(props) => props.theme.modalContentZ};
 `;
 
 type ModalTitleProps = PropsWithChildren<{
@@ -54,11 +54,11 @@ type ModalTitleProps = PropsWithChildren<{
 }>;
 
 export const ModalTitle = styled.div<ModalTitleProps>`
-  font-size: ${props => props.theme.modalTitleFontSize};
-  color: ${props => props.theme.modalTitleColor};
+  font-size: ${(props) => props.theme.modalTitleFontSize};
+  color: ${(props) => props.theme.modalTitleColor};
   margin-bottom: 10px;
   position: relative;
-  z-index: ${props => props.theme.modalTitleZ};
+  z-index: ${(props) => props.theme.modalTitleZ};
 `;
 
 const StyledModalFooter = styled.div`
@@ -76,14 +76,14 @@ const StyledModalFooter = styled.div`
   ${media.palm`
     padding-top: 16px;
   `};
-  z-index: ${props => props.theme.modalFooterZ};
+  z-index: ${(props) => props.theme.modalFooterZ};
 `;
 
 const CloseButton = styled.div`
-  color: ${props => props.theme.titleColorLT};
+  color: ${(props) => props.theme.titleColorLT};
   display: flex;
   justify-content: flex-end;
-  z-index: ${props => props.theme.modalButtonZ};
+  z-index: ${(props) => props.theme.modalButtonZ};
   position: absolute;
   top: 24px;
   right: 24px;
@@ -244,7 +244,7 @@ export class ModalDialog extends Component<ModalDialogProps> {
 const StyledModal = styled(ModalDialog)`
   top: 0;
   left: 0;
-  transition: ${props => props.theme.transition};
+  transition: ${(props) => props.theme.transition};
   padding-left: 40px;
   padding-right: 40px;
 

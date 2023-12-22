@@ -31,9 +31,9 @@ import get from 'lodash.get';
 import {SidePanelProps, SidePanelItem} from './types';
 
 export const StyledSidePanelContent = styled.div`
-  ${props => props.theme.sidePanelScrollBar};
+  ${(props) => props.theme.sidePanelScrollBar};
   flex-grow: 1;
-  padding: ${props => props.theme.sidePanelInnerPadding}px;
+  padding: ${(props) => props.theme.sidePanelInnerPadding}px;
   overflow-y: scroll;
   overflow-x: hidden;
 
@@ -84,7 +84,7 @@ export default function SidePanelFactory(
   };
 
   // We should defined sidebar panels here but keeping them for backward compatible
-  const fullPanels: SidePanelItem[] = SIDEBAR_PANELS.map(component => ({
+  const fullPanels: SidePanelItem[] = SIDEBAR_PANELS.map((component) => ({
     ...component,
     component: SIDEBAR_COMPONENTS[component.id],
     iconComponent: SIDEBAR_ICONS[component.id]
@@ -128,10 +128,10 @@ export default function SidePanelFactory(
 
     const isOpen = Boolean(activeSidePanel);
 
-    const _onOpenOrClose = useCallback(() => toggleSidePanel(activeSidePanel ? '' : 'layer'), [
-      activeSidePanel,
-      toggleSidePanel
-    ]);
+    const _onOpenOrClose = useCallback(
+      () => toggleSidePanel(activeSidePanel ? '' : 'layer'),
+      [activeSidePanel, toggleSidePanel]
+    );
 
     const onClickExportImage = useCallback(() => toggleModal(EXPORT_IMAGE_ID), [toggleModal]);
     const onClickExportData = useCallback(() => toggleModal(EXPORT_DATA_ID), [toggleModal]);
@@ -148,19 +148,22 @@ export default function SidePanelFactory(
       toggleModal(SAVE_MAP_ID);
     }, [title, setMapInfo, toggleModal]);
     const onClickShareMap = useCallback(() => toggleModal(SHARE_MAP_ID), [toggleModal]);
-    const onShowDatasetTable = useCallback(dataId => showDatasetTable(dataId), [showDatasetTable]);
+    const onShowDatasetTable = useCallback(
+      (dataId) => showDatasetTable(dataId),
+      [showDatasetTable]
+    );
     const onUpdateTableColor = useCallback(
       (dataId, newColor) => updateTableColor(dataId, newColor),
       [updateTableColor]
     );
     const onShowAddDataModal = useCallback(() => toggleModal(ADD_DATA_ID), [toggleModal]);
     const onShowAddMapStyleModal = useCallback(() => toggleModal(ADD_MAP_STYLE_ID), [toggleModal]);
-    const onRemoveDataset = useCallback(dataId => openDeleteModal(dataId), [openDeleteModal]);
+    const onRemoveDataset = useCallback((dataId) => openDeleteModal(dataId), [openDeleteModal]);
 
-    const currentPanel = useMemo(() => panels.find(({id}) => id === activeSidePanel) || null, [
-      activeSidePanel,
-      panels
-    ]);
+    const currentPanel = useMemo(
+      () => panels.find(({id}) => id === activeSidePanel) || null,
+      [activeSidePanel, panels]
+    );
 
     const customPanelProps = useMemo(() => getCustomPanelProps(props), [props]);
     const PanelComponent = currentPanel?.component;
@@ -222,8 +225,8 @@ export default function SidePanelFactory(
                   currentPanel?.id === 'layer'
                     ? uiState.layerPanelListView
                     : currentPanel?.id === 'filter'
-                    ? uiState.filterPanelListView
-                    : null
+                      ? uiState.filterPanelListView
+                      : null
                 }
               />
             ) : null}

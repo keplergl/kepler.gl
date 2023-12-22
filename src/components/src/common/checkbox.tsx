@@ -13,15 +13,15 @@ interface StyledSwitchInputProps {
 }
 
 const StyledSwitchInput = styled.label<StyledSwitchInputProps>`
-  ${props => (props.secondary ? props.theme.secondarySwitch : props.theme.inputSwitch)};
+  ${(props) => (props.secondary ? props.theme.secondarySwitch : props.theme.inputSwitch)};
 `;
 
 const StyledCheckboxInput = styled.label`
-  ${props => props.theme.inputCheckbox};
+  ${(props) => props.theme.inputCheckbox};
 `;
 
 const StyledRadiuInput = styled.label<StyledSwitchInputProps>`
-  ${props => (props.secondary ? props.theme.secondaryRadio : props.theme.inputRadio)};
+  ${(props) => (props.secondary ? props.theme.secondaryRadio : props.theme.inputRadio)};
 `;
 
 const HiddenInput = styled.input`
@@ -35,8 +35,8 @@ interface StyledCheckboxProps {
 
 const StyledCheckbox = styled.div<StyledCheckboxProps>`
   display: flex;
-  min-height: ${props => props.theme.switchHeight}px;
-  margin-left: ${props => (props.type === 'radio' ? 0 : props.theme.switchLabelMargin)}px;
+  min-height: ${(props) => props.theme.switchHeight}px;
+  margin-left: ${(props) => (props.type === 'radio' ? 0 : props.theme.switchLabelMargin)}px;
 `;
 
 interface CheckboxProps {
@@ -71,12 +71,12 @@ export default class Checkbox extends Component<CheckboxProps> {
     focused: false
   };
 
-  handleFocus: FocusEventHandler<HTMLInputElement> = args => {
+  handleFocus: FocusEventHandler<HTMLInputElement> = (args) => {
     this.setState({focused: true});
     this.props.onFocus(args);
   };
 
-  handleBlur: FocusEventHandler<HTMLInputElement> = args => {
+  handleBlur: FocusEventHandler<HTMLInputElement> = (args) => {
     this.setState({focused: false});
     this.props.onBlur(args);
   };
@@ -98,8 +98,8 @@ export default class Checkbox extends Component<CheckboxProps> {
       this.props.type === 'checkbox'
         ? StyledCheckboxInput
         : this.props.type === 'radio'
-        ? StyledRadiuInput
-        : StyledSwitchInput;
+          ? StyledRadiuInput
+          : StyledSwitchInput;
 
     return (
       <StyledCheckbox

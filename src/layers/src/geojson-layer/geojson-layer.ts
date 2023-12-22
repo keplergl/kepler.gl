@@ -168,17 +168,21 @@ type ObjectInfo = {
   id?: string;
 };
 
-export const featureAccessor = ({geojson}: GeoJsonLayerColumnsConfig) => (
-  dc: DataContainerInterface
-) => d => dc.valueAt(d.index, geojson.fieldIdx);
+export const featureAccessor =
+  ({geojson}: GeoJsonLayerColumnsConfig) =>
+  (dc: DataContainerInterface) =>
+  (d) =>
+    dc.valueAt(d.index, geojson.fieldIdx);
 
-const geoColumnAccessor = ({geojson}: GeoJsonLayerColumnsConfig) => (
-  dc: DataContainerInterface
-): arrow.Vector | null => dc.getColumn?.(geojson.fieldIdx) as arrow.Vector;
+const geoColumnAccessor =
+  ({geojson}: GeoJsonLayerColumnsConfig) =>
+  (dc: DataContainerInterface): arrow.Vector | null =>
+    dc.getColumn?.(geojson.fieldIdx) as arrow.Vector;
 
-const geoFieldAccessor = ({geojson}: GeoJsonLayerColumnsConfig) => (
-  dc: DataContainerInterface
-): Field | null => (dc.getField ? dc.getField(geojson.fieldIdx) : null);
+const geoFieldAccessor =
+  ({geojson}: GeoJsonLayerColumnsConfig) =>
+  (dc: DataContainerInterface): Field | null =>
+    dc.getField ? dc.getField(geojson.fieldIdx) : null;
 
 // access feature properties from geojson sub layer
 export const defaultElevation = 500;
@@ -229,11 +233,11 @@ export default class GeoJsonLayer extends Layer {
       color: {
         ...visualChannels.color,
         accessor: 'getFillColor',
-        condition: config => config.visConfig.filled,
+        condition: (config) => config.visConfig.filled,
         nullValue: visualChannels.color.nullValue,
-        getAttributeValue: config => d => d.properties.fillColor || config.color,
+        getAttributeValue: (config) => (d) => d.properties.fillColor || config.color,
         // used this to get updateTriggers
-        defaultValue: config => config.color
+        defaultValue: (config) => config.color
       },
       strokeColor: {
         property: 'strokeColor',
@@ -244,20 +248,20 @@ export default class GeoJsonLayer extends Layer {
         key: 'strokeColor',
         channelScaleType: CHANNEL_SCALES.color,
         accessor: 'getLineColor',
-        condition: config => config.visConfig.stroked,
+        condition: (config) => config.visConfig.stroked,
         nullValue: visualChannels.color.nullValue,
-        getAttributeValue: config => d =>
+        getAttributeValue: (config) => (d) =>
           d.properties.lineColor || config.visConfig.strokeColor || config.color,
         // used this to get updateTriggers
-        defaultValue: config => config.visConfig.strokeColor || config.color
+        defaultValue: (config) => config.visConfig.strokeColor || config.color
       },
       size: {
         ...visualChannels.size,
         property: 'stroke',
         accessor: 'getLineWidth',
-        condition: config => config.visConfig.stroked,
+        condition: (config) => config.visConfig.stroked,
         nullValue: 0,
-        getAttributeValue: () => d => d.properties.lineWidth || defaultLineWidth
+        getAttributeValue: () => (d) => d.properties.lineWidth || defaultLineWidth
       },
       height: {
         property: 'height',
@@ -268,9 +272,9 @@ export default class GeoJsonLayer extends Layer {
         key: 'height',
         channelScaleType: CHANNEL_SCALES.size,
         accessor: 'getElevation',
-        condition: config => config.visConfig.enable3d,
+        condition: (config) => config.visConfig.enable3d,
         nullValue: 0,
-        getAttributeValue: () => d => d.properties.elevation || defaultElevation
+        getAttributeValue: () => (d) => d.properties.elevation || defaultElevation
       },
       radius: {
         property: 'radius',
@@ -282,7 +286,7 @@ export default class GeoJsonLayer extends Layer {
         channelScaleType: CHANNEL_SCALES.radius,
         accessor: 'getPointRadius',
         nullValue: 0,
-        getAttributeValue: () => d => d.properties.radius || defaultRadius
+        getAttributeValue: () => (d) => d.properties.radius || defaultRadius
       }
     };
   }
@@ -290,11 +294,11 @@ export default class GeoJsonLayer extends Layer {
   static findDefaultLayerProps({label, fields = []}: KeplerTable) {
     const geojsonColumns = fields
       .filter(
-        f =>
+        (f) =>
           (f.type === 'geojson' || f.type === 'geoarrow') &&
           SUPPORTED_ANALYZER_TYPES[f.analyzerType]
       )
-      .map(f => f.name);
+      .map((f) => f.name);
 
     const defaultColumns = {
       geojson: uniq([...GEOJSON_FIELDS.geojson, ...geojsonColumns])
@@ -306,7 +310,7 @@ export default class GeoJsonLayer extends Layer {
     }
 
     return {
-      props: foundColumns.map(columns => ({
+      props: foundColumns.map((columns) => ({
         label: (typeof label === 'string' && label.replace(/\.[^/.]+$/, '')) || this.type,
         columns,
         isVisible: true
@@ -370,7 +374,7 @@ export default class GeoJsonLayer extends Layer {
     }
 
     // for geojson, this should work as well and more efficient. But we need to update some test cases e.g. #GeojsonLayer -> formatLayerData
-    return filteredIndex.map(i => this.dataToFeature[i]).filter(d => d);
+    return filteredIndex.map((i) => this.dataToFeature[i]).filter((d) => d);
   }
 
   formatLayerData(datasets, oldLayerData) {
@@ -383,12 +387,12 @@ export default class GeoJsonLayer extends Layer {
     const customFilterValueAccessor = (dc, d, fieldIndex) => {
       return dc.valueAt(d.properties.index, fieldIndex);
     };
-    const indexAccessor = f => f.properties.index;
+    const indexAccessor = (f) => f.properties.index;
 
-    const dataAccessor = dc => d => ({index: d.properties.index});
+    const dataAccessor = (dc) => (d) => ({index: d.properties.index});
     const accessors = this.getAttributeAccessors({dataAccessor, dataContainer});
 
-    const isFilteredAccessor = d => {
+    const isFilteredAccessor = (d) => {
       return this.filteredIndex ? this.filteredIndex[d.properties.index] : 1;
     };
 
@@ -432,18 +436,13 @@ export default class GeoJsonLayer extends Layer {
       if (this.dataToFeature.length < dataContainer.numChunks()) {
         // for incrementally loading data, we only load and render the latest batch; otherwise, we will load and render all batches
         const isIncrementalLoad = dataContainer.numChunks() - this.dataToFeature.length === 1;
-        const {
-          dataToFeature,
-          bounds,
-          fixedRadius,
-          featureTypes,
-          centroids
-        } = getGeojsonLayerMetaFromArrow({
-          dataContainer,
-          getGeoColumn,
-          getGeoField,
-          ...(isIncrementalLoad ? {chunkIndex: this.dataToFeature.length} : null)
-        });
+        const {dataToFeature, bounds, fixedRadius, featureTypes, centroids} =
+          getGeojsonLayerMetaFromArrow({
+            dataContainer,
+            getGeoColumn,
+            getGeoField,
+            ...(isIncrementalLoad ? {chunkIndex: this.dataToFeature.length} : null)
+          });
         if (centroids) this.centroids = this.centroids.concat(centroids);
         this.updateMeta({bounds, fixedRadius, featureTypes});
         this.dataToFeature = [...this.dataToFeature, ...dataToFeature];

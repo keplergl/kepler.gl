@@ -445,7 +445,7 @@ export const testFields = [
     displayName: 'gps_data.utc_timestamp',
     format: 'YYYY-M-D H:m:s',
     analyzerType: 'DATETIME',
-    valueAccessor: dc => d => {
+    valueAccessor: (dc) => (d) => {
       return dc.valueAt(d.index, 0);
     }
   },
@@ -457,7 +457,7 @@ export const testFields = [
     displayName: 'gps_data.lat',
     format: '',
     analyzerType: 'FLOAT',
-    valueAccessor: dc => d => {
+    valueAccessor: (dc) => (d) => {
       return dc.valueAt(d.index, 1);
     }
   },
@@ -469,7 +469,7 @@ export const testFields = [
     displayName: 'gps_data.lng',
     format: '',
     analyzerType: 'FLOAT',
-    valueAccessor: dc => d => {
+    valueAccessor: (dc) => (d) => {
       return dc.valueAt(d.index, 2);
     }
   },
@@ -481,7 +481,7 @@ export const testFields = [
     displayName: 'gps_data.types',
     format: '',
     analyzerType: 'STRING',
-    valueAccessor: dc => d => {
+    valueAccessor: (dc) => (d) => {
       return dc.valueAt(d.index, 3);
     }
   },
@@ -493,7 +493,7 @@ export const testFields = [
     displayName: 'epoch',
     format: 'X',
     analyzerType: 'TIME',
-    valueAccessor: dc => d => {
+    valueAccessor: (dc) => (d) => {
       return dc.valueAt(d.index, 4);
     }
   },
@@ -505,7 +505,7 @@ export const testFields = [
     displayName: 'has_result',
     format: '',
     analyzerType: 'BOOLEAN',
-    valueAccessor: dc => d => {
+    valueAccessor: (dc) => (d) => {
       return dc.valueAt(d.index, 5);
     }
   },
@@ -517,7 +517,7 @@ export const testFields = [
     displayName: 'uid',
     format: '',
     analyzerType: 'INT',
-    valueAccessor: dc => d => {
+    valueAccessor: (dc) => (d) => {
       return dc.valueAt(d.index, 6);
     }
   },
@@ -529,7 +529,7 @@ export const testFields = [
     displayName: 'time',
     format: 'YYYY-M-DTHH:mm:ss.SSSS',
     analyzerType: 'DATETIME',
-    valueAccessor: dc => d => {
+    valueAccessor: (dc) => (d) => {
       return dc.valueAt(d.index, 7);
     }
   },
@@ -541,7 +541,7 @@ export const testFields = [
     displayName: 'begintrip_ts_utc',
     format: 'YYYY-M-D HH:mm:ssZZ',
     analyzerType: 'DATETIME',
-    valueAccessor: dc => d => {
+    valueAccessor: (dc) => (d) => {
       return dc.valueAt(d.index, 8);
     }
   },
@@ -553,7 +553,7 @@ export const testFields = [
     displayName: 'begintrip_ts_local',
     format: 'YYYY-M-D HH:mm:ssZZ',
     analyzerType: 'DATETIME',
-    valueAccessor: dc => d => {
+    valueAccessor: (dc) => (d) => {
       return dc.valueAt(d.index, 9);
     }
   },
@@ -565,7 +565,7 @@ export const testFields = [
     displayName: 'date',
     format: 'YYYY-M-D',
     analyzerType: 'DATE',
-    valueAccessor: dc => d => {
+    valueAccessor: (dc) => (d) => {
       return dc.valueAt(d.index, 10);
     }
   }
@@ -615,30 +615,10 @@ export const timeMappedValue = [
 ];
 
 export const epochMappedValue = [
-  1472688000000,
-  1472688000000,
-  1472688000000,
-  1472688000000,
-  1472688000000,
-  1472688000000,
-  1472688000000,
-  1472688000000,
-  1472708000000,
-  1472708000000,
-  1472708000000,
-  1472708000000,
-  1472754400000,
-  1472754400000,
-  1472754400000,
-  1472754400000,
-  1472774400000,
-  1472774400000,
-  1472774400000,
-  1472774400000,
-  1472774400000,
-  1472774400000,
-  1472774400000,
-  1472774400000
+  1472688000000, 1472688000000, 1472688000000, 1472688000000, 1472688000000, 1472688000000,
+  1472688000000, 1472688000000, 1472708000000, 1472708000000, 1472708000000, 1472708000000,
+  1472754400000, 1472754400000, 1472754400000, 1472754400000, 1472774400000, 1472774400000,
+  1472774400000, 1472774400000, 1472774400000, 1472774400000, 1472774400000, 1472774400000
 ];
 
 export const timeHistogram = [
@@ -934,7 +914,7 @@ export const wktCsvFields = [
     format: '',
     fieldIdx: 0,
     analyzerType: 'INT',
-    valueAccessor: dc => d => {
+    valueAccessor: (dc) => (d) => {
       return dc.valueAt(d.index, 0);
     }
   },
@@ -946,7 +926,7 @@ export const wktCsvFields = [
     format: '',
     fieldIdx: 1,
     analyzerType: 'PAIR_GEOMETRY_FROM_STRING',
-    valueAccessor: dc => d => {
+    valueAccessor: (dc) => (d) => {
       return dc.valueAt(d.index, 1);
     }
   },
@@ -958,7 +938,7 @@ export const wktCsvFields = [
     format: '',
     fieldIdx: 2,
     analyzerType: 'GEOMETRY_FROM_STRING',
-    valueAccessor: dc => d => {
+    valueAccessor: (dc) => (d) => {
       return dc.valueAt(d.index, 2);
     }
   },
@@ -970,7 +950,7 @@ export const wktCsvFields = [
     format: '',
     fieldIdx: 3,
     analyzerType: 'FLOAT',
-    valueAccessor: dc => d => {
+    valueAccessor: (dc) => (d) => {
       return dc.valueAt(d.index, 3);
     }
   },
@@ -982,7 +962,7 @@ export const wktCsvFields = [
     format: '',
     fieldIdx: 4,
     analyzerType: 'STRING',
-    valueAccessor: dc => d => {
+    valueAccessor: (dc) => (d) => {
       return dc.valueAt(d.index, 4);
     }
   },
@@ -994,7 +974,7 @@ export const wktCsvFields = [
     format: '',
     fieldIdx: 5,
     analyzerType: 'FLOAT',
-    valueAccessor: dc => d => {
+    valueAccessor: (dc) => (d) => {
       return dc.valueAt(d.index, 5);
     }
   }

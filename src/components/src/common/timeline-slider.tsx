@@ -37,10 +37,10 @@ const StyledSlider = styled(Slider)`
   }
 `;
 
-const StyledDomain = styled.div.attrs(props => ({
+const StyledDomain = styled.div.attrs((props) => ({
   className: classnames('animation-control__time-domain', props.className)
 }))`
-  color: ${props => props.theme.titleTextColor};
+  color: ${(props) => props.theme.titleTextColor};
   font-weight: 400;
   font-size: 10px;
 `;
@@ -70,15 +70,8 @@ function TimelineSliderFactory() {
   }) => {
     const onThrottleUpdate = useMemo(() => throttle(setTimelineValue, 20), [setTimelineValue]);
 
-    const {
-      step,
-      domain,
-      value,
-      timeFormat,
-      defaultTimeFormat,
-      timezone,
-      animationWindow
-    } = timeline;
+    const {step, domain, value, timeFormat, defaultTimeFormat, timezone, animationWindow} =
+      timeline;
 
     const isRanged = useMemo(
       () =>

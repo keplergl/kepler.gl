@@ -64,7 +64,7 @@ export const DELAY_TASK = Task.fromCallback(
 );
 
 export const UNWRAP_TASK = Task.fromPromise(
-  promise => promise,
+  (promise) => promise,
 
   'UNWRAP'
 );

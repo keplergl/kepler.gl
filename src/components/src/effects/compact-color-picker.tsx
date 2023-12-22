@@ -17,10 +17,10 @@ export type SingleColorPickerProps = {
 };
 
 export const StyledPanelDropdown = styled.div`
-  ${props => props.theme.panelDropdownScrollBar}
-  background-color: ${props => props.theme.panelBackground};
-  box-shadow: ${props => props.theme.panelBoxShadow};
-  border-radius: ${props => props.theme.panelBorderRadius};
+  ${(props) => props.theme.panelDropdownScrollBar}
+  background-color: ${(props) => props.theme.panelBackground};
+  box-shadow: ${(props) => props.theme.panelBoxShadow};
+  border-radius: ${(props) => props.theme.panelBorderRadius};
   overflow-y: auto;
   max-height: 500px;
   position: relative;
@@ -34,28 +34,28 @@ const StyledConfigSection = styled.div`
 `;
 
 const SectionTitle = styled.div`
-  font-size: ${props => props.theme.inputFontSize};
-  color: ${props => props.theme.effectPanelTextSecondary2};
+  font-size: ${(props) => props.theme.inputFontSize};
+  color: ${(props) => props.theme.effectPanelTextSecondary2};
   margin-bottom: 8px;
 `;
 
 const StyledDropdownButtonWrapper = styled.div`
   align-self: flex-start;
   .button {
-    color: ${props => props.theme.effectPanelTextSecondary2};
+    color: ${(props) => props.theme.effectPanelTextSecondary2};
     display: flex;
     gap: 5px;
     border: none;
     transition: background 0.2s;
-    background-color: ${props => props.theme.inputBgd};
+    background-color: ${(props) => props.theme.inputBgd};
     padding: 8px 5px 8px 10px;
     &:active {
-      color: ${props => props.theme.effectPanelTextMain};
-      background-color: ${props => props.theme.inputBgdHover};
+      color: ${(props) => props.theme.effectPanelTextMain};
+      background-color: ${(props) => props.theme.inputBgdHover};
     }
     &:hover {
-      color: ${props => props.theme.effectPanelTextMain};
-      background-color: ${props => props.theme.inputBgdHover};
+      color: ${(props) => props.theme.effectPanelTextMain};
+      background-color: ${(props) => props.theme.inputBgdHover};
     }
     & > svg {
       margin-right: 0;
@@ -76,7 +76,7 @@ const SingleColorPickerDropdown = ({
   offset = DEFAULT_OFFSET
 }) => {
   const onSelectColorCb = useCallback(
-    v => {
+    (v) => {
       onSelectColor(v);
     },
     [onSelectColor]

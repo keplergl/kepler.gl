@@ -33,7 +33,7 @@ import {MOCK_MAP_STYLE, MOCK_MAP_STYLE_LIGHT} from 'test/helpers/mock-map-styles
 
 const InitialMapStyle = reducer(undefined, {});
 
-test('#mapStyleReducer', t => {
+test('#mapStyleReducer', (t) => {
   const newState = reducer(undefined, {});
 
   t.deepEqual(
@@ -48,7 +48,7 @@ test('#mapStyleReducer', t => {
   t.end();
 });
 
-test('#mapStyleReducer -> INIT', t => {
+test('#mapStyleReducer -> INIT', (t) => {
   const initialState = reducer(InitialMapStyle, keplerGlInit());
   t.deepEqual(
     initialState,
@@ -80,7 +80,7 @@ test('#mapStyleReducer -> INIT', t => {
   t.end();
 });
 
-test('#mapStyleReducer -> INIT & LOAD_MAP_STYLES', t => {
+test('#mapStyleReducer -> INIT & LOAD_MAP_STYLES', (t) => {
   const newState = reducer(
     InitialMapStyle,
     keplerGlInit({
@@ -131,7 +131,7 @@ test('#mapStyleReducer -> INIT & LOAD_MAP_STYLES', t => {
   t.end();
 });
 
-test('#mapStyleReducer -> INIT & LOAD_MAP_STYLES ->  mapStylesReplaceDefault: true', t => {
+test('#mapStyleReducer -> INIT & LOAD_MAP_STYLES ->  mapStylesReplaceDefault: true', (t) => {
   const myMapStyle = {
     id: 'default dark v9',
     label: 'default dark v9',
@@ -178,7 +178,7 @@ test('#mapStyleReducer -> INIT & LOAD_MAP_STYLES ->  mapStylesReplaceDefault: tr
   t.end();
 });
 
-test("#mapStyleReducer -> RECEIVE_MAP_CONFIG (custom: 'LOCAL')", t => {
+test("#mapStyleReducer -> RECEIVE_MAP_CONFIG (custom: 'LOCAL')", (t) => {
   drainTasksForTesting();
   const stateWithToken = reducer(
     InitialMapStyle,
@@ -211,8 +211,7 @@ test("#mapStyleReducer -> RECEIVE_MAP_CONFIG (custom: 'LOCAL')", t => {
       smoothie_the_cat: {
         accessToken: 'secret_token',
         custom: 'LOCAL',
-        icon:
-          'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat/static/-122.3391,37.7922,9,0,0/400x300?access_token=secret_token&logo=false&attribution=false',
+        icon: 'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat/static/-122.3391,37.7922,9,0,0/400x300?access_token=secret_token&logo=false&attribution=false',
         id: 'smoothie_the_cat',
         label: 'Smoothie the Cat',
         url: 'mapbox://styles/shanhe/smoothie.the.cat'
@@ -235,7 +234,7 @@ test("#mapStyleReducer -> RECEIVE_MAP_CONFIG (custom: 'LOCAL')", t => {
   };
 
   t.deepEqual(tmpStateWithConfig, expectedStateWithConfig, 'should load saved map style config');
-  Object.keys(tmpStateWithConfig).forEach(key => {
+  Object.keys(tmpStateWithConfig).forEach((key) => {
     t.deepEqual(
       tmpStateWithConfig[key],
       expectedStateWithConfig[key],
@@ -249,8 +248,7 @@ test("#mapStyleReducer -> RECEIVE_MAP_CONFIG (custom: 'LOCAL')", t => {
     payload: [
       {
         id: 'smoothie_the_cat',
-        url:
-          'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat?pluginName=Keplergl&access_token=secret_token'
+        url: 'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat?pluginName=Keplergl&access_token=secret_token'
       }
     ]
   };
@@ -268,8 +266,7 @@ test("#mapStyleReducer -> RECEIVE_MAP_CONFIG (custom: 'LOCAL')", t => {
     smoothie_the_cat: {
       accessToken: 'secret_token',
       custom: 'LOCAL',
-      icon:
-        'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat/static/-122.3391,37.7922,9,0,0/400x300?access_token=secret_token&logo=false&attribution=false',
+      icon: 'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat/static/-122.3391,37.7922,9,0,0/400x300?access_token=secret_token&logo=false&attribution=false',
       id: 'smoothie_the_cat',
       label: 'Smoothie the Cat',
       url: 'mapbox://styles/shanhe/smoothie.the.cat',
@@ -306,7 +303,7 @@ test("#mapStyleReducer -> RECEIVE_MAP_CONFIG (custom: 'LOCAL')", t => {
     'mapStyle state should have same keys'
   );
 
-  Object.keys(resultState1).forEach(key => {
+  Object.keys(resultState1).forEach((key) => {
     t.deepEqual(
       resultState1[key],
       expectedMapStyleState[key],
@@ -328,8 +325,7 @@ test("#mapStyleReducer -> RECEIVE_MAP_CONFIG (custom: 'LOCAL')", t => {
           smoothie_the_cat: {
             accessToken: 'secret_token',
             custom: 'LOCAL',
-            icon:
-              'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat/static/-122.3391,37.7922,9,0,0/400x300?access_token=secret_token&logo=false&attribution=false',
+            icon: 'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat/static/-122.3391,37.7922,9,0,0/400x300?access_token=secret_token&logo=false&attribution=false',
             id: 'smoothie_the_cat',
             label: 'Smoothie the Cat',
             url: 'mapbox://styles/shanhe/smoothie.the.cat'
@@ -345,14 +341,14 @@ test("#mapStyleReducer -> RECEIVE_MAP_CONFIG (custom: 'LOCAL')", t => {
     'mapStyle state saved should have same keys'
   );
 
-  Object.keys(savedConfig).forEach(key => {
+  Object.keys(savedConfig).forEach((key) => {
     t.deepEqual(savedConfig[key], expectedSaved[key], `should save state.${key} with correctly`);
   });
 
   t.end();
 });
 
-test("#mapStyleReducer -> RECEIVE_MAP_CONFIG (custom: 'MANAGED')", t => {
+test("#mapStyleReducer -> RECEIVE_MAP_CONFIG (custom: 'MANAGED')", (t) => {
   drainTasksForTesting();
   const stateWithToken = reducer(
     InitialMapStyle,
@@ -385,8 +381,7 @@ test("#mapStyleReducer -> RECEIVE_MAP_CONFIG (custom: 'MANAGED')", t => {
       smoothie_the_cat: {
         accessToken: 'secret_token',
         custom: 'MANAGED',
-        icon:
-          'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat/static/-122.3391,37.7922,9,0,0/400x300?access_token=secret_token&logo=false&attribution=false',
+        icon: 'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat/static/-122.3391,37.7922,9,0,0/400x300?access_token=secret_token&logo=false&attribution=false',
         id: 'smoothie_the_cat',
         label: 'Smoothie the Cat',
         url: 'mapbox://styles/shanhe/smoothie.the.cat'
@@ -409,7 +404,7 @@ test("#mapStyleReducer -> RECEIVE_MAP_CONFIG (custom: 'MANAGED')", t => {
   };
 
   t.deepEqual(tmpStateWithConfig, expectedStateWithConfig, 'should load saved map style config');
-  Object.keys(tmpStateWithConfig).forEach(key => {
+  Object.keys(tmpStateWithConfig).forEach((key) => {
     t.deepEqual(
       tmpStateWithConfig[key],
       expectedStateWithConfig[key],
@@ -431,8 +426,7 @@ test("#mapStyleReducer -> RECEIVE_MAP_CONFIG (custom: 'MANAGED')", t => {
           smoothie_the_cat: {
             accessToken: 'secret_token',
             custom: 'MANAGED',
-            icon:
-              'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat/static/-122.3391,37.7922,9,0,0/400x300?access_token=secret_token&logo=false&attribution=false',
+            icon: 'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat/static/-122.3391,37.7922,9,0,0/400x300?access_token=secret_token&logo=false&attribution=false',
             id: 'smoothie_the_cat',
             label: 'Smoothie the Cat',
             url: 'mapbox://styles/shanhe/smoothie.the.cat'
@@ -448,14 +442,14 @@ test("#mapStyleReducer -> RECEIVE_MAP_CONFIG (custom: 'MANAGED')", t => {
     'mapStyle state saved should have same keys in mapStyle.mapStyles'
   );
 
-  Object.keys(savedConfig).forEach(key => {
+  Object.keys(savedConfig).forEach((key) => {
     t.deepEqual(savedConfig[key], expectedSaved[key], `should save state.${key} with correctly`);
   });
 
   t.end();
 });
 
-test('#mapStyleReducer -> RECEIVE_MAP_CONFIG (custom: true (legacy backwards support))', t => {
+test('#mapStyleReducer -> RECEIVE_MAP_CONFIG (custom: true (legacy backwards support))', (t) => {
   drainTasksForTesting();
   const stateWithToken = reducer(
     InitialMapStyle,
@@ -488,8 +482,7 @@ test('#mapStyleReducer -> RECEIVE_MAP_CONFIG (custom: true (legacy backwards sup
       smoothie_the_cat: {
         accessToken: 'secret_token',
         custom: true,
-        icon:
-          'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat/static/-122.3391,37.7922,9,0,0/400x300?access_token=secret_token&logo=false&attribution=false',
+        icon: 'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat/static/-122.3391,37.7922,9,0,0/400x300?access_token=secret_token&logo=false&attribution=false',
         id: 'smoothie_the_cat',
         label: 'Smoothie the Cat',
         url: 'mapbox://styles/shanhe/smoothie.the.cat'
@@ -513,7 +506,7 @@ test('#mapStyleReducer -> RECEIVE_MAP_CONFIG (custom: true (legacy backwards sup
 
   t.deepEqual(stateWithConfig, expectedStateWithConfig, 'should load saved map style config');
 
-  Object.keys(stateWithConfig).forEach(key => {
+  Object.keys(stateWithConfig).forEach((key) => {
     t.deepEqual(
       stateWithConfig[key],
       expectedStateWithConfig[key],
@@ -527,8 +520,7 @@ test('#mapStyleReducer -> RECEIVE_MAP_CONFIG (custom: true (legacy backwards sup
     payload: [
       {
         id: 'smoothie_the_cat',
-        url:
-          'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat?pluginName=Keplergl&access_token=secret_token'
+        url: 'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat?pluginName=Keplergl&access_token=secret_token'
       }
     ]
   };
@@ -546,8 +538,7 @@ test('#mapStyleReducer -> RECEIVE_MAP_CONFIG (custom: true (legacy backwards sup
     smoothie_the_cat: {
       accessToken: 'secret_token',
       custom: true,
-      icon:
-        'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat/static/-122.3391,37.7922,9,0,0/400x300?access_token=secret_token&logo=false&attribution=false',
+      icon: 'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat/static/-122.3391,37.7922,9,0,0/400x300?access_token=secret_token&logo=false&attribution=false',
       id: 'smoothie_the_cat',
       label: 'Smoothie the Cat',
       url: 'mapbox://styles/shanhe/smoothie.the.cat',
@@ -584,7 +575,7 @@ test('#mapStyleReducer -> RECEIVE_MAP_CONFIG (custom: true (legacy backwards sup
     'mapStyle state should have same keys'
   );
 
-  Object.keys(resultState1).forEach(key => {
+  Object.keys(resultState1).forEach((key) => {
     t.deepEqual(
       resultState1[key],
       expectedMapStyleState[key],
@@ -606,8 +597,7 @@ test('#mapStyleReducer -> RECEIVE_MAP_CONFIG (custom: true (legacy backwards sup
           smoothie_the_cat: {
             accessToken: 'secret_token',
             custom: true,
-            icon:
-              'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat/static/-122.3391,37.7922,9,0,0/400x300?access_token=secret_token&logo=false&attribution=false',
+            icon: 'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat/static/-122.3391,37.7922,9,0,0/400x300?access_token=secret_token&logo=false&attribution=false',
             id: 'smoothie_the_cat',
             label: 'Smoothie the Cat',
             url: 'mapbox://styles/shanhe/smoothie.the.cat'
@@ -623,7 +613,7 @@ test('#mapStyleReducer -> RECEIVE_MAP_CONFIG (custom: true (legacy backwards sup
     'mapStyle state saved should have same keys'
   );
 
-  Object.keys(savedConfig).forEach(key => {
+  Object.keys(savedConfig).forEach((key) => {
     t.deepEqual(savedConfig[key], expectedSaved[key], `should save state.${key} with correctly`);
   });
 
@@ -631,7 +621,7 @@ test('#mapStyleReducer -> RECEIVE_MAP_CONFIG (custom: true (legacy backwards sup
 });
 
 // eslint-disable-next-line max-statements
-test('#mapStyleReducer -> MAP_STYLE_CHANGE', t => {
+test('#mapStyleReducer -> MAP_STYLE_CHANGE', (t) => {
   const initialState = reducer(
     InitialMapStyle,
     keplerGlInit({
@@ -774,7 +764,7 @@ test('#mapStyleReducer -> MAP_STYLE_CHANGE', t => {
   t.end();
 });
 
-test('#mapStyleReducer -> MAP_STYLE_CHANGE -> dark basemap to no basemap', t => {
+test('#mapStyleReducer -> MAP_STYLE_CHANGE -> dark basemap to no basemap', (t) => {
   const initialState = reducer(
     InitialMapStyle,
     keplerGlInit({
@@ -808,7 +798,7 @@ test('#mapStyleReducer -> MAP_STYLE_CHANGE -> dark basemap to no basemap', t => 
   t.end();
 });
 
-test('#mapStyleReducer -> EDIT_CUSTOM_MAP_STYLE', t => {
+test('#mapStyleReducer -> EDIT_CUSTOM_MAP_STYLE', (t) => {
   drainTasksForTesting();
   const stateWithToken = reducer(
     InitialMapStyle,
@@ -864,7 +854,7 @@ test('#mapStyleReducer -> EDIT_CUSTOM_MAP_STYLE', t => {
   t.end();
 });
 
-test('#mapStyleReducer -> REMOVE_CUSTOM_MAP_STYLE -> removal of currently selected custom style', t => {
+test('#mapStyleReducer -> REMOVE_CUSTOM_MAP_STYLE -> removal of currently selected custom style', (t) => {
   drainTasksForTesting();
   const stateWithToken = reducer(
     InitialMapStyle,
@@ -905,7 +895,7 @@ test('#mapStyleReducer -> REMOVE_CUSTOM_MAP_STYLE -> removal of currently select
   t.end();
 });
 
-test('#mapStyleReducer -> REMOVE_CUSTOM_MAP_STYLE -> removal of not currently selected custom style', t => {
+test('#mapStyleReducer -> REMOVE_CUSTOM_MAP_STYLE -> removal of not currently selected custom style', (t) => {
   drainTasksForTesting();
   const stateWithToken = reducer(
     InitialMapStyle,

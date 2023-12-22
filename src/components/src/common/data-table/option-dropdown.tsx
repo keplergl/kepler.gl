@@ -81,7 +81,7 @@ export const FormatterDropdown: React.FC<FormatterDropdownProps> = (
     onClose,
     formatLabels
   } = props;
-  const selectionIndex = formatLabels.findIndex(label => label.format === displayFormat);
+  const selectionIndex = formatLabels.findIndex((label) => label.format === displayFormat);
 
   const onSelectDisplayFormat = useCallback(
     (result, e) => {
@@ -175,12 +175,12 @@ const OptionDropdown = (props: OptionDropdownProps) => {
   };
 
   const formatLabels = getFieldFormatLabels(colMeta[column].type);
-  const options = TABLE_OPTION_LIST.filter(op => {
+  const options = TABLE_OPTION_LIST.filter((op) => {
     // cant use conditions because it creates a circular dependency
     // TODO: move condition clause out of default-settings TABLE_OPTION_LIST
     const validToFormat = op.value !== TABLE_OPTION.FORMAT_COLUMN || formatLabels.length;
     return (!op.condition || op.condition(props)) && validToFormat;
-  }).map(op => ({
+  }).map((op) => ({
     ...op,
     icon: TABLE_OPTION_LIST_ICONS[op.icon]
   }));
@@ -194,7 +194,7 @@ const OptionDropdown = (props: OptionDropdownProps) => {
     <Portaled right={120} top={20} isOpened={isOpened} onClose={onClose}>
       <StyledOptionsDropdown className="more-options">
         <DropdownList
-          displayOption={d => d.display}
+          displayOption={(d) => d.display}
           options={options}
           customListItemComponent={ListItem}
           onOptionSelected={onOptionSelected}

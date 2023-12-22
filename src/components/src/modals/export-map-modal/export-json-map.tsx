@@ -12,13 +12,13 @@ import {CopyToClipboard} from 'react-copy-to-clipboard';
 
 const StyledJsonExportSection = styled(StyledExportSection)`
   .note {
-    color: ${props => props.theme.errorColor};
+    color: ${(props) => props.theme.errorColor};
     font-size: 11px;
   }
 
   .viewer {
     position: relative;
-    border: 1px solid ${props => props.theme.selectBorderColorLT};
+    border: 1px solid ${(props) => props.theme.selectBorderColorLT};
     background-color: white;
     border-radius: 2px;
     display: inline-block;

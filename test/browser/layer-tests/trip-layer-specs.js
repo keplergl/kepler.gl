@@ -25,7 +25,7 @@ import {
 } from 'test/helpers/layer-utils';
 import {TripLayerMeta, dataToFeature, dataToTimeStamp} from 'test/fixtures/trip-geojson';
 
-test('#TripLayer -> constructor', t => {
+test('#TripLayer -> constructor', (t) => {
   const TEST_CASES = {
     CREATE: [
       {
@@ -34,7 +34,7 @@ test('#TripLayer -> constructor', t => {
           isVisible: true,
           label: 'test trip layer'
         },
-        test: layer => {
+        test: (layer) => {
           t.ok(layer.config.dataId === 'smoothie', 'tripnLayer dataId should be correct');
           t.ok(layer.type === 'trip', 'type should be trip');
           t.ok(layer.isAggregated === false, 'tripLayer is not aggregated');
@@ -47,7 +47,7 @@ test('#TripLayer -> constructor', t => {
   t.end();
 });
 
-test('#TripLayer -> formatLayerData', t => {
+test('#TripLayer -> formatLayerData', (t) => {
   const filteredIndex = [0, 2, 4];
 
   const TEST_CASES = [
@@ -68,7 +68,7 @@ test('#TripLayer -> formatLayerData', t => {
       datasets: {
         [dataId]: copyTableAndUpdate(prepareTripGeoDataset, {filteredIndex})
       },
-      assert: result => {
+      assert: (result) => {
         const {layerData, layer} = result;
         const expectedLayerData = {
           data: [dataToFeature[0], dataToFeature[2], dataToFeature[4]]
@@ -189,7 +189,7 @@ test('#TripLayer -> formatLayerData', t => {
       datasets: {
         [dataId]: copyTableAndUpdate(prepareTripGeoDataset, {filteredIndex})
       },
-      assert: result => {
+      assert: (result) => {
         const {layerData, layer} = result;
 
         const expectedLayerData = {
@@ -243,7 +243,7 @@ test('#TripLayer -> formatLayerData', t => {
   t.end();
 });
 
-test('#TripLayer -> renderLayer', t => {
+test('#TripLayer -> renderLayer', (t) => {
   const filteredIndex = [0, 2, 4];
 
   const TEST_CASES = [
@@ -276,7 +276,7 @@ test('#TripLayer -> renderLayer', t => {
       assert: (deckLayers, layer) => {
         const ids = ['test_trip_layer_1'];
         t.deepEqual(
-          deckLayers.map(l => l.id),
+          deckLayers.map((l) => l.id),
           ids,
           'Should render 1 deck layers'
         );
@@ -298,7 +298,7 @@ test('#TripLayer -> renderLayer', t => {
           opacity: 0.8
         };
 
-        Object.keys(expectedProps).forEach(key => {
+        Object.keys(expectedProps).forEach((key) => {
           t.deepEqual(
             deckTripLayer.props[key],
             expectedProps[key],
@@ -307,7 +307,7 @@ test('#TripLayer -> renderLayer', t => {
         });
 
         t.deepEqual(
-          deckTripLayer.props.extensions.map(cl => cl.constructor.name),
+          deckTripLayer.props.extensions.map((cl) => cl.constructor.name),
           ['DataFilterExtension'],
           'Should provide DataFilterExtension'
         );
@@ -385,7 +385,7 @@ test('#TripLayer -> renderLayer', t => {
   t.end();
 });
 
-test('#TripLayer -> parseTripGeoJsonTimestamp', t => {
+test('#TripLayer -> parseTripGeoJsonTimestamp', (t) => {
   // mix with illegal character
   const dataToFeature1 = cloneDeep(dataToFeature);
   dataToFeature1[0].geometry.coordinates[0][3] = 0;
@@ -394,9 +394,8 @@ test('#TripLayer -> parseTripGeoJsonTimestamp', t => {
   dataToFeature1[3].geometry.coordinates[0][3] = undefined;
   dataToFeature1[4].geometry.coordinates[0][3] = 'a';
 
-  dataToFeature1[0].geometry.coordinates[
-    dataToFeature1[0].geometry.coordinates.length - 1
-  ][3] = NaN;
+  dataToFeature1[0].geometry.coordinates[dataToFeature1[0].geometry.coordinates.length - 1][3] =
+    NaN;
 
   const result = parseTripGeoJsonTimestamp(dataToFeature1);
 

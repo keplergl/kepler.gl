@@ -29,7 +29,7 @@ function BrushConfigFactory(RangeSlider: ReturnType<typeof RangeSliderFactory>) 
         value1={config.size || 10 / 2}
         step={0.1}
         isRanged={false}
-        onChange={value => onChange({...config, size: value[1]})}
+        onChange={(value) => onChange({...config, size: value[1]})}
         inputTheme="secondary"
       />
     </SidePanelSection>

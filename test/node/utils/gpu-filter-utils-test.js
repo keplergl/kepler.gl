@@ -9,7 +9,7 @@ import {
   getDatasetFieldIndexForFilter
 } from '@kepler.gl/table';
 
-test('gpuFilterUtils -> resetFilterGpuMode', t => {
+test('gpuFilterUtils -> resetFilterGpuMode', (t) => {
   const testFilters = [
     {id: '1', dataId: ['smoothie'], gpu: true},
     {id: '2', dataId: ['smoothie'], gpu: true},
@@ -38,7 +38,7 @@ test('gpuFilterUtils -> resetFilterGpuMode', t => {
   t.end();
 });
 
-test('gpuFilterUtils -> assignGpuChannel', t => {
+test('gpuFilterUtils -> assignGpuChannel', (t) => {
   const testCases = [
     {
       gpuFilter: {id: '3', dataId: ['a'], gpu: true},
@@ -108,7 +108,7 @@ test('gpuFilterUtils -> assignGpuChannel', t => {
     }
   ];
 
-  testCases.forEach(tc => {
+  testCases.forEach((tc) => {
     t.deepEqual(
       assignGpuChannel(tc.gpuFilter, tc.filters),
       tc.result,
@@ -119,7 +119,7 @@ test('gpuFilterUtils -> assignGpuChannel', t => {
   t.end();
 });
 
-test('gpuFilterUtils -> assignGpuChannels', t => {
+test('gpuFilterUtils -> assignGpuChannels', (t) => {
   const testCases = [
     {
       filters: [
@@ -171,13 +171,13 @@ test('gpuFilterUtils -> assignGpuChannels', t => {
     }
   ];
 
-  testCases.forEach(tc => {
+  testCases.forEach((tc) => {
     t.deepEqual(assignGpuChannels(tc.filters), tc.result, 'should assign correct channel');
   });
   t.end();
 });
 
-test('gpuFilterUtils -> getDatasetFieldIndexForFilter', t => {
+test('gpuFilterUtils -> getDatasetFieldIndexForFilter', (t) => {
   const dataId = 'test-this-id';
 
   let fieldIndex = getDatasetFieldIndexForFilter(dataId, {

@@ -33,7 +33,7 @@ import {
   DEFAULT_NOTIFICATION_TYPES
 } from '@kepler.gl/constants';
 
-test('#uiStateReducer', t => {
+test('#uiStateReducer', (t) => {
   t.deepEqual(
     reducer(undefined, {}),
     {...INITIAL_UI_STATE, initialState: {}},
@@ -42,7 +42,7 @@ test('#uiStateReducer', t => {
   t.end();
 });
 
-test('#uiStateReducer -> INIT', t => {
+test('#uiStateReducer -> INIT', (t) => {
   const uiStateReducer = uiStateReducerFactory();
 
   const newState = reducer(
@@ -59,7 +59,7 @@ test('#uiStateReducer -> INIT', t => {
   t.end();
 });
 
-test('#uiStateReducerFactory', t => {
+test('#uiStateReducerFactory', (t) => {
   const uiStateReducer = uiStateReducerFactory({readOnly: true});
 
   t.deepEqual(
@@ -70,7 +70,7 @@ test('#uiStateReducerFactory', t => {
   t.end();
 });
 
-test('#uiStateReducer -> TOGGLE_SIDE_PANEL', t => {
+test('#uiStateReducer -> TOGGLE_SIDE_PANEL', (t) => {
   const newReducer = reducer(INITIAL_UI_STATE, toggleSidePanel('foo'));
 
   const expectedState = {
@@ -101,7 +101,7 @@ test('#uiStateReducer -> TOGGLE_SIDE_PANEL', t => {
   t.end();
 });
 
-test('#uiStateReducer -> TOGGLE_SIDE_PANEL_CLOSE_BUTTON', t => {
+test('#uiStateReducer -> TOGGLE_SIDE_PANEL_CLOSE_BUTTON', (t) => {
   const newReducer = reducer(INITIAL_UI_STATE, toggleSidePanelCloseButton(false));
 
   const expectedState = {
@@ -123,7 +123,7 @@ test('#uiStateReducer -> TOGGLE_SIDE_PANEL_CLOSE_BUTTON', t => {
   t.end();
 });
 
-test('#uiStateReducer -> OPEN_DELETE_MODAL', t => {
+test('#uiStateReducer -> OPEN_DELETE_MODAL', (t) => {
   const newReducer = reducer(INITIAL_UI_STATE, openDeleteModal('chai'));
 
   const expectedState = {
@@ -137,7 +137,7 @@ test('#uiStateReducer -> OPEN_DELETE_MODAL', t => {
   t.end();
 });
 
-test('#uiStateReducer -> SET_EXPORT_IMAGE_SETTING', t => {
+test('#uiStateReducer -> SET_EXPORT_IMAGE_SETTING', (t) => {
   const newReducer = reducer(
     INITIAL_UI_STATE,
     setExportImageSetting({resolution: RESOLUTIONS.TWO_X})
@@ -156,7 +156,7 @@ test('#uiStateReducer -> SET_EXPORT_IMAGE_SETTING', t => {
   t.end();
 });
 
-test('#uiStateReducer -> START_EXPORTING_IMAGE', t => {
+test('#uiStateReducer -> START_EXPORTING_IMAGE', (t) => {
   const newReducer = reducer(INITIAL_UI_STATE, startExportingImage());
 
   const expectedState = {
@@ -172,7 +172,7 @@ test('#uiStateReducer -> START_EXPORTING_IMAGE', t => {
   t.end();
 });
 
-test('#uiStateReducer -> TOGGLE_MAP_CONTROL', t => {
+test('#uiStateReducer -> TOGGLE_MAP_CONTROL', (t) => {
   const newReducer = reducer(INITIAL_UI_STATE, toggleMapControl('mapLegend'));
 
   const expectedState = {
@@ -192,7 +192,7 @@ test('#uiStateReducer -> TOGGLE_MAP_CONTROL', t => {
   t.end();
 });
 
-test('#uiStateReducer -> SET_MAP_CONTROL_VISIBILITY', t => {
+test('#uiStateReducer -> SET_MAP_CONTROL_VISIBILITY', (t) => {
   const newReducer = reducer(INITIAL_UI_STATE, setMapControlVisibility('mapLegend', false));
 
   const expectedMapControl = {
@@ -222,7 +222,7 @@ test('#uiStateReducer -> SET_MAP_CONTROL_VISIBILITY', t => {
   t.end();
 });
 
-test('#uiStateReducer -> SET_EXPORT_SELECTED_DATASET', t => {
+test('#uiStateReducer -> SET_EXPORT_SELECTED_DATASET', (t) => {
   const newReducer = reducer(INITIAL_UI_STATE, setExportSelectedDataset('a'));
 
   const expectedState = {
@@ -238,7 +238,7 @@ test('#uiStateReducer -> SET_EXPORT_SELECTED_DATASET', t => {
   t.end();
 });
 
-test('#uiStateReducer -> SET_EXPORT_DATA_TYPE', t => {
+test('#uiStateReducer -> SET_EXPORT_DATA_TYPE', (t) => {
   const newReducer = reducer(INITIAL_UI_STATE, setExportDataType(EXPORT_DATA_TYPE.JSON));
 
   const expectedState = {
@@ -254,7 +254,7 @@ test('#uiStateReducer -> SET_EXPORT_DATA_TYPE', t => {
   t.end();
 });
 
-test('#uiStateReducer -> SET_EXPORT_FILTERED', t => {
+test('#uiStateReducer -> SET_EXPORT_FILTERED', (t) => {
   const newReducer = reducer(INITIAL_UI_STATE, setExportFiltered(false));
 
   const expectedState = {
@@ -270,7 +270,7 @@ test('#uiStateReducer -> SET_EXPORT_FILTERED', t => {
   t.end();
 });
 
-test('#uiStateReducer -> ADD_NOTIFICATION', t => {
+test('#uiStateReducer -> ADD_NOTIFICATION', (t) => {
   const sharedNotificationId = 'test-notification-id';
 
   const notification1 = {
@@ -325,7 +325,7 @@ test('#uiStateReducer -> ADD_NOTIFICATION', t => {
   t.end();
 });
 
-test('#uiStateReducer -> REMOVE_NOTIFICATION', t => {
+test('#uiStateReducer -> REMOVE_NOTIFICATION', (t) => {
   const newState = reducer(
     INITIAL_UI_STATE,
     addNotification({
@@ -356,7 +356,7 @@ test('#uiStateReducer -> REMOVE_NOTIFICATION', t => {
   t.end();
 });
 
-test('#uiStateReducer -> LOAD_FILES_ERR', t => {
+test('#uiStateReducer -> LOAD_FILES_ERR', (t) => {
   const newState = reducer(INITIAL_UI_STATE, loadFiles());
   t.equal(newState.loadFiles.fileLoading, true, 'should set fileLoading to true');
 

@@ -58,7 +58,7 @@ function testGetTimeFieldDomain(table, t) {
     }
   ];
 
-  test_cases.forEach(tc =>
+  test_cases.forEach((tc) =>
     t.deepEqual(tc.input, tc.output, `should process correct domain for timestamp ${tc.msg}`)
   );
 }
@@ -92,7 +92,7 @@ function testGetNumericFieldStep(table, t) {
     }
   ];
 
-  test_cases.forEach(tc =>
+  test_cases.forEach((tc) =>
     t.equal(
       preciseRound(tc.input, 5),
       preciseRound(tc.output, 5),
@@ -215,7 +215,7 @@ function testGetFilterFunction({fields, dataContainer}, t) {
   );
 }
 
-test('KeplerTable -> getColumnFilterDomain -> time', t => {
+test('KeplerTable -> getColumnFilterDomain -> time', (t) => {
   const expectedFields = testFields;
 
   const data = processCsvData(testData);
@@ -231,7 +231,7 @@ test('KeplerTable -> getColumnFilterDomain -> time', t => {
   t.end();
 });
 
-test('KeplerTable -> getColumnFilterDomain -> numeric', async t => {
+test('KeplerTable -> getColumnFilterDomain -> numeric', async (t) => {
   const data = processCsvData(numericRangesCsv);
   const newDataEntry = createNewDataEntry({
     info: {id: 'test'},
@@ -244,7 +244,7 @@ test('KeplerTable -> getColumnFilterDomain -> numeric', async t => {
   t.end();
 });
 
-test('KeplerTable -> findPointFieldPairs', t => {
+test('KeplerTable -> findPointFieldPairs', (t) => {
   const TASE_CASE = [
     {
       fields: [
@@ -402,7 +402,7 @@ test('KeplerTable -> findPointFieldPairs', t => {
   ];
 
   TASE_CASE.forEach(({fields, expected}) => {
-    const found = findPointFieldPairs(fields.map(f => ({name: f})));
+    const found = findPointFieldPairs(fields.map((f) => ({name: f})));
 
     t.equal(expected.length, found.length, `should found ${expected.length} pairs`);
     expected.forEach((pair, index) => {

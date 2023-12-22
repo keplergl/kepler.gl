@@ -11,10 +11,10 @@ interface StyledDivProps {
   active?: boolean;
 }
 
-const StyledDiv = styled.div.attrs(props => ({
+const StyledDiv = styled.div.attrs((props) => ({
   className: classnames('toolbar-item', props.className)
 }))<StyledDivProps>`
-  color: ${props =>
+  color: ${(props) =>
     props.active ? props.theme.toolbarItemIconHover : props.theme.panelHeaderIcon};
   padding: 12px 20px;
   align-items: center;
@@ -22,9 +22,10 @@ const StyledDiv = styled.div.attrs(props => ({
   flex-direction: column;
   width: 110px;
   justify-content: space-between;
-  border: 1px solid ${props => (props.active ? props.theme.toolbarItemBorderHover : 'transparent')};
-  border-radius: ${props => props.theme.toolbarItemBorderRaddius};
-  background-color: ${props =>
+  border: 1px solid
+    ${(props) => (props.active ? props.theme.toolbarItemBorderHover : 'transparent')};
+  border-radius: ${(props) => props.theme.toolbarItemBorderRaddius};
+  background-color: ${(props) =>
     props.active ? props.theme.toolbarItemBgdHover : props.theme.dropdownListBgd};
 
   .toolbar-item__svg-container {
@@ -32,14 +33,14 @@ const StyledDiv = styled.div.attrs(props => ({
   }
   .toolbar-item__title {
     white-space: nowrap;
-    color: ${props => props.theme.textColorHl};
+    color: ${(props) => props.theme.textColorHl};
   }
 
   :hover {
-    background-color: ${props => props.theme.toolbarItemBgdHover};
-    border-color: ${props => props.theme.toolbarItemBorderHover};
+    background-color: ${(props) => props.theme.toolbarItemBgdHover};
+    border-color: ${(props) => props.theme.toolbarItemBorderHover};
     svg {
-      color: ${props => props.theme.toolbarItemIconHover};
+      color: ${(props) => props.theme.toolbarItemIconHover};
     }
     cursor: pointer;
   }
@@ -61,7 +62,7 @@ const ToolbarItem = React.memo((props: ToolbarItemProps) => (
     id={props.id}
     className={props.className}
     active={props.active}
-    onClick={e => {
+    onClick={(e) => {
       e.stopPropagation();
       e.preventDefault();
       if (typeof props.onClose === 'function') {

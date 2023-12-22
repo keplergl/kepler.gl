@@ -19,7 +19,7 @@ import {FileLoading, FileLoadingProgress, LoadFiles} from '@kepler.gl/types';
 const StyledLoadDataModal = styled.div.attrs({
   className: 'load-data-modal'
 })`
-  padding: ${props => props.theme.modalPadding};
+  padding: ${(props) => props.theme.modalPadding};
   min-height: 440px;
   display: flex;
   flex-direction: column;
@@ -62,7 +62,7 @@ export function LoadDataModalFactory(
   LoadStorageMap: ReturnType<typeof LoadStorageMapFactory>
 ) {
   /** @type {React.FunctionComponent<LoadDataModalProps>} */
-  const LoadDataModal: React.FC<LoadDataModalProps> = props => {
+  const LoadDataModal: React.FC<LoadDataModalProps> = (props) => {
     const intl = useIntl();
     const {loadingMethods, isCloudMapLoading} = props;
     const [currentMethod, toggleMethod] = useState(getDefaultMethod(loadingMethods));

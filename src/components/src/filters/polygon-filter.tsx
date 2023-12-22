@@ -10,32 +10,32 @@ import {StyledFilterPanel} from './components';
 
 const layerFilter = (layer: Layer) => layer.type === LAYER_TYPES.point;
 const isAlreadySelected = (selectedLayers: Layer[], layerId: string) =>
-  selectedLayers.findIndex(l => l.id === layerId) === -1;
+  selectedLayers.findIndex((l) => l.id === layerId) === -1;
 
 function PolygonFilterFactory() {
   const PolygonFilter: React.FC<PolygonFilterProps> = React.memo(({filter, layers, setLayers}) => {
     const setNewLayers = useCallback(
-      newLayers => {
+      (newLayers) => {
         return setLayers(newLayers.map((l: Layer) => l.id));
       },
       [setLayers]
     );
 
-    const selectedLayers = useMemo(() => layers.filter(l => filter.layerId?.includes(l.id)), [
-      filter,
-      layers
-    ]);
+    const selectedLayers = useMemo(
+      () => layers.filter((l) => filter.layerId?.includes(l.id)),
+      [filter, layers]
+    );
 
     const availableLayers = useMemo(() => {
       // remove already added layers and filter out non point layers
       return layers.filter(
-        layer => layerFilter(layer) && isAlreadySelected(selectedLayers, layer.id)
+        (layer) => layerFilter(layer) && isAlreadySelected(selectedLayers, layer.id)
       );
     }, [layers, selectedLayers]);
 
     const searchOptions = useCallback((value, options) => {
       const searchStr = value?.toLowerCase();
-      return options.filter(l => l.config?.label?.toLowerCase().indexOf(searchStr) >= 0);
+      return options.filter((l) => l.config?.label?.toLowerCase().indexOf(searchStr) >= 0);
     }, []);
 
     return (

@@ -907,15 +907,8 @@ export const mergedFilters = [
     step: 1000,
     speed: 1,
     mappedValue: [
-      1453770810000,
-      1453770279000,
-      1453770358000,
-      1453770124000,
-      1453770131000,
-      1453770395000,
-      1453770173000,
-      1453770394000,
-      1453770540000
+      1453770810000, 1453770279000, 1453770358000, 1453770124000, 1453770131000, 1453770395000,
+      1453770173000, 1453770394000, 1453770540000
     ],
     fieldType: 'timestamp',
     fixedDomain: true,
@@ -1150,7 +1143,7 @@ mergedLayer2.config = {
     format: '',
     fieldIdx: 0,
     analyzerType: 'STRING',
-    valueAccessor: values => values[0]
+    valueAccessor: (values) => values[0]
   },
   colorScale: 'ordinal',
   colorDomain: ['2.103.2', '2.107.3', '2.116.2', '2.117.1', '3.68.4'],
@@ -1165,7 +1158,7 @@ mergedLayer2.config = {
     type: 'integer',
     fieldIdx: 9,
     analyzerType: 'INT',
-    valueAccessor: values => values[9]
+    valueAccessor: (values) => values[9]
   },
   sizeDomain: [78, 694],
   sizeScale: 'sqrt',
@@ -1234,7 +1227,7 @@ mergedLayer3.config = {
     format: '',
     fieldIdx: 9,
     analyzerType: 'INT',
-    valueAccessor: values => values[9]
+    valueAccessor: (values) => values[9]
   },
   highlightColor: [252, 242, 26, 255],
   isConfigActive: false,
@@ -1299,7 +1292,7 @@ mergedLayer4.config = {
     format: '',
     fieldIdx: 3,
     analyzerType: 'INT',
-    valueAccessor: values => values[3]
+    valueAccessor: (values) => values[3]
   },
   colorScale: 'quantize',
   colorDomain: [94107, 94132],

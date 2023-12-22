@@ -43,7 +43,7 @@ export function mergeFilters<S extends VisState>(
   fromConfig?: boolean
 ): S {
   const preserveFilterOrder = fromConfig
-    ? filtersToMerge?.map(l => l.id)
+    ? filtersToMerge?.map((l) => l.id)
     : state.preserveFilterOrder;
 
   if (!Array.isArray(filtersToMerge) || !filtersToMerge.length) {
@@ -61,7 +61,7 @@ export function mergeFilters<S extends VisState>(
   updatedFilters = resetFilterGpuMode(updatedFilters);
   updatedFilters = assignGpuChannels(updatedFilters);
   // filter data
-  const datasetsToFilter = uniq(flattenDeep(validated.map(f => f.dataId)));
+  const datasetsToFilter = uniq(flattenDeep(validated.map((f) => f.dataId)));
 
   const filtered = applyFiltersToDatasets(
     datasetsToFilter,
@@ -86,9 +86,9 @@ export function replaceFilterDatasetIds(
   dataIdToUse: string
 ) {
   const replaced: Filter[] = [];
-  savedFilter.forEach(filter => {
+  savedFilter.forEach((filter) => {
     if (filter.dataId.includes(dataId)) {
-      const newDataId = filter.dataId.map(d => (d === dataId ? dataIdToUse : d));
+      const newDataId = filter.dataId.map((d) => (d === dataId ? dataIdToUse : d));
       replaced.push({
         ...filter,
         dataId: newDataId
@@ -137,7 +137,7 @@ function insertItemBasedOnPreservedOrder(
       while (i-- > 0 && preceedIdx < 0) {
         // keep looking for preceed layer that is already loaded
         const preceedItemId = preservedOrder[i - 1];
-        preceedIdx = newItems.findIndex(d => d.id === preceedItemId);
+        preceedIdx = newItems.findIndex((d) => d.id === preceedItemId);
       }
       if (preceedIdx > -1) {
         // if found
@@ -278,8 +278,8 @@ export function insertLayerAtRightOrder(
   // perservedOrder ['a', 'b', 'c'];
   // layerOrder ['a', 'b', 'c']
   const currentLayerQueue = currentOrder
-    .map(id => findById(id)(currentLayers))
-    .filter(layer => Boolean(layer));
+    .map((id) => findById(id)(currentLayers))
+    .filter((layer) => Boolean(layer));
   const newLayers = currentLayers.concat(layersToInsert);
   const newLayerOrderQueue = insertItemBasedOnPreservedOrder(
     currentLayerQueue,
@@ -310,7 +310,7 @@ export function mergeInteractions<S extends VisState>(
   const unmerged: Partial<SavedInteractionConfig> = {};
 
   if (interactionToBeMerged) {
-    (Object.keys(interactionToBeMerged) as Array<keyof SavedInteractionConfig>).forEach(key => {
+    (Object.keys(interactionToBeMerged) as Array<keyof SavedInteractionConfig>).forEach((key) => {
       if (!state.interactionConfig[key]) {
         return;
       }
@@ -425,7 +425,7 @@ export function mergeSplitMaps<S extends VisState>(
     if (entries.length > 0) {
       entries.forEach(([id, value]) => {
         // check if layer exists
-        const pushTo = state.layers.find(l => l.id === id) ? merged : unmerged;
+        const pushTo = state.layers.find((l) => l.id === id) ? merged : unmerged;
 
         // create map panel if current map is not split
         pushTo[i] = pushTo[i] || {
@@ -462,7 +462,7 @@ export function mergeEffects<S extends VisState>(
   const newEffects = [
     ...state.effects,
     ...(effects || [])
-      .map(effect => {
+      .map((effect) => {
         return fromConfig
           ? createEffect(
               deepmerge.all([
@@ -475,14 +475,14 @@ export function mergeEffects<S extends VisState>(
             )
           : (effect as EffectType);
       })
-      .filter(effect => {
+      .filter((effect) => {
         return Boolean(effect && effect.isValidToSave());
       })
   ];
   return {
     ...state,
     effects: newEffects,
-    effectOrder: newEffects.map(effect => effect.id)
+    effectOrder: newEffects.map((effect) => effect.id)
   };
 }
 
@@ -515,8 +515,8 @@ export function mergeInteractionTooltipConfig(
       unmergedTooltip[dataId] = tooltipConfig.fieldsToShow[dataId];
     } else {
       // if dataset is loaded
-      const allFields = state.datasets[dataId].fields.map(d => d.name);
-      const foundFieldsToShow = tooltipConfig.fieldsToShow[dataId].filter(field =>
+      const allFields = state.datasets[dataId].fields.map((d) => d.name);
+      const foundFieldsToShow = tooltipConfig.fieldsToShow[dataId].filter((field) =>
         allFields.includes(field.name)
       );
 
@@ -622,19 +622,19 @@ export function validateSavedLayerColumns(
   }
 
   // find actual column fieldIdx, in case it has changed
-  const allColFound = Object.keys(columns).every(key =>
+  const allColFound = Object.keys(columns).every((key) =>
     validateColumn(columns[key], columns, fields)
   );
 
   const rv = allColFound ? columns : null;
   if (options.throwOnError) {
-    const requiredColumns = Object.keys(emptyCols).filter(k => !emptyCols[k].optional);
-    const missingColumns = requiredColumns.filter(k => !columns?.[k].value);
+    const requiredColumns = Object.keys(emptyCols).filter((k) => !emptyCols[k].optional);
+    const missingColumns = requiredColumns.filter((k) => !columns?.[k].value);
     if (missingColumns.length) {
       throw new Error(`Layer has missing or invalid columns: ${missingColumns.join(', ')}`);
     }
     const configColumns = Object.keys(savedCols);
-    const invalidColumns = configColumns.filter(k => !columns?.[k]?.value);
+    const invalidColumns = configColumns.filter((k) => !columns?.[k]?.value);
     if (invalidColumns.length) {
       throw new Error(`Layer has invalid columns: ${invalidColumns.join(', ')}`);
     }
@@ -675,10 +675,10 @@ export function validateSavedTextLabel(
   const savedTextLabels = Array.isArray(savedTextLabel) ? savedTextLabel : [savedTextLabel];
 
   // validate field
-  return savedTextLabels.map(textLabel => {
+  return savedTextLabels.map((textLabel) => {
     const field = textLabel.field
-      ? fields.find(fd =>
-          Object.keys(textLabel.field).every(key => textLabel.field[key] === fd[key])
+      ? fields.find((fd) =>
+          Object.keys(textLabel.field).every((key) => textLabel.field[key] === fd[key])
         )
       : null;
 
@@ -711,7 +711,7 @@ export function validateSavedVisualChannels(
     if (savedLayer.config) {
       if (savedLayer.config[field]) {
         foundField = fields.find(
-          fd => savedLayer.config && fd.name === savedLayer.config[field].name
+          (fd) => savedLayer.config && fd.name === savedLayer.config[field].name
         );
       }
 
@@ -749,7 +749,7 @@ export function validateLayersByDatasets(
   const validated: Layer[] = [];
   const failed: NonNullable<ParsedConfig['visState']>['layers'] = [];
 
-  layers.forEach(layer => {
+  layers.forEach((layer) => {
     let validateLayer: Layer | null = null;
 
     if (layer?.config?.dataId) {
@@ -887,7 +887,7 @@ export function mergeDatasetsByOrder(state: VisState, newDataEntries: Datasets):
   if (Array.isArray(state.preserveDatasetOrder)) {
     // preserveDatasetOrder  might not include the  new datasets
     const newDatasetIds = Object.keys(merged).filter(
-      id => !state.preserveDatasetOrder?.includes(id)
+      (id) => !state.preserveDatasetOrder?.includes(id)
     );
     return [...state.preserveDatasetOrder, ...newDatasetIds].reduce(
       (accu, dataId) => ({

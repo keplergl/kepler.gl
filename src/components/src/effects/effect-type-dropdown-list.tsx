@@ -22,8 +22,8 @@ export type EffectTypeDropdownListProps = {
 };
 
 const DropdownListWrapper = styled.div`
-  ${props => props.theme.dropdownList};
-  background-color: ${props => props.theme.dropdownListBgd};
+  ${(props) => props.theme.dropdownList};
+  background-color: ${(props) => props.theme.dropdownListBgd};
   display: flex;
   flex-wrap: wrap;
   align-items: stretch;
@@ -43,7 +43,7 @@ const StyledDropdownListItem = styled.div`
   :hover {
     cursor: pointer;
     .effect-type-selector__item__label {
-      color: ${props => props.theme.effectPanelTextMain};
+      color: ${(props) => props.theme.effectPanelTextMain};
     }
   }
 `;
@@ -71,13 +71,13 @@ export function EffectTypeDropdownListFactory() {
         {options.map((value, i) => (
           <StyledDropdownListItem
             className={classNames('effect-type-selector__item', {
-              selected: selectedItems.find(it => it.type === value.type),
+              selected: selectedItems.find((it) => it.type === value.type),
               hover: selectionIndex === i,
               disabled: value.disabled
             })}
             key={`${value.type}_${i}`}
-            onMouseDown={e => onSelectOption(e, value)}
-            onClick={e => onSelectOption(e, value)}
+            onMouseDown={(e) => onSelectOption(e, value)}
+            onClick={(e) => onSelectOption(e, value)}
           >
             <ListItemComponent value={value} isTile />
           </StyledDropdownListItem>

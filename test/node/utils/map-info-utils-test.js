@@ -4,7 +4,7 @@
 import test from 'tape';
 import {isValidMapInfo} from '@kepler.gl/utils';
 
-test('mapInfoUtils -> isValidMapInfo', t => {
+test('mapInfoUtils -> isValidMapInfo', (t) => {
   t.equal(
     isValidMapInfo({title: 'example', description: ''}),
     true,

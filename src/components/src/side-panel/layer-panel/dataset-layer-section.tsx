@@ -36,7 +36,7 @@ function DatasetLayerSectionFactory(
   SourceDataCatalog: ReturnType<typeof SourceDataCatalogFactory>,
   LayerList: ReturnType<typeof LayerListFactory>
 ) {
-  const DatasetLayerSection: React.FC<DatasetLayerSectionProps> = props => {
+  const DatasetLayerSection: React.FC<DatasetLayerSectionProps> = (props) => {
     const {
       dataset,
       datasets,

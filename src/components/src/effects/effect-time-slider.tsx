@@ -46,20 +46,20 @@ const TopRowWrapper = styled.div`
   align-items: center;
 
   .day {
-    background-color: ${props => props.theme.effectPanelElementColorHovered};
+    background-color: ${(props) => props.theme.effectPanelElementColorHovered};
   }
   .night {
-    background-color: ${props => props.theme.effectPanelElementColor};
+    background-color: ${(props) => props.theme.effectPanelElementColor};
   }
   .sunrise,
   .sunset {
-    background-color: ${props => props.theme.effectPanelElementColorActive};
+    background-color: ${(props) => props.theme.effectPanelElementColorActive};
   }
   .inline_icon__day {
-    color: ${props => props.theme.effectPanelElementColorSun};
+    color: ${(props) => props.theme.effectPanelElementColorSun};
   }
   .inline_icon__night {
-    color: ${props => props.theme.effectPanelTextSecondary2};
+    color: ${(props) => props.theme.effectPanelTextSecondary2};
   }
 `;
 
@@ -68,7 +68,7 @@ const BottomRowWrapper = styled.div`
   height: 16px;
   .bottom_icon__sunrise,
   .bottom_icon__sunset {
-    color: ${props => props.theme.effectPanelTextSecondary2};
+    color: ${(props) => props.theme.effectPanelTextSecondary2};
   }
 `;
 
@@ -76,7 +76,7 @@ type BackgroundBlockProps = {width: string};
 const BackgroundBlock = styled.div<BackgroundBlockProps>`
   margin: 0px;
   padding: 0px;
-  width: ${props => props.width};
+  width: ${(props) => props.width};
   height: 24px;
   pointer-events: none;
 `;
@@ -85,7 +85,7 @@ type StyledIconProps = {left: number};
 const StyledIcon = styled.div<StyledIconProps>`
   position: absolute;
   top: 0px;
-  left: calc(${props => props.left}% - 8px);
+  left: calc(${(props) => props.left}% - 8px);
   height: 32px;
   pointer-events: none;
 `;
@@ -94,7 +94,7 @@ type StyledBottomIconProps = {left: number};
 const StyledBottomIcon = styled.div<StyledBottomIconProps>`
   position: absolute;
   top: 0px;
-  left: calc(${props => props.left}% - 27px);
+  left: calc(${(props) => props.left}% - 27px);
   height: 12px;
   pointer-events: none;
   margin-top: 1px;
@@ -189,7 +189,7 @@ export function getUIBlocks(config: EffectTimeSliderConfig): UIBlock[] {
   const updatedBlocks: UIBlock[] = [];
 
   // sort and split ui blocks
-  blocks.forEach(block => {
+  blocks.forEach((block) => {
     if (block.start > block.end) {
       block.end += 1;
     }
@@ -209,7 +209,7 @@ export function getUIBlocks(config: EffectTimeSliderConfig): UIBlock[] {
   updatedBlocks.sort((a, b) => a.start - b.start);
 
   const existingBottomBlocks = {};
-  updatedBlocks.forEach(block => {
+  updatedBlocks.forEach((block) => {
     block.width = (block.end - block.start) * 100;
     block.center = block.start * 100 + block.width / 2;
 

@@ -21,7 +21,7 @@ const FileNameTag = styled.div<FileNameTagProps>`
 
   .text {
     color: white;
-    font-size: ${props => props.fontSize};
+    font-size: ${(props) => props.fontSize};
   }
 `;
 
@@ -33,7 +33,7 @@ const FileTypeIconWrapper = styled.div<FileTypeIconWrapperProps>`
   display: inline-block;
   position: relative;
   color: currentColor;
-  height: ${props => props.height};
+  height: ${(props) => props.height};
 `;
 
 interface FileTypeIconProps {

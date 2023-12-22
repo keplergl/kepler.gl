@@ -6,7 +6,7 @@ export const ADDRESS_PREFIX = '@@KG_';
 
 import curry from 'lodash.curry';
 
-export const getActionForwardAddress = id => `${ADDRESS_PREFIX}${id.toUpperCase()}`;
+export const getActionForwardAddress = (id) => `${ADDRESS_PREFIX}${id.toUpperCase()}`;
 
 /**
  * Wrap an action into a forward action that only modify the state of a specific
@@ -79,7 +79,7 @@ export const wrapTo = curry((id, action) => ({
  * @returns {boolean} boolean - whether the action is a forward action
  * @public
  */
-export const isForwardAction = action => {
+export const isForwardAction = (action) => {
   return Boolean(action && action.meta && action.meta._forward_ === FORWARD);
 };
 
@@ -90,7 +90,7 @@ export const isForwardAction = action => {
  * @returns {Object} - unwrapped action
  * @public
  */
-export const unwrap = action => (isForwardAction(action) ? unwrap(action.payload) : action);
+export const unwrap = (action) => (isForwardAction(action) ? unwrap(action.payload) : action);
 
 /**
  * Given an id, returns the action for that id.
@@ -135,7 +135,7 @@ export const _actionFor = (id, action) =>
  *  mapDispatchToProps
  * )(MapContainer);
  */
-export const forwardTo = (id, dispatch) => action => dispatch(wrapTo(id, action));
+export const forwardTo = (id, dispatch) => (action) => dispatch(wrapTo(id, action));
 
 /**
  * Update the state of a kepler.gl instance

@@ -72,7 +72,7 @@ export function renderedSize({
     rowsToSample = Array.from(Array(dataContainer.numRows()).keys());
   }
   const rowWidth = Math.max(
-    ...rowsToSample.map(rowIdx => {
+    ...rowsToSample.map((rowIdx) => {
       const value = parseFieldValue(dataContainer.valueAt(rowIdx, colIdx), type);
       // measuring large text cause slow performance
       if (value.length > maxCellSize) {

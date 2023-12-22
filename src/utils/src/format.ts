@@ -3,4 +3,4 @@
 
 import {TOOLTIP_KEY} from '@kepler.gl/constants';
 
-export const getFormatValue = fmt => fmt[TOOLTIP_KEY];
+export const getFormatValue = (fmt) => fmt[TOOLTIP_KEY];

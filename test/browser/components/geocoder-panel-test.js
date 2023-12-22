@@ -14,7 +14,7 @@ import {InitialState} from 'test/helpers/mock-state';
 const GeocoderPanel = appInjector.get(GeocoderPanelFactory);
 const MAPBOX_TOKEN = process.env.MapboxAccessToken;
 
-test('GeocoderPanel - render', t => {
+test('GeocoderPanel - render', (t) => {
   const enabled = true;
   const updateVisData = sinon.spy();
   const removeDataset = sinon.spy();
@@ -53,7 +53,7 @@ test('GeocoderPanel - render', t => {
               fieldIdx: 0,
               type: 'integer',
               analyzerType: 'INT',
-              valueAccessor: values => values[0]
+              valueAccessor: (values) => values[0]
             },
             {
               name: 'ln',
@@ -63,7 +63,7 @@ test('GeocoderPanel - render', t => {
               fieldIdx: 1,
               type: 'integer',
               analyzerType: 'INT',
-              valueAccessor: values => values[1]
+              valueAccessor: (values) => values[1]
             },
             {
               name: 'icon',
@@ -73,7 +73,7 @@ test('GeocoderPanel - render', t => {
               fieldIdx: 2,
               type: 'string',
               analyzerType: 'STRING',
-              valueAccessor: values => values[2]
+              valueAccessor: (values) => values[2]
             },
             {
               name: 'text',
@@ -83,7 +83,7 @@ test('GeocoderPanel - render', t => {
               fieldIdx: 3,
               type: 'string',
               analyzerType: 'STRING',
-              valueAccessor: values => values[3]
+              valueAccessor: (values) => values[3]
             }
           ],
           rows: [[55, 1, 'place', 'mock']]
@@ -221,7 +221,7 @@ test('GeocoderPanel - render', t => {
   t.end();
 });
 
-test('Geocoder -> testForCoordinates', t => {
+test('Geocoder -> testForCoordinates', (t) => {
   t.deepEqual(
     testForCoordinates('21.22,-138.0'),
     [true, 21.22, -138.0],

@@ -19,7 +19,7 @@ import {
 } from '@kepler.gl/reducers';
 
 const InitialMapState = reducer(undefined, {});
-test('#mapStateReducer', t => {
+test('#mapStateReducer', (t) => {
   const newState = reducer(undefined, {});
 
   t.deepEqual(
@@ -31,7 +31,7 @@ test('#mapStateReducer', t => {
   t.end();
 });
 
-test('#mapStateReducerFactory', t => {
+test('#mapStateReducerFactory', (t) => {
   const mapStateReducer = mapStateReducerFactory({dragRotate: true});
   const newState = mapStateReducer(undefined, {});
 
@@ -44,7 +44,7 @@ test('#mapStateReducerFactory', t => {
   t.end();
 });
 
-test('#mapStateReducer -> UPDATE_MAP', t => {
+test('#mapStateReducer -> UPDATE_MAP', (t) => {
   const mapUpdate = {
     latitude: 24.123,
     longitude: 120.839,
@@ -60,7 +60,7 @@ test('#mapStateReducer -> UPDATE_MAP', t => {
 });
 
 // eslint-disable-next-line max-statements
-test('#mapStateReducer -> UPDATE_MAP - minZoom/maxZoom', t => {
+test('#mapStateReducer -> UPDATE_MAP - minZoom/maxZoom', (t) => {
   let mapUpdate = {
     zoom: 9,
     maxZoom: 12
@@ -144,7 +144,7 @@ test('#mapStateReducer -> UPDATE_MAP - minZoom/maxZoom', t => {
   t.end();
 });
 
-test('#mapStateReducer -> UPDATE_MAP - maxBounds', t => {
+test('#mapStateReducer -> UPDATE_MAP - maxBounds', (t) => {
   let state = {
     ...InitialMapState,
     latitude: 37.685430657228906,
@@ -203,7 +203,7 @@ test('#mapStateReducer -> UPDATE_MAP - maxBounds', t => {
   t.end();
 });
 
-test('#mapStateReducer -> UPDATE_MAP - split map and unsynced viewports', t => {
+test('#mapStateReducer -> UPDATE_MAP - split map and unsynced viewports', (t) => {
   // toggle to split mode
   let newState = reducer(INITIAL_MAP_STATE, toggleSplitMap());
   // change to unsynced viewports and retain default isZoomLocked
@@ -271,7 +271,7 @@ test('#mapStateReducer -> UPDATE_MAP - split map and unsynced viewports', t => {
   t.end();
 });
 
-test('#mapStateReducer -> TOGGLE_PERSPECTIVE', t => {
+test('#mapStateReducer -> TOGGLE_PERSPECTIVE', (t) => {
   const newState = reducer(undefined, {});
   t.equal(newState.dragRotate, false, 'dragRotate should default to false');
 
@@ -288,7 +288,7 @@ test('#mapStateReducer -> TOGGLE_PERSPECTIVE', t => {
   t.end();
 });
 
-test('#mapStateReducer -> TOGGLE_PERSPECTIVE - split map and unsynced viewports', t => {
+test('#mapStateReducer -> TOGGLE_PERSPECTIVE - split map and unsynced viewports', (t) => {
   // toggle to split mode
   let newState = reducer(INITIAL_MAP_STATE, toggleSplitMap());
   // change to unsynced viewports
@@ -333,7 +333,7 @@ test('#mapStateReducer -> TOGGLE_PERSPECTIVE - split map and unsynced viewports'
   t.end();
 });
 
-test('#mapStateReducer -> FIT_BOUNDS', t => {
+test('#mapStateReducer -> FIT_BOUNDS', (t) => {
   // default input and output in @mapbox/geo-viewport
   // https://github.com/mapbox/geo-viewport
 
@@ -359,7 +359,7 @@ test('#mapStateReducer -> FIT_BOUNDS', t => {
   t.end();
 });
 
-test('#mapStateReducer -> FIT_BOUNDS - split map and unsynced viewports', t => {
+test('#mapStateReducer -> FIT_BOUNDS - split map and unsynced viewports', (t) => {
   // default input and output in @mapbox/geo-viewport
   // https://github.com/mapbox/geo-viewport
 
@@ -409,7 +409,7 @@ test('#mapStateReducer -> FIT_BOUNDS - split map and unsynced viewports', t => {
   t.end();
 });
 
-test('#mapStateReducer -> FIT_BOUNDS.invalid', t => {
+test('#mapStateReducer -> FIT_BOUNDS.invalid', (t) => {
   // default input and output in @mapbox/geo-viewport
   // https://github.com/mapbox/geo-viewport
 
@@ -427,7 +427,7 @@ test('#mapStateReducer -> FIT_BOUNDS.invalid', t => {
   t.end();
 });
 
-test('#mapStateReducer -> SPLIT_MAP: toggle', t => {
+test('#mapStateReducer -> SPLIT_MAP: toggle', (t) => {
   let newState = reducer(INITIAL_MAP_STATE, toggleSplitMap());
 
   const expectedState = {
@@ -446,7 +446,7 @@ test('#mapStateReducer -> SPLIT_MAP: toggle', t => {
   t.end();
 });
 
-test('#mapStateReducer -> SPLIT_MAP: upload mapState config to update split map state', t => {
+test('#mapStateReducer -> SPLIT_MAP: upload mapState config to update split map state', (t) => {
   let state = {
     ...INITIAL_MAP_STATE,
     isSplit: true,
@@ -517,7 +517,7 @@ test('#mapStateReducer -> SPLIT_MAP: upload mapState config to update split map 
   t.end();
 });
 
-test('#mapStateReducer -> SPLIT_MAP: close map at specific point', t => {
+test('#mapStateReducer -> SPLIT_MAP: close map at specific point', (t) => {
   let newState = reducer(INITIAL_MAP_STATE, toggleSplitMap());
 
   const expectedState = {
@@ -536,7 +536,7 @@ test('#mapStateReducer -> SPLIT_MAP: close map at specific point', t => {
   t.end();
 });
 
-test('#mapStateReducer -> TOGGLE_SPLIT_MAP_VIEWPORT', t => {
+test('#mapStateReducer -> TOGGLE_SPLIT_MAP_VIEWPORT', (t) => {
   let newState = reducer(INITIAL_MAP_STATE, {});
 
   let expectedState = {

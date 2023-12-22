@@ -9,7 +9,7 @@
 export function isStyleUsingMapboxTiles(mapStyle) {
   const sources = mapStyle.stylesheet?.sources || {};
 
-  return Object.keys(sources).some(sourceId => {
+  return Object.keys(sources).some((sourceId) => {
     const {url, tiles} = sources[sourceId] || {};
 
     if (url) {
@@ -17,7 +17,7 @@ export function isStyleUsingMapboxTiles(mapStyle) {
     }
 
     if (tiles) {
-      return tiles.some(tileUrl => tileUrl.toLowerCase().startsWith('mapbox://'));
+      return tiles.some((tileUrl) => tileUrl.toLowerCase().startsWith('mapbox://'));
     }
 
     return false;

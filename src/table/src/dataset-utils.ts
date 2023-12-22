@@ -22,7 +22,7 @@ const datasetColors = [
 /** @type {typeof import('./dataset-utils').getNewDatasetColor} */
 export function getNewDatasetColor(datasets: Datasets): RGBColor {
   const presetColors = datasetColors.map(String);
-  const usedColors = uniq(Object.values(datasets).map(d => String(d.color))).filter(c =>
+  const usedColors = uniq(Object.values(datasets).map((d) => String(d.color))).filter((c) =>
     presetColors.includes(c)
   );
 

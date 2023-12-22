@@ -15,7 +15,7 @@ function RangeFilterPanelFactory(
 ) {
   const RangeFilterPanel: FilterPanelComponent<RangeFilter> = React.memo(
     ({idx, datasets, allAvailableFields, filter, removeFilter, setFilter}) => {
-      const onSetFilter = useCallback(value => setFilter(idx, 'value', value), [idx, setFilter]);
+      const onSetFilter = useCallback((value) => setFilter(idx, 'value', value), [idx, setFilter]);
 
       return (
         <div className="range-filter-panel">

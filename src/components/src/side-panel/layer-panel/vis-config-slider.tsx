@@ -48,10 +48,10 @@ const CustomInputWrapper = styled.div`
 `;
 
 const CustomInputLabel = styled.label`
-  color: ${props => props.theme.textColor};
+  color: ${(props) => props.theme.textColor};
   font-weight: 500;
   letter-spacing: 0.2px;
-  font-size: ${props => props.theme.layerConfigGroupLabelLabelFontSize};
+  font-size: ${(props) => props.theme.layerConfigGroupLabelLabelFontSize};
   padding-right: 15px;
 
   &:last-child {
@@ -62,8 +62,8 @@ const CustomInputLabel = styled.label`
 `;
 
 const RangeInput = styled.input`
-  ${props => props.theme.input};
-  font-size: ${props => props.theme.sliderInputFontSize};
+  ${(props) => props.theme.input};
+  font-size: ${(props) => props.theme.sliderInputFontSize};
   width: 44px;
   overflow: auto;
   height: 20px;
@@ -78,7 +78,7 @@ const LazyInput: React.FC<LazyInputProps> = ({value, onChange, name}) => {
   }, [value]);
 
   const onKeyDown = useCallback(
-    e => {
+    (e) => {
       switch (e.keyCode) {
         case KeyEvent.DOM_VK_ENTER:
         case KeyEvent.DOM_VK_RETURN:
@@ -95,7 +95,7 @@ const LazyInput: React.FC<LazyInputProps> = ({value, onChange, name}) => {
     [onChange, stateValue]
   );
 
-  const _onChange = useCallback(e => setValue(e.target.value), [setValue]);
+  const _onChange = useCallback((e) => setValue(e.target.value), [setValue]);
   const onBlur = useCallback(() => onChange(name, stateValue), [onChange, name, stateValue]);
 
   return (
@@ -200,7 +200,7 @@ export default function VisConfigSliderFactory(RangeSlider: ReturnType<typeof Ra
             value1={isRanged ? value[1] : value}
             step={step}
             isRanged={Boolean(isRanged)}
-            onChange={v => onChange({[property]: isRanged ? v : v[1]})}
+            onChange={(v) => onChange({[property]: isRanged ? v : v[1]})}
             inputTheme={inputTheme}
             showInput
           />
@@ -208,7 +208,7 @@ export default function VisConfigSliderFactory(RangeSlider: ReturnType<typeof Ra
           <CustomInput
             isRanged={isRanged}
             value={value}
-            onChangeCustomInput={v => onChange({[property]: v})}
+            onChangeCustomInput={(v) => onChange({[property]: v})}
           />
         )}
       </SidePanelSection>

@@ -18,7 +18,7 @@ import {
 } from '@kepler.gl/utils';
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 
-test('dataUtils -> clamp', t => {
+test('dataUtils -> clamp', (t) => {
   t.equal(clamp([0, 1], 2), 1, 'should clamp 2 to 1 for [0,1]');
   t.equal(clamp([0, 1], 0.5), 0.5, 'should not clamp 0.5 for [0,1]');
   t.equal(clamp([-1, 1], -2), -1, 'should clamp -2 to -1 for [-1,1]');
@@ -27,7 +27,7 @@ test('dataUtils -> clamp', t => {
   t.end();
 });
 
-test('dataUtils -> preciseRound', t => {
+test('dataUtils -> preciseRound', (t) => {
   t.equal(preciseRound(1.234, 2), '1.23', 'should round 1.234 correctly');
   t.equal(preciseRound(13.234, 0), '13', 'should round 13.234 correctly');
   t.equal(preciseRound(13, 2), '13.00', 'should round 13 correctly');
@@ -36,7 +36,7 @@ test('dataUtils -> preciseRound', t => {
   t.end();
 });
 
-test('dataUtils -> roundToFour', t => {
+test('dataUtils -> roundToFour', (t) => {
   t.equal(roundToFour(1.2344), 1.2344, 'should round 1.2344 to 4 decimals correctly');
   t.equal(roundToFour(13.23445), 13.2345, 'should round 13.23445 to 4 decimals correctly');
   t.equal(roundToFour(13), 13, 'should round 13 to 4 decimals correctly');
@@ -49,7 +49,7 @@ test('dataUtils -> roundToFour', t => {
   t.end();
 });
 
-test('dataUtils -> getRoundingDecimalFromStep', t => {
+test('dataUtils -> getRoundingDecimalFromStep', (t) => {
   t.equal(getRoundingDecimalFromStep(1), 0, 'decimal of step=int should be 0');
   t.equal(getRoundingDecimalFromStep(0.1), 1, 'decimal of step=0.1 should be 1');
   t.equal(getRoundingDecimalFromStep(0.01), 2, 'decimal of step=0.01 should be 2');
@@ -63,7 +63,7 @@ test('dataUtils -> getRoundingDecimalFromStep', t => {
   t.end();
 });
 
-test('dataUtils -> getRoundingDecimalFromStep', t => {
+test('dataUtils -> getRoundingDecimalFromStep', (t) => {
   t.equal(roundValToStep(0, 0.1, 0.11), 0.1, 'should round 0.11 to 0.1');
   t.equal(roundValToStep(0, 0.1, 0.1), 0.1, 'should round 0.1 to 0.1');
   t.equal(roundValToStep(1, 0.1, 1.16), 1.2, 'should round 1.16 to 1.2');
@@ -79,7 +79,7 @@ test('dataUtils -> getRoundingDecimalFromStep', t => {
   t.end();
 });
 
-test('dataUtils -> snapToMarks', t => {
+test('dataUtils -> snapToMarks', (t) => {
   const marks = [0, 1, 3, 4.7, 5, 6.4, 10];
   t.equal(snapToMarks(0, marks), 0, 'should snap to nearest mark');
   t.equal(snapToMarks(-1, marks), 0, 'should snap to nearest mark');
@@ -92,7 +92,7 @@ test('dataUtils -> snapToMarks', t => {
   t.end();
 });
 
-test('dataUtils -> normalizeSliderValue', t => {
+test('dataUtils -> normalizeSliderValue', (t) => {
   t.equal(normalizeSliderValue(-1.1, 0, 1), -1, 'should normalize slider value based on step');
   t.equal(normalizeSliderValue(4.4, 0, 1), 4, 'should round Val To Step');
   t.equal(normalizeSliderValue(4.4, 0, 1, [1, 2, 3, 4.1, 5]), 4.1, 'should snap To Marks');
@@ -102,7 +102,7 @@ test('dataUtils -> normalizeSliderValue', t => {
   t.end();
 });
 
-test('dataUtils -> arrayMove', t => {
+test('dataUtils -> arrayMove', (t) => {
   const arr = [4, 1, 9, 3, 11];
   t.deepEqual(arrayMove(arr, 2, 1), [4, 9, 1, 3, 11], 'should move array');
   t.deepEqual(arrayMove(arr, 2, 5), [4, 1, 3, 11, 9], 'should move array');
@@ -110,7 +110,7 @@ test('dataUtils -> arrayMove', t => {
   t.end();
 });
 
-test('dataUtils -> defaultFormatter', t => {
+test('dataUtils -> defaultFormatter', (t) => {
   t.equal(defaultFormatter(1), '1', 'defaultFormatter should be correct');
   t.equal(defaultFormatter('a'), 'a', 'defaultFormatter should be correct');
   t.equal(defaultFormatter(undefined), '', 'defaultFormatter should be correct');
@@ -120,11 +120,11 @@ test('dataUtils -> defaultFormatter', t => {
   t.end();
 });
 
-test('dataUtils -> getFormatter', t => {
+test('dataUtils -> getFormatter', (t) => {
   const TEST_CASES = [
     {
       input: [undefined],
-      assert: formatter => {
+      assert: (formatter) => {
         t.equal(formatter, defaultFormatter, 'should return defaultformatter');
       }
     },
@@ -138,7 +138,7 @@ test('dataUtils -> getFormatter', t => {
     },
     {
       input: ['none exist'],
-      assert: formatter => {
+      assert: (formatter) => {
         t.equal(formatter, defaultFormatter, 'should return defaultformatter');
       }
     },
@@ -204,7 +204,7 @@ test('dataUtils -> getFormatter', t => {
     }
   ];
 
-  TEST_CASES.forEach(tc => {
+  TEST_CASES.forEach((tc) => {
     const formatter = getFormatter(...tc.input);
     if (typeof tc.assert === 'function') {
       tc.assert(formatter);
@@ -215,7 +215,7 @@ test('dataUtils -> getFormatter', t => {
   t.end();
 });
 
-test('dataUtils -> formatNumber', t => {
+test('dataUtils -> formatNumber', (t) => {
   const TEST_CASES = [
     {input: ['3.14'], output: '3.14', message: 'field type is not given'},
     {input: ['3.14123'], output: '3.141', message: 'field type is not given'},
@@ -230,7 +230,7 @@ test('dataUtils -> formatNumber', t => {
     {input: ['12.345', 'real'], output: '12.35', message: 'format real'}
   ];
 
-  TEST_CASES.forEach(tc => {
+  TEST_CASES.forEach((tc) => {
     const output = formatNumber(...tc.input);
     t.equal(output, tc.output, `formatNumber should be correct when ${tc.message}`);
   });

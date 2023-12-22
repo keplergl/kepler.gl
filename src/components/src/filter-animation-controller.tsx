@@ -34,12 +34,13 @@ function FilterAnimationControllerFactory(
   }) => {
     const intervalBins = useMemo(() => getIntervalBins(filter), [filter]);
 
-    const steps = useMemo(() => (intervalBins ? intervalBins.map(x => x.x0) : null), [
-      intervalBins
-    ]);
+    const steps = useMemo(
+      () => (intervalBins ? intervalBins.map((x) => x.x0) : null),
+      [intervalBins]
+    );
 
     const updateAnimation = useCallback(
-      value => {
+      (value) => {
         switch (filter.animationWindow) {
           case ANIMATION_WINDOW.interval:
             const idx = value[1];

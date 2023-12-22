@@ -211,7 +211,7 @@ export default class CartoProvider extends Provider {
       }
 
       // These are the options required for the action. For now, all datasets that come from CARTO are CSV
-      const datasets = visualization.datasets.map(dataset => {
+      const datasets = visualization.datasets.map((dataset) => {
         const datasetId = dataset.name;
 
         return {
@@ -319,7 +319,7 @@ export default class CartoProvider extends Provider {
 
   _convertDataset({data: dataset}) {
     const {allData, fields, id} = dataset;
-    const columns = fields.map(field => ({
+    const columns = fields.map((field) => ({
       name: field.name,
       type: field.type
     }));

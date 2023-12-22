@@ -181,7 +181,7 @@ export class KeplerGLSchema {
 
     const {visState} = state;
 
-    const datasets = Object.values(visState.datasets as Datasets).map(ds => ({
+    const datasets = Object.values(visState.datasets as Datasets).map((ds) => ({
       version: this._version,
       data: this._datasetSchema[this._version].save(ds)
     }));

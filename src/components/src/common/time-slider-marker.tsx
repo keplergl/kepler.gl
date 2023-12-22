@@ -22,14 +22,14 @@ const TimeSliderContainer = styled.svg`
   margin-top: 6px;
 
   .axis text {
-    font-size: ${props => props.theme.axisFontSize};
-    fill: ${props => props.theme.axisFontColor};
+    font-size: ${(props) => props.theme.axisFontSize};
+    fill: ${(props) => props.theme.axisFontColor};
   }
 
   .axis line,
   .axis path {
     fill: none;
-    stroke: ${props => props.theme.sliderBarBgd};
+    stroke: ${(props) => props.theme.sliderBarBgd};
     shape-rendering: crispEdges;
     stroke-width: 2;
   }
@@ -39,8 +39,8 @@ const TimeSliderContainer = styled.svg`
   }
 
   .value {
-    fill: ${props => props.theme.axisFontColor};
-    font-size: ${props => props.theme.axisFontSize};
+    fill: ${(props) => props.theme.axisFontColor};
+    font-size: ${(props) => props.theme.axisFontSize};
 
     &.start {
       text-anchor: start;
@@ -67,25 +67,25 @@ const TICK_FORMATS = {
 // adapted based on d3 time scale tick format https://github.com/d3/d3-scale/blob/master/src/time.js#L59
 export function getTickFormat(timezone: string) {
   // date is js date object
-  const toMoment = timezone ? date => moment(date).tz(timezone) : moment;
+  const toMoment = timezone ? (date) => moment(date).tz(timezone) : moment;
   const formatter = datetimeFormatter(timezone);
 
-  return date =>
+  return (date) =>
     (toMoment(date).startOf('second') < date
       ? formatter(TICK_FORMATS.millisecond)
       : toMoment(date).startOf('minute') < date
-      ? formatter(TICK_FORMATS.second)
-      : toMoment(date).startOf('hour') < date
-      ? formatter(TICK_FORMATS.minute)
-      : toMoment(date).startOf('day') < date
-      ? formatter(TICK_FORMATS.hour)
-      : toMoment(date).startOf('month') < date
-      ? toMoment(date).startOf('isoWeek') < date
-        ? formatter(TICK_FORMATS.day)
-        : formatter(TICK_FORMATS.week)
-      : toMoment(date).startOf('year') < date
-      ? formatter(TICK_FORMATS.month)
-      : formatter(TICK_FORMATS.year))(date);
+        ? formatter(TICK_FORMATS.second)
+        : toMoment(date).startOf('hour') < date
+          ? formatter(TICK_FORMATS.minute)
+          : toMoment(date).startOf('day') < date
+            ? formatter(TICK_FORMATS.hour)
+            : toMoment(date).startOf('month') < date
+              ? toMoment(date).startOf('isoWeek') < date
+                ? formatter(TICK_FORMATS.day)
+                : formatter(TICK_FORMATS.week)
+              : toMoment(date).startOf('year') < date
+                ? formatter(TICK_FORMATS.month)
+                : formatter(TICK_FORMATS.year))(date);
 }
 
 // create a helper function so we can test it
@@ -98,19 +98,14 @@ export function getXAxis(
   if (!Array.isArray(domain) || !domain.every(Number.isFinite)) {
     return null;
   }
-  const scale = scaleUtc()
-    .domain(domain)
-    .range([0, width]);
+  const scale = scaleUtc().domain(domain).range([0, width]);
   if (!scale) {
     return null;
   }
 
   const ticks = Math.floor(width / (isEnlarged ? MIN_TICK_WIDTH_LARGE : MIN_TICK_WIDTH_SMALL));
   const tickFormat = timezone ? getTickFormat(timezone) : null;
-  const xAxis = axisBottom(scale)
-    .ticks(ticks)
-    .tickSize(0)
-    .tickPadding(12);
+  const xAxis = axisBottom(scale).ticks(ticks).tickSize(0).tickPadding(12);
   if (tickFormat) {
     xAxis.tickFormat(tickFormat);
   }
@@ -143,12 +138,10 @@ function TimeSliderMarkerFactory() {
     timezone
   }: TimeSliderMarkerProps) => {
     const xAxisRef = useRef(null);
-    const xAxis = useMemo(() => getXAxis(domain, width, isEnlarged, timezone), [
-      domain,
-      width,
-      isEnlarged,
-      timezone
-    ]);
+    const xAxis = useMemo(
+      () => getXAxis(domain, width, isEnlarged, timezone),
+      [domain, width, isEnlarged, timezone]
+    );
     useEffect(() => {
       updateAxis(xAxisRef, xAxis);
     }, [xAxisRef, xAxis]);

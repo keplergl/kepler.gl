@@ -10,7 +10,7 @@ export function getGeoJSON(data, getPosition, filterData) {
   const raw = typeof filterData === 'function' ? data.filter(filterData) : data;
 
   return raw
-    .map(d => ({
+    .map((d) => ({
       type: 'Point',
       properties: {
         data: d,
@@ -22,7 +22,7 @@ export function getGeoJSON(data, getPosition, filterData) {
         coordinates: getPosition(d)
       }
     }))
-    .filter(d => d.geometry.coordinates.every(Number.isFinite));
+    .filter((d) => d.geometry.coordinates.every(Number.isFinite));
 }
 
 const clusterResolver = ({clusterRadius}: {clusterRadius: number}) => `${clusterRadius}`;
@@ -34,7 +34,7 @@ const getClusterer = ({clusterRadius, geoJSON}: {clusterRadius: number; geoJSON}
     reduce: (accumulated, props) => {
       accumulated.points = [...accumulated.points, ...props.points];
     },
-    map: props => ({points: [props.data]})
+    map: (props) => ({points: [props.data]})
   }).load(geoJSON);
 
 export default class ClusterBuilder {

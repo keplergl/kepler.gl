@@ -100,7 +100,7 @@ export const getDefaultValueForParameter = (
   effectDescription: EffectParameterDescription[],
   uniformsDesc: any
 ) => {
-  const description = effectDescription.find(param => param.name === name);
+  const description = effectDescription.find((param) => param.name === name);
   const uniform = uniformsDesc[name];
   return description?.defaultValue ?? uniform?.value ?? uniform ?? description?.min;
 };
@@ -113,7 +113,7 @@ class PostProcessingEffect extends Effect {
   }
 
   _initializeEffect() {
-    const effectDesc = POSTPROCESSING_EFFECTS_DESCS.find(desc => desc.type === this.type);
+    const effectDesc = POSTPROCESSING_EFFECTS_DESCS.find((desc) => desc.type === this.type);
     if (effectDesc) {
       this.deckEffect = new DeckPostProcessEffect(effectDesc.class, this.parameters);
 
@@ -122,7 +122,7 @@ class PostProcessingEffect extends Effect {
         // get default parameters
         const keys = Object.keys(uniforms);
         const defaultParameters = {};
-        keys.forEach(key => {
+        keys.forEach((key) => {
           defaultParameters[key] = getDefaultValueForParameter(key, this._uiConfig, uniforms);
         });
         this.parameters = {...defaultParameters, ...this.parameters};

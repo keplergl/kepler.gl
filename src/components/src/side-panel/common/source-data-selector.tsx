@@ -27,7 +27,7 @@ export default function SourceDataSelectorFactory(
   }: SourceDataSelectorProps) => {
     const dsOptions = useMemo(
       () =>
-        Object.values(datasets).map(ds => ({
+        Object.values(datasets).map((ds) => ({
           label: ds.label,
           value: ds.id,
           color: ds.color
@@ -36,7 +36,8 @@ export default function SourceDataSelectorFactory(
     );
 
     const selectedItems = useMemo(
-      () => (dataId ? ((Array.isArray(dataId) && dataId) || [dataId]).map(id => datasets[id]) : []),
+      () =>
+        dataId ? ((Array.isArray(dataId) && dataId) || [dataId]).map((id) => datasets[id]) : [],
       [dataId, datasets]
     );
 

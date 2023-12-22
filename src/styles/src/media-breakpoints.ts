@@ -20,19 +20,19 @@ export const breakPointValues = {
 
 export const media = {
   palm: (first, ...args) => css`
-    @media (max-width: ${props => (props.theme.breakPoints || breakPointValues).palm}px) {
+    @media (max-width: ${(props) => (props.theme.breakPoints || breakPointValues).palm}px) {
       ${css(first, ...args)};
     }
   `,
 
   portable: (first, ...args) => css`
-    @media (max-width: ${props => (props.theme.breakPoints || breakPointValues).desk}px) {
+    @media (max-width: ${(props) => (props.theme.breakPoints || breakPointValues).desk}px) {
       ${css(first, ...args)};
     }
   `,
 
   desk: (first, ...args) => css`
-    @media (min-width: ${props => (props.theme.breakPoints || breakPointValues).desk + 1}px) {
+    @media (min-width: ${(props) => (props.theme.breakPoints || breakPointValues).desk + 1}px) {
       ${css(first, ...args)};
     }
   `

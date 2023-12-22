@@ -22,7 +22,7 @@ interface StyledAnimationControlsProps {
 const StyledAnimationControls = styled.div<StyledAnimationControlsProps>`
   display: flex;
   position: relative;
-  width: ${props => props.width}px;
+  width: ${(props) => props.width}px;
   &.disabled {
     opacity: 0.4;
     pointer-events: none;
@@ -31,10 +31,10 @@ const StyledAnimationControls = styled.div<StyledAnimationControlsProps>`
 
 const DEFAULT_ICONS = {
   /* eslint-disable react/display-name */
-  reset: _ => <Reset height="18px" />,
-  play: _ => <Play height="18px" />,
-  pause: _ => <Pause height="18px" />,
-  export: _ => <Save height="18px" />,
+  reset: (_) => <Reset height="18px" />,
+  play: (_) => <Play height="18px" />,
+  pause: (_) => <Pause height="18px" />,
+  export: (_) => <Save height="18px" />,
   /* eslint-enable react/display-name */
   speed: Rocket,
   animationFree: FreeWindow,

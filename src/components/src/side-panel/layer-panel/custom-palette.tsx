@@ -32,7 +32,7 @@ type CustomPaletteProps = {
 
 const dragHandleActive = css`
   .layer__drag-handle {
-    color: ${props => props.theme.textColorHl};
+    color: ${(props) => props.theme.textColorHl};
     opacity: 1;
     cursor: move;
   }
@@ -43,17 +43,17 @@ const StyledSortableItem = styled.div`
   align-items: center;
   padding-top: 6px;
   padding-bottom: 6px;
-  z-index: ${props => props.theme.dropdownWrapperZ + 1};
+  z-index: ${(props) => props.theme.dropdownWrapperZ + 1};
 
   :not(.sorting) {
     :hover {
-      background-color: ${props => props.theme.panelBackgroundHover};
+      background-color: ${(props) => props.theme.panelBackgroundHover};
       ${dragHandleActive};
     }
   }
 
   &.sorting-colors {
-    background-color: ${props => props.theme.panelBackgroundHover};
+    background-color: ${(props) => props.theme.panelBackgroundHover};
     ${dragHandleActive};
   }
 `;
@@ -65,10 +65,10 @@ const StyledDragHandle = styled.div`
 `;
 
 const StyledTrash = styled.div`
-  color: ${props => props.theme.textColor};
+  color: ${(props) => props.theme.textColor};
   svg {
     :hover {
-      color: ${props => props.theme.subtextColorActive};
+      color: ${(props) => props.theme.subtextColorActive};
     }
   }
   height: 12px;
@@ -82,7 +82,7 @@ const StyledTrash = styled.div`
 const StyledLine = styled.div`
   width: calc(100% - 16px);
   height: 1px;
-  background-color: ${props => props.theme.labelColor};
+  background-color: ${(props) => props.theme.labelColor};
   margin-top: 8px;
   margin-left: 8px;
 `;
@@ -90,12 +90,12 @@ const StyledLine = styled.div`
 const StyledSwatch = styled.div.attrs({
   className: 'custom-palette__swatch'
 })`
-  background-color: ${props => props.color};
+  background-color: ${(props) => props.color};
   width: 32px;
   height: 18px;
   display: inline-block;
   :hover {
-    box-shadow: ${props => props.theme.boxShadow};
+    box-shadow: ${(props) => props.theme.boxShadow};
     cursor: pointer;
   }
 `;
@@ -103,7 +103,7 @@ const StyledSwatch = styled.div.attrs({
 const StyledColorRange = styled.div`
   padding: 0 8px;
   :hover {
-    background-color: ${props => props.theme.panelBackgroundHover};
+    background-color: ${(props) => props.theme.panelBackgroundHover};
     cursor: pointer;
   }
 `;
@@ -117,7 +117,7 @@ const StyledButtonContainer = styled.div`
 const StyledInlineInput = styled.div`
   margin-left: 12px;
   input {
-    color: ${props => props.theme.textColorHl};
+    color: ${(props) => props.theme.textColorHl};
     font-size: 10px;
   }
 `;
@@ -196,7 +196,7 @@ class CustomPalette extends Component<CustomPaletteProps> {
     this.props.onToggleSketcher(false);
   };
 
-  _onApply: MouseEventHandler = event => {
+  _onApply: MouseEventHandler = (event) => {
     event.stopPropagation();
     event.preventDefault();
 
@@ -249,10 +249,10 @@ class CustomPalette extends Component<CustomPaletteProps> {
                   type="text"
                   className="custom-palette-hex__input"
                   value={color.toUpperCase()}
-                  onClick={e => {
+                  onClick={(e) => {
                     e.stopPropagation();
                   }}
-                  onChange={e => this._inputColorHex(index, e)}
+                  onChange={(e) => this._inputColorHex(index, e)}
                   id={`input-layer-label-${index}`}
                 />
               </StyledInlineInput>

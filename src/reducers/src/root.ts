@@ -59,7 +59,7 @@ export function provideInitialState(initialState, extraReducers?) {
 
   return (state = initialCoreState, action) => {
     // update child states
-    Object.keys(state).forEach(id => {
+    Object.keys(state).forEach((id) => {
       const updateItemState = coreReducer(state[id], _actionFor(id, action));
       state = _updateProperty(state, id, updateItemState);
     });
@@ -150,7 +150,7 @@ function decorate(target, savedInitialState = {}) {
       }
 
       // for each entry in the staten
-      Object.keys(nextState).forEach(id => {
+      Object.keys(nextState).forEach((id) => {
         // update child states
         nextState = _updateProperty(
           nextState,

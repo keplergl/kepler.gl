@@ -183,7 +183,7 @@ export const fitBoundsUpdater = (
   // if fitting to bounds while split and unsynced
   // copy the new latitude, longitude, and zoom values to each split viewport
   if (newState.splitMapViewports.length) {
-    newState.splitMapViewports = newState.splitMapViewports.map(currentViewport => ({
+    newState.splitMapViewports = newState.splitMapViewports.map((currentViewport) => ({
       ...currentViewport,
       latitude: newState.latitude,
       longitude: newState.longitude,
@@ -215,7 +215,7 @@ export const togglePerspectiveUpdater = (
   // if toggling 3d and 2d while split and unsynced
   // copy the new pitch, bearing, and dragRotate values to each split viewport
   if (newState.splitMapViewports.length) {
-    newState.splitMapViewports = newState.splitMapViewports.map(currentViewport => ({
+    newState.splitMapViewports = newState.splitMapViewports.map((currentViewport) => ({
       ...currentViewport,
       pitch: newState.pitch,
       bearing: newState.bearing,
@@ -337,7 +337,7 @@ export const toggleSplitMapViewportUpdater = (
       // only copy zoom viewport property from the most recently interacted-with viewport to the other
       // TODO: do we want to check for a match a different way, such as a combo of `latitude` and `longitude`?
       const lastUpdatedViewportIndex = newMapState.splitMapViewports.findIndex(
-        v => newMapState.zoom === v.zoom
+        (v) => newMapState.zoom === v.zoom
       );
 
       const splitMapViewports = newMapState.splitMapViewports.map((currentViewport, i) => {
@@ -468,7 +468,7 @@ export function pickViewportPropsFromMapState(state: MapState): Viewport {
 }
 
 /** Select items from object whose value is not undefined */
-const definedProps = obj =>
+const definedProps = (obj) =>
   Object.entries(obj).reduce(
     (accu, [k, v]) => ({...accu, ...(v !== undefined ? {[k]: v} : {})}),
     {}

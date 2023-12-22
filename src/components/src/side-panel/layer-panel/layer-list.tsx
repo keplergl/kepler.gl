@@ -42,19 +42,19 @@ interface SortableStyledItemProps {
 }
 
 const SortableStyledItem = styled.div<SortableStyledItemProps>`
-  z-index: ${props => props.theme.dropdownWrapperZ + 1};
-  transition: ${props => props.transition};
-  transform: ${props => props.transform};
+  z-index: ${(props) => props.theme.dropdownWrapperZ + 1};
+  transition: ${(props) => props.transition};
+  transform: ${(props) => props.transform};
   &.sorting {
     opacity: 0.3;
     pointer-events: none;
   }
   &.sorting-layers .layer-panel__header {
-    background-color: ${props => props.theme.panelBackgroundHover};
-    font-family: ${props => props.theme.fontFamily};
-    font-weight: ${props => props.theme.fontWeight};
-    font-size: ${props => props.theme.fontSize};
-    line-height: ${props => props.theme.lineHeight};
+    background-color: ${(props) => props.theme.panelBackgroundHover};
+    font-family: ${(props) => props.theme.fontFamily};
+    font-weight: ${(props) => props.theme.fontWeight};
+    font-size: ${(props) => props.theme.fontSize};
+    line-height: ${(props) => props.theme.lineHeight};
     *,
     *:before,
     *:after {
@@ -62,7 +62,7 @@ const SortableStyledItem = styled.div<SortableStyledItemProps>`
     }
     .layer__drag-handle {
       opacity: 1;
-      color: ${props => props.theme.textColorHl};
+      color: ${(props) => props.theme.textColorHl};
     }
   }
 `;
@@ -110,7 +110,7 @@ function LayerListFactory(LayerPanel: ReturnType<typeof LayerPanelFactory>) {
     );
   };
 
-  const LayerList: React.FC<LayerListProps> = props => {
+  const LayerList: React.FC<LayerListProps> = (props) => {
     const {
       layers,
       datasets,
@@ -138,7 +138,7 @@ function LayerListFactory(LayerPanel: ReturnType<typeof LayerPanelFactory>) {
 
     const layerTypeOptions = useMemo(
       () =>
-        Object.keys(layerClasses).map(key => {
+        Object.keys(layerClasses).map((key) => {
           const layer = new layerClasses[key]({dataId: ''});
           return {
             id: key,
@@ -183,11 +183,11 @@ function LayerListFactory(LayerPanel: ReturnType<typeof LayerPanelFactory>) {
           disabled={!isSortable}
         >
           {/* warning: containerId should be similar to the first key in dndItems defined in kepler-gl.js*/}
-          {layersToShow.map(layer => (
+          {layersToShow.map((layer) => (
             <SortableItem
               key={layer.id}
               layer={layer}
-              idx={layers.findIndex(l => l?.id === layer.id)}
+              idx={layers.findIndex((l) => l?.id === layer.id)}
               panelProps={panelProps}
               layerActions={layerActions}
               disabled={!isSortable}

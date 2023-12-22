@@ -16,7 +16,7 @@ const data = [
 
 const indices = [1, 3, 5];
 
-test('RowDataContainer', t => {
+test('RowDataContainer', (t) => {
   const dc = createDataContainer(data);
 
   t.deepEqual(dc.numRows(), 6, `RowDataContainer should have expected number of rows`);
@@ -42,7 +42,7 @@ test('RowDataContainer', t => {
   );
 
   t.deepEqual(
-    dc.mapIndex(d => d),
+    dc.mapIndex((d) => d),
     [{index: 0}, {index: 1}, {index: 2}, {index: 3}, {index: 4}, {index: 5}],
     `RowDataContainer.mapIndex should return expected array`
   );
@@ -66,7 +66,7 @@ test('RowDataContainer', t => {
   t.end();
 });
 
-test('IndexedDataContainer', t => {
+test('IndexedDataContainer', (t) => {
   const dc = createIndexedDataContainer(createDataContainer(data), indices);
 
   t.deepEqual(dc.numRows(), 3, `IndexedDataContainer should have expected number of rows`);
@@ -97,7 +97,7 @@ test('IndexedDataContainer', t => {
   );
 
   t.deepEqual(
-    dc.mapIndex(d => d),
+    dc.mapIndex((d) => d),
     [{index: 1}, {index: 3}, {index: 5}],
     `IndexedDataContainer.mapIndex should return expected array`
   );

@@ -15,7 +15,7 @@ function numberSort(a, b) {
   return a - b;
 }
 
-test('DataScaleUtils -> getOrdinalDomain', t => {
+test('DataScaleUtils -> getOrdinalDomain', (t) => {
   const data = [['a'], ['a'], ['b'], [undefined], [null], [0], null];
 
   function valueAccessor(d, dc) {
@@ -31,7 +31,7 @@ test('DataScaleUtils -> getOrdinalDomain', t => {
   t.end();
 });
 
-test('DataScaleUtils -> getQuantileDomain', t => {
+test('DataScaleUtils -> getQuantileDomain', (t) => {
   const data = ['a', 'b', 'c', 'b', undefined, null];
   const quanData = [1, 4, 2, 3, 1, undefined, null, 0];
   function valueAccessor(d) {
@@ -61,7 +61,7 @@ test('DataScaleUtils -> getQuantileDomain', t => {
   t.end();
 });
 
-test('DataScaleUtils -> getLinearDomain', t => {
+test('DataScaleUtils -> getLinearDomain', (t) => {
   const quanData = [1, 4, 2, 3, 1, undefined, null, 0];
   function valueAccessor(d) {
     return d.value;
@@ -86,7 +86,7 @@ test('DataScaleUtils -> getLinearDomain', t => {
   t.end();
 });
 
-test('DataScaleUtils -> getLogDomain', t => {
+test('DataScaleUtils -> getLogDomain', (t) => {
   function valueAccessor(d) {
     return d.value;
   }

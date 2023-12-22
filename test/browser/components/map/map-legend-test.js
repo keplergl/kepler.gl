@@ -26,7 +26,7 @@ import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
 
 const MapLegend = appInjector.get(MapLegendFactory);
 
-test('Components -> MapLegend.render', t => {
+test('Components -> MapLegend.render', (t) => {
   t.doesNotThrow(() => {
     mount(<MapLegend />);
   }, 'Show not fail without data');
@@ -34,7 +34,7 @@ test('Components -> MapLegend.render', t => {
   t.end();
 });
 
-test('Components -> MapLegend.render -> with layers', t => {
+test('Components -> MapLegend.render -> with layers', (t) => {
   const initialState = cloneDeep(StateWFilesFiltersLayerColor);
   const {layers} = initialState.visState;
   let wrapper;
@@ -66,10 +66,7 @@ test('Components -> MapLegend.render -> with layers', t => {
 
 function testGeojsonLegend(t, geojsonLegend) {
   t.equal(
-    geojsonLegend
-      .find('.legend--layer_name')
-      .at(0)
-      .text(),
+    geojsonLegend.find('.legend--layer_name').at(0).text(),
     geojsonLayer.config.label,
     'geojson layer legend should render label'
   );
@@ -92,10 +89,7 @@ function testGeojsonLegend(t, geojsonLegend) {
     'geojson fill color should render SingleColorLegend'
   );
   t.deepEqual(
-    fillColorLegend
-      .find(SingleColorLegend)
-      .at(0)
-      .props().color,
+    fillColorLegend.find(SingleColorLegend).at(0).props().color,
     geojsonLayer.config.color,
     'geojson color legend should be correct color'
   );
@@ -106,10 +100,7 @@ function testGeojsonLegend(t, geojsonLegend) {
     'geojson stroke color should render SingleColorLegend'
   );
   t.deepEqual(
-    strokeColorLegend
-      .find(SingleColorLegend)
-      .at(0)
-      .props().color,
+    strokeColorLegend.find(SingleColorLegend).at(0).props().color,
     geojsonLayer.config.visConfig.strokeColor,
     'geojson color legend should be correct color'
   );
@@ -120,10 +111,7 @@ function testPointLayerLegend(t, pointLegend) {
   // color by: gps_data.types
   // point layer has 2 color channels, only fill is enabled
   t.equal(
-    pointLegend
-      .find('.legend--layer_name')
-      .at(0)
-      .text(),
+    pointLegend.find('.legend--layer_name').at(0).text(),
     pointLayer.config.label,
     'point layer legend should render point label'
   );
@@ -159,10 +147,7 @@ function testPointLayerLegend(t, pointLegend) {
 
 function testHexagonLayerLegend(t, hexagonLegend) {
   t.equal(
-    hexagonLegend
-      .find('.legend--layer_name')
-      .at(0)
-      .text(),
+    hexagonLegend.find('.legend--layer_name').at(0).text(),
     hexagonLayer.config.label,
     'hexagon layer legend should render label'
   );

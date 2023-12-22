@@ -6,12 +6,12 @@ import styled from 'styled-components';
 import {StyledExportSection} from '../../common/styled-components';
 
 export const StyledExportMapSection = styled(StyledExportSection)`
-  margin-top: ${props => props.theme.exportIntraSectionMargin}px;
+  margin-top: ${(props) => props.theme.exportIntraSectionMargin}px;
 `;
 
 export const StyledWarning = styled.span`
-  color: ${props => props.theme.errorColor};
-  font-weight: ${props => props.theme.selectFontWeightBold};
+  color: ${(props) => props.theme.errorColor};
+  font-weight: ${(props) => props.theme.selectFontWeightBold};
 `;
 
 export const StyledExportLink = styled.a`

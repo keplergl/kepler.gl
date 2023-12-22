@@ -24,7 +24,7 @@ const columns = {
   lng: 'lng'
 };
 
-test('#ClusterLayer -> constructor', t => {
+test('#ClusterLayer -> constructor', (t) => {
   const TEST_CASES = {
     CREATE: [
       {
@@ -33,7 +33,7 @@ test('#ClusterLayer -> constructor', t => {
           isVisible: true,
           label: 'test cluster layer'
         },
-        test: layer => {
+        test: (layer) => {
           t.ok(layer.config.dataId === 'taro', 'clusterLayer dataId should be correct');
           t.ok(layer.type === 'cluster', 'type should be cluster');
           t.ok(layer.isAggregated === true, 'clusterLayer is aggregated');
@@ -48,7 +48,7 @@ test('#ClusterLayer -> constructor', t => {
   t.end();
 });
 
-test('#ClusterLayer -> formatLayerData', t => {
+test('#ClusterLayer -> formatLayerData', (t) => {
   const filteredIndex = [0, 1, 2, 4, 5, 7];
 
   const TEST_CASES = [
@@ -70,10 +70,10 @@ test('#ClusterLayer -> formatLayerData', t => {
           filteredIndex
         }
       },
-      assert: result => {
+      assert: (result) => {
         const {layerData, layer} = result;
         const expectedLayerData = {
-          data: [0, 1, 4, 5, 7].map(index => ({
+          data: [0, 1, 4, 5, 7].map((index) => ({
             index
           })),
           _filterData: () => {},
@@ -149,10 +149,10 @@ test('#ClusterLayer -> formatLayerData', t => {
           filteredIndex
         }
       },
-      assert: result => {
+      assert: (result) => {
         const {layerData} = result;
         const expectedLayerData = {
-          data: [0, 1, 4, 5, 7].map(index => ({
+          data: [0, 1, 4, 5, 7].map((index) => ({
             index
           })),
           _filterData: () => {},
@@ -191,7 +191,7 @@ test('#ClusterLayer -> formatLayerData', t => {
   t.end();
 });
 
-test('#ClusterLayer -> renderLayer', t => {
+test('#ClusterLayer -> renderLayer', (t) => {
   const filteredIndex = [0, 1, 2, 4, 5, 7];
   const spyLayerCallbacks = sinon.spy();
 
@@ -235,7 +235,7 @@ test('#ClusterLayer -> renderLayer', t => {
       },
       assert: (deckLayers, layer) => {
         t.deepEqual(
-          deckLayers.map(l => l.id),
+          deckLayers.map((l) => l.id),
           ['test_layer_1', 'test_layer_1-cluster'],
           'Should create 2 deck.gl layers'
         );
@@ -258,7 +258,7 @@ test('#ClusterLayer -> renderLayer', t => {
           height: INITIAL_MAP_STATE.height
         };
 
-        Object.keys(expectedProps).forEach(key => {
+        Object.keys(expectedProps).forEach((key) => {
           t.deepEqual(props[key], expectedProps[key], `should have correct props.${key}`);
         });
 

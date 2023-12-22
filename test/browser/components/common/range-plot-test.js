@@ -9,7 +9,7 @@ import {appInjector, RangePlotFactory} from '@kepler.gl/components';
 
 const RangePlot = appInjector.get(RangePlotFactory);
 
-test('Components -> RangePlot.render', t => {
+test('Components -> RangePlot.render', (t) => {
   const props = {
     histogram: [],
     isEnlarged: true,

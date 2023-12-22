@@ -4,7 +4,7 @@
 import test from 'tape';
 import {mergeLayerGroupVisibility} from '@kepler.gl/utils';
 
-test('mapbox.gl Style Editor -> mergeLayerGroupVisibility', t => {
+test('mapbox.gl Style Editor -> mergeLayerGroupVisibility', (t) => {
   const defaultLG = {
     label: true,
     road: true,

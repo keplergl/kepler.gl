@@ -35,15 +35,15 @@ const StyledItem = styled.div`
   font-size: 12px;
   line-height: 14px;
   padding: 8px 16px 8px 8px;
-  min-height: ${props => props.theme.actionPanelHeight}px;
+  min-height: ${(props) => props.theme.actionPanelHeight}px;
   text-transform: capitalize;
-  background-color: ${props => props.theme.dropdownListBgd};
+  background-color: ${(props) => props.theme.dropdownListBgd};
   max-width: 200px;
   position: relative;
 
-  ${props => (props.color ? `border-left: 3px solid rgb(${props.color});` : '')} :hover {
+  ${(props) => (props.color ? `border-left: 3px solid rgb(${props.color});` : '')} :hover {
     cursor: pointer;
-    color: ${props => props.theme.textColorHl};
+    color: ${(props) => props.theme.textColorHl};
     .nested-group {
       display: block;
     }
@@ -69,7 +69,7 @@ const StyledItem = styled.div`
     max-width: 200px;
     overflow: hidden;
     display: none;
-    color: ${props => props.theme.textColor};
+    color: ${(props) => props.theme.textColor};
     position: absolute;
     left: 100%;
     top: 0px;
@@ -85,17 +85,17 @@ const StyledItem = styled.div`
 const StyledCheckedbox = styled(Checkbox)`
   label {
     margin-bottom: 0;
-    color: ${props => props.theme.textColor};
+    color: ${(props) => props.theme.textColor};
     padding-left: 20px;
     line-height: 12px;
 
     &:before {
       width: 12px;
       height: 12px;
-      background-color: ${props => props.theme.dropdownListBgd};
+      background-color: ${(props) => props.theme.dropdownListBgd};
     }
     &:hover {
-      color: ${props => props.theme.textColorHl};
+      color: ${(props) => props.theme.textColorHl};
     }
   }
 `;
@@ -126,7 +126,7 @@ export const ActionPanelItem = React.memo(
     style
   }: ActionPanelItemProps) => {
     const onClickCallback = useCallback(
-      event => {
+      (event) => {
         event.preventDefault();
         event.stopPropagation();
         onClick?.();
@@ -169,13 +169,13 @@ ActionPanelItem.displayName = 'ActionPanelItem';
 
 const StyledActionPanel = styled.div<DirectionProp>`
   display: flex;
-  flex-direction: ${props => props.direction};
-  box-shadow: ${props => props.theme.dropdownListShadow};
-  transition: ${props => props.theme.transitionSlow};
-  color: ${props => props.theme.textColor};
+  flex-direction: ${(props) => props.direction};
+  box-shadow: ${(props) => props.theme.dropdownListShadow};
+  transition: ${(props) => props.theme.transitionSlow};
+  color: ${(props) => props.theme.textColor};
 
   .action-panel-item {
-    ${props =>
+    ${(props) =>
       props.direction === 'column'
         ? `border-bottom: 1px solid ${props.theme.panelHeaderIcon}`
         : `border-right: 1px solid ${props.theme.panelHeaderIcon}`} &:last-of-type {

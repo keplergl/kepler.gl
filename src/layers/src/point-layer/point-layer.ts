@@ -79,11 +79,14 @@ export type PointLayerData = {
   index: number;
 };
 
-export const pointPosAccessor = ({lat, lng, altitude}: PointLayerColumnsConfig) => dc => d => [
-  dc.valueAt(d.index, lng.fieldIdx),
-  dc.valueAt(d.index, lat.fieldIdx),
-  altitude && altitude.fieldIdx > -1 ? dc.valueAt(d.index, altitude.fieldIdx) : 0
-];
+export const pointPosAccessor =
+  ({lat, lng, altitude}: PointLayerColumnsConfig) =>
+  (dc) =>
+  (d) => [
+    dc.valueAt(d.index, lng.fieldIdx),
+    dc.valueAt(d.index, lat.fieldIdx),
+    altitude && altitude.fieldIdx > -1 ? dc.valueAt(d.index, altitude.fieldIdx) : 0
+  ];
 
 export const pointRequiredColumns: ['lat', 'lng'] = ['lat', 'lng'];
 export const pointOptionalColumns: ['altitude'] = ['altitude'];
@@ -127,7 +130,7 @@ export default class PointLayer extends Layer {
     super(props);
 
     this.registerVisConfig(pointVisConfigs);
-    this.getPositionAccessor = dataContainer =>
+    this.getPositionAccessor = (dataContainer) =>
       pointPosAccessor(this.config.columns)(dataContainer);
   }
 
@@ -163,8 +166,8 @@ export default class PointLayer extends Layer {
       color: {
         ...super.visualChannels.color,
         accessor: 'getFillColor',
-        condition: config => config.visConfig.filled,
-        defaultValue: config => config.color
+        condition: (config) => config.visConfig.filled,
+        defaultValue: (config) => config.color
       },
       strokeColor: {
         property: 'strokeColor',
@@ -175,8 +178,8 @@ export default class PointLayer extends Layer {
         range: 'strokeColorRange',
         channelScaleType: CHANNEL_SCALES.color,
         accessor: 'getLineColor',
-        condition: config => config.visConfig.outline,
-        defaultValue: config => config.visConfig.strokeColor || config.color
+        condition: (config) => config.visConfig.outline,
+        defaultValue: (config) => config.visConfig.strokeColor || config.color
       },
       size: {
         ...super.visualChannels.size,
@@ -216,7 +219,7 @@ export default class PointLayer extends Layer {
     }[] = [];
 
     // Make layer for each pair
-    fieldPairs.forEach(pair => {
+    fieldPairs.forEach((pair) => {
       const latField = pair.pair.lat;
 
       const prop: {

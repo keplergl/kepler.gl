@@ -17,7 +17,7 @@ const NotificationItemContentBlock = styled.div.attrs({
 })<NotificationItemContentBlockProps>`
   display: block;
   position: relative;
-  width: ${props => props.theme.notificationPanelItemWidth * (1 + Number(props.isExpanded))}px;
+  width: ${(props) => props.theme.notificationPanelItemWidth * (1 + Number(props.isExpanded))}px;
   margin-left: auto;
 `;
 
@@ -27,17 +27,17 @@ interface NotificationItemContentProps {
 }
 
 const NotificationItemContent = styled.div<NotificationItemContentProps>`
-  background-color: ${props => props.theme.notificationColors[props.type] || '#000'};
+  background-color: ${(props) => props.theme.notificationColors[props.type] || '#000'};
   color: #fff;
   display: flex;
   flex-direction: row;
-  width: ${props => props.theme.notificationPanelItemWidth * (1 + Number(props.isExpanded))}px;
-  height: ${props => props.theme.notificationPanelItemHeight * (1 + Number(props.isExpanded))}px;
+  width: ${(props) => props.theme.notificationPanelItemWidth * (1 + Number(props.isExpanded))}px;
+  height: ${(props) => props.theme.notificationPanelItemHeight * (1 + Number(props.isExpanded))}px;
   font-size: 11px;
   margin-bottom: 1rem;
   padding: 1em;
   border-radius: 4px;
-  box-shadow: ${props => props.theme.boxShadow};
+  box-shadow: ${(props) => props.theme.boxShadow};
   cursor: pointer;
 `;
 
@@ -64,9 +64,9 @@ const NotificationCounter = styled.div.attrs({
   width: 20px;
   height: 20px;
   background-color: #ffffff;
-  border: 1px solid ${props => props.theme.notificationColors[props.type] || '#000'};
-  color: ${props => props.theme.notificationColors[props.type] || '#000'};
-  box-shadow: ${props => props.theme.boxShadow};
+  border: 1px solid ${(props) => props.theme.notificationColors[props.type] || '#000'};
+  color: ${(props) => props.theme.notificationColors[props.type] || '#000'};
+  box-shadow: ${(props) => props.theme.boxShadow};
 `;
 
 interface NotificationMessageProps {
@@ -77,10 +77,10 @@ const NotificationMessage = styled.div.attrs({
   className: 'notification-item--message'
 })<NotificationMessageProps>`
   flex-grow: 2;
-  width: ${props => props.theme.notificationPanelItemWidth}px;
+  width: ${(props) => props.theme.notificationPanelItemWidth}px;
   margin: 0 1em;
-  overflow: ${props => (props.isExpanded ? 'auto' : 'hidden')};
-  padding-right: ${props => (props.isExpanded ? '1em' : 0)};
+  overflow: ${(props) => (props.isExpanded ? 'auto' : 'hidden')};
+  padding-right: ${(props) => (props.isExpanded ? '1em' : 0)};
 
   p {
     margin-top: 0;
@@ -104,7 +104,7 @@ const icons = {
   success: <Checkmark data-testid={dataTestIds.successIcon} />
 };
 
-const LinkRenderer = props => {
+const LinkRenderer = (props) => {
   return (
     <a href={props.href} target="_blank" rel="noopener noreferrer">
       {props.children}

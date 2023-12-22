@@ -872,7 +872,7 @@ mergedLayer0.config = {
     format: '',
     fieldIdx: 8,
     analyzerType: 'INT',
-    valueAccessor: values => values[8]
+    valueAccessor: (values) => values[8]
   },
   colorScale: 'quantize',
   colorDomain: [45, 9642],
@@ -884,7 +884,7 @@ mergedLayer0.config = {
     format: '',
     fieldIdx: 8,
     analyzerType: 'INT',
-    valueAccessor: values => values[8]
+    valueAccessor: (values) => values[8]
   },
   strokeColorScale: 'quantize',
   strokeColorDomain: [45, 9642],
@@ -900,7 +900,7 @@ mergedLayer0.config = {
     format: '',
     fieldIdx: 10,
     analyzerType: 'FLOAT',
-    valueAccessor: values => values[10]
+    valueAccessor: (values) => values[10]
   },
   heightScale: 'linear',
   heightDomain: [211.9244058, 858.5168842],
@@ -2704,7 +2704,7 @@ mergedLayer1.config = {
     fieldIdx: 12,
     format: '',
     analyzerType: 'FLOAT',
-    valueAccessor: values => values[12]
+    valueAccessor: (values) => values[12]
   },
   hidden: false,
   sizeScale: 'linear',

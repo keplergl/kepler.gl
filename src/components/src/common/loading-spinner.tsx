@@ -14,7 +14,7 @@ const animationName = keyframes`
 `;
 
 const Loader = styled.span`
-    border-left-color: ${props => props.color || props.theme.primaryBtnBgd};
+    border-left-color: ${(props) => props.color || props.theme.primaryBtnBgd};
     animation: _preloader_spin_ 500ms linear infinite;
     border-radius: 50%;
     border-top-color: transparent;
@@ -32,7 +32,7 @@ interface LoadingWrapperProps {
 
 const LoadingWrapper = styled.div<LoadingWrapperProps>`
   border-radius: 50%;
-  border: 3px solid ${props => props.borderColor || props.theme.borderColorLT};
+  border: 3px solid ${(props) => props.borderColor || props.theme.borderColorLT};
   padding: 2px;
 `;
 

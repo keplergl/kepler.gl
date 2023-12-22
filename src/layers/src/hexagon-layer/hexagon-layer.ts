@@ -130,7 +130,7 @@ export default class HexagonLayer extends AggregationLayer {
               wrapLongitude: false,
               data: [
                 hexagonToPolygonGeo(hoveredObject, {}, radius * visConfig.coverage, mapState)
-              ].filter(d => d),
+              ].filter((d) => d),
               getLineColor: this.config.highlightColor,
               lineWidthScale: clamp([1, 100], radius * 0.1 * zoomFactor)
             })

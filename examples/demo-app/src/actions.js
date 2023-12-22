@@ -73,7 +73,7 @@ export function setLoadingMapStatus(isMapLoading) {
  * @param {*} param0
  */
 export function onExportFileSuccess({response = {}, provider, options}) {
-  return dispatch => {
+  return (dispatch) => {
     // if isPublic is true, use share Url
     if (options.isPublic && provider.getShareUrl) {
       dispatch(push(provider.getShareUrl(false)));
@@ -85,7 +85,7 @@ export function onExportFileSuccess({response = {}, provider, options}) {
 }
 
 export function onLoadCloudMapSuccess({provider, loadParams}) {
-  return dispatch => {
+  return (dispatch) => {
     const mapUrl = provider?.getMapUrl(loadParams);
     if (mapUrl) {
       const url = `demo/map/${provider.name}?path=${mapUrl}`;
@@ -118,7 +118,7 @@ function detectResponseError(response) {
  * @returns {Function}
  */
 export function loadRemoteMap(options) {
-  return dispatch => {
+  return (dispatch) => {
     dispatch(setLoadingMapStatus(true));
     // breakdown url into url+query params
     loadRemoteRawData(options.dataUrl).then(
@@ -130,7 +130,7 @@ export function loadRemoteMap(options) {
           dispatch(setLoadingMapStatus(false))
         );
       },
-      error => {
+      (error) => {
         const {target = {}} = error;
         const {status, responseText} = target;
         dispatch(loadRemoteResourceError({status, message: responseText}, options.dataUrl));
@@ -204,7 +204,7 @@ export function loadSample(options, pushRoute = true) {
  * @returns {Function}
  */
 function loadRemoteSampleMap(options) {
-  return dispatch => {
+  return (dispatch) => {
     // Load configuration first
     const {configUrl, dataUrl} = options;
 
@@ -214,7 +214,7 @@ function loadRemoteSampleMap(options) {
         dispatch(loadRemoteResourceSuccess(data, config, options));
         dispatch(toggleModal(null));
       },
-      error => {
+      (error) => {
         if (error) {
           const {target = {}} = error;
           const {status, responseText} = target;
@@ -277,7 +277,7 @@ function loadRemoteData(url) {
   }
 
   // Load data
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     const loaders = [CSVLoader, ArrowLoader, GeoJSONLoader];
     const loadOptions = {
       arrow: {
@@ -300,7 +300,7 @@ function loadRemoteData(url) {
  * @returns {function(*)}
  */
 export function loadSampleConfigurations(sampleMapId = null) {
-  return dispatch => {
+  return (dispatch) => {
     requestJson(MAP_CONFIG_URL, (error, samples) => {
       if (error) {
         const {target = {}} = error;
@@ -320,7 +320,7 @@ export function loadSampleConfigurations(sampleMapId = null) {
 
         dispatch(loadMapSampleFile(samples));
         // Load the specified map
-        const map = sampleMapId && samples.find(s => s.id === sampleMapId);
+        const map = sampleMapId && samples.find((s) => s.id === sampleMapId);
         if (map) {
           dispatch(loadSample(map, false));
         }

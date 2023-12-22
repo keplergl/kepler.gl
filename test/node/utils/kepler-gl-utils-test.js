@@ -5,7 +5,7 @@ import test from 'tape';
 import {GEOCODER_DATASET_NAME} from '@kepler.gl/constants';
 import {getVisibleDatasets} from '@kepler.gl/components';
 
-test('kepler-gl utils -> getVisibleDatasets', t => {
+test('kepler-gl utils -> getVisibleDatasets', (t) => {
   // Geocoder dataset mock can be an empty object since the filter function only cares about the key
   // in the 'datasets' object and filters by it
   const datasets = {

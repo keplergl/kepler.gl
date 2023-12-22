@@ -21,11 +21,14 @@ const useDndEffects: (effects: Effect[], effectOrder: string[]) => DndEffectsHoo
   effectOrder
 ) => {
   const dispatch = useDispatch();
-  const [activeEffect, setActiveEffect]: [activeEffect: Effect | undefined, setActiveEffect: (effect: Effect | undefined) => void] = useState();
+  const [activeEffect, setActiveEffect]: [
+    activeEffect: Effect | undefined,
+    setActiveEffect: (effect: Effect | undefined) => void
+  ] = useState();
   const onEffectDragStart = useCallback(
-    event => {
+    (event) => {
       const {active} = event;
-      const newActiveEffect = effects.find(effect => effect.id === active.id);
+      const newActiveEffect = effects.find((effect) => effect.id === active.id);
       if (newActiveEffect) {
         setActiveEffect(newActiveEffect);
         if (newActiveEffect.isConfigActive) {
@@ -37,7 +40,7 @@ const useDndEffects: (effects: Effect[], effectOrder: string[]) => DndEffectsHoo
   );
 
   const onEffectDragEnd = useCallback(
-    event => {
+    (event) => {
       const {active, over} = event;
 
       const {id: activeEffectId} = active;

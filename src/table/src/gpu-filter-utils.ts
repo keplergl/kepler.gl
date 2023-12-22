@@ -18,7 +18,7 @@ export function setFilterGpuMode(filter: Filter, filters: Filter[]) {
   // TODO: refactor filter so we don't keep an array of everything
 
   filter.dataId.forEach((dataId, datasetIdx) => {
-    const gpuFilters = filters.filter(f => f.dataId.includes(dataId) && f.gpu);
+    const gpuFilters = filters.filter((f) => f.dataId.includes(dataId) && f.gpu);
 
     if (filter.gpu && gpuFilters.length === MAX_GPU_FILTERS) {
       set(['gpu'], false, filter);
@@ -56,7 +56,7 @@ export function assignGpuChannel(filter: Filter, filters: Filter[]) {
   const gpuChannel = filter.gpuChannel || [];
 
   filter.dataId.forEach((dataId, datasetIdx) => {
-    const findGpuChannel = channel => f => {
+    const findGpuChannel = (channel) => (f) => {
       const dataIdx = toArray(f.dataId).indexOf(dataId);
       return (
         f.id !== filter.id && dataIdx > -1 && f.gpu && toArray(f.gpuChannel)[dataIdx] === channel
@@ -106,7 +106,7 @@ export function resetFilterGpuMode(filters: Filter[]): Filter[] {
   return filters.map((f, i) => {
     if (f.gpu) {
       let gpu = true;
-      toArray(f.dataId).forEach(dataId => {
+      toArray(f.dataId).forEach((dataId) => {
         const count = gpuPerDataset[dataId];
 
         if (count === MAX_GPU_FILTERS) {
@@ -129,7 +129,7 @@ export function resetFilterGpuMode(filters: Filter[]): Filter[] {
  * Initial filter uniform
  */
 function getEmptyFilterRange() {
-  return new Array(MAX_GPU_FILTERS).fill(0).map(d => [0, 0]);
+  return new Array(MAX_GPU_FILTERS).fill(0).map((d) => [0, 0]);
 }
 
 /**
@@ -137,7 +137,7 @@ function getEmptyFilterRange() {
  * @param {any} d Data element with row index info.
  * @returns number
  */
-const defaultGetIndex = d => d.index;
+const defaultGetIndex = (d) => d.index;
 
 /**
  * Returns value at the specified row from the data container.
@@ -156,28 +156,28 @@ const defaultGetData = (dc: DataContainerInterface, d: any, fieldIndex: number) 
  * @param fields
  * @return {Function} getFilterValue
  */
-const getFilterValueAccessor = (
-  channels: (Filter | undefined)[],
-  dataId: string,
-  fields: any[]
-) => (dc: DataContainerInterface) => (getIndex = defaultGetIndex, getData = defaultGetData) => d =>
-  // for empty channel, value is 0 and min max would be [0, 0]
-  channels.map(filter => {
-    if (!filter) {
-      return 0;
-    }
-    const fieldIndex = getDatasetFieldIndexForFilter(dataId, filter);
-    const field = fields[fieldIndex];
+const getFilterValueAccessor =
+  (channels: (Filter | undefined)[], dataId: string, fields: any[]) =>
+  (dc: DataContainerInterface) =>
+  (getIndex = defaultGetIndex, getData = defaultGetData) =>
+  (d) =>
+    // for empty channel, value is 0 and min max would be [0, 0]
+    channels.map((filter) => {
+      if (!filter) {
+        return 0;
+      }
+      const fieldIndex = getDatasetFieldIndexForFilter(dataId, filter);
+      const field = fields[fieldIndex];
 
-    const value =
-      filter.type === FILTER_TYPES.timeRange
-        ? field.filterProps && Array.isArray(field.filterProps.mappedValue)
-          ? field.filterProps.mappedValue[getIndex(d)]
-          : moment.utc(getData(dc, d, fieldIndex)).valueOf()
-        : getData(dc, d, fieldIndex);
+      const value =
+        filter.type === FILTER_TYPES.timeRange
+          ? field.filterProps && Array.isArray(field.filterProps.mappedValue)
+            ? field.filterProps.mappedValue[getIndex(d)]
+            : moment.utc(getData(dc, d, fieldIndex)).valueOf()
+          : getData(dc, d, fieldIndex);
 
-    return notNullorUndefined(value) ? value - filter.domain?.[0] : Number.MIN_SAFE_INTEGER;
-  });
+      return notNullorUndefined(value) ? value - filter.domain?.[0] : Number.MIN_SAFE_INTEGER;
+    });
 
 /**
  * Get filter properties for gpu filtering
@@ -191,7 +191,7 @@ export function getGpuFilterProps(filters: Filter[], dataId: string, fields: Fie
 
   for (let i = 0; i < MAX_GPU_FILTERS; i++) {
     const filter = filters.find(
-      f =>
+      (f) =>
         f.gpu &&
         f.dataId.includes(dataId) &&
         f.gpuChannel &&

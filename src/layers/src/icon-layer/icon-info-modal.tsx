@@ -13,14 +13,14 @@ const CenterFlexbox = styled.div`
 `;
 
 const lineFunction = line()
-  .x(d => d[0] * 10)
-  .y(d => d[1] * 10);
+  .x((d) => d[0] * 10)
+  .y((d) => d[1] * 10);
 
 const IconShape = ({mesh, className}) => (
   <svg width="20px" height="20px">
     <g transform="translate(10, 10)">
       {mesh.cells.map((cell, i) => (
-        <path key={i} fill="#000000" d={lineFunction(cell.map(idx => mesh.positions[idx]))} />
+        <path key={i} fill="#000000" d={lineFunction(cell.map((idx) => mesh.positions[idx]))} />
       ))}
     </g>
   </svg>
@@ -38,14 +38,14 @@ const StyledIconItem = styled(CenterFlexbox)`
 `;
 
 const StyledCode = styled.code`
-  color: ${props => props.theme.titleColorLT};
+  color: ${(props) => props.theme.titleColorLT};
 `;
 
 const StyledTitle = styled.div`
   font-size: 20px;
   letter-spacing: 1.25px;
   margin: 18px 0 14px 0;
-  color: ${props => props.theme.titleColorLT};
+  color: ${(props) => props.theme.titleColorLT};
 `;
 
 const IconItem = ({icon: {id, mesh}}) => (
@@ -129,7 +129,7 @@ const IconInfoModalFactory = (svgIcons: any[] = []) => {
           <FormattedMessage id={'modal.iconInfo.icons'} />
         </StyledTitle>
         <IconTable className="icon-info-modal__icons__table">
-          {svgIcons.map(icon => (
+          {svgIcons.map((icon) => (
             <IconItem key={icon.id} icon={icon} />
           ))}
         </IconTable>

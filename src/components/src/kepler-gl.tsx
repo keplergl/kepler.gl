@@ -67,10 +67,10 @@ import {Provider} from '@kepler.gl/cloud-providers';
 // Maybe we should think about exporting this or creating a variable
 // as part of the base.js theme
 const GlobalStyle = styled.div`
-  font-family: ${props => props.theme.fontFamily};
-  font-weight: ${props => props.theme.fontWeight};
-  font-size: ${props => props.theme.fontSize};
-  line-height: ${props => props.theme.lineHeight};
+  font-family: ${(props) => props.theme.fontFamily};
+  font-weight: ${(props) => props.theme.fontWeight};
+  font-size: ${(props) => props.theme.fontSize};
+  line-height: ${(props) => props.theme.lineHeight};
 
   *,
   *:before,
@@ -91,7 +91,7 @@ const GlobalStyle = styled.div`
 
   a {
     text-decoration: none;
-    color: ${props => props.theme.labelColor};
+    color: ${(props) => props.theme.labelColor};
   }
 
   .maplibregl-ctrl .maplibregl-ctrl-logo {
@@ -113,7 +113,7 @@ const BottomWidgetOuter = styled.div<BottomWidgetOuterProps>(
   }`
 );
 
-export const isViewportDisjointed = props => {
+export const isViewportDisjointed = (props) => {
   return (
     props.mapState.isSplit &&
     !props.mapState.isViewportSynced &&
@@ -377,7 +377,7 @@ function KeplerGlFactory(
       }
     }
 
-    _handleResize = dimensions => {
+    _handleResize = (dimensions) => {
       this.setState({dimensions});
     };
 
@@ -387,37 +387,37 @@ function KeplerGlFactory(
     bottomWidgetRef = createRef<HTMLDivElement>();
 
     /* selectors */
-    themeSelector = props => props.theme;
-    availableThemeSelector = createSelector(this.themeSelector, theme =>
+    themeSelector = (props) => props.theme;
+    availableThemeSelector = createSelector(this.themeSelector, (theme) =>
       typeof theme === 'object'
         ? {
             ...basicTheme,
             ...theme
           }
         : theme === THEME.light
-        ? themeLT
-        : theme === THEME.base
-        ? themeBS
-        : theme
+          ? themeLT
+          : theme === THEME.base
+            ? themeBS
+            : theme
     );
 
-    datasetsSelector = props => props.visState.datasets;
+    datasetsSelector = (props) => props.visState.datasets;
     filteredDatasetsSelector = createSelector(this.datasetsSelector, getVisibleDatasets);
 
     availableProviders = createSelector(
       (props: KeplerGLProps) => props.cloudProviders,
-      providers =>
+      (providers) =>
         Array.isArray(providers) && providers.length
           ? {
-              hasStorage: providers.some(p => p.hasPrivateStorage()),
-              hasShare: providers.some(p => p.hasSharingUrl())
+              hasStorage: providers.some((p) => p.hasPrivateStorage()),
+              hasShare: providers.some((p) => p.hasSharingUrl())
             }
           : {}
     );
 
     localeMessagesSelector = createSelector(
       (props: KeplerGLProps) => props.localeMessages,
-      customMessages => (customMessages ? mergeMessages(messages, customMessages) : messages)
+      (customMessages) => (customMessages ? mergeMessages(messages, customMessages) : messages)
     );
 
     /* private methods */
@@ -431,7 +431,7 @@ function KeplerGlFactory(
     _loadMapStyle = () => {
       const defaultStyles = Object.values(this.props.mapStyle.mapStyles);
       // add id to custom map styles if not given
-      const customStyles = (this.props.mapStyles || []).map(ms => ({
+      const customStyles = (this.props.mapStyles || []).map((ms) => ({
         ...ms,
         id: ms.id || generateHashId()
       }));
@@ -602,7 +602,7 @@ export function makeGetActionCreators() {
       MapStyleActions,
       UIStateActions,
       ProviderActions
-    ].map(actions => bindActionCreators(mergeActions(actions, userActions), dispatch));
+    ].map((actions) => bindActionCreators(mergeActions(actions, userActions), dispatch));
 
     return {
       visStateActions,

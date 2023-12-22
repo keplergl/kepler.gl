@@ -51,7 +51,7 @@ export const Container = styled.div<ContainerProps>`
   display: flex;
   font-size: 11px;
   flex-grow: 1;
-  color: ${props => props.theme.dataTableTextColor};
+  color: ${(props) => props.theme.dataTableTextColor};
   width: 100%;
   position: relative;
   .ReactVirtualized__Grid:focus,
@@ -59,7 +59,7 @@ export const Container = styled.div<ContainerProps>`
     outline: 0;
   }
   .body-grid {
-    ${props => props.hasCustomScrollBarStyle && props.theme.modalScrollBar}
+    ${(props) => props.hasCustomScrollBarStyle && props.theme.modalScrollBar}
   }
 
   .cell {
@@ -83,13 +83,13 @@ export const Container = styled.div<ContainerProps>`
 
     .scroll-in-ui-thread.pinned-columns--header {
       overflow: hidden;
-      border-bottom: 1px solid ${props => props.theme.cellBorderColor};
+      border-bottom: 1px solid ${(props) => props.theme.cellBorderColor};
       padding-bottom: ${browserScrollBarWidth}px;
     }
     .scroll-in-ui-thread.unpinned-columns--header {
       width: 100vw;
       overflow: hidden;
-      border-bottom: 1px solid ${props => props.theme.cellBorderColor};
+      border-bottom: 1px solid ${(props) => props.theme.cellBorderColor};
       // leave room for scrollbar
       padding-bottom: ${browserScrollBarWidth}px;
     }
@@ -120,13 +120,13 @@ export const Container = styled.div<ContainerProps>`
       position: absolute;
       left: 0;
       top: 0;
-      border-right: 2px solid ${props => props.theme.pinnedGridBorderColor};
+      border-right: 2px solid ${(props) => props.theme.pinnedGridBorderColor};
     }
     .even-row {
-      background-color: ${props => props.theme.evenRowBackground};
+      background-color: ${(props) => props.theme.evenRowBackground};
     }
     .odd-row {
-      background-color: ${props => props.theme.oddRowBackground};
+      background-color: ${(props) => props.theme.oddRowBackground};
     }
     .cell,
     .header-cell {
@@ -145,12 +145,12 @@ export const Container = styled.div<ContainerProps>`
       }
     }
     .cell {
-      border-bottom: 1px solid ${props => props.theme.cellBorderColor};
-      border-right: 1px solid ${props => props.theme.cellBorderColor};
+      border-bottom: 1px solid ${(props) => props.theme.cellBorderColor};
+      border-right: 1px solid ${(props) => props.theme.cellBorderColor};
       white-space: nowrap;
       overflow: auto;
-      padding: 0 ${props => props.theme.cellPaddingSide}px;
-      font-size: ${props => props.theme.cellFontSize}px;
+      padding: 0 ${(props) => props.theme.cellPaddingSide}px;
+      font-size: ${(props) => props.theme.cellFontSize}px;
 
       .result-link {
         text-decoration: none;
@@ -159,11 +159,11 @@ export const Container = styled.div<ContainerProps>`
     .cell.end-cell,
     .header-cell.end-cell {
       border-right: none;
-      padding-right: ${props => props.theme.cellPaddingSide + props.theme.edgeCellPaddingSide}px;
+      padding-right: ${(props) => props.theme.cellPaddingSide + props.theme.edgeCellPaddingSide}px;
     }
     .cell.first-cell,
     .header-cell.first-cell {
-      padding-left: ${props => props.theme.cellPaddingSide + props.theme.edgeCellPaddingSide}px;
+      padding-left: ${(props) => props.theme.cellPaddingSide + props.theme.edgeCellPaddingSide}px;
     }
     .cell.bottom-cell {
       border-bottom: none;
@@ -185,9 +185,13 @@ export type SortColumn = {
   mode?: string;
 };
 
-const columnWidthFunction = (columns, cellSizeCache, ghost?) => ({index}) => {
-  return (columns[index] || {}).ghost ? ghost : cellSizeCache[columns[index]] || defaultColumnWidth;
-};
+const columnWidthFunction =
+  (columns, cellSizeCache, ghost?) =>
+  ({index}) => {
+    return (columns[index] || {}).ghost
+      ? ghost
+      : cellSizeCache[columns[index]] || defaultColumnWidth;
+  };
 
 interface GetRowCellProps {
   dataContainer: DataContainerInterface;
@@ -212,8 +216,8 @@ const defaultGetRowCell = (
   return value === null || value === undefined || value === ''
     ? ''
     : formatter
-    ? formatter(value)
-    : parseFieldValue(value, type);
+      ? formatter(value)
+      : parseFieldValue(value, type);
 };
 
 type StatsControlProps = {
@@ -222,17 +226,17 @@ type StatsControlProps = {
 };
 
 const StyledStatsControl = styled.div<StatsControlProps>`
-  height: ${props => props.theme.headerStatsControlHeight}px;
+  height: ${(props) => props.theme.headerStatsControlHeight}px;
   width: 100%;
   display: flex;
   justify-content: center;
   align-items: stretch;
   position: absolute;
-  top: ${props => props.top}px;
-  font-family: ${props => props.theme.fontFamilyMedium}px;
+  top: ${(props) => props.top}px;
+  font-family: ${(props) => props.theme.fontFamilyMedium}px;
   font-size: 12px;
-  color: ${props => props.theme.activeColor};
-  background-color: ${props => props.theme.headerCellStatsControlBackground};
+  color: ${(props) => props.theme.activeColor};
+  background-color: ${(props) => props.theme.headerCellStatsControlBackground};
   :hover {
     cursor: pointer;
   }
@@ -245,7 +249,7 @@ const StyledStatsControl = styled.div<StatsControlProps>`
     svg {
       margin-left: 12px;
       transition: transform 0.5s ease;
-      transform: rotate(${props => (props.showStats ? 180 : 0)}deg);
+      transform: rotate(${(props) => (props.showStats ? 180 : 0)}deg);
     }
   }
 `;
@@ -451,10 +455,10 @@ function DataTableFactory(HeaderCell: ReturnType<typeof HeaderCellFactory>) {
     columns = (props: DataTableProps) => props.columns;
     pinnedColumns = (props: DataTableProps) => props.pinnedColumns;
     unpinnedColumns = createSelector(this.columns, this.pinnedColumns, (columns, pinnedColumns) =>
-      !Array.isArray(pinnedColumns) ? columns : columns.filter(c => !pinnedColumns.includes(c))
+      !Array.isArray(pinnedColumns) ? columns : columns.filter((c) => !pinnedColumns.includes(c))
     );
 
-    toggleMoreOptions = moreOptionsColumn =>
+    toggleMoreOptions = (moreOptionsColumn) =>
       this.setState({
         moreOptionsColumn:
           this.state.moreOptionsColumn === moreOptionsColumn ? null : moreOptionsColumn
@@ -489,7 +493,7 @@ function DataTableFactory(HeaderCell: ReturnType<typeof HeaderCellFactory>) {
 
     renderDataCell = (columns, isPinned, props: DataTableProps) => {
       const getRowCell = this.props.getRowCell ?? defaultGetRowCell;
-      return cellInfo => {
+      return (cellInfo) => {
         const {columnIndex, key, style, rowIndex} = cellInfo;
         const {dataContainer, colMeta} = props;
         const column = columns[columnIndex];
@@ -530,7 +534,7 @@ function DataTableFactory(HeaderCell: ReturnType<typeof HeaderCellFactory>) {
     };
 
     renderHeaderCell(columns, isPinned, props, toggleMoreOptions, moreOptionsColumn) {
-      return cellInfo => (
+      return (cellInfo) => (
         <HeaderCell
           cellInfo={cellInfo}
           key={cellInfo.columnIndex}
@@ -578,14 +582,14 @@ function DataTableFactory(HeaderCell: ReturnType<typeof HeaderCellFactory>) {
         height: !hasStats
           ? headerRowHeight
           : showStats
-          ? headerRowWStatsHeight
-          : headerRowHeight + headerStatsControlHeight,
+            ? headerRowWStatsHeight
+            : headerRowHeight + headerStatsControlHeight,
         rowCount: 1,
         rowHeight: !hasStats
           ? headerRowHeight
           : showStats
-          ? headerRowWStatsHeight
-          : headerRowHeight + headerStatsControlHeight
+            ? headerRowWStatsHeight
+            : headerRowHeight + headerStatsControlHeight
       };
 
       const dataGridProps = {
@@ -616,11 +620,11 @@ function DataTableFactory(HeaderCell: ReturnType<typeof HeaderCellFactory>) {
                             columns={pinnedColumns}
                             headerGridProps={headerGridProps}
                             fixedWidth={pinnedColumnsWidth}
-                            onScroll={args => onScroll({...args, scrollLeft})}
+                            onScroll={(args) => onScroll({...args, scrollLeft})}
                             scrollTop={scrollTop}
                             scrollLeft={scrollLeft}
                             dataGridProps={dataGridProps}
-                            setGridRef={pinnedGrid => (this.pinnedGrid = pinnedGrid)}
+                            setGridRef={(pinnedGrid) => (this.pinnedGrid = pinnedGrid)}
                             columnWidth={columnWidthFunction(pinnedColumns, cellSizeCache)}
                             headerCellRender={this.renderHeaderCell(
                               pinnedColumns,
@@ -651,7 +655,7 @@ function DataTableFactory(HeaderCell: ReturnType<typeof HeaderCellFactory>) {
                           scrollTop={scrollTop}
                           scrollLeft={scrollLeft}
                           dataGridProps={dataGridProps}
-                          setGridRef={unpinnedGrid => (this.unpinnedGrid = unpinnedGrid)}
+                          setGridRef={(unpinnedGrid) => (this.unpinnedGrid = unpinnedGrid)}
                           columnWidth={columnWidthFunction(
                             unpinnedColumnsGhost,
                             cellSizeCache,

@@ -39,14 +39,14 @@ export default function NotificationPanelFactory(
 
     render() {
       const globalNotifications = this.props.notifications.filter(
-        n => n.topic === DEFAULT_NOTIFICATION_TOPICS.global
+        (n) => n.topic === DEFAULT_NOTIFICATION_TOPICS.global
       );
       return (
         <NotificationPanelContent
           className="notification-panel"
           style={{display: globalNotifications.length ? 'block' : 'none'}}
         >
-          {globalNotifications.map(n => (
+          {globalNotifications.map((n) => (
             <NotificationItem
               key={n.id}
               notification={n}
@@ -58,8 +58,8 @@ export default function NotificationPanelFactory(
     }
   }
 
-  const NotificationPanel = (React.memo(
+  const NotificationPanel = React.memo(
     NotificationPanelUnmemoized
-  ) as unknown) as typeof NotificationPanelUnmemoized;
+  ) as unknown as typeof NotificationPanelUnmemoized;
   return NotificationPanel;
 }

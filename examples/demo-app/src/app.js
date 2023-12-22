@@ -49,7 +49,7 @@ import {processCsvData, processGeojson} from '@kepler.gl/processors';
 
 const BannerHeight = 48;
 const BannerKey = `banner-${FormLink}`;
-const keplerGlGetState = state => state.demo.keplerGl;
+const keplerGlGetState = (state) => state.demo.keplerGl;
 
 const GlobalStyle = styled.div`
   font-family: ff-clan-web-pro, 'Helvetica Neue', Helvetica, sans-serif;
@@ -76,7 +76,7 @@ const GlobalStyle = styled.div`
 
   a {
     text-decoration: none;
-    color: ${props => props.theme.labelColor};
+    color: ${(props) => props.theme.labelColor};
   }
 `;
 
@@ -101,7 +101,7 @@ class App extends Component {
     // we ry to fetch along map configurations
     const {params: {id, provider} = {}, location: {query = {}} = {}} = this.props;
 
-    const cloudProvider = CLOUD_PROVIDERS.find(c => c.name === provider);
+    const cloudProvider = CLOUD_PROVIDERS.find((c) => c.name === provider);
     if (cloudProvider) {
       this.props.dispatch(
         loadCloudMap({
@@ -383,7 +383,7 @@ class App extends Component {
       // We expect an InteractiveMap created by KeplerGl's MapContainer.
       // https://uber.github.io/react-map-gl/#/Documentation/api-reference/interactive-map
       const map = mapbox.getMap();
-      map.on('zoomend', e => {
+      map.on('zoomend', (e) => {
         // console.log(`Map ${index} zoom level: ${e.target.style.z}`);
       });
     }
@@ -396,7 +396,7 @@ class App extends Component {
           // this is to apply the same modal style as kepler.gl core
           // because styled-components doesn't always return a node
           // https://github.com/styled-components/styled-components/issues/617
-          ref={node => {
+          ref={(node) => {
             node ? (this.root = node) : null;
           }}
         >
@@ -435,7 +435,7 @@ class App extends Component {
   }
 }
 
-const mapStateToProps = state => state;
-const dispatchToProps = dispatch => ({dispatch});
+const mapStateToProps = (state) => state;
+const dispatchToProps = (dispatch) => ({dispatch});
 
 export default connect(mapStateToProps, dispatchToProps)(App);

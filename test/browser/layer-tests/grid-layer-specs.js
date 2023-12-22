@@ -108,7 +108,7 @@ const expectedGridCellData = [
   }
 ];
 
-test('#GridLayer -> constructor', t => {
+test('#GridLayer -> constructor', (t) => {
   const TEST_CASES = {
     CREATE: [
       {
@@ -117,7 +117,7 @@ test('#GridLayer -> constructor', t => {
           isVisible: true,
           label: 'test grid layer'
         },
-        test: layer => {
+        test: (layer) => {
           t.ok(layer.config.dataId === 'taro', 'gridLayer dataId should be correct');
           t.ok(layer.type === 'grid', 'type should be grid');
           t.ok(layer.isAggregated === true, 'gridLayer is aggregated');
@@ -132,7 +132,7 @@ test('#GridLayer -> constructor', t => {
   t.end();
 });
 
-test('#GridLayer -> formatLayerData', t => {
+test('#GridLayer -> formatLayerData', (t) => {
   const TEST_CASES = [
     {
       name: 'Grid gps point.1',
@@ -152,10 +152,10 @@ test('#GridLayer -> formatLayerData', t => {
           filteredIndex
         }
       },
-      assert: result => {
+      assert: (result) => {
         const {layerData, layer} = result;
         const expectedLayerData = {
-          data: [0, 1, 4, 5, 7].map(index => ({
+          data: [0, 1, 4, 5, 7].map((index) => ({
             index
           })),
           _filterData: () => {},
@@ -214,10 +214,10 @@ test('#GridLayer -> formatLayerData', t => {
           filteredIndex
         }
       },
-      assert: result => {
+      assert: (result) => {
         const {layerData} = result;
         const expectedLayerData = {
-          data: [0, 1, 4, 5, 7].map(index => ({
+          data: [0, 1, 4, 5, 7].map((index) => ({
             index
           })),
           _filterData: () => {},
@@ -239,7 +239,7 @@ test('#GridLayer -> formatLayerData', t => {
   t.end();
 });
 
-test('#GridLayer -> renderLayer', t => {
+test('#GridLayer -> renderLayer', (t) => {
   const spyLayerCallbacks = sinon.spy();
 
   const TEST_CASES = [
@@ -274,7 +274,7 @@ test('#GridLayer -> renderLayer', t => {
       },
       assert: (deckLayers, layer, result) => {
         t.deepEqual(
-          deckLayers.map(l => l.id),
+          deckLayers.map((l) => l.id),
           ['test_layer_1', 'test_layer_1-grid-cell'],
           'Should create 2 deck.gl layers'
         );
@@ -299,7 +299,7 @@ test('#GridLayer -> renderLayer', t => {
           lowerPercentile: layer.config.visConfig.percentile[0]
         };
 
-        Object.keys(expectedProps).forEach(key => {
+        Object.keys(expectedProps).forEach((key) => {
           t.deepEqual(props[key], expectedProps[key], `should have correct props.${key}`);
         });
 
@@ -351,18 +351,8 @@ test('#GridLayer -> renderLayer', t => {
           instancePositions.value.slice(0, 12),
           // position of each bin
           [
-            -122.59661271087748,
-            37.743177277521255,
-            0,
-            -122.14283099317691,
-            37.38384344551697,
-            0,
-            -122.3697218520272,
-            37.743177277521255,
-            0,
-            0,
-            0,
-            0
+            -122.59661271087748, 37.743177277521255, 0, -122.14283099317691, 37.38384344551697, 0,
+            -122.3697218520272, 37.743177277521255, 0, 0, 0, 0
           ],
           'should create correct attribute.instanceFillColors'
         );
@@ -419,7 +409,7 @@ test('#GridLayer -> renderLayer', t => {
       },
       assert: (deckLayers, layer, result) => {
         t.deepEqual(
-          deckLayers.map(l => l.id),
+          deckLayers.map((l) => l.id),
           ['test_layer_2', 'test_layer_2-grid-cell'],
           'Should create 2 deck.gl layers'
         );
@@ -486,7 +476,7 @@ test('#GridLayer -> renderLayer', t => {
   t.end();
 });
 
-test('#GridLayer -> pointToPolygonGeo', t => {
+test('#GridLayer -> pointToPolygonGeo', (t) => {
   const polygonGeo = pointToPolygonGeo({
     object: {
       position: [-122.39096, 37.769897]

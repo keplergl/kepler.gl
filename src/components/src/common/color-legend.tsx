@@ -13,7 +13,7 @@ const GAP = 4;
 const RECT_W = 20;
 
 const StyledLegend = styled.div`
-  ${props => props.theme.sidePanelScrollBar};
+  ${(props) => props.theme.sidePanelScrollBar};
 
   max-height: 150px;
   overflow-y: auto;
@@ -21,16 +21,16 @@ const StyledLegend = styled.div`
   svg {
     text {
       font-size: 9px;
-      fill: ${props => props.theme.textColor};
+      fill: ${(props) => props.theme.textColor};
     }
   }
 `;
 
-const defaultFormat = d => d;
+const defaultFormat = (d) => d;
 
-const getTimeLabelFormat = domain => {
+const getTimeLabelFormat = (domain) => {
   const formatter = getTimeWidgetHintFormatter(domain);
-  return val => moment.utc(val).format(formatter);
+  return (val) => moment.utc(val).format(formatter);
 };
 
 const getQuantLabelFormat = (domain, fieldType) => {
@@ -38,11 +38,11 @@ const getQuantLabelFormat = (domain, fieldType) => {
   return fieldType === ALL_FIELD_TYPES.timestamp
     ? getTimeLabelFormat(domain)
     : !fieldType
-    ? defaultFormat
-    : n => formatNumber(n, fieldType);
+      ? defaultFormat
+      : (n) => formatNumber(n, fieldType);
 };
 
-const getOrdinalLegends = scale => {
+const getOrdinalLegends = (scale) => {
   const domain = scale.domain();
   return {
     data: domain.map(scale),
@@ -59,7 +59,7 @@ const getQuantLegends = (scale, labelFormat) => {
     };
   }
 
-  const labels = scale.range().map(d => {
+  const labels = scale.range().map((d) => {
     const invert = scale.invertExtent(d);
     return `${labelFormat(invert[0])} to ${labelFormat(invert[1])}`;
   });
@@ -87,11 +87,11 @@ interface ColorLegendProps {
 }
 
 export default class ColorLegend extends Component<ColorLegendProps> {
-  domainSelector = props => props.domain;
-  rangeSelector = props => props.range;
-  labelFormatSelector = props => props.labelFormat;
-  scaleTypeSelector = props => props.scaleType;
-  fieldTypeSelector = props => props.fieldType;
+  domainSelector = (props) => props.domain;
+  rangeSelector = (props) => props.range;
+  labelFormatSelector = (props) => props.labelFormat;
+  scaleTypeSelector = (props) => props.scaleType;
+  fieldTypeSelector = (props) => props.fieldType;
 
   legendsSelector = createSelector(
     this.domainSelector,
@@ -114,8 +114,8 @@ export default class ColorLegend extends Component<ColorLegendProps> {
         };
       } else if (Array.isArray(range.colorMap)) {
         return {
-          data: range.colorMap.map(cm => cm[1]),
-          labels: range.colorMap.map(cm => cm[0])
+          data: range.colorMap.map((cm) => cm[1]),
+          labels: range.colorMap.map((cm) => cm[0])
         };
       } else if (Array.isArray(range.colors)) {
         if (!domain || !scaleType) {
@@ -125,9 +125,7 @@ export default class ColorLegend extends Component<ColorLegendProps> {
         const scaleFunction = SCALE_FUNC[scaleType];
         // color scale can only be quantize, quantile or ordinal
         // @ts-ignore fix d3 scale
-        const scale = scaleFunction()
-          .domain(domain)
-          .range(range.colors);
+        const scale = scaleFunction().domain(domain).range(range.colors);
 
         if (scaleType === SCALE_TYPES.ordinal) {
           return getOrdinalLegends(scale);

@@ -19,7 +19,7 @@ const StyledSampleGallery = styled.div`
 const StyledSampleMap = styled.div`
   font-size: 14px;
   font-weight: 500;
-  color: ${props => props.theme.textColorLT};
+  color: ${(props) => props.theme.textColorLT};
   line-height: 22px;
   width: 30%;
   max-width: 480px;
@@ -58,7 +58,7 @@ const StyledSampleMap = styled.div`
 `;
 
 const StyledImageCaption = styled.div`
-  color: ${props => props.theme.labelColorLT};
+  color: ${(props) => props.theme.labelColorLT};
   font-size: 11px;
   font-weight: 400;
   line-height: 16px;
@@ -115,8 +115,8 @@ const SampleMapGallery = ({
       ) : (
         <StyledSampleGallery className="sample-map-gallery">
           {sampleMaps
-            .filter(sp => sp.visible)
-            .map(sp => (
+            .filter((sp) => sp.visible)
+            .map((sp) => (
               <SampleMap
                 id={sp.id}
                 sample={sp}

@@ -40,7 +40,7 @@ function InteractionManagerFactory(
           className="interaction-manager-title"
           title={intl.formatMessage({id: panelMetadata.label})}
         />
-        {Object.keys(interactionConfig).map(key => (
+        {Object.keys(interactionConfig).map((key) => (
           <InteractionPanel
             datasets={datasets}
             config={interactionConfig[key]}

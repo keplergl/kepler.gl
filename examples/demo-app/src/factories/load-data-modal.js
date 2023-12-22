@@ -30,14 +30,14 @@ const CustomLoadDataModalFactory = (...deps) => {
   LoadDataModal.defaultProps = {
     ...LoadDataModal.defaultProps,
     loadingMethods: [
-      defaultLoadingMethods.find(lm => lm.id === 'upload'),
+      defaultLoadingMethods.find((lm) => lm.id === 'upload'),
       additionalMethods.remote,
-      defaultLoadingMethods.find(lm => lm.id === 'storage'),
+      defaultLoadingMethods.find((lm) => lm.id === 'storage'),
       additionalMethods.sample
     ]
   };
 
-  return withState([], state => ({...state.demo.app, ...state.demo.keplerGl.map.uiState}), {
+  return withState([], (state) => ({...state.demo.app, ...state.demo.keplerGl.map.uiState}), {
     onLoadSample: loadSample,
     onLoadRemoteMap: loadRemoteMap,
     loadSampleConfigurations

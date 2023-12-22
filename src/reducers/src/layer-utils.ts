@@ -61,7 +61,7 @@ export function findDefaultLayer(dataset: KeplerTable, layerClasses: LayerClasse
       const foundLayers = result.foundLayers || previous;
 
       return foundLayers.concat(
-        props.map(p => ({
+        props.map((p) => ({
           ...p,
           type: lc,
           dataId: dataset.id
@@ -72,7 +72,7 @@ export function findDefaultLayer(dataset: KeplerTable, layerClasses: LayerClasse
   );
 
   // go through all layerProps to create layer
-  return layerProps.map(props => {
+  return layerProps.map((props) => {
     // @ts-expect-error TODO: checking props.type !== null
     const layer = new layerClasses[props.type](props);
     return typeof layer.setInitialLayerConfig === 'function' && dataset.dataContainer
@@ -286,13 +286,13 @@ export function getCustomDeckLayers(deckGlProps?: any): [CustomDeckLayer[], Cust
   const bottomDeckLayers = Array.isArray(deckGlProps?.layers)
     ? deckGlProps?.layers
     : isFunction(deckGlProps?.layers)
-    ? deckGlProps?.layers()
-    : [];
+      ? deckGlProps?.layers()
+      : [];
   const topDeckLayers = Array.isArray(deckGlProps?.topLayers)
     ? deckGlProps?.topLayers
     : isFunction(deckGlProps?.topLayers)
-    ? deckGlProps?.topLayers()
-    : [];
+      ? deckGlProps?.topLayers()
+      : [];
 
   return [bottomDeckLayers, topDeckLayers];
 }
@@ -324,7 +324,7 @@ export function bindLayerCallbacks(layerCallbacks: LayerCallbacks = {}, idx: num
   return Object.keys(layerCallbacks).reduce(
     (accu, key) => ({
       ...accu,
-      [key]: val => layerCallbacks[key](idx, val)
+      [key]: (val) => layerCallbacks[key](idx, val)
     }),
     {} as Record<string, (_idx: number, val: any) => void>
   );
@@ -367,7 +367,7 @@ export function computeDeckLayers(
     dataLayers = layerOrder
       .slice()
       .reverse()
-      .filter(id => currentLayersForDeck[id])
+      .filter((id) => currentLayersForDeck[id])
       .reduce((overlays, layerId) => {
         const layerIndex = layers.findIndex(({id}) => id === layerId);
         const bindedLayerCallbacks = layerCallbacks

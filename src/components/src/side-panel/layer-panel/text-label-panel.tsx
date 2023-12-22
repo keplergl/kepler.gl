@@ -57,7 +57,9 @@ function TextLabelPanelFactory(
   class TextLabelPanel extends Component<TextLabelPanelProps> {
     render() {
       const {updateLayerTextLabel, textLabel, fields} = this.props;
-      const currentFields = textLabel.map(tl => tl.field && tl.field.name).filter(d => Boolean(d));
+      const currentFields = textLabel
+        .map((tl) => tl.field && tl.field.name)
+        .filter((d) => Boolean(d));
 
       return (
         <LayerConfigGroup label={'panel.text.label'} collapsible>
@@ -65,7 +67,7 @@ function TextLabelPanelFactory(
             <FieldSelector
               fields={fields}
               value={currentFields as string[]}
-              onSelect={selected => updateLayerTextLabel('all', 'fields', selected)}
+              onSelect={(selected) => updateLayerTextLabel('all', 'fields', selected)}
               multiSelect
             />
           </ConfigGroupCollapsibleHeader>
@@ -80,7 +82,7 @@ function TextLabelPanelFactory(
                     fields={fields}
                     value={(tl.field && tl.field.name) || 'placeholder.selectField'}
                     placeholder={'placeholder.empty'}
-                    onSelect={v => updateLayerTextLabel(idx, 'field', v)}
+                    onSelect={(v) => updateLayerTextLabel(idx, 'field', v)}
                     erasable
                   />
                 </SidePanelSection>
@@ -92,7 +94,7 @@ function TextLabelPanelFactory(
                     {...LAYER_TEXT_CONFIGS.fontSize}
                     value1={tl.size}
                     isRanged={false}
-                    onChange={v => updateLayerTextLabel(idx, 'size', v[1])}
+                    onChange={(v) => updateLayerTextLabel(idx, 'size', v[1])}
                   />
                 </SidePanelSection>
                 <SidePanelSection>
@@ -118,7 +120,7 @@ function TextLabelPanelFactory(
                     {...LAYER_TEXT_CONFIGS.outlineWidth}
                     value1={tl.outlineWidth}
                     isRanged={false}
-                    onChange={v => updateLayerTextLabel(idx, 'outlineWidth', v[1])}
+                    onChange={(v) => updateLayerTextLabel(idx, 'outlineWidth', v[1])}
                   />
                 </SidePanelSection>
                 <SidePanelSection>
@@ -129,7 +131,7 @@ function TextLabelPanelFactory(
                     colorSets={[
                       {
                         selectedColor: tl.outlineColor,
-                        setColor: v => updateLayerTextLabel(idx, 'outlineColor', v)
+                        setColor: (v) => updateLayerTextLabel(idx, 'outlineColor', v)
                       }
                     ]}
                     useOpacity={true}
@@ -152,7 +154,7 @@ function TextLabelPanelFactory(
                     colorSets={[
                       {
                         selectedColor: tl.backgroundColor,
-                        setColor: v => updateLayerTextLabel(idx, 'backgroundColor', v)
+                        setColor: (v) => updateLayerTextLabel(idx, 'backgroundColor', v)
                       }
                     ]}
                     useOpacity={true}
@@ -169,7 +171,7 @@ function TextLabelPanelFactory(
                       <ItemSelector
                         {...LAYER_TEXT_CONFIGS.textAnchor}
                         selectedItems={tl.anchor}
-                        onChange={val => updateLayerTextLabel(idx, 'anchor', val)}
+                        onChange={(val) => updateLayerTextLabel(idx, 'anchor', val)}
                       />
                     </SBFlexboxItem>
                     <SBFlexboxItem>
@@ -179,7 +181,7 @@ function TextLabelPanelFactory(
                       <ItemSelector
                         {...LAYER_TEXT_CONFIGS.textAlignment}
                         selectedItems={tl.alignment}
-                        onChange={val => updateLayerTextLabel(idx, 'alignment', val)}
+                        onChange={(val) => updateLayerTextLabel(idx, 'alignment', val)}
                       />
                     </SBFlexboxItem>
                   </SpaceBetweenFlexbox>

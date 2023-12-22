@@ -24,7 +24,7 @@ const initialState = {
 };
 const mockStore = configureStore();
 
-test('Components -> Container -> Mount with mint:true', t => {
+test('Components -> Container -> Mount with mint:true', (t) => {
   // mount with empty store
   let store = mockStore({});
   const spy = sinon.spy(Console, 'error');
@@ -99,7 +99,7 @@ test('Components -> Container -> Mount with mint:true', t => {
     wrapper = mount(
       <Provider store={store}>
         <Container
-          getState={s => s.smoothie}
+          getState={(s) => s.smoothie}
           id={testId.id}
           mapboxApiAccessToken={testId.mapboxApiAccessToken}
         />
@@ -156,7 +156,7 @@ test('Components -> Container -> Mount with mint:true', t => {
   t.end();
 });
 
-test('Components -> Container -> Mount with mint:false', t => {
+test('Components -> Container -> Mount with mint:false', (t) => {
   const spy = sinon.spy(Console, 'error');
 
   // mount with custom state
@@ -175,7 +175,7 @@ test('Components -> Container -> Mount with mint:false', t => {
     wrapper = mount(
       <Provider store={store}>
         <Container
-          getState={s => s.smoothie}
+          getState={(s) => s.smoothie}
           id={testId.id}
           mint={false}
           mapboxApiAccessToken="hello.world"
@@ -227,7 +227,7 @@ test('Components -> Container -> Mount with mint:false', t => {
   t.end();
 });
 
-test('Components -> Container -> Mount then rename', t => {
+test('Components -> Container -> Mount then rename', (t) => {
   const dispatch = sinon.spy();
 
   // mount with custom state
@@ -245,7 +245,7 @@ test('Components -> Container -> Mount then rename', t => {
   t.doesNotThrow(() => {
     wrapper = mount(
       <Container
-        getState={s => s.smoothie}
+        getState={(s) => s.smoothie}
         id={testId.id}
         mapboxApiAccessToken="hello.world"
         dispatch={dispatch}

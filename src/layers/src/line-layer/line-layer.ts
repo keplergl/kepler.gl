@@ -51,16 +51,17 @@ export type LineLayerConfig = Merge<
   {columns: LineLayerColumnsConfig; visConfig: LineLayerVisConfig}
 >;
 
-export const linePosAccessor = ({lat0, lng0, lat1, lng1, alt0, alt1}: LineLayerColumnsConfig) => (
-  dc: DataContainerInterface
-) => d => [
-  dc.valueAt(d.index, lng0.fieldIdx),
-  dc.valueAt(d.index, lat0.fieldIdx),
-  alt0 && alt0.fieldIdx > -1 ? dc.valueAt(d.index, alt0.fieldIdx) : 0,
-  dc.valueAt(d.index, lng1.fieldIdx),
-  dc.valueAt(d.index, lat1.fieldIdx),
-  alt1 && alt1?.fieldIdx > -1 ? dc.valueAt(d.index, alt1.fieldIdx) : 0
-];
+export const linePosAccessor =
+  ({lat0, lng0, lat1, lng1, alt0, alt1}: LineLayerColumnsConfig) =>
+  (dc: DataContainerInterface) =>
+  (d) => [
+    dc.valueAt(d.index, lng0.fieldIdx),
+    dc.valueAt(d.index, lat0.fieldIdx),
+    alt0 && alt0.fieldIdx > -1 ? dc.valueAt(d.index, alt0.fieldIdx) : 0,
+    dc.valueAt(d.index, lng1.fieldIdx),
+    dc.valueAt(d.index, lat1.fieldIdx),
+    alt1 && alt1?.fieldIdx > -1 ? dc.valueAt(d.index, alt1.fieldIdx) : 0
+  ];
 
 export const lineRequiredColumns: ['lat0', 'lng0', 'lat1', 'lng1'] = [
   'lat0',

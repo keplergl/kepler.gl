@@ -15,7 +15,7 @@ function SingleSelectFilterPanelFactory(
 ) {
   const SingleSelectFilterPanel: FilterPanelComponent<SelectFilter> = React.memo(
     ({idx, datasets, allAvailableFields, filter, setFilter, removeFilter}) => {
-      const onSetFilter = useCallback(value => setFilter(idx, 'value', value), [idx, setFilter]);
+      const onSetFilter = useCallback((value) => setFilter(idx, 'value', value), [idx, setFilter]);
 
       return (
         <div className="single-select-filter-panel">

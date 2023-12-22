@@ -197,7 +197,7 @@ export const fields = [
     format: '',
     fieldIdx: 0,
     analyzerType: 'GEOMETRY',
-    valueAccessor: values => values[0]
+    valueAccessor: (values) => values[0]
   },
   {
     type: 'integer',
@@ -207,7 +207,7 @@ export const fields = [
     format: '',
     fieldIdx: 1,
     analyzerType: 'INT',
-    valueAccessor: values => values[1]
+    valueAccessor: (values) => values[1]
   },
   {
     type: 'integer',
@@ -217,7 +217,7 @@ export const fields = [
     format: '',
     fieldIdx: 2,
     analyzerType: 'INT',
-    valueAccessor: values => values[2]
+    valueAccessor: (values) => values[2]
   },
   {
     type: 'integer',
@@ -227,7 +227,7 @@ export const fields = [
     format: '',
     fieldIdx: 3,
     analyzerType: 'INT',
-    valueAccessor: values => values[3]
+    valueAccessor: (values) => values[3]
   },
   {
     type: 'integer',
@@ -237,7 +237,7 @@ export const fields = [
     format: '',
     fieldIdx: 4,
     analyzerType: 'INT',
-    valueAccessor: values => values[4]
+    valueAccessor: (values) => values[4]
   },
   {
     type: 'string',
@@ -247,7 +247,7 @@ export const fields = [
     format: '',
     fieldIdx: 5,
     analyzerType: 'STRING',
-    valueAccessor: values => values[5]
+    valueAccessor: (values) => values[5]
   },
   {
     type: 'object',
@@ -257,7 +257,7 @@ export const fields = [
     format: '',
     fieldIdx: 6,
     analyzerType: 'OBJECT',
-    valueAccessor: values => values[6]
+    valueAccessor: (values) => values[6]
   }
 ];
 
@@ -454,10 +454,7 @@ export const mergedRateFilter = {
 };
 
 export const geoBounds = [
-  -122.40115971858505,
-  37.78202426695214,
-  -122.39166672864975,
-  37.79427854456892
+  -122.40115971858505, 37.78202426695214, -122.39166672864975, 37.79427854456892
 ];
 
 export const expectedDataToFeature = [
@@ -480,7 +477,7 @@ export const updatedGeoJsonLayer = {
   }
 };
 
-export const mappedTripValue = geojsonData.features.map(f => f.properties.TRIPS);
+export const mappedTripValue = geojsonData.features.map((f) => f.properties.TRIPS);
 
 export const tripDomain = extent(mappedTripValue);
 
@@ -536,7 +533,7 @@ export const geoStyleFields = [
     fieldIdx: 0,
     type: 'geojson',
     analyzerType: 'GEOMETRY',
-    valueAccessor: values => values[0]
+    valueAccessor: (values) => values[0]
   },
   {
     name: 'fillColor',
@@ -546,7 +543,7 @@ export const geoStyleFields = [
     fieldIdx: 1,
     type: 'array',
     analyzerType: 'ARRAY',
-    valueAccessor: values => values[1]
+    valueAccessor: (values) => values[1]
   },
   {
     name: 'lineColor',
@@ -556,7 +553,7 @@ export const geoStyleFields = [
     fieldIdx: 2,
     type: 'array',
     analyzerType: 'ARRAY',
-    valueAccessor: values => values[2]
+    valueAccessor: (values) => values[2]
   },
   {
     name: 'lineWidth',
@@ -566,7 +563,7 @@ export const geoStyleFields = [
     fieldIdx: 3,
     type: 'integer',
     analyzerType: 'INT',
-    valueAccessor: values => values[3]
+    valueAccessor: (values) => values[3]
   },
   {
     name: 'elevation',
@@ -576,7 +573,7 @@ export const geoStyleFields = [
     fieldIdx: 4,
     type: 'integer',
     analyzerType: 'INT',
-    valueAccessor: values => values[4]
+    valueAccessor: (values) => values[4]
   },
   {
     name: 'radius',
@@ -586,7 +583,7 @@ export const geoStyleFields = [
     fieldIdx: 5,
     type: 'integer',
     analyzerType: 'INT',
-    valueAccessor: values => values[5]
+    valueAccessor: (values) => values[5]
   }
 ];
 

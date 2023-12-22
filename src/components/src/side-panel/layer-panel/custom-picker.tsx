@@ -21,16 +21,16 @@ type CustomPickerProps = {
 const StyledPicker = styled.div`
   .sketch-picker {
     span {
-      color: ${props => props.theme.labelColor} !important;
-      font-family: ${props => props.theme.fontFamily};
+      color: ${(props) => props.theme.labelColor} !important;
+      font-family: ${(props) => props.theme.fontFamily};
     }
     input {
       text-align: center;
-      font-family: ${props => props.theme.fontFamily};
-      color: ${props => props.theme.inputColor} !important;
-      border-color: ${props => props.theme.secondaryInputBgd} !important;
+      font-family: ${(props) => props.theme.fontFamily};
+      color: ${(props) => props.theme.inputColor} !important;
+      border-color: ${(props) => props.theme.secondaryInputBgd} !important;
       box-shadow: none !important;
-      background-color: ${props => props.theme.inputBgdHover} !important;
+      background-color: ${(props) => props.theme.inputBgdHover} !important;
     }
   }
 `;
@@ -39,7 +39,7 @@ const PRESET_COLORS = [];
 
 class CustomPicker extends Component<CustomPickerProps> {
   themeSelector = (props: CustomPickerProps) => props.theme;
-  pickerStyleSelector = createSelector(this.themeSelector, theme => ({
+  pickerStyleSelector = createSelector(this.themeSelector, (theme) => ({
     picker: {
       width: '200px',
       padding: '10px 10px 8px',

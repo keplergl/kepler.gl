@@ -18,7 +18,7 @@ import {copyTableAndUpdate} from '@kepler.gl/table';
 
 const {S2GeometryLayer} = KeplerGlLayers;
 
-test('#S2Geometry -> constructor', t => {
+test('#S2Geometry -> constructor', (t) => {
   const TEST_CASES = [
     {
       props: {
@@ -26,7 +26,7 @@ test('#S2Geometry -> constructor', t => {
         isVisible: true,
         label: 'text s2geometry layer'
       },
-      test: layer => {
+      test: (layer) => {
         t.ok(layer.config.dataId === 'smoothie', 'S2GeometryLayer dataId should be correct');
         t.ok(layer.type === 's2', 'type should be s2');
         t.deepEqual(
@@ -56,7 +56,7 @@ test('#S2Geometry -> constructor', t => {
   t.end();
 });
 
-test('#S2Geometry -> formatLayerData', t => {
+test('#S2Geometry -> formatLayerData', (t) => {
   const filteredIndex = [0, 2, 4];
 
   const TEST_CASES = [
@@ -78,7 +78,7 @@ test('#S2Geometry -> formatLayerData', t => {
       datasets: {
         [dataId]: copyTableAndUpdate(preparedDataset, {filteredIndex})
       },
-      assert: result => {
+      assert: (result) => {
         const {layerData, layer} = result;
         const expectedLayerData = {
           data: [
@@ -172,7 +172,7 @@ test('#S2Geometry -> formatLayerData', t => {
       datasets: {
         [dataId]: copyTableAndUpdate(preparedDataset, {filteredIndex})
       },
-      assert: result => {
+      assert: (result) => {
         const {layerData} = result;
         // getFillColor
         // domain: ['driver_analytics', 'driver_analytics_0', 'driver_gps']
@@ -224,7 +224,7 @@ test('#S2Geometry -> formatLayerData', t => {
   t.end();
 });
 
-test('#S2Geometry -> renderLayer', t => {
+test('#S2Geometry -> renderLayer', (t) => {
   const filteredIndex = [0, 2, 4];
 
   const TEST_CASES = [
@@ -261,7 +261,7 @@ test('#S2Geometry -> renderLayer', t => {
         ];
 
         t.deepEqual(
-          deckLayers.map(l => l.id),
+          deckLayers.map((l) => l.id),
           expectedLayerIds,
           'should create 1 composite, 1 hexagon-cell layer'
         );
@@ -279,7 +279,7 @@ test('#S2Geometry -> renderLayer', t => {
           elevationScale: 5
         };
 
-        Object.keys(expectedProps).forEach(key => {
+        Object.keys(expectedProps).forEach((key) => {
           t.deepEqual(layerProps[key], expectedProps[key], `should have correct props.${key}`);
         });
       }

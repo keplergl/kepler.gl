@@ -15,7 +15,7 @@ import {
 } from '@kepler.gl/actions';
 import {createAction, handleActions} from 'redux-actions';
 
-test('keplerGlReducer.initialState', t => {
+test('keplerGlReducer.initialState', (t) => {
   const test1Reducer = keplerGlReducer.initialState({
     visState: {
       layerClasses: []
@@ -80,7 +80,7 @@ test('keplerGlReducer.initialState', t => {
   t.end();
 });
 
-test('keplerGlReducer.initialState.2', t => {
+test('keplerGlReducer.initialState.2', (t) => {
   const test1Reducer = keplerGlReducer.initialState({
     visState: {
       layerClasses: []
@@ -147,14 +147,14 @@ test('keplerGlReducer.initialState.2', t => {
   t.end();
 });
 
-test('keplerGlReducer.initialState extrareducers', t => {
+test('keplerGlReducer.initialState extrareducers', (t) => {
   const INITIAL_STATE = {
     panels: []
   };
 
   const insightReducer = handleActions(
     {
-      ADD_PANEL_TO_SECTION: state => ({
+      ADD_PANEL_TO_SECTION: (state) => ({
         ...state,
         panels: ['first']
       })
@@ -193,7 +193,7 @@ test('keplerGlReducer.initialState extrareducers', t => {
   t.end();
 });
 
-test('keplerGlReducer.plugin', t => {
+test('keplerGlReducer.plugin', (t) => {
   // custom actions
   const hideAndShowSidePanel = createAction('HIDE_AND_SHOW_SIDE_PANEL');
   const hideMapControls = createAction('HIDE_MAP_CONTROLS');
@@ -219,7 +219,7 @@ test('keplerGlReducer.plugin', t => {
   const testReducer = keplerGlReducer
     // 1. as reducer map
     .plugin({
-      HIDE_AND_SHOW_SIDE_PANEL: state => ({
+      HIDE_AND_SHOW_SIDE_PANEL: (state) => ({
         ...state,
         uiState: {
           ...state.uiState,
@@ -231,7 +231,7 @@ test('keplerGlReducer.plugin', t => {
       handleActions(
         {
           // 2. as reducer
-          HIDE_MAP_CONTROLS: state => ({
+          HIDE_MAP_CONTROLS: (state) => ({
             ...state,
             uiState: {
               ...state.uiState,
@@ -257,7 +257,7 @@ test('keplerGlReducer.plugin', t => {
   t.end();
 });
 
-test('keplerGlReducer.plugin override', t => {
+test('keplerGlReducer.plugin override', (t) => {
   // custom actions
   const mockRawData = {
     fields: [
@@ -343,7 +343,7 @@ test('keplerGlReducer.plugin override', t => {
   t.end();
 });
 
-test('keplerGlReducer - splitMap and mapControl interaction', t => {
+test('keplerGlReducer - splitMap and mapControl interaction', (t) => {
   // init kepler.gl root and instance
   let state = keplerGlReducer(undefined, registerEntry({id: 'test'}));
 

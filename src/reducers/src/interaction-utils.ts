@@ -69,7 +69,7 @@ function autoFindTooltipFields(fields, maxDefaultTooltips) {
         .replace(/[_,.]+/g, ' ')
         .trim()
         .split(' ')
-        .every(seg => !ptFields.includes(seg)) &&
+        .every((seg) => !ptFields.includes(seg)) &&
       type !== ALL_FIELD_TYPES.geojson &&
       type !== ALL_FIELD_TYPES.geoarrow &&
       type !== 'object'
@@ -149,6 +149,6 @@ export function getTooltipDisplayValue({
   return item?.format
     ? getFormatter(item?.format, field)(value)
     : field.displayFormat
-    ? getFormatter(field.displayFormat, field)(value)
-    : parseFieldValue(value, field.type);
+      ? getFormatter(field.displayFormat, field)(value)
+      : parseFieldValue(value, field.type);
 }

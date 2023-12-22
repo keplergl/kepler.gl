@@ -41,7 +41,7 @@ const StyledEffectPanelContainer = styled.div`
 // top right position absolute
 const StyledEffectPanel = styled.div`
   top: 0;
-  background-color: ${props => props.theme.sidePanelBg};
+  background-color: ${(props) => props.theme.sidePanelBg};
   display: flex;
   flex-direction: column;
   flex-grow: 1;
@@ -51,7 +51,7 @@ const StyledEffectPanel = styled.div`
 const StyledEffectPanelHeader = styled.div`
   padding: ${({theme}) =>
     `${theme.effectPanelPaddingTop}px ${theme.effectPanelPaddingSide}px 4px ${theme.effectPanelPaddingSide}px}`};
-  border-bottom: 1px solid ${props => props.theme.borderColor};
+  border-bottom: 1px solid ${(props) => props.theme.borderColor};
   min-width: ${({theme}) => theme.effectPanelWidth}px;
 `;
 
@@ -59,8 +59,8 @@ type StyledEffectPanelContentProps = {
   extended?: boolean;
 };
 const StyledEffectPanelContent = styled.div<StyledEffectPanelContentProps>`
-  ${props => props.theme.sidePanelScrollBar};
-  padding: ${props => (props.extended ? '32px' : '10px 0px 10px 0px')};
+  ${(props) => props.theme.sidePanelScrollBar};
+  padding: ${(props) => (props.extended ? '32px' : '10px 0px 10px 0px')};
   overflow: overlay;
   display: flex;
   flex-direction: column;
@@ -80,11 +80,11 @@ function EffectManagerFactory(
 
     // Prevent shadow effect from being added multiple times
     const effectOptions = useMemo(() => {
-      const hasShadow = effects.some(effect => {
+      const hasShadow = effects.some((effect) => {
         return effect.type === LIGHT_AND_SHADOW_EFFECT.type;
       });
 
-      return EFFECT_DESCRIPTIONS.map(desc => {
+      return EFFECT_DESCRIPTIONS.map((desc) => {
         return {
           ...desc,
           disabled: Boolean(hasShadow && desc.type === LIGHT_AND_SHADOW_EFFECT.type)
@@ -92,7 +92,7 @@ function EffectManagerFactory(
       });
     }, [effects]);
 
-    const onAddEffect = useCallback(type => {
+    const onAddEffect = useCallback((type) => {
       visStateActions.addEffect({type});
     }, []);
 
@@ -137,7 +137,7 @@ function EffectManagerFactory(
 
   return withState(
     [],
-    state => {
+    (state) => {
       const visState = state.demo.keplerGl.map.visState;
       return {
         effects: visState.effects,

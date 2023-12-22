@@ -62,7 +62,7 @@ const defaultProps = {
   availableProviders: {}
 };
 
-test('Components -> SidePanel.mount -> no prop', t => {
+test('Components -> SidePanel.mount -> no prop', (t) => {
   // mount
   let wrapper;
   t.doesNotThrow(() => {
@@ -83,7 +83,7 @@ test('Components -> SidePanel.mount -> no prop', t => {
   t.end();
 });
 
-test('Components -> SidePanel.mount -> hide CollapseButton', t => {
+test('Components -> SidePanel.mount -> hide CollapseButton', (t) => {
   // mount
   let wrapper;
 
@@ -110,7 +110,7 @@ test('Components -> SidePanel.mount -> hide CollapseButton', t => {
   t.end();
 });
 
-test('Components -> SidePanel -> toggle panel', t => {
+test('Components -> SidePanel -> toggle panel', (t) => {
   const toggleSidePanel = sinon.spy();
   const uiStateActions = {
     ...UIStateActions,
@@ -138,7 +138,7 @@ test('Components -> SidePanel -> toggle panel', t => {
   t.end();
 });
 
-test('Components -> SidePanel -> render panel', t => {
+test('Components -> SidePanel -> render panel', (t) => {
   let wrapper;
   let uiState = {
     ...defaultProps.uiState,
@@ -200,11 +200,11 @@ test('Components -> SidePanel -> render panel', t => {
   t.end();
 });
 
-test('Components -> SidePanel -> render custom panel', t => {
+test('Components -> SidePanel -> render custom panel', (t) => {
   const RocketIcon = () => <div id="rocket-icon" />;
   const ChartIcon = () => <div id="chart-icon" />;
 
-  const MyPanels = props => {
+  const MyPanels = (props) => {
     if (props.activeSidePanel === 'rocket') {
       return <div className="rocket-panel">Rocket</div>;
     } else if (props.activeSidePanel === 'chart') {
@@ -215,7 +215,7 @@ test('Components -> SidePanel -> render custom panel', t => {
   };
 
   MyPanels.defaultProps = {
-    getProps: props => ({
+    getProps: (props) => ({
       layers: props.layers
     })
   };
@@ -281,7 +281,7 @@ test('Components -> SidePanel -> render custom panel', t => {
   t.end();
 });
 
-test('Components -> SidePanel -> PanelHeader', t => {
+test('Components -> SidePanel -> PanelHeader', (t) => {
   const showExportDropdown = sinon.spy();
   const uiStateActions = {
     ...UIStateActions,
@@ -311,19 +311,12 @@ test('Components -> SidePanel -> PanelHeader', t => {
 
   // Share
   t.equal(
-    header
-      .find('.side-panel__panel-header__action')
-      .at(0)
-      .find('p')
-      .text(),
+    header.find('.side-panel__panel-header__action').at(0).find('p').text(),
     'Share',
     'should only render Save action'
   );
 
-  header
-    .find('.side-panel__panel-header__action')
-    .at(0)
-    .simulate('click');
+  header.find('.side-panel__panel-header__action').at(0).simulate('click');
 
   t.ok(showExportDropdown.calledWith('save'), 'should call toggleSidePanel with share');
 
@@ -343,7 +336,7 @@ test('Components -> SidePanel -> PanelHeader', t => {
   t.end();
 });
 
-test('Components -> SidePanel -> PanelHeader -> ExportDropDown', t => {
+test('Components -> SidePanel -> PanelHeader -> ExportDropDown', (t) => {
   const toggleModal = sinon.spy();
   const startExportingImage = sinon.spy();
   const uiStateActions = {
@@ -373,54 +366,30 @@ test('Components -> SidePanel -> PanelHeader -> ExportDropDown', t => {
 
   // export image
   t.equal(
-    wrapper
-      .find(ToolbarItem)
-      .at(0)
-      .find('.toolbar-item__title')
-      .text(),
+    wrapper.find(ToolbarItem).at(0).find('.toolbar-item__title').text(),
     'Export Image',
     'Should render Export Image'
   );
 
-  wrapper
-    .find(ToolbarItem)
-    .at(0)
-    .find('.toolbar-item')
-    .simulate('click');
+  wrapper.find(ToolbarItem).at(0).find('.toolbar-item').simulate('click');
   t.ok(toggleModal.calledWith(EXPORT_IMAGE_ID), 'Should call toggleModal with EXPORT_IMAGE_ID');
 
   // export data
   t.equal(
-    wrapper
-      .find(ToolbarItem)
-      .at(1)
-      .find('.toolbar-item__title')
-      .text(),
+    wrapper.find(ToolbarItem).at(1).find('.toolbar-item__title').text(),
     'Export Data',
     'Should render Export Data'
   );
-  wrapper
-    .find(ToolbarItem)
-    .at(1)
-    .find('.toolbar-item')
-    .simulate('click');
+  wrapper.find(ToolbarItem).at(1).find('.toolbar-item').simulate('click');
   t.ok(toggleModal.calledWith(EXPORT_DATA_ID), 'Should call toggleModal with EXPORT_DATA_ID');
 
   // export map
   t.equal(
-    wrapper
-      .find(ToolbarItem)
-      .at(2)
-      .find('.toolbar-item__title')
-      .text(),
+    wrapper.find(ToolbarItem).at(2).find('.toolbar-item__title').text(),
     'Export Map',
     'Should render Export Map'
   );
-  wrapper
-    .find(ToolbarItem)
-    .at(2)
-    .find('.toolbar-item')
-    .simulate('click');
+  wrapper.find(ToolbarItem).at(2).find('.toolbar-item').simulate('click');
   t.ok(toggleModal.calledWith(EXPORT_MAP_ID), 'Should call toggleModal with EXPORT_MAP_ID');
 
   t.end();

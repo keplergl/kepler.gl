@@ -97,7 +97,7 @@ export type KeplerGlState = {
 const combinedUpdaters = null;
 /* eslint-enable no-unused-vars */
 
-export const isValidConfig = config =>
+export const isValidConfig = (config) =>
   isPlainObject(config) && isPlainObject(config.config) && config.version;
 
 export const defaultAddDataToMapOptions = {
@@ -171,7 +171,7 @@ export const addDataToMapUpdater = (
   }
   const oldLayers = state.visState.layers;
   const filterNewlyAddedLayers = (layers: Layer[]) =>
-    layers.filter(nl => !oldLayers.find(ol => ol === nl));
+    layers.filter((nl) => !oldLayers.find((ol) => ol === nl));
 
   // Returns undefined if not found, to make typescript happy
   const findMapBoundsIfCentered = (layers: Layer[]) => {
@@ -188,12 +188,7 @@ export const addDataToMapUpdater = (
       })
     ),
 
-    if_(
-      Boolean(info),
-      pick_('visState')(
-        apply_<VisState, any>(setMapInfoUpdater, {info})
-      )
-    ),
+    if_(Boolean(info), pick_('visState')(apply_<VisState, any>(setMapInfoUpdater, {info}))),
     with_(({visState}) =>
       pick_('mapState')(
         apply_(
@@ -228,7 +223,7 @@ export const loadFilesSuccessUpdater = (
     )
   ])(state);
   // make multiple add data to map calls
-  const stateWithData = compose_(payloads.map(p => apply_(addDataToMapUpdater, payload_(p))))(
+  const stateWithData = compose_(payloads.map((p) => apply_(addDataToMapUpdater, payload_(p))))(
     nextState
   );
   return stateWithData as KeplerGlState;
@@ -240,7 +235,7 @@ export const addDataToMapComposed = addDataToMapUpdater;
  * Helper which updates map overlay blending mode in visState,
  * but only if it's not currently in the `normal` mode.
  */
-const updateOverlayBlending = overlayBlending => visState => {
+const updateOverlayBlending = (overlayBlending) => (visState) => {
   if (visState.overlayBlending !== OVERLAY_BLENDINGS.normal.value) {
     return {
       ...visState,
@@ -254,23 +249,22 @@ const updateOverlayBlending = overlayBlending => visState => {
  * Helper which updates `darkBaseMapEnabled` in all the layers in visState which
  * have this config setting (or in one specific layer if the `layerId` param is provided).
  */
-const updateDarkBaseMapLayers = (
-  darkBaseMapEnabled: boolean,
-  layerId: string | null = null
-) => visState => ({
-  ...visState,
-  layers: visState.layers.map(layer => {
-    if (!layerId || layer.id === layerId) {
-      if (layer.visConfigSettings.hasOwnProperty('darkBaseMapEnabled')) {
-        const {visConfig} = layer.config;
-        return layer.updateLayerConfig({
-          visConfig: {...visConfig, darkBaseMapEnabled}
-        });
+const updateDarkBaseMapLayers =
+  (darkBaseMapEnabled: boolean, layerId: string | null = null) =>
+  (visState) => ({
+    ...visState,
+    layers: visState.layers.map((layer) => {
+      if (!layerId || layer.id === layerId) {
+        if (layer.visConfigSettings.hasOwnProperty('darkBaseMapEnabled')) {
+          const {visConfig} = layer.config;
+          return layer.updateLayerConfig({
+            visConfig: {...visConfig, darkBaseMapEnabled}
+          });
+        }
       }
-    }
-    return layer;
-  })
-});
+      return layer;
+    })
+  });
 
 /**
  * Updater that changes the map style by calling mapStyleChangeUpdater on visState.
@@ -289,7 +283,7 @@ export const combinedMapStyleChangeUpdater = (
 ): KeplerGlState => {
   const {payload} = action;
   const {mapStyle} = state;
-  const getColorMode = key => mapStyle.mapStyles[key]?.colorMode;
+  const getColorMode = (key) => mapStyle.mapStyles[key]?.colorMode;
   const prevColorMode = getColorMode(mapStyle.styleType);
   const nextColorMode = getColorMode(payload.styleType);
   let {visState} = state;
@@ -328,7 +322,7 @@ export const combinedLayerTypeChangeUpdater = (
   action: LayerTypeChangeUpdaterAction
 ): KeplerGlState => {
   let {visState} = state;
-  const oldLayerIndex = visState.layers.findIndex(layer => layer === action.oldLayer);
+  const oldLayerIndex = visState.layers.findIndex((layer) => layer === action.oldLayer);
   visState = layerTypeChangeUpdater(visState, action);
   const newLayer = visState.layers[oldLayerIndex];
   if (newLayer?.visConfigSettings.hasOwnProperty('darkBaseMapEnabled')) {

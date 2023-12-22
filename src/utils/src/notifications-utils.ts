@@ -45,7 +45,7 @@ export function createNotification({
  * @param options
  * @returns {{topic, id, message, type: (null|number)}}
  */
-export const errorNotification = options => ({
+export const errorNotification = (options) => ({
   ...createNotification(options),
   type: DEFAULT_NOTIFICATION_TYPES.error
 });
@@ -55,12 +55,12 @@ export const errorNotification = options => ({
  * @param options
  * @returns {{topic, id, message, type: null}}
  */
-export const successNotification = options => ({
+export const successNotification = (options) => ({
   ...createNotification(options),
   type: DEFAULT_NOTIFICATION_TYPES.success
 });
 
-export const exportImageError = options =>
+export const exportImageError = (options) =>
   errorNotification({
     ...options,
     id: 'EXPORT_IMAGE_ERROR_ID',

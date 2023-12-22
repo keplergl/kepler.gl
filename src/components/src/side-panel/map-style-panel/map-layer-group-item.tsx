@@ -29,7 +29,7 @@ const StyledLayerGroupItem = styled.div`
 `;
 
 const LayerLabel = styled(PanelLabelBold)<{active: boolean}>`
-  color: ${props => (props.active ? props.theme.textColor : props.theme.labelColor)};
+  color: ${(props) => (props.active ? props.theme.textColor : props.theme.labelColor)};
 `;
 
 export type LayerGroupItemActionIcons = {

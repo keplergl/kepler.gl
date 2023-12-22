@@ -14,10 +14,10 @@ interface StyledSliderProps {
 
 const StyledSlider = styled.div<StyledSliderProps>`
   position: relative;
-  background-color: ${props =>
+  background-color: ${(props) =>
     props.active ? props.theme.sliderBarHoverColor : props.theme.sliderBarColor};
-  ${props => `${props.vertical ? 'width' : 'height'}: ${props.theme.sliderBarHeight}px`};
-  border-radius: ${props => props.theme.sliderBarRadius};
+  ${(props) => `${props.vertical ? 'width' : 'height'}: ${props.theme.sliderBarHeight}px`};
+  border-radius: ${(props) => props.theme.sliderBarRadius};
   :hover {
     cursor: pointer;
   }

@@ -28,20 +28,20 @@ const Container = styled.div`
 
 type SortableStyledItemProps = {transition?: string; transform?: string};
 const SortableStyledItem = styled.div<SortableStyledItemProps>`
-  z-index: ${props => props.theme.dropdownWrapperZ + 1};
-  transition: ${props => props.transition};
-  transform: ${props => props.transform};
+  z-index: ${(props) => props.theme.dropdownWrapperZ + 1};
+  transition: ${(props) => props.transition};
+  transform: ${(props) => props.transform};
   outline: none;
   &.sorting {
     opacity: 0.3;
     pointer-events: none;
   }
   &.sorting-effects .effect-panel__header {
-    background-color: ${props => props.theme.panelBackgroundHover};
-    font-family: ${props => props.theme.fontFamily};
-    font-weight: ${props => props.theme.fontWeight};
-    font-size: ${props => props.theme.fontSize};
-    line-height: ${props => props.theme.lineHeight};
+    background-color: ${(props) => props.theme.panelBackgroundHover};
+    font-family: ${(props) => props.theme.fontFamily};
+    font-weight: ${(props) => props.theme.fontWeight};
+    font-size: ${(props) => props.theme.fontSize};
+    line-height: ${(props) => props.theme.lineHeight};
     *,
     *:before,
     *:after {
@@ -49,7 +49,7 @@ const SortableStyledItem = styled.div<SortableStyledItemProps>`
     }
     .effect__drag-handle {
       opacity: 1;
-      color: ${props => props.theme.textColorHl};
+      color: ${(props) => props.theme.textColorHl};
     }
   }
 `;
@@ -129,11 +129,11 @@ function EffectListFactory(
           strategy={verticalListSortingStrategy}
           disabled={false}
         >
-          {effectsToShow.map(effect => (
+          {effectsToShow.map((effect) => (
             <SortableItem
               key={effect.id}
               effect={effect}
-              idx={effects.findIndex(l => l?.id === effect.id)}
+              idx={effects.findIndex((l) => l?.id === effect.id)}
               panelProps={panelProps}
               disabled={false}
             />

@@ -30,7 +30,7 @@ const StyledLoadingDialog = styled.div.attrs({
 
   .loading-message {
     margin-left: 32px;
-    color: ${props => props.theme.titleColorLT};
+    color: ${(props) => props.theme.titleColorLT};
     font-weight: 500;
     font-size: 14px;
   }

@@ -33,7 +33,7 @@ function Toggle3dButtonFactory(MapControlTooltip) {
     mapControls
   }) => {
     const onClick = useCallback(
-      event => {
+      (event) => {
         event.preventDefault();
         onTogglePerspective();
       },

@@ -6,14 +6,14 @@ import styled from 'styled-components';
 import {FormattedMessage} from '@kepler.gl/localization';
 
 const StyledCode = styled.code`
-  color: ${props => props.theme.titleColorLT};
+  color: ${(props) => props.theme.titleColorLT};
 `;
 
 const StyledTitle = styled.div`
   font-size: 20px;
   letter-spacing: 1.25px;
   margin: 18px 0 14px 0;
-  color: ${props => props.theme.titleColorLT};
+  color: ${(props) => props.theme.titleColorLT};
 `;
 
 const TripInfoModalFactory = (svgIcons = []) => {

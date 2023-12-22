@@ -22,8 +22,8 @@ import {AggregationLayerProps} from '@deck.gl/aggregation-layers/aggregation-lay
 const defaultRadius = LAYER_VIS_CONFIGS.clusterRadius.defaultValue;
 const defaultRadiusRange = LAYER_VIS_CONFIGS.clusterRadiusRange.defaultValue;
 
-const defaultGetColorValue = points => points.length;
-const defaultGetRadiusValue = cell =>
+const defaultGetColorValue = (points) => points.length;
+const defaultGetRadiusValue = (cell) =>
   cell.filteredPoints ? cell.filteredPoints.length : cell.points.length;
 
 function processGeoJSON(this: CPUAggregator, step, props, aggregation, {viewport}) {
@@ -49,7 +49,7 @@ function getClusters(this: CPUAggregator, step, props, aggregation, {viewport}) 
 }
 
 function getSubLayerRadius(dimensionState, dimension, layerProps) {
-  return cell => {
+  return (cell) => {
     const {getRadiusValue} = layerProps;
     const {scaleFunc} = dimensionState;
     return scaleFunc(getRadiusValue(cell));
@@ -145,7 +145,7 @@ const defaultProps = {
   colorScaleType: SCALE_TYPES.quantize,
   radiusScaleType: SCALE_TYPES.sqrt,
   radiusRange: defaultRadiusRange,
-  getPosition: {type: 'accessor', value: x => x.position},
+  getPosition: {type: 'accessor', value: (x) => x.position},
   getColorValue: {type: 'accessor', value: defaultGetColorValue},
   getRadiusValue: {type: 'accessor', value: defaultGetRadiusValue}
 };

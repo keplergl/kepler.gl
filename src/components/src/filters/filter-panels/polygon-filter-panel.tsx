@@ -27,12 +27,15 @@ function PolygonFilterPanelFactory(
 ) {
   const PolygonFilterPanel: PolygonFilterPanelComponent = React.memo(
     ({idx, datasets, layers, filter, removeFilter, setFilter, toggleFilterFeature}) => {
-      const filterDatasets: KeplerTable[] = useMemo(() => filter.dataId.map(d => datasets[d]), [
-        filter,
-        datasets
-      ]);
+      const filterDatasets: KeplerTable[] = useMemo(
+        () => filter.dataId.map((d) => datasets[d]),
+        [filter, datasets]
+      );
 
-      const onSetLayers = useCallback(value => setFilter(idx, 'layerId', value), [setFilter, idx]);
+      const onSetLayers = useCallback(
+        (value) => setFilter(idx, 'layerId', value),
+        [setFilter, idx]
+      );
 
       const isVisible = get(filter, ['value', 'properties', 'isVisible'], true);
       const featureType = get(filter, ['value', 'geometry', 'type'], 'Polygon');

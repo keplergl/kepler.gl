@@ -32,7 +32,7 @@ const StyledMapControlContextPanel = styled.div`
 const StyledMapControlOverlay = styled.div`
   position: absolute;
   display: flex;
-  top: ${props => props.top}px;
+  top: ${(props) => props.top}px;
   right: 0;
   z-index: 1;
   pointer-events: none !important; /* prevent padding from blocking input */
@@ -41,13 +41,13 @@ const StyledMapControlOverlay = styled.div`
     pointer-events: all;
   }
 
-  margin-top: ${props => (props.rightPanelVisible ? props.theme.rightPanelMarginTop : 0)}px;
-  margin-right: ${props => (props.rightPanelVisible ? props.theme.rightPanelMarginRight : 0)}px;
-  ${props => (props.fullHeight ? 'height' : 'max-height')}: calc(100% - ${props =>
-  props.theme.rightPanelMarginTop + props.theme.bottomWidgetPaddingBottom}px);
+  margin-top: ${(props) => (props.rightPanelVisible ? props.theme.rightPanelMarginTop : 0)}px;
+  margin-right: ${(props) => (props.rightPanelVisible ? props.theme.rightPanelMarginRight : 0)}px;
+  ${(props) => (props.fullHeight ? 'height' : 'max-height')}: calc(100% - ${(props) =>
+    props.theme.rightPanelMarginTop + props.theme.bottomWidgetPaddingBottom}px);
 
   .map-control {
-    ${props => (props.rightPanelVisible ? 'padding-top: 0px;' : '')}
+    ${(props) => (props.rightPanelVisible ? 'padding-top: 0px;' : '')}
   }
 `;
 
@@ -60,7 +60,7 @@ function CustomMapControlFactory(EffectControl, EffectManager, ...deps) {
   const MapControl = MapControlFactory(...deps);
   const actionComponents = [...(MapControl.defaultProps?.actionComponents ?? []), EffectControl];
 
-  const CustomMapControl = props => {
+  const CustomMapControl = (props) => {
     const showEffects = Boolean(props.mapControls?.effect?.active);
     return (
       <StyledMapControlOverlay top={props.top} rightPanelVisible={showEffects}>
@@ -75,7 +75,7 @@ function CustomMapControlFactory(EffectControl, EffectManager, ...deps) {
     );
   };
 
-  return withState([], state => ({...state.demo.app}))(CustomMapControl);
+  return withState([], (state) => ({...state.demo.app}))(CustomMapControl);
 }
 
 export function replaceMapControl() {

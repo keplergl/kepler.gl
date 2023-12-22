@@ -34,7 +34,7 @@ export default function EffectControlFactory(
     actionIcons = defaultActionIcons
   }: EffectControlProps) => {
     const onClick = useCallback(
-      event => {
+      (event) => {
         event.preventDefault();
         onToggleMapControl('effect');
       },

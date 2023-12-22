@@ -28,22 +28,22 @@ const StyledMapPopover = styled.div`
   & > * + * {
     margin-top: 6px;
   }
-  ${props => props.theme.scrollBar};
-  font-family: ${props => props.theme.fontFamily};
+  ${(props) => props.theme.scrollBar};
+  font-family: ${(props) => props.theme.fontFamily};
   font-size: 11px;
   font-weight: 500;
-  background-color: ${props => props.theme.panelBackground};
-  color: ${props => props.theme.textColor};
+  background-color: ${(props) => props.theme.panelBackground};
+  color: ${(props) => props.theme.textColor};
   z-index: 1000;
   overflow-x: auto;
-  box-shadow: ${props => props.theme.panelBoxShadow};
+  box-shadow: ${(props) => props.theme.panelBoxShadow};
 
   :hover {
-    background-color: ${props => `${props.theme.panelBackground}dd`};
+    background-color: ${(props) => `${props.theme.panelBackground}dd`};
   }
 
   .primary-label {
-    color: ${props => props.theme.notificationColors.success};
+    color: ${(props) => props.theme.notificationColors.success};
     font-size: 10px;
   }
 
@@ -76,13 +76,13 @@ const StyledMapPopover = styled.div`
 
   td {
     border-color: transparent;
-    color: ${props => props.theme.textColor};
+    color: ${(props) => props.theme.textColor};
   }
 
   td.row__value {
     text-align: right;
     font-weight: 500;
-    color: ${props => props.theme.textColorHl};
+    color: ${(props) => props.theme.textColorHl};
   }
 `;
 
@@ -105,25 +105,25 @@ const PopoverContent = styled.div`
 `;
 
 const StyledIcon = styled.div`
-  color: ${props => props.theme.activeColor};
+  color: ${(props) => props.theme.activeColor};
 
   :hover {
     cursor: pointer;
-    color: ${props => props.theme.linkBtnColor};
+    color: ${(props) => props.theme.linkBtnColor};
   }
 `;
 
 const StyledSelectGeometry = styled.div`
   display: flex;
   align-items: center;
-  color: ${props => props.theme.textColorHl};
+  color: ${(props) => props.theme.textColorHl};
   svg {
     margin-right: 6px;
   }
 
   :hover {
     cursor: pointer;
-    color: ${props => props.theme.linkBtnColor};
+    color: ${(props) => props.theme.linkBtnColor};
   }
 `;
 
@@ -262,7 +262,7 @@ export default function MapPopoverFactory(
 
     return (
       <RootContext.Consumer>
-        {context => (
+        {(context) => (
           <Tippy
             popperOptions={getPopperOptions(container)}
             zIndex={98} /* should be below side panel's z-index of 99  */
@@ -275,7 +275,7 @@ export default function MapPopoverFactory(
             // @ts-ignore
             offset={getOffsetForPlacement}
             appendTo={context?.current || document.body}
-            render={attrs => (
+            render={(attrs) => (
               <StyledMapPopover {...attrs} className="map-popover">
                 {frozen ? (
                   <PinnedButtons>

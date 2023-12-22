@@ -4,7 +4,7 @@
 import test from 'tape';
 import {createLinearGradient} from '@kepler.gl/utils';
 
-test('createLinearGradient', t => {
+test('createLinearGradient', (t) => {
   let colors = [[100, 100, 100]];
 
   t.deepEqual(

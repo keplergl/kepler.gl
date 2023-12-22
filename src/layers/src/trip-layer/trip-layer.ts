@@ -80,9 +80,11 @@ export const tripVisConfigs: {
 };
 
 export const geoJsonRequiredColumns: ['geojson'] = ['geojson'];
-export const featureAccessor = ({geojson}: TripLayerColumnsConfig) => (
-  dc: DataContainerInterface
-) => d => dc.valueAt(d.index, geojson.fieldIdx);
+export const featureAccessor =
+  ({geojson}: TripLayerColumnsConfig) =>
+  (dc: DataContainerInterface) =>
+  (d) =>
+    dc.valueAt(d.index, geojson.fieldIdx);
 export const featureResolver = ({geojson}: TripLayerColumnsConfig) => geojson.fieldIdx;
 
 export default class TripLayer extends Layer {
@@ -137,17 +139,17 @@ export default class TripLayer extends Layer {
         ...visualChannels.color,
         accessor: 'getColor',
         nullValue: visualChannels.color.nullValue,
-        getAttributeValue: config => d => d.properties.lineColor || config.color,
+        getAttributeValue: (config) => (d) => d.properties.lineColor || config.color,
         // used this to get updateTriggers
-        defaultValue: config => config.color
+        defaultValue: (config) => config.color
       },
       size: {
         ...visualChannels.size,
         property: 'stroke',
         accessor: 'getWidth',
-        condition: config => config.visConfig.stroked,
+        condition: (config) => config.visConfig.stroked,
         nullValue: 0,
-        getAttributeValue: () => d => d.properties.lineWidth || defaultLineWidth
+        getAttributeValue: () => (d) => d.properties.lineWidth || defaultLineWidth
       }
     };
   }
@@ -174,7 +176,7 @@ export default class TripLayer extends Layer {
     {label, fields = [], dataContainer, id}: KeplerTable,
     foundLayers: any[]
   ) {
-    const geojsonColumns = fields.filter(f => f.type === 'geojson').map(f => f.name);
+    const geojsonColumns = fields.filter((f) => f.type === 'geojson').map((f) => f.name);
 
     const defaultColumns = {
       geojson: uniq([...GEOJSON_FIELDS.geojson, ...geojsonColumns])
@@ -182,13 +184,13 @@ export default class TripLayer extends Layer {
 
     const geoJsonColumns = this.findDefaultColumnField(defaultColumns, fields);
 
-    const tripGeojsonColumns = (geoJsonColumns || []).filter(col =>
+    const tripGeojsonColumns = (geoJsonColumns || []).filter((col) =>
       isTripGeoJsonField(dataContainer, fields[col.geojson.fieldIdx])
     );
 
     if (tripGeojsonColumns.length) {
       return {
-        props: tripGeojsonColumns.map(columns => ({
+        props: tripGeojsonColumns.map((columns) => ({
           label: (typeof label === 'string' && label.replace(/\.[^/.]+$/, '')) || this.type,
           columns,
           isVisible: true
@@ -196,10 +198,10 @@ export default class TripLayer extends Layer {
 
         // if a geojson layer is created from this column, delete it
         foundLayers: foundLayers.filter(
-          prop =>
+          (prop) =>
             prop.type !== 'geojson' ||
             prop.dataId !== id ||
-            !tripGeojsonColumns.find(c => prop.columns.geojson.name === c.geojson.name)
+            !tripGeojsonColumns.find((c) => prop.columns.geojson.name === c.geojson.name)
         )
       };
     }
@@ -224,8 +226,8 @@ export default class TripLayer extends Layer {
 
   calculateDataAttribute({dataContainer, filteredIndex}, getPosition) {
     return filteredIndex
-      .map(i => this.dataToFeature[i])
-      .filter(d => d && d.geometry.type === 'LineString');
+      .map((i) => this.dataToFeature[i])
+      .filter((d) => d && d.geometry.type === 'LineString');
   }
 
   formatLayerData(datasets, oldLayerData) {
@@ -239,9 +241,9 @@ export default class TripLayer extends Layer {
     const customFilterValueAccessor = (dc, f, fieldIndex) => {
       return dc.valueAt(f.properties.index, fieldIndex);
     };
-    const indexAccessor = f => f.properties.index;
+    const indexAccessor = (f) => f.properties.index;
 
-    const dataAccessor = dc => d => ({index: d.properties.index});
+    const dataAccessor = (dc) => (d) => ({index: d.properties.index});
     const accessors = this.getAttributeAccessors({dataAccessor, dataContainer});
 
     return {
@@ -250,8 +252,8 @@ export default class TripLayer extends Layer {
         indexAccessor,
         customFilterValueAccessor
       ),
-      getPath: d => d.geometry.coordinates,
-      getTimestamps: d => this.dataToTimeStamp[d.properties.index],
+      getPath: (d) => d.geometry.coordinates,
+      getTimestamps: (d) => this.dataToTimeStamp[d.properties.index],
       ...accessors
     };
   }
@@ -326,7 +328,7 @@ export default class TripLayer extends Layer {
       new DeckGLTripsLayer({
         ...defaultLayerProps,
         ...data,
-        getTimestamps: d => (data.getTimestamps(d) || []).map(ts => ts - domain0),
+        getTimestamps: (d) => (data.getTimestamps(d) || []).map((ts) => ts - domain0),
         widthScale: this.config.visConfig.thickness * zoomFactor * zoomFactorValue,
         capRounded: true,
         jointRounded: true,

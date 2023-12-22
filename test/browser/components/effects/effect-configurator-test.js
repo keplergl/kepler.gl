@@ -15,7 +15,7 @@ import {StateWEffects, InitialState} from 'test/helpers/mock-state';
 
 const EffectConfigurator = appInjector.get(EffectConfiguratorFactory);
 
-test('Components -> EffectConfigurator -> render -> post processing effect', t => {
+test('Components -> EffectConfigurator -> render -> post processing effect', (t) => {
   const testCases = [
     {
       // configurator for magnify effect with [x, y] and plain number uniforms
@@ -57,7 +57,7 @@ test('Components -> EffectConfigurator -> render -> post processing effect', t =
 const mockStore = configureStore();
 const ititialState = {mapState: {latitude: 0, longitude: 0}};
 
-test('Components -> EffectConfigurator -> render -> light & shadow effect', t => {
+test('Components -> EffectConfigurator -> render -> light & shadow effect', (t) => {
   const store = mockStore(ititialState);
 
   let nextState = visStateReducer(

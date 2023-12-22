@@ -29,18 +29,18 @@ export const StyledPanelTab = styled.div.attrs({
   align-items: flex-end;
   border-bottom-style: solid;
   border-bottom-width: 2px;
-  border-bottom-color: ${props =>
+  border-bottom-color: ${(props) =>
     props.active ? props.theme.panelToggleBorderColor : 'transparent'};
-  color: ${props => (props.active ? props.theme.subtextColorActive : props.theme.panelTabColor)};
+  color: ${(props) => (props.active ? props.theme.subtextColorActive : props.theme.panelTabColor)};
   display: flex;
   justify-content: center;
-  margin-right: ${props => props.theme.panelToggleMarginRight}px;
-  padding-bottom: ${props => props.theme.panelToggleBottomPadding}px;
-  width: ${props => props.theme.panelTabWidth};
+  margin-right: ${(props) => props.theme.panelToggleMarginRight}px;
+  padding-bottom: ${(props) => props.theme.panelToggleBottomPadding}px;
+  width: ${(props) => props.theme.panelTabWidth};
 
   :hover {
     cursor: pointer;
-    color: ${props => props.theme.textColorHl};
+    color: ${(props) => props.theme.textColorHl};
   }
 `;
 

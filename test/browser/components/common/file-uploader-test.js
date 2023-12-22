@@ -8,7 +8,7 @@ import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
 
 import {FileUpload, WarningMsg, FileDrop, UploadButton} from '@kepler.gl/components';
 
-test('Components -> FileUploader.render', t => {
+test('Components -> FileUploader.render', (t) => {
   let wrapper;
 
   t.doesNotThrow(() => {
@@ -25,9 +25,9 @@ test('Components -> FileUploader.render', t => {
   t.end();
 });
 
-test('Components -> FileUpload.onDrop', t => {
+test('Components -> FileUpload.onDrop', (t) => {
   const mockFiles = [{type: 'text/csv', name: 'tst-file.csv'}];
-  const onFileUpload = sinon.spy(arg => {
+  const onFileUpload = sinon.spy((arg) => {
     t.deepEqual(arg, mockFiles, 'should call onFileUpload with files');
   });
   const stopPropagation = sinon.spy();
@@ -53,20 +53,16 @@ test('Components -> FileUpload.onDrop', t => {
 
   t.ok(onFileUpload.called, 'onFileUpload should get called');
   t.ok(stopPropagation.called, 'stopPropagation should get called');
-  const files = wrapper
-    .find(FileUpload)
-    .children()
-    .first()
-    .state().files;
+  const files = wrapper.find(FileUpload).children().first().state().files;
 
   t.deepEqual(files, mockFiles, 'should set files to state');
 
   t.end();
 });
 
-test('Components -> FileUpload.onDrop -> render loading msg', t => {
+test('Components -> FileUpload.onDrop -> render loading msg', (t) => {
   const mockFiles = [{type: 'text/csv', name: 'tst-file.csv'}];
-  const onFileUpload = sinon.spy(arg => {
+  const onFileUpload = sinon.spy((arg) => {
     t.deepEqual(arg, mockFiles, 'should call onFileUpload with files');
   });
 
@@ -102,19 +98,16 @@ test('Components -> FileUpload.onDrop -> render loading msg', t => {
 
   t.ok(onFileUpload.called, 'onFileUpload should get called');
 
-  const uploadMsg = wrapper
-    .find('.file-upload-progress__message')
-    .at(0)
-    .html();
+  const uploadMsg = wrapper.find('.file-upload-progress__message').at(0).html();
   t.comment(uploadMsg);
   t.ok(uploadMsg.includes('tst-file.csv', 'should render upload file msg'));
 
   t.end();
 });
 
-test('Components -> FileUpload.onDrop -> render error msg', t => {
+test('Components -> FileUpload.onDrop -> render error msg', (t) => {
   const mockFiles = [{type: 'png', name: 'tst-file.png'}];
-  const onFileUpload = sinon.spy(arg => {
+  const onFileUpload = sinon.spy((arg) => {
     t.deepEqual(arg, mockFiles, 'should call onFileUpload with files');
   });
 
@@ -139,19 +132,15 @@ test('Components -> FileUpload.onDrop -> render error msg', t => {
   t.ok(onFileUpload.notCalled, 'onFileUpload should not get called');
   t.ok(wrapper.find(WarningMsg), 'should render WarningMsg');
 
-  const errorFiles = wrapper
-    .find(FileUpload)
-    .children()
-    .first()
-    .state().errorFiles;
+  const errorFiles = wrapper.find(FileUpload).children().first().state().errorFiles;
   t.deepEqual(errorFiles, ['tst-file.png'], 'should save files to errorFiles');
 
   t.end();
 });
 
-test('Components -> FileUpload.dragOver', t => {
+test('Components -> FileUpload.dragOver', (t) => {
   const mockFiles = [{type: 'text/csv', name: 'tst-file.csv'}];
-  const onFileUpload = sinon.spy(arg => {
+  const onFileUpload = sinon.spy((arg) => {
     t.deepEqual(arg, mockFiles, 'should call onFileUpload with files');
   });
   const wrapper = mountWithTheme(
@@ -172,18 +161,14 @@ test('Components -> FileUpload.dragOver', t => {
   };
 
   FileDropDiv.simulate('dragover', mockEvent);
-  const dragOver = wrapper
-    .find(FileUpload)
-    .children()
-    .first()
-    .state().dragOver;
+  const dragOver = wrapper.find(FileUpload).children().first().state().dragOver;
   t.ok(dragOver, 'dragOver should be set to true');
   t.end();
 });
 
-test('Components -> FileUpload.dragLeave', t => {
+test('Components -> FileUpload.dragLeave', (t) => {
   const mockFiles = [{type: 'text/csv', name: 'tst-file.csv'}];
-  const onFileUpload = sinon.spy(arg => {
+  const onFileUpload = sinon.spy((arg) => {
     t.deepEqual(arg, mockFiles, 'should call onFileUpload with files');
   });
   const wrapper = mountWithTheme(
@@ -204,18 +189,14 @@ test('Components -> FileUpload.dragLeave', t => {
   };
 
   FileDropDiv.simulate('dragleave', mockEvent);
-  const dragOver = wrapper
-    .find(FileUpload)
-    .children()
-    .first()
-    .state().dragOver;
+  const dragOver = wrapper.find(FileUpload).children().first().state().dragOver;
   t.notOk(dragOver, 'dragOver should be set to false');
   t.end();
 });
 
-test('Components -> UploadButton fileInput', t => {
+test('Components -> UploadButton fileInput', (t) => {
   const mockFiles = [{type: 'text/csv', name: 'tst-file.csv'}];
-  const onFileUpload = sinon.spy(arg => {
+  const onFileUpload = sinon.spy((arg) => {
     t.deepEqual(arg, mockFiles, 'should call onFileUpload with files');
   });
   const wrapper = mountWithTheme(
@@ -243,11 +224,7 @@ test('Components -> UploadButton fileInput', t => {
 
   input.simulate('change', mockEvent);
   t.ok(onFileUpload.called, 'onFileUpload should get called');
-  const files = wrapper
-    .find(FileUpload)
-    .children()
-    .first()
-    .state().files;
+  const files = wrapper.find(FileUpload).children().first().state().files;
 
   t.deepEqual(files, mockFiles, 'should set files to state');
 

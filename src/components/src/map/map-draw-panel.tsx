@@ -46,9 +46,10 @@ function MapDrawPanelFactory(
       actionIcons = defaultActionIcons
     }) => {
       const isActive = mapControls?.mapDraw?.active;
-      const onToggleMenuPanel = useCallback(() => onToggleMapControl('mapDraw'), [
-        onToggleMapControl
-      ]);
+      const onToggleMenuPanel = useCallback(
+        () => onToggleMapControl('mapDraw'),
+        [onToggleMapControl]
+      );
       if (!mapControls?.mapDraw?.show) {
         return null;
       }
@@ -82,7 +83,7 @@ function MapDrawPanelFactory(
           <MapControlTooltip id="map-draw" message="tooltip.DrawOnMap">
             <MapControlButton
               className={classnames('map-control-button', 'map-draw', {isActive})}
-              onClick={e => {
+              onClick={(e) => {
                 e.preventDefault();
                 onToggleMenuPanel();
               }}

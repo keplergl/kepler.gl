@@ -14,7 +14,7 @@ export const CloudListProvider: React.FC<CloudListProviderProps> = ({children, p
   const cloudProviders = useRef(providers);
 
   const setProvider = useCallback(
-    provider => {
+    (provider) => {
       setCurrentCloudProvider(currentCloudProvider === provider ? null : provider);
     },
     [currentCloudProvider]

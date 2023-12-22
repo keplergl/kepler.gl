@@ -154,14 +154,14 @@ export function findDefaultColorField({
   fields: Field[];
   fieldPairs: FieldPair[];
 }): null | Field {
-  const fieldsWithoutExcluded = fields.filter(field => {
+  const fieldsWithoutExcluded = fields.filter((field) => {
     if (field.type !== ALL_FIELD_TYPES.real && field.type !== ALL_FIELD_TYPES.integer) {
       // Only select numeric fields.
       return false;
     }
     if (
       fieldPairs.find(
-        pair => pair.pair.lat.value === field.name || pair.pair.lng.value === field.name
+        (pair) => pair.pair.lat.value === field.name || pair.pair.lng.value === field.name
       )
     ) {
       // Do not permit lat, lon fields
@@ -174,10 +174,10 @@ export function findDefaultColorField({
       return false;
     }
     const hasExcluded = EXCLUDED_DEFAULT_FIELDS.find(
-      f => normalizedFieldName.startsWith(f) || normalizedFieldName.endsWith(f)
+      (f) => normalizedFieldName.startsWith(f) || normalizedFieldName.endsWith(f)
     );
     const hasInclusion = METRIC_DEFAULT_FIELDS.find(
-      f => normalizedFieldName.startsWith(f) || normalizedFieldName.endsWith(f)
+      (f) => normalizedFieldName.startsWith(f) || normalizedFieldName.endsWith(f)
     );
     return !hasExcluded || hasInclusion;
   });
@@ -186,10 +186,10 @@ export function findDefaultColorField({
     const normalizedLeft = left.name.toLowerCase();
     const normalizedRight = right.name.toLowerCase();
     const leftHasInclusion = METRIC_DEFAULT_FIELDS.findIndex(
-      f => normalizedLeft.startsWith(f) || normalizedLeft.endsWith(f)
+      (f) => normalizedLeft.startsWith(f) || normalizedLeft.endsWith(f)
     );
     const rightHasInclusion = METRIC_DEFAULT_FIELDS.findIndex(
-      f => normalizedRight.startsWith(f) || normalizedRight.endsWith(f)
+      (f) => normalizedRight.startsWith(f) || normalizedRight.endsWith(f)
     );
     if (leftHasInclusion !== rightHasInclusion) {
       if (leftHasInclusion === -1) {
@@ -244,7 +244,7 @@ export const ACCEPTED_ANALYZER_TYPES = [
 ];
 
 const IGNORE_DATA_TYPES = Object.keys(AnalyzerDATA_TYPES).filter(
-  type => !ACCEPTED_ANALYZER_TYPES.includes(type)
+  (type) => !ACCEPTED_ANALYZER_TYPES.includes(type)
 );
 
 /**
@@ -282,14 +282,14 @@ export function validateInputData(data: ProtoDataset['data']): ProcessorResult {
       return false;
     }
 
-    if (!fields.every(field => field.analyzerType)) {
+    if (!fields.every((field) => field.analyzerType)) {
       assert('field missing analyzerType');
       return false;
     }
 
     // check time format is correct based on first 10 not empty element
     if (f.type === ALL_FIELD_TYPES.timestamp) {
-      const sample = findNonEmptyRowsAtField(rows, i, 10).map(r => ({ts: r[i]}));
+      const sample = findNonEmptyRowsAtField(rows, i, 10).map((r) => ({ts: r[i]}));
       const analyzedType = Analyzer.computeColMeta(sample)[0];
       return analyzedType && analyzedType.category === 'TIME' && analyzedType.format === f.format;
     }
@@ -304,10 +304,10 @@ export function validateInputData(data: ProtoDataset['data']): ProcessorResult {
   // if any field has missing type, recalculate it for everyone
   // because we simply lost faith in humanity
   const sampleData = getSampleForTypeAnalyze({
-    fields: fields.map(f => f.name),
+    fields: fields.map((f) => f.name),
     rows
   });
-  const fieldOrder = fields.map(f => f.name);
+  const fieldOrder = fields.map((f) => f.name);
   const meta = getFieldsFromData(sampleData, fieldOrder);
   const updatedFields = fields.map((f, i) => ({
     ...f,
@@ -344,7 +344,7 @@ export function getSampleForTypeAnalyze({
 }): RowData {
   const total = Math.min(sampleCount, rows.length);
   // const fieldOrder = fields.map(f => f.name);
-  const sample = range(0, total, 1).map(d => ({}));
+  const sample = range(0, total, 1).map((d) => ({}));
 
   // collect sample data for each field
   fields.forEach((field, fieldIdx) => {
@@ -450,7 +450,7 @@ export function getFieldsFromData(data: RowData, fieldOrder: string[]): Field[] 
   const result = fieldOrder.map((field, index) => {
     const name = fieldByIndex[index];
 
-    const fieldMeta = metadata.find(m => m.key === field);
+    const fieldMeta = metadata.find((m) => m.key === field);
 
     // fieldMeta could be undefined if the field has no data and Analyzer.computeColMeta
     // will ignore the field. In this case, we will simply assign the field type to STRING
@@ -460,7 +460,7 @@ export function getFieldsFromData(data: RowData, fieldOrder: string[]): Field[] 
 
     // check if string is hex wkb
     if (type === AnalyzerDATA_TYPES.STRING) {
-      type = data.some(d => isHexWkb(d[name])) ? AnalyzerDATA_TYPES.GEOMETRY : type;
+      type = data.some((d) => isHexWkb(d[name])) ? AnalyzerDATA_TYPES.GEOMETRY : type;
     }
 
     return {
@@ -471,7 +471,7 @@ export function getFieldsFromData(data: RowData, fieldOrder: string[]): Field[] 
       fieldIdx: index,
       type: analyzerTypeToFieldType(type),
       analyzerType: type,
-      valueAccessor: dc => d => {
+      valueAccessor: (dc) => (d) => {
         return dc.valueAt(d.index, index);
       }
     };
@@ -487,9 +487,10 @@ export function getFieldsFromData(data: RowData, fieldOrder: string[]): Field[] 
  * @param fieldOrder
  * @returns new field name by index
  */
-export function renameDuplicateFields(
-  fieldOrder: string[]
-): {allNames: string[]; fieldByIndex: string[]} {
+export function renameDuplicateFields(fieldOrder: string[]): {
+  allNames: string[];
+  fieldByIndex: string[];
+} {
   return fieldOrder.reduce<{allNames: string[]; fieldByIndex: string[]}>(
     (accu, field, i) => {
       const {allNames} = accu;
@@ -573,7 +574,7 @@ export function analyzerTypeToFieldType(aType: string): string {
 const TIME_DISPLAY = '2020-05-11 14:00';
 
 const addTimeLabel = (formats: TimeLabelFormat[]) =>
-  formats.map(f => ({
+  formats.map((f) => ({
     ...f,
     label:
       f.type === TOOLTIP_FORMAT_TYPES.DATE_TIME || f.type === TOOLTIP_FORMAT_TYPES.DATE
@@ -583,13 +584,13 @@ const addTimeLabel = (formats: TimeLabelFormat[]) =>
 
 export function getFieldFormatLabels(fieldType?: string): TooltipFormat[] {
   const tooltipTypes = (fieldType && FIELD_OPTS[fieldType].format.tooltip) || [];
-  const formatLabels: TimeLabelFormat[] = Object.values(TOOLTIP_FORMATS).filter(t =>
+  const formatLabels: TimeLabelFormat[] = Object.values(TOOLTIP_FORMATS).filter((t) =>
     tooltipTypes.includes(t.type)
   );
   return addTimeLabel(formatLabels);
 }
 
 export function getFormatLabels(fields: TooltipFields[], fieldName: string) {
-  const fieldType = fields.find(f => f.name === fieldName)?.type;
+  const fieldType = fields.find((f) => f.name === fieldName)?.type;
   return getFieldFormatLabels(fieldType);
 }

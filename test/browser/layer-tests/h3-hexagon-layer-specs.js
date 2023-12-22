@@ -26,7 +26,7 @@ const columns = {
   hex_id: 'hex_id'
 };
 
-test('#H3Layer -> constructor', t => {
+test('#H3Layer -> constructor', (t) => {
   const TEST_CASES = {
     CREATE: [
       {
@@ -35,7 +35,7 @@ test('#H3Layer -> constructor', t => {
           isVisible: true,
           label: 'test h3 layer'
         },
-        test: layer => {
+        test: (layer) => {
           t.ok(layer.config.dataId === 'smoothie', 'H3Layer dataId should be correct');
           t.ok(layer.type === 'hexagonId', 'type should be h3');
           t.ok(layer.isAggregated === false, 'H3Layer is not aggregated');
@@ -49,7 +49,7 @@ test('#H3Layer -> constructor', t => {
   t.end();
 });
 
-test('#H3Layer -> formatLayerData', t => {
+test('#H3Layer -> formatLayerData', (t) => {
   const filteredIndex = [0, 2, 4];
 
   const TEST_CASES = [
@@ -68,7 +68,7 @@ test('#H3Layer -> formatLayerData', t => {
       datasets: {
         [dataId]: copyTableAndUpdate(preparedDataset, {filteredIndex})
       },
-      assert: result => {
+      assert: (result) => {
         const {layerData, layer} = result;
         const expectedLayerData = {
           data: [
@@ -168,7 +168,7 @@ test('#H3Layer -> formatLayerData', t => {
       datasets: {
         [dataId]: copyTableAndUpdate(preparedDataset, {filteredIndex})
       },
-      assert: result => {
+      assert: (result) => {
         const {layerData} = result;
 
         // getSourceColor
@@ -218,7 +218,7 @@ test('#H3Layer -> formatLayerData', t => {
   t.end();
 });
 
-test('#H3Layer -> renderLayer', t => {
+test('#H3Layer -> renderLayer', (t) => {
   const filteredIndex = [0, 2, 4];
 
   const TEST_CASES = [
@@ -247,7 +247,7 @@ test('#H3Layer -> renderLayer', t => {
         const expectedLayerIds = ['test_layer_1', 'test_layer_1-hexagon-cell'];
 
         t.deepEqual(
-          deckLayers.map(l => l.id),
+          deckLayers.map((l) => l.id),
           expectedLayerIds,
           'should create 1 composite, 1 hexagon-cell layer'
         );
@@ -266,7 +266,7 @@ test('#H3Layer -> renderLayer', t => {
           filled: true,
           stroked: false
         };
-        Object.keys(expectedProps).forEach(key => {
+        Object.keys(expectedProps).forEach((key) => {
           t.deepEqual(props[key], expectedProps[key], `should have correct props.${key}`);
         });
       }
@@ -341,7 +341,7 @@ test('#H3Layer -> renderLayer', t => {
         ];
 
         t.deepEqual(
-          deckLayers.map(l => l.id),
+          deckLayers.map((l) => l.id),
           expectedLayerIds,
           'should create 1 composite, 1 hexagon-cell layer, 1 text layer, 1 multi-icon layer'
         );
@@ -353,7 +353,7 @@ test('#H3Layer -> renderLayer', t => {
   t.end();
 });
 
-test('#H3Layer -> idToPolygonGeo', t => {
+test('#H3Layer -> idToPolygonGeo', (t) => {
   const h3Object = {
     index: 411,
     id: '882a100d01fffff'

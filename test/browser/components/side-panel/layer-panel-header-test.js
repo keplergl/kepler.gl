@@ -22,7 +22,7 @@ const defaultProps = {
   onRemoveLayer: nop
 };
 
-test('Components -> LayerPanelHeader.mount -> no prop', t => {
+test('Components -> LayerPanelHeader.mount -> no prop', (t) => {
   const LayerPanelHeader = appInjector.get(LayerPanelHeaderFactory);
 
   // mount

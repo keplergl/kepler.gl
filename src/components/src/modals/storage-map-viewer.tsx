@@ -36,7 +36,7 @@ const StyledAssetItem = styled.div.attrs({
   .asset__title {
     font-size: 12px;
     font-weight: 500;
-    color: ${props => props.theme.textColorLT};
+    color: ${(props) => props.theme.textColorLT};
     line-height: 18px;
     height: 32px;
   }
@@ -76,7 +76,7 @@ const StyledAssetItem = styled.div.attrs({
 
   .asset__last-updated {
     font-size: 11px;
-    color: ${props => props.theme.textColorLT};
+    color: ${(props) => props.theme.textColorLT};
   }
 `;
 
@@ -84,7 +84,7 @@ const BackLink = styled.div`
   display: flex;
   font-size: 14px;
   align-items: center;
-  color: ${props => props.theme.titleColorLT};
+  color: ${(props) => props.theme.titleColorLT};
   cursor: pointer;
   margin-bottom: 40px;
 
@@ -161,7 +161,7 @@ class StorageAssetsViewer extends React.Component<StorageAssetsViewerProps> {
         </BackLink>
         {error && <StyledError>{error.message}</StyledError>}
         <StyledAssetGallery>
-          {assets.map(sp => (
+          {assets.map((sp) => (
             <AssetItem asset={sp} key={sp.id} onClick={() => onLoadAsset(sp)} />
           ))}
         </StyledAssetGallery>

@@ -27,7 +27,7 @@ const columns = {
   lng1: 'lng_1'
 };
 
-test('#ArcLayer -> constructor', t => {
+test('#ArcLayer -> constructor', (t) => {
   const TEST_CASES = {
     CREATE: [
       {
@@ -36,7 +36,7 @@ test('#ArcLayer -> constructor', t => {
           isVisible: true,
           label: 'test arc layer'
         },
-        test: layer => {
+        test: (layer) => {
           t.ok(layer.config.dataId === 'smoothie', 'ArcLayer dataId should be correct');
           t.ok(layer.type === 'arc', 'type should be arc');
           t.ok(layer.isAggregated === false, 'ArcLayer is not aggregated');
@@ -51,7 +51,7 @@ test('#ArcLayer -> constructor', t => {
   t.end();
 });
 
-test('#ArcLayer -> formatLayerData', t => {
+test('#ArcLayer -> formatLayerData', (t) => {
   const filteredIndex = [0, 2, 4];
 
   // filter.domain: [ 1474071056000, 1474071489000 ]
@@ -73,7 +73,7 @@ test('#ArcLayer -> formatLayerData', t => {
       datasets: {
         [dataId]: copyTableAndUpdate(preparedDataset, {filteredIndex})
       },
-      assert: result => {
+      assert: (result) => {
         const {layerData, layer} = result;
 
         const expectedLayerData = {
@@ -152,7 +152,7 @@ test('#ArcLayer -> formatLayerData', t => {
       datasets: {
         [dataId]: preparedDataset
       },
-      assert: result => {
+      assert: (result) => {
         const {layerData, layer} = result;
 
         const expectedLayerData = {
@@ -212,7 +212,7 @@ test('#ArcLayer -> formatLayerData', t => {
       datasets: {
         [dataId]: copyTableAndUpdate(preparedDataset, {filteredIndex})
       },
-      assert: result => {
+      assert: (result) => {
         const {layerData} = result;
         const expectedLayerData = {
           data: [
@@ -292,7 +292,7 @@ test('#ArcLayer -> formatLayerData', t => {
   t.end();
 });
 
-test('#ArcLayer -> renderLayer', t => {
+test('#ArcLayer -> renderLayer', (t) => {
   const filteredIndex = [0, 2, 4];
 
   const TEST_CASES = [
@@ -323,7 +323,7 @@ test('#ArcLayer -> renderLayer', t => {
           widthScale: layer.config.visConfig.thickness * PROJECTED_PIXEL_SIZE_MULTIPLIER,
           filterRange: preparedDataset.gpuFilter.filterRange
         };
-        Object.keys(expectedProps).forEach(key => {
+        Object.keys(expectedProps).forEach((key) => {
           t.equal(props[key], expectedProps[key], `should have correct props.${key}`);
         });
       }
@@ -365,7 +365,7 @@ test('#ArcLayer -> renderLayer', t => {
           brushingEnabled: true,
           brushingTarget: 'source_target'
         };
-        Object.keys(expectedProps).forEach(key => {
+        Object.keys(expectedProps).forEach((key) => {
           t.equal(props[key], expectedProps[key], `should have correct props.${key}`);
         });
       }

@@ -6,7 +6,7 @@ import React from 'react';
 import styled from 'styled-components';
 import {Base} from '../../common/icons';
 
-const MapIcon = props => {
+const MapIcon = (props) => {
   return (
     <div {...props}>
       {props.children}

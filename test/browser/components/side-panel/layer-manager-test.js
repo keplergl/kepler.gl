@@ -56,7 +56,7 @@ const defaultProps = {
   overlayBlending: 'normal'
 };
 
-test('Components -> LayerManager -> render -> list view', t => {
+test('Components -> LayerManager -> render -> list view', (t) => {
   // mount
   let wrapper;
   t.doesNotThrow(() => {
@@ -83,7 +83,7 @@ test('Components -> LayerManager -> render -> list view', t => {
     'H3 Hexagon 2',
     'H3 Hexagon 2'
   ];
-  wrapper.find('.layer__title__editor').forEach(item => titles.push(item.getDOMNode().value));
+  wrapper.find('.layer__title__editor').forEach((item) => titles.push(item.getDOMNode().value));
   t.deepEqual(titles, expectedTitles, 'should render panels in correct order');
 
   const layers = wrapper.find('.layer-panel');
@@ -92,7 +92,7 @@ test('Components -> LayerManager -> render -> list view', t => {
   t.end();
 });
 
-test('Components -> LayerManager -> render -> order by dataset view', t => {
+test('Components -> LayerManager -> render -> order by dataset view', (t) => {
   // mount
   let wrapper;
   t.doesNotThrow(() => {
@@ -119,7 +119,7 @@ test('Components -> LayerManager -> render -> order by dataset view', t => {
     'H3 Hexagon 2',
     'H3 Hexagon 2'
   ];
-  wrapper.find('.layer__title__editor').forEach(item => titles.push(item.getDOMNode().value));
+  wrapper.find('.layer__title__editor').forEach((item) => titles.push(item.getDOMNode().value));
   t.deepEqual(titles, expectedTitles, 'should render panels in correct order');
 
   const layers = wrapper.find('.layer-panel');

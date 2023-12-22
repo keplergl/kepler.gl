@@ -34,10 +34,10 @@ interface ChickletButtonProps {
 }
 
 export const ChickletButton = styled.div<ChickletButtonProps>`
-  background: ${props =>
+  background: ${(props) =>
     props.inputTheme === 'light' ? props.theme.chickletBgdLT : props.theme.chickletBgd};
   border-radius: 1px;
-  color: ${props =>
+  color: ${(props) =>
     props.inputTheme === 'light' ? props.theme.textColorLT : props.theme.textColor};
   font-size: 11px;
   line-height: 20px;
@@ -48,7 +48,7 @@ export const ChickletButton = styled.div<ChickletButtonProps>`
   max-width: calc(100% - 8px);
 
   :hover {
-    color: ${props =>
+    color: ${(props) =>
       props.inputTheme === 'light' ? props.theme.textColorHlLT : props.theme.textColorHl};
   }
 `;
@@ -85,14 +85,14 @@ interface ChickletedInputContainerProps {
 }
 
 const ChickletedInputContainer = styled.div<ChickletedInputContainerProps>`
-  ${props =>
+  ${(props) =>
     props.inputTheme === 'secondary'
       ? props.theme.secondaryChickletedInput
       : props.inputTheme === 'light'
-      ? props.theme.chickletedInputLT
-      : props.theme.chickletedInput}
-      
-  color: ${props =>
+        ? props.theme.chickletedInputLT
+        : props.theme.chickletedInput}
+
+  color: ${(props) =>
     props.hasPlaceholder ? props.theme.selectColorPlaceHolder : props.theme.selectColor};
   overflow: hidden;
 `;
@@ -122,7 +122,7 @@ const ChickletedItem = ({
       transform,
       transition,
       isDragging,
-      remove: e => removeItem(item, e)
+      remove: (e) => removeItem(item, e)
     }),
     [
       item,
@@ -154,21 +154,21 @@ const ChickletedInput: React.FC<ChickletedInputProps> = ({
   selectedItems = [],
   placeholder = '',
   removeItem,
-  reorderItems = d => d,
-  displayOption = d => d,
+  reorderItems = (d) => d,
+  displayOption = (d) => d,
   inputTheme,
   CustomChickletComponent
 }) => {
-  const selectedItemIds = useMemo(() => selectedItems.map(item => displayOption(item)), [
-    displayOption,
-    selectedItems
-  ]);
+  const selectedItemIds = useMemo(
+    () => selectedItems.map((item) => displayOption(item)),
+    [displayOption, selectedItems]
+  );
   const handleDragEnd = useCallback(
     ({active, over}) => {
       if (!over) return;
       if (active.id !== over.id) {
-        const oldIndex = selectedItemIds.findIndex(itemId => itemId === active.id);
-        const newIndex = selectedItemIds.findIndex(itemId => itemId === over.id);
+        const oldIndex = selectedItemIds.findIndex((itemId) => itemId === active.id);
+        const newIndex = selectedItemIds.findIndex((itemId) => itemId === over.id);
         reorderItems(arrayMove(selectedItems, oldIndex, newIndex));
       }
     },

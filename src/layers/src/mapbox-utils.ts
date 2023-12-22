@@ -24,12 +24,12 @@ export function generateMapboxLayers(
     return layerOrder
       .slice()
       .reverse()
-      .filter(layerId => {
+      .filter((layerId) => {
         const layer = findById(layerId)(layers);
         return layer?.overlayType === OVERLAY_TYPE_CONST.mapboxgl && layersToRender[layerId];
       })
       .reduce((acc, layerId) => {
-        const layerIndex = layers.findIndex(l => l.id === layerId);
+        const layerIndex = layers.findIndex((l) => l.id === layerId);
         if (layerIndex === -1) {
           return acc;
         }
@@ -79,7 +79,7 @@ export function updateMapboxLayers(
   }
 
   // insert or update new layer
-  Object.values(newLayers).forEach(overlay => {
+  Object.values(newLayers).forEach((overlay) => {
     const {id: layerId, config, data, sourceId, isVisible} = overlay;
     if (!data && !config) {
       return;
@@ -99,7 +99,7 @@ export function updateMapboxLayers(
 }
 
 function checkAndRemoveOldLayers(map, oldLayers: oldLayersType, newLayers: newLayersType) {
-  Object.keys(oldLayers).forEach(layerId => {
+  Object.keys(oldLayers).forEach((layerId) => {
     if (!newLayers[layerId]) {
       map.removeLayer(layerId);
     }
@@ -142,7 +142,7 @@ function updateSourceData(map, sourceId, data) {
 export function geoJsonFromData(
   filteredIndex: number[] = [],
   getGeometry: {({index: number}): any},
-  getProperties: {({index: number}): any} = d => {}
+  getProperties: {({index: number}): any} = (d) => {}
 ) {
   const geojson: {type: string; features: Feature[]} = {
     type: 'FeatureCollection',
@@ -169,12 +169,12 @@ export function geoJsonFromData(
   return geojson;
 }
 
-export const prefixGpuField = name => `gpu:${name}`;
+export const prefixGpuField = (name) => `gpu:${name}`;
 
 export function gpuFilterToMapboxFilter(gpuFilter) {
   const {filterRange, filterValueUpdateTriggers} = gpuFilter;
 
-  const hasFilter = Object.values(filterValueUpdateTriggers).filter(d => d);
+  const hasFilter = Object.values(filterValueUpdateTriggers).filter((d) => d);
 
   if (!hasFilter.length) {
     return null;

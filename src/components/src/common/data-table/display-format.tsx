@@ -12,7 +12,7 @@ import {InputLight} from '../../common/styled-components';
 import {FormatterDropdown} from './option-dropdown';
 
 const StyledConfigPanel = styled.div`
-  background-color: ${props => props.theme.headerCellBackground};
+  background-color: ${(props) => props.theme.headerCellBackground};
   box-shadow: 0 10px 18px 0 rgb(0 0 0 / 36%);
   flex-grow: 1;
 `;
@@ -97,7 +97,7 @@ export const NumberFormatConfig: React.FC<DataTableConfigProps> = ({
 function DataTableConfigFactory() {
   const getColumnsByFieldType = (columns: string[], colMeta: ColMeta, fieldType: string) => {
     const result: ColMetaProps[] = [];
-    columns.forEach(colName => {
+    columns.forEach((colName) => {
       if (colMeta[colName]?.type === fieldType) {
         result.push(colMeta[colName]);
       }

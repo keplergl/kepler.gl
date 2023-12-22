@@ -103,13 +103,13 @@ const defaultEffectIcons = {
 };
 
 const StyledEffectPanelHeader = styled(StyledPanelHeader)`
-  height: ${props => props.theme.effectPanelHeaderHeight}px;
+  height: ${(props) => props.theme.effectPanelHeaderHeight}px;
   position: relative;
   align-items: stretch;
 
   .effect__drag-handle {
     margin-left: -5px;
-    color: ${props => props.theme.textColor};
+    color: ${(props) => props.theme.textColor};
   }
 
   .effect__drag-handle__placeholder {
@@ -120,13 +120,13 @@ const StyledEffectPanelHeader = styled(StyledPanelHeader)`
 
   :hover {
     cursor: pointer;
-    background-color: ${props => props.theme.panelBackgroundHover};
+    background-color: ${(props) => props.theme.panelBackgroundHover};
     .effect__drag-handle {
       opacity: 1;
     }
   }
 
-  border-left: 3px solid ${props => props.theme.panelBackgroundHover};
+  border-left: 3px solid ${(props) => props.theme.panelBackgroundHover};
 `;
 
 const HeaderActionSection = styled.div`
@@ -138,7 +138,7 @@ const HeaderActionSection = styled.div`
   :hover {
     .effect-panel__header__actions__hidden {
       opacity: 1;
-      background-color: ${props => props.theme.panelBackgroundHover};
+      background-color: ${(props) => props.theme.panelBackgroundHover};
     }
   }
 `;
@@ -151,8 +151,10 @@ const StyledPanelHeaderHiddenActions = styled.div.attrs({
   opacity: 0;
   display: flex;
   align-items: center;
-  transition: opacity 0.4s ease, background-color 0.4s ease;
-  background-color: ${props =>
+  transition:
+    opacity 0.4s ease,
+    background-color 0.4s ease;
+  background-color: ${(props) =>
     props.isConfigActive ? props.theme.panelBackgroundHover : props.theme.panelBackground};
 
   :hover {
@@ -168,7 +170,7 @@ const StyledDragHandle = styled.div`
   :hover {
     cursor: move;
     opacity: 1;
-    color: ${props => props.theme.textColorHl};
+    color: ${(props) => props.theme.textColorHl};
   }
 `;
 
@@ -267,7 +269,7 @@ const StyledEffectTitleSection = styled.div`
   flex-grow: 1;
   align-items: center;
   display: flex;
-  color: ${props => props.theme.textColor};
+  color: ${(props) => props.theme.textColor};
 `;
 
 const IconPlaceholder = styled.div`
@@ -278,7 +280,7 @@ const IconPlaceholder = styled.div`
 const EffectIconWrapper = styled.div`
   height: 18px;
   margin: auto;
-  color: ${props => props.theme.textColor};
+  color: ${(props) => props.theme.textColor};
 `;
 
 EffectPanelHeaderFactory.deps = [EffectPanelHeaderActionSectionFactory];
@@ -297,7 +299,7 @@ function EffectPanelHeaderFactory(
     } = props;
 
     const label = useMemo(() => {
-      const description = EFFECT_DESCRIPTIONS.find(_description => _description.type === type);
+      const description = EFFECT_DESCRIPTIONS.find((_description) => _description.type === type);
       return description?.name || 'Effect';
     }, [type]);
 

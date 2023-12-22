@@ -54,24 +54,24 @@ function makeLocalDevConfig(env, EXAMPLE_DIR = LIB_DIR, externals = {}) {
 
     // if env.deck Load @deck.gl modules from root node_modules/@deck.gl
     // if env.deck_src Load @deck.gl modules from  deck.gl/modules folder parallel to kepler.gl
-    externals['deck.gl'].forEach(mdl => {
+    externals['deck.gl'].forEach((mdl) => {
       resolveAlias[`@deck.gl/${mdl}`] = useLocalDeck
         ? `${NODE_MODULES_DIR}/@deck.gl/${mdl}/src`
         : `${EXTERNAL_DECK_SRC}/modules/${mdl}/src`;
     });
 
-    ['luma.gl', 'probe.gl', 'loaders.gl'].forEach(name => {
+    ['luma.gl', 'probe.gl', 'loaders.gl'].forEach((name) => {
       // if env.deck Load ${name} from root node_modules
       // if env.deck_src Load ${name} from deck.gl/node_modules folder parallel to kepler.gl
       resolveAlias[name] = useLocalDeck
         ? `${NODE_MODULES_DIR}/${name}/src`
         : name === 'probe.gl'
-        ? `${EXTERNAL_DECK_SRC}/node_modules/${name}/src`
-        : `${EXTERNAL_DECK_SRC}/node_modules/@${name}/core/src`;
+          ? `${EXTERNAL_DECK_SRC}/node_modules/${name}/src`
+          : `${EXTERNAL_DECK_SRC}/node_modules/@${name}/core/src`;
 
       // if env.deck Load @${name} modules from root node_modules/@${name}
       // if env.deck_src Load @${name} modules from deck.gl/node_modules/@${name} folder parallel to kepler.gl`
-      externals[name].forEach(mdl => {
+      externals[name].forEach((mdl) => {
         resolveAlias[`@${name}/${mdl}`] = useLocalDeck
           ? `${NODE_MODULES_DIR}/@${name}/${mdl}/src`
           : `${EXTERNAL_DECK_SRC}/node_modules/@${name}/${mdl}/src`;
@@ -80,13 +80,13 @@ function makeLocalDevConfig(env, EXAMPLE_DIR = LIB_DIR, externals = {}) {
   }
 
   if (env.loaders_src) {
-    externals['loaders.gl'].forEach(mdl => {
+    externals['loaders.gl'].forEach((mdl) => {
       resolveAlias[`@loaders.gl/${mdl}`] = `${EXTERNAL_LOADERS_SRC}/modules/${mdl}/src`;
     });
   }
 
   if (env.hubble_src) {
-    externals['hubble.gl'].forEach(mdl => {
+    externals['hubble.gl'].forEach((mdl) => {
       resolveAlias[`@hubble.gl/${mdl}`] = `${EXTERNAL_HUBBLE_SRC}/modules/${mdl}/src`;
     });
   }
@@ -219,18 +219,18 @@ function addBabelSettings(env, config, exampleDir) {
     module: {
       ...config.module,
       rules: [
-        ...config.module.rules.filter(r => r.loader !== 'babel-loader'),
+        ...config.module.rules.filter((r) => r.loader !== 'babel-loader'),
         makeBabelRule(env, exampleDir)
       ]
     }
   };
 }
 
-module.exports = (exampleConfig, exampleDir) => env => {
+module.exports = (exampleConfig, exampleDir) => (env) => {
   // find all @deck.gl @luma.gl @loaders.gl @hubble.gl modules
   const modules = ['@deck.gl', '@loaders.gl', '@luma.gl', '@probe.gl', '@hubble.gl'];
   const loadAllDirs = modules.map(
-    dir =>
+    (dir) =>
       new Promise(function readDir(success, reject) {
         fs.readdir(join(NODE_MODULES_DIR, dir), function readDirItems(err, items) {
           if (err) {
@@ -243,14 +243,14 @@ module.exports = (exampleConfig, exampleDir) => env => {
   );
 
   return Promise.all(loadAllDirs)
-    .then(results => ({
+    .then((results) => ({
       'deck.gl': results[0],
       'loaders.gl': results[1],
       'luma.gl': results[2],
       'probe.gl': results[3],
       'hubble.gl': results[4]
     }))
-    .then(externals => {
+    .then((externals) => {
       const config = addLocalDevSettings(env, exampleConfig, exampleDir, externals);
       return addBabelSettings(env, config, exampleDir, externals);
     });

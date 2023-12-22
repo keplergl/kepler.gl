@@ -26,7 +26,7 @@ const MapPopover = appInjector.get(MapPopoverFactory);
 const MapControl = appInjector.get(MapControlFactory);
 const initialProps = mapFieldsSelector(mockKeplerProps);
 
-test('MapContainerFactory - display all options', t => {
+test('MapContainerFactory - display all options', (t) => {
   const onMapStyleLoaded = sinon.spy();
   const onLayerClick = sinon.spy();
 
@@ -73,7 +73,7 @@ test('MapContainerFactory - display all options', t => {
   t.end();
 });
 
-test('MapContainerFactory - _renderDeckOverlay', t => {
+test('MapContainerFactory - _renderDeckOverlay', (t) => {
   const props = {
     ...initialProps,
     mapboxApiAccessToken: 'pyx-11'
@@ -138,7 +138,7 @@ test('MapContainerFactory - _renderDeckOverlay', t => {
         hoverEvents.push({info, event});
       }
     },
-    getTestCases: assert => [
+    getTestCases: (assert) => [
       {
         name: 'hover',
         events: [{type: 'mousemove', x: 200, y: 200}, {wait: 50}],
@@ -158,7 +158,7 @@ test('MapContainerFactory - _renderDeckOverlay', t => {
           [
             // test picking info
             ('color', 'coordinate', 'pixel', 'x', 'y')
-          ].forEach(key => {
+          ].forEach((key) => {
             assert.deepEqual(
               hoverEvents[0].info[key],
               expectedInfo[key],
@@ -204,10 +204,7 @@ test('MapContainerFactory - _renderDeckOverlay', t => {
           }, 'render map container with map popover should not fail');
 
           t.equal(wrapper.find(MapPopover).length, 1, 'should render 1 MapPopover');
-          const mapPopoverProps = wrapper
-            .find(MapPopover)
-            .at(0)
-            .props();
+          const mapPopoverProps = wrapper.find(MapPopover).at(0).props();
 
           // test MapPopoverProp
           testMapPopoverProp(t, mapPopoverProps);
@@ -218,10 +215,7 @@ test('MapContainerFactory - _renderDeckOverlay', t => {
           const table = wrapper.find('table').at(0);
           const rows = table.find('.layer-hover-info__row');
           t.equal(rows.length, 5, 'should render 5 rows');
-          const tippyProps = wrapper
-            .find(Tippy)
-            .at(1)
-            .props();
+          const tippyProps = wrapper.find(Tippy).at(1).props();
 
           const expectedClientRect = {
             bottom: 200,
@@ -253,18 +247,12 @@ test('MapContainerFactory - _renderDeckOverlay', t => {
 
           for (let i = 0; i < 5; i++) {
             t.equal(
-              rows
-                .at(i)
-                .find('.row__name')
-                .text(),
+              rows.at(i).find('.row__name').text(),
               expectedTooltips[i][0],
               'row name should be correct'
             );
             t.equal(
-              rows
-                .at(i)
-                .find('.row__value')
-                .text(),
+              rows.at(i).find('.row__value').text(),
               expectedTooltips[i][1],
               'row value should be correct'
             );
@@ -277,7 +265,7 @@ test('MapContainerFactory - _renderDeckOverlay', t => {
   new InteractionTestRunner(testCase.props)
     .add(testCase.getTestCases(t))
     .run({
-      onTestStart: tc => t.comment(tc.name)
+      onTestStart: (tc) => t.comment(tc.name)
     })
     .then(() => t.end());
 });

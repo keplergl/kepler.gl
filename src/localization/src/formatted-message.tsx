@@ -14,7 +14,7 @@ type EnhancedFormattedMessageProps = {
   children?: () => React.ReactElement;
 };
 
-const EnhancedFormattedMessage: React.FC<EnhancedFormattedMessageProps> = props => (
+const EnhancedFormattedMessage: React.FC<EnhancedFormattedMessageProps> = (props) => (
   <FormattedMessage
     // Us id as default Message to prevent error being thrown
     defaultMessage={props.defaultMessage || props.id}

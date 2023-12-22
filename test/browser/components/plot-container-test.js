@@ -11,7 +11,7 @@ import {mockKeplerProps} from '../../helpers/mock-state';
 const PlotContainer = appInjector.get(PlotContainerFactory);
 const initialProps = plotContainerSelector(mockKeplerProps);
 
-test('PlotContainer -> mount', t => {
+test('PlotContainer -> mount', (t) => {
   t.doesNotThrow(() => {
     mountWithTheme(
       <IntlWrapper>
@@ -23,7 +23,7 @@ test('PlotContainer -> mount', t => {
   t.end();
 });
 
-test('PlotContainer -> mount -> imageSize', t => {
+test('PlotContainer -> mount -> imageSize', (t) => {
   let wrapper;
   const exportImageSetting = {
     ...initialProps.exportImageSetting,

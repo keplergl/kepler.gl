@@ -13,7 +13,7 @@ export function processClone(original, clone) {
 
   function copyProperties(sourceStyle, targetStyle) {
     const propertyKeys = asArray(sourceStyle);
-    propertyKeys.forEach(name => {
+    propertyKeys.forEach((name) => {
       targetStyle.setProperty(
         name,
         sourceStyle.getPropertyValue(name),
@@ -40,21 +40,19 @@ export function processClone(original, clone) {
   }
 
   function formatPseudoElementStyle(cln, elm, stl) {
-    const formatCssText = stl1 => {
+    const formatCssText = (stl1) => {
       const cnt = stl1.getPropertyValue('content');
       return `${stl.cssText} content: ${cnt};`;
     };
 
-    const formatProperty = name => {
+    const formatProperty = (name) => {
       return `${name}:${stl.getPropertyValue(name)}${
         stl.getPropertyPriority(name) ? ' !important' : ''
       }`;
     };
 
-    const formatCssProperties = stl2 => {
-      return `${asArray(stl2)
-        .map(formatProperty)
-        .join('; ')};`;
+    const formatCssProperties = (stl2) => {
+      return `${asArray(stl2).map(formatProperty).join('; ')};`;
     };
 
     const selector = `.${cln}:${elm}`;
@@ -79,7 +77,7 @@ export function processClone(original, clone) {
   }
 
   function clonePseudoElements([og, cln]) {
-    [':before', ':after'].forEach(element => clonePseudoElement(og, cln, element));
+    [':before', ':after'].forEach((element) => clonePseudoElement(og, cln, element));
   }
 
   function copyUserInput([og, cln]) {
@@ -92,7 +90,7 @@ export function processClone(original, clone) {
     cln.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
 
     if (!(cln instanceof window.SVGRectElement)) return;
-    ['width', 'height'].forEach(attribute => {
+    ['width', 'height'].forEach((attribute) => {
       const value = cln.getAttribute(attribute);
       if (!value) return;
 
@@ -146,7 +144,7 @@ export function makeImage(uri) {
     image.onload = () => {
       resolve(image);
     };
-    image.onerror = err => {
+    image.onerror = (err) => {
       const message = IMAGE_EXPORT_ERRORS.dataUri;
       Console.log(uri);
       // error is an Event Object
@@ -205,8 +203,8 @@ export function escape(string) {
 }
 
 export function delay(ms) {
-  return arg => {
-    return new Promise(resolve => {
+  return (arg) => {
+    return new Promise((resolve) => {
       window.setTimeout(() => {
         resolve(arg);
       }, ms);
@@ -220,7 +218,7 @@ export function isSrcAsDataUrl(text) {
 }
 
 function cvToBlob(canvas) {
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     const binaryString = window.atob(canvas.toDataURL().split(',')[1]);
     const length = binaryString.length;
     const binaryArray = new Uint8Array(length);
@@ -233,7 +231,7 @@ function cvToBlob(canvas) {
 
 export function canvasToBlob(canvas) {
   if (canvas.toBlob)
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       canvas.toBlob(resolve);
     });
 
@@ -280,7 +278,7 @@ export function getAndEncode(url, options) {
     url += (/\?/.test(url) ? '&' : '?') + new Date().getTime();
   }
 
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     const request = new window.XMLHttpRequest();
 
     request.onreadystatechange = done;

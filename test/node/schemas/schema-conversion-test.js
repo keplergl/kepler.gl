@@ -55,11 +55,11 @@ const TEST_CASES = [
   }
 ];
 
-test('#appSchema -> Convert Saved Configs', t => {
+test('#appSchema -> Convert Saved Configs', (t) => {
   TEST_CASES.forEach(({name, cases}) => {
     logStep(`---> test: ${name}`);
 
-    cases.forEach(cs => {
+    cases.forEach((cs) => {
       logStep(`------> test: ${cs.name}`);
 
       const parsed = SchemaManager.parseSavedConfig(cs.saved);

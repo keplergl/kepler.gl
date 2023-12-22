@@ -34,7 +34,7 @@ class FileDrop extends React.PureComponent<FileDropProps> {
     ((window.navigator.userAgent || []).includes('MSIE') ||
       (window.navigator.appVersion || []).includes('Trident/'));
 
-  static eventHasFiles = event => {
+  static eventHasFiles = (event) => {
     // In most browsers this is an array, but in IE11 it's an Object :(
 
     let hasFiles = false;
@@ -88,12 +88,12 @@ class FileDrop extends React.PureComponent<FileDropProps> {
     this.setState({draggingOverFrame: false, draggingOverTarget: false});
   };
 
-  handleWindowDragOverOrDrop = event => {
+  handleWindowDragOverOrDrop = (event) => {
     // This prevents the browser from trying to load whatever file the user dropped on the window
     event.preventDefault();
   };
 
-  handleFrameDrag = event => {
+  handleFrameDrag = (event) => {
     // Only allow dragging of files
     if (!FileDrop.eventHasFiles(event)) return;
 
@@ -116,7 +116,7 @@ class FileDrop extends React.PureComponent<FileDropProps> {
     }
   };
 
-  handleFrameDrop = event => {
+  handleFrameDrop = (event) => {
     event.preventDefault();
     if (!this.state.draggingOverTarget) {
       this.resetDragging();
@@ -124,7 +124,7 @@ class FileDrop extends React.PureComponent<FileDropProps> {
     }
   };
 
-  handleDragOver = event => {
+  handleDragOver = (event) => {
     if (FileDrop.eventHasFiles(event)) {
       this.setState({draggingOverTarget: true});
       if (!FileDrop.isIE() && this.props.dropEffect)
@@ -133,12 +133,12 @@ class FileDrop extends React.PureComponent<FileDropProps> {
     }
   };
 
-  handleDragLeave = event => {
+  handleDragLeave = (event) => {
     this.setState({draggingOverTarget: false});
     if (this.props.onDragLeave) this.props.onDragLeave(event);
   };
 
-  handleDrop = event => {
+  handleDrop = (event) => {
     if (this.props.onDrop && FileDrop.eventHasFiles(event)) {
       const files = event.dataTransfer ? event.dataTransfer.files : null;
       this.props.onDrop(files, event);
@@ -146,7 +146,7 @@ class FileDrop extends React.PureComponent<FileDropProps> {
     this.resetDragging();
   };
 
-  stopFrameListeners = frame => {
+  stopFrameListeners = (frame) => {
     if (frame) {
       frame.removeEventListener('dragenter', this.handleFrameDrag);
       frame.removeEventListener('dragleave', this.handleFrameDrag);
@@ -154,7 +154,7 @@ class FileDrop extends React.PureComponent<FileDropProps> {
     }
   };
 
-  startFrameListeners = frame => {
+  startFrameListeners = (frame) => {
     if (frame) {
       frame.addEventListener('dragenter', this.handleFrameDrag);
       frame.addEventListener('dragleave', this.handleFrameDrag);

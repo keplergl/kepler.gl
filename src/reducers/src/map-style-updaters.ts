@@ -198,7 +198,7 @@ export function getMapStyles({
         visibleLayerGroups
       });
 
-  const hasTopLayer = editable > 0 && Object.values(topLayerGroups).some(v => v);
+  const hasTopLayer = editable > 0 && Object.values(topLayerGroups).some((v) => v);
 
   // mute top layer if not visible in bottom layer
   const topLayers =
@@ -283,7 +283,7 @@ function getBackgroundColorFromStyleBaseLayer(
     // if newBackgroundColor was in string HSL format it can introduce RGB numbers with decimals,
     // which may render the background-color CSS of the <StyledMap> container incorrectly when using our own color utils `rgbToHex()`
     // so we attempt to round to nearest integer here
-    ?.map(channelNumber => Math.round(channelNumber)) as RGBColor | null;
+    ?.map((channelNumber) => Math.round(channelNumber)) as RGBColor | null;
 
   return newBackgroundColorAsRGBArray || backupBackgroundColor;
 }
@@ -307,7 +307,7 @@ function getBackgroundColor(previousState: MapStyle, styleType: string) {
 
 function getLayerGroupsFromStyle(style) {
   return Array.isArray(style?.layers)
-    ? DEFAULT_LAYER_GROUPS.filter(lg => style.layers.filter(lg.filter).length)
+    ? DEFAULT_LAYER_GROUPS.filter((lg) => style.layers.filter(lg.filter).length)
     : [];
 }
 
@@ -394,7 +394,7 @@ export const mapConfigChangeUpdater = (
   };
 };
 
-const hasStyleObject = style => isPlainObject(style?.style);
+const hasStyleObject = (style) => isPlainObject(style?.style);
 
 /**
  * Change to another map style. The selected style should already been loaded into `mapStyle.mapStyles`
@@ -516,7 +516,7 @@ export const loadMapStylesUpdater = (
 
 function createActionTask(action, payload) {
   if (typeof action === 'function') {
-    return ACTION_TASK().map(_ => action(payload));
+    return ACTION_TASK().map((_) => action(payload));
   }
 
   return null;
@@ -608,7 +608,7 @@ function getLoadMapStyleTasks(mapStyles, mapboxApiAccessToken, mapboxApiUrl, onS
         .map(LOAD_MAP_STYLE_TASK)
     ).bimap(
       // success
-      results =>
+      (results) =>
         loadMapStyles(
           results.reduce(
             (accu, {id, style}) => ({
@@ -623,7 +623,7 @@ function getLoadMapStyleTasks(mapStyles, mapboxApiAccessToken, mapboxApiUrl, onS
           onSuccess
         ),
       // error
-      err => loadMapStyleErr(Object.keys(mapStyles), err)
+      (err) => loadMapStyleErr(Object.keys(mapStyles), err)
     )
   ];
 }

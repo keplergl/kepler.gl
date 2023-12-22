@@ -28,7 +28,7 @@ const TENTATIVE_FEATURE_COLOR_TRANSPARENT: RGBAColor = [...COLORS.SECONDARY, ALP
 export const EDIT_HANDLE_STYLE = {
   getRadius: POINT_RADIUS,
   getFillColor: SECONDARY_COLOR_TRANSPARENT,
-  getOutlineColor: handle =>
+  getOutlineColor: (handle) =>
     handle?.properties?.featureIndex < 0 ? TENTATIVE_FEATURE_COLOR : PRIMARY_COLOR,
   highlightMultiplier: [...COLORS.HIGHLIGHT, ALPHA_05],
   highlightMultiplierNone: SECONDARY_COLOR_TRANSPARENT

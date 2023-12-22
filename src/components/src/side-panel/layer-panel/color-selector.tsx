@@ -54,21 +54,21 @@ export const ColorBlock = styled.div<{backgroundcolor: RGBColor}>`
   width: 32px;
   height: 18px;
   border-radius: 1px;
-  background-color: ${props =>
+  background-color: ${(props) =>
     Array.isArray(props.backgroundcolor)
       ? `rgb(${props.backgroundcolor.slice(0, 3).join(',')})`
       : 'transparent'};
 `;
 
 export const ColorSelectorInput = styled.div<ColorSelectorInputProps>`
-  ${props => (props.inputTheme === 'secondary' ? props.theme.secondaryInput : props.theme.input)};
-  height: ${props => props.theme.inputBoxHeight};
+  ${(props) => (props.inputTheme === 'secondary' ? props.theme.secondaryInput : props.theme.input)};
+  height: ${(props) => props.theme.inputBoxHeight};
 
   .color-selector__selector__label {
     text-transform: capitalize;
     font-size: 12px;
     text-align: center;
-    color: ${props => props.theme.inputPlaceholderColor};
+    color: ${(props) => props.theme.inputPlaceholderColor};
   }
 `;
 
@@ -98,7 +98,7 @@ function ColorSelectorFactory(RangeSlider): ComponentType<ColorSelectorProps> {
 
     node = createRef<HTMLDivElement>();
 
-    handleClickOutside = e => {
+    handleClickOutside = (e) => {
       if (this.props.colorUI && Number.isInteger(this.props.colorUI.showSketcher)) {
         // if sketcher is open, let sketch to close itself first
         return;
@@ -177,7 +177,7 @@ function ColorSelectorFactory(RangeSlider): ComponentType<ColorSelectorProps> {
                   active={editing === i}
                   disabled={disabled}
                   inputTheme={inputTheme}
-                  onMouseDown={e => this._showDropdown(e, i)}
+                  onMouseDown={(e) => this._showDropdown(e, i)}
                 >
                   {cSet.isRange ? (
                     <ColorPalette colors={(cSet.selectedColor as ColorRange).colors} />

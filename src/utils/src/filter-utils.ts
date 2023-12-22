@@ -211,7 +211,7 @@ export function validatePolygonFilter<K extends KeplerTableModel<K, L>, L extend
     return failed;
   }
 
-  const layer = layers.find(l => layerId.includes(l.id));
+  const layer = layers.find((l) => layerId.includes(l.id));
 
   if (!layer) {
     return failed;
@@ -405,31 +405,31 @@ export const getPolygonFilterFunctor = (layer, filter, dataContainer) => {
   switch (layer.type) {
     case LAYER_TYPES.point:
     case LAYER_TYPES.icon:
-      return data => {
+      return (data) => {
         const pos = getPosition(data);
         return pos.every(Number.isFinite) && isInPolygon(pos, filter.value);
       };
     case LAYER_TYPES.arc:
     case LAYER_TYPES.line:
-      return data => {
+      return (data) => {
         const pos = getPosition(data);
         return (
           pos.every(Number.isFinite) &&
           [
             [pos[0], pos[1]],
             [pos[3], pos[4]]
-          ].every(point => isInPolygon(point, filter.value))
+          ].every((point) => isInPolygon(point, filter.value))
         );
       };
     case LAYER_TYPES.hexagonId:
       if (layer.dataToFeature && layer.dataToFeature.centroids) {
-        return data => {
+        return (data) => {
           // null or getCentroid({id})
           const centroid = layer.dataToFeature.centroids[data.index];
           return centroid && isInPolygon(centroid, filter.value);
         };
       }
-      return data => {
+      return (data) => {
         const id = getPosition(data);
         if (!h3IsValid(id)) {
           return false;
@@ -438,7 +438,7 @@ export const getPolygonFilterFunctor = (layer, filter, dataContainer) => {
         return pos.every(Number.isFinite) && isInPolygon(pos, filter.value);
       };
     case LAYER_TYPES.geojson:
-      return data => {
+      return (data) => {
         return layer.isInPolygon(data, data.index, filter.value);
       };
     default:
@@ -469,8 +469,8 @@ export function getFilterFunction<L extends {config: {dataId: string | null}; id
   dataContainer: DataContainerInterface
 ): filterFunction {
   // field could be null in polygon filter
-  const valueAccessor = field ? field.valueAccessor : data => null;
-  const defaultFunc = d => true;
+  const valueAccessor = field ? field.valueAccessor : (data) => null;
+  const defaultFunc = (d) => true;
 
   if (filter.enabled === false) {
     return defaultFunc;
@@ -478,30 +478,30 @@ export function getFilterFunction<L extends {config: {dataId: string | null}; id
 
   switch (filter.type) {
     case FILTER_TYPES.range:
-      return data => isInRange(valueAccessor(data), filter.value);
+      return (data) => isInRange(valueAccessor(data), filter.value);
     case FILTER_TYPES.multiSelect:
-      return data => filter.value.includes(valueAccessor(data));
+      return (data) => filter.value.includes(valueAccessor(data));
     case FILTER_TYPES.select:
-      return data => valueAccessor(data) === filter.value;
+      return (data) => valueAccessor(data) === filter.value;
     case FILTER_TYPES.timeRange:
       if (!field) {
         return defaultFunc;
       }
       const mappedValue = get(field, ['filterProps', 'mappedValue']);
       const accessor = Array.isArray(mappedValue)
-        ? data => mappedValue[data.index]
-        : data => timeToUnixMilli(valueAccessor(data), field.format);
-      return data => isInRange(accessor(data), filter.value);
+        ? (data) => mappedValue[data.index]
+        : (data) => timeToUnixMilli(valueAccessor(data), field.format);
+      return (data) => isInRange(accessor(data), filter.value);
     case FILTER_TYPES.polygon:
       if (!layers || !layers.length || !filter.layerId) {
         return defaultFunc;
       }
       const layerFilterFunctions = filter.layerId
-        .map(id => layers.find(l => l.id === id))
-        .filter(l => l && l.config.dataId === dataId)
-        .map(layer => getPolygonFilterFunctor(layer, filter, dataContainer));
+        .map((id) => layers.find((l) => l.id === id))
+        .filter((l) => l && l.config.dataId === dataId)
+        .map((layer) => getPolygonFilterFunctor(layer, filter, dataContainer));
 
-      return data => layerFilterFunctions.every(filterFunc => filterFunc(data));
+      return (data) => layerFilterFunctions.every((filterFunc) => filterFunc(data));
     default:
       return defaultFunc;
   }
@@ -567,7 +567,7 @@ export function getFilterRecord(
     gpu: []
   };
 
-  filters.forEach(f => {
+  filters.forEach((f) => {
     if (isValidFilterValue(f.type, f.value) && toArray(f.dataId).includes(dataId)) {
       (f.fixedDomain || opt.ignoreDomain
         ? filterRecord.fixedDomain
@@ -591,7 +591,7 @@ export function diffFilters(
   let filterChanged: Partial<FilterChanged> = {};
 
   (Object.entries(filterRecord) as Entries<FilterRecord>).forEach(([record, items]) => {
-    items.forEach(filter => {
+    items.forEach((filter) => {
       const oldFilter: Filter = (oldFilterRecord[record] || []).find(
         (f: Filter) => f.id === filter.id
       );
@@ -601,7 +601,7 @@ export function diffFilters(
         filterChanged = set([record, filter.id], 'added', filterChanged);
       } else {
         // check  what has changed
-        ['name', 'value', 'dataId'].forEach(prop => {
+        ['name', 'value', 'dataId'].forEach((prop) => {
           if (filter[prop] !== oldFilter[prop]) {
             filterChanged = set([record, filter.id], `${prop}_changed`, filterChanged);
           }
@@ -611,7 +611,7 @@ export function diffFilters(
 
     (oldFilterRecord[record] || []).forEach((oldFilter: Filter) => {
       // deleted
-      if (!items.find(f => f.id === oldFilter.id)) {
+      if (!items.find((f) => f.id === oldFilter.id)) {
         filterChanged = set([record, oldFilter.id], 'deleted', filterChanged);
       }
     });
@@ -641,7 +641,7 @@ export function adjustValueToFilterDomain(value: Filter['value'], {domain, type}
     case FILTER_TYPES.range:
     case FILTER_TYPES.timeRange:
       if (!Array.isArray(value) || value.length !== 2) {
-        return domain.map(d => d);
+        return domain.map((d) => d);
       }
 
       return value.map((d, i) => (notNullorUndefined(d) && isInRange(d, domain) ? d : domain[i]));
@@ -650,7 +650,7 @@ export function adjustValueToFilterDomain(value: Filter['value'], {domain, type}
       if (!Array.isArray(value)) {
         return [];
       }
-      const filteredValue = value.filter(d => domain.includes(d));
+      const filteredValue = value.filter((d) => domain.includes(d));
       return filteredValue.length ? filteredValue : [];
 
     case FILTER_TYPES.select:
@@ -745,7 +745,7 @@ export function getTimestampFieldDomain(
   if (!diff) {
     domain[1] = domain[0] + 1000;
   }
-  const entry = TimestampStepMap.find(f => f.max >= diff);
+  const entry = TimestampStepMap.find((f) => f.max >= diff);
   if (entry) {
     step = entry.step;
   }
@@ -770,7 +770,7 @@ export function histogramConstruct(
   return d3Histogram()
     .thresholds(ticks(domain[0], domain[1], bins))
     .domain(domain)(mappedValue)
-    .map(bin => ({
+    .map((bin) => ({
       count: bin.length,
       bin,
       x0: bin.x0,
@@ -861,7 +861,7 @@ export function isValidFilterValue(type: string | null, value: any): boolean {
 
     case FILTER_TYPES.range:
     case FILTER_TYPES.timeRange:
-      return Array.isArray(value) && value.every(v => v !== null && !isNaN(v));
+      return Array.isArray(value) && value.every((v) => v !== null && !isNaN(v));
 
     case FILTER_TYPES.multiSelect:
       return Array.isArray(value) && Boolean(value.length);
@@ -907,14 +907,14 @@ export function getColumnFilterProps<K extends KeplerTableModel<K, L>, L>(
     .filter(({x, y}) => Number.isFinite(x) && Number.isFinite(y))
     .sort((a, b) => ascending(a.x, b.x));
 
-  const yDomain = extent(series, d => d.y);
+  const yDomain = extent(series, (d) => d.y);
   const xDomain = [series[0].x, series[series.length - 1].x];
 
   return {lineChart: {series, yDomain, xDomain}, yAxis};
 }
 
 export function getDefaultFilterPlotType(filter: Filter): string | null {
-  const filterPlotTypes: typeof SupportedPlotType[keyof typeof SupportedPlotType] | null =
+  const filterPlotTypes: (typeof SupportedPlotType)[keyof typeof SupportedPlotType] | null =
     filter.type && SupportedPlotType[filter.type];
   if (!filterPlotTypes) {
     return null;
@@ -945,8 +945,8 @@ export function applyFiltersToDatasets<
 ): {[id: string]: K} {
   const dataIds = toArray(datasetIds);
   return dataIds.reduce((acc, dataId) => {
-    const layersToFilter = (layers || []).filter(l => l.config.dataId === dataId);
-    const appliedFilters = filters.filter(d => shouldApplyFilter(d, dataId));
+    const layersToFilter = (layers || []).filter((l) => l.config.dataId === dataId);
+    const appliedFilters = filters.filter((d) => shouldApplyFilter(d, dataId));
     const table = datasets[dataId];
 
     return {
@@ -1085,9 +1085,9 @@ export const getFilterIdInFeature = (f: FeatureValue): string => get(f, ['proper
 export function generatePolygonFilter<
   L extends {config: {dataId: string | null; label: string}; id: string}
 >(layers: L[], feature: Feature): PolygonFilter {
-  const dataId = layers.map(l => l.config.dataId).filter(notNullorUndefined);
-  const layerId = layers.map(l => l.id);
-  const name = layers.map(l => l.config.label);
+  const dataId = layers.map((l) => l.config.dataId).filter(notNullorUndefined);
+  const layerId = layers.map((l) => l.id);
+  const name = layers.map((l) => l.config.label);
   const filter = getDefaultFilter({dataId});
   return {
     ...filter,
@@ -1112,7 +1112,7 @@ export function filterDatasetCPU<T extends StateType<K, L>, K extends KeplerTabl
   state: T,
   dataId: string
 ): T {
-  const datasetFilters = state.filters.filter(f => f.dataId.includes(dataId));
+  const datasetFilters = state.filters.filter((f) => f.dataId.includes(dataId));
   const dataset = state.datasets[dataId];
 
   if (!dataset) {
@@ -1147,21 +1147,25 @@ export function validateFiltersUpdateDatasets<
   let updatedDatasets = datasets;
 
   // merge filters
-  filtersToValidate.forEach(filter => {
+  filtersToValidate.forEach((filter) => {
     // we can only look for datasets define in the filter dataId
     const datasetIds = toArray(filter.dataId);
 
     // we can merge a filter only if all datasets in filter.dataId are loaded
-    if (datasetIds.every(d => datasets[d] && !state.isMergingDatasets[d])) {
+    if (datasetIds.every((d) => datasets[d] && !state.isMergingDatasets[d])) {
       // all datasetIds in filter must be present the state datasets
-      const {filter: validatedFilter, applyToDatasets, augmentedDatasets} = datasetIds.reduce<{
+      const {
+        filter: validatedFilter,
+        applyToDatasets,
+        augmentedDatasets
+      } = datasetIds.reduce<{
         filter: Filter | null;
         applyToDatasets: string[];
         augmentedDatasets: {[datasetId: string]: any};
       }>(
         (acc, datasetId) => {
           const dataset = updatedDatasets[datasetId];
-          const layers = state.layers.filter(l => l.config.dataId === dataset.id);
+          const layers = state.layers.filter((l) => l.config.dataId === dataset.id);
           const {filter: updatedFilter, dataset: updatedDataset} = validateFilterWithData(
             acc.augmentedDatasets[datasetId] || dataset,
             filter,
@@ -1244,7 +1248,7 @@ export function getFilterPlot<K extends KeplerTableModel<K, L>, L>(
     .filter(({x, y}) => Number.isFinite(x) && Number.isFinite(y))
     .sort((a, b) => ascending(a.x, b.x));
 
-  const yDomain = extent(series, d => d.y);
+  const yDomain = extent(series, (d) => d.y);
   const xDomain = [series[0].x, series[series.length - 1].x];
 
   return {lineChart: {series, yDomain, xDomain}, yAxis};
@@ -1276,10 +1280,10 @@ export function getTimeWidgetHintFormatter(domain: [number, number]): string | u
   return diff > durationWeek
     ? 'L'
     : diff > durationDay
-    ? 'L LT'
-    : diff > durationHour
-    ? 'LT'
-    : 'LTS';
+      ? 'L LT'
+      : diff > durationHour
+        ? 'LT'
+        : 'LTS';
 }
 
 export function isSideFilter(filter: Filter): boolean {

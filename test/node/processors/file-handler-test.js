@@ -9,7 +9,7 @@ import {
   parsedFields as parsedKeplerMapFields
 } from 'test/fixtures/state-saved-v1-7';
 
-test('#file-handler -> isKeplerGlMap', t => {
+test('#file-handler -> isKeplerGlMap', (t) => {
   t.equal(
     isKeplerGlMap('{datasets: [], info: {app: "kepler.gl"}, config: {}}'),
     false,
@@ -31,14 +31,14 @@ test('#file-handler -> isKeplerGlMap', t => {
   t.end();
 });
 
-test('#file-handler -> makeProgressIterator', async t => {
+test('#file-handler -> makeProgressIterator', async (t) => {
   // mock AsyncIterator returned by loarder.gl patchInBatches
   // Ideally should run this in browser-headless
   async function* mock() {
     let bytesUsed = 0;
     let value = 0;
     let b = 0;
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise((resolve) => setTimeout(resolve, 100));
     while (b < 2) {
       b += 1;
       bytesUsed += 10;
@@ -87,7 +87,7 @@ test('#file-handler -> makeProgressIterator', async t => {
   t.end();
 });
 
-test('#file-handler -> filesToDataPayload', t => {
+test('#file-handler -> filesToDataPayload', (t) => {
   const fileCache = [
     {
       data: {

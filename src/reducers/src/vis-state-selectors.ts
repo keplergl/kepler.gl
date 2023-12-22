@@ -9,12 +9,12 @@ const DEFAULT_FILE_FORMATS = ['CSV', 'Json', 'GeoJSON', 'Arrow'];
 
 export const getFileFormatNames = createSelector(
   // @ts-expect-error
-  state => state.loaders,
-  loaders => [...DEFAULT_FILE_FORMATS, ...loaders.map(loader => loader.name)]
+  (state) => state.loaders,
+  (loaders) => [...DEFAULT_FILE_FORMATS, ...loaders.map((loader) => loader.name)]
 );
 
 export const getFileExtensions = createSelector(
   // @ts-expect-error
-  state => state.loaders,
-  loaders => [...DEFAULT_FILE_EXTENSIONS, ...loaders.flatMap(loader => loader.extensions)]
+  (state) => state.loaders,
+  (loaders) => [...DEFAULT_FILE_EXTENSIONS, ...loaders.flatMap((loader) => loader.extensions)]
 );

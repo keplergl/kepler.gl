@@ -9,7 +9,7 @@ import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
 
 const FeatureActionPanel = PureFeatureActionPanelFactory();
 
-test('FeatureActionPanel -> display layers', t => {
+test('FeatureActionPanel -> display layers', (t) => {
   const layers = [
     {
       config: {
@@ -54,11 +54,7 @@ test('FeatureActionPanel -> display layers', t => {
   t.equal(wrapper.find('Checkbox').length, 2, 'We should display only 2 layer checkbox');
   for (let i = 0; i < wrapper.find('Checkbox').length; i++) {
     t.equal(
-      wrapper
-        .find('Checkbox')
-        .at(i)
-        .find('label')
-        .text(),
+      wrapper.find('Checkbox').at(i).find('label').text(),
       `layer ${i + 1}`,
       'should render correct layer label'
     );

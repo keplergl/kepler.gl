@@ -28,20 +28,20 @@ const LineChartWrapper = styled.div`
   }
 
   .rv-xy-plot__grid-lines__line {
-    stroke: ${props => props.theme.histogramFillOutRange};
+    stroke: ${(props) => props.theme.histogramFillOutRange};
     stroke-dasharray: 1px 4px;
   }
 
   .rv-xy-plot__axis__tick__text {
     font-size: 9px;
-    fill: ${props => props.theme.textColor};
+    fill: ${(props) => props.theme.textColor};
   }
 `;
 
 const StyledHint = styled.div`
   background-color: #d3d8e0;
   border-radius: 2px;
-  color: ${props => props.theme.textColorLT};
+  color: ${(props) => props.theme.textColorLT};
   font-size: 9px;
   margin: 4px;
   padding: 3px 6px;
@@ -112,10 +112,10 @@ function LineChartFactory() {
         ? [{x: series[0].x, y: yDomain[1], customComponent: () => brushComponent}]
         : [];
     }, [series, yDomain, brushComponent]);
-    const hintFormatter = useMemo(() => datetimeFormatter(timezone)(timeFormat), [
-      timezone,
-      timeFormat
-    ]);
+    const hintFormatter = useMemo(
+      () => datetimeFormatter(timezone)(timeFormat),
+      [timezone, timeFormat]
+    );
 
     return (
       <LineChartWrapper style={{marginTop: `${margin.top}px`}}>

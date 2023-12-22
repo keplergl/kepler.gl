@@ -10,12 +10,12 @@ const enableDOMLogging = require('@probe.gl/test-utils')._enableDOMLogging;
 enableDOMLogging();
 
 test.onFinish(window.browserTestDriver_finish);
-test.onFailure(args => {
+test.onFailure((args) => {
   Console.log(args);
   window.browserTestDriver_fail();
 });
 
-test('Browser tests', t => {
+test('Browser tests', (t) => {
   // running all tests in browser for debugging
   require('./node/index.js');
   require('./browser/index.js');

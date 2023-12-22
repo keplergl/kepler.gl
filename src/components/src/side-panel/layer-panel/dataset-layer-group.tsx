@@ -26,7 +26,7 @@ DatasetLayerGroupFactory.deps = [DatasetLayerSectionFactory];
 function DatasetLayerGroupFactory(
   DatasetLayerSection: ReturnType<typeof DatasetLayerSectionFactory>
 ) {
-  const DatasetLayerGroup: React.FC<DatasetLayerGroupProps> = props => {
+  const DatasetLayerGroup: React.FC<DatasetLayerGroupProps> = (props) => {
     const {
       datasets,
       showDatasetTable,
@@ -46,8 +46,8 @@ function DatasetLayerGroupFactory(
         // We just empty the positions in layers array (for each dataset)
         // where the layer doesn't belong to a dataset and set it to null
         const datasetLayers = layers
-          .map(layer => (layer.config.dataId === dataset.id ? layer : null))
-          .filter(layer => Boolean(layer));
+          .map((layer) => (layer.config.dataId === dataset.id ? layer : null))
+          .filter((layer) => Boolean(layer));
 
         return {dataset, datasetLayers};
       });
@@ -55,7 +55,7 @@ function DatasetLayerGroupFactory(
 
     return (
       <>
-        {datasetLayerSectionData.map(dlsData => (
+        {datasetLayerSectionData.map((dlsData) => (
           <DatasetLayerSection
             key={dlsData.dataset.id}
             dataset={dlsData.dataset}

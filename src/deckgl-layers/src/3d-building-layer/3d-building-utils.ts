@@ -22,12 +22,13 @@ export function getTileData(
   token: string,
   {index: {x, y, z}}: {index: Coordinates}
 ): Promise<TileDataItem[]> {
-  const mapSource = `${host ||
-    MAPBOX_HOST}${MAP_SOURCE}/${z}/${x}/${y}.vector.pbf?access_token=${token}`;
+  const mapSource = `${
+    host || MAPBOX_HOST
+  }${MAP_SOURCE}/${z}/${x}/${y}.vector.pbf?access_token=${token}`;
 
   return fetch(mapSource)
-    .then(response => response.arrayBuffer())
-    .then(buffer => decodeTile(x, y, z, buffer));
+    .then((response) => response.arrayBuffer())
+    .then((buffer) => decodeTile(x, y, z, buffer));
 }
 
 export function decodeTile(
@@ -55,7 +56,7 @@ export function decodeTile(
     const vectorTileFeature = vectorTileLayer.feature(i);
     // @ts-ignore
     const features = vectorTileFeatureToProp(vectorTileFeature, projectFunc);
-    features.forEach(f => {
+    features.forEach((f) => {
       f.properties.layer = layerName;
       if (f.properties.height) {
         result.push(f);
@@ -93,7 +94,7 @@ export function vectorTileFeatureToProp(
     }
   }
 
-  return coords.map(coordinates => ({
+  return coords.map((coordinates) => ({
     coordinates,
     properties: vectorTileFeature.properties
   }));

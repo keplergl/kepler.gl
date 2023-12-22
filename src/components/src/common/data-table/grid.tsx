@@ -31,7 +31,7 @@ export default class GridHack extends PureComponent<GridProps> {
     });
   }
 
-  _preventScrollBack = e => {
+  _preventScrollBack = (e) => {
     const {scrollLeft} = this.props;
     if (scrollLeft !== undefined && scrollLeft <= 0 && e.deltaX < 0) {
       // Prevent Scroll On Scrollable Elements, avoid browser backward navigation
@@ -43,7 +43,7 @@ export default class GridHack extends PureComponent<GridProps> {
     return;
   };
 
-  _updateRef = x => {
+  _updateRef = (x) => {
     if (!this.grid && x) {
       this.grid = x;
       /*
@@ -61,7 +61,7 @@ export default class GridHack extends PureComponent<GridProps> {
     const {setGridRef, ...rest} = this.props;
     return (
       <Grid
-        ref={x => {
+        ref={(x) => {
           if (setGridRef) setGridRef(x);
           this._updateRef(x);
         }}

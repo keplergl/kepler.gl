@@ -26,7 +26,7 @@ const columns = {
   lng1: 'lng_1'
 };
 
-test('#LineLayer -> constructor', t => {
+test('#LineLayer -> constructor', (t) => {
   const TEST_CASES = {
     CREATE: [
       {
@@ -35,7 +35,7 @@ test('#LineLayer -> constructor', t => {
           isVisible: true,
           label: 'test line layer'
         },
-        test: layer => {
+        test: (layer) => {
           t.ok(layer.config.dataId === 'smoothie', 'LineLayer dataId should be correct');
           t.ok(layer.type === 'line', 'type should be line');
           t.ok(layer.isAggregated === false, 'LineLayer is not aggregated');
@@ -50,7 +50,7 @@ test('#LineLayer -> constructor', t => {
   t.end();
 });
 
-test('#LineLayer -> formatLayerData', t => {
+test('#LineLayer -> formatLayerData', (t) => {
   const filteredIndex = [0, 2, 4];
   const filterDomain0 = 1474071056000;
 
@@ -70,7 +70,7 @@ test('#LineLayer -> formatLayerData', t => {
       datasets: {
         [dataId]: copyTableAndUpdate(preparedDataset, {filteredIndex})
       },
-      assert: result => {
+      assert: (result) => {
         const {layerData, layer} = result;
 
         const expectedLayerData = {
@@ -141,7 +141,7 @@ test('#LineLayer -> formatLayerData', t => {
       datasets: {
         [dataId]: copyTable(preparedDataset)
       },
-      assert: result => {
+      assert: (result) => {
         const {layerData, layer} = result;
 
         const expectedLayerData = {
@@ -195,7 +195,7 @@ test('#LineLayer -> formatLayerData', t => {
       datasets: {
         [dataId]: copyTableAndUpdate(preparedDataset, {filteredIndex})
       },
-      assert: result => {
+      assert: (result) => {
         const {layerData} = result;
 
         const expectedLayerData = {
@@ -276,7 +276,7 @@ test('#LineLayer -> formatLayerData', t => {
   t.end();
 });
 
-test('#LineLayer -> renderLayer', t => {
+test('#LineLayer -> renderLayer', (t) => {
   const filteredIndex = [0, 2, 4];
 
   const TEST_CASES = [

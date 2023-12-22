@@ -17,7 +17,7 @@ const TopSectionWrapper = styled.div.attrs({
   display: flex;
   justify-content: space-between;
   width: 100%;
-  color: ${props => props.theme.labelColor};
+  color: ${(props) => props.theme.labelColor};
   height: ${TOP_SECTION_HEIGHT};
 
   .bottom-widget__y-axis {
@@ -48,7 +48,7 @@ const TopSectionWrapper = styled.div.attrs({
       border-color: transparent;
 
       .item-selector__dropdown__value {
-        color: ${props =>
+        color: ${(props) =>
           props.hoverColor ? props.theme[props.hoverColor] : props.theme.textColorHl};
       }
     }
@@ -65,7 +65,7 @@ const TopSectionWrapper = styled.div.attrs({
 
 const StyledTitle = styled(CenterFlexbox)`
   flex-grow: 0;
-  color: ${props => props.theme.textColor};
+  color: ${(props) => props.theme.textColor};
   margin-right: 10px;
 
   .bottom-widget__icon {
@@ -101,10 +101,10 @@ function TimeWidgetTopFactory(FieldSelector: ReturnType<typeof FieldSelectorFact
         ),
       [datasets, filter.dataId]
     );
-    const _setFilterPlotYAxis = useCallback(value => setFilterPlot(index, {yAxis: value}), [
-      setFilterPlot,
-      index
-    ]);
+    const _setFilterPlotYAxis = useCallback(
+      (value) => setFilterPlot(index, {yAxis: value}),
+      [setFilterPlot, index]
+    );
 
     return (
       <TopSectionWrapper>

@@ -10,8 +10,8 @@ import classnames from 'classnames';
 import {RGBColor} from '@kepler.gl/types';
 
 export const SelectText = styled.span`
-  color: ${props => props.theme.labelColor};
-  font-size: ${props => props.theme.selectFontSize};
+  color: ${(props) => props.theme.labelColor};
+  font-size: ${(props) => props.theme.selectFontSize};
   font-weight: 400;
 
   i {
@@ -21,7 +21,7 @@ export const SelectText = styled.span`
 `;
 
 export const SelectTextBold = styled(SelectText)`
-  color: ${props => props.theme.textColor};
+  color: ${(props) => props.theme.textColor};
   font-weight: 500;
 `;
 
@@ -30,14 +30,14 @@ export const IconRoundSmall = styled.div`
   width: 18px;
   height: 18px;
   border-radius: 9px;
-  background-color: ${props => props.theme.secondaryBtnBgdHover};
-  color: ${props => props.theme.secondaryBtnColor};
+  background-color: ${(props) => props.theme.secondaryBtnBgdHover};
+  color: ${(props) => props.theme.secondaryBtnColor};
   align-items: center;
   justify-content: center;
 
   :hover {
     cursor: pointer;
-    background-color: ${props => props.theme.secondaryBtnBgdHover};
+    background-color: ${(props) => props.theme.secondaryBtnBgdHover};
   }
 `;
 
@@ -77,7 +77,7 @@ export const SBFlexboxNoMargin = styled.div`
 export const PanelLabel = styled.label.attrs({
   className: 'side-panel-panel__label'
 })`
-  color: ${props => props.theme.labelColor};
+  color: ${(props) => props.theme.labelColor};
   display: inline-block;
   font-size: 11px;
   font-weight: 400;
@@ -96,10 +96,10 @@ export const PanelLabelBold = styled(PanelLabel)`
   font-weight: 500;
 `;
 
-export const PanelHeaderTitle = styled.span.attrs(props => ({
+export const PanelHeaderTitle = styled.span.attrs((props) => ({
   className: classnames('side-panel-panel__header__title', props.className)
 }))`
-  color: ${props => props.theme.textColor};
+  color: ${(props) => props.theme.textColor};
   font-size: 13px;
   letter-spacing: 0.43px;
   text-transform: capitalize;
@@ -108,21 +108,21 @@ export const PanelHeaderTitle = styled.span.attrs(props => ({
 export const PanelHeaderContent = styled.div`
   display: flex;
   align-items: center;
-  color: ${props => props.theme.textColor};
+  color: ${(props) => props.theme.textColor};
   padding-left: 12px;
 
   .icon {
-    color: ${props => props.theme.labelColor};
+    color: ${(props) => props.theme.labelColor};
     display: flex;
     align-items: center;
     margin-right: 12px;
   }
 `;
 
-export const PanelContent = styled.div.attrs(props => ({
+export const PanelContent = styled.div.attrs((props) => ({
   className: classnames('side-panel-panel__content', props.className)
 }))`
-  background-color: ${props => props.theme.panelContentBackground};
+  background-color: ${(props) => props.theme.panelContentBackground};
   padding: 12px;
 `;
 
@@ -130,55 +130,55 @@ interface SidePanelSectionProps {
   disabled?: boolean;
 }
 
-export const SidePanelSection = styled.div.attrs(props => ({
+export const SidePanelSection = styled.div.attrs((props) => ({
   className: classnames('side-panel-section', props.className)
 }))<SidePanelSectionProps>`
   margin-bottom: 12px;
 
-  opacity: ${props => (props.disabled ? 0.4 : 1)};
-  pointer-events: ${props => (props.disabled ? 'none' : 'all')};
+  opacity: ${(props) => (props.disabled ? 0.4 : 1)};
+  pointer-events: ${(props) => (props.disabled ? 'none' : 'all')};
 `;
 
 export const SidePanelDivider = styled.div.attrs({
   className: 'side-panel-divider'
 })`
-  border-bottom: ${props => props.theme.sidepanelDividerBorder} solid
-    ${props => props.theme.panelBorderColor};
-  margin-bottom: ${props => props.theme.sidepanelDividerMargin}px;
-  height: ${props => props.theme.sidepanelDividerHeight}px;
+  border-bottom: ${(props) => props.theme.sidepanelDividerBorder} solid
+    ${(props) => props.theme.panelBorderColor};
+  margin-bottom: ${(props) => props.theme.sidepanelDividerMargin}px;
+  height: ${(props) => props.theme.sidepanelDividerHeight}px;
 `;
 
 export const Tooltip = styled(ReactTooltip)`
   &.__react_component_tooltip {
-    font-size: ${props => props.theme.tooltipFontSize};
+    font-size: ${(props) => props.theme.tooltipFontSize};
     font-weight: 400;
     padding: 7px 18px;
-    box-shadow: ${props => props.theme.tooltipBoxShadow};
+    box-shadow: ${(props) => props.theme.tooltipBoxShadow};
 
     &.type-dark {
-      background-color: ${props => props.theme.tooltipBg};
-      color: ${props => props.theme.tooltipColor};
+      background-color: ${(props) => props.theme.tooltipBg};
+      color: ${(props) => props.theme.tooltipColor};
       &.place-bottom {
         :after {
-          border-bottom-color: ${props => props.theme.tooltipBg};
+          border-bottom-color: ${(props) => props.theme.tooltipBg};
         }
       }
 
       &.place-top {
         :after {
-          border-top-color: ${props => props.theme.tooltipBg};
+          border-top-color: ${(props) => props.theme.tooltipBg};
         }
       }
 
       &.place-right {
         :after {
-          border-right-color: ${props => props.theme.tooltipBg};
+          border-right-color: ${(props) => props.theme.tooltipBg};
         }
       }
 
       &.place-left {
         :after {
-          border-left-color: ${props => props.theme.tooltipBg};
+          border-left-color: ${(props) => props.theme.tooltipBg};
         }
       }
     }
@@ -199,98 +199,98 @@ export interface ButtonProps {
 }
 
 // this needs to be an actual button to be able to set disabled attribute correctly
-export const Button = styled.button.attrs(props => ({
+export const Button = styled.button.attrs((props) => ({
   className: classnames('button', props.className)
 }))<ButtonProps>`
   align-items: center;
-  background-color: ${props =>
+  background-color: ${(props) =>
     props.negative
       ? props.theme.negativeBtnBgd
       : props.secondary
-      ? props.theme.secondaryBtnBgd
-      : props.link
-      ? props.theme.linkBtnBgd
-      : props.floating
-      ? props.theme.floatingBtnBgd
-      : props.cta
-      ? props.theme.ctaBtnBgd
-      : props.theme.primaryBtnBgd};
-  border-radius: ${props => props.theme.primaryBtnRadius};
-  color: ${props =>
+        ? props.theme.secondaryBtnBgd
+        : props.link
+          ? props.theme.linkBtnBgd
+          : props.floating
+            ? props.theme.floatingBtnBgd
+            : props.cta
+              ? props.theme.ctaBtnBgd
+              : props.theme.primaryBtnBgd};
+  border-radius: ${(props) => props.theme.primaryBtnRadius};
+  color: ${(props) =>
     props.negative
       ? props.theme.negativeBtnColor
       : props.secondary
-      ? props.theme.secondaryBtnColor
-      : props.link
-      ? props.theme.linkBtnColor
-      : props.floating
-      ? props.theme.floatingBtnColor
-      : props.cta
-      ? props.theme.ctaBtnColor
-      : props.theme.primaryBtnColor};
+        ? props.theme.secondaryBtnColor
+        : props.link
+          ? props.theme.linkBtnColor
+          : props.floating
+            ? props.theme.floatingBtnColor
+            : props.cta
+              ? props.theme.ctaBtnColor
+              : props.theme.primaryBtnColor};
   cursor: pointer;
   display: inline-flex;
-  font-size: ${props =>
+  font-size: ${(props) =>
     props.large
       ? props.theme.primaryBtnFontSizeLarge
       : props.small
-      ? props.theme.primaryBtnFontSizeSmall
-      : props.theme.primaryBtnFontSizeDefault};
+        ? props.theme.primaryBtnFontSizeSmall
+        : props.theme.primaryBtnFontSizeDefault};
   font-weight: 500;
-  font-family: ${props => props.theme.btnFontFamily};
+  font-family: ${(props) => props.theme.btnFontFamily};
   justify-content: center;
   letter-spacing: 0.3px;
   line-height: 14px;
   outline: 0;
-  padding: ${props => (props.large ? '14px 32px' : props.small ? '6px 9px' : '9px 12px')};
+  padding: ${(props) => (props.large ? '14px 32px' : props.small ? '6px 9px' : '9px 12px')};
   text-align: center;
-  transition: ${props => props.theme.transition};
+  transition: ${(props) => props.theme.transition};
   vertical-align: middle;
-  width: ${props => props.width || 'auto'};
-  opacity: ${props => (props.disabled ? 0.4 : 1)};
-  pointer-events: ${props => (props.disabled ? 'none' : 'all')};
-  border: ${props =>
+  width: ${(props) => props.width || 'auto'};
+  opacity: ${(props) => (props.disabled ? 0.4 : 1)};
+  pointer-events: ${(props) => (props.disabled ? 'none' : 'all')};
+  border: ${(props) =>
     props.negative
       ? props.theme.negativeBtnBorder
       : props.secondary
-      ? props.theme.secondaryBtnBorder
-      : props.floating
-      ? props.theme.floatingBtnBorder
-      : props.link
-      ? props.theme.linkBtnBorder
-      : props.theme.primaryBtnBorder};
+        ? props.theme.secondaryBtnBorder
+        : props.floating
+          ? props.theme.floatingBtnBorder
+          : props.link
+            ? props.theme.linkBtnBorder
+            : props.theme.primaryBtnBorder};
   :hover,
   :focus,
   :active,
   &.active {
-    background-color: ${props =>
+    background-color: ${(props) =>
       props.negative
         ? props.theme.negativeBtnBgdHover
         : props.secondary
-        ? props.theme.secondaryBtnBgdHover
-        : props.link
-        ? props.theme.linkBtnActBgdHover
-        : props.floating
-        ? props.theme.floatingBtnBgdHover
-        : props.cta
-        ? props.theme.ctaBtnBgdHover
-        : props.theme.primaryBtnBgdHover};
-    color: ${props =>
+          ? props.theme.secondaryBtnBgdHover
+          : props.link
+            ? props.theme.linkBtnActBgdHover
+            : props.floating
+              ? props.theme.floatingBtnBgdHover
+              : props.cta
+                ? props.theme.ctaBtnBgdHover
+                : props.theme.primaryBtnBgdHover};
+    color: ${(props) =>
       props.negative
         ? props.theme.negativeBtnActColor
         : props.secondary
-        ? props.theme.secondaryBtnActColor
-        : props.link
-        ? props.theme.linkBtnActColor
-        : props.floating
-        ? props.theme.floatingBtnActColor
-        : props.cta
-        ? props.theme.ctaBtnActColor
-        : props.theme.primaryBtnActColor};
+          ? props.theme.secondaryBtnActColor
+          : props.link
+            ? props.theme.linkBtnActColor
+            : props.floating
+              ? props.theme.floatingBtnActColor
+              : props.cta
+                ? props.theme.ctaBtnActColor
+                : props.theme.primaryBtnActColor};
   }
 
   svg {
-    margin-right: ${props => (props.large ? '10px' : props.small ? '6px' : '8px')};
+    margin-right: ${(props) => (props.large ? '10px' : props.small ? '6px' : '8px')};
   }
 `;
 
@@ -299,23 +299,23 @@ interface InputProps {
 }
 
 export const Input = styled.input<InputProps>`
-  ${props => (props.secondary ? props.theme.secondaryInput : props.theme.input)};
+  ${(props) => (props.secondary ? props.theme.secondaryInput : props.theme.input)};
 `;
 
 export const InputLight = styled.input`
-  ${props => props.theme.inputLT};
+  ${(props) => props.theme.inputLT};
 `;
 
 export const TextArea = styled.textarea<InputProps>`
-  ${props => (props.secondary ? props.theme.secondaryInput : props.theme.input)};
+  ${(props) => (props.secondary ? props.theme.secondaryInput : props.theme.input)};
 `;
 export const TextAreaLight = styled.textarea`
-  ${props => props.theme.inputLT} height: auto;
+  ${(props) => props.theme.inputLT} height: auto;
   white-space: pre-wrap;
 `;
 
 export const InlineInput = styled(Input)`
-  ${props => props.theme.inlineInput};
+  ${(props) => props.theme.inlineInput};
 `;
 
 export interface StyledPanelHeaderProps {
@@ -326,19 +326,20 @@ export interface StyledPanelHeaderProps {
 }
 
 export const StyledPanelHeader = styled.div<StyledPanelHeaderProps>`
-  background-color: ${props =>
+  background-color: ${(props) =>
     props.active ? props.theme.panelBackgroundHover : props.theme.panelBackground};
   border-left: 3px solid
     rgb(
-      ${props => (props.labelRCGColorValues ? props.labelRCGColorValues.join(',') : 'transparent')}
+      ${(props) =>
+        props.labelRCGColorValues ? props.labelRCGColorValues.join(',') : 'transparent'}
     );
   padding: 0 10px 0 0;
-  height: ${props => props.theme.panelHeaderHeight}px;
+  height: ${(props) => props.theme.panelHeaderHeight}px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-radius: ${props => props.theme.panelHeaderBorderRadius};
-  transition: ${props => props.theme.transition};
+  border-radius: ${(props) => props.theme.panelHeaderBorderRadius};
+  transition: ${(props) => props.theme.transition};
 `;
 
 interface StyledPanelDropdownProps {
@@ -346,12 +347,12 @@ interface StyledPanelDropdownProps {
 }
 
 export const StyledPanelDropdown = styled.div<StyledPanelDropdownProps>`
-  ${props => props.theme.panelDropdownScrollBar}
-  background-color: ${props =>
+  ${(props) => props.theme.panelDropdownScrollBar}
+  background-color: ${(props) =>
     props.type === 'light' ? props.theme.modalDropdownBackground : props.theme.panelBackground};
   overflow-y: auto;
-  box-shadow: ${props => props.theme.panelBoxShadow};
-  border-radius: ${props => props.theme.panelBorderRadius};
+  box-shadow: ${(props) => props.theme.panelBoxShadow};
+  border-radius: ${(props) => props.theme.panelBorderRadius};
   max-height: 500px;
   position: relative;
   z-index: 999;
@@ -364,13 +365,13 @@ export const ButtonGroup = styled.div`
     margin-left: 2px;
   }
   .button:first-child {
-    border-bottom-left-radius: ${props => props.theme.primaryBtnRadius};
-    border-top-left-radius: ${props => props.theme.primaryBtnRadius};
+    border-bottom-left-radius: ${(props) => props.theme.primaryBtnRadius};
+    border-top-left-radius: ${(props) => props.theme.primaryBtnRadius};
     margin-left: 0;
   }
   .button:last-child {
-    border-bottom-right-radius: ${props => props.theme.primaryBtnRadius};
-    border-top-right-radius: ${props => props.theme.primaryBtnRadius};
+    border-bottom-right-radius: ${(props) => props.theme.primaryBtnRadius};
+    border-top-right-radius: ${(props) => props.theme.primaryBtnRadius};
   }
 `;
 
@@ -382,7 +383,7 @@ export const DatasetSquare = styled.div<DatasetSquareProps>`
   display: inline-block;
   width: 10px;
   height: 10px;
-  background-color: rgb(${props => props.backgroundColor.join(',')});
+  background-color: rgb(${(props) => props.backgroundColor.join(',')});
   margin-right: 12px;
 `;
 
@@ -394,13 +395,13 @@ export const SelectionButton = styled.div<SelectionButtonProps>`
   position: relative;
   border-radius: 2px;
   border: 1px solid
-    ${props =>
+    ${(props) =>
       props.selected
         ? props.theme.selectionBtnBorderActColor
         : props.theme.selectionBtnBorderColor};
-  color: ${props =>
+  color: ${(props) =>
     props.selected ? props.theme.selectionBtnActColor : props.theme.selectionBtnColor};
-  background-color: ${props =>
+  background-color: ${(props) =>
     props.selected ? props.theme.selectionBtnActBgd : props.theme.selectionBtnBgd};
 
   cursor: pointer;
@@ -409,8 +410,8 @@ export const SelectionButton = styled.div<SelectionButtonProps>`
   padding: 6px 16px;
 
   :hover {
-    color: ${props => props.theme.selectionBtnActColor};
-    border: 1px solid ${props => props.theme.selectionBtnBorderActColor};
+    color: ${(props) => props.theme.selectionBtnActColor};
+    border: 1px solid ${(props) => props.theme.selectionBtnBorderActColor};
   }
 `;
 
@@ -420,8 +421,8 @@ export const StyledTable = styled.table`
 
   thead {
     tr th {
-      background: ${props => props.theme.panelBackgroundLT};
-      color: ${props => props.theme.titleColorLT};
+      background: ${(props) => props.theme.panelBackgroundLT};
+      color: ${(props) => props.theme.titleColorLT};
       padding: 18px 12px;
       text-align: start;
     }
@@ -429,25 +430,25 @@ export const StyledTable = styled.table`
 
   tbody {
     tr td {
-      border-bottom: ${props => props.theme.panelBorderLT};
+      border-bottom: ${(props) => props.theme.panelBorderLT};
       padding: 12px;
     }
   }
 `;
 
 export const StyledModalContent = styled.div`
-  background: ${props => props.theme.panelBackgroundLT};
-  color: ${props => props.theme.textColorLT};
+  background: ${(props) => props.theme.panelBackgroundLT};
+  color: ${(props) => props.theme.textColorLT};
   display: flex;
   flex-direction: row;
   font-size: 10px;
-  padding: 24px ${props => props.theme.modalLateralPadding};
-  margin: 0 -${props => props.theme.modalLateralPadding};
+  padding: 24px ${(props) => props.theme.modalLateralPadding};
+  margin: 0 -${(props) => props.theme.modalLateralPadding};
   justify-content: space-between;
   ${media.portable`
     flex-direction: column;
-    padding: 16px ${props => props.theme.modalPortableLateralPadding};
-    margin: 0 -${props => props.theme.modalPortableLateralPadding};
+    padding: 16px ${(props) => props.theme.modalPortableLateralPadding};
+    margin: 0 -${(props) => props.theme.modalPortableLateralPadding};
   `};
 `;
 
@@ -480,7 +481,7 @@ export const StyledModalSection = styled.div.attrs(({className}) => ({
     font-weight: 500;
   }
   .modal-section-subtitle {
-    color: ${props => props.theme.subtextColorLT};
+    color: ${(props) => props.theme.subtextColorLT};
   }
 
   input {
@@ -504,7 +505,7 @@ export const StyledModalInputFootnote = styled.div.attrs({
 })<StyledModalInputFootnoteProps>`
   display: flex;
   justify-content: flex-end;
-  color: ${props => (props.error ? props.theme.errorColor : props.theme.subtextColorLT)};
+  color: ${(props) => (props.error ? props.theme.errorColor : props.theme.subtextColorLT)};
   font-size: 10px;
 `;
 /**
@@ -542,7 +543,7 @@ export const StyledAttrbution = styled.div.attrs({
     a,
     .pipe-separator {
       margin-right: 2px;
-      color: ${props => props.theme.labelColor};
+      color: ${(props) => props.theme.labelColor};
     }
 
     .pipe-separator {
@@ -555,7 +556,7 @@ export const StyledAttrbution = styled.div.attrs({
     font-size: 10px;
     justify-content: flex-end;
     align-items: center;
-    color: ${props => props.theme.labelColor};
+    color: ${(props) => props.theme.labelColor};
 
     a.maplibregl-ctrl-logo {
       width: 72px;
@@ -588,24 +589,24 @@ export const StyledExportSection = styled.div<StyledExportSectionProps>`
   flex-direction: row;
   margin: 35px 0;
   width: 100%;
-  color: ${props => props.theme.textColorLT};
+  color: ${(props) => props.theme.textColorLT};
   font-size: 12px;
-  opacity: ${props => (props.disabled ? 0.3 : 1)};
-  pointer-events: ${props => (props.disabled ? 'none' : 'all')};
+  opacity: ${(props) => (props.disabled ? 0.3 : 1)};
+  pointer-events: ${(props) => (props.disabled ? 'none' : 'all')};
 
   .description {
     width: 185px;
     .title {
       font-weight: 500;
-      font-family: ${props => props.theme.fontFamilyMedium ?? props.theme.fontFamily};
+      font-family: ${(props) => props.theme.fontFamilyMedium ?? props.theme.fontFamily};
     }
     .subtitle {
-      color: ${props => props.theme.subtextColorLT};
+      color: ${(props) => props.theme.subtextColorLT};
       font-size: 11px;
     }
   }
   .warning {
-    color: ${props => props.theme.errorColor};
+    color: ${(props) => props.theme.errorColor};
     font-weight: 500;
   }
   .description.full {
@@ -632,17 +633,28 @@ export const StyledExportSection = styled.div<StyledExportSectionProps>`
 
       background-image: linear-gradient(45deg, transparent 50%, gray 50%),
         linear-gradient(135deg, gray 50%, transparent 50%), linear-gradient(to right, #ccc, #ccc);
-      background-position: calc(100% - 20px) calc(1em + 2px), calc(100% - 15px) calc(1em + 2px),
+      background-position:
+        calc(100% - 20px) calc(1em + 2px),
+        calc(100% - 15px) calc(1em + 2px),
         calc(100% - 2.5em) 4.5em;
-      background-size: 5px 5px, 5px 5px, 1px 1.5em;
+      background-size:
+        5px 5px,
+        5px 5px,
+        1px 1.5em;
       background-repeat: no-repeat;
     }
 
     select:focus {
       background-image: linear-gradient(45deg, green 50%, transparent 50%),
         linear-gradient(135deg, transparent 50%, green 50%), linear-gradient(to right, #ccc, #ccc);
-      background-position: calc(100% - 15px) 1em, calc(100% - 20px) 1em, calc(100% - 2.5em) 4.5em;
-      background-size: 5px 5px, 5px 5px, 1px 1.5em;
+      background-position:
+        calc(100% - 15px) 1em,
+        calc(100% - 20px) 1em,
+        calc(100% - 2.5em) 4.5em;
+      background-size:
+        5px 5px,
+        5px 5px,
+        1px 1.5em;
       background-repeat: no-repeat;
       border-color: green;
       outline: 0;
@@ -660,12 +672,12 @@ export const StyledFilteredOption = styled(SelectionButton)`
   width: 140px;
 
   .filter-option-title {
-    color: ${props => props.theme.textColorLT};
+    color: ${(props) => props.theme.textColorLT};
     font-size: 12px;
     font-weight: 500;
   }
   .filter-option-subtitle {
-    color: ${props => props.theme.subtextColorLT};
+    color: ${(props) => props.theme.subtextColorLT};
     font-size: 11px;
   }
 `;
@@ -682,14 +694,14 @@ export const WidgetContainer = styled.div`
 `;
 
 export const BottomWidgetInner = styled.div`
-  background-color: ${props => props.theme.bottomWidgetBgd};
-  padding: ${props => `${props.theme.bottomInnerPdVert}px ${props.theme.bottomInnerPdSide}px`};
+  background-color: ${(props) => props.theme.bottomWidgetBgd};
+  padding: ${(props) => `${props.theme.bottomInnerPdVert}px ${props.theme.bottomInnerPdSide}px`};
   position: relative;
-  margin-top: ${props => props.theme.bottomPanelGap}px;
+  margin-top: ${(props) => props.theme.bottomPanelGap}px;
 
   ${media.portable`
-    border-top: 1px solid ${props => props.theme.panelBorderColor};
-    border-left: 1px solid ${props => props.theme.panelBorderColor};
+    border-top: 1px solid ${(props) => props.theme.panelBorderColor};
+    border-left: 1px solid ${(props) => props.theme.panelBorderColor};
     padding: 12px 12px;
     margin-top: 0;
   `}
@@ -699,7 +711,7 @@ interface MapControlButtonProps {
   active?: boolean;
 }
 
-export const MapControlButton = styled(Button).attrs(props => ({
+export const MapControlButton = styled(Button).attrs((props) => ({
   className: classnames('map-control-button', props.className)
 }))<MapControlButtonProps>`
   box-shadow: 0 6px 12px 0 rgba(0, 0, 0, 0.16);
@@ -707,20 +719,20 @@ export const MapControlButton = styled(Button).attrs(props => ({
   width: 32px;
   padding: 0;
   border-radius: 0;
-  background-color: ${props =>
+  background-color: ${(props) =>
     props.active ? props.theme.floatingBtnBgdHover : props.theme.floatingBtnBgd};
-  color: ${props =>
+  color: ${(props) =>
     props.active ? props.theme.floatingBtnActColor : props.theme.floatingBtnColor};
-  border: ${props =>
+  border: ${(props) =>
     props.active ? props.theme.floatingBtnBorderHover : props.theme.floatingBtnBorder};
 
   :hover,
   :focus,
   :active,
   &.active {
-    background-color: ${props => props.theme.floatingBtnBgdHover};
-    color: ${props => props.theme.floatingBtnActColor};
-    border: ${props => props.theme.floatingBtnBorderHover};
+    background-color: ${(props) => props.theme.floatingBtnBgdHover};
+    color: ${(props) => props.theme.floatingBtnActColor};
+    border: ${(props) => props.theme.floatingBtnBorderHover};
   }
   svg {
     margin-right: 0;
@@ -728,7 +740,7 @@ export const MapControlButton = styled(Button).attrs(props => ({
 `;
 
 export const StyledFilterContent = styled.div`
-  background-color: ${props => props.theme.panelContentBackground};
+  background-color: ${(props) => props.theme.panelContentBackground};
   padding: 12px;
 `;
 
@@ -741,7 +753,7 @@ export const TruncatedTitleText = styled.div`
 export const CheckMark = styled.span.attrs({
   className: 'checkbox-inner'
 })`
-  background-color: ${props => props.theme.selectionBtnBorderActColor};
+  background-color: ${(props) => props.theme.selectionBtnBorderActColor};
   position: absolute;
   top: 0;
   right: 0;
@@ -770,10 +782,10 @@ export const StyledTimePicker = styled(TimePicker)`
   .react-time-picker {
     display: inline-flex;
     position: relative;
-    font-family: ${props => props.theme.fontFamily};
-    font-size: ${props => props.theme.inputFontSize};
-    background-color: ${props => props.theme.inputBgd};
-    color: ${props => props.theme.effectPanelTextMain};
+    font-family: ${(props) => props.theme.fontFamily};
+    font-size: ${(props) => props.theme.inputFontSize};
+    background-color: ${(props) => props.theme.inputBgd};
+    color: ${(props) => props.theme.effectPanelTextMain};
   }
   .react-time-picker,
   .react-time-picker *,
@@ -787,13 +799,13 @@ export const StyledTimePicker = styled(TimePicker)`
     display: flex;
     flex-grow: 1;
     flex-shrink: 0;
-    background-color: ${props => props.theme.inputBgd};
+    background-color: ${(props) => props.theme.inputBgd};
     border-radius: 4px;
     width: 110px;
     white-space: nowrap;
   }
   .react-time-picker__wrapper:hover {
-    background-color: ${props => props.theme.inputBgdHover};
+    background-color: ${(props) => props.theme.inputBgdHover};
   }
   .react-time-picker__inputGroup {
     min-width: calc((4px * 3) + 0.54em * 6 + 0.217em * 2);
@@ -812,9 +824,9 @@ export const StyledTimePicker = styled(TimePicker)`
   .react-time-picker__inputGroup__divider,
   .react-time-picker__inputGroup__leadingZero {
     display: inline-block;
-    color: ${props => props.theme.effectPanelTextMain};
-    font-family: ${props => props.theme.fontFamily};
-    font-size: ${props => props.theme.inputFontSize};
+    color: ${(props) => props.theme.effectPanelTextMain};
+    font-family: ${(props) => props.theme.fontFamily};
+    font-size: ${(props) => props.theme.inputFontSize};
     font-weight: 400;
   }
   .react-time-picker__inputGroup__input {
@@ -824,9 +836,9 @@ export const StyledTimePicker = styled(TimePicker)`
     padding: 0 1px;
     border: 0;
     background: transparent;
-    color: ${props => props.theme.effectPanelTextMain};
-    font-family: ${props => props.theme.fontFamily};
-    font-size: ${props => props.theme.inputFontSize};
+    color: ${(props) => props.theme.effectPanelTextMain};
+    font-family: ${(props) => props.theme.fontFamily};
+    font-size: ${(props) => props.theme.inputFontSize};
     box-sizing: content-box;
     -webkit-appearance: textfield;
     -moz-appearance: textfield;
@@ -853,11 +865,11 @@ export const StyledTimePicker = styled(TimePicker)`
     -webkit-appearance: menulist;
     -moz-appearance: menulist;
     appearance: menulist;
-    font-size: ${props => props.theme.inputFontSize};
+    font-size: ${(props) => props.theme.inputFontSize};
   }
   .react-time-picker__button {
     border: 0;
-    background-color: ${props => props.theme.inputBgd};
+    background-color: ${(props) => props.theme.inputBgd};
     padding: 4px 6px;
   }
   .react-time-picker__button:enabled {
@@ -876,8 +888,8 @@ export const StyledDatePicker = styled(DatePicker)`
   .react-date-picker {
     display: inline-flex;
     position: relative;
-    font-family: ${props => props.theme.fontFamily};
-    font-size: ${props => props.theme.inputFontSize};
+    font-family: ${(props) => props.theme.fontFamily};
+    font-size: ${(props) => props.theme.inputFontSize};
   }
   .react-date-picker,
   .react-date-picker *,
@@ -900,22 +912,22 @@ export const StyledDatePicker = styled(DatePicker)`
     flex-grow: 1;
     padding: 4px 9px;
     box-sizing: content-box;
-    background-color: ${props => props.theme.inputBgd};
+    background-color: ${(props) => props.theme.inputBgd};
     display: flex;
     justify-content: end;
     align-items: center;
     height: 22px;
-    border: 1px solid ${props => props.theme.inputBgd};
+    border: 1px solid ${(props) => props.theme.inputBgd};
     border-radius: 4px;
   }
 
   .react-date-picker__inputGroup:hover {
-    background-color: ${props => props.theme.inputBgdHover};
+    background-color: ${(props) => props.theme.inputBgdHover};
   }
   .react-date-picker__inputGroup__divider {
     padding: 1px 0;
     white-space: pre;
-    color: ${props => props.theme.effectPanelTextMain};
+    color: ${(props) => props.theme.effectPanelTextMain};
   }
   .react-date-picker__inputGroup__divider,
   .react-date-picker__inputGroup__leadingZero {
@@ -928,9 +940,9 @@ export const StyledDatePicker = styled(DatePicker)`
     padding: 0 1px;
     border: 0;
     background: none;
-    color: ${props => props.theme.effectPanelTextMain};
+    color: ${(props) => props.theme.effectPanelTextMain};
     font: inherit;
-    font-size: ${props => props.theme.inputFontSize};
+    font-size: ${(props) => props.theme.inputFontSize};
     box-sizing: content-box;
     -webkit-appearance: textfield;
     -moz-appearance: textfield;
@@ -947,7 +959,7 @@ export const StyledDatePicker = styled(DatePicker)`
     margin: 0;
   }
   .react-date-picker__inputGroup__input:invalid {
-    background: ${props => props.theme.inputBgd};
+    background: ${(props) => props.theme.inputBgd};
   }
   .react-date-picker__inputGroup__input--hasLeadingZero {
     margin-left: -0.54em;
@@ -957,7 +969,7 @@ export const StyledDatePicker = styled(DatePicker)`
     width: 257px;
     max-width: 100vw;
     z-index: 11;
-    color: ${props => props.theme.effectPanelTextSecondary1};
+    color: ${(props) => props.theme.effectPanelTextSecondary1};
     inset: auto !important;
   }
   .react-date-picker__calendar--closed {
@@ -972,10 +984,10 @@ export const StyledDatePicker = styled(DatePicker)`
   .react-calendar {
     width: 256px;
     max-width: 100%;
-    color: ${props => props.theme.effectPanelTextSecondary1};
-    background: ${props => props.theme.inputBgdHover};
+    color: ${(props) => props.theme.effectPanelTextSecondary1};
+    background: ${(props) => props.theme.inputBgdHover};
     border-radius: 0px 4px 4px 4px;
-    font-family: ${props => props.theme.fontFamily};
+    font-family: ${(props) => props.theme.fontFamily};
     line-height: 1.125em;
     padding: 16px;
   }
@@ -993,7 +1005,7 @@ export const StyledDatePicker = styled(DatePicker)`
     outline: none;
   }
   .react-calendar buttom:enabled {
-    color: ${props => props.theme.effectPanelTextMain};
+    color: ${(props) => props.theme.effectPanelTextMain};
   }
   .react-calendar button:enabled:hover {
     cursor: pointer;
@@ -1009,7 +1021,7 @@ export const StyledDatePicker = styled(DatePicker)`
   }
   .react-calendar__navigation button:enabled:hover,
   .react-calendar__navigation button:enabled:focus {
-    background-color: ${props => props.theme.inputBgdActive};
+    background-color: ${(props) => props.theme.inputBgdActive};
   }
   .react-calendar__month-view__weekdays {
     text-align: center;
@@ -1017,9 +1029,9 @@ export const StyledDatePicker = styled(DatePicker)`
     font-weight: bold;
   }
   .react-calendar__month-view__weekdays__weekday {
-    color: ${props => props.theme.effectPanelTextSecondary2};
+    color: ${(props) => props.theme.effectPanelTextSecondary2};
     padding: 0.5em;
-    font-size: ${props => props.theme.inputFontSize};
+    font-size: ${(props) => props.theme.inputFontSize};
     abbr {
       text-decoration: none;
     }
@@ -1031,15 +1043,15 @@ export const StyledDatePicker = styled(DatePicker)`
     font-weight: bold;
   }
   .react-calendar__month-view__days__day--weekend {
-    color: ${props => props.theme.effectPanelTextSecondary1};
+    color: ${(props) => props.theme.effectPanelTextSecondary1};
   }
   .react-calendar__month-view__days__day--neighboringMonth {
-    color: ${props => props.theme.effectPanelTextSecondary3};
+    color: ${(props) => props.theme.effectPanelTextSecondary3};
     opacity: 0.4;
   }
   .react-calendar__navigation__label__labelText,
   .react-calendar__navigation__arrow {
-    color: ${props => props.theme.effectPanelTextMain};
+    color: ${(props) => props.theme.effectPanelTextMain};
   }
   .react-calendar__year-view .react-calendar__tile,
   .react-calendar__decade-view .react-calendar__tile,
@@ -1047,42 +1059,42 @@ export const StyledDatePicker = styled(DatePicker)`
     padding: 2em 0.5em;
   }
   .react-calendar__tile {
-    color: ${props => props.theme.effectPanelTextSecondary1};
+    color: ${(props) => props.theme.effectPanelTextSecondary1};
     max-width: 100%;
     padding: 6px 4px;
     background: none;
     text-align: center;
-    font-size: ${props => props.theme.inputFontSize};
+    font-size: ${(props) => props.theme.inputFontSize};
     height: 30px;
   }
   .react-calendar__tile:enabled:hover,
   .react-calendar__tile:enabled:focus {
-    background-color: ${props => props.theme.primaryBtnBgd};
-    color: ${props => props.theme.primaryBtnActColor};
+    background-color: ${(props) => props.theme.primaryBtnBgd};
+    color: ${(props) => props.theme.primaryBtnActColor};
   }
   .react-calendar__tile--now:enabled:hover,
   .react-calendar__tile--now:enabled:focus {
-    background: ${props => props.theme.primaryBtnBgd};
-    color: ${props => props.theme.effectPanelTextMain};
+    background: ${(props) => props.theme.primaryBtnBgd};
+    color: ${(props) => props.theme.effectPanelTextMain};
   }
   .react-calendar__tile--hasActive {
-    background: ${props => props.theme.primaryBtnActBgd};
+    background: ${(props) => props.theme.primaryBtnActBgd};
   }
   .react-calendar__tile--hasActive:enabled:hover,
   .react-calendar__tile--hasActive:enabled:focus {
-    background: ${props => props.theme.primaryBtnActBgd};
-    color: ${props => props.theme.effectPanelTextMain};
+    background: ${(props) => props.theme.primaryBtnActBgd};
+    color: ${(props) => props.theme.effectPanelTextMain};
   }
   .react-calendar__tile--active {
-    background: ${props => props.theme.primaryBtnActBgd};
-    color: ${props => props.theme.effectPanelTextMain};
+    background: ${(props) => props.theme.primaryBtnActBgd};
+    color: ${(props) => props.theme.effectPanelTextMain};
     border-radius: 4px;
   }
   .react-calendar__tile--active:enabled:hover,
   .react-calendar__tile--active:enabled:focus {
-    background: ${props => props.theme.primaryBtnActBgd};
+    background: ${(props) => props.theme.primaryBtnActBgd};
   }
   .calendar__navigation__label__labelText {
-    сolor: ${props => props.theme.effectPanelTextMain};
+    сolor: ${(props) => props.theme.effectPanelTextMain};
   }
 `;

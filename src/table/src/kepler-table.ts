@@ -206,7 +206,7 @@ class KeplerTable {
    * @param columnName
    */
   getColumnField(columnName: string): Field | undefined {
-    const field = this.fields.find(fd => fd[FID_KEY] === columnName);
+    const field = this.fields.find((fd) => fd[FID_KEY] === columnName);
     this._assetField(columnName, field);
     return field;
   }
@@ -216,7 +216,7 @@ class KeplerTable {
    * @param columnName
    */
   getColumnFieldIdx(columnName: string): number {
-    const fieldIdx = this.fields.findIndex(fd => fd[FID_KEY] === columnName);
+    const fieldIdx = this.fields.findIndex((fd) => fd[FID_KEY] === columnName);
     this._assetField(columnName, Boolean(fieldIdx > -1));
     return fieldIdx;
   }
@@ -226,7 +226,7 @@ class KeplerTable {
    * @param columnName
    */
   getColumnDisplayFormat(columnName) {
-    const field = this.fields.find(fd => fd[FID_KEY] === columnName);
+    const field = this.fields.find((fd) => fd[FID_KEY] === columnName);
     this._assetField(columnName, field);
     return field?.displayFormat;
   }
@@ -364,7 +364,7 @@ class KeplerTable {
     }
 
     // no gpu filter
-    if (!filters.find(f => f.gpu)) {
+    if (!filters.find((f) => f.gpu)) {
       this.filteredIdxCPU = this.filteredIndex;
       this.filterRecordCPU = getFilterRecord(this.id, filters, opt);
       return this;
@@ -431,7 +431,7 @@ class KeplerTable {
     }
 
     const {valueAccessor} = field;
-    const indexValueAccessor = i => valueAccessor({index: i});
+    const indexValueAccessor = (i) => valueAccessor({index: i});
     const sortFunction = getSortingFunction(field.type);
 
     switch (scaleType) {
@@ -490,14 +490,14 @@ const specialCharacterSet = `[#_&@\\.\\-\\ ]`;
 
 function foundMatchingFields(re, suffixPair, allNames, fieldName) {
   const partnerIdx = allNames.findIndex(
-    d => d === fieldName.replace(re, match => match.replace(suffixPair[0], suffixPair[1]))
+    (d) => d === fieldName.replace(re, (match) => match.replace(suffixPair[0], suffixPair[1]))
   );
   let altIdx = -1;
   if (partnerIdx > -1) {
     // if found partner, go on and look for altitude
-    ALTITUDE_FIELDS.some(alt => {
+    ALTITUDE_FIELDS.some((alt) => {
       altIdx = allNames.findIndex(
-        d => d === fieldName.replace(re, match => match.replace(suffixPair[0], alt))
+        (d) => d === fieldName.replace(re, (match) => match.replace(suffixPair[0], alt))
       );
       return altIdx > -1;
     });
@@ -511,7 +511,7 @@ function foundMatchingFields(re, suffixPair, allNames, fieldName) {
  * @returns found point fields
  */
 export function findPointFieldPairs(fields: Field[]): FieldPair[] {
-  const allNames = fields.map(f => f.name.toLowerCase());
+  const allNames = fields.map((f) => f.name.toLowerCase());
 
   // get list of all fields with matching suffixes
   const acc: FieldPair[] = [];
@@ -571,7 +571,7 @@ export function sortDatasetByColumn(
   mode?: string
 ): KeplerTable {
   const {allIndexes, fields, dataContainer} = dataset;
-  const fieldIndex = fields.findIndex(f => f.name === column);
+  const fieldIndex = fields.findIndex((f) => f.name === column);
   if (fieldIndex < 0) {
     return dataset;
   }
@@ -614,7 +614,7 @@ export function pinTableColumns(dataset: KeplerTable, column: string): KeplerTab
   let pinnedColumns;
   if (Array.isArray(dataset.pinnedColumns) && dataset.pinnedColumns.includes(field.name)) {
     // unpin it
-    pinnedColumns = dataset.pinnedColumns.filter(co => co !== field.name);
+    pinnedColumns = dataset.pinnedColumns.filter((co) => co !== field.name);
   } else {
     pinnedColumns = (dataset.pinnedColumns || []).concat(field.name);
   }

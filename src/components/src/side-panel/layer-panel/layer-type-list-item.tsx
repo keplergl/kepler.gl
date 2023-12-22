@@ -27,30 +27,30 @@ const StyledListItem = styled.div`
     align-items: center;
 
     .layer-type-selector__item__icon {
-      color: ${props => props.theme.activeColor};
-      background-size: ${props => props.theme.layerTypeIconSizeSM}px
-        ${props => props.theme.layerTypeIconSizeSM}px;
-      height: ${props => props.theme.layerTypeIconSizeSM}px;
-      width: ${props => props.theme.layerTypeIconSizeSM}px;
+      color: ${(props) => props.theme.activeColor};
+      background-size: ${(props) => props.theme.layerTypeIconSizeSM}px
+        ${(props) => props.theme.layerTypeIconSizeSM}px;
+      height: ${(props) => props.theme.layerTypeIconSizeSM}px;
+      width: ${(props) => props.theme.layerTypeIconSizeSM}px;
       margin-right: 12px;
     }
   }
 
   .layer-type-selector__item__icon {
-    color: ${props => props.theme.labelColor};
+    color: ${(props) => props.theme.labelColor};
     display: flex;
     background-image: url(${`${KEPLER_UNFOLDED_BUCKET}/images/kepler.gl-layer-icon-bg.png`});
-    background-size: ${props => props.theme.layerTypeIconSizeL}px
-      ${props => props.theme.layerTypeIconSizeL}px;
-    height: ${props => props.theme.layerTypeIconSizeL}px;
-    width: ${props => props.theme.layerTypeIconSizeL}px;
+    background-size: ${(props) => props.theme.layerTypeIconSizeL}px
+      ${(props) => props.theme.layerTypeIconSizeL}px;
+    height: ${(props) => props.theme.layerTypeIconSizeL}px;
+    width: ${(props) => props.theme.layerTypeIconSizeL}px;
   }
 
   .layer-type-selector__item__label {
     text-transform: capitalize;
     font-size: 12px;
     text-align: center;
-    color: ${props => props.theme.selectColor};
+    color: ${(props) => props.theme.selectColor};
   }
 `;
 

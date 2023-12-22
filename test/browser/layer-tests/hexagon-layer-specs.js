@@ -90,7 +90,7 @@ expectedHexCellData[1].points.y = 313.5153377296145;
 expectedHexCellData[2].points.x = 81.97123993438628;
 expectedHexCellData[2].points.y = 314.4844732403706;
 
-test('#HexagonLayer -> constructor', t => {
+test('#HexagonLayer -> constructor', (t) => {
   const TEST_CASES = {
     CREATE: [
       {
@@ -99,7 +99,7 @@ test('#HexagonLayer -> constructor', t => {
           isVisible: true,
           label: 'test hexagon layer'
         },
-        test: layer => {
+        test: (layer) => {
           t.ok(layer.config.dataId === 'blue', 'HexagonLayer dataId should be correct');
           t.ok(layer.type === 'hexagon', 'type should be hexagon');
           t.ok(layer.isAggregated === true, 'HexagonLayer is aggregated');
@@ -114,7 +114,7 @@ test('#HexagonLayer -> constructor', t => {
   t.end();
 });
 
-test('#HexagonLayer -> formatLayerData', t => {
+test('#HexagonLayer -> formatLayerData', (t) => {
   const TEST_CASES = [
     {
       name: 'hexagon layer gps point.1',
@@ -134,10 +134,10 @@ test('#HexagonLayer -> formatLayerData', t => {
           filteredIndex
         }
       },
-      assert: result => {
+      assert: (result) => {
         const {layerData, layer} = result;
         const expectedLayerData = {
-          data: [0, 1, 4, 5, 7].map(index => ({
+          data: [0, 1, 4, 5, 7].map((index) => ({
             index
           })),
           _filterData: () => {},
@@ -200,10 +200,10 @@ test('#HexagonLayer -> formatLayerData', t => {
           filteredIndex
         }
       },
-      assert: result => {
+      assert: (result) => {
         const {layerData} = result;
         const expectedLayerData = {
-          data: [0, 1, 4, 5, 7].map(index => ({
+          data: [0, 1, 4, 5, 7].map((index) => ({
             index
           })),
           _filterData: () => {},
@@ -238,7 +238,7 @@ test('#HexagonLayer -> formatLayerData', t => {
   t.end();
 });
 
-test('#HexagonLayer -> renderLayer', t => {
+test('#HexagonLayer -> renderLayer', (t) => {
   const spyLayerCallbacks = sinon.spy();
 
   const TEST_CASES = [
@@ -273,7 +273,7 @@ test('#HexagonLayer -> renderLayer', t => {
       },
       assert: (deckLayers, layer) => {
         t.deepEqual(
-          deckLayers.map(l => l.id),
+          deckLayers.map((l) => l.id),
           ['test_layer_1', 'test_layer_1-hexagon-cell'],
           'Should create 2 deck.gl layers'
         );
@@ -319,7 +319,7 @@ test('#HexagonLayer -> renderLayer', t => {
             'should pass correct data to hexagon cell layer'
           );
         });
-        Object.keys(expectedProps).forEach(key => {
+        Object.keys(expectedProps).forEach((key) => {
           t.deepEqual(props[key], expectedProps[key], `should have correct props.${key}`);
         });
 
@@ -393,7 +393,7 @@ test('#HexagonLayer -> renderLayer', t => {
       },
       assert: (deckLayers, layer) => {
         t.deepEqual(
-          deckLayers.map(l => l.id),
+          deckLayers.map((l) => l.id),
           ['test_layer_1', 'test_layer_1-hexagon-cell'],
           'Should create 2 deck.gl layers'
         );
@@ -480,7 +480,7 @@ function creatLayerObjectHovered({layerId, data, object}) {
   };
 }
 
-test('#HexagonLayer -> renderHover', t => {
+test('#HexagonLayer -> renderHover', (t) => {
   const testObjectHovered = creatLayerObjectHovered({
     layerId: 'test_layer_1',
     data: dataContainer.row(0),
@@ -523,7 +523,7 @@ test('#HexagonLayer -> renderHover', t => {
       },
       assert: (deckLayers, layer) => {
         t.deepEqual(
-          deckLayers.map(l => l.id),
+          deckLayers.map((l) => l.id),
           [
             'test_layer_1',
             'test_layer_1-hexagon-cell',

@@ -10,7 +10,7 @@ const TippyArrow = styled.div`
   position: absolute;
   width: 15px;
   height: 15px;
-  fill: ${props => props.theme.tooltipBg};
+  fill: ${(props) => props.theme.tooltipBg};
   text-align: initial;
 
   > svg {
@@ -30,17 +30,17 @@ const TippyTooltipContent = styled(({children, arrow, isLightTheme, ...props}) =
     ) : null}
   </div>
 ))`
-  font-family: ${props => props.theme.fontFamily};
-  font-size: ${props => props.theme.tooltipFontSize};
+  font-family: ${(props) => props.theme.fontFamily};
+  font-size: ${(props) => props.theme.tooltipFontSize};
   font-weight: 400;
   padding: 7px 18px;
-  box-shadow: ${props =>
+  box-shadow: ${(props) =>
     props.isLightTheme ? props.theme.panelBoxShadow : props.theme.tooltipBoxShadow};
-  background-color: ${props =>
+  background-color: ${(props) =>
     props.isLightTheme ? props.theme.tooltipBgLT : props.theme.tooltipBg};
-  color: ${props => (props.isLightTheme ? props.theme.tooltipColorLT : props.theme.tooltipColor)};
-  border-radius: ${props => props.theme.primaryBtnRadius};
-  ${props =>
+  color: ${(props) => (props.isLightTheme ? props.theme.tooltipColorLT : props.theme.tooltipColor)};
+  border-radius: ${(props) => props.theme.primaryBtnRadius};
+  ${(props) =>
     props.arrow
       ? `
     &[data-placement^='top'] > .svg-arrow {
@@ -113,14 +113,14 @@ const TippyTooltip = ({
 
   return (
     <RootContext.Consumer>
-      {context => (
+      {(context) => (
         <Tippy
           {...rest}
           // Using document.body would result in the CSS styles not being applied
           // to the tooltip content when embedding the map widget as a Shadow DOM element.
           appendTo={context?.current || 'parent'}
           animation={true}
-          render={attrs => (
+          render={(attrs) => (
             <TippyTooltipContent
               {...attrs}
               className={className}

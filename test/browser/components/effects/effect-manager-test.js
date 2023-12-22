@@ -37,7 +37,7 @@ const initialState = {
   mapState: {latitude: 0, longitude: 0}
 };
 
-test('Components -> EffectManager -> render', t => {
+test('Components -> EffectManager -> render', (t) => {
   let store = mockStore(initialState);
 
   // mount

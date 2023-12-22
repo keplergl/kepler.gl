@@ -6,7 +6,7 @@ import test from 'tape';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
 import {RangeSlider, Slider, SliderHandle, SliderBarHandle} from '@kepler.gl/components';
 
-test('Components -> RangeSlider.render', t => {
+test('Components -> RangeSlider.render', (t) => {
   let wrapper;
   const onChange = () => {};
   t.doesNotThrow(() => {

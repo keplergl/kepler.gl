@@ -57,7 +57,7 @@ export default class ClusterLayer extends AggregationLayer {
     this.registerVisConfig(clusterVisConfigs);
 
     // Access data of a point from aggregated clusters, depends on how getClusterer works
-    this.getPointData = pt => pt;
+    this.getPointData = (pt) => pt;
   }
 
   get type(): 'cluster' {
@@ -138,7 +138,7 @@ export default class ClusterLayer extends AggregationLayer {
               visible: defaultLayerProps.visible,
               data: [hoveredObject],
               getFillColor: this.config.highlightColor,
-              getRadius: d => d.radius,
+              getRadius: (d) => d.radius,
               radiusScale: 1,
               pickable: false
             })

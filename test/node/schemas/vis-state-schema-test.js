@@ -37,7 +37,7 @@ const expectedVisStateEntries = [
   'editor'
 ];
 
-test('#visStateSchema -> v1 -> save layers', t => {
+test('#visStateSchema -> v1 -> save layers', (t) => {
   const initialState = cloneDeep(StateWFilesFiltersLayerColor);
 
   // save state
@@ -57,7 +57,7 @@ test('#visStateSchema -> v1 -> save layers', t => {
   t.end();
 });
 
-test('#visStateSchema -> v1 -> load layers', t => {
+test('#visStateSchema -> v1 -> load layers', (t) => {
   const initialState = cloneDeep(StateWFilesFiltersLayerColor);
 
   // save state
@@ -78,7 +78,7 @@ test('#visStateSchema -> v1 -> load layers', t => {
   t.end();
 });
 
-test('#visStateSchema -> v1 -> save load filters', t => {
+test('#visStateSchema -> v1 -> save load filters', (t) => {
   const initialState = cloneDeep(StateWFilesFiltersLayerColor);
   const savedState = SchemaManager.getConfigToSave(initialState);
 
@@ -125,7 +125,7 @@ test('#visStateSchema -> v1 -> save load filters', t => {
   t.end();
 });
 
-test('#visStateSchema -> v1 -> save and validate filters', t => {
+test('#visStateSchema -> v1 -> save and validate filters', (t) => {
   const initialState = cloneDeep(StateWFilesFiltersLayerColor);
 
   // add empty filter
@@ -138,7 +138,7 @@ test('#visStateSchema -> v1 -> save and validate filters', t => {
   t.end();
 });
 
-test('#visStateSchema -> v1 -> save load interaction', t => {
+test('#visStateSchema -> v1 -> save load interaction', (t) => {
   const initialState = cloneDeep(StateWFilesFiltersLayerColor);
   const savedState = SchemaManager.getConfigToSave(initialState);
 
@@ -216,7 +216,7 @@ test('#visStateSchema -> v1 -> save load interaction', t => {
   t.end();
 });
 
-test('#visStateSchema -> v1 -> save load interaction -> tooltip format', t => {
+test('#visStateSchema -> v1 -> save load interaction -> tooltip format', (t) => {
   const initialState = cloneDeep(StateWTooltipFormat);
   const savedState = SchemaManager.getConfigToSave(initialState);
 
@@ -273,7 +273,7 @@ test('#visStateSchema -> v1 -> save load interaction -> tooltip format', t => {
   t.end();
 });
 
-test('#visStateSchema -> v1 -> save load layerBlending', t => {
+test('#visStateSchema -> v1 -> save load layerBlending', (t) => {
   const initialState = cloneDeep(StateWFilesFiltersLayerColor);
   const savedState = SchemaManager.getConfigToSave(initialState);
 
@@ -289,7 +289,7 @@ test('#visStateSchema -> v1 -> save load layerBlending', t => {
   t.end();
 });
 
-test('#visStateSchema -> v1 -> save animation', t => {
+test('#visStateSchema -> v1 -> save animation', (t) => {
   const initialState = cloneDeep(StateWTripGeojson);
 
   // save state
@@ -309,7 +309,7 @@ test('#visStateSchema -> v1 -> save animation', t => {
   t.end();
 });
 
-test('visStateSchema -> saving with a null column value does not throw an error', t => {
+test('visStateSchema -> saving with a null column value does not throw an error', (t) => {
   const testLayer = cloneDeep(StateWFiles).visState.layers[0];
 
   // set a column to null
@@ -326,7 +326,7 @@ test('visStateSchema -> saving with a null column value does not throw an error'
   t.end();
 });
 
-test('#visStateSchema -> v1 -> save load effects', t => {
+test('#visStateSchema -> v1 -> save load effects', (t) => {
   const expectedEffects = [
     {
       id: 'e_4',
@@ -384,7 +384,7 @@ test('#visStateSchema -> v1 -> save load effects', t => {
   t.end();
 });
 
-test('#visStateSchema -> v1 -> save load effects (deprecated beta config)', t => {
+test('#visStateSchema -> v1 -> save load effects (deprecated beta config)', (t) => {
   const deprecatedEffects = [
     {
       id: 'e_5',

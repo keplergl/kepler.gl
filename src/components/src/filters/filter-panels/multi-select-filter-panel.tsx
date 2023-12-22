@@ -15,7 +15,7 @@ function MultiSelectFilterPanelFactory(
 ) {
   const MultiSelectFilterPanel: FilterPanelComponent<MultiSelectFilter> = React.memo(
     ({idx, datasets, allAvailableFields, filter, setFilter, removeFilter}) => {
-      const onSetFilter = useCallback(value => setFilter(idx, 'value', value), [idx, setFilter]);
+      const onSetFilter = useCallback((value) => setFilter(idx, 'value', value), [idx, setFilter]);
 
       return (
         <div className="multi-select-filter-panel">

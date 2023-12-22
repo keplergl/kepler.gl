@@ -8,10 +8,10 @@ import {KeplerTable} from '@kepler.gl/table';
 export function cmpObjectKeys(t, expectedObj, actualObj, name) {
   t.deepEqual(
     Object.keys(actualObj)
-      .filter(key => actualObj[key] !== undefined)
+      .filter((key) => actualObj[key] !== undefined)
       .sort(),
     Object.keys(expectedObj)
-      .filter(key => expectedObj[key] !== undefined)
+      .filter((key) => expectedObj[key] !== undefined)
       .sort(),
     `${name} should have same keys`
   );
@@ -36,7 +36,7 @@ export function cmpFilters(t, expectedFilter, actualFilter, opt = {}, idx = '', 
       `idx:${idx} | ${actualFilter.type} filter ${actualFilter.name}`
     );
 
-    Object.keys(actualFilter).forEach(key => {
+    Object.keys(actualFilter).forEach((key) => {
       switch (key) {
         case 'histogram':
         case 'enlargedHistogram':
@@ -79,7 +79,7 @@ export function cmpLayers(t, expectedLayer, actualLayer, opt = {}) {
   } else {
     cmpObjectKeys(t, expectedLayer.config, actualLayer.config, `layer.${actualLayer.id}`);
 
-    Object.keys(expectedLayer.config).forEach(key => {
+    Object.keys(expectedLayer.config).forEach((key) => {
       // test everything except color and id, which are auto generated
       // also skip functions
       switch (key) {
@@ -157,7 +157,7 @@ export function cmpSavedLayers(t, expectedLayer, actualLayer, opt = {}, idx = ''
       `idx:${idx} | layer.${actualLayer.type} should be saved correctly`
     );
 
-    Object.keys(expectedLayer).forEach(key => {
+    Object.keys(expectedLayer).forEach((key) => {
       t.deepEqual(
         actualLayer[key],
         expectedLayer[key],
@@ -172,7 +172,7 @@ export function cmpSavedLayers(t, expectedLayer, actualLayer, opt = {}, idx = ''
           `idx:${idx} | layer.${actualLayer.type}`
         );
 
-        Object.keys(actualLayer.config).forEach(ck => {
+        Object.keys(actualLayer.config).forEach((ck) => {
           t.deepEqual(
             actualLayer.config[ck],
             expectedLayer.config[ck],
@@ -200,7 +200,7 @@ export function cmpEffects(t, expectedEffect, actualEffect, opts = {}) {
       t.equal(actualEffect.id, expectedEffect.id, `${actualEffect.type} effect.id should be same`);
     }
 
-    Object.keys(expectedEffect).forEach(key => {
+    Object.keys(expectedEffect).forEach((key) => {
       // test everything except id, which can be auto generated
       switch (key) {
         case 'parameters':
@@ -245,7 +245,7 @@ export function cmpDatasetData(t, expectedDatasetData, actualDatasetData, datase
 export function cmpDatasets(t, expectedDatasets, actualDatasets) {
   cmpObjectKeys(t, expectedDatasets, actualDatasets, 'datasets');
 
-  Object.keys(actualDatasets).forEach(dataId => {
+  Object.keys(actualDatasets).forEach((dataId) => {
     cmpDataset(t, expectedDatasets[dataId], actualDatasets[dataId]);
   });
 }
@@ -260,8 +260,8 @@ export function cmpDataset(t, expectedDataset, actualDataset, opt = {}) {
 
   // test everything except auto generated color
   Object.keys(actualDataset)
-    .filter(key => actualDataset[key] !== undefined)
-    .forEach(key => {
+    .filter((key) => actualDataset[key] !== undefined)
+    .forEach((key) => {
       switch (key) {
         case 'fields':
           cmpFields(t, expectedDataset.fields, actualDataset.fields, expectedDataset.id);
@@ -283,15 +283,15 @@ export function cmpDataset(t, expectedDataset, actualDataset, opt = {}) {
             actualDataset[key],
             `dataset.${expectedDataset.id}.${key}`
           );
-          Object.keys(expectedDataset[key]).forEach(item => {
+          Object.keys(expectedDataset[key]).forEach((item) => {
             t.ok(
               Array.isArray(expectedDataset[key][item]),
               `dataset.${expectedDataset.id}[key].${item} should be an array`
             );
             // compare filter name
             t.deepEqual(
-              actualDataset[key][item].map(f => f.name),
-              expectedDataset[key][item].map(f => f.name),
+              actualDataset[key][item].map((f) => f.name),
+              expectedDataset[key][item].map((f) => f.name),
               `dataset.${expectedDataset.id}.${key}.${item} should contain correct filter`
             );
           });
@@ -311,7 +311,7 @@ export function cmpDataset(t, expectedDataset, actualDataset, opt = {}) {
 export function cmpGpuFilterProp(t, expectedGpuFilter, actualGpuFilter, dataContainer) {
   cmpObjectKeys(t, expectedGpuFilter, actualGpuFilter, 'gpu filter');
 
-  Object.keys(expectedGpuFilter).forEach(key => {
+  Object.keys(expectedGpuFilter).forEach((key) => {
     if (key === 'filterValueAccessor' && expectedGpuFilter.filterValueAccessor.inputs) {
       const {inputs, result} = expectedGpuFilter.filterValueAccessor;
       t.deepEqual(
@@ -337,7 +337,7 @@ export function cmpGpuFilterProp(t, expectedGpuFilter, actualGpuFilter, dataCont
 
 export function cmpInteraction(t, expectedInt, actualInt) {
   cmpObjectKeys(t, expectedInt, actualInt, 'interaction');
-  Object.keys(actualInt).forEach(key => {
+  Object.keys(actualInt).forEach((key) => {
     t.equal(
       typeof actualInt[key],
       typeof expectedInt[key],
@@ -359,7 +359,7 @@ export function cmpInteraction(t, expectedInt, actualInt) {
 export function cmpParsedAppConfigs(t, expectedConfig, actualConfig, {name = ''} = {}) {
   t.deepEqual(actualConfig, expectedConfig, `${name} should be expected`);
 
-  Object.keys(actualConfig).forEach(key => {
+  Object.keys(actualConfig).forEach((key) => {
     if (key === 'visState') {
       cmpObjectKeys(t, expectedConfig.visState, actualConfig.visState, 'visState');
       // for visConfig go through each entry
@@ -388,7 +388,7 @@ export function cmpField(t, expected, actual, name, opt = {}) {
   if (expected && actual) {
     cmpObjectKeys(t, expected, actual, name);
 
-    Object.keys(expected).forEach(k => {
+    Object.keys(expected).forEach((k) => {
       if (k === 'filterProps') {
         // compare filterProps
         t.ok(typeof actual[k] === 'object', `${name} should have filterProps`);
@@ -396,7 +396,7 @@ export function cmpField(t, expected, actual, name, opt = {}) {
         if (actual[k]) {
           cmpObjectKeys(t, expected[k], actual[k], `${name} filterProps`);
           // compare filterProps key
-          Object.keys(expected[k]).forEach(key => {
+          Object.keys(expected[k]).forEach((key) => {
             if (key === 'histogram' || key === 'enlargedHistogram') {
               t.ok(actual[k][key].length, `${name}.filterProps.${key} should not be empty`);
             } else {

@@ -36,7 +36,7 @@ export const CloudMaps = ({provider, onSelectMap, isLoading, maps, error}) => {
   return (
     <StyledFlexContainer>
       {(maps ?? []).length ? (
-        maps.map(vis => (
+        maps.map((vis) => (
           <CloudItem key={vis.id} onClick={() => onSelectMap(provider, vis)} vis={vis} />
         ))
       ) : (

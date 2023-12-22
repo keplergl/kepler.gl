@@ -87,7 +87,7 @@ const ExportImageModalFactory = () => {
             </div>
             <FormattedMessage id={'modal.exportImage.ratioDescription'} />
             <div className="button-list" id="export-image-modal__option_ratio">
-              {EXPORT_IMG_RATIO_OPTIONS.filter(op => !op.hidden).map(op => (
+              {EXPORT_IMG_RATIO_OPTIONS.filter((op) => !op.hidden).map((op) => (
                 <SelectionButton
                   key={op.id}
                   selected={ratio === op.id}
@@ -105,7 +105,7 @@ const ExportImageModalFactory = () => {
             </div>
             <FormattedMessage id={'modal.exportImage.resolutionDescription'} />
             <div className="button-list" id="export-image-modal__option_resolution">
-              {EXPORT_IMG_RESOLUTION_OPTIONS.map(op => (
+              {EXPORT_IMG_RESOLUTION_OPTIONS.map((op) => (
                 <SelectionButton
                   key={op.id}
                   selected={resolution === op.id}

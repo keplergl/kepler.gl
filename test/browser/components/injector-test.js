@@ -24,7 +24,7 @@ import {
 const mockStore = configureStore();
 const initialCoreState = coreReducer(undefined, keplerGlInit({}));
 
-test('Components -> injector -> injectComponents', t => {
+test('Components -> injector -> injectComponents', (t) => {
   const CustomHeader = () => <div className="my-test-header">smoothie</div>;
   const myCustomHeaderFactory = () => CustomHeader;
 
@@ -48,12 +48,12 @@ test('Components -> injector -> injectComponents', t => {
   t.end();
 });
 
-test('Components -> injector -> missing deps', t => {
+test('Components -> injector -> missing deps', (t) => {
   const spy = sinon.spy(Console, 'error');
   // eslint-disable-next-line react/display-name
   const myCustomNameFactory = () => () => <div className="my-test-header-name">name</div>;
   // eslint-disable-next-line react/display-name
-  const myCustomHeaderFactory = Name => () => (
+  const myCustomHeaderFactory = (Name) => () => (
     <div className="my-test-header-1">
       <Name />
       smoothie
@@ -84,10 +84,10 @@ test('Components -> injector -> missing deps', t => {
   t.end();
 });
 
-test('Components -> injector -> wrong factory type', t => {
+test('Components -> injector -> wrong factory type', (t) => {
   const spy = sinon.spy(Console, 'error');
   // eslint-disable-next-line react/display-name
-  const myCustomHeaderFactory = Name => () => (
+  const myCustomHeaderFactory = (Name) => () => (
     <div className="my-test-header-2">
       <Name />
       smoothie
@@ -123,7 +123,7 @@ test('Components -> injector -> wrong factory type', t => {
   t.end();
 });
 
-test('Components -> injector -> wrong replacement type', t => {
+test('Components -> injector -> wrong replacement type', (t) => {
   const spy = sinon.spy(Console, 'error');
   // const spy = sinon.spy(Console, 'error');
 
@@ -156,13 +156,13 @@ test('Components -> injector -> wrong replacement type', t => {
   t.end();
 });
 
-test('Components -> injector -> replace and render existing', t => {
+test('Components -> injector -> replace and render existing', (t) => {
   myCustomHeaderFactory.deps = PanelHeaderFactory.deps;
 
   function myCustomHeaderFactory(...deps) {
     const PanelHeader = PanelHeaderFactory(...deps);
     PanelHeader.defaultProps;
-    const MyHeader = props => {
+    const MyHeader = (props) => {
       return <PanelHeader {...props} appName="taro" />;
     };
     return MyHeader;
@@ -189,7 +189,7 @@ test('Components -> injector -> replace and render existing', t => {
   t.end();
 });
 
-test('Components -> injector -> withState.lens', t => {
+test('Components -> injector -> withState.lens', (t) => {
   const CustomHeader = ({visState}) => <div className="my-test-header-3">smoothie</div>;
   const myCustomHeaderFactory = () =>
     withState([visStateLens, mapStateLens, uiStateLens, mapStyleLens])(CustomHeader);
@@ -222,10 +222,10 @@ test('Components -> injector -> withState.lens', t => {
   t.end();
 });
 
-test('Components -> injector -> withState.mapStateToProps', t => {
+test('Components -> injector -> withState.mapStateToProps', (t) => {
   const CustomHeader = ({visState}) => <div className="my-test-header-3">smoothie</div>;
   const myCustomHeaderFactory = () =>
-    withState([], state => ({ids: Object.keys(state)}))(CustomHeader);
+    withState([], (state) => ({ids: Object.keys(state)}))(CustomHeader);
 
   const KeplerGl = injectComponents([[PanelHeaderFactory, myCustomHeaderFactory]]);
 
@@ -252,7 +252,7 @@ test('Components -> injector -> withState.mapStateToProps', t => {
   t.end();
 });
 
-test('Components -> injector -> actions', t => {
+test('Components -> injector -> actions', (t) => {
   const CustomHeader = ({add}) => (
     <div className="my-test-header-3" onClick={add}>
       smoothie
@@ -262,7 +262,7 @@ test('Components -> injector -> actions', t => {
   const testAction = () => ({type: 'ADD'});
 
   const myCustomHeaderFactory = () =>
-    withState([], state => state, {add: testAction})(CustomHeader);
+    withState([], (state) => state, {add: testAction})(CustomHeader);
 
   const KeplerGl = injectComponents([[PanelHeaderFactory, myCustomHeaderFactory]]);
 

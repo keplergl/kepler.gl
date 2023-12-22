@@ -13,7 +13,7 @@ const StyledPanelToggleWrapper = styled.div`
   display: flex;
   justify-content: space-between;
   padding-right: 16px;
-  background-color: ${props => props.theme.sidePanelHeaderBg};
+  background-color: ${(props) => props.theme.sidePanelHeaderBg};
 `;
 
 const ButtonWrapper = styled.div`
@@ -22,7 +22,7 @@ const ButtonWrapper = styled.div`
 
 const CustomPanelToggleFactory = (...deps) => {
   const PanelToggle = PanelToggleFactory(...deps);
-  const PanelToggleWrapper = props => (
+  const PanelToggleWrapper = (props) => (
     <StyledPanelToggleWrapper>
       <PanelToggle {...props} />
       <ButtonWrapper>
@@ -38,7 +38,7 @@ const CustomPanelToggleFactory = (...deps) => {
     // lenses
     [visStateLens],
     // mapStateToProps
-    state => ({mapState: state.keplerGl.map1}),
+    (state) => ({mapState: state.keplerGl.map1}),
     {
       onClickSaveConfig: setMapConfig
     }

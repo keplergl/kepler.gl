@@ -21,7 +21,7 @@ import {media} from '@kepler.gl/styles';
 
 const fileIconColor = '#D3D8E0';
 
-const LinkRenderer = props => {
+const LinkRenderer = (props) => {
   return (
     <a href={props.href} target="_blank" rel="noopener noreferrer">
       {props.children}
@@ -29,7 +29,7 @@ const LinkRenderer = props => {
   );
 };
 const StyledUploadMessage = styled.div`
-  color: ${props => props.theme.textColorLT};
+  color: ${(props) => props.theme.textColorLT};
   font-size: 14px;
   margin-bottom: 12px;
 
@@ -40,7 +40,7 @@ const StyledUploadMessage = styled.div`
 
 export const WarningMsg = styled.span`
   margin-top: 10px;
-  color: ${props => props.theme.errorColor};
+  color: ${(props) => props.theme.errorColor};
   font-weight: 500;
 `;
 
@@ -51,16 +51,17 @@ interface StyledFileDropProps {
 const StyledFileDrop = styled.div<StyledFileDropProps>`
   background-color: white;
   border-radius: 4px;
-  border-style: ${props => (props.dragOver ? 'solid' : 'dashed')};
+  border-style: ${(props) => (props.dragOver ? 'solid' : 'dashed')};
   border-width: 1px;
-  border-color: ${props => (props.dragOver ? props.theme.textColorLT : props.theme.subtextColorLT)};
+  border-color: ${(props) =>
+    props.dragOver ? props.theme.textColorLT : props.theme.subtextColorLT};
   text-align: center;
   width: 100%;
   padding: 48px 8px 0;
   height: 360px;
 
   .file-upload-or {
-    color: ${props => props.theme.linkBtnColor};
+    color: ${(props) => props.theme.linkBtnColor};
     padding-right: 4px;
   }
 
@@ -73,7 +74,7 @@ const StyledFileDrop = styled.div<StyledFileDropProps>`
 `;
 
 const MsgWrapper = styled.div`
-  color: ${props => props.theme.modalTitleColor};
+  color: ${(props) => props.theme.modalTitleColor};
   font-size: 20px;
   height: 36px;
 `;
@@ -171,9 +172,9 @@ function FileUploadFactory() {
 
     frame = createRef<HTMLDivElement>();
 
-    _isValidFileType = filename => {
+    _isValidFileType = (filename) => {
       const {fileExtensions = []} = this.props;
-      const fileExt = fileExtensions.find(ext => filename.endsWith(ext));
+      const fileExt = fileExtensions.find((ext) => filename.endsWith(ext));
 
       return Boolean(fileExt);
     };
@@ -206,7 +207,7 @@ function FileUploadFactory() {
       );
     };
 
-    _toggleDragState = newState => {
+    _toggleDragState = (newState) => {
       this.setState({dragOver: newState});
     };
 
@@ -231,7 +232,7 @@ function FileUploadFactory() {
                       id: 'fileUploader.configUploadMessage'
                     },
                     {
-                      fileFormatNames: fileFormatNames.map(format => `**${format}**`).join(', ')
+                      fileFormatNames: fileFormatNames.map((format) => `**${format}**`).join(', ')
                     }
                   )}(${GUIDES_FILE_FORMAT_DOC}).`}
                   renderers={{link: LinkRenderer}}
@@ -239,7 +240,7 @@ function FileUploadFactory() {
               </StyledUploadMessage>
               <StyledFileDrop dragOver={dragOver}>
                 <StyledFileTypeFow className="file-type-row">
-                  {fileExtensions.map(ext => (
+                  {fileExtensions.map((ext) => (
                     <FileType key={ext} ext={ext} height="50px" fontSize="9px" />
                   ))}
                 </StyledFileTypeFow>

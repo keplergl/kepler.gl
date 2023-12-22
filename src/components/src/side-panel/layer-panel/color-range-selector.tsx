@@ -41,12 +41,12 @@ type ColorPaletteGroupProps = {
 };
 
 export const ALL_TYPES: string[] = uniq(
-  COLOR_RANGES.map(c => c.type)
-    .filter(ctype => ctype)
+  COLOR_RANGES.map((c) => c.type)
+    .filter((ctype) => ctype)
     .concat(['all', 'custom']) as string[]
 );
 
-export const ALL_STEPS: number[] = uniq(COLOR_RANGES.map(d => d.colors.length)).sort(numberSort);
+export const ALL_STEPS: number[] = uniq(COLOR_RANGES.map((d) => d.colors.length)).sort(numberSort);
 
 const StyledColorConfig = styled.div`
   padding: 12px 12px 0 12px;
@@ -70,7 +70,7 @@ const StyledPaletteConfig = styled.div`
     flex-grow: 1;
   }
   .item-selector .item-selector__dropdown {
-    ${props => props.theme.secondaryInput};
+    ${(props) => props.theme.secondaryInput};
   }
 `;
 
@@ -108,7 +108,7 @@ export default class ColorRangeSelector extends Component<ColorRangeSelectorProp
     this.configTypeSelector,
     this.configStepSelector,
     (type, steps) => {
-      return COLOR_RANGES.filter(colorRange => {
+      return COLOR_RANGES.filter((colorRange) => {
         const isType = type === 'all' || type === colorRange.type;
         const isStep = Number(steps) === colorRange.colors.length;
 
@@ -160,13 +160,13 @@ export default class ColorRangeSelector extends Component<ColorRangeSelectorProp
     return (
       <StyledColorRangeSelector>
         <StyledColorConfig>
-          {(colorRangeConfig.custom ? ['custom'] : Object.keys(colorRangeConfig)).map(key => (
+          {(colorRangeConfig.custom ? ['custom'] : Object.keys(colorRangeConfig)).map((key) => (
             <PaletteConfig
               key={key}
               label={CONFIG_SETTINGS[key].label || key}
               config={CONFIG_SETTINGS[key]}
               value={colorRangeConfig[key]}
-              onChange={value => this._updateConfig({key, value})}
+              onChange={(value) => this._updateConfig({key, value})}
             />
           ))}
         </StyledColorConfig>
@@ -199,7 +199,7 @@ export const PaletteConfig: React.FC<PaletteConfigProps> = ({
   config: {type, options},
   onChange
 }) => (
-  <StyledPaletteConfig className="color-palette__config" onClick={e => e.stopPropagation()}>
+  <StyledPaletteConfig className="color-palette__config" onClick={(e) => e.stopPropagation()}>
     <div className="color-palette__config__label">
       <PanelLabel>
         <FormattedMessage id={`color.${label}`} />
@@ -232,7 +232,7 @@ const StyledColorRange = styled.div.attrs({
 })`
   padding: 0 8px;
   :hover {
-    background-color: ${props => props.theme.panelBackgroundHover};
+    background-color: ${(props) => props.theme.panelBackgroundHover};
     cursor: pointer;
   }
 `;
@@ -247,7 +247,7 @@ export const ColorPaletteGroup: React.FC<ColorPaletteGroupProps> = ({
     {colorRanges.map((colorRange, i) => (
       <StyledColorRange
         key={`${colorRange.name}-${i}`}
-        onClick={e =>
+        onClick={(e) =>
           onSelect(reversed ? (reverseColorRange(true, colorRange) as ColorRange) : colorRange, e)
         }
       >

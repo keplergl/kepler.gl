@@ -34,7 +34,7 @@ const resolver = ({
   visibleLayerGroups: {[id: string]: LayerGroup | boolean} | false;
 }) =>
   `${id}:${Object.keys(visibleLayerGroups)
-    .filter(d => visibleLayerGroups[d])
+    .filter((d) => visibleLayerGroups[d])
     .sort()
     .join('-')}`;
 
@@ -56,14 +56,14 @@ export const editTopMapStyle = memoize(
     visibleLayerGroups: {[id: string]: LayerGroup | boolean} | false;
   }) => {
     const visibleFilters = (mapStyle.layerGroups || [])
-      .filter(lg => visibleLayerGroups[lg.slug])
-      .map(lg => lg.filter);
+      .filter((lg) => visibleLayerGroups[lg.slug])
+      .map((lg) => lg.filter);
 
     // if top map
     // keep only visible layers
     // @ts-expect-error
-    const filteredLayers = mapStyle.style.layers.filter(layer =>
-      visibleFilters.some(match => match(layer))
+    const filteredLayers = mapStyle.style.layers.filter((layer) =>
+      visibleFilters.some((match) => match(layer))
     );
 
     return {
@@ -87,13 +87,13 @@ export const editBottomMapStyle = memoize(({id, mapStyle, visibleLayerGroups}) =
   }
 
   const invisibleFilters = (mapStyle.layerGroups || [])
-    .filter(lg => !visibleLayerGroups[lg.slug])
-    .map(lg => lg.filter);
+    .filter((lg) => !visibleLayerGroups[lg.slug])
+    .map((lg) => lg.filter);
 
   // if bottom map
   // filter out invisible layers
-  const filteredLayers = mapStyle.style.layers.filter(layer =>
-    invisibleFilters.every(match => !match(layer))
+  const filteredLayers = mapStyle.style.layers.filter((layer) =>
+    invisibleFilters.every((match) => !match(layer))
   );
 
   return {
@@ -119,8 +119,9 @@ export function getStyleDownloadUrl(styleUrl, accessToken, mapboxApiUrl) {
     const styleId = styleUrl.replace('mapbox://styles/', '');
 
     // https://api.mapbox.com/styles/v1/heshan0131/cjg1bfumo1cwm2rlrjxkinfgw?pluginName=Keplergl&access_token=<token>
-    return `${mapboxApiUrl ||
-      DEFAULT_MAPBOX_API_URL}/styles/v1/${styleId}?pluginName=Keplergl&access_token=${accessToken}`;
+    return `${
+      mapboxApiUrl || DEFAULT_MAPBOX_API_URL
+    }/styles/v1/${styleId}?pluginName=Keplergl&access_token=${accessToken}`;
   }
 
   // style url not recognized
@@ -168,13 +169,13 @@ export function getStyleImageIcon({
 
 export function scaleMapStyleByResolution(mapboxStyle, scale) {
   if (scale !== 1 && mapboxStyle) {
-    const labelLayerGroup = DEFAULT_LAYER_GROUPS.find(lg => lg.slug === 'label');
+    const labelLayerGroup = DEFAULT_LAYER_GROUPS.find((lg) => lg.slug === 'label');
     // @ts-ignore
     const {filter: labelLayerFilter} = labelLayerGroup;
     const zoomOffset = Math.log2(scale);
 
     const copyStyle = clondDeep(mapboxStyle);
-    (copyStyle.layers || []).forEach(d => {
+    (copyStyle.layers || []).forEach((d) => {
       // edit minzoom and maxzoom
       if (d.maxzoom) {
         d.maxzoom = Math.max(d.maxzoom + zoomOffset, 1);
@@ -187,7 +188,7 @@ export function scaleMapStyleByResolution(mapboxStyle, scale) {
       // edit text size
       if (labelLayerFilter(d)) {
         if (d.layout && d.layout['text-size'] && Array.isArray(d.layout['text-size'].stops)) {
-          d.layout['text-size'].stops.forEach(stop => {
+          d.layout['text-size'].stops.forEach((stop) => {
             // zoom
             stop[0] = Math.max(stop[0] + zoomOffset, 1);
             // size

@@ -16,7 +16,7 @@ const StyledUploader = styled.div`
 `;
 
 const StyledMapIcon = styled.div`
-  color: ${props => props.theme.textColorLT};
+  color: ${(props) => props.theme.textColorLT};
   margin-right: 16px;
   margin-top: 4px;
 `;
@@ -25,14 +25,14 @@ const StyledSvg = styled.svg`
   margin-right: 16px;
 
   line {
-    stroke: ${props => props.theme.selectBorderColorLT};
+    stroke: ${(props) => props.theme.selectBorderColorLT};
     stroke-width: 4;
     stroke-linecap: square;
     stroke-dasharray: 5 12;
     animation: dash-animation 25s infinite linear;
   }
   circle {
-    fill: ${props => props.theme.selectBorderColorLT};
+    fill: ${(props) => props.theme.selectBorderColorLT};
   }
 
   @keyframes dash-animation {
@@ -52,7 +52,7 @@ interface UploadAnimationProps {
   icon?: ComponentType<IconProps> | null;
 }
 
-export const UploadAnimation: React.FC<UploadAnimationProps> = props => (
+export const UploadAnimation: React.FC<UploadAnimationProps> = (props) => (
   <StyledUploader>
     <StyledMapIcon>
       <MapIcon height="48px" />

@@ -10,7 +10,7 @@ import {FormattedMessage} from 'react-intl';
 import {ASSETS_URL} from '../../constants/default-settings';
 
 const StyledMapIcon = styled.div`
-  background-image: url("${ASSETS_URL}icon-demo-map.jpg");
+  background-image: url('${ASSETS_URL}icon-demo-map.jpg');
   background-repeat: no-repeat;
   background-size: 64px 48px;
   width: 64px;
@@ -28,7 +28,7 @@ const StyledTrySampleData = styled.div`
   margin-bottom: 12px;
   flex-grow: 1;
   justify-content: flex-end;
-  color: ${props => props.theme.subtextColorLT};
+  color: ${(props) => props.theme.subtextColorLT};
 
   .demo-map-title {
     margin-left: 16px;
@@ -49,7 +49,7 @@ const StyledTrySampleData = styled.div`
     display: flex;
     font-size: 14px;
     align-items: center;
-    color: ${props => props.theme.subtextColorLT};
+    color: ${(props) => props.theme.subtextColorLT};
     cursor: pointer;
 
     ${media.portable`
@@ -57,7 +57,7 @@ const StyledTrySampleData = styled.div`
     `};
 
     :hover {
-      color: ${props => props.theme.textColorLT};
+      color: ${(props) => props.theme.textColorLT};
     }
 
     span {

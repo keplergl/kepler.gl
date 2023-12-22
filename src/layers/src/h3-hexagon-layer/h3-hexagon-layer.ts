@@ -92,9 +92,11 @@ export type HexagonIdLayerData = {index: number; id; centroid: Centroid};
 const DEFAULT_LINE_SCALE_VALUE = 8;
 
 export const hexIdRequiredColumns: ['hex_id'] = ['hex_id'];
-export const hexIdAccessor = ({hex_id}: HexagonIdLayerColumnsConfig) => (
-  dc: DataContainerInterface
-) => d => dc.valueAt(d.index, hex_id.fieldIdx);
+export const hexIdAccessor =
+  ({hex_id}: HexagonIdLayerColumnsConfig) =>
+  (dc: DataContainerInterface) =>
+  (d) =>
+    dc.valueAt(d.index, hex_id.fieldIdx);
 
 export const defaultElevation = 500;
 export const defaultCoverage = 1;
@@ -181,7 +183,7 @@ export default class HexagonIdLayer extends Layer {
       color: {
         ...visualChannels.color,
         accessor: 'getFillColor',
-        condition: config => config.visConfig.filled
+        condition: (config) => config.visConfig.filled
       },
       strokeColor: {
         property: 'strokeColor',
@@ -192,15 +194,15 @@ export default class HexagonIdLayer extends Layer {
         range: 'strokeColorRange',
         channelScaleType: CHANNEL_SCALES.color,
         accessor: 'getLineColor',
-        condition: config => config.visConfig.outline,
-        defaultValue: config => config.visConfig.strokeColor || config.color
+        condition: (config) => config.visConfig.outline,
+        defaultValue: (config) => config.visConfig.strokeColor || config.color
       },
       size: {
         ...visualChannels.size,
         property: 'height',
         accessor: 'getElevation',
         nullValue: 0,
-        condition: config => config.visConfig.enable3d,
+        condition: (config) => config.visConfig.enable3d,
         defaultValue: defaultElevation
       },
       coverage: {
@@ -241,14 +243,14 @@ export default class HexagonIdLayer extends Layer {
     }
 
     return {
-      props: hexFields.map(f => ({
+      props: hexFields.map((f) => ({
         isVisible: true,
         // default layer name should be dataset name
         label,
         columns: {
           hex_id: {
             value: f.name,
-            fieldIdx: fields.findIndex(fid => fid.name === f.name)
+            fieldIdx: fields.findIndex((fid) => fid.name === f.name)
           }
         }
       }))
@@ -330,7 +332,7 @@ export default class HexagonIdLayer extends Layer {
       getHexId,
       getFilterValue: gpuFilter.filterValueAccessor(dataContainer)(),
       textLabels,
-      getPosition: d => d.centroid,
+      getPosition: (d) => d.centroid,
       ...accessors
     };
   }

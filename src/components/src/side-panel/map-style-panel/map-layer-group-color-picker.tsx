@@ -14,9 +14,9 @@ import CustomPicker from '../layer-panel/custom-picker';
 import {ColorBlock} from '../layer-panel/color-selector';
 
 const LayerGroupColorPickerWrapper = styled.div<{extraMarginRight?: boolean; disabled?: boolean}>`
-  margin-right: ${props => (props.extraMarginRight ? 0 : 24)}px;
+  margin-right: ${(props) => (props.extraMarginRight ? 0 : 24)}px;
   cursor: pointer;
-  ${props =>
+  ${(props) =>
     props.disabled &&
     css`
       cursor: none;
@@ -54,7 +54,7 @@ function LayerGroupColorPickerFactory() {
     }, [setDisplayColorPicker]);
 
     const onCustomPickerChange = useCallback(
-      newColor => {
+      (newColor) => {
         onColorChange([newColor.rgb.r, newColor.rgb.g, newColor.rgb.b]);
       },
       [onColorChange]

@@ -88,15 +88,15 @@ function LayerGroupSelectorFactory(
                   isColorPickerAvailable && slug === THREE_D_BUILDING_LAYER_GROUP_SLUG
                     ? threeDBuildingColor
                     : slug === BACKGROUND_LAYER_GROUP_SLUG
-                    ? backgroundColor
-                    : null
+                      ? backgroundColor
+                      : null
                 }
                 onColorChange={
                   isColorPickerAvailable && slug === THREE_D_BUILDING_LAYER_GROUP_SLUG
                     ? on3dBuildingColorChange
                     : slug === BACKGROUND_LAYER_GROUP_SLUG
-                    ? onBackgroundColorChange
-                    : noop
+                      ? onBackgroundColorChange
+                      : noop
                 }
               />
             )

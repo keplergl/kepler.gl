@@ -17,7 +17,7 @@ import {RGBColor} from '@kepler.gl/types';
 import {StyledDatasetTitleProps, RemoveDatasetProps, ShowDataTableProps} from './types';
 
 const StyledDatasetTitle = styled.div<StyledDatasetTitleProps>`
-  color: ${props => props.theme.textColor};
+  color: ${(props) => props.theme.textColor};
   display: flex;
   align-items: flex-start;
 
@@ -25,19 +25,19 @@ const StyledDatasetTitle = styled.div<StyledDatasetTitleProps>`
     height: 16px;
   }
   :hover {
-    cursor: ${props => (props.clickable ? 'pointer' : 'auto')};
+    cursor: ${(props) => (props.clickable ? 'pointer' : 'auto')};
 
     .dataset-name {
-      color: ${props => (props.clickable ? props.theme.textColorHl : props.theme.textColor)};
+      color: ${(props) => (props.clickable ? props.theme.textColorHl : props.theme.textColor)};
     }
 
     .dataset-action {
-      color: ${props => props.theme.textColor};
+      color: ${(props) => props.theme.textColor};
       opacity: 1;
     }
 
     .dataset-action:hover {
-      color: ${props => props.theme.textColorHl};
+      color: ${(props) => props.theme.textColorHl};
     }
   }
 `;
@@ -67,7 +67,7 @@ const ShowDataTable = ({id, showDatasetTable}: ShowDataTableProps) => (
   <DataTagAction className="dataset-action show-data-table" data-tip data-for={`data-table-${id}`}>
     <Table
       height="16px"
-      onClick={e => {
+      onClick={(e) => {
         e.stopPropagation();
         showDatasetTable?.(id);
       }}
@@ -88,7 +88,7 @@ const RemoveDataset = ({datasetKey, removeDataset}: RemoveDatasetProps) => (
   >
     <Trash
       height="16px"
-      onClick={e => {
+      onClick={(e) => {
         e.stopPropagation();
         removeDataset?.(datasetKey);
       }}

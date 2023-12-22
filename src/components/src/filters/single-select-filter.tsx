@@ -19,8 +19,8 @@ export default function SingleSelectFilterFactory() {
         options={filter.domain}
         multiSelect={false}
         searchable={false}
-        displayOption={d => String(d)}
-        getOptionValue={d => d}
+        displayOption={(d) => String(d)}
+        getOptionValue={(d) => d}
         onChange={setFilter}
         inputTheme="secondary"
       />

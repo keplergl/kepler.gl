@@ -46,7 +46,7 @@ const StyledImagePreview = styled.div.attrs({
   .preview-image--error {
     font-size: 12px;
     padding: 12px;
-    color: ${props => props.theme.errorColor};
+    color: ${(props) => props.theme.errorColor};
     text-align: center;
   }
 `;
@@ -64,8 +64,12 @@ interface ImagePreviewProps {
  * @param {boolean} [props.showDimension]
  */
 const ImagePreview = ({exportImage, width = 400, showDimension = false}: ImagePreviewProps) => {
-  const {error, imageDataUri, processing, imageSize: {imageW = 0, imageH = 0} = {}} =
-    exportImage || {};
+  const {
+    error,
+    imageDataUri,
+    processing,
+    imageSize: {imageW = 0, imageH = 0} = {}
+  } = exportImage || {};
 
   const imageStyle = {
     width: `${width}px`,

@@ -99,7 +99,7 @@ describe('LoadStorageMap', () => {
 
     // show empty maps
     await waitFor(() => {
-      DEFAULT_MAPS.forEach(map => {
+      DEFAULT_MAPS.forEach((map) => {
         expect(getByText(map.title)).toBeInTheDocument();
         expect(getByText(map.description)).toBeInTheDocument();
       });

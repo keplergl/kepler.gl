@@ -64,7 +64,7 @@ export const fieldPropertiesV1 = {
 export class FieldSchema extends Schema {
   save(fields) {
     return {
-      [this.key]: fields.map(f => this.savePropertiesOrApplySchema(f)[this.key])
+      [this.key]: fields.map((f) => this.savePropertiesOrApplySchema(f)[this.key])
     };
   }
   load(fields) {
@@ -118,7 +118,7 @@ export class DatasetSchema extends Schema {
       (!fields[0].hasOwnProperty('format') || !fields[0].hasOwnProperty('analyzerType'));
 
     if (needCalculateMeta) {
-      const fieldOrder = fields.map(f => f.name);
+      const fieldOrder = fields.map((f) => f.name);
 
       const sampleData = getSampleForTypeAnalyze({
         fields: fieldOrder,

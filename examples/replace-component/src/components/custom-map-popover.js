@@ -6,7 +6,7 @@ import {MapPopoverFactory} from '@kepler.gl/components';
 
 const CustomMapPopoverFactory = (...deps) => {
   const MapPopover = MapPopoverFactory(...deps);
-  const MapPopoverWrapper = props => {
+  const MapPopoverWrapper = (props) => {
     // Disable tooltip for point layer
     if (props.layerHoverProp?.layer?.id === 'point_layer') {
       return null;

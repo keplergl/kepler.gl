@@ -92,10 +92,10 @@ const StyledLayerConfigurator = styled.div.attrs({
   className: 'layer-panel__config'
 })`
   position: relative;
-  margin-top: ${props => props.theme.layerConfiguratorMargin};
-  padding: ${props => props.theme.layerConfiguratorPadding};
-  border-left: ${props => props.theme.layerConfiguratorBorder} dashed
-    ${props => props.theme.layerConfiguratorBorderColor};
+  margin-top: ${(props) => props.theme.layerConfiguratorMargin};
+  padding: ${(props) => props.theme.layerConfiguratorPadding};
+  border-left: ${(props) => props.theme.layerConfiguratorBorder} dashed
+    ${(props) => props.theme.layerConfiguratorBorderColor};
 `;
 
 const StyledLayerVisualConfigurator = styled.div.attrs({
@@ -881,7 +881,7 @@ export default function LayerConfiguratorFactory(
             <Input
               type="file"
               accept=".glb,.gltf"
-              onChange={e => {
+              onChange={(e) => {
                 if (e.target.files && e.target.files[0]) {
                   const url = URL.createObjectURL(e.target.files[0]);
                   visConfiguratorProps.onChange({scenegraph: url});
@@ -1112,15 +1112,8 @@ export function ChannelByValueSelectorFactory(
     fields,
     description
   }: ChannelByValueSelectorProps) => {
-    const {
-      channelScaleType,
-      field,
-      key,
-      property,
-      scale,
-      defaultMeasure,
-      supportedFieldTypes
-    } = channel;
+    const {channelScaleType, field, key, property, scale, defaultMeasure, supportedFieldTypes} =
+      channel;
     const channelSupportedFieldTypes =
       supportedFieldTypes || CHANNEL_SCALE_SUPPORTED_FIELDS[channelScaleType];
     const supportedFields = fields.filter(({type}) => channelSupportedFieldTypes.includes(type));
@@ -1141,8 +1134,8 @@ export function ChannelByValueSelectorFactory(
         scaleType={scale ? layer.config[scale] : null}
         selectedField={layer.config[field]}
         showScale={showScale}
-        updateField={val => onChange({[field]: val}, key)}
-        updateScale={val => onChange({[scale]: val}, key)}
+        updateField={(val) => onChange({[field]: val}, key)}
+        updateScale={(val) => onChange({[scale]: val}, key)}
       />
     );
   };
@@ -1159,7 +1152,7 @@ export const AggregationScaleSelector = ({channel, layer, onChange}: Aggregation
       label={`${key} Scale`}
       options={scaleOptions}
       scaleType={layer.config[scale]}
-      onSelect={val => onChange({[scale]: val}, key)}
+      onSelect={(val) => onChange({[scale]: val}, key)}
     />
   ) : null;
 };
@@ -1197,7 +1190,7 @@ export const AggregationTypeSelector = ({channel, layer, onChange}: AggregationS
         getOptionValue="id"
         multiSelect={false}
         searchable={false}
-        onChange={value =>
+        onChange={(value) =>
           onChange(
             {
               visConfig: {

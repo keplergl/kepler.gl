@@ -62,7 +62,7 @@ export const INITIAL_PROVIDER_STATE: ProviderState = {
 
 function createActionTask(action, payload) {
   if (typeof action === 'function') {
-    return ACTION_TASK().map(_ => action(payload));
+    return ACTION_TASK().map((_) => action(payload));
   }
 
   return null;
@@ -98,8 +98,8 @@ function createGlobalNotificationTasks({
     topic: DEFAULT_NOTIFICATION_TOPICS.global,
     message
   };
-  const task = ACTION_TASK().map(_ => addNotification(successNote));
-  return delayClose ? [task, DELAY_TASK(3000).map(_ => removeNotification(id))] : [task];
+  const task = ACTION_TASK().map((_) => addNotification(successNote));
+  return delayClose ? [task, DELAY_TASK(3000).map((_) => removeNotification(id))] : [task];
 }
 
 /**
@@ -130,9 +130,9 @@ export const exportFileToCloudUpdater = (
   };
   const uploadFileTask = EXPORT_FILE_TO_CLOUD_TASK({provider, payload}).bimap(
     // success
-    response => exportFileSuccess({response, provider, options, onSuccess, closeModal}),
+    (response) => exportFileSuccess({response, provider, options, onSuccess, closeModal}),
     // error
-    error => exportFileError({error, provider, options, onError})
+    (error) => exportFileError({error, provider, options, onError})
   );
 
   return withTask(newState, uploadFileTask);
@@ -159,8 +159,8 @@ export const exportFileSuccessUpdater = (
   const tasks = [
     createActionTask(onSuccess, {response, provider, options}),
     closeModal &&
-      ACTION_TASK().map(_ => postSaveLoadSuccess(`Map saved to ${state.currentProvider}!`))
-  ].filter(d => d);
+      ACTION_TASK().map((_) => postSaveLoadSuccess(`Map saved to ${state.currentProvider}!`))
+  ].filter((d) => d);
 
   return tasks.length ? withTask(newState, tasks) : newState;
 };
@@ -175,8 +175,8 @@ export const postSaveLoadSuccessUpdater = (
   const message = action.payload || `Saved / Load to ${state.currentProvider} Success`;
 
   const tasks = [
-    ACTION_TASK().map(_ => toggleModal(null)),
-    ACTION_TASK().map(_ => resetProviderStatus()),
+    ACTION_TASK().map((_) => toggleModal(null)),
+    ACTION_TASK().map((_) => resetProviderStatus()),
     ...createGlobalNotificationTasks({message})
   ];
 
@@ -196,7 +196,7 @@ export const exportFileErrorUpdater = (
 
   if (isFileConflict(error)) {
     newState.mapSaved = provider.name;
-    return withTask(newState, [ACTION_TASK().map(_ => toggleModal(OVERWRITE_MAP_ID))]);
+    return withTask(newState, [ACTION_TASK().map((_) => toggleModal(OVERWRITE_MAP_ID))]);
   }
 
   newState.providerError = getError(error);
@@ -228,10 +228,10 @@ export const loadCloudMapUpdater = (
   const uploadFileTask = LOAD_CLOUD_MAP_TASK({provider, payload: loadParams}).bimap(
     // success
     // @ts-expect-error
-    response => loadCloudMapSuccess({response, loadParams, provider, onSuccess, onError}),
+    (response) => loadCloudMapSuccess({response, loadParams, provider, onSuccess, onError}),
     // error
     // @ts-expect-error
-    error => loadCloudMapError({error, provider, onError})
+    (error) => loadCloudMapError({error, provider, onError})
   );
 
   return withTask(newState, uploadFileTask);
@@ -264,7 +264,7 @@ function getDatasetHandler(format) {
 
   if (!DATASET_HANDLERS[format]) {
     const supportedFormat = Object.keys(DATASET_FORMATS)
-      .map(k => `'${k}'`)
+      .map((k) => `'${k}'`)
       .join(', ');
     Console.warn(
       `unknown format ${format}. Please use one of ${supportedFormat}, will use csv by default`
@@ -326,10 +326,10 @@ export const loadCloudMapSuccessUpdater = (
   const payload = parseLoadMapResponse(response, loadParams, provider);
 
   const tasks = [
-    ACTION_TASK().map(_ => addDataToMap(payload)),
+    ACTION_TASK().map((_) => addDataToMap(payload)),
     createActionTask(onSuccess, {response, loadParams, provider}),
-    ACTION_TASK().map(_ => postSaveLoadSuccess(`Map from ${provider.name} loaded`))
-  ].filter(d => d);
+    ACTION_TASK().map((_) => postSaveLoadSuccess(`Map from ${provider.name} loaded`))
+  ].filter((d) => d);
 
   return tasks.length ? withTask(newState, tasks) : newState;
 };

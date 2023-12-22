@@ -14,11 +14,11 @@ interface StyledGProps {
 const StyledG = styled.g<StyledGProps>`
   .selection {
     stroke: none;
-    fill: ${props => (props.isRanged ? props.theme.rangeBrushBgd : props.theme.BLUE2)};
-    fill-opacity: ${props => (props.isRanged ? 0.3 : 1)};
+    fill: ${(props) => (props.isRanged ? props.theme.rangeBrushBgd : props.theme.BLUE2)};
+    fill-opacity: ${(props) => (props.isRanged ? 0.3 : 1)};
   }
   .handle {
-    fill: ${props => props.theme.BLUE2};
+    fill: ${(props) => props.theme.BLUE2};
     fill-opacity: 0.3;
   }
 `;
@@ -38,8 +38,9 @@ const getHandlePath = (props: RangeBrushProps) => {
     const h = 39;
     const w = 4.5;
     const y = (props.height - h) / 2;
-    return `M${0.5 * x},${y}c${2.5 * x},0,${w * x},2,${w * x},${w}v${h - w * 2}c0,2.5,${-2 *
-      x},${w},${-w * x},${w}V${y}z`;
+    return `M${0.5 * x},${y}c${2.5 * x},0,${w * x},2,${w * x},${w}v${h - w * 2}c0,2.5,${
+      -2 * x
+    },${w},${-w * x},${w}V${y}z`;
   };
 };
 
@@ -91,11 +92,11 @@ function RangeBrushFactory(): React.ComponentType<RangeBrushProps> {
       this.root = this.rootContainer.current ? select(this.rootContainer.current) : undefined;
       this.brush = brushX()
         .handleSize(3)
-        .on('start', event => {
+        .on('start', (event) => {
           if (typeof this.props.onBrushStart === 'function') this.props.onBrushStart();
           this._startSel = event.selection;
         })
-        .on('brush', event => {
+        .on('brush', (event) => {
           if (this.moving) {
             return;
           }
@@ -105,7 +106,7 @@ function RangeBrushFactory(): React.ComponentType<RangeBrushProps> {
             this._brushed(event);
           }
         })
-        .on('end', event => {
+        .on('end', (event) => {
           if (!event.selection) {
             if (this.brushing) {
               // handle null selection

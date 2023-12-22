@@ -77,7 +77,7 @@ Object.defineProperty(window, 'clipboardData', {
   'dispatchEvent',
   'requestAnimationFrame',
   'cancelAnimationFrame'
-].forEach(prop => {
+].forEach((prop) => {
   window[prop] = () => {};
 });
 
@@ -132,7 +132,7 @@ canvas.width = gl.drawingBufferWidth;
 canvas.height = gl.drawingBufferHeight;
 gl.canvas = canvas;
 
-Object.keys(global.window).forEach(property => {
+Object.keys(global.window).forEach((property) => {
   if (typeof global[property] === 'undefined') {
     global[property] = global.window[property];
   }

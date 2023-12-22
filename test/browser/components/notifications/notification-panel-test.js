@@ -20,7 +20,7 @@ const notifications = [
   createNotification({message: '4', type: 'info'})
 ];
 
-test('Notification Panel - Show notifications', t => {
+test('Notification Panel - Show notifications', (t) => {
   const removeNotification = sinon.spy();
   const $ = shallow(
     <NotificationPanel

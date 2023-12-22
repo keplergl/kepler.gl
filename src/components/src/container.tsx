@@ -73,7 +73,7 @@ export function ContainerFactory(
     // default id and address if not provided
     static defaultProps = {
       id: 'map',
-      getState: state => state.keplerGl,
+      getState: (state) => state.keplerGl,
       mint: true
     };
 
@@ -118,7 +118,7 @@ export function ContainerFactory(
       }
     }
 
-    getSelector = memoize((id, getState) => state => {
+    getSelector = memoize((id, getState) => (state) => {
       if (!getState(state)) {
         // log error
         Console.error(ERROR_MSG.noState);

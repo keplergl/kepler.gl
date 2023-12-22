@@ -13,34 +13,34 @@ interface StyledSliderHandleProps {
   active?: boolean;
 }
 
-const StyledSliderHandle = styled.span.attrs(props => ({
+const StyledSliderHandle = styled.span.attrs((props) => ({
   className: classnames('kg-range-slider__handle', props.className)
 }))<StyledSliderHandleProps>`
   position: absolute;
   z-index: 10;
-  ${props => (props.vertical ? 'margin-left' : 'margin-top')}: -${props =>
-  (props.sliderHandleWidth - props.theme.sliderBarHeight) / 2}px;
+  ${(props) => (props.vertical ? 'margin-left' : 'margin-top')}: -${(props) =>
+    (props.sliderHandleWidth - props.theme.sliderBarHeight) / 2}px;
 
-  height: ${props =>
+  height: ${(props) =>
     Number.isFinite(props.sliderHandleWidth)
       ? props.sliderHandleWidth
       : props.theme.sliderHandleHeight}px;
-  width: ${props =>
+  width: ${(props) =>
     Number.isFinite(props.sliderHandleWidth)
       ? props.sliderHandleWidth
       : props.theme.sliderHandleHeight}px;
-  box-shadow: ${props => props.theme.sliderHandleShadow};
-  background-color: ${props => props.theme.sliderHandleColor};
-  color: ${props => props.theme.sliderHandleTextColor};
+  box-shadow: ${(props) => props.theme.sliderHandleShadow};
+  background-color: ${(props) => props.theme.sliderHandleColor};
+  color: ${(props) => props.theme.sliderHandleTextColor};
 
   border-width: 1px;
-  border-radius: ${props => props.theme.sliderBorderRadius};
+  border-radius: ${(props) => props.theme.sliderBorderRadius};
   border-style: solid;
-  border-color: ${props =>
+  border-color: ${(props) =>
     props.active ? props.theme.selectBorderColor : props.theme.sliderInactiveBorderColor};
 
   :hover {
-    background-color: ${props => props.theme.sliderHandleHoverColor};
+    background-color: ${(props) => props.theme.sliderHandleHoverColor};
     cursor: pointer;
   }
 
@@ -49,7 +49,7 @@ const StyledSliderHandle = styled.span.attrs(props => ({
   padding: 0 3px;
   letter-spacing: 1px;
   :after {
-    content: '${props => props.theme.sliderHandleAfterContent}';
+    content: '${(props) => props.theme.sliderHandleAfterContent}';
   }
 `;
 
@@ -66,12 +66,12 @@ const StyledSliderTooltip = styled.div<StyledSliderTooltipProps>`
   pointer-events: none;
   transition: opacity 0.3s ease-out;
   z-index: 999;
-  margin-left: ${props => props.sliderHandleWidth + 12}px;
+  margin-left: ${(props) => props.sliderHandleWidth + 12}px;
   font-size: 9.5px;
   font-weight: 500;
   padding: 7px 10px;
-  background-color: ${props => props.theme.tooltipBg};
-  color: ${props => props.theme.tooltipColor};
+  background-color: ${(props) => props.theme.tooltipBg};
+  color: ${(props) => props.theme.tooltipColor};
   margin-bottom: -6px;
   width: 50px;
 
@@ -96,7 +96,7 @@ const StyledSliderTooltip = styled.div<StyledSliderTooltipProps>`
     left: -6px;
     top: 50%;
     margin-top: -4px;
-    border-right-color: ${props => props.theme.tooltipBg};
+    border-right-color: ${(props) => props.theme.tooltipBg};
     border-right-style: solid;
     border-right-width: 6px;
   }
@@ -111,7 +111,7 @@ type SliderTooltipProps = {
 
 const SliderTooltip = ({
   value,
-  format = val => val,
+  format = (val) => val,
   style,
   sliderHandleWidth
 }: SliderTooltipProps) => {

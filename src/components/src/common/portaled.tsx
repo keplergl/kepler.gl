@@ -14,7 +14,7 @@ import {theme} from '@kepler.gl/styles';
 
 const listeners = {};
 
-const startListening = () => Object.keys(listeners).forEach(key => listeners[key]());
+const startListening = () => Object.keys(listeners).forEach((key) => listeners[key]());
 
 const getPageOffset = () => ({
   x:
@@ -256,7 +256,7 @@ class Portaled extends Component<PortaledProps, PortaledState> {
 
     return (
       <RootContext.Consumer>
-        {context => (
+        {(context) => (
           <Comp ref={this.element}>
             {isOpened ? (
               <Modal

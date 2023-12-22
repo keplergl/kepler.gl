@@ -143,7 +143,7 @@ interface StyledDroppableProps {
 }
 
 const StyledDroppable = styled.div<StyledDroppableProps>`
-  background-color: ${props => (props.isOver ? props.theme.dndOverBackgroundColor : 'none')};
+  background-color: ${(props) => (props.isOver ? props.theme.dndOverBackgroundColor : 'none')};
   width: 100%;
   height: 100%;
   position: absolute;
@@ -151,7 +151,7 @@ const StyledDroppable = styled.div<StyledDroppableProps>`
   z-index: 1;
 `;
 
-export const isSplitSelector = props =>
+export const isSplitSelector = (props) =>
   props.visState.splitMaps && props.visState.splitMaps.length > 1;
 
 export const Droppable = ({containerId}) => {
@@ -169,13 +169,13 @@ interface StyledDatasetAttributionsContainerProps {
 }
 
 const StyledDatasetAttributionsContainer = styled.div<StyledDatasetAttributionsContainerProps>`
-  max-width: ${props => (props.isPalm ? '130px' : '180px')};
+  max-width: ${(props) => (props.isPalm ? '130px' : '180px')};
   text-overflow: ellipsis;
   white-space: nowrap;
   overflow: hidden;
-  color: ${props => props.theme.labelColor};
+  color: ${(props) => props.theme.labelColor};
   margin-right: 2px;
-  line-height: ${props => (props.isPalm ? '1em' : '1.4em')};
+  line-height: ${(props) => (props.isPalm ? '1em' : '1.4em')};
   :hover {
     white-space: inherit;
   }
@@ -368,7 +368,7 @@ export default function MapContainerFactory(
       // [layers.id]: mapboxLayerConfig
     };
 
-    _handleResize = dimensions => {
+    _handleResize = (dimensions) => {
       const {primary, index} = this.props;
       if (primary) {
         const {mapStateActions} = this.props;
@@ -378,16 +378,16 @@ export default function MapContainerFactory(
       }
     };
 
-    layersSelector: PropSelector<VisState['layers']> = props => props.visState.layers;
-    layerDataSelector: PropSelector<VisState['layers']> = props => props.visState.layerData;
-    splitMapSelector: PropSelector<SplitMap[]> = props => props.visState.splitMaps;
-    splitMapIndexSelector: PropSelector<number | undefined> = props => props.index;
+    layersSelector: PropSelector<VisState['layers']> = (props) => props.visState.layers;
+    layerDataSelector: PropSelector<VisState['layers']> = (props) => props.visState.layerData;
+    splitMapSelector: PropSelector<SplitMap[]> = (props) => props.visState.splitMaps;
+    splitMapIndexSelector: PropSelector<number | undefined> = (props) => props.index;
     mapLayersSelector: PropSelector<SplitMapLayers | null | undefined> = createSelector(
       this.splitMapSelector,
       this.splitMapIndexSelector,
       getMapLayersFromSplitMaps
     );
-    layerOrderSelector: PropSelector<VisState['layerOrder']> = props => props.visState.layerOrder;
+    layerOrderSelector: PropSelector<VisState['layerOrder']> = (props) => props.visState.layerOrder;
     layersToRenderSelector: PropSelector<LayersToRender> = createSelector(
       this.layersSelector,
       this.layerDataSelector,
@@ -399,34 +399,35 @@ export default function MapContainerFactory(
       this.layerDataSelector,
       prepareLayersForDeck
     );
-    filtersSelector = props => props.visState.filters;
-    polygonFiltersSelector = createSelector(this.filtersSelector, filters =>
-      filters.filter(f => f.type === FILTER_TYPES.polygon && f.enabled !== false)
+    filtersSelector = (props) => props.visState.filters;
+    polygonFiltersSelector = createSelector(this.filtersSelector, (filters) =>
+      filters.filter((f) => f.type === FILTER_TYPES.polygon && f.enabled !== false)
     );
-    featuresSelector = props => props.visState.editor.features;
-    selectedFeatureSelector = props => props.visState.editor.selectedFeature;
+    featuresSelector = (props) => props.visState.editor.features;
+    selectedFeatureSelector = (props) => props.visState.editor.selectedFeature;
     featureCollectionSelector = createSelector(
       this.polygonFiltersSelector,
       this.featuresSelector,
       (polygonFilters, features) => ({
         type: 'FeatureCollection',
-        features: features.concat(polygonFilters.map(f => f.value))
+        features: features.concat(polygonFilters.map((f) => f.value))
       })
     );
     selectedPolygonIndexSelector = createSelector(
       this.featureCollectionSelector,
       this.selectedFeatureSelector,
       (collection, selectedFeature) =>
-        collection.features.findIndex(f => f.id === selectedFeature?.id)
+        collection.features.findIndex((f) => f.id === selectedFeature?.id)
     );
     selectedFeatureIndexArraySelector = createSelector(
       (value: number) => value,
-      value => {
+      (value) => {
         return value < 0 ? [] : [value];
       }
     );
 
-    generateMapboxLayerMethodSelector = props => props.generateMapboxLayers ?? generateMapboxLayers;
+    generateMapboxLayerMethodSelector = (props) =>
+      props.generateMapboxLayers ?? generateMapboxLayers;
 
     mapboxLayersSelector = createSelector(
       this.layersSelector,
@@ -440,8 +441,8 @@ export default function MapContainerFactory(
 
     // merge in a background-color style if the basemap choice is NO_MAP_ID
     // used by <StyledMap> inline style prop
-    mapStyleTypeSelector = props => props.mapStyle.styleType;
-    mapStyleBackgroundColorSelector = props => props.mapStyle.backgroundColor;
+    mapStyleTypeSelector = (props) => props.mapStyle.styleType;
+    mapStyleBackgroundColorSelector = (props) => props.mapStyle.backgroundColor;
     styleSelector = createSelector(
       this.mapStyleTypeSelector,
       this.mapStyleBackgroundColorSelector,
@@ -466,12 +467,12 @@ export default function MapContainerFactory(
       } as Partial<LayerBaseConfig>);
     };
 
-    _handleMapToggleLayer = layerId => {
+    _handleMapToggleLayer = (layerId) => {
       const {index: mapIndex = 0, visStateActions} = this.props;
       visStateActions.toggleLayerForMap(mapIndex, layerId);
     };
 
-    _onMapboxStyleUpdate = update => {
+    _onMapboxStyleUpdate = (update) => {
       // force refresh mapboxgl layers
       this.previousLayers = {};
       this._updateMapboxLayers();
@@ -486,7 +487,7 @@ export default function MapContainerFactory(
       }
     };
 
-    _setMapboxMap: React.Ref<MapRef> = mapbox => {
+    _setMapboxMap: React.Ref<MapRef> = (mapbox) => {
       if (!this._map && mapbox) {
         this._map = mapbox.getMap();
         // i noticed in certain context we don't access the actual map element
@@ -752,7 +753,7 @@ export default function MapContainerFactory(
         getCursor?: ({isDragging}: {isDragging: boolean}) => string;
       } = {};
       if (primaryMap) {
-        extraDeckParams.getTooltip = info =>
+        extraDeckParams.getTooltip = (info) =>
           EditorLayerUtils.getTooltip(info, {
             editorMenuActive,
             editor,
@@ -802,7 +803,7 @@ export default function MapContainerFactory(
           {...(isInteractive
             ? {
                 onMouseMove: primaryMap
-                  ? event => {
+                  ? (event) => {
                       onMouseMove?.(event);
                       this._onMouseMoveDebounced(event, viewport);
                     }
@@ -859,14 +860,14 @@ export default function MapContainerFactory(
               visStateActions.onLayerClick(data);
             }}
             onError={this._onDeckError}
-            ref={comp => {
+            ref={(comp) => {
               // @ts-ignore
               if (comp && comp.deck && !this._deck) {
                 // @ts-ignore
                 this._deck = comp.deck;
               }
             }}
-            onWebGLInitialized={gl => this._onDeckInitialized(gl)}
+            onWebGLInitialized={(gl) => this._onDeckInitialized(gl)}
             onAfterRender={() => {
               if (typeof deckRenderCallbacks?.onDeckAfterRender === 'function') {
                 deckRenderCallbacks.onDeckAfterRender(allDeckGlProps);
@@ -906,7 +907,7 @@ export default function MapContainerFactory(
       );
     }, DEBOUNCE_VIEWPORT_PROPAGATE);
 
-    _onViewportChange = viewport => {
+    _onViewportChange = (viewport) => {
       const {viewState} = viewport;
       if (this.props.isExport) {
         // Image export map shouldn't be interactive (otherwise this callback can
@@ -932,7 +933,7 @@ export default function MapContainerFactory(
       this.props.visStateActions.onMouseMove(normalizeEvent(event, viewport));
     }, DEBOUNCE_MOUSE_MOVE_PROPAGATE);
 
-    _toggleMapControl = panelId => {
+    _toggleMapControl = (panelId) => {
       const {index, uiStateActions} = this.props;
 
       uiStateActions.toggleMapControl(panelId, Number(index));
@@ -979,7 +980,7 @@ export default function MapContainerFactory(
         transformRequest: this.props.transformRequest || transformRequest
       };
 
-      const hasGeocoderLayer = Boolean(layers.find(l => l.id === GEOCODER_LAYER_ID));
+      const hasGeocoderLayer = Boolean(layers.find((l) => l.id === GEOCODER_LAYER_ID));
       const isSplit = Boolean(mapState.isSplit);
 
       const deck = this._renderDeckOverlay(layersForDeck, {
@@ -1097,7 +1098,7 @@ export default function MapContainerFactory(
         <StyledMap
           ref={this._ref}
           style={this.styleSelector(this.props)}
-          onContextMenu={event => event.preventDefault()}
+          onContextMenu={(event) => event.preventDefault()}
           mixBlendMode={visState.overlayBlending}
         >
           {mapContent}

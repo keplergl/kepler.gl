@@ -13,7 +13,7 @@ function nop(_) {}
 
 const DatasetTagWrapper = styled.div`
   display: flex;
-  color: ${props => props.theme.textColor};
+  color: ${(props) => props.theme.textColor};
   font-size: 11px;
   letter-spacing: 0.2px;
   overflow: auto;

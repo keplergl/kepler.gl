@@ -41,7 +41,7 @@ function SplitMapButtonFactory(MapControlTooltip) {
   }) => {
     const splitMap = mapControls?.splitMap || ({} as MapControlItem);
     const onClick = useCallback(
-      event => {
+      (event) => {
         event.preventDefault();
         onToggleSplitMap(isSplit ? mapIndex : undefined);
       },

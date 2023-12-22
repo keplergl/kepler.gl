@@ -9,7 +9,7 @@ import {DEFAULT_TIMEZONE} from '@kepler.gl/constants';
 
 import ItemSelector from '../common/item-selector/item-selector';
 
-const getValue = op => op?.name || DEFAULT_TIMEZONE;
+const getValue = (op) => op?.name || DEFAULT_TIMEZONE;
 
 export type TimezoneSelectorProps = {
   selected?: string;
@@ -24,12 +24,12 @@ const StyledItemSelector = styled(ItemSelector)`
     border-radius: 4px;
   }
   .active {
-    border-color: ${props => props.theme.activeColor};
+    border-color: ${(props) => props.theme.activeColor};
     border-radius: 4px 4px 0px 0px !important;
   }
 `;
 
-const defaultTimezones = moment.tz.names().map(name => {
+const defaultTimezones = moment.tz.names().map((name) => {
   return {
     name
   };

@@ -40,7 +40,7 @@ const DatasetCatalog = styled.div`
     overflow-x: auto;
     overflow-y: hidden;
     flex-direction: row;
-    ${props => props.theme.modalScrollBar}
+    ${(props) => props.theme.modalScrollBar}
   }
 `;
 
@@ -50,7 +50,7 @@ interface DatasetModalTabProps {
 
 export const DatasetModalTab = styled.div<DatasetModalTabProps>`
   align-items: center;
-  border-bottom: 3px solid ${props => (props.active ? 'black' : 'transparent')};
+  border-bottom: 3px solid ${(props) => (props.active ? 'black' : 'transparent')};
   cursor: pointer;
   display: flex;
   height: 35px;
@@ -87,7 +87,7 @@ const DatasetTabsUnmemoized: React.FC<DatasetTabsUnmemoizedProps> = ({
 }) => (
   <DatasetCatalog className="dataset-modal-catalog">
     <div className="overflow-horizontal">
-      {Object.values(datasets).map(dataset => (
+      {Object.values(datasets).map((dataset) => (
         <DatasetModalTab
           className="dataset-modal-tab"
           active={dataset === activeDataset}
@@ -149,8 +149,8 @@ function DataTableModalFactory(
     dataId = ({dataId = ''}: DataTableModalProps) => dataId;
     datasets = (props: DataTableModalProps) => props.datasets;
     fields = ({datasets, dataId = ''}: DataTableModalProps) => (datasets[dataId] || {}).fields;
-    columns = createSelector(this.fields, fields => fields.map(f => f.name));
-    colMeta = createSelector([this.fields, this.datasets], fields =>
+    columns = createSelector(this.fields, (fields) => fields.map((f) => f.name));
+    colMeta = createSelector([this.fields, this.datasets], (fields) =>
       fields.reduce(
         (acc, {name, displayName, type, filterProps, format, displayFormat}) => ({
           ...acc,
@@ -227,7 +227,7 @@ function DataTableModalFactory(
       sortTableColumn(dataId, column, mode);
     };
 
-    setColumnDisplayFormat = formats => {
+    setColumnDisplayFormat = (formats) => {
       const {dataId, setColumnDisplayFormat} = this.props;
       if (dataId) setColumnDisplayFormat(dataId, formats);
     };

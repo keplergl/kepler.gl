@@ -348,7 +348,7 @@ mergedLayer0.config = {
     format: '',
     fieldIdx: 0,
     analyzerType: 'INT',
-    valueAccessor: values => values[0]
+    valueAccessor: (values) => values[0]
   },
   colorDomain: [1000, 1000, 2000, 2000, 2000, 3000, 3000, 3000, 3000],
   highlightColor: [252, 242, 26, 255],
@@ -365,7 +365,7 @@ mergedLayer0.config = {
     format: '',
     fieldIdx: 0,
     analyzerType: 'INT',
-    valueAccessor: values => values[0]
+    valueAccessor: (values) => values[0]
   },
   sizeScale: 'sqrt',
   sizeDomain: [1000, 3000],

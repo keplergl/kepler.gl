@@ -50,7 +50,7 @@ export function observeDimensions(
 ) {
   const registry = getObserverRegistry();
   const handler = throttleDelay > 0 ? throttle(handleResize, throttleDelay) : handleResize;
-  registry.subscribe(target, entry => handler(getSize(target, entry)));
+  registry.subscribe(target, (entry) => handler(getSize(target, entry)));
 }
 
 export function unobserveDimensions(target: Element) {
@@ -93,7 +93,7 @@ export default function useDimensions<T extends Element>(
     let didUnobserve = false;
     observeDimensions(
       current,
-      entry => {
+      (entry) => {
         if (didUnobserve) return;
         const newSize = getSize(current, entry);
         if (newSize) {

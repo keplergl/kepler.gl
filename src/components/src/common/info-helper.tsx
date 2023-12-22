@@ -16,15 +16,15 @@ interface StyledInfoHelperProps {
 const StyledInfoHelper = styled.div<StyledInfoHelperProps>`
   align-items: center;
   margin-left: 10px;
-  color: ${props => props.theme.labelColor};
+  color: ${(props) => props.theme.labelColor};
   display: inline-flex;
   .info-helper__content {
-    width: ${props => (props.width ? `${props.width}px` : 'auto')};
-    max-width: ${props => (props.width ? 'auto' : '100px')};
+    width: ${(props) => (props.width ? `${props.width}px` : 'auto')};
+    max-width: ${(props) => (props.width ? 'auto' : '100px')};
   }
   :hover {
     cursor: pointer;
-    color: ${props => props.theme.textColorHl};
+    color: ${(props) => props.theme.textColorHl};
   }
 `;
 

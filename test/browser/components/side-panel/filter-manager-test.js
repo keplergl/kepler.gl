@@ -70,7 +70,7 @@ const filterManagerProps = {
   layers: StateWFilters.visState.layers
 };
 
-test('Components -> FilterManager.mount -> no prop', t => {
+test('Components -> FilterManager.mount -> no prop', (t) => {
   // mount
   let wrapper;
   t.doesNotThrow(() => {
@@ -88,7 +88,7 @@ test('Components -> FilterManager.mount -> no prop', t => {
   t.end();
 });
 
-test('Components -> FilterManager.mount -> with prop', t => {
+test('Components -> FilterManager.mount -> with prop', (t) => {
   // mount
   const addFilter = sinon.spy();
   const newProps = {
@@ -113,10 +113,7 @@ test('Components -> FilterManager.mount -> with prop', t => {
   t.ok(wrapper.find(FilterPanel).length === 2, 'should render 2 FilterPanel');
 
   // stateless component don't have a instance()
-  const filter1Props = wrapper
-    .find(FilterPanel)
-    .at(0)
-    .props();
+  const filter1Props = wrapper.find(FilterPanel).at(0).props();
 
   t.equal(filter1Props.filter, filterManagerProps.filters[1], 'should render last filter first');
   t.equal(filter1Props.isAnyFilterAnimating, false, 'isAnyFilterAnimating is false');
@@ -133,7 +130,7 @@ test('Components -> FilterManager.mount -> with prop', t => {
   t.end();
 });
 
-test('Components -> FilterManager.mount -> order by dataset view', t => {
+test('Components -> FilterManager.mount -> order by dataset view', (t) => {
   const newProps = {
     ...filterManagerProps,
     panelListView: 'byDataset'
@@ -152,7 +149,7 @@ test('Components -> FilterManager.mount -> order by dataset view', t => {
   t.end();
 });
 
-test('Components -> FilterManager.mount -> with supportedFilterTypes', t => {
+test('Components -> FilterManager.mount -> with supportedFilterTypes', (t) => {
   // load csv and geojson
   const updatedState = applyActions(keplerGlReducer, InitialState, [
     {
@@ -218,13 +215,10 @@ test('Components -> FilterManager.mount -> with supportedFilterTypes', t => {
   t.ok(wrapper.find(FieldSelector).length === 1, 'should render FieldSelector');
 
   // check field options
-  const fieldOptions = wrapper
-    .find(FieldSelector)
-    .at(0)
-    .props().fields;
+  const fieldOptions = wrapper.find(FieldSelector).at(0).props().fields;
 
   t.deepEqual(
-    fieldOptions.map(f => f.name),
+    fieldOptions.map((f) => f.name),
     ['gps_data.lat', 'gps_data.lng', 'uid'],
     'should only pass real / integer fields'
   );

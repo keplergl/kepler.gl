@@ -27,28 +27,28 @@ const StyledEffectTimeSelector = styled.div`
     width: 110px;
     height: 30px;
   }
-  border: 1px solid ${props => props.theme.inputBgd};
+  border: 1px solid ${(props) => props.theme.inputBgd};
   border-radius: 4px;
   :hover {
-    border: 1px solid ${props => props.theme.inputBgdHover};
+    border: 1px solid ${(props) => props.theme.inputBgdHover};
   }
   .active {
-    border: 1px solid ${props => props.theme.activeColor};
+    border: 1px solid ${(props) => props.theme.activeColor};
     border-radius: 4px 4px 0px 0px;
   }
 `;
 
 const StyledLabel = styled.div`
-  color: ${props => props.theme.effectPanelTextMain};
-  font-size: ${props => props.theme.inputFontSize};
+  color: ${(props) => props.theme.effectPanelTextMain};
+  font-size: ${(props) => props.theme.inputFontSize};
   height: 13px;
   display: flex;
   align-items: center;
 `;
 
 const DropdownListWrapper = styled.div`
-  ${props => props.theme.dropdownList};
-  background-color: ${props => props.theme.inputBgdHover};
+  ${(props) => props.theme.dropdownList};
+  background-color: ${(props) => props.theme.inputBgdHover};
   display: flex;
   flex-wrap: wrap;
   padding: 0px;
@@ -60,7 +60,7 @@ const StyledDropdownListItem = styled.div`
   padding: 10px 5px 9px 10px;
   width: 100%;
   :hover {
-    background-color: ${props => props.theme.effectPanelElementColorSelected};
+    background-color: ${(props) => props.theme.effectPanelElementColorSelected};
     cursor: pointer;
   }
 `;
@@ -78,8 +78,8 @@ const timeOptions = (() => {
   return out;
 })();
 
-const getDisplayOption = op => op.name;
-const getOptionValue = op => op.id;
+const getDisplayOption = (op) => op.name;
+const getOptionValue = (op) => op.id;
 
 /**
  * A component to render TimePicker as the header for the dropdown component.
@@ -124,8 +124,8 @@ const EffectTimeDropdownList = ({
             hover: selectionIndex === i
           })}
           key={`${value.id}_${i}`}
-          onMouseDown={e => onSelectOption(e, value)}
-          onClick={e => onSelectOption(e, value)}
+          onMouseDown={(e) => onSelectOption(e, value)}
+          onClick={(e) => onSelectOption(e, value)}
         >
           <ListItemComponent value={value} />
         </StyledDropdownListItem>
@@ -148,7 +148,7 @@ function EffectTimeSelectorFactory() {
           id: HEADER_ITEM_ID,
           value,
           onChange,
-          onClick: e => {
+          onClick: (e) => {
             // DatePicker is used as custom header.
             // Don't open the dropdown when the user is editing time values directly.
             const name = e?.target?.name;

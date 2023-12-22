@@ -4,7 +4,7 @@
 import test from 'tape';
 import {errorNotification, successNotification} from '@kepler.gl/utils';
 
-test('#notificationsUtils -> errorNotification', t => {
+test('#notificationsUtils -> errorNotification', (t) => {
   const notification = errorNotification({message: 'test', id: 'test-1'});
 
   t.deepEqual(
@@ -22,7 +22,7 @@ test('#notificationsUtils -> errorNotification', t => {
   t.end();
 });
 
-test('#notificationsUtils -> successNotification', t => {
+test('#notificationsUtils -> successNotification', (t) => {
   const notification = successNotification({message: 'test', id: 'test-1'});
 
   t.deepEqual(

@@ -25,16 +25,16 @@ interface BottomWidgetContainerProps {
 const BottomWidgetContainer = styled.div<BottomWidgetContainerProps>`
   display: flex;
   flex-direction: column;
-  padding-top: ${props => (props.hasPadding ? props.theme.bottomWidgetPaddingTop : 0)}px;
-  padding-right: ${props => (props.hasPadding ? props.theme.bottomWidgetPaddingRight : 0)}px;
-  padding-bottom: ${props => (props.hasPadding ? props.theme.bottomWidgetPaddingBottom : 0)}px;
-  padding-left: ${props => (props.hasPadding ? props.theme.bottomWidgetPaddingLeft : 0)}px;
+  padding-top: ${(props) => (props.hasPadding ? props.theme.bottomWidgetPaddingTop : 0)}px;
+  padding-right: ${(props) => (props.hasPadding ? props.theme.bottomWidgetPaddingRight : 0)}px;
+  padding-bottom: ${(props) => (props.hasPadding ? props.theme.bottomWidgetPaddingBottom : 0)}px;
+  padding-left: ${(props) => (props.hasPadding ? props.theme.bottomWidgetPaddingLeft : 0)}px;
   pointer-events: none !important; /* prevent padding from blocking input */
   & > * {
     /* all children should allow input */
     pointer-events: all;
   }
-  width: ${props => props.width}px;
+  width: ${(props) => props.width}px;
   z-index: 1;
   ${media.portable`padding: 0;`}
 `;
@@ -63,7 +63,7 @@ export default function BottomWidgetFactory(
   LayerAnimationController: ReturnType<typeof LayerAnimationControllerFactory>
 ): React.FC<BottomWidgetThemedProps> {
   const LayerAnimationControl = styled(AnimationControl)`
-    background-color: ${props => props.theme.sidePanelBg};
+    background-color: ${(props) => props.theme.sidePanelBg};
   `;
 
   const BottomWidget: React.FC<BottomWidgetThemedProps> = (props: BottomWidgetThemedProps) => {
@@ -83,11 +83,11 @@ export default function BottomWidgetFactory(
     const {activeSidePanel, readOnly} = uiState;
     const isOpen = Boolean(activeSidePanel);
 
-    const enlargedFilterIdx = useMemo(() => filters.findIndex(f => !isSideFilter(f)), [filters]);
+    const enlargedFilterIdx = useMemo(() => filters.findIndex((f) => !isSideFilter(f)), [filters]);
 
     const isMobile = hasPortableWidth(breakPointValues);
 
-    const animatedFilterIdx = useMemo(() => filters.findIndex(f => f.isAnimating), [filters]);
+    const animatedFilterIdx = useMemo(() => filters.findIndex((f) => f.isAnimating), [filters]);
     const animatedFilter = animatedFilterIdx > -1 ? filters[animatedFilterIdx] : null;
 
     const isLegendPinned =
@@ -104,7 +104,9 @@ export default function BottomWidgetFactory(
     // show playback control if layers contain trip layer & at least one trip layer is visible
     const animatableLayer = useMemo(
       () =>
-        layers.filter(l => l.config.animation && l.config.animation.enabled && l.config.isVisible),
+        layers.filter(
+          (l) => l.config.animation && l.config.animation.enabled && l.config.isVisible
+        ),
       [layers]
     );
 

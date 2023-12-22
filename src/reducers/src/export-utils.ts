@@ -35,7 +35,7 @@ export function exportData(state: StateType, options) {
     return;
   }
 
-  selectedDatasets.forEach(selectedData => {
+  selectedDatasets.forEach((selectedData) => {
     const {dataContainer, fields, label, filteredIdxCPU = []} = selectedData as KeplerTable;
     const toExport = filtered
       ? createIndexedDataContainer(dataContainer, filteredIdxCPU)
@@ -64,7 +64,7 @@ export function exportData(state: StateType, options) {
  * @returns csv string
  */
 export function formatCsv(data: DataContainerInterface, fields: Field[]): string {
-  const columns = fields.map(f => f.displayName || f.name);
+  const columns = fields.map((f) => f.displayName || f.name);
   const formattedData = [columns];
 
   // parse geojson object as string

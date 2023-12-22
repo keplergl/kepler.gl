@@ -65,12 +65,12 @@ const hashStyles = {
 const IconDiv = styled.div.attrs({
   className: 'tooltip-chicklet__icon'
 })<IconDivProps>`
-  color: ${props =>
+  color: ${(props) =>
     props.status === hashStyles.SHOW
       ? props.theme.subtextColorActive
       : props.status === hashStyles.ACTIVE
-      ? props.theme.activeColor
-      : props.theme.textColor};
+        ? props.theme.activeColor
+        : props.theme.textColor};
 `;
 
 type SortableStyledItemProps = {
@@ -78,8 +78,8 @@ type SortableStyledItemProps = {
   transform?: string;
 };
 const SortableStyledItem = styled.div<SortableStyledItemProps>`
-  transition: ${props => props.transition};
-  transform: ${props => props.transform};
+  transition: ${(props) => props.transition};
+  transform: ${(props) => props.transform};
   &.sorting {
     opacity: 0.3;
     pointer-events: none;
@@ -101,7 +101,7 @@ const StyledDragHandle = styled.div.attrs({
   margin-left: -5px;
   :hover {
     cursor: move;
-    color: ${props => props.theme.tooltipVerticalLineColor};
+    color: ${(props) => props.theme.tooltipVerticalLineColor};
   }
 `;
 
@@ -117,7 +117,7 @@ function getFormatTooltip(formatLabels: TimeLabelFormat[], format: string | null
   if (!format) {
     return null;
   }
-  const formatLabel = formatLabels.find(fl => getFormatValue(fl) === format);
+  const formatLabel = formatLabels.find((fl) => getFormatValue(fl) === format);
   if (formatLabel) {
     return formatLabel.label;
   }
@@ -167,19 +167,19 @@ function TooltipChickletFactory(
 
       const {show} = this.state;
       const tooltipField = config.fieldsToShow[dataId].find(
-        fieldToShow => fieldToShow.name === item.name
+        (fieldToShow) => fieldToShow.name === item.name
       );
       if (!tooltipField) {
         return null;
       }
-      const field = fields.find(f => f.name === tooltipField.name);
+      const field = fields.find((f) => f.name === tooltipField.name);
       if (!field) {
         return null;
       }
       const formatLabels = getFormatLabels(fields, tooltipField.name);
       const hasFormat = Boolean(field.displayFormat);
       const selectionIndex = formatLabels.findIndex(
-        fl => getFormatValue(fl) === field.displayFormat
+        (fl) => getFormatValue(fl) === field.displayFormat
       );
       const hashStyle = show ? hashStyles.SHOW : hasFormat ? hashStyles.ACTIVE : null;
 
@@ -191,7 +191,7 @@ function TooltipChickletFactory(
           transition={transition || ''}
           {...attributes}
         >
-          <ChickletButton ref={node => (this.node = node)}>
+          <ChickletButton ref={(node) => (this.node = node)}>
             <StyledDragHandle {...listeners}>
               <VertDots height="12px" />
             </StyledDragHandle>
@@ -214,7 +214,7 @@ function TooltipChickletFactory(
                     <IconDiv status={hashStyle}>
                       <Hash
                         height="8px"
-                        onClick={e => {
+                        onClick={(e) => {
                           e.stopPropagation();
                           this.setState({show: Boolean(!show)});
                         }}
@@ -236,7 +236,7 @@ function TooltipChickletFactory(
 
                         const displayFormat = getFormatValue(result);
                         const oldFieldsToShow = config.fieldsToShow[dataId];
-                        const fieldsToShow = oldFieldsToShow.map(fieldToShow => {
+                        const fieldsToShow = oldFieldsToShow.map((fieldToShow) => {
                           return fieldToShow.name === tooltipField.name
                             ? {
                                 name: tooltipField.name,

@@ -92,19 +92,19 @@ function LayerPanelFactory(
       this.updateLayerConfig({label: value});
     };
 
-    _toggleVisibility: MouseEventHandler = e => {
+    _toggleVisibility: MouseEventHandler = (e) => {
       e.stopPropagation();
       const isVisible = !this.props.layer.config.isVisible;
       this.updateLayerConfig({isVisible});
     };
 
-    _resetIsValid: MouseEventHandler = e => {
+    _resetIsValid: MouseEventHandler = (e) => {
       e?.stopPropagation();
       // Make the layer valid and visible again after an error
       this.props.layerSetIsValid(this.props.layer, true);
     };
 
-    _toggleEnableConfig: MouseEventHandler = e => {
+    _toggleEnableConfig: MouseEventHandler = (e) => {
       e?.stopPropagation();
       const {
         layer: {
@@ -114,12 +114,12 @@ function LayerPanelFactory(
       this.updateLayerConfig({isConfigActive: !isConfigActive});
     };
 
-    _removeLayer: MouseEventHandler = e => {
+    _removeLayer: MouseEventHandler = (e) => {
       e?.stopPropagation();
       this.props.removeLayer(this.props.layer.id);
     };
 
-    _duplicateLayer: MouseEventHandler = e => {
+    _duplicateLayer: MouseEventHandler = (e) => {
       e?.stopPropagation();
       this.props.duplicateLayer(this.props.layer.id);
     };

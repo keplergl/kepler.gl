@@ -9,7 +9,7 @@ import {VisStateActions} from '@kepler.gl/actions';
 import {EDITOR_LAYER_ID, EDITOR_MODES} from '@kepler.gl/constants';
 import {EditorLayerUtils, getEditorLayer} from '@kepler.gl/layers';
 
-test('editorLayerUtils -> isDrawingActive', t => {
+test('editorLayerUtils -> isDrawingActive', (t) => {
   t.equal(
     EditorLayerUtils.isDrawingActive(true, EDITOR_MODES.EDIT),
     false,
@@ -28,7 +28,7 @@ test('editorLayerUtils -> isDrawingActive', t => {
   t.end();
 });
 
-test('editorLayerUtils -> getCursor', t => {
+test('editorLayerUtils -> getCursor', (t) => {
   const {editor} = INITIAL_VIS_STATE;
   const mockSettings = {
     editorMenuActive: true,
@@ -58,7 +58,7 @@ test('editorLayerUtils -> getCursor', t => {
   t.end();
 });
 
-test('editorLayerUtils -> getTooltip', t => {
+test('editorLayerUtils -> getTooltip', (t) => {
   const {editor} = INITIAL_VIS_STATE;
   const info = {
     layer: {state: {mode: {_clickSequence: null}}},
@@ -148,7 +148,7 @@ test('editorLayerUtils -> getTooltip', t => {
   t.end();
 });
 
-test('editorLayerUtils -> onHover', t => {
+test('editorLayerUtils -> onHover', (t) => {
   const {editor} = INITIAL_VIS_STATE;
   const info = {
     layer: {},
@@ -187,7 +187,7 @@ test('editorLayerUtils -> onHover', t => {
   t.end();
 });
 
-test('editorLayerUtils -> onClick', t => {
+test('editorLayerUtils -> onClick', (t) => {
   const {editor} = INITIAL_VIS_STATE;
   const info = {
     layer: {},
@@ -234,7 +234,7 @@ test('editorLayerUtils -> onClick', t => {
   t.end();
 });
 
-test('editorLayerUtils -> getEditorLayer', t => {
+test('editorLayerUtils -> getEditorLayer', (t) => {
   const {editor} = INITIAL_VIS_STATE;
 
   const editorLayer = getEditorLayer({

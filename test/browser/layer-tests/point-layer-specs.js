@@ -23,7 +23,7 @@ import {DEFAULT_TEXT_LABEL, PROJECTED_PIXEL_SIZE_MULTIPLIER} from '@kepler.gl/co
 
 const {PointLayer} = KeplerGlLayers;
 
-test('#PointLayer -> constructor', t => {
+test('#PointLayer -> constructor', (t) => {
   const TEST_CASES = {
     CREATE: [
       {
@@ -32,7 +32,7 @@ test('#PointLayer -> constructor', t => {
           isVisible: true,
           label: 'test point layer'
         },
-        test: layer => {
+        test: (layer) => {
           t.ok(layer.config.dataId === 'smoothie', 'PointLayer dataId should be correct');
           t.ok(layer.type === 'point', 'type should be point');
           t.ok(layer.isAggregated === false, 'PointLayer is not aggregated');
@@ -54,7 +54,7 @@ test('#PointLayer -> constructor', t => {
   t.end();
 });
 
-test('#PointLayer -> formatLayerData', t => {
+test('#PointLayer -> formatLayerData', (t) => {
   const filteredIndex = [0, 2, 4];
   const filterDomain0 = 1474071056000;
 
@@ -94,7 +94,7 @@ test('#PointLayer -> formatLayerData', t => {
       datasets: {
         [dataId]: copyTableAndUpdate(preparedDataset, {filteredIndex})
       },
-      assert: result => {
+      assert: (result) => {
         const {layerData, layer} = result;
 
         const expectedLayerData = {
@@ -215,7 +215,7 @@ test('#PointLayer -> formatLayerData', t => {
       datasets: {
         [dataId]: copyTableAndUpdate(preparedDataset, {filteredIndex})
       },
-      assert: result => {
+      assert: (result) => {
         const {layerData, layer} = result;
         const expectedLayerData = {
           data: [
@@ -306,7 +306,7 @@ test('#PointLayer -> formatLayerData', t => {
       datasets: {
         [dataId]: copyTableAndUpdate(preparedDataset, {filteredIndex})
       },
-      assert: result => {
+      assert: (result) => {
         const {layerData, layer} = result;
 
         const expectedLayerData = {
@@ -389,7 +389,7 @@ test('#PointLayer -> formatLayerData', t => {
       datasets: {
         [dataId]: copyTableAndUpdate(preparedDataset, {filteredIndex})
       },
-      assert: result => {
+      assert: (result) => {
         const {layerData, layer} = result;
 
         const expectedLayerData = {
@@ -432,7 +432,7 @@ test('#PointLayer -> formatLayerData', t => {
   t.end();
 });
 
-test('#PointLayer -> renderLayer', t => {
+test('#PointLayer -> renderLayer', (t) => {
   const filteredIndex = [0, 2, 4];
   const TEST_CASES = [
     {
@@ -475,7 +475,7 @@ test('#PointLayer -> renderLayer', t => {
           lineWidthScale: layer.config.visConfig.thickness,
           filterRange: preparedDataset.gpuFilter.filterRange
         };
-        Object.keys(expectedProps).forEach(key => {
+        Object.keys(expectedProps).forEach((key) => {
           t.deepEqual(props[key], expectedProps[key], `should have correct props.${key}`);
         });
       }
@@ -521,7 +521,7 @@ test('#PointLayer -> renderLayer', t => {
       assert: (deckLayers, layer, layerData) => {
         t.equal(deckLayers.length, 5, 'Should create 5 deck.gl layer');
         t.deepEqual(
-          deckLayers.map(l => l.id),
+          deckLayers.map((l) => l.id),
           [
             'test_layer_1',
             'test_layer_1-label-types',
@@ -532,13 +532,8 @@ test('#PointLayer -> renderLayer', t => {
           'Should create 5 deck.gl layers'
         );
         // test test_layer_1-label-types-characters
-        const {
-          getPosition,
-          getColor,
-          getSize,
-          getPixelOffset,
-          getFilterValue
-        } = deckLayers[2].props;
+        const {getPosition, getColor, getSize, getPixelOffset, getFilterValue} =
+          deckLayers[2].props;
         const {getPixelOffset: getPixelOffset1} = deckLayers[4].props;
 
         const distanceScale = getDistanceScales(INITIAL_MAP_STATE);
@@ -620,7 +615,7 @@ test('#PointLayer -> renderLayer', t => {
       },
       assert: (deckLayers, layer, layerData) => {
         t.deepEqual(
-          deckLayers.map(l => l.id),
+          deckLayers.map((l) => l.id),
           ['test_layer_1', 'test_layer_1-label-types', 'test_layer_1-label-types-characters'],
           'Should create 3 deck.gl layers'
         );
@@ -655,7 +650,7 @@ test('#PointLayer -> renderLayer', t => {
   t.end();
 });
 
-test('#PointLayer -> updateLayer', t => {
+test('#PointLayer -> updateLayer', (t) => {
   const layerConfig = {
     id: 'test1',
     type: 'point',

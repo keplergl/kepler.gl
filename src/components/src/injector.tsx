@@ -49,7 +49,7 @@ export function injector(map = new Map()): InjectorType {
     // check if custom factory deps is declared
     const instances =
       cache.get(factory) ||
-      factory(...(factory.deps ? factory.deps.map(dep => get(dep, factory)) : []));
+      factory(...(factory.deps ? factory.deps.map((dep) => get(dep, factory)) : []));
 
     cache.set(fac, instances);
     return instances;
@@ -132,13 +132,13 @@ export interface WithState<RootState> {
   ): InferableComponentEnhancerWithProps<TStateProps & TDispatchProps, TOwnProps>;
 }
 
-const identity = state => state;
+const identity = (state) => state;
 // Helper to add reducer state to custom component
 export function withState(lenses: any[] = [], mapStateToProps = identity, actions = {}) {
-  return Component => {
+  return (Component) => {
     const WrappedComponent = ({state, ...props}) => (
       <KeplerGlContext.Consumer>
-        {context => (
+        {(context) => (
           <Component
             {...lenses.reduce(
               (totalState, lens) => ({
@@ -153,8 +153,8 @@ export function withState(lenses: any[] = [], mapStateToProps = identity, action
     );
 
     return connect(
-      state => ({...mapStateToProps(state), state}),
-      dispatch =>
+      (state) => ({...mapStateToProps(state), state}),
+      (dispatch) =>
         Object.keys(actions).reduce(
           (accu, key) => ({
             ...accu,

@@ -31,7 +31,7 @@ const defaultProps = {
   visStateActions: VisStateActions
 };
 
-test('Components -> BottomWidget.mount -> initial state', t => {
+test('Components -> BottomWidget.mount -> initial state', (t) => {
   let wrapper;
   t.doesNotThrow(() => {
     wrapper = mountWithTheme(

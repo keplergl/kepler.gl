@@ -51,6 +51,6 @@ const CONFIG = {
 };
 
 // This line enables bundling against src in this repo rather than installed deck.gl module
-module.exports = env => {
+module.exports = (env) => {
   return env ? require('../webpack.config.local')(CONFIG, __dirname)(env) : CONFIG;
 };
