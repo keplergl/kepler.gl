@@ -24,6 +24,7 @@ Geometry coordinates should be presented with a geographic coordinate reference 
 ## Supported File Formats
  - [CSV](#csv)
  - [GeoJSON](#geojson)
+ - [GeoArrow](https://geoarrow.org/)
  - [kepler.gl Json](#kepler-gl-json): exported from kepler.gl. See [export map](https://github.com/keplergl/kepler.gl/blob/master/docs/user-guides/k-save-and-export.md#export-map-as-json)
 
 
