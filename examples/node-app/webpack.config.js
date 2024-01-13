@@ -38,6 +38,12 @@ const CONFIG = {
         test: /\.json$/,
         loader: 'json-loader',
         exclude: [/node_modules/]
+      },
+      {
+        // fix for arrow-related errors
+        test: /\.mjs$/,
+        include: /node_modules/,
+        type: "javascript/auto"
       }
     ]
   },
