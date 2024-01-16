@@ -46,10 +46,10 @@ test('MapContainerFactory - display all options', t => {
 
   t.equal(wrapper.find('MapControl').length, 1, 'Should display 1 MapControl');
 
-  t.equal(wrapper.find('InteractiveMap').length, 1, 'Should display 1 InteractiveMap');
+  t.equal(wrapper.find('Map').length, 1, 'Should display 1 Map');
 
   // Editor
-  t.equal(wrapper.find('StaticMap').length, 1, 'Should display 1 DeckGl');
+  t.equal(wrapper.find('DeckGl').length, 1, 'Should display 1 DeckGl');
 
   const instance = wrapper.find(MapContainer).instance();
 

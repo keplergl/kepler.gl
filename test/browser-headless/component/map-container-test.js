@@ -57,7 +57,7 @@ test('MapContainerFactory - display all options', t => {
   t.equal(wrapper.find(MapControl).length, 1, 'Should display 1 MapControl');
 
   // TODO: why is this failing without Map in quotes
-  t.equal(wrapper.find('Map').length, 1, 'Should display 1 InteractiveMap');
+  t.equal(wrapper.find('Map').length, 1, 'Should display 1 Map');
   // Can't test overlay because mapboxgl is not supported in chromium
   t.equal(wrapper.find('Attribution').length, 1, 'Should display 1 Attribution');
 

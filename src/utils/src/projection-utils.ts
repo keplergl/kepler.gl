@@ -60,7 +60,8 @@ export function getCenterAndZoomFromBounds(bounds, {width, height}) {
  * Add extra info about screen space position and world position to the event.
  * @param {*} event Event to normalize.
  * @param {*} viewport Current viewport.
- * @returns Normalized event with extra information.
+ * @returns Normalized event with extra information compatible with React-map-gl MapLayerMouseEvent
+ * https://visgl.github.io/react-map-gl/docs/api-reference/types#maplayermouseevent
  */
 export function normalizeEvent(event: any, viewport: WebMercatorViewport) {
   var bounds = event.target?.getBoundingClientRect();

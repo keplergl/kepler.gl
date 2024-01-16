@@ -698,15 +698,15 @@ Returns **{type: ActionTypes.MAP_CLICK}**
 ### onMouseMove
 
 Trigger map mouse moveevent, payload would be
-React-map-gl PointerEvent
-[https://uber.github.io/react-map-gl/#/documentation/api-reference/pointer-event][202]
+React-map-gl MapLayerMouseEvent
+[https://visgl.github.io/react-map-gl/docs/api-reference/types#maplayermouseevent][202]
 
 - **ActionTypes**: [`ActionTypes.MOUSE_MOVE`][12]
 - **Updaters**: [`visStateUpdaters.mouseMoveUpdater`][203]
 
 **Parameters**
 
-- `evt` **[Object][164]** PointerEvent
+- `evt` **[Object][164]** MapLayerMouseEvent
 
 Returns **{type: ActionTypes.MAP_CLICK}**
 
@@ -1500,7 +1500,7 @@ Set the export map format (html, json)
 [199]: ../reducers/vis-state.md#visstateupdaterslayerclickupdater
 [200]: ../reducers/vis-state.md#visstateupdaterslayerhoverupdater
 [201]: ../reducers/vis-state.md#visstateupdatersmapclickupdater
-[202]: https://uber.github.io/react-map-gl/#/documentation/api-reference/pointer-event
+[202]: https://visgl.github.io/react-map-gl/docs/api-reference/types#maplayermouseevent
 [203]: ../reducers/vis-state.md#visstateupdatersmousemoveupdater
 [204]: ../reducers/vis-state.md#visstateupdatersremovedatasetupdater
 [205]: ../reducers/vis-state.md#visstateupdatersremovefilterupdater

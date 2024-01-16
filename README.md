@@ -28,7 +28,7 @@
 
 [<img width="600" alt="Kepler.gl Demo" src="https://eng.uber.com/wp-content/uploads/2018/05/image4-3-768x493.png">](http://kepler.gl/#/demo)
 
-[Kepler.gl][web] is a data-agnostic, high-performance web-based application for visual exploration of large-scale geolocation data sets. Built on top of [Mapbox GL](https://www.mapbox.com) and [deck.gl](http://uber.github.io/deck.gl/#/), kepler.gl can render millions of points representing thousands of trips and perform spatial aggregations on the fly.
+[Kepler.gl][web] is a data-agnostic, high-performance web-based application for visual exploration of large-scale geolocation data sets. Built on top of [MapLibre GL](https://maplibre.org/) and [deck.gl](https://deck.gl/), kepler.gl can render millions of points representing thousands of trips and perform spatial aggregations on the fly.
 
 Kepler.gl is also a React component that uses [Redux](https://redux.js.org/) to manage its state and data flow. It can be embedded into other React-Redux applications and is highly customizable. For information on how to embed kepler.gl in your app take a look at this step-by-step [tutorial][vis-academy] on vis.academy.
 
@@ -217,7 +217,7 @@ Action triggered when map viewport is updated.
 
 Function called when `KeplerGL` adds or removes a `MapContainer` component having an inner Mapbox map.
 
-The `mapbox` argument is an [`InteractiveMap`](https://uber.github.io/react-map-gl/#/Documentation/api-reference/interactive-map) when added or `null` when removed.
+The `mapbox` argument is an [`MapRef`](https://visgl.github.io/react-map-gl/docs/api-reference/types#mapref) when added or `null` when removed.
 
 The `index` argument is 0 for a single map or 1 for an additional map (since `KeplerGL` supports an optional split map view).
 

@@ -1061,11 +1061,11 @@ export type OnMouseMoveUpdaterAction = {
 };
 /**
  * Trigger map mouse moveevent, payload would be
- * React-map-gl PointerEvent
- * https://uber.github.io/react-map-gl/#/documentation/api-reference/pointer-event
+ * React-map-gl MapLayerMouseEvent
+ * https://visgl.github.io/react-map-gl/docs/api-reference/types#maplayermouseevent
  *
  * @memberof visStateActions
- * @param evt - PointerEvent
+ * @param evt - MapLayerMouseEvent
  * @returns action
  * @public
  */
