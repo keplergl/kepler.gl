@@ -7,7 +7,9 @@ import {
   DrawPolygonMode,
   TranslateMode,
   CompositeMode,
-  DrawRectangleMode
+  DrawRectangleMode,
+  MeasureDistanceMode,
+  DrawCircleFromCenterMode,
 } from '@nebula.gl/edit-modes';
 import {PathStyleExtension} from '@deck.gl/extensions';
 
@@ -61,6 +63,8 @@ export function getEditorLayer({
   if (editorMenuActive) {
     // @ts-ignore
     if (editorMode === EDITOR_MODES.DRAW_POLYGON) mode = DrawPolygonMode;
+    if (editorMode === EDITOR_MODES.MEASURE) mode = MeasureDistanceMode as any;
+    if (editorMode === EDITOR_MODES.DRAW_CIRCLE) mode = DrawCircleFromCenterMode as any;
     // @ts-ignore
     else if (editorMode === EDITOR_MODES.DRAW_RECTANGLE) mode = DrawRectangleMode;
   }

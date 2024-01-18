@@ -4,62 +4,63 @@
 // libraries
 import React, {Component, createRef, useMemo} from 'react';
 import styled, {withTheme} from 'styled-components';
-import {Map, MapRef} from 'react-map-gl/maplibre';
+import {Map, MapRef, ScaleControl} from 'react-map-gl/maplibre';
 import {PickInfo} from '@deck.gl/core/lib/deck';
 import DeckGL from '@deck.gl/react';
 import {createSelector, Selector} from 'reselect';
 import maplibregl from 'maplibre-gl';
 import {useDroppable} from '@dnd-kit/core';
 import debounce from 'lodash.debounce';
+import {GeoJsonLayer} from '@deck.gl/layers';
 
-import {VisStateActions, MapStateActions, UIStateActions} from '@kepler.gl/actions';
+import {BitmapLayer} from '@deck.gl/layers';
+import {TileLayer} from '@deck.gl/geo-layers';
+import {IconLayer} from '@deck.gl/layers';
+
+import {MapStateActions, UIStateActions, VisStateActions} from '@kepler.gl/actions';
 
 // components
 import MapPopoverFactory from './map/map-popover';
 import MapControlFactory from './map/map-control';
-import {
-  StyledMapContainer,
-  StyledAttrbution,
-  EndHorizontalFlexbox
-} from './common/styled-components';
+import {EndHorizontalFlexbox, StyledAttrbution, StyledMapContainer} from './common/styled-components';
 
 import EditorFactory from './editor/editor';
 
 // utils
 import {
+  EditorLayerUtils,
   generateMapboxLayers,
-  updateMapboxLayers,
   LayerBaseConfig,
-  VisualChannelDomain,
-  EditorLayerUtils
+  updateMapboxLayers,
+  VisualChannelDomain
 } from '@kepler.gl/layers';
-import {MapState, MapControls, Viewport, SplitMap, SplitMapLayers} from '@kepler.gl/types';
+import {MapControls, MapState, SplitMap, SplitMapLayers, Viewport} from '@kepler.gl/types';
 import {
+  computeDeckEffects,
   errorNotification,
-  setLayerBlending,
-  isStyleUsingMapboxTiles,
-  transformRequest,
-  observeDimensions,
-  unobserveDimensions,
-  hasMobileWidth,
   getMapLayersFromSplitMaps,
-  onViewPortChange,
   getViewportFromMapState,
+  hasMobileWidth,
+  isStyleUsingMapboxTiles,
   normalizeEvent,
+  observeDimensions,
+  onViewPortChange,
   rgbToHex,
-  computeDeckEffects
+  setLayerBlending,
+  transformRequest,
+  unobserveDimensions
 } from '@kepler.gl/utils';
 import {breakPointValues} from '@kepler.gl/styles';
 
 // default-settings
 import {
+  DEFAULT_PICKING_RADIUS,
+  DROPPABLE_MAP_CONTAINER_TYPE,
+  EMPTY_MAPBOX_STYLE,
   FILTER_TYPES,
   GEOCODER_LAYER_ID,
-  THROTTLE_NOTIFICATION_TIME,
-  DEFAULT_PICKING_RADIUS,
   NO_MAP_ID,
-  EMPTY_MAPBOX_STYLE,
-  DROPPABLE_MAP_CONTAINER_TYPE
+  THROTTLE_NOTIFICATION_TIME
 } from '@kepler.gl/constants';
 
 // Contexts
@@ -70,13 +71,13 @@ import {DatasetAttribution} from './types';
 import {LOCALE_CODES} from '@kepler.gl/localization';
 import {MapView} from '@deck.gl/core';
 import {
-  MapStyle,
   computeDeckLayers,
   getLayerHoverProp,
   LayerHoverProp,
+  LayersToRender,
+  MapStyle,
   prepareLayersForDeck,
-  prepareLayersToRender,
-  LayersToRender
+  prepareLayersToRender
 } from '@kepler.gl/reducers';
 import {VisState} from '@kepler.gl/schemas';
 
@@ -122,13 +123,14 @@ const StyledMap = styled(StyledMapContainer)<StyledMapContainerProps>(
 
 const MAPBOXGL_STYLE_UPDATE = 'style.load';
 const MAPBOXGL_RENDER = 'render';
-const nop = () => {};
+const nop = () => {
+};
 
 const MapLibreLogo = () => (
   <div className="attrition-logo">
     Basemap by:
     <a
-      style={{marginLeft: "5px"}}
+      style={{marginLeft: '5px'}}
       className="maplibregl-ctrl-logo"
       target="_blank"
       rel="noopener noreferrer"
@@ -176,15 +178,16 @@ const StyledDatasetAttributionsContainer = styled.div<StyledDatasetAttributionsC
   color: ${props => props.theme.labelColor};
   margin-right: 2px;
   line-height: ${props => (props.isPalm ? '1em' : '1.4em')};
+
   :hover {
     white-space: inherit;
   }
 `;
 
 const DatasetAttributions = ({
-  datasetAttributions,
-  isPalm
-}: {
+                               datasetAttributions,
+                               isPalm
+                             }: {
   datasetAttributions: DatasetAttribution[];
   isPalm: boolean;
 }) => (
@@ -728,16 +731,16 @@ export default function MapContainerFactory(
           layersForDeck,
           editorInfo: primaryMap
             ? {
-                editor,
-                editorMenuActive,
-                onSetFeatures: setFeatures,
-                setSelectedFeature,
-                featureCollection: this.featureCollectionSelector(this.props),
-                selectedFeatureIndexes: this.selectedFeatureIndexArraySelector(
-                  editorFeatureSelectedIndex
-                ),
-                viewport
-              }
+              editor,
+              editorMenuActive,
+              onSetFeatures: setFeatures,
+              setSelectedFeature,
+              featureCollection: this.featureCollectionSelector(this.props),
+              selectedFeatureIndexes: this.selectedFeatureIndexArraySelector(
+                editorFeatureSelectedIndex
+              ),
+              viewport
+            }
             : undefined
         },
         {
@@ -801,13 +804,13 @@ export default function MapContainerFactory(
         <div
           {...(isInteractive
             ? {
-                onMouseMove: primaryMap
-                  ? event => {
-                      onMouseMove?.(event);
-                      this._onMouseMoveDebounced(event, viewport);
-                    }
-                  : undefined
-              }
+              onMouseMove: primaryMap
+                ? event => {
+                  onMouseMove?.(event);
+                  this._onMouseMoveDebounced(event, viewport);
+                }
+                : undefined
+            }
             : {style: {pointerEvents: 'none'}})}
         >
           <DeckGL
@@ -833,15 +836,15 @@ export default function MapContainerFactory(
             onHover={
               isInteractive
                 ? (data, event) => {
-                    const res = EditorLayerUtils.onHover(data, {
-                      editorMenuActive,
-                      editor,
-                      hoverInfo
-                    });
-                    if (res) return;
+                  const res = EditorLayerUtils.onHover(data, {
+                    editorMenuActive,
+                    editor,
+                    hoverInfo
+                  });
+                  if (res) return;
 
-                    this._onLayerHoverDebounced(data, index, event);
-                  }
+                  this._onLayerHoverDebounced(data, index, event);
+                }
                 : null
             }
             onClick={(data, event) => {
@@ -992,7 +995,9 @@ export default function MapContainerFactory(
             mapStyle={mapStyle.bottomMapStyle ?? EMPTY_MAPBOX_STYLE}
             {...bottomMapContainerProps}
             ref={this._setMapboxMap}
-          />
+          >
+            <ScaleControl maxWidth={200} style={{marginLeft: 20}} unit={'nautical'} />
+          </MapComponent>
         )
       });
       if (!deck) {
@@ -1066,12 +1071,11 @@ export default function MapContainerFactory(
               {...topMapContainerProps}
             />
           ) : null}
-
           {hasGeocoderLayer
             ? this._renderDeckOverlay(
-                {[GEOCODER_LAYER_ID]: hasGeocoderLayer},
-                {primaryMap: false, isInteractive: false}
-              )
+              {[GEOCODER_LAYER_ID]: hasGeocoderLayer},
+              {primaryMap: false, isInteractive: false}
+            )
             : null}
           {this._renderMapPopover()}
           {this.props.primary ? (
@@ -1093,6 +1097,7 @@ export default function MapContainerFactory(
         // in this case we don't want to render the map
         return null;
       }
+
       return (
         <StyledMap
           ref={this._ref}

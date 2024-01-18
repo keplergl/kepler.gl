@@ -104,8 +104,8 @@ export const KEPLER_GL_WEBSITE = 'http://kepler.gl/';
 
 export const DIMENSIONS = {
   sidePanel: {
-    width: 300,
-    margin: {top: 20, left: 20, bottom: 30, right: 20},
+    width: 500,
+    margin: {top: 20, left: 20, bottom: 45, right: 20},
     headerHeight: 96
   },
   mapControl: {
@@ -172,7 +172,7 @@ export const PANELS = SIDEBAR_PANELS;
 
 export const DEFAULT_BLDG_COLOR = '#D1CEC7';
 
-export const DEFAULT_BACKGROUND_COLOR = '#000000';
+export const DEFAULT_BACKGROUND_COLOR = '#2d2b2b';
 
 // assists in identifying basemap background layers when auto-determining the backgroundColor
 export const BASE_MAP_BACKGROUND_LAYER_IDS = ['background', 'bg', 'land', 'water'];
@@ -834,7 +834,7 @@ export const LAYER_BLENDINGS = {
   }
 };
 
-export const MAX_DEFAULT_TOOLTIPS = 5;
+export const MAX_DEFAULT_TOOLTIPS = 7;
 
 export const RESOLUTIONS = keyMirror({
   ONE_X: null,
@@ -1084,7 +1084,9 @@ export const EDITOR_LAYER_PICKING_RADIUS = 6;
 export const EDITOR_MODES = {
   DRAW_POLYGON: 'DRAW_POLYGON',
   DRAW_RECTANGLE: 'DRAW_RECTANGLE',
-  EDIT: 'EDIT_VERTEX'
+  EDIT: 'EDIT_VERTEX',
+  MEASURE: 'MEASURE',
+  DRAW_CIRCLE: 'CIRCLE'
 };
 
 export const PLOT_TYPES = keyMirror({

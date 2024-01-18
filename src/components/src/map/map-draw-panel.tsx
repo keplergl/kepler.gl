@@ -5,13 +5,12 @@ import React, {useCallback} from 'react';
 import classnames from 'classnames';
 
 import {EDITOR_MODES} from '@kepler.gl/constants';
-import {CursorClick, DrawPolygon, EyeSeen, EyeUnseen, Polygon, Rectangle} from '../common/icons';
+import {CursorClick, DrawPolygon, EyeSeen, EyeUnseen, MagicWand, Polygon, Rectangle, Sun} from '../common/icons';
 import {MapControlButton} from '../common/styled-components';
 import ToolbarItem from '../common/toolbar-item';
 import MapControlTooltipFactory from './map-control-tooltip';
 import MapControlToolbarFactory from './map-control-toolbar';
 import {Editor, MapControls} from '@kepler.gl/types';
-import {BaseProps} from '../common/icons';
 
 MapDrawPanelFactory.deps = [MapControlTooltipFactory, MapControlToolbarFactory];
 
@@ -34,17 +33,19 @@ function MapDrawPanelFactory(
     polygon: DrawPolygon,
     cursor: CursorClick,
     innerPolygon: Polygon,
-    rectangle: Rectangle
+    rectangle: Rectangle,
+    circle: Sun,
+    edit: MagicWand
   };
 
   const MapDrawPanel: React.FC<MapDrawPanelProps> = React.memo(
     ({
-      editor,
-      mapControls,
-      onToggleMapControl,
-      onSetEditorMode,
-      actionIcons = defaultActionIcons
-    }) => {
+       editor,
+       mapControls,
+       onToggleMapControl,
+       onSetEditorMode,
+       actionIcons = defaultActionIcons
+     }) => {
       const isActive = mapControls?.mapDraw?.active;
       const onToggleMenuPanel = useCallback(() => onToggleMapControl('mapDraw'), [
         onToggleMapControl
@@ -76,6 +77,20 @@ function MapDrawPanelFactory(
                 label="toolbar.rectangle"
                 icon={actionIcons.rectangle}
                 active={editor.mode === EDITOR_MODES.DRAW_RECTANGLE}
+              />
+              <ToolbarItem
+                className="edit-circle-feature"
+                onClick={() => onSetEditorMode(EDITOR_MODES.DRAW_CIRCLE)}
+                label="Circle"
+                icon={actionIcons.circle}
+                active={editor.mode === EDITOR_MODES.DRAW_CIRCLE}
+              />
+              <ToolbarItem
+                className="edit-measure-feature"
+                onClick={() => onSetEditorMode(EDITOR_MODES.MEASURE)}
+                label="Measure"
+                icon={actionIcons.edit}
+                active={editor.mode === EDITOR_MODES.MEASURE}
               />
             </MapControlToolbar>
           ) : null}
