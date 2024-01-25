@@ -82,7 +82,9 @@ import {
   DEFAULT_TEXT_LABEL,
   COMPARE_TYPES,
   LIGHT_AND_SHADOW_EFFECT,
-  PLOT_TYPES
+  PLOT_TYPES,
+  BASE_SPEED,
+  FPS
 } from '@kepler.gl/constants';
 import {
   pick_,
@@ -199,6 +201,7 @@ export const DEFAULT_ANIMATION_CONFIG: AnimationConfig = {
   currentTime: null,
   speed: 1,
   isAnimating: false,
+  timeSteps: null,
   timeFormat: null,
   timezone: null,
   defaultTimeFormat: null,
@@ -321,7 +324,7 @@ export function updateStateOnLayerVisibilityChange<S extends VisState>(state: S,
   }
 
   if (layer.config.animation.enabled) {
-    newState = updateAnimationDomain(state);
+    newState = updateAnimationDomain(newState);
   }
 
   return newState;
@@ -505,6 +508,22 @@ export function layerConfigChangeUpdater(
     layerData,
     idx
   });
+}
+
+export function layerAnimationChangeUpdater<S extends VisState>(state: S, action): S {
+  const {oldLayer, prop, value} = action;
+  const idx = state.layers.findIndex(l => l.id === oldLayer.id);
+
+  const newLayer = oldLayer.updateLayerConfig({
+    animation: {
+      ...oldLayer.config.animation,
+      [prop]: value
+    }
+  });
+
+  const {layerData, layer} = calculateLayerData(newLayer, state, state.layerData[idx]);
+
+  return updateStateWithLayerAndData(state, {layerData, layer, idx});
 }
 
 /**
@@ -821,10 +840,13 @@ export function layerVisualChannelChangeUpdater(
 
   newLayer.updateLayerVisualChannel(dataset, channel);
 
-  const oldLayerData = state.layerData[idx];
-  const {layerData, layer} = calculateLayerData(newLayer, state, oldLayerData);
+  // calling update animation domain first to merge all layer animation domain
+  const updatedState = updateAnimationDomain(state);
 
-  return updateStateWithLayerAndData(state, {layerData, layer, idx});
+  const oldLayerData = updatedState.layerData[idx];
+  const {layerData, layer} = calculateLayerData(newLayer, updatedState, oldLayerData);
+
+  return updateStateWithLayerAndData(updatedState, {layerData, layer, idx});
 }
 
 /**
@@ -1308,16 +1330,30 @@ export const updateFilterAnimationSpeedUpdater = (
  * @public
  *
  */
-export const setLayerAnimationTimeUpdater = (
-  state: VisState,
+export const setLayerAnimationTimeUpdater = <S extends VisState>(
+  state: S,
   {value}: VisStateActions.SetLayerAnimationTimeUpdaterAction
-): VisState => ({
-  ...state,
-  animationConfig: {
-    ...state.animationConfig,
-    currentTime: value
-  }
-});
+): S => {
+  const currentTime = Array.isArray(value) ? value[0] : value;
+  const nextState = {
+    ...state,
+    animationConfig: {
+      ...state.animationConfig,
+      currentTime
+    }
+  };
+  // update animation config for each layer
+  const result = state.layers.reduce(
+    (accu, l) =>
+      l.config.animation.enabled && l.type !== 'trip'
+        ? layerAnimationChangeUpdater(accu, {oldLayer: l, prop: 'currentTime', currentTime})
+        : accu,
+
+    nextState
+  );
+
+  return result;
+};
 
 /**
  * Update animation speed with the vertical speed slider
@@ -2646,8 +2682,7 @@ export function updateAnimationDomain<S extends VisState>(state: S): S {
       l.config.isVisible &&
       l.config.animation &&
       l.config.animation.enabled &&
-      // @ts-expect-error trip-layer-only
-      Array.isArray(l.animationDomain)
+      Array.isArray(l.config.animation.domain)
   );
 
   if (!animatableLayers.length) {
@@ -2656,6 +2691,8 @@ export function updateAnimationDomain<S extends VisState>(state: S): S {
       animationConfig: {
         ...state.animationConfig,
         domain: null,
+        isAnimating: false,
+        timeSteps: null,
         defaultTimeFormat: null
       }
     };
@@ -2663,26 +2700,51 @@ export function updateAnimationDomain<S extends VisState>(state: S): S {
 
   const mergedDomain: [number, number] = animatableLayers.reduce(
     (accu, layer) => [
-      // @ts-expect-error trip-layer-only
-      Math.min(accu[0], layer.animationDomain[0]),
-      // @ts-expect-error trip-layer-only
-      Math.max(accu[1], layer.animationDomain[1])
+      Math.min(accu[0], layer.config.animation.domain?.[0] ?? Infinity),
+      Math.max(accu[1], layer.config.animation.domain?.[1] ?? -Infinity)
     ],
     [Number(Infinity), -Infinity]
   );
   const defaultTimeFormat = getTimeWidgetTitleFormatter(mergedDomain);
 
-  return {
+  // merge timeSteps
+  let mergedTimeSteps: number[] | null = uniq(
+    animatableLayers.reduce((accu, layer) => {
+      // @ts-ignore
+      accu.push(...(layer.config.animation.timeSteps || []));
+      return accu;
+    }, [])
+  ).sort();
+
+  mergedTimeSteps = mergedTimeSteps.length ? mergedTimeSteps : null;
+
+  // TODO: better handling of duration calculation
+  const duration = mergedTimeSteps
+    ? (BASE_SPEED * (1000 / FPS)) / mergedTimeSteps.length / (state.animationConfig.speed || 1)
+    : null;
+
+  const nextState = {
     ...state,
     animationConfig: {
       ...state.animationConfig,
-      currentTime: isInRange(state.animationConfig.currentTime, mergedDomain)
-        ? state.animationConfig.currentTime
-        : mergedDomain[0],
       domain: mergedDomain,
-      defaultTimeFormat
+      defaultTimeFormat,
+      duration,
+      timeSteps: mergedTimeSteps
     }
   };
+
+  // reset currentTime based on new domain
+  const currentTime = isInRange(state.animationConfig.currentTime, mergedDomain)
+    ? state.animationConfig.currentTime
+    : mergedDomain[0];
+
+  if (currentTime !== state.animationConfig.currentTime) {
+    // if currentTime changed, need to call animationTimeUpdater to re call formatLayerData
+    return setLayerAnimationTimeUpdater(nextState, {value: currentTime});
+  }
+
+  return nextState;
 }
 
 /**

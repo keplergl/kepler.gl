@@ -924,7 +924,7 @@ export function updateFilterAnimationSpeed(
 }
 
 export type SetLayerAnimationTimeUpdaterAction = {
-  value: number;
+  value: number | null;
 };
 /**
  * Reset animation
