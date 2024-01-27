@@ -1,0 +1,240 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
+import {createSelector} from 'reselect';
+import memoize from 'lodash.memoize';
+import {CHANNEL_SCALES, SCALE_FUNC, ALL_FIELD_TYPES, ColorRange} from '@kepler.gl/constants';
+import MapboxGLLayer, {MapboxLayerGLConfig} from '../mapboxgl-layer';
+import HeatmapLayerIcon from './heatmap-layer-icon';
+import {
+  LayerBaseConfigPartial,
+  LayerColumn,
+  LayerWeightConfig,
+  VisualChannels
+} from '../base-layer';
+import {VisConfigColorRange, VisConfigNumber, HexColor, Merge} from '@kepler.gl/types';
+import {hexToRgb, DataContainerInterface} from '@kepler.gl/utils';
+
+export type HeatmapLayerVisConfigSettings = {
+  opacity: VisConfigNumber;
+  colorRange: VisConfigColorRange;
+  radius: VisConfigNumber;
+};
+
+export type HeatmapLayerColumnsConfig = {lat: LayerColumn; lng: LayerColumn};
+
+export type HeatmapLayerVisConfig = {
+  opacity: number;
+  colorRange: ColorRange;
+  radius: number;
+};
+
+export type HeatmapLayerVisualChannelConfig = LayerWeightConfig;
+export type HeatmapLayerConfig = Merge<
+  MapboxLayerGLConfig,
+  {columns: HeatmapLayerColumnsConfig; visConfig: HeatmapLayerVisConfig}
+> &
+  HeatmapLayerVisualChannelConfig;
+
+export const MAX_ZOOM_LEVEL = 18;
+
+export const pointPosAccessor = ({lat, lng}: HeatmapLayerColumnsConfig) => (
+  dc: DataContainerInterface
+) => d => [dc.valueAt(d.index, lng.fieldIdx), dc.valueAt(d.index, lat.fieldIdx)];
+
+export const pointColResolver = ({lat, lng}: HeatmapLayerColumnsConfig) =>
+  `${lat.fieldIdx}-${lng.fieldIdx}`;
+
+export const heatmapVisConfigs: {
+  opacity: 'opacity';
+  colorRange: 'colorRange';
+  radius: 'heatmapRadius';
+} = {
+  opacity: 'opacity',
+  colorRange: 'colorRange',
+  radius: 'heatmapRadius'
+};
+
+/**
+ *
+ * @param colorRange
+ * @return [
+ *  0, "rgba(33,102,172,0)",
+ *  0.2, "rgb(103,169,207)",
+ *  0.4, "rgb(209,229,240)",
+ *  0.6, "rgb(253,219,199)",
+ *  0.8, "rgb(239,138,98)",
+ *  1, "rgb(178,24,43)"
+ * ]
+ */
+const heatmapDensity = (colorRange: ColorRange): (string | number)[] => {
+  const scaleFunction = SCALE_FUNC.quantize;
+
+  const colors: HexColor[] = ['#000000', ...colorRange.colors];
+
+  const scale = scaleFunction<HexColor>()
+    .domain([0, 1])
+    .range(colors);
+
+  const colorDensity = scale.range().reduce((bands: (string | number)[], level) => {
+    const invert = scale.invertExtent(level);
+    return [
+      ...bands,
+      invert[0], // first value in the range
+      `rgb(${hexToRgb(level).join(',')})` // color
+    ];
+  }, []);
+  colorDensity[1] = 'rgba(0,0,0,0)';
+  return colorDensity;
+};
+
+class HeatmapLayer extends MapboxGLLayer {
+  declare visConfigSettings: HeatmapLayerVisConfigSettings;
+  declare config: HeatmapLayerConfig;
+
+  getPosition: (config: HeatmapLayerColumnsConfig) => any;
+
+  constructor(props) {
+    super(props);
+    this.registerVisConfig(heatmapVisConfigs);
+    this.getPosition = memoize(pointPosAccessor, pointColResolver);
+  }
+
+  get type(): 'heatmap' {
+    return 'heatmap';
+  }
+
+  get visualChannels(): VisualChannels {
+    return {
+      // @ts-expect-error
+      weight: {
+        property: 'weight',
+        field: 'weightField',
+        scale: 'weightScale',
+        domain: 'weightDomain',
+        key: 'weight',
+        // supportedFieldTypes can be determined by channelScaleType
+        // or specified here
+        defaultMeasure: 'property.density',
+        supportedFieldTypes: [ALL_FIELD_TYPES.real, ALL_FIELD_TYPES.integer],
+        channelScaleType: CHANNEL_SCALES.size
+      }
+    };
+  }
+
+  get layerIcon() {
+    return HeatmapLayerIcon;
+  }
+
+  getVisualChannelDescription(channel) {
+    return channel === 'color'
+      ? {
+          label: 'property.color',
+          measure: 'property.density'
+        }
+      : {
+          label: 'property.weight',
+          measure: this.config.weightField ? this.config.weightField.name : 'property.density'
+        };
+  }
+
+  getDefaultLayerConfig(props: LayerBaseConfigPartial): HeatmapLayerConfig {
+    // mapbox heatmap layer color is always based on density
+    // no need to set colorField, colorDomain and colorScale
+    // eslint-disable-next-line no-unused-vars
+    const {colorField, colorDomain, colorScale, ...layerConfig} = {
+      ...super.getDefaultLayerConfig(props),
+
+      weightField: null,
+      weightDomain: [0, 1],
+      weightScale: 'linear'
+    };
+
+    // @ts-expect-error
+    return layerConfig;
+  }
+
+  getPositionAccessor(dataContainer) {
+    return this.getPosition(this.config.columns)(dataContainer);
+  }
+
+  updateLayerMeta(dataContainer) {
+    const getPosition = this.getPositionAccessor(dataContainer);
+    const bounds = this.getPointsBounds(dataContainer, getPosition);
+    this.updateMeta({bounds});
+  }
+
+  columnsSelector = config => pointColResolver(config.columns);
+  visConfigSelector = config => config.visConfig;
+  weightFieldSelector = config => (config.weightField ? config.weightField.name : null);
+  weightDomainSelector = config => config.weightDomain;
+
+  paintSelector = createSelector(
+    this.visConfigSelector,
+    this.weightFieldSelector,
+    this.weightDomainSelector,
+    (visConfig, weightField, weightDomain) => ({
+      'heatmap-weight': weightField
+        ? ['interpolate', ['linear'], ['get', weightField], weightDomain[0], 0, weightDomain[1], 1]
+        : 1,
+      'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 0, 1, MAX_ZOOM_LEVEL, 3],
+      'heatmap-color': [
+        'interpolate',
+        ['linear'],
+        ['heatmap-density'],
+        ...heatmapDensity(visConfig.colorRange)
+      ],
+      'heatmap-radius': [
+        'interpolate',
+        ['linear'],
+        ['zoom'],
+        0,
+        2,
+        MAX_ZOOM_LEVEL,
+        visConfig.radius // radius
+      ],
+      'heatmap-opacity': visConfig.opacity
+    })
+  );
+
+  computeHeatmapConfiguration = createSelector(
+    this.sourceSelector,
+    this.filterSelector,
+    this.paintSelector,
+    (source, filter, paint) => {
+      return {
+        type: 'heatmap',
+        id: this.id,
+        source,
+        layout: {
+          visibility: 'visible'
+        },
+        paint,
+        ...(this.isValidFilter(filter) ? {filter} : {})
+      };
+    }
+  );
+
+  formatLayerData(datasets, oldLayerData) {
+    if (this.config.dataId === null) {
+      return {};
+    }
+    const {weightField} = this.config;
+    const {dataContainer} = datasets[this.config.dataId];
+    const getPosition = this.getPositionAccessor(dataContainer);
+    const {data} = this.updateData(datasets, oldLayerData);
+
+    const newConfig = this.computeHeatmapConfiguration(this.config, datasets);
+    newConfig.id = this.id;
+
+    return {
+      columns: this.config.columns,
+      config: newConfig,
+      data,
+      weightField,
+      getPosition
+    };
+  }
+}
+
+export default HeatmapLayer;

@@ -1,30 +1,13 @@
-// Copyright (c) 2020 Uber Technologies, Inc.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
 
 import {combineReducers} from 'redux';
 import {handleActions} from 'redux-actions';
 
-import keplerGlReducer, {combinedUpdaters, uiStateUpdaters} from 'kepler.gl/reducers';
-import {processGeojson, processCsvData} from 'kepler.gl/processors';
-import KeplerGlSchema from 'kepler.gl/schemas';
-import {EXPORT_MAP_FORMATS} from 'kepler.gl/constants';
+import keplerGlReducer, {combinedUpdaters, uiStateUpdaters} from '@kepler.gl/reducers';
+import {processGeojson, processRowObject, processArrowTable} from '@kepler.gl/processors';
+import KeplerGlSchema from '@kepler.gl/schemas';
+import {EXPORT_MAP_FORMATS} from '@kepler.gl/constants';
 
 import {
   INIT,
@@ -34,7 +17,7 @@ import {
   SET_SAMPLE_LOADING_STATUS
 } from '../actions';
 
-import {AUTH_TOKENS, DEFAULT_FEATURE_FLAGS} from '../constants/default-settings';
+import {CLOUD_PROVIDERS_CONFIGURATION} from '../constants/default-settings';
 import {generateHashId} from '../utils/strings';
 
 // INITIAL_APP_STATE
@@ -43,13 +26,11 @@ const initialAppState = {
   loaded: false,
   sampleMaps: [], // this is used to store sample maps fetch from a remote json file
   isMapLoading: false, // determine whether we are loading a sample map,
-  error: null, // contains error when loading/retrieving data/configuration
+  error: null // contains error when loading/retrieving data/configuration
   // {
   //   status: null,
   //   message: null
   // }
-  // eventually we may have an async process to fetch these from a remote location
-  featureFlags: DEFAULT_FEATURE_FLAGS
 };
 
 // App reducer
@@ -86,9 +67,13 @@ const demoReducer = combineReducers({
         ...DEFAULT_EXPORT_MAP,
         [EXPORT_MAP_FORMATS.HTML]: {
           ...DEFAULT_EXPORT_MAP[[EXPORT_MAP_FORMATS.HTML]],
-          exportMapboxAccessToken: AUTH_TOKENS.EXPORT_MAPBOX_TOKEN
+          exportMapboxAccessToken: CLOUD_PROVIDERS_CONFIGURATION.EXPORT_MAPBOX_TOKEN
         }
       }
+    },
+    visState: {
+      loaders: [], // Add additional loaders.gl loaders here
+      loadOptions: {} // Add additional loaders.gl loader options here
     }
   }),
   app: appReducer
@@ -105,10 +90,12 @@ export const loadRemoteResourceSuccess = (state, action) => {
   // TODO: replace generate with a different function
   const datasetId = action.options.id || generateHashId(6);
   const {dataUrl} = action.options;
-  let processorMethod = processCsvData;
+  let processorMethod = processRowObject;
   // TODO: create helper to determine file ext eligibility
   if (dataUrl.includes('.json') || dataUrl.includes('.geojson')) {
     processorMethod = processGeojson;
+  } else if (dataUrl.includes('.arrow')) {
+    processorMethod = processArrowTable;
   }
 
   const datasets = {
@@ -125,7 +112,10 @@ export const loadRemoteResourceSuccess = (state, action) => {
     {
       payload: {
         datasets,
-        config
+        config,
+        options: {
+          centerMap: Boolean(!action.config)
+        }
       }
     }
   );

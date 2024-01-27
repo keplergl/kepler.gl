@@ -1,41 +1,32 @@
-// Copyright (c) 2020 Uber Technologies, Inc.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
 
 import test from 'tape';
 import cloneDeep from 'lodash.clonedeep';
+import Task, {withTask, drainTasksForTesting, succeedTaskInTest} from 'react-palm/tasks';
 
-import {
+import keplerGlReducer, {
   mergeFilters,
   mergeLayers,
+  mergeEffects,
   mergeInteractions,
   mergeLayerBlending,
-  mergeSplitMaps
-} from 'reducers/vis-state-merger';
+  mergeSplitMaps,
+  insertLayerAtRightOrder,
+  VIS_STATE_MERGERS,
+  createLayerFromConfig,
+  applyMergersUpdater,
+  visStateReducer,
+  keplerGlReducerCore as coreReducer,
+  defaultInteractionConfig,
+  getLayerOrderFromLayers
+} from '@kepler.gl/reducers';
 
-import SchemaManager from 'schemas';
-import visStateReducer from 'reducers/vis-state';
-import coreReducer from 'reducers/core';
-import {updateVisData} from 'actions/vis-state-actions';
-import {receiveMapConfig, addDataToMap} from 'actions/actions';
-import {getDefaultInteraction} from 'utils/interaction-utils';
-import {processKeplerglJSON} from 'processors/data-processor';
+import SchemaManager, {CURRENT_VERSION, visStateSchema} from '@kepler.gl/schemas';
+import {processKeplerglJSON} from '@kepler.gl/processors';
+import {updateVisData, receiveMapConfig, addDataToMap, registerEntry} from '@kepler.gl/actions';
+
+import {createDataContainer, findById} from '@kepler.gl/utils';
 
 // fixtures
 import {
@@ -85,11 +76,12 @@ import {
   StateWFilesFiltersLayerColor,
   StateWSplitMaps,
   testCsvDataId,
-  testGeoJsonDataId
+  testGeoJsonDataId,
+  StateWFiles
 } from 'test/helpers/mock-state';
 
 import {
-  datasetCsvFields,
+  testFields,
   testAllData,
   timeFilterProps,
   dateFilterProps,
@@ -100,13 +92,15 @@ import {
 } from 'test/fixtures/test-csv-data';
 
 import {
-  datasetFields as testGeoJsonFields,
+  fields,
   datasetAllData as testGeoJsonAllData,
   geoJsonRateFilterProps,
   geoJsonTripFilterProps,
   mergedTripFilter,
   mergedRateFilter
 } from 'test/fixtures/geojson';
+import {mockStateWithPolygonFilter} from '../../fixtures/points-with-polygon-filter-map';
+import CloneDeep from 'lodash.clonedeep';
 
 test('VisStateMerger.v0 -> mergeFilters -> toEmptyState', t => {
   const savedConfig = cloneDeep(savedStateV0);
@@ -246,19 +240,76 @@ test('VisStateMerger.v1 -> mergeFilters -> toWorkingState', t => {
   t.end();
 });
 
+test('VisStateMerger.v1 -> mergeFilters -> empty filter', t => {
+  const savedConfig = cloneDeep(savedStateV1);
+  // set an empty filter
+  savedConfig.config.config.visState.filters[0].name = [];
+  const oldState = cloneDeep(InitialState);
+
+  const oldVisState = oldState.visState;
+  const oldFilters = [...oldState.visState.filters];
+
+  const parsedConfig = SchemaManager.parseSavedConfig(savedConfig.config, oldState);
+  const parsedFilters = parsedConfig.visState.filters;
+
+  const mergedState = mergeFilters(oldState.visState, parsedFilters);
+
+  Object.keys(oldVisState).forEach(key => {
+    if (key === 'filterToBeMerged') {
+      t.deepEqual(
+        mergedState.filterToBeMerged,
+        parsedFilters,
+        'Should save filters to filterToBeMerged before data loaded'
+      );
+    } else {
+      t.deepEqual(mergedState[key], oldVisState[key], 'Should keep the rest of state same');
+    }
+  });
+
+  const parsedData = SchemaManager.parseSavedData(savedConfig.datasets);
+
+  // load data into reducer
+  const stateWData = visStateReducer(mergedState, updateVisData(parsedData));
+
+  // test parsed filters
+  cmpFilters(t, oldFilters, stateWData.filters);
+  t.deepEqual(
+    stateWData.filterToBeMerged,
+    parsedFilters,
+    'should save filters failed to merge to filterToBeMerged'
+  );
+
+  // should filter data
+  t.end();
+});
+
+test('VisStateMerger -> mergeLayers -> invalid layer config', t => {
+  const oldState = cloneDeep(InitialState);
+  const oldVisState = oldState.visState;
+
+  const layers = [
+    {id: 'abc'},
+    {type: 'taro'}, // no type
+    {type: 'point', id: 'yes'} // no config
+  ];
+  const mergedState = mergeLayers(oldVisState, layers, true);
+
+  t.equal(mergedState.layers, oldVisState.layers, 'merge invalid layer should not error');
+  t.deepEqual(mergedState.layerToBeMerged, layers, 'layerToBeMerged should contain invalid layers');
+  t.end();
+});
+
 test('VisStateMerger.current -> mergeLayers -> toEmptyState', t => {
   const stateToSave = cloneDeep(StateWFilesFiltersLayerColor);
   const appStateToSave = SchemaManager.save(stateToSave);
   const configToSave = appStateToSave.config;
   const configParsed = SchemaManager.parseSavedConfig(configToSave);
-
   const oldState = cloneDeep(InitialState);
   const oldVisState = oldState.visState;
 
   const parsedLayers = configParsed.visState.layers;
-
   // mergeLayers
-  const mergedState = mergeLayers(oldState.visState, parsedLayers);
+  const mergedState = mergeLayers(oldState.visState, parsedLayers, true);
 
   Object.keys(oldVisState).forEach(key => {
     if (key === 'layerToBeMerged') {
@@ -277,11 +328,89 @@ test('VisStateMerger.current -> mergeLayers -> toEmptyState', t => {
   const stateWData = visStateReducer(mergedState, updateVisData(parsedData));
 
   // test parsed layers
-  const genericLayersByOrder = stateToSave.visState.layerOrder.map(
-    idx => stateToSave.visState.layers[idx]
+  const genericLayersByOrder = stateToSave.visState.layerOrder.map(id =>
+    findById(id)(stateToSave.visState.layers)
   );
 
   cmpLayers(t, genericLayersByOrder, stateWData.layers, {id: true});
+  t.end();
+});
+
+test('visStateMerger -> mergeLayer -> incremental load', t => {
+  const stateToSave = cloneDeep(StateWFilesFiltersLayerColor);
+  const appStateToSave = SchemaManager.save(stateToSave);
+  const {datasets, config} = appStateToSave;
+
+  const [dataset1, dataset2] = datasets;
+  // load config first
+  const stateWithConfig = coreReducer(stateToSave, addDataToMap({config}));
+
+  t.deepEqual(
+    stateWithConfig.visState.preserveLayerOrder,
+    ['hexagon-2', 'point-0', 'geojson-1'],
+    'shoud preserve layer order'
+  );
+
+  t.deepEqual(
+    stateWithConfig.visState.layerToBeMerged.map(l => l.id),
+    ['hexagon-2', 'point-0', 'geojson-1'],
+    'should save to layerToBeMerged'
+  );
+
+  // load dataset2
+  const parsedData2 = SchemaManager.parseSavedData([dataset2]);
+  const stateWithData2 = coreReducer(stateWithConfig, addDataToMap({datasets: parsedData2}));
+  t.deepEqual(
+    stateWithData2.visState.preserveLayerOrder,
+    ['hexagon-2', 'point-0', 'geojson-1'],
+    'shoud preserve layer order'
+  );
+
+  t.deepEqual(
+    stateWithData2.visState.layers.map(l => l.id),
+    ['geojson-1'],
+    'shoud load geojeon layer'
+  );
+
+  t.deepEqual(
+    stateWithData2.visState.layerOrder,
+    [stateWithData2.visState.layers[0].id],
+    'layerOrder should be correct'
+  );
+  t.deepEqual(
+    stateWithData2.visState.layerToBeMerged.map(l => l.id),
+    ['hexagon-2', 'point-0'],
+    'should save to layerToBeMerged'
+  );
+
+  // load dataset1
+  const parsedData1 = SchemaManager.parseSavedData([dataset1]);
+  const stateWithData1 = coreReducer(stateWithData2, addDataToMap({datasets: parsedData1}));
+  t.deepEqual(
+    stateWithData1.visState.preserveLayerOrder,
+    ['hexagon-2', 'point-0', 'geojson-1'],
+    'shoud preserve layer order'
+  );
+  t.deepEqual(
+    stateWithData1.visState.layers.map(l => l.id),
+    ['geojson-1', 'hexagon-2', 'point-0'],
+    'shoud load 2 layers'
+  );
+  t.deepEqual(
+    stateWithData1.visState.layerOrder,
+    [
+      stateWithData1.visState.layers[1].id,
+      stateWithData1.visState.layers[2].id,
+      stateWithData1.visState.layers[0].id
+    ],
+    'layerOrder should be correct'
+  );
+  t.deepEqual(
+    stateWithData1.visState.layerToBeMerged.map(l => l.id),
+    [],
+    'layerToBeMerged should be empty'
+  );
+
   t.end();
 });
 
@@ -295,7 +424,7 @@ test('VisStateMerger.v1 -> mergeLayers -> toEmptyState', t => {
   const parsedLayers = parsedConfig.visState.layers;
 
   // mergeLayers
-  const mergedState = mergeLayers(oldState.visState, parsedLayers);
+  const mergedState = mergeLayers(oldState.visState, parsedLayers, true);
 
   Object.keys(oldVisState).forEach(key => {
     if (key === 'layerToBeMerged') {
@@ -328,7 +457,7 @@ test('VisStateMerger.v1.label -> mergeLayers -> toEmptyState', t => {
   const parsedLayers = parsedConfig.visState.layers;
 
   // mergeLayers
-  const mergedState = mergeLayers(oldState.visState, parsedLayers);
+  const mergedState = mergeLayers(oldState.visState, parsedLayers, true);
 
   Object.keys(oldVisState).forEach(key => {
     if (key === 'layerToBeMerged') {
@@ -363,6 +492,7 @@ test('VisStateMerger.v1.split -> mergeLayers -> toEmptyState', t => {
 
   // merge State
   const mergedState = visStateReducer(oldVisState, receiveMapConfig(parsedConfig));
+
   Object.keys(oldVisState).forEach(key => {
     if (key === 'layerToBeMerged') {
       t.deepEqual(
@@ -372,7 +502,7 @@ test('VisStateMerger.v1.split -> mergeLayers -> toEmptyState', t => {
       );
     } else if (key === 'splitMaps') {
       t.deepEqual(mergedState.splitMaps, [], 'Should wait to merge splitMaps');
-    } else if (key === 'splitMaps') {
+    } else if (key === 'splitMapsToBeMerged') {
       t.deepEqual(
         mergedState.splitMapsToBeMerged,
         expectedConfig,
@@ -407,13 +537,20 @@ test('VisStateMerger.v0 -> mergeLayers -> toWorkingState', t => {
   const parsedConfig = SchemaManager.parseSavedConfig(savedConfig.config);
 
   const oldState = cloneDeep(StateWFilesFiltersLayerColor);
+
   const oldVisState = oldState.visState;
+  t.deepEqual(
+    oldVisState.layerOrder,
+    ['hexagon-2', 'point-0', 'geojson-1'],
+    'layer order should be correct'
+  );
+
   const oldLayers = [...oldVisState.layers];
 
   const parsedLayers = parsedConfig.visState.layers;
 
   // mergeLayers
-  const mergedState = mergeLayers(oldState.visState, parsedLayers);
+  const mergedState = mergeLayers(oldState.visState, parsedLayers, true);
 
   Object.keys(oldVisState).forEach(key => {
     if (key === 'layerToBeMerged') {
@@ -427,6 +564,12 @@ test('VisStateMerger.v0 -> mergeLayers -> toWorkingState', t => {
     }
   });
 
+  t.deepEqual(
+    mergedState.layerOrder,
+    ['hexagon-2', 'point-0', 'geojson-1'],
+    'layer order should not change'
+  );
+
   const parsedData = SchemaManager.parseSavedData(savedConfig.datasets);
 
   // load data into reducer
@@ -437,7 +580,7 @@ test('VisStateMerger.v0 -> mergeLayers -> toWorkingState', t => {
 
   t.deepEqual(
     stateWData.layerOrder,
-    [3, 4, 5, 6, 7, 2, 0, 1],
+    [...getLayerOrderFromLayers(mergedLayersV0), 'hexagon-2', 'point-0', 'geojson-1'],
     'should put new layers on top of old ones'
   );
   t.deepEqual(stateWData.layerToBeMerged, [], 'should clean up layer to be merged');
@@ -452,12 +595,17 @@ test('VisStateMerger.v1 -> mergeLayers -> toWorkingState', t => {
 
   const oldState = cloneDeep(StateWFilesFiltersLayerColor);
   const oldVisState = oldState.visState;
+  t.deepEqual(
+    oldVisState.layerOrder,
+    ['hexagon-2', 'point-0', 'geojson-1'],
+    'layer order should be correct'
+  );
   const oldLayers = [...oldVisState.layers];
 
   const parsedLayers = parsedConfig.visState.layers;
 
   // mergeLayers
-  const mergedState = mergeLayers(oldState.visState, parsedLayers);
+  const mergedState = mergeLayers(oldState.visState, parsedLayers, true);
 
   Object.keys(oldVisState).forEach(key => {
     if (key === 'layerToBeMerged') {
@@ -471,6 +619,12 @@ test('VisStateMerger.v1 -> mergeLayers -> toWorkingState', t => {
     }
   });
 
+  t.deepEqual(
+    mergedState.layerOrder,
+    ['hexagon-2', 'point-0', 'geojson-1'],
+    'layer order should not change'
+  );
+
   const parsedData = SchemaManager.parseSavedData(savedConfig.datasets);
 
   // load data into reducer
@@ -479,7 +633,17 @@ test('VisStateMerger.v1 -> mergeLayers -> toWorkingState', t => {
   // test parsed filters
   cmpLayers(t, [...oldLayers, ...mergedLayersV1], stateWData.layers);
 
-  t.deepEqual(stateWData.layerOrder, [3, 4, 2, 0, 1], 'should put new layers on top of old ones');
+  t.deepEqual(
+    stateWData.layerOrder,
+    [
+      stateWData.layers[3].id,
+      stateWData.layers[4].id,
+      stateWData.layers[2].id,
+      stateWData.layers[0].id,
+      stateWData.layers[1].id
+    ],
+    'should put new layers on top of old ones'
+  );
   t.deepEqual(stateWData.layerToBeMerged, [], 'should clean up layer to be merged');
   t.equal(stateWData.layerData.length, 5, 'should calculate layer data');
 
@@ -562,29 +726,30 @@ test('VisStateMerger.v0 -> mergeInteractions -> toWorkingState', t => {
   const oldState = cloneDeep(StateWFilesFiltersLayerColor);
   const oldVisState = oldState.visState;
 
+  const milkShake = [
+    {
+      name: 'have',
+      format: null
+    },
+    {
+      name: 'a',
+      format: null
+    },
+    {
+      name: 'good',
+      format: null
+    },
+    {
+      name: 'day',
+      format: null
+    }
+  ];
   // add random items to interactionToBeMerged
   oldVisState.interactionToBeMerged = {
     ...oldVisState.interactionToBeMerged,
     tooltip: {
       fieldsToShow: {
-        milkshake: [
-          {
-            name: 'have',
-            format: null
-          },
-          {
-            name: 'a',
-            format: null
-          },
-          {
-            name: 'good',
-            format: null
-          },
-          {
-            name: 'day',
-            format: null
-          }
-        ]
+        milkShake
       }
     }
   };
@@ -599,6 +764,7 @@ test('VisStateMerger.v0 -> mergeInteractions -> toWorkingState', t => {
   const expectedInteractionToBeMerged = {
     tooltip: {
       fieldsToShow: {
+        milkShake,
         '9h10t7fyb': [
           {
             name: 'int_range',
@@ -644,14 +810,15 @@ test('VisStateMerger.v0 -> mergeInteractions -> toWorkingState', t => {
 
   // load data into reducer
   const stateWData = visStateReducer(mergedState, updateVisData(parsedData));
-  const defaultInteraction = getDefaultInteraction();
 
   const expectedInteractions = {
-    ...defaultInteraction,
+    ...defaultInteractionConfig,
     tooltip: {
-      ...defaultInteraction.tooltip,
+      ...defaultInteractionConfig.tooltip,
       enabled: true,
       config: {
+        compareMode: false,
+        compareType: 'absolute',
         fieldsToShow: {
           [testCsvDataId]: [
             {
@@ -671,7 +838,7 @@ test('VisStateMerger.v0 -> mergeInteractions -> toWorkingState', t => {
               format: null
             },
             {
-              name: 'id',
+              name: 'uid',
               format: null
             }
           ],
@@ -728,7 +895,18 @@ test('VisStateMerger.v0 -> mergeInteractions -> toWorkingState', t => {
 
   // test parsed interactions
   t.deepEqual(stateWData.interactionConfig, expectedInteractions, 'should merge interactionconfig');
-  t.deepEqual(stateWData.interactionToBeMerged, {}, 'should clear interaction');
+  t.deepEqual(
+    stateWData.interactionToBeMerged,
+    {
+      tooltip: {
+        fieldsToShow: {
+          milkShake
+        },
+        enabled: true
+      }
+    },
+    'should clear interaction'
+  );
 
   t.end();
 });
@@ -743,7 +921,6 @@ test('VisStateMerger.v1 -> mergeInteractions -> toEmptyState', t => {
 
   // merge interactions
   const mergedState = mergeInteractions(oldState.visState, parsedInteraction);
-  const defaultInteraction = getDefaultInteraction();
 
   Object.keys(oldVisState).forEach(key => {
     if (key === 'interactionToBeMerged') {
@@ -776,16 +953,18 @@ test('VisStateMerger.v1 -> mergeInteractions -> toEmptyState', t => {
       t.deepEqual(
         mergedState.interactionConfig,
         {
-          ...defaultInteraction,
+          ...defaultInteractionConfig,
           tooltip: {
-            ...defaultInteraction.tooltip,
+            ...defaultInteractionConfig.tooltip,
             enabled: false,
             config: {
-              fieldsToShow: {}
+              fieldsToShow: {},
+              compareMode: false,
+              compareType: 'absolute'
             }
           },
           brush: {
-            ...defaultInteraction.brush,
+            ...defaultInteractionConfig.brush,
             enabled: false,
             config: {
               size: 1
@@ -816,40 +995,12 @@ test('VisStateMerger.v1 -> mergeInteractions -> toWorkingState', t => {
   const oldState = cloneDeep(StateWFilesFiltersLayerColor);
   const oldVisState = oldState.visState;
 
-  // add random items to interactionToBeMerged
-  oldVisState.interactionToBeMerged = {
-    ...oldVisState.interactionToBeMerged,
-    tooltip: {
-      fieldsToShow: {
-        milkshake: [
-          {
-            name: 'have',
-            format: null
-          },
-          {
-            name: 'a',
-            format: null
-          },
-          {
-            name: 'good',
-            format: null
-          },
-          {
-            name: 'day',
-            format: null
-          }
-        ]
-      }
-    }
-  };
-
   const parsedConfig = SchemaManager.parseSavedConfig(savedConfig.config, oldState);
 
   const parsedInteraction = parsedConfig.visState.interactionConfig;
 
   // merge interactions
   const mergedState = mergeInteractions(oldState.visState, parsedInteraction);
-  const defaultInteraction = getDefaultInteraction();
 
   const expectedInteractionToBeMerged = {
     tooltip: {
@@ -884,11 +1035,13 @@ test('VisStateMerger.v1 -> mergeInteractions -> toWorkingState', t => {
       t.deepEqual(
         mergedState.interactionConfig,
         {
-          ...defaultInteraction,
+          ...defaultInteractionConfig,
           tooltip: {
-            ...defaultInteraction.tooltip,
+            ...defaultInteractionConfig.tooltip,
             enabled: false,
             config: {
+              compareMode: false,
+              compareType: 'absolute',
               fieldsToShow: {
                 [testCsvDataId]: [
                   {
@@ -908,7 +1061,7 @@ test('VisStateMerger.v1 -> mergeInteractions -> toWorkingState', t => {
                     format: null
                   },
                   {
-                    name: 'id',
+                    name: 'uid',
                     format: null
                   }
                 ],
@@ -939,7 +1092,7 @@ test('VisStateMerger.v1 -> mergeInteractions -> toWorkingState', t => {
           },
 
           brush: {
-            ...defaultInteraction.brush,
+            ...defaultInteractionConfig.brush,
             enabled: false,
             config: {
               size: 1
@@ -947,7 +1100,7 @@ test('VisStateMerger.v1 -> mergeInteractions -> toWorkingState', t => {
           },
 
           coordinate: {
-            ...defaultInteraction.coordinate,
+            ...defaultInteractionConfig.coordinate,
             enabled: false
           }
         },
@@ -964,11 +1117,13 @@ test('VisStateMerger.v1 -> mergeInteractions -> toWorkingState', t => {
   const stateWData = visStateReducer(mergedState, updateVisData(parsedData));
 
   const expectedInteractions = {
-    ...defaultInteraction,
+    ...defaultInteractionConfig,
     tooltip: {
-      ...defaultInteraction.tooltip,
+      ...defaultInteractionConfig.tooltip,
       enabled: false,
       config: {
+        compareMode: false,
+        compareType: 'absolute',
         fieldsToShow: {
           [testCsvDataId]: [
             {
@@ -988,7 +1143,7 @@ test('VisStateMerger.v1 -> mergeInteractions -> toWorkingState', t => {
               format: null
             },
             {
-              name: 'id',
+              name: 'uid',
               format: null
             }
           ],
@@ -1032,7 +1187,7 @@ test('VisStateMerger.v1 -> mergeInteractions -> toWorkingState', t => {
       }
     },
     brush: {
-      ...defaultInteraction.brush,
+      ...defaultInteractionConfig.brush,
       enabled: false,
       config: {size: 1}
     }
@@ -1056,7 +1211,6 @@ test('VisStateMerger.v1 -> mergeInteractions -> coordinate', t => {
 
   // merge interactions
   const mergedState = mergeInteractions(oldState.visState, parsedInteraction);
-  const defaultInteraction = getDefaultInteraction();
 
   const expectedInteractionToBeMerged = {};
 
@@ -1071,22 +1225,22 @@ test('VisStateMerger.v1 -> mergeInteractions -> coordinate', t => {
       t.deepEqual(
         mergedState.interactionConfig,
         {
-          ...defaultInteraction,
+          ...defaultInteractionConfig,
 
           tooltip: {
-            ...defaultInteraction.tooltip,
+            ...defaultInteractionConfig.tooltip,
             enabled: false
           },
 
           brush: {
-            ...defaultInteraction.brush,
+            ...defaultInteractionConfig.brush,
             config: {
               size: 1
             }
           },
 
           coordinate: {
-            ...defaultInteraction.coordinate,
+            ...defaultInteractionConfig.coordinate,
             enabled: true
           }
         },
@@ -1103,11 +1257,13 @@ test('VisStateMerger.v1 -> mergeInteractions -> coordinate', t => {
   const stateWData = visStateReducer(mergedState, updateVisData(parsedData));
 
   const expectedInteractions = {
-    ...defaultInteraction,
+    ...defaultInteractionConfig,
     tooltip: {
-      ...defaultInteraction.tooltip,
+      ...defaultInteractionConfig.tooltip,
       enabled: false,
       config: {
+        compareMode: false,
+        compareType: 'absolute',
         fieldsToShow: {
           a5ybmwl2d: [
             {
@@ -1135,12 +1291,12 @@ test('VisStateMerger.v1 -> mergeInteractions -> coordinate', t => {
       }
     },
     brush: {
-      ...defaultInteraction.brush,
+      ...defaultInteractionConfig.brush,
       enabled: false,
       config: {size: 1}
     },
     coordinate: {
-      ...defaultInteraction.coordinate,
+      ...defaultInteractionConfig.coordinate,
       enabled: true
     }
   };
@@ -1253,7 +1409,8 @@ test('VisStateMerger - mergeSplitMaps -> split to split', t => {
 test('VisStateMerger - mergeSplitMaps', t => {
   const testState1 = {
     layers: [],
-    splitMaps: [{layers: {a: true}}, {layers: {a: false}}]
+    splitMaps: [{layers: {a: true}}, {layers: {a: false}}],
+    splitMapsToBeMerged: []
   };
 
   t.deepEqual(
@@ -1272,7 +1429,8 @@ test('VisStateMerger - mergeSplitMaps', t => {
 
   const testState2 = {
     layers: [{id: 'c', config: {isVisible: true}}],
-    splitMaps: [{layers: {a: true}}, {layers: {a: false}}]
+    splitMaps: [{layers: {a: true}}, {layers: {a: false}}],
+    splitMapsToBeMerged: []
   };
 
   t.deepEqual(
@@ -1287,7 +1445,8 @@ test('VisStateMerger - mergeSplitMaps', t => {
 
   const testState3 = {
     layers: [{id: 'c', config: {isVisible: true}}],
-    splitMaps: []
+    splitMaps: [],
+    splitMapsToBeMerged: []
   };
   t.deepEqual(
     mergeSplitMaps(testState3, testSM),
@@ -1305,7 +1464,8 @@ test('VisStateMerger - mergeSplitMaps', t => {
       {id: 'b', config: {isVisible: false}},
       {id: 'c', config: {isVisible: true}}
     ],
-    splitMaps: []
+    splitMaps: [],
+    splitMapsToBeMerged: []
   };
   t.deepEqual(
     mergeSplitMaps(testState4, testSM),
@@ -1407,19 +1567,41 @@ test('VisStateMerger.v1 -> mergeFilters -> multiFilters', t => {
   );
   // check datasets is filtered
   // and field has filterProps
+
+  const tFields0 = testFields.map(f => ({
+    ...f,
+    ...(f.name === 'time'
+      ? {filterProps: timeFilterProps}
+      : f.name === 'date'
+      ? {filterProps: dateFilterProps}
+      : f.name === 'epoch'
+      ? {filterProps: epochFilterProps}
+      : {})
+  }));
+  const dc0 = createDataContainer(testAllData, {fields: tFields0});
+
+  const tFields1 = fields.map(f => ({
+    ...f,
+    ...(f.name === 'TRIPS'
+      ? {filterProps: geoJsonTripFilterProps}
+      : f.name === 'RATE'
+      ? {filterProps: geoJsonRateFilterProps}
+      : {})
+  }));
+  const dc1 = createDataContainer(testGeoJsonAllData, {fields: tFields1});
+
   const expectedDatasets = {
     [testCsvDataId]: {
-      fields: datasetCsvFields.map(f => ({
-        ...f,
-        ...(f.name === 'time'
-          ? {filterProps: timeFilterProps}
-          : f.name === 'date'
-          ? {filterProps: dateFilterProps}
-          : f.name === 'epoch'
-          ? {filterProps: epochFilterProps}
-          : {})
-      })),
-      allData: testAllData,
+      metadata: {
+        id: testCsvDataId,
+        label: 'hello.csv',
+        format: ''
+      },
+      type: '',
+      supportedFilterTypes: null,
+      disableDataOperation: false,
+      fields: tFields0,
+      dataContainer: dc0,
       allIndexes: [
         0,
         1,
@@ -1474,23 +1656,29 @@ test('VisStateMerger.v1 -> mergeFilters -> multiFilters', t => {
         filterValueAccessor: {
           inputs: [
             {
-              data: testAllData[1],
               index: 1
             }
           ],
           result: [1474588800000 - 1474588800000, 1472688000000 - 1472688000000, 0, 0]
         }
+      },
+      changedFilters: {
+        dynamicDomain: {'date-2': 'added'},
+        fixedDomain: {'time-0': 'added', 'epoch-4': 'added'},
+        cpu: {'date-2': 'added'},
+        gpu: {'time-0': 'added', 'epoch-4': 'added'}
       }
     },
     [testGeoJsonDataId]: {
-      fields: testGeoJsonFields.map(f => ({
-        ...f,
-        ...(f.name === 'TRIPS'
-          ? {filterProps: geoJsonTripFilterProps}
-          : f.name === 'RATE'
-          ? {filterProps: geoJsonRateFilterProps}
-          : {})
-      })),
+      metadata: {
+        id: testGeoJsonDataId,
+        label: 'zip.geojson',
+        format: ''
+      },
+      type: '',
+      supportedFilterTypes: null,
+      disableDataOperation: false,
+      fields: tFields1,
       filterRecord: {
         dynamicDomain: [mergedRateFilter, mergedTripFilter],
         fixedDomain: [],
@@ -1513,21 +1701,26 @@ test('VisStateMerger.v1 -> mergeFilters -> multiFilters', t => {
         filterValueAccessor: {
           inputs: [
             {
-              data: testGeoJsonAllData[1],
               index: 1
             }
           ],
           result: [0, 0, 0, 0]
         }
       },
-      allData: testGeoJsonAllData,
+      dataContainer: dc1,
       allIndexes: [0, 1, 2, 3, 4],
       id: testGeoJsonDataId,
       label: 'zip.geojson',
       color: 'donot test me',
       filteredIndex: [0],
       filteredIndexForDomain: [0],
-      fieldPairs: oldGeoJsonData.fieldPairs
+      fieldPairs: oldGeoJsonData.fieldPairs,
+      changedFilters: {
+        dynamicDomain: {'RATE-1': 'added', 'TRIPS-3': 'added'},
+        fixedDomain: null,
+        cpu: {'RATE-1': 'added'},
+        gpu: {'TRIPS-3': 'added'}
+      }
     }
   };
 
@@ -1575,5 +1768,386 @@ test('VisStateMerger -> import polygon filter map', t => {
 
   // parsed filters must be empty
   cmpFilters(t, [], stateWData.filters);
+  t.end();
+});
+
+test('VisStateMerger -> insertLayerAtRightOrder -> to empty config', t => {
+  const testCases = [
+    {
+      preservedOrder: ['a', 'b', 'c', 'd'],
+      batches: [
+        {
+          load: [{id: 'b'}],
+          expectedLayers: [{id: 'b'}],
+          expectedOrder: ['b']
+        },
+        {
+          load: [{id: 'a'}, {id: 'c'}],
+          expectedLayers: [{id: 'b'}, {id: 'a'}, {id: 'c'}],
+          expectedOrder: ['a', 'b', 'c']
+        },
+        {
+          load: [{id: 'd'}],
+          expectedLayers: [{id: 'b'}, {id: 'a'}, {id: 'c'}, {id: 'd'}],
+          expectedOrder: ['a', 'b', 'c', 'd']
+        }
+      ],
+      expectedLayers: [{id: 'b'}, {id: 'a'}, {id: 'c'}, {id: 'd'}],
+      expectedOrder: ['a', 'b', 'c', 'd']
+    },
+    {
+      preservedOrder: ['x', 'm', 'e', 'p', 'w', '6', 'h'],
+      batches: [
+        {
+          load: [{id: '6'}],
+          expectedLayers: [{id: '6'}],
+          expectedOrder: ['6']
+        },
+        {
+          load: [{id: 'e'}],
+          expectedLayers: [{id: '6'}, {id: 'e'}],
+          expectedOrder: ['e', '6']
+        },
+        {
+          load: [{id: 'x'}, {id: 'p'}, {id: 'w'}, {id: 'h'}],
+          expectedLayers: [{id: '6'}, {id: 'e'}, {id: 'x'}, {id: 'p'}, {id: 'w'}, {id: 'h'}],
+          expectedOrder: ['x', 'e', 'p', 'w', '6', 'h']
+        },
+        {
+          load: [{id: 'm'}],
+          expectedLayers: [
+            {id: '6'},
+            {id: 'e'},
+            {id: 'x'},
+            {id: 'p'},
+            {id: 'w'},
+            {id: 'h'},
+            {id: 'm'}
+          ],
+          expectedOrder: ['x', 'm', 'e', 'p', 'w', '6', 'h']
+        }
+      ],
+      expectedLayers: [{id: '6'}, {id: 'e'}, {id: 'x'}, {id: 'p'}, {id: 'w'}, {id: 'h'}, {id: 'm'}],
+      expectedOrder: ['x', 'm', 'e', 'p', 'w', '6', 'h']
+    },
+    {
+      preservedOrder: ['x', 'm', 'e', 'p', 'w', '6', 'h'],
+      batches: [
+        {
+          load: [{id: 'x'}, {id: 'm'}],
+          expectedLayers: [{id: 'x'}, {id: 'm'}],
+          expectedOrder: ['x', 'm']
+        },
+        {
+          load: [{id: 'w'}],
+          expectedLayers: [{id: 'x'}, {id: 'm'}, {id: 'w'}],
+          expectedOrder: ['x', 'm', 'w']
+        },
+        {
+          load: [{id: 'p'}],
+          expectedLayers: [{id: 'x'}, {id: 'm'}, {id: 'w'}, {id: 'p'}],
+          expectedOrder: ['x', 'm', 'p', 'w']
+        },
+        {
+          load: [{id: 'e'}, {id: 'h'}, {id: '6'}],
+          expectedLayers: [
+            {id: 'x'},
+            {id: 'm'},
+            {id: 'w'},
+            {id: 'p'},
+            {id: 'e'},
+            {id: 'h'},
+            {id: '6'}
+          ],
+          expectedOrder: ['x', 'm', 'e', 'p', 'w', '6', 'h']
+        }
+      ],
+      expectedOrder: ['x', 'm', 'e', 'p', 'w', '6', 'h'],
+      expectedLayers: [{id: 'x'}, {id: 'm'}, {id: 'w'}, {id: 'p'}, {id: 'e'}, {id: 'h'}, {id: '6'}]
+    }
+  ];
+
+  testCases.forEach(({preservedOrder, batches, expectedOrder, expectedLayers}) => {
+    let currentLayers = [];
+    let currentOrder = [];
+
+    // add layers in batch
+    for (const batch of batches) {
+      const {newLayerOrder, newLayers} = insertLayerAtRightOrder(
+        currentLayers,
+        batch.load,
+        currentOrder,
+        preservedOrder
+      );
+      currentLayers = newLayers;
+      currentOrder = newLayerOrder;
+
+      t.deepEqual(currentLayers, batch.expectedLayers, 'Should insert layer at correct Order');
+      t.deepEqual(currentOrder, batch.expectedOrder, 'Should reconstruct layer order');
+    }
+
+    t.deepEqual(currentLayers, expectedLayers, 'Should insert layer at correct Order');
+    t.deepEqual(currentOrder, expectedOrder, 'Should reconstruct layer order');
+  });
+
+  t.end();
+});
+
+test('VisStateMerger -> insertLayerAtRightOrder -> to empty config', t => {
+  const preservedOrder = ['a', 'b', 'c', 'd'];
+
+  const batches = [
+    {load: [{id: 'b'}], expectedLayers: [{id: 'm'}, {id: 'b'}], expectedOrder: ['b', 'm']},
+    {
+      load: [{id: 'a'}, {id: 'c'}],
+      expectedLayers: [{id: 'm'}, {id: 'b'}, {id: 'a'}, {id: 'c'}],
+      expectedOrder: ['a', 'b', 'c', 'm']
+    },
+    {
+      load: [{id: 'd'}],
+      expectedLayers: [{id: 'm'}, {id: 'b'}, {id: 'a'}, {id: 'c'}, {id: 'd'}],
+      expectedOrder: ['a', 'b', 'c', 'd', 'm']
+    }
+  ];
+
+  let currentLayers = [{id: 'm'}];
+  let currentOrder = ['m'];
+
+  // add layers in batch
+  for (const batch of batches) {
+    const {newLayerOrder, newLayers} = insertLayerAtRightOrder(
+      currentLayers,
+      batch.load,
+      currentOrder,
+      preservedOrder
+    );
+    currentLayers = newLayers;
+    currentOrder = newLayerOrder;
+
+    t.deepEqual(currentLayers, batch.expectedLayers, 'Should insert layer at correct Order');
+    t.deepEqual(currentOrder, batch.expectedOrder, 'Should reconstruct layer order');
+  }
+
+  t.end();
+});
+
+test('VisStateMerger -> load polygon filter map', t => {
+  const oldState = mockStateWithPolygonFilter();
+
+  const oldFilter = oldState.visState.filters[0];
+
+  const appStateToSave = SchemaManager.save(oldState);
+  const stateParsed = SchemaManager.load(appStateToSave);
+  const initialState = cloneDeep(InitialState);
+  const initialVisState = initialState.visState;
+
+  const visState = visStateReducer(
+    initialVisState,
+    updateVisData(stateParsed.datasets, {}, stateParsed.config)
+  );
+
+  const newFilter = visState.filters[0];
+
+  t.deepEqual(newFilter, oldFilter, 'Should have loaded the polygon filter correctly');
+  t.end();
+});
+
+test('VisStateMerger -> createLayerFromConfig with Parsed Layer', t => {
+  const oldState = CloneDeep(StateWFiles);
+
+  t.equal(oldState.visState.layers.length, 2, 'Should have layers');
+
+  // mock an exported layer config with visual channels
+  const savedLayer = visStateSchema[CURRENT_VERSION].save({
+    layers: [oldState.visState.layers[0]],
+    layerOrder: [oldState.visState.layers[0].id]
+  }).visState.layers[0];
+
+  t.ok(savedLayer.visualChannels, 'Should have visualChannels');
+
+  const addedLayer = createLayerFromConfig(oldState.visState, savedLayer);
+
+  t.ok(addedLayer.visConfigSettings, 'Should have visConfig settings loaded correctly');
+
+  t.end();
+});
+
+const MOCK_MERGE_TASK = Task.fromPromise(
+  time => new Promise(resolve => window.setTimeout(resolve, time)),
+  'MOCK_MERGE_TASK'
+);
+const mergeSuccess = payload => ({
+  type: 'MERGE_SUCCESS',
+  payload
+});
+const mergeError = payload => ({
+  type: 'MERGE_ERROR',
+  payload
+});
+
+function mockMergeSuccessUpdater(state, action) {
+  const {mergerActionPayload, dataId} = action.payload;
+  const nextState = {
+    ...state,
+    visState: {
+      ...state.visState,
+      isMergingDatasets: {
+        ...state.isMergingDatasets,
+        [dataId]: false
+      }
+    }
+  };
+  return {
+    ...nextState,
+    visState: applyMergersUpdater(nextState.visState, mergerActionPayload)
+  };
+}
+
+function asyncMerger(
+  state,
+  {processToBeMerged, operationsToBeMerged},
+  fromConfig,
+  mergerActionPayload
+) {
+  if (!processToBeMerged) {
+    return state;
+  }
+  const {dataId} = processToBeMerged;
+
+  if (!state.datasets[dataId] && (processToBeMerged || operationsToBeMerged)) {
+    return {
+      ...state,
+      processToBeMerged,
+      operationsToBeMerged
+    };
+  }
+  const nextState = {
+    ...state,
+    isMergingDatasets: {
+      ...state.isMergingDatasets,
+      [dataId]: true
+    }
+  };
+
+  const mergeMergeTasks = MOCK_MERGE_TASK(100).bimap(
+    () => mergeSuccess({mergerActionPayload, dataId}),
+    err => mergeError({mergerActionPayload, dataId, err})
+  );
+
+  return withTask(nextState, mergeMergeTasks);
+}
+const mockMerger = {
+  merge: asyncMerger,
+  // test props being an array
+  prop: ['process', 'operations'],
+  toMergeProp: ['processToBeMerged', 'operationsToBeMerged'],
+  waitToFinish: true
+};
+
+// prepare reducers
+const mockReducer = keplerGlReducer
+  .initialState({
+    visState: {
+      process: undefined,
+      processToBeMerged: undefined,
+      mergers: [mockMerger, ...VIS_STATE_MERGERS]
+    }
+  })
+  .plugin({
+    MERGE_SUCCESS: mockMergeSuccessUpdater,
+    MERGE_ERROR: mockMergeSuccessUpdater
+  });
+
+// eslint-disable-next-line max-statements
+test('VisStateMerger -> asyne mergers', t => {
+  // adding mock process to state
+  const stateToSave = cloneDeep(StateWMultiFilters);
+  const appStateToSave = SchemaManager.save(stateToSave);
+  const stateParsed = SchemaManager.load(appStateToSave);
+
+  const configWithProcess = {
+    ...stateParsed.config,
+    visState: {
+      ...stateParsed.config.visState,
+      process: {dataId: testCsvDataId}
+    }
+  };
+  drainTasksForTesting();
+  const initialState = mockReducer(undefined, registerEntry({id: 'test'}));
+
+  // apply config with process to merge
+  const nextState = mockReducer(
+    initialState,
+    // add csv data first
+    updateVisData(
+      stateParsed.datasets.find(d => d.info.id === testCsvDataId),
+      {},
+      configWithProcess
+    )
+  );
+
+  t.deepEqual(
+    nextState.test.visState.isMergingDatasets,
+    {[testCsvDataId]: true},
+    'should set test dataId to true'
+  );
+  t.equal(nextState.test.visState.layers.length, 0, 'should not add any layers');
+  t.equal(nextState.test.visState.filters.length, 0, 'should not add any filters');
+  t.equal(
+    nextState.test.visState.layerToBeMerged.length,
+    2,
+    'should have 2 layers waiting to be merged'
+  );
+
+  t.ok(nextState.test.visState.datasets[testCsvDataId], 'should add csv data');
+  const tasks = drainTasksForTesting();
+  t.equal(tasks.length, 1, 'should create 1 task');
+  t.equal(tasks[0].type, 'MOCK_MERGE_TASK', 'should create merger task');
+
+  // add another dataset will async merger is in process
+  const nextState1 = mockReducer(
+    nextState,
+    // add geojson data
+    updateVisData(stateParsed.datasets.find(d => d.info.id === testGeoJsonDataId))
+  );
+
+  t.ok(nextState1.test.visState.datasets[testGeoJsonDataId], 'should add geojson data');
+
+  t.deepEqual(
+    nextState1.test.visState.isMergingDatasets,
+    {[testCsvDataId]: true},
+    'isMergingDatasets of dataId is still true'
+  );
+
+  t.equal(nextState1.test.visState.layers.length, 1, 'should merge 1 layer');
+  t.equal(
+    nextState1.test.visState.layers[0].config.dataId,
+    testGeoJsonDataId,
+    'should only merge layer of geojson data'
+  );
+
+  t.equal(nextState1.test.visState.filters.length, 2, 'should merge 2 filters');
+  t.deepEqual(
+    nextState1.test.visState.filters.map(f => f.dataId),
+    [[testGeoJsonDataId], [testGeoJsonDataId]],
+    'should merge 2 filters of geojson data'
+  );
+
+  // async merge succeed
+  const nextState2 = mockReducer(nextState1, succeedTaskInTest(tasks[0], undefined));
+  t.deepEqual(
+    nextState2.test.visState.isMergingDatasets,
+    {[testCsvDataId]: false},
+    'should set isMerging data to false'
+  );
+
+  t.equal(nextState2.test.visState.layers.length, 2, 'should merge 2 layers');
+  t.equal(
+    nextState2.test.visState.layers[1].config.dataId,
+    testCsvDataId,
+    'should merge layer of csv data'
+  );
+  t.equal(nextState2.test.visState.filters.length, 5, 'should merge 5 filters');
+
   t.end();
 });

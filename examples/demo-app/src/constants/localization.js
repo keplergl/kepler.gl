@@ -1,26 +1,10 @@
-// Copyright (c) 2020 Uber Technologies, Inc.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
 
 // Add english messages here, other languages will use these
 // if translations not available for every message
 const en = {
+  'modal.loadData.remote': 'Load Map using URL',
   'sampleMapsTab.noData': 'No data ?',
   'sampleMapsTab.trySampleData': 'Try sample data',
   'sampleDataViewer.rowCount': ' {rowCount} rows',
@@ -38,7 +22,7 @@ const en = {
 export const messages = {
   en,
   fi: {
-    ...en,
+    'modal.loadData.remote': 'Lataa kartta URL-osoitteen avulla',
     'sampleMapsTab.noData': 'Ei aineistoja?',
     'sampleMapsTab.trySampleData': 'Kokeile testiaineistoja',
     'sampleDataViewer.rowCount': ' {rowCount} riviä',
@@ -53,7 +37,7 @@ export const messages = {
     'loadRemoteMap.fetch': 'Nouda'
   },
   ca: {
-    ...en,
+    'modal.loadData.remote': 'Carrega mapa mitjançant URL',
     'sampleMapsTab.noData': 'Cap dada?',
     'sampleMapsTab.trySampleData': 'Prova dades de mostra',
     'sampleDataViewer.rowCount': ' {rowCount} files',
@@ -68,7 +52,7 @@ export const messages = {
     'loadRemoteMap.fetch': 'Cerca'
   },
   es: {
-    ...en,
+    'modal.loadData.remote': 'Cargar mapa usando URL',
     'sampleMapsTab.noData': 'Ningún dato?',
     'sampleMapsTab.trySampleData': 'Prueba datos de muestra',
     'sampleDataViewer.rowCount': ' {rowCount} files',
@@ -81,5 +65,19 @@ export const messages = {
     'loadRemoteMap.clickHere':
       '<a rel="noopener noreferrer" target="_blank" href="{corsLink}">haz clic aquí</a>',
     'loadRemoteMap.fetch': 'Busca'
+  },
+  cn: {
+    'modal.loadData.remote': '使用 URL 加载地图',
+    'sampleMapsTab.noData': '没有数据？',
+    'sampleMapsTab.trySampleData': '尝试样本数据',
+    'sampleDataViewer.rowCount': ' {rowCount} 行',
+    'loadRemoteMap.description': '使用自定义 URL 加载地图',
+    'loadRemoteMap.message':
+      '您可以使用以下格式：CSV | JSON | Kepler.gl 配置 json。 确保 url 包含文件扩展名。',
+    'loadRemoteMap.examples': '示例：',
+    'loadRemoteMap.cors': '* 必须在您的自定义 url 域上定义 CORS 策略才能访问。欲了解更多信息',
+    'loadRemoteMap.clickHere':
+      '<a rel="noopener noreferrer" target="_blank" href="{corsLink}">点击此处</a>',
+    'loadRemoteMap.fetch': '获取'
   }
 };

@@ -1,0 +1,46 @@
+# This workflow will do a clean install of node dependencies, build the source code and run tests across different versions of node
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
+
+name: Node.js CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x]
+
+    steps:
+      - uses: actions/checkout@v2.1.1
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Install XVFB
+        run: sudo apt-get install xvfb
+
+      - name: Install YARN
+        run: npm install -g yarn
+
+      - name: Install Dependecies
+        run: yarn global add "puppeteer@19.11.1" && yarn
+
+      # - name: Lint
+      #  run: yarn lint
+
+      - name: Test
+        run: xvfb-run --auto-servernum yarn cover
+
+      - name: Coveralls
+        uses: coverallsapp/github-action@master
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}

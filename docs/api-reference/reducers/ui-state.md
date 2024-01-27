@@ -69,7 +69,8 @@ export default composedReducer;
 
 ### addNotificationUpdater
 
-Add a notification to be displayed
+Add a notification to be displayed.
+Existing notification is going to be updated in case of matching ids.
 
 -   **Action**: [`addNotification`][54]
 

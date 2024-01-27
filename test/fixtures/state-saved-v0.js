@@ -1,27 +1,10 @@
-// Copyright (c) 2020 Uber Technologies, Inc.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
 
-import {KeplerGlLayers} from 'layers';
+import {KeplerGlLayers} from '@kepler.gl/layers';
 const {PointLayer, ArcLayer, HexagonLayer, GeojsonLayer} = KeplerGlLayers;
-import {getDefaultInteraction} from 'utils/interaction-utils';
-import {DEFAULT_TEXT_LABEL, DEFAULT_COLOR_UI} from 'layers/layer-factory';
+import {DEFAULT_TEXT_LABEL, DEFAULT_COLOR_UI} from '@kepler.gl/constants';
+import {defaultInteractionConfig} from '@kepler.gl/reducers';
 
 export const savedStateV0 = {
   config: {
@@ -886,8 +869,10 @@ export const mergedFilters = [
     dataId: ['9h10t7fyb'],
     freeze: true,
     id: 'vxzfwyg2v',
-    enlarged: false,
+    enabled: true,
+    view: 'side',
     isAnimating: false,
+    animationWindow: 'free',
     name: ['song_name'],
     type: 'multiSelect',
     fieldIdx: [0],
@@ -905,8 +890,10 @@ export const mergedFilters = [
     dataId: ['9h10t7fyb'],
     freeze: true,
     id: 'fo9tjm2unl',
-    enlarged: true,
+    enabled: true,
+    view: 'enlarged',
     isAnimating: false,
+    animationWindow: 'free',
     name: ['timestamp_local'],
     type: 'timeRange',
     fieldIdx: [3],
@@ -933,17 +920,20 @@ export const mergedFilters = [
     fieldType: 'timestamp',
     fixedDomain: true,
     gpu: true,
-    gpuChannel: [0]
+    gpuChannel: [0],
+    defaultTimeFormat: 'L LTS'
   },
   {
     dataId: ['9h10t7fyb'],
     id: 'aesy96t5',
+    enabled: true,
     name: ['type_boolean'],
     type: 'select',
     freeze: true,
     value: false,
-    enlarged: false,
+    view: 'side',
     isAnimating: false,
+    animationWindow: 'free',
     fieldIdx: [10],
     domain: [true, false],
     fieldType: 'boolean',
@@ -957,17 +947,19 @@ export const mergedFilters = [
   {
     dataId: ['9h10t7fyb'],
     id: 's1bhgjt1',
+    enabled: true,
     name: ['int_range'],
     type: 'range',
     value: [78, 309],
     freeze: true,
-    enlarged: false,
+    view: 'side',
     plotType: 'histogram',
     yAxis: null,
     interval: null,
     histogram: ['not tested'],
     enlargedHistogram: ['not tested'],
     isAnimating: false,
+    animationWindow: 'free',
     fieldIdx: [9],
     domain: [78, 694],
     step: 1,
@@ -982,8 +974,10 @@ export const mergedFilters = [
     dataId: ['v79816te8'],
     freeze: true,
     id: '5nfmxjjzl',
-    enlarged: false,
+    enabled: true,
+    view: 'side',
     isAnimating: false,
+    animationWindow: 'free',
     name: ['ZIP_CODE'],
     type: 'range',
     fieldIdx: [2],
@@ -1150,11 +1144,13 @@ mergedLayer2.config = {
   isVisible: true,
   colorField: {
     name: 'song_name',
-    type: 'string',
     id: 'song_name',
+    displayName: 'song_name',
+    type: 'string',
     format: '',
-    tableFieldIndex: 1,
-    analyzerType: 'STRING'
+    fieldIdx: 0,
+    analyzerType: 'STRING',
+    valueAccessor: values => values[0]
   },
   colorScale: 'ordinal',
   colorDomain: ['2.103.2', '2.107.3', '2.116.2', '2.117.1', '3.68.4'],
@@ -1163,11 +1159,13 @@ mergedLayer2.config = {
   strokeColorDomain: [0, 1],
   sizeField: {
     name: 'int_range',
-    format: '',
     id: 'int_range',
+    displayName: 'int_range',
+    format: '',
     type: 'integer',
-    tableFieldIndex: 10,
-    analyzerType: 'INT'
+    fieldIdx: 9,
+    analyzerType: 'INT',
+    valueAccessor: values => values[9]
   },
   sizeDomain: [78, 694],
   sizeScale: 'sqrt',
@@ -1230,11 +1228,13 @@ mergedLayer3.config = {
   isVisible: true,
   colorField: {
     name: 'int_range',
+    displayName: 'int_range',
     id: 'int_range',
     type: 'integer',
     format: '',
-    tableFieldIndex: 10,
-    analyzerType: 'INT'
+    fieldIdx: 9,
+    analyzerType: 'INT',
+    valueAccessor: values => values[9]
   },
   highlightColor: [252, 242, 26, 255],
   isConfigActive: false,
@@ -1250,7 +1250,7 @@ mergedLayer3.config = {
   },
   visConfig: {
     colorAggregation: 'maximum',
-    sizeAggregation: 'average',
+    sizeAggregation: 'count',
     enable3d: true,
     opacity: 0.8,
     worldUnitSize: 0.5,
@@ -1265,7 +1265,8 @@ mergedLayer3.config = {
     sizeRange: [0, 50],
     percentile: [0, 100],
     elevationPercentile: [0, 100],
-    elevationScale: 10
+    elevationScale: 10,
+    enableElevationZoomFactor: true
   },
   animation: {enabled: false}
 };
@@ -1292,11 +1293,13 @@ mergedLayer4.config = {
   isVisible: true,
   colorField: {
     name: 'ID',
+    displayName: 'ID',
     id: 'ID',
     type: 'integer',
     format: '',
-    tableFieldIndex: 4,
-    analyzerType: 'INT'
+    fieldIdx: 3,
+    analyzerType: 'INT',
+    valueAccessor: values => values[3]
   },
   colorScale: 'quantize',
   colorDomain: [94107, 94132],
@@ -1374,6 +1377,7 @@ mergedLayer4.config = {
     radiusRange: [0, 50],
     heightRange: [0, 500],
     elevationScale: 5,
+    enableElevationZoomFactor: true,
     stroked: false,
     filled: true,
     enable3d: false,
@@ -1461,13 +1465,14 @@ mergedLayer4.meta = {
 
 export const mergedLayers = [mergedLayer0, mergedLayer1, mergedLayer2, mergedLayer3, mergedLayer4];
 
-const defaultInteraction = getDefaultInteraction();
 export const mergedInteractions = {
-  ...defaultInteraction,
+  ...defaultInteractionConfig,
   tooltip: {
-    ...defaultInteraction.tooltip,
+    ...defaultInteractionConfig.tooltip,
     enabled: true,
     config: {
+      compareMode: false,
+      compareType: 'absolute',
       fieldsToShow: {
         '9h10t7fyb': [
           {

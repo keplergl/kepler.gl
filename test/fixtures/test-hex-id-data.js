@@ -1,26 +1,10 @@
-// Copyright (c) 2020 Uber Technologies, Inc.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
 
-import {KeplerGlLayers} from 'layers';
+import {KeplerGlLayers} from '@kepler.gl/layers';
+import {createDataContainer} from '@kepler.gl/utils';
+import {DEFAULT_COLOR_UI} from '@kepler.gl/constants';
 const {H3Layer} = KeplerGlLayers;
-import {DEFAULT_COLOR_UI} from 'layers/layer-factory';
 
 export default `hex_id,value
 89283082c2fffff,64
@@ -88,9 +72,11 @@ export const hexIdDataConfig = {
                   colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
                 },
                 coverage: 1,
+                enable3d: false,
                 sizeRange: [0, 500],
                 coverageRange: [0, 1],
-                elevationScale: 5
+                elevationScale: 5,
+                enableElevationZoomFactor: true
               },
               textLabel: [
                 {
@@ -112,7 +98,10 @@ export const hexIdDataConfig = {
               sizeField: null,
               sizeScale: 'linear',
               coverageField: null,
-              coverageScale: 'linear'
+              coverageScale: 'linear',
+              strokeColorDomain: [0, 1],
+              strokeColorField: 'something',
+              strokeColorScale: 'something'
             }
           }
         ],
@@ -155,15 +144,17 @@ export const hexIdDataConfig = {
 export const mergedFilters = [
   {
     dataId: [dataId],
-    id: 'value',
+    id: 'byjasfp0u',
+    enabled: true,
     name: ['value'],
     type: 'range',
     value: [11.2, 28],
-    enlarged: false,
+    view: 'side',
     freeze: true,
     plotType: 'histogram',
     yAxis: null,
     isAnimating: false,
+    animationWindow: 'free',
     fieldIdx: [1],
     domain: [1, 76],
     step: 0.01,
@@ -182,19 +173,23 @@ export const mergedFilters = [
 const mergedFields = [
   {
     name: 'hex_id',
-    format: '',
-    tableFieldIndex: 1,
-    type: 'string',
     id: 'hex_id',
-    analyzerType: 'STRING'
+    displayName: 'hex_id',
+    format: '',
+    fieldIdx: 0,
+    type: 'string',
+    analyzerType: 'STRING',
+    valueAccessor: values => values[0]
   },
   {
     name: 'value',
-    format: '',
-    tableFieldIndex: 2,
-    type: 'integer',
     id: 'value',
+    displayName: 'value',
+    format: '',
+    fieldIdx: 1,
+    type: 'integer',
     analyzerType: 'INT',
+    valueAccessor: values => values[1],
     filterProps: {
       domain: [1, 76],
       step: 0.01,
@@ -321,7 +316,8 @@ const mergedFields = [
       value: [1, 76],
       type: 'range',
       typeOptions: ['range'],
-      gpu: true
+      gpu: true,
+      view: 'side'
     }
   }
 ];
@@ -346,11 +342,13 @@ mergedH3Layer.config = {
   isConfigActive: false,
   colorField: {
     name: 'value',
+    id: 'value',
+    displayName: 'value',
     format: '',
-    tableFieldIndex: 2,
+    fieldIdx: 1,
     type: 'integer',
     analyzerType: 'INT',
-    id: 'value'
+    valueAccessor: values => values[1]
   },
   colorScale: 'quantile',
   colorDomain: [18, 19, 26, 27],
@@ -360,6 +358,9 @@ mergedH3Layer.config = {
   coverageField: null,
   coverageScale: 'linear',
   coverageDomain: [0, 1],
+  strokeColorDomain: [0, 1],
+  strokeColorField: null,
+  strokeColorScale: 'quantile',
   visConfig: {
     opacity: 0.8,
     colorRange: {
@@ -368,11 +369,23 @@ mergedH3Layer.config = {
       category: 'Uber',
       colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
     },
+    filled: true,
+    outline: false,
+    strokeColor: null,
+    strokeColorRange: {
+      name: 'Global Warming',
+      type: 'sequential',
+      category: 'Uber',
+      colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
+    },
+    strokeOpacity: 0.8,
+    thickness: 2,
     coverage: 1,
     sizeRange: [0, 500],
     coverageRange: [0, 1],
+    enable3d: false,
     elevationScale: 5,
-    enable3d: false
+    enableElevationZoomFactor: true
   },
   textLabel: [
     {
@@ -381,48 +394,66 @@ mergedH3Layer.config = {
       size: 18,
       offset: [0, 0],
       anchor: 'start',
-      alignment: 'center'
+      alignment: 'center',
+      outlineWidth: 0,
+      outlineColor: [255, 0, 0, 255],
+      background: false,
+      backgroundColor: [0, 0, 200, 255]
     }
   ],
   colorUI: {
     color: DEFAULT_COLOR_UI,
-    colorRange: DEFAULT_COLOR_UI
+    colorRange: DEFAULT_COLOR_UI,
+    strokeColorRange: DEFAULT_COLOR_UI
   },
   animation: {
     enabled: false
   }
 };
 
+const expectedMergedDatasetData = [
+  ['89283082c2fffff', 64],
+  ['8928308288fffff', 73],
+  ['89283082c07ffff', 65],
+  ['89283082817ffff', 74],
+  ['89283082c3bffff', 66],
+  ['89283082883ffff', 76],
+  ['89283082c33ffff', 43],
+  ['89283082c23ffff', 40],
+  ['89283082887ffff', 36],
+  ['89283082ca7ffff', 27],
+  ['89283082cb3ffff', 32],
+  ['89283082c0bffff', 26],
+  ['89283082ca3ffff', 19],
+  ['89283082dcfffff', 18],
+  ['89283082d8fffff', 1],
+  ['89283095347ffff', 3],
+  ['89283095363ffff', 2],
+  ['8928309537bffff', 4],
+  ['89283082d93ffff', 6],
+  ['89283082d73ffff', 1],
+  ['8928309530bffff', 1],
+  ['8928309532bffff', 1]
+];
+
+const dataContainer = createDataContainer(expectedMergedDatasetData, {fields: mergedFields});
+const indices = dataContainer.getPlainIndex();
+
 export const expectedMergedDataset = {
   id: 'h3-hex-id',
   label: 'new dataset',
   color: 'dont test me',
-  allData: [
-    ['89283082c2fffff', 64],
-    ['8928308288fffff', 73],
-    ['89283082c07ffff', 65],
-    ['89283082817ffff', 74],
-    ['89283082c3bffff', 66],
-    ['89283082883ffff', 76],
-    ['89283082c33ffff', 43],
-    ['89283082c23ffff', 40],
-    ['89283082887ffff', 36],
-    ['89283082ca7ffff', 27],
-    ['89283082cb3ffff', 32],
-    ['89283082c0bffff', 26],
-    ['89283082ca3ffff', 19],
-    ['89283082dcfffff', 18],
-    ['89283082d8fffff', 1],
-    ['89283095347ffff', 3],
-    ['89283095363ffff', 2],
-    ['8928309537bffff', 4],
-    ['89283082d93ffff', 6],
-    ['89283082d73ffff', 1],
-    ['8928309530bffff', 1],
-    ['8928309532bffff', 1]
-  ],
-  allIndexes: new Array(22).fill(0).map((d, i) => i),
-  filteredIndex: new Array(22).fill(0).map((d, i) => i),
+  metadata: {
+    id: 'h3-hex-id',
+    label: 'new dataset',
+    format: ''
+  },
+  type: '',
+  supportedFilterTypes: null,
+  disableDataOperation: false,
+  dataContainer,
+  allIndexes: indices,
+  filteredIndex: indices,
   filteredIndexForDomain: [9, 11, 12, 13],
   fieldPairs: [],
   fields: mergedFields,
@@ -440,7 +471,7 @@ export const expectedMergedDataset = {
       gpuFilter_3: null
     },
     filterValueAccessor: {
-      inputs: [{data: ['89283082c33ffff', 43], index: 6}],
+      inputs: [{index: 6}],
       result: [42, 0, 0, 0]
     }
   },
@@ -449,5 +480,11 @@ export const expectedMergedDataset = {
     fixedDomain: [],
     cpu: [],
     gpu: [mergedFilters[0]]
+  },
+  changedFilters: {
+    dynamicDomain: {byjasfp0u: 'added'},
+    fixedDomain: null,
+    cpu: null,
+    gpu: {byjasfp0u: 'added'}
   }
 };

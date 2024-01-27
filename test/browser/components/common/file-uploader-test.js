@@ -1,31 +1,12 @@
-// Copyright (c) 2020 Uber Technologies, Inc.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
 
 import React from 'react';
 import test from 'tape';
 import sinon from 'sinon';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
 
-import {FileUpload, WarningMsg} from 'components/common/file-uploader/file-upload';
-import FileDrop from 'components/common/file-uploader/file-drop';
-import UploadButton from 'components/common/file-uploader/upload-button';
+import {FileUpload, WarningMsg, FileDrop, UploadButton} from '@kepler.gl/components';
 
 test('Components -> FileUploader.render', t => {
   let wrapper;
@@ -52,7 +33,7 @@ test('Components -> FileUpload.onDrop', t => {
   const stopPropagation = sinon.spy();
   const wrapper = mountWithTheme(
     <IntlWrapper>
-      <FileUpload onFileUpload={onFileUpload} />
+      <FileUpload onFileUpload={onFileUpload} fileExtensions={['csv']} />
     </IntlWrapper>
   );
 
@@ -89,9 +70,21 @@ test('Components -> FileUpload.onDrop -> render loading msg', t => {
     t.deepEqual(arg, mockFiles, 'should call onFileUpload with files');
   });
 
+  const mockFileProgress = {
+    'tst-file.csv': {
+      fileName: 'tst-file.csv',
+      percent: 1,
+      message: 'Done'
+    }
+  };
   const wrapper = mountWithTheme(
     <IntlWrapper>
-      <FileUpload onFileUpload={onFileUpload} fileLoading />
+      <FileUpload
+        fileExtensions={['csv', 'json', 'geojson']}
+        onFileUpload={onFileUpload}
+        fileLoading={{fileCache: [], filesToLoad: [], onFinish: () => {}}}
+        fileLoadingProgress={mockFileProgress}
+      />
     </IntlWrapper>
   );
 
@@ -108,11 +101,12 @@ test('Components -> FileUpload.onDrop -> render loading msg', t => {
   FileDropDiv.simulate('drop', mockEvent);
 
   t.ok(onFileUpload.called, 'onFileUpload should get called');
+
   const uploadMsg = wrapper
-    .find('.file-uploader__message')
+    .find('.file-upload-progress__message')
     .at(0)
     .html();
-
+  t.comment(uploadMsg);
   t.ok(uploadMsg.includes('tst-file.csv', 'should render upload file msg'));
 
   t.end();
@@ -226,7 +220,7 @@ test('Components -> UploadButton fileInput', t => {
   });
   const wrapper = mountWithTheme(
     <IntlWrapper>
-      <FileUpload onFileUpload={onFileUpload} />
+      <FileUpload onFileUpload={onFileUpload} fileExtensions={['csv']} />
     </IntlWrapper>
   );
   const uploadButton = wrapper.find(UploadButton);

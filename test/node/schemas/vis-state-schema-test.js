@@ -1,30 +1,15 @@
-// Copyright (c) 2020 Uber Technologies, Inc.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
 
 import test from 'tape';
 import cloneDeep from 'lodash.clonedeep';
 import {cmpFilters, cmpSavedLayers} from 'test/helpers/comparison-utils';
-import SchemaManager from 'schemas';
+import SchemaManager, {CURRENT_VERSION, visStateSchema} from '@kepler.gl/schemas';
 
 import {
+  StateWFiles,
   StateWFilesFiltersLayerColor,
+  StateWEffects,
   StateWTooltipFormat,
   expectedSavedLayer0,
   expectedLoadedLayer0,
@@ -37,6 +22,20 @@ import {
   testCsvDataId,
   testGeoJsonDataId
 } from 'test/helpers/mock-state';
+import {keplerGlReducerCore as keplerGlReducer} from '@kepler.gl/reducers';
+import {VisStateActions} from '@kepler.gl/actions';
+
+const expectedVisStateEntries = [
+  'filters',
+  'layers',
+  'effects',
+  'interactionConfig',
+  'layerBlending',
+  'overlayBlending',
+  'splitMaps',
+  'animationConfig',
+  'editor'
+];
 
 test('#visStateSchema -> v1 -> save layers', t => {
   const initialState = cloneDeep(StateWFilesFiltersLayerColor);
@@ -46,8 +45,8 @@ test('#visStateSchema -> v1 -> save layers', t => {
 
   t.deepEqual(
     Object.keys(vsToSave),
-    ['filters', 'layers', 'interactionConfig', 'layerBlending', 'splitMaps', 'animationConfig'],
-    'visState should have all 5 entries'
+    expectedVisStateEntries,
+    `visState should have all ${expectedVisStateEntries.length} entries`
   );
 
   const exptectedSavedLayers = [expectedSavedLayer0, expectedSavedLayer1, expectedSavedLayer2];
@@ -67,8 +66,8 @@ test('#visStateSchema -> v1 -> load layers', t => {
 
   t.deepEqual(
     Object.keys(vsLoaded),
-    ['filters', 'layers', 'interactionConfig', 'layerBlending', 'splitMaps', 'animationConfig'],
-    'visState should have all 5 entries'
+    expectedVisStateEntries,
+    `visState should have all ${expectedVisStateEntries.length} entries`
   );
 
   const loadedLayers = vsLoaded.layers;
@@ -95,27 +94,46 @@ test('#visStateSchema -> v1 -> save load filters', t => {
     {
       dataId: [testCsvDataId],
       id: 'hjpn8frza',
+      enabled: true,
       name: ['time'],
       type: 'timeRange',
       value: [1474606800000, 1474617600000],
-      enlarged: true,
+      view: 'enlarged',
       plotType: 'histogram',
-      yAxis: null
+      yAxis: null,
+      animationWindow: 'free',
+      speed: 4
     },
     {
       dataId: [testGeoJsonDataId],
       id: 'vpk2466o',
+      enabled: true,
       name: ['RATE'],
       type: 'multiSelect',
       value: ['a'],
-      enlarged: false,
+      view: 'side',
       plotType: 'histogram',
-      yAxis: null
+      yAxis: null,
+      animationWindow: 'free',
+      speed: 1
     }
   ];
 
   cmpFilters(t, expectedSavedFilters, filtersToSave);
   cmpFilters(t, expectedSavedFilters, loadedFilters);
+
+  t.end();
+});
+
+test('#visStateSchema -> v1 -> save and validate filters', t => {
+  const initialState = cloneDeep(StateWFilesFiltersLayerColor);
+
+  // add empty filter
+  const nextStte = keplerGlReducer(initialState, VisStateActions.addFilter(testCsvDataId));
+  const savedState = SchemaManager.getConfigToSave(nextStte);
+
+  t.equal(nextStte.visState.filters.length, 3, 'should have 3 filters');
+  t.equal(savedState.config.visState.filters.length, 2, 'should only save 2 filters');
 
   t.end();
 });
@@ -131,6 +149,8 @@ test('#visStateSchema -> v1 -> save load interaction', t => {
   const expectedSaved = {
     tooltip: {
       enabled: true,
+      compareMode: false,
+      compareType: 'absolute',
       fieldsToShow: {
         [testCsvDataId]: [
           {
@@ -150,7 +170,7 @@ test('#visStateSchema -> v1 -> save load interaction', t => {
             format: null
           },
           {
-            name: 'id',
+            name: 'uid',
             format: null
           }
         ],
@@ -207,6 +227,8 @@ test('#visStateSchema -> v1 -> save load interaction -> tooltip format', t => {
   const expectedSaved = {
     tooltip: {
       enabled: true,
+      compareMode: true,
+      compareType: 'relative',
       fieldsToShow: {
         [testCsvDataId]: [{name: 'gps_data.utc_timestamp', format: 'LL'}],
         [testGeoJsonDataId]: [
@@ -224,7 +246,7 @@ test('#visStateSchema -> v1 -> save load interaction -> tooltip format', t => {
           },
           {
             name: 'TRIPS',
-            format: null
+            format: '.3f'
           },
           {
             name: 'RATE',
@@ -275,8 +297,8 @@ test('#visStateSchema -> v1 -> save animation', t => {
 
   t.deepEqual(
     Object.keys(vsToSave),
-    ['filters', 'layers', 'interactionConfig', 'layerBlending', 'splitMaps', 'animationConfig'],
-    'visState should have all 5 entries'
+    expectedVisStateEntries,
+    `visState should have all ${expectedVisStateEntries.length} entries`
   );
 
   const expectedSavedLayers = [expectedSavedTripLayer];
@@ -284,5 +306,131 @@ test('#visStateSchema -> v1 -> save animation', t => {
   cmpSavedLayers(t, expectedSavedLayers, vsToSave.layers);
 
   t.deepEqual(vsToSave.animationConfig, expectedAnimationConfig, 'should save animationConfig');
+  t.end();
+});
+
+test('visStateSchema -> saving with a null column value does not throw an error', t => {
+  const testLayer = cloneDeep(StateWFiles).visState.layers[0];
+
+  // set a column to null
+  testLayer.config.columns.altitude = null;
+
+  // test that it doesn't fail ColumnSchemaV1.save
+  t.doesNotThrow(() => {
+    visStateSchema[CURRENT_VERSION].save({
+      layers: [testLayer],
+      layerOrder: [testLayer.id]
+    });
+  }, 'saving with a null column value should not fail');
+
+  t.end();
+});
+
+test('#visStateSchema -> v1 -> save load effects', t => {
+  const expectedEffects = [
+    {
+      id: 'e_4',
+      type: 'lightAndShadow',
+      isEnabled: true,
+      parameters: {
+        timestamp: 100,
+        timezone: 'UTC',
+        timeMode: 'pick',
+        shadowIntensity: 0.5,
+        shadowColor: [0, 0, 0],
+        sunLightColor: [255, 255, 255],
+        sunLightIntensity: 1,
+        ambientLightColor: [255, 255, 255],
+        ambientLightIntensity: 1
+      }
+    },
+    {
+      id: 'e_3',
+      type: 'magnify',
+      isEnabled: true,
+      parameters: {
+        screenXY: [0.5, 0.5],
+        radiusPixels: 200,
+        zoom: 2,
+        borderWidthPixels: 3,
+        borderColor: [255, 255, 255, 255]
+      }
+    },
+    {
+      id: 'e_2',
+      type: 'sepia',
+      isEnabled: true,
+      parameters: {amount: 0.5}
+    },
+    {
+      id: 'e_1',
+      type: 'ink',
+      isEnabled: true,
+      parameters: {strength: 0.25}
+    }
+  ];
+
+  const initialState = cloneDeep(StateWEffects);
+
+  const savedState = SchemaManager.getConfigToSave(initialState);
+  const savedEffects = savedState.config.visState.effects;
+
+  const loadedState = SchemaManager.parseSavedConfig(savedState);
+  const loadedEffects = loadedState.visState.effects;
+
+  t.deepEqual(savedEffects, expectedEffects, 'Effects should be saved as expected');
+  t.deepEqual(loadedEffects, expectedEffects, 'Effects should be loaded as expected');
+
+  t.end();
+});
+
+test('#visStateSchema -> v1 -> save load effects (deprecated beta config)', t => {
+  const deprecatedEffects = [
+    {
+      id: 'e_5',
+      config: {
+        type: 'magnify',
+        name: 'Magnify',
+        isEnabled: false,
+        isConfigActive: true,
+        params: {
+          screenXY: [0, 0],
+          radiusPixels: 200,
+          zoom: 2,
+          borderWidthPixels: 0,
+          borderColor: [255, 255, 255, 255]
+        }
+      }
+    }
+  ];
+
+  const expectedLoadedEffects = [
+    {
+      id: 'e_5',
+      type: 'magnify',
+      isEnabled: false,
+      parameters: {
+        screenXY: [0, 0],
+        radiusPixels: 200,
+        zoom: 2,
+        borderWidthPixels: 0,
+        borderColor: [255, 255, 255, 255]
+      }
+    }
+  ];
+
+  const initialState = cloneDeep(StateWEffects);
+  const deprecatedSavedState = SchemaManager.getConfigToSave(initialState);
+  deprecatedSavedState.config.visState.effects = deprecatedEffects;
+  deprecatedSavedState.config.visState.effectOrder = [deprecatedEffects[0].id];
+
+  const loadedState = SchemaManager.parseSavedConfig(deprecatedSavedState);
+
+  t.deepEqual(
+    loadedState.visState.effects,
+    expectedLoadedEffects,
+    'Effects should be loaded as expected'
+  );
+
   t.end();
 });

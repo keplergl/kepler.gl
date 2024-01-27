@@ -21,6 +21,7 @@
 - [6. Match config with data](#6-match-config-with-data)
 - [7. Save Map](#7-save-map)
   - [`.save_to_html()`](#save_to_html)
+  - [`._repr_html_()`](#_repr_html_)
 - [Demo Notebooks](#demo-notebooks)
 
 
@@ -36,7 +37,7 @@ To install use pip:
 $ pip install keplergl
 ```
 
-If you on Mac used `pip install` and running Notebook 5.3 and above, you don't need to run the following
+If you're on Mac, used `pip install`, and you're running Notebook 5.3 and above, you don't need to run the following:
 
 ```bash
 $ jupyter nbextension install --py --sys-prefix keplergl # can be skipped for notebook 5.3 and above
@@ -74,7 +75,12 @@ $ jupyter labextension install @jupyter-widgets/jupyterlab-manager keplergl-jupy
       Datasets as a dictionary, key is the name of the dataset. Read more on [Accepted data format][data_format]
 
   - __`config`__ `dict` _optional_
+      
       Map config as a dictionary. The `dataId` in the layer and filter settings should match the `name` of the dataset they are created under
+
+  - __`show_docs`__ `bool` _optional_
+      
+      By default, the User Guide URL (<https://docs.kepler.gl/docs/keplergl-jupyter>) will be printed when a map is created. To hide the User Guide URL, set `show_docs=False`.   
 
 The following command will load kepler.gl widget below a cell.
 **The map object created here is `map_1` it will be used throughout the code example in this doc.**
@@ -88,6 +94,7 @@ map_1
 ```
 
 ![empty map][empty_map]
+
 
 You can also create the map and pass in the data or data and config at the same time. Follow the instruction to [match config with data][match-config-w-data]
 
@@ -211,7 +218,7 @@ w1.add_data(data=df, name='cities')
 ```
 
 ### `GeoDataFrame`
-kepler.gl accepts [geopandas.GeoDataFrame][geo_data_frame], it automatically converts the current `geometry` column from shapely to wkt string.
+kepler.gl accepts [geopandas.GeoDataFrame][geo_data_frame], it automatically converts the current `geometry` column from shapely to wkt string and re-projects geometries to latitude and longitude (EPSG:4326) if the active `geometry` column is in a different projection.
 ```python
 url = 'http://eric.clst.org/assets/wiki/uploads/Stuff/gz_2010_us_040_00_500k.json'
 country_gdf = geopandas.read_file(url)
@@ -328,8 +335,31 @@ map_1.save_to_html(file_name='first_map.html')
 map_1.save_to_html(data={'data_1': df}, config=config, file_name='first_map.html')
 
 # this will save map with the interaction panel disabled
-map_1.save_to_html(file_name='first_map.html' read_only=True)
+map_1.save_to_html(file_name='first_map.html', read_only=True)
 ```
+
+### `._repr_html_()`
+
+- input
+  - **`data`**: _optional_  A data dictionary {"name": data}, if not provided, will use current map data
+  - **`config`**: _optional_ map config dictionary, if not provided, will use current map config
+  - **`read_only`**: _optional_ if `read_only` is `True`, hide side panel to disable map customization
+
+You can also directly serve the current map via a flask app. To do that return kepler’s map HTML representation. Here is an example on how to do that:
+
+```python
+from flask import Flask
+
+app = Flask(__name__)
+
+@app.route('/')
+def index():
+    return map_1._repr_html_()
+    
+if __name__ == '__main__':
+    app.run(debug=True)
+```
+
 # Demo Notebooks
 - [Load kepler.gl](https://github.com/keplergl/kepler.gl/blob/master/bindings/kepler.gl-jupyter/notebooks/Load%20kepler.gl.ipynb): Load kepler.gl widget, add data and config
 - [Geometry as String](https://github.com/keplergl/kepler.gl/blob/master/bindings/kepler.gl-jupyter/notebooks/Geometry%20as%20String.ipynb): Embed Polygon geometries as `GeoJson` and `WKT` inside a `CSV`

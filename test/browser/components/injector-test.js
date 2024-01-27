@@ -1,23 +1,7 @@
-// Copyright (c) 2020 Uber Technologies, Inc.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
 
+/* eslint-disable enzyme-deprecation/no-mount */
 import React from 'react';
 import test from 'tape';
 import {mount} from 'enzyme';
@@ -26,11 +10,16 @@ import {Provider} from 'react-redux';
 import sinon from 'sinon';
 import {console as Console} from 'global/window';
 
-import {withState, injectComponents, PanelHeaderFactory} from 'components';
+import {withState, injectComponents, PanelHeaderFactory} from '@kepler.gl/components';
 
-import coreReducer from 'reducers/core';
-import {keplerGlInit} from 'actions/actions';
-import {visStateLens, uiStateLens, mapStateLens, mapStyleLens} from 'reducers';
+import {keplerGlInit} from '@kepler.gl/actions';
+import {
+  keplerGlReducerCore as coreReducer,
+  visStateLens,
+  uiStateLens,
+  mapStateLens,
+  mapStyleLens
+} from '@kepler.gl/reducers';
 
 const mockStore = configureStore();
 const initialCoreState = coreReducer(undefined, keplerGlInit({}));
@@ -50,7 +39,7 @@ test('Components -> injector -> injectComponents', t => {
 
   const wrapper = mount(
     <Provider store={store}>
-      <KeplerGl id="foo" />
+      <KeplerGl id="foo" mapboxApiAccessToken="smoothie_and_milkshake" />
     </Provider>
   );
 
@@ -61,8 +50,9 @@ test('Components -> injector -> injectComponents', t => {
 
 test('Components -> injector -> missing deps', t => {
   const spy = sinon.spy(Console, 'error');
-
+  // eslint-disable-next-line react/display-name
   const myCustomNameFactory = () => () => <div className="my-test-header-name">name</div>;
+  // eslint-disable-next-line react/display-name
   const myCustomHeaderFactory = Name => () => (
     <div className="my-test-header-1">
       <Name />
@@ -96,7 +86,7 @@ test('Components -> injector -> missing deps', t => {
 
 test('Components -> injector -> wrong factory type', t => {
   const spy = sinon.spy(Console, 'error');
-  // const spy = sinon.spy(Console, 'error');
+  // eslint-disable-next-line react/display-name
   const myCustomHeaderFactory = Name => () => (
     <div className="my-test-header-2">
       <Name />

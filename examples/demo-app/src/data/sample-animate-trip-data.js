@@ -1,22 +1,5 @@
-// Copyright (c) 2020 Uber Technologies, Inc.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
 
 export default {
   type: 'FeatureCollection',
@@ -434,5 +417,41 @@ export default {
         ]
       }
     }
+  ]
+};
+
+export const animateTripDataId = 'animate-trip-data';
+export const pointDataId = 'sample_taxi_trip';
+
+// animationConfig,domain 1565577697000, 1565578881000
+// filer.domain: 1565576422000, 1565577120000
+export const pointData = {
+  fields: [
+    {
+      name: 'tpep_pickup_datetime',
+      format: 'YYYY-M-D H:m:s',
+      type: 'timestamp'
+    },
+    {name: 'pickup_longitude', format: '', type: 'real'},
+    {name: 'pickup_latitude', format: '', type: 'real'}
+  ],
+  rows: [
+    ['2019-08-12 2:23:42', -73.99389648, 40.75011063],
+    ['2019-08-12 2:32:00', -73.97642517, 40.73981094],
+    ['2019-08-12 2:21:00', -73.96870422, 40.75424576],
+    ['2019-08-12 2:28:18', -73.86306, 40.76958084],
+    ['2019-08-12 2:20:36', -73.94554138, 40.77942276],
+    ['2019-08-12 2:20:22', -73.87445831, 40.7740097],
+    ['2019-08-12 2:31:00', -73.97660065, 40.7518959]
+  ]
+};
+
+export const replacePointData = {
+  fields: pointData.fields,
+  rows: [
+    ['2019-08-12 2:23:18', -73.97812653, 40.75257492],
+    ['2019-08-12 2:07:26', -74.00622559, 40.73387146],
+    ['2019-08-12 2:08:55', -73.97122955, 40.75518417],
+    ['2019-08-12 2:10:30', -73.97627258, 40.75893402]
   ]
 };

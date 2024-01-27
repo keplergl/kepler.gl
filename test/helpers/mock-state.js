@@ -1,46 +1,45 @@
-// Copyright (c) 2020 Uber Technologies, Inc.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
 
 import test from 'tape-catch';
 import cloneDeep from 'lodash.clonedeep';
-import {VizColorPalette} from 'constants/custom-color-ranges';
-import {getInitialInputStyle} from 'reducers/map-style-updaters';
+import {drainTasksForTesting} from 'react-palm/tasks';
 
-import keplerGlReducer from 'reducers/core';
-import * as VisStateActions from 'actions/vis-state-actions';
-import * as MapStyleActions from 'actions/map-style-actions';
-import * as MapStateActions from 'actions/map-state-actions';
-import {addDataToMap} from 'actions/actions';
-import {DEFAULT_TEXT_LABEL, DEFAULT_COLOR_RANGE, DEFAULT_LAYER_OPACITY} from 'layers/layer-factory';
+import {getInitialInputStyle, keplerGlReducerCore as keplerGlReducer} from '@kepler.gl/reducers';
+
+import {
+  VizColorPalette,
+  COMPARE_TYPES,
+  DEFAULT_LAYER_OPACITY,
+  DEFAULT_TEXT_LABEL,
+  DEFAULT_COLOR_RANGE,
+  DEFAULT_HIGHLIGHT_COLOR,
+  DEFAULT_LAYER_LABEL
+} from '@kepler.gl/constants';
+import {DEFAULT_KEPLER_GL_PROPS, getUpdateVisDataPayload} from '@kepler.gl/components';
+import {
+  addDataToMap,
+  VisStateActions,
+  MapStateActions,
+  MapStyleActions,
+  UIStateActions,
+  ProviderActions
+} from '@kepler.gl/actions';
 
 // fixtures
-import {dataId as csvDataId, testFields, testAllData} from 'test/fixtures/test-csv-data';
-import {fields, rows, geoJsonDataId} from 'test/fixtures/geojson';
+import {dataId as csvDataId, testFields, testAllData} from '../fixtures/test-csv-data';
+import testLayerData from '../fixtures/test-layer-data';
+
+import {fields, rows, geoJsonDataId} from '../fixtures/geojson';
 import {
   fields as tripFields,
   rows as tripRows,
   config as tripConfig,
   dataId as tripDataId
-} from 'test/fixtures/test-trip-data';
-import tripGeojson, {tripDataInfo} from 'test/fixtures/trip-geojson';
-import {processGeojson} from 'processors/data-processor';
+} from '../fixtures/test-trip-data';
+import tripGeojson, {tripDataInfo} from '../fixtures/trip-geojson';
+import {processCsvData, processGeojson} from '@kepler.gl/processors';
+import {MOCK_MAP_STYLE} from './mock-map-styles';
 
 const geojsonFields = cloneDeep(fields);
 const geojsonRows = cloneDeep(rows);
@@ -72,17 +71,22 @@ export function applyActions(reducer, initialState, actions) {
   );
 }
 
+// TODO: need to be deleted and imported from raw-states
 export const InitialState = keplerGlReducer(undefined, {});
 
 /**
  * Mock app state with uploaded geojson and csv file
  * @returns {Immutable} appState
  */
-function mockStateWithFileUpload() {
+export function mockStateWithFileUpload() {
   const initialState = cloneDeep(InitialState);
 
   // load csv and geojson
   const updatedState = applyActions(keplerGlReducer, initialState, [
+    {
+      action: MapStyleActions.loadMapStyles,
+      payload: [{dark: MOCK_MAP_STYLE}]
+    },
     {
       action: VisStateActions.updateVisData,
       payload: [[{info: csvInfo, data: {fields: testFields, rows: testAllData}}]]
@@ -92,14 +96,20 @@ function mockStateWithFileUpload() {
       payload: [[{info: geojsonInfo, data: {fields: geojsonFields, rows: geojsonRows}}]]
     }
   ]);
-
+  // cleanup tasks created during loadMapStyles
+  drainTasksForTesting();
   // replace layer id and color with controlled value for testing
   updatedState.visState.layers.forEach((l, i) => {
+    const oldLayerId = l.id;
     l.id = `${l.type}-${i}`;
     l.config.color = [i, i, i];
     if (l.config.visConfig.strokeColor) {
       l.config.visConfig.strokeColor = [i + 10, i + 10, i + 10];
     }
+    // update layerOrder with newly created IDs
+    updatedState.visState.layerOrder = updatedState.visState.layerOrder.map(layerId =>
+      layerId === oldLayerId ? l.id : layerId
+    );
   });
 
   test(t => {
@@ -123,8 +133,13 @@ function mockStateWithTripGeojson() {
 
   // replace layer id and color with controlled value for testing
   updatedState.visState.layers.forEach((l, i) => {
+    const oldLayerId = l.id;
     l.id = `${l.type}-${i}`;
     l.config.color = [i, i, i];
+    // update layerOrder with newly created IDs
+    updatedState.visState.layerOrder = updatedState.visState.layerOrder.map(layerId =>
+      layerId === oldLayerId ? l.id : layerId
+    );
   });
 
   return updatedState;
@@ -144,6 +159,12 @@ function mockStateWithFilters(state) {
     {
       action: VisStateActions.setFilter,
       payload: [0, 'value', [1474606800000, 1474617600000]]
+    },
+
+    // set filter animation speed
+    {
+      action: VisStateActions.updateFilterAnimationSpeed,
+      payload: [0, 4]
     },
 
     // add another filter
@@ -210,6 +231,119 @@ function mockStateWithMultiFilters() {
   return prepareState;
 }
 
+function mockStateWithEffects() {
+  const initialState = cloneDeep(InitialState);
+
+  let prepareState = applyActions(keplerGlReducer, initialState, [
+    {
+      action: VisStateActions.addEffect,
+      payload: [{id: 'e_1'}]
+    },
+    {
+      action: VisStateActions.addEffect,
+      payload: [{id: 'e_2', type: 'sepia'}]
+    },
+    {
+      action: VisStateActions.addEffect,
+      payload: [{id: 'e_3', type: 'magnify'}]
+    },
+    {
+      action: VisStateActions.addEffect,
+      payload: [{id: 'e_4', type: 'lightAndShadow', parameters: {timestamp: 100, timezone: 'UTC'}}]
+    }
+  ]);
+  return prepareState;
+}
+
+function mockStateWithH3Layer() {
+  const initialState = cloneDeep(InitialState);
+
+  const prepareState = applyActions(keplerGlReducer, initialState, [
+    {
+      action: addDataToMap,
+      payload: [
+        {
+          datasets: {
+            info: {id: csvDataId},
+            data: processCsvData(testLayerData)
+          },
+          config: {
+            version: 'v1',
+            config: {
+              visState: {
+                layers: [
+                  {
+                    id: 'h3-layer',
+                    type: 'hexagonId',
+                    config: {
+                      dataId: csvDataId,
+                      label: 'H3 Hexagon',
+                      color: [255, 153, 31],
+                      columns: {hex_id: 'hex_id'},
+                      isVisible: true
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]);
+  return prepareState;
+}
+
+export function mockStateWithMultipleH3Layers() {
+  const initialState = cloneDeep(InitialState);
+
+  const prepareState = applyActions(keplerGlReducer, initialState, [
+    {
+      action: addDataToMap,
+      payload: [
+        {
+          datasets: {
+            info: {id: csvDataId},
+            data: processCsvData(testLayerData)
+          },
+          config: {
+            version: 'v1',
+            config: {
+              visState: {
+                layers: [
+                  {
+                    id: 'h3-layer-1',
+                    type: 'hexagonId',
+                    config: {
+                      dataId: csvDataId,
+                      label: 'H3 Hexagon 1',
+                      color: [255, 153, 31],
+                      columns: {hex_id: 'hex_id'},
+                      isVisible: true
+                    }
+                  },
+                  {
+                    id: 'h3-layer-2',
+                    type: 'hexagonId',
+                    config: {
+                      dataId: csvDataId,
+                      label: 'H3 Hexagon 2',
+                      color: [255, 153, 31],
+                      columns: {hex_id: 'hex_id'},
+                      isVisible: true
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]);
+  return prepareState;
+}
+
 /**
  * Mock state will contain 1 heatmap, 1 point and 1 arc layer, 1 hexbin layer and 1 time filter
  * @param {*} state
@@ -232,7 +366,7 @@ function mockStateWithTripData() {
   );
 }
 
-function mockStateWithLayerDimensions(state) {
+export function mockStateWithLayerDimensions(state) {
   const initialState = state || mockStateWithFileUpload();
 
   const layer0 = initialState.visState.layers.find(
@@ -258,9 +392,6 @@ function mockStateWithLayerDimensions(state) {
   const textLabelPayload1 = [layer0, 0, 'field', textLabelField];
   const textLabelPayload2 = [layer0, 0, 'color', [255, 0, 0]];
 
-  // layers = [ 'point', 'geojson', 'hexagon' ]
-  const reorderPayload = [[2, 0, 1]];
-
   const prepareState = applyActions(keplerGlReducer, initialState, [
     // change colorField
     {
@@ -275,39 +406,30 @@ function mockStateWithLayerDimensions(state) {
     {action: VisStateActions.layerTextLabelChange, payload: textLabelPayload1},
     {action: VisStateActions.layerTextLabelChange, payload: textLabelPayload2},
 
-    // add layer
+    // add layer from config
     {
       action: VisStateActions.addLayer,
-      payload: [{id: 'hexagon-2', color: [2, 2, 2]}]
+      payload: [
+        {
+          id: 'hexagon-2',
+          type: 'hexagon',
+          config: {
+            color: [2, 2, 2],
+            isVisible: true,
+            dataId: testCsvDataId,
+            columns: {
+              lat: 'gps_data.lat',
+              lng: 'gps_data.lng'
+            }
+          }
+        }
+      ]
     }
   ]);
 
-  const newLayer = prepareState.visState.layers[2];
+  const reorderPayload = [['hexagon-2', 'point-0', 'geojson-1']];
 
-  // set new layer to hexagon
-  const updateState = applyActions(keplerGlReducer, prepareState, [
-    {action: VisStateActions.layerTypeChange, payload: [newLayer, 'hexagon']}
-  ]);
-
-  const hexagonLayer = updateState.visState.layers[2];
-  hexagonLayer.id = 'hexagon-2';
-
-  const updateLayerConfig = {
-    dataId: testCsvDataId,
-    columns: {
-      lat: {value: 'gps_data.lat', fieldIdx: 1},
-      lng: {value: 'gps_data.lng', fieldIdx: 2}
-    },
-    isConfigActive: false
-  };
-
-  const resultState = applyActions(keplerGlReducer, updateState, [
-    // select hexagon layer columns
-    {
-      action: VisStateActions.layerConfigChange,
-      payload: [hexagonLayer, updateLayerConfig]
-    },
-
+  const resultState = applyActions(keplerGlReducer, prepareState, [
     // reorder Layer
     {action: VisStateActions.reorderLayer, payload: reorderPayload}
   ]);
@@ -315,10 +437,11 @@ function mockStateWithLayerDimensions(state) {
   return resultState;
 }
 
-function mockStateWithCustomMapStyle() {
+function mockStateWithCustomMapStyle(customType = 'LOCAL') {
   const initialState = cloneDeep(InitialState);
   const testCustomMapStyle = {
     ...getInitialInputStyle(),
+    id: 'smoothie_the_cat',
     accessToken: 'secret_token',
     isValid: true,
     label: 'Smoothie the Cat',
@@ -328,7 +451,10 @@ function mockStateWithCustomMapStyle() {
       layers: [{id: 'background'}, {id: 'road'}, {id: 'label'}],
       name: 'Smoothie the Cat'
     },
-    url: 'mapbox://styles/shanhe/smoothie.the.cat'
+    url: 'mapbox://styles/shanhe/smoothie.the.cat',
+    icon:
+      'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat/static/-122.3391,37.7922,9,0,0/400x300?access_token=secret_token&logo=false&attribution=false',
+    custom: customType
   };
 
   // add custom map style
@@ -362,13 +488,18 @@ function mockStateWithSplitMaps(state) {
   const initialState = state || mockStateWithFileUpload();
 
   const firstLayer = initialState.visState.layers[0];
-
+  const secondLayer = initialState.visState.layers[1];
   const prepareState = applyActions(keplerGlReducer, initialState, [
     // toggle splitMaps
     {action: MapStateActions.toggleSplitMap, payload: []},
 
     // toggleLayerForMap
-    {action: VisStateActions.toggleLayerForMap, payload: [0, firstLayer.id]}
+    {action: VisStateActions.toggleLayerForMap, payload: [0, firstLayer.id]},
+
+    // open geojson layer
+    {action: VisStateActions.toggleLayerForMap, payload: [1, secondLayer.id]},
+
+    {action: VisStateActions.toggleLayerForMap, payload: [1, firstLayer.id]}
   ]);
 
   return prepareState;
@@ -382,9 +513,18 @@ function mockStateWithTooltipFormat() {
     ...oldConfig,
     config: {
       ...oldConfig.config,
+      compareMode: true,
+      compareType: COMPARE_TYPES.RELATIVE,
       fieldsToShow: {
         ...oldConfig.config.fieldsToShow,
-        [testCsvDataId]: [{name: 'gps_data.utc_timestamp', format: 'LL'}]
+        [testCsvDataId]: [{name: 'gps_data.utc_timestamp', format: 'LL'}],
+        [testGeoJsonDataId]: [
+          {name: 'OBJECTID', format: null},
+          {name: 'ZIP_CODE', format: null},
+          {name: 'ID', format: null},
+          {name: 'TRIPS', format: '.3f'},
+          {name: 'RATE', format: null}
+        ]
       }
     }
   };
@@ -396,13 +536,87 @@ function mockStateWithTooltipFormat() {
   return prepareState;
 }
 
+function mockStateWithGeocoderDataset() {
+  const initialState = cloneDeep(InitialState);
+
+  const oldInteractionConfig = initialState.visState.interactionConfig.tooltip;
+  const newInteractionConfig = {
+    ...oldInteractionConfig,
+    config: {
+      ...oldInteractionConfig.config,
+      fieldsToShow: {
+        ...oldInteractionConfig.config.fieldsToShow,
+        geocoder_dataset: [
+          {
+            name: 'lt',
+            format: null
+          },
+          {
+            name: 'ln',
+            format: null
+          },
+          {
+            name: 'icon',
+            format: null
+          },
+          {
+            name: 'text',
+            format: null
+          }
+        ]
+      },
+      compareMode: false,
+      compareType: COMPARE_TYPES.ABSOLUTE
+    }
+  };
+  const geocoderDataset = getUpdateVisDataPayload(48.85658, 2.35183, 'Paris');
+
+  const prepareState = applyActions(keplerGlReducer, initialState, [
+    {
+      action: VisStateActions.updateVisData,
+      payload: geocoderDataset
+    },
+    {action: VisStateActions.interactionConfigChange, payload: [newInteractionConfig]}
+  ]);
+
+  return prepareState;
+}
+
+function mockStateWithLayerStyling() {
+  const initialState = mockStateWithFileUpload();
+  const layer0 = initialState.visState.layers.find(
+    l => l.config.dataId === testCsvDataId && l.type === 'point'
+  );
+  const mapCenter = {
+    longitude: 31.2369645,
+    latitude: 30.0242098,
+    zoom: 13
+  };
+
+  const prepareState = applyActions(keplerGlReducer, initialState, [
+    // make radius bigger
+    {
+      action: VisStateActions.layerVisConfigChange,
+      payload: [layer0, {radius: 100}]
+    },
+    // center map
+    {
+      action: MapStateActions.updateMap,
+      payload: [mapCenter]
+    }
+  ]);
+
+  return prepareState;
+}
+
 // saved hexagon layer
 export const expectedSavedLayer0 = {
   id: 'hexagon-2',
   type: 'hexagon',
   config: {
     dataId: testCsvDataId,
-    label: 'new layer',
+    label: DEFAULT_LAYER_LABEL,
+    highlightColor: DEFAULT_HIGHLIGHT_COLOR,
     color: [2, 2, 2],
     columns: {
       lat: 'gps_data.lat',
@@ -420,6 +634,7 @@ export const expectedSavedLayer0 = {
       percentile: [0, 100],
       elevationPercentile: [0, 100],
       elevationScale: 5,
+      enableElevationZoomFactor: true,
       colorAggregation: 'count',
       sizeAggregation: 'count',
       enable3d: false
@@ -439,7 +654,8 @@ export const expectedLoadedLayer0 = {
   type: 'hexagon',
   config: {
     dataId: testCsvDataId,
-    label: 'new layer',
+    label: DEFAULT_LAYER_LABEL,
+    highlightColor: DEFAULT_HIGHLIGHT_COLOR,
     color: [2, 2, 2],
     columns: {
       lat: 'gps_data.lat',
@@ -457,6 +673,7 @@ export const expectedLoadedLayer0 = {
       percentile: [0, 100],
       elevationPercentile: [0, 100],
       elevationScale: 5,
+      enableElevationZoomFactor: true,
       colorAggregation: 'count',
       sizeAggregation: 'count',
       enable3d: false
@@ -474,12 +691,12 @@ export const expectedSavedLayer1 = {
   type: 'point',
   config: {
     dataId: testCsvDataId,
-    label: 'gps data',
+    label: 'gps_data',
+    highlightColor: DEFAULT_HIGHLIGHT_COLOR,
     color: [0, 0, 0],
     columns: {
       lat: 'gps_data.lat',
-      lng: 'gps_data.lng',
-      altitude: null
+      lng: 'gps_data.lng'
     },
     textLabel: [
       {
@@ -529,12 +746,12 @@ export const expectedLoadedLayer1 = {
   type: 'point',
   config: {
     dataId: testCsvDataId,
-    label: 'gps data',
+    label: 'gps_data',
+    highlightColor: DEFAULT_HIGHLIGHT_COLOR,
     color: [0, 0, 0],
     columns: {
       lat: 'gps_data.lat',
-      lng: 'gps_data.lng',
-      altitude: null
+      lng: 'gps_data.lng'
     },
     hidden: false,
     isVisible: true,
@@ -583,6 +800,7 @@ export const expectedSavedLayer2 = {
   config: {
     dataId: testGeoJsonDataId,
     label: 'zip',
+    highlightColor: DEFAULT_HIGHLIGHT_COLOR,
     color: [1, 1, 1],
     columns: {
       geojson: '_geojson'
@@ -600,6 +818,7 @@ export const expectedSavedLayer2 = {
       radiusRange: [0, 50],
       heightRange: [0, 500],
       elevationScale: 5,
+      enableElevationZoomFactor: true,
       stroked: true,
       filled: true,
       enable3d: false,
@@ -628,6 +847,7 @@ export const expectedLoadedLayer2 = {
   config: {
     dataId: testGeoJsonDataId,
     label: 'zip',
+    highlightColor: DEFAULT_HIGHLIGHT_COLOR,
     color: [1, 1, 1],
     columns: {
       geojson: '_geojson'
@@ -646,6 +866,7 @@ export const expectedLoadedLayer2 = {
       radiusRange: [0, 50],
       heightRange: [0, 500],
       elevationScale: 5,
+      enableElevationZoomFactor: true,
       stroked: true,
       filled: true,
       enable3d: false,
@@ -667,14 +888,21 @@ export const expectedLoadedLayer2 = {
 
 export const StateWFiles = mockStateWithFileUpload();
 export const StateWFilters = mockStateWithFilters();
+export const StateWEffects = mockStateWithEffects();
 export const StateWFilesFiltersLayerColor = mockStateWithLayerDimensions(StateWFilters);
 export const StateWMultiFilters = mockStateWithMultiFilters();
 
-export const StateWCustomMapStyle = mockStateWithCustomMapStyle();
+export const StateWCustomMapStyleLegacy = mockStateWithCustomMapStyle(true);
+export const StateWCustomMapStyleLocal = mockStateWithCustomMapStyle('LOCAL');
+export const StateWCustomMapStyleManaged = mockStateWithCustomMapStyle('MANAGED');
 export const StateWSplitMaps = mockStateWithSplitMaps();
 export const StateWTrips = mockStateWithTripData();
 export const StateWTripGeojson = mockStateWithTripGeojson();
 export const StateWTooltipFormat = mockStateWithTooltipFormat();
+export const StateWH3Layer = mockStateWithH3Layer();
+export const StateWMultiH3Layers = mockStateWithMultipleH3Layers();
+export const StateWithGeocoderDataset = mockStateWithGeocoderDataset();
+export const StateWLayerStyle = mockStateWithLayerStyling();
 
 export const expectedSavedTripLayer = {
   id: 'trip-0',
@@ -682,6 +910,7 @@ export const expectedSavedTripLayer = {
   config: {
     dataId: 'trip_data',
     label: 'Trip Data',
+    highlightColor: DEFAULT_HIGHLIGHT_COLOR,
     color: [0, 0, 0],
     columns: {
       geojson: '_geojson'
@@ -703,4 +932,60 @@ export const expectedSavedTripLayer = {
     sizeField: null,
     sizeScale: 'linear'
   }
+};
+
+export function mockKeplerPropsWithState({
+  state,
+  keplerProps = DEFAULT_KEPLER_GL_PROPS,
+  visStateActions = {},
+  mapStateActions = {},
+  mapStyleActions = {},
+  uiStateActions = {},
+  providerActions = {}
+}) {
+  return {
+    ...state,
+    ...keplerProps,
+    visStateActions: {
+      ...VisStateActions,
+      ...visStateActions
+    },
+    mapStateActions: {
+      ...MapStateActions,
+      ...mapStateActions
+    },
+    mapStyleActions: {
+      ...MapStyleActions,
+      ...mapStyleActions
+    },
+    uiStateActions: {
+      ...UIStateActions,
+      ...uiStateActions
+    },
+    providerActions: {
+      ...ProviderActions,
+      ...providerActions
+    }
+  };
+}
+
+export const mockKeplerProps = mockKeplerPropsWithState({state: StateWLayerStyle});
+
+// mount map with mockKeplerProps
+// hover over data index 15
+// tested in map-container-test
+export const expectedLayerHoverProp = {
+  data: mockKeplerProps.visState.datasets[testCsvDataId].dataContainer.row(15),
+  fields: mockKeplerProps.visState.datasets[testCsvDataId].fields,
+  fieldsToShow:
+    mockKeplerProps.visState.interactionConfig.tooltip.config.fieldsToShow[testCsvDataId],
+  layer: mockKeplerProps.visState.layers[0]
+};
+
+export const expectedGeojsonLayerHoverProp = {
+  data: mockKeplerProps.visState.datasets[testGeoJsonDataId].dataContainer.row(0),
+  fields: mockKeplerProps.visState.datasets[testGeoJsonDataId].fields,
+  fieldsToShow:
+    mockKeplerProps.visState.interactionConfig.tooltip.config.fieldsToShow[testGeoJsonDataId],
+  layer: mockKeplerProps.visState.layers[1]
 };

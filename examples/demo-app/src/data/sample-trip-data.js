@@ -1,22 +1,5 @@
-// Copyright (c) 2020 Uber Technologies, Inc.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
 
 // Sample Taxi Trip Data
 export const testCsvData = `gps_data.utc_timestamp,gps_data.lat,gps_data.lng,gps_data.types,epoch,has_result,id,time,begintrip_ts_utc,begintrip_ts_local,date,<img>_tooltip,website
@@ -4002,7 +3985,25 @@ export const sampleTripDataConfig = {
             },
             color: [255, 0, 0],
             label: 'pickup',
-            isVisible: true
+            isVisible: true,
+            visConfig: {
+              colorRange: {
+                colorMap: [
+                  ['apple tree', '#FF000'],
+                  ['banana peel', '#00FF00'],
+                  ['banana peel 2', '#0000FF'],
+                  ['mango mint pineapple juice', '#555555'],
+                  ['orange peel', '#111111'],
+                  ['orange peel 0', '#222222']
+                ]
+              }
+            }
+          },
+          visualChannels: {
+            colorField: {
+              name: 'fare_type',
+              type: 'string'
+            }
           }
         },
         {
@@ -4069,6 +4070,29 @@ export const sampleTripDataConfig = {
           value: true
         }
       ]
+    },
+    mapStyle: {
+      styleType: '41fv96u',
+      visibleLayerGroups: {
+        label: false,
+        road: false,
+        border: false,
+        building: true,
+        water: true,
+        land: true,
+        '3d building': false
+      },
+      mapStyles: {
+        '41fv96u': {
+          accessToken: null,
+          custom: true,
+          icon:
+            'https://api.mapbox.com/styles/v1/MAPBOX_USER/cjg0ks54x300a2squ8fr9vhvq/static/-122.3391,37.7922,9,0,0/400x300?access_token=ACCESS_TOKEN&logo=false&attribution=false',
+          id: '41fv96u',
+          label: 'Outdoors',
+          url: 'mapbox://styles/MAPBOX_USER/cjhnxdcfy4ug62sn6qdfjutob'
+        }
+      }
     }
   }
 };

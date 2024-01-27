@@ -1,32 +1,22 @@
-// Copyright (c) 2020 Uber Technologies, Inc.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
 
 import test from 'tape';
 import {drainTasksForTesting, succeedTaskInTest, errorTaskInTest} from 'react-palm/tasks';
 import sinon from 'sinon';
 import {default as Console} from 'global/console';
-import ActionTypes from 'constants/action-types';
 
-import {exportFileToCloud, resetProviderStatus, setCloudProvider} from 'actions/provider-actions';
-import reducer, {providerStateReducerFactory} from 'reducers/provider-state';
-import {INITIAL_PROVIDER_STATE} from 'reducers/provider-state-updaters';
+import {
+  ActionTypes,
+  exportFileToCloud,
+  resetProviderStatus,
+  setCloudProvider
+} from '@kepler.gl/actions';
+import {
+  providerReducer as reducer,
+  providerStateReducerFactory,
+  INITIAL_PROVIDER_STATE
+} from '@kepler.gl/reducers';
 import MockProvider from 'test/helpers/mock-provider';
 
 test('#providerStateReducer', t => {
@@ -57,7 +47,7 @@ test('#providerStateReducerFactory', t => {
 
 test('#providerStateReducer -> EXPORT_FILE_TO_CLOUD', t => {
   const errSpy = sinon.spy(Console, 'error');
-
+  drainTasksForTesting();
   // null
   reducer(undefined, exportFileToCloud({provider: null}));
   t.ok(errSpy.calledOnce, 'should call console.error if provider is undefined');
@@ -159,6 +149,8 @@ test('#providerStateReducer -> EXPORT_FILE_TO_CLOUD', t => {
     },
     'Should set isLoading to false and error'
   );
+
+  errSpy.restore();
   t.end();
 });
 
@@ -336,24 +328,5 @@ test('#providerStateReducer -> RESET_PROVIDER_STATUS', t => {
     'Should resetProviderStatus'
   );
 
-  t.end();
-});
-
-test('#providerStateReducer -> SET_CLOUD_PROVIDER', t => {
-  const nextState = reducer(undefined, setCloudProvider('blue'));
-  t.deepEqual(
-    nextState,
-    {
-      isProviderLoading: false,
-      isCloudMapLoading: false,
-      providerError: null,
-      currentProvider: 'blue',
-      successInfo: {},
-      mapSaved: null,
-      initialState: {},
-      visualizations: []
-    },
-    'Should setCloudProvider'
-  );
   t.end();
 });

@@ -1,26 +1,13 @@
-// Copyright (c) 2020 Uber Technologies, Inc.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
 
 import {push} from 'react-router-redux';
 import {request, text as requestText, json as requestJson} from 'd3-request';
-import {loadFiles, toggleModal} from 'kepler.gl/actions';
+import {loadFiles, toggleModal} from '@kepler.gl/actions';
+import {load} from '@loaders.gl/core';
+import {CSVLoader} from '@loaders.gl/csv';
+import {ArrowLoader} from '@loaders.gl/arrow';
+import {_GeoJSONLoader as GeoJSONLoader} from '@loaders.gl/json';
 
 import {
   LOADING_SAMPLE_ERROR_MESSAGE,
@@ -97,11 +84,12 @@ export function onExportFileSuccess({response = {}, provider, options}) {
   };
 }
 
-export function onLoadCloudMapSuccess({response, provider, loadParams}) {
+export function onLoadCloudMapSuccess({provider, loadParams}) {
   return dispatch => {
-    if (provider.getMapUrl) {
-      const mapUrl = provider.getMapUrl(false, loadParams);
-      dispatch(push(mapUrl));
+    const mapUrl = provider?.getMapUrl(loadParams);
+    if (mapUrl) {
+      const url = `demo/map/${provider.name}?path=${mapUrl}`;
+      dispatch(push(url));
     }
   };
 }
@@ -182,8 +170,8 @@ function loadRemoteRawData(url) {
 /**
  *
  * @param {Object} options
- * @param {string} [options.dataUrl] the URL to fetch data from, e.g. https://raw.githubusercontent.com/uber-web/kepler.gl-data/master/earthquakes/data.csv
- * @param {string} [options.configUrl] the URL string to fetch kepler config from, e.g. https://raw.githubusercontent.com/uber-web/kepler.gl-data/master/earthquakes/config.json
+ * @param {string} [options.dataUrl] the URL to fetch data from, e.g. https://raw.githubusercontent.com/keplergl/kepler.gl-data/master/earthquakes/data.csv
+ * @param {string} [options.configUrl] the URL string to fetch kepler config from, e.g. https://raw.githubusercontent.com/keplergl/kepler.gl-data/master/earthquakes/config.json
  * @param {string} [options.id] the id used as dataset unique identifier, e.g. earthquakes
  * @param {string} [options.label] the label used to describe the new dataset, e.g. California Earthquakes
  * @param {string} [options.queryType] the type of query to execute to load data/config, e.g. sample
@@ -197,7 +185,7 @@ export function loadSample(options, pushRoute = true) {
   return (dispatch, getState) => {
     const {routing} = getState();
     if (options.id && pushRoute) {
-      dispatch(push(`/demo/${options.id}${routing.locationBeforeTransitions.search}`));
+      dispatch(push(`/demo/${options.id}${routing.locationBeforeTransitions?.search ?? ''}`));
     }
     // if the sample has a kepler.gl config file url we load it
     if (options.keplergl) {
@@ -289,19 +277,19 @@ function loadRemoteData(url) {
   }
 
   // Load data
-  return new Promise((resolve, reject) => {
-    requestMethod(url, (error, result) => {
-      if (error) {
-        reject(error);
-        return;
-      }
-      const responseError = detectResponseError(result);
-      if (responseError) {
-        reject(responseError);
-        return;
-      }
-      resolve(result);
-    });
+  return new Promise(resolve => {
+    const loaders = [CSVLoader, ArrowLoader, GeoJSONLoader];
+    const loadOptions = {
+      arrow: {
+        shape: 'arrow-table'
+      },
+      csv: {
+        shape: 'object-row-table'
+      },
+      metadata: true
+    };
+    const data = load(url, loaders, loadOptions);
+    resolve(data);
   });
 }
 

@@ -1,29 +1,11 @@
-// Copyright (c) 2020 Uber Technologies, Inc.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
 
 import test from 'tape';
-import GeojsonLayer, {
-  defaultElevation,
-  defaultLineWidth,
-  defaultRadius
-} from 'layers/geojson-layer/geojson-layer';
+import {defaultElevation, defaultLineWidth, defaultRadius, KeplerGlLayers} from '@kepler.gl/layers';
+import {copyTableAndUpdate, createNewDataEntry} from '@kepler.gl/table';
+
+const {GeojsonLayer} = KeplerGlLayers;
 
 import {updatedLayerV2} from 'test/fixtures/test-csv-data';
 import {
@@ -42,8 +24,7 @@ import {
   geoStyleDataToFeature,
   geoStyleMeta
 } from 'test/fixtures/geojson';
-import {createNewDataEntry} from 'utils/dataset-utils';
-import {processGeojson} from 'processors/data-processor';
+import {processGeojson} from '@kepler.gl/processors';
 
 test('#GeojsonLayer -> constructor', t => {
   const TEST_CASES = {
@@ -86,10 +67,7 @@ test('#GeojsonLayer -> formatLayerData', t => {
         }
       },
       datasets: {
-        [dataId]: {
-          ...preparedGeoDataset,
-          filteredIndex
-        }
+        [dataId]: copyTableAndUpdate(preparedGeoDataset, {filteredIndex})
       },
       assert: result => {
         const {layerData, layer} = result;
@@ -101,9 +79,10 @@ test('#GeojsonLayer -> formatLayerData', t => {
           'getElevation',
           'getFillColor',
           'getFilterValue',
+          'getFiltered',
           'getLineColor',
           'getLineWidth',
-          'getRadius'
+          'getPointRadius'
         ];
         const expectedLayerMeta = updatedLayerV2.meta;
         const expectedDataToFeature = updatedLayerV2.dataToFeature;
@@ -154,9 +133,9 @@ test('#GeojsonLayer -> formatLayerData', t => {
           'getLineWidth should return correct value'
         );
         t.deepEqual(
-          layerData.data.map(layerData.getRadius),
+          layerData.data.map(layerData.getPointRadius),
           [defaultRadius, defaultRadius],
-          'getRadius should return correct value'
+          'getPointRadius should return correct value'
         );
         // meta
         t.deepEqual(layer.meta, expectedLayerMeta, 'should format correct geojson layer meta');
@@ -208,10 +187,7 @@ test('#GeojsonLayer -> formatLayerData', t => {
         }
       },
       datasets: {
-        [dataId]: {
-          ...preparedGeoDataset,
-          filteredIndex
-        }
+        [dataId]: copyTableAndUpdate(preparedGeoDataset, {filteredIndex})
       },
       assert: result => {
         const {layerData, layer} = result;
@@ -223,9 +199,10 @@ test('#GeojsonLayer -> formatLayerData', t => {
           'getElevation',
           'getFillColor',
           'getFilterValue',
+          'getFiltered',
           'getLineColor',
           'getLineWidth',
-          'getRadius'
+          'getPointRadius'
         ];
         const expectedLayerMeta = updatedLayerV2.meta;
         const expectedDataToFeature = updatedLayerV2.dataToFeature;
@@ -290,9 +267,9 @@ test('#GeojsonLayer -> formatLayerData', t => {
           'getLineWidth should return correct value'
         );
         t.deepEqual(
-          layerData.data.map(layerData.getRadius),
+          layerData.data.map(layerData.getPointRadius),
           [1, 1],
-          'getRadius should return correct value'
+          'getPointRadius should return correct value'
         );
         // meta
         t.deepEqual(layer.meta, expectedLayerMeta, 'should format correct geojson layerData');
@@ -319,10 +296,7 @@ test('#GeojsonLayer -> formatLayerData', t => {
         }
       },
       datasets: {
-        [dataId]: {
-          ...prepareGeojsonDataset,
-          filteredIndex
-        }
+        [dataId]: copyTableAndUpdate(prepareGeojsonDataset, {filteredIndex})
       },
       assert: result => {
         const {layerData, layer} = result;
@@ -339,9 +313,10 @@ test('#GeojsonLayer -> formatLayerData', t => {
           'getElevation',
           'getFillColor',
           'getFilterValue',
+          'getFiltered',
           'getLineColor',
           'getLineWidth',
-          'getRadius'
+          'getPointRadius'
         ];
         const expectedLayerMeta = updatedGeoJsonLayer.meta;
         const expectedDataToFeature = updatedGeoJsonLayer.dataToFeature;
@@ -395,9 +370,9 @@ test('#GeojsonLayer -> formatLayerData', t => {
           'getLineWidth should return correct value'
         );
         t.deepEqual(
-          layerData.data.map(layerData.getRadius),
+          layerData.data.map(layerData.getPointRadius),
           [defaultLineWidth, defaultLineWidth, defaultLineWidth],
-          'getRadius should return correct value'
+          'getPointRadius should return correct value'
         );
 
         // meta
@@ -440,9 +415,10 @@ test('#GeojsonLayer -> formatLayerData', t => {
           'getElevation',
           'getFillColor',
           'getFilterValue',
+          'getFiltered',
           'getLineColor',
           'getLineWidth',
-          'getRadius'
+          'getPointRadius'
         ];
         const expectedLayerMeta = geoStyleMeta;
 
@@ -497,9 +473,9 @@ test('#GeojsonLayer -> formatLayerData', t => {
           'getLineWidth should return correct value'
         );
         t.deepEqual(
-          layerData.data.map(layerData.getRadius),
+          layerData.data.map(layerData.getPointRadius),
           [5, 5, 5],
-          'getRadius should return correct value'
+          'getPointRadius should return correct value'
         );
 
         // meta
@@ -533,6 +509,7 @@ test('#GeojsonLayer -> renderLayer', t => {
           columns: {
             geojson: '_geojson'
           },
+          isVisible: true,
           visConfig: {
             strokeColor: [4, 5, 6],
             strokeOpacity: 0.1
@@ -580,7 +557,8 @@ test('#GeojsonLayer -> renderLayer', t => {
 
         const expectedStrokeLayerProp = {
           widthScale: 128,
-          rounded: false,
+          jointRounded: false,
+          capRounded: false,
           miterLimit: 2,
           opacity: 0.1,
           visible: true,

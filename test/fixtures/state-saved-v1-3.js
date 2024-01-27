@@ -1,26 +1,9 @@
-// Copyright (c) 2020 Uber Technologies, Inc.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
 
-import {KeplerGlLayers} from 'layers';
+import {KeplerGlLayers} from '@kepler.gl/layers';
+import {DEFAULT_TEXT_LABEL, DEFAULT_COLOR_UI} from '@kepler.gl/constants';
 const {PointLayer, HexagonLayer} = KeplerGlLayers;
-import {DEFAULT_TEXT_LABEL, DEFAULT_COLOR_UI} from 'layers/layer-factory';
 
 // saved state v1 with split maps
 export const savedStateV1 = {
@@ -263,7 +246,7 @@ export const savedStateV1 = {
                 percentile: [0, 96.54],
                 elevationPercentile: [0, 100],
                 elevationScale: 5,
-                colorAggregation: 'average',
+                colorAggregation: 'count', // if associated visualChannel colorField value is null, it can only default to 'count'
                 sizeAggregation: 'average',
                 enable3d: false
               }
@@ -359,11 +342,13 @@ mergedLayer0.config = {
   isVisible: true,
   colorField: {
     name: 'deliver_radius',
-    type: 'integer',
     id: 'deliver_radius',
+    displayName: 'deliver_radius',
+    type: 'integer',
     format: '',
-    tableFieldIndex: 1,
-    analyzerType: 'INT'
+    fieldIdx: 0,
+    analyzerType: 'INT',
+    valueAccessor: values => values[0]
   },
   colorDomain: [1000, 1000, 2000, 2000, 2000, 3000, 3000, 3000, 3000],
   highlightColor: [252, 242, 26, 255],
@@ -374,11 +359,13 @@ mergedLayer0.config = {
   strokeColorScale: 'quantile',
   sizeField: {
     name: 'deliver_radius',
-    type: 'integer',
     id: 'deliver_radius',
+    displayName: 'deliver_radius',
+    type: 'integer',
     format: '',
-    tableFieldIndex: 1,
-    analyzerType: 'INT'
+    fieldIdx: 0,
+    analyzerType: 'INT',
+    valueAccessor: values => values[0]
   },
   sizeScale: 'sqrt',
   sizeDomain: [1000, 3000],
@@ -463,8 +450,9 @@ mergedLayer1.config = {
     percentile: [0, 96.54],
     elevationPercentile: [0, 100],
     elevationScale: 5,
-    colorAggregation: 'average',
-    sizeAggregation: 'average',
+    enableElevationZoomFactor: true,
+    colorAggregation: 'count', // if associated colorField value is null, it can only default to 'count'
+    sizeAggregation: 'count', // if associated sizeField value is null, it can only default to 'count'
     enable3d: false
   },
   animation: {enabled: false}

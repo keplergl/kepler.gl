@@ -1,22 +1,5 @@
-// Copyright (c) 2020 Uber Technologies, Inc.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
 
 import React, {PureComponent} from 'react';
 import styled from 'styled-components';
@@ -27,6 +10,7 @@ import {LinkButton} from './common/styled-components';
 import {media} from '../styles';
 import MapboxLogo from './mapbox-logo';
 import NetlifyLogo from './netlify-logo';
+import FoursquareLogo from './foursquare-logo';
 import {DEMO_LINK} from '../constants';
 
 const Container = styled.div`
@@ -49,9 +33,8 @@ const BrandingContainer = styled.div`
     margin-top: ${props => props.theme.margins.small};
   `};
 
-  display: grid;
-  grid-template-columns: repeat(4, auto);
-  column-gap: 20px;
+  display: flex;
+  gap: 20px;
   align-items: center;
 `;
 
@@ -139,6 +122,8 @@ const SocialContainer = styled.div`
   `};
 `;
 
+const GITHUB_BUTTON_STYLE = {marginLeft: '5px'};
+
 export default class Footer extends PureComponent {
   render() {
     return (
@@ -149,6 +134,7 @@ export default class Footer extends PureComponent {
             <img src={cdnUrl('icons/uber.svg')} />
             <MapboxLogo />
             <NetlifyLogo />
+            <FoursquareLogo />
             <CreatedBy>
               created by
               <StyledLogo className="fg">
@@ -168,16 +154,16 @@ export default class Footer extends PureComponent {
               large
               outlineDark
               href="https://github.com/keplergl/kepler.gl"
-              style={{marginLeft: '5px'}}
+              style={GITHUB_BUTTON_STYLE}
             >
               <img src={cdnUrl('icons/github.svg')} /> Github
             </LinkButton>
           </ButtonContainer>
           <SocialContainer>
-            <FacebookShareButton url="https://uber.github.io/kepler.gl/">
+            <FacebookShareButton url="https://kepler.gl/">
               <FacebookIcon size={32} />
             </FacebookShareButton>{' '}
-            <TwitterShareButton url="https://uber.github.io/kepler.gl/" hashtags={['keplergl']}>
+            <TwitterShareButton url="https://kepler.gl/" hashtags={['keplergl']}>
               <TwitterIcon size={32} />
             </TwitterShareButton>
           </SocialContainer>

@@ -1,6 +1,6 @@
 # Custom Theme
 
-You can pass theme name or object used to customize Kepler.gl style. Kepler.gl provide an `'light'` theme besides the default 'dark' theme. When pass in a theme object Kepler.gl will use the value passed as input to overwrite values from [theme](https://github.com/keplergl/kepler.gl/blob/master/src/styles/base.js).
+You can pass theme name or object used to customize Kepler.gl style. Kepler.gl provide an `'light'` theme besides the default 'dark' theme. When pass in a theme object Kepler.gl will use the value passed as input to overwrite values from [theme](https://github.com/keplergl/kepler.gl/blob/master/src/styles/src/base.ts).
 
 
 ```js

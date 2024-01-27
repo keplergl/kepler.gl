@@ -1,22 +1,5 @@
-// Copyright (c) 2020 Uber Technologies, Inc.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
 
 import test from 'tape';
 import moment from 'moment';
@@ -31,7 +14,9 @@ import {
   arcLayerMeta
 } from 'test/helpers/layer-utils';
 
-import {KeplerGlLayers} from 'layers';
+import {PROJECTED_PIXEL_SIZE_MULTIPLIER} from '@kepler.gl/constants';
+import {KeplerGlLayers} from '@kepler.gl/layers';
+import {copyTable, copyTableAndUpdate} from '@kepler.gl/table';
 
 const {LineLayer} = KeplerGlLayers;
 const columns = {
@@ -83,10 +68,7 @@ test('#LineLayer -> formatLayerData', t => {
         id: 'test_layer_0'
       },
       datasets: {
-        [dataId]: {
-          ...preparedDataset,
-          filteredIndex
-        }
+        [dataId]: copyTableAndUpdate(preparedDataset, {filteredIndex})
       },
       assert: result => {
         const {layerData, layer} = result;
@@ -94,20 +76,18 @@ test('#LineLayer -> formatLayerData', t => {
         const expectedLayerData = {
           data: [
             {
-              data: testRows[0],
               index: 0,
               sourcePosition: [testRows[0][2], testRows[0][1], 0],
               targetPosition: [testRows[0][4], testRows[0][3], 0]
             },
             {
-              data: testRows[4],
               index: 4,
               sourcePosition: [testRows[4][2], testRows[4][1], 0],
               targetPosition: [testRows[4][4], testRows[4][3], 0]
             }
           ],
           getFilterValue: () => {},
-          getSourceColor: () => {},
+          getColor: () => {},
           getTargetColor: () => {},
           getWidth: () => {}
         };
@@ -119,12 +99,8 @@ test('#LineLayer -> formatLayerData', t => {
           'layerData should have 6 keys'
         );
         t.deepEqual(layerData.data, expectedLayerData.data, 'should format correct line layerData');
-        // getSourceColor
-        t.deepEqual(
-          layerData.getSourceColor,
-          layer.config.color,
-          'getSourceColor should be a constant'
-        );
+        // getColor
+        t.deepEqual(layerData.getColor, layer.config.color, 'getColor should be a constant');
         // getTargetColor
         t.deepEqual(
           layerData.getTargetColor,
@@ -163,7 +139,7 @@ test('#LineLayer -> formatLayerData', t => {
         id: 'test_layer_2'
       },
       datasets: {
-        [dataId]: preparedDataset
+        [dataId]: copyTable(preparedDataset)
       },
       assert: result => {
         const {layerData, layer} = result;
@@ -171,7 +147,7 @@ test('#LineLayer -> formatLayerData', t => {
         const expectedLayerData = {
           data: [],
           getFilterValue: () => {},
-          getSourceColor: () => {},
+          getColor: () => {},
           getTargetColor: () => {},
           getWidth: () => {}
         };
@@ -182,13 +158,9 @@ test('#LineLayer -> formatLayerData', t => {
           expectedDataKeys,
           'layerData should have 6 keys'
         );
-        // getSourceColor
-        t.deepEqual(
-          layerData.getSourceColor,
-          layer.config.color,
-          'getSourceColor should be a constant'
-        );
-        // getSourceColor
+        // getColor
+        t.deepEqual(layerData.getColor, layer.config.color, 'getColor should be a constant');
+        // getColor
         t.deepEqual(layerData.getTargetColor, [1, 2, 3], 'getTargetColors should be a constant');
       }
     },
@@ -221,10 +193,7 @@ test('#LineLayer -> formatLayerData', t => {
         id: 'test_layer_1'
       },
       datasets: {
-        [dataId]: {
-          ...preparedDataset,
-          filteredIndex
-        }
+        [dataId]: copyTableAndUpdate(preparedDataset, {filteredIndex})
       },
       assert: result => {
         const {layerData} = result;
@@ -232,20 +201,18 @@ test('#LineLayer -> formatLayerData', t => {
         const expectedLayerData = {
           data: [
             {
-              data: testRows[0],
               index: 0,
               sourcePosition: [testRows[0][2], testRows[0][1], 0],
               targetPosition: [testRows[0][4], testRows[0][3], 0]
             },
             {
-              data: testRows[4],
               index: 4,
               sourcePosition: [testRows[4][2], testRows[4][1], 0],
               targetPosition: [testRows[4][4], testRows[4][3], 0]
             }
           ],
           getFilterValue: () => {},
-          getSourceColor: () => {},
+          getColor: () => {},
           getTargetColor: () => {},
           getWidth: () => {}
         };
@@ -261,16 +228,16 @@ test('#LineLayer -> formatLayerData', t => {
           expectedLayerData.data,
           'should format correct line layerData data'
         );
-        // getSourceColor
+        // getColor
         // domain: ['driver_analytics', 'driver_analytics_0', 'driver_gps']
         // range ['#010101', '#020202', '#030303']
         t.deepEqual(
-          layerData.data.map(layerData.getSourceColor),
+          layerData.data.map(layerData.getColor),
           [
             [2, 2, 2],
             [1, 1, 1]
           ],
-          'getSourceColor should be correct'
+          'getColor should be correct'
         );
         // getTargetColor
         // domain: ['driver_analytics', 'driver_analytics_0', 'driver_gps']
@@ -338,7 +305,7 @@ test('#LineLayer -> renderLayer', t => {
         t.equal(props.opacity, layer.config.visConfig.opacity, 'should calculate correct opacity');
         t.equal(
           props.widthScale,
-          layer.config.visConfig.thickness,
+          layer.config.visConfig.thickness * PROJECTED_PIXEL_SIZE_MULTIPLIER,
           'should apply correct widthScale'
         );
         t.equal(

@@ -1,22 +1,5 @@
-// Copyright (c) 2020 Uber Technologies, Inc.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
 
 import test from 'tape';
 import moment from 'moment';
@@ -31,9 +14,11 @@ import {
   preparedFilterDomain0,
   hexagonIdLayerMeta
 } from 'test/helpers/layer-utils';
-import {KeplerGlLayers} from 'layers';
-import {getCentroid} from 'layers/h3-hexagon-layer/h3-utils';
-import {defaultElevation} from 'layers/h3-hexagon-layer/h3-hexagon-layer';
+import {KeplerGlLayers, h3DefaultElevation as defaultElevation} from '@kepler.gl/layers';
+import {getCentroid, idToPolygonGeo} from '@kepler.gl/utils';
+
+import {copyTableAndUpdate} from '@kepler.gl/table';
+
 const {H3Layer} = KeplerGlLayers;
 const columns = {
   lat: 'lat',
@@ -81,23 +66,18 @@ test('#H3Layer -> formatLayerData', t => {
         id: 'test_layer_1'
       },
       datasets: {
-        [dataId]: {
-          ...preparedDataset,
-          filteredIndex
-        }
+        [dataId]: copyTableAndUpdate(preparedDataset, {filteredIndex})
       },
       assert: result => {
         const {layerData, layer} = result;
         const expectedLayerData = {
           data: [
             {
-              data: testRows[0],
               index: 0,
               id: '89283082c2fffff',
               centroid: getCentroid({id: '89283082c2fffff'})
             },
             {
-              data: testRows[4],
               index: 4,
               id: '89283082c3bffff',
               centroid: getCentroid({id: '89283082c3bffff'})
@@ -106,8 +86,11 @@ test('#H3Layer -> formatLayerData', t => {
           getElevation: () => {},
           getFilterValue: () => {},
           getFillColor: () => {},
+          getLineColor: () => {},
           getHexId: () => {},
-          getCoverage: () => {}
+          getCoverage: () => {},
+          getPosition: () => {},
+          textLabels: () => {}
         };
         t.deepEqual(
           Object.keys(layerData).sort(),
@@ -121,6 +104,8 @@ test('#H3Layer -> formatLayerData', t => {
         );
         // getFillColor
         t.deepEqual(layerData.getFillColor, [2, 3, 4], 'getFillColor should be a constant');
+        // getLineColor
+        t.deepEqual(layerData.getLineColor, [2, 3, 4], 'getLineColor should be a constant');
         // getElevation
         t.deepEqual(layerData.getElevation, defaultElevation, 'getElevation should be a constant');
         // getHexId
@@ -144,15 +129,20 @@ test('#H3Layer -> formatLayerData', t => {
       }
     },
     {
-      name: 'H3 layer format data. with colorField and sizeField',
+      name: 'H3 layer format data. with colorField, strokeColorField, and sizeField',
       layer: {
         config: {
           dataId,
           label: 'h3.2',
           columns,
           color: [10, 10, 10],
-          // color by types(string)
+          // fill color by types(string)
           colorField: {
+            type: 'string',
+            name: 'types'
+          },
+          // stroke color by types(string)
+          strokeColorField: {
             type: 'string',
             name: 'types'
           },
@@ -165,6 +155,9 @@ test('#H3Layer -> formatLayerData', t => {
             colorRange: {
               colors: ['#010101', '#020202', '#030303']
             },
+            strokeColorRange: {
+              colors: ['#010101', '#020202', '#030303']
+            },
             elevationRange: [10, 20],
             enable3d: true
           }
@@ -173,10 +166,7 @@ test('#H3Layer -> formatLayerData', t => {
         id: 'test_layer_2'
       },
       datasets: {
-        [dataId]: {
-          ...preparedDataset,
-          filteredIndex
-        }
+        [dataId]: copyTableAndUpdate(preparedDataset, {filteredIndex})
       },
       assert: result => {
         const {layerData} = result;
@@ -192,6 +182,16 @@ test('#H3Layer -> formatLayerData', t => {
           ],
           'getFillColor should be correct'
         );
+
+        t.deepEqual(
+          layerData.data.map(layerData.getLineColor),
+          [
+            [2, 2, 2],
+            [1, 1, 1]
+          ],
+          'getLineColor should be correct'
+        );
+
         // getElevation
         // domain: [1.59, 11]
         // range: [0, 500]
@@ -223,7 +223,7 @@ test('#H3Layer -> renderLayer', t => {
 
   const TEST_CASES = [
     {
-      name: 'Test render h3.2 -> has icon geometry',
+      name: 'Test render h3.2',
       layer: {
         id: 'test_layer_1',
         type: 'hexagonId',
@@ -232,17 +232,14 @@ test('#H3Layer -> renderLayer', t => {
           label: 'h3 hex',
           columns,
           color: [1, 2, 3],
-          visCondig: {
+          visConfig: {
             worldUnitSize: 0.5,
             elevationScale: 5
           }
         }
       },
       datasets: {
-        [dataId]: {
-          ...preparedDataset,
-          filteredIndex
-        }
+        [dataId]: copyTableAndUpdate(preparedDataset, {filteredIndex})
       },
       assert: (deckLayers, layer) => {
         t.equal(layer.type, 'hexagonId', 'should create 1 hexagonId layer');
@@ -265,15 +262,144 @@ test('#H3Layer -> renderLayer', t => {
           autoHighlight: false,
           highlightColor: [255, 255, 255, 60],
           extruded: false,
-          elevationScale: 5
+          elevationScale: 5,
+          filled: true,
+          stroked: false
         };
         Object.keys(expectedProps).forEach(key => {
           t.deepEqual(props[key], expectedProps[key], `should have correct props.${key}`);
         });
       }
+    },
+    {
+      name: 'Test render h3.2 with text label',
+      layer: {
+        id: 'test_layer_2',
+        type: 'hexagonId',
+        config: {
+          dataId,
+          label: 'h3 hex',
+          columns,
+          color: [1, 2, 3],
+          visConfig: {
+            worldUnitSize: 0.5,
+            elevationScale: 5
+          },
+          textLabel: [
+            {
+              field: {
+                name: 'types',
+                format: ''
+              },
+              format: ''
+            }
+          ]
+        }
+      },
+      datasets: {
+        [dataId]: preparedDataset
+      },
+      assert: (deckLayers, layer) => {
+        t.equal(layer.type, 'hexagonId', 'should create 1 hexagonId layer');
+
+        const expectedTextLabels = [
+          {
+            field: {
+              name: 'types',
+              id: 'types',
+              displayName: 'types',
+              format: '',
+              fieldIdx: 5,
+              type: 'string',
+              analyzerType: 'STRING',
+              valueAccessor: preparedDataset.fields[5].valueAccessor
+            },
+            color: [255, 255, 255],
+            size: 18,
+            offset: [0, 0],
+            anchor: 'middle',
+            alignment: 'center',
+            outlineWidth: 0,
+            outlineColor: [255, 0, 0, 255],
+            background: false,
+            backgroundColor: [0, 0, 200, 255]
+          }
+        ];
+
+        t.deepEqual(
+          layer.config.textLabel,
+          expectedTextLabels,
+          'should create textLabel using field "types"'
+        );
+
+        t.equal(deckLayers.length, 4, 'Should create 4 deck.gl layers');
+        const expectedLayerIds = [
+          'test_layer_2',
+          'test_layer_2-hexagon-cell',
+          'test_layer_2-label-types',
+          'test_layer_2-label-types-characters'
+        ];
+
+        t.deepEqual(
+          deckLayers.map(l => l.id),
+          expectedLayerIds,
+          'should create 1 composite, 1 hexagon-cell layer, 1 text layer, 1 multi-icon layer'
+        );
+      }
     }
   ];
 
   testRenderLayerCases(t, H3Layer, TEST_CASES);
+  t.end();
+});
+
+test('#H3Layer -> idToPolygonGeo', t => {
+  const h3Object = {
+    index: 411,
+    id: '882a100d01fffff'
+  };
+
+  const hexagonOutline = idToPolygonGeo(h3Object);
+  const expectedCoordinates = [
+    [-73.9556604529423, 40.747207768842344],
+    [-73.96203986286912, 40.746155567377926],
+    [-73.96400718290255, 40.74169679631741],
+    [-73.95959600220597, 40.73829055843986],
+    [-73.95321761814058, 40.73934254051138],
+    [-73.9512493890226, 40.74380097982341],
+    [-73.9556604529423, 40.747207768842344]
+  ];
+
+  const expectedHexagonOutline = {
+    type: 'Feature',
+    geometry: {
+      coordinates: expectedCoordinates,
+      type: 'LineString'
+    },
+    properties: undefined
+  };
+  t.deepEqual(
+    hexagonOutline,
+    expectedHexagonOutline,
+    'should generate geojson object of hexagon outline (LineString)'
+  );
+
+  const properties = {isClosed: true};
+  const hexagonPolygon = idToPolygonGeo(h3Object, properties);
+
+  const expectedHexagonPolygon = {
+    type: 'Feature',
+    geometry: {
+      coordinates: [expectedCoordinates],
+      type: 'Polygon'
+    },
+    properties: {isClosed: true}
+  };
+  t.deepEqual(
+    hexagonPolygon,
+    expectedHexagonPolygon,
+    'should generate geojson object of hexagon outline (LineString)'
+  );
+
   t.end();
 });

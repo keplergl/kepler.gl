@@ -1,48 +1,33 @@
-// Copyright (c) 2020 Uber Technologies, Inc.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
 
 import React from 'react';
 import test from 'tape';
 import sinon from 'sinon';
-import SidePanelFactory from 'components/side-panel';
-import SidebarFactory from 'components/side-panel/side-bar';
-import PanelHeaderFactory from 'components/side-panel/panel-header';
-import LayerManagerFactory from 'components/side-panel/layer-manager';
-import FilterManagerFactory from 'components/side-panel/filter-manager';
-import InteractionManagerFactory from 'components/side-panel/interaction-manager';
-import MapManagerFactory from 'components/side-panel/map-manager';
-import PanelToggleFactory from 'components/side-panel/panel-toggle';
-import CustomPanelsFactory from 'components/side-panel/custom-panel';
-import {SaveExportDropdownFactory} from 'components/side-panel/panel-header';
-import ToolbarItem from 'components/common/toolbar-item';
+import {
+  SidePanelFactory,
+  SidebarFactory,
+  CollapseButtonFactory,
+  PanelHeaderFactory,
+  SaveExportDropdownFactory,
+  LayerManagerFactory,
+  FilterManagerFactory,
+  InteractionManagerFactory,
+  MapManagerFactory,
+  PanelToggleFactory,
+  CustomPanelsFactory,
+  ToolbarItem,
+  appInjector
+} from '@kepler.gl/components';
 
-import * as VisStateActions from 'actions/vis-state-actions';
-import * as MapStyleActions from 'actions/map-style-actions';
-import * as UIStateActions from 'actions/ui-state-actions';
+import {VisStateActions, MapStyleActions, UIStateActions} from '@kepler.gl/actions';
 
-import {appInjector} from 'components/container';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
 
 // components
 const SidePanel = appInjector.get(SidePanelFactory);
 const Sidebar = appInjector.get(SidebarFactory);
+const SidebarCloseButton = appInjector.get(CollapseButtonFactory);
 const PanelHeader = appInjector.get(PanelHeaderFactory);
 const LayerManager = appInjector.get(LayerManagerFactory);
 const FilterManager = appInjector.get(FilterManagerFactory);
@@ -55,13 +40,15 @@ const SaveExportDropdown = appInjector.get(SaveExportDropdownFactory);
 import {InitialState} from 'test/helpers/mock-state';
 
 // Constants
-import {EXPORT_IMAGE_ID, EXPORT_DATA_ID, EXPORT_MAP_ID} from 'constants/default-settings';
+import {EXPORT_DATA_ID, EXPORT_MAP_ID, EXPORT_IMAGE_ID} from '@kepler.gl/constants';
+import {debug} from 'webpack';
 
 // default props from initial state
 const defaultProps = {
   datasets: InitialState.visState.datasets,
   filters: InitialState.visState.filters,
   layerBlending: InitialState.visState.layerBlending,
+  overlayBlending: InitialState.visState.overlayBlending,
   layerClasses: InitialState.visState.layerClasses,
   layerOrder: InitialState.visState.layerOrder,
   interactionConfig: InitialState.visState.interactionConfig,
@@ -89,6 +76,36 @@ test('Components -> SidePanel.mount -> no prop', t => {
   t.ok(wrapper.find(PanelHeader).length === 1, 'should render PanelHeader');
   t.ok(wrapper.find(PanelToggle).length === 1, 'should render PanelToggle');
   t.ok(wrapper.find(Sidebar).length === 1, 'should render Sidebar');
+
+  // side bar close button
+  t.ok(wrapper.find(SidebarCloseButton).length === 1, 'should render SideBarCollapseButton');
+
+  t.end();
+});
+
+test('Components -> SidePanel.mount -> hide CollapseButton', t => {
+  // mount
+  let wrapper;
+
+  const uiState = {
+    ...defaultProps.uiState,
+    isSidePanelCloseButtonVisible: false
+  };
+
+  t.doesNotThrow(() => {
+    wrapper = mountWithTheme(
+      <IntlWrapper>
+        <SidePanel {...defaultProps} uiState={uiState} />
+      </IntlWrapper>
+    );
+  }, 'SidePanel should not fail without props');
+
+  t.ok(wrapper.find(PanelHeader).length === 1, 'should render PanelHeader');
+  t.ok(wrapper.find(PanelToggle).length === 1, 'should render PanelToggle');
+  t.ok(wrapper.find(Sidebar).length === 1, 'should render Sidebar');
+
+  // side bar close button
+  t.ok(wrapper.find(SidebarCloseButton).length === 0, 'should not render SideBarCollapseButton');
 
   t.end();
 });
@@ -198,18 +215,6 @@ test('Components -> SidePanel -> render custom panel', t => {
   };
 
   MyPanels.defaultProps = {
-    panels: [
-      {
-        id: 'rocket',
-        label: 'Rocket',
-        iconComponent: RocketIcon
-      },
-      {
-        id: 'chart',
-        label: 'Chart',
-        iconComponent: ChartIcon
-      }
-    ],
     getProps: props => ({
       layers: props.layers
     })
@@ -219,9 +224,33 @@ test('Components -> SidePanel -> render custom panel', t => {
     return MyPanels;
   }
 
+  function CustomSidePanelFactory(...deps) {
+    const CustomSidePanel = SidePanelFactory(...deps);
+    CustomSidePanel.defaultProps = {
+      ...CustomSidePanel.defaultProps,
+      panels: [
+        ...CustomSidePanel.defaultProps.panels,
+        {
+          id: 'rocket',
+          label: 'Rocket',
+          iconComponent: RocketIcon
+        },
+        {
+          id: 'chart',
+          label: 'Chart',
+          iconComponent: ChartIcon
+        }
+      ]
+    };
+    return CustomSidePanel;
+  }
+
+  CustomSidePanelFactory.deps = SidePanelFactory.deps;
+
   let wrapper;
 
   const CustomSidePanel = appInjector
+    .provide(SidePanelFactory, CustomSidePanelFactory)
     .provide(CustomPanelsFactory, CustomSidePanelsFactory)
     .get(SidePanelFactory);
 
@@ -239,7 +268,7 @@ test('Components -> SidePanel -> render custom panel', t => {
   t.equal(wrapper.find(RocketIcon).length, 1, 'should render RocketIcon');
   t.equal(wrapper.find(ChartIcon).length, 1, 'should render RocketIcon');
 
-  // mount CustomSidePanel with 1 of the custom panel
+  // // mount CustomSidePanel with 1 of the custom panel
   const uiState = {...defaultProps.uiState, activeSidePanel: 'rocket'};
   t.doesNotThrow(() => {
     wrapper = mountWithTheme(
@@ -316,9 +345,11 @@ test('Components -> SidePanel -> PanelHeader', t => {
 
 test('Components -> SidePanel -> PanelHeader -> ExportDropDown', t => {
   const toggleModal = sinon.spy();
+  const startExportingImage = sinon.spy();
   const uiStateActions = {
     ...UIStateActions,
-    toggleModal
+    toggleModal,
+    startExportingImage
   };
 
   // mound with exportDropdown
@@ -350,6 +381,7 @@ test('Components -> SidePanel -> PanelHeader -> ExportDropDown', t => {
     'Export Image',
     'Should render Export Image'
   );
+
   wrapper
     .find(ToolbarItem)
     .at(0)

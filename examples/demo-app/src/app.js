@@ -1,47 +1,32 @@
-// Copyright (c) 2020 Uber Technologies, Inc.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
 
 import React, {Component} from 'react';
 import AutoSizer from 'react-virtualized/dist/commonjs/AutoSizer';
 import styled, {ThemeProvider} from 'styled-components';
 import window from 'global/window';
 import {connect} from 'react-redux';
-import {theme} from 'kepler.gl/styles';
+
+import {theme} from '@kepler.gl/styles';
 import Banner from './components/banner';
 import Announcement, {FormLink} from './components/announcement';
 import {replaceLoadDataModal} from './factories/load-data-modal';
 import {replaceMapControl} from './factories/map-control';
 import {replacePanelHeader} from './factories/panel-header';
-import {AUTH_TOKENS} from './constants/default-settings';
+import {CLOUD_PROVIDERS_CONFIGURATION, DEFAULT_FEATURE_FLAGS} from './constants/default-settings';
+import {messages} from './constants/localization';
+
 import {
   loadRemoteMap,
   loadSampleConfigurations,
   onExportFileSuccess,
-  onLoadCloudMapSuccess,
-  onLoadCloudMapError
+  onLoadCloudMapSuccess
 } from './actions';
 
-import {loadCloudMap} from 'kepler.gl/actions';
+import {loadCloudMap, addDataToMap, addNotification, replaceDataInMap} from '@kepler.gl/actions';
 import {CLOUD_PROVIDERS} from './cloud-providers';
 
-const KeplerGl = require('kepler.gl/components').injectComponents([
+const KeplerGl = require('@kepler.gl/components').injectComponents([
   replaceLoadDataModal(),
   replaceMapControl(),
   replacePanelHeader()
@@ -55,10 +40,11 @@ import sampleGeojsonPoints from './data/sample-geojson-points';
 import sampleGeojsonConfig from './data/sample-geojson-config';
 import sampleH3Data, {config as h3MapConfig} from './data/sample-hex-id-csv';
 import sampleS2Data, {config as s2MapConfig, dataId as s2DataId} from './data/sample-s2-data';
-import sampleAnimateTrip from './data/sample-animate-trip-data';
+import sampleAnimateTrip, {animateTripDataId} from './data/sample-animate-trip-data';
 import sampleIconCsv, {config as savedMapConfig} from './data/sample-icon-csv';
-import {addDataToMap, addNotification} from 'kepler.gl/actions';
-import {processCsvData, processGeojson} from 'kepler.gl/processors';
+import sampleGpsData from './data/sample-gps-data';
+
+import {processCsvData, processGeojson} from '@kepler.gl/processors';
 /* eslint-enable no-unused-vars */
 
 const BannerHeight = 48;
@@ -93,6 +79,15 @@ const GlobalStyle = styled.div`
     color: ${props => props.theme.labelColor};
   }
 `;
+
+const CONTAINER_STYLE = {
+  transition: 'margin 1s, height 1s',
+  position: 'absolute',
+  width: '100%',
+  height: '100%',
+  left: 0,
+  top: 0
+};
 
 class App extends Component {
   state = {
@@ -130,9 +125,9 @@ class App extends Component {
     }
 
     // delay zs to show the banner
-    if (!window.localStorage.getItem(BannerKey)) {
-      window.setTimeout(this._showBanner, 3000);
-    }
+    // if (!window.localStorage.getItem(BannerKey)) {
+    //   window.setTimeout(this._showBanner, 3000);
+    // }
     // load sample data
     // this._loadSampleData();
 
@@ -177,12 +172,13 @@ class App extends Component {
 
   _loadSampleData() {
     this._loadPointData();
-    // this._loadGeojsonData();
+    this._loadGeojsonData();
     // this._loadTripGeoJson();
     // this._loadIconData();
     // this._loadH3HexagonData();
     // this._loadS2Data();
     // this._loadScenegraphLayer();
+    // this._loadGpsData();
   }
 
   _loadPointData() {
@@ -196,8 +192,8 @@ class App extends Component {
           data: sampleTripData
         },
         options: {
-          centerMap: true,
-          readOnly: false
+          // centerMap: true,
+          keepExistingConfig: true
         },
         config: sampleTripDataConfig
       })
@@ -260,13 +256,33 @@ class App extends Component {
       addDataToMap({
         datasets: [
           {
-            info: {label: 'Trip animation'},
+            info: {label: 'Trip animation', id: animateTripDataId},
             data: processGeojson(sampleAnimateTrip)
           }
         ]
       })
     );
   }
+
+  _replaceData = () => {
+    // add geojson data
+    const sliceData = processGeojson({
+      type: 'FeatureCollection',
+      features: sampleGeojsonPoints.features.slice(0, 5)
+    });
+    this._loadGeojsonData();
+    window.setTimeout(() => {
+      this.props.dispatch(
+        replaceDataInMap({
+          datasetToReplaceId: 'bart-stops-geo',
+          datasetToUse: {
+            info: {label: 'Bart Stops Geo Replaced', id: 'bart-stops-geo-2'},
+            data: sliceData
+          }
+        })
+      );
+    }, 1000);
+  };
 
   _loadGeojsonData() {
     // load geojson
@@ -332,6 +348,24 @@ class App extends Component {
     );
   }
 
+  _loadGpsData() {
+    this.props.dispatch(
+      addDataToMap({
+        datasets: [
+          {
+            info: {
+              label: 'Gps Data',
+              id: 'gps-data'
+            },
+            data: processCsvData(sampleGpsData)
+          }
+        ],
+        options: {
+          keepExistingConfig: true
+        }
+      })
+    );
+  }
   _toggleCloudModal = () => {
     // TODO: this lives only in the demo hence we use the state for now
     // REFCOTOR using redux
@@ -346,8 +380,8 @@ class App extends Component {
       // https://reactjs.org/docs/refs-and-the-dom.html#callback-refs
       // console.log(`Map ${index} has closed`);
     } else {
-      // We expect an InteractiveMap created by KeplerGl's MapContainer.
-      // https://uber.github.io/react-map-gl/#/Documentation/api-reference/interactive-map
+      // We expect an Map created by KeplerGl's MapContainer.
+      // https://visgl.github.io/react-map-gl/docs/api-reference/map
       const map = mapbox.getMap();
       map.on('zoomend', e => {
         // console.log(`Map ${index} zoom level: ${e.target.style.z}`);
@@ -374,20 +408,11 @@ class App extends Component {
           >
             <Announcement onDisable={this._disableBanner} />
           </Banner>
-          <div
-            style={{
-              transition: 'margin 1s, height 1s',
-              position: 'absolute',
-              width: '100%',
-              height: '100%',
-              left: 0,
-              top: 0
-            }}
-          >
+          <div style={CONTAINER_STYLE}>
             <AutoSizer>
               {({height, width}) => (
                 <KeplerGl
-                  mapboxApiAccessToken={AUTH_TOKENS.MAPBOX_TOKEN}
+                  mapboxApiAccessToken={CLOUD_PROVIDERS_CONFIGURATION.MAPBOX_TOKEN}
                   id="map"
                   /*
                    * Specify path to keplerGl state, because it is not mount at the root
@@ -396,9 +421,10 @@ class App extends Component {
                   width={width}
                   height={height}
                   cloudProviders={CLOUD_PROVIDERS}
+                  localeMessages={messages}
                   onExportToCloudSuccess={onExportFileSuccess}
                   onLoadCloudMapSuccess={onLoadCloudMapSuccess}
-                  onLoadCloudMapError={onLoadCloudMapError}
+                  featureFlags={DEFAULT_FEATURE_FLAGS}
                 />
               )}
             </AutoSizer>

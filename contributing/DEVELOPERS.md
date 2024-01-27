@@ -22,7 +22,7 @@ machine:
 
 * [Git](http://git-scm.com/): The [Github Guide to Installing Git][git-setup] is a good source of information.
 
-* [Node.js ^6.x](http://nodejs.org): We use Node to generate the documentation, run a
+* [Node.js ^14.x](http://nodejs.org): We use Node to generate the documentation, run a
   development web server, run tests, and generate distributable files. Depending on your system,
   you can install Node either from source or as a pre-packaged bundle.
 
@@ -52,21 +52,20 @@ cd kepler.gl
 # Add the main kepler.gl repository as an upstream remote to your repository:
 git remote add upstream "git@github.com:keplergl/kepler.gl.git"
 
+# Install Puppeteer
+yarn global add puppeteer
+
 # Install JavaScript dependencies:
-yarn
+yarn bootstrap
 
 # Setup mapbox access token locally
 export MapboxAccessToken=<insert_your_token>
 
 # Start the kepler.gl demo app
-npm start
+yarn start
 ```
 
-An demo app will be served at
-
-```text
-http://localhost:8080/
-```
+An demo app will be served at `http://localhost:8080/`
 
 This is the demo app we hosted on [http://kepler.gl/#/demo][demo-app]. By default, it serves non-minified source code inside the src directory.
 
@@ -83,13 +82,13 @@ npm run start:deck-src
 
 ## Running Tests
 
-We write unit and browser tests with [Tape][tape] and [Enzyme][enzyme], and lint with [ESLint][eslint]. Make sure to run test before submitting your PR. To run all of the tests once with node:
+- We write node and browser tests with [Tape][tape], [Enzyme][enzyme], [jsDom](https://www.npmjs.com/package/jsdom) and [@probe.gl/test-util](https://uber-web.github.io/probe.gl/docs/modules/test-utils/browser-driver), and lint with [ESLint][eslint]. Make sure to run test before submitting your PR. To run all of the tests once
 
 ```bash
 yarn test
 ```
 
-To run separately
+- Yarn test runs lint and 3 tests in different env. To run them separately
 ```bash
 # lint
 yarn lint
@@ -97,17 +96,52 @@ yarn lint
 # node tests
 yarn test-node
 
-# browser tests
+# jsdom tests
 yarn test-browser
 
-# fast test (no linting)
-yarn fast-test
+# headless browser tests, uses probe.gl to run browser tests with puppeteer
+yarn test-headless
+```
+
+- Here are some handy scripts / tricks for debugging tests
+
+1. add `.only` to errored tests to only run 1 test at a time
+```js
+test.only('MapContainerFactory', t => {
+  // tests
+}
+```
+
+2. run all tests in chromium browser. This runs node, browser and headless browser tests in chromium browser and logs the output, you can step through the code with chrome developer tools
+```bash
+yarn test-browser-drive
+```
+
+3. Fast tests, runs node and browser tests without tap-spec output
+```bash
+yarn test-fast
 ```
 
 To generate a coverage report
 ```bash
 yarn cover
 ```
+
+## Test React components
+
+Enzyme is no longer supported therefore we are now transitioning to [testing library](https://testing-library.com/).
+
+We have introduced an eslint rule to deprecate the usage of enzyme so if you attempt to create new tests using enzyme
+it will throw an error when running lint.
+
+In order to create new tests cases please take advantage of [Testing Library](https://testing-library.com/).
+All necessary dependencies are already installed, you can start testing your React components by following this
+[doc](https://testing-library.com/docs/react-testing-library/intro);
+
+### Migrating enzyme to React testing library
+
+If you are interested in migrating enzyme tests to RTL (react testing library) feel free to check
+the [official migration guidelines](https://testing-library.com/docs/react-testing-library/migrate-from-enzyme/)
 
 ## Coding Rules
 
@@ -254,7 +288,7 @@ Netlify is connected to the following github triggers:
 A new production version of kepler.gl website is automatically created and deployed every time a PR is merged onto master.
 
 In order to support testing environment, Netlify is setup to generate build every time a PR is created or updated.
-By generating builds for new and updated PRs we support CI/CD so developers can test their own build in a production like environment 
+By generating builds for new and updated PRs we support CI/CD so developers can test their own build in a production like environment
 
 ### Publish kepler.gl package to NPM
 
@@ -271,7 +305,7 @@ In order to publish a new version of kepler.gl a developer must perform the foll
 3. Create a new PR for review.
 4. Once the PR is reviewed and merged, pull the latest changes locally.
 5. Run ```gh-release```: this command will create a new Github Release with the new updated CHANGELOG.md section.
-6. Once the new Github Release is created, Github will automatically trgger a new Github Action flow that will automatically build and publish the new package version to NPM registry.
+6. Once the new Github Release is created, Github will automatically trigger a new Github Action flow that will automatically build and publish the new package version to NPM registry.
 
 __After Release is completed and pushed__
 * Update each of the example folder package.json kepler.gl dependency with the newer. To update all examples, run
@@ -292,16 +326,16 @@ The documentation layout is defined by __SUMMARY.md__ file where the table of co
 * [ENTRY_LABEL](FILE_PATH)
 e.g.
 * [Welcome](README.md)
-``` 
+```
 
-The above file is used by Gitbook to generate the doc navigation visible on the left-hand side of Kepler.gl doc website. 
+The above file is used by Gitbook to generate the doc navigation visible on the left-hand side of Kepler.gl doc website.
 Gitbook also has the ability to show description for each folder/section of the documentation by creating an entry in __SUMMARY.md__
 and create a new __README.md__ file within said folder. The README.md file is a Gitbook convention that treats README files as if they were the main entry file for each folder.
 
 The following is an example of doc section in SUMMARY.md file:
 ```markdown
 * [User guides](docs/user-guides/README.md)
-``` 
+```
 
 ### Update Documentation
 The integration with Gitbook allows to update the documentation in two different ways:

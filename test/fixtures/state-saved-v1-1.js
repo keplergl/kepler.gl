@@ -1,26 +1,11 @@
-// Copyright (c) 2020 Uber Technologies, Inc.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
 
-import GeojsonLayer from 'layers/geojson-layer/geojson-layer';
-import {DEFAULT_TEXT_LABEL, DEFAULT_COLOR_UI} from 'layers/layer-factory';
-import {getDefaultInteraction} from 'utils/interaction-utils';
+import {KeplerGlLayers} from '@kepler.gl/layers';
+import {DEFAULT_TEXT_LABEL, DEFAULT_COLOR_UI} from '@kepler.gl/constants';
+
+const {GeojsonLayer} = KeplerGlLayers;
+import {defaultInteractionConfig} from '@kepler.gl/reducers';
 
 export const savedStateV1 = {
   datasets: [
@@ -837,8 +822,10 @@ export const mergedFilters = [
     dataId: ['a5ybmwl2d'],
     freeze: true,
     id: '9ca0l7p2a',
-    enlarged: false,
+    enabled: true,
+    view: 'side',
     isAnimating: false,
+    animationWindow: 'free',
     name: ['zip_area'],
     type: 'range',
     fieldIdx: [3],
@@ -879,21 +866,25 @@ mergedLayer0.config = {
   highlightColor: [252, 242, 26, 255],
   colorField: {
     name: 'c_m_r',
-    type: 'integer',
     id: 'c_m_r',
+    displayName: 'c_m_r',
+    type: 'integer',
     format: '',
-    tableFieldIndex: 9,
-    analyzerType: 'INT'
+    fieldIdx: 8,
+    analyzerType: 'INT',
+    valueAccessor: values => values[8]
   },
   colorScale: 'quantize',
   colorDomain: [45, 9642],
   strokeColorField: {
     name: 'c_m_r',
-    type: 'integer',
     id: 'c_m_r',
+    displayName: 'c_m_r',
+    type: 'integer',
     format: '',
-    tableFieldIndex: 9,
-    analyzerType: 'INT'
+    fieldIdx: 8,
+    analyzerType: 'INT',
+    valueAccessor: values => values[8]
   },
   strokeColorScale: 'quantize',
   strokeColorDomain: [45, 9642],
@@ -903,11 +894,13 @@ mergedLayer0.config = {
   textLabel: [DEFAULT_TEXT_LABEL],
   heightField: {
     name: 'c_a_v',
-    type: 'real',
     id: 'c_a_v',
+    displayName: 'c_a_v',
+    type: 'real',
     format: '',
-    tableFieldIndex: 11,
-    analyzerType: 'FLOAT'
+    fieldIdx: 10,
+    analyzerType: 'FLOAT',
+    valueAccessor: values => values[10]
   },
   heightScale: 'linear',
   heightDomain: [211.9244058, 858.5168842],
@@ -960,6 +953,7 @@ mergedLayer0.config = {
     radiusRange: [0, 50],
     heightRange: [0, 500],
     elevationScale: 18,
+    enableElevationZoomFactor: true,
     stroked: true,
     filled: true,
     strokeColor: [181, 18, 65],
@@ -2705,10 +2699,12 @@ mergedLayer1.config = {
   sizeField: {
     name: 'c_ta',
     id: 'c_ta',
+    displayName: 'c_ta',
     type: 'real',
+    fieldIdx: 12,
     format: '',
-    tableFieldIndex: 13,
-    analyzerType: 'FLOAT'
+    analyzerType: 'FLOAT',
+    valueAccessor: values => values[12]
   },
   hidden: false,
   sizeScale: 'linear',
@@ -2744,6 +2740,7 @@ mergedLayer1.config = {
     radiusRange: [0, 50],
     heightRange: [0, 500],
     elevationScale: 5,
+    enableElevationZoomFactor: true,
     stroked: true,
     filled: false,
     enable3d: false,
@@ -2766,13 +2763,14 @@ mergedLayer1.dataToFeature = mergedLayer0.dataToFeature;
 
 export const mergedLayers = [mergedLayer0, mergedLayer1];
 
-const defaultInteraction = getDefaultInteraction();
 export const mergedInteraction = {
-  ...defaultInteraction,
+  ...defaultInteractionConfig,
   tooltip: {
-    ...defaultInteraction.tooltip,
+    ...defaultInteractionConfig.tooltip,
     enabled: false,
     config: {
+      compareMode: false,
+      compareType: 'absolute',
       fieldsToShow: {
         a5ybmwl2d: [
           {
@@ -2792,7 +2790,7 @@ export const mergedInteraction = {
     }
   },
   brush: {
-    ...defaultInteraction.brush,
+    ...defaultInteractionConfig.brush,
     enabled: false,
     config: {
       size: 1

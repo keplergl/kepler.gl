@@ -4,6 +4,8 @@
 .ipynb_checkpoints/
 
 dist/
+# labextension build
+keplergl-jupyter/
 build/
 *.py[cod]
 node_modules/

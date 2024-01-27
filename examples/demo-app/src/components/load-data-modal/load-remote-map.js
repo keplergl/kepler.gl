@@ -1,30 +1,14 @@
-// Copyright (c) 2020 Uber Technologies, Inc.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
 
 // TODO: this will move onto kepler.gl core
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import {CORS_LINK} from '../../constants/default-settings';
-import {messages} from '../../constants/localization';
-import {FormattedHTMLMessage, FormattedMessage, IntlProvider} from 'react-intl';
+import {FormattedMessage} from 'react-intl';
+import {Button} from '@kepler.gl/components';
+import {validateUrl} from '../../utils/url';
 
 const propTypes = {
   onLoadRemoteMap: PropTypes.func.isRequired
@@ -75,11 +59,6 @@ export const StyledInputLabel = styled.div`
   }
 `;
 
-export const StyledBtn = styled.button`
-  background-color: ${props => props.theme.primaryBtnActBgd};
-  color: ${props => props.theme.primaryBtnActColor};
-`;
-
 export const StyledError = styled.div`
   color: red;
 `;
@@ -95,24 +74,28 @@ const Error = ({error, url}) => (
   </StyledError>
 );
 
-class LoadRemoteMap extends Component {
-  constructor(props) {
-    super(props);
+const CORS_LINK_MESSAGE = {corsLink: CORS_LINK};
 
-    this.state = {
-      dataUrl: ''
-    };
-  }
+class LoadRemoteMap extends Component {
+  state = {
+    dataUrl: '',
+    error: null,
+    submitted: false
+  };
+
   onMapUrlChange = e => {
-    // TODO: validate url
     this.setState({
-      dataUrl: e.target.value
+      dataUrl: e.target.value,
+      error: !validateUrl(e.target.value) ? {message: 'Incorrect URL'} : null
     });
   };
 
   onLoadRemoteMap = () => {
-    const {dataUrl} = this.state;
-    if (!dataUrl) {
+    const {dataUrl, error} = this.state;
+
+    this.setState({submitted: true});
+
+    if (!dataUrl || error) {
       return;
     }
 
@@ -120,42 +103,41 @@ class LoadRemoteMap extends Component {
   };
 
   render() {
-    const {locale} = this.props;
+    const displayedError = this.props.error || this.state.submitted ? this.state.error : null;
+
     return (
       <div>
         <InputForm>
-          <IntlProvider locale={locale} messages={messages[locale]}>
-            <StyledDescription>
-              <FormattedMessage id={'loadRemoteMap.description'} />
-            </StyledDescription>
-            <StyledInputLabel>
-              <FormattedMessage id={'loadRemoteMap.message'} />
-            </StyledInputLabel>
-            <StyledInputLabel>
-              <FormattedMessage id={'loadRemoteMap.examples'} />
-              <ul>
-                <li>https://your.map.url/map.json</li>
-                <li>http://your.map.url/data.csv</li>
-              </ul>
-            </StyledInputLabel>
-            <StyledInputLabel>
-              <FormattedMessage id={'loadRemoteMap.cors'} />{' '}
-              <FormattedHTMLMessage id={'loadRemoteMap.clickHere'} values={{corsLink: CORS_LINK}} />
-            </StyledInputLabel>
-            <StyledFromGroup>
-              <StyledInput
-                onChange={this.onMapUrlChange}
-                type="text"
-                placeholder="Url"
-                value={this.state.dataUrl}
-                error={this.props.error}
-              />
-              <StyledBtn type="submit" onClick={this.onLoadRemoteMap}>
-                <FormattedMessage id={'loadRemoteMap.fetch'} />
-              </StyledBtn>
-            </StyledFromGroup>
-            {this.props.error && <Error error={this.props.error} url={this.props.option.dataUrl} />}
-          </IntlProvider>
+          <StyledDescription>
+            <FormattedMessage id={'loadRemoteMap.description'} />
+          </StyledDescription>
+          <StyledInputLabel>
+            <FormattedMessage id={'loadRemoteMap.message'} />
+          </StyledInputLabel>
+          <StyledInputLabel>
+            <FormattedMessage id={'loadRemoteMap.examples'} />
+            <ul>
+              <li>https://your.map.url/map.json</li>
+              <li>http://your.map.url/data.csv</li>
+            </ul>
+          </StyledInputLabel>
+          <StyledInputLabel>
+            <FormattedMessage id={'loadRemoteMap.cors'} />{' '}
+            <FormattedMessage id={'loadRemoteMap.clickHere'} values={CORS_LINK_MESSAGE} />
+          </StyledInputLabel>
+          <StyledFromGroup>
+            <StyledInput
+              onChange={this.onMapUrlChange}
+              type="text"
+              placeholder="Url"
+              value={this.state.dataUrl}
+              error={displayedError}
+            />
+            <Button type="submit" cta size="small" onClick={this.onLoadRemoteMap}>
+              <FormattedMessage id={'loadRemoteMap.fetch'} />
+            </Button>
+          </StyledFromGroup>
+          {displayedError && <Error error={displayedError} url={this.props.option?.dataUrl} />}
         </InputForm>
       </div>
     );

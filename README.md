@@ -28,7 +28,7 @@
 
 [<img width="600" alt="Kepler.gl Demo" src="https://eng.uber.com/wp-content/uploads/2018/05/image4-3-768x493.png">](http://kepler.gl/#/demo)
 
-[Kepler.gl][web] is a data-agnostic, high-performance web-based application for visual exploration of large-scale geolocation data sets. Built on top of [Mapbox GL](https://www.mapbox.com) and [deck.gl](http://uber.github.io/deck.gl/#/), kepler.gl can render millions of points representing thousands of trips and perform spatial aggregations on the fly.
+[Kepler.gl][web] is a data-agnostic, high-performance web-based application for visual exploration of large-scale geolocation data sets. Built on top of [MapLibre GL](https://maplibre.org/) and [deck.gl](https://deck.gl/), kepler.gl can render millions of points representing thousands of trips and perform spatial aggregations on the fly.
 
 Kepler.gl is also a React component that uses [Redux](https://redux.js.org/) to manage its state and data flow. It can be embedded into other React-Redux applications and is highly customizable. For information on how to embed kepler.gl in your app take a look at this step-by-step [tutorial][vis-academy] on vis.academy.
 
@@ -48,12 +48,12 @@ Kepler.gl is also a React component that uses [Redux](https://redux.js.org/) to 
 
 ## Env
 
-Use Node 10.15.0 or above, older node versions have not been supported/ tested.
+Use Node 18.18.2 or above, older node versions have not been supported/ tested.
 For best results, use [nvm](https://github.com/creationix/nvm) `nvm install`.
 
 ## Install kepler.gl
 
-Install node (`> 10.15.0`), yarn, and project dependencies
+Install node (`> 18.18.2`), yarn, and project dependencies
 
 ```sh
 npm install --save kepler.gl
@@ -73,7 +73,7 @@ You can add the script tag to your html file as it follows:
 or if you would like, you can load a specific version
 
 ```html
-<script src="https://unpkg.com/kepler.gl@0.2.2/umd/keplergl.min.js" />
+<script src="https://unpkg.com/kepler.gl@2.5.5/umd/keplergl.min.js" />
 ```
 
 ## Develop kepler.gl
@@ -93,8 +93,8 @@ You need to add `taskMiddleware` of `react-palm` to your store too. We are activ
 
 ```js
 import {createStore, combineReducers, applyMiddleware, compose} from 'redux';
-import keplerGlReducer from 'kepler.gl/reducers';
-import {enhanceReduxMiddleware} from 'kepler.gl/middleware';
+import keplerGlReducer from '@kepler.gl/reducers';
+import {enhanceReduxMiddleware} from '@kepler.gl/middleware';
 
 const initialState = {};
 const reducers = combineReducers({
@@ -139,15 +139,10 @@ Read more about [Reducers][reducers].
 ### 2. Mount Component
 
 ```js
-import KeplerGl from 'kepler.gl';
+import KeplerGl from '@kepler.gl/components';
 
 const Map = props => (
-  <KeplerGl
-    id="foo"
-    width={width}
-    mapboxApiAccessToken={token}
-    height={height}
-  />
+  <KeplerGl id="foo" width={width} mapboxApiAccessToken={token} height={height} />
 );
 ```
 
@@ -165,11 +160,15 @@ stored in `state.keplerGl.foo`.
 In case you create multiple kepler.gl instances using the same id, the kepler.gl state defined by the entry will be
 overridden by the latest instance and reset to a blank state.
 
-##### `mapboxApiAccessToken` (String, required)
+##### `mapboxApiAccessToken` (String, required\*)
 
 - Default: `undefined`
 
-You can create a free account at [mapbox][mapbox] and create a token at [www.mapbox.com/account/access-tokens][mapbox-token]
+By default, kepler.gl uses mapbox-gl.js to render its base maps. You can create a free account at [mapbox][mapbox] and create a token at [www.mapbox.com/account/access-tokens][mapbox-token].
+
+If you replaced kepler.gl default map styles with your own, and they are not Mapbox styles. `mapboxApiAccessToken` will not be required.
+
+Read more about [Custom Map Styles][custom-map-styles].
 
 ##### `getState` (Function, optional)
 
@@ -218,7 +217,7 @@ Action triggered when map viewport is updated.
 
 Function called when `KeplerGL` adds or removes a `MapContainer` component having an inner Mapbox map.
 
-The `mapbox` argument is an [`InteractiveMap`](https://uber.github.io/react-map-gl/#/Documentation/api-reference/interactive-map) when added or `null` when removed.
+The `mapbox` argument is an [`MapRef`](https://visgl.github.io/react-map-gl/docs/api-reference/types#mapref) when added or `null` when removed.
 
 The `index` argument is 0 for a single map or 1 for an additional map (since `KeplerGL` supports an optional split map view).
 
@@ -268,7 +267,7 @@ Each `mapStyles` should has the following properties:
 
 - `id` (String, required) unique string that should **not** be one of these reserved `dark` `light` `muted`. `muted_night`
 - `label` (String, required) name to be displayed in map style selection panel
-- `url` (String, required) mapbox style url or a url pointing to the map style json object
+- `url` (String, required) mapbox style url or a url pointing to the map style json object written in [Mapbox GL Style Spec](https://docs.mapbox.com/mapbox-gl-js/style-spec/).
 - `icon` (String, optional) image icon of the style, it can be a url, or an [image data url](https://flaviocopes.com/data-urls/#how-does-a-data-url-look)
 - `layerGroups` (Array, optional)
 
@@ -295,6 +294,20 @@ const mapStyles = [
   }
 ];
 ```
+
+Read more about [Custom Map Styles][custom-map-styles].
+
+#### `initialUiState` (object, optional)
+
+- Default: `undefined`
+
+Intial UI State applied to uiState reducer, value will be shallow merged with default [`INITIAL_UI_STATE`](https://docs.kepler.gl/docs/api-reference/reducers/ui-state#initial_ui_state)
+
+#### `localeMessages` (object, optional)
+
+- Default: `undefined` Modify default translation or add new translation
+
+Read more about [Localization][localization].
 
 ### 3. Dispatch custom actions to `keplerGl` reducer.
 
@@ -331,10 +344,9 @@ const composedReducer = (state, action) => {
           // 'map' is the id of the keplerGl instance
           map: {
             ...state.keplerGl.map,
-            visState: visStateUpdaters.updateVisDataUpdater(
-              state.keplerGl.map.visState,
-              {datasets: action.payload}
-            )
+            visState: visStateUpdaters.updateVisDataUpdater(state.keplerGl.map.visState, {
+              datasets: action.payload
+            })
           }
         }
       };
@@ -354,10 +366,10 @@ using connect.
 
 ```js
 // component
-import KeplerGl from 'kepler.gl';
+import KeplerGl from '@kepler.gl/components';
 
 // action and forward dispatcher
-import {toggleFullScreen, forwardTo} from 'kepler.gl/actions';
+import {toggleFullScreen, forwardTo} from '@kepler.gl/actions';
 import {connect} from 'react-redux';
 
 const MapContainer = props => (
@@ -387,10 +399,10 @@ You can also simply wrap an action into a forward action with the `wrapTo` helpe
 
 ```js
 // component
-import KeplerGl from 'kepler.gl';
+import KeplerGl from '@kepler.gl/components';
 
 // action and forward dispatcher
-import {toggleFullScreen, wrapTo} from 'kepler.gl/actions';
+import {toggleFullScreen, wrapTo} from '@kepler.gl/actions';
 
 // create a function to wrapper action payload to 'foo'
 const wrapToMap = wrapTo('foo');
@@ -461,12 +473,7 @@ const customTheme = {
 
 return (
   <ThemeProvider theme={customTheme}>
-    <KeplerGl
-      mapboxApiAccessToken={MAPBOX_TOKEN}
-      id="map"
-      width={800}
-      height={800}
-    />
+    <KeplerGl mapboxApiAccessToken={MAPBOX_TOKEN} id="map" width={800} height={800} />
   </ThemeProvider>
 );
 ```
@@ -479,16 +486,14 @@ and call `injectComponents` at the root component of your app where `KeplerGl` i
 Take a look at `examples/demo-app/src/app.js` and see how it renders a custom side panel header in kepler.gl
 
 ```javascript
-import {injectComponents, PanelHeaderFactory} from 'kepler.gl/components';
+import {injectComponents, PanelHeaderFactory} from '@kepler.gl/components';
 
 // define custom header
 const CustomHeader = () => <div>My kepler.gl app</div>;
 const myCustomHeaderFactory = () => CustomHeader;
 
 // Inject custom header into Kepler.gl, replacing default
-const KeplerGl = injectComponents([
-  [PanelHeaderFactory, myCustomHeaderFactory]
-]);
+const KeplerGl = injectComponents([[PanelHeaderFactory, myCustomHeaderFactory]]);
 
 // render KeplerGl, it will render your custom header instead of the default
 const MapContainer = () => (
@@ -501,12 +506,8 @@ const MapContainer = () => (
 Using `withState` helper to add reducer state and actions to customized component as additional props.
 
 ```js
-import {
-  withState,
-  injectComponents,
-  PanelHeaderFactory
-} from 'kepler.gl/components';
-import {visStateLens} from 'kepler.gl/reducers';
+import {withState, injectComponents, PanelHeaderFactory} from '@kepler.gl/components';
+import {visStateLens} from '@kepler.gl/reducers';
 
 // custom action wrap to mounted instance
 const addTodo = text =>
@@ -543,6 +544,7 @@ To interact with a kepler.gl instance and add new data to it, you can dispatch t
 #### Parameters
 
 - `data` **[Object][40]** **\*required**
+
   - `datasets` **([Array][41]&lt;[Object][40]> | [Object][40])** **\*required** datasets can be a dataset or an array of datasets
     Each dataset object needs to have `info` and `data` property.
     - `datasets.info` **[Object][40]** \-info of a dataset
@@ -567,7 +569,7 @@ Kepler.gl provides an easy API `KeplerGlSchema.getConfigToSave` to generate a js
 
 ```javascript
 // app.js
-import {addDataToMap} from 'kepler.gl/actions';
+import {addDataToMap} from '@kepler.gl/actions';
 
 const sampleTripData = {
   fields: [
@@ -590,7 +592,7 @@ const sampleConfig = {
         dataId: 'test_trip_data',
         name: 'tpep_pickup_datetime',
         type: 'timeRange',
-        enlarged: true
+        view: 'enlarged'
       }
     ]
   }
@@ -641,9 +643,11 @@ Read more about [addDataToMap](./docs/api-reference/actions/actions.md#adddatato
 [processors]: docs/api-reference/processors/README.md
 [schemas]: docs/api-reference/schemas/README.md
 [using-updaters]: ./docs/api-reference/advanced-usages/using-updaters.md
+[custom-map-styles]: ./docs/api-reference/advanced-usages/custom-map-styles.md
 [forward-actions]: ./docs/api-reference/advanced-usages/forward-actions.md
 [replace-ui-component]: ./docs/api-reference/advanced-usages/replace-ui-component.md
 [saving-loading-w-schema]: ./docs/api-reference/advanced-usages/saving-loading-w-schema.md
+[localization]: ./docs/api-reference/localization/README.md
 [40]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object
 [41]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array
 [42]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String

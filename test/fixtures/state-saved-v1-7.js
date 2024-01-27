@@ -1,22 +1,5 @@
-// Copyright (c) 2020 Uber Technologies, Inc.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
 
 export const savedStateV1InteractionCoordinate = {
   datasets: [
@@ -796,5 +779,33 @@ export const savedStateV1InteractionCoordinate = {
         ]
       }
     }
+  },
+  info: {
+    app: 'kepler.gl',
+    created_at: 'Sun Nov 17 2019 18:37:59 GMT-0800 (Pacific Standard Time)'
   }
 };
+
+export const parsedFields = [
+  {name: 'a_zip', type: 'integer', format: '', analyzerType: 'INT'},
+  {
+    name: 'simplified_shape_v2',
+    type: 'geojson',
+    format: '',
+    analyzerType: 'PAIR_GEOMETRY_FROM_STRING'
+  },
+  {name: 'simplified_shape', type: 'geojson', format: '', analyzerType: 'GEOMETRY_FROM_STRING'},
+  {name: 'zip_area', type: 'real', format: '', analyzerType: 'FLOAT'},
+  {name: 'avg_number', type: 'real', format: '', analyzerType: 'FLOAT'},
+  {name: 'str_type', type: 'string', format: '', analyzerType: 'STRING'},
+  {name: 'int_type', type: 'integer', format: '', analyzerType: 'INT'},
+  {name: 'real_type', type: 'real', format: '', analyzerType: 'FLOAT'},
+  {name: 'c_m_r', type: 'integer', format: '', analyzerType: 'INT'},
+  {name: 'c_m_t', type: 'real', format: '', analyzerType: 'FLOAT'},
+  {name: 'c_a_v', type: 'real', format: '', analyzerType: 'FLOAT'},
+  {name: 'c_ch', type: 'real', format: '', analyzerType: 'FLOAT'},
+  {name: 'c_ta', type: 'real', format: '', analyzerType: 'FLOAT'},
+  {name: 'c_k_a', type: 'real', format: '', analyzerType: 'FLOAT'},
+  {name: 'c_ltv', type: 'real', format: '', analyzerType: 'FLOAT'},
+  {name: 'b_r_p', type: 'real', format: '', analyzerType: 'FLOAT'}
+];

@@ -1,28 +1,12 @@
-// Copyright (c) 2020 Uber Technologies, Inc.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
 
 import {OAuthApp} from '@carto/toolkit';
 import Console from 'global/console';
 import CartoIcon from './carto-icon';
-import {formatCsv} from 'kepler.gl/processors';
-import {Provider} from 'kepler.gl/cloud-providers';
+import {Provider} from '@kepler.gl/cloud-providers';
+import {createDataContainer} from '@kepler.gl/utils';
+import {formatCsv} from '@kepler.gl/reducers';
 
 const NAME = 'carto';
 const DISPLAY_NAME = 'CARTO';
@@ -45,7 +29,7 @@ export default class CartoProvider extends Provider {
     this._carto = new OAuthApp(
       {
         authorization: `https://${DOMAIN}/oauth2`,
-        scopes: 'schemas:c'
+        scopes: 'schemas:c datasets:rw:*'
       },
       {
         serverUrlTemplate: `https://{user}.${DOMAIN}/`,
@@ -163,7 +147,7 @@ export default class CartoProvider extends Provider {
    * Returns the access token. If it has expired returns null. The toolkit library loads it
    * from localStorage automatically
    */
-  getAccessToken() {
+  async getAccessToken() {
     let accessToken = null;
     try {
       accessToken = this._carto.oauth.expired ? null : this._carto.oauth.token;
@@ -191,6 +175,14 @@ export default class CartoProvider extends Provider {
    */
   getAccessTokenFromLocation(location) {
     return;
+  }
+
+  async getUser() {
+    return {
+      name: this.getUserName(),
+      abbreviated: '',
+      email: ''
+    }
   }
 
   async downloadMap(queryParams) {
@@ -332,7 +324,9 @@ export default class CartoProvider extends Provider {
       type: field.type
     }));
 
-    const file = formatCsv(allData, fields);
+    const dataContainer = createDataContainer([...allData]);
+
+    const file = formatCsv(dataContainer, fields);
 
     return {
       name: id,

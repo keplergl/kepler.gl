@@ -1,6 +1,6 @@
 # API Reference
 
-## Table of Content
+## Table of Contents
 
 -  [Overview](./#overview)
 -  [Ecosystem](./ecosystem.md)
@@ -19,6 +19,7 @@
     - [Saving and loading maps with schema manager](./advanced-usages/saving-loading-w-schema.md)
     - [Replace UI component](./advanced-usages/replace-ui-component.md)
     - [Custom Mapbox Host](./advanced-usages/custom-mapbox-host.md)
+    - [Custom Map Styles](./advanced-usages/custom-map-styles.md)
     - [Localization](./localization/README.md)
 
 -  API

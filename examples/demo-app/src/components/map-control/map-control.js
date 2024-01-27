@@ -1,36 +1,12 @@
-// Copyright (c) 2020 Uber Technologies, Inc.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
 
 import React, {useState} from 'react';
+import classnames from 'classnames';
 import styled from 'styled-components';
-import {MapControlFactory, Icons, IconRoundSmall, MapControlButton} from 'kepler.gl/components';
+import {Icons, IconRoundSmall, MapControlButton} from '@kepler.gl/components';
+
 import ReactMarkdown from 'react-markdown';
-
-const MapControl = MapControlFactory();
-
-const StyledMapControlOverlay = styled.div`
-  position: absolute;
-  top: 0px;
-  right: 0px;
-  z-index: 1;
-`;
 
 const StyledFloatingPanel = styled.div`
   margin-right: 12px;
@@ -120,8 +96,8 @@ const LinkRenderer = props => {
   );
 };
 
-// convert https://raw.githubusercontent.com/uber-web/kepler.gl-data/master/nyctrips/config.json
-// to https://github.com/uber-web/kepler.gl-data/blob/master/movement_pittsburgh/config.json
+// convert https://raw.githubusercontent.com/keplergl/kepler.gl-data/master/nyctrips/config.json
+// to https://github.com/keplergl/kepler.gl-data/blob/master/movement_pittsburgh/config.json
 function getURL(url) {
   return url
     ? url
@@ -130,7 +106,7 @@ function getURL(url) {
     : url;
 }
 
-function SampleMapPanel(props) {
+export function SampleMapPanel(props) {
   const [isActive, setActive] = useState(true);
 
   return (
@@ -164,6 +140,7 @@ function SampleMapPanel(props) {
         </StyledProjectPanel>
       ) : (
         <MapControlButton
+          className={classnames('map-control-button', 'info-panel', {isActive})}
           onClick={e => {
             e.preventDefault();
             setActive(true);
@@ -175,12 +152,3 @@ function SampleMapPanel(props) {
     </StyledFloatingPanel>
   );
 }
-
-const CustomMapControl = props => (
-  <StyledMapControlOverlay>
-    {!props.isExport && props.currentSample ? <SampleMapPanel {...props} /> : null}
-    <MapControl {...props} />
-  </StyledMapControlOverlay>
-);
-
-export default CustomMapControl;

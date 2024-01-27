@@ -1,30 +1,16 @@
-// Copyright (c) 2020 Uber Technologies, Inc.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
 
+/* eslint-disable enzyme-deprecation/no-mount */
 import test from 'tape';
 import React from 'react';
 import {mount} from 'enzyme';
 import sinon from 'sinon';
 import sinonStubPromise from 'sinon-stub-promise';
 import {getDistanceScales} from 'viewport-mercator-project';
-import {DEFAULT_TEXT_LABEL} from 'layers/layer-factory';
+import {copyTableAndUpdate} from '@kepler.gl/table';
+import {KeplerGlLayers} from '@kepler.gl/layers';
+import {DEFAULT_TEXT_LABEL, PROJECTED_PIXEL_SIZE_MULTIPLIER} from '@kepler.gl/constants';
 
 sinonStubPromise(sinon);
 
@@ -38,8 +24,7 @@ import {
   pointLayerMeta,
   iconGeometry
 } from 'test/helpers/layer-utils';
-import {KeplerGlLayers} from 'layers';
-import {INITIAL_MAP_STATE} from 'reducers/map-state-updaters';
+import {INITIAL_MAP_STATE} from '@kepler.gl/reducers';
 import {IntlWrapper} from '../../helpers/component-utils';
 
 const {IconLayer} = KeplerGlLayers;
@@ -124,10 +109,7 @@ test('#IconLayer -> formatLayerData', t => {
         id: 'test_layer_1'
       },
       datasets: {
-        [dataId]: {
-          ...preparedDataset,
-          filteredIndex
-        }
+        [dataId]: copyTableAndUpdate(preparedDataset, {filteredIndex})
       },
       assert: result => {
         const {layerData, layer} = result;
@@ -135,7 +117,6 @@ test('#IconLayer -> formatLayerData', t => {
         const expectedLayerData = {
           data: [
             {
-              data: testRows[0],
               index: 0,
               icon: 'accel'
             }
@@ -168,7 +149,7 @@ test('#IconLayer -> formatLayerData', t => {
         // getPosition
         t.deepEqual(
           layerData.getPosition(layerData.data[0]),
-          [testRows[0][2], testRows[0][1]],
+          [testRows[0][2], testRows[0][1], 0],
           'getPosition should return correct position'
         );
         // getFillColor
@@ -230,10 +211,7 @@ test('#IconLayer -> formatLayerData', t => {
         id: 'test_layer_2'
       },
       datasets: {
-        [dataId]: {
-          ...preparedDataset,
-          filteredIndex
-        }
+        [dataId]: copyTableAndUpdate(preparedDataset, {filteredIndex})
       },
       assert: result => {
         const {layerData} = result;
@@ -286,10 +264,7 @@ test('#IconLayer -> renderLayer', t => {
         id: 'test_layer_1'
       },
       datasets: {
-        [dataId]: {
-          ...preparedDataset,
-          filteredIndex
-        }
+        [dataId]: copyTableAndUpdate(preparedDataset, {filteredIndex})
       },
       assert: (deckLayers, layer) => {
         t.equal(layer.type, 'icon', 'should create 1 icon layer');
@@ -316,10 +291,7 @@ test('#IconLayer -> renderLayer', t => {
         layer.iconGeometry = iconGeometry;
       },
       datasets: {
-        [dataId]: {
-          ...preparedDataset,
-          filteredIndex
-        }
+        [dataId]: copyTableAndUpdate(preparedDataset, {filteredIndex})
       },
       assert: (deckLayers, layer) => {
         t.equal(layer.type, 'icon', 'should create 1 icon layer');
@@ -366,10 +338,7 @@ test('#IconLayer -> renderLayer', t => {
         layer.iconGeometry = iconGeometry;
       },
       datasets: {
-        [dataId]: {
-          ...preparedDataset,
-          filteredIndex
-        }
+        [dataId]: copyTableAndUpdate(preparedDataset, {filteredIndex})
       },
       renderArgs: {
         interactionConfig: {
@@ -441,10 +410,7 @@ test('#IconLayer -> renderLayer', t => {
         layer.iconGeometry = iconGeometry;
       },
       datasets: {
-        [dataId]: {
-          ...preparedDataset,
-          filteredIndex
-        }
+        [dataId]: copyTableAndUpdate(preparedDataset, {filteredIndex})
       },
       assert: (deckLayers, layer, layerData) => {
         t.equal(deckLayers.length, 7, 'Should create 7 deck.gl layer');
@@ -488,11 +454,11 @@ test('#IconLayer -> renderLayer', t => {
 
         t.deepEqual(
           getPosition(layerData.data[0]),
-          [testRows[0][2], testRows[0][1]],
+          [testRows[0][2], testRows[0][1], 0],
           'Should calculate correct getPosition'
         );
         t.deepEqual(getColor, DEFAULT_TEXT_LABEL.color, 'Should calculate correct getColor');
-        t.deepEqual(getSize, 1, 'Should calculate correct getSize');
+        t.deepEqual(getSize, PROJECTED_PIXEL_SIZE_MULTIPLIER, 'Should calculate correct getSize');
         t.deepEqual(
           getPixelOffset,
           expectedPixelOffset0,
@@ -516,19 +482,9 @@ test('#IconLayer -> renderLayer', t => {
   t.end();
 });
 
-test('#IconLayer -> fetch icon geometry -> renderIconModal', t => {
-  const mockSuccessResponse = {svgIcons: mockSvgIcons};
-  const mockJsonPromise = sinon.stub().returnsPromise();
-  mockJsonPromise.resolves(mockSuccessResponse);
-
-  const stubedFetch = sinon.stub(global, 'fetch').returnsPromise();
-
-  stubedFetch.resolves({
-    json: mockJsonPromise
-  });
-
+test('#IconLayer -> svg icons as constructor props -> renderIconModal', t => {
   // initialize iconLayer
-  const iconLayer = new IconLayer();
+  const iconLayer = new IconLayer({dataId: '', svgIcons: mockSvgIcons});
   t.deepEqual(iconLayer.iconGeometry, iconLayer.iconGeometry, 'should create correct iconGeometry');
 
   let wrapper;
@@ -551,6 +507,5 @@ test('#IconLayer -> fetch icon geometry -> renderIconModal', t => {
     'should render alert icon'
   );
 
-  stubedFetch.restore();
   t.end();
 });

@@ -1,30 +1,13 @@
-// Copyright (c) 2020 Uber Technologies, Inc.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
 
 import test from 'tape';
-import {findDefaultLayer} from 'utils/layer-utils/layer-utils';
-import {findPointFieldPairs, createNewDataEntry} from 'utils/dataset-utils';
-import {processCsvData, processGeojson} from 'processors/data-processor';
-import {GEOJSON_FIELDS} from 'constants/default-settings';
-import {LayerClasses, KeplerGlLayers} from 'layers';
-import {StateWTripGeojson} from 'test/helpers/mock-state';
+import cloneDeep from 'lodash.clonedeep';
+import {processCsvData, processGeojson} from '@kepler.gl/processors';
+import {LayerClasses, KeplerGlLayers} from '@kepler.gl/layers';
+import {GEOJSON_FIELDS} from '@kepler.gl/constants';
+import {findDefaultLayer, getLayerHoverProp, getLayerOrderFromLayers} from '@kepler.gl/reducers';
+import {StateWTripGeojson, StateWFiles} from 'test/helpers/mock-state';
 
 const {PointLayer, ArcLayer, GeojsonLayer, LineLayer} = KeplerGlLayers;
 
@@ -33,63 +16,70 @@ import {cmpLayers} from 'test/helpers/comparison-utils';
 import {getNextColorMakerValue} from 'test/helpers/layer-utils';
 import tripGeojson, {timeStampDomain, tripBounds} from 'test/fixtures/trip-geojson';
 import {geoJsonWithStyle} from 'test/fixtures/geojson';
+import {KeplerTable, findPointFieldPairs, createNewDataEntry} from '@kepler.gl/table';
+import {createDataContainer} from '@kepler.gl/utils';
 
 test('layerUtils -> findDefaultLayer.1', t => {
   const inputFields = [
     // layer 1
     {
       name: 'one_lat',
-      tableFieldIndex: 1
+      fieldIdx: 0
     },
     {
       name: 'one_lng',
-      tableFieldIndex: 2
+      fieldIdx: 1
     },
     // layer 2
     {
       name: 'two_two.lng',
-      tableFieldIndex: 3
+      fieldIdx: 2
     },
     {
       name: 'two_two.lat',
-      tableFieldIndex: 4
+      fieldIdx: 3
     },
     // layer 3
     {
       name: 'three longitude',
-      tableFieldIndex: 5
+      fieldIdx: 4
     },
     {
       name: 'three latitude',
-      tableFieldIndex: 6
+      fieldIdx: 5
     },
     // layer 4
     {
       name: 'four._.lon',
-      tableFieldIndex: 7
+      fieldIdx: 6
     },
     {
       name: 'four._.lat',
-      tableFieldIndex: 8
+      fieldIdx: 7
     },
     // layer 5
     {
       name: 'lat',
-      tableFieldIndex: 9
+      fieldIdx: 8
     },
     {
       name: 'lon',
-      tableFieldIndex: 10
+      fieldIdx: 9
     },
     // non layer
     //
+
     {
       name: 'non_layer_longitude.alt',
-      tableFieldIndex: 11
+      fieldIdx: 10
     },
     {
       name: 'non_layer_latitude.alt',
-      tableFieldIndex: 12
+      fieldIdx: 11
+    },
+    {
+      name: 'non_layer_altitude.alt',
+      fieldIdx: 12
     }
   ];
 
@@ -117,7 +107,7 @@ test('layerUtils -> findDefaultLayer.1', t => {
       }
     }),
     new PointLayer({
-      label: 'two two',
+      label: 'two_two',
       dataId,
       columns: {
         lat: {
@@ -155,7 +145,7 @@ test('layerUtils -> findDefaultLayer.1', t => {
       }
     }),
     new PointLayer({
-      label: 'four',
+      label: 'four._',
       dataId,
       columns: {
         lat: {
@@ -174,7 +164,7 @@ test('layerUtils -> findDefaultLayer.1', t => {
       }
     }),
     new PointLayer({
-      label: 'Point',
+      label: 'point',
       dataId,
       columns: {
         lat: {
@@ -192,8 +182,27 @@ test('layerUtils -> findDefaultLayer.1', t => {
         }
       }
     }),
+    new PointLayer({
+      label: 'non_layeralt',
+      dataId,
+      columns: {
+        lat: {
+          value: 'non_layer_latitude.alt',
+          fieldIdx: 11
+        },
+        lng: {
+          value: 'non_layer_longitude.alt',
+          fieldIdx: 10
+        },
+        altitude: {
+          value: 'non_layer_altitude.alt',
+          fieldIdx: 12,
+          optional: true
+        }
+      }
+    }),
     new ArcLayer({
-      label: 'one -> two two arc',
+      label: 'one -> two_two arc',
       dataId,
       columns: {
         lat0: {
@@ -215,7 +224,7 @@ test('layerUtils -> findDefaultLayer.1', t => {
       }
     }),
     new LineLayer({
-      label: 'one -> two two line',
+      label: 'one -> two_two line',
       dataId,
       columns: {
         lat0: {
@@ -233,6 +242,16 @@ test('layerUtils -> findDefaultLayer.1', t => {
         lng1: {
           value: 'two_two.lng',
           fieldIdx: 2
+        },
+        alt0: {
+          value: null,
+          fieldIdx: -1,
+          optional: true
+        },
+        alt1: {
+          value: null,
+          fieldIdx: -1,
+          optional: true
         }
       }
     })
@@ -253,34 +272,36 @@ test('layerUtils -> findDefaultLayer.2', t => {
     // layer 1
     {
       name: 'all_points',
-      tableFieldIndex: 1
+      fieldIdx: 0
     }
   ];
   const dataId = 'milkshake';
-  const fieldPairs = findPointFieldPairs(inputFields);
 
-  const dataset = {
-    id: dataId,
-    fields: inputFields,
-    fieldPairs,
-    label: 'sf_zip_geo',
-    allData: [
-      [
-        {
-          type: 'Feature',
-          properties: {index: 0},
-          geometry: {type: 'Point', coordinates: []}
-        }
+  const dataset = new KeplerTable({
+    info: {
+      id: dataId,
+      label: 'sf_zip_geo'
+    },
+    data: {
+      rows: [
+        [
+          {
+            type: 'Feature',
+            properties: {index: 0},
+            geometry: {type: 'Point', coordinates: []}
+          }
+        ],
+        [
+          {
+            type: 'Feature',
+            properties: {index: 1},
+            geometry: {type: 'Point', coordinates: []}
+          }
+        ]
       ],
-      [
-        {
-          type: 'Feature',
-          properties: {index: 1},
-          geometry: {type: 'Point', coordinates: []}
-        }
-      ]
-    ]
-  };
+      fields: inputFields
+    }
+  });
 
   const expected = new GeojsonLayer({
     label: 'sf_zip_geo',
@@ -311,11 +332,11 @@ test('layerUtils -> findDefaultLayer.3', t => {
     // layer 1 & 2
     {
       name: 'begintrip_lat',
-      tableFieldIndex: 1
+      fieldIdx: 0
     },
     {
       name: 'begintrip_lng',
-      tableFieldIndex: 2
+      fieldIdx: 1
     }
   ];
 
@@ -361,20 +382,20 @@ test('layerUtils -> findDefaultLayer.4', t => {
     // layer 1 (grid), 2 (arc), 3 (point)
     {
       name: 'begintrip_lat',
-      tableFieldIndex: 1
+      fieldIdx: 0
     },
     {
       name: 'begintrip_lng',
-      tableFieldIndex: 2
+      fieldIdx: 1
     },
     // layer 2 (arc), 4 (point)
     {
       name: 'dropoff_lat',
-      tableFieldIndex: 3
+      fieldIdx: 2
     },
     {
       name: 'dropoff_lng',
-      tableFieldIndex: 4
+      fieldIdx: 3
     }
   ];
 
@@ -460,6 +481,16 @@ test('layerUtils -> findDefaultLayer.4', t => {
         lng1: {
           value: 'dropoff_lng',
           fieldIdx: 3
+        },
+        alt0: {
+          value: null,
+          fieldIdx: -1,
+          optional: true
+        },
+        alt1: {
+          value: null,
+          fieldIdx: -1,
+          optional: true
         }
       }
     })
@@ -479,11 +510,11 @@ test('layerUtils -> findDefaultLayer.5', t => {
     // layer 1
     {
       name: 'one_late',
-      tableFieldIndex: 1
+      fieldIdx: 0
     },
     {
       name: 'one_lng',
-      tableFieldIndex: 2
+      fieldIdx: 1
     }
   ];
 
@@ -496,32 +527,50 @@ test('layerUtils -> findDefaultLayer.5', t => {
 });
 
 test('layerUtils -> findDefaultLayer:GeojsonLayer', t => {
-  const fields = [
-    {
-      name: 'random',
-      tableFieldIndex: 1
+  const dataset = new KeplerTable({
+    info: {
+      label: 'sf_zip_geo'
     },
-    {
-      name: 'begintrip_lng',
-      tableFieldIndex: 2
-    },
-    {
-      name: 'cool',
-      tableFieldIndex: 3
-    },
-    {
-      name: 'dropoff_lng',
-      tableFieldIndex: 4
-    },
-    {
-      name: GEOJSON_FIELDS.geojson[0],
-      tableFieldIndex: 5
-    },
-    {
-      name: GEOJSON_FIELDS.geojson[1],
-      tableFieldIndex: 6
+    data: {
+      rows: [
+        [
+          {
+            type: 'Feature',
+            properties: {index: 0},
+            geometry: {type: 'Point', coordinates: []}
+          }
+        ],
+        [
+          {
+            type: 'Feature',
+            properties: {index: 1},
+            geometry: {type: 'Point', coordinates: []}
+          }
+        ]
+      ],
+      fields: [
+        {
+          name: 'random'
+        },
+        {
+          name: 'begintrip_lng'
+        },
+        {
+          name: 'cool'
+        },
+        {
+          name: 'dropoff_lng'
+        },
+        {
+          name: GEOJSON_FIELDS.geojson[0]
+        },
+        {
+          name: GEOJSON_FIELDS.geojson[1]
+        }
+      ]
     }
-  ];
+  });
+
   const expected1 = new GeojsonLayer({
     label: 'what',
     dataId: 'smoothie',
@@ -530,6 +579,7 @@ test('layerUtils -> findDefaultLayer:GeojsonLayer', t => {
       geojson: {value: GEOJSON_FIELDS.geojson[0], fieldIdx: 4}
     }
   });
+
   const expected2 = new GeojsonLayer({
     label: 'what',
     dataId: 'smoothie',
@@ -548,30 +598,35 @@ test('layerUtils -> findDefaultLayer:GeojsonLayer', t => {
     strokeColor: layer2Stroke
   });
 
+  const {fields} = dataset;
+
+  const dataContainer = createDataContainer([
+    [
+      0,
+      1,
+      2,
+      3,
+      {
+        type: 'Feature',
+        properties: {index: 0},
+        geometry: {type: 'Point', coordinates: []}
+      },
+      {
+        type: 'Feature',
+        properties: {index: 0},
+        geometry: {type: 'Polygon', coordinates: []}
+      }
+    ],
+    {fields}
+  ]);
+
   const geojsonLayers = findDefaultLayer(
     {
       fields,
       label: 'what',
       id: 'smoothie',
       fieldPairs: [],
-      allData: [
-        [
-          0,
-          1,
-          2,
-          3,
-          {
-            type: 'Feature',
-            properties: {index: 0},
-            geometry: {type: 'Point', coordinates: []}
-          },
-          {
-            type: 'Feature',
-            properties: {index: 0},
-            geometry: {type: 'Polygon', coordinates: []}
-          }
-        ]
-      ]
+      dataContainer
     },
     KeplerGlLayers
   );
@@ -616,8 +671,10 @@ test('layerUtils -> findDefaultLayer:GeojsonLayer.wkt', t => {
     strokeColor: strokeColor2
   });
 
+  const dataContainer = createDataContainer(rows, {fields});
+
   const geojsonLayers = findDefaultLayer(
-    {fields, id: dataId, label, fieldPairs: [], allData: rows},
+    {fields, id: dataId, label, fieldPairs: [], dataContainer},
     KeplerGlLayers
   );
 
@@ -628,6 +685,8 @@ test('layerUtils -> findDefaultLayer:GeojsonLayer.wkt', t => {
 test('layerUtils -> findDefaultLayer:GeojsonWithStyle', t => {
   const {fields, rows} = processGeojson(geoJsonWithStyle);
 
+  const dataContainer = createDataContainer(rows, {fields});
+
   const geojsonLayers = findDefaultLayer(
     {
       fields,
@@ -635,7 +694,7 @@ test('layerUtils -> findDefaultLayer:GeojsonWithStyle', t => {
       dataId: 'taro',
       label: 'chubby prince',
       fieldPairs: [],
-      allData: rows
+      dataContainer
     },
     KeplerGlLayers
   );
@@ -648,25 +707,25 @@ test('layerUtils -> findDefaultLayer:IconLayer', t => {
   const inputFields = [
     {
       name: 'begintrip_lat',
-      tableFieldIndex: 1
+      fieldIdx: 0
     },
     {
       name: 'begintrip_lng',
-      tableFieldIndex: 2
+      fieldIdx: 1
     },
     {
       name: 'dropoff_lat',
-      tableFieldIndex: 3
+      fieldIdx: 2
     },
     {
       name: 'dropoff_lng',
-      tableFieldIndex: 4
+      fieldIdx: 3
     }
   ];
   const fieldPairs = findPointFieldPairs(inputFields);
 
-  const eventIcon = [{name: 'event_icon', tableFieldIndex: 5}];
-  const nameIcon = [{name: 'name.icon', tableFieldIndex: 5}];
+  const eventIcon = [{name: 'event_icon', fieldIdx: 4}];
+  const nameIcon = [{name: 'name.icon', fieldIdx: 4}];
 
   t.equal(
     findDefaultLayer(
@@ -797,5 +856,65 @@ test('layerUtils -> findDefaultLayer: TripLayer.1 -> ts as string', t => {
     {enabled: true, domain: [1535799600000, 1535799780000]},
     'should set correct animation domain'
   );
+  t.end();
+});
+
+test('layerUtils -> getLayerHoverProp', t => {
+  const visState = cloneDeep(StateWFiles).visState;
+  const layer = visState.layers[0];
+  const layerData = visState.layerData[0];
+  const layersToRender = {
+    [layer.id]: layer
+  };
+
+  const obj = layerData.data[0];
+
+  const mockHoverInfo = {
+    object: obj,
+    picked: true,
+    layer: {
+      props: {
+        idx: 0
+      }
+    }
+  };
+  const mockHoverInfoNotHovered = {
+    picked: false,
+    object: null
+  };
+  const args = {
+    interactionConfig: visState.interactionConfig,
+    hoverInfo: mockHoverInfo,
+    layers: visState.layers,
+    layersToRender,
+    datasets: visState.datasets
+  };
+
+  const expectedDataset = visState.datasets[layer.config.dataId];
+  const expected = {
+    data: expectedDataset.dataContainer.row(obj.index),
+    fields: expectedDataset.fields,
+    fieldsToShow: visState.interactionConfig.tooltip.config.fieldsToShow[layer.config.dataId],
+    layer
+  };
+
+  t.deepEqual(getLayerHoverProp(args), expected, 'should get correct layerHoverProp');
+
+  args.hoverInfo = mockHoverInfoNotHovered;
+  t.deepEqual(getLayerHoverProp(args), null, 'should get correct layerHoverProp');
+
+  visState.interactionConfig.tooltip.enabled = false;
+  args.hoverInfo = mockHoverInfo;
+
+  t.deepEqual(getLayerHoverProp(args), null, 'should get correct layerHoverProp');
+
+  t.end();
+});
+
+test('layerUtils -> getLayerOrderFromLayers', t => {
+  const visState = cloneDeep(StateWFiles).visState;
+  const layerOrder = getLayerOrderFromLayers(visState.layers);
+
+  t.deepEqual(layerOrder, ['point-0', 'geojson-1'], 'Should generate layerOrder correctly');
   t.end();
 });

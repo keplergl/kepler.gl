@@ -1,22 +1,5 @@
-// Copyright (c) 2020 Uber Technologies, Inc.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
 
 import {extent} from 'd3-array';
 
@@ -209,58 +192,74 @@ export const fields = [
   {
     type: 'geojson',
     name: '_geojson',
+    id: '_geojson',
+    displayName: '_geojson',
     format: '',
-    tableFieldIndex: 1,
-    analyzerType: 'GEOMETRY'
+    fieldIdx: 0,
+    analyzerType: 'GEOMETRY',
+    valueAccessor: values => values[0]
   },
   {
     type: 'integer',
     name: 'OBJECTID',
+    id: 'OBJECTID',
+    displayName: 'OBJECTID',
     format: '',
-    tableFieldIndex: 2,
-    analyzerType: 'INT'
+    fieldIdx: 1,
+    analyzerType: 'INT',
+    valueAccessor: values => values[1]
   },
   {
     type: 'integer',
     name: 'ZIP_CODE',
+    id: 'ZIP_CODE',
+    displayName: 'ZIP_CODE',
     format: '',
-    tableFieldIndex: 3,
-    analyzerType: 'INT'
+    fieldIdx: 2,
+    analyzerType: 'INT',
+    valueAccessor: values => values[2]
   },
   {
     type: 'integer',
     name: 'ID',
+    id: 'ID',
+    displayName: 'ID',
     format: '',
-    tableFieldIndex: 4,
-    analyzerType: 'INT'
+    fieldIdx: 3,
+    analyzerType: 'INT',
+    valueAccessor: values => values[3]
   },
   {
     type: 'integer',
     name: 'TRIPS',
+    id: 'TRIPS',
+    displayName: 'TRIPS',
     format: '',
-    tableFieldIndex: 5,
-    analyzerType: 'INT'
+    fieldIdx: 4,
+    analyzerType: 'INT',
+    valueAccessor: values => values[4]
   },
   {
     type: 'string',
     name: 'RATE',
+    id: 'RATE',
+    displayName: 'RATE',
     format: '',
-    tableFieldIndex: 6,
-    analyzerType: 'STRING'
+    fieldIdx: 5,
+    analyzerType: 'STRING',
+    valueAccessor: values => values[5]
   },
   {
-    type: 'geojson',
+    type: 'object',
     name: 'OBJ',
+    id: 'OBJ',
+    displayName: 'OBJ',
     format: '',
-    tableFieldIndex: 7,
-    analyzerType: 'OBJECT'
+    fieldIdx: 6,
+    analyzerType: 'OBJECT',
+    valueAccessor: values => values[6]
   }
 ];
-
-export const datasetFields = fields.map(f => ({
-  ...f,
-  id: f.name
-}));
 
 export const rows = [
   [feature0Parsed, 1, 94107, 94107, 11, 'a', {id: 1}],
@@ -271,19 +270,7 @@ export const rows = [
 ];
 
 // add index to properties
-export const datasetAllData = rows.map((row, index) =>
-  row.map((cell, i) =>
-    i === 0
-      ? {
-          ...cell,
-          properties: {
-            ...cell.properties,
-            index
-          }
-        }
-      : cell
-  )
-);
+export const datasetAllData = rows;
 
 export const geoJsonTripHistogram = [
   {count: 1, x0: 4, x1: 4.5},
@@ -414,16 +401,19 @@ export const geoJsonTripFilterProps = {
   type: 'range',
   typeOptions: ['range'],
   value: [4, 20],
-  gpu: true
+  gpu: true,
+  view: 'side'
 };
 
 export const mergedTripFilter = {
   ...geoJsonTripFilterProps,
+  animationWindow: 'free',
   dataId: [geoJsonDataId],
   freeze: true,
   id: 'TRIPS-3',
+  enabled: true,
   fixedDomain: false,
-  enlarged: false,
+  view: 'side',
   isAnimating: false,
   speed: 1,
   name: ['TRIPS'],
@@ -440,17 +430,20 @@ export const geoJsonRateFilterProps = {
   fieldType: 'string',
   type: 'multiSelect',
   value: [],
-  gpu: false
+  gpu: false,
+  view: 'side'
 };
 
 export const mergedRateFilter = {
   ...geoJsonRateFilterProps,
+  animationWindow: 'free',
   name: ['RATE'],
   dataId: [geoJsonDataId],
   freeze: true,
   id: 'RATE-1',
+  enabled: true,
   fixedDomain: false,
-  enlarged: false,
+  view: 'side',
   isAnimating: false,
   speed: 1,
   fieldIdx: [5],
@@ -537,45 +530,63 @@ export const geoJsonWithStyle = {
 export const geoStyleFields = [
   {
     name: '_geojson',
+    id: '_geojson',
+    displayName: '_geojson',
     format: '',
-    tableFieldIndex: 1,
+    fieldIdx: 0,
     type: 'geojson',
-    analyzerType: 'GEOMETRY'
+    analyzerType: 'GEOMETRY',
+    valueAccessor: values => values[0]
   },
   {
     name: 'fillColor',
+    id: 'fillColor',
+    displayName: 'fillColor',
     format: '',
-    tableFieldIndex: 2,
-    type: 'geojson',
-    analyzerType: 'ARRAY'
+    fieldIdx: 1,
+    type: 'array',
+    analyzerType: 'ARRAY',
+    valueAccessor: values => values[1]
   },
   {
     name: 'lineColor',
+    id: 'lineColor',
+    displayName: 'lineColor',
     format: '',
-    tableFieldIndex: 3,
-    type: 'geojson',
-    analyzerType: 'ARRAY'
+    fieldIdx: 2,
+    type: 'array',
+    analyzerType: 'ARRAY',
+    valueAccessor: values => values[2]
   },
   {
     name: 'lineWidth',
+    id: 'lineWidth',
+    displayName: 'lineWidth',
     format: '',
-    tableFieldIndex: 4,
+    fieldIdx: 3,
     type: 'integer',
-    analyzerType: 'INT'
+    analyzerType: 'INT',
+    valueAccessor: values => values[3]
   },
   {
     name: 'elevation',
+    id: 'elevation',
+    displayName: 'elevation',
     format: '',
-    tableFieldIndex: 5,
+    fieldIdx: 4,
     type: 'integer',
-    analyzerType: 'INT'
+    analyzerType: 'INT',
+    valueAccessor: values => values[4]
   },
   {
     name: 'radius',
+    id: 'radius',
+    displayName: 'radius',
     format: '',
-    tableFieldIndex: 6,
+    fieldIdx: 5,
     type: 'integer',
-    analyzerType: 'INT'
+    analyzerType: 'INT',
+    valueAccessor: values => values[5]
   }
 ];
 

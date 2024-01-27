@@ -1,56 +1,45 @@
-// Copyright (c) 2020 Uber Technologies, Inc.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
 
-/* eslint-disable max-statements */ import React from 'react';
+/* eslint-disable max-statements, enzyme-deprecation/no-mount */
+import React from 'react';
 import test from 'tape';
 import {mount} from 'enzyme';
 import sinon from 'sinon';
 import cloneDeep from 'lodash.clonedeep';
 
-import ColorSelector, {
-  ColorSelectorInput,
-  ColorBlock
-} from 'components/side-panel/layer-panel/color-selector';
 import {
-  LayerColorSelector,
-  LayerColorRangeSelector,
-  ArcLayerColorSelector,
+  appInjector,
+  ColorSelectorFactory,
+  ColorSelectorInput,
+  ColorBlock,
+  LayerColorSelectorFactory,
+  LayerColorRangeSelectorFactory,
+  ArcLayerColorSelectorFactory,
   getLayerConfiguratorProps,
-  getVisConfiguratorProps
-} from 'components/side-panel/layer-panel/layer-configurator';
-import SingleColorPalette from 'components/side-panel/layer-panel/single-color-palette';
-import ColorRangeSelector, {
+  getVisConfiguratorProps,
+  SingleColorPalette,
+  ColorRangeSelector,
   PaletteConfig,
   ColorPaletteGroup,
-  ALL_TYPES
-} from 'components/side-panel/layer-panel/color-range-selector';
-import ColorPalette from 'components/side-panel/layer-panel/color-palette';
-import CustomPalette from 'components/side-panel/layer-panel/custom-palette';
-import CustomPicker from 'components/side-panel/layer-panel/custom-picker';
-import {Button} from 'components/common/styled-components';
+  ALL_TYPES,
+  ColorPalette,
+  CustomPalette,
+  CustomPicker,
+  Button,
+  Portaled
+} from '@kepler.gl/components';
 
-import {COLOR_RANGES} from 'constants/color-ranges';
+import {COLOR_RANGES} from '@kepler.gl/constants';
 
 import {StateWFilesFiltersLayerColor, StateWTrips} from 'test/helpers/mock-state';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
-import {hexToRgb} from 'utils/color-utils';
+import {hexToRgb} from '@kepler.gl/utils';
+
+const ColorSelector = appInjector.get(ColorSelectorFactory);
+const LayerColorSelector = appInjector.get(LayerColorSelectorFactory);
+const LayerColorRangeSelector = appInjector.get(LayerColorRangeSelectorFactory);
+const ArcLayerColorSelector = appInjector.get(ArcLayerColorSelectorFactory);
 
 test('Components -> ColorSelector.render', t => {
   t.doesNotThrow(() => {
@@ -186,7 +175,6 @@ test('Components -> ArcLayerColorSelector.render -> render single color', t => {
   const initialState = StateWTrips.visState;
   const {layers} = initialState;
   const arcLayer = layers.find(l => l.type === 'arc');
-
   const updateLayerConfig = sinon.spy();
   const updateLayerVisConfig = sinon.spy();
   const updateLayerColorUI = sinon.spy();
@@ -783,6 +771,59 @@ test('Components -> LayerColorRangeSelector.render -> ColorSelector -> ColorRang
 
   const picker = cp.find(CustomPicker);
   t.equal(picker.length, 1, 'should render 1 CustomPicker');
+
+  // SecurityError (e.g. cross-origin error) should be handled in Portaled component
+  t.doesNotThrow(() => {
+    picker.simulateError({name: 'SecurityError', message: '', stack: []});
+    t.equal(wrapper.find(Portaled).length, 1);
+  }, 'Should not fail with SecurityError when close CustomPicker');
+
+  t.end();
+});
+
+test('Components -> ColorSelector.opacity', t => {
+  const setColor = sinon.spy();
+
+  const colorSelectorProps = {
+    colorSets: [
+      {
+        selectedColor: [128, 64, 32, 100],
+        setColor: setColor
+      }
+    ],
+    useOpacity: true
+  };
+
+  let wrapper;
+  t.doesNotThrow(() => {
+    wrapper = mountWithTheme(
+      <IntlWrapper>
+        <ColorSelector {...colorSelectorProps} />
+      </IntlWrapper>
+    );
+  }, 'Mount should not fail');
+
+  // show palette
+  wrapper
+    .find('.color-selector__selector')
+    .at(0)
+    .invoke('onMouseDown')({preventDefault() {}, stopPropagation() {}});
+
+  // select color
+  wrapper
+    .find('.single-color-palette__block')
+    .at(100)
+    .simulate('click');
+  t.ok(setColor.calledOnce, 'should call setColor once');
+  t.ok(setColor.calledWith([228, 155, 0, 100]), 'setColor called with correct color and opacity');
+
+  // change opacity via slider
+  wrapper
+    .find('RangeSlider')
+    .at(0)
+    .invoke('onChange')([0.5, 0.5]);
+  t.ok(setColor.calledTwice, 'should call setColor twice');
+  t.ok(setColor.calledWith([128, 64, 32, 128]), 'setColor called with correct color and opacity');
 
   t.end();
 });

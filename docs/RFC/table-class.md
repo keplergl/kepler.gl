@@ -10,7 +10,7 @@ export type KeplerDataset = {
 
   // fields and data
   fields: KeplerField[];
-  allData: any[][];
+  dataContainer: DataContainer;
 
   allIndexes: number[];
   filteredIndex: number[];
@@ -47,7 +47,7 @@ export type KeplerField = {
   id: string;
   name: string;
   format: string;
-  tableFieldIndex: numberstring;
+  fieldIdx: number;
   type: string;
 
   // meta data, storing domain and mappedValues
@@ -68,7 +68,7 @@ Missing features
 
 1. `initalize`
 
-to replace utils/dataset-utils `createNewDataEntry` This table method takes a `ProtoTable` and return a `Table` to be saved in kepler state.
+to replace utils/dataset-utils `createNewDataEntry` This table method takes a `ProtoTable` and returns a `Table` to be saved in kepler state.
 
 ```js
 table.initalize(protoTable);

@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
     "target": "es2020",
-    "allowJs": true,
-    "checkJs": true,
+    "allowJs": false,
+    "checkJs": false,
     "jsx": "react",
     "noEmit": true,
     "module": "esnext",
@@ -14,30 +14,26 @@
     "outDir": "build/dist",
     "sourceMap": true,
     "strictNullChecks": true,
-    "suppressImplicitAnyIndexErrors": true,
+    "suppressImplicitAnyIndexErrors": false,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "skipLibCheck": true,
     "strict": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "baseUrl": "./src"
+    "baseUrl": ".",
+    "paths": {
+      // Map all modules to their source
+      "@kepler.gl/*": ["src/*/src"]
+    }
   },
-  "include": [
-    "src/actions",
-    "src/cloud-providers",
-    "src/processors",
-    "src/reducers",
-    "src/schemas",
-    "src/utils",
+  "include": ["src"],
 
-    // TODO: add types
-    // "src/components",
-    // "src/constants",
-    // "src/deckgl-layers",
-    // "src/layers"
-    // "src/localization",
-    // "src/middleware",
-    // "src/tasks"
+  "exclude": [
+    "src/deckgl-layers/cluster-layer",
+
+    // build files
+    "src/**/dist/**",
+    "node_modules"
   ]
 }

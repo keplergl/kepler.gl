@@ -1,0 +1,80 @@
+{
+  "name": "@kepler.gl/utils",
+  "author": "Shan He <shan@uber.com>",
+  "version": "3.0.0",
+  "description": "kepler.gl constants used by kepler.gl components, actions and reducers",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "keywords": [
+    "babel",
+    "es6",
+    "react",
+    "webgl",
+    "visualization",
+    "deck.gl"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/keplergl/kepler.gl.git"
+  },
+  "scripts": {
+    "build": "rm -fr dist && babel src --out-dir dist --source-maps inline --extensions '.ts,.tsx,.js,.jsx' --ignore '**/*.d.ts'",
+    "build:umd": "NODE_OPTIONS=--openssl-legacy-provider webpack --config ./webpack/umd.js --progress --env.prod",
+    "build:types": "tsc --project ./tsconfig.production.json",
+    "prepublish": "babel-node ../../scripts/license-header/bin --license ../../FILE-HEADER && yarn build && yarn build:types",
+    "stab": "mkdir -p dist && touch dist/index.js"
+  },
+  "files": [
+    "dist",
+    "umd"
+  ],
+  "dependencies": {
+    "apache-arrow": "^13.0.0",
+    "@kepler.gl/constants": "3.0.0",
+    "@kepler.gl/types": "3.0.0",
+    "@luma.gl/constants": "^8.5.20",
+    "@luma.gl/core": "^8.5.20",
+    "@mapbox/geo-viewport": "^0.4.1",
+    "@turf/boolean-within": "^6.0.1",
+    "@turf/helpers": "^6.1.4",
+    "@types/d3-array": "^2.0.0",
+    "@types/keymirror": "^0.1.1",
+    "@types/lodash.clonedeep": "^4.5.7",
+    "@types/lodash.get": "^4.4.6",
+    "@types/lodash.isequal": "^4.5.5",
+    "@types/lodash.memoize": "^4.1.7",
+    "@types/lodash.throttle": "^4.1.7",
+    "d3-array": "^2.8.0",
+    "d3-format": "^2.0.0",
+    "decimal.js": "^10.2.0",
+    "global": "^4.3.0",
+    "h3-js": "^3.1.0",
+    "keymirror": "^0.1.1",
+    "lodash.clonedeep": "^4.0.1",
+    "lodash.get": "^4.4.2",
+    "lodash.isequal": "^4.5.0",
+    "lodash.memoize": "^4.1.2",
+    "lodash.throttle": "^4.1.1",
+    "mini-svg-data-uri": "^1.0.3",
+    "moment-timezone": "^0.5.35",
+    "react": "^18.2.0",
+    "resize-observer-polyfill": "^1.5.1",
+    "type-analyzer": "0.4.0"
+  },
+  "nyc": {
+    "sourceMap": false,
+    "instrument": false
+  },
+  "engines": {
+    "node": ">=18.18.2"
+  },
+  "maintainers": [
+    "Shan He <heshan0131@gmail.com>",
+    "Giuseppe Macri <gmacri@uber.com>"
+  ],
+  "volta": {
+    "node": "18.18.2",
+    "yarn": "1.22.17"
+  }
+}

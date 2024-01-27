@@ -1,48 +1,30 @@
-// Copyright (c) 2020 Uber Technologies, Inc.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
 
 import test from 'tape';
+
 import {
   getOrdinalDomain,
   getQuantileDomain,
   getLinearDomain,
-  getLogDomain
-} from 'utils/data-scale-utils';
+  getLogDomain,
+  createDataContainer
+} from '@kepler.gl/utils';
 
 function numberSort(a, b) {
   return a - b;
 }
 
 test('DataScaleUtils -> getOrdinalDomain', t => {
-  const data = ['a', 'a', 'b', undefined, null, 0];
-  function valueAccessor(d) {
-    return d.value;
+  const data = [['a'], ['a'], ['b'], [undefined], [null], [0], null];
+
+  function valueAccessor(d, dc) {
+    return dc.valueAt(d.index, 0);
   }
 
-  const values = [{value: 'a'}, {value: 'b'}, {value: 'b'}];
-
-  t.deepEqual(getOrdinalDomain(data), [0, 'a', 'b'], 'should get correct ordinal domain');
-
   t.deepEqual(
-    getOrdinalDomain(values, valueAccessor),
-    ['a', 'b'],
+    getOrdinalDomain(createDataContainer(data), valueAccessor),
+    [0, 'a', 'b'],
     'should get correct ordinal domain'
   );
 

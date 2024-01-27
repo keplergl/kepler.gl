@@ -1,6 +1,7 @@
 node_modules/
 */**/node_modules/
 coverage/
+*-coverage/
 .nyc_output/
 dist/
 build/
@@ -23,3 +24,13 @@ package-lock.json
 /index.html
 
 npm-debug.log
+.history/
+.yarn
+
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions

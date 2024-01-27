@@ -43,20 +43,21 @@ An instance of the provider is added to array of cloud providers in the file `sr
 import {Provider} from 'kepler.gl/cloud-providers';
 
 class MyProvider extends Provider {
-  constructor() {
-    this.name = 'foo';
-    this.displayName = 'My Provider';
-  }
-  // ... other required methods below
+    constructor() {
+        this.name = 'foo';
+        this.displayName = 'My Provider';
+    }
+
+    // ... other required methods below
 }
 
 const myProvider = new MyProvider();
 const App = () =>
-  <KeplerGl
-    mapboxApiAccessToken={AUTH_TOKENS.MAPBOX_TOKEN}
-    id="map"
-    cloudProviders={[myProvider]}
-  />
+    <KeplerGl
+        mapboxApiAccessToken={CLOUD_PROVIDERS_CONFIGURATION.MAPBOX_TOKEN}
+        id="map"
+        cloudProviders={[myProvider]}
+    />
 ```
 
 

@@ -1,31 +1,14 @@
-// Copyright (c) 2020 Uber Technologies, Inc.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
 
 import React, {Component} from 'react';
 import {connect} from 'react-redux';
-import {addDataToMap, wrapTo} from 'kepler.gl/actions';
+import {addDataToMap, wrapTo} from '@kepler.gl/actions';
 import AutoSizer from 'react-virtualized/dist/commonjs/AutoSizer';
 import styled from 'styled-components';
-import {theme} from 'kepler.gl/styles';
+import {theme} from '@kepler.gl/styles';
 
-import sampleData from './data/sample-data';
+import sampleData, {config} from './data/sample-data';
 
 const MAPBOX_TOKEN = process.env.MapboxAccessToken; // eslint-disable-line
 
@@ -34,13 +17,15 @@ import {
   PanelHeaderFactory,
   PanelToggleFactory,
   CustomPanelsFactory,
+  MapPopoverFactory,
   injectComponents
-} from 'kepler.gl/components';
+} from '@kepler.gl/components';
 
 import CustomPanelHeaderFactory from './components/panel-header';
 import CustomSidebarFactory from './components/side-bar';
 import CustomPanelToggleFactory from './components/panel-toggle';
 import CustomSidePanelFactory from './components/custom-panel';
+import CustomMapPopoverFactory from './components/custom-map-popover';
 
 const StyledMapConfigDisplay = styled.div`
   position: absolute;
@@ -61,12 +46,13 @@ const KeplerGl = injectComponents([
   [SidebarFactory, CustomSidebarFactory],
   [PanelHeaderFactory, CustomPanelHeaderFactory],
   [PanelToggleFactory, CustomPanelToggleFactory],
-  [CustomPanelsFactory, CustomSidePanelFactory]
+  [CustomPanelsFactory, CustomSidePanelFactory],
+  [MapPopoverFactory, CustomMapPopoverFactory]
 ]);
 
 class App extends Component {
   componentDidMount() {
-    this.props.dispatch(wrapTo('map1', addDataToMap({datasets: sampleData})));
+    this.props.dispatch(wrapTo('map1', addDataToMap({datasets: sampleData, config})));
   }
 
   render() {

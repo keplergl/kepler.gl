@@ -1,24 +1,7 @@
-// Copyright (c) 2020 Uber Technologies, Inc.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
 
-import {cdnUrl} from './utils';
+import {cdnUrl, fsqCdnUrl} from './utils';
 
 export const SECTIONS = [
   {
@@ -41,11 +24,26 @@ export const SECTIONS = [
     icon: cdnUrl('icons/features.png')
   },
   {
+    id: 'studio',
+    title: 'Take The Next Step',
+    description: `Built on top of kepler.gl’s framework, Foursquare Studio is a free,
+powerful geospatial analytics and visualization tool, with new features and updates released every few weeks.`,
+    icon: fsqCdnUrl('fsqlogo.png'),
+    isDark: true
+  },
+  {
     id: 'examples',
     title: 'See What People Created',
     description: 'See what others have been creating with Kepler.gl.',
     icon: cdnUrl('icons/examples.png'),
     background: cdnUrl('examples/section-background.png')
+  },
+  {
+    id: 'ecosystems',
+    title: 'Ecosystem',
+    description: 'A collection of kepler.gl plugins built for common data analytics tools',
+    icon: fsqCdnUrl('ecosystem.png'),
+    isDark: true
   },
   {
     id: 'tutorials',
@@ -170,6 +168,29 @@ export const FEATURES = [
     description:
       'Built on React & Redux, Kepler.gl can be embedded inside your own mapping applications.',
     image: cdnUrl('features/embeddable.svg')
+  }
+];
+
+export const ECOSYSTEM = [
+  {
+    title: 'Jupyter',
+    description:
+      'Built with Deck.gl, Kepler.gl utilizes WebGL to render large datasets quickly and efficiently.',
+    image: fsqCdnUrl('ecosystem-jupyter.png'),
+    githubUrl: 'https://github.com/keplergl/kepler.gl/tree/master/bindings/kepler.gl-jupyter'
+  },
+  {
+    title: 'Tableau',
+    description:
+      'You can easily drag and drop a dataset, add filters, apply scales, and do aggregation on the fly.',
+    image: fsqCdnUrl('ecosystem-tableau.png'),
+    githubUrl: 'https://github.com/keplergl/kepler.gl-tableau'
+  },
+  {
+    title: 'Visual Studio Code',
+    description: 'Geo Data Analytics tool for VS Code with Kepler.gl',
+    image: fsqCdnUrl('ecosystem-vscode.png'),
+    githubUrl: 'https://github.com/RandomFractals/geo-data-viewer'
   }
 ];
 

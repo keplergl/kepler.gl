@@ -1,28 +1,42 @@
-// Copyright (c) 2020 Uber Technologies, Inc.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
 
 const config = {
   version: 'v1',
   config: {
     visState: {
-      filters: [],
+      filters: [
+        {
+          dataId: ['bart-stops-geo-2'],
+          id: '2ua7g6t8',
+          name: ['exits'],
+          type: 'range',
+          value: [6121, 13547],
+          plotType: {
+            type: 'histogram'
+          },
+          animationWindow: 'free',
+          yAxis: null,
+          view: 'side',
+          speed: 1,
+          enabled: true
+        },
+        {
+          dataId: ['sf-zip-geo'],
+          id: 'kt1fkkbrb',
+          name: ['ZIP_CODE'],
+          type: 'range',
+          value: [94103, 94133],
+          plotType: {
+            type: 'histogram'
+          },
+          animationWindow: 'free',
+          yAxis: null,
+          view: 'side',
+          speed: 1,
+          enabled: true
+        }
+      ],
       layers: [
         {
           id: 'ze2p6id',
@@ -163,7 +177,7 @@ const config = {
       interactionConfig: {
         tooltip: {
           fieldsToShow: {
-            'bart-stops-geo': ['name', 'code', 'address', 'entries', 'exits'],
+            'bart-stops-geo': ['name'],
             'sf-zip-geo': ['OBJECTID', 'ZIP_CODE', 'ID', 'name', 'STREETNAME']
           },
           enabled: true

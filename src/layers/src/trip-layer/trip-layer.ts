@@ -1,0 +1,344 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
+import memoize from 'lodash.memoize';
+import uniq from 'lodash.uniq';
+import Layer, {LayerBaseConfig, LayerColumn} from '../base-layer';
+import {TripsLayer as DeckGLTripsLayer} from '@deck.gl/geo-layers';
+
+import {GEOJSON_FIELDS, ColorRange} from '@kepler.gl/constants';
+import TripLayerIcon from './trip-layer-icon';
+
+import {
+  getGeojsonDataMaps,
+  getGeojsonBounds,
+  getGeojsonFeatureTypes,
+  GeojsonDataMaps
+} from '../geojson-layer/geojson-utils';
+
+import {isTripGeoJsonField, parseTripGeoJsonTimestamp} from './trip-utils';
+import TripInfoModalFactory from './trip-info-modal';
+import {Merge, VisConfigColorRange, VisConfigNumber, VisConfigRange} from '@kepler.gl/types';
+import {default as KeplerTable} from '@kepler.gl/table';
+import {DataContainerInterface} from '@kepler.gl/utils';
+
+export type TripLayerVisConfigSettings = {
+  opacity: VisConfigNumber;
+  thickness: VisConfigNumber;
+  colorRange: VisConfigColorRange;
+  trailLength: VisConfigNumber;
+  sizeRange: VisConfigRange;
+};
+
+export type TripLayerColumnsConfig = {
+  geojson: LayerColumn;
+};
+
+export type TripLayerVisConfig = {
+  opacity: number;
+  thickness: number;
+  colorRange: ColorRange;
+  trailLength: number;
+  sizeRange: [number, number];
+};
+
+export type TripLayerConfig = Merge<
+  LayerBaseConfig,
+  {columns: TripLayerColumnsConfig; visConfig: TripLayerVisConfig}
+>;
+
+export type TripLayerMeta = {
+  getFeature: any;
+};
+
+const zoomFactorValue = 8;
+
+export const defaultThickness = 0.5;
+export const defaultLineWidth = 1;
+
+export const tripVisConfigs: {
+  opacity: 'opacity';
+  thickness: VisConfigNumber;
+  colorRange: 'colorRange';
+  trailLength: 'trailLength';
+  sizeRange: 'strokeWidthRange';
+} = {
+  opacity: 'opacity',
+  thickness: {
+    type: 'number',
+    defaultValue: defaultThickness,
+    label: 'Stroke Width',
+    isRanged: false,
+    range: [0, 100],
+    step: 0.1,
+    group: 'stroke',
+    property: 'thickness'
+  },
+  colorRange: 'colorRange',
+  trailLength: 'trailLength',
+  sizeRange: 'strokeWidthRange'
+};
+
+export const geoJsonRequiredColumns: ['geojson'] = ['geojson'];
+export const featureAccessor = ({geojson}: TripLayerColumnsConfig) => (
+  dc: DataContainerInterface
+) => d => dc.valueAt(d.index, geojson.fieldIdx);
+export const featureResolver = ({geojson}: TripLayerColumnsConfig) => geojson.fieldIdx;
+
+export default class TripLayer extends Layer {
+  declare visConfigSettings: TripLayerVisConfigSettings;
+  declare config: TripLayerConfig;
+  declare meta: TripLayerMeta;
+
+  dataToFeature: GeojsonDataMaps;
+  dataToTimeStamp: {}[];
+  getFeature: (columns: TripLayerColumnsConfig) => (dataContainer: DataContainerInterface) => any;
+  _layerInfoModal: () => JSX.Element;
+
+  constructor(props) {
+    super(props);
+
+    this.dataToFeature = [];
+    this.dataToTimeStamp = [];
+    this.registerVisConfig(tripVisConfigs);
+    this.getFeature = memoize(featureAccessor, featureResolver);
+    this._layerInfoModal = TripInfoModalFactory();
+  }
+
+  static get type(): 'trip' {
+    return 'trip';
+  }
+  get type() {
+    return TripLayer.type;
+  }
+
+  get name(): 'Trip' {
+    return 'Trip';
+  }
+
+  get layerIcon() {
+    return TripLayerIcon;
+  }
+
+  get columnPairs() {
+    return this.defaultPointColumnPairs;
+  }
+
+  get requiredLayerColumns() {
+    return geoJsonRequiredColumns;
+  }
+
+  get visualChannels() {
+    const visualChannels = super.visualChannels;
+
+    return {
+      ...visualChannels,
+      color: {
+        ...visualChannels.color,
+        accessor: 'getColor',
+        nullValue: visualChannels.color.nullValue,
+        getAttributeValue: config => d => d.properties.lineColor || config.color,
+        // used this to get updateTriggers
+        defaultValue: config => config.color
+      },
+      size: {
+        ...visualChannels.size,
+        property: 'stroke',
+        accessor: 'getWidth',
+        condition: config => config.visConfig.stroked,
+        nullValue: 0,
+        getAttributeValue: () => d => d.properties.lineWidth || defaultLineWidth
+      }
+    };
+  }
+
+  get animationDomain() {
+    return this.config.animation.domain;
+  }
+
+  get layerInfoModal() {
+    return {
+      id: 'iconInfo',
+      template: this._layerInfoModal,
+      modalProps: {
+        title: 'modal.tripInfo.title'
+      }
+    };
+  }
+
+  getPositionAccessor(dataContainer: DataContainerInterface) {
+    return this.getFeature(this.config.columns)(dataContainer);
+  }
+
+  static findDefaultLayerProps(
+    {label, fields = [], dataContainer, id}: KeplerTable,
+    foundLayers: any[]
+  ) {
+    const geojsonColumns = fields.filter(f => f.type === 'geojson').map(f => f.name);
+
+    const defaultColumns = {
+      geojson: uniq([...GEOJSON_FIELDS.geojson, ...geojsonColumns])
+    };
+
+    const geoJsonColumns = this.findDefaultColumnField(defaultColumns, fields);
+
+    const tripGeojsonColumns = (geoJsonColumns || []).filter(col =>
+      isTripGeoJsonField(dataContainer, fields[col.geojson.fieldIdx])
+    );
+
+    if (tripGeojsonColumns.length) {
+      return {
+        props: tripGeojsonColumns.map(columns => ({
+          label: (typeof label === 'string' && label.replace(/\.[^/.]+$/, '')) || this.type,
+          columns,
+          isVisible: true
+        })),
+
+        // if a geojson layer is created from this column, delete it
+        foundLayers: foundLayers.filter(
+          prop =>
+            prop.type !== 'geojson' ||
+            prop.dataId !== id ||
+            !tripGeojsonColumns.find(c => prop.columns.geojson.name === c.geojson.name)
+        )
+      };
+    }
+
+    return {props: []};
+  }
+
+  getDefaultLayerConfig(props) {
+    return {
+      ...super.getDefaultLayerConfig(props),
+      animation: {
+        enabled: true,
+        domain: null
+      }
+    };
+  }
+
+  getHoverData(object, dataContainer) {
+    // index for dataContainer is saved to feature.properties
+    return dataContainer.row(object.properties.index);
+  }
+
+  calculateDataAttribute({dataContainer, filteredIndex}, getPosition) {
+    return filteredIndex
+      .map(i => this.dataToFeature[i])
+      .filter(d => d && d.geometry.type === 'LineString');
+  }
+
+  formatLayerData(datasets, oldLayerData) {
+    if (this.config.dataId === null) {
+      return {};
+    }
+    // to-do: parse segment from dataContainer
+    const {dataContainer, gpuFilter} = datasets[this.config.dataId];
+    const {data} = this.updateData(datasets, oldLayerData);
+
+    const customFilterValueAccessor = (dc, f, fieldIndex) => {
+      return dc.valueAt(f.properties.index, fieldIndex);
+    };
+    const indexAccessor = f => f.properties.index;
+
+    const dataAccessor = dc => d => ({index: d.properties.index});
+    const accessors = this.getAttributeAccessors({dataAccessor, dataContainer});
+
+    return {
+      data,
+      getFilterValue: gpuFilter.filterValueAccessor(dataContainer)(
+        indexAccessor,
+        customFilterValueAccessor
+      ),
+      getPath: d => d.geometry.coordinates,
+      getTimestamps: d => this.dataToTimeStamp[d.properties.index],
+      ...accessors
+    };
+  }
+
+  updateAnimationDomain(domain) {
+    this.updateLayerConfig({
+      animation: {
+        ...this.config.animation,
+        domain
+      }
+    });
+  }
+
+  updateLayerMeta(dataContainer) {
+    const getFeature = this.getPositionAccessor(dataContainer);
+    if (getFeature === this.meta.getFeature) {
+      // TODO: revisit this after gpu filtering
+      return;
+    }
+
+    this.dataToFeature = getGeojsonDataMaps(dataContainer, getFeature);
+
+    const {dataToTimeStamp, animationDomain} = parseTripGeoJsonTimestamp(this.dataToFeature);
+
+    this.dataToTimeStamp = dataToTimeStamp;
+    this.updateAnimationDomain(animationDomain);
+
+    // get bounds from features
+    const bounds = getGeojsonBounds(this.dataToFeature);
+
+    // keep a record of what type of geometry the collection has
+    const featureTypes = getGeojsonFeatureTypes(this.dataToFeature);
+
+    this.updateMeta({bounds, featureTypes, getFeature});
+  }
+
+  setInitialLayerConfig({dataContainer}) {
+    if (!dataContainer.numRows()) {
+      return this;
+    }
+    this.updateLayerMeta(dataContainer);
+    return this;
+  }
+
+  renderLayer(opts) {
+    const {data, gpuFilter, mapState, animationConfig} = opts;
+    const {visConfig} = this.config;
+    const zoomFactor = this.getZoomFactor(mapState);
+    const isValidTime =
+      animationConfig &&
+      Array.isArray(animationConfig.domain) &&
+      animationConfig.domain.every(Number.isFinite) &&
+      Number.isFinite(animationConfig.currentTime);
+
+    if (!isValidTime) {
+      return [];
+    }
+
+    const domain0 = animationConfig.domain?.[0];
+
+    const updateTriggers = {
+      ...this.getVisualChannelUpdateTriggers(),
+      getTimestamps: {
+        columns: this.config.columns,
+        domain0
+      },
+      getFilterValue: gpuFilter.filterValueUpdateTriggers
+    };
+    const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
+
+    return [
+      new DeckGLTripsLayer({
+        ...defaultLayerProps,
+        ...data,
+        getTimestamps: d => (data.getTimestamps(d) || []).map(ts => ts - domain0),
+        widthScale: this.config.visConfig.thickness * zoomFactor * zoomFactorValue,
+        capRounded: true,
+        jointRounded: true,
+        wrapLongitude: false,
+        parameters: {
+          depthTest: mapState.dragRotate,
+          depthMask: false
+        },
+        trailLength: visConfig.trailLength * 1000,
+        currentTime: animationConfig.currentTime - domain0,
+        updateTriggers
+      })
+    ];
+  }
+}

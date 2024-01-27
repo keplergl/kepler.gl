@@ -1,24 +1,7 @@
-// Copyright (c) 2020 Uber Technologies, Inc.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
 
-/* eslint-disable max-statements */
+/* eslint-disable max-statements, enzyme-deprecation/no-mount */
 import React from 'react';
 import test from 'tape';
 import {mount} from 'enzyme';
@@ -27,12 +10,14 @@ import configureStore from 'redux-mock-store';
 import {Provider} from 'react-redux';
 import sinon from 'sinon';
 import {console as Console} from 'global/window';
-import rootReducer from 'reducers/root';
-import coreReducer from 'reducers/core';
-import {keplerGlInit} from 'actions/actions';
+import {
+  keplerGlReducer as rootReducer,
+  keplerGlReducerCore as coreReducer
+} from '@kepler.gl/reducers';
+import {keplerGlInit} from '@kepler.gl/actions';
 
-import Container, {ERROR_MSG} from 'components/container';
-import {DEFAULT_MAPBOX_API_URL} from 'constants/default-settings';
+import Container, {ERROR_MSG} from '@kepler.gl/components';
+import {DEFAULT_MAPBOX_API_URL} from '@kepler.gl/constants';
 const initialCoreState = coreReducer(undefined, keplerGlInit());
 const initialState = {
   keplerGl: {}
@@ -80,7 +65,8 @@ test('Components -> Container -> Mount with mint:true', t => {
       mint: true,
       mapboxApiAccessToken: undefined,
       mapboxApiUrl: undefined,
-      mapStylesReplaceDefault: undefined
+      mapStylesReplaceDefault: undefined,
+      initialUiState: undefined
     }
   };
 
@@ -130,7 +116,8 @@ test('Components -> Container -> Mount with mint:true', t => {
       mint: true,
       mapboxApiAccessToken: 'pk.smoothie',
       mapboxApiUrl: undefined,
-      mapStylesReplaceDefault: undefined
+      mapStylesReplaceDefault: undefined,
+      initialUiState: undefined
     }
   };
 
@@ -206,7 +193,8 @@ test('Components -> Container -> Mount with mint:false', t => {
       mint: false,
       mapboxApiAccessToken: 'hello.world',
       mapboxApiUrl: undefined,
-      mapStylesReplaceDefault: undefined
+      mapStylesReplaceDefault: undefined,
+      initialUiState: undefined
     }
   };
 
@@ -273,7 +261,8 @@ test('Components -> Container -> Mount then rename', t => {
       mint: true,
       mapboxApiAccessToken: 'hello.world',
       mapboxApiUrl: undefined,
-      mapStylesReplaceDefault: undefined
+      mapStylesReplaceDefault: undefined,
+      initialUiState: undefined
     }
   };
 

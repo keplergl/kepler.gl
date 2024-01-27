@@ -1,22 +1,5 @@
-// Copyright (c) 2020 Uber Technologies, Inc.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
 
 // NOTE: To use this example standalone (e.g. outside of deck.gl repo)
 // delete the local development overrides at the bottom of this file
@@ -25,6 +8,9 @@
 const resolve = require('path').resolve;
 const join = require('path').join;
 const webpack = require('webpack');
+
+const WEBPACK_ENV_VARIABLES = require('../../webpack/shared-webpack-configuration')
+  .WEBPACK_ENV_VARIABLES;
 
 const CONFIG = {
   // bundle app.js and everything it imports, recursively.
@@ -37,21 +23,25 @@ const CONFIG = {
     publicPath: '/'
   },
 
+  resolve: {
+    extensions: ['.tsx', '.ts', '.js']
+  },
+
   devtool: 'source-map',
 
   module: {
     rules: [
       {
-        test: /\.js$/,
+        test: /\.(js|ts|tsx)$/,
         loader: 'babel-loader',
         include: [join(__dirname, 'src')],
         exclude: [/node_modules/]
       },
+      // fix for arrow-related errors
       {
-        // The example has some JSON data
-        test: /\.json$/,
-        loader: 'json-loader',
-        exclude: [/node_modules/]
+        test: /\.mjs$/,
+        include: /node_modules/,
+        type: 'javascript/auto'
       }
     ]
   },
@@ -66,17 +56,10 @@ const CONFIG = {
   },
 
   // Optional: Enables reading mapbox and dropbox client token from environment variable
-  plugins: [
-    new webpack.EnvironmentPlugin([
-      'MapboxAccessToken',
-      'DropboxClientId',
-      'MapboxExportToken',
-      'CartoClientId'
-    ])
-  ]
+  plugins: [new webpack.EnvironmentPlugin(WEBPACK_ENV_VARIABLES)]
 };
 
-// This line enables bundling against src in this repo rather than installed deck.gl module
+// This line enables bundling against src in this repo rather than installed kepler.gl module
 module.exports = env => {
   return env ? require('../webpack.config.local')(CONFIG, __dirname)(env) : CONFIG;
 };

@@ -1,27 +1,11 @@
-// Copyright (c) 2020 Uber Technologies, Inc.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
 
 import test from 'tape';
 import sinon from 'sinon';
 import {console as Console} from 'global/window';
 import {DATA_TYPES} from 'type-analyzer';
+import cloneDeep from 'lodash.clonedeep';
 
 import testData, {
   dataWithNulls,
@@ -40,21 +24,27 @@ import {
   fields as geojsonFields,
   rows as geojsonRows
 } from 'test/fixtures/geojson';
+import testCsvObjectData, {objCsvFields, objCsvRows} from 'test/fixtures/test-csv-object';
+import {
+  parseCsvRowsByFieldType,
+  processCsvData,
+  processGeojson,
+  processRowObject
+} from '@kepler.gl/processors';
 
 import {
   ACCEPTED_ANALYZER_TYPES,
   analyzerTypeToFieldType,
-  formatCsv,
-  getFieldsFromData,
   getSampleForTypeAnalyze,
-  parseCsvRowsByFieldType,
-  processCsvData,
-  processGeojson,
-  processRowObject,
-  validateInputData
-} from 'processors/data-processor';
+  validateInputData,
+  getFieldsFromData,
+  createDataContainer
+} from '@kepler.gl/utils';
 
-import {ALL_FIELD_TYPES} from 'constants/default-settings';
+import {formatCsv} from '@kepler.gl/reducers';
+
+import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
+import {cmpFields} from '../../helpers/comparison-utils';
 
 test('Processor -> getFieldsFromData', t => {
   const data = [
@@ -63,36 +53,58 @@ test('Processor -> getFieldsFromData', t => {
       trip_epoch: '1472688000000',
       time_str: 'January 1st 2017 11:00pm ',
       value: '4',
+      novalue: null,
       surge: '1.2',
       isTrip: 'true',
-      zeroOnes: '0'
+      zeroOnes: '0',
+      geojson: '{"type":"Point","coordinates":[-122.4194155,37.7749295]}',
+      wkt: 'POINT (-122.4194155 37.7749295)',
+      wkb: '0101000020E6100000E17A14AE47D25EC0F6F3F6F2F7F94040'
     },
     {
       time: '2016-09-17 00:30:08',
       trip_epoch: '1472860800000',
       time_str: 'January 1st 2017 11:01pm ',
       value: '3',
+      novalue: null,
       surge: null,
       isTrip: 'false',
-      zeroOnes: '1'
+      zeroOnes: '1',
+      geojson:
+        '{"type":"Polygon","coordinates":[[[-122.4194155,37.7749295],[-122.4194155,37.7749295],[-122.4194155,37.7749295]]]}',
+      wkt: 'POLYGON ((-122.4194155 37.7749295, -122.4194155 37.7749295, -122.4194155 37.7749295))',
+      wkb:
+        '0103000020E61000000100000005000000E17A14AE47D25EC0F6F3F6F2F7F940400000000E17A14AE47D25EC0F6F3F6F2F7F940400000000E17A14AE47D25EC0F6F3F6F2F7F94040'
     },
     {
       time: null,
       trip_epoch: null,
       time_str: 'January 1st, 2017 11:02pm ',
       value: '2',
+      novalue: null,
       surge: '1.3',
       isTrip: null,
-      zeroOnes: '1'
+      zeroOnes: '1',
+      geojson:
+        '{"type":"LineString","coordinates":[[-122.4194155,37.7749295],[-122.4194155,37.7749295]]}',
+      wkt: 'LINESTRING (-122.4194155 37.7749295, -122.4194155 37.7749295)',
+      wkb:
+        '0102000020E610000002000000E17A14AE47D25EC0F6F3F6F2F7F94040E17A14AE47D25EC0F6F3F6F2F7F94040'
     },
     {
       time: null,
       trip_epoch: null,
       time_str: 'January 1st, 2017 11:02pm ',
       value: '0',
+      novalue: null,
       surge: '1.4',
       isTrip: null,
-      zeroOnes: '0'
+      zeroOnes: '0',
+      geojson:
+        '{"type":"MultiPoint","coordinates":[[-122.4194155,37.7749295],[-122.4194155,37.7749295]]}',
+      wkt: 'MULTIPOINT (-122.4194155 37.7749295, -122.4194155 37.7749295)',
+      wkb:
+        '0104000020E6100000020000000101000000E17A14AE47D25EC0F6F3F6F2F7F94040101000000E17A14AE47D25EC0F6F3F6F2F7F94040'
     }
   ];
 
@@ -103,9 +115,13 @@ test('Processor -> getFieldsFromData', t => {
     'timestamp',
     'timestamp',
     'integer',
+    'string',
     'real',
     'boolean',
-    'integer'
+    'integer',
+    'geojson',
+    'geojson',
+    'geojson'
   ];
 
   fields.forEach((f, i) =>
@@ -118,16 +134,13 @@ test('Processor -> processCsvData', t => {
   t.throws(() => processCsvData(''), 'should throw if csv is empty');
 
   // load sample dataset csv as text
-  const {fields, rows} = processCsvData(testData);
+  const {fields, rows} = processCsvData(cloneDeep(testData));
 
   t.equal(rows.length, testAllData.length, `should return ${testAllData.length} rows`);
 
-  t.deepEqual(fields, testFields, 'should parse fields correctly');
-  t.deepEqual(rows, testAllData, 'should parse rows correctly');
+  cmpFields(t, testFields, fields, 'should parse rows correctly');
 
-  fields.forEach((f, i) => {
-    t.deepEqual(f, testFields[i], `should parse correct field ${testFields[i].name}`);
-  });
+  t.deepEqual(rows, testAllData, 'should parse rows correctly');
 
   rows.forEach((r, i) => {
     t.deepEqual(r, testAllData[i], `should parse row ${i} correctly`);
@@ -136,7 +149,7 @@ test('Processor -> processCsvData', t => {
   t.end();
 });
 
-test('Processor -> processCsvData: duplicated field name', t => {
+test('Processor -> processCsvData -> duplicated field name', t => {
   const testData1 = `column1,column1,column1,column2\na,b,c,d\nc,d,e,f`;
 
   // load sample dataset csv as text
@@ -144,10 +157,46 @@ test('Processor -> processCsvData: duplicated field name', t => {
 
   const expectedResult = {
     fields: [
-      {name: 'column1', format: '', tableFieldIndex: 1, type: 'string', analyzerType: 'STRING'},
-      {name: 'column1-0', format: '', tableFieldIndex: 2, type: 'string', analyzerType: 'STRING'},
-      {name: 'column1-1', format: '', tableFieldIndex: 3, type: 'string', analyzerType: 'STRING'},
-      {name: 'column2', format: '', tableFieldIndex: 4, type: 'string', analyzerType: 'STRING'}
+      {
+        name: 'column1',
+        id: 'column1',
+        format: '',
+        fieldIdx: 0,
+        displayName: 'column1',
+        type: 'string',
+        analyzerType: 'STRING',
+        valueAccessor: values => values[0]
+      },
+      {
+        name: 'column1-0',
+        id: 'column1-0',
+        format: '',
+        fieldIdx: 1,
+        displayName: 'column1-0',
+        type: 'string',
+        analyzerType: 'STRING',
+        valueAccessor: values => values[1]
+      },
+      {
+        name: 'column1-1',
+        id: 'column1-1',
+        format: '',
+        fieldIdx: 2,
+        displayName: 'column1-1',
+        type: 'string',
+        analyzerType: 'STRING',
+        valueAccessor: values => values[2]
+      },
+      {
+        name: 'column2',
+        id: 'column2',
+        format: '',
+        fieldIdx: 3,
+        displayName: 'column2',
+        type: 'string',
+        analyzerType: 'STRING',
+        valueAccessor: values => values[3]
+      }
     ],
     rows: [
       ['a', 'b', 'c', 'd'],
@@ -155,18 +204,19 @@ test('Processor -> processCsvData: duplicated field name', t => {
     ]
   };
 
-  t.deepEqual(result, expectedResult, `should return ${testAllData.length} rows`);
+  cmpFields(t, result.fields, expectedResult.fields, 'should have created non duplicated fields');
+  t.deepEqual(
+    result.rows,
+    expectedResult.rows,
+    'should have computed rows with non duplicated fields'
+  );
 
   t.end();
 });
 
 test('Processor -> processCsvData -> with nulls', t => {
   const {fields, rows} = processCsvData(dataWithNulls);
-  t.deepEqual(fields, testFields, 'should parse fields correctly');
-
-  fields.forEach((f, i) => {
-    t.deepEqual(f, testFields[i], `should parse correct field ${testFields[i].name}`);
-  });
+  cmpFields(t, fields, testFields, 'should parse fields correctly');
 
   t.deepEqual(rows, parsedDataWithNulls, 'should parse rows correctly');
   rows.forEach((r, i) => {
@@ -175,10 +225,11 @@ test('Processor -> processCsvData -> with nulls', t => {
   t.end();
 });
 
-test('Processor -> processCsv.wkt', t => {
+test('Processor -> processCsvData -> wkt', t => {
   const {fields, rows} = processCsvData(wktCsv);
 
-  t.deepEqual(fields, wktCsvFields, 'should find geometry fields as type:geojson');
+  cmpFields(t, fields, wktCsvFields, 'should find geometry fields as type:geojson');
+
   rows.forEach((r, i) => {
     t.deepEqual(r, wktCsvRows[i], `should process wkt rows[${i}] correctly`);
   });
@@ -187,13 +238,21 @@ test('Processor -> processCsv.wkt', t => {
   t.end();
 });
 
-test('Processor => processGeojson', t => {
-  const {fields, rows} = processGeojson(geojsonData);
+test('Processor -> processCsvData -> w/ array and object', t => {
+  const {fields, rows} = processCsvData(testCsvObjectData);
+  cmpFields(t, fields, objCsvFields, 'should find csv object fields as type:object');
 
-  t.equal(fields.length, geojsonFields.length, 'should have same field length');
-  fields.forEach((f, i) => {
-    t.deepEqual(f, geojsonFields[i], 'should format geojson fields');
+  t.equal(rows.length, objCsvRows.length, 'should have same row length');
+  rows.forEach((r, i) => {
+    t.deepEqual(r, objCsvRows[i], 'should format correct csv object rows');
   });
+  t.end();
+});
+
+test('Processor => processGeojson', t => {
+  const {fields, rows} = processGeojson(cloneDeep(geojsonData));
+
+  cmpFields(t, fields, geojsonFields, 'should have same field length');
 
   t.equal(rows.length, geojsonRows.length, 'should have same row length');
   rows.forEach((r, i) => {
@@ -203,9 +262,9 @@ test('Processor => processGeojson', t => {
 });
 
 test('Processor => processGeojson: with style property', t => {
-  const {fields, rows} = processGeojson(geoJsonWithStyle);
+  const {fields, rows} = processGeojson(cloneDeep(geoJsonWithStyle));
 
-  t.deepEqual(fields, geoStyleFields, 'should preserve objects in geojson properties');
+  cmpFields(t, fields, geoStyleFields, 'should preserve objects in geojson properties');
   t.deepEqual(rows, geoStyleRows, 'should preserve objects in geojson properties');
   t.end();
 });
@@ -242,10 +301,46 @@ test('Processor => processGeojson: parse rows', t => {
   };
 
   const expectedFields = [
-    {name: '_geojson', format: '', tableFieldIndex: 1, type: 'geojson', analyzerType: 'GEOMETRY'},
-    {name: 'TRIPS', format: '', tableFieldIndex: 2, type: 'integer', analyzerType: 'INT'},
-    {name: 'RATE', format: '', tableFieldIndex: 3, type: 'string', analyzerType: 'STRING'},
-    {name: 'TIME', format: 'x', tableFieldIndex: 4, type: 'timestamp', analyzerType: 'TIME'}
+    {
+      name: '_geojson',
+      id: '_geojson',
+      displayName: '_geojson',
+      format: '',
+      fieldIdx: 0,
+      type: 'geojson',
+      analyzerType: 'GEOMETRY',
+      valueAccessor: values => values[0]
+    },
+    {
+      name: 'TRIPS',
+      id: 'TRIPS',
+      displayName: 'TRIPS',
+      format: '',
+      fieldIdx: 1,
+      type: 'integer',
+      analyzerType: 'INT',
+      valueAccessor: values => values[1]
+    },
+    {
+      name: 'RATE',
+      id: 'RATE',
+      displayName: 'RATE',
+      format: '',
+      fieldIdx: 2,
+      type: 'string',
+      analyzerType: 'STRING',
+      valueAccessor: values => values[2]
+    },
+    {
+      name: 'TIME',
+      id: 'TIME',
+      displayName: 'TIME',
+      format: 'x',
+      fieldIdx: 3,
+      type: 'timestamp',
+      analyzerType: 'TIME',
+      valueAccessor: values => values[3]
+    }
   ];
 
   const expectedRows = [
@@ -283,11 +378,13 @@ test('Processor => processGeojson: parse rows', t => {
   const result = processGeojson(testGeoData);
 
   t.deepEqual(Object.keys(result), ['fields', 'rows'], 'should contain fields and rows');
-  t.deepEqual(
+  cmpFields(
+    t,
     result.fields,
     expectedFields,
     'should parse correct fields when geojson input contain string'
   );
+
   t.deepEqual(
     result.rows,
     expectedRows,
@@ -352,7 +449,7 @@ test('Processor -> parseCsvRowsByFieldType -> boolean', t => {
 test('Processor -> getSampleForTypeAnalyze', t => {
   const fields = ['string', 'int', 'bool', 'time'];
 
-  const allData = [
+  const rows = [
     ['a', 0, true, null],
     ['b', 2, false, null],
     ['c', 3, true, '2017-01-01'],
@@ -364,7 +461,7 @@ test('Processor -> getSampleForTypeAnalyze', t => {
     ['h', undefined, true, '2017-01-04']
   ];
 
-  const sample = getSampleForTypeAnalyze({fields, allData, sampleCount: 5});
+  const sample = getSampleForTypeAnalyze({fields, rows, sampleCount: 5});
   const expected = [
     {
       string: 'a',
@@ -481,6 +578,7 @@ test('Processor -> validateInputData', t => {
 
 test('Processor -> processRowObject', t => {
   t.equal(processRowObject({}), null, 'Should return null when rawData is empty');
+
   const cases = [
     {
       input: [
@@ -497,31 +595,43 @@ test('Processor -> processRowObject', t => {
         fields: [
           {
             name: 'a',
+            id: 'a',
+            displayName: 'a',
             type: 'integer',
             format: '',
-            tableFieldIndex: 1,
-            analyzerType: 'INT'
+            fieldIdx: 0,
+            analyzerType: 'INT',
+            valueAccessor: values => values[0]
           },
           {
             name: 'b',
+            id: 'b',
+            displayName: 'b',
             type: 'string',
             format: '',
-            tableFieldIndex: 2,
-            analyzerType: 'STRING'
+            fieldIdx: 1,
+            analyzerType: 'STRING',
+            valueAccessor: values => values[1]
           },
           {
             name: 'c',
+            id: 'c',
+            displayName: 'c',
             type: 'boolean',
             format: '',
-            tableFieldIndex: 3,
-            analyzerType: 'BOOLEAN'
+            fieldIdx: 2,
+            analyzerType: 'BOOLEAN',
+            valueAccessor: values => values[2]
           },
           {
             name: 'd',
+            id: 'd',
+            displayName: 'd',
             type: 'real',
             format: '',
-            tableFieldIndex: 4,
-            analyzerType: 'FLOAT'
+            fieldIdx: 3,
+            analyzerType: 'FLOAT',
+            valueAccessor: values => values[3]
           }
         ]
       },
@@ -530,7 +640,9 @@ test('Processor -> processRowObject', t => {
   ];
 
   cases.forEach(({input, expected, msg}) => {
-    t.deepEqual(processRowObject(input), expected, msg);
+    const {fields, rows} = processRowObject(input);
+    cmpFields(t, fields, expected.fields, `${msg} fields`);
+    t.deepEqual(rows, expected.rows, msg);
   });
   t.end();
 });
@@ -583,8 +695,9 @@ test('Processor -> formatCsv', t => {
 
   cases.forEach(({input, expected, msg, processor}) => {
     const {fields, rows} = processor(input);
+    const dataContainer = createDataContainer(rows, {fields});
 
-    t.deepEqual(formatCsv(rows, fields), expected, msg);
+    t.deepEqual(formatCsv(dataContainer, fields), expected, msg);
   });
   t.end();
 });

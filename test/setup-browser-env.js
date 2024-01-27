@@ -1,26 +1,10 @@
-// Copyright (c) 2020 Uber Technologies, Inc.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
 
 /* setup.js */
 import {JSDOM, VirtualConsole} from 'jsdom';
 import global from 'global';
+const {gl} = require('@deck.gl/test-utils');
 
 const virtualConsole = new VirtualConsole();
 virtualConsole.sendTo(console);
@@ -48,6 +32,24 @@ Object.defineProperty(window, 'prompt', {
   writable: true
 });
 
+// TODO: This should be the right wat to mock matchMedia but matchMedia was still undefined so I moved to another way to mock it
+
+// Object.defineProperty(window, 'matchMedia', {
+//   value: () => ({
+//       matches: false,
+//       addListener: function() {},
+//       removeListener: function() {}
+//   }),
+//   writable: true
+// });
+window.matchMedia = () => {
+  return {
+    matches: false,
+    addListener: () => {},
+    removeListener: () => {}
+  };
+};
+
 function mockClipboardData() {
   let data = null;
   const obj = {};
@@ -66,6 +68,17 @@ function mockClipboardData() {
 Object.defineProperty(window, 'clipboardData', {
   value: mockClipboardData(),
   writable: true
+});
+
+// These do not seem to be present under jsdom v16, even though the documentation suggests that should be the case
+[
+  'addEventListener',
+  'removeEventListener',
+  'dispatchEvent',
+  'requestAnimationFrame',
+  'cancelAnimationFrame'
+].forEach(prop => {
+  window[prop] = () => {};
 });
 
 const nop = () => {};
@@ -105,10 +118,19 @@ function mockCanvas(globalWindow) {
   globalWindow.HTMLCanvasElement.prototype.toDataURL = () => '';
 }
 
+window.URL.createObjectURL = () => {};
+
 global.window = window;
 global.document = window.document;
 global.HTMLElement = window.HTMLElement;
+global.Element = window.Element;
 global.fetch = window.fetch;
+
+// Create a dummy canvas for the headless gl context
+const canvas = global.document.createElement('canvas');
+canvas.width = gl.drawingBufferWidth;
+canvas.height = gl.drawingBufferHeight;
+gl.canvas = canvas;
 
 Object.keys(global.window).forEach(property => {
   if (typeof global[property] === 'undefined') {
@@ -120,4 +142,24 @@ global.navigator = {
   userAgent: 'node.js',
   platform: 'mac',
   appName: 'kepler.gl'
+};
+
+global.IntersectionObserver = class IntersectionObserver {
+  constructor() {}
+
+  disconnect() {
+    return null;
+  }
+
+  observe() {
+    return null;
+  }
+
+  takeRecords() {
+    return null;
+  }
+
+  unobserve() {
+    return null;
+  }
 };

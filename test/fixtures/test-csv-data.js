@@ -1,25 +1,8 @@
-// Copyright (c) 2020 Uber Technologies, Inc.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
 
-/* eslint-disable max-lens */
-const data = `gps_data.utc_timestamp,gps_data.lat,gps_data.lng,gps_data.types,epoch,has_result,id,time,begintrip_ts_utc,begintrip_ts_local,date
+/* eslint-disable max-len */
+const data = `gps_data.utc_timestamp,gps_data.lat,gps_data.lng,gps_data.types,epoch,has_result,uid,time,begintrip_ts_utc,begintrip_ts_local,date
 2016-09-17 00:09:55,29.9900937,31.2590542,driver_analytics_0,1472688000000,False,1,2016-09-23T00:00:00.000Z,2016-10-01 09:41:39+00:00,2016-10-01 09:41:39+00:00,2016-09-23
 2016-09-17 00:10:56,29.9927699,31.2461142,driver_analytics,1472688000000,False,2,2016-09-23T00:00:00.000Z,2016-10-01 09:46:37+00:00,2016-10-01 16:46:37+00:00,2016-09-23
 2016-09-17 00:11:56,29.9907261,31.2312742,driver_analytics,1472688000000,False,3,2016-09-23T00:00:00.000Z,,,2016-09-23
@@ -155,6 +138,7 @@ export const config = {
               percentile: [0, 100],
               elevationPercentile: [0, 100],
               elevationScale: 5,
+              enableElevationZoomFactor: true,
               colorAggregation: 'count',
               sizeAggregation: 'count',
               enable3d: false
@@ -254,7 +238,7 @@ export const sampleConfig = {
   config
 };
 
-export const dataWithNulls = `gps_data.utc_timestamp,gps_data.lat,gps_data.lng,gps_data.types,epoch,has_result,id,time,begintrip_ts_utc,begintrip_ts_local,date
+export const dataWithNulls = `gps_data.utc_timestamp,gps_data.lat,gps_data.lng,gps_data.types,epoch,has_result,uid,time,begintrip_ts_utc,begintrip_ts_local,date
 Null,29.9900937,31.2590542,driver_analytics_0,1472688000000,False,1,2016-09-23T00:00:00.000Z,2016-10-01 09:41:39+00:00,2016-10-01 09:41:39+00:00,2016-09-23
 2016-09-17 00:10:56,29.9927699,31.2461142,null,1472688000000,False,null,2016-09-23T00:00:00.000Z,2016-10-01 09:46:37+00:00,2016-10-01 16:46:37+00:00,2016-09-23
 2016-09-17 00:11:56,29.9907261,NaN,driver_analytics,1472688000000,False,3,2016-09-23T00:00:00.000Z,,,2016-09-23
@@ -451,94 +435,158 @@ export const wktCsv = `a_zip,simplified_shape_v2,simplified_shape,m_rate,c_zip_t
 7023,"{""type"":""LineString"",""coordinates"":[[-74.387589,40.632238],[-74.387589,40.632238]]}","LINESTRING (-74.387589 40.632238, -74.387589 40.632238)",7.6,C_Medium_High,29.2
 `;
 
-// csv data
+// output of processCsvData
 export const testFields = [
   {
     type: 'timestamp',
+    fieldIdx: 0,
     name: 'gps_data.utc_timestamp',
+    id: 'gps_data.utc_timestamp',
+    displayName: 'gps_data.utc_timestamp',
     format: 'YYYY-M-D H:m:s',
-    tableFieldIndex: 1,
-    analyzerType: 'DATETIME'
+    analyzerType: 'DATETIME',
+    valueAccessor: dc => d => {
+      return dc.valueAt(d.index, 0);
+    }
   },
   {
     type: 'real',
+    fieldIdx: 1,
     name: 'gps_data.lat',
+    id: 'gps_data.lat',
+    displayName: 'gps_data.lat',
     format: '',
-    tableFieldIndex: 2,
-    analyzerType: 'FLOAT'
+    analyzerType: 'FLOAT',
+    valueAccessor: dc => d => {
+      return dc.valueAt(d.index, 1);
+    }
   },
   {
     type: 'real',
+    fieldIdx: 2,
     name: 'gps_data.lng',
+    id: 'gps_data.lng',
+    displayName: 'gps_data.lng',
     format: '',
-    tableFieldIndex: 3,
-    analyzerType: 'FLOAT'
+    analyzerType: 'FLOAT',
+    valueAccessor: dc => d => {
+      return dc.valueAt(d.index, 2);
+    }
   },
   {
     type: 'string',
+    fieldIdx: 3,
     name: 'gps_data.types',
+    id: 'gps_data.types',
+    displayName: 'gps_data.types',
     format: '',
-    tableFieldIndex: 4,
-    analyzerType: 'STRING'
+    analyzerType: 'STRING',
+    valueAccessor: dc => d => {
+      return dc.valueAt(d.index, 3);
+    }
   },
   {
     type: 'timestamp',
+    fieldIdx: 4,
     name: 'epoch',
+    id: 'epoch',
+    displayName: 'epoch',
     format: 'X',
-    tableFieldIndex: 5,
-    analyzerType: 'TIME'
+    analyzerType: 'TIME',
+    valueAccessor: dc => d => {
+      return dc.valueAt(d.index, 4);
+    }
   },
   {
     type: 'boolean',
+    fieldIdx: 5,
     name: 'has_result',
+    id: 'has_result',
+    displayName: 'has_result',
     format: '',
-    tableFieldIndex: 6,
-    analyzerType: 'BOOLEAN'
+    analyzerType: 'BOOLEAN',
+    valueAccessor: dc => d => {
+      return dc.valueAt(d.index, 5);
+    }
   },
   {
     type: 'integer',
-    name: 'id',
+    fieldIdx: 6,
+    name: 'uid',
+    id: 'uid',
+    displayName: 'uid',
     format: '',
-    tableFieldIndex: 7,
-    analyzerType: 'INT'
+    analyzerType: 'INT',
+    valueAccessor: dc => d => {
+      return dc.valueAt(d.index, 6);
+    }
   },
   {
     type: 'timestamp',
+    fieldIdx: 7,
     name: 'time',
+    id: 'time',
+    displayName: 'time',
     format: 'YYYY-M-DTHH:mm:ss.SSSS',
-    tableFieldIndex: 8,
-    analyzerType: 'DATETIME'
+    analyzerType: 'DATETIME',
+    valueAccessor: dc => d => {
+      return dc.valueAt(d.index, 7);
+    }
   },
   {
     type: 'timestamp',
+    fieldIdx: 8,
     name: 'begintrip_ts_utc',
+    id: 'begintrip_ts_utc',
+    displayName: 'begintrip_ts_utc',
     format: 'YYYY-M-D HH:mm:ssZZ',
-    tableFieldIndex: 9,
-    analyzerType: 'DATETIME'
+    analyzerType: 'DATETIME',
+    valueAccessor: dc => d => {
+      return dc.valueAt(d.index, 8);
+    }
   },
   {
     type: 'timestamp',
+    fieldIdx: 9,
     name: 'begintrip_ts_local',
+    id: 'begintrip_ts_local',
+    displayName: 'begintrip_ts_local',
     format: 'YYYY-M-D HH:mm:ssZZ',
-    tableFieldIndex: 10,
-    analyzerType: 'DATETIME'
+    analyzerType: 'DATETIME',
+    valueAccessor: dc => d => {
+      return dc.valueAt(d.index, 9);
+    }
   },
   {
     type: 'date',
+    fieldIdx: 10,
     name: 'date',
+    id: 'date',
+    displayName: 'date',
     format: 'YYYY-M-D',
-    tableFieldIndex: 11,
-    analyzerType: 'DATE'
+    analyzerType: 'DATE',
+    valueAccessor: dc => d => {
+      return dc.valueAt(d.index, 10);
+    }
   }
 ];
 
-// add id to fields
-// TODO: cleaning up after filter refractor
-export const datasetCsvFields = testFields.map(f => ({
-  ...f,
-  id: f.name
-}));
-
+export const testCsvFieldPairs = [
+  {
+    defaultName: 'gps_data',
+    pair: {
+      lat: {
+        value: 'gps_data.lat',
+        fieldIdx: 1
+      },
+      lng: {
+        value: 'gps_data.lng',
+        fieldIdx: 2
+      }
+    },
+    suffix: ['lat', 'lng']
+  }
+];
 export const timeMappedValue = [
   1474588800000,
   1474588800000,
@@ -782,21 +830,24 @@ export const timeFilterProps = {
   enlargedHistogram: enlargedTimeHistogram,
   fieldType: 'timestamp',
   type: 'timeRange',
-  enlarged: true,
+  view: 'enlarged',
   fixedDomain: true,
   gpu: true,
-  value: [1474588800000, 1474617600000]
+  value: [1474588800000, 1474617600000],
+  defaultTimeFormat: 'L LTS'
 };
 
 export const mergedTimeFilter = {
   ...timeFilterProps,
+  animationWindow: 'free',
   dataId: [dataId],
   freeze: true,
   id: 'time-0',
+  enabled: true,
   fixedDomain: true,
-  enlarged: true,
+  view: 'enlarged',
   isAnimating: false,
-  speed: 1,
+  speed: 4,
   name: ['time'],
   type: 'timeRange',
   fieldIdx: [7],
@@ -815,20 +866,23 @@ export const epochFilterProps = {
   enlargedHistogram: 'dont test me',
   fieldType: 'timestamp',
   type: 'timeRange',
-  enlarged: true,
+  view: 'enlarged',
   fixedDomain: true,
   gpu: true,
-  value: [1472688000000, 1472774400000]
+  value: [1472688000000, 1472774400000],
+  defaultTimeFormat: 'L LTS'
 };
 
 // value set mockStateWithFilters 1472700000000, 1472760000000
 export const mergedEpochFilter = {
   ...epochFilterProps,
+  animationWindow: 'free',
   dataId: [dataId],
   freeze: true,
   id: 'epoch-1',
+  enabled: true,
   fixedDomain: true,
-  enlarged: true,
+  view: 'side',
   isAnimating: false,
   speed: 1,
   name: ['epoch'],
@@ -847,16 +901,19 @@ export const dateFilterProps = {
   fieldType: 'date',
   type: 'multiSelect',
   gpu: false,
-  value: []
+  value: [],
+  view: 'side'
 };
 
 export const mergedDateFilter = {
   ...dateFilterProps,
+  animationWindow: 'free',
   dataId: [dataId],
   freeze: true,
   id: 'date-2',
+  enabled: true,
   fixedDomain: false,
-  enlarged: false,
+  view: 'side',
   isAnimating: false,
   speed: 1,
   name: ['date'],
@@ -872,44 +929,74 @@ export const wktCsvFields = [
   {
     type: 'integer',
     name: 'a_zip',
+    id: 'a_zip',
+    displayName: 'a_zip',
     format: '',
-    tableFieldIndex: 1,
-    analyzerType: 'INT'
+    fieldIdx: 0,
+    analyzerType: 'INT',
+    valueAccessor: dc => d => {
+      return dc.valueAt(d.index, 0);
+    }
   },
   {
     type: 'geojson',
     name: 'simplified_shape_v2',
+    id: 'simplified_shape_v2',
+    displayName: 'simplified_shape_v2',
     format: '',
-    tableFieldIndex: 2,
-    analyzerType: 'PAIR_GEOMETRY_FROM_STRING'
+    fieldIdx: 1,
+    analyzerType: 'PAIR_GEOMETRY_FROM_STRING',
+    valueAccessor: dc => d => {
+      return dc.valueAt(d.index, 1);
+    }
   },
   {
     type: 'geojson',
     name: 'simplified_shape',
+    id: 'simplified_shape',
+    displayName: 'simplified_shape',
     format: '',
-    tableFieldIndex: 3,
-    analyzerType: 'GEOMETRY_FROM_STRING'
+    fieldIdx: 2,
+    analyzerType: 'GEOMETRY_FROM_STRING',
+    valueAccessor: dc => d => {
+      return dc.valueAt(d.index, 2);
+    }
   },
   {
     type: 'real',
     name: 'm_rate',
+    id: 'm_rate',
+    displayName: 'm_rate',
     format: '',
-    tableFieldIndex: 4,
-    analyzerType: 'FLOAT'
+    fieldIdx: 3,
+    analyzerType: 'FLOAT',
+    valueAccessor: dc => d => {
+      return dc.valueAt(d.index, 3);
+    }
   },
   {
     type: 'string',
     name: 'c_zip_type',
+    id: 'c_zip_type',
+    displayName: 'c_zip_type',
     format: '',
-    tableFieldIndex: 5,
-    analyzerType: 'STRING'
+    fieldIdx: 4,
+    analyzerType: 'STRING',
+    valueAccessor: dc => d => {
+      return dc.valueAt(d.index, 4);
+    }
   },
   {
     type: 'real',
     name: 'c_number',
+    id: 'c_number',
+    displayName: 'c_number',
     format: '',
-    tableFieldIndex: 6,
-    analyzerType: 'FLOAT'
+    fieldIdx: 5,
+    analyzerType: 'FLOAT',
+    valueAccessor: dc => d => {
+      return dc.valueAt(d.index, 5);
+    }
   }
 ];
 
@@ -1394,7 +1481,7 @@ export const updatedLayerV2 = {
     fixedRadius: false
   }
 };
-/* eslint-enable max-lens */
+/* eslint-enable max-len */
 
 export const numericRangesCsv = `smallest,small,negative,medium,large
 0.00000,0,-10,10,0

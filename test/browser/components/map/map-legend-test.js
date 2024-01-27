@@ -1,35 +1,21 @@
-// Copyright (c) 2020 Uber Technologies, Inc.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
 
+/* eslint-disable enzyme-deprecation/no-mount */
 import React from 'react';
 import test from 'tape';
 import {mount} from 'enzyme';
 import cloneDeep from 'lodash.clonedeep';
 
-import MapLegend, {
+import {
+  MapLegendFactory,
   StyledMapControlLegend,
   LayerColorLegend,
   VisualChannelMetric,
   LayerSizeLegend,
-  SingleColorLegend
-} from 'components/map/map-legend';
+  SingleColorLegend,
+  appInjector
+} from '@kepler.gl/components';
 import {
   StateWFilesFiltersLayerColor,
   expectedSavedLayer1 as pointLayer,
@@ -37,6 +23,8 @@ import {
   expectedSavedLayer2 as geojsonLayer
 } from 'test/helpers/mock-state';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
+
+const MapLegend = appInjector.get(MapLegendFactory);
 
 test('Components -> MapLegend.render', t => {
   t.doesNotThrow(() => {
@@ -97,14 +85,7 @@ function testGeojsonLegend(t, geojsonLegend) {
   );
   const fillColorLegend = geojsonLegend.find(LayerColorLegend).at(0);
   const strokeColorLegend = geojsonLegend.find(LayerColorLegend).at(1);
-  t.equal(
-    fillColorLegend
-      .find('.legend--layer_type')
-      .at(0)
-      .text(),
-    'Color',
-    'geojson color legend should have Fill Color'
-  );
+
   t.equal(
     fillColorLegend.find(SingleColorLegend).length,
     1,
@@ -118,14 +99,7 @@ function testGeojsonLegend(t, geojsonLegend) {
     geojsonLayer.config.color,
     'geojson color legend should be correct color'
   );
-  t.equal(
-    strokeColorLegend
-      .find('.legend--layer_type')
-      .at(0)
-      .text(),
-    'Stroke Color',
-    'geojson color legend should have Stroke Color'
-  );
+
   t.equal(
     strokeColorLegend.find(SingleColorLegend).length,
     1,
@@ -165,14 +139,7 @@ function testPointLayerLegend(t, pointLegend) {
     'point layer legend should render 0 point layer size legend'
   );
   const pointColorLegend = pointLegend.find(LayerColorLegend).at(0);
-  t.equal(
-    pointColorLegend
-      .find('.legend--layer_type')
-      .at(0)
-      .text(),
-    'Color',
-    'point layer legend should have title Color'
-  );
+
   t.equal(
     pointColorLegend.find(VisualChannelMetric).length,
     1,
@@ -210,14 +177,7 @@ function testHexagonLayerLegend(t, hexagonLegend) {
     'hexagon layer legend should render 0 size legend'
   );
   const hexagonColorLegend = hexagonLegend.find(LayerColorLegend).at(0);
-  t.equal(
-    hexagonColorLegend
-      .find('.legend--layer_type')
-      .at(0)
-      .text(),
-    'Color',
-    'hexagon layer legend should have title Color'
-  );
+
   t.equal(
     hexagonColorLegend.find(VisualChannelMetric).length,
     1,

@@ -1,22 +1,5 @@
-// Copyright (c) 2020 Uber Technologies, Inc.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
 
 import test from 'tape';
 import {
@@ -29,7 +12,10 @@ import {
 import {StateWFiles, testCsvDataId} from 'test/helpers/mock-state';
 import {gpsPointBounds} from 'test/fixtures/test-csv-data';
 
-import HeatmapLayer, {MAX_ZOOM_LEVEL} from 'layers/heatmap-layer/heatmap-layer';
+import {MAX_ZOOM_LEVEL, KeplerGlLayers} from '@kepler.gl/layers';
+import {copyTableAndUpdate} from '@kepler.gl/table';
+
+const {HeatmapLayer} = KeplerGlLayers;
 
 const columns = {
   lat: 'lat',
@@ -70,7 +56,6 @@ test('#Heatmaplayer -> formatLayerData -> w/ GpuFilter', t => {
     id: 'heatmap-test-1',
     source: `${dataId}-1-2`,
     layout: {visibility: 'visible'},
-    maxzoom: 18,
     filter: ['all', ['>=', 'gpu:utc_timestamp', 39000], ['<=', 'gpu:utc_timestamp', 552000]],
     paint: {
       'heatmap-weight': ['interpolate', ['linear'], ['get', 'id'], 1, 0, 345, 1],
@@ -117,10 +102,7 @@ test('#Heatmaplayer -> formatLayerData -> w/ GpuFilter', t => {
         }
       },
       datasets: {
-        [dataId]: {
-          ...preparedDataset,
-          filteredIndex
-        }
+        [dataId]: copyTableAndUpdate(preparedDataset, {filteredIndex})
       },
       assert: result => {
         const {layerData, layer} = result;
@@ -207,7 +189,6 @@ test('#Heatmaplayer -> formatLayerData -> w/o GpuFilter', t => {
     id: 'heatmap-test-1',
     source: `${testCsvDataId}-1-2`,
     layout: {visibility: 'visible'},
-    maxzoom: 18,
     paint: {
       'heatmap-weight': 1,
       'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 0, 1, MAX_ZOOM_LEVEL, 3],
@@ -274,7 +255,7 @@ test('#Heatmaplayer -> formatLayerData -> w/o GpuFilter', t => {
         // test data
         t.equal(
           layerData.data.features.length,
-          testData.allData.length,
+          testData.dataContainer.numRows(),
           'should have same number of features'
         );
 

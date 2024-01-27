@@ -1,32 +1,18 @@
-// Copyright (c) 2020 Uber Technologies, Inc.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
 
 import test from 'tape';
-import keplerGlReducer from 'reducers';
+import keplerGlReducer from '@kepler.gl/reducers';
 import {
   registerEntry,
   resetMapConfig,
   receiveMapConfig,
   toggleSplitMap,
-  toggleMapControl
-} from 'actions';
+  toggleMapControl,
+  layerTypeChange,
+  addDataToMap,
+  ActionTypes
+} from '@kepler.gl/actions';
 import {createAction, handleActions} from 'redux-actions';
 
 test('keplerGlReducer.initialState', t => {
@@ -161,6 +147,52 @@ test('keplerGlReducer.initialState.2', t => {
   t.end();
 });
 
+test('keplerGlReducer.initialState extrareducers', t => {
+  const INITIAL_STATE = {
+    panels: []
+  };
+
+  const insightReducer = handleActions(
+    {
+      ADD_PANEL_TO_SECTION: state => ({
+        ...state,
+        panels: ['first']
+      })
+    },
+    INITIAL_STATE
+  );
+
+  const addPanelToSectionAction = createAction('ADD_PANEL_TO_SECTION');
+
+  const test1Reducer = keplerGlReducer.initialState(
+    {
+      visState: {
+        layerClasses: []
+      },
+      mapStyle: {
+        styleType: 'light'
+      }
+    },
+    {
+      insightState: insightReducer
+    }
+  );
+
+  const test1ReducerInitialState = test1Reducer(undefined, registerEntry({id: 'test'}));
+
+  t.deepEqual(test1ReducerInitialState.test.insightState.panels, [], 'should have extra state');
+
+  const actionModifiedState = test1Reducer(test1ReducerInitialState, addPanelToSectionAction());
+
+  t.deepEqual(
+    actionModifiedState.test.insightState.panels,
+    ['first'],
+    'should have modified panels'
+  );
+
+  t.end();
+});
+
 test('keplerGlReducer.plugin', t => {
   // custom actions
   const hideAndShowSidePanel = createAction('HIDE_AND_SHOW_SIDE_PANEL');
@@ -187,7 +219,7 @@ test('keplerGlReducer.plugin', t => {
   const testReducer = keplerGlReducer
     // 1. as reducer map
     .plugin({
-      HIDE_AND_SHOW_SIDE_PANEL: (state, action) => ({
+      HIDE_AND_SHOW_SIDE_PANEL: state => ({
         ...state,
         uiState: {
           ...state.uiState,
@@ -199,7 +231,7 @@ test('keplerGlReducer.plugin', t => {
       handleActions(
         {
           // 2. as reducer
-          HIDE_MAP_CONTROLS: (state, action) => ({
+          HIDE_MAP_CONTROLS: state => ({
             ...state,
             uiState: {
               ...state.uiState,
@@ -221,6 +253,92 @@ test('keplerGlReducer.plugin', t => {
   // dispatch action 2
   const updatedState2 = testReducer(testInitialState, hideMapControls());
   t.equal(updatedState2.test3.uiState.mapControls, hiddenMapControl, 'should call hideMapControls');
+
+  t.end();
+});
+
+test('keplerGlReducer.plugin override', t => {
+  // custom actions
+  const mockRawData = {
+    fields: [
+      {
+        name: 'start_point_lat',
+        id: 'start_point_lat',
+        displayName: 'start_point_lat',
+        type: 'real',
+        fieldIdx: 0
+      },
+      {
+        name: 'start_point_lng',
+        id: 'start_point_lng',
+        displayName: 'start_point_lng',
+        type: 'real',
+        fieldIdx: 2
+      },
+      {
+        name: 'end_point_lat',
+        id: 'end_point_lat',
+        displayName: 'end_point_lat',
+        type: 'real',
+        fieldIdx: 3
+      },
+      {
+        name: 'end_point_lng',
+        id: 'end_point_lng',
+        displayName: 'end_point_lng',
+        type: 'real',
+        fieldIdx: 4
+      }
+    ],
+    rows: [
+      [12.25, 37.75, 45.21, 100.12],
+      [null, 35.2, 45.0, 21.3],
+      [12.29, 37.64, 46.21, 99.127],
+      [null, null, 33.1, 29.34]
+    ]
+  };
+
+  const testReducer = keplerGlReducer
+    // 1. as reducer map
+    .plugin(
+      {
+        [ActionTypes.LAYER_TYPE_CHANGE]: (state, action) => {
+          return {
+            ...state,
+            visState: {
+              ...state.visState,
+              // do the default behavior and update layerOrder to empty
+              layerOrder: []
+            }
+          };
+        }
+      },
+      {override: {[ActionTypes.LAYER_TYPE_CHANGE]: true}}
+    );
+
+  let nextState = testReducer(undefined, registerEntry({id: 'test3'}));
+
+  nextState = testReducer(
+    nextState,
+    addDataToMap({
+      datasets: {
+        data: mockRawData,
+        info: {
+          id: 'foo'
+        }
+      }
+    })
+  );
+
+  t.equal(nextState.test3.visState.layers.length, 4, 'Should have 4 layer');
+
+  nextState = testReducer(nextState, layerTypeChange(nextState.test3.visState.layers[0], 'arc'));
+  t.equal(
+    nextState.test3.visState.layers[0].type,
+    'point',
+    'Should have not changed layer type to arc'
+  );
+  t.deepEqual(nextState.test3.visState.layerOrder, [], 'Should have changed layerOrder to empty');
 
   t.end();
 });
@@ -250,6 +368,8 @@ test('keplerGlReducer - splitMap and mapControl interaction', t => {
   state = keplerGlReducer(state, toggleSplitMap());
 
   t.equal(state.test.mapState.isSplit, true, 'Should have split map');
+
+  t.equal(state.test.uiState.mapControls.mapLegend.active, true, 'Should open map legend');
 
   state = keplerGlReducer(state, toggleMapControl('mapDraw', 1));
 

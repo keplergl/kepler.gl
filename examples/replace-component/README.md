@@ -1,4 +1,4 @@
-# Open modal
+# Replacing components
 
 Example showing how to replace kepler.gl default components using `injectComponents` method.
 
