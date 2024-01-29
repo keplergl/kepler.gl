@@ -5,7 +5,7 @@ import React, {useMemo} from 'react';
 
 import DatasetLayerSectionFactory from './dataset-layer-section';
 import {Layer, LayerClassesType} from '@kepler.gl/layers';
-import {UIStateActions, VisStateActions, ActionHandler} from '@kepler.gl/actions';
+import {UIStateActions, VisStateActions, ActionHandler, MapStateActions} from '@kepler.gl/actions';
 import {KeplerTable, Datasets} from '@kepler.gl/table';
 
 type DatasetLayerGroupProps = {
@@ -19,6 +19,7 @@ type DatasetLayerGroupProps = {
   updateTableColor: ActionHandler<typeof VisStateActions.updateTableColor>;
   uiStateActions: typeof UIStateActions;
   visStateActions: typeof VisStateActions;
+  mapStateActions: typeof MapStateActions;
 };
 
 DatasetLayerGroupFactory.deps = [DatasetLayerSectionFactory];
@@ -37,7 +38,8 @@ function DatasetLayerGroupFactory(
       layerOrder,
       layerClasses,
       uiStateActions,
-      visStateActions
+      visStateActions,
+      mapStateActions
     } = props;
 
     const datasetLayerSectionData = useMemo(() => {
@@ -69,6 +71,7 @@ function DatasetLayerGroupFactory(
             layerClasses={layerClasses}
             uiStateActions={uiStateActions}
             visStateActions={visStateActions}
+            mapStateActions={mapStateActions}
           />
         ))}
       </>
