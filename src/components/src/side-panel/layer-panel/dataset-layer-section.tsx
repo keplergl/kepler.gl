@@ -7,7 +7,7 @@ import styled from 'styled-components';
 import SourceDataCatalogFactory from '../common/source-data-catalog';
 import LayerListFactory from './layer-list';
 import {Layer, LayerClassesType} from '@kepler.gl/layers';
-import {UIStateActions, ActionHandler, VisStateActions} from '@kepler.gl/actions';
+import {UIStateActions, ActionHandler, VisStateActions, MapStateActions} from '@kepler.gl/actions';
 import {KeplerTable, Datasets} from '@kepler.gl/table';
 
 type DatasetLayerSectionProps = {
@@ -21,7 +21,8 @@ type DatasetLayerSectionProps = {
   updateTableColor: ActionHandler<typeof VisStateActions.updateTableColor>;
   removeDataset: ActionHandler<typeof UIStateActions.openDeleteModal>;
   uiStateActions: typeof UIStateActions;
-  visStateActions: typeof VisStateActions;
+  visStateActions: typeof VisStateActions;  
+  mapStateActions: typeof MapStateActions;
 };
 
 const DatasetLayerSectionWrapper = styled.div.attrs({
@@ -48,7 +49,8 @@ function DatasetLayerSectionFactory(
       layerOrder,
       layerClasses,
       uiStateActions,
-      visStateActions
+      visStateActions,
+      mapStateActions
     } = props;
 
     const datasetCatalog = useMemo(() => {
@@ -71,6 +73,7 @@ function DatasetLayerSectionFactory(
           layerClasses={layerClasses}
           uiStateActions={uiStateActions}
           visStateActions={visStateActions}
+          mapStateActions={mapStateActions}
           isSortable={false}
         />
       </DatasetLayerSectionWrapper>
