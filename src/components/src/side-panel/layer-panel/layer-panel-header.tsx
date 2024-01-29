@@ -73,7 +73,7 @@ export type LayerPanelHeaderProps = {
     enableConfig: ComponentType<Partial<BaseProps>>;
     resetIsValid: ComponentType<Partial<BaseProps>>;
     duplicate: ComponentType<Partial<BaseProps>>;
-    Crosshairs: ComponentType<Partial<BaseProps>>;
+    crosshairs: ComponentType<Partial<BaseProps>>;
   };
   listeners?: React.ElementType;
 };
