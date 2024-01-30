@@ -46,11 +46,6 @@ export {
 export {getFormatValue} from './format';
 export {exportMapToHTML} from './export-map-html';
 export {
-  DEFAULT_IMAGE_NAME,
-  DEFAULT_HTML_NAME,
-  DEFAULT_JSON_NAME,
-  DEFAULT_DATA_NAME,
-  DEFAULT_EXPORT_JSON_SETTINGS,
   isMSEdge,
   getScaleFromImageSize,
   calculateExportImageSize,
@@ -124,3 +119,10 @@ export {DataRow} from './data-row';
 
 export type {Centroid} from './h3-utils';
 export {getCentroid, idToPolygonGeo, h3IsValid, getHexFields} from './h3-utils';
+
+// Application config
+export {
+  getApplicationConfig,
+  initApplicationConfig,
+} from '../../utils/src/application-config';
+export type {KeplerApplicationConfig} from '../../utils/src/application-config';
