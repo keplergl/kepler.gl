@@ -18,7 +18,7 @@ import {
 
 import {mountWithTheme, IntlWrapper} from 'test/helpers/component-utils';
 
-import {VisStateActions, UIStateActions} from '@kepler.gl/actions';
+import {VisStateActions, UIStateActions, MapStateActions} from '@kepler.gl/actions';
 
 import {StateWMultiH3Layers} from 'test/helpers/mock-state';
 
@@ -52,6 +52,7 @@ const defaultProps = {
   layerPanelListView: 'list',
   uiStateActions: UIStateActions,
   visStateActions: VisStateActions,
+  mapStateActions: MapStateActions,
   layerBlending: 'normal',
   overlayBlending: 'normal'
 };

@@ -7,7 +7,7 @@ import cloneDeep from 'lodash.clonedeep';
 import {fireEvent, screen} from '@testing-library/react';
 import {dataTestIds} from '@kepler.gl/constants';
 import {appInjector, LayerListFactory} from '@kepler.gl/components';
-import {VisStateActions, UIStateActions, addDataToMap, keplerGlInit} from '@kepler.gl/actions';
+import {VisStateActions, UIStateActions,MapStateActions, addDataToMap, keplerGlInit} from '@kepler.gl/actions';
 import {processCsvData} from '@kepler.gl/processors';
 import {keplerGlReducerCore as keplerGlReducer} from '@kepler.gl/reducers';
 
@@ -86,7 +86,8 @@ const defaultProps = {
   layerOrder: StateWMultiH3Layers.visState.layerOrder,
   layers: StateWMultiH3Layers.visState.layers,
   uiStateActions: UIStateActions,
-  visStateActions: VisStateActions
+  visStateActions: VisStateActions,
+  mapStateActions: MapStateActions
 };
 
 // jest.mock('@kepler.gl/actions');
