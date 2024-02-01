@@ -86,7 +86,6 @@ function MapLegendPanelFactory(MapControlTooltip, MapControlPanel, MapLegend) {
     logoComponent,
     actionIcons = defaultActionIcons,
     mapState,
-    mapHeight,
     offsetRight,
     onToggleSplitMapViewport,
     onClickControlBtn,
@@ -155,7 +154,7 @@ function MapLegendPanelFactory(MapControlTooltip, MapControlPanel, MapLegend) {
         onToggleSplitMapViewport={onToggleSplitMapViewport}
         isViewportUnsyncAllowed={isViewportUnsyncAllowed}
       >
-        <MapLegend layers={layers} mapHeight={mapHeight} />
+        <MapLegend layers={layers} mapState={mapState} />
       </MapControlPanel>
     );
 
