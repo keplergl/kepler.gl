@@ -19,7 +19,8 @@ const defaultProps = {
   onToggleVisibility: nop,
   onUpdateLayerLabel: nop,
   onToggleEnableConfig: nop,
-  onRemoveLayer: nop
+  onRemoveLayer: nop,
+  onZoomToLayer: nop,
 };
 
 test('Components -> LayerPanelHeader.mount -> no prop', t => {

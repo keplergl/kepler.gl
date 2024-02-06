@@ -59,6 +59,7 @@ function DndContextFactory(
         onToggleEnableConfig={nop}
         onDuplicateLayer={nop}
         onRemoveLayer={nop}
+        onZoomToLayer={nop}
         layerType={layer.type}
         allowDuplicate={false}
         isDragNDropEnabled={false}

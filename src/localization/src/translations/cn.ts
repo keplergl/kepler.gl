@@ -175,6 +175,7 @@ export default {
     hide: '隐藏',
     show: '显示',
     removeLayer: '删除图层',
+    zoomToLayer: '缩放☞图层',
     duplicateLayer: '复制图层',
     layerSettings: '图层设置',
     closePanel: '关闭当前面板',

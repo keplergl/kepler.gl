@@ -20,7 +20,7 @@ import {
   appInjector
 } from '@kepler.gl/components';
 
-import {VisStateActions, MapStyleActions, UIStateActions} from '@kepler.gl/actions';
+import {VisStateActions, MapStyleActions, UIStateActions, MapStateActions} from '@kepler.gl/actions';
 
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
 
@@ -58,6 +58,7 @@ const defaultProps = {
   width: 300,
   uiStateActions: UIStateActions,
   visStateActions: VisStateActions,
+  mapStateActions: MapStateActions,
   mapStyleActions: MapStyleActions,
   availableProviders: {}
 };

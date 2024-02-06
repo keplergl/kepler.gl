@@ -7,7 +7,7 @@ import classnames from 'classnames';
 
 import {Layer, LayerClassesType} from '@kepler.gl/layers';
 import {Datasets} from '@kepler.gl/table';
-import {UIStateActions, VisStateActions} from '@kepler.gl/actions';
+import {UIStateActions, VisStateActions, MapStateActions} from '@kepler.gl/actions';
 
 import {useSortable, SortableContext, verticalListSortingStrategy} from '@dnd-kit/sortable';
 import {CSS} from '@dnd-kit/utilities';
@@ -23,6 +23,7 @@ export type LayerListProps = {
   isSortable?: boolean;
   uiStateActions: typeof UIStateActions;
   visStateActions: typeof VisStateActions;
+  mapStateActions: typeof MapStateActions;
 };
 
 export type LayerListFactoryDeps = [typeof LayerPanelFactory];
@@ -117,6 +118,7 @@ function LayerListFactory(LayerPanel: ReturnType<typeof LayerPanelFactory>) {
       layerOrder,
       uiStateActions,
       visStateActions,
+      mapStateActions,
       layerClasses,
       isSortable = true
     } = props;
@@ -159,10 +161,11 @@ function LayerListFactory(LayerPanel: ReturnType<typeof LayerPanelFactory>) {
         layerVisConfigChange: visStateActions.layerVisConfigChange,
         layerTextLabelChange: visStateActions.layerTextLabelChange,
         removeLayer: visStateActions.removeLayer,
+        zoomToLayer: mapStateActions.fitBounds,
         duplicateLayer: visStateActions.duplicateLayer,
         layerSetIsValid: visStateActions.layerSetIsValid
       }),
-      [visStateActions]
+      [visStateActions, mapStateActions]
     );
 
     const panelProps = useMemo(

@@ -20,7 +20,8 @@ import {
   Trash,
   VertDots,
   WarningSign,
-  Reset
+  Reset,
+  Crosshairs
 } from '../../common/icons';
 
 import {InlineInput, StyledPanelHeader} from '../../common/styled-components';
@@ -54,6 +55,7 @@ export type LayerPanelHeaderProps = {
   onUpdateLayerLabel: ChangeEventHandler;
   onToggleEnableConfig: MouseEventHandler;
   onRemoveLayer: MouseEventHandler;
+  onZoomToLayer: MouseEventHandler;
   onDuplicateLayer: MouseEventHandler;
   onResetIsValid: MouseEventHandler;
   isConfigActive: boolean;
@@ -71,6 +73,7 @@ export type LayerPanelHeaderProps = {
     enableConfig: ComponentType<Partial<BaseProps>>;
     resetIsValid: ComponentType<Partial<BaseProps>>;
     duplicate: ComponentType<Partial<BaseProps>>;
+    crosshairs: ComponentType<Partial<BaseProps>>;
   };
   listeners?: React.ElementType;
 };
@@ -278,6 +281,7 @@ export function LayerPanelHeaderActionSectionFactory(
       onToggleEnableConfig,
       onDuplicateLayer,
       onRemoveLayer,
+      onZoomToLayer,
       showRemoveLayer,
       isEditingLabel,
       // TODO: may not contain all necessary icons for all actions, e.g. actionIcons.duplicate. Need to to merge rather than replace
@@ -304,6 +308,13 @@ export function LayerPanelHeaderActionSectionFactory(
             onClick={onDuplicateLayer}
             IconComponent={actionIcons.duplicate}
             disabled={!allowDuplicate}
+          />
+          <PanelHeaderAction
+            className="layer__zoom-to-layer"
+            id={layerId}
+            tooltip={'tooltip.zoomToLayer'}
+            onClick={onZoomToLayer}
+            IconComponent={actionIcons.crosshairs}
           />
         </StyledPanelHeaderHiddenActions>
         {isValid ? (
@@ -362,7 +373,9 @@ const defaultActionIcons = {
   hidden: EyeUnseen,
   enableConfig: ArrowDown,
   duplicate: Copy,
-  resetIsValid: Reset
+  resetIsValid: Reset,
+  crosshairs:Crosshairs
+  ,
 };
 
 LayerPanelHeaderFactory.deps = [LayerTitleSectionFactory, LayerPanelHeaderActionSectionFactory];

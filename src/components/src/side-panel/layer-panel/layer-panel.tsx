@@ -15,7 +15,7 @@ import LayerPanelHeaderFactory from './layer-panel-header';
 import {dataTestIds} from '@kepler.gl/constants';
 import {NestedPartial, LayerVisConfig, ColorUI} from '@kepler.gl/types';
 import {Layer, LayerBaseConfig} from '@kepler.gl/layers';
-import {toggleModal, VisStateActions, ActionHandler} from '@kepler.gl/actions';
+import {toggleModal, VisStateActions, MapStateActions, ActionHandler} from '@kepler.gl/actions';
 import {Datasets} from '@kepler.gl/table';
 
 type LayerPanelProps = {
@@ -44,6 +44,7 @@ type LayerPanelProps = {
   layerVisConfigChange: ActionHandler<typeof VisStateActions.layerVisConfigChange>;
   layerTextLabelChange: ActionHandler<typeof VisStateActions.layerTextLabelChange>;
   removeLayer: ActionHandler<typeof VisStateActions.removeLayer>;
+  zoomToLayer: ActionHandler<typeof MapStateActions.fitBounds>;
   duplicateLayer: ActionHandler<typeof VisStateActions.duplicateLayer>;
   listeners?: React.ElementType;
 };
@@ -119,6 +120,12 @@ function LayerPanelFactory(
       this.props.removeLayer(this.props.layer.id);
     };
 
+    _zoomToLayer: MouseEventHandler = e => {
+      e?.stopPropagation();
+      const bounds = this.props.layer?.meta?.bounds;
+      bounds && this.props.zoomToLayer(bounds);
+    };
+
     _duplicateLayer: MouseEventHandler = e => {
       e?.stopPropagation();
       this.props.duplicateLayer(this.props.layer.id);
@@ -153,6 +160,7 @@ function LayerPanelFactory(
             onResetIsValid={this._resetIsValid}
             onUpdateLayerLabel={this._updateLayerLabel}
             onRemoveLayer={this._removeLayer}
+            onZoomToLayer={this._zoomToLayer}
             onDuplicateLayer={this._duplicateLayer}
             isDragNDropEnabled={isDraggable}
             listeners={listeners}
