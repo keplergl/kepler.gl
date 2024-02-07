@@ -13,7 +13,7 @@ import MapLegendPanelFactory from './map-legend-panel';
 import MapDrawPanelFactory from './map-draw-panel';
 import LocalePanelFactory from './locale-panel';
 import {Layer} from '@kepler.gl/layers';
-import {Editor, MapControls, MapState} from '@kepler.gl/types';
+import {Editor, LayerVisConfig, MapControls, MapState} from '@kepler.gl/types';
 import {Datasets} from '@kepler.gl/table';
 import {MapStateActions, UIStateActions} from '@kepler.gl/actions';
 
@@ -62,6 +62,7 @@ export type MapControlProps = {
   onToggleMapControl: (control: string) => void;
   onSetEditorMode: (mode: string) => void;
   onToggleEditorVisibility: () => void;
+  onLayerVisConfigChange: (oldLayer: Layer, newVisConfig: Partial<LayerVisConfig>) => void;
   top: number;
   onSetLocale: typeof UIStateActions.setLocale;
   locale: string;

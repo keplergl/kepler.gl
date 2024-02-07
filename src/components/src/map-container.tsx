@@ -1034,6 +1034,7 @@ export default function MapContainerFactory(
             onSetEditorMode={visStateActions.setEditorMode}
             onSetLocale={uiStateActions.setLocale}
             onToggleEditorVisibility={visStateActions.toggleEditorVisibility}
+            onLayerVisConfigChange={visStateActions.layerVisConfigChange}
             mapHeight={mapState.height}
           />
           {isSplitSelector(this.props) && <Droppable containerId={containerId} />}
