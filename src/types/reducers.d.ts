@@ -32,21 +32,14 @@ export type MapState = {
 
 export type Bounds = [number, number, number, number];
 
-export type HistogramBin = {
-  x0: number | undefined;
-  x1: number | undefined;
-  count: number;
-};
-
 export type RangeFieldDomain = {
-  domain: [number, number];
+  domain: number[];
   step: number;
-  histogram: HistogramBin[];
-  enlargedHistogram: HistogramBin[];
+  bins?: Bins;
 };
 
 export type SelectFieldDomain = {
-  domain: [true, false];
+  domain: boolean[];
 };
 export type MultiSelectFieldDomain = {
   domain: string[];
@@ -55,8 +48,7 @@ export type MultiSelectFieldDomain = {
 export type TimeRangeFieldDomain = {
   domain: [number, number];
   step: number;
-  histogram: HistogramBin[];
-  enlargedHistogram: HistogramBin[];
+  timeBins?: TimeBins;
   mappedValue: (Millisecond | null)[];
   // auto generated based on time domain
   defaultTimeFormat?: string | null;
@@ -71,10 +63,17 @@ export type FieldDomain =
   | SelectFieldDomain
   | MultiSelectFieldDomain;
 
+export interface LineDatum {
+  x: number;
+  y: number;
+  delta: string;
+  pct: number | null;
+}
+
 export type LineChart = {
   series: {x: number; y: number}[];
-  yDomain: [number, number];
-  xDomain: [number, number];
+  yDomain: number[] | undefined[];
+  xDomain: number[];
 };
 
 type FilterViewType = 'side' | 'enlarged' | 'minified';
@@ -83,8 +82,6 @@ export type FilterBase<L extends LineChart> = {
   dataId: string[];
   id: string;
   enabled: boolean;
-
-  freeze: boolean;
 
   // time range filter specific
   fixedDomain: boolean;
@@ -103,7 +100,9 @@ export type FilterBase<L extends LineChart> = {
 
   // plot
   yAxis: Field | null;
-  plotType: string;
+  plotType: {
+    [key: string]: any;
+  };
   lineChart?: L;
   // gpu filter
   gpu: boolean;
@@ -121,6 +120,9 @@ export type RangeFilter = FilterBase<LineChart> &
     value: [number, number];
     fixedDomain: true;
     typeOptions: ['range'];
+    plotType: {
+      [key: string]: any;
+    };
   };
 
 export type SelectFilter = FilterBase<LineChart> &
@@ -143,7 +145,6 @@ export type TimeRangeFilter = FilterBase<LineChart> &
     fieldType: 'timestamp';
     fixedDomain: true;
     value: [number, number];
-    bins?: object;
     plotType: {
       [key: string]: any;
     };
@@ -164,6 +165,31 @@ export type Filter =
   | SelectFilter
   | MultiSelectFilter
   | PolygonFilter;
+
+export interface Bin {
+  count: number;
+  indexes: number[];
+  x0: number;
+  x1: number;
+}
+
+export interface Bins {
+  [dataId: string]: Bin[];
+}
+
+export interface TimeBins {
+  [dataId: string]: {
+    [interval: string]: Bin[];
+  };
+}
+
+export interface PlotType {
+  interval: ValueOf<Interval>;
+  type: ValueOf<PlotTypes>;
+  aggregation: ValueOf<AggregationTypes>;
+  defaultTimeFormat: string;
+  colorsByDataId?: {[dataId: string]: string};
+}
 
 export type Feature = {
   id: string;

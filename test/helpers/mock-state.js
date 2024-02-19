@@ -27,7 +27,15 @@ import {
 } from '@kepler.gl/actions';
 
 // fixtures
-import {dataId as csvDataId, testFields, testAllData} from '../fixtures/test-csv-data';
+import {
+  dataId as csvDataId,
+  testFields,
+  testAllData,
+  testCsvDataSlice1,
+  testCsvDataSlice1Id,
+  testCsvDataSlice2,
+  testCsvDataSlice2Id
+} from '../fixtures/test-csv-data';
 import testLayerData from '../fixtures/test-layer-data';
 
 import {fields, rows, geoJsonDataId} from '../fixtures/geojson';
@@ -125,6 +133,64 @@ export function mockStateWithFileUpload() {
   return updatedState;
 }
 
+function mockStateWithSyncedTimeFilter() {
+  const initialState = cloneDeep(InitialState);
+  // load 2 csv data
+  const updatedState = applyActions(keplerGlReducer, initialState, [
+    {
+      action: MapStyleActions.loadMapStyles,
+      payload: [{dark: MOCK_MAP_STYLE}]
+    },
+    {
+      action: VisStateActions.updateVisData,
+      payload: [
+        [
+          {
+            info: {
+              id: testCsvDataSlice1Id,
+              label: 'hello.csv',
+              color: [255, 0, 0]
+            },
+            data: {fields: testFields, rows: testCsvDataSlice1}
+          }
+        ]
+      ]
+    },
+    {
+      action: VisStateActions.updateVisData,
+      payload: [
+        [
+          {
+            info: {
+              id: testCsvDataSlice2Id,
+              label: 'world.csv',
+              color: [0, 255, 0]
+            },
+            data: {fields: testFields, rows: testCsvDataSlice2}
+          }
+        ]
+      ]
+    },
+    // add 1 filter
+    {action: VisStateActions.addFilter, payload: ['test-csv-data-1']},
+
+    // set filter name to 'time', and value
+    {
+      action: VisStateActions.setFilter,
+      // ['2016-09-17 00:11:56', '2016-09-17 00:21:17']
+      payload: [0, ['name', 'value'], ['gps_data.utc_timestamp', [1474071116000, 1474071677000]]]
+    },
+
+    // set filter name and dataId and index 1
+    {
+      action: VisStateActions.setFilter,
+      payload: [0, ['dataId', 'name'], ['test-csv-data-2', 'gps_data.utc_timestamp'], 1]
+    }
+  ]);
+
+  return updatedState;
+}
+
 function mockStateWithTripGeojson() {
   const initialState = cloneDeep(InitialState);
 
@@ -212,13 +278,10 @@ export function mockStateWithFilters(state) {
     // add filter
     {action: VisStateActions.addFilter, payload: [testCsvDataId]},
 
-    // set filter to 'time'
-    {action: VisStateActions.setFilter, payload: [0, 'name', 'time']},
-
-    // set filter value
+    // set filter name to 'time', and value
     {
       action: VisStateActions.setFilter,
-      payload: [0, 'value', [1474606800000, 1474617600000]]
+      payload: [0, ['name', 'value'], ['time', [1474606800000, 1474617600000]]]
     },
 
     // set filter animation speed
@@ -231,10 +294,7 @@ export function mockStateWithFilters(state) {
     {action: VisStateActions.addFilter, payload: [testGeoJsonDataId]},
 
     // set filter to 'RATE'
-    {action: VisStateActions.setFilter, payload: [1, 'name', 'RATE']},
-
-    // set filter value
-    {action: VisStateActions.setFilter, payload: [1, 'value', ['a']]}
+    {action: VisStateActions.setFilter, payload: [1, ['name', 'value'], ['RATE', ['a']]]}
   ]);
 
   // replace filter id with controlled value for easy testing
@@ -264,7 +324,7 @@ function mockStateWithMultiFilters() {
     // add another filter
     {action: VisStateActions.addFilter, payload: [testGeoJsonDataId]},
 
-    // set filter to 'RATE'
+    // set filter to 'TRIPS'
     {action: VisStateActions.setFilter, payload: [3, 'name', 'TRIPS']},
 
     // set filter value
@@ -974,6 +1034,8 @@ export const StateWithGeocoderDataset = mockStateWithGeocoderDataset();
 export const StateWLayerStyle = mockStateWithLayerStyling();
 export const StateWTripTable = mockStateWithTripTable();
 export const StateWArcNeighbors = mockStateWithArcNeighbors();
+export const StateWSyncedTimeFilter = mockStateWithSyncedTimeFilter();
+
 export const expectedSavedTripLayer = {
   id: 'trip-0',
   type: 'trip',

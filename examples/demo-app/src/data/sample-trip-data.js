@@ -4053,7 +4053,7 @@ export const sampleTripDataConfig = {
         {
           dataId: 'test_trip_data',
           name: 'tpep_pickup_datetime',
-          enlarged: true
+          view: 'enlarged'
         },
         {
           dataId: 'test_trip_data',

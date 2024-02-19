@@ -126,6 +126,12 @@ test('Components -> TimeWidget.mount -> test actions', t => {
     );
   }, 'mount TimeWidget should not fail');
 
+  // t.ok(setFilterPlot.calledOnce, 'should call setFilterPlot when 1st mount to set plotType');
+  // t.deepEqual(
+  //   setFilterPlot.getCall(0).args,
+  //   [0, {plotType: {type: 'histogram'}}, undefined],
+  //   'should set plotType to linechart'
+  // );
   t.equal(wrapper.find(Icons.Close).length, 1, 'should render Close icon');
   t.equal(wrapper.find(Icons.Reset).length, 1, 'should render Reset icon');
   t.equal(wrapper.find(Icons.Play).length, 1, 'should render Play icon');
@@ -196,9 +202,10 @@ test('Components -> TimeWidget.mount -> test actions', t => {
   t.equal(wrapper.find(Typeahead).length, 1, 'should render dropdown select');
 
   wrapper.find(Typeahead).find('.field-selector_list-item').at(0).simulate('click');
-  t.equal(setFilterPlot.args[0][0], 0, 'should pass filteridx to setFilterPlot');
+  t.ok(setFilterPlot.calledOnce, 'should call setFilterPlot again');
+  t.equal(setFilterPlot.getCall(0).args[0], 0, 'should pass filteridx to setFilterPlot');
   t.equal(
-    setFilterPlot.args[0][1].yAxis.name,
+    setFilterPlot.getCall(0).args[1].yAxis.name,
     'gps_data.lat',
     'should pass correct yAxis to setFilterPlot'
   );

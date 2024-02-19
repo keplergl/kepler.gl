@@ -48,6 +48,7 @@ import {
   parseFieldValue,
   applyFilterFieldName,
   applyFiltersToDatasets,
+  adjustValueToFilterDomain,
   featureToFilterValue,
   filterDatasetCPU,
   FILTER_UPDATER_PROPS,
@@ -56,10 +57,9 @@ import {
   getFilterIdInFeature,
   getTimeWidgetTitleFormatter,
   isInRange,
-  LIMITED_FILTER_EFFECT_PROPS,
-  updateFilterDataId,
-  getFilterPlot,
-  getDefaultFilterPlotType
+  mergeFilterDomainStep,
+  updateFilterPlot,
+  removeFilterPlot
 } from '@kepler.gl/utils';
 
 // Mergers
@@ -81,7 +81,8 @@ import {
   MAX_DEFAULT_TOOLTIPS,
   DEFAULT_TEXT_LABEL,
   COMPARE_TYPES,
-  LIGHT_AND_SHADOW_EFFECT
+  LIGHT_AND_SHADOW_EFFECT,
+  PLOT_TYPES
 } from '@kepler.gl/constants';
 import {
   pick_,
@@ -887,6 +888,7 @@ export function setFilterAnimationWindowUpdater(
     )
   };
 }
+
 /**
  * Update filter property
  * @memberof visStateUpdaters
@@ -896,55 +898,164 @@ export function setFilterUpdater(
   state: VisState,
   action: VisStateActions.SetFilterUpdaterAction
 ): VisState {
-  const {idx, prop, value, valueIndex = 0} = action;
+  const {idx, valueIndex = 0} = action;
   const oldFilter = state.filters[idx];
-
   if (!oldFilter) {
     Console.error(`filters.${idx} is undefined`);
     return state;
   }
-  let newFilter = set([prop], value, oldFilter);
+  if (
+    Array.isArray(action.prop) &&
+    (!Array.isArray(action.value) || action.prop.length !== action.value.length)
+  ) {
+    Console.error('Expecting value to be an array of the same length, since prop is an array');
+    return state;
+  }
+  // convert prop and value to array
+  const props = toArray(action.prop);
+  const values = Array.isArray(action.prop) ? toArray(action.value) : [action.value];
+
+  let newFilter = oldFilter;
   let newState = state;
 
-  const {dataId} = newFilter;
+  let datasetIdsToFilter: string[] = [];
+  for (let i = 0; i < props.length; i++) {
+    const prop = props[i];
+    const value = values[i];
+    const res = _updateFilterProp(newState, newFilter, prop, value, valueIndex);
+    newFilter = res.filter;
+    newState = res.state;
+    datasetIdsToFilter = datasetIdsToFilter.concat(res.datasetIdsToFilter);
+  }
 
-  // Ensuring backward compatibility
-  let datasetIds = toArray(dataId);
+  const enlargedFilter = state.filters.find(f => f.view === FILTER_VIEW_TYPES.enlarged);
 
+  if (enlargedFilter && enlargedFilter.id !== newFilter.id) {
+    // there should be only one enlarged filter
+    newFilter.view = FILTER_VIEW_TYPES.side;
+  }
+
+  // save new filters to newState
+  newState = set(['filters', idx], newFilter, newState);
+
+  // filter data
+  const filteredDatasets = applyFiltersToDatasets(
+    uniq(datasetIdsToFilter),
+    newState.datasets,
+    newState.filters,
+    newState.layers
+  );
+
+  newState = set(['datasets'], filteredDatasets, newState);
+
+  // need to update filterPlot after filter Dataset for plot to update on filtered result
+  const filterWithPLot = updateFilterPlot(newState.datasets, newState.filters[idx]);
+
+  newState = set(['filters', idx], filterWithPLot, newState);
+
+  // dataId is an array
+  // pass only the dataset we need to update
+  newState = updateAllLayerDomainData(newState, datasetIdsToFilter, newFilter);
+
+  return newState;
+}
+function _updateFilterDataIdAtValueIndex(filter, valueIndex, value, datasets) {
+  let newFilter = filter;
+  if (filter.dataId[valueIndex]) {
+    // if dataId already exist
+    newFilter = _removeFilterDataIdAtValueIndex(filter, valueIndex, datasets);
+  }
+  if (value) {
+    const nextValue = newFilter.dataId.slice();
+    nextValue[valueIndex] = value;
+    newFilter = set(['dataId'], nextValue, newFilter);
+  }
+  return newFilter;
+}
+
+function _removeFilterDataIdAtValueIndex(filter, valueIndex, datasets) {
+  const dataId = filter.dataId[valueIndex];
+
+  if (filter.dataId.length === 1 && valueIndex === 0) {
+    // if remove the only dataId, create an empty filter instead;
+    return getDefaultFilter({id: filter.id});
+  }
+
+  if (dataId) {
+    filter = removeFilterPlot(filter, dataId);
+  }
+
+  for (const prop of ['dataId', 'name', 'fieldIdx', 'gpuChannel']) {
+    if (Array.isArray(filter[prop])) {
+      const nextVal = filter[prop].slice();
+      nextVal.splice(valueIndex, 1);
+      filter = set([prop], nextVal, filter);
+    }
+  }
+
+  // mergeFieldDomain for the remaining fields
+  // @ts-expect-error figure out correct types to use with mergeFilterDomainStep
+  let domainSteps: Filter & {step?: number | undefined} = {};
+  filter.dataId.forEach((filterDataId, idx) => {
+    const dataset = datasets[filterDataId];
+    const filterProps = dataset.getColumnFilterProps(filter.name[idx]);
+    // @ts-expect-error figure out correct types to use with mergeFilterDomainStep
+    domainSteps = mergeFilterDomainStep(domainSteps, filterProps);
+  });
+
+  const nextFilter = {
+    ...filter,
+    // value: nextValue,
+    domain: domainSteps.domain,
+    step: domainSteps.step
+  };
+
+  const nextValue = adjustValueToFilterDomain(nextFilter.value, nextFilter);
+  return {
+    ...nextFilter,
+    value: nextValue
+  };
+}
+
+/***
+ * Updates a single property of a filter
+ */
+function _updateFilterProp(state, filter, prop, value, valueIndex, datasetIds?) {
+  let datasetIdsToFilter: string[] = [];
   switch (prop) {
-    // TODO: Next PR for UI if we update dataId, we need to consider two cases:
+    // TODO: Next PR for UI if we update filterDataId, we need to consider two cases:
     // 1. dataId is empty: create a default filter
     // 2. Add a new dataset id
     case FILTER_UPDATER_PROPS.dataId:
-      // if trying to update filter dataId. create an empty new filter
-      newFilter = updateFilterDataId(dataId);
+      const oldDataId = [...filter.dataId];
+      filter = _updateFilterDataIdAtValueIndex(filter, valueIndex, value, state.datasets);
+      datasetIdsToFilter = uniq([...oldDataId, ...filter.dataId]);
       break;
 
     case FILTER_UPDATER_PROPS.name: {
       // we are supporting the current functionality
       // TODO: Next PR for UI filter name will only update filter name but it won't have side effects
       // we are gonna use pair of datasets and fieldIdx to update the filter
-      const datasetId = newFilter.dataId[valueIndex];
+      const datasetId = filter.dataId[valueIndex];
       const {filter: updatedFilter, dataset: newDataset} = applyFilterFieldName(
-        newFilter,
+        filter,
         state.datasets[datasetId],
         value,
         valueIndex,
-        {mergeDomain: false}
+        {mergeDomain: valueIndex > 0}
       );
-      if (!updatedFilter) {
-        return state;
+      if (updatedFilter) {
+        filter = updatedFilter;
+        if (filter.gpu) {
+          filter = setFilterGpuMode(filter, state.filters);
+          filter = assignGpuChannel(filter, state.filters);
+        }
+        state = set(['datasets', datasetId], newDataset, state);
+        // remove filter Plot at datasetId, so it will be recalculated
+        filter = removeFilterPlot(filter, datasetId);
+
+        datasetIdsToFilter = updatedFilter.dataId;
       }
-
-      newFilter = updatedFilter;
-
-      if (newFilter.gpu) {
-        newFilter = setFilterGpuMode(newFilter, state.filters);
-        newFilter = assignGpuChannel(newFilter, state.filters);
-      }
-
-      newState = set(['datasets', datasetId], newDataset, state);
-
       // only filter the current dataset
       break;
     }
@@ -953,7 +1064,7 @@ export function setFilterUpdater(
       // - check for layerId changes (XOR works because of string values)
       // if no differences between layerIds, don't do any filtering
       // @ts-ignore
-      const layerIdDifference = xor(newFilter.layerId, oldFilter.layerId);
+      const layerIdDifference = xor(value, filter.layerId);
 
       const layerDataIds = uniq<string>(
         layerIdDifference
@@ -967,11 +1078,11 @@ export function setFilterUpdater(
       );
 
       // only filter datasetsIds
-      datasetIds = layerDataIds;
+      datasetIdsToFilter = layerDataIds;
 
       // Update newFilter dataIds
       const newDataIds = uniq<string>(
-        newFilter.layerId
+        value
           ?.map(lid =>
             get(
               state.layers.find(l => l.id === lid),
@@ -981,49 +1092,22 @@ export function setFilterUpdater(
           .filter(d => d) as string[]
       );
 
-      newFilter = {
-        ...newFilter,
+      filter = {
+        ...filter,
+        layerId: value,
         dataId: newDataIds
       };
-
       break;
     }
     default:
+      filter = set([prop], value, filter);
+      datasetIdsToFilter = [...filter.dataId];
       break;
   }
 
-  const enlargedFilter = state.filters.find(f => f.view === FILTER_VIEW_TYPES.enlarged);
-
-  if (enlargedFilter && enlargedFilter.id !== newFilter.id) {
-    // there should be only one enlarged filter
-    newFilter.view = FILTER_VIEW_TYPES.side;
-  }
-
-  // save new filters to newState
-  newState = set(['filters', idx], newFilter, newState);
-
-  // if we are currently setting a prop that only requires to filter the current
-  // dataset we will pass only the current dataset to applyFiltersToDatasets and
-  // updateAllLayerDomainData otherwise we pass the all list of datasets as defined in dataId
-  const datasetIdsToFilter = LIMITED_FILTER_EFFECT_PROPS[prop]
-    ? [datasetIds[valueIndex]]
-    : datasetIds;
-
-  // filter data
-  const filteredDatasets = applyFiltersToDatasets(
-    datasetIdsToFilter,
-    newState.datasets,
-    newState.filters,
-    newState.layers
-  );
-
-  newState = set(['datasets'], filteredDatasets, newState);
-  // dataId is an array
-  // pass only the dataset we need to update
-  newState = updateAllLayerDomainData(newState, datasetIdsToFilter, newFilter);
-
-  return newState;
+  return {filter, datasetIds, datasetIdsToFilter, state};
 }
+/* eslint-enable max-statements */
 
 /**
  * Set the property of a filter plot
@@ -1034,19 +1118,23 @@ export const setFilterPlotUpdater = (
   state: VisState,
   {idx, newProp, valueIndex = 0}: VisStateActions.SetFilterPlotUpdaterAction
 ): VisState => {
-  let newFilter = {...state.filters[idx], ...newProp};
-  const prop = Object.keys(newProp)[0];
-  if (prop === 'yAxis') {
-    const plotType = getDefaultFilterPlotType(newFilter);
-    // TODO: plot is not supported in multi dataset filter for now
-    if (plotType) {
-      newFilter = {
-        ...newFilter,
-        ...getFilterPlot({...newFilter, plotType}, state.datasets[newFilter.dataId[valueIndex]]),
-        plotType
-      };
+  if (!state.filters[idx]) {
+    Console.error(`filters[${idx}] is undefined`);
+    return state;
+  }
+  let newFilter = state.filters[idx];
+
+  for (const prop in newProp) {
+    if (prop === 'plotType') {
+      newFilter = pick_('plotType')(merge_(newProp.plotType))(newFilter);
+    } else if (prop === 'yAxis') {
+      const chartType = newProp.yAxis ? PLOT_TYPES.lineChart : PLOT_TYPES.histogram;
+
+      newFilter = pick_('plotType')(merge_({type: chartType}))(merge_(newProp)(newFilter));
     }
   }
+
+  newFilter = updateFilterPlot(state.datasets, newFilter);
 
   return {
     ...state,
@@ -1634,8 +1722,18 @@ export function removeDatasetUpdater<T extends VisState>(
     datasets: newDatasets
   });
 
-  // remove filters
-  const filters = newState.filters.filter(filter => !filter.dataId.includes(datasetKey));
+  // update filters
+  const filters: Filter[] = [];
+  for (const filter of newState.filters) {
+    const valueIndex = filter.dataId.indexOf(datasetKey);
+    if (valueIndex >= 0 && filter.dataId.length > 1) {
+      // only remove one synced dataset from the filter
+      filters.push(_removeFilterDataIdAtValueIndex(filter, valueIndex, datasets));
+    } else if (valueIndex < 0) {
+      // leave the filter as is
+      filters.push(filter);
+    }
+  }
 
   newState = {...newState, filters};
 

@@ -106,7 +106,7 @@ export type Field = {
   type: string;
   fieldIdx: number;
   valueAccessor(v: {index: number}): any;
-  filterProps?: any;
+  filterProps?: FilterProps;
   metadata?: any;
   displayFormat?: string;
 };

@@ -131,10 +131,10 @@ class MapboxLayerGL extends Layer {
     const getPropertyFromFilter = hasFilter
       ? d => {
           const filterValue = valueAccessor(d);
-          return Object.values(filterValueUpdateTriggers).reduce<{[id: string]: number | number[]}>(
-            (accu: any, name, i) => ({
+          return Object.values(filterValueUpdateTriggers as ({name: string} | null)[]).reduce(
+            (accu: any, gpu, i) => ({
               ...accu,
-              ...(name ? {[prefixGpuField(name)]: filterValue[i]} : {})
+              ...(gpu?.name ? {[prefixGpuField(gpu.name)]: filterValue[i]} : {})
             }),
             {} as {[id: string]: number | number[]}
           );

@@ -6,6 +6,7 @@ import AutoSizer from 'react-virtualized/dist/commonjs/AutoSizer';
 import styled, {ThemeProvider} from 'styled-components';
 import window from 'global/window';
 import {connect} from 'react-redux';
+import cloneDeep from 'lodash.clonedeep';
 
 import {theme} from '@kepler.gl/styles';
 import Banner from './components/banner';
@@ -205,11 +206,25 @@ class App extends Component {
         datasets: [
           {
             info: {
-              label: 'Sample Taxi Trips in New York City',
+              label: 'Sample Taxi Trips 1',
               id: 'test_trip_data',
               color: [255, 0, 0]
             },
-            data: sampleTripData
+            data: {
+              rows: sampleTripData.rows.slice(0, 20),
+              fields: cloneDeep(sampleTripData.fields)
+            }
+          },
+          {
+            info: {
+              label: 'Sample Taxi Trips 2',
+              id: 'test_trip_data_2',
+              color: [0, 255, 0]
+            },
+            data: {
+              rows: sampleTripData.rows.slice(5, sampleTripData.rows.length),
+              fields: cloneDeep(sampleTripData.fields)
+            }
           }
         ],
         options: {

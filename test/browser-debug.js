@@ -18,8 +18,8 @@ test.onFailure(args => {
 test('Browser tests', t => {
   // running all tests in browser for debugging
   require('./node/index.js');
-  require('./browser/index.js');
-  require('./browser-headless/index.js');
+  // require('./browser/index.js');
+  // require('./browser-headless/index.js');
 
   t.end();
 });

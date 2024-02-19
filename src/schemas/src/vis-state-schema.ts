@@ -764,6 +764,19 @@ export class SplitMapsSchema extends Schema {
     };
   }
 }
+export class PlotTypeSchema extends Schema {
+  key = 'plotType';
+  load(plotType) {
+    if (typeof plotType === 'string') {
+      return {
+        plotType: {
+          type: plotType
+        }
+      };
+    }
+    return {plotType};
+  }
+}
 
 export const effectPropsV1 = {
   id: null,
@@ -811,7 +824,9 @@ export class EffectsSchema extends Schema {
 
 export const filterPropsV1 = {
   ...filterPropsV0,
-  plotType: null,
+  plotType: new PlotTypeSchema({
+    version: VERSIONS.v1
+  }),
   animationWindow: null,
   yAxis: new DimensionFieldSchema({
     version: VERSIONS.v1,

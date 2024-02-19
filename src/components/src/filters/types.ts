@@ -33,15 +33,19 @@ export type TopSectionWrapperProps = {
 export type RangeFilterProps = {
   filter: RangeFilter;
   setFilter: (v: number[]) => void;
+  setFilterPlot?: ActionHandler<typeof setFilterPlot>;
 };
 
 export type TimeRangeFilterProps = {
+  idx: number;
   filter: TimeRangeFilter;
   isAnimatable: boolean;
   hideTimeTitle: boolean;
   setFilter: (v: number[]) => void;
+  setFilterPlot: ActionHandler<typeof setFilterPlot>;
   toggleAnimation: () => void;
   timeline: Timeline;
+  datasets: Datasets;
 };
 
 export type SingleSelectFilterProps = {
@@ -60,7 +64,7 @@ export type TimeWidgetTopProps = {
   filter: Filter;
   readOnly: boolean;
   datasets: Datasets;
-  setFilterPlot: ActionHandler<typeof setFilterPlot>;
+  setFilterPlot: (newProp, valueIndex?: number) => void;
   index: number;
   onClose: () => void;
   onToggleMinify: () => void;

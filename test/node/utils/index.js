@@ -13,7 +13,7 @@ import './interaction-utils-test';
 import './mapbox-gl-style-editor-test';
 import './mapbox-utils-test';
 import './notifications-utils-test';
-import './aggregate-utils-test';
+import './aggregation-test';
 import './color-util-test';
 import './util-test';
 import './export-utils-test';

@@ -19,7 +19,11 @@ import {
   Filter,
   ProtoDataset,
   FilterRecord,
-  FilterDatasetOpt
+  FilterDatasetOpt,
+  RangeFieldDomain,
+  SelectFieldDomain,
+  MultiSelectFieldDomain,
+  TimeRangeFieldDomain
 } from '@kepler.gl/types';
 
 import {getGpuFilterProps, getDatasetFieldIndexForFilter} from './gpu-filter-utils';
@@ -44,7 +48,8 @@ import {
   getOrdinalDomain,
   getQuantileDomain,
   DataContainerInterface,
-  notNullorUndefined
+  notNullorUndefined,
+  FilterChanged
 } from '@kepler.gl/utils';
 
 export type GpuFilter = {
@@ -56,6 +61,35 @@ export type GpuFilter = {
     getIndex?: (any) => number,
     getData?: (dc_: DataContainerInterface, d: any, fieldIndex: number) => any
   ) => (d: any) => (number | number[])[];
+};
+
+export type FilterProps =
+  | NumericFieldFilterProps
+  | BooleanFieldFilterProps
+  | StringFieldFilterProps
+  | TimeFieldFilterProps;
+
+export type NumericFieldFilterProps = RangeFieldDomain & {
+  value: [number, number];
+  type: string;
+  typeOptions: string[];
+  gpu: boolean;
+};
+export type BooleanFieldFilterProps = SelectFieldDomain & {
+  type: string;
+  value: boolean;
+  gpu: boolean;
+};
+export type StringFieldFilterProps = MultiSelectFieldDomain & {
+  type: string;
+  value: string[];
+  gpu: boolean;
+};
+export type TimeFieldFilterProps = TimeRangeFieldDomain & {
+  type: string;
+  fixedDomain: boolean;
+  value: number[];
+  gpu: boolean;
 };
 
 // Unique identifier of each field
@@ -95,7 +129,7 @@ class KeplerTable {
   gpuFilter: GpuFilter;
   filterRecord?: FilterRecord;
   filterRecordCPU?: FilterRecord;
-  changedFilters?: any;
+  changedFilters?: FilterChanged;
 
   // table-injected metadata
   sortColumn?: {
@@ -301,15 +335,13 @@ class KeplerTable {
     this.filterRecord = filterRecord;
     this.gpuFilter = getGpuFilterProps(filters, dataId, fields);
 
-    // const newDataset = set(['filterRecord'], filterRecord, dataset);
+    this.changedFilters = diffFilters(filterRecord, oldFilterRecord);
 
     if (!filters.length) {
       this.filteredIndex = this.allIndexes;
       this.filteredIndexForDomain = this.allIndexes;
       return this;
     }
-
-    this.changedFilters = diffFilters(filterRecord, oldFilterRecord);
 
     // generate 2 sets of filter result
     // filteredIndex used to calculate layer data

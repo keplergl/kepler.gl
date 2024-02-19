@@ -74,8 +74,14 @@ function FilterManagerFactory(
     isAnyFilterAnimating,
     visStateActions
   }: FilterListProps) => {
-    const {removeFilter, setFilter, toggleFilterAnimation, toggleFilterFeature, setFilterView} =
-      visStateActions;
+    const {
+      removeFilter,
+      setFilter,
+      setFilterPlot,
+      toggleFilterAnimation,
+      toggleFilterFeature,
+      setFilterView
+    } = visStateActions;
 
     const filterPanelCallbacks = useMemo(() => {
       return filtersByIndex.reduce(
@@ -112,6 +118,7 @@ function FilterManagerFactory(
             toggleAnimation={filterPanelCallbacks[filter.id].toggleAnimation}
             toggleFilterFeature={filterPanelCallbacks[filter.id].toggleFilterFeature}
             setFilter={setFilter}
+            setFilterPlot={setFilterPlot}
           />
         ))}
       </SidePanelSection>

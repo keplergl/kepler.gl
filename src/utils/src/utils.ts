@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import window from 'global/window';
+import {capitalizeFirstLetter} from './strings';
 
 /**
  * Generate a hash string based on number of character
@@ -41,15 +42,6 @@ export function generateHashIdFromString(str: string): string {
 export function isChrome(): boolean {
   // Chrome 1+
   return window.chrome && window.chrome.webstore;
-}
-
-/**
- * Capitalize first letter of a string
- * @param {string} str
- * @returns {string}
- */
-export function capitalizeFirstLetter(str) {
-  return typeof str === 'string' ? str.charAt(0).toUpperCase() + str.slice(1) : str;
 }
 
 /**

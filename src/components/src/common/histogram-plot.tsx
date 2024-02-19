@@ -3,10 +3,9 @@
 
 import React, {ReactElement, useMemo} from 'react';
 import {scaleLinear} from 'd3-scale';
-import {max} from 'd3-array';
 import {hcl} from 'd3-color';
+import {min, max} from 'd3-array';
 import styled from 'styled-components';
-import {HistogramBin} from '@kepler.gl/types';
 
 const histogramStyle = {
   highlightW: 0.7,
@@ -37,77 +36,125 @@ interface HistogramPlotProps {
   height: number;
   margin: {top: number; bottom: number; left: number; right: number};
   isRanged?: boolean;
-  histogram: HistogramBin[];
   value: number[];
   brushComponent?: ReactElement;
+  histogramsByGroup: any;
+  colorsByGroup: any;
+  countProp: any;
+  range: any;
 }
 
 function HistogramPlotFactory() {
   const HistogramPlot = ({
     width,
     height,
+    histogramsByGroup,
+    colorsByGroup,
+    countProp = 'count',
     margin,
     isRanged,
-    histogram,
+    range,
     value,
     brushComponent
   }: HistogramPlotProps) => {
     const undefinedToZero = (x: number | undefined) => (x ? x : 0);
+    const groupKeys = useMemo(
+      () =>
+        Object.keys(histogramsByGroup)
+          // only keep non-empty groups
+          .filter(key => histogramsByGroup[key]?.length > 0),
+      [histogramsByGroup]
+    );
+
     const domain = useMemo(
       () =>
-        [histogram[0].x0, histogram[histogram.length - 1].x1].map(item => undefinedToZero(item)),
-      [histogram]
+        range ?? [
+          min(groupKeys, key => histogramsByGroup[key][0].x0),
+          max(groupKeys, key => histogramsByGroup[key][histogramsByGroup[key].length - 1].x1)
+        ],
+      [range, histogramsByGroup, groupKeys]
     );
-    const dataId = Object.keys(histogram[0]).filter(k => k !== 'x0' && k !== 'x1')[0];
-
-    // use 1st for now
-    const getValue = useMemo(() => d => d[dataId], [dataId]);
 
     const x = useMemo(() => scaleLinear().domain(domain).range([0, width]), [domain, width]);
 
     const y = useMemo(
       () =>
         scaleLinear()
-          .domain([0, Number(max(histogram, getValue))])
+          .domain([
+            0,
+            Math.max(
+              Number(
+                max(groupKeys, key => max(histogramsByGroup[key], (d: number[]) => d[countProp]))
+              ),
+              1
+            )
+          ])
           .range([0, height]),
-      [histogram, height, getValue]
+      [histogramsByGroup, groupKeys, height, countProp]
     );
 
-    const barWidth = width / histogram.length;
+    const barWidth = useMemo(() => {
+      const maxBins = max(groupKeys, key => {
+        if (histogramsByGroup[key].length > 1)
+          return (
+            (domain[1] - domain[0]) / (histogramsByGroup[key][1].x1 - histogramsByGroup[key][1].x0)
+          );
+        // TODO this part should be removed with follow ups
+        return (
+          (domain[1] - domain[0]) / (histogramsByGroup[key][0].x1 - histogramsByGroup[key][0].x0)
+        );
+      });
+      if (!maxBins) return 0;
+      return width / maxBins / groupKeys.length;
+    }, [histogramsByGroup, domain, groupKeys, width]);
 
     return (
       <HistogramWrapper width={width} height={height} style={{marginTop: `${margin.top}px`}}>
-        <g className="histogram-bars">
-          {histogram.map(bar => {
-            const inRange =
-              undefinedToZero(bar.x1) <= value[1] && undefinedToZero(bar.x0) >= value[0];
-            const wRatio = inRange ? histogramStyle.highlightW : histogramStyle.unHighlightedW;
-            const startX = x(undefinedToZero(bar.x0)) + (barWidth * (1 - wRatio)) / 2;
-            if (startX > 0 && startX + barWidth * histogramStyle.unHighlightedW <= width) {
-              return (
-                <Bar
-                  inRange={inRange}
-                  key={bar.x0}
-                  height={y(getValue(bar))}
-                  width={barWidth * wRatio}
-                  x={startX}
-                  rx={1}
-                  ry={1}
-                  y={height - y(getValue(bar))}
-                />
-              );
-            }
-            return null;
-          })}
-        </g>
+        {groupKeys.map((key, i) => (
+          <g key={key} className="histogram-bars">
+            {histogramsByGroup[key].map(bar => {
+              const inRange =
+                undefinedToZero(bar.x1) <= value[1] && undefinedToZero(bar.x0) >= value[0];
+              const wRatio = inRange ? histogramStyle.highlightW : histogramStyle.unHighlightedW;
+              const startX =
+                x(undefinedToZero(bar.x0)) + barWidth * i + (barWidth * (1 - wRatio)) / 2;
+              if (startX > 0 && startX + barWidth * histogramStyle.unHighlightedW <= width) {
+                return (
+                  <Bar
+                    inRange={inRange}
+                    color={colorsByGroup ? colorsByGroup[key] : undefined}
+                    key={bar.x0}
+                    height={y(bar[countProp])}
+                    width={barWidth * wRatio}
+                    x={startX}
+                    rx={1}
+                    ry={1}
+                    y={height - y(bar[countProp])}
+                  />
+                );
+              }
+              return null;
+            })}
+          </g>
+        ))}
         <g transform={`translate(${isRanged ? 0 : barWidth / 2}, 0)`}>{brushComponent}</g>
       </HistogramWrapper>
     );
   };
 
-  const EmpptyOrPlot = props =>
-    !props.histogram || !props.histogram.length ? null : <HistogramPlot {...props} />;
+  const HistogramPlotWithGroups = props => {
+    const groups = useMemo(
+      () => (props.histogramsByGroup ? Object.keys(props.histogramsByGroup) : null),
+      [props.histogramsByGroup]
+    );
 
-  return EmpptyOrPlot;
+    if (!groups?.length) {
+      return null;
+    }
+
+    return <HistogramPlot {...props} />;
+  };
+
+  return HistogramPlotWithGroups;
 }
 export default HistogramPlotFactory;

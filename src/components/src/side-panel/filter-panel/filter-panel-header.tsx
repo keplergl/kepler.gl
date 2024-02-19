@@ -7,7 +7,7 @@ import PanelHeaderActionFactory from '../../side-panel/panel-header-action';
 import {Trash} from '../../common/icons';
 import {createLinearGradient} from '@kepler.gl/utils';
 import {StyledPanelHeader, StyledPanelHeaderProps} from '../../common/styled-components';
-import {RGBColor, Filter} from '@kepler.gl/types';
+import {RGBColor, Filter, Field} from '@kepler.gl/types';
 import {KeplerTable} from '@kepler.gl/table';
 
 interface StyledFilterHeaderProps extends StyledPanelHeaderProps {
@@ -44,6 +44,8 @@ export type FilterPanelHeaderProps = {
   actionIcons?: {
     delete: ComponentType;
   };
+  allAvailableFields?: Field[];
+  idx?: number;
   children: React.ReactNode;
 };
 

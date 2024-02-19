@@ -221,6 +221,12 @@ export function getGpuFilterProps(filters: Filter[], dataId: string, fields: Fie
     filterRange[i][1] = filter ? filter.value[1] - filter.domain?.[0] : 0;
 
     triggers[`gpuFilter_${i}`] = filter ? filter.name[filter.dataId.indexOf(dataId)] : null;
+    triggers[`gpuFilter_${i}`] = filter
+      ? {
+          name: filter.name[filter.dataId.indexOf(dataId)],
+          domain0: filter.domain?.[0]
+        }
+      : null;
     channels.push(filter);
   }
 

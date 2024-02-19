@@ -23,8 +23,8 @@ import {
 
 import {processCsvData, processGeojson} from '@kepler.gl/processors';
 import {Layer, KeplerGlLayers, COLUMN_MODE_TABLE} from '@kepler.gl/layers';
-import {KeplerTable, createNewDataEntry, maybeToDate} from '@kepler.gl/table';
-import {createDataContainer, getDefaultFilter} from '@kepler.gl/utils';
+import {createNewDataEntry, maybeToDate} from '@kepler.gl/table';
+import {createDataContainer, getDefaultFilter, histogramFromDomain} from '@kepler.gl/utils';
 import {
   ALL_FIELD_TYPES,
   EDITOR_MODES,
@@ -32,7 +32,8 @@ import {
   DEFAULT_TEXT_LABEL,
   DEFAULT_COLOR_UI,
   FILTER_VIEW_TYPES,
-  LIGHT_AND_SHADOW_EFFECT
+  LIGHT_AND_SHADOW_EFFECT,
+  BINS
 } from '@kepler.gl/constants';
 
 const {ArcLayer, PointLayer, GeojsonLayer, LineLayer, TripLayer} = KeplerGlLayers;
@@ -42,6 +43,7 @@ import testData, {
   mergedTimeFilter,
   testFields,
   testAllData,
+  expectedSyncedTsFilter,
   testCsvFieldPairs
 } from 'test/fixtures/test-csv-data';
 import {
@@ -74,6 +76,7 @@ import {
   StateWFilters,
   StateWFiles,
   StateWFilesFiltersLayerColor,
+  StateWSyncedTimeFilter,
   StateWH3Layer,
   testCsvDataId,
   testGeoJsonDataId,
@@ -81,6 +84,12 @@ import {
 } from 'test/helpers/mock-state';
 import {getNextColorMakerValue} from 'test/helpers/layer-utils';
 import {expectedTripLayerConfig} from '../../fixtures/test-trip-csv-data';
+import {
+  testCsvDataSlice1,
+  testCsvDataSlice2,
+  testCsvDataSlice1Id,
+  testCsvDataSlice2Id
+} from '../../fixtures/test-csv-data';
 
 const mockData = {
   fields: [
@@ -1050,7 +1059,7 @@ test('#visStateReducer -> REMOVE_FILTER', t => {
         [0, 0]
       ],
       filterValueUpdateTriggers: {
-        gpuFilter_0: 'time',
+        gpuFilter_0: {name: 'time', domain0: 1474588800000},
         gpuFilter_1: null,
         gpuFilter_2: null,
         gpuFilter_3: null
@@ -1076,6 +1085,12 @@ test('#visStateReducer -> REMOVE_FILTER', t => {
     ...dataset1,
     filteredIndex: dataset1.allIndexes,
     filteredIndexForDomain: dataset1.allIndexes,
+    changedFilters: {
+      dynamicDomain: {'RATE-1': 'deleted'},
+      fixedDomain: null,
+      cpu: {'RATE-1': 'deleted'},
+      gpu: null
+    },
     filterRecord: {
       dynamicDomain: [],
       fixedDomain: [],
@@ -1453,62 +1468,13 @@ test('#visStateReducer -> UPDATE_VIS_DATA.2 -> to empty state', t => {
 });
 
 test('#visStateReducer -> UPDATE_VIS_DATA.3 -> merge w/ existing state', t => {
-  const mockLayer = new PointLayer({
-    dataId: 'snowflake',
-    columns: {
-      lat: {
-        value: 'start_point_lat',
-        fieldIdx: 0
-      },
-      lng: {
-        value: 'start_point_lng',
-        fieldIdx: 1
-      }
-    }
-  });
-  const snowflake = new KeplerTable({
-    data: {
-      fields: [{name: 'a'}, {name: 'b'}],
-      rows: [['something'], ['something_else']]
-    },
-    info: {
-      id: 'snowflake'
-    }
-  });
-
   const oldState = {
-    ...INITIAL_VIS_STATE,
-    layers: [mockLayer],
-    layerData: [
-      [1, 2],
-      [3, 4],
-      [5, 6],
-      [7, 8]
-    ],
-    datasets: {
-      snowflake
-    },
-    filters: [
-      {name: 'hello', dataId: ['a']},
-      {name: 'world', dataId: ['b']}
-    ],
-    interactionConfig: {
-      tooltip: {
-        id: 'tooltip',
-        enabled: true,
-        icon: 'messages',
-        config: {
-          fieldsToShow: {snowflake: ['a']}
-        }
-      }
-    },
-    layerOrder: [mockLayer.id],
-    layerBlending: 'additive',
-    splitMaps: []
+    ...StateWFiles.visState,
+    layerBlending: 'additive'
   };
 
   const expectedDatasets = {
-    snowflake,
+    ...StateWFiles.visState.datasets,
     smoothie: {
       metadata: {
         id: 'smoothie',
@@ -1548,8 +1514,9 @@ test('#visStateReducer -> UPDATE_VIS_DATA.3 -> merge w/ existing state', t => {
     }
   };
 
-  const expectedInteractionTooltip = {
-    fieldsToShow: {snowflake: ['a'], smoothie: []}
+  const expectedTooltip = {
+    ...oldState.interactionConfig.tooltip.config.fieldsToShow,
+    smoothie: []
   };
 
   const newState = reducer(
@@ -1565,26 +1532,28 @@ test('#visStateReducer -> UPDATE_VIS_DATA.3 -> merge w/ existing state', t => {
   Object.keys(expectedDatasets).forEach(key =>
     cmpDataset(t, expectedDatasets[key], newState.datasets[key])
   );
-  t.equal(newState.layers.length, 5, 'should find 1 arc aline and 2 point layers');
+  t.equal(newState.layers.length, 6, 'should find 1 arc 1 line and 2 point layers');
   t.deepEqual(
     newState.layerOrder,
     [
-      newState.layers[1].id,
       newState.layers[2].id,
       newState.layers[3].id,
       newState.layers[4].id,
+      newState.layers[5].id,
+      newState.layers[1].id,
       newState.layers[0].id
     ],
     'should add new layer index to layer order, put them on top'
   );
-  t.equal(newState.layers[1].config.dataId, 'smoothie', 'should save dataId to layer');
   t.equal(newState.layers[2].config.dataId, 'smoothie', 'should save dataId to layer');
   t.equal(newState.layers[3].config.dataId, 'smoothie', 'should save dataId to layer');
-  t.equal(newState.layerData.length, 5, 'should calculate layerData');
-  t.equal(newState.filters.length, 2, 'should keep original filters');
+  t.equal(newState.layers[4].config.dataId, 'smoothie', 'should save dataId to layer');
+  t.equal(newState.layers[5].config.dataId, 'smoothie', 'should save dataId to layer');
+  t.equal(newState.layerData.length, 6, 'should calculate layerData');
+
   t.deepEqual(
-    newState.interactionConfig.tooltip.config,
-    expectedInteractionTooltip,
+    newState.interactionConfig.tooltip.config.fieldsToShow,
+    expectedTooltip,
     'should set interaction config back to default'
   );
   t.equal(newState.layerBlending, 'additive', 'should keep layerBlending');
@@ -1780,8 +1749,6 @@ test('#visStateReducer -> UPDATE_VIS_DATA -> mergeFilters', t => {
   const expectedFilterProps = {
     domain: [12.249990000000002, 12.290000000000001],
     step: 0.00001,
-    histogram: [1], // test not empty
-    enlargedHistogram: [2], // test not empty
     fieldType: 'real',
     view: FILTER_VIEW_TYPES.side,
     type: mockFilter.type,
@@ -1796,14 +1763,12 @@ test('#visStateReducer -> UPDATE_VIS_DATA -> mergeFilters', t => {
     dataId: ['smoothie'],
     fieldIdx: [0],
     id: '38chejr',
-    freeze: true,
     fixedDomain: false,
     view: FILTER_VIEW_TYPES.enlarged,
-    plotType: 'histogram',
+    plotType: {type: 'histogram'},
     yAxis: null,
     gpu: true,
     gpuChannel: [0],
-    interval: null,
     name: [mockFilter.name],
     speed: 1,
     isAnimating: false,
@@ -1862,7 +1827,10 @@ test('#visStateReducer -> UPDATE_VIS_DATA -> mergeFilters', t => {
           [0, 0]
         ],
         filterValueUpdateTriggers: {
-          gpuFilter_0: mockFilter.name,
+          gpuFilter_0: {
+            name: mockFilter.name,
+            domain0: 12.249990000000002
+          },
           gpuFilter_1: null,
           gpuFilter_2: null,
           gpuFilter_3: null
@@ -2052,7 +2020,6 @@ test('#visStateReducer -> setFilter.dynamicDomain & cpu', t => {
 
   const expectedFilter = {
     dataId: ['smoothie'],
-    freeze: false,
     id: 'donnot test me yet',
     enabled: true,
     name: [],
@@ -2063,10 +2030,9 @@ test('#visStateReducer -> setFilter.dynamicDomain & cpu', t => {
     view: FILTER_VIEW_TYPES.side,
     isAnimating: false,
     animationWindow: 'free',
-    plotType: 'histogram',
+    plotType: {type: 'histogram'},
     yAxis: null,
     speed: 1,
-    interval: null,
     gpu: false,
     fieldIdx: []
   };
@@ -2082,7 +2048,6 @@ test('#visStateReducer -> setFilter.dynamicDomain & cpu', t => {
 
   const expectedFilterWName = {
     dataId: ['smoothie'],
-    freeze: true,
     id: filterId,
     enabled: true,
     name: ['date'],
@@ -2095,10 +2060,9 @@ test('#visStateReducer -> setFilter.dynamicDomain & cpu', t => {
     isAnimating: false,
     animationWindow: 'free',
     fieldType: 'date',
-    plotType: 'histogram',
+    plotType: {type: 'histogram'},
     yAxis: null,
     speed: 1,
-    interval: null,
     gpu: false
   };
 
@@ -2330,7 +2294,6 @@ test('#visStateReducer -> SET_FILTER.name', t => {
   const expectedFilter0 = oldFilter0;
   const expectedFilter1 = {
     dataId: [testGeoJsonDataId],
-    freeze: true,
     id: 'RATE-1',
     enabled: true,
     fixedDomain: false,
@@ -2343,16 +2306,20 @@ test('#visStateReducer -> SET_FILTER.name', t => {
     fieldIdx: [2],
     domain: [94105, 94111],
     value: [94105, 94111],
-    plotType: 'histogram',
+    plotType: {type: 'histogram'},
     yAxis: null,
-    interval: null,
     fieldType: 'integer',
     step: 0.01,
-    histogram: [],
-    enlargedHistogram: 'dont test me',
     typeOptions: ['range'],
     gpu: true,
-    gpuChannel: [0]
+    gpuChannel: [0],
+    bins: {
+      [testGeoJsonDataId]: histogramFromDomain(
+        [94105, 94111],
+        geojsonRows.map(d => d[2]),
+        BINS
+      )
+    }
   };
 
   cmpFilters(t, [expectedFilter0, expectedFilter1], updated.filters);
@@ -2362,31 +2329,282 @@ test('#visStateReducer -> SET_FILTER.name', t => {
 
 test('#visStateReducer -> SET_FILTER.dataId', t => {
   const oldState = CloneDeep(StateWFilters.visState);
+  const oldFilter = {...oldState.filters[1]};
   let newState = reducer(oldState, VisStateActions.setFilter(1, 'dataId', testCsvDataId));
 
   let newFilter = newState.filters[1];
-  let expectedFilter = {
-    ...getDefaultFilter({dataId: testCsvDataId}),
-    id: newFilter.id
-  };
+  let expectedFilter = getDefaultFilter({dataId: testCsvDataId, id: oldFilter.id});
 
   t.deepEqual(newFilter, expectedFilter, 'Should create a new filter using the provided dataId');
 
   // Using an array of dataId
-  newState = reducer(newState, VisStateActions.setFilter(1, 'dataId', [testCsvDataId]));
+  newState = reducer(newState, VisStateActions.setFilter(1, 'dataId', testCsvDataId, 0));
 
   newFilter = newState.filters[1];
 
-  expectedFilter = {
-    ...getDefaultFilter({dataId: testCsvDataId}),
-    id: newFilter.id
-  };
+  expectedFilter = getDefaultFilter({dataId: testCsvDataId, id: newFilter.id});
 
   t.deepEqual(
     newFilter,
     expectedFilter,
     'Should create a new filter using the provided list of dataId'
   );
+
+  t.end();
+});
+
+test('#visStateReducer -> SET_FILTER synced', t => {
+  const initialState = StateWSyncedTimeFilter.visState;
+  const oldFilter = {...initialState.filters[0]};
+  const filterId = oldFilter.id;
+
+  // test synced filter
+  expectedSyncedTsFilter.id = filterId;
+
+  const expectedFilteredDataset1 = {
+    ...initialState.datasets[testCsvDataSlice1Id],
+    changedFilters: {
+      dynamicDomain: null,
+      fixedDomain: {
+        [filterId]: 'dataId_changed'
+      },
+      cpu: null,
+      gpu: {
+        [filterId]: 'dataId_changed'
+      }
+    },
+    filterRecord: {
+      cpu: [],
+      dynamicDomain: [],
+      fixedDomain: [
+        // filterRecord cmparison util only check the name
+        {
+          name: ['gps_data.utc_timestamp', 'gps_data.utc_timestamp']
+        }
+      ],
+      gpu: [
+        // filterRecord cmparison util only check the name
+        {
+          name: ['gps_data.utc_timestamp', 'gps_data.utc_timestamp']
+        }
+      ]
+    },
+    gpuFilter: {
+      filterRange: [
+        [121000, 682000],
+        [0, 0],
+        [0, 0],
+        [0, 0]
+      ],
+      filterValueAccessor: {
+        inputs: [
+          {
+            data: testCsvDataSlice1[1],
+            index: 1
+          }
+        ],
+        result: [1474071056000 - 1474070995000, 0, 0, 0]
+      },
+      filterValueUpdateTriggers: {
+        gpuFilter_0: {
+          name: 'gps_data.utc_timestamp',
+          domain0: 1474070995000
+        },
+        gpuFilter_1: null,
+        gpuFilter_2: null,
+        gpuFilter_3: null
+      }
+    }
+  };
+
+  const expectedFilteredDataset2 = {
+    ...initialState.datasets[testCsvDataSlice2Id],
+    changedFilters: {
+      dynamicDomain: null,
+      fixedDomain: {
+        [filterId]: 'added'
+      },
+      cpu: null,
+      gpu: {
+        [filterId]: 'added'
+      }
+    },
+    filterRecord: {
+      cpu: [],
+      dynamicDomain: [],
+      fixedDomain: [
+        // filterRecord cmparison util only check the name
+        {
+          name: ['gps_data.utc_timestamp', 'gps_data.utc_timestamp']
+        }
+      ],
+      gpu: [
+        // filterRecord cmparison util only check the name
+        {
+          name: ['gps_data.utc_timestamp', 'gps_data.utc_timestamp']
+        }
+      ]
+    },
+    gpuFilter: {
+      filterRange: [
+        [121000, 682000],
+        [0, 0],
+        [0, 0],
+        [0, 0]
+      ],
+      filterValueAccessor: {
+        inputs: [
+          {
+            data: testCsvDataSlice2[1],
+            index: 1
+          }
+        ],
+        // 1474071056000
+        result: [1474071363000 - 1474070995000, 0, 0, 0]
+      },
+      filterValueUpdateTriggers: {
+        gpuFilter_0: {
+          name: 'gps_data.utc_timestamp',
+          domain0: 1474070995000
+        },
+        gpuFilter_1: null,
+        gpuFilter_2: null,
+        gpuFilter_3: null
+      }
+    }
+  };
+  cmpFilters(t, expectedSyncedTsFilter, initialState.filters[0]);
+  cmpDataset(t, expectedFilteredDataset1, initialState.datasets[testCsvDataSlice1Id]);
+  cmpDataset(t, expectedFilteredDataset2, initialState.datasets[testCsvDataSlice2Id]);
+
+  t.end();
+});
+
+test('#visStateReducer -> SET_FILTER synced -> remove 1', t => {
+  const initialState = StateWSyncedTimeFilter.visState;
+  const oldFilter = {...initialState.filters[0]};
+  const filterId = oldFilter.id;
+  // remove dataset at filter
+  const resultState = reducer(initialState, VisStateActions.setFilter(0, 'dataId', null, 0));
+  const expectedFilter = {
+    ...expectedSyncedTsFilter,
+    id: oldFilter.id,
+    dataId: ['test-csv-data-2'],
+    name: ['gps_data.utc_timestamp'],
+    fieldIdx: [0],
+    // reset domain
+    domain: [1474071301000, 1474072208000],
+    // adjust value
+    value: [1474071301000, 1474071677000],
+    gpuChannel: [0],
+    timeBins: {
+      'test-csv-data-2': expectedSyncedTsFilter.timeBins['test-csv-data-2']
+    }
+  };
+
+  const expectedFilteredDataset1 = {
+    ...initialState.datasets[testCsvDataSlice1Id],
+    changedFilters: {
+      dynamicDomain: null,
+      fixedDomain: {
+        [filterId]: 'deleted'
+      },
+      cpu: null,
+      gpu: {
+        [filterId]: 'deleted'
+      }
+    },
+    filterRecord: {
+      cpu: [],
+      dynamicDomain: [],
+      fixedDomain: [],
+      gpu: []
+    },
+    gpuFilter: {
+      filterRange: [
+        [0, 0],
+        [0, 0],
+        [0, 0],
+        [0, 0]
+      ],
+      filterValueAccessor: {
+        inputs: [
+          {
+            data: testCsvDataSlice1[1],
+            index: 1
+          }
+        ],
+        result: [0, 0, 0, 0]
+      },
+      filterValueUpdateTriggers: {
+        gpuFilter_0: null,
+        gpuFilter_1: null,
+        gpuFilter_2: null,
+        gpuFilter_3: null
+      }
+    }
+  };
+
+  const expectedFilteredDataset2 = {
+    ...initialState.datasets[testCsvDataSlice2Id],
+    changedFilters: {
+      dynamicDomain: null,
+      fixedDomain: {
+        [filterId]: 'dataId_changed'
+      },
+      cpu: null,
+      gpu: {
+        [filterId]: 'dataId_changed'
+      }
+    },
+    filterRecord: {
+      cpu: [],
+      dynamicDomain: [],
+      fixedDomain: [
+        // filterRecord cmparison util only check the name
+        {
+          name: ['gps_data.utc_timestamp']
+        }
+      ],
+      gpu: [
+        // filterRecord cmparison util only check the name
+        {
+          name: ['gps_data.utc_timestamp']
+        }
+      ]
+    },
+    gpuFilter: {
+      filterRange: [
+        [0, 376000],
+        [0, 0],
+        [0, 0],
+        [0, 0]
+      ],
+      filterValueAccessor: {
+        inputs: [
+          {
+            data: testCsvDataSlice2[1],
+            index: 1
+          }
+        ],
+        // 1474071056000
+        result: [1474071363000 - 1474071301000, 0, 0, 0]
+      },
+      filterValueUpdateTriggers: {
+        gpuFilter_0: {
+          name: 'gps_data.utc_timestamp',
+          domain0: 1474071301000
+        },
+        gpuFilter_1: null,
+        gpuFilter_2: null,
+        gpuFilter_3: null
+      }
+    }
+  };
+
+  cmpFilters(t, expectedFilter, resultState.filters[0]);
+  cmpDataset(t, expectedFilteredDataset1, resultState.datasets[testCsvDataSlice1Id]);
+  cmpDataset(t, expectedFilteredDataset2, resultState.datasets[testCsvDataSlice2Id]);
 
   t.end();
 });
@@ -2414,7 +2632,6 @@ function testSetFilterDynamicDomainGPU(t, setFilter) {
 
   const expectedFilterWName = {
     dataId: ['milkshake'],
-    freeze: true,
     enabled: true,
     id: stateWithFilter.filters[0].id,
     name: ['TRIPS'],
@@ -2425,20 +2642,53 @@ function testSetFilterDynamicDomainGPU(t, setFilter) {
     value: [4, 20],
     view: FILTER_VIEW_TYPES.side,
     fixedDomain: false,
-    histogram: [],
-    enlargedHistogram: [],
     isAnimating: false,
     animationWindow: 'free',
     fieldType: 'integer',
     typeOptions: ['range'],
-    plotType: 'histogram',
+    plotType: {type: 'histogram'},
     yAxis: null,
-    interval: null,
     speed: 1,
     gpu: true,
-    gpuChannel: [0]
+    gpuChannel: [0],
+    bins: {
+      milkshake: [
+        {count: 1, x0: 4, x1: 4.5},
+        {count: 0, x0: 4.5, x1: 5},
+        {count: 0, x0: 5, x1: 5.5},
+        {count: 0, x0: 5.5, x1: 6},
+        {count: 0, x0: 6, x1: 6.5},
+        {count: 0, x0: 6.5, x1: 7},
+        {count: 0, x0: 7, x1: 7.5},
+        {count: 0, x0: 7.5, x1: 8},
+        {count: 0, x0: 8, x1: 8.5},
+        {count: 0, x0: 8.5, x1: 9},
+        {count: 0, x0: 9, x1: 9.5},
+        {count: 0, x0: 9.5, x1: 10},
+        {count: 0, x0: 10, x1: 10.5},
+        {count: 0, x0: 10.5, x1: 11},
+        {count: 1, x0: 11, x1: 11.5},
+        {count: 0, x0: 11.5, x1: 12},
+        {count: 0, x0: 12, x1: 12.5},
+        {count: 0, x0: 12.5, x1: 13},
+        {count: 0, x0: 13, x1: 13.5},
+        {count: 0, x0: 13.5, x1: 14},
+        {count: 0, x0: 14, x1: 14.5},
+        {count: 0, x0: 14.5, x1: 15},
+        {count: 0, x0: 15, x1: 15.5},
+        {count: 0, x0: 15.5, x1: 16},
+        {count: 0, x0: 16, x1: 16.5},
+        {count: 0, x0: 16.5, x1: 17},
+        {count: 0, x0: 17, x1: 17.5},
+        {count: 0, x0: 17.5, x1: 18},
+        {count: 0, x0: 18, x1: 18.5},
+        {count: 0, x0: 18.5, x1: 19},
+        {count: 0, x0: 19, x1: 19.5},
+        {count: 0, x0: 19.5, x1: 20},
+        {count: 1, x0: 20, x1: 20}
+      ]
+    }
   };
-
   // test filter
   cmpFilters(t, expectedFilterWName, stateWithFilterName.filters[0]);
 
@@ -2478,7 +2728,7 @@ function testSetFilterDynamicDomainGPU(t, setFilter) {
         [0, 0]
       ],
       filterValueUpdateTriggers: {
-        gpuFilter_0: 'TRIPS',
+        gpuFilter_0: {name: 'TRIPS', domain0: 4},
         gpuFilter_1: null,
         gpuFilter_2: null,
         gpuFilter_3: null
@@ -2595,7 +2845,6 @@ test('#visStateReducer -> setFilter.fixedDomain & DynamicDomain & gpu & cpu', t 
 
   const expectedFilterTs = {
     dataId: ['smoothie'],
-    freeze: true,
     fixedDomain: true,
     id: filterId,
     name: ['gps_data.utc_timestamp'],
@@ -2604,9 +2853,13 @@ test('#visStateReducer -> setFilter.fixedDomain & DynamicDomain & gpu & cpu', t 
     domain: [1474070995000, 1474072208000],
     value: [1474071425000, 1474071740000],
     step: 1000,
-    plotType: 'histogram',
+    plotType: {
+      type: 'histogram',
+      interval: '15-second',
+      aggregation: 'sum',
+      defaultTimeFormat: 'L  LTS'
+    },
     yAxis: null,
-    interval: null,
     speed: 1,
     mappedValue: [
       1474070995000, 1474071056000, 1474071116000, 1474071178000, 1474071240000, 1474071301000,
@@ -2614,15 +2867,129 @@ test('#visStateReducer -> setFilter.fixedDomain & DynamicDomain & gpu & cpu', t 
       1474071677000, 1474071740000, 1474071802000, 1474071864000, 1474071928000, 1474071989000,
       1474072051000, 1474072115000, 1474072180000, 1474072203000, 1474072203000, 1474072208000
     ],
-    histogram: [],
-    enlargedHistogram: [],
     view: FILTER_VIEW_TYPES.enlarged,
     isAnimating: false,
     animationWindow: 'free',
     fieldType: 'timestamp',
     gpu: true,
     gpuChannel: [0],
-    defaultTimeFormat: 'L LTS'
+    defaultTimeFormat: 'L LTS',
+    timeBins: {
+      smoothie: {
+        '15-second': [
+          {
+            count: 1,
+            x0: 1474070985000,
+            x1: 1474071000000
+          },
+          {
+            count: 1,
+            x0: 1474071045000,
+            x1: 1474071060000
+          },
+          {
+            count: 1,
+            x0: 1474071105000,
+            x1: 1474071120000
+          },
+          {
+            count: 1,
+            x0: 1474071165000,
+            x1: 1474071180000
+          },
+          {
+            count: 1,
+            x0: 1474071240000,
+            x1: 1474071255000
+          },
+          {
+            count: 1,
+            x0: 1474071300000,
+            x1: 1474071315000
+          },
+          {
+            count: 1,
+            x0: 1474071360000,
+            x1: 1474071375000
+          },
+          {
+            count: 1,
+            x0: 1474071420000,
+            x1: 1474071435000
+          },
+          {
+            count: 1,
+            x0: 1474071480000,
+            x1: 1474071495000
+          },
+          {
+            count: 1,
+            x0: 1474071540000,
+            x1: 1474071555000
+          },
+          {
+            count: 1,
+            x0: 1474071555000,
+            x1: 1474071570000
+          },
+          {
+            count: 1,
+            x0: 1474071600000,
+            x1: 1474071615000
+          },
+          {
+            count: 1,
+            x0: 1474071675000,
+            x1: 1474071690000
+          },
+          {
+            count: 1,
+            x0: 1474071735000,
+            x1: 1474071750000
+          },
+          {
+            count: 1,
+            x0: 1474071795000,
+            x1: 1474071810000
+          },
+          {
+            count: 1,
+            x0: 1474071855000,
+            x1: 1474071870000
+          },
+          {
+            count: 1,
+            x0: 1474071915000,
+            x1: 1474071930000
+          },
+          {
+            count: 1,
+            x0: 1474071975000,
+            x1: 1474071990000
+          },
+          {
+            count: 1,
+            x0: 1474072050000,
+            x1: 1474072065000
+          },
+          {
+            count: 1,
+            x0: 1474072110000,
+            x1: 1474072125000
+          },
+          {
+            count: 1,
+            x0: 1474072170000,
+            x1: 1474072185000
+          },
+          {
+            count: 3,
+            x0: 1474072200000,
+            x1: 1474072215000
+          }
+        ]
+      }
+    }
   };
 
   // cmpFilters(t, expectedFilterTs, stateWidthTsFilter.filters[0]);
@@ -2638,12 +3005,11 @@ test('#visStateReducer -> setFilter.fixedDomain & DynamicDomain & gpu & cpu', t 
               domain: [1474070995000, 1474072208000],
               step: 1000,
               mappedValue: expectedFilterTs.mappedValue,
-              histogram: stateWidthTsFilter.filters[0].histogram,
-              enlargedHistogram: stateWidthTsFilter.filters[0].enlargedHistogram,
               fieldType: 'timestamp',
               type: 'timeRange',
               view: FILTER_VIEW_TYPES.enlarged,
               fixedDomain: true,
+              plotType: {},
               value: [1474070995000, 1474072208000],
               gpu: true,
               defaultTimeFormat: 'L LTS'
@@ -2665,7 +3031,7 @@ test('#visStateReducer -> setFilter.fixedDomain & DynamicDomain & gpu & cpu', t 
         [0, 0]
       ],
       filterValueUpdateTriggers: {
-        gpuFilter_0: 'gps_data.utc_timestamp',
+        gpuFilter_0: {name: 'gps_data.utc_timestamp', domain0: 1474070995000},
         gpuFilter_1: null,
         gpuFilter_2: null,
         gpuFilter_3: null
@@ -2736,7 +3102,7 @@ test('#visStateReducer -> setFilter.fixedDomain & DynamicDomain & gpu & cpu', t 
         [0, 0]
       ],
       filterValueUpdateTriggers: {
-        gpuFilter_0: 'gps_data.utc_timestamp',
+        gpuFilter_0: {name: 'gps_data.utc_timestamp', domain0: 1474070995000},
         gpuFilter_1: null,
         gpuFilter_2: null,
         gpuFilter_3: null
@@ -2770,7 +3136,7 @@ test('#visStateReducer -> setFilter.fixedDomain & DynamicDomain & gpu & cpu', t 
   t.end();
 });
 
-test('#visStateReducer -> SET_FILTER_PLOT', t => {
+test('#visStateReducer -> SET_FILTER_PLOT.yAxis', t => {
   // get test data
   const {fields, rows} = processCsvData(testData);
   const payload = [
@@ -2806,38 +3172,58 @@ test('#visStateReducer -> SET_FILTER_PLOT', t => {
   );
 
   const expectedFilterWName = {
-    ...getDefaultFilter({dataId: 'smoothie'}),
-    freeze: true,
+    ...getDefaultFilter({dataId: 'smoothie', id: filterId}),
     fixedDomain: true,
-    id: filterId,
     name: ['gps_data.utc_timestamp'],
     type: 'timeRange',
     fieldIdx: [0],
     domain: [1474070995000, 1474072208000],
     value: [1474070995000, 1474072208000],
     step: 1000,
-    plotType: 'lineChart',
+    plotType: {
+      interval: '15-second',
+      defaultTimeFormat: 'L  LTS',
+      type: 'lineChart',
+      aggregation: 'sum'
+    },
     yAxis: yAxisField,
-    interval: null,
     lineChart: {
-      series: [
-        {x: 1474070995000, y: 1},
-        {x: 1474071056000, y: 2},
-        {x: 1474071116000, y: 3},
-        {x: 1474071178000, y: 4},
-        {x: 1474071240000, y: 5},
-        {x: 1474071301000, y: 12124},
-        {x: 1474071363000, y: 222},
-        {x: 1474071425000, y: 345},
-        {x: 1474071864000, y: 1},
-        {x: 1474071989000, y: 43},
-        {x: 1474072051000, y: 4},
-        {x: 1474072115000, y: 5},
-        {x: 1474072203000, y: 6},
-        {x: 1474072203000, y: 7}
-      ],
-      yDomain: [1, 12124],
-      xDomain: [1474070995000, 1474072203000]
+      yDomain: [0, 12124],
+      xDomain: [1474070985000, 1474072215000],
+      interval: '15-second',
+      aggregation: 'sum',
+      series: {
+        lines: [
+          [
+            {x: 1474070985000, y: 1, delta: 'last', pct: null},
+            {x: 1474071045000, y: 2, delta: 'last', pct: 1},
+            {x: 1474071105000, y: 3, delta: 'last', pct: 0.5},
+            {x: 1474071165000, y: 4, delta: 'last', pct: 0.3333333333333333},
+            {x: 1474071240000, y: 5, delta: 'last', pct: 0.25},
+            {x: 1474071300000, y: 12124, delta: 'last', pct: 2423.8},
+            {x: 1474071360000, y: 222, delta: 'last', pct: -0.9816892114813592},
+            {x: 1474071420000, y: 345, delta: 'last', pct: 0.5540540540540541},
+            {x: 1474071480000, y: 0, delta: 'last', pct: -1},
+            {x: 1474071540000, y: 0, delta: 'last', pct: null},
+            {x: 1474071555000, y: 0, delta: 'last', pct: null},
+            {x: 1474071600000, y: 0, delta: 'last', pct: null},
+            {x: 1474071675000, y: 0, delta: 'last', pct: null},
+            {x: 1474071735000, y: 0, delta: 'last', pct: null},
+            {x: 1474071795000, y: 0, delta: 'last', pct: null},
+            {x: 1474071855000, y: 1, delta: 'last', pct: null},
+            {x: 1474071915000, y: 0, delta: 'last', pct: -1},
+            {x: 1474071975000, y: 43, delta: 'last', pct: null},
+            {x: 1474072050000, y: 4, delta: 'last', pct: -0.9069767441860465},
+            {x: 1474072110000, y: 5, delta: 'last', pct: 0.25},
+            {x: 1474072170000, y: 0, delta: 'last', pct: -1},
+            {x: 1474072200000, y: 13, delta: 'last', pct: null}
+          ]
+        ],
+        markers: []
+      },
+      title: 'Total of uid',
+      fieldType: 'integer',
+      allTime: {title: 'All Time Average', value: 580.5454545454545}
     },
     speed: 1,
     mappedValue: [
@@ -2846,19 +3232,144 @@ test('#visStateReducer -> SET_FILTER_PLOT', t => {
       1474071677000, 1474071740000, 1474071802000, 1474071864000, 1474071928000, 1474071989000,
       1474072051000, 1474072115000, 1474072180000, 1474072203000, 1474072203000, 1474072208000
     ],
-    histogram: [],
-    enlargedHistogram: [],
     view: FILTER_VIEW_TYPES.enlarged,
     isAnimating: false,
     animationWindow: 'free',
     fieldType: 'timestamp',
     gpu: true,
     gpuChannel: [0],
-    defaultTimeFormat: 'L LTS'
+    defaultTimeFormat: 'L LTS',
+    timeBins: {
+      smoothie: {
+        '15-second': [
+          {
+            count: 1,
+            x0: 1474070985000,
+            x1: 1474071000000
+          },
+          {
+            count: 1,
+            x0: 1474071045000,
+            x1: 1474071060000
+          },
+          {
+            count: 1,
+            x0: 1474071105000,
+            x1: 1474071120000
+          },
+          {
+            count: 1,
+            x0: 1474071165000,
+            x1: 1474071180000
+          },
+          {
+            count: 1,
+            x0: 1474071240000,
+            x1: 1474071255000
+          },
+          {
+            count: 1,
+            x0: 1474071300000,
+            x1: 1474071315000
+          },
+          {
+            count: 1,
+            x0: 1474071360000,
+            x1: 1474071375000
+          },
+          {
+            count: 1,
+            x0: 1474071420000,
+            x1: 1474071435000
+          },
+          {
+            count: 1,
+            x0: 1474071480000,
+            x1: 1474071495000
+          },
+          {
+            count: 1,
+            x0: 1474071540000,
+            x1: 1474071555000
+          },
+          {
+            count: 1,
+            x0: 1474071555000,
+            x1: 1474071570000
+          },
+          {
+            count: 1,
+            x0: 1474071600000,
+            x1: 1474071615000
+          },
+          {
+            count: 1,
+            x0: 1474071675000,
+            x1: 1474071690000
+          },
+          {
+            count: 1,
+            x0: 1474071735000,
+            x1: 1474071750000
+          },
+          {
+            count: 1,
+            x0: 1474071795000,
+            x1: 1474071810000
+          },
+          {
+            count: 1,
+            x0: 1474071855000,
+            x1: 1474071870000
+          },
+          {
+            count: 1,
+            x0: 1474071915000,
+            x1: 1474071930000
+          },
+          {
+            count: 1,
+            x0: 1474071975000,
+            x1: 1474071990000
+          },
+          {
+            count: 1,
+            x0: 1474072050000,
+            x1: 1474072065000
+          },
+          {
+            count: 1,
+            x0: 1474072110000,
+            x1: 1474072125000
+          },
+          {
+            count: 1,
+            x0: 1474072170000,
+            x1: 1474072185000
+          },
+          {
+            count: 3,
+            x0: 1474072200000,
+            x1: 1474072215000
+          }
+        ]
+      }
+    }
   };
-
   // test filter
   cmpFilters(t, expectedFilterWName, stateWithFilterPlot.filters[0]);
+
+  // set filterPlot type
+  const stateWithFilterPlotHistogram = reducer(
+    stateWithFilterPlot,
+    VisStateActions.setFilterPlot(0, {plotType: {type: 'histogram'}})
+  );
+  t.deepEqual(
+    stateWithFilterPlotHistogram.filters[0].plotType,
+    {interval: '15-second', defaultTimeFormat: 'L  LTS', type: 'histogram', aggregation: 'sum'},
+    'should set filter plotType to histogram'
+  );
+
   t.end();
 });
 
@@ -2995,6 +3506,33 @@ test('#visStateReducer -> REMOVE_DATASET w filter and layer', t => {
   Object.keys(expectedState).forEach(key => {
     t.deepEqual(newReducer[key], expectedState[key], `newReducer.${key} should be correct`);
   });
+
+  t.end();
+});
+
+test('#visStateReducer -> REMOVE_DATASET w synced filter', t => {
+  const initialState = CloneDeep(StateWSyncedTimeFilter.visState);
+  const oldFilter = {...initialState.filters[0]};
+
+  const resultState = reducer(initialState, VisStateActions.removeDataset(testCsvDataSlice1Id));
+
+  t.equal(resultState.filters.length, 1, 'should still have 1 filter');
+  const expectedFilter = {
+    ...expectedSyncedTsFilter,
+    id: oldFilter.id,
+    dataId: ['test-csv-data-2'],
+    name: ['gps_data.utc_timestamp'],
+    fieldIdx: [0],
+    // reset domain
+    domain: [1474071301000, 1474072208000],
+    // adjust value
+    value: [1474071301000, 1474071677000],
+    gpuChannel: [0],
+    timeBins: {
+      'test-csv-data-2': expectedSyncedTsFilter.timeBins['test-csv-data-2']
+    }
+  };
+  cmpFilters(t, expectedFilter, resultState.filters[0]);
 
   t.end();
 });
@@ -4145,7 +4683,6 @@ test('#visStateReducer -> POLYGON: Create polygon filter', t => {
   const expectedFilter = {
     id: newFilter.id,
     dataId: [firstDataset],
-    freeze: false,
     enabled: true,
     fixedDomain: true,
     view: FILTER_VIEW_TYPES.side,
@@ -4164,9 +4701,8 @@ test('#visStateReducer -> POLYGON: Create polygon filter', t => {
         filterId: newFilter.id
       }
     },
-    plotType: 'histogram',
+    plotType: {type: 'histogram'},
     yAxis: null,
-    interval: null,
     layerId: [newReducer.layers[0].id],
     gpu: false
   };
@@ -4354,7 +4890,6 @@ test('#visStateReducer -> POLYGON: Toggle filter feature', t => {
   const expectedFilter = {
     id: newFilter.id,
     dataId: ['puppy'],
-    freeze: false,
     enabled: true,
     fixedDomain: true,
     view: FILTER_VIEW_TYPES.side,
@@ -4373,9 +4908,8 @@ test('#visStateReducer -> POLYGON: Toggle filter feature', t => {
         filterId: newFilter.id
       }
     },
-    plotType: 'histogram',
+    plotType: {type: 'histogram'},
     yAxis: null,
-    interval: null,
     layerId: [newReducer.layers[0].id],
     gpu: false
   };

@@ -292,7 +292,7 @@ export function interactionConfigChange(
 
 export type SetFilterUpdaterAction = {
   idx: number;
-  prop: string;
+  prop: string | string[];
   value: any;
   valueIndex?: number;
 };
@@ -301,6 +301,8 @@ export type SetFilterUpdaterAction = {
  * @memberof visStateActions
  * @param idx -`idx` of filter to be updated
  * @param prop - `prop` of filter, e,g, `dataId`, `name`, `value`
+ *                or an array e.g. ['idx', 'name']. in that case the value
+ *                should also be an array of the corresponding values (by index)
  * @param value - new value
  * @param valueIndex - dataId index
  * @returns action
@@ -308,7 +310,7 @@ export type SetFilterUpdaterAction = {
  */
 export function setFilter(
   idx: number,
-  prop: string,
+  prop: string | string[],
   value: any,
   valueIndex?: number
 ): Merge<SetFilterUpdaterAction, {type: typeof ActionTypes.SET_FILTER}> {
@@ -1134,9 +1136,13 @@ export function toggleLayerForMap(
   };
 }
 
+type FilterPlotNewProp = {
+  yAxis?: null | Record<string, any>;
+  plotType?: {type: string};
+};
 export type SetFilterPlotUpdaterAction = {
   idx: number;
-  newProp: object;
+  newProp: FilterPlotNewProp;
   valueIndex?: number;
 };
 /**
@@ -1150,7 +1156,7 @@ export type SetFilterPlotUpdaterAction = {
  */
 export function setFilterPlot(
   idx: number,
-  newProp: object,
+  newProp: FilterPlotNewProp,
   valueIndex?: number
 ): Merge<SetFilterPlotUpdaterAction, {type: typeof ActionTypes.SET_FILTER_PLOT}> {
   return {

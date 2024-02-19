@@ -2,10 +2,12 @@
 // Copyright contributors to the kepler.gl project
 
 import {KeplerGlLayers} from '@kepler.gl/layers';
-import {DEFAULT_TEXT_LABEL, DEFAULT_COLOR_UI} from '@kepler.gl/constants';
+import {DEFAULT_TEXT_LABEL, DEFAULT_COLOR_UI, BINS} from '@kepler.gl/constants';
 
 const {GeojsonLayer} = KeplerGlLayers;
 import {defaultInteractionConfig} from '@kepler.gl/reducers';
+
+import {histogramFromDomain} from '@kepler.gl/utils';
 
 export const savedStateV1 = {
   datasets: [
@@ -820,7 +822,6 @@ export const v0ExpectedFields = [
 export const mergedFilters = [
   {
     dataId: ['a5ybmwl2d'],
-    freeze: true,
     id: '9ca0l7p2a',
     enabled: true,
     view: 'side',
@@ -832,17 +833,21 @@ export const mergedFilters = [
     domain: [0.03, 48.09],
     value: [0.03, 21.8],
     step: 0.01,
-    plotType: 'histogram',
+    plotType: {type: 'histogram'},
     yAxis: null,
-    interval: null,
-    histogram: ['Not tested'],
-    enlargedHistogram: ['Not tested'],
     speed: 1,
     fieldType: 'real',
     typeOptions: ['range'],
     fixedDomain: false,
     gpu: true,
-    gpuChannel: [0]
+    gpuChannel: [0],
+    bins: {
+      a5ybmwl2d: histogramFromDomain(
+        [0.03, 48.09],
+        savedStateV1.datasets[0].data.allData.map(d => d[3]),
+        BINS
+      )
+    }
   }
 ];
 

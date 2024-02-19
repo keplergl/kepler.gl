@@ -1601,9 +1601,7 @@ test('VisStateMerger.v1 -> mergeFilters -> multiFilters', t => {
       disableDataOperation: false,
       fields: tFields0,
       dataContainer: dc0,
-      allIndexes: [
-        0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23
-      ],
+      allIndexes: dc0.getPlainIndex(),
       id: testCsvDataId,
       label: 'hello.csv',
       color: 'donot test me',
@@ -1624,8 +1622,8 @@ test('VisStateMerger.v1 -> mergeFilters -> multiFilters', t => {
           [0, 0]
         ],
         filterValueUpdateTriggers: {
-          gpuFilter_0: 'time',
-          gpuFilter_1: 'epoch',
+          gpuFilter_0: {name: 'time', domain0: 1474588800000},
+          gpuFilter_1: {name: 'epoch', domain0: 1472688000000},
           gpuFilter_2: null,
           gpuFilter_3: null
         },
@@ -1669,7 +1667,7 @@ test('VisStateMerger.v1 -> mergeFilters -> multiFilters', t => {
           [0, 0]
         ],
         filterValueUpdateTriggers: {
-          gpuFilter_0: 'TRIPS',
+          gpuFilter_0: {name: 'TRIPS', domain0: 4},
           gpuFilter_1: null,
           gpuFilter_2: null,
           gpuFilter_3: null

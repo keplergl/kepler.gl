@@ -95,6 +95,7 @@ interface FieldSelectorFactoryProps {
   inputTheme?: string;
   placeholder?: string;
   erasable?: boolean;
+  disabled?: boolean;
   error?: boolean;
   multiSelect?: boolean;
   closeOnSelect?: boolean;
@@ -114,6 +115,7 @@ function FieldSelectorFactory(
   class FieldSelector extends Component<FieldSelectorFactoryProps> {
     static defaultProps = {
       erasable: true,
+      disabled: false,
       error: false,
       fields: [],
       onSelect: noop,
@@ -174,6 +176,7 @@ function FieldSelectorFactory(
         <StyledFieldSelector className={classnames('field-selector', this.props.className)}>
           <ItemSelector
             getOptionValue={d => d}
+            disabled={this.props.disabled}
             closeOnSelect={this.props.closeOnSelect}
             displayOption={defaultDisplayOption}
             filterOption="displayName"

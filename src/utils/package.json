@@ -37,7 +37,7 @@
     "@mapbox/geo-viewport": "^0.4.1",
     "@turf/boolean-within": "^6.0.1",
     "@turf/helpers": "^6.1.4",
-    "@types/d3-array": "^2.0.0",
+    "@types/d3-array": "^2.8.0",
     "@types/keymirror": "^0.1.1",
     "@types/lodash.clonedeep": "^4.5.7",
     "@types/lodash.get": "^4.4.6",

@@ -10,8 +10,9 @@ import Slider from './slider/slider';
 import {Input} from './styled-components';
 
 import {observeDimensions, unobserveDimensions, roundValToStep, clamp} from '@kepler.gl/utils';
-import {LineChart, Filter} from '@kepler.gl/types';
+import {LineChart, Filter, Bins} from '@kepler.gl/types';
 import {Datasets} from '@kepler.gl/table';
+import {ActionHandler, setFilterPlot} from '@kepler.gl/actions';
 
 interface SliderInputProps {
   flush?: boolean;
@@ -49,7 +50,8 @@ interface RangeSliderProps {
   value0: number;
   value1: number;
   onChange?: (val: number[], e?: Event | null) => void; // TODO
-  histogram?: any[];
+  setFilterPlot?: ActionHandler<typeof setFilterPlot>;
+  bins?: Bins;
   isRanged?: boolean;
   isEnlarged?: boolean;
   showInput?: boolean;
@@ -63,7 +65,9 @@ interface RangeSliderProps {
   playbackControlWidth?: number;
   lineChart?: LineChart;
   marks?: number[];
-  plotType?: string;
+  plotType?: {
+    [key: string]: any;
+  };
   plotValue?: number[];
 
   animationWindow?: string;
@@ -209,8 +213,9 @@ export default function RangeSliderFactory(
       const {
         isRanged,
         showInput,
-        histogram,
+        bins,
         lineChart,
+        plotType,
         range,
         onChange = noop,
         sliderHandleWidth,
@@ -218,6 +223,7 @@ export default function RangeSliderFactory(
         timezone,
         timeFormat,
         playbackControlWidth,
+        setFilterPlot,
         animationWindow,
         filter,
         datasets
@@ -225,7 +231,7 @@ export default function RangeSliderFactory(
 
       const {width} = this.state;
       const plotWidth = Math.max(width - Number(sliderHandleWidth), 0);
-      const renderPlot = (histogram && histogram.length) || lineChart;
+      const hasPlot = plotType?.type;
       return (
         <div
           className="kg-range-slider"
@@ -234,11 +240,11 @@ export default function RangeSliderFactory(
         >
           {Array.isArray(range) && range.every(Number.isFinite) && (
             <>
-              {renderPlot ? (
+              {hasPlot ? (
                 <RangePlot
-                  histogram={histogram}
-                  lineChart={this.props.lineChart}
-                  plotType={this.props.plotType}
+                  bins={bins}
+                  lineChart={lineChart}
+                  plotType={plotType}
                   isEnlarged={this.props.isEnlarged}
                   onBrush={(val0, val1) => onChange([val0, val1])}
                   marks={this.props.marks}
@@ -253,6 +259,7 @@ export default function RangeSliderFactory(
                   timezone={timezone}
                   timeFormat={timeFormat}
                   playbackControlWidth={playbackControlWidth}
+                  setFilterPlot={setFilterPlot}
                 />
               ) : null}
               <SliderWrapper

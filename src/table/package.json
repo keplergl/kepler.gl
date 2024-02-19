@@ -34,7 +34,7 @@
     "@kepler.gl/layers": "3.0.0",
     "@kepler.gl/types": "3.0.0",
     "@kepler.gl/utils": "3.0.0",
-    "@types/d3-array": "^2.0.0",
+    "@types/d3-array": "^2.8.0",
     "@types/lodash.uniq": "^4.5.7",
     "d3-array": "^2.8.0",
     "global": "^4.3.0",

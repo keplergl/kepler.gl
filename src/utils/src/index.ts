@@ -20,10 +20,12 @@ export {createNotification, exportImageError, successNotification} from './notif
 
 export {setStyleSheetBaseHref} from './dom-utils';
 export {default as domtoimage} from './dom-to-image';
-export {getFrequency, getMode, aggregate} from './aggregate-utils';
+export {getFrequency, getMode, aggregate} from './aggregation';
+export {getBinThresholds, histogramFromThreshold, histogramFromDomain} from './plot';
 // eslint-disable-next-line prettier/prettier
 export type {FieldFormatter} from './data-utils';
 export * from './data-utils';
+export * from './strings';
 export {
   getTimelineFromAnimationConfig,
   getTimelineFromFilter,
