@@ -34,6 +34,7 @@ import {capitalizeFirstLetter} from './strings';
 import {getDefaultTimeFormat} from './format';
 import {rgbToHex} from './color-utils';
 import {DataContainerInterface} from '.';
+import {KeplerTableModel} from './types';
 
 // TODO kepler-table module isn't accessible from utils. Add compatible interface to types
 type Datasets = any;
@@ -167,10 +168,13 @@ export function getBinThresholds(interval: string, domain: number[]): number[] {
 /**
  * Run GPU filter on current filter result to generate indexes for ploting chart
  * Skip ruuning for the same field
- * @param {KeplerTable} dataset
- * @param {Filter} filter
+ * @param dataset
+ * @param filter
  */
-export function runGpuFilterForPlot(dataset, filter) {
+export function runGpuFilterForPlot<K extends KeplerTableModel<K, L>, L>(
+  dataset: K,
+  filter?: Filter
+): number[] {
   const skipIndexes = getSkipIndexes(dataset, filter);
 
   const {
