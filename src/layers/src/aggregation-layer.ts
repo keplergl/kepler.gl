@@ -175,6 +175,11 @@ export default class AggregationLayer extends Layer {
     return object;
   }
 
+  getFilteredItemCount() {
+    // gpu filter not supported
+    return null;
+  }
+
   /**
    * Aggregation layer handles visual channel aggregation inside deck.gl layer
    */

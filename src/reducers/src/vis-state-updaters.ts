@@ -3033,6 +3033,7 @@ function checkTimeConfigArgs(config) {
     return accu;
   }, {});
 }
+
 /**
  * Update editor
  */
@@ -3045,6 +3046,36 @@ export function setLayerAnimationTimeConfigUpdater(
   }
   const updates = checkTimeConfigArgs(config);
   return pick_('animationConfig')(merge_(updates))(state);
+}
+
+/**
+ * Update editor
+ */
+export function layerFilteredItemsChangeUpdater<S extends VisState>(
+  state: S,
+  action: VisStateActions.LayerFilteredItemsChangeAction
+): S {
+  const {event, layer} = action;
+  const {id: deckglLayerId, count} = event;
+  if (!layer) {
+    Console.warn(`layerFilteredItems layer doesnt exists`);
+    return state;
+  }
+  if (layer.filteredItemCount?.[deckglLayerId] === count) {
+    return state;
+  }
+
+  layer.filteredItemCount = {
+    ...layer.filteredItemCount,
+    [deckglLayerId]: count
+  };
+
+  const nextState = {
+    ...state,
+    layers: swap_(layer)(state.layers)
+  };
+
+  return nextState;
 }
 
 // Find dataId from a saved visState property:

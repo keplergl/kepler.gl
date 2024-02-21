@@ -183,7 +183,11 @@ export const LAYER_ID_LENGTH = 6;
 
 const MAX_SAMPLE_SIZE = 5000;
 const defaultDomain: [number, number] = [0, 1];
-const dataFilterExtension = new DataFilterExtension({filterSize: MAX_GPU_FILTERS});
+const dataFilterExtension = new DataFilterExtension({
+  filterSize: MAX_GPU_FILTERS,
+  // @ts-expect-error not typed
+  countItems: true
+});
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const defaultDataAccessor = dc => d => d;
@@ -233,6 +237,9 @@ class Layer {
 
   isValid: boolean;
   errorMessage: string | null;
+  filteredItemCount: {
+    [deckLayerId: string]: number;
+  };
 
   constructor(props: BaseLayerConstructorProps) {
     this.id = props.id || generateHashId(LAYER_ID_LENGTH);
@@ -257,6 +264,8 @@ class Layer {
     // false indicates that the layer caused an error, and was disabled
     this.isValid = true;
     this.errorMessage = null;
+    // item count
+    this.filteredItemCount = {};
   }
 
   get layerIcon(): React.ElementType {
@@ -664,6 +673,14 @@ class Layer {
     return dataContainer.row(object.index);
   }
 
+  getFilteredItemCount(): number | null {
+    // use first layer
+    if (Object.keys(this.filteredItemCount).length) {
+      const firstLayer = Object.keys(this.filteredItemCount)[0];
+      return this.filteredItemCount[firstLayer];
+    }
+    return null;
+  }
   /**
    * When change layer type, try to copy over layer configs as much as possible
    * @param configToCopy - config to copy over
@@ -1187,6 +1204,9 @@ class Layer {
 
     if (triggerChanged && (triggerChanged.getMeta || triggerChanged.getData)) {
       this.updateLayerMeta(dataContainer, getPosition);
+
+      // reset filteredItemCount
+      this.filteredItemCount = {};
     }
 
     let data = [];
@@ -1378,11 +1398,13 @@ class Layer {
     idx,
     gpuFilter,
     mapState,
+    layerCallbacks,
     visible
   }: {
     idx: number;
     gpuFilter: GpuFilter;
     mapState: MapState;
+    layerCallbacks: any;
     visible: boolean;
   }) {
     return {
@@ -1399,6 +1421,7 @@ class Layer {
       // data filtering
       extensions: [dataFilterExtension],
       filterRange: gpuFilter ? gpuFilter.filterRange : undefined,
+      onFilteredItemsChange: gpuFilter ? layerCallbacks?.onFilteredItemsChange : undefined,
 
       // layer should be visible and if splitMap, shown in to one of panel
       visible: this.config.isVisible && visible

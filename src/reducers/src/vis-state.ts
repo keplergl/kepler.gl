@@ -140,6 +140,8 @@ const actionHandler = {
   [ActionTypes.SET_LAYER_ANIMATION_TIME_CONFIG]:
     visStateUpdaters.setLayerAnimationTimeConfigUpdater,
 
+  [ActionTypes.LAYER_FILTERED_ITEMS_CHANGE]: visStateUpdaters.layerFilteredItemsChangeUpdater,
+
   [ActionTypes.ADD_EFFECT]: visStateUpdaters.addEffectUpdater,
 
   [ActionTypes.REORDER_EFFECT]: visStateUpdaters.reorderEffectUpdater,
