@@ -90,17 +90,19 @@ export const loadRemoteResourceSuccess = (state, action) => {
   // TODO: replace generate with a different function
   const datasetId = action.options.id || generateHashId(6);
   const {dataUrl} = action.options;
-  let processorMethod = processRowObject;
-  // TODO: create helper to determine file ext eligibility
-  if (dataUrl.includes('.json') || dataUrl.includes('.geojson')) {
-    processorMethod = processGeojson;
-  } else if (dataUrl.includes('.arrow')) {
-    processorMethod = processArrowTable;
-  }
 
+  const {shape} = action.response;
+  let processorMethod = processRowObject;
   let unprocessedData = action.response;
-  if (unprocessedData?.shape === 'object-row-table') {
-    unprocessedData = unprocessedData.data;
+  if (shape === 'arrow-table') {
+    processorMethod = processArrowTable;
+  } else if (shape === 'object-row-table') {
+    processorMethod = processRowObject;
+    unprocessedData = action.response.data;
+  } else if (dataUrl.includes('.json') || dataUrl.includes('.geojson')) {
+    processorMethod = processGeojson;
+  } else {
+    throw new Error('Failed to select data processor');
   }
 
   const datasets = {
