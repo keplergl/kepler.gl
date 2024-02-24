@@ -98,11 +98,16 @@ export const loadRemoteResourceSuccess = (state, action) => {
     processorMethod = processArrowTable;
   }
 
+  let unprocessedData = action.response;
+  if (unprocessedData?.shape === 'object-row-table') {
+    unprocessedData = unprocessedData.data;
+  }
+
   const datasets = {
     info: {
       id: datasetId
     },
-    data: processorMethod(action.response)
+    data: processorMethod(unprocessedData)
   };
 
   const config = action.config ? KeplerGlSchema.parseSavedConfig(action.config) : null;
