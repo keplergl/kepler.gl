@@ -294,7 +294,7 @@ export const arrayMove = <T>(array: T[], from: number, to: number): T[] => {
  * @param field
  */
 export function getFormatter(
-  format: string | Record<string, string>,
+  format: string | Record<string, string> | null,
   field?: Field
 ): FieldFormatter {
   if (!format) {
