@@ -3,6 +3,7 @@
 
 import React, {ComponentType} from 'react';
 import styled from 'styled-components';
+import classnames from 'classnames';
 import PanelHeaderActionFactory from '../../side-panel/panel-header-action';
 import {Trash} from '../../common/icons';
 import {createLinearGradient} from '@kepler.gl/utils';
@@ -59,13 +60,14 @@ function FilterPanelHeaderFactory(
   };
   const FilterPanelHeader: React.FC<FilterPanelHeaderProps> = ({
     children,
+    className = '',
     datasets,
     filter,
     removeFilter,
     actionIcons = defaultActionIcons
   }: FilterPanelHeaderProps) => (
     <StyledFilterHeader
-      className="filter-panel__header"
+      className={classnames('filter-panel__header', className)}
       $labelRCGColorValues={datasets.map((d: KeplerTable) => d.color)}
     >
       <StyledChildrenContainer>{children}</StyledChildrenContainer>

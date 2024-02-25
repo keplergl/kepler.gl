@@ -4,6 +4,7 @@
 import classnames from 'classnames';
 import React, {Component, ComponentType} from 'react';
 import styled from 'styled-components';
+import classnames from 'classnames';
 import {createSelector} from 'reselect';
 
 import {Field} from '@kepler.gl/types';
@@ -125,7 +126,8 @@ function FieldSelectorFactory(
       multiSelect: false,
       closeOnSelect: true,
       showToken: true,
-      placeholder: 'placeholder.selectField'
+      placeholder: 'placeholder.selectField',
+      className: ''
     };
 
     fieldsSelector = props => props.fields;
