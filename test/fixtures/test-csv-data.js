@@ -758,7 +758,7 @@ export const expectedSyncedTsFilter = {
   // 2016-09-17 00:09:55 // 1474070995000
   // 2016-09-17 00:30:08 // 1474072208000
   domain: [1474070995000, 1474072208000],
-  value: [1474071116000, 1474071677000],
+  value: [1474071116000, 1474072188000],
   animationWindow: 'free',
   defaultTimeFormat: 'L LTS',
   view: 'enlarged',
@@ -1293,8 +1293,14 @@ export const testAllData = [
 
 export const testCsvDataSlice1 = testAllData.slice(0, 20);
 export const testCsvDataSlice1Id = 'test-csv-data-1';
+export const timeFieldDomainSlice1 = [1474070995000, 1474072115000];
+
 export const testCsvDataSlice2 = testAllData.slice(5, testAllData.length);
+export const timeFieldDomainSlice2 = [1474071301000, 1474072208000];
 export const testCsvDataSlice2Id = 'test-csv-data-2';
+
+// the synced value intersect domain of both slices
+export const syncTimeFilterValue = [1474071116000, 1474072188000];
 
 export default data;
 

@@ -2366,11 +2366,11 @@ test('#visStateReducer -> SET_FILTER synced', t => {
     changedFilters: {
       dynamicDomain: null,
       fixedDomain: {
-        [filterId]: 'dataId_changed'
+        [filterId]: 'value_changed'
       },
       cpu: null,
       gpu: {
-        [filterId]: 'dataId_changed'
+        [filterId]: 'value_changed'
       }
     },
     filterRecord: {
@@ -2391,7 +2391,7 @@ test('#visStateReducer -> SET_FILTER synced', t => {
     },
     gpuFilter: {
       filterRange: [
-        [121000, 682000],
+        [121000, 1193000],
         [0, 0],
         [0, 0],
         [0, 0]
@@ -2422,11 +2422,11 @@ test('#visStateReducer -> SET_FILTER synced', t => {
     changedFilters: {
       dynamicDomain: null,
       fixedDomain: {
-        [filterId]: 'added'
+        [filterId]: 'value_changed'
       },
       cpu: null,
       gpu: {
-        [filterId]: 'added'
+        [filterId]: 'value_changed'
       }
     },
     filterRecord: {
@@ -2447,7 +2447,7 @@ test('#visStateReducer -> SET_FILTER synced', t => {
     },
     gpuFilter: {
       filterRange: [
-        [121000, 682000],
+        [121000, 1193000],
         [0, 0],
         [0, 0],
         [0, 0]
@@ -2495,7 +2495,7 @@ test('#visStateReducer -> SET_FILTER synced -> remove 1', t => {
     // reset domain
     domain: [1474071301000, 1474072208000],
     // adjust value
-    value: [1474071301000, 1474071677000],
+    value: [1474071301000, 1474072188000],
     gpuChannel: [0],
     timeBins: {
       'test-csv-data-2': expectedSyncedTsFilter.timeBins['test-csv-data-2']
@@ -2575,7 +2575,7 @@ test('#visStateReducer -> SET_FILTER synced -> remove 1', t => {
     },
     gpuFilter: {
       filterRange: [
-        [0, 376000],
+        [0, 887000],
         [0, 0],
         [0, 0],
         [0, 0]
@@ -3498,7 +3498,7 @@ test('#visStateReducer -> REMOVE_DATASET w synced filter', t => {
     // reset domain
     domain: [1474071301000, 1474072208000],
     // adjust value
-    value: [1474071301000, 1474071677000],
+    value: [1474071301000, 1474072188000],
     gpuChannel: [0],
     timeBins: {
       'test-csv-data-2': expectedSyncedTsFilter.timeBins['test-csv-data-2']
