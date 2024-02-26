@@ -90,19 +90,26 @@ export const loadRemoteResourceSuccess = (state, action) => {
   // TODO: replace generate with a different function
   const datasetId = action.options.id || generateHashId(6);
   const {dataUrl} = action.options;
+
+  const {shape} = action.response;
   let processorMethod = processRowObject;
-  // TODO: create helper to determine file ext eligibility
-  if (dataUrl.includes('.json') || dataUrl.includes('.geojson')) {
-    processorMethod = processGeojson;
-  } else if (dataUrl.includes('.arrow')) {
+  let unprocessedData = action.response;
+  if (shape === 'arrow-table') {
     processorMethod = processArrowTable;
+  } else if (shape === 'object-row-table') {
+    processorMethod = processRowObject;
+    unprocessedData = action.response.data;
+  } else if (dataUrl.includes('.json') || dataUrl.includes('.geojson')) {
+    processorMethod = processGeojson;
+  } else {
+    throw new Error('Failed to select data processor');
   }
 
   const datasets = {
     info: {
       id: datasetId
     },
-    data: processorMethod(action.response)
+    data: processorMethod(unprocessedData)
   };
 
   const config = action.config ? KeplerGlSchema.parseSavedConfig(action.config) : null;
