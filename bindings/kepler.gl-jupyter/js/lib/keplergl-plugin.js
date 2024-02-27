@@ -21,20 +21,22 @@ import log from './log';
 // When serialiazing the entire widget state for embedding, only values that
 // differ from the defaults will be specified.
 
-export const KeplerGlModal = widgets.DOMWidgetModel.extend({
-  defaults: {
-    ...widgets.DOMWidgetModel.prototype.defaults(),
-    _model_name: 'KeplerGlModal',
-    _view_name: 'KeplerGlView',
-    _model_module: 'keplergl-jupyter',
-    _view_module: 'keplergl-jupyter',
+export class KeplerGlModal extends widgets.DOMWidgetModel {
+  defaults() {
+    return {
+      ...super.defaults(),
+      _model_name: 'KeplerGlModal',
+      _view_name: 'KeplerGlView',
+      _model_module: 'keplergl-jupyter',
+      _view_module: 'keplergl-jupyter',
 
-    data: {},
-    config: {}
+      data: {},
+      config: {},
+    };
   }
-});
+}
 
-export const KeplerGlView = widgets.DOMWidgetView.extend({
+export class KeplerGlView extends widgets.DOMWidgetView {
   render() {
     log('KeplerGlModal start render');
     this.keplergl = new KeplerGlJupyter();
@@ -46,17 +48,17 @@ export const KeplerGlView = widgets.DOMWidgetView.extend({
     this.model.on('change:config', this.config_changed, this);
 
     window.dom = this.el;
-  },
+  }
 
   data_changed() {
     log('KeplerGlModal start data_changed');
 
     this.keplergl.onDataChange(this);
-  },
+  }
 
   config_changed() {
     log('KeplerGlModal start config_change');
 
     this.keplergl.onConfigChange(this);
   }
-});
+}
