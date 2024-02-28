@@ -75,6 +75,7 @@ export {default as WarningSign} from './warning-sign';
 export {default as DrawPolygon} from './draw-polygon';
 export {default as Polygon} from './polygon';
 export {default as Rectangle} from './rectangle';
+export {default as TimelineMarker} from './timeline-marker';
 export {default as OrderByList} from './order-by-list';
 export {default as OrderByDataset} from './order-by-dataset';
 export {default as Messages} from './messages';

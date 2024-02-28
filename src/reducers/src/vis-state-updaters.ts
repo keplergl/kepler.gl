@@ -98,7 +98,14 @@ import {
 
 import KeplerGLSchema, {VisState, Merger, PostMergerPayload} from '@kepler.gl/schemas';
 
-import {Filter, InteractionConfig, AnimationConfig, Editor, Field} from '@kepler.gl/types';
+import {
+  Filter,
+  InteractionConfig,
+  AnimationConfig,
+  Editor,
+  Field,
+  TimeRangeFilter
+} from '@kepler.gl/types';
 import {Loader} from '@loaders.gl/loader-utils';
 
 import {calculateLayerData, findDefaultLayer, getLayerOrderFromLayers} from './layer-utils';
@@ -114,7 +121,7 @@ import {
 import {findFieldsToShow} from './interaction-utils';
 import {hasPropsToMerge, getPropValueToMerger} from './merger-handler';
 import {mergeDatasetsByOrder} from './vis-state-merger';
-import {fixEffectOrder} from '@kepler.gl/utils';
+import {fixEffectOrder, getAnimatableLayers, mergeTimeDomains} from '@kepler.gl/utils';
 import {createEffect} from '@kepler.gl/effects';
 
 // react-palm
@@ -878,6 +885,35 @@ export function layerVisConfigChangeUpdater(
 }
 
 /**
+ * Reset animation config current time to a specified value
+ * @memberof visStateUpdaters
+ * @public
+ *
+ */
+export const setLayerAnimationTimeUpdater = <S extends VisState>(
+  state: S,
+  {value}: VisStateActions.SetLayerAnimationTimeUpdaterAction
+): S => {
+  const currentTime = Array.isArray(value) ? value[0] : value;
+  const nextState = {
+    ...state,
+    animationConfig: {
+      ...state.animationConfig,
+      currentTime
+    }
+  };
+  // update animation config for each layer
+  const result = state.layers.reduce((accu, l) => {
+    if (l.config.animation.enabled && l.type !== 'trip') {
+      return layerAnimationChangeUpdater(accu, {oldLayer: l, prop: 'currentTime', currentTime});
+    }
+    return accu;
+  }, nextState);
+
+  return result;
+};
+
+/**
  * Update filter property
  * @memberof visStateUpdaters
  * @public
@@ -886,7 +922,15 @@ export function setFilterAnimationTimeUpdater(
   state: VisState,
   action: VisStateActions.SetFilterAnimationTimeUpdaterAction
 ): VisState {
-  return setFilterUpdater(state, action);
+  let newState = setFilterUpdater(state, action);
+  const {idx} = action;
+  const filter = newState.filters[idx];
+  if ((filter as TimeRangeFilter).syncedWithLayerTimeline) {
+    const timelineValue = getTimelineFromTrip(filter);
+    newState = setLayerAnimationTimeUpdater(newState, {value: timelineValue});
+  }
+
+  return newState;
 }
 
 /**
@@ -1323,37 +1367,6 @@ export const updateFilterAnimationSpeedUpdater = (
   ...state,
   filters: state.filters.map((f, i) => (i === action.idx ? {...f, speed: action.speed} : f))
 });
-
-/**
- * Reset animation config current time to a specified value
- * @memberof visStateUpdaters
- * @public
- *
- */
-export const setLayerAnimationTimeUpdater = <S extends VisState>(
-  state: S,
-  {value}: VisStateActions.SetLayerAnimationTimeUpdaterAction
-): S => {
-  const currentTime = Array.isArray(value) ? value[0] : value;
-  const nextState = {
-    ...state,
-    animationConfig: {
-      ...state.animationConfig,
-      currentTime
-    }
-  };
-  // update animation config for each layer
-  const result = state.layers.reduce(
-    (accu, l) =>
-      l.config.animation.enabled && l.type !== 'trip'
-        ? layerAnimationChangeUpdater(accu, {oldLayer: l, prop: 'currentTime', currentTime})
-        : accu,
-
-    nextState
-  );
-
-  return result;
-};
 
 /**
  * Update animation speed with the vertical speed slider
@@ -2677,13 +2690,7 @@ export function updateAllLayerDomainData(
 
 export function updateAnimationDomain<S extends VisState>(state: S): S {
   // merge all animatable layer domain and update global config
-  const animatableLayers = state.layers.filter(
-    l =>
-      l.config.isVisible &&
-      l.config.animation &&
-      l.config.animation.enabled &&
-      Array.isArray(l.config.animation.domain)
-  );
+  const animatableLayers = getAnimatableLayers(state.layers);
 
   if (!animatableLayers.length) {
     return {
@@ -2698,19 +2705,14 @@ export function updateAnimationDomain<S extends VisState>(state: S): S {
     };
   }
 
-  const mergedDomain: [number, number] = animatableLayers.reduce(
-    (accu, layer) => [
-      Math.min(accu[0], layer.config.animation.domain?.[0] ?? Infinity),
-      Math.max(accu[1], layer.config.animation.domain?.[1] ?? -Infinity)
-    ],
-    [Number(Infinity), -Infinity]
-  );
+  const layerDomains = animatableLayers.map(l => l.config.animation.domain || []);
+  // @ts-ignore
+  const mergedDomain = mergeTimeDomains(layerDomains);
   const defaultTimeFormat = getTimeWidgetTitleFormatter(mergedDomain);
 
   // merge timeSteps
-  let mergedTimeSteps: number[] | null = uniq(
+  let mergedTimeSteps: number[] | null = uniq<number>(
     animatableLayers.reduce((accu, layer) => {
-      // @ts-ignore
       accu.push(...(layer.config.animation.timeSteps || []));
       return accu;
     }, [])
@@ -3132,12 +3134,46 @@ export function layerFilteredItemsChangeUpdater<S extends VisState>(
     [deckglLayerId]: count
   };
 
-  const nextState = {
+  return {
     ...state,
     layers: swap_(layer)(state.layers)
   };
+}
 
-  return nextState;
+export function syncTimeFilterWithLayerTimelineUpdater<S extends VisState>(
+  state: S,
+  action: VisStateActions.SyncTimeFilterWithLayerTimelineAction
+) {
+  const {idx: filterIdx, enable = false} = action;
+
+  const filter = state.filters[filterIdx] as TimeRangeFilter;
+  let newAnimationConfig = {...state.animationConfig};
+
+  const newFilterDomain = enable
+    ? mergeTimeDomains([filter.domain, newAnimationConfig.domain as [number, number] | null])
+    : filter.domain;
+
+  const newFilter = {
+    ...filter,
+    value: adjustValueToFilterDomain(newFilterDomain, filter),
+    syncedWithLayerTimeline: enable
+  };
+
+  const animationConfigCurrentTime = enable
+    ? newFilterDomain[0]
+    : state.animationConfig.domain?.[0];
+
+  return setLayerAnimationTimeUpdater(
+    {
+      ...state,
+      filters: swap_<Filter>(newFilter)(state.filters)
+    },
+    {value: animationConfigCurrentTime}
+  );
+}
+
+function getTimelineFromTrip(filter) {
+  return filter.value[1];
 }
 
 // Find dataId from a saved visState property:

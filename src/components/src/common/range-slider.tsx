@@ -8,7 +8,7 @@ import styled from 'styled-components';
 import RangePlotFactory from './range-plot';
 import Slider from './slider/slider';
 import {Input} from './styled-components';
-
+import RangeSliderSublineFactory from '../common/range-slider-subline';
 import {observeDimensions, unobserveDimensions, roundValToStep, clamp} from '@kepler.gl/utils';
 import {LineChart, Filter, Bins} from '@kepler.gl/types';
 import {Datasets} from '@kepler.gl/table';
@@ -60,6 +60,8 @@ interface RangeSliderProps {
   step?: number;
   sliderHandleWidth?: number;
   xAxis?: ElementType;
+  sublines?: [number, number][];
+
   timezone?: string | null;
   timeFormat?: string;
   playbackControlWidth?: number;
@@ -77,10 +79,11 @@ interface RangeSliderProps {
   invertTrendColor?: boolean;
 }
 
-RangeSliderFactory.deps = [RangePlotFactory];
+RangeSliderFactory.deps = [RangePlotFactory, RangeSliderSublineFactory];
 
 export default function RangeSliderFactory(
-  RangePlot: ReturnType<typeof RangePlotFactory>
+  RangePlot: ReturnType<typeof RangePlotFactory>,
+  RangeSliderSubline: ReturnType<typeof RangeSliderSublineFactory>
 ): ComponentType<RangeSliderProps> {
   class RangeSlider extends Component<RangeSliderProps> {
     static defaultProps = {
@@ -227,6 +230,7 @@ export default function RangeSliderFactory(
         timeFormat,
         playbackControlWidth,
         setFilterPlot,
+        sublines,
         animationWindow,
         filter,
         datasets
@@ -266,6 +270,9 @@ export default function RangeSliderFactory(
                   setFilterPlot={setFilterPlot}
                 />
               ) : null}
+              {sublines?.length
+                ? sublines.map((line, index) => <RangeSliderSubline key={index} line={line} />)
+                : null}
               <SliderWrapper
                 className="kg-range-slider__slider"
                 isRanged={isRanged}

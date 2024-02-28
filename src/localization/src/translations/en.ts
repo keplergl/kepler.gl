@@ -196,6 +196,8 @@ export default {
   filterManager: {
     addFilter: 'Add Filter',
     timeFilterSync: 'Synced datasets',
+    timeLayerSync: 'Link with the layer timeline',
+    timeLayerUnsync: 'Unlink with the layer timeline',
     column: 'Column'
   },
   datasetTitle: {
@@ -240,6 +242,8 @@ export default {
     pause: 'pause',
     reset: 'reset',
     export: 'export',
+    timeLayerSync: 'Link with the layer timeline',
+    timeLayerUnsync: 'Unlink with the layer timeline',
     showEffectPanel: 'Show effect panel',
     hideEffectPanel: 'Hide effect panel',
     removeEffect: 'Remove effect',

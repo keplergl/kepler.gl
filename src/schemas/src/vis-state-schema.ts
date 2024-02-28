@@ -843,6 +843,9 @@ export const filterPropsV1 = {
   layerId: null,
   speed: null,
 
+  // layer timeline
+  syncedWithLayerTimeline: null,
+
   enabled: null,
 
   invertTrendColor: null
