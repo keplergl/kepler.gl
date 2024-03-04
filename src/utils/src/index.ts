@@ -21,7 +21,14 @@ export {createNotification, exportImageError, successNotification} from './notif
 export {setStyleSheetBaseHref} from './dom-utils';
 export {default as domtoimage} from './dom-to-image';
 export {getFrequency, getMode, aggregate} from './aggregation';
-export {getBinThresholds, histogramFromThreshold, histogramFromDomain, runGpuFilterForPlot} from './plot';
+export {
+  getBinThresholds,
+  histogramFromThreshold,
+  histogramFromDomain,
+  runGpuFilterForPlot,
+  adjustValueToAnimationWindow,
+  updateTimeFilterPlotType
+} from './plot';
 // eslint-disable-next-line prettier/prettier
 export type {FieldFormatter} from './data-utils';
 export * from './data-utils';
@@ -30,7 +37,10 @@ export {
   getTimelineFromAnimationConfig,
   getTimelineFromFilter,
   SAMPLE_TIMELINE,
-  TIMELINE_MODES
+  TIMELINE_MODES,
+  LayerToFilterTimeInterval,
+  TIME_INTERVALS_ORDERED,
+  TileTimeInterval
 } from './time';
 
 export {
@@ -45,7 +55,7 @@ export {
   getFormatLabels,
   getFieldFormatLabels
 } from './dataset-utils';
-export {getFormatValue} from './format';
+export {getFormatValue, getDefaultTimeFormat} from './format';
 export {exportMapToHTML} from './export-map-html';
 export {
   isMSEdge,

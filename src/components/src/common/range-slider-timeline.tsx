@@ -25,7 +25,7 @@ const TIMELINE_MARKER_STYLE: CSSProperties = {
 const containerStyle = {
   display: 'flex',
   width: '100%',
-  height: '16px'
+  height: '24px'
 };
 
 const iconWrapperStyle = {
