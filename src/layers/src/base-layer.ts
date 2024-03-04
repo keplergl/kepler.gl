@@ -280,7 +280,7 @@ class Layer {
     return null;
   }
 
-  get name() {
+  get name(): string | null {
     return this.type;
   }
 

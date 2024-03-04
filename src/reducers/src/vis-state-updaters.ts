@@ -74,6 +74,7 @@ import {
 import {mergeStateFromMergers, isValidMerger} from './merger-handler';
 import {Layer, LayerClasses, LAYER_ID_LENGTH} from '@kepler.gl/layers';
 import {
+  ANIMATION_WINDOW,
   EDITOR_MODES,
   SORT_ORDER,
   FILTER_TYPES,
@@ -83,6 +84,7 @@ import {
   COMPARE_TYPES,
   LIGHT_AND_SHADOW_EFFECT,
   PLOT_TYPES,
+  SYNC_TIMELINE_MODES,
   BASE_SPEED,
   FPS
 } from '@kepler.gl/constants';
@@ -942,17 +944,25 @@ export function setFilterAnimationWindowUpdater(
   state: VisState,
   {id, animationWindow}: VisStateActions.SetFilterAnimationWindowUpdaterAction
 ): VisState {
-  return {
-    ...state,
-    filters: state.filters.map(f =>
-      f.id === id
-        ? {
-            ...f,
-            animationWindow
-          }
-        : f
-    )
+  const filter = state.filters.find(f => f.id === id);
+
+  if (!filter) {
+    return state;
+  }
+
+  const newFilter = {
+    ...filter,
+    animationWindow
   };
+
+  const newState = {
+    ...state,
+    filters: swap_<Filter>(newFilter)(state.filters)
+  };
+
+  const newSyncTimelineMode = getSyncAnimationMode(newFilter);
+
+  return setTimeFilterTimelineModeUpdater(newState, {id, mode: newSyncTimelineMode});
 }
 
 /**
@@ -3147,16 +3157,19 @@ export function syncTimeFilterWithLayerTimelineUpdater<S extends VisState>(
   const {idx: filterIdx, enable = false} = action;
 
   const filter = state.filters[filterIdx] as TimeRangeFilter;
-  let newAnimationConfig = {...state.animationConfig};
+  const newAnimationConfig = {...state.animationConfig};
 
   const newFilterDomain = enable
     ? mergeTimeDomains([filter.domain, newAnimationConfig.domain as [number, number] | null])
     : filter.domain;
 
+  const syncTimelineMode = getSyncAnimationMode(filter);
+
   const newFilter = {
     ...filter,
     value: adjustValueToFilterDomain(newFilterDomain, filter),
-    syncedWithLayerTimeline: enable
+    syncedWithLayerTimeline: enable,
+    syncTimelineMode
   };
 
   const animationConfigCurrentTime = enable
@@ -3172,8 +3185,49 @@ export function syncTimeFilterWithLayerTimelineUpdater<S extends VisState>(
   );
 }
 
+export function setTimeFilterTimelineModeUpdater<S extends VisState>(
+  state: S,
+  action: VisStateActions.setTimeFilterSyncTimelineModeAction
+) {
+  const {id: filterId, mode: syncTimelineMode} = action;
+
+  const filter = state.filters.find(f => f.id === filterId) as TimeRangeFilter | undefined;
+
+  if (!filter?.syncedWithLayerTimeline) {
+    return state;
+  }
+
+  if (!validateSyncAnimationMode(filter, syncTimelineMode)) {
+    return state;
+  }
+
+  const newFilter = {
+    ...filter,
+    syncTimelineMode
+  };
+
+  return {
+    ...state,
+    filters: swap_<Filter>(newFilter)(state.filters)
+  };
+}
+
 function getTimelineFromTrip(filter) {
-  return filter.value[1];
+  return filter.value[filter.syncTimelineMode];
+}
+
+function getSyncAnimationMode(filter) {
+  return filter.animationWindow === ANIMATION_WINDOW.free
+    ? SYNC_TIMELINE_MODES.start
+    : SYNC_TIMELINE_MODES.end;
+}
+
+function validateSyncAnimationMode(filter, newMode) {
+  if (filter.animationWindow !== ANIMATION_WINDOW.free && newMode === SYNC_TIMELINE_MODES.start) {
+    return false;
+  }
+
+  return true;
 }
 
 // Find dataId from a saved visState property:

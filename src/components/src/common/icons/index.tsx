@@ -11,6 +11,7 @@ export {default as AnchorWindow} from './anchor_window';
 export {default as ArrowDown} from './arrow-down';
 export {default as ArrowDownAlt} from './arrow-down-alt';
 export {default as ArrowDownSolid} from './arrow-down-alt';
+export {default as ArrowDownFull} from './arrow-down-full';
 export {default as ArrowLeft} from './arrow-left';
 export {default as ArrowRight} from './arrow-right';
 export {default as ArrowUpSolid} from './arrow-up-solid';

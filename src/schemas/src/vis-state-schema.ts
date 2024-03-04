@@ -845,6 +845,7 @@ export const filterPropsV1 = {
 
   // layer timeline
   syncedWithLayerTimeline: null,
+  syncTimelineMode: null,
 
   enabled: null,
 

@@ -15,6 +15,7 @@ import {
   ActionHandler,
   setFilterAnimationTime,
   setFilterAnimationWindow,
+  setTimeFilterSyncTimelineMode,
   setFilterPlot,
   toggleFilterAnimation,
   updateFilterAnimationSpeed
@@ -87,6 +88,7 @@ export type TimeWidgetProps = {
   toggleAnimation: ActionHandler<typeof toggleFilterAnimation>;
   setFilterPlot: ActionHandler<typeof setFilterPlot>;
   setFilterAnimationWindow: ActionHandler<typeof setFilterAnimationWindow>;
+  setFilterSyncTimelineMode: ActionHandler<typeof setTimeFilterSyncTimelineMode>;
   timeline: Timeline;
   animationConfig: AnimationConfig;
 };

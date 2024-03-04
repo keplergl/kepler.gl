@@ -25,7 +25,12 @@ const TimeSliderContainer = styled.svg`
     fill: ${props => props.theme.axisFontColor};
   }
 
-  .axis line,
+  .axis line {
+    stroke: ${props => props.theme.axisFontColor};
+    shape-rendering: crispEdges;
+    stroke-width: 1;
+  }
+
   .axis path {
     fill: none;
     stroke: ${props => props.theme.sliderBarBgd};
@@ -104,7 +109,7 @@ export function getXAxis(
 
   const ticks = Math.floor(width / (isEnlarged ? MIN_TICK_WIDTH_LARGE : MIN_TICK_WIDTH_SMALL));
   const tickFormat = timezone ? getTickFormat(timezone) : null;
-  const xAxis = axisBottom(scale).ticks(ticks).tickSize(0).tickPadding(12);
+  const xAxis = axisBottom(scale).ticks(ticks).tickSize(4).tickPadding(4);
   if (tickFormat) {
     xAxis.tickFormat(tickFormat);
   }

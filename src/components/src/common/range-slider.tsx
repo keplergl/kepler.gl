@@ -9,7 +9,13 @@ import RangePlotFactory from './range-plot';
 import Slider from './slider/slider';
 import {Input} from './styled-components';
 import RangeSliderSublineFactory from '../common/range-slider-subline';
-import {observeDimensions, unobserveDimensions, roundValToStep, clamp} from '@kepler.gl/utils';
+import {
+  observeDimensions,
+  unobserveDimensions,
+  roundValToStep,
+  clamp,
+  scaleSourceDomainToDestination
+} from '@kepler.gl/utils';
 import {LineChart, Filter, Bins} from '@kepler.gl/types';
 import {Datasets} from '@kepler.gl/table';
 import {ActionHandler, setFilterPlot} from '@kepler.gl/actions';
@@ -60,7 +66,7 @@ interface RangeSliderProps {
   step?: number;
   sliderHandleWidth?: number;
   xAxis?: ElementType;
-  sublines?: [number, number][];
+  timelines?: number[];
 
   timezone?: string | null;
   timeFormat?: string;
@@ -230,7 +236,7 @@ export default function RangeSliderFactory(
         timeFormat,
         playbackControlWidth,
         setFilterPlot,
-        sublines,
+        timelines,
         animationWindow,
         filter,
         datasets
@@ -239,6 +245,13 @@ export default function RangeSliderFactory(
       const {width} = this.state;
       const plotWidth = Math.max(width - Number(sliderHandleWidth), 0);
       const hasPlot = plotType?.type;
+
+      const value = this.props.plotValue || this.filterValueSelector(this.props);
+      const scaledValue = range
+        ? // TODO figure out correct types for value and range
+          scaleSourceDomainToDestination(value as [number, number], range as [number, number])
+        : [0, 0];
+
       return (
         <div
           className="kg-range-slider"
@@ -260,7 +273,7 @@ export default function RangeSliderFactory(
                   filter={filter}
                   datasets={datasets}
                   range={range}
-                  value={this.props.plotValue || this.filterValueSelector(this.props)}
+                  value={value}
                   width={plotWidth}
                   isRanged={isRanged}
                   step={step}
@@ -270,8 +283,10 @@ export default function RangeSliderFactory(
                   setFilterPlot={setFilterPlot}
                 />
               ) : null}
-              {sublines?.length
-                ? sublines.map((line, index) => <RangeSliderSubline key={index} line={line} />)
+              {timelines?.length
+                ? timelines.map((line, index) => (
+                    <RangeSliderSubline key={index} line={line} scaledValue={scaledValue} />
+                  ))
                 : null}
               <SliderWrapper
                 className="kg-range-slider__slider"

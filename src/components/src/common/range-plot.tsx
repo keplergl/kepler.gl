@@ -191,7 +191,7 @@ export default function RangePlotFactory(
           }
         });
       } else if (isLineChart(plotType) && !lineChart && !isLoading) {
-        // load linechart
+        // load line chart
         setIsLoading(true);
         setFilterPlot({
           plotType: {
@@ -203,19 +203,21 @@ export default function RangePlotFactory(
       }
     }, [plotType, bins, lineChart, setFilterPlot, isLoading, setIsLoading]);
 
+    const rangePlotStyle = useMemo(
+      () => ({
+        height: `${
+          isEnlarged
+            ? hasMobileWidth(breakPointValues)
+              ? theme.rangePlotContainerHLargePalm
+              : theme.rangePlotContainerHLarge
+            : theme.rangePlotContainerH
+        }px`
+      }),
+      [isEnlarged, theme]
+    );
+
     return (
-      <StyledRangePlot
-        style={{
-          height: `${
-            isEnlarged
-              ? hasMobileWidth(breakPointValues)
-                ? theme.rangePlotContainerHLargePalm
-                : theme.rangePlotContainerHLarge
-              : theme.rangePlotContainerH
-          }px`
-        }}
-        className="kg-range-slider__plot"
-      >
+      <StyledRangePlot style={rangePlotStyle} className="kg-range-slider__plot">
         {isLoading ? (
           <div
             style={{
