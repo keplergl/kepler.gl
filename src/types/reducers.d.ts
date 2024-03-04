@@ -74,6 +74,11 @@ export type LineChart = {
   series: {x: number; y: number}[];
   yDomain: number[] | undefined[];
   xDomain: number[];
+
+  // Is this a valid part of LineChart?
+  aggregation: string;
+  interval: string;
+  yAxis: string;
 };
 
 type FilterViewType = 'side' | 'enlarged' | 'minified';
@@ -238,12 +243,12 @@ export type SplitMap = {
 export type AnimationConfigTimeFormat = 'L' | 'L LT' | 'L LTS';
 
 export type AnimationConfig = {
-  domain: number[] | null;
+  domain: [number, number] | null;
   currentTime: number | null;
   speed: number;
   duration?: number | null;
   isAnimating?: boolean;
-  timeSteps?: null | number[];
+  timeSteps: number[] | null;
   // auto generated based on time domain
   defaultTimeFormat: AnimationTimeFormat | null;
   // custom ui input

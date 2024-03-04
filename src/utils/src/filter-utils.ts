@@ -1229,19 +1229,27 @@ export function mergeTimeDomains(domains: ([number, number] | null)[]): [number,
 }
 
 /**
- *
- * @param layers {Layer[]}
+ * @param {Layer} layer
+ */
+export function isLayerAnimatable(layer: any): boolean {
+  return layer.config.animation?.enabled && Array.isArray(layer.config.animation.domain);
+}
+
+/**
+ * @param {Layer[]} layers
  * @returns {Layer[]}
  */
-export function getAnimatableLayers(layers: any[]): any[] {
-  const animatableLayers = layers.filter(
-    l =>
-      l.config.isVisible &&
-      l.config.animation &&
-      l.config.animation.enabled &&
-      Array.isArray(l.config.animation.domain)
-  );
-  return animatableLayers;
+export function getAnimatableVisibleLayers(layers: any[]): any[] {
+  return layers.filter(l => isLayerAnimatable(l) && l.config.isVisible);
+}
+
+/**
+ * @param {Layer[]} layers
+ * @param {string} type
+ * @returns {Layer[]}
+ */
+export function getAnimatableVisibleLayersByType(layers: any[], type: string): any[] {
+  return getAnimatableVisibleLayers(layers).filter(l => l.type === type);
 }
 
 export function mergeFilterWithTimeline(
@@ -1285,7 +1293,7 @@ export function scaleSourceDomainToDestination(
   return [scaledOffset, scaledSourceDomainSize + scaledOffset];
 }
 
-export function getFilterScaledTimeline(filter, animationConfig): number[] {
+export function getFilterScaledTimeline(filter, animationConfig): [number, number] | [] {
   if (!(filter.syncedWithLayerTimeline && animationConfig?.domain)) {
     return [];
   }

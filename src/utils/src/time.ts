@@ -51,7 +51,6 @@ export const getTimelineFromAnimationConfig = (animationConfig: AnimationConfig)
     // @ts-expect-error
     value: toArray(currentTime),
     enableInteraction: true,
-    // @ts-expect-error
     domain,
     speed,
     isAnimating: isAnimating || false,

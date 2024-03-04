@@ -5,6 +5,7 @@ import React, {useMemo} from 'react';
 // eslint-disable-next-line no-unused-vars
 import {CSSProperties} from 'react';
 import {ArrowDownFull, TimelineMarker} from '../common/icons';
+import {Tooltip} from '../common/styled-components';
 
 const BACKGROUND_LINE_STYLE: CSSProperties = {
   height: '4px',
@@ -21,6 +22,17 @@ const TIMELINE_MARKER_STYLE: CSSProperties = {
   color: '#3D4866'
 };
 
+const containerStyle = {
+  display: 'flex',
+  width: '100%',
+  height: '16px'
+};
+
+const iconWrapperStyle = {
+  marginRight: '8px',
+  cursor: 'pointer'
+};
+
 const TIMELINE_INDICATOR_STYLE: CSSProperties = {
   position: 'absolute',
   top: '-14px',
@@ -29,56 +41,67 @@ const TIMELINE_INDICATOR_STYLE: CSSProperties = {
 };
 
 function RangeSliderTimelineFactory() {
-  const RangeSliderTimeline = ({line, scaledValue, style}) => {
+  const RangeSliderTimeline = ({timeline, scaledValue, style}) => {
+    const {startTime, endTime, syncMode, Icon, label} = timeline;
+
     const progressStyle: CSSProperties = {
-      left: `${line[0]}%`,
+      left: `${startTime}%`,
       top: '0',
-      width: `${line[1] - line[0]}%`,
+      width: `${endTime - startTime}%`,
       height: '100%',
       position: 'absolute',
       backgroundColor: '#5558DB'
     };
 
-    const containerStyle = useMemo(
+    const progressBarContainer = useMemo(
       () => ({
         ...BACKGROUND_LINE_STYLE,
+        flex: 1,
         ...style
       }),
       [style]
     );
 
-    const value = scaledValue[line[2]];
+    const value = scaledValue[syncMode];
 
     const leftMarketStyle = useMemo(
       () => ({
-        left: `calc(${line[0]}% - 4px)`,
+        left: `calc(${startTime}% - 4px)`,
         ...TIMELINE_MARKER_STYLE
       }),
-      [line]
+      [startTime]
     );
 
     const rightMarketStyle = useMemo(
       () => ({
-        left: `calc(${line[1]}% - 4px)`,
+        left: `calc(${endTime}% - 4px)`,
         ...TIMELINE_MARKER_STYLE
       }),
-      [line]
+      [endTime]
     );
 
     const indicatorStyle = useMemo(
       () => ({
         ...TIMELINE_INDICATOR_STYLE,
-        left: `calc(${value}% - 2px)`
+        left: `calc(${value}% - 3px)`
       }),
       [value]
     );
 
     return (
       <div style={containerStyle}>
-        <div style={progressStyle} />
-        <ArrowDownFull style={leftMarketStyle} />
-        <ArrowDownFull style={rightMarketStyle} />
-        <TimelineMarker style={indicatorStyle} />
+        <div data-tip data-for={label} style={iconWrapperStyle}>
+          <Icon height="24px" color="#F7F8FA" />
+          <Tooltip id={label} place="right" effect="solid">
+            <span>{label}</span>
+          </Tooltip>
+        </div>
+        <div style={progressBarContainer}>
+          <div style={progressStyle} />
+          <ArrowDownFull style={leftMarketStyle} />
+          <ArrowDownFull style={rightMarketStyle} />
+          <TimelineMarker style={indicatorStyle} />
+        </div>
       </div>
     );
   };
