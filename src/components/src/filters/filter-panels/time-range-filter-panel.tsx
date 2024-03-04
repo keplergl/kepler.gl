@@ -154,6 +154,7 @@ function TimeRangeFilterPanelFactory(
                 <TimeRangeFilter
                   filter={filter}
                   datasets={datasets}
+                  layers={layers}
                   idx={idx}
                   toggleAnimation={toggleAnimation}
                   setFilter={onSetFilterValue}

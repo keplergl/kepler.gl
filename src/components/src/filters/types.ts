@@ -48,6 +48,7 @@ export type TimeRangeFilterProps = {
   toggleAnimation: () => void;
   timeline: Timeline;
   datasets: Datasets;
+  layers: readonly Layer[];
 };
 
 export type SingleSelectFilterProps = {
@@ -74,6 +75,7 @@ export type TimeWidgetTopProps = {
 };
 
 export type TimeWidgetProps = {
+  layers: Layer[];
   datasets: Datasets;
   filter: TimeRangeFilter;
   index: number;

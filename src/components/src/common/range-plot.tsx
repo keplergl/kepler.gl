@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useCallback, useMemo, useState, useEffect} from 'react';
+import React, {useCallback, useMemo, useState, useEffect, CSSProperties} from 'react';
 import styled, {withTheme} from 'styled-components';
 import RangeBrushFactory, {OnBrush, RangeBrushProps} from './range-brush';
 import HistogramPlotFactory from './histogram-plot';
@@ -42,6 +42,8 @@ interface RangePlotProps {
   datasets?: Datasets;
 
   invertTrendColor?: boolean;
+
+  style: CSSProperties;
 }
 
 type WithPlotLoadingProps = RangePlotProps &

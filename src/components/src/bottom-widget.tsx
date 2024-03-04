@@ -198,6 +198,7 @@ export default function BottomWidgetFactory(
                   filter={enhancedFilter as TimeRangeFilter}
                   index={enlargedFilterIdx}
                   datasets={datasets}
+                  layers={layers}
                   readOnly={readOnly}
                   showTimeDisplay={showFloatingTimeDisplay}
                   setFilterPlot={visStateActions.setFilterPlot}

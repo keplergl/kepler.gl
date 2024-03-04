@@ -25,6 +25,7 @@ function TimeWidgetFactory(
   const TimeWidget: React.FC<TimeWidgetProps> = ({
     datasets,
     filter,
+    layers,
     index,
     readOnly,
     showTimeDisplay,
@@ -65,8 +66,8 @@ function TimeWidgetFactory(
     );
 
     const timeRangeSlideProps = useMemo(
-      () => timeRangeSliderFieldsSelector(filter, datasets),
-      [filter, datasets]
+      () => timeRangeSliderFieldsSelector(filter, datasets, layers),
+      [filter, datasets, layers]
     );
 
     return (

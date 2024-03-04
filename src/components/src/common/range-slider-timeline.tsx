@@ -28,9 +28,9 @@ const TIMELINE_INDICATOR_STYLE: CSSProperties = {
   color: '#C4C4C4'
 };
 
-function RangeSliderSublineFactory() {
-  const RangeSliderSubline = ({line, scaledValue}) => {
-    const style: CSSProperties = {
+function RangeSliderTimelineFactory() {
+  const RangeSliderTimeline = ({line, scaledValue, style}) => {
+    const progressStyle: CSSProperties = {
       left: `${line[0]}%`,
       top: '0',
       width: `${line[1] - line[0]}%`,
@@ -38,6 +38,14 @@ function RangeSliderSublineFactory() {
       position: 'absolute',
       backgroundColor: '#5558DB'
     };
+
+    const containerStyle = useMemo(
+      () => ({
+        ...BACKGROUND_LINE_STYLE,
+        ...style
+      }),
+      [style]
+    );
 
     const value = scaledValue[line[2]];
 
@@ -66,8 +74,8 @@ function RangeSliderSublineFactory() {
     );
 
     return (
-      <div style={BACKGROUND_LINE_STYLE}>
-        <div style={style} />
+      <div style={containerStyle}>
+        <div style={progressStyle} />
         <ArrowDownFull style={leftMarketStyle} />
         <ArrowDownFull style={rightMarketStyle} />
         <TimelineMarker style={indicatorStyle} />
@@ -75,7 +83,7 @@ function RangeSliderSublineFactory() {
     );
   };
 
-  return RangeSliderSubline;
+  return RangeSliderTimeline;
 }
 
-export default RangeSliderSublineFactory;
+export default RangeSliderTimelineFactory;
