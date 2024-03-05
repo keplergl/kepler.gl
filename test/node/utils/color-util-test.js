@@ -215,6 +215,24 @@ test('ColorUtil -> removeCustomPaletteColor', t => {
         }
       },
       msg: 'Should remove 1 color at the end'
+    },
+    {
+      input: [CUSTOM_PALETTE, 0],
+      expected: {
+        ...CUSTOM_PALETTE,
+        colors: ['#030303', '#050505', '#070707'],
+        colorMap: [
+          [33, '#030303'],
+          [41, '#050505'],
+          [null, '#070707']
+        ],
+        colorLegends: {
+          '#030303': 'B',
+          '#050505': 'C',
+          '#070707': 'D'
+        }
+      },
+      msg: 'Should remove 1 color at the end'
     }
   ];
 

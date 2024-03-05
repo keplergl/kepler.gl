@@ -196,6 +196,7 @@ function getScaleLabels(
   });
 }
 
+const customScaleLabelFormat = d => String(d);
 /**
  * Get linear / quant scale color breaks
  */
@@ -205,7 +206,7 @@ export function getQuantLegends(scale: D3ScaleFunction, labelFormat: LabelFormat
   }
   const labels =
     scale.scaleType === 'threshold' || scale.scaleType === 'custom'
-      ? getThresholdLabels(scale, labelFormat)
+      ? getThresholdLabels(scale, customScaleLabelFormat)
       : getScaleLabels(scale, labelFormat);
 
   const data = scale.range();
@@ -337,9 +338,16 @@ export function getVisualChannelScaleByZoom({
  * Convert color breaks UI input into colorRange.colorMap
  */
 export function colorBreaksToColorMap(colorBreaks: ColorBreak[] | ColorBreakOrdinal[]): ColorMap {
-  const colorMap = colorBreaks.map(colorBreak => {
+  const colorMap = colorBreaks.map((colorBreak, i) => {
     // [value, hex]
-    return [colorBreak.inputs ? colorBreak.inputs[1] : colorBreak.label, colorBreak.data];
+    return [
+      colorBreak.inputs
+        ? i === colorBreaks.length - 1
+          ? null // last
+          : colorBreak.inputs[1]
+        : colorBreak.label,
+      colorBreak.data
+    ];
   });
 
   // @ts-ignore tuple
@@ -348,20 +356,21 @@ export function colorBreaksToColorMap(colorBreaks: ColorBreak[] | ColorBreakOrdi
 
 /**
  * Convert colorRange.colorMap into color breaks UI input
- * @type {typeof import('./data-scale-utils').colorMapToColorBreaks}
  */
-export function colorMapToColorBreaks(colorMap?: ColorMap, domain?: number[]): ColorBreak[] | null {
+export function colorMapToColorBreaks(colorMap?: ColorMap): ColorBreak[] | null {
   if (!colorMap) {
     return null;
   }
   const colorBreaks = colorMap.map(([value, color], i) => {
     const range =
       i === 0
-        ? [domain ? domain[0] : null, value]
+        ? // first
+          [-Infinity, value]
         : // last
         i === colorMap.length - 1
-        ? [colorMap[i - 1][0], domain ? domain[1] : null]
-        : [colorMap[i - 1][0], value];
+        ? [colorMap[i - 1][0], Infinity]
+        : // else
+          [colorMap[i - 1][0], value];
     return {
       data: color,
       range,

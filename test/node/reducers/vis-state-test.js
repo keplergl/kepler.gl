@@ -4102,7 +4102,8 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. show dropdown', t => {
       ...DEFAULT_COLOR_UI,
       showDropdown: 0
     },
-    colorRange: DEFAULT_COLOR_UI
+    colorRange: DEFAULT_COLOR_UI,
+    strokeColorRange: DEFAULT_COLOR_UI
   };
 
   t.deepEqual(
@@ -4124,7 +4125,7 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. show dropdown', t => {
   );
   t.deepEqual(
     nextState1.layers[0].config.colorUI,
-    {color: DEFAULT_COLOR_UI, colorRange: DEFAULT_COLOR_UI},
+    {color: DEFAULT_COLOR_UI, colorRange: DEFAULT_COLOR_UI, strokeColorRange: DEFAULT_COLOR_UI},
     'should update colorUI.showDropdown'
   );
 
@@ -4137,6 +4138,7 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. show dropdown', t => {
 
   const expectedColorUI2 = {
     color: DEFAULT_COLOR_UI,
+    strokeColorRange: DEFAULT_COLOR_UI,
     colorRange: {
       ...DEFAULT_COLOR_UI,
       showDropdown: 0,
@@ -4183,6 +4185,7 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. colorRangeConfig.step', t => {
 
   const expectedColorUI = {
     color: DEFAULT_COLOR_UI,
+    strokeColorRange: DEFAULT_COLOR_UI,
     colorRange: {
       ...DEFAULT_COLOR_UI,
       showDropdown: 0,
@@ -4223,6 +4226,7 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. colorRangeConfig.step', t => {
 
   const expectedColorUI2 = {
     color: DEFAULT_COLOR_UI,
+    strokeColorRange: DEFAULT_COLOR_UI,
     colorRange: {
       ...DEFAULT_COLOR_UI,
       showDropdown: 0,
@@ -4265,6 +4269,7 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. colorRangeConfig.step', t => {
 
   const expectedColorUI3 = {
     color: DEFAULT_COLOR_UI,
+    strokeColorRange: DEFAULT_COLOR_UI,
     colorRange: {
       ...DEFAULT_COLOR_UI,
       showDropdown: 0,
@@ -4316,6 +4321,7 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. colorRangeConfig.step', t => {
 
   const expectedColorUI4 = {
     color: DEFAULT_COLOR_UI,
+    strokeColorRange: DEFAULT_COLOR_UI,
     colorRange: {
       ...DEFAULT_COLOR_UI,
       showDropdown: 0,
@@ -4365,6 +4371,7 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom Palette', t => {
 
   const expectedColorUI = {
     color: DEFAULT_COLOR_UI,
+    strokeColorRange: DEFAULT_COLOR_UI,
     colorRange: {
       ...DEFAULT_COLOR_UI,
       customPalette: {
@@ -4399,6 +4406,7 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom Palette', t => {
 
   const expectedColorUI2 = {
     color: DEFAULT_COLOR_UI,
+    strokeColorRange: DEFAULT_COLOR_UI,
     colorRange: {
       ...DEFAULT_COLOR_UI,
       customPalette: {
@@ -4434,6 +4442,7 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom Palette', t => {
 
   const expectedColorUI3 = {
     color: DEFAULT_COLOR_UI,
+    strokeColorRange: DEFAULT_COLOR_UI,
     colorRange: {
       ...DEFAULT_COLOR_UI,
       showSketcher: 1,
@@ -4468,6 +4477,7 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom Palette', t => {
 
   const expectedColorUI4 = {
     color: DEFAULT_COLOR_UI,
+    strokeColorRange: DEFAULT_COLOR_UI,
     colorRange: {
       ...DEFAULT_COLOR_UI,
       showSketcher: 1,
@@ -4519,6 +4529,7 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom Palette', t => {
 
   const expectedColorUI6 = {
     color: DEFAULT_COLOR_UI,
+    strokeColorRange: DEFAULT_COLOR_UI,
     colorRange: {
       ...DEFAULT_COLOR_UI,
       showSketcher: 1,
@@ -4582,6 +4593,7 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom Palette', t => {
 
   const expectedColorUI7 = {
     color: DEFAULT_COLOR_UI,
+    strokeColorRange: DEFAULT_COLOR_UI,
     colorRange: {
       showSketcher: 1,
       // keep the customPalette
@@ -4633,6 +4645,50 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom breaks', t => {
 
   const expectedColorUI = {
     color: DEFAULT_COLOR_UI,
+    strokeColorRange: DEFAULT_COLOR_UI,
+    colorRange: {
+      ...DEFAULT_COLOR_UI,
+      customPalette: {
+        ...oldColorRange,
+        colorMap: [
+          ['driver_analytics', '#E6FAFA'],
+          ['driver_analytics_0', '#AAD7DA'],
+          ['driver_gps', '#68B4BB']
+        ]
+      },
+      colorRangeConfig: {
+        type: 'all',
+        steps: 6,
+        reversed: false,
+        custom: false,
+        customBreaks: true
+      }
+    }
+  };
+
+  t.deepEqual(
+    nextState.layers[0].config.colorUI,
+    expectedColorUI,
+    'should set customBreaks: true and update colorUI.customPalette with default colorMap'
+  );
+  t.end();
+});
+
+test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom breaks', t => {
+  const initialState = CloneDeep(StateWFilesFiltersLayerColor.visState);
+  const pointLayer = initialState.layers[0];
+  const oldColorRange = CloneDeep(pointLayer.config.visConfig.colorRange);
+
+  const nextState = reducer(
+    initialState,
+    VisStateActions.layerColorUIChange(pointLayer, 'colorRange', {
+      colorRangeConfig: {customBreaks: true}
+    })
+  );
+
+  const expectedColorUI = {
+    color: DEFAULT_COLOR_UI,
+    strokeColorRange: DEFAULT_COLOR_UI,
     colorRange: {
       ...DEFAULT_COLOR_UI,
       customPalette: {

@@ -38,7 +38,8 @@ import {
   HIGHLIGH_COLOR_3D,
   CHANNEL_SCALES,
   ColorRange,
-  LAYER_VIS_CONFIGS
+  LAYER_VIS_CONFIGS,
+  DEFAULT_COLOR_UI
 } from '@kepler.gl/constants';
 import {
   VisConfigNumber,
@@ -399,8 +400,10 @@ export default class GeoJsonLayer extends Layer {
   }
 
   getDefaultLayerConfig(props: LayerBaseConfigPartial) {
+    const defaultLayerConfig = super.getDefaultLayerConfig(props ?? {});
     return {
-      ...super.getDefaultLayerConfig(props),
+      ...defaultLayerConfig,
+      
       columnMode: props?.columnMode ?? DEFAULT_COLUMN_MODE,
       // add height visual channel
       heightField: null,
@@ -415,7 +418,11 @@ export default class GeoJsonLayer extends Layer {
       // add stroke color visual channel
       strokeColorField: null,
       strokeColorDomain: [0, 1],
-      strokeColorScale: 'quantile'
+      strokeColorScale: 'quantile',
+      colorUI: {
+        ...defaultLayerConfig.colorUI,
+        strokeColorRange: DEFAULT_COLOR_UI
+      }
     };
   }
 

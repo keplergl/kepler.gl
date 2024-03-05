@@ -230,7 +230,8 @@ mergedLayer0.config = {
   ],
   colorUI: {
     color: DEFAULT_COLOR_UI,
-    colorRange: DEFAULT_COLOR_UI
+    colorRange: DEFAULT_COLOR_UI,
+    strokeColorRange: DEFAULT_COLOR_UI
   },
   visConfig: {
     radius: 12.5,
