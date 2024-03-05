@@ -20,7 +20,9 @@ import {
   defaultInteractionConfig,
   prepareStateForDatasetReplace,
   syncTimeFilterWithLayerTimelineUpdater,
-  setTimeFilterTimelineModeUpdater
+  setTimeFilterTimelineModeUpdater,
+  setFilterAnimationTimeUpdater,
+  setFilterAnimationWindowUpdater
 } from '@kepler.gl/reducers';
 
 import {processCsvData, processGeojson} from '@kepler.gl/processors';
@@ -94,7 +96,7 @@ import {
   testCsvDataId,
   testGeoJsonDataId,
   InitialState,
-  mockStateWithTripGeojson
+  stateWithTimeFilterAndTripLayer
 } from 'test/helpers/mock-state';
 import {getNextColorMakerValue} from 'test/helpers/layer-utils';
 import {expectedTripLayerConfig} from '../../fixtures/test-trip-csv-data';
@@ -104,6 +106,7 @@ import {
   testCsvDataSlice1Id,
   testCsvDataSlice2Id
 } from '../../fixtures/test-csv-data';
+import {mockStateWithSyncedFilterAndTripLayer} from '../../fixtures/synced-filter-with-trip-layer';
 
 const mockData = {
   fields: [
@@ -5905,123 +5908,8 @@ test('#visStateReducer -> applyFilterFieldName', t => {
   t.end();
 });
 
-// sync filter with timeline
-function mockStateWithFilterAndTripLayer() {
-  const initialState = CloneDeep(StateWFilters);
-  return mockStateWithTripGeojson(initialState).visState;
-}
-
-test('#visStateReducer -> sync with time filter with trip layer', t => {
-  let visState = mockStateWithFilterAndTripLayer();
-
-  const animatableLayers = getAnimatableVisibleLayers(visState.layers);
-  t.equal(animatableLayers.length, 1, 'Should find 1 animatable layer');
-  t.equal(animatableLayers[0].type, LAYER_TYPES.trip, 'Should find 1 animatable trip layer');
-
-  const originalDomain = [...visState.filters[0].domain];
-
-  // ============
-  // Enable sync
-  // ============
-  visState = syncTimeFilterWithLayerTimelineUpdater(visState, {
-    idx: 0,
-    enable: true
-  });
-
-  let newFilter = visState.filters[0];
-
-  // check syncedWithLayerTimeline
-  t.equal(
-    newFilter.syncedWithLayerTimeline,
-    true,
-    'Should have set syncedWithLayerTimeline to true'
-  );
-
-  // check animation window wasn't updated
-  t.equal(newFilter.animationWindow, visState.filters[0].animationWindow);
-
-  // check syncTimelineMode
-  t.equal(
-    newFilter.syncTimelineMode,
-    SYNC_TIMELINE_MODES.end,
-    'Should have set syncTimelineMode to SYNC_TIMELINE_MODES.end (1)'
-  );
-
-  // check filter domains
-  t.deepEqual(newFilter.domain, originalDomain, 'Should not change the domain value');
-
-  // check filter value
-  t.deepEqual(
-    newFilter.value,
-    [1474588800000, 1565578836000],
-    'Should have set filter value by combining filter and animationConfig domains'
-  );
-
-  // check animationConfig value
-  t.equal(
-    visState.animationConfig.currentTime,
-    1474588800000,
-    'Should have set animationConfig value to filter value[0]'
-  );
-
-  // update syncTimelineMode
-  visState = setTimeFilterTimelineModeUpdater(visState, {
-    id: newFilter.id,
-    mode: SYNC_TIMELINE_MODES.start
-  });
-
-  newFilter = visState.filters[0];
-
-  // check syncTimelineMode
-  t.equal(
-    newFilter.syncTimelineMode,
-    SYNC_TIMELINE_MODES.start,
-    'Should have set syncTimelineMode to SYNC_TIMELINE_MODES.start'
-  );
-
-  // ============
-  // Disable sync
-  // ============
-
-  visState = syncTimeFilterWithLayerTimelineUpdater(visState, {
-    idx: 0,
-    enable: false
-  });
-
-  newFilter = visState.filters[0];
-
-  // check syncedWithLayerTimeline
-  t.equal(
-    newFilter.syncedWithLayerTimeline,
-    false,
-    'Should have set syncedWithLayerTimeline to false'
-  );
-
-  // check syncTimelineMode
-  t.equal(
-    newFilter.syncTimelineMode,
-    SYNC_TIMELINE_MODES.end,
-    'Should have set syncTimelineMode to end (1)'
-  );
-
-  // check filter domains
-  t.deepEqual(newFilter.domain, originalDomain, 'Should not change the domain value');
-
-  // check filter value
-  t.deepEqual(newFilter.value, newFilter.domain, 'Should have set filter value to match domain');
-
-  // check animationConfig value
-  t.equal(
-    visState.animationConfig.currentTime,
-    visState.animationConfig.domain[0],
-    'Should have set animationConfig value to filter value[0]'
-  );
-
-  t.end();
-});
-
 function mockStateWithFilterAndIntervalBasedAnimationLayer() {
-  let visState = mockStateWithFilterAndTripLayer();
+  let visState = stateWithTimeFilterAndTripLayer().visState;
   visState = reducer(visState, VisStateActions.addLayer());
   const mockedMetaData = {
     minZoom: 0,
@@ -6099,6 +5987,182 @@ function mockStateWithFilterAndIntervalBasedAnimationLayer() {
   return visState;
 }
 
+test('#visStateReducer -> sync with time filter with trip layer', t => {
+  let visState = mockStateWithSyncedFilterAndTripLayer().visState;
+
+  const animatableLayers = getAnimatableVisibleLayers(visState.layers);
+  t.equal(animatableLayers.length, 1, 'Should find 1 animatable layer');
+  t.equal(animatableLayers[0].type, LAYER_TYPES.trip, 'Should find 1 animatable trip layer');
+
+  const originalDomain = [...visState.filters[0].domain];
+
+  // ============
+  // Enable sync
+  // ============
+  visState = syncTimeFilterWithLayerTimelineUpdater(visState, {
+    idx: 0,
+    enable: true
+  });
+
+  let newFilter = visState.filters[0];
+
+  // check syncedWithLayerTimeline
+  t.equal(
+    newFilter.syncedWithLayerTimeline,
+    true,
+    'Should have set syncedWithLayerTimeline to true'
+  );
+
+  // check animation window wasn't updated
+  t.equal(newFilter.animationWindow, visState.filters[0].animationWindow);
+
+  // check syncTimelineMode
+  t.equal(
+    newFilter.syncTimelineMode,
+    SYNC_TIMELINE_MODES.end,
+    'Should have set syncTimelineMode to SYNC_TIMELINE_MODES.end'
+  );
+
+  // check filter domains
+  t.deepEqual(newFilter.domain, originalDomain, 'Should not change the domain value');
+
+  // check filter value
+  t.deepEqual(
+    newFilter.value,
+    [1564174363000, 1564184336370],
+    'Should have set filter value by combining filter and animationConfig domains'
+  );
+
+  // check animationConfig value
+  t.equal(
+    visState.animationConfig.currentTime,
+    newFilter.value[newFilter.syncTimelineMode],
+    'Should have set animationConfig value to filter value[0]'
+  );
+
+  visState = setFilterAnimationTimeUpdater(visState, {
+    idx: 0,
+    prop: 'value',
+    value: [1474588800000, 1474588800010]
+  });
+
+  newFilter = visState.filters[0];
+  t.equal(
+    visState.animationConfig.currentTime,
+    newFilter.value[newFilter.syncTimelineMode],
+    'Animation config current time value should match the filter value newFilter.syncTimelineMode=SYNC_TIMELINE_MODES.end'
+  );
+
+  // update syncTimelineMode
+  visState = setTimeFilterTimelineModeUpdater(visState, {
+    id: newFilter.id,
+    mode: SYNC_TIMELINE_MODES.start
+  });
+
+  newFilter = visState.filters[0];
+
+  // check syncTimelineMode
+  t.equal(
+    newFilter.syncTimelineMode,
+    SYNC_TIMELINE_MODES.start,
+    'Should have set syncTimelineMode to SYNC_TIMELINE_MODES.start'
+  );
+  // check animation config new value
+  t.equal(
+    visState.animationConfig.currentTime,
+    newFilter.value[newFilter.syncTimelineMode],
+    'Animation config current time value should match the filter value newFilter.syncTimelineMode=SYNC_TIMELINE_MODES.start'
+  );
+
+  // update filter animation window to INCREMENTAL
+  visState = setFilterAnimationWindowUpdater(visState, {
+    id: newFilter.id,
+    animationWindow: ANIMATION_WINDOW.incremental
+  });
+  newFilter = visState.filters[0];
+
+  // check syncTimelineMode is back to SYNC_TIMELINE_MODES.end
+  t.equal(
+    newFilter.syncTimelineMode,
+    SYNC_TIMELINE_MODES.end,
+    'SyncTimelineMode should be set to SYNC_TIMELINE_MODES.end when we switch to incremental mode'
+  );
+
+  // check animationConfig currentTime should be set to filter.value[filter.syncTimelineMode]
+  t.equal(
+    visState.animationConfig.currentTime,
+    newFilter.value[newFilter.syncTimelineMode],
+    'SyncTimelineMode should be set to SYNC_TIMELINE_MODES.end when we switch to incremental mode'
+  );
+
+  // update filter animation window to INCREMENTAL
+  visState = setFilterAnimationWindowUpdater(visState, {
+    id: newFilter.id,
+    animationWindow: ANIMATION_WINDOW.interval
+  });
+  newFilter = visState.filters[0];
+
+  // check syncTimelineMode should stay the same
+  t.equal(
+    newFilter.syncTimelineMode,
+    SYNC_TIMELINE_MODES.end,
+    'SyncTimelineMode should be set to SYNC_TIMELINE_MODES.end when we switch to incremental mode'
+  );
+
+  // check animationConfig currentTime value should stay the same
+  t.equal(
+    visState.animationConfig.currentTime,
+    newFilter.value[newFilter.syncTimelineMode],
+    'SyncTimelineMode should remain the same with interval mode'
+  );
+
+  // ============
+  // Disable sync
+  // ============
+
+  visState = syncTimeFilterWithLayerTimelineUpdater(visState, {
+    idx: 0,
+    enable: false
+  });
+
+  newFilter = visState.filters[0];
+
+  t.equal(
+    newFilter.animationWindow,
+    ANIMATION_WINDOW.interval,
+    'Should keep the same filter animationWindow value'
+  );
+
+  // check syncedWithLayerTimeline
+  t.equal(
+    newFilter.syncedWithLayerTimeline,
+    false,
+    'Should have set syncedWithLayerTimeline to false'
+  );
+
+  // check syncTimelineMode
+  t.equal(
+    newFilter.syncTimelineMode,
+    SYNC_TIMELINE_MODES.end,
+    'Should have set syncTimelineMode to end (1)'
+  );
+
+  // check filter domains
+  t.deepEqual(newFilter.domain, originalDomain, 'Should not change the domain value');
+
+  // check filter value
+  t.deepEqual(newFilter.value, newFilter.domain, 'Should have set filter value to match domain');
+
+  // check animationConfig value
+  t.equal(
+    visState.animationConfig.currentTime,
+    visState.animationConfig.domain[0],
+    'Should have set animationConfig value to filter value[0]'
+  );
+
+  t.end();
+});
+
 test('#visStateReducer -> sync with time filter with hextile layer', t => {
   let visState = mockStateWithFilterAndIntervalBasedAnimationLayer();
   const animatableLayers = getAnimatableVisibleLayers(visState.layers);
@@ -6131,7 +6195,7 @@ test('#visStateReducer -> sync with time filter with hextile layer', t => {
     'Should have set syncTimelineMode to SYNC_TIMELINE_MODES.end (1)'
   );
 
-  // check animation window wasn't updated
+  // check animation window to interval
   t.equal(
     newFilter.animationWindow,
     ANIMATION_WINDOW.interval,
@@ -6151,14 +6215,14 @@ test('#visStateReducer -> sync with time filter with hextile layer', t => {
   // check filter value
   t.deepEqual(
     newFilter.value,
-    [1474588800000, 1474588800000],
+    [1421348739000, 1421348739000],
     'Should have set filter value to the first interval step'
   );
 
   // check animationConfig value
   t.equal(
     visState.animationConfig.currentTime,
-    1474588800000,
+    newFilter.value[newFilter.syncTimelineMode],
     'Should have set animationConfig value to filter value[0]'
   );
 

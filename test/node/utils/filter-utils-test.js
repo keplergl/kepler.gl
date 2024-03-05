@@ -16,6 +16,8 @@ import {
   isInPolygon,
   diffFilters,
   getTimestampFieldDomain,
+  scaleSourceDomainToDestination,
+  mergeFilterWithTimeline,
   createDataContainer
 } from '@kepler.gl/utils';
 
@@ -519,6 +521,151 @@ test('filterUtils -> getTimestampFieldDomain', t => {
       t.deepEqual(tsFieldDomain[k], timeData[key].expect[k], `time domain ${k} should be the same`);
     });
   });
+
+  t.end();
+});
+
+test('filterUtils -> scaleSourceDomainToDestination', t => {
+  const sourceDomain = [1564174363000, 1564179109000];
+  const destinationDomain = [1564174363000, 1564184336370];
+
+  t.deepEqual(scaleSourceDomainToDestination(sourceDomain, destinationDomain), [
+    0,
+    47.586723444532794
+  ]);
+
+  t.end();
+});
+
+test('filterUtils -> mergeFilterWithTimeline', t => {
+  const animationConfig = {
+    domain: [1564174363000, 1564179109000],
+    currentTime: 1564178316089.6846,
+    speed: 1,
+    isAnimating: false,
+    timeSteps: null,
+    timeFormat: null,
+    timezone: null,
+    defaultTimeFormat: 'L LTS',
+    duration: null
+  };
+
+  const filter = {
+    dataId: ['fe422b77-b0fd-4c0e-848c-190e7bf94a72'],
+    id: 'daqu9ulv',
+    fixedDomain: true,
+    enlarged: true,
+    isAnimating: false,
+    animationWindow: 'free',
+    speed: 1,
+    name: ['DateTime'],
+    type: 'timeRange',
+    fieldIdx: [0],
+    domain: [1564176748230, 1564184336370],
+    value: [1564176936089.6848, 1564178316089.6846],
+    plotType: {
+      interval: '1-minute',
+      defaultTimeFormat: 'L  LT',
+      type: 'histogram',
+      aggregation: 'sum'
+    },
+    yAxis: null,
+    gpu: true,
+    syncedWithLayerTimeline: true,
+    syncTimelineMode: 1,
+    step: 1000,
+    mappedValue: [
+      1564176748230,
+      1564177260220,
+      1564178662720,
+      1564178735140,
+      1564182284550,
+      1564183811180,
+      1564184245340,
+      1564184331290,
+      1564184336370
+    ],
+    defaultTimeFormat: 'L LTS',
+    fieldType: 'timestamp',
+    timeBins: {
+      'fe422b77-b0fd-4c0e-848c-190e7bf94a72': {
+        '1-minute': [
+          {
+            count: 1,
+            indexes: [0],
+            x0: 1564176720000,
+            x1: 1564176780000
+          },
+          {
+            count: 1,
+            indexes: [1],
+            x0: 1564177260000,
+            x1: 1564177320000
+          },
+          {
+            count: 1,
+            indexes: [2],
+            x0: 1564178640000,
+            x1: 1564178700000
+          },
+          {
+            count: 1,
+            indexes: [3],
+            x0: 1564178700000,
+            x1: 1564178760000
+          },
+          {
+            count: 1,
+            indexes: [4],
+            x0: 1564182240000,
+            x1: 1564182300000
+          },
+          {
+            count: 1,
+            indexes: [5],
+            x0: 1564183800000,
+            x1: 1564183860000
+          },
+          {
+            count: 1,
+            indexes: [6],
+            x0: 1564184220000,
+            x1: 1564184280000
+          },
+          {
+            count: 2,
+            indexes: [7, 8],
+            x0: 1564184280000,
+            x1: 1564184340000
+          }
+        ]
+      }
+    },
+    gpuChannel: [0]
+  };
+
+  const {filter: newFilter, animationConfig: newAnimationConfig} = mergeFilterWithTimeline(
+    filter,
+    animationConfig
+  );
+
+  t.deepEqual(
+    newFilter.domain,
+    [1564174363000, 1564184336370],
+    'Merged filter should have the same domain'
+  );
+
+  t.deepEqual(
+    newAnimationConfig.domain,
+    [1564174363000, 1564184336370],
+    'Merged animationConfig should have the same domain'
+  );
+
+  t.deepEqual(
+    newFilter.domain,
+    newAnimationConfig.domain,
+    'New filter and animationConfig should have the same domain'
+  );
 
   t.end();
 });
