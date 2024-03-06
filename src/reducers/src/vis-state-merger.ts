@@ -780,11 +780,12 @@ export function validateLayersByDatasets(
  */
 // eslint-disable-next-line complexity
 export function validateLayerWithData(
-  {fields, id: dataId}: KeplerTable,
+  dataset: KeplerTable,
   savedLayer: ParsedLayer,
   layerClasses: VisState['layerClasses'],
   options: ValidateLayerOption = {}
 ): Layer | null {
+  const {fields, id: dataId} = dataset;
   const {type} = savedLayer;
   const {throwOnError} = options;
   // layer doesnt have a valid type
@@ -832,13 +833,18 @@ export function validateLayerWithData(
       : newLayer.config.textLabel;
 
   // copy visConfig over to emptyLayer to make sure it has all the props
-  const visConfig = newLayer.copyLayerConfig(
+  const copiedVisConfig = newLayer.copyLayerConfig(
     newLayer.config.visConfig,
     savedLayer.config.visConfig || {},
     {
       shallowCopy: ['colorRange', 'strokeColorRange']
     }
   );
+
+  // call layer methods to validate visConfig when switching dataset
+  const visConfig = newLayer.validateVisConfig
+    ? newLayer.validateVisConfig(dataset, copiedVisConfig)
+    : copiedVisConfig;
 
   newLayer.updateLayerConfig({
     visConfig,
