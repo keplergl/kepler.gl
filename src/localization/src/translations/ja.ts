@@ -144,6 +144,8 @@ export default {
     weightIntensity: '重みづけの強さ',
     zoomScale: 'ズームのスケール',
     heightRange: '高さの範囲',
+    fixedHeight: '固定高さ',
+    fixedHeightDescription: '高さを変更せずに使用する',
     heightMultiplier: '高さ乗数'
   },
   layerManager: {

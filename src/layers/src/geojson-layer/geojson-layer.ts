@@ -66,11 +66,11 @@ export const geojsonVisConfigs: {
   radiusRange: 'radiusRange';
   heightRange: 'elevationRange';
   elevationScale: 'elevationScale';
-  enableElevationZoomFactor: 'enableElevationZoomFactor';
   stroked: 'stroked';
   filled: 'filled';
   enable3d: 'enable3d';
   wireframe: 'wireframe';
+  fixedHeight: 'fixedHeight';
 } = {
   opacity: 'opacity',
   strokeOpacity: {
@@ -90,11 +90,11 @@ export const geojsonVisConfigs: {
   radiusRange: 'radiusRange',
   heightRange: 'elevationRange',
   elevationScale: 'elevationScale',
-  enableElevationZoomFactor: 'enableElevationZoomFactor',
   stroked: 'stroked',
   filled: 'filled',
   enable3d: 'enable3d',
-  wireframe: 'wireframe'
+  wireframe: 'wireframe',
+  fixedHeight: 'fixedHeight'
 };
 
 export type GeoJsonVisConfigSettings = {
@@ -110,7 +110,7 @@ export type GeoJsonVisConfigSettings = {
   radiusRange: VisConfigRange;
   heightRange: VisConfigRange;
   elevationScale: VisConfigNumber;
-  enableElevationZoomFactor: VisConfigBoolean;
+  fixedHeight: VisConfigBoolean;
   stroked: VisConfigBoolean;
   filled: VisConfigBoolean;
   enable3d: VisConfigBoolean;
@@ -134,11 +134,11 @@ export type GeoJsonLayerVisConfig = {
   radiusRange: [number, number];
   heightRange: [number, number];
   elevationScale: number;
-  enableElevationZoomFactor: boolean;
   stroked: boolean;
   filled: boolean;
   enable3d: boolean;
   wireframe: boolean;
+  fixedHeight: boolean;
 };
 
 type GeoJsonLayerVisualChannelConfig = LayerColorConfig &
@@ -266,6 +266,7 @@ export default class GeoJsonLayer extends Layer {
         domain: 'heightDomain',
         range: 'heightRange',
         key: 'height',
+        fixed: 'fixedHeight',
         channelScaleType: CHANNEL_SCALES.size,
         accessor: 'getElevation',
         condition: config => config.visConfig.enable3d,
@@ -494,6 +495,10 @@ export default class GeoJsonLayer extends Layer {
           geoFieldAccessor(this.config.columns)
         )
       : super.hasHoveredObject(objectInfo);
+  }
+
+  getElevationZoomFactor({zoom, zoomOffset = 0}) {
+    return this.config.visConfig.fixedHeight ? 1 : Math.pow(2, Math.max(8 - zoom + zoomOffset, 0));
   }
 
   renderLayer(opts) {

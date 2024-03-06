@@ -125,6 +125,14 @@ export const LAYER_VIS_CONFIGS: LayerVisConfigSettings = {
     group: PROPERTY_GROUPS.radius,
     property: 'fixedRadius'
   },
+  fixedHeight: {
+    defaultValue: false,
+    type: 'boolean',
+    label: 'layerVisConfigs.fixedHeight',
+    description: 'layerVisConfigs.fixedHeightDescription',
+    group: PROPERTY_GROUPS.height,
+    property: 'fixedHeight'
+  },
   radiusRange: {
     type: 'number',
     defaultValue: [0, 50],

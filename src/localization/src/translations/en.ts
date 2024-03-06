@@ -154,6 +154,8 @@ export default {
     weightIntensity: 'Weight Intensity',
     zoomScale: 'Zoom Scale',
     heightRange: 'Height Range',
+    fixedHeight: 'Fixed height',
+    fixedHeightDescription: 'Use height without modifications',
     heightMultiplier: 'Height Multiplier',
     darkModeEnabled: 'Dark base map'
   },

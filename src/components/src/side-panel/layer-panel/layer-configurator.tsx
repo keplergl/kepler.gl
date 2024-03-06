@@ -836,7 +836,7 @@ export default function LayerConfiguratorFactory(
                   {...layerChannelConfigProps}
                 />
                 <VisConfigSwitch
-                  {...layer.visConfigSettings.enableElevationZoomFactor}
+                  {...layer.visConfigSettings.fixedHeight}
                   {...visConfiguratorProps}
                 />
                 <VisConfigSwitch {...visConfiguratorProps} {...layer.visConfigSettings.wireframe} />

@@ -146,6 +146,8 @@ export default {
     weightIntensity: 'Intensidade da Espessura',
     zoomScale: 'Escala do Zoom',
     heightRange: 'Alcance da Altura',
+    fixedHeight: 'Altura fixa',
+    fixedHeightDescription: 'Use a altura sem modificações',
     heightMultiplier: 'Multiplicador de altura'
   },
   layerManager: {
