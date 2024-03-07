@@ -145,6 +145,8 @@ export default {
     weightIntensity: 'Painotuksen intensiteetti',
     zoomScale: 'Zoomausskaala',
     heightRange: 'Korkeuden rajat',
+    fixedHeight: 'Kiinteä korkeus',
+    fixedHeightDescription: 'Käytä korkeutta ilman muutoksia',
     heightMultiplier: 'Korkeuskerroin'
   },
   layerManager: {

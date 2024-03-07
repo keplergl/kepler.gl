@@ -1377,7 +1377,7 @@ mergedLayer4.config = {
     radiusRange: [0, 50],
     heightRange: [0, 500],
     elevationScale: 5,
-    enableElevationZoomFactor: true,
+    fixedHeight: false,
     stroked: false,
     filled: true,
     enable3d: false,
