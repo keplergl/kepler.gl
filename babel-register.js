@@ -24,7 +24,7 @@ require('@babel/register')({
   extensions: ['.ts', '.js', '.tsx', '.json']
 });
 
-require('@babel/polyfill');
+require('core-js/stable');
 var path = require('path');
 var glob = require('glob');
 
