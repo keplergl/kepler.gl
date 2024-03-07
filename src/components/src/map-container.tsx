@@ -456,8 +456,8 @@ export default function MapContainerFactory(
       this.props.visStateActions.onLayerClick(null);
     };
 
-    _onLayerHover = (idx: number, info: PickInfo<any> | null) => {
-      this.props.visStateActions.onLayerHover(info);
+    _onLayerHover = (_idx: number, info: PickInfo<any> | null) => {
+      this.props.visStateActions.onLayerHover(info, this.props.index);
     };
 
     _onLayerSetDomain = (idx: number, colorDomain: VisualChannelDomain) => {
@@ -919,13 +919,7 @@ export default function MapContainerFactory(
     };
 
     _onLayerHoverDebounced = debounce((data, index, event) => {
-      // add `mapIndex` property which will end up in the the `hoverInfo` object of `visState`
-      // this is for limiting the display of the `<MapPopover>` to the `<MapContainer>` the user is interacting with
-      // TODO this should be part of onLayerHover arguments, investigate
-      // @ts-ignore (does not fail with local yarn-test)
-      data.mapIndex = index;
-
-      this.props.visStateActions.onLayerHover(data);
+      this.props.visStateActions.onLayerHover(data, index);
     }, DEBOUNCE_MOUSE_MOVE_PROPAGATE);
 
     _onMouseMoveDebounced = debounce((event, viewport) => {

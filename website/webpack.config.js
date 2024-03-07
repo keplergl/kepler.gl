@@ -5,7 +5,11 @@ const {resolve, join} = require('path');
 const webpack = require('webpack');
 
 const KeplerPackage = require('../package');
-const {WEBPACK_ENV_VARIABLES, ENV_VARIABLES_WITH_INSTRUCTIONS, RESOLVE_ALIASES} = require('../webpack/shared-webpack-configuration');
+const {
+  WEBPACK_ENV_VARIABLES,
+  ENV_VARIABLES_WITH_INSTRUCTIONS,
+  RESOLVE_ALIASES
+} = require('../webpack/shared-webpack-configuration');
 
 const LIB_DIR = resolve(__dirname, '..');
 const SRC_DIR = resolve(LIB_DIR, './src');
@@ -69,6 +73,13 @@ const COMMON_CONFIG = {
         test: /\.mjs$/,
         include: /node_modules\/apache-arrow/,
         type: 'javascript/auto'
+      },
+      // for compiling @probe.gl, website build started to fail (March, 2024)
+      {
+        test: /\.(js)$/,
+        loader: 'babel-loader',
+        options: BABEL_CONFIG,
+        include: /node_modules\/@probe.gl/
       }
     ]
   },
@@ -135,9 +146,7 @@ function logInstruction(msg) {
 function validateEnvVariable(variable, instruction) {
   if (!process.env[variable]) {
     logError(`Error! ${variable} is not defined`);
-    logInstruction(
-      `Make sure to run "export ${variable}=<token>" before deploy the website`
-    );
+    logInstruction(`Make sure to run "export ${variable}=<token>" before deploy the website`);
     logInstruction(instruction);
     throw new Error(`Missing ${variable}`);
   }
