@@ -125,6 +125,17 @@ export default function BottomWidgetFactory(
       [visStateActions, enlargedFilterIdx]
     );
 
+    const onToggleMinify = useCallback(
+      () =>
+        visStateActions.setFilterView(
+          enlargedFilterIdx,
+          filter.view === FILTER_VIEW_TYPES.enlarged
+            ? FILTER_VIEW_TYPES.minified
+            : FILTER_VIEW_TYPES.enlarged
+        ),
+      [enlargedFilterIdx, visStateActions, filter]
+    );
+
     return (
       <BottomWidgetContainer
         width={Math.min(maxWidth, enlargedFilterWidth)}
@@ -174,8 +185,9 @@ export default function BottomWidgetFactory(
                   updateAnimationSpeed={visStateActions.updateFilterAnimationSpeed}
                   resetAnimation={resetAnimation}
                   isAnimatable={!animationConfig || !animationConfig.isAnimating}
-                  onClose={onClose}
                   timeline={timeline}
+                  onClose={onClose}
+                  onToggleMinify={onToggleMinify}
                 />
               ) : null
             }
