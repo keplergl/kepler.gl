@@ -348,7 +348,7 @@ export const LAYER_VIS_CONFIGS: LayerVisConfigSettings = {
     defaultValue: 5,
     label: 'layerVisConfigs.elevationScale',
     isRanged: false,
-    range: [0, 100],
+    range: [0, 1000],
     step: 0.1,
     group: PROPERTY_GROUPS.height,
     property: 'elevationScale',

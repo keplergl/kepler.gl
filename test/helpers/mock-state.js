@@ -914,6 +914,7 @@ export const expectedSavedLayer0 = {
       elevationPercentile: [0, 100],
       elevationScale: 5,
       enableElevationZoomFactor: true,
+      fixedHeight: false,
       colorAggregation: 'count',
       sizeAggregation: 'count',
       enable3d: false
@@ -953,6 +954,7 @@ export const expectedLoadedLayer0 = {
       elevationPercentile: [0, 100],
       elevationScale: 5,
       enableElevationZoomFactor: true,
+      fixedHeight: false,
       colorAggregation: 'count',
       sizeAggregation: 'count',
       enable3d: false

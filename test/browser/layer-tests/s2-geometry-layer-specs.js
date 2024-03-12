@@ -43,6 +43,7 @@ test('#S2Geometry -> constructor', t => {
             'enable3d',
             'elevationScale',
             'enableElevationZoomFactor',
+            'fixedHeight',
             'heightRange',
             'wireframe'
           ],
