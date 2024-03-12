@@ -271,8 +271,8 @@ export default {
     },
     addStyle: {
       pasteTitle: '1. Engancha el enlace del estilo',
-      pasteSubtitle1: 'Qué es un',
-      pasteSubtitle2: 'enlace del estilo',
+      pasteSubtitle3: 'Enlace a un style.json que sigue',
+      pasteSubtitle4: 'Especificación de estilo MapLibre',
       namingTitle: '2. Poner nombre a tu estilo'
     },
     shareMap: {

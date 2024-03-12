@@ -175,18 +175,10 @@ function AddMapStyleModalFactory() {
                   <FormattedMessage id={'modal.addStyle.pasteTitle'} />
                 </div>
                 <div className="modal-section-subtitle">
-                  {intl.formatMessage({id: 'modal.addStyle.pasteSubtitle0'})}
-                  <InlineLink
-                    target="_blank"
-                    href="https://www.mapbox.com/help/studio-manual-publish/#style-url"
-                  >
-                    {' '}
-                    {intl.formatMessage({id: 'modal.addStyle.pasteSubtitle2'})}
-                  </InlineLink>{' '}
                   {intl.formatMessage({id: 'modal.addStyle.pasteSubtitle3'})}
                   <InlineLink
                     target="_blank"
-                    href="https://docs.mapbox.com/mapbox-gl-js/style-spec"
+                    href="https://maplibre.org/maplibre-style-spec/"
                   >
                     {' '}
                     {intl.formatMessage({id: 'modal.addStyle.pasteSubtitle4'})}

@@ -263,8 +263,8 @@ export default {
     },
     addStyle: {
       pasteTitle: '1. Cole a url do seu estilo',
-      pasteSubtitle1: 'O que é uma',
-      pasteSubtitle2: 'URL de estilo',
+      pasteSubtitle3: 'Um link para um arquivo style.json que usa a',
+      pasteSubtitle4: 'especificação de estilo MapLibre',
       namingTitle: '2. Nomeie o seu estilo'
     },
     shareMap: {
