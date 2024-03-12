@@ -54,7 +54,9 @@ import {
 
 export type GpuFilter = {
   filterRange: number[][];
-  filterValueUpdateTriggers: any;
+  filterValueUpdateTriggers: {
+    [id: string]: {name: string; domain0: number} | null;
+  };
   filterValueAccessor: (
     dc: DataContainerInterface
   ) => (
@@ -215,7 +217,7 @@ class KeplerTable {
     this.filteredIndexForDomain = allIndexes;
     this.fieldPairs = findPointFieldPairs(fields);
     this.fields = fields;
-    this.gpuFilter = getGpuFilterProps([], dataId, fields);
+    this.gpuFilter = getGpuFilterProps([], dataId, fields, undefined);
     this.supportedFilterTypes = supportedFilterTypes;
     this.disableDataOperation = disableDataOperation;
   }
@@ -334,7 +336,7 @@ class KeplerTable {
     const filterRecord = getFilterRecord(dataId, filters, opt || {});
 
     this.filterRecord = filterRecord;
-    this.gpuFilter = getGpuFilterProps(filters, dataId, fields);
+    this.gpuFilter = getGpuFilterProps(filters, dataId, fields, this.gpuFilter);
 
     this.changedFilters = diffFilters(filterRecord, oldFilterRecord);
 
