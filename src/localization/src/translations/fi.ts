@@ -262,8 +262,8 @@ export default {
     },
     addStyle: {
       pasteTitle: '1. Liitä tyyli-URL',
-      pasteSubtitle1: 'Mikä on',
-      pasteSubtitle2: 'tyyli-URL?',
+      pasteSubtitle3: 'Linkki style.json-tiedostoon, joka käyttää',
+      pasteSubtitle4: 'MapLibre-tyylimäärittely',
       namingTitle: '2. Nimeä tyylisi'
     },
     shareMap: {

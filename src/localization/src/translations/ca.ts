@@ -270,8 +270,8 @@ export default {
     },
     addStyle: {
       pasteTitle: "1. Enganxa la URL de l'estil",
-      pasteSubtitle1: 'Què és un',
-      pasteSubtitle2: "URL de l'estil",
+      pasteSubtitle3: 'Enllaç a un style.json que segueix el',
+      pasteSubtitle4: "MapLibre Especificació d'estil",
       namingTitle: '2. Posa nom al teu estil'
     },
     shareMap: {

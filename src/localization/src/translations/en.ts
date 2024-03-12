@@ -304,11 +304,8 @@ export default {
     },
     addStyle: {
       pasteTitle: '1. Paste style url',
-      pasteSubtitle0: 'Style url can be a mapbox',
-      pasteSubtitle1: 'What is a',
-      pasteSubtitle2: 'style URL',
-      pasteSubtitle3: 'or a style.json using the',
-      pasteSubtitle4: 'Mapbox GL Style Spec',
+      pasteSubtitle3: 'Link to a style.json using the',
+      pasteSubtitle4: 'MapLibre Style Spec',
       namingTitle: '2. Name your style'
     },
     shareMap: {

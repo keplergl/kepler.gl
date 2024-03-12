@@ -266,11 +266,8 @@ export default {
     },
     addStyle: {
       pasteTitle: '1. 粘贴样式 url',
-      pasteSubtitle0: '样式 url 可以是 Mapbox 的',
-      pasteSubtitle1: '什么是',
-      pasteSubtitle2: '样式 URL，',
-      pasteSubtitle3: '还可以使用遵从Mapbox GL样式的style.json的url：',
-      pasteSubtitle4: 'Mapbox GL 样式规范',
+      pasteSubtitle3: '您可以使用符合 的style.json ',
+      pasteSubtitle4: 'MapLibre款式规格',
       namingTitle: '2. 命名你的样式'
     },
     shareMap: {

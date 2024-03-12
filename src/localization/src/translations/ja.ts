@@ -268,11 +268,8 @@ export default {
     },
     addStyle: {
       pasteTitle: '1. スタイルのURLをペースト',
-      pasteSubtitle0: 'スタイルのURLはMapboxの',
-      pasteSubtitle1: 'What is a',
-      pasteSubtitle2: 'スタイルURL',
-      pasteSubtitle3: 'を指定するか、Mapbox GLの仕様に沿ったstyle.jsonのURLを指定します：',
-      pasteSubtitle4: 'Mapbox GL スタイル仕様',
+      pasteSubtitle3: 'を使用する style.json ファイルへのリンク',
+      pasteSubtitle4: 'MapLibre スタイル定義',
       namingTitle: '2. スタイルの名称を設定'
     },
     shareMap: {
