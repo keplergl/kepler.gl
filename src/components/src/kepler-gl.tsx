@@ -161,7 +161,10 @@ export const mapFieldsSelector = (props: KeplerGLProps, index: number = 0) => ({
 
   // mapStyle
   topMapContainerProps: props.topMapContainerProps,
-  bottomMapContainerProps: props.bottomMapContainerProps
+  bottomMapContainerProps: props.bottomMapContainerProps,
+
+  // transformRequest for Mapbox basemaps
+  transformRequest: props.transformRequest
 });
 
 export function getVisibleDatasets(datasets) {
@@ -317,6 +320,8 @@ type KeplerGLBasicProps = {
 
   topMapContainerProps?: object;
   bottomMapContainerProps?: object;
+
+  transformRequest?: (url: string) => {url: string};
 };
 
 type KeplerGLProps = KeplerGlState & KeplerGlActions & KeplerGLBasicProps;

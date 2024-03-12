@@ -24,7 +24,8 @@ Geometry coordinates should be presented with a geographic coordinate reference 
 ## Supported File Formats
  - [CSV](#csv)
  - [GeoJSON](#geojson)
- - [kepler.gl Json](#kepler-gl-json): exported from kepler.gl. See [export map](https://github.com/keplergl/kepler.gl/blob/master/docs/user-guides/k-save-and-export.md#export-map-as-json)
+ - [GeoArrow](#geoarrow)
+ - [kepler.gl Json](#keplergl-json)
 
 
 ### CSV
@@ -190,6 +191,13 @@ kepler.gl will read styles from GeoJSON files. If you are a GeoJSON expert, you 
 }
 ```
 
+### GeoArrow
+
+[GeoArrow](https://geoarrow.org/) file, a binary data format which can be visualized with the [PolygonLayer](https://docs.kepler.gl/docs/user-guides/c-types-of-layers/e-polygon).
+
+### kepler.gl JSON
+
+JSON file exported from kepler.gl. See "[Export Map as JSON](https://docs.kepler.gl/docs/user-guides/k-save-and-export#export-map-as-json)".
 
 ### Load Map Using URL
 

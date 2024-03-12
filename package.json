@@ -185,7 +185,7 @@
     "jsdom": "^16.4.0",
     "json-loader": "^0.5.4",
     "maplibre-gl": "^3.6.2",
-    "minimist": "^1.1.0",
+    "minimist": "^1.2.6",
     "nyc": "^15.1.0",
     "prettier": "1.19.1",
     "progress-bar-webpack-plugin": "^2.1.0",
@@ -238,7 +238,7 @@
     "kind-of": "6.0.3",
     "jpeg-js": "^0.4.3",
     "lodash": "4.17.19",
-    "minimist": "1.2.3",
+    "minimist": "1.2.6",
     "node-fetch": "2.6.1",
     "tough-cookie": "4.0.0"
   },

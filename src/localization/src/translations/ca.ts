@@ -147,7 +147,9 @@ export default {
     weightIntensity: 'Intensitat de pes',
     zoomScale: 'Escala de zoom',
     heightRange: 'Rang alçada',
-    heightMultiplier: "Multiplicador d'alçada"
+    heightMultiplier: "Multiplicador d'alçada",
+    fixedHeight: 'Alçada fixa',
+    fixedHeightDescription: "Utilitzeu l'alçada sense modificacions"
   },
   layerManager: {
     addData: 'Afegeix Dades',

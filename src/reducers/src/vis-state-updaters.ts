@@ -1693,7 +1693,8 @@ export const layerHoverUpdater = (
   ...state,
   hoverInfo: {
     // deck.gl info is mutable
-    ...action.info
+    ...action.info,
+    ...(Number.isFinite(action.mapIndex) ? {mapIndex: action.mapIndex} : {})
   }
 });
 

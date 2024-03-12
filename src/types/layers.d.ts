@@ -213,6 +213,7 @@ export type LayerVisConfigSettings = {
   weight: VisConfigNumber;
   heatmapRadius: VisConfigNumber;
   darkBaseMapEnabled: VisConfigBoolean;
+  fixedHeight: VisConfigBoolean;
 };
 
 // TODO: Move this to individual layers
