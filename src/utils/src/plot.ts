@@ -289,7 +289,7 @@ const getAgregationType = (field, aggregation) => {
   return aggregation;
 };
 
-const getAgregationAccessor = (field, dataContainer: DataContainerInterface, fields) => {
+const getAggregationAccessor = (field, dataContainer: DataContainerInterface, fields) => {
   if (isPercentField(field)) {
     const numeratorIdx = fields.findIndex(f => f.name === field.metadata.numerator);
     const denominatorIdx = fields.findIndex(f => f.name === field.metadata.denominator);
@@ -305,13 +305,17 @@ const getAgregationAccessor = (field, dataContainer: DataContainerInterface, fie
 
 export const getValueAggrFunc = (field, aggregation, dataset) => {
   const {dataContainer, fields} = dataset;
+
+  // The passed-in field might not have all the fields set (e.g. valueAccessor)
+  field = fields.find(f => f.name === field.name);
+
   return field && aggregation
     ? bin =>
         aggregate(
           bin.indexes,
           getAgregationType(field, aggregation),
-          // @ts-ignore
-          getAgregationAccessor(field, dataContainer, fields)
+          // @ts-expect-error can return {getNumerator, getDenominator}
+          getAggregationAccessor(field, dataContainer, fields)
         )
     : bin => bin.count;
 };
