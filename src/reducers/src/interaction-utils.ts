@@ -11,7 +11,7 @@ import {
 } from '@kepler.gl/constants';
 
 import {Field, TooltipField, CompareType} from '@kepler.gl/types';
-import {DataRow, parseFieldValue, getFormatter, isNumber, defaultFormatter} from '@kepler.gl/utils';
+import {parseFieldValue, getFormatter, isNumber, defaultFormatter} from '@kepler.gl/utils';
 import {notNullorUndefined} from '@kepler.gl/common-utils';
 
 /**
@@ -82,29 +82,26 @@ function _mergeFieldPairs(pairs) {
 }
 
 export function getTooltipDisplayDeltaValue({
-  primaryData,
   field,
-  compareType,
-  data,
-  fieldIdx
+  value,
+  primaryValue,
+  compareType
 }: {
   field: Field;
-  data: DataRow;
-  fieldIdx: number;
-  primaryData: DataRow;
-  compareType: CompareType;
+  value: any;
+  primaryValue: any;
+  compareType?: CompareType;
 }): string | null {
   let displayDeltaValue: string | null = null;
 
   if (
-    primaryData &&
     // comparison mode only works for numeric field
-    (field.type === ALL_FIELD_TYPES.integer || field.type === ALL_FIELD_TYPES.real)
+    field.type === ALL_FIELD_TYPES.integer ||
+    field.type === ALL_FIELD_TYPES.real
   ) {
-    const baseDp = primaryData.valueAt(fieldIdx);
-    const dp = data.valueAt(fieldIdx);
-    if (isNumber(baseDp) && isNumber(dp)) {
-      const deltaValue = compareType === COMPARE_TYPES.RELATIVE ? dp / baseDp - 1 : dp - baseDp;
+    if (isNumber(primaryValue) && isNumber(value)) {
+      const deltaValue =
+        compareType === COMPARE_TYPES.RELATIVE ? value / primaryValue - 1 : value - primaryValue;
       const deltaFormat =
         compareType === COMPARE_TYPES.RELATIVE
           ? TOOLTIP_FORMATS.DECIMAL_PERCENT_FULL_2[TOOLTIP_KEY]
@@ -113,7 +110,7 @@ export function getTooltipDisplayDeltaValue({
       displayDeltaValue = getFormatter(deltaFormat, field)(deltaValue);
 
       // safely cast string
-      displayDeltaValue = defaultFormatter(displayDeltaValue) as string;
+      displayDeltaValue = defaultFormatter(displayDeltaValue);
       const deltaFirstChar = displayDeltaValue.charAt(0);
 
       if (deltaFirstChar !== '+' && !NEGATIVE_SIGNS.includes(deltaFirstChar)) {

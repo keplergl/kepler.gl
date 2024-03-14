@@ -132,9 +132,10 @@ export {
   getScaleFunction,
   getVisualChannelScaleByZoom,
   initializeLayerColorMap,
-  isNumericColorBreaks
+  isNumericColorBreaks,
+  isDomainStops
 } from './data-scale-utils';
-export type {ColorBreak, ColorBreakOrdinal} from './data-scale-utils';
+export type {ColorBreak, ColorBreakOrdinal, DomainQuantiles, DomainStops} from './data-scale-utils';
 
 export {DataRow} from './data-row';
 
