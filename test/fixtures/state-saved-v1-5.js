@@ -151,6 +151,7 @@ export const savedStateV1TripGeoJson = {
             type: 'trip',
             config: {
               dataId: 'trip_data',
+              columnMode: 'geojson',
               label: 'Trip Data',
               color: [0, 0, 0],
               columns: {
@@ -237,8 +238,16 @@ export const mergedLayer0 = new TripLayer({
 mergedLayer0.config = {
   dataId: 'trip_data',
   label: 'Trip Data',
+  columnMode: 'geojson',
   color: [0, 0, 0],
-  columns: {geojson: {value: '_geojson', fieldIdx: 0}},
+  columns: {
+    altitude: {value: null, fieldIdx: -1, optional: true},
+    geojson: {value: '_geojson', fieldIdx: 0, optional: false},
+    id: {value: null, fieldIdx: -1, optional: true},
+    lat: {value: null, fieldIdx: -1, optional: true},
+    lng: {value: null, fieldIdx: -1, optional: true},
+    timestamp: {value: null, fieldIdx: -1, optional: true}
+  },
   hidden: false,
   isVisible: true,
   isConfigActive: false,

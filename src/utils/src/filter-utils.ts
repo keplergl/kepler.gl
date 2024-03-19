@@ -184,6 +184,16 @@ interface KeplerTableModel<K, L> {
   getColumnFilterProps(columnName: string): Field['filterProps'] | null | undefined;
   dataContainer: DataContainerInterface;
   filterTableCPU(filters: Filter[], layers: L[]): K;
+  gpuFilter: {
+    filterRange: number[][];
+    filterValueUpdateTriggers: any;
+    filterValueAccessor: (
+      dc: DataContainerInterface
+    ) => (
+      getIndex?: (any) => number,
+      getData?: (dc_: DataContainerInterface, d: any, fieldIndex: number) => any
+    ) => (d: any) => (number | number[])[];
+  };
 }
 
 /**

@@ -14,7 +14,7 @@ import {
 } from '@kepler.gl/utils';
 import {getLayerOrderFromLayers} from '@kepler.gl/reducers';
 
-import {LayerColumns, LayerColumn, Layer} from '@kepler.gl/layers';
+import {Layer} from '@kepler.gl/layers';
 import {createEffect} from '@kepler.gl/effects';
 import {LAYER_BLENDINGS, OVERLAY_BLENDINGS} from '@kepler.gl/constants';
 import {CURRENT_VERSION, VisState, VisStateMergers, KeplerGLSchemaClass} from '@kepler.gl/schemas';
@@ -28,7 +28,9 @@ import {
   ParsedConfig,
   Filter,
   Effect as EffectType,
-  ParsedEffect
+  ParsedEffect,
+  LayerColumns,
+  LayerColumn
 } from '@kepler.gl/types';
 import {KeplerTable, Datasets, assignGpuChannels, resetFilterGpuMode} from '@kepler.gl/table';
 
@@ -798,6 +800,8 @@ export function validateLayerWithData(
     color: savedLayer.config.color,
     isVisible: savedLayer.config.isVisible,
     hidden: savedLayer.config.hidden,
+    // columns: savedLayer.config.columns,
+    columnMode: savedLayer.config.columnMode,
     highlightColor: savedLayer.config.highlightColor
   });
 

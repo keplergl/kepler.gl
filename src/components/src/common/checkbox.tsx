@@ -54,6 +54,7 @@ interface CheckboxProps {
   id: string;
   type?: string;
   label?: ReactNode;
+  name?: string;
   className?: string;
   value?: string | 'indeterminate';
   checked?: boolean;

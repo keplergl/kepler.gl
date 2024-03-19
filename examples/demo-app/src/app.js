@@ -129,7 +129,7 @@ class App extends Component {
     //   window.setTimeout(this._showBanner, 3000);
     // }
     // load sample data
-    // this._loadSampleData();
+    this._loadSampleData();
 
     // Notifications
     // this._loadMockNotifications();
@@ -171,26 +171,29 @@ class App extends Component {
   }
 
   _loadSampleData() {
-    this._loadPointData();
-    this._loadGeojsonData();
+    // this._loadPointData();
+    // this._loadGeojsonData();
     // this._loadTripGeoJson();
     // this._loadIconData();
     // this._loadH3HexagonData();
     // this._loadS2Data();
     // this._loadScenegraphLayer();
-    // this._loadGpsData();
+    this._loadGpsData();
   }
 
   _loadPointData() {
     this.props.dispatch(
       addDataToMap({
-        datasets: {
-          info: {
-            label: 'Sample Taxi Trips in New York City',
-            id: 'test_trip_data'
-          },
-          data: sampleTripData
-        },
+        datasets: [
+          {
+            info: {
+              label: 'Sample Taxi Trips in New York City',
+              id: 'test_trip_data',
+              color: [255, 0, 0]
+            },
+            data: sampleTripData
+          }
+        ],
         options: {
           // centerMap: true,
           keepExistingConfig: true

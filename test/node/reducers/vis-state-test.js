@@ -180,7 +180,6 @@ const expectedFieldParis = [
     suffix: ['lat', 'lng']
   }
 ];
-
 const mockFilter = {
   fieldIdx: 0,
   name: mockData.fields[0].name,
@@ -338,12 +337,13 @@ test('#visStateReducer -> LAYER_TYPE_CHANGE.1', t => {
   const layer = new Layer({id: 'more_layer'});
   const oldState = {
     ...INITIAL_VIS_STATE,
-    datasets: {
-      puppy: {
-        data: mockData.data,
+    datasets: createNewDataEntry({
+      info: {id: 'puppy', label: 'puppy'},
+      data: {
+        rows: mockData.data,
         fields: mockData.fields
       }
-    },
+    }),
     layers: [{id: 'existing_layer'}, layer],
     layerData: [[{data: [1, 2, 3]}, {data: [4, 5, 6]}]],
     layerOrder: ['more_layer', 'existing_layer'],
@@ -431,10 +431,12 @@ test('#visStateReducer -> LAYER_TYPE_CHANGE.2', t => {
     ...stringField,
     valueAccessor: stringField.valueAccessor(datasets.smoothie.dataContainer)
   };
+
   let nextState = reducer(
     oldState,
     VisStateActions.layerVisualChannelConfigChange(pointLayer, {colorField: stringField}, 'color')
   );
+
   nextState = reducer(
     nextState,
     VisStateActions.layerVisConfigChange(nextState.layers[0], {
@@ -1289,6 +1291,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA.2 -> to empty state', t => {
   const expectedArcLayer = new ArcLayer({
     dataId: 'smoothie',
     label: 'start_point -> end_point arc',
+    isVisible: false,
     columns: {
       lat0: {fieldIdx: 0, value: 'start_point_lat'},
       lng0: {fieldIdx: 1, value: 'start_point_lng'},
@@ -1300,6 +1303,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA.2 -> to empty state', t => {
   const expectedLineLayer = new LineLayer({
     dataId: 'smoothie',
     label: 'start_point -> end_point line',
+    isVisible: false,
     columns: {
       lat0: {fieldIdx: 0, value: 'start_point_lat'},
       lng0: {fieldIdx: 1, value: 'start_point_lng'},
@@ -1325,8 +1329,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA.2 -> to empty state', t => {
       lat: {fieldIdx: 0, value: 'start_point_lat'},
       lng: {fieldIdx: 1, value: 'start_point_lng'},
       altitude: {fieldIdx: -1, value: null, optional: true}
-    },
-    isVisible: true
+    }
   });
 
   expectedPointLayer1.meta = {
@@ -1883,19 +1886,23 @@ test('#visStateReducer -> UPDATE_VIS_DATA.SPLIT_MAPS', t => {
 
   // first visible layer should be point
   const id1 = newState.layers[4].id;
+  // 2nd visible layer
+  const id2 = newState.layers[5].id;
   const expectedSplitMaps = [
     {
       layers: {
         a: true,
         b: false,
-        [id1]: true
+        [id1]: true,
+        [id2]: true
       }
     },
     {
       layers: {
         a: false,
         b: true,
-        [id1]: true
+        [id1]: true,
+        [id2]: true
       }
     }
   ];

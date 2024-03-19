@@ -6,7 +6,6 @@ import {BrushingExtension} from '@deck.gl/extensions';
 import {EnhancedLineLayer} from '@kepler.gl/deckgl-layers';
 import LineLayerIcon from './line-layer-icon';
 import ArcLayer, {ArcLayerConfig} from '../arc-layer/arc-layer';
-import {LayerColumn} from '../base-layer';
 import {LAYER_VIS_CONFIGS, ColorRange, PROJECTED_PIXEL_SIZE_MULTIPLIER} from '@kepler.gl/constants';
 import {
   Merge,
@@ -14,7 +13,8 @@ import {
   VisConfigColorRange,
   VisConfigColorSelect,
   VisConfigNumber,
-  VisConfigRange
+  VisConfigRange,
+  LayerColumn
 } from '@kepler.gl/types';
 import {default as KeplerTable} from '@kepler.gl/table';
 import {DataContainerInterface} from '@kepler.gl/utils';
@@ -147,7 +147,7 @@ export default class LineLayer extends ArcLayer {
     if (fieldPairs.length < 2) {
       return {props: []};
     }
-    const props: {columns: LineLayerColumnsConfig; label: string} = {
+    const props: {columns: LineLayerColumnsConfig; label: string; isVisible: boolean} = {
       // connect the first two point layer with line
       columns: {
         lat0: fieldPairs[0].pair.lat,
@@ -157,7 +157,8 @@ export default class LineLayer extends ArcLayer {
         lng1: fieldPairs[1].pair.lng,
         alt1: {value: null, fieldIdx: -1, optional: true}
       },
-      label: `${fieldPairs[0].defaultName} -> ${fieldPairs[1].defaultName} line`
+      label: `${fieldPairs[0].defaultName} -> ${fieldPairs[1].defaultName} line`,
+      isVisible: false
     };
 
     return {props: [props]};

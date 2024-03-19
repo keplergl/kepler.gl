@@ -76,6 +76,7 @@ export default {
   },
   layer: {
     required: 'Required*',
+    columnModesSeparator: 'Or',
     radius: 'Radius',
     color: 'Color',
     fillColor: 'Fill Color',
@@ -440,6 +441,8 @@ export default {
     lat: 'lat',
     lng: 'lon',
     altitude: 'altitude',
+    id: 'id',
+    timestamp: 'time',
     icon: 'icon',
     geojson: 'geojson',
     token: 'token',

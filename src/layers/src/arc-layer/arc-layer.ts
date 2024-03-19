@@ -2,7 +2,6 @@
 // Copyright contributors to the kepler.gl project
 
 import Layer, {
-  LayerColumn,
   LayerBaseConfig,
   LayerColorConfig,
   LayerSizeConfig,
@@ -25,7 +24,8 @@ import {
   VisConfigColorRange,
   VisConfigColorSelect,
   VisConfigNumber,
-  VisConfigRange
+  VisConfigRange,
+  LayerColumn
 } from '@kepler.gl/types';
 import {KeplerTable} from '@kepler.gl/table';
 
@@ -135,6 +135,7 @@ export default class ArcLayer extends Layer {
   get columnLabels() {
     return arcColumnLabels;
   }
+
   get columnPairs() {
     return this.defaultLinkColumnPairs;
   }
@@ -170,7 +171,12 @@ export default class ArcLayer extends Layer {
       return {props: []};
     }
 
-    const props: {color: RGBColor; columns: ArcLayerColumnsConfig; label: string} = {
+    const props: {
+      color: RGBColor;
+      columns: ArcLayerColumnsConfig;
+      label: string;
+      isVisible: boolean;
+    } = {
       color: hexToRgb(DEFAULT_LAYER_COLOR.tripArc),
       // connect the first two point layer with arc
       columns: {
@@ -179,7 +185,9 @@ export default class ArcLayer extends Layer {
         lat1: fieldPairs[1].pair.lat,
         lng1: fieldPairs[1].pair.lng
       },
-      label: `${fieldPairs[0].defaultName} -> ${fieldPairs[1].defaultName} arc`
+      label: `${fieldPairs[0].defaultName} -> ${fieldPairs[1].defaultName} arc`,
+      // set initial visiblity to false, because arcs tend to be too musy
+      isVisible: false
     };
 
     return {props: [props]};

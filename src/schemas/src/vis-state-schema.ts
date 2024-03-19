@@ -530,6 +530,7 @@ export const layerPropsV1 = {
     key: 'config',
     properties: {
       dataId: null,
+      columnMode: null,
       label: null,
       color: null,
       highlightColor: null,

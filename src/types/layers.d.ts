@@ -23,6 +23,39 @@ export type LayerBaseConfig = {
     enabled: boolean;
     domain?: null;
   };
+
+  columnMode?: string;
+};
+
+export type LayerColumn = {value: string | null; fieldIdx: number; optional?: boolean};
+export type LayerConfigColumn = LayerColumn;
+
+export type LayerColumns = {
+  [key: string]: LayerConfigColumn;
+};
+
+export type ColumnPair = {
+  pair: string;
+  fieldPairKey: string;
+};
+
+export type ColumnPairs = {[key: string]: ColumnPair};
+
+export type ColumnLabels = {
+  [key: string]: string;
+};
+
+export type EnhancedFieldPair = {
+  name: string;
+  type: 'point';
+  pair: FieldPair['pair'];
+};
+
+export type SupportedColumnModes = {
+  key: string;
+  label: string;
+  requiredColumns?: string[];
+  optionalColumns?: string[];
 };
 
 export type LayerColorConfig = {

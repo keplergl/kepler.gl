@@ -89,7 +89,6 @@ test('layerUtils -> findDefaultLayer.1', t => {
     new PointLayer({
       label: 'one',
       dataId,
-      isVisible: true,
       columns: {
         lat: {
           value: 'one_lat',
@@ -204,6 +203,7 @@ test('layerUtils -> findDefaultLayer.1', t => {
     new ArcLayer({
       label: 'one -> two_two arc',
       dataId,
+      isVisible: false,
       columns: {
         lat0: {
           value: 'one_lat',
@@ -226,6 +226,7 @@ test('layerUtils -> findDefaultLayer.1', t => {
     new LineLayer({
       label: 'one -> two_two line',
       dataId,
+      isVisible: false,
       columns: {
         lat0: {
           value: 'one_lat',
@@ -344,7 +345,6 @@ test('layerUtils -> findDefaultLayer.3', t => {
     new PointLayer({
       label: 'begintrip',
       dataId,
-      isVisible: true,
       columns: {
         lat: {
           value: 'begintrip_lat',
@@ -404,7 +404,6 @@ test('layerUtils -> findDefaultLayer.4', t => {
     new PointLayer({
       label: 'begintrip',
       dataId,
-      isVisible: true,
       columns: {
         lat: {
           value: 'begintrip_lat',
@@ -443,6 +442,7 @@ test('layerUtils -> findDefaultLayer.4', t => {
     new ArcLayer({
       label: 'begintrip -> dropoff arc',
       dataId,
+      isVisible: false,
       columns: {
         lat0: {
           value: 'begintrip_lat',
@@ -465,6 +465,7 @@ test('layerUtils -> findDefaultLayer.4', t => {
     new LineLayer({
       label: 'begintrip -> dropoff line',
       dataId,
+      isVisible: false,
       columns: {
         lat0: {
           value: 'begintrip_lat',
@@ -778,16 +779,33 @@ test('layerUtils -> findDefaultLayer: TripLayer', t => {
   const stateWTrip = StateWTripGeojson;
   t.equal(stateWTrip.visState.layers.length, 1, 'should find one layer');
   const foundLayer = stateWTrip.visState.layers[0];
-
   t.equal(foundLayer.type, 'trip', 'should find a trip layer');
-  t.deepEqual(
-    foundLayer.config.animation,
-    {enabled: true, domain: timeStampDomain},
-    'should set correct animation domain'
-  );
+
+  const expectedConfig = {
+    dataId: 'trip_data',
+    label: 'Trip Data',
+    columns: {
+      geojson: {value: '_geojson', fieldIdx: 0, optional: false},
+      id: {value: null, fieldIdx: -1, optional: true},
+      lat: {value: null, fieldIdx: -1, optional: true},
+      lng: {value: null, fieldIdx: -1, optional: true},
+      timestamp: {value: null, fieldIdx: -1, optional: true},
+      altitude: {value: null, fieldIdx: -1, optional: true}
+    },
+    isVisible: true,
+    columnMode: 'geojson',
+    animation: {enabled: true, domain: timeStampDomain}
+  };
+
+  Object.keys(expectedConfig).forEach(key => {
+    t.deepEqual(
+      foundLayer.config[key],
+      expectedConfig[key],
+      `should set correct config.${key} domain`
+    );
+  });
 
   t.deepEqual(foundLayer.meta.bounds, tripBounds, 'should set correct bounds');
-
   t.deepEqual(foundLayer.meta.featureTypes, {line: true}, 'should set correct bounds');
 
   t.end();

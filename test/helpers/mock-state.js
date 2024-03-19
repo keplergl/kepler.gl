@@ -911,8 +911,17 @@ export const expectedSavedTripLayer = {
     label: 'Trip Data',
     highlightColor: DEFAULT_HIGHLIGHT_COLOR,
     color: [0, 0, 0],
+    columnMode: 'geojson',
     columns: {
       geojson: '_geojson'
+      // TODO Uncomment once fixed
+      /*
+      id: null,
+      lat: null,
+      lng: null,
+      timestamp: null,
+      altitude: null
+      */
     },
     hidden: false,
     isVisible: true,
