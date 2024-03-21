@@ -16,11 +16,9 @@ import PanelHeaderActionFactory from '../panel-header-action';
 import LayerColumnConfigFactory from './layer-column-config';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {assignColumnsByColumnMode, Layer, LayerInfoModal, LayerBaseConfig} from '@kepler.gl/layers';
-import {SupportedColumnModes, FieldPair} from '@kepler.gl/types';
+import {SupportedColumnMode, FieldPair, LayerColumns} from '@kepler.gl/types';
 
 import {Help} from '../../common/icons';
-
-LayerColumnModeConfigFactory.deps = [LayerColumnConfigFactory, PanelHeaderActionFactory];
 
 const TopRow = styled.div`
   display: flex;
@@ -78,32 +76,32 @@ const ConfigPanesContainer = styled.div`
   }
 `;
 
-export type LayerColumnModeConfigProps<FieldOption extends MinimalField> = {
-  layer: Layer;
-  supportedColumnModes: SupportedColumnModes[] | null;
+interface FieldOption extends MinimalField {}
+
+export type ColumnModeConfigProps = {
+  supportedColumnModes: SupportedColumnMode[] | null;
+  selectedColumnMode?: string;
   id: string;
-  layerConfig: LayerBaseConfig;
-  fields: FieldOption[];
-  fieldPairs?: FieldPair[];
-  openModal: (l: LayerInfoModal) => void;
-  updateLayerConfig: (config: Partial<LayerBaseConfig>) => void;
+  columns: LayerColumns;
+  renderColumnConfig: (mode: {key: string; label: string; columns: any}) => JSX.Element;
+  selectColumnMode: (mode: SupportedColumnMode) => void;
+  getHelpHandler?: (mode: SupportedColumnMode) => (() => void) | null;
 };
 
-function LayerColumnModeConfigFactory(
-  LayerColumnConfig: ReturnType<typeof LayerColumnConfigFactory>,
+ColumnModeConfigFactory.deps = [PanelHeaderActionFactory];
+
+export function ColumnModeConfigFactory(
   PanelHeaderAction: ReturnType<typeof PanelHeaderActionFactory>
 ) {
-  const LayerColumnModeConfig: React.FC<LayerColumnModeConfigProps<any>> = ({
-    layer,
-    supportedColumnModes,
+  const ColumnModeConfig: React.FC<ColumnModeConfigProps> = ({
     id,
-    layerConfig,
-    fields,
-    fieldPairs,
-    openModal,
-    updateLayerConfig
-  }: LayerColumnModeConfigProps<any>) => {
-    const {columns} = layerConfig;
+    supportedColumnModes,
+    selectedColumnMode,
+    columns,
+    renderColumnConfig,
+    selectColumnMode,
+    getHelpHandler = () => null
+  }: ColumnModeConfigProps) => {
     const columnModes = useMemo(
       () =>
         supportedColumnModes
@@ -117,23 +115,11 @@ function LayerColumnModeConfigFactory(
               return {key, label, columns: allColumns};
             })
           : Object.keys(columns).length > 0
-          ? [{key: 'default', label: undefined, columns}]
+          ? [{key: 'default', label: '', columns}]
           : [],
       [supportedColumnModes, columns]
     );
 
-    const handleSelectColumnMode = useCallback(
-      columnMode => {
-        const updatedColumns = assignColumnsByColumnMode({
-          columns,
-          supportedColumnModes,
-          columnMode
-        });
-
-        updateLayerConfig({columnMode, columns: updatedColumns});
-      },
-      [updateLayerConfig, columns, supportedColumnModes]
-    );
     return (
       <>
         {columnModes.length > 0 ? (
@@ -147,19 +133,11 @@ function LayerColumnModeConfigFactory(
           </TopRow>
         ) : null}
         <ConfigPanesContainer>
-          {columnModes.map(({key: columnMode, label, columns: cols}, i) => {
-            const columnPanel = (
-              <LayerColumnConfig
-                columnPairs={layer.columnPairs}
-                columns={cols}
-                assignColumnPairs={layer.assignColumnPairs.bind(layer)}
-                assignColumn={layer.assignColumn.bind(layer)}
-                columnLabels={layer.columnLabels}
-                fields={fields}
-                fieldPairs={fieldPairs}
-                updateLayerConfig={updateLayerConfig}
-              />
-            );
+          {columnModes.map((modeConfig, i) => {
+            const columnPanel = renderColumnConfig(modeConfig);
+            const helpHandler = getHelpHandler(modeConfig);
+            const selectColumnModeHandler = () => selectColumnMode(modeConfig);
+            const {key: columnMode, label} = modeConfig;
 
             return (
               <Fragment key={columnMode}>
@@ -175,20 +153,19 @@ function LayerColumnModeConfigFactory(
                         <Checkbox
                           type="radio"
                           name={`layer-${id}-input-modes`}
-                          checked={layerConfig.columnMode === columnMode}
+                          checked={selectedColumnMode === columnMode}
                           id={`${id}-input-column-${columnMode}`}
                           label={label}
-                          secondary
-                          onChange={() => handleSelectColumnMode(columnMode)}
+                          onChange={selectColumnModeHandler}
                         />
                       </PanelHeaderContent>
-                      {layer.layerInfoModal?.[columnMode] ? (
+                      {helpHandler ? (
                         <div className="interaction-panel__header__actions">
                           <PanelHeaderAction
                             id={`${id}-help-button`}
                             className="layer__help-button"
                             tooltip={'layerConfiguration.howTo'}
-                            onClick={() => openModal(layer.layerInfoModal?.[columnMode])}
+                            onClick={helpHandler}
                             IconComponent={Help}
                           />
                         </div>
@@ -206,6 +183,93 @@ function LayerColumnModeConfigFactory(
           })}
         </ConfigPanesContainer>
       </>
+    );
+  };
+
+  return ColumnModeConfig;
+}
+
+export type LayerColumnModeConfigProps = {
+  layer: Layer;
+  layerConfig: LayerBaseConfig;
+  supportedColumnModes: SupportedColumnMode[] | null;
+  id: string;
+  fields: FieldOption[];
+  fieldPairs?: FieldPair[];
+  openModal: (l: LayerInfoModal) => void;
+  updateLayerConfig: (config: Partial<LayerBaseConfig>) => void;
+};
+
+LayerColumnModeConfigFactory.deps = [LayerColumnConfigFactory, ColumnModeConfigFactory];
+
+function LayerColumnModeConfigFactory(
+  LayerColumnConfig: ReturnType<typeof LayerColumnConfigFactory>,
+  ColumnModeConfig: ReturnType<typeof ColumnModeConfigFactory>
+) {
+  const LayerColumnModeConfig = ({
+    id,
+    layer,
+    supportedColumnModes,
+    layerConfig,
+    fields,
+    fieldPairs,
+    openModal,
+    updateLayerConfig
+  }: LayerColumnModeConfigProps) => {
+    const {columns} = layerConfig;
+
+    const selectColumnMode = useCallback(
+      ({key: columnMode}) => {
+        const updatedColumns = assignColumnsByColumnMode({
+          columns,
+          supportedColumnModes,
+          columnMode
+        });
+
+        updateLayerConfig({columnMode, columns: updatedColumns});
+      },
+      [updateLayerConfig, columns, supportedColumnModes]
+    );
+
+    const renderColumnConfig = useCallback(
+      ({key: columnMode, label, columns: cols}) => (
+        <LayerColumnConfig
+          columnPairs={layer.columnPairs}
+          columns={cols}
+          assignColumnPairs={layer.assignColumnPairs.bind(layer)}
+          assignColumn={
+            layer.assignColumn.bind(layer) as (key: string, field: FieldOption) => LayerColumns
+          }
+          columnLabels={layer.columnLabels}
+          fields={fields}
+          fieldPairs={fieldPairs}
+          updateLayerConfig={updateLayerConfig}
+        />
+      ),
+      [layer, updateLayerConfig, fieldPairs, fields]
+    );
+
+    const getHelpHandler = useCallback(
+      ({key: columnMode}) => {
+        const modal = layer.layerInfoModal?.[columnMode];
+        if (modal) {
+          return () => openModal(modal);
+        }
+        return null;
+      },
+      [layer, openModal]
+    );
+
+    return (
+      <ColumnModeConfig
+        id={id}
+        supportedColumnModes={supportedColumnModes}
+        selectedColumnMode={layerConfig.columnMode}
+        columns={columns}
+        selectColumnMode={selectColumnMode}
+        renderColumnConfig={renderColumnConfig}
+        getHelpHandler={getHelpHandler}
+      />
     );
   };
 

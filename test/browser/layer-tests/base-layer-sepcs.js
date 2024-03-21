@@ -111,7 +111,7 @@ test('#AggregationLayer -> updateLayerDomain', t => {
   t.end();
 });
 
-test('#BaseLayer -> getAllPossibleColumnParis', t => {
+test('#BaseLayer -> getAllPossibleColumnPairs', t => {
   const columnes1 = {
     a: [1, 2],
     b: [3, 4]
@@ -124,8 +124,8 @@ test('#BaseLayer -> getAllPossibleColumnParis', t => {
   const columnes3 = {
     a: [1]
   };
-  t.equal(Layer.getAllPossibleColumnParis(columnes1).length, 4, 'should find 4 pairs');
-  t.equal(Layer.getAllPossibleColumnParis(columnes2).length, 2, 'should find 4 pairs');
-  t.equal(Layer.getAllPossibleColumnParis(columnes3).length, 1, 'should find 4 pairs');
+  t.equal(Layer.getAllPossibleColumnPairs(columnes1).length, 4, 'should find 4 pairs');
+  t.equal(Layer.getAllPossibleColumnPairs(columnes2).length, 2, 'should find 4 pairs');
+  t.equal(Layer.getAllPossibleColumnPairs(columnes3).length, 1, 'should find 4 pairs');
   t.end();
 });

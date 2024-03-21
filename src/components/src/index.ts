@@ -22,7 +22,10 @@ import {
   LayerColorRangeSelectorFactory,
   ArcLayerColorSelectorFactory
 } from './side-panel/layer-panel/layer-color-selector';
-import LayerColumnModeConfigFactory from './side-panel/layer-panel/layer-column-mode-config';
+import {
+  default as LayerColumnModeConfigFactory,
+  ColumnModeConfigFactory
+} from './side-panel/layer-panel/layer-column-mode-config';
 import {appInjector} from './container';
 
 // Components
@@ -427,6 +430,7 @@ export {
   ColorSelectorFactory,
   LayerColorSelectorFactory,
   LayerColumnModeConfigFactory,
+  ColumnModeConfigFactory,
   LayerColorRangeSelectorFactory,
   ArcLayerColorSelectorFactory
 };

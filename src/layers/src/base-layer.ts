@@ -63,7 +63,8 @@ import {
   LayerColumn,
   ColumnPairs,
   ColumnLabels,
-  SupportedColumnModes
+  SupportedColumnMode,
+  FieldPair
 } from '@kepler.gl/types';
 import {KeplerTable, Datasets, GpuFilter} from '@kepler.gl/table';
 
@@ -390,7 +391,7 @@ class Layer {
   /**
    * Returns which column modes this layer supports
    */
-  get supportedColumnModes(): SupportedColumnModes[] | null {
+  get supportedColumnModes(): SupportedColumnMode[] | null {
     return null;
   }
 
@@ -438,10 +439,10 @@ class Layer {
       return null;
     }
 
-    return this.getAllPossibleColumnParis(requiredColumns);
+    return this.getAllPossibleColumnPairs(requiredColumns);
   }
 
-  static getAllPossibleColumnParis(requiredColumns) {
+  static getAllPossibleColumnPairs(requiredColumns) {
     // for multiple matched field for one required column, return multiple
     // combinations, e. g. if column a has 2 matched, column b has 3 matched
     // 6 possible column pairs will be returned
@@ -571,9 +572,9 @@ class Layer {
    * Assign a field pair to column config, return column config
    * @param key - Column Key
    * @param pair - field Pair
-   * @returns {object} - Column config
+   * @returns Column config
    */
-  assignColumnPairs(key: string, pair: string): LayerColumns {
+  assignColumnPairs(key: string, pair: FieldPair): LayerColumns {
     if (!this.columnPairs || !this.columnPairs?.[key]) {
       // should not end in this state
       return this.config.columns;
@@ -931,7 +932,7 @@ class Layer {
     const {columns} = this.config;
     return (
       columns &&
-      Object.values(columns).every(column => {
+      Object.values(columns).every((column?: LayerColumn) => {
         return Boolean(column && (column.optional || (column.value && column.fieldIdx > -1)));
       })
     );
