@@ -53,7 +53,7 @@ function getValidFieldPairsSuggestionsForColumn(
 LayerColumnConfigFactory.deps = [ColumnSelectorFactory];
 
 function LayerColumnConfigFactory(ColumnSelector: ReturnType<typeof ColumnSelectorFactory>) {
-  const LayerColumnConfig: React.FC<LayerColumnConfigProps<MinimalField>> = ({
+  const LayerColumnConfig: React.FC<LayerColumnConfigProps<MinimalField & {fieldIdx: number}>> = ({
     columnPairs,
     fieldPairs,
     columns,

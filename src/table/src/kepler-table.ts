@@ -541,7 +541,7 @@ export function findPointFieldPairs(fields: Field[]): FieldPair[] {
               },
               ...(altIdx > -1
                 ? {
-                    alt: {
+                    altitude: {
                       fieldIdx: altIdx,
                       value: fields[altIdx].name
                     }

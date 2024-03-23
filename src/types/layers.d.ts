@@ -38,8 +38,8 @@ export type LayerColumns = {
 };
 
 export type ColumnPair = {
-  pair: string;
-  fieldPairKey: string;
+  pair: string | string[];
+  fieldPairKey: string | string[];
 };
 
 export type ColumnPairs = {[key: string]: ColumnPair};
@@ -114,7 +114,15 @@ export type Field = {
 export type FieldPair = {
   defaultName: string;
   pair: {
-    [key: string]: {
+    lat: {
+      fieldIdx: number;
+      value: string;
+    };
+    lng: {
+      fieldIdx: number;
+      value: string;
+    };
+    altitude?: {
       fieldIdx: number;
       value: string;
     };

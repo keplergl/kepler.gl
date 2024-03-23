@@ -1277,9 +1277,16 @@ mergedLayer4.config = {
   columns: {
     geojson: {
       value: '_geojson',
-      fieldIdx: 0
-    }
+      fieldIdx: 0,
+      optional: false
+    },
+    id: {value: null, fieldIdx: -1, optional: true},
+    lat: {value: null, fieldIdx: -1, optional: true},
+    lng: {value: null, fieldIdx: -1, optional: true},
+    altitude: {value: null, fieldIdx: -1, optional: true},
+    sortBy: {value: null, fieldIdx: -1, optional: true}
   },
+  columnMode: 'geojson',
   highlightColor: [252, 242, 26, 255],
   isConfigActive: false,
   hidden: false,

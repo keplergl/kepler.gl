@@ -40,8 +40,9 @@ test('#PointLayer -> constructor', t => {
           t.deepEqual(
             layer.columnPairs,
             {
-              lat: {pair: 'lng', fieldPairKey: 'lat'},
-              lng: {pair: 'lat', fieldPairKey: 'lng'}
+              lat: {pair: ['lng', 'altitude'], fieldPairKey: 'lat'},
+              lng: {pair: ['lat', 'altitude'], fieldPairKey: 'lng'},
+              altitude: {pair: ['lng', 'lat'], fieldPairKey: 'altitude'}
             },
             'columnPairs should be correct'
           );

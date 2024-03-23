@@ -381,13 +381,90 @@ export default {
       storage: 'Load from Storage'
     },
     tripInfo: {
-      title: 'How to enable trip animation',
-      description1:
-        'In order to animate the path, the geoJSON data needs to contain `LineString` in its feature geometry, and the coordinates in the LineString need to have 4 elements in the formats of',
-      code: ' [longitude, latitude, altitude, timestamp] ',
-      description2:
-        'with the last element being a timestamp. Valid timestamp formats include unix in seconds such as `1564184363` or in milliseconds such as `1564184363000`.',
-      example: 'Example:'
+      title: 'Create trips from GeoJson',
+      titleTable: 'Create trips from a list of points',
+      description1: `To animate the path, the GeoJSON data needs to contain \`LineString\` in its feature geometry, and the coordinates in the LineString need to have 4 elements in the formats of
+${'```json'}
+[longitude, latitude, altitude, timestamp]
+${'```'}
+The 3rd element is a timestamp. Valid timestamp formats include unix in seconds such as \`1564184363\` or in milliseconds such as \`1564184363000\`.`,
+      descriptionTable1:
+        'Trips can be created by joining a list of points from latitude and longitude, sort by timestamps and group by uniq ids.',
+      example: 'Example GeoJSON',
+      exampleTable: 'Example Csv'
+    },
+    polygonInfo: {
+      title: 'Create polygon layer from GeoJSON feature',
+      titleTable: 'Create path from points',
+      description: `Polygon can be created from
+__1 .A GeoJSON Feature Collection__
+__2. A Csv contains geometry column__
+
+### 1. Create polygon from GeoJSON file
+
+When upload a GeoJSON file contains FeatureCollection, a polygon layer will be auto-created
+
+Example GeoJSON
+${'```json'}
+{
+  "type": "FeatureCollection",
+  "features": [{
+      "type": "Feature",
+      "geometry": {
+          "type": "Point",
+          "coordinates": [102.0, 0.5]
+      },
+      "properties": {
+          "prop0": "value0"
+      }
+  }, {
+      "type": "Feature",
+      "geometry": {
+          "type": "LineString",
+          "coordinates": [
+              [102.0, 0.0],
+              [103.0, 1.0],
+              [104.0, 0.0],
+              [105.0, 1.0]
+          ]
+      },
+      "properties": {
+        "prop0": "value0"
+      }
+  }]
+}
+${'```'}
+
+### 2. Create polygon from a Geometry column in Csv table
+Geometries (Polygons, Points, LindStrings etc) can be embedded into CSV as a \`GeoJSON\` or \`WKT\` formatted string. 
+
+#### 2.1 \`GeoJSON\` string
+Example data.csv with \`GeoJSON\` string
+${'```txt'}
+id,_geojson
+1,"{""type"":""Polygon"",""coordinates"":[[[-74.158491,40.835947],[-74.157914,40.83902]]]}"
+${'```'}
+
+#### 2.2 \`WKT\` string
+Example data.csv with \`WKT\` string
+[The Well-Known Text (WKT)](https://dev.mysql.com/doc/refman/5.7/en/gis-data-formats.html#gis-wkt-format) representation of geometry values is designed for exchanging geometry data in ASCII form. 
+
+Example data.csv with WKT
+${'```txt'}
+id,_geojson
+1,"POLYGON((0 0,10 0,10 10,0 10,0 0),(5 5,7 5,7 7,5 7, 5 5))"
+${'```'}
+`,
+      descriptionTable: `Paths can be created by joining a list of points from latitude and longitude, sort by an index field (e.g. timestamp) and group by uniq ids.
+
+  ### Layer columns:
+  - **id**: - *required* - A \`id\` column is used to group by points. Points with the same id will be joined into a single path.
+  - **lat**: - *required* - The latitude of the point
+  - **lon**: - *required* - The longitude of the point
+  - **alt**: - *optional* - The altitude of the point
+  - **sort by**: - *optional* - A \`sort by\` column is used to sort the points, if not specified, points will be sorted by row index.
+`,
+      exampleTable: 'Example CSV'
     },
     iconInfo: {
       title: 'How to draw icons',
@@ -446,6 +523,7 @@ export default {
     icon: 'icon',
     geojson: 'geojson',
     token: 'token',
+    sortBy: 'sort by',
     arc: {
       lat0: 'source lat',
       lng0: 'source lng',

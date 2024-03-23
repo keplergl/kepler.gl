@@ -140,7 +140,7 @@
     "@testing-library/user-event": "^14.4.3",
     "@types/d3-array": "^2.0.0",
     "@types/d3-scale": "^3.2.2",
-    "@types/geojson": "^7946.0.7",
+    "@types/geojson": "^7946.0.8",
     "@types/jsdom": "^21.1.1",
     "@types/redux-actions": "^2.6.2",
     "@types/supercluster": "^7.1.0",

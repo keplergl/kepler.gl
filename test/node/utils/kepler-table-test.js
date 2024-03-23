@@ -332,7 +332,7 @@ test('KeplerTable -> findPointFieldPairs', t => {
               fieldIdx: 1,
               value: 'point.long'
             },
-            alt: {
+            altitude: {
               fieldIdx: 2,
               value: 'point.altitude'
             }
@@ -390,7 +390,7 @@ test('KeplerTable -> findPointFieldPairs', t => {
               fieldIdx: 1,
               value: 'point_lng'
             },
-            alt: {
+            altitude: {
               fieldIdx: 2,
               value: 'point_alt'
             }

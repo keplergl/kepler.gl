@@ -800,7 +800,6 @@ export function validateLayerWithData(
     color: savedLayer.config.color,
     isVisible: savedLayer.config.isVisible,
     hidden: savedLayer.config.hidden,
-    // columns: savedLayer.config.columns,
     columnMode: savedLayer.config.columnMode,
     highlightColor: savedLayer.config.highlightColor
   });

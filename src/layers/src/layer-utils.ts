@@ -14,7 +14,7 @@ import {
 import {DeckGlGeoTypes, GeojsonDataMaps} from './geojson-layer/geojson-utils';
 
 export function assignPointPairToLayerColumn(pair: FieldPair, hasAlt: boolean) {
-  const {lat, lng, alt} = pair.pair;
+  const {lat, lng, altitude} = pair.pair;
   if (!hasAlt) {
     return {lat, lng};
   }
@@ -24,7 +24,7 @@ export function assignPointPairToLayerColumn(pair: FieldPair, hasAlt: boolean) {
   return {
     lat,
     lng,
-    altitude: alt ? {...defaultAltColumn, ...alt} : defaultAltColumn
+    altitude: altitude ? {...defaultAltColumn, ...altitude} : defaultAltColumn
   };
 }
 
@@ -154,6 +154,7 @@ export function assignColumnsByColumnMode({
   columnMode: string | undefined;
 }): LayerColumns {
   const requiredColumns = getColumnModeRequiredColumns(supportedColumnModes, columnMode);
+
   if (requiredColumns) {
     return Object.entries(columns).reduce(
       (acc, [columnKey, column]) => ({
