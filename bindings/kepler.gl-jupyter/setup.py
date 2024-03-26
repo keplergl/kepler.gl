@@ -64,7 +64,7 @@ setup_args = {
     'long_description': LONG_DESCRIPTION,
     'include_package_data': True,
     'install_requires': [
-        'ipywidgets>=7.0.0,<8',
+        'ipywidgets>=8.0.0',
         'traittypes>=0.2.1',
         'geopandas>=0.5.0',
         'pandas>=0.23.0',
