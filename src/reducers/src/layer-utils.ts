@@ -52,6 +52,7 @@ export function findDefaultLayer(dataset: KeplerTable, layerClasses: LayerClasse
   if (!dataset) {
     return [];
   }
+
   const layerProps = (Object.keys(layerClasses) as Array<keyof LayerClassesType>).reduce(
     (previous, lc) => {
       const result: FindDefaultLayerPropsReturnValue =
@@ -66,7 +67,9 @@ export function findDefaultLayer(dataset: KeplerTable, layerClasses: LayerClasse
         props.map(p => ({
           ...p,
           type: lc,
-          dataId: dataset.id
+          dataId: dataset.id,
+          // set arc layer initial visiblity to false, because arcs tend to be too musy
+          ...(lc === 'arc' || lc === 'line' ? {isVisible: false} : {})
         }))
       );
     },
@@ -234,7 +237,8 @@ export function renderDeckGlLayer(props: any, layerCallbacks: {[key: string]: an
     mapState,
     animationConfig,
     objectHovered,
-    visible
+    visible,
+    dataset
   });
 }
 

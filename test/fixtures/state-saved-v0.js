@@ -1047,7 +1047,10 @@ mergedLayer0.config = {
       colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
     },
     strokeColor: [76, 154, 78],
-    radiusRange: [1, 100]
+    radiusRange: [1, 100],
+    allowHover: true,
+    showNeighborOnHover: false,
+    showHighlightColor: true
   }
 };
 
@@ -1190,7 +1193,10 @@ mergedLayer2.config = {
     },
     strokeColor: [218, 112, 191],
     fixedRadius: false,
-    radiusRange: [1, 854.16]
+    radiusRange: [1, 854.16],
+    allowHover: true,
+    showNeighborOnHover: false,
+    showHighlightColor: true
   },
   animation: {enabled: false}
 };

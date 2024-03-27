@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React from 'react';
+import React, {useMemo, ReactNode} from 'react';
 import styled from 'styled-components';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {PanelLabel} from '../../common/styled-components';
@@ -25,6 +25,7 @@ export type ColumnSelectorProps<FieldOption extends MinimalField> = {
       | null
   ) => void;
   fieldPairs: EnhancedFieldPair[] | null;
+  isActive?: boolean;
 };
 
 const ColumnRow = styled.div`
@@ -34,16 +35,22 @@ const ColumnRow = styled.div`
 `;
 
 const ColumnName = styled.div`
-  width: 27%;
+  width: 32%;
   line-height: 1.2;
   padding-right: 6px;
 `;
 
 const ColumnSelect = styled.div`
-  width: 73%;
+  width: 68%;
 `;
 
 ColumnSelectorFactory.deps = [FieldSelectorFactory];
+
+const ColumnPanelLabel = styled(PanelLabel).attrs<{children: ReactNode}>({
+  className: 'side-panel-subpanel__label'
+})`
+  font-size: 10px;
+`;
 
 function ColumnSelectorFactory(FieldSelector: ReturnType<typeof FieldSelectorFactory>) {
   const ColumnSelector: React.FC<ColumnSelectorProps<any>> = ({
@@ -52,27 +59,34 @@ function ColumnSelectorFactory(FieldSelector: ReturnType<typeof FieldSelectorFac
     label,
     allFields,
     onSelect,
-    fieldPairs
-  }) => (
-    <ColumnRow className="layer-config__column__selector">
-      <ColumnName className="layer-config__column__name">
-        <PanelLabel>
-          <FormattedMessage id={`columns.${label}`} />
-          {!column.optional ? `  *` : null}
-        </PanelLabel>
-      </ColumnName>
-      <ColumnSelect className="layer-config__column__select">
-        <FieldSelector
-          suggested={fieldPairs}
-          error={!validateColumn(column, columns, allFields)}
-          fields={allFields}
-          value={column.value}
-          erasable={Boolean(column.optional)}
-          onSelect={onSelect}
-        />
-      </ColumnSelect>
-    </ColumnRow>
-  );
+    fieldPairs,
+    isActive = true
+  }) => {
+    const isError = useMemo(
+      () => isActive && !validateColumn(column, columns, allFields),
+      [isActive, column, columns, allFields]
+    );
+    return (
+      <ColumnRow className="layer-config__column__selector">
+        <ColumnName className="layer-config__column__name">
+          <ColumnPanelLabel>
+            <FormattedMessage id={`columns.${label}`} />
+            {!column.optional ? `  *` : null}
+          </ColumnPanelLabel>
+        </ColumnName>
+        <ColumnSelect className="layer-config__column__select">
+          <FieldSelector
+            suggested={fieldPairs as any}
+            error={isError}
+            fields={allFields}
+            value={column.value}
+            erasable
+            onSelect={onSelect}
+          />
+        </ColumnSelect>
+      </ColumnRow>
+    );
+  };
   return ColumnSelector;
 }
 

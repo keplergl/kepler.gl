@@ -24,13 +24,13 @@ import {
   GeojsonDataMaps,
   DeckGlGeoTypes,
   detectTableColumns,
-  COLUMN_MODE_GEOJSON
+  COLUMN_MODE_GEOJSON,
+  applyFiltersToTableColumns
 } from './geojson-utils';
 import {
   getGeojsonLayerMetaFromArrow,
   isLayerHoveredFromArrow,
-  getHoveredObjectFromArrow,
-  assignColumnsByColumnMode
+  getHoveredObjectFromArrow
 } from '../layer-utils';
 import GeojsonLayerIcon from './geojson-layer-icon';
 import {
@@ -429,8 +429,10 @@ export default class GeoJsonLayer extends Layer {
     return null;
   }
 
-  calculateDataAttribute({dataContainer, filteredIndex}) {
+  calculateDataAttribute(dataset: KeplerTable, getPosition) {
+    const {dataContainer, filteredIndex} = dataset;
     if (dataContainer instanceof ArrowDataContainer) {
+      // TODO add columnMode logic here for ArrowDataContainer?
       // filter geojson/arrow table by values and make a partial copy of the raw table are expensive
       // so we will use filteredIndex to create an attribute e.g. filteredIndex [0|1] for GPU filtering
       // in deck.gl layer, see: FilterArrowExtension in @kepler.gl/deckgl-layers
@@ -454,7 +456,17 @@ export default class GeoJsonLayer extends Layer {
     }
 
     // for geojson, this should work as well and more efficient. But we need to update some test cases e.g. #GeojsonLayer -> formatLayerData
-    return filteredIndex.map(i => this.dataToFeature[i]).filter(d => d);
+    switch (this.config.columnMode) {
+      case COLUMN_MODE_GEOJSON: {
+        return filteredIndex.map(i => this.dataToFeature[i]).filter(d => d);
+      }
+
+      case COLUMN_MODE_TABLE:
+        return applyFiltersToTableColumns(dataset, this.dataToFeature);
+
+      default:
+        return [];
+    }
   }
 
   formatLayerData(datasets, oldLayerData) {
@@ -557,14 +569,8 @@ export default class GeoJsonLayer extends Layer {
       // find columns from lat, lng, id, and ts
       const columnConfig = detectTableColumns(dataset, this.config.columns, 'sortBy');
       if (columnConfig) {
-        const columns = assignColumnsByColumnMode({
-          columns: columnConfig.columns,
-          supportedColumnModes: this.supportedColumnModes,
-          columnMode: COLUMN_MODE_TABLE
-        });
         this.updateLayerConfig({
           ...columnConfig,
-          columns,
           columnMode: COLUMN_MODE_TABLE
         });
       }

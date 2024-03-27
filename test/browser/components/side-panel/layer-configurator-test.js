@@ -160,8 +160,8 @@ test('Components -> LayerConfigurator.mount -> LayerColumnConfig', t => {
 
   t.equal(
     baseConfigGroup.find(LayerColumnConfig).at(0).find(ColumnSelector).length,
-    3,
-    'Should render 3 ColumnSelector'
+    4,
+    'Should render 4 ColumnSelector'
   );
 
   // open fieldSelector
@@ -213,7 +213,8 @@ test('Components -> LayerConfigurator.mount -> LayerColumnConfig', t => {
             value: 'gps_data.lng',
             fieldIdx: 2
           },
-          altitude: {value: null, fieldIdx: -1, optional: true}
+          altitude: {value: null, fieldIdx: -1, optional: true},
+          neighbors: {value: null, fieldIdx: -1, optional: true}
         }
       }
     ],
@@ -245,7 +246,8 @@ test('Components -> LayerConfigurator.mount -> LayerColumnConfig', t => {
   //          value: 'gps_data.lng',
   //          fieldIdx: 2
   //        },
-  //        altitude: {value: null, fieldIdx: -1, optional: true}
+  //        altitude: {value: null, fieldIdx: -1, optional: true},
+  //        neighbors: {value: null, fieldIdx: -1, optional: true}
   //      }
   //    }
   //  ],
@@ -351,18 +353,10 @@ test('Components -> LayerConfigurator.mount -> LayerColumnModeConfig ', t => {
     updateLayerConfigSpy.args[0],
     [
       {
-        columnMode: 'table',
-        columns: {
-          geojson: {value: '_geojson', fieldIdx: 0, optional: true},
-          id: {value: null, fieldIdx: -1, optional: false},
-          lat: {value: null, fieldIdx: -1, optional: false},
-          lng: {value: null, fieldIdx: -1, optional: false},
-          altitude: {value: null, fieldIdx: -1, optional: true},
-          timestamp: {value: null, fieldIdx: -1, optional: false}
-        }
+        columnMode: 'table'
       }
     ],
-    'should update columnMode and columns'
+    'should update columnMode'
   );
 
   t.end();

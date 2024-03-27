@@ -18,6 +18,7 @@ import {KeplerTable} from '@kepler.gl/table';
 
 import {LayerBaseConfig} from '../base-layer';
 import {GeojsonLayerMetaProps, assignPointPairToLayerColumn} from '../layer-utils';
+import {LayerBaseConfig} from '../base-layer';
 
 export type GetFeature = (d: any) => Feature;
 export type GeojsonDataMaps = (Feature | BinaryFeatureCollection | null)[];
@@ -377,4 +378,41 @@ export function detectTableColumns(
   }
 
   return null;
+}
+
+export function applyFiltersToTableColumns(
+  dataset: KeplerTable,
+  dataToFeature: GeojsonDataMaps
+): GeojsonDataMaps {
+  const {dataContainer, filteredIndex} = dataset;
+  if (filteredIndex.length === dataContainer.numRows()) {
+    // Only apply the filtering when something is to be filtered out
+    return dataToFeature;
+  }
+
+  const filteredIndexSet = new Set(filteredIndex);
+  const filteredFeatures: GeojsonDataMaps = [];
+  for (const feature of dataToFeature) {
+    // @ts-expect-error geometry.coordinates not available for GeometryCollection
+    const filteredCoords = feature.geometry.coordinates.filter(c =>
+      filteredIndexSet.has(c.datumIndex)
+    );
+    if (filteredCoords.length > 0 && feature) {
+      filteredFeatures.push({
+        ...feature,
+        geometry: {
+          // @ts-expect-error BinaryFeatureCollection
+          ...feature.geometry,
+          coordinates: filteredCoords
+        },
+        properties: {
+          // @ts-expect-error BinaryFeatureCollection
+          ...feature.properties,
+          // @ts-expect-error BinaryFeatureCollection
+          values: feature.geometry.coordinates.map(c => dataContainer.rowAsArray(c.datumIndex))
+        }
+      });
+    }
+  }
+  return filteredFeatures;
 }

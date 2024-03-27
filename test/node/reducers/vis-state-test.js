@@ -22,12 +22,7 @@ import {
 } from '@kepler.gl/reducers';
 
 import {processCsvData, processGeojson} from '@kepler.gl/processors';
-import {
-  Layer,
-  KeplerGlLayers,
-  COLUMN_MODE_TABLE,
-  assignColumnsByColumnMode
-} from '@kepler.gl/layers';
+import {Layer, KeplerGlLayers, COLUMN_MODE_TABLE} from '@kepler.gl/layers';
 import {KeplerTable, createNewDataEntry, maybeToDate} from '@kepler.gl/table';
 import {createDataContainer, getDefaultFilter} from '@kepler.gl/utils';
 import {
@@ -678,27 +673,20 @@ test('#visStateReducer -> LAYER_CONFIG_CHANGE -> columnMode', t => {
   // trip Layer
   const tripLayer = updatedState2.layers[0];
 
-  const updatedColumns = assignColumnsByColumnMode({
-    columns: tripLayer.config.columns,
-    supportedColumnModes: tripLayer.supportedColumnModes,
-    columnMode: COLUMN_MODE_TABLE
-  });
-
-  // update trip layer column mode and columns
+  // update trip layer column mode
   const nextState = reducer(
     updatedState2,
     VisStateActions.layerConfigChange(tripLayer, {
-      columnMode: COLUMN_MODE_TABLE,
-      columns: updatedColumns
+      columnMode: COLUMN_MODE_TABLE
     })
   );
 
   const expectedLayerConfigColumns = {
-    geojson: {value: null, fieldIdx: -1, optional: true},
-    id: {value: null, fieldIdx: -1, optional: false},
-    lat: {value: 'location-lat', fieldIdx: 2, optional: false},
-    lng: {value: 'location-lng', fieldIdx: 1, optional: false},
-    timestamp: {value: null, fieldIdx: -1, optional: false},
+    geojson: {value: null, fieldIdx: -1},
+    id: {value: null, fieldIdx: -1},
+    lat: {value: 'location-lat', fieldIdx: 2},
+    lng: {value: 'location-lng', fieldIdx: 1},
+    timestamp: {value: null, fieldIdx: -1},
     altitude: {value: 'location-alt', fieldIdx: 6, optional: true}
   };
   t.deepEqual(
@@ -718,9 +706,9 @@ test('#visStateReducer -> LAYER_CONFIG_CHANGE -> columnMode', t => {
     nextState,
     VisStateActions.layerConfigChange(nextState.layers[0], {
       columns: {
-        ...updatedColumns,
-        timestamp: {value: 'timestamp', fieldIdx: 0, optional: true},
-        id: {value: 'name', fieldIdx: 5, optional: true}
+        ...expectedLayerConfigColumns,
+        timestamp: {value: 'timestamp', fieldIdx: 0},
+        id: {value: 'name', fieldIdx: 5}
       }
     })
   );
@@ -768,16 +756,9 @@ test('visStateReducer -> layerDataIdChangeUpdater', t => {
   const updatedLayer = nextState.layers[0];
 
   t.equal(updatedLayer.config.dataId, testGeoJsonDataId, 'should update point layer dataId');
-  t.deepEqual(
-    updatedLayer.config.columns,
-    {
-      altitude: {value: null, fieldIdx: -1, optional: true},
-      lat: {value: null, fieldIdx: -1},
-      lng: {value: null, fieldIdx: -1}
-    },
-    'should not update point layer column'
-  );
-  t.equal(updatedLayer.config.colorField, null, 'should not update point layer colorField');
+  const expectedLayerColumns = new PointLayer({}).config.columns;
+  t.deepEqual(updatedLayer.config.columns, expectedLayerColumns, 'should reset point layer column');
+  t.equal(updatedLayer.config.colorField, null, 'should not assign point layer colorField');
 
   // add layer
   const nextState1 = reducer(nextState, VisStateActions.addLayer());
@@ -882,7 +863,8 @@ test('visStateReducer -> layerDataIdChangeUpdater -> validation', t => {
     {
       altitude: {value: null, fieldIdx: -1, optional: true},
       lat: {value: 'gps_data.lat', fieldIdx: 1},
-      lng: {value: 'gps_data.lng', fieldIdx: 2}
+      lng: {value: 'gps_data.lng', fieldIdx: 2},
+      neighbors: {value: null, fieldIdx: -1, optional: true}
     },
     'should update point layer column'
   );
@@ -2048,7 +2030,8 @@ test('#visStateReducer -> setFilter.dynamicDomain & cpu', t => {
     columns: {
       lat: {value: 'gps_data.lat', fieldIdx: 1},
       lng: {value: 'gps_data.lng', fieldIdx: 2},
-      altitude: {value: null, fieldIdx: -1, optional: true}
+      altitude: {value: null, fieldIdx: -1, optional: true},
+      neighbors: {value: null, fieldIdx: -1, optional: true}
     }
   });
 
@@ -2224,12 +2207,12 @@ test('#visStateReducer -> setFilter.dynamicDomain & cpu', t => {
 
   const expectedLayerData1 = {
     data: [
-      {index: 17, position: [31.2165983, 30.0538936, 0]},
-      {index: 18, position: [31.2148748, 30.060911, 0]},
-      {index: 19, position: [31.2212278, 30.060334, 0]},
-      {index: 20, position: [31.2288985, 30.0554663, 0]},
-      {index: 21, position: [31.2187021, 30.0614122, 0]},
-      {index: 22, position: [31.2191059, 30.0612697, 0]}
+      {index: 17, position: [31.2165983, 30.0538936, 0], neighbors: undefined},
+      {index: 18, position: [31.2148748, 30.060911, 0], neighbors: undefined},
+      {index: 19, position: [31.2212278, 30.060334, 0], neighbors: undefined},
+      {index: 20, position: [31.2288985, 30.0554663, 0], neighbors: undefined},
+      {index: 21, position: [31.2187021, 30.0614122, 0], neighbors: undefined},
+      {index: 22, position: [31.2191059, 30.0612697, 0], neighbors: undefined}
     ],
     getPosition: () => {},
     getColor: () => {},

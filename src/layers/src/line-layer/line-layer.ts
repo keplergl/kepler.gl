@@ -29,12 +29,19 @@ export type LineLayerVisConfigSettings = {
 };
 
 export type LineLayerColumnsConfig = {
+  // COLUMN_MODE_POINTS required columns
   lat0: LayerColumn;
   lng0: LayerColumn;
   lat1: LayerColumn;
   lng1: LayerColumn;
   alt0?: LayerColumn;
   alt1?: LayerColumn;
+
+  // COLUMN_MODE_NEIGHBORS required columns
+  lat: LayerColumn;
+  lng: LayerColumn;
+  alt: LayerColumn;
+  neighbors: LayerColumn;
 };
 
 export type LineLayerVisConfig = {
@@ -51,19 +58,6 @@ export type LineLayerConfig = Merge<
   {columns: LineLayerColumnsConfig; visConfig: LineLayerVisConfig}
 >;
 
-export const linePosAccessor =
-  ({lat0, lng0, lat1, lng1, alt0, alt1}: LineLayerColumnsConfig) =>
-  (dc: DataContainerInterface) =>
-  d =>
-    [
-      dc.valueAt(d.index, lng0.fieldIdx),
-      dc.valueAt(d.index, lat0.fieldIdx),
-      alt0 && alt0.fieldIdx > -1 ? dc.valueAt(d.index, alt0.fieldIdx) : 0,
-      dc.valueAt(d.index, lng1.fieldIdx),
-      dc.valueAt(d.index, lat1.fieldIdx),
-      alt1 && alt1?.fieldIdx > -1 ? dc.valueAt(d.index, alt1.fieldIdx) : 0
-    ];
-
 export const lineRequiredColumns: ['lat0', 'lng0', 'lat1', 'lng1'] = [
   'lat0',
   'lng0',
@@ -71,6 +65,8 @@ export const lineRequiredColumns: ['lat0', 'lng0', 'lat1', 'lng1'] = [
   'lng1'
 ];
 export const lineOptionalColumns: ['alt0', 'alt1'] = ['alt0', 'alt1'];
+export const neighborRequiredColumns = ['lat', 'lng', 'neighbors'];
+export const neighborOptionalColumns = ['alt'];
 
 export const lineColumnLabels = {
   lat0: 'arc.lat0',
@@ -100,6 +96,44 @@ export const lineVisConfigs: {
   }
 };
 
+export const COLUMN_MODE_POINTS = 'points';
+export const COLUMN_MODE_NEIGHBORS = 'neighbors';
+const SUPPORTED_COLUMN_MODES = [
+  {
+    key: COLUMN_MODE_POINTS,
+    label: 'Points',
+    requiredColumns: lineRequiredColumns,
+    optionalColumns: lineOptionalColumns
+  },
+  {
+    key: COLUMN_MODE_NEIGHBORS,
+    label: 'Point and Neighbors',
+    requiredColumns: neighborRequiredColumns,
+    optionalColumns: neighborOptionalColumns
+  }
+];
+// const DEFAULT_COLUMN_MODE = COLUMN_MODE_POINTS;
+
+export const linePosAccessor =
+  ({lat0, lng0, lat1, lng1, alt0, alt1, lat, lng, alt}: LineLayerColumnsConfig, columnMode) =>
+  (dc: DataContainerInterface) => {
+    return columnMode === COLUMN_MODE_POINTS
+      ? d => [
+          dc.valueAt(d.index, lng0.fieldIdx),
+          dc.valueAt(d.index, lat0.fieldIdx),
+          alt0 && alt0.fieldIdx > -1 ? dc.valueAt(d.index, alt0.fieldIdx) : 0,
+          dc.valueAt(d.index, lng1.fieldIdx),
+          dc.valueAt(d.index, lat1.fieldIdx),
+          alt1 && alt1?.fieldIdx > -1 ? dc.valueAt(d.index, alt1.fieldIdx) : 0
+        ]
+      : // only return source point if columnMode is COLUMN_MODE_NEIGHBORS
+        d => [
+          dc.valueAt(d.index, lng.fieldIdx),
+          dc.valueAt(d.index, lat.fieldIdx),
+          alt?.fieldIdx > -1 ? dc.valueAt(d.index, alt.fieldIdx) : 0
+        ];
+  };
+
 export default class LineLayer extends ArcLayer {
   declare visConfigSettings: LineLayerVisConfigSettings;
   declare config: LineLayerConfig;
@@ -109,7 +143,7 @@ export default class LineLayer extends ArcLayer {
 
     this.registerVisConfig(lineVisConfigs);
     this.getPositionAccessor = (dataContainer: DataContainerInterface) =>
-      linePosAccessor(this.config.columns)(dataContainer);
+      linePosAccessor(this.config.columns, this.config.columnMode)(dataContainer);
   }
 
   get type() {
@@ -120,16 +154,16 @@ export default class LineLayer extends ArcLayer {
     return LineLayerIcon;
   }
 
-  get requiredLayerColumns() {
-    return lineRequiredColumns;
-  }
-
-  get optionalColumns() {
-    return lineOptionalColumns;
-  }
-
   get columnLabels() {
     return lineColumnLabels;
+  }
+
+  get columnPairs() {
+    return this.defaultLinkColumnPairs;
+  }
+
+  get supportedColumnModes() {
+    return SUPPORTED_COLUMN_MODES;
   }
 
   get visualChannels() {
@@ -147,15 +181,26 @@ export default class LineLayer extends ArcLayer {
     if (fieldPairs.length < 2) {
       return {props: []};
     }
+
+    const defaultAltColumn = {value: null, fieldIdx: -1, optional: true};
     const props: {columns: LineLayerColumnsConfig; label: string; isVisible: boolean} = {
       // connect the first two point layer with line
+      // TODO: fill default columns by parsing supported_column_modes
       columns: {
         lat0: fieldPairs[0].pair.lat,
         lng0: fieldPairs[0].pair.lng,
-        alt0: {value: null, fieldIdx: -1, optional: true},
+        alt0: fieldPairs[0].pair.altitude
+          ? {...defaultAltColumn, ...fieldPairs[0].pair.altitude}
+          : {...defaultAltColumn},
         lat1: fieldPairs[1].pair.lat,
         lng1: fieldPairs[1].pair.lng,
-        alt1: {value: null, fieldIdx: -1, optional: true}
+        alt1: fieldPairs[1].pair.altitude
+          ? {...defaultAltColumn, ...fieldPairs[1].pair.altitude}
+          : {...defaultAltColumn},
+        lat: {...defaultAltColumn},
+        lng: {...defaultAltColumn},
+        alt: {...defaultAltColumn},
+        neighbors: {...defaultAltColumn}
       },
       label: `${fieldPairs[0].defaultName} -> ${fieldPairs[1].defaultName} line`,
       isVisible: false

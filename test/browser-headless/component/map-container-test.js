@@ -148,11 +148,6 @@ test('MapContainerFactory - _renderDeckOverlay', t => {
           assert.is(hoverEvents[0].info.index, 15, 'object is picked');
           assert.is(hoverEvents[0].info.picked, true, 'object is picked');
           assert.is(hoverEvents[0].info.mapIndex, 0, 'onHover includes mapIndex value');
-          assert.deepEqual(
-            layers[0].state.model.getUniforms().picking_uSelectedColor,
-            [16, 0, 0],
-            'autoHighlight parameter is set'
-          );
 
           [
             // test picking info
@@ -181,6 +176,7 @@ test('MapContainerFactory - _renderDeckOverlay', t => {
           // asign info object to to state and test map popover
           const propsWithHoverInfo = {
             ...initialProps,
+            mapboxApiAccessToken: 'pyx-11',
             visState: {
               ...initialProps.visState,
               hoverInfo: hoverEvents[0].info,

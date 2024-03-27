@@ -57,7 +57,7 @@ export type EnhancedFieldPair = {
 export type SupportedColumnMode = {
   key: string;
   label: string;
-  requiredColumns?: string[];
+  requiredColumns: string[];
   optionalColumns?: string[];
   hasHelp?: boolean;
 };
@@ -259,6 +259,9 @@ export type LayerVisConfigSettings = {
   heatmapRadius: VisConfigNumber;
   darkBaseMapEnabled: VisConfigBoolean;
   fixedHeight: VisConfigBoolean;
+  allowHover: VisConfigBoolean;
+  showNeighborOnHover: VisConfigBoolean;
+  showHighlightColor: VisConfigBoolean;
 };
 
 // TODO: Move this to individual layers
@@ -308,6 +311,7 @@ export type TextConfigSelect = {
   multiSelect: boolean;
   searchable: boolean;
 };
+
 export type TextConfigNumber = {
   type: 'number';
   range: number[];
@@ -317,6 +321,7 @@ export type TextConfigNumber = {
   label: string;
   showInput: boolean;
 };
+
 export type LayerTextConfig = {
   fontSize: TextConfigNumber;
   outlineWidth: TextConfigNumber;

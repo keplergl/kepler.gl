@@ -27,6 +27,7 @@ export type LayerColumnConfigProps<FieldOption extends MinimalField> = {
   columnPairs?: ColumnPairs | null;
   fieldPairs?: FieldPair[];
   columnLabels: ColumnLabels | null;
+  isActive: boolean;
 };
 
 /**
@@ -61,7 +62,8 @@ function LayerColumnConfigFactory(ColumnSelector: ReturnType<typeof ColumnSelect
     fields,
     updateLayerConfig,
     assignColumn,
-    assignColumnPairs
+    assignColumnPairs,
+    isActive
   }) => {
     const enhancedFieldPairs: EnhancedFieldPair[] | null = useMemo(
       () =>
@@ -109,6 +111,7 @@ function LayerColumnConfigFactory(ColumnSelector: ReturnType<typeof ColumnSelect
                   key
                 )}
                 onSelect={val => onUpdateColumn(key, val)}
+                isActive={isActive}
               />
             ))}
           </div>
