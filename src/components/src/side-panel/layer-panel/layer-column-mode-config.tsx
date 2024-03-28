@@ -79,7 +79,7 @@ const ConfigPanesContainer = styled.div`
 interface FieldOption extends MinimalField {
   fieldIdx: number;
 }
-type ColumnModeConfig = {
+export type SupportedColumnModeConfig = {
   key: string;
   label: string;
   columns: LayerColumns;
@@ -93,8 +93,8 @@ export type ColumnModeConfigProps = {
     mode: {key: string; label: string; columns: any},
     selected: boolean
   ) => JSX.Element;
-  selectColumnMode: (mode: ColumnModeConfig) => void;
-  getHelpHandler?: (mode: ColumnModeConfig) => (() => void) | null;
+  selectColumnMode: (mode: SupportedColumnModeConfig) => void;
+  getHelpHandler?: (mode: SupportedColumnModeConfig) => (() => void) | null;
 };
 
 ColumnModeConfigFactory.deps = [PanelHeaderActionFactory];
