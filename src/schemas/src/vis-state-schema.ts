@@ -4,7 +4,7 @@
 import pick from 'lodash.pick';
 import {VERSIONS} from './versions';
 import {LAYER_VIS_CONFIGS, FILTER_VIEW_TYPES} from '@kepler.gl/constants';
-import {isFilterValidToSave, findById} from '@kepler.gl/utils';
+import {colorRangeBackwardCompatibility, isFilterValidToSave, findById} from '@kepler.gl/utils';
 import {notNullorUndefined} from '@kepler.gl/common-utils';
 import Schema from './schema';
 import cloneDeep from 'lodash.clonedeep';
@@ -507,13 +507,22 @@ const visConfigModificationV1 = {
 
 class VisConfigSchemaV1 extends Schema {
   key = 'visConfig';
-
+  // layer.config.visConfig
+  // colorRange
   load(visConfig, parents, accumulated) {
     const [layer] = parents.slice(-2, -1);
     const modified = visConfigModificationV1[layer.type]
       ? visConfigModificationV1[layer.type](visConfig, parents, accumulated)
       : {};
     const loadedVisConfig = {...visConfig, ...modified};
+
+    // backward compatibility, load colorRange and change the name to match new color Palette
+    ['colorRange', 'strokeColorRange'].forEach(prop => {
+      if (loadedVisConfig?.[prop]) {
+        loadedVisConfig[prop] = colorRangeBackwardCompatibility(loadedVisConfig[prop]);
+      }
+    });
+
     return {
       visConfig: loadedVisConfig
     };

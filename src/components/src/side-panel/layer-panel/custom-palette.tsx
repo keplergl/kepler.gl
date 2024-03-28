@@ -22,7 +22,7 @@ import styled, {StyledComponent, css} from 'styled-components';
 import Portaled from '../../common/portaled';
 
 import {KeyEvent} from '@kepler.gl/constants';
-import {ColorUI, HexColor} from '@kepler.gl/types';
+import {ColorUI, HexColor, NestedPartial} from '@kepler.gl/types';
 import {colorMapToColorBreaks, isNumericColorBreaks} from '@kepler.gl/utils';
 import {
   addCustomPaletteColor,
@@ -42,9 +42,7 @@ export type ActionIcons = {
 };
 
 export type EditColorMapFunc = (v: number, i: number) => void;
-export type SetColorUIFunc = (
-  newConfig: Partial<{[key in keyof ColorUI]: ColorUI[keyof ColorUI]}>
-) => void;
+export type SetColorUIFunc = (newConfig: NestedPartial<ColorUI>) => void;
 
 /**
  * EditableColorRange
@@ -526,8 +524,8 @@ function CustomPaletteFactory(): React.FC<CustomPaletteProps> {
         if (!customPalette.colorMap) {
           return;
         }
-        const newColorMap = customPalette.colorMap.map((cm, i) =>
-          i === index ? [value, cm[1]] : cm
+        const newColorMap = customPalette.colorMap.map(
+          (cm, i) => (i === index ? [value, cm[1]] : cm) as [string, string]
         );
         setColorPaletteUI({
           customPalette: {
@@ -569,12 +567,8 @@ function CustomPaletteFactory(): React.FC<CustomPaletteProps> {
         <DividerLine />
         {/* Cancel or Confirm Buttons */}
         <BottomAction onCancel={onCancel} onConfirm={onConfirm} />
-        <Portaled isOpened={showSketcher !== false} left={280} top={-300}>
-          <CustomPicker
-            color={colors[Number(showSketcher)]}
-            onChange={onPickerUpdate}
-            onSwatchClose={onSwatchClose}
-          />
+        <Portaled isOpened={showSketcher !== false} left={280} top={-300} onClose={onSwatchClose}>
+          <CustomPicker color={colors[Number(showSketcher)]} onChange={onPickerUpdate} />
         </Portaled>
       </StyledCustomPalette>
     );

@@ -29,7 +29,7 @@ import {
   EditableColorRange
 } from '@kepler.gl/components';
 
-import {StateWFilesFiltersLayerColor} from 'test/helpers/mock-state';
+import {StateWFilesFiltersLayerColor, expectedColorRangeInLayer} from 'test/helpers/mock-state';
 
 const ChannelByValueSelector = appInjector.get(ChannelByValueSelectorFactory);
 const DimensionScaleSelector = appInjector.get(DimensionScaleSelectorFactory);
@@ -44,15 +44,15 @@ function nop() {
 
 const ExpectedCustomPalette = {
   customPalette: {
-    name: 'Uber Viz Sequential 2',
+    name: 'Uber Viz Sequential',
     type: 'sequential',
     category: 'Uber',
-    colors: ['#E6FAFA', '#AAD7DA', '#68B4BB', '#00939C'],
+    colors: expectedColorRangeInLayer.colors,
     colorMap: [
-      [3032, '#E6FAFA'],
-      [6063, '#AAD7DA'],
-      [9093, '#68B4BB'],
-      [null, '#00939C']
+      [3032, expectedColorRangeInLayer.colors[0]],
+      [6063, expectedColorRangeInLayer.colors[1]],
+      [9093, expectedColorRangeInLayer.colors[2]],
+      [null, expectedColorRangeInLayer.colors[3]]
     ]
   },
   showSketcher: false,
@@ -63,7 +63,8 @@ const ExpectedCustomPalette = {
     steps: 6,
     reversed: false,
     custom: false,
-    customBreaks: true
+    customBreaks: true,
+    colorBlindSafe: false
   }
 };
 
@@ -225,6 +226,7 @@ test('Components -> ChannelByValueSelector -> ColorScaleSelector -> ColorBreakDi
     fields: updatedState.visState.datasets[pointLayer1.config.dataId].fields,
     setColorUI
   };
+
   let wrapper;
   t.doesNotThrow(() => {
     wrapper = mountWithTheme(
@@ -260,10 +262,10 @@ test('Components -> ChannelByValueSelector -> ColorScaleSelector -> ColorBreakDi
   t.equal(wrapper.find(ColorPaletteItem).length, 4, 'Should render 4 ColorPaletteItem');
 
   const expectedText = [
-    ['#E6FAFA', '1', '3032'],
-    ['#AAD7DA', '3032', '6063'],
-    ['#68B4BB', '6063', '9093'],
-    ['#00939C', '9093', '12120']
+    [expectedColorRangeInLayer.colors[0], '1', '3032'],
+    [expectedColorRangeInLayer.colors[1], '3032', '6063'],
+    [expectedColorRangeInLayer.colors[2], '6063', '9093'],
+    [expectedColorRangeInLayer.colors[3], '9093', '12120']
   ];
 
   for (let i = 0; i < 4; i++) {
@@ -366,10 +368,10 @@ test('Components -> ChannelByValueSelector -> ColorScaleSelector -> ColorBreakDi
   const expectedCustomPalette1 = {
     ...ExpectedCustomPalette.customPalette,
     colorMap: [
-      [3032, '#E6FAFA'],
-      [5000, '#AAD7DA'],
-      [9093, '#68B4BB'],
-      [null, '#00939C']
+      [3032, expectedColorRangeInLayer.colors[0]],
+      [5000, expectedColorRangeInLayer.colors[1]],
+      [9093, expectedColorRangeInLayer.colors[2]],
+      [null, expectedColorRangeInLayer.colors[3]]
     ]
   };
 

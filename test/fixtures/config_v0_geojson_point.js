@@ -112,14 +112,14 @@ export const parsedConfigV0 = {
           sizeField: null,
           visConfig: {
             colorRange: {
-              name: 'ColorBrewer Dark2-6',
+              name: 'Dark2',
               type: 'qualitative',
               category: 'ColorBrewer',
               colors: ['#1b9e77', '#d95f02', '#7570b3', '#e7298a', '#66a61e', '#e6ab02'],
               reversed: false
             },
             strokeColorRange: {
-              name: 'ColorBrewer Dark2-6',
+              name: 'Dark2',
               type: 'qualitative',
               category: 'ColorBrewer',
               colors: ['#1b9e77', '#d95f02', '#7570b3', '#e7298a', '#66a61e', '#e6ab02'],

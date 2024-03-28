@@ -77,7 +77,6 @@ export {LayerBlendingSelector, default as LayerManagerFactory} from './side-pane
 export {default as ColorPalette} from './side-panel/layer-panel/color-palette';
 export {
   ALL_TYPES,
-  ColorPaletteGroup,
   default as ColorRangeSelector,
   PaletteConfig
 } from './side-panel/layer-panel/color-range-selector';
@@ -101,8 +100,14 @@ export * from './side-panel/layer-panel/channel-by-value-selector';
 export * from './side-panel/layer-panel/color-breaks-panel';
 export * from './side-panel/layer-panel/color-range-selector';
 export * from './side-panel/layer-panel/color-scale-selector';
-export * from './side-panel/layer-panel/custom-palette';
-export {default as CustomPalette} from './side-panel/layer-panel/custom-palette';
+export {
+  AddColorStop,
+  default as CustomPalette,
+  DeleteColorStop,
+  ColorPaletteItem,
+  ColorSwatch,
+  EditableColorRange
+} from './side-panel/layer-panel/custom-palette';
 export {default as CustomPicker} from './side-panel/layer-panel/custom-picker';
 export {default as DatasetLayerGroupFactory} from './side-panel/layer-panel/dataset-layer-group';
 export {default as DatasetLayerSectionFactory} from './side-panel/layer-panel/dataset-layer-section';

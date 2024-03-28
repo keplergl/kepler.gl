@@ -1364,7 +1364,7 @@ mergedLayer4.config = {
   radiusScale: 'linear',
   visConfig: {
     colorRange: {
-      name: 'Uber Viz Qualitative 3',
+      name: 'Uber Viz Qualitative',
       type: 'qualitative',
       category: 'Uber',
       colors: [
@@ -1387,7 +1387,7 @@ mergedLayer4.config = {
       reversed: false
     },
     strokeColorRange: {
-      name: 'Uber Viz Qualitative 3',
+      name: 'Uber Viz Qualitative',
       type: 'qualitative',
       category: 'Uber',
       colors: [

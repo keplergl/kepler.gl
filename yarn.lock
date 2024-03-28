@@ -3320,8 +3320,10 @@ __metadata:
     "@kepler.gl/types": "npm:3.1.0-alpha.1"
     "@types/d3-scale": "npm:^3.2.2"
     "@types/keymirror": "npm:^0.1.1"
+    chroma-js: "npm:2.1.2"
     colorbrewer: "npm:^1.5.0"
     d3-scale: "npm:^3.2.3"
+    d3-scale-chromatic: "npm:2.0.0"
     global: "npm:^4.3.0"
     keymirror: "npm:^0.1.1"
   languageName: unknown
@@ -12688,6 +12690,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"chroma-js@npm:2.1.2":
+  version: 2.1.2
+  resolution: "chroma-js@npm:2.1.2"
+  dependencies:
+    cross-env: "npm:^6.0.3"
+  checksum: 10c0/f3760059b76240bab7387f335c798bbf55a4edf937534be7bc5c16ecad9b358dcfd891ca4fffa2c34742f45d5c3e96c8927c6a9906a13905da2bfa4c9ad30418
+  languageName: node
+  linkType: hard
+
 "chrome-trace-event@npm:^1.0.2":
   version: 1.0.4
   resolution: "chrome-trace-event@npm:1.0.4"
@@ -13455,6 +13466,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"cross-env@npm:^6.0.3":
+  version: 6.0.3
+  resolution: "cross-env@npm:6.0.3"
+  dependencies:
+    cross-spawn: "npm:^7.0.0"
+  bin:
+    cross-env: src/bin/cross-env.js
+    cross-env-shell: src/bin/cross-env-shell.js
+  checksum: 10c0/0d176b91c730abb08589431970a59771148f8fbf338959f5e3aa71b866d38ba390fc67f5330306d0a37d7cb74675224d0f23086f291661b944abbf5a00bd7080
+  languageName: node
+  linkType: hard
+
 "cross-spawn@npm:^6.0.0, cross-spawn@npm:^6.0.5":
   version: 6.0.6
   resolution: "cross-spawn@npm:6.0.6"
@@ -13867,6 +13890,16 @@ __metadata:
     d3-collection: "npm:1"
     d3-shape: "npm:^1.2.0"
   checksum: 10c0/eba13f931d3bde6eae99c74b966e63400d5a10ecd3627b22f771e11a08eb3239a5e77c81c378533e574444be62b34b5758d757e13c5e55b4ffb63c69c4e7fc88
+  languageName: node
+  linkType: hard
+
+"d3-scale-chromatic@npm:2.0.0":
+  version: 2.0.0
+  resolution: "d3-scale-chromatic@npm:2.0.0"
+  dependencies:
+    d3-color: "npm:1 - 2"
+    d3-interpolate: "npm:1 - 2"
+  checksum: 10c0/93cafe497b00046b1d4e237a8bb8981fbb35ba03070f420bd913872f6e9d2c9628ed8bb8c84c6a6ffe16029359fa74b646c5c5129732ef4186ab059a77da3021
   languageName: node
   linkType: hard
 

@@ -284,7 +284,7 @@ mergedH3Layer.config = {
       name: 'Global Warming',
       type: 'sequential',
       category: 'Uber',
-      colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
+      colors: ['#4C0035', '#880030', '#B72F15', '#D6610A', '#EF9100', '#FFC300']
     },
     strokeOpacity: 0.8,
     thickness: 2,

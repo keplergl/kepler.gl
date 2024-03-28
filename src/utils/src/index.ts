@@ -5,8 +5,8 @@
 
 export {
   colorMaybeToRGB,
+  colorRangeBackwardCompatibility,
   createLinearGradient,
-  getColorGroupByName,
   hasColorMap,
   hexToRgb,
   isHexColor,
@@ -14,11 +14,15 @@ export {
   normalizeColor,
   reverseColorRange,
   rgbToHex,
-  updateColorRange,
   addCustomPaletteColor,
   removeCustomPaletteColor,
   sortCustomPaletteColor,
-  updateCustomPaletteColor
+  updateCustomPaletteColor,
+  updateColorRangeBySelectedPalette,
+  paletteIsSteps,
+  paletteIsType,
+  paletteIsColorBlindSafe,
+  updateColorRangeByMatchingPalette
 } from './color-utils';
 export {errorNotification} from './notifications-utils';
 
