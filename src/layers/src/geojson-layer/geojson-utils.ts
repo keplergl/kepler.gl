@@ -21,6 +21,7 @@ import {LayerBaseConfig} from '../base-layer';
 
 export type GetFeature = (d: any) => Feature;
 export type GeojsonDataMaps = (Feature | BinaryFeatureCollection | null)[];
+export type GeojsonPointDataMaps = (number[] | number[][] | null)[];
 
 export const COLUMN_MODE_GEOJSON = 'geojson';
 
@@ -152,6 +153,42 @@ export function getGeojsonDataMaps(
       };
 
       dataToFeature[index] = cleaned;
+    } else {
+      dataToFeature[index] = null;
+    }
+  }
+
+  return dataToFeature;
+}
+
+/**
+ * Parse raw data to GeoJson point feature coordinates
+ */
+export function getGeojsonPointDataMaps(
+  dataContainer: DataContainerInterface,
+  getFeature: GetFeature
+): GeojsonPointDataMaps {
+  const acceptableTypes = ['Point', 'MultiPoint', 'GeometryCollection'];
+
+  const dataToFeature: GeojsonPointDataMaps = [];
+
+  for (let index = 0; index < dataContainer.numRows(); index++) {
+    const feature = parseGeoJsonRawFeature(getFeature(dataContainer.rowAsArray(index)));
+
+    if (feature && feature.geometry && acceptableTypes.includes(feature.geometry.type)) {
+      dataToFeature[index] =
+        feature.geometry.type === 'Point' || feature.geometry.type === 'MultiPoint'
+          ? feature.geometry.coordinates
+          : //@ts-expect-error Property 'geometries' does not exist on type 'LineString'
+            (feature.geometry.geometries || []).reduce((accu, f) => {
+              if (f.type === 'Point') {
+                accu.push(f.coordinates);
+              } else if (f.type === 'MultiPoint') {
+                accu.push(...f.coordinates);
+              }
+
+              return accu;
+            }, []);
     } else {
       dataToFeature[index] = null;
     }

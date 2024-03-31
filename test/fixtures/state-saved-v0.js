@@ -995,6 +995,7 @@ const mergedLayer0 = new PointLayer({
   id: '1eh',
   dataId: '9h10t7fyb',
   label: 'dropoff',
+  columnMode: 'points',
   color: [76, 154, 78],
   columns: {
     lat: {
@@ -1119,6 +1120,7 @@ const mergedLayer2 = new PointLayer({
 mergedLayer2.config = {
   dataId: '9h10t7fyb',
   label: 'begintrip',
+  columnMode: 'points',
   color: [218, 112, 191],
   columns: {
     lat: {

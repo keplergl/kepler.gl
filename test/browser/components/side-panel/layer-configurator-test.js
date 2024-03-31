@@ -156,12 +156,21 @@ test('Components -> LayerConfigurator.mount -> LayerColumnConfig', t => {
     1,
     'should render 1 LayerColumnModeConfig'
   );
-  t.equal(baseConfigGroup.find(LayerColumnConfig).length, 1, 'should render 1 LayerColumnConfig');
+  t.equal(baseConfigGroup.find(LayerColumnConfig).length, 2, 'should render 2 LayerColumnConfig');
 
   t.equal(
     baseConfigGroup.find(LayerColumnConfig).at(0).find(ColumnSelector).length,
     4,
-    'Should render 4 ColumnSelector'
+    'Should render 4 ColumnSelector for Point columns'
+  );
+
+  t.equal(
+    baseConfigGroup
+      .find(LayerColumnConfig)
+      .at(1)
+      .find(ColumnSelector).length,
+    1,
+    'Should render 1 ColumnSelector for GeoJSON feature'
   );
 
   // open fieldSelector
@@ -214,7 +223,8 @@ test('Components -> LayerConfigurator.mount -> LayerColumnConfig', t => {
             fieldIdx: 2
           },
           altitude: {value: null, fieldIdx: -1, optional: true},
-          neighbors: {value: null, fieldIdx: -1, optional: true}
+          neighbors: {value: null, fieldIdx: -1, optional: true},
+          geojson: {value: null, fieldIdx: -1}
         }
       }
     ],
@@ -247,7 +257,8 @@ test('Components -> LayerConfigurator.mount -> LayerColumnConfig', t => {
   //          fieldIdx: 2
   //        },
   //        altitude: {value: null, fieldIdx: -1, optional: true},
-  //        neighbors: {value: null, fieldIdx: -1, optional: true}
+  //        neighbors: {value: null, fieldIdx: -1, optional: true},
+  //        geojson: {value: null, fieldIdx: -1}
   //      }
   //    }
   //  ],
