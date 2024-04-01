@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 // @ts-nocheck
-import {KEPLER_GL_VERSION, EXPORT_HTML_MAP_MODES} from '@kepler.gl/constants';
+import {EXPORT_HTML_MAP_MODES, KEPLER_GL_VERSION} from '@kepler.gl/constants';
 
 /**
  * This method is used to create an html file which will inlcude kepler and map data
@@ -45,11 +45,11 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
         <meta name="twitter:image" content="https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/kepler.gl-meta-tag.png" />
 
         <!-- Load React/Redux -->
-        <script src="https://unpkg.com/react@16.8.4/umd/react.production.min.js" crossorigin></script>
-        <script src="https://unpkg.com/react-dom@16.8.4/umd/react-dom.production.min.js" crossorigin></script>
-        <script src="https://unpkg.com/redux@3.7.2/dist/redux.js" crossorigin></script>
-        <script src="https://unpkg.com/react-redux@7.1.3/dist/react-redux.min.js" crossorigin></script>
-        <script src="https://unpkg.com/styled-components@4.1.3/dist/styled-components.min.js" crossorigin></script>
+        <script src="https://unpkg.com/react@18.2.0/umd/react.production.min.js" crossorigin></script>
+        <script src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js" crossorigin></script>
+        <script src="https://unpkg.com/redux@4.2.1/dist/redux.js" crossorigin></script>
+        <script src="https://unpkg.com/react-redux@8.1.2/dist/react-redux.min.js" crossorigin></script>
+        <script src="https://unpkg.com/styled-components@4.4.1/dist/styled-components.min.js" crossorigin></script>
 
         <!-- Load Kepler.gl -->
         <script src="https://unpkg.com/kepler.gl@${version}/umd/keplergl.min.js" crossorigin></script>
