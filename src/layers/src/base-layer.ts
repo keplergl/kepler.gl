@@ -65,7 +65,11 @@ import {
   RGBColor,
   ValueOf
 } from '@kepler.gl/types';
-import {getScaleFunction, initializeLayerColorMap} from '@kepler.gl/utils';
+import {
+  getScaleFunction,
+  initializeLayerColorMap,
+  updateCustomColorRangeByColorUI
+} from '@kepler.gl/utils';
 import memoize from 'lodash.memoize';
 import {isDomainQuantile, getDomainStepsbyZoom, getThresholdsFromQuantiles} from '@kepler.gl/utils';
 
@@ -914,6 +918,11 @@ class Layer {
         Console.warn(`updateColorUI: Can't find visual channel which range is ${prop}`);
         return;
       }
+      // add name|type|category to updateCustomPalette if customBreaks, so that
+      // colors will not be override as well when inverse palette with custom break
+      customPalette.name = DEFAULT_CUSTOM_PALETTE.name;
+      customPalette.type = DEFAULT_CUSTOM_PALETTE.type;
+      customPalette.category = DEFAULT_CUSTOM_PALETTE.category;
       // initiate colorMap from current scale
       customPalette.colorMap = initializeLayerColorMap(this, visualChannels[channelKey]);
     } else if (newConfig.colorRangeConfig.custom) {
@@ -940,9 +949,17 @@ class Layer {
    * @param {*} prop
    */
   updateColorUIByColorRange(newConfig, prop) {
-    if (typeof newConfig.showDropdown !== 'number') return;
-
     const {colorUI, visConfig} = this.config;
+
+    // when custom palette adds/removes step, the number in "Steps" input control
+    // should be updated as well
+    const isCustom = newConfig.customPalette?.category === 'Custom';
+    const customStepsChanged = isCustom
+      ? newConfig.customPalette.colors.length !== visConfig[prop].colors.length
+      : false;
+
+    if (typeof newConfig.showDropdown !== 'number' && !customStepsChanged) return;
+
     this.updateLayerConfig({
       colorUI: {
         ...colorUI,
@@ -950,7 +967,9 @@ class Layer {
           ...colorUI[prop],
           colorRangeConfig: {
             ...colorUI[prop].colorRangeConfig,
-            steps: visConfig[prop].colors.length,
+            steps: customStepsChanged
+              ? colorUI[prop].customPalette.colors.length
+              : visConfig[prop].colors.length,
             reversed: Boolean(visConfig[prop].reversed)
           }
         }
@@ -972,10 +991,15 @@ class Layer {
 
     const {colorUI, visConfig} = this.config;
 
-    const update = updateColorRangeByMatchingPalette(
-      visConfig[prop],
-      colorUI[prop].colorRangeConfig
-    );
+    // for custom palette, one can only 'reverse' the colors in custom palette.
+    // changing 'steps', 'colorBindSafe', 'type' should fall back to predefined palette.
+    const isCustomColorReversed =
+      visConfig.colorRange.category === 'Custom' &&
+      newConfig.colorRangeConfig?.hasOwnProperty('reversed');
+
+    const update = isCustomColorReversed
+      ? updateCustomColorRangeByColorUI(visConfig[prop], colorUI[prop].colorRangeConfig)
+      : updateColorRangeByMatchingPalette(visConfig[prop], colorUI[prop].colorRangeConfig);
 
     if (update) {
       this.updateLayerVisConfig({[prop]: update});

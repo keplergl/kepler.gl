@@ -4715,15 +4715,17 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom breaks', t => {
     })
   );
 
+  // Explain: with redesigned color range using chormajs/d3, create customBreaks
+  // will lead to customPalette, which won't be overrided by predefined colorPalette
   const expectedColorUI = {
     color: DEFAULT_COLOR_UI,
     strokeColorRange: DEFAULT_COLOR_UI,
     colorRange: {
       ...DEFAULT_COLOR_UI,
       customPalette: {
-        name: 'Uber Viz Sequential',
-        type: 'sequential',
-        category: 'Uber',
+        name: 'color.customPalette',
+        type: 'custom',
+        category: 'Custom',
         colors: ['#00939C', '#6BB5B9', '#AAD7D9', '#E6FAFA'],
         colorMap: [
           ['driver_analytics', '#00939C'],
@@ -6835,6 +6837,262 @@ test('#VisStateUpdater -> removeEffect', t => {
   nextState = reducer(nextState, VisStateActions.removeEffect('e_2'));
 
   t.equal(nextState.effectOrder.length, 2, 'should be 2 ids in effectOrder');
+
+  t.end();
+});
+
+test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. enable custom palette', t => {
+  const initialState = CloneDeep(StateWFilesFiltersLayerColor.visState);
+  const pointLayer = initialState.layers[0];
+
+  const nextState = reducer(
+    initialState,
+    VisStateActions.layerColorUIChange(pointLayer, 'colorRange', {
+      colorRangeConfig: {custom: true}
+    })
+  );
+
+  const expectedColorUI = {
+    color: DEFAULT_COLOR_UI,
+    strokeColorRange: DEFAULT_COLOR_UI,
+    colorRange: {
+      ...DEFAULT_COLOR_UI,
+      customPalette: {
+        name: 'color.customPalette',
+        type: 'custom',
+        category: 'Custom',
+        colors: ['#00939C', '#6BB5B9', '#AAD7D9', '#E6FAFA']
+      },
+      colorRangeConfig: {
+        type: 'all',
+        colorBlindSafe: false,
+        steps: 6,
+        reversed: false,
+        custom: true,
+        customBreaks: false
+      }
+    }
+  };
+
+  t.deepEqual(
+    nextState.layers[0].config.colorUI,
+    expectedColorUI,
+    'should set customPalette when one clicks Custom Palette and Confirm button'
+  );
+
+  t.end();
+});
+
+test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom palette - delete color item', t => {
+  const initialState = CloneDeep(StateWFilesFiltersLayerColor.visState);
+  const pointLayer = initialState.layers[0];
+
+  const customPalette = {
+    customPalette: {
+      colors: ['#6BB5B9', '#AAD7D9', '#E6FAFA'],
+      name: 'color.customPalette',
+      type: 'custom',
+      category: 'Custom'
+    }
+  };
+
+  const nextState = reducer(
+    initialState,
+    VisStateActions.layerColorUIChange(pointLayer, 'colorRange', {
+      colorRangeConfig: {custom: true}
+    })
+  );
+
+  const deleteState = reducer(
+    nextState,
+    VisStateActions.layerColorUIChange(pointLayer, 'colorRange', customPalette)
+  );
+
+  const expectedColorUI = {
+    color: DEFAULT_COLOR_UI,
+    strokeColorRange: DEFAULT_COLOR_UI,
+    colorRange: {
+      ...DEFAULT_COLOR_UI,
+      customPalette: {
+        name: 'color.customPalette',
+        type: 'custom',
+        category: 'Custom',
+        colors: ['#6BB5B9', '#AAD7D9', '#E6FAFA']
+      },
+      colorRangeConfig: {
+        type: 'all',
+        colorBlindSafe: false,
+        steps: 3,
+        reversed: false,
+        custom: true,
+        customBreaks: false
+      }
+    }
+  };
+
+  t.deepEqual(
+    deleteState.layers[0].config.colorUI,
+    expectedColorUI,
+    'should set customPalette when one deletes a color item from Custom Palette'
+  );
+
+  let confirmState = reducer(
+    deleteState,
+    VisStateActions.layerColorUIChange(pointLayer, 'colorRange', {
+      colorRangeConfig: {custom: false}
+    })
+  );
+
+  // simulate Confirm button action
+  confirmState = reducer(
+    confirmState,
+    VisStateActions.layerVisConfigChange(pointLayer, {
+      colorRange: {
+        name: 'color.customPalette',
+        type: 'custom',
+        category: 'Custom',
+        colors: ['#6BB5B9', '#AAD7D9', '#E6FAFA']
+      }
+    })
+  );
+
+  const reverseState = reducer(
+    confirmState,
+    VisStateActions.layerColorUIChange(pointLayer, 'colorRange', {
+      colorRangeConfig: {reversed: true}
+    })
+  );
+
+  const expectedReversedColorUI = {
+    ...expectedColorUI,
+    colorRange: {
+      ...expectedColorUI.colorRange,
+      colorRangeConfig: {
+        type: 'all',
+        colorBlindSafe: false,
+        steps: 3,
+        reversed: true,
+        custom: false,
+        customBreaks: false
+      }
+    }
+  };
+
+  t.deepEqual(
+    reverseState.layers[0].config.colorUI,
+    expectedReversedColorUI,
+    'should set customPalette when one deletes a color item from Custom Palette and reverse it'
+  );
+
+  const expectedReversedVisConfigColorRange = {
+    category: 'Custom',
+    colors: ['#E6FAFA', '#AAD7D9', '#6BB5B9'],
+    name: 'color.customPalette',
+    reversed: true,
+    type: 'custom'
+  };
+
+  t.deepEqual(
+    reverseState.layers[0].config.visConfig.colorRange,
+    expectedReversedVisConfigColorRange,
+    'should set visConfig.ColorRange when one deletes a color item from Custom Palette and reverse it'
+  );
+
+  t.end();
+});
+
+test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom palette - select new steps', t => {
+  const initialState = CloneDeep(StateWFilesFiltersLayerColor.visState);
+  const pointLayer = initialState.layers[0];
+
+  const customPalette = {
+    customPalette: {
+      colors: ['#6BB5B9', '#AAD7D9', '#E6FAFA'],
+      name: 'color.customPalette',
+      type: 'custom',
+      category: 'Custom'
+    }
+  };
+
+  const nextState = reducer(
+    initialState,
+    VisStateActions.layerColorUIChange(pointLayer, 'colorRange', {
+      colorRangeConfig: {custom: true}
+    })
+  );
+
+  const deleteState = reducer(
+    nextState,
+    VisStateActions.layerColorUIChange(pointLayer, 'colorRange', customPalette)
+  );
+
+  let confirmState = reducer(
+    deleteState,
+    VisStateActions.layerColorUIChange(pointLayer, 'colorRange', {
+      colorRangeConfig: {custom: false}
+    })
+  );
+
+  // simulate Confirm button action
+  confirmState = reducer(
+    confirmState,
+    VisStateActions.layerVisConfigChange(pointLayer, {
+      colorRange: {
+        name: 'color.customPalette',
+        type: 'custom',
+        category: 'Custom',
+        colors: ['#6BB5B9', '#AAD7D9', '#E6FAFA']
+      }
+    })
+  );
+
+  const stepsState = reducer(
+    confirmState,
+    VisStateActions.layerColorUIChange(pointLayer, 'colorRange', {
+      colorRangeConfig: {steps: 4}
+    })
+  );
+
+  const expectedColorUI = {
+    color: DEFAULT_COLOR_UI,
+    strokeColorRange: DEFAULT_COLOR_UI,
+    colorRange: {
+      ...DEFAULT_COLOR_UI,
+      customPalette: {
+        name: 'color.customPalette',
+        type: 'custom',
+        category: 'Custom',
+        colors: ['#6BB5B9', '#AAD7D9', '#E6FAFA']
+      },
+      colorRangeConfig: {
+        type: 'all',
+        colorBlindSafe: false,
+        steps: 4,
+        reversed: false,
+        custom: false,
+        customBreaks: false
+      }
+    }
+  };
+
+  const expectedVisConfigColorRange = {
+    colors: ['#00939C', '#8BC6C9', '#EB9373', '#C22E00'],
+    name: 'Uber Viz Diverging',
+    type: 'diverging',
+    category: 'Uber'
+  };
+
+  t.deepEqual(
+    stepsState.layers[0].config.colorUI,
+    expectedColorUI,
+    'should set correct step in colorRangeConfig when one deletes a color item from Custom Palette and select new steps'
+  );
+
+  t.deepEqual(
+    stepsState.layers[0].config.visConfig.colorRange,
+    expectedVisConfigColorRange,
+    'should set predefined palette in visConfig.colorRange when one deletes a color item from Custom Palette and select new steps'
+  );
 
   t.end();
 });

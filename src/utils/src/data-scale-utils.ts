@@ -218,7 +218,12 @@ export function getQuantLegends(scale: D3ScaleFunction, labelFormat: LabelFormat
   }
   const labels =
     scale.scaleType === 'threshold' || scale.scaleType === 'custom'
-      ? getThresholdLabels(scale, customScaleLabelFormat)
+      ? getThresholdLabels(
+          scale,
+          scale.scaleType === 'custom'
+            ? customScaleLabelFormat
+            : n => (n ? formatNumber(n) : 'no value')
+        )
       : getScaleLabels(scale, labelFormat);
 
   const data = scale.range();
@@ -256,7 +261,7 @@ export function getQuantLabelFormat(domain, fieldType) {
     ? getTimeLabelFormat(domain)
     : !fieldType
     ? defaultFormat
-    : n => formatNumber(n, fieldType);
+    : n => (n ? formatNumber(n, fieldType) : 'no value');
 }
 
 /**

@@ -44,9 +44,9 @@ function nop() {
 
 const ExpectedCustomPalette = {
   customPalette: {
-    name: 'Uber Viz Sequential',
-    type: 'sequential',
-    category: 'Uber',
+    name: 'color.customPalette',
+    type: 'custom',
+    category: 'Custom',
     colors: expectedColorRangeInLayer.colors,
     colorMap: [
       [3032, expectedColorRangeInLayer.colors[0]],

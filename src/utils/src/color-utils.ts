@@ -365,27 +365,46 @@ export function updateColorRangeByMatchingPalette(
 }
 
 /**
- * Update color range after selecting a palette from color range selectoer
- * Copy over colorMap and colorLegends
+ * Update custom palette when reverse the colors in custom palette, since changing 'steps',
+ * 'colorBindSafe', 'type' should fall back to predefined palette.
  */
-export function updateColorRangeBySelectedPalette(
+export function updateCustomColorRangeByColorUI(
   oldColorRange: ColorRange,
-  colorPalette: ColorPalette,
-  colorConfig: {
-    reversed: boolean;
-    steps: number;
-  }
+  colorConfig: ColorRangeConfig
 ): ColorRange {
-  // const {reversed} = colorConfig;
+  const {reversed} = colorConfig;
+  const colors = oldColorRange.colors;
+  // for custom palette, one can only 'reverse' the colors in custom palette.
+  colors.reverse();
 
   const colorRange = {
-    ...colorPaletteToColorRange(colorPalette, colorConfig),
-    // ...(reversed ? {reversed} : {}),
+    name: oldColorRange.name,
+    type: oldColorRange.type,
+    category: oldColorRange.category,
+    colors,
+    ...(reversed ? {reversed} : {}),
     ...(oldColorRange.colorMap ? {colorMap: oldColorRange.colorMap} : {}),
     ...(oldColorRange.colorLegends ? {colorLegends: oldColorRange.colorLegends} : {})
   };
 
   return replaceColorsInColorRange(colorRange, colorRange.colors);
+}
+
+/**
+ * Update color range after selecting a palette from color range selectoer
+ * Copy over colorMap and colorLegends
+ */
+ export function updateColorRangeBySelectedPalette(oldColorRange, colorPalette, colorConfig) {
+  const {colors: newColors, ...newColorRange} = colorPaletteToColorRange(colorPalette, colorConfig);
+
+  const colorRange = {
+    colors: oldColorRange.colors,
+    ...newColorRange,
+    ...(oldColorRange.colorMap ? {colorMap: oldColorRange.colorMap} : {}),
+    ...(oldColorRange.colorLegends ? {colorLegends: oldColorRange.colorLegends} : {})
+  };
+
+  return replaceColorsInColorRange(colorRange, newColors);
 }
 
 const UberNameRegex = new RegExp(/^([A-Za-z ])+/g);

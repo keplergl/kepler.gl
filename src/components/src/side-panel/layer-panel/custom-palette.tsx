@@ -72,6 +72,7 @@ export type CustomPaletteInputProps = {
   inputColorHex: (index: number, v: HexColor) => void;
   editColorMapValue: EditColorMapFunc;
   actionIcons?: ActionIcons;
+  disableAppend?: boolean;
   disableDelete?: boolean;
   onDelete: (index: number) => void;
   onAdd: (index: number) => void;
@@ -353,6 +354,7 @@ export const CustomPaletteInput: React.FC<CustomPaletteInputProps> = ({
   inputColorHex,
   editColorMapValue,
   actionIcons = defaultActionIcons,
+  disableAppend,
   disableDelete,
   onDelete,
   onAdd,
@@ -394,7 +396,9 @@ export const CustomPaletteInput: React.FC<CustomPaletteInputProps> = ({
         ) : null}
       </div>
       <div className="custom-palette-input__right">
-        <AddColorStop onColorAdd={onColorAdd} IconComponent={actionIcons.add} />
+        {!disableAppend ? (
+          <AddColorStop onColorAdd={onColorAdd} IconComponent={actionIcons.add} />
+        ) : null}
         {!disableDelete ? (
           <DeleteColorStop onColorDelete={onColorDelete} IconComponent={actionIcons.delete} />
         ) : null}
@@ -555,6 +559,7 @@ function CustomPaletteFactory(): React.FC<CustomPaletteProps> {
               isSorting={isSorting}
               color={color}
               inputColorHex={inputColorHex}
+              disableAppend={colors.length >= 20}
               disableDelete={colors.length <= 2}
               actionIcons={actionIcons}
               onAdd={onAdd}
