@@ -7,3 +7,4 @@ import './range-slider-test';
 import './item-selector-test';
 import './range-plot-test';
 import './animation-control-test';
+import './column-stats-chart-test';

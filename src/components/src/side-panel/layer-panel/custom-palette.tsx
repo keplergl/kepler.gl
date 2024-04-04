@@ -21,7 +21,7 @@ import {
 import styled, {StyledComponent, css} from 'styled-components';
 import Portaled from '../../common/portaled';
 
-import {KeyEvent} from '@kepler.gl/constants';
+import {ColorMap, KeyEvent} from '@kepler.gl/constants';
 import {ColorUI, HexColor, NestedPartial} from '@kepler.gl/types';
 import {colorMapToColorBreaks, isNumericColorBreaks} from '@kepler.gl/utils';
 import {
@@ -96,8 +96,8 @@ const dragHandleActive = css`
 export const ColorPaletteItem = styled.div`
   display: flex;
   align-items: center;
-  padding-top: 6px;
-  padding-bottom: 6px;
+  padding-top: 2px;
+  padding-bottom: 2px;
   z-index: ${props => props.theme.dropdownWrapperZ + 1};
   justify-content: space-between;
 
@@ -531,10 +531,19 @@ function CustomPaletteFactory(): React.FC<CustomPaletteProps> {
         const newColorMap = customPalette.colorMap.map(
           (cm, i) => (i === index ? [value, cm[1]] : cm) as [string, string]
         );
+
+        // sort the user inputs in case the break values are not ordered
+        const breaks = newColorMap
+          .map(cm => cm[0] as string | null)
+          .slice(0, -1)
+          .sort((a, b) => Number(a) - Number(b))
+          .concat(null);
+        const sortedNewColorMap: ColorMap = newColorMap.map((cm, i) => [breaks[i], cm[1]]);
+
         setColorPaletteUI({
           customPalette: {
             ...customPalette,
-            colorMap: newColorMap
+            colorMap: sortedNewColorMap
           }
         });
       },

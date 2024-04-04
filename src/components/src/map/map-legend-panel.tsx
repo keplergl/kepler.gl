@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import {createPortal} from 'react-dom';
 import React, {ComponentType, useCallback, useContext, useState} from 'react';
 import styled, {withTheme} from 'styled-components';
 
@@ -9,7 +10,7 @@ import {MapControlButton} from '../common/styled-components';
 import MapControlTooltipFactory from './map-control-tooltip';
 import MapControlPanelFactory from './map-control-panel';
 import MapLegendFactory from './map-legend';
-import {createPortal} from 'react-dom';
+
 import {DIMENSIONS} from '@kepler.gl/constants';
 import {LayerVisConfig, MapControlMapLegend, MapControls, MapState} from '@kepler.gl/types';
 import {Layer} from '@kepler.gl/layers';

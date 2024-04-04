@@ -23,7 +23,8 @@ export {
   paletteIsType,
   paletteIsColorBlindSafe,
   updateColorRangeByMatchingPalette,
-  updateCustomColorRangeByColorUI
+  updateCustomColorRangeByColorUI,
+  initializeCustomPalette
 } from './color-utils';
 export {errorNotification} from './notifications-utils';
 
@@ -36,6 +37,7 @@ export {
   adjustValueToAnimationWindow,
   getBinThresholds,
   histogramFromThreshold,
+  histogramFromValues,
   histogramFromDomain,
   runGpuFilterForPlot,
   updateTimeFilterPlotType
@@ -92,7 +94,11 @@ export {
   scaleMapStyleByResolution
 } from './map-style-utils/mapbox-gl-style-editor';
 export {validateToken} from './mapbox-utils';
-export * from './observe-dimensions';
+export {
+  default as useDimensions,
+  observeDimensions,
+  unobserveDimensions
+} from './observe-dimensions';
 export type {Dimensions} from './observe-dimensions';
 export {snapToMarks} from './plot';
 export * from './projection-utils';
@@ -129,6 +135,7 @@ export type {FilterChanged, FilterResult, dataValueAccessor} from './filter-util
 
 export {
   colorMapToColorBreaks,
+  colorBreaksToColorMap,
   getLayerColorScale,
   getLegendOfScale,
   getLinearDomain,
@@ -142,7 +149,8 @@ export {
   isDomainStops,
   isDomainQuantile,
   getDomainStepsbyZoom,
-  getThresholdsFromQuantiles
+  getThresholdsFromQuantiles,
+  getQuantLabelFormat
 } from './data-scale-utils';
 export type {ColorBreak, ColorBreakOrdinal, DomainQuantiles, DomainStops} from './data-scale-utils';
 

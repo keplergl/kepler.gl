@@ -10,7 +10,8 @@ import {
   getLogDomain,
   createDataContainer,
   getThresholdsFromQuantiles,
-  getDomainStepsbyZoom
+  getDomainStepsbyZoom,
+  getQuantLabelFormat
 } from '@kepler.gl/utils';
 
 function numberSort(a, b) {
@@ -159,6 +160,20 @@ test('DataScaleUtils -> getDomainStepsbyZoom', t => {
       `should get correct domain from zoom ${z}`
     );
   });
+
+  t.end();
+});
+
+test('DataScaleUtils -> getQuantLabelFormat', t => {
+  const fieldType = 'real';
+  const domain = [1, 2];
+
+  const format = getQuantLabelFormat(domain, fieldType);
+
+  t.deepEqual(format(0), '0', 'should get correct quant label format for 0');
+  t.deepEqual(format(null), 'no value', 'should get correct quant label format for null');
+  t.deepEqual(format(undefined), 'no value', 'should get correct quant label format for undefined');
+  t.deepEqual(format(1.0), '1', 'should get correct quant label format for number');
 
   t.end();
 });

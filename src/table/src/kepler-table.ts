@@ -75,16 +75,19 @@ export type NumericFieldFilterProps = RangeFieldDomain & {
   type: string;
   typeOptions: string[];
   gpu: boolean;
+  columnStats?: Record<string, any>;
 };
 export type BooleanFieldFilterProps = SelectFieldDomain & {
   type: string;
   value: boolean;
   gpu: boolean;
+  columnStats?: Record<string, any>;
 };
 export type StringFieldFilterProps = MultiSelectFieldDomain & {
   type: string;
   value: string[];
   gpu: boolean;
+  columnStats?: Record<string, any>;
 };
 export type TimeFieldFilterProps = TimeRangeFieldDomain & {
   type: string;
@@ -92,6 +95,7 @@ export type TimeFieldFilterProps = TimeRangeFieldDomain & {
   fixedDomain: boolean;
   value: number[];
   gpu: boolean;
+  columnStats?: Record<string, any>;
 };
 
 // Unique identifier of each field

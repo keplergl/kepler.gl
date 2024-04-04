@@ -122,6 +122,7 @@ export type Field = {
   filterProps?: FilterProps;
   metadata?: Record<string, any>;
   displayFormat?: string;
+  isLoadingStats?: boolean;
   indexBy?: IndexBy;
 };
 

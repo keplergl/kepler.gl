@@ -11,6 +11,7 @@ import {Field} from '@kepler.gl/types';
 import ItemSelector from '../../common/item-selector/item-selector';
 import {PanelLabel, SidePanelSection} from '../../common/styled-components';
 import ColorScaleSelectorFactory from './color-scale-selector';
+import {KeplerTable} from '@kepler.gl/table';
 
 const SizeScaleSelector = ({...dropdownSelectProps}: any) => (
   <ItemSelector {...dropdownSelectProps} />
@@ -20,6 +21,7 @@ export type DimensionScaleSelectorProps = {
   layer: Layer;
   channel: VisualChannel;
   label?: string;
+  dataset: KeplerTable | undefined;
   onChange: (
     newConfig: {[key: string]: Field | null | string},
     key: string,
@@ -36,6 +38,7 @@ function DimensionScaleSelectorFactory(
   const DimensionScaleSelector: React.FC<DimensionScaleSelectorProps> = ({
     layer,
     channel,
+    dataset,
     label,
     onChange,
     setColorUI
@@ -75,11 +78,12 @@ function DimensionScaleSelectorFactory(
             defaultMessage={label}
           />
         </PanelLabel>
-        {isColorScale ? (
+        {isColorScale && dataset ? (
           <ColorScaleSelector
             {...dropdownSelectProps}
             layer={layer}
             field={layer.config[field]}
+            dataset={dataset}
             onSelect={onSelect}
             scaleType={scaleType}
             domain={layer.config[domain]}

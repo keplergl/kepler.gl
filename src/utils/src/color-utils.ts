@@ -3,8 +3,10 @@
 
 import {
   CategoricalPalette,
+  ColorMap,
   ColorPalette,
   ColorRange,
+  DEFAULT_CUSTOM_PALETTE,
   colorPaletteToColorRange
 } from '@kepler.gl/constants';
 import {ColorRangeConfig, HexColor, RGBColor} from '@kepler.gl/types';
@@ -441,4 +443,20 @@ export function colorRangeBackwardCompatibility(colorRange: ColorRange): ColorRa
   }
 
   return colorRange;
+}
+
+/**
+ * Initialize custom palette from current standard color range object
+ */
+export function initializeCustomPalette(colorRange: ColorRange, colorMap?: ColorMap): ColorRange {
+  // TODO: check on `isReversed` key, whether we can remove it here
+  const customPalette = {
+    ...colorRange,
+    name: DEFAULT_CUSTOM_PALETTE.name,
+    type: DEFAULT_CUSTOM_PALETTE.type,
+    category: DEFAULT_CUSTOM_PALETTE.category,
+    ...(colorMap ? {colorMap} : {})
+  };
+
+  return customPalette;
 }

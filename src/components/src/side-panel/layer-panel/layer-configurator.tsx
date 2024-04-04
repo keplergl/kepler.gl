@@ -94,11 +94,11 @@ const StyledLayerVisualConfigurator = styled.div.attrs({
 `;
 
 export const getLayerFields = (datasets: Datasets, layer: Layer) =>
-  layer.config?.dataId && datasets[layer.config.dataId] ? datasets[layer.config.dataId].fields : [];
+  datasets[layer.config?.dataId || ''] ? datasets[layer.config.dataId].fields : [];
 
 /** Return any to be able to customize the Dataset entity */
 export const getLayerDataset = (datasets: Datasets, layer: Layer): any =>
-  layer.config?.dataId && datasets[layer.config.dataId] ? datasets[layer.config.dataId] : null;
+  datasets[layer.config?.dataId || ''];
 
 export const getLayerConfiguratorProps = (props: LayerConfiguratorProps) => ({
   layer: props.layer,
@@ -116,6 +116,7 @@ export const getVisConfiguratorProps = (props: LayerConfiguratorProps) => ({
 
 export const getLayerChannelConfigProps = (props: LayerConfiguratorProps) => ({
   layer: props.layer,
+  dataset: getLayerDataset(props.datasets, props.layer),
   fields: getLayerFields(props.datasets, props.layer),
   onChange: props.updateLayerVisualChannelConfig,
   setColorUI: props.updateLayerColorUI

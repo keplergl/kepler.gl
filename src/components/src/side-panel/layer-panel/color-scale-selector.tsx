@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import Tippy from '@tippyjs/react/headless';
 import React, {useCallback, useMemo, useState} from 'react';
 import styled from 'styled-components';
 
-import {Accessor, DropdownList, Typeahead} from '@kepler.gl/components';
+import {Accessor, DropdownList, LazyTippy, Typeahead} from '@kepler.gl/components';
 import {ColorRange, SCALE_TYPES} from '@kepler.gl/constants';
 import {Layer, VisualChannelDomain} from '@kepler.gl/layers';
 import {ColorUI, Field} from '@kepler.gl/types';
@@ -13,6 +12,8 @@ import {getLayerColorScale, getLegendOfScale, hasColorMap} from '@kepler.gl/util
 import ColorBreaksPanelFactory, {ColorBreaksPanelProps} from './color-breaks-panel';
 import {SetColorUIFunc} from './custom-palette';
 import DropdownSelect from '../../common/item-selector/dropdown-select';
+import {KeplerTable} from '@kepler.gl/table';
+import type {Instance as TippyInstance} from 'tippy.js';
 
 export type ScaleOption = {
   label: string;
@@ -25,6 +26,7 @@ export type ContextProps = ColorBreaksPanelProps;
 export type ColorScaleSelectorProps = {
   layer: Layer;
   field: Field;
+  dataset: KeplerTable;
   scaleType: string;
   domain: VisualChannelDomain;
   range: ColorRange;
@@ -110,6 +112,7 @@ function ColorScaleSelectorFactory(
   const ColorScaleSelector: React.FC<ColorScaleSelectorProps> = ({
     layer,
     field,
+    dataset,
     onSelect,
     scaleType,
     domain,
@@ -123,7 +126,7 @@ function ColorScaleSelectorFactory(
       () => Accessor.generateOptionToStringFor(dropdownSelectProps.getOptionValue),
       [dropdownSelectProps.getOptionValue]
     );
-    const [tippyInstance, setTippyInstance] = useState();
+    const [tippyInstance, setTippyInstance] = useState<TippyInstance>();
     const isEditingColorBreaks = colorUIConfig?.colorRangeConfig?.customBreaks;
     const colorScale = useMemo(
       () =>
@@ -144,14 +147,16 @@ function ColorScaleSelectorFactory(
 
     const onSelectScale = useCallback(
       val => {
+        // highlight selected option
         if (getOptionValue(val) === SCALE_TYPES.custom) {
-          // trigger ui update only, when setting scale to custom
+          // update custom breaks
           setColorUI({
             showColorChart: true,
             colorRangeConfig: {
               customBreaks: true
             }
           });
+          onSelect(SCALE_TYPES.custom);
         } else {
           if (hasColorMap(range)) {
             // remove custom breaks
@@ -162,15 +167,16 @@ function ColorScaleSelectorFactory(
             onSelect(getOptionValue(val));
           }
           // if current is not custom
-          setColorUI({
-            colorRangeConfig: {
-              customBreaks: false
-            }
-          });
-          hideTippy(tippyInstance);
+          if (isEditingColorBreaks) {
+            setColorUI({
+              colorRangeConfig: {
+                customBreaks: false
+              }
+            });
+          }
         }
       },
-      [setColorUI, onSelect, range, getOptionValue, tippyInstance]
+      [setColorUI, onSelect, range, getOptionValue, isEditingColorBreaks]
     );
 
     const onApply = useCallback(() => {
@@ -186,31 +192,42 @@ function ColorScaleSelectorFactory(
 
     return (
       <DropdownPropContext.Provider
-        value={{setColorUI, colorUIConfig, colorBreaks, isCustomBreaks, onApply, onCancel}}
+        value={{
+          setColorUI,
+          colorField: field,
+          dataset,
+          colorUIConfig,
+          colorBreaks,
+          isCustomBreaks,
+          onScaleChange: onSelect,
+          onApply,
+          onCancel
+        }}
       >
         <StyledColorScaleSelector>
-          <Tippy
+          <LazyTippy
             trigger="click"
             placement="bottom-start"
             appendTo="parent"
             interactive={true}
             hideOnClick={!isEditingColorBreaks}
-            // @ts-ignore
             onCreate={setTippyInstance}
             popperOptions={POPPER_OPTIONS}
             render={attrs => (
               <DropdownWrapper {...attrs}>
                 {/*@ts-ignore*/}
-                <Typeahead
-                  {...dropdownSelectProps}
-                  displayOption={displayOption}
-                  // @ts-ignore
-                  getOptionValue={getOptionValue}
-                  onOptionSelected={onSelectScale}
-                  customListComponent={ColorScaleSelectDropdown}
-                  searchable={false}
-                  showOptionsWhenEmpty
-                />
+                {!dropdownSelectProps.disabled && (
+                  <Typeahead
+                    {...dropdownSelectProps}
+                    displayOption={displayOption}
+                    // @ts-ignore
+                    getOptionValue={getOptionValue}
+                    onOptionSelected={onSelectScale}
+                    customListComponent={ColorScaleSelectDropdown}
+                    searchable={false}
+                    showOptionsWhenEmpty
+                  />
+                )}
               </DropdownWrapper>
             )}
           >
@@ -222,7 +239,7 @@ function ColorScaleSelectorFactory(
                 value={dropdownSelectProps.selectedItems[0]}
               />
             </div>
-          </Tippy>
+          </LazyTippy>
         </StyledColorScaleSelector>
       </DropdownPropContext.Provider>
     );
