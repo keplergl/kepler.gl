@@ -55,6 +55,26 @@ const BarUnmemoized = styled.rect<BarType>(
 const Bar = React.memo(BarUnmemoized);
 Bar.displayName = 'Bar';
 
+const isBarInRange = (
+  bar: {x0: number; x1: number},
+  index: number,
+  list: any[],
+  filterDomain: any[],
+  filterValue: any[]
+) => {
+  // first
+  // if x0 <= domain[0] and current value[0] wasn't changed from the original domain
+  const x0Condition =
+    index === 0 ? bar.x0 <= filterDomain[0] && filterDomain[0] === filterValue[0] : false;
+  // Last
+  // if x1 >= domain[1] and current value[1] wasn't changed from the original domain
+  const x1Condition =
+    index === list.length - 1
+      ? bar.x1 >= filterDomain[1] && filterDomain[1] === filterValue[1]
+      : false;
+  return (x0Condition || bar.x0 >= filterValue[0]) && (x1Condition || bar.x1 <= filterValue[1]);
+};
+
 export type HistogramMaskModeType = {
   NoMask: number;
   Mask: number;
@@ -109,22 +129,6 @@ function HistogramPlotFactory() {
       [range, histogramsByGroup, groupKeys]
     );
 
-    const x = useMemo(() => scaleLinear().domain(domain).range([0, width]), [domain, width]);
-
-    const y = useMemo(
-      () =>
-        scaleLinear()
-          .domain([
-            0,
-            Math.max(
-              Number(max(groupKeys, key => max(histogramsByGroup[key], d => d[countProp]))),
-              1
-            )
-          ])
-          .range([0, height]),
-      [histogramsByGroup, groupKeys, height, countProp]
-    );
-
     const barWidth = useMemo(() => {
       if (groupKeys.length === 0) return 0;
       // find histogramsByGroup with max number of bins
@@ -142,6 +146,28 @@ function HistogramPlotFactory() {
       if (!maxBins) return 0;
       return width / maxBins / (isMasked ? 1 : groupKeys.length);
     }, [histogramsByGroup, domain, groupKeys, width, isMasked]);
+
+    const x = useMemo(
+      () =>
+        scaleLinear()
+          .domain(domain)
+          .range([barWidth, width]),
+      [domain, width, barWidth]
+    );
+
+    const y = useMemo(
+      () =>
+        scaleLinear()
+          .domain([
+            0,
+            Math.max(
+              Number(max(groupKeys, key => max(histogramsByGroup[key], d => d[countProp]))),
+              1
+            )
+          ])
+          .range([0, height]),
+      [histogramsByGroup, groupKeys, height, countProp]
+    );
 
     if (groupKeys.length === 0) {
       return null;
@@ -164,8 +190,8 @@ function HistogramPlotFactory() {
                 fill={HISTOGRAM_MASK_BGCOLOR}
               />
               <g key="filtered-bins" className="histogram-bars">
-                {histogramsByGroup.filteredBins.map((bar, idx) => {
-                  const inRange = bar.x1 <= value[1] && bar.x0 >= value[0];
+                {histogramsByGroup.filteredBins.map((bar, idx, list) => {
+                  const inRange = isBarInRange(bar, idx, list, domain, value);
                   const wRatio = inRange
                     ? histogramStyle.highlightW
                     : histogramStyle.unHighlightedW;
@@ -195,12 +221,12 @@ function HistogramPlotFactory() {
           </g>
           {isMasked === HISTOGRAM_MASK_MODE.MaskWithOverlay && (
             <g key="bins" transform="translate(0,0)" className="overlay-histogram-bars">
-              {histogramsByGroup.bins.map((bar, idx) => {
+              {histogramsByGroup.bins.map((bar, idx, list) => {
                 const filterBar = histogramsByGroup.filteredBins[idx];
                 const maskHeight = filterBar
                   ? y(bar[countProp]) - y(filterBar[countProp])
                   : y(bar[countProp]);
-                const inRange = bar.x1 <= value[1] && bar.x0 >= value[0];
+                const inRange = isBarInRange(bar, idx, list, domain, value);
                 const wRatio = inRange ? histogramStyle.highlightW : histogramStyle.unHighlightedW;
                 return (
                   <Bar
@@ -236,33 +262,35 @@ function HistogramPlotFactory() {
         height={height}
         style={{margin: `${margin.top}px ${margin.right}px ${margin.bottom}px ${margin.left}px`}}
       >
-        {groupKeys.map((key, i) => (
-          <g key={key} className="histogram-bars">
-            {histogramsByGroup[key].map((bar, idx) => {
-              const inRange =
-                undefinedToZero(bar.x1) <= value[1] && undefinedToZero(bar.x0) >= value[0];
-              const wRatio = inRange ? histogramStyle.highlightW : histogramStyle.unHighlightedW;
-              const startX =
-                x(undefinedToZero(bar.x0)) + barWidth * i + (barWidth * (1 - wRatio)) / 2;
-              if (startX > 0 && startX + barWidth * histogramStyle.unHighlightedW <= width) {
-                return (
-                  <Bar
-                    inRange={inRange}
-                    color={colorsByGroup ? colorsByGroup[key] : undefined}
-                    key={`bar-${idx}`}
-                    height={y(bar[countProp])}
-                    width={barWidth * wRatio}
-                    x={startX}
-                    rx={1}
-                    ry={1}
-                    y={height - y(bar[countProp])}
-                  />
-                );
-              }
-              return null;
-            })}
-          </g>
-        ))}
+        <g>
+          {groupKeys.map((key, i) => (
+            <g key={key} className="histogram-bars">
+              {histogramsByGroup[key].map((bar, idx, list) => {
+                const inRange = isBarInRange(bar, idx, list, domain, value);
+
+                const wRatio = inRange ? histogramStyle.highlightW : histogramStyle.unHighlightedW;
+                const startX =
+                  x(undefinedToZero(bar.x0)) + barWidth * i + (barWidth * (1 - wRatio)) / 2;
+                if (startX > 0 && startX + barWidth * histogramStyle.unHighlightedW <= width) {
+                  return (
+                    <Bar
+                      inRange={inRange}
+                      color={colorsByGroup?.[key]}
+                      key={`bar-${idx}`}
+                      height={y(bar[countProp])}
+                      width={barWidth * wRatio}
+                      x={startX}
+                      rx={1}
+                      ry={1}
+                      y={height - y(bar[countProp])}
+                    />
+                  );
+                }
+                return null;
+              })}
+            </g>
+          ))}
+        </g>
         <g transform={`translate(${isRanged ? 0 : barWidth / 2}, 0)`}>{brushComponent}</g>
       </HistogramWrapper>
     );
