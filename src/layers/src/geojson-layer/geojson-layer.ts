@@ -16,16 +16,20 @@ import Layer, {
   LayerHeightConfig,
   LayerRadiusConfig,
   LayerSizeConfig,
-  LayerStrokeColorConfig
+  LayerStrokeColorConfig,
+  BaseLayerConstructorProps
 } from '../base-layer';
 import {GeoJsonLayer as DeckGLGeoJsonLayer} from '@deck.gl/layers';
+import {BrushingExtension} from '@deck.gl/extensions';
+import {getTextOffsetByRadius, formatTextLabelData} from '../layer-text-label';
 import {
   getGeojsonLayerMeta,
   GeojsonDataMaps,
   DeckGlGeoTypes,
   detectTableColumns,
   COLUMN_MODE_GEOJSON,
-  applyFiltersToTableColumns
+  applyFiltersToTableColumns,
+  getMeanCentroids
 } from './geojson-utils';
 import {
   getGeojsonLayerMetaFromArrow,
@@ -230,6 +234,8 @@ const SUPPORTED_COLUMN_MODES = [
 ];
 const DEFAULT_COLUMN_MODE = COLUMN_MODE_GEOJSON;
 
+const brushingExtension = new BrushingExtension();
+
 export default class GeoJsonLayer extends Layer {
   declare config: GeoJsonLayerConfig;
   declare visConfigSettings: GeoJsonVisConfigSettings;
@@ -246,7 +252,7 @@ export default class GeoJsonLayer extends Layer {
     [COLUMN_MODE_GEOJSON]: () => React.JSX.Element;
   };
 
-  constructor(props) {
+  constructor(props: BaseLayerConstructorProps) {
     super(props);
 
     this.registerVisConfig(geojsonVisConfigs);
@@ -484,11 +490,38 @@ export default class GeoJsonLayer extends Layer {
     // for geojson, this should work as well and more efficient. But we need to update some test cases e.g. #GeojsonLayer -> formatLayerData
     switch (this.config.columnMode) {
       case COLUMN_MODE_GEOJSON: {
-        return filteredIndex.map(i => this.dataToFeature[i]).filter(d => d);
+        const {dataContainer, filteredIndex} = dataset;
+        const data: GeojsonDataMaps = [];
+        for (let i = 0; i < filteredIndex.length; i++) {
+          const index = filteredIndex[i];
+          const feature = this.dataToFeature[index];
+          // add centroid and values to Feature object for labeling
+          if (feature) {
+            // @ts-expect-error somehow extend feature type
+            feature.centroid = this.centroids ? this.centroids[index] : null;
+            // @ts-expect-error BinaryFeatureCollection
+            feature.properties.values = dataContainer.rowAsArray(index);
+            data.push(feature);
+          }
+        }
+        return data;
       }
 
       case COLUMN_MODE_TABLE:
-        return applyFiltersToTableColumns(dataset, this.dataToFeature);
+        const data = applyFiltersToTableColumns(dataset, this.dataToFeature);
+        // add centroid to Feature object for labeling
+        for (let i = 0, n = data.length; i < n; i++) {
+          const dataElem = data[i];
+          if (dataElem) {
+            // @ts-expect-error
+            const index = dataElem.properties?.index;
+            if (index && this.centroids) {
+              // @ts-expect-error
+              dataElem.centroid = this.centroids[index];
+            }
+          }
+        }
+        return data;
 
       default:
         return [];
@@ -499,8 +532,24 @@ export default class GeoJsonLayer extends Layer {
     if (this.config.dataId === null) {
       return {};
     }
+    const {textLabel} = this.config;
     const {gpuFilter, dataContainer} = datasets[this.config.dataId];
-    const {data} = this.updateData(datasets, oldLayerData);
+    const {data, triggerChanged} = this.updateData(datasets, oldLayerData);
+
+    this.getCentroids();
+
+    // get all distinct characters in the text labels
+    const textLabels = formatTextLabelData({
+      textLabel,
+      triggerChanged,
+      oldLayerData,
+      data,
+      dataContainer,
+      datumAccessor:
+        this.config.columnMode === COLUMN_MODE_TABLE
+          ? d => d.properties.values[0]
+          : d => d.properties.values
+    });
 
     let filterValueAccessor;
     let dataAccessor;
@@ -525,6 +574,8 @@ export default class GeoJsonLayer extends Layer {
         indexAccessor,
         filterValueAccessor
       ),
+      getPosition: d => d.centroid,
+      textLabels,
       getFiltered: isFilteredAccessor,
       ...accessors
     };
@@ -575,13 +626,13 @@ export default class GeoJsonLayer extends Layer {
     } else if (this.dataToFeature.length === 0) {
       const getFeature = this.getPositionAccessor(dataContainer);
 
-      const {dataToFeature, bounds, fixedRadius, featureTypes, centroids} = getGeojsonLayerMeta({
+      const {dataToFeature, bounds, fixedRadius, featureTypes} = getGeojsonLayerMeta({
         dataContainer,
         getFeature,
         config: this.config
       });
-      if (centroids) this.centroids = centroids;
       this.dataToFeature = dataToFeature;
+      this.getCentroids();
       this.updateMeta({bounds, fixedRadius, featureTypes});
     }
   }
@@ -642,7 +693,7 @@ export default class GeoJsonLayer extends Layer {
       : super.hasHoveredObject(objectInfo);
   }
 
-  getElevationZoomFactor({zoom, zoomOffset = 0}) {
+  getElevationZoomFactor({zoom, zoomOffset = 0}: {zoom: number; zoomOffset: number}) {
     return this.config.visConfig.fixedHeight ? 1 : Math.pow(2, Math.max(8 - zoom + zoomOffset, 0));
   }
 
@@ -678,6 +729,17 @@ export default class GeoJsonLayer extends Layer {
     const hoveredObject = this.hasHoveredObject(objectHovered);
 
     const {data, ...props} = dataProps;
+
+    const brushingProps = this.getBrushingExtensionProps(interactionConfig);
+    const getPixelOffset = getTextOffsetByRadius(radiusScale, data.getRadius, mapState);
+    const extensions = [...defaultLayerProps.extensions, brushingExtension];
+    const sharedProps = {
+      getFilterValue: data.getFilterValue,
+      extensions,
+      filterRange: defaultLayerProps.filterRange,
+      visible: defaultLayerProps.visible,
+      ...brushingProps
+    };
 
     // arrow table can have multiple chunks, a deck.gl layer is created for each chunk
     const deckLayerData = this.dataContainer instanceof ArrowDataContainer ? data : [data];
@@ -736,7 +798,27 @@ export default class GeoJsonLayer extends Layer {
               filled: false
             })
           ]
-        : [])
+        : []),
+      // text label layer
+      ...this.renderTextLabelLayer(
+        {
+          getPosition: dataProps.getPosition,
+          sharedProps,
+          getPixelOffset,
+          updateTriggers
+        },
+        opts
+      )
     ];
+  }
+
+  getCentroids() {
+    const {dataToFeature} = this;
+
+    if (dataToFeature) {
+      this.centroids = getMeanCentroids(dataToFeature);
+    } else {
+      this.centroids = [];
+    }
   }
 }

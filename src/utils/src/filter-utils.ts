@@ -416,7 +416,11 @@ export const getPolygonFilterFunctor = (layer, filter, dataContainer) => {
       };
     case LAYER_TYPES.geojson:
       return data => {
-        return layer.isInPolygon(data, data.index, filter.value);
+        if (layer.isInPolygon) {
+          return layer.isInPolygon(data, data.index, filter.value);
+        }
+        // show all geometries if can't apply filter
+        return true;
       };
     default:
       return () => true;

@@ -1705,9 +1705,25 @@ test('#visStateReducer -> UPDATE_VIS_DATA.4.Geojson -> geojson data', t => {
   t.equal(initialState.layers.length, 1, 'should find 1 geojson layer');
   cmpLayers(t, expectedLayer, initialState.layers[0], 'should save dataFeature to geojson layer');
 
+  const expectedCentroid = [
+    [-122.40004502483902, 37.78290460012809],
+    [-122.39208302880847, 37.794023679351454],
+    [-122.39219479465429, 37.794023679351454],
+    [-122.39208302880847, 37.79395061969509],
+    [-122.3921440972698, 37.794023679351454]
+  ];
+
+  // rebuild expectedLayerData with centroids for labeling in geojson layer
   t.deepEqual(
     initialState.layerData[0].data,
-    expectedLayerData.data,
+    expectedLayerData.data.map((d, i) => ({
+      ...d,
+      centroid: expectedCentroid[i],
+      properties: {
+        ...d.properties,
+        values: rows[d.properties.index]
+      }
+    })),
     'should save geojson to layer data'
   );
 

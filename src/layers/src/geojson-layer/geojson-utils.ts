@@ -72,6 +72,23 @@ export function parseGeoJsonRawFeature(rawFeature: unknown): Feature | null {
   return null;
 }
 
+export function getMeanCentroids(dataToFeature: GeojsonDataMaps) {
+  const meanCenters: Array<number[] | null> = [];
+  for (let i = 0; i < dataToFeature.length; i++) {
+    const feature = dataToFeature[i];
+    if (feature) {
+      try {
+        // TODO: use line interpolate to get center of line for LineString
+        const cent = center(feature as AllGeoJSON);
+        meanCenters.push(cent.geometry.coordinates);
+      } catch (e) {
+        meanCenters.push(null);
+      }
+    }
+  }
+  return meanCenters;
+}
+
 export function getGeojsonLayerMeta({
   dataContainer,
   getFeature,
@@ -97,26 +114,11 @@ export function getGeojsonLayerMeta({
   // keep a record of what type of geometry the collection has
   const featureTypes = getGeojsonFeatureTypes(dataToFeature);
 
-  const meanCenters: Array<number[] | null> = [];
-  for (let i = 0; i < dataToFeature.length; i++) {
-    const feature = dataToFeature[i];
-    if (feature) {
-      try {
-        // TODO: use line interpolate to get center of line for LineString
-        const cent = center(feature as AllGeoJSON);
-        meanCenters.push(cent.geometry.coordinates);
-      } catch (e) {
-        meanCenters.push(null);
-      }
-    }
-  }
-
   return {
     dataToFeature,
     bounds,
     fixedRadius,
-    featureTypes,
-    centroids: meanCenters
+    featureTypes
   };
 }
 

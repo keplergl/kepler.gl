@@ -880,6 +880,16 @@ export default function LayerConfiguratorFactory(
               </ConfigGroupCollapsibleContent>
             </LayerConfigGroup>
           ) : null}
+
+          {/* text label */}
+          <TextLabelPanel
+            fields={visConfiguratorProps.fields}
+            updateLayerTextLabel={this.props.updateLayerTextLabel}
+            textLabel={layer.config.textLabel}
+            // @ts-expect-error not used?
+            colorPalette={visConfiguratorProps.colorPalette}
+            setColorPaletteUI={visConfiguratorProps.setColorPaletteUI}
+          />
         </StyledLayerVisualConfigurator>
       );
     }

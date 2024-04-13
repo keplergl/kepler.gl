@@ -2,8 +2,15 @@
 // Copyright contributors to the kepler.gl project
 
 import test from 'tape';
-import {defaultElevation, defaultLineWidth, defaultRadius, KeplerGlLayers} from '@kepler.gl/layers';
+import {
+  defaultElevation,
+  defaultLineWidth,
+  defaultRadius,
+  KeplerGlLayers,
+  getMeanCentroids
+} from '@kepler.gl/layers';
 import {copyTableAndUpdate} from '@kepler.gl/table';
+import {createDataContainer} from '@kepler.gl/utils';
 
 const {GeojsonLayer} = KeplerGlLayers;
 
@@ -52,6 +59,53 @@ test('#GeojsonLayer -> constructor', t => {
 test('#GeojsonLayer -> formatLayerData', async t => {
   const filteredIndex = [0, 2, 4];
 
+  // Add centroid data for tests
+  const updatedLayerV2Mod = {...updatedLayerV2, dataToFeature: [...updatedLayerV2.dataToFeature]};
+  updatedLayerV2Mod.dataToFeature[2] = {
+    ...updatedLayerV2Mod.dataToFeature[2],
+    centroid: [-74.387589, 40.632238]
+  };
+  updatedLayerV2Mod.dataToFeature[4] = {
+    ...updatedLayerV2Mod.dataToFeature[4],
+    centroid: [-74.57280850000001, 41.089470500000004]
+  };
+
+  // Add centroid data for tests
+  const updatedGeoJsonLayerMod = {
+    ...updatedGeoJsonLayer,
+    dataToFeature: [...updatedGeoJsonLayer.dataToFeature]
+  };
+  updatedGeoJsonLayerMod.dataToFeature[0] = {
+    ...updatedGeoJsonLayerMod.dataToFeature[0],
+    centroid: [-122.40004502483902, 37.78290460012809]
+  };
+  updatedGeoJsonLayerMod.dataToFeature[2] = {
+    ...updatedGeoJsonLayerMod.dataToFeature[2],
+    centroid: [-122.39219479465429, 37.794023679351454]
+  };
+  updatedGeoJsonLayerMod.dataToFeature[4] = {
+    ...updatedGeoJsonLayerMod.dataToFeature[4],
+    centroid: [-122.3921440972698, 37.794023679351454]
+  };
+
+  // Add centroid data for tests
+  const geoStyleDataToFeatureMod = [...geoStyleDataToFeature];
+  geoStyleDataToFeatureMod[0] = {...geoStyleDataToFeatureMod[0], centroid: [-122.1, 37.3]};
+  geoStyleDataToFeatureMod[1] = {...geoStyleDataToFeatureMod[1], centroid: [-122.2, 37.2]};
+  geoStyleDataToFeatureMod[2] = {...geoStyleDataToFeatureMod[2], centroid: [-122.3, 37.1]};
+
+  function prepareDataForLabeling(d, dataContainer) {
+    return d
+      ? {
+          ...d,
+          properties: {
+            ...d.properties,
+            values: dataContainer.rowAsArray(d.properties.index)
+          }
+        }
+      : null;
+  }
+
   const TEST_CASES = [
     {
       name: 'Geojson wkt polygon.1',
@@ -64,7 +118,19 @@ test('#GeojsonLayer -> formatLayerData', async t => {
           label: 'some geometry file',
           columns: {
             geojson: 'simplified_shape_v2'
-          }
+          },
+          textLabel: [
+            {
+              field: [
+                {
+                  field: {
+                    name: 'a_zip',
+                    type: 'integer'
+                  }
+                }
+              ]
+            }
+          ]
         }
       },
       datasets: {
@@ -73,7 +139,13 @@ test('#GeojsonLayer -> formatLayerData', async t => {
       assert: result => {
         const {layerData, layer} = result;
         const expectedLayerData = {
-          data: [updatedLayerV2.dataToFeature[2], updatedLayerV2.dataToFeature[4]]
+          data: [updatedLayerV2Mod.dataToFeature[2], updatedLayerV2Mod.dataToFeature[4]],
+          textLabels: [
+            {
+              characterSet: [],
+              getText: () => {}
+            }
+          ]
         };
         const expectedDataKeys = [
           'data',
@@ -83,20 +155,40 @@ test('#GeojsonLayer -> formatLayerData', async t => {
           'getFiltered',
           'getLineColor',
           'getLineWidth',
-          'getPointRadius'
+          'getPointRadius',
+          'getPosition',
+          'textLabels'
         ];
         const expectedLayerMeta = updatedLayerV2.meta;
-        const expectedDataToFeature = updatedLayerV2.dataToFeature;
+        const expectedDataToFeature = updatedLayerV2Mod.dataToFeature;
 
         t.deepEqual(
           Object.keys(layerData).sort(),
           expectedDataKeys,
-          'layerData should have 7 keys'
+          'layerData should have 9 keys'
         );
-        // data
+        // textLabels
+        t.deepEqual(
+          layerData.textLabels.length,
+          expectedLayerData.textLabels.length,
+          'textLabels should have 1 item'
+        );
+        t.deepEqual(
+          layerData.textLabels[0].characterSet,
+          ['7', '0', '1', '6', '2', '9'],
+          'textLabels should have correct characterSet'
+        );
+        t.deepEqual(
+          layerData.textLabels[0].getText(layerData.data[0]),
+          '7016',
+          'textLabels getText should have correct text'
+        );
+        // data: centroid and values are added for labeling
         t.deepEqual(
           layerData.data,
-          expectedLayerData.data,
+          expectedLayerData.data.map(d =>
+            prepareDataForLabeling(d, preparedGeoDataset.dataContainer)
+          ),
           'should format correct geojson layerData'
         );
         t.deepEqual(
@@ -150,7 +242,9 @@ test('#GeojsonLayer -> formatLayerData', async t => {
         layer.dataToFeature.forEach((feature, i) => {
           t.deepEqual(
             feature,
-            expectedDataToFeature[i],
+            filteredIndex.includes(i)
+              ? prepareDataForLabeling(expectedDataToFeature[i], preparedGeoDataset.dataContainer)
+              : expectedDataToFeature[i],
             `should format correct geojson dataToFeature[${i}]`
           );
         });
@@ -184,7 +278,19 @@ test('#GeojsonLayer -> formatLayerData', async t => {
           // stroke by c_number(real)
           sizeField: preparedGeoDataset.fields.find(f => f.name === 'c_number'),
           // stroke by a_zip(int)
-          heightField: preparedGeoDataset.fields.find(f => f.name === 'a_zip')
+          heightField: preparedGeoDataset.fields.find(f => f.name === 'a_zip'),
+          textLabel: [
+            {
+              field: [
+                {
+                  field: {
+                    name: 'a_zip',
+                    type: 'integer'
+                  }
+                }
+              ]
+            }
+          ]
         }
       },
       datasets: {
@@ -193,7 +299,13 @@ test('#GeojsonLayer -> formatLayerData', async t => {
       assert: result => {
         const {layerData, layer} = result;
         const expectedLayerData = {
-          data: [updatedLayerV2.dataToFeature[2], updatedLayerV2.dataToFeature[4]]
+          data: [updatedLayerV2Mod.dataToFeature[2], updatedLayerV2Mod.dataToFeature[4]],
+          textLabels: [
+            {
+              characterSet: [],
+              getText: () => {}
+            }
+          ]
         };
         const expectedDataKeys = [
           'data',
@@ -203,20 +315,44 @@ test('#GeojsonLayer -> formatLayerData', async t => {
           'getFiltered',
           'getLineColor',
           'getLineWidth',
-          'getPointRadius'
+          'getPointRadius',
+          'getPosition',
+          'textLabels'
         ];
         const expectedLayerMeta = updatedLayerV2.meta;
-        const expectedDataToFeature = updatedLayerV2.dataToFeature;
+        const expectedDataToFeature = updatedLayerV2Mod.dataToFeature;
 
         t.deepEqual(
           Object.keys(layerData).sort(),
           expectedDataKeys,
-          'layerData should have 7 keys'
+          'layerData should have 9 keys'
         );
-        // data
+        // textLabels
+        t.deepEqual(
+          layerData.textLabels.length,
+          expectedLayerData.textLabels.length,
+          'textLabels should have 1 item'
+        );
+        t.deepEqual(
+          layerData.textLabels[0].characterSet,
+          ['7', '0', '1', '6', '2', '9'],
+          'textLabels should have correct characterSet'
+        );
+        t.deepEqual(
+          layerData.textLabels[0].getText(layerData.data[0]),
+          '7016',
+          'textLabels getText should have correct text'
+        );
+        // data: centroid and values are added for labeling
         t.deepEqual(
           layerData.data,
-          expectedLayerData.data,
+          expectedLayerData.data.map(d => ({
+            ...d,
+            properties: {
+              ...d.properties,
+              values: preparedGeoDataset.dataContainer.rowAsArray(d.properties.index)
+            }
+          })),
           'should format correct geojson layerData'
         );
         t.deepEqual(
@@ -275,11 +411,15 @@ test('#GeojsonLayer -> formatLayerData', async t => {
         // meta
         t.deepEqual(layer.meta, expectedLayerMeta, 'should format correct geojson layerData');
         // dataToFeature
-        t.deepEqual(
-          layer.dataToFeature,
-          expectedDataToFeature,
-          'should format correct geojson layerData'
-        );
+        layer.dataToFeature.forEach((feature, i) => {
+          t.deepEqual(
+            feature,
+            filteredIndex.includes(i)
+              ? prepareDataForLabeling(expectedDataToFeature[i], preparedGeoDataset.dataContainer)
+              : expectedDataToFeature[i],
+            `should format correct geojson dataToFeature[${i}]`
+          );
+        });
       }
     },
     {
@@ -293,7 +433,19 @@ test('#GeojsonLayer -> formatLayerData', async t => {
           columns: {
             geojson: '_geojson'
           },
-          color: [5, 5, 5]
+          color: [5, 5, 5],
+          textLabel: [
+            {
+              field: [
+                {
+                  field: {
+                    name: 'ID',
+                    type: 'integer'
+                  }
+                }
+              ]
+            }
+          ]
         }
       },
       datasets: {
@@ -304,9 +456,15 @@ test('#GeojsonLayer -> formatLayerData', async t => {
 
         const expectedLayerData = {
           data: [
-            updatedGeoJsonLayer.dataToFeature[0],
-            updatedGeoJsonLayer.dataToFeature[2],
-            updatedGeoJsonLayer.dataToFeature[4]
+            updatedGeoJsonLayerMod.dataToFeature[0],
+            updatedGeoJsonLayerMod.dataToFeature[2],
+            updatedGeoJsonLayerMod.dataToFeature[4]
+          ],
+          textLabels: [
+            {
+              characterSet: [],
+              getText: () => {}
+            }
           ]
         };
         const expectedDataKeys = [
@@ -317,20 +475,40 @@ test('#GeojsonLayer -> formatLayerData', async t => {
           'getFiltered',
           'getLineColor',
           'getLineWidth',
-          'getPointRadius'
+          'getPointRadius',
+          'getPosition',
+          'textLabels'
         ];
         const expectedLayerMeta = updatedGeoJsonLayer.meta;
-        const expectedDataToFeature = updatedGeoJsonLayer.dataToFeature;
+        const expectedDataToFeature = updatedGeoJsonLayerMod.dataToFeature;
 
         t.deepEqual(
           Object.keys(layerData).sort(),
           expectedDataKeys,
-          'layerData should have 7 keys'
+          'layerData should have 9 keys'
         );
-        // // data
+        // textLabels
+        t.deepEqual(
+          layerData.textLabels.length,
+          expectedLayerData.textLabels.length,
+          'textLabels should have 1 item'
+        );
+        t.deepEqual(
+          layerData.textLabels[0].characterSet,
+          ['9', '4', '1', '0', '7'],
+          'textLabels should have correct characterSet'
+        );
+        t.deepEqual(
+          layerData.textLabels[0].getText(layerData.data[0]),
+          '94107',
+          'textLabels getText should have correct text'
+        );
+        // data: centroid and values are added for labeling
         t.deepEqual(
           layerData.data,
-          expectedLayerData.data,
+          expectedLayerData.data.map(d =>
+            prepareDataForLabeling(d, prepareGeojsonDataset.dataContainer)
+          ),
           'should format correct geojson layerData'
         );
         t.deepEqual(
@@ -379,11 +557,18 @@ test('#GeojsonLayer -> formatLayerData', async t => {
         // meta
         t.deepEqual(layer.meta, expectedLayerMeta, 'should format correct geojson layer meta');
         // dataToFeature
-        t.deepEqual(
-          layer.dataToFeature,
-          expectedDataToFeature,
-          'should format correct geojson layer dataToFeature'
-        );
+        layer.dataToFeature.forEach((feature, i) => {
+          t.deepEqual(
+            feature,
+            filteredIndex.includes(i)
+              ? prepareDataForLabeling(
+                  expectedDataToFeature[i],
+                  prepareGeojsonDataset.dataContainer
+                )
+              : expectedDataToFeature[i],
+            `should format correct geojson dataToFeature[${i}]`
+          );
+        });
       }
     },
     // test case 3
@@ -398,7 +583,19 @@ test('#GeojsonLayer -> formatLayerData', async t => {
           columns: {
             geojson: '_geojson'
           },
-          color: [5, 5, 5]
+          color: [5, 5, 5],
+          textLabel: [
+            {
+              field: [
+                {
+                  field: {
+                    name: 'elevation',
+                    type: 'integer'
+                  }
+                }
+              ]
+            }
+          ]
         }
       },
       datasets: await createNewDataEntryMock({
@@ -409,7 +606,13 @@ test('#GeojsonLayer -> formatLayerData', async t => {
         const {layerData, layer} = result;
 
         const expectedLayerData = {
-          data: geoStyleDataToFeature
+          data: geoStyleDataToFeatureMod,
+          textLabels: [
+            {
+              characterSet: [],
+              getText: () => {}
+            }
+          ]
         };
         const expectedDataKeys = [
           'data',
@@ -419,21 +622,41 @@ test('#GeojsonLayer -> formatLayerData', async t => {
           'getFiltered',
           'getLineColor',
           'getLineWidth',
-          'getPointRadius'
+          'getPointRadius',
+          'getPosition',
+          'textLabels'
         ];
         const expectedLayerMeta = geoStyleMeta;
 
-        const expectedDataToFeature = geoStyleDataToFeature;
+        const expectedDataToFeature = geoStyleDataToFeatureMod;
 
         t.deepEqual(
           Object.keys(layerData).sort(),
           expectedDataKeys,
-          'layerData should have 7 keys'
+          'layerData should have 9 keys'
         );
-        // // data
+        // textLabels
+        t.deepEqual(
+          layerData.textLabels.length,
+          expectedLayerData.textLabels.length,
+          'textLabels should have 1 item'
+        );
+        t.deepEqual(
+          layerData.textLabels[0].characterSet,
+          ['1', '0'],
+          'textLabels should have correct characterSet'
+        );
+        t.deepEqual(
+          layerData.textLabels[0].getText(layerData.data[0]),
+          '10',
+          'textLabels getText should have correct text'
+        );
+        // data: centroid and values are added for labeling
+        const geoJsonWithStyleDataset = processGeojson(geoJsonWithStyle);
+        const dc = createDataContainer(geoJsonWithStyleDataset.rows);
         t.deepEqual(
           layerData.data,
-          expectedLayerData.data,
+          expectedLayerData.data.map(d => prepareDataForLabeling(d, dc)),
           'should format correct geojson layerData'
         );
         t.deepEqual(
@@ -482,11 +705,14 @@ test('#GeojsonLayer -> formatLayerData', async t => {
         // meta
         t.deepEqual(layer.meta, expectedLayerMeta, 'should format correct geojson layer meta');
         // dataToFeature
-        t.deepEqual(
-          layer.dataToFeature,
-          expectedDataToFeature,
-          'should format correct geojson layer dataToFeature'
-        );
+        const dc2 = createDataContainer(geoJsonWithStyleDataset.rows);
+        layer.dataToFeature.forEach((feature, i) => {
+          t.deepEqual(
+            feature,
+            prepareDataForLabeling(expectedDataToFeature[i], dc2),
+            `should format correct geojson dataToFeature[${i}]`
+          );
+        });
       }
     }
   ];
