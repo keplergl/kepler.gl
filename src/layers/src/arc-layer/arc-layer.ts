@@ -22,7 +22,8 @@ import {isLayerHoveredFromArrow, createGeoArrowPointVector, getFilteredIndex} fr
 import {
   DEFAULT_LAYER_COLOR,
   ColorRange,
-  PROJECTED_PIXEL_SIZE_MULTIPLIER
+  PROJECTED_PIXEL_SIZE_MULTIPLIER,
+  ALL_FIELD_TYPES
 } from '@kepler.gl/constants';
 
 import {
@@ -166,10 +167,11 @@ function maybeHexToGeo(
     : null;
 }
 
-function isOtherFieldString(columns, allFields, key) {
+function isH3Field(columns, allFields, key) {
   const field = allFields[columns[key].fieldIdx];
-  return field && field.type === 'string';
+  return field?.type === ALL_FIELD_TYPES.h3;
 }
+
 export const arcPosAccessor =
   ({lat0, lng0, lat1, lng1, lat, lng, geoarrow0, geoarrow1}: ArcLayerColumnsConfig, columnMode) =>
   (dc: DataContainerInterface) => {
@@ -287,12 +289,12 @@ export default class ArcLayer extends Layer {
     // if one of the lat or lng column is string type, we allow it
     // will try to pass it as hex
     return {
-      lat0: (column, columns, allFields) => isOtherFieldString(columns, allFields, 'lng0'),
-      lng0: (column, columns, allFields) => isOtherFieldString(columns, allFields, 'lat0'),
-      lat1: (column, columns, allFields) => isOtherFieldString(columns, allFields, 'lng1'),
-      lng1: (column, columns, allFields) => isOtherFieldString(columns, allFields, 'lat1'),
-      lat: (column, columns, allFields) => isOtherFieldString(columns, allFields, 'lng'),
-      lng: (column, columns, allFields) => isOtherFieldString(columns, allFields, 'lat')
+      lat0: (column, columns, allFields) => isH3Field(columns, allFields, 'lng0'),
+      lng0: (column, columns, allFields) => isH3Field(columns, allFields, 'lat0'),
+      lat1: (column, columns, allFields) => isH3Field(columns, allFields, 'lng1'),
+      lng1: (column, columns, allFields) => isH3Field(columns, allFields, 'lat1'),
+      lat: (column, columns, allFields) => isH3Field(columns, allFields, 'lng'),
+      lng: (column, columns, allFields) => isH3Field(columns, allFields, 'lat')
     };
   }
 

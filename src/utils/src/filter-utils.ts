@@ -41,11 +41,10 @@ import {
   AnimationConfig
 } from '@kepler.gl/types';
 
-import {generateHashId, toArray, notNullorUndefined} from '@kepler.gl/common-utils';
+import {generateHashId, toArray, notNullorUndefined, getCentroid} from '@kepler.gl/common-utils';
 import {DataContainerInterface} from './data-container-interface';
 import {set} from './utils';
 import {timeToUnixMilli, unique} from './data-utils';
-import {getCentroid} from './h3-utils';
 import {updateTimeFilterPlotType, updateRangeFilterPlotType} from './plot';
 import {KeplerTableModel} from './types';
 
@@ -340,6 +339,7 @@ export function getFilterProps(
       };
 
     case ALL_FIELD_TYPES.string:
+    case ALL_FIELD_TYPES.h3:
     case ALL_FIELD_TYPES.date:
       // @ts-expect-error
       return {
@@ -996,6 +996,7 @@ export function mergeFilterDomainStep(
 
   switch (filterProps.fieldType) {
     case ALL_FIELD_TYPES.string:
+    case ALL_FIELD_TYPES.h3:
     case ALL_FIELD_TYPES.date:
       return {
         ...newFilter,

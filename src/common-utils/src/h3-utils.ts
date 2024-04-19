@@ -38,12 +38,7 @@ export function idToPolygonGeo(object?: {id: H3Index}, properties?: any) {
 }
 
 export const isHexField = (field, fieldIdx, dataContainer) => {
-  if (field.type !== ALL_FIELD_TYPES.string) {
-    return false;
-  }
-
-  const firstDP = dataContainer.find(d => notNullorUndefined(d.valueAt(fieldIdx)), true);
-  return firstDP && h3IsValid(firstDP.valueAt(fieldIdx));
+  return field.type === ALL_FIELD_TYPES.h3;
 };
 
 export const getHexFields = (fields, dataContainer) =>
