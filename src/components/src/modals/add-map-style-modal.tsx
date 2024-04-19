@@ -194,7 +194,7 @@ function AddMapStyleModalFactory() {
                 <InputLight
                   type="text"
                   value={inputStyle.url || ''}
-                  onChange={({target: {value}}) => this.props.inputMapStyle({url: value})}
+                  onChange={({target: {value}}) => this.props.inputMapStyle({url: value, id: 'Custom Style' })}
                   placeholder="e.g. https://basemaps.cartocdn.com/gl/positron-gl-style/style.json"
                 />
               </StyledModalSection>
