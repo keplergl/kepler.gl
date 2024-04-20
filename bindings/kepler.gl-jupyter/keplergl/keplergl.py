@@ -175,7 +175,7 @@ class KeplerGl(widgets.DOMWidget):
         frame_txt = keplergl_html[:k] + "<body><script>" + cmd + "</script>" + keplergl_html[k+6:]
 
         if "google.colab" in sys.modules:
-            from IPython.display import HTML, Javascript 
+            from IPython.display import HTML, Javascript
             display(HTML(frame_txt))
             display(Javascript(f"google.colab.output.setIframeHeight('{self.height}');"))
 

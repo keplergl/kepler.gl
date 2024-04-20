@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {addDataToMap, ActionTypes} from 'kepler.gl/actions';
-import {KeplerGlSchema} from 'kepler.gl/schemas';
+import {addDataToMap, ActionTypes} from '@kepler.gl/actions';
+import {KeplerGlSchema} from '@kepler.gl/schemas';
 import document from 'global/document';
 
 import renderRoot from './components/root';

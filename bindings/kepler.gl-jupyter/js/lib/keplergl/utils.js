@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {processCsvData, processGeojson} from 'kepler.gl/processors';
+import {processCsvData, processGeojson} from '@kepler.gl/processors';
 import log from '../log';
 import console from 'global/console';
 

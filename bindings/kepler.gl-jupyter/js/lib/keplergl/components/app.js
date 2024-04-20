@@ -12,7 +12,7 @@ import {
   PanelHeaderFactory,
   CustomPanelsFactory,
   injectComponents
-} from 'kepler.gl/components';
+} from '@kepler.gl/components';
 
 import CustomPanelHeaderFactory from './panel-header';
 import CustomSidebarFactory from './side-bar';

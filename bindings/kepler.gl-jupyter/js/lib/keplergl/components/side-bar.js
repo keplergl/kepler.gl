@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import React from 'react';
-import {SidebarFactory, CollapseButtonFactory} from 'kepler.gl/components';
+import {SidebarFactory, CollapseButtonFactory} from '@kepler.gl/components';
 import styled from 'styled-components';
 
 const StyledSideBarContainer = styled.div`
