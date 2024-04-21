@@ -1,15 +1,16 @@
+"""module for keplergl-jupyter"""
 # SPDX-License-Identifier: MIT
 # Copyright contributors to the kepler.gl project
 
+import sys
+import json
 import ipywidgets as widgets
 from pkg_resources import resource_string
 from traitlets import Unicode, Dict, Int, validate, TraitError
 import pandas as pd
 import geopandas
 import shapely.wkt
-import json
 from ._version import EXTENSION_SPEC_VERSION
-import sys
 
 documentation = 'https://docs.kepler.gl/docs/keplergl-jupyter'
 def _df_to_dict(df):
@@ -54,7 +55,7 @@ def _normalize_data(data):
     return data
 
 def data_to_json(data, manager):
-    '''Serialize a Python date object.
+    '''Serialize a Python data object.
     Attributes of this dictionary are to be passed to the JavaScript side.
     '''
 
@@ -203,8 +204,8 @@ class KeplerGl(widgets.DOMWidget):
         # find open of body
         k = keplergl_html.find("<body>")
 
-        data_to_add = data_to_json(self.data, None) if data == None else data_to_json(data, None)
-        config_to_add = self.config if config == None else config
+        data_to_add = data_to_json(self.data, None) if data is None else data_to_json(data, None)
+        config_to_add = self.config if config is None else config
 
         # for key in data_to_add:
         #     print(type(data_to_add[key]))
