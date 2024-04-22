@@ -5,9 +5,6 @@ import {applyMiddleware, compose, createStore} from 'redux';
 import {combineReducers} from 'redux';
 import {keplerGlReducer, enhanceReduxMiddleware} from '@kepler.gl/reducers';
 
-// TODO: remove this after added middleware to files
-// import {enhanceReduxMiddleware} from '@kepler.gl/middleware';
-
 const customizedKeplerGlReducer = keplerGlReducer.initialState({
   uiState: {
     currentModal: null,

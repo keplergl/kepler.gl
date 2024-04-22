@@ -30,16 +30,13 @@ function handleJuptyerDataFormat(dataEntry) {
       type = 'json';
     } catch (e) {
       // assume it is base64 string represents arrow table
-      // convert it to Uint8Array
       try {
         console.log('parse base64string arrow tabl');
         // convert arrowTable from base64 string to ArrayBuffer
         const arrowTableBuffer = Buffer.from(data, 'base64').buffer;
         // create arrow table from ArrayBuffer
-        const apacheArrowTable = tableFromIPC([new Uint8Array(arrowTableBuffer)]);
-        parsed = apacheArrowTable;
+        parsed = tableFromIPC([new Uint8Array(arrowTableBuffer)]);
         type = 'arrow';
-        console.log('parsed arrow table', parsed);
       } catch (e) {
         // now we can assume it is csv
       }

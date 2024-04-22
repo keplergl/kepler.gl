@@ -18,6 +18,10 @@ Table of contacts
 
 ### 1. For Jupyter Notebook
 
+NOTE: for keplergl 0.3.4, the python package `notebook` should be installed with version 6.0.1.
+
+```shell
+
 #### Using conda:
 
 ```shell
@@ -47,7 +51,7 @@ jupyter nbextension enable --py --sys-prefix keplergl # can be skipped for noteb
 
 ### 2. For Google Colab:
 
-`keplergl` (>0.3.0) works with Google Colab. You can install it using pip. 
+`keplergl` (>0.3.0) works with Google Colab. You can install it using pip.
 
 ```python
 # Install keplergl (>0.3.0)
@@ -58,7 +62,7 @@ jupyter nbextension enable --py --sys-prefix keplergl # can be skipped for noteb
 
 #### JupyterLab 3
 
-NOTE: `keplergl` <=0.3.0 doesn't work with JupyterLab 3. You need to make sure the python package `keplergl` > 0.3.0 is installed. 
+NOTE: `keplergl` <=0.3.0 doesn't work with JupyterLab 3. You need to make sure the python package `keplergl` > 0.3.0 is installed.
 
 Installation using pip:
 ```shell
@@ -73,7 +77,7 @@ There is no need to use `jupyter labextension install` for `keplergl` > 0.3.0 wi
 
 #### JupyterLab 1
 
-For JupyterLab1, you need to install `keplergl-jupyter` labextension from NPM registery. There is no need to install `keplergl` python package. 
+For JupyterLab1, you need to install `keplergl-jupyter` labextension from NPM registery. There is no need to install `keplergl` python package.
 
 First, install `jupyterlab-manager` for JupyterLab1:
 ```shell
@@ -91,7 +95,7 @@ jupyter labextension install keplergl-jupyter
 
 #### JupyterLab 2
 
-For JupyterLab2, you need to install `keplergl-jupyter` labextension from NPM registery. There is no need to install `keplergl` python package. 
+For JupyterLab2, you need to install `keplergl-jupyter` labextension from NPM registery. There is no need to install `keplergl` python package.
 
 First, install `jupyterlab-manager` for JupyterLab2:
 ```shell
@@ -209,17 +213,19 @@ You will need to install node, yarn and Jupyter Notebook.
 Install [node](https://nodejs.org/en/download/package-manager/#macos) `> 12`, and [yarn](https://yarnpkg.com/en/docs/install#mac-stable). Use [nvm](https://github.com/creationix/nvm) for better node version management e.g. `nvm install 12`.
 
 
-#### 2. Install Jupyter 
+#### 2. Install Jupyter
 
 - Using conda
 ```shell
 conda install jupyter
+conda install notebook 6.0.1
 ```
 
 - Using pip
 
 ```shell
 pip install jupyter
+pip install notebook==6.0.1
 ```
 
 #### 3. Install GeoPandas
@@ -281,7 +287,7 @@ jupyter nbextension install --py --symlink --sys-prefix keplergl
 jupyter nbextension enable --py --sys-prefix keplergl
 ```
 
-NOTE: The above command `jupyter nbextension install -py --symlink --sys-prefix keplergl` is trying to create a symoblic link of the folder `bindings/kepler.gl-jupyter/keplergl/static` under the jupyter's folder `nbextensions`. Please check if there is already a folder "nbextensions/kepler-jupyter" existed, and you might need to remove it first. 
+NOTE: The above command `jupyter nbextension install -py --symlink --sys-prefix keplergl` is trying to create a symoblic link of the folder `bindings/kepler.gl-jupyter/keplergl/static` under the jupyter's folder `nbextensions`. Please check if there is already a folder "nbextensions/kepler-jupyter" existed, and you might need to remove it first.
 
 To find the location of `nbextensions` folder, you can use the following command:
 ```shell
