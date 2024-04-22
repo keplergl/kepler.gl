@@ -96,7 +96,6 @@ export const loadRemoteResourceSuccess = (state, action) => {
   let unprocessedData = action.response;
   if (shape === 'arrow-table') {
     processorMethod = processArrowTable;
-    unprocessedData = action.response.data;
   } else if (shape === 'object-row-table') {
     processorMethod = processRowObject;
     unprocessedData = action.response.data;
