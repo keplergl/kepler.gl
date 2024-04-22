@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
 # Copyright contributors to the kepler.gl project
 
-version_info = (0, 3, 4, 'final', 0)
+version_info = (0, 3, 4, 'alpha', 0)
 
 _specifier_ = {'alpha': 'a', 'beta': 'b', 'candidate': 'rc', 'final': ''}
 

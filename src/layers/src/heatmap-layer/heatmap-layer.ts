@@ -224,6 +224,7 @@ class HeatmapLayer extends MapboxGLLayer {
     const getPosition = this.getPositionAccessor(dataContainer);
     const {data} = this.updateData(datasets, oldLayerData);
 
+    // @ts-ignore datasets is not typed
     const newConfig = this.computeHeatmapConfiguration(this.config, datasets);
     newConfig.id = this.id;
 
