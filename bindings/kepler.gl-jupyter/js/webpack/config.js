@@ -22,19 +22,13 @@ const rules = [
   },
   // for compiling @probe.gl, website build started to fail (March, 2024)
   {
-    test: /\.(js)$/,
+    test: /\.(js|ts)$/,
     loader: 'babel-loader',
-    include: /node_modules\/@probe.gl/
-  },
-  {
-    test: /\.(js)$/,
-    loader: 'babel-loader',
-    include: /node_modules\/@loaders.gl/
-  },
-  {
-    test: /\.(js)$/,
-    loader: 'babel-loader',
-    include: /node_modules\/@math.gl/
+    include: [
+      /node_modules\/@probe.gl/,
+      /node_modules\/@loaders.gl/,
+      /node_modules\/@math.gl/
+    ]
   }
 ];
 
