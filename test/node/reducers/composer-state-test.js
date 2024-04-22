@@ -3,7 +3,11 @@
 
 /* eslint-disable max-statements */
 
+import {drainTasksForTesting, succeedTaskWithValues} from 'react-palm/tasks';
 import test from 'tape';
+
+import {registerEntry} from '@kepler.gl/actions';
+import {processCsvData} from '@kepler.gl/processors';
 import keplerGlReducer, {
   addDataToMapUpdater,
   replaceDataInMapUpdater,
@@ -12,9 +16,7 @@ import keplerGlReducer, {
   visStateReducer,
   mapStateReducer
 } from '@kepler.gl/reducers';
-import {processCsvData} from '@kepler.gl/processors';
-import {registerEntry} from '@kepler.gl/actions';
-import {drainTasksForTesting, succeedTaskWithValues} from 'react-palm/tasks';
+import {getTimeBins} from '@kepler.gl/utils';
 
 import testCsvData, {sampleConfig, dataWithNulls} from 'test/fixtures/test-csv-data';
 import testHexIdData, {
@@ -25,6 +27,9 @@ import testHexIdData, {
 } from 'test/fixtures/test-hex-id-data';
 import {cmpLayers, cmpFilters, cmpDataset, cmpInteraction} from 'test/helpers/comparison-utils';
 import {applyExistingDatasetTasks} from 'test/helpers/mock-state';
+
+import {StateWSyncedTimeFilter} from '../../helpers/mock-state';
+import {testCsvDataSlice1Id, testCsvDataSlice2Id} from '../../fixtures/test-csv-data';
 
 const mockRawData = {
   fields: [
@@ -577,5 +582,143 @@ test('#composerStateReducer - replaceDataInMapUpdater: same dataId', t => {
     }
   }));
   t.deepEqual(nextSavedConfig.visState.layers, expectedLayers, 'should replace layer dataId');
+  t.end();
+});
+
+test('#composerStateReducer - replaceDataInMapUpdater: syncedTimeFilter & match', t => {
+  const oldState = StateWSyncedTimeFilter;
+  const dataIdToReplace = 'dataset_to_replace';
+
+  const datasetToUse = {
+    data: processCsvData(dataWithNulls),
+    info: {
+      id: dataIdToReplace
+    }
+  };
+
+  let nextState = replaceDataInMapUpdater(oldState, {
+    payload: {
+      datasetToReplaceId: testCsvDataSlice1Id,
+      datasetToUse
+    }
+  });
+  // create datasets from existing tasks, trigger auto create layers
+  nextState = {
+    ...nextState,
+    visState: applyExistingDatasetTasks(visStateReducer, nextState.visState)
+  };
+
+  const oldFilter = oldState.visState.filters[0];
+  const expectedFilter = {
+    ...oldState.visState.filters[0],
+    dataId: [dataIdToReplace, testCsvDataSlice2Id],
+    // union [147407 1056000, 147407 1677000]; [147407 1301000, 1474072208000];
+    domain: [1474071056000, 1474072208000],
+    // value [1474071116000, 1474072188000] is still within so it doesnt change
+    value: oldState.visState.filters[0].value,
+    timeBins: {},
+    plotType: {
+      ...oldState.visState.filters[0].plotType,
+      colorsByDataId: {
+        [dataIdToReplace]: '#FF0000',
+        'test-csv-data-2': '#00FF00'
+      }
+    }
+  };
+
+  // should recalculate timeBins based on new datasets
+  expectedFilter.timeBins = getTimeBins(
+    expectedFilter,
+    nextState.visState.datasets,
+    oldFilter.plotType.interval
+  );
+
+  t.deepEqual(
+    nextState.visState.filters,
+    [expectedFilter],
+    'should replace dataset with syncd filter'
+  );
+  const expectedDomain0 = 1474071056000;
+  const expectedGpuFilter = {
+    filterRange: [
+      [expectedFilter.value[0] - expectedDomain0, expectedFilter.value[1] - expectedDomain0],
+      [0, 0],
+      [0, 0],
+      [0, 0]
+    ],
+    filterValueUpdateTriggers: {
+      gpuFilter_0: {name: 'gps_data.utc_timestamp', domain0: expectedDomain0},
+      gpuFilter_1: null,
+      gpuFilter_2: null,
+      gpuFilter_3: null
+    },
+    filterValueAccessor: 'dont test me'
+  };
+  t.deepEqual(
+    nextState.visState.datasets[dataIdToReplace].gpuFilter.filterRange,
+    expectedGpuFilter.filterRange,
+    'gpu filterRange should be correct'
+  );
+  t.deepEqual(
+    nextState.visState.datasets[dataIdToReplace].gpuFilter.filterValueUpdateTriggers,
+    expectedGpuFilter.filterValueUpdateTriggers,
+    'gpu filterValueUpdateTriggers should be correct'
+  );
+  t.deepEqual(
+    nextState.visState.datasets[testCsvDataSlice2Id].gpuFilter.filterRange,
+    expectedGpuFilter.filterRange,
+    'gpu filterRange should be correct'
+  );
+  t.deepEqual(
+    nextState.visState.datasets[testCsvDataSlice2Id].gpuFilter.filterValueUpdateTriggers,
+    expectedGpuFilter.filterValueUpdateTriggers,
+    'gpu filterValueUpdateTriggers should be correct'
+  );
+
+  t.end();
+});
+
+test('#composerStateReducer - replaceDataInMapUpdater: syncedTimeFilter & no match', t => {
+  const oldState = StateWSyncedTimeFilter;
+  const dataIdToReplace = 'dataset_to_replace';
+
+  const datasetToUse = {
+    // a different dataset with no match
+    data: processCsvData(testHexIdData),
+    info: {
+      id: dataIdToReplace
+    }
+  };
+
+  let nextState = replaceDataInMapUpdater(oldState, {
+    payload: {
+      datasetToReplaceId: testCsvDataSlice1Id,
+      datasetToUse
+    }
+  });
+  // create datasets from existing tasks, trigger auto create layers
+  nextState = {
+    ...nextState,
+    visState: applyExistingDatasetTasks(visStateReducer, nextState.visState)
+  };
+
+  t.equal(nextState.visState.filters.length, 0, 'should not merge filter if no match');
+  t.equal(
+    nextState.visState.layers.length,
+    1,
+    'should only keep 1 layer (not able to merge the other)'
+  );
+
+  t.deepEqual(oldState.visState.layers[1], nextState.visState.layers[0], 'should keep 1 layer');
+
+  t.equal(nextState.visState.layerToBeMerged.length, 1, 'should keep unmerged in layerToBeMerged');
+  t.equal(
+    nextState.visState.filterToBeMerged.length,
+    1,
+    'should keep unmerged in filterToBeMerged'
+  );
+
+  t.deepEqual(nextState.visState.interactionToBeMerged, {}, 'should reset interactionToBeMerged');
+  t.deepEqual(nextState.visState.splitMapsToBeMerged, [], 'should reset splitMapsToBeMerged');
   t.end();
 });

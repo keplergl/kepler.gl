@@ -12,8 +12,8 @@ export const syncedFilterWithTripLayerMap = {
     {
       version: 'v1',
       data: {
-        id: 'ku6sngc2',
-        label: 'un_2573-few-points.csv',
+        id: 'points-dataset',
+        label: 'few-points.csv',
         color: [143, 47, 191],
         allData: [
           [
@@ -168,8 +168,8 @@ export const syncedFilterWithTripLayerMap = {
     {
       version: 'v1',
       data: {
-        id: '5l94bqp',
-        label: 'un_2573-trips.json',
+        id: 'trip-dataset',
+        label: 'trips.json',
         color: [0, 92, 255],
         allData: [
           [
@@ -222,7 +222,7 @@ export const syncedFilterWithTripLayerMap = {
       visState: {
         filters: [
           {
-            dataId: ['ku6sngc2'],
+            dataId: ['points-dataset'],
             id: 'vxwjjz1sf',
             name: ['DateTime'],
             type: 'timeRange',
@@ -239,7 +239,7 @@ export const syncedFilterWithTripLayerMap = {
             id: 'proypi',
             type: 'point',
             config: {
-              dataId: 'ku6sngc2',
+              dataId: 'points-dataset',
               label: 'Point',
               color: [255, 203, 153],
               highlightColor: [252, 242, 26, 255],
@@ -292,7 +292,7 @@ export const syncedFilterWithTripLayerMap = {
             id: 'p4jyzm7',
             type: 'trip',
             config: {
-              dataId: '5l94bqp',
+              dataId: 'trip-dataset',
               label: 'un_2573-trips',
               color: [248, 149, 112],
               highlightColor: [252, 242, 26, 255],
@@ -333,14 +333,14 @@ export const syncedFilterWithTripLayerMap = {
         interactionConfig: {
           tooltip: {
             fieldsToShow: {
-              ku6sngc2: [
+              'point-dataset': [
                 {name: 'DateTime', format: null},
                 {name: 'Latitude', format: null},
                 {name: 'Longitude', format: null},
                 {name: 'Depth', format: null},
                 {name: 'Magnitude', format: null}
               ],
-              '5l94bqp': [{name: 'vendor', format: null}]
+              'trip-dataset': [{name: 'vendor', format: null}]
             },
             compareMode: false,
             compareType: 'absolute',
