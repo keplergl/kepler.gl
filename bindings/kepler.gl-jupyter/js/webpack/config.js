@@ -16,6 +16,7 @@ const rules = [
   // fix for arrow-related errors
   {
     test: /\.mjs$/,
+    // include: /node_modules\/apache-arrow/,
     include: /node_modules/,
     type: 'javascript/auto'
   },

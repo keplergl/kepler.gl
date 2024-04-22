@@ -2,17 +2,23 @@
 # SPDX-License-Identifier: MIT
 # Copyright contributors to the kepler.gl project
 
+import base64
 import sys
 import json
 import ipywidgets as widgets
 from pkg_resources import resource_string
-from traitlets import Unicode, Dict, Int, validate, TraitError
+from traitlets import Unicode, Dict, Int, validate, TraitError, Bool
 import pandas as pd
 import geopandas
+import pyarrow
+import geoarrow.pyarrow as ga
+import geoarrow.pandas as _
 import shapely.wkt
 from ._version import EXTENSION_SPEC_VERSION
 
 documentation = 'https://docs.kepler.gl/docs/keplergl-jupyter'
+
+
 def _df_to_dict(df):
     ''' Create an input dict for Kepler.gl using a DataFrame object
 
@@ -24,6 +30,28 @@ def _df_to_dict(df):
 
     '''
     return df.to_dict('split')
+
+
+def _df_to_arrow(df: pd.DataFrame):
+    ''' Create an arrow base64string for Kepler.gl using a DataFrame object
+
+    Inputs:
+    - df: a DataFrame object
+
+    Returns:
+    - string: a base64 string that can be used in Kepler.gl
+    '''
+    arrow_table = pyarrow.Table.from_pandas(df)
+    batches = arrow_table.to_batches()
+    sink = pyarrow.BufferOutputStream()
+    writer = pyarrow.ipc.new_stream(sink, arrow_table.schema)
+    for batch in batches:
+        writer.write_batch(batch)
+    arrow_buf = sink.getvalue()
+    base64_string = base64.b64encode(arrow_buf.to_pybytes()).decode()
+
+    return base64_string
+
 
 def _gdf_to_dict(gdf):
     ''' Create an input dict for kepler.gl using a GeoDataFrame object
@@ -49,10 +77,39 @@ def _gdf_to_dict(gdf):
 
     return _df_to_dict(df)
 
+
+def _gdf_to_arrow(gdf):
+    ''' Create an arrow base64string for Kepler.gl using a GeoDataFrame object'''
+    # reproject to 4326 if needed
+    if gdf.crs and not gdf.crs == 4326:
+        gdf = gdf.to_crs(4326)
+
+    # get name of the geometry column
+    # will cause error if data frame has no geometry column
+    name = gdf.geometry.name
+
+    array = ga.as_geoarrow(gdf.geometry, coord_type=ga.CoordType.INTERLEAVED)
+
+    table = pyarrow.Table.from_pandas(gdf.drop(columns=[name]))
+    arrow_table = table.append_column(name, array)
+
+    batches = arrow_table.to_batches()
+    sink = pyarrow.BufferOutputStream()
+    writer = pyarrow.ipc.new_stream(sink, arrow_table.schema)
+    for batch in batches:
+        writer.write_batch(batch)
+    arrow_buf = sink.getvalue()
+    base64_string = base64.b64encode(arrow_buf.to_pybytes()).decode()
+
+    return base64_string
+
+
 def _normalize_data(data):
     if isinstance(data, pd.DataFrame):
-        return _gdf_to_dict(data) if isinstance(data, geopandas.GeoDataFrame) else _df_to_dict(data)
+        #return _gdf_to_dict(data) if isinstance(data, geopandas.GeoDataFrame) else _df_to_dict(data)
+        return _gdf_to_arrow(data) if isinstance(data, geopandas.GeoDataFrame) else _df_to_arrow(data)
     return data
+
 
 def data_to_json(data, manager):
     '''Serialize a Python data object.
@@ -64,7 +121,8 @@ def data_to_json(data, manager):
     else:
         if type(data) is not dict:
             print(data)
-            raise Exception('data type incorrect expecting a dictionary mapping from data id to value, but got {}'.format(type(data)))
+            raise Exception(
+                'data type incorrect expecting a dictionary mapping from data id to value, but got {}'.format(type(data)))
             return None
         else:
             dataset = {}
@@ -74,20 +132,25 @@ def data_to_json(data, manager):
 
             return dataset
 
+
 def data_from_json(js, manager):
     '''Deserialize a Javascript date.'''
     return js
+
 
 data_serialization = {
     'from_json': data_from_json,
     'to_json': data_to_json
 }
 
+
 class TraitError(Exception):
     pass
 
+
 class DataException(TraitError):
     pass
+
 
 @widgets.register
 class KeplerGl(widgets.DOMWidget):
@@ -103,6 +166,7 @@ class KeplerGl(widgets.DOMWidget):
     data = Dict({}).tag(sync=True, **data_serialization)
     config = Dict({}).tag(sync=True)
     height = Int(400).tag(sync=True)
+    use_arrrow = Bool(False).tag(sync=True)
 
     def __init__(self, **kwargs):
         if 'show_docs' not in kwargs:
@@ -121,12 +185,14 @@ class KeplerGl(widgets.DOMWidget):
         '''
 
         if type(proposal.value) is not dict:
-            raise DataException('[data type error]: Expecting a dictionary mapping from id to value, but got {}'.format(type(proposal.value)))
+            raise DataException(
+                '[data type error]: Expecting a dictionary mapping from id to value, but got {}'.format(type(proposal.value)))
 
         else:
             for key, value in proposal.value.items():
                 if not isinstance(value, pd.DataFrame) and (type(value) is not str) and (type(value) is not dict):
-                     raise DataException('[data type error]: value of {} should be a DataFrame, a Geojson Dictionary or String, a csv String, but got {}'.format(key, type(value)))
+                    raise DataException(
+                        '[data type error]: value of {} should be a DataFrame, a Geojson Dictionary or String, a csv String, but got {}'.format(key, type(value)))
 
         return proposal.value
 
@@ -163,22 +229,27 @@ class KeplerGl(widgets.DOMWidget):
             map1.show()
 
         '''
-        keplergl_html = resource_string(__name__, 'static/keplergl.html').decode('utf-8')
+        keplergl_html = resource_string(
+            __name__, 'static/keplergl.html').decode('utf-8')
         # find open of body
         k = keplergl_html.find("<body>")
 
-        data_to_add = data_to_json(self.data, None) if data == None else data_to_json(data, None)
+        data_to_add = data_to_json(
+            self.data, None) if data == None else data_to_json(data, None)
         config_to_add = self.config if config == None else config
 
-        keplergl_data = json.dumps({"config": config_to_add, "data": data_to_add, "options": {"readOnly": read_only, "centerMap": center_map}})
+        keplergl_data = json.dumps({"config": config_to_add, "data": data_to_add, "options": {
+                                   "readOnly": read_only, "centerMap": center_map}})
 
         cmd = """window.__keplerglDataConfig = {};""".format(keplergl_data)
-        frame_txt = keplergl_html[:k] + "<body><script>" + cmd + "</script>" + keplergl_html[k+6:]
+        frame_txt = keplergl_html[:k] + "<body><script>" + \
+            cmd + "</script>" + keplergl_html[k+6:]
 
         if "google.colab" in sys.modules:
             from IPython.display import HTML, Javascript
             display(HTML(frame_txt))
-            display(Javascript(f"google.colab.output.setIframeHeight('{self.height}');"))
+            display(Javascript(
+                f"google.colab.output.setIframeHeight('{self.height}');"))
 
     def _repr_html_(self, data=None, config=None, read_only=False, center_map=False):
         ''' Return current map in an html encoded string
@@ -200,20 +271,24 @@ class KeplerGl(widgets.DOMWidget):
             keplergl._repr_html_()
 
         '''
-        keplergl_html = resource_string(__name__, 'static/keplergl.html').decode('utf-8')
+        keplergl_html = resource_string(
+            __name__, 'static/keplergl.html').decode('utf-8')
         # find open of body
         k = keplergl_html.find("<body>")
 
-        data_to_add = data_to_json(self.data, None) if data is None else data_to_json(data, None)
+        data_to_add = data_to_json(
+            self.data, None) if data is None else data_to_json(data, None)
         config_to_add = self.config if config is None else config
 
         # for key in data_to_add:
         #     print(type(data_to_add[key]))
 
-        keplergl_data = json.dumps({"config": config_to_add, "data": data_to_add, "options": {"readOnly": read_only, "centerMap": center_map}})
+        keplergl_data = json.dumps({"config": config_to_add, "data": data_to_add, "options": {
+                                   "readOnly": read_only, "centerMap": center_map}})
 
         cmd = """window.__keplerglDataConfig = {};""".format(keplergl_data)
-        frame_txt = keplergl_html[:k] + "<body><script>" + cmd + "</script>" + keplergl_html[k+6:]
+        frame_txt = keplergl_html[:k] + "<body><script>" + \
+            cmd + "</script>" + keplergl_html[k+6:]
 
         return frame_txt.encode('utf-8')
 
@@ -237,7 +312,8 @@ class KeplerGl(widgets.DOMWidget):
             keplergl.save_to_html(file_name='first_map.html')
 
         '''
-        frame_txt = self._repr_html_(data=data, config=config, read_only=read_only, center_map=center_map)
+        frame_txt = self._repr_html_(
+            data=data, config=config, read_only=read_only, center_map=center_map)
 
         with open(file_name, 'wb') as f:
             f.write(frame_txt)

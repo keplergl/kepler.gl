@@ -142,7 +142,8 @@ class KeplerGlJupyter {
           },
           data: {
             fields: d.fields,
-            rows: d.allData
+            // rows: d.allData
+            ...(d.dataContainer instanceof ArrowDataContainer ? {cols: d.dataContainer._cols} : {rows: d.allData})
           }
         })),
         config,
