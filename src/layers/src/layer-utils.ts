@@ -63,7 +63,6 @@ export function getGeojsonLayerMetaFromArrow({
   };
   // create binary data from arrow data for GeoJsonLayer
   const {binaryGeometries, featureTypes, bounds, meanCenters} = getBinaryGeometriesFromArrow(
-    // @ts-ignore Fix the type error later, need to upgrade apache-arrow in kepler.gl to v15 as in loader.gl
     geoColumn,
     encoding,
     options
