@@ -18,10 +18,6 @@ Table of contacts
 
 ### 1. For Jupyter Notebook
 
-NOTE: for keplergl 0.3.4, the python package `notebook` should be installed with version 6.0.1.
-
-```shell
-
 #### Using conda:
 
 ```shell
@@ -131,10 +127,12 @@ map_1 = KeplerGl(height=400)
 map_1
 
 # Load kepler.gl with map data and config
+# Since keplergl 0.3.4, you can pass `use_arrow=True` to load and render data faster using GeoArrow, e.g. `KeplerGl(data={'data_1': df}, config=config, use_arrow=True)`
 map_2 = KeplerGl(height=400, data={'data_1': df}, config=config)
 map_2
 
 # Add data to map
+# Since keplergl 0.3.4, you can pass `use_arrow=True` to load and render data faster using GeoArrow, e.g. `map_1.add_data(df, 'data_1', use_arrow=True)`
 map_1.add_data(df, 'data_1')
 
 # Apply config
