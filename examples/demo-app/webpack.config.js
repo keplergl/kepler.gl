@@ -42,6 +42,12 @@ const CONFIG = {
         test: /\.mjs$/,
         include: /node_modules/,
         type: 'javascript/auto'
+      },
+      // netlify biulder complains loader not found for these modules
+      {
+        test: /\.(js|ts)$/,
+        loader: 'babel-loader',
+        include: [/node_modules\/@probe.gl/, /node_modules\/@loaders.gl/, /node_modules\/@math.gl/]
       }
     ]
   },

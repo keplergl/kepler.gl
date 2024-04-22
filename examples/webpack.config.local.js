@@ -148,11 +148,7 @@ function makeBabelRule(env, exampleDir) {
             join(EXTERNAL_DECK_SRC, 'node_modules/probe.gl'),
             join(EXTERNAL_DECK_SRC, 'node_modules/@loaders.gl')
           ]
-        : [
-            // netlify biulder complains loader not found for these modules
-            join(NODE_MODULES_DIR, '@probe.gl'),
-            join(NODE_MODULES_DIR, '@loaders.gl')
-          ]),
+        : []),
       ...(env.loaders_src ? [join(EXTERNAL_LOADERS_SRC, 'modules')] : []),
       ...(env.hubble_src ? [join(EXTERNAL_HUBBLE_SRC, 'modules')] : []),
       join(exampleDir, 'src'),
