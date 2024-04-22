@@ -5,7 +5,6 @@ import * as arrow from 'apache-arrow';
 import {csvParseRows} from 'd3-dsv';
 import {DATA_TYPES as AnalyzerDATA_TYPES} from 'type-analyzer';
 import normalize from '@mapbox/geojson-normalize';
-import {ArrowTable} from '@loaders.gl/schema';
 import {ALL_FIELD_TYPES, DATASET_FORMATS, GUIDES_FILE_FORMAT_DOC} from '@kepler.gl/constants';
 import {ProcessorResult, Field} from '@kepler.gl/types';
 import {
@@ -382,8 +381,8 @@ export function processKeplerglDataset(
  * @param arrowTable ArrowTable to parse, see loaders.gl/schema
  * @returns dataset containing `fields` and `rows` or null
  */
-export function processArrowTable(arrowTable: ArrowTable): ProcessorResult | null {
-  return processArrowBatches(arrowTable.data.batches);
+export function processArrowTable(arrowTable: arrow.Table): ProcessorResult | null {
+  return processArrowBatches(arrowTable.batches);
 }
 
 /**
