@@ -331,7 +331,10 @@ export type ComputeDeckLayersProps = {
   };
 };
 
-export function bindLayerCallbacks(layerCallbacks: LayerCallbacks = {}, idx: number) {
+export function bindLayerCallbacks(
+  layerCallbacks: LayerCallbacks = {},
+  idx: number
+): Record<string, (idx: number, val: any) => void> {
   return Object.keys(layerCallbacks).reduce(
     (accu, key) => ({
       ...accu,
