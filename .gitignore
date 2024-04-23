@@ -18,6 +18,7 @@ package-lock.json
 .DS_Store
 .idea
 .vscode/
+.venv/
 
 /bundle*.js
 /favicon.png
