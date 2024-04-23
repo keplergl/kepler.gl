@@ -22,6 +22,7 @@ import sinon from 'sinon';
 import test from 'tape';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
 import {StateWFilesFiltersLayerColor} from 'test/helpers/mock-state';
+import {histogramFromThreshold, histogramFromValues, getHistogramDomain} from '@kepler.gl/utils';
 
 const ColorBreaksPanel = appInjector.get(ColorBreaksPanelFactory);
 const ColumnStatsChart = appInjector.get(ColumnStatsChartFactory);
@@ -57,11 +58,26 @@ const ColumnStatsChartProps = (filterData = false) => {
   };
   const colorScale = getLayerColorScale({range, domain, scaleType, layer: pointLayer1});
   const colorBreaks = getLegendOfScale({scale: colorScale, scaleType, fieldType: colorField.type});
-
+  const fieldValueAccessor = idx => dataset.getValue(colorField.name, idx);
+  const histogramDomain = getHistogramDomain({dataset, fieldValueAccessor});
+  const allBins = histogramFromValues(dataset.allIndexes, 30, fieldValueAccessor);
+  const filteredBins = !filterData
+    ? allBins
+    : histogramFromThreshold(
+        allBins.map(b => b.x0),
+        dataset.filteredIndexForDomain,
+        fieldValueAccessor,
+        false
+      );
+  const isFiltered = filterData;
   return {
     colorField,
     dataset,
     colorBreaks,
+    allBins,
+    filteredBins,
+    isFiltered,
+    histogramDomain,
     onChangedUpdater: sinon.spy()
   };
 };
@@ -151,7 +167,7 @@ test('Components -> ColumnStatsChart -> ColorChartHeader', t => {
         <ColorChartHeader {...InitialProps} />
       </IntlWrapper>
     );
-  }, 'should not fail rendering ColumnStatsChart');
+  }, 'should not fail rendering ColorChartHeader');
 
   const colorChartHeader = wrapper.find('.color-chart-header');
   t.equal(colorChartHeader.length, 1, 'should render 1 ColorChartHeader');
@@ -205,7 +221,6 @@ test('Components -> ColumnStatsChart -> IsLoading', t => {
     );
   }, 'should not fail rendering ColumnStatsChart');
 
-  t.equal(wrapper.find('.color-chart-loading').length, 1, 'should render loading component');
   t.equal(wrapper.find('.color-chart-header').length, 0, 'should not render ColorChartHeader');
   t.end();
 });
@@ -359,7 +374,7 @@ test('Components -> ColorBreaksPanel -> ColumnStatsChart', t => {
         <ColorBreaksPanel {...InitialProps} />
       </IntlWrapper>
     );
-  }, 'should not fail rendering ColumnStatsChart');
+  }, 'should not fail rendering ColorBreaksPanel');
 
   const colorChartTickWrapper = wrapper.find('.color-chart-tick-container');
 

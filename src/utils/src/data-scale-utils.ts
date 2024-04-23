@@ -6,7 +6,8 @@ import moment from 'moment';
 
 import {notNullorUndefined} from '@kepler.gl/common-utils';
 import {ALL_FIELD_TYPES, SCALE_FUNC, SCALE_TYPES} from '@kepler.gl/constants';
-// import {Layer, VisualChannel, VisualChannelDomain} from '@kepler.gl/layers';
+// import {AggregatedBin, Layer, VisualChannel, VisualChannelDomain} from '@kepler.gl/layers';
+// import {FilterProps, KeplerTable} from '@kepler.gl/layers';
 import {ColorMap, ColorRange, HexColor, MapState} from '@kepler.gl/types';
 
 import {isRgbColor, rgbToHex} from './color-utils';
@@ -32,6 +33,9 @@ export type D3ScaleFunction = Record<string, any> & ((x: any) => any);
 type Layer = any;
 type VisualChannel = any;
 type VisualChannelDomain = any;
+type AggregatedBin = any;
+type FilterProps = any;
+type KeplerTable = any;
 
 export type LabelFormat = (n: number) => string;
 type dataValueAccessor = <T>(param: T) => T;
@@ -420,4 +424,56 @@ export function colorMapToColorBreaks(colorMap?: ColorMap): ColorBreak[] | null 
  */
 export function isNumericColorBreaks(colorBreaks: unknown): colorBreaks is ColorBreak[] {
   return Array.isArray(colorBreaks) && colorBreaks.length && colorBreaks[0].inputs;
+}
+
+// return domainMin, domainMax, histogramMean
+export function getHistogramDomain({
+  aggregatedBins,
+  columnStats,
+  dataset,
+  fieldValueAccessor
+}: {
+  aggregatedBins?: AggregatedBin[];
+  columnStats?: FilterProps['columnStats'];
+  dataset?: KeplerTable;
+  fieldValueAccessor: (idx: unknown) => number;
+}) {
+  let domainMin = Number.POSITIVE_INFINITY;
+  let domainMax = Number.NEGATIVE_INFINITY;
+  let nValid = 0;
+  let domainSum = 0;
+
+  if (aggregatedBins) {
+    Object.values(aggregatedBins).forEach(bin => {
+      const val = bin.value;
+      if (isNumber(val)) {
+        if (val < domainMin) domainMin = val;
+        if (val > domainMax) domainMax = val;
+        domainSum += val;
+        nValid += 1;
+      }
+    });
+  } else {
+    if (columnStats && columnStats.quantiles && columnStats.mean) {
+      // no need to recalcuate min/max/mean if its already in columnStats
+      return [
+        columnStats.quantiles[0].value,
+        columnStats.quantiles[columnStats.quantiles.length - 1].value,
+        columnStats.mean
+      ];
+    }
+    if (dataset && fieldValueAccessor) {
+      dataset.allIndexes.forEach((x, i) => {
+        const val = fieldValueAccessor(x);
+        if (isNumber(val)) {
+          if (val < domainMin) domainMin = val;
+          if (val > domainMax) domainMax = val;
+          domainSum += val;
+          nValid += 1;
+        }
+      });
+    }
+  }
+  const histogramMean = nValid > 0 ? domainSum / nValid : 0;
+  return [nValid > 0 ? domainMin : 0, nValid > 0 ? domainMax : 0, histogramMean];
 }

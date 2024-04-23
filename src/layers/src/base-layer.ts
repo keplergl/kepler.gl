@@ -82,6 +82,12 @@ export type VisualChannelDomain = number[] | string[];
 export type VisualChannelField = Field | null;
 export type VisualChannelScale = keyof typeof SCALE_TYPES;
 
+export type AggregatedBin = {
+  i: number;
+  value: number;
+  counts: number;
+};
+
 export type LayerBaseConfig = {
   dataId: string;
   label: string;
@@ -104,6 +110,10 @@ export type LayerBaseConfig = {
     enabled: boolean;
     domain?: [number, number] | null;
   };
+
+  // for aggregate layer, aggregatedBins is returned for custom color scale
+  aggregatedBins?: AggregatedBin[];
+
   columnMode?: string;
   heightField?: VisualChannelField;
   heightDomain?: VisualChannelDomain;

@@ -379,6 +379,7 @@ export default class AggregationLayer extends Layer {
 
       // color
       colorRange: this.getColorRange(visConfig.colorRange),
+      colorMap: visConfig.colorRange.colorMap,
       colorScaleType: this.config.colorScale,
       upperPercentile: visConfig.percentile[1],
       lowerPercentile: visConfig.percentile[0],

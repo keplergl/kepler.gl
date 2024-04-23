@@ -899,6 +899,7 @@ export const expectedLoadedLayer0 = {
       elevationScale: 5,
       enableElevationZoomFactor: true,
       fixedHeight: false,
+      // LAYER_VIS_CONFIGS.aggregation.defaultValue is AGGREGATION_TYPES.average,
       colorAggregation: 'count',
       sizeAggregation: 'count',
       enable3d: false

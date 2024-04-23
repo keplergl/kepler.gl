@@ -633,16 +633,26 @@ export const linearFieldScaleFunctions = {
   [CHANNEL_SCALES.size]: [SCALE_TYPES.linear, SCALE_TYPES.sqrt, SCALE_TYPES.log]
 };
 
+const DEFAULT_AGGREGATION_COLOR_SCALES = [
+  SCALE_TYPES.quantize,
+  SCALE_TYPES.quantile,
+  SCALE_TYPES.custom
+];
+
 export const linearFieldAggrScaleFunctions = {
-  [CHANNEL_SCALES.colorAggr]: {
-    [AGGREGATION_TYPES.average]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile],
-    [AGGREGATION_TYPES.maximum]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile],
-    [AGGREGATION_TYPES.minimum]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile],
-    [AGGREGATION_TYPES.median]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile],
-    [AGGREGATION_TYPES.stdev]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile],
-    [AGGREGATION_TYPES.sum]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile],
-    [AGGREGATION_TYPES.variance]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile]
-  },
+  [CHANNEL_SCALES.colorAggr]: [
+    AGGREGATION_TYPES.count,
+    AGGREGATION_TYPES.average,
+    AGGREGATION_TYPES.maximum,
+    AGGREGATION_TYPES.minimum,
+    AGGREGATION_TYPES.median,
+    AGGREGATION_TYPES.stdev,
+    AGGREGATION_TYPES.sum,
+    AGGREGATION_TYPES.variance
+  ].reduce((prev, cur) => {
+    prev[cur] = DEFAULT_AGGREGATION_COLOR_SCALES;
+    return prev;
+  }, {}),
 
   [CHANNEL_SCALES.sizeAggr]: {
     [AGGREGATION_TYPES.average]: [SCALE_TYPES.linear, SCALE_TYPES.sqrt, SCALE_TYPES.log],
@@ -688,7 +698,7 @@ export const notSupportAggrOpts = {
  */
 export const DEFAULT_AGGREGATION = {
   [CHANNEL_SCALES.colorAggr]: {
-    [AGGREGATION_TYPES.count]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile]
+    [AGGREGATION_TYPES.count]: DEFAULT_AGGREGATION_COLOR_SCALES
   },
   [CHANNEL_SCALES.sizeAggr]: {
     [AGGREGATION_TYPES.count]: [SCALE_TYPES.linear, SCALE_TYPES.sqrt, SCALE_TYPES.log]

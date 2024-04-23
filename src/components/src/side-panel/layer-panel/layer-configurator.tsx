@@ -294,12 +294,12 @@ export default function LayerConfiguratorFactory(
           {/* Color */}
           <LayerConfigGroup label={'layer.color'} collapsible>
             <LayerColorRangeSelector {...visConfiguratorProps} />
+            <AggrScaleSelector {...layerChannelConfigProps} channel={layer.visualChannels.color} />
             <ChannelByValueSelector
               channel={layer.visualChannels.color}
               {...layerChannelConfigProps}
             />
             <ConfigGroupCollapsibleContent>
-              <AggrScaleSelector {...layerConfiguratorProps} channel={layer.visualChannels.color} />
               {layer.visConfigSettings.colorAggregation.condition(layer.config) ? (
                 <AggregationTypeSelector
                   {...layer.visConfigSettings.colorAggregation}
@@ -380,12 +380,10 @@ export default function LayerConfiguratorFactory(
               channel={layer.visualChannels.color}
               {...layerChannelConfigProps}
             />
-
+            <AggrScaleSelector {...layerChannelConfigProps} channel={layer.visualChannels.color} />
             <LayerColorRangeSelector {...visConfiguratorProps} />
 
             <ConfigGroupCollapsibleContent>
-              <AggrScaleSelector {...layerConfiguratorProps} channel={layer.visualChannels.color} />
-
               {layer.visConfigSettings.colorAggregation.condition(layer.config) ? (
                 <AggregationTypeSelector
                   {...layer.visConfigSettings.colorAggregation}
@@ -440,7 +438,7 @@ export default function LayerConfiguratorFactory(
                   />
                 ) : null}
                 <AggrScaleSelector
-                  {...layerConfiguratorProps}
+                  {...layerChannelConfigProps}
                   channel={layer.visualChannels.size}
                   label={'Height Scale'}
                 />

@@ -30,7 +30,8 @@ import {
   updateMapboxLayers,
   LayerBaseConfig,
   VisualChannelDomain,
-  EditorLayerUtils
+  EditorLayerUtils,
+  AggregatedBin
 } from '@kepler.gl/layers';
 import {MapState, MapControls, Viewport, SplitMap, SplitMapLayers} from '@kepler.gl/types';
 import {
@@ -465,9 +466,13 @@ export default function MapContainerFactory(
       this.props.visStateActions.onLayerHover(info, this.props.index);
     };
 
-    _onLayerSetDomain = (idx: number, colorDomain: {domain: VisualChannelDomain}) => {
+    _onLayerSetDomain = (
+      idx: number,
+      value: {domain: VisualChannelDomain; aggregatedBins: AggregatedBin[]}
+    ) => {
       this.props.visStateActions.layerConfigChange(this.props.visState.layers[idx], {
-        colorDomain: colorDomain.domain
+        colorDomain: value.domain,
+        aggregatedBins: value.aggregatedBins
       } as Partial<LayerBaseConfig>);
     };
 

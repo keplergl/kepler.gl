@@ -87,7 +87,7 @@ export function histogramFromThreshold(
 export function histogramFromValues(
   values: (Millisecond | null | number)[],
   numBins: number,
-  valueAccessor?: (d: unknown) => number
+  valueAccessor?: (d: number) => number
 ) {
   const getBins = d3Histogram().thresholds(numBins);
 
