@@ -382,7 +382,7 @@ export function processKeplerglDataset(
  * @param arrowTable ArrowTable to parse, see loaders.gl/schema
  * @returns dataset containing `fields` and `rows` or null
  */
-export function processArrowTable(arrowTable:ArrowTable): ProcessorResult | null {
+export function processArrowTable(arrowTable: ArrowTable): ProcessorResult | null {
   return processArrowBatches(arrowTable.data.batches);
 }
 
