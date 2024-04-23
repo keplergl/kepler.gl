@@ -4,7 +4,7 @@ Shapely==1.6.4.post2
 traitlets==4.3.2
 traittypes==0.2.1
 jupyter_packaging==0.12.3
-notebook==6.0.1
+notebook==6.4.12
 setuptools==69.5.1
 jupyter==1.0.0
 jupyterlab==4.1.6
