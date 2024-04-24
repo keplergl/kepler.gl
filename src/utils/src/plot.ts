@@ -467,11 +467,11 @@ export function filterSeriesByRange(series, range) {
   return inRange;
 }
 
-type MinVisState = {
+type MinVisStateForAnimationWindow = {
   datasets: Datasets;
 };
 
-export function adjustValueToAnimationWindow<S extends MinVisState>(
+export function adjustValueToAnimationWindow<S extends MinVisStateForAnimationWindow>(
   state: S,
   filter: TimeRangeFilter
 ) {
