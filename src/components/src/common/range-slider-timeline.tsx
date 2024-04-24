@@ -2,7 +2,6 @@
 // Copyright contributors to the kepler.gl project
 
 import React, {useMemo} from 'react';
-// eslint-disable-next-line no-unused-vars
 import {CSSProperties} from 'react';
 import {ArrowDownFull, TimelineMarker} from '../common/icons';
 import {Tooltip} from '../common/styled-components';

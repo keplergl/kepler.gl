@@ -48,6 +48,7 @@ import {
   ColorUI,
   Field,
   Filter,
+  GetVisChannelScaleReturnType,
   LayerVisConfigSettings,
   MapState,
   AnimationConfig,

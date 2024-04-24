@@ -17,7 +17,7 @@ export type ToggleSidePanelUpdaterAction = {
  * @public
  */
 export const toggleSidePanel: (
-  id: string | null
+  id: ToggleSidePanelUpdaterAction['payload']
 ) => Merge<ToggleSidePanelUpdaterAction, {type: typeof ActionTypes.TOGGLE_SIDE_PANEL}> =
   createAction(ActionTypes.TOGGLE_SIDE_PANEL, (id: string | null) => ({payload: id}));
 

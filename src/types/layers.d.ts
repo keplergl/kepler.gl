@@ -401,8 +401,6 @@ export type BindedLayerCallbacks = {
 
 export type VisualChannelAggregation = 'colorAggregation' | 'sizeAggregation';
 
-export type VisualChannelDomain = number[] | string[];
-
 export type SupportedFieldTypes =
   | 'boolean'
   | 'date'
@@ -456,6 +454,8 @@ export interface KeplerLayer {
     colorRange: ColorRange
   ): GetVisChannelScaleReturnType;
 }
+
+export type VisualChannelDomain = number[] | string[];
 
 export type GetVisChannelScaleReturnType = {
   (z: number): any;

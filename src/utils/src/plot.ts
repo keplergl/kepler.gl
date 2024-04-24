@@ -656,10 +656,7 @@ export function updateRangeFilterPlotType(
   };
 }
 
-export function getChartTitle(
-  yAxis: {displayName?: string},
-  plotType: {aggregation: string}
-): string {
+export function getChartTitle(yAxis: Field, plotType: PlotType): string {
   const yAxisName = yAxis?.displayName;
   const {aggregation} = plotType;
 
