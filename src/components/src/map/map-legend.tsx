@@ -4,6 +4,7 @@
 import React, {FC, useCallback, useState, ComponentType} from 'react';
 import styled from 'styled-components';
 import {rgb} from 'd3-color';
+import {useIntl} from 'react-intl';
 import ColorLegendFactory, {LegendRowFactory} from '../common/color-legend';
 import RadiusLegend from '../common/radius-legend';
 import {CHANNEL_SCALES, DIMENSIONS} from '@kepler.gl/constants';
@@ -151,6 +152,7 @@ export function LayerColorLegendFactory(
     mapState,
     actionIcons
   }) => {
+    const intl = useIntl();
     const enableColorBy = description.measure;
     const {scale, field, domain, range, property, fixed} = colorChannel;
     const [colorScale, colorField, colorDomain] = [scale, field, domain].map(k => config[k]);
@@ -206,6 +208,13 @@ export function LayerColorLegendFactory(
               ) : (
                 <SingleColorLegend
                   color={config.visConfig[property] || config[property] || config.color}
+                  label={intl.formatMessage({
+                    id: `mapLegend.layers.${layer.type}.singleColor.${colorChannel.key}`,
+                    defaultMessage: intl.formatMessage({
+                      id: `mapLegend.layers.default.singleColor.${colorChannel.key}`,
+                      defaultMessage: ' ' // mustn't be empty string or id will be used
+                    })
+                  })}
                 />
               )}
             </div>
@@ -329,8 +338,10 @@ export function LayerLegendContentFactory(
     onLayerVisConfigChange,
     actionIcons
   }) => {
-    const colorChannels = Object.values(layer.visualChannels).filter(isColorChannel);
-    const nonColorChannels = Object.values(layer.visualChannels).filter(vc => !isColorChannel(vc));
+    const visualChannels = layer.getLegendVisualChannels();
+    const channelKeys = Object.values(visualChannels);
+    const colorChannels = channelKeys.filter(isColorChannel);
+    const nonColorChannels = channelKeys.filter(vc => !isColorChannel(vc));
     const width = containerW - 2 * DIMENSIONS.mapControl.padding;
 
     // render color by chanel only
