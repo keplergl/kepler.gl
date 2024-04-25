@@ -45,6 +45,21 @@ jupyter nbextension install --py --sys-prefix keplergl # can be skipped for note
 jupyter nbextension enable --py --sys-prefix keplergl # can be skipped for notebook 5.3 and above
 ```
 
+NOTE: For No Module named 'keplergl' error, please make sure your virtual environment is activated and has been added to the Jupyter kernel.
+
+Use the following command to check the kernel list:
+```shell
+jupyter kernelspec list
+```
+
+Use the following command to add the virtual environment to the Jupyter kernel:
+```shell
+python -m ipykernel install --user --name=myenv
+```
+
+The `--name` parameter is your preferred name to identify the virtual environment
+
+
 ### 2. For Google Colab:
 
 `keplergl` (>0.3.0) works with Google Colab. You can install it using pip.
@@ -119,6 +134,8 @@ jupyter labextension install keplergl-jupyter
 ## Quick Start
 
 ### For Jupyter Notebook and JupyterLab:
+
+NOTE: please make sure the python kernel is correctly specified in the notebook.
 
 ```python
 # Load kepler.gl with an empty map
