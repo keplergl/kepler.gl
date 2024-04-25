@@ -666,7 +666,7 @@ export const linearFieldAggrScaleFunctions = {
 };
 
 export const ordinalFieldScaleFunctions = {
-  [CHANNEL_SCALES.color]: [SCALE_TYPES.ordinal],
+  [CHANNEL_SCALES.color]: [SCALE_TYPES.ordinal, SCALE_TYPES.custom],
   [CHANNEL_SCALES.radius]: [SCALE_TYPES.point],
   [CHANNEL_SCALES.size]: [SCALE_TYPES.point]
 };

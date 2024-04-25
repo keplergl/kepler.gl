@@ -295,7 +295,7 @@ export function getLegendOfScale({
   if (!scale || scale.byZoom) {
     return [];
   }
-  if (scaleType === SCALE_TYPES.ordinal) {
+  if (scaleType === SCALE_TYPES.ordinal || fieldType === ALL_FIELD_TYPES.string) {
     return getOrdinalLegends(scale);
   }
 
@@ -396,6 +396,13 @@ export function colorMapToColorBreaks(colorMap?: ColorMap): ColorBreak[] | null 
     return null;
   }
   const colorBreaks = colorMap.map(([value, color], i) => {
+    if (typeof value === 'string') {
+      // for ordinal string value
+      return {
+        data: color,
+        label: value
+      };
+    }
     const range =
       i === 0
         ? // first

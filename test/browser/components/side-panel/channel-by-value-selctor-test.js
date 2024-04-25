@@ -98,7 +98,7 @@ test('Components -> ChannelByValueSelector -> ColorScaleSelector -> disabled', t
   t.equal(wrapper.find(ColorScaleSelector).length, 1, 'Should render 1 ColorScaleSelector');
   t.equal(
     wrapper.find(ColorScaleSelector).at(0).props().disabled,
-    true,
+    false,
     'Should disabled color scale select if only 1 option'
   );
 

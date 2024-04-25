@@ -336,7 +336,11 @@ function ColorLegendFactory(LegendRow: ReturnType<typeof LegendRowFactory>) {
     );
 
     return (
-      <StyledLegend disableEdit={disableEdit} isExpanded={isExpanded}>
+      <StyledLegend
+        className="styled-color-legend"
+        disableEdit={disableEdit}
+        isExpanded={isExpanded}
+      >
         {legends.map((legend, i) => (
           <LegendRow
             key={`${legend.data}-${i}`}
