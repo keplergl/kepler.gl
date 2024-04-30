@@ -1,9 +1,9 @@
 geopandas==0.14.3
 ipywidgets==7.8.1
-Shapely==1.6.4.post2
-traitlets==4.3.2
-traittypes==0.2.1
+ipykernel==6.29.4
+Shapely==2.0.4
 jupyter_packaging==0.12.3
+jupyter-contrib-nbextensions==0.7.0
 notebook==6.0.1
 setuptools==69.5.1
 jupyter==1.0.0
