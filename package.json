@@ -268,6 +268,7 @@
     "node": "18.18.2",
     "yarn": "1.22.19"
   },
+  "packageManager": "yarn@1.22.19",
   "nx": {
     "tags": [
       "type:lib",
