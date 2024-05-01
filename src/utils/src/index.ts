@@ -70,7 +70,6 @@ export {
   getDefaultLayerGroupVisibility,
   editTopMapStyle,
   editBottomMapStyle,
-  isValidStyleUrl,
   getStyleDownloadUrl,
   getStyleImageIcon,
   scaleMapStyleByResolution,
