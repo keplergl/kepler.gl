@@ -6007,8 +6007,13 @@ test('#visStateReducer -> applyFilterFieldName', t => {
   const stateToSave = CloneDeep(StateWFilters);
 
   const oldFilter = stateToSave.visState.filters[0];
-  const dataset = stateToSave.visState.datasets[oldFilter.dataId];
-  const {filter: newFilter} = applyFilterFieldName(oldFilter, dataset, oldFilter.name[0]);
+  const datasets = stateToSave.visState.datasets;
+  const {filter: newFilter} = applyFilterFieldName(
+    oldFilter,
+    datasets,
+    oldFilter.dataId,
+    oldFilter.name[0]
+  );
   t.deepEqual(
     oldFilter.plotType,
     newFilter.plotType,

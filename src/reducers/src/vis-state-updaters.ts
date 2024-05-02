@@ -66,7 +66,6 @@ import {
   parseFieldValue,
   removeLayerFromSplitMaps,
   set,
-  mergeFilterDomainStep,
   updateFilterPlot,
   removeFilterPlot,
   isLayerAnimatable
@@ -142,7 +141,8 @@ import {
   updateTimeFilterPlotType,
   getDefaultTimeFormat,
   LayerToFilterTimeInterval,
-  TIME_INTERVALS_ORDERED
+  TIME_INTERVALS_ORDERED,
+  mergeFilterDomain
 } from '@kepler.gl/utils';
 import {createEffect} from '@kepler.gl/effects';
 import {PayloadAction} from '@reduxjs/toolkit';
@@ -1192,20 +1192,12 @@ function _removeFilterDataIdAtValueIndex(filter, valueIndex, datasets) {
   }
 
   // mergeFieldDomain for the remaining fields
-  // @ts-expect-error figure out correct types to use with mergeFilterDomainStep
-  let domainSteps: Filter & {step?: number | undefined} = {};
-  filter.dataId.forEach((filterDataId, idx) => {
-    const dataset = datasets[filterDataId];
-    const filterProps = dataset.getColumnFilterProps(filter.name[idx]);
-    // @ts-expect-error figure out correct types to use with mergeFilterDomainStep
-    domainSteps = mergeFilterDomainStep(domainSteps, filterProps);
-  });
+  const domainSteps = mergeFilterDomain(filter, datasets);
 
   const nextFilter = {
     ...filter,
     // value: nextValue,
-    domain: domainSteps.domain,
-    step: domainSteps.step
+    ...(domainSteps ? {domain: domainSteps?.domain, step: domainSteps?.step} : {})
   };
 
   const nextValue = adjustValueToFilterDomain(nextFilter.value, nextFilter);
@@ -1237,7 +1229,8 @@ function _updateFilterProp(state, filter, prop, value, valueIndex, datasetIds?) 
       const datasetId = filter.dataId[valueIndex];
       const {filter: updatedFilter, dataset: newDataset} = applyFilterFieldName(
         filter,
-        state.datasets[datasetId],
+        state.datasets,
+        datasetId,
         value,
         valueIndex,
         {mergeDomain: valueIndex > 0}
