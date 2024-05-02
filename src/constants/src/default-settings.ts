@@ -641,14 +641,14 @@ const DEFAULT_AGGREGATION_COLOR_SCALES = [
 
 export const linearFieldAggrScaleFunctions = {
   [CHANNEL_SCALES.colorAggr]: [
-    AGGREGATION_TYPES.count,
     AGGREGATION_TYPES.average,
     AGGREGATION_TYPES.maximum,
     AGGREGATION_TYPES.minimum,
     AGGREGATION_TYPES.median,
     AGGREGATION_TYPES.stdev,
     AGGREGATION_TYPES.sum,
-    AGGREGATION_TYPES.variance
+    AGGREGATION_TYPES.variance,
+    AGGREGATION_TYPES.count
   ].reduce((prev, cur) => {
     prev[cur] = DEFAULT_AGGREGATION_COLOR_SCALES;
     return prev;

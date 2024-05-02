@@ -15,7 +15,8 @@ import {
   HIGHLIGH_COLOR_3D,
   CHANNEL_SCALES,
   FIELD_OPTS,
-  DEFAULT_AGGREGATION
+  DEFAULT_AGGREGATION,
+  AGGREGATION_TYPES
 } from '@kepler.gl/constants';
 import {ColorRange, Field, LayerColumn, Merge} from '@kepler.gl/types';
 import {KeplerTable, Datasets} from '@kepler.gl/table';
@@ -262,8 +263,9 @@ export default class AggregationLayer extends Layer {
     return this.config[field]
       ? // scale options based on aggregation
         FIELD_OPTS[this.config[field].type].scale[channelScaleType][aggregationType]
-      : // default scale options for point count
-        DEFAULT_AGGREGATION[channelScaleType][aggregationType];
+      : // default scale options for point count: aggregationType should be count since
+        // LAYER_VIS_CONFIGS.aggregation.defaultValue is AGGREGATION_TYPES.average,
+        DEFAULT_AGGREGATION[channelScaleType][AGGREGATION_TYPES.count];
   }
 
   /**
