@@ -325,6 +325,29 @@ export function interactionConfigChange(
   };
 }
 
+export type ApplyFilterConfigUpdaterAction = {
+  filterId: string;
+  newFilter: Filter;
+};
+
+/**
+ * Update filter config
+ * @param filterId - id of the filter to be updated
+ * @param newFilter - new filter config
+ * @returns action
+ * @public
+ */
+export function applyFilterConfig(
+  filterId: string,
+  newFilter: Filter
+): Merge<ApplyFilterConfigUpdaterAction, {type: typeof ActionTypes.APPLY_FILTER_CONFIG}> {
+  return {
+    type: ActionTypes.APPLY_FILTER_CONFIG,
+    filterId,
+    newFilter
+  };
+}
+
 export type SetFilterUpdaterAction = {
   idx: number;
   prop: string | string[];

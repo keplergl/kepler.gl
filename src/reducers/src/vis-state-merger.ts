@@ -29,7 +29,8 @@ import {
   Effect as EffectType,
   ParsedEffect,
   LayerColumns,
-  LayerColumn
+  LayerColumn,
+  ParsedFilter
 } from '@kepler.gl/types';
 import {KeplerTable, Datasets, assignGpuChannels, resetFilterGpuMode} from '@kepler.gl/table';
 
@@ -191,6 +192,17 @@ export function createLayerFromConfig(state: VisState, layerConfig: any): Layer 
   const newLayer = validated[0];
   newLayer.updateLayerDomain(state.datasets);
   return newLayer;
+}
+
+/**
+ * Get loaded filter from state
+ */
+export function serializeFilter(
+  newFilter: Filter,
+  schema: KeplerGLSchemaClass
+): ParsedFilter | undefined {
+  const serializedVisState = serializeVisState({filters: [newFilter]}, schema);
+  return serializedVisState?.filters?.[0];
 }
 
 /**

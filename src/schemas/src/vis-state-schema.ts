@@ -856,7 +856,8 @@ export const filterPropsV1 = {
 
   enabled: null,
 
-  invertTrendColor: null
+  invertTrendColor: null,
+  timezone: null
 };
 
 export const propertiesV0 = {
