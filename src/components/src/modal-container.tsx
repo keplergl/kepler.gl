@@ -434,7 +434,7 @@ export default function ModalContainerFactory(
               onConfirm: this._onAddCustomMapStyle,
               confirmButton: {
                 large: true,
-                disabled: !mapStyle.inputStyle.style,
+                disabled: !mapStyle.inputStyle.url,
                 children: 'modal.button.addStyle'
               }
             };

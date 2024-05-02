@@ -19,6 +19,7 @@ import {media} from '@kepler.gl/styles';
 import {transformRequest} from '@kepler.gl/utils';
 import {injectIntl, IntlShape} from 'react-intl';
 import {FormattedMessage} from '@kepler.gl/localization';
+import {NO_BASEMAP_ICON} from '@kepler.gl/constants';
 import maplibregl from 'maplibre-gl';
 import {InputStyle, MapState} from '@kepler.gl/types';
 
@@ -194,7 +195,9 @@ function AddMapStyleModalFactory() {
                 <InputLight
                   type="text"
                   value={inputStyle.url || ''}
-                  onChange={({target: {value}}) => this.props.inputMapStyle({url: value})}
+                  onChange={({target: {value}}) =>
+                    this.props.inputMapStyle({url: value, id: 'Custom Style', icon: NO_BASEMAP_ICON})
+                  }
                   placeholder="e.g. https://basemaps.cartocdn.com/gl/positron-gl-style/style.json"
                 />
               </StyledModalSection>

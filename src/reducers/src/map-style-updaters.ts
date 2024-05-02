@@ -8,7 +8,6 @@ import Console from 'global/console';
 // Utils
 import {
   getDefaultLayerGroupVisibility,
-  isValidStyleUrl,
   getStyleDownloadUrl,
   mergeLayerGroupVisibility,
   editTopMapStyle,
@@ -601,9 +600,7 @@ function getLoadMapStyleTasks(mapStyles, mapboxApiAccessToken, mapboxApiUrl, onS
         // @ts-expect-error
         .map(({id, url, accessToken}) => ({
           id,
-          url: isValidStyleUrl(url)
-            ? getStyleDownloadUrl(url, accessToken || mapboxApiAccessToken, mapboxApiUrl)
-            : url
+          url: getStyleDownloadUrl(url, accessToken || mapboxApiAccessToken, mapboxApiUrl)
         }))
         .map(LOAD_MAP_STYLE_TASK)
     ).bimap(
@@ -698,12 +695,12 @@ export const inputMapStyleUpdater = (
 
   // differentiate between either a url to hosted style json that needs an icon url,
   // or an icon already available client-side as a data uri
-  const isValidUrl = isValidStyleUrl(updated.url);
   const isUpdatedIconDataUri = updated.icon?.startsWith('data:image');
-  const isValid = isValidUrl || Boolean(updated.uploadedFile);
+  const isValid = Boolean(updated.uploadedFile);
+  const isMapboxStyleUrl = updated.url?.startsWith('mapbox://') || updated.url?.includes('mapbox.com');
 
   const icon =
-    isValidUrl && !isUpdatedIconDataUri
+    !isUpdatedIconDataUri && isMapboxStyleUrl
       ? getStyleImageIcon({
           mapState,
           styleUrl: updated.url || '',
