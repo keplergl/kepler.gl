@@ -407,19 +407,7 @@ export const CustomPaletteInput: React.FC<CustomPaletteInputProps> = ({
             editColorMap={editColorMapValue}
             editable
           />
-        ) : (
-          colorBreaks &&
-          colorBreaks[index] && (
-            <ColorPaletteInput
-              value={colorBreaks[index].label}
-              id={`color-palette-input-${index}-left`}
-              width="auto"
-              textAlign="end"
-              editable={false}
-              onChange={v => v}
-            />
-          )
-        )}
+        ) : null}
       </div>
       <div className="custom-palette-input__right">
         {!disableAppend ? (

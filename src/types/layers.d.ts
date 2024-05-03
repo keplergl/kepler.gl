@@ -185,7 +185,7 @@ export type ColorRange = {
   category?: string;
   colors: HexColor[];
   reversed?: boolean;
-  colorMap?: ColorMap;
+  colorMap?: ColorMap | null;
   colorLegends?: ColorLegends;
 };
 

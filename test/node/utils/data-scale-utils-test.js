@@ -3,6 +3,8 @@
 
 import test from 'tape';
 import cloneDeep from 'lodash.clonedeep';
+import {format as d3Format} from 'd3-format';
+
 import {
   getOrdinalDomain,
   getQuantileDomain,
@@ -12,9 +14,11 @@ import {
   getThresholdsFromQuantiles,
   getDomainStepsbyZoom,
   getQuantLabelFormat,
-  getHistogramDomain
+  getHistogramDomain,
+  getQuantLegends
 } from '@kepler.gl/utils';
 import {StateWFilesFiltersLayerColor} from 'test/helpers/mock-state';
+import {SCALE_FUNC} from '@kepler.gl/constants';
 
 function numberSort(a, b) {
   return a - b;
@@ -207,5 +211,47 @@ test('DataScaleUtils -> getHistogramDomain', t => {
   histogramDomain = getHistogramDomain({dataset, fieldValueAccessor});
   t.deepEqual(histogramDomain, [1, 12124, 912.2857142857143]);
 
+  t.end();
+});
+
+test('DataScaleUtils -> getQuantLegends', t => {
+  // scale, labelFormat
+  const labelFormat = d3Format('.1s');
+  const domain = [3.1, 5.2, 7.3];
+
+  const scaleFunction = SCALE_FUNC.threshold()
+    .domain(domain)
+    .range(domain);
+  scaleFunction.scaleType = 'linear';
+
+  const legends = getQuantLegends(scaleFunction, labelFormat);
+
+  const expectedColorBreaks = [
+    {data: 3.1, label: 'NaN to 3', range: [undefined, 3.1], inputs: [NaN, 3]},
+    {data: 5.2, label: '3 to 5', range: [3.1, 5.2], inputs: [3, 5]},
+    {data: 7.3, label: '5 to 7', range: [5.2, 7.3], inputs: [5, 7]}
+  ];
+
+  t.deepEqual(legends, expectedColorBreaks, 'should create correct threshold legends');
+
+  const customDomain = [3.1, 5.2, 7.3, null];
+  const customScaleFunction = SCALE_FUNC.threshold()
+    .domain(customDomain)
+    .range(customDomain);
+  customScaleFunction.scaleType = 'custom';
+  const customLegends = getQuantLegends(customScaleFunction, labelFormat);
+
+  const expectedCustomColorBreaks = [
+    {data: 3.1, label: 'Less than 3.1', range: [undefined, 3.1], inputs: [null, 3.1]},
+    {data: 5.2, label: '3.1 to 5.2', range: [3.1, 5.2], inputs: [3.1, 5.2]},
+    {data: 7.3, label: '5.2 to 7.3', range: [5.2, 7.3], inputs: [5.2, 7.3]},
+    {data: null, label: '7.3 or more', range: [7.3, null], inputs: [7.3, null]}
+  ];
+
+  t.deepEqual(
+    customLegends,
+    expectedCustomColorBreaks,
+    'should create correct threshold legends from custom breaks'
+  );
   t.end();
 });

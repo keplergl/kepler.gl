@@ -313,7 +313,6 @@ export default class PointLayer extends Layer {
 
     if (defaultColorField) {
       this.updateLayerConfig({
-        // @ts-expect-error Remove this after updateLayerConfig converted into generic function
         colorField: defaultColorField
       });
       this.updateLayerVisualChannel(dataset, 'color');

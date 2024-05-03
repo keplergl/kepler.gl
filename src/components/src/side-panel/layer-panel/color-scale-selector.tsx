@@ -13,7 +13,6 @@ import {
   getLayerColorScale,
   getLegendOfScale,
   histogramFromValues,
-  histogramFromOrdinal,
   histogramFromThreshold,
   getHistogramDomain,
   hasColorMap
@@ -157,17 +156,15 @@ function ColorScaleSelectorFactory(
       [range, domain, scaleType, layer]
     );
 
-    const colorBreaks = useMemo(
-      () =>
-        colorScale
-          ? getLegendOfScale({
-              scale: colorScale,
-              scaleType,
-              fieldType: field?.type ?? ALL_FIELD_TYPES.real
-            })
-          : null,
-      [colorScale, scaleType, field?.type]
-    );
+    const colorBreaks = useMemo(() => {
+      return colorScale
+        ? getLegendOfScale({
+            scale: colorScale.byZoom && domain ? colorScale(domain?.length - 1) : colorScale,
+            scaleType,
+            fieldType: field?.type ?? ALL_FIELD_TYPES.real
+          })
+        : null;
+    }, [colorScale, scaleType, field?.type, domain]);
 
     const columnStats = field?.filterProps?.columnStats;
 
@@ -188,10 +185,8 @@ function ColorScaleSelectorFactory(
       }
       return columnStats?.bins
         ? columnStats?.bins
-        : field?.type === ALL_FIELD_TYPES.string
-        ? histogramFromOrdinal(colorScale?.domain() || [], dataset.allIndexes, fieldValueAccessor)
         : histogramFromValues(dataset.allIndexes, HISTOGRAM_BINS, fieldValueAccessor);
-    }, [aggregatedBins, columnStats, dataset, fieldValueAccessor, colorScale, field?.type]);
+    }, [aggregatedBins, columnStats, dataset, fieldValueAccessor]);
 
     const histogramDomain = useMemo(() => {
       return getHistogramDomain({aggregatedBins, columnStats, dataset, fieldValueAccessor});
@@ -221,22 +216,17 @@ function ColorScaleSelectorFactory(
       val => {
         // highlight selected option
         if (getOptionValue(val) === SCALE_TYPES.custom) {
-          const colorMap = range.colorMap
-            ? range.colorMap
-            : colorBreaks
-            ? colorBreaksToColorMap(colorBreaks)
-            : undefined;
-          const colors =
-            field?.type === ALL_FIELD_TYPES.string
-              ? range.colors.slice(0, colorMap?.length)
-              : range.colors;
           // update custom breaks
           const customPalette: NestedPartial<ColorRange> = {
             name: 'color.customPalette',
             type: 'custom',
             category: 'Custom',
-            colors,
-            colorMap
+            colors: range.colors,
+            colorMap: range.colorMap
+              ? range.colorMap
+              : colorBreaks
+              ? colorBreaksToColorMap(colorBreaks)
+              : null
           };
           setColorUI({
             showColorChart: true,

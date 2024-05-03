@@ -42,7 +42,7 @@ export type D3ScaleFunction = Record<string, any> & ((x: any) => any);
 type FilterProps = any;
 type KeplerTable = any;
 
-export type LabelFormat = (n: number) => string;
+export type LabelFormat = (n: number, type?: string) => string;
 type dataValueAccessor = <T>(param: T) => T;
 type dataContainerValueAccessor = (d: {index: number}, dc: DataContainerInterface) => any;
 type sort = (a: any, b: any) => any;
@@ -230,14 +230,13 @@ export function getQuantLegends(scale: D3ScaleFunction, labelFormat: LabelFormat
   if (typeof scale.invertExtent !== 'function') {
     return [];
   }
+  const thresholdLabelFormat = (n, type) =>
+    n && labelFormat ? labelFormat(n) : n ? formatNumber(n, type) : 'no value';
   const labels =
-    scale.scaleType === 'threshold' || scale.scaleType === 'custom'
-      ? getThresholdLabels(
-          scale,
-          scale.scaleType === 'custom'
-            ? customScaleLabelFormat
-            : n => (n ? formatNumber(n) : 'no value')
-        )
+    scale.scaleType === 'threshold' || scale.scaleType === 'jenks'
+      ? getThresholdLabels(scale, thresholdLabelFormat)
+      : scale.scaleType === 'custom'
+      ? getThresholdLabels(scale, customScaleLabelFormat)
       : getScaleLabels(scale, labelFormat);
 
   const data = scale.range();
@@ -295,7 +294,7 @@ export function getLegendOfScale({
   if (!scale || scale.byZoom) {
     return [];
   }
-  if (scaleType === SCALE_TYPES.ordinal || fieldType === ALL_FIELD_TYPES.string) {
+  if (scaleType === SCALE_TYPES.ordinal) {
     return getOrdinalLegends(scale);
   }
 
@@ -391,18 +390,11 @@ export function colorBreaksToColorMap(colorBreaks: ColorBreak[] | ColorBreakOrdi
 /**
  * Convert colorRange.colorMap into color breaks UI input
  */
-export function colorMapToColorBreaks(colorMap?: ColorMap): ColorBreak[] | null {
+export function colorMapToColorBreaks(colorMap?: ColorMap | null): ColorBreak[] | null {
   if (!colorMap) {
     return null;
   }
   const colorBreaks = colorMap.map(([value, color], i) => {
-    if (typeof value === 'string') {
-      // for ordinal string value
-      return {
-        data: color,
-        label: value
-      };
-    }
     const range =
       i === 0
         ? // first
