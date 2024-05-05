@@ -153,7 +153,15 @@ export {
   getThresholdsFromQuantiles,
   getQuantLabelFormat,
   getHistogramDomain,
-  getQuantLegends
+  getQuantLegends,
+  getCategoricalColorMap,
+  getCategoricalColorScale,
+  initCustomPaletteByCustomScale,
+  colorMapToCategoricalColorBreaks,
+  resetCategoricalColorMapByIndex,
+  selectRestCategoricalColorMapByIndex,
+  removeCategoricalValueFromColorMap,
+  addCategoricalValuesToColorMap
 } from './data-scale-utils';
 export type {ColorBreak, ColorBreakOrdinal, DomainQuantiles, DomainStops} from './data-scale-utils';
 

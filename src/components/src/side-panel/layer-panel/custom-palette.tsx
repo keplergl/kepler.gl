@@ -11,6 +11,7 @@ import React, {
   useRef,
   useState
 } from 'react';
+import uniq from 'lodash.uniq';
 import {
   SortableContainer,
   SortableContainerProps,
@@ -20,13 +21,24 @@ import {
 } from 'react-sortable-hoc';
 import styled, {StyledComponent, css} from 'styled-components';
 import Portaled from '../../common/portaled';
+import {Tooltip} from '../../common/styled-components';
+import Typeahead from '../../common/item-selector/typeahead';
+import ChickletedInput from '../../common/item-selector/chickleted-input';
+import DropdownList, {ListItem} from '../../common/item-selector/dropdown-list';
 
+import {toArray} from '@kepler.gl/common-utils';
 import {KeyEvent} from '@kepler.gl/constants';
 import {ColorMap, ColorUI, HexColor, NestedPartial} from '@kepler.gl/types';
-import {colorMapToColorBreaks, isNumericColorBreaks} from '@kepler.gl/utils';
 import {
+  addCategoricalValuesToColorMap,
   addCustomPaletteColor,
+  colorMapToCategoricalColorBreaks,
+  colorMapToColorBreaks,
+  isNumericColorBreaks,
+  resetCategoricalColorMapByIndex,
+  removeCategoricalValueFromColorMap,
   removeCustomPaletteColor,
+  selectRestCategoricalColorMapByIndex,
   sortCustomPaletteColor,
   updateCustomPaletteColor
 } from '@kepler.gl/utils';
@@ -59,6 +71,7 @@ export type CustomPaletteProps = {
   customPalette: ColorUI['customPalette'];
   setColorPaletteUI: SetColorUIFunc;
   showSketcher: number | boolean;
+  ordinalDomain?: string[] | number[];
   actionIcons?: ActionIcons;
   onApply: (e: React.MouseEvent) => void;
   onCancel: () => void;
@@ -169,6 +182,19 @@ const StyledButtonContainer = styled.div`
   display: flex;
   direction: rtl;
   padding: 0 12px;
+`;
+
+const StyledAddStepContainer = styled.div`
+  margin-top: 11px;
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+  padding: 0 12px;
+  color: ${props => props.theme.inputColor};
+  .addcolor {
+    margin-top: 4px;
+  }
 `;
 
 const StyledInput = styled(
@@ -421,6 +447,311 @@ export const CustomPaletteInput: React.FC<CustomPaletteInputProps> = ({
   );
 };
 
+const StyledCategoricalValuePickerWrapper = styled.div.attrs({
+  className: 'categorical-value-picker'
+})`
+  width: 150px;
+  color: ${props => props.theme.inputColor};
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  column-gap: 8px;
+  align-items: center;
+  cursor: pointer;
+`;
+
+type StyledCategoricalValuePickerProps = {noBorder: boolean};
+const StyledCategoricalValuePicker = styled.div<StyledCategoricalValuePickerProps>`
+  width: fit-content;
+  font-size: 11px;
+  border-bottom: ${props => (props.noBorder ? '' : '1px dashed')};
+  cursor: pointer;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+  max-width: 100px;
+`;
+
+type DropdownValuesWrapperProps = {width: number};
+const DropdownValuesWrapper = styled.div<DropdownValuesWrapperProps>`
+  border: 0;
+  width: 100%;
+  left: 0;
+  z-index: ${props => props.theme.dropdownWrapperZ};
+  width: ${props => props.width}px;
+`;
+
+type SelectedValuesWrapperProps = {width: number; height: number};
+const SelectedValuesWrapper = styled(DropdownValuesWrapper)<SelectedValuesWrapperProps>`
+  width: ${props => props.width}px;
+  max-height: ${props => props.height}px;
+  overflow: auto;
+  margin-bottom: 12px;
+
+  .custom-palette-chickleted-input {
+    padding: 8px;
+    background-color: ${props => props.theme.dropdownWrapperZ};
+  }
+`;
+
+const StyledDropdownHeader = styled.div`
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  color: ${props => props.theme.inputColor};
+  padding: 0 8px;
+  font-size: 10px;
+
+  .button {
+    margin: 0;
+    padding: 0;
+    width: fit-content;
+  }
+`;
+
+const StyledTooltipContent = styled.div`
+  padding: 8px;
+  width: 150px;
+  box-sizing: border-box;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+
+  div {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+`;
+
+const NUMBER_VALUES_IN_TOOLTIP = 10;
+
+const CategoricalSelectorContext = React.createContext({
+  onSelectRest: () => null,
+  onReset: () => null
+});
+
+// Categorical values dropdownlist:
+// extending DropdownList and adding 'Select the Rest' and 'Reset' buttons
+class ModifiedDropdownList extends DropdownList {
+  constructor(props) {
+    super(props);
+  }
+
+  render() {
+    return (
+      <>
+        <CategoricalSelectorContext.Consumer>
+          {context => (
+            <>
+              <StyledDropdownHeader>
+                <Button link size="smal" onClick={context.onSelectRest}>
+                  Select the Rest
+                </Button>
+                <Button link size="smal" onClick={context.onReset}>
+                  Reset
+                </Button>
+              </StyledDropdownHeader>
+              <DividerLine />
+              <DropdownList {...this.props} />
+            </>
+          )}
+        </CategoricalSelectorContext.Consumer>
+      </>
+    );
+  }
+}
+
+// Categorical values selector for editing categorical values
+const CategoricalSelector = ({
+  index,
+  selectedValues,
+  allValues,
+  addColorMapValue,
+  removeColorMapValue,
+  resetColorMapValue,
+  selectRestColorMapValue
+}) => {
+  const [showTypeahead, setShowTypeahead] = useState(false);
+
+  const onOptionSelected = useCallback(
+    value => {
+      const previousSelected = toArray(selectedValues);
+      const items = uniq(previousSelected.concat(toArray(value)));
+      addColorMapValue(items, index);
+      setShowTypeahead(false);
+    },
+    [selectedValues, index, addColorMapValue]
+  );
+
+  const onOpenDropdown = useCallback(() => {
+    setShowTypeahead(true);
+  }, []);
+
+  const onCloseDropdown = useCallback(() => {
+    setShowTypeahead(false);
+  }, []);
+
+  const onRemoveItem = useCallback(
+    value => {
+      removeColorMapValue(value, index);
+      setShowTypeahead(false);
+    },
+    [index, removeColorMapValue]
+  );
+
+  const onReset = useCallback(() => {
+    resetColorMapValue(index);
+    setShowTypeahead(false);
+    return null;
+  }, [resetColorMapValue, index]);
+
+  const onSelectRest = useCallback(() => {
+    selectRestColorMapValue(index);
+    setShowTypeahead(false);
+    return null;
+  }, [selectRestColorMapValue, index]);
+
+  // reuse the ChickletedInput for popping up selected values
+  // reuse the DropdownList component for selecting category values
+  return (
+    <StyledCategoricalValuePickerWrapper>
+      <Add height="12px" onClick={onOpenDropdown} />
+      <StyledCategoricalValuePicker
+        noBorder={selectedValues.length === 0}
+        onClick={onOpenDropdown}
+        data-tip
+        data-for={`category-values-${index}`}
+      >
+        {selectedValues.length === 0
+          ? 'Add Value'
+          : selectedValues.length === 1
+          ? selectedValues[0]
+          : `${selectedValues.length} selected`}
+        {selectedValues.length > 1 && (
+          <Tooltip id={`category-values-${index}`} place="top" interactive={true}>
+            <StyledTooltipContent>
+              {selectedValues.slice(0, NUMBER_VALUES_IN_TOOLTIP).map((value, i) => (
+                <div key={i}>{value}</div>
+              ))}
+              {selectedValues.length > NUMBER_VALUES_IN_TOOLTIP && <div>...</div>}
+            </StyledTooltipContent>
+          </Tooltip>
+        )}
+      </StyledCategoricalValuePicker>
+      <Portaled left={0} top={0} isOpened={showTypeahead} onClose={onCloseDropdown}>
+        {selectedValues.length > 1 && (
+          <SelectedValuesWrapper width={250} height={200}>
+            <ChickletedInput
+              className={'custom-palette-chickleted-input'}
+              selectedItems={selectedValues}
+              placeholder={''}
+              removeItem={onRemoveItem}
+              onClick={() => null}
+              CustomChickletComponent={null}
+            />
+          </SelectedValuesWrapper>
+        )}
+        <DropdownValuesWrapper width={250}>
+          <div style={{position: 'relative'}}>
+            <CategoricalSelectorContext.Provider
+              value={{
+                onReset,
+                onSelectRest
+              }}
+            >
+              <Typeahead
+                customClasses={{
+                  results: 'list-selector',
+                  input: 'typeahead__input',
+                  listItem: 'list__item',
+                  listAnchor: 'list__item__anchor'
+                }}
+                options={allValues}
+                placeholder={'Search'}
+                onOptionSelected={onOptionSelected}
+                customListComponent={ModifiedDropdownList}
+                customListItemComponent={ListItem}
+                searchable={true}
+                showOptionsWhenEmpty
+                selectedItems={selectedValues}
+              />
+            </CategoricalSelectorContext.Provider>
+          </div>
+        </DropdownValuesWrapper>
+      </Portaled>
+    </StyledCategoricalValuePickerWrapper>
+  );
+};
+
+export type CategoricalCustomPaletteInputProps = {
+  index: number;
+  isSorting: boolean;
+  color: HexColor;
+  colorMap?: ColorMap | null;
+  addColorMapValue: (v: number[] | string[], i: number) => void;
+  removeColorMapValue: (v: number | string, i: number) => void;
+  resetColorMapValue: (i: number) => void;
+  selectRestColorMapValue: (i: number, v: number[] | string[]) => void;
+  actionIcons?: ActionIcons;
+  onDelete: (index: number) => void;
+  onAdd: (index: number) => void;
+  onToggleSketcher: (index: number) => void;
+  allValues: string[] | number[];
+};
+
+export const CategoricalCustomPaletteInput: React.FC<CategoricalCustomPaletteInputProps> = ({
+  index,
+  isSorting,
+  color,
+  colorMap,
+  actionIcons = defaultActionIcons,
+  onDelete,
+  onAdd,
+  onToggleSketcher,
+  addColorMapValue,
+  removeColorMapValue,
+  resetColorMapValue,
+  selectRestColorMapValue,
+  allValues
+}: CategoricalCustomPaletteInputProps) => {
+  const selectedValues = useMemo(() => {
+    if (!colorMap) return [];
+    const values = Array.isArray(colorMap[index][0])
+      ? colorMap[index][0]
+      : colorMap[index][0]
+      ? [colorMap[index][0]]
+      : [];
+    return values;
+  }, [colorMap, index]);
+
+  const onClickSwtach = useCallback(() => onToggleSketcher(index), [onToggleSketcher, index]);
+  const onColorDelete = useCallback(() => onDelete(index), [onDelete, index]);
+
+  return (
+    <SortableItem index={index} isSorting={isSorting}>
+      <div className="custom-palette-input__left">
+        <DragHandle className="layer__drag-handle">
+          <actionIcons.sort height="20px" />
+        </DragHandle>
+        <ColorSwatch color={color} onClick={onClickSwtach} />
+        {colorMap && colorMap[index] && (
+          <CategoricalSelector
+            selectedValues={selectedValues}
+            allValues={allValues}
+            addColorMapValue={addColorMapValue}
+            removeColorMapValue={removeColorMapValue}
+            resetColorMapValue={resetColorMapValue}
+            selectRestColorMapValue={selectRestColorMapValue}
+            index={index}
+          />
+        )}
+      </div>
+      <div className="custom-palette-input__right">
+        <DeleteColorStop onColorDelete={onColorDelete} IconComponent={actionIcons.delete} />
+      </div>
+    </SortableItem>
+  );
+};
+
 export const BottomAction = ({onCancel, onConfirm}) => (
   <StyledButtonContainer>
     <Button className="confirm-apply__button" small onClick={onConfirm}>
@@ -440,6 +771,7 @@ const StyledCustomPalette = styled.div.attrs({
 
 function CustomPaletteFactory(): React.FC<CustomPaletteProps> {
   const CustomPalette: React.FC<CustomPaletteProps> = ({
+    ordinalDomain,
     customPalette,
     setColorPaletteUI,
     showSketcher,
@@ -450,8 +782,13 @@ function CustomPaletteFactory(): React.FC<CustomPaletteProps> {
     const [isSorting, setIsSorting] = useState(false);
     const {colors, colorMap} = customPalette;
     const colorBreaks = useMemo(
-      () => (colorMap ? colorMapToColorBreaks(colorMap) : null),
-      [colorMap]
+      () =>
+        colorMap
+          ? customPalette.type === 'custom'
+            ? colorMapToColorBreaks(colorMap)
+            : colorMapToCategoricalColorBreaks(colorMap)
+          : null,
+      [customPalette.type, colorMap]
     );
 
     const onPickerUpdate = useCallback(
@@ -497,6 +834,10 @@ function CustomPaletteFactory(): React.FC<CustomPaletteProps> {
       },
       [customPalette, setColorPaletteUI]
     );
+
+    const onAddCategoricalStep = useCallback(() => {
+      onAdd(colors.length - 1);
+    }, [colors.length, onAdd]);
 
     const onSwatchClose = useCallback(() => {
       onToggleSketcher(false);
@@ -565,6 +906,70 @@ function CustomPaletteFactory(): React.FC<CustomPaletteProps> {
       [setColorPaletteUI, customPalette]
     );
 
+    // remove a selected category item from a color map
+    const removeCategoricalColorMapValue = useCallback(
+      (item, index) => {
+        if (!colorMap) {
+          return;
+        }
+        setColorPaletteUI({
+          customPalette: {
+            ...customPalette,
+            colorMap: removeCategoricalValueFromColorMap(colorMap, item, index)
+          }
+        });
+      },
+      [setColorPaletteUI, customPalette, colorMap]
+    );
+
+    // add selected categorical items to a color map
+    const addCategoricalColorMapValue = useCallback(
+      (items, index) => {
+        if (!colorMap) {
+          return;
+        }
+        setColorPaletteUI({
+          customPalette: {
+            ...customPalette,
+            colorMap: addCategoricalValuesToColorMap(colorMap, items, index)
+          }
+        });
+      },
+      [setColorPaletteUI, customPalette, colorMap]
+    );
+
+    // reset a color map
+    const resetCategoricalColorMapValue = useCallback(
+      index => {
+        if (!colorMap) {
+          return;
+        }
+        setColorPaletteUI({
+          customPalette: {
+            ...customPalette,
+            colorMap: resetCategoricalColorMapByIndex(colorMap, index)
+          }
+        });
+      },
+      [setColorPaletteUI, customPalette, colorMap]
+    );
+
+    // select the rest values for a color map
+    const selectRestCategoricalColorMap = useCallback(
+      index => {
+        if (!colorMap) {
+          return;
+        }
+        setColorPaletteUI({
+          customPalette: {
+            ...customPalette,
+            colorMap: selectRestCategoricalColorMapByIndex(colorMap, index, ordinalDomain)
+          }
+        });
+      },
+      [setColorPaletteUI, customPalette, colorMap, ordinalDomain]
+    );
+
     return (
       <StyledCustomPalette>
         <WrappedSortableContainer
@@ -575,24 +980,53 @@ function CustomPaletteFactory(): React.FC<CustomPaletteProps> {
           helperClass="sorting-colors"
           useDragHandle
         >
-          {colors.map((color, index) => (
-            <CustomPaletteInput
-              key={index}
-              colorBreaks={colorBreaks}
-              index={index}
-              isSorting={isSorting}
-              color={color}
-              inputColorHex={inputColorHex}
-              disableAppend={colors.length >= 20}
-              disableDelete={colors.length <= 2}
-              actionIcons={actionIcons}
-              onAdd={onAdd}
-              onDelete={onDelete}
-              onToggleSketcher={onToggleSketcher}
-              editColorMapValue={editColorMapValue}
-            />
-          ))}
+          {colors.map((color, index) =>
+            customPalette.type === 'custom' ? (
+              <CustomPaletteInput
+                key={index}
+                colorBreaks={colorBreaks}
+                index={index}
+                isSorting={isSorting}
+                color={color}
+                inputColorHex={inputColorHex}
+                disableAppend={colors.length >= 20}
+                disableDelete={colors.length <= 2}
+                actionIcons={actionIcons}
+                onAdd={onAdd}
+                onDelete={onDelete}
+                onToggleSketcher={onToggleSketcher}
+                editColorMapValue={editColorMapValue}
+              />
+            ) : (
+              ordinalDomain && (
+                <CategoricalCustomPaletteInput
+                  key={index}
+                  colorMap={colorMap}
+                  index={index}
+                  isSorting={isSorting}
+                  color={color}
+                  actionIcons={actionIcons}
+                  onAdd={onAdd}
+                  onDelete={onDelete}
+                  onToggleSketcher={onToggleSketcher}
+                  addColorMapValue={addCategoricalColorMapValue}
+                  removeColorMapValue={removeCategoricalColorMapValue}
+                  resetColorMapValue={resetCategoricalColorMapValue}
+                  selectRestColorMapValue={selectRestCategoricalColorMap}
+                  allValues={ordinalDomain}
+                />
+              )
+            )
+          )}
         </WrappedSortableContainer>
+        {customPalette.type === 'customOrdinal' && (
+          <StyledAddStepContainer>
+            <AddColorStop onColorAdd={onAddCategoricalStep} IconComponent={actionIcons.add} />
+            <Button link size="smal" onClick={onAddCategoricalStep}>
+              Add Step
+            </Button>
+          </StyledAddStepContainer>
+        )}
         <DividerLine />
         {/* Cancel or Confirm Buttons */}
         <BottomAction onCancel={onCancel} onConfirm={onConfirm} />

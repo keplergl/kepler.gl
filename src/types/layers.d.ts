@@ -178,7 +178,7 @@ export type ColorRangeConfig = {
   colorBlindSafe: boolean;
 };
 
-export type ColorMap = [string[] | string | number | null, HexColor][];
+export type ColorMap = [string[] | number[] | string | number | null, HexColor][];
 // Key is HexColor but as key we can use only string
 export type ColorLegends = {[key: HexColor]: string};
 

@@ -1460,6 +1460,10 @@ export const layerColorUIChangeUpdater = (
   const newLayer = oldLayer.updateLayerColorUI(prop, newConfig);
   const newVisConfig = newLayer.config.visConfig[prop];
   if (oldVixConfig !== newVisConfig) {
+    // reset colorMap if switching field
+    if (oldVixConfig?.name !== newVisConfig.name) {
+      delete newVisConfig.colorMap;
+    }
     return layerVisConfigChangeUpdater(state, {
       oldLayer,
       newVisConfig: {

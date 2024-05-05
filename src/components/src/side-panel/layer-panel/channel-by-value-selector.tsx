@@ -6,7 +6,7 @@ import React from 'react';
 import {CHANNEL_SCALE_SUPPORTED_FIELDS} from '@kepler.gl/constants';
 import {Layer, VisualChannel} from '@kepler.gl/layers';
 import {KeplerTable} from '@kepler.gl/table';
-import {ColorUI, Field, LayerVisConfig} from '@kepler.gl/types';
+import {ColorUI, Field, LayerVisConfig, NestedPartial} from '@kepler.gl/types';
 
 import DimensionScaleSelectorFactory from './dimension-scale-selector';
 import VisConfigByFieldSelectorFactory from './vis-config-by-field-selector';
@@ -22,12 +22,7 @@ export type ChannelByValueSelectorProps = {
   fields: Field[];
   dataset: KeplerTable | undefined;
   description?: string;
-  setColorUI: (
-    prop: string,
-    newConfig: {
-      [key in keyof ColorUI]: ColorUI[keyof ColorUI];
-    }
-  ) => void;
+  setColorUI: (prop: string, newConfig: NestedPartial<ColorUI>) => void;
   updateLayerVisConfig: (newConfig: Partial<LayerVisConfig>) => void;
   disabled?: boolean;
 };
@@ -70,7 +65,22 @@ export function ChannelByValueSelectorFactory(
           disabled={disabled}
           placeholder={defaultMeasure || 'placeholder.selectField'}
           selectedField={layer.config[field]}
-          updateField={val => onChange({[field]: val}, key)}
+          updateField={val => {
+            onChange({[field]: val}, key);
+            // reset colorMap
+            const range = layer.config.visConfig[channel.range];
+            setColorUI(channel.range, {
+              customPalette: {
+                category: 'Custom',
+                name: 'color.customPalette',
+                type: 'custom',
+                colors: range.colors
+              },
+              colorRangeConfig: {
+                customBreaks: false
+              }
+            });
+          }}
         />
         {showScale && !disabled ? (
           <DimensionScaleSelector
