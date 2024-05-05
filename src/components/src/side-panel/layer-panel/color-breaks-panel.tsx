@@ -171,9 +171,11 @@ function ColorBreaksPanelFactory(
       [setColorUI, customPalette, isEditingCustomBreaks, onScaleChange]
     );
 
+    const ordinalDomain = useMemo(() => colorBreaks?.map(cb => cb.label), [colorBreaks]);
+
     return (
       <ColorBreaksPanelWrapper>
-        {dataset && allBins.length > 1 ? (
+        {dataset && allBins.length > 1 && customPalette.type !== 'customOrdinal' ? (
           <ColumnStatsChart
             colorField={colorField}
             dataset={dataset}
@@ -188,6 +190,7 @@ function ColorBreaksPanelFactory(
         <StyledColorBreaksPanel>
           {isEditingCustomBreaks ? (
             <CustomPalette
+              ordinalDomain={ordinalDomain}
               customPalette={customPalette}
               setColorPaletteUI={setColorUI}
               showSketcher={showSketcher}

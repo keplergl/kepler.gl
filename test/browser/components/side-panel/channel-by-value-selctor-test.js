@@ -45,7 +45,7 @@ function nop() {
 
 const ExpectedCustomPalette = {
   customPalette: {
-    name: 'color.customPalette',
+    name: 'color.customPalette.custom.uid',
     type: 'custom',
     category: 'Custom',
     colors: expectedColorRangeInLayer.colors,
@@ -98,8 +98,8 @@ test('Components -> ChannelByValueSelector -> ColorScaleSelector -> disabled', t
   t.equal(wrapper.find(ColorScaleSelector).length, 1, 'Should render 1 ColorScaleSelector');
   t.equal(
     wrapper.find(ColorScaleSelector).at(0).props().disabled,
-    true,
-    'Should disabled color scale select if only 1 option'
+    false,
+    'Should enable color scale select for string field'
   );
 
   t.equal(
@@ -218,8 +218,8 @@ test('Components -> ChannelByValueSelector -> ColorScaleSelector -> ColorBreakDi
   // scale optons
   t.equal(
     wrapper.find(ColorScaleSelector).at(0).find('.list__item').length,
-    3,
-    'should render 3 scale options'
+    4,
+    'should render 4 scale options'
   );
 
   t.equal(wrapper.find(ColorBreaksPanel).length, 1, 'Should render 1 ColorBreaksPanel');
@@ -261,7 +261,7 @@ test('Components -> ChannelByValueSelector -> ColorScaleSelector -> ColorBreakDi
         customBreaks: true
       },
       customPalette: {
-        name: 'color.customPalette',
+        name: 'color.customPalette.custom.uid',
         type: 'custom',
         category: 'Custom',
         colors: ['#00939C', '#6BB5B9', '#AAD7D9', '#E6FAFA'],
@@ -279,7 +279,7 @@ test('Components -> ChannelByValueSelector -> ColorScaleSelector -> ColorBreakDi
     'color',
     {
       colorRange: {
-        name: 'color.customPalette',
+        name: 'color.customPalette.custom.uid',
         type: 'custom',
         category: 'Custom',
         colors: ['#00939C', '#6BB5B9', '#AAD7D9', '#E6FAFA'],
@@ -436,7 +436,7 @@ test('Components -> ChannelByValueSelector -> ColorScaleSelector -> ColorBreakDi
     'color',
     {
       colorRange: {
-        name: 'color.customPalette',
+        name: 'color.customPalette.custom.uid',
         type: 'custom',
         category: 'Custom',
         colors: ['#00939C', '#6BB5B9', '#AAD7D9', '#E6FAFA']

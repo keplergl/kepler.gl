@@ -2,11 +2,11 @@
 // Copyright contributors to the kepler.gl project
 
 import {bisectLeft, quantileSorted as d3Quantile, extent} from 'd3-array';
+import uniq from 'lodash.uniq';
 import moment from 'moment';
 
-import {notNullorUndefined} from '@kepler.gl/common-utils';
-import {ALL_FIELD_TYPES, SCALE_FUNC, SCALE_TYPES} from '@kepler.gl/constants';
-// import {AggregatedBin, Layer, VisualChannel, VisualChannelDomain} from '@kepler.gl/layers';
+import {notNullorUndefined, toArray} from '@kepler.gl/common-utils';
+import {ALL_FIELD_TYPES, SCALE_FUNC, SCALE_TYPES, NO_VALUE_COLOR} from '@kepler.gl/constants';
 // import {FilterProps, KeplerTable} from '@kepler.gl/layers';
 import {
   AggregatedBin,
@@ -16,10 +16,14 @@ import {
   KeplerLayer as Layer,
   MapState,
   VisualChannel,
-  VisualChannelDomain
+  VisualChannelDomain,
+  RGBColor,
+  RGBAColor,
+  ColorUI,
+  Field
 } from '@kepler.gl/types';
 
-import {isRgbColor, rgbToHex} from './color-utils';
+import {isRgbColor, rgbToHex, hexToRgb} from './color-utils';
 import {DataContainerInterface} from './data-container-interface';
 import {formatNumber, isNumber, reverseFormatNumber, unique} from './data-utils';
 import {getTimeWidgetHintFormatter} from './filter-utils';
@@ -33,7 +37,7 @@ export type ColorBreak = {
 };
 export type ColorBreakOrdinal = {
   data: HexColor;
-  label: string;
+  label: string | number | string[] | number[] | null;
 };
 
 export type D3ScaleFunction = Record<string, any> & ((x: any) => any);
@@ -294,7 +298,11 @@ export function getLegendOfScale({
   if (!scale || scale.byZoom) {
     return [];
   }
-  if (scaleType === SCALE_TYPES.ordinal) {
+  if (
+    scaleType === SCALE_TYPES.ordinal ||
+    scaleType === SCALE_TYPES.customOrdinal ||
+    fieldType === ALL_FIELD_TYPES.string
+  ) {
     return getOrdinalLegends(scale);
   }
 
@@ -365,6 +373,69 @@ export function getVisualChannelScaleByZoom({
     scale = Number.isFinite(z) ? scale(z) : null;
   }
   return scale;
+}
+
+/**
+ * Get categorical colorMap from colors and domain (unique values)
+ */
+export function getCategoricalColorMap(
+  colors: string[],
+  domain: (string | number | string[] | number[] | null)[]
+): any {
+  // colorMap: [string | string[], hexstring]
+  const colorToUniqueValues = {};
+  const uniqueValues = unique(domain).filter(notNullorUndefined).sort();
+  // each unique value assign to a color, the rest unique values assign to last color
+  const lastColor = colors[colors.length - 1];
+  for (let i = 0; i < uniqueValues.length; ++i) {
+    if (i < colors.length) {
+      colorToUniqueValues[colors[i]] = uniqueValues[i];
+    } else {
+      colorToUniqueValues[lastColor] = [
+        ...(Array.isArray(colorToUniqueValues[lastColor])
+          ? colorToUniqueValues[lastColor]
+          : [colorToUniqueValues[lastColor]]),
+        uniqueValues[i]
+      ];
+    }
+  }
+
+  const colorMap = colors.map(color => {
+    if (color in colorToUniqueValues) {
+      return [colorToUniqueValues[color], color];
+    }
+    return [null, color];
+  });
+
+  return colorMap;
+}
+
+/**
+ * Get categorical colorBreaks from colorMap
+ */
+export function colorMapToCategoricalColorBreaks(colorMap?: ColorMap): ColorBreakOrdinal[] | null {
+  if (!colorMap) {
+    return null;
+  }
+  const colorBreaks = colorMap.map(([value, color], i) => {
+    return {
+      data: color,
+      label: value
+    };
+  });
+
+  return colorBreaks;
+}
+
+/**
+ * create categorical colorMap from colorBreaks
+ */
+export function colorBreaksToCategoricalColorMap(colorBreaks: ColorBreakOrdinal[]): ColorMap {
+  // colorMap: [string | string[], hexstring]
+  const colors = uniq(colorBreaks.map(cb => cb.data));
+  const values = uniq(colorBreaks.map(cb => cb.label));
+
+  return getCategoricalColorMap(colors, values);
 }
 
 /**
@@ -480,4 +551,191 @@ export function getHistogramDomain({
   }
   const histogramMean = nValid > 0 ? domainSum / nValid : 0;
   return [nValid > 0 ? domainMin : 0, nValid > 0 ? domainMax : 0, histogramMean];
+}
+
+export function resetCategoricalColorMapByIndex(colorMap: ColorMap, index: number): any {
+  if (!colorMap) {
+    return colorMap;
+  }
+  const newColorMap = colorMap.map((cm, i) => {
+    if (i === index) {
+      return [null, cm[1]];
+    }
+    return cm;
+  });
+  return newColorMap;
+}
+
+/**
+ * select rest categorical values for a colorMap by its index
+ */
+export function selectRestCategoricalColorMapByIndex(
+  colorMap: ColorMap | null,
+  index: number,
+  uniqueValues?: number[] | string[]
+): ColorMap | undefined | null {
+  if (!colorMap || !uniqueValues) {
+    return colorMap;
+  }
+
+  // find unique values that has not been used in current colorMap
+  const uniqValueDict = Object.fromEntries(uniqueValues.map(val => [val, false]));
+  colorMap.forEach(cm => {
+    toArray(cm[0]).forEach(v => {
+      if (v) uniqValueDict[v] = true;
+    });
+  });
+  const rest = Object.keys(uniqValueDict).filter(v => !uniqValueDict[v]);
+
+  // use the not used unique values in the selected color map
+  const newColorMap = colorMap.map((cm, i) => {
+    if (i === index) {
+      return [[...rest, ...toArray(cm[0])], cm[1]];
+    }
+    return cm;
+  }) as ColorMap;
+
+  return newColorMap;
+}
+
+/**
+ * remove a categorical value from a colorMap by its index
+ */
+export function removeCategoricalValueFromColorMap(
+  colorMap: ColorMap | null | undefined,
+  item: number | string,
+  index: number
+): ColorMap | null | undefined {
+  if (!colorMap) {
+    return colorMap;
+  }
+  const newColorMap = colorMap.map((cm, i) => {
+    if (i === index) {
+      if (!cm[0]) {
+        return [null, cm[1]];
+      }
+      const currentUniqueValues = toArray(cm[0]);
+      const updatedUniqueValues = currentUniqueValues.filter(v => v !== item);
+      return [updatedUniqueValues, cm[1]];
+    }
+    return cm;
+  }) as ColorMap;
+
+  return newColorMap;
+}
+
+/**
+ * add categorical values (from multisel dropdown) to a colorMap by its index
+ */
+export function addCategoricalValuesToColorMap(
+  colorMap: ColorMap,
+  items: (string | number)[],
+  index: number
+): ColorMap {
+  if (!colorMap) {
+    return colorMap;
+  }
+
+  const newColorMap = colorMap.map((cm, i) => {
+    if (i === index) {
+      if (!cm[0]) {
+        return [items, cm[1]];
+      }
+      const currentUniqueValues = toArray(cm[0]);
+      const updatedUniqueValues = uniq(currentUniqueValues.concat(items));
+      return [updatedUniqueValues, cm[1]];
+    }
+    // remove value from other colorMap
+    const currentUniqueValues = cm[0];
+    if (Array.isArray(currentUniqueValues)) {
+      const updatedUniqueValues: string[] | number[] = (currentUniqueValues as any[]).filter(
+        v => !items.includes(v)
+      );
+      return [updatedUniqueValues, cm[1]];
+    } else if (currentUniqueValues && items.includes(currentUniqueValues)) {
+      return [null, cm[1]];
+    }
+
+    return cm;
+  }) as ColorMap;
+
+  return newColorMap;
+}
+
+/**
+ * get a color scale func for categorical (custom ordinal) scale
+ */
+export function getCategoricalColorScale(
+  colorDomain: number[] | string[],
+  colorRange: ColorRange
+): (categoryValue: string | number) => RGBColor | RGBAColor {
+  // check if colorDomain changed e.g. by switching variable
+  let oldDomain: (number | string)[] = [];
+  colorRange.colorMap?.forEach(cm => {
+    if (Array.isArray(cm[0])) {
+      oldDomain = oldDomain.concat(cm[0]);
+    } else if (cm[0]) {
+      oldDomain.push(cm[0]);
+    }
+  });
+  oldDomain.sort();
+  colorDomain.sort();
+
+  const keepColorMap =
+    oldDomain.length === colorDomain.length &&
+    oldDomain.every((element, index) => element === colorDomain[index]);
+
+  const cMap = keepColorMap
+    ? colorRange.colorMap
+    : getCategoricalColorMap(colorRange.colors, colorDomain);
+  const valueToColor = cMap.reduce((prev, cm) => {
+    if (Array.isArray(cm[0])) {
+      cm[0].forEach(val => (prev[val] = cm[1]));
+    } else {
+      prev[cm[0]] = cm[1];
+    }
+    return prev;
+  }, {});
+  const scale = categoryValue => {
+    if (categoryValue in valueToColor) {
+      return hexToRgb(valueToColor[categoryValue]);
+    }
+    return NO_VALUE_COLOR;
+  };
+  scale.domain = () => colorDomain;
+  scale.range = () => colorRange.colors;
+  return scale;
+}
+
+/**
+ * initialize customPalette by custom scale
+ */
+export function initCustomPaletteByCustomScale(
+  scale: string,
+  field: Field,
+  range: ColorRange,
+  colorBreaks: ColorBreakOrdinal[] | null
+): ColorUI['customPalette'] {
+  const customPaletteName = `color.customPalette.${scale}.${field.name}`;
+  const type = scale === SCALE_TYPES.custom ? 'custom' : 'customOrdinal';
+  const colorBreaksToColorMapFunc =
+    scale === SCALE_TYPES.custom ? colorBreaksToColorMap : colorBreaksToCategoricalColorMap;
+  const reuseColorMap = range.colorMap && range.name === customPaletteName && range.type === type;
+  const colorMap = reuseColorMap
+    ? range.colorMap
+    : colorBreaks
+    ? colorBreaksToColorMapFunc(colorBreaks)
+    : null;
+  const colors = reuseColorMap ? range.colors : colorMap?.map(cm => cm[1]);
+
+  // update custom breaks
+  const customPalette: ColorUI['customPalette'] = {
+    category: 'Custom',
+    name: customPaletteName,
+    type,
+    colorMap,
+    colors: colors || []
+  };
+
+  return customPalette;
 }

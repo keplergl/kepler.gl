@@ -134,6 +134,17 @@ export function interpolateHex(hex1: HexColor, hex2: HexColor): HexColor {
   return d3Rgb(interpolate(hex1, hex2)(0.5)).hex().toUpperCase();
 }
 
+function addNewCategoricalStepAtIndex(colorMap, index, newColor) {
+  if (!Array.isArray(colorMap) || !colorMap.length) {
+    return colorMap;
+  }
+
+  let newColorMap = colorMap.map(([val, c]) => [Array.isArray(val) ? [...val] : val, c]);
+  newColorMap = arrayInsert(newColorMap, index + 1, [null, newColor]);
+
+  return newColorMap;
+}
+
 export function addNewQuantativeColorBreakAtIndex(colorMap, index, newColors) {
   if (!Array.isArray(colorMap) || !colorMap.length) {
     return colorMap;
@@ -177,7 +188,10 @@ export function addCustomPaletteColor(customPalette: ColorRange, index: number):
 
   // add color to colorMap
   if (colorMap) {
-    update.colorMap = addNewQuantativeColorBreakAtIndex(colorMap, index, update.colors);
+    update.colorMap =
+      customPalette.type === 'customOrdinal'
+        ? addNewCategoricalStepAtIndex(colorMap, index, newColor)
+        : addNewQuantativeColorBreakAtIndex(colorMap, index, update.colors);
   }
 
   return {

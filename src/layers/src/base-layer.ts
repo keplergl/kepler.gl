@@ -73,6 +73,7 @@ import {
 import {
   getScaleFunction,
   initializeLayerColorMap,
+  getCategoricalColorScale,
   updateCustomColorRangeByColorUI
 } from '@kepler.gl/utils';
 import memoize from 'lodash.memoize';
@@ -1030,18 +1031,25 @@ class Layer implements KeplerLayer {
     colorDomain: VisualChannelDomain,
     colorRange: ColorRange
   ): GetVisChannelScaleReturnType {
+    if (colorScale === SCALE_TYPES.customOrdinal) {
+      // get a color scale func for categorical (custom ordinal) scale
+      return getCategoricalColorScale(colorDomain, colorRange);
+    }
+
     if (hasColorMap(colorRange) && colorScale === SCALE_TYPES.custom) {
-      const cMap = new Map();
-      colorRange.colorMap?.forEach(([k, v]) => {
-        cMap.set(k, typeof v === 'string' ? hexToRgb(v) : v);
-      });
+      if (colorScale === SCALE_TYPES.custom || colorScale === SCALE_TYPES.ordinal) {
+        const cMap = new Map();
+        colorRange.colorMap?.forEach(([k, v]) => {
+          cMap.set(k, typeof v === 'string' ? hexToRgb(v) : v);
+        });
 
-      const scaleType = colorScale === SCALE_TYPES.custom ? colorScale : SCALE_TYPES.ordinal;
+        const scaleType = colorScale === SCALE_TYPES.custom ? colorScale : SCALE_TYPES.ordinal;
 
-      const scale = getScaleFunction(scaleType, cMap.values(), cMap.keys(), false);
-      scale.unknown(cMap.get(UNKNOWN_COLOR_KEY) || NO_VALUE_COLOR);
+        const scale = getScaleFunction(scaleType, cMap.values(), cMap.keys(), false);
+        scale.unknown(cMap.get(UNKNOWN_COLOR_KEY) || NO_VALUE_COLOR);
 
-      return scale as () => any;
+        return scale as GetVisChannelScaleReturnType;
+      }
     }
     return this.getVisChannelScale(colorScale, colorDomain, colorRange.colors.map(hexToRgb));
   }

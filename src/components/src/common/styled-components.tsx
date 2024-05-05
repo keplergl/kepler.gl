@@ -148,7 +148,8 @@ export const SidePanelDivider = styled.div.attrs({
   height: ${props => props.theme.sidepanelDividerHeight}px;
 `;
 
-export const Tooltip = styled(ReactTooltip)`
+type TooltipProps = {interactive?: boolean};
+export const Tooltip = styled(ReactTooltip)<TooltipProps>`
   &.__react_component_tooltip {
     font-size: ${props => props.theme.tooltipFontSize};
     font-weight: 400;
@@ -199,6 +200,7 @@ export type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
   disabled?: boolean;
   width?: string;
   inactive?: boolean;
+  size?: string;
 };
 
 // this needs to be an actual button to be able to set disabled attribute correctly

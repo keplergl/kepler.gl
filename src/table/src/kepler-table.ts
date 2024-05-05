@@ -481,6 +481,7 @@ class KeplerTable<F extends Field = Field> {
 
     switch (scaleType) {
       case SCALE_TYPES.ordinal:
+      case SCALE_TYPES.customOrdinal:
       case SCALE_TYPES.point:
         // do not recalculate ordinal domain based on filtered data
         // don't need to update ordinal domain every time
@@ -495,6 +496,7 @@ class KeplerTable<F extends Field = Field> {
       case SCALE_TYPES.quantize:
       case SCALE_TYPES.linear:
       case SCALE_TYPES.sqrt:
+      case SCALE_TYPES.custom:
       default:
         return getLinearDomain(filteredIndexForDomain, indexValueAccessor);
     }
