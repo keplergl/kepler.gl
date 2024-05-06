@@ -56,6 +56,7 @@ export type ColorScaleSelectorProps = {
   displayOption: string;
   getOptionValue: string;
   aggregatedBins?: AggregatedBin[];
+  channelKey: string;
 };
 
 const DropdownPropContext = React.createContext({});
@@ -136,6 +137,7 @@ function ColorScaleSelectorFactory(
     range,
     setColorUI,
     colorUIConfig,
+    channelKey,
     ...dropdownSelectProps
   }) => {
     const displayOption = Accessor.generateOptionToStringFor(dropdownSelectProps.displayOption);
@@ -156,7 +158,6 @@ function ColorScaleSelectorFactory(
       [range, domain, scaleType, layer]
     );
 
-    // for categorical scale,
     const colorBreaks = useMemo(() => {
       return colorScale
         ? getLegendOfScale({
@@ -193,6 +194,10 @@ function ColorScaleSelectorFactory(
       return getHistogramDomain({aggregatedBins, columnStats, dataset, fieldValueAccessor});
     }, [dataset, fieldValueAccessor, aggregatedBins, columnStats]);
 
+    const ordinalDomain = useMemo(() => {
+      return layer.config[layer.visualChannels[channelKey].domain] || [];
+    }, [channelKey, layer.config, layer.visualChannels]);
+
     const isFiltered = aggregatedBins
       ? false
       : dataset.filteredIndexForDomain.length !== dataset.allIndexes.length;
@@ -214,17 +219,17 @@ function ColorScaleSelectorFactory(
     }, [dataset, fieldValueAccessor, allBins, isFiltered]);
 
     const onSelectScale = useCallback(
-      // eslint-disable-next-line complexity
       val => {
         // highlight selected option
+        if (!val || isEditingColorBreaks) return;
         const selectedScale = getOptionValue(val);
-        if (selectedScale === SCALE_TYPES.custom || selectedScale === SCALE_TYPES.customOrdinal) {
-          const customPalette = initCustomPaletteByCustomScale(
-            selectedScale,
+        if (selectedScale === SCALE_TYPES.custom) {
+          const customPalette = initCustomPaletteByCustomScale({
+            scale: selectedScale,
             field,
             range,
             colorBreaks
-          );
+          });
           setColorUI({
             showColorChart: true,
             colorRangeConfig: {
@@ -233,26 +238,17 @@ function ColorScaleSelectorFactory(
             customPalette
           });
           onSelect(selectedScale, customPalette);
-        } else {
+        } else if (hasColorMap(range) && selectedScale !== SCALE_TYPES.customOrdinal) {
           // not custom
-          if (isEditingColorBreaks) {
-            setColorUI({
-              colorRangeConfig: {
-                customBreaks: false
-              }
-            });
-          }
-          if (hasColorMap(range)) {
-            // remove custom breaks
-            // eslint-disable-next-line no-unused-vars
-            const {colorMap: _, ...newRange} = range;
-            onSelect(getOptionValue(val), newRange);
-          } else {
-            onSelect(getOptionValue(val));
-          }
+          // remove colorMap
+          // eslint-disable-next-line no-unused-vars
+          const {colorMap: _, ...newRange} = range;
+          onSelect(selectedScale, newRange);
+        } else {
+          onSelect(selectedScale);
         }
       },
-      [field, setColorUI, onSelect, range, getOptionValue, isEditingColorBreaks, colorBreaks]
+      [isEditingColorBreaks, field, setColorUI, onSelect, range, getOptionValue, colorBreaks]
     );
 
     const onApply = useCallback(() => {
@@ -280,6 +276,7 @@ function ColorScaleSelectorFactory(
           filteredBins,
           isFiltered,
           histogramDomain,
+          ordinalDomain,
           onScaleChange: onSelect,
           onApply,
           onCancel

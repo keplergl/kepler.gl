@@ -59,7 +59,7 @@ export function applyLayerConfig(
 
 export type LayerConfigChangeUpdaterAction = {
   oldLayer: Layer;
-  newConfig: Partial<LayerBaseConfig>;
+  newConfig: Partial<Layer['config']>;
 };
 /**
  * Update layer base config: dataId, label, column, isVisible
@@ -184,7 +184,7 @@ export function layerTypeChange(
 }
 export type LayerVisualChannelConfigChangeUpdaterAction = {
   oldLayer: Layer;
-  newConfig: Partial<LayerBaseConfig>;
+  newConfig: Partial<Layer['config']>;
   channel: string;
   newVisConfig?: Partial<LayerVisConfig>;
 };

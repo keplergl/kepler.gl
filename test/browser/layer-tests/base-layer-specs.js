@@ -107,7 +107,7 @@ test('#BaseLayer -> updateLayerDomain', t => {
   t.deepEqual(
     updatedLayer.config.colorDomain,
     expectedOrdinalDomain,
-    'should skip domain calculation if field is oridinal'
+    'should skip domain calculation if field is ordinal'
   );
 
   t.end();

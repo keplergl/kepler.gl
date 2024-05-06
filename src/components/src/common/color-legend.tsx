@@ -1,17 +1,20 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {ColorRange} from '@kepler.gl/types';
+import React, {useCallback, useMemo} from 'react';
+import styled, {css} from 'styled-components';
+
+import {SCALE_TYPES} from '@kepler.gl/constants';
 import {Layer} from '@kepler.gl/layers';
-import {HexColor, MapState} from '@kepler.gl/types';
+import {ColorRange, HexColor, MapState} from '@kepler.gl/types';
 import {
   getLayerColorScale,
   getLegendOfScale,
   getVisualChannelScaleByZoom,
+  colorMapToCategoricalColorBreaks,
   isObject
 } from '@kepler.gl/utils';
-import React, {useCallback, useMemo} from 'react';
-import styled, {css} from 'styled-components';
+
 import {Reset} from './icons';
 import {InlineInput} from './styled-components';
 
@@ -243,10 +246,22 @@ export function useLayerColorLegends(
     [scale, layer, mapState]
   );
 
-  const currentLegends = useMemo(
-    () => getLegendOfScale({scale: scaleByZoom, scaleType, labelFormat, fieldType}),
-    [scaleByZoom, scaleType, labelFormat, fieldType]
-  );
+  const currentLegends = useMemo(() => {
+    if (scaleType === SCALE_TYPES.customOrdinal && range?.colorMap) {
+      const colorBreaks = colorMapToCategoricalColorBreaks(range.colorMap);
+      return colorBreaks?.map(cb => {
+        return {
+          data: cb.data,
+          label: Array.isArray(cb.label)
+            ? cb.label.length > 5
+              ? `${cb.label.length} selected`
+              : cb.label
+            : cb.label || ''
+        };
+      });
+    }
+    return getLegendOfScale({scale: scaleByZoom, scaleType, labelFormat, fieldType});
+  }, [range, scaleByZoom, scaleType, labelFormat, fieldType]);
 
   const LegendsWithCustomLegends = useMemo(
     () =>
