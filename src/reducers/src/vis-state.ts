@@ -36,6 +36,8 @@ const actionHandler = {
 
   [ActionTypes.LAYER_VIS_CONFIG_CHANGE]: visStateUpdaters.layerVisConfigChangeUpdater,
 
+  [ActionTypes.LAYER_TOGGLE_VISIBILITY]: visStateUpdaters.layerToggleVisibilityUpdater,
+
   [ActionTypes.LAYER_TEXT_LABEL_CHANGE]: visStateUpdaters.layerTextLabelChangeUpdater,
 
   [ActionTypes.LAYER_VISUAL_CHANNEL_CHANGE]: visStateUpdaters.layerVisualChannelChangeUpdater,

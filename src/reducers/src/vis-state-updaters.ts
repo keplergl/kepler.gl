@@ -39,7 +39,8 @@ import {
   loadNextFile,
   nextFileBatch,
   processFileContent,
-  fitBounds as fitMapBounds
+  fitBounds as fitMapBounds,
+  toggleLayerForMap
 } from '@kepler.gl/actions';
 
 // Utils
@@ -484,6 +485,19 @@ export function applyLayerConfigUpdater(
   return nextState;
 }
 
+function updatelayerVisibilty(state: VisState, newLayer: Layer, isVisible?: boolean): VisState {
+  let newState = updateStateOnLayerVisibilityChange(state, newLayer);
+  const filterIndex = filterSyncedWithTimeline(state);
+  if (isLayerAnimatable(newLayer) && filterIndex !== -1) {
+    // if layer is going to be visible we sync with filter otherwise we need to check whether other animatable layers exists and are visible
+    newState = syncTimeFilterWithLayerTimelineUpdater(newState, {
+      idx: filterIndex,
+      enable: isVisible ? isVisible : getAnimatableVisibleLayers(state.layers).length > 0
+    });
+  }
+  return newState;
+}
+
 /**
  * Update layer base config: dataId, label, column, isVisible
  * @memberof visStateUpdaters
@@ -526,17 +540,7 @@ export function layerConfigChangeUpdater(
 
   let newState = state;
   if ('isVisible' in action.newConfig) {
-    newState = updateStateOnLayerVisibilityChange(state, newLayer);
-    const filterIndex = filterSyncedWithTimeline(state);
-    if (isLayerAnimatable(newLayer) && filterIndex !== -1) {
-      // if layer is going to be visible we sync with filter otherwise we need to check whether other animatable layers exists and are visible
-      newState = syncTimeFilterWithLayerTimelineUpdater(newState, {
-        idx: filterIndex,
-        enable: action.newConfig.isVisible
-          ? action.newConfig.isVisible
-          : getAnimatableVisibleLayers(state.layers).length > 0
-      });
-    }
+    newState = updatelayerVisibilty(newState, newLayer, action.newConfig.isVisible);
   }
 
   if ('columns' in action.newConfig && newLayer.config.animation.enabled) {
@@ -565,6 +569,73 @@ export function layerAnimationChangeUpdater<S extends VisState>(state: S, action
   const {layerData, layer} = calculateLayerData(newLayer, state, state.layerData[idx]);
 
   return updateStateWithLayerAndData(state, {layerData, layer, idx});
+}
+
+/**
+ * Update layerId, isVisible, splitMapId
+ * handles two cases:
+ * 1) toggle the visibility of local SplitMap layer (visState.splitMap.layers)
+ * 2) toggle the visibility of global layer (visState.layers)
+
+ * @memberof visStateUpdaters
+ * @returns nextState
+ */
+export function layerToggleVisibilityUpdater(
+  state: VisState,
+  action: VisStateActions.LayerToggleVisibilityUpdaterAction
+): VisState {
+  const {layerId, isVisible, splitMapId} = action;
+  const layer = state.layers.find(d => d.id === layerId);
+
+  if (!layer) {
+    return state;
+  }
+
+  let newState = state;
+
+  if (splitMapId) {
+    // [case 1]: toggle local layer visibility for each SplitMap
+    const mapIndex = newState.splitMaps.findIndex(sm => sm.id === splitMapId);
+    if (isVisible) {
+      // 1) if the layer is invisible globally
+      // -> set global visibility to true
+      newState = layerConfigChangeUpdater(newState, layerConfigChange(layer, {isVisible: true}));
+
+      // -> set local visibility to true and the local visibilities of all other SplitMaps to false
+      return {
+        ...newState,
+        splitMaps: newState.splitMaps.map(sm =>
+          sm.id !== splitMapId
+            ? {
+                ...sm,
+                layers: {
+                  ...sm.layers,
+                  [layerId]: false
+                }
+              }
+            : {
+                ...sm,
+                layers: {
+                  ...sm.layers,
+                  [layerId]: true
+                }
+              }
+        )
+      };
+    }
+    // 2) else when the layer is visible globally
+    return toggleLayerForMapUpdater(newState, toggleLayerForMap(mapIndex, layerId));
+  } else {
+    // [case 2]: toggle global layer visibility
+    let newLayer = layer.updateLayerConfig({isVisible});
+    const idx = newState.layers.findIndex(l => l.id === layerId);
+
+    newState = updatelayerVisibilty(newState, newLayer, isVisible);
+    return updateStateWithLayerAndData(newState, {
+      layer: newLayer,
+      idx
+    });
+  }
 }
 
 /**
