@@ -80,7 +80,8 @@ import {
   FILTER_VIEW_TYPES,
   MAX_DEFAULT_TOOLTIPS,
   DEFAULT_TEXT_LABEL,
-  COMPARE_TYPES
+  COMPARE_TYPES,
+  LIGHT_AND_SHADOW_EFFECT
 } from '@kepler.gl/constants';
 import {
   pick_,
@@ -1436,6 +1437,14 @@ export const addEffectUpdater = (
   state: VisState,
   action: VisStateActions.AddEffectUpdaterAction
 ): VisState => {
+  if (
+    action.config?.type === LIGHT_AND_SHADOW_EFFECT.type &&
+    state.effects.some(effect => effect.type === LIGHT_AND_SHADOW_EFFECT.type)
+  ) {
+    Console.warn(`Can't add more than one ${LIGHT_AND_SHADOW_EFFECT.name} effect`);
+    return state;
+  }
+
   const newEffect = createEffect(action.config);
 
   // collapse configurators for other effects
