@@ -3,7 +3,7 @@
 
 import {RGBColor, Merge, RequireFrom} from './types';
 
-import {Filter, TooltipInfo, AnimationConfig, SplitMap, Feature} from './reducers';
+import {Filter, InteractionConfig, AnimationConfig, SplitMap, Feature} from './reducers';
 
 import {LayerTextLabel} from './layers';
 
@@ -30,16 +30,16 @@ export type MinSavedFilter = RequireFrom<SavedFilter, 'dataId' | 'id' | 'name' |
 export type ParsedFilter = SavedFilter | MinSavedFilter;
 
 export type SavedInteractionConfig = {
-  tooltip: TooltipInfo['config'] & {
+  tooltip: InteractionConfig['tooltip']['config'] & {
     enabled: boolean;
   };
-  geocoder: TooltipInfo['geocoder'] & {
+  geocoder: {
     enabled: boolean;
   };
-  brush: TooltipInfo['brush'] & {
+  brush: InteractionConfig['brush']['config'] & {
     enabled: boolean;
   };
-  coordinate: TooltipInfo['coordinate'] & {
+  coordinate: {
     enabled: boolean;
   };
 };
