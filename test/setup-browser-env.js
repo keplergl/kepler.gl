@@ -163,3 +163,6 @@ global.IntersectionObserver = class IntersectionObserver {
     return null;
   }
 };
+
+// Undefined once bumped to node v18 in @floating-ui
+global.Node = global.Node || (() => {});
