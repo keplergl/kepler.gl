@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useCallback, useState} from 'react';
+import React, {useCallback, useMemo} from 'react';
 import styled from 'styled-components';
+import {FILTER_VIEW_TYPES} from '@kepler.gl/constants';
 import {BottomWidgetInner} from '../common/styled-components';
 import TimeRangeSliderFactory from '../common/time-range-slider';
 import FloatingTimeDisplayFactory from '../common/animation-control/floating-time-display';
@@ -29,6 +30,7 @@ function TimeWidgetFactory(
     showTimeDisplay,
     setFilterAnimationTime,
     onClose,
+    onToggleMinify,
     resetAnimation,
     isAnimatable,
     updateAnimationSpeed,
@@ -37,8 +39,6 @@ function TimeWidgetFactory(
     setFilterAnimationWindow,
     timeline
   }: TimeWidgetProps) => {
-    const [isMinified, setMinified] = useState(false);
-
     const _updateAnimationSpeed = useCallback(speed => updateAnimationSpeed(index, speed), [
       updateAnimationSpeed,
       index
@@ -46,7 +46,7 @@ function TimeWidgetFactory(
 
     const _toggleAnimation = useCallback(() => toggleAnimation(index), [toggleAnimation, index]);
 
-    const _onToggleMinify = useCallback(() => setMinified(!isMinified), [setMinified, isMinified]);
+    const isMinified = useMemo(() => filter.view === FILTER_VIEW_TYPES.minified, [filter]);
 
     const _setFilterAnimationWindow = useCallback(
       animationWindow => setFilterAnimationWindow({id: filter.id, animationWindow}),
@@ -67,7 +67,7 @@ function TimeWidgetFactory(
           setFilterPlot={setFilterPlot}
           index={index}
           onClose={onClose}
-          onToggleMinify={_onToggleMinify}
+          onToggleMinify={onToggleMinify}
           isMinified={isMinified}
         />
         {/* Once AnimationControl is able to display large timeline*/}

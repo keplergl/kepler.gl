@@ -76,6 +76,7 @@ export type TimeWidgetProps = {
   isAnimatable: boolean;
   resetAnimation: () => void;
   onClose: () => void;
+  onToggleMinify: () => void;
   setFilterAnimationTime: ActionHandler<typeof setFilterAnimationTime>;
   updateAnimationSpeed: ActionHandler<typeof updateFilterAnimationSpeed>;
   toggleAnimation: ActionHandler<typeof toggleFilterAnimation>;
