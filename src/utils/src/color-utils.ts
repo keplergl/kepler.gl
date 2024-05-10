@@ -7,7 +7,14 @@ import {
   DEFAULT_CUSTOM_PALETTE,
   colorPaletteToColorRange
 } from '@kepler.gl/constants';
-import {ColorMap, ColorRange, ColorRangeConfig, HexColor, RGBColor} from '@kepler.gl/types';
+import {
+  ColorMap,
+  ColorRange,
+  ColorRangeConfig,
+  HexColor,
+  RGBAColor,
+  RGBColor
+} from '@kepler.gl/types';
 import {rgb as d3Rgb} from 'd3-color';
 import {interpolate} from 'd3-interpolate';
 import {arrayInsert, arrayMove} from './utils';
@@ -51,7 +58,7 @@ function PadNum(c) {
  * @param rgb
  * @returns hex string
  */
-export function rgbToHex([r, g, b]: RGBColor): HexColor {
+export function rgbToHex([r, g, b]: RGBColor | RGBAColor): HexColor {
   return `#${[r, g, b].map(n => PadNum(n)).join('')}`.toUpperCase();
 }
 

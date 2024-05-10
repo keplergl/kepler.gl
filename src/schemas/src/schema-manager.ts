@@ -104,12 +104,12 @@ export class KeplerGLSchema {
     validVersions = VERSIONS,
     version = CURRENT_VERSION,
     composedReducerSchema
-}: KeplerGLSchemaProps = {}) {
+  }: KeplerGLSchemaProps = {}) {
     this._validVersions = validVersions;
     this._version = version;
     this._reducerSchemas = reducers;
     this._datasetSchema = datasets;
-    this._composedReducerSchema = composedReducerSchema || null; 
+    this._composedReducerSchema = composedReducerSchema || null;
 
     this._datasetLastSaved = null;
     this._savedDataset = null;
