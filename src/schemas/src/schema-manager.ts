@@ -9,6 +9,7 @@ import mapStyleSchema from './map-style-schema';
 import mapStateSchema from './map-state-schema';
 import {SavedDatasetV1, ParsedDataset} from './dataset-schema';
 import {visStateSchema} from './vis-state-schema';
+import uiStateSchema from './ui-state-schema';
 
 import {CURRENT_VERSION, VERSIONS} from './versions';
 import {isPlainObject} from '@kepler.gl/utils';
@@ -71,7 +72,8 @@ export const reducerSchema: {
 } = {
   visState: visStateSchema,
   mapState: mapStateSchema,
-  mapStyle: mapStyleSchema
+  mapStyle: mapStyleSchema,
+  uiState: uiStateSchema
 };
 
 export class KeplerGLSchema {

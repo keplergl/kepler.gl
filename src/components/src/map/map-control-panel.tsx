@@ -9,6 +9,7 @@ import {Close, Pin} from '../common/icons';
 import Switch from '../common/switch';
 import {MapState} from '@kepler.gl/types';
 import {ActionHandler, toggleSplitMapViewport} from '@kepler.gl/actions';
+import classNames from 'classnames';
 
 const StyledMapControlPanel = styled.div`
   background-color: ${props => props.theme.mapPanelBackgroundColor};
@@ -154,7 +155,7 @@ function MapControlPanelFactory() {
             transform: `scale(${scale})`,
             marginBottom: '8px !important'
           }}
-          className={className}
+          className={classNames('map-control-panel', className)}
         >
           {mapState?.isSplit && isViewportUnsyncAllowed ? (
             <StyledMapControlPanelHeaderSplitViewportsTools>

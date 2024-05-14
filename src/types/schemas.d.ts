@@ -133,6 +133,18 @@ export type ParsedVisState = {
   animationConfig?: Partial<SavedAnimationConfig>;
 };
 
+export type ParsedUiState = {
+  mapControls: {
+    mapLegend: {
+      active: boolean;
+      settings: {
+        position: string;
+        contentHeight: number;
+      };
+    };
+  };
+};
+
 export type SavedMapState = {
   bearing: number;
   dragRotate: boolean;
@@ -200,6 +212,7 @@ export type ParsedConfig = {
   visState?: ParsedVisState;
   mapState?: ParsedMapState;
   mapStyle?: ParsedMapStyle;
+  uiState?: ParsedUiState;
 };
 
 export type SavedField = {
