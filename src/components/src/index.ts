@@ -297,11 +297,7 @@ export {default as EffectTimeConfiguratorFactory} from './effects/effect-time-co
 
 export {default as HowToButton} from './side-panel/layer-panel/how-to-button';
 // eslint-disable-next-line prettier/prettier
-export type {
-  ButtonProps,
-  StyledPanelHeaderProps,
-  StyledExportSectionProps
-} from './common';
+export type {ButtonProps, StyledPanelHeaderProps, StyledExportSectionProps} from './common';
 
 export type {CollapseButtonProps} from './side-panel/side-bar';
 export type {PanelTabProps} from './side-panel/panel-tab';
@@ -324,6 +320,7 @@ export type {
   OptionDropdownProps,
   FormatterDropdownProps
 } from './common/data-table/option-dropdown';
+export type {PlaybackControlsProps} from './common/animation-control/playback-controls';
 export type {LayerListProps, LayerListFactoryDeps} from './side-panel/layer-panel/layer-list';
 export type {MapContainerProps} from './map-container';
 export type {MapControlProps} from './map/map-control';

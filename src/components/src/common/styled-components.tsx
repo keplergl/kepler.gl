@@ -5,8 +5,9 @@ import styled from 'styled-components';
 import DatePicker from 'react-date-picker';
 import TimePicker from 'react-time-picker';
 import ReactTooltip from 'react-tooltip';
-import {media} from '@kepler.gl/styles';
 import classnames from 'classnames';
+
+import {media} from '@kepler.gl/styles';
 import {RGBColor} from '@kepler.gl/types';
 
 export const SelectText = styled.span`
@@ -185,7 +186,10 @@ export const Tooltip = styled(ReactTooltip)`
   }
 `;
 
-export interface ButtonProps {
+export type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
+  className?: string;
+  ref?: React.ForwardedRef<HTMLElement>;
+  children?: React.ReactNode;
   negative?: boolean;
   secondary?: boolean;
   link?: boolean;
@@ -196,7 +200,7 @@ export interface ButtonProps {
   disabled?: boolean;
   width?: string;
   inactive?: boolean;
-}
+};
 
 // this needs to be an actual button to be able to set disabled attribute correctly
 export const Button = styled.button.attrs(props => ({
