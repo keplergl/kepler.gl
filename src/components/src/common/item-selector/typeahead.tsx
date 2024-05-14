@@ -147,6 +147,7 @@ interface TypeaheadProps {
   inputIcon: ElementType;
   className?: string;
   selectedItems?: any[] | null;
+  autoFocus: boolean;
   // deprecated
   maxVisible?: number;
 }
@@ -199,7 +200,8 @@ class Typeahead extends Component<TypeaheadProps, TypeaheadState> {
     customListHeaderComponent: null,
     showOptionsWhenEmpty: true,
     searchable: true,
-    resultsTruncatedMessage: null
+    resultsTruncatedMessage: null,
+    autoFocus: true
   };
 
   static getDerivedStateFromProps(props, state) {
@@ -240,10 +242,12 @@ class Typeahead extends Component<TypeaheadProps, TypeaheadState> {
 
   componentDidMount() {
     // call focus on entry or div to trigger key events listener
-    if (this.entry.current) {
-      this.entry.current.focus();
-    } else {
-      this.root.current?.focus();
+    if (this.props.autoFocus) {
+      if (this.entry.current) {
+        this.entry.current.focus();
+      } else {
+        this.root.current?.focus();
+      }
     }
   }
 
