@@ -44,7 +44,7 @@
     "@types/lodash.isequal": "^4.5.5",
     "@types/lodash.memoize": "^4.1.7",
     "@types/lodash.throttle": "^4.1.7",
-    "apache-arrow": "^13.0.0",
+    "apache-arrow": ">=15.0.0",
     "d3-array": "^2.8.0",
     "d3-format": "^2.0.0",
     "decimal.js": "^10.2.0",
