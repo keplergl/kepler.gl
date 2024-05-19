@@ -26,7 +26,7 @@
     "react-swipeable-views": "^0.13.3",
     "react-waypoint": "^9.0.2",
     "redux": "^4.2.1",
-    "styled-components": "^4.2.0"
+    "styled-components": "6.1.8"
   },
   "devDependencies": {
     "gatsby": "^2.18.0",

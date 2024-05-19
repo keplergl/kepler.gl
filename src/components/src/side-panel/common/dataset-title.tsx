@@ -24,7 +24,7 @@ const StyledDatasetTitle = styled.div<StyledDatasetTitleProps>`
   .source-data-arrow {
     height: 16px;
   }
-  :hover {
+  &:hover {
     cursor: ${props => (props.clickable ? 'pointer' : 'auto')};
 
     .dataset-name {

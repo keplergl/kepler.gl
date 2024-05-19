@@ -84,7 +84,7 @@ const StyledPreviewImage = styled.div`
 const InlineLink = styled.a`
   font-weight: 500;
 
-  :hover {
+  &:hover {
     cursor: pointer;
   }
 `;

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import {CSSProperties} from 'react';
 import {
   Filter,
   MultiSelectFilter,
@@ -21,6 +22,7 @@ import {
   updateFilterAnimationSpeed
 } from '@kepler.gl/actions';
 import {Datasets} from '@kepler.gl/table';
+import {BaseComponentProps} from '../types';
 
 export type PolygonFilterProps = {
   filter: Filter;
@@ -28,8 +30,8 @@ export type PolygonFilterProps = {
   setLayers: (ids: ReadonlyArray<string>) => void;
 };
 
-export type TopSectionWrapperProps = {
-  hoverColor?: string;
+export type TopSectionWrapperProps = BaseComponentProps & {
+  hoverColor?: CSSProperties['color'];
 };
 
 export type RangeFilterProps = {

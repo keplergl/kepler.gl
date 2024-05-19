@@ -155,6 +155,7 @@
     "babel-plugin-istanbul": "^6.0.0",
     "babel-plugin-module-resolver": "^4.0.0",
     "babel-plugin-search-and-replace": "^1.0.0",
+    "babel-plugin-styled-components": "^2.1.4",
     "babel-plugin-transform-builtin-extend": "^1.1.0",
     "babelify": "^10.0.0",
     "css-loader": "5.2.7",
@@ -197,7 +198,7 @@
     "sinon-stub-promise": "^4.0.0",
     "source-map-loader": "^1.1.1",
     "style-loader": "2.0.0",
-    "styled-components": "^4.1.3",
+    "styled-components": "6.1.8",
     "stylelint": "^13.6.1",
     "stylelint-config-recommended": "^3.0.0",
     "stylelint-config-styled-components": "^0.1.1",
@@ -253,7 +254,7 @@
   "peerDependencies": {
     "react": ">=18.2",
     "react-dom": ">=18.2",
-    "styled-components": "^4.x || ^5.x"
+    "styled-components": "6.1.8"
   },
   "nyc": {
     "sourceMap": false,

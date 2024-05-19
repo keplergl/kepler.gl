@@ -45,9 +45,11 @@ const StyledEffectTypeSelector = styled.div`
     border-radius: ${props => props.theme.primaryBtnRadius};
     font-size: ${props => props.theme.primaryBtnFontSizeDefault};
     border: none;
-    :hover {
+
+    &:hover {
       background-color: ${props => props.theme.secondaryBtnBgdHover};
     }
+
     .item-selector__dropdown__value {
       color: ${props => props.theme.secondaryBtnActColor};
     }
@@ -98,7 +100,7 @@ function EffectTypeSelectorFactory(EffectTypeListItem, EffectTypeDropdownList) {
     );
   };
 
-  return withTheme(EffectTypeSelector);
+  return withTheme(EffectTypeSelector) as React.FC<Omit<EffectTypeSelectorProps, 'theme'>>;
 }
 
 export default EffectTypeSelectorFactory;

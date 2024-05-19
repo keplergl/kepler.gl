@@ -55,7 +55,7 @@ const StyledAssetItem = styled.div.attrs({
     img {
       max-width: 100%;
     }
-    :hover {
+    &:hover {
       cursor: pointer;
       opacity: 1;
     }
@@ -88,7 +88,7 @@ const BackLink = styled.div`
   cursor: pointer;
   margin-bottom: 40px;
 
-  :hover {
+  &:hover {
     font-weight: 500;
   }
 

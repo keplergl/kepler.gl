@@ -289,7 +289,7 @@ const StyledColorRange = styled.div.attrs({
   className: 'color-palette-outer'
 })`
   padding: 0 8px;
-  :hover {
+  &:hover {
     background-color: ${props => props.theme.panelBackgroundHover};
     cursor: pointer;
   }

@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import styled from 'styled-components';
+import styled, {IStyledComponent} from 'styled-components';
+import {BaseComponentProps} from '../types';
 
-export interface ToolbarProps {
+export type ToolbarProps = {
   show?: boolean;
-}
+} & BaseComponentProps;
 
-const Toolbar = styled.div<ToolbarProps>`
+const Toolbar: IStyledComponent<'web', ToolbarProps> = styled.div<ToolbarProps>`
   display: flex;
   flex-direction: row;
   background-color: ${props => props.theme.dropdownListBgd};

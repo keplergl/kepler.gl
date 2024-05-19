@@ -50,7 +50,7 @@ const StyledLoadDataModalTabItem = styled.div`
     padding-left: 0;
   }
 
-  :hover {
+  &:hover {
     color: ${props => props.theme.textColorLT};
   }
 `;

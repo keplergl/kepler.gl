@@ -27,7 +27,7 @@ const StyledCardContainer = styled.a`
   color: black;
   cursor: pointer;
   transition: transform 350ms;
-  :hover {
+  &:hover {
     transform: scale3d(1.05, 1.05, 1.05);
   }
   ${media.palm`

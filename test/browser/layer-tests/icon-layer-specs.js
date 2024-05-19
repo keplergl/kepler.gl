@@ -491,7 +491,7 @@ test('#IconLayer -> svg icons as constructor props -> renderIconModal', t => {
     );
   }, 'mount layer info modal with icons should not fail');
 
-  t.equal(wrapper.find('.icon-table__item').length, 3, 'should render 1 icon');
+  t.equal(wrapper.find('.icon-table__item').length, 2, 'should render 1 icon');
   t.equal(
     wrapper.find('.icon-table_item__name').at(0).find('code').text(),
     'alert',

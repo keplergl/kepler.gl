@@ -3,21 +3,18 @@
 
 import React, {useMemo} from 'react';
 import throttle from 'lodash.throttle';
-import styled from 'styled-components';
+import styled, {IStyledComponent} from 'styled-components';
 
 import RangeSliderFactory from './range-slider';
 import TimeSliderMarkerFactory from './time-slider-marker';
 import PlaybackControlsFactory from './animation-control/playback-controls';
 import TimeRangeSliderTimeTitleFactory from './time-range-slider-time-title';
-import {LineChart, Timeline, AnimationConfig} from '@kepler.gl/types';
+import {LineChart, Timeline, AnimationConfig, TimeBins} from '@kepler.gl/types';
 import {ActionHandler, setFilterPlot} from '@kepler.gl/actions';
 import AnimationControlFactory from './animation-control/animation-control';
+import {BaseComponentProps} from '../types';
 
 const animationControlWidth = 176;
-
-interface StyledSliderContainerProps {
-  isEnlarged?: boolean;
-}
 
 type TimeRangeSliderProps = {
   domain?: [number, number];
@@ -28,7 +25,7 @@ type TimeRangeSliderProps = {
   isAnimating: boolean;
   timeFormat: string;
   timezone?: string | null;
-  timeBins?: object;
+  timeBins?: TimeBins;
   plotType?: {
     [key: string]: any;
   };
@@ -48,7 +45,13 @@ type TimeRangeSliderProps = {
   animationConfig?: AnimationConfig;
 };
 
-const StyledSliderContainer = styled.div<StyledSliderContainerProps>`
+export type StyledSliderContainerProps = BaseComponentProps & {
+  isEnlarged?: boolean;
+};
+
+const StyledSliderContainer: IStyledComponent<'web', StyledSliderContainerProps> = styled.div<
+  StyledSliderContainerProps
+>`
   align-items: flex-end;
   display: flex;
   flex-direction: row;
@@ -74,7 +77,7 @@ TimeRangeSliderFactory.deps = [
   AnimationControlFactory
 ];
 
-export function getTimeBinsForInterval(timeBins, interval) {
+export function getTimeBinsForInterval(timeBins: TimeBins | undefined, interval: number) {
   if (!timeBins) return {};
   return Object.keys(timeBins).reduce((acc, dataId) => {
     acc[dataId] = timeBins[dataId][interval];

@@ -38,7 +38,7 @@ const StyledColorPickerTop = styled.div`
       color: ${({theme}) => theme.textColorHl};
       border-bottom-color: ${({theme}) => theme.panelToggleBorderColor};
     }
-    :hover {
+    &:hover {
       cursor: pointer;
       color: ${props => props.theme.textColorHl};
     }

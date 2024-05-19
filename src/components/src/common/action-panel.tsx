@@ -3,15 +3,16 @@
 
 import classnames from 'classnames';
 import React, {useCallback, PropsWithChildren, ElementType, CSSProperties, ReactNode} from 'react';
-import styled from 'styled-components';
+import styled, {IStyledComponent} from 'styled-components';
 import {ArrowRight} from './icons';
 import Checkbox from './switch';
+import {BaseComponentProps} from '../types';
 import TippyTooltip from './tippy-tooltip';
 
 export type ActionPanelProps = PropsWithChildren<{
   color?: string;
   className?: string;
-  direction?: string;
+  direction?: CSSProperties['direction'];
 }>;
 
 export type ActionPanelItemProps = PropsWithChildren<{
@@ -27,10 +28,6 @@ export type ActionPanelItemProps = PropsWithChildren<{
   style?: CSSProperties;
 }>;
 
-export interface DirectionProp {
-  direction: string;
-}
-
 const StyledItem = styled.div`
   display: flex;
   flex-direction: row;
@@ -44,7 +41,7 @@ const StyledItem = styled.div`
   max-width: 200px;
   position: relative;
 
-  ${props => (props.color ? `border-left: 3px solid rgb(${props.color});` : '')} :hover {
+  ${props => (props.color ? `border-left: 3px solid rgb(${props.color});` : '')} &:hover {
     color: ${props => props.theme.textColorHl};
     .nested-group {
       display: block;
@@ -114,7 +111,6 @@ const renderChildren = (child: ReactNode, index: number) =>
     className: classnames('action-panel-item', child.props.className)
   });
 
-/** @type {typeof import('./action-panel').ActionPanelItem} */
 export const ActionPanelItem = React.memo(
   ({
     children,
@@ -190,7 +186,14 @@ export const ActionPanelItem = React.memo(
 
 ActionPanelItem.displayName = 'ActionPanelItem';
 
-const StyledActionPanel = styled.div<DirectionProp>`
+export type StyledActionPanelProps = BaseComponentProps & {
+  direction?: string;
+};
+
+const StyledActionPanel: IStyledComponent<
+  'web',
+  StyledActionPanelProps
+> = styled.div<StyledActionPanelProps>`
   display: flex;
   flex-direction: ${props => props.direction};
   box-shadow: ${props => props.theme.dropdownListShadow};
@@ -208,7 +211,7 @@ const StyledActionPanel = styled.div<DirectionProp>`
 `;
 
 // React compound element https://medium.com/@Dane_s/react-js-compound-components-a6e54b5c9992
-/** @type {typeof import('./action-panel').ActionPanel} */
+// @ts-expect-error looks like not valid default value for direction prop
 const ActionPanel = ({children, className, direction = 'column'}: ActionPanelProps) => (
   <StyledActionPanel className={className} direction={direction}>
     {React.Children.map(children, renderChildren)}

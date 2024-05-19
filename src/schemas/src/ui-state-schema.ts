@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 import {VERSIONS} from './versions';
 import Schema from './schema';
 

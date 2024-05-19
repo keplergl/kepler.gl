@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import React, {useMemo} from 'react';
-import styled from 'styled-components';
+import styled, {IStyledComponent} from 'styled-components';
 import throttle from 'lodash.throttle';
 import classnames from 'classnames';
 import {clamp, datetimeFormatter} from '@kepler.gl/utils';
@@ -10,6 +10,7 @@ import {media} from '@kepler.gl/styles';
 import {DEFAULT_TIME_FORMAT, ANIMATION_WINDOW} from '@kepler.gl/constants';
 import {Timeline} from '@kepler.gl/types';
 import Slider from './slider/slider';
+import {BaseComponentProps} from '../types';
 
 function noop() {
   return;
@@ -17,7 +18,9 @@ function noop() {
 
 const SLIDER_MARGIN_PALM = 6;
 
-const AnimationControlSlider = styled.div`
+export type AnimationControlSliderProps = BaseComponentProps;
+
+const AnimationControlSlider: IStyledComponent<'web', AnimationControlSliderProps> = styled.div`
   display: flex;
   align-items: center;
 `;
