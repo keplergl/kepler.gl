@@ -31,6 +31,8 @@ test('FeatureActionPanel -> display layers', t => {
     }
   };
 
+  const selectedFeature = {type: 'Feature', geometry: {type: 'Polygon', coordinates: []}};
+
   const onToggleLayer = sinon.spy();
   const onDeleteFeature = sinon.spy();
 
@@ -43,6 +45,7 @@ test('FeatureActionPanel -> display layers', t => {
           className="action-item-test"
           layers={layers}
           datasets={datasets}
+          selectedFeature={selectedFeature}
           onToggleLayer={onToggleLayer}
           onDeleteFeature={onDeleteFeature}
           position={{x: 0, y: 0}}

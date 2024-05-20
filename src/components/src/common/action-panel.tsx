@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import classnames from 'classnames';
 import React, {useCallback, PropsWithChildren, ElementType, CSSProperties, ReactNode} from 'react';
 import styled from 'styled-components';
-import classnames from 'classnames';
 import {ArrowRight} from './icons';
 import Checkbox from './switch';
+import TippyTooltip from './tippy-tooltip';
 
 export type ActionPanelProps = PropsWithChildren<{
   color?: string;
@@ -21,6 +22,8 @@ export type ActionPanelItemProps = PropsWithChildren<{
   onClick?: () => void;
   isSelection?: boolean;
   isActive?: boolean;
+  isDisabled?: boolean;
+  tooltipText?: string | null;
   style?: CSSProperties;
 }>;
 
@@ -42,7 +45,6 @@ const StyledItem = styled.div`
   position: relative;
 
   ${props => (props.color ? `border-left: 3px solid rgb(${props.color});` : '')} :hover {
-    cursor: pointer;
     color: ${props => props.theme.textColorHl};
     .nested-group {
       display: block;
@@ -123,19 +125,32 @@ export const ActionPanelItem = React.memo(
     onClick,
     isSelection,
     isActive,
+    isDisabled,
+    tooltipText,
     style
   }: ActionPanelItemProps) => {
     const onClickCallback = useCallback(
       event => {
+        if (isDisabled) {
+          return;
+        }
         event.preventDefault();
         event.stopPropagation();
         onClick?.();
       },
-      [onClick]
+      [onClick, isDisabled]
     );
 
-    return (
-      <StyledItem className={className} onClick={onClickCallback} color={color} style={style}>
+    const content = (
+      <StyledItem
+        className={className}
+        onClick={onClickCallback}
+        color={color}
+        style={{
+          ...(isDisabled ? {cursor: 'not-allowed', opacity: 0.5} : {cursor: 'pointer'}),
+          ...style
+        }}
+      >
         {Icon ? (
           <div className="icon">
             <Icon height="16px" />
@@ -145,6 +160,7 @@ export const ActionPanelItem = React.memo(
           <StyledCheckedbox
             type="checkbox"
             checked={Boolean(isActive)}
+            disabled={Boolean(isDisabled)}
             id={`switch-${label}`}
             secondary
             label={label}
@@ -157,10 +173,17 @@ export const ActionPanelItem = React.memo(
             <div className="label-icon">
               <ArrowRight height="16px" />
             </div>
-            <div className="nested-group">{React.Children.map(children, renderChildren)}</div>
+            {!isDisabled ? (
+              <div className="nested-group">{React.Children.map(children, renderChildren)}</div>
+            ) : null}
           </div>
         ) : null}
       </StyledItem>
+    );
+    return tooltipText ? (
+      <TippyTooltip render={() => <div>{tooltipText}</div>}>{content}</TippyTooltip>
+    ) : (
+      content
     );
   }
 );
