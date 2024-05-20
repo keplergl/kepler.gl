@@ -6,6 +6,7 @@ import styled from 'styled-components';
 import classnames from 'classnames';
 import {Reset, Play, Pause, Save, Rocket, AnchorWindow, FreeWindow} from '../icons';
 import {ANIMATION_WINDOW} from '@kepler.gl/constants';
+import {Filter} from '@kepler.gl/types';
 import AnimationSpeedSliderFactory from './animation-speed-slider';
 import WindowActionControlFactory from './window-action-control';
 import AnimationWindowControlFactory, {AnimationItem} from './animation-window-control';
@@ -58,6 +59,7 @@ const DEFAULT_ANIMATE_ITEMS = {
   }
 };
 export interface PlaybackControlsProps {
+  filter?: Filter;
   isAnimatable?: boolean;
   isAnimating?: boolean;
   width?: number;
@@ -102,6 +104,7 @@ function PlaybackControlsFactory(
 
   // eslint-disable-next-line complexity
   const PlaybackControls: React.FC<PlaybackControlsProps> = ({
+    filter,
     isAnimatable,
     isAnimating = true,
     width,
@@ -154,6 +157,7 @@ function PlaybackControlsFactory(
             animationItems={animationItems}
             animationWindow={animationWindow}
             buttonHeight={buttonHeight}
+            filter={filter}
             setFilterAnimationWindow={setFilterAnimationWindow}
             updateAnimationSpeed={updateAnimationSpeed}
             isAnimating={isAnimating}

@@ -41,7 +41,8 @@ import {
   setFilter,
   processFileContent,
   fitBounds as fitMapBounds,
-  toggleLayerForMap
+  toggleLayerForMap,
+  applyFilterConfig
 } from '@kepler.gl/actions';
 
 // Utils
@@ -69,7 +70,8 @@ import {
   set,
   updateFilterPlot,
   removeFilterPlot,
-  isLayerAnimatable
+  isLayerAnimatable,
+  isSideFilter
 } from '@kepler.gl/utils';
 import {generateHashId, toArray} from '@kepler.gl/common-utils';
 // Mergers
@@ -115,6 +117,7 @@ import {
   Filter,
   InteractionConfig,
   AnimationConfig,
+  FilterAnimationConfig,
   Editor,
   Field,
   TimeRangeFilter
@@ -1485,6 +1488,35 @@ export const toggleFilterAnimationUpdater = (
   ...state,
   filters: state.filters.map((f, i) => (i === action.idx ? {...f, isAnimating: !f.isAnimating} : f))
 });
+
+export function isFilterAnimationConfig(config: AnimationConfig | FilterAnimationConfig): boolean {
+  return 'dataId' in config && 'animationWindow' in config;
+}
+
+export function setAnimationConfigUpdater(
+  state: VisState,
+  action: VisStateActions.SetAnimationConfigUpdaterAction
+): VisState {
+  const {config} = action;
+  if (isFilterAnimationConfig(config)) {
+    // Find filter used for animation
+    // Assuming there's only one filter used for animation, see setFilterViewUpdater
+    const filter = state.filters.find(f => !isSideFilter(f));
+    if (!filter) {
+      return state;
+    }
+    const newFilter = {...filter, ...config};
+    return applyFilterConfigUpdater(state, applyFilterConfig(filter.id, newFilter));
+  } else {
+    return {
+      ...state,
+      animationConfig: {
+        ...state.animationConfig,
+        ...config
+      }
+    };
+  }
+}
 
 /**
  * @memberof visStateUpdaters

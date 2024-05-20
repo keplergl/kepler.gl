@@ -260,6 +260,17 @@ export type AnimationConfig = {
   hideControl?: boolean;
 };
 
+export type FilterAnimationConfig = Pick<
+  TimeRangeFilter,
+  | 'dataId'
+  | 'value'
+  | 'animationWindow'
+  | 'speed'
+  | 'syncedWithLayerTimeline'
+  | 'syncTimelineMode'
+  | 'timezone'
+>;
+
 export type Timeline = {
   domain: [number, number] | null;
   value: number | [number, number];
