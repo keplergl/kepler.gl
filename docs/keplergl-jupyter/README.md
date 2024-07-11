@@ -74,13 +74,17 @@ $ jupyter labextension install @jupyter-widgets/jupyterlab-manager keplergl-jupy
 
       Datasets as a dictionary, key is the name of the dataset. Read more on [Accepted data format][data_format]
 
+  - __`use_arrow`__ `bool` _optional_ default: `False`
+
+      Allow load and render data faster using GeoArrow
+
   - __`config`__ `dict` _optional_
-      
+
       Map config as a dictionary. The `dataId` in the layer and filter settings should match the `name` of the dataset they are created under
 
   - __`show_docs`__ `bool` _optional_
-      
-      By default, the User Guide URL (<https://docs.kepler.gl/docs/keplergl-jupyter>) will be printed when a map is created. To hide the User Guide URL, set `show_docs=False`.   
+
+      By default, the User Guide URL (<https://docs.kepler.gl/docs/keplergl-jupyter>) will be printed when a map is created. To hide the User Guide URL, set `show_docs=False`.
 
 The following command will load kepler.gl widget below a cell.
 **The map object created here is `map_1` it will be used throughout the code example in this doc.**
@@ -112,6 +116,7 @@ map_2
 - Inputs
     - __`data`__ _required_ CSV, GeoJSON or DataFrame. Read more on [Accepted data format][data_format]
     - __`name`__ _required_ Name of the data entry.
+    - __`use_arrow`__ _optional_ Allow load and render data faster using GeoArrow.
 
 `name` of the dataset will be the saved to the `dataId` property of each `layer`, `filter` and `interactionConfig` in the config.
 
@@ -252,7 +257,7 @@ Interact with kepler.gl and customize layers and filters. Map data and config wi
 ## 5. Save and load config
 
 ### `.config`
-you can print your current map configuration at any time in the notebook 
+you can print your current map configuration at any time in the notebook
 ```python
 map_1.config
 ## {u'config': {u'mapState': {u'bearing': 2.6192893401015205,
@@ -355,7 +360,7 @@ app = Flask(__name__)
 @app.route('/')
 def index():
     return map_1._repr_html_()
-    
+
 if __name__ == '__main__':
     app.run(debug=True)
 ```

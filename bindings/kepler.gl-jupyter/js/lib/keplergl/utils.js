@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {processCsvData, processGeojson} from 'kepler.gl/processors';
+import {tableFromIPC} from 'apache-arrow';
+import {processCsvData, processGeojson, processArrowBatches} from '@kepler.gl/processors';
 import log from '../log';
 import console from 'global/console';
 
@@ -23,11 +24,22 @@ function handleJuptyerDataFormat(dataEntry) {
       type = 'json';
     }
   } else if (typeof data === 'string') {
+    // check if js string is json string
     try {
       parsed = JSON.parse(data);
       type = 'json';
     } catch (e) {
-      // assume it is csv
+      // assume it is base64 string represents arrow table
+      try {
+        console.log('parse base64string arrow tabl');
+        // convert arrowTable from base64 string to ArrayBuffer
+        const arrowTableBuffer = Buffer.from(data, 'base64').buffer;
+        // create arrow table from ArrayBuffer
+        parsed = tableFromIPC([new Uint8Array(arrowTableBuffer)]);
+        type = 'arrow';
+      } catch (e) {
+        // now we can assume it is csv
+      }
     }
   }
 
@@ -47,6 +59,8 @@ function processReceivedData({data, info}) {
         ? processGeojson(data)
         : info.queryType === 'df'
         ? processDataFrame(data)
+        : info.queryType === 'arrow'
+        ? processArrowBatches(data.batches)
         : null;
   } catch (e) {
     console.log(

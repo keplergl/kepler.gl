@@ -12,7 +12,7 @@ import {
   PanelHeaderFactory,
   CustomPanelsFactory,
   injectComponents
-} from 'kepler.gl/components';
+} from '@kepler.gl/components';
 
 import CustomPanelHeaderFactory from './panel-header';
 import CustomSidebarFactory from './side-bar';
@@ -80,7 +80,6 @@ function App() {
       {Helmet ? (
         <Helmet>
           <meta charSet="utf-8" />
-          <title>Kepler.gl Jupyter</title>
           <link
             rel="stylesheet"
             href="http://d1a3f4spazzrp4.cloudfront.net/kepler.gl/uber-fonts/4.0.0/superfine.css"
