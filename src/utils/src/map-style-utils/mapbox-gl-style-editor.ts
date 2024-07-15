@@ -11,9 +11,6 @@ import {
 } from '@kepler.gl/constants';
 import {BaseMapStyle, LayerGroup, MapState} from '@kepler.gl/types';
 
-const mapUrlRg = /^mapbox:\/\/styles\/[-a-z0-9]{2,256}\/[-a-z0-9]{2,256}/;
-const httpRg = /^(?=(http:|https:))/;
-
 export function getDefaultLayerGroupVisibility({layerGroups = []}: {layerGroups: LayerGroup[]}) {
   return layerGroups.reduce(
     (accu, layer) => ({
@@ -101,13 +98,6 @@ export const editBottomMapStyle = memoize(({id, mapStyle, visibleLayerGroups}) =
     layers: filteredLayers
   };
 }, resolver);
-
-// valid style url
-// mapbox://styles/uberdata/cjfyl03kp1tul2smf5v2tbdd4
-// lowercase letters, numbers and dashes only.
-export function isValidStyleUrl(url) {
-  return typeof url === 'string' && Boolean(url.match(mapUrlRg) || url.match(httpRg));
-}
 
 export function getStyleDownloadUrl(styleUrl, accessToken, mapboxApiUrl) {
   if (styleUrl.startsWith('http')) {
