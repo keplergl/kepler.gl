@@ -25,7 +25,7 @@ Create a tag: `<version>-jupyter` e.g. v0.3.4-jupyter
 
 ```
 git tag -a <version>-jupyter -m "<version>-jupyter"
-git push origin master && git push origin <version>-jupyter
+git push origin <version>-jupyter
 ```
 
 The new tag will trigger the Github Action `build-publish-pypi.yml`: __"Build KeplerGL Python and NPM packages"__. The packages will be built and tested, then published to NPM and PyPI using the secret tokens.
