@@ -238,7 +238,7 @@
     "@luma.gl/webgl": "8.5.21",
     "@types/lodash": "4.17.5",
     "browserslist": "^4.17.0",
-    "caniuse-lite": "^1.0.30001517",
+    "caniuse-lite": "^1.0.30001636",
     "d3-array": "^2.8.0",
     "d3-scale": "^3.2.3",
     "eslint-plugin-jest": "^27.2.1",
