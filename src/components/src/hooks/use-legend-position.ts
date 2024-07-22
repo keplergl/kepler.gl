@@ -40,23 +40,18 @@ const DEFAULT_POSITION: MapLegendControlSettings['position'] = {
 };
 const MIN_CONTENT_HEIGHT = 100;
 
-/**
- * Returns a function that calculates the anchored position of the map legend
- * that is being dragged.
- */
-export default function useLegendPosition({
+export type UseCalcLegendPositionProps = {
+  legendContentRef: React.MutableRefObject<HTMLElement | null>;
+  isSidePanelShown: boolean;
+  sidePanelWidth: number;
+};
+
+export function useCalcLegendPosition({
   legendContentRef,
   isSidePanelShown,
-  settings,
-  onChangeSettings,
-  theme
-}: Params): ReturnType {
-  const pos = settings?.position ?? DEFAULT_POSITION;
-  const contentHeight = settings?.contentHeight ?? -1;
-  const positionStyles = useMemo(() => ({[pos.anchorX]: pos.x, [pos.anchorY]: pos.y}), [pos]);
-  const startHeightRef = useRef(0);
-
-  const calcPosition = useCallback((): MapLegendControlSettings['position'] => {
+  sidePanelWidth
+}: UseCalcLegendPositionProps) {
+  return useCallback((): MapLegendControlSettings['position'] => {
     const root = legendContentRef.current?.closest('.kepler-gl');
     const legendContent = legendContentRef.current;
     if (!legendContent || !(root instanceof HTMLElement)) {
@@ -84,6 +79,30 @@ export default function useLegendPosition({
         : {y: bottomOffset, anchorY: 'bottom'})
     };
   }, [isSidePanelShown]);
+}
+
+/**
+ * Returns a function that calculates the anchored position of the map legend
+ * that is being dragged.
+ */
+export default function useLegendPosition({
+  legendContentRef,
+  isSidePanelShown,
+  settings,
+  onChangeSettings,
+  theme
+}: Params): ReturnType {
+  const pos = settings?.position ?? DEFAULT_POSITION;
+  const contentHeight = settings?.contentHeight ?? -1;
+  const positionStyles = useMemo(() => ({[pos.anchorX]: pos.x, [pos.anchorY]: pos.y}), [pos]);
+  const startHeightRef = useRef(0);
+  const sidePanelWidth = theme.sidePanel?.width || 0;
+
+  const calcPosition = useCalcLegendPosition({
+    legendContentRef,
+    isSidePanelShown,
+    sidePanelWidth
+  });
   const updatePosition = useCallback(
     () => onChangeSettings({position: calcPosition()}),
     [calcPosition, onChangeSettings]
@@ -115,7 +134,6 @@ export default function useLegendPosition({
   );
 
   // Shift when side panel is shown/hidden
-  const sidePanelWidth = theme.sidePanel?.width || 0;
   const posRef = useRef(pos);
   posRef.current = pos;
   useEffect(() => {

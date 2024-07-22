@@ -299,6 +299,7 @@ export type LayerLegendHeaderProps = {
   options?: {
     showLayerName?: boolean;
   };
+  isExport?: boolean;
 };
 
 const isRadiusChannel = visualChannel =>
@@ -453,7 +454,7 @@ function MapLegendFactory(
             key={index}
             width={containerW}
           >
-            <LayerLegendHeader options={options} layer={layer} />
+            <LayerLegendHeader isExport={isExport} options={options} layer={layer} />
             <LayerLegendContent
               containerW={containerW}
               layer={layer}
