@@ -116,6 +116,9 @@ const AddByDatasetButton: React.FC<AddByDatasetButtonProps> = ({
 
   const onOptionSelected = useCallback(
     option => {
+      if (!option) {
+        return;
+      }
       onAdd(option.value);
       if (tippyInstance) {
         // @ts-ignore
