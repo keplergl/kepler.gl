@@ -115,7 +115,11 @@ function makeLocalDevConfig(env, EXAMPLE_DIR = LIB_DIR, externals = {}) {
           test: /\.(js|ts|tsx)$/,
           use: ['source-map-loader'],
           enforce: 'pre',
-          exclude: [/node_modules\/react-palm/, /node_modules\/react-data-grid/]
+          exclude: [
+            /node_modules\/react-palm/,
+            /node_modules\/react-data-grid/,
+            /node_modules\/@probe\.gl/
+          ]
         },
         // for compiling apache-arrow ESM module
         {
@@ -129,6 +133,28 @@ function makeLocalDevConfig(env, EXAMPLE_DIR = LIB_DIR, externals = {}) {
     plugins: [new webpack.EnvironmentPlugin(WEBPACK_ENV_VARIABLES)]
   };
 }
+
+const BABEL_LOADER_OPTIONS = {
+  presets: ['@babel/preset-env', '@babel/preset-react', '@babel/preset-typescript'],
+  plugins: [
+    ['@babel/plugin-transform-typescript', {isTSX: true, allowDeclareFields: true}],
+    '@babel/plugin-proposal-class-properties',
+    '@babel/plugin-proposal-optional-chaining',
+    '@babel/plugin-proposal-export-namespace-from',
+    '@babel/plugin-transform-runtime',
+    [
+      'search-and-replace',
+      {
+        rules: [
+          {
+            search: '__PACKAGE_VERSION__',
+            replace: KeplerPackage.version
+          }
+        ]
+      }
+    ]
+  ]
+};
 
 function makeBabelRule(env, exampleDir) {
   return {
@@ -159,27 +185,7 @@ function makeBabelRule(env, exampleDir) {
       env.deck || env.deck_src
         ? [/node_modules\/(?!(@deck\.gl|@luma\.gl|@probe\.gl|probe.gl|@loaders\.gl)\/).*/]
         : [/node_modules/],
-    options: {
-      presets: ['@babel/preset-env', '@babel/preset-react', '@babel/preset-typescript'],
-      plugins: [
-        ['@babel/plugin-transform-typescript', {isTSX: true, allowDeclareFields: true}],
-        '@babel/plugin-proposal-class-properties',
-        '@babel/plugin-proposal-optional-chaining',
-        '@babel/plugin-proposal-export-namespace-from',
-        '@babel/plugin-transform-runtime',
-        [
-          'search-and-replace',
-          {
-            rules: [
-              {
-                search: '__PACKAGE_VERSION__',
-                replace: KeplerPackage.version
-              }
-            ]
-          }
-        ]
-      ]
-    }
+    options: BABEL_LOADER_OPTIONS
   };
 }
 
@@ -220,7 +226,13 @@ function addBabelSettings(env, config, exampleDir) {
       ...config.module,
       rules: [
         ...config.module.rules.filter(r => r.loader !== 'babel-loader'),
-        makeBabelRule(env, exampleDir)
+        makeBabelRule(env, exampleDir),
+        {
+          test: /\.(js|ts)$/,
+          loader: 'babel-loader',
+          options: BABEL_LOADER_OPTIONS,
+          include: [/node_modules\/@probe.gl/]
+        }
       ]
     }
   };
