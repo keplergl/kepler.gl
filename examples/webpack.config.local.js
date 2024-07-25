@@ -118,7 +118,8 @@ function makeLocalDevConfig(env, EXAMPLE_DIR = LIB_DIR, externals = {}) {
           exclude: [
             /node_modules\/react-palm/,
             /node_modules\/react-data-grid/,
-            /node_modules\/@probe\.gl/
+            /node_modules\/@probe\.gl/,
+            /node_modules\/@loaders\.gl/
           ]
         },
         // for compiling apache-arrow ESM module
@@ -231,7 +232,7 @@ function addBabelSettings(env, config, exampleDir) {
           test: /\.(js|ts)$/,
           loader: 'babel-loader',
           options: BABEL_LOADER_OPTIONS,
-          include: [/node_modules\/@probe.gl/]
+          include: [/node_modules\/@probe\.gl/, /node_modules\/@loaders\.gl/]
         }
       ]
     }
