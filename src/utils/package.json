@@ -23,7 +23,7 @@
     "build:umd": "NODE_OPTIONS=--openssl-legacy-provider webpack --config ./webpack/umd.js --progress --env.prod",
     "build:types": "tsc --project ./tsconfig.production.json",
     "prepublish": "babel-node ../../scripts/license-header/bin --license ../../FILE-HEADER && yarn build && yarn build:types",
-    "stab": "mkdir -p dist && touch dist/index.js"
+    "stab": "mkdir -p dist && touch dist/index.js >/dev/null 2>&1"
   },
   "files": [
     "dist",
