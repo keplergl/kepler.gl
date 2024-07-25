@@ -115,13 +115,35 @@ function makeLocalDevConfig(env, EXAMPLE_DIR = LIB_DIR, externals = {}) {
           test: /\.(js|ts|tsx)$/,
           use: ['source-map-loader'],
           enforce: 'pre',
-          exclude: [/node_modules\/react-palm/, /node_modules\/react-data-grid/]
+          exclude: [/node_modules\/react-palm/, /node_modules\/react-data-grid/, /node_modules\/@loaders.gl/, /node_module\/@probe.gl/]
         },
         // for compiling apache-arrow ESM module
         {
           test: /\.mjs$/,
           include: /node_modules\/apache-arrow/,
           type: 'javascript/auto'
+        },
+        {
+          test: /\.(js|ts|tsx)$/,
+          use: {
+            loader: 'babel-loader',
+            options: {
+              plugins: [
+                "@babel/plugin-transform-class-properties",
+                "@babel/plugin-transform-optional-chaining",
+                "@babel/plugin-transform-logical-assignment-operators",
+                "@babel/plugin-transform-nullish-coalescing-operator",
+                "@babel/plugin-transform-export-namespace-from"
+              ],
+              include: [
+                /node_modules\/@loaders\.gl/,
+                /node_modules\/@probe\.gl/,
+                /node_modules\/@math\.gl/,
+                /node_modules\/@kepler\.gl/
+              ],
+              exclude: [/node_modules\/(?!(@loaders\.gl|@probe\.gl|@kepler\.gl|@math\.gl)).*/],
+            }
+          }
         }
       ]
     },
