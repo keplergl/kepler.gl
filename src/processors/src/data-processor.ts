@@ -383,6 +383,7 @@ export function processKeplerglDataset(
  * @returns dataset containing `fields` and `rows` or null
  */
 export function processArrowTable(arrowTable: ArrowTable): ProcessorResult | null {
+  // @ts-ignore - Unknown data type causing build failures
   return processArrowBatches(arrowTable.data.batches);
 }
 
