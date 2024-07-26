@@ -36,7 +36,7 @@
   "devDependencies": {
     "apache-arrow": "^13.0.0",
     "@babel/cli": "7.4.4",
-    "@babel/core": "7.4.5",
+    "@babel/core": "^7.12.1",
     "@babel/plugin-transform-class-properties": "^7.12.1",
     "@babel/plugin-transform-export-namespace-from": "^7.12.1",
     "@babel/plugin-transform-optional-chaining": "^7.12.1",

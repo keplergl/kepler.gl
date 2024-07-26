@@ -38,6 +38,7 @@ const withLocalSelector = <P extends {}>(
     }));
 
     render() {
+      // @ts-ignore Argument of type 'Readonly<P & { selector: (...args: any[]) => KeplerGlState; }>' is not assignable to parameter of type 'never'
       const computedContext = this.contextSelector(this.props, this.context);
       return (
         <KeplerGlContext.Provider value={computedContext}>
