@@ -24,7 +24,6 @@ const BABEL_CONFIG = {
     "@babel/plugin-transform-optional-chaining",
     "@babel/plugin-transform-logical-assignment-operators",
     "@babel/plugin-transform-nullish-coalescing-operator",
-    "@babel/plugin-transform-export-namespace-from"
     [
       'search-and-replace',
       {
