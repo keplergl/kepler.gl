@@ -23,7 +23,7 @@
     "build:umd": "NODE_OPTIONS=--openssl-legacy-provider webpack --config ./webpack/umd.js --progress --env.prod",
     "build:types": "tsc --project ./tsconfig.production.json",
     "prepublish": "babel-node ../../scripts/license-header/bin --license ../../FILE-HEADER && yarn build && yarn build:types",
-    "stab": "mkdir -p dist && touch dist/index.js >/dev/null 2>&1"
+    "stab": "mkdir -p dist && touch dist/index.js"
   },
   "files": [
     "dist",
@@ -67,6 +67,9 @@
     "redux": "^4.2.1",
     "redux-actions": "^2.2.1",
     "reselect": "^4.0.0"
+  },
+  "overrides": {
+    "@types/lodash": "4.17.5"
   },
   "nyc": {
     "sourceMap": false,
