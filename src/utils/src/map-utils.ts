@@ -10,8 +10,8 @@ export const onViewPortChange = (
   viewState: Viewport,
   onUpdateMap: (next: any, mapIndex: number) => any,
   onViewStateChange?: (next: any) => void | null,
-  primary: boolean = false,
-  mapIndex: number = 0
+  primary = false,
+  mapIndex = 0
 ): void => {
   const {width = 0, height = 0, ...restViewState} = viewState;
   // react-map-gl sends 0,0 dimensions during initialization

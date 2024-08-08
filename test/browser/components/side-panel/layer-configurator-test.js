@@ -153,10 +153,7 @@ test('Components -> LayerConfigurator.mount -> defaut prop 2', t => {
   t.equal(baseConfigGroup.find(LayerColumnConfig).length, 1, 'should render 1 LayerColumnConfig');
 
   t.equal(
-    baseConfigGroup
-      .find(LayerColumnConfig)
-      .at(0)
-      .find(ColumnSelector).length,
+    baseConfigGroup.find(LayerColumnConfig).at(0).find(ColumnSelector).length,
     3,
     'Should render 3 ColumnSelector'
   );
@@ -246,7 +243,7 @@ test('Components -> LayerConfigurator.mount -> defaut prop 2', t => {
   //    }
   //  ],
   //  'should update single column'
-  //);
+  // );
   t.end();
 });
 
@@ -268,10 +265,7 @@ test('Components -> LayerConfigurator.mount -> collapsed / expand config group '
 
   const component = wrapper.find(LayerConfigurator).instance();
   t.equal(
-    wrapper
-      .find(LayerConfigGroup)
-      .at(0)
-      .find('.layer-config-group.collapsed').length,
+    wrapper.find(LayerConfigGroup).at(0).find('.layer-config-group.collapsed').length,
     3,
     'LayerConfigGroup should be collapsed'
   );
@@ -289,16 +283,10 @@ test('Components -> LayerConfigurator.mount -> collapsed / expand config group '
   t.ok(spy2.calledOnce, 'should call _renderTripLayerConfig');
 
   // click layer config group header
-  wrapper
-    .find('.layer-config-group__header')
-    .at(0)
-    .simulate('click');
+  wrapper.find('.layer-config-group__header').at(0).simulate('click');
 
   t.equal(
-    wrapper
-      .find(LayerConfigGroup)
-      .at(0)
-      .find('.layer-config-group.collapsed').length,
+    wrapper.find(LayerConfigGroup).at(0).find('.layer-config-group.collapsed').length,
     0,
     'LayerConfigGroup should be expanded'
   );

@@ -15,11 +15,7 @@ const webpack = require('webpack');
 const fs = require('fs');
 const KeplerPackage = require('../package');
 const {logStep, logError} = require('../scripts/log');
-const {
-  WEBPACK_ENV_VARIABLES,
-  ENV_VARIABLES_WITH_INSTRUCTIONS,
-  RESOLVE_ALIASES
-} = require('../webpack/shared-webpack-configuration');
+const {WEBPACK_ENV_VARIABLES, RESOLVE_ALIASES} = require('../webpack/shared-webpack-configuration');
 
 const LIB_DIR = resolve(__dirname, '..');
 const SRC_DIR = resolve(LIB_DIR, './src');

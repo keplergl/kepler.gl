@@ -86,10 +86,7 @@ test('Components -> TimeWidget.mount -> with time filter', t => {
   t.equal(wrapper.find(PlaybackControls).length, 1, 'should render PlaybackControls');
 
   // check yAxisFields
-  const yAxisFields = wrapper
-    .find(FieldSelector)
-    .at(0)
-    .props().fields;
+  const yAxisFields = wrapper.find(FieldSelector).at(0).props().fields;
   t.deepEqual(
     yAxisFields.map(f => f.name),
     ['gps_data.lat', 'gps_data.lng', 'uid'],
@@ -145,24 +142,15 @@ test('Components -> TimeWidget.mount -> test actions', t => {
   );
 
   // hit play
-  wrapper
-    .find(Icons.Play)
-    .at(0)
-    .simulate('click');
+  wrapper.find(Icons.Play).at(0).simulate('click');
   t.deepEqual(toggleAnimation.args[0], [0], 'should call toggle animation');
 
   // hit speed icon
-  wrapper
-    .find(Icons.Rocket)
-    .at(0)
-    .simulate('click');
+  wrapper.find(Icons.Rocket).at(0).simulate('click');
 
   t.equal(wrapper.find(AnimationSpeedSlider).length, 1, 'should render AnimationSpeedSlider');
   t.equal(
-    wrapper
-      .find(AnimationSpeedSlider)
-      .at(0)
-      .find('.kg-range-slider__handle').length,
+    wrapper.find(AnimationSpeedSlider).at(0).find('.kg-range-slider__handle').length,
     2,
     'should render 2 speed slider handle'
   );
@@ -182,31 +170,20 @@ test('Components -> TimeWidget.mount -> test actions', t => {
   t.deepEqual(updateAnimationSpeed.args[0], [0, 2], 'should call updateAnimationSpeed with speed');
 
   // hit animation window
-  wrapper
-    .find(Icons.FreeWindow)
-    .at(0)
-    .simulate('click');
+  wrapper.find(Icons.FreeWindow).at(0).simulate('click');
   t.equal(
     wrapper.find('.animation-window-control').length,
     1,
     'should render AnimationWindowControl initially'
   );
   t.equal(
-    wrapper
-      .find('.animation-window-control')
-      .at(0)
-      .find(IconButton).length,
+    wrapper.find('.animation-window-control').at(0).find(IconButton).length,
     1,
     'should render 1 animate window options'
   );
 
   // select an animation option
-  wrapper
-    .find('.animation-window-control')
-    .at(0)
-    .find(IconButton)
-    .at(0)
-    .simulate('click');
+  wrapper.find('.animation-window-control').at(0).find(IconButton).at(0).simulate('click');
 
   t.deepEqual(
     setFilterAnimationWindow.args[0],
@@ -215,17 +192,10 @@ test('Components -> TimeWidget.mount -> test actions', t => {
   );
 
   // click yaxis select
-  wrapper
-    .find('.item-selector__dropdown')
-    .at(0)
-    .simulate('click');
+  wrapper.find('.item-selector__dropdown').at(0).simulate('click');
   t.equal(wrapper.find(Typeahead).length, 1, 'should render dropdown select');
 
-  wrapper
-    .find(Typeahead)
-    .find('.field-selector_list-item')
-    .at(0)
-    .simulate('click');
+  wrapper.find(Typeahead).find('.field-selector_list-item').at(0).simulate('click');
   t.equal(setFilterPlot.args[0][0], 0, 'should pass filteridx to setFilterPlot');
   t.equal(
     setFilterPlot.args[0][1].yAxis.name,
@@ -234,10 +204,7 @@ test('Components -> TimeWidget.mount -> test actions', t => {
   );
 
   // hit close
-  wrapper
-    .find(Icons.Close)
-    .at(0)
-    .simulate('click');
+  wrapper.find(Icons.Close).at(0).simulate('click');
 
   t.deepEqual(onClose.calledOnce, true, 'should call enlarged filter to close');
 
@@ -309,41 +276,24 @@ test('Components -> TimeWidget.mount -> test floating time display', t => {
   const timeDisplay = wrapper.find(FloatingTimeDisplay);
   t.equal(timeDisplay.find(topSelector).length, 1, 'should render 1 top row');
   t.equal(
-    timeDisplay
-      .find(topSelector)
-      .at(0)
-      .find('.time-value')
-      .text(),
+    timeDisplay.find(topSelector).at(0).find('.time-value').text(),
     '09/23/2016',
     'should render correct date'
   );
 
   t.equal(timeDisplay.find(bottomSelector).length, 1, 'should render 1 bottom row');
   t.equal(
-    timeDisplay
-      .find(bottomSelector)
-      .at(0)
-      .find('.time-value').length,
+    timeDisplay.find(bottomSelector).at(0).find('.time-value').length,
     2,
     'should render 2 time value'
   );
   t.equal(
-    timeDisplay
-      .find(bottomSelector)
-      .at(0)
-      .find('.time-value')
-      .at(0)
-      .text(),
+    timeDisplay.find(bottomSelector).at(0).find('.time-value').at(0).text(),
     '5:00:00 AM',
     'should render correct time'
   );
   t.equal(
-    timeDisplay
-      .find(bottomSelector)
-      .at(0)
-      .find('.time-value')
-      .at(1)
-      .text(),
+    timeDisplay.find(bottomSelector).at(0).find('.time-value').at(1).text(),
     '8:00:00 AM',
     'should render correct time'
   );
@@ -357,23 +307,13 @@ test('Components -> TimeWidget.mount -> test floating time display', t => {
   // check time display again
   const timeDisplay2 = wrapper.find(FloatingTimeDisplay);
   t.equal(
-    timeDisplay2
-      .find(bottomSelector)
-      .at(0)
-      .find('.time-value')
-      .at(0)
-      .text(),
+    timeDisplay2.find(bottomSelector).at(0).find('.time-value').at(0).text(),
     '2016 Sep 23 01:00 am',
     'should render correct time format and timezone'
   );
 
   t.equal(
-    timeDisplay2
-      .find(bottomSelector)
-      .at(0)
-      .find('.time-value')
-      .at(1)
-      .text(),
+    timeDisplay2.find(bottomSelector).at(0).find('.time-value').at(1).text(),
     '2016 Sep 23 04:00 am',
     'should render correct time format and timezone'
   );
@@ -394,11 +334,7 @@ test('Components -> TimeWidget.mount -> TimeSliderMarker', t => {
   }, 'mount TimeWidget should not fail');
 
   t.equal(wrapper.find(TimeSliderMarker).length, 1, 'should render TimeSliderMarker');
-  let d3Html = wrapper
-    .find(TimeSliderMarker)
-    .at(0)
-    .find('.x.axis')
-    .html();
+  let d3Html = wrapper.find(TimeSliderMarker).at(0).find('.x.axis').html();
 
   // moment.utc(1474588800000) -> "2016-09-23 00:00"
   // moment.utc(1474617600000) -> "2016-09-23 08:00"
@@ -426,11 +362,7 @@ test('Components -> TimeWidget.mount -> TimeSliderMarker', t => {
     children: <TimeWidget {...defaultProps} filter={nextState.filters[0]} />
   });
 
-  d3Html = wrapper
-    .find(TimeSliderMarker)
-    .at(0)
-    .find('.x.axis')
-    .html();
+  d3Html = wrapper.find(TimeSliderMarker).at(0).find('.x.axis').html();
 
   // moment.utc(1474588800000).tz('America/New_York') -> "2016-09-22 20:00"
   // moment.utc(1474617600000).tz('America/New_York') -> "2016-09-23 04:00"

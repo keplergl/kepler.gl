@@ -31,10 +31,11 @@ export type AggregationLayerData = {
   index: number;
 };
 
-export const pointPosAccessor = ({lat, lng}: AggregationLayerColumns) => dc => d => [
-  dc.valueAt(d.index, lng.fieldIdx),
-  dc.valueAt(d.index, lat.fieldIdx)
-];
+export const pointPosAccessor =
+  ({lat, lng}: AggregationLayerColumns) =>
+  dc =>
+  d =>
+    [dc.valueAt(d.index, lng.fieldIdx), dc.valueAt(d.index, lat.fieldIdx)];
 
 export const pointPosResolver = ({lat, lng}: AggregationLayerColumns) =>
   `${lat.fieldIdx}-${lng.fieldIdx}`;
@@ -47,11 +48,10 @@ export const getValueAggrFunc = getPointData => (field, aggregation) => points =
       )
     : points.length;
 
-export const getFilterDataFunc = (
-  filterRange: number[][],
-  getFilterValue: (d: any) => number[]
-): ((d: any) => boolean) => pt =>
-  getFilterValue(pt).every((val, i) => val >= filterRange[i][0] && val <= filterRange[i][1]);
+export const getFilterDataFunc =
+  (filterRange: number[][], getFilterValue: (d: any) => number[]): ((d: any) => boolean) =>
+  pt =>
+    getFilterValue(pt).every((val, i) => val >= filterRange[i][0] && val <= filterRange[i][1]);
 
 const getLayerColorRange = (colorRange: ColorRange) => colorRange.colors.map(hexToRgb);
 
@@ -161,8 +161,9 @@ export default class AggregationLayer extends Layer {
       label: typeof label === 'function' ? label(this.config) : label || '',
       measure:
         fieldConfig && aggregation
-          ? `${this.config.visConfig[aggregation]} of ${fieldConfig.displayName ||
-              fieldConfig.name}`
+          ? `${this.config.visConfig[aggregation]} of ${
+              fieldConfig.displayName || fieldConfig.name
+            }`
           : defaultMeasure
     };
   }

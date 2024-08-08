@@ -185,9 +185,13 @@ export type SortColumn = {
   mode?: string;
 };
 
-const columnWidthFunction = (columns, cellSizeCache, ghost?) => ({index}) => {
-  return (columns[index] || {}).ghost ? ghost : cellSizeCache[columns[index]] || defaultColumnWidth;
-};
+const columnWidthFunction =
+  (columns, cellSizeCache, ghost?) =>
+  ({index}) => {
+    return (columns[index] || {}).ghost
+      ? ghost
+      : cellSizeCache[columns[index]] || defaultColumnWidth;
+  };
 
 interface GetRowCellProps {
   dataContainer: DataContainerInterface;
@@ -489,7 +493,7 @@ function DataTableFactory(HeaderCell: ReturnType<typeof HeaderCellFactory>) {
 
     renderDataCell = (columns, isPinned, props: DataTableProps) => {
       const getRowCell = this.props.getRowCell ?? defaultGetRowCell;
-      return cellInfo => {
+      const DataCellRenderer = cellInfo => {
         const {columnIndex, key, style, rowIndex} = cellInfo;
         const {dataContainer, colMeta} = props;
         const column = columns[columnIndex];
@@ -527,10 +531,11 @@ function DataTableFactory(HeaderCell: ReturnType<typeof HeaderCellFactory>) {
 
         return cell;
       };
+      return DataCellRenderer;
     };
 
     renderHeaderCell(columns, isPinned, props, toggleMoreOptions, moreOptionsColumn) {
-      return cellInfo => (
+      const HeaderCellRenderer = cellInfo => (
         <HeaderCell
           cellInfo={cellInfo}
           key={cellInfo.columnIndex}
@@ -542,6 +547,7 @@ function DataTableFactory(HeaderCell: ReturnType<typeof HeaderCellFactory>) {
           moreOptionsColumn={moreOptionsColumn}
         />
       );
+      return HeaderCellRenderer;
     }
     render() {
       const {

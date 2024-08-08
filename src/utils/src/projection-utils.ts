@@ -64,13 +64,13 @@ export function getCenterAndZoomFromBounds(bounds, {width, height}) {
  * https://visgl.github.io/react-map-gl/docs/api-reference/types#maplayermouseevent
  */
 export function normalizeEvent(event: any, viewport: WebMercatorViewport) {
-  var bounds = event.target?.getBoundingClientRect();
+  const bounds = event.target?.getBoundingClientRect();
   if (!bounds) {
     return event;
   }
 
-  var x = event.clientX - bounds.left;
-  var y = event.clientY - bounds.top;
+  const x = event.clientX - bounds.left;
+  const y = event.clientY - bounds.top;
   if (!Number.isFinite(x) || !Number.isFinite(y)) {
     return event;
   }

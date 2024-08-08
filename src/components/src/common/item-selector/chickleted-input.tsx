@@ -91,7 +91,7 @@ const ChickletedInputContainer = styled.div<ChickletedInputContainerProps>`
       : props.inputTheme === 'light'
       ? props.theme.chickletedInputLT
       : props.theme.chickletedInput}
-      
+
   color: ${props =>
     props.hasPlaceholder ? props.theme.selectColorPlaceHolder : props.theme.selectColor};
   overflow: hidden;
@@ -128,10 +128,8 @@ const ChickletedItem = ({
       item,
       removeItem,
       displayOption,
-      CustomChickletComponent,
       inputTheme,
       disabled,
-      itemId,
       attributes,
       listeners,
       setNodeRef,
@@ -159,10 +157,10 @@ const ChickletedInput: React.FC<ChickletedInputProps> = ({
   inputTheme,
   CustomChickletComponent
 }) => {
-  const selectedItemIds = useMemo(() => selectedItems.map(item => displayOption(item)), [
-    displayOption,
-    selectedItems
-  ]);
+  const selectedItemIds = useMemo(
+    () => selectedItems.map(item => displayOption(item)),
+    [displayOption, selectedItems]
+  );
   const handleDragEnd = useCallback(
     ({active, over}) => {
       if (!over) return;
@@ -172,7 +170,7 @@ const ChickletedInput: React.FC<ChickletedInputProps> = ({
         reorderItems(arrayMove(selectedItems, oldIndex, newIndex));
       }
     },
-    [selectedItems, displayOption, reorderItems]
+    [selectedItemIds, selectedItems, reorderItems]
   );
 
   return (

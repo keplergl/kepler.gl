@@ -80,9 +80,11 @@ export const tripVisConfigs: {
 };
 
 export const geoJsonRequiredColumns: ['geojson'] = ['geojson'];
-export const featureAccessor = ({geojson}: TripLayerColumnsConfig) => (
-  dc: DataContainerInterface
-) => d => dc.valueAt(d.index, geojson.fieldIdx);
+export const featureAccessor =
+  ({geojson}: TripLayerColumnsConfig) =>
+  (dc: DataContainerInterface) =>
+  d =>
+    dc.valueAt(d.index, geojson.fieldIdx);
 export const featureResolver = ({geojson}: TripLayerColumnsConfig) => geojson.fieldIdx;
 
 export default class TripLayer extends Layer {

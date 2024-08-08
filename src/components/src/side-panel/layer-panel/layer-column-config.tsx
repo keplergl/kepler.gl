@@ -52,9 +52,8 @@ function getValidFieldPairsSuggestionsForColumn(
       );
     });
     return matchingFieldPairs.length > 0 ? matchingFieldPairs : null;
-  } else {
-    return null;
   }
+  return null;
 }
 
 LayerColumnConfigFactory.deps = [ColumnSelectorFactory];

@@ -199,7 +199,7 @@ export function processFileData({
   fileCache: FileCacheItem[];
 }): Promise<FileCacheItem[]> {
   return new Promise((resolve, reject) => {
-    let {fileName, data} = content;
+    const {fileName, data} = content;
     let format: string | undefined;
     let processor: Function | undefined;
 

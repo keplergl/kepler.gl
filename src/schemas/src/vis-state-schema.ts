@@ -570,9 +570,7 @@ export class LayerSchemaV0 extends Schema {
     };
   }
 
-  load(
-    layers: SavedLayer[] | MinSavedLayer[] | undefined
-  ): {
+  load(layers: SavedLayer[] | MinSavedLayer[] | undefined): {
     layers: ParsedLayer[] | undefined;
   } {
     return {
@@ -592,9 +590,9 @@ export class FilterSchemaV0 extends Schema {
         .map(filter => this.savePropertiesOrApplySchema(filter).filters)
     };
   }
-  load(
-    filters: SavedFilter[] | MinSavedFilter[] | undefined
-  ): {filters: ParsedFilter[] | undefined} {
+  load(filters: SavedFilter[] | MinSavedFilter[] | undefined): {
+    filters: ParsedFilter[] | undefined;
+  } {
     return {
       filters: filters
         ?.map(filter => this.loadPropertiesOrApplySchema(filter).filters)
@@ -660,9 +658,7 @@ const interactionPropsV1 = [...interactionPropsV0, 'geocoder', 'coordinate'];
 export class InteractionSchemaV1 extends Schema {
   key = 'interactionConfig';
 
-  save(
-    interactionConfig: InteractionConfig
-  ):
+  save(interactionConfig: InteractionConfig):
     | {
         interactionConfig: SavedInteractionConfig;
       }
@@ -683,9 +679,7 @@ export class InteractionSchemaV1 extends Schema {
         }
       : {};
   }
-  load(
-    interactionConfig: SavedInteractionConfig
-  ): {
+  load(interactionConfig: SavedInteractionConfig): {
     interactionConfig: Partial<SavedInteractionConfig>;
   } {
     const modifiedConfig = interactionConfig;
@@ -898,9 +892,7 @@ export class VisStateSchemaV1 extends Schema {
     return this.savePropertiesOrApplySchema(node, parents, accumulator);
   }
 
-  load(
-    node?: SavedVisState
-  ): {
+  load(node?: SavedVisState): {
     visState: ParsedVisState | undefined;
   } {
     // @ts-expect-error

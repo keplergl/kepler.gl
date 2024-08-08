@@ -63,13 +63,7 @@ function HistogramPlotFactory() {
     // use 1st for now
     const getValue = useMemo(() => d => d[dataId], [dataId]);
 
-    const x = useMemo(
-      () =>
-        scaleLinear()
-          .domain(domain)
-          .range([0, width]),
-      [domain, width]
-    );
+    const x = useMemo(() => scaleLinear().domain(domain).range([0, width]), [domain, width]);
 
     const y = useMemo(
       () =>

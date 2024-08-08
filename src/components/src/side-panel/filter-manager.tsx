@@ -74,13 +74,8 @@ function FilterManagerFactory(
     isAnyFilterAnimating,
     visStateActions
   }: FilterListProps) => {
-    const {
-      removeFilter,
-      setFilter,
-      toggleFilterAnimation,
-      toggleFilterFeature,
-      setFilterView
-    } = visStateActions;
+    const {removeFilter, setFilter, toggleFilterAnimation, toggleFilterFeature, setFilterView} =
+      visStateActions;
 
     const filterPanelCallbacks = useMemo(() => {
       return filtersByIndex.reduce(

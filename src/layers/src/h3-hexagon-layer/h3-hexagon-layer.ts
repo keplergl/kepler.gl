@@ -92,9 +92,11 @@ export type HexagonIdLayerData = {index: number; id; centroid: Centroid};
 const DEFAULT_LINE_SCALE_VALUE = 8;
 
 export const hexIdRequiredColumns: ['hex_id'] = ['hex_id'];
-export const hexIdAccessor = ({hex_id}: HexagonIdLayerColumnsConfig) => (
-  dc: DataContainerInterface
-) => d => dc.valueAt(d.index, hex_id.fieldIdx);
+export const hexIdAccessor =
+  ({hex_id}: HexagonIdLayerColumnsConfig) =>
+  (dc: DataContainerInterface) =>
+  d =>
+    dc.valueAt(d.index, hex_id.fieldIdx);
 
 export const defaultElevation = 500;
 export const defaultCoverage = 1;

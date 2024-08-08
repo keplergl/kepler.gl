@@ -302,7 +302,7 @@ export function validateFilterWithData<K extends KeplerTableModel<K, L>, L>(
   filter: ParsedFilter,
   layers: L[]
 ): {filter: Filter; dataset: K} {
-  return filter.type && filterValidators.hasOwnProperty(filter.type)
+  return filter.type && Object.prototype.hasOwnProperty.call(filterValidators, filter.type)
     ? filterValidators[filter.type](dataset, filter, layers)
     : validateFilter(dataset, filter);
 }
@@ -483,7 +483,7 @@ export function getFilterFunction<L extends {config: {dataId: string | null}; id
       return data => filter.value.includes(valueAccessor(data));
     case FILTER_TYPES.select:
       return data => valueAccessor(data) === filter.value;
-    case FILTER_TYPES.timeRange:
+    case FILTER_TYPES.timeRange: {
       if (!field) {
         return defaultFunc;
       }
@@ -492,7 +492,8 @@ export function getFilterFunction<L extends {config: {dataId: string | null}; id
         ? data => mappedValue[data.index]
         : data => timeToUnixMilli(valueAccessor(data), field.format);
       return data => isInRange(accessor(data), filter.value);
-    case FILTER_TYPES.polygon:
+    }
+    case FILTER_TYPES.polygon: {
       if (!layers || !layers.length || !filter.layerId) {
         return defaultFunc;
       }
@@ -502,6 +503,7 @@ export function getFilterFunction<L extends {config: {dataId: string | null}; id
         .map(layer => getPolygonFilterFunctor(layer, filter, dataContainer));
 
       return data => layerFilterFunctions.every(filterFunc => filterFunc(data));
+    }
     default:
       return defaultFunc;
   }
@@ -586,13 +588,13 @@ export function getFilterRecord(
  */
 export function diffFilters(
   filterRecord: FilterRecord,
-  oldFilterRecord: FilterRecord | {} = {}
+  oldFilterRecord: FilterRecord | Record<string, never> = {}
 ): FilterChanged {
   let filterChanged: Partial<FilterChanged> = {};
 
   (Object.entries(filterRecord) as Entries<FilterRecord>).forEach(([record, items]) => {
     items.forEach(filter => {
-      const oldFilter: Filter = (oldFilterRecord[record] || []).find(
+      const oldFilter: Filter | undefined = (oldFilterRecord[record] || []).find(
         (f: Filter) => f.id === filter.id
       );
 
@@ -646,13 +648,13 @@ export function adjustValueToFilterDomain(value: Filter['value'], {domain, type}
 
       return value.map((d, i) => (notNullorUndefined(d) && isInRange(d, domain) ? d : domain[i]));
 
-    case FILTER_TYPES.multiSelect:
+    case FILTER_TYPES.multiSelect: {
       if (!Array.isArray(value)) {
         return [];
       }
       const filteredValue = value.filter(d => domain.includes(d));
       return filteredValue.length ? filteredValue : [];
-
+    }
     case FILTER_TYPES.select:
       return domain.includes(value) ? value : true;
     case FILTER_TYPES.polygon:
@@ -869,10 +871,10 @@ export function isValidFilterValue(type: string | null, value: any): boolean {
     case FILTER_TYPES.input:
       return Boolean(value.length);
 
-    case FILTER_TYPES.polygon:
+    case FILTER_TYPES.polygon: {
       const coordinates = get(value, ['geometry', 'coordinates']);
       return Boolean(value && value.id && coordinates);
-
+    }
     default:
       return true;
   }
@@ -881,7 +883,7 @@ export function isValidFilterValue(type: string | null, value: any): boolean {
 export function getColumnFilterProps<K extends KeplerTableModel<K, L>, L>(
   filter: Filter,
   dataset: K
-): {lineChart: LineChart; yAxs: Field} | {} {
+): {lineChart: LineChart; yAxs: Field} | Record<string, any> {
   if (filter.plotType === PLOT_TYPES.histogram || !filter.yAxis) {
     // histogram should be calculated when create filter
     return {};
@@ -892,7 +894,7 @@ export function getColumnFilterProps<K extends KeplerTableModel<K, L>, L>(
   const fieldIdx = dataset.getColumnFieldIdx(yAxis.name);
   if (fieldIdx < 0) {
     Console.warn(`yAxis ${yAxis.name} does not exist in dataset`);
-    return {lineChart: {}, yAxis};
+    return {};
   }
 
   // return lineChart
@@ -907,14 +909,14 @@ export function getColumnFilterProps<K extends KeplerTableModel<K, L>, L>(
     .filter(({x, y}) => Number.isFinite(x) && Number.isFinite(y))
     .sort((a, b) => ascending(a.x, b.x));
 
-  const yDomain = extent(series, d => d.y);
-  const xDomain = [series[0].x, series[series.length - 1].x];
+  const yDomain = extent(series, d => d.y) as [number, number];
+  const xDomain = [series[0].x, series[series.length - 1].x] as [number, number];
 
   return {lineChart: {series, yDomain, xDomain}, yAxis};
 }
 
 export function getDefaultFilterPlotType(filter: Filter): string | null {
-  const filterPlotTypes: typeof SupportedPlotType[keyof typeof SupportedPlotType] | null =
+  const filterPlotTypes: (typeof SupportedPlotType)[keyof typeof SupportedPlotType] | null =
     filter.type && SupportedPlotType[filter.type];
   if (!filterPlotTypes) {
     return null;
@@ -976,7 +978,10 @@ export function applyFilterFieldName<K extends KeplerTableModel<K, L>, L>(
   dataset: K;
 } {
   // using filterDatasetIndex we can filter only the specified dataset
-  const mergeDomain = option && option.hasOwnProperty('mergeDomain') ? option.mergeDomain : false;
+  const mergeDomain =
+    option && Object.prototype.hasOwnProperty.call(option, 'mergeDomain')
+      ? option.mergeDomain
+      : false;
 
   const fieldIndex = dataset.getColumnFieldIdx(fieldName);
   // if no field with same name is found, move to the next datasets
@@ -1042,7 +1047,7 @@ export function mergeFilterDomainStep(
         domain: unique(combinedDomain).sort()
       };
 
-    case ALL_FIELD_TYPES.timestamp:
+    case ALL_FIELD_TYPES.timestamp: {
       const step =
         (filter as TimeRangeFilter).step < (filterProps as TimeRangeFieldDomain).step
           ? (filter as TimeRangeFilter).step
@@ -1052,6 +1057,7 @@ export function mergeFilterDomainStep(
         ...newFilter,
         step
       };
+    }
     case ALL_FIELD_TYPES.real:
     case ALL_FIELD_TYPES.integer:
     default:
@@ -1066,7 +1072,7 @@ export function mergeFilterDomainStep(
 export const featureToFilterValue = (
   feature: Feature,
   filterId: string,
-  properties?: {}
+  properties?: Record<string, any>
 ): FeatureValue => ({
   ...feature,
   id: feature.id,
@@ -1154,7 +1160,11 @@ export function validateFiltersUpdateDatasets<
     // we can merge a filter only if all datasets in filter.dataId are loaded
     if (datasetIds.every(d => datasets[d] && !state.isMergingDatasets[d])) {
       // all datasetIds in filter must be present the state datasets
-      const {filter: validatedFilter, applyToDatasets, augmentedDatasets} = datasetIds.reduce<{
+      const {
+        filter: validatedFilter,
+        applyToDatasets,
+        augmentedDatasets
+      } = datasetIds.reduce<{
         filter: Filter | null;
         applyToDatasets: string[];
         augmentedDatasets: {[datasetId: string]: any};
@@ -1218,7 +1228,7 @@ export function validateFiltersUpdateDatasets<
 export function getFilterPlot<K extends KeplerTableModel<K, L>, L>(
   filter: Filter,
   dataset: K
-): {lineChart: LineChart; yAxs: Field} | {} {
+): {lineChart: LineChart; yAxs: Field} | Record<string, any> {
   if (filter.plotType === PLOT_TYPES.histogram || !filter.yAxis) {
     // histogram should be calculated when create filter
     return {};

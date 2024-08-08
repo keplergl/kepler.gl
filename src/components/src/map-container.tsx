@@ -128,7 +128,7 @@ const MapLibreLogo = () => (
   <div className="attrition-logo">
     Basemap by:
     <a
-      style={{marginLeft: "5px"}}
+      style={{marginLeft: '5px'}}
       className="maplibregl-ctrl-logo"
       target="_blank"
       rel="noopener noreferrer"

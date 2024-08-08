@@ -180,14 +180,8 @@ export default function GeocoderPanelFactory(): ComponentType<GeocoderPanelProps
     };
 
     render() {
-      const {
-        className,
-        isGeocoderEnabled,
-        mapboxApiAccessToken,
-        width,
-        index,
-        unsyncedViewports
-      } = this.props;
+      const {className, isGeocoderEnabled, mapboxApiAccessToken, width, index, unsyncedViewports} =
+        this.props;
       return (
         <StyledGeocoderPanel
           className={classnames('geocoder-panel', className)}

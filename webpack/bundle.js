@@ -9,7 +9,7 @@ const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPl
 const SRC_DIR = resolve(__dirname, '../src');
 const OUTPUT_DIR = resolve(__dirname, '../build');
 
-const LIBRARY_BUNDLE_CONFIG = env => ({
+const LIBRARY_BUNDLE_CONFIG = () => ({
   entry: {
     KeplerGl: join(SRC_DIR, 'index.js')
   },

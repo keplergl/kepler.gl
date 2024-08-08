@@ -163,7 +163,7 @@ class Portaled extends Component<PortaledProps, PortaledState> {
   };
 
   unsubscribe: (() => boolean) | undefined = undefined;
-  _unmounted: boolean = false;
+  _unmounted = false;
 
   componentDidMount() {
     // relative

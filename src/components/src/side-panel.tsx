@@ -128,10 +128,10 @@ export default function SidePanelFactory(
 
     const isOpen = Boolean(activeSidePanel);
 
-    const _onOpenOrClose = useCallback(() => toggleSidePanel(activeSidePanel ? '' : 'layer'), [
-      activeSidePanel,
-      toggleSidePanel
-    ]);
+    const _onOpenOrClose = useCallback(
+      () => toggleSidePanel(activeSidePanel ? '' : 'layer'),
+      [activeSidePanel, toggleSidePanel]
+    );
 
     const onClickExportImage = useCallback(() => toggleModal(EXPORT_IMAGE_ID), [toggleModal]);
     const onClickExportData = useCallback(() => toggleModal(EXPORT_DATA_ID), [toggleModal]);
@@ -157,10 +157,10 @@ export default function SidePanelFactory(
     const onShowAddMapStyleModal = useCallback(() => toggleModal(ADD_MAP_STYLE_ID), [toggleModal]);
     const onRemoveDataset = useCallback(dataId => openDeleteModal(dataId), [openDeleteModal]);
 
-    const currentPanel = useMemo(() => panels.find(({id}) => id === activeSidePanel) || null, [
-      activeSidePanel,
-      panels
-    ]);
+    const currentPanel = useMemo(
+      () => panels.find(({id}) => id === activeSidePanel) || null,
+      [activeSidePanel, panels]
+    );
 
     const customPanelProps = useMemo(() => getCustomPanelProps(props), [props]);
     const PanelComponent = currentPanel?.component;

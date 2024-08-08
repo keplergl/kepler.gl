@@ -487,9 +487,10 @@ export function getFieldsFromData(data: RowData, fieldOrder: string[]): Field[] 
  * @param fieldOrder
  * @returns new field name by index
  */
-export function renameDuplicateFields(
-  fieldOrder: string[]
-): {allNames: string[]; fieldByIndex: string[]} {
+export function renameDuplicateFields(fieldOrder: string[]): {
+  allNames: string[];
+  fieldByIndex: string[];
+} {
   return fieldOrder.reduce<{allNames: string[]; fieldByIndex: string[]}>(
     (accu, field, i) => {
       const {allNames} = accu;

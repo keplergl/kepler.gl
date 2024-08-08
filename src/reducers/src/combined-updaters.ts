@@ -188,12 +188,7 @@ export const addDataToMapUpdater = (
       })
     ),
 
-    if_(
-      Boolean(info),
-      pick_('visState')(
-        apply_<VisState, any>(setMapInfoUpdater, {info})
-      )
-    ),
+    if_(Boolean(info), pick_('visState')(apply_<VisState, any>(setMapInfoUpdater, {info}))),
     with_(({visState}) =>
       pick_('mapState')(
         apply_(
@@ -254,23 +249,22 @@ const updateOverlayBlending = overlayBlending => visState => {
  * Helper which updates `darkBaseMapEnabled` in all the layers in visState which
  * have this config setting (or in one specific layer if the `layerId` param is provided).
  */
-const updateDarkBaseMapLayers = (
-  darkBaseMapEnabled: boolean,
-  layerId: string | null = null
-) => visState => ({
-  ...visState,
-  layers: visState.layers.map(layer => {
-    if (!layerId || layer.id === layerId) {
-      if (layer.visConfigSettings.hasOwnProperty('darkBaseMapEnabled')) {
-        const {visConfig} = layer.config;
-        return layer.updateLayerConfig({
-          visConfig: {...visConfig, darkBaseMapEnabled}
-        });
+const updateDarkBaseMapLayers =
+  (darkBaseMapEnabled: boolean, layerId: string | null = null) =>
+  visState => ({
+    ...visState,
+    layers: visState.layers.map(layer => {
+      if (!layerId || layer.id === layerId) {
+        if (layer.visConfigSettings.hasOwnProperty('darkBaseMapEnabled')) {
+          const {visConfig} = layer.config;
+          return layer.updateLayerConfig({
+            visConfig: {...visConfig, darkBaseMapEnabled}
+          });
+        }
       }
-    }
-    return layer;
-  })
-});
+      return layer;
+    })
+  });
 
 /**
  * Updater that changes the map style by calling mapStyleChangeUpdater on visState.

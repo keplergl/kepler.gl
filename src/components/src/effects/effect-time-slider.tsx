@@ -151,7 +151,8 @@ const MODES = {
  * Generate rendering blocks for each part of the day.
  */
 export function getUIBlocks(config: EffectTimeSliderConfig): UIBlock[] {
-  let {dawn, sunrise, sunset, dusk} = config;
+  const {dawn} = config;
+  let {sunrise, sunset, dusk} = config;
   if (dawn > sunrise) sunrise += 1;
   if (dawn > sunset) sunset += 1;
   if (dawn > dusk) dusk += 1;
@@ -209,6 +210,7 @@ export function getUIBlocks(config: EffectTimeSliderConfig): UIBlock[] {
   updatedBlocks.sort((a, b) => a.start - b.start);
 
   const existingBottomBlocks = {};
+  // eslint-disable-next-line complexity
   updatedBlocks.forEach(block => {
     block.width = (block.end - block.start) * 100;
     block.center = block.start * 100 + block.width / 2;

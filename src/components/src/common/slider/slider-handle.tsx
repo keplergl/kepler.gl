@@ -19,7 +19,7 @@ const StyledSliderHandle = styled.span.attrs(props => ({
   position: absolute;
   z-index: 10;
   ${props => (props.vertical ? 'margin-left' : 'margin-top')}: -${props =>
-  (props.sliderHandleWidth - props.theme.sliderBarHeight) / 2}px;
+    (props.sliderHandleWidth - props.theme.sliderBarHeight) / 2}px;
 
   height: ${props =>
     Number.isFinite(props.sliderHandleWidth)

@@ -697,7 +697,8 @@ export const inputMapStyleUpdater = (
   // or an icon already available client-side as a data uri
   const isUpdatedIconDataUri = updated.icon?.startsWith('data:image');
   const isValid = Boolean(updated.uploadedFile);
-  const isMapboxStyleUrl = updated.url?.startsWith('mapbox://') || updated.url?.includes('mapbox.com');
+  const isMapboxStyleUrl =
+    updated.url?.startsWith('mapbox://') || updated.url?.includes('mapbox.com');
 
   const icon =
     !isUpdatedIconDataUri && isMapboxStyleUrl

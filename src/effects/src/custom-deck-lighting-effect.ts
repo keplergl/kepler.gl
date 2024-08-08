@@ -49,7 +49,7 @@ CustomShadowModule.fs = insertBefore(
 CustomShadowModule.getUniforms = (opts = {}, context = {}) => {
   const u = shadow.getUniforms(opts, context);
   if (opts.outputUniformShadow !== undefined) {
-    u['u_outputUniformShadow'] = opts.outputUniformShadow;
+    u.u_outputUniformShadow = opts.outputUniformShadow;
   }
   return u;
 };

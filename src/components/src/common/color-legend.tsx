@@ -125,9 +125,7 @@ export default class ColorLegend extends Component<ColorLegendProps> {
         const scaleFunction = SCALE_FUNC[scaleType];
         // color scale can only be quantize, quantile or ordinal
         // @ts-ignore fix d3 scale
-        const scale = scaleFunction()
-          .domain(domain)
-          .range(range.colors);
+        const scale = scaleFunction().domain(domain).range(range.colors);
 
         if (scaleType === SCALE_TYPES.ordinal) {
           return getOrdinalLegends(scale);

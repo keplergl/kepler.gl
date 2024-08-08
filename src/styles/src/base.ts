@@ -834,7 +834,7 @@ const secondarySwitch = css<SwitchableProps>`
 
   :before {
     ${props => props.theme.switchTrack} background: ${props =>
-  props.checked ? props.theme.switchTrackBgdActive : props.theme.secondarySwitchTrackBgd};
+      props.checked ? props.theme.switchTrackBgdActive : props.theme.secondarySwitchTrackBgd};
   }
 
   :after {

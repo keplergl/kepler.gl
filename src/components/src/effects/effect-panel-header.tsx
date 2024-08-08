@@ -220,7 +220,15 @@ export function EffectPanelHeaderActionSectionFactory(
             icon: actionIcons.enableConfig
           }
         ],
-      [actionItems, isEnabled, onRemoveEffect, onToggleEnabled, actionIcons]
+      [
+        actionItems,
+        actionIcons,
+        isEnabled,
+        isConfigActive,
+        onRemoveEffect,
+        onToggleEnabled,
+        onToggleEnableConfig
+      ]
     );
 
     return (

@@ -21,7 +21,7 @@ type DatasetLayerSectionProps = {
   updateTableColor: ActionHandler<typeof VisStateActions.updateTableColor>;
   removeDataset: ActionHandler<typeof UIStateActions.openDeleteModal>;
   uiStateActions: typeof UIStateActions;
-  visStateActions: typeof VisStateActions;  
+  visStateActions: typeof VisStateActions;
   mapStateActions: typeof MapStateActions;
 };
 

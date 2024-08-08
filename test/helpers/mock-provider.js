@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright contributors to the kepler.gl project
+// Copyriht contributors to the kepler.gl project
 
 import React from 'react';
 
@@ -30,8 +30,8 @@ export default class MockProvider {
   getAccessToken() {
     return true;
   }
-  async uploadMap(args) {
-    const promise = new Promise((resolve, reject) => {
+  async uploadMap() {
+    const promise = new Promise(resolve => {
       () => resolve('done!')();
     });
     await promise;

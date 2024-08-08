@@ -64,10 +64,10 @@ export const LayerBlendingSelector = React.memo(
       {}
     );
 
-    const onChange = useCallback(blending => updateLayerBlending(labeledLayerBlendings[blending]), [
-      updateLayerBlending,
-      labeledLayerBlendings
-    ]);
+    const onChange = useCallback(
+      blending => updateLayerBlending(labeledLayerBlendings[blending]),
+      [updateLayerBlending, labeledLayerBlendings]
+    );
 
     return (
       <SidePanelSection>

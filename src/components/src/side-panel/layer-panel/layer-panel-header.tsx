@@ -374,8 +374,7 @@ const defaultActionIcons = {
   enableConfig: ArrowDown,
   duplicate: Copy,
   resetIsValid: Reset,
-  crosshairs:Crosshairs
-  ,
+  crosshairs: Crosshairs
 };
 
 LayerPanelHeaderFactory.deps = [LayerTitleSectionFactory, LayerPanelHeaderActionSectionFactory];

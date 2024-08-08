@@ -35,8 +35,8 @@ const inject = {
 export default {
   name: 'filter-arrow',
   dependencies: [project],
-  vs: vs,
-  fs: fs,
-  inject: inject,
+  vs,
+  fs,
+  inject,
   getUniforms: () => {}
 };

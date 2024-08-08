@@ -60,7 +60,7 @@ const ititialState = {mapState: {latitude: 0, longitude: 0}};
 test('Components -> EffectConfigurator -> render -> light & shadow effect', t => {
   const store = mockStore(ititialState);
 
-  let nextState = visStateReducer(
+  const nextState = visStateReducer(
     InitialState.visState,
     VisStateActions.addEffect({
       type: 'lightAndShadow'

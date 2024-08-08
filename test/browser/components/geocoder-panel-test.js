@@ -168,7 +168,7 @@ test('GeocoderPanel - render', t => {
   const actualDatasets = updateVisData.args[0][0];
   const mockDatasets = mockPayload[0];
 
-  mockDatasets.forEach((mockDataset, index) => {
+  mockDatasets.forEach(mockDataset => {
     const {data: mockDatasetData, ...restMockDataset} = mockDataset;
     const {data: actualDatasetData, ...restActualDataset} = actualDatasets[0];
     cmpDatasetData(t, mockDatasetData, actualDatasetData, mockDataset.id);

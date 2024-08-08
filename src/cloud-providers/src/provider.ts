@@ -74,7 +74,7 @@ export default class Provider {
   displayName: string;
   icon: ComponentType<IconProps>;
   thumbnail: Thumbnail;
-  isNew: boolean = false;
+  isNew = false;
 
   constructor(props: ProviderProps) {
     this.name = props.name || NAME;
@@ -107,7 +107,7 @@ export default class Provider {
    * @returns shareUrl
    * @public
    */
-  getShareUrl(fullUrl: boolean = false): string {
+  getShareUrl(fullUrl = false): string {
     return '';
   }
 

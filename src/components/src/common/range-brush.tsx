@@ -38,8 +38,9 @@ const getHandlePath = (props: RangeBrushProps) => {
     const h = 39;
     const w = 4.5;
     const y = (props.height - h) / 2;
-    return `M${0.5 * x},${y}c${2.5 * x},0,${w * x},2,${w * x},${w}v${h - w * 2}c0,2.5,${-2 *
-      x},${w},${-w * x},${w}V${y}z`;
+    return `M${0.5 * x},${y}c${2.5 * x},0,${w * x},2,${w * x},${w}v${h - w * 2}c0,2.5,${
+      -2 * x
+    },${w},${-w * x},${w}V${y}z`;
   };
 };
 
@@ -69,8 +70,8 @@ function RangeBrushFactory(): React.ComponentType<RangeBrushProps> {
 
     rootContainer = createRef<SVGGElement>();
 
-    brushing: boolean = false;
-    moving: boolean = false;
+    brushing = false;
+    moving = false;
 
     root = this.rootContainer.current ? select(this.rootContainer.current) : undefined;
     brush: BrushBehavior<any> | undefined;
@@ -180,7 +181,7 @@ function RangeBrushFactory(): React.ComponentType<RangeBrushProps> {
       this._brushed({sourceEvent: {}, selection});
     }
 
-    _move(val0: number = 0, val1: number = 0) {
+    _move(val0 = 0, val1 = 0) {
       const {
         range: [min, max],
         width,
@@ -229,7 +230,7 @@ function RangeBrushFactory(): React.ComponentType<RangeBrushProps> {
       else this._onBrush(right ? d1 : d0);
     };
 
-    _onBrush(val0: number = 0, val1: number = 0) {
+    _onBrush(val0 = 0, val1 = 0) {
       const {
         isRanged,
         value: [currentVal0, currentVal1]

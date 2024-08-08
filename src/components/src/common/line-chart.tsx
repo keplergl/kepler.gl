@@ -112,10 +112,10 @@ function LineChartFactory() {
         ? [{x: series[0].x, y: yDomain[1], customComponent: () => brushComponent}]
         : [];
     }, [series, yDomain, brushComponent]);
-    const hintFormatter = useMemo(() => datetimeFormatter(timezone)(timeFormat), [
-      timezone,
-      timeFormat
-    ]);
+    const hintFormatter = useMemo(
+      () => datetimeFormatter(timezone)(timeFormat),
+      [timezone, timeFormat]
+    );
 
     return (
       <LineChartWrapper style={{marginTop: `${margin.top}px`}}>

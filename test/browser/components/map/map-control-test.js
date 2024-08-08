@@ -178,33 +178,21 @@ test('MapControlFactory - click options', t => {
 
   t.equal(wrapper.find(Delete).length, 1, 'Should show 1 delete split map button');
   // click split Map
-  wrapper
-    .find('.map-control-button.split-map')
-    .at(0)
-    .simulate('click');
+  wrapper.find('.map-control-button.split-map').at(0).simulate('click');
   t.ok(onToggleSplitMap.calledOnce, 'should call onToggleSplitMap');
   t.deepEqual(onToggleSplitMap.args[0], [0], 'should call onToggleSplitMap with mapindex');
 
   // click toggle3d
-  wrapper
-    .find('.map-control-button.toggle-3d')
-    .at(0)
-    .simulate('click');
+  wrapper.find('.map-control-button.toggle-3d').at(0).simulate('click');
   t.ok(onTogglePerspective.calledOnce, 'should call onTogglePerspective');
 
   // click map legend
-  wrapper
-    .find('.map-control-button.show-legend')
-    .at(0)
-    .simulate('click');
+  wrapper.find('.map-control-button.show-legend').at(0).simulate('click');
 
   t.equal(wrapper.find(MapLegend).length, 1, 'should render MapLegend');
 
   // click map draw
-  wrapper
-    .find('.map-control-button.map-draw')
-    .at(0)
-    .simulate('click');
+  wrapper.find('.map-control-button.map-draw').at(0).simulate('click');
 
   t.equal(wrapper.find(MapLegend).length, 1, 'should render MapLegend');
 
@@ -216,10 +204,7 @@ test('MapControlFactory - click options', t => {
   );
 
   // click locale
-  wrapper
-    .find('.map-control-button.locale-panel')
-    .at(0)
-    .simulate('click');
+  wrapper.find('.map-control-button.locale-panel').at(0).simulate('click');
   t.ok(onToggleMapControl.calledTwice, 'should call onToggleMapControl');
   t.deepEqual(
     onToggleMapControl.args[1],
@@ -228,10 +213,7 @@ test('MapControlFactory - click options', t => {
   );
 
   // click layer selector
-  wrapper
-    .find('.map-control-button.toggle-layer')
-    .at(0)
-    .simulate('click');
+  wrapper.find('.map-control-button.toggle-layer').at(0).simulate('click');
   t.ok(onToggleMapControl.calledThrice, 'should call onToggleMapControl');
   t.deepEqual(
     onToggleMapControl.args[2],
@@ -287,10 +269,7 @@ test('MapControlFactory - show panels', t => {
     'MapLayerSelector should render correct number of layers'
   );
 
-  wrapper
-    .find('input')
-    .at(0)
-    .simulate('change');
+  wrapper.find('input').at(0).simulate('change');
   t.ok(toggleLayerForMap.calledOnce, 'should call toggleLayerForMap');
   t.deepEqual(
     toggleLayerForMap.args[0],
@@ -310,10 +289,7 @@ test('MapControlFactory - show panels', t => {
 
   t.equal(wrapper.find(MapControlToolbar).length, 1, 'should render 1 MapControlToolbar');
   t.equal(
-    wrapper
-      .find(MapControlToolbar)
-      .at(0)
-      .find(ToolbarItem).length,
+    wrapper.find(MapControlToolbar).at(0).find(ToolbarItem).length,
     3,
     'should render 3 ToolbarItem'
   );
@@ -331,10 +307,7 @@ test('MapControlFactory - show panels', t => {
 
   t.equal(wrapper.find(MapControlToolbar).length, 1, 'should render 1 MapControlToolbar');
   t.equal(
-    wrapper
-      .find(MapControlToolbar)
-      .at(0)
-      .find(ToolbarItem).length,
+    wrapper.find(MapControlToolbar).at(0).find(ToolbarItem).length,
     Object.keys(LOCALE_CODES).length,
     `should render ${Object.keys(LOCALE_CODES).length} LOCALE_CODES`
   );

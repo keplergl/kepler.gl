@@ -98,9 +98,9 @@ const DEFAULT_MAP_CONTROLS_FEATURES: MapControlItem = {
  * @property mapLocale Default: `{show: false, active: false}`
  * @public
  */
-export const DEFAULT_MAP_CONTROLS: MapControls = (Object.keys(MAP_CONTROLS) as Array<
-  keyof typeof MAP_CONTROLS
->).reduce(
+export const DEFAULT_MAP_CONTROLS: MapControls = (
+  Object.keys(MAP_CONTROLS) as Array<keyof typeof MAP_CONTROLS>
+).reduce(
   (final, current) => ({
     ...final,
     [current]: DEFAULT_MAP_CONTROLS_FEATURES
@@ -261,7 +261,7 @@ export const INITIAL_UI_STATE: UiState = {
 export const initUiStateUpdater = (
   state: UiState,
   action: {
-    type?: typeof ActionTypes['INIT'];
+    type?: (typeof ActionTypes)['INIT'];
     payload: KeplerGlInitPayload;
   }
 ): UiState => ({

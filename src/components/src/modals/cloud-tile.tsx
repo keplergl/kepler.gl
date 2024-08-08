@@ -185,7 +185,7 @@ const CloudTile: React.FC<CloudTileProps> = ({provider, actionName}) => {
   return (
     <StyledBox>
       {provider.isNew ? <NewTag>New</NewTag> : null}
-      <div></div>
+      <div />
       <StyledTileWrapper onClick={onSelect} selected={isSelected}>
         <StyledCloudName>{displayName || name}</StyledCloudName>
         {provider.icon ? <provider.icon height="64px" /> : null}

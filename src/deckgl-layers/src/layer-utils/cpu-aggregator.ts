@@ -571,10 +571,8 @@ export default class CPUAggregator {
     const updateTriggers = {};
 
     for (const key in this.dimensionUpdaters) {
-      const {
-        accessor,
-        updateSteps
-      }: {accessor; updateSteps: UpdateStepsType[]} = this.dimensionUpdaters[key];
+      const {accessor, updateSteps}: {accessor; updateSteps: UpdateStepsType[]} =
+        this.dimensionUpdaters[key];
       // fold dimension triggers into each accessor
       updateTriggers[accessor] = {};
 

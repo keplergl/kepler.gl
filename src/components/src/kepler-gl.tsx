@@ -136,7 +136,7 @@ export const mapStateSelector = (props: any, index: number): any => {
       props.mapState;
 };
 
-export const mapFieldsSelector = (props: KeplerGLProps, index: number = 0) => ({
+export const mapFieldsSelector = (props: KeplerGLProps, index = 0) => ({
   getMapboxRef: props.getMapboxRef,
   mapboxApiAccessToken: props.mapboxApiAccessToken,
   mapboxApiUrl: props.mapboxApiUrl ? props.mapboxApiUrl : DEFAULT_KEPLER_GL_PROPS.mapboxApiUrl,

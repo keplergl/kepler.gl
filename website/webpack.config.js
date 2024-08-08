@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-const {resolve, join} = require('path');
+const {resolve} = require('path');
 const webpack = require('webpack');
 
 const KeplerPackage = require('../package');
@@ -20,10 +20,10 @@ const BABEL_CONFIG = {
   presets: ['@babel/preset-env', '@babel/preset-react', '@babel/preset-typescript'],
   plugins: [
     ['@babel/plugin-transform-typescript', {isTSX: true, allowDeclareFields: true}],
-    "@babel/plugin-transform-class-properties",
-    "@babel/plugin-transform-optional-chaining",
-    "@babel/plugin-transform-logical-assignment-operators",
-    "@babel/plugin-transform-nullish-coalescing-operator",
+    '@babel/plugin-transform-class-properties',
+    '@babel/plugin-transform-optional-chaining',
+    '@babel/plugin-transform-logical-assignment-operators',
+    '@babel/plugin-transform-nullish-coalescing-operator',
     [
       'search-and-replace',
       {

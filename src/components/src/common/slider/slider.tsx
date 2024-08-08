@@ -74,7 +74,7 @@ export default class Slider extends Component<SliderProps> {
     showTooltip: false
   };
 
-  private anchor: number = 0;
+  private anchor = 0;
 
   public ref: RefObject<typeof SliderWrapper & HTMLDivElement> = createRef<
     typeof SliderWrapper & HTMLDivElement

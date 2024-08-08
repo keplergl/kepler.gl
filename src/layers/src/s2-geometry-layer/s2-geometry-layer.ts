@@ -91,9 +91,11 @@ export const S2_TOKEN_FIELDS: {
 };
 
 export const s2RequiredColumns: ['token'] = ['token'];
-export const S2TokenAccessor = ({token}: S2GeometryLayerColumnsConfig) => (
-  dc: DataContainerInterface
-) => d => dc.valueAt(d.index, token.fieldIdx);
+export const S2TokenAccessor =
+  ({token}: S2GeometryLayerColumnsConfig) =>
+  (dc: DataContainerInterface) =>
+  d =>
+    dc.valueAt(d.index, token.fieldIdx);
 
 export const defaultElevation = 500;
 export const defaultLineWidth = 1;

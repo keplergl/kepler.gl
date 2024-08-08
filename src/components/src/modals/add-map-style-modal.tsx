@@ -131,7 +131,6 @@ function AddMapStyleModalFactory() {
     componentDidUpdate() {
       const map = this.mapRef && this.mapRef.getMap();
       if (map && this._map !== map) {
-
         this._map = map;
 
         map.on('style.load', () => {
@@ -196,7 +195,11 @@ function AddMapStyleModalFactory() {
                   type="text"
                   value={inputStyle.url || ''}
                   onChange={({target: {value}}) =>
-                    this.props.inputMapStyle({url: value, id: 'Custom Style', icon: NO_BASEMAP_ICON})
+                    this.props.inputMapStyle({
+                      url: value,
+                      id: 'Custom Style',
+                      icon: NO_BASEMAP_ICON
+                    })
                   }
                   placeholder="e.g. https://basemaps.cartocdn.com/gl/positron-gl-style/style.json"
                 />

@@ -75,7 +75,7 @@ function EffectManagerFactory(
 ): React.FC<EffectManagerProps> {
   const EffectManager = (props: EffectManagerWithIntlProp & EffectManagerState) => {
     const {intl, visStateActions, effects, effectOrder, children} = props;
-
+    const {addEffect: visStateAddEffect} = visStateActions;
     const [typeSelectorOpened, setTypeSelectorOpened] = useState(false);
 
     // Prevent shadow effect from being added multiple times
@@ -92,9 +92,12 @@ function EffectManagerFactory(
       });
     }, [effects]);
 
-    const onAddEffect = useCallback(type => {
-      visStateActions.addEffect({type});
-    }, []);
+    const onAddEffect = useCallback(
+      type => {
+        visStateAddEffect({type});
+      },
+      [visStateAddEffect]
+    );
 
     const onTypeSelectOpen = useCallback(() => {
       setTypeSelectorOpened(true);

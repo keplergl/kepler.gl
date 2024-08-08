@@ -156,28 +156,28 @@ const defaultGetData = (dc: DataContainerInterface, d: any, fieldIndex: number) 
  * @param fields
  * @return {Function} getFilterValue
  */
-const getFilterValueAccessor = (
-  channels: (Filter | undefined)[],
-  dataId: string,
-  fields: any[]
-) => (dc: DataContainerInterface) => (getIndex = defaultGetIndex, getData = defaultGetData) => d =>
-  // for empty channel, value is 0 and min max would be [0, 0]
-  channels.map(filter => {
-    if (!filter) {
-      return 0;
-    }
-    const fieldIndex = getDatasetFieldIndexForFilter(dataId, filter);
-    const field = fields[fieldIndex];
+const getFilterValueAccessor =
+  (channels: (Filter | undefined)[], dataId: string, fields: any[]) =>
+  (dc: DataContainerInterface) =>
+  (getIndex = defaultGetIndex, getData = defaultGetData) =>
+  d =>
+    // for empty channel, value is 0 and min max would be [0, 0]
+    channels.map(filter => {
+      if (!filter) {
+        return 0;
+      }
+      const fieldIndex = getDatasetFieldIndexForFilter(dataId, filter);
+      const field = fields[fieldIndex];
 
-    const value =
-      filter.type === FILTER_TYPES.timeRange
-        ? field.filterProps && Array.isArray(field.filterProps.mappedValue)
-          ? field.filterProps.mappedValue[getIndex(d)]
-          : moment.utc(getData(dc, d, fieldIndex)).valueOf()
-        : getData(dc, d, fieldIndex);
+      const value =
+        filter.type === FILTER_TYPES.timeRange
+          ? field.filterProps && Array.isArray(field.filterProps.mappedValue)
+            ? field.filterProps.mappedValue[getIndex(d)]
+            : moment.utc(getData(dc, d, fieldIndex)).valueOf()
+          : getData(dc, d, fieldIndex);
 
-    return notNullorUndefined(value) ? value - filter.domain?.[0] : Number.MIN_SAFE_INTEGER;
-  });
+      return notNullorUndefined(value) ? value - filter.domain?.[0] : Number.MIN_SAFE_INTEGER;
+    });
 
 /**
  * Get filter properties for gpu filtering

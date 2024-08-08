@@ -21,7 +21,10 @@ const useDndEffects: (effects: Effect[], effectOrder: string[]) => DndEffectsHoo
   effectOrder
 ) => {
   const dispatch = useDispatch();
-  const [activeEffect, setActiveEffect]: [activeEffect: Effect | undefined, setActiveEffect: (effect: Effect | undefined) => void] = useState();
+  const [activeEffect, setActiveEffect]: [
+    Effect | undefined,
+    (effect: Effect | undefined) => void
+  ] = useState();
   const onEffectDragStart = useCallback(
     event => {
       const {active} = event;

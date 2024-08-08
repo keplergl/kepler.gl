@@ -53,12 +53,13 @@ test('Components -> injector -> missing deps', t => {
   // eslint-disable-next-line react/display-name
   const myCustomNameFactory = () => () => <div className="my-test-header-name">name</div>;
   // eslint-disable-next-line react/display-name
-  const myCustomHeaderFactory = Name => () => (
-    <div className="my-test-header-1">
-      <Name />
-      smoothie
-    </div>
-  );
+  const myCustomHeaderFactory = Name => () =>
+    (
+      <div className="my-test-header-1">
+        <Name />
+        smoothie
+      </div>
+    );
   myCustomHeaderFactory.deps = [myCustomNameFactory];
 
   const KeplerGl = injectComponents([[PanelHeaderFactory, myCustomHeaderFactory]]);
@@ -87,12 +88,13 @@ test('Components -> injector -> missing deps', t => {
 test('Components -> injector -> wrong factory type', t => {
   const spy = sinon.spy(Console, 'error');
   // eslint-disable-next-line react/display-name
-  const myCustomHeaderFactory = Name => () => (
-    <div className="my-test-header-2">
-      <Name />
-      smoothie
-    </div>
-  );
+  const myCustomHeaderFactory = Name => () =>
+    (
+      <div className="my-test-header-2">
+        <Name />
+        smoothie
+      </div>
+    );
 
   const KeplerGl = injectComponents([[undefined, myCustomHeaderFactory]]);
 
@@ -194,7 +196,7 @@ test('Components -> injector -> replace and render existing', t => {
 });
 
 test('Components -> injector -> withState.lens', t => {
-  const CustomHeader = ({visState}) => <div className="my-test-header-3">smoothie</div>;
+  const CustomHeader = () => <div className="my-test-header-3">smoothie</div>;
   const myCustomHeaderFactory = () =>
     withState([visStateLens, mapStateLens, uiStateLens, mapStyleLens])(CustomHeader);
 
@@ -227,7 +229,7 @@ test('Components -> injector -> withState.lens', t => {
 });
 
 test('Components -> injector -> withState.mapStateToProps', t => {
-  const CustomHeader = ({visState}) => <div className="my-test-header-3">smoothie</div>;
+  const CustomHeader = () => <div clssName="my-test-header-3">smoothie</div>;
   const myCustomHeaderFactory = () =>
     withState([], state => ({ids: Object.keys(state)}))(CustomHeader);
 

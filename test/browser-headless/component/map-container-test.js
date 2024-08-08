@@ -144,7 +144,7 @@ test('MapContainerFactory - _renderDeckOverlay', t => {
         events: [{type: 'mousemove', x: 200, y: 200}, {wait: 50}],
         onBeforeEvents,
         // eslint-disable-next-line max-statements
-        onAfterEvents: ({deck, layers}) => {
+        onAfterEvents: ({layers}) => {
           assert.is(hoverEvents.length, 1, 'onHover is called');
           assert.is(hoverEvents[0].info.index, 15, 'object is picked');
           assert.is(hoverEvents[0].info.picked, true, 'object is picked');
@@ -204,10 +204,7 @@ test('MapContainerFactory - _renderDeckOverlay', t => {
           }, 'render map container with map popover should not fail');
 
           t.equal(wrapper.find(MapPopover).length, 1, 'should render 1 MapPopover');
-          const mapPopoverProps = wrapper
-            .find(MapPopover)
-            .at(0)
-            .props();
+          const mapPopoverProps = wrapper.find(MapPopover).at(0).props();
 
           // test MapPopoverProp
           testMapPopoverProp(t, mapPopoverProps);
@@ -218,10 +215,7 @@ test('MapContainerFactory - _renderDeckOverlay', t => {
           const table = wrapper.find('table').at(0);
           const rows = table.find('.layer-hover-info__row');
           t.equal(rows.length, 5, 'should render 5 rows');
-          const tippyProps = wrapper
-            .find(Tippy)
-            .at(1)
-            .props();
+          const tippyProps = wrapper.find(Tippy).at(1).props();
 
           const expectedClientRect = {
             bottom: 200,
@@ -253,18 +247,12 @@ test('MapContainerFactory - _renderDeckOverlay', t => {
 
           for (let i = 0; i < 5; i++) {
             t.equal(
-              rows
-                .at(i)
-                .find('.row__name')
-                .text(),
+              rows.at(i).find('.row__name').text(),
               expectedTooltips[i][0],
               'row name should be correct'
             );
             t.equal(
-              rows
-                .at(i)
-                .find('.row__value')
-                .text(),
+              rows.at(i).find('.row__value').text(),
               expectedTooltips[i][1],
               'row value should be correct'
             );

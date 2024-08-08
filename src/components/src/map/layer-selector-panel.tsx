@@ -54,11 +54,10 @@ function LayerSelectorPanelFactory(
       [layers, layersToRender]
     );
 
-    const isVisible = useMemo(() => isSplit && show && readOnly !== true, [
-      isSplit,
-      show,
-      readOnly
-    ]);
+    const isVisible = useMemo(
+      () => isSplit && show && readOnly !== true,
+      [isSplit, show, readOnly]
+    );
 
     const onToggleMenuPanel = useCallback(
       event => {

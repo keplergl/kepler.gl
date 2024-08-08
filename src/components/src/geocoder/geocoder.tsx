@@ -144,9 +144,10 @@ const GeoCoder: React.FC<GeocoderProps & IntlProps> = ({
   const [results, setResults] = useState(initialResults);
   const [selectedIndex, setSelectedIndex] = useState(0);
 
-  const client = useMemo(() => geocoderService({accessToken: mapboxApiAccessToken}), [
-    mapboxApiAccessToken
-  ]);
+  const client = useMemo(
+    () => geocoderService({accessToken: mapboxApiAccessToken}),
+    [mapboxApiAccessToken]
+  );
 
   const onChange = useCallback(
     event => {
