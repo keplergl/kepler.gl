@@ -33,7 +33,9 @@ const PLUGINS = [
         // This may not be needed once switch to Jest is complete as it is handled by transformIgnorePatterns
         '@mapbox/tiny-sdf': `${nodeModules}/@mapbox/tiny-sdf/index.cjs`,
         // compile from @kepler.gl src
-        ...RESOLVE_ALIASES
+        ...RESOLVE_ALIASES,
+        // loaders.gl cjs bundle of polyfills is not transpiled properly, use esm instead
+        '@loaders.gl/polyfills': `${nodeModules}/@loaders.gl/polyfills/src`
       }
     }
   ],
