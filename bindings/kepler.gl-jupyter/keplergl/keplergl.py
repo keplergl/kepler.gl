@@ -1,7 +1,7 @@
-"""module for keplergl-jupyter"""
 # SPDX-License-Identifier: MIT
 # Copyright contributors to the kepler.gl project
 
+#module for keplergl-jupyter
 import base64
 import sys
 import json
