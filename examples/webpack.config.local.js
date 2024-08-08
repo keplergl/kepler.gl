@@ -140,7 +140,7 @@ function makeLocalDevConfig(env, EXAMPLE_DIR = LIB_DIR, externals = {}) {
                 /node_modules\/@probe\.gl/,
                 /node_modules\/@math\.gl/
               ],
-              exclude: [/node_modules\/(?!(@loaders\.gl|@probe\.gl|@kepler\.gl|@math\.gl)).*/],
+              exclude: [/node_modules\/(?!(@loaders\.gl|@probe\.gl|@math\.gl)).*/],
             }
           }
         }
