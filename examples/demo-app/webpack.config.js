@@ -33,9 +33,26 @@ const CONFIG = {
     rules: [
       {
         test: /\.(js|ts|tsx)$/,
-        loader: 'babel-loader',
-        include: [join(__dirname, 'src')],
-        exclude: [/node_modules/]
+        use: {
+          loader: 'babel-loader',
+          options: {
+            plugins: [
+              "@babel/plugin-transform-class-properties",
+              "@babel/plugin-transform-optional-chaining",
+              "@babel/plugin-transform-logical-assignment-operators",
+              "@babel/plugin-transform-nullish-coalescing-operator",
+              "@babel/plugin-transform-export-namespace-from"
+            ],
+            include: [
+                join(__dirname, 'src'),
+                /node_modules\/@loaders\.gl/,
+                /node_modules\/@probe\.gl/,
+                /node_modules\/@math\.gl/,
+                /node_modules\/@kepler\.gl/
+            ],
+            exclude: [/node_modules\/(?!(@loaders\.gl|@probe\.gl|@kepler\.gl|@math\.gl)).*/],
+          }
+        }
       },
       // fix for arrow-related errors
       {

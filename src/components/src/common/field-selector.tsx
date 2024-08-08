@@ -174,6 +174,7 @@ function FieldSelectorFactory(
             isError={this.props.error}
             selectedItems={this.selectedItemsSelector(this.props)}
             erasable={this.props.erasable}
+            // @ts-ignore - Argument of type 'Readonly<FieldSelectorFactoryProps>' is not assignable to parameter of type 'never'
             options={this.fieldOptionsSelector(this.props)}
             multiSelect={this.props.multiSelect}
             placeholder={this.props.placeholder}

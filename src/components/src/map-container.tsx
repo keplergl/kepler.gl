@@ -413,6 +413,7 @@ export default function MapContainerFactory(
         features: features.concat(polygonFilters.map(f => f.value))
       })
     );
+    // @ts-ignore - No overload matches this call
     selectedPolygonIndexSelector = createSelector(
       this.featureCollectionSelector,
       this.selectedFeatureSelector,
@@ -648,6 +649,7 @@ export default function MapContainerFactory(
               isBase={compareMode}
               onSetFeatures={this.props.visStateActions.setFeatures}
               setSelectedFeature={this.props.visStateActions.setSelectedFeature}
+              // @ts-ignore Argument of type 'Readonly<MapContainerProps>' is not assignable to parameter of type 'never'
               featureCollection={this.featureCollectionSelector(this.props)}
             />
           )}
@@ -661,6 +663,7 @@ export default function MapContainerFactory(
               coordinate={interactionConfig.coordinate.enabled && coordinate}
               onSetFeatures={this.props.visStateActions.setFeatures}
               setSelectedFeature={this.props.visStateActions.setSelectedFeature}
+              // @ts-ignore Argument of type 'Readonly<MapContainerProps>' is not assignable to parameter of type 'never'
               featureCollection={this.featureCollectionSelector(this.props)}
             />
           )}
@@ -732,8 +735,10 @@ export default function MapContainerFactory(
                 editorMenuActive,
                 onSetFeatures: setFeatures,
                 setSelectedFeature,
+                // @ts-ignore Argument of type 'Readonly<MapContainerProps>' is not assignable to parameter of type 'never'
                 featureCollection: this.featureCollectionSelector(this.props),
                 selectedFeatureIndexes: this.selectedFeatureIndexArraySelector(
+                  // @ts-ignore Argument of type 'unknown' is not assignable to parameter of type 'number'.
                   editorFeatureSelectedIndex
                 ),
                 viewport

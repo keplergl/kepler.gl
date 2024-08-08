@@ -68,6 +68,9 @@
     "redux-actions": "^2.2.1",
     "reselect": "^4.0.0"
   },
+  "overrides": {
+    "@types/lodash": "4.17.5"
+  },
   "nyc": {
     "sourceMap": false,
     "instrument": false

@@ -63,6 +63,7 @@ export function getGeojsonLayerMetaFromArrow({
   };
   // create binary data from arrow data for GeoJsonLayer
   const {binaryGeometries, featureTypes, bounds, meanCenters} = getBinaryGeometriesFromArrow(
+    // @ts-ignore
     geoColumn,
     encoding,
     options

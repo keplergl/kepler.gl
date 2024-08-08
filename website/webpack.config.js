@@ -20,9 +20,10 @@ const BABEL_CONFIG = {
   presets: ['@babel/preset-env', '@babel/preset-react', '@babel/preset-typescript'],
   plugins: [
     ['@babel/plugin-transform-typescript', {isTSX: true, allowDeclareFields: true}],
-    '@babel/plugin-proposal-class-properties',
-    '@babel/plugin-proposal-export-namespace-from',
-    '@babel/plugin-proposal-optional-chaining',
+    "@babel/plugin-transform-class-properties",
+    "@babel/plugin-transform-optional-chaining",
+    "@babel/plugin-transform-logical-assignment-operators",
+    "@babel/plugin-transform-nullish-coalescing-operator",
     [
       'search-and-replace',
       {
