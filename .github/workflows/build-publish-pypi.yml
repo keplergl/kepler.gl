@@ -57,7 +57,7 @@ jobs:
       - name: Check Release Tag
         id: check-tag
         run: |
-          if [[ ${{ github.event.ref }} =~ ^refs/tags/v[0-9]+\.[0-9]+\.[0-9]+-jupyter$ ]]; then
+          if [[ ${{ github.event.ref }} =~ ^refs/tags/v[0-9]+\.[0-9]+\.[0-9]+([a|b][0-9])?-jupyter$ ]]; then
               echo ::set-output name=publish::true
           fi
 
