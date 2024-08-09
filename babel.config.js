@@ -3,6 +3,7 @@
 
 const {resolve} = require('path');
 const KeplerPackage = require('./package');
+const {RESOLVE_ALIASES} = require('./webpack/shared-webpack-configuration');
 
 const nodeModules = resolve(__dirname, 'node_modules');
 
@@ -30,8 +31,12 @@ const PLUGINS = [
         test: './test',
         // We explicitly transpile this ESM library in scripts/fix-dependencies.js and consume the transpiled version here
         // This may not be needed once switch to Jest is complete as it is handled by transformIgnorePatterns
-        '@mapbox/tiny-sdf': `${nodeModules}/@mapbox/tiny-sdf/index.cjs`
-      },
+        '@mapbox/tiny-sdf': `${nodeModules}/@mapbox/tiny-sdf/index.cjs`,
+        // compile from @kepler.gl src
+        ...RESOLVE_ALIASES,
+        // loaders.gl cjs bundle of polyfills is not transpiled properly, use esm instead
+        '@loaders.gl/polyfills': `${nodeModules}/@loaders.gl/polyfills/src`
+      }
     }
   ],
   [

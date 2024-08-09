@@ -21,7 +21,7 @@
     "jestPuppeteer": true
   },
   "parser": "@typescript-eslint/parser",
-  "plugins": ["babel", "prettier", "react", "@typescript-eslint", "enzyme-deprecation"],
+  "plugins": ["babel", "prettier", "react", "@typescript-eslint", "enzyme-deprecation", "jest"],
   "rules": {
     "valid-jsdoc": 0,
     "no-var": 0,
@@ -53,9 +53,9 @@
       "files": ["*.ts", "*.tsx"],
       "rules": {
         "no-undef": 0,
-        "no-unused-vars": 0,
-      },
-    },
+        "no-unused-vars": 0
+      }
+    }
   ],
   "settings": {
     "react": {

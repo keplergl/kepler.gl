@@ -109,13 +109,17 @@ test('Components -> injector -> wrong factory type', t => {
     </Provider>
   );
 
-  t.ok(spy.calledTwice, 'should call console.error twice');
   t.equal(
     spy.getCall(0).args[0],
     'Error injecting factory: ',
     'should warn when default factory is not provided'
   );
 
+  t.equal(
+    spy.getCall(1).args[0],
+    'factory and its replacement should be a function',
+    'should warn when default factory is not provided'
+  );
   // test if custom header is rendered
   t.ok(wrapper.find('.side-panel__panel-header').length, 'should render default header');
 

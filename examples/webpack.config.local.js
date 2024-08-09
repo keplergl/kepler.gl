@@ -115,7 +115,13 @@ function makeLocalDevConfig(env, EXAMPLE_DIR = LIB_DIR, externals = {}) {
           test: /\.(js|ts|tsx)$/,
           use: ['source-map-loader'],
           enforce: 'pre',
-          exclude: [/node_modules\/react-palm/, /node_modules\/react-data-grid/, /node_modules\/@loaders.gl/, /node_module\/@probe.gl/]
+          exclude: [
+            /node_modules\/react-palm/,
+            /node_modules\/react-data-grid/,
+            /node_modules\/@loaders.gl/,
+            /node_modules\/@probe.gl/,
+            /node_modules\/@turf\/jsts/
+          ]
         },
         // for compiling apache-arrow ESM module
         {
@@ -129,18 +135,18 @@ function makeLocalDevConfig(env, EXAMPLE_DIR = LIB_DIR, externals = {}) {
             loader: 'babel-loader',
             options: {
               plugins: [
-                "@babel/plugin-transform-class-properties",
-                "@babel/plugin-transform-optional-chaining",
-                "@babel/plugin-transform-logical-assignment-operators",
-                "@babel/plugin-transform-nullish-coalescing-operator",
-                "@babel/plugin-transform-export-namespace-from"
+                '@babel/plugin-transform-class-properties',
+                '@babel/plugin-transform-optional-chaining',
+                '@babel/plugin-transform-logical-assignment-operators',
+                '@babel/plugin-transform-nullish-coalescing-operator',
+                '@babel/plugin-transform-export-namespace-from'
               ],
               include: [
                 /node_modules\/@loaders\.gl/,
                 /node_modules\/@probe\.gl/,
                 /node_modules\/@math\.gl/
               ],
-              exclude: [/node_modules\/(?!(@loaders\.gl|@probe\.gl|@math\.gl)).*/],
+              exclude: [/node_modules\/(?!(@loaders\.gl|@probe\.gl|@math\.gl)).*/]
             }
           }
         }
@@ -184,8 +190,8 @@ function makeBabelRule(env, exampleDir) {
       presets: ['@babel/preset-env', '@babel/preset-react', '@babel/preset-typescript'],
       plugins: [
         ['@babel/plugin-transform-typescript', {isTSX: true, allowDeclareFields: true}],
-        "@babel/plugin-transform-logical-assignment-operators",
-        "@babel/plugin-transform-nullish-coalescing-operator",
+        '@babel/plugin-transform-logical-assignment-operators',
+        '@babel/plugin-transform-nullish-coalescing-operator',
         '@babel/plugin-transform-class-properties',
         '@babel/plugin-transform-optional-chaining',
         '@babel/plugin-transform-export-namespace-from',
