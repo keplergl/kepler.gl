@@ -47,9 +47,8 @@ test('#timeline -> getTimelineFromFilter', t => {
     gpuChannel: [0]
   };
 
-  const timeline = getTimelineFromFilter(filter);
   t.deepEqual(
-    Object.keys(timeline),
+    Object.keys(getTimelineFromFilter(filter)),
     [
       'value',
       'enableInteraction',
@@ -82,10 +81,8 @@ test('#timeline -> getTimelineFromAnimationConfig', t => {
     duration: null
   };
 
-  const timeline = getTimelineFromAnimationConfig(animationConfig);
-
   t.deepEqual(
-    Object.keys(timeline),
+    Object.keys(getTimelineFromAnimationConfig(animationConfig)),
     [
       'value',
       'enableInteraction',
