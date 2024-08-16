@@ -932,7 +932,7 @@ export function updateLayerAnimationSpeed(
     speed
   };
 }
-export type ToggleLayerAnimationUpdaterAction = {};
+export type ToggleLayerAnimationUpdaterAction = void;
 /**
  * start end end layer animation
  * @memberof visStateActions
@@ -948,7 +948,7 @@ export function toggleLayerAnimation(): Merge<
   };
 }
 
-export type ToggleLayerAnimationControlUpdaterAction = {};
+export type ToggleLayerAnimationControlUpdaterAction = void;
 /**
  * hide and show layer animation control
  * @memberof visStateActions
@@ -1047,7 +1047,7 @@ export function onLayerClick(
   };
 }
 
-export type OnMapClickUpdaterAction = {};
+export type OnMapClickUpdaterAction = void;
 /**
  * Trigger map click event, unselect clicked object
  * @memberof visStateActions
@@ -1375,7 +1375,7 @@ export function applyCPUFilter(
   };
 }
 
-export type ToggleEditorVisibilityUpdaterAction = {};
+export type ToggleEditorVisibilityUpdaterAction = void;
 /**
  * Toggle editor layer visibility
  * @memberof visStateActions

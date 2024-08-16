@@ -56,7 +56,9 @@ const StyledLoadDataModalTabItem = styled.div`
   }
 `;
 
-const noop = () => {};
+const noop = () => {
+  return;
+};
 
 interface ModalTabItemProps {
   currentMethod?: string;

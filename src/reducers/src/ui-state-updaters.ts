@@ -73,10 +73,10 @@ export const DEFAULT_MODAL = ADD_DATA_ID;
  *
  * export default composedReducer;
  */
-/* eslint-disable no-unused-vars */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // @ts-ignore
 const uiStateUpdaters = null;
-/* eslint-enable no-unused-vars */
+/* eslint-enable @typescript-eslint/no-unused-vars */
 
 const DEFAULT_MAP_CONTROLS_FEATURES: MapControlItem = {
   show: true,

@@ -640,7 +640,10 @@ function makeMapDispatchToProps() {
 function mergeActions(actions, userActions) {
   const overrides = {};
   for (const key in userActions) {
-    if (userActions.hasOwnProperty(key) && actions.hasOwnProperty(key)) {
+    if (
+      Object.prototype.hasOwnProperty.call(userActions, key) &&
+      Object.prototype.hasOwnProperty.call(actions, key)
+    ) {
       overrides[key] = userActions[key];
     }
   }

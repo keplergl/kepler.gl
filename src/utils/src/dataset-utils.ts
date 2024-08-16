@@ -344,7 +344,7 @@ export function getSampleForTypeAnalyze({
 }): RowData {
   const total = Math.min(sampleCount, rows.length);
   // const fieldOrder = fields.map(f => f.name);
-  const sample = range(0, total, 1).map(d => ({}));
+  const sample = range(0, total, 1).map(() => ({}));
 
   // collect sample data for each field
   fields.forEach((field, fieldIdx) => {
@@ -590,7 +590,7 @@ export function getFieldFormatLabels(fieldType?: string): TooltipFormat[] {
   return addTimeLabel(formatLabels);
 }
 
-export function getFormatLabels(fields: TooltipFields[], fieldName: string) {
+export function getFormatLabels(fields: TooltipFields[], fieldName: string): TooltipFormat[] {
   const fieldType = fields.find(f => f.name === fieldName)?.type;
   return getFieldFormatLabels(fieldType);
 }

@@ -190,8 +190,12 @@ export class ModalDialog extends Component<ModalDialogProps> {
   static defaultProps = {
     footer: false,
     close: true,
-    onConfirm: (): void => {},
-    onCancel: (): void => {},
+    onConfirm: () => {
+      return;
+    },
+    onCancel: () => {
+      return;
+    },
     cancelButton: defaultCancelButton,
     confirmButton: defaultConfirmButton,
     cssStyle: []

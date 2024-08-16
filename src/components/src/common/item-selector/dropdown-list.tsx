@@ -44,20 +44,22 @@ const DropdownFooterWrapper = styled.div`
   height: '0px';
 `;
 
+type Option = string | number | boolean | object | any;
+// TODO: make Option a generic type
 interface DropdownListProps {
-  options?: any[];
+  options?: Option[];
   allowCustomValues?: number;
   customClasses?: {listHeader?: string; listItem?: string; results?: string};
   customValues?: any[];
   customListItemComponent?: ElementType;
   customListHeaderComponent?: ElementType;
   selectionIndex?: number;
-  onOptionSelected?: Function;
-  displayOption?: Function;
+  onOptionSelected?: (option: Option, event: React.MouseEvent) => void;
+  displayOption?: (option: Option) => string;
   defaultClassNames?: boolean;
   areResultsTruncated?: boolean;
   resultsTruncatedMessage?: string;
-  listItemComponent?: Function;
+  listItemComponent?: ElementType;
   light?: boolean;
   fixedOptions?: any[];
 }
@@ -74,7 +76,9 @@ export default class DropdownList extends Component<DropdownListProps, DropdownL
     allowCustomValues: 0,
     customValues: [],
     displayOption: defaultDisplay,
-    onOptionSelected: () => {},
+    onOptionSelected: () => {
+      return;
+    },
     defaultClassNames: true,
     selectionIndex: null
   };
@@ -121,7 +125,9 @@ export default class DropdownList extends Component<DropdownListProps, DropdownL
   }
 
   // prevent console warning: getSnapshotBeforeUpdate() should be used with componentDidUpdate().
-  componentDidUpdate(prevProps, prevState, snapshot) {}
+  componentDidUpdate(prevProps, prevState, snapshot) {
+    return;
+  }
 
   componentWillUnmount() {
     if (this.loadingRef.current) {

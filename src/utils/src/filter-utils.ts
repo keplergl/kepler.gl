@@ -469,8 +469,8 @@ export function getFilterFunction<L extends {config: {dataId: string | null}; id
   dataContainer: DataContainerInterface
 ): filterFunction {
   // field could be null in polygon filter
-  const valueAccessor = field ? field.valueAccessor : data => null;
-  const defaultFunc = d => true;
+  const valueAccessor = field ? field.valueAccessor : () => null;
+  const defaultFunc = () => true;
 
   if (filter.enabled === false) {
     return defaultFunc;

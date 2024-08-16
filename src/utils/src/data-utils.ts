@@ -105,11 +105,11 @@ export function isNumber(d: any): boolean {
  * @param {string} prop
  * @returns {boolean} - yes or no
  */
-export function hasOwnProperty<X extends {}, Y extends PropertyKey>(
+export function hasOwnProperty<X extends object, Y extends PropertyKey>(
   obj: X,
   prop: Y
 ): obj is X & Record<Y, unknown> {
-  return obj.hasOwnProperty(prop);
+  return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 
 export function numberSort(a: number, b: number): number {

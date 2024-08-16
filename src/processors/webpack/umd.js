@@ -10,7 +10,7 @@ const KeplerPackage = require('../package');
 const SRC_DIR = resolve(__dirname, '../src');
 const OUTPUT_DIR = resolve(__dirname, '../umd');
 
-const LIBRARY_BUNDLE_CONFIG = env => ({
+const LIBRARY_BUNDLE_CONFIG = () => ({
   entry: {
     KeplerGl: join(SRC_DIR, 'index.ts')
   },

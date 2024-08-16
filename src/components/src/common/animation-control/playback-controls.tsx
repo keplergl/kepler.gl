@@ -41,7 +41,9 @@ const DEFAULT_ICONS = {
   animationIncremental: AnchorWindow
 };
 
-function nop() {}
+function nop() {
+  return;
+}
 
 const DEFAULT_ANIMATE_ITEMS = {
   [ANIMATION_WINDOW.free]: {

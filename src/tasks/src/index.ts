@@ -11,11 +11,7 @@ export const LOAD_FILE_TASK = Task.fromPromise(
   'LOAD_FILE_TASK'
 );
 
-export const PROCESS_FILE_DATA = Task.fromPromise(
-  processFileData,
-
-  'PROCESS_FILE_CONTENT'
-);
+export const PROCESS_FILE_DATA = Task.fromPromise(processFileData, 'PROCESS_FILE_CONTENT');
 
 export const LOAD_MAP_STYLE_TASK = taskCreator(
   ({url, id}, success, error) =>

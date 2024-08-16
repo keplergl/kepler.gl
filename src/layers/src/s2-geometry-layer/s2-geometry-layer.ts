@@ -254,7 +254,7 @@ export default class S2GeometryLayer extends Layer {
     };
   }
 
-  calculateDataAttribute({dataContainer, filteredIndex}: KeplerTable, getS2Token) {
+  calculateDataAttribute({filteredIndex}: KeplerTable, getS2Token) {
     const data: S2GeometryLayerData[] = [];
     for (let i = 0; i < filteredIndex.length; i++) {
       const index = filteredIndex[i];
@@ -293,7 +293,7 @@ export default class S2GeometryLayer extends Layer {
     this.updateMeta({bounds});
   }
 
-  formatLayerData(datasets, oldLayerData, opt = {}) {
+  formatLayerData(datasets, oldLayerData) {
     if (this.config.dataId === null) {
       return {};
     }

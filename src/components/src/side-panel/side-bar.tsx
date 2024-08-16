@@ -93,7 +93,9 @@ function SidebarFactory(CollapseButton: ReturnType<typeof CollapseButtonFactory>
       width: 300,
       minifiedWidth: 0,
       isOpen: true,
-      onOpenOrClose: function noop() {},
+      onOpenOrClose: function noop() {
+        return;
+      },
       shouldShowCollapseButton: true
     };
 

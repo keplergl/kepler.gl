@@ -22,6 +22,7 @@ import {FormattedMessage} from '@kepler.gl/localization';
 import {NO_BASEMAP_ICON} from '@kepler.gl/constants';
 import maplibregl from 'maplibre-gl';
 import {InputStyle, MapState} from '@kepler.gl/types';
+import {ActionHandler, inputMapStyle, loadCustomMapStyle} from '@kepler.gl/actions';
 
 const MapH = 190;
 const MapW = 264;
@@ -90,9 +91,9 @@ const InlineLink = styled.a`
 `;
 
 interface AddMapStyleModalProps {
-  inputMapStyle: Function;
+  inputMapStyle: ActionHandler<typeof inputMapStyle>;
   inputStyle: InputStyle;
-  loadCustomMapStyle: Function;
+  loadCustomMapStyle: ActionHandler<typeof loadCustomMapStyle>;
   mapboxApiAccessToken: string;
   mapboxApiUrl?: string;
   mapState: MapState;

@@ -82,7 +82,7 @@ interface ColorLegendProps {
   domain?: any[] | object;
   fieldType?: string | null;
   range?: RangeType;
-  labelFormat?: Function;
+  labelFormat?: (n: number) => string;
   displayLabel?: boolean;
 }
 

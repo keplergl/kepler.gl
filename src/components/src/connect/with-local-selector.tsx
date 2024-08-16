@@ -17,7 +17,7 @@ const mergeSelectors = (parentSelector, childSelector) => state =>
 // it will be stored in the context and passed down to child components,
 // as well as prop to the given component
 
-const withLocalSelector = <P extends {}>(
+const withLocalSelector = <P extends object>(
   ParentComponent: React.ComponentType<P>
 ): React.ComponentType<P & {selector: (...args: any[]) => KeplerGlState}> => {
   class WithConnectSelector extends Component<P & {selector: (...args: any[]) => KeplerGlState}> {

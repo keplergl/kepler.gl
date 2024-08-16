@@ -16,7 +16,7 @@ const StyledTitle = styled.div`
   color: ${props => props.theme.titleColorLT};
 `;
 
-const TripInfoModalFactory = (svgIcons = []) => {
+const TripInfoModalFactory = () => {
   const TripInfoModal = () => (
     <div className="trip-info-modal">
       <div className="trip-info-modal__description">

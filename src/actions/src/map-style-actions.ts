@@ -233,7 +233,7 @@ export type LoadCustomMapStyleUpdaterAction = {
   payload: {
     icon?: string;
     style?: object;
-    error?: object;
+    error?: object | boolean;
   };
 };
 /**

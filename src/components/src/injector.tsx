@@ -125,7 +125,7 @@ export function typeCheckRecipe(recipe) {
 }
 
 export interface WithState<RootState> {
-  <TStateProps = {}, TDispatchProps = {}, TOwnProps = {}, State = RootState>(
+  <TStateProps = object, TDispatchProps = object, TOwnProps = object, State = RootState>(
     lenses: any[],
     mapStateToProps: MapStateToPropsParam<TStateProps, TOwnProps, State>,
     mapDispatchToProps?: MapDispatchToPropsParam<TDispatchProps, TOwnProps>

@@ -115,7 +115,8 @@ export class DatasetSchema extends Schema {
     // we need to add format to each field
     const needCalculateMeta =
       fields[0] &&
-      (!fields[0].hasOwnProperty('format') || !fields[0].hasOwnProperty('analyzerType'));
+      (!Object.prototype.hasOwnProperty.call(fields[0], 'format') ||
+        !Object.prototype.hasOwnProperty.call(fields[0], 'analyzerType'));
 
     if (needCalculateMeta) {
       const fieldOrder = fields.map(f => f.name);

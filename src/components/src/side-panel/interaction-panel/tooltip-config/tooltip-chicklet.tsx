@@ -14,11 +14,12 @@ import {TimeLabelFormat, TooltipFields} from '@kepler.gl/types';
 import {getFormatValue, getFormatLabels} from '@kepler.gl/utils';
 import onClickOutside from 'react-onclickoutside';
 import TippyTooltip from '../../../common/tippy-tooltip';
+import {TooltipFormat} from '@kepler.gl/constants';
 
 interface TooltipChickletProps {
   disabled: boolean;
   item: {name: string};
-  displayOption: Function;
+  displayOption: (item: any) => string;
   remove: any;
 
   attributes: DraggableAttributes;
@@ -227,7 +228,7 @@ function TooltipChickletFactory(
                     <DropdownList
                       options={formatLabels}
                       selectionIndex={selectionIndex}
-                      displayOption={({label}) => label}
+                      displayOption={option => (option as TooltipFormat).label}
                       onOptionSelected={(result, e) => {
                         e.stopPropagation();
                         this.setState({

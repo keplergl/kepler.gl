@@ -92,11 +92,11 @@ export type PostMergerPayload = {
   options?: AddDataToMapOptions;
   layerMergers?: Merger<any>[];
 };
-export type MergerActionPayload<S extends {}> = {
+export type MergerActionPayload<S extends object> = {
   mergers: Merger<S>[];
   postMergerPayload: PostMergerPayload;
 };
-export type MergerMergeFunc<S extends {}> = (
+export type MergerMergeFunc<S extends object> = (
   state: S,
   config: any,
   fromConfig: boolean,
@@ -107,7 +107,7 @@ export type ReplaceParentDatasetIdsFunc<T> = (
   dataId: string,
   dataIdToReplace: string
 ) => T | null;
-export type Merger<S extends {}> = {
+export type Merger<S extends object> = {
   merge: MergerMergeFunc<S>;
   prop: string | string[];
   toMergeProp?: string | string[];
@@ -118,7 +118,7 @@ export type Merger<S extends {}> = {
   saveUnmerged?: (state: S, unmerged: any) => S;
   getChildDatasetIds?: any;
 };
-export type VisStateMergers<S extends {}> = Merger<S>[];
+export type VisStateMergers<S extends object> = Merger<S>[];
 
 // in v0 geojson there is only sizeField
 
@@ -297,7 +297,7 @@ class LayerVisConfigSchemaV0 extends Schema {
 
 class LayerConfigSchemaDeleteV0 extends Schema {
   version = VERSIONS.v0;
-  load(value) {
+  load() {
     return {};
   }
 }
@@ -362,7 +362,7 @@ export const layerPropsV0 = {
  * V1 Schema
  */
 class ColumnSchemaV1 extends Schema {
-  save(columns, state) {
+  save(columns) {
     // starting from v1, only save column value
     // fieldIdx will be calculated during merge
     return {
@@ -398,9 +398,9 @@ class TextLabelSchemaV1 extends Schema {
 }
 
 const visualChannelModificationV1 = {
-  geojson: (vc, parents, accumulator) => {
+  geojson: (vc, parents) => {
     const [layer] = parents.slice(-1);
-    const isOld = !vc.hasOwnProperty('strokeColorField');
+    const isOld = !Object.prototype.hasOwnProperty.call(vc, 'strokeColorField');
     // make our best guess if this geojson layer contains point
     const isPoint =
       vc.radiusField || layer.config.visConfig.radius !== LAYER_VIS_CONFIGS.radius.defaultValue;
@@ -454,11 +454,13 @@ class VisualChannelSchemaV1 extends Schema {
   }
 }
 const visConfigModificationV1 = {
-  point: (visConfig, parents, accumulated) => {
+  point: (visConfig, parents) => {
     const modified: modifiedType = {};
     const [layer] = parents.slice(-2, -1);
     const isOld =
-      !visConfig.hasOwnProperty('filled') && !visConfig.strokeColor && !visConfig.strokeColorRange;
+      !Object.prototype.hasOwnProperty.call(visConfig, 'filled') &&
+      !visConfig.strokeColor &&
+      !visConfig.strokeColorRange;
     if (isOld) {
       // color color & color range to stroke color
       modified.strokeColor = layer.config.color;
@@ -473,13 +475,13 @@ const visConfigModificationV1 = {
 
     return modified;
   },
-  geojson: (visConfig, parents, accumulated) => {
+  geojson: (visConfig, parents) => {
     // is points?
     const modified: modifiedType = {};
     const [layer] = parents.slice(-2, -1);
     const isOld =
       layer.visualChannels &&
-      !layer.visualChannels.hasOwnProperty('strokeColorField') &&
+      !Object.prototype.hasOwnProperty.call(layer.visualChannels, 'strokeColorField') &&
       !visConfig.strokeColor &&
       !visConfig.strokeColorRange;
     // make our best guess if this geojson layer contains point
@@ -662,7 +664,7 @@ export class InteractionSchemaV1 extends Schema {
     | {
         interactionConfig: SavedInteractionConfig;
       }
-    | {} {
+    | Record<string, any> {
     // save config even if disabled,
     return Array.isArray(this.properties)
       ? {

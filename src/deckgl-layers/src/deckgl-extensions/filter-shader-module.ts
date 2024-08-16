@@ -38,5 +38,7 @@ export default {
   vs,
   fs,
   inject,
-  getUniforms: () => {}
+  getUniforms: () => {
+    return;
+  }
 };

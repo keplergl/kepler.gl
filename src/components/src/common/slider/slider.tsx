@@ -9,7 +9,9 @@ import SliderHandle from './slider-handle';
 import SliderBarHandle from './slider-bar-handle';
 import {normalizeSliderValue, clamp} from '@kepler.gl/utils';
 
-function noop() {}
+function noop() {
+  return;
+}
 
 interface StyledRangeSliderProps {
   vertical?: boolean;

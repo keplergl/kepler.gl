@@ -418,7 +418,7 @@ export default class GeoJsonLayer extends Layer {
     if (!point) return false;
     // quick check if centroid is within the query rectangle
     if (isReactangleSearchBox && polygon.properties?.bbox) {
-      const [minX, minY, maxX, maxY] = polygon.properties?.bbox;
+      const [minX, minY, maxX, maxY] = polygon?.properties?.bbox || [];
       return point[0] >= minX && point[0] <= maxX && point[1] >= minY && point[1] <= maxY;
     }
     // use turf.js to check if centroid is within query polygon

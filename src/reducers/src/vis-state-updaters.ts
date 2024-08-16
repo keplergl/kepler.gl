@@ -153,10 +153,10 @@ disableStackCapturing();
  *
  * export default composedReducer;
  */
-/* eslint-disable no-unused-vars */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // @ts-ignore
 const visStateUpdaters = null;
-/* eslint-enable no-unused-vars */
+/* eslint-enable @typescript-eslint/no-unused-vars */
 
 export const defaultInteractionConfig: InteractionConfig = {
   tooltip: {
@@ -333,7 +333,10 @@ function pickChangedProps<T>(prev: T, next: T): Partial<T> {
   const changedProps: Partial<T> = {};
   const pickPropsOf = obj => {
     Object.keys(obj).forEach(key => {
-      if (!changedProps.hasOwnProperty(key) && !isEqual(prev[key], next[key])) {
+      if (
+        !Object.prototype.hasOwnProperty.call(changedProps, key) &&
+        !isEqual(prev[key], next[key])
+      ) {
         changedProps[key] = next[key];
       }
     });
@@ -559,7 +562,7 @@ function addOrRemoveTextLabels(newFields, textLabel, defaultTextLabel = DEFAULT_
 }
 
 function updateTextLabelPropAndValue(idx, prop, value, textLabel) {
-  if (!textLabel[idx].hasOwnProperty(prop)) {
+  if (!Object.prototype.hasOwnProperty.call(textLabel[idx], prop)) {
     return textLabel;
   }
 
@@ -914,7 +917,7 @@ export function setFilterUpdater(
       newFilter = updateFilterDataId(dataId);
       break;
 
-    case FILTER_UPDATER_PROPS.name:
+    case FILTER_UPDATER_PROPS.name: {
       // we are supporting the current functionality
       // TODO: Next PR for UI filter name will only update filter name but it won't have side effects
       // we are gonna use pair of datasets and fieldIdx to update the filter
@@ -941,7 +944,8 @@ export function setFilterUpdater(
 
       // only filter the current dataset
       break;
-    case FILTER_UPDATER_PROPS.layerId:
+    }
+    case FILTER_UPDATER_PROPS.layerId: {
       // We need to update only datasetId/s if we have added/removed layers
       // - check for layerId changes (XOR works because of string values)
       // if no differences between layerIds, don't do any filtering
@@ -980,6 +984,7 @@ export function setFilterUpdater(
       };
 
       break;
+    }
     default:
       break;
   }
@@ -1106,6 +1111,7 @@ export const toggleFilterAnimationUpdater = (
  */
 export const toggleLayerAnimationUpdater = (
   state: VisState,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   action: VisStateActions.ToggleLayerAnimationUpdaterAction
 ): VisState => ({
   ...state,
@@ -1120,10 +1126,7 @@ export const toggleLayerAnimationUpdater = (
  * @memberof visStateUpdaters
  * @public
  */
-export const toggleLayerAnimationControlUpdater = (
-  state: VisState,
-  action: VisStateActions.ToggleLayerAnimationControlUpdaterAction
-): VisState => ({
+export const toggleLayerAnimationControlUpdater = (state: VisState): VisState => ({
   ...state,
   animationConfig: {
     ...state.animationConfig,
@@ -1542,12 +1545,11 @@ export function removeDatasetUpdater<T extends VisState>(
     return state;
   }
 
-  /* eslint-disable no-unused-vars */
   const {
     layers,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     datasets: {[datasetKey]: dataset, ...newDatasets}
   } = state;
-  /* eslint-enable no-unused-vars */
 
   const layersToRemove = layers.filter(l => l.config.dataId === datasetKey).map(l => l.id);
 
@@ -1570,9 +1572,8 @@ function removeDatasetFromInteractionConfig(state, {dataId}) {
   const {tooltip} = interactionConfig;
   if (tooltip) {
     const {config} = tooltip;
-    /* eslint-disable no-unused-vars */
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const {[dataId]: fields, ...fieldsToShow} = config.fieldsToShow;
-    /* eslint-enable no-unused-vars */
     interactionConfig = {
       ...interactionConfig,
       tooltip: {...tooltip, config: {...config, fieldsToShow}}
@@ -1771,6 +1772,7 @@ export const layerClickUpdater = (
  */
 export const mapClickUpdater = (
   state: VisState,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   action: VisStateActions.OnMapClickUpdaterAction
 ): VisState => {
   return {
@@ -2249,6 +2251,7 @@ export function processFileContentUpdater(
   );
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function parseProgress(prevProgress = {}, progress) {
   // This happens when receiving query metadata or other cases we don't
   // have an update for the user.
@@ -2809,6 +2812,7 @@ export function setColumnDisplayFormatUpdater(
  */
 export function toggleEditorVisibilityUpdater(
   state: VisState,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   action: VisStateActions.ToggleEditorVisibilityUpdaterAction
 ): VisState {
   return {
@@ -2902,7 +2906,7 @@ function defaultReplaceParentDatasetIds(value: any, dataId: string, dataIdToRepl
         dataId: dataIdToReplace
       }
     };
-  } else if (isObject(value) && value.hasOwnProperty(dataId)) {
+  } else if (isObject(value) && Object.prototype.hasOwnProperty.call(value, dataId)) {
     // for value saved as {[dataId]: {...}}
     return {[dataIdToReplace]: value[dataId]};
   }

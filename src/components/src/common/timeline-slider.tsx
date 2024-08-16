@@ -11,7 +11,9 @@ import {DEFAULT_TIME_FORMAT, ANIMATION_WINDOW} from '@kepler.gl/constants';
 import {Timeline} from '@kepler.gl/types';
 import Slider from './slider/slider';
 
-function noop() {}
+function noop() {
+  return;
+}
 
 const SLIDER_MARGIN_PALM = 6;
 

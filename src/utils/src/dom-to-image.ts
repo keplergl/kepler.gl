@@ -282,7 +282,7 @@ function newInliner() {
   }
 
   function urlAsRegex(url0) {
-    return new RegExp(`(url\\([\'"]?)(${escape(url0)})([\'"]?\\))`, 'g');
+    return new RegExp(`(url\\(['"]?)(${escape(url0)})(['"]?\\))`, 'g');
   }
 
   function inline(string, url, baseUrl, get) {

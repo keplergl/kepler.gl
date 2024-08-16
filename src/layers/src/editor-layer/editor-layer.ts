@@ -89,7 +89,7 @@ export function getEditorLayer({
 
     onEdit: ({updatedData, editType}) => {
       switch (editType) {
-        case EDIT_TYPES.ADD_FEATURE:
+        case EDIT_TYPES.ADD_FEATURE: {
           const {features: _features} = updatedData;
           if (_features.length) {
             const lastFeature = _features[_features.length - 1];
@@ -99,6 +99,7 @@ export function getEditorLayer({
             setSelectedFeature(lastFeature);
           }
           break;
+        }
         case EDIT_TYPES.ADD_POSITION:
         case EDIT_TYPES.MOVE_POSITION:
         case EDIT_TYPES.TRANSLATING:

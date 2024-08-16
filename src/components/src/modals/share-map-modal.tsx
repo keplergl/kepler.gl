@@ -64,7 +64,9 @@ export const SharingUrl: React.FC<SharingUrlProps> = ({url, message = ''}) => {
     </StyleSharingUrl>
   );
 };
-const nop = () => {};
+const nop = () => {
+  return;
+};
 
 const StyledShareMapModal = styled(StyledModalContent)`
   padding: 24px 72px 40px 72px;
@@ -117,7 +119,7 @@ export default function ShareMapUrlModalFactory() {
       if (provider) {
         onExport(provider);
       }
-    }, [provider]);
+    }, [onExport, provider]);
 
     return (
       <ThemeProvider theme={themeLT}>

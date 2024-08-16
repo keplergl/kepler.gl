@@ -98,7 +98,9 @@ interface FieldSelectorFactoryProps {
   size?: string;
   reorderItems?: (newOrder: any) => void;
 }
-
+function noop() {
+  return;
+}
 function FieldSelectorFactory(
   FieldListItemFactory: ReturnType<typeof FieldListItemFactoryFactory>
 ): ComponentType<FieldSelectorFactoryProps> {
@@ -107,8 +109,8 @@ function FieldSelectorFactory(
       erasable: true,
       error: false,
       fields: [],
-      onSelect: () => {},
-      reorderItems: () => {},
+      onSelect: noop,
+      reorderItems: noop,
       placement: 'bottom',
       value: null,
       multiSelect: false,

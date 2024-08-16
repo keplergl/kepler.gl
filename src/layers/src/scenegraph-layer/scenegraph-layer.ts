@@ -150,7 +150,7 @@ export default class ScenegraphLayer extends Layer {
     };
   }
 
-  calculateDataAttribute({dataContainer, filteredIndex}: KeplerTable, getPosition) {
+  calculateDataAttribute({filteredIndex}: KeplerTable, getPosition) {
     const data: ScenegraphLayerData[] = [];
 
     for (let i = 0; i < filteredIndex.length; i++) {

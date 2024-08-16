@@ -42,13 +42,14 @@ function FilterAnimationControllerFactory(
     const updateAnimation = useCallback(
       value => {
         switch (filter.animationWindow) {
-          case ANIMATION_WINDOW.interval:
+          case ANIMATION_WINDOW.interval: {
             const idx = value[1];
             setFilterAnimationTime(filterIdx, 'value', [
               intervalBins[idx].x0,
               intervalBins[idx].x1 - 1
             ]);
             break;
+          }
           default:
             setFilterAnimationTime(filterIdx, 'value', value);
             break;

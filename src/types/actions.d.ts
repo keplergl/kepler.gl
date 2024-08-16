@@ -38,6 +38,7 @@ export type ProtoDataset = {
     format?: string;
     color?: RGBColor;
     type?: string;
+    hidden?: boolean;
   };
   data: {
     fields: {

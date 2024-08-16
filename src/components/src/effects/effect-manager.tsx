@@ -5,9 +5,14 @@ import React, {useMemo, useState, useCallback} from 'react';
 import styled from 'styled-components';
 import {injectIntl, IntlShape} from 'react-intl';
 
-import {addEffect, updateEffect, removeEffect, reorderEffect} from '@kepler.gl/actions';
+import {
+  addEffect,
+  updateEffect,
+  removeEffect,
+  reorderEffect,
+  ActionHandler
+} from '@kepler.gl/actions';
 import {LIGHT_AND_SHADOW_EFFECT, EFFECT_DESCRIPTIONS} from '@kepler.gl/constants';
-import {VisStateActions} from '@kepler.gl/actions';
 import {Effect} from '@kepler.gl/types';
 
 import {withState} from '../injector';
@@ -16,12 +21,18 @@ import EffectListFactory from './effect-list';
 import EffectTypeSelectorFactory from './effect-type-selector';
 
 export type EffectManagerState = {
-  visStateActions: typeof VisStateActions;
+  visStateActions: {
+    addEffect: ActionHandler<typeof addEffect>;
+    updateEffect: ActionHandler<typeof updateEffect>;
+    removeEffect: ActionHandler<typeof removeEffect>;
+    reorderEffect: ActionHandler<typeof reorderEffect>;
+  };
   effects: Effect[];
   effectOrder: string[];
   children: React.ReactNode;
 };
-export type EffectManagerProps = {};
+export type EffectManagerProps = EffectManagerWithIntlProp & EffectManagerState;
+
 export type EffectManagerWithIntlProp = {intl: IntlShape};
 
 const StyledEffectPanelContainer = styled.div`
@@ -150,7 +161,7 @@ function EffectManagerFactory(
     {
       visStateActions: {addEffect, updateEffect, removeEffect, reorderEffect}
     }
-  )(injectIntl(EffectManager)) as React.FC<{}>;
+  )(injectIntl(EffectManager)) as React.FC<EffectManagerProps>;
 }
 
 export default EffectManagerFactory;

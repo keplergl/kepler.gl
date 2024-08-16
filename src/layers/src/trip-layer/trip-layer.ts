@@ -93,7 +93,7 @@ export default class TripLayer extends Layer {
   declare meta: TripLayerMeta;
 
   dataToFeature: GeojsonDataMaps;
-  dataToTimeStamp: {}[];
+  dataToTimeStamp: object[];
   getFeature: (columns: TripLayerColumnsConfig) => (dataContainer: DataContainerInterface) => any;
   _layerInfoModal: () => JSX.Element;
 
@@ -224,7 +224,7 @@ export default class TripLayer extends Layer {
     return dataContainer.row(object.properties.index);
   }
 
-  calculateDataAttribute({dataContainer, filteredIndex}, getPosition) {
+  calculateDataAttribute({filteredIndex}) {
     return filteredIndex
       .map(i => this.dataToFeature[i])
       .filter(d => d && d.geometry.type === 'LineString');
@@ -243,7 +243,7 @@ export default class TripLayer extends Layer {
     };
     const indexAccessor = f => f.properties.index;
 
-    const dataAccessor = dc => d => ({index: d.properties.index});
+    const dataAccessor = () => d => ({index: d.properties.index});
     const accessors = this.getAttributeAccessors({dataAccessor, dataContainer});
 
     return {

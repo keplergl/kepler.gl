@@ -5,10 +5,8 @@ import React, {Component, ComponentType} from 'react';
 import styled from 'styled-components';
 import classnames from 'classnames';
 import {processRowObject} from '@kepler.gl/processors';
-import {FlyToInterpolator} from '@deck.gl/core';
+import {FlyToInterpolator} from '@deck.gl/core/typed';
 import {getCenterAndZoomFromBounds} from '@kepler.gl/utils';
-
-import Geocoder, {Result} from './geocoder/geocoder';
 import {
   GEOCODER_DATASET_NAME,
   GEOCODER_LAYER_ID,
@@ -16,7 +14,11 @@ import {
   GEOCODER_ICON_COLOR,
   GEOCODER_ICON_SIZE
 } from '@kepler.gl/constants';
-import {MapState, UiState, Viewport} from '@kepler.gl/types';
+import {AddDataToMapOptions, MapState, ProtoDataset, UiState, Viewport} from '@kepler.gl/types';
+import {ActionHandler, removeDataset, updateMap, updateVisData} from '@kepler.gl/actions';
+
+import Geocoder, {Result} from './geocoder/geocoder';
+import {MapViewState} from '@deck.gl/core/typed';
 
 const ICON_LAYER = {
   id: GEOCODER_LAYER_ID,
@@ -70,17 +72,21 @@ const StyledGeocoderPanel = styled.div<StyledGeocoderPanelProps>`
   z-index: 100;
 `;
 
-function generateGeocoderDataset(lat, lon, text) {
+function generateGeocoderDataset(lat: number, lon: number, text?: string): ProtoDataset | null {
+  const data = processRowObject([
+    {
+      lt: lat,
+      ln: lon,
+      icon: 'place',
+      text
+    }
+  ]);
+  if (!data) {
+    return null;
+  }
+
   return {
-    data: processRowObject([
-      {
-        lt: lat,
-        ln: lon,
-        icon: 'place',
-        text
-      }
-    ]),
-    id: GEOCODER_DATASET_NAME,
+    data,
     info: {
       hidden: true,
       id: GEOCODER_DATASET_NAME,
@@ -93,9 +99,17 @@ function isValid(key) {
   return /pk\..*\..*/.test(key);
 }
 
-export function getUpdateVisDataPayload(lat, lon, text) {
+export function getUpdateVisDataPayload(
+  lat: number,
+  lon: number,
+  text?: string
+): [ProtoDataset[], AddDataToMapOptions] | null {
+  const dataset = generateGeocoderDataset(lat, lon, text);
+  if (!dataset) {
+    return null;
+  }
   return [
-    [generateGeocoderDataset(lat, lon, text)],
+    [dataset],
     {
       keepExistingConfig: true
     }
@@ -107,14 +121,13 @@ interface GeocoderPanelProps {
   mapState: MapState;
   uiState: UiState;
   mapboxApiAccessToken: string;
-  updateVisData: Function;
-  removeDataset: Function;
-  updateMap: Function;
+  updateVisData: ActionHandler<typeof updateVisData>;
+  removeDataset: ActionHandler<typeof removeDataset>;
+  updateMap: ActionHandler<typeof updateMap>;
   layerOrder: string[];
 
-  transitionDuration?: number;
+  transitionDuration?: MapViewState['transitionDuration'];
   width?: number;
-  appWidth: number;
   className?: string;
   index: number;
   unsyncedViewports: boolean;
@@ -138,11 +151,12 @@ export default function GeocoderPanelFactory(): ComponentType<GeocoderPanelProps
       } = geoItem;
       const {layerOrder} = this.props;
 
-      this.removeGeocoderDataset();
-      this.props.updateVisData(
-        ...getUpdateVisDataPayload(lat, lon, text),
-        generateConfig(layerOrder)
-      );
+      const updateVisDataPayload = getUpdateVisDataPayload(lat, lon, text);
+      if (updateVisDataPayload) {
+        this.removeGeocoderDataset();
+        this.props.updateVisData(...updateVisDataPayload, generateConfig(layerOrder));
+      }
+
       const bounds = bbox || [
         lon - GEOCODER_GEO_OFFSET,
         lat - GEOCODER_GEO_OFFSET,

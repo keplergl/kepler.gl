@@ -5,7 +5,7 @@ import {createAction} from '@reduxjs/toolkit';
 import {default as ActionTypes} from './action-types';
 import {Bounds, Merge, Viewport} from '@kepler.gl/types';
 
-export type TogglePerspectiveUpdaterAction = {};
+export type TogglePerspectiveUpdaterAction = void;
 /**
  *
  * Toggle between 3d and 2d map.

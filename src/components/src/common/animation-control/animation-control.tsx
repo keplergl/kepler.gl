@@ -100,8 +100,12 @@ function AnimationControlFactory(
     isAnimatable,
     isAnimating,
     resetAnimation,
-    toggleAnimation,
-    updateAnimationSpeed,
+    toggleAnimation = () => {
+      return;
+    },
+    updateAnimationSpeed = () => {
+      return;
+    },
     setTimelineValue,
     setAnimationWindow,
     timeline,
@@ -153,11 +157,6 @@ function AnimationControlFactory(
         ) : null}
       </AnimationControlContainer>
     );
-  };
-
-  AnimationControl.defaultProps = {
-    toggleAnimation: () => {},
-    updateAnimationSpeed: () => {}
   };
 
   return AnimationControl;

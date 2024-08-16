@@ -122,7 +122,9 @@ const StyledMap = styled(StyledMapContainer)<StyledMapContainerProps>(
 
 const MAPBOXGL_STYLE_UPDATE = 'style.load';
 const MAPBOXGL_RENDER = 'render';
-const nop = () => {};
+const nop = () => {
+  return;
+};
 
 const MapLibreLogo = () => (
   <div className="attrition-logo">
@@ -277,9 +279,8 @@ export interface MapContainerProps {
   primary?: boolean; // primary one will be reporting its size to appState
   readOnly?: boolean;
   isExport?: boolean;
-  onMapToggleLayer?: Function;
-  onMapStyleLoaded?: Function;
-  onMapRender?: Function;
+  onMapStyleLoaded?: (map: maplibregl.Map | null) => void;
+  onMapRender?: (map: maplibregl.Map | null) => void;
   getMapboxRef?: (mapbox?: MapRef | null, index?: number) => void;
   index?: number;
   deleteMapLabels?: (containerId: string, layerId: string) => void;

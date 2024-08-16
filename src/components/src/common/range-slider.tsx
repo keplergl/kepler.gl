@@ -17,7 +17,9 @@ interface SliderInputProps {
   flush?: boolean;
   inputSize?: string;
 }
-
+const noop = () => {
+  return;
+};
 const SliderInput = styled(Input)<SliderInputProps>`
   width: ${props => props.theme.sliderInputWidth}px;
   margin-left: ${props => (props.flush ? 0 : props.inputSize === 'tiny' ? 12 : 18)}px;
@@ -82,7 +84,7 @@ export default function RangeSliderFactory(
       sliderHandleWidth: 12,
       inputTheme: '',
       inputSize: 'small',
-      onChange: () => {}
+      onChange: noop
     };
 
     static getDerivedStateFromProps(props, state) {
@@ -140,7 +142,7 @@ export default function RangeSliderFactory(
     };
 
     _setRangeVal1 = val => {
-      const {value0, range, onChange = () => {}} = this.props;
+      const {value0, range, onChange = noop} = this.props;
       if (!range) return;
       const val1 = Number(val);
       onChange([value0, clamp([value0, range[1]], this._roundValToStep(val1))]);
@@ -148,7 +150,7 @@ export default function RangeSliderFactory(
     };
 
     _setRangeVal0 = val => {
-      const {value1, range, onChange = () => {}} = this.props;
+      const {value1, range, onChange = noop} = this.props;
       if (!range) return;
       const val0 = Number(val);
       onChange([clamp([range[0], value1], this._roundValToStep(val0)), value1]);
@@ -210,7 +212,7 @@ export default function RangeSliderFactory(
         histogram,
         lineChart,
         range,
-        onChange = () => {},
+        onChange = noop,
         sliderHandleWidth,
         step,
         timezone,

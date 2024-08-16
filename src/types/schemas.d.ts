@@ -1,16 +1,9 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {RGBColor, Merge, RGBAColor, RequireFrom} from './types';
+import {RGBColor, Merge, RequireFrom} from './types';
 
-import {
-  Filter,
-  TooltipInfo,
-  InteractionConfig,
-  AnimationConfig,
-  SplitMap,
-  Feature
-} from './reducers';
+import {Filter, TooltipInfo, AnimationConfig, SplitMap, Feature} from './reducers';
 
 import {LayerTextLabel} from './layers';
 

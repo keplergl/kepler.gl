@@ -435,7 +435,13 @@ export const TABLE_OPTION = keyMirror({
   FORMAT_COLUMN: null
 });
 
-export const TABLE_OPTION_LIST = [
+export type TableOption = {
+  value: 'SORT_ASC' | 'SORT_DES' | 'UNSORT' | 'PIN' | 'UNPIN' | 'COPY' | 'FORMAT_COLUMN';
+  display: string;
+  icon: string;
+  condition?: (props: any) => boolean;
+};
+export const TABLE_OPTION_LIST: TableOption[] = [
   {
     value: TABLE_OPTION.SORT_ASC,
     display: 'Sort Ascending',

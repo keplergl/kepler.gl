@@ -30,7 +30,7 @@ export type IconLayerColumnsConfig = {
   icon: LayerColumn;
 };
 
-type IconGeometry = {} | null;
+type IconGeometry = object | null;
 
 export type IconLayerVisConfigSettings = {
   radius: VisConfigNumber;

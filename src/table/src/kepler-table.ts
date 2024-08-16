@@ -266,7 +266,7 @@ class KeplerTable {
       return null;
     }
     const field = this.fields[fieldIdx];
-    if (field.hasOwnProperty('filterProps')) {
+    if (Object.prototype.hasOwnProperty.call(field, 'filterProps')) {
       return field.filterProps;
     }
 

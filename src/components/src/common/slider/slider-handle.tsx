@@ -139,7 +139,9 @@ export default class SliderHandle extends Component {
     left: '50%',
     display: true,
     vertical: false,
-    valueListener: function valueListenerFn() {},
+    valueListener: function valueListenerFn() {
+      return;
+    },
     showTooltip: false
   };
 

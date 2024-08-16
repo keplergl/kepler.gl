@@ -16,7 +16,9 @@ export type MapViewStateContextType = {
 
 export const MapViewStateContext: React.Context<MapViewStateContextType> = createContext({
   getInternalViewState: (index = 0) => ({latitude: 0, longitude: 0, zoom: 0}),
-  setInternalViewState: (viewState, index = 0) => {}
+  setInternalViewState: (viewState, index = 0) => {
+    return;
+  }
 });
 
 /**

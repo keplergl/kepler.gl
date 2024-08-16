@@ -288,7 +288,7 @@ interface TableSectionProps {
     rowCount: number;
   } & Partial<GridProps>;
   columnWidth?;
-  setGridRef?: Function;
+  setGridRef?: (ref: HTMLDivElement | null) => void;
   headerCellRender?;
   dataCellRender?;
   scrollLeft?: number;
@@ -420,8 +420,8 @@ function DataTableFactory(HeaderCell: ReturnType<typeof HeaderCellFactory>) {
       hasCustomScrollBarStyle: true
     };
 
-    pinnedGrid = false;
-    unpinnedGrid = false;
+    pinnedGrid: HTMLDivElement | null = null;
+    unpinnedGrid: HTMLDivElement | null = null;
 
     state: DataTableState = {
       cellSizeCache: {},
@@ -477,7 +477,7 @@ function DataTableFactory(HeaderCell: ReturnType<typeof HeaderCellFactory>) {
         propsCache,
         pinnedColumns,
         unpinnedColumns
-      ) as {cellSizeCache: {}; ghost: number | null | undefined};
+      ) as {cellSizeCache: CellSizeCache; ghost: number | null | undefined};
 
       return {
         cellSizeCache,

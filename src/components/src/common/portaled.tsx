@@ -55,7 +55,7 @@ export const getChildPos = ({offsets, rect, childRect, pageOffset, padding}: Get
   const pos = {
     top: pageOffset.y + rect.top + (topOffset || 0),
     ...(anchorLeft
-      ? {left: pageOffset.x + rect.left + leftOffset!}
+      ? {left: pageOffset.x + rect.left + (leftOffset || 0)}
       : {right: window.innerWidth - rect.right - pageOffset.x + (rightOffset || 0)})
   };
 
@@ -112,7 +112,9 @@ const defaultModalStyle = {
 
 const WINDOW_PAD = 40;
 
-const noop = () => {};
+const noop = () => {
+  return;
+};
 
 type PortaledProps = PropsWithChildren<{
   component: ElementType;

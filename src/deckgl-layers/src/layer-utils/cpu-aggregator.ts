@@ -84,7 +84,9 @@ export function getScaleFunctor(scaleType) {
   return SCALE_FUNC[scaleType] || SCALE_FUNC.quantize;
 }
 
-function nop() {}
+function nop() {
+  return;
+}
 
 export function getGetValue(this: CPUAggregator, step, props, dimensionUpdater) {
   const {key} = dimensionUpdater;
@@ -369,7 +371,12 @@ export const defaultElevationDimension: DimensionType<number> = {
 
 export const defaultDimensions = [defaultColorDimension, defaultElevationDimension];
 
-export type CPUAggregatorState = {layerData: {data?}; dimensions: {}; geoJSON?; clusterBuilder?};
+export type CPUAggregatorState = {
+  layerData: {data?};
+  dimensions: object;
+  geoJSON?;
+  clusterBuilder?;
+};
 
 export default class CPUAggregator {
   static getDimensionScale: any;
@@ -631,7 +638,7 @@ export default class CPUAggregator {
   }
 
   getAccessor(dimensionKey, layerProps) {
-    if (!this.dimensionUpdaters.hasOwnProperty(dimensionKey)) {
+    if (!Object.prototype.hasOwnProperty.call(this.dimensionUpdaters, dimensionKey)) {
       return nop;
     }
     return this.dimensionUpdaters[dimensionKey].getSubLayerAccessor(

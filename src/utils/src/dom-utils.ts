@@ -163,7 +163,7 @@ export function isDataUrl(url) {
 }
 
 function parseExtension(url) {
-  const match = /\.([^\.\/]*?)$/g.exec(url);
+  const match = /\.([^./]*?)$/g.exec(url);
   if (match) {
     return match[1];
   }
@@ -202,7 +202,7 @@ export function dataAsUrl(content, type) {
 }
 
 export function escape(string) {
-  return string.replace(/([.*+?^${}()|\[\]\/\\])/g, '\\$1');
+  return string.replace(/([.*+?^${}()|[\]/\\])/g, '\\$1');
 }
 
 export function delay(ms) {

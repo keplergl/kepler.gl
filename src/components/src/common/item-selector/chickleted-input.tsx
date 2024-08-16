@@ -11,15 +11,16 @@ import {restrictToParentElement} from '@dnd-kit/modifiers';
 import Delete from '../icons/delete';
 import {FormattedMessage} from '@kepler.gl/localization';
 
+type Item = string | number | boolean | object | undefined;
 interface ChickletedInputProps {
   // required properties
   onClick: MouseEventHandler<HTMLDivElement>;
-  removeItem: Function;
+  removeItem: (item: Item, e: React.MouseEvent<SVGSVGElement, MouseEvent>) => void;
 
   // optional properties
   selectedItems?: any[];
   disabled?: boolean;
-  displayOption?: Function;
+  displayOption?: (item: Item) => string;
   focus?: boolean;
   error?: boolean;
   placeholder?: string;
@@ -153,7 +154,7 @@ const ChickletedInput: React.FC<ChickletedInputProps> = ({
   placeholder = '',
   removeItem,
   reorderItems = d => d,
-  displayOption = d => d,
+  displayOption = d => String(d),
   inputTheme,
   CustomChickletComponent
 }) => {

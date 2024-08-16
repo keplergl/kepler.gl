@@ -27,7 +27,9 @@ type ButtonProps = {
   text?: string;
 } & React.ButtonHTMLAttributes<HTMLButtonElement>;
 
-const noop = () => {};
+const noop = () => {
+  return;
+};
 const Button = ({onClick = noop, disabled = false, text = '', children, ...props}: ButtonProps) => (
   <StyledButton {...props} onClick={disabled ? undefined : onClick}>
     {text || children}

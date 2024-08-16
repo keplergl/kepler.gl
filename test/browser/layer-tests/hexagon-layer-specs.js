@@ -521,7 +521,7 @@ test('#HexagonLayer -> renderHover', t => {
       renderArgs: {
         objectHovered: testObjectHovered
       },
-      assert: (deckLayers, layer) => {
+      assert: deckLayers => {
         t.deepEqual(
           deckLayers.map(l => l.id),
           [

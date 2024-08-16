@@ -136,7 +136,8 @@ const getDefaultState = (): MapStyle => {
  *
  * export default composedReducer;
  */
-/* eslint-disable no-unused-vars */
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 // @ts-ignore
 const mapStyleUpdaters = null;
 /* eslint-enable no-unused-vars */
@@ -515,7 +516,7 @@ export const loadMapStylesUpdater = (
 
 function createActionTask(action, payload) {
   if (typeof action === 'function') {
-    return ACTION_TASK().map(_ => action(payload));
+    return ACTION_TASK().map(() => action(payload));
   }
 
   return null;
@@ -774,7 +775,7 @@ export const removeCustomMapStyleUpdater = (
 ): MapStyle => {
   const {id} = action.payload;
 
-  // eslint-disable-next-line no-unused-vars
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const {[id]: _, ...restOfMapStyles} = state.mapStyles;
 
   const newState = {

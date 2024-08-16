@@ -58,15 +58,17 @@ const useDndLayers: (layers: Layer[], layerOrder: string[]) => DndEffectsHook = 
 
       switch (overType) {
         // moving layers into maps
-        case DROPPABLE_MAP_CONTAINER_TYPE:
+        case DROPPABLE_MAP_CONTAINER_TYPE: {
           const mapIndex = over.data.current?.index ?? 0;
           dispatch(toggleLayerForMap(mapIndex, activeLayerId));
           break;
+        }
         // swaping layers
-        case SORTABLE_LAYER_TYPE:
+        case SORTABLE_LAYER_TYPE: {
           const newLayerOrder = reorderLayerOrder(layerOrder, activeLayerId, over.id);
           dispatch(reorderLayer(newLayerOrder));
           break;
+        }
         //  moving layers within side panel
         case SORTABLE_SIDE_PANEL_TYPE:
           // move layer to the end of the list

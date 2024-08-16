@@ -92,10 +92,10 @@ export type KeplerGlState = {
  * export default composedReducer;
  */
 
-/* eslint-disable no-unused-vars */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // @ts-ignore
 const combinedUpdaters = null;
-/* eslint-enable no-unused-vars */
+/* eslint-enable @typescript-eslint/no-unused-vars */
 
 export const isValidConfig = config =>
   isPlainObject(config) && isPlainObject(config.config) && config.version;
@@ -204,7 +204,13 @@ export const addDataToMapUpdater = (
     pick_('mapStyle')(apply_(styleMapConfigUpdater, payload_({config: parsedConfig, options}))),
     pick_('uiState')(apply_(uiStateLoadFilesSuccessUpdater, payload_(null))),
     pick_('uiState')(apply_(toggleModalUpdater, payload_(null))),
-    pick_('uiState')(merge_(options.hasOwnProperty('readOnly') ? {readOnly: options.readOnly} : {}))
+    pick_('uiState')(
+      merge_(
+        Object.prototype.hasOwnProperty.call(options, 'readOnly')
+          ? {readOnly: options.readOnly}
+          : {}
+      )
+    )
   ])(state);
 };
 
@@ -255,7 +261,7 @@ const updateDarkBaseMapLayers =
     ...visState,
     layers: visState.layers.map(layer => {
       if (!layerId || layer.id === layerId) {
-        if (layer.visConfigSettings.hasOwnProperty('darkBaseMapEnabled')) {
+        if (Object.prototype.hasOwnProperty.call(layer.visConfigSettings, 'darkBaseMapEnabled')) {
           const {visConfig} = layer.config;
           return layer.updateLayerConfig({
             visConfig: {...visConfig, darkBaseMapEnabled}
@@ -325,7 +331,7 @@ export const combinedLayerTypeChangeUpdater = (
   const oldLayerIndex = visState.layers.findIndex(layer => layer === action.oldLayer);
   visState = layerTypeChangeUpdater(visState, action);
   const newLayer = visState.layers[oldLayerIndex];
-  if (newLayer?.visConfigSettings.hasOwnProperty('darkBaseMapEnabled')) {
+  if (Object.prototype.hasOwnProperty.call(newLayer?.visConfigSettings, 'darkBaseMapEnabled')) {
     const {mapStyle} = state;
     const {colorMode} = mapStyle.mapStyles[mapStyle.styleType];
     const {darkBaseMapEnabled} = newLayer.config.visConfig;
@@ -361,7 +367,7 @@ export const toggleSplitMapUpdater = (
     ...state,
     visState: visStateToggleSplitMapUpdater(state.visState, action),
     uiState: uiStateToggleSplitMapUpdater(state.uiState),
-    mapState: mapStateToggleSplitMapUpdater(state.mapState, action)
+    mapState: mapStateToggleSplitMapUpdater(state.mapState)
   };
 
   const isSplit = newState.visState.splitMaps.length !== 0;

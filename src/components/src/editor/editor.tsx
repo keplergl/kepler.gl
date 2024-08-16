@@ -29,7 +29,7 @@ const StyledWrapper = styled.div`
   position: relative;
 `;
 
-const editorLayerFilter = (layer: Layer) => EDITOR_AVAILABLE_LAYERS.includes(layer.type!);
+const editorLayerFilter = (layer: Layer) => EDITOR_AVAILABLE_LAYERS.includes(layer.type || '');
 
 EditorFactory.deps = [FeatureActionPanelFactory];
 
