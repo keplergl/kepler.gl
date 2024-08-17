@@ -5,7 +5,9 @@ import {JSXElementConstructor} from 'react';
 import {connect as reduxConnect, GetProps, Matching} from 'react-redux';
 import withLocalSelector from './with-local-selector';
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const defaultMapStateToProps = (state, _, __) => state;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const defaultMapDispatchToProps = () => (dispatch, _, __) => ({dispatch});
 
 export const connect =

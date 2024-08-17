@@ -350,7 +350,7 @@ export default class GeoJsonLayer extends Layer {
     return null;
   }
 
-  calculateDataAttribute({dataContainer, filteredIndex}, getPosition) {
+  calculateDataAttribute({dataContainer, filteredIndex}) {
     if (dataContainer instanceof ArrowDataContainer) {
       // filter geojson/arrow table by values and make a partial copy of the raw table are expensive
       // so we will use filteredIndex to create an attribute e.g. filteredIndex [0|1] for GPU filtering
@@ -390,7 +390,7 @@ export default class GeoJsonLayer extends Layer {
     };
     const indexAccessor = f => f.properties.index;
 
-    const dataAccessor = dc => d => ({index: d.properties.index});
+    const dataAccessor = () => d => ({index: d.properties.index});
     const accessors = this.getAttributeAccessors({dataAccessor, dataContainer});
 
     const isFilteredAccessor = d => {

@@ -236,7 +236,7 @@ export function EffectPanelHeaderActionSectionFactory(
         <StyledPanelHeaderHiddenActions isConfigActive={isConfigActive}>
           {effectActionItems
             .filter((item: ActionItem) => Boolean(item.isHidden))
-            .map((item: ActionItem, i) => (
+            .map((item: ActionItem) => (
               <PanelHeaderAction
                 key={item.key}
                 className={`effect__${item.key}`}
@@ -251,7 +251,7 @@ export function EffectPanelHeaderActionSectionFactory(
         </StyledPanelHeaderHiddenActions>
         {effectActionItems
           .filter((item: ActionItem) => !item.isHidden)
-          .map((item: ActionItem, i) => (
+          .map((item: ActionItem) => (
             <PanelHeaderAction
               key={item.key}
               className={classnames(`effect__${item.key}`, item.classNames)}

@@ -38,7 +38,7 @@ export default function AnimationSpeedSliderFactory(
   RangeSlider: ReturnType<typeof RangeSliderFactory>
 ): ComponentType<AnimationSpeedSliderProps> {
   class AnimationSpeedSlider extends Component<AnimationSpeedSliderProps> {
-    handleClickOutside = e => {
+    handleClickOutside = () => {
       this.props.onHide();
     };
 

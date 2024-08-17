@@ -11,7 +11,7 @@ import ScatterplotIconLayer from './scatterplot-icon-layer';
 const DEFAULT_ICON_GEOMETRY = [1, 1, 0, 1, -1, 0, -1, -1, 0, -1, -1, 0, -1, 1, 0, 1, 1, 0];
 
 const defaultProps = {
-  getIconGeometry: (iconId: string) => DEFAULT_ICON_GEOMETRY,
+  getIconGeometry: () => DEFAULT_ICON_GEOMETRY,
   getIcon: (d: {icon: string}) => d.icon
 };
 

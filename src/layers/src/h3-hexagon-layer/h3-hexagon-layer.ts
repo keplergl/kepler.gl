@@ -287,7 +287,7 @@ export default class HexagonIdLayer extends Layer {
     };
   }
 
-  calculateDataAttribute({dataContainer, filteredIndex}: KeplerTable, getHexId) {
+  calculateDataAttribute({filteredIndex}: KeplerTable, getHexId) {
     const data: HexagonIdLayerData[] = [];
 
     for (let i = 0; i < filteredIndex.length; i++) {
@@ -308,7 +308,7 @@ export default class HexagonIdLayer extends Layer {
 
   // TODO: fix complexity
   /* eslint-disable complexity */
-  formatLayerData(datasets, oldLayerData, opt = {}) {
+  formatLayerData(datasets, oldLayerData) {
     if (this.config.dataId === null) {
       return {};
     }

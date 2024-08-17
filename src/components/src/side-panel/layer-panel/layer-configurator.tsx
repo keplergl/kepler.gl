@@ -309,12 +309,7 @@ export default function LayerConfiguratorFactory(
       );
     }
 
-    _renderHeatmapLayerConfig({
-      layer,
-      visConfiguratorProps,
-      layerConfiguratorProps,
-      layerChannelConfigProps
-    }) {
+    _renderHeatmapLayerConfig({layer, visConfiguratorProps, layerChannelConfigProps}) {
       return (
         <StyledLayerVisualConfigurator>
           {/* Color */}

@@ -150,7 +150,7 @@ function createVirtualReference(container, x, y, size = 0) {
   };
 }
 
-function getOffsetForPlacement({placement, reference, popper}, gap = 20) {
+function getOffsetForPlacement({placement}, gap = 20) {
   switch (placement) {
     case 'top-start':
     case 'bottom-start':

@@ -69,10 +69,10 @@ type IntlProps = {
 function ExportHtmlMapFactory(): React.ComponentType<ExportHtmlMapProps> {
   /** @type {typeof import('./export-html-map').ExportHtmlMap} */
   const ExportHtmlMap: React.FC<ExportHtmlMapProps & IntlProps> = ({
-    onChangeExportMapHTMLMode = mode => {
+    onChangeExportMapHTMLMode = () => {
       return;
     },
-    onEditUserMapboxAccessToken = token => {
+    onEditUserMapboxAccessToken = () => {
       return;
     },
     options = {},

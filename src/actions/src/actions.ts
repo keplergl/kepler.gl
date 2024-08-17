@@ -224,7 +224,7 @@ export const replaceDataInMap: (payload: ReplaceDataInMapPayload) => {
  * is listened by all subreducers,
  * @public
  */
-/* eslint-disable no-unused-vars */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // @ts-ignore
 const main = null;
-/* eslint-enable no-unused-vars */
+/* eslint-enable @typescript-eslint/no-unused-vars */

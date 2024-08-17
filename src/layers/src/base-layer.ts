@@ -188,6 +188,7 @@ const MAX_SAMPLE_SIZE = 5000;
 const defaultDomain: [number, number] = [0, 1];
 const dataFilterExtension = new DataFilterExtension({filterSize: MAX_GPU_FILTERS});
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const defaultDataAccessor = dc => d => d;
 const defaultGetFieldValue = (field, d) => field.valueAccessor(d);
 
@@ -576,14 +577,17 @@ class Layer {
       : 1;
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   formatLayerData(datasets: Datasets, oldLayerData?: any) {
     return {};
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   renderLayer(...args: any[]): any[] {
     return [];
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   getHoverData(object, dataContainer: DataContainerInterface, fields: Field[]) {
     if (!object) {
       return null;
@@ -1398,15 +1402,18 @@ class Layer {
     }, []);
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   calculateDataAttribute(keplerTable: KeplerTable, getPosition): any {
     // implemented in subclasses
     return [];
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   updateLayerMeta(dataContainer: DataContainerInterface, getPosition) {
     // implemented in subclasses
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   getPositionAccessor(dataContainer?: DataContainerInterface): (...args: any[]) => any {
     // implemented in subclasses
     return () => null;

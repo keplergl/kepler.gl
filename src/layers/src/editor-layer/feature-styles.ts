@@ -42,14 +42,12 @@ export const FEATURE_STYLE = {
 };
 
 export const LINE_STYLE = {
-  getColor: (feature: Feature, isSelected, mode: string): RGBAColor =>
+  getColor: (_feature: Feature, isSelected: boolean): RGBAColor =>
     isSelected ? PRIMARY_COLOR : PRIMARY_COLOR,
-  getWidth: (feature: Feature, isSelected, mode: string): number =>
+  getWidth: (_feature: Feature, isSelected: boolean): number =>
     isSelected ? STROKE_WIDTH_SELECTED : STROKE_WIDTH_NOT_SELECTED,
-  getTentativeLineColor: (feature: Feature, isSelected: boolean): RGBAColor =>
-    TENTATIVE_FEATURE_COLOR,
-  getTentativeLineWidth: (feature: Feature, isSelected: boolean): number =>
-    STROKE_WIDTH_NOT_SELECTED,
+  getTentativeLineColor: (): RGBAColor => TENTATIVE_FEATURE_COLOR,
+  getTentativeLineWidth: (): number => STROKE_WIDTH_NOT_SELECTED,
   getTentativeFillColor: TENTATIVE_FEATURE_COLOR_TRANSPARENT,
   dashArray: STROKE_DASH_ARRAY,
   solidArray: STROKE_SOLID_ARRAY,

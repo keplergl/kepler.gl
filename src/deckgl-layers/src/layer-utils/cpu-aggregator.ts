@@ -211,7 +211,7 @@ export const defaultAggregation: AggregationType = {
   ]
 };
 
-function getSubLayerAccessor(dimensionState, dimension, layerProps) {
+function getSubLayerAccessor(dimensionState, dimension) {
   return cell => {
     const {sortedBins, scaleFunc} = dimensionState;
     const bin = sortedBins.binMap[cell.index];

@@ -45,9 +45,9 @@ const StyledColorBlock = styled.div<{selected: boolean}>`
 
 const SingleColorPalette: React.FC<SingleColorPaletteProps> = ({selectedColor, onSelectColor}) => (
   <StyledColorPalette className="single-color-palette">
-    {Themes.map((theme, col) => (
+    {Themes.map(theme => (
       <StyledColorColumn key={theme} className="single-color-palette__column">
-        {range(1, ROWS + 1, 1).map((key, i) => (
+        {range(1, ROWS + 1, 1).map(key => (
           <StyledColorBlock
             className="single-color-palette__block"
             style={{

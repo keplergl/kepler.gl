@@ -24,8 +24,8 @@ const withLocalSelector = <P extends object>(
     static contextType = KeplerGlContext;
 
     selectorFromContext = (_, ctx) => (ctx.selector ? ctx.selector : identity);
-    selectorFromProps = (props, _) => (props.selector ? props.selector : identity);
-    idFromProps = (props, _) => props.id;
+    selectorFromProps = props => (props.selector ? props.selector : identity);
+    idFromProps = props => props.id;
     computedSelector = createSelector(
       this.selectorFromContext,
       this.selectorFromProps,

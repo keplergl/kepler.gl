@@ -90,7 +90,7 @@ export const FormatterDropdown: React.FC<FormatterDropdownProps> = (
   const selectionIndex = formatLabels.findIndex(label => label.format === displayFormat);
 
   const onSelectDisplayFormat = useCallback(
-    (result, e) => {
+    result => {
       setDisplayFormat(result);
       onClose();
     },

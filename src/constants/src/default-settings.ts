@@ -748,7 +748,7 @@ export const FIELD_OPTS = {
       ...notSupportAggrOpts
     },
     format: {
-      legend: d => '...',
+      legend: () => '...',
       tooltip: []
     }
   },
@@ -759,7 +759,7 @@ export const FIELD_OPTS = {
       ...notSupportAggrOpts
     },
     format: {
-      legend: d => '...',
+      legend: () => '...',
       tooltip: []
     }
   },
@@ -767,7 +767,7 @@ export const FIELD_OPTS = {
     type: 'numerical',
     scale: {},
     format: {
-      legend: d => '...',
+      legend: () => '...',
       tooltip: []
     }
   },
@@ -775,7 +775,7 @@ export const FIELD_OPTS = {
     type: 'numerical',
     scale: {},
     format: {
-      legend: d => '...',
+      legend: () => '...',
       tooltip: []
     }
   }
@@ -897,7 +897,7 @@ export const CustomRatioOption: ImageRatioOption = {
 export const FourByThreeRatioOption: ImageRatioOption = {
   id: EXPORT_IMG_RATIOS.FOUR_BY_THREE,
   label: 'modal.exportImage.ratio4_3',
-  getSize: (screenW, screenH) => ({
+  getSize: screenW => ({
     width: screenW,
     height: Math.round(screenW * 0.75)
   })
@@ -905,7 +905,7 @@ export const FourByThreeRatioOption: ImageRatioOption = {
 export const SixteenByNineRatioOption: ImageRatioOption = {
   id: EXPORT_IMG_RATIOS.SIXTEEN_BY_NINE,
   label: 'modal.exportImage.ratio16_9',
-  getSize: (screenW, screenH) => ({
+  getSize: screenW => ({
     width: screenW,
     height: Math.round(screenW * 0.5625)
   })

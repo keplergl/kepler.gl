@@ -98,7 +98,7 @@ function ColorSelectorFactory(RangeSlider): ComponentType<ColorSelectorProps> {
 
     node = createRef<HTMLDivElement>();
 
-    handleClickOutside = e => {
+    handleClickOutside = () => {
       if (this.props.colorUI && Number.isInteger(this.props.colorUI.showSketcher)) {
         // if sketcher is open, let sketch to close itself first
         return;

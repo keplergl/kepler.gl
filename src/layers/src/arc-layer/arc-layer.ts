@@ -185,7 +185,7 @@ export default class ArcLayer extends Layer {
     return {props: [props]};
   }
 
-  calculateDataAttribute({dataContainer, filteredIndex}, getPosition) {
+  calculateDataAttribute({filteredIndex}, getPosition) {
     const data: ArcLayerData[] = [];
     for (let i = 0; i < filteredIndex.length; i++) {
       const index = filteredIndex[i];

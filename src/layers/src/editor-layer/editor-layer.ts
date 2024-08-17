@@ -134,7 +134,7 @@ export function getEditorLayer({
 
     extensions: [new PathStyleExtension({dash: true})],
     dashGapPickable: true,
-    getDashArray: (feature, _isSelected) => {
+    getDashArray: feature => {
       if (feature?.properties?.guideType === 'tentative') {
         return LINE_STYLE.dashArray;
       }

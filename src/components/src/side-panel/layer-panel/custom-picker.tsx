@@ -48,7 +48,7 @@ class CustomPicker extends Component<CustomPickerProps> {
     }
   }));
 
-  handleClickOutside = (e: Event) => {
+  handleClickOutside = () => {
     this.props.onSwatchClose();
   };
 

@@ -143,6 +143,7 @@ export default function GeocoderPanelFactory(): ComponentType<GeocoderPanelProps
       this.props.removeDataset(GEOCODER_DATASET_NAME);
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     onSelected = (viewport: Viewport | null = null, geoItem: Result) => {
       const {
         center: [lon, lat],

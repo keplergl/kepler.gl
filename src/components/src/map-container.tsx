@@ -838,7 +838,7 @@ export default function MapContainerFactory(
             {...extraDeckParams}
             onHover={
               isInteractive
-                ? (data, event) => {
+                ? data => {
                     const res = EditorLayerUtils.onHover(data, {
                       editorMenuActive,
                       editor,
@@ -846,7 +846,7 @@ export default function MapContainerFactory(
                     });
                     if (res) return;
 
-                    this._onLayerHoverDebounced(data, index, event);
+                    this._onLayerHoverDebounced(data, index);
                   }
                 : null
             }
@@ -924,7 +924,7 @@ export default function MapContainerFactory(
       this._onViewportChangePropagateDebounced();
     };
 
-    _onLayerHoverDebounced = debounce((data, index, event) => {
+    _onLayerHoverDebounced = debounce((data, index) => {
       this.props.visStateActions.onLayerHover(data, index);
     }, DEBOUNCE_MOUSE_MOVE_PROPAGATE);
 

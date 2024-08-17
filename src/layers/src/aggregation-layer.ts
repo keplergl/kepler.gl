@@ -176,6 +176,7 @@ export default class AggregationLayer extends Layer {
   /**
    * Aggregation layer handles visual channel aggregation inside deck.gl layer
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   updateLayerVisualChannel({dataContainer}, channel) {
     this.validateVisualChannel(channel);
   }
@@ -248,7 +249,7 @@ export default class AggregationLayer extends Layer {
   /**
    * Aggregation layer handles visual channel aggregation inside deck.gl layer
    */
-  updateLayerDomain(datasets, newFilter): AggregationLayer {
+  updateLayerDomain(): AggregationLayer {
     return this;
   }
 
@@ -259,7 +260,7 @@ export default class AggregationLayer extends Layer {
     this.updateMeta({bounds});
   }
 
-  calculateDataAttribute({dataContainer, filteredIndex}: KeplerTable, getPosition) {
+  calculateDataAttribute({filteredIndex}: KeplerTable, getPosition) {
     const data: AggregationLayerData[] = [];
 
     for (let i = 0; i < filteredIndex.length; i++) {

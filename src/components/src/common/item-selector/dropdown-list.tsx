@@ -18,6 +18,7 @@ export const classList = {
 };
 
 const defaultDisplay = d => d;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const ListItem = ({value, displayOption = defaultDisplay, disabled, light}) => {
   const displayValue = displayOption(value);
   return (
@@ -115,7 +116,7 @@ export default class DropdownList extends Component<DropdownListProps, DropdownL
     }
   }
 
-  getSnapshotBeforeUpdate(prevProps: DropdownListProps, prevState: DropdownListState) {
+  getSnapshotBeforeUpdate(prevProps: DropdownListProps) {
     if (prevProps.options !== this.props.options) {
       // check if user searching, reset state.options at the first time
       const options = this._getOptions(0);
@@ -125,7 +126,7 @@ export default class DropdownList extends Component<DropdownListProps, DropdownL
   }
 
   // prevent console warning: getSnapshotBeforeUpdate() should be used with componentDidUpdate().
-  componentDidUpdate(prevProps, prevState, snapshot) {
+  componentDidUpdate() {
     return;
   }
 
