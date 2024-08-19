@@ -88,7 +88,6 @@ test('GeocoderPanel - render', t => {
           ],
           rows: [[55, 1, 'place', 'mock']]
         },
-        id: 'geocoder_dataset',
         info: {
           hidden: true,
           id: 'geocoder_dataset',
