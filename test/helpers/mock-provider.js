@@ -1,4 +1,7 @@
 // SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
+// SPDX-License-Identifier: MIT
 // Copyriht contributors to the kepler.gl project
 
 import React from 'react';
