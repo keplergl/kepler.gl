@@ -7,6 +7,8 @@ import {AnimationConfig, Timeline} from '@kepler.gl/types';
 import {snapToMarks, getTimelineFromAnimationConfig, toArray} from '@kepler.gl/utils';
 import AnimationControllerFactory from './common/animation-control/animation-controller';
 
+type AnimationValue = number;
+
 interface LayerAnimationControllerProps {
   animationConfig: AnimationConfig;
   setLayerAnimationTime: (x: number) => void;
@@ -33,13 +35,15 @@ function LayerAnimationControllerFactory(
     const {timeSteps, domain} = animationConfig;
 
     const setTimelineValue = useCallback(
-      (value: number) => {
+      (value: AnimationValue | AnimationValue[]) => {
+        const value0 = toArray(value)[0];
+
         if (Array.isArray(timeSteps)) {
-          setLayerAnimationTime(snapToMarks(toArray(value)[0], timeSteps));
+          setLayerAnimationTime(snapToMarks(value0, timeSteps));
 
           // TODO: merge slider in to avoid this step
-        } else if (domain && value >= domain[0] && value <= domain[1]) {
-          setLayerAnimationTime(value);
+        } else if (domain && value0 >= domain[0] && value0 <= domain[1]) {
+          setLayerAnimationTime(value0);
         }
       },
       [domain, setLayerAnimationTime, timeSteps]
