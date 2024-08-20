@@ -48,13 +48,12 @@ function getValidFieldPairsSuggestionsForColumn(
     const columnPair = columnPairs[columnKey];
     const matchingFieldPairs = enhancedFieldPairs.filter(({pair}) => {
       return toArray(columnPair.fieldPairKey).some(fieldPairKey =>
-        pair.hasOwnProperty(fieldPairKey)
+        Object.prototype.hasOwnProperty.call(pair, fieldPairKey)
       );
     });
     return matchingFieldPairs.length > 0 ? matchingFieldPairs : null;
-  } else {
-    return null;
   }
+  return null;
 }
 
 LayerColumnConfigFactory.deps = [ColumnSelectorFactory];

@@ -88,7 +88,7 @@ export default class DropboxProvider extends Provider {
             'dropbox',
             JSON.stringify({
               // dropbox token doesn't expire unless revoked by the user
-              token: token,
+              token,
               user,
               timestamp: new Date()
             })

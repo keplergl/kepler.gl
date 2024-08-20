@@ -56,13 +56,15 @@ function fetch(url, {propName, layer}: {propName?: string; layer?: any} = {}) {
   return fetch(url).then(response => response.json());
 }
 
-export const scenegraphPosAccessor = ({lat, lng, altitude}: ScenegraphLayerColumnsConfig) => (
-  dc: DataContainerInterface
-) => d => [
-  dc.valueAt(d.index, lng.fieldIdx),
-  dc.valueAt(d.index, lat.fieldIdx),
-  altitude && altitude.fieldIdx > -1 ? dc.valueAt(d.index, altitude.fieldIdx) : 0
-];
+export const scenegraphPosAccessor =
+  ({lat, lng, altitude}: ScenegraphLayerColumnsConfig) =>
+  (dc: DataContainerInterface) =>
+  d =>
+    [
+      dc.valueAt(d.index, lng.fieldIdx),
+      dc.valueAt(d.index, lat.fieldIdx),
+      altitude && altitude.fieldIdx > -1 ? dc.valueAt(d.index, altitude.fieldIdx) : 0
+    ];
 
 export const scenegraphVisConfigs: {
   opacity: 'opacity';
@@ -148,7 +150,7 @@ export default class ScenegraphLayer extends Layer {
     };
   }
 
-  calculateDataAttribute({dataContainer, filteredIndex}: KeplerTable, getPosition) {
+  calculateDataAttribute({filteredIndex}: KeplerTable, getPosition) {
     const data: ScenegraphLayerData[] = [];
 
     for (let i = 0; i < filteredIndex.length; i++) {

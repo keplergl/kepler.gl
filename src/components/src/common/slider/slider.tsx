@@ -9,7 +9,9 @@ import SliderHandle from './slider-handle';
 import SliderBarHandle from './slider-bar-handle';
 import {normalizeSliderValue, clamp} from '@kepler.gl/utils';
 
-function noop() {}
+function noop() {
+  return;
+}
 
 interface StyledRangeSliderProps {
   vertical?: boolean;
@@ -74,7 +76,7 @@ export default class Slider extends Component<SliderProps> {
     showTooltip: false
   };
 
-  private anchor: number = 0;
+  private anchor = 0;
 
   public ref: RefObject<typeof SliderWrapper & HTMLDivElement> = createRef<
     typeof SliderWrapper & HTMLDivElement

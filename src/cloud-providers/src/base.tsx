@@ -8,7 +8,9 @@ const getStyleClassFromColor = (totalColor: number, colors: string[]) =>
     .fill(1)
     .reduce((accu, c, i) => `${accu}.cr${i + 1} {fill:${colors[i % colors.length]};}`, '');
 
-const nop = () => {};
+const nop = () => {
+  return;
+};
 
 export type BaseProps = {
   /** Set the height of the icon, ex. '16px' */

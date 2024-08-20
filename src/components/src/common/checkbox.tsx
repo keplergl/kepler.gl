@@ -6,7 +6,9 @@ import styled from 'styled-components';
 import pick from 'lodash.pick';
 import classnames from 'classnames';
 
-function noop() {}
+function noop() {
+  return;
+}
 
 interface StyledSwitchInputProps {
   secondary?: boolean;

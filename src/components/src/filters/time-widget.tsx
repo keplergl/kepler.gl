@@ -39,10 +39,10 @@ function TimeWidgetFactory(
   }: TimeWidgetProps) => {
     const [isMinified, setMinified] = useState(false);
 
-    const _updateAnimationSpeed = useCallback(speed => updateAnimationSpeed(index, speed), [
-      updateAnimationSpeed,
-      index
-    ]);
+    const _updateAnimationSpeed = useCallback(
+      speed => updateAnimationSpeed(index, speed),
+      [updateAnimationSpeed, index]
+    );
 
     const _toggleAnimation = useCallback(() => toggleAnimation(index), [toggleAnimation, index]);
 
@@ -53,10 +53,10 @@ function TimeWidgetFactory(
       [setFilterAnimationWindow, filter.id]
     );
 
-    const timeSliderOnChange = useCallback(value => setFilterAnimationTime(index, 'value', value), [
-      setFilterAnimationTime,
-      index
-    ]);
+    const timeSliderOnChange = useCallback(
+      value => setFilterAnimationTime(index, 'value', value),
+      [setFilterAnimationTime, index]
+    );
 
     return (
       <TimeBottomWidgetInner className="bottom-widget--inner">

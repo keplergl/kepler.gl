@@ -91,9 +91,11 @@ export const S2_TOKEN_FIELDS: {
 };
 
 export const s2RequiredColumns: ['token'] = ['token'];
-export const S2TokenAccessor = ({token}: S2GeometryLayerColumnsConfig) => (
-  dc: DataContainerInterface
-) => d => dc.valueAt(d.index, token.fieldIdx);
+export const S2TokenAccessor =
+  ({token}: S2GeometryLayerColumnsConfig) =>
+  (dc: DataContainerInterface) =>
+  d =>
+    dc.valueAt(d.index, token.fieldIdx);
 
 export const defaultElevation = 500;
 export const defaultLineWidth = 1;
@@ -252,7 +254,7 @@ export default class S2GeometryLayer extends Layer {
     };
   }
 
-  calculateDataAttribute({dataContainer, filteredIndex}: KeplerTable, getS2Token) {
+  calculateDataAttribute({filteredIndex}: KeplerTable, getS2Token) {
     const data: S2GeometryLayerData[] = [];
     for (let i = 0; i < filteredIndex.length; i++) {
       const index = filteredIndex[i];
@@ -291,7 +293,7 @@ export default class S2GeometryLayer extends Layer {
     this.updateMeta({bounds});
   }
 
-  formatLayerData(datasets, oldLayerData, opt = {}) {
+  formatLayerData(datasets, oldLayerData) {
     if (this.config.dataId === null) {
       return {};
     }

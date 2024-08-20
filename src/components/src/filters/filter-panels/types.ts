@@ -38,6 +38,5 @@ export interface FilterPanelWithFieldSelectProps extends FilterPanelProps {
 export type FilterPanelComponent<F> = FunctionComponent<FilterPanelProps<F>>;
 export type PolygonFilterPanelComponent = FunctionComponent<PolygonFilterPanelProps>;
 export type TimeRangeFilterPanelComponent = FunctionComponent<TimeRangeFilterPanelProps>;
-export type FilterPanelWithFieldSelectComponent = FunctionComponent<
-  FilterPanelWithFieldSelectProps
->;
+export type FilterPanelWithFieldSelectComponent =
+  FunctionComponent<FilterPanelWithFieldSelectProps>;

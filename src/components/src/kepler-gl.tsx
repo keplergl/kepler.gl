@@ -136,7 +136,7 @@ export const mapStateSelector = (props: any, index: number): any => {
       props.mapState;
 };
 
-export const mapFieldsSelector = (props: KeplerGLProps, index: number = 0) => ({
+export const mapFieldsSelector = (props: KeplerGLProps, index = 0) => ({
   getMapboxRef: props.getMapboxRef,
   mapboxApiAccessToken: props.mapboxApiAccessToken,
   mapboxApiUrl: props.mapboxApiUrl ? props.mapboxApiUrl : DEFAULT_KEPLER_GL_PROPS.mapboxApiUrl,
@@ -169,7 +169,7 @@ export const mapFieldsSelector = (props: KeplerGLProps, index: number = 0) => ({
 
 export function getVisibleDatasets(datasets) {
   // We don't want Geocoder dataset to be present in SidePanel dataset list
-  return filterObjectByPredicate(datasets, (key, value) => key !== GEOCODER_DATASET_NAME);
+  return filterObjectByPredicate(datasets, key => key !== GEOCODER_DATASET_NAME);
 }
 
 export const sidePanelSelector = (props: KeplerGLProps, availableProviders, filteredDatasets) => ({
@@ -595,7 +595,7 @@ export function mapStateToProps(state: KeplerGlState, props: KeplerGLProps) {
 
 const defaultUserActions = {};
 
-const getDispatch = (dispatch, props) => dispatch;
+const getDispatch = dispatch => dispatch;
 const getUserActions = (dispatch, props) => props.actions || defaultUserActions;
 
 /** @type {() => import('reselect').OutputParametricSelector<any, any, any, any>} */
@@ -640,7 +640,10 @@ function makeMapDispatchToProps() {
 function mergeActions(actions, userActions) {
   const overrides = {};
   for (const key in userActions) {
-    if (userActions.hasOwnProperty(key) && actions.hasOwnProperty(key)) {
+    if (
+      Object.prototype.hasOwnProperty.call(userActions, key) &&
+      Object.prototype.hasOwnProperty.call(actions, key)
+    ) {
       overrides[key] = userActions[key];
     }
   }

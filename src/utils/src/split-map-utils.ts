@@ -48,7 +48,7 @@ export function removeLayerFromSplitMaps(splitMaps, layer) {
     return splitMaps;
   }
   return splitMaps.map(settings => {
-    // eslint-disable-next-line no-unused-vars
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const {[layer.id]: _, ...newLayers} = settings.layers;
     return {
       ...settings,

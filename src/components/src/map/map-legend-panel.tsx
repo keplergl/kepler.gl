@@ -113,6 +113,7 @@ function MapLegendPanelFactory(MapControlTooltip, MapControlPanel, MapLegend) {
       },
       [tippyInstance, onToggleMapControl]
     );
+    const rootContext = useContext(RootContext);
 
     if (!mapLegend.show) {
       return null;
@@ -143,7 +144,6 @@ function MapLegendPanelFactory(MapControlTooltip, MapControlPanel, MapLegend) {
       </MapControlPanel>
     );
 
-    const rootContext = useContext(RootContext);
     if (isPinned) {
       // Pinned panel is not supported in export mode
       if (isExport) {

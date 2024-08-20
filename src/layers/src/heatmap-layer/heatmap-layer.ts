@@ -38,9 +38,11 @@ export type HeatmapLayerConfig = Merge<
 
 export const MAX_ZOOM_LEVEL = 18;
 
-export const pointPosAccessor = ({lat, lng}: HeatmapLayerColumnsConfig) => (
-  dc: DataContainerInterface
-) => d => [dc.valueAt(d.index, lng.fieldIdx), dc.valueAt(d.index, lat.fieldIdx)];
+export const pointPosAccessor =
+  ({lat, lng}: HeatmapLayerColumnsConfig) =>
+  (dc: DataContainerInterface) =>
+  d =>
+    [dc.valueAt(d.index, lng.fieldIdx), dc.valueAt(d.index, lat.fieldIdx)];
 
 export const pointColResolver = ({lat, lng}: HeatmapLayerColumnsConfig) =>
   `${lat.fieldIdx}-${lng.fieldIdx}`;
@@ -72,9 +74,7 @@ const heatmapDensity = (colorRange: ColorRange): (string | number)[] => {
 
   const colors: HexColor[] = ['#000000', ...colorRange.colors];
 
-  const scale = scaleFunction<HexColor>()
-    .domain([0, 1])
-    .range(colors);
+  const scale = scaleFunction<HexColor>().domain([0, 1]).range(colors);
 
   const colorDensity = scale.range().reduce((bands: (string | number)[], level) => {
     const invert = scale.invertExtent(level);
@@ -141,7 +141,8 @@ class HeatmapLayer extends MapboxGLLayer {
   getDefaultLayerConfig(props: LayerBaseConfigPartial): HeatmapLayerConfig {
     // mapbox heatmap layer color is always based on density
     // no need to set colorField, colorDomain and colorScale
-    // eslint-disable-next-line no-unused-vars
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const {colorField, colorDomain, colorScale, ...layerConfig} = {
       ...super.getDefaultLayerConfig(props),
 

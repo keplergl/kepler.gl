@@ -112,11 +112,15 @@ export const CloudItem = ({vis, onClick}) => {
     <StyledVisualizationItem onClick={onClick}>
       {vis.thumbnail ? (
         <div role="thumbnail-wrapper" className="vis_item-thumb" style={thumbnailStyle}>
-          {vis.hasOwnProperty('privateMap') ? <PrivacyBadge privateMap={vis.privateMap} /> : null}
+          {Object.prototype.hasOwnProperty.call(vis, 'privateMap') ? (
+            <PrivacyBadge privateMap={vis.privateMap} />
+          ) : null}
         </div>
       ) : (
         <MapIcon role="map-icon" className="vis_item-icon">
-          {vis.hasOwnProperty('privateMap') ? <PrivacyBadge privateMap={vis.privateMap} /> : null}
+          {Object.prototype.hasOwnProperty.call(vis, 'privateMap') ? (
+            <PrivacyBadge privateMap={vis.privateMap} />
+          ) : null}
         </MapIcon>
       )}
       <span className="vis_item-title">{vis.title}</span>

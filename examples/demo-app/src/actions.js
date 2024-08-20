@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {push} from 'react-router-redux';
-import {request, text as requestText, json as requestJson} from 'd3-request';
+import {request, json as requestJson} from 'd3-request';
 import {loadFiles, toggleModal} from '@kepler.gl/actions';
 import {load} from '@loaders.gl/core';
 import {CSVLoader} from '@loaders.gl/csv';
@@ -72,7 +72,7 @@ export function setLoadingMapStatus(isMapLoading) {
  *
  * @param {*} param0
  */
-export function onExportFileSuccess({response = {}, provider, options}) {
+export function onExportFileSuccess({provider, options}) {
   return dispatch => {
     // if isPublic is true, use share Url
     if (options.isPublic && provider.getShareUrl) {
@@ -269,11 +269,6 @@ function loadRemoteData(url) {
   if (!url) {
     // TODO: we should return reject with an appropriate error
     return Promise.resolve(null);
-  }
-
-  let requestMethod = requestText;
-  if (url.includes('.json') || url.includes('.geojson')) {
-    requestMethod = requestJson;
   }
 
   // Load data

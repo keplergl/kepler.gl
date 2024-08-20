@@ -7,7 +7,13 @@ import cloneDeep from 'lodash.clonedeep';
 import {fireEvent, screen} from '@testing-library/react';
 import {dataTestIds} from '@kepler.gl/constants';
 import {appInjector, LayerListFactory} from '@kepler.gl/components';
-import {VisStateActions, UIStateActions,MapStateActions, addDataToMap, keplerGlInit} from '@kepler.gl/actions';
+import {
+  VisStateActions,
+  UIStateActions,
+  MapStateActions,
+  addDataToMap,
+  keplerGlInit
+} from '@kepler.gl/actions';
 import {processCsvData} from '@kepler.gl/processors';
 import {keplerGlReducerCore as keplerGlReducer} from '@kepler.gl/reducers';
 
@@ -144,6 +150,6 @@ describe('Components -> SidePanel -> LayerPanel -> LayerList', () => {
     const removeLayerButton = screen.getByTestId(dataTestIds.removeLayerAction);
     fireEvent.click(removeLayerButton);
 
-    expect(removeLayer).toBeCalled();
+    expect(removeLayer).toHaveBeenCalled();
   });
 });

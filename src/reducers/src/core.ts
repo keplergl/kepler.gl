@@ -38,15 +38,14 @@ const combined = (
   });
 };
 
-export const coreReducerFactory = (
-  initialState: Partial<KeplerGlState> = {},
-  extraReducers = {}
-) => (state, action) => {
-  if (composers[action.type]) {
-    return composers[action.type](state, action);
-  }
-  return combined(initialState, extraReducers)(state, action);
-};
+export const coreReducerFactory =
+  (initialState: Partial<KeplerGlState> = {}, extraReducers = {}) =>
+  (state, action) => {
+    if (composers[action.type]) {
+      return composers[action.type](state, action);
+    }
+    return combined(initialState, extraReducers)(state, action);
+  };
 
 export default coreReducerFactory();
 

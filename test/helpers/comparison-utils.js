@@ -84,7 +84,7 @@ export function cmpLayers(t, expectedLayer, actualLayer, opt = {}) {
       // also skip functions
       switch (key) {
         // list of fields
-        case 'textLabel':
+        case 'textLabel': {
           cmpObjectKeys(
             t,
             expectedLayer.config[key],
@@ -112,6 +112,7 @@ export function cmpLayers(t, expectedLayer, actualLayer, opt = {}) {
             );
           });
           break;
+        }
         // colorField is a field
         case 'colorField':
         case 'sizeField':

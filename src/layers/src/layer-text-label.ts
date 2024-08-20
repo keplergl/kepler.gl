@@ -35,6 +35,7 @@ export function getTextOffsetByRadius(radiusScale, getRadius, mapState) {
   };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const textLabelAccessor = textLabel => dc => d => {
   const val = textLabel.field.valueAccessor(d);
   return notNullorUndefined(val) ? String(val) : '';

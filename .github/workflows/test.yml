@@ -34,8 +34,8 @@ jobs:
       - name: Install Dependecies
         run: yarn global add "puppeteer@19.11.1" && yarn
 
-      # - name: Lint
-      #  run: yarn lint
+      - name: Lint
+        run: yarn lint
 
       - name: Test
         run: xvfb-run --auto-servernum yarn cover

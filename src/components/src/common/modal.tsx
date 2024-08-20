@@ -134,6 +134,7 @@ type ModalFooterProps = {
  */
 const processDisabledProperty = (props: ModalButtonProps): ModalButtonProps => {
   if (!props.disabled) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const {disabled, ...newProps} = props;
     return newProps;
   }
@@ -190,8 +191,12 @@ export class ModalDialog extends Component<ModalDialogProps> {
   static defaultProps = {
     footer: false,
     close: true,
-    onConfirm: (): void => {},
-    onCancel: (): void => {},
+    onConfirm: () => {
+      return;
+    },
+    onCancel: () => {
+      return;
+    },
     cancelButton: defaultCancelButton,
     confirmButton: defaultConfirmButton,
     cssStyle: []

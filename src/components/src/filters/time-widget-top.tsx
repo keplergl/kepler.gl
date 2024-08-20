@@ -101,10 +101,10 @@ function TimeWidgetTopFactory(FieldSelector: ReturnType<typeof FieldSelectorFact
         ),
       [datasets, filter.dataId]
     );
-    const _setFilterPlotYAxis = useCallback(value => setFilterPlot(index, {yAxis: value}), [
-      setFilterPlot,
-      index
-    ]);
+    const _setFilterPlotYAxis = useCallback(
+      value => setFilterPlot(index, {yAxis: value}),
+      [setFilterPlot, index]
+    );
 
     return (
       <TopSectionWrapper>

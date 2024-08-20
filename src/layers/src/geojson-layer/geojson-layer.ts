@@ -168,17 +168,21 @@ type ObjectInfo = {
   id?: string;
 };
 
-export const featureAccessor = ({geojson}: GeoJsonLayerColumnsConfig) => (
-  dc: DataContainerInterface
-) => d => dc.valueAt(d.index, geojson.fieldIdx);
+export const featureAccessor =
+  ({geojson}: GeoJsonLayerColumnsConfig) =>
+  (dc: DataContainerInterface) =>
+  d =>
+    dc.valueAt(d.index, geojson.fieldIdx);
 
-const geoColumnAccessor = ({geojson}: GeoJsonLayerColumnsConfig) => (
-  dc: DataContainerInterface
-): arrow.Vector | null => dc.getColumn?.(geojson.fieldIdx) as arrow.Vector;
+const geoColumnAccessor =
+  ({geojson}: GeoJsonLayerColumnsConfig) =>
+  (dc: DataContainerInterface): arrow.Vector | null =>
+    dc.getColumn?.(geojson.fieldIdx) as arrow.Vector;
 
-const geoFieldAccessor = ({geojson}: GeoJsonLayerColumnsConfig) => (
-  dc: DataContainerInterface
-): Field | null => (dc.getField ? dc.getField(geojson.fieldIdx) : null);
+const geoFieldAccessor =
+  ({geojson}: GeoJsonLayerColumnsConfig) =>
+  (dc: DataContainerInterface): Field | null =>
+    dc.getField ? dc.getField(geojson.fieldIdx) : null;
 
 // access feature properties from geojson sub layer
 export const defaultElevation = 500;
@@ -346,7 +350,7 @@ export default class GeoJsonLayer extends Layer {
     return null;
   }
 
-  calculateDataAttribute({dataContainer, filteredIndex}, getPosition) {
+  calculateDataAttribute({dataContainer, filteredIndex}) {
     if (dataContainer instanceof ArrowDataContainer) {
       // filter geojson/arrow table by values and make a partial copy of the raw table are expensive
       // so we will use filteredIndex to create an attribute e.g. filteredIndex [0|1] for GPU filtering
@@ -386,7 +390,7 @@ export default class GeoJsonLayer extends Layer {
     };
     const indexAccessor = f => f.properties.index;
 
-    const dataAccessor = dc => d => ({index: d.properties.index});
+    const dataAccessor = () => d => ({index: d.properties.index});
     const accessors = this.getAttributeAccessors({dataAccessor, dataContainer});
 
     const isFilteredAccessor = d => {
@@ -404,7 +408,7 @@ export default class GeoJsonLayer extends Layer {
     };
   }
 
-  isInPolygon(data: DataContainerInterface, index: number, polygon: Feature<Polygon>): Boolean {
+  isInPolygon(data: DataContainerInterface, index: number, polygon: Feature<Polygon>): boolean {
     if (this.centroids.length === 0 || !this.centroids[index]) {
       return false;
     }
@@ -414,7 +418,7 @@ export default class GeoJsonLayer extends Layer {
     if (!point) return false;
     // quick check if centroid is within the query rectangle
     if (isReactangleSearchBox && polygon.properties?.bbox) {
-      const [minX, minY, maxX, maxY] = polygon.properties?.bbox;
+      const [minX, minY, maxX, maxY] = polygon?.properties?.bbox || [];
       return point[0] >= minX && point[0] <= maxX && point[1] >= minY && point[1] <= maxY;
     }
     // use turf.js to check if centroid is within query polygon
@@ -433,26 +437,25 @@ export default class GeoJsonLayer extends Layer {
       if (this.dataToFeature.length < dataContainer.numChunks()) {
         // for incrementally loading data, we only load and render the latest batch; otherwise, we will load and render all batches
         const isIncrementalLoad = dataContainer.numChunks() - this.dataToFeature.length === 1;
-        const {dataToFeature, bounds, fixedRadius, featureTypes, centroids} = getGeojsonLayerMetaFromArrow({
-          dataContainer,
-          getGeoColumn,
-          getGeoField,
-          ...(isIncrementalLoad ? {chunkIndex: this.dataToFeature.length} : null)
-        });
+        const {dataToFeature, bounds, fixedRadius, featureTypes, centroids} =
+          getGeojsonLayerMetaFromArrow({
+            dataContainer,
+            getGeoColumn,
+            getGeoField,
+            ...(isIncrementalLoad ? {chunkIndex: this.dataToFeature.length} : null)
+          });
         if (centroids) this.centroids = this.centroids.concat(centroids);
         this.updateMeta({bounds, fixedRadius, featureTypes});
         this.dataToFeature = [...this.dataToFeature, ...dataToFeature];
       }
-    } else {
-      if (this.dataToFeature.length === 0) {
-        const {dataToFeature, bounds, fixedRadius, featureTypes, centroids} = getGeojsonLayerMeta({
-          dataContainer,
-          getFeature
-        });
-        if (centroids) this.centroids = centroids;
-        this.dataToFeature = dataToFeature;
-        this.updateMeta({bounds, fixedRadius, featureTypes});
-      }
+    } else if (this.dataToFeature.length === 0) {
+      const {dataToFeature, bounds, fixedRadius, featureTypes, centroids} = getGeojsonLayerMeta({
+        dataContainer,
+        getFeature
+      });
+      if (centroids) this.centroids = centroids;
+      this.dataToFeature = dataToFeature;
+      this.updateMeta({bounds, fixedRadius, featureTypes});
     }
   }
 

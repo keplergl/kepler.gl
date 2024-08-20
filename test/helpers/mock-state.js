@@ -234,7 +234,7 @@ function mockStateWithMultiFilters() {
 function mockStateWithEffects() {
   const initialState = cloneDeep(InitialState);
 
-  let prepareState = applyActions(keplerGlReducer, initialState, [
+  const prepareState = applyActions(keplerGlReducer, initialState, [
     {
       action: VisStateActions.addEffect,
       payload: [{id: 'e_1'}]
@@ -452,8 +452,7 @@ function mockStateWithCustomMapStyle(customType = 'LOCAL') {
       name: 'Smoothie the Cat'
     },
     url: 'mapbox://styles/shanhe/smoothie.the.cat',
-    icon:
-      'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat/static/-122.3391,37.7922,9,0,0/400x300?access_token=secret_token&logo=false&attribution=false',
+    icon: 'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat/static/-122.3391,37.7922,9,0,0/400x300?access_token=secret_token&logo=false&attribution=false',
     custom: customType
   };
 

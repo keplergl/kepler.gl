@@ -4086,8 +4086,7 @@ export const sampleTripDataConfig = {
         '41fv96u': {
           accessToken: null,
           custom: true,
-          icon:
-            'https://api.mapbox.com/styles/v1/MAPBOX_USER/cjg0ks54x300a2squ8fr9vhvq/static/-122.3391,37.7922,9,0,0/400x300?access_token=ACCESS_TOKEN&logo=false&attribution=false',
+          icon: 'https://api.mapbox.com/styles/v1/MAPBOX_USER/cjg0ks54x300a2squ8fr9vhvq/static/-122.3391,37.7922,9,0,0/400x300?access_token=ACCESS_TOKEN&logo=false&attribution=false',
           id: '41fv96u',
           label: 'Outdoors',
           url: 'mapbox://styles/MAPBOX_USER/cjhnxdcfy4ug62sn6qdfjutob'

@@ -18,6 +18,7 @@ const TippyArrow = styled.div`
   }
 `;
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const TippyTooltipContent = styled(({children, arrow, isLightTheme, ...props}) => (
   <div {...props}>
     {children}

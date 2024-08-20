@@ -10,7 +10,6 @@ import PostProcessEffect from './post-processing-effect';
 export function createEffect(params: EffectPropsPartial): EffectInterface {
   if (params?.type === LIGHT_AND_SHADOW_EFFECT.type) {
     return new LightingEffect(params);
-  } else {
-    return new PostProcessEffect(params);
   }
+  return new PostProcessEffect(params);
 }

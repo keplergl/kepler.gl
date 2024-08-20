@@ -120,10 +120,10 @@ const HeaderCellFactory = (FieldToken: React.FC<FieldTokenProps>) => {
     const isFormatted = Boolean(colMeta[column]?.displayFormat);
     const formatLabels = isFormatted ? getFieldFormatLabels(colMeta[column].type) : [];
     const onSortTable = useCallback(() => sortTableColumn(column), [sortTableColumn, column]);
-    const onToggleOptionMenu = useCallback(() => toggleMoreOptions(column), [
-      toggleMoreOptions,
-      column
-    ]);
+    const onToggleOptionMenu = useCallback(
+      () => toggleMoreOptions(column),
+      [toggleMoreOptions, column]
+    );
     const onPin = useCallback(() => pinTableColumn(column), [pinTableColumn, column]);
     const onCopy = useCallback(() => copyTableColumn(column), [copyTableColumn, column]);
     const onSetDisplayFormat = useCallback(

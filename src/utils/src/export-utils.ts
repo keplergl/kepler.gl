@@ -92,10 +92,7 @@ export function dataURItoBlob(dataURI: string): Blob {
   const binary = atob(dataURI.split(',')[1]);
 
   // separate out the mime component
-  const mimeString = dataURI
-    .split(',')[0]
-    .split(':')[1]
-    .split(';')[0];
+  const mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
 
   // write the bytes of the string to an ArrayBuffer
   const ab = new ArrayBuffer(binary.length);

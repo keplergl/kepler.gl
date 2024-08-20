@@ -303,8 +303,7 @@ export function insertLayerAtRightOrder(
  */
 export function mergeInteractions<S extends VisState>(
   state: S,
-  interactionToBeMerged: Partial<SavedInteractionConfig> | undefined,
-  fromConfig?: boolean
+  interactionToBeMerged: Partial<SavedInteractionConfig> | undefined
 ): S {
   const merged: Partial<SavedInteractionConfig> = {};
   const unmerged: Partial<SavedInteractionConfig> = {};
@@ -415,8 +414,7 @@ function replaceInteractionDatasetIds(interactionConfig, dataId: string, dataIdT
  */
 export function mergeSplitMaps<S extends VisState>(
   state: S,
-  splitMaps: NonNullable<ParsedConfig['visState']>['splitMaps'] = [],
-  fromConfig?: boolean
+  splitMaps: NonNullable<ParsedConfig['visState']>['splitMaps'] = []
 ): S {
   const merged = [...state.splitMaps];
   const unmerged = [];
@@ -532,8 +530,7 @@ export function mergeInteractionTooltipConfig(
  */
 export function mergeLayerBlending<S extends VisState>(
   state: S,
-  layerBlending: NonNullable<ParsedConfig['visState']>['layerBlending'],
-  fromConfig?: boolean
+  layerBlending: NonNullable<ParsedConfig['visState']>['layerBlending']
 ): S {
   if (layerBlending && LAYER_BLENDINGS[layerBlending]) {
     return {
@@ -550,8 +547,7 @@ export function mergeLayerBlending<S extends VisState>(
  */
 export function mergeOverlayBlending<S extends VisState>(
   state: S,
-  overlayBlending: NonNullable<ParsedConfig['visState']>['overlayBlending'],
-  fromConfig?: boolean
+  overlayBlending: NonNullable<ParsedConfig['visState']>['overlayBlending']
 ): S {
   if (overlayBlending && OVERLAY_BLENDINGS[overlayBlending]) {
     return {
@@ -568,8 +564,7 @@ export function mergeOverlayBlending<S extends VisState>(
  */
 export function mergeAnimationConfig<S extends VisState>(
   state: S,
-  animation: NonNullable<ParsedConfig['visState']>['animationConfig'],
-  fromConfig?: boolean
+  animation: NonNullable<ParsedConfig['visState']>['animationConfig']
 ): S {
   if (animation && animation.currentTime) {
     return {
@@ -789,7 +784,7 @@ export function validateLayerWithData(
   const {type} = savedLayer;
   const {throwOnError} = options;
   // layer doesnt have a valid type
-  if (!type || !layerClasses.hasOwnProperty(type) || !savedLayer.config) {
+  if (!type || !Object.prototype.hasOwnProperty.call(layerClasses, type) || !savedLayer.config) {
     if (throwOnError) {
       throw new Error(`Layer has invalid type "${type}" or config is missing`);
     }

@@ -11,7 +11,7 @@ const SRC_DIR = resolve(__dirname, '../src');
 const NODE_MODULES_DIR = resolve(__dirname, '../node_modules');
 const OUTPUT_DIR = resolve(__dirname, '../umd');
 
-const LIBRARY_BUNDLE_CONFIG = env => ({
+const LIBRARY_BUNDLE_CONFIG = () => ({
   entry: {
     KeplerGl: join(SRC_DIR, 'index.js')
   },

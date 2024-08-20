@@ -173,7 +173,7 @@ export default class CartoProvider extends Provider {
    * The CARTO cloud provider polls the created window internally to parse the URL
    * @param {*} location
    */
-  getAccessTokenFromLocation(location) {
+  getAccessTokenFromLocation() {
     return;
   }
 
@@ -182,7 +182,7 @@ export default class CartoProvider extends Provider {
       name: this.getUserName(),
       abbreviated: '',
       email: ''
-    }
+    };
   }
 
   async downloadMap(queryParams) {

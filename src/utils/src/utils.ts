@@ -8,10 +8,8 @@ import window from 'global/window';
  * @param {number} count
  * @returns {string} hash string
  */
-export function generateHashId(count: number = 6): string {
-  return Math.random()
-    .toString(36)
-    .substr(count);
+export function generateHashId(count = 6): string {
+  return Math.random().toString(36).substr(count);
 }
 
 /**
@@ -148,7 +146,11 @@ const setPath = <T extends any[] | object>(
   }
 
   // @ts-ignore
-  return insertValue(obj, key, setPath(next, value, obj.hasOwnProperty(key) ? obj[key] : {}));
+  return insertValue(
+    obj,
+    key,
+    setPath(next, value, Object.prototype.hasOwnProperty.call(obj, key) ? obj[key] : {})
+  );
 };
 
 /**

@@ -428,13 +428,8 @@ test('#IconLayer -> renderLayer', t => {
           'Should create 5 deck.gl layers'
         );
         // test test_layer_1-label-types
-        const {
-          getPosition,
-          getColor,
-          getSize,
-          getPixelOffset,
-          getFilterValue
-        } = deckLayers[4].props;
+        const {getPosition, getColor, getSize, getPixelOffset, getFilterValue} =
+          deckLayers[4].props;
         const {getPixelOffset: getPixelOffset1} = deckLayers[6].props;
 
         const distanceScale = getDistanceScales(INITIAL_MAP_STATE);
@@ -498,11 +493,7 @@ test('#IconLayer -> svg icons as constructor props -> renderIconModal', t => {
 
   t.equal(wrapper.find('.icon-table__item').length, 3, 'should render 1 icon');
   t.equal(
-    wrapper
-      .find('.icon-table_item__name')
-      .at(0)
-      .find('code')
-      .text(),
+    wrapper.find('.icon-table_item__name').at(0).find('code').text(),
     'alert',
     'should render alert icon'
   );

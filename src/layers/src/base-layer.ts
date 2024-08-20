@@ -175,7 +175,7 @@ export type UpdateTriggers = {
   [key: string]: UpdateTrigger;
 };
 export type UpdateTrigger = {
-  [key: string]: {};
+  [key: string]: any;
 };
 export type LayerBounds = [number, number, number, number];
 export type FindDefaultLayerPropsReturnValue = {props: any[]; foundLayers?: any[]};
@@ -188,6 +188,7 @@ const MAX_SAMPLE_SIZE = 5000;
 const defaultDomain: [number, number] = [0, 1];
 const dataFilterExtension = new DataFilterExtension({filterSize: MAX_GPU_FILTERS});
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const defaultDataAccessor = dc => d => d;
 const defaultGetFieldValue = (field, d) => field.valueAccessor(d);
 
@@ -536,14 +537,14 @@ class Layer {
       return this.config.columns;
     }
 
-    const {pair: partnerKey, fieldPairKey} = this.columnPairs?.[key];
+    const {pair: partnerKey, fieldPairKey} = this.columnPairs?.[key] || {};
 
     if (!pair[fieldPairKey]) {
       // do not allow `key: undefined` to creep into the `updatedColumn` object
       return this.config.columns;
     }
 
-    const {fieldPairKey: partnerFieldPairKey} = this.columnPairs?.[partnerKey];
+    const {fieldPairKey: partnerFieldPairKey} = this.columnPairs?.[partnerKey] || {};
 
     return {
       ...this.config.columns,
@@ -576,14 +577,17 @@ class Layer {
       : 1;
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   formatLayerData(datasets: Datasets, oldLayerData?: any) {
     return {};
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   renderLayer(...args: any[]): any[] {
     return [];
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   getHoverData(object, dataContainer: DataContainerInterface, fields: Field[]) {
     if (!object) {
       return null;
@@ -684,7 +688,7 @@ class Layer {
         this.visConfigSettings[item] = LAYER_VIS_CONFIGS[configItem];
       } else if (
         typeof configItem === 'object' &&
-        ['type', 'defaultValue'].every(p => configItem.hasOwnProperty(p))
+        ['type', 'defaultValue'].every(p => Object.prototype.hasOwnProperty.call(configItem, p))
       ) {
         // if provided customized visConfig, and has type && defaultValue
         // TODO: further check if customized visConfig is valid
@@ -815,7 +819,7 @@ class Layer {
       newConfig.colorRangeConfig &&
       ['reversed', 'steps'].some(
         key =>
-          newConfig.colorRangeConfig.hasOwnProperty(key) &&
+          Object.prototype.hasOwnProperty.call(newConfig.colorRangeConfig, key) &&
           newConfig.colorRangeConfig[key] !==
             (previous[prop] || DEFAULT_COLOR_UI).colorRangeConfig[key]
       );
@@ -826,7 +830,7 @@ class Layer {
     const colorRange = visConfig[prop];
     // find based on step or reversed
     let update;
-    if (newConfig.colorRangeConfig.hasOwnProperty('steps')) {
+    if (Object.prototype.hasOwnProperty.call(newConfig.colorRangeConfig, 'steps')) {
       const group = getColorGroupByName(colorRange);
 
       if (group) {
@@ -840,7 +844,7 @@ class Layer {
       }
     }
 
-    if (newConfig.colorRangeConfig.hasOwnProperty('reversed')) {
+    if (Object.prototype.hasOwnProperty.call(newConfig.colorRangeConfig, 'reversed')) {
       update = reverseColorRange(reversed, update || colorRange);
     }
 
@@ -1398,15 +1402,18 @@ class Layer {
     }, []);
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   calculateDataAttribute(keplerTable: KeplerTable, getPosition): any {
     // implemented in subclasses
     return [];
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   updateLayerMeta(dataContainer: DataContainerInterface, getPosition) {
     // implemented in subclasses
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   getPositionAccessor(dataContainer?: DataContainerInterface): (...args: any[]) => any {
     // implemented in subclasses
     return () => null;

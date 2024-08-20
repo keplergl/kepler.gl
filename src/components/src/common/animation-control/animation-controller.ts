@@ -85,7 +85,7 @@ function AnimationControllerFactory(): typeof AnimationControllerType {
     }
 
     _timer = null;
-    _startTime: number = 0;
+    _startTime = 0;
 
     _startOrPauseAnimation() {
       const {isAnimating, speed = 1} = this.props;

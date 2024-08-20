@@ -6,18 +6,21 @@ import {parseInBatches} from '@loaders.gl/core';
 import {JSONLoader, _JSONPath} from '@loaders.gl/json';
 import {CSVLoader} from '@loaders.gl/csv';
 import {ArrowLoader} from '@loaders.gl/arrow';
+import {Loader} from '@loaders.gl/loader-utils';
+import {generateHashId, isPlainObject, generateHashIdFromString} from '@kepler.gl/utils';
+import {DATASET_FORMATS} from '@kepler.gl/constants';
+import {LoadedMap, ProcessorResult} from '@kepler.gl/types';
+import {Feature, AddDataToMapPayload} from '@kepler.gl/types';
+import {FeatureCollection} from '@turf/helpers';
+
 import {
   processArrowBatches,
   processGeojson,
   processKeplerglJSON,
   processRowObject
 } from './data-processor';
-import {generateHashId, isPlainObject, generateHashIdFromString} from '@kepler.gl/utils';
-import {DATASET_FORMATS} from '@kepler.gl/constants';
-import {Loader} from '@loaders.gl/loader-utils';
+
 import {FileCacheItem, ValidKeplerGlMap} from './types';
-import {Feature, AddDataToMapPayload} from '@kepler.gl/types';
-import {FeatureCollection} from '@turf/helpers';
 
 const BATCH_TYPE = {
   METADATA: 'metadata',
@@ -199,9 +202,9 @@ export function processFileData({
   fileCache: FileCacheItem[];
 }): Promise<FileCacheItem[]> {
   return new Promise((resolve, reject) => {
-    let {fileName, data} = content;
+    const {fileName, data} = content;
     let format: string | undefined;
-    let processor: Function | undefined;
+    let processor: ((data: any) => ProcessorResult | LoadedMap | null) | undefined;
 
     // generate unique id with length of 4 using fileName string
     const id = generateHashIdFromString(fileName);

@@ -17,7 +17,7 @@ export function setFilterGpuMode(filter: Filter, filters: Filter[]) {
   // if all of them has, we set gpu mode to true
   // TODO: refactor filter so we don't keep an array of everything
 
-  filter.dataId.forEach((dataId, datasetIdx) => {
+  filter.dataId.forEach(dataId => {
     const gpuFilters = filters.filter(f => f.dataId.includes(dataId) && f.gpu);
 
     if (filter.gpu && gpuFilters.length === MAX_GPU_FILTERS) {
@@ -103,7 +103,7 @@ export function assignGpuChannel(filter: Filter, filters: Filter[]) {
 export function resetFilterGpuMode(filters: Filter[]): Filter[] {
   const gpuPerDataset = {};
 
-  return filters.map((f, i) => {
+  return filters.map(f => {
     if (f.gpu) {
       let gpu = true;
       toArray(f.dataId).forEach(dataId => {
@@ -129,7 +129,7 @@ export function resetFilterGpuMode(filters: Filter[]): Filter[] {
  * Initial filter uniform
  */
 function getEmptyFilterRange() {
-  return new Array(MAX_GPU_FILTERS).fill(0).map(d => [0, 0]);
+  return new Array(MAX_GPU_FILTERS).fill(0).map(() => [0, 0]);
 }
 
 /**
@@ -156,28 +156,28 @@ const defaultGetData = (dc: DataContainerInterface, d: any, fieldIndex: number) 
  * @param fields
  * @return {Function} getFilterValue
  */
-const getFilterValueAccessor = (
-  channels: (Filter | undefined)[],
-  dataId: string,
-  fields: any[]
-) => (dc: DataContainerInterface) => (getIndex = defaultGetIndex, getData = defaultGetData) => d =>
-  // for empty channel, value is 0 and min max would be [0, 0]
-  channels.map(filter => {
-    if (!filter) {
-      return 0;
-    }
-    const fieldIndex = getDatasetFieldIndexForFilter(dataId, filter);
-    const field = fields[fieldIndex];
+const getFilterValueAccessor =
+  (channels: (Filter | undefined)[], dataId: string, fields: any[]) =>
+  (dc: DataContainerInterface) =>
+  (getIndex = defaultGetIndex, getData = defaultGetData) =>
+  d =>
+    // for empty channel, value is 0 and min max would be [0, 0]
+    channels.map(filter => {
+      if (!filter) {
+        return 0;
+      }
+      const fieldIndex = getDatasetFieldIndexForFilter(dataId, filter);
+      const field = fields[fieldIndex];
 
-    const value =
-      filter.type === FILTER_TYPES.timeRange
-        ? field.filterProps && Array.isArray(field.filterProps.mappedValue)
-          ? field.filterProps.mappedValue[getIndex(d)]
-          : moment.utc(getData(dc, d, fieldIndex)).valueOf()
-        : getData(dc, d, fieldIndex);
+      const value =
+        filter.type === FILTER_TYPES.timeRange
+          ? field.filterProps && Array.isArray(field.filterProps.mappedValue)
+            ? field.filterProps.mappedValue[getIndex(d)]
+            : moment.utc(getData(dc, d, fieldIndex)).valueOf()
+          : getData(dc, d, fieldIndex);
 
-    return notNullorUndefined(value) ? value - filter.domain?.[0] : Number.MIN_SAFE_INTEGER;
-  });
+      return notNullorUndefined(value) ? value - filter.domain?.[0] : Number.MIN_SAFE_INTEGER;
+    });
 
 /**
  * Get filter properties for gpu filtering

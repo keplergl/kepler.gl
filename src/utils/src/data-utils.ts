@@ -54,7 +54,7 @@ export function getLatLngBounds(
   return [Math.max(lats[0], limit[0]), Math.min(lats[lats.length - 1], limit[1])];
 }
 
-export function clamp([min, max]: [number, number], val: number = 0): number {
+export function clamp([min, max]: [number, number], val = 0): number {
   return val <= min ? min : val >= max ? max : val;
 }
 
@@ -105,11 +105,11 @@ export function isNumber(d: any): boolean {
  * @param {string} prop
  * @returns {boolean} - yes or no
  */
-export function hasOwnProperty<X extends {}, Y extends PropertyKey>(
+export function hasOwnProperty<X extends object, Y extends PropertyKey>(
   obj: X,
   prop: Y
 ): obj is X & Record<Y, unknown> {
-  return obj.hasOwnProperty(prop);
+  return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 
 export function numberSort(a: number, b: number): number {
@@ -357,9 +357,9 @@ export function applyDefaultFormat(tooltipFormat: TooltipFormat): (v: any) => st
 export function getBooleanFormatter(format: string): FieldFormatter {
   switch (format) {
     case '01':
-      return (v: Boolean) => (v ? '1' : '0');
+      return (v: boolean) => (v ? '1' : '0');
     case 'yn':
-      return (v: Boolean) => (v ? 'yes' : 'no');
+      return (v: boolean) => (v ? 'yes' : 'no');
     default:
       return defaultFormatter;
   }
@@ -421,11 +421,7 @@ export function datetimeFormatter(
   timezone?: string | null
 ): (format?: string) => (ts: number) => string {
   return timezone
-    ? format => ts =>
-        moment
-          .utc(ts)
-          .tz(timezone)
-          .format(format)
+    ? format => ts => moment.utc(ts).tz(timezone).format(format)
     : // return empty string instead of 'Invalid date' if ts is undefined/null
-      format => ts => (ts ? moment.utc(ts).format(format) : '');
+      format => ts => ts ? moment.utc(ts).format(format) : '';
 }

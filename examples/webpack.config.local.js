@@ -15,11 +15,7 @@ const webpack = require('webpack');
 const fs = require('fs');
 const KeplerPackage = require('../package');
 const {logStep, logError} = require('../scripts/log');
-const {
-  WEBPACK_ENV_VARIABLES,
-  ENV_VARIABLES_WITH_INSTRUCTIONS,
-  RESOLVE_ALIASES
-} = require('../webpack/shared-webpack-configuration');
+const {WEBPACK_ENV_VARIABLES, RESOLVE_ALIASES} = require('../webpack/shared-webpack-configuration');
 
 const LIB_DIR = resolve(__dirname, '..');
 const SRC_DIR = resolve(LIB_DIR, './src');
@@ -37,7 +33,7 @@ const EXTERNAL_LOADERS_SRC = resolve(__dirname, '../../loaders.gl');
 const EXTERNAL_HUBBLE_SRC = resolve(__dirname, '../../hubble.gl');
 
 // Support for hot reloading changes to the deck.gl library:
-function makeLocalDevConfig(env, EXAMPLE_DIR = LIB_DIR, externals = {}) {
+function makeLocalDevConfig(env, externals = {}) {
   const resolveAlias = RESOLVE_ALIASES;
 
   // Combine flags
@@ -221,8 +217,8 @@ function makeBabelRule(env, exampleDir) {
  * @param {string} exampleDir
  * @param {Object} externals
  */
-function addLocalDevSettings(env, exampleConfig, exampleDir, externals) {
-  const localDevConfig = makeLocalDevConfig(env, exampleDir, externals);
+function addLocalDevSettings(env, exampleConfig, externals) {
+  const localDevConfig = makeLocalDevConfig(env, externals);
   const config = {...exampleConfig, ...localDevConfig};
 
   config.resolve = config.resolve || {};
@@ -260,7 +256,7 @@ module.exports = (exampleConfig, exampleDir) => env => {
   const modules = ['@deck.gl', '@loaders.gl', '@luma.gl', '@probe.gl', '@hubble.gl'];
   const loadAllDirs = modules.map(
     dir =>
-      new Promise(function readDir(success, reject) {
+      new Promise(function readDir(success) {
         fs.readdir(join(NODE_MODULES_DIR, dir), function readDirItems(err, items) {
           if (err) {
             logError(`Cannot find ${dir} in node_modules, make sure it is installed.`, err);
@@ -280,7 +276,7 @@ module.exports = (exampleConfig, exampleDir) => env => {
       'hubble.gl': results[4]
     }))
     .then(externals => {
-      const config = addLocalDevSettings(env, exampleConfig, exampleDir, externals);
+      const config = addLocalDevSettings(env, exampleConfig, externals);
       return addBabelSettings(env, config, exampleDir, externals);
     });
 };

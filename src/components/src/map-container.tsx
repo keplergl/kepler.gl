@@ -122,13 +122,15 @@ const StyledMap = styled(StyledMapContainer)<StyledMapContainerProps>(
 
 const MAPBOXGL_STYLE_UPDATE = 'style.load';
 const MAPBOXGL_RENDER = 'render';
-const nop = () => {};
+const nop = () => {
+  return;
+};
 
 const MapLibreLogo = () => (
   <div className="attrition-logo">
     Basemap by:
     <a
-      style={{marginLeft: "5px"}}
+      style={{marginLeft: '5px'}}
       className="maplibregl-ctrl-logo"
       target="_blank"
       rel="noopener noreferrer"
@@ -277,9 +279,8 @@ export interface MapContainerProps {
   primary?: boolean; // primary one will be reporting its size to appState
   readOnly?: boolean;
   isExport?: boolean;
-  onMapToggleLayer?: Function;
-  onMapStyleLoaded?: Function;
-  onMapRender?: Function;
+  onMapStyleLoaded?: (map: maplibregl.Map | null) => void;
+  onMapRender?: (map: maplibregl.Map | null) => void;
   getMapboxRef?: (mapbox?: MapRef | null, index?: number) => void;
   index?: number;
   deleteMapLabels?: (containerId: string, layerId: string) => void;
@@ -837,7 +838,7 @@ export default function MapContainerFactory(
             {...extraDeckParams}
             onHover={
               isInteractive
-                ? (data, event) => {
+                ? data => {
                     const res = EditorLayerUtils.onHover(data, {
                       editorMenuActive,
                       editor,
@@ -845,7 +846,7 @@ export default function MapContainerFactory(
                     });
                     if (res) return;
 
-                    this._onLayerHoverDebounced(data, index, event);
+                    this._onLayerHoverDebounced(data, index);
                   }
                 : null
             }
@@ -923,7 +924,7 @@ export default function MapContainerFactory(
       this._onViewportChangePropagateDebounced();
     };
 
-    _onLayerHoverDebounced = debounce((data, index, event) => {
+    _onLayerHoverDebounced = debounce((data, index) => {
       this.props.visStateActions.onLayerHover(data, index);
     }, DEBOUNCE_MOUSE_MOVE_PROPAGATE);
 

@@ -23,7 +23,9 @@ import {
 } from '@kepler.gl/actions';
 import {MapStyle} from '@kepler.gl/reducers';
 
-function noop() {}
+function noop() {
+  return;
+}
 
 const StyledInteractionPanel = styled.div`
   padding-bottom: 12px;

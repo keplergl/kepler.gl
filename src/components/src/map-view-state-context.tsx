@@ -11,12 +11,14 @@ import {MapState} from '@kepler.gl/types';
 
 export type MapViewStateContextType = {
   getInternalViewState: (index?: number) => MapViewState;
-  setInternalViewState: (viewState: MapViewState, index?: number) => void;
+  setInternalViewState: (viewState?: MapViewState, index?: number) => void;
 };
 
 export const MapViewStateContext: React.Context<MapViewStateContextType> = createContext({
-  getInternalViewState: (index = 0) => ({latitude: 0, longitude: 0, zoom: 0}),
-  setInternalViewState: (viewState, index = 0) => {}
+  getInternalViewState: () => ({latitude: 0, longitude: 0, zoom: 0}),
+  setInternalViewState: () => {
+    return;
+  }
 });
 
 /**
@@ -49,10 +51,8 @@ export const MapViewStateContextProvider = ({
       if (mapState.splitMapViewports?.some((s, i) => hasChanged(s, viewStates[i]))) {
         setViewStates(mapState.splitMapViewports as MapState[]);
       }
-    } else {
-      if (hasChanged(primaryState, mapState)) {
-        setViewStates([pickViewportPropsFromMapState(mapState)] as MapState[]);
-      }
+    } else if (hasChanged(primaryState, mapState)) {
+      setViewStates([pickViewportPropsFromMapState(mapState)] as MapState[]);
     }
     // Only update internalViewState when viewState changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -66,9 +66,8 @@ export const MapViewStateContextProvider = ({
           const nextViewStates = [...prevViewStates];
           nextViewStates[index] = newViewState as MapState;
           return nextViewStates;
-        } else {
-          return [newViewState] as MapState[];
         }
+        return [newViewState] as MapState[];
       });
     }
   } as MapViewStateContextType;

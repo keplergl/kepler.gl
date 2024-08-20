@@ -23,7 +23,9 @@ const StyledSlider = styled.div<StyledSliderProps>`
   }
 `;
 
-function nope() {}
+function nope() {
+  return;
+}
 
 type SliderBarHandleProps = {
   width: number;

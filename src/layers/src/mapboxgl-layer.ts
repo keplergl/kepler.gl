@@ -125,7 +125,7 @@ class MapboxLayerGL extends Layer {
             }),
             {}
           )
-      : d => ({});
+      : () => ({});
 
     const {filterValueUpdateTriggers, filterValueAccessor} = gpuFilter;
 
@@ -144,7 +144,7 @@ class MapboxLayerGL extends Layer {
             {}
           ) as any;
         }
-      : d => ({} as any);
+      : () => ({} as any);
 
     const getProperties = d => ({
       ...getPropertyFromVisualChanel(d),

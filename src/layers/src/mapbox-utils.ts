@@ -141,8 +141,8 @@ function updateSourceData(map, sourceId, data) {
  */
 export function geoJsonFromData(
   filteredIndex: number[] = [],
-  getGeometry: {({index: number}): any},
-  getProperties: {({index: number}): any} = d => {}
+  getGeometry: (arg: {index: number}) => any,
+  getProperties: (arg: {index: number}) => object
 ) {
   const geojson: {type: string; features: Feature[]} = {
     type: 'FeatureCollection',

@@ -374,7 +374,7 @@ class App extends Component {
     });
   };
 
-  _getMapboxRef = (mapbox, index) => {
+  _getMapboxRef = mapbox => {
     if (!mapbox) {
       // The ref has been unset.
       // https://reactjs.org/docs/refs-and-the-dom.html#callback-refs
@@ -383,7 +383,7 @@ class App extends Component {
       // We expect an Map created by KeplerGl's MapContainer.
       // https://visgl.github.io/react-map-gl/docs/api-reference/map
       const map = mapbox.getMap();
-      map.on('zoomend', e => {
+      map.on('zoomend', () => {
         // console.log(`Map ${index} zoom level: ${e.target.style.z}`);
       });
     }

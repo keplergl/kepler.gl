@@ -7,7 +7,7 @@ const DtsBundleWebpack = require('dts-bundle-webpack');
 const SRC_DIR = resolve(__dirname, '../src');
 const OUTPUT_DIR = resolve(__dirname, '../dist');
 
-const LIBRARY_BUNDLE_CONFIG = env => ({
+const LIBRARY_BUNDLE_CONFIG = () => ({
   // Silence warnings about big bundles
   stats: {
     warnings: false

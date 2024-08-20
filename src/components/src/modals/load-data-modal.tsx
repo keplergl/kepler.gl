@@ -25,7 +25,9 @@ const StyledLoadDataModal = styled.div.attrs({
   flex-direction: column;
 `;
 
-const noop = () => {};
+const noop = () => {
+  return;
+};
 const getDefaultMethod = <T,>(methods: T[] = []) =>
   Array.isArray(methods) ? get(methods, [0]) : null;
 export interface LoadingMethod {

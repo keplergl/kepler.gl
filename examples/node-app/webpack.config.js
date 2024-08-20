@@ -43,7 +43,7 @@ const CONFIG = {
         // fix for arrow-related errors
         test: /\.mjs$/,
         include: /node_modules/,
-        type: "javascript/auto"
+        type: 'javascript/auto'
       }
     ]
   },

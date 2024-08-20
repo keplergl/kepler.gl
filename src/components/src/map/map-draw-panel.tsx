@@ -46,9 +46,10 @@ function MapDrawPanelFactory(
       actionIcons = defaultActionIcons
     }) => {
       const isActive = mapControls?.mapDraw?.active;
-      const onToggleMenuPanel = useCallback(() => onToggleMapControl('mapDraw'), [
-        onToggleMapControl
-      ]);
+      const onToggleMenuPanel = useCallback(
+        () => onToggleMapControl('mapDraw'),
+        [onToggleMapControl]
+      );
       if (!mapControls?.mapDraw?.show) {
         return null;
       }

@@ -84,7 +84,9 @@ export function getScaleFunctor(scaleType) {
   return SCALE_FUNC[scaleType] || SCALE_FUNC.quantize;
 }
 
-function nop() {}
+function nop() {
+  return;
+}
 
 export function getGetValue(this: CPUAggregator, step, props, dimensionUpdater) {
   const {key} = dimensionUpdater;
@@ -209,7 +211,7 @@ export const defaultAggregation: AggregationType = {
   ]
 };
 
-function getSubLayerAccessor(dimensionState, dimension, layerProps) {
+function getSubLayerAccessor(dimensionState, dimension) {
   return cell => {
     const {sortedBins, scaleFunc} = dimensionState;
     const bin = sortedBins.binMap[cell.index];
@@ -369,7 +371,12 @@ export const defaultElevationDimension: DimensionType<number> = {
 
 export const defaultDimensions = [defaultColorDimension, defaultElevationDimension];
 
-export type CPUAggregatorState = {layerData: {data?}; dimensions: {}; geoJSON?; clusterBuilder?};
+export type CPUAggregatorState = {
+  layerData: {data?};
+  dimensions: object;
+  geoJSON?;
+  clusterBuilder?;
+};
 
 export default class CPUAggregator {
   static getDimensionScale: any;
@@ -571,10 +578,8 @@ export default class CPUAggregator {
     const updateTriggers = {};
 
     for (const key in this.dimensionUpdaters) {
-      const {
-        accessor,
-        updateSteps
-      }: {accessor; updateSteps: UpdateStepsType[]} = this.dimensionUpdaters[key];
+      const {accessor, updateSteps}: {accessor; updateSteps: UpdateStepsType[]} =
+        this.dimensionUpdaters[key];
       // fold dimension triggers into each accessor
       updateTriggers[accessor] = {};
 
@@ -633,7 +638,7 @@ export default class CPUAggregator {
   }
 
   getAccessor(dimensionKey, layerProps) {
-    if (!this.dimensionUpdaters.hasOwnProperty(dimensionKey)) {
+    if (!Object.prototype.hasOwnProperty.call(this.dimensionUpdaters, dimensionKey)) {
       return nop;
     }
     return this.dimensionUpdaters[dimensionKey].getSubLayerAccessor(

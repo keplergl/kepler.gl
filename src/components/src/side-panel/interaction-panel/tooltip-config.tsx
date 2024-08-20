@@ -137,7 +137,7 @@ function TooltipConfigFactory(
         };
         onChange(newConfig);
       },
-      [config, dataId, onChange]
+      [config, dataId, onChange, findSelectedHelper]
     );
 
     const handleReorderItems = useCallback(

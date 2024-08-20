@@ -21,10 +21,10 @@ function PolygonFilterFactory() {
       [setLayers]
     );
 
-    const selectedLayers = useMemo(() => layers.filter(l => filter.layerId?.includes(l.id)), [
-      filter,
-      layers
-    ]);
+    const selectedLayers = useMemo(
+      () => layers.filter(l => filter.layerId?.includes(l.id)),
+      [filter, layers]
+    );
 
     const availableLayers = useMemo(() => {
       // remove already added layers and filter out non point layers

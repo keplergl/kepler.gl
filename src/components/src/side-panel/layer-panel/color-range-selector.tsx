@@ -96,8 +96,12 @@ const CONFIG_SETTINGS = {
 
 export default class ColorRangeSelector extends Component<ColorRangeSelectorProps> {
   static defaultProps = {
-    onSelectColorRange: () => {},
-    setColorPaletteUI: () => {}
+    onSelectColorRange: () => {
+      return;
+    },
+    setColorPaletteUI: () => {
+      return;
+    }
   };
 
   configTypeSelector = (props: ColorRangeSelectorProps) =>

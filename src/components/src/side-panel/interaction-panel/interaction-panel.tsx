@@ -4,7 +4,6 @@
 import React, {useState, ComponentType, ReactElement, useCallback} from 'react';
 import styled from 'styled-components';
 import Switch from '../../common/switch';
-import PanelTitleFactory from '../panel-title';
 import BrushConfigFactory from './brush-config';
 import TooltipConfigFactory from './tooltip-config';
 import {Datasets} from '@kepler.gl/table';
@@ -38,7 +37,7 @@ const StyledInteractionPanel = styled.div`
   padding-bottom: 6px;
 `;
 
-InteractionPanelFactory.deps = [TooltipConfigFactory, BrushConfigFactory, PanelTitleFactory];
+InteractionPanelFactory.deps = [TooltipConfigFactory, BrushConfigFactory];
 
 const INTERACTION_CONFIG_ICONS: {[key: string]: React.ElementType} = {
   tooltip: Messages,
@@ -49,8 +48,7 @@ const INTERACTION_CONFIG_ICONS: {[key: string]: React.ElementType} = {
 
 function InteractionPanelFactory(
   TooltipConfig: ReturnType<typeof TooltipConfigFactory>,
-  BrushConfig: ReturnType<typeof BrushConfigFactory>,
-  PanelTitle: ReturnType<typeof PanelTitleFactory>
+  BrushConfig: ReturnType<typeof BrushConfigFactory>
 ): ComponentType<InteractionPanelProps> {
   const InteractionPanel: React.FC<InteractionPanelProps> = ({
     config,

@@ -17,7 +17,7 @@ test.onFinish(window.browserTestDriver_finish || (() => {}));
 
 // tap-browser-color alternative
 enableDOMLogging({
-  getStyle: message => ({background: failed ? '#F28E82' : '#8ECA6C'})
+  getStyle: () => ({background: failed ? '#F28E82' : '#8ECA6C'})
 });
 
 test('Browser tests', t => {

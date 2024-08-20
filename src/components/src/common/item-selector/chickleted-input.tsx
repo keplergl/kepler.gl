@@ -11,15 +11,16 @@ import {restrictToParentElement} from '@dnd-kit/modifiers';
 import Delete from '../icons/delete';
 import {FormattedMessage} from '@kepler.gl/localization';
 
+type Item = string | number | boolean | object | undefined;
 interface ChickletedInputProps {
   // required properties
   onClick: MouseEventHandler<HTMLDivElement>;
-  removeItem: Function;
+  removeItem: (item: Item, e: React.MouseEvent<SVGSVGElement, MouseEvent>) => void;
 
   // optional properties
   selectedItems?: any[];
   disabled?: boolean;
-  displayOption?: Function;
+  displayOption?: (item: Item) => string;
   focus?: boolean;
   error?: boolean;
   placeholder?: string;
@@ -91,7 +92,7 @@ const ChickletedInputContainer = styled.div<ChickletedInputContainerProps>`
       : props.inputTheme === 'light'
       ? props.theme.chickletedInputLT
       : props.theme.chickletedInput}
-      
+
   color: ${props =>
     props.hasPlaceholder ? props.theme.selectColorPlaceHolder : props.theme.selectColor};
   overflow: hidden;
@@ -128,10 +129,8 @@ const ChickletedItem = ({
       item,
       removeItem,
       displayOption,
-      CustomChickletComponent,
       inputTheme,
       disabled,
-      itemId,
       attributes,
       listeners,
       setNodeRef,
@@ -155,14 +154,14 @@ const ChickletedInput: React.FC<ChickletedInputProps> = ({
   placeholder = '',
   removeItem,
   reorderItems = d => d,
-  displayOption = d => d,
+  displayOption = d => String(d),
   inputTheme,
   CustomChickletComponent
 }) => {
-  const selectedItemIds = useMemo(() => selectedItems.map(item => displayOption(item)), [
-    displayOption,
-    selectedItems
-  ]);
+  const selectedItemIds = useMemo(
+    () => selectedItems.map(item => displayOption(item)),
+    [displayOption, selectedItems]
+  );
   const handleDragEnd = useCallback(
     ({active, over}) => {
       if (!over) return;
@@ -172,7 +171,7 @@ const ChickletedInput: React.FC<ChickletedInputProps> = ({
         reorderItems(arrayMove(selectedItems, oldIndex, newIndex));
       }
     },
-    [selectedItems, displayOption, reorderItems]
+    [selectedItemIds, selectedItems, reorderItems]
   );
 
   return (

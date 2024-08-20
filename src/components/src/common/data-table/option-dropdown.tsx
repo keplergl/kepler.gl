@@ -5,7 +5,13 @@ import React, {useCallback, useState} from 'react';
 import styled from 'styled-components';
 import Portaled from '../portaled';
 import DropdownList from '../item-selector/dropdown-list';
-import {SORT_ORDER, TABLE_OPTION, TABLE_OPTION_LIST, TooltipFormat} from '@kepler.gl/constants';
+import {
+  SORT_ORDER,
+  TABLE_OPTION,
+  TABLE_OPTION_LIST,
+  TooltipFormat,
+  TableOption
+} from '@kepler.gl/constants';
 import {getFieldFormatLabels} from '@kepler.gl/utils';
 import {ColMeta} from '@kepler.gl/types';
 import {ArrowDown, ArrowUp, Clipboard, Pin, Cancel, Hash} from '../icons';
@@ -84,7 +90,7 @@ export const FormatterDropdown: React.FC<FormatterDropdownProps> = (
   const selectionIndex = formatLabels.findIndex(label => label.format === displayFormat);
 
   const onSelectDisplayFormat = useCallback(
-    (result, e) => {
+    result => {
       setDisplayFormat(result);
       onClose();
     },
@@ -97,7 +103,7 @@ export const FormatterDropdown: React.FC<FormatterDropdownProps> = (
         <DropdownList
           options={formatLabels}
           selectionIndex={selectionIndex}
-          displayOption={({label}) => label}
+          displayOption={option => (option as TooltipFormat).label}
           onOptionSelected={onSelectDisplayFormat}
           light
         />
@@ -132,7 +138,7 @@ const OptionDropdown = (props: OptionDropdownProps) => {
     setDisplayFormat
   } = props;
   const [showFormatter, setShowFormatter] = useState(false);
-  const onOptionSelected = useCallback(
+  const onOptionSelected: (v: TableOption) => void = useCallback(
     ({value}) => {
       switch (value) {
         case TABLE_OPTION.SORT_ASC:
@@ -194,7 +200,7 @@ const OptionDropdown = (props: OptionDropdownProps) => {
     <Portaled right={120} top={20} isOpened={isOpened} onClose={onClose}>
       <StyledOptionsDropdown className="more-options">
         <DropdownList
-          displayOption={d => d.display}
+          displayOption={d => (d as TableOption).display}
           options={options}
           customListItemComponent={ListItem}
           onOptionSelected={onOptionSelected}

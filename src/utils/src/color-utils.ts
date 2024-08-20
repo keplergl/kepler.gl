@@ -85,8 +85,9 @@ export function reverseColorRange(reversed: boolean, colorRange: ColorRange): Co
 export function createLinearGradient(direction: string, colors: RGBColor[]) {
   const step = parseFloat((100.0 / colors.length).toFixed(2));
   const bands = colors.map((rgb, index) => {
-    return `rgba(${rgb.join(',')}, 1) ${step * index}%, rgba(${rgb.join(',')}, 1) ${step *
-      (index + 1)}%`;
+    return `rgba(${rgb.join(',')}, 1) ${step * index}%, rgba(${rgb.join(',')}, 1) ${
+      step * (index + 1)
+    }%`;
   });
 
   return `linear-gradient(to ${direction}, ${bands.join(',')})`;

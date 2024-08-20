@@ -532,13 +532,8 @@ test('#PointLayer -> renderLayer', t => {
           'Should create 5 deck.gl layers'
         );
         // test test_layer_1-label-types-characters
-        const {
-          getPosition,
-          getColor,
-          getSize,
-          getPixelOffset,
-          getFilterValue
-        } = deckLayers[2].props;
+        const {getPosition, getColor, getSize, getPixelOffset, getFilterValue} =
+          deckLayers[2].props;
         const {getPixelOffset: getPixelOffset1} = deckLayers[4].props;
 
         const distanceScale = getDistanceScales(INITIAL_MAP_STATE);

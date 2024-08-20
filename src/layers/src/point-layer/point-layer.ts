@@ -79,11 +79,15 @@ export type PointLayerData = {
   index: number;
 };
 
-export const pointPosAccessor = ({lat, lng, altitude}: PointLayerColumnsConfig) => dc => d => [
-  dc.valueAt(d.index, lng.fieldIdx),
-  dc.valueAt(d.index, lat.fieldIdx),
-  altitude && altitude.fieldIdx > -1 ? dc.valueAt(d.index, altitude.fieldIdx) : 0
-];
+export const pointPosAccessor =
+  ({lat, lng, altitude}: PointLayerColumnsConfig) =>
+  dc =>
+  d =>
+    [
+      dc.valueAt(d.index, lng.fieldIdx),
+      dc.valueAt(d.index, lat.fieldIdx),
+      altitude && altitude.fieldIdx > -1 ? dc.valueAt(d.index, altitude.fieldIdx) : 0
+    ];
 
 export const pointRequiredColumns: ['lat', 'lng'] = ['lat', 'lng'];
 export const pointOptionalColumns: ['altitude'] = ['altitude'];

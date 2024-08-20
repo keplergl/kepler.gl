@@ -136,10 +136,11 @@ const getDefaultState = (): MapStyle => {
  *
  * export default composedReducer;
  */
-/* eslint-disable no-unused-vars */
+
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // @ts-ignore
 const mapStyleUpdaters = null;
-/* eslint-enable no-unused-vars */
+/* eslint-enable @typescript-eslint/no-unused-vars */
 /**
  * Default initial `mapStyle`
  * @memberof mapStyleUpdaters
@@ -515,7 +516,7 @@ export const loadMapStylesUpdater = (
 
 function createActionTask(action, payload) {
   if (typeof action === 'function') {
-    return ACTION_TASK().map(_ => action(payload));
+    return ACTION_TASK().map(() => action(payload));
   }
 
   return null;
@@ -697,7 +698,8 @@ export const inputMapStyleUpdater = (
   // or an icon already available client-side as a data uri
   const isUpdatedIconDataUri = updated.icon?.startsWith('data:image');
   const isValid = Boolean(updated.uploadedFile);
-  const isMapboxStyleUrl = updated.url?.startsWith('mapbox://') || updated.url?.includes('mapbox.com');
+  const isMapboxStyleUrl =
+    updated.url?.startsWith('mapbox://') || updated.url?.includes('mapbox.com');
 
   const icon =
     !isUpdatedIconDataUri && isMapboxStyleUrl
@@ -773,7 +775,7 @@ export const removeCustomMapStyleUpdater = (
 ): MapStyle => {
   const {id} = action.payload;
 
-  // eslint-disable-next-line no-unused-vars
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const {[id]: _, ...restOfMapStyles} = state.mapStyles;
 
   const newState = {

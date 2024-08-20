@@ -68,16 +68,18 @@ export type ArcLayerData = {
 export type ArcLayerMeta = {
   bounds: LayerBounds;
 };
-export const arcPosAccessor = ({lat0, lng0, lat1, lng1}: ArcLayerColumnsConfig) => (
-  dc: DataContainerInterface
-) => d => [
-  dc.valueAt(d.index, lng0.fieldIdx),
-  dc.valueAt(d.index, lat0.fieldIdx),
-  0,
-  dc.valueAt(d.index, lng1.fieldIdx),
-  dc.valueAt(d.index, lat1.fieldIdx),
-  0
-];
+export const arcPosAccessor =
+  ({lat0, lng0, lat1, lng1}: ArcLayerColumnsConfig) =>
+  (dc: DataContainerInterface) =>
+  d =>
+    [
+      dc.valueAt(d.index, lng0.fieldIdx),
+      dc.valueAt(d.index, lat0.fieldIdx),
+      0,
+      dc.valueAt(d.index, lng1.fieldIdx),
+      dc.valueAt(d.index, lat1.fieldIdx),
+      0
+    ];
 
 export const arcRequiredColumns = ['lat0', 'lng0', 'lat1', 'lng1'];
 export const arcColumnLabels = {
@@ -161,9 +163,9 @@ export default class ArcLayer extends Layer {
     };
   }
 
-  static findDefaultLayerProps({
-    fieldPairs = []
-  }: KeplerTable): {props: {color?: RGBColor; columns: ArcLayerColumnsConfig; label: string}[]} {
+  static findDefaultLayerProps({fieldPairs = []}: KeplerTable): {
+    props: {color?: RGBColor; columns: ArcLayerColumnsConfig; label: string}[];
+  } {
     if (fieldPairs.length < 2) {
       return {props: []};
     }
@@ -183,7 +185,7 @@ export default class ArcLayer extends Layer {
     return {props: [props]};
   }
 
-  calculateDataAttribute({dataContainer, filteredIndex}, getPosition) {
+  calculateDataAttribute({filteredIndex}, getPosition) {
     const data: ArcLayerData[] = [];
     for (let i = 0; i < filteredIndex.length; i++) {
       const index = filteredIndex[i];

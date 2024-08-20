@@ -343,7 +343,7 @@ test('#LineLayer -> renderLayer', t => {
           }
         }
       },
-      assert: (deckLayers, layer) => {
+      assert: deckLayers => {
         t.equal(deckLayers.length, 1, 'Should create 1 deck.gl layer');
         const {props} = deckLayers[0];
         // test instancePositions

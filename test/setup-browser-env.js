@@ -21,7 +21,7 @@ mockCanvas(window);
 // // issue: https://github.com/chromaui/chromatic-cli/issues/14
 Object.defineProperty(window, 'fetch', {
   value: () =>
-    new Promise((res, rej) => {
+    new Promise(() => {
       // we just let this never resolve
     }),
   writable: true

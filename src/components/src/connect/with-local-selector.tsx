@@ -17,15 +17,15 @@ const mergeSelectors = (parentSelector, childSelector) => state =>
 // it will be stored in the context and passed down to child components,
 // as well as prop to the given component
 
-const withLocalSelector = <P extends {}>(
+const withLocalSelector = <P extends object>(
   ParentComponent: React.ComponentType<P>
 ): React.ComponentType<P & {selector: (...args: any[]) => KeplerGlState}> => {
   class WithConnectSelector extends Component<P & {selector: (...args: any[]) => KeplerGlState}> {
     static contextType = KeplerGlContext;
 
     selectorFromContext = (_, ctx) => (ctx.selector ? ctx.selector : identity);
-    selectorFromProps = (props, _) => (props.selector ? props.selector : identity);
-    idFromProps = (props, _) => props.id;
+    selectorFromProps = props => (props.selector ? props.selector : identity);
+    idFromProps = props => props.id;
     computedSelector = createSelector(
       this.selectorFromContext,
       this.selectorFromProps,

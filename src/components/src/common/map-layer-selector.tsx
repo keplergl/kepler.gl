@@ -27,7 +27,7 @@ interface MapLayerSelectorProps {
 /** @type {typeof import('./map-layer-selector').default} */
 const MapLayerSelector = ({layers, onMapToggleLayer}: MapLayerSelectorProps) => (
   <MapLayerSelect className="map-layer-selector">
-    {layers.map((layer, index) => (
+    {layers.map(layer => (
       <div key={layer.id} className="map-layer-selector__item">
         <Checkbox
           type="radio"

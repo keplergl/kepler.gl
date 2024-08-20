@@ -11,7 +11,7 @@ export type CustomPanelsProps<P> = {
 
 // This is a dummy component that can be replaced to inject more side panel sub panels into the side bar
 function CustomPanelsFactory<P>() {
-  const CustomPanels: React.FC<CustomPanelsProps<P>> = props => {
+  const CustomPanels: React.FC<CustomPanelsProps<P>> = () => {
     return <div />;
   };
 
@@ -30,6 +30,7 @@ function CustomPanelsFactory<P>() {
       // }
     ],
     // prop selector from side panel props
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     getProps: (sidePanelProps: SidePanelItem) => ({} as P)
   };
 

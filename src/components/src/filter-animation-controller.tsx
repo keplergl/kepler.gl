@@ -34,20 +34,22 @@ function FilterAnimationControllerFactory(
   }) => {
     const intervalBins = useMemo(() => getIntervalBins(filter), [filter]);
 
-    const steps = useMemo(() => (intervalBins ? intervalBins.map(x => x.x0) : null), [
-      intervalBins
-    ]);
+    const steps = useMemo(
+      () => (intervalBins ? intervalBins.map(x => x.x0) : null),
+      [intervalBins]
+    );
 
     const updateAnimation = useCallback(
       value => {
         switch (filter.animationWindow) {
-          case ANIMATION_WINDOW.interval:
+          case ANIMATION_WINDOW.interval: {
             const idx = value[1];
             setFilterAnimationTime(filterIdx, 'value', [
               intervalBins[idx].x0,
               intervalBins[idx].x1 - 1
             ]);
             break;
+          }
           default:
             setFilterAnimationTime(filterIdx, 'value', value);
             break;

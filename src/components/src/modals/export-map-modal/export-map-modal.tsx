@@ -23,7 +23,7 @@ interface ExportMapModalFactoryProps {
 
 const style = {width: '100%'};
 
-const NO_OP = (...args: any[]) => ({} as any);
+const NO_OP = () => ({} as any);
 
 ExportMapModalFactory.deps = [ExportHtmlMapFactory, ExportJsonMapFactory];
 

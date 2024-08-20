@@ -309,12 +309,7 @@ export default function LayerConfiguratorFactory(
       );
     }
 
-    _renderHeatmapLayerConfig({
-      layer,
-      visConfiguratorProps,
-      layerConfiguratorProps,
-      layerChannelConfigProps
-    }) {
+    _renderHeatmapLayerConfig({layer, visConfiguratorProps, layerChannelConfigProps}) {
       return (
         <StyledLayerVisualConfigurator>
           {/* Color */}
@@ -1112,15 +1107,8 @@ export function ChannelByValueSelectorFactory(
     fields,
     description
   }: ChannelByValueSelectorProps) => {
-    const {
-      channelScaleType,
-      field,
-      key,
-      property,
-      scale,
-      defaultMeasure,
-      supportedFieldTypes
-    } = channel;
+    const {channelScaleType, field, key, property, scale, defaultMeasure, supportedFieldTypes} =
+      channel;
     const channelSupportedFieldTypes =
       supportedFieldTypes || CHANNEL_SCALE_SUPPORTED_FIELDS[channelScaleType];
     const supportedFields = fields.filter(({type}) => channelSupportedFieldTypes.includes(type));
