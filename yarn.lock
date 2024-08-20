@@ -10719,7 +10719,7 @@ istanbul-lib-source-maps@^4.0.0:
 
 istanbul-merge@^2.0.0:
   version "2.0.0"
-  resolved "https://foursquaredev.jfrog.io/artifactory/api/npm/npm/istanbul-merge/-/istanbul-merge-2.0.0.tgz#996c93e8591315584775b7685ff6b679aec572b6"
+  resolved "https://registry.yarnpkg.com/istanbul-merge/-/istanbul-merge-2.0.0.tgz#996c93e8591315584775b7685ff6b679aec572b6"
   integrity sha512-Y812/uTdnF5Qc2qWxA7jQOTkqpFLEr7BHy8mzUQFRJstTjPigNS1Bh3q06AbOhBZ7tZqrI4MZdMgG34KVnUn6w==
   dependencies:
     array.prototype.flatmap "^1.3.1"
