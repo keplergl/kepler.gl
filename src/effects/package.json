@@ -30,13 +30,13 @@
     "umd"
   ],
   "dependencies": {
-    "suncalc": "^1.9.0",
     "@deck.gl/core": "^8.9.27",
+    "@kepler.gl/constants": "3.0.0",
+    "@kepler.gl/types": "3.0.0",
+    "@kepler.gl/utils": "3.0.0",
     "@luma.gl/core": "^8.5.20",
     "@luma.gl/shadertools": "^8.5.20",
-    "@kepler.gl/utils": "3.0.0",
-    "@kepler.gl/constants": "3.0.0",
-    "@kepler.gl/types": "3.0.0"
+    "suncalc": "^1.9.0"
   },
   "nyc": {
     "sourceMap": false,

@@ -57,19 +57,19 @@
     "cover-jest": "jest --coverage --reporter=lcov --watchAll=false",
     "cover-merge": "istanbul-merge --out=coverage/coverage-all.json tape-coverage/coverage-final.json jest-coverage/coverage-final.json",
     "cover-report": "nyc report -t coverage --report-dir coverage --reporter=json --reporter=lcov",
-    "start": "NODE_OPTIONS=--openssl-legacy-provider yarn install-and-start -- examples/demo-app start-local",
-    "start:deck": "NODE_OPTIONS=--openssl-legacy-provider yarn install-and-start -- examples/demo-app start-local-deck",
-    "start:deck-src": "NODE_OPTIONS=--openssl-legacy-provider yarn install-and-start -- examples/demo-app start-local-deck-src",
-    "start:loaders-src": "NODE_OPTIONS=--openssl-legacy-provider yarn install-and-start -- examples/demo-app start-local-loaders-src",
-    "start:open-modal": "yarn install-and-start -- examples/open-modal start-local",
-    "start:custom-reducer": "yarn install-and-start -- examples/custom-reducer start-local",
-    "start:replace-component": "yarn install-and-start -- examples/replace-component start-local",
-    "start:custom-theme": "yarn install-and-start -- examples/custom-theme start-local",
-    "start:custom-map-style": "yarn install-and-start -- examples/custom-map-style start-local",
-    "start:node-app": "yarn install-and-start -- examples/node-app start-local",
-    "start:web": "yarn install-and-start -- website start",
-    "start:https": "yarn install-and-start -- examples/demo-app start-local-https",
-    "start:e2e": "yarn install-and-start -- examples/demo-app start-local-e2e",
+    "start": "NODE_OPTIONS=--openssl-legacy-provider yarn install-and-start examples/demo-app start-local",
+    "start:deck": "NODE_OPTIONS=--openssl-legacy-provider yarn install-and-start examples/demo-app start-local-deck",
+    "start:deck-src": "NODE_OPTIONS=--openssl-legacy-provider yarn install-and-start examples/demo-app start-local-deck-src",
+    "start:loaders-src": "NODE_OPTIONS=--openssl-legacy-provider yarn install-and-start examples/demo-app start-local-loaders-src",
+    "start:open-modal": "yarn install-and-start examples/open-modal start-local",
+    "start:custom-reducer": "yarn install-and-start examples/custom-reducer start-local",
+    "start:replace-component": "yarn install-and-start examples/replace-component start-local",
+    "start:custom-theme": "yarn install-and-start examples/custom-theme start-local",
+    "start:custom-map-style": "yarn install-and-start examples/custom-map-style start-local",
+    "start:node-app": "yarn install-and-start examples/node-app start-local",
+    "start:web": "yarn install-and-start website start",
+    "start:https": "yarn install-and-start examples/demo-app start-local-https",
+    "start:e2e": "yarn install-and-start examples/demo-app start-local-e2e",
     "build": "NODE_OPTIONS=--openssl-legacy-provider rm -fr dist && babel src/{actions,components,reducers,cloud-providers,localization,tasks} --out-dir dist --source-maps inline --extensions '.ts,.tsx,.js,.jsx' --ignore '**/*.d.ts'",
     "build:umd": "NODE_OPTIONS=--openssl-legacy-provider webpack --config ./webpack/umd.js --progress --env.prod",
     "build:types": "tsc --project tsconfig.production.json",
@@ -94,18 +94,6 @@
   "files": [
     "dist",
     "src",
-    "actions.js",
-    "components.js",
-    "constants.js",
-    "layers.js",
-    "effects.js",
-    "middleware.js",
-    "processors.js",
-    "reducers.js",
-    "schemas.js",
-    "styles.js",
-    "cloud-providers.js",
-    "localization.js",
     "umd"
   ],
   "dependencies": {
@@ -275,12 +263,13 @@
   ],
   "volta": {
     "node": "18.18.2",
-    "yarn": "1.22.19"
+    "yarn": "4.4.0"
   },
   "nx": {
     "tags": [
       "type:lib",
       "scope:frontend"
     ]
-  }
+  },
+  "packageManager": "yarn@4.4.0"
 }
