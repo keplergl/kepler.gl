@@ -41,8 +41,8 @@ jobs:
       - name: Install Dependencies
         run: yarn install
 
-      - name: Install Puppeteer
-        run: yarn global add "puppeteer@19.11.1"
+      # - name: Install Puppeteer
+      #   run: yarn dlx "puppeteer@23.1.0"
 
       - name: Lint
         run: yarn lint
