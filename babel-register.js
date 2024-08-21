@@ -28,17 +28,17 @@ require('@babel/polyfill');
 var path = require('path');
 var glob = require('glob');
 
-// Requiring mapbox-gl here prevents polyfilling errors during tests.
+// Requiring mapbox-gl here prevents polyfill errors during tests.
 require('mapbox-gl');
 
 // eslint-disable-next-line func-names
-process.argv.slice(2).forEach(function(arg) {
+process.argv.slice(2).forEach(function (arg) {
   // eslint-disable-next-line func-names
-  glob(arg, function(er, files) {
+  glob(arg, function (er, files) {
     if (er) throw er;
 
     // eslint-disable-next-line func-names
-    files.forEach(function(file) {
+    files.forEach(function (file) {
       require(path.resolve(process.cwd(), file));
     });
   });

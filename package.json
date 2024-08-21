@@ -38,7 +38,7 @@
     "url": "https://github.com/keplergl/kepler.gl.git"
   },
   "scripts": {
-    "bootstrap": "PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true yarn",
+    "bootstrap": "PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true yarn install && yarn fix-dependencies",
     "install:example": "NODE_OPTIONS=--openssl-legacy-provider cd examples/demo-app && yarn",
     "install:web": "yarn install:example && cd website && yarn",
     "install-and-start": "node ./scripts/install-and-start",
@@ -77,7 +77,7 @@
     "analyze:bundle": "NODE_OPTIONS=--openssl-legacy-provider webpack --config ./webpack/bundle.js --progress --env.prod",
     "check-licence": "babel-node ./scripts/license-header/bin --license ./FILE-HEADER --dry",
     "add-licence": "babel-node ./scripts/license-header/bin --license ./FILE-HEADER",
-    "prepublish": "yarn fix-dependencies && yarn workspaces run stab && yarn workspaces run prepublish && yarn add-licence &&  yarn build:umd && yarn build:types",
+    "prepublishOnly": "yarn workspaces run stab && yarn workspaces run prepublish && yarn add-licence && yarn build:umd && yarn build:types",
     "docs": "babel-node ./scripts/documentation.js",
     "typedoc": "typedoc --theme markdown --out typedoc --inputFiles ./src/reducers --inputFiles ./src/actions --excludeExternals --excludeNotExported --excludePrivate",
     "example-version": "babel-node ./scripts/edit-version.js",
