@@ -19,17 +19,19 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
+      # use Volta to manage yarn/node versions
+      - uses: volta-cli/action@v3
+      
+      # - name: Use Node.js ${{ matrix.node-version }}
+      #   uses: actions/setup-node@v4
+      #   with:
+      #     node-version: ${{ matrix.node-version }}
 
       - name: Install XVFB
         run: sudo apt-get install xvfb
 
-      - name: Install YARN
-        run: npm install -g yarn
+      # - name: Install YARN
+      #   run: npm install -g yarn
 
       - name: Install Dependecies
         run: yarn global add "puppeteer@19.11.1" && yarn
