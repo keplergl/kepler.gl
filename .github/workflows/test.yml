@@ -20,13 +20,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       # use Volta to manage yarn/node versions
-      - uses: volta-cli/action@v3
+      - uses: volta-cli/action@v4
       
-      - name: Node Version
-        run: node --version
-      
-      - name: Yarn Version
-        run: yarn --version
       # - name: Use Node.js ${{ matrix.node-version }}
       #   uses: actions/setup-node@v4
       #   with:
@@ -34,9 +29,6 @@ jobs:
 
       - name: Install XVFB
         run: sudo apt-get install xvfb
-
-      # - name: Install YARN
-      #   run: npm install -g yarn
 
       - name: Install Dependencies
         run: yarn install && yarn bootstrap

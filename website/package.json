@@ -6,7 +6,11 @@
   "main": "dist/index.js",
   "version": "0.0.1",
   "engines": {
-    "node": ">=10.0.0"
+    "node": ">=18"
+  },
+  "volta": {
+    "node": "18.18.2",
+    "yarn": "4.4.0"
   },
   "scripts": {
     "start": "webpack-dev-server --mode development --env.prod --content-base ./src/static --progress --open",
@@ -14,7 +18,7 @@
     "build-clean": "rm -rf ./dist && mkdir dist",
     "build-static": "cp -r ./src/static/* dist",
     "build-script": "NODE_OPTIONS=--openssl-legacy-provider webpack -p --env.prod",
-    "build": "npm run build-clean && npm run build-static && npm run build-script",
+    "build": "yarn build-clean && yarn build-static && yarn build-script",
     "lint": "eslint src"
   },
   "dependencies": {
@@ -40,8 +44,8 @@
     "@babel/core": "^7.12.1",
     "@babel/plugin-transform-class-properties": "^7.12.1",
     "@babel/plugin-transform-export-namespace-from": "^7.12.1",
-    "@babel/plugin-transform-optional-chaining": "^7.12.1",
     "@babel/plugin-transform-modules-commonjs": "^7.12.1",
+    "@babel/plugin-transform-optional-chaining": "^7.12.1",
     "@babel/plugin-transform-runtime": "^7.12.1",
     "@babel/plugin-transform-typescript": "^7.16.8",
     "@babel/preset-env": "^7.0.0",
@@ -70,5 +74,6 @@
   "peerDependencies": {
     "react": "18.x",
     "react-dom": "18.x"
-  }
+  },
+  "packageManager": "yarn@4.4.0"
 }

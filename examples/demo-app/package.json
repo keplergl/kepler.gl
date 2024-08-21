@@ -66,5 +66,13 @@
     "@deck.gl/core": "8.9.27",
     "@deck.gl/extensions": "8.9.27",
     "react-vis": "1.11.7"
-  }
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "volta": {
+    "node": "18.18.2",
+    "yarn": "4.4.0"
+  },
+  "packageManager": "yarn@4.4.0"
 }
