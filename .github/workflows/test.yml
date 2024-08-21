@@ -39,7 +39,7 @@ jobs:
       #   run: npm install -g yarn
 
       - name: Install Dependencies
-        run: yarn install
+        run: yarn bootstrap
 
       # - name: Install Puppeteer
       #   run: yarn dlx "puppeteer@23.1.0"

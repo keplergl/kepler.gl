@@ -14,7 +14,7 @@ jobs:
           node-version: 18
           registry-url: https://registry.npmjs.org/
       - run: npm install -g yarn
-      - run: yarn
+      - run: yarn bootstrap
       - run: npm i -g npm@8.19.2
       - run: npm --version && npm publish --workspaces --access public
         env:
