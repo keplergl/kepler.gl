@@ -254,22 +254,22 @@
       "src/styles"
     ]
   },
-  "engines": {
-    "node": ">=18"
-  },
   "maintainers": [
     "Shan He <heshan0131@gmail.com>",
     "Giuseppe Macri <gmacri@uber.com>"
   ],
-  "volta": {
-    "node": "18.18.2",
-    "yarn": "4.4.0"
-  },
   "nx": {
     "tags": [
       "type:lib",
       "scope:frontend"
     ]
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "volta": {
+    "node": "18.18.2",
+    "yarn": "4.4.0"
   },
   "packageManager": "yarn@4.4.0"
 }
