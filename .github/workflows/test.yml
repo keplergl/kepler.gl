@@ -22,6 +22,11 @@ jobs:
       # use Volta to manage yarn/node versions
       - uses: volta-cli/action@v3
       
+      - name: Node Version
+        run: node --version
+      
+      - name: Yarn Version
+        run: yarn --version
       # - name: Use Node.js ${{ matrix.node-version }}
       #   uses: actions/setup-node@v4
       #   with:
@@ -33,8 +38,11 @@ jobs:
       # - name: Install YARN
       #   run: npm install -g yarn
 
-      - name: Install Dependecies
-        run: yarn global add "puppeteer@19.11.1" && yarn
+      - name: Install Dependencies
+        run: yarn install
+
+      - name: Install Puppeteer
+        run: yarn global add "puppeteer@19.11.1"
 
       - name: Lint
         run: yarn lint
