@@ -86,7 +86,7 @@
     "lint:css": "stylelint './src/**/*.js'",
     "typescript": "tsc --noEmit",
     "web": "(yarn && yarn install:web && yarn start:web)",
-    "deploy": "yarn install:web && (cd website && yarn install && yarn build)",
+    "deploy": "yarn install:web && cd website && yarn build",
     "clean": "rm -rf node_modules examples/**/node_modules website/node_modules",
     "release:patch": "git add CHANGELOG.md && git commit -m 'updated CHANGELOG.md' && npm version patch && git push origin && git push origin --tags",
     "fix-dependencies": "./scripts/fix-dependencies.sh"

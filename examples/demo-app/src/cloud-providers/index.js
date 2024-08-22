@@ -5,7 +5,7 @@ import {CLOUD_PROVIDERS_CONFIGURATION} from '../constants/default-settings';
 
 import DropboxProvider from './dropbox/dropbox-provider';
 import CartoProvider from './carto/carto-provider';
-import FoursquareProvider from './foursquare/fsq-provider';
+import FoursquareProvider from './foursquare/foursquare-provider';
 
 const {
   DROPBOX_CLIENT_ID,
