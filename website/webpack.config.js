@@ -48,7 +48,7 @@ const COMMON_CONFIG = {
 
   resolve: {
     extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
-    modules: ['node_modules', SRC_DIR, join(LIB_DIR, 'examples/demo-app/node_modules')],
+    modules: ['node_modules', SRC_DIR, resolve(LIB_DIR, './examples/demo-app/node_modules')],
     alias: RESOLVE_ALIASES
   },
 
