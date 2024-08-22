@@ -15,13 +15,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@auth0/auth0-spa-js@npm:^2.1.2":
-  version: 2.1.3
-  resolution: "@auth0/auth0-spa-js@npm:2.1.3"
-  checksum: 10c0/781d474564731f96182ff78d85e1d13841e924eba5d2e9a42593db28c66e2a6c59db1755c8c906698f0cd6d33d6e61501f0e0ab57ec981700966246944cccf74
-  languageName: node
-  linkType: hard
-
 "@babel/code-frame@npm:^7.0.0, @babel/code-frame@npm:^7.24.7":
   version: 7.24.7
   resolution: "@babel/code-frame@npm:7.24.7"
@@ -6073,7 +6066,6 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "kepler.gl-website@workspace:."
   dependencies:
-    "@auth0/auth0-spa-js": "npm:^2.1.2"
     "@babel/core": "npm:^7.12.1"
     "@babel/plugin-transform-class-properties": "npm:^7.12.1"
     "@babel/plugin-transform-export-namespace-from": "npm:^7.12.1"

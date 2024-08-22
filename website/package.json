@@ -15,7 +15,6 @@
     "lint": "eslint src"
   },
   "dependencies": {
-    "@auth0/auth0-spa-js": "^2.1.2",
     "classnames": "^2.2.5",
     "global": "^4.3.2",
     "lodash.get": "^4.4.2",
