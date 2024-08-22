@@ -10,11 +10,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Use Node.js 12.x
-        uses: actions/setup-node@v4
-        with:
-          node-version: 18.x
-          registry-url: https://registry.npmjs.org/
+      # use Volta to manage yarn/node versions
+      - uses: volta-cli/action@v4
 
       - name: Set up Python 3.9
         uses: actions/setup-python@v2
