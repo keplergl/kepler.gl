@@ -20,7 +20,7 @@ const VERSIONS = {
   reactDom:clearCarats(dependencies['react-dom']),
   redux: clearCarats(dependencies.redux),
   reactRedux: clearCarats(dependencies['react-redux']),
-  reactIntl: clearCarats(dependencies['react-intl']),
+  reactIntl: '4.7.6',
   reactCopyToClipboard: clearCarats(dependencies['react-copy-to-clipboard']),
   styledComponents: clearCarats(dependencies['styled-components']),
   keplergl: clearCarats(dependencies['kepler.gl'])
