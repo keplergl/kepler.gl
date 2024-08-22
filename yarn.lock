@@ -9098,6 +9098,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"create-react-class@npm:^15.5.1":
+  version: 15.7.0
+  resolution: "create-react-class@npm:15.7.0"
+  dependencies:
+    loose-envify: "npm:^1.3.1"
+    object-assign: "npm:^4.1.1"
+  checksum: 10c0/bce4b46e6d85b424cb50ca8089266c7664fcecfd81abaafb829680fae2e2e60dc6999cac88f5a16a38473ed284859f2328935a42fc5cd1b7cc48888fdd8363c9
+  languageName: node
+  linkType: hard
+
 "cross-spawn@npm:^6.0.0, cross-spawn@npm:^6.0.5":
   version: 6.0.5
   resolution: "cross-spawn@npm:6.0.5"
@@ -13233,6 +13243,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"history@npm:^3.0.0":
+  version: 3.3.0
+  resolution: "history@npm:3.3.0"
+  dependencies:
+    invariant: "npm:^2.2.1"
+    loose-envify: "npm:^1.2.0"
+    query-string: "npm:^4.2.2"
+    warning: "npm:^3.0.0"
+  checksum: 10c0/30de5218421dd698718b93e6aeade58cacbfc9403ea336060ef3861f5b3478269785df9df7e0642e10832eedf33d770a08ccfab4407440535f2030e3e31b33be
+  languageName: node
+  linkType: hard
+
 "hmac-drbg@npm:^1.0.1":
   version: 1.0.1
   resolution: "hmac-drbg@npm:1.0.1"
@@ -13248,6 +13270,13 @@ __metadata:
   version: 4.2.1
   resolution: "hoek@npm:4.2.1"
   checksum: 10c0/f799216a59cd059ffdb60a0ab6aae87f190606503951ba9cea53185dceae005a5ba3d935a4a356949cd4bb131b93aedcbf330d84d9aec45a5c6a9d03fe727130
+  languageName: node
+  linkType: hard
+
+"hoist-non-react-statics@npm:^2.3.1":
+  version: 2.5.5
+  resolution: "hoist-non-react-statics@npm:2.5.5"
+  checksum: 10c0/79c204446a61ad490cc9342b2deeedea5a17f03a5fc091f367b6c08f29387c8d5578634ebfb8733043422a5e1182b372893d63f8737ac4b75da3a2ec4a316162
   languageName: node
   linkType: hard
 
@@ -13889,7 +13918,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"invariant@npm:^2.2.2, invariant@npm:^2.2.4":
+"invariant@npm:^2.2.1, invariant@npm:^2.2.2, invariant@npm:^2.2.4":
   version: 2.2.4
   resolution: "invariant@npm:2.2.4"
   dependencies:
@@ -15672,6 +15701,7 @@ __metadata:
     react: "npm:^18.2.0"
     react-dom: "npm:^18.2.0"
     react-hot-loader: "npm:^4.13.0"
+    react-router: "npm:3.2.5"
     readdirp: "npm:^2.1.0"
     redux-mock-store: "npm:^1.2.1"
     sinon: "npm:^2.4.1"
@@ -16098,7 +16128,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"loose-envify@npm:^1.0.0, loose-envify@npm:^1.1.0, loose-envify@npm:^1.4.0":
+"loose-envify@npm:^1.0.0, loose-envify@npm:^1.1.0, loose-envify@npm:^1.2.0, loose-envify@npm:^1.3.1, loose-envify@npm:^1.4.0":
   version: 1.4.0
   resolution: "loose-envify@npm:1.4.0"
   dependencies:
@@ -19212,7 +19242,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"query-string@npm:^4.1.0":
+"query-string@npm:^4.1.0, query-string@npm:^4.2.2":
   version: 4.3.4
   resolution: "query-string@npm:4.3.4"
   dependencies:
@@ -19777,6 +19807,24 @@ __metadata:
     redux:
       optional: true
   checksum: 10c0/64c8be2765568dc66a3c442a41dd0ed74fe048d5ceb7a4fe72e5bac3d3687996a7115f57b5156af7406521087065a0e60f9194318c8ca99c55e9ce48558980ce
+  languageName: node
+  linkType: hard
+
+"react-router@npm:3.2.5":
+  version: 3.2.5
+  resolution: "react-router@npm:3.2.5"
+  dependencies:
+    create-react-class: "npm:^15.5.1"
+    history: "npm:^3.0.0"
+    hoist-non-react-statics: "npm:^2.3.1"
+    invariant: "npm:^2.2.1"
+    loose-envify: "npm:^1.2.0"
+    prop-types: "npm:^15.7.2"
+    react-is: "npm:^16.8.6"
+    warning: "npm:^3.0.0"
+  peerDependencies:
+    react: ^0.14.0 || ^15.0.0 || ^16.0.0
+  checksum: 10c0/87687ac4ad414a93811ddfe1ac0c31207a79a297a8146def4de77c465f21162af9884c9a3aa874318fb4a68fc2f80f81fd0e85083da5f11f15497721528d6693
   languageName: node
   linkType: hard
 
@@ -24257,6 +24305,15 @@ __metadata:
   dependencies:
     makeerror: "npm:1.0.12"
   checksum: 10c0/a17e037bccd3ca8a25a80cb850903facdfed0de4864bd8728f1782370715d679fa72e0a0f5da7c1c1379365159901e5935f35be531229da53bbfc0efdabdb48e
+  languageName: node
+  linkType: hard
+
+"warning@npm:^3.0.0":
+  version: 3.0.0
+  resolution: "warning@npm:3.0.0"
+  dependencies:
+    loose-envify: "npm:^1.0.0"
+  checksum: 10c0/6a2a56ab3139d3927193d926a027e74e1449fa47cc692feea95f8a81a4bb5b7f10c312def94cce03f3b58cb26ba3247858e75d17d596451d2c483a62e8204705
   languageName: node
   linkType: hard
 

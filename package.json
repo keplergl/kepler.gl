@@ -181,6 +181,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hot-loader": "^4.13.0",
+    "react-router": "3.2.5",
     "readdirp": "^2.1.0",
     "redux-mock-store": "^1.2.1",
     "sinon": "^2.4.1",
