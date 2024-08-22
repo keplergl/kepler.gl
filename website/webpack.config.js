@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-const {resolve, join} = require('path');
+const {resolve} = require('path');
 const webpack = require('webpack');
 
 const KeplerPackage = require('../package');
