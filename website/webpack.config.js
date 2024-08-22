@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-const {resolve} = require('path');
+const {resolve, join} = require('path');
 const webpack = require('webpack');
 
 const KeplerPackage = require('../package');
@@ -48,7 +48,7 @@ const COMMON_CONFIG = {
 
   resolve: {
     extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
-    modules: ['node_modules', SRC_DIR],
+    modules: ['node_modules', SRC_DIR, join(LIB_DIR, 'examples/demo-app/node_modules')],
     alias: RESOLVE_ALIASES
   },
 
