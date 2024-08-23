@@ -39,7 +39,7 @@
   },
   "scripts": {
     "bootstrap": "PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true yarn install && yarn fix-dependencies",
-    "install:example": "NODE_OPTIONS=--openssl-legacy-provider cd examples/demo-app && yarn",
+    "install:example": "cd examples/demo-app && NODE_OPTIONS=--openssl-legacy-provider yarn",
     "install:web": "yarn install:example && cd website && yarn",
     "install-and-start": "node ./scripts/install-and-start",
     "test-fast": "yarn test-node-debug && yarn test-browser-debug",
@@ -181,7 +181,6 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hot-loader": "^4.13.0",
-    "react-router": "3.2.5",
     "readdirp": "^2.1.0",
     "redux-mock-store": "^1.2.1",
     "sinon": "^2.4.1",
