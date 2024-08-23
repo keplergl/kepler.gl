@@ -34,8 +34,8 @@
     "@kepler.gl/cloud-providers": "3.0.0",
     "@kepler.gl/constants": "3.0.0",
     "@kepler.gl/deckgl-layers": "3.0.0",
-    "@kepler.gl/layers": "3.0.0",
     "@kepler.gl/effects": "3.0.0",
+    "@kepler.gl/layers": "3.0.0",
     "@kepler.gl/localization": "3.0.0",
     "@kepler.gl/processors": "3.0.0",
     "@kepler.gl/schemas": "3.0.0",
@@ -75,15 +75,16 @@
     "sourceMap": false,
     "instrument": false
   },
-  "engines": {
-    "node": ">=18.18.2"
-  },
   "maintainers": [
     "Shan He <heshan0131@gmail.com>",
     "Giuseppe Macri <gmacri@uber.com>"
   ],
+  "engines": {
+    "node": ">=18"
+  },
   "volta": {
     "node": "18.18.2",
-    "yarn": "1.22.17"
-  }
+    "yarn": "4.4.0"
+  },
+  "packageManager": "yarn@4.4.0"
 }

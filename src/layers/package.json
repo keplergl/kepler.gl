@@ -53,9 +53,9 @@
     "@nebula.gl/edit-modes": "1.0.2-alpha.1",
     "@nebula.gl/layers": "1.0.2-alpha.1",
     "@turf/bbox": "^6.0.1",
+    "@turf/boolean-within": "^6.0.1",
     "@turf/center": "^6.0.1",
     "@turf/helpers": "^6.1.4",
-    "@turf/boolean-within": "^6.0.1",
     "@types/geojson": "^7946.0.7",
     "@types/keymirror": "^0.1.1",
     "@types/lodash.memoize": "^4.1.7",
@@ -79,15 +79,16 @@
     "sourceMap": false,
     "instrument": false
   },
-  "engines": {
-    "node": ">=18.18.2"
-  },
   "maintainers": [
     "Shan He <heshan0131@gmail.com>",
     "Giuseppe Macri <gmacri@uber.com>"
   ],
+  "engines": {
+    "node": ">=18"
+  },
   "volta": {
     "node": "18.18.2",
-    "yarn": "1.22.17"
-  }
+    "yarn": "4.4.0"
+  },
+  "packageManager": "yarn@4.4.0"
 }

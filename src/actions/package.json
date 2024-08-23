@@ -50,15 +50,16 @@
     "sourceMap": false,
     "instrument": false
   },
-  "engines": {
-    "node": ">=18.18.2"
-  },
   "maintainers": [
     "Shan He <heshan0131@gmail.com>",
     "Giuseppe Macri <gmacri@uber.com>"
   ],
+  "engines": {
+    "node": ">=18"
+  },
   "volta": {
     "node": "18.18.2",
-    "yarn": "1.22.17"
-  }
+    "yarn": "4.4.0"
+  },
+  "packageManager": "yarn@4.4.0"
 }
