@@ -49,14 +49,7 @@ const COMMON_CONFIG = {
   resolve: {
     extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
     modules: ['node_modules', SRC_DIR, resolve(LIB_DIR, './examples/demo-app/node_modules')],
-    alias: {
-      ...RESOLVE_ALIASES,
-      // for some reason, netlify can't resolve this module
-      '@auth0/auth0-spa-js': resolve(
-        LIB_DIR,
-        './examples/demo-app/node_modules/@auth0/auth0-spa-js'
-      )
-    }
+    alias: RESOLVE_ALIASES
   },
 
   module: {
@@ -83,7 +76,7 @@ const COMMON_CONFIG = {
         type: 'javascript/auto'
       },
       // for compiling @probe.gl, website build started to fail (March, 2024)
-      // netlify biulder complains loader not found for these modules (April, 2024)
+      // netlify builder complains loader not found for these modules (April, 2024)
       {
         test: /\.(js)$/,
         loader: 'babel-loader',
