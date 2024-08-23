@@ -31,8 +31,10 @@ machine:
   [nvm-windows](https://github.com/coreybutler/nvm-windows))
   to manage and install Node.js, which makes it easy to change the version of Node.js per project.
 
-- [Yarn](https://yarnpkg.com): We use Yarn to install our Node.js module dependencies
+- [Yarn 4.4.0](https://yarnpkg.com): We use Yarn to install our Node.js module dependencies
   (rather than using npm). See the detailed [installation instructions][yarn-install].
+
+- [Volta](https://volta.sh/): We use Volta to manage Node and Yarn versions without you manually switching them
 
 #### Fork Kepler.gl Repo
 
@@ -52,9 +54,28 @@ cd kepler.gl
 
 # Add the main kepler.gl repository as an upstream remote to your repository:
 git remote add upstream "git@github.com:keplergl/kepler.gl.git"
+```
 
+Install [volta](https://docs.volta.sh/guide/getting-started)
+On Unix, MacOS
+
+```bash
+# install Volta on Unix
+curl https://get.volta.sh | bash
+```
+
+On Windows
+
+```bash
+winget install Volta.Volta
+```
+
+Install dependencies with Yarn
+
+```bash
 # Install Puppeteer
 yarn global add puppeteer
+
 
 # Install JavaScript dependencies:
 yarn install
