@@ -57,7 +57,7 @@
     "cover-jest": "jest --coverage --reporter=lcov --watchAll=false",
     "cover-merge": "istanbul-merge --out=coverage/coverage-all.json tape-coverage/coverage-final.json jest-coverage/coverage-final.json",
     "cover-report": "nyc report -t coverage --report-dir coverage --reporter=json --reporter=lcov",
-    "start": "NODE_OPTIONS=--openssl-legacy-provider yarn install-and-start examples/demo-app start-local",
+    "start": "NODE_OPTIONS=--openssl-legacy-provider yarn install-and-start examples/demo-app start:esbuild",
     "start:deck": "NODE_OPTIONS=--openssl-legacy-provider yarn install-and-start examples/demo-app start-local-deck",
     "start:deck-src": "NODE_OPTIONS=--openssl-legacy-provider yarn install-and-start examples/demo-app start-local-deck-src",
     "start:loaders-src": "NODE_OPTIONS=--openssl-legacy-provider yarn install-and-start examples/demo-app start-local-loaders-src",
