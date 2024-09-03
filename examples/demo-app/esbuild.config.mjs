@@ -137,7 +137,10 @@ function openURL(url) {
       new Promise(success => {
         fs.readdir(join(NODE_MODULES_DIR, dir), (err, items) => {
           if (err) {
-            logError(`Cannot find ${dir} in node_modules, make sure it is installed.`, err);
+            const colorRed = '\x1b[31m';
+            const colorReset = '\x1b[0m';
+            console.log(`${colorRed}%s${colorReset}`, `Cannot find ${dir} in node_modules, make sure it is installed. ${err}`);
+            
             success(null);
           }
           success(items);
