@@ -4741,6 +4741,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"esbuild-plugin-replace@npm:^1.4.0":
+  version: 1.4.0
+  resolution: "esbuild-plugin-replace@npm:1.4.0"
+  dependencies:
+    magic-string: "npm:^0.25.7"
+  checksum: 10c0/9574557ca6a63bb31818df3383618d8c12c32f142145cbdd1a80db5d7b88ed032e989708e302651a74bc9fa40bcf441c1aa6cbbce0fce5c511a5843577906f6a
+  languageName: node
+  linkType: hard
+
 "esbuild@npm:^0.23.1":
   version: 0.23.1
   resolution: "esbuild@npm:0.23.1"
@@ -6105,6 +6114,15 @@ __metadata:
   dependencies:
     yallist: "npm:^4.0.0"
   checksum: 10c0/cb53e582785c48187d7a188d3379c181b5ca2a9c78d2bce3e7dee36f32761d1c42983da3fe12b55cb74e1779fa94cdc2e5367c028a9b35317184ede0c07a30a9
+  languageName: node
+  linkType: hard
+
+"magic-string@npm:^0.25.7":
+  version: 0.25.9
+  resolution: "magic-string@npm:0.25.9"
+  dependencies:
+    sourcemap-codec: "npm:^1.4.8"
+  checksum: 10c0/37f5e01a7e8b19a072091f0b45ff127cda676232d373ce2c551a162dd4053c575ec048b9cbb4587a1f03adb6c5d0fd0dd49e8ab070cd2c83a4992b2182d9cb56
   languageName: node
   linkType: hard
 
@@ -7904,9 +7922,9 @@ __metadata:
     "@types/keymirror": "npm:^0.1.1"
     classnames: "npm:^2.2.1"
     d3-format: "npm:^2.0.0"
-    d3-request: "npm:^1.0.6"
     dropbox: "npm:^4.0.12"
     esbuild: "npm:^0.23.1"
+    esbuild-plugin-replace: "npm:^1.4.0"
     global: "npm:^4.3.0"
     keymirror: "npm:^0.1.1"
     prop-types: "npm:^15.6.0"
@@ -8090,6 +8108,13 @@ __metadata:
     sort-desc: "npm:^0.2.0"
     union-value: "npm:^1.0.1"
   checksum: 10c0/b19518e3659875d0997bfb6e4a2bc681a71b3cc30a39b7ab673fcb5c32e65b2c9d4b66eba6c97c29c78b5fc437306ec0e0a85a381565d54eff8716388535db5d
+  languageName: node
+  linkType: hard
+
+"sourcemap-codec@npm:^1.4.8":
+  version: 1.4.8
+  resolution: "sourcemap-codec@npm:1.4.8"
+  checksum: 10c0/f099279fdaae070ff156df7414bbe39aad69cdd615454947ed3e19136bfdfcb4544952685ee73f56e17038f4578091e12b17b283ed8ac013882916594d95b9e6
   languageName: node
   linkType: hard
 

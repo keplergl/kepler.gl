@@ -1,8 +1,11 @@
 import esbuild from 'esbuild';
+import {replace} from 'esbuild-plugin-replace';
+
 import process from 'node:process';
 import fs from 'node:fs';
 import {spawn} from 'node:child_process';
 import {join} from 'node:path';
+import KeplerPackage from '../../package.json' assert {type: 'json'};
 
 const args = process.argv;
 const LIB_DIR = '../../';
@@ -51,7 +54,14 @@ const config = {
     'process.env.FoursquareDomain': JSON.stringify(process.env.FoursquareDomain), // eslint-disable-line
     'process.env.FoursquareAPIURL': JSON.stringify(process.env.FoursquareAPIURL), // eslint-disable-line
     'process.env.FoursquareUserMapsURL': JSON.stringify(process.env.FoursquareUserMapsURL) // eslint-disable-line
-  }
+  },
+  plugins: [
+    // automatically injected kepler.gl package version into the bundle
+    replace({
+      __PACKAGE_VERSION__: KeplerPackage.version,
+      exclude: /node_modules/
+    })
+  ]
 };
 
 function addAliases(externals, args) {

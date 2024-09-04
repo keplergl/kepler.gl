@@ -59,5 +59,8 @@
     "node": "18.18.2",
     "yarn": "4.4.0"
   },
-  "packageManager": "yarn@4.4.0"
+  "packageManager": "yarn@4.4.0",
+  "devDependencies": {
+    "esbuild-plugin-replace": "^1.4.0"
+  }
 }

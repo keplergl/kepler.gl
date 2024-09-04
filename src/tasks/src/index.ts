@@ -2,7 +2,6 @@
 // Copyright contributors to the kepler.gl project
 
 import Task, {taskCreator} from 'react-palm/tasks';
-import {json as requestJson} from 'd3-request';
 import {readFileInBatches, processFileData} from '@kepler.gl/processors';
 
 export const LOAD_FILE_TASK = Task.fromPromise(
@@ -15,16 +14,21 @@ export const PROCESS_FILE_DATA = Task.fromPromise(processFileData, 'PROCESS_FILE
 
 export const LOAD_MAP_STYLE_TASK = taskCreator(
   ({url, id}, success, error) =>
-    requestJson(url, (err, result) => {
-      if (err) {
-        error(err);
-      } else {
+    fetch(url)
+      .then(response => {
+        if (!response.ok) {
+          return response.text().then(text => {
+            error(text);
+          });
+        }
+        return response.json();
+      })
+      .then(result => {
         if (!result) {
           error(new Error('Map style response is empty'));
         }
         success({id, style: result});
-      }
-    }),
+      }),
 
   'LOAD_MAP_STYLE_TASK'
 );

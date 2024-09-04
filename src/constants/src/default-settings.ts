@@ -95,7 +95,7 @@ export const SHARE_MAP_ID = 'shareMap';
 
 export const KEPLER_GL_NAME = 'kepler.gl';
 
-// __PACKAGE_VERSION__ is automatically injected by Babel/Webpack during the building process
+// __PACKAGE_VERSION__ is automatically injected by Babel/Esbuild during the build process
 // Since we are injecting this during the build process with babel
 // while developing VERSION is not defined, we capture the exception and return
 // an empty string which will allow us to retrieve the latest umd version
