@@ -3,6 +3,7 @@
 
 const forceTranspile = [
   // ESM libraries that require transpilation
+  /react-markdown/,
   /@deck.gl\/layers/,
   /@loaders.gl\/polyfills/,
   // For some reason babel crashes even before trying to transpile this library
