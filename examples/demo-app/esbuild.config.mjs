@@ -139,8 +139,11 @@ function openURL(url) {
           if (err) {
             const colorRed = '\x1b[31m';
             const colorReset = '\x1b[0m';
-            console.log(`${colorRed}%s${colorReset}`, `Cannot find ${dir} in node_modules, make sure it is installed. ${err}`);
-            
+            console.log(
+              `${colorRed}%s${colorReset}`,
+              `Cannot find ${dir} in node_modules, make sure it is installed. ${err}`
+            );
+
             success(null);
           }
           success(items);
@@ -189,6 +192,7 @@ function openURL(url) {
         await ctx.serve({
           servedir: 'dist',
           port,
+          fallback: 'dist/index.html',
           onRequest: ({remoteAddress, method, path, status, timeInMS}) => {
             console.info(remoteAddress, status, `"${method} ${path}" [${timeInMS}ms]`);
           }
