@@ -33,13 +33,14 @@ function LayerAnimationControllerFactory(
     const {timeSteps, domain} = animationConfig;
 
     const setTimelineValue = useCallback(
-      (value: number) => {
+      (value: number | number[]) => {
+        const timelineValue = toArray(value)[0];
         if (Array.isArray(timeSteps)) {
-          setLayerAnimationTime(snapToMarks(toArray(value)[0], timeSteps));
+          setLayerAnimationTime(snapToMarks(timelineValue, timeSteps));
 
           // TODO: merge slider in to avoid this step
-        } else if (domain && value >= domain[0] && value <= domain[1]) {
-          setLayerAnimationTime(value);
+        } else if (domain && timelineValue >= domain[0] && timelineValue <= domain[1]) {
+          setLayerAnimationTime(timelineValue);
         }
       },
       [domain, setLayerAnimationTime, timeSteps]
