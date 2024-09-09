@@ -16,7 +16,7 @@ interface LayerAnimationControllerProps {
     pauseAnimation: () => void,
     resetAnimation: () => void,
     timeline: Timeline | undefined,
-    setTimelineValue: (x: any) => void
+    setTimelineValue: (x: number | number[]) => void
   ) => React.ReactElement | null;
 }
 
