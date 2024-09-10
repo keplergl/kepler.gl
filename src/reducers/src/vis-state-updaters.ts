@@ -1068,6 +1068,70 @@ export const addFilterUpdater = (
       };
 
 /**
+ * Create or update a filter
+ * @memberof visStateUpdaters
+ * @public
+ */
+export const createOrUpdateFilterUpdater = (
+  state: VisState,
+  action: VisStateActions.CreateOrUpdateFilterUpdaterAction
+): VisState => {
+  const {id, dataId, field, value} = action;
+
+  let newState = state;
+  const originalIndex = newState.filters.findIndex(f => f.id === id);
+  let filterIndex = originalIndex;
+  if (!id && !dataId) {
+    return newState;
+  }
+  if (originalIndex < 0 && dataId) {
+    newState = addFilterUpdater(newState, {dataId});
+    if (newState.filters.length !== state.filters.length + 1) {
+      // No new filter was added
+      return state;
+    }
+    // Here we are assuming that the filter was added at the end
+    filterIndex = newState.filters.length - 1;
+    newState.filters[filterIndex] = {
+      ...newState.filters[filterIndex],
+      ...(id ? {id} : null)
+    };
+  }
+
+  // No need to update this if it's a newly created filter
+  // First we make sure all the dataIds that fields refer to are updated
+  if (originalIndex >= 0 && dataId) {
+    // If the dataId is an array, we need to update each one individually as they need a correct valueIndex passed
+    newState = (Array.isArray(dataId) ? dataId : [dataId]).reduce((accu, d, index) => {
+      return setFilterUpdater(accu, {
+        idx: filterIndex,
+        prop: 'dataId',
+        value: d,
+        valueIndex: index
+      });
+    }, newState);
+  }
+  // Then we update the fields
+  if (field) {
+    // If the field is an array, we need to update each field individually as they need a correct valueIndex passed
+    newState = (Array.isArray(field) ? field : [field]).reduce((accu, f, index) => {
+      return setFilterUpdater(accu, {
+        idx: filterIndex,
+        prop: 'name',
+        value: f,
+        valueIndex: index
+      });
+    }, newState);
+  }
+  // Then we update the value separately
+  if (value !== null && typeof value !== 'undefined') {
+    newState = setFilterUpdater(newState, {idx: filterIndex, prop: 'value', value});
+  }
+
+  return newState;
+};
+
+/**
  * Set layer color palette ui state
  * @memberof visStateUpdaters
  */
