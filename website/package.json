@@ -23,7 +23,7 @@
     "react-dom": "^18.2.0",
     "react-palm": "^3.1.2",
     "react-redux": "^8.0.5",
-    "react-router": "3.2.5",
+    "react-router": "3.2.6",
     "react-router-redux": "^4.0.8",
     "react-share": "^2.1.1",
     "react-swipeable-views": "^0.12.13",
