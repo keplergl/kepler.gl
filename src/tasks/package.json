@@ -31,7 +31,6 @@
   ],
   "dependencies": {
     "@kepler.gl/processors": "3.0.0",
-    "d3-request": "^1.0.6",
     "react-palm": "^3.3.8"
   },
   "nyc": {
