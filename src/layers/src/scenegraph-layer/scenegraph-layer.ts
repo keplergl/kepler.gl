@@ -3,7 +3,7 @@
 
 import {ScenegraphLayer as DeckScenegraphLayer} from '@deck.gl/mesh-layers';
 import {load} from '@loaders.gl/core';
-import {GLTFLoader} from '@loaders.gl/gltf';
+import {GLTFLoader, postProcessGLTF} from '@loaders.gl/gltf';
 
 import Layer, {LayerBaseConfig, LayerColumn} from '../base-layer';
 import ScenegraphLayerIcon from './scenegraph-layer-icon';
@@ -50,7 +50,9 @@ export const scenegraphOptionalColumns: ['altitude'] = ['altitude'];
 
 function fetch(url, {propName, layer}: {propName?: string; layer?: any} = {}) {
   if (propName === 'scenegraph') {
-    return load(url, GLTFLoader, layer.getLoadOptions());
+    return load(url, GLTFLoader, layer.getLoadOptions()).then(gltfWithBuffers =>
+      postProcessGLTF(gltfWithBuffers)
+    );
   }
 
   return fetch(url).then(response => response.json());
