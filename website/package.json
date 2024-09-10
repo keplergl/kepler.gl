@@ -60,7 +60,7 @@
     "url-loader": "^0.5.9",
     "webpack": "^4.29.0",
     "webpack-cli": "^3.2.1",
-    "webpack-dev-middleware": "^3.5.1",
+    "webpack-dev-middleware": "^5.3.4",
     "webpack-dev-server": "^3.1.14",
     "webpack-hot-middleware": "^2.24.3"
   },
