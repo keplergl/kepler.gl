@@ -61,7 +61,7 @@ const StyledEffectPanel = styled.div`
 
 const StyledEffectPanelHeader = styled.div`
   padding: ${({theme}) =>
-    `${theme.effectPanelPaddingTop}px ${theme.effectPanelPaddingSide}px 4px ${theme.effectPanelPaddingSide}px}`};
+    `${theme.effectPanelPaddingTop}px ${theme.effectPanelPaddingSide}px 4px ${theme.effectPanelPaddingSide}px`};
   border-bottom: 1px solid ${props => props.theme.borderColor};
   min-width: ${({theme}) => theme.effectPanelWidth}px;
 `;
