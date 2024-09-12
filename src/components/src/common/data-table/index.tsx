@@ -333,7 +333,7 @@ export const TableSection = ({
           columnWidth,
           width: fixedWidth || width
         };
-        const headerGridWidth = fixedWidth || width - browserScrollBarWidth;
+        const headerGridWidth = fixedWidth || width;
         const dataGridHeight = fixedHeight || height;
 
         return (
