@@ -12,7 +12,7 @@ import {
   TOOLTIP_KEY,
   TooltipFormat
 } from '@kepler.gl/constants';
-import {Millisecond, Field, ColMetaProps} from '@kepler.gl/types';
+import {Millisecond, Field} from '@kepler.gl/types';
 
 import {snapToMarks} from './plot';
 import {isPlainObject} from './utils';
@@ -311,18 +311,20 @@ export function getFormatter(
   return defaultFormatter;
 }
 
-export function getColumnFormatter(colMeta: ColMetaProps): FieldFormatter {
-  const {format, displayFormat} = colMeta;
+export function getColumnFormatter(
+  field: Pick<Field, 'type'> & Partial<Pick<Field, 'format' | 'displayFormat'>>
+): FieldFormatter {
+  const {format, displayFormat} = field;
 
   if (!format && !displayFormat) {
-    return FIELD_DISPLAY_FORMAT[colMeta.type];
+    return FIELD_DISPLAY_FORMAT[field.type];
   }
   const tooltipFormat = Object.values(TOOLTIP_FORMATS).find(f => f[TOOLTIP_KEY] === displayFormat);
 
   if (tooltipFormat) {
     return applyDefaultFormat(tooltipFormat);
-  } else if (typeof displayFormat === 'string' && colMeta) {
-    return applyCustomFormat(displayFormat, colMeta);
+  } else if (typeof displayFormat === 'string' && field) {
+    return applyCustomFormat(displayFormat, field);
   } else if (typeof displayFormat === 'object') {
     return applyValueMap(displayFormat);
   }
@@ -365,7 +367,7 @@ export function getBooleanFormatter(format: string): FieldFormatter {
   }
 }
 // Allow user to specify custom tooltip format via config
-export function applyCustomFormat(format, field): FieldFormatter {
+export function applyCustomFormat(format, field: {type?: string}): FieldFormatter {
   switch (field.type) {
     case ALL_FIELD_TYPES.real:
     case ALL_FIELD_TYPES.integer:
@@ -421,7 +423,11 @@ export function datetimeFormatter(
   timezone?: string | null
 ): (format?: string) => (ts: number) => string {
   return timezone
-    ? format => ts => moment.utc(ts).tz(timezone).format(format)
+    ? format => ts =>
+        moment
+          .utc(ts)
+          .tz(timezone)
+          .format(format)
     : // return empty string instead of 'Invalid date' if ts is undefined/null
-      format => ts => ts ? moment.utc(ts).format(format) : '';
+      format => ts => (ts ? moment.utc(ts).format(format) : '');
 }
