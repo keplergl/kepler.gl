@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import styled from 'styled-components';
-import React, {useState} from 'react';
-import {RootContext} from '../';
 import Tippy, {TippyProps} from '@tippyjs/react';
+import React, {useCallback, useRef, useState} from 'react';
+import styled from 'styled-components';
+
+import {RootContext} from '../';
 
 const TippyArrow = styled.div`
   position: absolute;
@@ -112,6 +113,22 @@ const TippyTooltip = ({
     setOpacity(0);
   }
 
+  const skipNextShow = useRef(false);
+  const onTrigger = useCallback((instance, event) => {
+    if (event instanceof MouseEvent && event.buttons > 0) {
+      // if the user is holding down the mouse button, e.g. while dragging, we won't show the tooltip
+      skipNextShow.current = true;
+    } else {
+      skipNextShow.current = false;
+    }
+  }, []);
+  const onShow = useCallback(() => {
+    if (skipNextShow.current) {
+      return false;
+    }
+    return;
+  }, []);
+
   return (
     <RootContext.Consumer>
       {context => (
@@ -134,6 +151,8 @@ const TippyTooltip = ({
           )}
           onMount={onMount}
           onHide={onHide}
+          onTrigger={onTrigger}
+          onShow={onShow}
         >
           {children}
         </Tippy>
