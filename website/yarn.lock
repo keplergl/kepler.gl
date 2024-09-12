@@ -5108,13 +5108,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"hoist-non-react-statics@npm:^2.3.1":
-  version: 2.5.5
-  resolution: "hoist-non-react-statics@npm:2.5.5"
-  checksum: 10c0/79c204446a61ad490cc9342b2deeedea5a17f03a5fc091f367b6c08f29387c8d5578634ebfb8733043422a5e1182b372893d63f8737ac4b75da3a2ec4a316162
-  languageName: node
-  linkType: hard
-
 "hoist-non-react-statics@npm:^3.3.0, hoist-non-react-statics@npm:^3.3.2":
   version: 3.3.2
   resolution: "hoist-non-react-statics@npm:3.3.2"
@@ -6096,7 +6089,7 @@ __metadata:
     react-dom: "npm:^18.2.0"
     react-palm: "npm:^3.1.2"
     react-redux: "npm:^8.0.5"
-    react-router: "npm:3.2.5"
+    react-router: "npm:3.2.6"
     react-router-redux: "npm:^4.0.8"
     react-share: "npm:^2.1.1"
     react-swipeable-views: "npm:^0.12.13"
@@ -7726,7 +7719,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-is@npm:^16.13.1, react-is@npm:^16.6.0, react-is@npm:^16.6.3, react-is@npm:^16.7.0, react-is@npm:^16.8.6":
+"react-is@npm:^16.13.0, react-is@npm:^16.13.1, react-is@npm:^16.6.0, react-is@npm:^16.6.3, react-is@npm:^16.7.0, react-is@npm:^16.8.6":
   version: 16.13.1
   resolution: "react-is@npm:16.13.1"
   checksum: 10c0/33977da7a5f1a287936a0c85639fec6ca74f4f15ef1e59a6bc20338fc73dc69555381e211f7a3529b8150a1f71e4225525b41b60b52965bda53ce7d47377ada1
@@ -7810,21 +7803,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-router@npm:3.2.5":
-  version: 3.2.5
-  resolution: "react-router@npm:3.2.5"
+"react-router@npm:3.2.6":
+  version: 3.2.6
+  resolution: "react-router@npm:3.2.6"
   dependencies:
     create-react-class: "npm:^15.5.1"
     history: "npm:^3.0.0"
-    hoist-non-react-statics: "npm:^2.3.1"
+    hoist-non-react-statics: "npm:^3.3.2"
     invariant: "npm:^2.2.1"
     loose-envify: "npm:^1.2.0"
     prop-types: "npm:^15.7.2"
-    react-is: "npm:^16.8.6"
+    react-is: "npm:^16.13.0"
     warning: "npm:^3.0.0"
   peerDependencies:
     react: ^0.14.0 || ^15.0.0 || ^16.0.0
-  checksum: 10c0/87687ac4ad414a93811ddfe1ac0c31207a79a297a8146def4de77c465f21162af9884c9a3aa874318fb4a68fc2f80f81fd0e85083da5f11f15497721528d6693
+  checksum: 10c0/114ddcf89c60f67b9c90689c58d92b1cf9f658f07e8333f4d3d28e6fe38d36fc4d86bd31bdfafe7cb89b063dc23635c6414037760e680fabdec172f8b9121508
   languageName: node
   linkType: hard
 
