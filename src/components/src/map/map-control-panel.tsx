@@ -19,14 +19,18 @@ const StyledMapControlPanel = styled.div`
   }
 `;
 
+type StyledMapControlPanelContentProps = {
+  isExport?: boolean;
+};
+
 const StyledMapControlPanelContent = styled.div.attrs({
   className: 'map-control__panel-content'
-})`
+})<StyledMapControlPanelContentProps>`
   ${props => props.theme.dropdownScrollBar};
   max-height: 500px;
   min-height: 100px;
   min-width: ${props => props.theme.mapControl.width}px;
-  overflow: overlay;
+  overflow: ${props => (props.isExport ? 'hidden' : 'overlay')};
 `;
 
 type MapControlPanelHeaderProps = {
@@ -198,7 +202,9 @@ function MapControlPanelFactory() {
               </>
             )}
           </StyledMapControlPanelHeader>
-          <StyledMapControlPanelContent>{children}</StyledMapControlPanelContent>
+          <StyledMapControlPanelContent isExport={isExport}>
+            {children}
+          </StyledMapControlPanelContent>
         </StyledMapControlPanel>
       );
     }
