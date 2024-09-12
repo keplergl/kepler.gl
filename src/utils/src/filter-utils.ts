@@ -447,11 +447,19 @@ export const getPolygonFilterFunctor = (layer, filter, dataContainer) => {
 };
 
 /**
+ * Check if a GeoJSON feature filter can be applied to a layer
+ */
+export function canApplyFeatureFilter(feature: Feature | null): boolean {
+  return Boolean(feature?.geometry && ['Polygon', 'MultiPolygon'].includes(feature.geometry.type));
+}
+
+/**
  * @param param An object that represents a row record.
  * @param param.index Index of the row in data container.
  * @returns Returns true to keep the element, or false otherwise.
  */
 type filterFunction = (data: {index: number}) => boolean;
+
 /**
  * @param field dataset Field
  * @param dataId Dataset id
