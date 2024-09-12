@@ -103,7 +103,7 @@ export function provideRecipesToInjector(recipes: [Factory, Factory][], appInjec
   }, appInjector);
 
   // make sure all component instance are cached
-  provided.forEach((v, k) => {
+  provided.forEach(v => {
     injector.get(v);
   });
 
