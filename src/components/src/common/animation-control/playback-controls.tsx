@@ -57,7 +57,7 @@ const DEFAULT_ANIMATE_ITEMS = {
     tooltip: 'tooltip.animationByIncremental'
   }
 };
-interface PlaybackControlsProps {
+export interface PlaybackControlsProps {
   isAnimatable?: boolean;
   isAnimating?: boolean;
   width?: number;
