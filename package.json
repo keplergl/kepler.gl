@@ -101,7 +101,7 @@
     "@hubble.gl/core": "1.2.0-alpha.6",
     "@hubble.gl/react": "1.2.0-alpha.6",
     "@kepler.gl/components": "3.0.0",
-    "@loaders.gl/polyfills": "^4.1.0-alpha.4",
+    "@loaders.gl/polyfills": "^4.1.1",
     "@types/mapbox__geo-viewport": "^0.4.1",
     "html-webpack-plugin": "^4.3.0",
     "typedoc": "^0.19.2"
@@ -129,7 +129,7 @@
     "@babel/traverse": "^7.12.1",
     "@cfaester/enzyme-adapter-react-18": "^0.7.0",
     "@deck.gl/test-utils": "^8.9.27",
-    "@loaders.gl/polyfills": "^4.1.0-alpha.4",
+    "@loaders.gl/polyfills": "^4.1.1",
     "@luma.gl/test-utils": "^8.5.20",
     "@nebula.gl/layers": "1.0.2-alpha.1",
     "@probe.gl/env": "^3.5.0",
@@ -207,14 +207,17 @@
     "webpack-stats-plugin": "^0.2.1"
   },
   "resolutions": {
-    "@loaders.gl/core": "^4.1.0-alpha.4",
-    "@loaders.gl/csv": "^4.1.0-alpha.4",
-    "@loaders.gl/draco": "^4.1.0-alpha.11",
-    "@loaders.gl/gltf": "^4.1.0-alpha.4",
-    "@loaders.gl/json": "^4.1.0-alpha.4",
-    "@loaders.gl/loader-utils": "^4.1.0-alpha.4",
-    "@loaders.gl/polyfills": "^4.1.0-alpha.4",
-    "@loaders.gl/schema": "^4.1.0-alpha.4",
+    "@loaders.gl/core": "4.1.1",
+    "@loaders.gl/csv": "4.1.1",
+    "@loaders.gl/draco": "4.1.1",
+    "@loaders.gl/gltf": "4.1.1",
+    "@loaders.gl/json": "4.1.1",
+    "@loaders.gl/loader-utils": "4.1.1",
+    "@loaders.gl/polyfills": "4.1.1",
+    "@loaders.gl/arrow": "4.1.1",
+    "@loaders.gl/gis": "4.1.1",
+    "@loaders.gl/schema": "4.1.1",
+    "@loaders.gl/wkt": "4.1.1",
     "@luma.gl/constants": "8.5.21",
     "@luma.gl/core": "8.5.21",
     "@luma.gl/experimental": "8.5.21",
@@ -239,10 +242,6 @@
     "react": ">=18.2",
     "react-dom": ">=18.2",
     "styled-components": "^4.x || ^5.x"
-  },
-  "overrides": {
-    "@loaders.gl/draco": "4.1.0-alpha.11",
-    "@loaders.gl/schema": "4.1.0-alpha.4"
   },
   "nyc": {
     "sourceMap": false,
