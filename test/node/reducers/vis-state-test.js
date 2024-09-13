@@ -30,7 +30,8 @@ import {
   LAYER_VIS_CONFIGS,
   DEFAULT_TEXT_LABEL,
   DEFAULT_COLOR_UI,
-  FILTER_VIEW_TYPES
+  FILTER_VIEW_TYPES,
+  LIGHT_AND_SHADOW_EFFECT
 } from '@kepler.gl/constants';
 
 const {ArcLayer, PointLayer, GeojsonLayer, LineLayer, TripLayer} = KeplerGlLayers;
@@ -5426,12 +5427,25 @@ test('#VisStateUpdater -> addEffect', t => {
     nextState,
     VisStateActions.addEffect({
       id: 'e_shadow',
-      type: 'lightAndShadow',
+      type: LIGHT_AND_SHADOW_EFFECT.type,
       parameters: {timestamp: 1689280466362, timezone: 'UTC'}
     })
   );
 
   t.equal(nextState.effects.length, 2, 'should add second effect');
+
+  nextState = reducer(
+    nextState,
+    VisStateActions.addEffect({
+      type: LIGHT_AND_SHADOW_EFFECT.type
+    })
+  );
+
+  t.equal(
+    nextState.effects.length,
+    2,
+    `shouldn't add second ${LIGHT_AND_SHADOW_EFFECT.name} effect`
+  );
 
   const expectedEffect2 = {
     id: 'e_shadow',
