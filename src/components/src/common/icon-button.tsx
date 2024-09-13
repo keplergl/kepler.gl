@@ -4,6 +4,7 @@
 import {MouseEvent, ReactNode} from 'react';
 import styled from 'styled-components';
 import {Button, ButtonProps} from './styled-components';
+
 interface IconButtonProps extends ButtonProps {
   collapsed?: boolean;
   theme?: object;

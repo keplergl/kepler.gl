@@ -402,4 +402,4 @@ For both scenarios, changes will be propagated from one system to the other and 
 [github-pr]: https://help.github.com/articles/creating-a-pull-request/
 [jsDoc]: http://usejsdoc.org/
 [tape]: https://github.com/substack/tape
-[yarn-install]: https://yarnpkg.com/en/docs/install
+[yarn-install]: https://yarnpkg.com/getting-started/install

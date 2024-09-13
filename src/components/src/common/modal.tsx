@@ -206,8 +206,9 @@ export class ModalDialog extends Component<ModalDialogProps> {
     const {props} = this;
     return (
       <Modal
-        className={this.props.className}
+        className={props.className}
         {...props}
+        testId={props['data-testid']}
         ariaHideApp={false}
         style={{
           overlay: {

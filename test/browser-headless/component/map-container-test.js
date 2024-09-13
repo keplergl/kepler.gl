@@ -15,7 +15,6 @@ import {
   MapViewStateContextProvider
 } from '@kepler.gl/components';
 // import {Map} from 'react-map-gl'; // see other TODO below
-import Tippy from '@tippyjs/react/headless';
 import {gl, InteractionTestRunner} from '@deck.gl/test-utils';
 
 import {mockKeplerProps, expectedLayerHoverProp} from '../../helpers/mock-state';
@@ -208,34 +207,12 @@ test('MapContainerFactory - _renderDeckOverlay', t => {
 
           // test MapPopoverProp
           testMapPopoverProp(t, mapPopoverProps);
-          // map control and map popover both uses Tippy
-          t.equal(wrapper.find(Tippy).length, 2, 'should render Tippy');
+          t.equal(wrapper.find('.map-popover').length, 3, 'should render .map-popover');
           t.equal(wrapper.find('table').length, 1, 'should render 1 table');
 
           const table = wrapper.find('table').at(0);
           const rows = table.find('.layer-hover-info__row');
           t.equal(rows.length, 5, 'should render 5 rows');
-          const tippyProps = wrapper.find(Tippy).at(1).props();
-
-          const expectedClientRect = {
-            bottom: 200,
-            height: 0,
-            left: 200,
-            right: 200,
-            top: 200,
-            width: 0,
-            y: 200,
-            x: 200
-          };
-
-          const rect = tippyProps.getReferenceClientRect();
-          delete rect.toJSON;
-
-          t.deepEqual(
-            rect,
-            expectedClientRect,
-            'getReferenceClientRect should return correct rect'
-          );
 
           const expectedTooltips = [
             ['gps_data.utc_timestamp', '2016-09-17 00:24:24'],

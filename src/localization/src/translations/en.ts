@@ -250,6 +250,7 @@ export default {
   },
   editor: {
     filterLayer: 'Filter Layers',
+    filterLayerDisabled: 'Non-polygon geometries cannot be used for filtering',
     copyGeometry: 'Copy Geometry',
     noLayersToFilter: 'No layers to filter'
   },

@@ -10,7 +10,13 @@ import {Provider} from 'react-redux';
 import sinon from 'sinon';
 import {console as Console} from 'global/window';
 
-import {withState, injectComponents, PanelHeaderFactory} from '@kepler.gl/components';
+import {
+  withState,
+  injector,
+  injectComponents,
+  PanelHeaderFactory,
+  provideRecipesToInjector
+} from '@kepler.gl/components';
 
 import {keplerGlInit} from '@kepler.gl/actions';
 import {
@@ -296,6 +302,52 @@ test('Components -> injector -> actions', t => {
 
   const lastAction = store.getActions().pop();
   t.deepEqual(lastAction, {type: 'ADD'}, 'should dispatch custom actions');
+
+  t.end();
+});
+
+test('Components -> injector -> provideRecipesToInjector', t => {
+  /// Header1 -> Header 2 -> Header 3
+  const spyMyHeader3Factory = sinon.spy();
+  const spyMyHeader2Factory = sinon.spy();
+  const spyMyHeader1Factory = sinon.spy();
+
+  const myHeader3Factory = () => {
+    spyMyHeader3Factory('getHeader3');
+    const Header3 = () => <div className="my-test-header-3">hello world</div>;
+    return Header3;
+  };
+
+  const myHeader2Factory = MyHeader3 => {
+    spyMyHeader2Factory('getHeader2');
+    const Header2 = () => (
+      <div className="my-test-header-2">
+        <MyHeader3 />
+      </div>
+    );
+    return Header2;
+  };
+  myHeader2Factory.deps = [myHeader3Factory];
+
+  const myHeader1Factory = MyCustomHeader2 => {
+    spyMyHeader1Factory('getHeader1');
+    const Header1 = () => (
+      <div className="my-test-header-1">
+        <MyCustomHeader2 />
+      </div>
+    );
+    return Header1;
+  };
+
+  myHeader1Factory.deps = [myHeader2Factory];
+
+  const recipe1 = [myHeader1Factory, myHeader1Factory];
+
+  provideRecipesToInjector([recipe1], injector());
+
+  t.equal(spyMyHeader1Factory.called, true, 'Should call myHeader1Factory');
+  t.equal(spyMyHeader2Factory.called, true, 'Should call myHeader2Factory');
+  t.equal(spyMyHeader3Factory.called, true, 'Should call myHeader3Factory');
 
   t.end();
 });

@@ -132,7 +132,9 @@ export default class DropdownList extends Component<DropdownListProps, DropdownL
 
   componentWillUnmount() {
     if (this.loadingRef.current) {
-      this.observer?.unobserve(this.loadingRef.current);
+      this.observer?.unobserve(this.loadingRef?.current);
+      this.page = 0;
+      this.prevY = 0;
     }
   }
 
