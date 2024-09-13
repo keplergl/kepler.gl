@@ -401,6 +401,35 @@ export function addFilter(
   };
 }
 
+export type CreateOrUpdateFilterUpdaterAction = {
+  id?: string;
+  dataId?: string | string[];
+  field?: string | string[];
+  value?: any;
+};
+
+/**
+ * Create or updates a filter
+ * @memberof visStateActions
+ * @param dataId - dataset `id` this new filter is associated with
+ * @returns action
+ * @public
+ */
+export function createOrUpdateFilter(
+  id?: string,
+  dataId?: string | string[],
+  field?: string | string[],
+  value?: any
+): Merge<CreateOrUpdateFilterUpdaterAction, {type: typeof ActionTypes.CREATE_OR_UPDATE_FILTER}> {
+  return {
+    type: ActionTypes.CREATE_OR_UPDATE_FILTER,
+    id,
+    dataId,
+    field,
+    value
+  };
+}
+
 export type AddLayerUpdaterAction = {
   config?: object;
   datasetId?: string;
