@@ -25,7 +25,7 @@ interface AnimationControllerProps<T extends number | number[]> {
     pauseAnimation: () => void,
     resetAnimation: () => void,
     timeline: Timeline | undefined,
-    setTimelineValue: (x: any) => void
+    setTimelineValue: (x: T) => void
   ) => React.ReactElement | null;
 }
 
