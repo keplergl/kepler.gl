@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {Blob, URL, atob, Uint8Array, ArrayBuffer, document} from 'global/window';
 import get from 'lodash.get';
 
 import {
