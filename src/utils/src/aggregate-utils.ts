@@ -2,7 +2,9 @@
 // Copyright contributors to the kepler.gl project
 
 import {deviation, min, max, mean, median, sum, variance} from 'd3-array';
-import {AGGREGATION_TYPES} from '@kepler.gl/constants';
+import {AGGREGATION_TYPES, AggregationTypes} from '@kepler.gl/constants';
+import {ValueOf} from '@kepler.gl/types';
+const identity = d => d;
 
 export const getFrequency = data =>
   data.reduce(
@@ -21,7 +23,11 @@ export const getMode = data => {
   );
 };
 
-export function aggregate(data, technique) {
+export function aggregate(
+  data: any[],
+  technique: ValueOf<AggregationTypes>,
+  accessor: (any: any) => any = identity
+): any {
   switch (technique) {
     case AGGREGATION_TYPES.average:
       return mean(data);
