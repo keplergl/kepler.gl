@@ -67,7 +67,7 @@ export function mergeStateFromMergers<State extends VisState>(
 
       // check if asyncTask was created (time consuming tasks)
       if (newTasks.length && merger.waitToFinish) {
-        // skip rest, the async merger will call applyMergerupdater() to continue
+        // skip rest, the async merger will call applyMergerUpdater() to continue
         return {mergedState, allMerged: false};
       }
     }

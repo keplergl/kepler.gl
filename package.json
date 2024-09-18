@@ -31,7 +31,8 @@
     "./src/actions",
     "./src/effects",
     "./src/reducers",
-    "./src/components"
+    "./src/components",
+    "./src/duckdb-plugin"
   ],
   "repository": {
     "type": "git",

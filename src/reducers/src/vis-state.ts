@@ -146,7 +146,9 @@ const actionHandler = {
 
   [ActionTypes.REMOVE_EFFECT]: visStateUpdaters.removeEffectUpdater,
 
-  [ActionTypes.UPDATE_EFFECT]: visStateUpdaters.updateEffectUpdater
+  [ActionTypes.UPDATE_EFFECT]: visStateUpdaters.updateEffectUpdater,
+
+  [ActionTypes.CREATE_NEW_DATASET_SUCCESS]: visStateUpdaters.createNewDatasetSuccessUpdater
 };
 
 // construct vis-state reducer

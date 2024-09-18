@@ -22,6 +22,9 @@ import {
   ParsedLayer,
   EffectPropsPartial
 } from '@kepler.gl/types';
+import {createAction} from '@reduxjs/toolkit';
+
+import {KeplerTable} from '@kepler.gl/table';
 // TODO - import LoaderObject type from @loaders.gl/core when supported
 // TODO - import LoadOptions type from @loaders.gl/core when supported
 
@@ -1521,6 +1524,20 @@ export function setFilterAnimationTimeConfig(
     config
   };
 }
+
+export type CreateNewDatasetSuccessPayload = {
+  results: (PromiseFulfilledResult<KeplerTable> | PromiseRejectedResult)[];
+  addToMapOptions: AddDataToMapPayload['options'];
+};
+/**
+ * Called when a new dataset is created successfully via async table methods
+ * @param payload
+ * @param payload.results - results of promises.allSettlted
+ * @returns
+ */
+export const createNewDatasetSuccess = createAction<CreateNewDatasetSuccessPayload>(
+  ActionTypes.CREATE_NEW_DATASET_SUCCESS
+);
 
 /**
  * This declaration is needed to group actions in docs

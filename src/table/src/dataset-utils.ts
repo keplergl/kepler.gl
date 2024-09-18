@@ -4,6 +4,7 @@
 import uniq from 'lodash.uniq';
 import KeplerTable, {Datasets} from './kepler-table';
 import {ProtoDataset, RGBColor} from '@kepler.gl/types';
+import Task from 'react-palm/tasks';
 
 import {hexToRgb, validateInputData, datasetColorMaker} from '@kepler.gl/utils';
 
@@ -56,17 +57,31 @@ export function createNewDataEntry(
     // get keplerTable from datasets
     const keplerTable = datasets[info.id];
     // update the data in keplerTable
-    keplerTable.update(validatedData);
-    return {
-      [keplerTable.id]: keplerTable
-    };
+    return UPDATE_TABLE_TASK({table: keplerTable, data: validatedData});
+    // keplerTable.update(validatedData);
+    // return {
+    //   [keplerTable.id]: keplerTable
+    // };
   }
 
   info = info || {};
   const color = info.color || getNewDatasetColor(datasets);
 
-  const keplerTable = new KeplerTable({info, data: validatedData, color, ...opts});
-  return {
-    [keplerTable.id]: keplerTable
-  };
+  // const keplerTable = new KeplerTable({info, data: validatedData, color, ...opts});
+  return CREATE_TABLE_TASK({TableClass: KeplerTable, info, color, opts, data: validatedData});
+  // return {
+  //   [keplerTable.id]: keplerTable
+  // };
 }
+
+async function updateTable({table, data}) {
+  const updated = await table.update(data); // Assuming `table` has an `update` method
+  return updated;
+}
+async function createTable({TableClass, info, color, opts, data}) {
+  const keplerTable = await new TableClass({info, data, color, ...opts});
+
+  return keplerTable;
+}
+const UPDATE_TABLE_TASK = Task.fromPromise(updateTable, 'UPDATE_TABLE_TASK');
+const CREATE_TABLE_TASK = Task.fromPromise(createTable, 'CREATE_TABLE_TASK');

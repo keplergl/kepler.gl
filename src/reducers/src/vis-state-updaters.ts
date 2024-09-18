@@ -3,7 +3,7 @@
 
 import bbox from '@turf/bbox';
 import {console as Console} from 'global/window';
-import {disableStackCapturing, withTask} from 'react-palm/tasks';
+import Task, {disableStackCapturing, withTask} from 'react-palm/tasks';
 import cloneDeep from 'lodash.clonedeep';
 import uniq from 'lodash.uniq';
 import get from 'lodash.get';
@@ -12,6 +12,8 @@ import pick from 'lodash.pick';
 import isEqual from 'lodash.isequal';
 import copy from 'copy-to-clipboard';
 import deepmerge from 'deepmerge';
+import {Action, PayloadAction} from '@reduxjs/toolkit';
+
 // Tasks
 import {LOAD_FILE_TASK, UNWRAP_TASK, PROCESS_FILE_DATA, DELAY_TASK} from '@kepler.gl/tasks';
 // Actions
@@ -30,7 +32,9 @@ import {
   VisStateActions,
   MapStateActions,
   processFileContent,
-  ActionTypes
+  ActionTypes,
+  createNewDatasetSuccess,
+  CreateNewDatasetSuccessPayload
 } from '@kepler.gl/actions';
 
 // Utils
@@ -1945,19 +1949,45 @@ export const updateVisDataUpdater = (
 
   const datasets = toArray(action.datasets);
 
-  const newDataEntries = datasets.reduce(
-    // @ts-expect-error  Type '{}' is missing the following properties from type 'ProtoDataset': data, info
-    (accu, {info = {}, ...rest} = {}) => ({
-      ...accu,
-      ...(createNewDataEntry({info, ...rest}, state.datasets) || {})
-    }),
-    {}
+  // create new dataset entries can be async
+  // const newDataEntries = datasets.reduce(
+  //   (accu, {info = {}, ...rest} = {}) => ({
+  //     ...accu,
+  //     ...(createNewDataEntry({info, ...rest}, state.datasets) || {})
+  //   }),
+  //   {}
+  // );
+  const allCreateDatasetsTasks = datasets.map(
+    ({info = {}, ...rest}) => createNewDataEntry({info, ...rest}, state.datasets) || {}
+  );
+  // call all Tasks
+  const tasks = Task.allSettled(allCreateDatasetsTasks).map(results =>
+    createNewDatasetSuccess({results, addToMapOptions: options})
   );
 
+  return withTask(previousState, tasks);
+};
+
+export const createNewDatasetSuccessUpdater = (
+  state: VisState,
+  action: PayloadAction<CreateNewDatasetSuccessPayload>
+): VisState => {
+  console.log('createNewDatasetSuccessUpdater', action.payload);
+  const {results, addToMapOptions} = action.payload;
+  const newDataEntries = results.reduce((accu, result) => {
+    if (result.status === 'fulfilled') {
+      const dataset = result.value;
+      return {...accu, [dataset.id]: dataset};
+    } else {
+      // handle create dataset error
+      console.error(result.reason);
+      return accu;
+    }
+  }, {} as Datasets);
   // save new dataset entry to state
   const mergedState = {
-    ...previousState,
-    datasets: mergeDatasetsByOrder(previousState, newDataEntries)
+    ...state,
+    datasets: mergeDatasetsByOrder(state, newDataEntries)
   };
 
   // merge state with config to be merged
@@ -1967,7 +1997,7 @@ export const updateVisDataUpdater = (
   const newDataIds = Object.keys(newDataEntries);
   const postMergerPayload = {
     newDataIds,
-    options,
+    options: addToMapOptions,
     layerMergers
   };
 
