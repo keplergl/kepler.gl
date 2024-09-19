@@ -3,7 +3,6 @@
 
 import React, {PureComponent} from 'react';
 import styled, {keyframes} from 'styled-components';
-import {window} from 'global';
 
 import {media, breakPoints} from '../styles';
 import {HERO_IMAGES, HERO_IMAGES_SCALED} from '../content';

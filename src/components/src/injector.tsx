@@ -9,7 +9,6 @@ import {
   MapDispatchToPropsParam,
   InferableComponentEnhancerWithProps
 } from 'react-redux';
-import {console as Console} from 'global/window';
 import KeplerGlContext from './context';
 
 export type FactoryElement = (...args) => React.ComponentType;
@@ -42,7 +41,7 @@ export function injector(map = new Map()): InjectorType {
     const factory = map.get(fac);
     // factory is not injected
     if (!factory) {
-      Console.error(ERROR_MSG.noDep(fac, parent));
+      console.error(ERROR_MSG.noDep(fac, parent));
       return MissingComp;
     }
 
@@ -89,7 +88,7 @@ export function provideRecipesToInjector(recipes: [Factory, Factory][], appInjec
     const customDependencies = flattenDeps([], recipe[1]);
     inj = customDependencies.reduce((ij, factory) => {
       if (provided.get(factory)) {
-        Console.warn(
+        console.warn(
           `${factory.name} already injected from ${provided.get(factory).name}, injecting ${
             recipe[0].name
           } after ${provided.get(factory).name} will override it`
@@ -112,19 +111,19 @@ export function provideRecipesToInjector(recipes: [Factory, Factory][], appInjec
 
 export function typeCheckRecipe(recipe) {
   if (!Array.isArray(recipe) || recipe.length < 2) {
-    Console.error('Error injecting [factory, replacement]', recipe);
-    Console.error(ERROR_MSG.wrongRecipeType);
+    console.error('Error injecting [factory, replacement]', recipe);
+    console.error(ERROR_MSG.wrongRecipeType);
     return false;
   }
 
   const [factory, replacement] = recipe;
   if (typeof factory !== 'function') {
-    Console.error('Error injecting factory: ', factory);
-    Console.error(ERROR_MSG.notFunc);
+    console.error('Error injecting factory: ', factory);
+    console.error(ERROR_MSG.notFunc);
     return false;
   } else if (typeof replacement !== 'function') {
-    Console.error('Error injecting replacement for: ', factory);
-    Console.error(ERROR_MSG.notFunc);
+    console.error('Error injecting replacement for: ', factory);
+    console.error(ERROR_MSG.notFunc);
     return false;
   }
 

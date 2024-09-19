@@ -2,7 +2,6 @@
 // Copyright contributors to the kepler.gl project
 
 import bbox from '@turf/bbox';
-import {console as Console} from 'global/window';
 import {disableStackCapturing, withTask} from 'react-palm/tasks';
 import cloneDeep from 'lodash.clonedeep';
 import uniq from 'lodash.uniq';
@@ -730,7 +729,7 @@ export function layerTypeChangeUpdater(
   const idx = state.layers.findIndex(l => l.id === oldId);
 
   if (!state.layerClasses[newType]) {
-    Console.error(`${newType} is not a valid layer type`);
+    console.error(`${newType} is not a valid layer type`);
     return state;
   }
   let newLayer = new state.layerClasses[newType]({
@@ -897,7 +896,7 @@ export function setFilterUpdater(
   const oldFilter = state.filters[idx];
 
   if (!oldFilter) {
-    Console.error(`filters.${idx} is undefined`);
+    console.error(`filters.${idx} is undefined`);
     return state;
   }
   let newFilter = set([prop], value, oldFilter);
@@ -1287,7 +1286,7 @@ export const addLayerUpdater = (
   if (action.config) {
     newLayer = createLayerFromConfig(state, action.config);
     if (!newLayer) {
-      Console.warn(
+      console.warn(
         'Failed to create layer from config, it usually means the config is not be in correct format',
         action.config
       );
@@ -1339,7 +1338,7 @@ export function removeLayerUpdater<T extends VisState>(
     : state.layers.findIndex(l => l.id === id);
   if (idx < 0 || idx >= state.layers.length) {
     // invalid index
-    Console.warn(`can not remove layer with invalid id|idx ${id}`);
+    console.warn(`can not remove layer with invalid id|idx ${id}`);
     return state;
   }
 
@@ -1386,7 +1385,7 @@ export const duplicateLayerUpdater = (
       Number(id)
     : state.layers.findIndex(l => l.id === id);
   if (idx < 0 || !state.layers[idx]) {
-    Console.warn(`layer ${idx} not found in layerOrder`);
+    console.warn(`layer ${idx} not found in layerOrder`);
     return state;
   }
 
@@ -1462,7 +1461,7 @@ export const removeEffectUpdater = (
 ): VisState => {
   const idx = state.effects.findIndex(l => l.id === id);
   if (idx < 0 || idx >= state.effects.length) {
-    Console.warn(`can not remove effect with invalid id ${id}`);
+    console.warn(`can not remove effect with invalid id ${id}`);
     return state;
   }
 
@@ -1500,7 +1499,7 @@ export const updateEffectUpdater = (
 ): VisState => {
   const idx = state.effects.findIndex(l => l.id === id);
   if (idx < 0 || idx >= state.effects.length) {
-    Console.warn(`can not update effect with invalid id ${id}`);
+    console.warn(`can not update effect with invalid id ${id}`);
     return state;
   }
 
@@ -1508,7 +1507,7 @@ export const updateEffectUpdater = (
   if (props.id !== undefined && props.id !== id) {
     const idx2 = state.effects.findIndex(l => l.id === props.id);
     if (idx2 >= 0) {
-      Console.warn(`can not update effect with existing effect id ${id}`);
+      console.warn(`can not update effect with existing effect id ${id}`);
       return state;
     }
 
@@ -2316,7 +2315,7 @@ export const loadFilesErrUpdater = (
   {error, fileName}: VisStateActions.LoadFilesErrUpdaterAction
 ): VisState => {
   // update ui with error message
-  Console.warn(error);
+  console.warn(error);
   if (!state.fileLoading) {
     return state;
   }
@@ -2830,11 +2829,11 @@ export function setFilterAnimationTimeConfigUpdater(
 ): VisState {
   const oldFilter = state.filters[idx];
   if (!oldFilter) {
-    Console.error(`filters.${idx} is undefined`);
+    console.error(`filters.${idx} is undefined`);
     return state;
   }
   if (oldFilter.type !== FILTER_TYPES.timeRange) {
-    Console.error(
+    console.error(
       `setFilterAnimationTimeConfig can only be called to update a time filter. check filter.type === 'timeRange'`
     );
     return state;
@@ -2849,7 +2848,7 @@ function checkTimeConfigArgs(config) {
   const allowed = ['timeFormat', 'timezone'];
   return Object.keys(config).reduce((accu, prop) => {
     if (!allowed.includes(prop)) {
-      Console.error(
+      console.error(
         `setLayerAnimationTimeConfig takes timeFormat and/or timezone as options, found ${prop}`
       );
       return accu;

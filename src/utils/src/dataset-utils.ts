@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {console as globalConsole} from 'global/window';
 import {
   ALL_FIELD_TYPES,
   FIELD_OPTS,
@@ -566,7 +565,7 @@ export function analyzerTypeToFieldType(aType: string): string {
     case ZIPCODE:
       return ALL_FIELD_TYPES.string;
     default:
-      globalConsole.warn(`Unsupported analyzer type: ${aType}`);
+      console.warn(`Unsupported analyzer type: ${aType}`);
       return ALL_FIELD_TYPES.string;
   }
 }

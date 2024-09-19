@@ -2,7 +2,6 @@
 // Copyright contributors to the kepler.gl project
 
 import React, {ErrorInfo} from 'react';
-import console from 'global/console';
 
 interface ErrorBoundaryProps {
   children?: React.ReactNode;

@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-const console = require('global/console');
-
 const Colors = {
   Reset: '\x1b[0m',
   Bright: '\x1b[1m',
@@ -29,7 +27,7 @@ const Colors = {
   BgMagenta: '\x1b[45m',
   BgCyan: '\x1b[46m',
   BgWhite: '\x1b[47m'
-}
+};
 
 function log(color) {
   return function logWithColor(msg) {
@@ -42,5 +40,5 @@ module.exports = {
   logOk: log(Colors.FgCyan),
   logError: log(Colors.FgRed),
   logProgress: log(Colors.FgBlue),
-  logStep: log(Colors.FgMagenta),
-}
+  logStep: log(Colors.FgMagenta)
+};

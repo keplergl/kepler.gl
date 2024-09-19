@@ -2,7 +2,6 @@
 // Copyright contributors to the kepler.gl project
 
 import * as arrow from 'apache-arrow';
-import {console as globalConsole} from 'global/window';
 import {DATA_TYPES as AnalyzerDATA_TYPES} from 'type-analyzer';
 import {Field} from '@kepler.gl/types';
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
@@ -227,7 +226,7 @@ export function arrowDataTypeToFieldType(arrowType: arrow.DataType): string {
   ) {
     return ALL_FIELD_TYPES.object;
   }
-  globalConsole.warn(`Unsupported arrow type: ${arrowType}`);
+  console.warn(`Unsupported arrow type: ${arrowType}`);
   return ALL_FIELD_TYPES.string;
 }
 
@@ -263,6 +262,6 @@ export function arrowDataTypeToAnalyzerDataType(
   ) {
     return AnalyzerDATA_TYPES.OBJECT;
   }
-  globalConsole.warn(`Unsupported arrow type: ${arrowType}`);
+  console.warn(`Unsupported arrow type: ${arrowType}`);
   return AnalyzerDATA_TYPES.STRING;
 }

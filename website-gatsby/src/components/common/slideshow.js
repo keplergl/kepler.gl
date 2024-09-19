@@ -4,7 +4,6 @@
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
-import {setInterval, clearInterval} from 'global/window';
 import {media} from '../../styles';
 
 const imageRatio = 696 / 1080;

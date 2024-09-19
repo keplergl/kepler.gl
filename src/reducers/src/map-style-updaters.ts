@@ -3,7 +3,6 @@
 
 import Task, {withTask} from 'react-palm/tasks';
 import cloneDeep from 'lodash.clonedeep';
-import Console from 'global/console';
 
 // Utils
 import {
@@ -532,7 +531,7 @@ export const loadMapStyleErrUpdater = (
   state: MapStyle,
   {payload: {ids, error}}: MapStyleActions.LoadMapStyleErrUpdaterAction
 ): MapStyle => {
-  Console.error(error);
+  console.error(error);
   // reset isLoading
   const isLoading = Object.keys(state.isLoading).reduce(
     (accu, key) => ({

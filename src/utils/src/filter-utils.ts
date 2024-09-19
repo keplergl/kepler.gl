@@ -3,7 +3,6 @@
 
 import {ascending, extent, histogram as d3Histogram, ticks} from 'd3-array';
 import keyMirror from 'keymirror';
-import Console from 'global/console';
 import get from 'lodash.get';
 import isEqual from 'lodash.isequal';
 
@@ -901,7 +900,7 @@ export function getColumnFilterProps<K extends KeplerTableModel<K, L>, L>(
   const {yAxis} = filter;
   const fieldIdx = dataset.getColumnFieldIdx(yAxis.name);
   if (fieldIdx < 0) {
-    Console.warn(`yAxis ${yAxis.name} does not exist in dataset`);
+    console.warn(`yAxis ${yAxis.name} does not exist in dataset`);
     return {};
   }
 
@@ -1246,7 +1245,7 @@ export function getFilterPlot<K extends KeplerTableModel<K, L>, L>(
   const {yAxis} = filter;
   const fieldIdx = dataset.getColumnFieldIdx(yAxis.name);
   if (fieldIdx < 0) {
-    Console.warn(`yAxis ${yAxis.name} does not exist in dataset`);
+    console.warn(`yAxis ${yAxis.name} does not exist in dataset`);
     return {lineChart: {}, yAxis};
   }
 

@@ -84,7 +84,7 @@ export function calculateExportImageSize({
 }
 
 export function convertToPng(sourceElem: HTMLElement, options) {
-  return domtoimage.toPng(sourceElem, options);
+  return domtoimage.toSvg(sourceElem, options);
 }
 
 export function dataURItoBlob(dataURI: string): Blob {

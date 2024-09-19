@@ -5,7 +5,6 @@
 
 import {ActionTypes} from '@kepler.gl/actions';
 import {LOCATION_CHANGE} from 'react-router-redux';
-import window from 'global/window';
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 import get from 'lodash.get';
 
