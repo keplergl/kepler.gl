@@ -590,6 +590,7 @@ export default function MapContainerFactory(
           clicked,
           datasets,
           interactionConfig,
+          animationConfig,
           layers,
           mousePos: {mousePosition, coordinate, pinned}
         }
@@ -601,6 +602,7 @@ export default function MapContainerFactory(
       }
 
       const layerHoverProp = getLayerHoverProp({
+        animationConfig,
         interactionConfig,
         hoverInfo,
         layers,
@@ -620,6 +622,7 @@ export default function MapContainerFactory(
         const lngLat = clicked ? clicked.coordinate : pinned.coordinate;
         pinnedPosition = this._getHoverXY(viewport, lngLat);
         layerPinnedProp = getLayerHoverProp({
+          animationConfig,
           interactionConfig,
           hoverInfo: clicked,
           layers,
