@@ -349,10 +349,7 @@ test('Components -> LayerConfigurator.mount -> LayerColumnModeConfig ', t => {
     .at(1)
     .find(Checkbox);
 
-  checkbox2
-    .find('input')
-    .at(0)
-    .simulate('change', {target: {}});
+  checkbox2.find('input').at(0).simulate('change', {target: {}});
   t.ok(updateLayerConfigSpy.calledOnce, 'updateLayerConfig called');
 
   t.deepEqual(

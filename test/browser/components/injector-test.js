@@ -307,7 +307,7 @@ test('Components -> injector -> actions', t => {
 });
 
 test('Components -> injector -> provideRecipesToInjector', t => {
-  /// Header1 -> Header 2 -> Header 3
+  // Header1 -> Header 2 -> Header 3
   const spyMyHeader3Factory = sinon.spy();
   const spyMyHeader2Factory = sinon.spy();
   const spyMyHeader1Factory = sinon.spy();

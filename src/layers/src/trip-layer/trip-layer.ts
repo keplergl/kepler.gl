@@ -496,7 +496,7 @@ export default class TripLayer extends Layer {
       const object = this.dataToFeature[featureIndex];
       const idx = bisectRight(this.dataToTimeStamp[featureIndex], time);
       // @ts-expect-error type geometry?
-      const {coordinates} = object?.geometry;
+      const {coordinates} = object?.geometry || {coordinates: []};
       if (idx >= 0 && idx < coordinates.length) {
         const coords = coordinates[idx];
         return {
