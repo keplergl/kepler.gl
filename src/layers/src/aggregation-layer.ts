@@ -6,7 +6,6 @@ import Layer, {
   LayerBaseConfig,
   LayerBaseConfigPartial,
   LayerColorConfig,
-  LayerColumn,
   LayerSizeConfig,
   VisualChannelDescription,
   VisualChannels
@@ -19,7 +18,7 @@ import {
   DEFAULT_AGGREGATION,
   ColorRange
 } from '@kepler.gl/constants';
-import {Merge} from '@kepler.gl/types';
+import {Merge, LayerColumn} from '@kepler.gl/types';
 import {KeplerTable, Datasets} from '@kepler.gl/table';
 
 type AggregationLayerColumns = {
@@ -49,7 +48,10 @@ export const getValueAggrFunc = getPointData => (field, aggregation) => points =
     : points.length;
 
 export const getFilterDataFunc =
-  (filterRange: number[][], getFilterValue: (d: any) => number[]): ((d: any) => boolean) =>
+  (
+    filterRange: number[][],
+    getFilterValue: (d: unknown) => (number | number[])[]
+  ): ((d: unknown) => boolean) =>
   pt =>
     getFilterValue(pt).every((val, i) => val >= filterRange[i][0] && val <= filterRange[i][1]);
 

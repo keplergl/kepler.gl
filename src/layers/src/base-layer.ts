@@ -10,6 +10,7 @@ import {TextLayer} from '@deck.gl/layers';
 
 import DefaultLayerIcon from './default-layer-icon';
 import {diffUpdateTriggers} from './layer-update';
+import {assignColumnsByColumnMode} from './layer-utils';
 
 import {
   ALL_FIELD_TYPES,
@@ -48,7 +49,6 @@ import {
 import {
   RGBColor,
   RGBAColor,
-  ValueOf,
   NestedPartial,
   LayerTextLabel,
   ColorUI,
@@ -56,15 +56,17 @@ import {
   LayerVisConfigSettings,
   Field,
   MapState,
-  Filter
+  Filter,
+  ValueOf,
+  AnimationConfig,
+  LayerColumns,
+  LayerColumn,
+  ColumnPairs,
+  ColumnLabels,
+  SupportedColumnModes
 } from '@kepler.gl/types';
 import {KeplerTable, Datasets, GpuFilter} from '@kepler.gl/table';
 
-export type LayerColumn = {value: string | null; fieldIdx: number; optional?: boolean};
-
-export type LayerColumns = {
-  [key: string]: LayerColumn;
-};
 export type VisualChannelDomain = number[] | string[];
 export type VisualChannelField = Field | null;
 export type VisualChannelScale = keyof typeof SCALE_TYPES;
@@ -91,6 +93,7 @@ export type LayerBaseConfig = {
     enabled: boolean;
     domain?: null;
   };
+  columnMode?: string;
 };
 
 export type LayerBaseConfigPartial = {dataId: LayerBaseConfig['dataId']} & Partial<LayerBaseConfig>;
@@ -162,13 +165,6 @@ export type VisualChannelDescription = {
   measure: string | undefined;
 };
 
-export type ColumnPair = {
-  pair: string;
-  fieldPairKey: string;
-};
-
-export type ColumnPairs = {[key: string]: ColumnPair};
-
 type ColumnValidator = (column: LayerColumn, columns: LayerColumns, allFields: Field[]) => boolean;
 
 export type UpdateTriggers = {
@@ -190,7 +186,9 @@ const dataFilterExtension = new DataFilterExtension({filterSize: MAX_GPU_FILTERS
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const defaultDataAccessor = dc => d => d;
-const defaultGetFieldValue = (field, d) => field.valueAccessor(d);
+// Can't use fiedValueAccesor because need the raw data to render tooltip
+// SHAN: Revisit here
+export const defaultGetFieldValue = (field, d) => field.valueAccessor(d);
 
 export const OVERLAY_TYPE_CONST = keymirror({
   deckgl: null,
@@ -207,6 +205,14 @@ function* generateColor(): Generator<RGBColor> {
     yield layerColors[index++];
   }
 }
+
+export type LayerInfoModal = {
+  id: string;
+  template: React.FC<void>;
+  modalProps: {
+    title: string;
+  };
+};
 
 export const colorMaker = generateColor();
 
@@ -229,17 +235,23 @@ class Layer {
 
   constructor(props: BaseLayerConstructorProps) {
     this.id = props.id || generateHashId(LAYER_ID_LENGTH);
-
     // meta
     this.meta = {};
 
     // visConfigSettings
     this.visConfigSettings = {};
 
-    this.config = this.getDefaultLayerConfig({
-      columns: this.getLayerColumns(),
-      ...props
-    });
+    this.config = this.getDefaultLayerConfig(props);
+
+    // set columnMode from supported columns
+    if (!this.config.columnMode) {
+      const {supportedColumnModes} = this;
+      if (supportedColumnModes?.length) {
+        this.config.columnMode = supportedColumnModes[0]?.key;
+      }
+    }
+    // then set column, columnMode should already been set
+    this.config.columns = this.getLayerColumns(props.columns);
 
     // false indicates that the layer caused an error, and was disabled
     this.isValid = true;
@@ -267,10 +279,24 @@ class Layer {
   }
 
   get requiredLayerColumns(): string[] {
+    const {supportedColumnModes} = this;
+    if (supportedColumnModes) {
+      return supportedColumnModes.reduce<string[]>(
+        (acc, obj) => (obj.requiredColumns ? acc.concat(obj.requiredColumns) : acc),
+        []
+      );
+    }
     return [];
   }
 
   get optionalColumns(): string[] {
+    const {supportedColumnModes} = this;
+    if (supportedColumnModes) {
+      return supportedColumnModes.reduce<string[]>(
+        (acc, obj) => (obj.optionalColumns ? acc.concat(obj.optionalColumns) : acc),
+        []
+      );
+    }
     return [];
   }
 
@@ -316,6 +342,13 @@ class Layer {
     return null;
   }
 
+  /**
+   * Column labels if its different than column key
+   */
+  get columnLabels(): ColumnLabels | null {
+    return null;
+  }
+
   /*
    * Default point column pairs, can be used for point based layers: point, icon etc.
    */
@@ -350,7 +383,14 @@ class Layer {
    *   };
    * }
    */
-  get layerInfoModal(): any {
+  get layerInfoModal(): LayerInfoModal | Record<string, LayerInfoModal> | null {
+    return null;
+  }
+
+  /**
+   * Returns which column modes this layer supports
+   */
+  get supportedColumnModes(): SupportedColumnModes[] | null {
     return null;
   }
 
@@ -452,11 +492,12 @@ class Layer {
       dataId: props.dataId,
       label: props.label || DEFAULT_LAYER_LABEL,
       color: props.color || colorMaker.next().value,
-      columns: props.columns || {},
-      isVisible: props.isVisible || false,
-      isConfigActive: props.isConfigActive || false,
+      // set columns later
+      columns: {},
+      isVisible: props.isVisible ?? true,
+      isConfigActive: props.isConfigActive ?? false,
       highlightColor: props.highlightColor || DEFAULT_HIGHLIGHT_COLOR,
-      hidden: props.hidden || false,
+      hidden: props.hidden ?? false,
 
       // TODO: refactor this into separate visual Channel config
       // color by field, domain is set by filters, field, scale type
@@ -477,7 +518,8 @@ class Layer {
         color: DEFAULT_COLOR_UI,
         colorRange: DEFAULT_COLOR_UI
       },
-      animation: {enabled: false}
+      animation: {enabled: false},
+      ...(props.columnMode ? {columnMode: props.columnMode} : {})
     };
   }
 
@@ -519,7 +561,7 @@ class Layer {
     return {
       ...this.config.columns,
       [key]: {
-        ...this.config.columns[key],
+        ...this.config.columns?.[key],
         ...update
       }
     };
@@ -588,7 +630,12 @@ class Layer {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  getHoverData(object, dataContainer: DataContainerInterface, fields: Field[]) {
+  getHoverData(
+    object: any,
+    dataContainer: DataContainerInterface,
+    fields?: Field[],
+    animationConfig?: AnimationConfig
+  ): any {
     if (!object) {
       return null;
     }
@@ -630,6 +677,15 @@ class Layer {
       notToCopy
     });
 
+    // update columNode based on new columns
+    if (this.config.columnMode && this.supportedColumnModes) {
+      // find a mode with all requied columns
+      const satisfiedColumnMode = this.supportedColumnModes?.find(mode => {
+        return mode.requiredColumns?.every(requriedCol => copied.columns?.[requriedCol]?.value);
+      });
+      copied.columnMode = satisfiedColumnMode?.key || copied.columnMode;
+    }
+
     this.updateLayerConfig(copied);
     // validate visualChannel field type and scale types
     Object.keys(this.visualChannels).forEach(channel => {
@@ -652,7 +708,7 @@ class Layer {
     configToCopy,
     {shallowCopy = [], notToCopy = []}: {shallowCopy?: string[]; notToCopy?: string[]} = {}
   ) {
-    const copied = {};
+    const copied: {columnMode?: string; columns?: LayerColumns} = {};
     Object.keys(currentConfig).forEach(key => {
       if (
         isPlainObject(currentConfig[key]) &&
@@ -698,26 +754,40 @@ class Layer {
     });
   }
 
-  getLayerColumns() {
-    const columnValidators = this.columnValidators;
+  getLayerColumns(propsColumns = {}) {
+    const columnValidators = this.columnValidators || {};
     const required = this.requiredLayerColumns.reduce(
       (accu, key) => ({
         ...accu,
         [key]: columnValidators[key]
-          ? {value: null, fieldIdx: -1, validator: columnValidators[key]}
-          : {value: null, fieldIdx: -1}
+          ? {
+              value: propsColumns[key]?.value ?? null,
+              fieldIdx: propsColumns[key]?.fieldIdx ?? -1,
+              validator: columnValidators[key]
+            }
+          : {value: propsColumns[key]?.value ?? null, fieldIdx: propsColumns[key]?.fieldIdx ?? -1}
       }),
       {}
     );
     const optional = this.optionalColumns.reduce(
       (accu, key) => ({
         ...accu,
-        [key]: {value: null, fieldIdx: -1, optional: true}
+        [key]: {
+          value: propsColumns[key]?.value ?? null,
+          fieldIdx: propsColumns[key]?.fieldIdx ?? -1,
+          optional: true
+        }
       }),
       {}
     );
 
-    return {...required, ...optional};
+    const columns = {...required, ...optional};
+
+    return assignColumnsByColumnMode({
+      columns,
+      supportedColumnModes: this.supportedColumnModes,
+      columnMode: this.config.columnMode
+    });
   }
 
   updateLayerConfig<LayerConfig extends LayerBaseConfig = LayerBaseConfig>(
@@ -1036,8 +1106,6 @@ class Layer {
     nullValue = NO_VALUE_COLOR,
     getValue = defaultGetFieldValue
   ) {
-    // @ts-expect-error TODO: VisualChannelField better typing
-    const {type} = field;
     const value = getValue(field, data);
 
     if (!notNullorUndefined(value)) {
@@ -1045,10 +1113,8 @@ class Layer {
     }
 
     let attributeValue;
-    if (type === ALL_FIELD_TYPES.timestamp) {
-      // shouldn't need to convert here
-      // scale Function should take care of it
-      attributeValue = scale(new Date(value));
+    if (Array.isArray(value)) {
+      attributeValue = value.map(scale);
     } else {
       attributeValue = scale(value);
     }

@@ -7,20 +7,14 @@ import {FormattedMessage} from '@kepler.gl/localization';
 import {PanelLabel} from '../../common/styled-components';
 import FieldSelectorFactory from '../../common/field-selector';
 import {validateColumn} from '@kepler.gl/reducers';
-import {LayerColumn, LayerColumns} from '@kepler.gl/layers';
-import {Field, FieldPair} from '@kepler.gl/types';
+import {LayerColumn, LayerColumns, EnhancedFieldPair} from '@kepler.gl/types';
+import {MinimalField} from '../../common/field-selector';
 
-type Pair = {
-  name: string;
-  type: string;
-  pair: FieldPair['pair'];
-};
-
-type ColumnSelectorProps = {
+export type ColumnSelectorProps<FieldOption extends MinimalField> = {
   column: LayerColumn;
   columns: LayerColumns;
   label: string;
-  allFields: Field[];
+  allFields: FieldOption[];
   onSelect: (
     items:
       | ReadonlyArray<string | number | boolean | object>
@@ -30,7 +24,7 @@ type ColumnSelectorProps = {
       | object
       | null
   ) => void;
-  fieldPairs?: Pair[] | null;
+  fieldPairs: EnhancedFieldPair[] | null;
 };
 
 const ColumnRow = styled.div`
@@ -52,7 +46,7 @@ const ColumnSelect = styled.div`
 ColumnSelectorFactory.deps = [FieldSelectorFactory];
 
 function ColumnSelectorFactory(FieldSelector: ReturnType<typeof FieldSelectorFactory>) {
-  const ColumnSelector: React.FC<ColumnSelectorProps> = ({
+  const ColumnSelector: React.FC<ColumnSelectorProps<any>> = ({
     column,
     columns,
     label,

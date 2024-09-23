@@ -8,7 +8,6 @@ import Layer, {
   LayerBaseConfig,
   LayerBaseConfigPartial,
   LayerColorConfig,
-  LayerColumn,
   LayerSizeConfig,
   LayerStrokeColorConfig
 } from '../base-layer';
@@ -31,7 +30,8 @@ import {
   VisConfigColorRange,
   VisConfigColorSelect,
   VisConfigNumber,
-  VisConfigRange
+  VisConfigRange,
+  LayerColumn
 } from '@kepler.gl/types';
 
 export type PointLayerVisConfigSettings = {

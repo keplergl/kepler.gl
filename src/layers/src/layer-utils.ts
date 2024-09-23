@@ -3,7 +3,7 @@
 
 import * as arrow from 'apache-arrow';
 import {Feature, BBox} from 'geojson';
-import {Field, FieldPair} from '@kepler.gl/types';
+import {Field, FieldPair, SupportedColumnModes, LayerColumns} from '@kepler.gl/types';
 import {DataContainerInterface} from '@kepler.gl/utils';
 import {
   getBinaryGeometriesFromArrow,
@@ -129,4 +129,43 @@ export function getHoveredObjectFromArrow(
       : null;
   }
   return null;
+}
+
+/**
+ * find requiredColumns of supported column mode based on column mode
+ */
+export function getColumnModeRequiredColumns(
+  supportedColumnModes: SupportedColumnModes[] | null,
+  columnMode?: string
+): string[] | undefined {
+  return supportedColumnModes?.find(({key}) => key === columnMode)?.requiredColumns;
+}
+
+/**
+ * Assign column optional prop based on column mode
+ */
+export function assignColumnsByColumnMode({
+  columns,
+  supportedColumnModes,
+  columnMode
+}: {
+  columns: LayerColumns;
+  supportedColumnModes: SupportedColumnModes[] | null;
+  columnMode: string | undefined;
+}): LayerColumns {
+  const requiredColumns = getColumnModeRequiredColumns(supportedColumnModes, columnMode);
+  if (requiredColumns) {
+    return Object.entries(columns).reduce(
+      (acc, [columnKey, column]) => ({
+        ...acc,
+        [columnKey]: {
+          ...column,
+          optional: !requiredColumns?.includes(columnKey)
+        }
+      }),
+      {}
+    );
+  }
+
+  return columns;
 }

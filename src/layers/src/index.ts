@@ -42,12 +42,9 @@ export {parseGeoJsonRawFeature} from './geojson-layer/geojson-utils';
 // eslint-disable-next-line prettier/prettier
 export type {
   LayerBaseConfig,
-  LayerColumns,
-  LayerColumn,
   VisualChannelDomain,
   VisualChannel,
   VisualChannelDescription,
-  ColumnPairs,
   FindDefaultLayerPropsReturnValue
 } from './base-layer';
 export * from './base-layer';
@@ -116,3 +113,4 @@ export const EditorLayerUtils = {
 export {getFilterDataFunc} from './aggregation-layer';
 
 export * from './layer-update';
+export * from './layer-utils';

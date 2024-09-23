@@ -15,7 +15,7 @@ import {DataContainerInterface, getSampleData} from '@kepler.gl/utils';
 import {GeojsonLayerMetaProps} from '../layer-utils';
 
 export type GetFeature = (d: any) => Feature;
-export type GeojsonDataMaps = Array<Feature | BinaryFeatureCollection | null>;
+export type GeojsonDataMaps = (Feature | BinaryFeatureCollection | null)[];
 
 /* eslint-disable */
 // TODO: Re-enable eslint when we upgrade to handle enums and type maps

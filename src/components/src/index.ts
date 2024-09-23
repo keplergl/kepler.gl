@@ -22,6 +22,7 @@ import {
   LayerColorRangeSelectorFactory,
   ArcLayerColorSelectorFactory
 } from './side-panel/layer-panel/layer-color-selector';
+import LayerColumnModeConfigFactory from './side-panel/layer-panel/layer-column-mode-config';
 import {appInjector} from './container';
 
 // Components
@@ -398,6 +399,7 @@ export const RangeSlider = appInjector.get(RangeSliderFactory);
 export const VisConfigSlider = appInjector.get(VisConfigSliderFactory);
 export const VisConfigSwitch = appInjector.get(VisConfigSwitchFactory);
 export const LayerConfigGroup = appInjector.get(LayerConfigGroupFactory);
+export const LayerColumnModeConfig = appInjector.get(LayerColumnModeConfigFactory);
 export const LayerColumnConfig = appInjector.get(LayerColumnConfigFactory);
 export const ChannelByValueSelector = appInjector.get(ChannelByValueSelectorFactory);
 export const FieldSelector = appInjector.get(FieldSelectorFactory);
@@ -424,6 +426,7 @@ export {
   InfoHelperFactory,
   ColorSelectorFactory,
   LayerColorSelectorFactory,
+  LayerColumnModeConfigFactory,
   LayerColorRangeSelectorFactory,
   ArcLayerColorSelectorFactory
 };

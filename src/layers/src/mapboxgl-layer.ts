@@ -1,17 +1,12 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import Layer, {
-  LayerBaseConfig,
-  LayerColumn,
-  OVERLAY_TYPE_CONST,
-  VisualChannels
-} from './base-layer';
+import Layer, {LayerBaseConfig, OVERLAY_TYPE_CONST, VisualChannels} from './base-layer';
 import {createSelector} from 'reselect';
 
 import {geoJsonFromData, prefixGpuField, gpuFilterToMapboxFilter} from './mapbox-utils';
 import {default as KeplerTable} from '@kepler.gl/table';
-import {Merge} from '@kepler.gl/types';
+import {Merge, LayerColumn} from '@kepler.gl/types';
 
 type MapboxLayerGLColumns = {
   lat: LayerColumn;
@@ -136,15 +131,15 @@ class MapboxLayerGL extends Layer {
     const getPropertyFromFilter = hasFilter
       ? d => {
           const filterValue = valueAccessor(d);
-          return Object.values(filterValueUpdateTriggers).reduce(
+          return Object.values(filterValueUpdateTriggers).reduce<{[id: string]: number | number[]}>(
             (accu: any, name, i) => ({
               ...accu,
               ...(name ? {[prefixGpuField(name)]: filterValue[i]} : {})
             }),
-            {}
-          ) as any;
+            {} as {[id: string]: number | number[]}
+          );
         }
-      : () => ({} as any);
+      : d => ({} as Record<string, number | number[]>);
 
     const getProperties = d => ({
       ...getPropertyFromVisualChanel(d),

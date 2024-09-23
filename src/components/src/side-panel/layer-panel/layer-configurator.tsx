@@ -10,7 +10,7 @@ import {Input, PanelLabel, SidePanelSection} from '../../common/styled-component
 import ItemSelector from '../../common/item-selector/item-selector';
 
 import VisConfigByFieldSelectorFactory from './vis-config-by-field-selector';
-import LayerColumnConfigFactory from './layer-column-config';
+import LayerColumnModeConfigFactory from './layer-column-mode-config';
 import LayerTypeSelectorFactory from './layer-type-selector';
 import DimensionScaleSelector from './dimension-scale-selector';
 import SourceDataSelectorFactory from '../common/source-data-selector';
@@ -137,7 +137,7 @@ LayerConfiguratorFactory.deps = [
   TextLabelPanelFactory,
   LayerConfigGroupFactory,
   ChannelByValueSelectorFactory,
-  LayerColumnConfigFactory,
+  LayerColumnModeConfigFactory,
   LayerTypeSelectorFactory,
   VisConfigSwitchFactory,
   LayerColorSelectorFactory,
@@ -151,7 +151,7 @@ export default function LayerConfiguratorFactory(
   TextLabelPanel: ReturnType<typeof TextLabelPanelFactory>,
   LayerConfigGroup: ReturnType<typeof LayerConfigGroupFactory>,
   ChannelByValueSelector: ReturnType<typeof ChannelByValueSelectorFactory>,
-  LayerColumnConfig: ReturnType<typeof LayerColumnConfigFactory>,
+  LayerColumnModeConfig: ReturnType<typeof LayerColumnModeConfigFactory>,
   LayerTypeSelector: ReturnType<typeof LayerTypeSelectorFactory>,
   VisConfigSwitch: ReturnType<typeof VisConfigSwitchFactory>,
   LayerColorSelector: ReturnType<typeof LayerColorSelectorFactory>,
@@ -1023,10 +1023,16 @@ export default function LayerConfiguratorFactory(
       );
     }
 
+    handleSelectColumnMode = (key: string) => {
+      const {updateLayerConfig} = this.props;
+      updateLayerConfig({columnMode: key});
+    };
+
     render() {
       const {
         layer,
         datasets,
+        openModal,
         updateLayerConfig,
         layerTypeOptions,
         updateLayerType,
@@ -1045,8 +1051,9 @@ export default function LayerConfiguratorFactory(
 
       return (
         <StyledLayerConfigurator>
-          {layer.layerInfoModal ? (
-            <HowToButton onClick={() => this.props.openModal(layer.layerInfoModal)} />
+          {layer.layerInfoModal && !layer.supportedColumnModes ? (
+            // @ts-expect-error wrong handler type?
+            <HowToButton onClick={() => openModal(layer.layerInfoModal)} />
           ) : null}
           <LayerConfigGroup label={'layer.basic'} collapsible expanded={!layer.hasAllColumns()}>
             <LayerTypeSelector
@@ -1064,16 +1071,17 @@ export default function LayerConfiguratorFactory(
                 // @ts-ignore
                 onSelect={(value: string) => updateLayerConfig({dataId: value})}
               />
-              <LayerColumnConfig
-                columnPairs={layer.columnPairs}
-                columns={layer.config.columns}
-                assignColumnPairs={layer.assignColumnPairs.bind(layer)}
-                assignColumn={layer.assignColumn.bind(layer)}
-                // @ts-ignore
-                columnLabels={layer.columnLabels}
+              <LayerColumnModeConfig
+                layer={layer}
+                supportedColumnModes={layer.supportedColumnModes}
+                id={layer.id}
+                layerConfig={layer.config}
+                // @ts-expect-error wrong handler type?
+                openModal={openModal}
+                updateLayerConfig={updateLayerConfig}
+                updateLayerType={updateLayerType}
                 fields={fields}
                 fieldPairs={fieldPairs}
-                updateLayerConfig={updateLayerConfig}
               />
             </ConfigGroupCollapsibleContent>
             {layer.errorMessage ? <LayerErrorMessage errorMessage={layer.errorMessage} /> : null}

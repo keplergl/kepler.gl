@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import Console from 'global/console';
+
 import {arrayMove} from '@dnd-kit/sortable';
 import {GEOCODER_LAYER_ID} from '@kepler.gl/constants';
 import {Layer as DeckLayer, LayerProps as DeckLayerProps} from '@deck.gl/core/typed';
@@ -123,6 +125,7 @@ export function calculateLayerData<S extends MinVisStateForLayerData>(
     layer.isValid = true;
     layer.errorMessage = null;
   } catch (err) {
+    Console.error(err);
     layer = layer.updateLayerConfig({
       isVisible: false
     });
@@ -145,6 +148,7 @@ export function calculateLayerData<S extends MinVisStateForLayerData>(
  * @type {typeof import('./layer-utils').getLayerHoverProp}
  */
 export function getLayerHoverProp({
+  animationConfig,
   interactionConfig,
   hoverInfo,
   layers,
@@ -152,6 +156,7 @@ export function getLayerHoverProp({
   datasets
 }: {
   interactionConfig: InteractionConfig;
+  animationConfig: VisState['animationConfig'];
   hoverInfo: any;
   layers: Layer[];
   layersToRender: LayersToRender;
@@ -182,7 +187,8 @@ export function getLayerHoverProp({
       const data: DataRow | null = layer.getHoverData(
         object || hoverInfo.index,
         dataContainer,
-        fields
+        fields,
+        animationConfig
       );
       if (!data) {
         return null;

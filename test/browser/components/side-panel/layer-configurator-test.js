@@ -9,12 +9,14 @@ import sinon from 'sinon';
 
 import {
   LayerConfiguratorFactory,
+  LayerColumnModeConfigFactory,
   LayerColumnConfigFactory,
   LayerConfigGroupFactory,
   FieldSelectorFactory,
   ColumnSelectorFactory,
   appInjector,
-  dropdownListClassList
+  dropdownListClassList,
+  Checkbox
 } from '@kepler.gl/components';
 
 import {StateWFiles, StateWTripGeojson, testCsvDataId} from 'test/helpers/mock-state';
@@ -29,6 +31,7 @@ import {act} from 'react-dom/test-utils';
 
 // components
 const LayerConfigurator = appInjector.get(LayerConfiguratorFactory);
+const LayerColumnModeConfig = appInjector.get(LayerColumnModeConfigFactory);
 const LayerColumnConfig = appInjector.get(LayerColumnConfigFactory);
 const LayerConfigGroup = appInjector.get(LayerConfigGroupFactory);
 const ColumnSelector = appInjector.get(ColumnSelectorFactory);
@@ -147,9 +150,12 @@ test('Components -> LayerConfigurator.mount -> defaut prop 2', t => {
       </IntlWrapper>
     );
   }, 'LayerConfigurator should not fail without props');
-
   const baseConfigGroup = wrapper.find(LayerConfigGroup).at(0);
-
+  t.equal(
+    baseConfigGroup.find(LayerColumnModeConfig).length,
+    1,
+    'should render 1 LayerColumnModeConfig'
+  );
   t.equal(baseConfigGroup.find(LayerColumnConfig).length, 1, 'should render 1 LayerColumnConfig');
 
   t.equal(
@@ -221,6 +227,7 @@ test('Components -> LayerConfigurator.mount -> defaut prop 2', t => {
 
   // TODO: still need to fix this one
   // for some reason the update config callback is only called once
+
   // click single column
   // clickItemSelectList(fieldSelector2, 2);
 
@@ -267,7 +274,7 @@ test('Components -> LayerConfigurator.mount -> collapsed / expand config group '
   t.equal(
     wrapper.find(LayerConfigGroup).at(0).find('.layer-config-group.collapsed').length,
     3,
-    'LayerConfigGroup should be collapsed'
+    'LayerColumnModeConfig should be collapsed'
   );
 
   const spy = sinon.spy(component, '_renderScatterplotLayerConfig');
@@ -288,7 +295,79 @@ test('Components -> LayerConfigurator.mount -> collapsed / expand config group '
   t.equal(
     wrapper.find(LayerConfigGroup).at(0).find('.layer-config-group.collapsed').length,
     0,
-    'LayerConfigGroup should be expanded'
+    'LayerColumnModeConfig should be expanded'
+  );
+
+  // t.equal(
+  //   wrapper.find(LayerColumnModeConfig).length,
+  //   1,
+  //   'LayerColumnModeConfig should be expanded'
+  // );
+  t.end();
+});
+
+test('Components -> LayerConfigurator.mount -> LayerColumnModeConfig ', t => {
+  const updateLayerConfigSpy = sinon.spy();
+
+  const propsWithTripLayer = {
+    ...defaultProps,
+    updateLayerConfig: updateLayerConfigSpy,
+    layer: StateWTripGeojson.visState.layers[0],
+    datasets: StateWTripGeojson.visState.datasets
+  };
+
+  let wrapper;
+  t.doesNotThrow(() => {
+    wrapper = mountWithTheme(
+      <IntlWrapper>
+        <LayerConfigurator {...propsWithTripLayer} />
+      </IntlWrapper>
+    );
+  }, 'LayerConfigurator should not fail without props');
+  const baseConfigGroup = wrapper.find(LayerConfigGroup).at(0);
+  t.equal(
+    baseConfigGroup.find(LayerColumnModeConfig).length,
+    1,
+    'should render 1 LayerColumnModeConfig'
+  );
+  t.equal(baseConfigGroup.find(LayerColumnConfig).length, 2, 'should render 2 LayerColumnConfig');
+
+  // 1 columne mode panel
+  const checkbox = baseConfigGroup
+    .find(LayerColumnModeConfig)
+    .find('.layer-column-mode-panel')
+    .at(0)
+    .find(Checkbox);
+
+  t.equal(checkbox.props().label, 'GeoJSON', 'should render correct checkbox prop');
+  t.equal(checkbox.props().checked, true, 'should render correct checkbox prop');
+
+  // check the other selection
+  const checkbox2 = baseConfigGroup
+    .find(LayerColumnModeConfig)
+    .find('.layer-column-mode-panel')
+    .at(1)
+    .find(Checkbox);
+
+  checkbox2.find('input').at(0).simulate('change', {target: {}});
+  t.ok(updateLayerConfigSpy.calledOnce, 'updateLayerConfig called');
+
+  t.deepEqual(
+    updateLayerConfigSpy.args[0],
+    [
+      {
+        columnMode: 'table',
+        columns: {
+          geojson: {value: '_geojson', fieldIdx: 0, optional: true},
+          id: {value: null, fieldIdx: -1, optional: false},
+          lat: {value: null, fieldIdx: -1, optional: false},
+          lng: {value: null, fieldIdx: -1, optional: false},
+          altitude: {value: null, fieldIdx: -1, optional: true},
+          timestamp: {value: null, fieldIdx: -1, optional: false}
+        }
+      }
+    ],
+    'should update columnMode and columns'
   );
 
   t.end();

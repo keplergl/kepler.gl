@@ -12,7 +12,6 @@ import Layer, {
   LayerBaseConfig,
   LayerBaseConfigPartial,
   LayerColorConfig,
-  LayerColumn,
   LayerHeightConfig,
   LayerRadiusConfig,
   LayerSizeConfig,
@@ -41,7 +40,8 @@ import {
   VisConfigBoolean,
   Merge,
   RGBColor,
-  Field
+  Field,
+  LayerColumn
 } from '@kepler.gl/types';
 import {KeplerTable} from '@kepler.gl/table';
 import {DataContainerInterface, ArrowDataContainer} from '@kepler.gl/utils';

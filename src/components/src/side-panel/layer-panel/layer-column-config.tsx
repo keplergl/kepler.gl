@@ -2,16 +2,21 @@
 // Copyright contributors to the kepler.gl project
 
 import React, {useCallback, useMemo} from 'react';
-import styled from 'styled-components';
 
-import {ColumnPairs, LayerColumns, LayerBaseConfig} from '@kepler.gl/layers';
-import {FormattedMessage} from '@kepler.gl/localization';
-import {FieldPair, Field} from '@kepler.gl/types';
+import {LayerBaseConfig} from '@kepler.gl/layers';
+import {
+  FieldPair,
+  Field,
+  ColumnPairs,
+  LayerColumns,
+  ColumnLabels,
+  EnhancedFieldPair
+} from '@kepler.gl/types';
 import {toArray} from '@kepler.gl/utils';
 
 import ColumnSelectorFactory from './column-selector';
 import {MinimalField} from '../../common/field-selector';
-import {PanelLabel, SidePanelSection} from '../../common/styled-components';
+import {SidePanelSection} from '../../common/styled-components';
 
 export type LayerColumnConfigProps<FieldOption extends MinimalField> = {
   columns: LayerColumns;
@@ -19,21 +24,11 @@ export type LayerColumnConfigProps<FieldOption extends MinimalField> = {
   assignColumnPairs: (key: string, pair: string) => LayerColumns;
   assignColumn: (key: string, field: FieldOption) => LayerColumns;
   updateLayerConfig: (newConfig: Partial<LayerBaseConfig>) => void;
+  updateLayerType?: (newType: string) => void;
   columnPairs?: ColumnPairs | null;
   fieldPairs?: FieldPair[];
-  columnLabels?: Record<string, string>;
+  columnLabels: ColumnLabels | null;
 };
-
-export type EnhancedFieldPair = {
-  name: string;
-  type: 'point';
-  pair: FieldPair['pair'];
-};
-
-const TopRow = styled.div`
-  display: flex;
-  justify-content: space-between;
-`;
 
 /**
  * only provide suggested field pairs if there is a match,
@@ -102,14 +97,6 @@ function LayerColumnConfigFactory(ColumnSelector: ReturnType<typeof ColumnSelect
       <div>
         <SidePanelSection>
           <div className="layer-config__column">
-            <TopRow>
-              <PanelLabel>
-                <FormattedMessage id={'columns.title'} />
-              </PanelLabel>
-              <PanelLabel>
-                <FormattedMessage id="layer.required" />
-              </PanelLabel>
-            </TopRow>
             {Object.keys(columns).map(key => (
               <ColumnSelector
                 column={columns[key]}

@@ -2,8 +2,9 @@
 // Copyright contributors to the kepler.gl project
 
 import {Analyzer, DATA_TYPES} from 'type-analyzer';
+import {ascending} from 'd3-array';
 
-import {Field} from '@kepler.gl/types';
+import {Field, LayerColumns} from '@kepler.gl/types';
 
 import {parseGeoJsonRawFeature, getGeojsonFeatureTypes} from '../geojson-layer/geojson-utils';
 import {
@@ -165,4 +166,51 @@ export function getAnimationDomainFromTimestamps(dataToTimeStamp: number[][] = [
     },
     [Infinity, -Infinity]
   );
+}
+
+type GeoJsonFeature = any;
+type CoordsType = number[] & {
+  datumIndex: number;
+  datum: number[];
+};
+
+export function groupColumnsAsGeoJson(
+  dataContainer: DataContainerInterface,
+  columns: LayerColumns
+): GeoJsonFeature[] {
+  const groupedById: {[key: string]: CoordsType[]} = {};
+  for (let index = 0; index < dataContainer.numRows(); index++) {
+    // Note: this can cause row materialization in case of non-row based containers
+    const datum = dataContainer.rowAsArray(index) as number[];
+    const id = datum[columns.id.fieldIdx];
+    const lat = datum[columns.lat.fieldIdx];
+    const lon = datum[columns.lng.fieldIdx];
+    const altitude = columns.altitude ? datum[columns.altitude.fieldIdx] : 0;
+    const time = datum[columns.timestamp.fieldIdx];
+    // @ts-expect-error
+    const coords: CoordsType = [lon, lat, altitude, time];
+    // Adding references to the original data to the coordinates array
+    coords.datumIndex = index;
+    coords.datum = datum;
+    if (!groupedById[id]) groupedById[id] = [];
+    if (Number.isFinite(lon) && Number.isFinite(lat) && time) {
+      groupedById[id].push(coords);
+    }
+  }
+  const result = Object.entries(groupedById).map(([id, items]: [string, CoordsType[]], index) => ({
+    type: 'Feature',
+    geometry: {
+      type: 'LineString',
+      coordinates:
+        // Sort by time
+        items.sort((a, b) => ascending(a[3], b[3]))
+    },
+    properties: {
+      index,
+      // values are used for valueAccessor in TripLayer.formatLayerData()
+      // Note: this can cause row materialization in case of non-row based containers
+      values: items.map(item => dataContainer.rowAsArray(item.datumIndex))
+    }
+  }));
+  return result;
 }

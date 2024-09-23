@@ -1493,7 +1493,7 @@ test('VisStateMerger - mergeTripGeojson', t => {
 
   t.equal(tripLayer.type, 'trip', 'should create 1 trip layer');
 
-  cmpLayers(t, tripLayer, mergedTripLayer, {id: true, color: true});
+  cmpLayers(t, mergedTripLayer, tripLayer, {id: true, color: true});
 
   t.deepEqual(
     tripLayer.dataToFeature,

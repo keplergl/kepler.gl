@@ -423,11 +423,7 @@ export function datetimeFormatter(
   timezone?: string | null
 ): (format?: string) => (ts: number) => string {
   return timezone
-    ? format => ts =>
-        moment
-          .utc(ts)
-          .tz(timezone)
-          .format(format)
+    ? format => ts => moment.utc(ts).tz(timezone).format(format)
     : // return empty string instead of 'Invalid date' if ts is undefined/null
-      format => ts => (ts ? moment.utc(ts).format(format) : '');
+      format => ts => ts ? moment.utc(ts).format(format) : '';
 }

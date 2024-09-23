@@ -13,7 +13,6 @@ import Layer, {
   LayerBaseConfig,
   LayerBaseConfigPartial,
   LayerColorConfig,
-  LayerColumn,
   LayerSizeConfig,
   LayerStrokeColorConfig,
   LayerHeightConfig
@@ -25,7 +24,8 @@ import {
   VisConfigColorRange,
   VisConfigColorSelect,
   VisConfigNumber,
-  VisConfigRange
+  VisConfigRange,
+  LayerColumn
 } from '@kepler.gl/types';
 import S2LayerIcon from './s2-layer-icon';
 import {getS2Center, validS2Token} from './s2-utils';

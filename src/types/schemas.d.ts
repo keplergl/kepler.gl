@@ -62,6 +62,7 @@ export type SavedLayer = {
     visConfig: Record<string, any>;
     hidden: boolean;
     textLabel: Merge<LayerTextLabel, {field: {name: string; type: string} | null}>;
+    columnMode: string;
   };
   visualChannels: SavedVisualChannels;
 };

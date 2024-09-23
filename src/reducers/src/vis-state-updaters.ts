@@ -494,6 +494,11 @@ export function layerConfigChangeUpdater(
     newState = updateStateOnLayerVisibilityChange(state, newLayer);
   }
 
+  if ('columns' in action.newConfig && newLayer.config.animation.enabled) {
+    // TODO: Shan, make the animation config function more robust
+    newState = updateAnimationDomain(newState);
+  }
+
   return updateStateWithLayerAndData(newState, {
     layer: newLayer,
     layerData,
@@ -703,7 +708,6 @@ export function setInitialLayerConfig(layer, datasets, layerClasses): Layer {
       ...props[0],
       label: newLayer.config.label,
       dataId: newLayer.config.dataId,
-      isVisible: true,
       isConfigActive: newLayer.config.isConfigActive
     });
 

@@ -9,7 +9,7 @@ import {SvgIconLayer} from '@kepler.gl/deckgl-layers';
 import IconLayerIcon from './icon-layer-icon';
 import {ICON_FIELDS, KEPLER_UNFOLDED_BUCKET, ColorRange} from '@kepler.gl/constants';
 import IconInfoModalFactory from './icon-info-modal';
-import Layer, {LayerBaseConfig, LayerBaseConfigPartial, LayerColumn} from '../base-layer';
+import Layer, {LayerBaseConfig, LayerBaseConfigPartial} from '../base-layer';
 import {assignPointPairToLayerColumn} from '../layer-utils';
 import {isTest} from '@kepler.gl/utils';
 import {getTextOffsetByRadius, formatTextLabelData} from '../layer-text-label';
@@ -20,7 +20,8 @@ import {
   VisConfigColorRange,
   VisConfigNumber,
   VisConfigRange,
-  Merge
+  Merge,
+  LayerColumn
 } from '@kepler.gl/types';
 
 export type IconLayerColumnsConfig = {

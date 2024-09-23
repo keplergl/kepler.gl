@@ -160,9 +160,9 @@ const getFilterValueAccessor =
   (channels: (Filter | undefined)[], dataId: string, fields: any[]) =>
   (dc: DataContainerInterface) =>
   (getIndex = defaultGetIndex, getData = defaultGetData) =>
-  d =>
+  d => {
     // for empty channel, value is 0 and min max would be [0, 0]
-    channels.map(filter => {
+    const channelValues = channels.map(filter => {
       if (!filter) {
         return 0;
       }
@@ -176,8 +176,27 @@ const getFilterValueAccessor =
             : moment.utc(getData(dc, d, fieldIndex)).valueOf()
           : getData(dc, d, fieldIndex);
 
-      return notNullorUndefined(value) ? value - filter.domain?.[0] : Number.MIN_SAFE_INTEGER;
+      return notNullorUndefined(value)
+        ? Array.isArray(value)
+          ? value.map(v => v - filter.domain?.[0])
+          : value - filter.domain?.[0]
+        : Number.MIN_SAFE_INTEGER;
     });
+
+    // TODO: can we refactor the above to avoid the transformation below?
+    const arrChannel = channelValues.find(v => Array.isArray(v));
+    if (Array.isArray(arrChannel)) {
+      // Convert info form supported by DataFilterExtension (relevant for TripLayer)
+      const vals: number[][] = [];
+      // if there are multiple arrays, they should have the same length
+      for (let i = 0; i < arrChannel.length; i++) {
+        vals.push(channelValues.map(v => (Array.isArray(v) ? v[i] : v)));
+      }
+      return vals;
+    }
+
+    return channelValues;
+  };
 
 /**
  * Get filter properties for gpu filtering
