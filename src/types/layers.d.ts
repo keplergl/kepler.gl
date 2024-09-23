@@ -27,6 +27,9 @@ export type LayerBaseConfig = {
   columnMode?: string;
 };
 
+/**
+ * Used to configure geospatial data source columns like Longitude, Latitude, Geojson.
+ */
 export type LayerColumn = {value: string | null; fieldIdx: number; optional?: boolean};
 export type LayerConfigColumn = LayerColumn;
 

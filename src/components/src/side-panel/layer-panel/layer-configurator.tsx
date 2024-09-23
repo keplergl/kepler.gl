@@ -1023,7 +1023,7 @@ export default function LayerConfiguratorFactory(
       );
     }
 
-    handleSelectColumnMode = key => {
+    handleSelectColumnMode = (key: string) => {
       const {updateLayerConfig} = this.props;
       updateLayerConfig({columnMode: key});
     };

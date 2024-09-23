@@ -50,8 +50,8 @@ export const getValueAggrFunc = getPointData => (field, aggregation) => points =
 export const getFilterDataFunc =
   (
     filterRange: number[][],
-    getFilterValue: (d: any) => (number | number[])[]
-  ): ((d: any) => boolean) =>
+    getFilterValue: (d: unknown) => (number | number[])[]
+  ): ((d: unknown) => boolean) =>
   pt =>
     getFilterValue(pt).every((val, i) => val >= filterRange[i][0] && val <= filterRange[i][1]);
 

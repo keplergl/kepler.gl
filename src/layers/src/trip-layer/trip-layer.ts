@@ -489,7 +489,7 @@ export default class TripLayer extends Layer {
     time: number
   ): {
     idx: number;
-    coords: any;
+    coords: number[] | null;
     datum: any;
   } {
     if (this.config.columnMode === COLUMN_MODE_TABLE) {
