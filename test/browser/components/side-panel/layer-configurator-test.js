@@ -165,10 +165,7 @@ test('Components -> LayerConfigurator.mount -> LayerColumnConfig', t => {
   );
 
   t.equal(
-    baseConfigGroup
-      .find(LayerColumnConfig)
-      .at(1)
-      .find(ColumnSelector).length,
+    baseConfigGroup.find(LayerColumnConfig).at(1).find(ColumnSelector).length,
     1,
     'Should render 1 ColumnSelector for GeoJSON feature'
   );

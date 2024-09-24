@@ -179,7 +179,7 @@ export function getGeojsonPointDataMaps(
       dataToFeature[index] =
         feature.geometry.type === 'Point' || feature.geometry.type === 'MultiPoint'
           ? feature.geometry.coordinates
-          : //@ts-expect-error Property 'geometries' does not exist on type 'LineString'
+          : // @ts-expect-error Property 'geometries' does not exist on type 'LineString'
             (feature.geometry.geometries || []).reduce((accu, f) => {
               if (f.type === 'Point') {
                 accu.push(f.coordinates);
@@ -345,9 +345,9 @@ export function groupColumnsAsGeoJson(
 
   const result: Feature[] = Object.entries(groupedById).map(
     ([id, items]: [string, CoordsType[]], index) => ({
-      type: 'Feature' as 'Feature',
+      type: 'Feature' as const,
       geometry: {
-        type: 'LineString' as 'LineString',
+        type: 'LineString' as const,
         // Sort by columns if has sortByField
         // TODO: items are expected in Position[] format?
         coordinates: (sortByFieldIdx > -1
@@ -371,7 +371,7 @@ export function groupColumnsAsGeoJson(
 export function detectTableColumns(
   dataset: KeplerTable,
   layerColumns: LayerColumns,
-  sortBy: string = 'timestamp'
+  sortBy = 'timestamp'
 ) {
   const {fields, fieldPairs} = dataset;
   if (!fieldPairs.length || !fields.length) {

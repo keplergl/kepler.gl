@@ -294,7 +294,7 @@ export default class PointLayer extends Layer {
       if (props.length === 0) {
         prop.isVisible = true;
       }
-      //@ts-expect-error logically separate geojson column type?
+      // @ts-expect-error logically separate geojson column type?
       prop.columns = assignPointPairToLayerColumn(pair, true);
 
       props.push(prop);

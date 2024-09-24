@@ -15,7 +15,12 @@ import {default as GridLayer} from './grid-layer/grid-layer';
 export {pointToPolygonGeo} from './grid-layer/grid-utils';
 import {default as HexagonLayer} from './hexagon-layer/hexagon-layer';
 import {default as GeojsonLayer} from './geojson-layer/geojson-layer';
-export {defaultElevation, defaultLineWidth, defaultRadius, COLUMN_MODE_TABLE} from './geojson-layer/geojson-layer';
+export {
+  defaultElevation,
+  defaultLineWidth,
+  defaultRadius,
+  COLUMN_MODE_TABLE
+} from './geojson-layer/geojson-layer';
 import {default as ClusterLayer} from './cluster-layer/cluster-layer';
 import {default as IconLayer} from './icon-layer/icon-layer';
 import {default as HeatmapLayer} from './heatmap-layer/heatmap-layer';
