@@ -16,6 +16,7 @@ import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 import {LayerColumns} from '@kepler.gl/types';
 import {KeplerTable} from '@kepler.gl/table';
 
+import {LayerBaseConfig} from '../base-layer';
 import {GeojsonLayerMetaProps, assignPointPairToLayerColumn} from '../layer-utils';
 
 export type GetFeature = (d: any) => Feature;
@@ -77,10 +78,7 @@ export function getGeojsonLayerMeta({
 }: {
   dataContainer: DataContainerInterface;
   getFeature: GetFeature;
-  config: {
-    columnMode: string | undefined;
-    columns: LayerColumns;
-  };
+  config: LayerBaseConfig;
 }): GeojsonLayerMetaProps {
   const dataToFeature =
     config.columnMode === COLUMN_MODE_GEOJSON
