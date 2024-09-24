@@ -9,6 +9,7 @@ import {console as Console} from 'global/window';
 import {drainTasksForTesting, succeedTaskInTest, errorTaskInTest} from 'react-palm/tasks';
 import CloneDeep from 'lodash.clonedeep';
 
+import SchemaManager from '@kepler.gl/schemas';
 import {VisStateActions, MapStateActions} from '@kepler.gl/actions';
 import {
   visStateReducer as reducer,
@@ -21,7 +22,12 @@ import {
 } from '@kepler.gl/reducers';
 
 import {processCsvData, processGeojson} from '@kepler.gl/processors';
-import {Layer, KeplerGlLayers} from '@kepler.gl/layers';
+import {
+  Layer,
+  KeplerGlLayers,
+  COLUMN_MODE_TABLE,
+  assignColumnsByColumnMode
+} from '@kepler.gl/layers';
 import {KeplerTable, createNewDataEntry, maybeToDate} from '@kepler.gl/table';
 import {createDataContainer, getDefaultFilter} from '@kepler.gl/utils';
 import {
@@ -51,7 +57,7 @@ import {
   fields as geojsonFields,
   rows as geojsonRows
 } from 'test/fixtures/geojson';
-
+import tripCsvData, {tripCsvDataInfo, expectedCoordinates} from 'test/fixtures/test-trip-csv-data';
 import tripGeojson, {timeStampDomain, tripDataInfo} from 'test/fixtures/trip-geojson';
 import {mockPolygonFeature, mockPolygonFeature2, mockPolygonData} from 'test/fixtures/polygon';
 
@@ -79,6 +85,7 @@ import {
   InitialState
 } from 'test/helpers/mock-state';
 import {getNextColorMakerValue} from 'test/helpers/layer-utils';
+import {expectedTripLayerConfig} from '../../fixtures/test-trip-csv-data';
 
 const mockData = {
   fields: [
@@ -654,6 +661,97 @@ test('#visStateReducer -> LAYER_CONFIG_CHANGE -> isVisible -> splitMaps', t => {
   ];
   t.deepEqual(nextState2.splitMaps, initialSplitMaps2, 'should add layer to splitMaps');
 
+  t.end();
+});
+
+test('#visStateReducer -> LAYER_CONFIG_CHANGE -> columnMode', t => {
+  const initialState = InitialState.visState;
+  // const initialState = cloneDeep(state || InitialState);
+  const updatedState = reducer(
+    initialState,
+    VisStateActions.updateVisData({info: tripCsvDataInfo, data: processCsvData(tripCsvData)})
+  );
+
+  const pointLayer = updatedState.layers[0];
+  // change layer type to trip
+  const updatedState2 = reducer(updatedState, VisStateActions.layerTypeChange(pointLayer, 'trip'));
+  // trip Layer
+  const tripLayer = updatedState2.layers[0];
+
+  const updatedColumns = assignColumnsByColumnMode({
+    columns: tripLayer.config.columns,
+    supportedColumnModes: tripLayer.supportedColumnModes,
+    columnMode: COLUMN_MODE_TABLE
+  });
+
+  // update trip layer column mode and columns
+  const nextState = reducer(
+    updatedState2,
+    VisStateActions.layerConfigChange(tripLayer, {
+      columnMode: COLUMN_MODE_TABLE,
+      columns: updatedColumns
+    })
+  );
+
+  const expectedLayerConfigColumns = {
+    geojson: {value: null, fieldIdx: -1, optional: true},
+    id: {value: null, fieldIdx: -1, optional: false},
+    lat: {value: 'location-lat', fieldIdx: 2, optional: false},
+    lng: {value: 'location-lng', fieldIdx: 1, optional: false},
+    timestamp: {value: null, fieldIdx: -1, optional: false},
+    altitude: {value: 'location-alt', fieldIdx: 6, optional: true}
+  };
+  t.deepEqual(
+    nextState.layers[0].config.columns,
+    expectedLayerConfigColumns,
+    'should update layer columns'
+  );
+  t.equal(
+    nextState.layers[0].config.columnMode,
+    COLUMN_MODE_TABLE,
+    'should update layer columnMode'
+  );
+
+  t.deepEqual(nextState.layerData[0], {}, 'should not format layer data without all columns');
+  // update trip layer column mode and columns id, timestap
+  const nextState1 = reducer(
+    nextState,
+    VisStateActions.layerConfigChange(nextState.layers[0], {
+      columns: {
+        ...updatedColumns,
+        timestamp: {value: 'timestamp', fieldIdx: 0, optional: true},
+        id: {value: 'name', fieldIdx: 5, optional: true}
+      }
+    })
+  );
+  t.ok(nextState1.layerData[0].data, 'should format layer data with columns');
+  t.equal(nextState1.layerData[0].data.length, 2, 'Should format 2 geojson features');
+
+  t.deepEqual(
+    nextState1.layerData[0].data[0].geometry.coordinates.slice(0, 2),
+    expectedCoordinates,
+    'feature[0] coordinates should be correct'
+  );
+  t.deepEqual(
+    nextState1.layerData[0].data[0].properties.index,
+    0,
+    'feature[0] properties index should be correct'
+  );
+  t.deepEqual(
+    nextState1.layerData[0].data[0].properties.values.length,
+    8,
+    'feature[0] properties values should have correct length'
+  );
+  const stateToSave = SchemaManager.save({visState: nextState1});
+  const savedTripLayer = stateToSave.config.config.visState.layers[0];
+  t.equal(savedTripLayer.config.columnMode, COLUMN_MODE_TABLE, 'should save columnMode');
+  t.deepEqual(
+    savedTripLayer.config.columns,
+    expectedTripLayerConfig.config.columns,
+    'should save trip layer config columns'
+  );
+
+  // console.log(JSON.stringify(stateToSave.config.config.visState.layers[0], null, 2));
   t.end();
 });
 

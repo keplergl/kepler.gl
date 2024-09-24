@@ -710,13 +710,10 @@ export function setInitialLayerConfig(layer, datasets, layerClasses): Layer {
       dataId: newLayer.config.dataId,
       isConfigActive: newLayer.config.isConfigActive
     });
-
-    return typeof newLayer.setInitialLayerConfig === 'function'
-      ? newLayer.setInitialLayerConfig(dataset)
-      : newLayer;
   }
-
-  return newLayer;
+  return typeof newLayer.setInitialLayerConfig === 'function'
+    ? newLayer.setInitialLayerConfig(dataset)
+    : newLayer;
 }
 /**
  * Update layer type. Previews layer config will be copied if applicable.

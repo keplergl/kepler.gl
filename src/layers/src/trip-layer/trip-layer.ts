@@ -7,18 +7,20 @@ import uniq from 'lodash.uniq';
 import Layer, {LayerBaseConfig, defaultGetFieldValue} from '../base-layer';
 import {TripsLayer as DeckGLTripsLayer} from '@deck.gl/geo-layers';
 
-import {GEOJSON_FIELDS, ColorRange, ALL_FIELD_TYPES} from '@kepler.gl/constants';
+import {GEOJSON_FIELDS, ColorRange} from '@kepler.gl/constants';
 import TripLayerIcon from './trip-layer-icon';
 
 import {
   getGeojsonDataMaps,
   getGeojsonBounds,
   getGeojsonFeatureTypes,
-  GeojsonDataMaps
+  GeojsonDataMaps,
+  detectTableColumns,
+  groupColumnsAsGeoJson
 } from '../geojson-layer/geojson-utils';
 
-import {groupColumnsAsGeoJson, isTripGeoJsonField, parseTripGeoJsonTimestamp} from './trip-utils';
-import {assignPointPairToLayerColumn} from '../layer-utils';
+import {isTripGeoJsonField, parseTripGeoJsonTimestamp} from './trip-utils';
+import {assignColumnsByColumnMode} from '../layer-utils';
 import TripInfoModalFactory from './trip-info-modal';
 import {bisectRight} from 'd3-array';
 import {
@@ -108,8 +110,8 @@ const getTableModeFieldValue = (field, data) => {
   return rv;
 };
 
-const COLUMN_MODE_GEOJSON = 'geojson';
-const COLUMN_MODE_TABLE = 'table';
+export const COLUMN_MODE_GEOJSON = 'geojson';
+export const COLUMN_MODE_TABLE = 'table';
 const SUPPORTED_COLUMN_MODES = [
   {
     key: COLUMN_MODE_GEOJSON,
@@ -134,7 +136,7 @@ export default class TripLayer extends Layer {
   dataToFeature: GeojsonDataMaps;
   dataToTimeStamp: any[];
   getFeature: (columns: TripLayerColumnsConfig) => (dataContainer: DataContainerInterface) => any;
-  _layerInfoModal: () => JSX.Element;
+  _layerInfoModal: Record<string, () => JSX.Element>;
 
   constructor(props) {
     super(props);
@@ -144,7 +146,10 @@ export default class TripLayer extends Layer {
     this.dataContainer = null;
     this.registerVisConfig(tripVisConfigs);
     this.getFeature = memoize(featureAccessor, featureResolver);
-    this._layerInfoModal = TripInfoModalFactory();
+    this._layerInfoModal = {
+      [COLUMN_MODE_TABLE]: TripInfoModalFactory(COLUMN_MODE_TABLE),
+      [COLUMN_MODE_GEOJSON]: TripInfoModalFactory(COLUMN_MODE_GEOJSON)
+    };
   }
 
   get supportedColumnModes() {
@@ -209,9 +214,16 @@ export default class TripLayer extends Layer {
     return {
       [COLUMN_MODE_GEOJSON]: {
         id: 'iconInfo',
-        template: this._layerInfoModal,
+        template: this._layerInfoModal[COLUMN_MODE_GEOJSON],
         modalProps: {
           title: 'modal.tripInfo.title'
+        }
+      },
+      [COLUMN_MODE_TABLE]: {
+        id: 'iconInfo',
+        template: this._layerInfoModal[COLUMN_MODE_TABLE],
+        modalProps: {
+          title: 'modal.tripInfo.titleTable'
         }
       }
     };
@@ -257,36 +269,6 @@ export default class TripLayer extends Layer {
             !tripGeojsonColumns.find(c => prop.columns.geojson.name === c.geojson.name)
         )
       };
-    }
-
-    // find columns from lat, lng, id, and ts
-    if (fieldPairs.length) {
-      // find time column
-      const timeFieldIdx = fields.findIndex(f => f.type === ALL_FIELD_TYPES.timestamp);
-      // find id column
-      const idFieldIdx = fields.findIndex(f => f.name?.toLowerCase().match(/^(id|uuid)$/g));
-
-      if (timeFieldIdx > -1 && idFieldIdx > -1) {
-        const layerProp = {
-          columns: {
-            ...assignPointPairToLayerColumn(fieldPairs[0], true),
-            id: {
-              value: fields[idFieldIdx],
-              fieldIdx: idFieldIdx
-            },
-            timestamp: {
-              value: fields[timeFieldIdx],
-              fieldIdx: timeFieldIdx
-            }
-          },
-          label: fieldPairs[0].defaultName,
-          columnMode: COLUMN_MODE_TABLE
-        };
-
-        return {
-          props: [layerProp]
-        };
-      }
     }
 
     return {props: []};
@@ -358,6 +340,7 @@ export default class TripLayer extends Layer {
       return {};
     }
     // to-do: parse segment from dataContainer
+
     const {dataContainer, gpuFilter} = datasets[this.config.dataId];
     const {data} = this.updateData(datasets, oldLayerData);
 
@@ -406,7 +389,7 @@ export default class TripLayer extends Layer {
       this.dataToFeature = getGeojsonDataMaps(dataContainer, getFeature);
     } else {
       this.dataContainer = dataContainer;
-      this.dataToFeature = groupColumnsAsGeoJson(dataContainer, this.config.columns);
+      this.dataToFeature = groupColumnsAsGeoJson(dataContainer, this.config.columns, 'timestamp');
     }
 
     const {dataToTimeStamp, animationDomain} = parseTripGeoJsonTimestamp(this.dataToFeature);
@@ -423,10 +406,31 @@ export default class TripLayer extends Layer {
     this.updateMeta({bounds, featureTypes, getFeature});
   }
 
-  setInitialLayerConfig({dataContainer}) {
+  setInitialLayerConfig(dataset) {
+    const {dataContainer} = dataset;
     if (!dataContainer.numRows()) {
       return this;
     }
+
+    // defefaultLayerProps will automatically find geojson column
+    // if not found, we try to set it to id / lat /lng /ts
+    if (!this.config.columns.geojson.value) {
+      // find columns from lat, lng, id, and ts
+      const columnConfig = detectTableColumns(dataset, this.config.columns);
+      if (columnConfig) {
+        const columns = assignColumnsByColumnMode({
+          columns: columnConfig.columns,
+          supportedColumnModes: this.supportedColumnModes,
+          columnMode: COLUMN_MODE_TABLE
+        });
+        this.updateLayerConfig({
+          ...columnConfig,
+          columns,
+          columnMode: COLUMN_MODE_TABLE
+        });
+      }
+    }
+
     this.updateLayerMeta(dataContainer);
     return this;
   }

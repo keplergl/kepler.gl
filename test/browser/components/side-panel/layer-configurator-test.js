@@ -138,7 +138,7 @@ test('Components -> LayerConfigurator.mount -> default prop 1', t => {
   t.end();
 });
 
-test('Components -> LayerConfigurator.mount -> defaut prop 2', t => {
+test('Components -> LayerConfigurator.mount -> LayerColumnConfig', t => {
   // mount
   const updateLayerConfigSpy = sinon.spy();
 
@@ -298,11 +298,6 @@ test('Components -> LayerConfigurator.mount -> collapsed / expand config group '
     'LayerColumnModeConfig should be expanded'
   );
 
-  // t.equal(
-  //   wrapper.find(LayerColumnModeConfig).length,
-  //   1,
-  //   'LayerColumnModeConfig should be expanded'
-  // );
   t.end();
 });
 

@@ -56,7 +56,7 @@
     "@turf/boolean-within": "^6.0.1",
     "@turf/center": "^6.0.1",
     "@turf/helpers": "^6.1.4",
-    "@types/geojson": "^7946.0.7",
+    "@types/geojson": "^7946.0.8",
     "@types/keymirror": "^0.1.1",
     "@types/lodash.memoize": "^4.1.7",
     "@types/lodash.uniq": "^4.5.7",

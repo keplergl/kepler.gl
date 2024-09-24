@@ -76,7 +76,9 @@ const ConfigPanesContainer = styled.div`
   }
 `;
 
-interface FieldOption extends MinimalField {}
+interface FieldOption extends MinimalField {
+  fieldIdx: number;
+}
 
 export type ColumnModeConfigProps = {
   supportedColumnModes: SupportedColumnMode[] | null;
@@ -237,9 +239,7 @@ function LayerColumnModeConfigFactory(
           columnPairs={layer.columnPairs}
           columns={cols}
           assignColumnPairs={layer.assignColumnPairs.bind(layer)}
-          assignColumn={
-            layer.assignColumn.bind(layer) as (key: string, field: FieldOption) => LayerColumns
-          }
+          assignColumn={layer.assignColumn.bind(layer)}
           columnLabels={layer.columnLabels}
           fields={fields}
           fieldPairs={fieldPairs}

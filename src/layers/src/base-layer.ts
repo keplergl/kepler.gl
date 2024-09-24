@@ -41,6 +41,7 @@ import {
   hexToRgb,
   getLatLngBounds,
   isPlainObject,
+  toArray,
   notNullorUndefined,
   DataContainerInterface,
   getSampleContainerData
@@ -355,8 +356,9 @@ class Layer {
    */
   get defaultPointColumnPairs(): ColumnPairs {
     return {
-      lat: {pair: 'lng', fieldPairKey: 'lat'},
-      lng: {pair: 'lat', fieldPairKey: 'lng'}
+      lat: {pair: ['lng', 'altitude'], fieldPairKey: 'lat'},
+      lng: {pair: ['lat', 'altitude'], fieldPairKey: 'lng'},
+      altitude: {pair: ['lng', 'lat'], fieldPairKey: 'altitude'}
     };
   }
 
@@ -546,11 +548,8 @@ class Layer {
 
   /**
    * Assign a field to layer column, return column config
-   * @param key - Column Key
-   * @param field - Selected field
-   * @returns {{}} - Column config
    */
-  assignColumn(key: string, field: Field): LayerColumns {
+  assignColumn(key: string, field: {name: string; fieldIdx: number}): LayerColumns {
     // field value could be null for optional columns
     const update = field
       ? {
@@ -570,30 +569,41 @@ class Layer {
 
   /**
    * Assign a field pair to column config, return column config
-   * @param key - Column Key
-   * @param pair - field Pair
-   * @returns Column config
    */
-  assignColumnPairs(key: string, pair: FieldPair): LayerColumns {
+  assignColumnPairs(key: string, fieldPairs: FieldPair): LayerColumns {
     if (!this.columnPairs || !this.columnPairs?.[key]) {
       // should not end in this state
       return this.config.columns;
     }
+    // key = 'lat'
+    const {pair, fieldPairKey} = this.columnPairs?.[key] || {};
 
-    const {pair: partnerKey, fieldPairKey} = this.columnPairs?.[key] || {};
-
-    if (!pair[fieldPairKey]) {
+    if (typeof fieldPairKey === 'string' && !pair[fieldPairKey]) {
       // do not allow `key: undefined` to creep into the `updatedColumn` object
       return this.config.columns;
     }
 
-    const {fieldPairKey: partnerFieldPairKey} = this.columnPairs?.[partnerKey] || {};
-
-    return {
+    // pair = ['lng', 'alt] | 'lng'
+    const updatedColumn = {
       ...this.config.columns,
-      [key]: pair[fieldPairKey],
-      [partnerKey]: pair[partnerFieldPairKey]
+      // @ts-expect-error fieldPairKey can be string[] here?
+      [key]: fieldPairs[fieldPairKey]
     };
+
+    const partnerKeys = toArray(pair);
+    for (const partnerKey of partnerKeys) {
+      if (
+        this.config.columns[partnerKey] &&
+        this.columnPairs?.[partnerKey] &&
+        // @ts-ignore
+        fieldPairs[this.columnPairs?.[partnerKey].fieldPairKey]
+      ) {
+        // @ts-ignore
+        updatedColumn[partnerKey] = fieldPairs[this.columnPairs?.[partnerKey].fieldPairKey];
+      }
+    }
+
+    return updatedColumn;
   }
 
   /**

@@ -37,6 +37,10 @@ import {
   config as tripConfig,
   dataId as tripDataId
 } from '../fixtures/test-trip-data';
+import tripCsvData, {
+  tripCsvDataInfo,
+  expectedTripLayerConfig
+} from '../fixtures/test-trip-csv-data';
 import tripGeojson, {tripDataInfo} from '../fixtures/trip-geojson';
 import {processCsvData, processGeojson} from '@kepler.gl/processors';
 import {MOCK_MAP_STYLE} from './mock-map-styles';
@@ -145,7 +149,37 @@ function mockStateWithTripGeojson() {
   return updatedState;
 }
 
-function mockStateWithFilters(state) {
+export function mockStateWithTripTable(state) {
+  const initialState = cloneDeep(state || InitialState);
+  const updatedState = applyActions(keplerGlReducer, initialState, [
+    {
+      action: addDataToMap,
+      payload: [
+        {
+          datasets: {info: tripCsvDataInfo, data: processCsvData(tripCsvData)},
+          config: {
+            version: 'v1',
+            config: {
+              visState: {
+                layers: [expectedTripLayerConfig]
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]);
+
+  test(t => {
+    t.equal(updatedState.visState.layers.length, 1, 'should create 1 trip layer');
+    t.equal(updatedState.visState.layers[0].type, 'trip', 'should create trip layer');
+    t.end();
+  });
+
+  return updatedState;
+}
+
+export function mockStateWithFilters(state) {
   const initialState = state || mockStateWithFileUpload();
 
   const prepareState = applyActions(keplerGlReducer, initialState, [
@@ -804,6 +838,7 @@ export const expectedSavedLayer2 = {
     columns: {
       geojson: '_geojson'
     },
+    columnMode: 'geojson',
     hidden: false,
     isVisible: true,
     visConfig: {
@@ -851,6 +886,7 @@ export const expectedLoadedLayer2 = {
     columns: {
       geojson: '_geojson'
     },
+    columnMode: 'geojson',
     hidden: false,
     isVisible: true,
     visConfig: {
@@ -902,6 +938,7 @@ export const StateWH3Layer = mockStateWithH3Layer();
 export const StateWMultiH3Layers = mockStateWithMultipleH3Layers();
 export const StateWithGeocoderDataset = mockStateWithGeocoderDataset();
 export const StateWLayerStyle = mockStateWithLayerStyling();
+export const StateWTripTable = mockStateWithTripTable();
 
 export const expectedSavedTripLayer = {
   id: 'trip-0',
@@ -914,14 +951,6 @@ export const expectedSavedTripLayer = {
     columnMode: 'geojson',
     columns: {
       geojson: '_geojson'
-      // TODO Uncomment once fixed
-      /*
-      id: null,
-      lat: null,
-      lng: null,
-      timestamp: null,
-      altitude: null
-      */
     },
     hidden: false,
     isVisible: true,
