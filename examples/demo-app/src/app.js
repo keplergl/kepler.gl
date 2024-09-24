@@ -313,11 +313,11 @@ class App extends Component {
           {
             info: {label: 'Bart Stops Geo', id: 'bart-stops-geo'},
             data: processGeojson(sampleGeojsonPoints)
-          },
-          {
-            info: {label: 'SF Zip Geo', id: 'sf-zip-geo'},
-            data: processGeojson(sampleGeojson)
           }
+          // {
+          //   info: {label: 'SF Zip Geo', id: 'sf-zip-geo'},
+          //   data: processGeojson(sampleGeojson)
+          // }
         ],
         options: {
           keepExistingConfig: true

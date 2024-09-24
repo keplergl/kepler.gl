@@ -864,7 +864,8 @@ test('visStateReducer -> layerDataIdChangeUpdater -> validation', t => {
       altitude: {value: null, fieldIdx: -1, optional: true},
       lat: {value: 'gps_data.lat', fieldIdx: 1},
       lng: {value: 'gps_data.lng', fieldIdx: 2},
-      neighbors: {value: null, fieldIdx: -1, optional: true}
+      neighbors: {value: null, fieldIdx: -1, optional: true},
+      geojson: {value: null, fieldIdx: -1}
     },
     'should update point layer column'
   );
@@ -2026,6 +2027,7 @@ test('#visStateReducer -> setFilter.dynamicDomain & cpu', t => {
   const expectedLayer1 = new PointLayer({
     isVisible: true,
     dataId: 'smoothie',
+    columnMode: 'points',
     label: 'gps_data',
     columns: {
       lat: {value: 'gps_data.lat', fieldIdx: 1},
@@ -2207,12 +2209,12 @@ test('#visStateReducer -> setFilter.dynamicDomain & cpu', t => {
 
   const expectedLayerData1 = {
     data: [
-      {index: 17, position: [31.2165983, 30.0538936, 0], neighbors: undefined},
-      {index: 18, position: [31.2148748, 30.060911, 0], neighbors: undefined},
-      {index: 19, position: [31.2212278, 30.060334, 0], neighbors: undefined},
-      {index: 20, position: [31.2288985, 30.0554663, 0], neighbors: undefined},
-      {index: 21, position: [31.2187021, 30.0614122, 0], neighbors: undefined},
-      {index: 22, position: [31.2191059, 30.0612697, 0], neighbors: undefined}
+      {index: 17, position: [31.2165983, 30.0538936, 0]},
+      {index: 18, position: [31.2148748, 30.060911, 0]},
+      {index: 19, position: [31.2212278, 30.060334, 0]},
+      {index: 20, position: [31.2288985, 30.0554663, 0]},
+      {index: 21, position: [31.2187021, 30.0614122, 0]},
+      {index: 22, position: [31.2191059, 30.0612697, 0]}
     ],
     getPosition: () => {},
     getColor: () => {},

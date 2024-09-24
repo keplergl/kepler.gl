@@ -81,6 +81,7 @@ export const stateSavedV1 = {
             config: {
               dataId: '8ppj5gfrs',
               label: 'point',
+              columnMode: 'points',
               color: [23, 184, 190, 255],
               columns: {
                 lat: 'point_lat',
@@ -174,6 +175,7 @@ const mergedLayer0 = new PointLayer({
 mergedLayer0.config = {
   dataId: '8ppj5gfrs',
   label: 'point',
+  columnMode: 'points',
   color: [23, 184, 190, 255],
   columns: {
     lat: {
