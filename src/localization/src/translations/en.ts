@@ -527,6 +527,7 @@ ${'```'}
     timestamp: 'time',
     icon: 'icon',
     geojson: 'geojson',
+    geoarrow: 'geoarrow',
     token: 'token',
     sortBy: 'sort by',
     neighbors: 'neighbors',

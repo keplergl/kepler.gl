@@ -375,7 +375,7 @@ export default class GeoJsonLayer extends Layer {
     const geojsonColumns = fields
       .filter(
         f =>
-          (f.type === 'geojson' || f.type === 'geoarrow') &&
+          f.type === 'geojson' /*|| f.type === 'geoarrow'*/ &&
           SUPPORTED_ANALYZER_TYPES[f.analyzerType]
       )
       .map(f => f.name);
