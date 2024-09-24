@@ -6,7 +6,6 @@ import React, {useCallback, useMemo} from 'react';
 import {LayerBaseConfig} from '@kepler.gl/layers';
 import {
   FieldPair,
-  Field,
   ColumnPairs,
   LayerColumns,
   ColumnLabels,
@@ -21,7 +20,7 @@ import {SidePanelSection} from '../../common/styled-components';
 export type LayerColumnConfigProps<FieldOption extends MinimalField> = {
   columns: LayerColumns;
   fields: FieldOption[];
-  assignColumnPairs: (key: string, pair: string) => LayerColumns;
+  assignColumnPairs: (key: string, pair: FieldPair) => LayerColumns;
   assignColumn: (key: string, field: FieldOption) => LayerColumns;
   updateLayerConfig: (newConfig: Partial<LayerBaseConfig>) => void;
   updateLayerType?: (newType: string) => void;
@@ -54,7 +53,7 @@ function getValidFieldPairsSuggestionsForColumn(
 LayerColumnConfigFactory.deps = [ColumnSelectorFactory];
 
 function LayerColumnConfigFactory(ColumnSelector: ReturnType<typeof ColumnSelectorFactory>) {
-  const LayerColumnConfig: React.FC<LayerColumnConfigProps<Field>> = ({
+  const LayerColumnConfig: React.FC<LayerColumnConfigProps<MinimalField>> = ({
     columnPairs,
     fieldPairs,
     columns,

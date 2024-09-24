@@ -54,11 +54,12 @@ export type EnhancedFieldPair = {
   pair: FieldPair['pair'];
 };
 
-export type SupportedColumnModes = {
+export type SupportedColumnMode = {
   key: string;
   label: string;
   requiredColumns?: string[];
   optionalColumns?: string[];
+  hasHelp?: boolean;
 };
 
 export type LayerColorConfig = {

@@ -3,7 +3,7 @@
 
 import * as arrow from 'apache-arrow';
 import {Feature, BBox} from 'geojson';
-import {Field, FieldPair, SupportedColumnModes, LayerColumns} from '@kepler.gl/types';
+import {Field, FieldPair, SupportedColumnMode, LayerColumns} from '@kepler.gl/types';
 import {DataContainerInterface} from '@kepler.gl/utils';
 import {
   getBinaryGeometriesFromArrow,
@@ -135,7 +135,7 @@ export function getHoveredObjectFromArrow(
  * find requiredColumns of supported column mode based on column mode
  */
 export function getColumnModeRequiredColumns(
-  supportedColumnModes: SupportedColumnModes[] | null,
+  supportedColumnModes: SupportedColumnMode[] | null,
   columnMode?: string
 ): string[] | undefined {
   return supportedColumnModes?.find(({key}) => key === columnMode)?.requiredColumns;
@@ -150,7 +150,7 @@ export function assignColumnsByColumnMode({
   columnMode
 }: {
   columns: LayerColumns;
-  supportedColumnModes: SupportedColumnModes[] | null;
+  supportedColumnModes: SupportedColumnMode[] | null;
   columnMode: string | undefined;
 }): LayerColumns {
   const requiredColumns = getColumnModeRequiredColumns(supportedColumnModes, columnMode);
