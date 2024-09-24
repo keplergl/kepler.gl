@@ -6,6 +6,7 @@ import {parseInBatches} from '@loaders.gl/core';
 import {JSONLoader, _JSONPath} from '@loaders.gl/json';
 import {CSVLoader} from '@loaders.gl/csv';
 import {ArrowLoader} from '@loaders.gl/arrow';
+import {ParquetLoader, installBufferPolyfill} from '@loaders.gl/parquet';
 import {Loader} from '@loaders.gl/loader-utils';
 import {generateHashId, isPlainObject, generateHashIdFromString} from '@kepler.gl/utils';
 import {DATASET_FORMATS} from '@kepler.gl/constants';
@@ -22,6 +23,8 @@ import {
 
 import {FileCacheItem, ValidKeplerGlMap} from './types';
 
+installBufferPolyfill();
+
 const BATCH_TYPE = {
   METADATA: 'metadata',
   PARTIAL_RESULT: 'partial-result',
@@ -36,6 +39,10 @@ const CSV_LOADER_OPTIONS = {
 const ARROW_LOADER_OPTIONS = {
   shape: 'arrow-table',
   batchDebounceMs: 10 // time to delay between batches, for incremental loading
+};
+
+const PARQUET_LOADER_OPTIONS = {
+  worker: true
 };
 
 const JSON_LOADER_OPTIONS = {
@@ -179,11 +186,12 @@ export async function readFileInBatches({
   loaders: Loader[];
   loadOptions: any;
 }): Promise<AsyncGenerator> {
-  loaders = [JSONLoader, CSVLoader, ArrowLoader, ...loaders];
+  loaders = [JSONLoader, CSVLoader, ArrowLoader, ParquetLoader, ...loaders];
   loadOptions = {
     csv: CSV_LOADER_OPTIONS,
     arrow: ARROW_LOADER_OPTIONS,
     json: JSON_LOADER_OPTIONS,
+    parquet: PARQUET_LOADER_OPTIONS,
     metadata: true,
     ...loadOptions
   };
