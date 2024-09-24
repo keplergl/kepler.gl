@@ -576,7 +576,7 @@ class Layer {
       return this.config.columns;
     }
     // key = 'lat'
-    const {pair, fieldPairKey} = this.columnPairs?.[key];
+    const {pair, fieldPairKey} = this.columnPairs?.[key] || {};
 
     if (typeof fieldPairKey === 'string' && !pair[fieldPairKey]) {
       // do not allow `key: undefined` to creep into the `updatedColumn` object
