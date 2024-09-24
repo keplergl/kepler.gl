@@ -16,7 +16,6 @@ import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 import {LayerColumns} from '@kepler.gl/types';
 import {KeplerTable} from '@kepler.gl/table';
 
-import {LayerBaseConfig} from '../base-layer';
 import {GeojsonLayerMetaProps, assignPointPairToLayerColumn} from '../layer-utils';
 import {LayerBaseConfig} from '../base-layer';
 

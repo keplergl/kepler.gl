@@ -15,7 +15,7 @@ import {
   pointLayerMeta,
   fieldDomain
 } from 'test/helpers/layer-utils';
-import testArcData, {pointFromNeighbor, dataId as ArcDataId} from 'test/fixtures/test-arc-data';
+import testArcData, {pointFromNeighbor} from 'test/fixtures/test-arc-data';
 import {StateWArcNeighbors} from 'test/helpers/mock-state';
 import {copyTableAndUpdate} from '@kepler.gl/table';
 import {KeplerGlLayers} from '@kepler.gl/layers';

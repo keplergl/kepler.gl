@@ -14,11 +14,7 @@ import {
   preparedFilterDomain0,
   arcLayerMeta
 } from 'test/helpers/layer-utils';
-import testArcData, {
-  arcFromHex,
-  arcFromNeighbor,
-  dataId as ArcDataId
-} from 'test/fixtures/test-arc-data';
+import testArcData, {arcFromHex, arcFromNeighbor} from 'test/fixtures/test-arc-data';
 import {StateWArcNeighbors} from 'test/helpers/mock-state';
 import {PROJECTED_PIXEL_SIZE_MULTIPLIER} from '@kepler.gl/constants';
 import {KeplerGlLayers} from '@kepler.gl/layers';

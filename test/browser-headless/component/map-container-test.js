@@ -143,7 +143,7 @@ test('MapContainerFactory - _renderDeckOverlay', t => {
         events: [{type: 'mousemove', x: 200, y: 200}, {wait: 50}],
         onBeforeEvents,
         // eslint-disable-next-line max-statements
-        onAfterEvents: ({layers}) => {
+        onAfterEvents: () => {
           assert.is(hoverEvents.length, 1, 'onHover is called');
           assert.is(hoverEvents[0].info.index, 15, 'object is picked');
           assert.is(hoverEvents[0].info.picked, true, 'object is picked');

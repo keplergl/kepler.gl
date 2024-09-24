@@ -257,7 +257,7 @@ export function cmpDatasets(t, expectedDatasets, actualDatasets) {
 export function assertDatasetIsTable(t, dataset) {
   t.ok(dataset instanceof KeplerTable, `${dataset.label || 'dataset'} should be a KeplerTable`);
 }
-export function cmpColumns(t, expectedColumns, actualColumns, layerName, opt = {}) {
+export function cmpColumns(t, expectedColumns, actualColumns, layerName) {
   cmpObjectKeys(t, expectedColumns, actualColumns, `${layerName}.config.columns`);
 
   Object.keys(expectedColumns).forEach(key => {
