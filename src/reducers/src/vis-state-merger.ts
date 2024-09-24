@@ -640,6 +640,9 @@ export function validateSavedLayerColumns(
   return rv;
 }
 
+/**
+ * Validate layer column
+ */
 export function validateColumn(
   column: LayerColumn & {validator?: typeof validateColumn},
   columns: LayerColumns,
@@ -771,6 +774,37 @@ export function validateLayersByDatasets(
 
   return {validated, failed};
 }
+
+/**
+ * Get required columns for validation based on column mode
+ */
+function _getColumnConfigForValidation(newLayer) {
+  // find column fieldIdx
+  let columnConfig = newLayer.getLayerColumns();
+  // if columnMode is defined, find column mode config
+  const colModeConfig = newLayer.config.columnMode
+    ? (newLayer.supportedColumnModes || []).find(
+        colMode => colMode.key === newLayer.config.columnMode
+      )
+    : null;
+
+  if (colModeConfig) {
+    // only validate columns in column mode
+    columnConfig = [
+      ...(colModeConfig.requiredColumns || []),
+      ...(colModeConfig.optionalColumns || [])
+    ].reduce(
+      (accu, key) => ({
+        ...accu,
+        [key]: columnConfig[key]
+      }),
+      {}
+    );
+  }
+
+  return columnConfig;
+}
+
 /**
  * Validate saved layer config with new data,
  * update fieldIdx based on new fields
@@ -804,8 +838,8 @@ export function validateLayerWithData(
     highlightColor: savedLayer.config.highlightColor
   });
 
-  // find column fieldIdx
-  const columnConfig = newLayer.getLayerColumns();
+  const columnConfig = _getColumnConfigForValidation(newLayer);
+
   if (Object.keys(columnConfig)) {
     const columns = validateSavedLayerColumns(
       fields,
@@ -814,7 +848,12 @@ export function validateLayerWithData(
       options
     );
     if (columns) {
-      newLayer.updateLayerConfig({columns});
+      newLayer.updateLayerConfig({
+        columns: {
+          ...newLayer.config.columns,
+          ...columns
+        }
+      });
     } else if (!options.allowEmptyColumn) {
       return null;
     }

@@ -51,6 +51,7 @@ export type PointLayerColumnsConfig = {
   lat: LayerColumn;
   lng: LayerColumn;
   altitude?: LayerColumn;
+  neighbors?: LayerColumn;
 };
 
 export type PointLayerVisConfig = {
@@ -64,6 +65,9 @@ export type PointLayerVisConfig = {
   strokeColorRange: ColorRange;
   radiusRange: [number, number];
   filled: boolean;
+  allowHover: boolean;
+  showNeighborOnHover: boolean;
+  showHighlightColor: boolean;
 };
 export type PointLayerVisualChannelConfig = LayerColorConfig &
   LayerSizeConfig &
@@ -77,6 +81,7 @@ export type PointLayerConfig = Merge<
 export type PointLayerData = {
   position: number[];
   index: number;
+  neighbors: any[];
 };
 
 export const pointPosAccessor =
@@ -90,7 +95,7 @@ export const pointPosAccessor =
     ];
 
 export const pointRequiredColumns: ['lat', 'lng'] = ['lat', 'lng'];
-export const pointOptionalColumns: ['altitude'] = ['altitude'];
+export const pointOptionalColumns: ['altitude', 'neighbors'] = ['altitude', 'neighbors'];
 
 const brushingExtension = new BrushingExtension();
 
@@ -105,6 +110,9 @@ export const pointVisConfigs: {
   strokeColorRange: 'strokeColorRange';
   radiusRange: 'radiusRange';
   filled: VisConfigBoolean;
+  allowHover: 'allowHover';
+  showNeighborOnHover: 'showNeighborOnHover';
+  showHighlightColor: 'showHighlightColor';
 } = {
   radius: 'radius',
   fixedRadius: 'fixedRadius',
@@ -121,7 +129,10 @@ export const pointVisConfigs: {
     label: 'layer.fillColor',
     defaultValue: true,
     property: 'filled'
-  }
+  },
+  allowHover: 'allowHover',
+  showNeighborOnHover: 'showNeighborOnHover',
+  showHighlightColor: 'showHighlightColor'
 };
 
 export default class PointLayer extends Layer {
@@ -260,11 +271,19 @@ export default class PointLayer extends Layer {
     };
   }
 
-  calculateDataAttribute({filteredIndex}: KeplerTable, getPosition) {
+  calculateDataAttribute({filteredIndex, dataContainer}: KeplerTable, getPosition) {
     const data: PointLayerData[] = [];
 
     for (let i = 0; i < filteredIndex.length; i++) {
       const index = filteredIndex[i];
+      let neighbors;
+
+      if (this.config.columns.neighbors?.value) {
+        const {fieldIdx} = this.config.columns.neighbors;
+        neighbors = Array.isArray(dataContainer.valueAt(index, fieldIdx))
+          ? dataContainer.valueAt(index, fieldIdx)
+          : [];
+      }
       const pos = getPosition({index});
 
       // if doesn't have point lat or lng, do not add the point
@@ -272,7 +291,9 @@ export default class PointLayer extends Layer {
       if (pos.every(Number.isFinite)) {
         data.push({
           position: pos,
-          index
+          // index is important for filter
+          index,
+          neighbors
         });
       }
     }
@@ -315,8 +336,9 @@ export default class PointLayer extends Layer {
     this.updateMeta({bounds});
   }
 
+  // eslint-disable-next-line complexity
   renderLayer(opts) {
-    const {data, gpuFilter, objectHovered, mapState, interactionConfig} = opts;
+    const {data, gpuFilter, objectHovered, mapState, interactionConfig, dataset} = opts;
 
     // if no field size is defined we need to pass fixed radius = false
     const fixedRadius = this.config.visConfig.fixedRadius && Boolean(this.config.sizeField);
@@ -349,6 +371,20 @@ export default class PointLayer extends Layer {
       ...brushingProps
     };
     const hoveredObject = this.hasHoveredObject(objectHovered);
+    const {showNeighborOnHover, allowHover} = this.config.visConfig;
+    let neighborsData = [];
+    if (allowHover && showNeighborOnHover && hoveredObject) {
+      // find neighbor
+      neighborsData = (hoveredObject.neighbors || [])
+        .map(idx => ({
+          // TODO do we really need to pass data here?
+          data: dataset.dataContainer.rowAsArray(idx),
+          // position: pos,
+          // index is important for filter
+          index: idx
+        }))
+        .filter(d => d.data);
+    }
 
     return [
       new ScatterplotLayer({
@@ -362,7 +398,10 @@ export default class PointLayer extends Layer {
         },
         lineWidthUnits: 'pixels',
         updateTriggers,
-        extensions
+        extensions,
+        opacity: hoveredObject && showNeighborOnHover ? 0.2 : this.config.visConfig.opacity,
+        pickable: allowHover,
+        autoHighlight: false
       }),
       // hover layer
       ...(hoveredObject
@@ -371,9 +410,13 @@ export default class PointLayer extends Layer {
               ...this.getDefaultHoverLayerProps(),
               ...layerProps,
               visible: defaultLayerProps.visible,
-              data: [hoveredObject],
-              getLineColor: this.config.highlightColor,
-              getFillColor: this.config.highlightColor,
+              data: [...neighborsData, hoveredObject],
+              getLineColor: this.config.visConfig.showHighlightColor
+                ? this.config.highlightColor
+                : data.getLineColor,
+              getFillColor: this.config.visConfig.showHighlightColor
+                ? this.config.highlightColor
+                : data.getFillColor,
               getRadius: data.getRadius,
               getPosition: data.getPosition
             })

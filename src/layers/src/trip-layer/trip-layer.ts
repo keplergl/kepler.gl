@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {Feature} from 'geojson';
 import memoize from 'lodash.memoize';
 import uniq from 'lodash.uniq';
 import Layer, {LayerBaseConfig, defaultGetFieldValue} from '../base-layer';
@@ -16,11 +15,11 @@ import {
   getGeojsonFeatureTypes,
   GeojsonDataMaps,
   detectTableColumns,
-  groupColumnsAsGeoJson
+  groupColumnsAsGeoJson,
+  applyFiltersToTableColumns
 } from '../geojson-layer/geojson-utils';
 
 import {isTripGeoJsonField, parseTripGeoJsonTimestamp} from './trip-utils';
-import {assignColumnsByColumnMode} from '../layer-utils';
 import TripInfoModalFactory from './trip-info-modal';
 import {bisectRight} from 'd3-array';
 import {
@@ -295,44 +294,22 @@ export default class TripLayer extends Layer {
   }
 
   calculateDataAttribute(dataset: KeplerTable, getPosition) {
-    if (this.config.columnMode === COLUMN_MODE_GEOJSON) {
-      return dataset.filteredIndex
-        .map(i => this.dataToFeature[i])
-        .filter((d: unknown) => d && (d as Feature).geometry.type === 'LineString');
-    }
-    if (dataset.filteredIndex.length === dataset.dataContainer.numRows()) {
-      // Only apply the filtering when something is to be filtered out
-      return this.dataToFeature;
-    }
-
-    const filteredIndexSet = new Set(dataset.filteredIndex);
-    const filteredFeatures: any[] = [];
-    for (const feature of this.dataToFeature) {
-      // @ts-expect-error fix type or expected?
-      const filteredCoords = feature?.geometry.coordinates.filter(c =>
-        // TODO: is it necessary to filter coords, or can we assume they are never filtered?
-        filteredIndexSet.has(c.datumIndex)
-      );
-      if (filteredCoords.length > 0) {
-        filteredFeatures.push({
-          ...feature,
-          geometry: {
-            // @ts-expect-error fix type or expected?
-            ...feature.geometry,
-            coordinates: filteredCoords
-          },
-          properties: {
-            // @ts-expect-error fix type or expected?
-            ...feature.properties,
-            // @ts-expect-error fix type or expected?
-            values: feature.geometry.coordinates.map(c =>
-              dataset.dataContainer.rowAsArray(c.datumIndex)
-            )
-          }
-        });
+    switch (this.config.columnMode) {
+      case COLUMN_MODE_GEOJSON: {
+        return (
+          dataset.filteredIndex
+            .map(i => this.dataToFeature[i])
+            // TODO d can be BinaryFeatureCollection, fix logic
+            .filter(d => d && (d as any).geometry?.type === 'LineString')
+        );
       }
+
+      case COLUMN_MODE_TABLE:
+        return applyFiltersToTableColumns(dataset, this.dataToFeature);
+
+      default:
+        return [];
     }
-    return filteredFeatures;
   }
 
   formatLayerData(datasets: Datasets, oldLayerData) {
@@ -418,14 +395,8 @@ export default class TripLayer extends Layer {
       // find columns from lat, lng, id, and ts
       const columnConfig = detectTableColumns(dataset, this.config.columns);
       if (columnConfig) {
-        const columns = assignColumnsByColumnMode({
-          columns: columnConfig.columns,
-          supportedColumnModes: this.supportedColumnModes,
-          columnMode: COLUMN_MODE_TABLE
-        });
         this.updateLayerConfig({
           ...columnConfig,
-          columns,
           columnMode: COLUMN_MODE_TABLE
         });
       }

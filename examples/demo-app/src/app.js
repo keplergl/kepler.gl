@@ -43,8 +43,8 @@ import sampleS2Data, {config as s2MapConfig, dataId as s2DataId} from './data/sa
 import sampleAnimateTrip, {animateTripDataId} from './data/sample-animate-trip-data';
 import sampleIconCsv, {config as savedMapConfig} from './data/sample-icon-csv';
 import sampleGpsData from './data/sample-gps-data';
-
-import {processCsvData, processGeojson} from '@kepler.gl/processors';
+import sampleRowData, {config as rowDataConfig} from './data/sample-row-data';
+import {processCsvData, processGeojson, processRowObject} from '@kepler.gl/processors';
 /* eslint-enable no-unused-vars */
 
 const BannerHeight = 48;
@@ -178,7 +178,25 @@ class App extends Component {
     // this._loadH3HexagonData();
     // this._loadS2Data();
     // this._loadScenegraphLayer();
-    this._loadGpsData();
+    // this._loadGpsData();
+    // this._loadRowData();
+  }
+
+  _loadRowData() {
+    this.props.dispatch(
+      addDataToMap({
+        datasets: [
+          {
+            info: {
+              label: 'Sample Visit Data',
+              id: 'sample_visit_data'
+            },
+            data: processRowObject(sampleRowData)
+          }
+        ],
+        config: rowDataConfig
+      })
+    );
   }
 
   _loadPointData() {

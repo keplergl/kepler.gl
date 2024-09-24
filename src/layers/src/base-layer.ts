@@ -10,7 +10,6 @@ import {TextLayer} from '@deck.gl/layers';
 
 import DefaultLayerIcon from './default-layer-icon';
 import {diffUpdateTriggers} from './layer-update';
-import {assignColumnsByColumnMode} from './layer-utils';
 
 import {
   ALL_FIELD_TYPES,
@@ -367,10 +366,17 @@ class Layer {
    */
   get defaultLinkColumnPairs(): ColumnPairs {
     return {
+      lat: {pair: ['lng', 'alt'], fieldPairKey: 'lat'},
+      lng: {pair: ['lat', 'alt'], fieldPairKey: 'lng'},
+      alt: {pair: ['lng', 'lat'], fieldPairKey: 'altitude'},
+
       lat0: {pair: 'lng0', fieldPairKey: 'lat'},
       lng0: {pair: 'lat0', fieldPairKey: 'lng'},
+      alt0: {pair: ['lng0', 'lat0'], fieldPairKey: 'altitude'},
+
       lat1: {pair: 'lng1', fieldPairKey: 'lat'},
-      lng1: {pair: 'lat1', fieldPairKey: 'lng'}
+      lng1: {pair: 'lat1', fieldPairKey: 'lng'},
+      alt1: {pair: ['lng1', 'lat1'], fieldPairKey: 'altitude'}
     };
   }
 
@@ -794,11 +800,7 @@ class Layer {
 
     const columns = {...required, ...optional};
 
-    return assignColumnsByColumnMode({
-      columns,
-      supportedColumnModes: this.supportedColumnModes,
-      columnMode: this.config.columnMode
-    });
+    return columns;
   }
 
   updateLayerConfig<LayerConfig extends LayerBaseConfig = LayerBaseConfig>(
@@ -933,18 +935,31 @@ class Layer {
       this.updateLayerVisConfig({[prop]: update});
     }
   }
-
+  hasColumnValue(column?: LayerColumn) {
+    return Boolean(column && column.value && column.fieldIdx > -1);
+  }
+  hasRequiredColumn(column?: LayerColumn) {
+    return Boolean(column && (column.optional || this.hasColumnValue(column)));
+  }
   /**
    * Check whether layer has all columns
    * @returns yes or no
    */
   hasAllColumns(): boolean {
-    const {columns} = this.config;
-    return (
+    const {columns, columnMode} = this.config;
+    // if layer has different column mode, check if have all required columns of current column Mode
+    if (columnMode) {
+      const currentColumnModes = (this.supportedColumnModes || []).find(
+        colMode => colMode.key === columnMode
+      );
+      return Boolean(
+        currentColumnModes !== undefined &&
+          currentColumnModes.requiredColumns?.every(colKey => this.hasColumnValue(columns[colKey]))
+      );
+    }
+    return Boolean(
       columns &&
-      Object.values(columns).every((column?: LayerColumn) => {
-        return Boolean(column && (column.optional || (column.value && column.fieldIdx > -1)));
-      })
+        Object.values(columns).every((column?: LayerColumn) => this.hasRequiredColumn(column))
     );
   }
 

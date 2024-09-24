@@ -396,7 +396,10 @@ mergedLayer0.config = {
       reversed: true
     },
     radiusRange: [0, 50],
-    strokeColor: [18, 147, 154]
+    strokeColor: [18, 147, 154],
+    allowHover: true,
+    showNeighborOnHover: false,
+    showHighlightColor: true
   },
   animation: {enabled: false}
 };

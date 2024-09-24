@@ -263,6 +263,21 @@ export default function LayerConfiguratorFactory(
             updateLayerTextLabel={this.props.updateLayerTextLabel}
             textLabel={layer.config.textLabel}
           />
+
+          {/* Interaction */}
+          <LayerConfigGroup label={'layer.interaction'} collapsible>
+            <VisConfigSwitch {...layer.visConfigSettings.allowHover} {...visConfiguratorProps} />
+            <ConfigGroupCollapsibleContent>
+              <VisConfigSwitch
+                {...layer.visConfigSettings.showNeighborOnHover}
+                {...visConfiguratorProps}
+              />
+              <VisConfigSwitch
+                {...layer.visConfigSettings.showHighlightColor}
+                {...visConfiguratorProps}
+              />
+            </ConfigGroupCollapsibleContent>
+          </LayerConfigGroup>
         </StyledLayerVisualConfigurator>
       );
     }

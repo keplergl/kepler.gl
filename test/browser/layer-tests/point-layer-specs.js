@@ -15,7 +15,8 @@ import {
   pointLayerMeta,
   fieldDomain
 } from 'test/helpers/layer-utils';
-
+import testArcData, {pointFromNeighbor} from 'test/fixtures/test-arc-data';
+import {StateWArcNeighbors} from 'test/helpers/mock-state';
 import {copyTableAndUpdate} from '@kepler.gl/table';
 import {KeplerGlLayers} from '@kepler.gl/layers';
 import {INITIAL_MAP_STATE} from '@kepler.gl/reducers';
@@ -112,11 +113,13 @@ test('#PointLayer -> formatLayerData', t => {
           data: [
             {
               index: 0,
-              position: [testRows[0][2], testRows[0][1], testRows[0][7]]
+              position: [testRows[0][2], testRows[0][1], testRows[0][7]],
+              neighbors: undefined
             },
             {
               index: 4,
-              position: [testRows[4][2], testRows[4][1], testRows[4][7]]
+              position: [testRows[4][2], testRows[4][1], testRows[4][7]],
+              neighbors: undefined
             }
           ],
           getFilterValue: () => {},
@@ -222,11 +225,13 @@ test('#PointLayer -> formatLayerData', t => {
           data: [
             {
               index: 0,
-              position: [testRows[0][2], testRows[0][1], 0]
+              position: [testRows[0][2], testRows[0][1], 0],
+              neighbors: undefined
             },
             {
               index: 4,
-              position: [testRows[4][2], testRows[4][1], 0]
+              position: [testRows[4][2], testRows[4][1], 0],
+              neighbors: undefined
             }
           ],
           getFilterValue: () => {},
@@ -314,11 +319,13 @@ test('#PointLayer -> formatLayerData', t => {
           data: [
             {
               index: 0,
-              position: [testRows[0][2], testRows[0][1], 0]
+              position: [testRows[0][2], testRows[0][1], 0],
+              neighbors: undefined
             },
             {
               index: 4,
-              position: [testRows[4][2], testRows[4][1], 0]
+              position: [testRows[4][2], testRows[4][1], 0],
+              neighbors: undefined
             }
           ],
           getFilterValue: () => {},
@@ -397,11 +404,13 @@ test('#PointLayer -> formatLayerData', t => {
           data: [
             {
               index: 0,
-              position: [testRows[0][2], testRows[0][1], 0]
+              position: [testRows[0][2], testRows[0][1], 0],
+              neighbors: undefined
             },
             {
               index: 4,
-              position: [testRows[4][2], testRows[4][1], 0]
+              position: [testRows[4][2], testRows[4][1], 0],
+              neighbors: undefined
             }
           ],
           getFilterValue: () => {},
@@ -425,6 +434,36 @@ test('#PointLayer -> formatLayerData', t => {
         t.deepEqual(layer.config.sizeDomain, [0, 1], 'should update layer sizeDomain');
         // getRadius should be a constant because sizeField is null
         t.equal(layerData.getRadius, 1, 'getRadius should return current radius');
+      }
+    },
+    {
+      name: 'Arc data from neighbors',
+      layer: pointFromNeighbor,
+      datasets: StateWArcNeighbors.visState.datasets,
+      assert: result => {
+        const {layerData} = result;
+        const expectedLayerData = {
+          data: [
+            {
+              index: 0,
+              position: [testArcData[0].longitude, testArcData[0].latitude, 0],
+              neighbors: testArcData[0].neighbors
+            },
+            {
+              index: 1,
+              position: [testArcData[1].longitude, testArcData[1].latitude, 0],
+              neighbors: testArcData[1].neighbors
+            }
+          ]
+        };
+
+        for (let i = 0; i < 2; i++) {
+          t.deepEqual(
+            layerData.data[i],
+            expectedLayerData.data[i],
+            'should format correct point layerData data with neighbors'
+          );
+        }
       }
     }
   ];

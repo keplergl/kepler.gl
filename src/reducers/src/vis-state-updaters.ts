@@ -651,6 +651,7 @@ export function layerDataIdChangeUpdater(
   const idx = state.layers.findIndex(l => l.id === oldLayer.id);
 
   let newLayer = oldLayer.updateLayerConfig({dataId});
+
   // this may happen when a layer is new (type: null and no columns) but it's not ready to be saved
   if (newLayer.isValidToSave()) {
     const validated = validateExistingLayerWithData(

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import classnames from 'classnames';
 import React, {Component, ComponentType} from 'react';
 import styled from 'styled-components';
 import {createSelector} from 'reselect';
@@ -25,7 +26,12 @@ const StyledFieldListItem = styled.div`
   flex-direction: row;
   align-items: center;
 `;
-
+const StyledFieldSelector = styled.div`
+  .item-selector__dropdown {
+    // smaller padding on the side to accomodate field token
+    padding: 0 6px;
+  }
+`;
 export type FieldListItemFactoryProps = {
   value: Field;
   displayOption: (field: Field) => string;
@@ -97,6 +103,7 @@ interface FieldSelectorFactoryProps {
   CustomChickletComponent?: ComponentType<any>;
   size?: string;
   reorderItems?: (newOrder: any) => void;
+  className?: string;
 }
 function noop() {
   return;
@@ -164,7 +171,7 @@ function FieldSelectorFactory(
 
     render() {
       return (
-        <div className="field-selector">
+        <StyledFieldSelector className={classnames('field-selector', this.props.className)}>
           <ItemSelector
             getOptionValue={d => d}
             closeOnSelect={this.props.closeOnSelect}
@@ -187,7 +194,7 @@ function FieldSelectorFactory(
             DropdownHeaderComponent={this.props.suggested ? SuggestedFieldHeader : null}
             CustomChickletComponent={this.props.CustomChickletComponent}
           />
-        </div>
+        </StyledFieldSelector>
       );
     }
   }

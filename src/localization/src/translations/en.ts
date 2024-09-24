@@ -114,7 +114,8 @@ export default {
       '3d': '3D'
     },
     layerUpdateError:
-      'An error occurred during layer update: {errorMessage}. Make sure the format of the input data is valid.'
+      'An error occurred during layer update: {errorMessage}. Make sure the format of the input data is valid.',
+    interaction: 'Interaction'
   },
   layerVisConfigs: {
     angle: 'Angle',
@@ -157,6 +158,9 @@ export default {
     heightRange: 'Height Range',
     fixedHeight: 'Fixed height',
     fixedHeightDescription: 'Use height without modifications',
+    allowHover: 'Allow Hover',
+    showNeighborOnHover: 'Highlight Neighbors On Hover',
+    showHighlightColor: 'Show highlight Color',
     heightMultiplier: 'Height Multiplier',
     darkModeEnabled: 'Dark base map'
   },
@@ -516,19 +520,21 @@ ${'```'}
   columns: {
     title: 'Columns',
     lat: 'lat',
-    lng: 'lon',
+    lng: 'lng',
     altitude: 'altitude',
+    alt: 'altitude',
     id: 'id',
     timestamp: 'time',
     icon: 'icon',
     geojson: 'geojson',
     token: 'token',
     sortBy: 'sort by',
+    neighbors: 'neighbors',
     arc: {
-      lat0: 'source lat',
-      lng0: 'source lng',
-      lat1: 'target lat',
-      lng1: 'target lng'
+      lat0: 'source lat or hex id',
+      lng0: 'source lng or hex id',
+      lat1: 'target lat or hex id',
+      lng1: 'target lng or hex id'
     },
     line: {
       alt0: 'source altitude',

@@ -41,8 +41,9 @@ import tripCsvData, {
   tripCsvDataInfo,
   expectedTripLayerConfig
 } from '../fixtures/test-trip-csv-data';
+import testArcData, {arcDataInfo, config as arcDataConfig} from '../fixtures/test-arc-data';
 import tripGeojson, {tripDataInfo} from '../fixtures/trip-geojson';
-import {processCsvData, processGeojson} from '@kepler.gl/processors';
+import {processCsvData, processGeojson, processRowObject} from '@kepler.gl/processors';
 import {MOCK_MAP_STYLE} from './mock-map-styles';
 
 const geojsonFields = cloneDeep(fields);
@@ -173,6 +174,31 @@ export function mockStateWithTripTable(state) {
   test(t => {
     t.equal(updatedState.visState.layers.length, 1, 'should create 1 trip layer');
     t.equal(updatedState.visState.layers[0].type, 'trip', 'should create trip layer');
+    t.end();
+  });
+
+  return updatedState;
+}
+
+export function mockStateWithArcNeighbors(state) {
+  const initialState = cloneDeep(state || InitialState);
+  const updatedState = applyActions(keplerGlReducer, initialState, [
+    {
+      action: addDataToMap,
+      payload: [
+        {
+          datasets: {info: arcDataInfo, data: processRowObject(testArcData)},
+          config: arcDataConfig
+        }
+      ]
+    }
+  ]);
+
+  test(t => {
+    t.equal(updatedState.visState.layers.length, 3, 'should create 3 layers');
+    t.equal(updatedState.visState.layers[0].type, 'point', 'should create point layer');
+    t.equal(updatedState.visState.layers[1].type, 'arc', 'should create arc layer');
+    t.equal(updatedState.visState.layers[2].type, 'arc', 'should create arc layer');
     t.end();
   });
 
@@ -758,7 +784,10 @@ export const expectedSavedLayer1 = {
       },
       strokeColorRange: DEFAULT_COLOR_RANGE,
       strokeColor: null,
-      radiusRange: [0, 50]
+      radiusRange: [0, 50],
+      allowHover: true,
+      showNeighborOnHover: false,
+      showHighlightColor: true
     }
   },
   visualChannels: {
@@ -803,7 +832,10 @@ export const expectedLoadedLayer1 = {
       strokeColorRange: DEFAULT_COLOR_RANGE,
       filled: true,
       strokeColor: null,
-      radiusRange: [0, 50]
+      radiusRange: [0, 50],
+      allowHover: true,
+      showNeighborOnHover: false,
+      showHighlightColor: true
     },
     colorField: {
       name: 'gps_data.types',
@@ -939,7 +971,7 @@ export const StateWMultiH3Layers = mockStateWithMultipleH3Layers();
 export const StateWithGeocoderDataset = mockStateWithGeocoderDataset();
 export const StateWLayerStyle = mockStateWithLayerStyling();
 export const StateWTripTable = mockStateWithTripTable();
-
+export const StateWArcNeighbors = mockStateWithArcNeighbors();
 export const expectedSavedTripLayer = {
   id: 'trip-0',
   type: 'trip',

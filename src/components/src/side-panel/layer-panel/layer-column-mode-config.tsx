@@ -15,7 +15,7 @@ import {MinimalField} from '../../common/field-selector';
 import PanelHeaderActionFactory from '../panel-header-action';
 import LayerColumnConfigFactory from './layer-column-config';
 import {FormattedMessage} from '@kepler.gl/localization';
-import {assignColumnsByColumnMode, Layer, LayerInfoModal, LayerBaseConfig} from '@kepler.gl/layers';
+import {Layer, LayerInfoModal, LayerBaseConfig} from '@kepler.gl/layers';
 import {SupportedColumnMode, FieldPair, LayerColumns} from '@kepler.gl/types';
 
 import {Help} from '../../common/icons';
@@ -79,15 +79,22 @@ const ConfigPanesContainer = styled.div`
 interface FieldOption extends MinimalField {
   fieldIdx: number;
 }
-
+type ColumnModeConfig = {
+  key: string;
+  label: string;
+  columns: LayerColumns;
+};
 export type ColumnModeConfigProps = {
   supportedColumnModes: SupportedColumnMode[] | null;
   selectedColumnMode?: string;
   id: string;
   columns: LayerColumns;
-  renderColumnConfig: (mode: {key: string; label: string; columns: any}) => JSX.Element;
-  selectColumnMode: (mode: SupportedColumnMode) => void;
-  getHelpHandler?: (mode: SupportedColumnMode) => (() => void) | null;
+  renderColumnConfig: (
+    mode: {key: string; label: string; columns: any},
+    selected: boolean
+  ) => JSX.Element;
+  selectColumnMode: (mode: ColumnModeConfig) => void;
+  getHelpHandler?: (mode: ColumnModeConfig) => (() => void) | null;
 };
 
 ColumnModeConfigFactory.deps = [PanelHeaderActionFactory];
@@ -136,10 +143,12 @@ export function ColumnModeConfigFactory(
         ) : null}
         <ConfigPanesContainer>
           {columnModes.map((modeConfig, i) => {
-            const columnPanel = renderColumnConfig(modeConfig);
+            const {key: columnMode, label} = modeConfig;
+
+            const isSelected = selectedColumnMode === columnMode || columnModes.length === 1;
+            const columnPanel = renderColumnConfig(modeConfig, isSelected);
             const helpHandler = getHelpHandler(modeConfig);
             const selectColumnModeHandler = () => selectColumnMode(modeConfig);
-            const {key: columnMode, label} = modeConfig;
 
             return (
               <Fragment key={columnMode}>
@@ -155,7 +164,7 @@ export function ColumnModeConfigFactory(
                         <Checkbox
                           type="radio"
                           name={`layer-${id}-input-modes`}
-                          checked={selectedColumnMode === columnMode}
+                          checked={isSelected}
                           id={`${id}-input-column-${columnMode}`}
                           label={label}
                           onChange={selectColumnModeHandler}
@@ -222,19 +231,13 @@ function LayerColumnModeConfigFactory(
 
     const selectColumnMode = useCallback(
       ({key: columnMode}) => {
-        const updatedColumns = assignColumnsByColumnMode({
-          columns,
-          supportedColumnModes,
-          columnMode
-        });
-
-        updateLayerConfig({columnMode, columns: updatedColumns});
+        updateLayerConfig({columnMode});
       },
-      [updateLayerConfig, columns, supportedColumnModes]
+      [updateLayerConfig]
     );
 
     const renderColumnConfig = useCallback(
-      ({key: columnMode, label, columns: cols}) => (
+      ({key: columnMode, label, columns: cols}, isSelected) => (
         <LayerColumnConfig
           columnPairs={layer.columnPairs}
           columns={cols}
@@ -243,7 +246,15 @@ function LayerColumnModeConfigFactory(
           columnLabels={layer.columnLabels}
           fields={fields}
           fieldPairs={fieldPairs}
-          updateLayerConfig={updateLayerConfig}
+          updateLayerConfig={config =>
+            updateLayerConfig({
+              ...config,
+              // if column mode not currently selected
+              // set column mode along with the columns
+              ...(!isSelected && columnMode !== 'defaut' ? {columnMode} : {})
+            })
+          }
+          isActive={isSelected}
         />
       ),
       [layer, updateLayerConfig, fieldPairs, fields]
