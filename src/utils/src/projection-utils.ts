@@ -4,14 +4,13 @@
 import geoViewport from '@mapbox/geo-viewport';
 
 import WebMercatorViewport from 'viewport-mercator-project';
-import Console from 'global/console';
 
 export const MAPBOX_TILE_SIZE = 512;
 
-function isLat(num) {
+function isLat(num: number) {
   return Number.isFinite(num) && num <= 90 && num >= -90;
 }
-function isLng(num) {
+function isLng(num: number) {
   return Number.isFinite(num) && num <= 180 && num >= -180;
 }
 
@@ -36,7 +35,7 @@ export function validateBounds(bounds) {
 export function getCenterAndZoomFromBounds(bounds, {width, height}) {
   const validBounds = validateBounds(bounds);
   if (!validBounds) {
-    Console.warn('invalid map bounds provided');
+    console.warn('invalid map bounds provided');
     return null;
   }
 

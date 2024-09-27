@@ -2,7 +2,6 @@
 // Copyright contributors to the kepler.gl project
 
 import {withTask} from 'react-palm/tasks';
-import Console from 'global/console';
 import {generateHashId, getError, isPlainObject, toArray} from '@kepler.gl/utils';
 import {
   EXPORT_FILE_TO_CLOUD_TASK,
@@ -70,12 +69,12 @@ function createActionTask(action, payload) {
 
 function _validateProvider(provider, method) {
   if (!provider) {
-    Console.error(`provider is not defined`);
+    console.error(`provider is not defined`);
     return false;
   }
 
   if (typeof provider[method] !== 'function') {
-    Console.error(`${method} is not a function of Cloud provider: ${provider.name}`);
+    console.error(`${method} is not a function of Cloud provider: ${provider.name}`);
     return false;
   }
 
@@ -211,7 +210,7 @@ export const loadCloudMapUpdater = (
 ): ProviderState => {
   const {loadParams, provider, onSuccess, onError} = action.payload;
   if (!loadParams) {
-    Console.warn('load map error: loadParams is undefined');
+    console.warn('load map error: loadParams is undefined');
     return state;
   }
   if (!_validateProvider(provider, 'downloadMap')) {
@@ -258,7 +257,7 @@ function checkLoadMapResponseError(response) {
 function getDatasetHandler(format) {
   const defaultHandler = DATASET_HANDLERS[DATASET_FORMATS.csv];
   if (!format) {
-    Console.warn('format is not provided in load map response, will use csv by default');
+    console.warn('format is not provided in load map response, will use csv by default');
     return defaultHandler;
   }
 
@@ -266,7 +265,7 @@ function getDatasetHandler(format) {
     const supportedFormat = Object.keys(DATASET_FORMATS)
       .map(k => `'${k}'`)
       .join(', ');
-    Console.warn(
+    console.warn(
       `unknown format ${format}. Please use one of ${supportedFormat}, will use csv by default`
     );
     return defaultHandler;
@@ -340,7 +339,7 @@ export const loadCloudMapErrorUpdater = (
 ): ProviderState => {
   const message = getError(action.payload.error) || `Error loading saved map`;
 
-  Console.warn(message);
+  console.warn(message);
 
   const newState = {
     ...state,

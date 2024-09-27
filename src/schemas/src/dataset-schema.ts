@@ -2,7 +2,6 @@
 // Copyright contributors to the kepler.gl project
 
 import pick from 'lodash.pick';
-import {console as globalConsole} from 'global/window';
 
 import {ProtoDataset, RGBColor} from '@kepler.gl/types';
 import {KeplerTable} from '@kepler.gl/table';
@@ -136,7 +135,7 @@ export class DatasetSchema extends Schema {
         if (fields[i].type !== f.type) {
           // if newly detected field type is different from saved type
           // we log it but won't update it, cause we don't want to break people's map
-          globalConsole.warn(`detect ${f.name} type is now ${f.type} instead of ${fields[i].type}`);
+          console.warn(`detect ${f.name} type is now ${f.type} instead of ${fields[i].type}`);
         }
       });
     }

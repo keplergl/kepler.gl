@@ -1,13 +1,11 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import Console from 'global/console';
-
 const identity = state => state;
 
 /** Returns a function that logs a value with a given message */
 export function log(text: string): (value: any) => void {
-  return value => Console.log(text, value);
+  return value => console.log(text, value);
 }
 /** Wraps a value in an object and stores it the `payload` field */
 export function payload_<P>(payload: P) {

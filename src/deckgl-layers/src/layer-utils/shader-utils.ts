@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {console as Console} from 'global/window';
-
 /*
  * Amendment to default layer vertex shader
  * @param {string} vs
@@ -14,9 +12,9 @@ import {console as Console} from 'global/window';
  */
 export function editShader(vs: string, type: string, originalText: string, testToReplace: string) {
   if (!vs.includes(originalText)) {
-    // Here we call Console.error when we fail to edit deck.gl shader
+    // Here we call console.error when we fail to edit deck.gl shader
     // This should be caught by layer test
-    Console.error(`Cannot edit ${type} layer shader`);
+    console.error(`Cannot edit ${type} layer shader`);
     return vs;
   }
 

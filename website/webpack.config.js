@@ -14,8 +14,6 @@ const {
 const LIB_DIR = resolve(__dirname, '..');
 const SRC_DIR = resolve(LIB_DIR, './src');
 
-const console = require('global/console');
-
 const BABEL_CONFIG = {
   presets: ['@babel/preset-env', '@babel/preset-react', '@babel/preset-typescript'],
   plugins: [

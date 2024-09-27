@@ -3,7 +3,6 @@
 
 import React, {PureComponent} from 'react';
 import styled, {keyframes} from 'styled-components';
-import {window} from 'global';
 
 import {cdnUrl} from '../utils';
 import {media, breakPoints} from '../styles';
@@ -82,9 +81,7 @@ export default class Hero extends PureComponent {
         <Content>
           <LogoImage />
           <StyledCaption>
-            <div className="kg-home__caption__subtitle">
-              Make an impact with your location data
-            </div>
+            <div className="kg-home__caption__subtitle">Make an impact with your location data</div>
             <div className="kg-home__caption__description">
               <span>Kepler.gl is a powerful </span>
               <span className="t-bold"> open source </span>

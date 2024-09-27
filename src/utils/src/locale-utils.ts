@@ -2,7 +2,6 @@
 // Copyright contributors to the kepler.gl project
 
 import {isObject} from './utils';
-import Console from 'global/console';
 
 // Flat messages since react-intl does not seem to support nested structures
 // Adapted from https://medium.com/siren-apparel-press/internationalization-and-localization-of-sirenapparel-eu-sirenapparel-us-and-sirenapparel-asia-ddee266066a2
@@ -21,7 +20,7 @@ export const flattenMessages = (nestedMessages, prefix = '') => {
 
 export const mergeMessages = (defaultMessages, userMessages) => {
   if (!isObject(userMessages) || !isObject(userMessages.en)) {
-    Console.error(
+    console.error(
       'message should be an object and contain at least the `en` translation. Read more at https://docs.kepler.gl/docs/api-reference/localization'
     );
 

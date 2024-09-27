@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import window from 'global/window';
-
 /**
  * Generate a hash string based on number of character
  * @param {number} count
@@ -40,7 +38,7 @@ export function generateHashIdFromString(str: string): string {
  */
 export function isChrome(): boolean {
   // Chrome 1+
-  return window.chrome && window.chrome.webstore;
+  return !!(window as any).chrome?.webstore;
 }
 
 /**
@@ -48,7 +46,7 @@ export function isChrome(): boolean {
  * @param {string} str
  * @returns {string}
  */
-export function capitalizeFirstLetter(str) {
+export function capitalizeFirstLetter(str: string) {
   return typeof str === 'string' ? str.charAt(0).toUpperCase() + str.slice(1) : str;
 }
 

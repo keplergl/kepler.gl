@@ -7,7 +7,6 @@ import {browserHistory} from 'react-router';
 import {enhanceReduxMiddleware} from '@kepler.gl/reducers';
 import thunk from 'redux-thunk';
 // eslint-disable-next-line no-unused-vars
-import window from 'global/window';
 
 import demoReducer from './reducers/index';
 

@@ -2,7 +2,6 @@
 // Copyright contributors to the kepler.gl project
 
 import React, {Component, createRef, Dispatch} from 'react';
-import Console from 'global/console';
 import {bindActionCreators} from 'redux';
 import styled, {ThemeProvider, withTheme} from 'styled-components';
 import {createSelector} from 'reselect';
@@ -429,7 +428,7 @@ function KeplerGlFactory(
     _validateMapboxToken() {
       const {mapboxApiAccessToken} = this.props;
       if (!validateToken(mapboxApiAccessToken)) {
-        Console.warn(MISSING_MAPBOX_TOKEN);
+        console.warn(MISSING_MAPBOX_TOKEN);
       }
     }
 

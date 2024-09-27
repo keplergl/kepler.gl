@@ -3,7 +3,6 @@
 
 /* setup.js */
 import {JSDOM, VirtualConsole} from 'jsdom';
-import global from 'global';
 const {gl} = require('@deck.gl/test-utils');
 
 const virtualConsole = new VirtualConsole();

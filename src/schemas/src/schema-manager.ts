@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {console as Console} from 'global/window';
-
 import {Datasets} from '@kepler.gl/table';
 import datasetSchema from './dataset-schema';
 import mapStyleSchema from './map-style-schema';
@@ -262,12 +260,12 @@ export class KeplerGLSchema {
    */
   validateVersion(version: any): string | null {
     if (!version) {
-      Console.error('There is no version number associated with this saved map');
+      console.error('There is no version number associated with this saved map');
       return null;
     }
 
     if (!this._validVersions[version]) {
-      Console.error(`${version} is not a valid version`);
+      console.error(`${version} is not a valid version`);
       return null;
     }
 

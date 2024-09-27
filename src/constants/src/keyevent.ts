@@ -1,10 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import window from 'global/window';
-/* eslint-disable no-use-before-define */
-const KeyEvent = Object.assign({}, window.KeyEvent);
-/* eslint-enable no-use-before-define */
+const KeyEvent = Object.assign({}, (window as any).KeyEvent); // Firefox only
 
 // event event.keyCode is deprecated, should use event.key in the future
 KeyEvent.DOM_VK_UP = KeyEvent.DOM_VK_UP || 38;

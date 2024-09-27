@@ -3,10 +3,9 @@
 
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import document from 'global/document';
 import {Provider} from 'react-redux';
-import store from './store.ts';
-import App from './app.tsx';
+import store from './store';
+import App from './app';
 
 const Root = () => (
   <Provider store={store}>
@@ -14,6 +13,6 @@ const Root = () => (
   </Provider>
 );
 
-const root = ReactDOM.createRoot(document.getElementById('root'));
+const root = ReactDOM.createRoot(document.getElementById('root')!);
 
 root.render(<Root />);

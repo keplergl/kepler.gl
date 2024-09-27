@@ -8,7 +8,6 @@ import {mount} from 'enzyme';
 import configureStore from 'redux-mock-store';
 import {Provider} from 'react-redux';
 import sinon from 'sinon';
-import {console as Console} from 'global/window';
 
 import {
   withState,

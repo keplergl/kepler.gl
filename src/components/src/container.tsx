@@ -4,7 +4,6 @@
 import React, {Component, ComponentType, Dispatch} from 'react';
 import {connect, ConnectedProps} from 'react-redux';
 import memoize from 'lodash.memoize';
-import {console as Console} from 'global/window';
 import {injector, provideRecipesToInjector, flattenDeps} from './injector';
 import KeplerGlFactory from './kepler-gl';
 
@@ -121,7 +120,7 @@ export function ContainerFactory(
     getSelector = memoize((id, getState) => state => {
       if (!getState(state)) {
         // log error
-        Console.error(ERROR_MSG.noState);
+        console.error(ERROR_MSG.noState);
 
         return null;
       }

@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import Console from 'global/console';
-import window from 'global/window';
-import document from 'global/document';
 import {IMAGE_EXPORT_ERRORS} from '@kepler.gl/constants';
 
 export function processClone(original, clone) {
@@ -141,15 +138,15 @@ export function uid() {
   return `u${fourRandomChars()}${index++}`;
 }
 
-export function makeImage(uri) {
+export function makeImage(uri: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
-    const image = new window.Image();
+    const image: HTMLImageElement = new window.Image();
     image.onload = () => {
       resolve(image);
     };
     image.onerror = err => {
       const message = IMAGE_EXPORT_ERRORS.dataUri;
-      Console.log(uri);
+      console.log(uri);
       // error is an Event Object
       // https://www.w3schools.com/jsref/obj_event.asp
       reject({event: err, message});
@@ -205,8 +202,8 @@ export function escape(string) {
   return string.replace(/([.*+?^${}()|[\]/\\])/g, '\\$1');
 }
 
-export function delay(ms) {
-  return arg => {
+export function delay<T>(ms: number) {
+  return (arg: T): Promise<T> => {
     return new Promise(resolve => {
       window.setTimeout(() => {
         resolve(arg);
@@ -314,7 +311,7 @@ export function getAndEncode(url, options) {
 
       const encoder = new window.FileReader();
       encoder.onloadend = () => {
-        const content = encoder.result.split(/,/)[1];
+        const content = (encoder.result as string).split(/,/)[1];
         resolve(content);
       };
       encoder.readAsDataURL(request.response);
@@ -329,7 +326,7 @@ export function getAndEncode(url, options) {
     }
 
     function fail(message) {
-      Console.error(message);
+      console.error(message);
       resolve('');
     }
   });

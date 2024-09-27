@@ -6,9 +6,6 @@
  * Modified by heshan0131 to allow loading external stylesheets and inline webfonts
  */
 
-import window from 'global/window';
-import document from 'global/document';
-import Console from 'global/console';
 import svgToMiniDataURI from 'mini-svg-data-uri';
 import {IMAGE_EXPORT_ERRORS} from '@kepler.gl/constants';
 
@@ -111,7 +108,7 @@ function toSvg(node, options) {
  * */
 function toPixelData(node, options) {
   return draw(node, options || {}).then(
-    canvas => canvas.getContext('2d').getImageData(0, 0, getWidth(node), getHeight(node)).data
+    canvas => canvas.getContext('2d')!.getImageData(0, 0, getWidth(node), getHeight(node)).data
   );
 }
 
@@ -164,17 +161,17 @@ function draw(domNode, options) {
     .then(delay(100))
     .then(image => {
       const canvas = newCanvas(domNode);
-      canvas.getContext('2d').drawImage(image, 0, 0);
+      canvas.getContext('2d')!.drawImage(image, 0, 0);
       return canvas;
     });
 
   function newCanvas(dNode) {
-    const canvas = document.createElement('canvas');
+    const canvas: HTMLCanvasElement = document.createElement('canvas');
     canvas.width = options.width || getWidth(dNode);
     canvas.height = options.height || getHeight(dNode);
 
     if (options.bgcolor) {
-      const ctx = canvas.getContext('2d');
+      const ctx = canvas.getContext('2d')!;
       ctx.fillStyle = options.bgcolor;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
@@ -354,8 +351,8 @@ function newFontFaces() {
                 // Handle any error that occurred in any of the previous
                 // promises in the chain. stylesheet failed to load should not stop
                 // the process, hence result in only a warning, instead of reject
-                Console.warn(IMAGE_EXPORT_ERRORS.styleSheet, sheet.href);
-                Console.log(err);
+                console.warn(IMAGE_EXPORT_ERRORS.styleSheet, sheet.href);
+                console.log(err);
                 return;
               });
           }
@@ -375,7 +372,7 @@ function newFontFaces() {
         try {
           rules = sheet.rules || sheet.cssRules;
         } catch (e) {
-          Console.log(`'Can't read the css rules of: ${sheet.href}`, e);
+          console.log(`'Can't read the css rules of: ${sheet.href}`, e);
           return;
         }
 
@@ -383,11 +380,11 @@ function newFontFaces() {
           try {
             asArray(rules || []).forEach(cssRules.push.bind(cssRules));
           } catch (e) {
-            Console.log(`Error while reading CSS rules from ${sheet.href}`, e);
+            console.log(`Error while reading CSS rules from ${sheet.href}`, e);
             return;
           }
         } else {
-          Console.log('getCssRules can not find cssRules');
+          console.log('getCssRules can not find cssRules');
           return;
         }
       });

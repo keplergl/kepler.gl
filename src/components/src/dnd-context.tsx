@@ -4,7 +4,6 @@
 import React, {useCallback, useMemo, PropsWithChildren} from 'react';
 import styled from 'styled-components';
 import {DndContext as DndKitContext, DragOverlay} from '@dnd-kit/core';
-import Console from 'global/console';
 
 import {
   DND_EMPTY_MODIFIERS,
@@ -94,7 +93,7 @@ function DndContextFactory(
             onEffectDragStart(event);
             break;
           default:
-            Console.log(`activeType ${activeType} unknown`);
+            console.log(`activeType ${activeType} unknown`);
         }
       },
       [onLayerDragStart, onEffectDragStart]
@@ -111,7 +110,7 @@ function DndContextFactory(
             onEffectDragEnd(event);
             break;
           default:
-            Console.log(`activeType ${activeType} unknown`);
+            console.log(`activeType ${activeType} unknown`);
         }
       },
       [onLayerDragEnd, onEffectDragEnd]

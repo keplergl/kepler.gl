@@ -3,7 +3,6 @@
 
 import React, {PureComponent} from 'react';
 import {ThemeProvider} from 'styled-components';
-import window from 'global/window';
 
 import {theme} from '../styles';
 import {SECTIONS} from '../content';

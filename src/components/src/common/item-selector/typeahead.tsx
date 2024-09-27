@@ -6,7 +6,6 @@ import {polyfill} from 'react-lifecycles-compat';
 import fuzzy from 'fuzzy';
 import classNames from 'classnames';
 import styled from 'styled-components';
-import {console as Console} from 'global/window';
 
 import Accessor from './accessor';
 import DropdownList, {ListItem} from './dropdown-list';
@@ -64,7 +63,7 @@ function generateSearchFunction(props: TypeaheadProps) {
   const {searchOptions, filterOption} = props;
   if (typeof searchOptions === 'function') {
     if (filterOption !== null) {
-      Console.warn('searchOptions prop is being used, filterOption prop will be ignored');
+      console.warn('searchOptions prop is being used, filterOption prop will be ignored');
     }
     return searchOptions;
   } else if (typeof filterOption === 'function') {

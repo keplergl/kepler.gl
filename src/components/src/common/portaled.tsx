@@ -9,7 +9,6 @@ import {canUseDOM} from 'exenv';
 import {withTheme} from 'styled-components';
 import {RootContext} from '../context';
 import Modal from 'react-modal';
-import window from 'global/window';
 import {theme} from '@kepler.gl/styles';
 
 const listeners = {};

@@ -3,8 +3,6 @@
 
 import React, {Component} from 'react';
 import {bisectLeft} from 'd3-array';
-import {requestAnimationFrame, cancelAnimationFrame} from 'global/window';
-import Console from 'global/console';
 import {BASE_SPEED, FPS, ANIMATION_WINDOW} from '@kepler.gl/constants';
 import {Timeline} from '@kepler.gl/types';
 
@@ -84,7 +82,7 @@ function AnimationControllerFactory(): typeof AnimationControllerType {
       }
     }
 
-    _timer = null;
+    _timer: null | number = null;
     _startTime = 0;
 
     _startOrPauseAnimation() {
@@ -160,7 +158,7 @@ function AnimationControllerFactory(): typeof AnimationControllerType {
           // 30*600
           const {steps} = this.props;
           if (!Array.isArray(steps) || !steps.length) {
-            Console.warn('animation steps should be an array');
+            console.warn('animation steps should be an array');
             return;
           }
           // when speed = 1, animation should loop through 600 frames at 60 FPS

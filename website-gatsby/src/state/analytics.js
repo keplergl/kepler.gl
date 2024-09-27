@@ -5,11 +5,10 @@
 
 import {ActionTypes} from 'kepler.gl/actions';
 import {LOCATION_CHANGE} from 'react-router-redux';
-import window from 'global/window';
 import {ALL_FIELD_TYPES} from 'kepler.gl/constants';
 import get from 'lodash.get';
 
-const getPayload = action => action ? action.payload : null;
+const getPayload = action => (action ? action.payload : null);
 
 // Hack, because we don't have a way to access next state
 const getFilterType = (store, idx, value) => {
@@ -70,7 +69,7 @@ const trackingInformation = {
   [LOCATION_CHANGE]: x => x,
 
   // demo app actions
-  ['PUSHING_FILE']: (payload) => {
+  ['PUSHING_FILE']: payload => {
     const size = get(payload, ['metadata', 'metadata', 'size']);
     return {
       isLoading: payload.isLoading,
@@ -92,9 +91,7 @@ const analyticsMiddleware = store => next => action => {
     window.gtag('event', 'action', {
       event_category: action.type,
       event_label: trackingInformation[action.type]
-        ? JSON.stringify(
-          trackingInformation[action.type](payload, store)
-        )
+        ? JSON.stringify(trackingInformation[action.type](payload, store))
         : null
     });
   }

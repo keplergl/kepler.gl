@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {console as Console} from 'global/console';
 import {ascending, descending} from 'd3-array';
 
 import {
@@ -426,7 +425,7 @@ class KeplerTable {
     const {dataContainer, filteredIndexForDomain} = this;
 
     if (!SCALE_TYPES[scaleType]) {
-      Console.error(`scale type ${scaleType} not supported`);
+      console.error(`scale type ${scaleType} not supported`);
       return null;
     }
 
@@ -475,7 +474,7 @@ class KeplerTable {
    */
   _assetField(fieldName: string, condition: any): void {
     if (!condition) {
-      Console.error(`${fieldName} doesnt exist in dataset ${this.id}`);
+      console.error(`${fieldName} doesnt exist in dataset ${this.id}`);
     }
   }
 }

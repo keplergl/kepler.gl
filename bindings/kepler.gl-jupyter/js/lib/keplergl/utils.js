@@ -4,7 +4,6 @@
 import {tableFromIPC} from 'apache-arrow';
 import {processCsvData, processGeojson, processArrowBatches} from '@kepler.gl/processors';
 import log from '../log';
-import console from 'global/console';
 
 function handleJuptyerDataFormat(dataEntry) {
   // This makes passing data between Jupyter the iframe easier

@@ -3,7 +3,6 @@
 
 import test from 'tape';
 import moment from 'moment';
-import global from 'global';
 import sinon from 'sinon';
 import sinonStubPromise from 'sinon-stub-promise';
 sinonStubPromise(sinon);

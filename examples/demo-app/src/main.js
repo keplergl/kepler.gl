@@ -3,7 +3,6 @@
 
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import document from 'global/document';
 import {Provider} from 'react-redux';
 import {browserHistory, Router, Route} from 'react-router';
 import {syncHistoryWithStore} from 'react-router-redux';

@@ -4,7 +4,6 @@
 import React from 'react';
 import {Router, Route, IndexRoute, browserHistory} from 'react-router';
 import {syncHistoryWithStore} from 'react-router-redux';
-import window from 'global/window';
 import store from './reducers';
 import Home from './components/home';
 import App from './components/app';

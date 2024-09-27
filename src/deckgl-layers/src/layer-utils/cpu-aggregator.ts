@@ -3,7 +3,6 @@
 
 /* eslint-disable guard-for-in */
 import {AGGREGATION_OPERATION, _BinSorter as BinSorter} from '@deck.gl/aggregation-layers';
-import {console as Console} from 'global/window';
 
 import {aggregate} from '@kepler.gl/utils';
 import {AGGREGATION_TYPES, SCALE_FUNC} from '@kepler.gl/constants';
@@ -68,7 +67,7 @@ export const DECK_AGGREGATION_MAP = {
 
 export function getValueFunc(aggregation, accessor) {
   if (!aggregation || !AGGREGATION_OPERATION[aggregation.toUpperCase()]) {
-    Console.warn(`Aggregation ${aggregation} is not supported`);
+    console.warn(`Aggregation ${aggregation} is not supported`);
   }
 
   const op = AGGREGATION_OPERATION[aggregation.toUpperCase()] || AGGREGATION_OPERATION.SUM;
@@ -79,7 +78,7 @@ export function getValueFunc(aggregation, accessor) {
 
 export function getScaleFunctor(scaleType) {
   if (!scaleType || !SCALE_FUNC[scaleType]) {
-    Console.warn(`Scale ${scaleType} is not supported`);
+    console.warn(`Scale ${scaleType} is not supported`);
   }
   return SCALE_FUNC[scaleType] || SCALE_FUNC.quantize;
 }

@@ -4,8 +4,6 @@
 // NOTE: this is only used for exporting html template
 import createAppStore from './store';
 import renderRoot from './components/root';
-import document from 'global/document';
-import window from 'global/window';
 import {addDataConfigToKeplerGl} from './kepler.gl';
 
 const map = (function initKeplerGl() {
@@ -13,10 +11,7 @@ const map = (function initKeplerGl() {
   const store = createAppStore();
 
   const divElmt = document.createElement('div');
-  divElmt.setAttribute(
-    'style',
-    'width: 100vw; height: 100vh; position: absolute'
-  );
+  divElmt.setAttribute('style', 'width: 100vw; height: 100vh; position: absolute');
   document.body.appendChild(divElmt);
 
   return {

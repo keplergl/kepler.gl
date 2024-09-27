@@ -6,8 +6,6 @@
 import readdirp from 'readdirp';
 import minimist from 'minimist';
 import {readFileSync} from 'fs';
-import process from 'global/process.js';
-import console from 'global/console.js';
 
 import LicenseFixer from './license-fixer.mjs';
 
