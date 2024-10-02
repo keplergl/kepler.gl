@@ -16,21 +16,7 @@ import {
 import domtoimage from './dom-to-image';
 import {generateHashId, set} from './utils';
 import {exportMapToHTML} from './export-map-html';
-
-/**
- * Default file names
- */
-export const DEFAULT_IMAGE_NAME = 'kepler.gl.png';
-export const DEFAULT_HTML_NAME = 'kepler.gl.html';
-export const DEFAULT_JSON_NAME = 'kepler.gl.json';
-export const DEFAULT_DATA_NAME = 'kepler.gl';
-
-/**
- * Default json export settings
- */
-export const DEFAULT_EXPORT_JSON_SETTINGS = {
-  hasData: true
-};
+import {getApplicationConfig} from './application-config';
 
 const defaultResolution = OneXResolutionOption;
 
@@ -136,7 +122,10 @@ export function downloadFile(fileBlob: Blob, fileName: string) {
  * Whether color is rgb
  * @returns
  */
-export function exportImage(uiStateExportImage: ExportImage, filename = DEFAULT_IMAGE_NAME) {
+export function exportImage(
+  uiStateExportImage: ExportImage,
+  filename = getApplicationConfig().defaultImageName
+) {
   const {imageDataUri} = uiStateExportImage;
   if (imageDataUri) {
     const file = dataURItoBlob(imageDataUri);
@@ -154,7 +143,7 @@ export function exportToJsonString(data) {
   }
 }
 
-export function getMapJSON(state, options = DEFAULT_EXPORT_JSON_SETTINGS) {
+export function getMapJSON(state, options = getApplicationConfig().defaultExportJsonSettings) {
   const {hasData} = options;
   const schema = state.visState.schema;
 
@@ -175,7 +164,7 @@ export function exportJson(state, options: any = {}) {
   const map = getMapJSON(state, options);
   map.info.source = 'kepler.gl';
   const fileBlob = new Blob([exportToJsonString(map)], {type: 'application/json'});
-  const fileName = state.appName ? `${state.appName}.json` : DEFAULT_JSON_NAME;
+  const fileName = state.appName ? `${state.appName}.json` : getApplicationConfig().defaultJsonName;
   downloadFile(fileBlob, fileName);
 }
 
@@ -190,10 +179,13 @@ export function exportHtml(state, options) {
   };
 
   const fileBlob = new Blob([exportMapToHTML(data)], {type: 'text/html'});
-  downloadFile(fileBlob, state.appName ? `${state.appName}.html` : DEFAULT_HTML_NAME);
+  downloadFile(
+    fileBlob,
+    state.appName ? `${state.appName}.html` : getApplicationConfig().defaultHtmlName
+  );
 }
 
-export function exportMap(state, options = DEFAULT_EXPORT_JSON_SETTINGS) {
+export function exportMap(state, options = getApplicationConfig().defaultExportJsonSettings) {
   const {imageDataUri} = state.uiState.exportImage;
   const thumbnail: Blob | null = imageDataUri ? dataURItoBlob(imageDataUri) : null;
   const mapToSave = getMapJSON(state, options);
