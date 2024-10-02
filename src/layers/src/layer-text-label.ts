@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import {Table as ArrowTable} from 'apache-arrow';
 import {getDistanceScales} from 'viewport-mercator-project';
 import {notNullorUndefined} from '@kepler.gl/utils';
 import uniq from 'lodash.uniq';
@@ -46,7 +47,8 @@ export const formatTextLabelData = ({
   triggerChanged,
   oldLayerData,
   data,
-  dataContainer
+  dataContainer,
+  filteredIndex
 }) => {
   return textLabel.map((tl, i) => {
     if (!tl.field) {
@@ -57,7 +59,7 @@ export const formatTextLabelData = ({
       };
     }
 
-    const getText = textLabelAccessor(tl)(dataContainer);
+    let getText: (d: {index: number}) => string = textLabelAccessor(tl)(dataContainer);
     let characterSet;
 
     if (
@@ -68,8 +70,27 @@ export const formatTextLabelData = ({
     ) {
       characterSet = oldLayerData.textLabels[i].characterSet;
     } else {
-      const allLabels = tl.field ? data.map(getText) : [];
-      characterSet = uniq(allLabels.join(''));
+      if (data instanceof ArrowTable) {
+        // we don't filter out arrow tables,
+        // so we use filteredIndex array instead
+        const allLabels: string[] = [];
+        if (tl.field) {
+          filteredIndex.forEach((value, index) => {
+            if (value > 0) allLabels.push(getText({index}));
+          });
+        }
+        characterSet = uniq(allLabels.join(''));
+      } else {
+        const allLabels = tl.field ? data.map(getText) : [];
+        characterSet = uniq(allLabels.join(''));
+      }
+    }
+
+    // For Arrow Layers getText has to be an arrow column
+    if (data instanceof ArrowTable) {
+      // TODO the data has to be a column of string type.
+      // Integer columns lack valueOffsets prop.
+      getText = dataContainer.getColumn(tl.field.fieldIdx);
     }
 
     return {

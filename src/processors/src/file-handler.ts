@@ -5,8 +5,8 @@ import * as arrow from 'apache-arrow';
 import {parseInBatches} from '@loaders.gl/core';
 import {JSONLoader, _JSONPath} from '@loaders.gl/json';
 import {CSVLoader} from '@loaders.gl/csv';
-import {ArrowLoader} from '@loaders.gl/arrow';
-import {ParquetLoader, installBufferPolyfill} from '@loaders.gl/parquet';
+import {GeoArrowLoader} from '@loaders.gl/arrow';
+import {GeoParquetLoader, installBufferPolyfill} from '@loaders.gl/parquet';
 import {Loader} from '@loaders.gl/loader-utils';
 import {generateHashId, isPlainObject, generateHashIdFromString} from '@kepler.gl/utils';
 import {DATASET_FORMATS} from '@kepler.gl/constants';
@@ -42,7 +42,7 @@ const ARROW_LOADER_OPTIONS = {
 };
 
 const PARQUET_LOADER_OPTIONS = {
-  worker: true
+  shape: 'arrow-table'
 };
 
 const JSON_LOADER_OPTIONS = {
@@ -186,7 +186,7 @@ export async function readFileInBatches({
   loaders: Loader[];
   loadOptions: any;
 }): Promise<AsyncGenerator> {
-  loaders = [JSONLoader, CSVLoader, ArrowLoader, ParquetLoader, ...loaders];
+  loaders = [JSONLoader, CSVLoader, GeoArrowLoader, GeoParquetLoader, ...loaders];
   loadOptions = {
     csv: CSV_LOADER_OPTIONS,
     arrow: ARROW_LOADER_OPTIONS,

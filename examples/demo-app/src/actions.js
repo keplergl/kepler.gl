@@ -7,7 +7,7 @@ import {fetch} from 'global';
 import {loadFiles, toggleModal} from '@kepler.gl/actions';
 import {load} from '@loaders.gl/core';
 import {CSVLoader} from '@loaders.gl/csv';
-import {ArrowLoader} from '@loaders.gl/arrow';
+import {GeoArrowLoader} from '@loaders.gl/arrow';
 import {_GeoJSONLoader as GeoJSONLoader} from '@loaders.gl/json';
 
 import {
@@ -251,7 +251,7 @@ function loadRemoteData(url) {
 
   // Load data
   return new Promise(resolve => {
-    const loaders = [CSVLoader, ArrowLoader, GeoJSONLoader];
+    const loaders = [CSVLoader, GeoArrowLoader, GeoJSONLoader];
     const loadOptions = {
       arrow: {
         shape: 'arrow-table'
