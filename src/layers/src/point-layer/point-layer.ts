@@ -4,7 +4,7 @@
 import {BrushingExtension} from '@deck.gl/extensions';
 import {ScatterplotLayer} from '@deck.gl/layers';
 
-import {GeoArrowScatterplotLayer} from '@kepler.gl/deckgl-arrow-layers';
+import {GeoArrowScatterplotLayer, EXTENSION_NAME} from '@kepler.gl/deckgl-arrow-layers';
 import {FilterArrowExtension} from '@kepler.gl/deckgl-layers';
 
 import Layer, {
@@ -315,7 +315,7 @@ export default class PointLayer extends Layer {
     fields.forEach(field => {
       if (
         field.type === 'geoarrow' &&
-        field.metadata.get('ARROW:extension:name') === 'geoarrow.point'
+        field.metadata.get('ARROW:extension:name') === EXTENSION_NAME.POINT
       ) {
         const prop: {
           label: string;
@@ -323,20 +323,17 @@ export default class PointLayer extends Layer {
           isVisible?: boolean;
           columns?: PointLayerColumnsConfig;
         } = {
-          label: 'Geo Points'
-        };
-
-        if (props.length === 0) {
-          prop.isVisible = true;
-        }
-
-        // @ts-expect-error
-        prop.columns = {
-          geoarrow: {
-            fieldIdx: field.fieldIdx,
-            value: field.displayName
+          label: 'Geo Points',
+          isVisible: props.length === 0,
+          // @ts-expect-error fill not required columns with default columns
+          columns: {
+            geoarrow: {
+              fieldIdx: field.fieldIdx,
+              value: field.displayName
+            }
           }
         };
+
         props.push(prop);
       }
     });
@@ -393,7 +390,7 @@ export default class PointLayer extends Layer {
 
   calculateDataAttribute({filteredIndex, dataContainer}: KeplerTable, getPosition) {
     if (this.config.columnMode === COLUMN_MODE_GEOARROW) {
-      // filter geojson/arrow table by values and make a partial copy of the raw table are expensive
+      // filtering an arrow table by values and make a partial copy of the raw table is expensive
       // so we will use filteredIndex to create an attribute e.g. filteredIndex [0|1] for GPU filtering
       // in deck.gl layer, see: FilterArrowExtension in @kepler.gl/deckgl-layers
       if (!this.filteredIndex) {
@@ -585,7 +582,7 @@ export default class PointLayer extends Layer {
         autoHighlight: false
       }),
       // hover layer
-      ...(false && hoveredObject
+      ...(hoveredObject
         ? [
             new ScatterplotLayer({
               ...this.getDefaultHoverLayerProps(),
@@ -615,7 +612,6 @@ export default class PointLayer extends Layer {
         this.config.columnMode === COLUMN_MODE_GEOARROW
           ? {
               ...opts,
-              // make sure data doesn't trigger full layer update
               data: {...opts.data, getPosition}
             }
           : opts
