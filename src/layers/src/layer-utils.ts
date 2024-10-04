@@ -38,19 +38,16 @@ export type GeojsonLayerMetaProps = {
 
 export function getGeojsonLayerMetaFromArrow({
   dataContainer,
-  getGeoColumn,
-  getGeoField,
+  geoColumn,
+  geoField,
   chunkIndex
 }: {
   dataContainer: DataContainerInterface;
-  getGeoColumn: (dataContainer: DataContainerInterface) => unknown;
-  getGeoField: (dataContainer: DataContainerInterface) => Field | null;
+  geoColumn: arrow.Vector;
+  geoField: Field;
   chunkIndex?: number;
 }): GeojsonLayerMetaProps {
-  const geoColumn = getGeoColumn(dataContainer) as arrow.Vector;
-  const arrowField = getGeoField(dataContainer);
-
-  const encoding = arrowField?.metadata?.get('ARROW:extension:name');
+  const encoding = geoField?.metadata?.get('ARROW:extension:name');
   const options: BinaryGeometriesFromArrowOptions = {
     ...(chunkIndex !== undefined && chunkIndex >= 0
       ? {

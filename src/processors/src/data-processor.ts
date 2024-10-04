@@ -6,6 +6,7 @@ import {csvParseRows} from 'd3-dsv';
 import {DATA_TYPES as AnalyzerDATA_TYPES} from 'type-analyzer';
 import normalize from '@mapbox/geojson-normalize';
 import {ArrowTable} from '@loaders.gl/schema';
+import {GeoMetadata, getGeoMetadata} from '@loaders.gl/gis';
 import {ALL_FIELD_TYPES, DATASET_FORMATS, GUIDES_FILE_FORMAT_DOC} from '@kepler.gl/constants';
 import {ProcessorResult, Field} from '@kepler.gl/types';
 import {
@@ -400,8 +401,31 @@ export function processArrowBatches(arrowBatches: arrow.RecordBatch[]): Processo
   const arrowTable = new arrow.Table(arrowBatches);
   const fields: Field[] = [];
 
+  let geoMetadata: GeoMetadata | null = null;
+  try {
+    geoMetadata = getGeoMetadata({
+      metadata: {
+        // @ts-expect-error
+        geo: arrowTable.schema.metadata.get('geo')
+      }
+    });
+  } catch (error) {}
+
   // parse fields
   arrowTable.schema.fields.forEach((field: arrow.Field, index: number) => {
+    // TODO this is temp change, remove
+    // Fill fields with metadata from geo metadata from parquet files
+    if (geoMetadata) {
+      const fieldMetadata = geoMetadata.columns[field.name];
+      if (fieldMetadata) {
+        Object.keys(fieldMetadata).forEach(key => {
+          if (!field.metadata.get(key)) {
+            field.metadata.set(key, fieldMetadata[key] as string);
+          }
+        });
+      }
+    }
+
     const isGeometryColumn = field.metadata.get('ARROW:extension:name')?.startsWith('geoarrow');
     fields.push({
       name: field.name,

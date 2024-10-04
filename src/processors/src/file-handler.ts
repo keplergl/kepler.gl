@@ -6,7 +6,7 @@ import {parseInBatches} from '@loaders.gl/core';
 import {JSONLoader, _JSONPath} from '@loaders.gl/json';
 import {CSVLoader} from '@loaders.gl/csv';
 import {GeoArrowLoader} from '@loaders.gl/arrow';
-import {GeoParquetLoader, installBufferPolyfill} from '@loaders.gl/parquet';
+import {ParquetWasmLoader, installBufferPolyfill} from '@loaders.gl/parquet';
 import {Loader} from '@loaders.gl/loader-utils';
 import {generateHashId, isPlainObject, generateHashIdFromString} from '@kepler.gl/utils';
 import {DATASET_FORMATS} from '@kepler.gl/constants';
@@ -79,7 +79,7 @@ export function isArrowTable(table: any): table is arrow.Table {
  * @returns {boolean} - true if data is an ArrowData object type guarded
  */
 export function isArrowData(data: any): boolean {
-  return Array.isArray(data) && Boolean(data[0].data && data[0].schema);
+  return Array.isArray(data) && Boolean(data.length && data[0].data && data[0].schema);
 }
 
 export function isGeoJson(json: unknown): json is Feature | FeatureCollection {
@@ -186,7 +186,7 @@ export async function readFileInBatches({
   loaders: Loader[];
   loadOptions: any;
 }): Promise<AsyncGenerator> {
-  loaders = [JSONLoader, CSVLoader, GeoArrowLoader, GeoParquetLoader, ...loaders];
+  loaders = [JSONLoader, CSVLoader, GeoArrowLoader, ParquetWasmLoader, ...loaders];
   loadOptions = {
     csv: CSV_LOADER_OPTIONS,
     arrow: ARROW_LOADER_OPTIONS,
