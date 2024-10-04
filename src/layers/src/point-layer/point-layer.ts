@@ -482,10 +482,16 @@ export default class PointLayer extends Layer {
       const getFeature = this.getPositionAccessor();
       this.dataToFeature = getGeojsonPointDataMaps(dataContainer, getFeature);
     } else if (this.config.columnMode === COLUMN_MODE_GEOARROW) {
-      // TODO maybe bounds can be in GeoArrow meta?
-      const getPosition = this.getPositionAccessor(dataContainer);
-      const bounds = this.getPointsBounds(dataContainer, getPosition);
-      this.updateMeta({bounds});
+      // TODO move to common utils
+      const field = dataContainer.getField(this.config.columns.geoarrow.fieldIdx);
+      const boundsFromMetadata = field.metadata.get('bbox');
+      if (Array.isArray(boundsFromMetadata) && boundsFromMetadata.length === 4) {
+        this.updateMeta({bounds: boundsFromMetadata});
+      } else {
+        const getPosition = this.getPositionAccessor(dataContainer);
+        const bounds = this.getPointsBounds(dataContainer, getPosition);
+        this.updateMeta({bounds});
+      }
     } else {
       const getPosition = this.getPositionAccessor(dataContainer);
       const bounds = this.getPointsBounds(dataContainer, getPosition);

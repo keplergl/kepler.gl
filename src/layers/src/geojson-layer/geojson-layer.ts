@@ -375,7 +375,7 @@ export default class GeoJsonLayer extends Layer {
     const geojsonColumns = fields
       .filter(
         f =>
-          f.type === 'geojson' /*|| f.type === 'geoarrow'*/ &&
+          (f.type === 'geojson' || f.type === 'geoarrow') &&
           SUPPORTED_ANALYZER_TYPES[f.analyzerType]
       )
       .map(f => f.name);
@@ -524,21 +524,20 @@ export default class GeoJsonLayer extends Layer {
   updateLayerMeta(dataContainer) {
     this.dataContainer = dataContainer;
 
-    const getFeature = this.getPositionAccessor(dataContainer);
-    const getGeoColumn = geoColumnAccessor(this.config.columns);
-    const getGeoField = geoFieldAccessor(this.config.columns);
-
     if (dataContainer instanceof ArrowDataContainer) {
+      const geoColumn = geoColumnAccessor(this.config.columns)(dataContainer);
+      const geoField = geoFieldAccessor(this.config.columns)(dataContainer);
+
       // update the latest batch/chunk of geoarrow data when loading data incrementally
-      if (this.dataToFeature.length < dataContainer.numChunks()) {
+      if (geoColumn && geoField && this.dataToFeature.length < dataContainer.numChunks()) {
         // for incrementally loading data, we only load and render the latest batch; otherwise, we will load and render all batches
         const isIncrementalLoad = dataContainer.numChunks() - this.dataToFeature.length === 1;
         // TODO: add support for COLUMN_MODE_TABLE in getGeojsonLayerMetaFromArrow
         const {dataToFeature, bounds, fixedRadius, featureTypes, centroids} =
           getGeojsonLayerMetaFromArrow({
             dataContainer,
-            getGeoColumn,
-            getGeoField,
+            geoColumn,
+            geoField,
             ...(isIncrementalLoad ? {chunkIndex: this.dataToFeature.length} : null)
           });
         if (centroids) this.centroids = this.centroids.concat(centroids);
@@ -546,6 +545,8 @@ export default class GeoJsonLayer extends Layer {
         this.dataToFeature = [...this.dataToFeature, ...dataToFeature];
       }
     } else if (this.dataToFeature.length === 0) {
+      const getFeature = this.getPositionAccessor(dataContainer);
+
       const {dataToFeature, bounds, fixedRadius, featureTypes, centroids} = getGeojsonLayerMeta({
         dataContainer,
         getFeature,
