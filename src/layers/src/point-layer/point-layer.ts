@@ -627,7 +627,7 @@ export default class PointLayer extends Layer {
 
   hasHoveredObject(objectInfo) {
     // non-GeoArrow mode
-    if (!(this.dataContainer instanceof ArrowDataContainer)) {
+    if (this.config.columnMode !== COLUMN_MODE_GEOARROW) {
       return super.hasHoveredObject(objectInfo);
     }
 
@@ -653,7 +653,7 @@ export default class PointLayer extends Layer {
     // for arrow format, `object` is the Arrow row object Proxy,
     // and index is passed in `hoverInfo`.
     const index =
-      dataContainer instanceof ArrowDataContainer
+      this.config.columnMode === COLUMN_MODE_GEOARROW
         ? hoverInfo?.index
         : (object as {index: number}).index;
     if (index >= 0) {
