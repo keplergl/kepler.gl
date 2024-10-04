@@ -15,7 +15,15 @@ type MapboxLayerGLColumns = {
 
 export type MapboxLayerGLConfig = Merge<LayerBaseConfig, {columns: MapboxLayerGLColumns}>;
 
-export const mapboxRequiredColumns: ['lat', 'lng'] = ['lat', 'lng'];
+export const COLUMN_MODE_POINTS = 'points';
+export const mapboxRequiredColumns = ['lat', 'lng'];
+const SUPPORTED_COLUMN_MODES = [
+  {
+    key: COLUMN_MODE_POINTS,
+    label: 'Points',
+    requiredColumns: mapboxRequiredColumns
+  }
+];
 
 export const pointColResolver = ({lat, lng}: MapboxLayerGLColumns) =>
   `${lat.fieldIdx}-${lng.fieldIdx}`;
@@ -35,8 +43,8 @@ class MapboxLayerGL extends Layer {
     return true;
   }
 
-  get requiredLayerColumns() {
-    return mapboxRequiredColumns;
+  get supportedColumnModes() {
+    return SUPPORTED_COLUMN_MODES;
   }
 
   get columnPairs() {
