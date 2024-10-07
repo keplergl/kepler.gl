@@ -9,7 +9,7 @@ import Layer, {
   LayerBaseConfigPartial
 } from '../base-layer';
 import {BrushingExtension} from '@deck.gl/extensions';
-import {GeoArrowArcLayer, EXTENSION_NAME} from '@kepler.gl/deckgl-arrow-layers';
+import {GeoArrowArcLayer} from '@kepler.gl/deckgl-arrow-layers';
 import {FilterArrowExtension} from '@kepler.gl/deckgl-layers';
 import {ArcLayer as DeckArcLayer} from '@deck.gl/layers';
 import {h3ToGeo} from 'h3-js';

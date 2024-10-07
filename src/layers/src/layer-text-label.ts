@@ -3,7 +3,7 @@
 
 import {Table as ArrowTable} from 'apache-arrow';
 import {getDistanceScales} from 'viewport-mercator-project';
-import {notNullorUndefined} from '@kepler.gl/utils';
+import {notNullorUndefined, DataContainerInterface, ArrowDataContainer} from '@kepler.gl/utils';
 import uniq from 'lodash.uniq';
 
 export const defaultPadding = 20;
@@ -49,6 +49,13 @@ export const formatTextLabelData = ({
   data,
   dataContainer,
   filteredIndex
+}: {
+  textLabel: any;
+  triggerChanged?: boolean | {[key: string]: boolean};
+  oldLayerData: any;
+  data: any;
+  dataContainer: DataContainerInterface;
+  filteredIndex?: Uint8ClampedArray | null;
 }) => {
   return textLabel.map((tl, i) => {
     if (!tl.field) {
@@ -63,7 +70,7 @@ export const formatTextLabelData = ({
     let characterSet;
 
     if (
-      !triggerChanged[`getLabelCharacterSet-${i}`] &&
+      !triggerChanged?.[`getLabelCharacterSet-${i}`] &&
       oldLayerData &&
       oldLayerData.textLabels &&
       oldLayerData.textLabels[i]
@@ -75,9 +82,15 @@ export const formatTextLabelData = ({
         // so we use filteredIndex array instead
         const allLabels: string[] = [];
         if (tl.field) {
-          filteredIndex.forEach((value, index) => {
-            if (value > 0) allLabels.push(getText({index}));
-          });
+          if (filteredIndex) {
+            filteredIndex.forEach((value, index) => {
+              if (value > 0) allLabels.push(getText({index}));
+            });
+          } else {
+            for (let i = 0; i < dataContainer.numRows(); i++) {
+              allLabels.push(getText({index: i}));
+            }
+          }
         }
         characterSet = uniq(allLabels.join(''));
       } else {
@@ -90,7 +103,7 @@ export const formatTextLabelData = ({
     if (data instanceof ArrowTable) {
       // TODO the data has to be a column of string type.
       // Integer columns lack valueOffsets prop.
-      getText = dataContainer.getColumn(tl.field.fieldIdx);
+      getText = (dataContainer as ArrowDataContainer).getColumn(tl.field.fieldIdx) as any;
     }
 
     return {
