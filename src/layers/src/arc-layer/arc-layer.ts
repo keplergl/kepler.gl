@@ -16,7 +16,7 @@ import {h3ToGeo} from 'h3-js';
 
 import {hexToRgb, DataContainerInterface, ArrowDataContainer} from '@kepler.gl/utils';
 import ArcLayerIcon from './arc-layer-icon';
-import {isLayerHoveredFromArrow} from '../layer-utils';
+import {isLayerHoveredFromArrow, getGeoPointFields} from '../layer-utils';
 import {
   DEFAULT_LAYER_COLOR,
   ColorRange,
@@ -304,13 +304,8 @@ export default class ArcLayer extends Layer {
   static findDefaultLayerProps({fields, fieldPairs = []}: KeplerTable): {
     props: {color?: RGBColor; columns: ArcLayerColumnsConfig; label: string}[];
   } {
-    const geoArrowLineFields = fields.filter(field => {
-      return (
-        field.type === 'geoarrow' &&
-        field.metadata.get('ARROW:extension:name') === EXTENSION_NAME.POINT
-      );
-    });
-
+    // TODO move this to field pairs logic, to create a field pair from a single column
+    const geoArrowLineFields = getGeoPointFields(fields);
     if (geoArrowLineFields.length >= 2) {
       const props: {columns: ArcLayerColumnsConfig; label: string; isVisible: boolean} = {
         // @ts-expect-error fill not required columns with default columns

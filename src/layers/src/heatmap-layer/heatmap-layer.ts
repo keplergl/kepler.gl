@@ -4,10 +4,10 @@
 import {createSelector} from 'reselect';
 import memoize from 'lodash.memoize';
 import {CHANNEL_SCALES, SCALE_FUNC, ALL_FIELD_TYPES, ColorRange} from '@kepler.gl/constants';
-import {EXTENSION_NAME} from '@kepler.gl/deckgl-arrow-layers';
 import MapboxGLLayer, {MapboxLayerGLConfig} from '../mapboxgl-layer';
 import HeatmapLayerIcon from './heatmap-layer-icon';
 import {LayerBaseConfigPartial, LayerWeightConfig, VisualChannels} from '../base-layer';
+import {getGeoPointFields} from '../layer-utils';
 import {
   VisConfigColorRange,
   VisConfigNumber,
@@ -169,12 +169,8 @@ class HeatmapLayer extends MapboxGLLayer {
   } {
     const {fields} = dataset;
 
-    const geoArrowLineFields = fields.filter(field => {
-      return (
-        field.type === 'geoarrow' &&
-        field.metadata.get('ARROW:extension:name') === EXTENSION_NAME.POINT
-      );
-    });
+    // TODO move this to field pairs logic, to create a field pair from a single column
+    const geoArrowLineFields = getGeoPointFields(fields);
 
     if (geoArrowLineFields.length > 0) {
       const props: {columns: HeatmapLayerColumnsConfig; label: string; isVisible: boolean} = {

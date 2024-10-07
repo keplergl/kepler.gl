@@ -3,10 +3,11 @@
 
 import {BrushingExtension} from '@deck.gl/extensions';
 
-import {GeoArrowArcLayer, EXTENSION_NAME} from '@kepler.gl/deckgl-arrow-layers';
+import {GeoArrowArcLayer} from '@kepler.gl/deckgl-arrow-layers';
 import {FilterArrowExtension} from '@kepler.gl/deckgl-layers';
 import {EnhancedLineLayer} from '@kepler.gl/deckgl-layers';
 import LineLayerIcon from './line-layer-icon';
+import {getGeoPointFields} from '../layer-utils';
 import ArcLayer, {ArcLayerConfig} from '../arc-layer/arc-layer';
 import {LAYER_VIS_CONFIGS, ColorRange, PROJECTED_PIXEL_SIZE_MULTIPLIER} from '@kepler.gl/constants';
 import {
@@ -218,13 +219,8 @@ export default class LineLayer extends ArcLayer {
   static findDefaultLayerProps({fields, fieldPairs = []}: KeplerTable): {
     props: {color?: RGBColor; columns: LineLayerColumnsConfig; label: string}[];
   } {
-    const geoArrowLineFields = fields.filter(field => {
-      return (
-        field.type === 'geoarrow' &&
-        field.metadata.get('ARROW:extension:name') === EXTENSION_NAME.POINT
-      );
-    });
-
+    // TODO move this to field pairs logic, to create a field pair from a single column
+    const geoArrowLineFields = getGeoPointFields(fields);
     if (geoArrowLineFields.length >= 2) {
       const props: {columns: LineLayerColumnsConfig; label: string; isVisible: boolean} = {
         // @ts-expect-error fill not required columns with default columns

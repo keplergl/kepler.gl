@@ -3096,6 +3096,7 @@ __metadata:
     "@loaders.gl/arrow": "npm:^4.2.5"
     "@loaders.gl/core": "npm:^4.2.5"
     "@loaders.gl/csv": "npm:^4.2.5"
+    "@loaders.gl/gis": "npm:^4.2.5"
     "@loaders.gl/json": "npm:^4.2.5"
     "@loaders.gl/loader-utils": "npm:^4.2.5"
     "@loaders.gl/parquet": "npm:^4.3.0-alpha.8"
