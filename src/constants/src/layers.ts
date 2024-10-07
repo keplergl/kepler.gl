@@ -38,6 +38,7 @@ export const DEFAULT_TEXT_LABEL: LayerTextLabel = {
   field: null,
   color: [255, 255, 255],
   size: 18,
+  weight: 400,
   offset: [0, 0],
   anchor: 'start',
   alignment: 'center',
@@ -484,6 +485,16 @@ export const LAYER_TEXT_CONFIGS: LayerTextConfig = {
     step: 1,
     isRanged: false,
     label: 'Font size',
+    showInput: true
+  },
+
+  fontWeight: {
+    type: 'number',
+    range: [100, 1000],
+    value0: 100,
+    step: 100,
+    isRanged: false,
+    label: 'Font weight',
     showInput: true
   },
   outlineWidth: {

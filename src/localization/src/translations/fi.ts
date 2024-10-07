@@ -51,6 +51,7 @@ export default {
       label: 'Nimiö',
       labelWithId: 'Nimiö {labelId}',
       fontSize: 'Fontin koko',
+      fontWeight: 'Fontin paino',
       fontColor: 'Fontin väri',
       textAnchor: 'Tekstin ankkuri',
       alignment: 'Sijoittelu',

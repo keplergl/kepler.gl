@@ -1447,6 +1447,7 @@ class Layer {
             getPixelOffset: getPixelOffset(textLabel[i]),
             getSize: PROJECTED_PIXEL_SIZE_MULTIPLIER,
             sizeScale: textLabel[i].size,
+            fontWeight: textLabel[i].weight,
             getTextAnchor: textLabel[i].anchor,
             getAlignmentBaseline: textLabel[i].alignment,
             getColor: textLabel[i].color,
