@@ -10,6 +10,7 @@ import {
   parseGeometryFromArrow,
   BinaryGeometriesFromArrowOptions
 } from '@loaders.gl/arrow';
+import {EXTENSION_NAME} from '@kepler.gl/deckgl-arrow-layers';
 
 import {DeckGlGeoTypes, GeojsonDataMaps} from './geojson-layer/geojson-utils';
 
@@ -136,4 +137,18 @@ export function getColumnModeRequiredColumns(
   columnMode?: string
 ): string[] | undefined {
   return supportedColumnModes?.find(({key}) => key === columnMode)?.requiredColumns;
+}
+
+/**
+ * Returns geoarrow fields with ARROW:extension:name POINT metadata
+ * @param fields Any fields
+ * @returns geoarrow fields with ARROW:extension:name POINT metadata
+ */
+export function getGeoPointFields(fields: Field[]): Field[] {
+  return fields.filter(field => {
+    return (
+      field.type === 'geoarrow' &&
+      field.metadata.get('ARROW:extension:name') === EXTENSION_NAME.POINT
+    );
+  });
 }

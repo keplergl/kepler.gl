@@ -4,7 +4,7 @@
 import {BrushingExtension} from '@deck.gl/extensions';
 import {ScatterplotLayer} from '@deck.gl/layers';
 
-import {GeoArrowScatterplotLayer, EXTENSION_NAME} from '@kepler.gl/deckgl-arrow-layers';
+import {GeoArrowScatterplotLayer} from '@kepler.gl/deckgl-arrow-layers';
 import {FilterArrowExtension} from '@kepler.gl/deckgl-layers';
 
 import Layer, {
@@ -30,7 +30,11 @@ import {
 } from '@kepler.gl/constants';
 
 import {getTextOffsetByRadius, formatTextLabelData} from '../layer-text-label';
-import {assignPointPairToLayerColumn, isLayerHoveredFromArrow} from '../layer-utils';
+import {
+  assignPointPairToLayerColumn,
+  isLayerHoveredFromArrow,
+  getGeoPointFields
+} from '../layer-utils';
 import {getGeojsonPointDataMaps, GeojsonPointDataMaps} from '../geojson-layer/geojson-utils';
 import {
   Merge,
@@ -311,32 +315,27 @@ export default class PointLayer extends Layer {
       columns?: PointLayerColumnsConfig;
     }[] = [];
 
-    // Check for GeoArrow point geometries first
-    fields.forEach(field => {
-      if (
-        field.type === 'geoarrow' &&
-        field.metadata.get('ARROW:extension:name') === EXTENSION_NAME.POINT
-      ) {
-        const prop: {
-          label: string;
-          color?: RGBColor;
-          isVisible?: boolean;
-          columns?: PointLayerColumnsConfig;
-        } = {
-          label: 'Geo Points',
-          isVisible: props.length === 0,
-          // @ts-expect-error fill not required columns with default columns
-          columns: {
-            geoarrow: {
-              fieldIdx: field.fieldIdx,
-              value: field.displayName
-            }
+    const geoArrowLineFields = getGeoPointFields(fields);
+    if (geoArrowLineFields.length > 0) {
+      const prop: {
+        label: string;
+        color?: RGBColor;
+        isVisible?: boolean;
+        columns?: PointLayerColumnsConfig;
+      } = {
+        label: 'Geo Points',
+        isVisible: props.length === 0,
+        // @ts-expect-error fill not required columns with default columns
+        columns: {
+          geoarrow: {
+            fieldIdx: geoArrowLineFields[0].fieldIdx,
+            value: geoArrowLineFields[0].displayName
           }
-        };
+        }
+      };
 
-        props.push(prop);
-      }
-    });
+      return {props: [prop]};
+    }
 
     // Make layer for each pair
     fieldPairs.forEach(pair => {

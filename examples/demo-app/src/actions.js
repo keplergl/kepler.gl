@@ -9,6 +9,7 @@ import {load} from '@loaders.gl/core';
 import {CSVLoader} from '@loaders.gl/csv';
 import {GeoArrowLoader} from '@loaders.gl/arrow';
 import {_GeoJSONLoader as GeoJSONLoader} from '@loaders.gl/json';
+import {ParquetWasmLoader} from '@loaders.gl/parquet';
 
 import {
   LOADING_SAMPLE_ERROR_MESSAGE,
@@ -251,13 +252,16 @@ function loadRemoteData(url) {
 
   // Load data
   return new Promise(resolve => {
-    const loaders = [CSVLoader, GeoArrowLoader, GeoJSONLoader];
+    const loaders = [CSVLoader, GeoArrowLoader, ParquetWasmLoader, GeoJSONLoader];
     const loadOptions = {
+      csv: {
+        shape: 'object-row-table'
+      },
       arrow: {
         shape: 'arrow-table'
       },
-      csv: {
-        shape: 'object-row-table'
+      parquet: {
+        shape: 'arrow-table'
       },
       metadata: true
     };
