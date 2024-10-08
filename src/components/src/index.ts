@@ -142,7 +142,7 @@ export {
   StyledMapControlLegend,
   LayerColorLegend,
   VisualChannelMetric,
-  LayerSizeLegend,
+  LayerDefaultLegend,
   SingleColorLegend
 } from './map/map-legend';
 export {default as MapDrawPanelFactory} from './map/map-draw-panel';
