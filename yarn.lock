@@ -2878,7 +2878,6 @@ __metadata:
     "@types/react-lifecycles-compat": "npm:^3.0.1"
     "@types/react-map-gl": "npm:^6.1.3"
     "@types/react-modal": "npm:^3.13.1"
-    "@types/react-onclickoutside": "npm:^6.7.4"
     "@types/react-redux": "npm:^7.1.23"
     "@types/react-virtualized": "npm:^9.21.30"
     "@types/react-vis": "npm:1.11.7"
@@ -2920,7 +2919,6 @@ __metadata:
     react-map-gl: "npm:^7.1.6"
     react-markdown: "npm:^6.0.3"
     react-modal: "npm:^3.12.1"
-    react-onclickoutside: "npm:^6.7.1"
     react-redux: "npm:^8.0.5"
     react-sortable-hoc: "npm:^1.8.3"
     react-time-picker: "npm:^6.2.0"
@@ -5574,15 +5572,6 @@ __metadata:
   dependencies:
     "@types/react": "npm:*"
   checksum: 10c0/dfcf52fa4b5d5c203aa47ffaafade369836cb9f891e9b60e7056bf5fdfc508ebec7971bb3d4c4018f422953c1c79948755ef19da3e816c28d7c5fdacf9466af8
-  languageName: node
-  linkType: hard
-
-"@types/react-onclickoutside@npm:^6.7.4":
-  version: 6.7.10
-  resolution: "@types/react-onclickoutside@npm:6.7.10"
-  dependencies:
-    "@types/react": "npm:*"
-  checksum: 10c0/2ce1c401e142fab4ce6d4212f85e01555c45e52c1e153de29c89e89ce33e2c771302c128e933382f330766db68274c2bdf829e893a6bce95f3791ef12697e826
   languageName: node
   linkType: hard
 
@@ -19576,7 +19565,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-onclickoutside@npm:^6.7.1, react-onclickoutside@npm:^6.9.0":
+"react-onclickoutside@npm:^6.9.0":
   version: 6.13.1
   resolution: "react-onclickoutside@npm:6.13.1"
   peerDependencies:
