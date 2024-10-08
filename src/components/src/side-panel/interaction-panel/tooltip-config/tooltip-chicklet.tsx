@@ -191,7 +191,7 @@ function TooltipChickletFactory(
         transition={transition || ''}
         {...attributes}
       >
-        <ChickletButton ref={ref}>
+        <ChickletButton>
           <StyledDragHandle {...listeners}>
             <VertDots height="12px" />
           </StyledDragHandle>
@@ -223,7 +223,7 @@ function TooltipChickletFactory(
                 </ChickletAddon>
               </TippyTooltip>
               {show && (
-                <StyledPopover>
+                <StyledPopover ref={ref}>
                   <DropdownList
                     options={formatLabels}
                     selectionIndex={selectionIndex}
