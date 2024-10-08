@@ -133,25 +133,6 @@ function TooltipChickletFactory(
   onDisplayFormatChange
 ): React.FC<TooltipChickletProps> {
   const TooltipChicklet: React.FC<TooltipChickletProps> = (props: TooltipChickletProps) => {
-    // state = {
-    //   show: false
-    // };
-    // private node!: HTMLDivElement | null;
-
-    // componentDidMount() {
-    //   document.addEventListener('mousedown', this.handleClickOutside, false);
-    // }
-
-    // componentWillUnmount() {
-    //   document.removeEventListener('mousedown', this.handleClickOutside, false);
-    // }
-
-    // handleClickOutside = (e: any) => {
-    //   if (this.node?.contains(e.target)) {
-    //     return;
-    //   }
-    // };
-
     const {
       disabled,
       item,
