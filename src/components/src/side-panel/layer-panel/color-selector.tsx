@@ -188,7 +188,7 @@ function ColorSelectorFactory(RangeSlider): ComponentType<ColorSelectorProps> {
                 active={editing === i}
                 disabled={disabled}
                 inputTheme={inputTheme}
-                onMouseDown={e => onToggleDropdown(e, i)}
+                onClick={e => onToggleDropdown(e, i)}
               >
                 {cSet.isRange ? (
                   <ColorPalette colors={(cSet.selectedColor as ColorRange).colors} />

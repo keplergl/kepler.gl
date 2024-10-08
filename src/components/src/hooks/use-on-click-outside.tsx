@@ -10,9 +10,6 @@ export default function useOnClickOutside<T extends HTMLElement>(
   const handleClickOutside = useCallback(
     e => {
       if (containerRef.current && !containerRef.current.contains(e.target)) {
-        console.log('handleClickOutside: onClose');
-        console.log('current', containerRef.current);
-        console.log('target', e.target);
         onClose(e);
       }
     },
