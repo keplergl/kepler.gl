@@ -119,7 +119,6 @@ function ColorSelectorFactory(RangeSlider): ComponentType<ColorSelectorProps> {
         // if sketcher is open, let sketch to close itself first
         return;
       }
-      console.log('handleClickOutside: closePanelDropdown');
       closePanelDropdown();
     }, [showSketcher, closePanelDropdown]);
 
@@ -168,10 +167,8 @@ function ColorSelectorFactory(RangeSlider): ComponentType<ColorSelectorProps> {
         e.preventDefault();
 
         if (setColorUI) {
-          console.log('onToggleDropdown-setColorUI', i);
           setColorUI({showDropdown: i});
         } else {
-          console.log('onToggleDropdown-setShowDropdown', i);
           setShowDropdown(i);
         }
       },

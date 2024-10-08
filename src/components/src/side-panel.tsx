@@ -89,7 +89,7 @@ export default function SidePanelFactory(
     iconComponent: SIDEBAR_ICONS[component.id]
   }));
 
-  const fullPanels = [...defaultSidePanels, ...CustomPanels.panels];
+  const fullPanels = [...defaultSidePanels, ...(CustomPanels.panels || [])];
 
   const getCustomPanelProps = CustomPanels.getProps || (() => ({}));
 

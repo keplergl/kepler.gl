@@ -14,7 +14,7 @@ import {TimeLabelFormat, TooltipFields} from '@kepler.gl/types';
 import {getFormatValue, getFormatLabels} from '@kepler.gl/utils';
 import TippyTooltip from '../../../common/tippy-tooltip';
 import {TooltipFormat} from '@kepler.gl/constants';
-import useOnClickOutside from 'src/components/src/hooks/use-on-click-outside';
+import useOnClickOutside from '../../../hooks/use-on-click-outside';
 
 interface TooltipChickletProps {
   disabled: boolean;

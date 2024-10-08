@@ -219,34 +219,31 @@ test('Components -> SidePanel -> render custom panel', t => {
     return null;
   };
 
-  MyPanels.defaultProps = {
-    getProps: props => ({
-      layers: props.layers
-    })
-  };
+  MyPanels.getProps = props => ({
+    layers: props.layers
+  });
 
   function CustomSidePanelsFactory() {
     return MyPanels;
   }
 
   function CustomSidePanelFactory(...deps) {
-    const CustomSidePanel = SidePanelFactory(...deps);
-    CustomSidePanel.defaultProps = {
-      ...CustomSidePanel.defaultProps,
-      panels: [
-        ...CustomSidePanel.defaultProps.panels,
-        {
-          id: 'rocket',
-          label: 'Rocket',
-          iconComponent: RocketIcon
-        },
-        {
-          id: 'chart',
-          label: 'Chart',
-          iconComponent: ChartIcon
-        }
-      ]
-    };
+    const SidePanel = SidePanelFactory(...deps);
+    const panels = [
+      ...SidePanel.defaultPanels,
+      {
+        id: 'rocket',
+        label: 'Rocket',
+        iconComponent: RocketIcon
+      },
+      {
+        id: 'chart',
+        label: 'Chart',
+        iconComponent: ChartIcon
+      }
+    ];
+
+    const CustomSidePanel = props => <SidePanel {...props} panels={panels} />;
     return CustomSidePanel;
   }
 
