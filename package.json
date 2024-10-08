@@ -22,6 +22,7 @@
     "./src/styles",
     "./src/localization",
     "./src/deckgl-layers",
+    "./src/deckgl-arrow-layers",
     "./src/layers",
     "./src/schemas",
     "./src/table",
