@@ -121,8 +121,5 @@ export type {Centroid} from './h3-utils';
 export {getCentroid, idToPolygonGeo, h3IsValid, getHexFields} from './h3-utils';
 
 // Application config
-export {
-  getApplicationConfig,
-  initApplicationConfig,
-} from '../../utils/src/application-config';
+export {getApplicationConfig, initApplicationConfig} from '../../utils/src/application-config';
 export type {KeplerApplicationConfig} from '../../utils/src/application-config';
