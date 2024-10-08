@@ -14,14 +14,6 @@ type ColorPaletteProps = {
   isReversed?: boolean;
 };
 
-const defaultProps = {
-  height: 10,
-  colors: [],
-  className: '',
-  isSelected: false,
-  isReversed: false
-};
-
 const PaletteWrapper = styled.div.attrs({
   className: 'color-range-palette__inner'
 })`
@@ -52,11 +44,11 @@ const StyledColorBlock = styled.div.attrs({
 `;
 
 const ColorPalette: React.FC<ColorPaletteProps> = ({
-  colors,
-  height,
-  className,
-  isSelected,
-  isReversed
+  colors = [],
+  height = 10,
+  className = '',
+  isSelected = false,
+  isReversed = false
 }) => (
   <PaletteContainer className={className} isSelected={isSelected}>
     <PaletteWrapper style={{height, transform: `scale(${isReversed ? -1 : 1}, 1)`}}>
@@ -66,7 +58,5 @@ const ColorPalette: React.FC<ColorPaletteProps> = ({
     </PaletteWrapper>
   </PaletteContainer>
 );
-
-ColorPalette.defaultProps = defaultProps;
 
 export default ColorPalette;

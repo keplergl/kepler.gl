@@ -297,7 +297,7 @@ function EffectPanelHeaderFactory(
   const EffectPanelHeader = (props: EffectPanelHeaderProps) => {
     const {
       isConfigActive,
-      isDragNDropEnabled,
+      isDragNDropEnabled = true,
       type,
       onToggleEnableConfig,
       listeners,
@@ -335,8 +335,6 @@ function EffectPanelHeaderFactory(
       </StyledEffectPanelHeader>
     );
   };
-
-  EffectPanelHeader.defaultProps = defaultProps;
 
   return EffectPanelHeader;
 }

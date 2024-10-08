@@ -8,8 +8,6 @@ import DatasetTagFactory from './dataset-tag';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {DatasetItemProps, SourceDataSelectorProps} from './types';
 
-const defaultPlaceHolder = 'Select A Dataset';
-
 SourceDataSelectorFactory.deps = [DatasetTagFactory];
 
 export default function SourceDataSelectorFactory(
@@ -22,7 +20,7 @@ export default function SourceDataSelectorFactory(
     datasets,
     disabled,
     onSelect,
-    defaultValue,
+    defaultValue = 'Select A Dataset',
     inputTheme
   }: SourceDataSelectorProps) => {
     const dsOptions = useMemo(
@@ -62,8 +60,5 @@ export default function SourceDataSelectorFactory(
     );
   };
 
-  SourceDataSelector.defaultProps = {
-    defaultValue: defaultPlaceHolder
-  };
   return SourceDataSelector;
 }
