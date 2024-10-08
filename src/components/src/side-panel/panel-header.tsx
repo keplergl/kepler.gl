@@ -5,15 +5,15 @@ import React, {Component, useCallback} from 'react';
 import styled from 'styled-components';
 import classnames from 'classnames';
 import {createSelector} from 'reselect';
-import {Tooltip} from '../common/styled-components';
+import {StyledPanelDropdown, Tooltip} from '../common/styled-components';
 import KeplerGlLogo from '../common/logo';
 import {Save, DataTable, Save2, Picture, Db, Map as MapIcon, Share} from '../common/icons';
-import ClickOutsideCloseDropdown from './panel-dropdown';
 import Toolbar from '../common/toolbar';
 import ToolbarItem, {ToolbarItemProps} from '../common/toolbar-item';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {UiState} from '@kepler.gl/types';
 import {BaseProps} from '../common/icons';
+import useOnClickOutside from '../hooks/use-on-click-outside';
 
 type StyledPanelActionProps = {
   active?: boolean;
@@ -173,24 +173,23 @@ export {PanelAction};
 
 export const PanelHeaderDropdownFactory = () => {
   const PanelHeaderDropdown: React.FC<PanelHeaderDropdownProps> = ({items, show, onClose, id}) => {
+    const ref = useOnClickOutside<HTMLDivElement>(onClose);
     return (
       <StyledToolbar show={show} className={`${id}-dropdown`}>
-        <ClickOutsideCloseDropdown
-          className="panel-header-dropdown__inner"
-          show={show}
-          onClose={onClose}
-        >
-          {items.map(item => (
-            <ToolbarItem
-              id={item.key}
-              key={item.key}
-              label={item.label}
-              icon={item.icon}
-              onClick={item.onClick}
-              onClose={onClose}
-            />
-          ))}
-        </ClickOutsideCloseDropdown>
+        {show ? (
+          <StyledPanelDropdown type="dark" ref={ref} className="panel-header-dropdown__inner">
+            {items.map(item => (
+              <ToolbarItem
+                id={item.key}
+                key={item.key}
+                label={item.label}
+                icon={item.icon}
+                onClick={item.onClick}
+                onClose={onClose}
+              />
+            ))}
+          </StyledPanelDropdown>
+        ) : null}
       </StyledToolbar>
     );
   };
