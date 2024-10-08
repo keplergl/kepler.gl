@@ -59,7 +59,7 @@ const config = {
     // automatically injected kepler.gl package version into the bundle
     replace({
       __PACKAGE_VERSION__: KeplerPackage.version,
-      exclude: /node_modules/
+      include: /constants\/src\/default-settings\.ts/
     })
   ]
 };

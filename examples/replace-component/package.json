@@ -1,7 +1,7 @@
 {
   "scripts": {
     "start": "node esbuild.config.mjs --start",
-    "start:local": "NODE_ENV=local node esbuild.config.mjs --start --env.deck"
+    "start:local": "NODE_ENV=local node esbuild.config.mjs --start"
   },
   "dependencies": {
     "@kepler.gl/actions": "^3.0.0-alpha.1",
