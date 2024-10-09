@@ -6,7 +6,6 @@ import Layer, {
   LayerBaseConfig,
   LayerBaseConfigPartial,
   LayerColorConfig,
-  LayerColumn,
   LayerSizeConfig,
   VisualChannelDescription,
   VisualChannels
@@ -19,7 +18,7 @@ import {
   DEFAULT_AGGREGATION,
   ColorRange
 } from '@kepler.gl/constants';
-import {Merge} from '@kepler.gl/types';
+import {Merge, LayerColumn} from '@kepler.gl/types';
 import {KeplerTable, Datasets} from '@kepler.gl/table';
 
 type AggregationLayerColumns = {
@@ -31,10 +30,11 @@ export type AggregationLayerData = {
   index: number;
 };
 
-export const pointPosAccessor = ({lat, lng}: AggregationLayerColumns) => dc => d => [
-  dc.valueAt(d.index, lng.fieldIdx),
-  dc.valueAt(d.index, lat.fieldIdx)
-];
+export const pointPosAccessor =
+  ({lat, lng}: AggregationLayerColumns) =>
+  dc =>
+  d =>
+    [dc.valueAt(d.index, lng.fieldIdx), dc.valueAt(d.index, lat.fieldIdx)];
 
 export const pointPosResolver = ({lat, lng}: AggregationLayerColumns) =>
   `${lat.fieldIdx}-${lng.fieldIdx}`;
@@ -47,11 +47,13 @@ export const getValueAggrFunc = getPointData => (field, aggregation) => points =
       )
     : points.length;
 
-export const getFilterDataFunc = (
-  filterRange: number[][],
-  getFilterValue: (d: any) => number[]
-): ((d: any) => boolean) => pt =>
-  getFilterValue(pt).every((val, i) => val >= filterRange[i][0] && val <= filterRange[i][1]);
+export const getFilterDataFunc =
+  (
+    filterRange: number[][],
+    getFilterValue: (d: unknown) => (number | number[])[]
+  ): ((d: unknown) => boolean) =>
+  pt =>
+    getFilterValue(pt).every((val, i) => val >= filterRange[i][0] && val <= filterRange[i][1]);
 
 const getLayerColorRange = (colorRange: ColorRange) => colorRange.colors.map(hexToRgb);
 
@@ -161,8 +163,9 @@ export default class AggregationLayer extends Layer {
       label: typeof label === 'function' ? label(this.config) : label || '',
       measure:
         fieldConfig && aggregation
-          ? `${this.config.visConfig[aggregation]} of ${fieldConfig.displayName ||
-              fieldConfig.name}`
+          ? `${this.config.visConfig[aggregation]} of ${
+              fieldConfig.displayName || fieldConfig.name
+            }`
           : defaultMeasure
     };
   }
@@ -175,6 +178,7 @@ export default class AggregationLayer extends Layer {
   /**
    * Aggregation layer handles visual channel aggregation inside deck.gl layer
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   updateLayerVisualChannel({dataContainer}, channel) {
     this.validateVisualChannel(channel);
   }
@@ -247,7 +251,7 @@ export default class AggregationLayer extends Layer {
   /**
    * Aggregation layer handles visual channel aggregation inside deck.gl layer
    */
-  updateLayerDomain(datasets, newFilter): AggregationLayer {
+  updateLayerDomain(): AggregationLayer {
     return this;
   }
 
@@ -258,7 +262,7 @@ export default class AggregationLayer extends Layer {
     this.updateMeta({bounds});
   }
 
-  calculateDataAttribute({dataContainer, filteredIndex}: KeplerTable, getPosition) {
+  calculateDataAttribute({filteredIndex}: KeplerTable, getPosition) {
     const data: AggregationLayerData[] = [];
 
     for (let i = 0; i < filteredIndex.length; i++) {

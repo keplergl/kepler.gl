@@ -391,7 +391,7 @@ test('#HexagonLayer -> renderLayer', t => {
           onSetLayerDomain: spyLayerCallbacks
         }
       },
-      assert: (deckLayers, layer) => {
+      assert: deckLayers => {
         t.deepEqual(
           deckLayers.map(l => l.id),
           ['test_layer_1', 'test_layer_1-hexagon-cell'],
@@ -521,7 +521,7 @@ test('#HexagonLayer -> renderHover', t => {
       renderArgs: {
         objectHovered: testObjectHovered
       },
-      assert: (deckLayers, layer) => {
+      assert: deckLayers => {
         t.deepEqual(
           deckLayers.map(l => l.id),
           [

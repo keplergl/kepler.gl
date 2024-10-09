@@ -3,17 +3,19 @@
 
 import React, {useCallback, useState, ComponentType} from 'react';
 import {useIntl} from 'react-intl';
-
-import ActionPanel, {ActionPanelItem} from '../common/action-panel';
-import styled from 'styled-components';
-import classnames from 'classnames';
-import {Trash, Layers, Copy, Checkmark} from '../common/icons';
 import copy from 'copy-to-clipboard';
 import {useDismiss, useFloating, useInteractions} from '@floating-ui/react';
+import classnames from 'classnames';
+import styled from 'styled-components';
+
 import {Layer} from '@kepler.gl/layers';
 import {Filter} from '@kepler.gl/types';
 import {Feature} from '@nebula.gl/edit-modes';
 import {Datasets} from '@kepler.gl/table';
+import {canApplyFeatureFilter} from '@kepler.gl/utils';
+
+import ActionPanel, {ActionPanelItem} from '../common/action-panel';
+import {Trash, Layers, Copy, Checkmark} from '../common/icons';
 
 const LAYOVER_OFFSET = 4;
 
@@ -89,6 +91,7 @@ export function PureFeatureActionPanelFactory(): React.FC<FeatureActionPanelProp
       return null;
     }
 
+    const isFilterLayerDisabled = !canApplyFeatureFilter(selectedFeature as any);
     return (
       <StyledActionsLayer
         ref={refs.setFloating}
@@ -104,6 +107,10 @@ export function PureFeatureActionPanelFactory(): React.FC<FeatureActionPanelProp
             className="editor-layers-list"
             label={intl.formatMessage({id: 'editor.filterLayer', defaultMessage: 'Filter layers'})}
             Icon={actionIcons.layer}
+            isDisabled={isFilterLayerDisabled}
+            tooltipText={
+              isFilterLayerDisabled ? intl.formatMessage({id: 'editor.filterLayerDisabled'}) : null
+            }
           >
             {layers.length ? (
               layers.map((layer, index) => (

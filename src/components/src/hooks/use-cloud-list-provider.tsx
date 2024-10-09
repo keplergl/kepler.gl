@@ -23,10 +23,10 @@ export const CloudListProvider: React.FC<CloudListProviderProps> = ({children, p
   const value = useMemo(
     () => ({
       provider: currentCloudProvider,
-      setProvider: setProvider,
+      setProvider,
       cloudProviders: cloudProviders.current
     }),
-    [currentCloudProvider, setCurrentCloudProvider]
+    [currentCloudProvider, setProvider]
   );
 
   return <CloudProviderContext.Provider value={value}>{children}</CloudProviderContext.Provider>;

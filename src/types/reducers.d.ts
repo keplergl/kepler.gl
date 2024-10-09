@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {Field, Millisecond} from './types';
+import type {MapViewState} from '@deck.gl/core/typed';
 
 export type MapState = {
   pitch: number;
@@ -142,7 +143,7 @@ export type TimeRangeFilter = FilterBase<LineChart> &
     fieldType: 'timestamp';
     fixedDomain: true;
     value: [number, number];
-    bins?: Object;
+    bins?: object;
     plotType: {
       [key: string]: any;
     };
@@ -310,7 +311,7 @@ export type BaseMapStyle = {
   label: string;
   url: string;
   icon: string;
-  style?: Object;
+  style?: object;
   layerGroups: LayerGroup[];
   accessToken?: string;
   custom?: CustomStyleType;
@@ -442,6 +443,10 @@ export type Viewport = {
   maxZoom?: number;
   /**  Maximum geographical bounds, pan/zoom operations are constrained within those bounds */
   maxBounds?: Bounds;
+  /** viewport transition duration use by geocoder panel **/
+  transitionDuration?: MapViewState['transitionDuration'];
+  /** viewport transition duration use by geocoder panel **/
+  transitionInterpolator?: MapViewState['transitionInterpolator'];
 };
 
 export type MapStyles = {
@@ -512,7 +517,7 @@ export type TypedTimeRangeFilter = FilterBaseOmitRedudant &
     fieldType: 'timestamp';
     fixedDomain: true;
     value: [number, number];
-    bins?: Object;
+    bins?: object;
     plotType: {
       [key: string]: any;
     };

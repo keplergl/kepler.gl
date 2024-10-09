@@ -149,7 +149,7 @@ const CloudTile: React.FC<CloudTileProps> = ({provider, actionName}) => {
       setError(error as Error);
     }
     setIsLoading(false);
-  }, [provider]);
+  }, [provider, setProvider]);
 
   const onSelect = useCallback(async () => {
     if (isLoading) {
@@ -166,7 +166,7 @@ const CloudTile: React.FC<CloudTileProps> = ({provider, actionName}) => {
       setError(err as Error);
       setProvider(null);
     }
-  }, [setProvider, provider, user, isLoading]);
+  }, [setProvider, provider, user, isLoading, onLogin]);
 
   const onLogout = useCallback(async () => {
     setIsLoading(true);
@@ -178,14 +178,14 @@ const CloudTile: React.FC<CloudTileProps> = ({provider, actionName}) => {
     setIsLoading(false);
     setUser(null);
     setProvider(null);
-  }, [provider]);
+  }, [provider, setProvider]);
 
   const {displayName, name} = provider;
 
   return (
     <StyledBox>
       {provider.isNew ? <NewTag>New</NewTag> : null}
-      <div></div>
+      <div />
       <StyledTileWrapper onClick={onSelect} selected={isSelected}>
         <StyledCloudName>{displayName || name}</StyledCloudName>
         {provider.icon ? <provider.icon height="64px" /> : null}

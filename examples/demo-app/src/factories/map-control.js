@@ -44,7 +44,7 @@ const StyledMapControlOverlay = styled.div`
   margin-top: ${props => (props.rightPanelVisible ? props.theme.rightPanelMarginTop : 0)}px;
   margin-right: ${props => (props.rightPanelVisible ? props.theme.rightPanelMarginRight : 0)}px;
   ${props => (props.fullHeight ? 'height' : 'max-height')}: calc(100% - ${props =>
-  props.theme.rightPanelMarginTop + props.theme.bottomWidgetPaddingBottom}px);
+    props.theme.rightPanelMarginTop + props.theme.bottomWidgetPaddingBottom}px);
 
   .map-control {
     ${props => (props.rightPanelVisible ? 'padding-top: 0px;' : '')}

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {Component, createRef, MouseEventHandler, MouseEvent, PropsWithChildren} from 'react';
+import React, {Component, createRef, MouseEventHandler, PropsWithChildren} from 'react';
 import classnames from 'classnames';
 import styled, {css} from 'styled-components';
 import {
@@ -27,7 +27,7 @@ type CustomPaletteProps = {
   setCustomPalette: (c: NestedPartial<ColorRange>) => void;
   onCancel: () => void;
   onToggleSketcher: (i: boolean | number) => void;
-  onApply: (p: ColorRange, e: MouseEvent) => void;
+  onApply: (p: ColorRange, e: React.MouseEvent) => void;
 };
 
 const dragHandleActive = css`

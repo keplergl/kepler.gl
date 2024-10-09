@@ -6,13 +6,8 @@ import memoize from 'lodash.memoize';
 import {CHANNEL_SCALES, SCALE_FUNC, ALL_FIELD_TYPES, ColorRange} from '@kepler.gl/constants';
 import MapboxGLLayer, {MapboxLayerGLConfig} from '../mapboxgl-layer';
 import HeatmapLayerIcon from './heatmap-layer-icon';
-import {
-  LayerBaseConfigPartial,
-  LayerColumn,
-  LayerWeightConfig,
-  VisualChannels
-} from '../base-layer';
-import {VisConfigColorRange, VisConfigNumber, HexColor, Merge} from '@kepler.gl/types';
+import {LayerBaseConfigPartial, LayerWeightConfig, VisualChannels} from '../base-layer';
+import {VisConfigColorRange, VisConfigNumber, HexColor, Merge, LayerColumn} from '@kepler.gl/types';
 import {hexToRgb, DataContainerInterface} from '@kepler.gl/utils';
 
 export type HeatmapLayerVisConfigSettings = {
@@ -38,9 +33,11 @@ export type HeatmapLayerConfig = Merge<
 
 export const MAX_ZOOM_LEVEL = 18;
 
-export const pointPosAccessor = ({lat, lng}: HeatmapLayerColumnsConfig) => (
-  dc: DataContainerInterface
-) => d => [dc.valueAt(d.index, lng.fieldIdx), dc.valueAt(d.index, lat.fieldIdx)];
+export const pointPosAccessor =
+  ({lat, lng}: HeatmapLayerColumnsConfig) =>
+  (dc: DataContainerInterface) =>
+  d =>
+    [dc.valueAt(d.index, lng.fieldIdx), dc.valueAt(d.index, lat.fieldIdx)];
 
 export const pointColResolver = ({lat, lng}: HeatmapLayerColumnsConfig) =>
   `${lat.fieldIdx}-${lng.fieldIdx}`;
@@ -72,9 +69,7 @@ const heatmapDensity = (colorRange: ColorRange): (string | number)[] => {
 
   const colors: HexColor[] = ['#000000', ...colorRange.colors];
 
-  const scale = scaleFunction<HexColor>()
-    .domain([0, 1])
-    .range(colors);
+  const scale = scaleFunction<HexColor>().domain([0, 1]).range(colors);
 
   const colorDensity = scale.range().reduce((bands: (string | number)[], level) => {
     const invert = scale.invertExtent(level);
@@ -141,7 +136,8 @@ class HeatmapLayer extends MapboxGLLayer {
   getDefaultLayerConfig(props: LayerBaseConfigPartial): HeatmapLayerConfig {
     // mapbox heatmap layer color is always based on density
     // no need to set colorField, colorDomain and colorScale
-    // eslint-disable-next-line no-unused-vars
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const {colorField, colorDomain, colorScale, ...layerConfig} = {
       ...super.getDefaultLayerConfig(props),
 
@@ -224,6 +220,7 @@ class HeatmapLayer extends MapboxGLLayer {
     const getPosition = this.getPositionAccessor(dataContainer);
     const {data} = this.updateData(datasets, oldLayerData);
 
+    // @ts-ignore
     const newConfig = this.computeHeatmapConfiguration(this.config, datasets);
     newConfig.id = this.id;
 

@@ -120,7 +120,7 @@ const StyledDatePicker = styled.div`
 type WithIconWrapperProps = {width?: string};
 const WithIconWrapper = styled.div<WithIconWrapperProps>`
   position: relative;
-  ${props => (props.width ? 'width: ' + props.width : '')}
+  ${props => (props.width ? `width: ${props.width}` : '')}
 `;
 
 const StyledExtraIcon = styled.div`
@@ -190,31 +190,26 @@ export default function EffectTimeConfiguratorFactory(
       return moment.tz.names().includes(_timezone) ? _timezone : DEFAULT_TIMEZONE;
     }, [_timezone]);
 
-    const [
-      datePickerDate,
-      fullDate,
-      formattedTime,
-      formattedDate,
-      dayTimeProgress
-    ] = useMemo(() => {
-      const currentMoment = moment.tz(timestamp, timezone);
+    const [datePickerDate, fullDate, formattedTime, formattedDate, dayTimeProgress] =
+      useMemo(() => {
+        const currentMoment = moment.tz(timestamp, timezone);
 
-      // Slider value from 0 to 1
-      const dayProgress = getDayRatio(currentMoment);
+        // Slider value from 0 to 1
+        const dayProgress = getDayRatio(currentMoment);
 
-      // Date picker always renders Date in local timezone
-      const date = new Date();
-      date.setFullYear(currentMoment.year(), currentMoment.month(), currentMoment.date());
-      date.setHours(0, 0, 0, 0);
+        // Date picker always renders Date in local timezone
+        const date = new Date();
+        date.setFullYear(currentMoment.year(), currentMoment.month(), currentMoment.date());
+        date.setHours(0, 0, 0, 0);
 
-      return [
-        date,
-        currentMoment.toDate(),
-        currentMoment.format('HH:mm'),
-        currentMoment.format('YYYY-MM-DD'),
-        dayProgress
-      ];
-    }, [timestamp, timezone]);
+        return [
+          date,
+          currentMoment.toDate(),
+          currentMoment.format('HH:mm'),
+          currentMoment.format('YYYY-MM-DD'),
+          dayProgress
+        ];
+      }, [timestamp, timezone]);
 
     const timeSliderConfig = useMemo(() => {
       const times = SunCalc.getTimes(fullDate, mapState.latitude, mapState.longitude);
@@ -235,8 +230,8 @@ export default function EffectTimeConfiguratorFactory(
         const hours = clamp([0, 23], Math.floor(value[1] * 24));
         const minutes = clamp([0, 59], Math.floor((value[1] * 24 - hours) * 60));
 
-        const newFormattedTime = `${hours < 10 ? '0' + hours : hours}:${
-          minutes < 10 ? '0' + minutes : minutes
+        const newFormattedTime = `${hours < 10 ? `0${hours}` : hours}:${
+          minutes < 10 ? `0${minutes}` : minutes
         }`;
         const newTimestamp = getTimestamp(formattedDate, newFormattedTime, timezone);
         onTimeParametersChanged({timestamp: newTimestamp});
@@ -311,7 +306,7 @@ export default function EffectTimeConfiguratorFactory(
         </SliderWrapper>
 
         <StyledWrapper hidden={disableDateTimePick} marginBottom={2}>
-          <TextBlock width="32px"></TextBlock>
+          <TextBlock width="32px" />
           <TextBlock width="110px">
             <FormattedMessage id={'effectManager.date'} />
           </TextBlock>

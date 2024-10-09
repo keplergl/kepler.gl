@@ -144,9 +144,10 @@ const GeoCoder: React.FC<GeocoderProps & IntlProps> = ({
   const [results, setResults] = useState(initialResults);
   const [selectedIndex, setSelectedIndex] = useState(0);
 
-  const client = useMemo(() => geocoderService({accessToken: mapboxApiAccessToken}), [
-    mapboxApiAccessToken
-  ]);
+  const client = useMemo(
+    () => geocoderService({accessToken: mapboxApiAccessToken}),
+    [mapboxApiAccessToken]
+  );
 
   const onChange = useCallback(
     event => {
@@ -154,6 +155,7 @@ const GeoCoder: React.FC<GeocoderProps & IntlProps> = ({
       setInputValue(queryString);
       const resultCoordinates = testForCoordinates(queryString);
       if (resultCoordinates[0]) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const [_, latitude, longitude] = resultCoordinates;
         setResults([{center: [latitude, longitude], place_name: queryString}]);
       } else {

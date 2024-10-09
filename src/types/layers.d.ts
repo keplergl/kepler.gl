@@ -23,6 +23,43 @@ export type LayerBaseConfig = {
     enabled: boolean;
     domain?: null;
   };
+
+  columnMode?: string;
+};
+
+/**
+ * Used to configure geospatial data source columns like Longitude, Latitude, Geojson.
+ */
+export type LayerColumn = {value: string | null; fieldIdx: number; optional?: boolean};
+export type LayerConfigColumn = LayerColumn;
+
+export type LayerColumns = {
+  [key: string]: LayerConfigColumn;
+};
+
+export type ColumnPair = {
+  pair: string | string[];
+  fieldPairKey: string | string[];
+};
+
+export type ColumnPairs = {[key: string]: ColumnPair};
+
+export type ColumnLabels = {
+  [key: string]: string;
+};
+
+export type EnhancedFieldPair = {
+  name: string;
+  type: 'point';
+  pair: FieldPair['pair'];
+};
+
+export type SupportedColumnMode = {
+  key: string;
+  label: string;
+  requiredColumns: string[];
+  optionalColumns?: string[];
+  hasHelp?: boolean;
 };
 
 export type LayerColorConfig = {
@@ -77,7 +114,15 @@ export type Field = {
 export type FieldPair = {
   defaultName: string;
   pair: {
-    [key: string]: {
+    lat: {
+      fieldIdx: number;
+      value: string;
+    };
+    lng: {
+      fieldIdx: number;
+      value: string;
+    };
+    altitude?: {
       fieldIdx: number;
       value: string;
     };
@@ -214,6 +259,9 @@ export type LayerVisConfigSettings = {
   heatmapRadius: VisConfigNumber;
   darkBaseMapEnabled: VisConfigBoolean;
   fixedHeight: VisConfigBoolean;
+  allowHover: VisConfigBoolean;
+  showNeighborOnHover: VisConfigBoolean;
+  showHighlightColor: VisConfigBoolean;
 };
 
 // TODO: Move this to individual layers
@@ -263,6 +311,7 @@ export type TextConfigSelect = {
   multiSelect: boolean;
   searchable: boolean;
 };
+
 export type TextConfigNumber = {
   type: 'number';
   range: number[];
@@ -272,6 +321,7 @@ export type TextConfigNumber = {
   label: string;
   showInput: boolean;
 };
+
 export type LayerTextConfig = {
   fontSize: TextConfigNumber;
   outlineWidth: TextConfigNumber;

@@ -52,9 +52,7 @@ export function processClone(original, clone) {
     };
 
     const formatCssProperties = stl2 => {
-      return `${asArray(stl2)
-        .map(formatProperty)
-        .join('; ')};`;
+      return `${asArray(stl2).map(formatProperty).join('; ')};`;
     };
 
     const selector = `.${cln}:${elm}`;
@@ -100,27 +98,30 @@ export function processClone(original, clone) {
     });
   }
 
-  return Promise.resolve([original, clone])
-    .then(([og, cln]) => {
-      cloneStyle(og, cln);
-      return [og, cln];
-    })
-    .then(([og, cln]) => {
-      clonePseudoElements([og, cln]);
-      return [og, cln];
-    })
-    .then(([og, cln]) => {
-      copyUserInput([og, cln]);
-      return [og, cln];
-    })
-    .then(([og, cln]) => {
-      fixSvg(cln);
-      return [og, cln];
-    })
-    .then(([og, cln]) => cln);
+  return (
+    Promise.resolve([original, clone])
+      .then(([og, cln]) => {
+        cloneStyle(og, cln);
+        return [og, cln];
+      })
+      .then(([og, cln]) => {
+        clonePseudoElements([og, cln]);
+        return [og, cln];
+      })
+      .then(([og, cln]) => {
+        copyUserInput([og, cln]);
+        return [og, cln];
+      })
+      .then(([og, cln]) => {
+        fixSvg(cln);
+        return [og, cln];
+      })
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      .then(([og, cln]) => cln)
+  );
 }
 
-/****
+/** **
  * UTILS
  ****/
 export function asArray(arrayLike) {
@@ -162,7 +163,7 @@ export function isDataUrl(url) {
 }
 
 function parseExtension(url) {
-  const match = /\.([^\.\/]*?)$/g.exec(url);
+  const match = /\.([^./]*?)$/g.exec(url);
   if (match) {
     return match[1];
   }
@@ -201,7 +202,7 @@ export function dataAsUrl(content, type) {
 }
 
 export function escape(string) {
-  return string.replace(/([.*+?^${}()|\[\]\/\\])/g, '\\$1');
+  return string.replace(/([.*+?^${}()|[\]/\\])/g, '\\$1');
 }
 
 export function delay(ms) {

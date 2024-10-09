@@ -80,7 +80,8 @@ import {
   FILTER_VIEW_TYPES,
   MAX_DEFAULT_TOOLTIPS,
   DEFAULT_TEXT_LABEL,
-  COMPARE_TYPES
+  COMPARE_TYPES,
+  LIGHT_AND_SHADOW_EFFECT
 } from '@kepler.gl/constants';
 import {
   pick_,
@@ -153,10 +154,10 @@ disableStackCapturing();
  *
  * export default composedReducer;
  */
-/* eslint-disable no-unused-vars */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // @ts-ignore
 const visStateUpdaters = null;
-/* eslint-enable no-unused-vars */
+/* eslint-enable @typescript-eslint/no-unused-vars */
 
 export const defaultInteractionConfig: InteractionConfig = {
   tooltip: {
@@ -333,7 +334,10 @@ function pickChangedProps<T>(prev: T, next: T): Partial<T> {
   const changedProps: Partial<T> = {};
   const pickPropsOf = obj => {
     Object.keys(obj).forEach(key => {
-      if (!changedProps.hasOwnProperty(key) && !isEqual(prev[key], next[key])) {
+      if (
+        !Object.prototype.hasOwnProperty.call(changedProps, key) &&
+        !isEqual(prev[key], next[key])
+      ) {
         changedProps[key] = next[key];
       }
     });
@@ -490,6 +494,11 @@ export function layerConfigChangeUpdater(
     newState = updateStateOnLayerVisibilityChange(state, newLayer);
   }
 
+  if ('columns' in action.newConfig && newLayer.config.animation.enabled) {
+    // TODO: Shan, make the animation config function more robust
+    newState = updateAnimationDomain(newState);
+  }
+
   return updateStateWithLayerAndData(newState, {
     layer: newLayer,
     layerData,
@@ -559,7 +568,7 @@ function addOrRemoveTextLabels(newFields, textLabel, defaultTextLabel = DEFAULT_
 }
 
 function updateTextLabelPropAndValue(idx, prop, value, textLabel) {
-  if (!textLabel[idx].hasOwnProperty(prop)) {
+  if (!Object.prototype.hasOwnProperty.call(textLabel[idx], prop)) {
     return textLabel;
   }
 
@@ -642,6 +651,7 @@ export function layerDataIdChangeUpdater(
   const idx = state.layers.findIndex(l => l.id === oldLayer.id);
 
   let newLayer = oldLayer.updateLayerConfig({dataId});
+
   // this may happen when a layer is new (type: null and no columns) but it's not ready to be saved
   if (newLayer.isValidToSave()) {
     const validated = validateExistingLayerWithData(
@@ -699,16 +709,12 @@ export function setInitialLayerConfig(layer, datasets, layerClasses): Layer {
       ...props[0],
       label: newLayer.config.label,
       dataId: newLayer.config.dataId,
-      isVisible: true,
       isConfigActive: newLayer.config.isConfigActive
     });
-
-    return typeof newLayer.setInitialLayerConfig === 'function'
-      ? newLayer.setInitialLayerConfig(dataset)
-      : newLayer;
   }
-
-  return newLayer;
+  return typeof newLayer.setInitialLayerConfig === 'function'
+    ? newLayer.setInitialLayerConfig(dataset)
+    : newLayer;
 }
 /**
  * Update layer type. Previews layer config will be copied if applicable.
@@ -914,7 +920,7 @@ export function setFilterUpdater(
       newFilter = updateFilterDataId(dataId);
       break;
 
-    case FILTER_UPDATER_PROPS.name:
+    case FILTER_UPDATER_PROPS.name: {
       // we are supporting the current functionality
       // TODO: Next PR for UI filter name will only update filter name but it won't have side effects
       // we are gonna use pair of datasets and fieldIdx to update the filter
@@ -941,7 +947,8 @@ export function setFilterUpdater(
 
       // only filter the current dataset
       break;
-    case FILTER_UPDATER_PROPS.layerId:
+    }
+    case FILTER_UPDATER_PROPS.layerId: {
       // We need to update only datasetId/s if we have added/removed layers
       // - check for layerId changes (XOR works because of string values)
       // if no differences between layerIds, don't do any filtering
@@ -980,6 +987,7 @@ export function setFilterUpdater(
       };
 
       break;
+    }
     default:
       break;
   }
@@ -1063,6 +1071,70 @@ export const addFilterUpdater = (
       };
 
 /**
+ * Create or update a filter
+ * @memberof visStateUpdaters
+ * @public
+ */
+export const createOrUpdateFilterUpdater = (
+  state: VisState,
+  action: VisStateActions.CreateOrUpdateFilterUpdaterAction
+): VisState => {
+  const {id, dataId, field, value} = action;
+
+  let newState = state;
+  const originalIndex = newState.filters.findIndex(f => f.id === id);
+  let filterIndex = originalIndex;
+  if (!id && !dataId) {
+    return newState;
+  }
+  if (originalIndex < 0 && dataId) {
+    newState = addFilterUpdater(newState, {dataId});
+    if (newState.filters.length !== state.filters.length + 1) {
+      // No new filter was added
+      return state;
+    }
+    // Here we are assuming that the filter was added at the end
+    filterIndex = newState.filters.length - 1;
+    newState.filters[filterIndex] = {
+      ...newState.filters[filterIndex],
+      ...(id ? {id} : null)
+    };
+  }
+
+  // No need to update this if it's a newly created filter
+  // First we make sure all the dataIds that fields refer to are updated
+  if (originalIndex >= 0 && dataId) {
+    // If the dataId is an array, we need to update each one individually as they need a correct valueIndex passed
+    newState = (Array.isArray(dataId) ? dataId : [dataId]).reduce((accu, d, index) => {
+      return setFilterUpdater(accu, {
+        idx: filterIndex,
+        prop: 'dataId',
+        value: d,
+        valueIndex: index
+      });
+    }, newState);
+  }
+  // Then we update the fields
+  if (field) {
+    // If the field is an array, we need to update each field individually as they need a correct valueIndex passed
+    newState = (Array.isArray(field) ? field : [field]).reduce((accu, f, index) => {
+      return setFilterUpdater(accu, {
+        idx: filterIndex,
+        prop: 'name',
+        value: f,
+        valueIndex: index
+      });
+    }, newState);
+  }
+  // Then we update the value separately
+  if (value !== null && typeof value !== 'undefined') {
+    newState = setFilterUpdater(newState, {idx: filterIndex, prop: 'value', value});
+  }
+
+  return newState;
+};
+
+/**
  * Set layer color palette ui state
  * @memberof visStateUpdaters
  */
@@ -1106,6 +1178,7 @@ export const toggleFilterAnimationUpdater = (
  */
 export const toggleLayerAnimationUpdater = (
   state: VisState,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   action: VisStateActions.ToggleLayerAnimationUpdaterAction
 ): VisState => ({
   ...state,
@@ -1120,10 +1193,7 @@ export const toggleLayerAnimationUpdater = (
  * @memberof visStateUpdaters
  * @public
  */
-export const toggleLayerAnimationControlUpdater = (
-  state: VisState,
-  action: VisStateActions.ToggleLayerAnimationControlUpdaterAction
-): VisState => ({
+export const toggleLayerAnimationControlUpdater = (state: VisState): VisState => ({
   ...state,
   animationConfig: {
     ...state.animationConfig,
@@ -1433,6 +1503,14 @@ export const addEffectUpdater = (
   state: VisState,
   action: VisStateActions.AddEffectUpdaterAction
 ): VisState => {
+  if (
+    action.config?.type === LIGHT_AND_SHADOW_EFFECT.type &&
+    state.effects.some(effect => effect.type === LIGHT_AND_SHADOW_EFFECT.type)
+  ) {
+    Console.warn(`Can't add more than one ${LIGHT_AND_SHADOW_EFFECT.name} effect`);
+    return state;
+  }
+
   const newEffect = createEffect(action.config);
 
   // collapse configurators for other effects
@@ -1542,12 +1620,11 @@ export function removeDatasetUpdater<T extends VisState>(
     return state;
   }
 
-  /* eslint-disable no-unused-vars */
   const {
     layers,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     datasets: {[datasetKey]: dataset, ...newDatasets}
   } = state;
-  /* eslint-enable no-unused-vars */
 
   const layersToRemove = layers.filter(l => l.config.dataId === datasetKey).map(l => l.id);
 
@@ -1570,9 +1647,8 @@ function removeDatasetFromInteractionConfig(state, {dataId}) {
   const {tooltip} = interactionConfig;
   if (tooltip) {
     const {config} = tooltip;
-    /* eslint-disable no-unused-vars */
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const {[dataId]: fields, ...fieldsToShow} = config.fieldsToShow;
-    /* eslint-enable no-unused-vars */
     interactionConfig = {
       ...interactionConfig,
       tooltip: {...tooltip, config: {...config, fieldsToShow}}
@@ -1771,6 +1847,7 @@ export const layerClickUpdater = (
  */
 export const mapClickUpdater = (
   state: VisState,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   action: VisStateActions.OnMapClickUpdaterAction
 ): VisState => {
   return {
@@ -2249,6 +2326,7 @@ export function processFileContentUpdater(
   );
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function parseProgress(prevProgress = {}, progress) {
   // This happens when receiving query metadata or other cases we don't
   // have an update for the user.
@@ -2584,7 +2662,7 @@ export const setSelectedFeatureUpdater = (
   {feature, selectionContext}: VisStateActions.SetSelectedFeatureUpdaterAction
 ): VisState => {
   // add bbox for polygon filter to speed up filtering
-   if (feature && feature.properties) feature.properties.bbox = bbox(feature);
+  if (feature && feature.properties) feature.properties.bbox = bbox(feature);
   return {
     ...state,
     editor: {
@@ -2809,6 +2887,7 @@ export function setColumnDisplayFormatUpdater(
  */
 export function toggleEditorVisibilityUpdater(
   state: VisState,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   action: VisStateActions.ToggleEditorVisibilityUpdaterAction
 ): VisState {
   return {
@@ -2902,7 +2981,7 @@ function defaultReplaceParentDatasetIds(value: any, dataId: string, dataIdToRepl
         dataId: dataIdToReplace
       }
     };
-  } else if (isObject(value) && value.hasOwnProperty(dataId)) {
+  } else if (isObject(value) && Object.prototype.hasOwnProperty.call(value, dataId)) {
     // for value saved as {[dataId]: {...}}
     return {[dataIdToReplace]: value[dataId]};
   }

@@ -9,7 +9,9 @@ import {UpdateTableColorTypes} from './types';
 import {RGBColor} from '@kepler.gl/types';
 import {VisStateActions, ActionHandler} from '@kepler.gl/actions';
 
-function nop(_) {}
+function nop() {
+  return;
+}
 
 const DatasetTagWrapper = styled.div`
   display: flex;

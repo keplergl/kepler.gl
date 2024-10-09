@@ -7,3 +7,9 @@
 # as crash happens before it even gets to that point
 # We use tail to avoid the first line of the the output which is the command itself
 yarn babel node_modules/@mapbox/tiny-sdf/index.js | tail -n +2 > node_modules/@mapbox/tiny-sdf/index.cjs
+
+# Patch for an issue with react-virtualized output having an invalid import
+# https://github.com/bvaughn/react-virtualized/issues/1212
+if [[ -f "node_modules/react-virtualized/dist/es/WindowScroller/utils/onScroll.js" ]]; then
+  sed -i -e '/import { bpfrpt_proptype_WindowScroller } from "..\/WindowScroller.js";/d' node_modules/react-virtualized/dist/es/WindowScroller/utils/onScroll.js
+fi

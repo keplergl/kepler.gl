@@ -33,14 +33,17 @@ function LoadStorageMapFactory() {
 
     useEffect(() => {
       setProviderInfo(currentProvider);
-    }, [currentProvider]);
+    }, [currentProvider, setProviderInfo]);
 
-    const onSelectMap = useCallback((provider, map) => {
-      onLoadCloudMap({
-        loadParams: map.loadParams,
-        provider
-      });
-    }, []);
+    const onSelectMap = useCallback(
+      (provider, map) => {
+        onLoadCloudMap({
+          loadParams: map.loadParams,
+          provider
+        });
+      },
+      [onLoadCloudMap]
+    );
 
     return (
       <FlexColContainer>

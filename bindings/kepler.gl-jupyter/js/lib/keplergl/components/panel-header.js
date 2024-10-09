@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {PanelHeaderFactory, Icons, withState} from 'kepler.gl/components';
-import {toggleModal} from 'kepler.gl/actions';
+import {PanelHeaderFactory, Icons, withState} from '@kepler.gl/components';
+import {toggleModal} from '@kepler.gl/actions';
 import React from 'react';
 import {IntlProvider} from 'react-intl';
 

@@ -211,8 +211,7 @@ test("#mapStyleReducer -> RECEIVE_MAP_CONFIG (custom: 'LOCAL')", t => {
       smoothie_the_cat: {
         accessToken: 'secret_token',
         custom: 'LOCAL',
-        icon:
-          'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat/static/-122.3391,37.7922,9,0,0/400x300?access_token=secret_token&logo=false&attribution=false',
+        icon: 'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat/static/-122.3391,37.7922,9,0,0/400x300?access_token=secret_token&logo=false&attribution=false',
         id: 'smoothie_the_cat',
         label: 'Smoothie the Cat',
         url: 'mapbox://styles/shanhe/smoothie.the.cat'
@@ -249,8 +248,7 @@ test("#mapStyleReducer -> RECEIVE_MAP_CONFIG (custom: 'LOCAL')", t => {
     payload: [
       {
         id: 'smoothie_the_cat',
-        url:
-          'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat?pluginName=Keplergl&access_token=secret_token'
+        url: 'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat?pluginName=Keplergl&access_token=secret_token'
       }
     ]
   };
@@ -268,8 +266,7 @@ test("#mapStyleReducer -> RECEIVE_MAP_CONFIG (custom: 'LOCAL')", t => {
     smoothie_the_cat: {
       accessToken: 'secret_token',
       custom: 'LOCAL',
-      icon:
-        'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat/static/-122.3391,37.7922,9,0,0/400x300?access_token=secret_token&logo=false&attribution=false',
+      icon: 'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat/static/-122.3391,37.7922,9,0,0/400x300?access_token=secret_token&logo=false&attribution=false',
       id: 'smoothie_the_cat',
       label: 'Smoothie the Cat',
       url: 'mapbox://styles/shanhe/smoothie.the.cat',
@@ -328,8 +325,7 @@ test("#mapStyleReducer -> RECEIVE_MAP_CONFIG (custom: 'LOCAL')", t => {
           smoothie_the_cat: {
             accessToken: 'secret_token',
             custom: 'LOCAL',
-            icon:
-              'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat/static/-122.3391,37.7922,9,0,0/400x300?access_token=secret_token&logo=false&attribution=false',
+            icon: 'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat/static/-122.3391,37.7922,9,0,0/400x300?access_token=secret_token&logo=false&attribution=false',
             id: 'smoothie_the_cat',
             label: 'Smoothie the Cat',
             url: 'mapbox://styles/shanhe/smoothie.the.cat'
@@ -385,8 +381,7 @@ test("#mapStyleReducer -> RECEIVE_MAP_CONFIG (custom: 'MANAGED')", t => {
       smoothie_the_cat: {
         accessToken: 'secret_token',
         custom: 'MANAGED',
-        icon:
-          'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat/static/-122.3391,37.7922,9,0,0/400x300?access_token=secret_token&logo=false&attribution=false',
+        icon: 'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat/static/-122.3391,37.7922,9,0,0/400x300?access_token=secret_token&logo=false&attribution=false',
         id: 'smoothie_the_cat',
         label: 'Smoothie the Cat',
         url: 'mapbox://styles/shanhe/smoothie.the.cat'
@@ -431,8 +426,7 @@ test("#mapStyleReducer -> RECEIVE_MAP_CONFIG (custom: 'MANAGED')", t => {
           smoothie_the_cat: {
             accessToken: 'secret_token',
             custom: 'MANAGED',
-            icon:
-              'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat/static/-122.3391,37.7922,9,0,0/400x300?access_token=secret_token&logo=false&attribution=false',
+            icon: 'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat/static/-122.3391,37.7922,9,0,0/400x300?access_token=secret_token&logo=false&attribution=false',
             id: 'smoothie_the_cat',
             label: 'Smoothie the Cat',
             url: 'mapbox://styles/shanhe/smoothie.the.cat'
@@ -488,8 +482,7 @@ test('#mapStyleReducer -> RECEIVE_MAP_CONFIG (custom: true (legacy backwards sup
       smoothie_the_cat: {
         accessToken: 'secret_token',
         custom: true,
-        icon:
-          'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat/static/-122.3391,37.7922,9,0,0/400x300?access_token=secret_token&logo=false&attribution=false',
+        icon: 'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat/static/-122.3391,37.7922,9,0,0/400x300?access_token=secret_token&logo=false&attribution=false',
         id: 'smoothie_the_cat',
         label: 'Smoothie the Cat',
         url: 'mapbox://styles/shanhe/smoothie.the.cat'
@@ -527,8 +520,7 @@ test('#mapStyleReducer -> RECEIVE_MAP_CONFIG (custom: true (legacy backwards sup
     payload: [
       {
         id: 'smoothie_the_cat',
-        url:
-          'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat?pluginName=Keplergl&access_token=secret_token'
+        url: 'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat?pluginName=Keplergl&access_token=secret_token'
       }
     ]
   };
@@ -546,8 +538,7 @@ test('#mapStyleReducer -> RECEIVE_MAP_CONFIG (custom: true (legacy backwards sup
     smoothie_the_cat: {
       accessToken: 'secret_token',
       custom: true,
-      icon:
-        'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat/static/-122.3391,37.7922,9,0,0/400x300?access_token=secret_token&logo=false&attribution=false',
+      icon: 'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat/static/-122.3391,37.7922,9,0,0/400x300?access_token=secret_token&logo=false&attribution=false',
       id: 'smoothie_the_cat',
       label: 'Smoothie the Cat',
       url: 'mapbox://styles/shanhe/smoothie.the.cat',
@@ -606,8 +597,7 @@ test('#mapStyleReducer -> RECEIVE_MAP_CONFIG (custom: true (legacy backwards sup
           smoothie_the_cat: {
             accessToken: 'secret_token',
             custom: true,
-            icon:
-              'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat/static/-122.3391,37.7922,9,0,0/400x300?access_token=secret_token&logo=false&attribution=false',
+            icon: 'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat/static/-122.3391,37.7922,9,0,0/400x300?access_token=secret_token&logo=false&attribution=false',
             id: 'smoothie_the_cat',
             label: 'Smoothie the Cat',
             url: 'mapbox://styles/shanhe/smoothie.the.cat'
@@ -836,7 +826,7 @@ test('#mapStyleReducer -> EDIT_CUSTOM_MAP_STYLE', t => {
 
   t.deepEqual(
     nextState.inputStyle,
-    {...inputMapStyleToEdit, error: false, isValid: true, style: null, uploadedFile: null},
+    {...inputMapStyleToEdit, error: false, isValid: false, style: null, uploadedFile: null},
     'should set the inputStyle'
   );
 

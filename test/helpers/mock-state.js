@@ -37,8 +37,13 @@ import {
   config as tripConfig,
   dataId as tripDataId
 } from '../fixtures/test-trip-data';
+import tripCsvData, {
+  tripCsvDataInfo,
+  expectedTripLayerConfig
+} from '../fixtures/test-trip-csv-data';
+import testArcData, {arcDataInfo, config as arcDataConfig} from '../fixtures/test-arc-data';
 import tripGeojson, {tripDataInfo} from '../fixtures/trip-geojson';
-import {processCsvData, processGeojson} from '@kepler.gl/processors';
+import {processCsvData, processGeojson, processRowObject} from '@kepler.gl/processors';
 import {MOCK_MAP_STYLE} from './mock-map-styles';
 
 const geojsonFields = cloneDeep(fields);
@@ -145,7 +150,62 @@ function mockStateWithTripGeojson() {
   return updatedState;
 }
 
-function mockStateWithFilters(state) {
+export function mockStateWithTripTable(state) {
+  const initialState = cloneDeep(state || InitialState);
+  const updatedState = applyActions(keplerGlReducer, initialState, [
+    {
+      action: addDataToMap,
+      payload: [
+        {
+          datasets: {info: tripCsvDataInfo, data: processCsvData(tripCsvData)},
+          config: {
+            version: 'v1',
+            config: {
+              visState: {
+                layers: [expectedTripLayerConfig]
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]);
+
+  test(t => {
+    t.equal(updatedState.visState.layers.length, 1, 'should create 1 trip layer');
+    t.equal(updatedState.visState.layers[0].type, 'trip', 'should create trip layer');
+    t.end();
+  });
+
+  return updatedState;
+}
+
+export function mockStateWithArcNeighbors(state) {
+  const initialState = cloneDeep(state || InitialState);
+  const updatedState = applyActions(keplerGlReducer, initialState, [
+    {
+      action: addDataToMap,
+      payload: [
+        {
+          datasets: {info: arcDataInfo, data: processRowObject(testArcData)},
+          config: arcDataConfig
+        }
+      ]
+    }
+  ]);
+
+  test(t => {
+    t.equal(updatedState.visState.layers.length, 3, 'should create 3 layers');
+    t.equal(updatedState.visState.layers[0].type, 'point', 'should create point layer');
+    t.equal(updatedState.visState.layers[1].type, 'arc', 'should create arc layer');
+    t.equal(updatedState.visState.layers[2].type, 'arc', 'should create arc layer');
+    t.end();
+  });
+
+  return updatedState;
+}
+
+export function mockStateWithFilters(state) {
   const initialState = state || mockStateWithFileUpload();
 
   const prepareState = applyActions(keplerGlReducer, initialState, [
@@ -234,7 +294,7 @@ function mockStateWithMultiFilters() {
 function mockStateWithEffects() {
   const initialState = cloneDeep(InitialState);
 
-  let prepareState = applyActions(keplerGlReducer, initialState, [
+  const prepareState = applyActions(keplerGlReducer, initialState, [
     {
       action: VisStateActions.addEffect,
       payload: [{id: 'e_1'}]
@@ -452,8 +512,7 @@ function mockStateWithCustomMapStyle(customType = 'LOCAL') {
       name: 'Smoothie the Cat'
     },
     url: 'mapbox://styles/shanhe/smoothie.the.cat',
-    icon:
-      'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat/static/-122.3391,37.7922,9,0,0/400x300?access_token=secret_token&logo=false&attribution=false',
+    icon: 'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat/static/-122.3391,37.7922,9,0,0/400x300?access_token=secret_token&logo=false&attribution=false',
     custom: customType
   };
 
@@ -692,6 +751,7 @@ export const expectedSavedLayer1 = {
   config: {
     dataId: testCsvDataId,
     label: 'gps_data',
+    columnMode: 'points',
     highlightColor: DEFAULT_HIGHLIGHT_COLOR,
     color: [0, 0, 0],
     columns: {
@@ -725,7 +785,10 @@ export const expectedSavedLayer1 = {
       },
       strokeColorRange: DEFAULT_COLOR_RANGE,
       strokeColor: null,
-      radiusRange: [0, 50]
+      radiusRange: [0, 50],
+      allowHover: true,
+      showNeighborOnHover: false,
+      showHighlightColor: true
     }
   },
   visualChannels: {
@@ -747,6 +810,7 @@ export const expectedLoadedLayer1 = {
   config: {
     dataId: testCsvDataId,
     label: 'gps_data',
+    columnMode: 'points',
     highlightColor: DEFAULT_HIGHLIGHT_COLOR,
     color: [0, 0, 0],
     columns: {
@@ -770,7 +834,10 @@ export const expectedLoadedLayer1 = {
       strokeColorRange: DEFAULT_COLOR_RANGE,
       filled: true,
       strokeColor: null,
-      radiusRange: [0, 50]
+      radiusRange: [0, 50],
+      allowHover: true,
+      showNeighborOnHover: false,
+      showHighlightColor: true
     },
     colorField: {
       name: 'gps_data.types',
@@ -805,6 +872,7 @@ export const expectedSavedLayer2 = {
     columns: {
       geojson: '_geojson'
     },
+    columnMode: 'geojson',
     hidden: false,
     isVisible: true,
     visConfig: {
@@ -852,6 +920,7 @@ export const expectedLoadedLayer2 = {
     columns: {
       geojson: '_geojson'
     },
+    columnMode: 'geojson',
     hidden: false,
     isVisible: true,
     visConfig: {
@@ -903,7 +972,8 @@ export const StateWH3Layer = mockStateWithH3Layer();
 export const StateWMultiH3Layers = mockStateWithMultipleH3Layers();
 export const StateWithGeocoderDataset = mockStateWithGeocoderDataset();
 export const StateWLayerStyle = mockStateWithLayerStyling();
-
+export const StateWTripTable = mockStateWithTripTable();
+export const StateWArcNeighbors = mockStateWithArcNeighbors();
 export const expectedSavedTripLayer = {
   id: 'trip-0',
   type: 'trip',
@@ -912,6 +982,7 @@ export const expectedSavedTripLayer = {
     label: 'Trip Data',
     highlightColor: DEFAULT_HIGHLIGHT_COLOR,
     color: [0, 0, 0],
+    columnMode: 'geojson',
     columns: {
       geojson: '_geojson'
     },

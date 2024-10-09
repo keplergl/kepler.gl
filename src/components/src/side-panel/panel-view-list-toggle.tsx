@@ -13,7 +13,7 @@ import {PANEL_VIEW_TOGGLES} from '@kepler.gl/constants';
 type ToggleOptionProps = {
   isActive: boolean;
   onClick: () => void;
-  option: typeof TOGGLE_OPTIONS[0];
+  option: (typeof TOGGLE_OPTIONS)[0];
 };
 
 type PanelViewListToggleProps = {

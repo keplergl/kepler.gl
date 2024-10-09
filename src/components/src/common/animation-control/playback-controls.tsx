@@ -31,17 +31,19 @@ const StyledAnimationControls = styled.div<StyledAnimationControlsProps>`
 
 const DEFAULT_ICONS = {
   /* eslint-disable react/display-name */
-  reset: _ => <Reset height="18px" />,
-  play: _ => <Play height="18px" />,
-  pause: _ => <Pause height="18px" />,
-  export: _ => <Save height="18px" />,
+  reset: () => <Reset height="18px" />,
+  play: () => <Play height="18px" />,
+  pause: () => <Pause height="18px" />,
+  export: () => <Save height="18px" />,
   /* eslint-enable react/display-name */
   speed: Rocket,
   animationFree: FreeWindow,
   animationIncremental: AnchorWindow
 };
 
-function nop() {}
+function nop() {
+  return;
+}
 
 const DEFAULT_ANIMATE_ITEMS = {
   [ANIMATION_WINDOW.free]: {
@@ -55,7 +57,7 @@ const DEFAULT_ANIMATE_ITEMS = {
     tooltip: 'tooltip.animationByIncremental'
   }
 };
-interface PlaybackControlsProps {
+export interface PlaybackControlsProps {
   isAnimatable?: boolean;
   isAnimating?: boolean;
   width?: number;

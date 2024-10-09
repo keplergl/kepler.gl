@@ -401,6 +401,35 @@ export function addFilter(
   };
 }
 
+export type CreateOrUpdateFilterUpdaterAction = {
+  id?: string;
+  dataId?: string | string[];
+  field?: string | string[];
+  value?: any;
+};
+
+/**
+ * Create or updates a filter
+ * @memberof visStateActions
+ * @param dataId - dataset `id` this new filter is associated with
+ * @returns action
+ * @public
+ */
+export function createOrUpdateFilter(
+  id?: string,
+  dataId?: string | string[],
+  field?: string | string[],
+  value?: any
+): Merge<CreateOrUpdateFilterUpdaterAction, {type: typeof ActionTypes.CREATE_OR_UPDATE_FILTER}> {
+  return {
+    type: ActionTypes.CREATE_OR_UPDATE_FILTER,
+    id,
+    dataId,
+    field,
+    value
+  };
+}
+
 export type AddLayerUpdaterAction = {
   config?: object;
   datasetId?: string;
@@ -932,7 +961,7 @@ export function updateLayerAnimationSpeed(
     speed
   };
 }
-export type ToggleLayerAnimationUpdaterAction = {};
+export type ToggleLayerAnimationUpdaterAction = void;
 /**
  * start end end layer animation
  * @memberof visStateActions
@@ -948,7 +977,7 @@ export function toggleLayerAnimation(): Merge<
   };
 }
 
-export type ToggleLayerAnimationControlUpdaterAction = {};
+export type ToggleLayerAnimationControlUpdaterAction = void;
 /**
  * hide and show layer animation control
  * @memberof visStateActions
@@ -1047,7 +1076,7 @@ export function onLayerClick(
   };
 }
 
-export type OnMapClickUpdaterAction = {};
+export type OnMapClickUpdaterAction = void;
 /**
  * Trigger map click event, unselect clicked object
  * @memberof visStateActions
@@ -1375,7 +1404,7 @@ export function applyCPUFilter(
   };
 }
 
-export type ToggleEditorVisibilityUpdaterAction = {};
+export type ToggleEditorVisibilityUpdaterAction = void;
 /**
  * Toggle editor layer visibility
  * @memberof visStateActions
@@ -1503,7 +1532,7 @@ export function setFilterAnimationTimeConfig(
  *
  * @public
  */
-/* eslint-disable no-unused-vars */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // @ts-ignore
 const visStateActions = null;
-/* eslint-enable no-unused-vars */
+/* eslint-enable @typescript-eslint/no-unused-vars */

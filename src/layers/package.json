@@ -42,21 +42,21 @@
     "@kepler.gl/table": "3.0.0",
     "@kepler.gl/types": "3.0.0",
     "@kepler.gl/utils": "3.0.0",
-    "@loaders.gl/arrow": "^4.1.0-alpha.4",
-    "@loaders.gl/core": "^4.1.0-alpha.4",
-    "@loaders.gl/gis": "^4.1.0-alpha.4",
-    "@loaders.gl/gltf": "^4.1.0-alpha.4",
-    "@loaders.gl/schema": "^4.1.0-alpha.4",
-    "@loaders.gl/wkt": "^4.1.0-alpha.4",
+    "@loaders.gl/arrow": "^4.1.1",
+    "@loaders.gl/core": "^4.1.1",
+    "@loaders.gl/gis": "^4.1.1",
+    "@loaders.gl/gltf": "^4.1.1",
+    "@loaders.gl/schema": "^4.1.1",
+    "@loaders.gl/wkt": "^4.1.1",
     "@luma.gl/constants": "^8.5.20",
     "@mapbox/geojson-normalize": "0.0.1",
     "@nebula.gl/edit-modes": "1.0.2-alpha.1",
     "@nebula.gl/layers": "1.0.2-alpha.1",
     "@turf/bbox": "^6.0.1",
+    "@turf/boolean-within": "^6.0.1",
     "@turf/center": "^6.0.1",
     "@turf/helpers": "^6.1.4",
-    "@turf/boolean-within": "^6.0.1",
-    "@types/geojson": "^7946.0.7",
+    "@types/geojson": "^7946.0.8",
     "@types/keymirror": "^0.1.1",
     "@types/lodash.memoize": "^4.1.7",
     "@types/lodash.uniq": "^4.5.7",
@@ -79,15 +79,16 @@
     "sourceMap": false,
     "instrument": false
   },
-  "engines": {
-    "node": ">=18.18.2"
-  },
   "maintainers": [
     "Shan He <heshan0131@gmail.com>",
     "Giuseppe Macri <gmacri@uber.com>"
   ],
+  "engines": {
+    "node": ">=18"
+  },
   "volta": {
     "node": "18.18.2",
-    "yarn": "1.22.17"
-  }
+    "yarn": "4.4.0"
+  },
+  "packageManager": "yarn@4.4.0"
 }

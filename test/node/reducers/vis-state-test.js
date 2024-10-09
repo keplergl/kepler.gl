@@ -9,6 +9,7 @@ import {console as Console} from 'global/window';
 import {drainTasksForTesting, succeedTaskInTest, errorTaskInTest} from 'react-palm/tasks';
 import CloneDeep from 'lodash.clonedeep';
 
+import SchemaManager from '@kepler.gl/schemas';
 import {VisStateActions, MapStateActions} from '@kepler.gl/actions';
 import {
   visStateReducer as reducer,
@@ -21,7 +22,7 @@ import {
 } from '@kepler.gl/reducers';
 
 import {processCsvData, processGeojson} from '@kepler.gl/processors';
-import {Layer, KeplerGlLayers} from '@kepler.gl/layers';
+import {Layer, KeplerGlLayers, COLUMN_MODE_TABLE} from '@kepler.gl/layers';
 import {KeplerTable, createNewDataEntry, maybeToDate} from '@kepler.gl/table';
 import {createDataContainer, getDefaultFilter} from '@kepler.gl/utils';
 import {
@@ -30,7 +31,8 @@ import {
   LAYER_VIS_CONFIGS,
   DEFAULT_TEXT_LABEL,
   DEFAULT_COLOR_UI,
-  FILTER_VIEW_TYPES
+  FILTER_VIEW_TYPES,
+  LIGHT_AND_SHADOW_EFFECT
 } from '@kepler.gl/constants';
 
 const {ArcLayer, PointLayer, GeojsonLayer, LineLayer, TripLayer} = KeplerGlLayers;
@@ -50,7 +52,7 @@ import {
   fields as geojsonFields,
   rows as geojsonRows
 } from 'test/fixtures/geojson';
-
+import tripCsvData, {tripCsvDataInfo, expectedCoordinates} from 'test/fixtures/test-trip-csv-data';
 import tripGeojson, {timeStampDomain, tripDataInfo} from 'test/fixtures/trip-geojson';
 import {mockPolygonFeature, mockPolygonFeature2, mockPolygonData} from 'test/fixtures/polygon';
 
@@ -78,6 +80,7 @@ import {
   InitialState
 } from 'test/helpers/mock-state';
 import {getNextColorMakerValue} from 'test/helpers/layer-utils';
+import {expectedTripLayerConfig} from '../../fixtures/test-trip-csv-data';
 
 const mockData = {
   fields: [
@@ -179,7 +182,6 @@ const expectedFieldParis = [
     suffix: ['lat', 'lng']
   }
 ];
-
 const mockFilter = {
   fieldIdx: 0,
   name: mockData.fields[0].name,
@@ -337,12 +339,13 @@ test('#visStateReducer -> LAYER_TYPE_CHANGE.1', t => {
   const layer = new Layer({id: 'more_layer'});
   const oldState = {
     ...INITIAL_VIS_STATE,
-    datasets: {
-      puppy: {
-        data: mockData.data,
+    datasets: createNewDataEntry({
+      info: {id: 'puppy', label: 'puppy'},
+      data: {
+        rows: mockData.data,
         fields: mockData.fields
       }
-    },
+    }),
     layers: [{id: 'existing_layer'}, layer],
     layerData: [[{data: [1, 2, 3]}, {data: [4, 5, 6]}]],
     layerOrder: ['more_layer', 'existing_layer'],
@@ -430,10 +433,12 @@ test('#visStateReducer -> LAYER_TYPE_CHANGE.2', t => {
     ...stringField,
     valueAccessor: stringField.valueAccessor(datasets.smoothie.dataContainer)
   };
+
   let nextState = reducer(
     oldState,
     VisStateActions.layerVisualChannelConfigChange(pointLayer, {colorField: stringField}, 'color')
   );
+
   nextState = reducer(
     nextState,
     VisStateActions.layerVisConfigChange(nextState.layers[0], {
@@ -654,6 +659,90 @@ test('#visStateReducer -> LAYER_CONFIG_CHANGE -> isVisible -> splitMaps', t => {
   t.end();
 });
 
+test('#visStateReducer -> LAYER_CONFIG_CHANGE -> columnMode', t => {
+  const initialState = InitialState.visState;
+  // const initialState = cloneDeep(state || InitialState);
+  const updatedState = reducer(
+    initialState,
+    VisStateActions.updateVisData({info: tripCsvDataInfo, data: processCsvData(tripCsvData)})
+  );
+
+  const pointLayer = updatedState.layers[0];
+  // change layer type to trip
+  const updatedState2 = reducer(updatedState, VisStateActions.layerTypeChange(pointLayer, 'trip'));
+  // trip Layer
+  const tripLayer = updatedState2.layers[0];
+
+  // update trip layer column mode
+  const nextState = reducer(
+    updatedState2,
+    VisStateActions.layerConfigChange(tripLayer, {
+      columnMode: COLUMN_MODE_TABLE
+    })
+  );
+
+  const expectedLayerConfigColumns = {
+    geojson: {value: null, fieldIdx: -1},
+    id: {value: null, fieldIdx: -1},
+    lat: {value: 'location-lat', fieldIdx: 2},
+    lng: {value: 'location-lng', fieldIdx: 1},
+    timestamp: {value: null, fieldIdx: -1},
+    altitude: {value: 'location-alt', fieldIdx: 6, optional: true}
+  };
+  t.deepEqual(
+    nextState.layers[0].config.columns,
+    expectedLayerConfigColumns,
+    'should update layer columns'
+  );
+  t.equal(
+    nextState.layers[0].config.columnMode,
+    COLUMN_MODE_TABLE,
+    'should update layer columnMode'
+  );
+
+  t.deepEqual(nextState.layerData[0], {}, 'should not format layer data without all columns');
+  // update trip layer column mode and columns id, timestap
+  const nextState1 = reducer(
+    nextState,
+    VisStateActions.layerConfigChange(nextState.layers[0], {
+      columns: {
+        ...expectedLayerConfigColumns,
+        timestamp: {value: 'timestamp', fieldIdx: 0},
+        id: {value: 'name', fieldIdx: 5}
+      }
+    })
+  );
+  t.ok(nextState1.layerData[0].data, 'should format layer data with columns');
+  t.equal(nextState1.layerData[0].data.length, 2, 'Should format 2 geojson features');
+
+  t.deepEqual(
+    nextState1.layerData[0].data[0].geometry.coordinates.slice(0, 2),
+    expectedCoordinates,
+    'feature[0] coordinates should be correct'
+  );
+  t.deepEqual(
+    nextState1.layerData[0].data[0].properties.index,
+    0,
+    'feature[0] properties index should be correct'
+  );
+  t.deepEqual(
+    nextState1.layerData[0].data[0].properties.values.length,
+    8,
+    'feature[0] properties values should have correct length'
+  );
+  const stateToSave = SchemaManager.save({visState: nextState1});
+  const savedTripLayer = stateToSave.config.config.visState.layers[0];
+  t.equal(savedTripLayer.config.columnMode, COLUMN_MODE_TABLE, 'should save columnMode');
+  t.deepEqual(
+    savedTripLayer.config.columns,
+    expectedTripLayerConfig.config.columns,
+    'should save trip layer config columns'
+  );
+
+  // console.log(JSON.stringify(stateToSave.config.config.visState.layers[0], null, 2));
+  t.end();
+});
+
 test('visStateReducer -> layerDataIdChangeUpdater', t => {
   const initialState = CloneDeep(StateWFilesFiltersLayerColor).visState;
   const pointLayer = initialState.layers[0];
@@ -667,16 +756,9 @@ test('visStateReducer -> layerDataIdChangeUpdater', t => {
   const updatedLayer = nextState.layers[0];
 
   t.equal(updatedLayer.config.dataId, testGeoJsonDataId, 'should update point layer dataId');
-  t.deepEqual(
-    updatedLayer.config.columns,
-    {
-      altitude: {value: null, fieldIdx: -1, optional: true},
-      lat: {value: null, fieldIdx: -1},
-      lng: {value: null, fieldIdx: -1}
-    },
-    'should not update point layer column'
-  );
-  t.equal(updatedLayer.config.colorField, null, 'should not update point layer colorField');
+  const expectedLayerColumns = new PointLayer({}).config.columns;
+  t.deepEqual(updatedLayer.config.columns, expectedLayerColumns, 'should reset point layer column');
+  t.equal(updatedLayer.config.colorField, null, 'should not assign point layer colorField');
 
   // add layer
   const nextState1 = reducer(nextState, VisStateActions.addLayer());
@@ -781,7 +863,9 @@ test('visStateReducer -> layerDataIdChangeUpdater -> validation', t => {
     {
       altitude: {value: null, fieldIdx: -1, optional: true},
       lat: {value: 'gps_data.lat', fieldIdx: 1},
-      lng: {value: 'gps_data.lng', fieldIdx: 2}
+      lng: {value: 'gps_data.lng', fieldIdx: 2},
+      neighbors: {value: null, fieldIdx: -1, optional: true},
+      geojson: {value: null, fieldIdx: -1}
     },
     'should update point layer column'
   );
@@ -1288,6 +1372,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA.2 -> to empty state', t => {
   const expectedArcLayer = new ArcLayer({
     dataId: 'smoothie',
     label: 'start_point -> end_point arc',
+    isVisible: false,
     columns: {
       lat0: {fieldIdx: 0, value: 'start_point_lat'},
       lng0: {fieldIdx: 1, value: 'start_point_lng'},
@@ -1299,6 +1384,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA.2 -> to empty state', t => {
   const expectedLineLayer = new LineLayer({
     dataId: 'smoothie',
     label: 'start_point -> end_point line',
+    isVisible: false,
     columns: {
       lat0: {fieldIdx: 0, value: 'start_point_lat'},
       lng0: {fieldIdx: 1, value: 'start_point_lng'},
@@ -1324,8 +1410,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA.2 -> to empty state', t => {
       lat: {fieldIdx: 0, value: 'start_point_lat'},
       lng: {fieldIdx: 1, value: 'start_point_lng'},
       altitude: {fieldIdx: -1, value: null, optional: true}
-    },
-    isVisible: true
+    }
   });
 
   expectedPointLayer1.meta = {
@@ -1882,19 +1967,23 @@ test('#visStateReducer -> UPDATE_VIS_DATA.SPLIT_MAPS', t => {
 
   // first visible layer should be point
   const id1 = newState.layers[4].id;
+  // 2nd visible layer
+  const id2 = newState.layers[5].id;
   const expectedSplitMaps = [
     {
       layers: {
         a: true,
         b: false,
-        [id1]: true
+        [id1]: true,
+        [id2]: true
       }
     },
     {
       layers: {
         a: false,
         b: true,
-        [id1]: true
+        [id1]: true,
+        [id2]: true
       }
     }
   ];
@@ -1938,11 +2027,13 @@ test('#visStateReducer -> setFilter.dynamicDomain & cpu', t => {
   const expectedLayer1 = new PointLayer({
     isVisible: true,
     dataId: 'smoothie',
+    columnMode: 'points',
     label: 'gps_data',
     columns: {
       lat: {value: 'gps_data.lat', fieldIdx: 1},
       lng: {value: 'gps_data.lng', fieldIdx: 2},
-      altitude: {value: null, fieldIdx: -1, optional: true}
+      altitude: {value: null, fieldIdx: -1, optional: true},
+      neighbors: {value: null, fieldIdx: -1, optional: true}
     }
   });
 
@@ -2518,30 +2609,10 @@ test('#visStateReducer -> setFilter.fixedDomain & DynamicDomain & gpu & cpu', t 
     interval: null,
     speed: 1,
     mappedValue: [
-      1474070995000,
-      1474071056000,
-      1474071116000,
-      1474071178000,
-      1474071240000,
-      1474071301000,
-      1474071363000,
-      1474071425000,
-      1474071489000,
-      1474071552000,
-      1474071567000,
-      1474071614000,
-      1474071677000,
-      1474071740000,
-      1474071802000,
-      1474071864000,
-      1474071928000,
-      1474071989000,
-      1474072051000,
-      1474072115000,
-      1474072180000,
-      1474072203000,
-      1474072203000,
-      1474072208000
+      1474070995000, 1474071056000, 1474071116000, 1474071178000, 1474071240000, 1474071301000,
+      1474071363000, 1474071425000, 1474071489000, 1474071552000, 1474071567000, 1474071614000,
+      1474071677000, 1474071740000, 1474071802000, 1474071864000, 1474071928000, 1474071989000,
+      1474072051000, 1474072115000, 1474072180000, 1474072203000, 1474072203000, 1474072208000
     ],
     histogram: [],
     enlargedHistogram: [],
@@ -2770,30 +2841,10 @@ test('#visStateReducer -> SET_FILTER_PLOT', t => {
     },
     speed: 1,
     mappedValue: [
-      1474070995000,
-      1474071056000,
-      1474071116000,
-      1474071178000,
-      1474071240000,
-      1474071301000,
-      1474071363000,
-      1474071425000,
-      1474071489000,
-      1474071552000,
-      1474071567000,
-      1474071614000,
-      1474071677000,
-      1474071740000,
-      1474071802000,
-      1474071864000,
-      1474071928000,
-      1474071989000,
-      1474072051000,
-      1474072115000,
-      1474072180000,
-      1474072203000,
-      1474072203000,
-      1474072208000
+      1474070995000, 1474071056000, 1474071116000, 1474071178000, 1474071240000, 1474071301000,
+      1474071363000, 1474071425000, 1474071489000, 1474071552000, 1474071567000, 1474071614000,
+      1474071677000, 1474071740000, 1474071802000, 1474071864000, 1474071928000, 1474071989000,
+      1474072051000, 1474072115000, 1474072180000, 1474072203000, 1474072203000, 1474072208000
     ],
     histogram: [],
     enlargedHistogram: [],
@@ -4722,30 +4773,7 @@ test('#visStateReducer -> SORT_TABLE_COLUMN', t => {
   t.ok(nextState2.datasets[testCsvDataId].sortOrder, 'should create sortOrder');
 
   const expectedOrder = [
-    3,
-    0,
-    2,
-    4,
-    1,
-    5,
-    6,
-    7,
-    8,
-    9,
-    10,
-    11,
-    12,
-    13,
-    14,
-    15,
-    16,
-    17,
-    20,
-    19,
-    18,
-    23,
-    22,
-    21
+    3, 0, 2, 4, 1, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 19, 18, 23, 22, 21
   ];
   t.deepEqual(nextState2.datasets[testCsvDataId].sortOrder, expectedOrder, 'should sort correctly');
   t.deepEqual(
@@ -5489,12 +5517,25 @@ test('#VisStateUpdater -> addEffect', t => {
     nextState,
     VisStateActions.addEffect({
       id: 'e_shadow',
-      type: 'lightAndShadow',
+      type: LIGHT_AND_SHADOW_EFFECT.type,
       parameters: {timestamp: 1689280466362, timezone: 'UTC'}
     })
   );
 
   t.equal(nextState.effects.length, 2, 'should add second effect');
+
+  nextState = reducer(
+    nextState,
+    VisStateActions.addEffect({
+      type: LIGHT_AND_SHADOW_EFFECT.type
+    })
+  );
+
+  t.equal(
+    nextState.effects.length,
+    2,
+    `shouldn't add second ${LIGHT_AND_SHADOW_EFFECT.name} effect`
+  );
 
   const expectedEffect2 = {
     id: 'e_shadow',
@@ -5571,7 +5612,7 @@ test('#VisStateUpdater -> updateEffect', t => {
 test('#VisStateUpdater -> addEffect: invalid effect parameters', t => {
   const initialState = InitialState.visState;
 
-  let nextState = reducer(
+  const nextState = reducer(
     initialState,
     VisStateActions.addEffect({
       id: 'e_1',

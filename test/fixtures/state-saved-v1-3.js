@@ -191,6 +191,7 @@ export const savedStateV1 = {
             config: {
               dataId: 'fm8v2jcza',
               label: 'restaurant',
+              columnMode: 'points',
               color: [18, 147, 154],
               columns: {
                 lat: 'restaurant_lat',
@@ -322,6 +323,7 @@ const mergedLayer0 = new PointLayer({
 mergedLayer0.config = {
   dataId: 'fm8v2jcza',
   label: 'restaurant',
+  columnMode: 'points',
   color: [18, 147, 154],
   columns: {
     lat: {
@@ -396,7 +398,10 @@ mergedLayer0.config = {
       reversed: true
     },
     radiusRange: [0, 50],
-    strokeColor: [18, 147, 154]
+    strokeColor: [18, 147, 154],
+    allowHover: true,
+    showNeighborOnHover: false,
+    showHighlightColor: true
   },
   animation: {enabled: false}
 };

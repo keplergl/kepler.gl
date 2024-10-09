@@ -41,7 +41,9 @@ export const FeatureFlagsContextProvider = (
  */
 export const CloudProviderContext = createContext<CloudProviderContextType>({
   provider: null,
-  setProvider: () => {},
+  setProvider: () => {
+    return;
+  },
   cloudProviders: []
 });
 

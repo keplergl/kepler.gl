@@ -81,6 +81,7 @@ export const stateSavedV1 = {
             config: {
               dataId: '8ppj5gfrs',
               label: 'point',
+              columnMode: 'points',
               color: [23, 184, 190, 255],
               columns: {
                 lat: 'point_lat',
@@ -174,6 +175,7 @@ const mergedLayer0 = new PointLayer({
 mergedLayer0.config = {
   dataId: '8ppj5gfrs',
   label: 'point',
+  columnMode: 'points',
   color: [23, 184, 190, 255],
   columns: {
     lat: {
@@ -250,7 +252,10 @@ mergedLayer0.config = {
       colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
     },
     strokeColor: [23, 184, 190, 255],
-    radiusRange: [0, 50]
+    radiusRange: [0, 50],
+    allowHover: true,
+    showNeighborOnHover: false,
+    showHighlightColor: true
   },
   animation: {enabled: false}
 };

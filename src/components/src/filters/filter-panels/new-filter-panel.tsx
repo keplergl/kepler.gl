@@ -32,15 +32,15 @@ function NewFilterPanelFactory(
 ) {
   const NewFilterPanel: FilterPanelComponent<FilterBase<LineChart>> = React.memo(
     ({idx, filter, datasets, allAvailableFields, setFilter, removeFilter}) => {
-      const onFieldSelector = useCallback(field => setFilter(idx, 'name', field.name), [
-        idx,
-        setFilter
-      ]);
+      const onFieldSelector = useCallback(
+        field => setFilter(idx, 'name', field.name),
+        [idx, setFilter]
+      );
 
-      const onSourceDataSelector = useCallback(value => setFilter(idx, 'dataId', value), [
-        idx,
-        setFilter
-      ]);
+      const onSourceDataSelector = useCallback(
+        value => setFilter(idx, 'dataId', value),
+        [idx, setFilter]
+      );
 
       const dataset: KeplerTable = datasets[filter.dataId[0]];
       const supportedFields = useMemo(

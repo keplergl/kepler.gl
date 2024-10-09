@@ -38,7 +38,7 @@ const initialState = {
 };
 
 test('Components -> EffectManager -> render', t => {
-  let store = mockStore(initialState);
+  const store = mockStore(initialState);
 
   // mount
   let wrapper;

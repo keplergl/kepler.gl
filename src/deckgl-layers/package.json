@@ -43,7 +43,7 @@
     "@mapbox/geo-viewport": "^0.4.1",
     "@mapbox/vector-tile": "^1.3.1",
     "@types/d3-array": "^2.0.0",
-    "@types/geojson": "^7946.0.7",
+    "@types/geojson": "^7946.0.8",
     "@types/lodash.memoize": "^4.1.7",
     "@types/supercluster": "^7.1.0",
     "d3-array": "^2.8.0",
@@ -57,15 +57,16 @@
     "sourceMap": false,
     "instrument": false
   },
-  "engines": {
-    "node": ">=18.18.2"
-  },
   "maintainers": [
     "Shan He <heshan0131@gmail.com>",
     "Giuseppe Macri <gmacri@uber.com>"
   ],
+  "engines": {
+    "node": ">=18"
+  },
   "volta": {
     "node": "18.18.2",
-    "yarn": "1.22.17"
-  }
+    "yarn": "4.4.0"
+  },
+  "packageManager": "yarn@4.4.0"
 }

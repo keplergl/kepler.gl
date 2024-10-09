@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-export {default as Base} from './base'
+export {default as Base} from './base';
 
 // eslint-disable-next-line prettier/prettier
 export type {BaseProps} from './base'
@@ -40,6 +40,7 @@ export {default as FilterFunnel} from './filter-funnel';
 export {default as FreeWindow} from './free-window';
 export {default as Gear} from './gear';
 export {default as Hash} from './hash';
+export {default as Help} from './help';
 export {default as Histogram} from './histogram';
 export {default as IconWrapper} from './base';
 export {default as Info} from './info';

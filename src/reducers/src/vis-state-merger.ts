@@ -14,7 +14,7 @@ import {
 } from '@kepler.gl/utils';
 import {getLayerOrderFromLayers} from '@kepler.gl/reducers';
 
-import {LayerColumns, LayerColumn, Layer} from '@kepler.gl/layers';
+import {Layer} from '@kepler.gl/layers';
 import {createEffect} from '@kepler.gl/effects';
 import {LAYER_BLENDINGS, OVERLAY_BLENDINGS} from '@kepler.gl/constants';
 import {CURRENT_VERSION, VisState, VisStateMergers, KeplerGLSchemaClass} from '@kepler.gl/schemas';
@@ -28,7 +28,9 @@ import {
   ParsedConfig,
   Filter,
   Effect as EffectType,
-  ParsedEffect
+  ParsedEffect,
+  LayerColumns,
+  LayerColumn
 } from '@kepler.gl/types';
 import {KeplerTable, Datasets, assignGpuChannels, resetFilterGpuMode} from '@kepler.gl/table';
 
@@ -303,8 +305,7 @@ export function insertLayerAtRightOrder(
  */
 export function mergeInteractions<S extends VisState>(
   state: S,
-  interactionToBeMerged: Partial<SavedInteractionConfig> | undefined,
-  fromConfig?: boolean
+  interactionToBeMerged: Partial<SavedInteractionConfig> | undefined
 ): S {
   const merged: Partial<SavedInteractionConfig> = {};
   const unmerged: Partial<SavedInteractionConfig> = {};
@@ -415,8 +416,7 @@ function replaceInteractionDatasetIds(interactionConfig, dataId: string, dataIdT
  */
 export function mergeSplitMaps<S extends VisState>(
   state: S,
-  splitMaps: NonNullable<ParsedConfig['visState']>['splitMaps'] = [],
-  fromConfig?: boolean
+  splitMaps: NonNullable<ParsedConfig['visState']>['splitMaps'] = []
 ): S {
   const merged = [...state.splitMaps];
   const unmerged = [];
@@ -532,8 +532,7 @@ export function mergeInteractionTooltipConfig(
  */
 export function mergeLayerBlending<S extends VisState>(
   state: S,
-  layerBlending: NonNullable<ParsedConfig['visState']>['layerBlending'],
-  fromConfig?: boolean
+  layerBlending: NonNullable<ParsedConfig['visState']>['layerBlending']
 ): S {
   if (layerBlending && LAYER_BLENDINGS[layerBlending]) {
     return {
@@ -550,8 +549,7 @@ export function mergeLayerBlending<S extends VisState>(
  */
 export function mergeOverlayBlending<S extends VisState>(
   state: S,
-  overlayBlending: NonNullable<ParsedConfig['visState']>['overlayBlending'],
-  fromConfig?: boolean
+  overlayBlending: NonNullable<ParsedConfig['visState']>['overlayBlending']
 ): S {
   if (overlayBlending && OVERLAY_BLENDINGS[overlayBlending]) {
     return {
@@ -568,8 +566,7 @@ export function mergeOverlayBlending<S extends VisState>(
  */
 export function mergeAnimationConfig<S extends VisState>(
   state: S,
-  animation: NonNullable<ParsedConfig['visState']>['animationConfig'],
-  fromConfig?: boolean
+  animation: NonNullable<ParsedConfig['visState']>['animationConfig']
 ): S {
   if (animation && animation.currentTime) {
     return {
@@ -643,6 +640,9 @@ export function validateSavedLayerColumns(
   return rv;
 }
 
+/**
+ * Validate layer column
+ */
 export function validateColumn(
   column: LayerColumn & {validator?: typeof validateColumn},
   columns: LayerColumns,
@@ -774,6 +774,37 @@ export function validateLayersByDatasets(
 
   return {validated, failed};
 }
+
+/**
+ * Get required columns for validation based on column mode
+ */
+function _getColumnConfigForValidation(newLayer) {
+  // find column fieldIdx
+  let columnConfig = newLayer.getLayerColumns();
+  // if columnMode is defined, find column mode config
+  const colModeConfig = newLayer.config.columnMode
+    ? (newLayer.supportedColumnModes || []).find(
+        colMode => colMode.key === newLayer.config.columnMode
+      )
+    : null;
+
+  if (colModeConfig) {
+    // only validate columns in column mode
+    columnConfig = [
+      ...(colModeConfig.requiredColumns || []),
+      ...(colModeConfig.optionalColumns || [])
+    ].reduce(
+      (accu, key) => ({
+        ...accu,
+        [key]: columnConfig[key]
+      }),
+      {}
+    );
+  }
+
+  return columnConfig;
+}
+
 /**
  * Validate saved layer config with new data,
  * update fieldIdx based on new fields
@@ -789,7 +820,7 @@ export function validateLayerWithData(
   const {type} = savedLayer;
   const {throwOnError} = options;
   // layer doesnt have a valid type
-  if (!type || !layerClasses.hasOwnProperty(type) || !savedLayer.config) {
+  if (!type || !Object.prototype.hasOwnProperty.call(layerClasses, type) || !savedLayer.config) {
     if (throwOnError) {
       throw new Error(`Layer has invalid type "${type}" or config is missing`);
     }
@@ -803,11 +834,12 @@ export function validateLayerWithData(
     color: savedLayer.config.color,
     isVisible: savedLayer.config.isVisible,
     hidden: savedLayer.config.hidden,
+    columnMode: savedLayer.config.columnMode,
     highlightColor: savedLayer.config.highlightColor
   });
 
-  // find column fieldIdx
-  const columnConfig = newLayer.getLayerColumns();
+  const columnConfig = _getColumnConfigForValidation(newLayer);
+
   if (Object.keys(columnConfig)) {
     const columns = validateSavedLayerColumns(
       fields,
@@ -816,7 +848,12 @@ export function validateLayerWithData(
       options
     );
     if (columns) {
-      newLayer.updateLayerConfig({columns});
+      newLayer.updateLayerConfig({
+        columns: {
+          ...newLayer.config.columns,
+          ...columns
+        }
+      });
     } else if (!options.allowEmptyColumn) {
       return null;
     }

@@ -8,18 +8,15 @@ jobs:
     if: "!contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]')"
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
-      - name: Use Node.js 12.x
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18.x
-          registry-url: https://registry.npmjs.org/
+      # use Volta to manage yarn/node versions
+      - uses: volta-cli/action@v4
 
-      - name: Set up Python 3.8
+      - name: Set up Python 3.9
         uses: actions/setup-python@v2
         with:
-          python-version: 3.8
+          python-version: 3.9
 
       - name: Install dependencies
         run: |
@@ -49,7 +46,7 @@ jobs:
           python bindings/kepler.gl-jupyter/notebooks/DataFrame.py
 
       - name: Create artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: keplergl-pypi
           path: bindings/kepler.gl-jupyter/dist/

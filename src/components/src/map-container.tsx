@@ -122,13 +122,15 @@ const StyledMap = styled(StyledMapContainer)<StyledMapContainerProps>(
 
 const MAPBOXGL_STYLE_UPDATE = 'style.load';
 const MAPBOXGL_RENDER = 'render';
-const nop = () => {};
+const nop = () => {
+  return;
+};
 
 const MapLibreLogo = () => (
   <div className="attrition-logo">
     Basemap by:
     <a
-      style={{marginLeft: "5px"}}
+      style={{marginLeft: '5px'}}
       className="maplibregl-ctrl-logo"
       target="_blank"
       rel="noopener noreferrer"
@@ -277,9 +279,8 @@ export interface MapContainerProps {
   primary?: boolean; // primary one will be reporting its size to appState
   readOnly?: boolean;
   isExport?: boolean;
-  onMapToggleLayer?: Function;
-  onMapStyleLoaded?: Function;
-  onMapRender?: Function;
+  onMapStyleLoaded?: (map: maplibregl.Map | null) => void;
+  onMapRender?: (map: maplibregl.Map | null) => void;
   getMapboxRef?: (mapbox?: MapRef | null, index?: number) => void;
   index?: number;
   deleteMapLabels?: (containerId: string, layerId: string) => void;
@@ -413,6 +414,7 @@ export default function MapContainerFactory(
         features: features.concat(polygonFilters.map(f => f.value))
       })
     );
+    // @ts-ignore - No overload matches this call
     selectedPolygonIndexSelector = createSelector(
       this.featureCollectionSelector,
       this.selectedFeatureSelector,
@@ -588,6 +590,7 @@ export default function MapContainerFactory(
           clicked,
           datasets,
           interactionConfig,
+          animationConfig,
           layers,
           mousePos: {mousePosition, coordinate, pinned}
         }
@@ -599,6 +602,7 @@ export default function MapContainerFactory(
       }
 
       const layerHoverProp = getLayerHoverProp({
+        animationConfig,
         interactionConfig,
         hoverInfo,
         layers,
@@ -618,6 +622,7 @@ export default function MapContainerFactory(
         const lngLat = clicked ? clicked.coordinate : pinned.coordinate;
         pinnedPosition = this._getHoverXY(viewport, lngLat);
         layerPinnedProp = getLayerHoverProp({
+          animationConfig,
           interactionConfig,
           hoverInfo: clicked,
           layers,
@@ -648,6 +653,7 @@ export default function MapContainerFactory(
               isBase={compareMode}
               onSetFeatures={this.props.visStateActions.setFeatures}
               setSelectedFeature={this.props.visStateActions.setSelectedFeature}
+              // @ts-ignore Argument of type 'Readonly<MapContainerProps>' is not assignable to parameter of type 'never'
               featureCollection={this.featureCollectionSelector(this.props)}
             />
           )}
@@ -661,6 +667,7 @@ export default function MapContainerFactory(
               coordinate={interactionConfig.coordinate.enabled && coordinate}
               onSetFeatures={this.props.visStateActions.setFeatures}
               setSelectedFeature={this.props.visStateActions.setSelectedFeature}
+              // @ts-ignore Argument of type 'Readonly<MapContainerProps>' is not assignable to parameter of type 'never'
               featureCollection={this.featureCollectionSelector(this.props)}
             />
           )}
@@ -732,8 +739,10 @@ export default function MapContainerFactory(
                 editorMenuActive,
                 onSetFeatures: setFeatures,
                 setSelectedFeature,
+                // @ts-ignore Argument of type 'Readonly<MapContainerProps>' is not assignable to parameter of type 'never'
                 featureCollection: this.featureCollectionSelector(this.props),
                 selectedFeatureIndexes: this.selectedFeatureIndexArraySelector(
+                  // @ts-ignore Argument of type 'unknown' is not assignable to parameter of type 'number'.
                   editorFeatureSelectedIndex
                 ),
                 viewport
@@ -832,7 +841,7 @@ export default function MapContainerFactory(
             {...extraDeckParams}
             onHover={
               isInteractive
-                ? (data, event) => {
+                ? data => {
                     const res = EditorLayerUtils.onHover(data, {
                       editorMenuActive,
                       editor,
@@ -840,7 +849,7 @@ export default function MapContainerFactory(
                     });
                     if (res) return;
 
-                    this._onLayerHoverDebounced(data, index, event);
+                    this._onLayerHoverDebounced(data, index);
                   }
                 : null
             }
@@ -918,7 +927,7 @@ export default function MapContainerFactory(
       this._onViewportChangePropagateDebounced();
     };
 
-    _onLayerHoverDebounced = debounce((data, index, event) => {
+    _onLayerHoverDebounced = debounce((data, index) => {
       this.props.visStateActions.onLayerHover(data, index);
     }, DEBOUNCE_MOUSE_MOVE_PROPAGATE);
 

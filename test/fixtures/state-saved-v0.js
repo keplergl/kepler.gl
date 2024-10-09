@@ -907,15 +907,8 @@ export const mergedFilters = [
     step: 1000,
     speed: 1,
     mappedValue: [
-      1453770810000,
-      1453770279000,
-      1453770358000,
-      1453770124000,
-      1453770131000,
-      1453770395000,
-      1453770173000,
-      1453770394000,
-      1453770540000
+      1453770810000, 1453770279000, 1453770358000, 1453770124000, 1453770131000, 1453770395000,
+      1453770173000, 1453770394000, 1453770540000
     ],
     fieldType: 'timestamp',
     fixedDomain: true,
@@ -1002,6 +995,7 @@ const mergedLayer0 = new PointLayer({
   id: '1eh',
   dataId: '9h10t7fyb',
   label: 'dropoff',
+  columnMode: 'points',
   color: [76, 154, 78],
   columns: {
     lat: {
@@ -1054,7 +1048,10 @@ mergedLayer0.config = {
       colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
     },
     strokeColor: [76, 154, 78],
-    radiusRange: [1, 100]
+    radiusRange: [1, 100],
+    allowHover: true,
+    showNeighborOnHover: false,
+    showHighlightColor: true
   }
 };
 
@@ -1123,6 +1120,7 @@ const mergedLayer2 = new PointLayer({
 mergedLayer2.config = {
   dataId: '9h10t7fyb',
   label: 'begintrip',
+  columnMode: 'points',
   color: [218, 112, 191],
   columns: {
     lat: {
@@ -1197,7 +1195,10 @@ mergedLayer2.config = {
     },
     strokeColor: [218, 112, 191],
     fixedRadius: false,
-    radiusRange: [1, 854.16]
+    radiusRange: [1, 854.16],
+    allowHover: true,
+    showNeighborOnHover: false,
+    showHighlightColor: true
   },
   animation: {enabled: false}
 };
@@ -1284,9 +1285,16 @@ mergedLayer4.config = {
   columns: {
     geojson: {
       value: '_geojson',
-      fieldIdx: 0
-    }
+      fieldIdx: 0,
+      optional: false
+    },
+    id: {value: null, fieldIdx: -1, optional: true},
+    lat: {value: null, fieldIdx: -1, optional: true},
+    lng: {value: null, fieldIdx: -1, optional: true},
+    altitude: {value: null, fieldIdx: -1, optional: true},
+    sortBy: {value: null, fieldIdx: -1, optional: true}
   },
+  columnMode: 'geojson',
   highlightColor: [252, 242, 26, 255],
   isConfigActive: false,
   hidden: false,

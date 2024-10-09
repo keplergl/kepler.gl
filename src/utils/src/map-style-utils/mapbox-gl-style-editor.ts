@@ -11,9 +11,6 @@ import {
 } from '@kepler.gl/constants';
 import {BaseMapStyle, LayerGroup, MapState} from '@kepler.gl/types';
 
-const mapUrlRg = /^mapbox:\/\/styles\/[-a-z0-9]{2,256}\/[-a-z0-9]{2,256}/;
-const httpRg = /^(?=(http:|https:))/;
-
 export function getDefaultLayerGroupVisibility({layerGroups = []}: {layerGroups: LayerGroup[]}) {
   return layerGroups.reduce(
     (accu, layer) => ({
@@ -26,7 +23,6 @@ export function getDefaultLayerGroupVisibility({layerGroups = []}: {layerGroups:
 
 const resolver = ({
   id,
-  mapStyle,
   visibleLayerGroups = {}
 }: {
   id?: string;
@@ -47,7 +43,6 @@ const resolver = ({
  */
 export const editTopMapStyle = memoize(
   ({
-    id,
     mapStyle,
     visibleLayerGroups
   }: {
@@ -102,13 +97,6 @@ export const editBottomMapStyle = memoize(({id, mapStyle, visibleLayerGroups}) =
   };
 }, resolver);
 
-// valid style url
-// mapbox://styles/uberdata/cjfyl03kp1tul2smf5v2tbdd4
-// lowercase letters, numbers and dashes only.
-export function isValidStyleUrl(url) {
-  return typeof url === 'string' && Boolean(url.match(mapUrlRg) || url.match(httpRg));
-}
-
 export function getStyleDownloadUrl(styleUrl, accessToken, mapboxApiUrl) {
   if (styleUrl.startsWith('http')) {
     return styleUrl;
@@ -119,8 +107,9 @@ export function getStyleDownloadUrl(styleUrl, accessToken, mapboxApiUrl) {
     const styleId = styleUrl.replace('mapbox://styles/', '');
 
     // https://api.mapbox.com/styles/v1/heshan0131/cjg1bfumo1cwm2rlrjxkinfgw?pluginName=Keplergl&access_token=<token>
-    return `${mapboxApiUrl ||
-      DEFAULT_MAPBOX_API_URL}/styles/v1/${styleId}?pluginName=Keplergl&access_token=${accessToken}`;
+    return `${
+      mapboxApiUrl || DEFAULT_MAPBOX_API_URL
+    }/styles/v1/${styleId}?pluginName=Keplergl&access_token=${accessToken}`;
   }
 
   // style url not recognized
@@ -214,7 +203,9 @@ export function mergeLayerGroupVisibility(defaultLayerGroup, currentLayerGroup) 
   return Object.keys(defaultLayerGroup).reduce(
     (accu, key) => ({
       ...accu,
-      ...(currentLayerGroup.hasOwnProperty(key) ? {[key]: currentLayerGroup[key]} : {})
+      ...(Object.prototype.hasOwnProperty.call(currentLayerGroup, key)
+        ? {[key]: currentLayerGroup[key]}
+        : {})
     }),
     defaultLayerGroup
   );

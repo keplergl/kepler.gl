@@ -8,7 +8,7 @@ NOTE: __Version number of the js module **`kelergl-jupyter`** and the python mod
 
 ### Step1:
 
-Update `version_info` in keplergl/_version.py in bindings/kepler.gl-jupyter folder. 
+Update `version_info` in keplergl/_version.py in bindings/kepler.gl-jupyter folder.
 Update `"version": "0.x.x"` to match the version info in js/package.json in bindings/kepler.gl-jupyter folder.
 Update `EXTENSION_SPEC_VERSION` to match the js module version. Update `version` in js/package
 
@@ -21,7 +21,7 @@ git commit -am "keplergl==<version>"
 
 ### Step2:
 
-Create a tag: `<version>-jupyter` e.g. v0.3.2-jupyter
+Create a tag: `<version>-jupyter` e.g. v0.3.4-jupyter
 
 ```
 git tag -a <version>-jupyter -m "<version>-jupyter"
@@ -38,7 +38,7 @@ The new version should be automatically picked and built from PyPi by conda-forg
 
 Edit `meta.yaml` under directory `recipes/`:
 
-* Update the version number 
+* Update the version number
 
 ```python
 {% set version = "0.3.0" %}

@@ -9,7 +9,6 @@ import {MapControlButton} from '../common/styled-components';
 import MapControlTooltipFactory from './map-control-tooltip';
 import MapControlPanelFactory from './map-control-panel';
 import MapLegendFactory from './map-legend';
-import LazyTippy from './lazy-tippy';
 import {createPortal} from 'react-dom';
 import {DIMENSIONS} from '@kepler.gl/constants';
 import {MapControlItem, MapControls, MapState} from '@kepler.gl/types';
@@ -29,6 +28,14 @@ export type MapLegendPanelFactoryDeps = [
 interface PinToBottomProps {
   offsetRight?: number;
 }
+import {
+  FloatingPortal,
+  offset,
+  useClick,
+  useDismiss,
+  useFloating,
+  useInteractions
+} from '@floating-ui/react';
 
 const PinToBottom = styled.div<PinToBottomProps>`
   position: absolute;
@@ -79,7 +86,6 @@ function MapLegendPanelFactory(MapControlTooltip, MapControlPanel, MapLegend) {
     logoComponent,
     actionIcons = defaultActionIcons,
     mapState,
-    mapHeight,
     offsetRight,
     onToggleSplitMapViewport,
     onClickControlBtn,
@@ -87,6 +93,19 @@ function MapLegendPanelFactory(MapControlTooltip, MapControlPanel, MapLegend) {
   }) => {
     const mapLegend = mapControls?.mapLegend || ({} as MapControlItem);
     const {active: isPinned} = mapLegend || {};
+    const rootContext = useContext(RootContext);
+    const [isOpened, setIsOpened] = useState(false);
+
+    const {refs, context, floatingStyles} = useFloating({
+      placement: 'left-start',
+      open: isOpened,
+      onOpenChange: setIsOpened,
+      middleware: [offset(10)]
+    });
+
+    const click = useClick(context);
+    const dismiss = useDismiss(context);
+    const {getFloatingProps, getReferenceProps} = useInteractions([click, dismiss]);
 
     const onClick = useCallback(() => {
       onClickControlBtn?.();
@@ -94,7 +113,6 @@ function MapLegendPanelFactory(MapControlTooltip, MapControlPanel, MapLegend) {
         onToggleMapControl('mapDraw');
       }
     }, [onClickControlBtn, onToggleMapControl, mapControls]);
-    const [tippyInstance, setTippyInstance] = useState(null);
     const onCloseClick = useCallback(
       e => {
         e.preventDefault();
@@ -105,13 +123,10 @@ function MapLegendPanelFactory(MapControlTooltip, MapControlPanel, MapLegend) {
     const onPinClick = useCallback(
       e => {
         e.preventDefault();
-        if (tippyInstance) {
-          // @ts-ignore
-          tippyInstance.hide();
-        }
+        setIsOpened(false);
         onToggleMapControl('mapLegend');
       },
-      [tippyInstance, onToggleMapControl]
+      [setIsOpened, onToggleMapControl]
     );
 
     if (!mapLegend.show) {
@@ -139,11 +154,10 @@ function MapLegendPanelFactory(MapControlTooltip, MapControlPanel, MapLegend) {
         onToggleSplitMapViewport={onToggleSplitMapViewport}
         isViewportUnsyncAllowed={isViewportUnsyncAllowed}
       >
-        <MapLegend layers={layers} mapHeight={mapHeight} />
+        <MapLegend layers={layers} mapState={mapState} />
       </MapControlPanel>
     );
 
-    const rootContext = useContext(RootContext);
     if (isPinned) {
       // Pinned panel is not supported in export mode
       if (isExport) {
@@ -154,27 +168,22 @@ function MapLegendPanelFactory(MapControlTooltip, MapControlPanel, MapLegend) {
     }
 
     return (
-      // The outer div is to prevent an accessibility warning from Tippy
-      <div>
-        {/* 
-  // @ts-ignore */}
-        <LazyTippy
-          interactive={true}
-          trigger="click"
-          placement="left-start"
-          onCreate={setTippyInstance}
-          render={attrs => <div {...attrs}>{mapControlPanel}</div>}
-          appendTo="parent"
-        >
-          <div>
-            <MapControlTooltip id="show-legend" message="tooltip.showLegend">
-              <MapControlButton className="map-control-button show-legend" onClick={onClick}>
-                <actionIcons.legend height="22px" />
-              </MapControlButton>
-            </MapControlTooltip>
-          </div>
-        </LazyTippy>
-      </div>
+      <>
+        {isOpened ? (
+          <FloatingPortal root={rootContext?.current}>
+            <div ref={refs.setFloating} style={floatingStyles} {...getFloatingProps()}>
+              {mapControlPanel}
+            </div>
+          </FloatingPortal>
+        ) : null}
+        <div ref={refs.setReference} {...getReferenceProps()}>
+          <MapControlTooltip id="show-legend" message="tooltip.showLegend">
+            <MapControlButton className="map-control-button show-legend" onClick={onClick}>
+              <actionIcons.legend height="22px" />
+            </MapControlButton>
+          </MapControlTooltip>
+        </div>
+      </>
     );
   };
 

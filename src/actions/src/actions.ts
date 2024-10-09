@@ -105,9 +105,7 @@ export type ActionHandlers<T extends {[k: string]: Handler}> = {
  *   })
  * );
  */
-export const addDataToMap: (
-  data: AddDataToMapPayload
-) => {
+export const addDataToMap: (data: AddDataToMapPayload) => {
   type: typeof ActionTypes.ADD_DATA_TO_MAP;
   payload: AddDataToMapPayload;
 } = createAction(ActionTypes.ADD_DATA_TO_MAP, (data: AddDataToMapPayload) => ({payload: data}));
@@ -187,9 +185,7 @@ export type KeplerGlInitPayload = {
  * @public
  */
 // @ts-expect-error
-export const keplerGlInit: (
-  options?: KeplerGlInitPayload
-) => {
+export const keplerGlInit: (options?: KeplerGlInitPayload) => {
   type: typeof ActionTypes.INIT;
   payload: KeplerGlInitPayload;
 } = createAction(ActionTypes.INIT, (payload: KeplerGlInitPayload) => ({payload}));
@@ -213,9 +209,7 @@ export type ReplaceDataInMapPayload = {
  * @param payload.datasetToUse - mapboxApiUrl to be saved to mapStyle reducer.
  * @public
  */
-export const replaceDataInMap: (
-  payload: ReplaceDataInMapPayload
-) => {
+export const replaceDataInMap: (payload: ReplaceDataInMapPayload) => {
   type: typeof ActionTypes.REPLACE_DATA_IN_MAP;
   payload: ReplaceDataInMapPayload;
 } = createAction(ActionTypes.REPLACE_DATA_IN_MAP, (payload: ReplaceDataInMapPayload) => ({
@@ -230,7 +224,7 @@ export const replaceDataInMap: (
  * is listened by all subreducers,
  * @public
  */
-/* eslint-disable no-unused-vars */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // @ts-ignore
 const main = null;
-/* eslint-enable no-unused-vars */
+/* eslint-enable @typescript-eslint/no-unused-vars */

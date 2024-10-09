@@ -95,7 +95,7 @@ export const SHARE_MAP_ID = 'shareMap';
 
 export const KEPLER_GL_NAME = 'kepler.gl';
 
-// __PACKAGE_VERSION__ is automatically injected by Babel/Webpack during the building process
+// __PACKAGE_VERSION__ is automatically injected by Babel/Esbuild during the build process
 // Since we are injecting this during the build process with babel
 // while developing VERSION is not defined, we capture the exception and return
 // an empty string which will allow us to retrieve the latest umd version
@@ -435,7 +435,13 @@ export const TABLE_OPTION = keyMirror({
   FORMAT_COLUMN: null
 });
 
-export const TABLE_OPTION_LIST = [
+export type TableOption = {
+  value: 'SORT_ASC' | 'SORT_DES' | 'UNSORT' | 'PIN' | 'UNPIN' | 'COPY' | 'FORMAT_COLUMN';
+  display: string;
+  icon: string;
+  condition?: (props: any) => boolean;
+};
+export const TABLE_OPTION_LIST: TableOption[] = [
   {
     value: TABLE_OPTION.SORT_ASC,
     display: 'Sort Ascending',
@@ -742,7 +748,7 @@ export const FIELD_OPTS = {
       ...notSupportAggrOpts
     },
     format: {
-      legend: d => '...',
+      legend: () => '...',
       tooltip: []
     }
   },
@@ -753,7 +759,7 @@ export const FIELD_OPTS = {
       ...notSupportAggrOpts
     },
     format: {
-      legend: d => '...',
+      legend: () => '...',
       tooltip: []
     }
   },
@@ -761,7 +767,7 @@ export const FIELD_OPTS = {
     type: 'numerical',
     scale: {},
     format: {
-      legend: d => '...',
+      legend: () => '...',
       tooltip: []
     }
   },
@@ -769,7 +775,7 @@ export const FIELD_OPTS = {
     type: 'numerical',
     scale: {},
     format: {
-      legend: d => '...',
+      legend: () => '...',
       tooltip: []
     }
   }
@@ -891,7 +897,7 @@ export const CustomRatioOption: ImageRatioOption = {
 export const FourByThreeRatioOption: ImageRatioOption = {
   id: EXPORT_IMG_RATIOS.FOUR_BY_THREE,
   label: 'modal.exportImage.ratio4_3',
-  getSize: (screenW, screenH) => ({
+  getSize: screenW => ({
     width: screenW,
     height: Math.round(screenW * 0.75)
   })
@@ -899,7 +905,7 @@ export const FourByThreeRatioOption: ImageRatioOption = {
 export const SixteenByNineRatioOption: ImageRatioOption = {
   id: EXPORT_IMG_RATIOS.SIXTEEN_BY_NINE,
   label: 'modal.exportImage.ratio16_9',
-  getSize: (screenW, screenH) => ({
+  getSize: screenW => ({
     width: screenW,
     height: Math.round(screenW * 0.5625)
   })
@@ -1170,7 +1176,7 @@ export const dataTestIds: Record<string, string> = {
 
 // Effects
 export const DEFAULT_TIMEZONE = 'UTC';
-export const DEFAULT_POST_PROCESSING_EFFECT_TYPE: string = 'ink';
+export const DEFAULT_POST_PROCESSING_EFFECT_TYPE = 'ink';
 
 export const DEFAULT_LIGHT_COLOR: [number, number, number] = [255, 255, 255];
 export const DEFAULT_LIGHT_INTENSITY = 1;
@@ -1178,9 +1184,9 @@ export const DEFAULT_SHADOW_INTENSITY = 0.5;
 export const DEFAULT_SHADOW_COLOR: [number, number, number] = [0, 0, 0];
 
 export const LIGHT_AND_SHADOW_EFFECT_TIME_MODES = {
-  pick: 'pick' as 'pick',
-  current: 'current' as 'current',
-  animation: 'animation' as 'animation'
+  pick: 'pick' as const,
+  current: 'current' as const,
+  animation: 'animation' as const
 };
 export type LightAndShadowEffectTimeMode = 'pick' | 'current' | 'animation';
 export const DEFAULT_LIGHT_AND_SHADOW_PROPS: {

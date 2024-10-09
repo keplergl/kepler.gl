@@ -31,6 +31,8 @@ test('FeatureActionPanel -> display layers', t => {
     }
   };
 
+  const selectedFeature = {type: 'Feature', geometry: {type: 'Polygon', coordinates: []}};
+
   const onToggleLayer = sinon.spy();
   const onDeleteFeature = sinon.spy();
 
@@ -43,6 +45,7 @@ test('FeatureActionPanel -> display layers', t => {
           className="action-item-test"
           layers={layers}
           datasets={datasets}
+          selectedFeature={selectedFeature}
           onToggleLayer={onToggleLayer}
           onDeleteFeature={onDeleteFeature}
           position={{x: 0, y: 0}}
@@ -54,11 +57,7 @@ test('FeatureActionPanel -> display layers', t => {
   t.equal(wrapper.find('Checkbox').length, 2, 'We should display only 2 layer checkbox');
   for (let i = 0; i < wrapper.find('Checkbox').length; i++) {
     t.equal(
-      wrapper
-        .find('Checkbox')
-        .at(i)
-        .find('label')
-        .text(),
+      wrapper.find('Checkbox').at(i).find('label').text(),
       `layer ${i + 1}`,
       'should render correct layer label'
     );

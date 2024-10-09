@@ -106,7 +106,7 @@ const StyledError = styled.div`
   margin-bottom: 16px;
 `;
 
-const getDuration = (last: number = 0) => moment.duration(new Date().valueOf() - last).humanize();
+const getDuration = (last = 0) => moment.duration(new Date().valueOf() - last).humanize();
 
 interface Asset {
   imageUrl?: string;

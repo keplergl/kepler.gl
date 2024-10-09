@@ -196,7 +196,9 @@ function LayerConfigGroupFactory(
   LayerConfigGroup.defaultProps = {
     collapsible: false,
     expanded: false,
-    onChange: () => {},
+    onChange: () => {
+      return;
+    },
     description: '',
     disabled: false
   };

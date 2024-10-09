@@ -274,7 +274,7 @@ export default function ModalContainerFactory(
         modalProps = currentModal.modalProps;
       } else {
         switch (currentModal) {
-          case DATA_TABLE_ID:
+          case DATA_TABLE_ID: {
             const width = containerW * 0.9;
             template = (
               <DataTableModal
@@ -299,7 +299,8 @@ export default function ModalContainerFactory(
               `};
             `;
             break;
-          case DELETE_DATA_ID:
+          }
+          case DELETE_DATA_ID: {
             // validate options
             if (datasetKeyToRemove && datasets && datasets[datasetKeyToRemove]) {
               template = (
@@ -319,6 +320,7 @@ export default function ModalContainerFactory(
               };
             }
             break; // in case we add a new case after this one
+          }
           case ADD_DATA_ID:
             template = (
               <LoadDataModal
@@ -387,7 +389,7 @@ export default function ModalContainerFactory(
               }
             };
             break;
-          case EXPORT_MAP_ID:
+          case EXPORT_MAP_ID: {
             const keplerGlConfig = visState.schema.getConfigToSave({
               mapStyle,
               visState,
@@ -415,6 +417,7 @@ export default function ModalContainerFactory(
               }
             };
             break;
+          }
           case ADD_MAP_STYLE_ID:
             template = (
               <AddMapStyleModal
@@ -434,7 +437,7 @@ export default function ModalContainerFactory(
               onConfirm: this._onAddCustomMapStyle,
               confirmButton: {
                 large: true,
-                disabled: !mapStyle.inputStyle.style,
+                disabled: !mapStyle.inputStyle.url,
                 children: 'modal.button.addStyle'
               }
             };

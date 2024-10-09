@@ -10,7 +10,7 @@ import {FormattedMessage} from '@kepler.gl/localization';
 
 import {Add} from '../common/icons';
 
-export const DUMMY_ITEM_ID: string = 'dummy';
+export const DUMMY_ITEM_ID = 'dummy';
 
 export type EffectTypeListItemProps = {
   value: {type: string; name: string};

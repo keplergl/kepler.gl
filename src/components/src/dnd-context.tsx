@@ -70,10 +70,11 @@ function DndContextFactory(
   const DndContext = ({children, visState}: DndContextProps) => {
     const {datasets, layerOrder, layers, effects, effectOrder, splitMaps} = visState;
 
-    const {activeLayer, onDragStart: onLayerDragStart, onDragEnd: onLayerDragEnd} = useDndLayers(
-      layers,
-      layerOrder
-    );
+    const {
+      activeLayer,
+      onDragStart: onLayerDragStart,
+      onDragEnd: onLayerDragEnd
+    } = useDndLayers(layers, layerOrder);
     const {onDragStart: onEffectDragStart, onDragEnd: onEffectDragEnd} = useDndEffects(
       effects,
       effectOrder

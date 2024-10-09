@@ -26,6 +26,7 @@ const defaultGetColorValue = points => points.length;
 const defaultGetRadiusValue = cell =>
   cell.filteredPoints ? cell.filteredPoints.length : cell.points.length;
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function processGeoJSON(this: CPUAggregator, step, props, aggregation, {viewport}) {
   const {data, getPosition, filterData} = props;
   const geoJSON = getGeoJSON(data, getPosition, filterData);
@@ -34,6 +35,7 @@ function processGeoJSON(this: CPUAggregator, step, props, aggregation, {viewport
   this.setState({geoJSON, clusterBuilder});
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function getClusters(this: CPUAggregator, step, props, aggregation, {viewport}) {
   const {geoJSON, clusterBuilder} = this.state;
   const {clusterRadius, zoom, width, height} = props;

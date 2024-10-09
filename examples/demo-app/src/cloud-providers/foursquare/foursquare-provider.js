@@ -51,7 +51,7 @@ export default class FoursquareProvider extends Provider {
 
     this._auth0 = new Auth0Client({
       domain: authDomain,
-      clientId: clientId,
+      clientId,
       scope: FOURSQUARE_AUTH_SCOPE,
       authorizationParams: {
         redirect_uri: window.location.origin,

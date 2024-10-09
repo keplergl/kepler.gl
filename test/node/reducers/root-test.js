@@ -302,7 +302,7 @@ test('keplerGlReducer.plugin override', t => {
     // 1. as reducer map
     .plugin(
       {
-        [ActionTypes.LAYER_TYPE_CHANGE]: (state, action) => {
+        [ActionTypes.LAYER_TYPE_CHANGE]: state => {
           return {
             ...state,
             visState: {

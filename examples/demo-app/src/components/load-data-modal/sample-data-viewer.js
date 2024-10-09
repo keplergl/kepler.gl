@@ -72,7 +72,7 @@ const StyledError = styled.div`
   margin-bottom: 16px;
 `;
 
-const SampleMap = ({id, sample, onClick, locale}) => (
+const SampleMap = ({id, sample, onClick}) => (
   <StyledSampleMap id={id} className="sample-map-gallery__item">
     <div className="sample-map">
       <div className="sample-map__image" onClick={onClick}>

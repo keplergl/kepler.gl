@@ -18,24 +18,21 @@ jobs:
         node-version: [18.x]
 
     steps:
-      - uses: actions/checkout@v2.1.1
-
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v3
-        with:
-          node-version: ${{ matrix.node-version }}
+      - uses: actions/checkout@v4
+      # use Volta to manage yarn/node versions
+      - uses: volta-cli/action@v4
 
       - name: Install XVFB
         run: sudo apt-get install xvfb
 
-      - name: Install YARN
-        run: npm install -g yarn
+      - name: Install Dependencies
+        run: yarn install && yarn bootstrap
 
-      - name: Install Dependecies
-        run: yarn global add "puppeteer@19.11.1" && yarn
+      # - name: Install Puppeteer
+      #   run: yarn dlx "puppeteer@23.1.0"
 
-      # - name: Lint
-      #  run: yarn lint
+      - name: Lint
+        run: yarn lint
 
       - name: Test
         run: xvfb-run --auto-servernum yarn cover

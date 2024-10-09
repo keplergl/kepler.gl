@@ -8,11 +8,10 @@ import Layer, {
   LayerBaseConfig,
   LayerBaseConfigPartial,
   LayerColorConfig,
-  LayerColumn,
   LayerSizeConfig,
   LayerStrokeColorConfig
 } from '../base-layer';
-import {hexToRgb, findDefaultColorField} from '@kepler.gl/utils';
+import {hexToRgb, findDefaultColorField, DataContainerInterface} from '@kepler.gl/utils';
 import {default as KeplerTable} from '@kepler.gl/table';
 import PointLayerIcon from './point-layer-icon';
 import {
@@ -24,6 +23,7 @@ import {
 
 import {getTextOffsetByRadius, formatTextLabelData} from '../layer-text-label';
 import {assignPointPairToLayerColumn} from '../layer-utils';
+import {getGeojsonPointDataMaps, GeojsonPointDataMaps} from '../geojson-layer/geojson-utils';
 import {
   Merge,
   RGBColor,
@@ -31,7 +31,8 @@ import {
   VisConfigColorRange,
   VisConfigColorSelect,
   VisConfigNumber,
-  VisConfigRange
+  VisConfigRange,
+  LayerColumn
 } from '@kepler.gl/types';
 
 export type PointLayerVisConfigSettings = {
@@ -51,6 +52,8 @@ export type PointLayerColumnsConfig = {
   lat: LayerColumn;
   lng: LayerColumn;
   altitude?: LayerColumn;
+  neighbors?: LayerColumn;
+  geojson: LayerColumn;
 };
 
 export type PointLayerVisConfig = {
@@ -64,6 +67,9 @@ export type PointLayerVisConfig = {
   strokeColorRange: ColorRange;
   radiusRange: [number, number];
   filled: boolean;
+  allowHover: boolean;
+  showNeighborOnHover: boolean;
+  showHighlightColor: boolean;
 };
 export type PointLayerVisualChannelConfig = LayerColorConfig &
   LayerSizeConfig &
@@ -77,18 +83,58 @@ export type PointLayerConfig = Merge<
 export type PointLayerData = {
   position: number[];
   index: number;
+  neighbors: any[];
 };
 
-export const pointPosAccessor = ({lat, lng, altitude}: PointLayerColumnsConfig) => dc => d => [
-  dc.valueAt(d.index, lng.fieldIdx),
-  dc.valueAt(d.index, lat.fieldIdx),
-  altitude && altitude.fieldIdx > -1 ? dc.valueAt(d.index, altitude.fieldIdx) : 0
-];
+export const pointPosAccessor =
+  ({lat, lng, altitude}: PointLayerColumnsConfig) =>
+  (dc: DataContainerInterface) =>
+  (d: {index: number}) =>
+    [
+      dc.valueAt(d.index, lng.fieldIdx),
+      dc.valueAt(d.index, lat.fieldIdx),
+      altitude && altitude.fieldIdx > -1 ? dc.valueAt(d.index, altitude.fieldIdx) : 0
+    ];
+
+export const geojsonPosAccessor =
+  ({geojson}: {geojson: LayerColumn}) =>
+  d =>
+    d[geojson.fieldIdx];
+
+export const COLUMN_MODE_POINTS = 'points';
+export const COLUMN_MODE_GEOJSON = 'geojson';
 
 export const pointRequiredColumns: ['lat', 'lng'] = ['lat', 'lng'];
-export const pointOptionalColumns: ['altitude'] = ['altitude'];
+export const pointOptionalColumns: ['altitude', 'neighbors'] = ['altitude', 'neighbors'];
+export const geojsonRequiredColumns: ['geojson'] = ['geojson'];
+
+const SUPPORTED_COLUMN_MODES = [
+  {
+    key: COLUMN_MODE_POINTS,
+    label: 'Point Columns',
+    requiredColumns: pointRequiredColumns,
+    optionalColumns: pointOptionalColumns
+  },
+  {
+    key: COLUMN_MODE_GEOJSON,
+    label: 'GeoJSON Feature',
+    requiredColumns: geojsonRequiredColumns
+  }
+];
+const DEFAULT_COLUMN_MODE = COLUMN_MODE_POINTS;
 
 const brushingExtension = new BrushingExtension();
+
+function pushPointPosition(data: any[], pos: number[], index: number, neighbors: number[]) {
+  if (pos.every(Number.isFinite)) {
+    data.push({
+      position: pos,
+      // index is important for filter
+      index,
+      ...(neighbors ? {neighbors} : {})
+    });
+  }
+}
 
 export const pointVisConfigs: {
   radius: 'radius';
@@ -101,6 +147,9 @@ export const pointVisConfigs: {
   strokeColorRange: 'strokeColorRange';
   radiusRange: 'radiusRange';
   filled: VisConfigBoolean;
+  allowHover: 'allowHover';
+  showNeighborOnHover: 'showNeighborOnHover';
+  showHighlightColor: 'showHighlightColor';
 } = {
   radius: 'radius',
   fixedRadius: 'fixedRadius',
@@ -117,18 +166,25 @@ export const pointVisConfigs: {
     label: 'layer.fillColor',
     defaultValue: true,
     property: 'filled'
-  }
+  },
+  allowHover: 'allowHover',
+  showNeighborOnHover: 'showNeighborOnHover',
+  showHighlightColor: 'showHighlightColor'
 };
 
 export default class PointLayer extends Layer {
   declare config: PointLayerConfig;
   declare visConfigSettings: PointLayerVisConfigSettings;
+  dataToFeature: GeojsonPointDataMaps = [];
+
   constructor(props) {
     super(props);
 
     this.registerVisConfig(pointVisConfigs);
-    this.getPositionAccessor = dataContainer =>
-      pointPosAccessor(this.config.columns)(dataContainer);
+    this.getPositionAccessor = (dataContainer: DataContainerInterface) =>
+      this.config.columnMode === COLUMN_MODE_POINTS
+        ? pointPosAccessor(this.config.columns)(dataContainer)
+        : geojsonPosAccessor(this.config.columns);
   }
 
   get type(): 'point' {
@@ -142,9 +198,6 @@ export default class PointLayer extends Layer {
   get layerIcon() {
     return PointLayerIcon;
   }
-  get requiredLayerColumns() {
-    return pointRequiredColumns;
-  }
 
   get optionalColumns() {
     return pointOptionalColumns;
@@ -152,6 +205,10 @@ export default class PointLayer extends Layer {
 
   get columnPairs() {
     return this.defaultPointColumnPairs;
+  }
+
+  get supportedColumnModes() {
+    return SUPPORTED_COLUMN_MODES;
   }
 
   get noneLayerDataAffectingProps() {
@@ -237,6 +294,7 @@ export default class PointLayer extends Layer {
       if (props.length === 0) {
         prop.isVisible = true;
       }
+      // @ts-expect-error logically separate geojson column type?
       prop.columns = assignPointPairToLayerColumn(pair, true);
 
       props.push(prop);
@@ -248,6 +306,7 @@ export default class PointLayer extends Layer {
   getDefaultLayerConfig(props: LayerBaseConfigPartial) {
     return {
       ...super.getDefaultLayerConfig(props),
+      columnMode: props?.columnMode ?? DEFAULT_COLUMN_MODE,
 
       // add stroke color visual channel
       strokeColorField: null,
@@ -256,22 +315,39 @@ export default class PointLayer extends Layer {
     };
   }
 
-  calculateDataAttribute({filteredIndex}: KeplerTable, getPosition) {
+  calculateDataAttribute({filteredIndex, dataContainer}: KeplerTable, getPosition) {
     const data: PointLayerData[] = [];
 
     for (let i = 0; i < filteredIndex.length; i++) {
       const index = filteredIndex[i];
-      const pos = getPosition({index});
+      let neighbors;
 
-      // if doesn't have point lat or lng, do not add the point
-      // deck.gl can't handle position = null
-      if (pos.every(Number.isFinite)) {
-        data.push({
-          position: pos,
-          index
-        });
+      if (this.config.columnMode === COLUMN_MODE_POINTS) {
+        if (this.config.columns.neighbors?.value) {
+          const {fieldIdx} = this.config.columns.neighbors;
+          neighbors = Array.isArray(dataContainer.valueAt(index, fieldIdx))
+            ? dataContainer.valueAt(index, fieldIdx)
+            : [];
+        }
+        const pos = getPosition({index});
+
+        // if doesn't have point lat or lng, do not add the point
+        // deck.gl can't handle position = null
+        pushPointPosition(data, pos, index, neighbors);
+      } else {
+        // point from geojson coordinates
+        const coordinates = this.dataToFeature[i];
+        // if multi points
+        if (coordinates && Array.isArray(coordinates[0])) {
+          coordinates.forEach(coord => {
+            pushPointPosition(data, coord, index, neighbors);
+          });
+        } else if (coordinates && Number.isFinite(coordinates[0])) {
+          pushPointPosition(data, coordinates as number[], index, neighbors);
+        }
       }
     }
+
     return data;
   }
 
@@ -282,7 +358,7 @@ export default class PointLayer extends Layer {
     const {textLabel} = this.config;
     const {gpuFilter, dataContainer} = datasets[this.config.dataId];
     const {data, triggerChanged} = this.updateData(datasets, oldLayerData);
-    const getPosition = this.getPositionAccessor(dataContainer);
+    const getPosition = d => d.position;
 
     // get all distinct characters in the text labels
     const textLabels = formatTextLabelData({
@@ -306,13 +382,19 @@ export default class PointLayer extends Layer {
   /* eslint-enable complexity */
 
   updateLayerMeta(dataContainer) {
-    const getPosition = this.getPositionAccessor(dataContainer);
-    const bounds = this.getPointsBounds(dataContainer, getPosition);
-    this.updateMeta({bounds});
+    if (this.config.columnMode === COLUMN_MODE_GEOJSON) {
+      const getFeature = this.getPositionAccessor();
+      this.dataToFeature = getGeojsonPointDataMaps(dataContainer, getFeature);
+    } else {
+      const getPosition = this.getPositionAccessor(dataContainer);
+      const bounds = this.getPointsBounds(dataContainer, getPosition);
+      this.updateMeta({bounds});
+    }
   }
 
+  // eslint-disable-next-line complexity
   renderLayer(opts) {
-    const {data, gpuFilter, objectHovered, mapState, interactionConfig} = opts;
+    const {data, gpuFilter, objectHovered, mapState, interactionConfig, dataset} = opts;
 
     // if no field size is defined we need to pass fixed radius = false
     const fixedRadius = this.config.visConfig.fixedRadius && Boolean(this.config.sizeField);
@@ -345,6 +427,20 @@ export default class PointLayer extends Layer {
       ...brushingProps
     };
     const hoveredObject = this.hasHoveredObject(objectHovered);
+    const {showNeighborOnHover, allowHover} = this.config.visConfig;
+    let neighborsData = [];
+    if (allowHover && showNeighborOnHover && hoveredObject) {
+      // find neighbor
+      neighborsData = (hoveredObject.neighbors || [])
+        .map(idx => ({
+          // TODO do we really need to pass data here?
+          data: dataset.dataContainer.rowAsArray(idx),
+          // position: pos,
+          // index is important for filter
+          index: idx
+        }))
+        .filter(d => d.data);
+    }
 
     return [
       new ScatterplotLayer({
@@ -358,7 +454,10 @@ export default class PointLayer extends Layer {
         },
         lineWidthUnits: 'pixels',
         updateTriggers,
-        extensions
+        extensions,
+        opacity: hoveredObject && showNeighborOnHover ? 0.2 : this.config.visConfig.opacity,
+        pickable: allowHover,
+        autoHighlight: false
       }),
       // hover layer
       ...(hoveredObject
@@ -367,9 +466,13 @@ export default class PointLayer extends Layer {
               ...this.getDefaultHoverLayerProps(),
               ...layerProps,
               visible: defaultLayerProps.visible,
-              data: [hoveredObject],
-              getLineColor: this.config.highlightColor,
-              getFillColor: this.config.highlightColor,
+              data: [...neighborsData, hoveredObject],
+              getLineColor: this.config.visConfig.showHighlightColor
+                ? this.config.highlightColor
+                : data.getLineColor,
+              getFillColor: this.config.visConfig.showHighlightColor
+                ? this.config.highlightColor
+                : data.getFillColor,
               getRadius: data.getRadius,
               getPosition: data.getPosition
             })

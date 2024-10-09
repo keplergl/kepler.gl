@@ -50,6 +50,7 @@ export default class Schema {
     return this._getPropertyValueFromSchema('save', node, parents, accumulator);
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _getPropertyValueFromSchema(operation, node: any, parents: object[] = [], accumulator) {
     const internal = `_${operation}`;
     return {

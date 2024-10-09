@@ -25,7 +25,7 @@ interface AnimationControllerProps<T extends number | number[]> {
     pauseAnimation: () => void,
     resetAnimation: () => void,
     timeline: Timeline | undefined,
-    setTimelineValue: (x: any) => void
+    setTimelineValue: (x: T) => void
   ) => React.ReactElement | null;
 }
 
@@ -85,7 +85,7 @@ function AnimationControllerFactory(): typeof AnimationControllerType {
     }
 
     _timer = null;
-    _startTime: number = 0;
+    _startTime = 0;
 
     _startOrPauseAnimation() {
       const {isAnimating, speed = 1} = this.props;

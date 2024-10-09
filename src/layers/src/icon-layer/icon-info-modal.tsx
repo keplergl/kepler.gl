@@ -16,8 +16,8 @@ const lineFunction = line()
   .x(d => d[0] * 10)
   .y(d => d[1] * 10);
 
-const IconShape = ({mesh, className}) => (
-  <svg width="20px" height="20px">
+const IconShape = ({mesh}) => (
+  <svg className="icon-table__item__shape" width="20px" height="20px">
     <g transform="translate(10, 10)">
       {mesh.cells.map((cell, i) => (
         <path key={i} fill="#000000" d={lineFunction(cell.map(idx => mesh.positions[idx]))} />
@@ -50,7 +50,7 @@ const StyledTitle = styled.div`
 
 const IconItem = ({icon: {id, mesh}}) => (
   <StyledIconItem className="icon-table__item">
-    <IconShape className="icon-table__item__shape" mesh={mesh} />
+    <IconShape mesh={mesh} />
     <div className="icon-table_item__name">
       <StyledCode>{id}</StyledCode>
     </div>

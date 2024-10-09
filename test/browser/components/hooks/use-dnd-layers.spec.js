@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React from 'react';
 import {renderHook, act} from '@testing-library/react';
 import {useDispatch} from 'react-redux';
 import {useDndLayers} from '@kepler.gl/components';

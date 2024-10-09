@@ -9,17 +9,24 @@ import uniq from 'lodash.uniq';
 import {DATA_TYPES} from 'type-analyzer';
 import Layer, {
   colorMaker,
+  defaultGetFieldValue,
   LayerBaseConfig,
   LayerBaseConfigPartial,
   LayerColorConfig,
-  LayerColumn,
   LayerHeightConfig,
   LayerRadiusConfig,
   LayerSizeConfig,
   LayerStrokeColorConfig
 } from '../base-layer';
 import {GeoJsonLayer as DeckGLGeoJsonLayer} from '@deck.gl/layers';
-import {getGeojsonLayerMeta, GeojsonDataMaps, DeckGlGeoTypes} from './geojson-utils';
+import {
+  getGeojsonLayerMeta,
+  GeojsonDataMaps,
+  DeckGlGeoTypes,
+  detectTableColumns,
+  COLUMN_MODE_GEOJSON,
+  applyFiltersToTableColumns
+} from './geojson-utils';
 import {
   getGeojsonLayerMetaFromArrow,
   isLayerHoveredFromArrow,
@@ -41,11 +48,13 @@ import {
   VisConfigBoolean,
   Merge,
   RGBColor,
-  Field
+  Field,
+  LayerColumn
 } from '@kepler.gl/types';
 import {KeplerTable} from '@kepler.gl/table';
 import {DataContainerInterface, ArrowDataContainer} from '@kepler.gl/utils';
 import {FilterArrowExtension} from '@kepler.gl/deckgl-layers';
+import GeojsonInfoModalFactory from './geojson-info-modal';
 
 const SUPPORTED_ANALYZER_TYPES = {
   [DATA_TYPES.GEOMETRY]: true,
@@ -168,22 +177,57 @@ type ObjectInfo = {
   id?: string;
 };
 
-export const featureAccessor = ({geojson}: GeoJsonLayerColumnsConfig) => (
-  dc: DataContainerInterface
-) => d => dc.valueAt(d.index, geojson.fieldIdx);
+export const featureAccessor =
+  ({geojson}: GeoJsonLayerColumnsConfig) =>
+  (dc: DataContainerInterface) =>
+  d =>
+    dc.valueAt(d.index, geojson.fieldIdx);
 
-const geoColumnAccessor = ({geojson}: GeoJsonLayerColumnsConfig) => (
-  dc: DataContainerInterface
-): arrow.Vector | null => dc.getColumn?.(geojson.fieldIdx) as arrow.Vector;
+const geoColumnAccessor =
+  ({geojson}: GeoJsonLayerColumnsConfig) =>
+  (dc: DataContainerInterface): arrow.Vector | null =>
+    dc.getColumn?.(geojson.fieldIdx) as arrow.Vector;
 
-const geoFieldAccessor = ({geojson}: GeoJsonLayerColumnsConfig) => (
-  dc: DataContainerInterface
-): Field | null => (dc.getField ? dc.getField(geojson.fieldIdx) : null);
+const getTableModeValueAccessor = feature => {
+  // Called from gpu-filter-utils.getFilterValueAccessor()
+  return field => feature.properties.values.map(v => field.valueAccessor(v));
+};
+
+const getTableModeFieldValue = (field, data) => {
+  let rv;
+  if (typeof data === 'function') {
+    rv = data(field);
+  } else {
+    rv = defaultGetFieldValue(field, data);
+  }
+  return rv;
+};
+
+const geoFieldAccessor =
+  ({geojson}: GeoJsonLayerColumnsConfig) =>
+  (dc: DataContainerInterface): Field | null =>
+    dc.getField ? dc.getField(geojson.fieldIdx) : null;
 
 // access feature properties from geojson sub layer
 export const defaultElevation = 500;
 export const defaultLineWidth = 1;
 export const defaultRadius = 1;
+
+export const COLUMN_MODE_TABLE = 'table';
+const SUPPORTED_COLUMN_MODES = [
+  {
+    key: COLUMN_MODE_GEOJSON,
+    label: 'GeoJSON',
+    requiredColumns: ['geojson']
+  },
+  {
+    key: COLUMN_MODE_TABLE,
+    label: 'Table columns',
+    requiredColumns: ['id', 'lat', 'lng'],
+    optionalColumns: ['altitude', 'sortBy']
+  }
+];
+const DEFAULT_COLUMN_MODE = COLUMN_MODE_GEOJSON;
 
 export default class GeoJsonLayer extends Layer {
   declare config: GeoJsonLayerConfig;
@@ -196,12 +240,21 @@ export default class GeoJsonLayer extends Layer {
   filteredIndexTrigger: number[] | null = null;
   centroids: Array<number[] | null> = [];
 
+  _layerInfoModal: {
+    [COLUMN_MODE_TABLE]: () => React.JSX.Element;
+    [COLUMN_MODE_GEOJSON]: () => React.JSX.Element;
+  };
+
   constructor(props) {
     super(props);
 
     this.registerVisConfig(geojsonVisConfigs);
     this.getPositionAccessor = (dataContainer: DataContainerInterface) =>
       featureAccessor(this.config.columns)(dataContainer);
+    this._layerInfoModal = {
+      [COLUMN_MODE_TABLE]: GeojsonInfoModalFactory(COLUMN_MODE_TABLE),
+      [COLUMN_MODE_GEOJSON]: GeojsonInfoModalFactory(COLUMN_MODE_GEOJSON)
+    };
   }
 
   get type() {
@@ -219,8 +272,38 @@ export default class GeoJsonLayer extends Layer {
     return GeojsonLayerIcon;
   }
 
-  get requiredLayerColumns() {
-    return geoJsonRequiredColumns;
+  get columnPairs() {
+    return this.defaultPointColumnPairs;
+  }
+
+  get supportedColumnModes() {
+    return SUPPORTED_COLUMN_MODES;
+  }
+
+  get layerInfoModal() {
+    return {
+      [COLUMN_MODE_GEOJSON]: {
+        id: 'iconInfo',
+        template: this._layerInfoModal[COLUMN_MODE_GEOJSON],
+        modalProps: {
+          title: 'modal.polygonInfo.title'
+        }
+      },
+      [COLUMN_MODE_TABLE]: {
+        id: 'iconInfo',
+        template: this._layerInfoModal[COLUMN_MODE_TABLE],
+        modalProps: {
+          title: 'modal.polygonInfo.titleTable'
+        }
+      }
+    };
+  }
+
+  accessVSFieldValue(field, indexKey) {
+    if (this.config.columnMode === COLUMN_MODE_GEOJSON) {
+      return defaultGetFieldValue;
+    }
+    return getTableModeFieldValue;
   }
 
   get visualChannels() {
@@ -318,7 +401,7 @@ export default class GeoJsonLayer extends Layer {
   getDefaultLayerConfig(props: LayerBaseConfigPartial) {
     return {
       ...super.getDefaultLayerConfig(props),
-
+      columnMode: props?.columnMode ?? DEFAULT_COLUMN_MODE,
       // add height visual channel
       heightField: null,
       heightDomain: [0, 1],
@@ -346,8 +429,10 @@ export default class GeoJsonLayer extends Layer {
     return null;
   }
 
-  calculateDataAttribute({dataContainer, filteredIndex}, getPosition) {
+  calculateDataAttribute(dataset: KeplerTable, getPosition) {
+    const {dataContainer, filteredIndex} = dataset;
     if (dataContainer instanceof ArrowDataContainer) {
+      // TODO add columnMode logic here for ArrowDataContainer?
       // filter geojson/arrow table by values and make a partial copy of the raw table are expensive
       // so we will use filteredIndex to create an attribute e.g. filteredIndex [0|1] for GPU filtering
       // in deck.gl layer, see: FilterArrowExtension in @kepler.gl/deckgl-layers
@@ -371,7 +456,17 @@ export default class GeoJsonLayer extends Layer {
     }
 
     // for geojson, this should work as well and more efficient. But we need to update some test cases e.g. #GeojsonLayer -> formatLayerData
-    return filteredIndex.map(i => this.dataToFeature[i]).filter(d => d);
+    switch (this.config.columnMode) {
+      case COLUMN_MODE_GEOJSON: {
+        return filteredIndex.map(i => this.dataToFeature[i]).filter(d => d);
+      }
+
+      case COLUMN_MODE_TABLE:
+        return applyFiltersToTableColumns(dataset, this.dataToFeature);
+
+      default:
+        return [];
+    }
   }
 
   formatLayerData(datasets, oldLayerData) {
@@ -381,12 +476,17 @@ export default class GeoJsonLayer extends Layer {
     const {gpuFilter, dataContainer} = datasets[this.config.dataId];
     const {data} = this.updateData(datasets, oldLayerData);
 
-    const customFilterValueAccessor = (dc, d, fieldIndex) => {
-      return dc.valueAt(d.properties.index, fieldIndex);
-    };
-    const indexAccessor = f => f.properties.index;
+    let filterValueAccessor;
+    let dataAccessor;
+    if (this.config.columnMode === COLUMN_MODE_GEOJSON) {
+      filterValueAccessor = (dc, d, fieldIndex) => dc.valueAt(d.properties.index, fieldIndex);
+      dataAccessor = dc => d => ({index: d.properties.index});
+    } else {
+      filterValueAccessor = getTableModeValueAccessor;
+      dataAccessor = dc => d => ({index: d.properties.index});
+    }
 
-    const dataAccessor = dc => d => ({index: d.properties.index});
+    const indexAccessor = f => f.properties.index;
     const accessors = this.getAttributeAccessors({dataAccessor, dataContainer});
 
     const isFilteredAccessor = d => {
@@ -397,14 +497,14 @@ export default class GeoJsonLayer extends Layer {
       data,
       getFilterValue: gpuFilter.filterValueAccessor(dataContainer)(
         indexAccessor,
-        customFilterValueAccessor
+        filterValueAccessor
       ),
       getFiltered: isFilteredAccessor,
       ...accessors
     };
   }
 
-  isInPolygon(data: DataContainerInterface, index: number, polygon: Feature<Polygon>): Boolean {
+  isInPolygon(data: DataContainerInterface, index: number, polygon: Feature<Polygon>): boolean {
     if (this.centroids.length === 0 || !this.centroids[index]) {
       return false;
     }
@@ -414,7 +514,7 @@ export default class GeoJsonLayer extends Layer {
     if (!point) return false;
     // quick check if centroid is within the query rectangle
     if (isReactangleSearchBox && polygon.properties?.bbox) {
-      const [minX, minY, maxX, maxY] = polygon.properties?.bbox;
+      const [minX, minY, maxX, maxY] = polygon?.properties?.bbox || [];
       return point[0] >= minX && point[0] <= maxX && point[1] >= minY && point[1] <= maxY;
     }
     // use turf.js to check if centroid is within query polygon
@@ -433,33 +533,49 @@ export default class GeoJsonLayer extends Layer {
       if (this.dataToFeature.length < dataContainer.numChunks()) {
         // for incrementally loading data, we only load and render the latest batch; otherwise, we will load and render all batches
         const isIncrementalLoad = dataContainer.numChunks() - this.dataToFeature.length === 1;
-        const {dataToFeature, bounds, fixedRadius, featureTypes, centroids} = getGeojsonLayerMetaFromArrow({
-          dataContainer,
-          getGeoColumn,
-          getGeoField,
-          ...(isIncrementalLoad ? {chunkIndex: this.dataToFeature.length} : null)
-        });
+        // TODO: add support for COLUMN_MODE_TABLE in getGeojsonLayerMetaFromArrow
+        const {dataToFeature, bounds, fixedRadius, featureTypes, centroids} =
+          getGeojsonLayerMetaFromArrow({
+            dataContainer,
+            getGeoColumn,
+            getGeoField,
+            ...(isIncrementalLoad ? {chunkIndex: this.dataToFeature.length} : null)
+          });
         if (centroids) this.centroids = this.centroids.concat(centroids);
         this.updateMeta({bounds, fixedRadius, featureTypes});
         this.dataToFeature = [...this.dataToFeature, ...dataToFeature];
       }
-    } else {
-      if (this.dataToFeature.length === 0) {
-        const {dataToFeature, bounds, fixedRadius, featureTypes, centroids} = getGeojsonLayerMeta({
-          dataContainer,
-          getFeature
-        });
-        if (centroids) this.centroids = centroids;
-        this.dataToFeature = dataToFeature;
-        this.updateMeta({bounds, fixedRadius, featureTypes});
-      }
+    } else if (this.dataToFeature.length === 0) {
+      const {dataToFeature, bounds, fixedRadius, featureTypes, centroids} = getGeojsonLayerMeta({
+        dataContainer,
+        getFeature,
+        config: this.config
+      });
+      if (centroids) this.centroids = centroids;
+      this.dataToFeature = dataToFeature;
+      this.updateMeta({bounds, fixedRadius, featureTypes});
     }
   }
 
-  setInitialLayerConfig({dataContainer}) {
+  setInitialLayerConfig(dataset) {
+    const {dataContainer} = dataset;
     if (!dataContainer.numRows()) {
       return this;
     }
+
+    // defefaultLayerProps will automatically find geojson column
+    // if not found, we try to set it to id / lat /lng /ts
+    if (!this.config.columns.geojson.value) {
+      // find columns from lat, lng, id, and ts
+      const columnConfig = detectTableColumns(dataset, this.config.columns, 'sortBy');
+      if (columnConfig) {
+        this.updateLayerConfig({
+          ...columnConfig,
+          columnMode: COLUMN_MODE_TABLE
+        });
+      }
+    }
+
     this.updateLayerMeta(dataContainer);
 
     const {featureTypes} = this.meta;

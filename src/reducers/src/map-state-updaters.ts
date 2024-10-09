@@ -47,11 +47,11 @@ import {MapState, Bounds, Viewport} from '@kepler.gl/types';
  *
  * export default composedReducer;
  */
-/* eslint-disable no-unused-vars */
+
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // @ts-ignore
 const mapStateUpdaters = null;
-/* eslint-enable no-unused-vars */
-
+/* eslint-enable @typescript-eslint/no-unused-vars */
 /**
  * Default initial `mapState`
  * @memberof mapStateUpdaters
@@ -199,10 +199,7 @@ export const fitBoundsUpdater = (
  * @memberof mapStateUpdaters
  * @public
  */
-export const togglePerspectiveUpdater = (
-  state: MapState,
-  action: MapStateActions.TogglePerspectiveUpdaterAction
-): MapState => {
+export const togglePerspectiveUpdater = (state: MapState): MapState => {
   const newState = {
     ...state,
     ...{
@@ -287,10 +284,7 @@ export const receiveMapConfigUpdater = (
  * @memberof mapStateUpdaters
  * @public
  */
-export const toggleSplitMapUpdater = (
-  state: MapState,
-  action: MapStateActions.ToggleSplitMapUpdaterAction
-): MapState => ({
+export const toggleSplitMapUpdater = (state: MapState): MapState => ({
   ...state,
   ...getMapDimForSplitMap(!state.isSplit, state),
   isSplit: !state.isSplit,

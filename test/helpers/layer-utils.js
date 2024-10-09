@@ -30,9 +30,9 @@ import csvData, {wktCsv} from '../fixtures/test-csv-data';
 import testLayerData, {bounds, fieldDomain, iconGeometry} from '../fixtures/test-layer-data';
 import {geojsonData} from '../fixtures/geojson';
 import tripGeoJson from '../fixtures/trip-geojson';
+import {IntlWrapper} from './component-utils';
 
 import {logStep} from '../../scripts/log';
-import {IntlWrapper} from './component-utils';
 
 export const dataId = '0dj3h';
 export const timeFilter = [{name: 'utc_timestamp', value: [1474071095000, 1474071608000]}];
@@ -87,13 +87,27 @@ export function testCreateCases(t, LayerClass, testCases) {
       }, 'layer icon should be mountable');
 
       if (layer.layerInfoModal) {
-        t.doesNotThrow(() => {
-          mount(
-            <IntlWrapper>
-              <layer.layerInfoModal.template />
-            </IntlWrapper>
-          );
-        }, 'layer info modal should be mountable');
+        if (layer.layerInfoModal.template) {
+          t.doesNotThrow(() => {
+            mount(
+              <IntlWrapper>
+                <layer.layerInfoModal.template />
+              </IntlWrapper>
+            );
+          }, 'layer info modal should be mountable');
+        } else if (Object.keys(layer.layerInfoModal).length) {
+          // layerInfoModal is based on columnMode
+          Object.keys(layer.layerInfoModal).forEach(mode => {
+            const Template = layer.layerInfoModal[mode].template;
+            t.doesNotThrow(() => {
+              mount(
+                <IntlWrapper>
+                  <Template />
+                </IntlWrapper>
+              );
+            }, 'layer info modal should be mountable');
+          });
+        }
       }
     }
     if (layer && tc.test) {

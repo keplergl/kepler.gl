@@ -3,7 +3,7 @@
 
 import * as arrow from 'apache-arrow';
 import {Feature, BBox} from 'geojson';
-import {Field, FieldPair} from '@kepler.gl/types';
+import {Field, FieldPair, SupportedColumnMode} from '@kepler.gl/types';
 import {DataContainerInterface} from '@kepler.gl/utils';
 import {
   getBinaryGeometriesFromArrow,
@@ -14,7 +14,7 @@ import {
 import {DeckGlGeoTypes, GeojsonDataMaps} from './geojson-layer/geojson-utils';
 
 export function assignPointPairToLayerColumn(pair: FieldPair, hasAlt: boolean) {
-  const {lat, lng, alt} = pair.pair;
+  const {lat, lng, altitude} = pair.pair;
   if (!hasAlt) {
     return {lat, lng};
   }
@@ -24,7 +24,7 @@ export function assignPointPairToLayerColumn(pair: FieldPair, hasAlt: boolean) {
   return {
     lat,
     lng,
-    altitude: alt ? {...defaultAltColumn, ...alt} : defaultAltColumn
+    altitude: altitude ? {...defaultAltColumn, ...altitude} : defaultAltColumn
   };
 }
 
@@ -63,6 +63,7 @@ export function getGeojsonLayerMetaFromArrow({
   };
   // create binary data from arrow data for GeoJsonLayer
   const {binaryGeometries, featureTypes, bounds, meanCenters} = getBinaryGeometriesFromArrow(
+    // @ts-ignore
     geoColumn,
     encoding,
     options
@@ -128,4 +129,14 @@ export function getHoveredObjectFromArrow(
       : null;
   }
   return null;
+}
+
+/**
+ * find requiredColumns of supported column mode based on column mode
+ */
+export function getColumnModeRequiredColumns(
+  supportedColumnModes: SupportedColumnMode[] | null,
+  columnMode?: string
+): string[] | undefined {
+  return supportedColumnModes?.find(({key}) => key === columnMode)?.requiredColumns;
 }

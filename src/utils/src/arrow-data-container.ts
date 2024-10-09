@@ -226,10 +226,9 @@ export function arrowDataTypeToFieldType(arrowType: arrow.DataType): string {
     arrow.DataType.isStruct(arrowType)
   ) {
     return ALL_FIELD_TYPES.object;
-  } else {
-    globalConsole.warn(`Unsupported arrow type: ${arrowType}`);
-    return ALL_FIELD_TYPES.string;
   }
+  globalConsole.warn(`Unsupported arrow type: ${arrowType}`);
+  return ALL_FIELD_TYPES.string;
 }
 
 /**
@@ -263,8 +262,7 @@ export function arrowDataTypeToAnalyzerDataType(
     arrow.DataType.isStruct(arrowType)
   ) {
     return AnalyzerDATA_TYPES.OBJECT;
-  } else {
-    globalConsole.warn(`Unsupported arrow type: ${arrowType}`);
-    return AnalyzerDATA_TYPES.STRING;
   }
+  globalConsole.warn(`Unsupported arrow type: ${arrowType}`);
+  return AnalyzerDATA_TYPES.STRING;
 }

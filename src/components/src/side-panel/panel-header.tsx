@@ -250,7 +250,7 @@ export const SaveExportDropdownFactory = (
         label: 'toolbar.saveMap',
         icon: Save2,
         key: 'save',
-        onClick: props => props.onSaveMap!
+        onClick: props => props.onSaveMap
       },
       {
         label: 'toolbar.shareMapURL',
@@ -312,13 +312,17 @@ function PanelHeaderFactory(
           id: 'storage',
           iconComponent: Db,
           tooltip: 'tooltip.cloudStorage',
-          onClick: () => {},
+          onClick: () => {
+            return;
+          },
           dropdownComponent: CloudStorageDropdown
         },
         {
           id: 'save',
           iconComponent: Save,
-          onClick: () => {},
+          onClick: () => {
+            return;
+          },
           label: 'Share',
           dropdownComponent: SaveExportDropdown
         }

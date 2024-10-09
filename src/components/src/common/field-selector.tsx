@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import classnames from 'classnames';
 import React, {Component, ComponentType} from 'react';
 import styled from 'styled-components';
 import {createSelector} from 'reselect';
@@ -25,7 +26,12 @@ const StyledFieldListItem = styled.div`
   flex-direction: row;
   align-items: center;
 `;
-
+const StyledFieldSelector = styled.div`
+  .item-selector__dropdown {
+    // smaller padding on the side to accomodate field token
+    padding: 0 6px;
+  }
+`;
 export type FieldListItemFactoryProps = {
   value: Field;
   displayOption: (field: Field) => string;
@@ -97,8 +103,11 @@ interface FieldSelectorFactoryProps {
   CustomChickletComponent?: ComponentType<any>;
   size?: string;
   reorderItems?: (newOrder: any) => void;
+  className?: string;
 }
-
+function noop() {
+  return;
+}
 function FieldSelectorFactory(
   FieldListItemFactory: ReturnType<typeof FieldListItemFactoryFactory>
 ): ComponentType<FieldSelectorFactoryProps> {
@@ -107,8 +116,8 @@ function FieldSelectorFactory(
       erasable: true,
       error: false,
       fields: [],
-      onSelect: () => {},
-      reorderItems: () => {},
+      onSelect: noop,
+      reorderItems: noop,
       placement: 'bottom',
       value: null,
       multiSelect: false,
@@ -162,7 +171,7 @@ function FieldSelectorFactory(
 
     render() {
       return (
-        <div className="field-selector">
+        <StyledFieldSelector className={classnames('field-selector', this.props.className)}>
           <ItemSelector
             getOptionValue={d => d}
             closeOnSelect={this.props.closeOnSelect}
@@ -174,6 +183,7 @@ function FieldSelectorFactory(
             isError={this.props.error}
             selectedItems={this.selectedItemsSelector(this.props)}
             erasable={this.props.erasable}
+            // @ts-ignore - Argument of type 'Readonly<FieldSelectorFactoryProps>' is not assignable to parameter of type 'never'
             options={this.fieldOptionsSelector(this.props)}
             multiSelect={this.props.multiSelect}
             placeholder={this.props.placeholder}
@@ -184,7 +194,7 @@ function FieldSelectorFactory(
             DropdownHeaderComponent={this.props.suggested ? SuggestedFieldHeader : null}
             CustomChickletComponent={this.props.CustomChickletComponent}
           />
-        </div>
+        </StyledFieldSelector>
       );
     }
   }

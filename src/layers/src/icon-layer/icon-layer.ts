@@ -9,7 +9,7 @@ import {SvgIconLayer} from '@kepler.gl/deckgl-layers';
 import IconLayerIcon from './icon-layer-icon';
 import {ICON_FIELDS, KEPLER_UNFOLDED_BUCKET, ColorRange} from '@kepler.gl/constants';
 import IconInfoModalFactory from './icon-info-modal';
-import Layer, {LayerBaseConfig, LayerBaseConfigPartial, LayerColumn} from '../base-layer';
+import Layer, {LayerBaseConfig, LayerBaseConfigPartial} from '../base-layer';
 import {assignPointPairToLayerColumn} from '../layer-utils';
 import {isTest} from '@kepler.gl/utils';
 import {getTextOffsetByRadius, formatTextLabelData} from '../layer-text-label';
@@ -20,7 +20,8 @@ import {
   VisConfigColorRange,
   VisConfigNumber,
   VisConfigRange,
-  Merge
+  Merge,
+  LayerColumn
 } from '@kepler.gl/types';
 
 export type IconLayerColumnsConfig = {
@@ -30,7 +31,7 @@ export type IconLayerColumnsConfig = {
   icon: LayerColumn;
 };
 
-type IconGeometry = {} | null;
+type IconGeometry = object | null;
 
 export type IconLayerVisConfigSettings = {
   radius: VisConfigNumber;
@@ -59,16 +60,21 @@ const brushingExtension = new BrushingExtension();
 
 export const SVG_ICON_URL = `${KEPLER_UNFOLDED_BUCKET}/icons/svg-icons.json`;
 
-export const iconPosAccessor = ({lat, lng, altitude}: IconLayerColumnsConfig) => (
-  dc: DataContainerInterface
-) => d => [
-  dc.valueAt(d.index, lng.fieldIdx),
-  dc.valueAt(d.index, lat.fieldIdx),
-  altitude?.fieldIdx > -1 ? dc.valueAt(d.index, altitude.fieldIdx) : 0
-];
+export const iconPosAccessor =
+  ({lat, lng, altitude}: IconLayerColumnsConfig) =>
+  (dc: DataContainerInterface) =>
+  d =>
+    [
+      dc.valueAt(d.index, lng.fieldIdx),
+      dc.valueAt(d.index, lat.fieldIdx),
+      altitude?.fieldIdx > -1 ? dc.valueAt(d.index, altitude.fieldIdx) : 0
+    ];
 
-export const iconAccessor = ({icon}: IconLayerColumnsConfig) => (dc: DataContainerInterface) => d =>
-  dc.valueAt(d.index, icon.fieldIdx);
+export const iconAccessor =
+  ({icon}: IconLayerColumnsConfig) =>
+  (dc: DataContainerInterface) =>
+  d =>
+    dc.valueAt(d.index, icon.fieldIdx);
 
 export const iconRequiredColumns: ['lat', 'lng', 'icon'] = ['lat', 'lng', 'icon'];
 export const iconOptionalColumns: ['altitude'] = ['altitude'];

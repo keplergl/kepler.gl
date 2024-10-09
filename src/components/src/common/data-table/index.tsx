@@ -185,9 +185,13 @@ export type SortColumn = {
   mode?: string;
 };
 
-const columnWidthFunction = (columns, cellSizeCache, ghost?) => ({index}) => {
-  return (columns[index] || {}).ghost ? ghost : cellSizeCache[columns[index]] || defaultColumnWidth;
-};
+const columnWidthFunction =
+  (columns, cellSizeCache, ghost?) =>
+  ({index}) => {
+    return (columns[index] || {}).ghost
+      ? ghost
+      : cellSizeCache[columns[index]] || defaultColumnWidth;
+  };
 
 interface GetRowCellProps {
   dataContainer: DataContainerInterface;
@@ -284,7 +288,7 @@ interface TableSectionProps {
     rowCount: number;
   } & Partial<GridProps>;
   columnWidth?;
-  setGridRef?: Function;
+  setGridRef?: (ref: HTMLDivElement | null) => void;
   headerCellRender?;
   dataCellRender?;
   scrollLeft?: number;
@@ -329,7 +333,7 @@ export const TableSection = ({
           columnWidth,
           width: fixedWidth || width
         };
-        const headerGridWidth = fixedWidth || width - browserScrollBarWidth;
+        const headerGridWidth = fixedWidth || width;
         const dataGridHeight = fixedHeight || height;
 
         return (
@@ -416,8 +420,8 @@ function DataTableFactory(HeaderCell: ReturnType<typeof HeaderCellFactory>) {
       hasCustomScrollBarStyle: true
     };
 
-    pinnedGrid = false;
-    unpinnedGrid = false;
+    pinnedGrid: HTMLDivElement | null = null;
+    unpinnedGrid: HTMLDivElement | null = null;
 
     state: DataTableState = {
       cellSizeCache: {},
@@ -473,7 +477,7 @@ function DataTableFactory(HeaderCell: ReturnType<typeof HeaderCellFactory>) {
         propsCache,
         pinnedColumns,
         unpinnedColumns
-      ) as {cellSizeCache: {}; ghost: number | null | undefined};
+      ) as {cellSizeCache: CellSizeCache; ghost: number | null | undefined};
 
       return {
         cellSizeCache,
@@ -489,7 +493,7 @@ function DataTableFactory(HeaderCell: ReturnType<typeof HeaderCellFactory>) {
 
     renderDataCell = (columns, isPinned, props: DataTableProps) => {
       const getRowCell = this.props.getRowCell ?? defaultGetRowCell;
-      return cellInfo => {
+      const DataCellRenderer = cellInfo => {
         const {columnIndex, key, style, rowIndex} = cellInfo;
         const {dataContainer, colMeta} = props;
         const column = columns[columnIndex];
@@ -527,10 +531,11 @@ function DataTableFactory(HeaderCell: ReturnType<typeof HeaderCellFactory>) {
 
         return cell;
       };
+      return DataCellRenderer;
     };
 
     renderHeaderCell(columns, isPinned, props, toggleMoreOptions, moreOptionsColumn) {
-      return cellInfo => (
+      const HeaderCellRenderer = cellInfo => (
         <HeaderCell
           cellInfo={cellInfo}
           key={cellInfo.columnIndex}
@@ -542,6 +547,7 @@ function DataTableFactory(HeaderCell: ReturnType<typeof HeaderCellFactory>) {
           moreOptionsColumn={moreOptionsColumn}
         />
       );
+      return HeaderCellRenderer;
     }
     render() {
       const {

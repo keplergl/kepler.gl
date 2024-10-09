@@ -55,7 +55,7 @@ export type GpuFilter = {
   ) => (
     getIndex?: (any) => number,
     getData?: (dc_: DataContainerInterface, d: any, fieldIndex: number) => any
-  ) => (d: any) => number[];
+  ) => (d: any) => (number | number[])[];
 };
 
 // Unique identifier of each field
@@ -266,7 +266,7 @@ class KeplerTable {
       return null;
     }
     const field = this.fields[fieldIdx];
-    if (field.hasOwnProperty('filterProps')) {
+    if (Object.prototype.hasOwnProperty.call(field, 'filterProps')) {
       return field.filterProps;
     }
 
@@ -541,7 +541,7 @@ export function findPointFieldPairs(fields: Field[]): FieldPair[] {
               },
               ...(altIdx > -1
                 ? {
-                    alt: {
+                    altitude: {
                       fieldIdx: altIdx,
                       value: fields[altIdx].name
                     }

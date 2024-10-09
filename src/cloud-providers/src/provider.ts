@@ -74,7 +74,7 @@ export default class Provider {
   displayName: string;
   icon: ComponentType<IconProps>;
   thumbnail: Thumbnail;
-  isNew: boolean = false;
+  isNew = false;
 
   constructor(props: ProviderProps) {
     this.name = props.name || NAME;
@@ -107,7 +107,8 @@ export default class Provider {
    * @returns shareUrl
    * @public
    */
-  getShareUrl(fullUrl: boolean = false): string {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  getShareUrl(fullUrl = false): string {
     return '';
   }
 
@@ -116,6 +117,7 @@ export default class Provider {
    * @returns mapUrl
    * @public
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   getMapUrl(loadParams: MapItemLoadParams): string {
     return '';
   }
@@ -185,7 +187,9 @@ export default class Provider {
    * @public
    */
   async uploadMap({
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     mapData,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     options = {}
   }: {
     mapData: MapData;
@@ -242,6 +246,7 @@ export default class Provider {
    *  return downloadMap;
    * }
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async downloadMap(loadParams): Promise<{map: SavedMap; format: string}> {
     return Promise.reject('You must implement downloadMap');
   }

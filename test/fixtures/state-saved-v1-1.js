@@ -857,9 +857,16 @@ mergedLayer0.config = {
   columns: {
     geojson: {
       fieldIdx: 1,
-      value: 'simplified_shape_v2'
-    }
+      value: 'simplified_shape_v2',
+      optional: false
+    },
+    id: {value: null, fieldIdx: -1, optional: true},
+    lat: {value: null, fieldIdx: -1, optional: true},
+    lng: {value: null, fieldIdx: -1, optional: true},
+    altitude: {value: null, fieldIdx: -1, optional: true},
+    sortBy: {value: null, fieldIdx: -1, optional: true}
   },
+  columnMode: 'geojson',
   hidden: false,
   isVisible: true,
   isConfigActive: false,
@@ -2685,8 +2692,14 @@ mergedLayer1.config = {
   label: 'stroke by pop',
   color: [221, 178, 124],
   columns: {
-    geojson: {value: 'simplified_shape', fieldIdx: 2}
+    geojson: {value: 'simplified_shape', fieldIdx: 2, optional: false},
+    id: {value: null, fieldIdx: -1, optional: true},
+    lat: {value: null, fieldIdx: -1, optional: true},
+    lng: {value: null, fieldIdx: -1, optional: true},
+    altitude: {value: null, fieldIdx: -1, optional: true},
+    sortBy: {value: null, fieldIdx: -1, optional: true}
   },
+  columnMode: 'geojson',
   isVisible: true,
   isConfigActive: false,
   highlightColor: [252, 242, 26, 255],

@@ -54,7 +54,8 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
       color={color}
       style={{
         width: `${size - strokeWidth * 2 - gap * 2}px`,
-        height: `${size - strokeWidth * 2 - gap * 2}px`
+        height: `${size - strokeWidth * 2 - gap * 2}px`,
+        borderWidth: strokeWidth
       }}
     />
   </LoadingWrapper>

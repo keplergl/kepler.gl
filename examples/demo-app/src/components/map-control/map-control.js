@@ -118,10 +118,9 @@ export function SampleMapPanel(props) {
             <CloseButton onClick={() => setActive(false)} />
           </div>
           <div className="project-description">
-            <ReactMarkdown
-              source={props.currentSample.detail || props.currentSample.description}
-              renderers={{link: LinkRenderer}}
-            />
+            <ReactMarkdown components={{a: LinkRenderer}}>
+              {props.currentSample.detail || props.currentSample.description}
+            </ReactMarkdown>
           </div>
           <div className="project-links">
             <LinkButton

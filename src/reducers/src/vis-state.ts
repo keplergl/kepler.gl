@@ -12,6 +12,8 @@ import * as visStateUpdaters from './vis-state-updaters';
 const actionHandler = {
   [ActionTypes.ADD_FILTER]: visStateUpdaters.addFilterUpdater,
 
+  [ActionTypes.CREATE_OR_UPDATE_FILTER]: visStateUpdaters.createOrUpdateFilterUpdater,
+
   [ActionTypes.ADD_LAYER]: visStateUpdaters.addLayerUpdater,
 
   [ActionTypes.APPLY_LAYER_CONFIG]: visStateUpdaters.applyLayerConfigUpdater,

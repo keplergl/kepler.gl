@@ -149,21 +149,25 @@ export class KeplerGLSchema {
    * @param savedConfig
    */
   load(
-    savedDatasets: SavedMap | SavedMap['datasets'] | any,
-    savedConfig: SavedMap['config'] | any
+    ...args:
+      | [
+          savedDatasets: SavedMap | SavedMap['datasets'] | any,
+          savedConfig: SavedMap['config'] | any
+        ]
+      | [{datasets: SavedMap['datasets'] | any; config: SavedMap['config'] | any}]
   ): LoadedMap {
     // if pass dataset and config in as a single object
     if (
-      arguments.length === 1 &&
-      isPlainObject(arguments[0]) &&
-      (Array.isArray(arguments[0].datasets) || isPlainObject(arguments[0].config))
+      args.length === 1 &&
+      isPlainObject(args[0]) &&
+      (Array.isArray(args[0].datasets) || isPlainObject(args[0].config))
     ) {
-      return this.load(arguments[0].datasets, arguments[0].config);
+      return this.load(args[0].datasets, args[0].config);
     }
 
     return {
-      ...(Array.isArray(savedDatasets) ? {datasets: this.parseSavedData(savedDatasets)} : {}),
-      ...(savedConfig ? {config: this.parseSavedConfig(savedConfig)} : {})
+      ...(Array.isArray(args[0]) ? {datasets: this.parseSavedData(args[0])} : {}),
+      ...(args[1] ? {config: this.parseSavedConfig(args[1])} : {})
     };
   }
 
@@ -233,6 +237,7 @@ export class KeplerGLSchema {
   /**
    * Parse saved App config
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   parseSavedConfig({version, config}, state = {}): ParsedConfig | null {
     const validVersion = this.validateVersion(version);
     if (!validVersion) {
@@ -274,9 +279,9 @@ export class KeplerGLSchema {
    * @param state
    * @returns - whether data has changed or not
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   hasDataChanged(state: any): boolean {
     return true;
-    // return this._datasetLastSaved !== state.visState.datasets;
   }
 }
 

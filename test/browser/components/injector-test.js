@@ -10,7 +10,13 @@ import {Provider} from 'react-redux';
 import sinon from 'sinon';
 import {console as Console} from 'global/window';
 
-import {withState, injectComponents, PanelHeaderFactory} from '@kepler.gl/components';
+import {
+  withState,
+  injector,
+  injectComponents,
+  PanelHeaderFactory,
+  provideRecipesToInjector
+} from '@kepler.gl/components';
 
 import {keplerGlInit} from '@kepler.gl/actions';
 import {
@@ -53,12 +59,13 @@ test('Components -> injector -> missing deps', t => {
   // eslint-disable-next-line react/display-name
   const myCustomNameFactory = () => () => <div className="my-test-header-name">name</div>;
   // eslint-disable-next-line react/display-name
-  const myCustomHeaderFactory = Name => () => (
-    <div className="my-test-header-1">
-      <Name />
-      smoothie
-    </div>
-  );
+  const myCustomHeaderFactory = Name => () =>
+    (
+      <div className="my-test-header-1">
+        <Name />
+        smoothie
+      </div>
+    );
   myCustomHeaderFactory.deps = [myCustomNameFactory];
 
   const KeplerGl = injectComponents([[PanelHeaderFactory, myCustomHeaderFactory]]);
@@ -87,12 +94,13 @@ test('Components -> injector -> missing deps', t => {
 test('Components -> injector -> wrong factory type', t => {
   const spy = sinon.spy(Console, 'error');
   // eslint-disable-next-line react/display-name
-  const myCustomHeaderFactory = Name => () => (
-    <div className="my-test-header-2">
-      <Name />
-      smoothie
-    </div>
-  );
+  const myCustomHeaderFactory = Name => () =>
+    (
+      <div className="my-test-header-2">
+        <Name />
+        smoothie
+      </div>
+    );
 
   const KeplerGl = injectComponents([[undefined, myCustomHeaderFactory]]);
 
@@ -109,13 +117,17 @@ test('Components -> injector -> wrong factory type', t => {
     </Provider>
   );
 
-  t.ok(spy.calledTwice, 'should call console.error twice');
   t.equal(
     spy.getCall(0).args[0],
     'Error injecting factory: ',
     'should warn when default factory is not provided'
   );
 
+  t.equal(
+    spy.getCall(1).args[0],
+    'factory and its replacement should be a function',
+    'should warn when default factory is not provided'
+  );
   // test if custom header is rendered
   t.ok(wrapper.find('.side-panel__panel-header').length, 'should render default header');
 
@@ -190,7 +202,7 @@ test('Components -> injector -> replace and render existing', t => {
 });
 
 test('Components -> injector -> withState.lens', t => {
-  const CustomHeader = ({visState}) => <div className="my-test-header-3">smoothie</div>;
+  const CustomHeader = () => <div className="my-test-header-3">smoothie</div>;
   const myCustomHeaderFactory = () =>
     withState([visStateLens, mapStateLens, uiStateLens, mapStyleLens])(CustomHeader);
 
@@ -223,7 +235,7 @@ test('Components -> injector -> withState.lens', t => {
 });
 
 test('Components -> injector -> withState.mapStateToProps', t => {
-  const CustomHeader = ({visState}) => <div className="my-test-header-3">smoothie</div>;
+  const CustomHeader = () => <div clssName="my-test-header-3">smoothie</div>;
   const myCustomHeaderFactory = () =>
     withState([], state => ({ids: Object.keys(state)}))(CustomHeader);
 
@@ -290,6 +302,52 @@ test('Components -> injector -> actions', t => {
 
   const lastAction = store.getActions().pop();
   t.deepEqual(lastAction, {type: 'ADD'}, 'should dispatch custom actions');
+
+  t.end();
+});
+
+test('Components -> injector -> provideRecipesToInjector', t => {
+  // Header1 -> Header 2 -> Header 3
+  const spyMyHeader3Factory = sinon.spy();
+  const spyMyHeader2Factory = sinon.spy();
+  const spyMyHeader1Factory = sinon.spy();
+
+  const myHeader3Factory = () => {
+    spyMyHeader3Factory('getHeader3');
+    const Header3 = () => <div className="my-test-header-3">hello world</div>;
+    return Header3;
+  };
+
+  const myHeader2Factory = MyHeader3 => {
+    spyMyHeader2Factory('getHeader2');
+    const Header2 = () => (
+      <div className="my-test-header-2">
+        <MyHeader3 />
+      </div>
+    );
+    return Header2;
+  };
+  myHeader2Factory.deps = [myHeader3Factory];
+
+  const myHeader1Factory = MyCustomHeader2 => {
+    spyMyHeader1Factory('getHeader1');
+    const Header1 = () => (
+      <div className="my-test-header-1">
+        <MyCustomHeader2 />
+      </div>
+    );
+    return Header1;
+  };
+
+  myHeader1Factory.deps = [myHeader2Factory];
+
+  const recipe1 = [myHeader1Factory, myHeader1Factory];
+
+  provideRecipesToInjector([recipe1], injector());
+
+  t.equal(spyMyHeader1Factory.called, true, 'Should call myHeader1Factory');
+  t.equal(spyMyHeader2Factory.called, true, 'Should call myHeader2Factory');
+  t.equal(spyMyHeader3Factory.called, true, 'Should call myHeader3Factory');
 
   t.end();
 });
