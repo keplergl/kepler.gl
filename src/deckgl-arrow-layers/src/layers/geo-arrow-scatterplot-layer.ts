@@ -74,7 +74,7 @@ type _GeoArrowScatterplotLayerProps = {
   getLineWidth?: FloatAccessor;
 };
 
-// Remove data and getPosition from the upstream default props
+// Remove data and getPosition from the upstream default props
 const {
   data: _data,
   getPosition: _getPosition,
@@ -92,7 +92,7 @@ const defaultProps: DefaultProps<GeoArrowScatterplotLayerProps> = {
   ...ourDefaultProps
 };
 
-export class GeoArrowScatterplotLayer<ExtraProps extends {} = {}> extends CompositeLayer<
+export class GeoArrowScatterplotLayer<ExtraProps extends object = object> extends CompositeLayer<
   GeoArrowScatterplotLayerProps & ExtraProps
 > {
   static defaultProps = defaultProps;
@@ -106,7 +106,7 @@ export class GeoArrowScatterplotLayer<ExtraProps extends {} = {}> extends Compos
     return getPickingInfo(params, this.props.data);
   }
 
-  renderLayers(): Layer<{}> | LayersList | null {
+  renderLayers(): Layer<object> | LayersList | null {
     const {data: table} = this.props;
 
     if (this.props.getPosition !== undefined) {
@@ -135,7 +135,7 @@ export class GeoArrowScatterplotLayer<ExtraProps extends {} = {}> extends Compos
     throw new Error('getPosition not GeoArrow point or multipoint');
   }
 
-  _renderLayersPoint(geometryColumn: ga.vector.PointVector): Layer<{}> | LayersList | null {
+  _renderLayersPoint(geometryColumn: ga.vector.PointVector): Layer<object> | LayersList | null {
     const {data: table} = this.props;
 
     if (this.props._validate) {
@@ -195,7 +195,7 @@ export class GeoArrowScatterplotLayer<ExtraProps extends {} = {}> extends Compos
 
   _renderLayersMultiPoint(
     geometryColumn: ga.vector.MultiPointVector
-  ): Layer<{}> | LayersList | null {
+  ): Layer<object> | LayersList | null {
     const {data: table} = this.props;
 
     // TODO: validate that if nested, accessor props have the same nesting

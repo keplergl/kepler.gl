@@ -87,7 +87,7 @@ type _GeoArrowArcLayerProps = {
   _validate?: boolean;
 };
 
-// Remove data from the upstream default props
+// Remove data from the upstream default props
 const {
   data: _data,
   getSourcePosition: _getSourcePosition,
@@ -106,7 +106,7 @@ const defaultProps: DefaultProps<GeoArrowArcLayerProps> = {
   ...ourDefaultProps
 };
 
-export class GeoArrowArcLayer<ExtraProps extends {} = {}> extends CompositeLayer<
+export class GeoArrowArcLayer<ExtraProps extends object = object> extends CompositeLayer<
   GeoArrowArcLayerProps & ExtraProps
 > {
   static defaultProps = defaultProps;
@@ -120,11 +120,11 @@ export class GeoArrowArcLayer<ExtraProps extends {} = {}> extends CompositeLayer
     return getPickingInfo(params, this.props.data);
   }
 
-  renderLayers(): Layer<{}> | LayersList | null {
+  renderLayers(): Layer<object> | LayersList | null {
     return this._renderLayersPoint();
   }
 
-  _renderLayersPoint(): Layer<{}> | LayersList | null {
+  _renderLayersPoint(): Layer<object> | LayersList | null {
     const {
       data: table,
       getSourcePosition: sourcePosition,

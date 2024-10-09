@@ -111,7 +111,7 @@ type _GeoArrowTextLayerProps = {
   _validate?: boolean;
 };
 
-// Remove data and getPosition from the upstream default props
+// Remove data and getPosition from the upstream default props
 const {
   data: _data,
   getPosition: _getPosition,
@@ -139,7 +139,7 @@ const defaultProps: DefaultProps<GeoArrowTextLayerProps> = {
   ...ourDefaultProps
 };
 
-export class GeoArrowTextLayer<ExtraProps extends {} = {}> extends CompositeLayer<
+export class GeoArrowTextLayer<ExtraProps extends object = object> extends CompositeLayer<
   GeoArrowTextLayerProps & ExtraProps
 > {
   static defaultProps = defaultProps;
@@ -153,7 +153,7 @@ export class GeoArrowTextLayer<ExtraProps extends {} = {}> extends CompositeLaye
     return getPickingInfo(params, this.props.data);
   }
 
-  renderLayers(): Layer<{}> | LayersList | null {
+  renderLayers(): Layer<object> | LayersList | null {
     const {data: table} = this.props;
 
     if (this.props.getPosition !== undefined) {
@@ -173,7 +173,7 @@ export class GeoArrowTextLayer<ExtraProps extends {} = {}> extends CompositeLaye
     throw new Error('getPosition not GeoArrow point');
   }
 
-  _renderLayersPoint(geometryColumn: ga.vector.PointVector): Layer<{}> | LayersList | null {
+  _renderLayersPoint(geometryColumn: ga.vector.PointVector): Layer<object> | LayersList | null {
     const {data: table} = this.props;
 
     if (this.props._validate) {
