@@ -65,4 +65,4 @@ const CustomPicker: React.FC<CustomPickerProps> = props => {
   );
 };
 
-export default withTheme(CustomPicker as React.FC<CustomPickerProps>);
+export default withTheme(CustomPicker);

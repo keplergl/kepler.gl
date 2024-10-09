@@ -63,24 +63,25 @@ export function LoadDataModalFactory(
   FileUpload: ReturnType<typeof FileUploadFactory>,
   LoadStorageMap: ReturnType<typeof LoadStorageMapFactory>
 ) {
-  /** @type {React.FunctionComponent<LoadDataModalProps>} */
+  const defaultLoadingMethods = [
+    {
+      id: LOADING_METHODS.upload,
+      label: 'modal.loadData.upload',
+      elementType: FileUpload
+    },
+    {
+      id: LOADING_METHODS.storage,
+      label: 'modal.loadData.storage',
+      elementType: LoadStorageMap
+    }
+  ];
+
   const LoadDataModal: React.FC<LoadDataModalProps> & {
     defaultLoadingMethods: LoadDataModalProps['loadingMethods'];
   } = ({
     onFileUpload = noop,
     fileLoading = false,
-    loadingMethods = [
-      {
-        id: LOADING_METHODS.upload,
-        label: 'modal.loadData.upload',
-        elementType: FileUpload
-      },
-      {
-        id: LOADING_METHODS.storage,
-        label: 'modal.loadData.storage',
-        elementType: LoadStorageMap
-      }
-    ],
+    loadingMethods = defaultLoadingMethods,
     isCloudMapLoading,
     ...restProps
   }) => {
@@ -112,18 +113,7 @@ export function LoadDataModalFactory(
     );
   };
 
-  LoadDataModal.defaultLoadingMethods = [
-    {
-      id: LOADING_METHODS.upload,
-      label: 'modal.loadData.upload',
-      elementType: FileUpload
-    },
-    {
-      id: LOADING_METHODS.storage,
-      label: 'modal.loadData.storage',
-      elementType: LoadStorageMap
-    }
-  ];
+  LoadDataModal.defaultLoadingMethods = defaultLoadingMethods;
 
   return LoadDataModal;
 }
