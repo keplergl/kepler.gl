@@ -67,6 +67,7 @@ export type PointLayerVisConfig = {
   strokeColorRange: ColorRange;
   radiusRange: [number, number];
   filled: boolean;
+  billboard: boolean;
   allowHover: boolean;
   showNeighborOnHover: boolean;
   showHighlightColor: boolean;
@@ -147,6 +148,7 @@ export const pointVisConfigs: {
   strokeColorRange: 'strokeColorRange';
   radiusRange: 'radiusRange';
   filled: VisConfigBoolean;
+  billboard: 'billboard';
   allowHover: 'allowHover';
   showNeighborOnHover: 'showNeighborOnHover';
   showHighlightColor: 'showHighlightColor';
@@ -167,6 +169,7 @@ export const pointVisConfigs: {
     defaultValue: true,
     property: 'filled'
   },
+  billboard: 'billboard',
   allowHover: 'allowHover',
   showNeighborOnHover: 'showNeighborOnHover',
   showHighlightColor: 'showHighlightColor'
@@ -404,6 +407,7 @@ export default class PointLayer extends Layer {
       stroked: this.config.visConfig.outline,
       filled: this.config.visConfig.filled,
       lineWidthScale: this.config.visConfig.thickness,
+      billboard: this.config.visConfig.billboard,
       radiusScale,
       ...(this.config.visConfig.fixedRadius ? {} : {radiusMaxPixels: 500})
     };

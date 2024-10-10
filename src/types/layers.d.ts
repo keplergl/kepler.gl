@@ -224,6 +224,8 @@ export type LayerVisConfigSettings = {
   thickness: VisConfigNumber;
   strokeWidthRange: VisConfigRange;
   trailLength: VisConfigNumber;
+  fadeTrail: VisConfigBoolean;
+  billboard: VisConfigBoolean;
   radius: VisConfigNumber;
   fixedRadius: VisConfigBoolean;
   radiusRange: VisConfigRange;

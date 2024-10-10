@@ -167,7 +167,7 @@ export const savedStateV1TripGeoJson = {
                   category: 'Uber',
                   colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
                 },
-                trailLength: 180,
+                billboard: false,
                 sizeRange: [0, 10]
               },
               textLabel: [
@@ -267,6 +267,8 @@ mergedLayer0.config = {
     thickness: 0.5,
     colorRange: DEFAULT_COLOR_RANGE,
     trailLength: 180,
+    fadeTrail: true,
+    billboard: false,
     sizeRange: [0, 10]
   },
   textLabel: [DEFAULT_TEXT_LABEL],

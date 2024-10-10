@@ -380,6 +380,7 @@ mergedLayer0.config = {
     radius: 10,
     fixedRadius: true,
     opacity: 0.29,
+    billboard: false,
     outline: false,
     filled: true,
     thickness: 2,

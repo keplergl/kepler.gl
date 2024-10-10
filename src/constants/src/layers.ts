@@ -106,6 +106,21 @@ export const LAYER_VIS_CONFIGS: LayerVisConfigSettings = {
     property: 'trailLength',
     allowCustomValue: true
   },
+  fadeTrail: {
+    defaultValue: true,
+    type: 'boolean',
+    label: 'layerVisConfigs.fadeTrail',
+    group: PROPERTY_GROUPS.stroke,
+    property: 'fadeTrail'
+  },
+  billboard: {
+    defaultValue: false,
+    type: 'boolean',
+    label: 'layerVisConfigs.billboard',
+    description: 'layerVisConfigs.billboardDescription',
+    group: PROPERTY_GROUPS.display,
+    property: 'billboard'
+  },
   // radius is actually radiusScale in deck.gl
   radius: {
     type: 'number',

@@ -253,6 +253,7 @@ export default function LayerConfiguratorFactory(
                   {...visConfiguratorProps}
                 />
               ) : null}
+              <VisConfigSwitch {...layer.visConfigSettings.billboard} {...visConfiguratorProps} />
             </ConfigGroupCollapsibleContent>
           </LayerConfigGroup>
 
@@ -711,6 +712,7 @@ export default function LayerConfiguratorFactory(
             )}
 
             <ConfigGroupCollapsibleContent>
+              <VisConfigSwitch {...layer.visConfigSettings.billboard} {...visConfiguratorProps} />
               <ChannelByValueSelector
                 channel={layer.visualChannels.size}
                 {...layerChannelConfigProps}
@@ -724,12 +726,16 @@ export default function LayerConfiguratorFactory(
             {...(featureTypes.polygon ? layer.visConfigSettings.stroked : {})}
             label="layer.trailLength"
             description="layer.trailLengthDescription"
+            collapsible
           >
             <VisConfigSlider
               {...layer.visConfigSettings.trailLength}
               {...visConfiguratorProps}
               label={false}
             />
+            <ConfigGroupCollapsibleContent>
+              <VisConfigSwitch {...layer.visConfigSettings.fadeTrail} {...visConfiguratorProps} />
+            </ConfigGroupCollapsibleContent>
           </LayerConfigGroup>
         </StyledLayerVisualConfigurator>
       );
