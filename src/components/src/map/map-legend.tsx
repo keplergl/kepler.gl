@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {FC} from 'react';
+import React, {FC, useCallback} from 'react';
 import styled from 'styled-components';
 import {rgb} from 'd3-color';
-import ColorLegend from '../common/color-legend';
+import ColorLegendFactory from '../common/color-legend';
 import RadiusLegend from '../common/radius-legend';
 import {CHANNEL_SCALES, DIMENSIONS} from '@kepler.gl/constants';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {Layer, LayerBaseConfig, VisualChannel, VisualChannelDescription} from '@kepler.gl/layers';
-import {MapState} from '@kepler.gl/types';
+import {LayerVisConfig, MapState, RGBColor} from '@kepler.gl/types';
 
 interface StyledMapControlLegendProps {
   width?: number;
@@ -43,10 +43,15 @@ export const StyledMapControlLegend = styled.div<StyledMapControlLegendProps>`
 
   .legend--layer__title {
     padding-right: ${props => props.theme.mapControl.padding}px;
+    margin-top: 4px;
   }
 
+  .legend--layer__item {
+    padding-bottom: 4px;
+  }
   .legend--layer_by {
     color: ${props => props.theme.subtextColor};
+    margin-top: 4px;
   }
 
   .legend--layer_color_field {
@@ -74,7 +79,6 @@ export type LayerSizeLegendProps = {
   name: string | undefined;
 };
 
-/** @type {typeof import('./map-legend').LayerDefaultLegend} */
 export const LayerDefaultLegend: React.FC<LayerSizeLegendProps> = ({label, name}) =>
   label ? (
     <div className="legend--layer_size-schema">
@@ -89,41 +93,69 @@ export const LayerDefaultLegend: React.FC<LayerSizeLegendProps> = ({label, name}
 const SINGLE_COLOR_DOMAIN = [''];
 
 export type SingleColorLegendProps = {
-  width: number;
-  color: string;
+  color: RGBColor;
 };
 
-/** @type {typeof import('./map-legend').SingleColorLegend} */
-export const SingleColorLegend: React.FC<SingleColorLegendProps> = React.memo(({width, color}) => (
-  <ColorLegend
-    scaleType="ordinal"
-    displayLabel={false}
-    domain={SINGLE_COLOR_DOMAIN}
-    fieldType={null}
-    range={{colors: [rgb(...color).toString()]}}
-    width={width}
-  />
-));
+SingleColorLegendFactory.deps = [ColorLegendFactory];
 
-SingleColorLegend.displayName = 'SingleColorLegend';
+export function SingleColorLegendFactory(
+  ColorLegend: ReturnType<typeof ColorLegendFactory>
+): React.FC<SingleColorLegendProps> {
+  const SingleColorLegend: React.FC<SingleColorLegendProps> = ({color}) => (
+    <ColorLegend
+      scaleType="ordinal"
+      displayLabel={false}
+      domain={SINGLE_COLOR_DOMAIN}
+      fieldType={null}
+      range={{colors: [rgb(...color).toString()]}}
+      disableEdit={true}
+    />
+  );
+  SingleColorLegend.displayName = 'SingleColorLegend';
+  return React.memo(SingleColorLegend);
+}
 
 export type LayerColorLegendProps = {
   description: VisualChannelDescription;
   config: LayerBaseConfig;
-  width: number;
   colorChannel: VisualChannel;
+  onLayerVisConfigChange?: (oldLayer: Layer, newVisConfig: Partial<LayerVisConfig>) => void;
+  layer: Layer;
+  disableEdit?: boolean;
 };
 
-/** @type {typeof import('./map-legend').LayerColorLegend} */
-export const LayerColorLegend: React.FC<LayerColorLegendProps> = React.memo(
-  ({description, config, width, colorChannel}) => {
+LayerColorLegendFactory.deps = [ColorLegendFactory, SingleColorLegendFactory];
+export function LayerColorLegendFactory(
+  ColorLegend: ReturnType<typeof ColorLegendFactory>,
+  SingleColorLegend: ReturnType<typeof SingleColorLegendFactory>
+) {
+  const LayerColorLegend: React.FC<LayerColorLegendProps> = ({
+    description,
+    config,
+    layer,
+    colorChannel,
+    disableEdit,
+    onLayerVisConfigChange
+  }) => {
     const enableColorBy = description.measure;
     const {scale, field, domain, range, property} = colorChannel;
     const [colorScale, colorField, colorDomain] = [scale, field, domain].map(k => config[k]);
     const colorRange = config.visConfig[range];
-
+    const onUpdateColorLegend = useCallback(
+      colorLegends => {
+        if (onLayerVisConfigChange) {
+          onLayerVisConfigChange(layer, {
+            [range]: {
+              ...colorRange,
+              colorLegends
+            }
+          });
+        }
+      },
+      [layer, onLayerVisConfigChange, colorRange, range]
+    );
     return (
-      <div>
+      <div className="legend--layer__item">
         <div className="legend--layer_color-schema">
           <div>
             {enableColorBy ? <VisualChannelMetric name={enableColorBy} /> : null}
@@ -135,12 +167,12 @@ export const LayerColorLegend: React.FC<LayerColorLegendProps> = React.memo(
                   domain={colorDomain}
                   fieldType={(colorField && colorField.type) || 'real'}
                   range={colorRange}
-                  width={width}
+                  onUpdateColorLegend={onUpdateColorLegend}
+                  disableEdit={disableEdit}
                 />
               ) : (
                 <SingleColorLegend
                   color={config.visConfig[property] || config[property] || config.color}
-                  width={width}
                 />
               )}
             </div>
@@ -148,11 +180,11 @@ export const LayerColorLegend: React.FC<LayerColorLegendProps> = React.memo(
         </div>
       </div>
     );
-  }
-);
+  };
 
-// eslint-disable-next-line react/display-name
-LayerColorLegend.displayName = 'LayerColorLegend';
+  LayerColorLegend.displayName = 'LayerColorLegend';
+  return React.memo(LayerColorLegend);
+}
 
 function getLayerRadiusScaleMetersToPixelsMultiplier(layer, mapState) {
   // @ts-ignore this actually exist
@@ -185,7 +217,7 @@ export const LayerRadiusLegend: FC<LayerRadiusLegendProps> = React.memo(
     }
 
     return (
-      <div className="legend--layer__item">
+      <div>
         <div className="legend--layer_size-schema">
           <div>
             {enableSizeBy ? <VisualChannelMetric name={enableSizeBy} /> : null}
@@ -206,7 +238,6 @@ export const LayerRadiusLegend: FC<LayerRadiusLegendProps> = React.memo(
     );
   }
 );
-LayerRadiusLegend.displayName = 'LayerRadiusLegend';
 
 const isColorChannel = visualChannel =>
   [CHANNEL_SCALES.color, CHANNEL_SCALES.colorAggr].includes(visualChannel.channelScaleType);
@@ -222,7 +253,6 @@ const isRadiusChannel = visualChannel =>
   [CHANNEL_SCALES.radius].includes(visualChannel.channelScaleType);
 
 export function LayerLegendHeaderFactory() {
-  /** @type {typeof import('./map-legend').LayerLegendHeader }> */
   const LayerLegendHeader: React.FC<LayerLegendHeaderProps> = ({options, layer}) => {
     return options?.showLayerName !== false ? (
       <div className="legend--layer_name">{layer.config.label}</div>
@@ -235,28 +265,51 @@ export type LayerLegendContentProps = {
   layer: Layer;
   containerW: number;
   mapState?: MapState;
+  disableEdit?: boolean;
+  onLayerVisConfigChange?: (oldLayer: Layer, newVisConfig: Partial<LayerVisConfig>) => void;
 };
 
-export function LayerLegendContentFactory() {
-  /** @type {typeof import('./map-legend').LayerLegendContent }> */
-  const LayerLegendContent: React.FC<LayerLegendContentProps> = ({layer, containerW, mapState}) => {
+LayerLegendContentFactory.deps = [LayerColorLegendFactory];
+
+export function LayerLegendContentFactory(
+  LayerColorLegend: ReturnType<typeof LayerColorLegendFactory>
+) {
+  const LayerLegendContent: React.FC<LayerLegendContentProps> = ({
+    layer,
+    containerW,
+    mapState,
+    disableEdit,
+    onLayerVisConfigChange
+  }) => {
     const colorChannels = Object.values(layer.visualChannels).filter(isColorChannel);
     const nonColorChannels = Object.values(layer.visualChannels).filter(vc => !isColorChannel(vc));
     const width = containerW - 2 * DIMENSIONS.mapControl.padding;
 
+    // render color by chanel only
+    let colorChannelToRender = colorChannels.filter(
+      cc =>
+        (!cc.condition || cc.condition(layer.config)) &&
+        layer.getVisualChannelDescription(cc.key)?.measure
+    );
+    // if no color by chanel, render rest
+    if (!colorChannelToRender.length) {
+      colorChannelToRender = colorChannels.filter(
+        cc => !cc.condition || cc.condition(layer.config)
+      );
+    }
     return (
       <>
-        {colorChannels.map(colorChannel =>
-          !colorChannel.condition || colorChannel.condition(layer.config) ? (
-            <LayerColorLegend
-              key={colorChannel.key}
-              description={layer.getVisualChannelDescription(colorChannel.key)}
-              config={layer.config}
-              width={width}
-              colorChannel={colorChannel}
-            />
-          ) : null
-        )}
+        {colorChannelToRender.map(colorChannel => (
+          <LayerColorLegend
+            key={colorChannel.key}
+            colorChannel={colorChannel}
+            config={layer.config}
+            description={layer.getVisualChannelDescription(colorChannel.key)}
+            layer={layer}
+            disableEdit={disableEdit}
+            onLayerVisConfigChange={onLayerVisConfigChange}
+          />
+        ))}
         {nonColorChannels.map(visualChannel => {
           const matchCondition = !visualChannel.condition || visualChannel.condition(layer.config);
           const enabled = layer.config[visualChannel.field] || visualChannel.defaultMeasure;
@@ -298,12 +351,24 @@ export type MapLegendProps = {
   options?: {
     showLayerName?: boolean;
   };
+  disableEdit?: boolean;
+  onLayerVisConfigChange?: (oldLayer: Layer, newVisConfig: Partial<LayerVisConfig>) => void;
 };
 
 MapLegendFactory.deps = [LayerLegendHeaderFactory, LayerLegendContentFactory];
-function MapLegendFactory(LayerLegendHeader, LayerLegendContent) {
-  /** @type {typeof import('./map-legend').MapLegend }> */
-  const MapLegend: React.FC<MapLegendProps> = ({layers = [], width, mapState, options}) => (
+
+function MapLegendFactory(
+  LayerLegendHeader: ReturnType<typeof LayerLegendHeaderFactory>,
+  LayerLegendContent: ReturnType<typeof LayerLegendContentFactory>
+) {
+  const MapLegend: React.FC<MapLegendProps> = ({
+    layers = [],
+    width,
+    mapState,
+    options,
+    disableEdit,
+    onLayerVisConfigChange
+  }) => (
     <div
       className="map-legend"
       {...(mapState?.height && {
@@ -327,7 +392,13 @@ function MapLegendFactory(LayerLegendHeader, LayerLegendContent) {
             width={containerW}
           >
             <LayerLegendHeader options={options} layer={layer} />
-            <LayerLegendContent containerW={containerW} layer={layer} mapState={mapState} />
+            <LayerLegendContent
+              containerW={containerW}
+              layer={layer}
+              mapState={mapState}
+              disableEdit={disableEdit}
+              onLayerVisConfigChange={onLayerVisConfigChange}
+            />
           </StyledMapControlLegend>
         );
       })}

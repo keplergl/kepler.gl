@@ -86,6 +86,10 @@ const DEFAULT_MAP_CONTROLS_FEATURES: MapControlItem = {
   activeMapIndex: 0
 };
 
+const DEFAULT_MAP_LEGEND_CONTROL = {
+  ...DEFAULT_MAP_CONTROLS_FEATURES,
+  disableEdit: false
+};
 /**
  * A list of map control visibility and whether is it active.
  * @memberof uiStateUpdaters
@@ -103,7 +107,10 @@ export const DEFAULT_MAP_CONTROLS: MapControls = (
 ).reduce(
   (final, current) => ({
     ...final,
-    [current]: DEFAULT_MAP_CONTROLS_FEATURES
+    [current]:
+      current === MAP_CONTROLS.mapLegend
+        ? DEFAULT_MAP_LEGEND_CONTROL
+        : DEFAULT_MAP_CONTROLS_FEATURES
   }),
   {} as MapControls
 );

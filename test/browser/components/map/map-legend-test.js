@@ -10,10 +10,10 @@ import cloneDeep from 'lodash.clonedeep';
 import {
   MapLegendFactory,
   StyledMapControlLegend,
-  LayerColorLegend,
   VisualChannelMetric,
   LayerDefaultLegend,
-  SingleColorLegend,
+  SingleColorLegendFactory,
+  LayerColorLegendFactory,
   appInjector
 } from '@kepler.gl/components';
 import {
@@ -25,6 +25,8 @@ import {
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
 
 const MapLegend = appInjector.get(MapLegendFactory);
+const LayerColorLegend = appInjector.get(LayerColorLegendFactory);
+const SingleColorLegend = appInjector.get(SingleColorLegendFactory);
 
 test('Components -> MapLegend.render', t => {
   t.doesNotThrow(() => {

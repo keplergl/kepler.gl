@@ -11,7 +11,7 @@ import MapControlPanelFactory from './map-control-panel';
 import MapLegendFactory from './map-legend';
 import {createPortal} from 'react-dom';
 import {DIMENSIONS} from '@kepler.gl/constants';
-import {MapControlItem, MapControls, MapState} from '@kepler.gl/types';
+import {LayerVisConfig, MapControlMapLegend, MapControls, MapState} from '@kepler.gl/types';
 import {Layer} from '@kepler.gl/layers';
 import {media} from '@kepler.gl/styles';
 import {ActionHandler, toggleSplitMapViewport} from '@kepler.gl/actions';
@@ -70,6 +70,7 @@ export type MapLegendPanelProps = {
   onToggleSplitMapViewport?: ActionHandler<typeof toggleSplitMapViewport>;
   isViewportUnsyncAllowed?: boolean;
   onClickControlBtn?: (e?: MouseEvent) => void;
+  onLayerVisConfigChange?: (oldLayer: Layer, newVisConfig: Partial<LayerVisConfig>) => void;
 };
 
 function MapLegendPanelFactory(MapControlTooltip, MapControlPanel, MapLegend) {
@@ -89,10 +90,11 @@ function MapLegendPanelFactory(MapControlTooltip, MapControlPanel, MapLegend) {
     offsetRight,
     onToggleSplitMapViewport,
     onClickControlBtn,
-    isViewportUnsyncAllowed = true
+    isViewportUnsyncAllowed = true,
+    onLayerVisConfigChange
   }) => {
-    const mapLegend = mapControls?.mapLegend || ({} as MapControlItem);
-    const {active: isPinned} = mapLegend || {};
+    const mapLegend = mapControls?.mapLegend || ({} as MapControlMapLegend);
+    const {active: isPinned, disableEdit} = mapLegend || {};
     const rootContext = useContext(RootContext);
     const [isOpened, setIsOpened] = useState(false);
 
@@ -154,7 +156,12 @@ function MapLegendPanelFactory(MapControlTooltip, MapControlPanel, MapLegend) {
         onToggleSplitMapViewport={onToggleSplitMapViewport}
         isViewportUnsyncAllowed={isViewportUnsyncAllowed}
       >
-        <MapLegend layers={layers} mapState={mapState} />
+        <MapLegend
+          layers={layers}
+          mapState={mapState}
+          disableEdit={disableEdit}
+          onLayerVisConfigChange={onLayerVisConfigChange}
+        />
       </MapControlPanel>
     );
 
