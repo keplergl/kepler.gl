@@ -63,10 +63,36 @@ export function LoadDataModalFactory(
   FileUpload: ReturnType<typeof FileUploadFactory>,
   LoadStorageMap: ReturnType<typeof LoadStorageMapFactory>
 ) {
-  /** @type {React.FunctionComponent<LoadDataModalProps>} */
-  const LoadDataModal: React.FC<LoadDataModalProps> = props => {
+  const defaultLoadingMethods = [
+    {
+      id: LOADING_METHODS.upload,
+      label: 'modal.loadData.upload',
+      elementType: FileUpload
+    },
+    {
+      id: LOADING_METHODS.storage,
+      label: 'modal.loadData.storage',
+      elementType: LoadStorageMap
+    }
+  ];
+
+  const LoadDataModal: React.FC<LoadDataModalProps> & {
+    defaultLoadingMethods: LoadDataModalProps['loadingMethods'];
+  } = ({
+    onFileUpload = noop,
+    fileLoading = false,
+    loadingMethods = defaultLoadingMethods,
+    isCloudMapLoading,
+    ...restProps
+  }) => {
     const intl = useIntl();
-    const {loadingMethods, isCloudMapLoading} = props;
+    const currentModalProps = {
+      ...restProps,
+      onFileUpload,
+      fileLoading,
+      isCloudMapLoading
+    };
+    // const {loadingMethods, isCloudMapLoading} = props;
     const [currentMethod, toggleMethod] = useState(getDefaultMethod(loadingMethods));
 
     const ElementType = currentMethod?.elementType;
@@ -81,28 +107,13 @@ export function LoadDataModalFactory(
         {isCloudMapLoading ? (
           <LoadingDialog size={64} />
         ) : (
-          ElementType && <ElementType key={currentMethod?.id} intl={intl} {...props} />
+          ElementType && <ElementType key={currentMethod?.id} intl={intl} {...currentModalProps} />
         )}
       </StyledLoadDataModal>
     );
   };
 
-  LoadDataModal.defaultProps = {
-    onFileUpload: noop,
-    fileLoading: false,
-    loadingMethods: [
-      {
-        id: LOADING_METHODS.upload,
-        label: 'modal.loadData.upload',
-        elementType: FileUpload
-      },
-      {
-        id: LOADING_METHODS.storage,
-        label: 'modal.loadData.storage',
-        elementType: LoadStorageMap
-      }
-    ]
-  };
+  LoadDataModal.defaultLoadingMethods = defaultLoadingMethods;
 
   return LoadDataModal;
 }

@@ -107,7 +107,7 @@ test('Components -> LayerColorSelector.render -> render layer color', t => {
 
   const csInput = wrapper.find(ColorSelectorInput);
   t.equal(csInput.length, 1, 'should render 1 ColorSelectorInput');
-  csInput.simulate('mousedown');
+  csInput.simulate('click');
 
   t.ok(updateLayerColorUI.calledOnce, 'should call updateLayerColorUI');
   t.ok(updateLayerVisConfig.notCalled, 'should not call updateLayerColorUI');
@@ -235,7 +235,7 @@ test('Components -> ArcLayerColorSelector.render -> render single color', t => {
 
   const csInput = wrapper.find(ColorSelectorInput);
   t.equal(csInput.length, 2, 'should render 2 ColorSelectorInput');
-  csInput.at(1).simulate('mousedown');
+  csInput.at(1).simulate('click');
 
   t.ok(updateLayerColorUI.calledOnce, 'should call updateLayerColorUI when mousedown 2nd block');
   t.ok(
@@ -344,7 +344,7 @@ test('Components -> LayerColorRangeSelector.render -> ColorSelector', t => {
   // simulate click
   const csInput = wrapper.find(ColorSelectorInput);
   t.equal(csInput.length, 1, 'should render 2 ColorSelectorInput');
-  csInput.at(0).simulate('mousedown');
+  csInput.at(0).simulate('click');
 
   t.ok(updateLayerColorUI.calledOnce, 'should call updateLayerColorUI when mousedown 2nd block');
   t.ok(
@@ -774,7 +774,7 @@ test('Components -> ColorSelector.opacity', t => {
   }, 'Mount should not fail');
 
   // show palette
-  wrapper.find('.color-selector__selector').at(0).invoke('onMouseDown')({
+  wrapper.find('.color-selector__selector').at(0).invoke('onClick')({
     preventDefault() {},
     stopPropagation() {}
   });
