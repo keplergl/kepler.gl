@@ -59,6 +59,7 @@
     "mini-svg-data-uri": "^1.0.3",
     "moment-timezone": "^0.5.35",
     "react": "^18.2.0",
+    "react-map-gl": "^7.1.6",
     "resize-observer-polyfill": "^1.5.1",
     "type-analyzer": "0.4.0"
   },

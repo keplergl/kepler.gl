@@ -4,11 +4,10 @@
 // libraries
 import React, {Component, createRef, useMemo} from 'react';
 import styled, {withTheme} from 'styled-components';
-import {Map, MapRef} from 'react-map-gl/maplibre';
+import {Map, MapboxMap, MapRef} from 'react-map-gl';
 import {PickInfo} from '@deck.gl/core/lib/deck';
 import DeckGL from '@deck.gl/react';
 import {createSelector, Selector} from 'reselect';
-import maplibregl from 'maplibre-gl';
 import {useDroppable} from '@dnd-kit/core';
 import debounce from 'lodash.debounce';
 
@@ -47,7 +46,8 @@ import {
   getViewportFromMapState,
   normalizeEvent,
   rgbToHex,
-  computeDeckEffects
+  computeDeckEffects,
+  getApplicationConfig
 } from '@kepler.gl/utils';
 import {breakPointValues} from '@kepler.gl/styles';
 
@@ -114,7 +114,7 @@ const StyledMap = styled(StyledMapContainer)<StyledMapContainerProps>(
   #default-deckgl-overlay {
     mix-blend-mode: ${mixBlendMode};
   };
-  *[maplibregl-children] {
+  *[${getApplicationConfig().mapLibCssClass}-children] {
     position: absolute;
   }
 `
@@ -126,16 +126,16 @@ const nop = () => {
   return;
 };
 
-const MapLibreLogo = () => (
+const MapLibLogo = () => (
   <div className="attrition-logo">
     Basemap by:
     <a
       style={{marginLeft: '5px'}}
-      className="maplibregl-ctrl-logo"
+      className={`${getApplicationConfig().mapLibCssClass}-ctrl-logo`}
       target="_blank"
       rel="noopener noreferrer"
-      href="https://www.maplibre.org/"
-      aria-label="MapLibre logo"
+      href={getApplicationConfig().mapLibUrl}
+      aria-label={`${getApplicationConfig().mapLibName} logo`}
     />
   </div>
 );
@@ -245,11 +245,11 @@ export const Attribution: React.FC<{
           <DatasetAttributions datasetAttributions={datasetAttributions} isPalm={isPalm} />
           <div className="attrition-link">
             {datasetAttributions?.length ? <span className="pipe-separator">|</span> : null}
-            {isPalm ? <MapLibreLogo /> : null}
+            {isPalm ? <MapLibLogo /> : null}
             <a href="https://kepler.gl/policy/" target="_blank" rel="noopener noreferrer">
               © kepler.gl |{' '}
             </a>
-            {!isPalm ? <MapLibreLogo /> : null}
+            {!isPalm ? <MapLibLogo /> : null}
           </div>
         </EndHorizontalFlexbox>
       </StyledAttrbution>
@@ -263,6 +263,8 @@ MapContainerFactory.deps = [MapPopoverFactory, MapControlFactory, EditorFactory]
 
 type MapboxStyle = string | object | undefined;
 type PropSelector<R> = Selector<MapContainerProps, R>;
+
+type GetMapRef = ReturnType<ReturnType<typeof getApplicationConfig>['getMap']>;
 
 export interface MapContainerProps {
   visState: VisState;
@@ -279,8 +281,9 @@ export interface MapContainerProps {
   primary?: boolean; // primary one will be reporting its size to appState
   readOnly?: boolean;
   isExport?: boolean;
-  onMapStyleLoaded?: (map: maplibregl.Map | null) => void;
-  onMapRender?: (map: maplibregl.Map | null) => void;
+  // onMapStyleLoaded?: (map: maplibregl.Map | ReturnType<MapRef['getMap']> | null) => void;
+  onMapStyleLoaded?: (map: GetMapRef | null) => void;
+  onMapRender?: (map: GetMapRef | null) => void;
   getMapboxRef?: (mapbox?: MapRef | null, index?: number) => void;
   index?: number;
   deleteMapLabels?: (containerId: string, layerId: string) => void;
@@ -361,7 +364,7 @@ export default function MapContainerFactory(
     }
 
     _deck: any = null;
-    _map: maplibregl.Map | null = null;
+    _map: MapboxMap | null = null;
     _ref = createRef<HTMLDivElement>();
     _deckGLErrorsElapsed: {[id: string]: number} = {};
 
@@ -488,9 +491,9 @@ export default function MapContainerFactory(
       }
     };
 
-    _setMapboxMap: React.Ref<MapRef> = mapbox => {
-      if (!this._map && mapbox) {
-        this._map = mapbox.getMap();
+    _setMapRef = mapRef => {
+      if (!this._map && mapRef) {
+        this._map = getApplicationConfig().getMap(mapRef);
         // i noticed in certain context we don't access the actual map element
         if (!this._map) {
           return;
@@ -509,7 +512,7 @@ export default function MapContainerFactory(
         // The parent component can gain access to our MapboxGlMap by
         // providing this callback. Note that 'mapbox' will be null when the
         // ref is unset (e.g. when a split map is closed).
-        this.props.getMapboxRef(mapbox, this.props.index);
+        this.props.getMapboxRef(mapRef, this.props.index);
       }
     };
 
@@ -978,7 +981,7 @@ export default function MapContainerFactory(
         preserveDrawingBuffer: true,
         mapboxAccessToken: currentStyle?.accessToken || mapboxApiAccessToken,
         baseApiUrl: mapboxApiUrl,
-        mapLib: maplibregl,
+        mapLib: getApplicationConfig().getMapLib(),
         transformRequest: this.props.transformRequest || transformRequest
       };
 
@@ -994,7 +997,7 @@ export default function MapContainerFactory(
             {...mapProps}
             mapStyle={mapStyle.bottomMapStyle ?? EMPTY_MAPBOX_STYLE}
             {...bottomMapContainerProps}
-            ref={this._setMapboxMap}
+            ref={this._setMapRef}
           />
         )
       });
@@ -1065,7 +1068,7 @@ export default function MapContainerFactory(
               style={MAP_STYLE.top}
               mapboxAccessToken={mapProps.mapboxAccessToken}
               baseApiUrl={mapProps.baseApiUrl}
-              mapLib={maplibregl}
+              mapLib={getApplicationConfig().getMapLib()}
               {...topMapContainerProps}
             />
           ) : null}
