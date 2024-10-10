@@ -264,6 +264,8 @@ MapContainerFactory.deps = [MapPopoverFactory, MapControlFactory, EditorFactory]
 type MapboxStyle = string | object | undefined;
 type PropSelector<R> = Selector<MapContainerProps, R>;
 
+type GetMapRef = ReturnType<ReturnType<typeof getApplicationConfig>['getMap']>;
+
 export interface MapContainerProps {
   visState: VisState;
   mapState: MapState;
@@ -279,8 +281,9 @@ export interface MapContainerProps {
   primary?: boolean; // primary one will be reporting its size to appState
   readOnly?: boolean;
   isExport?: boolean;
-  onMapStyleLoaded?: (map: maplibregl.Map | null) => void;
-  onMapRender?: (map: maplibregl.Map | null) => void;
+  // onMapStyleLoaded?: (map: maplibregl.Map | ReturnType<MapRef['getMap']> | null) => void;
+  onMapStyleLoaded?: (map: GetMapRef | null) => void;
+  onMapRender?: (map: GetMapRef | null) => void;
   getMapboxRef?: (mapbox?: MapRef | null, index?: number) => void;
   index?: number;
   deleteMapLabels?: (containerId: string, layerId: string) => void;
@@ -488,9 +491,9 @@ export default function MapContainerFactory(
       }
     };
 
-    _setMapboxMap: React.Ref<MapRef> = mapbox => {
-      if (!this._map && mapbox) {
-        this._map = mapbox.getMap();
+    _setMapRef = mapRef => {
+      if (!this._map && mapRef) {
+        this._map = getApplicationConfig().getMap(mapRef);
         // i noticed in certain context we don't access the actual map element
         if (!this._map) {
           return;
@@ -509,7 +512,7 @@ export default function MapContainerFactory(
         // The parent component can gain access to our MapboxGlMap by
         // providing this callback. Note that 'mapbox' will be null when the
         // ref is unset (e.g. when a split map is closed).
-        this.props.getMapboxRef(mapbox, this.props.index);
+        this.props.getMapboxRef(mapRef, this.props.index);
       }
     };
 
@@ -994,7 +997,7 @@ export default function MapContainerFactory(
             {...mapProps}
             mapStyle={mapStyle.bottomMapStyle ?? EMPTY_MAPBOX_STYLE}
             {...bottomMapContainerProps}
-            ref={this._setMapboxMap}
+            ref={this._setMapRef}
           />
         )
       });

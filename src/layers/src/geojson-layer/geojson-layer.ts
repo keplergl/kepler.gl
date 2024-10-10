@@ -299,7 +299,7 @@ export default class GeoJsonLayer extends Layer {
     };
   }
 
-  accessVSFieldValue(field, indexKey) {
+  accessVSFieldValue() {
     if (this.config.columnMode === COLUMN_MODE_GEOJSON) {
       return defaultGetFieldValue;
     }
@@ -429,7 +429,7 @@ export default class GeoJsonLayer extends Layer {
     return null;
   }
 
-  calculateDataAttribute(dataset: KeplerTable, getPosition) {
+  calculateDataAttribute(dataset: KeplerTable) {
     const {dataContainer, filteredIndex} = dataset;
     if (dataContainer instanceof ArrowDataContainer) {
       // TODO add columnMode logic here for ArrowDataContainer?
@@ -480,10 +480,10 @@ export default class GeoJsonLayer extends Layer {
     let dataAccessor;
     if (this.config.columnMode === COLUMN_MODE_GEOJSON) {
       filterValueAccessor = (dc, d, fieldIndex) => dc.valueAt(d.properties.index, fieldIndex);
-      dataAccessor = dc => d => ({index: d.properties.index});
+      dataAccessor = () => d => ({index: d.properties.index});
     } else {
       filterValueAccessor = getTableModeValueAccessor;
-      dataAccessor = dc => d => ({index: d.properties.index});
+      dataAccessor = () => d => ({index: d.properties.index});
     }
 
     const indexAccessor = f => f.properties.index;
