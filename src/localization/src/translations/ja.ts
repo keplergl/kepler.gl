@@ -52,6 +52,7 @@ export default {
       label: 'ラベル',
       labelWithId: 'ラベル {labelId}',
       fontSize: '文字サイズ',
+      fontWeight: 'フォントの太さ',
       fontColor: '文字色',
       textAnchor: '文字左右',
       alignment: '文字上下',
