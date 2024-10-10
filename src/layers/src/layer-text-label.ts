@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import {Table as ArrowTable} from 'apache-arrow';
 import {getDistanceScales} from 'viewport-mercator-project';
-import {notNullorUndefined} from '@kepler.gl/utils';
+import {notNullorUndefined, DataContainerInterface, ArrowDataContainer} from '@kepler.gl/utils';
 import uniq from 'lodash.uniq';
 
 export const defaultPadding = 20;
@@ -46,7 +47,15 @@ export const formatTextLabelData = ({
   triggerChanged,
   oldLayerData,
   data,
-  dataContainer
+  dataContainer,
+  filteredIndex
+}: {
+  textLabel: any;
+  triggerChanged?: boolean | {[key: string]: boolean};
+  oldLayerData: any;
+  data: any;
+  dataContainer: DataContainerInterface;
+  filteredIndex?: Uint8ClampedArray | null;
 }) => {
   return textLabel.map((tl, i) => {
     if (!tl.field) {
@@ -57,19 +66,44 @@ export const formatTextLabelData = ({
       };
     }
 
-    const getText = textLabelAccessor(tl)(dataContainer);
+    let getText: (d: {index: number}) => string = textLabelAccessor(tl)(dataContainer);
     let characterSet;
 
     if (
-      !triggerChanged[`getLabelCharacterSet-${i}`] &&
+      !triggerChanged?.[`getLabelCharacterSet-${i}`] &&
       oldLayerData &&
       oldLayerData.textLabels &&
       oldLayerData.textLabels[i]
     ) {
       characterSet = oldLayerData.textLabels[i].characterSet;
     } else {
-      const allLabels = tl.field ? data.map(getText) : [];
-      characterSet = uniq(allLabels.join(''));
+      if (data instanceof ArrowTable) {
+        // we don't filter out arrow tables,
+        // so we use filteredIndex array instead
+        const allLabels: string[] = [];
+        if (tl.field) {
+          if (filteredIndex) {
+            filteredIndex.forEach((value, index) => {
+              if (value > 0) allLabels.push(getText({index}));
+            });
+          } else {
+            for (let i = 0; i < dataContainer.numRows(); i++) {
+              allLabels.push(getText({index: i}));
+            }
+          }
+        }
+        characterSet = uniq(allLabels.join(''));
+      } else {
+        const allLabels = tl.field ? data.map(getText) : [];
+        characterSet = uniq(allLabels.join(''));
+      }
+    }
+
+    // For Arrow Layers getText has to be an arrow column
+    if (data instanceof ArrowTable) {
+      // TODO the data has to be a column of string type.
+      // Integer columns lack valueOffsets prop.
+      getText = (dataContainer as ArrowDataContainer).getColumn(tl.field.fieldIdx) as any;
     }
 
     return {

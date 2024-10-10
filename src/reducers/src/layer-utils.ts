@@ -191,7 +191,8 @@ export function getLayerHoverProp({
         object || hoverInfo.index,
         dataContainer,
         fields,
-        animationConfig
+        animationConfig,
+        hoverInfo
       );
       if (!data) {
         return null;

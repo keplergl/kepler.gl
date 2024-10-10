@@ -49,6 +49,8 @@ export class ArrowDataContainer implements DataContainerInterface {
   // cache column data to make valueAt() faster
   // _colData: any[][];
 
+  _arrowTable: arrow.Table;
+
   constructor(data: ArrowDataContainerInput) {
     if (!data.cols) {
       throw Error('ArrowDataContainer: no columns provided');
@@ -64,6 +66,13 @@ export class ArrowDataContainer implements DataContainerInterface {
     this._fields = data.fields || [];
     this._numChunks = data.cols[0].data.length;
     // this._colData = data.cols.map(c => c.toArray());
+
+    // @ts-expect-error
+    this._arrowTable = data.cols._sourceArrowTable;
+  }
+
+  getTable() {
+    return this._arrowTable;
   }
 
   update(updateData: arrow.Vector<any>[]) {
@@ -73,6 +82,12 @@ export class ArrowDataContainer implements DataContainerInterface {
     this._numChunks = this._cols[0].data.length;
     // cache column data to make valueAt() faster
     // this._colData = this._cols.map(c => c.toArray());
+
+    //
+    // this._arrowTable = new arrow.Table();
+    // updateData.forEach((col, idx) => {
+    //   this._arrowTable.setChildAt(idx, col);
+    // });
   }
 
   numChunks(): number {

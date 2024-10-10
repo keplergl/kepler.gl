@@ -4,6 +4,9 @@
 import {BrushingExtension} from '@deck.gl/extensions';
 import {ScatterplotLayer} from '@deck.gl/layers';
 
+import {GeoArrowScatterplotLayer} from '@kepler.gl/deckgl-arrow-layers';
+import {FilterArrowExtension} from '@kepler.gl/deckgl-layers';
+
 import Layer, {
   LayerBaseConfig,
   LayerBaseConfigPartial,
@@ -11,7 +14,12 @@ import Layer, {
   LayerSizeConfig,
   LayerStrokeColorConfig
 } from '../base-layer';
-import {hexToRgb, findDefaultColorField, DataContainerInterface} from '@kepler.gl/utils';
+import {
+  hexToRgb,
+  findDefaultColorField,
+  DataContainerInterface,
+  ArrowDataContainer
+} from '@kepler.gl/utils';
 import {default as KeplerTable} from '@kepler.gl/table';
 import PointLayerIcon from './point-layer-icon';
 import {
@@ -22,7 +30,11 @@ import {
 } from '@kepler.gl/constants';
 
 import {getTextOffsetByRadius, formatTextLabelData} from '../layer-text-label';
-import {assignPointPairToLayerColumn} from '../layer-utils';
+import {
+  assignPointPairToLayerColumn,
+  isLayerHoveredFromArrow,
+  getGeoPointFields
+} from '../layer-utils';
 import {getGeojsonPointDataMaps, GeojsonPointDataMaps} from '../geojson-layer/geojson-utils';
 import {
   Merge,
@@ -32,7 +44,9 @@ import {
   VisConfigColorSelect,
   VisConfigNumber,
   VisConfigRange,
-  LayerColumn
+  LayerColumn,
+  Field,
+  AnimationConfig
 } from '@kepler.gl/types';
 
 export type PointLayerVisConfigSettings = {
@@ -54,6 +68,7 @@ export type PointLayerColumnsConfig = {
   altitude?: LayerColumn;
   neighbors?: LayerColumn;
   geojson: LayerColumn;
+  geoarrow: LayerColumn;
 };
 
 export type PointLayerVisConfig = {
@@ -101,14 +116,29 @@ export const geojsonPosAccessor =
   d =>
     d[geojson.fieldIdx];
 
+export const geoarrowPosAccessor =
+  ({geoarrow}: PointLayerColumnsConfig) =>
+  (dataContainer: DataContainerInterface) =>
+  (d: {index: number}) => {
+    const row = dataContainer.valueAt(d.index, geoarrow.fieldIdx);
+    return [row.get(0), row.get(1), 0];
+  };
+
 export const COLUMN_MODE_POINTS = 'points';
 export const COLUMN_MODE_GEOJSON = 'geojson';
+export const COLUMN_MODE_GEOARROW = 'geoarrow';
 
 export const pointRequiredColumns: ['lat', 'lng'] = ['lat', 'lng'];
 export const pointOptionalColumns: ['altitude', 'neighbors'] = ['altitude', 'neighbors'];
 export const geojsonRequiredColumns: ['geojson'] = ['geojson'];
+export const geoarrowRequiredColumns: ['geoarrow'] = ['geoarrow'];
 
 const SUPPORTED_COLUMN_MODES = [
+  {
+    key: COLUMN_MODE_GEOARROW,
+    label: 'GeoArrow Column',
+    requiredColumns: geoarrowRequiredColumns
+  },
   {
     key: COLUMN_MODE_POINTS,
     label: 'Point Columns',
@@ -124,8 +154,9 @@ const SUPPORTED_COLUMN_MODES = [
 const DEFAULT_COLUMN_MODE = COLUMN_MODE_POINTS;
 
 const brushingExtension = new BrushingExtension();
+const arrowCPUFilterExtension = new FilterArrowExtension();
 
-function pushPointPosition(data: any[], pos: number[], index: number, neighbors: number[]) {
+function pushPointPosition(data: any[], pos: number[], index: number, neighbors?: number[]) {
   if (pos.every(Number.isFinite)) {
     data.push({
       position: pos,
@@ -177,14 +208,21 @@ export default class PointLayer extends Layer {
   declare visConfigSettings: PointLayerVisConfigSettings;
   dataToFeature: GeojsonPointDataMaps = [];
 
+  dataContainer: DataContainerInterface | null = null;
+  filteredIndex: Uint8ClampedArray | null = null;
+  filteredIndexTrigger: number[] = [];
+
   constructor(props) {
     super(props);
 
     this.registerVisConfig(pointVisConfigs);
-    this.getPositionAccessor = (dataContainer: DataContainerInterface) =>
-      this.config.columnMode === COLUMN_MODE_POINTS
-        ? pointPosAccessor(this.config.columns)(dataContainer)
-        : geojsonPosAccessor(this.config.columns);
+    this.getPositionAccessor = (dataContainer: DataContainerInterface) => {
+      if (this.config.columnMode === COLUMN_MODE_POINTS)
+        return pointPosAccessor(this.config.columns)(dataContainer);
+      else if (this.config.columnMode === COLUMN_MODE_GEOJSON)
+        return geojsonPosAccessor(this.config.columns);
+      return geoarrowPosAccessor(this.config.columns)(dataContainer);
+    };
   }
 
   get type(): 'point' {
@@ -264,13 +302,37 @@ export default class PointLayer extends Layer {
     return this;
   }
 
-  static findDefaultLayerProps({fieldPairs = []}: KeplerTable) {
+  static findDefaultLayerProps(dataset: KeplerTable) {
+    const {fields, fieldPairs = []} = dataset;
+
     const props: {
       label: string;
       color?: RGBColor;
       isVisible?: boolean;
       columns?: PointLayerColumnsConfig;
     }[] = [];
+
+    const geoArrowLineFields = getGeoPointFields(fields);
+    if (geoArrowLineFields.length > 0) {
+      const prop: {
+        label: string;
+        color?: RGBColor;
+        isVisible?: boolean;
+        columns?: PointLayerColumnsConfig;
+      } = {
+        label: 'Geo Points',
+        isVisible: props.length === 0,
+        // @ts-expect-error fill not required columns with default columns
+        columns: {
+          geoarrow: {
+            fieldIdx: geoArrowLineFields[0].fieldIdx,
+            value: geoArrowLineFields[0].displayName
+          }
+        }
+      };
+
+      return {props: [prop]};
+    }
 
     // Make layer for each pair
     fieldPairs.forEach(pair => {
@@ -304,9 +366,16 @@ export default class PointLayer extends Layer {
   }
 
   getDefaultLayerConfig(props: LayerBaseConfigPartial) {
+    const defaultLayerConfig = super.getDefaultLayerConfig(props ?? {});
+
+    let defaultColumnMode = DEFAULT_COLUMN_MODE;
+    if (props.columns?.geoarrow) {
+      defaultColumnMode = COLUMN_MODE_GEOARROW;
+    }
+
     return {
-      ...super.getDefaultLayerConfig(props),
-      columnMode: props?.columnMode ?? DEFAULT_COLUMN_MODE,
+      ...defaultLayerConfig,
+      columnMode: props?.columnMode ?? defaultColumnMode,
 
       // add stroke color visual channel
       strokeColorField: null,
@@ -316,6 +385,23 @@ export default class PointLayer extends Layer {
   }
 
   calculateDataAttribute({filteredIndex, dataContainer}: KeplerTable, getPosition) {
+    if (this.config.columnMode === COLUMN_MODE_GEOARROW) {
+      // filtering an arrow table by values and make a partial copy of the raw table is expensive
+      // so we will use filteredIndex to create an attribute e.g. filteredIndex [0|1] for GPU filtering
+      // in deck.gl layer, see: FilterArrowExtension in @kepler.gl/deckgl-layers
+      if (!this.filteredIndex) {
+        this.filteredIndex = new Uint8ClampedArray(dataContainer.numRows());
+      }
+      this.filteredIndex.fill(0);
+      for (let i = 0; i < filteredIndex.length; ++i) {
+        this.filteredIndex[filteredIndex[i]] = 1;
+      }
+      this.filteredIndexTrigger = filteredIndex;
+
+      // Rendering logic still checks data.length or data.numRows
+      return (dataContainer as ArrowDataContainer).getTable();
+    }
+
     const data: PointLayerData[] = [];
 
     for (let i = 0; i < filteredIndex.length; i++) {
@@ -366,15 +452,22 @@ export default class PointLayer extends Layer {
       triggerChanged,
       oldLayerData,
       data,
-      dataContainer
+      dataContainer,
+      filteredIndex: this.filteredIndex
     });
 
     const accessors = this.getAttributeAccessors({dataContainer});
+
+    const isFilteredAccessor = (data, objectInfo) => {
+      // for GeoArrow data is a buffer, so use objectInfo
+      return this.filteredIndex ? this.filteredIndex[objectInfo.index] : 1;
+    };
 
     return {
       data,
       getPosition,
       getFilterValue: gpuFilter.filterValueAccessor(dataContainer)(),
+      getFiltered: isFilteredAccessor,
       textLabels,
       ...accessors
     };
@@ -382,9 +475,22 @@ export default class PointLayer extends Layer {
   /* eslint-enable complexity */
 
   updateLayerMeta(dataContainer) {
+    this.dataContainer = dataContainer;
+
     if (this.config.columnMode === COLUMN_MODE_GEOJSON) {
       const getFeature = this.getPositionAccessor();
       this.dataToFeature = getGeojsonPointDataMaps(dataContainer, getFeature);
+    } else if (this.config.columnMode === COLUMN_MODE_GEOARROW) {
+      // TODO move to common utils
+      const field = dataContainer.getField(this.config.columns.geoarrow.fieldIdx);
+      const boundsFromMetadata = field.metadata.get('bbox');
+      if (Array.isArray(boundsFromMetadata) && boundsFromMetadata.length === 4) {
+        this.updateMeta({bounds: boundsFromMetadata});
+      } else {
+        const getPosition = this.getPositionAccessor(dataContainer);
+        const bounds = this.getPointsBounds(dataContainer, getPosition);
+        this.updateMeta({bounds});
+      }
     } else {
       const getPosition = this.getPositionAccessor(dataContainer);
       const bounds = this.getPointsBounds(dataContainer, getPosition);
@@ -411,13 +517,18 @@ export default class PointLayer extends Layer {
     const updateTriggers = {
       getPosition: this.config.columns,
       getFilterValue: gpuFilter.filterValueUpdateTriggers,
+      getFiltered: this.filteredIndexTrigger,
       ...this.getVisualChannelUpdateTriggers()
     };
 
     const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
     const brushingProps = this.getBrushingExtensionProps(interactionConfig);
     const getPixelOffset = getTextOffsetByRadius(radiusScale, data.getRadius, mapState);
-    const extensions = [...defaultLayerProps.extensions, brushingExtension];
+    const extensions = [
+      ...defaultLayerProps.extensions,
+      brushingExtension,
+      arrowCPUFilterExtension
+    ];
 
     const sharedProps = {
       getFilterValue: data.getFilterValue,
@@ -442,12 +553,24 @@ export default class PointLayer extends Layer {
         .filter(d => d.data);
     }
 
+    const ScatterplotLayerClass =
+      this.config.columnMode === COLUMN_MODE_GEOARROW ? GeoArrowScatterplotLayer : ScatterplotLayer;
+    const adjustedData =
+      this.config.columnMode === COLUMN_MODE_GEOARROW
+        ? dataset.dataContainer.getTable()
+        : data.data;
+    const getPosition =
+      this.config.columnMode === COLUMN_MODE_GEOARROW ? undefined : data.getPosition;
+
     return [
-      new ScatterplotLayer({
+      // @ts-expect-error
+      new ScatterplotLayerClass({
         ...defaultLayerProps,
         ...brushingProps,
         ...layerProps,
         ...data,
+        data: adjustedData,
+        getPosition,
         parameters: {
           // circles will be flat on the map when the altitude column is not used
           depthTest: (this.config.columns.altitude?.fieldIdx as number) > -1
@@ -481,13 +604,56 @@ export default class PointLayer extends Layer {
       // text label layer
       ...this.renderTextLabelLayer(
         {
-          getPosition: data.getPosition,
+          getPosition,
           sharedProps,
           getPixelOffset,
-          updateTriggers
+          updateTriggers,
+          getFiltered: data.getFiltered
         },
-        opts
+        this.config.columnMode === COLUMN_MODE_GEOARROW
+          ? {
+              ...opts,
+              data: {...opts.data, getPosition}
+            }
+          : opts
       )
     ];
+  }
+
+  hasHoveredObject(objectInfo) {
+    // non-GeoArrow mode
+    if (this.config.columnMode !== COLUMN_MODE_GEOARROW) {
+      return super.hasHoveredObject(objectInfo);
+    }
+
+    if (
+      isLayerHoveredFromArrow(objectInfo, this.id) &&
+      objectInfo.index >= 0 &&
+      this.dataContainer
+    ) {
+      return {
+        index: objectInfo.index,
+        position: this.getPositionAccessor(this.dataContainer)(objectInfo)
+      };
+    }
+  }
+
+  getHoverData(
+    object: unknown,
+    dataContainer: DataContainerInterface,
+    fields: Field[],
+    animationConfig: AnimationConfig,
+    hoverInfo: {index: number}
+  ) {
+    // for arrow format, `object` is the Arrow row object Proxy,
+    // and index is passed in `hoverInfo`.
+    const index =
+      this.config.columnMode === COLUMN_MODE_GEOARROW
+        ? hoverInfo?.index
+        : (object as {index: number}).index;
+    if (index >= 0) {
+      return dataContainer.row(index);
+    }
+    return null;
   }
 }

@@ -1292,6 +1292,23 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@loaders.gl/arrow@npm:4.3.0-alpha.8":
+  version: 4.3.0-alpha.8
+  resolution: "@loaders.gl/arrow@npm:4.3.0-alpha.8"
+  dependencies:
+    "@loaders.gl/gis": "npm:4.3.0-alpha.8"
+    "@loaders.gl/loader-utils": "npm:4.3.0-alpha.8"
+    "@loaders.gl/schema": "npm:4.3.0-alpha.8"
+    "@loaders.gl/wkt": "npm:4.3.0-alpha.8"
+    "@loaders.gl/worker-utils": "npm:4.3.0-alpha.8"
+    "@math.gl/polygon": "npm:^4.1.0"
+    apache-arrow: "npm:>= 15.0.0"
+  peerDependencies:
+    "@loaders.gl/core": ^4.0.0
+  checksum: 10c0/93557b8b73a9142b1ca68c2fb741f8904c2c7ae4050d2d4057f09b2271741c722356b05b286d487331c3f1131d500d693ffa538bab1be99d54817de9fbea404b
+  languageName: node
+  linkType: hard
+
 "@loaders.gl/arrow@npm:^4.1.0-alpha.4":
   version: 4.2.2
   resolution: "@loaders.gl/arrow@npm:4.2.2"
@@ -1309,20 +1326,63 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@loaders.gl/arrow@npm:^4.1.1":
-  version: 4.2.3
-  resolution: "@loaders.gl/arrow@npm:4.2.3"
+"@loaders.gl/arrow@npm:^4.2.5":
+  version: 4.2.5
+  resolution: "@loaders.gl/arrow@npm:4.2.5"
   dependencies:
-    "@loaders.gl/gis": "npm:4.2.3"
-    "@loaders.gl/loader-utils": "npm:4.2.3"
-    "@loaders.gl/schema": "npm:4.2.3"
-    "@loaders.gl/wkt": "npm:4.2.3"
-    "@loaders.gl/worker-utils": "npm:4.2.3"
+    "@loaders.gl/gis": "npm:4.2.5"
+    "@loaders.gl/loader-utils": "npm:4.2.5"
+    "@loaders.gl/schema": "npm:4.2.5"
+    "@loaders.gl/wkt": "npm:4.2.5"
+    "@loaders.gl/worker-utils": "npm:4.2.5"
     "@math.gl/polygon": "npm:4.0.0"
     apache-arrow: "npm:>= 15.0.0"
   peerDependencies:
     "@loaders.gl/core": ^4.0.0
-  checksum: 10c0/d9f296de09f9ea2c989f555fe3bc5c3da8b48c4f9a89d11b4bc9d9aeb1ecb9726ce37fed76c9f20d01a487f176329034d6c1391242fe9dcc8a9273371ea7a6a9
+  checksum: 10c0/8df889936f62b0d18d71c04d66ada9deb6390c69282800b70a89fa1f461559de753357f4987eb22817ce6b341db7eb77197f34f6cb98ef89d1868c826bca25b3
+  languageName: node
+  linkType: hard
+
+"@loaders.gl/bson@npm:4.3.0-alpha.8":
+  version: 4.3.0-alpha.8
+  resolution: "@loaders.gl/bson@npm:4.3.0-alpha.8"
+  dependencies:
+    "@loaders.gl/gis": "npm:4.3.0-alpha.8"
+    "@loaders.gl/loader-utils": "npm:4.3.0-alpha.8"
+    "@loaders.gl/schema": "npm:4.3.0-alpha.8"
+    "@types/bson": "npm:4.2.0"
+    bson: "npm:4.2.0"
+  peerDependencies:
+    "@loaders.gl/core": ^4.0.0
+  checksum: 10c0/3c280af996f2706d03669c450474afc512fc967d92e644f3edcbe3e258b8dafd5cda517cced3a15c95245647e29261d2ce2f1d64e644e51e92d07859b830fb67
+  languageName: node
+  linkType: hard
+
+"@loaders.gl/compression@npm:4.3.0-alpha.8":
+  version: 4.3.0-alpha.8
+  resolution: "@loaders.gl/compression@npm:4.3.0-alpha.8"
+  dependencies:
+    "@loaders.gl/loader-utils": "npm:4.3.0-alpha.8"
+    "@loaders.gl/worker-utils": "npm:4.3.0-alpha.8"
+    "@types/brotli": "npm:^1.3.0"
+    "@types/pako": "npm:^1.0.1"
+    brotli: "npm:^1.3.2"
+    fflate: "npm:0.7.4"
+    lz4js: "npm:^0.2.0"
+    lzo-wasm: "npm:^0.0.4"
+    pako: "npm:1.0.11"
+    snappyjs: "npm:^0.6.1"
+    zstd-codec: "npm:^0.1"
+  peerDependencies:
+    "@loaders.gl/core": ^4.0.0
+  dependenciesMeta:
+    brotli:
+      optional: true
+    lz4js:
+      optional: true
+    zstd-codec:
+      optional: true
+  checksum: 10c0/beff1d18d6be5811b2607214241e723ed0e32adc7d917e61745b333600342d2b15ea8ab4de9c8879c8d778b0a56cd2da40136e22ee4b1f8c5a741dce51b2fdb7
   languageName: node
   linkType: hard
 
@@ -1350,15 +1410,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@loaders.gl/core@npm:^4.1.1":
-  version: 4.2.3
-  resolution: "@loaders.gl/core@npm:4.2.3"
+"@loaders.gl/core@npm:^4.2.5":
+  version: 4.2.5
+  resolution: "@loaders.gl/core@npm:4.2.5"
   dependencies:
-    "@loaders.gl/loader-utils": "npm:4.2.3"
-    "@loaders.gl/schema": "npm:4.2.3"
-    "@loaders.gl/worker-utils": "npm:4.2.3"
+    "@loaders.gl/loader-utils": "npm:4.2.5"
+    "@loaders.gl/schema": "npm:4.2.5"
+    "@loaders.gl/worker-utils": "npm:4.2.5"
     "@probe.gl/log": "npm:^4.0.2"
-  checksum: 10c0/b3ed3cea0a7350c4c2369bbdcaab28642f2051e4e0263bd2d22fa8425da7eea1cc47141adea974308338fa8741f04c0f86f9cceb2bd338fd39245b4da64435fd
+  checksum: 10c0/8f4ef5a09fef4a80ad7ca7e6d06a45c6e7ce4d5fac209bcc5adae24f3566456fec0fd97bd228b781e7aad4264104dbc8c75270784dc5d917b528c8b3ec3ff19f
   languageName: node
   linkType: hard
 
@@ -1374,15 +1434,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@loaders.gl/csv@npm:^4.1.1":
-  version: 4.2.3
-  resolution: "@loaders.gl/csv@npm:4.2.3"
+"@loaders.gl/csv@npm:^4.2.5":
+  version: 4.2.5
+  resolution: "@loaders.gl/csv@npm:4.2.5"
   dependencies:
-    "@loaders.gl/loader-utils": "npm:4.2.3"
-    "@loaders.gl/schema": "npm:4.2.3"
+    "@loaders.gl/loader-utils": "npm:4.2.5"
+    "@loaders.gl/schema": "npm:4.2.5"
   peerDependencies:
     "@loaders.gl/core": ^4.0.0
-  checksum: 10c0/5b58f4e315202d495dfb9d1bfdcdc825e0be79be29986181c93ee3f17916a5e2f2ab8b35bda4edf9b05916bb238bb48ce03bffe0ac97dbdcb98ecc134c9af750
+  checksum: 10c0/abb14695d2731602dbc94484e4e6a49f2f9acf29a1f6b7778b5960247d4b0d22d640adf2f27f1c72090dfa0856f6fe06bf1bc1b27523bf695d5d23ed698c4f38
   languageName: node
   linkType: hard
 
@@ -1441,18 +1501,33 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@loaders.gl/gis@npm:4.2.3":
-  version: 4.2.3
-  resolution: "@loaders.gl/gis@npm:4.2.3"
+"@loaders.gl/gis@npm:4.2.5":
+  version: 4.2.5
+  resolution: "@loaders.gl/gis@npm:4.2.5"
   dependencies:
-    "@loaders.gl/loader-utils": "npm:4.2.3"
-    "@loaders.gl/schema": "npm:4.2.3"
+    "@loaders.gl/loader-utils": "npm:4.2.5"
+    "@loaders.gl/schema": "npm:4.2.5"
     "@mapbox/vector-tile": "npm:^1.3.1"
     "@math.gl/polygon": "npm:^4.0.0"
     pbf: "npm:^3.2.1"
   peerDependencies:
     "@loaders.gl/core": ^4.0.0
-  checksum: 10c0/6cbdae6b7b608107b82b77c6ee741706bd1aa2db5783dd06214104bf24b324a392cb37bca44c3cf78ac2fe72d6a76006ed54b2773b6c61fc2efce657f3f6bca4
+  checksum: 10c0/131ec92e7397436e15f2a98b960cb240f33d5318acbe82bdfb6480e42d63aa88393e8e5991e7c41b6c965d1683d372e655da57fe30d564ce8c1eef92239d4e6e
+  languageName: node
+  linkType: hard
+
+"@loaders.gl/gis@npm:4.3.0-alpha.8":
+  version: 4.3.0-alpha.8
+  resolution: "@loaders.gl/gis@npm:4.3.0-alpha.8"
+  dependencies:
+    "@loaders.gl/loader-utils": "npm:4.3.0-alpha.8"
+    "@loaders.gl/schema": "npm:4.3.0-alpha.8"
+    "@mapbox/vector-tile": "npm:^1.3.1"
+    "@math.gl/polygon": "npm:^4.1.0"
+    pbf: "npm:^3.2.1"
+  peerDependencies:
+    "@loaders.gl/core": ^4.0.0
+  checksum: 10c0/76671319f97270ba4f518cc25d7cca4be65e7d2097aec72eefa7fd92e757eac9bd2de433a413f3e9ce66a41cf3dbf336eb4b8181d6004454d3fffd806af51710
   languageName: node
   linkType: hard
 
@@ -1518,16 +1593,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@loaders.gl/json@npm:^4.1.1":
-  version: 4.2.3
-  resolution: "@loaders.gl/json@npm:4.2.3"
+"@loaders.gl/json@npm:^4.2.5":
+  version: 4.2.5
+  resolution: "@loaders.gl/json@npm:4.2.5"
   dependencies:
-    "@loaders.gl/gis": "npm:4.2.3"
-    "@loaders.gl/loader-utils": "npm:4.2.3"
-    "@loaders.gl/schema": "npm:4.2.3"
+    "@loaders.gl/gis": "npm:4.2.5"
+    "@loaders.gl/loader-utils": "npm:4.2.5"
+    "@loaders.gl/schema": "npm:4.2.5"
   peerDependencies:
     "@loaders.gl/core": ^4.0.0
-  checksum: 10c0/eb79c0ecd6c01190865b1eade356bca341c4a506801c326af305cf6a39768edefec20ada5fcdb76e2da46f4c9ad020c59f6e44aba8c55a46fbd9f0a37b0afe6c
+  checksum: 10c0/8bc39b01b6d85c9f3712b619ec8b873a45c2f8197d370dd4aa84d035f15ecc3e60c02bbfc2b80e470a6ab8c786ef2fa1fa63b865450c2c1b8fa52e160864fd40
   languageName: node
   linkType: hard
 
@@ -1555,16 +1630,30 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@loaders.gl/loader-utils@npm:4.2.3":
-  version: 4.2.3
-  resolution: "@loaders.gl/loader-utils@npm:4.2.3"
+"@loaders.gl/loader-utils@npm:4.2.5":
+  version: 4.2.5
+  resolution: "@loaders.gl/loader-utils@npm:4.2.5"
   dependencies:
-    "@loaders.gl/schema": "npm:4.2.3"
-    "@loaders.gl/worker-utils": "npm:4.2.3"
+    "@loaders.gl/schema": "npm:4.2.5"
+    "@loaders.gl/worker-utils": "npm:4.2.5"
     "@probe.gl/stats": "npm:^4.0.2"
   peerDependencies:
     "@loaders.gl/core": ^4.0.0
-  checksum: 10c0/55a5d906193263136ed94cd04fb4414e86256722f402e97a213d125177241b88f2fd5dd205c06bce5ae0842e5f3e93b9d7241d46d78b1ac4da329c7baa22f5b6
+  checksum: 10c0/5043cdb2e01be18343317ee58c9130234293e25a5fa11cbbe5b8a170fc65c918e87c38f459594cfe006801e55cb93f4ffd7e841888bd66b5230151afc4b1c63d
+  languageName: node
+  linkType: hard
+
+"@loaders.gl/loader-utils@npm:4.3.0-alpha.8":
+  version: 4.3.0-alpha.8
+  resolution: "@loaders.gl/loader-utils@npm:4.3.0-alpha.8"
+  dependencies:
+    "@loaders.gl/schema": "npm:4.3.0-alpha.8"
+    "@loaders.gl/worker-utils": "npm:4.3.0-alpha.8"
+    "@probe.gl/log": "npm:^4.0.2"
+    "@probe.gl/stats": "npm:^4.0.2"
+  peerDependencies:
+    "@loaders.gl/core": ^4.0.0
+  checksum: 10c0/34d4d7dda61fb01ce77cf2ede57442036db6449548d211e714ed2f082e6b64431e7834f0dc83f1771591849357b57f37652e3ecbec0e60b9ed13730b9ca6cf39
   languageName: node
   linkType: hard
 
@@ -1592,6 +1681,39 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@loaders.gl/parquet@npm:4.3.0-alpha.8":
+  version: 4.3.0-alpha.8
+  resolution: "@loaders.gl/parquet@npm:4.3.0-alpha.8"
+  dependencies:
+    "@loaders.gl/arrow": "npm:4.3.0-alpha.8"
+    "@loaders.gl/bson": "npm:4.3.0-alpha.8"
+    "@loaders.gl/compression": "npm:4.3.0-alpha.8"
+    "@loaders.gl/gis": "npm:4.3.0-alpha.8"
+    "@loaders.gl/loader-utils": "npm:4.3.0-alpha.8"
+    "@loaders.gl/schema": "npm:4.3.0-alpha.8"
+    "@loaders.gl/wkt": "npm:4.3.0-alpha.8"
+    "@probe.gl/log": "npm:^4.0.9"
+    async-mutex: "npm:^0.2.2"
+    base64-js: "npm:^1.3.1"
+    brotli: "npm:^1.3.2"
+    ieee754: "npm:^1.2.1"
+    int53: "npm:^0.2.4"
+    lz4js: "npm:^0.2.0"
+    node-int64: "npm:^0.4.0"
+    object-stream: "npm:0.0.1"
+    parquet-wasm: "npm:^0.6.1"
+    snappyjs: "npm:^0.6.0"
+    thrift: "npm:^0.19.0"
+    util: "npm:^0.12.5"
+    varint: "npm:^6.0.0"
+    zstd-codec: "npm:^0.1"
+  peerDependencies:
+    "@loaders.gl/core": ^4.0.0
+    apache-arrow: ">= 15.0.0"
+  checksum: 10c0/efb283a7da0820c9745b6838db09ac765741121ebd3bb947286566da3ac18905c6cf6455b5a2b89c4900037d6056d47fce1c962781efe7b8a706fa6474c7c17f
+  languageName: node
+  linkType: hard
+
 "@loaders.gl/schema@npm:3.4.15, @loaders.gl/schema@npm:^3.4.13":
   version: 3.4.15
   resolution: "@loaders.gl/schema@npm:3.4.15"
@@ -1612,14 +1734,25 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@loaders.gl/schema@npm:4.2.3":
-  version: 4.2.3
-  resolution: "@loaders.gl/schema@npm:4.2.3"
+"@loaders.gl/schema@npm:4.2.5":
+  version: 4.2.5
+  resolution: "@loaders.gl/schema@npm:4.2.5"
   dependencies:
     "@types/geojson": "npm:^7946.0.7"
   peerDependencies:
     "@loaders.gl/core": ^4.0.0
-  checksum: 10c0/b6bf755a8ec64340d333df57e6c56c4a9ca703cdb8f464cdec3cfe8f41a04d7558522e3a90ae178e2d95cef9d9d945f7915e767a877146a47ccf25969e5e35a1
+  checksum: 10c0/1fb2d7278f9b7ad299a17964c1cfaa52292710c7f40ae604c16d59a7d131db70aad3be4e4ae672cfb9f627d9a561e97a740bb710debe0aef36f5ba33a8c04397
+  languageName: node
+  linkType: hard
+
+"@loaders.gl/schema@npm:4.3.0-alpha.8":
+  version: 4.3.0-alpha.8
+  resolution: "@loaders.gl/schema@npm:4.3.0-alpha.8"
+  dependencies:
+    "@types/geojson": "npm:^7946.0.7"
+  peerDependencies:
+    "@loaders.gl/core": ^4.0.0
+  checksum: 10c0/715cfdf168f74f1ce6a697312fb69fb1e3eb74d5913424fca669420d15532b6e2b98f49ad071c3fd2073d41604ddfdd0314da4aa118e4662b5bedbaa2ec60712
   languageName: node
   linkType: hard
 
@@ -1697,16 +1830,29 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@loaders.gl/wkt@npm:4.2.3":
-  version: 4.2.3
-  resolution: "@loaders.gl/wkt@npm:4.2.3"
+"@loaders.gl/wkt@npm:4.2.5":
+  version: 4.2.5
+  resolution: "@loaders.gl/wkt@npm:4.2.5"
   dependencies:
-    "@loaders.gl/gis": "npm:4.2.3"
-    "@loaders.gl/loader-utils": "npm:4.2.3"
-    "@loaders.gl/schema": "npm:4.2.3"
+    "@loaders.gl/gis": "npm:4.2.5"
+    "@loaders.gl/loader-utils": "npm:4.2.5"
+    "@loaders.gl/schema": "npm:4.2.5"
   peerDependencies:
     "@loaders.gl/core": ^4.0.0
-  checksum: 10c0/f074594e8cbc4dd517cf5552f1af13dd89a82685a4b88a9dd21c2e7635ffa87a5641efb33ce13cfe0c0b3d5462b82e96883f388aea0ba16dedda9fb73d0d6bf4
+  checksum: 10c0/88a7fc9b9aced4fae1c97f197d002ce2f8a3d01ec3c08fdb9f01989944154f29b9d6035c1b60a20847a5e1967b355695f639dbd01832fe4726d448b0fe10b14f
+  languageName: node
+  linkType: hard
+
+"@loaders.gl/wkt@npm:4.3.0-alpha.8":
+  version: 4.3.0-alpha.8
+  resolution: "@loaders.gl/wkt@npm:4.3.0-alpha.8"
+  dependencies:
+    "@loaders.gl/gis": "npm:4.3.0-alpha.8"
+    "@loaders.gl/loader-utils": "npm:4.3.0-alpha.8"
+    "@loaders.gl/schema": "npm:4.3.0-alpha.8"
+  peerDependencies:
+    "@loaders.gl/core": ^4.0.0
+  checksum: 10c0/b4b0911d58ae215ebace4a66bbc85b17b7a957e1d8e101e7f924613b2c5ad2776e24c91ecca7c99296e5d4eb156789ac39e0a414c8d1990783c76f0ffc814869
   languageName: node
   linkType: hard
 
@@ -1744,12 +1890,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@loaders.gl/worker-utils@npm:4.2.3":
-  version: 4.2.3
-  resolution: "@loaders.gl/worker-utils@npm:4.2.3"
+"@loaders.gl/worker-utils@npm:4.2.5":
+  version: 4.2.5
+  resolution: "@loaders.gl/worker-utils@npm:4.2.5"
   peerDependencies:
     "@loaders.gl/core": ^4.0.0
-  checksum: 10c0/30a9ee62530fa12cb1b2b014386d1709d3f2bfe5e4dbc16a7cbeb1221334ec2073e9a2a3581843cc8e655d7f36fd173def047af92d55cc00c53f2e9ecf1bcc52
+  checksum: 10c0/15c47ccbe0e77cd1c2233206cc4c74f8b9693d7faa4aa3874fde3c5f68f245cd8b3b3a66527c2b9dc362a731c1fdf40544453219a05e4116ba82bedc8a0dc59d
+  languageName: node
+  linkType: hard
+
+"@loaders.gl/worker-utils@npm:4.3.0-alpha.8":
+  version: 4.3.0-alpha.8
+  resolution: "@loaders.gl/worker-utils@npm:4.3.0-alpha.8"
+  peerDependencies:
+    "@loaders.gl/core": ^4.0.0
+  checksum: 10c0/0cf01f3f5a25f88203dee6ca4c815e1a597631c13d7816233032238a5cd14176cb30de7f105a6e9406725a1c7c5095205d3ce1894f84ff7fdf207185a94e1c61
   languageName: node
   linkType: hard
 
@@ -2074,6 +2229,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@math.gl/core@npm:4.1.0":
+  version: 4.1.0
+  resolution: "@math.gl/core@npm:4.1.0"
+  dependencies:
+    "@math.gl/types": "npm:4.1.0"
+  checksum: 10c0/495934dc2be0b60cd6ff2cc16a0215608c9254919db741a0074b6b41cef9a0543c7f790eda7d529afa102d2937490608ef75fcc64c789ef2876ae750fd0ed3d6
+  languageName: node
+  linkType: hard
+
 "@math.gl/culling@npm:^3.5.1, @math.gl/culling@npm:^3.6.2":
   version: 3.6.3
   resolution: "@math.gl/culling@npm:3.6.3"
@@ -2123,6 +2287,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@math.gl/polygon@npm:^4.1.0":
+  version: 4.1.0
+  resolution: "@math.gl/polygon@npm:4.1.0"
+  dependencies:
+    "@math.gl/core": "npm:4.1.0"
+  checksum: 10c0/0fcfb489c5613ddff6dd0cbea65084e10fa9a3523fb87a36a4fdf10057d12d2a99f1ebd93da6e72b45db0783fb8cd9cff704765473372a8db580faaf50c85ab5
+  languageName: node
+  linkType: hard
+
 "@math.gl/sun@npm:^3.6.2":
   version: 3.6.3
   resolution: "@math.gl/sun@npm:3.6.3"
@@ -2150,6 +2323,13 @@ __metadata:
   version: 4.0.1
   resolution: "@math.gl/types@npm:4.0.1"
   checksum: 10c0/1488cd0ac119ae21de42ca86e4fee6703962ba620c84257fcdeda63962afd1749868a68e490c41338edc2470c2795b90f1cf9c2006bb0fa079a27fde1508c0f8
+  languageName: node
+  linkType: hard
+
+"@math.gl/types@npm:4.1.0":
+  version: 4.1.0
+  resolution: "@math.gl/types@npm:4.1.0"
+  checksum: 10c0/3c4dfa5ac5c9e2cef24d31f56b89c1dde785a5d70fd1a7030386346cb7dd4fa2cce5ba983b89842c1971492e30870dd22a078d64893f9c66887e38367bf992fa
   languageName: node
   linkType: hard
 
@@ -2277,7 +2457,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@probe.gl/log@npm:^4.0.2":
+"@probe.gl/log@npm:^4.0.2, @probe.gl/log@npm:^4.0.9":
   version: 4.0.9
   resolution: "@probe.gl/log@npm:4.0.9"
   dependencies:
@@ -2953,6 +3133,24 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/brotli@npm:^1.3.0":
+  version: 1.3.4
+  resolution: "@types/brotli@npm:1.3.4"
+  dependencies:
+    "@types/node": "npm:*"
+  checksum: 10c0/b13829301b3ee79250d3fa8b1973097837bdd040fb90c90f63f406385e62b8e06e72a41e77939c6f8118090a7c72215b0d7b4d83b1e69457616810a65a576339
+  languageName: node
+  linkType: hard
+
+"@types/bson@npm:4.2.0":
+  version: 4.2.0
+  resolution: "@types/bson@npm:4.2.0"
+  dependencies:
+    bson: "npm:*"
+  checksum: 10c0/06f226fa7d033badf3b0a90cd31fc720e82637b513282bf843732bdf3e8127a81dd0050cf95acd324e8812be6d16726c859c3f9dbf1d0e5e4d2e092a2cdff37d
+  languageName: node
+  linkType: hard
+
 "@types/cacheable-request@npm:^6.0.1":
   version: 6.0.3
   resolution: "@types/cacheable-request@npm:6.0.3"
@@ -3308,6 +3506,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/pako@npm:^1.0.1":
+  version: 1.0.7
+  resolution: "@types/pako@npm:1.0.7"
+  checksum: 10c0/1ba133db0b30a974c3d651c85651fd30135f629727b4b4d7ef2649c8f8b01014d5ef41f75399d939e320a50bfa87c32beccbb513badfeaf85d74ea6d5370fdcc
+  languageName: node
+  linkType: hard
+
 "@types/pbf@npm:*, @types/pbf@npm:^3.0.5":
   version: 3.0.5
   resolution: "@types/pbf@npm:3.0.5"
@@ -3620,6 +3825,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"async-limiter@npm:~1.0.0":
+  version: 1.0.1
+  resolution: "async-limiter@npm:1.0.1"
+  checksum: 10c0/0693d378cfe86842a70d4c849595a0bb50dc44c11649640ca982fa90cbfc74e3cc4753b5a0847e51933f2e9c65ce8e05576e75e5e1fd963a086e673735b35969
+  languageName: node
+  linkType: hard
+
+"async-mutex@npm:^0.2.2":
+  version: 0.2.6
+  resolution: "async-mutex@npm:0.2.6"
+  dependencies:
+    tslib: "npm:^2.0.0"
+  checksum: 10c0/440f1388fdbf2021261ba05952765182124a333681692fdef6af13935c20bfc2017e24e902362f12b29094a77b359ce3131e8dd45b1db42f1d570927ace9e7d9
+  languageName: node
+  linkType: hard
+
 "asynckit@npm:^0.4.0":
   version: 0.4.0
   resolution: "asynckit@npm:0.4.0"
@@ -3665,10 +3886,42 @@ __metadata:
   languageName: node
   linkType: hard
 
-"base64-js@npm:^1.3.1":
+"base64-js@npm:^1.1.2, base64-js@npm:^1.3.1":
   version: 1.5.1
   resolution: "base64-js@npm:1.5.1"
   checksum: 10c0/f23823513b63173a001030fae4f2dabe283b99a9d324ade3ad3d148e218134676f1ee8568c877cd79ec1c53158dcf2d2ba527a97c606618928ba99dd930102bf
+  languageName: node
+  linkType: hard
+
+"brotli@npm:^1.3.2":
+  version: 1.3.3
+  resolution: "brotli@npm:1.3.3"
+  dependencies:
+    base64-js: "npm:^1.1.2"
+  checksum: 10c0/9d24e24f8b7eabf44af034ed5f7d5530008b835f09a107a84ac060723e86dd43c6aa68958691fe5df524f59473b35f5ce2e0854aa1152c0a254d1010f51bcf22
+  languageName: node
+  linkType: hard
+
+"browser-or-node@npm:^1.2.1":
+  version: 1.3.0
+  resolution: "browser-or-node@npm:1.3.0"
+  checksum: 10c0/a914790dd6a857149b1bb128a39872a95172f6f1db7824dd014b88cc2f88ce6433013ec83388fff83512fb815e7dc2ea60ddbfe8ff150d4f233092ff0d60ec60
+  languageName: node
+  linkType: hard
+
+"bson@npm:*":
+  version: 6.8.0
+  resolution: "bson@npm:6.8.0"
+  checksum: 10c0/0503bb2a4ce2e183bd06151bdb983a623cfde05c76fbb5a34e941c594f3a681b52333d61b37c7933b8733b0ba14607b3599d94b46635d90bb96b1e7cec51aa8f
+  languageName: node
+  linkType: hard
+
+"bson@npm:4.2.0":
+  version: 4.2.0
+  resolution: "bson@npm:4.2.0"
+  dependencies:
+    buffer: "npm:^5.6.0"
+  checksum: 10c0/50e852996fd630a1d8d40840f1f775b5e0c821616d0a3710abdd45fcfdaec796b215202ed33d4955f517f3ac2119648ea1c0d96654309bbf1fee1d736cf5e0d8
   languageName: node
   linkType: hard
 
@@ -3679,7 +3932,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"buffer@npm:^5.0.8":
+"buffer@npm:^5.0.8, buffer@npm:^5.6.0":
   version: 5.7.1
   resolution: "buffer@npm:5.7.1"
   dependencies:
@@ -4899,6 +5152,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"fflate@npm:0.7.4":
+  version: 0.7.4
+  resolution: "fflate@npm:0.7.4"
+  checksum: 10c0/5e749eb3a6ed61a0f6c55756abf9f4258f06f60505db689e22d18503dd252ca5af656d32668e4b7b20714adf8b313febf695d23863a8352f23e325baee0f672d
+  languageName: node
+  linkType: hard
+
 "find-replace@npm:^3.0.0":
   version: 3.0.0
   resolution: "find-replace@npm:3.0.0"
@@ -5354,7 +5614,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ieee754@npm:^1.1.12, ieee754@npm:^1.1.13":
+"ieee754@npm:^1.1.12, ieee754@npm:^1.1.13, ieee754@npm:^1.2.1":
   version: 1.2.1
   resolution: "ieee754@npm:1.2.1"
   checksum: 10c0/b0782ef5e0935b9f12883a2e2aa37baa75da6e66ce6515c168697b42160807d9330de9a32ec1ed73149aea02e0d822e572bca6f1e22bdcbd2149e13b050b17bb
@@ -5396,6 +5656,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"inherits@npm:^2.0.3":
+  version: 2.0.4
+  resolution: "inherits@npm:2.0.4"
+  checksum: 10c0/4e531f648b29039fb7426fb94075e6545faa1eb9fe83c29f0b6d9e7263aceb4289d2d4557db0d428188eeb449cc7c5e77b0a0b2c4e248ff2a65933a0dee49ef2
+  languageName: node
+  linkType: hard
+
 "ini@npm:^1.3.5":
   version: 1.3.8
   resolution: "ini@npm:1.3.8"
@@ -5407,6 +5674,13 @@ __metadata:
   version: 0.1.1
   resolution: "inline-style-parser@npm:0.1.1"
   checksum: 10c0/08832a533f51a1e17619f2eabf2f5ec5e956d6dcba1896351285c65df022c9420de61d73256e1dca8015a52abf96cc84ddc3b73b898b22de6589d3962b5e501b
+  languageName: node
+  linkType: hard
+
+"int53@npm:^0.2.4":
+  version: 0.2.4
+  resolution: "int53@npm:0.2.4"
+  checksum: 10c0/7942bc3cee8aa6ed143b5169bcc2518c7d8d7e67601e3a982e853efb6a67420e863b90ff4d2edf0f4cfe6bd259b16d91690067986f8b2d4f8026c70d369b401a
   languageName: node
   linkType: hard
 
@@ -5466,7 +5740,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"is-arguments@npm:^1.1.1":
+"is-arguments@npm:^1.0.4, is-arguments@npm:^1.1.1":
   version: 1.1.1
   resolution: "is-arguments@npm:1.1.1"
   dependencies:
@@ -5583,6 +5857,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"is-generator-function@npm:^1.0.7":
+  version: 1.0.10
+  resolution: "is-generator-function@npm:1.0.10"
+  dependencies:
+    has-tostringtag: "npm:^1.0.0"
+  checksum: 10c0/df03514df01a6098945b5a0cfa1abff715807c8e72f57c49a0686ad54b3b74d394e2d8714e6f709a71eb00c9630d48e73ca1796c1ccc84ac95092c1fecc0d98b
+  languageName: node
+  linkType: hard
+
 "is-hexadecimal@npm:^1.0.0":
   version: 1.0.4
   resolution: "is-hexadecimal@npm:1.0.4"
@@ -5673,7 +5956,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"is-typed-array@npm:^1.1.13":
+"is-typed-array@npm:^1.1.13, is-typed-array@npm:^1.1.3":
   version: 1.1.13
   resolution: "is-typed-array@npm:1.1.13"
   dependencies:
@@ -5726,6 +6009,15 @@ __metadata:
     node-fetch: "npm:^1.0.1"
     whatwg-fetch: "npm:>=0.10.0"
   checksum: 10c0/ea9fd37d31ec7b35b82180e1946d4a2f512506d0559fa567ec6ee6701ff1c6d924be90e75499c50982274b707e03ecd9eaa21d618872dd0deff530e4c3bdb074
+  languageName: node
+  linkType: hard
+
+"isomorphic-ws@npm:^4.0.1":
+  version: 4.0.1
+  resolution: "isomorphic-ws@npm:4.0.1"
+  peerDependencies:
+    ws: "*"
+  checksum: 10c0/7cb90dc2f0eb409825558982fb15d7c1d757a88595efbab879592f9d2b63820d6bbfb5571ab8abe36c715946e165a413a99f6aafd9f40ab1f514d73487bc9996
   languageName: node
   linkType: hard
 
@@ -6016,6 +6308,20 @@ __metadata:
   dependencies:
     yallist: "npm:^4.0.0"
   checksum: 10c0/cb53e582785c48187d7a188d3379c181b5ca2a9c78d2bce3e7dee36f32761d1c42983da3fe12b55cb74e1779fa94cdc2e5367c028a9b35317184ede0c07a30a9
+  languageName: node
+  linkType: hard
+
+"lz4js@npm:^0.2.0":
+  version: 0.2.0
+  resolution: "lz4js@npm:0.2.0"
+  checksum: 10c0/73c6dd5117a6fa465e6be1bd5ae34ef4f02e4eb164a47d77f8c2483ccdde43cbdf8509a5e5a4480ef812e5c7a2cb946e026b9c784533775ee5c91861edaefb39
+  languageName: node
+  linkType: hard
+
+"lzo-wasm@npm:^0.0.4":
+  version: 0.0.4
+  resolution: "lzo-wasm@npm:0.0.4"
+  checksum: 10c0/33c0d43c9617f23e03196f475fd35b6b4a725e7252cf328002a606a4377ea281d380f12160df80bedfbe5516f7d9ad70592f469a6bef1e91db274e86d411452e
   languageName: node
   linkType: hard
 
@@ -6392,6 +6698,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"node-int64@npm:^0.4.0":
+  version: 0.4.0
+  resolution: "node-int64@npm:0.4.0"
+  checksum: 10c0/a6a4d8369e2f2720e9c645255ffde909c0fbd41c92ea92a5607fc17055955daac99c1ff589d421eee12a0d24e99f7bfc2aabfeb1a4c14742f6c099a51863f31a
+  languageName: node
+  linkType: hard
+
 "normalize-package-data@npm:^2.5.0":
   version: 2.5.0
   resolution: "normalize-package-data@npm:2.5.0"
@@ -6451,6 +6764,13 @@ __metadata:
   version: 1.1.1
   resolution: "object-keys@npm:1.1.1"
   checksum: 10c0/b11f7ccdbc6d406d1f186cdadb9d54738e347b2692a14439ca5ac70c225fa6db46db809711b78589866d47b25fc3e8dee0b4c722ac751e11180f9380e3d8601d
+  languageName: node
+  linkType: hard
+
+"object-stream@npm:0.0.1":
+  version: 0.0.1
+  resolution: "object-stream@npm:0.0.1"
+  checksum: 10c0/f8ecf919b3e10917daf34fb2bb94521108b85411b8a94d5a996e6d40eb4c6e2246e179067dc528b83e86c51b01b1fd16c617da0e2193dd00f0bf74a1efb8f048
   languageName: node
   linkType: hard
 
@@ -6520,6 +6840,20 @@ __metadata:
   dependencies:
     repeat-string: "npm:^1.5.4"
   checksum: 10c0/446c858bf3f7171cd164569aec074f3fe05ed9bcd03bc4016bb02b14733060344e54965e61667b46b67242ff77ae13d2ef9c35b6b039aed658ef5e9d1872f5d4
+  languageName: node
+  linkType: hard
+
+"pako@npm:1.0.11":
+  version: 1.0.11
+  resolution: "pako@npm:1.0.11"
+  checksum: 10c0/86dd99d8b34c3930345b8bbeb5e1cd8a05f608eeb40967b293f72fe469d0e9c88b783a8777e4cc7dc7c91ce54c5e93d88ff4b4f060e6ff18408fd21030d9ffbe
+  languageName: node
+  linkType: hard
+
+"parquet-wasm@npm:^0.6.1":
+  version: 0.6.1
+  resolution: "parquet-wasm@npm:0.6.1"
+  checksum: 10c0/dcade4b006ff86edca711dacf3c71997b4a86985384fc183119f73d5dae1d0c94d3e7fa5b48845845df5db97d3eb445d6c137f3459a5d9a66a3b9b3bc0474497
   languageName: node
   linkType: hard
 
@@ -6698,6 +7032,13 @@ __metadata:
     end-of-stream: "npm:^1.1.0"
     once: "npm:^1.3.1"
   checksum: 10c0/bbdeda4f747cdf47db97428f3a135728669e56a0ae5f354a9ac5b74556556f5446a46f720a8f14ca2ece5be9b4d5d23c346db02b555f46739934cc6c093a5478
+  languageName: node
+  linkType: hard
+
+"q@npm:^1.5.0":
+  version: 1.5.1
+  resolution: "q@npm:1.5.1"
+  checksum: 10c0/7855fbdba126cb7e92ef3a16b47ba998c0786ec7fface236e3eb0135b65df36429d91a86b1fff3ab0927b4ac4ee88a2c44527c7c3b8e2a37efbec9fe34803df4
   languageName: node
   linkType: hard
 
@@ -7471,10 +7812,11 @@ __metadata:
     "@kepler.gl/schemas": "npm:^3.0.0-alpha.1"
     "@kepler.gl/styles": "npm:^3.0.0-alpha.1"
     "@kepler.gl/utils": "npm:^3.0.0-alpha.1"
-    "@loaders.gl/arrow": "npm:^4.1.1"
-    "@loaders.gl/core": "npm:^4.1.1"
-    "@loaders.gl/csv": "npm:^4.1.1"
-    "@loaders.gl/json": "npm:^4.1.1"
+    "@loaders.gl/arrow": "npm:^4.2.5"
+    "@loaders.gl/core": "npm:^4.2.5"
+    "@loaders.gl/csv": "npm:^4.2.5"
+    "@loaders.gl/json": "npm:^4.2.5"
+    "@loaders.gl/parquet": "npm:4.3.0-alpha.8"
     "@types/classnames": "npm:^2.3.1"
     "@types/keymirror": "npm:^0.1.1"
     classnames: "npm:^2.2.1"
@@ -7637,6 +7979,13 @@ __metadata:
     get-intrinsic: "npm:^1.2.4"
     object-inspect: "npm:^1.13.1"
   checksum: 10c0/d2afd163dc733cc0a39aa6f7e39bf0c436293510dbccbff446733daeaf295857dbccf94297092ec8c53e2503acac30f0b78830876f0485991d62a90e9cad305f
+  languageName: node
+  linkType: hard
+
+"snappyjs@npm:^0.6.0, snappyjs@npm:^0.6.1":
+  version: 0.6.1
+  resolution: "snappyjs@npm:0.6.1"
+  checksum: 10c0/6fa62bb62adfc2bad577db78c58b1c52aba5482f749018ff3000f13bf660f13ec5f16ab80673ce4e8792902a16c30e5fb40a3b67dbca9af525658c9d343c5b1c
   languageName: node
   linkType: hard
 
@@ -7954,6 +8303,19 @@ __metadata:
   bin:
     texture-compressor: ./bin/texture-compressor.js
   checksum: 10c0/ea0bce1cbda3a64f826867e97ee2a1f17a7219d21d97d7625a6370792afddc697e6832a9b3b39bf2eef0978af7bc0d1dcefaf7fd91d719213658b0a010a83c44
+  languageName: node
+  linkType: hard
+
+"thrift@npm:^0.19.0":
+  version: 0.19.0
+  resolution: "thrift@npm:0.19.0"
+  dependencies:
+    browser-or-node: "npm:^1.2.1"
+    isomorphic-ws: "npm:^4.0.1"
+    node-int64: "npm:^0.4.0"
+    q: "npm:^1.5.0"
+    ws: "npm:^5.2.3"
+  checksum: 10c0/935c2d9fcd3f23528fb462e8186aacf6e9c185593f59ac6ede1e3f5862de85f7d093a99546edce77443c990e6fde850a5ef5603e087cc1e9df96003f01860435
   languageName: node
   linkType: hard
 
@@ -8297,6 +8659,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"util@npm:^0.12.5":
+  version: 0.12.5
+  resolution: "util@npm:0.12.5"
+  dependencies:
+    inherits: "npm:^2.0.3"
+    is-arguments: "npm:^1.0.4"
+    is-generator-function: "npm:^1.0.7"
+    is-typed-array: "npm:^1.1.3"
+    which-typed-array: "npm:^1.1.2"
+  checksum: 10c0/c27054de2cea2229a66c09522d0fa1415fb12d861d08523a8846bf2e4cbf0079d4c3f725f09dcb87493549bcbf05f5798dce1688b53c6c17201a45759e7253f3
+  languageName: node
+  linkType: hard
+
 "uuid@npm:^7.0.3":
   version: 7.0.3
   resolution: "uuid@npm:7.0.3"
@@ -8313,6 +8688,13 @@ __metadata:
     spdx-correct: "npm:^3.0.0"
     spdx-expression-parse: "npm:^3.0.0"
   checksum: 10c0/7b91e455a8de9a0beaa9fe961e536b677da7f48c9a493edf4d4d4a87fd80a7a10267d438723364e432c2fcd00b5650b5378275cded362383ef570276e6312f4f
+  languageName: node
+  linkType: hard
+
+"varint@npm:^6.0.0":
+  version: 6.0.0
+  resolution: "varint@npm:6.0.0"
+  checksum: 10c0/737fc37088a62ed3bd21466e318d21ca7ac4991d0f25546f518f017703be4ed0f9df1c5559f1dd533dddba4435a1b758fd9230e4772c1a930ef72b42f5c750fd
   languageName: node
   linkType: hard
 
@@ -8406,7 +8788,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"which-typed-array@npm:^1.1.14, which-typed-array@npm:^1.1.15":
+"which-typed-array@npm:^1.1.14, which-typed-array@npm:^1.1.15, which-typed-array@npm:^1.1.2":
   version: 1.1.15
   resolution: "which-typed-array@npm:1.1.15"
   dependencies:
@@ -8444,6 +8826,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"ws@npm:^5.2.3":
+  version: 5.2.4
+  resolution: "ws@npm:5.2.4"
+  dependencies:
+    async-limiter: "npm:~1.0.0"
+  checksum: 10c0/14e84e4209f86ab68b01b9ebf42c88f81f26a64ff4886ef65d27c734c9b90b8d7e84712da3c3f7a922a4ab58bf0b96544d32ae28ebbd620fcda3027dd5bc7604
+  languageName: node
+  linkType: hard
+
 "xmlhttprequest@npm:1":
   version: 1.8.0
   resolution: "xmlhttprequest@npm:1.8.0"
@@ -8469,5 +8860,12 @@ __metadata:
   version: 20.2.9
   resolution: "yargs-parser@npm:20.2.9"
   checksum: 10c0/0685a8e58bbfb57fab6aefe03c6da904a59769bd803a722bb098bd5b0f29d274a1357762c7258fb487512811b8063fb5d2824a3415a0a4540598335b3b086c72
+  languageName: node
+  linkType: hard
+
+"zstd-codec@npm:^0.1":
+  version: 0.1.5
+  resolution: "zstd-codec@npm:0.1.5"
+  checksum: 10c0/8b7e6d9ce86f00fc4ea16c949aab5538505a1f3f1a9c7c095b2a7308b4ed894deec7bdb2c614e1486a337abdce09a6e56282dc0e39fe9f880953b094f8c7810b
   languageName: node
   linkType: hard

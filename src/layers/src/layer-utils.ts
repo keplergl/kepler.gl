@@ -10,6 +10,7 @@ import {
   parseGeometryFromArrow,
   BinaryGeometriesFromArrowOptions
 } from '@loaders.gl/arrow';
+import {EXTENSION_NAME} from '@kepler.gl/deckgl-arrow-layers';
 
 import {DeckGlGeoTypes, GeojsonDataMaps} from './geojson-layer/geojson-utils';
 
@@ -38,19 +39,16 @@ export type GeojsonLayerMetaProps = {
 
 export function getGeojsonLayerMetaFromArrow({
   dataContainer,
-  getGeoColumn,
-  getGeoField,
+  geoColumn,
+  geoField,
   chunkIndex
 }: {
   dataContainer: DataContainerInterface;
-  getGeoColumn: (dataContainer: DataContainerInterface) => unknown;
-  getGeoField: (dataContainer: DataContainerInterface) => Field | null;
+  geoColumn: arrow.Vector;
+  geoField: Field;
   chunkIndex?: number;
 }): GeojsonLayerMetaProps {
-  const geoColumn = getGeoColumn(dataContainer) as arrow.Vector;
-  const arrowField = getGeoField(dataContainer);
-
-  const encoding = arrowField?.metadata?.get('ARROW:extension:name');
+  const encoding = geoField?.metadata?.get('ARROW:extension:name');
   const options: BinaryGeometriesFromArrowOptions = {
     ...(chunkIndex !== undefined && chunkIndex >= 0
       ? {
@@ -139,4 +137,18 @@ export function getColumnModeRequiredColumns(
   columnMode?: string
 ): string[] | undefined {
   return supportedColumnModes?.find(({key}) => key === columnMode)?.requiredColumns;
+}
+
+/**
+ * Returns geoarrow fields with ARROW:extension:name POINT metadata
+ * @param fields Any fields
+ * @returns geoarrow fields with ARROW:extension:name POINT metadata
+ */
+export function getGeoPointFields(fields: Field[]): Field[] {
+  return fields.filter(field => {
+    return (
+      field.type === 'geoarrow' &&
+      field.metadata.get('ARROW:extension:name') === EXTENSION_NAME.POINT
+    );
+  });
 }

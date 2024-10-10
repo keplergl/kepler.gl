@@ -3,8 +3,11 @@
 
 import {BrushingExtension} from '@deck.gl/extensions';
 
+import {GeoArrowArcLayer} from '@kepler.gl/deckgl-arrow-layers';
+import {FilterArrowExtension} from '@kepler.gl/deckgl-layers';
 import {EnhancedLineLayer} from '@kepler.gl/deckgl-layers';
 import LineLayerIcon from './line-layer-icon';
+import {getGeoPointFields} from '../layer-utils';
 import ArcLayer, {ArcLayerConfig} from '../arc-layer/arc-layer';
 import {LAYER_VIS_CONFIGS, ColorRange, PROJECTED_PIXEL_SIZE_MULTIPLIER} from '@kepler.gl/constants';
 import {
@@ -42,6 +45,10 @@ export type LineLayerColumnsConfig = {
   lng: LayerColumn;
   alt: LayerColumn;
   neighbors: LayerColumn;
+
+  // COLUMN_MODE_GEOARROW
+  geoarrow0: LayerColumn;
+  geoarrow1: LayerColumn;
 };
 
 export type LineLayerVisConfig = {
@@ -67,6 +74,7 @@ export const lineRequiredColumns: ['lat0', 'lng0', 'lat1', 'lng1'] = [
 export const lineOptionalColumns: ['alt0', 'alt1'] = ['alt0', 'alt1'];
 export const neighborRequiredColumns = ['lat', 'lng', 'neighbors'];
 export const neighborOptionalColumns = ['alt'];
+export const geoarrowRequiredColumns = ['geoarrow0', 'geoarrow1'];
 
 export const lineColumnLabels = {
   lat0: 'arc.lat0',
@@ -98,7 +106,13 @@ export const lineVisConfigs: {
 
 export const COLUMN_MODE_POINTS = 'points';
 export const COLUMN_MODE_NEIGHBORS = 'neighbors';
+export const COLUMN_MODE_GEOARROW = 'geoarrow';
 const SUPPORTED_COLUMN_MODES = [
+  {
+    key: COLUMN_MODE_GEOARROW,
+    label: 'Geoarrow',
+    requiredColumns: geoarrowRequiredColumns
+  },
   {
     key: COLUMN_MODE_POINTS,
     label: 'Points',
@@ -112,26 +126,51 @@ const SUPPORTED_COLUMN_MODES = [
     optionalColumns: neighborOptionalColumns
   }
 ];
-// const DEFAULT_COLUMN_MODE = COLUMN_MODE_POINTS;
+
+const brushingExtension = new BrushingExtension();
+const arrowCPUFilterExtension = new FilterArrowExtension();
 
 export const linePosAccessor =
-  ({lat0, lng0, lat1, lng1, alt0, alt1, lat, lng, alt}: LineLayerColumnsConfig, columnMode) =>
+  (
+    {
+      lat0,
+      lng0,
+      lat1,
+      lng1,
+      alt0,
+      alt1,
+      lat,
+      lng,
+      alt,
+      geoarrow0,
+      geoarrow1
+    }: LineLayerColumnsConfig,
+    columnMode
+  ) =>
   (dc: DataContainerInterface) => {
-    return columnMode === COLUMN_MODE_POINTS
-      ? d => [
-          dc.valueAt(d.index, lng0.fieldIdx),
-          dc.valueAt(d.index, lat0.fieldIdx),
-          alt0 && alt0.fieldIdx > -1 ? dc.valueAt(d.index, alt0.fieldIdx) : 0,
-          dc.valueAt(d.index, lng1.fieldIdx),
-          dc.valueAt(d.index, lat1.fieldIdx),
-          alt1 && alt1?.fieldIdx > -1 ? dc.valueAt(d.index, alt1.fieldIdx) : 0
-        ]
-      : // only return source point if columnMode is COLUMN_MODE_NEIGHBORS
-        d => [
-          dc.valueAt(d.index, lng.fieldIdx),
-          dc.valueAt(d.index, lat.fieldIdx),
-          alt?.fieldIdx > -1 ? dc.valueAt(d.index, alt.fieldIdx) : 0
-        ];
+    if (columnMode === COLUMN_MODE_POINTS)
+      return d => [
+        dc.valueAt(d.index, lng0.fieldIdx),
+        dc.valueAt(d.index, lat0.fieldIdx),
+        alt0 && alt0.fieldIdx > -1 ? dc.valueAt(d.index, alt0.fieldIdx) : 0,
+        dc.valueAt(d.index, lng1.fieldIdx),
+        dc.valueAt(d.index, lat1.fieldIdx),
+        alt1 && alt1?.fieldIdx > -1 ? dc.valueAt(d.index, alt1.fieldIdx) : 0
+      ];
+
+    if (columnMode === COLUMN_MODE_NEIGHBORS)
+      return d => [
+        dc.valueAt(d.index, lng.fieldIdx),
+        dc.valueAt(d.index, lat.fieldIdx),
+        alt?.fieldIdx > -1 ? dc.valueAt(d.index, alt.fieldIdx) : 0
+      ];
+
+    // COLUMN_MODE_GEOARROW
+    return d => {
+      const start = dc.valueAt(d.index, geoarrow0.fieldIdx);
+      const end = dc.valueAt(d.index, geoarrow1.fieldIdx);
+      return [start.get(0), start.get(1), 0, end.get(2), end.get(3), 0];
+    };
   };
 
 export default class LineLayer extends ArcLayer {
@@ -177,7 +216,31 @@ export default class LineLayer extends ArcLayer {
     };
   }
 
-  static findDefaultLayerProps({fieldPairs = []}: KeplerTable) {
+  static findDefaultLayerProps({fields, fieldPairs = []}: KeplerTable): {
+    props: {color?: RGBColor; columns: LineLayerColumnsConfig; label: string}[];
+  } {
+    // TODO move this to field pairs logic, to create a field pair from a single column
+    const geoArrowLineFields = getGeoPointFields(fields);
+    if (geoArrowLineFields.length >= 2) {
+      const props: {columns: LineLayerColumnsConfig; label: string; isVisible: boolean} = {
+        // @ts-expect-error fill not required columns with default columns
+        columns: {
+          geoarrow0: {
+            fieldIdx: geoArrowLineFields[0].fieldIdx,
+            value: geoArrowLineFields[0].displayName
+          },
+          geoarrow1: {
+            fieldIdx: geoArrowLineFields[1].fieldIdx,
+            value: geoArrowLineFields[1].displayName
+          }
+        },
+        label: `${geoArrowLineFields[0].displayName} -> ${geoArrowLineFields[1].displayName} line`,
+        isVisible: true
+      };
+
+      return {props: [props]};
+    }
+
     if (fieldPairs.length < 2) {
       return {props: []};
     }
@@ -200,7 +263,9 @@ export default class LineLayer extends ArcLayer {
         lat: {...defaultAltColumn},
         lng: {...defaultAltColumn},
         alt: {...defaultAltColumn},
-        neighbors: {...defaultAltColumn}
+        neighbors: {...defaultAltColumn},
+        geoarrow0: {...defaultAltColumn},
+        geoarrow1: {...defaultAltColumn}
       },
       label: `${fieldPairs[0].defaultName} -> ${fieldPairs[1].defaultName} line`,
       isVisible: false
@@ -210,7 +275,7 @@ export default class LineLayer extends ArcLayer {
   }
 
   renderLayer(opts) {
-    const {data, gpuFilter, objectHovered, interactionConfig} = opts;
+    const {data, gpuFilter, objectHovered, interactionConfig, dataset} = opts;
 
     const layerProps = {
       widthScale: this.config.visConfig.thickness * PROJECTED_PIXEL_SIZE_MULTIPLIER,
@@ -220,20 +285,44 @@ export default class LineLayer extends ArcLayer {
     const updateTriggers = {
       getPosition: this.config.columns,
       getFilterValue: gpuFilter.filterValueUpdateTriggers,
+      getFiltered: this.filteredIndexTrigger,
       ...this.getVisualChannelUpdateTriggers()
     };
     const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
     const hoveredObject = this.hasHoveredObject(objectHovered);
 
+    const LineLayerClass =
+      this.config.columnMode === COLUMN_MODE_GEOARROW ? GeoArrowArcLayer : EnhancedLineLayer;
+    const adjustedData =
+      this.config.columnMode === COLUMN_MODE_GEOARROW
+        ? dataset.dataContainer.getTable()
+        : data.data;
+    const getSourcePosition =
+      this.config.columnMode === COLUMN_MODE_GEOARROW
+        ? dataset.dataContainer.getColumn(this.config.columns.geoarrow0.fieldIdx)
+        : data.getPosition;
+    const getTargetPosition =
+      this.config.columnMode === COLUMN_MODE_GEOARROW
+        ? dataset.dataContainer.getColumn(this.config.columns.geoarrow1.fieldIdx)
+        : data.getPosition;
+
     return [
       // base layer
-      new EnhancedLineLayer({
+      new LineLayerClass({
         ...defaultLayerProps,
         ...this.getBrushingExtensionProps(interactionConfig, 'source_target'),
         ...data,
+        data: adjustedData,
+        getSourcePosition,
+        getTargetPosition,
         ...layerProps,
         updateTriggers,
-        extensions: [...defaultLayerProps.extensions, new BrushingExtension()]
+        extensions: [...defaultLayerProps.extensions, brushingExtension, arrowCPUFilterExtension],
+        _subLayerProps: {
+          'geo-arrow-arc-layer': {
+            type: EnhancedLineLayer
+          }
+        }
       }),
       // hover layer
       ...(hoveredObject

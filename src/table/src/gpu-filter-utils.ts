@@ -160,7 +160,7 @@ const getFilterValueAccessor =
   (channels: (Filter | undefined)[], dataId: string, fields: any[]) =>
   (dc: DataContainerInterface) =>
   (getIndex = defaultGetIndex, getData = defaultGetData) =>
-  d => {
+  (d, objectInfo) => {
     // for empty channel, value is 0 and min max would be [0, 0]
     const channelValues = channels.map(filter => {
       if (!filter) {
@@ -174,7 +174,8 @@ const getFilterValueAccessor =
           ? field.filterProps && Array.isArray(field.filterProps.mappedValue)
             ? field.filterProps.mappedValue[getIndex(d)]
             : moment.utc(getData(dc, d, fieldIndex)).valueOf()
-          : getData(dc, d, fieldIndex);
+          : // Fix for GeoArrow GPU filtering: index is in objectInfo
+            getData(dc, d || objectInfo, fieldIndex);
 
       return notNullorUndefined(value)
         ? Array.isArray(value)
