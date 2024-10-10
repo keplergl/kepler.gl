@@ -122,4 +122,4 @@ export {getCentroid, idToPolygonGeo, h3IsValid, getHexFields} from './h3-utils';
 
 // Application config
 export {getApplicationConfig, initApplicationConfig} from '../../utils/src/application-config';
-export type {KeplerApplicationConfig} from '../../utils/src/application-config';
+export type {KeplerApplicationConfig, MapLibInstance} from '../../utils/src/application-config';

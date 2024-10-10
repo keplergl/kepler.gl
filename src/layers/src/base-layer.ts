@@ -650,7 +650,9 @@ class Layer {
   getHoverData(
     object: any,
     dataContainer: DataContainerInterface,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     fields?: Field[],
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     animationConfig?: AnimationConfig
   ): any {
     if (!object) {

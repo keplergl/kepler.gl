@@ -66,9 +66,7 @@ const RadiusLegend: FC<Props> = ({scaleType, width, domain, range}) => {
     if (!Array.isArray(domain) || !domain.every(Number.isFinite)) {
       return undefined;
     }
-    return scaleSqrt()
-      .domain(domain)
-      .range(range);
+    return scaleSqrt().domain(domain).range(range);
   }, [domain, range, scaleType]);
 
   const radiusTicks = useMemo(() => {

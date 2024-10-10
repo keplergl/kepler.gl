@@ -174,7 +174,7 @@ export default class TripLayer extends Layer {
     return this.defaultPointColumnPairs;
   }
 
-  accessVSFieldValue(field, indexKey) {
+  accessVSFieldValue() {
     if (this.config.columnMode === COLUMN_MODE_GEOJSON) {
       return defaultGetFieldValue;
     }
@@ -236,7 +236,7 @@ export default class TripLayer extends Layer {
   }
 
   static findDefaultLayerProps(
-    {label, fieldPairs, fields = [], dataContainer, id}: KeplerTable,
+    {label, fields = [], dataContainer, id}: KeplerTable,
     foundLayers: any[]
   ) {
     const geojsonColumns = fields.filter(f => f.type === 'geojson').map(f => f.name);
@@ -293,7 +293,7 @@ export default class TripLayer extends Layer {
       ?.datum;
   }
 
-  calculateDataAttribute(dataset: KeplerTable, getPosition) {
+  calculateDataAttribute(dataset: KeplerTable) {
     switch (this.config.columnMode) {
       case COLUMN_MODE_GEOJSON: {
         return (
@@ -330,7 +330,7 @@ export default class TripLayer extends Layer {
       valueAccessor = getTableModeValueAccessor;
     }
     const indexAccessor = f => f.properties.index;
-    const dataAccessor = dc => d => ({index: d.properties.index});
+    const dataAccessor = () => d => ({index: d.properties.index});
     const accessors = this.getAttributeAccessors({dataAccessor, dataContainer});
     const getFilterValue = gpuFilter.filterValueAccessor(dataContainer)(
       indexAccessor,

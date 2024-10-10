@@ -139,7 +139,7 @@ class MapboxLayerGL extends Layer {
             {} as {[id: string]: number | number[]}
           );
         }
-      : d => ({} as Record<string, number | number[]>);
+      : () => ({} as Record<string, number | number[]>);
 
     const getProperties = d => ({
       ...getPropertyFromVisualChanel(d),

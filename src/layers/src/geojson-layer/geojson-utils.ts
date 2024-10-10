@@ -344,7 +344,8 @@ export function groupColumnsAsGeoJson(
   }
 
   const result: Feature[] = Object.entries(groupedById).map(
-    ([id, items]: [string, CoordsType[]], index) => ({
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    ([_, items]: [string, CoordsType[]], index) => ({
       type: 'Feature' as const,
       geometry: {
         type: 'LineString' as const,

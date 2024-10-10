@@ -237,7 +237,7 @@ function LayerColumnModeConfigFactory(
     );
 
     const renderColumnConfig = useCallback(
-      ({key: columnMode, label, columns: cols}, isSelected) => (
+      ({key: columnMode, columns: cols}, isSelected) => (
         <LayerColumnConfig
           columnPairs={layer.columnPairs}
           columns={cols}

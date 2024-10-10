@@ -304,10 +304,7 @@ export default class ArcLayer extends Layer {
   }
 
   calculateDataAttributeForPoints(
-    {
-      dataContainer,
-      filteredIndex
-    }: {dataContainer: DataContainerInterface; filteredIndex: number[]},
+    {filteredIndex}: {dataContainer: DataContainerInterface; filteredIndex: number[]},
     getPosition
   ) {
     const data: ArcLayerData[] = [];
