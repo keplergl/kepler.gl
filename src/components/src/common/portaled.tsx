@@ -168,6 +168,7 @@ class Portaled extends Component<PortaledProps, PortaledState> {
   _unmounted = false;
 
   componentDidMount() {
+    this._unmounted = false;
     // relative
     this.unsubscribe = subscribe(this.handleScroll);
     this.handleScroll();
