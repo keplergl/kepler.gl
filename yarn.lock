@@ -3210,6 +3210,7 @@ __metadata:
     mini-svg-data-uri: "npm:^1.0.3"
     moment-timezone: "npm:^0.5.35"
     react: "npm:^18.2.0"
+    react-map-gl: "npm:^7.1.6"
     resize-observer-polyfill: "npm:^1.5.1"
     type-analyzer: "npm:0.4.0"
   languageName: unknown
