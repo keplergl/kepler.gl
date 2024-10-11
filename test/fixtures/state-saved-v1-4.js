@@ -234,6 +234,7 @@ mergedLayer0.config = {
   },
   visConfig: {
     radius: 12.5,
+    billboard: false,
     fixedRadius: false,
     opacity: 0.8,
     outline: false,
