@@ -3,10 +3,9 @@
 
 import React from 'react';
 import test from 'tape';
-import {appInjector} from 'components';
 import {mountWithTheme} from 'test/helpers/component-utils';
 
-import {ColorLegendFactory, LegendRowFactory} from '@kepler.gl/components';
+import {ColorLegendFactory, LegendRowFactory, appInjector} from '@kepler.gl/components';
 
 const ColorLegend = appInjector.get(ColorLegendFactory);
 const LegendRow = appInjector.get(LegendRowFactory);
