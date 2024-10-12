@@ -1026,12 +1026,12 @@ function _updateFilterProp(state, filter, prop, value, valueIndex, datasetIds?) 
     // TODO: Next PR for UI if we update filterDataId, we need to consider two cases:
     // 1. dataId is empty: create a default filter
     // 2. Add a new dataset id
-    case FILTER_UPDATER_PROPS.dataId:
+    case FILTER_UPDATER_PROPS.dataId: {
       const oldDataId = [...filter.dataId];
       filter = _updateFilterDataIdAtValueIndex(filter, valueIndex, value, state.datasets);
       datasetIdsToFilter = uniq([...oldDataId, ...filter.dataId]);
       break;
-
+    }
     case FILTER_UPDATER_PROPS.name: {
       // we are supporting the current functionality
       // TODO: Next PR for UI filter name will only update filter name but it won't have side effects
