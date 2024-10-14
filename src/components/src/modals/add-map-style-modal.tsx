@@ -163,7 +163,7 @@ function AddMapStyleModalFactory() {
         mapboxAccessToken: mapboxApiAccessToken,
         mapLib: maplibregl,
         preserveDrawingBuffer: true,
-        transformRequest
+        transformRequest: transformRequest(mapboxApiAccessToken)
       };
 
       return (
