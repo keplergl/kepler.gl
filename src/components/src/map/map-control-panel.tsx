@@ -50,6 +50,7 @@ const StyledMapControlPanelHeader = styled.div.attrs({
   color: ${props => props.theme.titleTextColor};
   position: relative;
   box-sizing: border-box;
+  align-items: center;
 
   button {
     width: 18px;
@@ -101,14 +102,14 @@ const StyledIcon = styled(IconRoundSmall)`
   :hover {
     cursor: pointer;
     background-color: transparent;
-    color: ${props => props.theme.linkBtnColor};
+    color: ${props => props.theme.floatingBtnActColor};
   }
 `;
 
 export type MapControlPanelProps = {
   header?: string;
   scale?: number;
-  onClick: React.MouseEventHandler<HTMLDivElement>;
+  onClick?: React.MouseEventHandler<HTMLDivElement>;
   onPinClick?: React.MouseEventHandler<HTMLDivElement>;
   pinnable?: boolean;
   disableClose?: boolean;

@@ -140,10 +140,10 @@ export {
   LayerLegendHeaderFactory,
   LayerLegendContentFactory,
   StyledMapControlLegend,
-  LayerColorLegend,
+  LayerColorLegendFactory,
   VisualChannelMetric,
   LayerDefaultLegend,
-  SingleColorLegend
+  SingleColorLegendFactory
 } from './map/map-legend';
 export {default as MapDrawPanelFactory} from './map/map-draw-panel';
 export {default as SplitMapButtonFactory} from './map/split-map-button';
@@ -220,7 +220,7 @@ export {
 } from './editor/feature-action-panel';
 
 // Injector
-export {injector, provideRecipesToInjector, withState} from './injector';
+export * from './injector';
 
 // Common Components
 export {default as CloudTile} from './modals/cloud-tile';
@@ -246,7 +246,13 @@ export {default as Modal, ModalFooter, ModalTitle} from './common/modal';
 export {default as AppLogo} from './common/logo';
 export {default as Switch} from './common/switch';
 export {default as Checkbox} from './common/checkbox';
-export {default as ColorLegend, LegendRow} from './common/color-legend';
+export {
+  default as ColorLegendFactory,
+  LegendRowFactory,
+  LegendColorDisplayFactory,
+  LegendRowEditorFactory,
+  ResetColorLabelFactory
+} from './common/color-legend';
 export {default as EffectControlFactory} from './map/effects/effect-control';
 export {default as LoadingSpinner} from './common/loading-spinner';
 export {default as LoadingDialog} from './modals/loading-dialog';

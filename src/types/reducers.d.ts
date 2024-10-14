@@ -364,9 +364,12 @@ export type MapControlItem = {
   disableClose?: boolean;
   activeMapIndex?: number;
 };
+export type MapControlMapLegend = MapControlItem & {
+  disableEdit?: boolean;
+};
 export type MapControls = {
   visibleLayers?: MapControlItem;
-  mapLegend?: MapControlItem;
+  mapLegend?: MapControlMapLegend;
   toggle3d?: MapControlItem;
   splitMap?: MapControlItem;
   mapDraw?: MapControlItem;
