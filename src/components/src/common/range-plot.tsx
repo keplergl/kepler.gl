@@ -35,6 +35,8 @@ interface RangePlotProps {
   animationWindow?: string;
   filter?: Filter;
   datasets?: Datasets;
+
+  invertTrendColor?: boolean;
 }
 
 RangePlotFactory.deps = [RangeBrushFactory, HistogramPlotFactory, LineChartFactory];

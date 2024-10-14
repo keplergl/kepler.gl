@@ -148,6 +148,7 @@ export type TimeRangeFilter = FilterBase<LineChart> &
       [key: string]: any;
     };
     animationWindow: string;
+    invertTrendColor: boolean;
   };
 
 export type PolygonFilter = FilterBase<LineChart> & {
@@ -520,11 +521,11 @@ export type TypedTimeRangeFilter = FilterBaseOmitRedudant &
     fieldType: 'timestamp';
     fixedDomain: true;
     value: [number, number];
-    bins?: object;
     plotType: {
       [key: string]: any;
     };
     animationWindow: string;
+    invertTrendColor: boolean;
   };
 
 export type TypedPolygonFilter = FilterBaseOmitRedudant & {
