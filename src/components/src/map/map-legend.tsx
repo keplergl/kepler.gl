@@ -1,18 +1,21 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React from 'react';
+import React, {FC} from 'react';
 import styled from 'styled-components';
 import {rgb} from 'd3-color';
 import ColorLegend from '../common/color-legend';
+import RadiusLegend from '../common/radius-legend';
 import {CHANNEL_SCALES, DIMENSIONS} from '@kepler.gl/constants';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {Layer, LayerBaseConfig, VisualChannel, VisualChannelDescription} from '@kepler.gl/layers';
+import {MapState} from '@kepler.gl/types';
 
 interface StyledMapControlLegendProps {
   width?: number;
   last?: boolean;
 }
+import {getDistanceScales} from 'viewport-mercator-project';
 
 export const StyledMapControlLegend = styled.div<StyledMapControlLegendProps>`
   padding: 10px ${props => props.theme.mapControl.padding}px 10px
@@ -71,8 +74,8 @@ export type LayerSizeLegendProps = {
   name: string | undefined;
 };
 
-/** @type {typeof import('./map-legend').LayerSizeLegend} */
-export const LayerSizeLegend: React.FC<LayerSizeLegendProps> = ({label, name}) =>
+/** @type {typeof import('./map-legend').LayerDefaultLegend} */
+export const LayerDefaultLegend: React.FC<LayerSizeLegendProps> = ({label, name}) =>
   label ? (
     <div className="legend--layer_size-schema">
       <p>
@@ -151,6 +154,60 @@ export const LayerColorLegend: React.FC<LayerColorLegendProps> = React.memo(
 // eslint-disable-next-line react/display-name
 LayerColorLegend.displayName = 'LayerColorLegend';
 
+function getLayerRadiusScaleMetersToPixelsMultiplier(layer, mapState) {
+  // @ts-ignore this actually exist
+  const {metersPerPixel} = getDistanceScales(mapState);
+  // if no field size is defined we need to pass fixed radius = false
+  const fixedRadius = layer.config.visConfig.fixedRadius && Boolean(layer.config.sizeField);
+  return layer.getRadiusScaleByZoom(mapState, fixedRadius) / metersPerPixel[0];
+}
+
+export type LayerRadiusLegendProps = {
+  layer: Layer;
+  mapState?: MapState;
+  width: number;
+  visualChannel: VisualChannel;
+};
+
+export const LayerRadiusLegend: FC<LayerRadiusLegendProps> = React.memo(
+  ({layer, width, visualChannel, mapState}) => {
+    const description = layer.getVisualChannelDescription(visualChannel.key);
+    const config = layer.config;
+
+    const enableSizeBy = description.measure;
+    const {scale, field, domain, range} = visualChannel;
+    const [sizeScale, sizeField, sizeDomain] = [scale, field, domain].map(k => config[k]);
+    let sizeRange = config.visConfig[range];
+
+    if (mapState) {
+      const radiusMultiplier = getLayerRadiusScaleMetersToPixelsMultiplier(layer, mapState);
+      sizeRange = sizeRange.map(v => v * radiusMultiplier);
+    }
+
+    return (
+      <div className="legend--layer__item">
+        <div className="legend--layer_size-schema">
+          <div>
+            {enableSizeBy ? <VisualChannelMetric name={enableSizeBy} /> : null}
+            <div className="legend--layer_size-legend">
+              {enableSizeBy ? (
+                <RadiusLegend
+                  scaleType={sizeScale}
+                  domain={sizeDomain}
+                  fieldType={(sizeField && sizeField.type) || 'real'}
+                  range={sizeRange}
+                  width={width}
+                />
+              ) : null}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+);
+LayerRadiusLegend.displayName = 'LayerRadiusLegend';
+
 const isColorChannel = visualChannel =>
   [CHANNEL_SCALES.color, CHANNEL_SCALES.colorAggr].includes(visualChannel.channelScaleType);
 
@@ -160,6 +217,9 @@ export type LayerLegendHeaderProps = {
     showLayerName?: boolean;
   };
 };
+
+const isRadiusChannel = visualChannel =>
+  [CHANNEL_SCALES.radius].includes(visualChannel.channelScaleType);
 
 export function LayerLegendHeaderFactory() {
   /** @type {typeof import('./map-legend').LayerLegendHeader }> */
@@ -174,13 +234,15 @@ export function LayerLegendHeaderFactory() {
 export type LayerLegendContentProps = {
   layer: Layer;
   containerW: number;
+  mapState?: MapState;
 };
 
 export function LayerLegendContentFactory() {
   /** @type {typeof import('./map-legend').LayerLegendContent }> */
-  const LayerLegendContent: React.FC<LayerLegendContentProps> = ({layer, containerW}) => {
+  const LayerLegendContent: React.FC<LayerLegendContentProps> = ({layer, containerW, mapState}) => {
     const colorChannels = Object.values(layer.visualChannels).filter(isColorChannel);
     const nonColorChannels = Object.values(layer.visualChannels).filter(vc => !isColorChannel(vc));
+    const width = containerW - 2 * DIMENSIONS.mapControl.padding;
 
     return (
       <>
@@ -190,7 +252,7 @@ export function LayerLegendContentFactory() {
               key={colorChannel.key}
               description={layer.getVisualChannelDescription(colorChannel.key)}
               config={layer.config}
-              width={containerW - 2 * DIMENSIONS.mapControl.padding}
+              width={width}
               colorChannel={colorChannel}
             />
           ) : null
@@ -199,15 +261,28 @@ export function LayerLegendContentFactory() {
           const matchCondition = !visualChannel.condition || visualChannel.condition(layer.config);
           const enabled = layer.config[visualChannel.field] || visualChannel.defaultMeasure;
 
-          const description = layer.getVisualChannelDescription(visualChannel.key);
-
-          return matchCondition && enabled ? (
-            <LayerSizeLegend
-              key={visualChannel.key}
-              label={description.label}
-              name={description.measure}
-            />
-          ) : null;
+          if (matchCondition && enabled) {
+            const description = layer.getVisualChannelDescription(visualChannel.key);
+            if (isRadiusChannel(visualChannel)) {
+              return (
+                <LayerRadiusLegend
+                  key={visualChannel.key}
+                  layer={layer}
+                  mapState={mapState}
+                  width={width}
+                  visualChannel={visualChannel}
+                />
+              );
+            }
+            return (
+              <LayerDefaultLegend
+                key={visualChannel.key}
+                label={description.label}
+                name={description.measure}
+              />
+            );
+          }
+          return null;
         })}
       </>
     );
@@ -219,7 +294,7 @@ export function LayerLegendContentFactory() {
 export type MapLegendProps = {
   layers?: ReadonlyArray<Layer>;
   width?: number;
-  mapHeight?: number;
+  mapState?: MapState;
   options?: {
     showLayerName?: boolean;
   };
@@ -228,13 +303,13 @@ export type MapLegendProps = {
 MapLegendFactory.deps = [LayerLegendHeaderFactory, LayerLegendContentFactory];
 function MapLegendFactory(LayerLegendHeader, LayerLegendContent) {
   /** @type {typeof import('./map-legend').MapLegend }> */
-  const MapLegend: React.FC<MapLegendProps> = ({layers = [], width, mapHeight, options}) => (
+  const MapLegend: React.FC<MapLegendProps> = ({layers = [], width, mapState, options}) => (
     <div
       className="map-legend"
-      {...(mapHeight && {
+      {...(mapState?.height && {
         style: {
           /* subtracting rough size of 4 map control buttons and padding */
-          maxHeight: mapHeight - 250
+          maxHeight: mapState.height - 250
         }
       })}
     >
@@ -252,7 +327,7 @@ function MapLegendFactory(LayerLegendHeader, LayerLegendContent) {
             width={containerW}
           >
             <LayerLegendHeader options={options} layer={layer} />
-            <LayerLegendContent containerW={containerW} layer={layer} />
+            <LayerLegendContent containerW={containerW} layer={layer} mapState={mapState} />
           </StyledMapControlLegend>
         );
       })}

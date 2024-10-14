@@ -103,20 +103,20 @@ function PlaybackControlsFactory(
   // eslint-disable-next-line complexity
   const PlaybackControls: React.FC<PlaybackControlsProps> = ({
     isAnimatable,
-    isAnimating,
+    isAnimating = true,
     width,
     speed,
-    animationWindow,
+    animationWindow = ANIMATION_WINDOW.free,
     setFilterAnimationWindow,
     updateAnimationSpeed,
-    pauseAnimation,
-    resetAnimation,
-    startAnimation,
-    playbackIcons,
-    animationItems,
-    buttonStyle,
-    buttonHeight,
-    playbackActionItems = []
+    pauseAnimation = nop,
+    resetAnimation = nop,
+    startAnimation = nop,
+    playbackIcons = DEFAULT_ICONS,
+    animationItems = DEFAULT_ANIMATE_ITEMS,
+    buttonStyle = 'secondary',
+    buttonHeight = DEFAULT_BUTTON_HEIGHT,
+    playbackActionItems = PLAYBACK_CONTROLS_DEFAULT_ACTION_COMPONENTS
   }) => {
     const [isSpeedControlVisible, toggleSpeedControl] = useState(false);
     const [showAnimationWindowControl, setShowAnimationWindowControl] = useState(false);
@@ -167,19 +167,6 @@ function PlaybackControlsFactory(
         ))}
       </StyledAnimationControls>
     );
-  };
-
-  PlaybackControls.defaultProps = {
-    playbackIcons: DEFAULT_ICONS,
-    animationItems: DEFAULT_ANIMATE_ITEMS,
-    buttonStyle: 'secondary',
-    buttonHeight: DEFAULT_BUTTON_HEIGHT,
-    playbackActionItems: PLAYBACK_CONTROLS_DEFAULT_ACTION_COMPONENTS,
-    animationWindow: ANIMATION_WINDOW.free,
-    isAnimatable: true,
-    pauseAnimation: nop,
-    resetAnimation: nop,
-    startAnimation: nop
   };
 
   return PlaybackControls;

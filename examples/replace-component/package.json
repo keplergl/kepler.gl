@@ -1,7 +1,7 @@
 {
   "scripts": {
-    "start": "webpack-dev-server --progress --hot --open",
-    "start-local": "webpack-dev-server --env.es6 --progress --hot --open"
+    "start": "node esbuild.config.mjs --start",
+    "start:local": "NODE_ENV=local node esbuild.config.mjs --start"
   },
   "dependencies": {
     "@kepler.gl/actions": "^3.0.0-alpha.1",
@@ -9,6 +9,7 @@
     "@kepler.gl/reducers": "^3.0.0-alpha.1",
     "@kepler.gl/schemas": "^3.0.0-alpha.1",
     "@kepler.gl/styles": "^3.0.0-alpha.1",
+    "esbuild": "^0.23.1",
     "global": "^4.3.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -19,21 +20,14 @@
     "styled-components": "^4.1.3"
   },
   "devDependencies": {
-    "@babel/core": "^7.12.1",
-    "@babel/plugin-transform-class-properties": "^7.12.1",
-    "@babel/plugin-transform-export-namespace-from": "^7.12.1",
-    "@babel/plugin-transform-modules-commonjs": "^7.12.1",
-    "@babel/plugin-transform-optional-chaining": "^7.12.1",
-    "@babel/plugin-transform-runtime": "^7.12.1",
-    "@babel/plugin-transform-typescript": "^7.16.8",
-    "@babel/preset-env": "^7.12.1",
-    "@babel/preset-react": "^7.12.1",
-    "@babel/preset-typescript": "^7.16.7",
-    "babel-loader": "^8.0.0",
-    "webpack": "^4.29.0",
-    "webpack-cli": "^3.2.1",
-    "webpack-dev-middleware": "^3.5.1",
-    "webpack-dev-server": "^3.1.14",
-    "webpack-hot-middleware": "^2.24.3"
-  }
+    "esbuild-plugin-replace": "^1.4.0"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "volta": {
+    "node": "18.18.2",
+    "yarn": "4.4.0"
+  },
+  "packageManager": "yarn@4.4.0"
 }

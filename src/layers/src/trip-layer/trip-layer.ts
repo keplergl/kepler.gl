@@ -6,7 +6,7 @@ import uniq from 'lodash.uniq';
 import Layer, {LayerBaseConfig, defaultGetFieldValue} from '../base-layer';
 import {TripsLayer as DeckGLTripsLayer} from '@deck.gl/geo-layers';
 
-import {GEOJSON_FIELDS, ColorRange} from '@kepler.gl/constants';
+import {GEOJSON_FIELDS, ColorRange, PROJECTED_PIXEL_SIZE_MULTIPLIER} from '@kepler.gl/constants';
 import TripLayerIcon from './trip-layer-icon';
 
 import {
@@ -50,6 +50,8 @@ export type TripLayerVisConfig = {
   colorRange: ColorRange;
   trailLength: number;
   sizeRange: [number, number];
+  billboard: boolean;
+  fadeTrail: boolean;
 };
 
 export type TripLayerConfig = Merge<
@@ -71,6 +73,8 @@ export const tripVisConfigs: {
   thickness: VisConfigNumber;
   colorRange: 'colorRange';
   trailLength: 'trailLength';
+  fadeTrail: 'fadeTrail';
+  billboard: 'billboard';
   sizeRange: 'strokeWidthRange';
 } = {
   opacity: 'opacity',
@@ -86,6 +90,8 @@ export const tripVisConfigs: {
   },
   colorRange: 'colorRange',
   trailLength: 'trailLength',
+  fadeTrail: 'fadeTrail',
+  billboard: 'billboard',
   sizeRange: 'strokeWidthRange'
 };
 
@@ -174,7 +180,7 @@ export default class TripLayer extends Layer {
     return this.defaultPointColumnPairs;
   }
 
-  accessVSFieldValue(field, indexKey) {
+  accessVSFieldValue() {
     if (this.config.columnMode === COLUMN_MODE_GEOJSON) {
       return defaultGetFieldValue;
     }
@@ -236,7 +242,7 @@ export default class TripLayer extends Layer {
   }
 
   static findDefaultLayerProps(
-    {label, fieldPairs, fields = [], dataContainer, id}: KeplerTable,
+    {label, fields = [], dataContainer, id}: KeplerTable,
     foundLayers: any[]
   ) {
     const geojsonColumns = fields.filter(f => f.type === 'geojson').map(f => f.name);
@@ -293,7 +299,7 @@ export default class TripLayer extends Layer {
       ?.datum;
   }
 
-  calculateDataAttribute(dataset: KeplerTable, getPosition) {
+  calculateDataAttribute(dataset: KeplerTable) {
     switch (this.config.columnMode) {
       case COLUMN_MODE_GEOJSON: {
         return (
@@ -330,7 +336,7 @@ export default class TripLayer extends Layer {
       valueAccessor = getTableModeValueAccessor;
     }
     const indexAccessor = f => f.properties.index;
-    const dataAccessor = dc => d => ({index: d.properties.index});
+    const dataAccessor = () => d => ({index: d.properties.index});
     const accessors = this.getAttributeAccessors({dataAccessor, dataContainer});
     const getFilterValue = gpuFilter.filterValueAccessor(dataContainer)(
       indexAccessor,
@@ -433,11 +439,13 @@ export default class TripLayer extends Layer {
     };
     const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
 
+    const billboardWidthFactor = visConfig.billboard ? PROJECTED_PIXEL_SIZE_MULTIPLIER : 1;
+
     const layerProps = {
       ...defaultLayerProps,
       ...data,
       getTimestamps: d => (data.getTimestamps(d) || []).map(ts => ts - domain0),
-      widthScale: visConfig.thickness * zoomFactor * zoomFactorValue,
+      widthScale: visConfig.thickness * zoomFactor * zoomFactorValue * billboardWidthFactor,
       capRounded: true,
       jointRounded: true,
       wrapLongitude: false,
@@ -446,6 +454,8 @@ export default class TripLayer extends Layer {
         depthMask: false
       },
       trailLength: visConfig.trailLength * 1000,
+      fadeTrail: visConfig.fadeTrail,
+      billboard: visConfig.billboard,
       currentTime: animationConfig.currentTime - domain0,
       updateTriggers,
       id: `${defaultLayerProps.id}${mapState.globe?.enabled ? '-globe' : ''}`

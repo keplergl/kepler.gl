@@ -104,25 +104,32 @@ function MapControlFactory(
     MapLegendPanel
   ];
 
-  const MapControl: React.FC<MapControlProps> = React.memo(
-    ({actionComponents = DEFAULT_ACTIONS, ...props}) => {
-      return (
-        <StyledMapControl className="map-control" top={props.top}>
-          {actionComponents.map((ActionComponent, index) => (
-            <ActionComponent key={index} className="map-control-action" {...props} />
-          ))}
-        </StyledMapControl>
-      );
-    }
-  );
-
-  MapControl.defaultProps = {
-    isSplit: false,
-    top: 0,
-    mapIndex: 0,
-    logoComponent: LegendLogo,
-    actionComponents: DEFAULT_ACTIONS
+  const MapControl: React.FC<MapControlProps> & {
+    defaultActionComponents: MapControlProps['actionComponents'];
+  } = ({
+    actionComponents = DEFAULT_ACTIONS,
+    isSplit = false,
+    top = 0,
+    mapIndex = 0,
+    logoComponent = LegendLogo,
+    ...restProps
+  }) => {
+    const actionComponentProps = {
+      isSplit,
+      mapIndex,
+      logoComponent,
+      ...restProps
+    };
+    return (
+      <StyledMapControl className="map-control" top={top}>
+        {actionComponents.map((ActionComponent, index) => (
+          <ActionComponent key={index} className="map-control-action" {...actionComponentProps} />
+        ))}
+      </StyledMapControl>
+    );
   };
+
+  MapControl.defaultActionComponents = DEFAULT_ACTIONS;
 
   MapControl.displayName = 'MapControl';
 

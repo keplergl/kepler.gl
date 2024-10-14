@@ -12,7 +12,7 @@ import {
   StyledMapControlLegend,
   LayerColorLegend,
   VisualChannelMetric,
-  LayerSizeLegend,
+  LayerDefaultLegend,
   SingleColorLegend,
   appInjector
 } from '@kepler.gl/components';
@@ -76,7 +76,7 @@ function testGeojsonLegend(t, geojsonLegend) {
     'geojson layer legend should render 2 color legend'
   );
   t.equal(
-    geojsonLegend.find(LayerSizeLegend).length,
+    geojsonLegend.find(LayerDefaultLegend).length,
     0,
     'geojson layer legend should render 1 size legend'
   );
@@ -122,7 +122,7 @@ function testPointLayerLegend(t, pointLegend) {
     'point layer legend should render 1 point layer color legend'
   );
   t.equal(
-    pointLegend.find(LayerSizeLegend).length,
+    pointLegend.find(LayerDefaultLegend).length,
     0,
     'point layer legend should render 0 point layer size legend'
   );
@@ -157,7 +157,7 @@ function testHexagonLayerLegend(t, hexagonLegend) {
     'hexagon layer legend should render 1 color legend'
   );
   t.equal(
-    hexagonLegend.find(LayerSizeLegend).length,
+    hexagonLegend.find(LayerDefaultLegend).length,
     0,
     'hexagon layer legend should render 0 size legend'
   );

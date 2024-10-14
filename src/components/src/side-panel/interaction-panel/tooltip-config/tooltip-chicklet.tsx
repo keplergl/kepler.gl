@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {Component, ComponentType} from 'react';
+import React, {useState} from 'react';
 import styled from 'styled-components';
 import classnames from 'classnames';
 import {DraggableAttributes} from '@dnd-kit/core';
@@ -12,9 +12,9 @@ import DropdownList from '../../../common/item-selector/dropdown-list';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {TimeLabelFormat, TooltipFields} from '@kepler.gl/types';
 import {getFormatValue, getFormatLabels} from '@kepler.gl/utils';
-import onClickOutside from 'react-onclickoutside';
 import TippyTooltip from '../../../common/tippy-tooltip';
 import {TooltipFormat} from '@kepler.gl/constants';
+import useOnClickOutside from '../../../hooks/use-on-click-outside';
 
 interface TooltipChickletProps {
   disabled: boolean;
@@ -131,142 +131,120 @@ function TooltipChickletFactory(
   onChange: (cfg: TooltipConfig) => void,
   fields: TooltipFields[],
   onDisplayFormatChange
-): ComponentType<TooltipChickletProps> {
-  class TooltipChicklet extends Component<TooltipChickletProps> {
-    state = {
-      show: false
-    };
-    private node!: HTMLDivElement | null;
+): React.FC<TooltipChickletProps> {
+  const TooltipChicklet: React.FC<TooltipChickletProps> = (props: TooltipChickletProps) => {
+    const {
+      disabled,
+      item,
+      displayOption,
+      remove,
+      attributes,
+      listeners,
+      setNodeRef,
+      transform,
+      transition,
+      isDragging
+    } = props;
 
-    componentDidMount() {
-      document.addEventListener('mousedown', this.handleClickOutside, false);
+    const [show, setShow] = useState(false);
+    const ref = useOnClickOutside<HTMLDivElement>(() => setShow(false));
+    // const {show} = this.state;
+    const tooltipField = config.fieldsToShow[dataId].find(
+      fieldToShow => fieldToShow.name === item.name
+    );
+    if (!tooltipField) {
+      return null;
     }
-
-    componentWillUnmount() {
-      document.removeEventListener('mousedown', this.handleClickOutside, false);
+    const field = fields.find(f => f.name === tooltipField.name);
+    if (!field) {
+      return null;
     }
+    const formatLabels = getFormatLabels(fields, tooltipField.name);
+    const hasFormat = Boolean(field.displayFormat);
+    const selectionIndex = formatLabels.findIndex(fl => getFormatValue(fl) === field.displayFormat);
+    const hashStyle = show ? hashStyles.SHOW : hasFormat ? hashStyles.ACTIVE : null;
 
-    handleClickOutside = (e: any) => {
-      if (this.node?.contains(e.target)) {
-        return;
-      }
-    };
-
-    render() {
-      const {
-        disabled,
-        item,
-        displayOption,
-        remove,
-        attributes,
-        listeners,
-        setNodeRef,
-        transform,
-        transition,
-        isDragging
-      } = this.props;
-
-      const {show} = this.state;
-      const tooltipField = config.fieldsToShow[dataId].find(
-        fieldToShow => fieldToShow.name === item.name
-      );
-      if (!tooltipField) {
-        return null;
-      }
-      const field = fields.find(f => f.name === tooltipField.name);
-      if (!field) {
-        return null;
-      }
-      const formatLabels = getFormatLabels(fields, tooltipField.name);
-      const hasFormat = Boolean(field.displayFormat);
-      const selectionIndex = formatLabels.findIndex(
-        fl => getFormatValue(fl) === field.displayFormat
-      );
-      const hashStyle = show ? hashStyles.SHOW : hasFormat ? hashStyles.ACTIVE : null;
-
-      return (
-        <SortableStyledItem
-          ref={setNodeRef}
-          className={classnames('sortable-layer-items', {sorting: isDragging})}
-          transform={CSS.Translate.toString(transform)}
-          transition={transition || ''}
-          {...attributes}
-        >
-          <ChickletButton ref={node => (this.node = node)}>
-            <StyledDragHandle {...listeners}>
-              <VertDots height="12px" />
-            </StyledDragHandle>
-            <StyledTag title={displayOption(item)}>{displayOption(item)}</StyledTag>
-            {formatLabels.length > 1 && (
-              <ChickletAddonWrapper>
-                <TippyTooltip
-                  placement="top"
-                  render={() => (
-                    <span>
-                      {hasFormat ? (
-                        getFormatTooltip(formatLabels, field.displayName)
-                      ) : (
-                        <FormattedMessage id={'fieldSelector.formatting'} />
-                      )}
-                    </span>
-                  )}
-                >
-                  <ChickletAddon>
-                    <IconDiv status={hashStyle}>
-                      <Hash
-                        height="8px"
-                        onClick={e => {
-                          e.stopPropagation();
-                          this.setState({show: Boolean(!show)});
-                        }}
-                      />
-                    </IconDiv>
-                  </ChickletAddon>
-                </TippyTooltip>
-                {show && (
-                  <StyledPopover>
-                    <DropdownList
-                      options={formatLabels}
-                      selectionIndex={selectionIndex}
-                      displayOption={option => (option as TooltipFormat).label}
-                      onOptionSelected={(result, e) => {
+    return (
+      <SortableStyledItem
+        ref={setNodeRef}
+        className={classnames('sortable-layer-items', {sorting: isDragging})}
+        transform={CSS.Translate.toString(transform)}
+        transition={transition || ''}
+        {...attributes}
+      >
+        <ChickletButton>
+          <StyledDragHandle {...listeners}>
+            <VertDots height="12px" />
+          </StyledDragHandle>
+          <StyledTag title={displayOption(item)}>{displayOption(item)}</StyledTag>
+          {formatLabels.length > 1 && (
+            <ChickletAddonWrapper>
+              <TippyTooltip
+                placement="top"
+                render={() => (
+                  <span>
+                    {hasFormat ? (
+                      getFormatTooltip(formatLabels, field.displayName)
+                    ) : (
+                      <FormattedMessage id={'fieldSelector.formatting'} />
+                    )}
+                  </span>
+                )}
+              >
+                <ChickletAddon>
+                  <IconDiv status={hashStyle}>
+                    <Hash
+                      height="8px"
+                      onClick={e => {
                         e.stopPropagation();
-                        this.setState({
-                          show: false
-                        });
-
-                        const displayFormat = getFormatValue(result);
-                        const oldFieldsToShow = config.fieldsToShow[dataId];
-                        const fieldsToShow = oldFieldsToShow.map(fieldToShow => {
-                          return fieldToShow.name === tooltipField.name
-                            ? {
-                                name: tooltipField.name,
-                                format: displayFormat
-                              }
-                            : fieldToShow;
-                        });
-                        const newConfig = {
-                          ...config,
-                          fieldsToShow: {
-                            ...config.fieldsToShow,
-                            [dataId]: fieldsToShow
-                          }
-                        };
-                        onChange(newConfig);
-                        onDisplayFormatChange(dataId, field.name, displayFormat);
+                        setShow(Boolean(!show));
                       }}
                     />
-                  </StyledPopover>
-                )}
-              </ChickletAddonWrapper>
-            )}
-            <Delete onClick={disabled ? null : remove} />
-          </ChickletButton>
-        </SortableStyledItem>
-      );
-    }
-  }
-  return onClickOutside(TooltipChicklet);
+                  </IconDiv>
+                </ChickletAddon>
+              </TippyTooltip>
+              {show && (
+                <StyledPopover ref={ref}>
+                  <DropdownList
+                    options={formatLabels}
+                    selectionIndex={selectionIndex}
+                    displayOption={option => (option as TooltipFormat).label}
+                    onOptionSelected={(result, e) => {
+                      e.stopPropagation();
+                      setShow(false);
+
+                      const displayFormat = getFormatValue(result);
+                      const oldFieldsToShow = config.fieldsToShow[dataId];
+                      const fieldsToShow = oldFieldsToShow.map(fieldToShow => {
+                        return fieldToShow.name === tooltipField.name
+                          ? {
+                              name: tooltipField.name,
+                              format: displayFormat
+                            }
+                          : fieldToShow;
+                      });
+                      const newConfig = {
+                        ...config,
+                        fieldsToShow: {
+                          ...config.fieldsToShow,
+                          [dataId]: fieldsToShow
+                        }
+                      };
+                      onChange(newConfig);
+                      onDisplayFormatChange(dataId, field.name, displayFormat);
+                    }}
+                  />
+                </StyledPopover>
+              )}
+            </ChickletAddonWrapper>
+          )}
+          <Delete onClick={disabled ? null : remove} />
+        </ChickletButton>
+      </SortableStyledItem>
+    );
+  };
+
+  return TooltipChicklet;
 }
 
 export default TooltipChickletFactory;

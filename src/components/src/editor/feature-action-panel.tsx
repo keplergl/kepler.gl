@@ -57,7 +57,7 @@ export function PureFeatureActionPanelFactory(): React.FC<FeatureActionPanelProp
     className,
     datasets,
     selectedFeature,
-    position,
+    position = null,
     layers,
     currentFilter,
     onToggleLayer,
@@ -157,10 +157,6 @@ export function PureFeatureActionPanelFactory(): React.FC<FeatureActionPanelProp
   };
 
   FeatureActionPanel.displayName = 'FeatureActionPanel';
-  FeatureActionPanel.defaultProps = {
-    position: null,
-    actionIcons: defaultActionIcons
-  };
 
   return FeatureActionPanel;
 }
