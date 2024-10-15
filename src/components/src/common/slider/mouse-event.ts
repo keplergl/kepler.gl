@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import document from 'global/document';
 import {
   RefObject,
-  TouchEvent,
+  TouchEvent as ReactTouchEvent,
   TouchEventHandler,
   MouseEventHandler as ReactMouseEventHandler,
-  MouseEvent
+  MouseEvent as ReactMouseEvent
 } from 'react';
 import {StyleRangeSliderType} from './slider';
 
@@ -44,7 +43,7 @@ export default class MouseEventHandler {
     this.setAnchor = setAnchor;
   }
 
-  handleMouseDown: ReactMouseEventHandler = (e: MouseEvent) => {
+  handleMouseDown: ReactMouseEventHandler = (e: ReactMouseEvent) => {
     document.addEventListener('mouseup', this.mouseup);
     document.addEventListener('mousemove', this.mousemove);
     if (this.setAnchor) {
@@ -54,11 +53,11 @@ export default class MouseEventHandler {
     this.toggleMouseOver();
   };
 
-  private getMousePos(e: MouseEvent) {
+  private getMousePos(e: ReactMouseEvent | MouseEvent) {
     return this.vertical ? e.clientY : e.clientX;
   }
 
-  private getTouchPosition(e: TouchEvent) {
+  private getTouchPosition(e: ReactTouchEvent | TouchEvent) {
     return this.vertical ? e.touches[0].clientY : e.touches[0].clientX;
   }
 
@@ -82,7 +81,7 @@ export default class MouseEventHandler {
     this.valueListener(this.getDistanceToTrack(pos));
   };
 
-  handleTouchStart: TouchEventHandler = (e: TouchEvent) => {
+  handleTouchStart: TouchEventHandler = (e: ReactTouchEvent) => {
     // TODO: fix touch event
     document.addEventListener('touchend', this.touchend);
     document.addEventListener('touchmove', this.touchmove);

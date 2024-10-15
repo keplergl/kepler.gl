@@ -4,7 +4,6 @@
 /* eslint-disable max-statements */
 import test from 'tape-catch';
 import sinon from 'sinon';
-import {console as Console} from 'global/window';
 
 import {drainTasksForTesting, succeedTaskInTest, errorTaskInTest} from 'react-palm/tasks';
 import CloneDeep from 'lodash.clonedeep';

@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {Component, CSSProperties, KeyboardEvent} from 'react';
+import React, {Component, CSSProperties} from 'react';
 import {createPortal} from 'react-dom';
 import styled from 'styled-components';
-import window from 'global/window';
 import classnames from 'classnames';
 import get from 'lodash.get';
 import {createSelector} from 'reselect';

@@ -4,7 +4,6 @@
 import React from 'react';
 import {act} from 'react-dom/test-utils';
 import test from 'tape-catch';
-import global from 'global';
 import sinon from 'sinon';
 import flatten from 'lodash.flattendeep';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
@@ -90,8 +89,8 @@ const texts = [
 ];
 const testColumns = ['_geojson', 'income level of people over 65', 'engagement'];
 const testColumnMeasure = [46, 159, 65];
-function mockCanvas(globalWindow) {
-  globalWindow.HTMLCanvasElement.prototype.getContext = function mockGetContext() {
+function mockCanvas() {
+  HTMLCanvasElement.prototype.getContext = function mockGetContext() {
     return {
       measureText: text => {
         const index = flatten(texts).indexOf(text);
@@ -110,12 +109,12 @@ function mockCanvas(globalWindow) {
 
 let oldGetContext;
 function prepareMockCanvas() {
-  oldGetContext = global.window.HTMLCanvasElement.prototype.getContext;
-  mockCanvas(global.window);
+  oldGetContext = HTMLCanvasElement.prototype.getContext;
+  mockCanvas();
 }
 
 function restoreMockCanvas() {
-  global.window.HTMLCanvasElement.prototype.getContext = oldGetContext;
+  HTMLCanvasElement.prototype.getContext = oldGetContext;
 }
 
 // eslint-disable-next-line max-statements

@@ -2,7 +2,6 @@
 // Copyright contributors to the kepler.gl project
 
 import {WebMercatorViewport} from '@deck.gl/core';
-import Console from 'global/console';
 import {Centroid} from '@kepler.gl/utils';
 
 export function hexagonToPolygonGeo(object, properties, radius, mapState) {
@@ -15,7 +14,7 @@ export function hexagonToPolygonGeo(object, properties, radius, mapState) {
   const {unitsPerMeter} = viewport.getDistanceScales(object.position);
 
   if (!Array.isArray(unitsPerMeter)) {
-    Console.warn(`unitsPerMeter is undefined`);
+    console.warn(`unitsPerMeter is undefined`);
     return null;
   }
 

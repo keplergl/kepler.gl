@@ -6,7 +6,6 @@
  * For React 16.8 compatibility
  */
 import React, {ReactNode} from 'react';
-import window from 'global/window';
 
 export type FileDropProps = {
   dropEffect?: 'copy' | 'move' | 'link' | 'none';
@@ -29,10 +28,8 @@ export type FileDropProps = {
 /** @augments React.PureComponent<FileDropProps> */
 class FileDrop extends React.PureComponent<FileDropProps> {
   static isIE = () =>
-    window &&
-    window.navigator &&
-    ((window.navigator.userAgent || []).includes('MSIE') ||
-      (window.navigator.appVersion || []).includes('Trident/'));
+    window?.navigator?.userAgent?.includes('MSIE') ||
+    window?.navigator?.appVersion?.includes('Trident/');
 
   static eventHasFiles = event => {
     // In most browsers this is an array, but in IE11 it's an Object :(

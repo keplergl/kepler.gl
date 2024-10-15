@@ -7,7 +7,6 @@ import React from 'react';
 import {gl} from '@deck.gl/test-utils';
 import sinon from 'sinon';
 import {mount} from 'enzyme';
-import {console as Console} from 'global/window';
 import cloneDeep from 'lodash.clonedeep';
 
 import {

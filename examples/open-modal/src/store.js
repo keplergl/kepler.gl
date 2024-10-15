@@ -5,7 +5,6 @@ import {createStore, combineReducers, applyMiddleware, compose} from 'redux';
 import keplerGlReducer, {enhanceReduxMiddleware} from '@kepler.gl/reducers';
 
 import appReducer from './app-reducer';
-import window from 'global/window';
 
 const reducers = combineReducers({
   keplerGl: keplerGlReducer,

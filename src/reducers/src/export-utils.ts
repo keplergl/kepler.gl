@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {Blob} from 'global/window';
 import {csvFormatRows} from 'd3-dsv';
 
 import {EXPORT_DATA_TYPE} from '@kepler.gl/constants';

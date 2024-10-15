@@ -2,7 +2,6 @@
 // Copyright contributors to the kepler.gl project
 
 import {OAuthApp} from '@carto/toolkit';
-import Console from 'global/console';
 import CartoIcon from './carto-icon';
 import {Provider} from '@kepler.gl/cloud-providers';
 import {createDataContainer} from '@kepler.gl/utils';
@@ -343,33 +342,33 @@ export default class CartoProvider extends Provider {
 
       switch (error.message) {
         case 'No client ID has been specified':
-          Console.error('No ClientID set for CARTO provider');
+          console.error('No ClientID set for CARTO provider');
           break;
         case 'Cannot set the client ID more than once':
-          Console.error('CARTO provider already initialized');
+          console.error('CARTO provider already initialized');
           break;
         case (error.message.match(/relation "[a-zA-Z0-9_]+" does not exist/) || {}).input:
-          Console.error('CARTO custom storage is not properly initialized');
+          console.error('CARTO custom storage is not properly initialized');
           message = 'Custom storage is not properly initialized';
           break;
         case (
           error.message.match(/Failed to copy to keplergl_[a-zA-Z0-9_]+: Too many retries/) || {}
         ).input:
-          Console.error('CARTO Rate limit exceeded');
+          console.error('CARTO Rate limit exceeded');
           message =
             "Failed to upload. You've exceeded the number of datasets allowed with your plan. Consider upgrading your plan.";
           break;
         case (error.message.match(/[a-zA-Z0-9_\s:]+: DB Quota exceeded/) || {}).input:
-          Console.error('CARTO DB Quota exceeded');
+          console.error('CARTO DB Quota exceeded');
           message =
             "Failed to upload. You've exceeded your account's disk storage limit. Consider upgrading your plan.";
           break;
         default:
-          Console.error(`CARTO provider: ${message}`);
+          console.error(`CARTO provider: ${message}`);
       }
     } else {
       message = 'General error in CARTO provider';
-      Console.error(message);
+      console.error(message);
     }
 
     // Use 'CARTO' as error code in order to show provider in notifications

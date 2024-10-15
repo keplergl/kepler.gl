@@ -4,7 +4,6 @@
 // Forked from uber-licence, MIT
 
 import {readFileSync, writeFileSync} from 'fs';
-import console from 'global/console.js';
 
 function LicenseFixer(options) {
     options = options || {};

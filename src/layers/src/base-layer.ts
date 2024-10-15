@@ -2,7 +2,6 @@
 // Copyright contributors to the kepler.gl project
 
 import React from 'react';
-import {console as Console} from 'global/window';
 import keymirror from 'keymirror';
 import {DataFilterExtension} from '@deck.gl/extensions';
 import {COORDINATE_SYSTEM} from '@deck.gl/core';
@@ -1072,7 +1071,7 @@ class Layer {
         }
 
         if (!attributeAccessors[accessor]) {
-          Console.warn(`Failed to provide accessor function for ${accessor || channel}`);
+          console.warn(`Failed to provide accessor function for ${accessor || channel}`);
         }
       }
     });

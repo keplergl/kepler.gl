@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import window from 'global/window';
 import {BrushingExtension} from '@deck.gl/extensions';
 import GL from '@luma.gl/constants';
 
@@ -198,7 +197,7 @@ export default class IconLayer extends Layer {
   }
 
   getSvgIcons() {
-    const fetchConfig = {
+    const fetchConfig: RequestInit = {
       method: 'GET',
       mode: 'cors',
       cache: 'no-cache'

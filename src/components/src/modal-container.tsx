@@ -4,7 +4,6 @@
 import React, {Component} from 'react';
 import {css} from 'styled-components';
 import get from 'lodash.get';
-import document from 'global/document';
 
 import ModalDialogFactory from './modals/modal-dialog';
 import {exportHtml, exportMap, exportJson, exportImage} from '@kepler.gl/utils';

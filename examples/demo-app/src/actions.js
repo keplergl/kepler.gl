@@ -2,7 +2,6 @@
 // Copyright contributors to the kepler.gl project
 
 import {push} from 'react-router-redux';
-import {fetch} from 'global';
 
 import {loadFiles, toggleModal} from '@kepler.gl/actions';
 import {load} from '@loaders.gl/core';

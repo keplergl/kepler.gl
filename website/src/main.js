@@ -9,7 +9,6 @@ import ReactDOM from 'react-dom/client';
 import {Provider} from 'react-redux';
 import store from './reducers';
 import Routes from './routes';
-import document from 'global/document';
 
 require('./static/favicon.png');
 

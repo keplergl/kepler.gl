@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import document from 'global/document';
 import {DataContainerInterface, parseFieldValue} from '@kepler.gl/utils';
 
 const MIN_GHOST_CELL_SIZE = 200;
@@ -60,7 +59,7 @@ export function renderedSize({
 
   const textCanvas = document.createElement('canvas');
   document.body.appendChild(textCanvas);
-  const context = textCanvas.getContext('2d');
+  const context = textCanvas.getContext('2d')!;
   context.font = [fontSize, font].join('px ');
 
   let rowsToSample = [...Array(numRowsToCalculate)].map(() =>
@@ -95,7 +94,7 @@ export function renderedSize({
   const clampedHeaderWidth = clamp(minHeaderWidth, maxHeaderSize, headerWidth);
 
   // cleanup
-  textCanvas.parentElement.removeChild(textCanvas);
+  textCanvas.parentElement!.removeChild(textCanvas);
 
   return {
     row: clampedRowWidth,

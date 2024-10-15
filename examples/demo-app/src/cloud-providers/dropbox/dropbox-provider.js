@@ -3,7 +3,6 @@
 
 // DROPBOX
 import {Dropbox} from 'dropbox';
-import window from 'global/window';
 import DropboxIcon from './dropbox-icon';
 import {MAP_URI} from '../../constants/default-settings';
 import {KEPLER_FORMAT, Provider} from '@kepler.gl/cloud-providers';

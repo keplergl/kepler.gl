@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {Blob, URL, atob, Uint8Array, ArrayBuffer, document} from 'global/window';
 import get from 'lodash.get';
 
 import {
@@ -71,7 +70,7 @@ export function calculateExportImageSize({
 }
 
 export function convertToPng(sourceElem: HTMLElement, options) {
-  return domtoimage.toPng(sourceElem, options);
+  return domtoimage.toSvg(sourceElem, options);
 }
 
 export function dataURItoBlob(dataURI: string): Blob {
