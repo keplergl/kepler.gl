@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {ascending, extent, histogram as d3Histogram, ticks} from 'd3-array';
 import keyMirror from 'keymirror';
-import Console from 'global/console';
 import get from 'lodash.get';
 import isEqual from 'lodash.isequal';
+import {ascending, extent} from 'd3-array';
 
 import booleanWithin from '@turf/boolean-within';
 import {point as turfPoint} from '@turf/helpers';
@@ -23,7 +22,6 @@ import * as ScaleUtils from './data-scale-utils';
 import {h3IsValid} from 'h3-js';
 
 import {
-  Millisecond,
   Entries,
   Field,
   ParsedFilter,
@@ -32,10 +30,10 @@ import {
   PolygonFilter,
   FieldDomain,
   TimeRangeFieldDomain,
-  HistogramBin,
   Feature,
   FeatureValue,
   LineChart,
+  RangeFilter,
   TimeRangeFilter,
   RangeFieldDomain,
   FilterDatasetOpt,
@@ -46,6 +44,7 @@ import {DataContainerInterface} from './data-container-interface';
 import {generateHashId, set, toArray} from './utils';
 import {notNullorUndefined, timeToUnixMilli, unique} from './data-utils';
 import {getCentroid} from './h3-utils';
+import {updateTimeFilterPlotType, updateRangeFilterPlotType} from './plot';
 
 export const durationSecond = 1000;
 export const durationMinute = durationSecond * 60;
@@ -78,34 +77,11 @@ export const TimestampStepMap = [
   {max: Number.POSITIVE_INFINITY, step: 1000}
 ];
 
-export const histogramBins = 30;
-export const enlargedHistogramBins = 100;
-
 export const FILTER_UPDATER_PROPS = keyMirror({
   dataId: null,
   name: null,
   layerId: null
 });
-
-export const LIMITED_FILTER_EFFECT_PROPS = keyMirror({
-  [FILTER_UPDATER_PROPS.name]: null
-});
-/**
- * Max number of filter value buffers that deck.gl provides
- */
-
-const SupportedPlotType = {
-  [FILTER_TYPES.timeRange]: {
-    default: 'histogram',
-    [ALL_FIELD_TYPES.integer]: 'lineChart',
-    [ALL_FIELD_TYPES.real]: 'lineChart'
-  },
-  [FILTER_TYPES.range]: {
-    default: 'histogram',
-    [ALL_FIELD_TYPES.integer]: 'lineChart',
-    [ALL_FIELD_TYPES.real]: 'lineChart'
-  }
-};
 
 export const FILTER_COMPONENTS = {
   [FILTER_TYPES.select]: 'SingleSelectFilter',
@@ -117,7 +93,6 @@ export const FILTER_COMPONENTS = {
 
 export const DEFAULT_FILTER_STRUCTURE = {
   dataId: [], // [string]
-  freeze: false,
   id: null,
   enabled: true,
 
@@ -136,9 +111,10 @@ export const DEFAULT_FILTER_STRUCTURE = {
   value: null,
 
   // plot
-  plotType: PLOT_TYPES.histogram,
+  plotType: {
+    type: PLOT_TYPES.histogram
+  },
   yAxis: null,
-  interval: null,
 
   // mode
   gpu: false
@@ -230,7 +206,6 @@ export function validatePolygonFilter<K extends KeplerTableModel<K, L>, L extend
   return {
     filter: {
       ...filter,
-      freeze: true,
       fieldIdx: []
     },
     dataset
@@ -299,8 +274,7 @@ export function validateFilter<K extends KeplerTableModel<K, L>, L>(
 }
 
 /**
- * Validate saved filter config with new data,
- * calculate domain and fieldIdx based new fields and data
+ * Validate saved filter config with new data
  *
  * @param dataset
  * @param filter - filter to be validate
@@ -335,8 +309,7 @@ function validateFilterYAxis(filter, dataset) {
     filter = matchedAxis
       ? {
           ...filter,
-          yAxis: matchedAxis,
-          ...getFilterPlot({...filter, yAxis: matchedAxis}, dataset)
+          yAxis: matchedAxis
         }
       : filter;
   }
@@ -400,7 +373,8 @@ export function getFilterProps(
         view: FILTER_VIEW_TYPES.enlarged,
         fixedDomain: true,
         value: filterProps.domain,
-        gpu: true
+        gpu: true,
+        plotType: {}
       };
 
     default:
@@ -639,6 +613,7 @@ export function diffFilters(
 
   return {...{dynamicDomain: null, fixedDomain: null, cpu: null, gpu: null}, ...filterChanged};
 }
+
 /**
  * Call by parsing filters from URL
  * Check if value of filter within filter domain, if not adjust it to match
@@ -682,7 +657,6 @@ export function adjustValueToFilterDomain(value: Filter['value'], {domain, type}
       return null;
   }
 }
-/* eslint-enable complexity */
 
 /**
  * Calculate numeric domain and suitable step
@@ -710,9 +684,7 @@ export function getNumericFieldDomain(
     domain[1] = formatNumberByStep(domain[1], step, 'ceil');
   }
 
-  const {histogram, enlargedHistogram} = getHistogram(domain, mappedValue);
-
-  return {domain, step, histogram, enlargedHistogram};
+  return {domain, step};
 }
 
 /**
@@ -753,8 +725,8 @@ export function getTimestampFieldDomain(
 ): TimeRangeFieldDomain {
   // to avoid converting string format time to epoch
   // every time we compare we store a value mapped to int in filter domain
-
   const mappedValue = dataContainer.mapIndex(valueAccessor);
+
   const domain = ScaleUtils.getLinearDomain(mappedValue);
   const defaultTimeFormat = getTimeWidgetTitleFormatter(domain);
 
@@ -770,44 +742,12 @@ export function getTimestampFieldDomain(
     step = entry.step;
   }
 
-  const {histogram, enlargedHistogram} = getHistogram(domain, mappedValue);
-
   return {
     domain,
     step,
     mappedValue,
-    histogram,
-    enlargedHistogram,
     defaultTimeFormat
   };
-}
-
-export function histogramConstruct(
-  domain: [number, number],
-  mappedValue: (Millisecond | number)[],
-  bins: number
-): HistogramBin[] {
-  return d3Histogram()
-    .thresholds(ticks(domain[0], domain[1], bins))
-    .domain(domain)(mappedValue)
-    .map(bin => ({
-      count: bin.length,
-      bin,
-      x0: bin.x0,
-      x1: bin.x1
-    }));
-}
-/**
- * Calculate histogram from domain and array of values
- */
-export function getHistogram(
-  domain: [number, number],
-  mappedValue: (Millisecond | number)[]
-): {histogram: HistogramBin[]; enlargedHistogram: HistogramBin[]} {
-  const histogram = histogramConstruct(domain, mappedValue, histogramBins);
-  const enlargedHistogram = histogramConstruct(domain, mappedValue, enlargedHistogramBins);
-
-  return {histogram, enlargedHistogram};
 }
 
 /**
@@ -902,7 +842,7 @@ export function getColumnFilterProps<K extends KeplerTableModel<K, L>, L>(
   filter: Filter,
   dataset: K
 ): {lineChart: LineChart; yAxs: Field} | Record<string, any> {
-  if (filter.plotType === PLOT_TYPES.histogram || !filter.yAxis) {
+  if (filter.plotType?.type === PLOT_TYPES.histogram || !filter.yAxis) {
     // histogram should be calculated when create filter
     return {};
   }
@@ -911,8 +851,8 @@ export function getColumnFilterProps<K extends KeplerTableModel<K, L>, L>(
   const {yAxis} = filter;
   const fieldIdx = dataset.getColumnFieldIdx(yAxis.name);
   if (fieldIdx < 0) {
-    Console.warn(`yAxis ${yAxis.name} does not exist in dataset`);
-    return {};
+    // Console.warn(`yAxis ${yAxis.name} does not exist in dataset`);
+    return {lineChart: {}, yAxis};
   }
 
   // return lineChart
@@ -933,18 +873,21 @@ export function getColumnFilterProps<K extends KeplerTableModel<K, L>, L>(
   return {lineChart: {series, yDomain, xDomain}, yAxis};
 }
 
-export function getDefaultFilterPlotType(filter: Filter): string | null {
-  const filterPlotTypes: (typeof SupportedPlotType)[keyof typeof SupportedPlotType] | null =
-    filter.type && SupportedPlotType[filter.type];
-  if (!filterPlotTypes) {
-    return null;
+export function updateFilterPlot<K extends KeplerTableModel<K, any>>(
+  datasets: {[id: string]: K},
+  filter: Filter,
+  dataId: string | undefined = undefined
+) {
+  if (dataId) {
+    filter = removeFilterPlot(filter, dataId);
   }
 
-  if (!filter.yAxis) {
-    return filterPlotTypes.default;
+  if (filter.type === FILTER_TYPES.timeRange) {
+    return updateTimeFilterPlotType(filter as TimeRangeFilter, filter.plotType, datasets);
+  } else if (filter.type === FILTER_TYPES.range) {
+    return updateRangeFilterPlotType(filter as RangeFilter, filter.plotType, datasets);
   }
-
-  return filterPlotTypes[filter.yAxis.type] || null;
+  return filter;
 }
 
 /**
@@ -977,7 +920,7 @@ export function applyFiltersToDatasets<
 }
 
 /**
- * Applies a new field name value to fielter and update both filter and dataset
+ * Applies a new field name value to filter and update both filter and dataset
  * @param filter - to be applied the new field name on
  * @param dataset - dataset the field belongs to
  * @param fieldName - field.name
@@ -1011,15 +954,24 @@ export function applyFilterFieldName<K extends KeplerTableModel<K, L>, L>(
   // TODO: validate field type
   const filterProps = dataset.getColumnFilterProps(fieldName);
 
-  const newFilter = {
+  let newFilter = {
     ...(mergeDomain ? mergeFilterDomainStep(filter, filterProps) : {...filter, ...filterProps}),
     name: Object.assign([...toArray(filter.name)], {[filterDatasetIndex]: fieldName}),
     fieldIdx: Object.assign([...toArray(filter.fieldIdx)], {
       [filterDatasetIndex]: fieldIndex
     }),
-    // TODO, since we allow to add multiple fields to a filter we can no longer freeze the filter
-    freeze: true
+    // Make sure plotType is not overwritten by the default empty plotType
+    ...(filter.plotType ? {plotType: filter.plotType} : {})
   };
+
+  // TODO: if we don't set filter value in filterProps, we don't need to do this
+  if (filterDatasetIndex > 0) {
+    // don't reset the filter value if we are just adding a synced dataset
+    newFilter = {
+      ...newFilter,
+      value: filter.value
+    };
+  }
 
   return {
     filter: newFilter,
@@ -1047,14 +999,15 @@ export function mergeFilterDomainStep(
     return filter;
   }
 
-  const combinedDomain = !filter.domain
+  const sortedDomain = !filter.domain
     ? filterProps.domain
     : [...(filter.domain || []), ...(filterProps.domain || [])].sort((a, b) => a - b);
 
   const newFilter = {
     ...filter,
     ...filterProps,
-    domain: [combinedDomain[0], combinedDomain[combinedDomain.length - 1]]
+    // use min max as default domain
+    domain: [sortedDomain[0], sortedDomain[sortedDomain.length - 1]]
   };
 
   switch (filterProps.fieldType) {
@@ -1062,7 +1015,7 @@ export function mergeFilterDomainStep(
     case ALL_FIELD_TYPES.date:
       return {
         ...newFilter,
-        domain: unique(combinedDomain).sort()
+        domain: unique(sortedDomain)
       };
 
     case ALL_FIELD_TYPES.timestamp: {
@@ -1171,19 +1124,15 @@ export function validateFiltersUpdateDatasets<
   let updatedDatasets = datasets;
 
   // merge filters
-  filtersToValidate.forEach(filter => {
+  filtersToValidate.forEach(filterToValidate => {
     // we can only look for datasets define in the filter dataId
-    const datasetIds = toArray(filter.dataId);
+    const datasetIds = toArray(filterToValidate.dataId);
 
     // we can merge a filter only if all datasets in filter.dataId are loaded
     if (datasetIds.every(d => datasets[d] && !state.isMergingDatasets[d])) {
       // all datasetIds in filter must be present the state datasets
-      const {
-        filter: validatedFilter,
-        applyToDatasets,
-        augmentedDatasets
-      } = datasetIds.reduce<{
-        filter: Filter | null;
+      const {validatedFilter, applyToDatasets, augmentedDatasets} = datasetIds.reduce<{
+        validatedFilter: Filter | null;
         applyToDatasets: string[];
         augmentedDatasets: {[datasetId: string]: any};
       }>(
@@ -1192,21 +1141,14 @@ export function validateFiltersUpdateDatasets<
           const layers = state.layers.filter(l => l.config.dataId === dataset.id);
           const {filter: updatedFilter, dataset: updatedDataset} = validateFilterWithData(
             acc.augmentedDatasets[datasetId] || dataset,
-            filter,
+            acc.validatedFilter || filterToValidate,
             layers
           );
 
           if (updatedFilter) {
+            // merge filter domain step
             return {
-              ...acc,
-              // merge filter props
-              filter: acc.filter
-                ? {
-                    ...acc.filter,
-                    // TODO check: changed from acc to acc.filter to fix types
-                    ...mergeFilterDomainStep(acc.filter, updatedFilter)
-                  }
-                : updatedFilter,
+              validatedFilter: updatedFilter,
 
               applyToDatasets: [...acc.applyToDatasets, datasetId],
 
@@ -1220,75 +1162,51 @@ export function validateFiltersUpdateDatasets<
           return acc;
         },
         {
-          filter: null,
+          validatedFilter: null,
           applyToDatasets: [],
           augmentedDatasets: {}
         }
       );
 
       if (validatedFilter && isEqual(datasetIds, applyToDatasets)) {
-        validated.push(validatedFilter);
+        validated.push(updateFilterPlot(datasets, validatedFilter));
         updatedDatasets = {
           ...updatedDatasets,
           ...augmentedDatasets
         };
       } else {
-        failed.push(filter);
+        failed.push(filterToValidate);
       }
     } else {
-      failed.push(filter);
+      failed.push(filterToValidate);
     }
   });
 
   return {validated, failed, updatedDatasets};
 }
 
-export function getFilterPlot<K extends KeplerTableModel<K, L>, L>(
-  filter: Filter,
-  dataset: K
-): {lineChart: LineChart; yAxs: Field} | Record<string, any> {
-  if (filter.plotType === PLOT_TYPES.histogram || !filter.yAxis) {
-    // histogram should be calculated when create filter
-    return {};
+export function removeFilterPlot(filter: Filter, dataId: string) {
+  let nextFilter = filter;
+
+  const rangeFilter = filter as RangeFilter;
+  if (rangeFilter.bins && rangeFilter.bins[dataId]) {
+    const {[dataId]: _delete, ...nextBins} = rangeFilter.bins;
+    nextFilter = {
+      ...rangeFilter,
+      bins: nextBins
+    };
   }
 
-  const {mappedValue = []} = filter;
-  const {yAxis} = filter;
-  const fieldIdx = dataset.getColumnFieldIdx(yAxis.name);
-  if (fieldIdx < 0) {
-    Console.warn(`yAxis ${yAxis.name} does not exist in dataset`);
-    return {lineChart: {}, yAxis};
+  const timeFilter = filter as TimeRangeFilter;
+  if (timeFilter.timeBins && timeFilter.timeBins[dataId]) {
+    const {[dataId]: __delete, ...nextTimeBins} = timeFilter.timeBins;
+    nextFilter = {
+      ...nextFilter,
+      timeBins: nextTimeBins
+    } as Filter;
   }
 
-  // return lineChart
-  const series = dataset.dataContainer
-    .map(
-      (row, rowIndex) => ({
-        x: mappedValue[rowIndex],
-        y: row.valueAt(fieldIdx)
-      }),
-      true
-    )
-    .filter(({x, y}) => Number.isFinite(x) && Number.isFinite(y))
-    .sort((a, b) => ascending(a.x, b.x));
-
-  const yDomain = extent(series, d => d.y);
-  const xDomain = [series[0].x, series[series.length - 1].x];
-
-  return {lineChart: {series, yDomain, xDomain}, yAxis};
-}
-
-/**
- * Retrieve interval bins for time filter
- */
-export function getIntervalBins(filter: TimeRangeFilter) {
-  const {bins} = filter;
-  const interval = filter.plotType?.interval;
-  if (!interval || !bins || Object.keys(bins).length === 0) {
-    return null;
-  }
-  const values = Object.values(bins);
-  return values[0] ? values[0][interval] : null;
+  return nextFilter;
 }
 
 export function isValidTimeDomain(domain) {

@@ -38,7 +38,7 @@ function NewFilterPanelFactory(
       );
 
       const onSourceDataSelector = useCallback(
-        value => setFilter(idx, 'dataId', value),
+        value => setFilter(idx, 'dataId', value, 0),
         [idx, setFilter]
       );
 
@@ -64,7 +64,6 @@ function NewFilterPanelFactory(
               <SourceDataSelector
                 inputTheme="secondary"
                 datasets={datasets}
-                disabled={filter.freeze}
                 dataId={filter.dataId}
                 onSelect={onSourceDataSelector}
               />

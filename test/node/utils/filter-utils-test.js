@@ -15,7 +15,6 @@ import {
   generatePolygonFilter,
   isInPolygon,
   diffFilters,
-  getHistogram,
   getTimestampFieldDomain,
   createDataContainer
 } from '@kepler.gl/utils';
@@ -301,8 +300,7 @@ test('filterUtils -> validatePolygonFilter', t => {
     validatePolygonFilter(dataset, filter, layers).filter,
     {
       ...filter,
-      fieldIdx: [],
-      freeze: true
+      fieldIdx: []
     },
     'Should positively validate filter'
   );
@@ -463,8 +461,6 @@ test('filterUtils -> getTimestampFieldDomain', t => {
       expect: {
         domain: [1475315139000, 1475315140000],
         mappedValue: [1475315139000, 1475315139000],
-        histogram: [{count: 2, x0: 1475315139000, x1: 1475315139000}],
-        enlargedHistogram: [{count: 2, x0: 1475315139000, x1: 1475315139000}],
         step: 0.05,
         defaultTimeFormat: 'L LTS'
       }
@@ -474,10 +470,6 @@ test('filterUtils -> getTimestampFieldDomain', t => {
       expect: {
         domain: [1475315139001, 1475315139003],
         mappedValue: [1475315139001, 1475315139002, 1475315139003],
-        ...getHistogram(
-          [1475315139001, 1475315139003],
-          [1475315139001, 1475315139002, 1475315139003]
-        ),
         step: 0.1,
         defaultTimeFormat: 'L LTS'
       }
@@ -487,8 +479,6 @@ test('filterUtils -> getTimestampFieldDomain', t => {
       expect: {
         domain: [1475315139010, 1475315139030],
         mappedValue: [1475315139010, 1475315139020, 1475315139030],
-        histogram: [],
-        enlargedHistogram: [],
         step: 1,
         defaultTimeFormat: 'L LTS'
       }
@@ -498,8 +488,6 @@ test('filterUtils -> getTimestampFieldDomain', t => {
       expect: {
         domain: [1475315139100, 1475315139300],
         mappedValue: [1475315139100, 1475315139200, 1475315139300],
-        histogram: [],
-        enlargedHistogram: [],
         step: 5,
         defaultTimeFormat: 'L LTS'
       }
@@ -509,8 +497,6 @@ test('filterUtils -> getTimestampFieldDomain', t => {
       expect: {
         domain: [1475315139000, 1475315145000],
         mappedValue: [1475315139000, 1475315145000],
-        histogram: [],
-        enlargedHistogram: [],
         step: 1000,
         defaultTimeFormat: 'L LTS'
       }
@@ -530,15 +516,7 @@ test('filterUtils -> getTimestampFieldDomain', t => {
 
     Object.keys(timeData[key].expect).forEach(k => {
       // histogram is created by d3, only need to test they exist
-      if (k === 'histogram' || k === 'enlargedHistogram') {
-        t.ok(tsFieldDomain[k].length, `should create ${k}`);
-      } else {
-        t.deepEqual(
-          tsFieldDomain[k],
-          timeData[key].expect[k],
-          `time domain ${k} should be the same`
-        );
-      }
+      t.deepEqual(tsFieldDomain[k], timeData[key].expect[k], `time domain ${k} should be the same`);
     });
   });
 

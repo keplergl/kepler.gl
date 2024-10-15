@@ -39,6 +39,7 @@ const LoadingWrapper = styled.div<LoadingWrapperProps>`
 interface LoadingSpinnerProps {
   size?: number;
   color?: string;
+  borderColor?: string;
   strokeWidth?: number;
   gap?: number;
 }
@@ -46,10 +47,13 @@ interface LoadingSpinnerProps {
 const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
   size = 32,
   color = '',
+  borderColor = '',
   strokeWidth = 3,
   gap = 2
 }) => (
-  <LoadingWrapper style={{width: `${size}px`, height: `${size}px`, padding: `${gap}px`}}>
+  <LoadingWrapper
+    style={{width: `${size}px`, height: `${size}px`, padding: `${gap}px`, borderColor}}
+  >
     <Loader
       color={color}
       style={{

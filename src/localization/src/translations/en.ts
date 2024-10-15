@@ -194,7 +194,9 @@ export default {
     howTo: 'How to'
   },
   filterManager: {
-    addFilter: 'Add Filter'
+    addFilter: 'Add Filter',
+    timeFilterSync: 'Sync with…',
+    column: 'Column'
   },
   datasetTitle: {
     showDataTable: 'Show data table',
@@ -228,6 +230,7 @@ export default {
     removeBaseMapStyle: 'Remove base map style',
     delete: 'Delete',
     timePlayback: 'Time Playback',
+    timeFilterSync: 'Sync with a column from another dataset',
     cloudStorage: 'Cloud Storage',
     '3DMap': '3D Map',
     animationByWindow: 'Moving Time Window',

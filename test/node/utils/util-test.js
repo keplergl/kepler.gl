@@ -2,15 +2,8 @@
 // Copyright contributors to the kepler.gl project
 
 import test from 'tape';
-import {
-  set,
-  toArray,
-  getError,
-  camelToTitle,
-  camelize,
-  capitalizeFirstLetter,
-  arrayInsert
-} from '@kepler.gl/utils';
+import {set, toArray, getError, camelToTitle, camelize, arrayInsert} from '@kepler.gl/utils';
+import {capitalizeFirstLetter} from '@kepler.gl/utils';
 
 test('Utils -> set', t => {
   const obj1 = {map: {map1: 'world'}};

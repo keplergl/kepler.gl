@@ -96,7 +96,7 @@ export function notNullorUndefined<T extends NonNullable<any>>(d: T | null | und
 /**
  * Whether d is a number, this filtered out NaN as well
  */
-export function isNumber(d: any): boolean {
+export function isNumber(d: unknown): d is number {
   return Number.isFinite(d);
 }
 
@@ -426,4 +426,8 @@ export function datetimeFormatter(
     ? format => ts => moment.utc(ts).tz(timezone).format(format)
     : // return empty string instead of 'Invalid date' if ts is undefined/null
       format => ts => ts ? moment.utc(ts).format(format) : '';
+}
+
+export function notNullOrUndefined(d: any): boolean {
+  return d !== undefined && d !== null;
 }

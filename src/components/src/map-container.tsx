@@ -335,14 +335,14 @@ export default function MapContainerFactory(
       primary: true
     };
 
+    constructor(props) {
+      super(props);
+    }
+
     state = {
       // Determines whether attribution should be visible based the result of loading the map style
       showMapboxAttribution: true
     };
-
-    constructor(props) {
-      super(props);
-    }
 
     componentDidMount() {
       if (!this._ref.current) {
