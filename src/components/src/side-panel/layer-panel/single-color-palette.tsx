@@ -58,6 +58,8 @@ const ColorPickerTop = ({setMode, mode}) => (
     ))}
   </StyledColorPickerTop>
 );
+
+// eslint-disable-next-line @typescript-eslint/no-empty-function
 const nop = () => {};
 
 const SingleColorPalette: React.FC<SingleColorPaletteProps> = ({
