@@ -429,6 +429,24 @@ export default class GeoJsonLayer extends Layer {
     return null;
   }
 
+  getFilteredItemCount() {
+    // return -polygons-fill or -polygons-stroke
+    // + -linestrings
+    // + -points-circle
+    if (Object.keys(this.filteredItemCount).length) {
+      const polygonCount =
+        this.filteredItemCount[`${this.id}-polygons-fill`] ||
+        this.filteredItemCount[`${this.id}-polygons-stroke`] ||
+        0;
+      const linestringCount = this.filteredItemCount[`${this.id}-linestrings`] || 0;
+      const pointCount = this.filteredItemCount[`${this.id}-points-circle`] || 0;
+
+      return polygonCount + linestringCount + pointCount;
+    }
+
+    return null;
+  }
+
   calculateDataAttribute(dataset: KeplerTable) {
     const {dataContainer, filteredIndex} = dataset;
     if (dataContainer instanceof ArrowDataContainer) {

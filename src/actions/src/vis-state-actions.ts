@@ -1528,6 +1528,32 @@ export function setFilterAnimationTimeConfig(
   };
 }
 
+export type LayerFilteredItemsChangeAction = {
+  event: {
+    id: string;
+    count: number;
+  };
+  layer: Layer;
+};
+
+/**
+ * deck.gl layer gpu filter callback
+ * @memberof visStateActions
+ * @param layer
+ * @param event
+ * @return action
+ */
+export function layerFilteredItemsChange(
+  layer: LayerFilteredItemsChangeAction['layer'],
+  event: LayerFilteredItemsChangeAction['event']
+): Merge<LayerFilteredItemsChangeAction, {type: typeof ActionTypes.LAYER_FILTERED_ITEMS_CHANGE}> {
+  return {
+    type: ActionTypes.LAYER_FILTERED_ITEMS_CHANGE,
+    layer,
+    event
+  };
+}
+
 /**
  * This declaration is needed to group actions in docs
  */

@@ -3419,6 +3419,7 @@ test('#visStateReducer -> REMOVE_DATASET w filter and layer', t => {
   const oldState = CloneDeep(StateWFilters.visState);
 
   const expectedState = {
+    ...oldState,
     layers: [oldState.layers[1]],
     filters: [oldState.filters[1]],
     layerData: [oldState.layerData[1]],
@@ -3430,6 +3431,7 @@ test('#visStateReducer -> REMOVE_DATASET w filter and layer', t => {
     effectOrder: [],
 
     interactionConfig: {
+      ...oldState.interactionConfig,
       tooltip: {
         id: 'tooltip',
         label: 'interactions.tooltip',
@@ -3462,38 +3464,8 @@ test('#visStateReducer -> REMOVE_DATASET w filter and layer', t => {
             ]
           }
         }
-      },
-      brush: oldState.interactionConfig.brush,
-      coordinate: oldState.interactionConfig.coordinate,
-      geocoder: oldState.interactionConfig.geocoder
-    },
-    editingDataset: oldState.editingDataset,
-    layerBlending: oldState.layerBlending,
-    overlayBlending: oldState.overlayBlending,
-    hoverInfo: oldState.hoverInfo,
-    clicked: oldState.clicked,
-    mousePos: oldState.mousePos,
-    maxDefaultTooltips: oldState.maxDefaultTooltips,
-    splitMaps: oldState.splitMaps,
-    layerClasses: oldState.layerClasses,
-    animationConfig: oldState.animationConfig,
-    initialState: oldState.initialState,
-    layerToBeMerged: [],
-    filterToBeMerged: [],
-    interactionToBeMerged: {},
-    splitMapsToBeMerged: [],
-    editor: oldState.editor,
-    mapInfo: {
-      title: '',
-      description: ''
-    },
-    fileLoading: oldState.fileLoading,
-    fileLoadingProgress: oldState.fileLoadingProgress,
-    loaders: oldState.loaders,
-    loadOptions: oldState.loadOptions,
-    mergers: oldState.mergers,
-    schema: oldState.schema,
-    isMergingDatasets: {}
+      }
+    }
   };
 
   const newReducer = reducer(oldState, VisStateActions.removeDataset(testCsvDataId));
@@ -3695,6 +3667,7 @@ test('#visStateReducer -> SPLIT_MAP: REMOVE_DATASET', t => {
   const oldState = StateWSplitMaps.visState;
 
   const expectedState = {
+    ...oldState,
     layers: [oldState.layers[0]],
     layerData: [oldState.layerData[0]],
     layerOrder: [oldState.layers[0].id],
@@ -3705,6 +3678,7 @@ test('#visStateReducer -> SPLIT_MAP: REMOVE_DATASET', t => {
     effects: [],
     effectOrder: [],
     interactionConfig: {
+      ...oldState.interactionConfig,
       tooltip: {
         id: 'tooltip',
         label: 'interactions.tooltip',
@@ -3737,38 +3711,9 @@ test('#visStateReducer -> SPLIT_MAP: REMOVE_DATASET', t => {
             ]
           }
         }
-      },
-      brush: oldState.interactionConfig.brush,
-      coordinate: oldState.interactionConfig.coordinate,
-      geocoder: oldState.interactionConfig.geocoder
+      }
     },
-    splitMaps: [{layers: {'point-0': false}}, {layers: {'point-0': true}}],
-    editingDataset: oldState.editingDataset,
-    layerBlending: oldState.layerBlending,
-    overlayBlending: oldState.overlayBlending,
-    hoverInfo: oldState.hoverInfo,
-    clicked: oldState.clicked,
-    mousePos: oldState.mousePos,
-    maxDefaultTooltips: oldState.maxDefaultTooltips,
-    layerClasses: oldState.layerClasses,
-    animationConfig: DEFAULT_ANIMATION_CONFIG,
-    initialState: oldState.initialState,
-    layerToBeMerged: [],
-    filterToBeMerged: [],
-    interactionToBeMerged: {},
-    splitMapsToBeMerged: [],
-    editor: oldState.editor,
-    mapInfo: {
-      title: '',
-      description: ''
-    },
-    fileLoading: oldState.fileLoading,
-    fileLoadingProgress: oldState.fileLoadingProgress,
-    loaders: oldState.loaders,
-    loadOptions: oldState.loadOptions,
-    schema: oldState.schema,
-    mergers: oldState.mergers,
-    isMergingDatasets: {}
+    splitMaps: [{layers: {'point-0': false}}, {layers: {'point-0': true}}]
   };
 
   const newReducer = reducer(oldState, VisStateActions.removeDataset(testGeoJsonDataId));
@@ -5758,6 +5703,23 @@ test('#visStateReducer -> setFilterAnimationTimeConfig', t => {
     VisStateActions.setFilterAnimationTimeConfig(0, {timezone: 'America/New_York'})
   );
   t.equal(nextState1.filters[0].timezone, 'America/New_York', 'should set filter timeFormat');
+  t.end();
+});
+
+test('#visStateReducer -> layerFilteredItemsChange', t => {
+  const mockEvent = {
+    id: 'point-layer-1',
+    count: 100
+  };
+  const layer = StateWFiles.visState.layers[0];
+  const nextState = reducer(
+    StateWFiles.visState,
+    VisStateActions.layerFilteredItemsChange(layer, mockEvent)
+  );
+  const expected = {'point-layer-1': 100};
+
+  t.deepEqual(layer.filteredItemCount, expected, 'should set filteredItemCount on layer');
+
   t.end();
 });
 

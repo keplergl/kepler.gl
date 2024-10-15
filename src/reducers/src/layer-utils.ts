@@ -343,6 +343,13 @@ export function bindLayerCallbacks(layerCallbacks: LayerCallbacks = {}, idx: num
 export type LayerCallbacks = {
   onLayerHover?: (idx: number, value: any) => void;
   onSetLayerDomain?: (idx: number, value: any) => void;
+  onFilteredItemsChange?: (
+    idx: number,
+    event: {
+      id: string;
+      count: number;
+    }
+  ) => void;
 };
 
 // eslint-disable-next-line complexity

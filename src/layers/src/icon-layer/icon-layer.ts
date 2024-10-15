@@ -263,6 +263,18 @@ export default class IconLayer extends Layer {
     return {props};
   }
 
+  getFilteredItemCount() {
+    // use total
+    if (Object.keys(this.filteredItemCount).length) {
+      return Object.values(this.filteredItemCount).reduce(
+        (total, curr) => (Number.isFinite(curr) ? total + curr : total),
+        0
+      );
+    }
+
+    return null;
+  }
+
   calculateDataAttribute({dataContainer, filteredIndex}: KeplerTable, getPosition) {
     const getIcon = this.getIconAccessor(dataContainer);
     const data: IconLayerData[] = [];
