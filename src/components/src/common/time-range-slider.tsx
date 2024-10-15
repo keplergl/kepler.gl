@@ -44,6 +44,7 @@ type TimeRangeSliderProps = {
   setFilterPlot?: ActionHandler<typeof setFilterPlot>;
   onChange: (v: number[]) => void;
   timeline: Timeline;
+  invertTrendColor?: boolean;
 };
 
 const StyledSliderContainer = styled.div<StyledSliderContainerProps>`
@@ -100,6 +101,7 @@ export default function TimeRangeSliderFactory(
       timeBins,
       plotType,
       lineChart,
+      invertTrendColor,
       step,
       isAnimatable,
       speed,
@@ -146,6 +148,7 @@ export default function TimeRangeSliderFactory(
                 value1={value[1]}
                 bins={binsForInterval}
                 lineChart={lineChart}
+                invertTrendColor={invertTrendColor}
                 plotType={plotType}
                 isEnlarged={isEnlarged}
                 showInput={false}

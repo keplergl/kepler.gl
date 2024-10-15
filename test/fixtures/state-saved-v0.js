@@ -1057,6 +1057,7 @@ mergedLayer0.config = {
   hidden: false,
   visConfig: {
     radius: 270.4,
+    billboard: false,
     opacity: 0.8,
     outline: false,
     filled: true,
@@ -1202,6 +1203,7 @@ mergedLayer2.config = {
   hidden: false,
   visConfig: {
     radius: 10,
+    billboard: false,
     opacity: 0.8,
     outline: false,
     filled: true,

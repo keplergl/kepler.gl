@@ -40,6 +40,8 @@ interface RangePlotProps {
   animationWindow?: string;
   filter?: Filter;
   datasets?: Datasets;
+
+  invertTrendColor?: boolean;
 }
 
 type WithPlotLoadingProps = RangePlotProps &

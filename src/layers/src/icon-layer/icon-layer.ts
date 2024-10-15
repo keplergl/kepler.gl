@@ -47,6 +47,7 @@ export type IconLayerVisConfig = {
   opacity: number;
   colorRange: ColorRange;
   radiusRange: [number, number];
+  billboard: boolean;
 };
 
 export type IconLayerConfig = Merge<
@@ -85,12 +86,14 @@ export const pointVisConfigs: {
   opacity: 'opacity';
   colorRange: 'colorRange';
   radiusRange: 'radiusRange';
+  billboard: 'billboard';
 } = {
   radius: 'radius',
   fixedRadius: 'fixedRadius',
   opacity: 'opacity',
   colorRange: 'colorRange',
-  radiusRange: 'radiusRange'
+  radiusRange: 'radiusRange',
+  billboard: 'billboard'
 };
 
 function flatterIconPositions(icon) {
@@ -326,6 +329,7 @@ export default class IconLayer extends Layer {
 
     const layerProps = {
       radiusScale,
+      billboard: this.config.visConfig.billboard,
       ...(this.config.visConfig.fixedRadius ? {} : {radiusMaxPixels: 500})
     };
 

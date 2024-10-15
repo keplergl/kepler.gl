@@ -573,7 +573,7 @@ export function analyzerTypeToFieldType(aType: string): string {
 
 const TIME_DISPLAY = '2020-05-11 14:00';
 
-const addTimeLabel = (formats: TimeLabelFormat[]) =>
+export const addTimeLabel = (formats: TimeLabelFormat[]) =>
   formats.map(f => ({
     ...f,
     label:
@@ -590,7 +590,7 @@ export function getFieldFormatLabels(fieldType?: string): TooltipFormat[] {
   return addTimeLabel(formatLabels);
 }
 
-export function getFormatLabels(fields: TooltipFields[], fieldName: string): TooltipFormat[] {
+export const getFormatLabels = (fields: TooltipFields[], fieldName: string): TooltipFormat[] => {
   const fieldType = fields.find(f => f.name === fieldName)?.type;
   return getFieldFormatLabels(fieldType);
-}
+};

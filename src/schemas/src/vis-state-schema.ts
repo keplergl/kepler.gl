@@ -843,7 +843,9 @@ export const filterPropsV1 = {
   layerId: null,
   speed: null,
 
-  enabled: null
+  enabled: null,
+
+  invertTrendColor: null
 };
 
 export const propertiesV0 = {

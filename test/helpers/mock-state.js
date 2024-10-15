@@ -832,6 +832,7 @@ export const expectedSavedLayer1 = {
     isVisible: true,
     visConfig: {
       radius: 10,
+      billboard: false,
       fixedRadius: false,
       opacity: DEFAULT_LAYER_OPACITY,
       outline: false,
@@ -881,6 +882,7 @@ export const expectedLoadedLayer1 = {
     isVisible: true,
     visConfig: {
       radius: 10,
+      billboard: false,
       fixedRadius: false,
       opacity: DEFAULT_LAYER_OPACITY,
       outline: false,
@@ -1055,6 +1057,8 @@ export const expectedSavedTripLayer = {
       thickness: 0.5,
       colorRange: DEFAULT_COLOR_RANGE,
       trailLength: 180,
+      fadeTrail: true,
+      billboard: false,
       sizeRange: [0, 10]
     },
     textLabel: [DEFAULT_TEXT_LABEL]

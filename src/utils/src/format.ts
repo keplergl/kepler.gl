@@ -2,8 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {TOOLTIP_KEY, TICK_INTERVALS} from '@kepler.gl/constants';
-
-export const getFormatValue = fmt => fmt[TOOLTIP_KEY];
+import {TimeLabelFormat} from '@kepler.gl/types';
 
 export function getDefaultTimeFormat(interval?: string): string {
   const timeInterval = interval ? TICK_INTERVALS[interval] : {interval: 'none'};
@@ -28,3 +27,5 @@ export function getDefaultTimeFormat(interval?: string): string {
       return 'L  LTS';
   }
 }
+
+export const getFormatValue = (fmt: TimeLabelFormat): string | null => fmt[TOOLTIP_KEY];

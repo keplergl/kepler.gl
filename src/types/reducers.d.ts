@@ -149,6 +149,7 @@ export type TimeRangeFilter = FilterBase<LineChart> &
       [key: string]: any;
     };
     animationWindow: string;
+    invertTrendColor: boolean;
   };
 
 export type PolygonFilter = FilterBase<LineChart> & {
@@ -390,9 +391,12 @@ export type MapControlItem = {
   disableClose?: boolean;
   activeMapIndex?: number;
 };
+export type MapControlMapLegend = MapControlItem & {
+  disableEdit?: boolean;
+};
 export type MapControls = {
   visibleLayers?: MapControlItem;
-  mapLegend?: MapControlItem;
+  mapLegend?: MapControlMapLegend;
   toggle3d?: MapControlItem;
   splitMap?: MapControlItem;
   mapDraw?: MapControlItem;
@@ -543,11 +547,11 @@ export type TypedTimeRangeFilter = FilterBaseOmitRedudant &
     fieldType: 'timestamp';
     fixedDomain: true;
     value: [number, number];
-    bins?: object;
     plotType: {
       [key: string]: any;
     };
     animationWindow: string;
+    invertTrendColor: boolean;
   };
 
 export type TypedPolygonFilter = FilterBaseOmitRedudant & {

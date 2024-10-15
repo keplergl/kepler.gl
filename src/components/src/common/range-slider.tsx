@@ -73,6 +73,8 @@ interface RangeSliderProps {
   animationWindow?: string;
   filter?: Filter;
   datasets?: Datasets;
+
+  invertTrendColor?: boolean;
 }
 
 RangeSliderFactory.deps = [RangePlotFactory];
@@ -216,6 +218,7 @@ export default function RangeSliderFactory(
         bins,
         lineChart,
         plotType,
+        invertTrendColor,
         range,
         onChange = noop,
         sliderHandleWidth,
@@ -245,6 +248,7 @@ export default function RangeSliderFactory(
                   bins={bins}
                   lineChart={lineChart}
                   plotType={plotType}
+                  invertTrendColor={invertTrendColor}
                   isEnlarged={this.props.isEnlarged}
                   onBrush={(val0, val1) => onChange([val0, val1])}
                   marks={this.props.marks}
