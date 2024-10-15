@@ -85,9 +85,7 @@ export function histogramFromDomain(
   numBins: number,
   valueAccessor?: (d: unknown) => number
 ): Bin[] {
-  const getBins = d3Histogram()
-    .thresholds(ticks(domain[0], domain[1], numBins))
-    .domain(domain);
+  const getBins = d3Histogram().thresholds(ticks(domain[0], domain[1], numBins)).domain(domain);
   if (valueAccessor) {
     getBins.value(valueAccessor);
   }
@@ -201,6 +199,9 @@ export function runGpuFilterForPlot(dataset, filter) {
 
 function getSkipIndexes(dataset, filter) {
   // array of gpu filter names
+  if (!filter) {
+    return [];
+  }
   const gpuFilters = Object.values(dataset.gpuFilter.filterValueUpdateTriggers) as ({
     name: string;
   } | null)[];
