@@ -23,6 +23,7 @@
   - [`.save_to_html()`](#save_to_html)
   - [`._repr_html_()`](#_repr_html_)
 - [Demo Notebooks](#demo-notebooks)
+- [FAQ & Troubleshoot](#faq--troubleshoot)
 
 
 ## Install
@@ -267,9 +268,6 @@ map_1.config
 #   u'longitude': -122.42590232651203,
 ```
 
-### Config panel
-Config can be copied from the side panel with the `{}` icon.
-
 When the map is final, you can copy this config and load it later to reproduce the same map. Follow the instruction to [match config with data][match-config-w-data].
 
 #### Apply config to a map:
@@ -374,8 +372,8 @@ if __name__ == '__main__':
 
 # FAQ & Troubleshoot
 
-#### 1. What about windows?
-keplergl is currently only published to PyPI, and unfortunately I use a Mac. If you encounter errors installing it on windows. [This issue](https://github.com/keplergl/kepler.gl/issues/557) might shed some light. Follow this issue for [conda](https://github.com/keplergl/kepler.gl/issues/646) support.
+#### 1. What about Microsoft Windows?
+keplergl is currently only published to PyPI, and unfortunately I use a Mac. If you encounter errors installing it on windows, [this issue](https://github.com/keplergl/kepler.gl/issues/557) might shed some light. Follow this issue for [conda](https://github.com/keplergl/kepler.gl/issues/646) support.
 
 #### 2. Install keplergl-jupyter on Jupyter Lab failed?
 
