@@ -87,6 +87,7 @@ export type StringFieldFilterProps = MultiSelectFieldDomain & {
 };
 export type TimeFieldFilterProps = TimeRangeFieldDomain & {
   type: string;
+  view: Filter['view'];
   fixedDomain: boolean;
   value: number[];
   gpu: boolean;

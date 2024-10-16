@@ -66,16 +66,17 @@ function TimeRangeFilterPanelFactory(
       removeFilter,
       toggleAnimation
     }) => {
-      const onSetFilterValue = useCallback(value => setFilter(idx, 'value', value), [
-        idx,
-        setFilter
-      ]);
+      const onSetFilterValue = useCallback(
+        value => setFilter(idx, 'value', value),
+        [idx, setFilter]
+      );
 
       const totalDatasetsNum = useMemo(() => Object.keys(datasets).length, [datasets]);
       const datasetsWithTime = useMemo(() => getDatasetsWithTimeField(datasets), [datasets]);
-      const datasetsWithTimeNum = useMemo(() => Object.keys(datasetsWithTime).length, [
-        datasetsWithTime
-      ]);
+      const datasetsWithTimeNum = useMemo(
+        () => Object.keys(datasetsWithTime).length,
+        [datasetsWithTime]
+      );
       const filterDatasetsNum = useMemo(() => filter.dataId.length, [filter]);
       const onSetFilterPlot = useCallback(
         (newProp, valueIndex) => setFilterPlot(idx, newProp, valueIndex),
@@ -118,10 +119,10 @@ function TimeRangeFilterPanelFactory(
 
       const onFieldSelector = (field, valueIndex) => setFilter(idx, 'name', field.name, valueIndex);
 
-      const onSourceDataSelector = useCallback(value => setFilter(idx, 'dataId', value, 0), [
-        idx,
-        setFilter
-      ]);
+      const onSourceDataSelector = useCallback(
+        value => setFilter(idx, 'dataId', value, 0),
+        [idx, setFilter]
+      );
 
       const dataset = datasets[filter.dataId[0]];
       const supportedFields = useMemo(
@@ -147,17 +148,16 @@ function TimeRangeFilterPanelFactory(
               erasable={false}
               onSelect={field => onFieldSelector(field, 0)}
             />
-            {panelActions &&
-              panelActions.map(panelAction => (
-                <PanelHeaderAction
-                  id={panelAction.id}
-                  key={panelAction.id}
-                  onClick={panelAction.onClick}
-                  tooltip={panelAction.tooltip}
-                  IconComponent={panelAction.iconComponent}
-                  active={panelAction.active}
-                />
-              ))}
+            {panelActions.map(panelAction => (
+              <PanelHeaderAction
+                id={panelAction.id}
+                key={panelAction.id}
+                onClick={panelAction.onClick}
+                tooltip={panelAction.tooltip}
+                IconComponent={panelAction.iconComponent}
+                active={panelAction.active}
+              />
+            ))}
           </FilterPanelHeader>
           <StyledFilterContent className="filter-panel__content">
             {totalDatasetsNum > 1 && (

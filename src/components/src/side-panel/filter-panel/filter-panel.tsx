@@ -26,8 +26,8 @@ interface FilterPanelPropsImpl extends Omit<FilterPanelProps, 'allAvailableField
   filters: Filter[];
   layers: ReadonlyArray<Layer>;
   isAnyFilterAnimating: boolean;
-  enlargeFilter: () => void;
   toggleAnimation: () => void;
+  enlargeFilter: () => void;
   toggleFilterFeature: () => void;
 }
 
