@@ -4,7 +4,6 @@
 import classnames from 'classnames';
 import React, {Component, ComponentType} from 'react';
 import styled from 'styled-components';
-import classnames from 'classnames';
 import {createSelector} from 'reselect';
 
 import {Field} from '@kepler.gl/types';
