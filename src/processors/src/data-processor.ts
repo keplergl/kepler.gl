@@ -388,6 +388,27 @@ export function processArrowTable(arrowTable: ArrowTable): ProcessorResult | nul
   return processArrowBatches(arrowTable.data.batches);
 }
 
+export function arrowSchemaToFields<F extends Field>(schema: arrow.Schema): F[] {
+  return schema.fields.map((field: arrow.Field, index: number) => {
+    const isGeoArrowColumn = field.metadata.get('ARROW:extension:name')?.startsWith('geoarrow');
+    return {
+      ...field,
+      name: field.name,
+      id: field.name,
+      displayName: field.name,
+      format: '',
+      fieldIdx: index,
+      type: isGeoArrowColumn ? ALL_FIELD_TYPES.geoarrow : arrowDataTypeToFieldType(field.type),
+      analyzerType: isGeoArrowColumn
+        ? AnalyzerDATA_TYPES.GEOMETRY
+        : arrowDataTypeToAnalyzerDataType(field.type),
+      valueAccessor: (dc: any) => d => {
+        return dc.valueAt(d.index, index);
+      },
+      metadata: field.metadata
+    };
+  });
+}
 /**
  * Parse arrow batches returned from parseInBatches()
  *
@@ -399,27 +420,7 @@ export function processArrowBatches(arrowBatches: arrow.RecordBatch[]): Processo
     return null;
   }
   const arrowTable = new arrow.Table(arrowBatches);
-  const fields: Field[] = [];
-
-  // parse fields
-  arrowTable.schema.fields.forEach((field: arrow.Field, index: number) => {
-    const isGeometryColumn = field.metadata.get('ARROW:extension:name')?.startsWith('geoarrow');
-    fields.push({
-      name: field.name,
-      id: field.name,
-      displayName: field.name,
-      format: '',
-      fieldIdx: index,
-      type: isGeometryColumn ? ALL_FIELD_TYPES.geoarrow : arrowDataTypeToFieldType(field.type),
-      analyzerType: isGeometryColumn
-        ? AnalyzerDATA_TYPES.GEOMETRY
-        : arrowDataTypeToAnalyzerDataType(field.type),
-      valueAccessor: (dc: any) => d => {
-        return dc.valueAt(d.index, index);
-      },
-      metadata: field.metadata
-    });
-  });
+  const fields = arrowSchemaToFields(arrowTable.schema);
 
   const cols = [...Array(arrowTable.numCols).keys()].map(i => arrowTable.getChildAt(i));
   // return empty rows and use raw arrow table to construct column-wise data container

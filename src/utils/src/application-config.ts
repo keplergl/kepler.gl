@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import {KeplerTable} from '@kepler.gl/table';
 import {MapLib, MapRef} from 'react-map-gl';
 
 export type MapLibInstance = MapLib<any>;
@@ -43,7 +44,7 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig<mapboxgl.Map>
   mapLibName: 'MapLibre',
   mapLibUrl: 'https://www.maplibre.org/',
   plugins: [],
-  table: undefined
+  table: KeplerTable
 };
 
 const applicationConfig: Required<KeplerApplicationConfig<mapboxgl.Map>> =

@@ -74,7 +74,7 @@ export function maybeToDate(
   return dc.valueAt(d.index, fieldIdx);
 }
 
-class KeplerTable {
+class KeplerTable<F extends Field> {
   readonly id: string;
 
   type?: string;
@@ -82,7 +82,7 @@ class KeplerTable {
   color: RGBColor;
 
   // fields and data
-  fields: Field[];
+  fields: F[];
 
   dataContainer: DataContainerInterface;
 
@@ -165,7 +165,7 @@ class KeplerTable {
       inputDataFormat
     });
 
-    const fields: Field[] = data.fields.map((f, i) => ({
+    const fields = data.fields.map((f, i) => ({
       ...f,
       fieldIdx: i,
       id: f.name,
@@ -203,7 +203,7 @@ class KeplerTable {
    * Get field
    * @param columnName
    */
-  getColumnField(columnName: string): Field | undefined {
+  getColumnField(columnName: string): F | undefined {
     const field = this.fields.find(fd => fd[FID_KEY] === columnName);
     this._assetField(columnName, field);
     return field;
@@ -242,7 +242,7 @@ class KeplerTable {
    * @param fieldIdx
    * @param newField
    */
-  updateColumnField(fieldIdx: number, newField: Field): void {
+  updateColumnField(fieldIdx: number, newField: F): void {
     this.fields = Object.assign([...this.fields], {[fieldIdx]: newField});
   }
 
@@ -258,7 +258,7 @@ class KeplerTable {
    * Save filterProps to field and retrieve it
    * @param columnName
    */
-  getColumnFilterProps(columnName: string): Field['filterProps'] | null | undefined {
+  getColumnFilterProps(columnName: string): F['filterProps'] | null | undefined {
     const fieldIdx = this.getColumnFieldIdx(columnName);
     if (fieldIdx < 0) {
       return null;
@@ -386,7 +386,7 @@ class KeplerTable {
    * Calculate field domain based on field type and data
    * for Filter
    */
-  getColumnFilterDomain(field: Field): FieldDomain {
+  getColumnFilterDomain(field: F): FieldDomain {
     const {dataContainer} = this;
     const {valueAccessor} = field;
 
@@ -417,10 +417,7 @@ class KeplerTable {
   /**
    *  Get the domain of this column based on scale type
    */
-  getColumnLayerDomain(
-    field: Field,
-    scaleType: string
-  ): number[] | string[] | [number, number] | null {
+  getColumnLayerDomain(field: F, scaleType: string): number[] | string[] | [number, number] | null {
     const {dataContainer, filteredIndexForDomain} = this;
 
     if (!SCALE_TYPES[scaleType]) {
@@ -479,7 +476,7 @@ class KeplerTable {
 }
 
 export type Datasets = {
-  [key: string]: KeplerTable;
+  [key: string]: KeplerTable<Field>;
 };
 
 // HELPER FUNCTIONS (MAINLY EXPORTED FOR TEST...)
@@ -508,7 +505,7 @@ function foundMatchingFields(re, suffixPair, allNames, fieldName) {
  * @param fields
  * @returns found point fields
  */
-export function findPointFieldPairs(fields: Field[]): FieldPair[] {
+export function findPointFieldPairs(fields: F[]): FieldPair[] {
   const allNames = fields.map(f => f.name.toLowerCase());
 
   // get list of all fields with matching suffixes
@@ -564,10 +561,10 @@ export function findPointFieldPairs(fields: Field[]): FieldPair[] {
  * @type
  */
 export function sortDatasetByColumn(
-  dataset: KeplerTable,
+  dataset: KeplerTable<Field>,
   column: string,
   mode?: string
-): KeplerTable {
+): KeplerTable<Field> {
   const {allIndexes, fields, dataContainer} = dataset;
   const fieldIndex = fields.findIndex(f => f.name === column);
   if (fieldIndex < 0) {
@@ -603,7 +600,7 @@ export function sortDatasetByColumn(
   return dataset;
 }
 
-export function pinTableColumns(dataset: KeplerTable, column: string): KeplerTable {
+export function pinTableColumns(dataset: KeplerTable<Field>, column: string): KeplerTable<Field> {
   const field = dataset.getColumnField(column);
   if (!field) {
     return dataset;
@@ -621,7 +618,7 @@ export function pinTableColumns(dataset: KeplerTable, column: string): KeplerTab
   return copyTableAndUpdate(dataset, {pinnedColumns});
 }
 
-export function copyTable(original: KeplerTable): KeplerTable {
+export function copyTable(original: KeplerTable<Field>): KeplerTable<Field> {
   return Object.assign(Object.create(Object.getPrototypeOf(original)), original);
 }
 
@@ -630,9 +627,9 @@ export function copyTable(original: KeplerTable): KeplerTable {
  * @returns
  */
 export function copyTableAndUpdate(
-  original: KeplerTable,
-  options: Partial<KeplerTable> = {}
-): KeplerTable {
+  original: KeplerTable<Field>,
+  options: Partial<KeplerTable<Field>> = {}
+): KeplerTable<Field> {
   return Object.entries(options).reduce((acc, entry) => {
     acc[entry[0]] = entry[1];
     return acc;
@@ -641,8 +638,8 @@ export function copyTableAndUpdate(
 
 export function getFieldValueAccessor<
   F extends {
-    type?: Field['type'];
-    format?: Field['format'];
+    type?: F['type'];
+    format?: F['format'];
   }
 >(f: F, i: number, dc: DataContainerInterface) {
   return maybeToDate.bind(
