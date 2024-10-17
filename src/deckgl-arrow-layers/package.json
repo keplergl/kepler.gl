@@ -1,0 +1,61 @@
+{
+  "name": "@kepler.gl/deckgl-arrow-layers",
+  "author": "Shan He <shan@uber.com>",
+  "version": "3.0.0",
+  "description": "Deck.gl layers with GeoArrow and GeoParquet support",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "keywords": [
+    "babel",
+    "es6",
+    "react",
+    "webgl",
+    "visualization",
+    "deck.gl"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/keplergl/kepler.gl.git"
+  },
+  "scripts": {
+    "build": "rm -fr dist && babel src --out-dir dist --source-maps inline --extensions '.ts,.tsx,.js,.jsx' --ignore '**/*.d.ts'",
+    "build:umd": "NODE_OPTIONS=--openssl-legacy-provider webpack --config ./webpack/umd.js --progress --env.prod",
+    "build:types": "tsc --project ./tsconfig.production.json",
+    "prepublish": "babel-node ../../scripts/license-header/bin --license ../../FILE-HEADER && yarn build && yarn build:types",
+    "stab": "mkdir -p dist && touch dist/index.js"
+  },
+  "files": [
+    "dist",
+    "umd"
+  ],
+  "dependencies": {
+    "@geoarrow/geoarrow-js": "^0.3.0",
+    "@math.gl/core": "^4.0.0",
+    "@math.gl/polygon": "^4.0.0",
+    "@math.gl/types": "^4.0.0",
+    "apache-arrow": ">=15",
+    "threads": "^1.7.0"
+  },
+  "peerDependencies": {
+    "@deck.gl/aggregation-layers": "^8.9.27",
+    "@deck.gl/core": "^8.9.27",
+    "@deck.gl/geo-layers": "^8.9.27",
+    "@deck.gl/layers": "^8.9.27"
+  },
+  "nyc": {
+    "sourceMap": false,
+    "instrument": false
+  },
+  "maintainers": [
+    "Shan He <heshan0131@gmail.com>"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "volta": {
+    "node": "18.18.2",
+    "yarn": "4.4.0"
+  },
+  "packageManager": "yarn@4.4.0"
+}

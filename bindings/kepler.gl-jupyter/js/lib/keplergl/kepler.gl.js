@@ -142,8 +142,9 @@ class KeplerGlJupyter {
           },
           data: {
             fields: d.fields,
-            // rows: d.allData
-            ...(d.dataContainer instanceof ArrowDataContainer ? {cols: d.dataContainer._cols} : {rows: d.allData})
+            ...(d.dataContainer instanceof ArrowDataContainer
+              ? {cols: d.dataContainer._cols}
+              : {rows: d.allData})
           }
         })),
         config,
@@ -153,12 +154,7 @@ class KeplerGlJupyter {
   }
 }
 
-export function addDataConfigToKeplerGl({
-  data: inputData,
-  config,
-  options,
-  store
-}) {
+export function addDataConfigToKeplerGl({data: inputData, config, options, store}) {
   const data = inputData ? dataToDatasets(inputData) : [];
   log(data);
 
