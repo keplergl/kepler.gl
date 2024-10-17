@@ -34,7 +34,8 @@ import {
   testCsvDataSlice1,
   testCsvDataSlice1Id,
   testCsvDataSlice2,
-  testCsvDataSlice2Id
+  testCsvDataSlice2Id,
+  syncTimeFilterValue
 } from '../fixtures/test-csv-data';
 import testLayerData from '../fixtures/test-layer-data';
 
@@ -185,6 +186,13 @@ function mockStateWithSyncedTimeFilter() {
     {
       action: VisStateActions.setFilter,
       payload: [0, ['dataId', 'name'], ['test-csv-data-2', 'gps_data.utc_timestamp'], 1]
+    },
+
+    // set filter name to 'time', and value
+    {
+      action: VisStateActions.setFilter,
+      // ['2016-09-17 00:11:56', '2016-09-17 00:21:17']
+      payload: [0, ['value'], [syncTimeFilterValue]]
     }
   ]);
 

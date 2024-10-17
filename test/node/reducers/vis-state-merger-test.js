@@ -73,6 +73,7 @@ import {
   StateWFilters,
   StateWMultiFilters,
   StateWFilesFiltersLayerColor,
+  StateWSyncedTimeFilter,
   StateWSplitMaps,
   testCsvDataId,
   testGeoJsonDataId,
@@ -87,7 +88,8 @@ import {
   epochFilterProps,
   mergedTimeFilter,
   mergedDateFilter,
-  mergedEpochFilter
+  mergedEpochFilter,
+  expectedSyncedTsFilter
 } from 'test/fixtures/test-csv-data';
 
 import {
@@ -1709,6 +1711,43 @@ test('VisStateMerger.v1 -> mergeFilters -> multiFilters', t => {
   ];
 
   cmpFilters(t, expectedFilters, mergedState.filters);
+  t.end();
+});
+
+test('VisStateMerger.v1 -> mergeFilters -> syncedFilters', t => {
+  const stateToSave = cloneDeep(StateWSyncedTimeFilter);
+  const appStateToSave = SchemaManager.save(stateToSave);
+  const {datasets, config} = appStateToSave;
+  t.equal(datasets.length, 2, 'should save 2 datasets');
+
+  // load config to initial state
+  const stateWithConfig = coreReducer(InitialState, addDataToMap({config}));
+
+  t.equal(stateWithConfig.visState.filters.length, 0, 'should not load filter without data');
+  t.equal(
+    stateWithConfig.visState.filterToBeMerged.length,
+    1,
+    'should save filter to filterToBeMerged'
+  );
+
+  const parsedDatasets = SchemaManager.parseSavedData(datasets);
+
+  // load data 1
+  const stateWithData1 = coreReducer(stateWithConfig, addDataToMap({datasets: parsedDatasets[0]}));
+  t.equal(Object.keys(stateWithData1.visState.datasets).length, 1, 'should load 1 dataset');
+  t.equal(stateWithData1.visState.filters.length, 0, 'should not load filter without all datasets');
+
+  // load data 2
+  const stateWithData2 = coreReducer(stateWithData1, addDataToMap({datasets: parsedDatasets[1]}));
+  t.equal(Object.keys(stateWithData2.visState.datasets).length, 2, 'should load 2 datasets');
+  t.equal(
+    stateWithData2.visState.filters.length,
+    1,
+    'should load filter when all datasets are ready'
+  );
+
+  cmpFilters(t, expectedSyncedTsFilter, stateWithData2.visState.filters[0]);
+
   t.end();
 });
 
