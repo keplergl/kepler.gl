@@ -45,6 +45,7 @@ import {generateHashId, set, toArray} from './utils';
 import {notNullorUndefined, timeToUnixMilli, unique} from './data-utils';
 import {getCentroid} from './h3-utils';
 import {updateTimeFilterPlotType, updateRangeFilterPlotType} from './plot';
+import {KeplerTableModel} from './types';
 
 export const durationSecond = 1000;
 export const durationMinute = durationSecond * 60;
@@ -151,25 +152,6 @@ export function getDefaultFilter({
 export function shouldApplyFilter(filter: Filter, datasetId: string): boolean {
   const dataIds = toArray(filter.dataId);
   return dataIds.includes(datasetId) && filter.value !== null;
-}
-
-interface KeplerTableModel<K, L> {
-  id: string;
-  getColumnFieldIdx(columnName: string): number;
-  filterTable(filters: Filter[], layers: L[], opt?: FilterDatasetOpt): K;
-  getColumnFilterProps(columnName: string): Field['filterProps'] | null | undefined;
-  dataContainer: DataContainerInterface;
-  filterTableCPU(filters: Filter[], layers: L[]): K;
-  gpuFilter: {
-    filterRange: number[][];
-    filterValueUpdateTriggers: any;
-    filterValueAccessor: (
-      dc: DataContainerInterface
-    ) => (
-      getIndex?: (any) => number,
-      getData?: (dc_: DataContainerInterface, d: any, fieldIndex: number) => any
-    ) => (d: any) => (number | number[])[];
-  };
 }
 
 /**
