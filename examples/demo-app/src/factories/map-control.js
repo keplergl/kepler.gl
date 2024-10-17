@@ -58,7 +58,7 @@ CustomMapControlFactory.deps = [
 ];
 function CustomMapControlFactory(EffectControl, EffectManager, ...deps) {
   const MapControl = MapControlFactory(...deps);
-  const actionComponents = [...(MapControl.defaultProps?.actionComponents ?? []), EffectControl];
+  const actionComponents = [...(MapControl.defaultActionComponents ?? []), EffectControl];
 
   const CustomMapControl = props => {
     const showEffects = Boolean(props.mapControls?.effect?.active);
