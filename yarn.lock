@@ -2909,7 +2909,7 @@ __metadata:
     moment-timezone: "npm:^0.5.35"
     prop-types: "npm:^15.6.0"
     react: "npm:^18.2.0"
-    react-color: "npm:^2.17.3"
+    react-color: "npm:^2.19.3"
     react-copy-to-clipboard: "npm:^5.0.2"
     react-date-picker: "npm:^10.2.0"
     react-dom: "npm:^18.2.0"
@@ -19268,7 +19268,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-color@npm:^2.17.3":
+"react-color@npm:^2.19.3":
   version: 2.19.3
   resolution: "react-color@npm:2.19.3"
   dependencies:

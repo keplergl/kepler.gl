@@ -141,7 +141,7 @@ function ColorSelectorFactory(RangeSlider): ComponentType<ColorSelectorProps> {
 
     const onSelectColor = useCallback(
       (color: RGBColor | ColorRange, e: MouseEvent) => {
-        e.stopPropagation();
+        if (e) e.stopPropagation();
         const colorSet = typeof editing === 'number' && colorSets[editing];
         if (colorSet) {
           onSetColor(colorSet, color, colorSet.selectedColor[3]);
