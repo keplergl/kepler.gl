@@ -7,9 +7,11 @@ import {
   withState,
   MapControlFactory,
   EffectControlFactory,
-  EffectManagerFactory
+  EffectManagerFactory,
+  MapControlButton
 } from '@kepler.gl/components';
 import {SampleMapPanel} from '../components/map-control/map-control';
+import SqlPanelControlFactory from '../components/map-control/sql-panel-control';
 
 const StyledMapControlPanel = styled.div`
   position: relative;
@@ -54,11 +56,16 @@ const StyledMapControlOverlay = styled.div`
 CustomMapControlFactory.deps = [
   EffectControlFactory,
   EffectManagerFactory,
+  SqlPanelControlFactory,
   ...MapControlFactory.deps
 ];
-function CustomMapControlFactory(EffectControl, EffectManager, ...deps) {
+function CustomMapControlFactory(EffectControl, EffectManager, SqlPanelControl, ...deps) {
   const MapControl = MapControlFactory(...deps);
-  const actionComponents = [...(MapControl.defaultProps?.actionComponents ?? []), EffectControl];
+  const actionComponents = [
+    ...(MapControl.defaultActionComponents ?? []),
+    EffectControl,
+    SqlPanelControl
+  ];
 
   const CustomMapControl = props => {
     const showEffects = Boolean(props.mapControls?.effect?.active);

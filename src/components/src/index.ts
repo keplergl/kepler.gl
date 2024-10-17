@@ -26,6 +26,8 @@ import {
   default as LayerColumnModeConfigFactory,
   ColumnModeConfigFactory
 } from './side-panel/layer-panel/layer-column-mode-config';
+import DataTableFactory from './common/data-table';
+
 import {appInjector} from './container';
 
 // Components
@@ -264,7 +266,8 @@ export {
   default as DataTableConfigFactory,
   NumberFormatConfig
 } from './common/data-table/display-format';
-export {default as DataTableFactory} from './common/data-table';
+export {renderedSize} from './common/data-table/cell-size';
+
 export {default as CanvasHack} from './common/data-table/canvas';
 export {default as OptionDropdown, FormatterDropdown} from './common/data-table/option-dropdown';
 export {default as MapLayerSelector} from './common/map-layer-selector';
@@ -415,6 +418,7 @@ export const ColorSelector = appInjector.get(ColorSelectorFactory);
 export const LayerColorSelector = appInjector.get(LayerColorSelectorFactory);
 export const LayerColorRangeSelector = appInjector.get(LayerColorRangeSelectorFactory);
 export const ArcLayerColorSelector = appInjector.get(ArcLayerColorSelectorFactory);
+export const DataTable = appInjector.get(DataTableFactory);
 export {
   appInjector,
   TimeRangeSliderFactory,
@@ -432,7 +436,8 @@ export {
   LayerColumnModeConfigFactory,
   ColumnModeConfigFactory,
   LayerColorRangeSelectorFactory,
-  ArcLayerColorSelectorFactory
+  ArcLayerColorSelectorFactory,
+  DataTableFactory
 };
 
 // hooks

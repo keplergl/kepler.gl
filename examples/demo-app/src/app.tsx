@@ -8,6 +8,7 @@ import window from 'global/window';
 import {connect, useDispatch} from 'react-redux';
 
 import {theme} from '@kepler.gl/styles';
+import {useSelector} from 'react-redux';
 import {ParsedConfig} from '@kepler.gl/types';
 import {SqlPanel} from 'keplergl-duckdb-plugin';
 import Banner from './components/banner';
@@ -91,14 +92,16 @@ const CONTAINER_STYLE = {
   left: 0,
   top: 0,
   display: 'flex',
-  flexDirection: 'column'
+  flexDirection: 'row'
 };
 
 const App = props => {
   const [showBanner, toggleShowBanner] = useState(false);
-
   const {params: {id, provider} = {}, location: {query = {}} = {}} = props;
   const dispatch = useDispatch();
+  const isSqlPanelOpen = useSelector(
+    state => state?.demo?.keplerGl?.map?.uiState.mapControls.sqlPanel.active
+  );
   useEffect(() => {
     // if we pass an id as part of the url
     // we ry to fetch along map configurations
@@ -423,9 +426,11 @@ const App = props => {
               )}
             </AutoSizer>
           </div>
-          <div style={{height: '50%'}}>
-            <SqlPanel />
-          </div>
+          {isSqlPanelOpen ? (
+            <div style={{width: '50%'}}>
+              <SqlPanel />
+            </div>
+          ) : null}
         </div>
       </GlobalStyle>
     </ThemeProvider>
