@@ -16,7 +16,7 @@ const rules = [
   // fix for arrow-related errors
   {
     test: /\.mjs$/,
-    // include: /node_modules\/apache-arrow/,
+    // include: /node_modules[\\/]apache-arrow/,
     include: /node_modules/,
     type: 'javascript/auto'
   },
@@ -25,9 +25,9 @@ const rules = [
     test: /\.(js|ts)$/,
     loader: 'babel-loader',
     include: [
-      /node_modules\/@probe.gl/,
-      /node_modules\/@loaders.gl/,
-      /node_modules\/@math.gl/
+      /node_modules[\\/]@probe.gl/,
+      /node_modules[\\/]@loaders.gl/,
+      /node_modules[\\/]@math.gl/
     ]
   }
 ];
