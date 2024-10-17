@@ -152,7 +152,8 @@ class ItemSelectorUnmemoized extends Component<ItemSelectorProps> {
     DropDownRenderComponent: DropdownList,
     DropDownLineItemRenderComponent: ListItem,
     DropDownWrapperComponent: DropdownWrapper,
-    reorderItems: undefined
+    reorderItems: undefined,
+    className: ''
   };
 
   state = {

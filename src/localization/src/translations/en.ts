@@ -195,7 +195,7 @@ export default {
   },
   filterManager: {
     addFilter: 'Add Filter',
-    timeFilterSync: 'Sync with…',
+    timeFilterSync: 'Synced datasets',
     column: 'Column'
   },
   datasetTitle: {
