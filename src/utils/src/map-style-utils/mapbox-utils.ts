@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import {isMapboxURL, transformMapboxUrl} from 'maplibregl-mapbox-request-transformer';
+
 /**
  * Determines whether a Map Style is using Mapbox Tiles
  * @param {any} mapStyle the mapStyle to check
@@ -24,8 +26,19 @@ export function isStyleUsingMapboxTiles(mapStyle) {
   });
 }
 
-export const transformRequest = (url: string): {url: string} => {
-  return {
-    url
+/**
+ * Transform mapbox protocol so can be used with maplibre
+ * @param mapboxKey mapbox api key
+ * @returns transformed url
+ */
+export const transformRequest = (
+  mapboxKey: string
+): ((url: string, resourceType: string) => {url: string}) => {
+  return (url: string, resourceType: string) => {
+    if (isMapboxURL(url)) {
+      return transformMapboxUrl(url, resourceType, mapboxKey);
+    }
+
+    return {url};
   };
 };
