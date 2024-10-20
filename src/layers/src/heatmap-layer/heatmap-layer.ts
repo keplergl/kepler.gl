@@ -2,7 +2,6 @@
 // Copyright contributors to the kepler.gl project
 
 import {createSelector} from 'reselect';
-import memoize from 'lodash.memoize';
 import {CHANNEL_SCALES, SCALE_FUNC, ALL_FIELD_TYPES, ColorRange} from '@kepler.gl/constants';
 import MapboxGLLayer, {MapboxLayerGLConfig} from '../mapboxgl-layer';
 import HeatmapLayerIcon from './heatmap-layer-icon';
@@ -50,13 +49,17 @@ export type HeatmapLayerConfig = Merge<
 export const MAX_ZOOM_LEVEL = 18;
 
 export const pointPosAccessor =
-  ({lat, lng, geoarrow}: HeatmapLayerColumnsConfig, columnMode) =>
+  ({lat, lng}: HeatmapLayerColumnsConfig) =>
   (dc: DataContainerInterface) =>
-  d => {
-    if (columnMode === COLUMN_MODE_POINTS) {
-      return [dc.valueAt(d.index, lng.fieldIdx), dc.valueAt(d.index, lat.fieldIdx)];
-    }
+  (d: {index: number}): number[] => {
+    // COLUMN_MODE_POINTS
+    return [dc.valueAt(d.index, lng.fieldIdx), dc.valueAt(d.index, lat.fieldIdx)];
+  };
 
+export const geoarrowPosAccessor =
+  ({geoarrow}: HeatmapLayerColumnsConfig) =>
+  (dc: DataContainerInterface) =>
+  (d: {index: number}): number[] => {
     // COLUMN_MODE_GEOARROW
     const row = dc.valueAt(d.index, geoarrow.fieldIdx);
     return [row.get(0), row.get(1)];
@@ -133,16 +136,15 @@ class HeatmapLayer extends MapboxGLLayer {
   declare visConfigSettings: HeatmapLayerVisConfigSettings;
   declare config: HeatmapLayerConfig;
 
-  getPosition: (config: HeatmapLayerColumnsConfig, columnMode?: string) => any;
-
-  dataContainer: DataContainerInterface | null = null;
-  filteredIndex: Uint8ClampedArray | null = null;
-  filteredIndexTrigger: number[] = [];
-
   constructor(props) {
     super(props);
     this.registerVisConfig(heatmapVisConfigs);
-    this.getPosition = memoize(pointPosAccessor, pointColResolver);
+
+    this.getPositionAccessor = (dataContainer: DataContainerInterface) => {
+      if (this.config.columnMode === COLUMN_MODE_POINTS)
+        return pointPosAccessor(this.config.columns)(dataContainer);
+      return geoarrowPosAccessor(this.config.columns)(dataContainer);
+    };
   }
 
   get type(): 'heatmap' {
@@ -159,36 +161,6 @@ class HeatmapLayer extends MapboxGLLayer {
       return this.hasColumnValue(columns.geoarrow);
     }
     return super.hasAllColumns();
-  }
-
-  static findDefaultLayerProps(
-    dataset: KeplerTable,
-    foundLayers?: any[]
-  ): {
-    props: {color?: RGBColor; columns: HeatmapLayerColumnsConfig; label: string}[];
-  } {
-    const {fields} = dataset;
-
-    // TODO move this to field pairs logic, to create a field pair from a single column
-    const geoArrowLineFields = getGeoPointFields(fields);
-
-    if (geoArrowLineFields.length > 0) {
-      const props: {columns: HeatmapLayerColumnsConfig; label: string; isVisible: boolean} = {
-        // @ts-expect-error fill not required columns with default columns
-        columns: {
-          geoarrow: {
-            fieldIdx: geoArrowLineFields[0].fieldIdx,
-            value: geoArrowLineFields[0].displayName
-          }
-        },
-        label: `${geoArrowLineFields[0].displayName} heatmap`,
-        isVisible: true
-      };
-
-      return {props: [props]};
-    }
-
-    return super.findDefaultLayerProps(dataset, foundLayers);
   }
 
   get visualChannels(): VisualChannels {
@@ -248,10 +220,6 @@ class HeatmapLayer extends MapboxGLLayer {
 
     // @ts-expect-error
     return layerConfig;
-  }
-
-  getPositionAccessor(dataContainer) {
-    return this.getPosition(this.config.columns, this.config.columnMode)(dataContainer);
   }
 
   updateLayerMeta(dataContainer) {
