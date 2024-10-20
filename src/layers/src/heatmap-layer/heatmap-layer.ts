@@ -6,17 +6,8 @@ import {CHANNEL_SCALES, SCALE_FUNC, ALL_FIELD_TYPES, ColorRange} from '@kepler.g
 import MapboxGLLayer, {MapboxLayerGLConfig} from '../mapboxgl-layer';
 import HeatmapLayerIcon from './heatmap-layer-icon';
 import {LayerBaseConfigPartial, LayerWeightConfig, VisualChannels} from '../base-layer';
-import {getGeoPointFields} from '../layer-utils';
-import {
-  VisConfigColorRange,
-  VisConfigNumber,
-  HexColor,
-  Merge,
-  LayerColumn,
-  RGBColor
-} from '@kepler.gl/types';
+import {VisConfigColorRange, VisConfigNumber, HexColor, Merge, LayerColumn} from '@kepler.gl/types';
 import {hexToRgb, DataContainerInterface} from '@kepler.gl/utils';
-import {KeplerTable} from '@kepler.gl/table';
 
 export type HeatmapLayerVisConfigSettings = {
   opacity: VisConfigNumber;
@@ -51,16 +42,13 @@ export const MAX_ZOOM_LEVEL = 18;
 export const pointPosAccessor =
   ({lat, lng}: HeatmapLayerColumnsConfig) =>
   (dc: DataContainerInterface) =>
-  (d: {index: number}): number[] => {
-    // COLUMN_MODE_POINTS
-    return [dc.valueAt(d.index, lng.fieldIdx), dc.valueAt(d.index, lat.fieldIdx)];
-  };
+  (d: {index: number}): number[] =>
+    [dc.valueAt(d.index, lng.fieldIdx), dc.valueAt(d.index, lat.fieldIdx)];
 
 export const geoarrowPosAccessor =
   ({geoarrow}: HeatmapLayerColumnsConfig) =>
   (dc: DataContainerInterface) =>
   (d: {index: number}): number[] => {
-    // COLUMN_MODE_GEOARROW
     const row = dc.valueAt(d.index, geoarrow.fieldIdx);
     return [row.get(0), row.get(1)];
   };
@@ -89,14 +77,14 @@ export const COLUMN_MODE_POINTS = 'points';
 export const COLUMN_MODE_GEOARROW = 'geoarrow';
 const SUPPORTED_COLUMN_MODES = [
   {
-    key: COLUMN_MODE_GEOARROW,
-    label: 'Geoarrow',
-    requiredColumns: geoarrowRequiredColumns
-  },
-  {
     key: COLUMN_MODE_POINTS,
     label: 'Points',
     requiredColumns: pointRequiredColumns
+  },
+  {
+    key: COLUMN_MODE_GEOARROW,
+    label: 'Geoarrow',
+    requiredColumns: geoarrowRequiredColumns
   }
 ];
 const DEFAULT_COLUMN_MODE = COLUMN_MODE_POINTS;
@@ -198,20 +186,13 @@ class HeatmapLayer extends MapboxGLLayer {
   }
 
   getDefaultLayerConfig(props: LayerBaseConfigPartial): HeatmapLayerConfig {
-    const defaultLayerConfig = super.getDefaultLayerConfig(props ?? {});
-
-    let defaultColumnMode = DEFAULT_COLUMN_MODE;
-    if (props.columns?.geoarrow) {
-      defaultColumnMode = COLUMN_MODE_GEOARROW;
-    }
-
     // mapbox heatmap layer color is always based on density
     // no need to set colorField, colorDomain and colorScale
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const {colorField, colorDomain, colorScale, ...layerConfig} = {
-      ...defaultLayerConfig,
-      columnMode: props?.columnMode ?? defaultColumnMode,
+      ...super.getDefaultLayerConfig(props),
+      columnMode: props?.columnMode ?? DEFAULT_COLUMN_MODE,
 
       weightField: null,
       weightDomain: [0, 1],
