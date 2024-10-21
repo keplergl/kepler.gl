@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import {Vector as ArrowVector} from 'apache-arrow';
+
 import Layer, {
   LayerBaseConfig,
   LayerColorConfig,
@@ -16,7 +18,12 @@ import {h3ToGeo} from 'h3-js';
 
 import {hexToRgb, DataContainerInterface, ArrowDataContainer} from '@kepler.gl/utils';
 import ArcLayerIcon from './arc-layer-icon';
-import {isLayerHoveredFromArrow, getGeoPointFields} from '../layer-utils';
+import {
+  isLayerHoveredFromArrow,
+  getGeoPointFields,
+  createGeoArrowPointVector,
+  getFilteredIndex
+} from '../layer-utils';
 import {
   DEFAULT_LAYER_COLOR,
   ColorRange,
@@ -212,6 +219,15 @@ export default class ArcLayer extends Layer {
   declare meta: ArcLayerMeta;
 
   dataContainer: DataContainerInterface | null = null;
+  geoArrowVector0: ArrowVector | undefined = undefined;
+  geoArrowVector1: ArrowVector | undefined = undefined;
+
+  /*
+   * CPU filtering an arrow table by values and assembling a partial copy of the raw table is expensive
+   * so we will use filteredIndex to create an attribute e.g. filteredIndex [0|1] for GPU filtering
+   * in deck.gl layer, see: FilterArrowExtension in @kepler.gl/deckgl-layers.
+   * Note that this approach can create visible lags in case of a lot of discarted geometry.
+   */
   filteredIndex: Uint8ClampedArray | null = null;
   filteredIndexTrigger: number[] = [];
 
@@ -365,26 +381,31 @@ export default class ArcLayer extends Layer {
   }
 
   calculateDataAttributeForGeoArrow(
-    {
-      dataContainer,
-      filteredIndex
-    }: {dataContainer: DataContainerInterface; filteredIndex: number[]},
+    {dataContainer, filteredIndex}: {dataContainer: ArrowDataContainer; filteredIndex: number[]},
     getPosition
   ) {
-    // filter geojson/arrow table by values and make a partial copy of the raw table are expensive
-    // so we will use filteredIndex to create an attribute e.g. filteredIndex [0|1] for GPU filtering
-    // in deck.gl layer, see: FilterArrowExtension in @kepler.gl/deckgl-layers
-    if (!this.filteredIndex) {
-      this.filteredIndex = new Uint8ClampedArray(dataContainer.numRows());
-    }
-    this.filteredIndex.fill(0);
-    for (let i = 0; i < filteredIndex.length; ++i) {
-      this.filteredIndex[filteredIndex[i]] = 1;
-    }
+    this.filteredIndex = getFilteredIndex(
+      dataContainer.numRows(),
+      filteredIndex,
+      this.filteredIndex
+    );
     this.filteredIndexTrigger = filteredIndex;
 
-    // Rendering logic still checks data.length or data.numRows
-    return (dataContainer as ArrowDataContainer).getTable();
+    if (this.config.columnMode === COLUMN_MODE_GEOARROW) {
+      this.geoArrowVector0 = dataContainer.getColumn(this.config.columns.geoarrow0.fieldIdx);
+      this.geoArrowVector1 = dataContainer.getColumn(this.config.columns.geoarrow1.fieldIdx);
+    } else {
+      // generate columns compatible with geoarrow point extension
+      // TODO remove excessive intermediate allocations
+      this.geoArrowVector0 = createGeoArrowPointVector(d => {
+        return getPosition(d).slice(0, 3);
+      }, dataContainer.numRows());
+      this.geoArrowVector1 = createGeoArrowPointVector(d => {
+        return getPosition(d).slice(3, 6);
+      }, dataContainer.numRows());
+    }
+
+    return dataContainer.getTable();
   }
 
   calculateDataAttributeForPoints(
@@ -450,9 +471,19 @@ export default class ArcLayer extends Layer {
   }
 
   calculateDataAttribute({dataContainer, filteredIndex}: KeplerTable, getPosition) {
-    if (this.config.columnMode === COLUMN_MODE_GEOARROW) {
+    const {columnMode} = this.config;
+
+    // 1) COLUMN_MODE_GEOARROW - when we have a geoarrow point column
+    // 2) COLUMN_MODE_POINTS + ArrowDataContainer > create geoarrow point column on the fly
+    if (
+      dataContainer instanceof ArrowDataContainer &&
+      (columnMode === COLUMN_MODE_GEOARROW || columnMode === COLUMN_MODE_POINTS)
+    ) {
       return this.calculateDataAttributeForGeoArrow({dataContainer, filteredIndex}, getPosition);
     }
+    this.geoArrowVector0 = undefined;
+    this.geoArrowVector1 = undefined;
+
     if (this.config.columnMode === COLUMN_MODE_POINTS) {
       return this.calculateDataAttributeForPoints({dataContainer, filteredIndex}, getPosition);
     }
@@ -530,20 +561,18 @@ export default class ArcLayer extends Layer {
     const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
     const hoveredObject = this.hasHoveredObject(objectHovered);
 
-    const ArcLayerClass =
-      this.config.columnMode === COLUMN_MODE_GEOARROW ? GeoArrowArcLayer : DeckArcLayer;
-    const adjustedData =
-      this.config.columnMode === COLUMN_MODE_GEOARROW
-        ? dataset.dataContainer.getTable()
-        : data.data;
-    const getSourcePosition =
-      this.config.columnMode === COLUMN_MODE_GEOARROW
-        ? dataset.dataContainer.getColumn(this.config.columns.geoarrow0.fieldIdx)
-        : data.getPosition;
-    const getTargetPosition =
-      this.config.columnMode === COLUMN_MODE_GEOARROW
-        ? dataset.dataContainer.getColumn(this.config.columns.geoarrow1.fieldIdx)
-        : data.getPosition;
+    const useArrowLayer = Boolean(this.geoArrowVector0);
+
+    let ArcLayerClass: typeof DeckArcLayer | typeof GeoArrowArcLayer = DeckArcLayer;
+    let deckLayerData = data.data;
+    let getSourcePosition = data.getPosition;
+    let getTargetPosition = data.getPosition;
+    if (useArrowLayer) {
+      ArcLayerClass = GeoArrowArcLayer;
+      deckLayerData = dataset.dataContainer.getTable();
+      getSourcePosition = this.geoArrowVector0;
+      getTargetPosition = this.geoArrowVector1;
+    }
 
     return [
       // @ts-expect-error
@@ -551,7 +580,7 @@ export default class ArcLayer extends Layer {
         ...defaultLayerProps,
         ...this.getBrushingExtensionProps(interactionConfig, 'source_target'),
         ...data,
-        data: adjustedData,
+        data: deckLayerData,
         getSourcePosition,
         getTargetPosition,
         widthScale,
@@ -576,11 +605,6 @@ export default class ArcLayer extends Layer {
   }
 
   hasHoveredObject(objectInfo) {
-    // non-GeoArrow mode
-    if (this.config.columnMode !== COLUMN_MODE_GEOARROW) {
-      return super.hasHoveredObject(objectInfo);
-    }
-
     if (
       isLayerHoveredFromArrow(objectInfo, this.id) &&
       objectInfo.index >= 0 &&
@@ -591,6 +615,8 @@ export default class ArcLayer extends Layer {
         position: this.getPositionAccessor(this.dataContainer)(objectInfo)
       };
     }
+
+    return super.hasHoveredObject(objectInfo);
   }
 
   getHoverData(
@@ -602,10 +628,9 @@ export default class ArcLayer extends Layer {
   ) {
     // for arrow format, `object` is the Arrow row object Proxy,
     // and index is passed in `hoverInfo`.
-    const index =
-      this.config.columnMode === COLUMN_MODE_GEOARROW
-        ? hoverInfo?.index
-        : (object as {index: number}).index;
+    const index = Boolean(this.geoArrowVector0)
+      ? hoverInfo?.index
+      : (object as {index: number}).index;
     if (index >= 0) {
       return dataContainer.row(index);
     }

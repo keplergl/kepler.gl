@@ -972,11 +972,15 @@ class Layer {
    * @param {Array | Object} layerData
    * @returns {boolean} yes or no
    */
-  hasLayerData(layerData) {
+  hasLayerData(layerData: {data: unknown[] | ArrowTable}) {
     if (!layerData) {
       return false;
     }
-    return Boolean(layerData.data && (layerData.data.length || layerData.data.numRows));
+
+    return Boolean(
+      layerData.data &&
+        ((layerData.data as unknown[]).length || (layerData.data as ArrowTable).numRows)
+    );
   }
 
   isValidToSave(): boolean {
