@@ -125,7 +125,8 @@ function FieldSelectorFactory(
       multiSelect: false,
       closeOnSelect: true,
       showToken: true,
-      placeholder: 'placeholder.selectField'
+      placeholder: 'placeholder.selectField',
+      className: ''
     };
 
     fieldsSelector = props => props.fields;

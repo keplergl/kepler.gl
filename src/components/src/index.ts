@@ -206,11 +206,13 @@ export {default as TimeWidgetTopFactory} from './filters/time-widget-top';
 export {default as SingleSelectFilterFactory} from './filters/single-select-filter';
 export {default as MultiSelectFilterFactory} from './filters/multi-select-filter';
 export {default as NewFilterPanelFactory} from './filters/filter-panels/new-filter-panel';
+export {default as TimeRangeFilterPanelFactory} from './filters/filter-panels/time-range-filter-panel';
 export {
   timeRangeSliderFieldsSelector,
   default as TimeRangeFilterFactory
 } from './filters/time-range-filter';
 export {default as RangeFilterFactory} from './filters/range-filter';
+
 
 // // Editor Factory
 export {default as EditorFactory} from './editor/editor';
