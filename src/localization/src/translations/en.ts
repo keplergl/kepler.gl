@@ -534,6 +534,8 @@ ${'```'}
     icon: 'icon',
     geojson: 'geojson',
     geoarrow: 'geoarrow',
+    geoarrow0: 'geoarrow source',
+    geoarrow1: 'geoarrow target',
     token: 'token',
     sortBy: 'sort by',
     neighbors: 'neighbors',

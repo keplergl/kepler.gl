@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import {Vector as ArrowVector} from 'apache-arrow';
+
 import {BrushingExtension} from '@deck.gl/extensions';
 import {ScatterplotLayer} from '@deck.gl/layers';
 
@@ -33,7 +35,10 @@ import {getTextOffsetByRadius, formatTextLabelData} from '../layer-text-label';
 import {
   assignPointPairToLayerColumn,
   isLayerHoveredFromArrow,
-  getGeoPointFields
+  getGeoPointFields,
+  createGeoArrowPointVector,
+  getFilteredIndex,
+  getNeighbors
 } from '../layer-utils';
 import {getGeojsonPointDataMaps, GeojsonPointDataMaps} from '../geojson-layer/geojson-utils';
 import {
@@ -212,6 +217,14 @@ export default class PointLayer extends Layer {
   dataToFeature: GeojsonPointDataMaps = [];
 
   dataContainer: DataContainerInterface | null = null;
+  geoArrowVector: ArrowVector | undefined = undefined;
+
+  /*
+   * CPU filtering an arrow table by values and assembling a partial copy of the raw table is expensive
+   * so we will use filteredIndex to create an attribute e.g. filteredIndex [0|1] for GPU filtering
+   * in deck.gl layer, see: FilterArrowExtension in @kepler.gl/deckgl-layers.
+   * Note that this approach can create visible lags in case of a lot of discarted geometry.
+   */
   filteredIndex: Uint8ClampedArray | null = null;
   filteredIndexTrigger: number[] = [];
 
@@ -388,22 +401,31 @@ export default class PointLayer extends Layer {
   }
 
   calculateDataAttribute({filteredIndex, dataContainer}: KeplerTable, getPosition) {
-    if (this.config.columnMode === COLUMN_MODE_GEOARROW) {
-      // filtering an arrow table by values and make a partial copy of the raw table is expensive
-      // so we will use filteredIndex to create an attribute e.g. filteredIndex [0|1] for GPU filtering
-      // in deck.gl layer, see: FilterArrowExtension in @kepler.gl/deckgl-layers
-      if (!this.filteredIndex) {
-        this.filteredIndex = new Uint8ClampedArray(dataContainer.numRows());
-      }
-      this.filteredIndex.fill(0);
-      for (let i = 0; i < filteredIndex.length; ++i) {
-        this.filteredIndex[filteredIndex[i]] = 1;
-      }
+    const {columnMode} = this.config;
+
+    // 1) COLUMN_MODE_GEOARROW - when we have a geoarrow point column
+    // 2) COLUMN_MODE_POINTS + ArrowDataContainer > create geoarrow point column on the fly
+    if (
+      dataContainer instanceof ArrowDataContainer &&
+      (columnMode === COLUMN_MODE_GEOARROW || columnMode === COLUMN_MODE_POINTS)
+    ) {
+      this.filteredIndex = getFilteredIndex(
+        dataContainer.numRows(),
+        filteredIndex,
+        this.filteredIndex
+      );
       this.filteredIndexTrigger = filteredIndex;
 
-      // Rendering logic still checks data.length or data.numRows
-      return (dataContainer as ArrowDataContainer).getTable();
+      if (this.config.columnMode === COLUMN_MODE_GEOARROW) {
+        this.geoArrowVector = dataContainer.getColumn(this.config.columns.geoarrow.fieldIdx);
+      } else {
+        // generate a column compatible with geoarrow point
+        this.geoArrowVector = createGeoArrowPointVector(getPosition, dataContainer.numRows());
+      }
+
+      return dataContainer.getTable();
     }
+    this.geoArrowVector = undefined;
 
     const data: PointLayerData[] = [];
 
@@ -424,15 +446,15 @@ export default class PointLayer extends Layer {
         // deck.gl can't handle position = null
         pushPointPosition(data, pos, index, neighbors);
       } else {
-        // point from geojson coordinates
+        // COLUMN_MODE_GEOJSON mode - point from geojson coordinates
         const coordinates = this.dataToFeature[i];
         // if multi points
         if (coordinates && Array.isArray(coordinates[0])) {
           coordinates.forEach(coord => {
-            pushPointPosition(data, coord, index, neighbors);
+            pushPointPosition(data, coord, index);
           });
         } else if (coordinates && Number.isFinite(coordinates[0])) {
-          pushPointPosition(data, coordinates as number[], index, neighbors);
+          pushPointPosition(data, coordinates as number[], index);
         }
       }
     }
@@ -543,28 +565,27 @@ export default class PointLayer extends Layer {
     };
     const hoveredObject = this.hasHoveredObject(objectHovered);
     const {showNeighborOnHover, allowHover} = this.config.visConfig;
-    let neighborsData = [];
+    let neighborsData: ReturnType<typeof getNeighbors> = [];
     if (allowHover && showNeighborOnHover && hoveredObject) {
-      // find neighbor
-      neighborsData = (hoveredObject.neighbors || [])
-        .map(idx => ({
-          // TODO do we really need to pass data here?
-          data: dataset.dataContainer.rowAsArray(idx),
-          // position: pos,
-          // index is important for filter
-          index: idx
-        }))
-        .filter(d => d.data);
+      // find neighbors
+      neighborsData = getNeighbors(
+        this.config.columns.neighbors,
+        dataset.dataContainer,
+        hoveredObject.index,
+        this.getPositionAccessor(dataset.dataContainer)
+      );
     }
 
-    const ScatterplotLayerClass =
-      this.config.columnMode === COLUMN_MODE_GEOARROW ? GeoArrowScatterplotLayer : ScatterplotLayer;
-    const adjustedData =
-      this.config.columnMode === COLUMN_MODE_GEOARROW
-        ? dataset.dataContainer.getTable()
-        : data.data;
-    const getPosition =
-      this.config.columnMode === COLUMN_MODE_GEOARROW ? undefined : data.getPosition;
+    const useArrowLayer = Boolean(this.geoArrowVector);
+    let ScatterplotLayerClass: typeof ScatterplotLayer | typeof GeoArrowScatterplotLayer =
+      ScatterplotLayer;
+    let deckLayerData = data.data;
+    let getPosition = data.getPosition;
+    if (useArrowLayer) {
+      ScatterplotLayerClass = GeoArrowScatterplotLayer;
+      deckLayerData = dataset.dataContainer.getTable();
+      getPosition = this.geoArrowVector;
+    }
 
     return [
       // @ts-expect-error
@@ -573,7 +594,7 @@ export default class PointLayer extends Layer {
         ...brushingProps,
         ...layerProps,
         ...data,
-        data: adjustedData,
+        data: deckLayerData,
         getPosition,
         parameters: {
           // circles will be flat on the map when the altitude column is not used
@@ -614,7 +635,7 @@ export default class PointLayer extends Layer {
           updateTriggers,
           getFiltered: data.getFiltered
         },
-        this.config.columnMode === COLUMN_MODE_GEOARROW
+        Boolean(this.geoArrowVector)
           ? {
               ...opts,
               data: {...opts.data, getPosition}
@@ -625,11 +646,6 @@ export default class PointLayer extends Layer {
   }
 
   hasHoveredObject(objectInfo) {
-    // non-GeoArrow mode
-    if (this.config.columnMode !== COLUMN_MODE_GEOARROW) {
-      return super.hasHoveredObject(objectInfo);
-    }
-
     if (
       isLayerHoveredFromArrow(objectInfo, this.id) &&
       objectInfo.index >= 0 &&
@@ -640,6 +656,8 @@ export default class PointLayer extends Layer {
         position: this.getPositionAccessor(this.dataContainer)(objectInfo)
       };
     }
+
+    return super.hasHoveredObject(objectInfo);
   }
 
   getHoverData(
@@ -651,10 +669,9 @@ export default class PointLayer extends Layer {
   ) {
     // for arrow format, `object` is the Arrow row object Proxy,
     // and index is passed in `hoverInfo`.
-    const index =
-      this.config.columnMode === COLUMN_MODE_GEOARROW
-        ? hoverInfo?.index
-        : (object as {index: number}).index;
+    const index = Boolean(this.geoArrowVector)
+      ? hoverInfo?.index
+      : (object as {index: number}).index;
     if (index >= 0) {
       return dataContainer.row(index);
     }

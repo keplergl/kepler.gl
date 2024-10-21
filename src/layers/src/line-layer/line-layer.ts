@@ -291,20 +291,18 @@ export default class LineLayer extends ArcLayer {
     const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
     const hoveredObject = this.hasHoveredObject(objectHovered);
 
-    const LineLayerClass =
-      this.config.columnMode === COLUMN_MODE_GEOARROW ? GeoArrowArcLayer : EnhancedLineLayer;
-    const adjustedData =
-      this.config.columnMode === COLUMN_MODE_GEOARROW
-        ? dataset.dataContainer.getTable()
-        : data.data;
-    const getSourcePosition =
-      this.config.columnMode === COLUMN_MODE_GEOARROW
-        ? dataset.dataContainer.getColumn(this.config.columns.geoarrow0.fieldIdx)
-        : data.getPosition;
-    const getTargetPosition =
-      this.config.columnMode === COLUMN_MODE_GEOARROW
-        ? dataset.dataContainer.getColumn(this.config.columns.geoarrow1.fieldIdx)
-        : data.getPosition;
+    const useArrowLayer = Boolean(this.geoArrowVector0);
+
+    let LineLayerClass: typeof EnhancedLineLayer | typeof GeoArrowArcLayer = EnhancedLineLayer;
+    let deckLayerData = data.data;
+    let getSourcePosition = data.getPosition;
+    let getTargetPosition = data.getPosition;
+    if (useArrowLayer) {
+      LineLayerClass = GeoArrowArcLayer;
+      deckLayerData = dataset.dataContainer.getTable();
+      getSourcePosition = this.geoArrowVector0;
+      getTargetPosition = this.geoArrowVector1;
+    }
 
     return [
       // base layer
@@ -312,7 +310,7 @@ export default class LineLayer extends ArcLayer {
         ...defaultLayerProps,
         ...this.getBrushingExtensionProps(interactionConfig, 'source_target'),
         ...data,
-        data: adjustedData,
+        data: deckLayerData,
         getSourcePosition,
         getTargetPosition,
         ...layerProps,
