@@ -74,6 +74,7 @@ TimeRangeSliderFactory.deps = [
 ];
 
 export function getTimeBinsForInterval(timeBins, interval) {
+  if (!timeBins) return {};
   return Object.keys(timeBins).reduce((acc, dataId) => {
     acc[dataId] = timeBins[dataId][interval];
     return acc;
