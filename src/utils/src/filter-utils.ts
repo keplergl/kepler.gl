@@ -241,7 +241,7 @@ export function validateFilter<K extends KeplerTableModel<K, L>, L>(
     return failed;
   }
 
-  updatedFilter.value = adjustValueToFilterDomain(filter.value, updatedFilter);
+  // don't adjust value yet before all datasets are loaded
   updatedFilter.view = filter.view ?? updatedFilter.view;
 
   if (updatedFilter.value === null) {
@@ -1118,12 +1118,14 @@ export function validateFiltersUpdateDatasets<
         applyToDatasets: string[];
         augmentedDatasets: {[datasetId: string]: any};
       }>(
-        (acc, datasetId) => {
+        (acc, datasetId, idx) => {
           const dataset = updatedDatasets[datasetId];
           const layers = state.layers.filter(l => l.config.dataId === dataset.id);
+          const toValidate = acc.validatedFilter || filterToValidate;
+
           const {filter: updatedFilter, dataset: updatedDataset} = validateFilterWithData(
             acc.augmentedDatasets[datasetId] || dataset,
-            acc.validatedFilter || filterToValidate,
+            toValidate,
             layers
           );
 
@@ -1151,6 +1153,7 @@ export function validateFiltersUpdateDatasets<
       );
 
       if (validatedFilter && isEqual(datasetIds, applyToDatasets)) {
+        validatedFilter.value = adjustValueToFilterDomain(filterToValidate.value, validatedFilter);
         validated.push(updateFilterPlot(datasets, validatedFilter));
         updatedDatasets = {
           ...updatedDatasets,
