@@ -2959,7 +2959,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@kepler.gl/deckgl-arrow-layers@workspace:src/deckgl-arrow-layers":
+"@kepler.gl/deckgl-arrow-layers@npm:3.0.0, @kepler.gl/deckgl-arrow-layers@workspace:src/deckgl-arrow-layers":
   version: 0.0.0-use.local
   resolution: "@kepler.gl/deckgl-arrow-layers@workspace:src/deckgl-arrow-layers"
   dependencies:
@@ -3031,6 +3031,7 @@ __metadata:
     "@deck.gl/layers": "npm:^8.9.27"
     "@deck.gl/mesh-layers": "npm:^8.9.27"
     "@kepler.gl/constants": "npm:3.0.0"
+    "@kepler.gl/deckgl-arrow-layers": "npm:3.0.0"
     "@kepler.gl/deckgl-layers": "npm:3.0.0"
     "@kepler.gl/localization": "npm:3.0.0"
     "@kepler.gl/table": "npm:3.0.0"
@@ -3114,6 +3115,7 @@ __metadata:
     "@kepler.gl/actions": "npm:3.0.0"
     "@kepler.gl/cloud-providers": "npm:3.0.0"
     "@kepler.gl/constants": "npm:3.0.0"
+    "@kepler.gl/deckgl-arrow-layers": "npm:3.0.0"
     "@kepler.gl/deckgl-layers": "npm:3.0.0"
     "@kepler.gl/effects": "npm:3.0.0"
     "@kepler.gl/layers": "npm:3.0.0"
