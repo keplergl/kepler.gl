@@ -559,7 +559,9 @@ ${'```'}
     steps: 'steps',
     type: 'type',
     reversed: 'reversed',
-    opacity: 'Opacity'
+    opacity: 'Opacity',
+    preset: 'Preset Colors',
+    picker: 'Color Picker'
   },
   scale: {
     colorScale: 'Color Scale',
