@@ -150,12 +150,6 @@ const defaultGetData = (dc: DataContainerInterface, d: any, fieldIndex: number) 
   return dc.valueAt(d.index, fieldIndex);
 };
 
-/**
- * @param channels
- * @param dataId
- * @param fields
- * @return {Function} getFilterValue
- */
 const getFilterValueAccessor =
   (channels: (Filter | undefined)[], dataId: string, fields: any[]) =>
   (dc: DataContainerInterface) =>
@@ -198,12 +192,21 @@ const getFilterValueAccessor =
     return channelValues;
   };
 
+function isFilterTriggerEqual(a, b) {
+  return a === b || (a?.name === b?.name && a?.domain0 === b?.domain0);
+}
+
 /**
  * Get filter properties for gpu filtering
  */
-export function getGpuFilterProps(filters: Filter[], dataId: string, fields: Field[]): GpuFilter {
+export function getGpuFilterProps(
+  filters: Filter[],
+  dataId: string,
+  fields: Field[],
+  oldGpuFilter?: GpuFilter
+): GpuFilter {
   const filterRange = getEmptyFilterRange();
-  const triggers = {};
+  const triggers: GpuFilter['filterValueUpdateTriggers'] = {};
 
   // array of filter for each channel, undefined, if no filter is assigned to that channel
   const channels: (Filter | undefined)[] = [];
@@ -219,14 +222,18 @@ export function getGpuFilterProps(filters: Filter[], dataId: string, fields: Fie
 
     filterRange[i][0] = filter ? filter.value[0] - filter.domain?.[0] : 0;
     filterRange[i][1] = filter ? filter.value[1] - filter.domain?.[0] : 0;
+    const oldFilterTrigger = oldGpuFilter?.filterValueUpdateTriggers?.[`gpuFilter_${i}`] || null;
 
-    triggers[`gpuFilter_${i}`] = filter ? filter.name[filter.dataId.indexOf(dataId)] : null;
-    triggers[`gpuFilter_${i}`] = filter
+    const trigger = filter
       ? {
           name: filter.name[filter.dataId.indexOf(dataId)],
           domain0: filter.domain?.[0]
         }
       : null;
+    // don't create a new object, cause deck.gl use shallow compare
+    triggers[`gpuFilter_${i}`] = isFilterTriggerEqual(trigger, oldFilterTrigger)
+      ? oldFilterTrigger
+      : trigger;
     channels.push(filter);
   }
 
