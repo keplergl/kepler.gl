@@ -45,9 +45,7 @@
     "@mapbox/geojson-normalize": "0.0.1",
     "@nebula.gl/edit-modes": "1.0.2-alpha.1",
     "@turf/helpers": "^6.1.4",
-    "d3-dsv": "^2.0.0",
-    "node-stdlib-browser": "^1.2.0",
-    "zlib": "^1.0.5"
+    "d3-dsv": "^2.0.0"
   },
   "nyc": {
     "sourceMap": false,

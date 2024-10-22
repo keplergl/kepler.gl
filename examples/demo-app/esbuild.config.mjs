@@ -7,8 +7,6 @@ import {spawn} from 'node:child_process';
 import {join} from 'node:path';
 import KeplerPackage from '../../package.json' assert {type: 'json'};
 
-import stdLibBrowser from 'node-stdlib-browser';
-
 const args = process.argv;
 const LIB_DIR = '../../';
 const NODE_MODULES_DIR = join(LIB_DIR, 'node_modules');
@@ -35,9 +33,7 @@ const RESOLVE_LOCAL_ALIASES = {
   // Suppress useless warnings from react-date-picker's dep
   'tiny-warning': `${SRC_DIR}/utils/src/noop.ts`,
   // kepler.gl and loaders.gl need to use same apache-arrow
-  'apache-arrow': `${NODE_MODULES_DIR}/apache-arrow`,
-  fs: stdLibBrowser.fs,
-  buffer: stdLibBrowser.buffer
+  'apache-arrow': `${NODE_MODULES_DIR}/apache-arrow`
 };
 
 const config = {
@@ -57,9 +53,7 @@ const config = {
     'process.env.FoursquareClientId': JSON.stringify(process.env.FoursquareClientId), // eslint-disable-line
     'process.env.FoursquareDomain': JSON.stringify(process.env.FoursquareDomain), // eslint-disable-line
     'process.env.FoursquareAPIURL': JSON.stringify(process.env.FoursquareAPIURL), // eslint-disable-line
-    'process.env.FoursquareUserMapsURL': JSON.stringify(process.env.FoursquareUserMapsURL), // eslint-disable-line
-    'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'production'),
-    'process.env.NODE_DEBUG': JSON.stringify(process.env.NODE_DEBUG || '')
+    'process.env.FoursquareUserMapsURL': JSON.stringify(process.env.FoursquareUserMapsURL) // eslint-disable-line
   },
   plugins: [
     // automatically injected kepler.gl package version into the bundle
