@@ -35,6 +35,7 @@ const StyledSeparator = styled.div`
 `;
 
 const StyledButton = styled(Button)`
+  margin-top: 2px;
   padding: 2px;
 `;
 
@@ -140,7 +141,7 @@ function FilterSyncedDatasetPanelFactory(SourceSelector, FilterPanelHeader, Sour
                       onFieldSelector={field => onFieldSelector(field, index)}
                     />
                   </StyledFilterPanelHeader>
-                  {index + 1 < list.length && <StyledSeparator />}
+                  <StyledSeparator />
                 </div>
               );
             })}

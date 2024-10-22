@@ -14,22 +14,24 @@ const StyledSourceContainer = styled.div`
 SourceSelectorFactory.deps = [SourceDataSelectorContentFactory, FieldSelectorFactory];
 
 function SourceSelectorFactory(SourceDataSelectorContent, FieldSelector) {
-  const StyledFieldSelector = styled(FieldSelector)`
-    -webkit-border-bottom-right-radius: 4px;
-    -webkit-border-bottom-left-radius: 4px;
-    -moz-border-radius-bottomright: 4px;
-    -moz-border-radius-bottomleft: 4px;
-    border-bottom-right-radius: 4px;
-    border-bottom-left-radius: 4px;
+  const StyledSourceDataSelectorContent = styled.div`
+    margin-bottom: 2px;
+
+    .item-selector__dropdown {
+      border-top-left-radius: 2px;
+      border-top-right-radius: 2px;
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
+    }
   `;
 
-  const StyledSourceDataSelectorContent = styled(SourceDataSelectorContent)`
-    -webkit-border-top-left-radius: 4px;
-    -webkit-border-top-right-radius: 4px;
-    -moz-border-radius-topleft: 4px;
-    -moz-border-radius-topright: 4px;
-    border-top-left-radius: 4px;
-    border-top-right-radius: 4px;
+  const StyledFieldSelector = styled.div`
+    .item-selector__dropdown {
+      border-top-left-radius: 0;
+      border-top-right-radius: 0;
+      border-bottom-left-radius: 2px;
+      border-bottom-right-radius: 2px;
+    }
   `;
 
   const SourceSelector = ({
@@ -49,21 +51,25 @@ function SourceSelectorFactory(SourceDataSelectorContent, FieldSelector) {
 
     return (
       <StyledSourceContainer className={className}>
-        <StyledSourceDataSelectorContent
-          inputTheme={inputTheme}
-          datasets={datasets}
-          disabled={disabled}
-          dataId={dataId}
-          onSelect={onSelectDataset}
-        />
-        {dataId && (
-          <StyledFieldSelector
+        <StyledSourceDataSelectorContent>
+          <SourceDataSelectorContent
             inputTheme={inputTheme}
-            fields={datasetFields}
-            value={fieldValue}
-            erasable={false}
-            onSelect={onFieldSelector}
+            datasets={datasets}
+            disabled={disabled}
+            dataId={dataId}
+            onSelect={onSelectDataset}
           />
+        </StyledSourceDataSelectorContent>
+        {dataId && (
+          <StyledFieldSelector>
+            <FieldSelector
+              inputTheme={inputTheme}
+              fields={datasetFields}
+              value={fieldValue}
+              erasable={false}
+              onSelect={onFieldSelector}
+            />
+          </StyledFieldSelector>
         )}
       </StyledSourceContainer>
     );
