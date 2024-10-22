@@ -163,12 +163,18 @@ const getFilterValueAccessor =
       const fieldIndex = getDatasetFieldIndexForFilter(dataId, filter);
       const field = fields[fieldIndex];
 
-      const value =
-        filter.type === FILTER_TYPES.timeRange
-          ? field.filterProps && Array.isArray(field.filterProps.mappedValue)
-            ? field.filterProps.mappedValue[getIndex(d)]
-            : moment.utc(getData(dc, d, fieldIndex)).valueOf()
-          : getData(dc, d, fieldIndex);
+      let value;
+      const data = getData(dc, d, fieldIndex);
+      if (typeof data === 'function') {
+        value = data(field);
+      } else {
+        value =
+          filter.type === FILTER_TYPES.timeRange
+            ? field.filterProps && Array.isArray(field.filterProps.mappedValue)
+              ? field.filterProps.mappedValue[getIndex(d)]
+              : moment.utc(data).valueOf()
+            : data;
+      }
 
       return notNullorUndefined(value)
         ? Array.isArray(value)
