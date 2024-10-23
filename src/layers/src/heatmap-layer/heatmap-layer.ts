@@ -83,7 +83,7 @@ const SUPPORTED_COLUMN_MODES = [
   },
   {
     key: COLUMN_MODE_GEOARROW,
-    label: 'Geoarrow',
+    label: 'Geoarrow Points',
     requiredColumns: geoarrowRequiredColumns
   }
 ];

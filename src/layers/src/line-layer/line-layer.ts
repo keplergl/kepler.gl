@@ -109,11 +109,6 @@ export const COLUMN_MODE_NEIGHBORS = 'neighbors';
 export const COLUMN_MODE_GEOARROW = 'geoarrow';
 const SUPPORTED_COLUMN_MODES = [
   {
-    key: COLUMN_MODE_GEOARROW,
-    label: 'Geoarrow',
-    requiredColumns: geoarrowRequiredColumns
-  },
-  {
     key: COLUMN_MODE_POINTS,
     label: 'Points',
     requiredColumns: lineRequiredColumns,
@@ -124,6 +119,11 @@ const SUPPORTED_COLUMN_MODES = [
     label: 'Point and Neighbors',
     requiredColumns: neighborRequiredColumns,
     optionalColumns: neighborOptionalColumns
+  },
+  {
+    key: COLUMN_MODE_GEOARROW,
+    label: 'Geoarrow Points',
+    requiredColumns: geoarrowRequiredColumns
   }
 ];
 
