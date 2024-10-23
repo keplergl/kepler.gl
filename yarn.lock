@@ -3098,7 +3098,7 @@ __metadata:
     "@loaders.gl/gis": "npm:^4.3.1"
     "@loaders.gl/json": "npm:^4.3.1"
     "@loaders.gl/loader-utils": "npm:^4.3.1"
-    "@loaders.gl/parquet": "npm:^4.3.0-alpha.8"
+    "@loaders.gl/parquet": "npm:^4.3.1"
     "@mapbox/geojson-normalize": "npm:0.0.1"
     "@nebula.gl/edit-modes": "npm:1.0.2-alpha.1"
     "@turf/helpers": "npm:^6.1.4"

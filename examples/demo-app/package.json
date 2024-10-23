@@ -23,7 +23,7 @@
     "@loaders.gl/core": "^4.3.1",
     "@loaders.gl/csv": "^4.3.1",
     "@loaders.gl/json": "^4.3.1",
-    "@loaders.gl/parquet": "4.3.0-alpha.8",
+    "@loaders.gl/parquet": "^4.3.1",
     "@types/classnames": "^2.3.1",
     "@types/keymirror": "^0.1.1",
     "classnames": "^2.2.1",
