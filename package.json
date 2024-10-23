@@ -216,7 +216,7 @@
     "@loaders.gl/loader-utils": "4.3.1",
     "@loaders.gl/polyfills": "4.3.1",
     "@loaders.gl/arrow": "4.3.1",
-    "@loaders.gl/parquet": "4.3.1",
+    "@loaders.gl/parquet": "4.3.0-alpha.8",
     "@loaders.gl/gis": "4.3.1",
     "@loaders.gl/schema": "4.3.1",
     "@loaders.gl/wkt": "4.3.1",
