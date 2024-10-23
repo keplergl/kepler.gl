@@ -555,7 +555,11 @@ export default class ArcLayer extends Layer {
         getTargetPosition,
         widthScale,
         updateTriggers,
-        extensions: [...defaultLayerProps.extensions, brushingExtension, arrowCPUFilterExtension]
+        extensions: [
+          ...defaultLayerProps.extensions,
+          brushingExtension,
+          ...(useArrowLayer ? [arrowCPUFilterExtension] : [])
+        ]
       }),
       // hover layer
       ...(hoveredObject

@@ -517,13 +517,15 @@ export default class PointLayer extends Layer {
       ...this.getVisualChannelUpdateTriggers()
     };
 
+    const useArrowLayer = Boolean(this.geoArrowVector);
+
     const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
     const brushingProps = this.getBrushingExtensionProps(interactionConfig);
     const getPixelOffset = getTextOffsetByRadius(radiusScale, data.getRadius, mapState);
     const extensions = [
       ...defaultLayerProps.extensions,
       brushingExtension,
-      arrowCPUFilterExtension
+      ...(useArrowLayer ? [arrowCPUFilterExtension] : [])
     ];
 
     const sharedProps = {
@@ -546,7 +548,6 @@ export default class PointLayer extends Layer {
       );
     }
 
-    const useArrowLayer = Boolean(this.geoArrowVector);
     let ScatterplotLayerClass: typeof ScatterplotLayer | typeof GeoArrowScatterplotLayer =
       ScatterplotLayer;
     let deckLayerData = data.data;

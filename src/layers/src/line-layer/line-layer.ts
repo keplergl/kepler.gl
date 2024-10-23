@@ -293,7 +293,11 @@ export default class LineLayer extends ArcLayer {
         getTargetPosition,
         ...layerProps,
         updateTriggers,
-        extensions: [...defaultLayerProps.extensions, brushingExtension, arrowCPUFilterExtension],
+        extensions: [
+          ...defaultLayerProps.extensions,
+          brushingExtension,
+          ...(useArrowLayer ? [arrowCPUFilterExtension] : [])
+        ],
         _subLayerProps: {
           'geo-arrow-arc-layer': {
             type: EnhancedLineLayer
