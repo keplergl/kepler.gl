@@ -2,6 +2,10 @@
 // Copyright contributors to the kepler.gl project
 
 import '@testing-library/jest-dom';
+
+// ReferenceError: ReadableStream is not defined in @loaders.gl/polyfills
+global.ReadableStream = {};
+
 import {installFilePolyfills} from '@loaders.gl/polyfills';
 installFilePolyfills();
 
