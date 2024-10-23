@@ -5,6 +5,7 @@ import '@testing-library/jest-dom';
 
 // ReferenceError: ReadableStream is not defined in @loaders.gl/polyfills
 const {ReadableStream} = require('node:stream/web');
+global.ReadableStream = ReadableStream;
 globalThis.ReadableStream = ReadableStream;
 
 import {installFilePolyfills} from '@loaders.gl/polyfills';
