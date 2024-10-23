@@ -146,7 +146,7 @@ export function getColumnModeRequiredColumns(
  * @param fields Any fields
  * @returns geoarrow fields with ARROW:extension:name POINT metadata
  */
-export function getGeoPointFields(fields: Field[]): Field[] {
+export function getGeoArrowPointFields(fields: Field[]): Field[] {
   return fields.filter(field => {
     return (
       field.type === 'geoarrow' &&
@@ -249,7 +249,7 @@ export function getNeighbors(
 
 /**
  * Returns bounds from a geoarrow field.
- * TODO: refactor once metadata extraction from parquet is fixed
+ * TODO: refactor once metadata extraction from parquet to arrow vectors is in place.
  * @param layerColumn Layer columns for which to check for a bounding box.
  * @param dataContainer Data container with geoarrow metadata.
  * @returns Returns bounding box if exists.

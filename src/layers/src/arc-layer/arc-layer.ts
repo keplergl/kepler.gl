@@ -446,8 +446,11 @@ export default class ArcLayer extends Layer {
     ) {
       return this.calculateDataAttributeForGeoArrow({dataContainer, filteredIndex}, getPosition);
     }
+
+    // we don't need these in non-Arrow modes atm.
     this.geoArrowVector0 = undefined;
     this.geoArrowVector1 = undefined;
+    this.filteredIndex = null;
 
     if (this.config.columnMode === COLUMN_MODE_POINTS) {
       return this.calculateDataAttributeForPoints({dataContainer, filteredIndex}, getPosition);

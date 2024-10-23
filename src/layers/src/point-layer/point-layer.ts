@@ -394,7 +394,10 @@ export default class PointLayer extends Layer {
 
       return dataContainer.getTable();
     }
+
+    // we don't need these in non-Arrow modes atm.
     this.geoArrowVector = undefined;
+    this.filteredIndex = null;
 
     const data: PointLayerData[] = [];
 

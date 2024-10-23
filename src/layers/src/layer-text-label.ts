@@ -100,11 +100,11 @@ export const formatTextLabelData = ({
     }
 
     let getText: typeof getTextAccessor | ArrowVector = getTextAccessor;
-    // For Arrow Layers getText has to be an arrow column,
-    // for now check here for ArrowTable, not ArrowDataContainer.
+    // For Arrow Layers getText has to be an arrow vector.
+    // For now check here for ArrowTable, not ArrowDataContainer.
     if (data instanceof ArrowTable) {
       // TODO the data has to be a column of string type.
-      // Integer columns lack valueOffsets prop.
+      // as numerical and other columns types lack valueOffsets prop.
       getText = (dataContainer as ArrowDataContainer).getColumn(tl.field.fieldIdx);
     }
 
