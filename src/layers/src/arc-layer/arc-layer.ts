@@ -340,16 +340,11 @@ export default class ArcLayer extends Layer {
   }
 
   getDefaultLayerConfig(props: LayerBaseConfigPartial) {
-    const defaultLayerConfig = super.getDefaultLayerConfig(props ?? {});
-
-    let defaultColumnMode = DEFAULT_COLUMN_MODE;
-    if (props.columns?.geoarrow0 && props.columns?.geoarrow1) {
-      defaultColumnMode = COLUMN_MODE_GEOARROW;
-    }
+    const defaultLayerConfig = super.getDefaultLayerConfig(props);
 
     return {
       ...defaultLayerConfig,
-      columnMode: props?.columnMode ?? defaultColumnMode
+      columnMode: props?.columnMode ?? DEFAULT_COLUMN_MODE
     };
   }
 

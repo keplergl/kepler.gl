@@ -874,7 +874,8 @@ test('visStateReducer -> layerDataIdChangeUpdater -> validation', t => {
       lat: {value: 'gps_data.lat', fieldIdx: 1},
       lng: {value: 'gps_data.lng', fieldIdx: 2},
       neighbors: {value: null, fieldIdx: -1, optional: true},
-      geojson: {value: null, fieldIdx: -1}
+      geojson: {value: null, fieldIdx: -1},
+      geoarrow: {value: null, fieldIdx: -1}
     },
     'should update point layer column'
   );
