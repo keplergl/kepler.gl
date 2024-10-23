@@ -124,6 +124,7 @@ test('#PointLayer -> formatLayerData', t => {
             }
           ],
           getFilterValue: () => {},
+          getFiltered: () => {},
           getFillColor: () => {},
           getLineColor: () => {},
           getRadius: () => {},
@@ -234,6 +235,7 @@ test('#PointLayer -> formatLayerData', t => {
             }
           ],
           getFilterValue: () => {},
+          getFiltered: () => {},
           getLineColor: () => {},
           getFillColor: () => {},
           getRadius: () => {},
@@ -326,6 +328,7 @@ test('#PointLayer -> formatLayerData', t => {
             }
           ],
           getFilterValue: () => {},
+          getFiltered: () => {},
           getLineColor: () => {},
           getFillColor: () => {},
           getRadius: () => {},
@@ -409,6 +412,7 @@ test('#PointLayer -> formatLayerData', t => {
             }
           ],
           getFilterValue: () => {},
+          getFiltered: () => {},
           getLineColor: () => {},
           getFillColor: () => {},
           getRadius: () => {},

@@ -110,7 +110,8 @@ test('#Heatmaplayer -> formatLayerData -> w/ GpuFilter', t => {
         const expectedLayerData = {
           columns: {
             lat: {value: 'lat', fieldIdx: 1},
-            lng: {value: 'lng', fieldIdx: 2}
+            lng: {value: 'lng', fieldIdx: 2},
+            geoarrow: {value: null, fieldIdx: -1}
           },
           config: expectedConfig,
           data: {
@@ -237,7 +238,8 @@ test('#Heatmaplayer -> formatLayerData -> w/o GpuFilter', t => {
         const expectedLayerData = {
           columns: {
             lat: {value: 'gps_data.lat', fieldIdx: 1},
-            lng: {value: 'gps_data.lng', fieldIdx: 2}
+            lng: {value: 'gps_data.lng', fieldIdx: 2},
+            geoarrow: {value: null, fieldIdx: -1}
           },
           config: expectedConfig,
           weightField: null,
