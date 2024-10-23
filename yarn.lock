@@ -4267,6 +4267,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@open-wc/webpack-import-meta-loader@npm:0.4.7":
+  version: 0.4.7
+  resolution: "@open-wc/webpack-import-meta-loader@npm:0.4.7"
+  checksum: 10c0/17bbb7ec94ec61b851685aab559cf82d33754e910eb1334cef754c842c4950a33b61c1304088712764a38ca439af768212158d3e96e5a5e87fdbca682de931ef
+  languageName: node
+  linkType: hard
+
 "@pkgjs/parseargs@npm:^0.11.0":
   version: 0.11.0
   resolution: "@pkgjs/parseargs@npm:0.11.0"
@@ -15746,6 +15753,7 @@ __metadata:
     "@loaders.gl/polyfills": "npm:^4.3.1"
     "@luma.gl/test-utils": "npm:^8.5.20"
     "@nebula.gl/layers": "npm:1.0.2-alpha.1"
+    "@open-wc/webpack-import-meta-loader": "npm:0.4.7"
     "@probe.gl/env": "npm:^3.5.0"
     "@probe.gl/test-utils": "npm:^3.5.0"
     "@testing-library/dom": "npm:^9.0.1"

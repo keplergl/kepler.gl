@@ -75,13 +75,23 @@ const COMMON_CONFIG = {
         include: /node_modules\/apache-arrow/,
         type: 'javascript/auto'
       },
+      {
+        test: /\.js$/,
+        loader: require.resolve('@open-wc/webpack-import-meta-loader'),
+        include: [/node_modules\/parquet-wasm/]
+      },
       // for compiling @probe.gl, website build started to fail (March, 2024)
       // netlify builder complains loader not found for these modules (April, 2024)
       {
         test: /\.(js)$/,
         loader: 'babel-loader',
         options: BABEL_CONFIG,
-        include: [/node_modules\/@probe.gl/, /node_modules\/@loaders.gl/, /node_modules\/@math.gl/]
+        include: [
+          /node_modules\/@probe.gl/,
+          /node_modules\/@loaders.gl/,
+          /node_modules\/@math.gl/,
+          /node_modules\/@geoarrow/
+        ]
       }
     ]
   },

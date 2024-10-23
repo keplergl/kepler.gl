@@ -133,6 +133,7 @@
     "@loaders.gl/polyfills": "^4.3.1",
     "@luma.gl/test-utils": "^8.5.20",
     "@nebula.gl/layers": "1.0.2-alpha.1",
+    "@open-wc/webpack-import-meta-loader": "0.4.7",
     "@probe.gl/env": "^3.5.0",
     "@probe.gl/test-utils": "^3.5.0",
     "@testing-library/dom": "^9.0.1",
