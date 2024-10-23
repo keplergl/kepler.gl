@@ -278,6 +278,7 @@ export function getBoundsFromArrowMetadata(
         }
       }
     }
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
   } catch (error) {}
 
   return false;
