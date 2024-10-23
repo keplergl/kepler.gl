@@ -3,8 +3,10 @@
 
 import * as arrow from 'apache-arrow';
 import {Feature, BBox} from 'geojson';
+import {getGeoMetadata} from '@loaders.gl/gis';
+
 import {Field, FieldPair, SupportedColumnMode, LayerColumn} from '@kepler.gl/types';
-import {DataContainerInterface} from '@kepler.gl/utils';
+import {DataContainerInterface, ArrowDataContainer} from '@kepler.gl/utils';
 import {
   getBinaryGeometriesFromArrow,
   parseGeometryFromArrow,
@@ -243,4 +245,40 @@ export function getNeighbors(
   }));
 
   return neighborsData;
+}
+
+/**
+ * Returns bounds from a geoarrow field.
+ * TODO: refactor once metadata extraction from parquet is fixed
+ * @param layerColumn Layer columns for which to check for a bounding box.
+ * @param dataContainer Data container with geoarrow metadata.
+ * @returns Returns bounding box if exists.
+ */
+export function getBoundsFromArrowMetadata(
+  layerColumn: LayerColumn,
+  dataContainer: ArrowDataContainer
+): [number, number, number, number] | false {
+  try {
+    const field = dataContainer.getField(layerColumn.fieldIdx);
+    const table = dataContainer.getTable();
+
+    const geoMetadata = getGeoMetadata({
+      metadata: {
+        // @ts-expect-error
+        geo: table.schema.metadata.get('geo')
+      }
+    });
+
+    if (geoMetadata) {
+      const fieldMetadata = geoMetadata.columns[field.name];
+      if (fieldMetadata) {
+        const boundsFromMetadata = fieldMetadata['bbox'];
+        if (Array.isArray(boundsFromMetadata) && boundsFromMetadata.length === 4) {
+          return boundsFromMetadata;
+        }
+      }
+    }
+  } catch (error) {}
+
+  return false;
 }

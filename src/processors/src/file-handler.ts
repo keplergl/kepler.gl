@@ -6,7 +6,7 @@ import {parseInBatches} from '@loaders.gl/core';
 import {JSONLoader, _JSONPath} from '@loaders.gl/json';
 import {CSVLoader} from '@loaders.gl/csv';
 import {GeoArrowLoader} from '@loaders.gl/arrow';
-import {ParquetWasmLoader, installBufferPolyfill} from '@loaders.gl/parquet';
+import {ParquetWasmLoader} from '@loaders.gl/parquet';
 import {Loader} from '@loaders.gl/loader-utils';
 import {generateHashId, isPlainObject, generateHashIdFromString} from '@kepler.gl/utils';
 import {DATASET_FORMATS} from '@kepler.gl/constants';
@@ -22,8 +22,6 @@ import {
 } from './data-processor';
 
 import {FileCacheItem, ValidKeplerGlMap} from './types';
-
-installBufferPolyfill();
 
 const BATCH_TYPE = {
   METADATA: 'metadata',

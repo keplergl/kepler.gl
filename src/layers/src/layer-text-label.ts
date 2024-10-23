@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {Table as ArrowTable} from 'apache-arrow';
+import {Table as ArrowTable, Vector as ArrowVector} from 'apache-arrow';
 import {getDistanceScales} from 'viewport-mercator-project';
 import {notNullorUndefined, DataContainerInterface, ArrowDataContainer} from '@kepler.gl/utils';
 import uniq from 'lodash.uniq';
@@ -66,7 +66,7 @@ export const formatTextLabelData = ({
       };
     }
 
-    let getText: (d: {index: number}) => string = textLabelAccessor(tl)(dataContainer);
+    const getTextAccessor: (d: {index: number}) => string = textLabelAccessor(tl)(dataContainer);
     let characterSet;
 
     if (
@@ -84,26 +84,28 @@ export const formatTextLabelData = ({
         if (tl.field) {
           if (filteredIndex) {
             filteredIndex.forEach((value, index) => {
-              if (value > 0) allLabels.push(getText({index}));
+              if (value > 0) allLabels.push(getTextAccessor({index}));
             });
           } else {
             for (let i = 0; i < dataContainer.numRows(); i++) {
-              allLabels.push(getText({index: i}));
+              allLabels.push(getTextAccessor({index: i}));
             }
           }
         }
         characterSet = uniq(allLabels.join(''));
       } else {
-        const allLabels = tl.field ? data.map(getText) : [];
+        const allLabels = tl.field ? data.map(getTextAccessor) : [];
         characterSet = uniq(allLabels.join(''));
       }
     }
 
-    // For Arrow Layers getText has to be an arrow column
+    let getText: typeof getTextAccessor | ArrowVector = getTextAccessor;
+    // For Arrow Layers getText has to be an arrow column,
+    // for now check here for ArrowTable, not ArrowDataContainer.
     if (data instanceof ArrowTable) {
       // TODO the data has to be a column of string type.
       // Integer columns lack valueOffsets prop.
-      getText = (dataContainer as ArrowDataContainer).getColumn(tl.field.fieldIdx) as any;
+      getText = (dataContainer as ArrowDataContainer).getColumn(tl.field.fieldIdx);
     }
 
     return {

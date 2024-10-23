@@ -35,7 +35,7 @@ import {getTextOffsetByRadius, formatTextLabelData} from '../layer-text-label';
 import {
   assignPointPairToLayerColumn,
   isLayerHoveredFromArrow,
-  getGeoPointFields,
+  getBoundsFromArrowMetadata,
   createGeoArrowPointVector,
   getFilteredIndex,
   getNeighbors
@@ -318,37 +318,13 @@ export default class PointLayer extends Layer {
     return this;
   }
 
-  static findDefaultLayerProps(dataset: KeplerTable) {
-    const {fields, fieldPairs = []} = dataset;
-
+  static findDefaultLayerProps({fieldPairs = []}: KeplerTable) {
     const props: {
       label: string;
       color?: RGBColor;
       isVisible?: boolean;
       columns?: PointLayerColumnsConfig;
     }[] = [];
-
-    const geoArrowLineFields = getGeoPointFields(fields);
-    if (geoArrowLineFields.length > 0) {
-      const prop: {
-        label: string;
-        color?: RGBColor;
-        isVisible?: boolean;
-        columns?: PointLayerColumnsConfig;
-      } = {
-        label: 'Geo Points',
-        isVisible: props.length === 0,
-        // @ts-expect-error fill not required columns with default columns
-        columns: {
-          geoarrow: {
-            fieldIdx: geoArrowLineFields[0].fieldIdx,
-            value: geoArrowLineFields[0].displayName
-          }
-        }
-      };
-
-      return {props: [prop]};
-    }
 
     // Make layer for each pair
     fieldPairs.forEach(pair => {
@@ -382,16 +358,9 @@ export default class PointLayer extends Layer {
   }
 
   getDefaultLayerConfig(props: LayerBaseConfigPartial) {
-    const defaultLayerConfig = super.getDefaultLayerConfig(props ?? {});
-
-    let defaultColumnMode = DEFAULT_COLUMN_MODE;
-    if (props.columns?.geoarrow) {
-      defaultColumnMode = COLUMN_MODE_GEOARROW;
-    }
-
     return {
-      ...defaultLayerConfig,
-      columnMode: props?.columnMode ?? defaultColumnMode,
+      ...super.getDefaultLayerConfig(props),
+      columnMode: props?.columnMode ?? DEFAULT_COLUMN_MODE,
 
       // add stroke color visual channel
       strokeColorField: null,
@@ -506,10 +475,11 @@ export default class PointLayer extends Layer {
       const getFeature = this.getPositionAccessor();
       this.dataToFeature = getGeojsonPointDataMaps(dataContainer, getFeature);
     } else if (this.config.columnMode === COLUMN_MODE_GEOARROW) {
-      // TODO move to common utils
-      const field = dataContainer.getField(this.config.columns.geoarrow.fieldIdx);
-      const boundsFromMetadata = field.metadata.get('bbox');
-      if (Array.isArray(boundsFromMetadata) && boundsFromMetadata.length === 4) {
+      const boundsFromMetadata = getBoundsFromArrowMetadata(
+        this.config.columns.geoarrow,
+        dataContainer
+      );
+      if (boundsFromMetadata) {
         this.updateMeta({bounds: boundsFromMetadata});
       } else {
         const getPosition = this.getPositionAccessor(dataContainer);

@@ -18,12 +18,7 @@ import {h3ToGeo} from 'h3-js';
 
 import {hexToRgb, DataContainerInterface, ArrowDataContainer} from '@kepler.gl/utils';
 import ArcLayerIcon from './arc-layer-icon';
-import {
-  isLayerHoveredFromArrow,
-  getGeoPointFields,
-  createGeoArrowPointVector,
-  getFilteredIndex
-} from '../layer-utils';
+import {isLayerHoveredFromArrow, createGeoArrowPointVector, getFilteredIndex} from '../layer-utils';
 import {
   DEFAULT_LAYER_COLOR,
   ColorRange,
@@ -320,28 +315,6 @@ export default class ArcLayer extends Layer {
   static findDefaultLayerProps({fields, fieldPairs = []}: KeplerTable): {
     props: {color?: RGBColor; columns: ArcLayerColumnsConfig; label: string}[];
   } {
-    // TODO move this to field pairs logic, to create a field pair from a single column
-    const geoArrowLineFields = getGeoPointFields(fields);
-    if (geoArrowLineFields.length >= 2) {
-      const props: {columns: ArcLayerColumnsConfig; label: string; isVisible: boolean} = {
-        // @ts-expect-error fill not required columns with default columns
-        columns: {
-          geoarrow0: {
-            fieldIdx: geoArrowLineFields[0].fieldIdx,
-            value: geoArrowLineFields[0].displayName
-          },
-          geoarrow1: {
-            fieldIdx: geoArrowLineFields[1].fieldIdx,
-            value: geoArrowLineFields[1].displayName
-          }
-        },
-        label: `${geoArrowLineFields[0].displayName} -> ${geoArrowLineFields[1].displayName} line`,
-        isVisible: true
-      };
-
-      return {props: [props]};
-    }
-
     if (fieldPairs.length < 2) {
       return {props: []};
     }
@@ -370,7 +343,7 @@ export default class ArcLayer extends Layer {
     const defaultLayerConfig = super.getDefaultLayerConfig(props ?? {});
 
     let defaultColumnMode = DEFAULT_COLUMN_MODE;
-    if (props.columns?.geoarrow0 || props.columns?.geoarrow1) {
+    if (props.columns?.geoarrow0 && props.columns?.geoarrow1) {
       defaultColumnMode = COLUMN_MODE_GEOARROW;
     }
 

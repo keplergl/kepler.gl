@@ -219,28 +219,6 @@ export default class LineLayer extends ArcLayer {
   static findDefaultLayerProps({fields, fieldPairs = []}: KeplerTable): {
     props: {color?: RGBColor; columns: LineLayerColumnsConfig; label: string}[];
   } {
-    // TODO move this to field pairs logic, to create a field pair from a single column
-    const geoArrowLineFields = getGeoPointFields(fields);
-    if (geoArrowLineFields.length >= 2) {
-      const props: {columns: LineLayerColumnsConfig; label: string; isVisible: boolean} = {
-        // @ts-expect-error fill not required columns with default columns
-        columns: {
-          geoarrow0: {
-            fieldIdx: geoArrowLineFields[0].fieldIdx,
-            value: geoArrowLineFields[0].displayName
-          },
-          geoarrow1: {
-            fieldIdx: geoArrowLineFields[1].fieldIdx,
-            value: geoArrowLineFields[1].displayName
-          }
-        },
-        label: `${geoArrowLineFields[0].displayName} -> ${geoArrowLineFields[1].displayName} line`,
-        isVisible: true
-      };
-
-      return {props: [props]};
-    }
-
     if (fieldPairs.length < 2) {
       return {props: []};
     }
