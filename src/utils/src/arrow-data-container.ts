@@ -49,6 +49,7 @@ export class ArrowDataContainer implements DataContainerInterface {
   // cache column data to make valueAt() faster
   // _colData: any[][];
 
+  /** An arrow table recreated from vectors */
   _arrowTable: arrow.Table;
 
   constructor(data: ArrowDataContainerInput) {
@@ -67,8 +68,19 @@ export class ArrowDataContainer implements DataContainerInterface {
     this._numChunks = data.cols[0].data.length;
     // this._colData = data.cols.map(c => c.toArray());
 
-    // @ts-expect-error
-    this._arrowTable = data.cols._sourceArrowTable;
+    this._arrowTable = this._createTable();
+  }
+
+  /**
+   * Restores internal Arrow table from vectors.
+   * TODO: consider using original arrow table, as it could contain extra metadata, not passed to the fields.
+   */
+  private _createTable() {
+    const creaOpts = {};
+    this._fields.map((field, index) => {
+      creaOpts[field.name] = this._cols[index];
+    });
+    return new arrow.Table(creaOpts);
   }
 
   getTable() {
@@ -80,14 +92,11 @@ export class ArrowDataContainer implements DataContainerInterface {
     this._numColumns = this._cols.length;
     this._numRows = this._cols[0].length;
     this._numChunks = this._cols[0].data.length;
+
+    this._arrowTable = this._createTable();
+
     // cache column data to make valueAt() faster
     // this._colData = this._cols.map(c => c.toArray());
-
-    //
-    // this._arrowTable = new arrow.Table();
-    // updateData.forEach((col, idx) => {
-    //   this._arrowTable.setChildAt(idx, col);
-    // });
   }
 
   numChunks(): number {
