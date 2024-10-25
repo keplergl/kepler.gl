@@ -389,7 +389,7 @@ export default class PointLayer extends Layer {
         this.geoArrowVector = dataContainer.getColumn(this.config.columns.geoarrow.fieldIdx);
       } else {
         // generate a column compatible with geoarrow point
-        this.geoArrowVector = createGeoArrowPointVector(getPosition, dataContainer.numRows());
+        this.geoArrowVector = createGeoArrowPointVector(dataContainer, getPosition);
       }
 
       return dataContainer.getTable();
@@ -455,9 +455,8 @@ export default class PointLayer extends Layer {
 
     const accessors = this.getAttributeAccessors({dataContainer});
 
-    const isFilteredAccessor = (data, objectInfo) => {
-      // for GeoArrow data is a buffer, so use objectInfo
-      return this.filteredIndex ? this.filteredIndex[objectInfo.index] : 1;
+    const isFilteredAccessor = data => {
+      return this.filteredIndex ? this.filteredIndex[data.index] : 1;
     };
 
     return {

@@ -198,6 +198,9 @@ export class GeoArrowTextLayer<ExtraProps extends object = object> extends Compo
       // ! TODO valueOffsets are only present for string columns
       const characterOffsets = textData.valueOffsets;
 
+      // @ts-expect-error how to properly retrieve batch offset?
+      const batchOffset = geometryColumn._offsets[recordBatchIdx];
+
       const props: TextLayerProps<any> = {
         // Note: because this is a composite layer and not doing the rendering
         // itself, we still have to pass in our defaultProps
@@ -250,11 +253,17 @@ export class GeoArrowTextLayer<ExtraProps extends object = object> extends Compo
           propName,
           propInput,
           chunkIdx: recordBatchIdx,
-          geomCoordOffsets: characterOffsets
+          geomCoordOffsets: characterOffsets,
+          batchOffset
         });
       }
 
-      const layer = new TextLayer(this.getSubLayerProps(props));
+      const layer = new TextLayer({
+        ...this.getSubLayerProps(props),
+        // preserve binded accessors, as they are overwriten back by pass through accessors from extensions
+        getFiltered: props.getFiltered,
+        getFilterValue: props.getFilterValue
+      });
       layers.push(layer);
     }
 

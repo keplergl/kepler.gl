@@ -154,6 +154,9 @@ export class GeoArrowArcLayer<ExtraProps extends object = object> extends Compos
       const targetData = targetPosition.data[recordBatchIdx];
       const targetValues = child.getPointChild(targetData).values;
 
+      // @ts-expect-error how to properly retrieve batch offset?
+      const batchOffset = sourcePosition._offsets[recordBatchIdx];
+
       const props: ArcLayerProps<any> = {
         // Note: because this is a composite layer and not doing the rendering
         // itself, we still have to pass in our defaultProps
@@ -187,12 +190,18 @@ export class GeoArrowArcLayer<ExtraProps extends object = object> extends Compos
           props,
           propName,
           propInput,
-          chunkIdx: recordBatchIdx
+          chunkIdx: recordBatchIdx,
+          batchOffset
         });
       }
 
       const SubLayerClass = this.getSubLayerClass('geo-arrow-arc-layer', ArcLayer);
-      const layer = new SubLayerClass(this.getSubLayerProps(props));
+      const layer = new SubLayerClass({
+        ...this.getSubLayerProps(props),
+        // preserve binded accessors, as they are overwriten back by pass through accessors from extensions
+        getFiltered: props.getFiltered,
+        getFilterValue: props.getFilterValue
+      });
       layers.push(layer);
     }
 

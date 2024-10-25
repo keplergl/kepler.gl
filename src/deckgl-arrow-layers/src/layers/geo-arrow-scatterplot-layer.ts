@@ -153,6 +153,9 @@ export class GeoArrowScatterplotLayer<ExtraProps extends object = object> extend
       const flatCoordsData = ga.child.getPointChild(geometryData);
       const flatCoordinateArray = flatCoordsData.values;
 
+      // @ts-expect-error how to properly retrieve batch offset?
+      const batchOffset = geometryColumn._offsets[recordBatchIdx];
+
       const props: ScatterplotLayerProps<any> = {
         // Note: because this is a composite layer and not doing the rendering
         // itself, we still have to pass in our defaultProps
@@ -182,11 +185,17 @@ export class GeoArrowScatterplotLayer<ExtraProps extends object = object> extend
           props,
           propName,
           propInput,
-          chunkIdx: recordBatchIdx
+          chunkIdx: recordBatchIdx,
+          batchOffset
         });
       }
 
-      const layer = new ScatterplotLayer(this.getSubLayerProps(props));
+      const layer = new ScatterplotLayer({
+        ...this.getSubLayerProps(props),
+        // preserve binded accessors, as they are overwriten back by pass through accessors from extensions
+        getFiltered: props.getFiltered,
+        getFilterValue: props.getFilterValue
+      });
       layers.push(layer);
     }
 
@@ -216,6 +225,9 @@ export class GeoArrowScatterplotLayer<ExtraProps extends object = object> extend
       const geomOffsets = multiPointData.valueOffsets;
       const flatCoordsData = ga.child.getPointChild(pointData);
       const flatCoordinateArray = flatCoordsData.values;
+
+      // @ts-expect-error how to properly retrieve batch offset?
+      const batchOffset = geometryColumn._offsets[recordBatchIdx];
 
       const props: ScatterplotLayerProps = {
         // Note: because this is a composite layer and not doing the rendering
@@ -251,11 +263,17 @@ export class GeoArrowScatterplotLayer<ExtraProps extends object = object> extend
           propName,
           propInput,
           chunkIdx: recordBatchIdx,
-          geomCoordOffsets: geomOffsets
+          geomCoordOffsets: geomOffsets,
+          batchOffset
         });
       }
 
-      const layer = new ScatterplotLayer(this.getSubLayerProps(props));
+      const layer = new ScatterplotLayer({
+        ...this.getSubLayerProps(props),
+        // preserve binded accessors, as they are overwriten back by pass through accessors from extensions
+        getFiltered: props.getFiltered,
+        getFilterValue: props.getFilterValue
+      });
       layers.push(layer);
     }
 

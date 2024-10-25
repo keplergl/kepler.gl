@@ -365,12 +365,12 @@ export default class ArcLayer extends Layer {
     } else {
       // generate columns compatible with geoarrow point extension
       // TODO remove excessive intermediate allocations
-      this.geoArrowVector0 = createGeoArrowPointVector(d => {
+      this.geoArrowVector0 = createGeoArrowPointVector(dataContainer, d => {
         return getPosition(d).slice(0, 3);
-      }, dataContainer.numRows());
-      this.geoArrowVector1 = createGeoArrowPointVector(d => {
+      });
+      this.geoArrowVector1 = createGeoArrowPointVector(dataContainer, d => {
         return getPosition(d).slice(3, 6);
-      }, dataContainer.numRows());
+      });
     }
 
     return dataContainer.getTable();

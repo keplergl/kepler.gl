@@ -150,7 +150,7 @@ export function getGeoArrowPointFields(fields: Field[]): Field[] {
   return fields.filter(field => {
     return (
       field.type === 'geoarrow' &&
-      field.metadata.get('ARROW:extension:name') === EXTENSION_NAME.POINT
+      field.metadata?.get('ARROW:extension:name') === EXTENSION_NAME.POINT
     );
   });
 }
@@ -162,12 +162,15 @@ export function getGeoArrowPointFields(fields: Field[]): Field[] {
  * @returns An arrow vector compatible with ARROW:extension:name geoarrow.point.
  */
 export function createGeoArrowPointVector(
-  getPosition: ({index: number}) => number[],
-  numElements: number
+  dataContainer: ArrowDataContainer,
+  getPosition: ({index: number}) => number[]
 ): arrow.Vector {
-  // TODO update/resize existing vector
-  // TODO find an easier way to create point geo column
-  // TODO support batches?
+  // TODO update/resize existing vector?
+  // TODO find an easier way to create point geo columns
+  // in a correct arrow format, as this approach seems too excessive for just a simple interleaved buffer.
+
+  const numElements = dataContainer.numRows();
+  const table = dataContainer.getTable();
 
   const numCoords = numElements > 0 ? getPosition({index: 0}).length : 2;
   const precision = 2;
@@ -181,12 +184,21 @@ export function createGeoArrowPointVector(
   const fixedSizeListBuilder = new arrow.FixedSizeListBuilder({type: fixedSizeList});
   fixedSizeListBuilder.addChild(floatBuilder);
 
-  for (let i = 0; i < numElements; ++i) {
-    const pos = getPosition({index: i});
-    fixedSizeListBuilder.append(pos);
+  const assembledBatches: arrow.Data[] = [];
+  const indexData = {index: 0};
+  for (let batchIndex = 0; batchIndex < table.batches.length; ++batchIndex) {
+    const numRowsInBatch = table.batches[batchIndex].numRows;
+
+    for (let i = 0; i < numRowsInBatch; ++i) {
+      const pos = getPosition(indexData);
+      fixedSizeListBuilder.append(pos);
+
+      ++indexData.index;
+    }
+    assembledBatches.push(fixedSizeListBuilder.flush());
   }
-  fixedSizeListBuilder.finish();
-  return fixedSizeListBuilder.toVector();
+
+  return arrow.makeVector(assembledBatches);
 }
 
 /**
