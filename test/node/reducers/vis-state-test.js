@@ -568,6 +568,8 @@ test('#visStateReducer -> LAYER_TYPE_CHANGE.3 -> animationConfig', t => {
       ...DEFAULT_ANIMATION_CONFIG,
       domain: timeStampDomain,
       currentTime: timeStampDomain[0],
+      duration: null,
+      timeSteps: null,
       defaultTimeFormat: 'L LTS'
     },
     'should update visState.animationConfig'
@@ -610,7 +612,13 @@ test('#visStateReducer -> LAYER_CONFIG_CHANGE -> isVisible -> animationConfig', 
       ...DEFAULT_ANIMATION_CONFIG,
       domain: null,
       currentTime: 1565577261000,
-      isAnimating: false
+      speed: 1,
+      isAnimating: false,
+      duration: null,
+      timeSteps: null,
+      defaultTimeFormat: null,
+      timeFormat: null,
+      timezone: null
     },
     'should set animationConfig to default'
   );
@@ -626,6 +634,8 @@ test('#visStateReducer -> LAYER_CONFIG_CHANGE -> isVisible -> animationConfig', 
       ...nextState2.animationConfig,
       domain: timeStampDomain,
       currentTime: timeStampDomain[0],
+      duration: null,
+      timeSteps: null,
       defaultTimeFormat: 'L LTS'
     },
     'should set animationConfig domain and currentTime'
@@ -3620,7 +3630,9 @@ test('#visStateReducer -> SPLIT_MAP: REMOVE_LAYER. set animation domain', t => {
     splitMaps: [],
     animationConfig: {
       domain: [1568502710000, 1568503060000],
-      currentTime: 1568502970000
+      currentTime: 1568502970000,
+      duration: null,
+      timeSteps: null
     }
   };
 
@@ -3628,6 +3640,8 @@ test('#visStateReducer -> SPLIT_MAP: REMOVE_LAYER. set animation domain', t => {
   const expectedAnimationConfig = {
     domain: [1568502810000, 1568503060000],
     currentTime: 1568502970000,
+    duration: null,
+    timeSteps: null,
     defaultTimeFormat: 'L LTS'
   };
 
@@ -3641,6 +3655,8 @@ test('#visStateReducer -> SPLIT_MAP: REMOVE_LAYER. set animation domain', t => {
   const expectedAnimationConfig2 = {
     domain: [1568502710000, 1568502960000],
     currentTime: 1568502710000,
+    duration: null,
+    timeSteps: null,
     defaultTimeFormat: 'L LTS'
   };
   t.deepEqual(
@@ -3655,6 +3671,9 @@ test('#visStateReducer -> SPLIT_MAP: REMOVE_LAYER. set animation domain', t => {
     {
       domain: null,
       currentTime: 1568502710000,
+      isAnimating: false,
+      duration: null,
+      timeSteps: null,
       defaultTimeFormat: null
     },
     'remove last animation layer and set animation config to default'
