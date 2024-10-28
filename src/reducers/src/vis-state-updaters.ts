@@ -3168,7 +3168,7 @@ export function syncTimeFilterWithLayerTimelineUpdater<S extends VisState>(
       ...state,
       filters: swap_<Filter>(newFilter)(state.filters)
     },
-    {value: animationConfigCurrentTime}
+    {value: animationConfigCurrentTime ?? null}
   );
 }
 

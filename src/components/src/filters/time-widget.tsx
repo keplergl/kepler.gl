@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useCallback, useState, useMemo} from 'react';
+import React, {useCallback, useMemo} from 'react';
 import styled from 'styled-components';
 import {FILTER_VIEW_TYPES} from '@kepler.gl/constants';
 import {BottomWidgetInner} from '../common/styled-components';
