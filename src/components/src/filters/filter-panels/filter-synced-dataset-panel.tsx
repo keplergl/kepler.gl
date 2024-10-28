@@ -14,8 +14,6 @@ import FilterPanelHeaderFactory from '../../side-panel/filter-panel/filter-panel
 import SourceSelectorFactory from '../../side-panel/common/source-selector';
 import SourceDataSelectorFactory from '../../side-panel/common/source-data-selector';
 
-const TIME_FIELD_ANALYZER_TYPES = ['DATE', 'TIME', 'DATETIME'];
-
 const SyncedDatasetsArea = styled.div`
   display: grid;
   align-items: center;
@@ -50,7 +48,7 @@ function getDatasetsWithTimeField(datasets) {
 }
 
 function getTimeFields(dataset) {
-  return dataset.fields.filter(f => TIME_FIELD_ANALYZER_TYPES.includes(f.analyzerType));
+  return dataset.fields.filter(f => f.type === ALL_FIELD_TYPES.timestamp);
 }
 
 FilterSyncedDatasetPanelFactory.deps = [

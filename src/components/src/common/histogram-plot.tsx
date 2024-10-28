@@ -94,16 +94,18 @@ function HistogramPlotFactory() {
     );
 
     const barWidth = useMemo(() => {
-      const maxBins = max(groupKeys, key => {
-        if (histogramsByGroup[key].length > 1)
-          return (
-            (domain[1] - domain[0]) / (histogramsByGroup[key][1].x1 - histogramsByGroup[key][1].x0)
-          );
-        // TODO this part should be removed with follow ups
-        return (
-          (domain[1] - domain[0]) / (histogramsByGroup[key][0].x1 - histogramsByGroup[key][0].x0)
-        );
-      });
+      // find histogramsByGroup with max number of bins
+      const maxGroup = groupKeys.reduce((accu, key, idx) => {
+        if (histogramsByGroup[key].length > accu.length) {
+          return histogramsByGroup[key];
+        }
+        return accu;
+      }, histogramsByGroup[groupKeys[0]]);
+
+      // find the bin for measuring step
+      const stdBinIdx = maxGroup.length > 1 ? 1 : 0;
+      const xStep = maxGroup[stdBinIdx].x1 - maxGroup[stdBinIdx].x0;
+      const maxBins = (domain[1] - domain[0]) / xStep;
       if (!maxBins) return 0;
       return width / maxBins / groupKeys.length;
     }, [histogramsByGroup, domain, groupKeys, width]);

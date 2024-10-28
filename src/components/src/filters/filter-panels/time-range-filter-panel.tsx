@@ -4,12 +4,10 @@
 import React, {useCallback, useMemo} from 'react';
 import TimeRangeFilterFactory from '../time-range-filter';
 import {Clock} from '../../common/icons';
-import FieldPanelWithFieldSelectFactory from './filter-panel-with-field-select';
 import {TimeRangeFilterPanelComponent} from './types';
 import {isSideFilter, getTimelineFromFilter} from '@kepler.gl/utils';
 import FilterPanelHeaderFactory from '../../side-panel/filter-panel/filter-panel-header';
 import PanelHeaderActionFactory from '../../side-panel/panel-header-action';
-import SourceDataSelectorFactory from '../../side-panel/common/source-data-selector';
 import FieldSelectorFactory from '../../common/field-selector';
 import {StyledFilterContent} from '../../common/styled-components';
 import {getSupportedFilterFields} from './new-filter-panel';
@@ -20,10 +18,8 @@ import FilterSyncedDatasetPanelFactory from './filter-synced-dataset-panel';
 const SYNC_FILTER_ID_LENGTH = 2;
 
 TimeRangeFilterPanelFactory.deps = [
-  FieldPanelWithFieldSelectFactory,
   TimeRangeFilterFactory,
   FilterPanelHeaderFactory,
-  SourceDataSelectorFactory,
   FieldSelectorFactory,
   PanelHeaderActionFactory,
   TimeSyncedFieldSelectorFactory,
@@ -31,10 +27,8 @@ TimeRangeFilterPanelFactory.deps = [
 ];
 
 function TimeRangeFilterPanelFactory(
-  FieldPanelWithFieldSelect: ReturnType<typeof FieldPanelWithFieldSelectFactory>,
   TimeRangeFilter: ReturnType<typeof TimeRangeFilterFactory>,
   FilterPanelHeader: ReturnType<typeof FilterPanelHeaderFactory>,
-  SourceDataSelector: ReturnType<typeof SourceDataSelectorFactory>,
   FieldSelector: ReturnType<typeof FieldSelectorFactory>,
   PanelHeaderAction: ReturnType<typeof PanelHeaderActionFactory>,
   TimeSyncedFieldSelector: ReturnType<typeof TimeSyncedFieldSelectorFactory>,
