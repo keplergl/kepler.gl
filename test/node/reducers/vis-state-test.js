@@ -24,7 +24,12 @@ import {
 import {processCsvData, processGeojson} from '@kepler.gl/processors';
 import {Layer, KeplerGlLayers, COLUMN_MODE_TABLE} from '@kepler.gl/layers';
 import {createNewDataEntry, maybeToDate} from '@kepler.gl/table';
-import {createDataContainer, getDefaultFilter, histogramFromDomain} from '@kepler.gl/utils';
+import {
+  createDataContainer,
+  applyFilterFieldName,
+  getDefaultFilter,
+  histogramFromDomain
+} from '@kepler.gl/utils';
 import {
   ALL_FIELD_TYPES,
   EDITOR_MODES,
@@ -5738,6 +5743,21 @@ test('#visStateReducer -> layerFilteredItemsChange', t => {
   const expected = {'point-layer-1': 100};
 
   t.deepEqual(layer.filteredItemCount, expected, 'should set filteredItemCount on layer');
+
+  t.end();
+});
+
+test('#visStateReducer -> applyFilterFieldName', t => {
+  const stateToSave = CloneDeep(StateWFilters);
+
+  const oldFilter = stateToSave.visState.filters[0];
+  const dataset = stateToSave.visState.datasets[oldFilter.dataId];
+  const {filter: newFilter} = applyFilterFieldName(oldFilter, dataset, oldFilter.name[0]);
+  t.deepEqual(
+    oldFilter.plotType,
+    newFilter.plotType,
+    'Should not overwrite plotType (by the default empty object)'
+  );
 
   t.end();
 });
