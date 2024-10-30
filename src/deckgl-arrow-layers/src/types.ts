@@ -71,3 +71,8 @@ export type ColorAccessor =
 export type NormalAccessor =
   | arrow.Vector<arrow.FixedSizeList<arrow.Float32>>
   | Accessor<arrow.Table, arrow.Vector<arrow.FixedSizeList<arrow.Float32>>>;
+
+export type ExtensionProps = {
+  getFiltered?: ({index: number}) => number;
+  getFilterValue?: (d: any, objectInfo?: {index: number}) => (number | number[])[];
+};

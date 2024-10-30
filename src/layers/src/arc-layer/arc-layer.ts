@@ -468,9 +468,9 @@ export default class ArcLayer extends Layer {
     const {gpuFilter, dataContainer} = datasets[this.config.dataId];
     const {data} = this.updateData(datasets, oldLayerData);
     const accessors = this.getAttributeAccessors({dataContainer});
-    const isFilteredAccessor = (data, objectInfo) => {
+    const isFilteredAccessor = data => {
       // for GeoArrow data is a buffer, so use objectInfo
-      return this.filteredIndex ? this.filteredIndex[objectInfo.index] : 1;
+      return this.filteredIndex ? this.filteredIndex[data.index] : 1;
     };
 
     return {

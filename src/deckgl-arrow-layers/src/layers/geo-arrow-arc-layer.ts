@@ -18,7 +18,7 @@ import * as ga from '@geoarrow/geoarrow-js';
 import {assignAccessor, extractAccessorsFromProps} from '../utils/utils';
 import {child} from '@geoarrow/geoarrow-js';
 import {GeoArrowExtraPickingProps, computeChunkOffsets, getPickingInfo} from '../utils/picking';
-import {ColorAccessor, FloatAccessor, GeoArrowPickingInfo} from '../types';
+import {ColorAccessor, FloatAccessor, GeoArrowPickingInfo, ExtensionProps} from '../types';
 import {validateAccessors} from '../utils/validate';
 
 /** All properties supported by GeoArrowArcLayer */
@@ -157,7 +157,7 @@ export class GeoArrowArcLayer<ExtraProps extends object = object> extends Compos
       // @ts-expect-error how to properly retrieve batch offset?
       const batchOffset = sourcePosition._offsets[recordBatchIdx];
 
-      const props: ArcLayerProps<any> = {
+      const props: ArcLayerProps<any> & ExtensionProps = {
         // Note: because this is a composite layer and not doing the rendering
         // itself, we still have to pass in our defaultProps
         ...ourDefaultProps,
@@ -198,7 +198,7 @@ export class GeoArrowArcLayer<ExtraProps extends object = object> extends Compos
       const SubLayerClass = this.getSubLayerClass('geo-arrow-arc-layer', ArcLayer);
       const layer = new SubLayerClass({
         ...this.getSubLayerProps(props),
-        // preserve binded accessors, as they are overwriten back by pass through accessors from extensions
+        // preserve binded accessors, as they are overwriten back by pass-through accessors from extensions
         getFiltered: props.getFiltered,
         getFilterValue: props.getFilterValue
       });

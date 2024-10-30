@@ -25,7 +25,7 @@ import {
   invertOffsets
 } from '../utils/utils';
 import {GeoArrowExtraPickingProps, computeChunkOffsets, getPickingInfo} from '../utils/picking';
-import {ColorAccessor, FloatAccessor, GeoArrowPickingInfo} from '../types';
+import {ColorAccessor, FloatAccessor, GeoArrowPickingInfo, ExtensionProps} from '../types';
 import {EXTENSION_NAME} from '../constants';
 import {validateAccessors} from '../utils/validate';
 
@@ -156,7 +156,7 @@ export class GeoArrowScatterplotLayer<ExtraProps extends object = object> extend
       // @ts-expect-error how to properly retrieve batch offset?
       const batchOffset = geometryColumn._offsets[recordBatchIdx];
 
-      const props: ScatterplotLayerProps<any> = {
+      const props: ScatterplotLayerProps<any> & ExtensionProps = {
         // Note: because this is a composite layer and not doing the rendering
         // itself, we still have to pass in our defaultProps
         ...ourDefaultProps,
@@ -192,7 +192,7 @@ export class GeoArrowScatterplotLayer<ExtraProps extends object = object> extend
 
       const layer = new ScatterplotLayer({
         ...this.getSubLayerProps(props),
-        // preserve binded accessors, as they are overwriten back by pass through accessors from extensions
+        // preserve binded accessors, as they are overwriten back by pass-through accessors from extensions
         getFiltered: props.getFiltered,
         getFilterValue: props.getFilterValue
       });
@@ -229,7 +229,7 @@ export class GeoArrowScatterplotLayer<ExtraProps extends object = object> extend
       // @ts-expect-error how to properly retrieve batch offset?
       const batchOffset = geometryColumn._offsets[recordBatchIdx];
 
-      const props: ScatterplotLayerProps = {
+      const props: ScatterplotLayerProps & ExtensionProps = {
         // Note: because this is a composite layer and not doing the rendering
         // itself, we still have to pass in our defaultProps
         ...ourDefaultProps,
@@ -270,7 +270,7 @@ export class GeoArrowScatterplotLayer<ExtraProps extends object = object> extend
 
       const layer = new ScatterplotLayer({
         ...this.getSubLayerProps(props),
-        // preserve binded accessors, as they are overwriten back by pass through accessors from extensions
+        // preserve binded accessors, as they are overwriten back by pass-through accessors from extensions
         getFiltered: props.getFiltered,
         getFilterValue: props.getFilterValue
       });

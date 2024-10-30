@@ -22,7 +22,7 @@ import {
   getGeometryVector
 } from '../utils/utils';
 import {GeoArrowExtraPickingProps, computeChunkOffsets, getPickingInfo} from '../utils/picking';
-import {ColorAccessor, FloatAccessor, GeoArrowPickingInfo} from '../types';
+import {ColorAccessor, FloatAccessor, GeoArrowPickingInfo, ExtensionProps} from '../types';
 import {EXTENSION_NAME} from '../constants';
 import {validateAccessors} from '../utils/validate';
 
@@ -201,7 +201,7 @@ export class GeoArrowTextLayer<ExtraProps extends object = object> extends Compo
       // @ts-expect-error how to properly retrieve batch offset?
       const batchOffset = geometryColumn._offsets[recordBatchIdx];
 
-      const props: TextLayerProps<any> = {
+      const props: TextLayerProps<any> & ExtensionProps = {
         // Note: because this is a composite layer and not doing the rendering
         // itself, we still have to pass in our defaultProps
         ...ourDefaultProps,
@@ -260,7 +260,7 @@ export class GeoArrowTextLayer<ExtraProps extends object = object> extends Compo
 
       const layer = new TextLayer({
         ...this.getSubLayerProps(props),
-        // preserve binded accessors, as they are overwriten back by pass through accessors from extensions
+        // preserve binded accessors, as they are overwriten back by pass-through accessors from extensions
         getFiltered: props.getFiltered,
         getFilterValue: props.getFilterValue
       });
