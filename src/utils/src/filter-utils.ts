@@ -37,7 +37,8 @@ import {
   TimeRangeFilter,
   RangeFieldDomain,
   FilterDatasetOpt,
-  FilterRecord
+  FilterRecord,
+  AnimationConfig
 } from '@kepler.gl/types';
 
 import {DataContainerInterface} from './data-container-interface';
@@ -1215,4 +1216,73 @@ export function getTimeWidgetHintFormatter(domain: [number, number]): string | u
 
 export function isSideFilter(filter: Filter): boolean {
   return filter.view === FILTER_VIEW_TYPES.side;
+}
+
+export function mergeTimeDomains(domains: ([number, number] | null)[]): [number, number] {
+  return domains.reduce(
+    (acc: [number, number], domain) => [
+      Math.min(acc[0], domain?.[0] ?? Infinity),
+      Math.max(acc[1], domain?.[1] ?? -Infinity)
+    ],
+    [Number(Infinity), -Infinity]
+  ) as [number, number];
+}
+
+/**
+ *
+ * @param layers {Layer[]}
+ * @returns {Layer[]}
+ */
+export function getAnimatableLayers(layers: any[]): any[] {
+  const animatableLayers = layers.filter(
+    l =>
+      l.config.isVisible &&
+      l.config.animation &&
+      l.config.animation.enabled &&
+      Array.isArray(l.config.animation.domain)
+  );
+  return animatableLayers;
+}
+
+export function mergeFilterWithTimeline(
+  filter: TimeRangeFilter,
+  animationConfig: AnimationConfig
+): {filter: TimeRangeFilter; animationConfig: AnimationConfig} {
+  if (
+    filter?.type === FILTER_TYPES.timeRange &&
+    filter.syncedWithLayerTimeline &&
+    animationConfig &&
+    Array.isArray(animationConfig.domain)
+  ) {
+    const domain = mergeTimeDomains([filter.domain, animationConfig.domain as [number, number]]);
+    return {
+      filter: {
+        ...filter,
+        domain
+      },
+      animationConfig: {
+        ...animationConfig,
+        domain
+      }
+    };
+  }
+  return {filter, animationConfig};
+}
+
+export function getFilterScaledTimeline(filter: TimeRangeFilter, animationConfig: AnimationConfig) {
+  if (!filter.syncedWithLayerTimeline) {
+    return null;
+  }
+  // 0 -> 100: merged domains t1 - t0 === 100% filter may already have this info which is good
+  const domainSize = filter.domain[1] - filter.domain[0];
+  // 10 -> 20: animationConfig domain d1 - d0 === animationConfig size
+  const animationConfigSize = animationConfig?.domain
+    ? animationConfig.domain[1] - animationConfig.domain[0]
+    : 0;
+  // scale animationConfig size using domain size
+  const scaledAnimationConfigSize = (animationConfigSize / domainSize) * 100;
+  // scale d0 - t0 using domain size to find starting point
+  const offset = animationConfig?.domain ? animationConfig.domain[0] - filter.domain[0] : 0;
+  const scaledOffset = (offset / domainSize) * 100;
+  return [[scaledOffset, scaledAnimationConfigSize + scaledOffset]];
 }

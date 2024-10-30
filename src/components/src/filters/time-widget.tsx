@@ -37,6 +37,7 @@ function TimeWidgetFactory(
     toggleAnimation,
     setFilterPlot,
     setFilterAnimationWindow,
+    animationConfig,
     timeline
   }: TimeWidgetProps) => {
     const _updateAnimationSpeed = useCallback(
@@ -63,6 +64,11 @@ function TimeWidgetFactory(
       [index, setFilterPlot]
     );
 
+    const timeRangeSlideProps = useMemo(
+      () => timeRangeSliderFieldsSelector(filter, datasets),
+      [filter, datasets]
+    );
+
     return (
       <TimeBottomWidgetInner className="bottom-widget--inner">
         <TimeWidgetTop
@@ -78,7 +84,7 @@ function TimeWidgetFactory(
         {/* Once AnimationControl is able to display large timeline*/}
         {/* we can replace TimeRangeSlider with AnimationControl*/}
         <TimeRangeSlider
-          {...timeRangeSliderFieldsSelector(filter, datasets)}
+          {...timeRangeSlideProps}
           onChange={timeSliderOnChange}
           toggleAnimation={_toggleAnimation}
           updateAnimationSpeed={_updateAnimationSpeed}
@@ -87,6 +93,7 @@ function TimeWidgetFactory(
           resetAnimation={resetAnimation}
           isAnimatable={isAnimatable}
           setFilterPlot={_setFilterPlot}
+          animationConfig={animationConfig}
           isMinified={isMinified}
           timeline={timeline}
         />

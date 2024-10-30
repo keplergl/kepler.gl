@@ -7,7 +7,8 @@ import {
   RangeFilter,
   SelectFilter,
   TimeRangeFilter,
-  Timeline
+  Timeline,
+  AnimationConfig
 } from '@kepler.gl/types';
 import {Layer} from '@kepler.gl/layers';
 import {
@@ -87,4 +88,5 @@ export type TimeWidgetProps = {
   setFilterPlot: ActionHandler<typeof setFilterPlot>;
   setFilterAnimationWindow: ActionHandler<typeof setFilterAnimationWindow>;
   timeline: Timeline;
+  animationConfig: AnimationConfig;
 };

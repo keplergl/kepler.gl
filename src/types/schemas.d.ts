@@ -23,6 +23,7 @@ export type SavedFilter = {
   } | null;
   speed: Filter['speed'];
   layerId: Filter['layerId'];
+  syncedWithLayerTimeline: Filter['syncedWithLayerTimeline'];
 };
 export type MinSavedFilter = RequireFrom<SavedFilter, 'dataId' | 'id' | 'name' | 'type' | 'value'>;
 export type ParsedFilter = SavedFilter | MinSavedFilter;

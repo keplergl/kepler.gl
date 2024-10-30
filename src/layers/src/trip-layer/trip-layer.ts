@@ -456,6 +456,7 @@ export default class TripLayer extends Layer {
       trailLength: visConfig.trailLength * 1000,
       fadeTrail: visConfig.fadeTrail,
       billboard: visConfig.billboard,
+      // TODO: giuseppe this values becomes negative
       currentTime: animationConfig.currentTime - domain0,
       updateTriggers,
       id: `${defaultLayerProps.id}${mapState.globe?.enabled ? '-globe' : ''}`

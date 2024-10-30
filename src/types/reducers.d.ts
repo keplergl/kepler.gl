@@ -143,11 +143,12 @@ export type TimeRangeFilter = FilterBase<LineChart> &
   TimeRangeFieldDomain & {
     type: 'timeRange';
     fieldType: 'timestamp';
-    fixedDomain: true;
+    fixedDomain: boolean;
     value: [number, number];
     plotType: {
       [key: string]: any;
     };
+    syncedWithLayerTimeline: boolean;
     animationWindow: string;
     invertTrendColor: boolean;
   };

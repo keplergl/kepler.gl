@@ -6,6 +6,7 @@ import styled from 'styled-components';
 
 import {FormattedMessage} from '@kepler.gl/localization';
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
+import {getAnimatableLayers} from '@kepler.gl/utils';
 
 import {Button} from '../../common/styled-components';
 import {Add} from '../../common/icons';
@@ -52,13 +53,7 @@ function getTimeFields(dataset) {
   return dataset.fields.filter(f => f.type === ALL_FIELD_TYPES.timestamp);
 }
 
-FilterSyncedDatasetPanelFactory.deps = [
-  SourceSelectorFactory,
-  FilterPanelHeaderFactory,
-  SourceDataSelectorFactory
-];
-
-function FilterSyncedDatasetPanelFactory(SourceSelector, FilterPanelHeader, SourceDataSelector) {
+function DatasetItemFactory(SourceSelector, FilterPanelHeader) {
   const StyledFilterPanelHeader = styled(FilterPanelHeader)`
     display: flex;
     border: none;
@@ -76,14 +71,135 @@ function FilterSyncedDatasetPanelFactory(SourceSelector, FilterPanelHeader, Sour
     background-color: transparent;
   `;
 
+  const DatasetItem = ({
+    dataId,
+    datasets,
+    supportedFields,
+    idx,
+    filter,
+    index,
+    onRemoveSyncedFilter,
+    filterDatasetsNum,
+    datasetsWithTimeNum,
+    onSelectSyncedDataset,
+    onFieldSelector
+  }) => (
+    <div>
+      <StyledSeparator />
+      <StyledFilterPanelHeader
+        datasets={[datasets[dataId]]}
+        allAvailableFields={supportedFields}
+        idx={idx}
+        filter={filter}
+        removeFilter={() => onRemoveSyncedFilter(index)}
+      >
+        <StyledSourceSelector
+          datasets={datasets}
+          disabled={filterDatasetsNum >= datasetsWithTimeNum}
+          dataId={dataId}
+          onSelectDataset={datasetId => onSelectSyncedDataset(datasetId, index)}
+          fields={getTimeFields(datasets[dataId])}
+          fieldValue={filter.name[index]}
+          onFieldSelector={field => onFieldSelector(field, index)}
+        />
+      </StyledFilterPanelHeader>
+    </div>
+  );
+
+  return DatasetItem;
+}
+
+DatasetItemFactory.deps = [SourceSelectorFactory, FilterPanelHeaderFactory];
+
+function SyncedDatasetButtonFactory() {
+  const SyncedDatasetButton = ({onAddSyncedFilter}) => (
+    <div>
+      <StyledSeparator />
+      <TippyTooltip
+        delay={[500, 0]}
+        placement="top"
+        render={() => (
+          <div>
+            <FormattedMessage id={'tooltip.timeFilterSync'} />
+          </div>
+        )}
+      >
+        <StyledButton className="add-sync-dataset" secondary={true} onClick={onAddSyncedFilter}>
+          <Add height="12px" />
+          <FormattedMessage id={'filterManager.timeFilterSync'} />
+        </StyledButton>
+      </TippyTooltip>
+    </div>
+  );
+
+  return SyncedDatasetButton;
+}
+
+function SyncLayerTimelineButtonFactory() {
+  const SyncLayerTimelineButton = ({onSyncLayerTimeline}) => (
+    <div>
+      <StyledSeparator />
+      <TippyTooltip
+        delay={[500, 0]}
+        placement="top"
+        render={() => (
+          <div>
+            <FormattedMessage id={'tooltip.timeLayerSync'} />
+          </div>
+        )}
+      >
+        <StyledButton className="add-sync-dataset" secondary={true} onClick={onSyncLayerTimeline}>
+          <Add height="12px" />
+          <FormattedMessage id={'filterManager.timeLayerSync'} />
+        </StyledButton>
+      </TippyTooltip>
+    </div>
+  );
+
+  return SyncLayerTimelineButton;
+}
+
+function UnsyncLayerTimelineButtonFactory() {
+  const UnsyncLayerTimelineButton = ({onSyncLayerTimeline}) => (
+    <div>
+      <StyledSeparator />
+      <TippyTooltip
+        delay={[500, 0]}
+        placement="top"
+        render={() => (
+          <div>
+            <FormattedMessage id={'tooltip.timeLayerUnsync'} />
+          </div>
+        )}
+      >
+        <StyledButton className="add-sync-dataset" secondary={true} onClick={onSyncLayerTimeline}>
+          <Add height="12px" />
+          <FormattedMessage id={'filterManager.timeLayerUnsync'} />
+        </StyledButton>
+      </TippyTooltip>
+    </div>
+  );
+
+  return UnsyncLayerTimelineButton;
+}
+
+function FilterSyncedDatasetPanelFactory(
+  DatasetItem,
+  SourceDataSelector,
+  SyncedDatasetButton,
+  SyncLayerTimelineButton,
+  UnsyncLayerTimelineButton
+) {
   const FilterSyncedDatasetPanel = ({
     datasets,
+    layers,
     filter,
     setFilter,
     idx,
     supportedFields,
     onFieldSelector,
-    onSourceDataSelector
+    onSourceDataSelector,
+    syncTimeFilterWithLayerTimeline
   }) => {
     const datasetsWithTime = useMemo(() => getDatasetsWithTimeField(datasets), [datasets]);
     const filterDatasetsNum = useMemo(() => filter.dataId.length, [filter.dataId]);
@@ -114,33 +230,43 @@ function FilterSyncedDatasetPanelFactory(SourceSelector, FilterPanelHeader, Sour
       setFilter(idx, ['dataId', 'name'], [nextId, nextName], filter.dataId.length);
     }, [setFilter, idx, datasetsWithTime, datasets, filter.dataId, filter.name]);
 
+    const onSyncLayerTimeline = useCallback(() => syncTimeFilterWithLayerTimeline(idx, true), [
+      syncTimeFilterWithLayerTimeline,
+      idx
+    ]);
+
+    const onRemoveSyncWithLayerTimeline = useCallback(
+      () => syncTimeFilterWithLayerTimeline(idx, false),
+      [syncTimeFilterWithLayerTimeline, idx]
+    );
+
+    const tripLayers = useMemo(() => getAnimatableLayers(layers).filter(l => l.type === 'trip'), [
+      layers
+    ]);
+
+    const isLinkedWithLayerTimeline = useMemo(() => filter.syncedWithLayerTimeline, [filter]);
+
     return (
       <SyncedDatasetsArea>
         {filter.dataId.length > 1 ? (
           <>
             <StyledContentTitle>Datasets</StyledContentTitle>
-            {filter.dataId.map((dataId, index, list) => {
+            {filter.dataId.map((dataId, index) => {
               return (
-                <div key={dataId}>
-                  <StyledFilterPanelHeader
-                    datasets={[datasets[dataId]]}
-                    allAvailableFields={supportedFields}
-                    idx={idx}
-                    filter={filter}
-                    removeFilter={() => onRemoveSyncedFilter(index)}
-                  >
-                    <StyledSourceSelector
-                      datasets={datasets}
-                      disabled={filterDatasetsNum >= datasetsWithTimeNum}
-                      dataId={dataId}
-                      onSelectDataset={datasetId => onSelectSyncedDataset(datasetId, index)}
-                      fields={getTimeFields(datasets[dataId])}
-                      fieldValue={filter.name[index]}
-                      onFieldSelector={field => onFieldSelector(field, index)}
-                    />
-                  </StyledFilterPanelHeader>
-                  <StyledSeparator />
-                </div>
+                <DatasetItem
+                  key={dataId}
+                  dataId={dataId}
+                  index={index}
+                  datasets={datasets}
+                  supportedFields={supportedFields}
+                  idx={idx}
+                  filter={filter}
+                  onRemoveSyncedFilter={onRemoveSyncedFilter}
+                  filterDatasetsNum={filterDatasetsNum}
+                  datasetsWithTimeNum={datasetsWithTimeNum}
+                  onSelectSyncedDataset={onSelectSyncedDataset}
+                  onFieldSelector={onFieldSelector}
+                />
               );
             })}
           </>
@@ -152,36 +278,35 @@ function FilterSyncedDatasetPanelFactory(SourceSelector, FilterPanelHeader, Sour
               dataId={Array.isArray(filter.dataId) ? filter.dataId[0] : filter.dataId}
               onSelect={onSourceDataSelector}
             />
-            <StyledSeparator />
+          </>
+        )}
+        {isLinkedWithLayerTimeline ? (
+          <UnsyncLayerTimelineButton onSyncLayerTimeline={onRemoveSyncWithLayerTimeline} />
+        ) : (
+          <>
+            {tripLayers.length && (
+              <SyncLayerTimelineButton onSyncLayerTimeline={onSyncLayerTimeline} />
+            )}
           </>
         )}
         {filterDatasetsNum < datasetsWithTimeNum && (
-          <div>
-            <TippyTooltip
-              delay={[500, 0]}
-              placement="top"
-              render={() => (
-                <div>
-                  <FormattedMessage id={'tooltip.timeFilterSync'} />
-                </div>
-              )}
-            >
-              <StyledButton
-                className="add-sync-dataset"
-                secondary={true}
-                onClick={onAddSyncedFilter}
-              >
-                <Add height="12px" />
-                <FormattedMessage id={'filterManager.timeFilterSync'} />
-              </StyledButton>
-            </TippyTooltip>
-          </div>
+          <SyncedDatasetButton onAddSyncedFilter={onAddSyncedFilter} />
         )}
       </SyncedDatasetsArea>
     );
   };
 
+  FilterSyncedDatasetPanel.displayName = 'FilterSyncedDatasetPanel';
+
   return FilterSyncedDatasetPanel;
 }
+
+FilterSyncedDatasetPanelFactory.deps = [
+  DatasetItemFactory,
+  SourceDataSelectorFactory,
+  SyncedDatasetButtonFactory,
+  SyncLayerTimelineButtonFactory,
+  UnsyncLayerTimelineButtonFactory
+];
 
 export default FilterSyncedDatasetPanelFactory;

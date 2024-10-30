@@ -21,7 +21,7 @@ export type LayerBaseConfig = {
   };
   animation: {
     enabled: boolean;
-    domain?: null;
+    domain?: [number, number] | null;
   };
 
   columnMode?: string;

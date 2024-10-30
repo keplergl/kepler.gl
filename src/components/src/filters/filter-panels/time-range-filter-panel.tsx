@@ -38,13 +38,15 @@ function TimeRangeFilterPanelFactory(
     ({
       idx,
       datasets,
+      layers,
       allAvailableFields,
       filter,
       enlargeFilter,
       setFilter,
       setFilterPlot,
       removeFilter,
-      toggleAnimation
+      toggleAnimation,
+      syncTimeFilterWithLayerTimeline
     }) => {
       const onSetFilterValue = useCallback(
         value => setFilter(idx, 'value', value),
@@ -137,12 +139,14 @@ function TimeRangeFilterPanelFactory(
             {totalDatasetsNum > 1 && (
               <FilterSyncedDatasetPanel
                 datasets={datasets}
+                layers={layers}
                 filter={filter}
                 idx={idx}
                 onFieldSelector={onFieldSelector}
                 onSourceDataSelector={onSourceDataSelector}
                 setFilter={setFilter}
                 supportedFields={supportedFields}
+                syncTimeFilterWithLayerTimeline={syncTimeFilterWithLayerTimeline}
               />
             )}
             {isHistogramVisible && (

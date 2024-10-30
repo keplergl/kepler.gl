@@ -9,7 +9,7 @@ import RangeSliderFactory from './range-slider';
 import TimeSliderMarkerFactory from './time-slider-marker';
 import PlaybackControlsFactory from './animation-control/playback-controls';
 import TimeRangeSliderTimeTitleFactory from './time-range-slider-time-title';
-import {LineChart, Timeline} from '@kepler.gl/types';
+import {LineChart, Timeline, AnimationConfig} from '@kepler.gl/types';
 import {ActionHandler, setFilterPlot} from '@kepler.gl/actions';
 import AnimationControlFactory from './animation-control/animation-control';
 
@@ -45,6 +45,7 @@ type TimeRangeSliderProps = {
   onChange: (v: number[]) => void;
   timeline: Timeline;
   invertTrendColor?: boolean;
+  animationConfig?: AnimationConfig;
 };
 
 const StyledSliderContainer = styled.div<StyledSliderContainerProps>`

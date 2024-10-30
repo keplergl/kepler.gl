@@ -1554,6 +1554,25 @@ export function layerFilteredItemsChange(
   };
 }
 
+export type SyncTimeFilterWithLayerTimelineAction = {
+  idx: number;
+  enable: boolean;
+};
+
+export function syncTimeFilterWithLayerTimeline(
+  idx: SyncTimeFilterWithLayerTimelineAction['idx'],
+  enable: SyncTimeFilterWithLayerTimelineAction['enable']
+): Merge<
+  SyncTimeFilterWithLayerTimelineAction,
+  {type: typeof ActionTypes.SYNC_TIME_FILTER_WITH_LAYER_TIMELINE}
+> {
+  return {
+    type: ActionTypes.SYNC_TIME_FILTER_WITH_LAYER_TIMELINE,
+    idx,
+    enable
+  };
+}
+
 /**
  * This declaration is needed to group actions in docs
  */
