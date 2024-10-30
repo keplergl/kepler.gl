@@ -10,9 +10,20 @@ import {DataContainerInterface, ArrowDataContainer} from '@kepler.gl/utils';
 import {
   getBinaryGeometriesFromArrow,
   parseGeometryFromArrow,
-  BinaryGeometriesFromArrowOptions
+  BinaryGeometriesFromArrowOptions,
+  updateBoundsFromGeoArrowSamples
 } from '@loaders.gl/arrow';
 import {EXTENSION_NAME} from '@kepler.gl/deckgl-arrow-layers';
+
+import {WKBLoader} from '@loaders.gl/wkt';
+import {geojsonToBinary} from '@loaders.gl/gis';
+import {
+  BinaryFeatureCollection,
+  Geometry,
+  BinaryPointFeature,
+  BinaryLineFeature,
+  BinaryPolygonFeature
+} from '@loaders.gl/schema';
 
 import {DeckGlGeoTypes, GeojsonDataMaps} from './geojson-layer/geojson-utils';
 
@@ -39,6 +50,98 @@ export type GeojsonLayerMetaProps = {
   centroids?: Array<number[] | null>;
 };
 
+/**
+ * Converts a geoarrow.wkb vector into an array of BinaryFeatureCollections.
+ * @param geoColumn A vector column with geoarrow.wkb extension.
+ * @param options Options for geometry transformation.
+ * @returns
+ */
+function getBinaryGeometriesFromWKBArrow(
+  geoColumn: arrow.Vector,
+  options: {chunkIndex?: number; chunkOffset?: number}
+): GeojsonLayerMetaProps {
+  const dataToFeature: BinaryFeatureCollection[] = [];
+  const featureTypes: GeojsonLayerMetaProps['featureTypes'] = {
+    point: false,
+    line: false,
+    polygon: false
+  };
+
+  const chunks =
+    options?.chunkIndex !== undefined && options?.chunkIndex >= 0
+      ? [geoColumn.data[options?.chunkIndex]]
+      : geoColumn.data;
+  let globalFeatureIdOffset = options?.chunkOffset || 0;
+  let featureIndex = globalFeatureIdOffset;
+  let bounds: [number, number, number, number] = [Infinity, Infinity, -Infinity, -Infinity];
+
+  chunks.forEach(chunk => {
+    const geojsonFeatures: Feature[] = [];
+    for (let i = 0; i < chunk.length; ++i) {
+      // ignore features without any geometry
+      if (chunk.valueOffsets[i + 1] - chunk.valueOffsets[i] > 0) {
+        const valuesSlice = chunk.values.slice(chunk.valueOffsets[i], chunk.valueOffsets[i + 1]);
+
+        const geometry = WKBLoader?.parseSync?.(valuesSlice.buffer, {
+          wkb: {shape: 'geojson-geometry'}
+        }) as Geometry;
+        const feature: Feature = {
+          type: 'Feature',
+          geometry,
+          properties: {index: featureIndex}
+        };
+        geojsonFeatures.push(feature);
+
+        const {type} = geometry;
+        featureTypes.polygon = type === 'Polygon' || type === 'MultiPolygon';
+        featureTypes.point = type === 'Point' || type === 'MultiPoint';
+        featureTypes.line = type === 'LineString' || type === 'MultiLineString';
+      }
+
+      featureIndex++;
+    }
+
+    const geojsonToBinaryOptions = {
+      triangulate: true,
+      fixRingWinding: true
+    };
+    const binaryFeatures = geojsonToBinary(geojsonFeatures, geojsonToBinaryOptions);
+
+    // Need to update globalFeatureIds, to take into account previous batches,
+    // as geojsonToBinary doesn't have such option.
+    const featureTypesArr = ['points', 'lines', 'polygons'];
+    featureTypesArr.forEach(prop => {
+      const features = binaryFeatures[prop] as
+        | BinaryPointFeature
+        | BinaryLineFeature
+        | BinaryPolygonFeature;
+      if (features) {
+        bounds = updateBoundsFromGeoArrowSamples(
+          features.positions.value as Float64Array,
+          features.positions.size,
+          bounds
+        );
+
+        const {globalFeatureIds, numericProps} = features;
+        const {index} = numericProps;
+        const len = globalFeatureIds.value.length;
+        for (let i = 0; i < len; ++i) {
+          globalFeatureIds.value[i] = index.value[i];
+        }
+      }
+    });
+
+    dataToFeature.push(binaryFeatures);
+  });
+
+  return {
+    dataToFeature: dataToFeature,
+    featureTypes: featureTypes,
+    bounds,
+    fixedRadius: false
+  };
+}
+
 export function getGeojsonLayerMetaFromArrow({
   dataContainer,
   geoColumn,
@@ -61,6 +164,12 @@ export function getGeojsonLayerMetaFromArrow({
     triangulate: true,
     calculateMeanCenters: true
   };
+
+  // getBinaryGeometriesFromArrow doesn't support geoarrow.wkb
+  if (encoding === 'geoarrow.wkb') {
+    return getBinaryGeometriesFromWKBArrow(geoColumn, options);
+  }
+
   // create binary data from arrow data for GeoJsonLayer
   const {binaryGeometries, featureTypes, bounds, meanCenters} = getBinaryGeometriesFromArrow(
     // @ts-ignore
