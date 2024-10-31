@@ -137,6 +137,9 @@ export function getTimeBins(
 export function binByTime(indexes, dataset, interval, filter) {
   // gpuFilters need to be apply to filteredIndex
   const mappedValue = getFilterMappedValue(dataset, filter);
+  if (!mappedValue) {
+    return null;
+  }
   const intervalBins = getBinThresholds(interval, filter.domain);
 
   const bins = histogramFromThreshold(intervalBins, mappedValue, indexes);

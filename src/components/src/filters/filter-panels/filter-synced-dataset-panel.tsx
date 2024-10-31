@@ -317,9 +317,9 @@ function FilterSyncedDatasetPanelFactory(
             ) : null}
           </>
         )}
-        {filterDatasetsNum < datasetsWithTimeNum && (
+        {filterDatasetsNum < datasetsWithTimeNum ? (
           <SyncedDatasetButton onAddSyncedFilter={onAddSyncedFilter} />
-        )}
+        ) : null}
       </SyncedDatasetsArea>
     );
   };
