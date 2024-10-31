@@ -86,6 +86,11 @@ export default function BottomWidgetFactory(
     const enlargedFilterIdx = useMemo(() => filters.findIndex(f => !isSideFilter(f)), [filters]);
     const animatedFilterIdx = useMemo(() => filters.findIndex(f => f.isAnimating), [filters]);
     const animatedFilter = animatedFilterIdx > -1 ? filters[animatedFilterIdx] : null;
+    // we need to hide layer timeline when filter is synced and not enlarged
+    const isTimelineLinkedWithFilter = useMemo(
+      () => (filters as TimeRangeFilter[]).some(f => f.syncedWithLayerTimeline),
+      [filters]
+    );
 
     const isMobile = useMemo(() => hasPortableWidth(breakPointValues), []);
     const isLegendPinned =
@@ -159,7 +164,7 @@ export default function BottomWidgetFactory(
         hasPadding={showAnimationControl || showTimeWidget}
         ref={rootRef}
       >
-        {!filter?.syncedWithLayerTimeline ? (
+        {!isTimelineLinkedWithFilter ? (
           <LayerAnimationController
             animationConfig={enhancedAnimationConfig}
             setLayerAnimationTime={visStateActions.setLayerAnimationTime}

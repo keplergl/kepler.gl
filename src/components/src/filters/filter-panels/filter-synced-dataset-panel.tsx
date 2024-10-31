@@ -284,14 +284,14 @@ function FilterSyncedDatasetPanelFactory(
           <UnsyncLayerTimelineButton onSyncLayerTimeline={onRemoveSyncWithLayerTimeline} />
         ) : (
           <>
-            {tripLayers.length && (
+            {tripLayers.length ? (
               <SyncLayerTimelineButton onSyncLayerTimeline={onSyncLayerTimeline} />
-            )}
+            ) : null}
           </>
         )}
-        {filterDatasetsNum < datasetsWithTimeNum && (
+        {filterDatasetsNum < datasetsWithTimeNum ? (
           <SyncedDatasetButton onAddSyncedFilter={onAddSyncedFilter} />
-        )}
+        ) : null}
       </SyncedDatasetsArea>
     );
   };
