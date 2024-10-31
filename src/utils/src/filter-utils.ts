@@ -1269,20 +1269,26 @@ export function mergeFilterWithTimeline(
   return {filter, animationConfig};
 }
 
-export function getFilterScaledTimeline(filter: TimeRangeFilter, animationConfig: AnimationConfig) {
-  if (!filter.syncedWithLayerTimeline) {
-    return null;
-  }
+export function scaleSourceDomainToDestination(
+  sourceDomain: [number, number],
+  destinationDomain: [number, number]
+): [number, number] {
   // 0 -> 100: merged domains t1 - t0 === 100% filter may already have this info which is good
-  const domainSize = filter.domain[1] - filter.domain[0];
+  const sourceDomainSize = sourceDomain[1] - sourceDomain[0];
   // 10 -> 20: animationConfig domain d1 - d0 === animationConfig size
-  const animationConfigSize = animationConfig?.domain
-    ? animationConfig.domain[1] - animationConfig.domain[0]
-    : 0;
+  const destinationDomainSize = destinationDomain[1] - destinationDomain[0];
   // scale animationConfig size using domain size
-  const scaledAnimationConfigSize = (animationConfigSize / domainSize) * 100;
+  const scaledSourceDomainSize = (sourceDomainSize / destinationDomainSize) * 100;
   // scale d0 - t0 using domain size to find starting point
-  const offset = animationConfig?.domain ? animationConfig.domain[0] - filter.domain[0] : 0;
-  const scaledOffset = (offset / domainSize) * 100;
-  return [[scaledOffset, scaledAnimationConfigSize + scaledOffset]];
+  const offset = sourceDomain[0] - destinationDomain[0];
+  const scaledOffset = (offset / destinationDomainSize) * 100;
+  return [scaledOffset, scaledSourceDomainSize + scaledOffset];
+}
+
+export function getFilterScaledTimeline(filter, animationConfig): number[] {
+  if (!(filter.syncedWithLayerTimeline && animationConfig?.domain)) {
+    return [];
+  }
+
+  return scaleSourceDomainToDestination(animationConfig.domain, filter.domain);
 }

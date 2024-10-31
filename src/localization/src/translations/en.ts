@@ -244,6 +244,8 @@ export default {
     export: 'export',
     timeLayerSync: 'Link with the layer timeline',
     timeLayerUnsync: 'Unlink with the layer timeline',
+    syncTimelineStart: 'Start of current filter timeframe',
+    syncTimelineEnd: 'End of current filter timeframe',
     showEffectPanel: 'Show effect panel',
     hideEffectPanel: 'Hide effect panel',
     removeEffect: 'Remove effect',

@@ -2,24 +2,35 @@
 // Copyright contributors to the kepler.gl project
 
 import React, {useCallback, useMemo} from 'react';
-import styled from 'styled-components';
+import styled, {withTheme} from 'styled-components';
 
 import {FormattedMessage} from '@kepler.gl/localization';
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 import {getAnimatableLayers} from '@kepler.gl/utils';
 
 import {Button} from '../../common/styled-components';
-import {Add} from '../../common/icons';
+import {Add, Trash} from '../../common/icons';
 import TippyTooltip from '../../common/tippy-tooltip';
 import FilterPanelHeaderFactory from '../../side-panel/filter-panel/filter-panel-header';
 import SourceSelectorFactory from '../../side-panel/common/source-selector';
 import SourceDataSelectorFactory from '../../side-panel/common/source-data-selector';
+import LayerTypeListItemFactory from '../../side-panel/layer-panel/layer-type-list-item';
+
+const TrashIcon = styled(Trash)`
+  cursor: pointer;
+  color: ${props => props.theme.fontWhiteColor};
+  margin-left: 8px;
+`;
 
 const SyncedDatasetsArea = styled.div`
   display: grid;
   align-items: center;
   grid-auto-rows: min-content;
   grid-auto-flow: row;
+
+  .side-panel-section {
+    margin-bottom: 0;
+  }
 `;
 
 const StyledContentTitle = styled.div`
@@ -30,7 +41,7 @@ const StyledContentTitle = styled.div`
 const StyledSeparator = styled.div`
   border-left: 1px dashed ${props => props.theme.subtextColor};
   height: 16px;
-  margin-left: 8px;
+  margin: 4px 0 4px 8px;
 `;
 
 const StyledButton = styled(Button)`
@@ -71,6 +82,7 @@ function DatasetItemFactory(SourceSelector, FilterPanelHeader) {
     background-color: transparent;
   `;
 
+  // Check if this component already exists
   const DatasetItem = ({
     dataId,
     datasets,
@@ -110,6 +122,41 @@ function DatasetItemFactory(SourceSelector, FilterPanelHeader) {
 }
 
 DatasetItemFactory.deps = [SourceSelectorFactory, FilterPanelHeaderFactory];
+
+const StyledLayerTimeline = styled.div`
+  display: flex;
+  align-items: center;
+`;
+
+const StyledLayerList = styled.div`
+  flex: 1;
+`;
+
+function LayerTimelineFactory(LayerTypeListItem) {
+  const StyledLayerTypeListItem = styled(LayerTypeListItem)`
+    background-color: ${props => props.theme.dropdownListHighlightBg};
+    padding: 4px;
+  `;
+
+  const LayerTimeline = ({layers, theme, onDelete}) => (
+    <StyledLayerTimeline>
+      <StyledLayerList>
+        {layers.map(layer => (
+          <StyledLayerTypeListItem
+            key={layer.id}
+            value={{icon: layer.layerIcon, label: layer.name}}
+            theme={{...theme, layerTypeIconSizeSM: 24}}
+          />
+        ))}
+      </StyledLayerList>
+      <TrashIcon height="12px" width="12px" onClick={onDelete} />
+    </StyledLayerTimeline>
+  );
+
+  return withTheme(LayerTimeline);
+}
+
+LayerTimelineFactory.deps = [LayerTypeListItemFactory];
 
 function SyncedDatasetButtonFactory() {
   const SyncedDatasetButton = ({onAddSyncedFilter}) => (
@@ -159,36 +206,12 @@ function SyncLayerTimelineButtonFactory() {
   return SyncLayerTimelineButton;
 }
 
-function UnsyncLayerTimelineButtonFactory() {
-  const UnsyncLayerTimelineButton = ({onSyncLayerTimeline}) => (
-    <div>
-      <StyledSeparator />
-      <TippyTooltip
-        delay={[500, 0]}
-        placement="top"
-        render={() => (
-          <div>
-            <FormattedMessage id={'tooltip.timeLayerUnsync'} />
-          </div>
-        )}
-      >
-        <StyledButton className="add-sync-dataset" secondary={true} onClick={onSyncLayerTimeline}>
-          <Add height="12px" />
-          <FormattedMessage id={'filterManager.timeLayerUnsync'} />
-        </StyledButton>
-      </TippyTooltip>
-    </div>
-  );
-
-  return UnsyncLayerTimelineButton;
-}
-
 function FilterSyncedDatasetPanelFactory(
   DatasetItem,
+  LayerTimeline,
   SourceDataSelector,
   SyncedDatasetButton,
-  SyncLayerTimelineButton,
-  UnsyncLayerTimelineButton
+  SyncLayerTimelineButton
 ) {
   const FilterSyncedDatasetPanel = ({
     datasets,
@@ -203,9 +226,10 @@ function FilterSyncedDatasetPanelFactory(
   }) => {
     const datasetsWithTime = useMemo(() => getDatasetsWithTimeField(datasets), [datasets]);
     const filterDatasetsNum = useMemo(() => filter.dataId.length, [filter.dataId]);
-    const datasetsWithTimeNum = useMemo(() => Object.keys(datasetsWithTime).length, [
-      datasetsWithTime
-    ]);
+    const datasetsWithTimeNum = useMemo(
+      () => Object.keys(datasetsWithTime).length,
+      [datasetsWithTime]
+    );
 
     const onRemoveSyncedFilter = useCallback(
       valueIndex => {
@@ -230,19 +254,20 @@ function FilterSyncedDatasetPanelFactory(
       setFilter(idx, ['dataId', 'name'], [nextId, nextName], filter.dataId.length);
     }, [setFilter, idx, datasetsWithTime, datasets, filter.dataId, filter.name]);
 
-    const onSyncLayerTimeline = useCallback(() => syncTimeFilterWithLayerTimeline(idx, true), [
-      syncTimeFilterWithLayerTimeline,
-      idx
-    ]);
+    const onSyncLayerTimeline = useCallback(
+      () => syncTimeFilterWithLayerTimeline(idx, true),
+      [syncTimeFilterWithLayerTimeline, idx]
+    );
 
     const onRemoveSyncWithLayerTimeline = useCallback(
       () => syncTimeFilterWithLayerTimeline(idx, false),
       [syncTimeFilterWithLayerTimeline, idx]
     );
 
-    const tripLayers = useMemo(() => getAnimatableLayers(layers).filter(l => l.type === 'trip'), [
-      layers
-    ]);
+    const animatableLayers = useMemo(
+      () => getAnimatableLayers(layers).filter(l => l.type === 'trip'),
+      [layers]
+    );
 
     const isLinkedWithLayerTimeline = useMemo(() => filter.syncedWithLayerTimeline, [filter]);
 
@@ -281,10 +306,13 @@ function FilterSyncedDatasetPanelFactory(
           </>
         )}
         {isLinkedWithLayerTimeline ? (
-          <UnsyncLayerTimelineButton onSyncLayerTimeline={onRemoveSyncWithLayerTimeline} />
+          <>
+            <StyledSeparator />
+            <LayerTimeline layers={animatableLayers} onDelete={onRemoveSyncWithLayerTimeline} />
+          </>
         ) : (
           <>
-            {tripLayers.length ? (
+            {animatableLayers.length ? (
               <SyncLayerTimelineButton onSyncLayerTimeline={onSyncLayerTimeline} />
             ) : null}
           </>
@@ -303,10 +331,10 @@ function FilterSyncedDatasetPanelFactory(
 
 FilterSyncedDatasetPanelFactory.deps = [
   DatasetItemFactory,
+  LayerTimelineFactory,
   SourceDataSelectorFactory,
   SyncedDatasetButtonFactory,
-  SyncLayerTimelineButtonFactory,
-  UnsyncLayerTimelineButtonFactory
+  SyncLayerTimelineButtonFactory
 ];
 
 export default FilterSyncedDatasetPanelFactory;

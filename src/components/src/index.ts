@@ -200,6 +200,10 @@ export {
 } from './common/time-slider-marker';
 export {default as TimeRangeSliderTimeTitleFactory} from './common/time-range-slider-time-title';
 export {default as IconButton} from './common/icon-button';
+export {
+  SYNC_TIMELINE_ANIMATION_ITEMS,
+  default as SyncTimelineControlFactory
+} from './common/sync-timeline-control';
 // // Filters factory
 export {default as TimeWidgetFactory} from './filters/time-widget';
 export {default as TimeWidgetTopFactory} from './filters/time-widget-top';
@@ -212,7 +216,6 @@ export {
   default as TimeRangeFilterFactory
 } from './filters/time-range-filter';
 export {default as RangeFilterFactory} from './filters/range-filter';
-
 
 // // Editor Factory
 export {default as EditorFactory} from './editor/editor';

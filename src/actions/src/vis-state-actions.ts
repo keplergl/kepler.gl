@@ -20,7 +20,8 @@ import {
   Filter,
   ParsedConfig,
   ParsedLayer,
-  EffectPropsPartial
+  EffectPropsPartial,
+  SyncTimelineMode
 } from '@kepler.gl/types';
 // TODO - import LoaderObject type from @loaders.gl/core when supported
 // TODO - import LoadOptions type from @loaders.gl/core when supported
@@ -1570,6 +1571,25 @@ export function syncTimeFilterWithLayerTimeline(
     type: ActionTypes.SYNC_TIME_FILTER_WITH_LAYER_TIMELINE,
     idx,
     enable
+  };
+}
+
+export type setTimeFilterSyncTimelineModeAction = {
+  id: string;
+  mode: SyncTimelineMode;
+};
+
+export function setTimeFilterSyncTimelineMode({
+  id,
+  mode
+}: setTimeFilterSyncTimelineModeAction): Merge<
+  setTimeFilterSyncTimelineModeAction,
+  {type: typeof ActionTypes.SYNC_TIME_FILTER_TIMELINE_MODE}
+> {
+  return {
+    type: ActionTypes.SYNC_TIME_FILTER_TIMELINE_MODE,
+    id,
+    mode
   };
 }
 

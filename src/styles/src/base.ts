@@ -47,6 +47,7 @@ export const titleColorLT = '#29323C';
 export const subtextColor = '#6A7485';
 export const subtextColorLT = '#A0A7B4';
 export const subtextColorActive = '#FFFFFF';
+export const fontWhiteColor = '#54638c';
 export const panelToggleBorderColor = '#FFFFFF';
 export const panelTabWidth = '30px';
 
@@ -1412,6 +1413,7 @@ export const theme = {
   subtextColor,
   subtextColorLT,
   subtextColorActive,
+  fontWhiteColor,
   panelToggleBorderColor,
   panelTabWidth,
   textTruncate,

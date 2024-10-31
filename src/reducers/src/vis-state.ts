@@ -145,6 +145,8 @@ const actionHandler = {
   [ActionTypes.SYNC_TIME_FILTER_WITH_LAYER_TIMELINE]:
     visStateUpdaters.syncTimeFilterWithLayerTimelineUpdater,
 
+  [ActionTypes.SYNC_TIME_FILTER_TIMELINE_MODE]: visStateUpdaters.setTimeFilterTimelineModeUpdater,
+
   [ActionTypes.ADD_EFFECT]: visStateUpdaters.addEffectUpdater,
 
   [ActionTypes.REORDER_EFFECT]: visStateUpdaters.reorderEffectUpdater,

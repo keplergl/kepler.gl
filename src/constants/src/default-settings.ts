@@ -13,7 +13,7 @@ import {
   scalePoint
 } from 'd3-scale';
 import {TOOLTIP_FORMAT_TYPES} from './tooltip';
-import {RGBAColor, EffectDescription, BaseMapStyle} from '@kepler.gl/types';
+import {BaseMapStyle, EffectDescription, RGBAColor, SyncTimelineMode} from '@kepler.gl/types';
 
 export const ACTION_PREFIX = '@@kepler.gl/';
 export const KEPLER_UNFOLDED_BUCKET = 'https://studio-public-data.foursquare.com/statics/keplergl';
@@ -1441,3 +1441,8 @@ export type EffectType =
   | 'magnify'
   | 'hexagonalPixelate'
   | 'lightAndShadow';
+
+export const SYNC_TIMELINE_MODES: Record<string, SyncTimelineMode> = {
+  start: 0,
+  end: 1
+};

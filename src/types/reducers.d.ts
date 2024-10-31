@@ -139,6 +139,8 @@ export type MultiSelectFilter = FilterBase<LineChart> &
     value: string[];
   };
 
+export type SyncTimelineMode = 0 | 1;
+
 export type TimeRangeFilter = FilterBase<LineChart> &
   TimeRangeFieldDomain & {
     type: 'timeRange';
@@ -149,6 +151,7 @@ export type TimeRangeFilter = FilterBase<LineChart> &
       [key: string]: any;
     };
     syncedWithLayerTimeline: boolean;
+    syncTimelineMode: SyncTimelineMode;
     animationWindow: string;
     invertTrendColor: boolean;
   };
