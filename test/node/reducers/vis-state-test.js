@@ -3236,6 +3236,7 @@ test('#visStateReducer -> SET_FILTER_PLOT.yAxis', t => {
         ],
         markers: []
       },
+      yAxis: 'uid',
       title: 'Total of uid',
       fieldType: 'integer',
       allTime: {title: 'All Time Average', value: 580.5454545454545}
@@ -3374,9 +3375,63 @@ test('#visStateReducer -> SET_FILTER_PLOT.yAxis', t => {
   // test filter
   cmpFilters(t, expectedFilterWName, stateWithFilterPlot.filters[0]);
 
+  // set filterPlot yAxis again
+  const yAxisField2 = stateWithFilterName.datasets.smoothie.fields.find(
+    f => f.name === 'gps_data.lat'
+  );
+  const stateWithFilterPlot2 = reducer(
+    stateWithFilterPlot,
+    VisStateActions.setFilterPlot(0, {yAxis: yAxisField2})
+  );
+  const expectedFilterWName2 = {
+    ...expectedFilterWName,
+    yAxis: yAxisField2,
+    lineChart: {
+      yDomain: [29.9870074, 90.18377960000001],
+      xDomain: [1474070985000, 1474072215000],
+      interval: '15-second',
+      aggregation: 'sum',
+      series: {
+        lines: [
+          [
+            {x: 1474070985000, y: 29.9900937, delta: 'last', pct: null},
+            {x: 1474071045000, y: 29.9927699, delta: 'last', pct: 0.00008923613333024682},
+            {x: 1474071105000, y: 29.9907261, delta: 'last', pct: -0.00006814308937832221},
+            {x: 1474071165000, y: 29.9870074, delta: 'last', pct: -0.0001239949972401734},
+            {x: 1474071240000, y: 29.9923041, delta: 'last', pct: 0.00017663316413490536},
+            {x: 1474071300000, y: 29.9968249, delta: 'last', pct: 0.00015073200061350596},
+            {x: 1474071360000, y: 30.0037217, delta: 'last', pct: 0.0002299176670528158},
+            {x: 1474071420000, y: 30.0116207, delta: 'last', pct: 0.00026326733993142846},
+            {x: 1474071480000, y: 30.0208925, delta: 'last', pct: 0.0003089403299035078},
+            {x: 1474071540000, y: 30.0218999, delta: 'last', pct: 0.000033556630603251856},
+            {x: 1474071555000, y: 30.0229344, delta: 'last', pct: 0.00003445817897751978},
+            {x: 1474071600000, y: 30.0264237, delta: 'last', pct: 0.0001162211512542309},
+            {x: 1474071675000, y: 30.0292134, delta: 'last', pct: 0.00009290816741525582},
+            {x: 1474071735000, y: 30.034391, delta: 'last', pct: 0.00017241876871805346},
+            {x: 1474071795000, y: 30.0352752, delta: 'last', pct: 0.000029439584774718954},
+            {x: 1474071855000, y: 30.0395918, delta: 'last', pct: 0.00014371767767252643},
+            {x: 1474071915000, y: 30.0497387, delta: 'last', pct: 0.00033778421716099144},
+            {x: 1474071975000, y: 30.0538936, delta: 'last', pct: 0.00013826742526714978},
+            {x: 1474072050000, y: 30.060911, delta: 'last', pct: 0.0002334938724878657},
+            {x: 1474072110000, y: 30.060334, delta: 'last', pct: -0.000019194361741060598},
+            {x: 1474072170000, y: 30.0554663, delta: 'last', pct: -0.0001619310018312477},
+            {x: 1474072200000, y: 90.18377960000001, delta: 'last', pct: 2.0005782874844305}
+          ]
+        ],
+        markers: []
+      },
+      yAxis: 'gps_data.lat',
+      title: 'Total of gps_data.lat',
+      fieldType: 'real',
+      allTime: {title: 'All Time Average', value: 32.757264254545454}
+    }
+  };
+  // gps_data.lat
+  cmpFilters(t, expectedFilterWName2, stateWithFilterPlot2.filters[0]);
+
   // set filterPlot type
   const stateWithFilterPlotHistogram = reducer(
-    stateWithFilterPlot,
+    stateWithFilterPlot2,
     VisStateActions.setFilterPlot(0, {plotType: {type: 'histogram'}})
   );
   t.deepEqual(

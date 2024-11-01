@@ -42,6 +42,7 @@ import {
   isPlainObject,
   isObject,
   addNewLayersToSplitMap,
+  snapToMarks,
   computeSplitMapLayers,
   removeLayerFromSplitMaps,
   isRgbColor,
@@ -59,7 +60,8 @@ import {
   isInRange,
   mergeFilterDomainStep,
   updateFilterPlot,
-  removeFilterPlot
+  removeFilterPlot,
+  isLayerAnimatable
 } from '@kepler.gl/utils';
 
 // Mergers
@@ -123,7 +125,12 @@ import {
 import {findFieldsToShow} from './interaction-utils';
 import {hasPropsToMerge, getPropValueToMerger} from './merger-handler';
 import {mergeDatasetsByOrder} from './vis-state-merger';
-import {fixEffectOrder, getAnimatableLayers, mergeTimeDomains} from '@kepler.gl/utils';
+import {
+  fixEffectOrder,
+  getAnimatableVisibleLayers,
+  getAnimatableVisibleLayersByType,
+  mergeTimeDomains
+} from '@kepler.gl/utils';
 import {createEffect} from '@kepler.gl/effects';
 
 // react-palm
@@ -505,6 +512,17 @@ export function layerConfigChangeUpdater(
   let newState = state;
   if ('isVisible' in action.newConfig) {
     newState = updateStateOnLayerVisibilityChange(state, newLayer);
+    const filterIndex = filterSyncedWithTimeline(state);
+    if (isLayerAnimatable(newLayer) && filterIndex !== -1) {
+      // if layer is going to be visible we sync with filter otherwise we need to check whether other animatable layers exists and are visible
+      newState = syncTimeFilterWithLayerTimelineUpdater(newState, {
+        idx: filterIndex,
+        // @ts-expect-error why layers are assigned to enable?
+        enable: action.newConfig.isVisible
+          ? action.newConfig.isVisible
+          : getAnimatableVisibleLayers(state.layers)
+      });
+    }
   }
 
   if ('columns' in action.newConfig && newLayer.config.animation.enabled) {
@@ -533,6 +551,15 @@ export function layerAnimationChangeUpdater<S extends VisState>(state: S, action
   const {layerData, layer} = calculateLayerData(newLayer, state, state.layerData[idx]);
 
   return updateStateWithLayerAndData(state, {layerData, layer, idx});
+}
+
+/**
+ *
+ * @param state
+ * @returns index of the filter synced to timeline or -1
+ */
+function filterSyncedWithTimeline(state: VisState): number {
+  return state.filters.findIndex(f => (f as TimeRangeFilter).syncedWithLayerTimeline);
 }
 
 /**
@@ -905,14 +932,12 @@ export const setLayerAnimationTimeUpdater = <S extends VisState>(
     }
   };
   // update animation config for each layer
-  const result = state.layers.reduce((accu, l) => {
+  return state.layers.reduce((accu, l) => {
     if (l.config.animation.enabled && l.type !== 'trip') {
       return layerAnimationChangeUpdater(accu, {oldLayer: l, prop: 'currentTime', currentTime});
     }
     return accu;
   }, nextState);
-
-  return result;
 };
 
 /**
@@ -929,7 +954,10 @@ export function setFilterAnimationTimeUpdater(
   const filter = newState.filters[idx];
   if ((filter as TimeRangeFilter).syncedWithLayerTimeline) {
     const timelineValue = getTimelineFromTrip(filter);
-    newState = setLayerAnimationTimeUpdater(newState, {value: timelineValue});
+    const value = state.animationConfig.timeSteps
+      ? snapToMarks(timelineValue, state.animationConfig.timeSteps)
+      : timelineValue;
+    newState = setLayerAnimationTimeUpdater(newState, {value});
   }
 
   return newState;
@@ -960,7 +988,7 @@ export function setFilterAnimationWindowUpdater(
     filters: swap_<Filter>(newFilter)(state.filters)
   };
 
-  const newSyncTimelineMode = getSyncAnimationMode(newFilter);
+  const newSyncTimelineMode = getSyncAnimationMode(newFilter as TimeRangeFilter);
 
   return setTimeFilterTimelineModeUpdater(newState, {id, mode: newSyncTimelineMode});
 }
@@ -1033,8 +1061,13 @@ export function setFilterUpdater(
   // pass only the dataset we need to update
   newState = updateAllLayerDomainData(newState, datasetIdsToFilter, newFilter);
 
+  // if (newFilter.syncedWithLayerTimeline) {
+  //   newState = syncTimeFilterWithLayerTimelineUpdater(state, {idx, enable: newFilter.syncedWithLayerTimeline});
+  // }
+
   return newState;
 }
+
 function _updateFilterDataIdAtValueIndex(filter, valueIndex, value, datasets) {
   let newFilter = filter;
   if (filter.dataId[valueIndex]) {
@@ -1135,6 +1168,7 @@ function _updateFilterProp(state, filter, prop, value, valueIndex, datasetIds?) 
       // only filter the current dataset
       break;
     }
+
     case FILTER_UPDATER_PROPS.layerId: {
       // We need to update only datasetId/s if we have added/removed layers
       // - check for layerId changes (XOR works because of string values)
@@ -1175,6 +1209,7 @@ function _updateFilterProp(state, filter, prop, value, valueIndex, datasetIds?) 
       };
       break;
     }
+
     default:
       filter = set([prop], value, filter);
       datasetIdsToFilter = [...filter.dataId];
@@ -2700,7 +2735,7 @@ export function updateAllLayerDomainData(
 
 export function updateAnimationDomain<S extends VisState>(state: S): S {
   // merge all animatable layer domain and update global config
-  const animatableLayers = getAnimatableLayers(state.layers);
+  const animatableLayers = getAnimatableVisibleLayers(state.layers);
 
   if (!animatableLayers.length) {
     return {
@@ -3157,29 +3192,52 @@ export function syncTimeFilterWithLayerTimelineUpdater<S extends VisState>(
   const {idx: filterIdx, enable = false} = action;
 
   const filter = state.filters[filterIdx] as TimeRangeFilter;
-  const newAnimationConfig = {...state.animationConfig};
+  const hasHexTileLayer =
+    enable && Boolean(getAnimatableVisibleLayersByType(state.layers, 'hexTile').length);
 
-  const newFilterDomain = enable
-    ? mergeTimeDomains([filter.domain, newAnimationConfig.domain as [number, number] | null])
-    : filter.domain;
+  const newFilterDomain =
+    hasHexTileLayer && state.animationConfig.domain
+      ? mergeTimeDomains([filter.domain, state.animationConfig.domain as [number, number]])
+      : filter.domain;
 
   const syncTimelineMode = getSyncAnimationMode(filter);
 
-  const newFilter = {
-    ...filter,
-    value: adjustValueToFilterDomain(newFilterDomain, filter),
+  let newState = setFilterAnimationWindowUpdater(state, {
+    id: filter.id,
+    animationWindow: hasHexTileLayer ? ANIMATION_WINDOW.interval : filter.animationWindow
+  });
+
+  let newFilter = newState.filters[filterIdx];
+
+  const newFilterValue = adjustValueToFilterDomain(
+    hasHexTileLayer ? [newFilterDomain[0], newFilterDomain[0]] : newFilter.value,
+    {
+      domain: newFilterDomain,
+      // check whether this is valid type here - required to pass ts checks.
+      type: newFilter.type
+    }
+  );
+
+  newState = setFilterUpdater(newState, {
+    idx: filterIdx,
+    prop: 'value',
+    value: newFilterValue
+  });
+
+  newFilter = {
+    ...newState.filters[filterIdx],
     syncedWithLayerTimeline: enable,
     syncTimelineMode
-  };
+  } as TimeRangeFilter;
 
   const animationConfigCurrentTime = enable
     ? newFilterDomain[0]
-    : state.animationConfig.domain?.[0];
+    : newState.animationConfig.domain?.[0] ?? 0;
 
   return setLayerAnimationTimeUpdater(
     {
-      ...state,
-      filters: swap_<Filter>(newFilter)(state.filters)
+      ...newState,
+      filters: swap_<Filter>(newFilter)(newState.filters)
     },
     {value: animationConfigCurrentTime ?? null}
   );
@@ -3216,18 +3274,18 @@ function getTimelineFromTrip(filter) {
   return filter.value[filter.syncTimelineMode];
 }
 
-function getSyncAnimationMode(filter) {
-  return filter.animationWindow === ANIMATION_WINDOW.free
-    ? SYNC_TIMELINE_MODES.start
-    : SYNC_TIMELINE_MODES.end;
-}
-
-function validateSyncAnimationMode(filter, newMode) {
-  if (filter.animationWindow !== ANIMATION_WINDOW.free && newMode === SYNC_TIMELINE_MODES.start) {
-    return false;
+function getSyncAnimationMode(filter: TimeRangeFilter) {
+  if (filter.animationWindow === ANIMATION_WINDOW.free) {
+    return filter.syncTimelineMode ?? SYNC_TIMELINE_MODES.end;
   }
 
-  return true;
+  return SYNC_TIMELINE_MODES.end;
+}
+
+function validateSyncAnimationMode(filter: TimeRangeFilter, newMode: number) {
+  return !(
+    filter.animationWindow !== ANIMATION_WINDOW.free && newMode === SYNC_TIMELINE_MODES.start
+  );
 }
 
 // Find dataId from a saved visState property:

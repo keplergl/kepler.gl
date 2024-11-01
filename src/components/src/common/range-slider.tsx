@@ -66,7 +66,7 @@ interface RangeSliderProps {
   step?: number;
   sliderHandleWidth?: number;
   xAxis?: ElementType;
-  timelines?: number[][];
+  timelines?: any[];
   timelineLabel?: string;
 
   timezone?: string | null;
@@ -240,7 +240,6 @@ export default function RangeSliderFactory(
         playbackControlWidth,
         setFilterPlot,
         timelines,
-        timelineLabel,
         animationWindow,
         filter,
         datasets
@@ -291,7 +290,6 @@ export default function RangeSliderFactory(
               {timelines?.length ? (
                 <RangeSliderTimelinePanel
                   timelines={timelines}
-                  timelineLabel={timelineLabel}
                   scaledValue={scaledValue}
                   style={RANGE_SLIDER_TIMELINE_PANEL_STYLE}
                 />

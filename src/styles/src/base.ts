@@ -1559,6 +1559,9 @@ export const theme = {
   fieldTokenHeight,
   fieldTokenWidth,
 
+  // COLORS
+  BLUE2: 'rgba(85, 88, 219, 0.2)',
+
   // Effect panel
   effectPanelWidth,
   effectPanelHeight,

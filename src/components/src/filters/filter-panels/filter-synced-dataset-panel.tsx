@@ -6,7 +6,7 @@ import styled, {withTheme} from 'styled-components';
 
 import {FormattedMessage} from '@kepler.gl/localization';
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
-import {getAnimatableLayers} from '@kepler.gl/utils';
+import {getAnimatableVisibleLayers} from '@kepler.gl/utils';
 
 import {Button} from '../../common/styled-components';
 import {Add, Trash} from '../../common/icons';
@@ -264,10 +264,7 @@ function FilterSyncedDatasetPanelFactory(
       [syncTimeFilterWithLayerTimeline, idx]
     );
 
-    const animatableLayers = useMemo(
-      () => getAnimatableLayers(layers).filter(l => l.type === 'trip'),
-      [layers]
-    );
+    const animatableLayers = useMemo(() => getAnimatableVisibleLayers(layers), [layers]);
 
     const isLinkedWithLayerTimeline = useMemo(() => filter.syncedWithLayerTimeline, [filter]);
 

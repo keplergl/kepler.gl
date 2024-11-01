@@ -240,7 +240,8 @@ export function validBin(b) {
 }
 
 /**
- * Use in slider, given a number and an array of numbers, return the nears number from the array
+ * Use in slider, given a number and an array of numbers, return the nears number from the array.
+ * Takes a value, timesteps and return the actual step.
  * @param value
  * @param marks
  */
@@ -354,10 +355,9 @@ export function getLineChart(datasets: Datasets, filter: Filter): LineChart {
 
   if (
     filter.lineChart &&
-    // @ts-expect-error add aggregation to LineChart?
     filter.lineChart.aggregation === aggregation &&
-    // @ts-expect-error add aggregation to LineChart?
-    filter.lineChart.interval === interval
+    filter.lineChart.interval === interval &&
+    filter.lineChart.yAxis === yAxis?.name
   ) {
     // don't update lineChart if plotType hasn't change
     return filter.lineChart;
@@ -399,6 +399,7 @@ export function getLineChart(datasets: Datasets, filter: Filter): LineChart {
     series: split,
     title: `${aggrName}${' of '}${yAxis ? yAxis.name : 'Count'}`,
     fieldType: yAxis ? yAxis.type : 'integer',
+    yAxis: yAxis ? yAxis.name : null,
     allTime: {
       title: `All Time Average`,
       value: aggregate(series, AGGREGATION_TYPES.average, d => d.y)
