@@ -5,8 +5,8 @@ import React, {useMemo, FC} from 'react';
 import styled from 'styled-components';
 import {scaleSqrt} from 'd3-scale';
 import {SCALE_TYPES} from '@kepler.gl/constants';
+import {formatNumber} from '@kepler.gl/utils';
 import {max} from 'd3-array';
-import {format} from 'd3-format';
 import {console as Console} from 'global/window';
 
 const StyledLegend = styled.div<{width: number; height: number}>`
@@ -48,8 +48,6 @@ const ValueLabel = styled.div`
   border-radius: 2px;
 `;
 
-const formatValue = format('.2~f');
-
 const margin = {left: 1, top: 5, right: 2, bottom: 5};
 
 type Props = {
@@ -60,7 +58,7 @@ type Props = {
   range: [number, number];
 };
 
-const RadiusLegend: FC<Props> = ({scaleType, width, domain, range}) => {
+const RadiusLegend: FC<Props> = ({scaleType, width, domain, range, fieldType}) => {
   const radiusScale = useMemo(() => {
     if (scaleType !== SCALE_TYPES.sqrt) {
       Console.warn(`Unsupported radius scale type: ${scaleType}`);
@@ -141,7 +139,7 @@ const RadiusLegend: FC<Props> = ({scaleType, width, domain, range}) => {
               top: margin.top + h - radiusScale(v) * 2
             }}
           >
-            {formatValue(v)}
+            {formatNumber(v, fieldType)}
           </ValueLabel>
         ))}
       </LabelsOuter>
