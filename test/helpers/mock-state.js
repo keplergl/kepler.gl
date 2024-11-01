@@ -199,8 +199,8 @@ function mockStateWithSyncedTimeFilter() {
   return updatedState;
 }
 
-function mockStateWithTripGeojson() {
-  const initialState = cloneDeep(InitialState);
+export function mockStateWithTripGeojson(state) {
+  const initialState = cloneDeep(state || InitialState);
 
   // load csv and geojson
   const updatedState = applyActions(keplerGlReducer, initialState, [

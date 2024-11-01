@@ -1252,6 +1252,15 @@ export function getAnimatableVisibleLayersByType(layers: any[], type: string): a
   return getAnimatableVisibleLayers(layers).filter(l => l.type === type);
 }
 
+/**
+ * @param {Layer[]} layers
+ * @returns {Layer[]}
+ */
+export function getIntervalBasedAnimationLayers(layers: any[]): any[] {
+  // @ts-ignore
+  return getAnimatableVisibleLayers(layers).filter(l => l.config.animation?.timeSteps);
+}
+
 export function mergeFilterWithTimeline(
   filter: TimeRangeFilter,
   animationConfig: AnimationConfig

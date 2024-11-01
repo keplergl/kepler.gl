@@ -1,21 +1,46 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {AnimationConfig, Timeline, TimeRangeFilter} from '@kepler.gl/types';
+import {ascending, bisector, tickStep} from 'd3-array';
+import moment from 'moment';
 
-import {toArray} from './utils';
 import {
   TICK_INTERVALS,
   BINS_LARGE,
   DURATIONS,
   TIME_INTERVALS,
   durationYear,
+  INTERVAL,
   TickInterval
 } from '@kepler.gl/constants';
-import moment from 'moment';
+import {AnimationConfig, Timeline, TimeRangeFilter} from '@kepler.gl/types';
+
+import {toArray} from './utils';
 import {getFrequency} from './aggregation';
 
-import {ascending, bisector, tickStep} from 'd3-array';
+export const TileTimeInterval = {
+  YEAR: 'Y',
+  MONTH: 'M',
+  DAY: 'D',
+  HOUR: 'H',
+  MINUTE: 'T'
+};
+
+export const TIME_INTERVALS_ORDERED = [
+  TileTimeInterval.MINUTE,
+  TileTimeInterval.HOUR,
+  TileTimeInterval.DAY,
+  TileTimeInterval.MONTH,
+  TileTimeInterval.YEAR
+];
+
+export const LayerToFilterTimeInterval = {
+  [TileTimeInterval.MINUTE]: INTERVAL['1-minute'],
+  [TileTimeInterval.HOUR]: INTERVAL['1-hour'],
+  [TileTimeInterval.DAY]: INTERVAL['1-day'],
+  [TileTimeInterval.MONTH]: INTERVAL['1-month'],
+  [TileTimeInterval.YEAR]: INTERVAL['1-year']
+};
 
 export const TIMELINE_MODES = {
   inner: 'inner',

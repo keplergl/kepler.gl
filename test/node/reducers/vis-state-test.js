@@ -18,7 +18,9 @@ import {
   serializeLayer,
   validateLayerWithData,
   defaultInteractionConfig,
-  prepareStateForDatasetReplace
+  prepareStateForDatasetReplace,
+  syncTimeFilterWithLayerTimelineUpdater,
+  setTimeFilterTimelineModeUpdater
 } from '@kepler.gl/reducers';
 
 import {processCsvData, processGeojson} from '@kepler.gl/processors';
@@ -27,8 +29,10 @@ import {createNewDataEntry, maybeToDate} from '@kepler.gl/table';
 import {
   createDataContainer,
   applyFilterFieldName,
+  getAnimatableVisibleLayers,
   getDefaultFilter,
-  histogramFromDomain
+  histogramFromDomain,
+  TileTimeInterval
 } from '@kepler.gl/utils';
 import {
   ALL_FIELD_TYPES,
@@ -38,7 +42,11 @@ import {
   DEFAULT_COLOR_UI,
   FILTER_VIEW_TYPES,
   LIGHT_AND_SHADOW_EFFECT,
-  BINS
+  ANIMATION_WINDOW,
+  BINS,
+  INTERVAL,
+  LAYER_TYPES,
+  SYNC_TIMELINE_MODES
 } from '@kepler.gl/constants';
 
 const {ArcLayer, PointLayer, GeojsonLayer, LineLayer, TripLayer} = KeplerGlLayers;
@@ -85,7 +93,8 @@ import {
   StateWH3Layer,
   testCsvDataId,
   testGeoJsonDataId,
-  InitialState
+  InitialState,
+  mockStateWithTripGeojson
 } from 'test/helpers/mock-state';
 import {getNextColorMakerValue} from 'test/helpers/layer-utils';
 import {expectedTripLayerConfig} from '../../fixtures/test-trip-csv-data';
@@ -5812,6 +5821,303 @@ test('#visStateReducer -> applyFilterFieldName', t => {
     oldFilter.plotType,
     newFilter.plotType,
     'Should not overwrite plotType (by the default empty object)'
+  );
+
+  t.end();
+});
+
+// sync filter with timeline
+function mockStateWithFilterAndTripLayer() {
+  const initialState = CloneDeep(StateWFilters);
+  return mockStateWithTripGeojson(initialState).visState;
+}
+
+test('#visStateReducer -> sync with time filter with trip layer', t => {
+  let visState = mockStateWithFilterAndTripLayer();
+
+  const animatableLayers = getAnimatableVisibleLayers(visState.layers);
+  t.equal(animatableLayers.length, 1, 'Should find 1 animatable layer');
+  t.equal(animatableLayers[0].type, LAYER_TYPES.trip, 'Should find 1 animatable trip layer');
+
+  const originalDomain = [...visState.filters[0].domain];
+
+  // ============
+  // Enable sync
+  // ============
+  visState = syncTimeFilterWithLayerTimelineUpdater(visState, {
+    idx: 0,
+    enable: true
+  });
+
+  let newFilter = visState.filters[0];
+
+  // check syncedWithLayerTimeline
+  t.equal(
+    newFilter.syncedWithLayerTimeline,
+    true,
+    'Should have set syncedWithLayerTimeline to true'
+  );
+
+  // check animation window wasn't updated
+  t.equal(newFilter.animationWindow, visState.filters[0].animationWindow);
+
+  // check syncTimelineMode
+  t.equal(
+    newFilter.syncTimelineMode,
+    SYNC_TIMELINE_MODES.end,
+    'Should have set syncTimelineMode to SYNC_TIMELINE_MODES.end (1)'
+  );
+
+  // check filter domains
+  t.deepEqual(newFilter.domain, originalDomain, 'Should not change the domain value');
+
+  // check filter value
+  t.deepEqual(
+    newFilter.value,
+    [1474588800000, 1565578836000],
+    'Should have set filter value by combining filter and animationConfig domains'
+  );
+
+  // check animationConfig value
+  t.equal(
+    visState.animationConfig.currentTime,
+    1474588800000,
+    'Should have set animationConfig value to filter value[0]'
+  );
+
+  // update syncTimelineMode
+  visState = setTimeFilterTimelineModeUpdater(visState, {
+    id: newFilter.id,
+    mode: SYNC_TIMELINE_MODES.start
+  });
+
+  newFilter = visState.filters[0];
+
+  // check syncTimelineMode
+  t.equal(
+    newFilter.syncTimelineMode,
+    SYNC_TIMELINE_MODES.start,
+    'Should have set syncTimelineMode to SYNC_TIMELINE_MODES.start'
+  );
+
+  // ============
+  // Disable sync
+  // ============
+
+  visState = syncTimeFilterWithLayerTimelineUpdater(visState, {
+    idx: 0,
+    enable: false
+  });
+
+  newFilter = visState.filters[0];
+
+  // check syncedWithLayerTimeline
+  t.equal(
+    newFilter.syncedWithLayerTimeline,
+    false,
+    'Should have set syncedWithLayerTimeline to false'
+  );
+
+  // check syncTimelineMode
+  t.equal(
+    newFilter.syncTimelineMode,
+    SYNC_TIMELINE_MODES.end,
+    'Should have set syncTimelineMode to end (1)'
+  );
+
+  // check filter domains
+  t.deepEqual(newFilter.domain, originalDomain, 'Should not change the domain value');
+
+  // check filter value
+  t.deepEqual(newFilter.value, newFilter.domain, 'Should have set filter value to match domain');
+
+  // check animationConfig value
+  t.equal(
+    visState.animationConfig.currentTime,
+    visState.animationConfig.domain[0],
+    'Should have set animationConfig value to filter value[0]'
+  );
+
+  t.end();
+});
+
+function mockStateWithFilterAndIntervalBasedAnimationLayer() {
+  let visState = mockStateWithFilterAndTripLayer();
+  visState = reducer(visState, VisStateActions.addLayer());
+  const mockedMetaData = {
+    minZoom: 0,
+    maxZoom: 4,
+    fields: [
+      {
+        id: 'Fires',
+        name: 'Fires',
+        type: 'real',
+        analyzerType: 'FLOAT',
+        format: '',
+        filterProps: {
+          fieldType: 'real',
+          domain: [1, 400],
+          domainStops: {
+            z: [0, 1, 2, 3],
+            stops: [
+              [1, 100],
+              [1, 200],
+              [1, 300],
+              [1, 400]
+            ],
+            interpolation: 'interpolate'
+          },
+          domainQuantiles: {
+            z: [0, 1, 2, 3],
+            quantiles: Array.from({length: 4}).map(() => [0, 10])
+          },
+          histogram: null,
+          value: [1, 400],
+          type: 'range',
+          typeOptions: ['range'],
+          gpu: true,
+          step: 1
+        },
+        indexBy: {
+          format: 'x',
+          type: 'timestamp',
+          mappedValue: {
+            1580515200000: 'Fires|1580515200000',
+            1583020800000: 'Fires|1583020800000',
+            1585699200000: 'Fires|1585699200000',
+            1588291200000: 'Fires|1588291200000'
+          },
+          timeDomain: {
+            domain: [1580515200000, 1588291200000],
+            timeSteps: [1580515200000, 1583020800000, 1585699200000, 1588291200000],
+            duration: 1000
+          }
+        }
+      }
+    ],
+    resolutionOffset: 4,
+    targetTimeInterval: TileTimeInterval.DAY,
+    tilesetIndex: undefined,
+    zipUrl: undefined
+  };
+
+  const lastLayerIndex = visState.layers.length - 1;
+  const layer = visState.layers[lastLayerIndex];
+  layer.meta = mockedMetaData;
+  layer.config = {
+    ...visState.layers[lastLayerIndex].config,
+    animation: {
+      domain: visState.animationConfig.domain,
+      timeSteps: visState.animationConfig.domain,
+      duration: 1000,
+      enabled: true,
+      startTime: visState.animationConfig.domain[0]
+    }
+  };
+
+  visState.layers[lastLayerIndex] = layer;
+
+  return visState;
+}
+
+test('#visStateReducer -> sync with time filter with hextile layer', t => {
+  let visState = mockStateWithFilterAndIntervalBasedAnimationLayer();
+  const animatableLayers = getAnimatableVisibleLayers(visState.layers);
+  t.equal(animatableLayers.length, 2, 'Should find 1 animatable layer');
+  t.equal(animatableLayers[0].type, LAYER_TYPES.trip, 'Should find 1 animatable trip layer');
+
+  const originalDomain = [...visState.filters[0].domain];
+
+  // ============
+  // Enable sync
+  // ============
+  visState = syncTimeFilterWithLayerTimelineUpdater(visState, {
+    idx: 0,
+    enable: true
+  });
+
+  let newFilter = visState.filters[0];
+
+  // check syncedWithLayerTimeline
+  t.equal(
+    newFilter.syncedWithLayerTimeline,
+    true,
+    'Should have set syncedWithLayerTimeline to true'
+  );
+
+  // check syncTimelineMode
+  t.equal(
+    newFilter.syncTimelineMode,
+    SYNC_TIMELINE_MODES.end,
+    'Should have set syncTimelineMode to SYNC_TIMELINE_MODES.end (1)'
+  );
+
+  // check animation window wasn't updated
+  t.equal(
+    newFilter.animationWindow,
+    ANIMATION_WINDOW.interval,
+    'Should have set filter animation window to interval'
+  );
+
+  // check plotType interval to match hextile interval
+  t.equal(
+    newFilter.plotType.interval,
+    INTERVAL['1-day'],
+    'Should have set plotType interval to 1-day'
+  );
+
+  // check filter domains
+  t.deepEqual(newFilter.domain, originalDomain, 'Should not change the domain value');
+
+  // check filter value
+  t.deepEqual(
+    newFilter.value,
+    [1474588800000, 1474588800000],
+    'Should have set filter value to the first interval step'
+  );
+
+  // check animationConfig value
+  t.equal(
+    visState.animationConfig.currentTime,
+    1474588800000,
+    'Should have set animationConfig value to filter value[0]'
+  );
+
+  // ============
+  // Disable sync
+  // ============
+  visState = syncTimeFilterWithLayerTimelineUpdater(visState, {
+    idx: 0,
+    enable: false
+  });
+
+  newFilter = visState.filters[0];
+
+  // check syncedWithLayerTimeline
+  t.equal(
+    newFilter.syncedWithLayerTimeline,
+    false,
+    'Should have set syncedWithLayerTimeline to false'
+  );
+
+  // check syncTimelineMode
+  t.equal(
+    newFilter.syncTimelineMode,
+    SYNC_TIMELINE_MODES.end,
+    'Should have set syncTimelineMode to end (1)'
+  );
+
+  // check filter domains
+  t.deepEqual(newFilter.domain, originalDomain, 'Should not change the domain value');
+
+  // check filter value
+  t.deepEqual(newFilter.value, newFilter.domain, 'Should have set filter value to match domain');
+
+  // check animationConfig value
+  t.equal(
+    visState.animationConfig.currentTime,
+    visState.animationConfig.domain[0],
+    'Should have set animationConfig value to filter value[0]'
   );
 
   t.end();
