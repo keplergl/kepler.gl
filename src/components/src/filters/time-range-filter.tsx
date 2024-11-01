@@ -5,11 +5,17 @@ import React from 'react';
 import TimeRangeSliderFactory from '../common/time-range-slider';
 import {DEFAULT_TIME_FORMAT, FILTER_VIEW_TYPES} from '@kepler.gl/constants';
 import {TimeRangeFilter} from '@kepler.gl/types';
+import {Datasets} from '@kepler.gl/table';
+import {Layer} from '@kepler.gl/layers';
 import {TimeRangeFilterProps} from './types';
 /*
  * TimeRangeFilter -> TimeRangeSlider -> RangeSlider
  */
-export function timeRangeSliderFieldsSelector(filter: TimeRangeFilter, datasets) {
+export function timeRangeSliderFieldsSelector(
+  filter: TimeRangeFilter,
+  datasets: Datasets,
+  layers: readonly Layer[]
+) {
   const hasUserFormat = typeof filter.timeFormat === 'string';
   const timeFormat =
     (hasUserFormat ? filter.timeFormat : filter.defaultTimeFormat) || DEFAULT_TIME_FORMAT;
@@ -30,6 +36,7 @@ export function timeRangeSliderFieldsSelector(filter: TimeRangeFilter, datasets)
     timeFormat,
     filter,
     datasets,
+    layers,
     isMinified: filter.view === FILTER_VIEW_TYPES.minified,
     isEnlarged: filter.view === FILTER_VIEW_TYPES.enlarged
   };
@@ -41,6 +48,7 @@ function TimeRangeFilterFactory(TimeRangeSlider: ReturnType<typeof TimeRangeSlid
   const TimeRangeFilterComponent: React.FC<TimeRangeFilterProps> = ({
     filter,
     datasets,
+    layers,
     setFilter,
     setFilterPlot,
     isAnimatable,
@@ -49,7 +57,7 @@ function TimeRangeFilterFactory(TimeRangeSlider: ReturnType<typeof TimeRangeSlid
     timeline
   }) => (
     <TimeRangeSlider
-      {...timeRangeSliderFieldsSelector(filter, datasets)}
+      {...timeRangeSliderFieldsSelector(filter, datasets, layers)}
       onChange={setFilter}
       setFilterPlot={setFilterPlot}
       toggleAnimation={toggleAnimation}

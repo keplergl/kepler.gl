@@ -8,7 +8,7 @@ import styled from 'styled-components';
 import RangePlotFactory from './range-plot';
 import Slider from './slider/slider';
 import {Input} from './styled-components';
-import RangeSliderSublineFactory from '../common/range-slider-subline';
+import RangeSliderTimelinePanelFactory from '../common/range-slider-timeline-panel';
 import {
   observeDimensions,
   unobserveDimensions,
@@ -66,7 +66,8 @@ interface RangeSliderProps {
   step?: number;
   sliderHandleWidth?: number;
   xAxis?: ElementType;
-  timelines?: number[];
+  timelines?: number[][];
+  timelineLabel?: string;
 
   timezone?: string | null;
   timeFormat?: string;
@@ -85,11 +86,13 @@ interface RangeSliderProps {
   invertTrendColor?: boolean;
 }
 
-RangeSliderFactory.deps = [RangePlotFactory, RangeSliderSublineFactory];
+const RANGE_SLIDER_TIMELINE_PANEL_STYLE = {marginLeft: '-32px'};
+
+RangeSliderFactory.deps = [RangePlotFactory, RangeSliderTimelinePanelFactory];
 
 export default function RangeSliderFactory(
   RangePlot: ReturnType<typeof RangePlotFactory>,
-  RangeSliderSubline: ReturnType<typeof RangeSliderSublineFactory>
+  RangeSliderTimelinePanel: ReturnType<typeof RangeSliderTimelinePanelFactory>
 ): ComponentType<RangeSliderProps> {
   class RangeSlider extends Component<RangeSliderProps> {
     static defaultProps = {
@@ -237,6 +240,7 @@ export default function RangeSliderFactory(
         playbackControlWidth,
         setFilterPlot,
         timelines,
+        timelineLabel,
         animationWindow,
         filter,
         datasets
@@ -251,11 +255,11 @@ export default function RangeSliderFactory(
         ? // TODO figure out correct types for value and range
           scaleSourceDomainToDestination(value as [number, number], range as [number, number])
         : [0, 0];
-
+      const commonPadding = `${Number(sliderHandleWidth) / 2}px`;
       return (
         <div
           className="kg-range-slider"
-          style={{width: '100%', padding: `0 ${Number(sliderHandleWidth) / 2}px`}}
+          style={{width: '100%', padding: `0 ${commonPadding}`}}
           ref={this.setSliderContainer}
         >
           {Array.isArray(range) && range.every(Number.isFinite) && (
@@ -281,13 +285,17 @@ export default function RangeSliderFactory(
                   timeFormat={timeFormat}
                   playbackControlWidth={playbackControlWidth}
                   setFilterPlot={setFilterPlot}
+                  style={{paddingLeft: commonPadding}}
                 />
               ) : null}
-              {timelines?.length
-                ? timelines.map((line, index) => (
-                    <RangeSliderSubline key={index} line={line} scaledValue={scaledValue} />
-                  ))
-                : null}
+              {timelines?.length ? (
+                <RangeSliderTimelinePanel
+                  timelines={timelines}
+                  timelineLabel={timelineLabel}
+                  scaledValue={scaledValue}
+                  style={RANGE_SLIDER_TIMELINE_PANEL_STYLE}
+                />
+              ) : null}
               <SliderWrapper
                 className="kg-range-slider__slider"
                 isRanged={isRanged}
