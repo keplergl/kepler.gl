@@ -44,7 +44,7 @@
     "@kepler.gl/tasks": "3.0.0",
     "@kepler.gl/types": "3.0.0",
     "@kepler.gl/utils": "3.0.0",
-    "@loaders.gl/loader-utils": "^4.3.1",
+    "@loaders.gl/loader-utils": "^4.3.2",
     "@turf/bbox": "^6.0.1",
     "@types/lodash.clonedeep": "^4.5.7",
     "@types/lodash.flattendeep": "^4.4.7",
