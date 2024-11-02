@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {Vector as ArrowVector} from 'apache-arrow';
+import * as arrow from 'apache-arrow';
 
 import Layer, {
   LayerBaseConfig,
@@ -173,40 +173,41 @@ function isOtherFieldString(columns, allFields, key) {
 export const arcPosAccessor =
   ({lat0, lng0, lat1, lng1, lat, lng, geoarrow0, geoarrow1}: ArcLayerColumnsConfig, columnMode) =>
   (dc: DataContainerInterface) => {
-    if (columnMode === COLUMN_MODE_POINTS) {
-      return d => {
-        // lat or lng column could be hex column
-        // we assume string value is hex and try to convert it to geo lat lng
-        const startPos = maybeHexToGeo(dc, d, lat0, lng0);
-        const endPos = maybeHexToGeo(dc, d, lat1, lng1);
-        return [
-          startPos ? startPos[0] : dc.valueAt(d.index, lng0.fieldIdx),
-          startPos ? startPos[1] : dc.valueAt(d.index, lat0.fieldIdx),
-          0,
-          endPos ? endPos[0] : dc.valueAt(d.index, lng1.fieldIdx),
-          endPos ? endPos[1] : dc.valueAt(d.index, lat1.fieldIdx),
-          0
-        ];
-      };
-    }
-    if (columnMode === COLUMN_MODE_NEIGHBORS) {
-      return d => {
-        const startPos = maybeHexToGeo(dc, d, lat, lng);
-        // only return source point if columnMode is COLUMN_MODE_NEIGHBORS
+    switch (columnMode) {
+      case COLUMN_MODE_GEOARROW:
+        return d => {
+          const start = dc.valueAt(d.index, geoarrow0.fieldIdx);
+          const end = dc.valueAt(d.index, geoarrow1.fieldIdx);
+          return [start.get(0), start.get(1), 0, end.get(2), end.get(3), 0];
+        };
+      case COLUMN_MODE_NEIGHBORS:
+        return d => {
+          const startPos = maybeHexToGeo(dc, d, lat, lng);
+          // only return source point if columnMode is COLUMN_MODE_NEIGHBORS
 
-        return [
-          startPos ? startPos[0] : dc.valueAt(d.index, lng.fieldIdx),
-          startPos ? startPos[1] : dc.valueAt(d.index, lat.fieldIdx),
-          0
-        ];
-      };
+          return [
+            startPos ? startPos[0] : dc.valueAt(d.index, lng.fieldIdx),
+            startPos ? startPos[1] : dc.valueAt(d.index, lat.fieldIdx),
+            0
+          ];
+        };
+      default:
+        // COLUMN_MODE_POINTS
+        return d => {
+          // lat or lng column could be hex column
+          // we assume string value is hex and try to convert it to geo lat lng
+          const startPos = maybeHexToGeo(dc, d, lat0, lng0);
+          const endPos = maybeHexToGeo(dc, d, lat1, lng1);
+          return [
+            startPos ? startPos[0] : dc.valueAt(d.index, lng0.fieldIdx),
+            startPos ? startPos[1] : dc.valueAt(d.index, lat0.fieldIdx),
+            0,
+            endPos ? endPos[0] : dc.valueAt(d.index, lng1.fieldIdx),
+            endPos ? endPos[1] : dc.valueAt(d.index, lat1.fieldIdx),
+            0
+          ];
+        };
     }
-    // COLUMN_MODE_GEOARROW
-    return d => {
-      const start = dc.valueAt(d.index, geoarrow0.fieldIdx);
-      const end = dc.valueAt(d.index, geoarrow1.fieldIdx);
-      return [start.get(0), start.get(1), 0, end.get(2), end.get(3), 0];
-    };
   };
 export default class ArcLayer extends Layer {
   declare visConfigSettings: ArcLayerVisConfigSettings;
@@ -214,8 +215,8 @@ export default class ArcLayer extends Layer {
   declare meta: ArcLayerMeta;
 
   dataContainer: DataContainerInterface | null = null;
-  geoArrowVector0: ArrowVector | undefined = undefined;
-  geoArrowVector1: ArrowVector | undefined = undefined;
+  geoArrowVector0: arrow.Vector | undefined = undefined;
+  geoArrowVector1: arrow.Vector | undefined = undefined;
 
   /*
    * CPU filtering an arrow table by values and assembling a partial copy of the raw table is expensive
@@ -592,7 +593,7 @@ export default class ArcLayer extends Layer {
   }
 
   getHoverData(
-    object: unknown,
+    object: {index: number} | arrow.StructRow | undefined,
     dataContainer: DataContainerInterface,
     fields: Field[],
     animationConfig: AnimationConfig,

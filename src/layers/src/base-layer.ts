@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import React from 'react';
-import {Table as ArrowTable, Vector as ArrowVector} from 'apache-arrow';
+import * as arrow from 'apache-arrow';
 import {console as Console} from 'global/window';
 import keymirror from 'keymirror';
 import {DataFilterExtension} from '@deck.gl/extensions';
@@ -992,14 +992,14 @@ class Layer {
    * @param {Array | Object} layerData
    * @returns {boolean} yes or no
    */
-  hasLayerData(layerData: {data: unknown[] | ArrowTable}) {
+  hasLayerData(layerData: {data: unknown[] | arrow.Table}) {
     if (!layerData) {
       return false;
     }
 
     return Boolean(
       layerData.data &&
-        ((layerData.data as unknown[]).length || (layerData.data as ArrowTable).numRows)
+        ((layerData.data as unknown[]).length || (layerData.data as arrow.Table).numRows)
     );
   }
 
@@ -1454,7 +1454,7 @@ class Layer {
       updateTriggers,
       sharedProps
     }: {
-      getPosition?: ((d: any) => number[]) | ArrowVector;
+      getPosition?: ((d: any) => number[]) | arrow.Vector;
       getFiltered?: (data: {index: number}, objectInfo: {index: number}) => number;
       getPixelOffset: (textLabel: any) => number[] | ((d: any) => number[]);
       backgroundProps?: {background: boolean};
@@ -1468,7 +1468,7 @@ class Layer {
     const {data, mapState} = renderOpts;
     const {textLabel} = this.config;
 
-    const TextLayerClass = data.data instanceof ArrowTable ? GeoArrowTextLayer : TextLayer;
+    const TextLayerClass = data.data instanceof arrow.Table ? GeoArrowTextLayer : TextLayer;
 
     return data.textLabels.reduce((accu, d, i) => {
       if (d.getText) {

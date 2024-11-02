@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {Vector as ArrowVector} from 'apache-arrow';
+import * as arrow from 'apache-arrow';
 
 import {BrushingExtension} from '@deck.gl/extensions';
 import {ScatterplotLayer} from '@deck.gl/layers';
@@ -217,7 +217,7 @@ export default class PointLayer extends Layer {
   dataToFeature: GeojsonPointDataMaps = [];
 
   dataContainer: DataContainerInterface | null = null;
-  geoArrowVector: ArrowVector | undefined = undefined;
+  geoArrowVector: arrow.Vector | undefined = undefined;
 
   /*
    * CPU filtering an arrow table by values and assembling a partial copy of the raw table is expensive
@@ -233,11 +233,15 @@ export default class PointLayer extends Layer {
 
     this.registerVisConfig(pointVisConfigs);
     this.getPositionAccessor = (dataContainer: DataContainerInterface) => {
-      if (this.config.columnMode === COLUMN_MODE_POINTS)
-        return pointPosAccessor(this.config.columns)(dataContainer);
-      else if (this.config.columnMode === COLUMN_MODE_GEOJSON)
-        return geojsonPosAccessor(this.config.columns);
-      return geoarrowPosAccessor(this.config.columns)(dataContainer);
+      switch (this.config.columnMode) {
+        case COLUMN_MODE_GEOARROW:
+          return geoarrowPosAccessor(this.config.columns)(dataContainer);
+        case COLUMN_MODE_GEOJSON:
+          return geojsonPosAccessor(this.config.columns);
+        default:
+          // COLUMN_MODE_POINTS
+          return pointPosAccessor(this.config.columns)(dataContainer);
+      }
     };
   }
 
@@ -634,7 +638,7 @@ export default class PointLayer extends Layer {
   }
 
   getHoverData(
-    object: unknown,
+    object: {index: number} | arrow.StructRow | undefined,
     dataContainer: DataContainerInterface,
     fields: Field[],
     animationConfig: AnimationConfig,

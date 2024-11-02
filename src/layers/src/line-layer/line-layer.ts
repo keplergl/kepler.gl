@@ -147,29 +147,30 @@ export const linePosAccessor =
     columnMode
   ) =>
   (dc: DataContainerInterface) => {
-    if (columnMode === COLUMN_MODE_POINTS)
-      return d => [
-        dc.valueAt(d.index, lng0.fieldIdx),
-        dc.valueAt(d.index, lat0.fieldIdx),
-        alt0 && alt0.fieldIdx > -1 ? dc.valueAt(d.index, alt0.fieldIdx) : 0,
-        dc.valueAt(d.index, lng1.fieldIdx),
-        dc.valueAt(d.index, lat1.fieldIdx),
-        alt1 && alt1?.fieldIdx > -1 ? dc.valueAt(d.index, alt1.fieldIdx) : 0
-      ];
-
-    if (columnMode === COLUMN_MODE_NEIGHBORS)
-      return d => [
-        dc.valueAt(d.index, lng.fieldIdx),
-        dc.valueAt(d.index, lat.fieldIdx),
-        alt?.fieldIdx > -1 ? dc.valueAt(d.index, alt.fieldIdx) : 0
-      ];
-
-    // COLUMN_MODE_GEOARROW
-    return d => {
-      const start = dc.valueAt(d.index, geoarrow0.fieldIdx);
-      const end = dc.valueAt(d.index, geoarrow1.fieldIdx);
-      return [start.get(0), start.get(1), 0, end.get(2), end.get(3), 0];
-    };
+    switch (columnMode) {
+      case COLUMN_MODE_GEOARROW:
+        return d => {
+          const start = dc.valueAt(d.index, geoarrow0.fieldIdx);
+          const end = dc.valueAt(d.index, geoarrow1.fieldIdx);
+          return [start.get(0), start.get(1), 0, end.get(2), end.get(3), 0];
+        };
+      case COLUMN_MODE_NEIGHBORS:
+        return d => [
+          dc.valueAt(d.index, lng.fieldIdx),
+          dc.valueAt(d.index, lat.fieldIdx),
+          alt?.fieldIdx > -1 ? dc.valueAt(d.index, alt.fieldIdx) : 0
+        ];
+      default:
+        // COLUMN_MODE_POINTS
+        return d => [
+          dc.valueAt(d.index, lng0.fieldIdx),
+          dc.valueAt(d.index, lat0.fieldIdx),
+          alt0 && alt0.fieldIdx > -1 ? dc.valueAt(d.index, alt0.fieldIdx) : 0,
+          dc.valueAt(d.index, lng1.fieldIdx),
+          dc.valueAt(d.index, lat1.fieldIdx),
+          alt1 && alt1?.fieldIdx > -1 ? dc.valueAt(d.index, alt1.fieldIdx) : 0
+        ];
+    }
   };
 
 export default class LineLayer extends ArcLayer {

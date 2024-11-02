@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {Table as ArrowTable, Vector as ArrowVector} from 'apache-arrow';
+import * as arrow from 'apache-arrow';
 import {getDistanceScales} from 'viewport-mercator-project';
 import {notNullorUndefined, DataContainerInterface, ArrowDataContainer} from '@kepler.gl/utils';
 import uniq from 'lodash.uniq';
@@ -77,7 +77,7 @@ export const formatTextLabelData = ({
     ) {
       characterSet = oldLayerData.textLabels[i].characterSet;
     } else {
-      if (data instanceof ArrowTable) {
+      if (data instanceof arrow.Table) {
         // we don't filter out arrow tables,
         // so we use filteredIndex array instead
         const allLabels: string[] = [];
@@ -99,10 +99,10 @@ export const formatTextLabelData = ({
       }
     }
 
-    let getText: typeof getTextAccessor | ArrowVector = getTextAccessor;
+    let getText: typeof getTextAccessor | arrow.Vector = getTextAccessor;
     // For Arrow Layers getText has to be an arrow vector.
     // For now check here for ArrowTable, not ArrowDataContainer.
-    if (data instanceof ArrowTable) {
+    if (data instanceof arrow.Table) {
       // TODO the data has to be a column of string type.
       // as numerical and other columns types lack valueOffsets prop.
       getText = (dataContainer as ArrowDataContainer).getColumn(tl.field.fieldIdx);

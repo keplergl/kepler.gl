@@ -14,7 +14,8 @@ export enum EXTENSION_NAME {
   POLYGON = 'geoarrow.polygon',
   MULTIPOINT = 'geoarrow.multipoint',
   MULTILINESTRING = 'geoarrow.multilinestring',
-  MULTIPOLYGON = 'geoarrow.multipolygon'
+  MULTIPOLYGON = 'geoarrow.multipolygon',
+  WKB = 'geoarrow.wkb'
 }
 
 export const DEFAULT_COLOR: [number, number, number, number] = [0, 0, 0, 255];
