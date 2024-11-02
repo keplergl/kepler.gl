@@ -165,7 +165,7 @@ const getFilterValueAccessor =
 
       let value;
       // d can be undefined when called from attribute updater from deck,
-      // when data an ArrowTable, so use objectInfo instead.
+      // when data is an ArrowTable, so use objectInfo instead.
       const data = getData(dc, d || objectInfo, fieldIndex);
       if (typeof data === 'function') {
         value = data(field);

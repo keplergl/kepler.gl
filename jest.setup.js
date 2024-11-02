@@ -3,7 +3,7 @@
 
 import '@testing-library/jest-dom';
 
-// Disable polyfils as // ReferenceError: ReadableStream is not defined in @loaders.gl/polyfills
+// Disable polyfills as // ReferenceError: ReadableStream is not defined in @loaders.gl/polyfills
 // import {installFilePolyfills} from '@loaders.gl/polyfills';
 // installFilePolyfills();
 
