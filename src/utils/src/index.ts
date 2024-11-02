@@ -25,7 +25,9 @@ export {
   getBinThresholds,
   histogramFromThreshold,
   histogramFromDomain,
-  runGpuFilterForPlot
+  runGpuFilterForPlot,
+  adjustValueToAnimationWindow,
+  updateTimeFilterPlotType
 } from './plot';
 // eslint-disable-next-line prettier/prettier
 export type {FieldFormatter} from './data-utils';
