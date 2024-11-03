@@ -54,7 +54,7 @@ test('#Heatmaplayer -> formatLayerData -> w/ GpuFilter', t => {
   const expectedConfig = {
     type: 'heatmap',
     id: 'heatmap-test-1',
-    source: `${dataId}-1-2`,
+    source: `${dataId}-points-1-2--1`,
     layout: {visibility: 'visible'},
     filter: ['all', ['>=', 'gpu:utc_timestamp', 39000], ['<=', 'gpu:utc_timestamp', 552000]],
     paint: {
@@ -188,7 +188,7 @@ test('#Heatmaplayer -> formatLayerData -> w/o GpuFilter', t => {
   const expectedConfig = {
     type: 'heatmap',
     id: 'heatmap-test-1',
-    source: `${testCsvDataId}-1-2`,
+    source: `${testCsvDataId}-points-1-2--1`,
     layout: {visibility: 'visible'},
     paint: {
       'heatmap-weight': 1,
