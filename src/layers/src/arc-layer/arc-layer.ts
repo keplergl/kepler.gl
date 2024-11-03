@@ -469,7 +469,7 @@ export default class ArcLayer extends Layer {
     const {gpuFilter, dataContainer} = datasets[this.config.dataId];
     const {data} = this.updateData(datasets, oldLayerData);
     const accessors = this.getAttributeAccessors({dataContainer});
-    const isFilteredAccessor = data => {
+    const isFilteredAccessor = (data: {index: number}) => {
       // for GeoArrow data is a buffer, so use objectInfo
       return this.filteredIndex ? this.filteredIndex[data.index] : 1;
     };
@@ -577,7 +577,7 @@ export default class ArcLayer extends Layer {
     ];
   }
 
-  hasHoveredObject(objectInfo) {
+  hasHoveredObject(objectInfo: {index: number}) {
     if (
       isLayerHoveredFromArrow(objectInfo, this.id) &&
       objectInfo.index >= 0 &&

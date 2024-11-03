@@ -87,8 +87,8 @@ export const formatTextLabelData = ({
               if (value > 0) allLabels.push(getTextAccessor({index}));
             });
           } else {
-            for (let i = 0; i < dataContainer.numRows(); i++) {
-              allLabels.push(getTextAccessor({index: i}));
+            for (let index = 0; index < dataContainer.numRows(); ++index) {
+              allLabels.push(getTextAccessor({index}));
             }
           }
         }
@@ -102,10 +102,10 @@ export const formatTextLabelData = ({
     let getText: typeof getTextAccessor | arrow.Vector = getTextAccessor;
     // For Arrow Layers getText has to be an arrow vector.
     // For now check here for ArrowTable, not ArrowDataContainer.
-    if (data instanceof arrow.Table) {
+    if (data instanceof arrow.Table && dataContainer instanceof ArrowDataContainer) {
       // TODO the data has to be a column of string type.
       // as numerical and other columns types lack valueOffsets prop.
-      getText = (dataContainer as ArrowDataContainer).getColumn(tl.field.fieldIdx);
+      getText = dataContainer.getColumn(tl.field.fieldIdx);
     }
 
     return {

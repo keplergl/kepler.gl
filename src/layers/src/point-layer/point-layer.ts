@@ -459,7 +459,7 @@ export default class PointLayer extends Layer {
 
     const accessors = this.getAttributeAccessors({dataContainer});
 
-    const isFilteredAccessor = data => {
+    const isFilteredAccessor = (data: {index: number}) => {
       return this.filteredIndex ? this.filteredIndex[data.index] : 1;
     };
 
@@ -622,7 +622,7 @@ export default class PointLayer extends Layer {
     ];
   }
 
-  hasHoveredObject(objectInfo) {
+  hasHoveredObject(objectInfo: {index: number}) {
     if (
       isLayerHoveredFromArrow(objectInfo, this.id) &&
       objectInfo.index >= 0 &&
