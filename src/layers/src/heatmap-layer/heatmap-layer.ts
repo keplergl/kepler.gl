@@ -129,9 +129,13 @@ class HeatmapLayer extends MapboxGLLayer {
     this.registerVisConfig(heatmapVisConfigs);
 
     this.getPositionAccessor = (dataContainer: DataContainerInterface) => {
-      if (this.config.columnMode === COLUMN_MODE_POINTS)
-        return pointPosAccessor(this.config.columns)(dataContainer);
-      return geoarrowPosAccessor(this.config.columns)(dataContainer);
+      switch (this.config.columnMode) {
+        case COLUMN_MODE_GEOARROW:
+          return geoarrowPosAccessor(this.config.columns)(dataContainer);
+        default:
+          // COLUMN_MODE_POINTS
+          return pointPosAccessor(this.config.columns)(dataContainer);
+      }
     };
   }
 
@@ -144,8 +148,8 @@ class HeatmapLayer extends MapboxGLLayer {
   }
 
   hasAllColumns() {
-    const {columns} = this.config;
-    if (this.config.columnMode === COLUMN_MODE_GEOARROW) {
+    const {columns, columnMode} = this.config;
+    if (columnMode === COLUMN_MODE_GEOARROW) {
       return this.hasColumnValue(columns.geoarrow);
     }
     return super.hasAllColumns();
