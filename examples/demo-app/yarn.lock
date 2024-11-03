@@ -1637,7 +1637,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@loaders.gl/parquet@npm:4.3.2":
+"@loaders.gl/parquet@npm:^4.3.2":
   version: 4.3.2
   resolution: "@loaders.gl/parquet@npm:4.3.2"
   dependencies:
@@ -7739,7 +7739,7 @@ __metadata:
     "@loaders.gl/core": "npm:^4.3.2"
     "@loaders.gl/csv": "npm:^4.3.2"
     "@loaders.gl/json": "npm:^4.3.2"
-    "@loaders.gl/parquet": "npm:4.3.2"
+    "@loaders.gl/parquet": "npm:^4.3.2"
     "@types/classnames": "npm:^2.3.1"
     "@types/keymirror": "npm:^0.1.1"
     classnames: "npm:^2.2.1"
