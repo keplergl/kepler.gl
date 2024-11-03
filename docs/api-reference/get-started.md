@@ -2,10 +2,10 @@
 
 ### Installation
 
-Use <b>Node v6</b> and above, older node versions have not been tested
+Use <b>Node v18</b> and above, older node versions have not been tested
 
 ```sh
-npm install --save kepler.gl
+npm install --save kepler.gl @kepler.gl/components @kepler.gl/reducers
 ```
 
 ### Get Mapbox Token
@@ -21,7 +21,7 @@ Kepler.gl is built on top of [Mapbox GL](https://www.mapbox.com). A mapbox accou
 Kepler.gl uses [Redux](https://redux.js.org/) to manage its internal state, along with [react-palm](https://github.com/btford/react-palm) middleware to handle side effects. Mount kepler.gl reducer in your store, apply  `taskMiddleware`.
 
 ```js
-import keplerGlReducer from 'kepler.gl/reducers';
+import keplerGlReducer from '@kepler.gl/reducers';
 import {createStore, combineReducers, applyMiddleware} from 'redux';
 import {taskMiddleware} from 'react-palm/tasks';
 
@@ -42,7 +42,7 @@ mounted at root of your reducer, you will need to specify the path to it when yo
 #### 2. Mount component
 
 ```js
-import KeplerGl from 'kepler.gl';
+import KeplerGl from '@kepler.gl/components';
 
 const Map = props => (
   <KeplerGl
@@ -61,7 +61,7 @@ Read more about [addDataToMap](./actions/actions.md#adddatatomap)
 
 
 ```js
-import {addDataToMap} from 'kepler.gl/actions';
+import {addDataToMap} from '@kepler.gl/actions';
 
 this.props.dispatch(
   addDataToMap({
