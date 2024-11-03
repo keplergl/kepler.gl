@@ -2,7 +2,6 @@
 // Copyright contributors to the kepler.gl project
 
 import {createSelector} from 'reselect';
-import memoize from 'lodash.memoize';
 import {CHANNEL_SCALES, SCALE_FUNC, ALL_FIELD_TYPES, ColorRange} from '@kepler.gl/constants';
 import MapboxGLLayer, {MapboxLayerGLConfig} from '../mapboxgl-layer';
 import HeatmapLayerIcon from './heatmap-layer-icon';
@@ -16,7 +15,14 @@ export type HeatmapLayerVisConfigSettings = {
   radius: VisConfigNumber;
 };
 
-export type HeatmapLayerColumnsConfig = {lat: LayerColumn; lng: LayerColumn};
+export type HeatmapLayerColumnsConfig = {
+  // COLUMN_MODE_POINTS
+  lat: LayerColumn;
+  lng: LayerColumn;
+
+  // COLUMN_MODE_GEOARROW
+  geoarrow: LayerColumn;
+};
 
 export type HeatmapLayerVisConfig = {
   opacity: number;
@@ -36,11 +42,23 @@ export const MAX_ZOOM_LEVEL = 18;
 export const pointPosAccessor =
   ({lat, lng}: HeatmapLayerColumnsConfig) =>
   (dc: DataContainerInterface) =>
-  d =>
+  (d: {index: number}): number[] =>
     [dc.valueAt(d.index, lng.fieldIdx), dc.valueAt(d.index, lat.fieldIdx)];
 
-export const pointColResolver = ({lat, lng}: HeatmapLayerColumnsConfig) =>
-  `${lat.fieldIdx}-${lng.fieldIdx}`;
+export const geoarrowPosAccessor =
+  ({geoarrow}: HeatmapLayerColumnsConfig) =>
+  (dc: DataContainerInterface) =>
+  (d: {index: number}): number[] => {
+    const row = dc.valueAt(d.index, geoarrow.fieldIdx);
+    return [row.get(0), row.get(1)];
+  };
+
+export const pointColResolver = ({lat, lng, geoarrow}: HeatmapLayerColumnsConfig, columnMode) => {
+  if (columnMode === COLUMN_MODE_POINTS) {
+    return `${lat.fieldIdx}-${lng.fieldIdx}`;
+  }
+  return `geoarrow-${geoarrow.fieldIdx}`;
+};
 
 export const heatmapVisConfigs: {
   opacity: 'opacity';
@@ -51,6 +69,25 @@ export const heatmapVisConfigs: {
   colorRange: 'colorRange',
   radius: 'heatmapRadius'
 };
+
+export const pointRequiredColumns = ['lat', 'lng'];
+export const geoarrowRequiredColumns = ['geoarrow'];
+
+export const COLUMN_MODE_POINTS = 'points';
+export const COLUMN_MODE_GEOARROW = 'geoarrow';
+const SUPPORTED_COLUMN_MODES = [
+  {
+    key: COLUMN_MODE_POINTS,
+    label: 'Points',
+    requiredColumns: pointRequiredColumns
+  },
+  {
+    key: COLUMN_MODE_GEOARROW,
+    label: 'Geoarrow Points',
+    requiredColumns: geoarrowRequiredColumns
+  }
+];
+const DEFAULT_COLUMN_MODE = COLUMN_MODE_POINTS;
 
 /**
  *
@@ -87,16 +124,35 @@ class HeatmapLayer extends MapboxGLLayer {
   declare visConfigSettings: HeatmapLayerVisConfigSettings;
   declare config: HeatmapLayerConfig;
 
-  getPosition: (config: HeatmapLayerColumnsConfig) => any;
-
   constructor(props) {
     super(props);
     this.registerVisConfig(heatmapVisConfigs);
-    this.getPosition = memoize(pointPosAccessor, pointColResolver);
+
+    this.getPositionAccessor = (dataContainer: DataContainerInterface) => {
+      switch (this.config.columnMode) {
+        case COLUMN_MODE_GEOARROW:
+          return geoarrowPosAccessor(this.config.columns)(dataContainer);
+        default:
+          // COLUMN_MODE_POINTS
+          return pointPosAccessor(this.config.columns)(dataContainer);
+      }
+    };
   }
 
   get type(): 'heatmap' {
     return 'heatmap';
+  }
+
+  get supportedColumnModes() {
+    return SUPPORTED_COLUMN_MODES;
+  }
+
+  hasAllColumns() {
+    const {columns, columnMode} = this.config;
+    if (columnMode === COLUMN_MODE_GEOARROW) {
+      return this.hasColumnValue(columns.geoarrow);
+    }
+    return super.hasAllColumns();
   }
 
   get visualChannels(): VisualChannels {
@@ -140,6 +196,7 @@ class HeatmapLayer extends MapboxGLLayer {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const {colorField, colorDomain, colorScale, ...layerConfig} = {
       ...super.getDefaultLayerConfig(props),
+      columnMode: props?.columnMode ?? DEFAULT_COLUMN_MODE,
 
       weightField: null,
       weightDomain: [0, 1],
@@ -150,17 +207,13 @@ class HeatmapLayer extends MapboxGLLayer {
     return layerConfig;
   }
 
-  getPositionAccessor(dataContainer) {
-    return this.getPosition(this.config.columns)(dataContainer);
-  }
-
   updateLayerMeta(dataContainer) {
     const getPosition = this.getPositionAccessor(dataContainer);
     const bounds = this.getPointsBounds(dataContainer, getPosition);
     this.updateMeta({bounds});
   }
 
-  columnsSelector = config => pointColResolver(config.columns);
+  columnsSelector = config => pointColResolver(config.columns, config.columnMode);
   visConfigSelector = config => config.visConfig;
   weightFieldSelector = config => (config.weightField ? config.weightField.name : null);
   weightDomainSelector = config => config.weightDomain;

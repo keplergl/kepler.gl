@@ -154,7 +154,7 @@ const getFilterValueAccessor =
   (channels: (Filter | undefined)[], dataId: string, fields: any[]) =>
   (dc: DataContainerInterface) =>
   (getIndex = defaultGetIndex, getData = defaultGetData) =>
-  d => {
+  (d, objectInfo?: {index: number}) => {
     // for empty channel, value is 0 and min max would be [0, 0]
     const channelValues = channels.map(filter => {
       if (!filter) {
@@ -164,7 +164,9 @@ const getFilterValueAccessor =
       const field = fields[fieldIndex];
 
       let value;
-      const data = getData(dc, d, fieldIndex);
+      // d can be undefined when called from attribute updater from deck,
+      // when data is an ArrowTable, so use objectInfo instead.
+      const data = getData(dc, d || objectInfo, fieldIndex);
       if (typeof data === 'function') {
         value = data(field);
       } else {

@@ -62,7 +62,7 @@ export type GpuFilter = {
   ) => (
     getIndex?: (any) => number,
     getData?: (dc_: DataContainerInterface, d: any, fieldIndex: number) => any
-  ) => (d: any) => (number | number[])[];
+  ) => (d: any, objectInfo?: {index: number}) => (number | number[])[];
 };
 
 export type FilterProps =

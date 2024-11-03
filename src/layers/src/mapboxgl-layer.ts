@@ -11,14 +11,25 @@ import {Merge, LayerColumn} from '@kepler.gl/types';
 type MapboxLayerGLColumns = {
   lat: LayerColumn;
   lng: LayerColumn;
+
+  // COLUMN_MODE_GEOARROW
+  geoarrow?: LayerColumn;
 };
 
 export type MapboxLayerGLConfig = Merge<LayerBaseConfig, {columns: MapboxLayerGLColumns}>;
 
-export const mapboxRequiredColumns: ['lat', 'lng'] = ['lat', 'lng'];
+export const COLUMN_MODE_POINTS = 'points';
+export const mapboxRequiredColumns = ['lat', 'lng'];
+const SUPPORTED_COLUMN_MODES = [
+  {
+    key: COLUMN_MODE_POINTS,
+    label: 'Points',
+    requiredColumns: mapboxRequiredColumns
+  }
+];
 
-export const pointColResolver = ({lat, lng}: MapboxLayerGLColumns) =>
-  `${lat.fieldIdx}-${lng.fieldIdx}`;
+export const pointColResolver = ({lat, lng, geoarrow}: MapboxLayerGLColumns, columnMode?: string) =>
+  `${columnMode}-${lat.fieldIdx}-${lng.fieldIdx}-${geoarrow?.fieldIdx}`;
 
 class MapboxLayerGL extends Layer {
   declare config: MapboxLayerGLConfig;
@@ -35,8 +46,8 @@ class MapboxLayerGL extends Layer {
     return true;
   }
 
-  get requiredLayerColumns() {
-    return mapboxRequiredColumns;
+  get supportedColumnModes() {
+    return SUPPORTED_COLUMN_MODES;
   }
 
   get columnPairs() {
@@ -53,7 +64,8 @@ class MapboxLayerGL extends Layer {
   datasetSelector = (config: MapboxLayerGLConfig) => config.dataId;
   gpuFilterSelector = (config: MapboxLayerGLConfig, datasets) =>
     ((config.dataId && datasets[config.dataId]) || {}).gpuFilter;
-  columnsSelector = (config: MapboxLayerGLConfig) => pointColResolver(config.columns);
+  columnsSelector = (config: MapboxLayerGLConfig) =>
+    pointColResolver(config.columns, config.columnMode);
 
   sourceSelector = createSelector(
     this.datasetSelector,

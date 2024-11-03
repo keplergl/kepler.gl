@@ -2,11 +2,13 @@
 // Copyright contributors to the kepler.gl project
 
 import React from 'react';
+import * as arrow from 'apache-arrow';
 import {console as Console} from 'global/window';
 import keymirror from 'keymirror';
 import {DataFilterExtension} from '@deck.gl/extensions';
 import {COORDINATE_SYSTEM} from '@deck.gl/core';
 import {TextLayer} from '@deck.gl/layers';
+import {GeoArrowTextLayer} from '@kepler.gl/deckgl-arrow-layers';
 
 import DefaultLayerIcon from './default-layer-icon';
 import {diffUpdateTriggers} from './layer-update';
@@ -662,7 +664,9 @@ class Layer {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     fields?: Field[],
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    animationConfig?: AnimationConfig
+    animationConfig?: AnimationConfig,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    hoverInfo?: {index: number}
   ): any {
     if (!object) {
       return null;
@@ -988,11 +992,15 @@ class Layer {
    * @param {Array | Object} layerData
    * @returns {boolean} yes or no
    */
-  hasLayerData(layerData) {
+  hasLayerData(layerData: {data: unknown[] | arrow.Table}) {
     if (!layerData) {
       return false;
     }
-    return Boolean(layerData.data && layerData.data.length);
+
+    return Boolean(
+      layerData.data &&
+        ((layerData.data as unknown[]).length || (layerData.data as arrow.Table).numRows)
+    );
   }
 
   isValidToSave(): boolean {
@@ -1440,15 +1448,19 @@ class Layer {
   renderTextLabelLayer(
     {
       getPosition,
+      getFiltered,
       getPixelOffset,
       backgroundProps,
       updateTriggers,
       sharedProps
     }: {
-      getPosition: any;
-      getPixelOffset: any;
-      backgroundProps?: any;
-      updateTriggers: any;
+      getPosition?: ((d: any) => number[]) | arrow.Vector;
+      getFiltered?: (data: {index: number}, objectInfo: {index: number}) => number;
+      getPixelOffset: (textLabel: any) => number[] | ((d: any) => number[]);
+      backgroundProps?: {background: boolean};
+      updateTriggers: {
+        [key: string]: any;
+      };
       sharedProps: any;
     },
     renderOpts
@@ -1456,18 +1468,22 @@ class Layer {
     const {data, mapState} = renderOpts;
     const {textLabel} = this.config;
 
+    const TextLayerClass = data.data instanceof arrow.Table ? GeoArrowTextLayer : TextLayer;
+
     return data.textLabels.reduce((accu, d, i) => {
       if (d.getText) {
         const background = textLabel[i].background || backgroundProps?.background;
 
         accu.push(
-          new TextLayer({
+          // @ts-expect-error
+          new TextLayerClass({
             ...sharedProps,
             id: `${this.id}-label-${textLabel[i].field?.name}`,
             data: data.data,
             visible: this.config.isVisible,
             getText: d.getText,
             getPosition,
+            getFiltered,
             characterSet: d.characterSet,
             getPixelOffset: getPixelOffset(textLabel[i]),
             getSize: PROJECTED_PIXEL_SIZE_MULTIPLIER,

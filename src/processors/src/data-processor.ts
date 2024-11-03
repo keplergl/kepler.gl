@@ -421,6 +421,7 @@ export function processArrowBatches(arrowBatches: arrow.RecordBatch[]): Processo
   });
 
   const cols = [...Array(arrowTable.numCols).keys()].map(i => arrowTable.getChildAt(i));
+
   // return empty rows and use raw arrow table to construct column-wise data container
   return {fields, rows: [], cols, metadata: arrowTable.schema.metadata};
 }

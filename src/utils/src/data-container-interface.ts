@@ -85,6 +85,12 @@ export interface DataContainerInterface {
   getField?(columnIndex: number): Field;
 
   /**
+   * Returns the underlying data object.
+   * @returns Returns the underlying data object.
+   */
+  getTable?(): unknown;
+
+  /**
    * Returns contents of the data container as a two-dimensional array.
    * @returns Data.
    */

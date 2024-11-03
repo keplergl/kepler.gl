@@ -156,7 +156,7 @@ test('Components -> LayerConfigurator.mount -> LayerColumnConfig', t => {
     1,
     'should render 1 LayerColumnModeConfig'
   );
-  t.equal(baseConfigGroup.find(LayerColumnConfig).length, 2, 'should render 2 LayerColumnConfig');
+  t.equal(baseConfigGroup.find(LayerColumnConfig).length, 3, 'should render 2 LayerColumnConfig');
 
   t.equal(
     baseConfigGroup.find(LayerColumnConfig).at(0).find(ColumnSelector).length,
@@ -221,7 +221,8 @@ test('Components -> LayerConfigurator.mount -> LayerColumnConfig', t => {
           },
           altitude: {value: null, fieldIdx: -1, optional: true},
           neighbors: {value: null, fieldIdx: -1, optional: true},
-          geojson: {value: null, fieldIdx: -1}
+          geojson: {value: null, fieldIdx: -1},
+          geoarrow: {value: null, fieldIdx: -1}
         }
       }
     ],

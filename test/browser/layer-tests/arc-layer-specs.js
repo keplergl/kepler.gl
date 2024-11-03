@@ -92,6 +92,7 @@ test('#ArcLayer -> formatLayerData', t => {
             }
           ],
           getFilterValue: () => {},
+          getFiltered: () => {},
           getSourceColor: () => {},
           getTargetColor: () => {},
           getWidth: () => {}
@@ -160,6 +161,7 @@ test('#ArcLayer -> formatLayerData', t => {
         const expectedLayerData = {
           data: [],
           getFilterValue: () => {},
+          getFiltered: () => {},
           getSourceColor: () => {},
           getTargetColor: () => {},
           getWidth: () => {}
@@ -230,6 +232,7 @@ test('#ArcLayer -> formatLayerData', t => {
             }
           ],
           getFilterValue: () => {},
+          getFiltered: () => {},
           getSourceColor: () => {},
           getTargetColor: () => {},
           getWidth: () => {}
@@ -313,6 +316,7 @@ test('#ArcLayer -> formatLayerData', t => {
             }
           ],
           getFilterValue: () => {},
+          getFiltered: () => {},
           getSourceColor: () => {},
           getTargetColor: () => {},
           getWidth: () => {}
@@ -354,6 +358,7 @@ test('#ArcLayer -> formatLayerData', t => {
             }
           ],
           getFilterValue: () => {},
+          getFiltered: () => {},
           getSourceColor: () => {},
           getTargetColor: () => {},
           getWidth: () => {}

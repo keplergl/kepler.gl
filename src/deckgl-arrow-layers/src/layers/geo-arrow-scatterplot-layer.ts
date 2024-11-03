@@ -25,7 +25,7 @@ import {
   invertOffsets
 } from '../utils/utils';
 import {GeoArrowExtraPickingProps, computeChunkOffsets, getPickingInfo} from '../utils/picking';
-import {ColorAccessor, FloatAccessor, GeoArrowPickingInfo} from '../types';
+import {ColorAccessor, FloatAccessor, GeoArrowPickingInfo, ExtensionProps} from '../types';
 import {EXTENSION_NAME} from '../constants';
 import {validateAccessors} from '../utils/validate';
 
@@ -153,7 +153,10 @@ export class GeoArrowScatterplotLayer<ExtraProps extends object = object> extend
       const flatCoordsData = ga.child.getPointChild(geometryData);
       const flatCoordinateArray = flatCoordsData.values;
 
-      const props: ScatterplotLayerProps<any> = {
+      // @ts-expect-error how to properly retrieve batch offset?
+      const batchOffset = geometryColumn._offsets[recordBatchIdx];
+
+      const props: ScatterplotLayerProps<any> & ExtensionProps = {
         // Note: because this is a composite layer and not doing the rendering
         // itself, we still have to pass in our defaultProps
         ...ourDefaultProps,
@@ -182,11 +185,17 @@ export class GeoArrowScatterplotLayer<ExtraProps extends object = object> extend
           props,
           propName,
           propInput,
-          chunkIdx: recordBatchIdx
+          chunkIdx: recordBatchIdx,
+          batchOffset
         });
       }
 
-      const layer = new ScatterplotLayer(this.getSubLayerProps(props));
+      const layer = new ScatterplotLayer({
+        ...this.getSubLayerProps(props),
+        // preserve binded accessors, as they are overwriten back by pass-through accessors from extensions
+        getFiltered: props.getFiltered,
+        getFilterValue: props.getFilterValue
+      });
       layers.push(layer);
     }
 
@@ -217,7 +226,10 @@ export class GeoArrowScatterplotLayer<ExtraProps extends object = object> extend
       const flatCoordsData = ga.child.getPointChild(pointData);
       const flatCoordinateArray = flatCoordsData.values;
 
-      const props: ScatterplotLayerProps = {
+      // @ts-expect-error how to properly retrieve batch offset?
+      const batchOffset = geometryColumn._offsets[recordBatchIdx];
+
+      const props: ScatterplotLayerProps & ExtensionProps = {
         // Note: because this is a composite layer and not doing the rendering
         // itself, we still have to pass in our defaultProps
         ...ourDefaultProps,
@@ -251,11 +263,17 @@ export class GeoArrowScatterplotLayer<ExtraProps extends object = object> extend
           propName,
           propInput,
           chunkIdx: recordBatchIdx,
-          geomCoordOffsets: geomOffsets
+          geomCoordOffsets: geomOffsets,
+          batchOffset
         });
       }
 
-      const layer = new ScatterplotLayer(this.getSubLayerProps(props));
+      const layer = new ScatterplotLayer({
+        ...this.getSubLayerProps(props),
+        // preserve binded accessors, as they are overwriten back by pass-through accessors from extensions
+        getFiltered: props.getFiltered,
+        getFilterValue: props.getFilterValue
+      });
       layers.push(layer);
     }
 

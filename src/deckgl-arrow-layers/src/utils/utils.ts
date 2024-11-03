@@ -111,6 +111,8 @@ type AssignAccessorProps = {
   chunkIdx: number;
   /** a map from the geometry index to the coord offsets for that geometry. */
   geomCoordOffsets?: Int32Array | null;
+  /** Absolute offset of the batch in the table/vector. Added to the sampling index. */
+  batchOffset?: number;
 };
 
 /**
@@ -126,10 +128,11 @@ type AssignAccessorProps = {
  */
 function wrapAccessorFunction<In, Out>(
   objectInfo: _InternalAccessorContext<In>,
-  userAccessorFunction: AccessorFunction<In, Out>
+  userAccessorFunction: AccessorFunction<In, Out>,
+  batchOffset: number
 ): Out {
   const {index, data} = objectInfo;
-  let newIndex = index;
+  let newIndex = index + batchOffset;
   if (data.invertedGeomOffsets !== undefined) {
     newIndex = data.invertedGeomOffsets[index];
   }
@@ -154,7 +157,7 @@ function wrapAccessorFunction<In, Out>(
  *
  */
 export function assignAccessor(args: AssignAccessorProps) {
-  const {props, propName, propInput, chunkIdx, geomCoordOffsets} = args;
+  const {props, propName, propInput, chunkIdx, geomCoordOffsets, batchOffset = 0} = args;
 
   if (propInput === undefined) {
     return;
@@ -198,7 +201,7 @@ export function assignAccessor(args: AssignAccessorProps) {
         return propInput(object, objectInfo);
       }
 
-      return wrapAccessorFunction(objectInfo, propInput);
+      return wrapAccessorFunction(objectInfo, propInput, batchOffset);
     };
   } else {
     props[propName] = propInput;
