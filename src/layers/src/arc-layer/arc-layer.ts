@@ -534,12 +534,10 @@ export default class ArcLayer extends Layer {
 
     let ArcLayerClass: typeof DeckArcLayer | typeof GeoArrowArcLayer = DeckArcLayer;
     let experimentalPropOverrides: {
-      data: ArcLayerData[] | arrow.Table;
+      data?: ArcLayerData[] | arrow.Table;
       getSourcePosition?: arrow.Vector;
       getTargetPosition?: arrow.Vector;
-    } = {
-      data: data.data
-    };
+    } = {};
 
     if (useArrowLayer) {
       ArcLayerClass = GeoArrowArcLayer;

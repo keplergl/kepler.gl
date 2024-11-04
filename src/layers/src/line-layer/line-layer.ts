@@ -275,12 +275,10 @@ export default class LineLayer extends ArcLayer {
 
     let LineLayerClass: typeof EnhancedLineLayer | typeof GeoArrowArcLayer = EnhancedLineLayer;
     let experimentalPropOverrides: {
-      data: LineLayerData[] | arrow.Table;
+      data?: LineLayerData[] | arrow.Table;
       getSourcePosition?: arrow.Vector;
       getTargetPosition?: arrow.Vector;
-    } = {
-      data: data.data
-    };
+    } = {};
 
     if (useArrowLayer) {
       LineLayerClass = GeoArrowArcLayer;
