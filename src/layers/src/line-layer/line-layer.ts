@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import * as arrow from 'apache-arrow';
-
 import {BrushingExtension} from '@deck.gl/extensions';
 
 import {GeoArrowArcLayer} from '@kepler.gl/deckgl-arrow-layers';
