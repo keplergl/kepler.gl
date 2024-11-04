@@ -2,89 +2,89 @@
 
 ### Table of Contents
 
-- [forwardActions](#forwardactions)
-  - [forwardTo](#forwardto)
-  - [isForwardAction](#isforwardaction)
-  - [unwrap](#unwrap)
-  - [wrapTo](#wrapto)
-- [ActionTypes](#actiontypes)
-- [mapStyleActions](#mapstyleactions)
-  - [addCustomMapStyle](#addcustommapstyle)
-  - [inputMapStyle](#inputmapstyle)
-  - [loadCustomMapStyle](#loadcustommapstyle)
-  - [loadMapStyleErr](#loadmapstyleerr)
-  - [loadMapStyles](#loadmapstyles)
-  - [mapConfigChange](#mapconfigchange)
-  - [mapStyleChange](#mapstylechange)
-  - [requestMapStyles](#requestmapstyles)
-  - [set3dBuildingColor](#set3dbuildingcolor)
-- [main](#main)
-  - [addDataToMap](#adddatatomap)
-  - [keplerGlInit](#keplerglinit)
-  - [receiveMapConfig](#receivemapconfig)
-  - [resetMapConfig](#resetmapconfig)
-- [visStateActions](#visstateactions)
-  - [addFilter](#addfilter)
-  - [addLayer](#addlayer)
-  - [applyCPUFilter](#applycpufilter)
-  - [enlargeFilter](#enlargefilter)
-  - [interactionConfigChange](#interactionconfigchange)
-  - [layerConfigChange](#layerconfigchange)
-  - [layerTextLabelChange](#layertextlabelchange)
-  - [layerTypeChange](#layertypechange)
-  - [layerVisConfigChange](#layervisconfigchange)
-  - [layerVisualChannelConfigChange](#layervisualchannelconfigchange)
-  - [loadFiles](#loadfiles)
-  - [loadFilesErr](#loadfileserr)
-  - [onLayerClick](#onlayerclick)
-  - [onLayerHover](#onlayerhover)
-  - [onMapClick](#onmapclick)
-  - [onMouseMove](#onmousemove)
-  - [removeDataset](#removedataset)
-  - [removeFilter](#removefilter)
-  - [removeLayer](#removelayer)
-  - [reorderLayer](#reorderlayer)
-  - [setEditorMode](#seteditormode)
-  - [setFilter](#setfilter)
-  - [setFilterPlot](#setfilterplot)
-  - [setMapInfo](#setmapinfo)
-  - [showDatasetTable](#showdatasettable)
-  - [toggleFilterAnimation](#togglefilteranimation)
-  - [toggleLayerForMap](#togglelayerformap)
-  - [updateAnimationTime](#updateanimationtime)
-  - [updateFilterAnimationSpeed](#updatefilteranimationspeed)
-  - [updateLayerAnimationSpeed](#updatelayeranimationspeed)
-  - [updateLayerBlending](#updatelayerblending)
-  - [updateVisData](#updatevisdata)
-- [uiStateActions](#uistateactions)
-  - [addNotification](#addnotification)
-  - [cleanupExportImage](#cleanupexportimage)
-  - [hideExportDropdown](#hideexportdropdown)
-  - [openDeleteModal](#opendeletemodal)
-  - [removeNotification](#removenotification)
-  - [setExportData](#setexportdata)
-  - [setExportDataType](#setexportdatatype)
-  - [setExportFiltered](#setexportfiltered)
-  - [setExportImageDataUri](#setexportimagedatauri)
-  - [setExportImageSetting](#setexportimagesetting)
-  - [setExportSelectedDataset](#setexportselecteddataset)
-  - [setUserMapboxAccessToken](#setusermapboxaccesstoken)
-  - [showExportDropdown](#showexportdropdown)
-  - [startExportingImage](#startexportingimage)
-  - [toggleMapControl](#togglemapcontrol)
-  - [toggleModal](#togglemodal)
-  - [toggleSidePanel](#togglesidepanel)
-- [rootActions](#rootactions)
-  - [deleteEntry](#deleteentry)
-  - [registerEntry](#registerentry)
-  - [renameEntry](#renameentry)
-- [mapStateActions](#mapstateactions)
-  - [fitBounds](#fitbounds)
-  - [togglePerspective](#toggleperspective)
-  - [toggleSplitMap](#togglesplitmap)
-  - [updateMap](#updatemap)
-- [layerColorUIChange](#layercoloruichange)
-- [setExportMapFormat](#setexportmapformat)
+- [forwardActions][1]
+  - [forwardTo][2]
+  - [isForwardAction][5]
+  - [unwrap][7]
+  - [wrapTo][9]
+- [ActionTypes][12]
+- [mapStyleActions][14]
+  - [addCustomMapStyle][15]
+  - [inputMapStyle][16]
+  - [loadCustomMapStyle][18]
+  - [loadMapStyleErr][20]
+  - [loadMapStyles][22]
+  - [mapConfigChange][24]
+  - [mapStyleChange][26]
+  - [requestMapStyles][28]
+  - [set3dBuildingColor][30]
+- [main][32]
+  - [addDataToMap][33]
+  - [keplerGlInit][36]
+  - [receiveMapConfig][38]
+  - [resetMapConfig][41]
+- [visStateActions][42]
+  - [addFilter][43]
+  - [addLayer][45]
+  - [applyCPUFilter][47]
+  - [enlargeFilter][49]
+  - [interactionConfigChange][51]
+  - [layerConfigChange][53]
+  - [layerTextLabelChange][55]
+  - [layerTypeChange][57]
+  - [layerVisConfigChange][59]
+  - [layerVisualChannelConfigChange][61]
+  - [loadFiles][63]
+  - [loadFilesErr][65]
+  - [onLayerClick][67]
+  - [onLayerHover][69]
+  - [onMapClick][71]
+  - [onMouseMove][72]
+  - [removeDataset][74]
+  - [removeFilter][76]
+  - [removeLayer][78]
+  - [reorderLayer][80]
+  - [setEditorMode][83]
+  - [setFilter][86]
+  - [setFilterPlot][88]
+  - [setMapInfo][90]
+  - [showDatasetTable][92]
+  - [toggleFilterAnimation][94]
+  - [toggleLayerForMap][96]
+  - [updateAnimationTime][98]
+  - [updateFilterAnimationSpeed][100]
+  - [updateLayerAnimationSpeed][102]
+  - [updateLayerBlending][104]
+  - [updateVisData][106]
+- [uiStateActions][108]
+  - [addNotification][109]
+  - [cleanupExportImage][111]
+  - [hideExportDropdown][112]
+  - [openDeleteModal][113]
+  - [removeNotification][115]
+  - [setExportData][117]
+  - [setExportDataType][118]
+  - [setExportFiltered][120]
+  - [setExportImageDataUri][122]
+  - [setExportImageSetting][124]
+  - [setExportSelectedDataset][126]
+  - [setUserMapboxAccessToken][128]
+  - [showExportDropdown][130]
+  - [startExportingImage][132]
+  - [toggleMapControl][133]
+  - [toggleModal][135]
+  - [toggleSidePanel][137]
+- [rootActions][139]
+  - [deleteEntry][140]
+  - [registerEntry][142]
+  - [renameEntry][144]
+- [mapStateActions][146]
+  - [fitBounds][147]
+  - [togglePerspective][150]
+  - [toggleSplitMap][152]
+  - [updateMap][155]
+- [layerColorUIChange][158]
+- [setExportMapFormat][160]
 
 ## forwardActions
 
