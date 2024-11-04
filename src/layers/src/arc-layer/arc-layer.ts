@@ -533,14 +533,21 @@ export default class ArcLayer extends Layer {
     const useArrowLayer = Boolean(this.geoArrowVector0);
 
     let ArcLayerClass: typeof DeckArcLayer | typeof GeoArrowArcLayer = DeckArcLayer;
-    let deckLayerData = data.data;
-    let getSourcePosition = data.getPosition;
-    let getTargetPosition = data.getPosition;
+    let experimentalPropOverrides: {
+      data: ArcLayerData[] | arrow.Table;
+      getSourcePosition?: arrow.Vector;
+      getTargetPosition?: arrow.Vector;
+    } = {
+      data: data.data
+    };
+
     if (useArrowLayer) {
       ArcLayerClass = GeoArrowArcLayer;
-      deckLayerData = dataset.dataContainer.getTable();
-      getSourcePosition = this.geoArrowVector0;
-      getTargetPosition = this.geoArrowVector1;
+      experimentalPropOverrides = {
+        data: dataset.dataContainer.getTable(),
+        getSourcePosition: this.geoArrowVector0,
+        getTargetPosition: this.geoArrowVector1
+      };
     }
 
     return [
@@ -549,9 +556,7 @@ export default class ArcLayer extends Layer {
         ...defaultLayerProps,
         ...this.getBrushingExtensionProps(interactionConfig, 'source_target'),
         ...data,
-        data: deckLayerData,
-        getSourcePosition,
-        getTargetPosition,
+        ...experimentalPropOverrides,
         widthScale,
         updateTriggers,
         extensions: [
