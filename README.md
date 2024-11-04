@@ -327,7 +327,7 @@ e.g. `updateVisDataUpdater` is the updater for `ActionTypes.UPDATE_VIS_DATA` (ta
 Here is an example how you can listen to an app action `QUERY_SUCCESS` and call `updateVisDataUpdater` to load data into Kepler.Gl.
 
 ```js
-import keplerGlReducer, {visStateUpdaters} from 'kepler.gl/reducers';
+import {keplerGlReducer, visStateUpdaters} from '@kepler.gl/reducers';
 
 // Root Reducer
 const reducers = combineReducers({
