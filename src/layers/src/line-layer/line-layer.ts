@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import * as arrow from 'apache-arrow';
+
 import {BrushingExtension} from '@deck.gl/extensions';
 
 import {GeoArrowArcLayer} from '@kepler.gl/deckgl-arrow-layers';
@@ -272,14 +274,19 @@ export default class LineLayer extends ArcLayer {
     const useArrowLayer = Boolean(this.geoArrowVector0);
 
     let LineLayerClass: typeof EnhancedLineLayer | typeof GeoArrowArcLayer = EnhancedLineLayer;
-    let deckLayerData = data.data;
-    let getSourcePosition = data.getPosition;
-    let getTargetPosition = data.getPosition;
+    let experimentalPropOverrides: {
+      data?: arrow.Table;
+      getSourcePosition?: arrow.Vector;
+      getTargetPosition?: arrow.Vector;
+    } = {};
+
     if (useArrowLayer) {
       LineLayerClass = GeoArrowArcLayer;
-      deckLayerData = dataset.dataContainer.getTable();
-      getSourcePosition = this.geoArrowVector0;
-      getTargetPosition = this.geoArrowVector1;
+      experimentalPropOverrides = {
+        data: dataset.dataContainer.getTable(),
+        getSourcePosition: this.geoArrowVector0,
+        getTargetPosition: this.geoArrowVector1
+      };
     }
 
     return [
@@ -288,9 +295,7 @@ export default class LineLayer extends ArcLayer {
         ...defaultLayerProps,
         ...this.getBrushingExtensionProps(interactionConfig, 'source_target'),
         ...data,
-        data: deckLayerData,
-        getSourcePosition,
-        getTargetPosition,
+        ...experimentalPropOverrides,
         ...layerProps,
         updateTriggers,
         extensions: [
