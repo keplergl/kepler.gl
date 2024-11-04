@@ -9,7 +9,7 @@ import {GeoArrowArcLayer} from '@kepler.gl/deckgl-arrow-layers';
 import {FilterArrowExtension} from '@kepler.gl/deckgl-layers';
 import {EnhancedLineLayer} from '@kepler.gl/deckgl-layers';
 import LineLayerIcon from './line-layer-icon';
-import ArcLayer, {ArcLayerConfig, ArcLayerData as LineLayerData} from '../arc-layer/arc-layer';
+import ArcLayer, {ArcLayerConfig} from '../arc-layer/arc-layer';
 import {LAYER_VIS_CONFIGS, ColorRange, PROJECTED_PIXEL_SIZE_MULTIPLIER} from '@kepler.gl/constants';
 import {
   Merge,
@@ -275,7 +275,7 @@ export default class LineLayer extends ArcLayer {
 
     let LineLayerClass: typeof EnhancedLineLayer | typeof GeoArrowArcLayer = EnhancedLineLayer;
     let experimentalPropOverrides: {
-      data?: LineLayerData[] | arrow.Table;
+      data?: arrow.Table;
       getSourcePosition?: arrow.Vector;
       getTargetPosition?: arrow.Vector;
     } = {};
