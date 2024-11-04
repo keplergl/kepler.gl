@@ -10,7 +10,7 @@ You can add a dispatch function to your component that dispatches actions to a s
 
 ```js
 // component
-import KeplerGl from '@kepler.gl/components';
+import {KeplerGl} from '@kepler.gl/components';
 import {connect} from 'react-redux';
 
 // import action and forward dispatcher
@@ -44,7 +44,7 @@ You can also simply wrap an action into a forward action with the `wrapTo` helpe
 
 ```js
 // component
-import KeplerGl from '@kepler.gl/components';
+import {KeplerGl} from '@kepler.gl/components';
 
 // action and wrapper
 import {toggleFullScreen, wrapTo} from '@kepler.gl/actions';
