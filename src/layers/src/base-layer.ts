@@ -1,74 +1,76 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React from 'react';
-import * as arrow from 'apache-arrow';
+import {COORDINATE_SYSTEM} from '@deck.gl/core';
+import {GeoArrowTextLayer} from '@kepler.gl/deckgl-arrow-layers';
+import {DataFilterExtension} from '@deck.gl/extensions';
+import {TextLayer} from '@deck.gl/layers';
 import {console as Console} from 'global/window';
 import keymirror from 'keymirror';
-import {DataFilterExtension} from '@deck.gl/extensions';
-import {COORDINATE_SYSTEM} from '@deck.gl/core';
-import {TextLayer} from '@deck.gl/layers';
-import {GeoArrowTextLayer} from '@kepler.gl/deckgl-arrow-layers';
-
+import React from 'react';
+import * as arrow from 'apache-arrow';
 import DefaultLayerIcon from './default-layer-icon';
 import {diffUpdateTriggers} from './layer-update';
 
 import {
   ALL_FIELD_TYPES,
-  NO_VALUE_COLOR,
-  SCALE_TYPES,
   CHANNEL_SCALES,
-  FIELD_OPTS,
-  SCALE_FUNC,
   CHANNEL_SCALE_SUPPORTED_FIELDS,
-  MAX_GPU_FILTERS,
-  ColorRange,
   COLOR_RANGES,
-  DataVizColors,
-  LAYER_VIS_CONFIGS,
-  DEFAULT_TEXT_LABEL,
+  ColorRange,
   DEFAULT_COLOR_UI,
-  UNKNOWN_COLOR_KEY,
+  DEFAULT_CUSTOM_PALETTE,
   DEFAULT_HIGHLIGHT_COLOR,
   DEFAULT_LAYER_LABEL,
+  DEFAULT_TEXT_LABEL,
+  DataVizColors,
+  FIELD_OPTS,
+  LAYER_VIS_CONFIGS,
+  MAX_GPU_FILTERS,
+  NO_VALUE_COLOR,
   PROJECTED_PIXEL_SIZE_MULTIPLIER,
-  TEXT_OUTLINE_MULTIPLIER
+  SCALE_FUNC,
+  SCALE_TYPES,
+  TEXT_OUTLINE_MULTIPLIER,
+  UNKNOWN_COLOR_KEY
 } from '@kepler.gl/constants';
 
 import {
+  DataContainerInterface,
   generateHashId,
   getColorGroupByName,
-  reverseColorRange,
-  hexToRgb,
   getLatLngBounds,
+  getSampleContainerData,
+  hasColorMap,
+  hexToRgb,
   isPlainObject,
   toArray,
   notNullorUndefined,
-  DataContainerInterface,
-  getSampleContainerData
+  reverseColorRange
 } from '@kepler.gl/utils';
 
+import {Datasets, GpuFilter, KeplerTable} from '@kepler.gl/table';
 import {
-  RGBColor,
-  RGBAColor,
-  NestedPartial,
-  LayerTextLabel,
   ColorUI,
+  Field,
+  Filter,
+  LayerTextLabel,
   LayerVisConfig,
   LayerVisConfigSettings,
-  Field,
   MapState,
-  Filter,
-  ValueOf,
   AnimationConfig,
   LayerColumns,
   LayerColumn,
   ColumnPairs,
   ColumnLabels,
   SupportedColumnMode,
-  FieldPair
+  FieldPair,
+  NestedPartial,
+  RGBAColor,
+  RGBColor,
+  ValueOf
 } from '@kepler.gl/types';
-import {KeplerTable, Datasets, GpuFilter} from '@kepler.gl/table';
+import {getScaleFunction, initializeLayerColorMap} from '@kepler.gl/utils';
 
 export type VisualChannelDomain = number[] | string[];
 export type VisualChannelField = Field | null;
@@ -97,6 +99,9 @@ export type LayerBaseConfig = {
     domain?: [number, number] | null;
   };
   columnMode?: string;
+  heightField?: VisualChannelField;
+  heightDomain?: VisualChannelDomain;
+  heightScale?: string;
 };
 
 export type LayerBaseConfigPartial = {dataId: LayerBaseConfig['dataId']} & Partial<LayerBaseConfig>;
@@ -862,28 +867,56 @@ class Layer {
     const isColorRange = visConfig[prop] && visConfig[prop].colors;
 
     if (isColorRange) {
+      // if open dropdown and prop is color range
+      // Automatically set colorRangeConfig's step and reversed
       this.updateColorUIByColorRange(newConfig, prop);
+
+      // if changes in UI is made to 'reversed', 'steps' or steps
+      // update current layer colorRange
       this.updateColorRangeByColorUI(newConfig, previous, prop);
+
+      // if set colorRangeConfig to custom
+      // initiate customPalette to be edited in the ui
       this.updateCustomPalette(newConfig, previous, prop);
     }
 
     return this;
   }
 
+  // if set colorRangeConfig to custom palette or custom breaks
+  // initiate customPalette to be edited in the ui
   updateCustomPalette(newConfig, previous, prop) {
-    if (!newConfig.colorRangeConfig || !newConfig.colorRangeConfig.custom) {
+    if (!newConfig.colorRangeConfig?.custom && !newConfig.colorRangeConfig?.customBreaks) {
       return;
     }
 
     const {colorUI, visConfig} = this.config;
 
     if (!visConfig[prop]) return;
-    const {colors} = visConfig[prop];
+    // make copy of current color range to customPalette
     const customPalette = {
-      ...colorUI[prop].customPalette,
-      name: 'Custom Palette',
-      colors: [...colors]
+      ...visConfig[prop]
     };
+
+    if (newConfig.colorRangeConfig.customBreaks && !customPalette.colorMap) {
+      // find visualChanel
+      const visualChannels = this.visualChannels;
+      const channelKey = Object.keys(visualChannels).find(
+        key => visualChannels[key].range === prop
+      );
+      if (!channelKey) {
+        // should never happn
+        Console.warn(`updateColorUI: Can't find visual channel which range is ${prop}`);
+        return;
+      }
+      // initiate colorMap from current scale
+      customPalette.colorMap = initializeLayerColorMap(this, visualChannels[channelKey]);
+    } else if (newConfig.colorRangeConfig.custom) {
+      customPalette.name = DEFAULT_CUSTOM_PALETTE.name;
+      customPalette.type = DEFAULT_CUSTOM_PALETTE.type;
+      customPalette.category = DEFAULT_CUSTOM_PALETTE.category;
+    }
+
     this.updateLayerConfig({
       colorUI: {
         ...colorUI,
@@ -894,6 +927,7 @@ class Layer {
       }
     });
   }
+
   /**
    * if open dropdown and prop is color range
    * Automatically set colorRangeConfig's step and reversed
@@ -1017,16 +1051,17 @@ class Layer {
   }
 
   getColorScale(colorScale: string, colorDomain: VisualChannelDomain, colorRange: ColorRange) {
-    if (Array.isArray(colorRange.colorMap)) {
+    if (hasColorMap(colorRange) && colorScale === SCALE_TYPES.custom) {
       const cMap = new Map();
-      colorRange.colorMap.forEach(([k, v]) => {
+      colorRange.colorMap?.forEach(([k, v]) => {
         cMap.set(k, typeof v === 'string' ? hexToRgb(v) : v);
       });
 
-      const scale = SCALE_FUNC[SCALE_TYPES.ordinal]()
-        .domain(cMap.keys())
-        .range(cMap.values())
-        .unknown(cMap.get(UNKNOWN_COLOR_KEY) || NO_VALUE_COLOR);
+      const scaleType = colorScale === SCALE_TYPES.custom ? colorScale : SCALE_TYPES.ordinal;
+
+      const scale = getScaleFunction(scaleType, cMap.values(), cMap.keys(), false);
+      scale.unknown(cMap.get(UNKNOWN_COLOR_KEY) || NO_VALUE_COLOR);
+
       return scale;
     }
     return this.getVisChannelScale(colorScale, colorDomain, colorRange.colors.map(hexToRgb));
@@ -1084,6 +1119,7 @@ class Layer {
 
           attributeAccessors[accessor] = d =>
             this.getEncodedChannelValue(
+              // @ts-ignore
               scaleFunction,
               dataAccessor(dataContainer)(d),
               this.config[field],
@@ -1313,7 +1349,7 @@ class Layer {
    * @param {string} channel
    * @returns {string[]}
    */
-  getScaleOptions(channel) {
+  getScaleOptions(channel: string): string[] {
     const visualChannel = this.visualChannels[channel];
     const {field, scale, channelScaleType} = visualChannel;
 

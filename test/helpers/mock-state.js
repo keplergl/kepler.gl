@@ -134,6 +134,101 @@ export function mockStateWithFileUpload() {
   return updatedState;
 }
 
+function mockStateWithLayerCustomColorBreaksLegends() {
+  const initialState = cloneDeep(InitialState);
+  const mockColorRange = {
+    colors: ['#FF000', '#00FF00', '#0000FF'],
+    colorMap: [
+      [1, '#FF0000'],
+      [3, '#00FF00'],
+      [5, '#0000FF']
+    ],
+    colorLegends: {
+      '#FF0000': 'hello'
+    }
+  };
+  // load csv and geojson
+  const updatedState = applyActions(keplerGlReducer, initialState, [
+    {
+      action: MapStyleActions.loadMapStyles,
+      payload: [{dark: MOCK_MAP_STYLE}]
+    },
+    {
+      action: addDataToMap,
+      payload: [
+        {
+          datasets: [
+            {
+              info: csvInfo,
+              data: {fields: testFields, rows: testAllData}
+            }
+          ],
+          config: {
+            version: 'v1',
+            config: {
+              visState: {
+                layers: [
+                  {
+                    type: 'point',
+                    id: 'point-layer-0',
+                    config: {
+                      dataId: csvInfo.id,
+                      columns: {
+                        lat: 'gps_data.lat',
+                        lng: 'gps_data.lng'
+                      },
+                      color: [255, 0, 0],
+                      label: 'pickup',
+                      isVisible: true,
+                      visConfig: {
+                        colorRange: mockColorRange
+                      }
+                    },
+                    visualChannels: {
+                      colorField: {
+                        name: 'uid',
+                        type: 'integer'
+                      },
+                      colorScale: 'custom'
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]);
+
+  // cleanup tasks created during loadMapStyles
+  drainTasksForTesting();
+
+  test(t => {
+    t.equal(updatedState.visState.layers.length, 1, 'should load 1 layer');
+    t.deepEqual(
+      updatedState.visState.layers[0].config.visConfig.colorRange,
+      mockColorRange,
+      'should load layer colorRange correctly'
+    );
+    t.deepEqual(
+      updatedState.visState.layers[0].config.colorScale,
+      'custom',
+      'should load layer color Scale correctly'
+    );
+
+    t.deepEqual(
+      updatedState.visState.layers[0].config.colorField.name,
+      'uid',
+      'should load colorField correctly'
+    );
+
+    t.end();
+  });
+
+  return updatedState;
+}
+
 function mockStateWithSyncedTimeFilter() {
   const initialState = cloneDeep(InitialState);
   // load 2 csv data
@@ -1042,6 +1137,7 @@ export const StateWH3Layer = mockStateWithH3Layer();
 export const StateWMultiH3Layers = mockStateWithMultipleH3Layers();
 export const StateWithGeocoderDataset = mockStateWithGeocoderDataset();
 export const StateWLayerStyle = mockStateWithLayerStyling();
+export const StateWLayerCustomColorBreaks = mockStateWithLayerCustomColorBreaksLegends();
 export const StateWTripTable = mockStateWithTripTable();
 export const StateWArcNeighbors = mockStateWithArcNeighbors();
 export const StateWSyncedTimeFilter = mockStateWithSyncedTimeFilter();

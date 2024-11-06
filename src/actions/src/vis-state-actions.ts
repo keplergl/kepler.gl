@@ -155,6 +155,7 @@ export type LayerVisualChannelConfigChangeUpdaterAction = {
   oldLayer: Layer;
   newConfig: Partial<LayerBaseConfig>;
   channel: string;
+  newVisConfig?: Partial<LayerVisConfig>;
 };
 /**
  * Update layer visual channel
@@ -168,7 +169,8 @@ export type LayerVisualChannelConfigChangeUpdaterAction = {
 export function layerVisualChannelConfigChange(
   oldLayer: Layer,
   newConfig: Partial<LayerBaseConfig>,
-  channel: string
+  channel: string,
+  newVisConfig?: Partial<LayerVisConfig>
 ): Merge<
   LayerVisualChannelConfigChangeUpdaterAction,
   {type: typeof ActionTypes.LAYER_VISUAL_CHANNEL_CHANGE}
@@ -177,7 +179,8 @@ export function layerVisualChannelConfigChange(
     type: ActionTypes.LAYER_VISUAL_CHANNEL_CHANGE,
     oldLayer,
     newConfig,
-    channel
+    channel,
+    newVisConfig
   };
 }
 export type LayerVisConfigChangeUpdaterAction = {

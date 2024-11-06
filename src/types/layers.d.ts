@@ -130,6 +130,8 @@ export type FieldPair = {
   suffix: string[];
 };
 
+export type SizeRange = [number, number];
+
 export type LayerTextLabel = {
   field: Field | null;
   color: RGBColor;
@@ -150,12 +152,15 @@ export type ColorUI = {
   showSketcher: boolean | number;
   // show color range selection panel
   showDropdown: boolean | number;
+  // show color scale chart
+  showColorChart: boolean;
   // color range selector config
   colorRangeConfig: {
     type: string;
     steps: number;
     reversed: boolean;
     custom: boolean;
+    customBreaks: boolean;
   };
 };
 
@@ -187,7 +192,7 @@ export type VisConfigNumber = VisConfig & {
   type: 'number';
   isRanged: false;
   defaultValue: number;
-  range: [number, number];
+  range: SizeRange;
   step: number;
 };
 
@@ -205,8 +210,8 @@ export type VisConfigSelection = VisConfig & {
 export type VisConfigRange = VisConfig & {
   type: 'number';
   isRanged: boolean;
-  range: [number, number];
-  defaultValue: [number, number];
+  range: SizeRange;
+  defaultValue: SizeRange;
   step: number;
 };
 

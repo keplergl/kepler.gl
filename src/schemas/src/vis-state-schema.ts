@@ -403,7 +403,7 @@ const visualChannelModificationV1 = {
     const isOld = !Object.prototype.hasOwnProperty.call(vc, 'strokeColorField');
     // make our best guess if this geojson layer contains point
     const isPoint =
-      vc.radiusField || layer.config.visConfig.radius !== LAYER_VIS_CONFIGS.radius.defaultValue;
+      vc.radiusField || layer.config.visConfig.radius !== LAYER_VIS_CONFIGS.radius?.defaultValue;
 
     if (isOld && !isPoint && layer.config.visConfig.stroked) {
       // if stroked is true, copy color config to stroke color config
@@ -487,7 +487,7 @@ const visConfigModificationV1 = {
     // make our best guess if this geojson layer contains point
     const isPoint =
       (layer.visualChannels && layer.visualChannels.radiusField) ||
-      (visConfig && visConfig.radius !== LAYER_VIS_CONFIGS.radius.defaultValue);
+      (visConfig && visConfig.radius !== LAYER_VIS_CONFIGS.radius?.defaultValue);
 
     if (isOld) {
       // color color & color range to stroke color
@@ -512,12 +512,9 @@ class VisConfigSchemaV1 extends Schema {
     const modified = visConfigModificationV1[layer.type]
       ? visConfigModificationV1[layer.type](visConfig, parents, accumulated)
       : {};
-
+    const loadedVisConfig = {...visConfig, ...modified};
     return {
-      visConfig: {
-        ...visConfig,
-        ...modified
-      }
+      visConfig: loadedVisConfig
     };
   }
 }

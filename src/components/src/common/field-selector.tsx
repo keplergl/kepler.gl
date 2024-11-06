@@ -6,7 +6,7 @@ import React, {Component, ComponentType} from 'react';
 import styled from 'styled-components';
 import {createSelector} from 'reselect';
 
-import {Field} from '@kepler.gl/types';
+import {Field, TooltipField} from '@kepler.gl/types';
 import {notNullorUndefined, toArray} from '@kepler.gl/utils';
 
 import ItemSelector from './item-selector/item-selector';
@@ -62,24 +62,11 @@ export function FieldListItemFactoryFactory(FieldToken) {
 const SuggestedFieldHeader = () => <div>Suggested Field</div>;
 
 export type MinimalField = {name: string; displayName: string; format: string; type?: string};
-type FieldType =
-  | string
-  | string[]
-  | {
-      name: string;
-      format: string | null;
-    }[]
-  | {
-      format?: string;
-      id?: string;
-      name?: string;
-      fieldIdx?: number;
-      type?: number;
-    }
-  | Field;
+export type FieldType = string | TooltipField | Field;
+export type FieldValue = string | {name: string} | string[] | {name: string}[];
 
-interface FieldSelectorFactoryProps {
-  fields?: FieldType[];
+export type FieldSelectorProps<Option extends MinimalField> = {
+  fields: Option[];
   onSelect: (
     items:
       | ReadonlyArray<string | number | boolean | object>
@@ -89,10 +76,10 @@ interface FieldSelectorFactoryProps {
       | object
       | null
   ) => void;
-  placement?: string;
-  value?: FieldType | null;
-  filterFieldTypes?: FieldType | FieldType[];
+  value?: FieldValue | null;
+  filterFieldTypes?: string | string[];
   inputTheme?: string;
+  placement?: string;
   placeholder?: string;
   erasable?: boolean;
   disabled?: boolean;
@@ -100,19 +87,20 @@ interface FieldSelectorFactoryProps {
   multiSelect?: boolean;
   closeOnSelect?: boolean;
   showToken?: boolean;
-  suggested?: ReadonlyArray<string | number | boolean | object> | null;
+  suggested?: Option[] | null;
   CustomChickletComponent?: ComponentType<any>;
   size?: string;
   reorderItems?: (newOrder: any) => void;
   className?: string;
-}
+};
+
 function noop() {
   return;
 }
 function FieldSelectorFactory(
   FieldListItemFactory: ReturnType<typeof FieldListItemFactoryFactory>
-): ComponentType<FieldSelectorFactoryProps> {
-  class FieldSelector extends Component<FieldSelectorFactoryProps> {
+): ComponentType<FieldSelectorProps<MinimalField>> {
+  class FieldSelector extends Component<FieldSelectorProps<MinimalField>> {
     static defaultProps = {
       erasable: true,
       disabled: false,
@@ -170,6 +158,7 @@ function FieldSelectorFactory(
       }
     );
 
+    // @ts-ignore Fix later
     fieldListItemSelector = createSelector(this.showTokenSelector, FieldListItemFactory);
 
     render() {
@@ -202,6 +191,8 @@ function FieldSelectorFactory(
       );
     }
   }
+
+  // @ts-ignore: Fix me
   return FieldSelector;
 }
 

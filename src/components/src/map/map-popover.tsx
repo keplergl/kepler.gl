@@ -7,7 +7,7 @@ import MapPopoverContentFactory from './map-popover-content';
 import {Pin, ArrowLeft, ArrowRight, CursorPoint} from '../common/icons';
 import {injectIntl, IntlShape} from 'react-intl';
 import {FormattedMessage} from '@kepler.gl/localization';
-import {RootContext} from '../';
+import {RootContext} from '..';
 import {parseGeoJsonRawFeature} from '@kepler.gl/layers';
 import {idToPolygonGeo, generateHashId} from '@kepler.gl/utils';
 import {LAYER_TYPES} from '@kepler.gl/constants';

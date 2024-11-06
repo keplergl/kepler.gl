@@ -101,7 +101,8 @@ test('Components -> LayerConfigurator.mount -> default prop 1', t => {
     layerChannelConfigProps: {
       layer: expectedLayer,
       fields: expectedDataset.fields,
-      onChange: updateLayerVisualChannelConfig
+      onChange: updateLayerVisualChannelConfig,
+      setColorUI: updateLayerColorUI
     }
   };
 

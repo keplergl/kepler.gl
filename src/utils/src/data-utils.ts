@@ -12,7 +12,7 @@ import {
   TOOLTIP_KEY,
   TooltipFormat
 } from '@kepler.gl/constants';
-import {Millisecond, Field} from '@kepler.gl/types';
+import {Field, Millisecond} from '@kepler.gl/types';
 
 import {snapToMarks} from './plot';
 import {isPlainObject} from './utils';
@@ -271,22 +271,6 @@ export const parseFieldValue = (value: any, type: string): string => {
   return FIELD_DISPLAY_FORMAT[type] ? FIELD_DISPLAY_FORMAT[type](value) : String(value);
 };
 
-const arrayMoveMutate = <T>(array: T[], from: number, to: number) => {
-  array.splice(to < 0 ? array.length + to : to, 0, array.splice(from, 1)[0]);
-};
-
-/**
- *
- * @param array
- * @param from
- * @param to
- */
-export const arrayMove = <T>(array: T[], from: number, to: number): T[] => {
-  array = array.slice();
-  arrayMoveMutate(array, from, to);
-  return array;
-};
-
 /**
  * Get the value format based on field and format options
  * Used in render tooltip value
@@ -413,6 +397,47 @@ export function formatNumber(n: number, type?: string): string {
     default:
       return formatNumber(n, 'real');
   }
+}
+
+const transformation = {
+  Y: Math.pow(10, 24),
+  Z: Math.pow(10, 21),
+  E: Math.pow(10, 18),
+  P: Math.pow(10, 15),
+  T: Math.pow(10, 12),
+  G: Math.pow(10, 9),
+  M: Math.pow(10, 6),
+  k: Math.pow(10, 3),
+  h: Math.pow(10, 2),
+  da: Math.pow(10, 1),
+  d: Math.pow(10, -1),
+  c: Math.pow(10, -2),
+  m: Math.pow(10, -3),
+  μ: Math.pow(10, -6),
+  n: Math.pow(10, -9),
+  p: Math.pow(10, -12),
+  f: Math.pow(10, -15),
+  a: Math.pow(10, -18),
+  z: Math.pow(10, -21),
+  y: Math.pow(10, -24)
+};
+
+/**
+ * Convert a formatted number from string back to number
+ */
+export function reverseFormatNumber(str: string): number {
+  let returnValue: number | null = null;
+  const strNum = str.trim().replace(/,/g, '');
+  Object.entries(transformation).forEach(d => {
+    if (strNum.includes(d[0])) {
+      returnValue = parseFloat(strNum) * d[1];
+      return true;
+    }
+    return false;
+  });
+
+  // if no transformer found, convert to nuber regardless
+  return returnValue === null ? Number(strNum) : returnValue;
 }
 
 /**

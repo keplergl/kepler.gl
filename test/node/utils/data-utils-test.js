@@ -10,7 +10,6 @@ import {
   normalizeSliderValue,
   roundValToStep,
   snapToMarks,
-  arrayMove,
   getFormatter,
   defaultFormatter,
   formatNumber,
@@ -100,14 +99,6 @@ test('dataUtils -> normalizeSliderValue', t => {
   t.equal(normalizeSliderValue(4.4, 0, undefined), 4.4, 'is step is not defined return value');
   t.equal(normalizeSliderValue(4.4, undefined, 1), 4.4, 'is minValue is not defined return value');
 
-  t.end();
-});
-
-test('dataUtils -> arrayMove', t => {
-  const arr = [4, 1, 9, 3, 11];
-  t.deepEqual(arrayMove(arr, 2, 1), [4, 9, 1, 3, 11], 'should move array');
-  t.deepEqual(arrayMove(arr, 2, 5), [4, 1, 3, 11, 9], 'should move array');
-  t.deepEqual(arrayMove(arr, 2, -1), [4, 1, 3, 11, 9], 'should move array');
   t.end();
 });
 

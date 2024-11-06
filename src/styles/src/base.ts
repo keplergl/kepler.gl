@@ -611,6 +611,8 @@ const secondaryInput = css<SecondaryInputProps>`
   }
 
   :active,
+  :focus,
+  &.focus,
   &.active {
     background-color: ${props => props.theme.secondaryInputBgdActive};
     border-color: ${props => props.theme.secondaryInputBorderActiveColor};

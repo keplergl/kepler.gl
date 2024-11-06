@@ -5,7 +5,7 @@ import Tippy, {TippyProps} from '@tippyjs/react';
 import React, {useCallback, useRef, useState} from 'react';
 import styled from 'styled-components';
 
-import {RootContext} from '../';
+import {RootContext} from '..';
 
 const TippyArrow = styled.div`
   position: absolute;

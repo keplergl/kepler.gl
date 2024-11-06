@@ -2,44 +2,48 @@
 // Copyright contributors to the kepler.gl project
 
 /* eslint-disable max-statements, enzyme-deprecation/no-mount */
-import React from 'react';
-import test from 'tape';
 import {mount} from 'enzyme';
-import sinon from 'sinon';
 import cloneDeep from 'lodash.clonedeep';
+import React from 'react';
+import sinon from 'sinon';
+import test from 'tape';
+
+import {appInjector, Button, ColorPalette} from '@kepler.gl/components';
 
 import {
-  appInjector,
+  AddColorStop,
+  ALL_TYPES,
+  ArcLayerColorSelectorFactory,
+  ColorBlock,
+  ColorPaletteGroup,
+  ColorRangeSelectorFactory,
   ColorSelectorFactory,
   ColorSelectorInput,
-  ColorBlock,
-  LayerColorSelectorFactory,
-  LayerColorRangeSelectorFactory,
-  ArcLayerColorSelectorFactory,
+  CustomPaletteFactory,
+  CustomPicker,
+  DeleteColorStop,
+  EditableColorRange,
   getLayerConfiguratorProps,
   getVisConfiguratorProps,
-  SingleColorPalette,
-  ColorRangeSelector,
+  LayerColorRangeSelectorFactory,
+  LayerColorSelectorFactory,
   PaletteConfig,
-  ColorPaletteGroup,
-  ALL_TYPES,
-  ColorPalette,
-  CustomPalette,
-  CustomPicker,
-  Button,
-  Portaled
+  Portaled,
+  SingleColorPalette
 } from '@kepler.gl/components';
 
 import {COLOR_RANGES} from '@kepler.gl/constants';
 
-import {StateWFilesFiltersLayerColor, StateWTrips} from 'test/helpers/mock-state';
-import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
 import {hexToRgb} from '@kepler.gl/utils';
+import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
+import {StateWFilesFiltersLayerColor, StateWTrips} from 'test/helpers/mock-state';
 
 const ColorSelector = appInjector.get(ColorSelectorFactory);
 const LayerColorSelector = appInjector.get(LayerColorSelectorFactory);
 const LayerColorRangeSelector = appInjector.get(LayerColorRangeSelectorFactory);
 const ArcLayerColorSelector = appInjector.get(ArcLayerColorSelectorFactory);
+const ColorRangeSelector = appInjector.get(ColorRangeSelectorFactory);
+const CustomPalette = appInjector.get(CustomPaletteFactory);
 
 test('Components -> ColorSelector.render', t => {
   t.doesNotThrow(() => {
@@ -579,6 +583,7 @@ test('Components -> LayerColorRangeSelector.render -> ColorSelector -> ColorRang
     updateLayerVisConfig,
     updateLayerColorUI
   };
+
   const visConfiguratorProps = getVisConfiguratorProps(mockProps);
   let wrapper;
   t.doesNotThrow(() => {
@@ -604,12 +609,15 @@ test('Components -> LayerColorRangeSelector.render -> ColorSelector -> ColorRang
   // reversed: true }
   const cp = wrapper.find(CustomPalette);
   t.equal(cp.length, 1, 'should render 1 CustomPalette');
+  t.equal(cp.find(EditableColorRange).length, 0, 'Should not render EditableColorRange');
 
   // add step
-  t.equal(cp.find(Button).length, 3, 'should render 3 buttons');
+  t.equal(cp.find(Button).length, 2, 'should render 2 buttons');
+  t.equal(cp.find(AddColorStop).length, 8, 'Should render 8 add color buttons');
+  t.equal(cp.find(DeleteColorStop).length, 8, 'Should render 8 delete color buttons');
 
   // click add step
-  cp.find(Button).at(0).simulate('click');
+  cp.find(AddColorStop).at(0).simulate('click');
 
   t.deepEqual(
     updateLayerColorUI.args[0],
@@ -617,15 +625,19 @@ test('Components -> LayerColorRangeSelector.render -> ColorSelector -> ColorRang
       'colorRange',
       {
         customPalette: {
+          name: 'color.customPalette',
+          type: 'custom',
+          category: 'Custom',
+          reversed: true,
           colors: [
             '#7F1941',
+            '#AA0E4B',
             '#D50255',
             '#FEAD54',
             '#FEEDB1',
             '#E8FEB5',
             '#49E3CE',
             '#0198BD',
-            '#007A99',
             '#007A99'
           ]
         }
@@ -634,11 +646,31 @@ test('Components -> LayerColorRangeSelector.render -> ColorSelector -> ColorRang
     'should add color to custom palette when click add step'
   );
 
-  // click cancel
-  cp.find(Button).at(1).simulate('click');
+  // click delete step
+  cp.find(DeleteColorStop).at(1).simulate('click');
 
   t.deepEqual(
     updateLayerColorUI.args[1],
+    [
+      'colorRange',
+      {
+        customPalette: {
+          name: 'color.customPalette',
+          type: 'custom',
+          category: 'Custom',
+          reversed: true,
+          colors: ['#7F1941', '#FEAD54', '#FEEDB1', '#E8FEB5', '#49E3CE', '#0198BD', '#007A99']
+        }
+      }
+    ],
+    'should delete color to custom palette when click add step'
+  );
+
+  // click cancel
+  cp.find(Button).at(0).simulate('click');
+
+  t.deepEqual(
+    updateLayerColorUI.args[2],
     [
       'colorRange',
       {
@@ -650,7 +682,7 @@ test('Components -> LayerColorRangeSelector.render -> ColorSelector -> ColorRang
   );
 
   // click apply
-  cp.find(Button).at(2).simulate('click');
+  cp.find(Button).at(1).simulate('click');
 
   t.deepEqual(
     updateLayerColorUI.args[2],
@@ -669,9 +701,10 @@ test('Components -> LayerColorRangeSelector.render -> ColorSelector -> ColorRang
     [
       {
         colorRange: {
-          name: 'Custom Palette',
+          name: 'color.customPalette',
           type: 'custom',
           category: 'Custom',
+          reversed: true,
           colors: [
             '#7F1941',
             '#D50255',
