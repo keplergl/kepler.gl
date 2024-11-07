@@ -1,0 +1,6 @@
+dist/
+.venv/
+.conda/
+node_modules/
+__pycache__/
+build/

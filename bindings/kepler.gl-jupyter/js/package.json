@@ -1,6 +1,6 @@
 {
   "name": "keplergl-jupyter",
-  "version": "0.3.4a3",
+  "version": "0.3.4",
   "description": "This is a simple jupyter widget for kepler.gl, an advanced geo-spatial visualization tool, to render large-scale interactive maps.",
   "author": "Shan He",
   "license": "MIT",
@@ -64,7 +64,7 @@
     "webpack-stats-plugin": "^0.2.1"
   },
   "dependencies": {
-    "@jupyter-widgets/base": "^2 || ^3 || ^4.0.0",
+    "@jupyter-widgets/base": "^6",
     "@jupyterlab/builder": "^4.0.0",
     "@kepler.gl/actions": "^3.0.0",
     "@kepler.gl/components": "^3.0.0",

@@ -4,6 +4,7 @@
 import * as widgets from '@jupyter-widgets/base';
 import KeplerGlJupyter from './keplergl/kepler.gl';
 import log from './log';
+import {version} from '../package.json';
 
 // Custom Model. Custom widgets models must at least provide default values
 // for model attributes, including
@@ -20,21 +21,24 @@ import log from './log';
 
 // When serialiazing the entire widget state for embedding, only values that
 // differ from the defaults will be specified.
-
-export const KeplerGlModal = widgets.DOMWidgetModel.extend({
-  defaults: {
-    ...widgets.DOMWidgetModel.prototype.defaults(),
-    _model_name: 'KeplerGlModal',
-    _view_name: 'KeplerGlView',
-    _model_module: 'keplergl-jupyter',
-    _view_module: 'keplergl-jupyter',
-
-    data: {},
-    config: {}
+// Note: in JavaScript, class.extend does not inherently inherit static functions.
+export class KeplerGlModal extends widgets.DOMWidgetModel {
+  defaults() {
+    return {
+      ...super.defaults(),
+      _model_name: 'KeplerGlModal',
+      _model_module: 'keplergl-jupyter',
+      _model_module_version: version,
+      _view_name: 'KeplerGlView',
+      _view_module: 'keplergl-jupyter',
+      _view_module_version: version,
+      data: {},
+      config: {}
+    };
   }
-});
+}
 
-export const KeplerGlView = widgets.DOMWidgetView.extend({
+export class KeplerGlView extends widgets.DOMWidgetView {
   render() {
     log('KeplerGlModal start render');
     this.keplergl = new KeplerGlJupyter();
@@ -46,17 +50,17 @@ export const KeplerGlView = widgets.DOMWidgetView.extend({
     this.model.on('change:config', this.config_changed, this);
 
     window.dom = this.el;
-  },
+  }
 
   data_changed() {
     log('KeplerGlModal start data_changed');
 
     this.keplergl.onDataChange(this);
-  },
+  }
 
   config_changed() {
     log('KeplerGlModal start config_change');
 
     this.keplergl.onConfigChange(this);
   }
-});
+}
