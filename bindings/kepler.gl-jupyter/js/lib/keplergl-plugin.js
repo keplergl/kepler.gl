@@ -4,7 +4,6 @@
 import * as widgets from '@jupyter-widgets/base';
 import KeplerGlJupyter from './keplergl/kepler.gl';
 import log from './log';
-import {version} from '../package.json';
 
 // Custom Model. Custom widgets models must at least provide default values
 // for model attributes, including
@@ -28,10 +27,8 @@ export class KeplerGlModal extends widgets.DOMWidgetModel {
       ...super.defaults(),
       _model_name: 'KeplerGlModal',
       _model_module: 'keplergl-jupyter',
-      _model_module_version: version,
       _view_name: 'KeplerGlView',
       _view_module: 'keplergl-jupyter',
-      _view_module_version: version,
       data: {},
       config: {}
     };
