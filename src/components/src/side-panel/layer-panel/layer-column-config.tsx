@@ -2,38 +2,33 @@
 // Copyright contributors to the kepler.gl project
 
 import React, {useCallback, useMemo} from 'react';
-import styled from 'styled-components';
 
-import {ColumnPairs, LayerColumns, LayerBaseConfig} from '@kepler.gl/layers';
-import {FormattedMessage} from '@kepler.gl/localization';
-import {FieldPair, Field} from '@kepler.gl/types';
+import {LayerBaseConfig} from '@kepler.gl/layers';
+import {
+  FieldPair,
+  ColumnPairs,
+  LayerColumns,
+  ColumnLabels,
+  EnhancedFieldPair
+} from '@kepler.gl/types';
 import {toArray} from '@kepler.gl/utils';
 
 import ColumnSelectorFactory from './column-selector';
 import {MinimalField} from '../../common/field-selector';
-import {PanelLabel, SidePanelSection} from '../../common/styled-components';
+import {SidePanelSection} from '../../common/styled-components';
 
 export type LayerColumnConfigProps<FieldOption extends MinimalField> = {
   columns: LayerColumns;
   fields: FieldOption[];
-  assignColumnPairs: (key: string, pair: string) => LayerColumns;
+  assignColumnPairs: (key: string, pair: FieldPair) => LayerColumns;
   assignColumn: (key: string, field: FieldOption) => LayerColumns;
   updateLayerConfig: (newConfig: Partial<LayerBaseConfig>) => void;
+  updateLayerType?: (newType: string) => void;
   columnPairs?: ColumnPairs | null;
   fieldPairs?: FieldPair[];
-  columnLabels?: Record<string, string>;
+  columnLabels: ColumnLabels | null;
+  isActive: boolean;
 };
-
-export type EnhancedFieldPair = {
-  name: string;
-  type: 'point';
-  pair: FieldPair['pair'];
-};
-
-const TopRow = styled.div`
-  display: flex;
-  justify-content: space-between;
-`;
 
 /**
  * only provide suggested field pairs if there is a match,
@@ -48,19 +43,18 @@ function getValidFieldPairsSuggestionsForColumn(
     const columnPair = columnPairs[columnKey];
     const matchingFieldPairs = enhancedFieldPairs.filter(({pair}) => {
       return toArray(columnPair.fieldPairKey).some(fieldPairKey =>
-        pair.hasOwnProperty(fieldPairKey)
+        Object.prototype.hasOwnProperty.call(pair, fieldPairKey)
       );
     });
     return matchingFieldPairs.length > 0 ? matchingFieldPairs : null;
-  } else {
-    return null;
   }
+  return null;
 }
 
 LayerColumnConfigFactory.deps = [ColumnSelectorFactory];
 
 function LayerColumnConfigFactory(ColumnSelector: ReturnType<typeof ColumnSelectorFactory>) {
-  const LayerColumnConfig: React.FC<LayerColumnConfigProps<Field>> = ({
+  const LayerColumnConfig: React.FC<LayerColumnConfigProps<MinimalField & {fieldIdx: number}>> = ({
     columnPairs,
     fieldPairs,
     columns,
@@ -68,7 +62,8 @@ function LayerColumnConfigFactory(ColumnSelector: ReturnType<typeof ColumnSelect
     fields,
     updateLayerConfig,
     assignColumn,
-    assignColumnPairs
+    assignColumnPairs,
+    isActive
   }) => {
     const enhancedFieldPairs: EnhancedFieldPair[] | null = useMemo(
       () =>
@@ -103,14 +98,6 @@ function LayerColumnConfigFactory(ColumnSelector: ReturnType<typeof ColumnSelect
       <div>
         <SidePanelSection>
           <div className="layer-config__column">
-            <TopRow>
-              <PanelLabel>
-                <FormattedMessage id={'columns.title'} />
-              </PanelLabel>
-              <PanelLabel>
-                <FormattedMessage id="layer.required" />
-              </PanelLabel>
-            </TopRow>
             {Object.keys(columns).map(key => (
               <ColumnSelector
                 column={columns[key]}
@@ -124,6 +111,7 @@ function LayerColumnConfigFactory(ColumnSelector: ReturnType<typeof ColumnSelect
                   key
                 )}
                 onSelect={val => onUpdateColumn(key, val)}
+                isActive={isActive}
               />
             ))}
           </div>

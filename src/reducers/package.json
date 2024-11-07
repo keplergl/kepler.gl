@@ -33,9 +33,10 @@
     "@kepler.gl/actions": "3.0.0",
     "@kepler.gl/cloud-providers": "3.0.0",
     "@kepler.gl/constants": "3.0.0",
+    "@kepler.gl/deckgl-arrow-layers": "3.0.0",
     "@kepler.gl/deckgl-layers": "3.0.0",
-    "@kepler.gl/layers": "3.0.0",
     "@kepler.gl/effects": "3.0.0",
+    "@kepler.gl/layers": "3.0.0",
     "@kepler.gl/localization": "3.0.0",
     "@kepler.gl/processors": "3.0.0",
     "@kepler.gl/schemas": "3.0.0",
@@ -43,7 +44,7 @@
     "@kepler.gl/tasks": "3.0.0",
     "@kepler.gl/types": "3.0.0",
     "@kepler.gl/utils": "3.0.0",
-    "@loaders.gl/loader-utils": "^4.1.0-alpha.4",
+    "@loaders.gl/loader-utils": "^4.3.2",
     "@turf/bbox": "^6.0.1",
     "@types/lodash.clonedeep": "^4.5.7",
     "@types/lodash.flattendeep": "^4.4.7",
@@ -68,19 +69,23 @@
     "redux-actions": "^2.2.1",
     "reselect": "^4.0.0"
   },
+  "overrides": {
+    "@types/lodash": "4.17.5"
+  },
   "nyc": {
     "sourceMap": false,
     "instrument": false
-  },
-  "engines": {
-    "node": ">=18.18.2"
   },
   "maintainers": [
     "Shan He <heshan0131@gmail.com>",
     "Giuseppe Macri <gmacri@uber.com>"
   ],
+  "engines": {
+    "node": ">=18"
+  },
   "volta": {
     "node": "18.18.2",
-    "yarn": "1.22.17"
-  }
+    "yarn": "4.4.0"
+  },
+  "packageManager": "yarn@4.4.0"
 }

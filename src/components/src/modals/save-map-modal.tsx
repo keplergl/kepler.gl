@@ -61,7 +61,9 @@ const StyledSaveMapModal = styled.div.attrs({
   }
 `;
 
-const nop = _ => {};
+const nop = () => {
+  return;
+};
 const TEXT_AREA_LIGHT_STYLE = {resize: 'none'};
 
 type CharacterLimits = {
@@ -194,7 +196,7 @@ function SaveMapModalFactory() {
       if (provider) {
         onConfirm(provider);
       }
-    }, [provider]);
+    }, [onConfirm, provider]);
 
     return (
       <ImageModalContainer

@@ -14,10 +14,12 @@ import {
   preparedFilterDomain0,
   arcLayerMeta
 } from 'test/helpers/layer-utils';
-
+import testArcData, {arcFromHex, arcFromNeighbor} from 'test/fixtures/test-arc-data';
+import {StateWArcNeighbors} from 'test/helpers/mock-state';
 import {PROJECTED_PIXEL_SIZE_MULTIPLIER} from '@kepler.gl/constants';
 import {KeplerGlLayers} from '@kepler.gl/layers';
 import {copyTableAndUpdate} from '@kepler.gl/table';
+import {h3ToGeo} from 'h3-js';
 
 const {ArcLayer} = KeplerGlLayers;
 const columns = {
@@ -90,6 +92,7 @@ test('#ArcLayer -> formatLayerData', t => {
             }
           ],
           getFilterValue: () => {},
+          getFiltered: () => {},
           getSourceColor: () => {},
           getTargetColor: () => {},
           getWidth: () => {}
@@ -158,6 +161,7 @@ test('#ArcLayer -> formatLayerData', t => {
         const expectedLayerData = {
           data: [],
           getFilterValue: () => {},
+          getFiltered: () => {},
           getSourceColor: () => {},
           getTargetColor: () => {},
           getWidth: () => {}
@@ -228,6 +232,7 @@ test('#ArcLayer -> formatLayerData', t => {
             }
           ],
           getFilterValue: () => {},
+          getFiltered: () => {},
           getSourceColor: () => {},
           getTargetColor: () => {},
           getWidth: () => {}
@@ -284,6 +289,90 @@ test('#ArcLayer -> formatLayerData', t => {
           ],
           'getFilterValue should return [value, 0, 0, 0]'
         );
+      }
+    },
+    {
+      name: 'Arc data from neighbors',
+      layer: arcFromNeighbor,
+      datasets: StateWArcNeighbors.visState.datasets,
+      assert: result => {
+        const {layerData} = result;
+        const expectedLayerData = {
+          data: [
+            {
+              index: 0,
+              sourcePosition: [testArcData[0].longitude, testArcData[0].latitude, 0],
+              targetPosition: [testArcData[1].longitude, testArcData[1].latitude, 0]
+            },
+            {
+              index: 0,
+              sourcePosition: [testArcData[0].longitude, testArcData[0].latitude, 0],
+              targetPosition: [testArcData[2].longitude, testArcData[2].latitude, 0]
+            },
+            {
+              index: 1,
+              sourcePosition: [testArcData[1].longitude, testArcData[1].latitude, 0],
+              targetPosition: [testArcData[2].longitude, testArcData[2].latitude, 0]
+            }
+          ],
+          getFilterValue: () => {},
+          getFiltered: () => {},
+          getSourceColor: () => {},
+          getTargetColor: () => {},
+          getWidth: () => {}
+        };
+        // index 18, 19 does not have valid neighbors
+        t.equal(layerData.data.length, 38, 'should format 41 rows');
+
+        for (let i = 0; i < 3; i++) {
+          t.deepEqual(
+            layerData.data[i],
+            expectedLayerData.data[i],
+            'should format correct arc layerData data'
+          );
+        }
+      }
+    },
+    {
+      name: 'Arc data from hex',
+      layer: arcFromHex,
+      datasets: StateWArcNeighbors.visState.datasets,
+      assert: result => {
+        const {layerData} = result;
+        const expectedLayerData = {
+          data: [
+            {
+              index: 0,
+              sourcePosition: [...h3ToGeo(testArcData[0]['source hex_id']).reverse(), 0],
+              targetPosition: [...h3ToGeo(testArcData[0]['target hex_id']).reverse(), 0]
+            },
+            {
+              index: 1,
+              sourcePosition: [...h3ToGeo(testArcData[1]['source hex_id']).reverse(), 0],
+              targetPosition: [...h3ToGeo(testArcData[1]['target hex_id']).reverse(), 0]
+            },
+            {
+              index: 2,
+              sourcePosition: [...h3ToGeo(testArcData[2]['source hex_id']).reverse(), 0],
+              targetPosition: [...h3ToGeo(testArcData[2]['target hex_id']).reverse(), 0]
+            }
+          ],
+          getFilterValue: () => {},
+          getFiltered: () => {},
+          getSourceColor: () => {},
+          getTargetColor: () => {},
+          getWidth: () => {}
+        };
+        // index 18, 19 does not have valid neighbors
+        t.equal(layerData.data.length, 20, 'should format 20 rows');
+
+        for (let i = 0; i < 3; i++) {
+          t.deepEqual(
+            layerData.data[i],
+            expectedLayerData.data[i],
+            'should format correct arc layerData data'
+          );
+        }
       }
     }
   ];
@@ -356,7 +445,7 @@ test('#ArcLayer -> renderLayer', t => {
           }
         }
       },
-      assert: (deckLayers, layer) => {
+      assert: deckLayers => {
         t.equal(deckLayers.length, 1, 'Should create 1 deck.gl layer');
         const {props} = deckLayers[0];
         // test instancePositions

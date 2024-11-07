@@ -47,6 +47,7 @@ export const titleColorLT = '#29323C';
 export const subtextColor = '#6A7485';
 export const subtextColorLT = '#A0A7B4';
 export const subtextColorActive = '#FFFFFF';
+export const fontWhiteColor = '#54638c';
 export const panelToggleBorderColor = '#FFFFFF';
 export const panelTabWidth = '30px';
 
@@ -834,7 +835,7 @@ const secondarySwitch = css<SwitchableProps>`
 
   :before {
     ${props => props.theme.switchTrack} background: ${props =>
-  props.checked ? props.theme.switchTrackBgdActive : props.theme.secondarySwitchTrackBgd};
+      props.checked ? props.theme.switchTrackBgdActive : props.theme.secondarySwitchTrackBgd};
   }
 
   :after {
@@ -1412,6 +1413,7 @@ export const theme = {
   subtextColor,
   subtextColorLT,
   subtextColorActive,
+  fontWhiteColor,
   panelToggleBorderColor,
   panelTabWidth,
   textTruncate,
@@ -1556,6 +1558,9 @@ export const theme = {
   fieldTokenRightMargin,
   fieldTokenHeight,
   fieldTokenWidth,
+
+  // COLORS
+  BLUE2: 'rgba(85, 88, 219, 0.2)',
 
   // Effect panel
   effectPanelWidth,

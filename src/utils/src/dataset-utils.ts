@@ -344,7 +344,7 @@ export function getSampleForTypeAnalyze({
 }): RowData {
   const total = Math.min(sampleCount, rows.length);
   // const fieldOrder = fields.map(f => f.name);
-  const sample = range(0, total, 1).map(d => ({}));
+  const sample = range(0, total, 1).map(() => ({}));
 
   // collect sample data for each field
   fields.forEach((field, fieldIdx) => {
@@ -487,9 +487,10 @@ export function getFieldsFromData(data: RowData, fieldOrder: string[]): Field[] 
  * @param fieldOrder
  * @returns new field name by index
  */
-export function renameDuplicateFields(
-  fieldOrder: string[]
-): {allNames: string[]; fieldByIndex: string[]} {
+export function renameDuplicateFields(fieldOrder: string[]): {
+  allNames: string[];
+  fieldByIndex: string[];
+} {
   return fieldOrder.reduce<{allNames: string[]; fieldByIndex: string[]}>(
     (accu, field, i) => {
       const {allNames} = accu;
@@ -572,7 +573,7 @@ export function analyzerTypeToFieldType(aType: string): string {
 
 const TIME_DISPLAY = '2020-05-11 14:00';
 
-const addTimeLabel = (formats: TimeLabelFormat[]) =>
+export const addTimeLabel = (formats: TimeLabelFormat[]) =>
   formats.map(f => ({
     ...f,
     label:
@@ -589,7 +590,7 @@ export function getFieldFormatLabels(fieldType?: string): TooltipFormat[] {
   return addTimeLabel(formatLabels);
 }
 
-export function getFormatLabels(fields: TooltipFields[], fieldName: string) {
+export const getFormatLabels = (fields: TooltipFields[], fieldName: string): TooltipFormat[] => {
   const fieldType = fields.find(f => f.name === fieldName)?.type;
   return getFieldFormatLabels(fieldType);
-}
+};

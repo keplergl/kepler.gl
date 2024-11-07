@@ -20,7 +20,12 @@ import {
   appInjector
 } from '@kepler.gl/components';
 
-import {VisStateActions, MapStyleActions, UIStateActions, MapStateActions} from '@kepler.gl/actions';
+import {
+  VisStateActions,
+  MapStyleActions,
+  UIStateActions,
+  MapStateActions
+} from '@kepler.gl/actions';
 
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
 
@@ -41,7 +46,6 @@ import {InitialState} from 'test/helpers/mock-state';
 
 // Constants
 import {EXPORT_DATA_ID, EXPORT_MAP_ID, EXPORT_IMAGE_ID} from '@kepler.gl/constants';
-import {debug} from 'webpack';
 
 // default props from initial state
 const defaultProps = {
@@ -215,34 +219,31 @@ test('Components -> SidePanel -> render custom panel', t => {
     return null;
   };
 
-  MyPanels.defaultProps = {
-    getProps: props => ({
-      layers: props.layers
-    })
-  };
+  MyPanels.getProps = props => ({
+    layers: props.layers
+  });
 
   function CustomSidePanelsFactory() {
     return MyPanels;
   }
 
   function CustomSidePanelFactory(...deps) {
-    const CustomSidePanel = SidePanelFactory(...deps);
-    CustomSidePanel.defaultProps = {
-      ...CustomSidePanel.defaultProps,
-      panels: [
-        ...CustomSidePanel.defaultProps.panels,
-        {
-          id: 'rocket',
-          label: 'Rocket',
-          iconComponent: RocketIcon
-        },
-        {
-          id: 'chart',
-          label: 'Chart',
-          iconComponent: ChartIcon
-        }
-      ]
-    };
+    const SidePanel = SidePanelFactory(...deps);
+    const panels = [
+      ...SidePanel.defaultPanels,
+      {
+        id: 'rocket',
+        label: 'Rocket',
+        iconComponent: RocketIcon
+      },
+      {
+        id: 'chart',
+        label: 'Chart',
+        iconComponent: ChartIcon
+      }
+    ];
+
+    const CustomSidePanel = props => <SidePanel {...props} panels={panels} />;
     return CustomSidePanel;
   }
 
@@ -312,19 +313,12 @@ test('Components -> SidePanel -> PanelHeader', t => {
 
   // Share
   t.equal(
-    header
-      .find('.side-panel__panel-header__action')
-      .at(0)
-      .find('p')
-      .text(),
+    header.find('.side-panel__panel-header__action').at(0).find('p').text(),
     'Share',
     'should only render Save action'
   );
 
-  header
-    .find('.side-panel__panel-header__action')
-    .at(0)
-    .simulate('click');
+  header.find('.side-panel__panel-header__action').at(0).simulate('click');
 
   t.ok(showExportDropdown.calledWith('save'), 'should call toggleSidePanel with share');
 
@@ -374,54 +368,30 @@ test('Components -> SidePanel -> PanelHeader -> ExportDropDown', t => {
 
   // export image
   t.equal(
-    wrapper
-      .find(ToolbarItem)
-      .at(0)
-      .find('.toolbar-item__title')
-      .text(),
+    wrapper.find(ToolbarItem).at(0).find('.toolbar-item__title').text(),
     'Export Image',
     'Should render Export Image'
   );
 
-  wrapper
-    .find(ToolbarItem)
-    .at(0)
-    .find('.toolbar-item')
-    .simulate('click');
+  wrapper.find(ToolbarItem).at(0).find('.toolbar-item').simulate('click');
   t.ok(toggleModal.calledWith(EXPORT_IMAGE_ID), 'Should call toggleModal with EXPORT_IMAGE_ID');
 
   // export data
   t.equal(
-    wrapper
-      .find(ToolbarItem)
-      .at(1)
-      .find('.toolbar-item__title')
-      .text(),
+    wrapper.find(ToolbarItem).at(1).find('.toolbar-item__title').text(),
     'Export Data',
     'Should render Export Data'
   );
-  wrapper
-    .find(ToolbarItem)
-    .at(1)
-    .find('.toolbar-item')
-    .simulate('click');
+  wrapper.find(ToolbarItem).at(1).find('.toolbar-item').simulate('click');
   t.ok(toggleModal.calledWith(EXPORT_DATA_ID), 'Should call toggleModal with EXPORT_DATA_ID');
 
   // export map
   t.equal(
-    wrapper
-      .find(ToolbarItem)
-      .at(2)
-      .find('.toolbar-item__title')
-      .text(),
+    wrapper.find(ToolbarItem).at(2).find('.toolbar-item__title').text(),
     'Export Map',
     'Should render Export Map'
   );
-  wrapper
-    .find(ToolbarItem)
-    .at(2)
-    .find('.toolbar-item')
-    .simulate('click');
+  wrapper.find(ToolbarItem).at(2).find('.toolbar-item').simulate('click');
   t.ok(toggleModal.calledWith(EXPORT_MAP_ID), 'Should call toggleModal with EXPORT_MAP_ID');
 
   t.end();

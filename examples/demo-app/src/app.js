@@ -6,6 +6,7 @@ import AutoSizer from 'react-virtualized/dist/commonjs/AutoSizer';
 import styled, {ThemeProvider} from 'styled-components';
 import window from 'global/window';
 import {connect} from 'react-redux';
+import cloneDeep from 'lodash.clonedeep';
 
 import {theme} from '@kepler.gl/styles';
 import Banner from './components/banner';
@@ -43,8 +44,8 @@ import sampleS2Data, {config as s2MapConfig, dataId as s2DataId} from './data/sa
 import sampleAnimateTrip, {animateTripDataId} from './data/sample-animate-trip-data';
 import sampleIconCsv, {config as savedMapConfig} from './data/sample-icon-csv';
 import sampleGpsData from './data/sample-gps-data';
-
-import {processCsvData, processGeojson} from '@kepler.gl/processors';
+import sampleRowData, {config as rowDataConfig} from './data/sample-row-data';
+import {processCsvData, processGeojson, processRowObject} from '@kepler.gl/processors';
 /* eslint-enable no-unused-vars */
 
 const BannerHeight = 48;
@@ -171,26 +172,61 @@ class App extends Component {
   }
 
   _loadSampleData() {
-    this._loadPointData();
-    this._loadGeojsonData();
+    // this._loadPointData();
+    // this._loadGeojsonData();
     // this._loadTripGeoJson();
     // this._loadIconData();
     // this._loadH3HexagonData();
     // this._loadS2Data();
     // this._loadScenegraphLayer();
     // this._loadGpsData();
+    // this._loadRowData();
+  }
+
+  _loadRowData() {
+    this.props.dispatch(
+      addDataToMap({
+        datasets: [
+          {
+            info: {
+              label: 'Sample Visit Data',
+              id: 'sample_visit_data'
+            },
+            data: processRowObject(sampleRowData)
+          }
+        ],
+        config: rowDataConfig
+      })
+    );
   }
 
   _loadPointData() {
     this.props.dispatch(
       addDataToMap({
-        datasets: {
-          info: {
-            label: 'Sample Taxi Trips in New York City',
-            id: 'test_trip_data'
+        datasets: [
+          {
+            info: {
+              label: 'Sample Taxi Trips 1',
+              id: 'test_trip_data',
+              color: [255, 0, 0]
+            },
+            data: {
+              rows: sampleTripData.rows.slice(0, 20),
+              fields: cloneDeep(sampleTripData.fields)
+            }
           },
-          data: sampleTripData
-        },
+          {
+            info: {
+              label: 'Sample Taxi Trips 2',
+              id: 'test_trip_data_2',
+              color: [0, 255, 0]
+            },
+            data: {
+              rows: sampleTripData.rows.slice(5, sampleTripData.rows.length),
+              fields: cloneDeep(sampleTripData.fields)
+            }
+          }
+        ],
         options: {
           // centerMap: true,
           keepExistingConfig: true
@@ -292,11 +328,11 @@ class App extends Component {
           {
             info: {label: 'Bart Stops Geo', id: 'bart-stops-geo'},
             data: processGeojson(sampleGeojsonPoints)
-          },
-          {
-            info: {label: 'SF Zip Geo', id: 'sf-zip-geo'},
-            data: processGeojson(sampleGeojson)
           }
+          // {
+          //   info: {label: 'SF Zip Geo', id: 'sf-zip-geo'},
+          //   data: processGeojson(sampleGeojson)
+          // }
         ],
         options: {
           keepExistingConfig: true
@@ -374,7 +410,7 @@ class App extends Component {
     });
   };
 
-  _getMapboxRef = (mapbox, index) => {
+  _getMapboxRef = mapbox => {
     if (!mapbox) {
       // The ref has been unset.
       // https://reactjs.org/docs/refs-and-the-dom.html#callback-refs
@@ -383,7 +419,7 @@ class App extends Component {
       // We expect an Map created by KeplerGl's MapContainer.
       // https://visgl.github.io/react-map-gl/docs/api-reference/map
       const map = mapbox.getMap();
-      map.on('zoomend', e => {
+      map.on('zoomend', () => {
         // console.log(`Map ${index} zoom level: ${e.target.style.z}`);
       });
     }

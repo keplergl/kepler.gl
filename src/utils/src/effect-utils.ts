@@ -81,7 +81,8 @@ function isDaytime(lat, lon, timestamp) {
  */
 function updateEffect({visState, mapState, effect}) {
   if (effect.type === LIGHT_AND_SHADOW_EFFECT.type) {
-    let {timestamp, timeMode} = effect.parameters;
+    let {timestamp} = effect.parameters;
+    const {timeMode} = effect.parameters;
     const sunLight = effect.deckEffect.directionalLights[0];
 
     // set timestamp for shadow
@@ -130,7 +131,7 @@ export function validateEffectParameters(
   effectDescription.forEach(description => {
     const {defaultValue, name, type, min, max} = description;
 
-    if (!result.hasOwnProperty(name)) return;
+    if (!Object.prototype.hasOwnProperty.call(result, name)) return;
     const property = result[name];
 
     if (type === 'color' || type === 'array') {

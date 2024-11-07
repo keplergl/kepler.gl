@@ -81,12 +81,12 @@ export default function useDimensions<T extends Element>(
   nodeRef?: RefObject<T>,
   throttleDelay = DEFAULT_THROTTLE_DELAY
 ): [RefObject<T>, Dimensions | null] {
-  const ref = nodeRef ?? useRef<T>(null);
+  const ref = useRef<T>(null);
   const [size, setSize] = useState(null);
 
   useEffect(() => {
-    const {current} = ref;
-    if (!current) {
+    const {current} = ref || {};
+    if (!current || !nodeRef) {
       return;
     }
 

@@ -6,7 +6,7 @@ import styled from 'styled-components';
 
 import {rgbToHex} from '@kepler.gl/utils';
 
-import {Portaled, SingleColorPalette} from '../../../components';
+import {Portaled, SingleColorPalette} from '..';
 import {Button} from '../common/styled-components';
 
 export type SingleColorPickerProps = {

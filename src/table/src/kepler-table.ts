@@ -19,7 +19,11 @@ import {
   Filter,
   ProtoDataset,
   FilterRecord,
-  FilterDatasetOpt
+  FilterDatasetOpt,
+  RangeFieldDomain,
+  SelectFieldDomain,
+  MultiSelectFieldDomain,
+  TimeRangeFieldDomain
 } from '@kepler.gl/types';
 
 import {getGpuFilterProps, getDatasetFieldIndexForFilter} from './gpu-filter-utils';
@@ -44,18 +48,51 @@ import {
   getOrdinalDomain,
   getQuantileDomain,
   DataContainerInterface,
-  notNullorUndefined
+  notNullorUndefined,
+  FilterChanged
 } from '@kepler.gl/utils';
 
 export type GpuFilter = {
   filterRange: number[][];
-  filterValueUpdateTriggers: any;
+  filterValueUpdateTriggers: {
+    [id: string]: {name: string; domain0: number} | null;
+  };
   filterValueAccessor: (
     dc: DataContainerInterface
   ) => (
     getIndex?: (any) => number,
     getData?: (dc_: DataContainerInterface, d: any, fieldIndex: number) => any
-  ) => (d: any) => number[];
+  ) => (d: any, objectInfo?: {index: number}) => (number | number[])[];
+};
+
+export type FilterProps =
+  | NumericFieldFilterProps
+  | BooleanFieldFilterProps
+  | StringFieldFilterProps
+  | TimeFieldFilterProps;
+
+export type NumericFieldFilterProps = RangeFieldDomain & {
+  value: [number, number];
+  type: string;
+  typeOptions: string[];
+  gpu: boolean;
+};
+export type BooleanFieldFilterProps = SelectFieldDomain & {
+  type: string;
+  value: boolean;
+  gpu: boolean;
+};
+export type StringFieldFilterProps = MultiSelectFieldDomain & {
+  type: string;
+  value: string[];
+  gpu: boolean;
+};
+export type TimeFieldFilterProps = TimeRangeFieldDomain & {
+  type: string;
+  view: Filter['view'];
+  fixedDomain: boolean;
+  value: number[];
+  gpu: boolean;
 };
 
 // Unique identifier of each field
@@ -95,7 +132,7 @@ class KeplerTable {
   gpuFilter: GpuFilter;
   filterRecord?: FilterRecord;
   filterRecordCPU?: FilterRecord;
-  changedFilters?: any;
+  changedFilters?: FilterChanged;
 
   // table-injected metadata
   sortColumn?: {
@@ -180,7 +217,7 @@ class KeplerTable {
     this.filteredIndexForDomain = allIndexes;
     this.fieldPairs = findPointFieldPairs(fields);
     this.fields = fields;
-    this.gpuFilter = getGpuFilterProps([], dataId, fields);
+    this.gpuFilter = getGpuFilterProps([], dataId, fields, undefined);
     this.supportedFilterTypes = supportedFilterTypes;
     this.disableDataOperation = disableDataOperation;
   }
@@ -266,7 +303,7 @@ class KeplerTable {
       return null;
     }
     const field = this.fields[fieldIdx];
-    if (field.hasOwnProperty('filterProps')) {
+    if (Object.prototype.hasOwnProperty.call(field, 'filterProps')) {
       return field.filterProps;
     }
 
@@ -299,17 +336,15 @@ class KeplerTable {
     const filterRecord = getFilterRecord(dataId, filters, opt || {});
 
     this.filterRecord = filterRecord;
-    this.gpuFilter = getGpuFilterProps(filters, dataId, fields);
+    this.gpuFilter = getGpuFilterProps(filters, dataId, fields, this.gpuFilter);
 
-    // const newDataset = set(['filterRecord'], filterRecord, dataset);
+    this.changedFilters = diffFilters(filterRecord, oldFilterRecord);
 
     if (!filters.length) {
       this.filteredIndex = this.allIndexes;
       this.filteredIndexForDomain = this.allIndexes;
       return this;
     }
-
-    this.changedFilters = diffFilters(filterRecord, oldFilterRecord);
 
     // generate 2 sets of filter result
     // filteredIndex used to calculate layer data
@@ -541,7 +576,7 @@ export function findPointFieldPairs(fields: Field[]): FieldPair[] {
               },
               ...(altIdx > -1
                 ? {
-                    alt: {
+                    altitude: {
                       fieldIdx: altIdx,
                       value: fields[altIdx].name
                     }

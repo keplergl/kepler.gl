@@ -30,49 +30,25 @@ test('Components -> ItemSelector.render', t => {
   t.equal(wrapper.find('.item-selector__dropdown').length, 1, 'should render DropdownSelect');
   t.equal(wrapper.find(Typeahead).length, 0, 'should not render Typeahead');
   t.equal(
-    wrapper
-      .find('.item-selector__dropdown')
-      .at(0)
-      .find('.list__item__anchor')
-      .text(),
+    wrapper.find('.item-selector__dropdown').at(0).find('.list__item__anchor').text(),
     'normal',
     'should render selected value'
   );
 
   // click dropdown select
-  wrapper
-    .find('.item-selector__dropdown')
-    .at(0)
-    .simulate('click');
+  wrapper.find('.item-selector__dropdown').at(0).simulate('click');
 
   t.equal(wrapper.find(Typeahead).length, 1, 'should render Typeahead');
   t.equal(wrapper.find(DropdownList).length, 1, 'should render 1 Typeahead');
-  t.equal(
-    wrapper
-      .find(DropdownList)
-      .at(0)
-      .find(ListItem).length,
-    3,
-    'should render 3 ListItem'
-  );
+  t.equal(wrapper.find(DropdownList).at(0).find(ListItem).length, 3, 'should render 3 ListItem');
 
   t.equal(
-    wrapper
-      .find(DropdownList)
-      .at(0)
-      .find('.list__item__anchor')
-      .at(0)
-      .text(),
+    wrapper.find(DropdownList).at(0).find('.list__item__anchor').at(0).text(),
     'additive',
     'should render additive'
   );
 
-  wrapper
-    .find(DropdownList)
-    .at(0)
-    .find('.list__item')
-    .at(0)
-    .simulate('click');
+  wrapper.find(DropdownList).at(0).find('.list__item').at(0).simulate('click');
 
   t.deepEqual(onChange.args[0], ['additive'], 'should call additive');
   t.end();
@@ -81,11 +57,7 @@ test('Components -> ItemSelector.render', t => {
 test('Components -> ItemSelector.render over 100 options', t => {
   let wrapper;
   const onChange = sinon.spy();
-  const randomOptions = Array.from({length: 120}, () =>
-    Math.random()
-      .toString(16)
-      .substr(2, 8)
-  );
+  const randomOptions = Array.from({length: 120}, () => Math.random().toString(16).substr(2, 8));
 
   const props = {
     selectedItems: '',
@@ -106,28 +78,18 @@ test('Components -> ItemSelector.render over 100 options', t => {
   t.equal(wrapper.find('.item-selector__dropdown').length, 1, 'should render DropdownSelect');
   t.equal(wrapper.find(Typeahead).length, 0, 'should not render Typeahead');
   t.equal(
-    wrapper
-      .find('.item-selector__dropdown')
-      .at(0)
-      .find('.list__item__anchor')
-      .text(),
+    wrapper.find('.item-selector__dropdown').at(0).find('.list__item__anchor').text(),
     '',
     'should render no select value'
   );
 
   // click dropdown select
-  wrapper
-    .find('.item-selector__dropdown')
-    .at(0)
-    .simulate('click');
+  wrapper.find('.item-selector__dropdown').at(0).simulate('click');
 
   t.equal(wrapper.find(Typeahead).length, 1, 'should render Typeahead');
   t.equal(wrapper.find(DropdownList).length, 1, 'should render 1 Typeahead');
   t.equal(
-    wrapper
-      .find(DropdownList)
-      .at(0)
-      .find(ListItem).length,
+    wrapper.find(DropdownList).at(0).find(ListItem).length,
     100,
     'should render first 100 ListItem'
   );
@@ -157,10 +119,7 @@ test('Components -> ItemSelector.render over 100 options', t => {
   wrapper.update();
 
   t.equal(
-    wrapper
-      .find(DropdownList)
-      .at(0)
-      .find(ListItem).length,
+    wrapper.find(DropdownList).at(0).find(ListItem).length,
     120,
     'should render all 120 ListItem'
   );
@@ -173,10 +132,7 @@ test('Components -> ItemSelector.render over 100 options', t => {
 
   wrapper.update();
   t.equal(
-    wrapper
-      .find(DropdownList)
-      .at(0)
-      .find(ListItem).length,
+    wrapper.find(DropdownList).at(0).find(ListItem).length,
     120,
     'should still render all 120 ListItem'
   );

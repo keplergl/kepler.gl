@@ -84,11 +84,6 @@ type HeaderActionSectionProps = {
 
 export type LayerPanelHeaderActionSectionProps = LayerPanelHeaderProps & HeaderActionSectionProps;
 
-export const defaultProps = {
-  isDragNDropEnabled: true,
-  showRemoveLayer: true
-};
-
 const getBorderCss = status =>
   css`
     border-top: 2px solid ${({theme}) => theme.notificationColors[status]};
@@ -282,7 +277,7 @@ export function LayerPanelHeaderActionSectionFactory(
       onDuplicateLayer,
       onRemoveLayer,
       onZoomToLayer,
-      showRemoveLayer,
+      showRemoveLayer = true,
       isEditingLabel,
       // TODO: may not contain all necessary icons for all actions, e.g. actionIcons.duplicate. Need to to merge rather than replace
       actionIcons = defaultActionIcons
@@ -374,8 +369,7 @@ const defaultActionIcons = {
   enableConfig: ArrowDown,
   duplicate: Copy,
   resetIsValid: Reset,
-  crosshairs:Crosshairs
-  ,
+  crosshairs: Crosshairs
 };
 
 LayerPanelHeaderFactory.deps = [LayerTitleSectionFactory, LayerPanelHeaderActionSectionFactory];
@@ -387,7 +381,7 @@ function LayerPanelHeaderFactory(
   const LayerPanelHeader: React.FC<LayerPanelHeaderProps> = props => {
     const {
       isConfigActive,
-      isDragNDropEnabled,
+      isDragNDropEnabled = true,
       isValid,
       warning,
       label,
@@ -436,8 +430,6 @@ function LayerPanelHeaderFactory(
       </StyledLayerPanelHeader>
     );
   };
-
-  LayerPanelHeader.defaultProps = defaultProps;
 
   return LayerPanelHeader;
 }

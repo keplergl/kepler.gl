@@ -1,14 +1,16 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useState, useCallback} from 'react';
+import React, {useCallback, useMemo, useState, useEffect, CSSProperties} from 'react';
 import styled, {withTheme} from 'styled-components';
 import RangeBrushFactory, {OnBrush, RangeBrushProps} from './range-brush';
 import HistogramPlotFactory from './histogram-plot';
 import LineChartFactory, {HoverDP} from './line-chart';
-import {isTest, hasMobileWidth} from '@kepler.gl/utils';
+import {hasMobileWidth, isTest} from '@kepler.gl/utils';
+import {PLOT_TYPES} from '@kepler.gl/constants';
+import LoadingSpinner from './loading-spinner';
 import {breakPointValues} from '@kepler.gl/styles';
-import {LineChart, Filter} from '@kepler.gl/types';
+import {LineChart as LineChartType, Filter, Bins} from '@kepler.gl/types';
 import {Datasets} from '@kepler.gl/table';
 
 const StyledRangePlot = styled.div`
@@ -22,9 +24,12 @@ interface RangePlotProps {
   range: number[];
   value: number[];
   width: number;
-  plotType?: string;
-  lineChart?: LineChart;
-  histogram?: {x0: number; x1: number}[];
+  plotType: {
+    [key: string]: any;
+  };
+  lineChart?: LineChartType;
+  bins?: Bins;
+
   isEnlarged?: boolean;
   isRanged?: boolean;
   theme: any;
@@ -35,9 +40,23 @@ interface RangePlotProps {
   animationWindow?: string;
   filter?: Filter;
   datasets?: Datasets;
+
+  invertTrendColor?: boolean;
+
+  style: CSSProperties;
 }
 
+type WithPlotLoadingProps = RangePlotProps &
+  Partial<RangeBrushProps> & {
+    setFilterPlot: any;
+  };
+
 RangePlotFactory.deps = [RangeBrushFactory, HistogramPlotFactory, LineChartFactory];
+
+const isHistogramPlot = plotType => plotType?.type === PLOT_TYPES.histogram;
+const isLineChart = plotType => plotType?.type === PLOT_TYPES.lineChart;
+const hasHistogram = (plotType, bins) => isHistogramPlot(plotType) && bins;
+const hasLineChart = (plotType, lineChart) => isLineChart(plotType) && lineChart;
 
 export default function RangePlotFactory(
   RangeBrush: ReturnType<typeof RangeBrushFactory>,
@@ -45,18 +64,28 @@ export default function RangePlotFactory(
   LineChartPlot: ReturnType<typeof LineChartFactory>
 ) {
   const RangePlot = ({
+    bins,
     onBrush,
     range,
     value,
     width,
     plotType,
     lineChart,
-    histogram,
     isEnlarged,
     isRanged,
     theme,
     ...chartProps
   }: RangePlotProps & Partial<RangeBrushProps>) => {
+    const groupColors = useMemo(() => {
+      const dataIds = bins ? Object.keys(bins) : [];
+      return plotType.colorsByDataId
+        ? dataIds.reduce((acc, dataId) => {
+            acc[dataId] = plotType.colorsByDataId[dataId];
+            return acc;
+          }, {})
+        : null;
+    }, [bins, plotType.colorsByDataId]);
+
     const [brushing, setBrushing] = useState(false);
     const [hoveredDP, onMouseMove] = useState<HoverDP | null>(null);
     const [enableChartHover, setEnableChartHover] = useState(false);
@@ -119,27 +148,102 @@ export default function RangePlotFactory(
       ...chartProps
     };
 
+    return isLineChart(plotType) && lineChart ? (
+      <LineChartPlot lineChart={lineChart} {...commonProps} />
+    ) : (
+      <HistogramPlot
+        histogramsByGroup={bins}
+        colorsByGroup={groupColors}
+        range={range}
+        {...commonProps}
+      />
+    );
+  };
+
+  const RangePlotWithTheme = withTheme(RangePlot);
+
+  // a container to render spinner or message when the data is too big
+  // to generate a plot
+  const WithPlotLoading = ({
+    lineChart,
+    plotType,
+    bins,
+    setFilterPlot,
+    isEnlarged,
+    theme,
+    ...otherProps
+  }: WithPlotLoadingProps) => {
+    const [isLoading, setIsLoading] = useState(false);
+    // eslint-disable-next-line complexity
+    useEffect(() => {
+      if (!plotType && !isLoading) {
+        // if plotType is undefined. this shouldn't happen
+        setIsLoading(true);
+        setFilterPlot({
+          plotType: {
+            type: PLOT_TYPES.histogram
+          }
+        });
+      } else if (isHistogramPlot(plotType) && !bins && !isLoading) {
+        setIsLoading(true);
+        // load histogram
+        setFilterPlot({
+          plotType: {
+            type: PLOT_TYPES.histogram
+          }
+        });
+      } else if (isLineChart(plotType) && !lineChart && !isLoading) {
+        // load line chart
+        setIsLoading(true);
+        setFilterPlot({
+          plotType: {
+            type: PLOT_TYPES.lineChart
+          }
+        });
+      } else if (isLoading && (hasHistogram(plotType, bins) || hasLineChart(plotType, lineChart))) {
+        setIsLoading(false);
+      }
+    }, [plotType, bins, lineChart, setFilterPlot, isLoading, setIsLoading]);
+
+    const rangePlotStyle = useMemo(
+      () => ({
+        height: `${
+          isEnlarged
+            ? hasMobileWidth(breakPointValues)
+              ? theme.rangePlotContainerHLargePalm
+              : theme.rangePlotContainerHLarge
+            : theme.rangePlotContainerH
+        }px`
+      }),
+      [isEnlarged, theme]
+    );
+
     return (
-      <StyledRangePlot
-        style={{
-          height: `${
-            isEnlarged
-              ? hasMobileWidth(breakPointValues)
-                ? theme.rangePlotContainerHLargePalm
-                : theme.rangePlotContainerHLarge
-              : theme.rangePlotContainerH
-          }px`
-        }}
-        className="kg-range-slider__plot"
-      >
-        {plotType === 'lineChart' && lineChart ? (
-          <LineChartPlot lineChart={lineChart} {...commonProps} />
+      <StyledRangePlot style={rangePlotStyle} className="kg-range-slider__plot">
+        {isLoading ? (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '100%'
+            }}
+          >
+            <LoadingSpinner borderColor="transparent" size={40} />
+          </div>
         ) : (
-          <HistogramPlot histogram={histogram} {...commonProps} />
+          <RangePlotWithTheme
+            lineChart={lineChart}
+            bins={bins}
+            plotType={plotType}
+            isEnlarged={isEnlarged}
+            theme={theme}
+            {...otherProps}
+          />
         )}
       </StyledRangePlot>
     );
   };
 
-  return withTheme(RangePlot);
+  return withTheme(WithPlotLoading);
 }

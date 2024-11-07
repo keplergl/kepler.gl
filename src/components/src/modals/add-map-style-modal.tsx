@@ -5,7 +5,7 @@ import React, {Component} from 'react';
 import {polyfill} from 'react-lifecycles-compat';
 import classnames from 'classnames';
 import styled from 'styled-components';
-import MapGLMap, {MapRef} from 'react-map-gl/maplibre';
+import {Map, MapboxMap, MapRef} from 'react-map-gl';
 import {
   StyledModalContent,
   InputLight,
@@ -16,12 +16,12 @@ import {
 import {media} from '@kepler.gl/styles';
 
 // Utils
-import {transformRequest} from '@kepler.gl/utils';
+import {getApplicationConfig, transformRequest} from '@kepler.gl/utils';
 import {injectIntl, IntlShape} from 'react-intl';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {NO_BASEMAP_ICON} from '@kepler.gl/constants';
-import maplibregl from 'maplibre-gl';
 import {InputStyle, MapState} from '@kepler.gl/types';
+import {ActionHandler, inputMapStyle, loadCustomMapStyle} from '@kepler.gl/actions';
 
 const MapH = 190;
 const MapW = 264;
@@ -90,9 +90,9 @@ const InlineLink = styled.a`
 `;
 
 interface AddMapStyleModalProps {
-  inputMapStyle: Function;
+  inputMapStyle: ActionHandler<typeof inputMapStyle>;
   inputStyle: InputStyle;
-  loadCustomMapStyle: Function;
+  loadCustomMapStyle: ActionHandler<typeof loadCustomMapStyle>;
   mapboxApiAccessToken: string;
   mapboxApiUrl?: string;
   mapState: MapState;
@@ -126,12 +126,11 @@ function AddMapStyleModalFactory() {
     }
 
     mapRef: MapRef | null | undefined;
-    _map: maplibregl.Map | undefined;
+    _map: MapboxMap | undefined;
 
     componentDidUpdate() {
       const map = this.mapRef && this.mapRef.getMap();
       if (map && this._map !== map) {
-
         this._map = map;
 
         map.on('style.load', () => {
@@ -161,7 +160,7 @@ function AddMapStyleModalFactory() {
         ...mapState,
         baseApiUrl: mapboxApiUrl,
         mapboxAccessToken: mapboxApiAccessToken,
-        mapLib: maplibregl,
+        mapLib: getApplicationConfig().getMapLib(),
         preserveDrawingBuffer: true,
         transformRequest
       };
@@ -196,7 +195,11 @@ function AddMapStyleModalFactory() {
                   type="text"
                   value={inputStyle.url || ''}
                   onChange={({target: {value}}) =>
-                    this.props.inputMapStyle({url: value, id: 'Custom Style', icon: NO_BASEMAP_ICON})
+                    this.props.inputMapStyle({
+                      url: value,
+                      id: 'Custom Style',
+                      icon: NO_BASEMAP_ICON
+                    })
                   }
                   placeholder="e.g. https://basemaps.cartocdn.com/gl/positron-gl-style/style.json"
                 />
@@ -268,7 +271,7 @@ function AddMapStyleModalFactory() {
                   <div className="preview-image-spinner" />
                 ) : (
                   <StyledMapContainer>
-                    <MapGLMap
+                    <Map
                       {...mapProps}
                       ref={el => {
                         this.mapRef = el;

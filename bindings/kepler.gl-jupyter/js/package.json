@@ -26,7 +26,7 @@
     "start": "NODE_ENV=development webpack --config ./webpack/dev.js --mode development --watch --progress",
     "clean": "rimraf dist/ && rimraf ../keplergl/static/",
     "cleanall": "npm run clean && rimraf node_modules/",
-    "prepublish": "NODE_OPTIONS=--openssl-legacy-provider yarn build && yarn build:lab",
+    "prepublishOnly": "NODE_OPTIONS=--openssl-legacy-provider yarn build && yarn build:lab",
     "build": "NODE_OPTIONS=--openssl-legacy-provider npm run clean && npm run build:lab && webpack --config ./webpack/build.js && jupyter labextension build .",
     "build:lab": "NODE_OPTIONS=--openssl-legacy-provider rimraf babel/ && mkdir babel && babel lib --out-dir babel",
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -34,14 +34,19 @@
     "prettier": "prettier --config ./.prettierrc --print-width 80 --single-quote --write lib/**/*.js"
   },
   "devDependencies": {
-    "apache-arrow": "^13.0.0",
     "@babel/cli": "7.4.4",
-    "@babel/core": "7.4.5",
-    "@babel/plugin-proposal-class-properties": "^7.3.0",
+    "@babel/core": "^7.12.1",
+    "@babel/plugin-transform-class-properties": "^7.12.1",
+    "@babel/plugin-transform-export-namespace-from": "^7.12.1",
+    "@babel/plugin-transform-modules-commonjs": "^7.12.1",
+    "@babel/plugin-transform-optional-chaining": "^7.12.1",
+    "@babel/plugin-transform-runtime": "^7.12.1",
+    "@babel/plugin-transform-typescript": "^7.16.8",
     "@babel/preset-env": "^7.0.0",
     "@babel/preset-react": "^7.0.0",
     "@babel/preset-typescript": "^7.16.7",
     "@jupyterlab/builder": "^4.0.0",
+    "apache-arrow": "^13.0.0",
     "babel-eslint": "^9.0.0",
     "babel-loader": "^8.0.0",
     "babel-plugin-search-and-replace": "^1.0.0",
@@ -70,8 +75,8 @@
     "@kepler.gl/components": "^3.0.0",
     "@kepler.gl/processors": "^3.0.0",
     "@kepler.gl/reducers": "^3.0.0",
-    "@kepler.gl/styles": "^3.0.0",
     "@kepler.gl/schemas": "^3.0.0",
+    "@kepler.gl/styles": "^3.0.0",
     "@loaders.gl/arrow": "^4.1.0",
     "@loaders.gl/core": "^4.1.0",
     "@loaders.gl/csv": "^4.1.0",
@@ -106,9 +111,12 @@
       }
     }
   },
-  "packageManager": "yarn@1.22.17",
+  "engines": {
+    "node": ">=18"
+  },
   "volta": {
     "node": "18.18.2",
-    "yarn": "1.22.17"
-  }
+    "yarn": "4.4.0"
+  },
+  "packageManager": "yarn@4.4.0"
 }

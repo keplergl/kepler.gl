@@ -15,7 +15,10 @@
     <img src='https://app.fossa.com/api/projects/custom%2B4458%2Fgithub.com%2Fkeplergl%2Fkepler.gl.svg?type=shield' alt='Fossa' />
   </a>
   <a href="https://app.netlify.com/sites/keplergl/deploys" alt="Netlify Status">
-    <img src="https://img.shields.io/endpoint.svg?url=https%3A%2F%2Fdeveloper.oswaldlabs.com%2Fnetlify-status%2F0c9b895c-acd0-43fd-8af7-fe960181b686?style=flat" />
+    <img src="https://api.netlify.com/api/v1/badges/0c9b895c-acd0-43fd-8af7-fe960181b686/deploy-status" />
+  </a>
+  <a href='https://coveralls.io/github/keplergl/kepler.gl?branch=master'>
+    <img src='https://coveralls.io/repos/github/keplergl/kepler.gl/badge.svg?branch=master' alt='Coverage Status' />
   </a>
 </p>
 
@@ -324,7 +327,7 @@ e.g. `updateVisDataUpdater` is the updater for `ActionTypes.UPDATE_VIS_DATA` (ta
 Here is an example how you can listen to an app action `QUERY_SUCCESS` and call `updateVisDataUpdater` to load data into Kepler.Gl.
 
 ```js
-import keplerGlReducer, {visStateUpdaters} from 'kepler.gl/reducers';
+import {keplerGlReducer, visStateUpdaters} from '@kepler.gl/reducers';
 
 // Root Reducer
 const reducers = combineReducers({

@@ -25,7 +25,8 @@ export const PROPERTY_GROUPS = keyMirror({
   // for heatmap aggregation
   cell: null,
   precision: null,
-  display: null
+  display: null,
+  interaction: null
 });
 
 export const DEFAULT_LAYER_OPACITY = 0.8;
@@ -104,6 +105,21 @@ export const LAYER_VIS_CONFIGS: LayerVisConfigSettings = {
     group: PROPERTY_GROUPS.stroke,
     property: 'trailLength',
     allowCustomValue: true
+  },
+  fadeTrail: {
+    defaultValue: true,
+    type: 'boolean',
+    label: 'layerVisConfigs.fadeTrail',
+    group: PROPERTY_GROUPS.stroke,
+    property: 'fadeTrail'
+  },
+  billboard: {
+    defaultValue: false,
+    type: 'boolean',
+    label: 'layerVisConfigs.billboard',
+    description: 'layerVisConfigs.billboardDescription',
+    group: PROPERTY_GROUPS.display,
+    property: 'billboard'
   },
   // radius is actually radiusScale in deck.gl
   radius: {
@@ -451,6 +467,27 @@ export const LAYER_VIS_CONFIGS: LayerVisConfigSettings = {
     label: 'layerVisConfigs.darkModeEnabled',
     property: 'darkBaseMapEnabled',
     group: PROPERTY_GROUPS.display
+  },
+  allowHover: {
+    type: 'boolean',
+    defaultValue: true,
+    label: 'layerVisConfigs.allowHover',
+    group: PROPERTY_GROUPS.interaction,
+    property: 'allowHover'
+  },
+  showNeighborOnHover: {
+    type: 'boolean',
+    defaultValue: false,
+    label: 'layerVisConfigs.showNeighborOnHover',
+    group: PROPERTY_GROUPS.interaction,
+    property: 'showNeighborOnHover'
+  },
+  showHighlightColor: {
+    type: 'boolean',
+    defaultValue: true,
+    label: 'layerVisConfigs.showHighlightColor',
+    group: PROPERTY_GROUPS.interaction,
+    property: 'showHighlightColor'
   }
 };
 

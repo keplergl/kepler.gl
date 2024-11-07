@@ -4,7 +4,6 @@
 import React, {useCallback} from 'react';
 import classnames from 'classnames';
 import styled from 'styled-components';
-import PropTypes from 'prop-types';
 import {media} from '@kepler.gl/styles';
 import {FormattedMessage, useIntl} from 'react-intl';
 import {LoadingMethod} from './load-data-modal';
@@ -56,7 +55,9 @@ const StyledLoadDataModalTabItem = styled.div`
   }
 `;
 
-const noop = () => {};
+const noop = () => {
+  return;
+};
 
 interface ModalTabItemProps {
   currentMethod?: string;
@@ -64,6 +65,11 @@ interface ModalTabItemProps {
   toggleMethod: (method: LoadingMethod) => void;
 }
 
+interface ModalTabProps {
+  loadingMethods: LoadingMethod[];
+  toggleMethod: (method: LoadingMethod) => void;
+  currentMethod?: string;
+}
 export const ModalTabItem: React.FC<ModalTabItemProps> = ({
   currentMethod,
   method,
@@ -87,7 +93,11 @@ export const ModalTabItem: React.FC<ModalTabItemProps> = ({
 };
 
 function ModalTabsFactory() {
-  const ModalTabs = ({currentMethod, toggleMethod, loadingMethods}) => (
+  const ModalTabs: React.FC<ModalTabProps> = ({
+    currentMethod,
+    toggleMethod = noop,
+    loadingMethods = []
+  }) => (
     <ModalTab className="load-data-modal__tab">
       <div className="load-data-modal__tab__inner">
         {loadingMethods.map(method => (
@@ -101,18 +111,6 @@ function ModalTabsFactory() {
       </div>
     </ModalTab>
   );
-
-  ModalTabs.propTypes = {
-    toggleMethod: PropTypes.func.isRequired,
-    currentMethod: PropTypes.string,
-    loadingMethods: PropTypes.arrayOf(PropTypes.object)
-  };
-
-  ModalTabs.defaultProps = {
-    toggleMethod: noop,
-    currentMethod: null,
-    loadingMethods: []
-  };
 
   return ModalTabs;
 }

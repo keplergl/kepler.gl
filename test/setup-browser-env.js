@@ -21,7 +21,7 @@ mockCanvas(window);
 // // issue: https://github.com/chromaui/chromatic-cli/issues/14
 Object.defineProperty(window, 'fetch', {
   value: () =>
-    new Promise((res, rej) => {
+    new Promise(() => {
       // we just let this never resolve
     }),
   writable: true
@@ -163,3 +163,6 @@ global.IntersectionObserver = class IntersectionObserver {
     return null;
   }
 };
+
+// Undefined once bumped to node v18 in @floating-ui
+global.Node = global.Node || (() => {});

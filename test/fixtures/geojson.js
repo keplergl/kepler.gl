@@ -2,6 +2,8 @@
 // Copyright contributors to the kepler.gl project
 
 import {extent} from 'd3-array';
+import {histogramFromDomain} from '@kepler.gl/utils';
+import {BINS} from '@kepler.gl/constants';
 
 export const geoJsonDataId = 'ieukmgne';
 
@@ -272,131 +274,9 @@ export const rows = [
 // add index to properties
 export const datasetAllData = rows;
 
-export const geoJsonTripHistogram = [
-  {count: 1, x0: 4, x1: 4.5},
-  {count: 0, x0: 4.5, x1: 5},
-  {count: 0, x0: 5, x1: 5.5},
-  {count: 0, x0: 5.5, x1: 6},
-  {count: 0, x0: 6, x1: 6.5},
-  {count: 0, x0: 6.5, x1: 7},
-  {count: 0, x0: 7, x1: 7.5},
-  {count: 0, x0: 7.5, x1: 8},
-  {count: 0, x0: 8, x1: 8.5},
-  {count: 0, x0: 8.5, x1: 9},
-  {count: 0, x0: 9, x1: 9.5},
-  {count: 0, x0: 9.5, x1: 10},
-  {count: 0, x0: 10, x1: 10.5},
-  {count: 0, x0: 10.5, x1: 11},
-  {count: 1, x0: 11, x1: 11.5},
-  {count: 0, x0: 11.5, x1: 12},
-  {count: 0, x0: 12, x1: 12.5},
-  {count: 0, x0: 12.5, x1: 13},
-  {count: 0, x0: 13, x1: 13.5},
-  {count: 0, x0: 13.5, x1: 14},
-  {count: 0, x0: 14, x1: 14.5},
-  {count: 0, x0: 14.5, x1: 15},
-  {count: 0, x0: 15, x1: 15.5},
-  {count: 0, x0: 15.5, x1: 16},
-  {count: 0, x0: 16, x1: 16.5},
-  {count: 0, x0: 16.5, x1: 17},
-  {count: 0, x0: 17, x1: 17.5},
-  {count: 0, x0: 17.5, x1: 18},
-  {count: 0, x0: 18, x1: 18.5},
-  {count: 0, x0: 18.5, x1: 19},
-  {count: 0, x0: 19, x1: 19.5},
-  {count: 0, x0: 19.5, x1: 20},
-  {count: 1, x0: 20, x1: 20}
-];
-
-export const geoJsonTripHistogramEnlarged = [
-  {count: 1, x0: 4, x1: 4.2},
-  {count: 0, x0: 4.2, x1: 4.4},
-  {count: 0, x0: 4.4, x1: 4.6},
-  {count: 0, x0: 4.6, x1: 4.8},
-  {count: 0, x0: 4.8, x1: 5},
-  {count: 0, x0: 5, x1: 5.2},
-  {count: 0, x0: 5.2, x1: 5.4},
-  {count: 0, x0: 5.4, x1: 5.6},
-  {count: 0, x0: 5.6, x1: 5.8},
-  {count: 0, x0: 5.8, x1: 6},
-  {count: 0, x0: 6, x1: 6.2},
-  {count: 0, x0: 6.2, x1: 6.4},
-  {count: 0, x0: 6.4, x1: 6.6},
-  {count: 0, x0: 6.6, x1: 6.8},
-  {count: 0, x0: 6.8, x1: 7},
-  {count: 0, x0: 7, x1: 7.2},
-  {count: 0, x0: 7.2, x1: 7.4},
-  {count: 0, x0: 7.4, x1: 7.6},
-  {count: 0, x0: 7.6, x1: 7.8},
-  {count: 0, x0: 7.8, x1: 8},
-  {count: 0, x0: 8, x1: 8.2},
-  {count: 0, x0: 8.2, x1: 8.4},
-  {count: 0, x0: 8.4, x1: 8.6},
-  {count: 0, x0: 8.6, x1: 8.8},
-  {count: 0, x0: 8.8, x1: 9},
-  {count: 0, x0: 9, x1: 9.2},
-  {count: 0, x0: 9.2, x1: 9.4},
-  {count: 0, x0: 9.4, x1: 9.6},
-  {count: 0, x0: 9.6, x1: 9.8},
-  {count: 0, x0: 9.8, x1: 10},
-  {count: 0, x0: 10, x1: 10.2},
-  {count: 0, x0: 10.2, x1: 10.4},
-  {count: 0, x0: 10.4, x1: 10.6},
-  {count: 0, x0: 10.6, x1: 10.8},
-  {count: 0, x0: 10.8, x1: 11},
-  {count: 1, x0: 11, x1: 11.2},
-  {count: 0, x0: 11.2, x1: 11.4},
-  {count: 0, x0: 11.4, x1: 11.6},
-  {count: 0, x0: 11.6, x1: 11.8},
-  {count: 0, x0: 11.8, x1: 12},
-  {count: 0, x0: 12, x1: 12.2},
-  {count: 0, x0: 12.2, x1: 12.4},
-  {count: 0, x0: 12.4, x1: 12.6},
-  {count: 0, x0: 12.6, x1: 12.8},
-  {count: 0, x0: 12.8, x1: 13},
-  {count: 0, x0: 13, x1: 13.2},
-  {count: 0, x0: 13.2, x1: 13.4},
-  {count: 0, x0: 13.4, x1: 13.6},
-  {count: 0, x0: 13.6, x1: 13.8},
-  {count: 0, x0: 13.8, x1: 14},
-  {count: 0, x0: 14, x1: 14.2},
-  {count: 0, x0: 14.2, x1: 14.4},
-  {count: 0, x0: 14.4, x1: 14.6},
-  {count: 0, x0: 14.6, x1: 14.8},
-  {count: 0, x0: 14.8, x1: 15},
-  {count: 0, x0: 15, x1: 15.2},
-  {count: 0, x0: 15.2, x1: 15.4},
-  {count: 0, x0: 15.4, x1: 15.6},
-  {count: 0, x0: 15.6, x1: 15.8},
-  {count: 0, x0: 15.8, x1: 16},
-  {count: 0, x0: 16, x1: 16.2},
-  {count: 0, x0: 16.2, x1: 16.4},
-  {count: 0, x0: 16.4, x1: 16.6},
-  {count: 0, x0: 16.6, x1: 16.8},
-  {count: 0, x0: 16.8, x1: 17},
-  {count: 0, x0: 17, x1: 17.2},
-  {count: 0, x0: 17.2, x1: 17.4},
-  {count: 0, x0: 17.4, x1: 17.6},
-  {count: 0, x0: 17.6, x1: 17.8},
-  {count: 0, x0: 17.8, x1: 18},
-  {count: 0, x0: 18, x1: 18.2},
-  {count: 0, x0: 18.2, x1: 18.4},
-  {count: 0, x0: 18.4, x1: 18.6},
-  {count: 0, x0: 18.6, x1: 18.8},
-  {count: 0, x0: 18.8, x1: 19},
-  {count: 0, x0: 19, x1: 19.2},
-  {count: 0, x0: 19.2, x1: 19.4},
-  {count: 0, x0: 19.4, x1: 19.6},
-  {count: 0, x0: 19.6, x1: 19.8},
-  {count: 0, x0: 19.8, x1: 20},
-  {count: 1, x0: 20, x1: 20}
-];
-
 export const geoJsonTripFilterProps = {
   domain: [4, 20],
   fieldType: 'integer',
-  histogram: geoJsonTripHistogram,
-  enlargedHistogram: geoJsonTripHistogramEnlarged,
   step: 0.01,
   type: 'range',
   typeOptions: ['range'],
@@ -409,7 +289,6 @@ export const mergedTripFilter = {
   ...geoJsonTripFilterProps,
   animationWindow: 'free',
   dataId: [geoJsonDataId],
-  freeze: true,
   id: 'TRIPS-3',
   enabled: true,
   fixedDomain: false,
@@ -419,10 +298,16 @@ export const mergedTripFilter = {
   name: ['TRIPS'],
   fieldIdx: [4],
   value: [4, 12],
-  plotType: 'histogram',
+  plotType: {type: 'histogram'},
   yAxis: null,
-  interval: null,
-  gpuChannel: [0]
+  gpuChannel: [0],
+  bins: {
+    [geoJsonDataId]: histogramFromDomain(
+      [4, 20],
+      rows.map(r => r[4]),
+      BINS
+    )
+  }
 };
 
 export const geoJsonRateFilterProps = {
@@ -439,7 +324,6 @@ export const mergedRateFilter = {
   animationWindow: 'free',
   name: ['RATE'],
   dataId: [geoJsonDataId],
-  freeze: true,
   id: 'RATE-1',
   enabled: true,
   fixedDomain: false,
@@ -448,16 +332,14 @@ export const mergedRateFilter = {
   speed: 1,
   fieldIdx: [5],
   value: ['a'],
-  plotType: 'histogram',
-  yAxis: null,
-  interval: null
+  plotType: {
+    type: 'histogram'
+  },
+  yAxis: null
 };
 
 export const geoBounds = [
-  -122.40115971858505,
-  37.78202426695214,
-  -122.39166672864975,
-  37.79427854456892
+  -122.40115971858505, 37.78202426695214, -122.39166672864975, 37.79427854456892
 ];
 
 export const expectedDataToFeature = [

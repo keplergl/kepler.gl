@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-export {default as Base} from './base'
+export {default as Base} from './base';
 
 // eslint-disable-next-line prettier/prettier
 export type {BaseProps} from './base'
@@ -11,6 +11,7 @@ export {default as AnchorWindow} from './anchor_window';
 export {default as ArrowDown} from './arrow-down';
 export {default as ArrowDownAlt} from './arrow-down-alt';
 export {default as ArrowDownSolid} from './arrow-down-alt';
+export {default as ArrowDownFull} from './arrow-down-full';
 export {default as ArrowLeft} from './arrow-left';
 export {default as ArrowRight} from './arrow-right';
 export {default as ArrowUpSolid} from './arrow-up-solid';
@@ -40,6 +41,7 @@ export {default as FilterFunnel} from './filter-funnel';
 export {default as FreeWindow} from './free-window';
 export {default as Gear} from './gear';
 export {default as Hash} from './hash';
+export {default as Help} from './help';
 export {default as Histogram} from './histogram';
 export {default as IconWrapper} from './base';
 export {default as Info} from './info';
@@ -74,6 +76,7 @@ export {default as WarningSign} from './warning-sign';
 export {default as DrawPolygon} from './draw-polygon';
 export {default as Polygon} from './polygon';
 export {default as Rectangle} from './rectangle';
+export {default as TimelineMarker} from './timeline-marker';
 export {default as OrderByList} from './order-by-list';
 export {default as OrderByDataset} from './order-by-dataset';
 export {default as Messages} from './messages';

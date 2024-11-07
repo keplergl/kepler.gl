@@ -23,7 +23,6 @@ export function getDefaultLayerGroupVisibility({layerGroups = []}: {layerGroups:
 
 const resolver = ({
   id,
-  mapStyle,
   visibleLayerGroups = {}
 }: {
   id?: string;
@@ -44,7 +43,6 @@ const resolver = ({
  */
 export const editTopMapStyle = memoize(
   ({
-    id,
     mapStyle,
     visibleLayerGroups
   }: {
@@ -109,8 +107,9 @@ export function getStyleDownloadUrl(styleUrl, accessToken, mapboxApiUrl) {
     const styleId = styleUrl.replace('mapbox://styles/', '');
 
     // https://api.mapbox.com/styles/v1/heshan0131/cjg1bfumo1cwm2rlrjxkinfgw?pluginName=Keplergl&access_token=<token>
-    return `${mapboxApiUrl ||
-      DEFAULT_MAPBOX_API_URL}/styles/v1/${styleId}?pluginName=Keplergl&access_token=${accessToken}`;
+    return `${
+      mapboxApiUrl || DEFAULT_MAPBOX_API_URL
+    }/styles/v1/${styleId}?pluginName=Keplergl&access_token=${accessToken}`;
   }
 
   // style url not recognized
@@ -204,7 +203,9 @@ export function mergeLayerGroupVisibility(defaultLayerGroup, currentLayerGroup) 
   return Object.keys(defaultLayerGroup).reduce(
     (accu, key) => ({
       ...accu,
-      ...(currentLayerGroup.hasOwnProperty(key) ? {[key]: currentLayerGroup[key]} : {})
+      ...(Object.prototype.hasOwnProperty.call(currentLayerGroup, key)
+        ? {[key]: currentLayerGroup[key]}
+        : {})
     }),
     defaultLayerGroup
   );

@@ -105,17 +105,33 @@ function LineChartFactory() {
     timezone,
     timeFormat
   }: LineChartProps) => {
-    const {series, yDomain} = lineChart || {};
+    const {yDomain, xDomain} = lineChart || {};
+    // @ts-expect-error seems lineChart.series has ambiguous types. Requires refactoring.
+    const series: {lines: any[]; markers: any[]} = lineChart?.series;
 
+    const paddedYDomain = useMemo(
+      () =>
+        yDomain && yDomain[0] && yDomain[1]
+          ? [yDomain[0], yDomain[1] + (yDomain[1] - yDomain[0]) * 0.2]
+          : [],
+      [yDomain]
+    );
     const brushData = useMemo(() => {
-      return series && series[0] && series[0].x && yDomain && yDomain[1]
-        ? [{x: series[0].x, y: yDomain[1], customComponent: () => brushComponent}]
+      return xDomain && paddedYDomain
+        ? [
+            {
+              x: xDomain[0],
+              y: paddedYDomain[1],
+              customComponent: () => brushComponent
+            }
+          ]
         : [];
-    }, [series, yDomain, brushComponent]);
-    const hintFormatter = useMemo(() => datetimeFormatter(timezone)(timeFormat), [
-      timezone,
-      timeFormat
-    ]);
+    }, [xDomain, paddedYDomain, brushComponent]);
+
+    const hintFormatter = useMemo(
+      () => datetimeFormatter(timezone)(timeFormat),
+      [timezone, timeFormat]
+    );
 
     return (
       <LineChartWrapper style={{marginTop: `${margin.top}px`}}>
@@ -127,14 +143,19 @@ function LineChartFactory() {
           onMouseLeave={() => {
             onMouseMove(null);
           }}
+          yDomain={paddedYDomain}
+          xDomain={xDomain}
         >
           <HorizontalGridLines tickTotal={3} />
-          <LineSeries
-            style={{fill: 'none'}}
-            color={color}
-            data={series}
-            onNearestX={enableChartHover ? onMouseMove : undefined}
-          />
+          {series.lines.map((d, i) => (
+            <LineSeries
+              key={i}
+              style={{fill: 'none'}}
+              color={color}
+              data={d}
+              onNearestX={series.markers.length || !enableChartHover ? undefined : onMouseMove}
+            />
+          ))}
           <MarkSeries data={hoveredDP ? [hoveredDP] : []} color={color} />
           <CustomSVGSeries data={brushData} />
           {isEnlarged && <YAxis tickTotal={3} />}

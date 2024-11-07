@@ -4,7 +4,7 @@
 import document from 'global/document';
 import {DataContainerInterface, parseFieldValue} from '@kepler.gl/utils';
 
-const MIN_GHOST_CELL_SIZE: number = 200;
+const MIN_GHOST_CELL_SIZE = 200;
 const MIN_CELL_SIZE = 45;
 // first column have padding on the left
 const EDGE_COLUMN_PADDING = 10;

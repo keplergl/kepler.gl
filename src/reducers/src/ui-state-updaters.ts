@@ -73,10 +73,10 @@ export const DEFAULT_MODAL = ADD_DATA_ID;
  *
  * export default composedReducer;
  */
-/* eslint-disable no-unused-vars */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // @ts-ignore
 const uiStateUpdaters = null;
-/* eslint-enable no-unused-vars */
+/* eslint-enable @typescript-eslint/no-unused-vars */
 
 const DEFAULT_MAP_CONTROLS_FEATURES: MapControlItem = {
   show: true,
@@ -86,6 +86,10 @@ const DEFAULT_MAP_CONTROLS_FEATURES: MapControlItem = {
   activeMapIndex: 0
 };
 
+const DEFAULT_MAP_LEGEND_CONTROL = {
+  ...DEFAULT_MAP_CONTROLS_FEATURES,
+  disableEdit: false
+};
 /**
  * A list of map control visibility and whether is it active.
  * @memberof uiStateUpdaters
@@ -98,12 +102,15 @@ const DEFAULT_MAP_CONTROLS_FEATURES: MapControlItem = {
  * @property mapLocale Default: `{show: false, active: false}`
  * @public
  */
-export const DEFAULT_MAP_CONTROLS: MapControls = (Object.keys(MAP_CONTROLS) as Array<
-  keyof typeof MAP_CONTROLS
->).reduce(
+export const DEFAULT_MAP_CONTROLS: MapControls = (
+  Object.keys(MAP_CONTROLS) as Array<keyof typeof MAP_CONTROLS>
+).reduce(
   (final, current) => ({
     ...final,
-    [current]: DEFAULT_MAP_CONTROLS_FEATURES
+    [current]:
+      current === MAP_CONTROLS.mapLegend
+        ? DEFAULT_MAP_LEGEND_CONTROL
+        : DEFAULT_MAP_CONTROLS_FEATURES
   }),
   {} as MapControls
 );
@@ -261,7 +268,7 @@ export const INITIAL_UI_STATE: UiState = {
 export const initUiStateUpdater = (
   state: UiState,
   action: {
-    type?: typeof ActionTypes['INIT'];
+    type?: (typeof ActionTypes)['INIT'];
     payload: KeplerGlInitPayload;
   }
 ): UiState => ({

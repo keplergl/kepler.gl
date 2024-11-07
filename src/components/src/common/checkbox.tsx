@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import classnames from 'classnames';
+import pick from 'lodash.pick';
 import React, {ChangeEventHandler, Component, FocusEventHandler, ReactNode} from 'react';
 import styled from 'styled-components';
-import pick from 'lodash.pick';
-import classnames from 'classnames';
 
-function noop() {}
+function noop() {
+  return;
+}
 
 interface StyledSwitchInputProps {
   secondary?: boolean;
@@ -31,18 +33,28 @@ const HiddenInput = styled.input`
 
 interface StyledCheckboxProps {
   type?: string;
+  disabled?: boolean;
 }
 
 const StyledCheckbox = styled.div<StyledCheckboxProps>`
   display: flex;
   min-height: ${props => props.theme.switchHeight}px;
   margin-left: ${props => (props.type === 'radio' ? 0 : props.theme.switchLabelMargin)}px;
+  ${props =>
+    props.disabled
+      ? `
+    cursor: not-allowed;
+    pointer-events: none;
+    opacity: 0.5;
+  `
+      : ''}
 `;
 
 interface CheckboxProps {
   id: string;
   type?: string;
   label?: ReactNode;
+  name?: string;
   className?: string;
   value?: string | 'indeterminate';
   checked?: boolean;
@@ -105,6 +117,7 @@ export default class Checkbox extends Component<CheckboxProps> {
       <StyledCheckbox
         type={this.props.type}
         className={classnames('kg-checkbox', this.props.className)}
+        disabled={this.props.disabled}
       >
         <HiddenInput {...inputProps} />
         <LabelElement className="kg-checkbox__label" {...labelProps}>

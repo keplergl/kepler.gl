@@ -40,28 +40,16 @@ test('SaveExportDropdown', t => {
   t.equal(wrapper.find(PanelHeaderDropdown).length, 1, 'We should display 1 PanelHeaderDropdown');
   t.equal(wrapper.find(ToolbarItem).length, 4, 'We should display 4 ToolbarItems');
 
-  wrapper
-    .find('.toolbar-item')
-    .at(0)
-    .simulate('click');
+  wrapper.find('.toolbar-item').at(0).simulate('click');
   t.equal(onExportImage.called, true, 'Should have called export image callback');
 
-  wrapper
-    .find('.toolbar-item')
-    .at(1)
-    .simulate('click');
+  wrapper.find('.toolbar-item').at(1).simulate('click');
   t.equal(onExportData.called, true, 'Should have called export data callback');
 
-  wrapper
-    .find('.toolbar-item')
-    .at(2)
-    .simulate('click');
+  wrapper.find('.toolbar-item').at(2).simulate('click');
   t.equal(onExportMap.called, true, 'Should have called export map callback');
 
-  wrapper
-    .find('.toolbar-item')
-    .at(3)
-    .simulate('click');
+  wrapper.find('.toolbar-item').at(3).simulate('click');
   t.equal(onSaveMap.called, true, 'Should have called save map callback');
 
   t.end();

@@ -28,6 +28,7 @@ import {Datasets} from '@kepler.gl/table';
 type LayerBlendingSelectorProps = {
   layerBlending: string;
   updateLayerBlending: ActionHandler<typeof VisStateActions.updateLayerBlending>;
+  className?: string;
 } & WrappedComponentProps;
 
 type OverlayBlendingSelectorProps = {
@@ -55,7 +56,7 @@ type LayerManagerProps = {
 } & WrappedComponentProps;
 
 export const LayerBlendingSelector = React.memo(
-  ({layerBlending, updateLayerBlending, intl}: LayerBlendingSelectorProps) => {
+  ({layerBlending, updateLayerBlending, intl, className}: LayerBlendingSelectorProps) => {
     const labeledLayerBlendings = Object.keys(LAYER_BLENDINGS).reduce(
       (acc, current) => ({
         ...acc,
@@ -64,13 +65,13 @@ export const LayerBlendingSelector = React.memo(
       {}
     );
 
-    const onChange = useCallback(blending => updateLayerBlending(labeledLayerBlendings[blending]), [
-      updateLayerBlending,
-      labeledLayerBlendings
-    ]);
+    const onChange = useCallback(
+      blending => updateLayerBlending(labeledLayerBlendings[blending]),
+      [updateLayerBlending, labeledLayerBlendings]
+    );
 
     return (
-      <SidePanelSection>
+      <SidePanelSection className={className}>
         <PanelLabel>
           <FormattedMessage id="layerBlending.title" />
         </PanelLabel>

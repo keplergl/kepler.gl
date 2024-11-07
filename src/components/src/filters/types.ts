@@ -7,13 +7,15 @@ import {
   RangeFilter,
   SelectFilter,
   TimeRangeFilter,
-  Timeline
+  Timeline,
+  AnimationConfig
 } from '@kepler.gl/types';
 import {Layer} from '@kepler.gl/layers';
 import {
   ActionHandler,
   setFilterAnimationTime,
   setFilterAnimationWindow,
+  setTimeFilterSyncTimelineMode,
   setFilterPlot,
   toggleFilterAnimation,
   updateFilterAnimationSpeed
@@ -33,15 +35,20 @@ export type TopSectionWrapperProps = {
 export type RangeFilterProps = {
   filter: RangeFilter;
   setFilter: (v: number[]) => void;
+  setFilterPlot?: ActionHandler<typeof setFilterPlot>;
 };
 
 export type TimeRangeFilterProps = {
+  idx: number;
   filter: TimeRangeFilter;
   isAnimatable: boolean;
   hideTimeTitle: boolean;
   setFilter: (v: number[]) => void;
+  setFilterPlot: ActionHandler<typeof setFilterPlot>;
   toggleAnimation: () => void;
   timeline: Timeline;
+  datasets: Datasets;
+  layers: readonly Layer[];
 };
 
 export type SingleSelectFilterProps = {
@@ -60,7 +67,7 @@ export type TimeWidgetTopProps = {
   filter: Filter;
   readOnly: boolean;
   datasets: Datasets;
-  setFilterPlot: ActionHandler<typeof setFilterPlot>;
+  setFilterPlot: (newProp, valueIndex?: number) => void;
   index: number;
   onClose: () => void;
   onToggleMinify: () => void;
@@ -68,6 +75,7 @@ export type TimeWidgetTopProps = {
 };
 
 export type TimeWidgetProps = {
+  layers: Layer[];
   datasets: Datasets;
   filter: TimeRangeFilter;
   index: number;
@@ -76,10 +84,13 @@ export type TimeWidgetProps = {
   isAnimatable: boolean;
   resetAnimation: () => void;
   onClose: () => void;
+  onToggleMinify: () => void;
   setFilterAnimationTime: ActionHandler<typeof setFilterAnimationTime>;
   updateAnimationSpeed: ActionHandler<typeof updateFilterAnimationSpeed>;
   toggleAnimation: ActionHandler<typeof toggleFilterAnimation>;
   setFilterPlot: ActionHandler<typeof setFilterPlot>;
   setFilterAnimationWindow: ActionHandler<typeof setFilterAnimationWindow>;
+  setFilterSyncTimelineMode: ActionHandler<typeof setTimeFilterSyncTimelineMode>;
   timeline: Timeline;
+  animationConfig: AnimationConfig;
 };

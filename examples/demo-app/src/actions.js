@@ -2,12 +2,14 @@
 // Copyright contributors to the kepler.gl project
 
 import {push} from 'react-router-redux';
-import {request, text as requestText, json as requestJson} from 'd3-request';
+import {fetch} from 'global';
+
 import {loadFiles, toggleModal} from '@kepler.gl/actions';
 import {load} from '@loaders.gl/core';
 import {CSVLoader} from '@loaders.gl/csv';
-import {ArrowLoader} from '@loaders.gl/arrow';
+import {GeoArrowLoader} from '@loaders.gl/arrow';
 import {_GeoJSONLoader as GeoJSONLoader} from '@loaders.gl/json';
+import {ParquetWasmLoader} from '@loaders.gl/parquet';
 
 import {
   LOADING_SAMPLE_ERROR_MESSAGE,
@@ -72,7 +74,7 @@ export function setLoadingMapStatus(isMapLoading) {
  *
  * @param {*} param0
  */
-export function onExportFileSuccess({response = {}, provider, options}) {
+export function onExportFileSuccess({provider, options}) {
   return dispatch => {
     // if isPublic is true, use share Url
     if (options.isPublic && provider.getShareUrl) {
@@ -93,28 +95,14 @@ export function onLoadCloudMapSuccess({provider, loadParams}) {
     }
   };
 }
-/**
- * this method detects whther the response status is < 200 or > 300 in case the error
- * is not caught by the actualy request framework
- * @param response the response
- * @returns {{status: *, message: (*|{statusCode}|Object)}}
- */
-function detectResponseError(response) {
-  if (response.statusCode && (response.statusCode < 200 || response.statusCode >= 300)) {
-    return {
-      status: response.statusCode,
-      message: response.body || response.message || response
-    };
-  }
-}
 
 // This can be moved into Kepler.gl to provide ability to load data from remote URLs
 /**
  * The method is able to load both data and kepler.gl files.
- * It uses loadFile action to dispatcha and add new datasets/configs
+ * It uses loadFile action to dispatch and add new datasets/configs
  * to the kepler.gl instance
  * @param options
- * @param {string} options.dataUrl the URL to fetch data from. Current supoprted file type json,csv, kepler.json
+ * @param {string} options.dataUrl the URL to fetch data from. Current supported file type json,csv, kepler.json
  * @returns {Function}
  */
 export function loadRemoteMap(options) {
@@ -149,21 +137,18 @@ function loadRemoteRawData(url) {
     // TODO: we should return reject with an appropriate error
     return Promise.resolve(null);
   }
-
-  return new Promise((resolve, reject) => {
-    request(url, (error, result) => {
-      if (error) {
-        reject(error);
-        return;
+  return fetch(url)
+    .then(resp => {
+      if (!resp.ok) {
+        return resp.text().then(text => {
+          throw new Error(text);
+        });
       }
-      const responseError = detectResponseError(result);
-      if (responseError) {
-        reject(responseError);
-        return;
-      }
-      resolve([result.response, url]);
+      return resp.blob();
+    })
+    .then(data => {
+      return [data, url];
     });
-  });
 }
 
 // The following methods are only used to load SAMPLES
@@ -244,19 +229,13 @@ function loadRemoteConfig(url) {
     return Promise.resolve(null);
   }
 
-  return new Promise((resolve, reject) => {
-    requestJson(url, (error, config) => {
-      if (error) {
-        reject(error);
-        return;
-      }
-      const responseError = detectResponseError(config);
-      if (responseError) {
-        reject(responseError);
-        return;
-      }
-      resolve(config);
-    });
+  return fetch(url).then(resp => {
+    if (!resp.ok) {
+      return resp.text().then(text => {
+        throw new Error(text);
+      });
+    }
+    return resp.json();
   });
 }
 
@@ -271,20 +250,18 @@ function loadRemoteData(url) {
     return Promise.resolve(null);
   }
 
-  let requestMethod = requestText;
-  if (url.includes('.json') || url.includes('.geojson')) {
-    requestMethod = requestJson;
-  }
-
   // Load data
   return new Promise(resolve => {
-    const loaders = [CSVLoader, ArrowLoader, GeoJSONLoader];
+    const loaders = [CSVLoader, GeoArrowLoader, ParquetWasmLoader, GeoJSONLoader];
     const loadOptions = {
+      csv: {
+        shape: 'object-row-table'
+      },
       arrow: {
         shape: 'arrow-table'
       },
-      csv: {
-        shape: 'object-row-table'
+      parquet: {
+        shape: 'arrow-table'
       },
       metadata: true
     };
@@ -301,30 +278,31 @@ function loadRemoteData(url) {
  */
 export function loadSampleConfigurations(sampleMapId = null) {
   return dispatch => {
-    requestJson(MAP_CONFIG_URL, (error, samples) => {
-      if (error) {
-        const {target = {}} = error;
-        const {status, responseText} = target;
-        dispatch(
-          loadRemoteResourceError(
-            {status, message: `${responseText} - ${LOADING_SAMPLE_LIST_ERROR_MESSAGE}`},
-            MAP_CONFIG_URL
-          )
-        );
-      } else {
-        const responseError = detectResponseError(samples);
-        if (responseError) {
-          dispatch(loadRemoteResourceError(responseError, MAP_CONFIG_URL));
-          return;
+    fetch(MAP_CONFIG_URL)
+      .then(response => {
+        if (!response.ok) {
+          return response.text().then(text => {
+            throw new Error(text);
+          });
+        } else {
+          return response.json();
         }
-
+      })
+      .then(samples => {
         dispatch(loadMapSampleFile(samples));
         // Load the specified map
         const map = sampleMapId && samples.find(s => s.id === sampleMapId);
         if (map) {
           dispatch(loadSample(map, false));
         }
-      }
-    });
+      })
+      .catch(error => {
+        dispatch(
+          loadRemoteResourceError(
+            {message: `${error} - ${LOADING_SAMPLE_LIST_ERROR_MESSAGE}`},
+            MAP_CONFIG_URL
+          )
+        );
+      });
   };
 }

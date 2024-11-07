@@ -3,13 +3,13 @@
 
 import {ScenegraphLayer as DeckScenegraphLayer} from '@deck.gl/mesh-layers';
 import {load} from '@loaders.gl/core';
-import {GLTFLoader} from '@loaders.gl/gltf';
+import {GLTFLoader, postProcessGLTF} from '@loaders.gl/gltf';
 
-import Layer, {LayerBaseConfig, LayerColumn} from '../base-layer';
+import Layer, {LayerBaseConfig} from '../base-layer';
 import ScenegraphLayerIcon from './scenegraph-layer-icon';
 import ScenegraphInfoModalFactory from './scenegraph-info-modal';
 import {LAYER_VIS_CONFIGS, ColorRange} from '@kepler.gl/constants';
-import {Merge, VisConfigColorRange, VisConfigNumber} from '@kepler.gl/types';
+import {Merge, VisConfigColorRange, VisConfigNumber, LayerColumn} from '@kepler.gl/types';
 import {default as KeplerTable} from '@kepler.gl/table';
 import {DataContainerInterface} from '@kepler.gl/utils';
 
@@ -48,21 +48,25 @@ export type ScenegraphLayerData = {position: number[]; index: number};
 export const scenegraphRequiredColumns: ['lat', 'lng'] = ['lat', 'lng'];
 export const scenegraphOptionalColumns: ['altitude'] = ['altitude'];
 
-function fetch(url, {propName, layer}: {propName?: string; layer?: any} = {}) {
+export function fetchGltf(url, {propName, layer}: {propName?: string; layer?: any} = {}) {
   if (propName === 'scenegraph') {
-    return load(url, GLTFLoader, layer.getLoadOptions());
+    return load(url, GLTFLoader, layer.getLoadOptions()).then(gltfWithBuffers =>
+      postProcessGLTF(gltfWithBuffers)
+    );
   }
 
-  return fetch(url).then(response => response.json());
+  return fetchGltf(url).then(response => response.json());
 }
 
-export const scenegraphPosAccessor = ({lat, lng, altitude}: ScenegraphLayerColumnsConfig) => (
-  dc: DataContainerInterface
-) => d => [
-  dc.valueAt(d.index, lng.fieldIdx),
-  dc.valueAt(d.index, lat.fieldIdx),
-  altitude && altitude.fieldIdx > -1 ? dc.valueAt(d.index, altitude.fieldIdx) : 0
-];
+export const scenegraphPosAccessor =
+  ({lat, lng, altitude}: ScenegraphLayerColumnsConfig) =>
+  (dc: DataContainerInterface) =>
+  d =>
+    [
+      dc.valueAt(d.index, lng.fieldIdx),
+      dc.valueAt(d.index, lat.fieldIdx),
+      altitude && altitude.fieldIdx > -1 ? dc.valueAt(d.index, altitude.fieldIdx) : 0
+    ];
 
 export const scenegraphVisConfigs: {
   opacity: 'opacity';
@@ -148,7 +152,7 @@ export default class ScenegraphLayer extends Layer {
     };
   }
 
-  calculateDataAttribute({dataContainer, filteredIndex}: KeplerTable, getPosition) {
+  calculateDataAttribute({filteredIndex}: KeplerTable, getPosition) {
     const data: ScenegraphLayerData[] = [];
 
     for (let i = 0; i < filteredIndex.length; i++) {
@@ -199,7 +203,7 @@ export default class ScenegraphLayer extends Layer {
         // gpu data filtering is not supported at the moment in scenegraphLayer https://github.com/visgl/deck.gl/issues/8099
         extensions: [],
         ...data,
-        fetch,
+        fetch: fetchGltf,
         scenegraph: this.config.visConfig.scenegraph || DEFAULT_MODEL,
         sizeScale,
         getTranslation: DEFAULT_TRANSITION,

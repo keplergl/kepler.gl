@@ -19,14 +19,18 @@ const StyledMapControlPanel = styled.div`
   }
 `;
 
+type StyledMapControlPanelContentProps = {
+  isExport?: boolean;
+};
+
 const StyledMapControlPanelContent = styled.div.attrs({
   className: 'map-control__panel-content'
-})`
+})<StyledMapControlPanelContentProps>`
   ${props => props.theme.dropdownScrollBar};
   max-height: 500px;
   min-height: 100px;
   min-width: ${props => props.theme.mapControl.width}px;
-  overflow: overlay;
+  overflow: ${props => (props.isExport ? 'hidden' : 'overlay')};
 `;
 
 type MapControlPanelHeaderProps = {
@@ -46,6 +50,7 @@ const StyledMapControlPanelHeader = styled.div.attrs({
   color: ${props => props.theme.titleTextColor};
   position: relative;
   box-sizing: border-box;
+  align-items: center;
 
   button {
     width: 18px;
@@ -97,14 +102,14 @@ const StyledIcon = styled(IconRoundSmall)`
   :hover {
     cursor: pointer;
     background-color: transparent;
-    color: ${props => props.theme.linkBtnColor};
+    color: ${props => props.theme.floatingBtnActColor};
   }
 `;
 
 export type MapControlPanelProps = {
   header?: string;
   scale?: number;
-  onClick: React.MouseEventHandler<HTMLDivElement>;
+  onClick?: React.MouseEventHandler<HTMLDivElement>;
   onPinClick?: React.MouseEventHandler<HTMLDivElement>;
   pinnable?: boolean;
   disableClose?: boolean;
@@ -198,7 +203,9 @@ function MapControlPanelFactory() {
               </>
             )}
           </StyledMapControlPanelHeader>
-          <StyledMapControlPanelContent>{children}</StyledMapControlPanelContent>
+          <StyledMapControlPanelContent isExport={isExport}>
+            {children}
+          </StyledMapControlPanelContent>
         </StyledMapControlPanel>
       );
     }

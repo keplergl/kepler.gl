@@ -3,11 +3,12 @@
 
 import React, {ComponentType} from 'react';
 import styled from 'styled-components';
+import classnames from 'classnames';
 import PanelHeaderActionFactory from '../../side-panel/panel-header-action';
 import {Trash} from '../../common/icons';
 import {createLinearGradient} from '@kepler.gl/utils';
 import {StyledPanelHeader, StyledPanelHeaderProps} from '../../common/styled-components';
-import {RGBColor, Filter} from '@kepler.gl/types';
+import {RGBColor, Filter, Field} from '@kepler.gl/types';
 import {KeplerTable} from '@kepler.gl/table';
 
 interface StyledFilterHeaderProps extends StyledPanelHeaderProps {
@@ -44,6 +45,8 @@ export type FilterPanelHeaderProps = {
   actionIcons?: {
     delete: ComponentType;
   };
+  allAvailableFields?: Field[];
+  idx?: number;
   children: React.ReactNode;
 };
 
@@ -57,13 +60,14 @@ function FilterPanelHeaderFactory(
   };
   const FilterPanelHeader: React.FC<FilterPanelHeaderProps> = ({
     children,
+    className = '',
     datasets,
     filter,
     removeFilter,
     actionIcons = defaultActionIcons
   }: FilterPanelHeaderProps) => (
     <StyledFilterHeader
-      className="filter-panel__header"
+      className={classnames('filter-panel__header', className)}
       $labelRCGColorValues={datasets.map((d: KeplerTable) => d.color)}
     >
       <StyledChildrenContainer>{children}</StyledChildrenContainer>

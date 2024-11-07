@@ -62,10 +62,7 @@ test('Map Popover - render', t => {
   );
 
   // click pin
-  wrapper
-    .find('.popover-pin')
-    .at(0)
-    .simulate('click');
+  wrapper.find('.popover-pin').at(0).simulate('click');
   t.ok(onClose.called, 'should call onClose when click pin');
   // render coordinate
   wrapper.setProps({
@@ -74,30 +71,9 @@ test('Map Popover - render', t => {
     )
   });
   t.equal(wrapper.find('CoordinateInfo').length, 1, 'Should render CoordinateInfo');
-  t.equal(
-    wrapper
-      .find('.row__value')
-      .at(0)
-      .text(),
-    '-31.123457,',
-    'should render lat'
-  );
-  t.equal(
-    wrapper
-      .find('.row__value')
-      .at(1)
-      .text(),
-    '127.123457,',
-    'should render longitude'
-  );
-  t.equal(
-    wrapper
-      .find('.row__value')
-      .at(2)
-      .text(),
-    '12.1z',
-    'should render zoom'
-  );
+  t.equal(wrapper.find('.row__value').at(0).text(), '-31.123457,', 'should render lat');
+  t.equal(wrapper.find('.row__value').at(1).text(), '127.123457,', 'should render longitude');
+  t.equal(wrapper.find('.row__value').at(2).text(), '12.1z', 'should render zoom');
 
   t.end();
 });
@@ -125,18 +101,12 @@ test('Map Popover - render with layerHoverProp', t => {
   ];
   for (let i = 0; i < 5; i++) {
     t.equal(
-      rows
-        .at(i)
-        .find('.row__name')
-        .text(),
+      rows.at(i).find('.row__name').text(),
       expectedTooltips[i][0],
       'row name should be correct'
     );
     t.equal(
-      rows
-        .at(i)
-        .find('.row__value')
-        .text(),
+      rows.at(i).find('.row__value').text(),
       expectedTooltips[i][1],
       'row value should be correct'
     );
@@ -172,10 +142,7 @@ test('Map Popover - render with geojsonLayerHoverProp', t => {
   t.equal(wrapper.find('.primary-label').length, 1, 'Should display 1 primary label');
 
   // click select geometry
-  wrapper
-    .find('.select-geometry')
-    .at(0)
-    .simulate('click');
+  wrapper.find('.select-geometry').at(0).simulate('click');
 
   t.ok(setSelectedFeature.called, 'should call setSelectedFeature when click select geometry');
   t.ok(onSetFeatures.called, 'should call onSetFeatures when click select geometry');

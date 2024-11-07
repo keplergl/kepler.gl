@@ -88,7 +88,6 @@ test('GeocoderPanel - render', t => {
           ],
           rows: [[55, 1, 'place', 'mock']]
         },
-        id: 'geocoder_dataset',
         info: {
           hidden: true,
           id: 'geocoder_dataset',
@@ -168,7 +167,7 @@ test('GeocoderPanel - render', t => {
   const actualDatasets = updateVisData.args[0][0];
   const mockDatasets = mockPayload[0];
 
-  mockDatasets.forEach((mockDataset, index) => {
+  mockDatasets.forEach(mockDataset => {
     const {data: mockDatasetData, ...restMockDataset} = mockDataset;
     const {data: actualDatasetData, ...restActualDataset} = actualDatasets[0];
     cmpDatasetData(t, mockDatasetData, actualDatasetData, mockDataset.id);

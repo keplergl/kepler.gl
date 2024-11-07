@@ -43,7 +43,7 @@ const StyleSwitch = styled.div`
   border: 1px solid mediumseagreen;
 `;
 
-function App(props) {
+function App() {
   const [customTheme, setTheme] = useState(false);
   const [windowDimension, setDimension] = useState({
     width: window.innerWidth,

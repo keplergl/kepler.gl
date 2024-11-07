@@ -27,7 +27,6 @@ import MapManagerFactory from './side-panel/map-manager';
 import CustomPanelsFactory from './side-panel/custom-panel';
 
 import styled from 'styled-components';
-import get from 'lodash.get';
 import {SidePanelProps, SidePanelItem} from './types';
 
 export const StyledSidePanelContent = styled.div`
@@ -84,16 +83,20 @@ export default function SidePanelFactory(
   };
 
   // We should defined sidebar panels here but keeping them for backward compatible
-  const fullPanels: SidePanelItem[] = SIDEBAR_PANELS.map(component => ({
+  const defaultSidePanels: SidePanelItem[] = SIDEBAR_PANELS.map(component => ({
     ...component,
     component: SIDEBAR_COMPONENTS[component.id],
     iconComponent: SIDEBAR_ICONS[component.id]
   }));
 
-  const getCustomPanelProps = get(CustomPanels, ['defaultProps', 'getProps']) || (() => ({}));
+  const fullPanels = [...defaultSidePanels, ...(CustomPanels.panels || [])];
+
+  const getCustomPanelProps = CustomPanels.getProps || (() => ({}));
 
   // eslint-disable-next-line max-statements
-  const SidePanel: React.FC<SidePanelProps> = (props: SidePanelProps) => {
+  const SidePanel: React.FC<SidePanelProps> & {defaultPanels: SidePanelProps['panels']} = (
+    props: SidePanelProps
+  ) => {
     const {
       appName,
       appWebsite,
@@ -107,7 +110,7 @@ export default function SidePanelFactory(
       layerOrder,
       interactionConfig,
       panels = fullPanels,
-      mapInfo,
+      mapInfo = {},
       mapSaved,
       mapStateActions,
       mapStyle,
@@ -128,10 +131,10 @@ export default function SidePanelFactory(
 
     const isOpen = Boolean(activeSidePanel);
 
-    const _onOpenOrClose = useCallback(() => toggleSidePanel(activeSidePanel ? '' : 'layer'), [
-      activeSidePanel,
-      toggleSidePanel
-    ]);
+    const _onOpenOrClose = useCallback(
+      () => toggleSidePanel(activeSidePanel ? '' : 'layer'),
+      [activeSidePanel, toggleSidePanel]
+    );
 
     const onClickExportImage = useCallback(() => toggleModal(EXPORT_IMAGE_ID), [toggleModal]);
     const onClickExportData = useCallback(() => toggleModal(EXPORT_DATA_ID), [toggleModal]);
@@ -157,12 +160,15 @@ export default function SidePanelFactory(
     const onShowAddMapStyleModal = useCallback(() => toggleModal(ADD_MAP_STYLE_ID), [toggleModal]);
     const onRemoveDataset = useCallback(dataId => openDeleteModal(dataId), [openDeleteModal]);
 
-    const currentPanel = useMemo(() => panels.find(({id}) => id === activeSidePanel) || null, [
-      activeSidePanel,
-      panels
-    ]);
+    const currentPanel = useMemo(
+      () => panels.find(({id}) => id === activeSidePanel) || null,
+      [activeSidePanel, panels]
+    );
 
-    const customPanelProps = useMemo(() => getCustomPanelProps(props), [props]);
+    const customPanelProps = useMemo(() => getCustomPanelProps(props), [props]) as Record<
+      string,
+      any
+    >;
     const PanelComponent = currentPanel?.component;
 
     return (
@@ -238,10 +244,6 @@ export default function SidePanelFactory(
     );
   };
 
-  SidePanel.defaultProps = {
-    panels: fullPanels,
-    mapInfo: {}
-  };
-
+  SidePanel.defaultPanels = fullPanels;
   return SidePanel;
 }

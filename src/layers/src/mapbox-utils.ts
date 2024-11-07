@@ -141,8 +141,8 @@ function updateSourceData(map, sourceId, data) {
  */
 export function geoJsonFromData(
   filteredIndex: number[] = [],
-  getGeometry: {({index: number}): any},
-  getProperties: {({index: number}): any} = d => {}
+  getGeometry: (arg: {index: number}) => any,
+  getProperties: (arg: {index: number}) => object
 ) {
   const geojson: {type: string; features: Feature[]} = {
     type: 'FeatureCollection',
@@ -184,13 +184,13 @@ export function gpuFilterToMapboxFilter(gpuFilter) {
 
   // [">=", key, value]
   // ["<=", key, value]
-  const expressions = Object.values(filterValueUpdateTriggers).reduce(
-    (accu: any[], name, i) =>
-      name
+  const expressions = Object.values(filterValueUpdateTriggers as ({name: string} | null)[]).reduce(
+    (accu: any[], gpu, i) =>
+      gpu?.name
         ? [
             ...accu,
-            ['>=', prefixGpuField(name), filterRange[i][0]],
-            ['<=', prefixGpuField(name), filterRange[i][1]]
+            ['>=', prefixGpuField(gpu.name), filterRange[i][0]],
+            ['<=', prefixGpuField(gpu.name), filterRange[i][1]]
           ]
         : accu,
     condition

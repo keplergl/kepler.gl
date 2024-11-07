@@ -160,7 +160,7 @@ export const _updateProperty = (state, id, nextState) =>
  * A set of helpers to forward dispatch actions to a specific instance reducer
  * @public
  */
-/* eslint-disable no-unused-vars */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // @ts-ignore
 const forwardActions = null;
-/* eslint-enable no-unused-vars */
+/* eslint-enable @typescript-eslint/no-unused-vars */

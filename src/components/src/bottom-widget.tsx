@@ -5,7 +5,7 @@ import React, {forwardRef, useMemo, useCallback} from 'react';
 import styled, {withTheme} from 'styled-components';
 
 import {FILTER_VIEW_TYPES} from '@kepler.gl/constants';
-import {hasPortableWidth, isSideFilter} from '@kepler.gl/utils';
+import {hasPortableWidth, isSideFilter, mergeFilterWithTimeline} from '@kepler.gl/utils';
 import {media, breakPointValues} from '@kepler.gl/styles';
 import {TimeRangeFilter} from '@kepler.gl/types';
 
@@ -84,12 +84,15 @@ export default function BottomWidgetFactory(
     const isOpen = Boolean(activeSidePanel);
 
     const enlargedFilterIdx = useMemo(() => filters.findIndex(f => !isSideFilter(f)), [filters]);
-
-    const isMobile = hasPortableWidth(breakPointValues);
-
     const animatedFilterIdx = useMemo(() => filters.findIndex(f => f.isAnimating), [filters]);
     const animatedFilter = animatedFilterIdx > -1 ? filters[animatedFilterIdx] : null;
+    // we need to hide layer timeline when filter is synced and not enlarged
+    const isTimelineLinkedWithFilter = useMemo(
+      () => (filters as TimeRangeFilter[]).some(f => f.syncedWithLayerTimeline),
+      [filters]
+    );
 
+    const isMobile = useMemo(() => hasPortableWidth(breakPointValues), []);
     const isLegendPinned =
       uiState.mapControls?.mapLegend?.show && uiState.mapControls?.mapLegend?.active;
     const spaceForLegendWidth = isLegendPinned
@@ -98,8 +101,10 @@ export default function BottomWidgetFactory(
         theme.bottomWidgetPaddingRight
       : 0;
 
-    const enlargedFilterWidth =
-      (isOpen && !isMobile ? containerW - sidePanelWidth : containerW) - spaceForLegendWidth;
+    const enlargedFilterWidth = useMemo(
+      () => (!isMobile && isOpen ? containerW - sidePanelWidth : containerW) - spaceForLegendWidth,
+      [isMobile, isOpen, containerW, sidePanelWidth, spaceForLegendWidth]
+    );
 
     // show playback control if layers contain trip layer & at least one trip layer is visible
     const animatableLayer = useMemo(
@@ -108,8 +113,11 @@ export default function BottomWidgetFactory(
       [layers]
     );
 
-    const readyToAnimation =
-      Array.isArray(animationConfig.domain) && Number.isFinite(animationConfig.currentTime);
+    const readyToAnimation = useMemo(
+      () => Array.isArray(animationConfig.domain) && Number.isFinite(animationConfig.currentTime),
+      [animationConfig.domain, animationConfig.currentTime]
+    );
+
     // if animation control is showing, hide time display in time slider
     const showFloatingTimeDisplay = !animatableLayer.length;
     const showAnimationControl =
@@ -118,11 +126,34 @@ export default function BottomWidgetFactory(
 
     // if filter is not animating, pass in enlarged filter here because
     // animation controller needs to call reset on it
-    const filter = (animatedFilter as TimeRangeFilter) || filters[enlargedFilterIdx];
+    const filter = useMemo(
+      () => (animatedFilter as TimeRangeFilter) || filters[enlargedFilterIdx],
+      [animatedFilter, filters, enlargedFilterIdx]
+    );
+
+    // we merge filter and timeline if filter is synced
+    const {filter: enhancedFilter, animationConfig: enhancedAnimationConfig} = useMemo(
+      () =>
+        filter?.syncedWithLayerTimeline
+          ? mergeFilterWithTimeline(filter, animationConfig)
+          : {filter, animationConfig},
+      [filter, animationConfig]
+    );
 
     const onClose = useCallback(
       () => visStateActions.setFilterView(enlargedFilterIdx, FILTER_VIEW_TYPES.side),
       [visStateActions, enlargedFilterIdx]
+    );
+
+    const onToggleMinify = useCallback(
+      () =>
+        visStateActions.setFilterView(
+          enlargedFilterIdx,
+          filter.view === FILTER_VIEW_TYPES.enlarged
+            ? FILTER_VIEW_TYPES.minified
+            : FILTER_VIEW_TYPES.enlarged
+        ),
+      [enlargedFilterIdx, visStateActions, filter]
     );
 
     return (
@@ -133,27 +164,29 @@ export default function BottomWidgetFactory(
         hasPadding={showAnimationControl || showTimeWidget}
         ref={rootRef}
       >
-        <LayerAnimationController
-          animationConfig={animationConfig}
-          setLayerAnimationTime={visStateActions.setLayerAnimationTime}
-        >
-          {(isAnimating, start, pause, resetAnimation, timeline, setTimelineValue) =>
-            showAnimationControl ? (
-              <LayerAnimationControl
-                updateAnimationSpeed={visStateActions.updateLayerAnimationSpeed}
-                toggleAnimation={visStateActions.toggleLayerAnimation}
-                isAnimatable={!animatedFilter}
-                isAnimating={isAnimating}
-                resetAnimation={resetAnimation}
-                setTimelineValue={setTimelineValue}
-                timeline={timeline}
-              />
-            ) : null
-          }
-        </LayerAnimationController>
-        {filter ? (
+        {!isTimelineLinkedWithFilter ? (
+          <LayerAnimationController
+            animationConfig={enhancedAnimationConfig}
+            setLayerAnimationTime={visStateActions.setLayerAnimationTime}
+          >
+            {(isAnimating, start, pause, resetAnimation, timeline, setTimelineValue) =>
+              showAnimationControl ? (
+                <LayerAnimationControl
+                  updateAnimationSpeed={visStateActions.updateLayerAnimationSpeed}
+                  toggleAnimation={visStateActions.toggleLayerAnimation}
+                  isAnimatable={!animatedFilter}
+                  isAnimating={isAnimating}
+                  resetAnimation={resetAnimation}
+                  setTimelineValue={setTimelineValue}
+                  timeline={timeline}
+                />
+              ) : null
+            }
+          </LayerAnimationController>
+        ) : null}
+        {enhancedFilter ? (
           <FilterAnimationController
-            filter={filter}
+            filter={enhancedFilter}
             filterIdx={animatedFilterIdx > -1 ? animatedFilterIdx : enlargedFilterIdx}
             setFilterAnimationTime={visStateActions.setFilterAnimationTime}
           >
@@ -162,20 +195,24 @@ export default function BottomWidgetFactory(
                 <TimeWidget
                   // TimeWidget uses React.memo, here we pass width
                   // even though it doesnt use it, to force rerender
-                  filter={filters[enlargedFilterIdx] as TimeRangeFilter}
+                  filter={enhancedFilter as TimeRangeFilter}
                   index={enlargedFilterIdx}
                   datasets={datasets}
+                  layers={layers}
                   readOnly={readOnly}
                   showTimeDisplay={showFloatingTimeDisplay}
                   setFilterPlot={visStateActions.setFilterPlot}
                   setFilterAnimationTime={setTimelineValue}
                   setFilterAnimationWindow={visStateActions.setFilterAnimationWindow}
+                  setFilterSyncTimelineMode={visStateActions.setTimeFilterSyncTimelineMode}
                   toggleAnimation={visStateActions.toggleFilterAnimation}
                   updateAnimationSpeed={visStateActions.updateFilterAnimationSpeed}
                   resetAnimation={resetAnimation}
                   isAnimatable={!animationConfig || !animationConfig.isAnimating}
+                  animationConfig={animationConfig}
                   onClose={onClose}
                   timeline={timeline}
+                  onToggleMinify={onToggleMinify}
                 />
               ) : null
             }

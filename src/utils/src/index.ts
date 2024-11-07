@@ -20,11 +20,28 @@ export {createNotification, exportImageError, successNotification} from './notif
 
 export {setStyleSheetBaseHref} from './dom-utils';
 export {default as domtoimage} from './dom-to-image';
-export {getFrequency, getMode, aggregate} from './aggregate-utils';
+export {getFrequency, getMode, aggregate} from './aggregation';
+export {
+  getBinThresholds,
+  histogramFromThreshold,
+  histogramFromDomain,
+  runGpuFilterForPlot,
+  adjustValueToAnimationWindow,
+  updateTimeFilterPlotType
+} from './plot';
 // eslint-disable-next-line prettier/prettier
 export type {FieldFormatter} from './data-utils';
 export * from './data-utils';
-export {getTimelineFromAnimationConfig, getTimelineFromFilter, SAMPLE_TIMELINE, TIMELINE_MODES} from './time';
+export * from './strings';
+export {
+  getTimelineFromAnimationConfig,
+  getTimelineFromFilter,
+  SAMPLE_TIMELINE,
+  TIMELINE_MODES,
+  LayerToFilterTimeInterval,
+  TIME_INTERVALS_ORDERED,
+  TileTimeInterval
+} from './time';
 
 export {
   datasetColorMaker,
@@ -38,14 +55,9 @@ export {
   getFormatLabels,
   getFieldFormatLabels
 } from './dataset-utils';
-export {getFormatValue} from './format';
+export {getFormatValue, getDefaultTimeFormat} from './format';
 export {exportMapToHTML} from './export-map-html';
 export {
-  DEFAULT_IMAGE_NAME,
-  DEFAULT_HTML_NAME,
-  DEFAULT_JSON_NAME,
-  DEFAULT_DATA_NAME,
-  DEFAULT_EXPORT_JSON_SETTINGS,
   isMSEdge,
   getScaleFromImageSize,
   calculateExportImageSize,
@@ -80,7 +92,12 @@ export * from './utils';
 export * from './split-map-utils';
 export {snapToMarks} from './plot';
 
-export {computeDeckEffects, fixEffectOrder, reorderEffectOrder, validateEffectParameters} from './effect-utils';
+export {
+  computeDeckEffects,
+  fixEffectOrder,
+  reorderEffectOrder,
+  validateEffectParameters
+} from './effect-utils';
 
 // Mapbox
 export {transformRequest, isStyleUsingMapboxTiles} from './map-style-utils/mapbox-utils';
@@ -88,20 +105,33 @@ export {transformRequest, isStyleUsingMapboxTiles} from './map-style-utils/mapbo
 // Map
 export * from './map-utils';
 
-export {createDataContainer, createIndexedDataContainer, getSampleData as getSampleContainerData, DataForm} from './data-container-utils';
-export type { DataContainerInterface } from './data-container-interface';
-export {ArrowDataContainer, arrowDataTypeToFieldType, arrowDataTypeToAnalyzerDataType} from './arrow-data-container';
-export type {FilterResult, FilterChanged, dataValueAccessor} from './filter-utils'
-export * from "./filter-utils";
+export {
+  createDataContainer,
+  createIndexedDataContainer,
+  getSampleData as getSampleContainerData,
+  DataForm
+} from './data-container-utils';
+export type {DataContainerInterface} from './data-container-interface';
+export {
+  ArrowDataContainer,
+  arrowDataTypeToFieldType,
+  arrowDataTypeToAnalyzerDataType
+} from './arrow-data-container';
+export type {FilterResult, FilterChanged, dataValueAccessor} from './filter-utils';
+export * from './filter-utils';
 
 export {
   getQuantileDomain,
   getOrdinalDomain,
   getLinearDomain,
   getLogDomain
-} from "./data-scale-utils";
+} from './data-scale-utils';
 
 export {DataRow} from './data-row';
 
 export type {Centroid} from './h3-utils';
 export {getCentroid, idToPolygonGeo, h3IsValid, getHexFields} from './h3-utils';
+
+// Application config
+export {getApplicationConfig, initApplicationConfig} from '../../utils/src/application-config';
+export type {KeplerApplicationConfig, MapLibInstance} from '../../utils/src/application-config';

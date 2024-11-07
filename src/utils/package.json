@@ -30,7 +30,6 @@
     "umd"
   ],
   "dependencies": {
-    "apache-arrow": "^13.0.0",
     "@kepler.gl/constants": "3.0.0",
     "@kepler.gl/types": "3.0.0",
     "@luma.gl/constants": "^8.5.20",
@@ -38,13 +37,14 @@
     "@mapbox/geo-viewport": "^0.4.1",
     "@turf/boolean-within": "^6.0.1",
     "@turf/helpers": "^6.1.4",
-    "@types/d3-array": "^2.0.0",
+    "@types/d3-array": "^2.8.0",
     "@types/keymirror": "^0.1.1",
     "@types/lodash.clonedeep": "^4.5.7",
     "@types/lodash.get": "^4.4.6",
     "@types/lodash.isequal": "^4.5.5",
     "@types/lodash.memoize": "^4.1.7",
     "@types/lodash.throttle": "^4.1.7",
+    "apache-arrow": ">=15.0.0",
     "d3-array": "^2.8.0",
     "d3-format": "^2.0.0",
     "decimal.js": "^10.2.0",
@@ -59,6 +59,7 @@
     "mini-svg-data-uri": "^1.0.3",
     "moment-timezone": "^0.5.35",
     "react": "^18.2.0",
+    "react-map-gl": "^7.1.6",
     "resize-observer-polyfill": "^1.5.1",
     "type-analyzer": "0.4.0"
   },
@@ -66,15 +67,16 @@
     "sourceMap": false,
     "instrument": false
   },
-  "engines": {
-    "node": ">=18.18.2"
-  },
   "maintainers": [
     "Shan He <heshan0131@gmail.com>",
     "Giuseppe Macri <gmacri@uber.com>"
   ],
+  "engines": {
+    "node": ">=18"
+  },
   "volta": {
     "node": "18.18.2",
-    "yarn": "1.22.17"
-  }
+    "yarn": "4.4.0"
+  },
+  "packageManager": "yarn@4.4.0"
 }

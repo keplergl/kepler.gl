@@ -111,12 +111,13 @@ function shouldSkipSearch(input, state, showOptionsWhenEmpty) {
   return !(showOptionsWhenEmpty && isFocused) && emptyValue;
 }
 
+type Option = string | number | boolean | object | undefined;
 interface TypeaheadProps {
   name?: string;
   customClasses?: any;
   resultsTruncatedMessage?: string;
-  options?: ReadonlyArray<string | number | boolean | object | undefined>;
-  fixedOptions?: ReadonlyArray<string | number | boolean | object> | null;
+  options?: ReadonlyArray<Option>;
+  fixedOptions?: ReadonlyArray<Option> | null;
   allowCustomValues?: number;
   initialValue?: string;
   value?: string;
@@ -131,21 +132,22 @@ interface TypeaheadProps {
   onKeyUp?: KeyboardEventHandler<HTMLDivElement>;
   onFocus?: (event: React.FocusEvent<HTMLDivElement>) => void;
   onBlur?: (event: React.FocusEvent<HTMLInputElement>) => void;
-  filterOption?: string | Function;
-  searchOptions?: Function;
-  displayOption?: string | Function;
-  inputDisplayOption?: string | Function;
-  formInputOption?: string | Function;
+  filterOption?: string | ((o: Option, s: string) => boolean);
+  searchOptions?: (o: Option, s: string) => boolean;
+  displayOption?: string | ((o: Option) => string);
+  inputDisplayOption?: string | ((o: Option) => string);
+  formInputOption?: string | ((o: Option) => string);
   defaultClassNames?: boolean;
   customListComponent?: ElementType;
-  customListItemComponent?: ElementType | Function;
-  customListHeaderComponent?: ElementType | Function | null;
+  customListItemComponent?: ElementType;
+  customListHeaderComponent?: ElementType | null;
   showOptionsWhenEmpty?: boolean;
   searchable?: boolean;
   light?: boolean;
   inputIcon: ElementType;
   className?: string;
   selectedItems?: any[] | null;
+  autoFocus: boolean;
   // deprecated
   maxVisible?: number;
 }
@@ -167,6 +169,9 @@ interface TypeaheadState {
   isFocused: boolean;
 }
 
+function noop() {
+  return;
+}
 class Typeahead extends Component<TypeaheadProps, TypeaheadState> {
   static defaultProps = {
     options: [],
@@ -178,13 +183,13 @@ class Typeahead extends Component<TypeaheadProps, TypeaheadState> {
     disabled: false,
     textarea: false,
     inputProps: {},
-    onOptionSelected(option) {},
-    onChange(event) {},
-    onKeyDown(event) {},
-    onKeyPress(event) {},
-    onKeyUp(event) {},
-    onFocus(event) {},
-    onBlur(event) {},
+    onOptionSelected: noop,
+    onChange: noop,
+    onKeyDown: noop,
+    onKeyPress: noop,
+    onKeyUp: noop,
+    onFocus: noop,
+    onBlur: noop,
     filterOption: null,
     searchOptions: null,
     inputDisplayOption: null,
@@ -195,7 +200,8 @@ class Typeahead extends Component<TypeaheadProps, TypeaheadState> {
     customListHeaderComponent: null,
     showOptionsWhenEmpty: true,
     searchable: true,
-    resultsTruncatedMessage: null
+    resultsTruncatedMessage: null,
+    autoFocus: true
   };
 
   static getDerivedStateFromProps(props, state) {
@@ -236,10 +242,12 @@ class Typeahead extends Component<TypeaheadProps, TypeaheadState> {
 
   componentDidMount() {
     // call focus on entry or div to trigger key events listener
-    if (this.entry.current) {
-      this.entry.current.focus();
-    } else {
-      this.root.current?.focus();
+    if (this.props.autoFocus) {
+      if (this.entry.current) {
+        this.entry.current.focus();
+      } else {
+        this.root.current?.focus();
+      }
     }
   }
 

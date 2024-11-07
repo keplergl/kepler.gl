@@ -6,12 +6,7 @@ import {drainTasksForTesting, succeedTaskInTest, errorTaskInTest} from 'react-pa
 import sinon from 'sinon';
 import {default as Console} from 'global/console';
 
-import {
-  ActionTypes,
-  exportFileToCloud,
-  resetProviderStatus,
-  setCloudProvider
-} from '@kepler.gl/actions';
+import {ActionTypes, exportFileToCloud, resetProviderStatus} from '@kepler.gl/actions';
 import {
   providerReducer as reducer,
   providerStateReducerFactory,
@@ -169,7 +164,7 @@ test('#providerStateReducer -> EXPORT_FILE_TO_CLOUD -> onSuccess : onError', t =
       ...state,
       notification: action.payload
     }),
-    [ActionTypes.REMOVE_NOTIFICATION]: (state, action) => ({
+    [ActionTypes.REMOVE_NOTIFICATION]: state => ({
       ...state,
       remove: true
     })

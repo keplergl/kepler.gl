@@ -3,8 +3,9 @@
 
 import {KeplerGlLayers} from '@kepler.gl/layers';
 const {PointLayer, ArcLayer, HexagonLayer, GeojsonLayer} = KeplerGlLayers;
-import {DEFAULT_TEXT_LABEL, DEFAULT_COLOR_UI} from '@kepler.gl/constants';
+import {DEFAULT_TEXT_LABEL, DEFAULT_COLOR_UI, BINS} from '@kepler.gl/constants';
 import {defaultInteractionConfig} from '@kepler.gl/reducers';
+import {getBinThresholds, histogramFromThreshold, histogramFromDomain} from '@kepler.gl/utils';
 
 export const savedStateV0 = {
   config: {
@@ -867,7 +868,6 @@ export const expectedFields1 = [
 export const mergedFilters = [
   {
     dataId: ['9h10t7fyb'],
-    freeze: true,
     id: 'vxzfwyg2v',
     enabled: true,
     view: 'side',
@@ -879,16 +879,16 @@ export const mergedFilters = [
     domain: ['2.103.2', '2.107.3', '2.116.2', '2.117.1', '3.68.4'],
     value: ['3.68.4', '2.117.1', '2.103.2', '2.116.2'],
     fieldType: 'string',
-    plotType: 'histogram',
+    plotType: {
+      type: 'histogram'
+    },
     yAxis: null,
-    interval: null,
     speed: 1,
     fixedDomain: false,
     gpu: false
   },
   {
     dataId: ['9h10t7fyb'],
-    freeze: true,
     id: 'fo9tjm2unl',
     enabled: true,
     view: 'enlarged',
@@ -897,31 +897,45 @@ export const mergedFilters = [
     name: ['timestamp_local'],
     type: 'timeRange',
     fieldIdx: [3],
-    plotType: 'histogram',
+    plotType: {
+      interval: '5-second',
+      defaultTimeFormat: 'L  LTS',
+      type: 'histogram',
+      aggregation: 'sum'
+    },
     yAxis: null,
-    interval: null,
-    histogram: ['not tested'],
-    enlargedHistogram: ['not tested'],
     domain: [1453770124000, 1453770810000],
     value: [1453770124000, 1453770415000],
     step: 1000,
     speed: 1,
     mappedValue: [
-      1453770810000,
-      1453770279000,
-      1453770358000,
-      1453770124000,
-      1453770131000,
-      1453770395000,
-      1453770173000,
-      1453770394000,
-      1453770540000
+      1453770810000, 1453770279000, 1453770358000, 1453770124000, 1453770131000, 1453770395000,
+      1453770173000, 1453770394000, 1453770540000
     ],
     fieldType: 'timestamp',
     fixedDomain: true,
     gpu: true,
     gpuChannel: [0],
-    defaultTimeFormat: 'L LTS'
+    defaultTimeFormat: 'L LTS',
+    timeBins: {
+      '9h10t7fyb': {
+        '5-second': histogramFromThreshold(
+          getBinThresholds('5-second', [1453770124000, 1453770810000]),
+          [
+            1453770810000,
+            1453770279000,
+            1453770358000,
+            1453770124000,
+            1453770131000,
+            1453770395000,
+            1453770173000,
+            1453770394000,
+            1453770540000
+          ],
+          [0, 1, 2, 3, 4, 5, 6, 7, 8]
+        )
+      }
+    }
   },
   {
     dataId: ['9h10t7fyb'],
@@ -929,7 +943,6 @@ export const mergedFilters = [
     enabled: true,
     name: ['type_boolean'],
     type: 'select',
-    freeze: true,
     value: false,
     view: 'side',
     isAnimating: false,
@@ -937,9 +950,10 @@ export const mergedFilters = [
     fieldIdx: [10],
     domain: [true, false],
     fieldType: 'boolean',
-    plotType: 'histogram',
+    plotType: {
+      type: 'histogram'
+    },
     yAxis: null,
-    interval: null,
     speed: 1,
     fixedDomain: false,
     gpu: false
@@ -951,13 +965,11 @@ export const mergedFilters = [
     name: ['int_range'],
     type: 'range',
     value: [78, 309],
-    freeze: true,
     view: 'side',
-    plotType: 'histogram',
+    plotType: {
+      type: 'histogram'
+    },
     yAxis: null,
-    interval: null,
-    histogram: ['not tested'],
-    enlargedHistogram: ['not tested'],
     isAnimating: false,
     animationWindow: 'free',
     fieldIdx: [9],
@@ -968,11 +980,17 @@ export const mergedFilters = [
     typeOptions: ['range'],
     fixedDomain: false,
     gpu: true,
-    gpuChannel: [1]
+    gpuChannel: [1],
+    bins: {
+      '9h10t7fyb': histogramFromDomain(
+        [78, 694],
+        [694, 335, 363, 78, 192, 242, 175, 223, 298],
+        BINS
+      )
+    }
   },
   {
     dataId: ['v79816te8'],
-    freeze: true,
     id: '5nfmxjjzl',
     enabled: true,
     view: 'side',
@@ -981,11 +999,10 @@ export const mergedFilters = [
     name: ['ZIP_CODE'],
     type: 'range',
     fieldIdx: [2],
-    plotType: 'histogram',
+    plotType: {
+      type: 'histogram'
+    },
     yAxis: null,
-    interval: null,
-    histogram: ['not tested'],
-    enlargedHistogram: ['not tested'],
     domain: [94107, 94132],
     value: [94115.3, 94132],
     step: 0.01,
@@ -994,7 +1011,10 @@ export const mergedFilters = [
     typeOptions: ['range'],
     fixedDomain: false,
     gpu: true,
-    gpuChannel: [0]
+    gpuChannel: [0],
+    bins: {
+      v79816te8: histogramFromDomain([94107, 94132], [94107, 94129, 94132, 94132], BINS)
+    }
   }
 ];
 
@@ -1002,6 +1022,7 @@ const mergedLayer0 = new PointLayer({
   id: '1eh',
   dataId: '9h10t7fyb',
   label: 'dropoff',
+  columnMode: 'points',
   color: [76, 154, 78],
   columns: {
     lat: {
@@ -1036,6 +1057,7 @@ mergedLayer0.config = {
   hidden: false,
   visConfig: {
     radius: 270.4,
+    billboard: false,
     opacity: 0.8,
     outline: false,
     filled: true,
@@ -1054,7 +1076,10 @@ mergedLayer0.config = {
       colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
     },
     strokeColor: [76, 154, 78],
-    radiusRange: [1, 100]
+    radiusRange: [1, 100],
+    allowHover: true,
+    showNeighborOnHover: false,
+    showHighlightColor: true
   }
 };
 
@@ -1123,6 +1148,7 @@ const mergedLayer2 = new PointLayer({
 mergedLayer2.config = {
   dataId: '9h10t7fyb',
   label: 'begintrip',
+  columnMode: 'points',
   color: [218, 112, 191],
   columns: {
     lat: {
@@ -1177,6 +1203,7 @@ mergedLayer2.config = {
   hidden: false,
   visConfig: {
     radius: 10,
+    billboard: false,
     opacity: 0.8,
     outline: false,
     filled: true,
@@ -1197,7 +1224,10 @@ mergedLayer2.config = {
     },
     strokeColor: [218, 112, 191],
     fixedRadius: false,
-    radiusRange: [1, 854.16]
+    radiusRange: [1, 854.16],
+    allowHover: true,
+    showNeighborOnHover: false,
+    showHighlightColor: true
   },
   animation: {enabled: false}
 };
@@ -1284,9 +1314,16 @@ mergedLayer4.config = {
   columns: {
     geojson: {
       value: '_geojson',
-      fieldIdx: 0
-    }
+      fieldIdx: 0,
+      optional: false
+    },
+    id: {value: null, fieldIdx: -1, optional: true},
+    lat: {value: null, fieldIdx: -1, optional: true},
+    lng: {value: null, fieldIdx: -1, optional: true},
+    altitude: {value: null, fieldIdx: -1, optional: true},
+    sortBy: {value: null, fieldIdx: -1, optional: true}
   },
+  columnMode: 'geojson',
   highlightColor: [252, 242, 26, 255],
   isConfigActive: false,
   hidden: false,

@@ -5,6 +5,7 @@ import {FunctionComponent, ComponentType, ReactNode} from 'react';
 import {Filter, PolygonFilter, TimeRangeFilter, Field} from '@kepler.gl/types';
 import {Layer} from '@kepler.gl/layers';
 import {Datasets} from '@kepler.gl/table';
+import {setFilter, setFilterPlot, syncTimeFilterWithLayerTimeline} from '@kepler.gl/actions';
 
 interface PanelAction {
   id: string;
@@ -20,7 +21,11 @@ export interface FilterPanelProps<F = Filter> {
   allAvailableFields: Field[];
   filter: F;
   removeFilter: () => void;
-  setFilter: (idx: number, field: string, value: any) => void;
+  setFilter: (...args: Parameters<typeof setFilter>) => void;
+  setFilterPlot: (...args: Parameters<typeof setFilterPlot>) => void;
+  syncTimeFilterWithLayerTimeline?: (
+    ...args: Parameters<typeof syncTimeFilterWithLayerTimeline>
+  ) => void;
   children?: ReactNode;
 }
 export interface PolygonFilterPanelProps extends FilterPanelProps<PolygonFilter> {
@@ -28,6 +33,7 @@ export interface PolygonFilterPanelProps extends FilterPanelProps<PolygonFilter>
   toggleFilterFeature: () => void;
 }
 export interface TimeRangeFilterPanelProps extends FilterPanelProps<TimeRangeFilter> {
+  layers: ReadonlyArray<Layer>;
   enlargeFilter: () => void;
   toggleAnimation: () => void;
 }
@@ -39,5 +45,5 @@ export type FilterPanelComponent<F> = FunctionComponent<FilterPanelProps<F>>;
 export type PolygonFilterPanelComponent = FunctionComponent<PolygonFilterPanelProps>;
 export type TimeRangeFilterPanelComponent = FunctionComponent<TimeRangeFilterPanelProps>;
 export type FilterPanelWithFieldSelectComponent = FunctionComponent<
-  FilterPanelWithFieldSelectProps
+  Omit<FilterPanelWithFieldSelectProps, 'setFilterPlot'>
 >;

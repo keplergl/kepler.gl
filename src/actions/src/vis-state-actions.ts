@@ -20,7 +20,8 @@ import {
   Filter,
   ParsedConfig,
   ParsedLayer,
-  EffectPropsPartial
+  EffectPropsPartial,
+  SyncTimelineMode
 } from '@kepler.gl/types';
 // TODO - import LoaderObject type from @loaders.gl/core when supported
 // TODO - import LoadOptions type from @loaders.gl/core when supported
@@ -292,7 +293,7 @@ export function interactionConfigChange(
 
 export type SetFilterUpdaterAction = {
   idx: number;
-  prop: string;
+  prop: string | string[];
   value: any;
   valueIndex?: number;
 };
@@ -301,6 +302,8 @@ export type SetFilterUpdaterAction = {
  * @memberof visStateActions
  * @param idx -`idx` of filter to be updated
  * @param prop - `prop` of filter, e,g, `dataId`, `name`, `value`
+ *                or an array e.g. ['idx', 'name']. in that case the value
+ *                should also be an array of the corresponding values (by index)
  * @param value - new value
  * @param valueIndex - dataId index
  * @returns action
@@ -308,7 +311,7 @@ export type SetFilterUpdaterAction = {
  */
 export function setFilter(
   idx: number,
-  prop: string,
+  prop: string | string[],
   value: any,
   valueIndex?: number
 ): Merge<SetFilterUpdaterAction, {type: typeof ActionTypes.SET_FILTER}> {
@@ -398,6 +401,35 @@ export function addFilter(
     type: ActionTypes.ADD_FILTER,
     dataId,
     id
+  };
+}
+
+export type CreateOrUpdateFilterUpdaterAction = {
+  id?: string;
+  dataId?: string | string[];
+  field?: string | string[];
+  value?: any;
+};
+
+/**
+ * Create or updates a filter
+ * @memberof visStateActions
+ * @param dataId - dataset `id` this new filter is associated with
+ * @returns action
+ * @public
+ */
+export function createOrUpdateFilter(
+  id?: string,
+  dataId?: string | string[],
+  field?: string | string[],
+  value?: any
+): Merge<CreateOrUpdateFilterUpdaterAction, {type: typeof ActionTypes.CREATE_OR_UPDATE_FILTER}> {
+  return {
+    type: ActionTypes.CREATE_OR_UPDATE_FILTER,
+    id,
+    dataId,
+    field,
+    value
   };
 }
 
@@ -893,7 +925,7 @@ export function updateFilterAnimationSpeed(
 }
 
 export type SetLayerAnimationTimeUpdaterAction = {
-  value: number;
+  value: number | null;
 };
 /**
  * Reset animation
@@ -932,7 +964,7 @@ export function updateLayerAnimationSpeed(
     speed
   };
 }
-export type ToggleLayerAnimationUpdaterAction = {};
+export type ToggleLayerAnimationUpdaterAction = void;
 /**
  * start end end layer animation
  * @memberof visStateActions
@@ -948,7 +980,7 @@ export function toggleLayerAnimation(): Merge<
   };
 }
 
-export type ToggleLayerAnimationControlUpdaterAction = {};
+export type ToggleLayerAnimationControlUpdaterAction = void;
 /**
  * hide and show layer animation control
  * @memberof visStateActions
@@ -1047,7 +1079,7 @@ export function onLayerClick(
   };
 }
 
-export type OnMapClickUpdaterAction = {};
+export type OnMapClickUpdaterAction = void;
 /**
  * Trigger map click event, unselect clicked object
  * @memberof visStateActions
@@ -1105,9 +1137,13 @@ export function toggleLayerForMap(
   };
 }
 
+type FilterPlotNewProp = {
+  yAxis?: null | Record<string, any>;
+  plotType?: {type: string};
+};
 export type SetFilterPlotUpdaterAction = {
   idx: number;
-  newProp: object;
+  newProp: FilterPlotNewProp;
   valueIndex?: number;
 };
 /**
@@ -1121,7 +1157,7 @@ export type SetFilterPlotUpdaterAction = {
  */
 export function setFilterPlot(
   idx: number,
-  newProp: object,
+  newProp: FilterPlotNewProp,
   valueIndex?: number
 ): Merge<SetFilterPlotUpdaterAction, {type: typeof ActionTypes.SET_FILTER_PLOT}> {
   return {
@@ -1375,7 +1411,7 @@ export function applyCPUFilter(
   };
 }
 
-export type ToggleEditorVisibilityUpdaterAction = {};
+export type ToggleEditorVisibilityUpdaterAction = void;
 /**
  * Toggle editor layer visibility
  * @memberof visStateActions
@@ -1493,6 +1529,70 @@ export function setFilterAnimationTimeConfig(
   };
 }
 
+export type LayerFilteredItemsChangeAction = {
+  event: {
+    id: string;
+    count: number;
+  };
+  layer: Layer;
+};
+
+/**
+ * deck.gl layer gpu filter callback
+ * @memberof visStateActions
+ * @param layer
+ * @param event
+ * @return action
+ */
+export function layerFilteredItemsChange(
+  layer: LayerFilteredItemsChangeAction['layer'],
+  event: LayerFilteredItemsChangeAction['event']
+): Merge<LayerFilteredItemsChangeAction, {type: typeof ActionTypes.LAYER_FILTERED_ITEMS_CHANGE}> {
+  return {
+    type: ActionTypes.LAYER_FILTERED_ITEMS_CHANGE,
+    layer,
+    event
+  };
+}
+
+export type SyncTimeFilterWithLayerTimelineAction = {
+  idx: number;
+  enable: boolean;
+};
+
+export function syncTimeFilterWithLayerTimeline(
+  idx: SyncTimeFilterWithLayerTimelineAction['idx'],
+  enable: SyncTimeFilterWithLayerTimelineAction['enable']
+): Merge<
+  SyncTimeFilterWithLayerTimelineAction,
+  {type: typeof ActionTypes.SYNC_TIME_FILTER_WITH_LAYER_TIMELINE}
+> {
+  return {
+    type: ActionTypes.SYNC_TIME_FILTER_WITH_LAYER_TIMELINE,
+    idx,
+    enable
+  };
+}
+
+export type setTimeFilterSyncTimelineModeAction = {
+  id: string;
+  mode: SyncTimelineMode;
+};
+
+export function setTimeFilterSyncTimelineMode({
+  id,
+  mode
+}: setTimeFilterSyncTimelineModeAction): Merge<
+  setTimeFilterSyncTimelineModeAction,
+  {type: typeof ActionTypes.SYNC_TIME_FILTER_TIMELINE_MODE}
+> {
+  return {
+    type: ActionTypes.SYNC_TIME_FILTER_TIMELINE_MODE,
+    id,
+    mode
+  };
+}
+
 /**
  * This declaration is needed to group actions in docs
  */
@@ -1503,7 +1603,7 @@ export function setFilterAnimationTimeConfig(
  *
  * @public
  */
-/* eslint-disable no-unused-vars */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // @ts-ignore
 const visStateActions = null;
-/* eslint-enable no-unused-vars */
+/* eslint-enable @typescript-eslint/no-unused-vars */

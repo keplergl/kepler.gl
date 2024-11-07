@@ -7,8 +7,11 @@ const PRESETS = ['@babel/preset-env', '@babel/preset-react', '@babel/preset-type
 const PLUGINS = [
   ['@babel/plugin-transform-typescript', {isTSX: true, allowDeclareFields: true}],
   '@babel/plugin-transform-modules-commonjs',
-  '@babel/plugin-proposal-class-properties',
-  '@babel/plugin-proposal-optional-chaining',
+  '@babel/plugin-transform-class-properties',
+  '@babel/plugin-transform-optional-chaining',
+  '@babel/plugin-transform-logical-assignment-operators',
+  '@babel/plugin-transform-nullish-coalescing-operator',
+  '@babel/plugin-transform-export-namespace-from',
   [
     '@babel/transform-runtime',
     {

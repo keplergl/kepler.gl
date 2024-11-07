@@ -12,7 +12,7 @@ import {
   TOOLTIP_KEY,
   TooltipFormat
 } from '@kepler.gl/constants';
-import {Millisecond, Field, ColMetaProps} from '@kepler.gl/types';
+import {Millisecond, Field} from '@kepler.gl/types';
 
 import {snapToMarks} from './plot';
 import {isPlainObject} from './utils';
@@ -54,7 +54,7 @@ export function getLatLngBounds(
   return [Math.max(lats[0], limit[0]), Math.min(lats[lats.length - 1], limit[1])];
 }
 
-export function clamp([min, max]: [number, number], val: number = 0): number {
+export function clamp([min, max]: [number, number], val = 0): number {
   return val <= min ? min : val >= max ? max : val;
 }
 
@@ -96,7 +96,7 @@ export function notNullorUndefined<T extends NonNullable<any>>(d: T | null | und
 /**
  * Whether d is a number, this filtered out NaN as well
  */
-export function isNumber(d: any): boolean {
+export function isNumber(d: unknown): d is number {
   return Number.isFinite(d);
 }
 
@@ -105,11 +105,11 @@ export function isNumber(d: any): boolean {
  * @param {string} prop
  * @returns {boolean} - yes or no
  */
-export function hasOwnProperty<X extends {}, Y extends PropertyKey>(
+export function hasOwnProperty<X extends object, Y extends PropertyKey>(
   obj: X,
   prop: Y
 ): obj is X & Record<Y, unknown> {
-  return obj.hasOwnProperty(prop);
+  return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 
 export function numberSort(a: number, b: number): number {
@@ -294,7 +294,7 @@ export const arrayMove = <T>(array: T[], from: number, to: number): T[] => {
  * @param field
  */
 export function getFormatter(
-  format: string | Record<string, string>,
+  format: string | Record<string, string> | null,
   field?: Field
 ): FieldFormatter {
   if (!format) {
@@ -311,18 +311,20 @@ export function getFormatter(
   return defaultFormatter;
 }
 
-export function getColumnFormatter(colMeta: ColMetaProps): FieldFormatter {
-  const {format, displayFormat} = colMeta;
+export function getColumnFormatter(
+  field: Pick<Field, 'type'> & Partial<Pick<Field, 'format' | 'displayFormat'>>
+): FieldFormatter {
+  const {format, displayFormat} = field;
 
   if (!format && !displayFormat) {
-    return FIELD_DISPLAY_FORMAT[colMeta.type];
+    return FIELD_DISPLAY_FORMAT[field.type];
   }
   const tooltipFormat = Object.values(TOOLTIP_FORMATS).find(f => f[TOOLTIP_KEY] === displayFormat);
 
   if (tooltipFormat) {
     return applyDefaultFormat(tooltipFormat);
-  } else if (typeof displayFormat === 'string' && colMeta) {
-    return applyCustomFormat(displayFormat, colMeta);
+  } else if (typeof displayFormat === 'string' && field) {
+    return applyCustomFormat(displayFormat, field);
   } else if (typeof displayFormat === 'object') {
     return applyValueMap(displayFormat);
   }
@@ -357,15 +359,15 @@ export function applyDefaultFormat(tooltipFormat: TooltipFormat): (v: any) => st
 export function getBooleanFormatter(format: string): FieldFormatter {
   switch (format) {
     case '01':
-      return (v: Boolean) => (v ? '1' : '0');
+      return (v: boolean) => (v ? '1' : '0');
     case 'yn':
-      return (v: Boolean) => (v ? 'yes' : 'no');
+      return (v: boolean) => (v ? 'yes' : 'no');
     default:
       return defaultFormatter;
   }
 }
 // Allow user to specify custom tooltip format via config
-export function applyCustomFormat(format, field): FieldFormatter {
+export function applyCustomFormat(format, field: {type?: string}): FieldFormatter {
   switch (field.type) {
     case ALL_FIELD_TYPES.real:
     case ALL_FIELD_TYPES.integer:
@@ -421,11 +423,11 @@ export function datetimeFormatter(
   timezone?: string | null
 ): (format?: string) => (ts: number) => string {
   return timezone
-    ? format => ts =>
-        moment
-          .utc(ts)
-          .tz(timezone)
-          .format(format)
+    ? format => ts => moment.utc(ts).tz(timezone).format(format)
     : // return empty string instead of 'Invalid date' if ts is undefined/null
-      format => ts => (ts ? moment.utc(ts).format(format) : '');
+      format => ts => ts ? moment.utc(ts).format(format) : '';
+}
+
+export function notNullOrUndefined(d: any): boolean {
+  return d !== undefined && d !== null;
 }

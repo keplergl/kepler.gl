@@ -36,7 +36,7 @@ test('RowDataContainer', t => {
   );
 
   t.deepEqual(
-    dc.map((row, rowIndex) => row.valueAt(1)),
+    dc.map(row => row.valueAt(1)),
     [20, 40, 60, 90, 110, 130],
     `RowDataContainer.map should return expected array`
   );
@@ -48,7 +48,7 @@ test('RowDataContainer', t => {
   );
 
   t.deepEqual(
-    dc.find((row, rowIndex) => {
+    dc.find(row => {
       return row.valueAt(1) === 60;
     }),
     dc.row(2),
@@ -56,7 +56,7 @@ test('RowDataContainer', t => {
   );
 
   t.deepEqual(
-    dc.reduce((acc, row, index) => {
+    dc.reduce((acc, row) => {
       return acc + row.valueAt(1);
     }, 10),
     460,
@@ -91,7 +91,7 @@ test('IndexedDataContainer', t => {
   );
 
   t.deepEqual(
-    dc.map((row, rowIndex) => row.valueAt(1)),
+    dc.map(row => row.valueAt(1)),
     [40, 90, 130],
     `IndexedDataContainer.map should return expected array`
   );
@@ -103,7 +103,7 @@ test('IndexedDataContainer', t => {
   );
 
   t.deepEqual(
-    dc.find((row, rowIndex) => {
+    dc.find(row => {
       return row.valueAt(1) === 90;
     }),
     dc.row(1),
@@ -111,7 +111,7 @@ test('IndexedDataContainer', t => {
   );
 
   t.deepEqual(
-    dc.reduce((acc, row, index) => {
+    dc.reduce((acc, row) => {
       return acc + row.valueAt(1);
     }, 10),
     270,

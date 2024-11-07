@@ -22,8 +22,9 @@ export function getTileData(
   token: string,
   {index: {x, y, z}}: {index: Coordinates}
 ): Promise<TileDataItem[]> {
-  const mapSource = `${host ||
-    MAPBOX_HOST}${MAP_SOURCE}/${z}/${x}/${y}.vector.pbf?access_token=${token}`;
+  const mapSource = `${
+    host || MAPBOX_HOST
+  }${MAP_SOURCE}/${z}/${x}/${y}.vector.pbf?access_token=${token}`;
 
   return fetch(mapSource)
     .then(response => response.arrayBuffer())

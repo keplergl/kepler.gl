@@ -21,7 +21,7 @@ const initialState = {
 // REDUCER
 const appReducer = handleActions(
   {
-    [INIT]: (state, action) => ({
+    [INIT]: state => ({
       ...state,
       loaded: true
     }),

@@ -16,7 +16,14 @@ export function cmpObjectKeys(t, expectedObj, actualObj, name) {
     `${name} should have same keys`
   );
 }
-
+export function cmpBins(t, expected, actual) {
+  t.equal(actual.length, expected.length, 'bins should have same length');
+  actual.forEach((b, i) => {
+    t.equal(b.count, expected[i].count, 'bins count should be same');
+    t.equal(b.x0, expected[i].x0, 'bins x0 should be same');
+    t.equal(b.x1, expected[i].x1, 'bins x1 should be same');
+  });
+}
 export function cmpFilters(t, expectedFilter, actualFilter, opt = {}, idx = '', name = '') {
   t.equal(typeof actualFilter, typeof expectedFilter, `${name}filters should be same type`);
   if (Array.isArray(expectedFilter) && Array.isArray(actualFilter)) {
@@ -38,10 +45,36 @@ export function cmpFilters(t, expectedFilter, actualFilter, opt = {}, idx = '', 
 
     Object.keys(actualFilter).forEach(key => {
       switch (key) {
-        case 'histogram':
-        case 'enlargedHistogram':
-          if (actualFilter.type === FILTER_TYPES.range || FILTER_TYPES.timeRange) {
-            t.ok(actualFilter[key].length, `${name}.filter.${key} should not be empty`);
+        case 'bins':
+          if (actualFilter.type === FILTER_TYPES.range) {
+            cmpObjectKeys(t, expectedFilter.bins, actualFilter.bins, 'filter.bins');
+            Object.keys(expectedFilter.bins).forEach(binDataId => {
+              // cmp bins
+              cmpBins(t, expectedFilter.bins[binDataId], actualFilter.bins[binDataId]);
+            });
+            // t.ok(actualFilter[key].length, `${name}.filter.${key} should not be empty`);
+          }
+          break;
+        case 'timeBins':
+          if (actualFilter.type === FILTER_TYPES.timeRange) {
+            cmpObjectKeys(t, expectedFilter.timeBins, actualFilter.timeBins, 'filter.timeBins');
+            Object.keys(expectedFilter.timeBins).forEach(binDataId => {
+              // cmp bins
+              cmpObjectKeys(
+                t,
+                expectedFilter.timeBins[binDataId],
+                actualFilter.timeBins[binDataId],
+                'filter.timeBins[binDataId'
+              );
+              Object.keys(expectedFilter.timeBins[binDataId]).forEach(interval => {
+                cmpBins(
+                  t,
+                  expectedFilter.timeBins[binDataId][interval],
+                  actualFilter.timeBins[binDataId][interval]
+                );
+              });
+            });
+            // t.ok(actualFilter[key].length, `${name}.filter.${key} should not be empty`);
           }
           break;
         case 'yAxis':
@@ -79,12 +112,13 @@ export function cmpLayers(t, expectedLayer, actualLayer, opt = {}) {
   } else {
     cmpObjectKeys(t, expectedLayer.config, actualLayer.config, `layer.${actualLayer.id}`);
 
+    // eslint-disable-next-line complexity
     Object.keys(expectedLayer.config).forEach(key => {
       // test everything except color and id, which are auto generated
       // also skip functions
       switch (key) {
         // list of fields
-        case 'textLabel':
+        case 'textLabel': {
           cmpObjectKeys(
             t,
             expectedLayer.config[key],
@@ -112,10 +146,13 @@ export function cmpLayers(t, expectedLayer, actualLayer, opt = {}) {
             );
           });
           break;
+        }
         // colorField is a field
         case 'colorField':
         case 'sizeField':
         case 'heightField':
+        case 'columns':
+          break;
         case 'strokeColorField':
           cmpField(
             t,
@@ -252,6 +289,26 @@ export function cmpDatasets(t, expectedDatasets, actualDatasets) {
 
 export function assertDatasetIsTable(t, dataset) {
   t.ok(dataset instanceof KeplerTable, `${dataset.label || 'dataset'} should be a KeplerTable`);
+}
+export function cmpColumns(t, expectedColumns, actualColumns, layerName) {
+  cmpObjectKeys(t, expectedColumns, actualColumns, `${layerName}.config.columns`);
+
+  Object.keys(expectedColumns).forEach(key => {
+    if (expectedColumns[key].validator) {
+      // validator is a function, we only test its existence
+      t.ok(
+        actualColumns[key].validator,
+        `${layerName}.config.columns.${key} should have validator`
+      );
+
+      // eslint-disable-next-line no-unused-vars
+      const {validater: _a, ...restPropsA} = actualColumns[key];
+      // eslint-disable-next-line no-unused-vars
+      const {validater: _e, ...restPropsE} = expectedColumns[key];
+
+      t.deepEqual(restPropsA, restPropsE, `${layerName}.config.columns.${key} should have correct`);
+    }
+  });
 }
 
 export function cmpDataset(t, expectedDataset, actualDataset, opt = {}) {

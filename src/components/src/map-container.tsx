@@ -4,11 +4,10 @@
 // libraries
 import React, {Component, createRef, useMemo} from 'react';
 import styled, {withTheme} from 'styled-components';
-import {Map, MapRef} from 'react-map-gl/maplibre';
+import {Map, MapboxMap, MapRef} from 'react-map-gl';
 import {PickInfo} from '@deck.gl/core/lib/deck';
 import DeckGL from '@deck.gl/react';
 import {createSelector, Selector} from 'reselect';
-import maplibregl from 'maplibre-gl';
 import {useDroppable} from '@dnd-kit/core';
 import debounce from 'lodash.debounce';
 
@@ -47,7 +46,8 @@ import {
   getViewportFromMapState,
   normalizeEvent,
   rgbToHex,
-  computeDeckEffects
+  computeDeckEffects,
+  getApplicationConfig
 } from '@kepler.gl/utils';
 import {breakPointValues} from '@kepler.gl/styles';
 
@@ -114,7 +114,7 @@ const StyledMap = styled(StyledMapContainer)<StyledMapContainerProps>(
   #default-deckgl-overlay {
     mix-blend-mode: ${mixBlendMode};
   };
-  *[maplibregl-children] {
+  *[${getApplicationConfig().mapLibCssClass}-children] {
     position: absolute;
   }
 `
@@ -122,18 +122,20 @@ const StyledMap = styled(StyledMapContainer)<StyledMapContainerProps>(
 
 const MAPBOXGL_STYLE_UPDATE = 'style.load';
 const MAPBOXGL_RENDER = 'render';
-const nop = () => {};
+const nop = () => {
+  return;
+};
 
-const MapLibreLogo = () => (
+const MapLibLogo = () => (
   <div className="attrition-logo">
     Basemap by:
     <a
-      style={{marginLeft: "5px"}}
-      className="maplibregl-ctrl-logo"
+      style={{marginLeft: '5px'}}
+      className={`${getApplicationConfig().mapLibCssClass}-ctrl-logo`}
       target="_blank"
       rel="noopener noreferrer"
-      href="https://www.maplibre.org/"
-      aria-label="MapLibre logo"
+      href={getApplicationConfig().mapLibUrl}
+      aria-label={`${getApplicationConfig().mapLibName} logo`}
     />
   </div>
 );
@@ -243,11 +245,11 @@ export const Attribution: React.FC<{
           <DatasetAttributions datasetAttributions={datasetAttributions} isPalm={isPalm} />
           <div className="attrition-link">
             {datasetAttributions?.length ? <span className="pipe-separator">|</span> : null}
-            {isPalm ? <MapLibreLogo /> : null}
+            {isPalm ? <MapLibLogo /> : null}
             <a href="https://kepler.gl/policy/" target="_blank" rel="noopener noreferrer">
               © kepler.gl |{' '}
             </a>
-            {!isPalm ? <MapLibreLogo /> : null}
+            {!isPalm ? <MapLibLogo /> : null}
           </div>
         </EndHorizontalFlexbox>
       </StyledAttrbution>
@@ -261,6 +263,8 @@ MapContainerFactory.deps = [MapPopoverFactory, MapControlFactory, EditorFactory]
 
 type MapboxStyle = string | object | undefined;
 type PropSelector<R> = Selector<MapContainerProps, R>;
+
+type GetMapRef = ReturnType<ReturnType<typeof getApplicationConfig>['getMap']>;
 
 export interface MapContainerProps {
   visState: VisState;
@@ -277,9 +281,9 @@ export interface MapContainerProps {
   primary?: boolean; // primary one will be reporting its size to appState
   readOnly?: boolean;
   isExport?: boolean;
-  onMapToggleLayer?: Function;
-  onMapStyleLoaded?: Function;
-  onMapRender?: Function;
+  // onMapStyleLoaded?: (map: maplibregl.Map | ReturnType<MapRef['getMap']> | null) => void;
+  onMapStyleLoaded?: (map: GetMapRef | null) => void;
+  onMapRender?: (map: GetMapRef | null) => void;
   getMapboxRef?: (mapbox?: MapRef | null, index?: number) => void;
   index?: number;
   deleteMapLabels?: (containerId: string, layerId: string) => void;
@@ -331,14 +335,14 @@ export default function MapContainerFactory(
       primary: true
     };
 
+    constructor(props) {
+      super(props);
+    }
+
     state = {
       // Determines whether attribution should be visible based the result of loading the map style
       showMapboxAttribution: true
     };
-
-    constructor(props) {
-      super(props);
-    }
 
     componentDidMount() {
       if (!this._ref.current) {
@@ -360,7 +364,7 @@ export default function MapContainerFactory(
     }
 
     _deck: any = null;
-    _map: maplibregl.Map | null = null;
+    _map: MapboxMap | null = null;
     _ref = createRef<HTMLDivElement>();
     _deckGLErrorsElapsed: {[id: string]: number} = {};
 
@@ -413,6 +417,7 @@ export default function MapContainerFactory(
         features: features.concat(polygonFilters.map(f => f.value))
       })
     );
+    // @ts-ignore - No overload matches this call
     selectedPolygonIndexSelector = createSelector(
       this.featureCollectionSelector,
       this.selectedFeatureSelector,
@@ -466,6 +471,10 @@ export default function MapContainerFactory(
       } as Partial<LayerBaseConfig>);
     };
 
+    _onLayerFilteredItemsChange = (idx, event) => {
+      this.props.visStateActions.layerFilteredItemsChange(this.props.visState.layers[idx], event);
+    };
+
     _handleMapToggleLayer = layerId => {
       const {index: mapIndex = 0, visStateActions} = this.props;
       visStateActions.toggleLayerForMap(mapIndex, layerId);
@@ -486,9 +495,9 @@ export default function MapContainerFactory(
       }
     };
 
-    _setMapboxMap: React.Ref<MapRef> = mapbox => {
-      if (!this._map && mapbox) {
-        this._map = mapbox.getMap();
+    _setMapRef = mapRef => {
+      if (!this._map && mapRef) {
+        this._map = getApplicationConfig().getMap(mapRef);
         // i noticed in certain context we don't access the actual map element
         if (!this._map) {
           return;
@@ -507,7 +516,7 @@ export default function MapContainerFactory(
         // The parent component can gain access to our MapboxGlMap by
         // providing this callback. Note that 'mapbox' will be null when the
         // ref is unset (e.g. when a split map is closed).
-        this.props.getMapboxRef(mapbox, this.props.index);
+        this.props.getMapboxRef(mapRef, this.props.index);
       }
     };
 
@@ -588,6 +597,7 @@ export default function MapContainerFactory(
           clicked,
           datasets,
           interactionConfig,
+          animationConfig,
           layers,
           mousePos: {mousePosition, coordinate, pinned}
         }
@@ -599,6 +609,7 @@ export default function MapContainerFactory(
       }
 
       const layerHoverProp = getLayerHoverProp({
+        animationConfig,
         interactionConfig,
         hoverInfo,
         layers,
@@ -618,6 +629,7 @@ export default function MapContainerFactory(
         const lngLat = clicked ? clicked.coordinate : pinned.coordinate;
         pinnedPosition = this._getHoverXY(viewport, lngLat);
         layerPinnedProp = getLayerHoverProp({
+          animationConfig,
           interactionConfig,
           hoverInfo: clicked,
           layers,
@@ -648,6 +660,7 @@ export default function MapContainerFactory(
               isBase={compareMode}
               onSetFeatures={this.props.visStateActions.setFeatures}
               setSelectedFeature={this.props.visStateActions.setSelectedFeature}
+              // @ts-ignore Argument of type 'Readonly<MapContainerProps>' is not assignable to parameter of type 'never'
               featureCollection={this.featureCollectionSelector(this.props)}
             />
           )}
@@ -661,6 +674,7 @@ export default function MapContainerFactory(
               coordinate={interactionConfig.coordinate.enabled && coordinate}
               onSetFeatures={this.props.visStateActions.setFeatures}
               setSelectedFeature={this.props.visStateActions.setSelectedFeature}
+              // @ts-ignore Argument of type 'Readonly<MapContainerProps>' is not assignable to parameter of type 'never'
               featureCollection={this.featureCollectionSelector(this.props)}
             />
           )}
@@ -732,8 +746,10 @@ export default function MapContainerFactory(
                 editorMenuActive,
                 onSetFeatures: setFeatures,
                 setSelectedFeature,
+                // @ts-ignore Argument of type 'Readonly<MapContainerProps>' is not assignable to parameter of type 'never'
                 featureCollection: this.featureCollectionSelector(this.props),
                 selectedFeatureIndexes: this.selectedFeatureIndexArraySelector(
+                  // @ts-ignore Argument of type 'unknown' is not assignable to parameter of type 'number'.
                   editorFeatureSelectedIndex
                 ),
                 viewport
@@ -742,7 +758,8 @@ export default function MapContainerFactory(
         },
         {
           onLayerHover: this._onLayerHover,
-          onSetLayerDomain: this._onLayerSetDomain
+          onSetLayerDomain: this._onLayerSetDomain,
+          onFilteredItemsChange: this._onLayerFilteredItemsChange
         },
         deckGlProps
       );
@@ -832,7 +849,7 @@ export default function MapContainerFactory(
             {...extraDeckParams}
             onHover={
               isInteractive
-                ? (data, event) => {
+                ? data => {
                     const res = EditorLayerUtils.onHover(data, {
                       editorMenuActive,
                       editor,
@@ -840,7 +857,7 @@ export default function MapContainerFactory(
                     });
                     if (res) return;
 
-                    this._onLayerHoverDebounced(data, index, event);
+                    this._onLayerHoverDebounced(data, index);
                   }
                 : null
             }
@@ -918,7 +935,7 @@ export default function MapContainerFactory(
       this._onViewportChangePropagateDebounced();
     };
 
-    _onLayerHoverDebounced = debounce((data, index, event) => {
+    _onLayerHoverDebounced = debounce((data, index) => {
       this.props.visStateActions.onLayerHover(data, index);
     }, DEBOUNCE_MOUSE_MOVE_PROPAGATE);
 
@@ -969,7 +986,7 @@ export default function MapContainerFactory(
         preserveDrawingBuffer: true,
         mapboxAccessToken: currentStyle?.accessToken || mapboxApiAccessToken,
         baseApiUrl: mapboxApiUrl,
-        mapLib: maplibregl,
+        mapLib: getApplicationConfig().getMapLib(),
         transformRequest: this.props.transformRequest || transformRequest
       };
 
@@ -985,7 +1002,7 @@ export default function MapContainerFactory(
             {...mapProps}
             mapStyle={mapStyle.bottomMapStyle ?? EMPTY_MAPBOX_STYLE}
             {...bottomMapContainerProps}
-            ref={this._setMapboxMap}
+            ref={this._setMapRef}
           />
         )
       });
@@ -1025,6 +1042,7 @@ export default function MapContainerFactory(
             onSetEditorMode={visStateActions.setEditorMode}
             onSetLocale={uiStateActions.setLocale}
             onToggleEditorVisibility={visStateActions.toggleEditorVisibility}
+            onLayerVisConfigChange={visStateActions.layerVisConfigChange}
             mapHeight={mapState.height}
           />
           {isSplitSelector(this.props) && <Droppable containerId={containerId} />}
@@ -1056,7 +1074,7 @@ export default function MapContainerFactory(
               style={MAP_STYLE.top}
               mapboxAccessToken={mapProps.mapboxAccessToken}
               baseApiUrl={mapProps.baseApiUrl}
-              mapLib={maplibregl}
+              mapLib={getApplicationConfig().getMapLib()}
               {...topMapContainerProps}
             />
           ) : null}

@@ -157,7 +157,7 @@ export default function NotificationItemFactory() {
               {icons[notification.type]}
             </NotificationIcon>
             <NotificationMessage isExpanded={isExpanded} theme={this.props.theme}>
-              <ReactMarkdown source={notification.message} renderers={{link: LinkRenderer}} />
+              <ReactMarkdown components={{a: LinkRenderer}}>{notification.message}</ReactMarkdown>
             </NotificationMessage>
             {typeof removeNotification === 'function' ? (
               <div className="notification-item--action">

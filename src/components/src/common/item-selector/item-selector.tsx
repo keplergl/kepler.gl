@@ -152,7 +152,8 @@ class ItemSelectorUnmemoized extends Component<ItemSelectorProps> {
     DropDownRenderComponent: DropdownList,
     DropDownLineItemRenderComponent: ListItem,
     DropDownWrapperComponent: DropdownWrapper,
-    reorderItems: undefined
+    reorderItems: undefined,
+    className: ''
   };
 
   state = {
@@ -266,9 +267,8 @@ class ItemSelectorUnmemoized extends Component<ItemSelectorProps> {
     const {placement = 'bottom'} = this.props;
     const {dimensions} = this.state;
 
-    const DropDownWrapperComponent = this.props.DropDownWrapperComponent as React.ComponentType<
-      any
-    >;
+    const DropDownWrapperComponent = this.props
+      .DropDownWrapperComponent as React.ComponentType<any>;
 
     return (
       <Portaled left={0} top={0} isOpened={this.state.showTypeahead} onClose={this._hideTypeahead}>

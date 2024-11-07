@@ -5,7 +5,7 @@ import {createAction} from '@reduxjs/toolkit';
 import {default as ActionTypes} from './action-types';
 import {Bounds, Merge, Viewport} from '@kepler.gl/types';
 
-export type TogglePerspectiveUpdaterAction = {};
+export type TogglePerspectiveUpdaterAction = void;
 /**
  *
  * Toggle between 3d and 2d map.
@@ -32,10 +32,10 @@ export type FitBoundsUpdaterAction = {payload: Bounds};
  */
 export const fitBounds: (
   payload: Bounds
-) => Merge<
-  FitBoundsUpdaterAction,
-  {type: typeof ActionTypes.FIT_BOUNDS}
-> = createAction(ActionTypes.FIT_BOUNDS, (bounds: Bounds) => ({payload: bounds}));
+) => Merge<FitBoundsUpdaterAction, {type: typeof ActionTypes.FIT_BOUNDS}> = createAction(
+  ActionTypes.FIT_BOUNDS,
+  (bounds: Bounds) => ({payload: bounds})
+);
 
 export type UpdateMapUpdaterAction = {payload: {viewport: Viewport; mapIndex?: number}};
 /**
@@ -84,10 +84,10 @@ export type ToggleSplitMapUpdaterAction = {
  */
 export const toggleSplitMap: (
   payload: number
-) => Merge<
-  ToggleSplitMapUpdaterAction,
-  {type: typeof ActionTypes.TOGGLE_SPLIT_MAP}
-> = createAction(ActionTypes.TOGGLE_SPLIT_MAP, (index: number) => ({payload: index}));
+) => Merge<ToggleSplitMapUpdaterAction, {type: typeof ActionTypes.TOGGLE_SPLIT_MAP}> = createAction(
+  ActionTypes.TOGGLE_SPLIT_MAP,
+  (index: number) => ({payload: index})
+);
 
 export type ToggleSplitMapViewportUpdaterAction = {
   payload: {
@@ -124,7 +124,7 @@ export const toggleSplitMapViewport: (payload: {
  *
  * @public
  */
-/* eslint-disable no-unused-vars */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // @ts-ignore
 const mapStateActions = null;
-/* eslint-enable no-unused-vars */
+/* eslint-enable @typescript-eslint/no-unused-vars */

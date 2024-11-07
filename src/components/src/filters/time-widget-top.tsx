@@ -89,7 +89,6 @@ function TimeWidgetTopFactory(FieldSelector: ReturnType<typeof FieldSelectorFact
     readOnly,
     datasets,
     setFilterPlot,
-    index,
     onClose,
     isMinified,
     onToggleMinify
@@ -101,10 +100,10 @@ function TimeWidgetTopFactory(FieldSelector: ReturnType<typeof FieldSelectorFact
         ),
       [datasets, filter.dataId]
     );
-    const _setFilterPlotYAxis = useCallback(value => setFilterPlot(index, {yAxis: value}), [
-      setFilterPlot,
-      index
-    ]);
+    const _setFilterPlotYAxis = useCallback(
+      value => setFilterPlot({yAxis: value}),
+      [setFilterPlot]
+    );
 
     return (
       <TopSectionWrapper>

@@ -54,7 +54,7 @@ test('#Heatmaplayer -> formatLayerData -> w/ GpuFilter', t => {
   const expectedConfig = {
     type: 'heatmap',
     id: 'heatmap-test-1',
-    source: `${dataId}-1-2`,
+    source: `${dataId}-points-1-2--1`,
     layout: {visibility: 'visible'},
     filter: ['all', ['>=', 'gpu:utc_timestamp', 39000], ['<=', 'gpu:utc_timestamp', 552000]],
     paint: {
@@ -110,7 +110,8 @@ test('#Heatmaplayer -> formatLayerData -> w/ GpuFilter', t => {
         const expectedLayerData = {
           columns: {
             lat: {value: 'lat', fieldIdx: 1},
-            lng: {value: 'lng', fieldIdx: 2}
+            lng: {value: 'lng', fieldIdx: 2},
+            geoarrow: {value: null, fieldIdx: -1}
           },
           config: expectedConfig,
           data: {
@@ -187,7 +188,7 @@ test('#Heatmaplayer -> formatLayerData -> w/o GpuFilter', t => {
   const expectedConfig = {
     type: 'heatmap',
     id: 'heatmap-test-1',
-    source: `${testCsvDataId}-1-2`,
+    source: `${testCsvDataId}-points-1-2--1`,
     layout: {visibility: 'visible'},
     paint: {
       'heatmap-weight': 1,
@@ -237,7 +238,8 @@ test('#Heatmaplayer -> formatLayerData -> w/o GpuFilter', t => {
         const expectedLayerData = {
           columns: {
             lat: {value: 'gps_data.lat', fieldIdx: 1},
-            lng: {value: 'gps_data.lng', fieldIdx: 2}
+            lng: {value: 'gps_data.lng', fieldIdx: 2},
+            geoarrow: {value: null, fieldIdx: -1}
           },
           config: expectedConfig,
           weightField: null,

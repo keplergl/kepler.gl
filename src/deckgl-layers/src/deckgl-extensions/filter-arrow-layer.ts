@@ -2,7 +2,6 @@
 // Copyright contributors to the kepler.gl project
 
 import {Layer, LayerExtension} from '@deck.gl/core';
-import {LayerContext} from '@deck.gl/core/lib/layer';
 import GL from '@luma.gl/constants';
 
 import shaderModule from './filter-shader-module';
@@ -30,14 +29,14 @@ export default class FilterArrowExtension extends LayerExtension {
   static defaultProps = defaultProps;
   static extensionName = 'FilterArrowExtension';
 
-  getShaders(extension: any) {
+  getShaders() {
     return {
       modules: [shaderModule],
       defines: {}
     };
   }
 
-  initializeState(this: Layer<FilterArrowExtensionProps>, context: LayerContext, extension: this) {
+  initializeState(this: Layer<FilterArrowExtensionProps>) {
     const attributeManager = this.getAttributeManager();
     if (attributeManager) {
       attributeManager.add({

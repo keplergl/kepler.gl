@@ -36,16 +36,19 @@ const ENV_VARIABLES_WITH_INSTRUCTIONS = {
   FoursquareClientId: 'You can get the token at https://location.foursquare.com/developer',
   FoursquareDomain: 'You can get the token at https://location.foursquare.com/developer',
   FoursquareAPIURL: 'You can get the token at https://location.foursquare.com/developer',
-  FoursquareUserMapsURL: 'You can get the token at https://location.foursquare.com/developer',
+  FoursquareUserMapsURL: 'You can get the token at https://location.foursquare.com/developer'
 };
 
-const WEBPACK_ENV_VARIABLES = Object.keys(ENV_VARIABLES_WITH_INSTRUCTIONS).reduce((acc, key) => ({
-  ...acc,
-  [key]: null
-}), {});
+const WEBPACK_ENV_VARIABLES = Object.keys(ENV_VARIABLES_WITH_INSTRUCTIONS).reduce(
+  (acc, key) => ({
+    ...acc,
+    [key]: null
+  }),
+  {}
+);
 
 module.exports = {
   ENV_VARIABLES_WITH_INSTRUCTIONS,
   WEBPACK_ENV_VARIABLES,
   RESOLVE_ALIASES: resolveAlias
-}
+};

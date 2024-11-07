@@ -1,4 +1,3 @@
-"""module for keplergl-jupyter"""
 # SPDX-License-Identifier: MIT
 # Copyright contributors to the kepler.gl project
 

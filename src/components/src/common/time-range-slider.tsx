@@ -9,7 +9,8 @@ import RangeSliderFactory from './range-slider';
 import TimeSliderMarkerFactory from './time-slider-marker';
 import PlaybackControlsFactory from './animation-control/playback-controls';
 import TimeRangeSliderTimeTitleFactory from './time-range-slider-time-title';
-import {HistogramBin, LineChart, Timeline} from '@kepler.gl/types';
+import {LineChart, Timeline, AnimationConfig} from '@kepler.gl/types';
+import {ActionHandler, setFilterPlot} from '@kepler.gl/actions';
 import AnimationControlFactory from './animation-control/animation-control';
 
 const animationControlWidth = 176;
@@ -27,8 +28,10 @@ type TimeRangeSliderProps = {
   isAnimating: boolean;
   timeFormat: string;
   timezone?: string | null;
-  histogram?: HistogramBin[];
-  plotType?: string;
+  timeBins?: object;
+  plotType?: {
+    [key: string]: any;
+  };
   lineChart?: LineChart;
   step: number;
   isAnimatable?: boolean;
@@ -38,8 +41,11 @@ type TimeRangeSliderProps = {
   toggleAnimation: () => void;
   updateAnimationSpeed?: (val: number) => void;
   setFilterAnimationWindow?: (id: string) => void;
+  setFilterPlot?: ActionHandler<typeof setFilterPlot>;
   onChange: (v: number[]) => void;
   timeline: Timeline;
+  invertTrendColor?: boolean;
+  animationConfig?: AnimationConfig;
 };
 
 const StyledSliderContainer = styled.div<StyledSliderContainerProps>`
@@ -68,6 +74,14 @@ TimeRangeSliderFactory.deps = [
   AnimationControlFactory
 ];
 
+export function getTimeBinsForInterval(timeBins, interval) {
+  if (!timeBins) return {};
+  return Object.keys(timeBins).reduce((acc, dataId) => {
+    acc[dataId] = timeBins[dataId][interval];
+    return acc;
+  }, {});
+}
+
 export default function TimeRangeSliderFactory(
   PlaybackControls: ReturnType<typeof PlaybackControlsFactory>,
   RangeSlider: ReturnType<typeof RangeSliderFactory>,
@@ -86,9 +100,10 @@ export default function TimeRangeSliderFactory(
       resetAnimation,
       timeFormat,
       timezone,
-      histogram,
+      timeBins,
       plotType,
       lineChart,
+      invertTrendColor,
       step,
       isAnimatable,
       speed,
@@ -97,10 +112,15 @@ export default function TimeRangeSliderFactory(
       setFilterAnimationWindow,
       toggleAnimation,
       onChange,
+      setFilterPlot,
       timeline
     } = props;
 
     const throttledOnchange = useMemo(() => throttle(onChange, 20), [onChange]);
+    const binsForInterval = useMemo(() => getTimeBinsForInterval(timeBins, plotType?.interval), [
+      timeBins,
+      plotType?.interval
+    ]);
 
     const style = useMemo(
       () => ({
@@ -128,8 +148,9 @@ export default function TimeRangeSliderFactory(
                 range={domain}
                 value0={value[0]}
                 value1={value[1]}
-                histogram={histogram}
+                bins={binsForInterval}
                 lineChart={lineChart}
+                invertTrendColor={invertTrendColor}
                 plotType={plotType}
                 isEnlarged={isEnlarged}
                 showInput={false}
@@ -138,6 +159,7 @@ export default function TimeRangeSliderFactory(
                 xAxis={TimeSliderMarker}
                 timezone={timezone}
                 timeFormat={timeFormat}
+                setFilterPlot={setFilterPlot}
               />
             </div>
           ) : (

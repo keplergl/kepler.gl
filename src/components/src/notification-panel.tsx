@@ -58,8 +58,8 @@ export default function NotificationPanelFactory(
     }
   }
 
-  const NotificationPanel = (React.memo(
+  const NotificationPanel = React.memo(
     NotificationPanelUnmemoized
-  ) as unknown) as typeof NotificationPanelUnmemoized;
+  ) as unknown as typeof NotificationPanelUnmemoized;
   return NotificationPanel;
 }

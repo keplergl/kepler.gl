@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import React, {useCallback, useMemo} from 'react';
-import {getIntervalBins, getTimelineFromFilter} from '@kepler.gl/utils';
+import {getBinThresholds, getTimelineFromFilter} from '@kepler.gl/utils';
 import {TimeRangeFilter} from '@kepler.gl/types';
 import {ANIMATION_WINDOW} from '@kepler.gl/constants';
 import AnimationControllerFactory from './common/animation-control/animation-controller';
@@ -32,28 +32,40 @@ function FilterAnimationControllerFactory(
     setFilterAnimationTime,
     children
   }) => {
-    const intervalBins = useMemo(() => getIntervalBins(filter), [filter]);
+    const binThresholds = useMemo(() => {
+      return getBinThresholds(filter.plotType?.interval, filter.domain);
+    }, [filter.plotType?.interval, filter.domain]);
 
-    const steps = useMemo(() => (intervalBins ? intervalBins.map(x => x.x0) : null), [
-      intervalBins
-    ]);
+    const steps = useMemo(() => {
+      if (binThresholds) {
+        const thresholds = [...binThresholds];
+        // pop last threshold
+        thresholds.pop();
+        return thresholds;
+      }
+
+      return null;
+    }, [binThresholds]);
 
     const updateAnimation = useCallback(
       value => {
         switch (filter.animationWindow) {
-          case ANIMATION_WINDOW.interval:
+          case ANIMATION_WINDOW.interval: {
             const idx = value[1];
-            setFilterAnimationTime(filterIdx, 'value', [
-              intervalBins[idx].x0,
-              intervalBins[idx].x1 - 1
-            ]);
+            if (idx < binThresholds.length - 1) {
+              setFilterAnimationTime(filterIdx, 'value', [
+                binThresholds[idx],
+                binThresholds[idx + 1] - 1
+              ]);
+            }
             break;
+          }
           default:
             setFilterAnimationTime(filterIdx, 'value', value);
             break;
         }
       },
-      [filterIdx, intervalBins, filter.animationWindow, setFilterAnimationTime]
+      [filterIdx, binThresholds, filter.animationWindow, setFilterAnimationTime]
     );
 
     // if filter is synced merge the filter and animation config

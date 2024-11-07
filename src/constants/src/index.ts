@@ -13,3 +13,4 @@ export * from './tooltip';
 export * from './user-feedbacks';
 export * from './user-guides';
 export * from './dnd-layer-items';
+export * from './time';

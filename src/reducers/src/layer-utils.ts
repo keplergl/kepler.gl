@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import Console from 'global/console';
+
 import {arrayMove} from '@dnd-kit/sortable';
 import {GEOCODER_LAYER_ID} from '@kepler.gl/constants';
 import {Layer as DeckLayer, LayerProps as DeckLayerProps} from '@deck.gl/core/typed';
@@ -50,6 +52,7 @@ export function findDefaultLayer(dataset: KeplerTable, layerClasses: LayerClasse
   if (!dataset) {
     return [];
   }
+
   const layerProps = (Object.keys(layerClasses) as Array<keyof LayerClassesType>).reduce(
     (previous, lc) => {
       const result: FindDefaultLayerPropsReturnValue =
@@ -64,7 +67,9 @@ export function findDefaultLayer(dataset: KeplerTable, layerClasses: LayerClasse
         props.map(p => ({
           ...p,
           type: lc,
-          dataId: dataset.id
+          dataId: dataset.id,
+          // set arc layer initial visiblity to false, because arcs tend to be too musy
+          ...(lc === 'arc' || lc === 'line' ? {isVisible: false} : {})
         }))
       );
     },
@@ -123,6 +128,7 @@ export function calculateLayerData<S extends MinVisStateForLayerData>(
     layer.isValid = true;
     layer.errorMessage = null;
   } catch (err) {
+    Console.error(err);
     layer = layer.updateLayerConfig({
       isVisible: false
     });
@@ -145,6 +151,7 @@ export function calculateLayerData<S extends MinVisStateForLayerData>(
  * @type {typeof import('./layer-utils').getLayerHoverProp}
  */
 export function getLayerHoverProp({
+  animationConfig,
   interactionConfig,
   hoverInfo,
   layers,
@@ -152,6 +159,7 @@ export function getLayerHoverProp({
   datasets
 }: {
   interactionConfig: InteractionConfig;
+  animationConfig: VisState['animationConfig'];
   hoverInfo: any;
   layers: Layer[];
   layersToRender: LayersToRender;
@@ -182,7 +190,9 @@ export function getLayerHoverProp({
       const data: DataRow | null = layer.getHoverData(
         object || hoverInfo.index,
         dataContainer,
-        fields
+        fields,
+        animationConfig,
+        hoverInfo
       );
       if (!data) {
         return null;
@@ -228,7 +238,8 @@ export function renderDeckGlLayer(props: any, layerCallbacks: {[key: string]: an
     mapState,
     animationConfig,
     objectHovered,
-    visible
+    visible,
+    dataset
   });
 }
 
@@ -333,6 +344,13 @@ export function bindLayerCallbacks(layerCallbacks: LayerCallbacks = {}, idx: num
 export type LayerCallbacks = {
   onLayerHover?: (idx: number, value: any) => void;
   onSetLayerDomain?: (idx: number, value: any) => void;
+  onFilteredItemsChange?: (
+    idx: number,
+    event: {
+      id: string;
+      count: number;
+    }
+  ) => void;
 };
 
 // eslint-disable-next-line complexity

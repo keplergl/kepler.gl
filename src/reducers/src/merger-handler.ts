@@ -77,16 +77,16 @@ export function mergeStateFromMergers<State extends VisState>(
   return {mergedState, allMerged: true};
 }
 
-export function hasPropsToMerge<State extends {}>(
+export function hasPropsToMerge<State extends object>(
   state: State,
   mergerProps: string | string[]
 ): boolean {
   return Array.isArray(mergerProps)
-    ? Boolean(mergerProps.some(p => state.hasOwnProperty(p)))
-    : typeof mergerProps === 'string' && state.hasOwnProperty(mergerProps);
+    ? Boolean(mergerProps.some(p => Object.prototype.hasOwnProperty.call(state, p)))
+    : typeof mergerProps === 'string' && Object.prototype.hasOwnProperty.call(state, mergerProps);
 }
 
-export function getPropValueToMerger<State extends {}>(
+export function getPropValueToMerger<State extends object>(
   state: State,
   mergerProps: string | string[],
   toMergeProps?: string | string[]

@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {Component, ComponentType} from 'react';
+import React, {useCallback} from 'react';
 import styled from 'styled-components';
 import RangeSliderFactory from '../range-slider';
-import onClickOutside from 'react-onclickoutside';
 import {SPEED_CONTROL_RANGE, SPEED_CONTROL_STEP} from '@kepler.gl/constants';
+import useOnClickOutside from '../../hooks/use-on-click-outside';
 
 const SliderWrapper = styled.div`
   position: relative;
@@ -36,34 +36,33 @@ interface AnimationSpeedSliderProps {
 
 export default function AnimationSpeedSliderFactory(
   RangeSlider: ReturnType<typeof RangeSliderFactory>
-): ComponentType<AnimationSpeedSliderProps> {
-  class AnimationSpeedSlider extends Component<AnimationSpeedSliderProps> {
-    handleClickOutside = e => {
-      this.props.onHide();
-    };
+): React.FC<AnimationSpeedSliderProps> {
+  const AnimationSpeedSlider: React.FC<AnimationSpeedSliderProps> = ({
+    onHide,
+    speed,
+    updateAnimationSpeed
+  }) => {
+    const ref = useOnClickOutside<HTMLDivElement>(onHide);
 
-    _onChange = v => this.props.updateAnimationSpeed(v[1]);
+    const onChange = useCallback(v => updateAnimationSpeed(v[1]), [updateAnimationSpeed]);
 
-    render() {
-      return (
-        <SpeedSliderContainer className="animation-control__speed-slider">
-          <SliderWrapper>
-            <RangeSlider
-              range={SPEED_CONTROL_RANGE}
-              step={SPEED_CONTROL_STEP}
-              value0={0}
-              value1={this.props.speed}
-              onChange={this._onChange}
-              isRanged={false}
-              showInput
-              inputTheme="secondary"
-              inputSize="tiny"
-            />
-          </SliderWrapper>
-        </SpeedSliderContainer>
-      );
-    }
-  }
-
-  return onClickOutside(AnimationSpeedSlider);
+    return (
+      <SpeedSliderContainer className="animation-control__speed-slider" ref={ref}>
+        <SliderWrapper>
+          <RangeSlider
+            range={SPEED_CONTROL_RANGE}
+            step={SPEED_CONTROL_STEP}
+            value0={0}
+            value1={speed}
+            onChange={onChange}
+            isRanged={false}
+            showInput
+            inputTheme="secondary"
+            inputSize="tiny"
+          />
+        </SliderWrapper>
+      </SpeedSliderContainer>
+    );
+  };
+  return AnimationSpeedSlider;
 }

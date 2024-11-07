@@ -13,7 +13,7 @@ import MapLegendPanelFactory from './map-legend-panel';
 import MapDrawPanelFactory from './map-draw-panel';
 import LocalePanelFactory from './locale-panel';
 import {Layer} from '@kepler.gl/layers';
-import {Editor, MapControls, MapState} from '@kepler.gl/types';
+import {Editor, LayerVisConfig, MapControls, MapState} from '@kepler.gl/types';
 import {Datasets} from '@kepler.gl/table';
 import {MapStateActions, UIStateActions} from '@kepler.gl/actions';
 
@@ -62,6 +62,7 @@ export type MapControlProps = {
   onToggleMapControl: (control: string) => void;
   onSetEditorMode: (mode: string) => void;
   onToggleEditorVisibility: () => void;
+  onLayerVisConfigChange: (oldLayer: Layer, newVisConfig: Partial<LayerVisConfig>) => void;
   top: number;
   onSetLocale: typeof UIStateActions.setLocale;
   locale: string;
@@ -104,25 +105,32 @@ function MapControlFactory(
     MapLegendPanel
   ];
 
-  const MapControl: React.FC<MapControlProps> = React.memo(
-    ({actionComponents = DEFAULT_ACTIONS, ...props}) => {
-      return (
-        <StyledMapControl className="map-control" top={props.top}>
-          {actionComponents.map((ActionComponent, index) => (
-            <ActionComponent key={index} className="map-control-action" {...props} />
-          ))}
-        </StyledMapControl>
-      );
-    }
-  );
-
-  MapControl.defaultProps = {
-    isSplit: false,
-    top: 0,
-    mapIndex: 0,
-    logoComponent: LegendLogo,
-    actionComponents: DEFAULT_ACTIONS
+  const MapControl: React.FC<MapControlProps> & {
+    defaultActionComponents: MapControlProps['actionComponents'];
+  } = ({
+    actionComponents = DEFAULT_ACTIONS,
+    isSplit = false,
+    top = 0,
+    mapIndex = 0,
+    logoComponent = LegendLogo,
+    ...restProps
+  }) => {
+    const actionComponentProps = {
+      isSplit,
+      mapIndex,
+      logoComponent,
+      ...restProps
+    };
+    return (
+      <StyledMapControl className="map-control" top={top}>
+        {actionComponents.map((ActionComponent, index) => (
+          <ActionComponent key={index} className="map-control-action" {...actionComponentProps} />
+        ))}
+      </StyledMapControl>
+    );
   };
+
+  MapControl.defaultActionComponents = DEFAULT_ACTIONS;
 
   MapControl.displayName = 'MapControl';
 

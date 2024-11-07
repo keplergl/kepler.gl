@@ -33,7 +33,7 @@ const customizedKeplerGlReducer = keplerGlReducer
   })
   // handle additional actions
   .plugin({
-    HIDE_AND_SHOW_SIDE_PANEL: (state, action) => ({
+    HIDE_AND_SHOW_SIDE_PANEL: state => ({
       ...state,
       uiState: {
         ...state.uiState,

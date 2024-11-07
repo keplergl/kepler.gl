@@ -3,7 +3,6 @@
 
 import React, {useRef, useEffect, useMemo} from 'react';
 import moment from 'moment-timezone';
-import PropTypes from 'prop-types';
 import {NumberValue, scaleUtc} from 'd3-scale';
 import {select} from 'd3-selection';
 import {axisBottom} from 'd3-axis';
@@ -26,7 +25,12 @@ const TimeSliderContainer = styled.svg`
     fill: ${props => props.theme.axisFontColor};
   }
 
-  .axis line,
+  .axis line {
+    stroke: ${props => props.theme.axisFontColor};
+    shape-rendering: crispEdges;
+    stroke-width: 1;
+  }
+
   .axis path {
     fill: none;
     stroke: ${props => props.theme.sliderBarBgd};
@@ -98,19 +102,14 @@ export function getXAxis(
   if (!Array.isArray(domain) || !domain.every(Number.isFinite)) {
     return null;
   }
-  const scale = scaleUtc()
-    .domain(domain)
-    .range([0, width]);
+  const scale = scaleUtc().domain(domain).range([0, width]);
   if (!scale) {
     return null;
   }
 
   const ticks = Math.floor(width / (isEnlarged ? MIN_TICK_WIDTH_LARGE : MIN_TICK_WIDTH_SMALL));
   const tickFormat = timezone ? getTickFormat(timezone) : null;
-  const xAxis = axisBottom(scale)
-    .ticks(ticks)
-    .tickSize(0)
-    .tickPadding(12);
+  const xAxis = axisBottom(scale).ticks(ticks).tickSize(4).tickPadding(4);
   if (tickFormat) {
     xAxis.tickFormat(tickFormat);
   }
@@ -143,12 +142,10 @@ function TimeSliderMarkerFactory() {
     timezone
   }: TimeSliderMarkerProps) => {
     const xAxisRef = useRef(null);
-    const xAxis = useMemo(() => getXAxis(domain, width, isEnlarged, timezone), [
-      domain,
-      width,
-      isEnlarged,
-      timezone
-    ]);
+    const xAxis = useMemo(
+      () => getXAxis(domain, width, isEnlarged, timezone),
+      [domain, width, isEnlarged, timezone]
+    );
     useEffect(() => {
       updateAxis(xAxisRef, xAxis);
     }, [xAxisRef, xAxis]);
@@ -157,11 +154,6 @@ function TimeSliderMarkerFactory() {
         <g className="x axis" ref={xAxisRef} transform="translate(0, 0)" />
       </TimeSliderContainer>
     );
-  };
-
-  TimeSliderMarker.propTypes = {
-    domain: PropTypes.arrayOf(PropTypes.any).isRequired,
-    width: PropTypes.number.isRequired
   };
 
   return React.memo(TimeSliderMarker);

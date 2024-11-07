@@ -31,17 +31,19 @@ const StyledAnimationControls = styled.div<StyledAnimationControlsProps>`
 
 const DEFAULT_ICONS = {
   /* eslint-disable react/display-name */
-  reset: _ => <Reset height="18px" />,
-  play: _ => <Play height="18px" />,
-  pause: _ => <Pause height="18px" />,
-  export: _ => <Save height="18px" />,
+  reset: () => <Reset height="18px" />,
+  play: () => <Play height="18px" />,
+  pause: () => <Pause height="18px" />,
+  export: () => <Save height="18px" />,
   /* eslint-enable react/display-name */
   speed: Rocket,
   animationFree: FreeWindow,
   animationIncremental: AnchorWindow
 };
 
-function nop() {}
+function nop() {
+  return;
+}
 
 const DEFAULT_ANIMATE_ITEMS = {
   [ANIMATION_WINDOW.free]: {
@@ -55,7 +57,7 @@ const DEFAULT_ANIMATE_ITEMS = {
     tooltip: 'tooltip.animationByIncremental'
   }
 };
-interface PlaybackControlsProps {
+export interface PlaybackControlsProps {
   isAnimatable?: boolean;
   isAnimating?: boolean;
   width?: number;
@@ -101,20 +103,20 @@ function PlaybackControlsFactory(
   // eslint-disable-next-line complexity
   const PlaybackControls: React.FC<PlaybackControlsProps> = ({
     isAnimatable,
-    isAnimating,
+    isAnimating = true,
     width,
     speed,
-    animationWindow,
+    animationWindow = ANIMATION_WINDOW.free,
     setFilterAnimationWindow,
     updateAnimationSpeed,
-    pauseAnimation,
-    resetAnimation,
-    startAnimation,
-    playbackIcons,
-    animationItems,
-    buttonStyle,
-    buttonHeight,
-    playbackActionItems = []
+    pauseAnimation = nop,
+    resetAnimation = nop,
+    startAnimation = nop,
+    playbackIcons = DEFAULT_ICONS,
+    animationItems = DEFAULT_ANIMATE_ITEMS,
+    buttonStyle = 'secondary',
+    buttonHeight = DEFAULT_BUTTON_HEIGHT,
+    playbackActionItems = PLAYBACK_CONTROLS_DEFAULT_ACTION_COMPONENTS
   }) => {
     const [isSpeedControlVisible, toggleSpeedControl] = useState(false);
     const [showAnimationWindowControl, setShowAnimationWindowControl] = useState(false);
@@ -165,19 +167,6 @@ function PlaybackControlsFactory(
         ))}
       </StyledAnimationControls>
     );
-  };
-
-  PlaybackControls.defaultProps = {
-    playbackIcons: DEFAULT_ICONS,
-    animationItems: DEFAULT_ANIMATE_ITEMS,
-    buttonStyle: 'secondary',
-    buttonHeight: DEFAULT_BUTTON_HEIGHT,
-    playbackActionItems: PLAYBACK_CONTROLS_DEFAULT_ACTION_COMPONENTS,
-    animationWindow: ANIMATION_WINDOW.free,
-    isAnimatable: true,
-    pauseAnimation: nop,
-    resetAnimation: nop,
-    startAnimation: nop
   };
 
   return PlaybackControls;

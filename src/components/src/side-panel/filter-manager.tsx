@@ -77,9 +77,11 @@ function FilterManagerFactory(
     const {
       removeFilter,
       setFilter,
+      setFilterPlot,
       toggleFilterAnimation,
       toggleFilterFeature,
-      setFilterView
+      setFilterView,
+      syncTimeFilterWithLayerTimeline
     } = visStateActions;
 
     const filterPanelCallbacks = useMemo(() => {
@@ -117,6 +119,8 @@ function FilterManagerFactory(
             toggleAnimation={filterPanelCallbacks[filter.id].toggleAnimation}
             toggleFilterFeature={filterPanelCallbacks[filter.id].toggleFilterFeature}
             setFilter={setFilter}
+            setFilterPlot={setFilterPlot}
+            syncTimeFilterWithLayerTimeline={syncTimeFilterWithLayerTimeline}
           />
         ))}
       </SidePanelSection>

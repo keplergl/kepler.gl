@@ -113,10 +113,7 @@ test('Components -> FilterManager.mount -> with prop', t => {
   t.ok(wrapper.find(FilterPanel).length === 2, 'should render 2 FilterPanel');
 
   // stateless component don't have a instance()
-  const filter1Props = wrapper
-    .find(FilterPanel)
-    .at(0)
-    .props();
+  const filter1Props = wrapper.find(FilterPanel).at(0).props();
 
   t.equal(filter1Props.filter, filterManagerProps.filters[1], 'should render last filter first');
   t.equal(filter1Props.isAnyFilterAnimating, false, 'isAnyFilterAnimating is false');
@@ -218,10 +215,7 @@ test('Components -> FilterManager.mount -> with supportedFilterTypes', t => {
   t.ok(wrapper.find(FieldSelector).length === 1, 'should render FieldSelector');
 
   // check field options
-  const fieldOptions = wrapper
-    .find(FieldSelector)
-    .at(0)
-    .props().fields;
+  const fieldOptions = wrapper.find(FieldSelector).at(0).props().fields;
 
   t.deepEqual(
     fieldOptions.map(f => f.name),

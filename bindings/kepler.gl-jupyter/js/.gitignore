@@ -3,6 +3,5 @@ dist/
 temp.*
 babel/
 
-yarn.lock
 yarn-error.log
 package-lock.json

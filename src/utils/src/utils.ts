@@ -2,16 +2,15 @@
 // Copyright contributors to the kepler.gl project
 
 import window from 'global/window';
+import {capitalizeFirstLetter} from './strings';
 
 /**
  * Generate a hash string based on number of character
  * @param {number} count
  * @returns {string} hash string
  */
-export function generateHashId(count: number = 6): string {
-  return Math.random()
-    .toString(36)
-    .substr(count);
+export function generateHashId(count = 6): string {
+  return Math.random().toString(36).substr(count);
 }
 
 /**
@@ -43,15 +42,6 @@ export function generateHashIdFromString(str: string): string {
 export function isChrome(): boolean {
   // Chrome 1+
   return window.chrome && window.chrome.webstore;
-}
-
-/**
- * Capitalize first letter of a string
- * @param {string} str
- * @returns {string}
- */
-export function capitalizeFirstLetter(str) {
-  return typeof str === 'string' ? str.charAt(0).toUpperCase() + str.slice(1) : str;
 }
 
 /**
@@ -148,7 +138,11 @@ const setPath = <T extends any[] | object>(
   }
 
   // @ts-ignore
-  return insertValue(obj, key, setPath(next, value, obj.hasOwnProperty(key) ? obj[key] : {}));
+  return insertValue(
+    obj,
+    key,
+    setPath(next, value, Object.prototype.hasOwnProperty.call(obj, key) ? obj[key] : {})
+  );
 };
 
 /**

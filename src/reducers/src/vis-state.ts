@@ -12,6 +12,8 @@ import * as visStateUpdaters from './vis-state-updaters';
 const actionHandler = {
   [ActionTypes.ADD_FILTER]: visStateUpdaters.addFilterUpdater,
 
+  [ActionTypes.CREATE_OR_UPDATE_FILTER]: visStateUpdaters.createOrUpdateFilterUpdater,
+
   [ActionTypes.ADD_LAYER]: visStateUpdaters.addLayerUpdater,
 
   [ActionTypes.APPLY_LAYER_CONFIG]: visStateUpdaters.applyLayerConfigUpdater,
@@ -137,6 +139,13 @@ const actionHandler = {
 
   [ActionTypes.SET_LAYER_ANIMATION_TIME_CONFIG]:
     visStateUpdaters.setLayerAnimationTimeConfigUpdater,
+
+  [ActionTypes.LAYER_FILTERED_ITEMS_CHANGE]: visStateUpdaters.layerFilteredItemsChangeUpdater,
+
+  [ActionTypes.SYNC_TIME_FILTER_WITH_LAYER_TIMELINE]:
+    visStateUpdaters.syncTimeFilterWithLayerTimelineUpdater,
+
+  [ActionTypes.SYNC_TIME_FILTER_TIMELINE_MODE]: visStateUpdaters.setTimeFilterTimelineModeUpdater,
 
   [ActionTypes.ADD_EFFECT]: visStateUpdaters.addEffectUpdater,
 

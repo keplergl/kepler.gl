@@ -147,6 +147,9 @@ export function LayerConfigGroupLabelFactory(InfoHelper: ReturnType<typeof InfoH
 
 LayerConfigGroupFactory.deps = [LayerConfigGroupLabelFactory];
 
+function nop() {
+  return;
+}
 function LayerConfigGroupFactory(
   LayerConfigGroupLabel: ReturnType<typeof LayerConfigGroupLabelFactory>
 ) {
@@ -155,11 +158,11 @@ function LayerConfigGroupFactory(
     children,
     property,
     layer,
-    onChange,
-    collapsible,
-    description,
-    disabled,
-    expanded,
+    onChange = nop,
+    collapsible = false,
+    description = '',
+    disabled = false,
+    expanded = false,
     IconComponent = VertThreeDots
   }) => {
     const [collapsed, toggleCollapsed] = useState(!expanded);
@@ -193,13 +196,6 @@ function LayerConfigGroupFactory(
     );
   };
 
-  LayerConfigGroup.defaultProps = {
-    collapsible: false,
-    expanded: false,
-    onChange: () => {},
-    description: '',
-    disabled: false
-  };
   return LayerConfigGroup;
 }
 

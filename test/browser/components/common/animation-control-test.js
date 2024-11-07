@@ -61,10 +61,7 @@ test('Components -> AnimationControl -> render with props', t => {
   t.ok(wrapper.find(PlaybackControls), 'should render PlaybackControls');
   t.ok(wrapper.find(FloatingTimeDisplay), 'should render FloatingTimeDisplay');
 
-  wrapper
-    .find(IconButton)
-    .at(0)
-    .simulate('click');
+  wrapper.find(IconButton).at(0).simulate('click');
   t.ok(toggleAnimation.calledOnce, 'should call toggleAnimation');
   t.end();
 });
@@ -100,18 +97,12 @@ test('Components -> AnimationControl -> time display', t => {
   t.equal(timeDomainEnd.length, 1, 'should render timeDomainEnd');
 
   t.equal(
-    timeDomainStart
-      .find('span')
-      .at(0)
-      .text(),
+    timeDomainStart.find('span').at(0).text(),
     '08/12/2019 2:34:21 AM',
     'should render current domain start'
   );
   t.equal(
-    timeDomainEnd
-      .find('span')
-      .at(0)
-      .text(),
+    timeDomainEnd.find('span').at(0).text(),
     '08/12/2019 3:00:36 AM',
     'should render current domain end'
   );
@@ -122,11 +113,7 @@ test('Components -> AnimationControl -> time display', t => {
     'should render 1 top row time'
   );
   t.equal(
-    timeDisplay
-      .find('.animation-control__time-display__top')
-      .at(0)
-      .find('.time-value')
-      .text(),
+    timeDisplay.find('.animation-control__time-display__top').at(0).find('.time-value').text(),
     '08/12/2019',
     'should render correct date'
   );
@@ -137,11 +124,7 @@ test('Components -> AnimationControl -> time display', t => {
     'should render 1 top row time'
   );
   t.equal(
-    timeDisplay
-      .find('.animation-control__time-display__bottom')
-      .at(0)
-      .find('.time-value')
-      .text(),
+    timeDisplay.find('.animation-control__time-display__bottom').at(0).find('.time-value').text(),
     '2:34:21 AM',
     'should render correct time'
   );
@@ -185,18 +168,12 @@ test('Components -> AnimationControl -> time display -> custom timezone and time
   t.equal(timeDomainEnd.length, 1, 'should render timeDomainEnd');
 
   t.equal(
-    timeDomainStart
-      .find('span')
-      .at(0)
-      .text(),
+    timeDomainStart.find('span').at(0).text(),
     '2019 Aug 11 10:34',
     'should render current domain start'
   );
   t.equal(
-    timeDomainEnd
-      .find('span')
-      .at(0)
-      .text(),
+    timeDomainEnd.find('span').at(0).text(),
     '2019 Aug 11 11:00',
     'should render current domain end'
   );
@@ -207,11 +184,7 @@ test('Components -> AnimationControl -> time display -> custom timezone and time
     'should render 1 bottom row time'
   );
   t.equal(
-    timeDisplay
-      .find('.animation-control__time-display__bottom')
-      .at(0)
-      .find('.time-value')
-      .text(),
+    timeDisplay.find('.animation-control__time-display__bottom').at(0).find('.time-value').text(),
     '2019 Aug 11 10:34',
     'should render correct date'
   );

@@ -70,7 +70,7 @@ export function injector(map = new Map()): InjectorType {
 
 // entryPoint
 export function flattenDeps(allDeps: Factory[], factory: any): Factory[] {
-  const addToDeps = allDeps.concat([factory]);
+  const addToDeps = allDeps.includes(factory) ? allDeps : allDeps.concat([factory]);
   return Array.isArray(factory.deps) && factory.deps.length
     ? factory.deps.reduce((accu, dep) => flattenDeps(accu, dep), addToDeps)
     : addToDeps;
@@ -79,7 +79,7 @@ export function flattenDeps(allDeps: Factory[], factory: any): Factory[] {
 export function provideRecipesToInjector(recipes: [Factory, Factory][], appInjector: InjectorType) {
   const provided = new Map();
 
-  return recipes.reduce((inj, recipe) => {
+  const injector = recipes.reduce((inj, recipe) => {
     if (!typeCheckRecipe(recipe)) {
       return inj;
     }
@@ -101,6 +101,13 @@ export function provideRecipesToInjector(recipes: [Factory, Factory][], appInjec
     provided.set(recipe[0], recipe[1]);
     return inj.provide(...recipe);
   }, appInjector);
+
+  // make sure all component instance are cached
+  provided.forEach(v => {
+    injector.get(v);
+  });
+
+  return injector;
 }
 
 export function typeCheckRecipe(recipe) {
@@ -125,7 +132,7 @@ export function typeCheckRecipe(recipe) {
 }
 
 export interface WithState<RootState> {
-  <TStateProps = {}, TDispatchProps = {}, TOwnProps = {}, State = RootState>(
+  <TStateProps = object, TDispatchProps = object, TOwnProps = object, State = RootState>(
     lenses: any[],
     mapStateToProps: MapStateToPropsParam<TStateProps, TOwnProps, State>,
     mapDispatchToProps?: MapDispatchToPropsParam<TDispatchProps, TOwnProps>

@@ -10,10 +10,10 @@ import cloneDeep from 'lodash.clonedeep';
 import {
   MapLegendFactory,
   StyledMapControlLegend,
-  LayerColorLegend,
   VisualChannelMetric,
-  LayerSizeLegend,
-  SingleColorLegend,
+  LayerDefaultLegend,
+  SingleColorLegendFactory,
+  LayerColorLegendFactory,
   appInjector
 } from '@kepler.gl/components';
 import {
@@ -25,6 +25,8 @@ import {
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
 
 const MapLegend = appInjector.get(MapLegendFactory);
+const LayerColorLegend = appInjector.get(LayerColorLegendFactory);
+const SingleColorLegend = appInjector.get(SingleColorLegendFactory);
 
 test('Components -> MapLegend.render', t => {
   t.doesNotThrow(() => {
@@ -66,10 +68,7 @@ test('Components -> MapLegend.render -> with layers', t => {
 
 function testGeojsonLegend(t, geojsonLegend) {
   t.equal(
-    geojsonLegend
-      .find('.legend--layer_name')
-      .at(0)
-      .text(),
+    geojsonLegend.find('.legend--layer_name').at(0).text(),
     geojsonLayer.config.label,
     'geojson layer legend should render label'
   );
@@ -79,7 +78,7 @@ function testGeojsonLegend(t, geojsonLegend) {
     'geojson layer legend should render 2 color legend'
   );
   t.equal(
-    geojsonLegend.find(LayerSizeLegend).length,
+    geojsonLegend.find(LayerDefaultLegend).length,
     0,
     'geojson layer legend should render 1 size legend'
   );
@@ -92,10 +91,7 @@ function testGeojsonLegend(t, geojsonLegend) {
     'geojson fill color should render SingleColorLegend'
   );
   t.deepEqual(
-    fillColorLegend
-      .find(SingleColorLegend)
-      .at(0)
-      .props().color,
+    fillColorLegend.find(SingleColorLegend).at(0).props().color,
     geojsonLayer.config.color,
     'geojson color legend should be correct color'
   );
@@ -106,10 +102,7 @@ function testGeojsonLegend(t, geojsonLegend) {
     'geojson stroke color should render SingleColorLegend'
   );
   t.deepEqual(
-    strokeColorLegend
-      .find(SingleColorLegend)
-      .at(0)
-      .props().color,
+    strokeColorLegend.find(SingleColorLegend).at(0).props().color,
     geojsonLayer.config.visConfig.strokeColor,
     'geojson color legend should be correct color'
   );
@@ -120,10 +113,7 @@ function testPointLayerLegend(t, pointLegend) {
   // color by: gps_data.types
   // point layer has 2 color channels, only fill is enabled
   t.equal(
-    pointLegend
-      .find('.legend--layer_name')
-      .at(0)
-      .text(),
+    pointLegend.find('.legend--layer_name').at(0).text(),
     pointLayer.config.label,
     'point layer legend should render point label'
   );
@@ -134,7 +124,7 @@ function testPointLayerLegend(t, pointLegend) {
     'point layer legend should render 1 point layer color legend'
   );
   t.equal(
-    pointLegend.find(LayerSizeLegend).length,
+    pointLegend.find(LayerDefaultLegend).length,
     0,
     'point layer legend should render 0 point layer size legend'
   );
@@ -159,10 +149,7 @@ function testPointLayerLegend(t, pointLegend) {
 
 function testHexagonLayerLegend(t, hexagonLegend) {
   t.equal(
-    hexagonLegend
-      .find('.legend--layer_name')
-      .at(0)
-      .text(),
+    hexagonLegend.find('.legend--layer_name').at(0).text(),
     hexagonLayer.config.label,
     'hexagon layer legend should render label'
   );
@@ -172,7 +159,7 @@ function testHexagonLayerLegend(t, hexagonLegend) {
     'hexagon layer legend should render 1 color legend'
   );
   t.equal(
-    hexagonLegend.find(LayerSizeLegend).length,
+    hexagonLegend.find(LayerDefaultLegend).length,
     0,
     'hexagon layer legend should render 0 size legend'
   );

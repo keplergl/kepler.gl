@@ -16,6 +16,7 @@ import {
   formatNumber,
   roundToFour
 } from '@kepler.gl/utils';
+import {processLayerBounds} from '@kepler.gl/reducers';
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 
 test('dataUtils -> clamp', t => {
@@ -233,6 +234,47 @@ test('dataUtils -> formatNumber', t => {
   TEST_CASES.forEach(tc => {
     const output = formatNumber(...tc.input);
     t.equal(output, tc.output, `formatNumber should be correct when ${tc.message}`);
+  });
+
+  t.end();
+});
+
+test('dataUtils -> validateBounds', t => {
+  const TEST_CASES = [
+    {
+      input: [[10, -10, 20, -20]],
+      output: [10, -10, 20, -20],
+      message: 'should return the same bound for a single bound'
+    },
+    {
+      input: [
+        [10, -10, 20, -20],
+        [15, -15, 25, -25]
+      ],
+      output: [10, -15, 25, -20],
+      message: 'should return a combined bound for multiple bounds'
+    },
+    {
+      input: [
+        [10, -90, 20, -20],
+        [10, -10, 90, -90]
+      ],
+      output: [10, -10, 90, -20],
+      message: 'should handle latitude -90,90 correctly'
+    },
+    {
+      input: [
+        [-180, -90, 20, -20],
+        [15, -190, 25, -25]
+      ],
+      output: [0, 0, 25, -20],
+      message: 'should handle extreme longitude values'
+    }
+  ];
+
+  TEST_CASES.forEach(tc => {
+    const output = processLayerBounds(tc.input);
+    t.deepEqual(output, tc.output, tc.message);
   });
 
   t.end();

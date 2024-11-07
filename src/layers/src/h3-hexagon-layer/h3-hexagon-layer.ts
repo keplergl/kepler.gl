@@ -5,7 +5,6 @@ import Layer, {
   LayerBaseConfig,
   LayerBaseConfigPartial,
   LayerColorConfig,
-  LayerColumn,
   LayerCoverageConfig,
   LayerSizeConfig
 } from '../base-layer';
@@ -38,7 +37,8 @@ import {
   VisConfigColorRange,
   VisConfigNumber,
   VisConfigRange,
-  Merge
+  Merge,
+  LayerColumn
 } from '@kepler.gl/types';
 import {KeplerTable} from '@kepler.gl/table';
 
@@ -92,9 +92,11 @@ export type HexagonIdLayerData = {index: number; id; centroid: Centroid};
 const DEFAULT_LINE_SCALE_VALUE = 8;
 
 export const hexIdRequiredColumns: ['hex_id'] = ['hex_id'];
-export const hexIdAccessor = ({hex_id}: HexagonIdLayerColumnsConfig) => (
-  dc: DataContainerInterface
-) => d => dc.valueAt(d.index, hex_id.fieldIdx);
+export const hexIdAccessor =
+  ({hex_id}: HexagonIdLayerColumnsConfig) =>
+  (dc: DataContainerInterface) =>
+  d =>
+    dc.valueAt(d.index, hex_id.fieldIdx);
 
 export const defaultElevation = 500;
 export const defaultCoverage = 1;
@@ -285,7 +287,7 @@ export default class HexagonIdLayer extends Layer {
     };
   }
 
-  calculateDataAttribute({dataContainer, filteredIndex}: KeplerTable, getHexId) {
+  calculateDataAttribute({filteredIndex}: KeplerTable, getHexId) {
     const data: HexagonIdLayerData[] = [];
 
     for (let i = 0; i < filteredIndex.length; i++) {
@@ -306,7 +308,7 @@ export default class HexagonIdLayer extends Layer {
 
   // TODO: fix complexity
   /* eslint-disable complexity */
-  formatLayerData(datasets, oldLayerData, opt = {}) {
+  formatLayerData(datasets, oldLayerData) {
     if (this.config.dataId === null) {
       return {};
     }

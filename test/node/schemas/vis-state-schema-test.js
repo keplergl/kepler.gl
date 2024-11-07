@@ -99,7 +99,12 @@ test('#visStateSchema -> v1 -> save load filters', t => {
       type: 'timeRange',
       value: [1474606800000, 1474617600000],
       view: 'enlarged',
-      plotType: 'histogram',
+      plotType: {
+        interval: '1-hour',
+        defaultTimeFormat: 'L  H A',
+        type: 'histogram',
+        aggregation: 'sum'
+      },
       yAxis: null,
       animationWindow: 'free',
       speed: 4
@@ -112,7 +117,9 @@ test('#visStateSchema -> v1 -> save load filters', t => {
       type: 'multiSelect',
       value: ['a'],
       view: 'side',
-      plotType: 'histogram',
+      plotType: {
+        type: 'histogram'
+      },
       yAxis: null,
       animationWindow: 'free',
       speed: 1

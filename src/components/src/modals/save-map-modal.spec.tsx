@@ -17,7 +17,7 @@ import {fireEvent} from '@testing-library/react';
 import SaveMapModalFactory from './save-map-modal';
 import {renderWithTheme} from 'test/helpers/component-jest-utils';
 import {useCloudListProvider} from '../hooks/use-cloud-list-provider';
-import {dataTestIds} from '@kepler.gl/constants/src';
+import {dataTestIds} from '@kepler.gl/constants';
 
 const SaveMapModal = SaveMapModalFactory();
 

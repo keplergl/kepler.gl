@@ -113,13 +113,11 @@ export type MapConfigChangeUpdaterAction = {
  */
 export const mapConfigChange: (
   mapStyle: MapConfigChangeUpdaterAction['payload']
-) => Merge<
-  MapConfigChangeUpdaterAction,
-  {type: typeof ActionTypes.MAP_CONFIG_CHANGE}
-> = createAction(
-  ActionTypes.MAP_CONFIG_CHANGE,
-  (mapStyle: MapConfigChangeUpdaterAction['payload']) => ({payload: mapStyle})
-);
+) => Merge<MapConfigChangeUpdaterAction, {type: typeof ActionTypes.MAP_CONFIG_CHANGE}> =
+  createAction(
+    ActionTypes.MAP_CONFIG_CHANGE,
+    (mapStyle: MapConfigChangeUpdaterAction['payload']) => ({payload: mapStyle})
+  );
 
 type OnLoadMapStyleSuccessCallback = (payload: {styleType: string}) => any;
 
@@ -146,16 +144,14 @@ export type RequestMapStylesUpdaterAction = {
 export const requestMapStyles: (
   mapStyles: RequestMapStylesUpdaterAction['payload']['mapStyles'],
   onSuccess?: RequestMapStylesUpdaterAction['payload']['onSuccess']
-) => Merge<
-  RequestMapStylesUpdaterAction,
-  {type: typeof ActionTypes.REQUEST_MAP_STYLES}
-> = createAction(
-  ActionTypes.REQUEST_MAP_STYLES,
-  (
-    mapStyles: RequestMapStylesUpdaterAction['payload']['mapStyles'],
-    onSuccess?: RequestMapStylesUpdaterAction['payload']['onSuccess']
-  ) => ({payload: {mapStyles, onSuccess}})
-);
+) => Merge<RequestMapStylesUpdaterAction, {type: typeof ActionTypes.REQUEST_MAP_STYLES}> =
+  createAction(
+    ActionTypes.REQUEST_MAP_STYLES,
+    (
+      mapStyles: RequestMapStylesUpdaterAction['payload']['mapStyles'],
+      onSuccess?: RequestMapStylesUpdaterAction['payload']['onSuccess']
+    ) => ({payload: {mapStyles, onSuccess}})
+  );
 
 /** LOAD_MAP_STYLES */
 export type LoadMapStylesUpdaterAction = {
@@ -173,10 +169,7 @@ export type LoadMapStylesUpdaterAction = {
 export const loadMapStyles: (
   newStyles: LoadMapStylesUpdaterAction['payload']['newStyles'],
   onSuccess?: LoadMapStylesUpdaterAction['payload']['onSuccess']
-) => Merge<
-  LoadMapStylesUpdaterAction,
-  {type: typeof ActionTypes.LOAD_MAP_STYLES}
-> = createAction(
+) => Merge<LoadMapStylesUpdaterAction, {type: typeof ActionTypes.LOAD_MAP_STYLES}> = createAction(
   ActionTypes.LOAD_MAP_STYLES,
   (
     newStyles: LoadMapStylesUpdaterAction['payload']['newStyles'],
@@ -201,16 +194,14 @@ export type LoadMapStyleErrUpdaterAction = {
 export const loadMapStyleErr: (
   ids: LoadMapStyleErrUpdaterAction['payload']['ids'],
   error: LoadMapStyleErrUpdaterAction['payload']['error']
-) => Merge<
-  LoadMapStyleErrUpdaterAction,
-  {type: typeof ActionTypes.LOAD_MAP_STYLE_ERR}
-> = createAction(
-  ActionTypes.LOAD_MAP_STYLE_ERR,
-  (
-    ids: LoadMapStyleErrUpdaterAction['payload']['ids'],
-    error: LoadMapStyleErrUpdaterAction['payload']['error']
-  ) => ({payload: {ids, error}})
-);
+) => Merge<LoadMapStyleErrUpdaterAction, {type: typeof ActionTypes.LOAD_MAP_STYLE_ERR}> =
+  createAction(
+    ActionTypes.LOAD_MAP_STYLE_ERR,
+    (
+      ids: LoadMapStyleErrUpdaterAction['payload']['ids'],
+      error: LoadMapStyleErrUpdaterAction['payload']['error']
+    ) => ({payload: {ids, error}})
+  );
 
 /** MAP_STYLE_CHANGE */
 export type MapStyleChangeUpdaterAction = {
@@ -229,10 +220,7 @@ export type MapStyleChangeUpdaterAction = {
 export const mapStyleChange: (
   styleType: MapStyleChangeUpdaterAction['payload']['styleType'],
   onSuccess?: MapStyleChangeUpdaterAction['payload']['onSuccess']
-) => Merge<
-  MapStyleChangeUpdaterAction,
-  {type: typeof ActionTypes.MAP_STYLE_CHANGE}
-> = createAction(
+) => Merge<MapStyleChangeUpdaterAction, {type: typeof ActionTypes.MAP_STYLE_CHANGE}> = createAction(
   ActionTypes.MAP_STYLE_CHANGE,
   (
     styleType: MapStyleChangeUpdaterAction['payload']['styleType'],
@@ -245,7 +233,7 @@ export type LoadCustomMapStyleUpdaterAction = {
   payload: {
     icon?: string;
     style?: object;
-    error?: object;
+    error?: object | boolean;
   };
 };
 /**
@@ -259,13 +247,11 @@ export type LoadCustomMapStyleUpdaterAction = {
  */
 export const loadCustomMapStyle: (
   customMapStyle: LoadCustomMapStyleUpdaterAction['payload']
-) => Merge<
-  LoadCustomMapStyleUpdaterAction,
-  {type: typeof ActionTypes.LOAD_CUSTOM_MAP_STYLE}
-> = createAction(
-  ActionTypes.LOAD_CUSTOM_MAP_STYLE,
-  (customMapStyle: LoadCustomMapStyleUpdaterAction['payload']) => ({payload: customMapStyle})
-);
+) => Merge<LoadCustomMapStyleUpdaterAction, {type: typeof ActionTypes.LOAD_CUSTOM_MAP_STYLE}> =
+  createAction(
+    ActionTypes.LOAD_CUSTOM_MAP_STYLE,
+    (customMapStyle: LoadCustomMapStyleUpdaterAction['payload']) => ({payload: customMapStyle})
+  );
 
 /** SET_3D_BUILDING_COLOR */
 export type Set3dBuildingColorUpdaterAction = {
@@ -280,13 +266,11 @@ export type Set3dBuildingColorUpdaterAction = {
  */
 export const set3dBuildingColor: (
   color: Set3dBuildingColorUpdaterAction['payload']
-) => Merge<
-  Set3dBuildingColorUpdaterAction,
-  {type: typeof ActionTypes.SET_3D_BUILDING_COLOR}
-> = createAction(
-  ActionTypes.SET_3D_BUILDING_COLOR,
-  (color: Set3dBuildingColorUpdaterAction['payload']) => ({payload: color})
-);
+) => Merge<Set3dBuildingColorUpdaterAction, {type: typeof ActionTypes.SET_3D_BUILDING_COLOR}> =
+  createAction(
+    ActionTypes.SET_3D_BUILDING_COLOR,
+    (color: Set3dBuildingColorUpdaterAction['payload']) => ({payload: color})
+  );
 
 /** SET_BACKGROUND_COLOR */
 export type SetBackgroundColorUpdaterAction = {
@@ -301,10 +285,8 @@ export type SetBackgroundColorUpdaterAction = {
  */
 export const setBackgroundColor: (
   color: SetBackgroundColorUpdaterAction['payload']
-) => Merge<
-  SetBackgroundColorUpdaterAction,
-  {type: typeof ActionTypes.SET_BACKGROUND_COLOR}
-> = createAction(ActionTypes.SET_BACKGROUND_COLOR, (color: RGBColor) => ({payload: color}));
+) => Merge<SetBackgroundColorUpdaterAction, {type: typeof ActionTypes.SET_BACKGROUND_COLOR}> =
+  createAction(ActionTypes.SET_BACKGROUND_COLOR, (color: RGBColor) => ({payload: color}));
 
 /**
  * Actions handled mostly by  `mapStyle` reducer.
@@ -313,7 +295,7 @@ export const setBackgroundColor: (
  *
  * @public
  */
-/* eslint-disable no-unused-vars */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // @ts-ignore
 const mapStyleActions = null;
-/* eslint-enable no-unused-vars */
+/* eslint-enable @typescript-eslint/no-unused-vars */

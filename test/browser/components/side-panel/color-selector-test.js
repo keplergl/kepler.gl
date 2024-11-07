@@ -107,7 +107,7 @@ test('Components -> LayerColorSelector.render -> render layer color', t => {
 
   const csInput = wrapper.find(ColorSelectorInput);
   t.equal(csInput.length, 1, 'should render 1 ColorSelectorInput');
-  csInput.simulate('mousedown');
+  csInput.simulate('click');
 
   t.ok(updateLayerColorUI.calledOnce, 'should call updateLayerColorUI');
   t.ok(updateLayerVisConfig.notCalled, 'should not call updateLayerColorUI');
@@ -160,10 +160,7 @@ test('Components -> LayerColorSelector.render -> render single color click', t =
   t.ok(wrapper.find('.single-color-palette__block'), 'should render color blocks');
 
   // click color block
-  wrapper
-    .find('.single-color-palette__block')
-    .at(0)
-    .simulate('click');
+  wrapper.find('.single-color-palette__block').at(0).simulate('click');
 
   t.ok(updateLayerConfig.calledOnce, 'should call updateLayerConfig');
   t.ok(updateLayerConfig.calledWith({color: [255, 254, 230]}));
@@ -238,7 +235,7 @@ test('Components -> ArcLayerColorSelector.render -> render single color', t => {
 
   const csInput = wrapper.find(ColorSelectorInput);
   t.equal(csInput.length, 2, 'should render 2 ColorSelectorInput');
-  csInput.at(1).simulate('mousedown');
+  csInput.at(1).simulate('click');
 
   t.ok(updateLayerColorUI.calledOnce, 'should call updateLayerColorUI when mousedown 2nd block');
   t.ok(
@@ -298,10 +295,7 @@ test('Components -> ArcLayerColorSelector.render -> render single color click', 
   t.ok(wrapper.find('.single-color-palette__block'), 'should render color blocks');
 
   // click color block
-  wrapper
-    .find('.single-color-palette__block')
-    .at(0)
-    .simulate('click');
+  wrapper.find('.single-color-palette__block').at(0).simulate('click');
 
   t.ok(updateLayerVisConfig.calledOnce, 'should call updateLayerVisConfig');
   t.ok(updateLayerVisConfig.calledWith({targetColor: [255, 254, 230]}));
@@ -343,17 +337,14 @@ test('Components -> LayerColorRangeSelector.render -> ColorSelector', t => {
   t.equal(cblks.length, 8, 'should render 8 ColorBlocks');
 
   const expectedColor = `rgb(${hexToRgb('#7F1941').join(', ')})`;
-  const firstColor = cblks
-    .at(0)
-    .getDOMNode()
-    .style.getPropertyValue('background-color');
+  const firstColor = cblks.at(0).getDOMNode().style.getPropertyValue('background-color');
 
   t.equal(firstColor, expectedColor, 'should render correct background color');
 
   // simulate click
   const csInput = wrapper.find(ColorSelectorInput);
   t.equal(csInput.length, 1, 'should render 2 ColorSelectorInput');
-  csInput.at(0).simulate('mousedown');
+  csInput.at(0).simulate('click');
 
   t.ok(updateLayerColorUI.calledOnce, 'should call updateLayerColorUI when mousedown 2nd block');
   t.ok(
@@ -428,10 +419,7 @@ test('Components -> LayerColorRangeSelector.render -> ColorSelector -> ColorRang
     'should render item selector dropdown input'
   );
 
-  typeSelect
-    .find('.item-selector__dropdown')
-    .at(0)
-    .simulate('click');
+  typeSelect.find('.item-selector__dropdown').at(0).simulate('click');
 
   wrapper.update();
 
@@ -439,13 +427,7 @@ test('Components -> LayerColorRangeSelector.render -> ColorSelector -> ColorRang
   t.equal(listItem.length, 6, 'should render item selector typeahead');
 
   t.deepEqual(
-    listItem.map(nd =>
-      nd
-        .at(0)
-        .find('.list__item__anchor')
-        .at(0)
-        .text()
-    ),
+    listItem.map(nd => nd.at(0).find('.list__item__anchor').at(0).text()),
     ALL_TYPES,
     'should render all types'
   );
@@ -503,10 +485,7 @@ test('Components -> LayerColorRangeSelector.render -> ColorSelector -> ColorRang
     'should render custom switch'
   );
 
-  customSwitch
-    .find('input')
-    .at(0)
-    .simulate('change');
+  customSwitch.find('input').at(0).simulate('change');
 
   t.ok(
     updateLayerColorUI.callCount === 3,
@@ -630,9 +609,7 @@ test('Components -> LayerColorRangeSelector.render -> ColorSelector -> ColorRang
   t.equal(cp.find(Button).length, 3, 'should render 3 buttons');
 
   // click add step
-  cp.find(Button)
-    .at(0)
-    .simulate('click');
+  cp.find(Button).at(0).simulate('click');
 
   t.deepEqual(
     updateLayerColorUI.args[0],
@@ -658,9 +635,7 @@ test('Components -> LayerColorRangeSelector.render -> ColorSelector -> ColorRang
   );
 
   // click cancel
-  cp.find(Button)
-    .at(1)
-    .simulate('click');
+  cp.find(Button).at(1).simulate('click');
 
   t.deepEqual(
     updateLayerColorUI.args[1],
@@ -675,9 +650,7 @@ test('Components -> LayerColorRangeSelector.render -> ColorSelector -> ColorRang
   );
 
   // click apply
-  cp.find(Button)
-    .at(2)
-    .simulate('click');
+  cp.find(Button).at(2).simulate('click');
 
   t.deepEqual(
     updateLayerColorUI.args[2],
@@ -716,10 +689,7 @@ test('Components -> LayerColorRangeSelector.render -> ColorSelector -> ColorRang
   );
 
   // click swatch
-  wrapper
-    .find('.custom-palette__swatch')
-    .at(3)
-    .simulate('click');
+  wrapper.find('.custom-palette__swatch').at(3).simulate('click');
 
   t.ok(
     updateLayerColorUI.calledWith('colorRange', {
@@ -788,7 +758,7 @@ test('Components -> ColorSelector.opacity', t => {
     colorSets: [
       {
         selectedColor: [128, 64, 32, 100],
-        setColor: setColor
+        setColor
       }
     ],
     useOpacity: true
@@ -804,24 +774,18 @@ test('Components -> ColorSelector.opacity', t => {
   }, 'Mount should not fail');
 
   // show palette
-  wrapper
-    .find('.color-selector__selector')
-    .at(0)
-    .invoke('onMouseDown')({preventDefault() {}, stopPropagation() {}});
+  wrapper.find('.color-selector__selector').at(0).invoke('onClick')({
+    preventDefault() {},
+    stopPropagation() {}
+  });
 
   // select color
-  wrapper
-    .find('.single-color-palette__block')
-    .at(100)
-    .simulate('click');
+  wrapper.find('.single-color-palette__block').at(100).simulate('click');
   t.ok(setColor.calledOnce, 'should call setColor once');
   t.ok(setColor.calledWith([228, 155, 0, 100]), 'setColor called with correct color and opacity');
 
   // change opacity via slider
-  wrapper
-    .find('RangeSlider')
-    .at(0)
-    .invoke('onChange')([0.5, 0.5]);
+  wrapper.find('RangeSlider').at(0).invoke('onChange')([0.5, 0.5]);
   t.ok(setColor.calledTwice, 'should call setColor twice');
   t.ok(setColor.calledWith([128, 64, 32, 128]), 'setColor called with correct color and opacity');
 

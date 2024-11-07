@@ -5,7 +5,7 @@ Shapely==2.0.4
 jupyter_packaging==0.12.3
 jupyter-contrib-nbextensions==0.7.0
 notebook==6.0.1
-setuptools==69.5.1
+setuptools==70.0.0
 jupyter==1.0.0
 jupyterlab==4.1.6
 pyarrow==16.0.0

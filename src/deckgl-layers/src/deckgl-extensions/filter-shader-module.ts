@@ -15,19 +15,10 @@ const vs = `
 const fs = ``;
 
 const inject = {
-  'vs:#decl': `
-    varying float is_filtered;
-  `,
-  'vs:#main-end': `
-    is_filtered = FILTER_ARROW_ATTRIB;
-  `,
-  'fs:#decl': `
-    varying float is_filtered;
-  `,
-  'fs:DECKGL_FILTER_COLOR': `
-    // abandon the fragments if  it is not filtered
-    if (is_filtered == 0.) {
-      discard;
+  // create degenerate vertices instead of discarding pixels in the fragment shader
+  'vs:DECKGL_FILTER_GL_POSITION': `
+    if (FILTER_ARROW_ATTRIB == 0.) {
+      position = vec4(0., 0., 0., 0.);
     }
   `
 };
@@ -35,8 +26,10 @@ const inject = {
 export default {
   name: 'filter-arrow',
   dependencies: [project],
-  vs: vs,
-  fs: fs,
-  inject: inject,
-  getUniforms: () => {}
+  vs,
+  fs,
+  inject,
+  getUniforms: () => {
+    return;
+  }
 };

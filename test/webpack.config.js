@@ -42,16 +42,18 @@ const COMMON_CONFIG = {
           presets: ['@babel/preset-env', '@babel/preset-react', '@babel/preset-typescript'],
           plugins: [
             ['@babel/plugin-transform-typescript', {isTSX: true, allowDeclareFields: true}],
-            '@babel/plugin-proposal-class-properties',
-            '@babel/plugin-proposal-export-namespace-from',
-            [
-              'module-resolver',
+            '@babel/plugin-transform-class-properties',
+            '@babel/plugin-transform-optional-chaining',
+            '@babel/plugin-transform-logical-assignment-operators',
+            '@babel/plugin-transform-nullish-coalescing-operator',
+            '@babel/plugin-transform-export-namespace-from'[
+              ('module-resolver',
               {
                 root: [SRC_DIR],
                 alias: {
                   test: TEST_DIR
                 }
-              }
+              })
             ]
           ]
         }
@@ -66,6 +68,6 @@ const COMMON_CONFIG = {
   plugins: [new HtmlWebpackPlugin()]
 };
 
-module.exports = (env = {}, opts = {}) => {
+module.exports = () => {
   return COMMON_CONFIG;
 };
