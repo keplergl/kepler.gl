@@ -189,6 +189,10 @@ export default {
     time: 'Time',
     timezone: 'Timezone'
   },
+  aiAssistantManager: {
+    title: 'AI Assistant',
+    aiProvider: 'AI Provider'
+  },
   layerConfiguration: {
     defaultDescription: 'Calculate {property} based on selected field',
     howTo: 'How to'
@@ -250,7 +254,9 @@ export default {
     hideEffectPanel: 'Hide effect panel',
     removeEffect: 'Remove effect',
     disableEffect: 'Disable effect',
-    effectSettings: 'Effect settings'
+    effectSettings: 'Effect settings',
+    showAiAssistantPanel: 'Show AI Assistant panel',
+    hideAiAssistantPanel: 'Hide AI Assistant panel'
   },
   toolbar: {
     exportImage: 'Export Image',
@@ -452,7 +458,7 @@ ${'```json'}
 ${'```'}
 
 ### 2. Create polygon from a Geometry column in Csv table
-Geometries (Polygons, Points, LindStrings etc) can be embedded into CSV as a \`GeoJSON\` or \`WKT\` formatted string. 
+Geometries (Polygons, Points, LindStrings etc) can be embedded into CSV as a \`GeoJSON\` or \`WKT\` formatted string.
 
 #### 2.1 \`GeoJSON\` string
 Example data.csv with \`GeoJSON\` string
@@ -463,7 +469,7 @@ ${'```'}
 
 #### 2.2 \`WKT\` string
 Example data.csv with \`WKT\` string
-[The Well-Known Text (WKT)](https://dev.mysql.com/doc/refman/5.7/en/gis-data-formats.html#gis-wkt-format) representation of geometry values is designed for exchanging geometry data in ASCII form. 
+[The Well-Known Text (WKT)](https://dev.mysql.com/doc/refman/5.7/en/gis-data-formats.html#gis-wkt-format) representation of geometry values is designed for exchanging geometry data in ASCII form.
 
 Example data.csv with WKT
 ${'```txt'}

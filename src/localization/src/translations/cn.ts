@@ -197,7 +197,9 @@ export default {
     speed: '速度',
     play: '播放',
     pause: '暂停',
-    reset: '重置'
+    reset: '重置',
+    showAiAssistantPanel: '显示AI助手',
+    hideAiAssistantPanel: '隐藏AI助手'
   },
   toolbar: {
     exportImage: '导出图片',
@@ -422,7 +424,7 @@ export default {
     scale: '规模'
   },
   fileUploader: {
-    message: '将您的文件拖放到此处（可多个）',
+    message: '将您的文件拖放到此��（可多个）',
     chromeMessage:
       '*对于 Chrome 用户：文件大小最大为 250mb。如果需要上传更多文件，请尝试使用 Safari。',
     disclaimer:
@@ -457,5 +459,8 @@ export default {
   'Bug Report': '错误报告',
   'User Guide': '用户指南',
   Save: '保存',
-  Share: '分享'
+  Share: '分享',
+  aiAssistantManager: {
+    title: 'AI助手'
+  }
 };

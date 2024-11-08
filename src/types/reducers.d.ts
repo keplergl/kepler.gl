@@ -411,6 +411,7 @@ export type MapControls = {
   mapDraw?: MapControlItem;
   mapLocale?: MapControlItem;
   effect?: MapControlItem;
+  aiAssistant?: MapControlItem;
 };
 
 export type LoadFiles = {
@@ -576,3 +577,13 @@ export type TypedFilter =
   | TypedSelectFilter
   | TypedMultiSelectFilter
   | TypedPolygonFilter;
+
+export type AiAssistantConfig = {
+  isReady: boolean;
+  provider: string;
+  model: string;
+  apiKey: string;
+  baseUrl: string;
+  temperature: number;
+  topP: number;
+};

@@ -8,6 +8,7 @@ import {enhanceReduxMiddleware} from '@kepler.gl/reducers';
 import thunk from 'redux-thunk';
 // eslint-disable-next-line no-unused-vars
 import window from 'global/window';
+import {createLogger} from 'redux-logger';
 
 import demoReducer from './reducers/index';
 
@@ -16,7 +17,22 @@ const reducers = combineReducers({
   routing: routerReducer
 });
 
-export const middlewares = enhanceReduxMiddleware([thunk, routerMiddleware(browserHistory)]);
+const loggerMiddleware = createLogger({
+  predicate: (_getState, action) => {
+    // skip logging in production mode
+    if (process.env.NODE_ENV === 'production') {
+      return false;
+    }
+    const skipLogging = [
+      '@@kepler.gl/LAYER_HOVER',
+      '@@kepler.gl/MOUSE_MOVE',
+      '@@kepler.gl/UPDATE_MAP',
+    ];
+    return !skipLogging.includes(action.type);
+  }
+});
+
+export const middlewares = enhanceReduxMiddleware([thunk, loggerMiddleware, routerMiddleware(browserHistory)]);
 
 export const enhancers = [applyMiddleware(...middlewares)];
 

@@ -201,7 +201,9 @@ export default {
     delete: 'Deletar',
     timePlayback: 'Tempo de reprodução',
     cloudStorage: 'Armazenamento Cloud',
-    '3DMap': ' Mapa 3D'
+    '3DMap': ' Mapa 3D',
+    showAiAssistantPanel: 'Mostrar Assistente IA',
+    hideAiAssistantPanel: 'Ocultar Assistente IA'
   },
   toolbar: {
     exportImage: 'Exportar Imagem',
@@ -438,5 +440,8 @@ export default {
   'Bug Report': 'Reportar Bug',
   'User Guide': 'Guia do Usuário',
   Save: 'Salvar',
-  Share: 'Compartilhar'
+  Share: 'Compartilhar',
+  aiAssistantManager: {
+    title: 'Assistente IA'
+  }
 };

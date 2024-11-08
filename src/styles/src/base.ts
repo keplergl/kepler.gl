@@ -480,6 +480,13 @@ export const effectPanelElementColorHovered = inputBgdHover;
 export const effectPanelElementColorSelected = '#454e5d';
 export const effectPanelElementColorSun = '#F7B26B';
 
+// ai assistant panel
+export const aiAssistantPanelChatWidth = 445;
+export const aiAssistantPanelConfigWidth = 345;
+export const aiAssistantPanelHeight = 180;
+export const aiAssistantPanelPaddingSide = 16;
+export const aiAssistantPanelPaddingTop = 16;
+
 // right panel
 export const rightPanelMarginTop = 12;
 export const rightPanelMarginRight = 12;
@@ -1570,6 +1577,13 @@ export const theme = {
   rightPanelMarginTop,
   rightPanelMarginRight,
   effectPanelAddEffectFontFamily,
+
+  // Ai Assistant panel
+  aiAssistantPanelChatWidth,
+  aiAssistantPanelConfigWidth,
+  aiAssistantPanelHeight,
+  aiAssistantPanelPaddingSide,
+  aiAssistantPanelPaddingTop,
 
   // effect type selector
   effectTypeIconMarginSide,

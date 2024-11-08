@@ -153,7 +153,9 @@ const actionHandler = {
 
   [ActionTypes.REMOVE_EFFECT]: visStateUpdaters.removeEffectUpdater,
 
-  [ActionTypes.UPDATE_EFFECT]: visStateUpdaters.updateEffectUpdater
+  [ActionTypes.UPDATE_EFFECT]: visStateUpdaters.updateEffectUpdater,
+
+  [ActionTypes.UPDATE_AI_ASSISTANT_CONFIG]: visStateUpdaters.updateAiAssistantConfigUpdater
 };
 
 // construct vis-state reducer

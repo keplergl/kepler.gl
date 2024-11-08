@@ -7,7 +7,9 @@ import {
   withState,
   MapControlFactory,
   EffectControlFactory,
-  EffectManagerFactory
+  EffectManagerFactory,
+  AiAssistantControlFactory,
+  AiAssistantManagerFactory
 } from '@kepler.gl/components';
 import {SampleMapPanel} from '../components/map-control/map-control';
 
@@ -30,6 +32,7 @@ const StyledMapControlContextPanel = styled.div`
 `;
 
 const StyledMapControlOverlay = styled.div`
+  height: ${props => (props.fullHeight ? '100%' : 'auto')};
   position: absolute;
   display: flex;
   top: ${props => props.top}px;
@@ -44,7 +47,7 @@ const StyledMapControlOverlay = styled.div`
   margin-top: ${props => (props.rightPanelVisible ? props.theme.rightPanelMarginTop : 0)}px;
   margin-right: ${props => (props.rightPanelVisible ? props.theme.rightPanelMarginRight : 0)}px;
   ${props => (props.fullHeight ? 'height' : 'max-height')}: calc(100% - ${props =>
-    props.theme.rightPanelMarginTop + props.theme.bottomWidgetPaddingBottom}px);
+  props.theme.rightPanelMarginTop + props.theme.bottomWidgetPaddingBottom}px);
 
   .map-control {
     ${props => (props.rightPanelVisible ? 'padding-top: 0px;' : '')}
@@ -54,22 +57,36 @@ const StyledMapControlOverlay = styled.div`
 CustomMapControlFactory.deps = [
   EffectControlFactory,
   EffectManagerFactory,
+  AiAssistantControlFactory,
+  AiAssistantManagerFactory,
   ...MapControlFactory.deps
 ];
-function CustomMapControlFactory(EffectControl, EffectManager, ...deps) {
+function CustomMapControlFactory(
+  EffectControl,
+  EffectManager,
+  AiAssistantControl,
+  AiAssistantManager,
+  ...deps
+) {
   const MapControl = MapControlFactory(...deps);
-  const actionComponents = [...(MapControl.defaultActionComponents ?? []), EffectControl];
+  const actionComponents = [
+    ...(MapControl.defaultActionComponents ?? []),
+    EffectControl,
+    AiAssistantControl
+  ];
 
   const CustomMapControl = props => {
     const showEffects = Boolean(props.mapControls?.effect?.active);
+    const showAiAssistant = Boolean(props.mapControls?.aiAssistant?.active);
     return (
-      <StyledMapControlOverlay top={props.top} rightPanelVisible={showEffects}>
+      <StyledMapControlOverlay top={props.top} rightPanelVisible={showEffects} fullHeight={showAiAssistant}>
         <StyledMapControlPanel>
           {!props.isExport && props.currentSample ? <SampleMapPanel {...props} /> : null}
           <MapControl {...props} top={0} actionComponents={actionComponents} />
         </StyledMapControlPanel>
         <StyledMapControlContextPanel>
           {showEffects ? <EffectManager /> : null}
+          {showAiAssistant ? <AiAssistantManager /> : null}
         </StyledMapControlContextPanel>
       </StyledMapControlOverlay>
     );

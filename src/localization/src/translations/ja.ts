@@ -205,7 +205,9 @@ export default {
     speed: '速度',
     play: '再生',
     pause: '一時停止',
-    reset: 'リセット'
+    reset: 'リセット',
+    showAiAssistantPanel: 'AIアシスタントを表示',
+    hideAiAssistantPanel: 'AIアシスタントを非表示'
   },
   toolbar: {
     exportImage: '画像を出力',
@@ -233,7 +235,7 @@ export default {
     },
     button: {
       delete: '削除',
-      download: 'ダウンロード',
+      download: 'ダウン��ード',
       export: '出力',
       addStyle: 'スタイル追加',
       save: '保存',
@@ -367,7 +369,7 @@ export default {
       back: '戻る'
     },
     overwriteMap: {
-      title: '地図を保存中...',
+      title: '地図を保中...',
       alreadyExists: '既に{mapSaved}に存在します。上書きしますか？'
     },
     loadStorageMap: {
@@ -463,5 +465,8 @@ export default {
   'Bug Report': 'バグを報告',
   'User Guide': 'ユーザーガイド',
   Save: '保存',
-  Share: '共有'
+  Share: '共有',
+  aiAssistantManager: {
+    title: 'AIアシスタント'
+  }
 };

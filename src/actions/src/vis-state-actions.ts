@@ -21,7 +21,8 @@ import {
   ParsedConfig,
   ParsedLayer,
   EffectPropsPartial,
-  SyncTimelineMode
+  SyncTimelineMode,
+  AiAssistantConfig
 } from '@kepler.gl/types';
 // TODO - import LoaderObject type from @loaders.gl/core when supported
 // TODO - import LoadOptions type from @loaders.gl/core when supported
@@ -536,6 +537,23 @@ export function duplicateLayer(
     id
   };
 }
+
+export type UpdateAiAssistantConfigUpdaterAction = {
+  config: AiAssistantConfig;
+};
+
+/**
+ * Update ai assistant config
+ */
+export function updateAiAssistantConfig(
+  config: AiAssistantConfig
+): Merge<UpdateAiAssistantConfigUpdaterAction, {type: typeof ActionTypes.UPDATE_AI_ASSISTANT_CONFIG}> {
+  return {
+    type: ActionTypes.UPDATE_AI_ASSISTANT_CONFIG,
+    config
+  };
+}
+
 
 export type AddEffectUpdaterAction = {
   config: EffectPropsPartial;

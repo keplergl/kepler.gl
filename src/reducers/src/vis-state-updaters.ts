@@ -267,6 +267,11 @@ export const INITIAL_VIS_STATE: VisState = {
   effects: [],
   effectOrder: [],
 
+  // ai assistant
+  aiAssistant: {
+    isReady: false
+  },
+
   interactionConfig: defaultInteractionConfig,
   interactionToBeMerged: {},
 
@@ -3574,3 +3579,13 @@ function replacePropValueInState(
   }
   return nextState;
 }
+
+export const updateAiAssistantConfigUpdater = (
+  state: VisState,
+  { config }: VisStateActions.UpdateAiAssistantConfigUpdaterAction
+): VisState => {
+  return {
+    ...state,
+    aiAssistant: config
+  };
+};

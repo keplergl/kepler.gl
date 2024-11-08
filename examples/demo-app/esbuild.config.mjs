@@ -21,6 +21,9 @@ const EXTERNAL_LOADERS_SRC = join(LIB_DIR, 'loaders.gl');
 // For debugging hubble.gl, load hubble.gl from external hubble.gl directory
 const EXTERNAL_HUBBLE_SRC = join(LIB_DIR, '../../hubble.gl');
 
+// For debugging ai-assistant, load ai-assistant from external ai-assistant directory
+const EXTERNAL_AI_ASSISTANT_SRC = join(LIB_DIR, '../ai-assistant');
+
 const port = 8080;
 
 // add alias to serve from kepler src, resolve libraries so there is only one copy of them
@@ -40,7 +43,7 @@ const config = {
   platform: 'browser',
   format: 'iife',
   logLevel: 'info',
-  loader: {'.js': 'jsx'},
+  loader: {'.js': 'jsx', '.css': 'css'},
   entryPoints: ['src/main.js'],
   outfile: 'dist/bundle.js',
   bundle: true,
@@ -70,6 +73,12 @@ function addAliases(externals, args) {
   // Combine flags
   const useLocalDeck = args.includes('--env.deck') || args.includes('--env.hubble_src');
   const useRepoDeck = args.includes('--env.deck_src');
+  const useLocalAiAssistant = args.includes('--env.ai');
+
+  // resolve ai-assistant from local dir
+  if (useLocalAiAssistant) {
+    resolveAlias['ai-assistant'] = `${EXTERNAL_AI_ASSISTANT_SRC}/src`;
+  }
 
   // resolve deck.gl from local dir
   if (useLocalDeck || useRepoDeck) {

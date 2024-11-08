@@ -24,7 +24,8 @@
     "baseUrl": ".",
     "paths": {
       // Map all modules to their source
-      "@kepler.gl/*": ["src/*/src"]
+      "@kepler.gl/*": ["src/*/src"],
+      "ai-assistant": ["../ai-assistant/src"]
     }
   },
   "include": ["src"],

@@ -203,6 +203,8 @@ export default {
     timePlayback: 'Reproducció de temps',
     cloudStorage: 'Emmagatzematge al núvol',
     '3DMap': 'Mapa 3D',
+    showAiAssistantPanel: "Mostra l'assistent d'IA",
+    hideAiAssistantPanel: "Amaga l'assistent d'IA",
     animationByWindow: 'Finestra Temporal Mòbil',
     animationByIncremental: 'Finestra Temporal Incremental',
     speed: 'velocitat',
@@ -465,5 +467,8 @@ export default {
   'Bug Report': "Informe d'errors",
   'User Guide': "Guia d'usuari",
   Save: 'Desa',
-  Share: 'Comparteix'
+  Share: 'Comparteix',
+  aiAssistantManager: {
+    title: 'Assitant dIA'
+  }
 };

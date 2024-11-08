@@ -259,6 +259,8 @@ export {
   ResetColorLabelFactory
 } from './common/color-legend';
 export {default as EffectControlFactory} from './map/effects/effect-control';
+export {default as AiAssistantControlFactory} from './map/ai-assistant-control';
+
 export {default as LoadingSpinner} from './common/loading-spinner';
 export {default as LoadingDialog} from './modals/loading-dialog';
 export {MapViewStateContext, MapViewStateContextProvider} from './map-view-state-context';
@@ -309,6 +311,8 @@ export {default as SidePanelTitleFactory} from './effects/side-panel-title';
 export {default as EffectTypeSelectorFactory} from './effects/effect-type-selector';
 export {default as EffectConfiguratorFactory} from './effects/effect-configurator';
 export {default as EffectTimeConfiguratorFactory} from './effects/effect-time-configurator';
+
+export {default as AiAssistantManagerFactory} from './ai-assistant/ai-assistant-manager';
 
 export {default as HowToButton} from './side-panel/layer-panel/how-to-button';
 // eslint-disable-next-line prettier/prettier

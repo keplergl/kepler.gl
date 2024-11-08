@@ -27,7 +27,8 @@ import {
   SavedVisState,
   SplitMap,
   ValueOf,
-  Effect
+  Effect,
+  AiAssistantConfig
 } from '@kepler.gl/types';
 import {Datasets} from '@kepler.gl/table';
 import {Layer, LayerClassesType} from '@kepler.gl/layers';
@@ -55,6 +56,7 @@ export interface VisState {
   layerOrder: string[];
   effects: Effect[];
   effectOrder: string[];
+  aiAssistant: AiAssistantConfig;
   filters: Filter[];
   filterToBeMerged: any[];
   datasets: Datasets;

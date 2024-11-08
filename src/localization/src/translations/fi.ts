@@ -200,7 +200,9 @@ export default {
     delete: 'Poista',
     timePlayback: 'Ajan animointi',
     cloudStorage: 'Pilvitallennus',
-    '3DMap': '3D-näkymä'
+    '3DMap': '3D-näkymä',
+    showAiAssistantPanel: 'Näytä tekoälyavustaja',
+    hideAiAssistantPanel: 'Piilota tekoälyavustaja'
   },
   toolbar: {
     exportImage: 'Vie kuva',
@@ -437,5 +439,8 @@ export default {
   'Bug Report': 'Bugiraportointi',
   'User Guide': 'Opas',
   Save: 'Tallenna',
-  Share: 'Jaa'
+  Share: 'Jaa',
+  aiAssistantManager: {
+    title: 'Tekoälyavustaja'
+  }
 };
