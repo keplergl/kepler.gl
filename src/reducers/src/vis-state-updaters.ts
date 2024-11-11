@@ -66,6 +66,7 @@ import {
 
 // Mergers
 import {
+  ANIMATION_WINDOW,
   BASE_SPEED,
   COMPARE_TYPES,
   DEFAULT_TEXT_LABEL,
@@ -73,9 +74,11 @@ import {
   FILTER_TYPES,
   FILTER_VIEW_TYPES,
   FPS,
+  LIGHT_AND_SHADOW_EFFECT,
   MAX_DEFAULT_TOOLTIPS,
+  PLOT_TYPES,
   SORT_ORDER,
-  PLOT_TYPES
+  SYNC_TIMELINE_MODES
 } from '@kepler.gl/constants';
 import {LAYER_ID_LENGTH, Layer, LayerClasses} from '@kepler.gl/layers';
 import {

@@ -66,7 +66,7 @@ export type ColorBreaksPanelProps = {
   colorUIConfig: ColorUI;
   isCustomBreaks: boolean;
   setColorUI: SetColorUIFunc;
-  onApply: (e: MouseEvent) => void;
+  onApply: (e: React.MouseEvent) => void;
   onCancel: () => void;
 };
 
