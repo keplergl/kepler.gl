@@ -23,7 +23,7 @@ export type ColorBreakOrdinal = {
   label: string;
 };
 
-export type D3ScaleFunction = Record<string, any> & Function;
+export type D3ScaleFunction = Record<string, any> & ((x: any) => any);
 
 export type LabelFormat = (n: number) => string;
 type dataValueAccessor = <T>(param: T) => T;
