@@ -203,7 +203,9 @@ function ColorRangeSelectorFactory(
 
   ColorRangeSelector.defaultProps = {
     colorRanges: COLOR_RANGES,
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
     onSelectColorRange: () => {},
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
     setColorPaletteUI: () => {}
   };
 
