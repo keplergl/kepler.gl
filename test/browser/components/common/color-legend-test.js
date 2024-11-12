@@ -19,17 +19,6 @@ test('Components -> ColorLegend.render ColorMap', t => {
   }, 'Show not fail without props');
 
   const width = 180;
-  // range = {
-  // colors: ['#FF0000', '#00FF00', '#0000FF'],
-  // colorMap: [
-  //   [1, '#FF0000'],
-  //   [3, '#00FF00'],
-  //   [5, '#0000FF']
-  // ],
-  // colorLegends: {
-  //   '#FF0000': 'hello'
-  // }
-  // };
 
   const props = {
     layer,

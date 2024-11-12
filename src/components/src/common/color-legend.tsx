@@ -195,7 +195,23 @@ const overrideColorLegends = (colorLegends, overrides) => {
   return newColorLegends;
 };
 
-function overrideByCustomLegend({colorLegends, currentLegends}) {
+type OverrideByCustomLegendOptions = {
+  /**
+   * Legend parameters to override
+   */
+  colorLegends?: Record<string, any>;
+  /**
+   * Original Legends
+   */
+  currentLegends: ReturnType<typeof getLegendOfScale>;
+};
+
+/**
+ * Overrides legend labels with color legends.
+ * @param param0 Legend info and override parameters.
+ * @returns Original or overriden lenends.
+ */
+function overrideByCustomLegend({colorLegends, currentLegends}: OverrideByCustomLegendOptions) {
   if (colorLegends && isObject(colorLegends)) {
     // override labels with color legends
     const data = Object.keys(colorLegends);
@@ -207,7 +223,6 @@ function overrideByCustomLegend({colorLegends, currentLegends}) {
   return currentLegends;
 }
 
-/** @type {typeof import('./color-legend').useLayerColorLegends} */
 export function useLayerColorLegends(
   layer,
   scaleType,
