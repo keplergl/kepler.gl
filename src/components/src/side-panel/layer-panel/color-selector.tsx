@@ -1,17 +1,18 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {MouseEvent, ComponentType, useState, useCallback} from 'react';
-import styled from 'styled-components';
-import {FormattedMessage} from 'react-intl';
-import {rgbToHex} from '@kepler.gl/utils';
-import SingleColorPalette from './single-color-palette';
-import ColorRangeSelector from './color-range-selector';
-import ColorPalette from './color-palette';
-import {StyledPanelDropdown, PanelLabel} from '../../common/styled-components';
 import {ColorRange} from '@kepler.gl/constants';
+import {ColorUI, NestedPartial, RGBAColor, RGBColor} from '@kepler.gl/types';
+import {rgbToHex} from '@kepler.gl/utils';
+import React, {MouseEvent, ComponentType, useState, useCallback} from 'react';
+import {FormattedMessage} from 'react-intl';
+import styled from 'styled-components';
 import RangeSliderFactory from '../../common/range-slider';
-import {NestedPartial, RGBColor, RGBAColor, ColorUI} from '@kepler.gl/types';
+import {PanelLabel, StyledPanelDropdown} from '../../common/styled-components';
+import ColorPalette from './color-palette';
+import ColorRangeSelectorFactory from './color-range-selector';
+import SingleColorPalette from './single-color-palette';
+
 import useOnClickOutside from '../../hooks/use-on-click-outside';
 
 type ColorSelectorInputProps = {
@@ -84,9 +85,9 @@ export const InputBoxContainer = styled.div`
   }
 `;
 
-ColorSelectorFactory.deps = [RangeSliderFactory];
+ColorSelectorFactory.deps = [ColorRangeSelectorFactory, RangeSliderFactory];
 
-function ColorSelectorFactory(RangeSlider): ComponentType<ColorSelectorProps> {
+function ColorSelectorFactory(ColorRangeSelector, RangeSlider): ComponentType<ColorSelectorProps> {
   const ColorSelector: React.FC<ColorSelectorProps> = ({
     colorSets = [],
     colorUI,

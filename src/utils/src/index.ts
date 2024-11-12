@@ -4,15 +4,21 @@
 // UTILS
 
 export {
+  colorMaybeToRGB,
+  createLinearGradient,
+  getColorGroupByName,
+  hasColorMap,
   hexToRgb,
   isHexColor,
-  rgbToHex,
-  getColorGroupByName,
-  reverseColorRange,
-  createLinearGradient,
-  colorMaybeToRGB,
   isRgbColor,
-  normalizeColor
+  normalizeColor,
+  reverseColorRange,
+  rgbToHex,
+  updateColorRange,
+  addCustomPaletteColor,
+  removeCustomPaletteColor,
+  sortCustomPaletteColor,
+  updateCustomPaletteColor
 } from './color-utils';
 export {errorNotification} from './notifications-utils';
 
@@ -22,75 +28,75 @@ export {setStyleSheetBaseHref} from './dom-utils';
 export {default as domtoimage} from './dom-to-image';
 export {getFrequency, getMode, aggregate} from './aggregation';
 export {
+  adjustValueToAnimationWindow,
   getBinThresholds,
   histogramFromThreshold,
   histogramFromDomain,
   runGpuFilterForPlot,
-  adjustValueToAnimationWindow,
   updateTimeFilterPlotType
 } from './plot';
 // eslint-disable-next-line prettier/prettier
-export type {FieldFormatter} from './data-utils';
 export * from './data-utils';
+export type {FieldFormatter} from './data-utils';
 export * from './strings';
 export {
-  getTimelineFromAnimationConfig,
-  getTimelineFromFilter,
   SAMPLE_TIMELINE,
   TIMELINE_MODES,
-  LayerToFilterTimeInterval,
   TIME_INTERVALS_ORDERED,
-  TileTimeInterval
+  LayerToFilterTimeInterval,
+  TileTimeInterval,
+  getTimelineFromAnimationConfig,
+  getTimelineFromFilter
 } from './time';
 
 export {
+  ACCEPTED_ANALYZER_TYPES,
+  analyzerTypeToFieldType,
   datasetColorMaker,
   findDefaultColorField,
-  ACCEPTED_ANALYZER_TYPES,
-  validateInputData,
-  getSampleForTypeAnalyze,
+  getFieldFormatLabels,
   getFieldsFromData,
-  renameDuplicateFields,
-  analyzerTypeToFieldType,
   getFormatLabels,
-  getFieldFormatLabels
+  getSampleForTypeAnalyze,
+  renameDuplicateFields,
+  validateInputData
 } from './dataset-utils';
-export {getFormatValue, getDefaultTimeFormat} from './format';
 export {exportMapToHTML} from './export-map-html';
 export {
-  isMSEdge,
-  getScaleFromImageSize,
   calculateExportImageSize,
   convertToPng,
   dataURItoBlob,
   downloadFile,
-  exportImage,
-  exportToJsonString,
-  getMapJSON,
-  exportJson,
   exportHtml,
+  exportImage,
+  exportJson,
   exportMap,
-  default as exporters
+  exportToJsonString,
+  default as exporters,
+  getMapJSON,
+  getScaleFromImageSize,
+  isMSEdge
 } from './export-utils';
+export {getFormatValue, getDefaultTimeFormat} from './format';
 export {setLayerBlending} from './gl-utils';
 export {flattenMessages, mergeMessages} from './locale-utils';
-export type {Dimensions} from './observe-dimensions';
-export * from './observe-dimensions';
-export * from './projection-utils';
-export {validateToken} from './mapbox-utils';
+export {isValidMapInfo} from './map-info-utils';
 export {
-  getDefaultLayerGroupVisibility,
-  editTopMapStyle,
   editBottomMapStyle,
+  editTopMapStyle,
+  getDefaultLayerGroupVisibility,
   getStyleDownloadUrl,
   getStyleImageIcon,
-  scaleMapStyleByResolution,
-  mergeLayerGroupVisibility
+  mergeLayerGroupVisibility,
+  scaleMapStyleByResolution
 } from './map-style-utils/mapbox-gl-style-editor';
-export {isValidMapInfo} from './map-info-utils';
-export * from './utils';
-export * from './split-map-utils';
+export {validateToken} from './mapbox-utils';
+export * from './observe-dimensions';
+export type {Dimensions} from './observe-dimensions';
 export {snapToMarks} from './plot';
+export * from './projection-utils';
+export * from './split-map-utils';
+export * from './utils';
 
 export {
   computeDeckEffects,
@@ -100,37 +106,45 @@ export {
 } from './effect-utils';
 
 // Mapbox
-export {transformRequest, isStyleUsingMapboxTiles} from './map-style-utils/mapbox-utils';
+export {isStyleUsingMapboxTiles, transformRequest} from './map-style-utils/mapbox-utils';
 
 // Map
 export * from './map-utils';
 
 export {
-  createDataContainer,
-  createIndexedDataContainer,
-  getSampleData as getSampleContainerData,
-  DataForm
-} from './data-container-utils';
+  ArrowDataContainer,
+  arrowDataTypeToAnalyzerDataType,
+  arrowDataTypeToFieldType
+} from './arrow-data-container';
 export type {DataContainerInterface} from './data-container-interface';
 export {
-  ArrowDataContainer,
-  arrowDataTypeToFieldType,
-  arrowDataTypeToAnalyzerDataType
-} from './arrow-data-container';
-export type {FilterResult, FilterChanged, dataValueAccessor} from './filter-utils';
+  DataForm,
+  createDataContainer,
+  createIndexedDataContainer,
+  getSampleData as getSampleContainerData
+} from './data-container-utils';
 export * from './filter-utils';
+export type {FilterChanged, FilterResult, dataValueAccessor} from './filter-utils';
 
 export {
-  getQuantileDomain,
-  getOrdinalDomain,
+  colorMapToColorBreaks,
+  getLayerColorScale,
+  getLegendOfScale,
   getLinearDomain,
-  getLogDomain
+  getLogDomain,
+  getOrdinalDomain,
+  getQuantileDomain,
+  getScaleFunction,
+  getVisualChannelScaleByZoom,
+  initializeLayerColorMap,
+  isNumericColorBreaks
 } from './data-scale-utils';
+export type {ColorBreak, ColorBreakOrdinal} from './data-scale-utils';
 
 export {DataRow} from './data-row';
 
+export {getCentroid, getHexFields, h3IsValid, idToPolygonGeo} from './h3-utils';
 export type {Centroid} from './h3-utils';
-export {getCentroid, idToPolygonGeo, h3IsValid, getHexFields} from './h3-utils';
 
 // Application config
 export {getApplicationConfig, initApplicationConfig} from '../../utils/src/application-config';

@@ -3234,6 +3234,7 @@ __metadata:
     apache-arrow: "npm:>=15.0.0"
     d3-array: "npm:^2.8.0"
     d3-format: "npm:^2.0.0"
+    d3-interpolate: "npm:^2.0.1"
     decimal.js: "npm:^10.2.0"
     global: "npm:^4.3.0"
     h3-js: "npm:^3.1.0"
@@ -9566,7 +9567,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"d3-interpolate@npm:1 - 2, d3-interpolate@npm:1.2.0 - 2":
+"d3-interpolate@npm:1 - 2, d3-interpolate@npm:1.2.0 - 2, d3-interpolate@npm:^2.0.1":
   version: 2.0.1
   resolution: "d3-interpolate@npm:2.0.1"
   dependencies:

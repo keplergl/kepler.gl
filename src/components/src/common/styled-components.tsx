@@ -1,14 +1,13 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import styled from 'styled-components';
+import {media} from '@kepler.gl/styles';
+import {RGBColor} from '@kepler.gl/types';
+import classnames from 'classnames';
 import DatePicker from 'react-date-picker';
 import TimePicker from 'react-time-picker';
 import ReactTooltip from 'react-tooltip';
-import classnames from 'classnames';
-
-import {media} from '@kepler.gl/styles';
-import {RGBColor} from '@kepler.gl/types';
+import styled from 'styled-components';
 
 export const SelectText = styled.span`
   color: ${props => props.theme.labelColor};

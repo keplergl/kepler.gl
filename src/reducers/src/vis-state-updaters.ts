@@ -2,62 +2,62 @@
 // Copyright contributors to the kepler.gl project
 
 import bbox from '@turf/bbox';
-import {console as Console} from 'global/window';
-import {disableStackCapturing, withTask} from 'react-palm/tasks';
-import cloneDeep from 'lodash.clonedeep';
-import uniq from 'lodash.uniq';
-import get from 'lodash.get';
-import xor from 'lodash.xor';
-import pick from 'lodash.pick';
-import isEqual from 'lodash.isequal';
 import copy from 'copy-to-clipboard';
 import deepmerge from 'deepmerge';
+import {console as Console} from 'global/window';
+import cloneDeep from 'lodash.clonedeep';
+import get from 'lodash.get';
+import isEqual from 'lodash.isequal';
+import pick from 'lodash.pick';
+import uniq from 'lodash.uniq';
+import xor from 'lodash.xor';
+import {disableStackCapturing, withTask} from 'react-palm/tasks';
 // Tasks
-import {LOAD_FILE_TASK, UNWRAP_TASK, PROCESS_FILE_DATA, DELAY_TASK} from '@kepler.gl/tasks';
+import {DELAY_TASK, LOAD_FILE_TASK, PROCESS_FILE_DATA, UNWRAP_TASK} from '@kepler.gl/tasks';
 // Actions
 import {
+  ActionTypes,
+  MapStateActions,
+  ReceiveMapConfigPayload,
+  VisStateActions,
   applyLayerConfig,
   layerConfigChange,
   layerTypeChange,
   layerVisConfigChange,
   layerVisualChannelConfigChange,
+  loadFileStepSuccess,
   loadFilesErr,
   loadFilesSuccess,
-  loadFileStepSuccess,
   loadNextFile,
   nextFileBatch,
-  ReceiveMapConfigPayload,
-  VisStateActions,
-  MapStateActions,
-  processFileContent,
-  ActionTypes
+  processFileContent
 } from '@kepler.gl/actions';
 
 // Utils
 import {
-  set,
-  toArray,
-  arrayInsert,
-  generateHashId,
-  isPlainObject,
-  isObject,
+  FILTER_UPDATER_PROPS,
   addNewLayersToSplitMap,
   snapToMarks,
-  computeSplitMapLayers,
-  removeLayerFromSplitMaps,
-  isRgbColor,
-  parseFieldValue,
   applyFilterFieldName,
   applyFiltersToDatasets,
+  arrayInsert,
+  computeSplitMapLayers,
   adjustValueToFilterDomain,
   featureToFilterValue,
   filterDatasetCPU,
-  FILTER_UPDATER_PROPS,
+  generateHashId,
   generatePolygonFilter,
   getDefaultFilter,
   getFilterIdInFeature,
   getTimeWidgetTitleFormatter,
   isInRange,
+  isObject,
+  isPlainObject,
+  isRgbColor,
+  parseFieldValue,
+  removeLayerFromSplitMaps,
+  set,
+  toArray,
   mergeFilterDomainStep,
   updateFilterPlot,
   removeFilterPlot,
@@ -66,41 +66,41 @@ import {
 
 // Mergers
 import {
-  VIS_STATE_MERGERS,
-  validateLayerWithData,
-  createLayerFromConfig,
-  serializeLayer,
-  serializeVisState,
-  parseLayerConfig
-} from './vis-state-merger';
-import {mergeStateFromMergers, isValidMerger} from './merger-handler';
-import {Layer, LayerClasses, LAYER_ID_LENGTH} from '@kepler.gl/layers';
-import {
   ANIMATION_WINDOW,
+  BASE_SPEED,
+  COMPARE_TYPES,
+  DEFAULT_TEXT_LABEL,
   EDITOR_MODES,
-  SORT_ORDER,
   FILTER_TYPES,
   FILTER_VIEW_TYPES,
-  MAX_DEFAULT_TOOLTIPS,
-  DEFAULT_TEXT_LABEL,
-  COMPARE_TYPES,
+  FPS,
   LIGHT_AND_SHADOW_EFFECT,
+  MAX_DEFAULT_TOOLTIPS,
   PLOT_TYPES,
-  SYNC_TIMELINE_MODES,
-  BASE_SPEED,
-  FPS
+  SORT_ORDER,
+  SYNC_TIMELINE_MODES
 } from '@kepler.gl/constants';
+import {LAYER_ID_LENGTH, Layer, LayerClasses} from '@kepler.gl/layers';
 import {
-  pick_,
-  merge_,
-  swap_,
   apply_,
   compose_,
+  filterOutById,
+  merge_,
+  pick_,
   removeElementAtIndex,
-  filterOutById
+  swap_
 } from './composer-helpers';
+import {isValidMerger, mergeStateFromMergers} from './merger-handler';
+import {
+  VIS_STATE_MERGERS,
+  createLayerFromConfig,
+  parseLayerConfig,
+  serializeLayer,
+  serializeVisState,
+  validateLayerWithData
+} from './vis-state-merger';
 
-import KeplerGLSchema, {VisState, Merger, PostMergerPayload} from '@kepler.gl/schemas';
+import KeplerGLSchema, {Merger, PostMergerPayload, VisState} from '@kepler.gl/schemas';
 
 import {
   Filter,
@@ -112,18 +112,18 @@ import {
 } from '@kepler.gl/types';
 import {Loader} from '@loaders.gl/loader-utils';
 
-import {calculateLayerData, findDefaultLayer, getLayerOrderFromLayers} from './layer-utils';
 import {
-  copyTableAndUpdate,
   Datasets,
-  pinTableColumns,
-  sortDatasetByColumn,
   assignGpuChannel,
+  copyTableAndUpdate,
+  createNewDataEntry,
+  pinTableColumns,
   setFilterGpuMode,
-  createNewDataEntry
+  sortDatasetByColumn
 } from '@kepler.gl/table';
 import {findFieldsToShow} from './interaction-utils';
-import {hasPropsToMerge, getPropValueToMerger} from './merger-handler';
+import {calculateLayerData, findDefaultLayer, getLayerOrderFromLayers} from './layer-utils';
+import {getPropValueToMerger, hasPropsToMerge} from './merger-handler';
 import {mergeDatasetsByOrder} from './vis-state-merger';
 import {
   fixEffectOrder,
@@ -870,14 +870,15 @@ export function layerVisualChannelChangeUpdater(
   state: VisState,
   action: VisStateActions.LayerVisualChannelConfigChangeUpdaterAction
 ): VisState {
-  const {oldLayer, newConfig, channel} = action;
+  const {oldLayer, newConfig, newVisConfig, channel} = action;
   if (!oldLayer.config.dataId) {
     return state;
   }
   const dataset = state.datasets[oldLayer.config.dataId];
 
   const idx = state.layers.findIndex(l => l.id === oldLayer.id);
-  const newLayer = oldLayer.updateLayerConfig(newConfig);
+  let newLayer = oldLayer.updateLayerConfig(newConfig);
+  if (newVisConfig) newLayer = newLayer.updateLayerVisConfig(newVisConfig);
 
   newLayer.updateLayerVisualChannel(dataset, channel);
 
@@ -902,6 +903,7 @@ export function layerVisConfigChangeUpdater(
   const {oldLayer} = action;
   const idx = state.layers.findIndex(l => l.id === oldLayer.id);
   const props = Object.keys(action.newVisConfig);
+
   const newVisConfig = {
     ...oldLayer.config.visConfig,
     ...action.newVisConfig

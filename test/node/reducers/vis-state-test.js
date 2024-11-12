@@ -4144,7 +4144,8 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. show dropdown', t => {
         type: 'all',
         steps: 4,
         reversed: false,
-        custom: false
+        custom: false,
+        customBreaks: false
       }
     }
   };
@@ -4189,7 +4190,8 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. colorRangeConfig.step', t => {
         type: 'all',
         steps: 6,
         reversed: false,
-        custom: false
+        custom: false,
+        customBreaks: false
       }
     }
   };
@@ -4228,7 +4230,8 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. colorRangeConfig.step', t => {
         type: 'all',
         steps: 6,
         reversed: true,
-        custom: false
+        custom: false,
+        customBreaks: false
       }
     }
   };
@@ -4269,7 +4272,8 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. colorRangeConfig.step', t => {
         type: 'all',
         steps: 8,
         reversed: true,
-        custom: false
+        custom: false,
+        customBreaks: false
       }
     }
   };
@@ -4319,7 +4323,8 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. colorRangeConfig.step', t => {
         type: 'all',
         steps: 11,
         reversed: true,
-        custom: false
+        custom: false,
+        customBreaks: false
       }
     }
   };
@@ -4363,7 +4368,7 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom Palette', t => {
     colorRange: {
       ...DEFAULT_COLOR_UI,
       customPalette: {
-        name: 'Custom Palette',
+        name: 'color.customPalette',
         type: 'custom',
         category: 'Custom',
         colors: oldColorRange.colors
@@ -4373,7 +4378,8 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom Palette', t => {
         type: 'all',
         steps: 4,
         reversed: false,
-        custom: true
+        custom: true,
+        customBreaks: false
       }
     }
   };
@@ -4396,7 +4402,7 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom Palette', t => {
     colorRange: {
       ...DEFAULT_COLOR_UI,
       customPalette: {
-        name: 'Custom Palette',
+        name: 'color.customPalette',
         type: 'custom',
         category: 'Custom',
         colors: ['aaa', 'bbb', 'ccc']
@@ -4406,7 +4412,8 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom Palette', t => {
         type: 'all',
         steps: 4,
         reversed: false,
-        custom: true
+        custom: true,
+        customBreaks: false
       }
     }
   };
@@ -4428,9 +4435,10 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom Palette', t => {
   const expectedColorUI3 = {
     color: DEFAULT_COLOR_UI,
     colorRange: {
+      ...DEFAULT_COLOR_UI,
       showSketcher: 1,
       customPalette: {
-        name: 'Custom Palette',
+        name: 'color.customPalette',
         type: 'custom',
         category: 'Custom',
         colors: ['aaa', 'bbb', 'ccc']
@@ -4440,7 +4448,8 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom Palette', t => {
         type: 'all',
         steps: 4,
         reversed: false,
-        custom: true
+        custom: true,
+        customBreaks: false
       }
     }
   };
@@ -4460,9 +4469,10 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom Palette', t => {
   const expectedColorUI4 = {
     color: DEFAULT_COLOR_UI,
     colorRange: {
+      ...DEFAULT_COLOR_UI,
       showSketcher: 1,
       customPalette: {
-        name: 'Custom Palette',
+        name: 'color.customPalette',
         type: 'custom',
         category: 'Custom',
         colors: ['bbb', 'ccc', 'aaa']
@@ -4472,7 +4482,8 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom Palette', t => {
         type: 'all',
         steps: 4,
         reversed: false,
-        custom: true
+        custom: true,
+        customBreaks: false
       }
     }
   };
@@ -4488,7 +4499,7 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom Palette', t => {
     nextState4,
     VisStateActions.layerVisConfigChange(nextState4.layers[0], {
       colorRange: {
-        name: 'Custom Palette',
+        name: 'color.customPalette',
         type: 'custom',
         category: 'Custom',
         colors: ['bbb', 'ccc', 'aaa']
@@ -4509,10 +4520,11 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom Palette', t => {
   const expectedColorUI6 = {
     color: DEFAULT_COLOR_UI,
     colorRange: {
+      ...DEFAULT_COLOR_UI,
       showSketcher: 1,
       // keep the customPalette
       customPalette: {
-        name: 'Custom Palette',
+        name: 'color.customPalette',
         type: 'custom',
         category: 'Custom',
         colors: ['bbb', 'ccc', 'aaa']
@@ -4522,7 +4534,8 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom Palette', t => {
         type: 'all',
         steps: 4,
         reversed: false,
-        custom: false
+        custom: false,
+        customBreaks: false
       }
     }
   };
@@ -4536,13 +4549,26 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom Palette', t => {
   t.deepEqual(
     nextState6.layers[0].config.visConfig.colorRange,
     {
-      name: 'Custom Palette',
+      name: 'color.customPalette',
       type: 'custom',
       category: 'Custom',
       colors: ['bbb', 'ccc', 'aaa']
     },
     'should set visConfig.colorRange'
   );
+
+  // color colorMap and colorLegends to colorRange
+  nextState6.layers[0].config.visConfig.colorRange = {
+    ...nextState6.layers[0].config.visConfig.colorRange,
+    colorLegends: {
+      bbb: 'custom legend'
+    },
+    colorMap: [
+      [1, 'bbb'],
+      [2, 'ccc'],
+      [null, 'aaa']
+    ]
+  };
 
   // open it again
   const nextState7 = reducer(
@@ -4560,17 +4586,27 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom Palette', t => {
       showSketcher: 1,
       // keep the customPalette
       customPalette: {
-        name: 'Custom Palette',
+        name: 'color.customPalette',
         type: 'custom',
         category: 'Custom',
-        colors: ['bbb', 'ccc', 'aaa']
+        colors: ['bbb', 'ccc', 'aaa'],
+        colorLegends: {
+          bbb: 'custom legend'
+        },
+        colorMap: [
+          [1, 'bbb'],
+          [2, 'ccc'],
+          [null, 'aaa']
+        ]
       },
       showDropdown: 0,
+      showColorChart: false,
       colorRangeConfig: {
         type: 'all',
         steps: 4,
         reversed: false,
-        custom: true
+        custom: true,
+        customBreaks: false
       }
     }
   };
@@ -4579,6 +4615,48 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom Palette', t => {
     nextState7.layers[0].config.colorUI,
     expectedColorUI7,
     'should set colorRangeConfig.custom true'
+  );
+  t.end();
+});
+
+test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom breaks', t => {
+  const initialState = CloneDeep(StateWFilesFiltersLayerColor.visState);
+  const pointLayer = initialState.layers[0];
+  const oldColorRange = CloneDeep(pointLayer.config.visConfig.colorRange);
+
+  const nextState = reducer(
+    initialState,
+    VisStateActions.layerColorUIChange(pointLayer, 'colorRange', {
+      colorRangeConfig: {customBreaks: true}
+    })
+  );
+
+  const expectedColorUI = {
+    color: DEFAULT_COLOR_UI,
+    colorRange: {
+      ...DEFAULT_COLOR_UI,
+      customPalette: {
+        ...oldColorRange,
+        colorMap: [
+          ['driver_analytics', '#E6FAFA'],
+          ['driver_analytics_0', '#AAD7DA'],
+          ['driver_gps', '#68B4BB']
+        ]
+      },
+      colorRangeConfig: {
+        type: 'all',
+        steps: 6,
+        reversed: false,
+        custom: false,
+        customBreaks: true
+      }
+    }
+  };
+
+  t.deepEqual(
+    nextState.layers[0].config.colorUI,
+    expectedColorUI,
+    'should set customBreaks: true and update colorUI.customPalette with default colorMap'
   );
   t.end();
 });

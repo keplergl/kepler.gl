@@ -2,21 +2,21 @@
 // Copyright contributors to the kepler.gl project
 
 import React, {
+  CSSProperties,
+  ChangeEventHandler,
   Component,
   MouseEventHandler,
-  TouchEventHandler,
-  CSSProperties,
-  ChangeEventHandler
+  TouchEventHandler
 } from 'react';
 import styled from 'styled-components';
 
+import {ActionHandler, MapStateActions, VisStateActions, toggleModal} from '@kepler.gl/actions';
+import {dataTestIds} from '@kepler.gl/constants';
+import {Layer, LayerBaseConfig} from '@kepler.gl/layers';
+import {Datasets} from '@kepler.gl/table';
+import {ColorUI, LayerVisConfig, NestedPartial} from '@kepler.gl/types';
 import LayerConfiguratorFactory from './layer-configurator';
 import LayerPanelHeaderFactory from './layer-panel-header';
-import {dataTestIds} from '@kepler.gl/constants';
-import {NestedPartial, LayerVisConfig, ColorUI} from '@kepler.gl/types';
-import {Layer, LayerBaseConfig} from '@kepler.gl/layers';
-import {toggleModal, VisStateActions, MapStateActions, ActionHandler} from '@kepler.gl/actions';
-import {Datasets} from '@kepler.gl/table';
 
 type LayerPanelProps = {
   className?: string;
@@ -85,8 +85,12 @@ function LayerPanelFactory(
       this.props.layerTextLabelChange(this.props.layer, ...args);
     };
 
-    updateLayerVisualChannelConfig = (newConfig: Partial<LayerBaseConfig>, channel: string) => {
-      this.props.layerVisualChannelConfigChange(this.props.layer, newConfig, channel);
+    updateLayerVisualChannelConfig = (
+      newConfig: Partial<LayerBaseConfig>,
+      channel: string,
+      newVisConfig?: Partial<LayerVisConfig>
+    ) => {
+      this.props.layerVisualChannelConfigChange(this.props.layer, newConfig, channel, newVisConfig);
     };
 
     _updateLayerLabel: ChangeEventHandler<HTMLInputElement> = ({target: {value}}) => {

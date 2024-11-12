@@ -202,6 +202,23 @@ export function arrayInsert<T>(arr: T[], index: number, val: T): T[] {
   return [...arr.slice(0, index), val, ...arr.slice(index)];
 }
 
+const arrayMoveMutate = (array, from, to) => {
+  array.splice(to < 0 ? array.length + to : to, 0, array.splice(from, 1)[0]);
+};
+
+/**
+ *
+ * @param {any[]} array
+ * @param {number} from
+ * @param {number} to
+ * @returns {any[]}
+ */
+export const arrayMove = (array, from, to) => {
+  array = array.slice();
+  arrayMoveMutate(array, from, to);
+  return array;
+};
+
 export function hasMobileWidth(breakPointValues: {palm: number; desk: number}): boolean {
   const mobileWidth = window.matchMedia(`(max-width: ${breakPointValues.palm}px)`);
   return mobileWidth.matches;

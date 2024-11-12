@@ -1,15 +1,19 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import {ColorRange} from '@kepler.gl/constants';
+import {Layer} from '@kepler.gl/layers';
+import {HexColor, MapState} from '@kepler.gl/types';
+import {
+  getLayerColorScale,
+  getLegendOfScale,
+  getVisualChannelScaleByZoom,
+  isObject
+} from '@kepler.gl/utils';
 import React, {useCallback, useMemo} from 'react';
 import styled, {css} from 'styled-components';
-import moment from 'moment';
-import {SCALE_TYPES, SCALE_FUNC, ALL_FIELD_TYPES, ColorRange} from '@kepler.gl/constants';
-import {getTimeWidgetHintFormatter, formatNumber} from '@kepler.gl/utils';
-import {isObject} from '@kepler.gl/utils';
 import {Reset} from './icons';
 import {InlineInput} from './styled-components';
-import {HexColor} from '@kepler.gl/types';
 
 const ROW_H = 15;
 const GAP = 4;
@@ -33,50 +37,6 @@ const StyledLegend = styled.div<{disableEdit: boolean}>`
 
   ${props => (props.disableEdit ? inputCss : '')}
 `;
-
-const defaultFormat = d => d;
-
-const getTimeLabelFormat = domain => {
-  const formatter = getTimeWidgetHintFormatter(domain);
-  return val => moment.utc(val).format(formatter);
-};
-
-const getQuantLabelFormat = (domain, fieldType) => {
-  // quant scale can only be assigned to linear Fields: real, timestamp, integer
-  return fieldType === ALL_FIELD_TYPES.timestamp
-    ? getTimeLabelFormat(domain)
-    : !fieldType
-    ? defaultFormat
-    : n => formatNumber(n, fieldType);
-};
-
-const getOrdinalLegends = scale => {
-  const domain = scale.domain();
-  const labels = scale.domain();
-  const data = domain.map(scale);
-  return data.map((datum, index) => ({
-    data: datum,
-    label: labels[index]
-  }));
-};
-
-const getQuantLegends = (scale, labelFormat) => {
-  if (typeof scale.invertExtent !== 'function') {
-    return [];
-  }
-
-  const labels = scale.range().map(d => {
-    const invert = scale.invertExtent(d);
-    return `${labelFormat(invert[0])} to ${labelFormat(invert[1])}`;
-  });
-
-  const data = scale.range();
-
-  return labels.map((label, index) => ({
-    data: data[index],
-    label
-  }));
-};
 
 const StyledLegendRow = styled.div`
   display: flex;
@@ -235,7 +195,73 @@ const overrideColorLegends = (colorLegends, overrides) => {
   return newColorLegends;
 };
 
+type OverrideByCustomLegendOptions = {
+  /**
+   * Legend parameters to override
+   */
+  colorLegends?: Record<string, any>;
+  /**
+   * Original Legends
+   */
+  currentLegends: ReturnType<typeof getLegendOfScale>;
+};
+
+/**
+ * Overrides legend labels with color legends.
+ * @param param0 Legend info and override parameters.
+ * @returns Original or overriden lenends.
+ */
+function overrideByCustomLegend({colorLegends, currentLegends}: OverrideByCustomLegendOptions) {
+  if (colorLegends && isObject(colorLegends)) {
+    // override labels with color legends
+    const data = Object.keys(colorLegends);
+    const labels = Object.values(colorLegends);
+
+    return overrideColorLegends(currentLegends, {data, labels});
+  }
+
+  return currentLegends;
+}
+
+export function useLayerColorLegends(
+  layer,
+  scaleType,
+  domain,
+  range,
+  isFixed,
+  fieldType,
+  labelFormat,
+  mapState
+) {
+  const scale = useMemo(
+    () => getLayerColorScale({range, domain, scaleType, isFixed, layer}),
+    [range, domain, scaleType, isFixed, layer]
+  );
+
+  const scaleByZoom = useMemo(
+    () => getVisualChannelScaleByZoom({scale, layer, mapState}),
+    [scale, layer, mapState]
+  );
+
+  const currentLegends = useMemo(
+    () => getLegendOfScale({scale: scaleByZoom, scaleType, labelFormat, fieldType}),
+    [scaleByZoom, scaleType, labelFormat, fieldType]
+  );
+
+  const LegendsWithCustomLegends = useMemo(
+    () =>
+      overrideByCustomLegend({
+        colorLegends: range?.colorLegends,
+        currentLegends
+      }),
+    [range?.colorLegends, currentLegends]
+  );
+
+  return LegendsWithCustomLegends;
+}
+
 type ColorLegendProps = {
+  layer: Layer;
   scaleType: string;
   domain: number[] | string[];
   fieldType?: string | null;
@@ -243,63 +269,38 @@ type ColorLegendProps = {
   labelFormat?: (n: any) => string;
   displayLabel?: boolean;
   disableEdit?: boolean;
+  mapState?: MapState;
+  isFixed?: boolean;
   onUpdateColorLegend?: (colorLegends: {[key: HexColor]: string}) => void;
 };
 
 ColorLegendFactory.deps = [LegendRowFactory];
 function ColorLegendFactory(LegendRow: ReturnType<typeof LegendRowFactory>) {
   const ColorLegend: React.FC<ColorLegendProps> = ({
+    layer,
+    isFixed,
     domain,
     range,
     labelFormat,
     scaleType,
     fieldType,
+    mapState,
     onUpdateColorLegend,
     displayLabel = true,
     disableEdit = false
   }) => {
     const {colorLegends} = range || {};
 
-    const legends = useMemo(() => {
-      let currentLegends: any[] = [];
-      if (!range) {
-        return currentLegends;
-      }
-      if (Array.isArray(range.colors)) {
-        if (!domain || !scaleType) {
-          return currentLegends;
-        }
-
-        const scaleFunction = SCALE_FUNC[scaleType];
-        // color scale can only be quantize, quantile or ordinal
-        const scale = scaleFunction().domain(domain).range(range.colors);
-
-        if (scaleType === SCALE_TYPES.ordinal) {
-          return getOrdinalLegends(scale);
-        }
-
-        const formatLabel = labelFormat || getQuantLabelFormat(scale.domain(), fieldType);
-
-        currentLegends = getQuantLegends(scale, formatLabel);
-      }
-
-      if (range.colorLegends && isObject(range.colorLegends)) {
-        // override labels with color legends
-        const data = Object.keys(range.colorLegends);
-        const labels = Object.values(range.colorLegends);
-
-        currentLegends = overrideColorLegends(currentLegends, {data, labels});
-      }
-
-      if (Array.isArray(range.colorMap)) {
-        const data = range.colorMap.map(cm => cm[1]);
-        const labels = range.colorMap.map(cm => cm[0]);
-
-        currentLegends = overrideColorLegends(currentLegends, {data, labels});
-      }
-
-      return currentLegends;
-    }, [domain, range, labelFormat, scaleType, fieldType]);
+    const legends = useLayerColorLegends(
+      layer,
+      scaleType,
+      domain,
+      range,
+      isFixed,
+      fieldType,
+      labelFormat,
+      mapState
+    );
 
     const onUpdateLabel = useCallback(
       (color, newValue) => {

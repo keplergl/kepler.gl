@@ -225,7 +225,7 @@ export default class DropdownList extends Component<DropdownListProps, DropdownL
                 onMouseDown={e => this._onClick(value, e)}
                 onClick={e => this._onClick(value, e)}
               >
-                <CustomListItemComponent value={value} displayOption={display} />
+                <CustomListItemComponent value={value} displayOption={display} light={light} />
               </div>
             ))}
           </div>

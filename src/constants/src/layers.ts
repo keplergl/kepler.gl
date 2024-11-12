@@ -63,12 +63,15 @@ export const DEFAULT_COLOR_UI: ColorUI = {
   showSketcher: false,
   // show color range selection panel
   showDropdown: false,
+  // show color chart
+  showColorChart: false,
   // color range selector config
   colorRangeConfig: {
     type: 'all',
     steps: 6,
     reversed: false,
-    custom: false
+    custom: false,
+    customBreaks: false
   }
 };
 

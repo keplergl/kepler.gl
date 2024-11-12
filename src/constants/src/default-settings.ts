@@ -3,17 +3,18 @@
 
 import keyMirror from 'keymirror';
 
+import {BaseMapStyle, EffectDescription, RGBAColor, SyncTimelineMode} from '@kepler.gl/types';
 import {
   scaleLinear,
-  scaleQuantize,
-  scaleQuantile,
-  scaleOrdinal,
-  scaleSqrt,
   scaleLog,
-  scalePoint
+  scaleOrdinal,
+  scalePoint,
+  scaleQuantile,
+  scaleQuantize,
+  scaleSqrt,
+  scaleThreshold
 } from 'd3-scale';
 import {TOOLTIP_FORMAT_TYPES} from './tooltip';
-import {BaseMapStyle, EffectDescription, RGBAColor, SyncTimelineMode} from '@kepler.gl/types';
 
 export const ACTION_PREFIX = '@@kepler.gl/';
 export const KEPLER_UNFOLDED_BUCKET = 'https://studio-public-data.foursquare.com/statics/keplergl';
@@ -382,17 +383,45 @@ export const FILTER_VIEW_TYPES = keyMirror({
 
 export const DEFAULT_FILTER_VIEW_TYPE = FILTER_VIEW_TYPES.side;
 
-export const SCALE_TYPES = keyMirror({
+export type SCALE_TYPES_DEF = {
+  ordinal: 'ordinal';
+  quantile: 'quantile';
+  quantize: 'quantize';
+  linear: 'linear';
+  sqrt: 'sqrt';
+  log: 'log';
+  point: 'point';
+  threshold: 'threshold';
+  custom: 'custom';
+};
+
+export const SCALE_TYPES: SCALE_TYPES_DEF = keyMirror({
   ordinal: null,
   quantile: null,
   quantize: null,
   linear: null,
   sqrt: null,
   log: null,
-
+  threshold: null,
+  custom: null,
   // ordinal domain to linear range
   point: null
 });
+export const SCALE_TYPE_NAMES: {[key in keyof SCALE_TYPES_DEF]: string} = {
+  ordinal: 'Ordinal',
+  quantile: 'Quantile',
+  quantize: 'Quantize',
+  linear: 'Linear',
+  sqrt: 'Sqrt',
+  log: 'Log',
+  threshold: 'Threshold',
+  custom: 'Custom Breaks',
+  point: 'Point'
+};
+
+export type SCALE_FUNC_TYPE = {
+  [key in keyof SCALE_TYPES_DEF]: () => number;
+};
 
 export const SCALE_FUNC = {
   [SCALE_TYPES.linear]: scaleLinear,
@@ -401,7 +430,9 @@ export const SCALE_FUNC = {
   [SCALE_TYPES.ordinal]: scaleOrdinal,
   [SCALE_TYPES.sqrt]: scaleSqrt,
   [SCALE_TYPES.log]: scaleLog,
-  [SCALE_TYPES.point]: scalePoint
+  [SCALE_TYPES.point]: scalePoint,
+  [SCALE_TYPES.threshold]: scaleThreshold,
+  [SCALE_TYPES.custom]: scaleThreshold
 };
 
 export const ALL_FIELD_TYPES = keyMirror({
@@ -592,7 +623,7 @@ export const AGGREGATION_TYPE_OPTIONS: {id: string; label: string}[] = Object.en
 }));
 
 export const linearFieldScaleFunctions = {
-  [CHANNEL_SCALES.color]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile],
+  [CHANNEL_SCALES.color]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile, SCALE_TYPES.custom],
   [CHANNEL_SCALES.radius]: [SCALE_TYPES.sqrt],
   [CHANNEL_SCALES.size]: [SCALE_TYPES.linear, SCALE_TYPES.sqrt, SCALE_TYPES.log]
 };

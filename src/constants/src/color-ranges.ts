@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import colorbrewer from 'colorbrewer';
 import {HexColor} from '@kepler.gl/types';
+import colorbrewer from 'colorbrewer';
 import {VizColorPalette} from './custom-color-ranges';
 
 export type ColorMap = [string[] | string | number | null, HexColor][];
 // Key is HexColor but as key we can use only string
-export type ColorLegends = {[key: string]: string};
+export type ColorLegends = {[key: HexColor]: string};
 
 export type ColorRange = {
   name?: string;
@@ -51,9 +51,11 @@ for (const [keyName, colorScheme] of Object.entries(colorbrewer)) {
   }
 }
 
-export const COLOR_RANGES = colorRanges;
+export const COLOR_RANGES: ColorRange[] = colorRanges;
 
-export const DEFAULT_COLOR_RANGE = colorRanges.find(({name}) => name === 'Global Warming') || {
+export const DEFAULT_COLOR_RANGE: ColorRange = colorRanges.find(
+  ({name}) => name === 'Global Warming'
+) || {
   name: 'Global Warming',
   type: 'SEQ',
   category: 'Uber',

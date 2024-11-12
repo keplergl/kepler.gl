@@ -4,7 +4,7 @@
 import React, {FC, useCallback} from 'react';
 import styled from 'styled-components';
 import {rgb} from 'd3-color';
-import ColorLegendFactory from '../common/color-legend';
+import ColorLegendFactory, {LegendRowFactory} from '../common/color-legend';
 import RadiusLegend from '../common/radius-legend';
 import {CHANNEL_SCALES, DIMENSIONS} from '@kepler.gl/constants';
 import {FormattedMessage} from '@kepler.gl/localization';
@@ -90,28 +90,24 @@ export const LayerDefaultLegend: React.FC<LayerSizeLegendProps> = ({label, name}
     </div>
   ) : null;
 
-const SINGLE_COLOR_DOMAIN = [''];
-
 export type SingleColorLegendProps = {
   color: RGBColor;
+  label?: string;
 };
 
-SingleColorLegendFactory.deps = [ColorLegendFactory];
+SingleColorLegendFactory.deps = [LegendRowFactory];
 
-export function SingleColorLegendFactory(
-  ColorLegend: ReturnType<typeof ColorLegendFactory>
-): React.FC<SingleColorLegendProps> {
-  const SingleColorLegend: React.FC<SingleColorLegendProps> = ({color}) => (
-    <ColorLegend
-      scaleType="ordinal"
-      displayLabel={false}
-      domain={SINGLE_COLOR_DOMAIN}
-      fieldType={null}
-      range={{colors: [rgb(...color).toString()]}}
-      disableEdit={true}
+export function SingleColorLegendFactory(LegendRow: ReturnType<typeof LegendRowFactory>) {
+  const SingleColorLegend: React.FC<SingleColorLegendProps> = ({color, label}) => (
+    <LegendRow
+      label={label ?? ''}
+      displayLabel={Boolean(label)}
+      color={Array.isArray(color) ? rgb(...color).toString() : color}
     />
   );
+
   SingleColorLegend.displayName = 'SingleColorLegend';
+
   return React.memo(SingleColorLegend);
 }
 
@@ -162,6 +158,7 @@ export function LayerColorLegendFactory(
             <div className="legend--layer_color-legend">
               {enableColorBy ? (
                 <ColorLegend
+                  layer={layer}
                   scaleType={colorScale}
                   displayLabel
                   domain={colorDomain}

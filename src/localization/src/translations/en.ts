@@ -191,7 +191,9 @@ export default {
   },
   layerConfiguration: {
     defaultDescription: 'Calculate {property} based on selected field',
-    howTo: 'How to'
+    howTo: 'How to',
+    showColorChart: 'Show Color Chart',
+    hideColorChart: 'Hide Color Chart'
   },
   filterManager: {
     addFilter: 'Add Filter',
@@ -569,6 +571,7 @@ ${'```'}
     type: 'type',
     reversed: 'reversed',
     opacity: 'Opacity',
+    disableStepReason: `Can't change number of steps with custom color breaks, use custom palette to edit steps`,
     preset: 'Preset Colors',
     picker: 'Color Picker'
   },
