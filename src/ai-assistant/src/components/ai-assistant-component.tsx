@@ -1,15 +1,17 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, { useEffect } from 'react';
+import React, {useEffect} from 'react';
 import styled, {withTheme} from 'styled-components';
-import {AiAssistantConfig} from '@kepler.gl/types';
 import {AiAssistant, useAssistant} from 'ai-assistant';
-import 'ai-assistant/dist/index.css';
-import { textColorLT } from '@kepler.gl/styles';
-import { basemapFunctionDefinition } from './ai-assistant-functions';
-import { ActionHandler, mapStyleChange } from '@kepler.gl/actions';
-import { MapStyle } from '@kepler.gl/reducers';
+import 'ai-assistant/../dist/index.css';
+
+import {AiAssistantConfig} from '../index';
+import {textColorLT} from '@kepler.gl/styles';
+import {ActionHandler, mapStyleChange} from '@kepler.gl/actions';
+import {MapStyle} from '@kepler.gl/reducers';
+
+import {basemapFunctionDefinition} from '../tools/ai-assistant-functions';
 
 export type AiAssistantComponentProps = {
   theme: any;
@@ -38,7 +40,7 @@ function AiAssistantComponentFactory() {
   }: AiAssistantComponentProps) => {
     const welcomeMessage = 'Welcome to the Kepler.gl AI Assistant!';
     const instructions =
-      'You are a helpful assistant that can answer questions and help with tasks.';
+      'You are a helpful assistant that can answer questions and help with tasks. If you can use tools, please use them. If the parameters of functions are not provided, please ask user to specify them. Otherwise, just answer the question directly. Do not include any programming code in your response. You can do the following tasks: 1. Change the basemap style.';
 
     const functions = [basemapFunctionDefinition({mapStyleChange, mapStyle})];
 
@@ -52,7 +54,7 @@ function AiAssistantComponentFactory() {
 
     useEffect(() => {
       initializeAssistant();
-    }, []);
+    }, [initializeAssistant]);
 
     return (
       <StyledAiAssistantComponent className="ai-assistant-component">

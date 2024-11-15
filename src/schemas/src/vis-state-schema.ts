@@ -27,9 +27,9 @@ import {
   SavedVisState,
   SplitMap,
   ValueOf,
-  Effect,
-  AiAssistantConfig
+  Effect
 } from '@kepler.gl/types';
+import {AiAssistantConfig} from '@kepler.gl/ai-assistant';
 import {Datasets} from '@kepler.gl/table';
 import {Layer, LayerClassesType} from '@kepler.gl/layers';
 import {Loader} from '@loaders.gl/loader-utils';

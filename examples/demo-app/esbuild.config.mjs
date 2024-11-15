@@ -36,7 +36,7 @@ const RESOLVE_LOCAL_ALIASES = {
   // Suppress useless warnings from react-date-picker's dep
   'tiny-warning': `${SRC_DIR}/utils/src/noop.ts`,
   // kepler.gl and loaders.gl need to use same apache-arrow
-  'apache-arrow': `${NODE_MODULES_DIR}/apache-arrow`
+  'apache-arrow': `${NODE_MODULES_DIR}/apache-arrow`,
 };
 
 const config = {
@@ -49,14 +49,14 @@ const config = {
   bundle: true,
   define: {
     NODE_ENV: JSON.stringify(process.env.NODE_ENV || 'production'),
-    'process.env.MapboxAccessToken': JSON.stringify(process.env.MapboxAccessToken), // eslint-disable-line
-    'process.env.DropboxClientId': JSON.stringify(process.env.DropboxClientId), // eslint-disable-line
-    'process.env.MapboxExportToken': JSON.stringify(process.env.MapboxExportToken), // eslint-disable-line
-    'process.env.CartoClientId': JSON.stringify(process.env.CartoClientId), // eslint-disable-line
-    'process.env.FoursquareClientId': JSON.stringify(process.env.FoursquareClientId), // eslint-disable-line
-    'process.env.FoursquareDomain': JSON.stringify(process.env.FoursquareDomain), // eslint-disable-line
-    'process.env.FoursquareAPIURL': JSON.stringify(process.env.FoursquareAPIURL), // eslint-disable-line
-    'process.env.FoursquareUserMapsURL': JSON.stringify(process.env.FoursquareUserMapsURL) // eslint-disable-line
+    'process.env.MapboxAccessToken': JSON.stringify(process.env.MapboxAccessToken || ''),
+    'process.env.DropboxClientId': JSON.stringify(process.env.DropboxClientId || ''),
+    'process.env.MapboxExportToken': JSON.stringify(process.env.MapboxExportToken || ''),
+    'process.env.CartoClientId': JSON.stringify(process.env.CartoClientId || ''),
+    'process.env.FoursquareClientId': JSON.stringify(process.env.FoursquareClientId || ''),
+    'process.env.FoursquareDomain': JSON.stringify(process.env.FoursquareDomain || ''),
+    'process.env.FoursquareAPIURL': JSON.stringify(process.env.FoursquareAPIURL || ''),
+    'process.env.FoursquareUserMapsURL': JSON.stringify(process.env.FoursquareUserMapsURL || '')
   },
   plugins: [
     // automatically injected kepler.gl package version into the bundle
@@ -78,6 +78,7 @@ function addAliases(externals, args) {
   // resolve ai-assistant from local dir
   if (useLocalAiAssistant) {
     resolveAlias['ai-assistant'] = `${EXTERNAL_AI_ASSISTANT_SRC}/src`;
+    resolveAlias['@kepler.gl/ai-assistant'] = join(SRC_DIR, 'ai-assistant/src');
   }
 
   // resolve deck.gl from local dir

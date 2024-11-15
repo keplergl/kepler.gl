@@ -209,9 +209,7 @@ export default {
     speed: 'velocidad',
     play: 'iniciar',
     pause: 'pausar',
-    reset: 'reiniciar',
-    showAiAssistantPanel: 'Mostrar Asistente IA',
-    hideAiAssistantPanel: 'Ocultar Asistente IA'
+    reset: 'reiniciar'
   },
   toolbar: {
     exportImage: 'Exportar imagen',
@@ -468,8 +466,5 @@ export default {
   'Bug Report': 'Informe de errores',
   'User Guide': 'Guía de usuario',
   Save: 'Guadar',
-  Share: 'Compartir',
-  aiAssistantManager: {
-    title: 'Asistente IA'
-  }
+  Share: 'Compartir'
 };

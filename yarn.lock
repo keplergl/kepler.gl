@@ -2835,6 +2835,19 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@kepler.gl/ai-assistant@npm:3.0.0, @kepler.gl/ai-assistant@workspace:src/ai-assistant":
+  version: 0.0.0-use.local
+  resolution: "@kepler.gl/ai-assistant@workspace:src/ai-assistant"
+  dependencies:
+    "@kepler.gl/components": "npm:3.0.0"
+    "@kepler.gl/constants": "npm:3.0.0"
+    "@kepler.gl/layers": "npm:3.0.0"
+    "@kepler.gl/types": "npm:3.0.0"
+    "@kepler.gl/utils": "npm:3.0.0"
+    global: "npm:^4.3.0"
+  languageName: unknown
+  linkType: soft
+
 "@kepler.gl/cloud-providers@npm:3.0.0, @kepler.gl/cloud-providers@workspace:src/cloud-providers":
   version: 0.0.0-use.local
   resolution: "@kepler.gl/cloud-providers@workspace:src/cloud-providers"
@@ -3155,6 +3168,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@kepler.gl/schemas@workspace:src/schemas"
   dependencies:
+    "@kepler.gl/ai-assistant": "npm:3.0.0"
     "@kepler.gl/constants": "npm:3.0.0"
     "@kepler.gl/layers": "npm:3.0.0"
     "@kepler.gl/table": "npm:3.0.0"

@@ -5,14 +5,12 @@ import React, {useState, useCallback} from 'react';
 import styled from 'styled-components';
 import {injectIntl, IntlShape} from 'react-intl';
 
-import {AiAssistantConfig} from '@kepler.gl/types';
+import {MapStyle} from '@kepler.gl/reducers';
+import {AiAssistantConfig} from '../index';
 import {ActionHandler, mapStyleChange, updateAiAssistantConfig} from '@kepler.gl/actions';
-import {withState} from '../injector';
-import SidePanelTitleFactory from '../effects/side-panel-title';
-import Settings from '../common/icons/settings';
+import {withState, SidePanelTitleFactory, Icons} from '@kepler.gl/components';
 import AiAssistantConfigFactory from './ai-assistant-config';
 import AiAssistantComponentFactory from './ai-assistant-component';
-import {MapStyle} from '@kepler.gl/reducers';
 
 export type AiAssistantManagerState = {
   visStateActions: {
@@ -54,16 +52,15 @@ const StyledAiAssistantPanel = styled.div`
 `;
 
 const StyledAiAssistantPanelHeader = styled.div`
-  padding: ${({theme}) =>
-    `${theme.aiAssistantPanelPaddingTop}px ${theme.aiAssistantPanelPaddingSide}px 4px ${theme.aiAssistantPanelPaddingSide}px`};
+  padding: 16px 16px 4px 16px;
   border-bottom: 1px solid ${props => props.theme.borderColor};
-  min-width: ${({theme}) => theme.aiAssistantPanelConfigWidth}px;
+  min-width: 345px;
   color: ${props => props.theme.subtextColorActive};
 `;
 
 const StyledAiAssistantPanelContent = styled.div`
   ${props => props.theme.sidePanelScrollBar};
-  color: ${props => (props.theme.subtextColorActive)};
+  color: ${props => props.theme.subtextColorActive};
   padding: 10px 0px 10px 0px;
   overflow-y: auto;
   display: flex;
@@ -71,7 +68,11 @@ const StyledAiAssistantPanelContent = styled.div`
   height: 100%;
 `;
 
-AiAssistantManagerFactory.deps = [SidePanelTitleFactory, AiAssistantConfigFactory, AiAssistantComponentFactory];
+AiAssistantManagerFactory.deps = [
+  SidePanelTitleFactory,
+  AiAssistantConfigFactory,
+  AiAssistantComponentFactory
+];
 
 function AiAssistantManagerFactory(
   SidePanelTitle: ReturnType<typeof SidePanelTitleFactory>,
@@ -94,7 +95,7 @@ function AiAssistantManagerFactory(
               className="ai-assistant-manager-title"
               title={intl.formatMessage({id: 'aiAssistantManager.title'})}
             >
-              <Settings onClick={onConfigButtonClick} />
+              <Icons.Settings onClick={onConfigButtonClick} />
             </SidePanelTitle>
           </StyledAiAssistantPanelHeader>
 

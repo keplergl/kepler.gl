@@ -197,9 +197,7 @@ export default {
     speed: '速度',
     play: '播放',
     pause: '暂停',
-    reset: '重置',
-    showAiAssistantPanel: '显示AI助手',
-    hideAiAssistantPanel: '隐藏AI助手'
+    reset: '重置'
   },
   toolbar: {
     exportImage: '导出图片',
@@ -459,8 +457,5 @@ export default {
   'Bug Report': '错误报告',
   'User Guide': '用户指南',
   Save: '保存',
-  Share: '分享',
-  aiAssistantManager: {
-    title: 'AI助手'
-  }
+  Share: '分享'
 };

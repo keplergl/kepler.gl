@@ -7,10 +7,9 @@ import {
   withState,
   MapControlFactory,
   EffectControlFactory,
-  EffectManagerFactory,
-  AiAssistantControlFactory,
-  AiAssistantManagerFactory
+  EffectManagerFactory
 } from '@kepler.gl/components';
+import {AiAssistantControlFactory, AiAssistantManagerFactory} from '@kepler.gl/ai-assistant';
 import {SampleMapPanel} from '../components/map-control/map-control';
 
 const StyledMapControlPanel = styled.div`
@@ -47,7 +46,7 @@ const StyledMapControlOverlay = styled.div`
   margin-top: ${props => (props.rightPanelVisible ? props.theme.rightPanelMarginTop : 0)}px;
   margin-right: ${props => (props.rightPanelVisible ? props.theme.rightPanelMarginRight : 0)}px;
   ${props => (props.fullHeight ? 'height' : 'max-height')}: calc(100% - ${props =>
-  props.theme.rightPanelMarginTop + props.theme.bottomWidgetPaddingBottom}px);
+    props.theme.rightPanelMarginTop + props.theme.bottomWidgetPaddingBottom}px);
 
   .map-control {
     ${props => (props.rightPanelVisible ? 'padding-top: 0px;' : '')}
@@ -79,7 +78,11 @@ function CustomMapControlFactory(
     const showEffects = Boolean(props.mapControls?.effect?.active);
     const showAiAssistant = Boolean(props.mapControls?.aiAssistant?.active);
     return (
-      <StyledMapControlOverlay top={props.top} rightPanelVisible={showEffects} fullHeight={showAiAssistant}>
+      <StyledMapControlOverlay
+        top={props.top}
+        rightPanelVisible={showEffects}
+        fullHeight={showAiAssistant}
+      >
         <StyledMapControlPanel>
           {!props.isExport && props.currentSample ? <SampleMapPanel {...props} /> : null}
           <MapControl {...props} top={0} actionComponents={actionComponents} />

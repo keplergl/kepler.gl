@@ -1,12 +1,19 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, { useState } from 'react';
+import React, {useState} from 'react';
 import styled, {withTheme} from 'styled-components';
 import {injectIntl, WrappedComponentProps} from 'react-intl';
-import {Input, PanelLabelWrapper, ItemSelector, RangeSliderFactory, Button, LoadingSpinner} from '@kepler.gl/components';
-import {AiAssistantConfig} from '@kepler.gl/types';
-import {ApiKey} from '../common/icons';
+import {
+  Input,
+  PanelLabelWrapper,
+  ItemSelector,
+  RangeSliderFactory,
+  Button,
+  LoadingSpinner
+} from '@kepler.gl/components';
+import {AiAssistantConfig} from '../index';
+import ApiKey from '../icons/api-key';
 import {testApiKey} from 'ai-assistant';
 
 const PROVIDER_MODELS = {
@@ -130,7 +137,7 @@ function AiAssistantConfigFactory(RangeSlider: ReturnType<typeof RangeSliderFact
     const [temperature, setTemperature] = useState(aiAssistant?.temperature || 0.8);
     const [topP, setTopP] = useState(aiAssistant?.topP || 0.8);
     const [baseUrl, setBaseUrl] = useState(aiAssistant?.baseUrl || 'http://localhost:11434');
-    const [apiKeyError, setApiKeyError] = useState(false);
+    const [connectionError, setConnectionError] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
     const [isRunning, setIsRunning] = useState(false);
 
@@ -138,6 +145,8 @@ function AiAssistantConfigFactory(RangeSlider: ReturnType<typeof RangeSliderFact
       if (typeof value === 'string') {
         setProvider(value);
         setModel(PROVIDER_MODELS[value][0]);
+        setConnectionError(false);
+        setErrorMessage('');
       }
     };
 
@@ -150,7 +159,7 @@ function AiAssistantConfigFactory(RangeSlider: ReturnType<typeof RangeSliderFact
     const onApiKeyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       setApiKey(e.target.value);
       // reset previous key error if any
-      setApiKeyError(false);
+      setConnectionError(false);
       setErrorMessage('');
     };
 
@@ -164,24 +173,31 @@ function AiAssistantConfigFactory(RangeSlider: ReturnType<typeof RangeSliderFact
 
     const onBaseUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       setBaseUrl(e.target.value);
+      setConnectionError(false);
+      setErrorMessage('');
     };
 
     const onStartChat = async () => {
       setIsRunning(true);
-      const isValidKey = await testApiKey({
+      const {success, service} = await testApiKey({
         modelProvider: provider,
         modelName: model,
         apiKey: apiKey,
         baseUrl: baseUrl
       });
-      setApiKeyError(!isValidKey);
-      setErrorMessage(isValidKey ? '' : 'Invalid API key');
+      const errorMessage = !success
+        ? service === 'ollama'
+          ? 'Connection failed: maybe invalid Ollama Base URL'
+          : 'Connection failed: maybe invalid API Key'
+        : '';
+      setConnectionError(!success);
+      setErrorMessage(errorMessage);
       updateAiAssistantConfig({
         provider: provider,
         model: model,
         apiKey: apiKey,
         baseUrl: baseUrl,
-        isReady: isValidKey,
+        isReady: success,
         temperature: temperature,
         topP: topP
       });
@@ -260,9 +276,6 @@ function AiAssistantConfigFactory(RangeSlider: ReturnType<typeof RangeSliderFact
                 value={apiKey}
               />
             </div>
-            {apiKeyError && (
-              <StyleErrorMessage className="error-message">{errorMessage}</StyleErrorMessage>
-            )}
           </>
         ) : (
           <>
@@ -270,7 +283,7 @@ function AiAssistantConfigFactory(RangeSlider: ReturnType<typeof RangeSliderFact
               <SectionTitle>
                 {intl.formatMessage({
                   id: 'aiAssistantManager.baseUrl.title',
-                  defaultMessage: 'Enter Ollama Base URL'
+                  defaultMessage: 'Ollama Base URL'
                 })}
               </SectionTitle>
             </PanelLabelWrapper>
@@ -289,6 +302,9 @@ function AiAssistantConfigFactory(RangeSlider: ReturnType<typeof RangeSliderFact
               />
             </div>
           </>
+        )}
+        {connectionError && (
+          <StyleErrorMessage className="error-message">{errorMessage}</StyleErrorMessage>
         )}
         <PanelLabelWrapper>
           <SectionTitle>

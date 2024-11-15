@@ -189,10 +189,6 @@ export default {
     time: 'Time',
     timezone: 'Timezone'
   },
-  aiAssistantManager: {
-    title: 'AI Assistant',
-    aiProvider: 'AI Provider'
-  },
   layerConfiguration: {
     defaultDescription: 'Calculate {property} based on selected field',
     howTo: 'How to'
@@ -254,9 +250,7 @@ export default {
     hideEffectPanel: 'Hide effect panel',
     removeEffect: 'Remove effect',
     disableEffect: 'Disable effect',
-    effectSettings: 'Effect settings',
-    showAiAssistantPanel: 'Show AI Assistant panel',
-    hideAiAssistantPanel: 'Hide AI Assistant panel'
+    effectSettings: 'Effect settings'
   },
   toolbar: {
     exportImage: 'Export Image',

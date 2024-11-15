@@ -1,6 +1,8 @@
-import { ActionHandler } from '@kepler.gl/actions';
-import { mapStyleChange } from '@kepler.gl/actions';
-import { DEFAULT_MAP_STYLES } from '@kepler.gl/constants';
+import React, {ReactNode, useEffect, useState} from 'react';
+import {MapStyleSelectorFactory, appInjector} from '@kepler.gl/components';
+import {MapStyle} from '@kepler.gl/reducers';
+import {mapStyleChange, ActionHandler} from '@kepler.gl/actions';
+import {DEFAULT_MAP_STYLES} from '@kepler.gl/constants';
 import {
   CallbackFunctionProps,
   CustomFunctionCall,
@@ -9,10 +11,6 @@ import {
   ErrorCallbackResult,
   RegisterFunctionCallingProps
 } from 'ai-assistant';
-import React, { ReactNode, useEffect, useState } from 'react';
-import MapStyleSelectorFactory from '../side-panel/map-style-panel/map-style-selector';
-import { appInjector } from '../container';
-import { MapStyle } from '@kepler.gl/reducers';
 
 export function basemapFunctionDefinition(
   context: CustomFunctionContext<ActionHandler<typeof mapStyleChange> | MapStyle>
@@ -24,7 +22,7 @@ export function basemapFunctionDefinition(
       styleType: {
         type: 'string',
         description:
-          'The name of the basemap style. Valid values are "dark-matter", "dark-matter-nolabels", "no_map", "positron", "positron-nolabels", "voyager", "voyager-nolabels"'
+          'The name of the basemap style. Required. If not provided, please ask user to specify the style. Valid values are "dark-matter", "dark-matter-nolabels", "no_map", "positron", "positron-nolabels", "voyager", "voyager-nolabels"'
       }
     },
     required: ['styleType'],
@@ -33,7 +31,6 @@ export function basemapFunctionDefinition(
     callbackMessage: customBasemapMessageCallback
   };
 }
-
 
 type BasemapCallbackResult = {
   success: boolean;
@@ -50,10 +47,7 @@ type OutputResultProps = BasemapCallbackResult | ErrorCallbackResult;
 
 type OutputDataProps = BasemapFunctionContext;
 
-type BasemapCallbackOutput = CustomFunctionOutputProps<
-  OutputResultProps,
-  OutputDataProps
->;
+type BasemapCallbackOutput = CustomFunctionOutputProps<OutputResultProps, OutputDataProps>;
 
 type BasemapCallbackArgs = {
   styleType: string;
@@ -64,7 +58,7 @@ function basemapCallback({
   functionArgs,
   functionContext
 }: CallbackFunctionProps): BasemapCallbackOutput {
-  const { styleType } = functionArgs as BasemapCallbackArgs;
+  const {styleType} = functionArgs as BasemapCallbackArgs;
   const {mapStyleChange, mapStyle} = functionContext as BasemapFunctionContext;
 
   // check if styleType is valid
@@ -74,7 +68,9 @@ function basemapCallback({
       name: functionName,
       result: {
         success: false,
-        details: `Invalid basemap style: ${styleType}. The valid values are ${DEFAULT_MAP_STYLES.map(style => style.id).join(', ')}`
+        details: `Invalid basemap style: ${styleType}. The valid values are ${DEFAULT_MAP_STYLES.map(
+          style => style.id
+        ).join(', ')}`
       }
     };
   }
@@ -99,17 +95,21 @@ function basemapCallback({
 
 const MapStyleSelector = appInjector.get(MapStyleSelectorFactory);
 
-function BasemapMessage({ functionArgs, output }: CustomFunctionCall) {
-  const { styleType } = functionArgs as BasemapCallbackArgs;
-  const {mapStyleChange, mapStyle} = output.data as BasemapFunctionContext;
+function BasemapMessage({functionArgs, output}: CustomFunctionCall) {
+  const {styleType} = functionArgs as BasemapCallbackArgs;
+  const outputData = output.data as BasemapFunctionContext;
 
   const [isSelecting, setIsSelecting] = useState(false);
 
   const [selectedMapStyle, setSelectedMapStyle] = useState(styleType);
 
   useEffect(() => {
-    mapStyleChange(styleType);
-  }, []);
+    outputData?.mapStyleChange(styleType);
+  }, [outputData, styleType]);
+
+  if (!outputData) {
+    return null;
+  }
 
   const onChangeBasemap = (id: string) => {
     mapStyleChange(id);
@@ -123,7 +123,7 @@ function BasemapMessage({ functionArgs, output }: CustomFunctionCall) {
   return (
     <div>
       <MapStyleSelector
-        mapStyle={{...mapStyle, styleType: selectedMapStyle}}
+        mapStyle={{...outputData.mapStyle, styleType: selectedMapStyle}}
         isSelecting={isSelecting}
         onChange={onChangeBasemap}
         toggleActive={onToggleActive}
