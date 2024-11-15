@@ -422,7 +422,7 @@ export default {
     scale: '规模'
   },
   fileUploader: {
-    message: '将您的文件拖放到此��（可多个）',
+    message: '将您的文件拖放到此处（可多个）',
     chromeMessage:
       '*对于 Chrome 用户：文件大小最大为 250mb。如果需要上传更多文件，请尝试使用 Safari。',
     disclaimer:

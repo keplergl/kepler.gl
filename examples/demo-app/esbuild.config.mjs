@@ -21,9 +21,6 @@ const EXTERNAL_LOADERS_SRC = join(LIB_DIR, 'loaders.gl');
 // For debugging hubble.gl, load hubble.gl from external hubble.gl directory
 const EXTERNAL_HUBBLE_SRC = join(LIB_DIR, '../../hubble.gl');
 
-// For debugging ai-assistant, load ai-assistant from external ai-assistant directory
-const EXTERNAL_AI_ASSISTANT_SRC = join(LIB_DIR, '../ai-assistant');
-
 const port = 8080;
 
 // add alias to serve from kepler src, resolve libraries so there is only one copy of them
@@ -36,7 +33,7 @@ const RESOLVE_LOCAL_ALIASES = {
   // Suppress useless warnings from react-date-picker's dep
   'tiny-warning': `${SRC_DIR}/utils/src/noop.ts`,
   // kepler.gl and loaders.gl need to use same apache-arrow
-  'apache-arrow': `${NODE_MODULES_DIR}/apache-arrow`,
+  'apache-arrow': `${NODE_MODULES_DIR}/apache-arrow`
 };
 
 const config = {
@@ -77,7 +74,7 @@ function addAliases(externals, args) {
 
   // resolve ai-assistant from local dir
   if (useLocalAiAssistant) {
-    resolveAlias['ai-assistant'] = `${EXTERNAL_AI_ASSISTANT_SRC}/src`;
+    resolveAlias['ai-assistant'] = join(LIB_DIR, '../ai-assistant/src');
     resolveAlias['@kepler.gl/ai-assistant'] = join(SRC_DIR, 'ai-assistant/src');
   }
 

@@ -259,7 +259,6 @@ export {
   ResetColorLabelFactory
 } from './common/color-legend';
 export {default as EffectControlFactory} from './map/effects/effect-control';
-
 export {default as LoadingSpinner} from './common/loading-spinner';
 export {default as LoadingDialog} from './modals/loading-dialog';
 export {MapViewStateContext, MapViewStateContextProvider} from './map-view-state-context';

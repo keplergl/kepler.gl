@@ -6,9 +6,9 @@ import {MapControls} from '@kepler.gl/types';
 import AiStar from '../icons/ai-star';
 import {MapControlButton, MapControlTooltipFactory} from '@kepler.gl/components';
 
-interface AiAssistantControlIcons {
+type AiAssistantControlIcons = {
   aiAssistantIcon: ComponentType<any>;
-}
+};
 
 export type AiAssistantControlProps = {
   mapControls: MapControls;
