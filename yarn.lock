@@ -20022,7 +20022,7 @@ __metadata:
     tape-catch: "npm:^1.0.6"
     typedoc: "npm:^0.19.2"
     typedoc-plugin-markdown: "npm:^3.0.11"
-    typescript: "npm:4.5.5"
+    typescript: "npm:4.7.2"
     url-loader: "npm:^4.1.1"
     watchify: "npm:^3.6.1"
     webpack: "npm:^4.29.0"
@@ -28578,23 +28578,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@npm:4.5.5":
-  version: 4.5.5
-  resolution: "typescript@npm:4.5.5"
+"typescript@npm:4.7.2":
+  version: 4.7.2
+  resolution: "typescript@npm:4.7.2"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
-  checksum: 10c0/ac15b92f3dcd9a4233cab288a913ccbd96729fc488181396fa93c0297ccef3cd3c2f9a7a63340efb0d07bff3d5026028fc81b9c1ef08076029e057081eb5884b
+  checksum: 10c0/c458df58a52f1cb1c954109dbc3477abfeb632644bc6552a9ac2152bce86e377afe11bf661466926bc4dcdc945f1e053d492c347ae377f1cba7051226b930ea3
   languageName: node
   linkType: hard
 
-"typescript@patch:typescript@npm%3A4.5.5#optional!builtin<compat/typescript>":
-  version: 4.5.5
-  resolution: "typescript@patch:typescript@npm%3A4.5.5#optional!builtin<compat/typescript>::version=4.5.5&hash=f1b8ea"
+"typescript@patch:typescript@npm%3A4.7.2#optional!builtin<compat/typescript>":
+  version: 4.7.2
+  resolution: "typescript@patch:typescript@npm%3A4.7.2#optional!builtin<compat/typescript>::version=4.7.2&hash=65a307"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
-  checksum: 10c0/c699912602518eca36f101f61492608733da8305ba93a82291fbb29508da56e360b10f35f56fd9a53406db9ea2c261d30efd4ec1d9253ff45fdb5541b9d0381c
+  checksum: 10c0/f454730aef4a8cef2ad5650ce769f38ed4460583fe5867d4f93592282afdbd9b5142b75d448b647e4984edf23575ac1f2adafb2db8614f253f700721d3eb439a
   languageName: node
   linkType: hard
 

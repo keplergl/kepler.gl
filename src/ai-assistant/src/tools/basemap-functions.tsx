@@ -10,7 +10,7 @@ import {
   CustomFunctionOutputProps,
   ErrorCallbackResult,
   RegisterFunctionCallingProps
-} from 'ai-assistant';
+} from 'react-ai-assist';
 
 export function basemapFunctionDefinition(
   context: CustomFunctionContext<ActionHandler<typeof mapStyleChange> | MapStyle>
