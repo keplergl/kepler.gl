@@ -267,17 +267,6 @@ export const INITIAL_VIS_STATE: VisState = {
   effects: [],
   effectOrder: [],
 
-  // ai assistant
-  aiAssistant: {
-    isReady: false,
-    provider: 'openai',
-    model: 'gpt-4o',
-    apiKey: '',
-    baseUrl: '',
-    temperature: 1.0,
-    topP: 0.8
-  },
-
   interactionConfig: defaultInteractionConfig,
   interactionToBeMerged: {},
 
@@ -3585,13 +3574,3 @@ function replacePropValueInState(
   }
   return nextState;
 }
-
-export const updateAiAssistantConfigUpdater = (
-  state: VisState,
-  {config}: VisStateActions.UpdateAiAssistantConfigUpdaterAction
-): VisState => {
-  return {
-    ...state,
-    aiAssistant: config
-  };
-};

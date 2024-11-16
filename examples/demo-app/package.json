@@ -52,9 +52,7 @@
     "@luma.gl/webgl": "8.5.21",
     "@deck.gl/core": "8.9.27",
     "@deck.gl/extensions": "8.9.27",
-    "react-vis": "1.11.7",
-    "react": "18.2.0",
-    "react-dom": "18.2.0"
+    "react-vis": "1.11.7"
   },
   "engines": {
     "node": ">=18"

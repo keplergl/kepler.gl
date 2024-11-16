@@ -29,7 +29,6 @@ import {
   ValueOf,
   Effect
 } from '@kepler.gl/types';
-import {AiAssistantConfig} from '@kepler.gl/ai-assistant';
 import {Datasets} from '@kepler.gl/table';
 import {Layer, LayerClassesType} from '@kepler.gl/layers';
 import {Loader} from '@loaders.gl/loader-utils';
@@ -56,7 +55,6 @@ export interface VisState {
   layerOrder: string[];
   effects: Effect[];
   effectOrder: string[];
-  aiAssistant: AiAssistantConfig;
   filters: Filter[];
   filterToBeMerged: any[];
   datasets: Datasets;

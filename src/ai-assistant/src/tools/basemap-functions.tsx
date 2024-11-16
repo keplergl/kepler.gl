@@ -112,7 +112,7 @@ function BasemapMessage({functionArgs, output}: CustomFunctionCall) {
   }
 
   const onChangeBasemap = (id: string) => {
-    mapStyleChange(id);
+    outputData?.mapStyleChange(id);
     setSelectedMapStyle(id);
   };
 

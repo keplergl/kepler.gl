@@ -7,13 +7,14 @@ import {injectIntl, IntlShape} from 'react-intl';
 
 import {MapStyle} from '@kepler.gl/reducers';
 import {AiAssistantConfig} from '../index';
-import {ActionHandler, mapStyleChange, updateAiAssistantConfig} from '@kepler.gl/actions';
+import {ActionHandler, mapStyleChange} from '@kepler.gl/actions';
 import {withState, SidePanelTitleFactory, Icons} from '@kepler.gl/components';
+import {updateAiAssistantConfig} from '@kepler.gl/ai-assistant';
 import AiAssistantConfigFactory from './ai-assistant-config';
 import AiAssistantComponentFactory from './ai-assistant-component';
 
 export type AiAssistantManagerState = {
-  visStateActions: {
+  aiAssistantActions: {
     updateAiAssistantConfig: ActionHandler<typeof updateAiAssistantConfig>;
   };
   mapStyleActions: {
@@ -80,7 +81,7 @@ function AiAssistantManagerFactory(
   AiAssistantComponent: ReturnType<typeof AiAssistantComponentFactory>
 ): React.FC<AiAssistantManagerProps> {
   const AiAssistantManager = (props: AiAssistantManagerWithIntlProp & AiAssistantManagerState) => {
-    const {intl, visStateActions, aiAssistant, children, mapStyleActions, mapStyle} = props;
+    const {intl, aiAssistantActions, aiAssistant, children, mapStyleActions, mapStyle} = props;
     const [showConfig, setShowConfig] = useState(false);
 
     const onConfigButtonClick = useCallback(() => {
@@ -106,7 +107,7 @@ function AiAssistantManagerFactory(
             {showConfig || !aiAssistant.isReady ? (
               <AiAssistantConfig
                 aiAssistant={aiAssistant}
-                updateAiAssistantConfig={visStateActions.updateAiAssistantConfig}
+                updateAiAssistantConfig={aiAssistantActions.updateAiAssistantConfig}
               />
             ) : (
               <AiAssistantComponent
@@ -126,13 +127,13 @@ function AiAssistantManagerFactory(
     [],
     state => {
       return {
-        aiAssistant: state.demo.keplerGl.map.visState.aiAssistant,
+        aiAssistant: state.demo.aiAssistant,
         mapStyle: state.demo.keplerGl.map.mapStyle
       };
     },
     {
-      visStateActions: {updateAiAssistantConfig},
-      mapStyleActions: {mapStyleChange}
+      mapStyleActions: {mapStyleChange},
+      aiAssistantActions: {updateAiAssistantConfig}
     }
   )(injectIntl(AiAssistantManager)) as React.FC<AiAssistantManagerProps>;
 }

@@ -8,6 +8,7 @@ import keplerGlReducer, {combinedUpdaters, uiStateUpdaters} from '@kepler.gl/red
 import {processGeojson, processRowObject, processArrowTable} from '@kepler.gl/processors';
 import KeplerGlSchema from '@kepler.gl/schemas';
 import {EXPORT_MAP_FORMATS} from '@kepler.gl/constants';
+import {aiAssistantReducer} from '@kepler.gl/ai-assistant';
 
 import {
   INIT,
@@ -76,7 +77,8 @@ const demoReducer = combineReducers({
       loadOptions: {} // Add additional loaders.gl loader options here
     }
   }),
-  app: appReducer
+  app: appReducer,
+  aiAssistant: aiAssistantReducer
 });
 
 // this can be moved into a action and call kepler.gl action

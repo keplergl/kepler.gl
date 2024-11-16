@@ -9,14 +9,9 @@ export {default as AiAssistantComponentFactory} from './components/ai-assistant-
 
 export {default as AiAssistantControlFactory} from './map/ai-assistant-control';
 
-export type AiAssistantConfig = {
-  isReady: boolean;
-  provider: string;
-  model: string;
-  apiKey: string;
-  baseUrl: string;
-  temperature: number;
-  topP: number;
-};
+export {aiAssistantReducer} from './reducers';
+
+export type {AiAssistantConfig} from './actions';
+export {UPDATE_AI_ASSISTANT_CONFIG, updateAiAssistantConfig} from './actions';
 
 export {messages} from './localization';
