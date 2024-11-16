@@ -14,7 +14,7 @@ import {
 } from '@kepler.gl/components';
 import {AiAssistantConfig} from '../index';
 import ApiKey from '../icons/api-key';
-import {testApiKey} from 'ai-assistant';
+import {testApiKey} from 'react-ai-assist';
 
 const PROVIDER_MODELS = {
   openai: ['gpt-4o', 'gpt-4o-mini', 'gpt-3.5-turbo-0125', 'gpt-3.5-turbo'],
