@@ -3,15 +3,15 @@
 
 import React, {useEffect} from 'react';
 import styled, {withTheme} from 'styled-components';
-import {AiAssistant, useAssistant} from 'ai-assistant';
-import 'ai-assistant/../dist/index.css';
+import {AiAssistant, useAssistant} from 'react-ai-assist';
+import 'react-ai-assist/dist/index.css';
 
 import {AiAssistantConfig} from '../index';
 import {textColorLT} from '@kepler.gl/styles';
 import {ActionHandler, mapStyleChange} from '@kepler.gl/actions';
 import {MapStyle} from '@kepler.gl/reducers';
 
-import {basemapFunctionDefinition} from '../tools/ai-assistant-functions';
+import {basemapFunctionDefinition} from '../tools/basemap-functions';
 
 export type AiAssistantComponentProps = {
   theme: any;
@@ -69,6 +69,8 @@ function AiAssistantComponentFactory() {
           topP={aiAssistant.topP}
           historyMessages={[]}
           functions={functions}
+          enableVoice={aiAssistant.provider === 'openai' || aiAssistant.provider === 'google'}
+          enableScreenCapture={false}
         />
       </StyledAiAssistantComponent>
     );

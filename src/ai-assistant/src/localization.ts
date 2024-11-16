@@ -3,8 +3,10 @@
 
 export const messages = {
   en: {
-    showAiAssistantPanel: 'Show AI Assistant panel',
-    hideAiAssistantPanel: 'Hide AI Assistant panel',
+    tooltip: {
+      showAiAssistantPanel: 'Show AI Assistant panel',
+      hideAiAssistantPanel: 'Hide AI Assistant panel'
+    },
     aiAssistantManager: {
       title: 'AI Assistant',
       aiProvider: 'AI Provider',
@@ -29,8 +31,10 @@ export const messages = {
     }
   },
   fi: {
-    showAiAssistantPanel: 'Näytä AI-ohjainpaneeli',
-    hideAiAssistantPanel: 'Piilota AI-ohjainpaneeli',
+    tooltip: {
+      showAiAssistantPanel: 'Näytä AI-ohjainpaneeli',
+      hideAiAssistantPanel: 'Piilota AI-ohjainpaneeli'
+    },
     aiAssistantManager: {
       title: 'AI-ohjain',
       aiProvider: 'AI-toimittaja',
@@ -55,8 +59,10 @@ export const messages = {
     }
   },
   ca: {
-    showAiAssistantPanel: "Mostrar panell d'IA",
-    hideAiAssistantPanel: "Ocultar panell d'IA",
+    tooltip: {
+      showAiAssistantPanel: "Mostrar panell d'IA",
+      hideAiAssistantPanel: "Ocultar panell d'IA"
+    },
     aiAssistantManager: {
       title: 'IA',
       aiProvider: "Proveïdor d'IA",
@@ -81,8 +87,10 @@ export const messages = {
     }
   },
   es: {
-    showAiAssistantPanel: 'Mostrar panel de IA',
-    hideAiAssistantPanel: 'Ocultar panel de IA',
+    tooltip: {
+      showAiAssistantPanel: 'Mostrar panel de IA',
+      hideAiAssistantPanel: 'Ocultar panel de IA'
+    },
     aiAssistantManager: {
       title: 'IA',
       aiProvider: 'Proveedor de IA',
@@ -107,8 +115,10 @@ export const messages = {
     }
   },
   cn: {
-    showAiAssistantPanel: '显示 AI 助手面板',
-    hideAiAssistantPanel: '隐藏 AI 助手面板',
+    tooltip: {
+      showAiAssistantPanel: '显示 AI 助手面板',
+      hideAiAssistantPanel: '隐藏 AI 助手面板'
+    },
     aiAssistantManager: {
       title: 'AI 助手',
       aiProvider: 'AI 提供商',
@@ -130,6 +140,34 @@ export const messages = {
         title: 'Top P'
       },
       startChat: '开始聊天'
+    }
+  },
+  jp: {
+    tooltip: {
+      showAiAssistantPanel: 'AI アシスタントパネルを表示',
+      hideAiAssistantPanel: 'AI アシスタントパネルを非表示'
+    },
+    aiAssistantManager: {
+      title: 'AI アシスタント',
+      aiProvider: 'AI プロバイダー',
+      llmModel: {
+        title: 'LLM モデルを選択'
+      },
+      apiKey: {
+        title: 'API キー',
+        placeholder: 'API キーを入力'
+      },
+      baseUrl: {
+        title: 'OllamaBase URL',
+        placeholder: 'OllamaBase URL を入力'
+      },
+      temperature: {
+        title: '温度'
+      },
+      topP: {
+        title: 'Top P'
+      },
+      startChat: 'チャットを開始'
     }
   }
 };

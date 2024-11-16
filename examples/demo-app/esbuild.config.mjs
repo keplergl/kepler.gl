@@ -74,7 +74,7 @@ function addAliases(externals, args) {
 
   // resolve ai-assistant from local dir
   if (useLocalAiAssistant) {
-    resolveAlias['ai-assistant'] = join(LIB_DIR, '../ai-assistant/src');
+    resolveAlias['react-ai-assist'] = join(LIB_DIR, '../ai-assistant/src');
     resolveAlias['@kepler.gl/ai-assistant'] = join(SRC_DIR, 'ai-assistant/src');
   }
 

@@ -93,7 +93,10 @@ function AiAssistantManagerFactory(
           <StyledAiAssistantPanelHeader>
             <SidePanelTitle
               className="ai-assistant-manager-title"
-              title={intl.formatMessage({id: 'aiAssistantManager.title'})}
+              title={intl.formatMessage({
+                id: 'aiAssistantManager.title',
+                defaultMessage: 'AI Assistant'
+              })}
             >
               <Icons.Settings onClick={onConfigButtonClick} />
             </SidePanelTitle>

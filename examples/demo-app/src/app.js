@@ -16,6 +16,7 @@ import {replaceMapControl} from './factories/map-control';
 import {replacePanelHeader} from './factories/panel-header';
 import {CLOUD_PROVIDERS_CONFIGURATION, DEFAULT_FEATURE_FLAGS} from './constants/default-settings';
 import {messages} from './constants/localization';
+import {messages as aiAssistantMessages} from '@kepler.gl/ai-assistant';
 
 import {
   loadRemoteMap,
@@ -457,7 +458,7 @@ class App extends Component {
                   width={width}
                   height={height}
                   cloudProviders={CLOUD_PROVIDERS}
-                  localeMessages={messages}
+                  localeMessages={{...messages, ...aiAssistantMessages}}
                   onExportToCloudSuccess={onExportFileSuccess}
                   onLoadCloudMapSuccess={onLoadCloudMapSuccess}
                   featureFlags={DEFAULT_FEATURE_FLAGS}

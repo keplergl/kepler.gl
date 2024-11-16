@@ -18,3 +18,5 @@ export type AiAssistantConfig = {
   temperature: number;
   topP: number;
 };
+
+export {messages} from './localization';

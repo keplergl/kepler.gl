@@ -35,7 +35,8 @@
     "@kepler.gl/layers": "3.0.0",
     "@kepler.gl/types": "3.0.0",
     "@kepler.gl/utils": "3.0.0",
-    "global": "^4.3.0"
+    "global": "^4.3.0",
+    "react-ai-assist": "0.0.4"
   },
   "nyc": {
     "sourceMap": false,
