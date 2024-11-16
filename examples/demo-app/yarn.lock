@@ -7472,9 +7472,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-virtualized@git+https://git@github.com/remorses/react-virtualized-fixed-import.git#9.22.3":
-  version: 9.22.3
-  resolution: "react-virtualized@https://git@github.com/remorses/react-virtualized-fixed-import.git#commit=6e416ee8aa6ac2087cecc68f68371d8fe561d9a4"
+"react-virtualized@npm:^9.21.0, react-virtualized@npm:^9.22.4":
+  version: 9.22.5
+  resolution: "react-virtualized@npm:9.22.5"
   dependencies:
     "@babel/runtime": "npm:^7.7.2"
     clsx: "npm:^1.0.4"
@@ -7483,9 +7483,9 @@ __metadata:
     prop-types: "npm:^15.7.2"
     react-lifecycles-compat: "npm:^3.0.4"
   peerDependencies:
-    react: ^15.3.0 || ^16.0.0-alpha
-    react-dom: ^15.3.0 || ^16.0.0-alpha
-  checksum: 10c0/c8442051efd3ff3982758554120a4c3da758d525b5b4552fde19d8b62161e6be5c4e1720adb1e245a4e1e6c694a725237b3b2d8df3ae4615ad410fd3120e5e3d
+    react: ^15.3.0 || ^16.0.0-alpha || ^17.0.0 || ^18.0.0
+    react-dom: ^15.3.0 || ^16.0.0-alpha || ^17.0.0 || ^18.0.0
+  checksum: 10c0/b0444b472f317dce61119c07426c5e9ebfe5125d049996678da922717715a1aa83df755aa36877f4b1718aa2e181d22f15ebb807ee356418c56f922f865628c1
   languageName: node
   linkType: hard
 
