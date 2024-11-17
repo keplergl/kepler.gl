@@ -59,7 +59,21 @@ const COMMON_CONFIG = {
         test: /\.(js|jsx|ts|tsx)$/,
         loader: 'babel-loader',
         options: BABEL_CONFIG,
-        exclude: [/node_modules/]
+        include: [
+          resolve(__dirname, './src'),
+          resolve(LIB_DIR, './examples'),
+          resolve(LIB_DIR, './src'),
+          /node_modules\/react-ai-assist/
+        ],
+        exclude: [/node_modules\/(?!react-ai-assist)/]
+      },
+      // Add css loader for ai-assistant
+      {
+        test: /\.css$/,
+        use: [
+          'style-loader',
+          'css-loader'
+        ]
       },
       {
         test: /\.(eot|svg|ico|ttf|woff|woff2|gif|jpe?g|png)$/,

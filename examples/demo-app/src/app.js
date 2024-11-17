@@ -426,6 +426,17 @@ class App extends Component {
     }
   };
 
+  combinedMessages = Object.keys(messages).reduce(
+    (acc, language) => ({
+      ...acc,
+      [language]: {
+        ...(messages[language] || {}),
+        ...(aiAssistantMessages[language] || {})
+      }
+    }),
+    {}
+  );
+
   render() {
     return (
       <ThemeProvider theme={theme}>
@@ -458,7 +469,7 @@ class App extends Component {
                   width={width}
                   height={height}
                   cloudProviders={CLOUD_PROVIDERS}
-                  localeMessages={{...messages, ...aiAssistantMessages}}
+                  localeMessages={this.combinedMessages}
                   onExportToCloudSuccess={onExportFileSuccess}
                   onLoadCloudMapSuccess={onLoadCloudMapSuccess}
                   featureFlags={DEFAULT_FEATURE_FLAGS}

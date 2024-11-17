@@ -7,9 +7,9 @@ export type AiAssistantConfig = {
   temperature: number;
   topP: number;
 };
-const ACTION_PREFIX = 'REACT_AI_ASSISTANT';
+const ACTION_PREFIX = '@@react-ai-assistant/';
 
-export const UPDATE_AI_ASSISTANT_CONFIG = `${ACTION_PREFIX}_UPDATE_AI_ASSISTANT_CONFIG`;
+export const UPDATE_AI_ASSISTANT_CONFIG = `${ACTION_PREFIX}UPDATE_AI_ASSISTANT_CONFIG`;
 
 // Action creators
 export function updateAiAssistantConfig(config: AiAssistantConfig) {
