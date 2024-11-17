@@ -19,7 +19,17 @@ import {testApiKey} from 'react-ai-assist';
 const PROVIDER_MODELS = {
   openai: ['gpt-4o', 'gpt-4o-mini', 'gpt-3.5-turbo-0125', 'gpt-3.5-turbo'],
   google: ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-1.0-pro'],
-  ollama: ['llama3.2', 'llama3.1', 'llama3.1:70b', 'qwen2', 'llava', 'mistral', 'gemma2', 'phi3.5']
+  ollama: [
+    'qwen2.5-coder',
+    'llama3.2',
+    'llama3.1',
+    'llama3.1:70b',
+    'qwen2',
+    'llava',
+    'mistral',
+    'gemma2',
+    'phi3.5'
+  ]
 };
 
 export type AiAssistantConfigProps = {

@@ -71,6 +71,7 @@ function AiAssistantComponentFactory() {
           functions={functions}
           enableVoice={aiAssistant.provider === 'openai' || aiAssistant.provider === 'google'}
           enableScreenCapture={false}
+          fontSize={'text-tiny'}
         />
       </StyledAiAssistantComponent>
     );
