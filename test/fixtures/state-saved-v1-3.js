@@ -374,7 +374,8 @@ mergedLayer0.config = {
   textLabel: [DEFAULT_TEXT_LABEL],
   colorUI: {
     color: DEFAULT_COLOR_UI,
-    colorRange: DEFAULT_COLOR_UI
+    colorRange: DEFAULT_COLOR_UI,
+    strokeColorRange: DEFAULT_COLOR_UI
   },
   visConfig: {
     radius: 10,

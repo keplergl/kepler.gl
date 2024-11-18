@@ -1198,7 +1198,8 @@ mergedLayer2.config = {
   textLabel: [DEFAULT_TEXT_LABEL],
   colorUI: {
     color: DEFAULT_COLOR_UI,
-    colorRange: DEFAULT_COLOR_UI
+    colorRange: DEFAULT_COLOR_UI,
+    strokeColorRange: DEFAULT_COLOR_UI
   },
   hidden: false,
   visConfig: {
@@ -1349,7 +1350,8 @@ mergedLayer4.config = {
   textLabel: [DEFAULT_TEXT_LABEL],
   colorUI: {
     color: DEFAULT_COLOR_UI,
-    colorRange: DEFAULT_COLOR_UI
+    colorRange: DEFAULT_COLOR_UI,
+    strokeColorRange: DEFAULT_COLOR_UI
   },
   heightField: null,
   heightDomain: [0, 1],

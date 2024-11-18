@@ -70,6 +70,7 @@ export {default as PanelHeaderActionFactory} from './side-panel/panel-header-act
 export {default as PanelTabFactory} from './side-panel/panel-tab';
 export {default as PanelToggleFactory} from './side-panel/panel-toggle';
 export {CollapseButtonFactory, default as SidebarFactory} from './side-panel/side-bar';
+export {default as ColorScaleSelectorFactory} from './side-panel/layer-panel/color-scale-selector';
 
 export {LayerBlendingSelector, default as LayerManagerFactory} from './side-panel/layer-manager';
 export {default as ColorPalette} from './side-panel/layer-panel/color-palette';

@@ -28,9 +28,9 @@ import {
   LAYER_VIS_CONFIGS,
   DEFAULT_LAYER_COLOR,
   CHANNEL_SCALES,
-  ColorRange
+  ColorRange,
+  DEFAULT_COLOR_UI
 } from '@kepler.gl/constants';
-
 import {getTextOffsetByRadius, formatTextLabelData} from '../layer-text-label';
 import {
   assignPointPairToLayerColumn,
@@ -362,14 +362,20 @@ export default class PointLayer extends Layer {
   }
 
   getDefaultLayerConfig(props: LayerBaseConfigPartial) {
+    const defaultLayerConfig = super.getDefaultLayerConfig(props ?? {});
     return {
-      ...super.getDefaultLayerConfig(props),
+      ...defaultLayerConfig,
+
       columnMode: props?.columnMode ?? DEFAULT_COLUMN_MODE,
 
       // add stroke color visual channel
       strokeColorField: null,
       strokeColorDomain: [0, 1],
-      strokeColorScale: 'quantile'
+      strokeColorScale: 'quantile',
+      colorUI: {
+        ...defaultLayerConfig.colorUI,
+        strokeColorRange: DEFAULT_COLOR_UI
+      }
     };
   }
 

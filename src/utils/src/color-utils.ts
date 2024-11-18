@@ -262,7 +262,7 @@ export function removeCustomPaletteColor(customPalette: ColorRange, index: numbe
   if (Array.isArray(colorMap)) {
     // find colorMap index
     const colorMapIndex = colorMap.findIndex(cm => cm[1] === oldValue);
-    if (colorMapIndex > 0) {
+    if (colorMapIndex >= 0) {
       update.colorMap = [...colorMap];
       update.colorMap.splice(colorMapIndex, 1);
     }

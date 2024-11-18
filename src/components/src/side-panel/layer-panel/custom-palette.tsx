@@ -295,8 +295,8 @@ export const EditableColorRange: React.FC<EditableColorRangeProps> = ({
   editColorMap,
   editable
 }) => {
-  const noMinBound = item.inputs[0] === null && index === 0;
-  const noMaxBound = item.inputs[1] === null && isLast;
+  const noMinBound = !Number.isFinite(item.inputs[0]) && index === 0;
+  const noMaxBound = !Number.isFinite(item.inputs[1]) && isLast;
   const onChangeLeft = useCallback(
     val => {
       if (editable && editColorMap) editColorMap(parseFloat(val), index - 1);
@@ -433,10 +433,9 @@ function CustomPaletteFactory(): React.FC<CustomPaletteProps> {
   }) => {
     const [isSorting, setIsSorting] = useState(false);
     const {colors, colorMap} = customPalette;
-    const colorBreaks = useMemo(
-      () => (colorMap ? colorMapToColorBreaks(colorMap) : null),
-      [colorMap]
-    );
+    const colorBreaks = useMemo(() => (colorMap ? colorMapToColorBreaks(colorMap) : null), [
+      colorMap
+    ]);
 
     const onPickerUpdate = useCallback(
       color => {
