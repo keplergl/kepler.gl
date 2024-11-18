@@ -956,18 +956,8 @@ export function setFilterAnimationTimeUpdater(
   state: VisState,
   action: VisStateActions.SetFilterAnimationTimeUpdaterAction
 ): VisState {
-  let newState = setFilterUpdater(state, action);
-  const {idx} = action;
-  const filter = newState.filters[idx];
-  if ((filter as TimeRangeFilter).syncedWithLayerTimeline) {
-    const timelineValue = getTimelineFromTrip(filter);
-    const value = state.animationConfig.timeSteps
-      ? snapToMarks(timelineValue, state.animationConfig.timeSteps)
-      : timelineValue;
-    newState = setLayerAnimationTimeUpdater(newState, {value});
-  }
-
-  return newState;
+  const newState = setFilterUpdater(state, action);
+  return adjustAnimationConfigWithFilter(newState, action.idx);
 }
 
 /**
@@ -2785,9 +2775,18 @@ export function updateAnimationDomain<S extends VisState>(state: S): S {
   };
 
   // reset currentTime based on new domain
-  const currentTime = isInRange(state.animationConfig.currentTime, mergedDomain)
+  const syncedFilter = state.filters?.find(f => (f as TimeRangeFilter).syncedWithLayerTimeline) as
+    | TimeRangeFilter
+    | undefined;
+
+  // if synced filter exist wee need to merge animationConfig and filter domains
+  // and validate the current time against the new merged domain
+  const newAnimationDomain = syncedFilter
+    ? mergeTimeDomains([mergedDomain, syncedFilter.domain])
+    : mergedDomain;
+  const currentTime = isInRange(state.animationConfig.currentTime, newAnimationDomain)
     ? state.animationConfig.currentTime
-    : mergedDomain[0];
+    : newAnimationDomain[0];
 
   if (currentTime !== state.animationConfig.currentTime) {
     // if currentTime changed, need to call animationTimeUpdater to re call formatLayerData
@@ -3266,8 +3265,12 @@ export function syncTimeFilterWithLayerTimelineUpdater<S extends VisState>(
       mode: getSyncAnimationMode(newFilter)
     });
 
+    newFilter = newState.filters[filterIdx] as TimeRangeFilter;
+
     // set the animation config value to match filter value
-    return setLayerAnimationTimeUpdater(newState, {value: newState.filters[filterIdx].value[0]});
+    return setLayerAnimationTimeUpdater(newState, {
+      value: newFilter.value[newFilter.syncTimelineMode]
+    });
   }
 
   // set domain and step
@@ -3316,9 +3319,14 @@ export function setTimeFilterTimelineModeUpdater<S extends VisState>(
 ) {
   const {id: filterId, mode: syncTimelineMode} = action;
 
-  const filter = state.filters.find(f => f.id === filterId) as TimeRangeFilter | undefined;
+  const filterIdx = state.filters.findIndex(f => f.id === filterId);
+  if (filterIdx === -1) {
+    return state;
+  }
 
-  if (!filter || !validateSyncAnimationMode(filter, syncTimelineMode)) {
+  const filter = state.filters[filterIdx] as TimeRangeFilter;
+
+  if (!validateSyncAnimationMode(filter, syncTimelineMode)) {
     return state;
   }
 
@@ -3327,13 +3335,27 @@ export function setTimeFilterTimelineModeUpdater<S extends VisState>(
     syncTimelineMode
   };
 
-  return {
+  const newState = {
     ...state,
     filters: swap_<Filter>(newFilter)(state.filters)
   };
+
+  return adjustAnimationConfigWithFilter(newState, filterIdx);
 }
 
-function getTimelineFromTrip(filter) {
+function adjustAnimationConfigWithFilter(state, filterIdx) {
+  const filter = state.filters[filterIdx];
+  if (filter.syncedWithLayerTimeline) {
+    const timelineValue = getTimelineValueFromFilter(filter);
+    const value = state.animationConfig.timeSteps
+      ? snapToMarks(timelineValue, state.animationConfig.timeSteps)
+      : timelineValue;
+    return setLayerAnimationTimeUpdater(state, {value});
+  }
+  return state;
+}
+
+function getTimelineValueFromFilter(filter) {
   return filter.value[filter.syncTimelineMode];
 }
 

@@ -1103,7 +1103,7 @@ export function validateFiltersUpdateDatasets<
   // TODO Better Typings here
   const validated: any[] = [];
   const failed: any[] = [];
-  const {datasets} = state;
+  const {datasets, layers} = state;
   let updatedDatasets = datasets;
 
   // merge filters
@@ -1119,15 +1119,15 @@ export function validateFiltersUpdateDatasets<
         applyToDatasets: string[];
         augmentedDatasets: {[datasetId: string]: any};
       }>(
-        (acc, datasetId, idx) => {
+        (acc, datasetId) => {
           const dataset = updatedDatasets[datasetId];
-          const layers = state.layers.filter(l => l.config.dataId === dataset.id);
+          const datasetLayers = layers.filter(l => l.config.dataId === dataset.id);
           const toValidate = acc.validatedFilter || filterToValidate;
 
           const {filter: updatedFilter, dataset: updatedDataset} = validateFilterWithData(
             acc.augmentedDatasets[datasetId] || dataset,
             toValidate,
-            layers
+            datasetLayers
           );
 
           if (updatedFilter) {
@@ -1154,7 +1154,20 @@ export function validateFiltersUpdateDatasets<
       );
 
       if (validatedFilter && isEqual(datasetIds, applyToDatasets)) {
-        validatedFilter.value = adjustValueToFilterDomain(filterToValidate.value, validatedFilter);
+        let domain = validatedFilter.domain;
+        if ((validatedFilter as TimeRangeFilter).syncedWithLayerTimeline) {
+          const animatableLayers = getAnimatableVisibleLayers(layers);
+          domain = mergeTimeDomains([
+            ...animatableLayers.map(l => l.config.animation.domain || [0, 0]),
+            validatedFilter.domain
+          ]);
+        }
+
+        validatedFilter.value = adjustValueToFilterDomain(filterToValidate.value, {
+          ...validatedFilter,
+          domain
+        });
+
         validated.push(updateFilterPlot(datasets, validatedFilter));
         updatedDatasets = {
           ...updatedDatasets,

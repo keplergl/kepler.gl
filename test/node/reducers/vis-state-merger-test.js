@@ -4,6 +4,7 @@
 import test from 'tape';
 import cloneDeep from 'lodash.clonedeep';
 import Task, {withTask, drainTasksForTesting, succeedTaskInTest} from 'react-palm/tasks';
+import CloneDeep from 'lodash.clonedeep';
 
 import keplerGlReducer, {
   mergeFilters,
@@ -18,8 +19,11 @@ import keplerGlReducer, {
   visStateReducer,
   keplerGlReducerCore as coreReducer,
   defaultInteractionConfig,
-  getLayerOrderFromLayers
+  getLayerOrderFromLayers,
+  setFilterAnimationTimeUpdater,
+  syncTimeFilterWithLayerTimelineUpdater
 } from '@kepler.gl/reducers';
+import {SYNC_TIMELINE_MODES} from '@kepler.gl/constants';
 
 import SchemaManager, {CURRENT_VERSION, visStateSchema} from '@kepler.gl/schemas';
 import {processKeplerglJSON} from '@kepler.gl/processors';
@@ -100,8 +104,8 @@ import {
   mergedTripFilter,
   mergedRateFilter
 } from 'test/fixtures/geojson';
-import {mockStateWithPolygonFilter} from '../../fixtures/points-with-polygon-filter-map';
-import CloneDeep from 'lodash.clonedeep';
+import {mockStateWithPolygonFilter} from 'test/fixtures/points-with-polygon-filter-map';
+import {mockStateWithSyncedFilterAndTripLayer} from 'test/fixtures/synced-filter-with-trip-layer';
 
 test('VisStateMerger.v0 -> mergeFilters -> toEmptyState', t => {
   const savedConfig = cloneDeep(savedStateV0);
@@ -1962,6 +1966,61 @@ test('VisStateMerger -> load polygon filter map', t => {
   const newFilter = visState.filters[0];
 
   t.deepEqual(newFilter, oldFilter, 'Should have loaded the polygon filter correctly');
+  t.end();
+});
+
+test('VisStateMerger -> load time filter/trip layer synced map', t => {
+  const oldState = mockStateWithSyncedFilterAndTripLayer();
+  oldState.visState = syncTimeFilterWithLayerTimelineUpdater(oldState.visState, {
+    idx: 0,
+    enable: true
+  });
+
+  let filter = oldState.visState.filters[0];
+
+  oldState.visState = setFilterAnimationTimeUpdater(oldState.visState, {
+    idx: 0,
+    prop: 'value',
+    value: [filter.domain[0], filter.domain[0] + 1000]
+  });
+
+  filter = oldState.visState.filters[0];
+
+  const appStateToSave = SchemaManager.save(oldState);
+  const stateParsed = SchemaManager.load(appStateToSave);
+  const initialState = cloneDeep(InitialState);
+  const initialVisState = initialState.visState;
+
+  const visState = visStateReducer(
+    initialVisState,
+    updateVisData(stateParsed.datasets, {}, stateParsed.config)
+  );
+
+  const newFilter = visState.filters[0];
+
+  t.deepEqual(filter.value, newFilter.value, 'Should have loaded the same filter value');
+
+  // check syncedWithLayerTimeline
+  t.equal(
+    newFilter.syncedWithLayerTimeline,
+    true,
+    'Should have set syncedWithLayerTimeline to true'
+  );
+
+  // check syncTimelineMode
+  t.equal(
+    newFilter.syncTimelineMode,
+    SYNC_TIMELINE_MODES.end,
+    'Should have set syncTimelineMode to SYNC_TIMELINE_MODES.end'
+  );
+
+  // check animationConfig value
+  t.equal(
+    visState.animationConfig.currentTime,
+    oldState.visState.animationConfig.currentTime,
+    'Should have set animationConfig value to filter value[0]'
+  );
+
   t.end();
 });
 

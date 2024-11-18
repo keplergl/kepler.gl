@@ -250,10 +250,10 @@ export default function RangeSliderFactory(
       const hasPlot = plotType?.type;
 
       const value = this.props.plotValue || this.filterValueSelector(this.props);
-      const scaledValue = range
-        ? // TODO figure out correct types for value and range
-          scaleSourceDomainToDestination(value as [number, number], range as [number, number])
-        : [0, 0];
+      const scaledValue =
+        timelines?.length && range
+          ? scaleSourceDomainToDestination(value as [number, number], range as [number, number])
+          : [0, 0];
       const commonPadding = `${Number(sliderHandleWidth) / 2}px`;
       return (
         <div

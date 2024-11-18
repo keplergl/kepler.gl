@@ -5,7 +5,11 @@ import test from 'tape-catch';
 import cloneDeep from 'lodash.clonedeep';
 import {drainTasksForTesting} from 'react-palm/tasks';
 
-import {getInitialInputStyle, keplerGlReducerCore as keplerGlReducer} from '@kepler.gl/reducers';
+import {
+  getInitialInputStyle,
+  keplerGlReducerCore as keplerGlReducer,
+  syncTimeFilterWithLayerTimelineUpdater
+} from '@kepler.gl/reducers';
 
 import {
   VizColorPalette,
@@ -373,6 +377,8 @@ export function mockStateWithArcNeighbors(state) {
 
   return updatedState;
 }
+
+// export function mockStateWith
 
 export function mockStateWithFilters(state) {
   const initialState = state || mockStateWithFileUpload();
@@ -1230,3 +1236,20 @@ export const expectedGeojsonLayerHoverProp = {
     mockKeplerProps.visState.interactionConfig.tooltip.config.fieldsToShow[testGeoJsonDataId],
   layer: mockKeplerProps.visState.layers[1]
 };
+
+export function stateWithTimeFilterAndTripLayer() {
+  const initialState = mockStateWithTripData();
+
+  return mockStateWithTripGeojson(initialState);
+}
+
+export function stateWithTimeFilterSyncedWithTripLayer() {
+  const initialState = stateWithTimeFilterAndTripLayer();
+  return {
+    ...initialState,
+    visState: syncTimeFilterWithLayerTimelineUpdater(initialState.visState, {
+      idx: 0,
+      enable: true
+    })
+  };
+}
