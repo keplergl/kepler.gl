@@ -8,6 +8,12 @@ import window from 'global/window';
 import {connect} from 'react-redux';
 import cloneDeep from 'lodash.clonedeep';
 
+import {ScreenshotWrapper} from 'react-ai-assist';
+import {
+  messages as aiAssistantMessages,
+  setStartScreenCapture,
+  setScreenCaptured
+} from '@kepler.gl/ai-assistant';
 import {theme} from '@kepler.gl/styles';
 import Banner from './components/banner';
 import Announcement, {FormLink} from './components/announcement';
@@ -16,7 +22,6 @@ import {replaceMapControl} from './factories/map-control';
 import {replacePanelHeader} from './factories/panel-header';
 import {CLOUD_PROVIDERS_CONFIGURATION, DEFAULT_FEATURE_FLAGS} from './constants/default-settings';
 import {messages} from './constants/localization';
-import {messages as aiAssistantMessages} from '@kepler.gl/ai-assistant';
 
 import {
   loadRemoteMap,
@@ -136,6 +141,14 @@ class App extends Component {
     // Notifications
     // this._loadMockNotifications();
   }
+
+  _setStartScreenCapture = flag => {
+    this.props.dispatch(setStartScreenCapture(flag));
+  };
+
+  _setScreenCaptured = screenshot => {
+    this.props.dispatch(setScreenCaptured(screenshot));
+  };
 
   _showBanner = () => {
     this.setState({showBanner: true});
@@ -448,35 +461,41 @@ class App extends Component {
             node ? (this.root = node) : null;
           }}
         >
-          <Banner
-            show={this.state.showBanner}
-            height={BannerHeight}
-            bgColor="#2E7CF6"
-            onClose={this._hideBanner}
+          <ScreenshotWrapper
+            startScreenCapture={this.props.demo.aiAssistant.screenshotToAsk.startScreenCapture}
+            setScreenCaptured={this._setScreenCaptured}
+            setStartScreenCapture={this._setStartScreenCapture}
           >
-            <Announcement onDisable={this._disableBanner} />
-          </Banner>
-          <div style={CONTAINER_STYLE}>
-            <AutoSizer>
-              {({height, width}) => (
-                <KeplerGl
-                  mapboxApiAccessToken={CLOUD_PROVIDERS_CONFIGURATION.MAPBOX_TOKEN}
-                  id="map"
-                  /*
-                   * Specify path to keplerGl state, because it is not mount at the root
-                   */
-                  getState={keplerGlGetState}
-                  width={width}
-                  height={height}
-                  cloudProviders={CLOUD_PROVIDERS}
-                  localeMessages={this.combinedMessages}
-                  onExportToCloudSuccess={onExportFileSuccess}
-                  onLoadCloudMapSuccess={onLoadCloudMapSuccess}
-                  featureFlags={DEFAULT_FEATURE_FLAGS}
-                />
-              )}
-            </AutoSizer>
-          </div>
+            <Banner
+              show={this.state.showBanner}
+              height={BannerHeight}
+              bgColor="#2E7CF6"
+              onClose={this._hideBanner}
+            >
+              <Announcement onDisable={this._disableBanner} />
+            </Banner>
+            <div style={CONTAINER_STYLE}>
+              <AutoSizer>
+                {({height, width}) => (
+                  <KeplerGl
+                    mapboxApiAccessToken={CLOUD_PROVIDERS_CONFIGURATION.MAPBOX_TOKEN}
+                    id="map"
+                    /*
+                     * Specify path to keplerGl state, because it is not mount at the root
+                     */
+                    getState={keplerGlGetState}
+                    width={width}
+                    height={height}
+                    cloudProviders={CLOUD_PROVIDERS}
+                    localeMessages={this.combinedMessages}
+                    onExportToCloudSuccess={onExportFileSuccess}
+                    onLoadCloudMapSuccess={onLoadCloudMapSuccess}
+                    featureFlags={DEFAULT_FEATURE_FLAGS}
+                  />
+                )}
+              </AutoSizer>
+            </div>
+          </ScreenshotWrapper>
         </GlobalStyle>
       </ThemeProvider>
     );

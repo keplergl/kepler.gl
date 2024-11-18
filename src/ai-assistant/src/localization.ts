@@ -18,7 +18,7 @@ export const messages = {
         placeholder: 'Enter your API Key'
       },
       baseUrl: {
-        title: 'OllamaBase URL',
+        title: 'Ollama Base URL',
         placeholder: 'Enter OllamaBase URL'
       },
       temperature: {
@@ -46,8 +46,8 @@ export const messages = {
         placeholder: 'Syötä API-avain'
       },
       baseUrl: {
-        title: 'OllamaBase URL',
-        placeholder: 'Syötä OllamaBase URL'
+        title: 'Ollama Base URL',
+        placeholder: 'Syötä Ollama Base URL'
       },
       temperature: {
         title: 'Lämpötila'
@@ -158,7 +158,7 @@ export const messages = {
         placeholder: 'API キーを入力'
       },
       baseUrl: {
-        title: 'OllamaBase URL',
+        title: 'Ollama Base URL',
         placeholder: 'OllamaBase URL を入力'
       },
       temperature: {

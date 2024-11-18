@@ -5,11 +5,18 @@ import React, {useCallback} from 'react';
 import styled from 'styled-components';
 import {injectIntl, IntlShape} from 'react-intl';
 
-import {MapStyle} from '@kepler.gl/reducers';
-import {AiAssistantState} from '../index';
-import {ActionHandler, mapStyleChange} from '@kepler.gl/actions';
+import {MapStyle, mapStyleLens, visStateLens} from '@kepler.gl/reducers';
+import {ActionHandler, mapStyleChange, loadFiles, addDataToMap} from '@kepler.gl/actions';
 import {withState, SidePanelTitleFactory, Icons} from '@kepler.gl/components';
-import {updateAiAssistantConfig, updateAiAssistantMessages} from '../actions';
+import {VisState} from '@kepler.gl/schemas';
+
+import {AiAssistantState} from '../index';
+import {
+  updateAiAssistantConfig,
+  updateAiAssistantMessages,
+  setStartScreenCapture,
+  setScreenCaptured
+} from '../actions';
 import AiAssistantConfigFactory from './ai-assistant-config';
 import AiAssistantComponentFactory from './ai-assistant-component';
 
@@ -17,12 +24,17 @@ export type AiAssistantManagerState = {
   aiAssistantActions: {
     updateAiAssistantConfig: ActionHandler<typeof updateAiAssistantConfig>;
     updateAiAssistantMessages: ActionHandler<typeof updateAiAssistantMessages>;
+    setStartScreenCapture: ActionHandler<typeof setStartScreenCapture>;
+    setScreenCaptured: ActionHandler<typeof setScreenCaptured>;
   };
-  mapStyleActions: {
+  keplerGlActions: {
     mapStyleChange: ActionHandler<typeof mapStyleChange>;
+    loadFiles: ActionHandler<typeof loadFiles>;
+    addDataToMap: ActionHandler<typeof addDataToMap>;
   };
   aiAssistant: AiAssistantState;
   mapStyle: MapStyle;
+  visState: VisState;
   children: React.ReactNode;
 };
 
@@ -82,7 +94,8 @@ function AiAssistantManagerFactory(
   AiAssistantComponent: ReturnType<typeof AiAssistantComponentFactory>
 ): React.FC<AiAssistantManagerProps> {
   const AiAssistantManager = (props: AiAssistantManagerWithIntlProp & AiAssistantManagerState) => {
-    const {intl, aiAssistantActions, aiAssistant, children, mapStyleActions, mapStyle} = props;
+    const {intl, aiAssistantActions, aiAssistant, children, keplerGlActions, mapStyle, visState} =
+      props;
 
     const onConfigButtonClick = useCallback(() => {
       // set aiAssistant.config.isReady to false so we can render the config component
@@ -114,8 +127,11 @@ function AiAssistantManagerFactory(
               <AiAssistantComponent
                 aiAssistant={aiAssistant}
                 updateAiAssistantMessages={aiAssistantActions.updateAiAssistantMessages}
-                mapStyleChange={mapStyleActions.mapStyleChange}
+                setStartScreenCapture={aiAssistantActions.setStartScreenCapture}
+                setScreenCaptured={aiAssistantActions.setScreenCaptured}
+                keplerGlActions={keplerGlActions}
                 mapStyle={mapStyle}
+                visState={visState}
               />
             )}
           </StyledAiAssistantPanelContent>
@@ -126,16 +142,20 @@ function AiAssistantManagerFactory(
   };
 
   return withState(
-    [],
+    [mapStyleLens, visStateLens],
     state => {
-      return {
-        aiAssistant: state.demo.aiAssistant,
-        mapStyle: state.demo.keplerGl.map.mapStyle
-      };
+      // todo: find a better way to get the state key
+      const stateKey = Object.keys(state)[0];
+      return {aiAssistant: state[stateKey].aiAssistant};
     },
     {
-      mapStyleActions: {mapStyleChange},
-      aiAssistantActions: {updateAiAssistantConfig, updateAiAssistantMessages}
+      keplerGlActions: {mapStyleChange, loadFiles, addDataToMap},
+      aiAssistantActions: {
+        updateAiAssistantConfig,
+        updateAiAssistantMessages,
+        setStartScreenCapture,
+        setScreenCaptured
+      }
     }
   )(injectIntl(AiAssistantManager)) as React.FC<AiAssistantManagerProps>;
 }

@@ -57,5 +57,10 @@ parseUri.options = {
  * @param str
  */
 export function validateUrl(str) {
-  return str?.match(/^(ftp|http|https?):\/\/+(www\.)?[a-z0-9\-.]{3,}\.[a-z]{3}$/);
+  try {
+    new URL(str);
+    return true;
+  } catch {
+    return false;
+  }
 }

@@ -7,9 +7,21 @@ import AiStar from '../icons/ai-star';
 import {MapControlButton, MapControlTooltipFactory} from '@kepler.gl/components';
 
 type AiAssistantControlIcons = {
-  aiAssistantIcon: ComponentType<any>;
+  aiAssistantIcon: ComponentType<{
+    height?: string;
+    width?: string;
+    className?: string;
+    style?: React.CSSProperties;
+  }>;
 };
 
+/**
+ * AiAssistantControlProps
+ * @param mapControls MapControls from kepler.gl
+ * @param onToggleMapControl (control: string) => void
+ * @param actionIcons AiAssistantControlIcons
+ * @returns
+ */
 export type AiAssistantControlProps = {
   mapControls: MapControls;
   onToggleMapControl: (control: string) => void;
@@ -18,6 +30,11 @@ export type AiAssistantControlProps = {
 
 AiAssistantControlFactory.deps = [MapControlTooltipFactory];
 
+/**
+ * AiAssistantControlFactory
+ * @param MapControlTooltip
+ * @returns
+ */
 export default function AiAssistantControlFactory(
   MapControlTooltip: ReturnType<typeof MapControlTooltipFactory>
 ): React.FC<AiAssistantControlProps> {
