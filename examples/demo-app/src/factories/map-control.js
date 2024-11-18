@@ -31,7 +31,6 @@ const StyledMapControlContextPanel = styled.div`
 `;
 
 const StyledMapControlOverlay = styled.div`
-  height: ${props => (props.fullHeight ? '100%' : 'auto')};
   position: absolute;
   display: flex;
   top: ${props => props.top}px;
@@ -80,7 +79,7 @@ function CustomMapControlFactory(
     return (
       <StyledMapControlOverlay
         top={props.top}
-        rightPanelVisible={showEffects}
+        rightPanelVisible={showEffects || showAiAssistant}
         fullHeight={showAiAssistant}
       >
         <StyledMapControlPanel>

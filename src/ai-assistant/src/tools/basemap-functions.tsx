@@ -121,7 +121,7 @@ function BasemapMessage({functionArgs, output}: CustomFunctionCall) {
   };
 
   return (
-    <div>
+    <div style={{marginTop: '8px'}}>
       <MapStyleSelector
         mapStyle={{...outputData.mapStyle, styleType: selectedMapStyle}}
         isSelecting={isSelecting}

@@ -34,7 +34,7 @@ const PROVIDER_MODELS = {
 
 export type AiAssistantConfigProps = {
   theme: any;
-  aiAssistant: AiAssistantConfig;
+  aiAssistantConfig: AiAssistantConfig;
   updateAiAssistantConfig: (aiAssistantConfig: AiAssistantConfig) => void;
 } & WrappedComponentProps;
 
@@ -138,15 +138,15 @@ AiAssistantConfigFactory.deps = [RangeSliderFactory];
 function AiAssistantConfigFactory(RangeSlider: ReturnType<typeof RangeSliderFactory>) {
   const AiAssistantConfig: React.FC<AiAssistantConfigProps> = ({
     intl,
-    aiAssistant,
+    aiAssistantConfig,
     updateAiAssistantConfig
   }) => {
-    const [provider, setProvider] = useState(aiAssistant?.provider || 'openai');
-    const [model, setModel] = useState(aiAssistant?.model || PROVIDER_MODELS[provider][0]);
-    const [apiKey, setApiKey] = useState(aiAssistant?.apiKey || '');
-    const [temperature, setTemperature] = useState(aiAssistant?.temperature || 0.8);
-    const [topP, setTopP] = useState(aiAssistant?.topP || 0.8);
-    const [baseUrl, setBaseUrl] = useState(aiAssistant?.baseUrl || 'http://localhost:11434');
+    const [provider, setProvider] = useState(aiAssistantConfig.provider || 'openai');
+    const [model, setModel] = useState(aiAssistantConfig.model || PROVIDER_MODELS[provider][0]);
+    const [apiKey, setApiKey] = useState(aiAssistantConfig.apiKey || '');
+    const [temperature, setTemperature] = useState(aiAssistantConfig.temperature || 0.8);
+    const [topP, setTopP] = useState(aiAssistantConfig.topP || 0.8);
+    const [baseUrl, setBaseUrl] = useState(aiAssistantConfig.baseUrl || 'http://localhost:11434');
     const [connectionError, setConnectionError] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
     const [isRunning, setIsRunning] = useState(false);

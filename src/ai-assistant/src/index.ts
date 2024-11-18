@@ -10,6 +10,7 @@ export {default as AiAssistantComponentFactory} from './components/ai-assistant-
 export {default as AiAssistantControlFactory} from './map/ai-assistant-control';
 
 export {aiAssistantReducer} from './reducers';
+export type {AiAssistantState} from './reducers';
 
 export type {AiAssistantConfig} from './actions';
 export {UPDATE_AI_ASSISTANT_CONFIG, updateAiAssistantConfig} from './actions';

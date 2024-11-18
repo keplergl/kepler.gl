@@ -1,26 +1,27 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useState, useCallback} from 'react';
+import React, {useCallback} from 'react';
 import styled from 'styled-components';
 import {injectIntl, IntlShape} from 'react-intl';
 
 import {MapStyle} from '@kepler.gl/reducers';
-import {AiAssistantConfig} from '../index';
+import {AiAssistantState} from '../index';
 import {ActionHandler, mapStyleChange} from '@kepler.gl/actions';
 import {withState, SidePanelTitleFactory, Icons} from '@kepler.gl/components';
-import {updateAiAssistantConfig} from '@kepler.gl/ai-assistant';
+import {updateAiAssistantConfig, updateAiAssistantMessages} from '../actions';
 import AiAssistantConfigFactory from './ai-assistant-config';
 import AiAssistantComponentFactory from './ai-assistant-component';
 
 export type AiAssistantManagerState = {
   aiAssistantActions: {
     updateAiAssistantConfig: ActionHandler<typeof updateAiAssistantConfig>;
+    updateAiAssistantMessages: ActionHandler<typeof updateAiAssistantMessages>;
   };
   mapStyleActions: {
     mapStyleChange: ActionHandler<typeof mapStyleChange>;
   };
-  aiAssistant: AiAssistantConfig;
+  aiAssistant: AiAssistantState;
   mapStyle: MapStyle;
   children: React.ReactNode;
 };
@@ -82,11 +83,11 @@ function AiAssistantManagerFactory(
 ): React.FC<AiAssistantManagerProps> {
   const AiAssistantManager = (props: AiAssistantManagerWithIntlProp & AiAssistantManagerState) => {
     const {intl, aiAssistantActions, aiAssistant, children, mapStyleActions, mapStyle} = props;
-    const [showConfig, setShowConfig] = useState(false);
 
     const onConfigButtonClick = useCallback(() => {
-      setShowConfig(true);
-    }, []);
+      // set aiAssistant.config.isReady to false so we can render the config component
+      aiAssistantActions.updateAiAssistantConfig({...aiAssistant.config, isReady: false});
+    }, [aiAssistant.config, aiAssistantActions]);
 
     return (
       <StyledAiAssistantPanelContainer className="ai-assistant-manager">
@@ -104,14 +105,15 @@ function AiAssistantManagerFactory(
           </StyledAiAssistantPanelHeader>
 
           <StyledAiAssistantPanelContent>
-            {showConfig || !aiAssistant.isReady ? (
+            {!aiAssistant.config.isReady ? (
               <AiAssistantConfig
-                aiAssistant={aiAssistant}
+                aiAssistantConfig={aiAssistant.config}
                 updateAiAssistantConfig={aiAssistantActions.updateAiAssistantConfig}
               />
             ) : (
               <AiAssistantComponent
                 aiAssistant={aiAssistant}
+                updateAiAssistantMessages={aiAssistantActions.updateAiAssistantMessages}
                 mapStyleChange={mapStyleActions.mapStyleChange}
                 mapStyle={mapStyle}
               />
@@ -133,7 +135,7 @@ function AiAssistantManagerFactory(
     },
     {
       mapStyleActions: {mapStyleChange},
-      aiAssistantActions: {updateAiAssistantConfig}
+      aiAssistantActions: {updateAiAssistantConfig, updateAiAssistantMessages}
     }
   )(injectIntl(AiAssistantManager)) as React.FC<AiAssistantManagerProps>;
 }

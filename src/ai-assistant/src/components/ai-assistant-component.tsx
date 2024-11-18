@@ -3,19 +3,21 @@
 
 import React, {useEffect} from 'react';
 import styled, {withTheme} from 'styled-components';
-import {AiAssistant, useAssistant} from 'react-ai-assist';
+import {AiAssistant, MessageModel, useAssistant} from 'react-ai-assist';
 import 'react-ai-assist/dist/index.css';
 
-import {AiAssistantConfig} from '../index';
 import {textColorLT} from '@kepler.gl/styles';
 import {ActionHandler, mapStyleChange} from '@kepler.gl/actions';
 import {MapStyle} from '@kepler.gl/reducers';
 
 import {basemapFunctionDefinition} from '../tools/basemap-functions';
+import {AiAssistantState} from '../reducers';
+import {updateAiAssistantMessages} from '../actions';
 
 export type AiAssistantComponentProps = {
   theme: any;
-  aiAssistant: AiAssistantConfig;
+  aiAssistant: AiAssistantState;
+  updateAiAssistantMessages: ActionHandler<typeof updateAiAssistantMessages>;
   mapStyleChange: ActionHandler<typeof mapStyleChange>;
   mapStyle: MapStyle;
 };
@@ -35,6 +37,7 @@ function AiAssistantComponentFactory() {
   const AiAssistantComponent: React.FC<AiAssistantComponentProps> = ({
     theme,
     aiAssistant,
+    updateAiAssistantMessages,
     mapStyleChange,
     mapStyle
   }: AiAssistantComponentProps) => {
@@ -45,9 +48,9 @@ function AiAssistantComponentFactory() {
     const functions = [basemapFunctionDefinition({mapStyleChange, mapStyle})];
 
     const {initializeAssistant} = useAssistant({
-      modelProvider: aiAssistant.provider,
-      model: aiAssistant.model,
-      apiKey: aiAssistant.apiKey,
+      modelProvider: aiAssistant.config.provider,
+      model: aiAssistant.config.model,
+      apiKey: aiAssistant.config.apiKey,
       instructions,
       functions
     });
@@ -56,22 +59,31 @@ function AiAssistantComponentFactory() {
       initializeAssistant();
     }, [initializeAssistant]);
 
+    const onMessagesUpdated = (messages: MessageModel[]) => {
+      updateAiAssistantMessages(messages);
+    };
+
     return (
       <StyledAiAssistantComponent className="ai-assistant-component">
         <AiAssistant
           theme={theme.textColor === textColorLT ? 'light' : 'dark'}
           welcomeMessage={welcomeMessage}
-          modelProvider={aiAssistant.provider}
-          model={aiAssistant.model}
-          apiKey={aiAssistant.apiKey}
+          modelProvider={aiAssistant.config.provider}
+          model={aiAssistant.config.model}
+          apiKey={aiAssistant.config.apiKey}
           instructions={instructions}
-          temperature={aiAssistant.temperature}
-          topP={aiAssistant.topP}
-          historyMessages={[]}
+          temperature={aiAssistant.config.temperature}
+          topP={aiAssistant.config.topP}
+          historyMessages={aiAssistant.messages}
+          onMessagesUpdated={onMessagesUpdated}
           functions={functions}
-          enableVoice={aiAssistant.provider === 'openai' || aiAssistant.provider === 'google'}
+          enableVoice={
+            aiAssistant.config.provider === 'openai' || aiAssistant.config.provider === 'google'
+          }
           enableScreenCapture={false}
           fontSize={'text-tiny'}
+          botMessageClassName={''}
+          githubIssueLink={'https://github.com/keplergl/kepler.gl/issues'}
         />
       </StyledAiAssistantComponent>
     );
