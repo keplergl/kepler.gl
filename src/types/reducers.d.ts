@@ -411,6 +411,7 @@ export type MapControls = {
   mapDraw?: MapControlItem;
   mapLocale?: MapControlItem;
   effect?: MapControlItem;
+  aiAssistant?: MapControlItem;
 };
 
 export type LoadFiles = {

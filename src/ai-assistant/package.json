@@ -1,8 +1,8 @@
 {
-  "name": "@kepler.gl/schemas",
-  "author": "Shan He <shan@uber.com>",
+  "name": "@kepler.gl/ai-assistant",
+  "author": "Xun Li<lixun910@gmail.com>",
   "version": "3.0.0",
-  "description": "kepler.gl schemas used by kepler.gl components, actions and reducers",
+  "description": "kepler.gl AI assistant",
   "license": "MIT",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -30,28 +30,20 @@
     "umd"
   ],
   "dependencies": {
-    "@kepler.gl/ai-assistant": "3.0.0",
+    "@kepler.gl/components": "3.0.0",
     "@kepler.gl/constants": "3.0.0",
     "@kepler.gl/layers": "3.0.0",
-    "@kepler.gl/table": "3.0.0",
     "@kepler.gl/types": "3.0.0",
     "@kepler.gl/utils": "3.0.0",
-    "@loaders.gl/loader-utils": "^4.3.2",
-    "@types/keymirror": "^0.1.1",
-    "@types/lodash.clonedeep": "^4.5.7",
-    "@types/lodash.pick": "^4.4.6",
     "global": "^4.3.0",
-    "keymirror": "^0.1.1",
-    "lodash.clonedeep": "^4.0.1",
-    "lodash.pick": "^4.4.0"
+    "react-ai-assist": "0.0.8"
   },
   "nyc": {
     "sourceMap": false,
     "instrument": false
   },
   "maintainers": [
-    "Shan He <heshan0131@gmail.com>",
-    "Giuseppe Macri <gmacri@uber.com>"
+    "Xun Li <lixun910@gmail.com>"
   ],
   "engines": {
     "node": ">=18"

@@ -32,7 +32,8 @@
     "./src/actions",
     "./src/effects",
     "./src/reducers",
-    "./src/components"
+    "./src/components",
+    "./src/ai-assistant"
   ],
   "repository": {
     "type": "git",
@@ -71,7 +72,7 @@
     "start:web": "yarn install-and-start website start",
     "start:https": "yarn install-and-start examples/demo-app start-local-https",
     "start:e2e": "yarn install-and-start examples/demo-app start-local-e2e",
-    "build": "NODE_OPTIONS=--openssl-legacy-provider rm -fr dist && babel src/{actions,components,reducers,cloud-providers,localization,tasks} --out-dir dist --source-maps inline --extensions '.ts,.tsx,.js,.jsx' --ignore '**/*.d.ts'",
+    "build": "NODE_OPTIONS=--openssl-legacy-provider rm -fr dist && babel src/{actions,components,reducers,cloud-providers,localization,tasks,ai-assistant} --out-dir dist --source-maps inline --extensions '.ts,.tsx,.js,.jsx' --ignore '**/*.d.ts'",
     "build:umd": "NODE_OPTIONS=--openssl-legacy-provider webpack --config ./webpack/umd.js --progress --env.prod",
     "build:types": "tsc --project tsconfig.production.json",
     "analyze": "yarn analyze:bundle",
@@ -145,6 +146,7 @@
     "@types/geojson": "^7946.0.8",
     "@types/jsdom": "^21.1.1",
     "@types/redux-actions": "^2.6.2",
+    "@types/redux-logger": "^3",
     "@types/supercluster": "^7.1.0",
     "@typescript-eslint/eslint-plugin": "5.57.0",
     "@typescript-eslint/parser": "^5.57.1",
@@ -184,6 +186,7 @@
     "react-dom": "^18.2.0",
     "react-hot-loader": "^4.13.0",
     "readdirp": "^2.1.0",
+    "redux-logger": "^3.0.6",
     "redux-mock-store": "^1.2.1",
     "sinon": "^2.4.1",
     "sinon-stub-promise": "^4.0.0",
@@ -197,7 +200,7 @@
     "tape": "^4.9.2",
     "tape-catch": "^1.0.6",
     "typedoc-plugin-markdown": "^3.0.11",
-    "typescript": "4.5.5",
+    "typescript": "4.7.2",
     "url-loader": "^4.1.1",
     "watchify": "^3.6.1",
     "webpack": "^4.29.0",

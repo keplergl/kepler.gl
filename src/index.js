@@ -28,5 +28,8 @@ export * from '@kepler.gl/styles';
 // Utils
 export * from '@kepler.gl/utils';
 
+// AI Assistant
+export * from '@kepler.gl/ai-assistant';
+
 // Default export
 export {default} from '@kepler.gl/components';
