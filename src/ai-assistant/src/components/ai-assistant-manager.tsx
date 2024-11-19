@@ -5,7 +5,7 @@ import React, {useCallback} from 'react';
 import styled from 'styled-components';
 import {injectIntl, IntlShape} from 'react-intl';
 
-import {MapStyle, mapStyleLens, visStateLens} from '@kepler.gl/reducers';
+import {MapStyle} from '@kepler.gl/reducers';
 import {ActionHandler, mapStyleChange, loadFiles, addDataToMap} from '@kepler.gl/actions';
 import {withState, SidePanelTitleFactory, Icons} from '@kepler.gl/components';
 import {VisState} from '@kepler.gl/schemas';
@@ -142,11 +142,19 @@ function AiAssistantManagerFactory(
   };
 
   return withState(
-    [mapStyleLens, visStateLens],
+    [],
     state => {
       // todo: find a better way to get the state key
       const stateKey = Object.keys(state)[0];
-      return {aiAssistant: state[stateKey].aiAssistant};
+      const mapKey = Object.keys(state[stateKey].keplerGl)[0];
+      return {
+        aiAssistant: state[stateKey].aiAssistant,
+        mapStyle: state[stateKey].keplerGl[mapKey].mapStyle,
+        visState: {
+          loaders: state[stateKey].keplerGl[mapKey].visState.loaders,
+          loadOptions: state[stateKey].keplerGl[mapKey].visState.loadOptions
+        }
+      };
     },
     {
       keplerGlActions: {mapStyleChange, loadFiles, addDataToMap},

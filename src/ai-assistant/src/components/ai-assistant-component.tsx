@@ -9,7 +9,7 @@ import 'react-ai-assist/dist/index.css';
 import {textColorLT} from '@kepler.gl/styles';
 import {ActionHandler, addDataToMap, loadFiles, mapStyleChange} from '@kepler.gl/actions';
 import {MapStyle} from '@kepler.gl/reducers';
-import {VisState} from '@kepler.gl/schemas';
+import {Loader} from '@loaders.gl/loader-utils';
 
 import {basemapFunctionDefinition} from '../tools/basemap-functions';
 import {loadUrlFunctionDefinition} from '../tools/loadurl-function';
@@ -36,7 +36,10 @@ export type AiAssistantComponentProps = {
     addDataToMap: ActionHandler<typeof addDataToMap>;
   };
   mapStyle: MapStyle;
-  visState: VisState;
+  visState: {
+    loaders: Loader[];
+    loadOptions: object;
+  };
 };
 
 const StyledAiAssistantComponent = styled.div`
