@@ -3023,7 +3023,7 @@ __metadata:
     "@kepler.gl/types": "npm:3.0.0"
     "@kepler.gl/utils": "npm:3.0.0"
     global: "npm:^4.3.0"
-    react-ai-assist: "npm:0.0.7"
+    react-ai-assist: "npm:0.0.8"
   languageName: unknown
   linkType: soft
 
@@ -24252,9 +24252,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-ai-assist@npm:0.0.7":
-  version: 0.0.7
-  resolution: "react-ai-assist@npm:0.0.7"
+"react-ai-assist@npm:0.0.8":
+  version: 0.0.8
+  resolution: "react-ai-assist@npm:0.0.8"
   dependencies:
     "@emotion/is-prop-valid": "npm:^1.3.1"
     "@google/generative-ai": "npm:^0.17.1"
@@ -24278,11 +24278,10 @@ __metadata:
     postcss: "npm:^8.4.45"
     react-audio-voice-recorder: "npm:^2.2.0"
     tailwindcss: "npm:^3.4.11"
-    zod: "npm:^3.23.8"
   peerDependencies:
-    react: ^16.8.0 || ^17.0.0 || ^18.0.0
-    react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
-  checksum: 10c0/9228c4b9fca8014e8b07401c0dbcf639011b685c7d26f24f41f91667ff0ee073e0487671ac5783f0df737d8b7e9a9d01fcbd063ac3ec583f56c68eaa34dc2cb2
+    react: ^18.0.0
+    react-dom: ^18.0.0
+  checksum: 10c0/2d0b508dbd5231d1df85ec1160a6ba39fd48abc106a9687f0f12fc890aecd9affe4b7d3e689a1ac00075ad9510289eb6a8de2a3c57c7b7b1236e7afda56be3cb
   languageName: node
   linkType: hard
 
@@ -30414,7 +30413,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"zod@npm:3.23.8, zod@npm:^3.22.3, zod@npm:^3.22.4, zod@npm:^3.23.8":
+"zod@npm:3.23.8, zod@npm:^3.22.3, zod@npm:^3.22.4":
   version: 3.23.8
   resolution: "zod@npm:3.23.8"
   checksum: 10c0/8f14c87d6b1b53c944c25ce7a28616896319d95bc46a9660fe441adc0ed0a81253b02b5abdaeffedbeb23bdd25a0bf1c29d2c12dd919aef6447652dd295e3e69
