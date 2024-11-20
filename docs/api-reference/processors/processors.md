@@ -2,11 +2,11 @@
 
 ### Table of Contents
 
--   [getFieldsFromData][1]
--   [processCsvData][4]
--   [processGeojson][7]
--   [processKeplerglJSON][10]
--   [processRowObject][13]
+- [getFieldsFromData](#getfieldsfromdata)
+- [processCsvData](#processcsvdata)
+- [processGeojson](#processgeojson)
+- [processKeplerglJSON](#processkeplergljson)
+- [processRowObject](#processrowobject)
 
 ## getFieldsFromData
 
@@ -21,7 +21,7 @@ Assign `type`, `tableFieldIndex` and `format` (timestamp only) to each field
 **Examples**
 
 ```javascript
-import {getFieldsFromData} from 'kepler.gl/processors';
+import {getFieldsFromData} from '@kepler.gl/processors';
 const data = [{
   time: '2016-09-17 00:09:55',
   value: '4',
@@ -66,7 +66,7 @@ The data object can be wrapped in a `dataset` and pass to [`addDataToMap`][18]
 **Examples**
 
 ```javascript
-import {processCsvData} from 'kepler.gl/processors';
+import {processCsvData} from '@kepler.gl/processors';
 
 const testData = `gps_data.utc_timestamp,gps_data.lat,gps_data.lng,gps_data.types,epoch,has_result,id,time,begintrip_ts_utc,begintrip_ts_local,date
 2016-09-17 00:09:55,29.9900937,31.2590542,driver_analytics,1472688000000,False,1,2016-09-23T00:00:00.000Z,2016-10-01 09:41:39+00:00,2016-10-01 09:41:39+00:00,2016-09-23
@@ -100,8 +100,8 @@ The data object can be wrapped in a `dataset` and pass to [`addDataToMap`][18]
 **Examples**
 
 ```javascript
-import {addDataToMap} from 'kepler.gl/actions';
-import {processGeojson} from 'kepler.gl/processors';
+import {addDataToMap} from '@kepler.gl/actions';
+import {processGeojson} from '@kepler.gl/processors';
 
 const geojson = {
 	"type" : "FeatureCollection",
@@ -138,15 +138,15 @@ The json object should contain `datasets` and `config`.
 
 **Parameters**
 
--   `rawData` **[Object][17]** 
-    -   `rawData.datasets` **[Array][16]** 
-    -   `rawData.config` **[Object][17]** 
+-   `rawData` **[Object][17]**
+    -   `rawData.datasets` **[Array][16]**
+    -   `rawData.config` **[Object][17]**
 
 **Examples**
 
 ```javascript
-import {addDataToMap} from 'kepler.gl/actions';
-import {processKeplerglJSON} from 'kepler.gl/processors';
+import {addDataToMap} from '@kepler.gl/actions';
+import {processKeplerglJSON} from '@kepler.gl/processors';
 
 dispatch(addDataToMap(processKeplerglJSON(keplerGlJson)));
 ```
@@ -164,8 +164,8 @@ Process data where each row is an object, output can be passed to [`addDataToMap
 **Examples**
 
 ```javascript
-import {addDataToMap} from 'kepler.gl/actions';
-import {processRowObject} from 'kepler.gl/processors';
+import {addDataToMap} from '@kepler.gl/actions';
+import {processRowObject} from '@kepler.gl/processors';
 
 const data = [
  {lat: 31.27, lng: 127.56, value: 3},
