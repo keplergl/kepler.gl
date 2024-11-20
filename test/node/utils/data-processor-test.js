@@ -32,14 +32,14 @@ import {
   processRowObject
 } from '@kepler.gl/processors';
 
+import {validateInputData, createDataContainer} from '@kepler.gl/utils';
+
 import {
   ACCEPTED_ANALYZER_TYPES,
   analyzerTypeToFieldType,
-  getSampleForTypeAnalyze,
-  validateInputData,
   getFieldsFromData,
-  createDataContainer
-} from '@kepler.gl/utils';
+  getSampleForTypeAnalyze
+} from '@kepler.gl/common-utils';
 
 import {formatCsv} from '@kepler.gl/reducers';
 

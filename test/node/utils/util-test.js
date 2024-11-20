@@ -8,9 +8,9 @@ import {
   camelize,
   capitalizeFirstLetter,
   getError,
-  set,
-  toArray
+  set
 } from '@kepler.gl/utils';
+import {toArray} from '@kepler.gl/common-utils';
 import test from 'tape';
 
 test('Utils -> set', t => {
