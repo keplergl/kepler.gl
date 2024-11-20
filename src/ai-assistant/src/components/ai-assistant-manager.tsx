@@ -5,8 +5,8 @@ import React, {useCallback} from 'react';
 import styled from 'styled-components';
 import {injectIntl, IntlShape} from 'react-intl';
 
-import {MapStyle} from '@kepler.gl/reducers';
-import {ActionHandler, mapStyleChange, loadFiles, addDataToMap} from '@kepler.gl/actions';
+import {MapStyle, mapStyleLens, visStateLens} from '@kepler.gl/reducers';
+import {ActionHandler, mapStyleChange, loadFiles, addDataToMap, addLayer} from '@kepler.gl/actions';
 import {withState, SidePanelTitleFactory, Icons} from '@kepler.gl/components';
 import {VisState} from '@kepler.gl/schemas';
 
@@ -18,7 +18,7 @@ import {
   setScreenCaptured
 } from '../actions';
 import AiAssistantConfigFactory from './ai-assistant-config';
-import AiAssistantComponentFactory from './ai-assistant-component';
+import AiAssistantComponentFactory, {SelectedKeplerGlActions} from './ai-assistant-component';
 
 export type AiAssistantManagerState = {
   aiAssistantActions: {
@@ -27,11 +27,7 @@ export type AiAssistantManagerState = {
     setStartScreenCapture: ActionHandler<typeof setStartScreenCapture>;
     setScreenCaptured: ActionHandler<typeof setScreenCaptured>;
   };
-  keplerGlActions: {
-    mapStyleChange: ActionHandler<typeof mapStyleChange>;
-    loadFiles: ActionHandler<typeof loadFiles>;
-    addDataToMap: ActionHandler<typeof addDataToMap>;
-  };
+  keplerGlActions: SelectedKeplerGlActions;
   aiAssistant: AiAssistantState;
   mapStyle: MapStyle;
   visState: VisState;
@@ -142,22 +138,16 @@ function AiAssistantManagerFactory(
   };
 
   return withState(
-    [],
+    [visStateLens, mapStyleLens],
     state => {
       // todo: find a better way to get the state key
       const stateKey = Object.keys(state)[0];
-      const mapKey = Object.keys(state[stateKey].keplerGl)[0];
       return {
-        aiAssistant: state[stateKey].aiAssistant,
-        mapStyle: state[stateKey].keplerGl[mapKey].mapStyle,
-        visState: {
-          loaders: state[stateKey].keplerGl[mapKey].visState.loaders,
-          loadOptions: state[stateKey].keplerGl[mapKey].visState.loadOptions
-        }
+        aiAssistant: state[stateKey].aiAssistant
       };
     },
     {
-      keplerGlActions: {mapStyleChange, loadFiles, addDataToMap},
+      keplerGlActions: {mapStyleChange, loadFiles, addDataToMap, addLayer},
       aiAssistantActions: {
         updateAiAssistantConfig,
         updateAiAssistantMessages,

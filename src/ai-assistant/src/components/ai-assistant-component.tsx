@@ -7,9 +7,9 @@ import {AiAssistant, MessageModel, useAssistant} from 'react-ai-assist';
 import 'react-ai-assist/dist/index.css';
 
 import {textColorLT} from '@kepler.gl/styles';
-import {ActionHandler, addDataToMap, loadFiles, mapStyleChange} from '@kepler.gl/actions';
+import {ActionHandler, addDataToMap, addLayer, loadFiles, mapStyleChange} from '@kepler.gl/actions';
 import {MapStyle} from '@kepler.gl/reducers';
-import {Loader} from '@loaders.gl/loader-utils';
+import {VisState} from '@kepler.gl/schemas';
 
 import {basemapFunctionDefinition} from '../tools/basemap-functions';
 import {loadUrlFunctionDefinition} from '../tools/loadurl-function';
@@ -23,6 +23,14 @@ import {
   INSTRUCTIONS,
   WELCOME_MESSAGE
 } from '../constants';
+import {addGeojsonLayerFunctionDefinition} from '../tools/geojson-layer-function';
+
+export type SelectedKeplerGlActions = {
+  mapStyleChange: ActionHandler<typeof mapStyleChange>;
+  loadFiles: ActionHandler<typeof loadFiles>;
+  addDataToMap: ActionHandler<typeof addDataToMap>;
+  addLayer: ActionHandler<typeof addLayer>;
+};
 
 export type AiAssistantComponentProps = {
   theme: any;
@@ -30,16 +38,9 @@ export type AiAssistantComponentProps = {
   updateAiAssistantMessages: ActionHandler<typeof updateAiAssistantMessages>;
   setStartScreenCapture: ActionHandler<typeof setStartScreenCapture>;
   setScreenCaptured: ActionHandler<typeof setScreenCaptured>;
-  keplerGlActions: {
-    mapStyleChange: ActionHandler<typeof mapStyleChange>;
-    loadFiles: ActionHandler<typeof loadFiles>;
-    addDataToMap: ActionHandler<typeof addDataToMap>;
-  };
+  keplerGlActions: SelectedKeplerGlActions;
   mapStyle: MapStyle;
-  visState: {
-    loaders: Loader[];
-    loadOptions: object;
-  };
+  visState: VisState;
 };
 
 const StyledAiAssistantComponent = styled.div`
@@ -70,6 +71,10 @@ function AiAssistantComponentFactory() {
         addDataToMap: keplerGlActions.addDataToMap,
         loaders: visState.loaders,
         loadOptions: visState.loadOptions
+      }),
+      addGeojsonLayerFunctionDefinition({
+        addLayer: keplerGlActions.addLayer,
+        datasets: visState.datasets
       })
     ];
 

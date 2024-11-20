@@ -64,6 +64,7 @@
   },
   "packageManager": "yarn@4.4.0",
   "devDependencies": {
-    "esbuild-plugin-replace": "^1.4.0"
+    "esbuild-plugin-replace": "^1.4.0",
+    "redux-logger": "^3.0.6"
   }
 }
