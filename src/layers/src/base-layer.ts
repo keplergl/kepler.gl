@@ -37,18 +37,15 @@ import {
 
 import {
   DataContainerInterface,
-  generateHashId,
   getColorGroupByName,
   getLatLngBounds,
   getSampleContainerData,
   hasColorMap,
   hexToRgb,
   isPlainObject,
-  toArray,
-  notNullorUndefined,
   reverseColorRange
 } from '@kepler.gl/utils';
-
+import {generateHashId, toArray, notNullorUndefined} from '@kepler.gl/common-utils';
 import {Datasets, GpuFilter, KeplerTable} from '@kepler.gl/table';
 import {
   ColorUI,

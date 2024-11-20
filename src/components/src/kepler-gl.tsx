@@ -20,6 +20,8 @@ import {
   VisStateActions
 } from '@kepler.gl/actions';
 
+import {generateHashId} from '@kepler.gl/common-utils';
+
 type KeplerGlActions = {
   visStateActions: typeof VisStateActions;
   mapStateActions: typeof MapStateActions;
@@ -52,7 +54,6 @@ import {CloudListProvider} from './hooks/use-cloud-list-provider';
 
 import {
   filterObjectByPredicate,
-  generateHashId,
   validateToken,
   mergeMessages,
   observeDimensions,

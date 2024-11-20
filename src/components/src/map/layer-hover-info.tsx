@@ -7,7 +7,7 @@ import {TooltipField} from '@kepler.gl/types';
 import {CenterFlexbox} from '../common/styled-components';
 import {Layers} from '../common/icons';
 import PropTypes from 'prop-types';
-import {notNullorUndefined} from '@kepler.gl/utils';
+import {notNullorUndefined} from '@kepler.gl/common-utils';
 import {Layer} from '@kepler.gl/layers';
 import {
   AggregationLayerHoverData,

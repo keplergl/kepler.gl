@@ -11,7 +11,7 @@ import {
   ColumnLabels,
   EnhancedFieldPair
 } from '@kepler.gl/types';
-import {toArray} from '@kepler.gl/utils';
+import {toArray} from '@kepler.gl/common-utils';
 
 import ColumnSelectorFactory from './column-selector';
 import {MinimalField} from '../../common/field-selector';

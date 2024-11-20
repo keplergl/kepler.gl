@@ -13,7 +13,7 @@ import {PathStyleExtension} from '@deck.gl/extensions';
 
 import {EDITOR_LAYER_ID, EDITOR_MODES, EDITOR_LAYER_PICKING_RADIUS} from '@kepler.gl/constants';
 import {Viewport, Editor, Feature, FeatureSelectionContext} from '@kepler.gl/types';
-import {generateHashId} from '@kepler.gl/utils';
+import {generateHashId} from '@kepler.gl/common-utils';
 
 import {EDIT_TYPES} from './constants';
 import {LINE_STYLE, FEATURE_STYLE, EDIT_HANDLE_STYLE} from './feature-styles';

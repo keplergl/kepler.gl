@@ -2,7 +2,8 @@
 // Copyright contributors to the kepler.gl project
 
 import {getGlobalTaskQueue} from 'react-palm/tasks';
-import {isObject, toArray} from '@kepler.gl/utils';
+import {isObject} from '@kepler.gl/utils';
+import {toArray} from '@kepler.gl/common-utils';
 import {ValueOf} from '@kepler.gl/types';
 import {VisState, Merger, PostMergerPayload} from '@kepler.gl/schemas';
 

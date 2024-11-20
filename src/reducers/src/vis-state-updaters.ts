@@ -45,7 +45,6 @@ import {
   adjustValueToFilterDomain,
   featureToFilterValue,
   filterDatasetCPU,
-  generateHashId,
   generatePolygonFilter,
   getDefaultFilter,
   getFilterIdInFeature,
@@ -57,12 +56,12 @@ import {
   parseFieldValue,
   removeLayerFromSplitMaps,
   set,
-  toArray,
   mergeFilterDomainStep,
   updateFilterPlot,
   removeFilterPlot,
   isLayerAnimatable
 } from '@kepler.gl/utils';
+import {generateHashId, toArray} from '@kepler.gl/common-utils';
 
 // Mergers
 import {

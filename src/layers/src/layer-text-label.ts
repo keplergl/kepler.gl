@@ -3,7 +3,8 @@
 
 import * as arrow from 'apache-arrow';
 import {getDistanceScales} from 'viewport-mercator-project';
-import {notNullorUndefined, DataContainerInterface, ArrowDataContainer} from '@kepler.gl/utils';
+import {DataContainerInterface, ArrowDataContainer} from '@kepler.gl/utils';
+import {notNullorUndefined} from '@kepler.gl/common-utils';
 import uniq from 'lodash.uniq';
 
 export const defaultPadding = 20;

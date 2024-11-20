@@ -9,7 +9,7 @@ import {injector, provideRecipesToInjector, flattenDeps} from './injector';
 import KeplerGlFactory from './kepler-gl';
 
 import {registerEntry, deleteEntry, renameEntry, forwardTo} from '@kepler.gl/actions';
-import {notNullorUndefined} from '@kepler.gl/utils';
+import {notNullorUndefined} from '@kepler.gl/common-utils';
 import {KeplerGlState} from '@kepler.gl/reducers';
 
 export const ERROR_MSG = {

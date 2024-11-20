@@ -39,6 +39,7 @@
     "@floating-ui/react": "0.25.1",
     "@kepler.gl/actions": "3.0.0",
     "@kepler.gl/cloud-providers": "3.0.0",
+    "@kepler.gl/common-utils": "3.0.0",
     "@kepler.gl/constants": "3.0.0",
     "@kepler.gl/effects": "3.0.0",
     "@kepler.gl/layers": "3.0.0",

@@ -4,7 +4,8 @@
 import pick from 'lodash.pick';
 import {VERSIONS} from './versions';
 import {LAYER_VIS_CONFIGS, FILTER_VIEW_TYPES} from '@kepler.gl/constants';
-import {isFilterValidToSave, notNullorUndefined, findById} from '@kepler.gl/utils';
+import {isFilterValidToSave, findById} from '@kepler.gl/utils';
+import {notNullorUndefined} from '@kepler.gl/common-utils';
 import Schema from './schema';
 import cloneDeep from 'lodash.clonedeep';
 import {

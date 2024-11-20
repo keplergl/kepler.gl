@@ -32,6 +32,7 @@
   "dependencies": {
     "@kepler.gl/actions": "3.0.0",
     "@kepler.gl/cloud-providers": "3.0.0",
+    "@kepler.gl/common-utils": "3.0.0",
     "@kepler.gl/constants": "3.0.0",
     "@kepler.gl/deckgl-arrow-layers": "3.0.0",
     "@kepler.gl/deckgl-layers": "3.0.0",

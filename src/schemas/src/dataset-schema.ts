@@ -8,7 +8,7 @@ import {ProtoDataset, RGBColor} from '@kepler.gl/types';
 import {KeplerTable} from '@kepler.gl/table';
 import {VERSIONS} from './versions';
 import Schema from './schema';
-import {getFieldsFromData, getSampleForTypeAnalyze} from '@kepler.gl/utils';
+import {getFieldsFromData, getSampleForTypeAnalyze} from '@kepler.gl/common-utils';
 
 export type SavedField = {
   name: string;

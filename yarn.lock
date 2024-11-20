@@ -3036,6 +3036,18 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@kepler.gl/common-utils@npm:3.0.0, @kepler.gl/common-utils@workspace:src/common-utils":
+  version: 0.0.0-use.local
+  resolution: "@kepler.gl/common-utils@workspace:src/common-utils"
+  dependencies:
+    "@kepler.gl/constants": "npm:3.0.0"
+    "@kepler.gl/types": "npm:3.0.0"
+    d3-array: "npm:^2.8.0"
+    global: "npm:^4.3.0"
+    type-analyzer: "npm:0.4.0"
+  languageName: unknown
+  linkType: soft
+
 "@kepler.gl/components@npm:3.0.0, @kepler.gl/components@workspace:src/components":
   version: 0.0.0-use.local
   resolution: "@kepler.gl/components@workspace:src/components"
@@ -3049,6 +3061,7 @@ __metadata:
     "@floating-ui/react": "npm:0.25.1"
     "@kepler.gl/actions": "npm:3.0.0"
     "@kepler.gl/cloud-providers": "npm:3.0.0"
+    "@kepler.gl/common-utils": "npm:3.0.0"
     "@kepler.gl/constants": "npm:3.0.0"
     "@kepler.gl/effects": "npm:3.0.0"
     "@kepler.gl/layers": "npm:3.0.0"
@@ -3222,6 +3235,7 @@ __metadata:
     "@deck.gl/geo-layers": "npm:^8.9.27"
     "@deck.gl/layers": "npm:^8.9.27"
     "@deck.gl/mesh-layers": "npm:^8.9.27"
+    "@kepler.gl/common-utils": "npm:3.0.0"
     "@kepler.gl/constants": "npm:3.0.0"
     "@kepler.gl/deckgl-arrow-layers": "npm:3.0.0"
     "@kepler.gl/deckgl-layers": "npm:3.0.0"
@@ -3280,6 +3294,7 @@ __metadata:
   resolution: "@kepler.gl/processors@workspace:src/processors"
   dependencies:
     "@danmarshall/deckgl-typings": "npm:4.9.22"
+    "@kepler.gl/common-utils": "npm:3.0.0"
     "@kepler.gl/constants": "npm:3.0.0"
     "@kepler.gl/schemas": "npm:3.0.0"
     "@kepler.gl/types": "npm:3.0.0"
@@ -3304,6 +3319,7 @@ __metadata:
   dependencies:
     "@kepler.gl/actions": "npm:3.0.0"
     "@kepler.gl/cloud-providers": "npm:3.0.0"
+    "@kepler.gl/common-utils": "npm:3.0.0"
     "@kepler.gl/constants": "npm:3.0.0"
     "@kepler.gl/deckgl-arrow-layers": "npm:3.0.0"
     "@kepler.gl/deckgl-layers": "npm:3.0.0"
@@ -3348,6 +3364,7 @@ __metadata:
   resolution: "@kepler.gl/schemas@workspace:src/schemas"
   dependencies:
     "@kepler.gl/ai-assistant": "npm:3.0.0"
+    "@kepler.gl/common-utils": "npm:3.0.0"
     "@kepler.gl/constants": "npm:3.0.0"
     "@kepler.gl/layers": "npm:3.0.0"
     "@kepler.gl/table": "npm:3.0.0"
@@ -3378,6 +3395,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@kepler.gl/table@workspace:src/table"
   dependencies:
+    "@kepler.gl/common-utils": "npm:3.0.0"
     "@kepler.gl/constants": "npm:3.0.0"
     "@kepler.gl/layers": "npm:3.0.0"
     "@kepler.gl/types": "npm:3.0.0"
@@ -3410,6 +3428,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@kepler.gl/utils@workspace:src/utils"
   dependencies:
+    "@kepler.gl/common-utils": "npm:3.0.0"
     "@kepler.gl/constants": "npm:3.0.0"
     "@kepler.gl/types": "npm:3.0.0"
     "@luma.gl/constants": "npm:^8.5.20"

@@ -4,7 +4,8 @@
 import React, {useCallback} from 'react';
 import {ANIMATION_WINDOW} from '@kepler.gl/constants';
 import {AnimationConfig, Timeline} from '@kepler.gl/types';
-import {snapToMarks, getTimelineFromAnimationConfig, toArray} from '@kepler.gl/utils';
+import {snapToMarks, getTimelineFromAnimationConfig} from '@kepler.gl/utils';
+import {toArray} from '@kepler.gl/common-utils';
 import AnimationControllerFactory from './common/animation-control/animation-controller';
 
 interface LayerAnimationControllerProps {
