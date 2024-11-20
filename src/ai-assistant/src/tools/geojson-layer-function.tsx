@@ -1,10 +1,8 @@
 import {ActionHandler, addLayer} from '@kepler.gl/actions';
 import {LayerClasses} from '@kepler.gl/layers';
 import {Datasets} from '@kepler.gl/table';
-import {ReactNode} from 'react';
 import {
   CallbackFunctionProps,
-  CustomFunctionCall,
   CustomFunctionContext,
   CustomFunctionOutputProps,
   ErrorCallbackResult,
@@ -18,10 +16,10 @@ export function addGeojsonLayerFunctionDefinition(
     name: 'addGeojsonLayer',
     description: 'Add a new Geojson layer',
     properties: {
-      datasetId: {
+      datasetName: {
         type: 'string',
         description:
-          'The id of the dataset. If not provided, the first dataset will be used. If no dataset, please ask user to load a dataset.'
+          'The name of the dataset. If not provided, the first dataset will be used. If no dataset, please ask user to load a dataset.'
       },
       // layerType: {
       //   type: 'string',
@@ -40,18 +38,20 @@ export function addGeojsonLayerFunctionDefinition(
       },
       customColorScale: {
         type: 'array',
+        items: {
+          type: 'number'
+        },
         description: 'The custom color scale of the layer. Only used when colorScale is "custom".'
       }
     },
-    required: ['datasetId', 'fieldName'],
+    required: ['datasetName', 'fieldName'],
     callbackFunction: addLayerCallback,
-    callbackFunctionContext: context,
-    callbackMessage: addLayerCallbackMessage
+    callbackFunctionContext: context
   };
 }
 
 type AddLayerCallbackArgs = {
-  datasetId: string;
+  datasetName: string;
   layerType: string;
   fieldName: string;
   colorScale: string;
@@ -65,6 +65,8 @@ type AddLayerFunctionContext = {
 type AddLayerCallbackResult = {
   success: boolean;
   layerId: string;
+  datasetId: string;
+  layerLabel: string;
   details?: string;
 };
 
@@ -81,13 +83,13 @@ function addLayerCallback({
   functionArgs,
   functionContext
 }: CallbackFunctionProps): AddLayerCallbackOutput {
-  const {datasetId, fieldName, colorScale} = functionArgs as AddLayerCallbackArgs;
+  const {datasetName, fieldName, colorScale} = functionArgs as AddLayerCallbackArgs;
   const {datasets, addLayer} = functionContext as AddLayerFunctionContext;
 
   // check if dataset exists
-  const dataset = datasets[datasetId];
+  const datasetId = Object.keys(datasets).find(dataId => datasets[dataId].label === datasetName);
 
-  if (!dataset) {
+  if (!datasetId) {
     return {
       type: 'layer',
       name: functionName,
@@ -101,6 +103,7 @@ function addLayerCallback({
   }
 
   // check if field exists in the dataset
+  const dataset = datasets[datasetId];
   const field = dataset.fields.find(f => f.name === fieldName);
   if (!field) {
     return {
@@ -130,32 +133,27 @@ function addLayerCallback({
   // create a new GeojsonLayer
   const GeojsonLayer = LayerClasses.geojson;
   const result = GeojsonLayer.findDefaultLayerProps(dataset);
-  const props = {
-    ...result.props,
-    type: 'geojson',
-    dataId: dataset.id
-  };
-  const layer = new GeojsonLayer(props);
-  layer.setInitialLayerConfig(dataset);
+  const layer = new GeojsonLayer(result.props[0]);
 
+  // construct new layer config for addLayer() action
   const newLayer = {
     id: layer.id,
     type: 'geojson',
     config: {
       dataId: dataset.id,
-      columns: layer.config.columns,
       label: layer.config.label,
+      columns: {
+        geojson: layer.config.columns.geojson.value
+      },
       colorScale,
       colorField: {
         name: field.name,
         type: field.type
       },
-      colorDomain: dataset.getColumnFilterDomain(field),
-      // visConfig: {
-      //   ...layer.config.visConfig,
-      //   thickness: 0.2,
-      //   opacity: 1
-      // },
+      visConfig: {
+        ...layer.config.visConfig,
+        filled: true
+      },
       isVisible: true
     }
   };
@@ -168,12 +166,10 @@ function addLayerCallback({
     result: {
       success: true,
       layerId: newLayer.id,
+      datasetId,
+      layerLabel: newLayer.config.label,
       details: `New Geojson layer with ${field.name} and ${colorScale} color scale added successfully.`
     },
     data: {layerId: newLayer.id}
   };
-}
-
-function addLayerCallbackMessage(props: CustomFunctionCall): ReactNode | null {
-  return null;
 }

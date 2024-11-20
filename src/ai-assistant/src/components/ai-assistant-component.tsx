@@ -96,8 +96,9 @@ function AiAssistantComponentFactory() {
 
     useEffect(() => {
       initializeAssistant();
+      // re-initialize assistant when datasets change
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [visState.datasets]);
 
     const onMessagesUpdated = (messages: MessageModel[]) => {
       updateAiAssistantMessages(messages);
