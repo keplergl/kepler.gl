@@ -2,8 +2,8 @@
 
 ### Table of Contents
 
--   [combinedUpdaters][1]
-    -   [addDataToMapUpdater][3]
+- [combinedUpdaters](#combinedupdaters)
+  - [addDataToMapUpdater](#adddatatomapupdater)
 
 ## combinedUpdaters
 
@@ -14,7 +14,7 @@ as the first argument. Read more about [Using updaters][5]
 **Examples**
 
 ```javascript
-import keplerGlReducer, {combinedUpdaters} from 'kepler.gl/reducers';
+import keplerGlReducer, {combinedUpdaters} from '@kepler.gl/reducers';
 // Root Reducer
 const reducers = combineReducers({
  keplerGl: keplerGlReducer,
@@ -58,7 +58,7 @@ Combine data and full configuration update in a single action
 **Parameters**
 
 -   `state` **[Object][7]** kepler.gl instance state, containing all subreducer state
--   `action` **[Object][7]** 
+-   `action` **[Object][7]**
     -   `action.payload` **[Object][7]** `{datasets, options, config}`
         -   `action.payload.datasets` **([Array][8]&lt;[Object][7]> | [Object][7])** **\*required** datasets can be a dataset or an array of datasets
             Each dataset object needs to have `info` and `data` property.
