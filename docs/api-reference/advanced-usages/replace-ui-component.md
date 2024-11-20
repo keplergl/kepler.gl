@@ -39,7 +39,7 @@ In kepler.gl, we create the app injector by calling provide with an array of def
 Here is an example of how to use `injectComponents` to replace default `PanelHeader`.
 
 ```js
-import {injectComponents, PanelHeaderFactory} from 'kepler.gl/components';
+import {injectComponents, PanelHeaderFactory} from '@kepler.gl/components';
 
 // define custom header
 const CustomHeader = () => (<div>My kepler.gl app</div>);
@@ -68,8 +68,8 @@ const MapContainer = () => <KeplerGl id="foo"/>;
 Here is an example of using `withState` helper to add reducer state and actions to customized component as additional props.
 
 ```js
-import {withState, injectComponents, PanelHeaderFactory} from 'kepler.gl/components';
-import {visStateLens} from 'kepler.gl/reducers';
+import {withState, injectComponents, PanelHeaderFactory} from '@kepler.gl/components';
+import {visStateLens} from '@kepler.gl/reducers';
 
 // custom action wrap to mounted instance
 const addTodo = (text) => ({

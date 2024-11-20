@@ -2,14 +2,15 @@
 
 ### Table of Contents
 
--   [mapStateUpdaters][1]
-    -   [fitBoundsUpdater][3]
-    -   [INITIAL_MAP_STATE][5]
-    -   [receiveMapConfigUpdater][7]
-    -   [resetMapConfigUpdater][9]
-    -   [togglePerspectiveUpdater][11]
-    -   [toggleSplitMapUpdater][13]
-    -   [updateMapUpdater][15]
+- [mapStateUpdaters](#mapstateupdaters)
+  - [fitBoundsUpdater](#fitboundsupdater)
+  - [INITIAL\_MAP\_STATE](#initial_map_state)
+    - [Properties](#properties)
+  - [receiveMapConfigUpdater](#receivemapconfigupdater)
+  - [resetMapConfigUpdater](#resetmapconfigupdater)
+  - [togglePerspectiveUpdater](#toggleperspectiveupdater)
+  - [toggleSplitMapUpdater](#togglesplitmapupdater)
+  - [updateMapUpdater](#updatemapupdater)
 
 ## mapStateUpdaters
 
@@ -19,7 +20,7 @@ Read more about [Using updaters][17]
 **Examples**
 
 ```javascript
-import keplerGlReducer, {mapStateUpdaters} from 'kepler.gl/reducers';
+import keplerGlReducer, {mapStateUpdaters} from '@kepler.gl/reducers';
 // Root Reducer
 const reducers = combineReducers({
  keplerGl: keplerGlReducer,
@@ -57,8 +58,8 @@ Fit map viewport to bounds
 
 **Parameters**
 
--   `state` **[Object][19]** 
--   `action` **[Object][19]** 
+-   `state` **[Object][19]**
+-   `action` **[Object][19]**
     -   `action.payload` **[Array][20]&lt;[number][21]>** bounds as `[lngMin, latMin, lngMax, latMax]`
 
 Returns **[Object][19]** nextState
@@ -87,8 +88,8 @@ Update `mapState` to propagate a new config
 
 **Parameters**
 
--   `state` **[Object][19]** 
--   `action` **[Object][19]** 
+-   `state` **[Object][19]**
+-   `action` **[Object][19]**
     -   `action.payload` **[Object][19]** saved map config
     -   `action.payload.config`   (optional, default `{}`)
     -   `action.payload.options`   (optional, default `{}`)
@@ -116,7 +117,7 @@ Toggle between 3d and 2d map.
 
 **Parameters**
 
--   `state` **[Object][19]** 
+-   `state` **[Object][19]**
 
 Returns **[Object][19]** nextState
 
@@ -128,7 +129,7 @@ Toggle between one or split maps
 
 **Parameters**
 
--   `state` **[Object][19]** 
+-   `state` **[Object][19]**
 
 Returns **[Object][19]** nextState
 
@@ -140,8 +141,8 @@ Update map viewport
 
 **Parameters**
 
--   `state` **[Object][19]** 
--   `action` **[Object][19]** 
+-   `state` **[Object][19]**
+-   `action` **[Object][19]**
     -   `action.payload` **[Object][19]** viewport
 
 Returns **[Object][19]** nextState

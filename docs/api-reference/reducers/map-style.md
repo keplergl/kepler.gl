@@ -2,16 +2,17 @@
 
 ### Table of Contents
 
--   [mapStyleUpdaters][1]
-    -   [INITIAL_MAP_STYLE][3]
-    -   [initMapStyleUpdater][5]
-    -   [inputMapStyleUpdater][7]
-    -   [loadCustomMapStyleUpdater][9]
-    -   [loadMapStyleErrUpdater][11]
-    -   [loadMapStylesUpdater][13]
-    -   [mapConfigChangeUpdater][15]
-    -   [mapStyleChangeUpdater][17]
-    -   [resetMapConfigMapStyleUpdater][19]
+- [mapStyleUpdaters](#mapstyleupdaters)
+  - [INITIAL\_MAP\_STYLE](#initial_map_style)
+    - [Properties](#properties)
+  - [initMapStyleUpdater](#initmapstyleupdater)
+  - [inputMapStyleUpdater](#inputmapstyleupdater)
+  - [loadCustomMapStyleUpdater](#loadcustommapstyleupdater)
+  - [loadMapStyleErrUpdater](#loadmapstyleerrupdater)
+  - [loadMapStylesUpdater](#loadmapstylesupdater)
+  - [mapConfigChangeUpdater](#mapconfigchangeupdater)
+  - [mapStyleChangeUpdater](#mapstylechangeupdater)
+  - [resetMapConfigMapStyleUpdater](#resetmapconfigmapstyleupdater)
 
 ## mapStyleUpdaters
 
@@ -21,7 +22,7 @@ Read more about [Using updaters][21]
 **Examples**
 
 ```javascript
-import keplerGlReducer, {mapStyleUpdaters} from 'kepler.gl/reducers';
+import keplerGlReducer, {mapStyleUpdaters} from '@kepler.gl/reducers';
 // Root Reducer
 const reducers = combineReducers({
  keplerGl: keplerGlReducer,
@@ -76,10 +77,10 @@ populate mapStyles.
 
 **Parameters**
 
--   `state` **[Object][23]** 
--   `action` **[Object][23]** 
-    -   `action.payload` **[Object][23]** 
-        -   `action.payload.mapboxApiAccessToken` **[string][22]** 
+-   `state` **[Object][23]**
+-   `action` **[Object][23]**
+    -   `action.payload` **[Object][23]**
+        -   `action.payload.mapboxApiAccessToken` **[string][22]**
 
 Returns **[Object][23]** nextState
 
@@ -100,8 +101,8 @@ Input a custom map style object
         -   `action.payload.name` **[string][22]** style name
         -   `action.payload.layerGroups` **[Object][23]** layer groups that can be used to set map layer visibility
         -   `action.payload.icon` **[Object][23]** icon image data url
-    -   `action.payload.inputStyle`  
-    -   `action.payload.mapState`  
+    -   `action.payload.inputStyle`
+    -   `action.payload.mapState`
 
 Returns **[Object][23]** nextState
 
@@ -114,14 +115,14 @@ Callback when a custom map style object is received
 **Parameters**
 
 -   `state` **[Object][23]** `mapStyle`
--   `action` **[Object][23]** 
-    -   `action.payload` **[Object][23]** 
-        -   `action.payload.icon` **[string][22]** 
-        -   `action.payload.style` **[Object][23]** 
-        -   `action.payload.error` **any** 
-    -   `action.payload.icon`  
-    -   `action.payload.style`  
-    -   `action.payload.error`  
+-   `action` **[Object][23]**
+    -   `action.payload` **[Object][23]**
+        -   `action.payload.icon` **[string][22]**
+        -   `action.payload.style` **[Object][23]**
+        -   `action.payload.error` **any**
+    -   `action.payload.icon`
+    -   `action.payload.style`
+    -   `action.payload.error`
 
 Returns **[Object][23]** nextState
 
@@ -134,7 +135,7 @@ Callback when load map style error
 **Parameters**
 
 -   `state` **[Object][23]** `mapStyle`
--   `action` **[Object][23]** 
+-   `action` **[Object][23]**
     -   `action.payload` **any** error
 
 Returns **[Object][23]** nextState
@@ -148,7 +149,7 @@ Callback when load map style success
 **Parameters**
 
 -   `state` **[Object][23]** `mapStyle`
--   `action` **[Object][23]** 
+-   `action` **[Object][23]**
     -   `action.payload` **[Object][23]** a `{[id]: style}` mapping
 
 Returns **[Object][23]** nextState
@@ -162,7 +163,7 @@ Update `visibleLayerGroups`to change layer group visibility
 **Parameters**
 
 -   `state` **[Object][23]** `mapStyle`
--   `action` **[Object][23]** 
+-   `action` **[Object][23]**
     -   `action.payload` **[Object][23]** new config `{visibleLayerGroups: {label: false, road: true, background: true}}`
 
 Returns **[Object][23]** nextState
@@ -176,8 +177,8 @@ Change to another map style. The selected style should already been loaded into 
 **Parameters**
 
 -   `state` **[Object][23]** `mapStyle`
--   `action` **[Object][23]** 
-    -   `action.payload` **[string][22]** 
+-   `action` **[Object][23]**
+    -   `action.payload` **[string][22]**
 
 Returns **[Object][23]** nextState
 
