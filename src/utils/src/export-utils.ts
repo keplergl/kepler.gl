@@ -13,8 +13,9 @@ import {
   OneXResolutionOption,
   ExportImage
 } from '@kepler.gl/constants';
+import {generateHashId} from '@kepler.gl/common-utils';
 import domtoimage from './dom-to-image';
-import {generateHashId, set} from './utils';
+import {set} from './utils';
 import {exportMapToHTML} from './export-map-html';
 import {getApplicationConfig} from './application-config';
 

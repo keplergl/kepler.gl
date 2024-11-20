@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import {notNullorUndefined} from '@kepler.gl/common-utils';
 import {ALL_FIELD_TYPES, ColorMap, ColorRange, SCALE_FUNC, SCALE_TYPES} from '@kepler.gl/constants';
 import {Layer, VisualChannel, VisualChannelDomain} from '@kepler.gl/layers';
 import {HexColor, MapState} from '@kepler.gl/types';
@@ -8,7 +9,7 @@ import {bisectLeft, quantileSorted as d3Quantile, extent} from 'd3-array';
 import moment from 'moment';
 import {isRgbColor, rgbToHex} from './color-utils';
 import {DataContainerInterface} from './data-container-interface';
-import {formatNumber, notNullorUndefined, reverseFormatNumber, unique} from './data-utils';
+import {formatNumber, reverseFormatNumber, unique} from './data-utils';
 import {getTimeWidgetHintFormatter} from './filter-utils';
 import {isPlainObject} from './utils';
 

@@ -13,11 +13,11 @@ import {
   editTopMapStyle,
   editBottomMapStyle,
   getStyleImageIcon,
-  generateHashId,
   isPlainObject,
   hexToRgb,
   colorMaybeToRGB
 } from '@kepler.gl/utils';
+import {generateHashId} from '@kepler.gl/common-utils';
 import {
   DEFAULT_MAP_STYLES,
   DEFAULT_LAYER_GROUPS,

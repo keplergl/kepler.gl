@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {generateHashId, validateEffectParameters} from '@kepler.gl/utils';
+import {validateEffectParameters} from '@kepler.gl/utils';
+import {generateHashId} from '@kepler.gl/common-utils';
 import {
   Effect as EffectInterface,
   EffectProps,

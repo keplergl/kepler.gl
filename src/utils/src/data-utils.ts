@@ -12,6 +12,7 @@ import {
   TOOLTIP_KEY,
   TooltipFormat
 } from '@kepler.gl/constants';
+import {notNullorUndefined} from '@kepler.gl/common-utils';
 import {Field, Millisecond} from '@kepler.gl/types';
 
 import {snapToMarks} from './plot';
@@ -84,13 +85,6 @@ export function timeToUnixMilli(value: string | number | Date, format: string): 
     }
   }
   return null;
-}
-
-/**
- * whether null or undefined
- */
-export function notNullorUndefined<T extends NonNullable<any>>(d: T | null | undefined): d is T {
-  return d !== undefined && d !== null;
 }
 
 /**
@@ -451,8 +445,4 @@ export function datetimeFormatter(
     ? format => ts => moment.utc(ts).tz(timezone).format(format)
     : // return empty string instead of 'Invalid date' if ts is undefined/null
       format => ts => ts ? moment.utc(ts).format(format) : '';
-}
-
-export function notNullOrUndefined(d: any): boolean {
-  return d !== undefined && d !== null;
 }

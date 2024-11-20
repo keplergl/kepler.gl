@@ -30,6 +30,7 @@
     "umd"
   ],
   "dependencies": {
+    "@kepler.gl/common-utils": "3.0.0",
     "@kepler.gl/constants": "3.0.0",
     "@kepler.gl/layers": "3.0.0",
     "@kepler.gl/types": "3.0.0",

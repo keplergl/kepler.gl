@@ -4,7 +4,7 @@
 import React from 'react';
 import styled from 'styled-components';
 
-import {notNullorUndefined} from '@kepler.gl/utils';
+import {notNullorUndefined} from '@kepler.gl/common-utils';
 import {ComponentType} from 'react';
 import {ArrowDown, Delete} from '../icons';
 import {ListItem} from './dropdown-list';

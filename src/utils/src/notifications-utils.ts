@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {generateHashId} from './utils';
+import {generateHashId} from '@kepler.gl/common-utils';
 
 import {
   DEFAULT_NOTIFICATION_MESSAGE,

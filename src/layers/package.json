@@ -36,6 +36,7 @@
     "@deck.gl/geo-layers": "^8.9.27",
     "@deck.gl/layers": "^8.9.27",
     "@deck.gl/mesh-layers": "^8.9.27",
+    "@kepler.gl/common-utils": "3.0.0",
     "@kepler.gl/constants": "3.0.0",
     "@kepler.gl/deckgl-arrow-layers": "3.0.0",
     "@kepler.gl/deckgl-layers": "3.0.0",

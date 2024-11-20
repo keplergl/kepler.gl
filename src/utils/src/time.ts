@@ -13,9 +13,9 @@ import {
   INTERVAL,
   TickInterval
 } from '@kepler.gl/constants';
+import {toArray} from '@kepler.gl/common-utils';
 import {AnimationConfig, Timeline, TimeRangeFilter} from '@kepler.gl/types';
 
-import {toArray} from './utils';
 import {getFrequency} from './aggregation';
 
 export const TileTimeInterval = {

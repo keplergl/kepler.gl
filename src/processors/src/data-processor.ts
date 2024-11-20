@@ -11,14 +11,15 @@ import {ProcessorResult, Field} from '@kepler.gl/types';
 import {
   arrowDataTypeToAnalyzerDataType,
   arrowDataTypeToFieldType,
-  notNullorUndefined,
   hasOwnProperty,
-  isPlainObject,
-  analyzerTypeToFieldType,
+  isPlainObject
+} from '@kepler.gl/utils';
+import {notNullorUndefined, toArray} from '@kepler.gl/common-utils';
+import {
   getSampleForTypeAnalyze,
   getFieldsFromData,
-  toArray
-} from '@kepler.gl/utils';
+  analyzerTypeToFieldType
+} from '@kepler.gl/common-utils';
 import {KeplerGlSchema, ParsedDataset, SavedMap, LoadedMap} from '@kepler.gl/schemas';
 import {Feature} from '@nebula.gl/edit-modes';
 

@@ -4,7 +4,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import Checkbox from './checkbox';
-import {generateHashId} from '@kepler.gl/utils';
+import {generateHashId} from '@kepler.gl/common-utils';
 
 const MapLayerSelect = styled.div`
   padding: 12px;

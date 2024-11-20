@@ -50,15 +50,10 @@ export {
 } from './time';
 
 export {
-  ACCEPTED_ANALYZER_TYPES,
-  analyzerTypeToFieldType,
   datasetColorMaker,
   findDefaultColorField,
   getFieldFormatLabels,
-  getFieldsFromData,
   getFormatLabels,
-  getSampleForTypeAnalyze,
-  renameDuplicateFields,
   validateInputData
 } from './dataset-utils';
 export {exportMapToHTML} from './export-map-html';

@@ -31,6 +31,7 @@
   ],
   "dependencies": {
     "@danmarshall/deckgl-typings": "4.9.22",
+    "@kepler.gl/common-utils": "3.0.0",
     "@kepler.gl/constants": "3.0.0",
     "@kepler.gl/schemas": "3.0.0",
     "@kepler.gl/types": "3.0.0",

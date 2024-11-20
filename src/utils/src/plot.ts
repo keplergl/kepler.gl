@@ -17,6 +17,7 @@ import {
   ValueOf,
   LineDatum
 } from '@kepler.gl/types';
+import {notNullorUndefined} from '@kepler.gl/common-utils';
 import {
   ANIMATION_WINDOW,
   BINS,
@@ -28,7 +29,7 @@ import {
 } from '@kepler.gl/constants';
 import {VisState} from '@kepler.gl/schemas';
 
-import {notNullOrUndefined, roundValToStep} from './data-utils';
+import {roundValToStep} from './data-utils';
 import {aggregate, AGGREGATION_NAME} from './aggregation';
 import {capitalizeFirstLetter} from './strings';
 import {getDefaultTimeFormat} from './format';
@@ -413,11 +414,11 @@ export function splitSeries(series) {
   let temp: any[] = [];
   for (let i = 0; i < series.length; i++) {
     const d = series[i];
-    if (!notNullOrUndefined(d.y) && temp.length) {
+    if (!notNullorUndefined(d.y) && temp.length) {
       // ends temp
       lines.push(temp);
       temp = [];
-    } else if (notNullOrUndefined(d.y)) {
+    } else if (notNullorUndefined(d.y)) {
       temp.push(d);
     }
 
@@ -426,7 +427,7 @@ export function splitSeries(series) {
     }
   }
 
-  const markers = lines.length > 1 ? series.filter(d => notNullOrUndefined(d.y)) : [];
+  const markers = lines.length > 1 ? series.filter(d => notNullorUndefined(d.y)) : [];
 
   return {lines, markers};
 }
