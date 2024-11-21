@@ -44,6 +44,7 @@
     "react-virtualized": "^9.21.0",
     "redux": "^4.2.1",
     "redux-actions": "^2.2.1",
+    "redux-logger": "^3.0.6",
     "redux-thunk": "^1.0.0",
     "styled-components": "^4.1.3"
   },

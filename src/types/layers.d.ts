@@ -98,16 +98,16 @@ export type LayerWeightConfig = {
 };
 
 export type Field = {
-  analyzerType: string;
-  id?: string;
   name: string;
   displayName: string;
-  format: string;
   type: string;
-  fieldIdx: number;
+  // fieldIdx: number;
   valueAccessor(v: {index: number}): any;
+  analyzerType?: string;
+  id?: string;
+  format?: string;
   filterProps?: FilterProps;
-  metadata?: any;
+  metadata?: Record<string, any>;
   displayFormat?: string;
 };
 

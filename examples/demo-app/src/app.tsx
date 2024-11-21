@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {Component} from 'react';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import AutoSizer from 'react-virtualized/dist/commonjs/AutoSizer';
 import styled, {ThemeProvider} from 'styled-components';
 import window from 'global/window';
-import {connect} from 'react-redux';
+import {connect, useDispatch} from 'react-redux';
 import cloneDeep from 'lodash.clonedeep';
 
 import {ScreenshotWrapper} from 'react-ai-assist';
@@ -30,7 +30,7 @@ import {
   onLoadCloudMapSuccess
 } from './actions';
 
-import {loadCloudMap, addDataToMap, addNotification, replaceDataInMap} from '@kepler.gl/actions';
+import {loadCloudMap, addDataToMap, replaceDataInMap} from '@kepler.gl/actions';
 import {CLOUD_PROVIDERS} from './cloud-providers';
 
 const KeplerGl = require('@kepler.gl/components').injectComponents([
@@ -52,6 +52,7 @@ import sampleIconCsv, {config as savedMapConfig} from './data/sample-icon-csv';
 import sampleGpsData from './data/sample-gps-data';
 import sampleRowData, {config as rowDataConfig} from './data/sample-row-data';
 import {processCsvData, processGeojson, processRowObject} from '@kepler.gl/processors';
+
 /* eslint-enable no-unused-vars */
 
 const BannerHeight = 48;
@@ -93,24 +94,23 @@ const CONTAINER_STYLE = {
   width: '100%',
   height: '100%',
   left: 0,
-  top: 0
+  top: 0,
+  display: 'flex',
+  flexDirection: 'row'
 };
 
-class App extends Component {
-  state = {
-    showBanner: false,
-    width: window.innerWidth,
-    height: window.innerHeight
-  };
+const App = props => {
+  const [showBanner, toggleShowBanner] = useState(false);
+  const {params: {id, provider} = {}, location: {query = {}} = {}} = props;
+  const dispatch = useDispatch();
 
-  componentDidMount() {
+  useEffect(() => {
     // if we pass an id as part of the url
     // we ry to fetch along map configurations
-    const {params: {id, provider} = {}, location: {query = {}} = {}} = this.props;
 
     const cloudProvider = CLOUD_PROVIDERS.find(c => c.name === provider);
     if (cloudProvider) {
-      this.props.dispatch(
+      dispatch(
         loadCloudMap({
           loadParams: query,
           provider: cloudProvider,
@@ -122,83 +122,56 @@ class App extends Component {
 
     // Load sample using its id
     if (id) {
-      this.props.dispatch(loadSampleConfigurations(id));
+      dispatch(loadSampleConfigurations(id));
     }
 
     // Load map using a custom
     if (query.mapUrl) {
       // TODO?: validate map url
-      this.props.dispatch(loadRemoteMap({dataUrl: query.mapUrl}));
+      dispatch(loadRemoteMap({dataUrl: query.mapUrl}));
     }
 
     // delay zs to show the banner
     // if (!window.localStorage.getItem(BannerKey)) {
-    //   window.setTimeout(this._showBanner, 3000);
+    //   window.setTimeout(_showBanner, 3000);
     // }
     // load sample data
-    // this._loadSampleData();
+    // _loadSampleData();
 
     // Notifications
-    // this._loadMockNotifications();
-  }
+    // _loadMockNotifications();
+  }, []);
 
-  _setStartScreenCapture = flag => {
-    this.props.dispatch(setStartScreenCapture(flag));
-  };
+  const _setStartScreenCapture = useCallback(
+    flag => {
+      dispatch(setStartScreenCapture(flag));
+    },
+    [dispatch]
+  );
 
-  _setScreenCaptured = screenshot => {
-    this.props.dispatch(setScreenCaptured(screenshot));
-  };
+  const _setScreenCaptured = useCallback(
+    screenshot => {
+      dispatch(setScreenCaptured(screenshot));
+    },
+    [dispatch]
+  );
 
-  _showBanner = () => {
-    this.setState({showBanner: true});
-  };
+  // eslint-disable-next-line no-unused-vars
+  const _showBanner = useCallback(() => {
+    toggleShowBanner(true);
+  }, [toggleShowBanner]);
 
-  _hideBanner = () => {
-    this.setState({showBanner: false});
-  };
+  const hideBanner = useCallback(() => {
+    toggleShowBanner(false);
+  }, [toggleShowBanner]);
 
-  _disableBanner = () => {
-    this._hideBanner();
+  const _disableBanner = useCallback(() => {
+    hideBanner();
     window.localStorage.setItem(BannerKey, 'true');
-  };
+  }, [hideBanner]);
 
-  _loadMockNotifications = () => {
-    const notifications = [
-      [{message: 'Welcome to Kepler.gl'}, 3000],
-      [{message: 'Something is wrong', type: 'error'}, 1000],
-      [{message: 'I am getting better', type: 'warning'}, 1000],
-      [{message: 'Everything is fine', type: 'success'}, 1000]
-    ];
-
-    this._addNotifications(notifications);
-  };
-
-  _addNotifications(notifications) {
-    if (notifications && notifications.length) {
-      const [notification, timeout] = notifications[0];
-
-      window.setTimeout(() => {
-        this.props.dispatch(addNotification(notification));
-        this._addNotifications(notifications.slice(1));
-      }, timeout);
-    }
-  }
-
-  _loadSampleData() {
-    // this._loadPointData();
-    // this._loadGeojsonData();
-    // this._loadTripGeoJson();
-    // this._loadIconData();
-    // this._loadH3HexagonData();
-    // this._loadS2Data();
-    // this._loadScenegraphLayer();
-    // this._loadGpsData();
-    // this._loadRowData();
-  }
-
-  _loadRowData() {
-    this.props.dispatch(
+  const _loadRowData = useCallback(() => {
+    dispatch(
       addDataToMap({
         datasets: [
           {
@@ -212,10 +185,10 @@ class App extends Component {
         config: rowDataConfig
       })
     );
-  }
+  }, []);
 
-  _loadPointData() {
-    this.props.dispatch(
+  const _loadPointData = useCallback(() => {
+    dispatch(
       addDataToMap({
         datasets: [
           {
@@ -248,10 +221,10 @@ class App extends Component {
         config: sampleTripDataConfig
       })
     );
-  }
+  }, [dispatch]);
 
-  _loadScenegraphLayer() {
-    this.props.dispatch(
+  const _loadScenegraphLayer = useCallback(() => {
+    dispatch(
       addDataToMap({
         datasets: {
           info: {
@@ -282,11 +255,11 @@ class App extends Component {
         }
       })
     );
-  }
+  }, [dispatch]);
 
-  _loadIconData() {
+  const _loadIconData = useCallback(() => {
     // load icon data and config and process csv file
-    this.props.dispatch(
+    dispatch(
       addDataToMap({
         datasets: [
           {
@@ -299,10 +272,10 @@ class App extends Component {
         ]
       })
     );
-  }
+  }, [dispatch]);
 
-  _loadTripGeoJson() {
-    this.props.dispatch(
+  const _loadTripGeoJson = useCallback(() => {
+    dispatch(
       addDataToMap({
         datasets: [
           {
@@ -312,17 +285,45 @@ class App extends Component {
         ]
       })
     );
-  }
+  }, [dispatch]);
 
-  _replaceData = () => {
+  const _loadGeojsonData = useCallback(() => {
+    // load geojson
+    const geojsonPoints = processGeojson(sampleGeojsonPoints);
+    const geojsonZip = processGeojson(sampleGeojson);
+    dispatch(
+      addDataToMap({
+        datasets: [
+          geojsonPoints
+            ? {
+                info: {label: 'Bart Stops Geo', id: 'bart-stops-geo'},
+                data: geojsonPoints
+              }
+            : null,
+          geojsonZip
+            ? {
+                info: {label: 'SF Zip Geo', id: 'sf-zip-geo'},
+                data: geojsonZip
+              }
+            : null
+        ].filter(d => d !== null),
+        options: {
+          keepExistingConfig: true
+        },
+        config: sampleGeojsonConfig
+      })
+    );
+  }, [dispatch]);
+
+  const _replaceData = useCallback(() => {
     // add geojson data
     const sliceData = processGeojson({
       type: 'FeatureCollection',
       features: sampleGeojsonPoints.features.slice(0, 5)
     });
-    this._loadGeojsonData();
+    _loadGeojsonData();
     window.setTimeout(() => {
-      this.props.dispatch(
+      dispatch(
         replaceDataInMap({
           datasetToReplaceId: 'bart-stops-geo',
           datasetToUse: {
@@ -332,33 +333,11 @@ class App extends Component {
         })
       );
     }, 1000);
-  };
+  }, [dispatch, _loadGeojsonData]);
 
-  _loadGeojsonData() {
-    // load geojson
-    this.props.dispatch(
-      addDataToMap({
-        datasets: [
-          {
-            info: {label: 'Bart Stops Geo', id: 'bart-stops-geo'},
-            data: processGeojson(sampleGeojsonPoints)
-          }
-          // {
-          //   info: {label: 'SF Zip Geo', id: 'sf-zip-geo'},
-          //   data: processGeojson(sampleGeojson)
-          // }
-        ],
-        options: {
-          keepExistingConfig: true
-        },
-        config: sampleGeojsonConfig
-      })
-    );
-  }
-
-  _loadH3HexagonData() {
+  const _loadH3HexagonData = useCallback(() => {
     // load h3 hexagon
-    this.props.dispatch(
+    dispatch(
       addDataToMap({
         datasets: [
           {
@@ -375,11 +354,11 @@ class App extends Component {
         }
       })
     );
-  }
+  }, [dispatch]);
 
-  _loadS2Data() {
+  const _loadS2Data = useCallback(() => {
     // load s2
-    this.props.dispatch(
+    dispatch(
       addDataToMap({
         datasets: [
           {
@@ -396,10 +375,10 @@ class App extends Component {
         }
       })
     );
-  }
+  }, [dispatch]);
 
-  _loadGpsData() {
-    this.props.dispatch(
+  const _loadGpsData = useCallback(() => {
+    dispatch(
       addDataToMap({
         datasets: [
           {
@@ -415,66 +394,66 @@ class App extends Component {
         }
       })
     );
-  }
-  _toggleCloudModal = () => {
-    // TODO: this lives only in the demo hence we use the state for now
-    // REFCOTOR using redux
-    this.setState({
-      cloudModalOpen: !this.state.cloudModalOpen
-    });
-  };
+  }, [dispatch]);
 
-  _getMapboxRef = mapbox => {
-    if (!mapbox) {
-      // The ref has been unset.
-      // https://reactjs.org/docs/refs-and-the-dom.html#callback-refs
-      // console.log(`Map ${index} has closed`);
-    } else {
-      // We expect an Map created by KeplerGl's MapContainer.
-      // https://visgl.github.io/react-map-gl/docs/api-reference/map
-      const map = mapbox.getMap();
-      map.on('zoomend', () => {
-        // console.log(`Map ${index} zoom level: ${e.target.style.z}`);
-      });
-    }
-  };
+  const combinedMessages = useMemo(() => {
+    return Object.keys(messages).reduce(
+      (acc, language) => ({
+        ...acc,
+        [language]: {
+          ...(messages[language] || {}),
+          ...(aiAssistantMessages[language] || {})
+        }
+      }),
+      {}
+    );
+  }, [messages, aiAssistantMessages]);
 
-  combinedMessages = Object.keys(messages).reduce(
-    (acc, language) => ({
-      ...acc,
-      [language]: {
-        ...(messages[language] || {}),
-        ...(aiAssistantMessages[language] || {})
-      }
-    }),
-    {}
-  );
+  // eslint-disable-next-line no-unused-vars
+  const _loadSampleData = useCallback(() => {
+    // _loadPointData();
+    // _loadGeojsonData();
+    // _loadTripGeoJson();
+    // _loadIconData();
+    // _loadH3HexagonData();
+    // _loadS2Data();
+    // _loadScenegraphLayer();
+    // _loadGpsData();
+    // _loadRowData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    _loadPointData,
+    _loadGeojsonData,
+    _loadTripGeoJson,
+    _loadIconData,
+    _loadH3HexagonData,
+    _loadS2Data,
+    _loadScenegraphLayer,
+    _loadGpsData,
+    _loadRowData,
+    _replaceData
+  ]);
 
-  render() {
-    return (
-      <ThemeProvider theme={theme}>
-        <GlobalStyle
-          // this is to apply the same modal style as kepler.gl core
-          // because styled-components doesn't always return a node
-          // https://github.com/styled-components/styled-components/issues/617
-          ref={node => {
-            node ? (this.root = node) : null;
-          }}
+  return (
+    <ThemeProvider theme={theme}>
+      <GlobalStyle
+      // this is to apply the same modal style as kepler.gl core
+      // because styled-components doesn't always return a node
+      // https://github.com/styled-components/styled-components/issues/617
+      // ref={node => {
+      //   node ? (this.root = node) : null;
+      // }}
+      >
+        <ScreenshotWrapper
+          startScreenCapture={props.demo.aiAssistant.screenshotToAsk.startScreenCapture}
+          setScreenCaptured={_setScreenCaptured}
+          setStartScreenCapture={_setStartScreenCapture}
         >
-          <ScreenshotWrapper
-            startScreenCapture={this.props.demo.aiAssistant.screenshotToAsk.startScreenCapture}
-            setScreenCaptured={this._setScreenCaptured}
-            setStartScreenCapture={this._setStartScreenCapture}
-          >
-            <Banner
-              show={this.state.showBanner}
-              height={BannerHeight}
-              bgColor="#2E7CF6"
-              onClose={this._hideBanner}
-            >
-              <Announcement onDisable={this._disableBanner} />
-            </Banner>
-            <div style={CONTAINER_STYLE}>
+          <Banner show={showBanner} height={BannerHeight} bgColor="#2E7CF6" onClose={hideBanner}>
+            <Announcement onDisable={_disableBanner} />
+          </Banner>
+          <div style={CONTAINER_STYLE}>
+            <div style={{flexGrow: 1}}>
               <AutoSizer>
                 {({height, width}) => (
                   <KeplerGl
@@ -487,7 +466,7 @@ class App extends Component {
                     width={width}
                     height={height}
                     cloudProviders={CLOUD_PROVIDERS}
-                    localeMessages={this.combinedMessages}
+                    localeMessages={combinedMessages}
                     onExportToCloudSuccess={onExportFileSuccess}
                     onLoadCloudMapSuccess={onLoadCloudMapSuccess}
                     featureFlags={DEFAULT_FEATURE_FLAGS}
@@ -495,12 +474,12 @@ class App extends Component {
                 )}
               </AutoSizer>
             </div>
-          </ScreenshotWrapper>
-        </GlobalStyle>
-      </ThemeProvider>
-    );
-  }
-}
+          </div>
+        </ScreenshotWrapper>
+      </GlobalStyle>
+    </ThemeProvider>
+  );
+};
 
 const mapStateToProps = state => state;
 const dispatchToProps = dispatch => ({dispatch});

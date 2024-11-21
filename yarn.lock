@@ -3406,6 +3406,7 @@ __metadata:
     global: "npm:^4.3.0"
     lodash.uniq: "npm:^4.0.1"
     moment: "npm:^2.10.6"
+    react-palm: "npm:^3.3.8"
   languageName: unknown
   linkType: soft
 
