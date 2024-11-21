@@ -11,4 +11,4 @@ export const ASSISTANT_NAME = 'kepler-gl-ai-assistant';
 
 export const ASSISTANT_DESCRIPTION = 'A Kepler.gl AI Assistant';
 
-export const ASSISTANT_VERSION = '0.0.1-3';
+export const ASSISTANT_VERSION = '0.0.1-4';

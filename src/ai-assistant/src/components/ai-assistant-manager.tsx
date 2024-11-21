@@ -6,7 +6,16 @@ import styled from 'styled-components';
 import {injectIntl, IntlShape} from 'react-intl';
 
 import {MapStyle, mapStyleLens, visStateLens} from '@kepler.gl/reducers';
-import {ActionHandler, mapStyleChange, loadFiles, addDataToMap, addLayer} from '@kepler.gl/actions';
+import {
+  ActionHandler,
+  mapStyleChange,
+  loadFiles,
+  addDataToMap,
+  addLayer,
+  createOrUpdateFilter,
+  setFilter,
+  setFilterPlot
+} from '@kepler.gl/actions';
 import {withState, SidePanelTitleFactory, Icons} from '@kepler.gl/components';
 import {VisState} from '@kepler.gl/schemas';
 
@@ -64,7 +73,8 @@ const StyledAiAssistantPanel = styled.div`
 const StyledAiAssistantPanelHeader = styled.div`
   padding: 16px 16px 4px 16px;
   border-bottom: 1px solid ${props => props.theme.borderColor};
-  min-width: 345px;
+  min-width: 415px;
+  max-width: 415px;
   color: ${props => props.theme.subtextColorActive};
 `;
 
@@ -147,7 +157,15 @@ function AiAssistantManagerFactory(
       };
     },
     {
-      keplerGlActions: {mapStyleChange, loadFiles, addDataToMap, addLayer},
+      keplerGlActions: {
+        mapStyleChange,
+        loadFiles,
+        addDataToMap,
+        addLayer,
+        createOrUpdateFilter,
+        setFilter,
+        setFilterPlot
+      },
       aiAssistantActions: {
         updateAiAssistantConfig,
         updateAiAssistantMessages,

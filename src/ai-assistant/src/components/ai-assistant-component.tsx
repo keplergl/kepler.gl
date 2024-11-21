@@ -7,7 +7,16 @@ import {AiAssistant, MessageModel, useAssistant} from 'react-ai-assist';
 import 'react-ai-assist/dist/index.css';
 
 import {textColorLT} from '@kepler.gl/styles';
-import {ActionHandler, addDataToMap, addLayer, loadFiles, mapStyleChange} from '@kepler.gl/actions';
+import {
+  ActionHandler,
+  addDataToMap,
+  addLayer,
+  createOrUpdateFilter,
+  setFilter,
+  mapStyleChange,
+  setFilterPlot,
+  loadFiles
+} from '@kepler.gl/actions';
 import {MapStyle} from '@kepler.gl/reducers';
 import {VisState} from '@kepler.gl/schemas';
 
@@ -24,12 +33,16 @@ import {
   WELCOME_MESSAGE
 } from '../constants';
 import {addGeojsonLayerFunctionDefinition} from '../tools/geojson-layer-function';
+import {filterFunctionDefinition} from '../tools/filter-function';
 
 export type SelectedKeplerGlActions = {
   mapStyleChange: ActionHandler<typeof mapStyleChange>;
   loadFiles: ActionHandler<typeof loadFiles>;
   addDataToMap: ActionHandler<typeof addDataToMap>;
   addLayer: ActionHandler<typeof addLayer>;
+  createOrUpdateFilter: ActionHandler<typeof createOrUpdateFilter>;
+  setFilter: ActionHandler<typeof setFilter>;
+  setFilterPlot: ActionHandler<typeof setFilterPlot>;
 };
 
 export type AiAssistantComponentProps = {
@@ -75,6 +88,13 @@ function AiAssistantComponentFactory() {
       addGeojsonLayerFunctionDefinition({
         addLayer: keplerGlActions.addLayer,
         datasets: visState.datasets
+      }),
+      filterFunctionDefinition({
+        datasets: visState.datasets,
+        filters: visState.filters,
+        createOrUpdateFilter: keplerGlActions.createOrUpdateFilter,
+        setFilter: keplerGlActions.setFilter,
+        setFilterPlot: keplerGlActions.setFilterPlot
       })
     ];
 
@@ -98,7 +118,7 @@ function AiAssistantComponentFactory() {
       initializeAssistant();
       // re-initialize assistant when datasets change
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [visState.datasets]);
+    }, [visState.datasets, visState.filters]);
 
     const onMessagesUpdated = (messages: MessageModel[]) => {
       updateAiAssistantMessages(messages);
