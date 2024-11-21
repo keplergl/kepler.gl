@@ -8,6 +8,8 @@ import {
   ErrorCallbackResult,
   RegisterFunctionCallingProps
 } from 'react-ai-assist';
+import {checkDatasetNotExists, checkFieldNotExists} from './utils';
+import {createGeojsonLayerConfig} from './layer-utils';
 
 export function addGeojsonLayerFunctionDefinition(
   context: CustomFunctionContext<ActionHandler<typeof addLayer> | Datasets>
@@ -55,6 +57,7 @@ type AddLayerCallbackArgs = {
   layerType: string;
   fieldName: string;
   colorScale: string;
+  customColorScale: number[];
 };
 
 type AddLayerFunctionContext = {
@@ -83,39 +86,23 @@ function addLayerCallback({
   functionArgs,
   functionContext
 }: CallbackFunctionProps): AddLayerCallbackOutput {
-  const {datasetName, fieldName, colorScale} = functionArgs as AddLayerCallbackArgs;
+  const {datasetName, fieldName, colorScale, customColorScale} =
+    functionArgs as AddLayerCallbackArgs;
   const {datasets, addLayer} = functionContext as AddLayerFunctionContext;
 
   // check if dataset exists
+  const datasetError = checkDatasetNotExists(datasets, datasetName, functionName);
   const datasetId = Object.keys(datasets).find(dataId => datasets[dataId].label === datasetName);
-
-  if (!datasetId) {
-    return {
-      type: 'layer',
-      name: functionName,
-      result: {
-        success: false,
-        details: `Dataset not found. Please specify one from the following datasets: ${Object.keys(
-          datasets
-        ).join(', ')}`
-      }
-    };
+  if (datasetError || !datasetId) {
+    return datasetError as AddLayerCallbackOutput;
   }
 
   // check if field exists in the dataset
   const dataset = datasets[datasetId];
+  const fieldError = checkFieldNotExists(dataset, fieldName, functionName);
   const field = dataset.fields.find(f => f.name === fieldName);
-  if (!field) {
-    return {
-      type: 'layer',
-      name: functionName,
-      result: {
-        success: false,
-        details: `Field not found. Please specify one from the following fields: ${dataset.fields
-          .map(f => f.name)
-          .join(', ')}`
-      }
-    };
+  if (fieldError || !field) {
+    return fieldError as AddLayerCallbackOutput;
   }
 
   // check colorScale is valid
@@ -130,33 +117,32 @@ function addLayerCallback({
     };
   }
 
+  // check if customColorScale is available
+  if (colorScale === 'custom' && !customColorScale) {
+    return {
+      type: 'layer',
+      name: functionName,
+      result: {
+        success: false,
+        details: 'Custom color scale is required when colorScale is "custom"'
+      }
+    };
+  }
+
   // create a new GeojsonLayer
   const GeojsonLayer = LayerClasses.geojson;
   const result = GeojsonLayer.findDefaultLayerProps(dataset);
   const layer = new GeojsonLayer(result.props[0]);
 
   // construct new layer config for addLayer() action
-  const newLayer = {
-    id: layer.id,
-    type: 'geojson',
-    config: {
-      dataId: dataset.id,
-      label: layer.config.label,
-      columns: {
-        geojson: layer.config.columns.geojson.value
-      },
-      colorScale,
-      colorField: {
-        name: field.name,
-        type: field.type
-      },
-      visConfig: {
-        ...layer.config.visConfig,
-        filled: true
-      },
-      isVisible: true
-    }
-  };
+  const newLayer = createGeojsonLayerConfig({
+    layer,
+    dataset,
+    field,
+    colorScale,
+    customColorScale,
+    colorRange: layer.config.visConfig.colorRange
+  });
 
   addLayer(newLayer, datasetId);
 
