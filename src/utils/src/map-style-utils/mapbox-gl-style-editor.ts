@@ -167,6 +167,12 @@ export function scaleMapStyleByResolution(mapboxStyle, scale) {
       // edit minzoom and maxzoom
       if (d.maxzoom) {
         d.maxzoom = Math.max(d.maxzoom + zoomOffset, 1);
+
+        // The maximum zoom is 24
+        // https://github.com/visgl/react-map-gl/blob/master/docs/api-reference/map.md#maxzoom-number-maxzoom
+        if (d.maxzoom > 24) {
+          d.maxzoom = 24;
+        }
       }
 
       if (d.minzoom) {
