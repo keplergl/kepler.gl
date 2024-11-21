@@ -3,7 +3,7 @@ import {useSelector} from 'react-redux';
 import {ActionHandler, createOrUpdateFilter, setFilter, setFilterPlot} from '@kepler.gl/actions';
 import {Datasets} from '@kepler.gl/table';
 import {Filter} from '@kepler.gl/types';
-import React, {ReactNode} from 'react';
+import React, {ReactNode, useEffect} from 'react';
 import {
   CallbackFunctionProps,
   CustomFunctionCall,
@@ -14,8 +14,7 @@ import {
 } from 'react-ai-assist';
 import {checkDatasetNotExists, checkFieldNotExists} from './utils';
 import {getDefaultFilter, getFilterProps, updateFilterPlot} from '@kepler.gl/utils';
-import RangeFilterFactory from 'src/components/src/filters/range-filter';
-import {appInjector} from 'src/components/src/container';
+import {RangeFilterFactory, appInjector} from '@kepler.gl/components';
 
 export function filterFunctionDefinition(
   context: CustomFunctionContext<
@@ -87,10 +86,12 @@ type OutputResultProps =
 
 type OutputDataProps = {
   datasetId: string;
+  fieldName: string;
   filter: Filter;
   filterIdx: number;
   setFilter: ActionHandler<typeof setFilter>;
   setFilterPlot: ActionHandler<typeof setFilterPlot>;
+  createOrUpdateFilter: ActionHandler<typeof createOrUpdateFilter>;
 };
 
 type FilterCallbackOutput = CustomFunctionOutputProps<OutputResultProps, OutputDataProps>;
@@ -138,9 +139,11 @@ async function filterCallback({
     value: setFilterValue,
     fieldIndex: selectField.fieldIdx
   };
+  // update the filter plot, so we can render the filter in the filter message component
   const updatedFilter = updateFilterPlot(datasets, newFilter, datasetId);
 
-  await createOrUpdateFilter(updatedFilter.id, datasetId, selectField?.name, setFilterValue);
+  // create filter only and apply the filter value later in the filter message component
+  // await createOrUpdateFilter(updatedFilter.id, datasetId, selectField?.name);
 
   console.log('filters', filters);
 
@@ -157,10 +160,12 @@ async function filterCallback({
     },
     data: {
       datasetId,
+      fieldName: selectField.name,
       filterIdx: filters.length,
       filter: updatedFilter,
       setFilter,
-      setFilterPlot
+      setFilterPlot,
+      createOrUpdateFilter
     }
   });
 }
@@ -170,8 +175,18 @@ const RangeFilterComponent = appInjector.get(RangeFilterFactory);
 function FilterMessage({output}: CustomFunctionCall) {
   const outputData = output.data as OutputDataProps;
 
+  // run this when the component is mounted
+  useEffect(() => {
+    outputData.createOrUpdateFilter(
+      outputData.filter.id,
+      outputData.datasetId,
+      outputData.fieldName,
+      outputData.filter.value
+    );
+  }, [outputData, outputData.filter]);
+
   const filters = useSelector(state => {
-    // @ts-ignore TODO: fix this we need to get the updatedfilters from the visState
+    // @ts-ignore TODO: fix this: we need to get the updated filters from the visState, but nicely
     return state.demo.keplerGl.map.visState.filters;
   });
 
@@ -184,13 +199,15 @@ function FilterMessage({output}: CustomFunctionCall) {
   };
 
   return (
-    <div>
-      <RangeFilterComponent
-        filter={filter}
-        setFilter={onSetFilter}
-        setFilterPlot={onSetFilterPlot}
-      />
-    </div>
+    filter && (
+      <div>
+        <RangeFilterComponent
+          filter={filter}
+          setFilter={onSetFilter}
+          setFilterPlot={onSetFilterPlot}
+        />
+      </div>
+    )
   );
 }
 
