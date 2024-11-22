@@ -1,17 +1,37 @@
 <!doctype html>
 <html>
-  <head>
-    <meta charset='UTF-8' />
-    <title>kepler.gl demo</title>
-    <link rel="stylesheet" href="//d1a3f4spazzrp4.cloudfront.net/kepler.gl/uber-fonts/4.0.0/superfine.css">
-    <link href="https://unpkg.com/maplibre-gl@^3/dist/maplibre-gl.css" rel="stylesheet">
-    <link rel="stylesheet" href="/bundle.css">
-    <style type="text/css">
-       body {margin: 0; padding: 0; overflow: hidden;}
-    </style>
-  </head>
-  <body>
-    <div id="root" />
-    <script src="/bundle.js"></script>
-  </body>
+
+<head>
+  <meta charset='UTF-8' />
+  <title>kepler.gl demo</title>
+  <link rel="stylesheet" href="//d1a3f4spazzrp4.cloudfront.net/kepler.gl/uber-fonts/4.0.0/superfine.css">
+  <link href="https://unpkg.com/maplibre-gl@^3/dist/maplibre-gl.css" rel="stylesheet">
+  <link rel="stylesheet" href="/bundle.css">
+  <style type="text/css">
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+  </style>
+  <script>
+    // fix for canvas context when using screencapture to ask in AI Assistant
+    HTMLCanvasElement.prototype.getContext = function (origFn) {
+      return function (type, attribs) {
+        attribs = attribs || {};
+        attribs.preserveDrawingBuffer = true;
+        attribs.alpha = true;
+        attribs.antialias = true;
+        attribs.depth = true;
+        return origFn.call(this, type, attribs);
+      };
+    }(HTMLCanvasElement.prototype.getContext);
+  </script>
+</head>
+
+<body>
+  <div id="root" />
+  <script src="/bundle.js"></script>
+</body>
+
 </html>

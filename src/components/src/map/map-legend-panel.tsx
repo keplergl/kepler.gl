@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import React, {ComponentType, useCallback, useContext, useState} from 'react';
-import styled from 'styled-components';
+import styled, {withTheme} from 'styled-components';
 
 import {Legend} from '../common/icons';
 import {MapControlButton} from '../common/styled-components';
@@ -57,6 +57,7 @@ interface MapLegendPanelIcons {
 }
 
 export type MapLegendPanelProps = {
+  theme: any;
   layers: ReadonlyArray<Layer>;
   scale: number;
   onToggleMapControl: (control: string) => void;
@@ -79,6 +80,7 @@ function MapLegendPanelFactory(MapControlTooltip, MapControlPanel, MapLegend) {
   };
 
   const MapLegendPanel: React.FC<MapLegendPanelProps> = ({
+    theme,
     layers,
     mapControls,
     scale,
@@ -170,7 +172,15 @@ function MapLegendPanelFactory(MapControlTooltip, MapControlPanel, MapLegend) {
       if (isExport) {
         return mapControlPanel;
       }
-      const pinnedPanel = <PinToBottom offsetRight={offsetRight}>{mapControlPanel}</PinToBottom>;
+      const pinnedOffsetRight =
+        mapControls?.effect?.show && mapControls?.effect?.active
+          ? theme.effectPanelWidth + 10
+          : mapControls?.aiAssistant?.show && mapControls?.aiAssistant?.active
+          ? theme.aiAssistantPanelWidth + 10
+          : 0;
+      const pinnedPanel = (
+        <PinToBottom offsetRight={pinnedOffsetRight}>{mapControlPanel}</PinToBottom>
+      );
       return createPortal(pinnedPanel, rootContext?.current || document.body);
     }
 
@@ -195,7 +205,7 @@ function MapLegendPanelFactory(MapControlTooltip, MapControlPanel, MapLegend) {
   };
 
   MapLegendPanel.displayName = 'MapLegendPanel';
-  return MapLegendPanel;
+  return withTheme(MapLegendPanel);
 }
 
 export default MapLegendPanelFactory;

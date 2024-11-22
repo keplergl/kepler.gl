@@ -3191,7 +3191,7 @@ __metadata:
     "@kepler.gl/types": "npm:3.1.0-alpha.1"
     "@kepler.gl/utils": "npm:3.1.0-alpha.1"
     global: "npm:^4.3.0"
-    react-ai-assist: "npm:0.0.8"
+    react-ai-assist: "npm:0.0.9"
   languageName: unknown
   linkType: soft
 
@@ -24638,9 +24638,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-ai-assist@npm:0.0.8":
-  version: 0.0.8
-  resolution: "react-ai-assist@npm:0.0.8"
+"react-ai-assist@npm:0.0.9":
+  version: 0.0.9
+  resolution: "react-ai-assist@npm:0.0.9"
   dependencies:
     "@emotion/is-prop-valid": "npm:^1.3.1"
     "@google/generative-ai": "npm:^0.17.1"
@@ -24667,7 +24667,7 @@ __metadata:
   peerDependencies:
     react: ^18.0.0
     react-dom: ^18.0.0
-  checksum: 10c0/2d0b508dbd5231d1df85ec1160a6ba39fd48abc106a9687f0f12fc890aecd9affe4b7d3e689a1ac00075ad9510289eb6a8de2a3c57c7b7b1236e7afda56be3cb
+  checksum: 10c0/b4c4824913a914bc727e20cf543180b8028e6eea3b744fcb43c097d6a120e17b4d1d82b040a29add20d2bf726bf254a1341b9626530945844739eec529405d1f
   languageName: node
   linkType: hard
 

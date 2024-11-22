@@ -73,8 +73,8 @@ const StyledAiAssistantPanel = styled.div`
 const StyledAiAssistantPanelHeader = styled.div`
   padding: 16px 16px 4px 16px;
   border-bottom: 1px solid ${props => props.theme.borderColor};
-  min-width: 415px;
-  max-width: 415px;
+  min-width: ${props => props.theme.aiAssistantPanelWidth}px;
+  max-width: ${props => props.theme.aiAssistantPanelWidth}px;
   color: ${props => props.theme.subtextColorActive};
 `;
 
