@@ -7,10 +7,11 @@ import testData, {numericRangesCsv, testFields} from 'test/fixtures/test-csv-dat
 
 import {preciseRound, getFilterFunction} from '@kepler.gl/utils';
 import {createNewDataEntry, findPointFieldPairs} from '@kepler.gl/table';
-
 import {processCsvData} from '@kepler.gl/processors';
-import {cmpFields} from '../../helpers/comparison-utils';
 import {FILTER_TYPES} from '@kepler.gl/constants';
+
+import {cmpFields} from '../../helpers/comparison-utils';
+import {createNewDataEntryMock} from '../../helpers/table-utils';
 
 function testGetTimeFieldDomain(table, t) {
   const test_cases = [
@@ -215,15 +216,16 @@ function testGetFilterFunction({fields, dataContainer}, t) {
   );
 }
 
-test('KeplerTable -> getColumnFilterDomain -> time', t => {
+test('KeplerTable -> getColumnFilterDomain -> time', async t => {
   const expectedFields = testFields;
 
   const data = processCsvData(testData);
-  const newDataEntry = createNewDataEntry({
-    info: {id: 'test'},
-    data
-  });
-  const dataset = newDataEntry.test;
+  const dataset = (
+    await createNewDataEntryMock({
+      info: {id: 'test'},
+      data
+    })
+  ).test;
   cmpFields(t, expectedFields, dataset.fields, dataset.id);
   testGetTimeFieldDomain(dataset, t);
   testGetFilterFunction(dataset, t);
@@ -233,11 +235,12 @@ test('KeplerTable -> getColumnFilterDomain -> time', t => {
 
 test('KeplerTable -> getColumnFilterDomain -> numeric', async t => {
   const data = processCsvData(numericRangesCsv);
-  const newDataEntry = createNewDataEntry({
-    info: {id: 'test'},
-    data
-  });
-  const dataset = newDataEntry.test;
+  const dataset = (
+    await createNewDataEntryMock({
+      info: {id: 'test'},
+      data
+    })
+  ).test;
 
   testGetNumericFieldStep(dataset, t);
 

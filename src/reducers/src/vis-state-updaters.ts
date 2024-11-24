@@ -13,7 +13,13 @@ import uniq from 'lodash.uniq';
 import xor from 'lodash.xor';
 import Task, {disableStackCapturing, withTask} from 'react-palm/tasks';
 // Tasks
-import {DELAY_TASK, LOAD_FILE_TASK, PROCESS_FILE_DATA, UNWRAP_TASK} from '@kepler.gl/tasks';
+import {
+  DELAY_TASK,
+  ACTION_TASK,
+  LOAD_FILE_TASK,
+  PROCESS_FILE_DATA,
+  UNWRAP_TASK
+} from '@kepler.gl/tasks';
 // Actions
 import {
   ActionTypes,
@@ -32,7 +38,8 @@ import {
   loadFilesSuccess,
   loadNextFile,
   nextFileBatch,
-  processFileContent
+  processFileContent,
+  fitBounds as fitMapBounds
 } from '@kepler.gl/actions';
 
 // Utils
@@ -138,6 +145,8 @@ import {
 } from '@kepler.gl/utils';
 import {createEffect} from '@kepler.gl/effects';
 import {PayloadAction} from '@reduxjs/toolkit';
+
+import {findMapBounds} from './data-utils';
 
 // react-palm
 // disable capture exception for react-palm call to withTask
@@ -2148,7 +2157,7 @@ export const createNewDatasetSuccessUpdater = (
   state: VisState,
   action: PayloadAction<CreateNewDatasetSuccessPayload>
 ): VisState => {
-  console.log('createNewDatasetSuccessUpdater', action.payload);
+  // console.log('createNewDatasetSuccessUpdater', action.payload);
   const {results, addToMapOptions} = action.payload;
   const newDataEntries = results.reduce((accu, result) => {
     if (result.status === 'fulfilled') {
@@ -2278,12 +2287,26 @@ function postMergeUpdater(mergedState: VisState, postMergerPayload: PostMergerPa
   updatedState = updateAnimationDomain(updatedState);
 
   // try to process layerMergers after dataset+datasetMergers
-  return layerMergers && layerMergers.length > 0
-    ? applyMergersUpdater(updatedState, {
-        mergers: layerMergers,
-        postMergerPayload: {...postMergerPayload, layerMergers: []}
-      })
-    : updatedState;
+  updatedState =
+    layerMergers && layerMergers.length > 0
+      ? applyMergersUpdater(updatedState, {
+          mergers: layerMergers,
+          postMergerPayload: {...postMergerPayload, layerMergers: []}
+        })
+      : updatedState;
+
+  // center the map once the dataset is created
+  if (newLayers.length && (options || {}).centerMap) {
+    const bounds = findMapBounds(newLayers);
+    if (bounds) {
+      const fitBoundsTask = ACTION_TASK().map(() => {
+        return fitMapBounds(bounds);
+      });
+      updatedState = withTask(updatedState, fitBoundsTask);
+    }
+  }
+
+  return updatedState;
 }
 
 /**

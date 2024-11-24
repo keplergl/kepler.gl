@@ -118,7 +118,7 @@ export function ContainerFactory(
           dispatch(deleteEntry(id));
         }
       };
-    }, []); // Empty dependency array ensures the effect runs only once on mount
+    }, [id]);
 
     useEffect(() => {
       // check if id has changed, if true, copy state over

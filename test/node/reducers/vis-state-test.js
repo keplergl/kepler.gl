@@ -107,6 +107,7 @@ import {
   testCsvDataSlice2Id
 } from '../../fixtures/test-csv-data';
 import {mockStateWithSyncedFilterAndTripLayer} from '../../fixtures/synced-filter-with-trip-layer';
+import {createNewDataEntryMock} from 'test/helpers/table-utils';
 
 const mockData = {
   fields: [
@@ -361,11 +362,11 @@ test('#visStateReducer -> LAYER_TYPE_CHANGE.0', t => {
   t.end();
 });
 
-test('#visStateReducer -> LAYER_TYPE_CHANGE.1', t => {
+test('#visStateReducer -> LAYER_TYPE_CHANGE.1', async t => {
   const layer = new Layer({id: 'more_layer'});
   const oldState = {
     ...INITIAL_VIS_STATE,
-    datasets: createNewDataEntry({
+    datasets: await createNewDataEntryMock({
       info: {id: 'puppy', label: 'puppy'},
       data: {
         rows: mockData.data,
@@ -432,14 +433,14 @@ test('#visStateReducer -> LAYER_TYPE_CHANGE.1', t => {
   t.end();
 });
 
-test('#visStateReducer -> LAYER_TYPE_CHANGE.2', t => {
+test('#visStateReducer -> LAYER_TYPE_CHANGE.2', async t => {
   const pointLayer = new PointLayer({id: 'a', dataId: 'smoothie'});
   const mockColorRange = {
     name: 'abc',
     isReversed: true,
     colors: ['a', 'b', 'c']
   };
-  const datasets = createNewDataEntry({
+  const datasets = await createNewDataEntryMock({
     info: {id: 'smoothie'},
     data: {
       rows: testAllData,
@@ -543,7 +544,7 @@ test('#visStateReducer -> LAYER_TYPE_CHANGE.2', t => {
   t.end();
 });
 
-test('#visStateReducer -> LAYER_TYPE_CHANGE.3 -> animationConfig', t => {
+test('#visStateReducer -> LAYER_TYPE_CHANGE.3 -> animationConfig', async t => {
   const layer = new GeojsonLayer({
     label: 'taro and blue',
     dataId: 'taro',
@@ -553,7 +554,7 @@ test('#visStateReducer -> LAYER_TYPE_CHANGE.3 -> animationConfig', t => {
     id: 'taro'
   });
 
-  const dataset = createNewDataEntry({
+  const dataset = await createNewDataEntryMock({
     info: {id: 'taro'},
     data: processGeojson(tripGeojson)
   });
@@ -698,10 +699,12 @@ test('#visStateReducer -> LAYER_CONFIG_CHANGE -> isVisible -> splitMaps', t => {
 test('#visStateReducer -> LAYER_CONFIG_CHANGE -> columnMode', t => {
   const initialState = InitialState.visState;
   // const initialState = cloneDeep(state || InitialState);
-  const updatedState = reducer(
-    initialState,
-    VisStateActions.updateVisData({info: tripCsvDataInfo, data: processCsvData(tripCsvData)})
-  );
+  const updatedState = applyActions(reducer, initialState, [
+    {
+      action: VisStateActions.updateVisData,
+      payload: [{info: tripCsvDataInfo, data: processCsvData(tripCsvData)}]
+    }
+  ]);
 
   const pointLayer = updatedState.layers[0];
   // change layer type to trip
@@ -824,16 +827,20 @@ test('visStateReducer -> layerDataIdChangeUpdater', t => {
 
 test('visStateReducer -> layerDataIdChangeUpdater -> geojson', t => {
   const initialState = CloneDeep(StateWFilesFiltersLayerColor).visState;
-  const nextState = reducer(
-    initialState,
+  const nextState = applyActions(reducer, initialState, [
     // add another geojson
-    VisStateActions.updateVisData([
-      {
-        info: {id: 'geojson2', label: 'Some Geojson'},
-        data: {fields: geojsonFields, rows: geojsonRows.slice(0, 3)}
-      }
-    ])
-  );
+    {
+      action: VisStateActions.updateVisData,
+      payload: [
+        [
+          {
+            info: {id: 'geojson2', label: 'Some Geojson'},
+            data: {fields: geojsonFields, rows: geojsonRows.slice(0, 3)}
+          }
+        ]
+      ]
+    }
+  ]);
 
   // find geojson layer
   const index = nextState.layers.findIndex(l => l.type === 'geojson');
@@ -874,10 +881,12 @@ test('visStateReducer -> layerDataIdChangeUpdater -> validation', t => {
     ...row.slice(fieldIdx + 1, row.length)
   ]);
   // add another dataset
-  const nextState = reducer(
-    initialState,
-    VisStateActions.updateVisData([{info: newDataInfo, data: {fields, rows}}])
-  );
+  const nextState = applyActions(reducer, initialState, [
+    {
+      action: VisStateActions.updateVisData,
+      payload: [[{info: newDataInfo, data: {fields, rows}}]]
+    }
+  ]);
 
   const nextState1 = reducer(
     nextState,
@@ -1361,16 +1370,20 @@ test('#visStateReducer -> UPDATE_VIS_DATA.1 -> No data', t => {
 test('#visStateReducer -> UPDATE_VIS_DATA.2 -> to empty state', t => {
   const oldState = INITIAL_VIS_STATE;
 
-  const newState = reducer(
-    oldState,
-    VisStateActions.updateVisData([
-      {
-        data: mockRawData,
-        info: {id: 'smoothie', label: 'exciting dataset'},
-        metadata: {album: 'taro_and_blue'}
-      }
-    ])
-  );
+  const newState = applyActions(reducer, oldState, [
+    {
+      action: VisStateActions.updateVisData,
+      payload: [
+        [
+          {
+            data: mockRawData,
+            info: {id: 'smoothie', label: 'exciting dataset'},
+            metadata: {album: 'taro_and_blue'}
+          }
+        ]
+      ]
+    }
+  ]);
 
   const expectedDatasets = {
     smoothie: {
@@ -1547,15 +1560,19 @@ test('#visStateReducer -> UPDATE_VIS_DATA.3 -> merge w/ existing state', t => {
     smoothie: []
   };
 
-  const newState = reducer(
-    oldState,
-    VisStateActions.updateVisData([
-      {
-        data: mockRawData,
-        info: {id: 'smoothie', label: 'smoothie and milkshake'}
-      }
-    ])
-  );
+  const newState = applyActions(reducer, oldState, [
+    {
+      action: VisStateActions.updateVisData,
+      payload: [
+        [
+          {
+            data: mockRawData,
+            info: {id: 'smoothie', label: 'smoothie and milkshake'}
+          }
+        ]
+      ]
+    }
+  ]);
 
   Object.keys(expectedDatasets).forEach(key =>
     cmpDataset(t, expectedDatasets[key], newState.datasets[key])
@@ -1607,7 +1624,12 @@ test('#visStateReducer -> UPDATE_VIS_DATA.4.Geojson -> geojson data', t => {
   const [layer1Color, layer1StrokeColor] = getNextColorMakerValue(2);
 
   // receive data
-  const initialState = reducer(initialVisState, VisStateActions.updateVisData(payload));
+  const initialState = applyActions(reducer, initialVisState, [
+    {
+      action: VisStateActions.updateVisData,
+      payload: [payload]
+    }
+  ]);
 
   const expectedDatasets = {
     metadata: {
@@ -1706,7 +1728,12 @@ test('#visStateReducer -> UPDATE_VIS_DATA.4.Geojson -> with config', t => {
   ];
 
   // receive data
-  const initialState = reducer(initialVisState, VisStateActions.updateVisData(payload));
+  const initialState = applyActions(reducer, initialVisState, [
+    {
+      action: VisStateActions.updateVisData,
+      payload: [payload]
+    }
+  ]);
 
   t.equal(initialState.layers.length, 1, 'should create 1 layer');
 
@@ -1740,7 +1767,12 @@ test('#visStateReducer -> UPDATE_VIS_DATA.4.Geojson -> with config', t => {
     }
   };
 
-  const testState = reducer(initialState, VisStateActions.updateVisData(datasets, {}, config));
+  const testState = applyActions(reducer, initialState, [
+    {
+      action: VisStateActions.updateVisData,
+      payload: [datasets, {}, config]
+    }
+  ]);
 
   t.deepEqual(
     Object.keys(testState.datasets),
@@ -1804,15 +1836,19 @@ test('#visStateReducer -> UPDATE_VIS_DATA -> mergeFilters', t => {
     value: mockFilter.value
   };
 
-  const newState = reducer(
-    oldState,
-    VisStateActions.updateVisData([
-      {
-        data: mockRawData,
-        info: {id: 'smoothie', label: 'smoothie and milkshake'}
-      }
-    ])
-  );
+  const newState = applyActions(reducer, oldState, [
+    {
+      action: VisStateActions.updateVisData,
+      payload: [
+        [
+          {
+            data: mockRawData,
+            info: {id: 'smoothie', label: 'smoothie and milkshake'}
+          }
+        ]
+      ]
+    }
+  ]);
 
   const dc = createDataContainer(mockRawData.rows, {fields: mockRawData.fields});
   const allIndexes = dc.getPlainIndex();
@@ -1951,15 +1987,19 @@ test('#visStateReducer -> UPDATE_VIS_DATA.SPLIT_MAPS', t => {
     layerOrder: [layers[2].id, layers[1].id, layers[0].id, layers[3].id]
   };
 
-  const newState = reducer(
-    oldState,
-    VisStateActions.updateVisData([
-      {
-        data: mockRawData,
-        info: {id: 'smoothie', label: 'smoothie and milkshake'}
-      }
-    ])
-  );
+  const newState = applyActions(reducer, oldState, [
+    {
+      action: VisStateActions.updateVisData,
+      payload: [
+        [
+          {
+            data: mockRawData,
+            info: {id: 'smoothie', label: 'smoothie and milkshake'}
+          }
+        ]
+      ]
+    }
+  ]);
 
   // first visible layer should be point
   const id1 = newState.layers[4].id;
@@ -2018,7 +2058,12 @@ test('#visStateReducer -> setFilter.dynamicDomain & cpu', t => {
   ];
 
   // receive data
-  const initialState = reducer(INITIAL_VIS_STATE, VisStateActions.updateVisData(payload));
+  const initialState = applyActions(reducer, INITIAL_VIS_STATE, [
+    {
+      action: VisStateActions.updateVisData,
+      payload: [payload]
+    }
+  ]);
 
   const expectedLayer1 = new PointLayer({
     isVisible: true,
@@ -2650,7 +2695,12 @@ function testSetFilterDynamicDomainGPU(t, setFilter) {
   ];
 
   // receive data
-  const initialState = reducer(INITIAL_VIS_STATE, VisStateActions.updateVisData(payload));
+  const initialState = applyActions(reducer, INITIAL_VIS_STATE, [
+    {
+      action: VisStateActions.updateVisData,
+      payload: [payload]
+    }
+  ]);
 
   // add filter
   const stateWithFilter = reducer(initialState, VisStateActions.addFilter('milkshake'));
@@ -2827,7 +2877,7 @@ test('#visStateReducer -> UPDATE_FILTER_ANIMATION_SPEED', t => {
   t.end();
 });
 
-test('#visStateReducer -> setFilter.fixedDomain & DynamicDomain & gpu & cpu', t => {
+test('#visStateReducer -> setFilter.fixedDomain & DynamicDomain & gpu & cpu', async t => {
   // get test data
   const {fields, rows} = processCsvData(testData);
   const payload = [
@@ -2840,13 +2890,15 @@ test('#visStateReducer -> setFilter.fixedDomain & DynamicDomain & gpu & cpu', t 
     }
   ];
 
-  const datasetSmoothie = createNewDataEntry({
-    info: {id: 'smoothie', label: 'queen smoothie'},
-    data: {
-      rows: testAllData,
-      fields: testFields
-    }
-  }).smoothie;
+  const datasetSmoothie = (
+    await createNewDataEntryMock({
+      info: {id: 'smoothie', label: 'queen smoothie'},
+      data: {
+        rows: testAllData,
+        fields: testFields
+      }
+    })
+  ).smoothie;
 
   // add fixedDomain & gpu filter
   const stateWidthTsFilter = applyActions(reducer, INITIAL_VIS_STATE, [
@@ -3178,7 +3230,12 @@ test('#visStateReducer -> SET_FILTER_PLOT.yAxis', t => {
   ];
 
   // receive data
-  const initialState = reducer(INITIAL_VIS_STATE, VisStateActions.updateVisData(payload));
+  const initialState = applyActions(reducer, INITIAL_VIS_STATE, [
+    {
+      action: VisStateActions.updateVisData,
+      payload: [payload]
+    }
+  ]);
 
   // add filter
   const stateWithFilter = reducer(initialState, VisStateActions.addFilter('smoothie'));
@@ -4834,7 +4891,12 @@ test('#visStateReducer -> POLYGON: Create polygon filter', t => {
   };
 
   // visStateUpdateVisDataUpdater - creates 4 layers
-  let newReducer = reducer(state, VisStateActions.updateVisData(datasets, options, {}));
+  let newReducer = applyActions(reducer, state, [
+    {
+      action: VisStateActions.updateVisData,
+      payload: [datasets, options, {}]
+    }
+  ]);
 
   // add new polygon feature
   newReducer = reducer(newReducer, VisStateActions.setFeatures([mockPolygonFeature]));
@@ -4901,7 +4963,12 @@ test('#visStateReducer -> POLYGON: Create polygon filter', t => {
   t.equal(newReducer.layerData[1].data.length, 0, 'Layer Point 2 show show 0 points');
 
   // Adding a new dataset - creates extra 4 layers
-  newReducer = reducer(newReducer, VisStateActions.updateVisData(datasets, options, {}));
+  newReducer = applyActions(reducer, newReducer, [
+    {
+      action: VisStateActions.updateVisData,
+      payload: [datasets, options, {}]
+    }
+  ]);
 
   t.equal(newReducer.layerData[4].data.length, 4, 'Layer Point 5 should full data');
 
@@ -5038,7 +5105,12 @@ test('#visStateReducer -> POLYGON: Toggle filter feature', t => {
   };
 
   // visStateUpdateVisDataUpdater - creates 4 layers
-  let newReducer = reducer(state, VisStateActions.updateVisData(datasets, options, {}));
+  let newReducer = applyActions(reducer, state, [
+    {
+      action: VisStateActions.updateVisData,
+      payload: [datasets, options, {}]
+    }
+  ]);
 
   newReducer = reducer(newReducer, VisStateActions.addLayer());
 
@@ -5208,7 +5280,12 @@ test('#visStateReducer -> POLYGON: delete polygon filter', t => {
   };
 
   // visStateUpdateVisDataUpdater - creates 4 layers
-  let newReducer = reducer(state, VisStateActions.updateVisData(datasets, options, {}));
+  let newReducer = applyActions(reducer, state, [
+    {
+      action: VisStateActions.updateVisData,
+      payload: [datasets, options, {}]
+    }
+  ]);
 
   newReducer = reducer(newReducer, VisStateActions.addLayer());
 
@@ -5598,7 +5675,8 @@ test('#visStateReducer -> LOAD_FILES', async t => {
   }
 
   const nextState = reducer(initialState, VisStateActions.loadFiles(mockFiles));
-  const [task1, ...more] = drainTasksForTesting();
+
+  const [fitBoundsTask, task1, ...more] = drainTasksForTesting();
 
   t.equal(more.length, 0, 'should ceate 1 task');
 

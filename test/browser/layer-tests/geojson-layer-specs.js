@@ -18,6 +18,7 @@ import {
   geoFilterDomain0,
   geojsonFilterDomain0
 } from 'test/helpers/layer-utils';
+import {createNewDataEntryMock} from 'test/helpers/table-utils';
 import {
   updatedGeoJsonLayer,
   geoJsonWithStyle,
@@ -48,7 +49,7 @@ test('#GeojsonLayer -> constructor', t => {
   t.end();
 });
 
-test('#GeojsonLayer -> formatLayerData', t => {
+test('#GeojsonLayer -> formatLayerData', async t => {
   const filteredIndex = [0, 2, 4];
 
   const TEST_CASES = [
@@ -400,7 +401,7 @@ test('#GeojsonLayer -> formatLayerData', t => {
           color: [5, 5, 5]
         }
       },
-      datasets: createNewDataEntry({
+      datasets: await createNewDataEntryMock({
         info: {id: dataId},
         data: processGeojson(geoJsonWithStyle)
       }),

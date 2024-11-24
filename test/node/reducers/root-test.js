@@ -14,6 +14,7 @@ import {
   ActionTypes
 } from '@kepler.gl/actions';
 import {createAction, handleActions} from 'redux-actions';
+import {applyActions} from 'test/helpers/mock-state';
 
 test('keplerGlReducer.initialState', t => {
   const test1Reducer = keplerGlReducer.initialState({
@@ -318,17 +319,20 @@ test('keplerGlReducer.plugin override', t => {
 
   let nextState = testReducer(undefined, registerEntry({id: 'test3'}));
 
-  nextState = testReducer(
-    nextState,
-    addDataToMap({
-      datasets: {
-        data: mockRawData,
-        info: {
-          id: 'foo'
-        }
+  const addDataToMapPayload = {
+    datasets: {
+      data: mockRawData,
+      info: {
+        id: 'foo'
       }
-    })
-  );
+    }
+  };
+  nextState = applyActions(testReducer, nextState, [
+    {
+      action: addDataToMap,
+      payload: [addDataToMapPayload]
+    }
+  ]);
 
   t.equal(nextState.test3.visState.layers.length, 4, 'Should have 4 layer');
 
