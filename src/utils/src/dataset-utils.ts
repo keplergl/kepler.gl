@@ -246,7 +246,7 @@ export function validateInputData(data: ProtoDataset['data']): ProcessorResult {
   const allValid = fields.every((f, i) => {
     if (!isPlainObject(f)) {
       assert(`fields needs to be an array of object, but find ${typeof f}`);
-      fields[i] = {name: `column_${i}`};
+      fields[i] = {name: `column_${i}`, type: ALL_FIELD_TYPES.string};
     }
 
     if (!f.name) {

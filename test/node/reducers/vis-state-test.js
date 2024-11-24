@@ -27,7 +27,7 @@ import {
 
 import {processCsvData, processGeojson} from '@kepler.gl/processors';
 import {Layer, KeplerGlLayers, COLUMN_MODE_TABLE} from '@kepler.gl/layers';
-import {createNewDataEntry, maybeToDate} from '@kepler.gl/table';
+import {maybeToDate} from '@kepler.gl/table';
 import {
   createDataContainer,
   applyFilterFieldName,
@@ -5676,9 +5676,9 @@ test('#visStateReducer -> LOAD_FILES', async t => {
 
   const nextState = reducer(initialState, VisStateActions.loadFiles(mockFiles));
 
-  const [fitBoundsTask, task1, ...more] = drainTasksForTesting();
-
-  t.equal(more.length, 0, 'should ceate 1 task');
+  const tasks = drainTasksForTesting();
+  t.equal(tasks.length, 2, 'should ceate 2 tasks');
+  const task1 = tasks[1];
 
   const expectedTask1 = {
     type: 'LOAD_FILE_TASK',

@@ -388,7 +388,7 @@ export function processArrowTable(arrowTable: ArrowTable): ProcessorResult | nul
   return processArrowBatches(arrowTable.data.batches);
 }
 
-export function arrowSchemaToFields<F extends Field>(schema: arrow.Schema): F[] {
+export function arrowSchemaToFields(schema: arrow.Schema): Field[] {
   return schema.fields.map((field: arrow.Field, index: number) => {
     const isGeoArrowColumn = field.metadata.get('ARROW:extension:name')?.startsWith('geoarrow');
     return {

@@ -4,7 +4,7 @@
 import * as arrow from 'apache-arrow';
 import {console as globalConsole} from 'global/window';
 import {DATA_TYPES as AnalyzerDATA_TYPES} from 'type-analyzer';
-import {Field, ProtoDatasetField} from '@kepler.gl/types';
+import {ProtoDatasetField} from '@kepler.gl/types';
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 
 import {DataRow, SharedRowOptions} from './data-row';
@@ -144,7 +144,7 @@ export class ArrowDataContainer implements DataContainerInterface {
     return this._cols[columnIndex];
   }
 
-  getField(columnIndex: number): Field {
+  getField(columnIndex: number): ProtoDatasetField {
     return this._fields[columnIndex];
   }
 

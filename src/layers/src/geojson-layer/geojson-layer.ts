@@ -49,7 +49,7 @@ import {
   VisConfigBoolean,
   Merge,
   RGBColor,
-  Field,
+  ProtoDatasetField,
   LayerColumn
 } from '@kepler.gl/types';
 import {KeplerTable} from '@kepler.gl/table';
@@ -206,7 +206,7 @@ const getTableModeFieldValue = (field, data) => {
 
 const geoFieldAccessor =
   ({geojson}: GeoJsonLayerColumnsConfig) =>
-  (dc: DataContainerInterface): Field | null =>
+  (dc: DataContainerInterface): ProtoDatasetField | null =>
     dc.getField ? dc.getField(geojson.fieldIdx) : null;
 
 // access feature properties from geojson sub layer
@@ -377,6 +377,7 @@ export default class GeoJsonLayer extends Layer {
       .filter(
         f =>
           (f.type === 'geojson' || f.type === 'geoarrow') &&
+          f.analyzerType &&
           SUPPORTED_ANALYZER_TYPES[f.analyzerType]
       )
       .map(f => f.name);
@@ -403,7 +404,7 @@ export default class GeoJsonLayer extends Layer {
     const defaultLayerConfig = super.getDefaultLayerConfig(props ?? {});
     return {
       ...defaultLayerConfig,
-      
+
       columnMode: props?.columnMode ?? DEFAULT_COLUMN_MODE,
       // add height visual channel
       heightField: null,

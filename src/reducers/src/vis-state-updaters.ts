@@ -2165,7 +2165,7 @@ export const createNewDatasetSuccessUpdater = (
       return {...accu, [dataset.id]: dataset};
     } else {
       // handle create dataset error
-      console.error(result.reason || result.value);
+      console.error(result.reason);
       return accu;
     }
   }, {} as Datasets);

@@ -111,7 +111,7 @@ export function maybeToDate(
   return dc.valueAt(d.index, fieldIdx);
 }
 
-class KeplerTable<F extends Field> {
+class KeplerTable<F extends Field = Field> {
   readonly id: string;
 
   type?: string;
@@ -119,15 +119,15 @@ class KeplerTable<F extends Field> {
   color: RGBColor;
 
   // fields and data
-  fields: F[];
+  fields: F[] = [];
 
   dataContainer: DataContainerInterface;
 
-  allIndexes: number[];
-  filteredIndex: number[];
+  allIndexes: number[] = [];
+  filteredIndex: number[] = [];
   filteredIdxCPU?: number[];
-  filteredIndexForDomain: number[];
-  fieldPairs: FieldPair[];
+  filteredIndexForDomain: number[] = [];
+  fieldPairs: FieldPair[] = [];
   gpuFilter: GpuFilter;
   filterRecord?: FilterRecord;
   filterRecordCPU?: FilterRecord;
@@ -191,6 +191,9 @@ class KeplerTable<F extends Field> {
 
     this.supportedFilterTypes = supportedFilterTypes;
     this.disableDataOperation = disableDataOperation;
+
+    this.dataContainer = createDataContainer([]);
+    this.gpuFilter = getGpuFilterProps([], this.id, [], undefined);
   }
 
   importData({data}: {data: ProtoDataset['data']}) {
@@ -202,11 +205,13 @@ class KeplerTable<F extends Field> {
       inputDataFormat
     });
 
-    const fields = data.fields.map((f, i) => ({
+    const fields: Field[] = data.fields.map((f, i) => ({
       ...f,
       fieldIdx: i,
       id: f.name,
       displayName: f.displayName || f.name,
+      analyzerType: f.analyzerType || ALL_FIELD_TYPES.string,
+      format: f.format || '',
       valueAccessor: getFieldValueAccessor(f, i, dataContainer)
     }));
 
@@ -216,6 +221,7 @@ class KeplerTable<F extends Field> {
     this.filteredIndex = allIndexes;
     this.filteredIndexForDomain = allIndexes;
     this.fieldPairs = findPointFieldPairs(fields);
+    // @ts-expect-error Make sure that fields satisfies F extends Field
     this.fields = fields;
     this.gpuFilter = getGpuFilterProps([], this.id, fields, undefined);
   }

@@ -38,6 +38,7 @@ export type ProtoDatasetField = {
   displayName?: string;
   analyzerType?: string;
   id?: string;
+  metadata?: Record<string, any>;
 };
 export type ProtoDataset = {
   info: {

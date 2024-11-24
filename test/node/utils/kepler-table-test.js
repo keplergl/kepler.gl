@@ -6,7 +6,7 @@ import moment from 'moment';
 import testData, {numericRangesCsv, testFields} from 'test/fixtures/test-csv-data';
 
 import {preciseRound, getFilterFunction} from '@kepler.gl/utils';
-import {createNewDataEntry, findPointFieldPairs} from '@kepler.gl/table';
+import {findPointFieldPairs} from '@kepler.gl/table';
 import {processCsvData} from '@kepler.gl/processors';
 import {FILTER_TYPES} from '@kepler.gl/constants';
 

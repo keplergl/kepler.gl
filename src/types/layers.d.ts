@@ -101,11 +101,11 @@ export type Field = {
   name: string;
   displayName: string;
   type: string;
-  // fieldIdx: number;
+  fieldIdx: number;
   valueAccessor(v: {index: number}): any;
   analyzerType?: string;
   id?: string;
-  format?: string;
+  format: string;
   filterProps?: FilterProps;
   metadata?: Record<string, any>;
   displayFormat?: string;
