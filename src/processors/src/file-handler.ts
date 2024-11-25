@@ -16,8 +16,8 @@ import {
 } from '@kepler.gl/utils';
 import {generateHashId} from '@kepler.gl/common-utils';
 import {DATASET_FORMATS} from '@kepler.gl/constants';
-import {LoadedMap, ProcessorResult} from '@kepler.gl/types';
-import {Feature, AddDataToMapPayload} from '@kepler.gl/types';
+import {AddDataToMapPayload, Feature, LoadedMap, ProcessorResult} from '@kepler.gl/types';
+import {KeplerTable} from '@kepler.gl/table';
 import {FeatureCollection} from '@turf/helpers';
 
 import {
@@ -220,7 +220,7 @@ export async function processFileData({
   // generate unique id with length of 4 using fileName string
   const id = generateHashIdFromString(fileName);
   // decide on which table class to use based on application config
-  const table = getApplicationConfig().table;
+  const table = getApplicationConfig().table ?? KeplerTable;
 
   if (typeof table.getFileProcessor === 'function') {
     // use custom processors from table class

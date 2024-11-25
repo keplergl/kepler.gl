@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {KeplerTable} from '@kepler.gl/table';
 import {MapLib, MapRef} from 'react-map-gl';
 
 export type MapLibInstance = MapLib<any>;
@@ -44,7 +43,9 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig<mapboxgl.Map>
   mapLibName: 'MapLibre',
   mapLibUrl: 'https://www.maplibre.org/',
   plugins: [],
-  table: KeplerTable
+  // The default table class is KeplerTable.
+  // TODO include KeplerTable here when circular dependency on with @kepler.gl/table and @kepler.gl/utils are resolved.
+  table: null
 };
 
 const applicationConfig: Required<KeplerApplicationConfig<mapboxgl.Map>> =
