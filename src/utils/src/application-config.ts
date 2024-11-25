@@ -44,7 +44,7 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig<mapboxgl.Map>
   mapLibUrl: 'https://www.maplibre.org/',
   plugins: [],
   // The default table class is KeplerTable.
-  // TODO include KeplerTable here when circular dependency on with @kepler.gl/table and @kepler.gl/utils are resolved.
+  // TODO include KeplerTable here when the circular dependency with @kepler.gl/table and @kepler.gl/utils are resolved.
   table: null
 };
 

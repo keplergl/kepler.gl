@@ -189,7 +189,8 @@ export const addDataToMapUpdater = (
     ),
 
     if_(Boolean(info), pick_('visState')(apply_<VisState, any>(setMapInfoUpdater, {info}))),
-    // Note that this won't in case datasets are created in Tasks
+    // Note that fit bounds here won't be called in case datasets are created in Tasks.
+    // A separate Task to update bounds is created once the datasets are ready.
     with_(({visState}) =>
       pick_('mapState')(
         apply_(

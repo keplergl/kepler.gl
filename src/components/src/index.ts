@@ -251,8 +251,8 @@ export {
   LegendRowFactory,
   ResetColorLabelFactory
 } from './common/color-legend';
-export {renderedSize} from './common/data-table/cell-size';
 export {default as CanvasHack} from './common/data-table/canvas';
+export {renderedSize} from './common/data-table/cell-size';
 export {
   default as DataTableConfigFactory,
   NumberFormatConfig

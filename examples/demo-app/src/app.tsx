@@ -48,11 +48,10 @@ import sampleGeojsonConfig from './data/sample-geojson-config';
 import sampleH3Data, {config as h3MapConfig} from './data/sample-hex-id-csv';
 import sampleS2Data, {config as s2MapConfig, dataId as s2DataId} from './data/sample-s2-data';
 import sampleAnimateTrip, {animateTripDataId} from './data/sample-animate-trip-data';
-import sampleIconCsv, {config as savedMapConfig} from './data/sample-icon-csv';
+import sampleIconCsv from './data/sample-icon-csv';
 import sampleGpsData from './data/sample-gps-data';
 import sampleRowData, {config as rowDataConfig} from './data/sample-row-data';
 import {processCsvData, processGeojson, processRowObject} from '@kepler.gl/processors';
-
 /* eslint-enable no-unused-vars */
 
 const BannerHeight = 48;
@@ -140,7 +139,7 @@ const App = props => {
 
     // Notifications
     // _loadMockNotifications();
-  }, []);
+  }, [dispatch, id, provider, query]);
 
   const _setStartScreenCapture = useCallback(
     flag => {
@@ -185,7 +184,7 @@ const App = props => {
         config: rowDataConfig
       })
     );
-  }, []);
+  }, [dispatch]);
 
   const _loadPointData = useCallback(() => {
     dispatch(
@@ -407,7 +406,7 @@ const App = props => {
       }),
       {}
     );
-  }, [messages, aiAssistantMessages]);
+  }, []);
 
   // eslint-disable-next-line no-unused-vars
   const _loadSampleData = useCallback(() => {

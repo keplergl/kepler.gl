@@ -100,7 +100,6 @@ function DropdownSelect<Option>({
   displayOption,
   disabled,
   onClick,
-  error,
   inputTheme,
   size,
   value,
