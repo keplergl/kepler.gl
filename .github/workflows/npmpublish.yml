@@ -1,8 +1,9 @@
 name: Node.js Package
 
 on:
-  release:
-    types: [created]
+  push:
+    branches:
+      - 'igr/publish-fix-try-2'
 
 jobs:
   publish-npm:
@@ -25,7 +26,7 @@ jobs:
         run: npm config set "//registry.npmjs.org/:_authToken=${NPM_AUTH_TOKEN}"
 
       - name: NPM config
-        run: npm config list
+        run: npm --version && npm config list
 
       - name: Publish
         run: npm publish --dry-run --workspaces --access public
