@@ -3,7 +3,7 @@ name: Node.js Package
 on:
   push:
     branches:
-      - 'igr/publish-fix-try-2'
+      - 'igr/publishing-4'
 
 jobs:
   publish-npm:
