@@ -145,8 +145,6 @@ async function filterCallback({
   // create filter only and apply the filter value later in the filter message component
   // await createOrUpdateFilter(updatedFilter.id, datasetId, selectField?.name);
 
-  console.log('filters', filters);
-
   return Promise.resolve({
     type: 'filter',
     name: functionName,

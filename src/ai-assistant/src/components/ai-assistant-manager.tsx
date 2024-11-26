@@ -14,7 +14,8 @@ import {
   addLayer,
   createOrUpdateFilter,
   setFilter,
-  setFilterPlot
+  setFilterPlot,
+  layerSetIsValid
 } from '@kepler.gl/actions';
 import {withState, SidePanelTitleFactory, Icons} from '@kepler.gl/components';
 import {VisState} from '@kepler.gl/schemas';
@@ -164,7 +165,8 @@ function AiAssistantManagerFactory(
         addLayer,
         createOrUpdateFilter,
         setFilter,
-        setFilterPlot
+        setFilterPlot,
+        layerSetIsValid
       },
       aiAssistantActions: {
         updateAiAssistantConfig,

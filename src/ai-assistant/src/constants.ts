@@ -1,7 +1,5 @@
-// SPDX-License-Identifier: MIT
-// Copyright contributors to the kepler.gl project
-
-export const TASK_LIST = '1. Change the basemap style.\n2. Load data from url.';
+export const TASK_LIST =
+  '1. Change the basemap style.\n2. Load data from url.\n3. Create a geojson layer using variable.\n4. Filter the data of a variable.\n5. Create a histogram.';
 
 export const WELCOME_MESSAGE = `Hi, I am Kepler.gl AI Assistant!\nHere are some tasks I can help you with:\n\n${TASK_LIST}`;
 

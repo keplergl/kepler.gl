@@ -11,6 +11,7 @@ type CreateGeojsonLayerConfigParams = {
   colorScale: string;
   colorRange?: ColorRange;
   customColorScale?: number[];
+  customColors?: string[];
 };
 
 export function createGeojsonLayerConfig({
@@ -19,7 +20,8 @@ export function createGeojsonLayerConfig({
   field,
   colorScale,
   colorRange,
-  customColorScale
+  customColorScale,
+  customColors
 }: CreateGeojsonLayerConfigParams) {
   if (customColorScale && colorRange) {
     return createCustomGeojsonLayerConfig({
@@ -28,7 +30,8 @@ export function createGeojsonLayerConfig({
       field,
       colorScale,
       colorRange,
-      customColorScale
+      customColorScale,
+      customColors
     });
   }
   return createDefaultGeojsonLayerConfig({layer, dataset, field, colorScale});
@@ -68,12 +71,14 @@ export function createCustomGeojsonLayerConfig({
   field,
   colorScale,
   colorRange,
-  customColorScale
+  customColorScale,
+  customColors
 }: CreateGeojsonLayerConfigParams & {
   colorRange: ColorRange;
   customColorScale: number[];
+  customColors?: string[];
 }) {
-  const customColorRange = createCustomColorRange(colorRange, customColorScale);
+  const customColorRange = createCustomColorRange(colorRange, customColorScale, customColors ?? []);
   return {
     id: layer.id,
     type: 'geojson',
@@ -121,7 +126,11 @@ function findColorRange(currentColorRange: ColorRange, numberOfColors: number): 
   return colorRange ?? currentColorRange;
 }
 
-export function createCustomColorRange(colorRange: ColorRange, customColorScale: number[]) {
+export function createCustomColorRange(
+  colorRange: ColorRange,
+  customColorScale: number[],
+  customColors: string[]
+) {
   const numberOfColors = customColorScale.length + 1;
   const newColorRange = findColorRange(colorRange, numberOfColors);
 
@@ -144,6 +153,28 @@ export function createCustomColorRange(colorRange: ColorRange, customColorScale:
     colorMap,
     colorLegends
   };
+
+  // replace the colors in the customColorRange with the input customColors
+  customColorRange.colors = [...customColorRange.colors, ...customColors];
+  customColorRange.colorMap = customColorRange.colorMap?.map(([value, color], index) => {
+    if (index <= customColorScale.length) {
+      return [value, customColors[index]];
+    }
+    return [value, color];
+  });
+  if (customColorRange.colorLegends) {
+    customColorRange.colorLegends = Object.entries(customColorRange.colorLegends).reduce(
+      (prev, [color, label], index) => {
+        if (index <= customColorScale.length) {
+          prev[customColors[index]] = label;
+        } else {
+          prev[color] = label;
+        }
+        return prev;
+      },
+      {} as ColorLegends
+    );
+  }
 
   return customColorRange;
 }

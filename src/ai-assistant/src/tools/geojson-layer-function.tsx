@@ -44,6 +44,13 @@ export function addGeojsonLayerFunctionDefinition(
           type: 'number'
         },
         description: 'The custom color scale of the layer. Only used when colorScale is "custom".'
+      },
+      customColors: {
+        type: 'array',
+        items: {
+          type: 'string'
+        },
+        description: 'The custom hex colors of the layer. Only used when colorScale is "custom".'
       }
     },
     required: ['datasetName', 'fieldName'],
@@ -58,6 +65,7 @@ type AddLayerCallbackArgs = {
   fieldName: string;
   colorScale: string;
   customColorScale: number[];
+  customColors: string[];
 };
 
 type AddLayerFunctionContext = {
@@ -86,7 +94,7 @@ function addLayerCallback({
   functionArgs,
   functionContext
 }: CallbackFunctionProps): AddLayerCallbackOutput {
-  const {datasetName, fieldName, colorScale, customColorScale} =
+  const {datasetName, fieldName, colorScale, customColorScale, customColors} =
     functionArgs as AddLayerCallbackArgs;
   const {datasets, addLayer} = functionContext as AddLayerFunctionContext;
 
@@ -141,6 +149,7 @@ function addLayerCallback({
     field,
     colorScale,
     customColorScale,
+    customColors,
     colorRange: layer.config.visConfig.colorRange
   });
 
