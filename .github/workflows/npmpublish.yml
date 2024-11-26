@@ -1,9 +1,7 @@
 name: Node.js Package
 
-on:
-  push:
-    branches:
-      - 'igr/publishing-4'
+release:
+  types: [created]
 
 jobs:
   publish-npm:
@@ -29,4 +27,4 @@ jobs:
         run: npm --version && npm config list && yarn --version
 
       - name: Publish
-        run: npm publish --dry-run --workspaces --access public
+        run: npm publish --workspaces --access public
