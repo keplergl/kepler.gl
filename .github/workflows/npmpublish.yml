@@ -24,5 +24,8 @@ jobs:
       - name: Login to NPM
         run: npm config set "//registry.npmjs.org/:_authToken=${NPM_AUTH_TOKEN}"
 
+      - name: NPM config
+        run: npm config list
+
       - name: Publish
-        run: npm publish --workspaces --access public
+        run: npm publish --dry-run --workspaces --access public
