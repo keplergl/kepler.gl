@@ -30,7 +30,12 @@ import {basemapFunctionDefinition} from '../tools/basemap-functions';
 import {loadUrlFunctionDefinition} from '../tools/loadurl-function';
 
 import {AiAssistantState} from '../reducers';
-import {setScreenCaptured, setStartScreenCapture, updateAiAssistantMessages} from '../actions';
+import {
+  addDatasetContext,
+  setScreenCaptured,
+  setStartScreenCapture,
+  updateAiAssistantMessages
+} from '../actions';
 import {
   ASSISTANT_DESCRIPTION,
   ASSISTANT_NAME,
@@ -162,6 +167,22 @@ function AiAssistantComponentFactory() {
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [visState.datasets, visState.filters]);
 
+    // show ideas for adding dataset context to the conversation
+    const datasetContextIdeas = Object.values(visState.datasets)
+      .filter(dataset => !aiAssistant.datasetContext.includes(dataset.id))
+      .map(dataset => ({
+        title: `Add Dataset Context `,
+        description: `The metadata of "${dataset.label}"`,
+        icon: 'ph:file-plus',
+        context: `datasetId: ${dataset.id}\n${dataset.fields
+          .map(field => `${field.name}: ${field.type}`)
+          .join('\n')}\nPlease don't respond to this message.`,
+        callback: () => {
+          // add the dataset to the context
+          addDatasetContext(dataset.id);
+        }
+      }));
+
     const onMessagesUpdated = (messages: MessageModel[]) => {
       updateAiAssistantMessages(messages);
     };
@@ -192,6 +213,7 @@ function AiAssistantComponentFactory() {
           fontSize={'text-tiny'}
           botMessageClassName={''}
           githubIssueLink={'https://github.com/keplergl/kepler.gl/issues'}
+          ideas={datasetContextIdeas}
         />
       </StyledAiAssistantComponent>
     );

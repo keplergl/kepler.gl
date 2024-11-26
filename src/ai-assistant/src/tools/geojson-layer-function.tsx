@@ -50,7 +50,8 @@ export function addGeojsonLayerFunctionDefinition(
         items: {
           type: 'string'
         },
-        description: 'The custom hex colors of the layer. Only used when colorScale is "custom".'
+        description:
+          'An array of hex color values. Must contain exactly one more color than the number of values in customColorScale. For example, if customColorScale has 3 values, customColors must have 4 colors.'
       }
     },
     required: ['datasetName', 'fieldName'],

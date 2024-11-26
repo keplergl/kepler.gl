@@ -56,6 +56,8 @@ const StyledAiAssistantPanelContainer = styled.div`
   justify-content: space-between;
   overflow: hidden;
   height: 100%;
+  min-width: ${props => props.theme.aiAssistantPanelWidth}px;
+  max-width: ${props => props.theme.aiAssistantPanelWidth}px;
   & > * {
     /* all children should allow input */
     pointer-events: all;
@@ -74,8 +76,6 @@ const StyledAiAssistantPanel = styled.div`
 const StyledAiAssistantPanelHeader = styled.div`
   padding: 16px 16px 4px 16px;
   border-bottom: 1px solid ${props => props.theme.borderColor};
-  min-width: ${props => props.theme.aiAssistantPanelWidth}px;
-  max-width: ${props => props.theme.aiAssistantPanelWidth}px;
   color: ${props => props.theme.subtextColorActive};
 `;
 

@@ -6,7 +6,9 @@ import {
   UPDATE_AI_ASSISTANT_CONFIG,
   UPDATE_AI_ASSISTANT_MESSAGES,
   SET_START_SCREEN_CAPTURE,
-  SET_SCREEN_CAPTURED
+  SET_SCREEN_CAPTURED,
+  ADD_DATASET_CONTEXT,
+  REMOVE_DATASET_CONTEXT
 } from '../actions';
 import {MessageModel} from 'react-ai-assist';
 
@@ -19,6 +21,7 @@ export type AiAssistantConfig = {
   temperature: number;
   topP: number;
 };
+
 // Initial state for the reducer
 const initialConfig: AiAssistantConfig = {
   isReady: false,
@@ -37,6 +40,7 @@ export type AiAssistantState = {
     startScreenCapture: boolean;
     screenCaptured: string;
   };
+  datasetContext: string[];
 };
 
 const initialState: AiAssistantState = {
@@ -45,43 +49,63 @@ const initialState: AiAssistantState = {
   screenshotToAsk: {
     startScreenCapture: false,
     screenCaptured: ''
-  }
+  },
+  datasetContext: []
 };
 
 export const aiAssistantReducer = handleActions<AiAssistantState, any>(
   {
-    [UPDATE_AI_ASSISTANT_CONFIG]: updateAiAssistantConfig,
-    [UPDATE_AI_ASSISTANT_MESSAGES]: updateAiAssistantMessages,
-    [SET_START_SCREEN_CAPTURE]: setStartScreenCapture,
-    [SET_SCREEN_CAPTURED]: setScreenCaptured
+    [UPDATE_AI_ASSISTANT_CONFIG]: updateAiAssistantConfigHandler,
+    [UPDATE_AI_ASSISTANT_MESSAGES]: updateAiAssistantMessagesHandler,
+    [SET_START_SCREEN_CAPTURE]: setStartScreenCaptureHandler,
+    [SET_SCREEN_CAPTURED]: setScreenCapturedHandler,
+    [ADD_DATASET_CONTEXT]: addDatasetContextHandler,
+    [REMOVE_DATASET_CONTEXT]: removeDatasetContextHandler
   },
   initialState
 );
 
-function updateAiAssistantConfig(state: AiAssistantState, action: Action<AiAssistantConfig>) {
+function updateAiAssistantConfigHandler(
+  state: AiAssistantState,
+  action: Action<AiAssistantConfig>
+) {
   return {
     ...state,
     config: {...state.config, ...action.payload}
   };
 }
 
-function updateAiAssistantMessages(state: AiAssistantState, action: Action<MessageModel[]>) {
+function updateAiAssistantMessagesHandler(state: AiAssistantState, action: Action<MessageModel[]>) {
   return {
     ...state,
     messages: action.payload
   };
 }
 
-function setStartScreenCapture(state: AiAssistantState, action: Action<boolean>) {
+function setStartScreenCaptureHandler(state: AiAssistantState, action: Action<boolean>) {
   return {
     ...state,
     screenshotToAsk: {startScreenCapture: action.payload, screenCaptured: ''}
   };
 }
 
-function setScreenCaptured(state: AiAssistantState, action: Action<string>) {
+function setScreenCapturedHandler(state: AiAssistantState, action: Action<string>) {
   return {
     ...state,
     screenshotToAsk: {...state.screenshotToAsk, screenCaptured: action.payload}
+  };
+}
+
+function addDatasetContextHandler(state: AiAssistantState, action: Action<string>) {
+  return {
+    ...state,
+    datasetContext: [...state.datasetContext, action.payload]
+  };
+}
+
+function removeDatasetContextHandler(state: AiAssistantState, action: Action<string>) {
+  return {
+    ...state,
+    datasetContext: state.datasetContext.filter(id => id !== action.payload)
   };
 }
