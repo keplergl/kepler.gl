@@ -34,6 +34,7 @@
     "@kepler.gl/common-utils": "3.0.0",
     "@kepler.gl/constants": "3.0.0",
     "@kepler.gl/schemas": "3.0.0",
+    "@kepler.gl/table": "3.0.0",
     "@kepler.gl/types": "3.0.0",
     "@kepler.gl/utils": "3.0.0",
     "@loaders.gl/arrow": "^4.3.2",

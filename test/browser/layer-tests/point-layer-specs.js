@@ -19,7 +19,8 @@ import {processGeojson} from '@kepler.gl/processors';
 import {geoJsonWithStyle, geojsonData} from 'test/fixtures/geojson';
 import testArcData, {pointFromNeighbor} from 'test/fixtures/test-arc-data';
 import {StateWArcNeighbors} from 'test/helpers/mock-state';
-import {copyTableAndUpdate, createNewDataEntry} from '@kepler.gl/table';
+import {createNewDataEntryMock} from 'test/helpers/table-utils';
+import {copyTableAndUpdate} from '@kepler.gl/table';
 import {KeplerGlLayers} from '@kepler.gl/layers';
 import {INITIAL_MAP_STATE} from '@kepler.gl/reducers';
 import {DEFAULT_TEXT_LABEL, PROJECTED_PIXEL_SIZE_MULTIPLIER} from '@kepler.gl/constants';
@@ -732,7 +733,7 @@ test('#PointLayer -> updateLayer', t => {
   t.end();
 });
 
-test('#PointLayer -> formatLayerData -> Geojson column mode', t => {
+test('#PointLayer -> formatLayerData -> Geojson column mode', async t => {
   // create a mockup GeoJson dataset with Point and MultiPoint geometry
   const geoJsonWithMultiPoint = cloneDeep(geoJsonWithStyle);
   geoJsonWithMultiPoint.features.push({
@@ -809,7 +810,7 @@ test('#PointLayer -> formatLayerData -> Geojson column mode', t => {
           }
         }
       },
-      datasets: createNewDataEntry({
+      datasets: await createNewDataEntryMock({
         info: {id: dataId},
         data: geojsonPointDataset
       }),
@@ -873,7 +874,7 @@ test('#PointLayer -> formatLayerData -> Geojson column mode', t => {
           }
         }
       },
-      datasets: createNewDataEntry({
+      datasets: await createNewDataEntryMock({
         info: {id: dataId},
         data: geojsonPolygonDataset
       }),
@@ -918,7 +919,7 @@ test('#PointLayer -> formatLayerData -> Geojson column mode', t => {
           }
         }
       },
-      datasets: createNewDataEntry({
+      datasets: await createNewDataEntryMock({
         info: {id: dataId},
         data: geojsonMultiPolygonDataset
       }),
@@ -988,7 +989,7 @@ test('#PointLayer -> formatLayerData -> Geojson column mode', t => {
           }
         }
       },
-      datasets: createNewDataEntry({
+      datasets: await createNewDataEntryMock({
         info: {id: dataId},
         data: geojsonGeometryCollectionDataset
       }),
@@ -1062,7 +1063,7 @@ test('#PointLayer -> formatLayerData -> Geojson column mode', t => {
           }
         }
       },
-      datasets: createNewDataEntry({
+      datasets: await createNewDataEntryMock({
         info: {id: dataId},
         data: geojsonPointWithNullDataset
       }),

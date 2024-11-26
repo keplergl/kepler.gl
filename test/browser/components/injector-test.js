@@ -235,7 +235,7 @@ test('Components -> injector -> withState.lens', t => {
 });
 
 test('Components -> injector -> withState.mapStateToProps', t => {
-  const CustomHeader = () => <div clssName="my-test-header-3">smoothie</div>;
+  const CustomHeader = () => <div className="my-test-header-3">smoothie</div>;
   const myCustomHeaderFactory = () =>
     withState([], state => ({ids: Object.keys(state)}))(CustomHeader);
 

@@ -200,7 +200,7 @@ test('Components -> ChannelByValueSelector -> ColorScaleSelector -> disabled', t
   t.end();
 });
 
-test.only('Components -> ChannelByValueSelector -> ColorScaleSelector -> ColorBreakDisplay', t => {
+test('Components -> ChannelByValueSelector -> ColorScaleSelector -> ColorBreakDisplay', t => {
   const InitialState = cloneDeep(StateWFilesFiltersLayerColor);
   const {layers, datasets} = InitialState.visState;
   const pointLayer = layers[0];

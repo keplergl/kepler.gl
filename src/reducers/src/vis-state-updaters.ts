@@ -11,16 +11,24 @@ import isEqual from 'lodash.isequal';
 import pick from 'lodash.pick';
 import uniq from 'lodash.uniq';
 import xor from 'lodash.xor';
-import {disableStackCapturing, withTask} from 'react-palm/tasks';
+import Task, {disableStackCapturing, withTask} from 'react-palm/tasks';
 // Tasks
-import {DELAY_TASK, LOAD_FILE_TASK, PROCESS_FILE_DATA, UNWRAP_TASK} from '@kepler.gl/tasks';
+import {
+  DELAY_TASK,
+  ACTION_TASK,
+  LOAD_FILE_TASK,
+  PROCESS_FILE_DATA,
+  UNWRAP_TASK
+} from '@kepler.gl/tasks';
 // Actions
 import {
   ActionTypes,
+  CreateNewDatasetSuccessPayload,
   MapStateActions,
   ReceiveMapConfigPayload,
   VisStateActions,
   applyLayerConfig,
+  createNewDatasetSuccess,
   layerConfigChange,
   layerTypeChange,
   layerVisConfigChange,
@@ -30,7 +38,8 @@ import {
   loadFilesSuccess,
   loadNextFile,
   nextFileBatch,
-  processFileContent
+  processFileContent,
+  fitBounds as fitMapBounds
 } from '@kepler.gl/actions';
 
 // Utils
@@ -62,7 +71,6 @@ import {
   isLayerAnimatable
 } from '@kepler.gl/utils';
 import {generateHashId, toArray} from '@kepler.gl/common-utils';
-
 // Mergers
 import {
   ANIMATION_WINDOW,
@@ -136,6 +144,9 @@ import {
   TIME_INTERVALS_ORDERED
 } from '@kepler.gl/utils';
 import {createEffect} from '@kepler.gl/effects';
+import {PayloadAction} from '@reduxjs/toolkit';
+
+import {findMapBounds} from './data-utils';
 
 // react-palm
 // disable capture exception for react-palm call to withTask
@@ -2122,7 +2133,7 @@ export const updateVisDataUpdater = (
   const {config, options} = action;
 
   // apply config if passed from action
-  // TODO: we don't handle asyn mergers here yet
+  // TODO: we don't handle async mergers here yet
   const previousState = config
     ? receiveMapConfigUpdater(state, {
         payload: {config, options}
@@ -2131,19 +2142,37 @@ export const updateVisDataUpdater = (
 
   const datasets = toArray(action.datasets);
 
-  const newDataEntries = datasets.reduce(
-    // @ts-expect-error  Type '{}' is missing the following properties from type 'ProtoDataset': data, info
-    (accu, {info = {}, ...rest} = {}) => ({
-      ...accu,
-      ...(createNewDataEntry({info, ...rest}, state.datasets) || {})
-    }),
-    {}
+  const allCreateDatasetsTasks = datasets.map(
+    ({info = {}, ...rest}) => createNewDataEntry({info, ...rest}, state.datasets) || {}
+  );
+  // call all Tasks
+  const tasks = Task.allSettled(allCreateDatasetsTasks).map(results =>
+    createNewDatasetSuccess({results, addToMapOptions: options})
   );
 
+  return withTask(previousState, tasks);
+};
+
+export const createNewDatasetSuccessUpdater = (
+  state: VisState,
+  action: PayloadAction<CreateNewDatasetSuccessPayload>
+): VisState => {
+  // console.log('createNewDatasetSuccessUpdater', action.payload);
+  const {results, addToMapOptions} = action.payload;
+  const newDataEntries = results.reduce((accu, result) => {
+    if (result.status === 'fulfilled') {
+      const dataset = result.value;
+      return {...accu, [dataset.id]: dataset};
+    } else {
+      // handle create dataset error
+      console.error(result.reason);
+      return accu;
+    }
+  }, {} as Datasets);
   // save new dataset entry to state
   const mergedState = {
-    ...previousState,
-    datasets: mergeDatasetsByOrder(previousState, newDataEntries)
+    ...state,
+    datasets: mergeDatasetsByOrder(state, newDataEntries)
   };
 
   // merge state with config to be merged
@@ -2153,7 +2182,7 @@ export const updateVisDataUpdater = (
   const newDataIds = Object.keys(newDataEntries);
   const postMergerPayload = {
     newDataIds,
-    options,
+    options: addToMapOptions,
     layerMergers
   };
 
@@ -2258,12 +2287,26 @@ function postMergeUpdater(mergedState: VisState, postMergerPayload: PostMergerPa
   updatedState = updateAnimationDomain(updatedState);
 
   // try to process layerMergers after dataset+datasetMergers
-  return layerMergers && layerMergers.length > 0
-    ? applyMergersUpdater(updatedState, {
-        mergers: layerMergers,
-        postMergerPayload: {...postMergerPayload, layerMergers: []}
-      })
-    : updatedState;
+  updatedState =
+    layerMergers && layerMergers.length > 0
+      ? applyMergersUpdater(updatedState, {
+          mergers: layerMergers,
+          postMergerPayload: {...postMergerPayload, layerMergers: []}
+        })
+      : updatedState;
+
+  // center the map once the dataset is created
+  if (newLayers.length && (options || {}).centerMap) {
+    const bounds = findMapBounds(newLayers);
+    if (bounds) {
+      const fitBoundsTask = ACTION_TASK().map(() => {
+        return fitMapBounds(bounds);
+      });
+      updatedState = withTask(updatedState, fitBoundsTask);
+    }
+  }
+
+  return updatedState;
 }
 
 /**

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {Field} from '@kepler.gl/types';
+import {ProtoDatasetField} from '@kepler.gl/types';
 import {DataRow, SharedRowOptions} from './data-row';
 
 /**
@@ -82,7 +82,7 @@ export interface DataContainerInterface {
    * @param columnIndex Column index.
    * @returns The field object at the specified index.
    */
-  getField?(columnIndex: number): Field;
+  getField?(columnIndex: number): ProtoDatasetField;
 
   /**
    * Returns the underlying data object.

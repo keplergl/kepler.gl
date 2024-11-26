@@ -27,6 +27,7 @@ import {
   default as LayerColumnModeConfigFactory,
   ColumnModeConfigFactory
 } from './side-panel/layer-panel/layer-column-mode-config';
+import DataTableFactory from './common/data-table';
 
 // Components
 export {
@@ -250,8 +251,8 @@ export {
   LegendRowFactory,
   ResetColorLabelFactory
 } from './common/color-legend';
-export {default as DataTableFactory} from './common/data-table';
 export {default as CanvasHack} from './common/data-table/canvas';
+export {renderedSize} from './common/data-table/cell-size';
 export {
   default as DataTableConfigFactory,
   NumberFormatConfig
@@ -428,6 +429,7 @@ export {
   ChannelByValueSelectorFactory,
   ColorSelectorFactory,
   ColumnModeConfigFactory,
+  DataTableFactory,
   FieldListItemFactoryFactory,
   InfoHelperFactory,
   LayerColorRangeSelectorFactory,
@@ -462,6 +464,7 @@ export const ColorSelector = appInjector.get(ColorSelectorFactory);
 export const LayerColorSelector = appInjector.get(LayerColorSelectorFactory);
 export const LayerColorRangeSelector = appInjector.get(LayerColorRangeSelectorFactory);
 export const ArcLayerColorSelector = appInjector.get(ArcLayerColorSelectorFactory);
+export const DataTable = appInjector.get(DataTableFactory);
 
 // hooks
 export {CloudListProvider, useCloudListProvider} from './hooks/use-cloud-list-provider';

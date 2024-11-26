@@ -6,11 +6,11 @@ import {RowDataContainer} from './row-data-container';
 import {IndexedDataContainer} from './indexed-data-container';
 
 import {DataContainerInterface} from './data-container-interface';
-import {Field} from '@kepler.gl/types';
+import {ProtoDatasetField} from '@kepler.gl/types';
 
 export type DataContainerOptions = {
   inputDataFormat?: string; // one of DataForm
-  fields?: Field[];
+  fields?: ProtoDatasetField[];
 };
 
 export const DataForm = {

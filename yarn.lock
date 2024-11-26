@@ -3297,6 +3297,7 @@ __metadata:
     "@kepler.gl/common-utils": "npm:3.0.0"
     "@kepler.gl/constants": "npm:3.0.0"
     "@kepler.gl/schemas": "npm:3.0.0"
+    "@kepler.gl/table": "npm:3.0.0"
     "@kepler.gl/types": "npm:3.0.0"
     "@kepler.gl/utils": "npm:3.0.0"
     "@loaders.gl/arrow": "npm:^4.3.2"
@@ -3406,6 +3407,7 @@ __metadata:
     global: "npm:^4.3.0"
     lodash.uniq: "npm:^4.0.1"
     moment: "npm:^2.10.6"
+    react-palm: "npm:^3.3.8"
   languageName: unknown
   linkType: soft
 

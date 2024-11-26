@@ -3,7 +3,7 @@
 
 import test from 'tape-catch';
 import cloneDeep from 'lodash.clonedeep';
-import {drainTasksForTesting} from 'react-palm/tasks';
+import {drainTasksForTesting, succeedTaskWithValues} from 'react-palm/tasks';
 
 import {
   getInitialInputStyle,
@@ -29,6 +29,7 @@ import {
   UIStateActions,
   ProviderActions
 } from '@kepler.gl/actions';
+import {KeplerTable} from '@kepler.gl/table';
 
 // fixtures
 import {
@@ -80,17 +81,68 @@ export const geojsonInfo = {
   params: {file: null}
 };
 
+/**
+ * Applies actions one by one using the reducer.
+ * After each action drain Tasks and automarically resolve tasks
+ * of type CREATE_TABLE_TASK in order to create datasets.
+ * @param {Reducer} reducer A reducer to use.
+ * @param {State} initialState Initial state.
+ * @param {Action | Action[]}actions An array of actions.
+ * @returns
+ */
 export function applyActions(reducer, initialState, actions) {
   const actionQ = Array.isArray(actions) ? actions : [actions];
 
-  return actionQ.reduce(
-    (updatedState, {action, payload}) => reducer(updatedState, action(...payload)),
-    initialState
-  );
+  // remove any existing tasks before actions
+  drainTasksForTesting();
+
+  let updatedState = actionQ.reduce((updatedState, {action, payload}) => {
+    let newState = reducer(updatedState, action(...payload));
+    const tasks = drainTasksForTesting();
+    newState = applyCreateTableTasks(tasks, reducer, newState);
+    return newState;
+  }, initialState);
+
+  return updatedState;
 }
 
 // TODO: need to be deleted and imported from raw-states
 export const InitialState = keplerGlReducer(undefined, {});
+
+/**
+ * Mock instant sync result of createNewDataEntry.
+ */
+const mockCreateNewDataEntry = ({info, color, opts, data}) => {
+  const table = new KeplerTable({info, color, ...opts});
+  table.importData({data});
+  return table;
+};
+
+/**
+ * Execute tasks and mock CREATE_TABLE_TASK with success.
+ * @param {Task[]} tasks
+ * @param {Reducer} reducer
+ * @param {VisState} initialState
+ * @returns
+ */
+export const applyCreateTableTasks = (tasks, reducer, initialState) => {
+  return tasks.reduce((updatedState, task) => {
+    if (!task.label.includes('CREATE_TABLE_TASK')) return updatedState;
+    const tables = task.payload.map(payload => mockCreateNewDataEntry(payload));
+    return reducer(updatedState, succeedTaskWithValues(task, tables));
+  }, initialState);
+};
+
+/**
+ * Execute existing tasts and mock CREATE_TABLE_TASK with success.
+ * @param {VisStateReducer} reducer
+ * @param {VisState} initialState
+ * @returns
+ */
+export function applyExistingDatasetTasks(reducer, initialState) {
+  const tasks = drainTasksForTesting();
+  return applyCreateTableTasks(tasks, reducer, initialState);
+}
 
 /**
  * Mock app state with uploaded geojson and csv file
@@ -114,8 +166,7 @@ export function mockStateWithFileUpload() {
       payload: [[{info: geojsonInfo, data: {fields: geojsonFields, rows: geojsonRows}}]]
     }
   ]);
-  // cleanup tasks created during loadMapStyles
-  drainTasksForTesting();
+
   // replace layer id and color with controlled value for testing
   updatedState.visState.layers.forEach((l, i) => {
     const oldLayerId = l.id;
@@ -204,9 +255,6 @@ function mockStateWithLayerCustomColorBreaksLegends() {
       ]
     }
   ]);
-
-  // cleanup tasks created during loadMapStyles
-  drainTasksForTesting();
 
   test(t => {
     t.equal(updatedState.visState.layers.length, 1, 'should load 1 layer');
@@ -580,19 +628,22 @@ export function mockStateWithMultipleH3Layers() {
 function mockStateWithTripData() {
   const initialState = cloneDeep(InitialState);
 
-  return keplerGlReducer(
-    initialState,
-    addDataToMap({
-      datasets: {
-        info: {
-          label: 'Sample Trips',
-          id: tripDataId
-        },
-        data: {fields: tripFields, rows: tripRows}
+  const addDataPayload = {
+    datasets: {
+      info: {
+        label: 'Sample Trips',
+        id: tripDataId
       },
-      config: tripConfig
-    })
-  );
+      data: {fields: tripFields, rows: tripRows}
+    },
+    config: tripConfig
+  };
+  return applyActions(keplerGlReducer, initialState, [
+    {
+      action: addDataToMap,
+      payload: [addDataPayload]
+    }
+  ]);
 }
 
 export function mockStateWithLayerDimensions(state) {

@@ -31,6 +31,15 @@ export type ExportFileToCloudPayload = {
 /**
  * Input dataset parsed to addDataToMap
  */
+export type ProtoDatasetField = {
+  name: string;
+  type: string;
+  format?: string;
+  displayName?: string;
+  analyzerType?: string;
+  id?: string;
+  metadata?: Record<string, any>;
+};
 export type ProtoDataset = {
   info: {
     id?: string;
@@ -41,14 +50,7 @@ export type ProtoDataset = {
     hidden?: boolean;
   };
   data: {
-    fields: {
-      name: string;
-      type?: string;
-      format?: string;
-      displayName?: string;
-      analyzerType?: string;
-      id?: string;
-    }[];
+    fields: ProtoDatasetField[];
     rows: any[][];
     cols?: any[];
   };

@@ -5,7 +5,7 @@ import {processKeplerglJSON} from '@kepler.gl/processors';
 import CloneDeep from 'lodash.clonedeep';
 import {keplerGlReducerCore as coreReducer} from '@kepler.gl/reducers';
 import {addDataToMap} from '@kepler.gl/actions';
-import {InitialState} from '../helpers/mock-state';
+import {InitialState, applyActions} from '../helpers/mock-state';
 
 export const syncedFilterWithTripLayerMap = {
   datasets: [
@@ -391,7 +391,13 @@ export const syncedFilterWithTripLayerMap = {
 export const mockStateWithSyncedFilterAndTripLayer = () => {
   const initialState = CloneDeep(InitialState);
   const result = processKeplerglJSON(syncedFilterWithTripLayerMap);
-  const newState = coreReducer(initialState, addDataToMap(result));
+
+  const newState = applyActions(coreReducer, initialState, [
+    {
+      action: addDataToMap,
+      payload: [result]
+    }
+  ]);
 
   return newState;
 };
