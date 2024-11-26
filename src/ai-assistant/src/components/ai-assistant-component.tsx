@@ -63,6 +63,7 @@ export type AiAssistantComponentProps = {
   updateAiAssistantMessages: ActionHandler<typeof updateAiAssistantMessages>;
   setStartScreenCapture: ActionHandler<typeof setStartScreenCapture>;
   setScreenCaptured: ActionHandler<typeof setScreenCaptured>;
+  addDatasetContext: ActionHandler<typeof addDatasetContext>;
   keplerGlActions: SelectedKeplerGlActions;
   mapStyle: MapStyle;
   visState: VisState;
@@ -86,6 +87,7 @@ function AiAssistantComponentFactory() {
     updateAiAssistantMessages,
     setStartScreenCapture,
     setScreenCaptured,
+    addDatasetContext,
     keplerGlActions,
     mapStyle,
     visState
