@@ -18,22 +18,6 @@ const reducers = combineReducers({
   routing: routerReducer
 });
 
-// add redux-logger
-const loggerMiddleware = createLogger({
-  predicate: (_getState, action) => {
-    // skip logging in production mode
-    if (process.env.NODE_ENV === 'production') {
-      return false;
-    }
-    const skipLogging = [
-      '@@kepler.gl/LAYER_HOVER',
-      '@@kepler.gl/MOUSE_MOVE',
-      '@@kepler.gl/UPDATE_MAP'
-    ];
-    return !skipLogging.includes(action.type);
-  }
-});
-
 export const middlewares = enhanceReduxMiddleware([
   thunk,
   routerMiddleware(browserHistory),
