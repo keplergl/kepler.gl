@@ -3191,7 +3191,7 @@ __metadata:
     "@kepler.gl/types": "npm:3.1.0-alpha.1"
     "@kepler.gl/utils": "npm:3.1.0-alpha.1"
     global: "npm:^4.3.0"
-    react-ai-assist: "npm:0.0.12"
+    react-ai-assist: "npm:0.0.13"
   languageName: unknown
   linkType: soft
 
@@ -24671,9 +24671,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-ai-assist@npm:0.0.12":
-  version: 0.0.12
-  resolution: "react-ai-assist@npm:0.0.12"
+"react-ai-assist@npm:0.0.13":
+  version: 0.0.13
+  resolution: "react-ai-assist@npm:0.0.13"
   dependencies:
     "@emotion/is-prop-valid": "npm:^1.3.1"
     "@google/generative-ai": "npm:^0.17.1"
@@ -24692,6 +24692,7 @@ __metadata:
     echarts: "npm:^5.5.1"
     echarts-for-react: "npm:^3.0.2"
     framer-motion: "npm:^11.11.10"
+    global: "npm:^4.4.0"
     globals: "npm:^15.11.0"
     html2canvas: "npm:^1.4.1"
     lodash: "npm:^4.17.21"
@@ -24705,7 +24706,7 @@ __metadata:
   peerDependencies:
     react: ^18.0.0
     react-dom: ^18.0.0
-  checksum: 10c0/ad69944a3b34094ca01b91d79e09659d879711a0f379e0b8ed08afca9e0df0eadcf840c8295901051ddc8638bcaa35a16a52216c1803adb6835ffc37ad5fd009
+  checksum: 10c0/3838b6b5db17b0e45a488d2996e9104aadaa5b4998148ab1a09e58946a56988680d7d010cc1740008b45eccbc36bbe2663ee3cf3851a558f7a0ba4a279bcbadd
   languageName: node
   linkType: hard
 

@@ -14,19 +14,6 @@
       overflow: hidden;
     }
   </style>
-  <script>
-    // fix for canvas context when using screencapture to ask in AI Assistant
-    HTMLCanvasElement.prototype.getContext = function (origFn) {
-      return function (type, attribs) {
-        attribs = attribs || {};
-        attribs.preserveDrawingBuffer = true;
-        attribs.alpha = true;
-        attribs.antialias = true;
-        attribs.depth = true;
-        return origFn.call(this, type, attribs);
-      };
-    }(HTMLCanvasElement.prototype.getContext);
-  </script>
 </head>
 
 <body>
