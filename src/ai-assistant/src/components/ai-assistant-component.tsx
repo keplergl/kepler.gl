@@ -3,7 +3,12 @@
 
 import React, {useEffect} from 'react';
 import styled, {withTheme} from 'styled-components';
-import {AiAssistant, MessageModel, useAssistant} from 'react-ai-assist';
+import {
+  AiAssistant,
+  MessageModel,
+  useAssistant,
+  histogramFunctionDefinition
+} from 'react-ai-assist';
 import 'react-ai-assist/dist/index.css';
 
 import {textColorLT} from '@kepler.gl/styles';
@@ -104,42 +109,42 @@ function AiAssistantComponentFactory() {
         createOrUpdateFilter: keplerGlActions.createOrUpdateFilter,
         setFilter: keplerGlActions.setFilter,
         setFilterPlot: keplerGlActions.setFilterPlot
+      }),
+      histogramFunctionDefinition({
+        getValues: (datasetName: string, variableName: string): number[] => {
+          // find which dataset has the variableName
+          const datasetId = Object.keys(visState.datasets).find(
+            dataId => visState.datasets[dataId].label === datasetName
+          );
+          if (!datasetId) return [];
+          const dataset = visState.datasets[datasetId];
+          if (dataset) {
+            return Array.from({length: dataset.length}, (_, i) =>
+              dataset.getValue(variableName, i)
+            );
+          }
+          return [];
+        },
+        onSelected: (datasetName: string, selectedRowIndices: number[]) => {
+          // update the filteredIndex in the dataset
+          const datasetId = Object.keys(visState.datasets).find(
+            dataId => visState.datasets[dataId].label === datasetName
+          );
+          if (!datasetId) return;
+          const dataset = visState.datasets[datasetId];
+          if (dataset) {
+            dataset.filteredIndex =
+              selectedRowIndices.length === 0 ? dataset.allIndexes : selectedRowIndices;
+            // get all layers that use this dataset
+            const layers = visState.layers.filter(layer => layer.config.dataId === dataset.id);
+            layers.forEach(layer => {
+              layer.formatLayerData(visState.datasets);
+            });
+            // trigger a re-render using layerSetIsValid()
+            keplerGlActions.layerSetIsValid(layers[0], true);
+          }
+        }
       })
-      // histogramFunctionDefinition({
-      //   getValues: (datasetName: string, variableName: string): number[] => {
-      //     // find which dataset has the variableName
-      //     const datasetId = Object.keys(visState.datasets).find(
-      //       dataId => visState.datasets[dataId].label === datasetName
-      //     );
-      //     if (!datasetId) return [];
-      //     const dataset = visState.datasets[datasetId];
-      //     if (dataset) {
-      //       return Array.from({length: dataset.length}, (_, i) =>
-      //         dataset.getValue(variableName, i)
-      //       );
-      //     }
-      //     return [];
-      //   },
-      //   onSelected: (datasetName: string, selectedRowIndices: number[]) => {
-      //     // update the filteredIndex in the dataset
-      //     const datasetId = Object.keys(visState.datasets).find(
-      //       dataId => visState.datasets[dataId].label === datasetName
-      //     );
-      //     if (!datasetId) return;
-      //     const dataset = visState.datasets[datasetId];
-      //     if (dataset) {
-      //       dataset.filteredIndex =
-      //         selectedRowIndices.length === 0 ? dataset.allIndexes : selectedRowIndices;
-      //       // get all layers that use this dataset
-      //       const layers = visState.layers.filter(layer => layer.config.dataId === dataset.id);
-      //       layers.forEach(layer => {
-      //         layer.formatLayerData(visState.datasets);
-      //       });
-      //       // trigger a re-render using layerSetIsValid()
-      //       keplerGlActions.layerSetIsValid(layers[0], true);
-      //     }
-      //   }
-      // })
     ];
 
     const enableVoiceAndScreenCapture =

@@ -21,12 +21,7 @@ const resolveAlias = {
   // react-ai-assist needs to be resolved from same node_modules
   'react-ai-assist': `${NODE_MODULES_DIR}/react-ai-assist`,
   // echarts resolve
-  echarts: `${NODE_MODULES_DIR}/echarts`,
-  'echarts/core': `${NODE_MODULES_DIR}/echarts/lib/core`,
-  'echarts/components': `${NODE_MODULES_DIR}/echarts/lib/components`,
-  'echarts/renderers': `${NODE_MODULES_DIR}/echarts/lib/renderers`,
-  'echarts/charts': `${NODE_MODULES_DIR}/echarts/lib/charts`
-
+  echarts: `${NODE_MODULES_DIR}/echarts`
 };
 
 // add kepler.gl submodule aliases
