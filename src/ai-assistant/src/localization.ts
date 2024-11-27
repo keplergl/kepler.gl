@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 // Add english messages here, other languages will use these
 // if translations not available for every message
 

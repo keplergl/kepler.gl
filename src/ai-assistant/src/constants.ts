@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 export const TASK_LIST = '1. Change the basemap style.\n2. Load data from url.';
 
 export const WELCOME_MESSAGE = `Hi, I am Kepler.gl AI Assistant!\nHere are some tasks I can help you with:\n\n${TASK_LIST}`;

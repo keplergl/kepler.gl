@@ -76,7 +76,14 @@ const LIBRARY_BUNDLE_CONFIG = () => ({
       {
         test: /\.(js|ts|tsx)$/,
         loader: 'babel-loader',
-        include: [SRC_DIR, `${NODE_MODULES_DIR}/@loaders.gl`],
+        include: [
+          SRC_DIR,
+          `${NODE_MODULES_DIR}/@loaders.gl`,
+          `${NODE_MODULES_DIR}/@deck.gl`,
+          `${NODE_MODULES_DIR}/@math.gl`,
+          `${NODE_MODULES_DIR}/react-ai-assist`,
+          `${NODE_MODULES_DIR}/@geoarrow`
+        ],
         options: {
           plugins: [
             [
@@ -93,11 +100,21 @@ const LIBRARY_BUNDLE_CONFIG = () => ({
           ]
         }
       },
+      // Add css loader for ai-assistant
+      {
+        test: /\.css$/,
+        use: ['style-loader', 'css-loader']
+      },
       // for compiling apache-arrow ESM module
       {
         test: /\.mjs$/,
         include: /node_modules\/apache-arrow/,
         type: 'javascript/auto'
+      },
+      {
+        test: /\.js$/,
+        loader: require.resolve('@open-wc/webpack-import-meta-loader'),
+        include: [/node_modules\/parquet-wasm/]
       }
     ]
   },

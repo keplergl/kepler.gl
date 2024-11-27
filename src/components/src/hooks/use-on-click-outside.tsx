@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 // Copyright 2022 Foursquare Labs, Inc. All Rights Reserved.
 
 import document from 'global/document';
