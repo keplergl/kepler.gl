@@ -19,7 +19,14 @@ const resolveAlias = {
   // kepler.gl and loaders.gl need to use same apache-arrow
   'apache-arrow': `${NODE_MODULES_DIR}/apache-arrow`,
   // react-ai-assist needs to be resolved from same node_modules
-  'react-ai-assist': `${NODE_MODULES_DIR}/react-ai-assist`
+  'react-ai-assist': `${NODE_MODULES_DIR}/react-ai-assist`,
+  // echarts resolve
+  echarts: `${NODE_MODULES_DIR}/echarts`,
+  'echarts/core': `${NODE_MODULES_DIR}/echarts/lib/core`,
+  'echarts/components': `${NODE_MODULES_DIR}/echarts/lib/components`,
+  'echarts/renderers': `${NODE_MODULES_DIR}/echarts/lib/renderers`,
+  'echarts/charts': `${NODE_MODULES_DIR}/echarts/lib/charts`
+
 };
 
 // add kepler.gl submodule aliases
