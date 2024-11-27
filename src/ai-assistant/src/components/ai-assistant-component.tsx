@@ -173,10 +173,12 @@ function AiAssistantComponentFactory() {
     const datasetContextIdeas = Object.values(visState.datasets)
       .filter(dataset => !aiAssistant.datasetContext.includes(dataset.id))
       .map(dataset => ({
-        title: `Add Dataset Context `,
+        title: `Click to Add Dataset Context `,
         description: `The metadata of "${dataset.label}"`,
-        icon: 'ph:file-plus',
-        context: `datasetId: ${dataset.id}\n${dataset.fields
+        icon: 'svg-spinners:pulse',
+        context: `Please remember the following dataset context:\ndatasetName: ${
+          dataset.label
+        }\ndatasetId: ${dataset.id}\n${dataset.fields
           .map(field => `${field.name}: ${field.type}`)
           .join('\n')}\nPlease don't respond to this message.`,
         callback: () => {
