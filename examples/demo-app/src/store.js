@@ -6,6 +6,7 @@ import {routerReducer, routerMiddleware} from 'react-router-redux';
 import {browserHistory} from 'react-router';
 import {enhanceReduxMiddleware} from '@kepler.gl/reducers';
 import {createLogger} from 'redux-logger';
+import thunk from 'redux-thunk';
 // eslint-disable-next-line no-unused-vars
 import window from 'global/window';
 
@@ -16,7 +17,7 @@ const reducers = combineReducers({
   routing: routerReducer
 });
 
-export const middlewares = enhanceReduxMiddleware([routerMiddleware(browserHistory)]);
+export const middlewares = enhanceReduxMiddleware([thunk, routerMiddleware(browserHistory)]);
 
 // eslint-disable-next-line no-process-env
 if (NODE_ENV === 'local') {
