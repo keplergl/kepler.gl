@@ -156,7 +156,8 @@ const addProdConfig = config => {
   return Object.assign(config, {
     output: {
       path: resolve(__dirname, './dist'),
-      filename: 'bundle.js'
+      filename: 'bundle.js',
+      publicPath: "/"
     }
   });
 };
