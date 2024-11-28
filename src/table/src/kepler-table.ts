@@ -236,6 +236,8 @@ class KeplerTable<F extends Field = Field> {
     this.allIndexes = this.dataContainer.getPlainIndex();
     this.filteredIndex = this.allIndexes;
     this.filteredIndexForDomain = this.allIndexes;
+
+    return this;
   }
 
   get length() {
