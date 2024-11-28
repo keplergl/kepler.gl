@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 import {Action, handleActions} from 'redux-actions';
 import {
   UPDATE_AI_ASSISTANT_CONFIG,

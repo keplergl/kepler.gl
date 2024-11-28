@@ -1,5 +1,5 @@
-// // SPDX-License-Identifier: MIT
-// // Copyright contributors to the kepler.gl project
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
 
 /* eslint-disable max-statements */
 

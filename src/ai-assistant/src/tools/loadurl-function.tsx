@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 import {addDataToMap, loadFiles} from '@kepler.gl/actions';
 import {ActionHandler} from '@kepler.gl/actions';
 import {

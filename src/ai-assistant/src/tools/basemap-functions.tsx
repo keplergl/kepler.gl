@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 import React, {ReactNode, useEffect, useState} from 'react';
 import {MapStyleSelectorFactory, appInjector} from '@kepler.gl/components';
 import {MapStyle} from '@kepler.gl/reducers';

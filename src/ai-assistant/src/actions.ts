@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 import {MessageModel} from 'react-ai-assist';
 import {AiAssistantConfig} from './reducers';
 
