@@ -17,8 +17,6 @@ import ReactMarkdown from 'react-markdown';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {media} from '@kepler.gl/styles';
 
-/** @typedef {import('./file-upload').FileUploadProps} FileUploadProps */
-
 const fileIconColor = '#D3D8E0';
 
 const LinkRenderer = props => {
@@ -81,6 +79,9 @@ const MsgWrapper = styled.div`
 const StyledDragNDropIcon = styled.div`
   color: ${fileIconColor};
   margin-bottom: 48px;
+
+  display: flex;
+  justify-content: center;
 
   ${media.portable`
     margin-bottom: 16px;
