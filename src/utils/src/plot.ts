@@ -304,7 +304,11 @@ const getAgregationAccessor = (field, dataContainer: DataContainerInterface, fie
   return i => field.valueAccessor({index: i});
 };
 
-export const getValueAggrFunc = (field, aggregation, dataset): any => {
+export const getValueAggrFunc = (
+  field: Field | string | null,
+  aggregation: string,
+  dataset: KeplerTableModel<any, any>
+): ((bin: Bin) => number) => {
   const {dataContainer, fields} = dataset;
   return field && aggregation
     ? bin =>
