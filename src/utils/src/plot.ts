@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {bisectLeft, bisector, extent, histogram as d3Histogram, ticks} from 'd3-array';
+import isEqual from 'lodash.isequal';
 import {getFilterMappedValue, getInitialInterval, intervalToFunction} from './time';
 import moment from 'moment';
 import {
@@ -303,14 +304,14 @@ const getAgregationAccessor = (field, dataContainer: DataContainerInterface, fie
   return i => field.valueAccessor({index: i});
 };
 
-export const getValueAggrFunc = (field, aggregation, dataset) => {
+export const getValueAggrFunc = (field, aggregation, dataset): any => {
   const {dataContainer, fields} = dataset;
   return field && aggregation
     ? bin =>
         aggregate(
           bin.indexes,
           getAgregationType(field, aggregation),
-          // @ts-ignore
+          // @ts-expect-error can return {getNumerator, getDenominator}
           getAgregationAccessor(field, dataContainer, fields)
         )
     : bin => bin.count;
@@ -328,7 +329,7 @@ function getDelta(
   bins: LineDatum[],
   y: number,
   interval: PlotType['interval']
-): Partial<LineDatum> {
+): Partial<LineDatum> & {delta: 'last'; pct: number | null} {
   // if (WOW[interval]) return getWow(bins, y, interval);
   const lastBin = bins[bins.length - 1];
 
@@ -351,27 +352,28 @@ export function getPctChange(y, y0) {
  * @param filter
  */
 export function getLineChart(datasets: Datasets, filter: Filter): LineChart {
-  const {dataId, yAxis, plotType} = filter;
+  const {dataId, yAxis, plotType, lineChart} = filter;
   const {aggregation, interval} = plotType;
+  const seriesDataId = dataId[0];
+  const bins = (filter as TimeRangeFilter).timeBins?.[seriesDataId]?.[interval];
 
   if (
-    filter.lineChart &&
-    filter.lineChart.aggregation === aggregation &&
-    filter.lineChart.interval === interval &&
-    filter.lineChart.yAxis === yAxis?.name
+    lineChart &&
+    lineChart.aggregation === aggregation &&
+    lineChart.interval === interval &&
+    lineChart.yAxis === yAxis?.name &&
+    // we need to make sure we validate bins because of cross filter data changes
+    isEqual(bins, lineChart?.bins)
   ) {
     // don't update lineChart if plotType hasn't change
-    return filter.lineChart;
+    return lineChart;
   }
 
-  const seriesDataId = dataId[0];
   const dataset = datasets[seriesDataId];
   const getYValue = getValueAggrFunc(yAxis, aggregation, dataset);
 
-  // @ts-expect-error do we expect TimeRangeFilter here?
-  const bins = filter.timeBins[seriesDataId][interval];
-  const init = [];
-  const series = bins.reduce((accu, bin, i) => {
+  const init: LineDatum[] = [];
+  const series = (bins || []).reduce((accu, bin, i) => {
     const y = getYValue(bin);
     const delta = getDelta(accu, y, interval);
     accu.push({
@@ -383,7 +385,7 @@ export function getLineChart(datasets: Datasets, filter: Filter): LineChart {
   }, init);
 
   const yDomain = extent<{y: any}>(series, d => d.y);
-  const xDomain = [bins[0].x0, bins[bins.length - 1].x1];
+  const xDomain = bins ? [bins[0].x0, bins[bins.length - 1].x1] : [];
 
   // treat missing data as another series
   const split = splitSeries(series);
@@ -404,7 +406,9 @@ export function getLineChart(datasets: Datasets, filter: Filter): LineChart {
     allTime: {
       title: `All Time Average`,
       value: aggregate(series, AGGREGATION_TYPES.average, d => d.y)
-    }
+    },
+    // @ts-expect-error bins is Bins[], not a Bins map. Refactor to use correct types.
+    bins
   };
 }
 
@@ -560,6 +564,7 @@ export function updateTimeFilterPlotType(
   if (plotType.type === PLOT_TYPES.histogram) {
     // Histogram is calculated and memoized in the chart itself
   } else if (plotType.type === PLOT_TYPES.lineChart) {
+    // we should be able to move this into its own component so react will do the shallow comparison for us.
     nextFilter = {
       ...nextFilter,
       lineChart: getLineChart(datasets, nextFilter)
