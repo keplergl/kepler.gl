@@ -14,16 +14,11 @@ import {
   TickInterval
 } from '@kepler.gl/constants';
 import {toArray} from '@kepler.gl/common-utils';
-import {
-  AnimationConfig,
-  Timeline,
-  TimeRangeFilter,
-  Filter,
-  KeplerTableModel
-} from '@kepler.gl/types';
+import {AnimationConfig, Timeline, TimeRangeFilter, Filter} from '@kepler.gl/types';
 
 import {getFrequency} from './aggregation';
 import {getBinThresholds} from './plot';
+import {KeplerTableModel} from './types';
 
 export const TIMELINE_MODES = {
   inner: 'inner',
@@ -256,12 +251,15 @@ export function intervalToFunction(id: string) {
 }
 
 /**
- *
+ * Get initial interval from filter and datasets
  * @param filter
- * @param datasets {Datasets}
+ * @param datasets
  * @returns
  */
-export function getInitialInterval(filter: Filter, datasets: KeplerTableModel<any, any>): string {
+export function getInitialInterval(
+  filter: Filter,
+  datasets: Record<string, KeplerTableModel<any, any>>
+): string {
   const {domain} = filter;
   const mergeMappedValue = filter.dataId.reduce((accu, dataId) => {
     const mappedValue = getFilterMappedValue(datasets[dataId], filter);
