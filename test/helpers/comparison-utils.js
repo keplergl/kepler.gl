@@ -86,7 +86,7 @@ export function cmpFilters(t, expectedFilter, actualFilter, opt = {}, idx = '', 
             `${name}.filter.${key} should be the same`
           );
           break;
-        case 'lineChart':
+        case 'lineChart': {
           const {bins: actualBins, ...actualLineChart} = actualFilter[key];
           const {bins: expectedBins, ...expectedLineChart} = expectedFilter[key];
 
@@ -97,6 +97,7 @@ export function cmpFilters(t, expectedFilter, actualFilter, opt = {}, idx = '', 
           );
           cmpBins(t, actualBins, expectedBins);
           break;
+        }
         default:
           if (key !== 'id' || opt.id) {
             // test everything except id, which is auto generated
