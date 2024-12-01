@@ -312,6 +312,11 @@ export function filterIntervalOptions(options, domain) {
   });
 }
 
+/**
+ * Get timeline from filter
+ * @param filter TimeRangeFilter filter
+ * @returns Timeline
+ */
 export const getTimelineFromFilter = (filter: TimeRangeFilter): Timeline => {
   const {
     value,
