@@ -68,6 +68,11 @@ On Unix, MacOS
 # install Volta on Unix
 curl https://get.volta.sh | bash
 ```
+On Windows
+
+```bash
+winget install Volta.Volta
+```
 
 Install `nvm` to set the proper Node.js version for the project. Follow instructions to install nvm [here](https://github.com/nvm-sh/nvm).
 
