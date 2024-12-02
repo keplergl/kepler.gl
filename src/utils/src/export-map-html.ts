@@ -24,7 +24,7 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
         <link rel="stylesheet" href="https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/uber-fonts/4.0.0/superfine.css">
 
         <!--MapBox css-->
-        <link href="https:https://unpkg.com/maplibre-gl@^3/dist/maplibre-gl.css" rel="stylesheet">
+        <link href="https://unpkg.com/maplibre-gl@^3/dist/maplibre-gl.css" rel="stylesheet">
 
         <!-— facebook open graph tags -->
         <meta property="og:url" content="http://kepler.gl/" />
