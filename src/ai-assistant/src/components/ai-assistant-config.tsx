@@ -143,7 +143,9 @@ function AiAssistantConfigFactory(RangeSlider: ReturnType<typeof RangeSliderFact
   }) => {
     const [provider, setProvider] = useState(aiAssistantConfig.provider || 'openai');
     const [model, setModel] = useState(aiAssistantConfig.model || PROVIDER_MODELS[provider][0]);
-    const [apiKey, setApiKey] = useState(aiAssistantConfig.apiKey || '');
+    const [apiKey, setApiKey] = useState(
+      aiAssistantConfig.apiKey || process.env.FoursquareUserMapsURL
+    );
     const [temperature, setTemperature] = useState(aiAssistantConfig.temperature || 0.8);
     const [topP, setTopP] = useState(aiAssistantConfig.topP || 0.8);
     const [baseUrl, setBaseUrl] = useState(aiAssistantConfig.baseUrl || 'http://localhost:11434');

@@ -15,7 +15,8 @@ import {
   createOrUpdateFilter,
   setFilter,
   setFilterPlot,
-  layerSetIsValid
+  layerSetIsValid,
+  layerVisualChannelConfigChange
 } from '@kepler.gl/actions';
 import {withState, SidePanelTitleFactory, Icons} from '@kepler.gl/components';
 import {VisState} from '@kepler.gl/schemas';
@@ -29,7 +30,19 @@ import {
   addDatasetContext
 } from '../actions';
 import AiAssistantConfigFactory from './ai-assistant-config';
-import AiAssistantComponentFactory, {SelectedKeplerGlActions} from './ai-assistant-component';
+import AiAssistantComponentFactory from './ai-assistant-component';
+
+export type SelectedKeplerGlActions = {
+  mapStyleChange: ActionHandler<typeof mapStyleChange>;
+  loadFiles: ActionHandler<typeof loadFiles>;
+  addDataToMap: ActionHandler<typeof addDataToMap>;
+  addLayer: ActionHandler<typeof addLayer>;
+  layerVisualChannelConfigChange: ActionHandler<typeof layerVisualChannelConfigChange>;
+  createOrUpdateFilter: ActionHandler<typeof createOrUpdateFilter>;
+  setFilter: ActionHandler<typeof setFilter>;
+  setFilterPlot: ActionHandler<typeof setFilterPlot>;
+  layerSetIsValid: ActionHandler<typeof layerSetIsValid>;
+};
 
 export type AiAssistantManagerState = {
   aiAssistantActions: {
@@ -169,7 +182,8 @@ function AiAssistantManagerFactory(
         createOrUpdateFilter,
         setFilter,
         setFilterPlot,
-        layerSetIsValid
+        layerSetIsValid,
+        layerVisualChannelConfigChange
       },
       aiAssistantActions: {
         updateAiAssistantConfig,

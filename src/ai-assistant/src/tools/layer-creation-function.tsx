@@ -8,26 +8,26 @@ import {
   ErrorCallbackResult,
   RegisterFunctionCallingProps
 } from 'react-ai-assist';
-import {checkDatasetNotExists, checkFieldNotExists} from './utils';
-import {createGeojsonLayerConfig} from './layer-utils';
+import {checkDatasetNotExists, checkFieldNotExists, interpolateColor} from './utils';
+import {findDefaultLayer} from '@kepler.gl/reducers';
 
-export function addGeojsonLayerFunctionDefinition(
+export function addLayerFunctionDefinition(
   context: CustomFunctionContext<ActionHandler<typeof addLayer> | Datasets>
 ): RegisterFunctionCallingProps {
   return {
-    name: 'addGeojsonLayer',
-    description: 'Add a new Geojson layer',
+    name: 'addLayer',
+    description: 'Add a new map layer by specifying the dataset and field.',
     properties: {
       datasetName: {
         type: 'string',
         description:
-          'The name of the dataset. If not provided, the first dataset will be used. If no dataset, please ask user to load a dataset.'
+          'The name of the dataset. If not provided, use the datasetName of the first dataset. Please do not use datastId.'
       },
-      // layerType: {
-      //   type: 'string',
-      //   description:
-      //     'The type of the layer to add. If not provided, ask user to specify the type. Valid values are "point", "arc", "line", "grid", "hexagon", "geojson", "cluster", "heatmap", "h3", "trip" and "s2".'
-      // },
+      layerType: {
+        type: 'string',
+        description:
+          'The type of the layer. Valid values are "point" (point layer), "arc" (arc layer), "line" (line layer), "grid" (grid layer), "hexagon" (hexagon layer), "geojson" (geojson layer), "cluster" (cluster layer), "heatmap" (heatmap layer), "h3" (h3 layer), "trip" (trip layer) and "s2" (s2 layer).'
+      },
       fieldName: {
         type: 'string',
         description:
@@ -36,25 +36,18 @@ export function addGeojsonLayerFunctionDefinition(
       colorScale: {
         type: 'string',
         description:
-          'The color scale of the layer. Default is "quantile". The possible values are "quantile", "quantize", "ordinal" or "custom"'
+          'The color scale of the layer. The possible values are "quantile", "quantize", "ordinal" or "custom". If not provided, use "quantile". '
       },
       customColorScale: {
         type: 'array',
         items: {
           type: 'number'
         },
-        description: 'The custom color scale of the layer. Only used when colorScale is "custom".'
-      },
-      customColors: {
-        type: 'array',
-        items: {
-          type: 'string'
-        },
         description:
-          'An array of hex color values. Must contain exactly one more color than the number of values in customColorScale. For example, if customColorScale has 3 values, customColors must have 4 colors.'
+          'An array of numeric breakpoints used to define custom color intervals. Only applicable when colorScale is set to "custom".'
       }
     },
-    required: ['datasetName', 'fieldName'],
+    required: ['datasetName', 'fieldName', 'colorScale'],
     callbackFunction: addLayerCallback,
     callbackFunctionContext: context
   };
@@ -66,7 +59,6 @@ type AddLayerCallbackArgs = {
   fieldName: string;
   colorScale: string;
   customColorScale: number[];
-  customColors: string[];
 };
 
 type AddLayerFunctionContext = {
@@ -79,6 +71,8 @@ type AddLayerCallbackResult = {
   layerId: string;
   datasetId: string;
   layerLabel: string;
+  layerType: string | null;
+  numberOfColors: number;
   details?: string;
 };
 
@@ -95,8 +89,13 @@ function addLayerCallback({
   functionArgs,
   functionContext
 }: CallbackFunctionProps): AddLayerCallbackOutput {
-  const {datasetName, fieldName, colorScale, customColorScale, customColors} =
-    functionArgs as AddLayerCallbackArgs;
+  const {
+    datasetName,
+    fieldName,
+    layerType,
+    colorScale = 'quantile',
+    customColorScale
+  } = functionArgs as AddLayerCallbackArgs;
   const {datasets, addLayer} = functionContext as AddLayerFunctionContext;
 
   // check if dataset exists
@@ -133,26 +132,57 @@ function addLayerCallback({
       name: functionName,
       result: {
         success: false,
-        details: 'Custom color scale is required when colorScale is "custom"'
+        details: 'Custom color scale or breaks is required when colorScale is "custom"'
       }
     };
   }
 
-  // create a new GeojsonLayer
-  const GeojsonLayer = LayerClasses.geojson;
-  const result = GeojsonLayer.findDefaultLayerProps(dataset);
-  const layer = new GeojsonLayer(result.props[0]);
+  // check if layerType is valid
+  const defaultLayers = findDefaultLayer(dataset, LayerClasses);
+  const layer = defaultLayers.find(l => l.type === layerType) || defaultLayers[0];
+
+  const colorField = {
+    name: field.name,
+    type: field.type
+  };
+
+  // create custom colorRange if needed
+  let customColorRange = layer.config.visConfig.colorRange;
+  if (colorScale === 'custom') {
+    const newColors = interpolateColor(customColorRange.colors, customColorScale.length + 1);
+    customColorRange = {
+      ...customColorRange,
+      colors: newColors,
+      colorMap: newColors.map((color, index) => [customColorScale[index] || null, color])
+    };
+  }
 
   // construct new layer config for addLayer() action
-  const newLayer = createGeojsonLayerConfig({
-    layer,
-    dataset,
-    field,
-    colorScale,
-    customColorScale,
-    customColors,
-    colorRange: layer.config.visConfig.colorRange
-  });
+  const newLayer = {
+    id: layer.id,
+    type: layer.type,
+    config: {
+      ...layer.config,
+      dataId: datasetId,
+      label: `${field.name}-${colorScale}`,
+      columns: Object.keys(layer.config.columns).reduce((acc, key) => {
+        acc[key] = layer.config.columns[key].value;
+        return acc;
+      }, {}),
+      colorScale,
+      colorField,
+      strokeColorScale: colorScale,
+      strokeColorField: colorField,
+      visConfig: {
+        ...layer.config.visConfig,
+        colorRange: customColorRange,
+        strokeColorRange: customColorRange,
+        ...(customColorScale
+          ? {colorDomain: customColorScale, strokeColorDomain: customColorScale}
+          : {})
+      }
+    }
+  };
 
   addLayer(newLayer, datasetId);
 
@@ -164,7 +194,9 @@ function addLayerCallback({
       layerId: newLayer.id,
       datasetId,
       layerLabel: newLayer.config.label,
-      details: `New Geojson layer with ${field.name} and ${colorScale} color scale added successfully.`
+      layerType: newLayer.type,
+      numberOfColors: newLayer.config.visConfig.colorRange.colors.length,
+      details: `New map layer with ${field.name} and ${colorScale} color scale added successfully.`
     },
     data: {layerId: newLayer.id}
   };

@@ -38,10 +38,8 @@ const config = {
   },
   entryPoints: [
     'src/main.js',
-    `${LIB_DIR}/examples/demo-app/src/main.js`
   ],
   outdir: 'dist',
-  entryNames: 'bundle',
   bundle: true,
   define: {
     NODE_ENV: JSON.stringify(process.env.NODE_ENV || 'production'),

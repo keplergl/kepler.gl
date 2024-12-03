@@ -12,17 +12,7 @@ import {
 import 'react-ai-assist/dist/index.css';
 
 import {textColorLT} from '@kepler.gl/styles';
-import {
-  ActionHandler,
-  addDataToMap,
-  addLayer,
-  createOrUpdateFilter,
-  setFilter,
-  mapStyleChange,
-  setFilterPlot,
-  loadFiles,
-  layerSetIsValid
-} from '@kepler.gl/actions';
+import {ActionHandler} from '@kepler.gl/actions';
 import {MapStyle} from '@kepler.gl/reducers';
 import {VisState} from '@kepler.gl/schemas';
 
@@ -43,19 +33,11 @@ import {
   INSTRUCTIONS,
   WELCOME_MESSAGE
 } from '../constants';
-import {addGeojsonLayerFunctionDefinition} from '../tools/geojson-layer-function';
 import {filterFunctionDefinition} from '../tools/filter-function';
-
-export type SelectedKeplerGlActions = {
-  mapStyleChange: ActionHandler<typeof mapStyleChange>;
-  loadFiles: ActionHandler<typeof loadFiles>;
-  addDataToMap: ActionHandler<typeof addDataToMap>;
-  addLayer: ActionHandler<typeof addLayer>;
-  createOrUpdateFilter: ActionHandler<typeof createOrUpdateFilter>;
-  setFilter: ActionHandler<typeof setFilter>;
-  setFilterPlot: ActionHandler<typeof setFilterPlot>;
-  layerSetIsValid: ActionHandler<typeof layerSetIsValid>;
-};
+import {addLayerFunctionDefinition} from '../tools/layer-creation-function';
+import {updateLayerColorFunctionDefinition} from '../tools/layer-style-function';
+import {SelectedKeplerGlActions} from './ai-assistant-manager';
+import {getValuesFromDataset, highlightRows} from '../tools/utils';
 
 export type AiAssistantComponentProps = {
   theme: any;
@@ -99,9 +81,13 @@ function AiAssistantComponentFactory() {
         loaders: visState.loaders,
         loadOptions: visState.loadOptions
       }),
-      addGeojsonLayerFunctionDefinition({
+      addLayerFunctionDefinition({
         addLayer: keplerGlActions.addLayer,
         datasets: visState.datasets
+      }),
+      updateLayerColorFunctionDefinition({
+        layerVisualChannelConfigChange: keplerGlActions.layerVisualChannelConfigChange,
+        layers: visState.layers
       }),
       filterFunctionDefinition({
         datasets: visState.datasets,
@@ -111,39 +97,16 @@ function AiAssistantComponentFactory() {
         setFilterPlot: keplerGlActions.setFilterPlot
       }),
       histogramFunctionDefinition({
-        getValues: (datasetName: string, variableName: string): number[] => {
-          // find which dataset has the variableName
-          const datasetId = Object.keys(visState.datasets).find(
-            dataId => visState.datasets[dataId].label === datasetName
-          );
-          if (!datasetId) return [];
-          const dataset = visState.datasets[datasetId];
-          if (dataset) {
-            return Array.from({length: dataset.length}, (_, i) =>
-              dataset.getValue(variableName, i)
-            );
-          }
-          return [];
-        },
-        onSelected: (datasetName: string, selectedRowIndices: number[]) => {
-          // update the filteredIndex in the dataset
-          const datasetId = Object.keys(visState.datasets).find(
-            dataId => visState.datasets[dataId].label === datasetName
-          );
-          if (!datasetId) return;
-          const dataset = visState.datasets[datasetId];
-          if (dataset) {
-            dataset.filteredIndex =
-              selectedRowIndices.length === 0 ? dataset.allIndexes : selectedRowIndices;
-            // get all layers that use this dataset
-            const layers = visState.layers.filter(layer => layer.config.dataId === dataset.id);
-            layers.forEach(layer => {
-              layer.formatLayerData(visState.datasets);
-            });
-            // trigger a re-render using layerSetIsValid()
-            keplerGlActions.layerSetIsValid(layers[0], true);
-          }
-        }
+        getValues: (datasetName: string, variableName: string): number[] =>
+          getValuesFromDataset(visState.datasets, datasetName, variableName),
+        onSelected: (datasetName: string, selectedRowIndices: number[]) =>
+          highlightRows(
+            visState.datasets,
+            visState.layers,
+            datasetName,
+            selectedRowIndices,
+            keplerGlActions.layerSetIsValid
+          )
       })
     ];
 
@@ -165,9 +128,9 @@ function AiAssistantComponentFactory() {
 
     useEffect(() => {
       initializeAssistant();
-      // re-initialize assistant when datasets change
+      // re-initialize assistant when datasets, filters or layers change
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [visState.datasets, visState.filters]);
+    }, [visState.datasets, visState.filters, visState.layers]);
 
     // show ideas for adding dataset context to the conversation
     const datasetContextIdeas = Object.values(visState.datasets)

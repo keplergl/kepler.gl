@@ -6,7 +6,7 @@ import AggregationLayer, {AggregationLayerConfig} from '../aggregation-layer';
 import {EnhancedHexagonLayer} from '@kepler.gl/deckgl-layers';
 import {hexagonToPolygonGeo} from './hexagon-utils';
 import HexagonLayerIcon from './hexagon-layer-icon';
-import {clamp} from '@kepler.gl/utils';
+import {clamp, getHexFields} from '@kepler.gl/utils';
 import {
   VisConfigBoolean,
   VisConfigColorRange,
@@ -16,6 +16,7 @@ import {
   Merge
 } from '@kepler.gl/types';
 import {AggregationTypes, ColorRange} from '@kepler.gl/constants';
+import {KeplerTable} from '@kepler.gl/table';
 
 export type HexagonLayerVisConfigSettings = {
   opacity: VisConfigNumber;
@@ -102,6 +103,20 @@ export default class HexagonLayer extends AggregationLayer {
 
   get layerIcon() {
     return HexagonLayerIcon;
+  }
+
+  static findDefaultLayerProps({fieldPairs = []}: KeplerTable) {
+    if (!fieldPairs || fieldPairs.length === 0) {
+      return {props: []};
+    }
+
+    return {
+      props: fieldPairs.map(fieldPair => ({
+        isVisible: true,
+        label: 'Hexbin',
+        columns: fieldPair.pair
+      }))
+    };
   }
 
   renderLayer(opts) {

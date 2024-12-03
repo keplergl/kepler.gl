@@ -12,6 +12,8 @@
     "build-static": "cp -r ./src/static/* dist",
     "build-script": "NODE_OPTIONS=--openssl-legacy-provider webpack --mode production --env prod",
     "build": "yarn build-clean && yarn build-static && yarn build-script",
+    "esbuild": "node esbuild.config.mjs --build",
+    "esbuild-start": "node esbuild.config.mjs --start",
     "lint": "eslint src"
   },
   "dependencies": {
