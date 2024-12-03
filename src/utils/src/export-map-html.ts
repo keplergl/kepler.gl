@@ -211,7 +211,9 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
 
           /** Render **/
           (function render(react, reactDOM, app) {
-            reactDOM.render(app, document.getElementById('app'));
+            const container = document.getElementById('app');
+            const root = reactDOM.createRoot(container);
+            root.render(app);
           }(React, ReactDOM, app));
         </script>
         <!-- The next script will show how to interact directly with Kepler map store -->
