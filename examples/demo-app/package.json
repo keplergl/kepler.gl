@@ -1,6 +1,9 @@
 {
   "scripts": {
     "start": "node esbuild.config.mjs --start",
+    "build": "node esbuild.config.mjs --build",
+    "deploy": "yarn build && netlify deploy -d dist",
+    "deploy:prod": "yarn build && netlify deploy -d dist --prod",
     "start:local": "NODE_ENV=local node esbuild.config.mjs --start",
     "start:local-ai": "NODE_ENV=local node esbuild.config.mjs --start --env.ai",
     "start:local-deck": "NODE_ENV=local node esbuild.config.mjs --start --env.deck",
@@ -39,6 +42,7 @@
     "react-intl": "^6.3.0",
     "react-markdown": "^6.0.3",
     "react-redux": "^8.0.5",
+    "react-resizable-panels": "^2.1.7",
     "react-router": "3.2.5",
     "react-router-redux": "^4.0.8",
     "react-virtualized": "^9.21.0",

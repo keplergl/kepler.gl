@@ -52,11 +52,12 @@ export function createNewDataEntry(
   {info, data, ...opts}: ProtoDataset,
   datasets: Datasets = {}
 ): Datasets {
-  const validatedData = validateInputData(data);
-  if (!validatedData) {
-    return {};
-  }
-
+  // ! restore
+  // const validatedData = validateInputData(data);
+  // if (!validatedData) {
+  //   return {};
+  // }
+  const validatedData = data;
   // check if dataset already exists, and update it when loading data by batches incrementally
   if (info && info.id && datasets[info.id]) {
     // get keplerTable from datasets

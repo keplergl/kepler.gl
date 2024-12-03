@@ -144,3 +144,6 @@ export type {Centroid} from './h3-utils';
 // Application config
 export {getApplicationConfig, initApplicationConfig} from './application-config';
 export type {KeplerApplicationConfig, MapLibInstance} from './application-config';
+
+// Browser utils
+export {isAppleDevice} from './browser-utils';

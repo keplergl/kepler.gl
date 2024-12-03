@@ -38,3 +38,7 @@ npm-debug.log
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
+
+# Local Netlify folder
+.netlify
+meta.json
