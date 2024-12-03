@@ -162,7 +162,7 @@ function AddMapStyleModalFactory() {
         mapboxAccessToken: mapboxApiAccessToken,
         mapLib: getApplicationConfig().getMapLib(),
         preserveDrawingBuffer: true,
-        transformRequest
+        transformRequest: transformRequest(mapboxApiAccessToken)
       };
 
       return (
