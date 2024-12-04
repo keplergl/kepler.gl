@@ -16,6 +16,9 @@ const FOURSQUARE_AUTH_SCOPE = 'openid profile email';
 // Foursquare stores kepler maps using kepler.gl-raw as ImportSource
 const FOURSQUARE_KEPLER_GL_IMPORT_SOURCE = 'kepler.gl-raw';
 
+const PRIVATE_STORAGE_ENABLED = true;
+const SHARING_ENABLED = false;
+
 /**
  * Converts a FSQ map model to cloud provider map item
  * @param model Foursquare Map
@@ -110,9 +113,9 @@ export default class FoursquareProvider extends Provider {
       }
     );
 
-    const createMap = await mapResponse.json();
+    const createdMap = await mapResponse.json();
 
-    await fetch(`${this.apiURL}/v1/maps/${createMap.id}/thumbnail`, {
+    await fetch(`${this.apiURL}/v1/maps/${createdMap.id}/thumbnail`, {
       method: 'PUT',
       headers: {
         ...headers,
@@ -161,6 +164,14 @@ export default class FoursquareProvider extends Provider {
   getMapUrl(loadParams) {
     const {id} = loadParams;
     return `${this.apiURL}/v1/maps/${id}`;
+  }
+
+  hasPrivateStorage() {
+    return PRIVATE_STORAGE_ENABLED;
+  }
+
+  hasSharingUrl() {
+    return SHARING_ENABLED;
   }
 
   getManagementUrl() {
