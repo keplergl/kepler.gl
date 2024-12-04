@@ -22,6 +22,29 @@ Remember to:
 - Provide clear feedback about what action is being taken
 - Do not include raw programming code in responses to users`;
 
+export const PROMPT_IDEAS = [
+  {
+    title: 'Show Metadata ',
+    description: 'list dataset info'
+  },
+  {
+    title: 'Change Basemap ',
+    description: 'use Positron style'
+  },
+  {
+    title: 'Load Data',
+    description: 'load data from https://geodacenter.github.io/data-and-lab/data/lehd.geojson'
+  },
+  {
+    title: 'Create a Map Layer',
+    description: 'update its color inspired by Van Gogh Starry Night'
+  },
+  {
+    title: 'Data Insight',
+    description: 'create a histogram'
+  }
+];
+
 export const ASSISTANT_NAME = 'kepler-gl-ai-assistant';
 
 export const ASSISTANT_DESCRIPTION = 'A Kepler.gl AI Assistant';

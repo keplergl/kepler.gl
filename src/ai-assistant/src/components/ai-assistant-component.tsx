@@ -26,6 +26,7 @@ import {
   ASSISTANT_NAME,
   ASSISTANT_VERSION,
   INSTRUCTIONS,
+  PROMPT_IDEAS,
   WELCOME_MESSAGE
 } from '../constants';
 import {filterFunctionDefinition} from '../tools/filter-function';
@@ -168,6 +169,7 @@ function AiAssistantComponentFactory() {
           fontSize={'text-tiny'}
           botMessageClassName={''}
           githubIssueLink={'https://github.com/keplergl/kepler.gl/issues'}
+          ideas={PROMPT_IDEAS}
         />
       </StyledAiAssistantComponent>
     );
