@@ -157,7 +157,17 @@ export default class FoursquareProvider extends Provider {
   }
 
   async downloadMap(loadParams) {
-    const {id} = loadParams;
+    let {id, path} = loadParams;
+    if (!id) {
+      // try to get map id from foursquare map path
+      if (typeof path === 'string') {
+        const pathId = /((\w{4,12}-?)){5}/.exec(path)[0];
+        if (pathId) {
+          id = pathId;
+        }
+      }
+    }
+
     if (!id) {
       return Promise.reject('No Map id was provider as part of loadParams');
     }
@@ -178,7 +188,7 @@ export default class FoursquareProvider extends Provider {
 
   getMapUrl(loadParams) {
     const {id} = loadParams;
-    return `${this.apiURL}/v1/maps/${id}`;
+    return id ? `${this.apiURL}/v1/maps/${id}` : null;
   }
 
   getManagementUrl() {
