@@ -86,11 +86,9 @@ export function highlightRows(
     const selectLayers = layers.filter(layer => layer.config.dataId === dataset.id);
     selectLayers.forEach(layer => {
       layer.formatLayerData(datasets);
-    });
-    // trigger a re-render using layerSetIsValid()
-    if (selectLayers.length > 0) {
+      // trigger a re-render using layerSetIsValid() to update the top layer
       layerSetIsValid(selectLayers[0], true);
-    }
+    });
   }
 }
 

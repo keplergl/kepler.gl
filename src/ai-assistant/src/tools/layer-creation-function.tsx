@@ -3,6 +3,7 @@ import {LayerClasses} from '@kepler.gl/layers';
 import {Datasets} from '@kepler.gl/table';
 import {
   CallbackFunctionProps,
+  CustomFunctionCall,
   CustomFunctionContext,
   CustomFunctionOutputProps,
   ErrorCallbackResult,
@@ -10,6 +11,7 @@ import {
 } from 'react-ai-assist';
 import {checkDatasetNotExists, checkFieldNotExists, interpolateColor} from './utils';
 import {findDefaultLayer} from '@kepler.gl/reducers';
+import React, {useEffect} from 'react';
 
 export function addLayerFunctionDefinition(
   context: CustomFunctionContext<ActionHandler<typeof addLayer> | Datasets>
@@ -26,7 +28,7 @@ export function addLayerFunctionDefinition(
       layerType: {
         type: 'string',
         description:
-          'The type of the layer. Valid values are "point" (point layer), "arc" (arc layer), "line" (line layer), "grid" (grid layer), "hexagon" (hexagon layer), "geojson" (geojson layer), "cluster" (cluster layer), "heatmap" (heatmap layer), "h3" (h3 layer), "trip" (trip layer) and "s2" (s2 layer).'
+          'The type of the layer. Valid values are "point" (point layer), "arc" (arc layer), "line" (line layer), "grid" (grid layer), "hexagon" (hexagon layer), "geojson" (geojson layer), "cluster" (cluster layer), "heatmap" (heatmap layer), "h3" (h3 layer), "trip" (trip layer) and "s2" (s2 layer). If not provided, the function will try to find the best layer type based on the dataset.'
       },
       fieldName: {
         type: 'string',
@@ -49,7 +51,8 @@ export function addLayerFunctionDefinition(
     },
     required: ['datasetName', 'fieldName', 'colorScale'],
     callbackFunction: addLayerCallback,
-    callbackFunctionContext: context
+    callbackFunctionContext: context,
+    callbackMessage: addLayerMessageCallback
   };
 }
 
@@ -79,7 +82,9 @@ type AddLayerCallbackResult = {
 type OutputResultProps = AddLayerCallbackResult | ErrorCallbackResult;
 
 type OutputDataProps = {
-  layerId: string;
+  newLayer: object;
+  datasetId: string;
+  addLayer: ActionHandler<typeof addLayer>;
 };
 
 type AddLayerCallbackOutput = CustomFunctionOutputProps<OutputResultProps, OutputDataProps>;
@@ -184,7 +189,7 @@ function addLayerCallback({
     }
   };
 
-  addLayer(newLayer, datasetId);
+  // addLayer(newLayer, datasetId);
 
   return {
     type: 'layer',
@@ -195,9 +200,23 @@ function addLayerCallback({
       datasetId,
       layerLabel: newLayer.config.label,
       layerType: newLayer.type,
-      numberOfColors: newLayer.config.visConfig.colorRange.colors.length,
+      numberOfColors: customColorRange.colors.length,
       details: `New map layer with ${field.name} and ${colorScale} color scale added successfully.`
     },
-    data: {layerId: newLayer.id}
+    data: {newLayer, datasetId, addLayer}
   };
+}
+
+function AddLayerMessage({output}: CustomFunctionCall) {
+  const outputData = output.data as OutputDataProps;
+
+  useEffect(() => {
+    outputData?.addLayer?.(outputData.newLayer, outputData.datasetId);
+  }, [outputData]);
+
+  return null;
+}
+
+function addLayerMessageCallback(props: CustomFunctionCall) {
+  return <AddLayerMessage {...props} />;
 }

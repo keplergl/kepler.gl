@@ -126,7 +126,6 @@ function AiAssistantComponentFactory() {
     };
 
     useEffect(() => {
-      console.log('initializeAssistant');
       initializeAssistantWithContext();
       // re-initialize assistant when datasets, filters or layers change
       // eslint-disable-next-line react-hooks/exhaustive-deps
