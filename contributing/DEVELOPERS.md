@@ -18,8 +18,7 @@ explains the basic mechanics of using `git`, `node`, `yarn`.
 
 ### Installing Dependencies
 
-Before you can build Kepler.gl, you must install and configure the following dependencies on your
-machine:
+Before you can build Kepler.gl, you must install and configure the following dependencies on your machine:
 
 - [Git](http://git-scm.com/): The [Github Guide to Installing Git][git-setup] is a good source of information.
 
@@ -43,6 +42,12 @@ If you plan to contribute code to kepler.gl, you must have a [GitHub account](ht
 
 #### Developing kepler.gl
 
+If you are using Windows then using `WSL (Windows Subsystem for Linux)` is recommended. You can download a Linux Distribution like e.g. `Ubuntu` and inside of that distribution you can follow along with the next steps. You can find the detailed instructions about `WSL` [here](https://learn.microsoft.com/en-us/windows/wsl/).
+
+If you are using MacOS or Linux then you can follow along.
+
+Also please make sure the code editor you are using it has proper support for [EditorConfig](https://editorconfig.org/).VSCode has the [EditorConfig for VS Code](https://marketplace.visualstudio.com/items?itemName=EditorConfig.EditorConfig) Plugin. Please install necessary support for EditorConfig for your editor so that other code formatters do not have an effect on the Kepler.GL code.
+
 To develop features, debug code, run tests, we use webpack to start a local web server and serve the kepler.gl demo app from the src directory.
 
 ```bash
@@ -63,11 +68,23 @@ On Unix, MacOS
 # install Volta on Unix
 curl https://get.volta.sh | bash
 ```
-
 On Windows
 
 ```bash
 winget install Volta.Volta
+```
+
+Install `nvm` to set the proper Node.js version for the project. Follow instructions to install nvm [here](https://github.com/nvm-sh/nvm).
+
+```bash
+# Install the proper Node.js version for the Kepler.gl project
+nvm install
+
+# Use the downloaded Node.js version for the Kepler.gl project
+nvm use
+
+# Enable Yarn
+corepack enable
 ```
 
 Install dependencies with Yarn
@@ -81,8 +98,16 @@ yarn global add puppeteer
 yarn install
 yarn bootstrap
 
-# Setup mapbox access token locally
-export MapboxAccessToken=<insert_your_token>
+# Setup Mapbox access token locally
+export MapboxAccessToken=<MapboxAccessToken>
+# Set up other environment variables
+export DropboxClientId=<DropboxClientId>
+export MapboxExportToken=<MapboxExportToken>
+export CartoClientId=<CartoClientId>
+export FoursquareClientId=<FoursquareClientId>
+export FoursquareDomain=<FoursquareDomain>
+export FoursquareAPIURL=<FoursquareAPIURL>
+export FoursquareUserMapsURL=<FoursquareUserMapsURL>
 
 # Start the kepler.gl demo app
 yarn start
