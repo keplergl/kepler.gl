@@ -1,6 +1,6 @@
 import {ActionHandler, addLayer} from '@kepler.gl/actions';
 import {LayerClasses} from '@kepler.gl/layers';
-import {Datasets} from '@kepler.gl/table';
+import KeplerTable, {Datasets} from '@kepler.gl/table';
 import {
   CallbackFunctionProps,
   CustomFunctionCall,
@@ -143,8 +143,15 @@ function addLayerCallback({
   }
 
   // check if layerType is valid
-  const defaultLayers = findDefaultLayer(dataset, LayerClasses);
-  const layer = defaultLayers.find(l => l.type === layerType) || defaultLayers[0];
+  const layer = guessDefaultLayer(dataset, layerType);
+
+  if (!layer) {
+    return {
+      type: 'layer',
+      name: functionName,
+      result: {success: false, details: `Invalid layer type: ${layerType}`}
+    };
+  }
 
   const colorField = {
     name: field.name,
@@ -189,8 +196,6 @@ function addLayerCallback({
     }
   };
 
-  // addLayer(newLayer, datasetId);
-
   return {
     type: 'layer',
     name: functionName,
@@ -205,6 +210,24 @@ function addLayerCallback({
     },
     data: {newLayer, datasetId, addLayer}
   };
+}
+
+function guessDefaultLayer(dataset: KeplerTable, layerType: string) {
+  // special case for hexagon layer, which could be implemented as findDefaultLayerProps() in hexagon-layer.tsx
+  if (layerType === 'hexagon') {
+    if (dataset.fieldPairs && dataset.fieldPairs.length > 0) {
+      const props = dataset.fieldPairs.map(fieldPair => ({
+        isVisible: true,
+        label: 'Hexbin',
+        columns: fieldPair.pair
+      }));
+      const layer = new LayerClasses.hexagon(props[0]);
+      return layer;
+    }
+  }
+  const defaultLayers = findDefaultLayer(dataset, LayerClasses);
+  const layer = defaultLayers.find(l => l.type === layerType);
+  return layer || defaultLayers.length > 0 ? defaultLayers[0] : null;
 }
 
 function AddLayerMessage({output}: CustomFunctionCall) {

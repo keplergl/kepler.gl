@@ -9,7 +9,7 @@ import {
   useAssistant,
   histogramFunctionDefinition
 } from 'react-ai-assist';
-import 'react-ai-assist/../dist/index.css';
+import 'react-ai-assist/dist/index.css';
 
 import {textColorLT} from '@kepler.gl/styles';
 import {ActionHandler} from '@kepler.gl/actions';
@@ -121,7 +121,7 @@ function AiAssistantComponentFactory() {
 
     const initializeAssistantWithContext = async () => {
       await initializeAssistant();
-      const context = await getDatasetContext(visState.datasets);
+      const context = getDatasetContext(visState.datasets);
       addAdditionalContext({context});
     };
 

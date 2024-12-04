@@ -6,10 +6,7 @@ import {
   UPDATE_AI_ASSISTANT_CONFIG,
   UPDATE_AI_ASSISTANT_MESSAGES,
   SET_START_SCREEN_CAPTURE,
-  SET_SCREEN_CAPTURED,
-  ADD_DATASET_CONTEXT,
-  REMOVE_DATASET_CONTEXT,
-  RESET_DATASET_CONTEXT
+  SET_SCREEN_CAPTURED
 } from '../actions';
 import {MessageModel} from 'react-ai-assist';
 
@@ -41,7 +38,6 @@ export type AiAssistantState = {
     startScreenCapture: boolean;
     screenCaptured: string;
   };
-  datasetContext: string[];
 };
 
 const initialState: AiAssistantState = {
@@ -50,8 +46,7 @@ const initialState: AiAssistantState = {
   screenshotToAsk: {
     startScreenCapture: false,
     screenCaptured: ''
-  },
-  datasetContext: []
+  }
 };
 
 export const aiAssistantReducer = handleActions<AiAssistantState, any>(
@@ -59,10 +54,7 @@ export const aiAssistantReducer = handleActions<AiAssistantState, any>(
     [UPDATE_AI_ASSISTANT_CONFIG]: updateAiAssistantConfigHandler,
     [UPDATE_AI_ASSISTANT_MESSAGES]: updateAiAssistantMessagesHandler,
     [SET_START_SCREEN_CAPTURE]: setStartScreenCaptureHandler,
-    [SET_SCREEN_CAPTURED]: setScreenCapturedHandler,
-    [ADD_DATASET_CONTEXT]: addDatasetContextHandler,
-    [REMOVE_DATASET_CONTEXT]: removeDatasetContextHandler,
-    [RESET_DATASET_CONTEXT]: resetDatasetContextHandler
+    [SET_SCREEN_CAPTURED]: setScreenCapturedHandler
   },
   initialState
 );
@@ -95,26 +87,5 @@ function setScreenCapturedHandler(state: AiAssistantState, action: Action<string
   return {
     ...state,
     screenshotToAsk: {...state.screenshotToAsk, screenCaptured: action.payload}
-  };
-}
-
-function addDatasetContextHandler(state: AiAssistantState, action: Action<string>) {
-  return {
-    ...state,
-    datasetContext: [...state.datasetContext, action.payload]
-  };
-}
-
-function removeDatasetContextHandler(state: AiAssistantState, action: Action<string>) {
-  return {
-    ...state,
-    datasetContext: state.datasetContext.filter(id => id !== action.payload)
-  };
-}
-
-function resetDatasetContextHandler(state: AiAssistantState) {
-  return {
-    ...state,
-    datasetContext: []
   };
 }
