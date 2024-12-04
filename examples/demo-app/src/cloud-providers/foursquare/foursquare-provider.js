@@ -10,14 +10,12 @@ const DISPLAY_NAME = 'Foursquare';
 const APP_NAME = 'Kepler.gl';
 
 const FOURSQUARE_PRIVATE_STORAGE_ENABLED = true;
+const FOURSQUARE_SHARING_ENABLED = false;
 const FOURSQUARE_AUTH_AUDIENCE = 'https://foursquare.com/api/';
 const FOURSQUARE_AUTH_SCOPE = 'openid profile email';
 
 // Foursquare stores kepler maps using kepler.gl-raw as ImportSource
 const FOURSQUARE_KEPLER_GL_IMPORT_SOURCE = 'kepler.gl-raw';
-
-const PRIVATE_STORAGE_ENABLED = true;
-const SHARING_ENABLED = false;
 
 /**
  * Converts a FSQ map model to cloud provider map item
@@ -70,6 +68,10 @@ export default class FoursquareProvider extends Provider {
 
   hasPrivateStorage() {
     return FOURSQUARE_PRIVATE_STORAGE_ENABLED;
+  }
+
+  hasSharingUrl() {
+    return FOURSQUARE_SHARING_ENABLED;
   }
 
   async getUser() {
@@ -164,14 +166,6 @@ export default class FoursquareProvider extends Provider {
   getMapUrl(loadParams) {
     const {id} = loadParams;
     return `${this.apiURL}/v1/maps/${id}`;
-  }
-
-  hasPrivateStorage() {
-    return PRIVATE_STORAGE_ENABLED;
-  }
-
-  hasSharingUrl() {
-    return SHARING_ENABLED;
   }
 
   getManagementUrl() {
