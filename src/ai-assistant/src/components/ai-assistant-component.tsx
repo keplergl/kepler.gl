@@ -9,7 +9,7 @@ import {
   useAssistant,
   histogramFunctionDefinition
 } from 'react-ai-assist';
-import 'react-ai-assist/dist/index.css';
+import 'react-ai-assist/../dist/index.css';
 
 import {textColorLT} from '@kepler.gl/styles';
 import {ActionHandler} from '@kepler.gl/actions';
@@ -20,12 +20,7 @@ import {basemapFunctionDefinition} from '../tools/basemap-functions';
 import {loadUrlFunctionDefinition} from '../tools/loadurl-function';
 
 import {AiAssistantState} from '../reducers';
-import {
-  addDatasetContext,
-  setScreenCaptured,
-  setStartScreenCapture,
-  updateAiAssistantMessages
-} from '../actions';
+import {setScreenCaptured, setStartScreenCapture, updateAiAssistantMessages} from '../actions';
 import {
   ASSISTANT_DESCRIPTION,
   ASSISTANT_NAME,
@@ -37,7 +32,7 @@ import {filterFunctionDefinition} from '../tools/filter-function';
 import {addLayerFunctionDefinition} from '../tools/layer-creation-function';
 import {updateLayerColorFunctionDefinition} from '../tools/layer-style-function';
 import {SelectedKeplerGlActions} from './ai-assistant-manager';
-import {getValuesFromDataset, highlightRows} from '../tools/utils';
+import {getDatasetContext, getValuesFromDataset, highlightRows} from '../tools/utils';
 
 export type AiAssistantComponentProps = {
   theme: any;
@@ -45,7 +40,6 @@ export type AiAssistantComponentProps = {
   updateAiAssistantMessages: ActionHandler<typeof updateAiAssistantMessages>;
   setStartScreenCapture: ActionHandler<typeof setStartScreenCapture>;
   setScreenCaptured: ActionHandler<typeof setScreenCaptured>;
-  addDatasetContext: ActionHandler<typeof addDatasetContext>;
   keplerGlActions: SelectedKeplerGlActions;
   mapStyle: MapStyle;
   visState: VisState;
@@ -69,7 +63,6 @@ function AiAssistantComponentFactory() {
     updateAiAssistantMessages,
     setStartScreenCapture,
     setScreenCaptured,
-    addDatasetContext,
     keplerGlActions,
     mapStyle,
     visState
@@ -124,31 +117,26 @@ function AiAssistantComponentFactory() {
       functions
     };
 
-    const {initializeAssistant} = useAssistant(assistantProps);
+    const {initializeAssistant, addAdditionalContext} = useAssistant(assistantProps);
+
+    const initializeAssistantWithContext = async () => {
+      await initializeAssistant();
+      const context = await getDatasetContext(visState.datasets);
+      addAdditionalContext({context});
+    };
 
     useEffect(() => {
-      initializeAssistant();
+      console.log('initializeAssistant');
+      initializeAssistantWithContext();
       // re-initialize assistant when datasets, filters or layers change
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [visState.datasets, visState.filters, visState.layers]);
 
-    // show ideas for adding dataset context to the conversation
-    const datasetContextIdeas = Object.values(visState.datasets)
-      .filter(dataset => !aiAssistant.datasetContext.includes(dataset.id))
-      .map(dataset => ({
-        title: `Click to Add Dataset Context `,
-        description: `The metadata of "${dataset.label}"`,
-        icon: 'svg-spinners:pulse',
-        context: `Please remember the following dataset context:\ndatasetName: ${
-          dataset.label
-        }\ndatasetId: ${dataset.id}\n${dataset.fields
-          .map(field => `${field.name}: ${field.type}`)
-          .join('\n')}\nPlease don't respond to this message.`,
-        callback: () => {
-          // add the dataset to the context
-          addDatasetContext(dataset.id);
-        }
-      }));
+    const onRestartAssistant = () => {
+      // clean up aiAssistant state
+      updateAiAssistantMessages([]);
+      initializeAssistantWithContext();
+    };
 
     const onMessagesUpdated = (messages: MessageModel[]) => {
       updateAiAssistantMessages(messages);
@@ -177,10 +165,10 @@ function AiAssistantComponentFactory() {
           onScreenshotClick={onScreenshotClick}
           screenCapturedBase64={aiAssistant.screenshotToAsk.screenCaptured}
           onRemoveScreenshot={onRemoveScreenshot}
+          onRestartChat={onRestartAssistant}
           fontSize={'text-tiny'}
           botMessageClassName={''}
           githubIssueLink={'https://github.com/keplergl/kepler.gl/issues'}
-          ideas={datasetContextIdeas}
         />
       </StyledAiAssistantComponent>
     );

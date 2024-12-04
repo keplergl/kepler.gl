@@ -8,7 +8,8 @@ import {
   SET_START_SCREEN_CAPTURE,
   SET_SCREEN_CAPTURED,
   ADD_DATASET_CONTEXT,
-  REMOVE_DATASET_CONTEXT
+  REMOVE_DATASET_CONTEXT,
+  RESET_DATASET_CONTEXT
 } from '../actions';
 import {MessageModel} from 'react-ai-assist';
 
@@ -60,7 +61,8 @@ export const aiAssistantReducer = handleActions<AiAssistantState, any>(
     [SET_START_SCREEN_CAPTURE]: setStartScreenCaptureHandler,
     [SET_SCREEN_CAPTURED]: setScreenCapturedHandler,
     [ADD_DATASET_CONTEXT]: addDatasetContextHandler,
-    [REMOVE_DATASET_CONTEXT]: removeDatasetContextHandler
+    [REMOVE_DATASET_CONTEXT]: removeDatasetContextHandler,
+    [RESET_DATASET_CONTEXT]: resetDatasetContextHandler
   },
   initialState
 );
@@ -107,5 +109,12 @@ function removeDatasetContextHandler(state: AiAssistantState, action: Action<str
   return {
     ...state,
     datasetContext: state.datasetContext.filter(id => id !== action.payload)
+  };
+}
+
+function resetDatasetContextHandler(state: AiAssistantState) {
+  return {
+    ...state,
+    datasetContext: []
   };
 }

@@ -26,8 +26,7 @@ import {
   updateAiAssistantConfig,
   updateAiAssistantMessages,
   setStartScreenCapture,
-  setScreenCaptured,
-  addDatasetContext
+  setScreenCaptured
 } from '../actions';
 import AiAssistantConfigFactory from './ai-assistant-config';
 import AiAssistantComponentFactory from './ai-assistant-component';
@@ -50,7 +49,6 @@ export type AiAssistantManagerState = {
     updateAiAssistantMessages: ActionHandler<typeof updateAiAssistantMessages>;
     setStartScreenCapture: ActionHandler<typeof setStartScreenCapture>;
     setScreenCaptured: ActionHandler<typeof setScreenCaptured>;
-    addDatasetContext: ActionHandler<typeof addDatasetContext>;
   };
   keplerGlActions: SelectedKeplerGlActions;
   aiAssistant: AiAssistantState;
@@ -151,7 +149,6 @@ function AiAssistantManagerFactory(
                 updateAiAssistantMessages={aiAssistantActions.updateAiAssistantMessages}
                 setStartScreenCapture={aiAssistantActions.setStartScreenCapture}
                 setScreenCaptured={aiAssistantActions.setScreenCaptured}
-                addDatasetContext={aiAssistantActions.addDatasetContext}
                 keplerGlActions={keplerGlActions}
                 mapStyle={mapStyle}
                 visState={visState}
@@ -189,8 +186,7 @@ function AiAssistantManagerFactory(
         updateAiAssistantConfig,
         updateAiAssistantMessages,
         setStartScreenCapture,
-        setScreenCaptured,
-        addDatasetContext
+        setScreenCaptured
       }
     }
   )(injectIntl(AiAssistantManager)) as React.FC<AiAssistantManagerProps>;

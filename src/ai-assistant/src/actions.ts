@@ -12,6 +12,7 @@ export const SET_START_SCREEN_CAPTURE = `${ACTION_PREFIX}SET_START_SCREEN_CAPTUR
 export const SET_SCREEN_CAPTURED = `${ACTION_PREFIX}SET_SCREEN_CAPTURED`;
 export const ADD_DATASET_CONTEXT = `${ACTION_PREFIX}ADD_DATASET_CONTEXT`;
 export const REMOVE_DATASET_CONTEXT = `${ACTION_PREFIX}REMOVE_DATASET_CONTEXT`;
+export const RESET_DATASET_CONTEXT = `${ACTION_PREFIX}RESET_DATASET_CONTEXT`;
 
 // Action creators
 export function updateAiAssistantConfig(config: AiAssistantConfig) {
@@ -53,5 +54,10 @@ export function removeDatasetContext(datasetId: string) {
   return {
     type: REMOVE_DATASET_CONTEXT,
     payload: datasetId
+  };
+}
+export function resetDatasetContext() {
+  return {
+    type: RESET_DATASET_CONTEXT
   };
 }
