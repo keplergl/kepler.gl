@@ -12,6 +12,7 @@ const STORAGE_MESSAGE = 'modal.loadStorageMap.foursquareStorageMessage';
 const APP_NAME = 'Kepler.gl';
 
 const FOURSQUARE_PRIVATE_STORAGE_ENABLED = true;
+const FOURSQUARE_SHARING_ENABLED = false;
 const FOURSQUARE_AUTH_AUDIENCE = 'https://foursquare.com/api/';
 const FOURSQUARE_AUTH_SCOPE = 'openid profile email';
 
@@ -87,6 +88,10 @@ export default class FoursquareProvider extends Provider {
     return FOURSQUARE_PRIVATE_STORAGE_ENABLED;
   }
 
+  hasSharingUrl() {
+    return FOURSQUARE_SHARING_ENABLED;
+  }
+
   async getUser() {
     return this._auth0.getUser();
   }
@@ -128,9 +133,9 @@ export default class FoursquareProvider extends Provider {
       }
     );
 
-    const createMap = await mapResponse.json();
+    const createdMap = await mapResponse.json();
 
-    await fetch(`${this.apiURL}/v1/maps/${createMap.id}/thumbnail`, {
+    await fetch(`${this.apiURL}/v1/maps/${createdMap.id}/thumbnail`, {
       method: 'PUT',
       headers: {
         ...headers,
