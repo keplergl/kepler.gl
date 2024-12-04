@@ -1,5 +1,5 @@
 export const TASK_LIST =
-  '1. Change the basemap style.\n2. Load data from url.\n3. Create a map layer using variable.\n4. Filter the data of a variable.\n5. Create a histogram.';
+  '1. Show dataset/layer/variable info.\n2. Change the basemap style.\n3. Load data from url.\n4. Create a map layer using variable.\n5. Filter the data of a variable.\n6. Create a histogram.';
 
 export const WELCOME_MESSAGE = `Hi, I am Kepler.gl AI Assistant!\nHere are some tasks I can help you with:\n\n${TASK_LIST}`;
 

@@ -92,12 +92,15 @@ export function highlightRows(
   }
 }
 
-export function getDatasetContext(datasets: Datasets) {
+export function getDatasetContext(datasets: Datasets, layers: Layer[]) {
   const context = 'Please remember the following dataset context:';
   const dataMeta = Object.values(datasets).map(dataset => ({
     datasetName: dataset.label,
     datasetId: dataset.id,
-    fields: dataset.fields.map(field => ({[field.name]: field.type}))
+    fields: dataset.fields.map(field => ({[field.name]: field.type})),
+    layers: layers
+      .filter(layer => layer.config.dataId === dataset.id)
+      .map(layer => ({id: layer.id, label: layer.config.label, type: layer.type}))
   }));
   return `${context}\n${JSON.stringify(dataMeta)}`;
 }

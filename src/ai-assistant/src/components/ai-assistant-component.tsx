@@ -121,7 +121,7 @@ function AiAssistantComponentFactory() {
 
     const initializeAssistantWithContext = async () => {
       await initializeAssistant();
-      const context = getDatasetContext(visState.datasets);
+      const context = getDatasetContext(visState.datasets, visState.layers);
       addAdditionalContext({context});
     };
 
