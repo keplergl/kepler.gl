@@ -1,8 +1,7 @@
 import esbuild from 'esbuild';
 import { replace } from 'esbuild-plugin-replace';
 import process from 'node:process';
-import { join, resolve } from 'node:path';
-import fs from 'node:fs';
+import { join } from 'node:path';
 import { spawn } from 'node:child_process';
 import WebsitePackage from '../package.json' assert {type: 'json'};
 
