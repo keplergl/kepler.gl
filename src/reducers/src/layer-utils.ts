@@ -34,7 +34,18 @@ export type LayersToRender = {
   [layerId: string]: boolean;
 };
 
-export type AggregationLayerHoverData = {points: any[]; colorValue?: any; elevationValue?: any};
+export type AggregationLayerHoverData = {
+  points: any[];
+  colorValue?: any;
+  elevationValue?: any;
+  aggregatedData?: Record<
+    string,
+    {
+      measure: string;
+      value?: number;
+    }
+  >;
+};
 
 export type LayerHoverProp = {
   data: DataRow | AggregationLayerHoverData | null;
