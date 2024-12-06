@@ -170,7 +170,7 @@ const CellInfo = ({
     return null;
   }, [fieldsToShow, sizeField, layer, data.elevationValue]);
 
-  const aggregatedData: {name: string; value?: nubmer}[] = useMemo(() => {
+  const aggregatedData = useMemo(() => {
     if (data.aggregatedData && fieldsToShow) {
       return fieldsToShow.reduce((acc, field) => {
         const dataForField = data.aggregatedData?.[field.name];
@@ -181,7 +181,7 @@ const CellInfo = ({
           });
         }
         return acc;
-      }, []);
+      }, [] as {name: string; value?: string}[]);
     }
     return [];
   }, [data.aggregatedData, fieldsToShow]);

@@ -42,7 +42,7 @@ export type AggregationLayerHoverData = {
     string,
     {
       measure: string;
-      value?: number;
+      value?: any;
     }
   >;
 };
