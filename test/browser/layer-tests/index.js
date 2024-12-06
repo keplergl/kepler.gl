@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import './base-layer-sepcs';
+import './base-layer-specs';
 import './arc-layer-specs';
 import './cluster-layer-specs';
 import './geojson-layer-specs';

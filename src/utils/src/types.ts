@@ -13,6 +13,7 @@ export interface KeplerTableModel<K, L, F extends Field = any> {
   getColumnFilterProps(columnName: string): Field['filterProps'] | null | undefined;
   dataContainer: DataContainerInterface;
   filterTableCPU(filters: Filter[], layers: L[]): K;
+  getColumnField(fieldName: string): Field | undefined;
   gpuFilter: {
     filterRange: number[][];
     filterValueUpdateTriggers: any;

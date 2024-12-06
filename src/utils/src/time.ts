@@ -14,9 +14,16 @@ import {
   TickInterval
 } from '@kepler.gl/constants';
 import {toArray} from '@kepler.gl/common-utils';
-import {AnimationConfig, Timeline, TimeRangeFilter} from '@kepler.gl/types';
+import {AnimationConfig, Timeline, TimeRangeFilter, Filter} from '@kepler.gl/types';
 
 import {getFrequency} from './aggregation';
+import {getBinThresholds} from './plot';
+import {KeplerTableModel} from './types';
+
+export const TIMELINE_MODES = {
+  inner: 'inner',
+  outer: 'outer'
+};
 
 export const TileTimeInterval = {
   YEAR: 'Y',
@@ -40,11 +47,6 @@ export const LayerToFilterTimeInterval = {
   [TileTimeInterval.DAY]: INTERVAL['1-day'],
   [TileTimeInterval.MONTH]: INTERVAL['1-month'],
   [TileTimeInterval.YEAR]: INTERVAL['1-year']
-};
-
-export const TIMELINE_MODES = {
-  inner: 'inner',
-  outer: 'outer'
 };
 
 export const SAMPLE_TIMELINE = {
@@ -83,37 +85,7 @@ export const getTimelineFromAnimationConfig = (animationConfig: AnimationConfig)
     defaultTimeFormat,
     timeFormat,
     timezone,
-    marks: null
-  };
-};
-
-export const getTimelineFromFilter = (filter: TimeRangeFilter): Timeline => {
-  const {
-    value,
-    domain,
-    speed,
-    isAnimating,
-    step,
-    // @ts-expect-error
-    timeSteps,
-    defaultTimeFormat,
-    timeFormat,
-    timezone,
-    animationWindow
-  } = filter;
-
-  return {
-    value,
-    enableInteraction: true,
-    domain,
-    speed,
-    isAnimating,
-    step,
-    timeSteps,
-    defaultTimeFormat,
-    timeFormat,
-    timezone,
-    animationWindow,
+    timeBins: null,
     marks: null
   };
 };
@@ -221,10 +193,13 @@ function detectInterval(values: number[] = [], domain, maxSteps = 10) {
 
 /**
  * mappedValue is saved to dataset.fields.filterProps
- * @param dataset
+ * @param dataset {KeplerTable}
  * @param filter
  */
-export function getFilterMappedValue(dataset, filter) {
+export function getFilterMappedValue(
+  dataset: KeplerTableModel<any, any>,
+  filter: Filter
+): Filter['mappedValue'] | null {
   const dataId = dataset.id;
   const fieldName = filter.name[filter.dataId.indexOf(dataId)];
   const field = dataset.getColumnField(fieldName);
@@ -257,7 +232,7 @@ function getDurationUnit(duration) {
   return ['milliseconds', 1];
 }
 
-export function intervalToFunction(id) {
+export function intervalToFunction(id: string) {
   const [stepStr, interval] = id.split('-');
   const step = parseInt(stepStr); // eslint-disable-line radix
   if (!step) {
@@ -275,7 +250,16 @@ export function intervalToFunction(id) {
   return TIME_INTERVALS[interval].every(step);
 }
 
-export function getInitialInterval(filter, datasets) {
+/**
+ * Get initial interval from filter and datasets
+ * @param filter
+ * @param datasets
+ * @returns
+ */
+export function getInitialInterval(
+  filter: Filter,
+  datasets: Record<string, KeplerTableModel<any, any>>
+): string {
   const {domain} = filter;
   const mergeMappedValue = filter.dataId.reduce((accu, dataId) => {
     const mappedValue = getFilterMappedValue(datasets[dataId], filter);
@@ -287,12 +271,13 @@ export function getInitialInterval(filter, datasets) {
       accu.push(mappedValue[i]);
     }
     return accu;
-  }, []);
+  }, [] as any[]);
 
   // check if data has predefined interval
   let interval = detectInterval(mergeMappedValue, domain);
 
   if (!interval) {
+    // @ts-expect-error need better types for domain
     const [t0, t1] = domain;
     interval = getIntervalByTicks(BINS_LARGE, t0, t1);
   }
@@ -326,3 +311,42 @@ export function filterIntervalOptions(options, domain) {
     return count >= minBins && count <= maxBins;
   });
 }
+
+/**
+ * Get timeline from filter
+ * @param filter TimeRangeFilter filter
+ * @returns Timeline
+ */
+export const getTimelineFromFilter = (filter: TimeRangeFilter): Timeline => {
+  const {
+    value,
+    domain,
+    speed,
+    isAnimating,
+    step,
+    // @ts-expect-error
+    timeSteps,
+    defaultTimeFormat,
+    timeFormat,
+    timezone,
+    timeBins,
+    animationWindow,
+    plotType
+  } = filter;
+
+  return {
+    value,
+    enableInteraction: true,
+    domain,
+    speed,
+    isAnimating,
+    step,
+    timeSteps,
+    defaultTimeFormat,
+    timeFormat,
+    timezone,
+    timeBins,
+    animationWindow,
+    marks: getBinThresholds(plotType?.interval, domain)
+  };
+};

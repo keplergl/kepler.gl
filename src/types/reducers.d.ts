@@ -270,6 +270,7 @@ export type Timeline = {
   defaultTimeFormat?: null | string;
   timeFormat?: null | string;
   timezone?: null | string;
+  timeBins?: null | Record<string, any>;
   animationWindow?: null | Filter['animationWindow'];
   marks?: null | number[];
 } & Record<string, any>;
