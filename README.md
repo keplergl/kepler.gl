@@ -54,29 +54,29 @@ Kepler.gl is also a React component that uses [Redux](https://redux.js.org/) to 
 Use Node 18.18.2 or above, older node versions have not been supported/ tested.
 For best results, use [nvm](https://github.com/creationix/nvm) `nvm install`.
 
-## Install kepler.gl
+## Install kepler.gl modules
 
-Install node (`> 18.18.2`), yarn, and project dependencies
+Kepler.gl consists of different modules. Each module can be added to the project like this:
 
 ```sh
-npm install --save kepler.gl
+npm install --save @kepler.gl/components
 // or
-yarn add kepler.gl
+yarn add @kepler.gl/components
 ```
 
 kepler.gl is built upon [mapbox][mapbox]. You will need a [Mapbox Access Token][mapbox-token] to use it.
 
 If you don't use a module bundler, it's also fine. Kepler.gl npm package includes precompiled production UMD builds in the [umd folder](https://unpkg.com/kepler.gl/umd).
-You can add the script tag to your html file as it follows:
+You can add the script tag to your html file as it follows (latest version of Kepler.gl):
 
 ```html
 <script src="https://unpkg.com/kepler.gl/umd/keplergl.min.js" />
 ```
 
-or if you would like, you can load a specific version
+or if you would like, you can load a specific version:
 
 ```html
-<script src="https://unpkg.com/kepler.gl@2.5.5/umd/keplergl.min.js" />
+<script src="https://unpkg.com/kepler.gl@3.0.0/umd/keplergl.min.js" />
 ```
 
 ## Develop kepler.gl

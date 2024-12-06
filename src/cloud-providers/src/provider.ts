@@ -34,6 +34,7 @@ export type Thumbnail = {
 export type ProviderProps = {
   name?: string;
   displayName?: string;
+  storageMessage?: string;
   icon?: ComponentType<IconProps>;
   thumbnail?: Thumbnail;
 };
@@ -72,6 +73,7 @@ export const FILE_CONFLICT_MSG = 'file_conflict';
 export default class Provider {
   name: string;
   displayName: string;
+  storageMessage?: string;
   icon: ComponentType<IconProps>;
   thumbnail: Thumbnail;
   isNew = false;
@@ -79,6 +81,7 @@ export default class Provider {
   constructor(props: ProviderProps) {
     this.name = props.name || NAME;
     this.displayName = props.displayName || DISPLAY_NAME;
+    this.storageMessage = props.storageMessage;
     this.icon = props.icon || ICON;
     this.thumbnail = props.thumbnail || THUMBNAIL;
   }

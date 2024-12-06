@@ -505,7 +505,9 @@ ${'```'}
       back: 'Back',
       goToPage: 'Go to your Kepler.gl {displayName} page',
       storageMaps: 'Storage / Maps',
-      noSavedMaps: 'No saved maps yet'
+      noSavedMaps: 'No saved maps yet',
+      foursquareStorageMessage:
+        'Only maps saved with Kepler.gl > Save > Foursquare Storage option are shown here'
     }
   },
   header: {

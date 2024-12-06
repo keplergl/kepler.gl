@@ -19,6 +19,7 @@ export type AiAssistantConfig = {
   temperature: number;
   topP: number;
 };
+
 // Initial state for the reducer
 const initialConfig: AiAssistantConfig = {
   isReady: false,
@@ -50,36 +51,39 @@ const initialState: AiAssistantState = {
 
 export const aiAssistantReducer = handleActions<AiAssistantState, any>(
   {
-    [UPDATE_AI_ASSISTANT_CONFIG]: updateAiAssistantConfig,
-    [UPDATE_AI_ASSISTANT_MESSAGES]: updateAiAssistantMessages,
-    [SET_START_SCREEN_CAPTURE]: setStartScreenCapture,
-    [SET_SCREEN_CAPTURED]: setScreenCaptured
+    [UPDATE_AI_ASSISTANT_CONFIG]: updateAiAssistantConfigHandler,
+    [UPDATE_AI_ASSISTANT_MESSAGES]: updateAiAssistantMessagesHandler,
+    [SET_START_SCREEN_CAPTURE]: setStartScreenCaptureHandler,
+    [SET_SCREEN_CAPTURED]: setScreenCapturedHandler
   },
   initialState
 );
 
-function updateAiAssistantConfig(state: AiAssistantState, action: Action<AiAssistantConfig>) {
+function updateAiAssistantConfigHandler(
+  state: AiAssistantState,
+  action: Action<AiAssistantConfig>
+) {
   return {
     ...state,
     config: {...state.config, ...action.payload}
   };
 }
 
-function updateAiAssistantMessages(state: AiAssistantState, action: Action<MessageModel[]>) {
+function updateAiAssistantMessagesHandler(state: AiAssistantState, action: Action<MessageModel[]>) {
   return {
     ...state,
     messages: action.payload
   };
 }
 
-function setStartScreenCapture(state: AiAssistantState, action: Action<boolean>) {
+function setStartScreenCaptureHandler(state: AiAssistantState, action: Action<boolean>) {
   return {
     ...state,
     screenshotToAsk: {startScreenCapture: action.payload, screenCaptured: ''}
   };
 }
 
-function setScreenCaptured(state: AiAssistantState, action: Action<string>) {
+function setScreenCapturedHandler(state: AiAssistantState, action: Action<string>) {
   return {
     ...state,
     screenshotToAsk: {...state.screenshotToAsk, screenCaptured: action.payload}

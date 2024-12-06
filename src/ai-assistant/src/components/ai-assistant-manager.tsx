@@ -5,8 +5,19 @@ import React, {useCallback} from 'react';
 import styled from 'styled-components';
 import {injectIntl, IntlShape} from 'react-intl';
 
-import {MapStyle} from '@kepler.gl/reducers';
-import {ActionHandler, mapStyleChange, loadFiles, addDataToMap} from '@kepler.gl/actions';
+import {MapStyle, mapStyleLens, visStateLens} from '@kepler.gl/reducers';
+import {
+  ActionHandler,
+  mapStyleChange,
+  loadFiles,
+  addDataToMap,
+  addLayer,
+  createOrUpdateFilter,
+  setFilter,
+  setFilterPlot,
+  layerSetIsValid,
+  layerVisualChannelConfigChange
+} from '@kepler.gl/actions';
 import {withState, SidePanelTitleFactory, Icons} from '@kepler.gl/components';
 import {VisState} from '@kepler.gl/schemas';
 
@@ -20,6 +31,18 @@ import {
 import AiAssistantConfigFactory from './ai-assistant-config';
 import AiAssistantComponentFactory from './ai-assistant-component';
 
+export type SelectedKeplerGlActions = {
+  mapStyleChange: ActionHandler<typeof mapStyleChange>;
+  loadFiles: ActionHandler<typeof loadFiles>;
+  addDataToMap: ActionHandler<typeof addDataToMap>;
+  addLayer: ActionHandler<typeof addLayer>;
+  layerVisualChannelConfigChange: ActionHandler<typeof layerVisualChannelConfigChange>;
+  createOrUpdateFilter: ActionHandler<typeof createOrUpdateFilter>;
+  setFilter: ActionHandler<typeof setFilter>;
+  setFilterPlot: ActionHandler<typeof setFilterPlot>;
+  layerSetIsValid: ActionHandler<typeof layerSetIsValid>;
+};
+
 export type AiAssistantManagerState = {
   aiAssistantActions: {
     updateAiAssistantConfig: ActionHandler<typeof updateAiAssistantConfig>;
@@ -27,11 +50,7 @@ export type AiAssistantManagerState = {
     setStartScreenCapture: ActionHandler<typeof setStartScreenCapture>;
     setScreenCaptured: ActionHandler<typeof setScreenCaptured>;
   };
-  keplerGlActions: {
-    mapStyleChange: ActionHandler<typeof mapStyleChange>;
-    loadFiles: ActionHandler<typeof loadFiles>;
-    addDataToMap: ActionHandler<typeof addDataToMap>;
-  };
+  keplerGlActions: SelectedKeplerGlActions;
   aiAssistant: AiAssistantState;
   mapStyle: MapStyle;
   visState: VisState;
@@ -50,6 +69,8 @@ const StyledAiAssistantPanelContainer = styled.div`
   justify-content: space-between;
   overflow: hidden;
   height: 100%;
+  min-width: ${props => props.theme.aiAssistantPanelWidth}px;
+  max-width: ${props => props.theme.aiAssistantPanelWidth}px;
   & > * {
     /* all children should allow input */
     pointer-events: all;
@@ -68,7 +89,6 @@ const StyledAiAssistantPanel = styled.div`
 const StyledAiAssistantPanelHeader = styled.div`
   padding: 16px 16px 4px 16px;
   border-bottom: 1px solid ${props => props.theme.borderColor};
-  min-width: 345px;
   color: ${props => props.theme.subtextColorActive};
 `;
 
@@ -142,22 +162,26 @@ function AiAssistantManagerFactory(
   };
 
   return withState(
-    [],
+    [visStateLens, mapStyleLens],
     state => {
       // todo: find a better way to get the state key
       const stateKey = Object.keys(state)[0];
-      const mapKey = Object.keys(state[stateKey].keplerGl)[0];
       return {
-        aiAssistant: state[stateKey].aiAssistant,
-        mapStyle: state[stateKey].keplerGl[mapKey].mapStyle,
-        visState: {
-          loaders: state[stateKey].keplerGl[mapKey].visState.loaders,
-          loadOptions: state[stateKey].keplerGl[mapKey].visState.loadOptions
-        }
+        aiAssistant: state[stateKey].aiAssistant
       };
     },
     {
-      keplerGlActions: {mapStyleChange, loadFiles, addDataToMap},
+      keplerGlActions: {
+        mapStyleChange,
+        loadFiles,
+        addDataToMap,
+        addLayer,
+        createOrUpdateFilter,
+        setFilter,
+        setFilterPlot,
+        layerSetIsValid,
+        layerVisualChannelConfigChange
+      },
       aiAssistantActions: {
         updateAiAssistantConfig,
         updateAiAssistantMessages,

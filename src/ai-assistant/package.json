@@ -1,7 +1,7 @@
 {
   "name": "@kepler.gl/ai-assistant",
   "author": "Xun Li<lixun910@gmail.com>",
-  "version": "3.1.0-alpha.0",
+  "version": "3.1.0-alpha.1",
   "description": "kepler.gl AI assistant",
   "license": "MIT",
   "main": "dist/index.js",
@@ -30,13 +30,15 @@
     "umd"
   ],
   "dependencies": {
-    "@kepler.gl/components": "3.1.0-alpha.0",
-    "@kepler.gl/constants": "3.1.0-alpha.0",
-    "@kepler.gl/layers": "3.1.0-alpha.0",
-    "@kepler.gl/types": "3.1.0-alpha.0",
-    "@kepler.gl/utils": "3.1.0-alpha.0",
+    "@kepler.gl/components": "3.1.0-alpha.1",
+    "@kepler.gl/constants": "3.1.0-alpha.1",
+    "@kepler.gl/layers": "3.1.0-alpha.1",
+    "@kepler.gl/types": "3.1.0-alpha.1",
+    "@kepler.gl/utils": "3.1.0-alpha.1",
+    "color-interpolate": "^1.0.5",
+    "echarts": "^5.5.1",
     "global": "^4.3.0",
-    "react-ai-assist": "0.0.8"
+    "react-ai-assist": "0.0.20"
   },
   "nyc": {
     "sourceMap": false,
