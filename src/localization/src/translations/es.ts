@@ -151,9 +151,9 @@ export default {
     weightIntensity: 'Intensidad de peso',
     zoomScale: 'Escala de zoom',
     heightRange: 'Rango de alturas',
+    heightMultiplier: 'Multiplicador de altura',
     fixedHeight: 'Altura fija',
-    fixedHeightDescription: 'Usar altura sin modificaciones',
-    heightMultiplier: 'Multiplicador de altura'
+    fixedHeightDescription: 'Usar altura sin modificaciones'
   },
   layerManager: {
     addData: 'Añadir datos',

@@ -58,6 +58,7 @@ export const gridVisConfigs: {
   elevationPercentile: 'elevationPercentile';
   elevationScale: 'elevationScale';
   enableElevationZoomFactor: 'enableElevationZoomFactor';
+  fixedHeight: 'fixedHeight';
   colorAggregation: 'colorAggregation';
   sizeAggregation: 'sizeAggregation';
   enable3d: 'enable3d';
@@ -71,6 +72,7 @@ export const gridVisConfigs: {
   elevationPercentile: 'elevationPercentile',
   elevationScale: 'elevationScale',
   enableElevationZoomFactor: 'enableElevationZoomFactor',
+  fixedHeight: 'fixedHeight',
   colorAggregation: 'colorAggregation',
   sizeAggregation: 'sizeAggregation',
   enable3d: 'enable3d'

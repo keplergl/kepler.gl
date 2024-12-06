@@ -644,9 +644,11 @@ class Layer {
    * @returns {number}
    */
   getElevationZoomFactor({zoom, zoomOffset = 0}: {zoom: number; zoomOffset?: number}): number {
-    return this.config.visConfig.enableElevationZoomFactor
-      ? Math.pow(2, Math.max(8 - zoom + zoomOffset, 0))
-      : 1;
+    // enableElevationZoomFactor is used to support existing maps
+    const {fixedHeight, enableElevationZoomFactor} = this.config.visConfig;
+    return fixedHeight || enableElevationZoomFactor === false
+      ? 1
+      : Math.pow(2, Math.max(8 - zoom + zoomOffset, 0));
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars

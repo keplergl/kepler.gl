@@ -62,6 +62,7 @@ export const hexagonVisConfigs: {
   elevationPercentile: 'elevationPercentile';
   elevationScale: 'elevationScale';
   enableElevationZoomFactor: 'enableElevationZoomFactor';
+  fixedHeight: 'fixedHeight';
   colorAggregation: 'colorAggregation';
   sizeAggregation: 'sizeAggregation';
   enable3d: 'enable3d';
@@ -76,6 +77,7 @@ export const hexagonVisConfigs: {
   elevationPercentile: 'elevationPercentile',
   elevationScale: 'elevationScale',
   enableElevationZoomFactor: 'enableElevationZoomFactor',
+  fixedHeight: 'fixedHeight',
   colorAggregation: 'colorAggregation',
   sizeAggregation: 'sizeAggregation',
   enable3d: 'enable3d'
