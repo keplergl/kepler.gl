@@ -41,8 +41,8 @@ const TIMELINE_INDICATOR_STYLE: CSSProperties = {
 };
 
 function RangeSliderTimelineFactory() {
-  const RangeSliderTimeline = ({timeline, scaledValue, style}) => {
-    const {startTime, endTime, syncMode, Icon, label} = timeline;
+  const RangeSliderTimeline = ({subAnimation, scaledValue, style}) => {
+    const {startTime, endTime, syncMode, Icon, label} = subAnimation;
 
     const progressStyle: CSSProperties = {
       left: `${startTime}%`,

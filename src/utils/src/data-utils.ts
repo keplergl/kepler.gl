@@ -181,7 +181,7 @@ export function normalizeSliderValue(
   val: number,
   minValue: number,
   step: number,
-  marks?: number[]
+  marks?: number[] | null
 ): number {
   if (marks && marks.length) {
     // Use in slider, given a number and an array of numbers, return the nears number from the array

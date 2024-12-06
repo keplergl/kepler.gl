@@ -15,6 +15,17 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+## [3.1.0-alpha.1] - December 3 2024
+
+- f6b37c6af [fix] fixes for exported maps
+- 979c9a5a1 [fix] align upload icon (#2799)
+- 6862eb85c [fix] Fix for Try Sample Data (#2796)
+- f4f7fd2b4 [fix] fix examples - proper publicPath to include bundle chunks (#2795)
+- 7ca7f9178 [chore] prepublishOnly command fixes (#2793)
+- 40c6c8b09 [chore] npmpublish fixes - set npm registry manually (#2792)
+- f60b94f48 [chore] fix npmpublish action (#2791)
+- e77981e13 [chore] fix for package publishing (#2790)
+
 ## [3.1.0-alpha.0] - November 26 2024
 
 - 5b4f6537 [feat] create new dataset action (#2778)
