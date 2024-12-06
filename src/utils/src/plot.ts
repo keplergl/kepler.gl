@@ -290,7 +290,7 @@ const getAgregationType = (field, aggregation) => {
   return aggregation;
 };
 
-const getAgregationAccessor = (field, dataContainer: DataContainerInterface, fields) => {
+const getAggregationAccessor = (field, dataContainer: DataContainerInterface, fields) => {
   if (isPercentField(field)) {
     const numeratorIdx = fields.findIndex(f => f.name === field.metadata.numerator);
     const denominatorIdx = fields.findIndex(f => f.name === field.metadata.denominator);
@@ -310,13 +310,19 @@ export const getValueAggrFunc = (
   dataset: KeplerTableModel<any, any>
 ): ((bin: Bin) => number) => {
   const {dataContainer, fields} = dataset;
-  return field && aggregation
+
+  // The passed-in field might not have all the fields set (e.g. valueAccessor)
+  const datasetField = fields.find(
+    f => field && (f.name === field || f.name === (field as Field).name)
+  );
+
+  return datasetField && aggregation
     ? bin =>
         aggregate(
           bin.indexes,
-          getAgregationType(field, aggregation),
+          getAgregationType(datasetField, aggregation),
           // @ts-expect-error can return {getNumerator, getDenominator}
-          getAgregationAccessor(field, dataContainer, fields)
+          getAggregationAccessor(datasetField, dataContainer, fields)
         )
     : bin => bin.count;
 };

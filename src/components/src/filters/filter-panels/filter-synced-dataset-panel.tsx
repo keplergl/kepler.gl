@@ -297,6 +297,7 @@ function FilterSyncedDatasetPanelFactory(
             />
           </>
         )}
+        {/** sync with animatable layers */}
         {isLinkedWithLayerTimeline ? (
           <>
             <StyledSeparator />
