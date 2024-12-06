@@ -14,8 +14,8 @@
   <a href='https://app.fossa.com/projects/custom%2B4458%2Fgithub.com%2Fkeplergl%2Fkepler.gl?ref=badge_shield'>
     <img src='https://app.fossa.com/api/projects/custom%2B4458%2Fgithub.com%2Fkeplergl%2Fkepler.gl.svg?type=shield' alt='Fossa' />
   </a>
-  <a href="https://app.netlify.com/sites/keplergl/deploys" alt="Netlify Status">
-    <img src="https://api.netlify.com/api/v1/badges/0c9b895c-acd0-43fd-8af7-fe960181b686/deploy-status" />
+  <a href="https://app.netlify.com/sites/keplergl/deploys">
+    <img src="https://api.netlify.com/api/v1/badges/0c9b895c-acd0-43fd-8af7-fe960181b686/deploy-status" alt="Netlify Status"/>
   </a>
   <a href='https://coveralls.io/github/keplergl/kepler.gl?branch=master'>
     <img src='https://coveralls.io/repos/github/keplergl/kepler.gl/badge.svg?branch=master' alt='Coverage Status' />
@@ -23,7 +23,7 @@
 </p>
 
 <h1 align="center">
-  kepler.gl | <a href="http://kepler.gl">Website</a> | <a href="http://kepler.gl/#/demo">Demo App</a> | <a href="https://docs.kepler.gl/">Docs</a>
+  kepler.gl | <a href="https://kepler.gl">Website</a> | <a href="https://kepler.gl/#/demo">Demo App</a> | <a href="https://docs.kepler.gl/">Docs</a>
 </h1>
 <h3></h3>
 
