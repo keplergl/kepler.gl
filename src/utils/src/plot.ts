@@ -303,19 +303,21 @@ const getAggregationAccessor = (field, dataContainer: DataContainerInterface, fi
   return i => field.valueAccessor({index: i});
 };
 
-export const getValueAggrFunc = (field, aggregation, dataset) => {
+export const getValueAggrFunc = (field: Field | string | null, aggregation: string, dataset) => {
   const {dataContainer, fields} = dataset;
 
   // The passed-in field might not have all the fields set (e.g. valueAccessor)
-  field = fields.find(f => f.name === field.name);
+  const datasetField = fields.find(
+    f => field && (f.name === field || f.name === (field as Field).name)
+  );
 
-  return field && aggregation
+  return datasetField && aggregation
     ? bin =>
         aggregate(
           bin.indexes,
-          getAgregationType(field, aggregation),
+          getAgregationType(datasetField, aggregation),
           // @ts-expect-error can return {getNumerator, getDenominator}
-          getAggregationAccessor(field, dataContainer, fields)
+          getAggregationAccessor(datasetField, dataContainer, fields)
         )
     : bin => bin.count;
 };
