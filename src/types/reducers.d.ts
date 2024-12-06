@@ -79,6 +79,7 @@ export type LineChart = {
   aggregation: string;
   interval: string;
   yAxis: string;
+  bins?: Bins;
 };
 
 type FilterViewType = 'side' | 'enlarged' | 'minified';
