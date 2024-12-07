@@ -48,6 +48,7 @@ export {
   getTimelineFromAnimationConfig,
   getTimelineFromFilter
 } from './time';
+export {maybeHexToGeo, getPositionFromHexValue} from './position-utils';
 
 export {
   datasetColorMaker,
