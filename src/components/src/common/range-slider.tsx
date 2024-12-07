@@ -239,8 +239,8 @@ export default function RangeSliderFactory(
         timeFormat,
         playbackControlWidth,
         setFilterPlot,
-        subAnimations: subAnimations,
         animationWindow,
+        subAnimations: subAnimations,
         filter,
         datasets
       } = this.props;
