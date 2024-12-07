@@ -3,7 +3,7 @@
 
 import {WebMercatorViewport} from '@deck.gl/core';
 import Console from 'global/console';
-import {Centroid} from '@kepler.gl/utils';
+import type {Centroid} from '@kepler.gl/common-utils';
 
 export function hexagonToPolygonGeo(object, properties, radius, mapState) {
   const viewport = new WebMercatorViewport(mapState);

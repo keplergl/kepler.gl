@@ -25,6 +25,7 @@ import {
   rows as geojsonRows
 } from 'test/fixtures/geojson';
 import testCsvObjectData, {objCsvFields, objCsvRows} from 'test/fixtures/test-csv-object';
+import testCsvH3Data, {expectedFields as expectedHexFields} from 'test/fixtures/test-hex-id-data';
 import {
   parseCsvRowsByFieldType,
   processCsvData,
@@ -57,6 +58,7 @@ test('Processor -> getFieldsFromData', t => {
       surge: '1.2',
       isTrip: 'true',
       zeroOnes: '0',
+      h3_9: '89268cd80b3ffff',
       geojson: '{"type":"Point","coordinates":[-122.4194155,37.7749295]}',
       wkt: 'POINT (-122.4194155 37.7749295)',
       wkb: '0101000020E6100000E17A14AE47D25EC0F6F3F6F2F7F94040'
@@ -70,6 +72,7 @@ test('Processor -> getFieldsFromData', t => {
       surge: null,
       isTrip: 'false',
       zeroOnes: '1',
+      h3_9: '89268cd8103ffff',
       geojson:
         '{"type":"Polygon","coordinates":[[[-122.4194155,37.7749295],[-122.4194155,37.7749295],[-122.4194155,37.7749295]]]}',
       wkt: 'POLYGON ((-122.4194155 37.7749295, -122.4194155 37.7749295, -122.4194155 37.7749295))',
@@ -84,6 +87,7 @@ test('Processor -> getFieldsFromData', t => {
       surge: '1.3',
       isTrip: null,
       zeroOnes: '1',
+      h3_9: '89268cd8107ffff',
       geojson:
         '{"type":"LineString","coordinates":[[-122.4194155,37.7749295],[-122.4194155,37.7749295]]}',
       wkt: 'LINESTRING (-122.4194155 37.7749295, -122.4194155 37.7749295)',
@@ -98,6 +102,7 @@ test('Processor -> getFieldsFromData', t => {
       surge: '1.4',
       isTrip: null,
       zeroOnes: '0',
+      h3_9: '89268cd8113ffff',
       geojson:
         '{"type":"MultiPoint","coordinates":[[-122.4194155,37.7749295],[-122.4194155,37.7749295]]}',
       wkt: 'MULTIPOINT (-122.4194155 37.7749295, -122.4194155 37.7749295)',
@@ -116,6 +121,7 @@ test('Processor -> getFieldsFromData', t => {
     'real',
     'boolean',
     'integer',
+    'h3',
     'geojson',
     'geojson',
     'geojson'
@@ -243,6 +249,14 @@ test('Processor -> processCsvData -> w/ array and object', t => {
   rows.forEach((r, i) => {
     t.deepEqual(r, objCsvRows[i], 'should format correct csv object rows');
   });
+  t.end();
+});
+
+test('Processor -> processCsvData -> w/ hex id', t => {
+  const {fields, rows} = processCsvData(testCsvH3Data);
+  cmpFields(t, fields, expectedHexFields, 'should find csv object fields as h3');
+
+  t.equal(rows.length, 22, 'should have same row length');
   t.end();
 });
 

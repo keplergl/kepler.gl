@@ -17,11 +17,9 @@ import {
   idToPolygonGeo,
   h3IsValid,
   getHexFields,
-  Centroid,
-  findDefaultColorField,
-  DataContainerInterface,
-  createDataContainer
-} from '@kepler.gl/utils';
+  Centroid
+} from '@kepler.gl/common-utils';
+import {findDefaultColorField, DataContainerInterface, createDataContainer} from '@kepler.gl/utils';
 import H3HexagonLayerIcon from './h3-hexagon-layer-icon';
 import {
   CHANNEL_SCALES,

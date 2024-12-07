@@ -14,11 +14,13 @@ import {
   hasOwnProperty,
   isPlainObject
 } from '@kepler.gl/utils';
-import {notNullorUndefined, toArray} from '@kepler.gl/common-utils';
 import {
+  analyzerTypeToFieldType,
   getSampleForTypeAnalyze,
   getFieldsFromData,
-  analyzerTypeToFieldType
+  h3IsValid,
+  notNullorUndefined,
+  toArray
 } from '@kepler.gl/common-utils';
 import {KeplerGlSchema, ParsedDataset, SavedMap, LoadedMap} from '@kepler.gl/schemas';
 import {Feature} from '@nebula.gl/edit-modes';
@@ -66,6 +68,11 @@ export const PARSE_FIELD_VALUE_FROM_STRING = {
   [ALL_FIELD_TYPES.array]: {
     valid: Array.isArray,
     parse: tryParseJsonString
+  },
+
+  [ALL_FIELD_TYPES.h3]: {
+    valid: d => h3IsValid(d),
+    parse: d => d
   }
 };
 

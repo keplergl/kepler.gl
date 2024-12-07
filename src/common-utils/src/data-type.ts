@@ -7,6 +7,9 @@ import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 import {console as globalConsole} from 'global/window';
 import {range} from 'd3-array';
 import {isHexWkb, notNullorUndefined} from './data';
+import {h3IsValid} from './h3-utils';
+
+const H3_ANALYZER_TYPE = 'H3';
 
 export const ACCEPTED_ANALYZER_TYPES = [
   AnalyzerDATA_TYPES.DATE,
@@ -22,7 +25,8 @@ export const ACCEPTED_ANALYZER_TYPES = [
   AnalyzerDATA_TYPES.PAIR_GEOMETRY_FROM_STRING,
   AnalyzerDATA_TYPES.ZIPCODE,
   AnalyzerDATA_TYPES.ARRAY,
-  AnalyzerDATA_TYPES.OBJECT
+  AnalyzerDATA_TYPES.OBJECT,
+  H3_ANALYZER_TYPE
 ];
 
 const IGNORE_DATA_TYPES = Object.keys(AnalyzerDATA_TYPES).filter(
@@ -127,6 +131,8 @@ export function analyzerTypeToFieldType(aType: string): string {
     case STRING:
     case ZIPCODE:
       return ALL_FIELD_TYPES.string;
+    case H3_ANALYZER_TYPE:
+      return ALL_FIELD_TYPES.h3;
     default:
       globalConsole.warn(`Unsupported analyzer type: ${aType}`);
       return ALL_FIELD_TYPES.string;
@@ -198,7 +204,17 @@ export function getFieldsFromData(data: RowData, fieldOrder: string[]): Field[] 
     let type = fieldMeta?.type || 'STRING';
     const format = fieldMeta?.format || '';
 
-    // check if string is hex wkb
+    // quick check if first valid string in column is H3
+    if (type === AnalyzerDATA_TYPES.STRING) {
+      for (let i = 0, n = data.length; i < n; ++i) {
+        if (notNullorUndefined(data[i][name])) {
+          type = h3IsValid(data[i][name] || '') ? H3_ANALYZER_TYPE : type;
+          break;
+        }
+      }
+    }
+
+    // quick check if string is hex wkb
     if (type === AnalyzerDATA_TYPES.STRING) {
       type = data.some(d => isHexWkb(d[name])) ? AnalyzerDATA_TYPES.GEOMETRY : type;
     }

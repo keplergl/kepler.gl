@@ -252,7 +252,8 @@ export const FIELD_DISPLAY_FORMAT: {
       : '',
   [ALL_FIELD_TYPES.geoarrow]: d => d,
   [ALL_FIELD_TYPES.object]: JSON.stringify,
-  [ALL_FIELD_TYPES.array]: JSON.stringify
+  [ALL_FIELD_TYPES.array]: JSON.stringify,
+  [ALL_FIELD_TYPES.h3]: defaultFormatter
 };
 
 /**

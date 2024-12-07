@@ -446,7 +446,8 @@ export const ALL_FIELD_TYPES = keyMirror({
   point: null,
   array: null,
   object: null,
-  geoarrow: null
+  geoarrow: null,
+  h3: null
 });
 
 // Data Table
@@ -563,6 +564,10 @@ export const FIELD_TYPE_DISPLAY = {
   [ALL_FIELD_TYPES.object]: {
     label: 'object',
     color: GREEN2
+  },
+  [ALL_FIELD_TYPES.h3]: {
+    label: 'h3',
+    color: BLUE
   }
 };
 
@@ -807,6 +812,17 @@ export const FIELD_OPTS = {
     scale: {},
     format: {
       legend: () => '...',
+      tooltip: []
+    }
+  },
+  [ALL_FIELD_TYPES.h3]: {
+    type: 'h3',
+    scale: {
+      ...notSupportedScaleOpts,
+      ...notSupportAggrOpts
+    },
+    format: {
+      legend: d => '...',
       tooltip: []
     }
   }

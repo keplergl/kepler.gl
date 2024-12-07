@@ -3,7 +3,6 @@
 
 import {h3GetResolution, H3Index, h3IsValid, h3ToGeo, h3ToGeoBoundary} from 'h3-js';
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
-import {notNullorUndefined} from '@kepler.gl/common-utils';
 
 export {h3GetResolution, h3IsValid};
 
@@ -38,12 +37,7 @@ export function idToPolygonGeo(object?: {id: H3Index}, properties?: any) {
 }
 
 export const isHexField = (field, fieldIdx, dataContainer) => {
-  if (field.type !== ALL_FIELD_TYPES.string) {
-    return false;
-  }
-
-  const firstDP = dataContainer.find(d => notNullorUndefined(d.valueAt(fieldIdx)), true);
-  return firstDP && h3IsValid(firstDP.valueAt(fieldIdx));
+  return field.type === ALL_FIELD_TYPES.h3;
 };
 
 export const getHexFields = (fields, dataContainer) =>

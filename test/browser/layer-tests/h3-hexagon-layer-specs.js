@@ -15,7 +15,7 @@ import {
   hexagonIdLayerMeta
 } from 'test/helpers/layer-utils';
 import {KeplerGlLayers, h3DefaultElevation as defaultElevation} from '@kepler.gl/layers';
-import {getCentroid, idToPolygonGeo} from '@kepler.gl/utils';
+import {getCentroid, idToPolygonGeo} from '@kepler.gl/common-utils';
 
 import {copyTableAndUpdate} from '@kepler.gl/table';
 

@@ -21,7 +21,7 @@ import {
   ProtoDataset
 } from '@kepler.gl/types';
 import {TooltipFormat} from '@kepler.gl/constants';
-import {notNullorUndefined} from '@kepler.gl/common-utils';
+import {notNullorUndefined, h3IsValid} from '@kepler.gl/common-utils';
 
 import {isPlainObject} from './utils';
 import {getFormatter} from './data-utils';
@@ -270,6 +270,12 @@ export function validateInputData(data: ProtoDataset['data']): ProcessorResult {
       const sample = findNonEmptyRowsAtField(rows, i, 10).map(r => ({ts: r[i]}));
       const analyzedType = Analyzer.computeColMeta(sample)[0];
       return analyzedType && analyzedType.category === 'TIME' && analyzedType.format === f.format;
+    }
+
+    // check existing string field is H3 type
+    if (f.type === ALL_FIELD_TYPES.string) {
+      const sample = findNonEmptyRowsAtField(rows, i, 10).map(r => r[i]);
+      return sample.every(item => !h3IsValid(item));
     }
 
     return true;
