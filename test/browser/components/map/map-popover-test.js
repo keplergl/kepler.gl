@@ -95,7 +95,7 @@ test('Map Popover - render with layerHoverProp', t => {
       </IntlWrapper>
     );
   }, 'Should render map popover with layerHoverProps');
-  t.equal(wrapper.find('LayerHoverInfo').length, 1, 'Should render LayerHoverInfo');
+  t.equal(wrapper.find(LayerHoverInfo).length, 1, 'Should render LayerHoverInfo');
   t.equal(wrapper.find('table').length, 1, 'Should render 1 table');
   const table = wrapper.find('table').at(0);
   const rows = table.find('.layer-hover-info__row');
