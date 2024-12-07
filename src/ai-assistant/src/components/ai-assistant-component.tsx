@@ -7,7 +7,8 @@ import {
   AiAssistant,
   MessageModel,
   useAssistant,
-  histogramFunctionDefinition
+  histogramFunctionDefinition,
+  queryDuckDBFunctionDefinition
 } from 'react-ai-assist';
 import 'react-ai-assist/dist/index.css';
 
@@ -102,6 +103,10 @@ function AiAssistantComponentFactory() {
             selectedRowIndices,
             keplerGlActions.layerSetIsValid
           )
+      }),
+      queryDuckDBFunctionDefinition({
+        getValues: (datasetName: string, variableName: string): number[] =>
+          getValuesFromDataset(visState.datasets, datasetName, variableName)
       })
     ];
 
