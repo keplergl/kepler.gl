@@ -906,6 +906,7 @@ test('layerUtils -> getLayerHoverProp', t => {
     object: null
   };
   const args = {
+    animationConfig: visState.animationConfig,
     interactionConfig: visState.interactionConfig,
     hoverInfo: mockHoverInfo,
     layers: visState.layers,
@@ -918,7 +919,8 @@ test('layerUtils -> getLayerHoverProp', t => {
     data: expectedDataset.dataContainer.row(obj.index),
     fields: expectedDataset.fields,
     fieldsToShow: visState.interactionConfig.tooltip.config.fieldsToShow[layer.config.dataId],
-    layer
+    layer,
+    currentTime: visState.animationConfig.currentTime
   };
 
   t.deepEqual(getLayerHoverProp(args), expected, 'should get correct layerHoverProp');

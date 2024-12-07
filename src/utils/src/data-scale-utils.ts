@@ -77,23 +77,32 @@ export function getLogDomain(data: any[], valueAccessor: dataValueAccessor): [nu
   return [d0 === 0 ? 1e-5 : d0, d1];
 }
 
+export type DomainStops = {
+  stops: number[];
+  z: number[];
+};
+
 /**
  * whether field domain is stops
  */
-export function isDomainStops(domain: any): boolean {
+export function isDomainStops(domain: unknown): domain is DomainStops {
   return isPlainObject(domain) && Array.isArray(domain.stops) && Array.isArray(domain.z);
 }
+
+export type DomainQuantiles = {
+  quantiles: number[];
+  z: number[];
+};
 
 /**
  * whether field domain is quantiles
  */
-export function isDomainQuantile(domain: any): boolean {
+export function isDomainQuantile(domain: any): domain is DomainQuantiles {
   return isPlainObject(domain) && Array.isArray(domain.quantiles) && Array.isArray(domain.z);
 }
 
 /**
  * get the domain at zoom
- * @type {typeof import('./data-scale-utils').getThresholdsFromQuantiles}
  */
 export function getThresholdsFromQuantiles(
   quantiles: number[],

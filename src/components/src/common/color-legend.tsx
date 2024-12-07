@@ -16,7 +16,7 @@ import {Reset} from './icons';
 import {InlineInput} from './styled-components';
 
 const ROW_H = 15;
-const GAP = 4;
+const GAP = 2;
 const RECT_W = 20;
 
 const stopClickPropagation = e => e.stopPropagation();
@@ -224,15 +224,15 @@ function overrideByCustomLegend({colorLegends, currentLegends}: OverrideByCustom
 }
 
 export function useLayerColorLegends(
-  layer,
-  scaleType,
-  domain,
-  range,
-  isFixed,
-  fieldType,
-  labelFormat,
-  mapState
-) {
+  layer: ColorLegendProps['layer'],
+  scaleType: ColorLegendProps['scaleType'],
+  domain: ColorLegendProps['domain'],
+  range: ColorLegendProps['range'],
+  isFixed: ColorLegendProps['isFixed'],
+  fieldType: ColorLegendProps['fieldType'],
+  labelFormat: ColorLegendProps['labelFormat'],
+  mapState: ColorLegendProps['mapState']
+): Legend[] {
   const scale = useMemo(
     () => getLayerColorScale({range, domain, scaleType, isFixed, layer}),
     [range, domain, scaleType, isFixed, layer]
@@ -260,7 +260,7 @@ export function useLayerColorLegends(
   return LegendsWithCustomLegends;
 }
 
-type ColorLegendProps = {
+export type ColorLegendProps = {
   layer: Layer;
   scaleType: string;
   domain: number[] | string[];
@@ -272,6 +272,12 @@ type ColorLegendProps = {
   mapState?: MapState;
   isFixed?: boolean;
   onUpdateColorLegend?: (colorLegends: {[key: HexColor]: string}) => void;
+};
+
+export type Legend = {
+  data: string;
+  label: string;
+  override?: boolean;
 };
 
 ColorLegendFactory.deps = [LegendRowFactory];

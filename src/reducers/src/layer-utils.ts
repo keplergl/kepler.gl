@@ -11,7 +11,6 @@ import {
   TooltipField,
   CompareType,
   SplitMapLayers,
-  InteractionConfig,
   Editor,
   Feature,
   FeatureSelectionContext,
@@ -25,7 +24,7 @@ import {
   getEditorLayer
 } from '@kepler.gl/layers';
 
-import KeplerTable, {Datasets} from '@kepler.gl/table';
+import KeplerTable from '@kepler.gl/table';
 import {VisState} from '@kepler.gl/schemas';
 import {isFunction, getMapLayersFromSplitMaps, DataRow} from '@kepler.gl/utils';
 import {ThreeDBuildingLayer} from '@kepler.gl/deckgl-layers';
@@ -43,6 +42,7 @@ export type LayerHoverProp = {
   layer: Layer;
   primaryData?: DataRow | AggregationLayerHoverData | null;
   compareType?: CompareType;
+  currentTime?: VisState['animationConfig']['currentTime'];
 };
 
 /**
@@ -148,7 +148,6 @@ export function calculateLayerData<S extends MinVisStateForLayerData>(
 
 /**
  * Calculate props passed to LayerHoverInfo
- * @type {typeof import('./layer-utils').getLayerHoverProp}
  */
 export function getLayerHoverProp({
   animationConfig,
@@ -158,12 +157,12 @@ export function getLayerHoverProp({
   layersToRender,
   datasets
 }: {
-  interactionConfig: InteractionConfig;
+  interactionConfig: VisState['interactionConfig'];
   animationConfig: VisState['animationConfig'];
-  hoverInfo: any;
-  layers: Layer[];
+  hoverInfo: VisState['hoverInfo'];
+  layers: VisState['layers'];
   layersToRender: LayersToRender;
-  datasets: Datasets;
+  datasets: VisState['datasets'];
 }): LayerHoverProp | null {
   if (interactionConfig.tooltip.enabled && hoverInfo && hoverInfo.picked) {
     // if anything hovered
@@ -203,7 +202,8 @@ export function getLayerHoverProp({
         data,
         fields,
         fieldsToShow,
-        layer
+        layer,
+        currentTime: animationConfig.currentTime
       };
     }
   }

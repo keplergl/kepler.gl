@@ -43,7 +43,8 @@ import {
   hasColorMap,
   hexToRgb,
   isPlainObject,
-  reverseColorRange
+  reverseColorRange,
+  isDomainStops
 } from '@kepler.gl/utils';
 import {generateHashId, toArray, notNullorUndefined} from '@kepler.gl/common-utils';
 import {Datasets, GpuFilter, KeplerTable} from '@kepler.gl/table';
@@ -68,6 +69,8 @@ import {
   ValueOf
 } from '@kepler.gl/types';
 import {getScaleFunction, initializeLayerColorMap} from '@kepler.gl/utils';
+import {bisectLeft} from 'd3-array';
+import memoize from 'lodash.memoize';
 
 export type VisualChannelDomain = number[] | string[];
 export type VisualChannelField = Field | null;
@@ -228,6 +231,11 @@ export const colorMaker = generateColor();
 export type BaseLayerConstructorProps = {
   id?: string;
 } & LayerBaseConfigPartial;
+
+export type GetVisChannelScaleReturnType = {
+  (z: number): any;
+  byZoom?: boolean;
+} | null;
 
 class Layer {
   id: string;
@@ -1049,7 +1057,11 @@ class Layer {
     );
   }
 
-  getColorScale(colorScale: string, colorDomain: VisualChannelDomain, colorRange: ColorRange) {
+  getColorScale(
+    colorScale: string,
+    colorDomain: VisualChannelDomain,
+    colorRange: ColorRange
+  ): GetVisChannelScaleReturnType {
     if (hasColorMap(colorRange) && colorScale === SCALE_TYPES.custom) {
       const cMap = new Map();
       colorRange.colorMap?.forEach(([k, v]) => {
@@ -1061,11 +1073,14 @@ class Layer {
       const scale = getScaleFunction(scaleType, cMap.values(), cMap.keys(), false);
       scale.unknown(cMap.get(UNKNOWN_COLOR_KEY) || NO_VALUE_COLOR);
 
-      return scale;
+      return scale as () => any;
     }
     return this.getVisChannelScale(colorScale, colorDomain, colorRange.colors.map(hexToRgb));
   }
 
+  accessVSFieldValue(field, indexKey) {
+    return defaultGetFieldValue;
+  }
   /**
    * Mapping from visual channels to deck.gl accesors
    * @param {Object} param Parameters
@@ -1075,10 +1090,12 @@ class Layer {
    */
   getAttributeAccessors({
     dataAccessor = defaultDataAccessor,
-    dataContainer
+    dataContainer,
+    indexKey
   }: {
     dataAccessor?: typeof defaultDataAccessor;
     dataContainer: DataContainerInterface;
+    indexKey?: number;
   }) {
     const attributeAccessors: {[key: string]: any} = {};
 
@@ -1116,14 +1133,35 @@ class Layer {
                   isFixed
                 );
 
-          attributeAccessors[accessor] = d =>
-            this.getEncodedChannelValue(
-              // @ts-ignore
-              scaleFunction,
-              dataAccessor(dataContainer)(d),
-              this.config[field],
-              nullValue
-            );
+          const getFieldValue = this.accessVSFieldValue(this.config[field], indexKey);
+
+          if (scaleFunction) {
+            attributeAccessors[accessor] = scaleFunction.byZoom
+              ? memoize(z => {
+                  const scaleFunc = scaleFunction(z);
+                  return d =>
+                    this.getEncodedChannelValue(
+                      scaleFunc,
+                      dataAccessor(dataContainer)(d),
+                      this.config[field],
+                      nullValue,
+                      getFieldValue
+                    );
+                })
+              : d =>
+                  this.getEncodedChannelValue(
+                    scaleFunction,
+                    dataAccessor(dataContainer)(d),
+                    this.config[field],
+                    nullValue,
+                    getFieldValue
+                  );
+
+            // set getFillColorByZoom to true
+            if (scaleFunction.byZoom) {
+              attributeAccessors[`${accessor}ByZoom`] = true;
+            }
+          }
         } else if (typeof getAttributeValue === 'function') {
           attributeAccessors[accessor] = getAttributeValue(this.config);
         } else {
@@ -1145,7 +1183,34 @@ class Layer {
     domain: VisualChannelDomain,
     range: any,
     fixed?: boolean
-  ): () => any | null {
+  ): GetVisChannelScaleReturnType {
+    if (isDomainStops(domain)) {
+      // color is based on zoom
+      const zSteps = domain.z;
+      // get scale function by z
+      // {
+      //  z: [z, z, z],
+      //  stops: [[min, max], [min, max]],
+      //  interpolation: 'interpolate'
+      // }
+
+      const getScale = function getScaleByZoom(z) {
+        let scaleDomain;
+        const i = bisectLeft(zSteps, z);
+        if (i === 0) {
+          scaleDomain = domain.stops[0];
+        } else {
+          scaleDomain = domain.stops[i - 1];
+        }
+
+        return SCALE_FUNC[fixed ? 'linear' : scale]()
+          .domain(scaleDomain)
+          .range(fixed ? scaleDomain : range);
+      };
+      getScale.byZoom = true;
+      return getScale;
+    }
+
     return SCALE_FUNC[fixed ? 'linear' : scale]()
       .domain(domain)
       .range(fixed ? domain : range);
