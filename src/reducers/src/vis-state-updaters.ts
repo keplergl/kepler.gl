@@ -3233,7 +3233,7 @@ export function layerFilteredItemsChangeUpdater<S extends VisState>(
 export function syncTimeFilterWithLayerTimelineUpdater<S extends VisState>(
   state: S,
   action: VisStateActions.SyncTimeFilterWithLayerTimelineAction
-) {
+): S {
   const {idx: filterIdx, enable = false} = action;
 
   const filter = state.filters[filterIdx] as TimeRangeFilter;
