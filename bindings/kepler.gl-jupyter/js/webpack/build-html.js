@@ -89,7 +89,7 @@ module.exports = (rules, plugins) => ({
         `https://unpkg.com/styled-components@${VERSIONS.styledComponents}/dist/styled-components.min.js`,
 
         // load kepler.gl last
-        `https://unpkg.com/kepler.gl@${VERSIONS.keplergl}/umd/keplergl.min.js`
+        // `https://unpkg.com/kepler.gl@${VERSIONS.keplergl}/umd/keplergl.min.js`
       ],
       title: 'Kepler.gl'
     }),

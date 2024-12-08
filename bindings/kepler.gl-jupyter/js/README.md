@@ -1,4 +1,4 @@
-# kperlgl-jupyter
+# keplergl-jupyter
 
 This is a simple jupyter widget for kepler.gl, an advanced geospatial visualization tool, to render large-scale interactive maps.
 
