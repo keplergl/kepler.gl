@@ -34,7 +34,12 @@ import {filterFunctionDefinition} from '../tools/filter-function';
 import {addLayerFunctionDefinition} from '../tools/layer-creation-function';
 import {updateLayerColorFunctionDefinition} from '../tools/layer-style-function';
 import {SelectedKeplerGlActions} from './ai-assistant-manager';
-import {getDatasetContext, getValuesFromDataset, highlightRows} from '../tools/utils';
+import {
+  getDatasetContext,
+  getValuesFromDataset,
+  highlightRows,
+  highlightRowsByColumnValues
+} from '../tools/utils';
 
 type ThemeProps = {theme: any};
 
@@ -69,7 +74,30 @@ function AiAssistantComponentFactory() {
     keplerGlActions,
     mapStyle,
     visState
-  }: AiAssistantComponentProps & ThemeProps) => {
+  }: AiAssistantComponentProps) => {
+    const highlightRowsOnSelected = (datasetName: string, selectedRowIndices: number[]) =>
+      highlightRows(
+        visState.datasets,
+        visState.layers,
+        datasetName,
+        selectedRowIndices,
+        keplerGlActions.layerSetIsValid
+      );
+
+    const highlightRowsByColumnValuesOnSelected = (
+      datasetName: string,
+      columnName: string,
+      selectedValues: unknown[]
+    ) =>
+      highlightRowsByColumnValues(
+        visState.datasets,
+        visState.layers,
+        datasetName,
+        columnName,
+        selectedValues,
+        keplerGlActions.layerSetIsValid
+      );
+
     const functions = [
       basemapFunctionDefinition({mapStyleChange: keplerGlActions.mapStyleChange, mapStyle}),
       loadUrlFunctionDefinition({
@@ -95,19 +123,13 @@ function AiAssistantComponentFactory() {
       histogramFunctionDefinition({
         getValues: (datasetName: string, variableName: string): number[] =>
           getValuesFromDataset(visState.datasets, datasetName, variableName),
-        onSelected: (datasetName: string, selectedRowIndices: number[]) =>
-          highlightRows(
-            visState.datasets,
-            visState.layers,
-            datasetName,
-            selectedRowIndices,
-            keplerGlActions.layerSetIsValid
-          )
+        onSelected: highlightRowsOnSelected
       }),
       queryDuckDBFunctionDefinition({
         // duckDB: kepler.gl duckdb instance
         getValues: (datasetName: string, variableName: string): number[] =>
-          getValuesFromDataset(visState.datasets, datasetName, variableName)
+          getValuesFromDataset(visState.datasets, datasetName, variableName),
+        onSelected: highlightRowsByColumnValuesOnSelected
       })
     ];
 
