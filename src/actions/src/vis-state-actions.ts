@@ -773,10 +773,8 @@ export type SetColumnDisplayFormatUpdaterAction = {
  * @public
  */
 export function setColumnDisplayFormat(
-  dataId: string,
-  formats: {
-    [key: string]: string;
-  }
+  dataId: SetColumnDisplayFormatUpdaterAction['dataId'],
+  formats: SetColumnDisplayFormatUpdaterAction['formats']
 ): Merge<
   SetColumnDisplayFormatUpdaterAction,
   {type: typeof ActionTypes.SET_COLUMN_DISPLAY_FORMAT}
