@@ -224,6 +224,7 @@ export {default as MultiSelectFilterFactory} from './filters/multi-select-filter
 export {default as RangeFilterFactory} from './filters/range-filter';
 export {default as SingleSelectFilterFactory} from './filters/single-select-filter';
 export {default as TimeRangeFilterPanelFactory} from './filters/filter-panels/time-range-filter-panel';
+export {default as FilterSyncedDatasetPanelFactory} from './filters/filter-panels/filter-synced-dataset-panel';
 export {
   default as TimeRangeFilterFactory,
   timeRangeSliderFieldsSelector

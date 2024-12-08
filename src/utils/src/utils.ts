@@ -184,7 +184,7 @@ const arrayMoveMutate = (array, from, to) => {
  * @param {number} to
  * @returns {any[]}
  */
-export const arrayMove = (array, from, to) => {
+export const arrayMove = <T>(array: T[], from: number, to: number): T[] => {
   array = array.slice();
   arrayMoveMutate(array, from, to);
   return array;
@@ -218,7 +218,7 @@ export function filterObjectByPredicate(obj, predicate) {
   );
 }
 
-export function isFunction(func): boolean {
+export function isFunction(func: any): boolean {
   return typeof func === 'function';
 }
 

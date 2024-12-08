@@ -22,13 +22,13 @@ const TIMELINE_MARKER_STYLE: CSSProperties = {
   color: '#3D4866'
 };
 
-const containerStyle = {
+const containerStyle: CSSProperties = {
   display: 'flex',
   width: '100%',
   height: '24px'
 };
 
-const iconWrapperStyle = {
+const iconWrapperStyle: CSSProperties = {
   marginRight: '8px',
   cursor: 'pointer'
 };

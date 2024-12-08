@@ -40,7 +40,6 @@ const StyledMapControl = styled.div<StyledMapControlProps>`
 const LegendLogo = <KeplerGlLogo version={false} appName="kepler.gl" />;
 
 export type MapControlProps = {
-  availableLocales: ReadonlyArray<string>;
   datasets: Datasets;
   dragRotate: boolean;
   isSplit: boolean;
@@ -65,6 +64,7 @@ export type MapControlProps = {
   onLayerVisConfigChange: (oldLayer: Layer, newVisConfig: Partial<LayerVisConfig>) => void;
   top: number;
   onSetLocale: typeof UIStateActions.setLocale;
+  availableLocales: string[];
   locale: string;
   logoComponent?: React.FC | React.ReactNode;
   isExport?: boolean;
