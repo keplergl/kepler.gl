@@ -44,6 +44,7 @@ test('#timeline -> getTimelineFromFilter', t => {
     ],
     defaultTimeFormat: 'L LTS',
     fieldType: 'timestamp',
+    timeBins: {},
     gpuChannel: [0]
   };
 
@@ -60,6 +61,7 @@ test('#timeline -> getTimelineFromFilter', t => {
       'defaultTimeFormat',
       'timeFormat',
       'timezone',
+      'timeBins',
       'animationWindow',
       'marks'
     ],
@@ -93,6 +95,7 @@ test('#timeline -> getTimelineFromAnimationConfig', t => {
       'defaultTimeFormat',
       'timeFormat',
       'timezone',
+      'timeBins',
       'marks'
     ],
     'Should generate the correct keys for animationConfig timeline'

@@ -53,8 +53,6 @@ function TimeRangeFilterPanelFactory(
         [idx, setFilter]
       );
 
-      const totalDatasetsNum = useMemo(() => Object.keys(datasets).length, [datasets]);
-
       const onSetFilterPlot = useCallback(
         (newProp, valueIndex) => setFilterPlot(idx, newProp, valueIndex),
         [idx, setFilterPlot]
@@ -136,19 +134,17 @@ function TimeRangeFilterPanelFactory(
             ))}
           </FilterPanelHeader>
           <StyledFilterContent className="filter-panel__content">
-            {totalDatasetsNum > 1 && (
-              <FilterSyncedDatasetPanel
-                datasets={datasets}
-                layers={layers}
-                filter={filter}
-                idx={idx}
-                onFieldSelector={onFieldSelector}
-                onSourceDataSelector={onSourceDataSelector}
-                setFilter={setFilter}
-                supportedFields={supportedFields}
-                syncTimeFilterWithLayerTimeline={syncTimeFilterWithLayerTimeline}
-              />
-            )}
+            <FilterSyncedDatasetPanel
+              datasets={datasets}
+              layers={layers}
+              filter={filter}
+              idx={idx}
+              onFieldSelector={onFieldSelector}
+              onSourceDataSelector={onSourceDataSelector}
+              setFilter={setFilter}
+              supportedFields={supportedFields}
+              syncTimeFilterWithLayerTimeline={syncTimeFilterWithLayerTimeline}
+            />
             {isHistogramVisible && (
               <div className="filter-panel__filter">
                 <TimeRangeFilter

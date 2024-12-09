@@ -118,6 +118,7 @@ export const S2VisConfigs: {
   enable3d: 'enable3d';
   elevationScale: 'elevationScale';
   enableElevationZoomFactor: 'enableElevationZoomFactor';
+  fixedHeight: 'fixedHeight';
   heightRange: 'elevationRange';
 
   // wireframe
@@ -148,6 +149,7 @@ export const S2VisConfigs: {
   enable3d: 'enable3d',
   elevationScale: 'elevationScale',
   enableElevationZoomFactor: 'enableElevationZoomFactor',
+  fixedHeight: 'fixedHeight',
   heightRange: 'elevationRange',
 
   // wireframe

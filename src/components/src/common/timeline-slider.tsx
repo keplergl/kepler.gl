@@ -72,7 +72,7 @@ function TimelineSliderFactory() {
   }) => {
     const onThrottleUpdate = useMemo(() => throttle(setTimelineValue, 20), [setTimelineValue]);
 
-    const {step, domain, value, timeFormat, defaultTimeFormat, timezone, animationWindow} =
+    const {step, domain, value, timeFormat, defaultTimeFormat, timezone, animationWindow, marks} =
       timeline;
 
     const isRanged = useMemo(
@@ -141,6 +141,7 @@ function TimelineSliderFactory() {
             onSlider1Change={onSlider1Change}
             value0={value0}
             value1={value1}
+            marks={marks}
           />
         </SliderWrapper>
         {timeEnd ? (

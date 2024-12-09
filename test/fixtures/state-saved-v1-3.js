@@ -458,6 +458,7 @@ mergedLayer1.config = {
     elevationPercentile: [0, 100],
     elevationScale: 5,
     enableElevationZoomFactor: true,
+    fixedHeight: false,
     colorAggregation: 'count', // if associated colorField value is null, it can only default to 'count'
     sizeAggregation: 'count', // if associated sizeField value is null, it can only default to 'count'
     enable3d: false

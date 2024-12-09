@@ -1297,7 +1297,8 @@ mergedLayer3.config = {
     percentile: [0, 100],
     elevationPercentile: [0, 100],
     elevationScale: 10,
-    enableElevationZoomFactor: true
+    enableElevationZoomFactor: true,
+    fixedHeight: false
   },
   animation: {enabled: false}
 };

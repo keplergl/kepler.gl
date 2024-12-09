@@ -79,11 +79,11 @@ const COMMON_CONFIG = {
       },
       {
         test: /\.(eot|svg|ico|ttf|woff|woff2|gif|jpe?g|png)$/,
-        loader: 'url-loader'
+        type: 'asset/resource'
       },
       {
         test: /\.(svg|ico|gif|jpe?g|png)$/,
-        loader: 'file-loader?name=[name].[ext]'
+        type: 'asset/inline'
       },
       // for compiling apache-arrow ESM module
       {
@@ -121,13 +121,9 @@ const COMMON_CONFIG = {
     ]
   },
 
-  node: {
-    fs: 'empty'
-  },
-
-  // to support browser history api and remove the '#' sign
   devServer: {
-    historyApiFallback: true
+    historyApiFallback: true,
+    // Add new options if needed
   },
 
   // Optional: Enables reading mapbox token from environment variable
@@ -139,11 +135,9 @@ const COMMON_CONFIG = {
     })
   ],
 
-  // Required to avoid deck.gl undefined module when code is minified
+  // Update optimization settings
   optimization: {
-    concatenateModules: false,
-    providedExports: false,
-    usedExports: false
+    // Webpack 5 has better defaults for tree-shaking and module concatenation
   }
 };
 

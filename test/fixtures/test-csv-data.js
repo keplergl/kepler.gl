@@ -141,6 +141,7 @@ export const config = {
               elevationPercentile: [0, 100],
               elevationScale: 5,
               enableElevationZoomFactor: true,
+              fixedHeight: false,
               colorAggregation: 'count',
               sizeAggregation: 'count',
               enable3d: false

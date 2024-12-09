@@ -76,7 +76,8 @@ export const hexIdDataConfig = {
                 sizeRange: [0, 500],
                 coverageRange: [0, 1],
                 elevationScale: 5,
-                enableElevationZoomFactor: true
+                enableElevationZoomFactor: true,
+                fixedHeight: false
               },
               textLabel: [
                 {
@@ -269,7 +270,8 @@ mergedH3Layer.config = {
     coverageRange: [0, 1],
     enable3d: false,
     elevationScale: 5,
-    enableElevationZoomFactor: true
+    enableElevationZoomFactor: true,
+    fixedHeight: false
   },
   textLabel: [
     {

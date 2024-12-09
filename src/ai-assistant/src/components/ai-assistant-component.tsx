@@ -3,13 +3,18 @@
 
 import React, {useEffect} from 'react';
 import styled, {withTheme} from 'styled-components';
-import {AiAssistant, MessageModel, useAssistant} from 'react-ai-assist';
+import {
+  AiAssistant,
+  MessageModel,
+  useAssistant,
+  histogramFunctionDefinition
+} from 'react-ai-assist';
 import 'react-ai-assist/dist/index.css';
 
 import {textColorLT} from '@kepler.gl/styles';
-import {ActionHandler, addDataToMap, loadFiles, mapStyleChange} from '@kepler.gl/actions';
+import {ActionHandler} from '@kepler.gl/actions';
 import {MapStyle} from '@kepler.gl/reducers';
-import {Loader} from '@loaders.gl/loader-utils';
+import {VisState} from '@kepler.gl/schemas';
 
 import {basemapFunctionDefinition} from '../tools/basemap-functions';
 import {loadUrlFunctionDefinition} from '../tools/loadurl-function';
@@ -21,8 +26,14 @@ import {
   ASSISTANT_NAME,
   ASSISTANT_VERSION,
   INSTRUCTIONS,
+  PROMPT_IDEAS,
   WELCOME_MESSAGE
 } from '../constants';
+import {filterFunctionDefinition} from '../tools/filter-function';
+import {addLayerFunctionDefinition} from '../tools/layer-creation-function';
+import {updateLayerColorFunctionDefinition} from '../tools/layer-style-function';
+import {SelectedKeplerGlActions} from './ai-assistant-manager';
+import {getDatasetContext, getValuesFromDataset, highlightRows} from '../tools/utils';
 
 export type AiAssistantComponentProps = {
   theme: any;
@@ -30,16 +41,9 @@ export type AiAssistantComponentProps = {
   updateAiAssistantMessages: ActionHandler<typeof updateAiAssistantMessages>;
   setStartScreenCapture: ActionHandler<typeof setStartScreenCapture>;
   setScreenCaptured: ActionHandler<typeof setScreenCaptured>;
-  keplerGlActions: {
-    mapStyleChange: ActionHandler<typeof mapStyleChange>;
-    loadFiles: ActionHandler<typeof loadFiles>;
-    addDataToMap: ActionHandler<typeof addDataToMap>;
-  };
+  keplerGlActions: SelectedKeplerGlActions;
   mapStyle: MapStyle;
-  visState: {
-    loaders: Loader[];
-    loadOptions: object;
-  };
+  visState: VisState;
 };
 
 const StyledAiAssistantComponent = styled.div`
@@ -70,6 +74,33 @@ function AiAssistantComponentFactory() {
         addDataToMap: keplerGlActions.addDataToMap,
         loaders: visState.loaders,
         loadOptions: visState.loadOptions
+      }),
+      addLayerFunctionDefinition({
+        addLayer: keplerGlActions.addLayer,
+        datasets: visState.datasets
+      }),
+      updateLayerColorFunctionDefinition({
+        layerVisualChannelConfigChange: keplerGlActions.layerVisualChannelConfigChange,
+        layers: visState.layers
+      }),
+      filterFunctionDefinition({
+        datasets: visState.datasets,
+        filters: visState.filters,
+        createOrUpdateFilter: keplerGlActions.createOrUpdateFilter,
+        setFilter: keplerGlActions.setFilter,
+        setFilterPlot: keplerGlActions.setFilterPlot
+      }),
+      histogramFunctionDefinition({
+        getValues: (datasetName: string, variableName: string): number[] =>
+          getValuesFromDataset(visState.datasets, datasetName, variableName),
+        onSelected: (datasetName: string, selectedRowIndices: number[]) =>
+          highlightRows(
+            visState.datasets,
+            visState.layers,
+            datasetName,
+            selectedRowIndices,
+            keplerGlActions.layerSetIsValid
+          )
       })
     ];
 
@@ -87,12 +118,25 @@ function AiAssistantComponentFactory() {
       functions
     };
 
-    const {initializeAssistant} = useAssistant(assistantProps);
+    const {initializeAssistant, addAdditionalContext} = useAssistant(assistantProps);
+
+    const initializeAssistantWithContext = async () => {
+      await initializeAssistant();
+      const context = getDatasetContext(visState.datasets, visState.layers);
+      addAdditionalContext({context});
+    };
 
     useEffect(() => {
-      initializeAssistant();
+      initializeAssistantWithContext();
+      // re-initialize assistant when datasets, filters or layers change
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [visState.datasets, visState.filters, visState.layers]);
+
+    const onRestartAssistant = () => {
+      // clean up aiAssistant state
+      updateAiAssistantMessages([]);
+      initializeAssistantWithContext();
+    };
 
     const onMessagesUpdated = (messages: MessageModel[]) => {
       updateAiAssistantMessages(messages);
@@ -121,9 +165,11 @@ function AiAssistantComponentFactory() {
           onScreenshotClick={onScreenshotClick}
           screenCapturedBase64={aiAssistant.screenshotToAsk.screenCaptured}
           onRemoveScreenshot={onRemoveScreenshot}
+          onRestartChat={onRestartAssistant}
           fontSize={'text-tiny'}
           botMessageClassName={''}
           githubIssueLink={'https://github.com/keplergl/kepler.gl/issues'}
+          ideas={PROMPT_IDEAS}
         />
       </StyledAiAssistantComponent>
     );

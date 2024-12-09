@@ -114,7 +114,8 @@ export default class AggregationLayer extends Layer {
       'coverage',
       'elevationPercentile',
       'elevationScale',
-      'enableElevationZoomFactor'
+      'enableElevationZoomFactor',
+      'fixedHeight'
     ];
   }
 
@@ -375,6 +376,8 @@ export default class AggregationLayer extends Layer {
       elevationScale: visConfig.elevationScale * eleZoomFactor,
       elevationScaleType: this.config.sizeScale,
       elevationRange: visConfig.sizeRange,
+      elevationFixed: visConfig.fixedHeight,
+
       elevationLowerPercentile: visConfig.elevationPercentile[0],
       elevationUpperPercentile: visConfig.elevationPercentile[1],
 

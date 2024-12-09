@@ -24,7 +24,7 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
         <link rel="stylesheet" href="https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/uber-fonts/4.0.0/superfine.css">
 
         <!--MapBox css-->
-        <link href="https:https://unpkg.com/maplibre-gl@^3/dist/maplibre-gl.css" rel="stylesheet">
+        <link href="https://unpkg.com/maplibre-gl@^3/dist/maplibre-gl.css" rel="stylesheet">
 
         <!-— facebook open graph tags -->
         <meta property="og:url" content="http://kepler.gl/" />
@@ -45,8 +45,8 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
         <meta name="twitter:image" content="https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/kepler.gl-meta-tag.png" />
 
         <!-- Load React/Redux -->
-        <script src="https://unpkg.com/react@18.2.0/umd/react.production.min.js" crossorigin></script>
-        <script src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js" crossorigin></script>
+        <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin></script>
+        <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin></script>
         <script src="https://unpkg.com/redux@4.2.1/dist/redux.js" crossorigin></script>
         <script src="https://unpkg.com/react-redux@8.1.2/dist/react-redux.min.js" crossorigin></script>
         <script src="https://unpkg.com/styled-components@4.4.1/dist/styled-components.min.js" crossorigin></script>
@@ -211,7 +211,9 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
 
           /** Render **/
           (function render(react, reactDOM, app) {
-            reactDOM.render(app, document.getElementById('app'));
+            const container = document.getElementById('app');
+            const root = reactDOM.createRoot(container);
+            root.render(app);
           }(React, ReactDOM, app));
         </script>
         <!-- The next script will show how to interact directly with Kepler map store -->
@@ -230,13 +232,18 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
               config
             );
 
-            store.dispatch(keplerGl.addDataToMap({
-              datasets: loadedData.datasets,
-              config: loadedData.config,
-              options: {
-                centerMap: false
-              }
-            }));
+            // For some reason Kepler overwrites the config without extra wait time
+            window.setTimeout(() => {
+              store.dispatch(
+                keplerGl.addDataToMap({
+                  datasets: loadedData.datasets,
+                  config: loadedData.config,
+                  options: {
+                    centerMap: false,
+                  },
+                })
+              );
+            }, 500);
           }(KeplerGl, store))
         </script>
       </body>

@@ -4,8 +4,8 @@
 import React, {useMemo} from 'react';
 import RangeSliderTimelineFactory from './range-slider-timeline';
 
-function RangeSliderTimelinePanelFactory(RangeSliderTimeline) {
-  const RangeSliderTimelinePanel = ({timelines, scaledValue, style}) => {
+function RangeSliderSubAnimationPanelFactory(RangeSliderTimeline) {
+  const RangeSliderSubAnimationPanel = ({subAnimations, scaledValue, style}) => {
     const containerStyle = useMemo(
       () => ({
         display: 'flex',
@@ -18,16 +18,16 @@ function RangeSliderTimelinePanelFactory(RangeSliderTimeline) {
 
     return (
       <div style={containerStyle}>
-        {timelines.map((timeline, index) => (
-          <RangeSliderTimeline key={index} timeline={timeline} scaledValue={scaledValue} />
+        {subAnimations.map((subAnimation, index) => (
+          <RangeSliderTimeline key={index} subAnimation={subAnimation} scaledValue={scaledValue} />
         ))}
       </div>
     );
   };
 
-  return RangeSliderTimelinePanel;
+  return RangeSliderSubAnimationPanel;
 }
 
-RangeSliderTimelinePanelFactory.deps = [RangeSliderTimelineFactory];
+RangeSliderSubAnimationPanelFactory.deps = [RangeSliderTimelineFactory];
 
-export default RangeSliderTimelinePanelFactory;
+export default RangeSliderSubAnimationPanelFactory;

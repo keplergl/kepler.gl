@@ -50,7 +50,7 @@ type SliderProps = {
   enableBarDrag: boolean;
   showTooltip: boolean;
   vertical: boolean;
-  marks?: number[];
+  marks?: number[] | null;
   classSet?: {[key: string]: boolean};
   disabled: boolean;
   className?: string;

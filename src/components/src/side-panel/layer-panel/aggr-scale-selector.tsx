@@ -6,7 +6,7 @@ import DimensionScaleSelectorFactory from './dimension-scale-selector';
 
 AggrScaleSelectorFactory.deps = [DimensionScaleSelectorFactory];
 export function AggrScaleSelectorFactory(DimensionScaleSelector) {
-  const AggrScaleSelector = ({channel, layer, onChange, setColorUI}) => {
+  const AggrScaleSelector = ({channel, layer, onChange, setColorUI, label}) => {
     const {key} = channel;
     const scaleOptions = layer.getScaleOptions(key);
 
@@ -14,7 +14,7 @@ export function AggrScaleSelectorFactory(DimensionScaleSelector) {
       <DimensionScaleSelector
         layer={layer}
         channel={channel}
-        label={`${key} Scale`}
+        label={label || `${key} Scale`}
         onChange={onChange}
         setColorUI={setColorUI}
       />

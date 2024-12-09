@@ -116,6 +116,7 @@ export const HexagonIdVisConfigs: {
   coverageRange: 'coverageRange';
   elevationScale: 'elevationScale';
   enableElevationZoomFactor: 'enableElevationZoomFactor';
+  fixedHeight: 'fixedHeight';
 } = {
   colorRange: 'colorRange',
   filled: {
@@ -143,7 +144,8 @@ export const HexagonIdVisConfigs: {
   sizeRange: 'elevationRange',
   coverageRange: 'coverageRange',
   elevationScale: 'elevationScale',
-  enableElevationZoomFactor: 'enableElevationZoomFactor'
+  enableElevationZoomFactor: 'enableElevationZoomFactor',
+  fixedHeight: 'fixedHeight'
 };
 
 const brushingExtension = new BrushingExtension();

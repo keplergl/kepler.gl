@@ -66,6 +66,7 @@ export type FieldType = string | TooltipField | Field;
 export type FieldValue = string | {name: string} | string[] | {name: string}[];
 
 export type FieldSelectorProps<Option extends MinimalField> = {
+  id?: string;
   fields: Option[];
   onSelect: (
     items:

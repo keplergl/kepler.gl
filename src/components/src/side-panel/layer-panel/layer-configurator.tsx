@@ -353,7 +353,7 @@ export default function LayerConfiguratorFactory(
     }) {
       const {config} = layer;
       const {
-        visConfig: {enable3d}
+        visConfig: {enable3d, fixedHeight}
       } = config;
       const elevationByDescription = 'layer.elevationByDescription';
       const colorByDescription = 'layer.colorByDescription';
@@ -409,7 +409,7 @@ export default function LayerConfiguratorFactory(
               <VisConfigSlider
                 {...layer.visConfigSettings.elevationScale}
                 {...visConfiguratorProps}
-                label="layerVisConfigs.heightMultiplier"
+                label={'layerVisConfigs.heightMultiplier'}
               />
               <ConfigGroupCollapsibleContent>
                 <ChannelByValueSelector
@@ -418,20 +418,6 @@ export default function LayerConfiguratorFactory(
                   description={elevationByDescription}
                   disabled={!enable3d}
                 />
-                <AggrScaleSelector
-                  {...layerConfiguratorProps}
-                  channel={layer.visualChannels.size}
-                />
-                <VisConfigSlider
-                  {...layer.visConfigSettings.sizeRange}
-                  {...visConfiguratorProps}
-                  label="layerVisConfigs.heightRange"
-                />
-                <VisConfigSwitch
-                  {...layer.visConfigSettings.enableElevationZoomFactor}
-                  {...visConfiguratorProps}
-                  label="layerVisConfigs.enableHeightZoomFactor"
-                />
                 {layer.visConfigSettings.sizeAggregation.condition(layer.config) ? (
                   <AggregationTypeSelector
                     {...layer.visConfigSettings.sizeAggregation}
@@ -439,6 +425,21 @@ export default function LayerConfiguratorFactory(
                     channel={layer.visualChannels.size}
                   />
                 ) : null}
+                <AggrScaleSelector
+                  {...layerConfiguratorProps}
+                  channel={layer.visualChannels.size}
+                  label={'Height Scale'}
+                />
+                <VisConfigSlider
+                  {...layer.visConfigSettings.sizeRange}
+                  {...visConfiguratorProps}
+                  label={'layerVisConfigs.heightRange'}
+                  disabled={fixedHeight}
+                />
+                <VisConfigSwitch
+                  {...layer.visConfigSettings.fixedHeight}
+                  {...visConfiguratorProps}
+                />
                 {layer.visConfigSettings.elevationPercentile.condition(layer.config) ? (
                   <VisConfigSlider
                     {...layer.visConfigSettings.elevationPercentile}
@@ -552,20 +553,18 @@ export default function LayerConfiguratorFactory(
               channel={layer.visualChannels.size}
               {...layerChannelConfigProps}
             />
+            <VisConfigSlider
+              {...layer.visConfigSettings.elevationScale}
+              {...visConfiguratorProps}
+              label={'layerVisConfigs.heightMultiplier'}
+            />
             <ConfigGroupCollapsibleContent>
-              <VisConfigSlider
-                {...layer.visConfigSettings.elevationScale}
-                {...visConfiguratorProps}
-              />
               <VisConfigSlider
                 {...layer.visConfigSettings.sizeRange}
                 {...visConfiguratorProps}
                 label="layerVisConfigs.heightRange"
               />
-              <VisConfigSwitch
-                {...layer.visConfigSettings.enableElevationZoomFactor}
-                {...visConfiguratorProps}
-              />
+              <VisConfigSwitch {...layer.visConfigSettings.fixedHeight} {...visConfiguratorProps} />
             </ConfigGroupCollapsibleContent>
           </LayerConfigGroup>
 
@@ -1006,7 +1005,7 @@ export default function LayerConfiguratorFactory(
             <VisConfigSlider
               {...layer.visConfigSettings.elevationScale}
               {...visConfiguratorProps}
-              label="layerVisConfigs.elevationScale"
+              label={'layerVisConfigs.heightMultiplier'}
             />
             <ConfigGroupCollapsibleContent>
               <VisConfigSlider
@@ -1014,10 +1013,7 @@ export default function LayerConfiguratorFactory(
                 {...visConfiguratorProps}
                 label="layerVisConfigs.heightRange"
               />
-              <VisConfigSwitch
-                {...layer.visConfigSettings.enableElevationZoomFactor}
-                {...visConfiguratorProps}
-              />
+              <VisConfigSwitch {...layer.visConfigSettings.fixedHeight} {...visConfiguratorProps} />
               <VisConfigSwitch {...visConfiguratorProps} {...layer.visConfigSettings.wireframe} />
             </ConfigGroupCollapsibleContent>
           </LayerConfigGroup>
