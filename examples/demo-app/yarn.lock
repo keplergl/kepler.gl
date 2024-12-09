@@ -7389,6 +7389,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-resizable-panels@npm:^2.1.7":
+  version: 2.1.7
+  resolution: "react-resizable-panels@npm:2.1.7"
+  peerDependencies:
+    react: ^16.14.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^19.0.0-rc
+    react-dom: ^16.14.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^19.0.0-rc
+  checksum: 10c0/644a57960507b809f571bf8c95f07a04e3aeb9b20405a1d9d8cb6deb72d2462192e6e5e9751237347e7818179a619a6f65de4b355e276334d10b8cfe737ca4e1
+  languageName: node
+  linkType: hard
+
 "react-router-redux@npm:^4.0.8":
   version: 4.0.8
   resolution: "react-router-redux@npm:4.0.8"
@@ -7780,6 +7790,7 @@ __metadata:
     react-intl: "npm:^6.3.0"
     react-markdown: "npm:^6.0.3"
     react-redux: "npm:^8.0.5"
+    react-resizable-panels: "npm:^2.1.7"
     react-router: "npm:3.2.5"
     react-router-redux: "npm:^4.0.8"
     react-virtualized: "npm:^9.21.0"

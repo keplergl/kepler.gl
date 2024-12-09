@@ -251,7 +251,16 @@ export const FIELD_DISPLAY_FORMAT: {
       ? `[${String(d)}]`
       : '',
   [ALL_FIELD_TYPES.geoarrow]: d => d,
-  [ALL_FIELD_TYPES.object]: JSON.stringify,
+  [ALL_FIELD_TYPES.object]: (value: any) => {
+    if (typeof value?.toString === 'function') {
+      return value.toString();
+    }
+    try {
+      return JSON.stringify(value);
+    } catch (e) {
+      return String(value);
+    }
+  },
   [ALL_FIELD_TYPES.array]: JSON.stringify
 };
 
@@ -261,6 +270,12 @@ export const FIELD_DISPLAY_FORMAT: {
 export const parseFieldValue = (value: any, type: string): string => {
   if (!notNullorUndefined(value)) {
     return '';
+  }
+  // BigInt values cannot be serialized with JSON.stringify() directly
+  // We need to explicitly convert them to strings using .toString()
+  // See: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt#use_within_json
+  if (typeof value === 'bigint') {
+    return value.toString();
   }
   return FIELD_DISPLAY_FORMAT[type] ? FIELD_DISPLAY_FORMAT[type](value) : String(value);
 };

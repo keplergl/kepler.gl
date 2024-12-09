@@ -7,6 +7,15 @@ import {browserHistory} from 'react-router';
 import {enhanceReduxMiddleware} from '@kepler.gl/reducers';
 import {createLogger} from 'redux-logger';
 import thunk from 'redux-thunk';
+import keplerGlDuckdbPlugin, {KeplerGlDuckDbTable} from 'keplergl-duckdb-plugin';
+import {initApplicationConfig} from '@kepler.gl/utils';
+
+// initialize kepler application with duckdb plugin
+initApplicationConfig({
+  plugins: [keplerGlDuckdbPlugin],
+  table: KeplerGlDuckDbTable
+});
+
 // eslint-disable-next-line no-unused-vars
 import window from 'global/window';
 

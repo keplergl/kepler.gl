@@ -1,0 +1,3 @@
+[submodule "src/keplergl-duckdb-plugin"]
+	path = src/keplergl-duckdb-plugin
+	url = git@github.com:foursquare/keplergl-duckdb-plugin.git
