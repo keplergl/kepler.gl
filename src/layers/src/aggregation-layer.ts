@@ -172,24 +172,20 @@ export default class AggregationLayer extends Layer {
 
   getHoverData(object: any, dataContainer: DataContainerInterface, fields: Field[]): any {
     if (!object) return object;
-
+    const measure = this.config.visConfig.colorAggregation;
     // aggregate all fields for the hovered group
-    const aggregatedFields = fields.reduce((accu, field) => {
+    const aggregatedData = fields.reduce((accu, field) => {
       accu[field.name] = {
-        measure: this.config.visConfig.colorAggregation,
-        value: aggregate(
-          object.points,
-          this.config.visConfig.colorAggregation,
-          (d: {index: number}) => {
-            return dataContainer.valueAt(d.index, field.fieldIdx);
-          }
-        )
+        measure,
+        value: aggregate(object.points, measure, (d: {index: number}) => {
+          return dataContainer.valueAt(d.index, field.fieldIdx);
+        })
       };
       return accu;
     }, {});
 
     // return aggregated object
-    return {aggregatedData: aggregatedFields, ...object};
+    return {aggregatedData, ...object};
   }
 
   getFilteredItemCount() {

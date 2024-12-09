@@ -184,7 +184,7 @@ const CellInfo = ({
       }, [] as {name: string; value?: string}[]);
     }
     return [];
-  }, [data.aggregatedData, fieldsToShow]);
+  }, [data.aggregatedData, fieldsToShow, colorField?.name]);
 
   const colorMeasure = layer.getVisualChannelDescription('color').measure;
   const sizeMeasure = layer.getVisualChannelDescription('size').measure;
@@ -197,8 +197,8 @@ const CellInfo = ({
       {sizeField && layer.visualChannels.size && sizeMeasure ? (
         <Row name={sizeMeasure} key="size" value={elevationValue || 'N/A'} />
       ) : null}
-      {aggregatedData.map((av, idx) => (
-        <Row name={av.name} key={`data_${idx}`} value={av.value || 'N/A'} />
+      {aggregatedData.map((dataForField, idx) => (
+        <Row name={dataForField.name} key={`data_${idx}`} value={dataForField.value || 'N/A'} />
       ))}
     </tbody>
   );
