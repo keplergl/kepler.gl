@@ -18,6 +18,7 @@ import {
 } from '@kepler.gl/reducers';
 import {useIntl} from 'react-intl';
 import {VisState} from '@kepler.gl/schemas';
+import {capitalizeFirstLetter} from '@kepler.gl/utils';
 
 export const StyledLayerName = styled(CenterFlexbox)`
   color: ${props => props.theme.textColorHl};
@@ -191,6 +192,22 @@ const CellInfo = ({
     return null;
   }, [fieldsToShow, sizeField, layer, data.elevationValue]);
 
+  const aggregatedData = useMemo(() => {
+    if (data.aggregatedData && fieldsToShow) {
+      return fieldsToShow.reduce((acc, field) => {
+        const dataForField = data.aggregatedData?.[field.name];
+        if (dataForField?.measure && field.name !== colorField?.name) {
+          acc.push({
+            name: `${capitalizeFirstLetter(dataForField.measure)} of ${field.name}`,
+            value: dataForField.value
+          });
+        }
+        return acc;
+      }, [] as {name: string; value?: string}[]);
+    }
+    return [];
+  }, [data.aggregatedData, fieldsToShow, colorField?.name]);
+
   const colorMeasure = layer.getVisualChannelDescription('color').measure;
   const sizeMeasure = layer.getVisualChannelDescription('size').measure;
   return (
@@ -202,6 +219,9 @@ const CellInfo = ({
       {sizeField && layer.visualChannels.size && sizeMeasure ? (
         <Row name={sizeMeasure} key="size" value={elevationValue || 'N/A'} />
       ) : null}
+      {aggregatedData.map((dataForField, idx) => (
+        <Row name={dataForField.name} key={`data_${idx}`} value={dataForField.value || 'N/A'} />
+      ))}
     </tbody>
   );
 };
