@@ -159,7 +159,7 @@ export {
 } from './map/map-legend';
 
 export {default as MapLegendPanelFactory} from './map/map-legend-panel';
-export {default as MapPopoverFactory} from './map/map-popover';
+export {default as MapPopoverFactory, getSelectedFeature} from './map/map-popover';
 export {default as MapPopoverContentFactory} from './map/map-popover-content';
 export {default as SplitMapButtonFactory} from './map/split-map-button';
 export {default as Toggle3dButtonFactory} from './map/toggle-3d-button';
