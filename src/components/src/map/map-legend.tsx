@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {FC, useCallback} from 'react';
+import React, {FC, useCallback, useState, ComponentType} from 'react';
 import styled from 'styled-components';
 import {rgb} from 'd3-color';
 import ColorLegendFactory, {LegendRowFactory} from '../common/color-legend';
@@ -10,12 +10,14 @@ import {CHANNEL_SCALES, DIMENSIONS} from '@kepler.gl/constants';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {Layer, LayerBaseConfig, VisualChannel, VisualChannelDescription} from '@kepler.gl/layers';
 import {LayerVisConfig, MapState, RGBColor} from '@kepler.gl/types';
+import {getDistanceScales} from 'viewport-mercator-project';
+import {ArrowDown, ArrowRight} from '../common/icons';
+import PanelHeaderActionFactory from '../side-panel/panel-header-action';
 
 interface StyledMapControlLegendProps {
   width?: number;
   last?: boolean;
 }
-import {getDistanceScales} from 'viewport-mercator-project';
 
 export const StyledMapControlLegend = styled.div<StyledMapControlLegendProps>`
   padding: 10px ${props => props.theme.mapControl.padding}px 10px
@@ -41,9 +43,14 @@ export const StyledMapControlLegend = styled.div<StyledMapControlLegendProps>`
     padding-right: ${props => props.theme.mapControl.padding}px;
   }
 
-  .legend--layer__title {
-    padding-right: ${props => props.theme.mapControl.padding}px;
+  .legend--layer_size-title-row {
+    display: flex;
     margin-top: 4px;
+    padding-right: ${props => props.theme.mapControl.padding}px;
+    align-items: center;
+  }
+
+  .legend--layer__title {
   }
 
   .legend--layer__item {
@@ -118,13 +125,20 @@ export type LayerColorLegendProps = {
   onLayerVisConfigChange?: (oldLayer: Layer, newVisConfig: Partial<LayerVisConfig>) => void;
   layer: Layer;
   disableEdit?: boolean;
+  isExport?: boolean;
   mapState?: MapState;
+  actionIcons: MapLegendIcons;
 };
 
-LayerColorLegendFactory.deps = [ColorLegendFactory, SingleColorLegendFactory];
+LayerColorLegendFactory.deps = [
+  ColorLegendFactory,
+  SingleColorLegendFactory,
+  PanelHeaderActionFactory
+];
 export function LayerColorLegendFactory(
   ColorLegend: ReturnType<typeof ColorLegendFactory>,
-  SingleColorLegend: ReturnType<typeof SingleColorLegendFactory>
+  SingleColorLegend: ReturnType<typeof SingleColorLegendFactory>,
+  PanelHeaderAction: ReturnType<typeof PanelHeaderActionFactory>
 ) {
   const LayerColorLegend: React.FC<LayerColorLegendProps> = ({
     description,
@@ -133,7 +147,9 @@ export function LayerColorLegendFactory(
     colorChannel,
     disableEdit,
     onLayerVisConfigChange,
-    mapState
+    isExport,
+    mapState,
+    actionIcons
   }) => {
     const enableColorBy = description.measure;
     const {scale, field, domain, range, property, fixed} = colorChannel;
@@ -154,15 +170,29 @@ export function LayerColorLegendFactory(
       },
       [layer, onLayerVisConfigChange, colorRange, range]
     );
+    const [isExpanded, setIsExpanded] = useState(isExport);
+    const handleToggleExpanded = () => setIsExpanded(!isExpanded);
     return (
       <div className="legend--layer__item">
         <div className="legend--layer_color-schema">
           <div>
-            {enableColorBy ? <VisualChannelMetric name={enableColorBy} /> : null}
+            {enableColorBy ? (
+              <div className="legend--layer_size-title-row">
+                <VisualChannelMetric name={enableColorBy} />
+                {!isExport ? (
+                  <PanelHeaderAction
+                    id="legend-collapse-button"
+                    onClick={handleToggleExpanded}
+                    IconComponent={isExpanded ? actionIcons.expanded : actionIcons.collapsed}
+                  />
+                ) : null}
+              </div>
+            ) : null}
             <div className="legend--layer_color-legend">
               {enableColorBy ? (
                 <ColorLegend
                   layer={layer}
+                  isExpanded={isExpanded}
                   scaleType={colorScale}
                   displayLabel
                   domain={colorDomain}
@@ -197,10 +227,16 @@ function getLayerRadiusScaleMetersToPixelsMultiplier(layer, mapState) {
   return layer.getRadiusScaleByZoom(mapState, fixedRadius) / metersPerPixel[0];
 }
 
+export type MapLegendIcons = {
+  expanded: ComponentType<any>;
+  collapsed: ComponentType<any>;
+};
+
 export type LayerRadiusLegendProps = {
   layer: Layer;
   mapState?: MapState;
   width: number;
+  isExport?: boolean;
   visualChannel: VisualChannel;
 };
 
@@ -264,12 +300,19 @@ export function LayerLegendHeaderFactory() {
   return LayerLegendHeader;
 }
 
+const defaultActionIcons = {
+  expanded: ArrowDown,
+  collapsed: ArrowRight
+};
+
 export type LayerLegendContentProps = {
   layer: Layer;
   containerW: number;
   mapState?: MapState;
   disableEdit?: boolean;
+  isExport?: boolean;
   onLayerVisConfigChange?: (oldLayer: Layer, newVisConfig: Partial<LayerVisConfig>) => void;
+  actionIcons: MapLegendIcons;
 };
 
 LayerLegendContentFactory.deps = [LayerColorLegendFactory];
@@ -282,7 +325,9 @@ export function LayerLegendContentFactory(
     containerW,
     mapState,
     disableEdit,
-    onLayerVisConfigChange
+    isExport,
+    onLayerVisConfigChange,
+    actionIcons
   }) => {
     const colorChannels = Object.values(layer.visualChannels).filter(isColorChannel);
     const nonColorChannels = Object.values(layer.visualChannels).filter(vc => !isColorChannel(vc));
@@ -309,9 +354,11 @@ export function LayerLegendContentFactory(
             config={layer.config}
             description={layer.getVisualChannelDescription(colorChannel.key)}
             layer={layer}
+            isExport={isExport}
             disableEdit={disableEdit}
             mapState={mapState}
             onLayerVisConfigChange={onLayerVisConfigChange}
+            actionIcons={actionIcons}
           />
         ))}
         {nonColorChannels.map(visualChannel => {
@@ -356,7 +403,9 @@ export type MapLegendProps = {
     showLayerName?: boolean;
   };
   disableEdit?: boolean;
+  isExport?: boolean;
   onLayerVisConfigChange?: (oldLayer: Layer, newVisConfig: Partial<LayerVisConfig>) => void;
+  actionIcons: MapLegendIcons;
 };
 
 MapLegendFactory.deps = [LayerLegendHeaderFactory, LayerLegendContentFactory];
@@ -371,14 +420,16 @@ function MapLegendFactory(
     mapState,
     options,
     disableEdit,
-    onLayerVisConfigChange
+    isExport,
+    onLayerVisConfigChange,
+    actionIcons = defaultActionIcons
   }) => (
     <div
       className="map-legend"
       {...(mapState?.height && {
         style: {
           /* subtracting rough size of 4 map control buttons and padding */
-          maxHeight: mapState.height - 250
+          maxHeight: mapState.height - (isExport ? 0 : 250)
         }
       })}
     >
@@ -401,7 +452,9 @@ function MapLegendFactory(
               layer={layer}
               mapState={mapState}
               disableEdit={disableEdit}
+              isExport={isExport}
               onLayerVisConfigChange={onLayerVisConfigChange}
+              actionIcons={actionIcons}
             />
           </StyledMapControlLegend>
         );

@@ -26,9 +26,9 @@ const inputCss = css`
     pointer-events: none;
   }
 `;
-const StyledLegend = styled.div<{disableEdit: boolean}>`
+const StyledLegend = styled.div<{disableEdit: boolean; isExpanded?: boolean}>`
   ${props => props.theme.sidePanelScrollBar};
-  max-height: 180px;
+  ${props => (props.isExpanded ? '' : `max-height: 180px;`)};
   overflow: auto;
   margin-bottom: ${GAP}px;
   display: grid;
@@ -271,6 +271,7 @@ export type ColorLegendProps = {
   disableEdit?: boolean;
   mapState?: MapState;
   isFixed?: boolean;
+  isExpanded?: boolean;
   onUpdateColorLegend?: (colorLegends: {[key: HexColor]: string}) => void;
 };
 
@@ -285,6 +286,7 @@ function ColorLegendFactory(LegendRow: ReturnType<typeof LegendRowFactory>) {
   const ColorLegend: React.FC<ColorLegendProps> = ({
     layer,
     isFixed,
+    isExpanded,
     domain,
     range,
     labelFormat,
@@ -334,7 +336,7 @@ function ColorLegendFactory(LegendRow: ReturnType<typeof LegendRowFactory>) {
     );
 
     return (
-      <StyledLegend disableEdit={disableEdit}>
+      <StyledLegend disableEdit={disableEdit} isExpanded={isExpanded}>
         {legends.map((legend, i) => (
           <LegendRow
             key={`${legend.data}-${i}`}
