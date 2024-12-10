@@ -72,6 +72,7 @@ export type MapLegendPanelProps = {
   isViewportUnsyncAllowed?: boolean;
   onClickControlBtn?: (e?: MouseEvent) => void;
   onLayerVisConfigChange?: (oldLayer: Layer, newVisConfig: Partial<LayerVisConfig>) => void;
+  className: string;
 };
 
 function MapLegendPanelFactory(MapControlTooltip, MapControlPanel, MapLegend) {
@@ -93,6 +94,7 @@ function MapLegendPanelFactory(MapControlTooltip, MapControlPanel, MapLegend) {
     onToggleSplitMapViewport,
     onClickControlBtn,
     isViewportUnsyncAllowed = true,
+    className,
     onLayerVisConfigChange
   }) => {
     const mapLegend = mapControls?.mapLegend || ({} as MapControlMapLegend);
@@ -139,7 +141,7 @@ function MapLegendPanelFactory(MapControlTooltip, MapControlPanel, MapLegend) {
     const mapControlPanel = (
       <MapControlPanel
         scale={scale}
-        header={'header.layerLegend'}
+        header="header.layerLegend"
         isPinned={true}
         {...(isPinned
           ? {
@@ -157,6 +159,7 @@ function MapLegendPanelFactory(MapControlTooltip, MapControlPanel, MapLegend) {
         mapState={mapState}
         onToggleSplitMapViewport={onToggleSplitMapViewport}
         isViewportUnsyncAllowed={isViewportUnsyncAllowed}
+        className={className}
       >
         <MapLegend
           layers={layers}
