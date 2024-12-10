@@ -137,7 +137,7 @@ function MapControlPanelFactory() {
       mapState,
       onToggleSplitMapViewport,
       isViewportUnsyncAllowed,
-      className
+      className = 'map-control-panel'
     }) => {
       const {isViewportSynced, isZoomLocked} = mapState || {};
       const onUnlockViewportChange = useCallback(() => {
