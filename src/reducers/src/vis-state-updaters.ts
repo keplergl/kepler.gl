@@ -3399,9 +3399,9 @@ export function setTimeFilterTimelineModeUpdater<S extends VisState>(
   return adjustAnimationConfigWithFilter(newState, filterIdx);
 }
 
-function adjustAnimationConfigWithFilter(state, filterIdx) {
+function adjustAnimationConfigWithFilter<S extends VisState>(state: S, filterIdx: number): S {
   const filter = state.filters[filterIdx];
-  if (filter.syncedWithLayerTimeline) {
+  if ((filter as TimeRangeFilter).syncedWithLayerTimeline) {
     const timelineValue = getTimelineValueFromFilter(filter);
     const value = state.animationConfig.timeSteps
       ? snapToMarks(timelineValue, state.animationConfig.timeSteps)

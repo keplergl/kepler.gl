@@ -28,7 +28,6 @@ import {
   PLOT_TYPES,
   AggregationTypes
 } from '@kepler.gl/constants';
-import {VisState} from '@kepler.gl/schemas';
 
 import {roundValToStep} from './data-utils';
 import {aggregate, AGGREGATION_NAME} from './aggregation';
@@ -349,9 +348,9 @@ function getDelta(
   };
 }
 
-export function getPctChange(y, y0) {
+export function getPctChange(y: unknown, y0: unknown): number | null {
   if (Number.isFinite(y) && Number.isFinite(y0) && y0 !== 0) {
-    return (y - y0) / y0;
+    return ((y as number) - (y0 as number)) / (y0 as number);
   }
   return null;
 }
@@ -446,7 +445,14 @@ export function splitSeries(series) {
   return {lines, markers};
 }
 
-export function adjustValueToAnimationWindow(state: VisState, filter: TimeRangeFilter) {
+type MinVisStateForAnimationWindow = {
+  datasets: Datasets;
+};
+
+export function adjustValueToAnimationWindow<S extends MinVisStateForAnimationWindow>(
+  state: S,
+  filter: TimeRangeFilter
+) {
   const {
     plotType,
     value: [value0, value1],
