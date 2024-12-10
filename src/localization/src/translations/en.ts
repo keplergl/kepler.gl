@@ -620,5 +620,27 @@ ${'```'}
   'Bug Report': 'Bug Report',
   'User Guide': 'User Guide',
   Save: 'Save',
-  Share: 'Share'
+  Share: 'Share',
+  mapLegend: {
+    layers: {
+      line: {
+        singleColor: {
+          sourceColor: 'Source',
+          targetColor: 'Target'
+        }
+      },
+      arc: {
+        singleColor: {
+          sourceColor: 'Source',
+          targetColor: 'Target'
+        }
+      },
+      default: {
+        singleColor: {
+          color: 'Fill color',
+          strokeColor: 'Outline'
+        }
+      }
+    }
+  }
 };

@@ -8,7 +8,8 @@ import Layer, {
   LayerColorConfig,
   LayerSizeConfig,
   LayerBounds,
-  LayerBaseConfigPartial
+  LayerBaseConfigPartial,
+  VisualChannel
 } from '../base-layer';
 import {BrushingExtension} from '@deck.gl/extensions';
 import {GeoArrowArcLayer} from '@kepler.gl/deckgl-arrow-layers';
@@ -590,5 +591,15 @@ export default class ArcLayer extends Layer {
       return dataContainer.row(index);
     }
     return null;
+  }
+
+  getLegendVisualChannels() {
+    let channels: {[key: string]: VisualChannel} = this.visualChannels;
+    if (channels.sourceColor?.field && this.config[channels.sourceColor.field]) {
+      // Remove targetColor to avoid duplicate legend
+      channels = {...channels};
+      delete channels.targetColor;
+    }
+    return channels;
   }
 }
