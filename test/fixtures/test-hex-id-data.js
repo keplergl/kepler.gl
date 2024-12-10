@@ -32,6 +32,29 @@ export default `hex_id,value
 
 export const dataId = 'h3-hex-id';
 
+export const expectedFields = [
+  {
+    analyzerType: 'H3',
+    displayName: 'hex_id',
+    fieldIdx: 0,
+    format: '',
+    id: 'hex_id',
+    name: 'hex_id',
+    type: 'h3',
+    valueAccessor: values => values[0]
+  },
+  {
+    analyzerType: 'INT',
+    displayName: 'value',
+    fieldIdx: 1,
+    format: '',
+    id: 'value',
+    name: 'value',
+    type: 'integer',
+    valueAccessor: values => values[1]
+  }
+];
+
 export const hexIdDataConfig = {
   dataId,
   config: {
@@ -181,8 +204,8 @@ const mergedFields = [
     displayName: 'hex_id',
     format: '',
     fieldIdx: 0,
-    type: 'string',
-    analyzerType: 'STRING',
+    type: 'h3',
+    analyzerType: 'H3',
     valueAccessor: values => values[0]
   },
   {

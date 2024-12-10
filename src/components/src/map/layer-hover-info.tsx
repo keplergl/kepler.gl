@@ -3,18 +3,22 @@
 
 import React, {useMemo} from 'react';
 import styled from 'styled-components';
-import {TooltipField} from '@kepler.gl/types';
+import {CompareType, Field, Merge, TooltipField} from '@kepler.gl/types';
 import {CenterFlexbox} from '../common/styled-components';
 import {Layers} from '../common/icons';
 import PropTypes from 'prop-types';
 import {notNullorUndefined} from '@kepler.gl/common-utils';
+import {DataRow} from '@kepler.gl/utils';
 import {Layer} from '@kepler.gl/layers';
 import {
   AggregationLayerHoverData,
+  LayerHoverProp,
   getTooltipDisplayDeltaValue,
   getTooltipDisplayValue
 } from '@kepler.gl/reducers';
 import {useIntl} from 'react-intl';
+import {VisState} from '@kepler.gl/schemas';
+import {capitalizeFirstLetter} from '@kepler.gl/utils';
 
 export const StyledLayerName = styled(CenterFlexbox)`
   color: ${props => props.theme.textColorHl};
@@ -98,36 +102,55 @@ const Row: React.FC<RowProps> = ({name, value, deltaValue, url}) => {
   );
 };
 
-const EntryInfo = ({fieldsToShow, fields, data, primaryData, compareType}) => (
+export type EntryInfoProps = Merge<LayerHoverProp, {fieldsToShow: TooltipField[]}>;
+
+const EntryInfo: React.FC<EntryInfoProps> = ({fieldsToShow, ...props}) => (
   <tbody>
     {fieldsToShow.map(item => (
-      <EntryInfoRow
-        key={item.name}
-        item={item}
-        fields={fields}
-        data={data}
-        primaryData={primaryData}
-        compareType={compareType}
-      />
+      <EntryInfoRow key={item.name} item={item} {...props} />
     ))}
   </tbody>
 );
 
-const EntryInfoRow = ({item, fields, data, primaryData, compareType}) => {
+export type EntryInfoRowProps = {
+  data: LayerHoverProp['data'];
+  fields: Field[];
+  layer: Layer;
+  primaryData?: LayerHoverProp['primaryData'];
+  compareType?: CompareType;
+  currentTime?: VisState['animationConfig']['currentTime'];
+  item: TooltipField;
+};
+
+const EntryInfoRow: React.FC<EntryInfoRowProps> = ({
+  layer,
+  item,
+  fields,
+  data,
+  primaryData,
+  compareType,
+  currentTime
+}) => {
   const fieldIdx = fields.findIndex(f => f.name === item.name);
   if (fieldIdx < 0) {
     return null;
   }
   const field = fields[fieldIdx];
-  const value = data.valueAt(fieldIdx);
+  const fieldValueAccessor = layer.accessVSFieldValue(field, currentTime);
+  const value = fieldValueAccessor(field, data instanceof DataRow ? {index: data._rowIndex} : data);
+  const primaryValue = primaryData
+    ? fieldValueAccessor(
+        field,
+        primaryData instanceof DataRow ? {index: primaryData._rowIndex} : primaryData
+      )
+    : null;
   const displayValue = getTooltipDisplayValue({item, field, value});
 
   const displayDeltaValue = primaryData
     ? getTooltipDisplayDeltaValue({
         field,
-        data,
-        fieldIdx,
-        primaryData,
+        value,
+        primaryValue,
         compareType
       })
     : null;
@@ -169,6 +192,22 @@ const CellInfo = ({
     return null;
   }, [fieldsToShow, sizeField, layer, data.elevationValue]);
 
+  const aggregatedData = useMemo(() => {
+    if (data.aggregatedData && fieldsToShow) {
+      return fieldsToShow.reduce((acc, field) => {
+        const dataForField = data.aggregatedData?.[field.name];
+        if (dataForField?.measure && field.name !== colorField?.name) {
+          acc.push({
+            name: `${capitalizeFirstLetter(dataForField.measure)} of ${field.name}`,
+            value: dataForField.value
+          });
+        }
+        return acc;
+      }, [] as {name: string; value?: string}[]);
+    }
+    return [];
+  }, [data.aggregatedData, fieldsToShow, colorField?.name]);
+
   const colorMeasure = layer.getVisualChannelDescription('color').measure;
   const sizeMeasure = layer.getVisualChannelDescription('size').measure;
   return (
@@ -180,6 +219,9 @@ const CellInfo = ({
       {sizeField && layer.visualChannels.size && sizeMeasure ? (
         <Row name={sizeMeasure} key="size" value={elevationValue || 'N/A'} />
       ) : null}
+      {aggregatedData.map((dataForField, idx) => (
+        <Row name={dataForField.name} key={`data_${idx}`} value={dataForField.value || 'N/A'} />
+      ))}
     </tbody>
   );
 };

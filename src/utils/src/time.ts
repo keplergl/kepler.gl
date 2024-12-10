@@ -104,7 +104,7 @@ export function getIntervalByTicks(ticks, start, stop) {
   // Otherwise, assume interval is already a time interval and use it.
   if (typeof ticks === 'number') {
     const target = Math.abs(stop - start) / ticks;
-    let i = bisector((d: TickInterval) => d.duration).right(tickIntervals, target);
+    const i = bisector((d: TickInterval) => d.duration).right(tickIntervals, target);
     if (i === tickIntervals.length) {
       step = tickStep(start / durationYear, stop / durationYear, ticks);
       interval = 'year';

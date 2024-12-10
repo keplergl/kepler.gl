@@ -445,6 +445,7 @@ class KeplerTable<F extends Field = Field> {
         return {domain: [true, false]};
 
       case ALL_FIELD_TYPES.string:
+      case ALL_FIELD_TYPES.h3:
       case ALL_FIELD_TYPES.date:
         domain = getOrdinalDomain(dataContainer, valueAccessor);
         return {domain};

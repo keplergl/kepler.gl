@@ -126,6 +126,7 @@ export type LayerColorLegendProps = {
   layer: Layer;
   disableEdit?: boolean;
   isExport?: boolean;
+  mapState?: MapState;
   actionIcons: MapLegendIcons;
 };
 
@@ -147,11 +148,14 @@ export function LayerColorLegendFactory(
     disableEdit,
     onLayerVisConfigChange,
     isExport,
+    mapState,
     actionIcons
   }) => {
     const enableColorBy = description.measure;
-    const {scale, field, domain, range, property} = colorChannel;
+    const {scale, field, domain, range, property, fixed} = colorChannel;
     const [colorScale, colorField, colorDomain] = [scale, field, domain].map(k => config[k]);
+    const isFixed = fixed && config.visConfig[fixed];
+
     const colorRange = config.visConfig[range];
     const onUpdateColorLegend = useCallback(
       colorLegends => {
@@ -196,6 +200,8 @@ export function LayerColorLegendFactory(
                   range={colorRange}
                   onUpdateColorLegend={onUpdateColorLegend}
                   disableEdit={disableEdit}
+                  isFixed={isFixed}
+                  mapState={mapState}
                 />
               ) : (
                 <SingleColorLegend
@@ -350,6 +356,7 @@ export function LayerLegendContentFactory(
             layer={layer}
             isExport={isExport}
             disableEdit={disableEdit}
+            mapState={mapState}
             onLayerVisConfigChange={onLayerVisConfigChange}
             actionIcons={actionIcons}
           />
