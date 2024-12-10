@@ -134,7 +134,10 @@ export {
   getVisualChannelScaleByZoom,
   initializeLayerColorMap,
   isNumericColorBreaks,
-  isDomainStops
+  isDomainStops,
+  isDomainQuantile,
+  getDomainStepsbyZoom,
+  getThresholdsFromQuantiles
 } from './data-scale-utils';
 export type {ColorBreak, ColorBreakOrdinal, DomainQuantiles, DomainStops} from './data-scale-utils';
 

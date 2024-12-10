@@ -69,8 +69,8 @@ import {
   ValueOf
 } from '@kepler.gl/types';
 import {getScaleFunction, initializeLayerColorMap} from '@kepler.gl/utils';
-import {bisectLeft} from 'd3-array';
 import memoize from 'lodash.memoize';
+import {isDomainQuantile, getDomainStepsbyZoom, getThresholdsFromQuantiles} from '@kepler.gl/utils';
 
 export type VisualChannelDomain = number[] | string[];
 export type VisualChannelField = Field | null;
@@ -198,6 +198,7 @@ const dataFilterExtension = new DataFilterExtension({
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const defaultDataAccessor = dc => d => d;
+const identity = d => d;
 // Can't use fiedValueAccesor because need the raw data to render tooltip
 // SHAN: Revisit here
 export const defaultGetFieldValue = (field, d) => field.valueAccessor(d);
@@ -1184,7 +1185,20 @@ class Layer {
     range: any,
     fixed?: boolean
   ): GetVisChannelScaleReturnType {
-    if (isDomainStops(domain)) {
+    // if quantile is provided per zoom
+    if (isDomainQuantile(domain) && scale === SCALE_TYPES.quantile) {
+      const zSteps = domain.z;
+
+      const getScale = function getScaleByZoom(z) {
+        const scaleDomain = getDomainStepsbyZoom(domain.quantiles, zSteps, z);
+        const thresholds = getThresholdsFromQuantiles(scaleDomain, range.length);
+
+        return getScaleFunction('threshold', range, thresholds, false);
+      };
+
+      getScale.byZoom = true;
+      return getScale;
+    } else if (isDomainStops(domain)) {
       // color is based on zoom
       const zSteps = domain.z;
       // get scale function by z
@@ -1195,18 +1209,11 @@ class Layer {
       // }
 
       const getScale = function getScaleByZoom(z) {
-        let scaleDomain;
-        const i = bisectLeft(zSteps, z);
-        if (i === 0) {
-          scaleDomain = domain.stops[0];
-        } else {
-          scaleDomain = domain.stops[i - 1];
-        }
+        const scaleDomain = getDomainStepsbyZoom(domain.stops, zSteps, z);
 
-        return SCALE_FUNC[fixed ? 'linear' : scale]()
-          .domain(scaleDomain)
-          .range(fixed ? scaleDomain : range);
+        return getScaleFunction(scale, range, scaleDomain, fixed);
       };
+
       getScale.byZoom = true;
       return getScale;
     }
@@ -1218,13 +1225,10 @@ class Layer {
 
   /**
    * Get longitude and latitude bounds of the data.
-   * @param {import('utils/table-utils/data-container-interface').DataContainerInterface} dataContainer DataContainer to calculate bounds for.
-   * @param {(d: {index: number}, dc: import('utils/table-utils/data-container-interface').DataContainerInterface) => number[]} getPosition Access kepler.gl layer data from deck.gl layer
-   * @return {number[]|null} bounds of the data.
    */
   getPointsBounds(
     dataContainer: DataContainerInterface,
-    getPosition?: (x: any, dc: DataContainerInterface) => number[]
+    getPosition: (x: any, dc: DataContainerInterface) => number[] = identity
   ): number[] | null {
     // no need to loop through the entire dataset
     // get a sample of data to calculate bounds
