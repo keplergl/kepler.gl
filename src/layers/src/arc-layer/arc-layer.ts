@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import * as arrow from 'apache-arrow';
+import {h3ToGeo} from 'h3-js';
 
 import Layer, {
   LayerBaseConfig,
@@ -14,7 +15,6 @@ import {BrushingExtension} from '@deck.gl/extensions';
 import {GeoArrowArcLayer} from '@kepler.gl/deckgl-arrow-layers';
 import {FilterArrowExtension} from '@kepler.gl/deckgl-layers';
 import {ArcLayer as DeckArcLayer} from '@deck.gl/layers';
-import {h3ToGeo} from 'h3-js';
 
 import {hexToRgb, DataContainerInterface, ArrowDataContainer} from '@kepler.gl/utils';
 import ArcLayerIcon from './arc-layer-icon';

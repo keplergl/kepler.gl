@@ -1033,7 +1033,17 @@ export function setFilterUpdater<S extends VisState>(
   for (let i = 0; i < props.length; i++) {
     const prop = props[i];
     const value = values[i];
-    const res = _updateFilterProp(newState, newFilter, prop, value, valueIndex);
+    // We currently do not support passing in name as an array into _updateFilterProp, so we call it multiple times with each name
+    // See the comment in there as to what should be addressed
+    let res;
+    if (prop === 'name' && Array.isArray(value)) {
+      // eslint-disable-next-line no-loop-func
+      res = value.reduce((accu, v) => {
+        return _updateFilterProp(accu, newFilter, prop, v, valueIndex);
+      }, newState);
+    } else {
+      res = _updateFilterProp(newState, newFilter, prop, value, valueIndex);
+    }
     newFilter = res.filter;
     newState = res.state;
     datasetIdsToFilter = datasetIdsToFilter.concat(res.datasetIdsToFilter);
@@ -3233,7 +3243,7 @@ export function layerFilteredItemsChangeUpdater<S extends VisState>(
 export function syncTimeFilterWithLayerTimelineUpdater<S extends VisState>(
   state: S,
   action: VisStateActions.SyncTimeFilterWithLayerTimelineAction
-) {
+): S {
   const {idx: filterIdx, enable = false} = action;
 
   const filter = state.filters[filterIdx] as TimeRangeFilter;
