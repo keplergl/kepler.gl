@@ -966,8 +966,7 @@ export function setFilterAnimationTimeUpdater(
   state: VisState,
   action: VisStateActions.SetFilterAnimationTimeUpdaterAction
 ): VisState {
-  const newState = setFilterUpdater(state, action);
-  return adjustAnimationConfigWithFilter(newState, action.idx);
+  return setFilterUpdater(state, action);
 }
 
 /**
@@ -1077,6 +1076,11 @@ export function setFilterUpdater<S extends VisState>(
   // dataId is an array
   // pass only the dataset we need to update
   newState = updateAllLayerDomainData(newState, datasetIdsToFilter, newFilter);
+
+  // If time range filter value was updated, adjust animation config
+  if (newFilter.type === FILTER_TYPES.timeRange && props.includes('value')) {
+    newState = adjustAnimationConfigWithFilter(newState, action.idx);
+  }
 
   return newState;
 }
