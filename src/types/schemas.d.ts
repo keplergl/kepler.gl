@@ -60,11 +60,11 @@ export type SavedLayer = {
     columns: {
       [key: string]: string;
     };
+    columnMode: string;
     isVisible: boolean;
     visConfig: Record<string, any>;
     hidden: boolean;
     textLabel: Merge<LayerTextLabel, {field: {name: string; type: string} | null}>;
-    columnMode: string;
   };
   visualChannels: SavedVisualChannels;
 };

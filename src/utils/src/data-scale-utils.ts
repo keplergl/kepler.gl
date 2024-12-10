@@ -206,7 +206,7 @@ function getScaleLabels(
   });
 }
 
-const customScaleLabelFormat = d => String(d);
+const customScaleLabelFormat = n => (n ? formatNumber(n, 'real') : 'no value');
 /**
  * Get linear / quant scale color breaks
  */
