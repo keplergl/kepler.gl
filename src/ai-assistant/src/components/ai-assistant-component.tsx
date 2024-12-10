@@ -7,9 +7,10 @@ import {
   AiAssistant,
   MessageModel,
   useAssistant,
-  histogramFunctionDefinition
+  histogramFunctionDefinition,
+  dataClassifyFunctionDefinition
 } from 'react-ai-assist';
-import 'react-ai-assist/dist/index.css';
+import 'react-ai-assist/../dist/index.css';
 
 import {textColorLT} from '@kepler.gl/styles';
 import {ActionHandler} from '@kepler.gl/actions';
@@ -101,6 +102,10 @@ function AiAssistantComponentFactory() {
             selectedRowIndices,
             keplerGlActions.layerSetIsValid
           )
+      }),
+      dataClassifyFunctionDefinition({
+        getValues: (datasetName: string, variableName: string): number[] =>
+          getValuesFromDataset(visState.datasets, datasetName, variableName)
       })
     ];
 
