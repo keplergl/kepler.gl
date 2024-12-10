@@ -122,12 +122,11 @@ test('interactionUtil -> getTooltipDisplayDeltaValue', t => {
   const TEST_CASES = [
     {
       input: {
-        primaryData: dataset.dataContainer.row(0),
+        primaryValue: dataset.dataContainer.row(0).valueAt(testFieldIdx),
         // field.displayFormat has been used to replace tooltipConfig.format
         field: {...dataset.fields[testFieldIdx], displayFormat: item.format},
         compareType: COMPARE_TYPES.ABSOLUTE,
-        data: dataset.dataContainer.row(1),
-        fieldIdx: testFieldIdx,
+        value: dataset.dataContainer.row(1).valueAt(testFieldIdx),
         item
       },
       output: `${TOOLTIP_MINUS_SIGN}7.000`,
@@ -135,11 +134,10 @@ test('interactionUtil -> getTooltipDisplayDeltaValue', t => {
     },
     {
       input: {
-        primaryData: dataset.dataContainer.row(0),
+        primaryValue: dataset.dataContainer.row(0).valueAt(testFieldIdx),
         field: {...dataset.fields[testFieldIdx], displayFormat: item.format},
         compareType: COMPARE_TYPES.RELATIVE,
-        data: dataset.dataContainer.row(1),
-        fieldIdx: testFieldIdx,
+        value: dataset.dataContainer.row(1).valueAt(testFieldIdx),
         item
       },
       output: `${TOOLTIP_MINUS_SIGN}63.64%`,
@@ -147,11 +145,10 @@ test('interactionUtil -> getTooltipDisplayDeltaValue', t => {
     },
     {
       input: {
-        primaryData: dataset.dataContainer.row(3),
+        primaryValue: dataset.dataContainer.row(3).valueAt(testFieldIdx),
         field: {...dataset.fields[testFieldIdx], displayFormat: item.format},
         compareType: COMPARE_TYPES.ABSOLUTE,
-        data: dataset.dataContainer.row(1),
-        fieldIdx: testFieldIdx,
+        value: dataset.dataContainer.row(1).valueAt(testFieldIdx),
         item
       },
       output: TOOLTIP_MINUS_SIGN,
@@ -159,11 +156,10 @@ test('interactionUtil -> getTooltipDisplayDeltaValue', t => {
     },
     {
       input: {
-        primaryData: dataset.dataContainer.row(0),
+        primaryValue: dataset.dataContainer.row(0).valueAt(testFieldIdx),
         field: {...dataset.fields[testFieldIdx], displayFormat: item.format},
         compareType: COMPARE_TYPES.ABSOLUTE,
-        data: dataset.dataContainer.row(3),
-        fieldIdx: testFieldIdx,
+        value: dataset.dataContainer.row(3).valueAt(testFieldIdx),
         item
       },
       output: TOOLTIP_MINUS_SIGN,
@@ -171,11 +167,10 @@ test('interactionUtil -> getTooltipDisplayDeltaValue', t => {
     },
     {
       input: {
-        primaryData: dataset.dataContainer.row(4),
+        primaryValue: dataset.dataContainer.row(4).valueAt(testFieldIdx),
         field: {...dataset.fields[testFieldIdx], displayFormat: item.format},
         compareType: COMPARE_TYPES.ABSOLUTE,
-        data: dataset.dataContainer.row(3),
-        fieldIdx: testFieldIdx,
+        value: dataset.dataContainer.row(3).valueAt(testFieldIdx),
         item
       },
       output: TOOLTIP_MINUS_SIGN,

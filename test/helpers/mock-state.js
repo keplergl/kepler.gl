@@ -1275,6 +1275,7 @@ export const mockKeplerProps = mockKeplerPropsWithState({state: StateWLayerStyle
 // hover over data index 15
 // tested in map-container-test
 export const expectedLayerHoverProp = {
+  currentTime: null,
   data: mockKeplerProps.visState.datasets[testCsvDataId].dataContainer.row(15),
   fields: mockKeplerProps.visState.datasets[testCsvDataId].fields,
   fieldsToShow:
