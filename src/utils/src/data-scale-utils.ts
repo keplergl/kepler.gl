@@ -126,20 +126,20 @@ export function getThresholdsFromQuantiles(
 
 /**
  * get the domain at zoom
- * @type {typeof import('./data-scale-utils').getDomainStepsbyZoom}
  */
 export function getDomainStepsbyZoom(domain: any[], steps: number[], z: number): any {
   const i = bisectLeft(steps, z);
 
-  if (i === 0) {
-    return domain[0];
+  if (steps[i] === z) {
+    // If z is an integer value exactly matching a step, return the corresponding domain
+    return domain[i];
   }
-  return domain[i - 1];
+  // Otherwise, return the next coarsest domain
+  return domain[Math.max(i - 1, 0)];
 }
 
 /**
  * Get d3 scale function
- * @type {typeof import('./data-scale-utils').getScaleFunction}
  */
 export function getScaleFunction(
   scale: string,

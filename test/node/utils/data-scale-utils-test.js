@@ -8,7 +8,9 @@ import {
   getQuantileDomain,
   getLinearDomain,
   getLogDomain,
-  createDataContainer
+  createDataContainer,
+  getThresholdsFromQuantiles,
+  getDomainStepsbyZoom
 } from '@kepler.gl/utils';
 
 function numberSort(a, b) {
@@ -108,6 +110,55 @@ test('DataScaleUtils -> getLogDomain', t => {
     [0.00001, 1],
     'should have undefined domain for empty set'
   );
+
+  t.end();
+});
+
+test('DataScaleUtils -> getThresholdsFromQuantiles', t => {
+  t.deepEqual(
+    getThresholdsFromQuantiles([0, 1, 2, 3, 4, 5], 3),
+    [1.6666666666666665, 3.333333333333333],
+    'should get correct thresholds from quantiles'
+  );
+
+  t.deepEqual(
+    getThresholdsFromQuantiles([0, 1, 2, 3, 4, 5], 1),
+    [],
+    'should get correct thresholds from quantiles'
+  );
+
+  t.deepEqual(
+    getThresholdsFromQuantiles([0, 1, 2, 3, 4, 5], undefined),
+    [0, 5],
+    'should get correct thresholds from quantiles'
+  );
+  t.end();
+});
+
+test('DataScaleUtils -> getDomainStepsbyZoom', t => {
+  const domain = [
+    [0, 1],
+    [0, 2],
+    [0, 3]
+  ];
+  const steps = [0, 2, 4];
+  [
+    {z: 0, expected: [0, 1]},
+    {z: 0.5, expected: [0, 1]},
+    {z: 1, expected: [0, 1]},
+    {z: 1.2, expected: [0, 1]},
+    {z: 2, expected: [0, 2]},
+    {z: 3.5, expected: [0, 2]},
+    {z: 4, expected: [0, 3]},
+    {z: 4.5, expected: [0, 3]},
+    {z: 10, expected: [0, 3]}
+  ].forEach(({z, expected}) => {
+    t.deepEqual(
+      getDomainStepsbyZoom(domain, steps, z),
+      expected,
+      `should get correct domain from zoom ${z}`
+    );
+  });
 
   t.end();
 });
