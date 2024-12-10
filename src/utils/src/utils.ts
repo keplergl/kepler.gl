@@ -218,7 +218,7 @@ export function filterObjectByPredicate(obj, predicate) {
   );
 }
 
-export function isFunction(func: any): boolean {
+export function isFunction(func: unknown): boolean {
   return typeof func === 'function';
 }
 
