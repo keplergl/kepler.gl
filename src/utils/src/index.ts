@@ -140,9 +140,6 @@ export type {ColorBreak, ColorBreakOrdinal, DomainQuantiles, DomainStops} from '
 
 export {DataRow} from './data-row';
 
-export {getCentroid, getHexFields, h3IsValid, idToPolygonGeo} from './h3-utils';
-export type {Centroid} from './h3-utils';
-
 // Application config
 export {getApplicationConfig, initApplicationConfig} from './application-config';
 export type {KeplerApplicationConfig, MapLibInstance} from './application-config';
