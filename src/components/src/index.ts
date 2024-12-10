@@ -370,6 +370,7 @@ export type {
   LayerTypeListItemType
 } from './side-panel/layer-panel/layer-type-list-item';
 export type {SingleColorPaletteProps} from './side-panel/layer-panel/single-color-palette';
+export type {SupportedColumnModeConfig} from './side-panel/layer-panel/layer-column-mode-config';
 export type {MapManagerProps} from './side-panel/map-manager';
 export type {LayerGroupColorPickerProps} from './side-panel/map-style-panel/map-layer-group-color-picker';
 export type {LayerGroupSelectorProps} from './side-panel/map-style-panel/map-layer-selector';

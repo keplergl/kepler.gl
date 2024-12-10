@@ -230,9 +230,10 @@ export function findById(id: string): <X extends {id: string}>(arr: X[]) => X | 
  * Returns array difference from
  */
 export function arrayDifference<X extends {id: string}>(source: X[]): (compare: X[]) => X[] {
+  const initial: X[] = [];
   return compare =>
     source.reduce((acc, element) => {
       const foundElement = findById(element.id)(compare);
       return foundElement ? [...acc, foundElement] : acc;
-    }, [] as X[]);
+    }, initial);
 }

@@ -2,8 +2,6 @@
 // Copyright contributors to the kepler.gl project
 
 import keyMirror from 'keymirror';
-import {AGGREGATION_TYPES, PLOT_TYPES} from './';
-
 import {
   utcDay,
   utcHour,
@@ -15,7 +13,9 @@ import {
   utcYear
 } from 'd3-time';
 
-type ValueOf<T> = T[keyof T];
+import {ValueOf} from '@kepler.gl/types';
+
+import {AGGREGATION_TYPES, PLOT_TYPES} from './';
 
 export interface IntervalOption {
   label: string;

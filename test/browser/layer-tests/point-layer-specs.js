@@ -4,6 +4,20 @@
 import test from 'tape';
 import moment from 'moment';
 import {getDistanceScales} from 'viewport-mercator-project';
+import {scaleQuantize} from 'd3-scale';
+import cloneDeep from 'lodash.clonedeep';
+
+import {DEFAULT_TEXT_LABEL, PROJECTED_PIXEL_SIZE_MULTIPLIER} from '@kepler.gl/constants';
+import {KeplerGlLayers} from '@kepler.gl/layers';
+import {processGeojson} from '@kepler.gl/processors';
+import {INITIAL_MAP_STATE} from '@kepler.gl/reducers';
+import {copyTableAndUpdate} from '@kepler.gl/table';
+import {hexToRgb} from '@kepler.gl/utils';
+
+import {geoJsonWithStyle, geojsonData} from 'test/fixtures/geojson';
+import testArcData, {pointFromNeighbor} from 'test/fixtures/test-arc-data';
+import {StateWArcNeighbors} from 'test/helpers/mock-state';
+import {createNewDataEntryMock} from 'test/helpers/table-utils';
 import {
   testCreateCases,
   testFormatLayerDataCases,
@@ -15,16 +29,6 @@ import {
   pointLayerMeta,
   fieldDomain
 } from 'test/helpers/layer-utils';
-import {processGeojson} from '@kepler.gl/processors';
-import {geoJsonWithStyle, geojsonData} from 'test/fixtures/geojson';
-import testArcData, {pointFromNeighbor} from 'test/fixtures/test-arc-data';
-import {StateWArcNeighbors} from 'test/helpers/mock-state';
-import {createNewDataEntryMock} from 'test/helpers/table-utils';
-import {copyTableAndUpdate} from '@kepler.gl/table';
-import {KeplerGlLayers} from '@kepler.gl/layers';
-import {INITIAL_MAP_STATE} from '@kepler.gl/reducers';
-import {DEFAULT_TEXT_LABEL, PROJECTED_PIXEL_SIZE_MULTIPLIER} from '@kepler.gl/constants';
-import cloneDeep from 'lodash.clonedeep';
 
 const {PointLayer} = KeplerGlLayers;
 
@@ -63,7 +67,6 @@ test('#PointLayer -> constructor', t => {
 test('#PointLayer -> formatLayerData', t => {
   const filteredIndex = [0, 2, 4];
   const filterDomain0 = 1474071056000;
-
   const TEST_CASES = [
     {
       name: 'Point gps point.1',
@@ -464,6 +467,86 @@ test('#PointLayer -> formatLayerData', t => {
             'should format correct point layerData data with neighbors'
           );
         }
+      }
+    },
+    {
+      name: 'Test gps point.2 Data colorFields, domainStops',
+      layer: {
+        type: 'point',
+        id: 'test_layer_2',
+        config: {
+          dataId,
+          label: 'some point file',
+          columns: {
+            lat: 'lat',
+            lng: 'lng'
+          },
+          visConfig: {
+            outline: true,
+            fixedRadius: true,
+            colorRange: {
+              colors: ['#010101', '#020202', '#030303', '#040404', '#050505', '#060606', '#070707']
+            },
+            strokeColor: [4, 5, 6]
+          },
+          // color by id(integer)
+          colorField: {
+            type: 'integer',
+            name: 'id'
+          },
+          colorScale: 'quantize'
+        }
+      },
+      datasets: {
+        [dataId]: copyTableAndUpdate(preparedDataset, {filteredIndex})
+      },
+      assert: result => {
+        const {layer} = result;
+        layer.config.colorDomain = {
+          z: [2, 3, 4, 5],
+          stops: [
+            [0, 20],
+            [0, 30],
+            [0, 40],
+            [0, 50]
+          ]
+        };
+
+        const layerData = layer.formatLayerData({
+          [dataId]: copyTableAndUpdate(preparedDataset, {filteredIndex})
+        });
+
+        // get scale function
+        const getFillColor0 = layerData.getFillColor(1);
+        const getFillColor = layerData.getFillColor(1);
+        t.equal(layerData.getFillColorByZoom, true, 'should set getFillColorByZoom to truthy');
+        t.equal(getFillColor0, getFillColor, 'function should be memoized');
+
+        const expectedScale = scaleQuantize()
+          .domain([0, 20])
+          .range(layer.config.visConfig.colorRange.colors);
+
+        const expectedColors = [
+          hexToRgb(expectedScale(preparedDataset.dataContainer.row(0).valueAt(7))),
+          [0, 0, 0, 0],
+          hexToRgb(expectedScale(preparedDataset.dataContainer.row(2).valueAt(7))),
+          hexToRgb(expectedScale(preparedDataset.dataContainer.row(3).valueAt(7))),
+          hexToRgb(expectedScale(preparedDataset.dataContainer.row(4).valueAt(7))),
+          hexToRgb(expectedScale(preparedDataset.dataContainer.row(5).valueAt(7)))
+        ];
+        for (let i = 0; i < 6; i++) {
+          t.deepEqual(
+            getFillColor({
+              data: preparedDataset.dataContainer.row(i),
+              index: i
+            }),
+            expectedColors[i],
+            `Should get corrent value from zoom scale for ${preparedDataset.dataContainer
+              .row(i)
+              .valueAt(7)}`
+          );
+        }
+        // should use domain [0, 20]
       }
     }
   ];

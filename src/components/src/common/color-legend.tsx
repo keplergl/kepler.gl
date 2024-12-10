@@ -16,7 +16,7 @@ import {Reset} from './icons';
 import {InlineInput} from './styled-components';
 
 const ROW_H = 15;
-const GAP = 4;
+const GAP = 2;
 const RECT_W = 20;
 
 const stopClickPropagation = e => e.stopPropagation();
@@ -26,9 +26,9 @@ const inputCss = css`
     pointer-events: none;
   }
 `;
-const StyledLegend = styled.div<{disableEdit: boolean}>`
+const StyledLegend = styled.div<{disableEdit: boolean; isExpanded?: boolean}>`
   ${props => props.theme.sidePanelScrollBar};
-  max-height: 180px;
+  ${props => (props.isExpanded ? '' : `max-height: 180px;`)};
   overflow: auto;
   margin-bottom: ${GAP}px;
   display: grid;
@@ -224,15 +224,15 @@ function overrideByCustomLegend({colorLegends, currentLegends}: OverrideByCustom
 }
 
 export function useLayerColorLegends(
-  layer,
-  scaleType,
-  domain,
-  range,
-  isFixed,
-  fieldType,
-  labelFormat,
-  mapState
-) {
+  layer: ColorLegendProps['layer'],
+  scaleType: ColorLegendProps['scaleType'],
+  domain: ColorLegendProps['domain'],
+  range: ColorLegendProps['range'],
+  isFixed: ColorLegendProps['isFixed'],
+  fieldType: ColorLegendProps['fieldType'],
+  labelFormat: ColorLegendProps['labelFormat'],
+  mapState: ColorLegendProps['mapState']
+): Legend[] {
   const scale = useMemo(
     () => getLayerColorScale({range, domain, scaleType, isFixed, layer}),
     [range, domain, scaleType, isFixed, layer]
@@ -260,7 +260,7 @@ export function useLayerColorLegends(
   return LegendsWithCustomLegends;
 }
 
-type ColorLegendProps = {
+export type ColorLegendProps = {
   layer: Layer;
   scaleType: string;
   domain: number[] | string[];
@@ -271,7 +271,14 @@ type ColorLegendProps = {
   disableEdit?: boolean;
   mapState?: MapState;
   isFixed?: boolean;
+  isExpanded?: boolean;
   onUpdateColorLegend?: (colorLegends: {[key: HexColor]: string}) => void;
+};
+
+export type Legend = {
+  data: string;
+  label: string;
+  override?: boolean;
 };
 
 ColorLegendFactory.deps = [LegendRowFactory];
@@ -279,6 +286,7 @@ function ColorLegendFactory(LegendRow: ReturnType<typeof LegendRowFactory>) {
   const ColorLegend: React.FC<ColorLegendProps> = ({
     layer,
     isFixed,
+    isExpanded,
     domain,
     range,
     labelFormat,
@@ -328,7 +336,7 @@ function ColorLegendFactory(LegendRow: ReturnType<typeof LegendRowFactory>) {
     );
 
     return (
-      <StyledLegend disableEdit={disableEdit}>
+      <StyledLegend disableEdit={disableEdit} isExpanded={isExpanded}>
         {legends.map((legend, i) => (
           <LegendRow
             key={`${legend.data}-${i}`}

@@ -162,6 +162,7 @@ function MapLegendPanelFactory(MapControlTooltip, MapControlPanel, MapLegend) {
           layers={layers}
           mapState={mapState}
           disableEdit={disableEdit}
+          isExport={isExport}
           onLayerVisConfigChange={onLayerVisConfigChange}
         />
       </MapControlPanel>

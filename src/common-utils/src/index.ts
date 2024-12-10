@@ -4,3 +4,6 @@
 export * from './data';
 export * from './data-type';
 export * from './string';
+
+export {getCentroid, getHexFields, h3IsValid, idToPolygonGeo} from './h3-utils';
+export type {Centroid} from './h3-utils';
