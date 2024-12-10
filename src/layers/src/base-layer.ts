@@ -1651,6 +1651,10 @@ class Layer {
     // implemented in subclasses
     return () => null;
   }
+
+  getLegendVisualChannels(): {[key: string]: VisualChannel} {
+    return this.visualChannels;
+  }
 }
 
 export default Layer;
