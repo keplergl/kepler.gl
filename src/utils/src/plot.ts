@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {bisectLeft, bisector, extent, histogram as d3Histogram, ticks} from 'd3-array';
+import {bisectLeft, extent, histogram as d3Histogram, ticks} from 'd3-array';
 import isEqual from 'lodash.isequal';
 import {getFilterMappedValue, getInitialInterval, intervalToFunction} from './time';
 import moment from 'moment';
@@ -446,28 +446,6 @@ export function splitSeries(series) {
   return {lines, markers};
 }
 
-export function filterSeriesByRange(series, range) {
-  if (!series) {
-    return [];
-  }
-  const [start, end] = range;
-  const inRange: any[] = [];
-
-  for (const serie of series) {
-    if (!serie.length) {
-      // eslint-disable-next-line no-console, no-undef
-      console.warn('Serie shouldnt be empty', series);
-    }
-
-    const i0 = bisector((s: {x: any}) => s.x).left(serie, start);
-    const i1 = bisector((s: {x: any}) => s.x).right(serie, end);
-    const sliced = serie.slice(i0, i1);
-    if (sliced.length) inRange.push(sliced);
-  }
-
-  return inRange;
-}
-
 export function adjustValueToAnimationWindow(state: VisState, filter: TimeRangeFilter) {
   const {
     plotType,
@@ -637,7 +615,10 @@ export function updateRangeFilterPlotType(
   };
 }
 
-export function getChartTitle(yAxis, plotType: {aggregation: string}) {
+export function getChartTitle(
+  yAxis: {displayName?: string},
+  plotType: {aggregation: string}
+): string {
   const yAxisName = yAxis?.displayName;
   const {aggregation} = plotType;
 
