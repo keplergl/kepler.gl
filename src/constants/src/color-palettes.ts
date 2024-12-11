@@ -398,17 +398,14 @@ export function buildCategoricalPalette({
 }
 
 function _colorToUppercase(c) {
-  return d3Color(c)
-    .formatHex()
-    .toUpperCase();
+  return d3Color(c).formatHex().toUpperCase();
 }
 /**
  * All sequantial palette is based on palette in d3-scale-chromatic
  * https://github.com/d3/d3-scale-chromatic/blob/main/src/index.js
- * @type {typeof import('./color-palettes').buildSequentialPalette}
  */
 function buildSequentialPalette({name, type, category}) {
-  if (!COLOR_BLIND_SAFE_MAP.hasOwnProperty(name)) {
+  if (!Object.prototype.hasOwnProperty.call(COLOR_BLIND_SAFE_MAP, name)) {
     Console.warn(`${name} does not exists in COLOR_BLIND_SAFE_MAP`);
   }
   const interpolator = d3ScaleChromatic[`interpolate${name}`];

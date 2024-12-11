@@ -14,7 +14,6 @@ import {
   AddColorStop,
   ArcLayerColorSelectorFactory,
   ColorBlock,
-  ColorPaletteItem,
   ColorRangeSelectorFactory,
   ColorSelectorFactory,
   ColorSelectorInput,

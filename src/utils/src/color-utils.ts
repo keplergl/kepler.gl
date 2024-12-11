@@ -131,9 +131,7 @@ export function colorMaybeToHex(color: unknown): HexColor {
  */
 
 export function interpolateHex(hex1: HexColor, hex2: HexColor): HexColor {
-  return d3Rgb(interpolate(hex1, hex2)(0.5))
-    .hex()
-    .toUpperCase();
+  return d3Rgb(interpolate(hex1, hex2)(0.5)).hex().toUpperCase();
 }
 
 export function addNewQuantativeColorBreakAtIndex(colorMap, index, newColors) {
@@ -390,8 +388,8 @@ export function updateColorRangeBySelectedPalette(
   return replaceColorsInColorRange(colorRange, colorRange.colors);
 }
 
-const UberNameRegex = new RegExp(/^([A-Za-z\ ])+/g);
-const ColorBrewerRegex = new RegExp(/^ColorBrewer\ ([A-Za-z1-9])+/g);
+const UberNameRegex = new RegExp(/^([A-Za-z ])+/g);
+const ColorBrewerRegex = new RegExp(/^ColorBrewer ([A-Za-z1-9])+/g);
 
 /**
  * convert saved colorRange to colorPalette objevt type/name/category/isColorBlind
