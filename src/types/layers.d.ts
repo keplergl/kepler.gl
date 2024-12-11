@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import {ColorRange} from '@kepler.gl/constants';
+
 export type LayerBaseConfig = {
   dataId: string | null;
   label: string;
@@ -145,6 +147,15 @@ export type LayerTextLabel = {
   backgroundColor: RGBAColor;
 };
 
+export type ColorRangeConfig = {
+  type: string;
+  steps: number;
+  reversed: boolean;
+  custom: boolean;
+  customBreaks: boolean;
+  colorBlindSafe: boolean;
+};
+
 export type ColorUI = {
   // customPalette in edit
   customPalette: ColorRange;
@@ -155,13 +166,7 @@ export type ColorUI = {
   // show color scale chart
   showColorChart: boolean;
   // color range selector config
-  colorRangeConfig: {
-    type: string;
-    steps: number;
-    reversed: boolean;
-    custom: boolean;
-    customBreaks: boolean;
-  };
+  colorRangeConfig: ColorRangeConfig;
 };
 
 export type VisConfig = {

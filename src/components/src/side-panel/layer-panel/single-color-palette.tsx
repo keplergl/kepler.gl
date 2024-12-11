@@ -59,9 +59,6 @@ const ColorPickerTop = ({setMode, mode}) => (
   </StyledColorPickerTop>
 );
 
-// eslint-disable-next-line @typescript-eslint/no-empty-function
-const nop = () => {};
-
 const SingleColorPalette: React.FC<SingleColorPaletteProps> = ({
   selectedColor,
   onSelectColor
@@ -85,9 +82,7 @@ const SingleColorPalette: React.FC<SingleColorPaletteProps> = ({
           selectedColor={selectedColor}
         />
       ) : null}
-      {mode === MODE.picker ? (
-        <CustomPicker color={selectedColor} onChange={onSetColor} onSwatchClose={nop} />
-      ) : null}
+      {mode === MODE.picker ? <CustomPicker color={selectedColor} onChange={onSetColor} /> : null}
     </div>
   );
 };

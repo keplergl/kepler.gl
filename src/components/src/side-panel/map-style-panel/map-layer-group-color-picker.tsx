@@ -80,11 +80,7 @@ function LayerGroupColorPickerFactory() {
           top={-50}
           onClose={onClosePicker}
         >
-          <CustomPicker
-            color={rgbToHex(color)}
-            onChange={onCustomPickerChange}
-            onSwatchClose={onClosePicker}
-          />
+          <CustomPicker color={rgbToHex(color)} onChange={onCustomPickerChange} />
         </Portaled>
       </LayerGroupColorPickerWrapper>
     );

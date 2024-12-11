@@ -1,8 +1,12 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import {HexColor} from '@kepler.gl/types';
+
 /* eslint-disable quote-props */
-const COLORS = {
+const COLORS: {
+  [key: string]: HexColor;
+} = {
   grey_7: '#898989',
   brick_20: '#B77B6A',
   brick_21: '#8B574F',
@@ -494,7 +498,11 @@ const COLORS = {
 
 export default COLORS;
 
-export const ColorsByTheme = Object.keys(COLORS).reduce((accu, key) => {
+export const ColorsByTheme: {
+  [theme: string]: {
+    [idx: string]: HexColor;
+  };
+} = Object.keys(COLORS).reduce((accu, key) => {
   if (!key.includes('_')) {
     return accu;
   }
@@ -510,7 +518,7 @@ export const ColorsByTheme = Object.keys(COLORS).reduce((accu, key) => {
 }, {});
 
 // theme name in order wheel order
-export const Themes = [
+export const Themes: string[] = [
   'yellow',
   'gold',
   'amber',

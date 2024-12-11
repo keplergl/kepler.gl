@@ -569,10 +569,10 @@ ${'```'}
   },
   color: {
     customPalette: 'Custom Palette',
-    steps: 'steps',
-    type: 'type',
-    reversed: 'reversed',
-    opacity: 'Opacity',
+    steps: 'Steps',
+    type: 'Type',
+    colorBlindSafe: 'Colorblind Safe',
+    reversed: 'Reversed',
     disableStepReason: `Can't change number of steps with custom color breaks, use custom palette to edit steps`,
     preset: 'Preset Colors',
     picker: 'Color Picker'

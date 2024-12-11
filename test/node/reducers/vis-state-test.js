@@ -48,7 +48,9 @@ import {
   BINS,
   INTERVAL,
   LAYER_TYPES,
-  SYNC_TIMELINE_MODES
+  SYNC_TIMELINE_MODES,
+  KEPLER_COLOR_PALETTES,
+  colorPaletteToColorRange
 } from '@kepler.gl/constants';
 
 const {ArcLayer, PointLayer, GeojsonLayer, LineLayer, TripLayer} = KeplerGlLayers;
@@ -4215,6 +4217,7 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. show dropdown', t => {
       ...DEFAULT_COLOR_UI,
       showDropdown: 0,
       colorRangeConfig: {
+        colorBlindSafe: false,
         type: 'all',
         steps: 4,
         reversed: false,
@@ -4235,7 +4238,6 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. show dropdown', t => {
 test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. colorRangeConfig.step', t => {
   const initialState = CloneDeep(StateWFilesFiltersLayerColor.visState);
   const pointLayer = initialState.layers[0];
-
   const oldColorRange = CloneDeep(pointLayer.config.visConfig.colorRange);
 
   t.equal(oldColorRange.colors.length, 4, 'old color range should have 4 colors');
@@ -4262,6 +4264,7 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. colorRangeConfig.step', t => {
       ...DEFAULT_COLOR_UI,
       showDropdown: 0,
       colorRangeConfig: {
+        colorBlindSafe: false,
         type: 'all',
         steps: 6,
         reversed: false,
@@ -4271,12 +4274,11 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. colorRangeConfig.step', t => {
     }
   };
 
-  const expectedColorRange = {
-    name: 'Uber Viz Sequential 4',
-    type: 'sequential',
-    category: 'Uber',
-    colors: ['#E6FAFA', '#C1E5E6', '#9DD0D4', '#75BBC1', '#4BA7AF', '#00939C']
-  };
+  const expectedColorRange = colorPaletteToColorRange(
+    KEPLER_COLOR_PALETTES.find(({name}) => name === 'Uber Viz Sequential'),
+    {steps: 6, reversed: false}
+  );
+
   t.deepEqual(
     nextState.layers[0].config.colorUI,
     expectedColorUI,
@@ -4303,6 +4305,7 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. colorRangeConfig.step', t => {
       ...DEFAULT_COLOR_UI,
       showDropdown: 0,
       colorRangeConfig: {
+        colorBlindSafe: false,
         type: 'all',
         steps: 6,
         reversed: true,
@@ -4312,13 +4315,10 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. colorRangeConfig.step', t => {
     }
   };
 
-  const expectedColorRange2 = {
-    name: 'Uber Viz Sequential 4',
-    type: 'sequential',
-    category: 'Uber',
-    colors: ['#00939C', '#4BA7AF', '#75BBC1', '#9DD0D4', '#C1E5E6', '#E6FAFA'],
-    reversed: true
-  };
+  const expectedColorRange2 = colorPaletteToColorRange(
+    KEPLER_COLOR_PALETTES.find(({name}) => name === 'Uber Viz Sequential'),
+    {steps: 6, reversed: true}
+  );
 
   t.deepEqual(
     nextState2.layers[0].config.colorUI,
@@ -4346,6 +4346,7 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. colorRangeConfig.step', t => {
       ...DEFAULT_COLOR_UI,
       showDropdown: 0,
       colorRangeConfig: {
+        colorBlindSafe: false,
         type: 'all',
         steps: 8,
         reversed: true,
@@ -4355,22 +4356,10 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. colorRangeConfig.step', t => {
     }
   };
 
-  const expectedColorRange3 = {
-    name: 'Uber Viz Sequential 6',
-    type: 'sequential',
-    category: 'Uber',
-    colors: [
-      '#E6FAFA',
-      '#C1E5E6',
-      '#9DD0D4',
-      '#75BBC1',
-      '#4BA7AF',
-      '#00939C',
-      '#108188',
-      '#0E7077'
-    ].reverse(),
-    reversed: true
-  };
+  const expectedColorRange3 = colorPaletteToColorRange(
+    KEPLER_COLOR_PALETTES.find(({name}) => name === 'Uber Viz Sequential'),
+    {steps: 8, reversed: true}
+  );
 
   t.deepEqual(
     nextState3.layers[0].config.colorUI,
@@ -4387,7 +4376,7 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. colorRangeConfig.step', t => {
   const nextState4 = reducer(
     nextState,
     VisStateActions.layerColorUIChange(nextState3.layers[0], 'colorRange', {
-      colorRangeConfig: {steps: 11}
+      colorRangeConfig: {type: 'diverging'}
     })
   );
 
@@ -4398,14 +4387,20 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. colorRangeConfig.step', t => {
       ...DEFAULT_COLOR_UI,
       showDropdown: 0,
       colorRangeConfig: {
-        type: 'all',
-        steps: 11,
+        colorBlindSafe: false,
+        type: 'diverging',
+        steps: 8,
         reversed: true,
         custom: false,
         customBreaks: false
       }
     }
   };
+  const expectedColorRange8 = colorPaletteToColorRange(
+    KEPLER_COLOR_PALETTES.find(({name}) => name === 'Uber Viz Diverging'),
+    {steps: 8, reversed: true}
+  );
+
   t.deepEqual(
     nextState4.layers[0].config.colorUI,
     expectedColorUI4,
@@ -4413,8 +4408,8 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. colorRangeConfig.step', t => {
   );
   t.deepEqual(
     nextState4.layers[0].config.visConfig.colorRange,
-    expectedColorRange3,
-    'should note update visConfig.colorRange when no match'
+    expectedColorRange8,
+    'should get first valid visConfig.colorRange when no match'
   );
 
   t.end();
@@ -4454,6 +4449,7 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom Palette', t => {
       },
       showDropdown: 0,
       colorRangeConfig: {
+        colorBlindSafe: false,
         type: 'all',
         steps: 4,
         reversed: false,
@@ -4489,6 +4485,7 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom Palette', t => {
       },
       showDropdown: 0,
       colorRangeConfig: {
+        colorBlindSafe: false,
         type: 'all',
         steps: 4,
         reversed: false,
@@ -4526,6 +4523,7 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom Palette', t => {
       },
       showDropdown: 0,
       colorRangeConfig: {
+        colorBlindSafe: false,
         type: 'all',
         steps: 4,
         reversed: false,
@@ -4561,6 +4559,7 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom Palette', t => {
       },
       showDropdown: 0,
       colorRangeConfig: {
+        colorBlindSafe: false,
         type: 'all',
         steps: 4,
         reversed: false,
@@ -4614,6 +4613,7 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom Palette', t => {
       },
       showDropdown: 0,
       colorRangeConfig: {
+        colorBlindSafe: false,
         type: 'all',
         steps: 4,
         reversed: false,
@@ -4686,6 +4686,7 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom Palette', t => {
       showDropdown: 0,
       showColorChart: false,
       colorRangeConfig: {
+        colorBlindSafe: false,
         type: 'all',
         steps: 4,
         reversed: false,
@@ -4706,7 +4707,6 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom Palette', t => {
 test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom breaks', t => {
   const initialState = CloneDeep(StateWFilesFiltersLayerColor.visState);
   const pointLayer = initialState.layers[0];
-  const oldColorRange = CloneDeep(pointLayer.config.visConfig.colorRange);
 
   const nextState = reducer(
     initialState,
@@ -4721,15 +4721,19 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom breaks', t => {
     colorRange: {
       ...DEFAULT_COLOR_UI,
       customPalette: {
-        ...oldColorRange,
+        name: 'Uber Viz Sequential',
+        type: 'sequential',
+        category: 'Uber',
+        colors: ['#00939C', '#6BB5B9', '#AAD7D9', '#E6FAFA'],
         colorMap: [
-          ['driver_analytics', '#E6FAFA'],
-          ['driver_analytics_0', '#AAD7DA'],
-          ['driver_gps', '#68B4BB']
+          ['driver_analytics', '#00939C'],
+          ['driver_analytics_0', '#6BB5B9'],
+          ['driver_gps', '#AAD7D9']
         ]
       },
       colorRangeConfig: {
         type: 'all',
+        colorBlindSafe: false,
         steps: 6,
         reversed: false,
         custom: false,
@@ -4743,49 +4747,7 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom breaks', t => {
     expectedColorUI,
     'should set customBreaks: true and update colorUI.customPalette with default colorMap'
   );
-  t.end();
-});
 
-test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom breaks', t => {
-  const initialState = CloneDeep(StateWFilesFiltersLayerColor.visState);
-  const pointLayer = initialState.layers[0];
-  const oldColorRange = CloneDeep(pointLayer.config.visConfig.colorRange);
-
-  const nextState = reducer(
-    initialState,
-    VisStateActions.layerColorUIChange(pointLayer, 'colorRange', {
-      colorRangeConfig: {customBreaks: true}
-    })
-  );
-
-  const expectedColorUI = {
-    color: DEFAULT_COLOR_UI,
-    strokeColorRange: DEFAULT_COLOR_UI,
-    colorRange: {
-      ...DEFAULT_COLOR_UI,
-      customPalette: {
-        ...oldColorRange,
-        colorMap: [
-          ['driver_analytics', '#E6FAFA'],
-          ['driver_analytics_0', '#AAD7DA'],
-          ['driver_gps', '#68B4BB']
-        ]
-      },
-      colorRangeConfig: {
-        type: 'all',
-        steps: 6,
-        reversed: false,
-        custom: false,
-        customBreaks: true
-      }
-    }
-  };
-
-  t.deepEqual(
-    nextState.layers[0].config.colorUI,
-    expectedColorUI,
-    'should set customBreaks: true and update colorUI.customPalette with default colorMap'
-  );
   t.end();
 });
 

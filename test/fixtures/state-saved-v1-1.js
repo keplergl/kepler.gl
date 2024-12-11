@@ -928,7 +928,7 @@ mergedLayer0.config = {
     opacity: 0.8,
     thickness: 2,
     colorRange: {
-      name: 'ColorBrewer YlGnBu-9',
+      name: 'YlGnBu',
       type: 'sequential',
       category: 'ColorBrewer',
       colors: [
@@ -945,7 +945,7 @@ mergedLayer0.config = {
       reversed: true
     },
     strokeColorRange: {
-      name: 'ColorBrewer YlGnBu-9',
+      name: 'YlGnBu',
       type: 'sequential',
       category: 'ColorBrewer',
       colors: [

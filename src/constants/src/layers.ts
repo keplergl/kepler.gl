@@ -3,16 +3,41 @@
 
 import keyMirror from 'keymirror';
 
-import {ColorRange, DEFAULT_COLOR_RANGE} from './color-ranges';
-import {AGGREGATION_TYPES} from './default-settings';
-
+import {
+  AGGREGATION_TYPES,
+  DEFAULT_LAYER_COLOR_PALETTE,
+  DEFAULT_LAYER_COLOR_PALETTE_STEPS
+} from './default-settings';
 import {
   ColorUI,
+  HexColor,
   LayerTextConfig,
   LayerTextLabel,
   LayerVisConfigSettings,
   RGBAColor
 } from '@kepler.gl/types';
+import {ColorPalette, KEPLER_COLOR_PALETTES, colorPaletteToColorRange} from './color-palettes';
+
+export type ColorMap = [string[] | string | number | null, HexColor][];
+// Key is HexColor but as key we can use only string
+export type ColorLegends = {[key: HexColor]: string};
+
+export type ColorRange = {
+  name?: string;
+  type?: string;
+  category?: string;
+  colors: HexColor[];
+  reversed?: boolean;
+  colorMap?: ColorMap;
+  colorLegends?: ColorLegends;
+};
+
+export type MiniColorRange = {
+  name: string;
+  type: string;
+  category: string;
+  colors: HexColor[];
+};
 
 export type AggregationTypes = keyof typeof AGGREGATION_TYPES;
 
@@ -32,7 +57,6 @@ export const PROPERTY_GROUPS = keyMirror({
 export const DEFAULT_LAYER_OPACITY = 0.8;
 export const DEFAULT_HIGHLIGHT_COLOR: RGBAColor = [252, 242, 26, 255];
 export const DEFAULT_LAYER_LABEL = 'new layer';
-export {DEFAULT_COLOR_RANGE};
 
 export const DEFAULT_TEXT_LABEL: LayerTextLabel = {
   field: null,
@@ -46,6 +70,15 @@ export const DEFAULT_TEXT_LABEL: LayerTextLabel = {
   background: false,
   backgroundColor: [0, 0, 200, 255]
 };
+
+const DEFAULT_COLOR_PALETTE = KEPLER_COLOR_PALETTES.find(
+  ({name}) => name === DEFAULT_LAYER_COLOR_PALETTE
+) as ColorPalette;
+
+export const DEFAULT_COLOR_RANGE = colorPaletteToColorRange(DEFAULT_COLOR_PALETTE, {
+  reversed: false,
+  steps: DEFAULT_LAYER_COLOR_PALETTE_STEPS
+});
 
 export const DEFAULT_CUSTOM_PALETTE: ColorRange = {
   name: 'color.customPalette',
@@ -70,6 +103,7 @@ export const DEFAULT_COLOR_UI: ColorUI = {
     type: 'all',
     steps: 6,
     reversed: false,
+    colorBlindSafe: false,
     custom: false,
     customBreaks: false
   }

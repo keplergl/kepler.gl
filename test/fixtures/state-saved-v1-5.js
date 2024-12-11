@@ -7,13 +7,7 @@ import tripGeojson, {
   dataToTimeStamp
 } from 'test/fixtures/trip-geojson';
 import {KeplerGlLayers} from '@kepler.gl/layers';
-import {
-  DEFAULT_LAYER_OPACITY,
-  DEFAULT_TEXT_LABEL,
-  DEFAULT_COLOR_RANGE,
-  DEFAULT_COLOR_UI
-} from '@kepler.gl/constants';
-
+import {DEFAULT_LAYER_OPACITY, DEFAULT_TEXT_LABEL, DEFAULT_COLOR_UI} from '@kepler.gl/constants';
 const {TripLayer} = KeplerGlLayers;
 
 export const savedStateV1TripGeoJson = {
@@ -265,7 +259,12 @@ mergedLayer0.config = {
   visConfig: {
     opacity: DEFAULT_LAYER_OPACITY,
     thickness: 0.5,
-    colorRange: DEFAULT_COLOR_RANGE,
+    colorRange: {
+      name: 'Global Warming',
+      type: 'sequential',
+      category: 'Uber',
+      colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
+    },
     trailLength: 180,
     fadeTrail: true,
     billboard: false,

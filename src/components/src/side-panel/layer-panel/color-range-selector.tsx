@@ -1,22 +1,29 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import uniq from 'lodash.uniq';
 import React, {MouseEvent, useCallback, useMemo} from 'react';
 import styled from 'styled-components';
-
-import {COLOR_RANGES, ColorRange} from '@kepler.gl/constants';
+import {KEPLER_COLOR_PALETTES, PALETTE_TYPES, ColorRange, ColorPalette} from '@kepler.gl/constants';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {ColorUI, NestedPartial} from '@kepler.gl/types';
-import {hasColorMap, numberSort, reverseColorRange, updateColorRange} from '@kepler.gl/utils';
+import {
+  hasColorMap,
+  updateColorRangeBySelectedPalette,
+  paletteIsSteps,
+  paletteIsType,
+  paletteIsColorBlindSafe
+} from '@kepler.gl/utils';
 import ItemSelector from '../../common/item-selector/item-selector';
 import {PanelLabel, Tooltip} from '../../common/styled-components';
 import Switch from '../../common/switch';
-import ColorPalette from './color-palette';
+import ColorPalettePanel from './color-palette';
 import CustomPaletteFactory from './custom-palette';
 
+import {capitalizeFirstLetter} from '@kepler.gl/utils';
+import {range} from 'd3-array';
+
 type ColorRangeSelectorProps = {
-  colorRanges?: ColorRange[];
+  colorPalettes?: ColorPalette[];
   colorPaletteUI: ColorUI;
   selectedColorRange: ColorRange;
   onSelectColorRange: (p: ColorRange, e: MouseEvent) => void;
@@ -36,20 +43,10 @@ type PaletteConfigProps = {
   reason?: string;
 };
 
-type ColorPaletteGroupProps = {
-  reversed?: boolean;
-  selected: ColorRange;
-  colorRanges: ColorRange[];
-  onSelect: (p: ColorRange, e: MouseEvent) => void;
-};
-
-export const ALL_TYPES: string[] = uniq(
-  COLOR_RANGES.map(c => c.type)
-    .filter(ctype => ctype)
-    .concat(['all', 'custom']) as string[]
-);
-
-export const ALL_STEPS: number[] = uniq(COLOR_RANGES.map(d => d.colors.length)).sort(numberSort);
+// @ts-ignore cant concat 'all' to PALETTE_TYPES values
+export const ALL_TYPES = Object.values(PALETTE_TYPES).concat(['all']);
+const MAX_STEPS = 20;
+const ALL_STEPS = range(2, MAX_STEPS + 1, 1);
 
 const StyledColorConfig = styled.div`
   padding: 12px 12px 0 12px;
@@ -96,37 +93,43 @@ const CONFIG_SETTINGS = {
     type: 'switch',
     options: [true, false]
   },
+  colorBlindSafe: {
+    type: 'switch',
+    options: [true, false]
+  },
   custom: {
     label: 'customPalette',
     type: 'switch',
     options: [true, false]
   }
 };
+const displayOption = d => capitalizeFirstLetter(d);
+const getOptionValue = d => d;
 
 ColorRangeSelectorFactory.deps = [CustomPaletteFactory];
 function ColorRangeSelectorFactory(
   CustomPalette: ReturnType<typeof CustomPaletteFactory>
 ): React.FC<ColorRangeSelectorProps> {
   const ColorRangeSelector: React.FC<ColorRangeSelectorProps> = ({
-    colorRanges,
+    colorPalettes,
     colorPaletteUI,
     setColorPaletteUI,
     onSelectColorRange,
     selectedColorRange
   }) => {
     const {customPalette, showSketcher, colorRangeConfig} = colorPaletteUI;
-    const {type, steps} = colorRangeConfig;
+    const {type, steps, colorBlindSafe, reversed} = colorRangeConfig;
 
-    const filteredColorRanges = useMemo(() => {
+    const filteredColorPalettes = useMemo(() => {
       return (
-        colorRanges?.filter(colorRange => {
-          const isType = type === 'all' || type === colorRange.type;
-          const isStep = Number(steps) === colorRange.colors.length;
-
-          return isType && isStep;
-        }) ?? []
+        colorPalettes?.filter(
+          palette =>
+            paletteIsType(palette, type) &&
+            paletteIsSteps(palette, steps) &&
+            paletteIsColorBlindSafe(palette, colorBlindSafe)
+        ) ?? []
       );
-    }, [colorRanges, type, steps]);
+    }, [colorPalettes, colorBlindSafe, steps, type]);
 
     const _updateConfig = useCallback(
       ({key, value}) => {
@@ -147,12 +150,16 @@ function ColorRangeSelectorFactory(
       [customPalette, onSelectColorRange]
     );
 
-    const onSelectFromList = useCallback(
-      (colorRange, e) => {
-        const newColorRange = updateColorRange(selectedColorRange, colorRange);
+    const _onSelectPalette = useCallback(
+      (colorPalette, e) => {
+        const newColorRange = updateColorRangeBySelectedPalette(selectedColorRange, colorPalette, {
+          steps,
+          reversed
+        });
+
         onSelectColorRange(newColorRange, e);
       },
-      [selectedColorRange, onSelectColorRange]
+      [selectedColorRange, reversed, steps, onSelectColorRange]
     );
     return (
       <StyledColorRangeSelector>
@@ -179,7 +186,7 @@ function ColorRangeSelectorFactory(
         {colorRangeConfig.custom ? (
           <>
             <StyledColorPalette>
-              <ColorPalette colors={customPalette.colors} />
+              <ColorPalettePanel colors={customPalette.colors} />
             </StyledColorPalette>
             <CustomPalette
               customPalette={customPalette}
@@ -190,19 +197,25 @@ function ColorRangeSelectorFactory(
             />
           </>
         ) : (
-          <ColorPaletteGroup
-            colorRanges={filteredColorRanges}
-            onSelect={onSelectFromList}
-            selected={selectedColorRange}
-            reversed={colorRangeConfig.reversed}
-          />
+          <div className="color-palette__group">
+            {filteredColorPalettes.map((colorPalette, i) => (
+              <ColorPaletteItem
+                key={`${colorPalette.name}-${i}`}
+                colorPalette={colorPalette}
+                selectedColorRange={selectedColorRange}
+                onSelect={_onSelectPalette}
+                reversed={reversed}
+                steps={steps}
+              />
+            ))}
+          </div>
         )}
       </StyledColorRangeSelector>
     );
   };
 
   ColorRangeSelector.defaultProps = {
-    colorRanges: COLOR_RANGES,
+    colorPalettes: KEPLER_COLOR_PALETTES,
     // eslint-disable-next-line @typescript-eslint/no-empty-function
     onSelectColorRange: () => {},
     // eslint-disable-next-line @typescript-eslint/no-empty-function
@@ -248,6 +261,8 @@ export const PaletteConfig: React.FC<PaletteConfigProps> = ({
             onChange={updateSelect}
             disabled={disabled}
             inputTheme="secondary"
+            displayOption={displayOption}
+            getOptionValue={getOptionValue}
           />
         )}
         {type === 'switch' && (
@@ -280,28 +295,33 @@ const StyledColorRange = styled.div.attrs({
   }
 `;
 
-export const ColorPaletteGroup: React.FC<ColorPaletteGroupProps> = ({
-  reversed,
+type ColorPaletteItemProps = {
+  reversed?: boolean;
+  selected?: ColorRange;
+  colorPalette: ColorPalette;
+  selectedColorRange: ColorRange;
+  onSelect: (colorPalette: ColorPalette, e: MouseEvent) => void;
+  steps: number;
+};
+
+export const ColorPaletteItem: React.FC<ColorPaletteItemProps> = ({
+  colorPalette,
+  steps,
+  selectedColorRange,
   onSelect,
-  selected,
-  colorRanges
-}) => (
-  <div className="color-palette__group">
-    {colorRanges.map((colorRange, i) => (
-      <StyledColorRange
-        key={`${colorRange.name}-${i}`}
-        onClick={e =>
-          onSelect(reversed ? (reverseColorRange(true, colorRange) as ColorRange) : colorRange, e)
-        }
-      >
-        <ColorPalette
-          colors={colorRange.colors}
-          isReversed={reversed}
-          isSelected={colorRange.name === selected.name && reversed === Boolean(selected.reversed)}
-        />
-      </StyledColorRange>
-    ))}
-  </div>
-);
+  reversed
+}) => {
+  const colors = useMemo(() => colorPalette.colors(steps), [colorPalette, steps]);
+  const onClick = useCallback(e => onSelect(colorPalette, e), [colorPalette, onSelect]);
+  return (
+    <StyledColorRange onClick={onClick}>
+      <ColorPalettePanel
+        colors={colors}
+        isReversed={reversed}
+        isSelected={colorPalette.name === selectedColorRange.name}
+      />
+    </StyledColorRange>
+  );
+};
 
 export default ColorRangeSelectorFactory;

@@ -16,7 +16,6 @@ import {
   ALL_FIELD_TYPES,
   CHANNEL_SCALES,
   CHANNEL_SCALE_SUPPORTED_FIELDS,
-  COLOR_RANGES,
   ColorRange,
   DEFAULT_COLOR_UI,
   DEFAULT_CUSTOM_PALETTE,
@@ -34,17 +33,15 @@ import {
   TEXT_OUTLINE_MULTIPLIER,
   UNKNOWN_COLOR_KEY
 } from '@kepler.gl/constants';
-
 import {
   DataContainerInterface,
-  getColorGroupByName,
   getLatLngBounds,
   getSampleContainerData,
   hasColorMap,
   hexToRgb,
   isPlainObject,
-  reverseColorRange,
-  isDomainStops
+  isDomainStops,
+  updateColorRangeByMatchingPalette
 } from '@kepler.gl/utils';
 import {generateHashId, toArray, notNullorUndefined} from '@kepler.gl/common-utils';
 import {Datasets, GpuFilter, KeplerTable} from '@kepler.gl/table';
@@ -965,7 +962,7 @@ class Layer {
     // only update colorRange if changes in UI is made to 'reversed', 'steps' or steps
     const shouldUpdate =
       newConfig.colorRangeConfig &&
-      ['reversed', 'steps'].some(
+      ['reversed', 'steps', 'colorBlindSafe', 'type'].some(
         key =>
           Object.prototype.hasOwnProperty.call(newConfig.colorRangeConfig, key) &&
           newConfig.colorRangeConfig[key] !==
@@ -974,27 +971,11 @@ class Layer {
     if (!shouldUpdate) return;
 
     const {colorUI, visConfig} = this.config;
-    const {steps, reversed} = colorUI[prop].colorRangeConfig;
-    const colorRange = visConfig[prop];
-    // find based on step or reversed
-    let update;
-    if (Object.prototype.hasOwnProperty.call(newConfig.colorRangeConfig, 'steps')) {
-      const group = getColorGroupByName(colorRange);
 
-      if (group) {
-        const sameGroup = COLOR_RANGES.filter(cr => getColorGroupByName(cr) === group);
-
-        update = sameGroup.find(cr => cr.colors.length === steps);
-
-        if (update && colorRange.reversed) {
-          update = reverseColorRange(true, update);
-        }
-      }
-    }
-
-    if (Object.prototype.hasOwnProperty.call(newConfig.colorRangeConfig, 'reversed')) {
-      update = reverseColorRange(reversed, update || colorRange);
-    }
+    const update = updateColorRangeByMatchingPalette(
+      visConfig[prop],
+      colorUI[prop].colorRangeConfig
+    );
 
     if (update) {
       this.updateLayerVisConfig({[prop]: update});

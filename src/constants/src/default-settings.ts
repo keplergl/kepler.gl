@@ -845,6 +845,9 @@ export const DEFAULT_LAYER_COLOR = {
   request_lat: '#52A353'
 };
 
+export const DEFAULT_LAYER_COLOR_PALETTE = 'Global Warming';
+export const DEFAULT_LAYER_COLOR_PALETTE_STEPS = 6;
+
 // let user pass in default tooltip fields
 export const DEFAULT_TOOLTIP_FIELDS: any[] = [];
 
