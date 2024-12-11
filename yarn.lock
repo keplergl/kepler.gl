@@ -2177,6 +2177,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@duckdb/duckdb-wasm@npm:^1.29.0":
+  version: 1.29.0
+  resolution: "@duckdb/duckdb-wasm@npm:1.29.0"
+  dependencies:
+    apache-arrow: "npm:^17.0.0"
+  checksum: 10c0/caa550b09433adb709f997241ef00fd7ee93dc4cb4a03838d9d978536fdc640c80ef0f2c294248c688e4a38231be42287e4aba655e13d94bcd9aff4767a404a0
+  languageName: node
+  linkType: hard
+
 "@emotion/is-prop-valid@npm:^0.8.1":
   version: 0.8.8
   resolution: "@emotion/is-prop-valid@npm:0.8.8"
@@ -3178,6 +3187,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@kepler.gl/ai-assistant@workspace:src/ai-assistant"
   dependencies:
+    "@duckdb/duckdb-wasm": "npm:^1.29.0"
     "@kepler.gl/components": "npm:3.1.0-alpha.1"
     "@kepler.gl/constants": "npm:3.1.0-alpha.1"
     "@kepler.gl/layers": "npm:3.1.0-alpha.1"
@@ -3186,7 +3196,7 @@ __metadata:
     color-interpolate: "npm:^1.0.5"
     echarts: "npm:^5.5.1"
     global: "npm:^4.3.0"
-    react-ai-assist: "npm:0.0.20"
+    react-ai-assist: "npm:0.0.25"
   languageName: unknown
   linkType: soft
 
@@ -10786,7 +10796,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"apache-arrow@npm:>= 15.0.0, apache-arrow@npm:>=15, apache-arrow@npm:>=15.0.0":
+"apache-arrow@npm:>= 15.0.0, apache-arrow@npm:>=15, apache-arrow@npm:>=15.0.0, apache-arrow@npm:^17.0.0":
   version: 17.0.0
   resolution: "apache-arrow@npm:17.0.0"
   dependencies:
@@ -10802,6 +10812,25 @@ __metadata:
   bin:
     arrow2csv: bin/arrow2csv.cjs
   checksum: 10c0/fa705b88a5d76c05122414bf7ba8a46c93f3509584de332eb045c736384cdfe53fc140135abbdeaa6036dfe422d145598b461b89f0b710cdeebbb732e9fb7f58
+  languageName: node
+  linkType: hard
+
+"apache-arrow@npm:^18.1.0":
+  version: 18.1.0
+  resolution: "apache-arrow@npm:18.1.0"
+  dependencies:
+    "@swc/helpers": "npm:^0.5.11"
+    "@types/command-line-args": "npm:^5.2.3"
+    "@types/command-line-usage": "npm:^5.0.4"
+    "@types/node": "npm:^20.13.0"
+    command-line-args: "npm:^5.2.1"
+    command-line-usage: "npm:^7.0.1"
+    flatbuffers: "npm:^24.3.25"
+    json-bignum: "npm:^0.0.3"
+    tslib: "npm:^2.6.2"
+  bin:
+    arrow2csv: bin/arrow2csv.js
+  checksum: 10c0/2bb43c19e8e29b5cba8eb5a3a76f7e4e93ecb25658e49de2c3997be12a461a72e2a4ddd2f90e6806e9725bb28e391ffedc9e6e0ab1f613eb70cfb5438d2c4d21
   languageName: node
   linkType: hard
 
@@ -24767,10 +24796,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-ai-assist@npm:0.0.20":
-  version: 0.0.20
-  resolution: "react-ai-assist@npm:0.0.20"
+"react-ai-assist@npm:0.0.25":
+  version: 0.0.25
+  resolution: "react-ai-assist@npm:0.0.25"
   dependencies:
+    "@duckdb/duckdb-wasm": "npm:^1.29.0"
     "@emotion/is-prop-valid": "npm:^1.3.1"
     "@google/generative-ai": "npm:^0.21.0"
     "@iconify/react": "npm:^5.0.2"
@@ -24782,6 +24812,7 @@ __metadata:
     "@langchain/openai": "npm:^0.3.0"
     "@nextui-org/react": "npm:^2.4.8"
     "@nextui-org/use-clipboard": "npm:^2.0.7"
+    apache-arrow: "npm:^18.1.0"
     async-mutex: "npm:^0.5.0"
     autoprefixer: "npm:^10.4.20"
     axios: "npm:^1.7.7"
@@ -24800,10 +24831,12 @@ __metadata:
     react-virtualized-auto-sizer: "npm:^1.0.24"
     tailwindcss: "npm:^3.4.11"
   peerDependencies:
+    "@duckdb/duckdb-wasm": ^1.29.0
+    apache-arrow: ^13 || ^18
     echarts: ^5.5.1
     react: ^18.0.0
     react-dom: ^18.0.0
-  checksum: 10c0/c7c248323c84d668dbf2d663bd682801c7868038161a287918636d41c91ddd55a688b376cb586a3e08a20d0ae4634e97a20b40f7975296d1745ba2d45d1c4dcf
+  checksum: 10c0/49eed7cc9101fb4d84cdbb1fced48184a0ff69b19b0fad986f8d82009fc808709891dee9bd7cd95f683600d653a41bdac5310c48fc78a6f7a9a986c97942fd4b
   languageName: node
   linkType: hard
 

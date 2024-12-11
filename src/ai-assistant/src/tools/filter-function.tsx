@@ -171,30 +171,34 @@ async function filterCallback({
 const RangeFilterComponent = appInjector.get(RangeFilterFactory);
 
 function FilterMessage({output}: CustomFunctionCall) {
-  const outputData = output.data as OutputDataProps;
+  const outputData = output.data as OutputDataProps | undefined;
 
   // run this when the component is mounted
   useEffect(() => {
-    outputData.createOrUpdateFilter(
+    outputData?.createOrUpdateFilter(
       outputData.filter.id,
       outputData.datasetId,
       outputData.fieldName,
       outputData.filter.value
     );
-  }, [outputData, outputData.filter]);
+  }, [outputData]);
 
   const filters = useSelector(state => {
     // @ts-ignore TODO: fix this: we need to get the updated filters from the visState, but nicely
     return state.demo.keplerGl.map.visState.filters;
   });
 
-  const filter = filters.find(f => f.id === outputData.filter.id);
+  const filter = filters.find(f => f.id === outputData?.filter.id);
 
-  const onSetFilter = value => outputData.setFilter(outputData.filterIdx, 'value', value);
+  const onSetFilter = value => outputData?.setFilter(outputData.filterIdx, 'value', value);
 
   const onSetFilterPlot = (newProp, valueIndex) => {
-    outputData.setFilterPlot(outputData.filterIdx, newProp, valueIndex);
+    outputData?.setFilterPlot(outputData.filterIdx, newProp, valueIndex);
   };
+
+  if (!outputData) {
+    return <div>Something went wrong, filter not created.</div>;
+  }
 
   return (
     filter && (
