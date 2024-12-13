@@ -987,7 +987,9 @@ export default function MapContainerFactory(
         mapboxAccessToken: currentStyle?.accessToken || mapboxApiAccessToken,
         baseApiUrl: mapboxApiUrl,
         mapLib: getApplicationConfig().getMapLib(),
-        transformRequest: this.props.transformRequest || transformRequest
+        transformRequest:
+          this.props.transformRequest ||
+          transformRequest(currentStyle?.accessToken || mapboxApiAccessToken)
       };
 
       const hasGeocoderLayer = Boolean(layers.find(l => l.id === GEOCODER_LAYER_ID));
