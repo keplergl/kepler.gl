@@ -60,11 +60,10 @@ jobs:
 
       - name: Publish KeplerGL to Pypi
         if: steps.check-tag.outputs.publish == 'true'
-        env:
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.pypi_token }}
-        run: |
-          python -m twine upload bindings/kepler.gl-jupyter/dist/*.tar.gz
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.pypi_token }}
+          packages-dir: bindings/kepler.gl-jupyter/dist/
 
       - name: Publish kepler-jupyter to NPM
         if: steps.check-tag.outputs.publish == 'true'
