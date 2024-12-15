@@ -62,7 +62,6 @@ jobs:
         if: steps.check-tag.outputs.publish == 'true'
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          password: ${{ secrets.pypi_token }}
           packages-dir: bindings/kepler.gl-jupyter/dist/
 
       - name: Publish kepler-jupyter to NPM
