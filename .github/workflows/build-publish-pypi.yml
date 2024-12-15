@@ -60,11 +60,11 @@ jobs:
               echo ::set-output name=publish::true
           fi
 
-      - name: Publish KeplerGL to Pypi
-        if: steps.check-tag.outputs.publish == 'true'
-        uses: pypa/gh-action-pypi-publish@release/v1
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
         with:
-          packages-dir: bindings/kepler.gl-jupyter/dist/
+          node-version: '18'
+          registry-url: 'https://registry.npmjs.org'
 
       - name: Publish kepler-jupyter to NPM
         if: steps.check-tag.outputs.publish == 'true'
@@ -75,3 +75,9 @@ jobs:
           source venv/bin/activate
           cd bindings/kepler.gl-jupyter/js
           npm publish
+
+      - name: Publish KeplerGL to Pypi
+        if: steps.check-tag.outputs.publish == 'true'
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: bindings/kepler.gl-jupyter/dist/
