@@ -75,8 +75,9 @@ jobs:
           cd bindings/kepler.gl-jupyter/js
           echo "//registry.npmjs.org/:_authToken=${{ secrets.npm_token }}" > .npmrc
           npm config set registry https://registry.npmjs.org/
+          npm whoami
           npm config ls
-          npm publish
+          npm publish --verbose --access public
 
       - name: Publish KeplerGL to Pypi
         if: steps.check-tag.outputs.publish == 'true'
