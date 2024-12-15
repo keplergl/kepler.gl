@@ -6,6 +6,8 @@ jobs:
   build_and_publish:
     runs-on: ubuntu-latest
     if: "!contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]')"
+    permissions:
+      id-token: write
 
     steps:
       - uses: actions/checkout@v4
