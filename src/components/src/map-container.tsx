@@ -465,9 +465,9 @@ export default function MapContainerFactory(
       this.props.visStateActions.onLayerHover(info, this.props.index);
     };
 
-    _onLayerSetDomain = (idx: number, colorDomain: VisualChannelDomain) => {
+    _onLayerSetDomain = (idx: number, colorDomain: {domain: VisualChannelDomain}) => {
       this.props.visStateActions.layerConfigChange(this.props.visState.layers[idx], {
-        colorDomain
+        colorDomain: colorDomain.domain
       } as Partial<LayerBaseConfig>);
     };
 
