@@ -6,8 +6,6 @@ import {Analyzer, DATA_TYPES} from 'type-analyzer';
 import {FilterProps} from '@kepler.gl/table';
 import {Field} from '@kepler.gl/types';
 
-export type CommonTileDatasetMetadata = {};
-
 export enum DatasetType {
   VECTOR_TILE = 'vectorTile'
 }
@@ -20,7 +18,7 @@ type VectorTileRemoteMetadata = {
   type: VectorTileType.REMOTE;
   tilesetDataUrl: string;
   tilesetMetadataUrl?: string;
-} & CommonTileDatasetMetadata;
+};
 
 export type VectorTileConfigOptions = {
   sourceLatColumn?: string;
