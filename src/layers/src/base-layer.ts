@@ -661,7 +661,7 @@ class Layer {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  formatLayerData(datasets: Datasets, oldLayerData?: any) {
+  formatLayerData(datasets: Datasets, oldLayerData?: unknown, animationConfig?: AnimationConfig) {
     return {};
   }
 
@@ -1096,7 +1096,7 @@ class Layer {
   }: {
     dataAccessor?: typeof defaultDataAccessor;
     dataContainer: DataContainerInterface;
-    indexKey?: number;
+    indexKey?: number | null;
   }) {
     const attributeAccessors: {[key: string]: any} = {};
 
@@ -1315,7 +1315,7 @@ class Layer {
     const triggerChanged = this.getChangedTriggers(dataUpdateTriggers);
 
     if (triggerChanged && (triggerChanged.getMeta || triggerChanged.getData)) {
-      this.updateLayerMeta(dataContainer, getPosition);
+      this.updateLayerMeta(layerDataset, getPosition);
 
       // reset filteredItemCount
       this.filteredItemCount = {};
@@ -1646,7 +1646,7 @@ class Layer {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  updateLayerMeta(dataContainer: DataContainerInterface, getPosition) {
+  updateLayerMeta(dataset: KeplerTable, getPosition) {
     // implemented in subclasses
   }
 

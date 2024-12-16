@@ -106,8 +106,8 @@ export type EntryInfoProps = Merge<LayerHoverProp, {fieldsToShow: TooltipField[]
 
 const EntryInfo: React.FC<EntryInfoProps> = ({fieldsToShow, ...props}) => (
   <tbody>
-    {fieldsToShow.map(item => (
-      <EntryInfoRow key={item.name} item={item} {...props} />
+    {fieldsToShow.map((item, index) => (
+      <EntryInfoRow key={`${item.name}_${index}`} item={item} {...props} />
     ))}
   </tbody>
 );

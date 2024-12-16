@@ -14,6 +14,7 @@ import {
   Editor,
   Feature,
   FeatureSelectionContext,
+  LayerCallbacks,
   Viewport
 } from '@kepler.gl/types';
 import {
@@ -354,18 +355,6 @@ export function bindLayerCallbacks(
     {} as Record<string, (_idx: number, val: any) => void>
   );
 }
-
-export type LayerCallbacks = {
-  onLayerHover?: (idx: number, value: any) => void;
-  onSetLayerDomain?: (idx: number, value: any) => void;
-  onFilteredItemsChange?: (
-    idx: number,
-    event: {
-      id: string;
-      count: number;
-    }
-  ) => void;
-};
 
 // eslint-disable-next-line complexity
 export function computeDeckLayers(
