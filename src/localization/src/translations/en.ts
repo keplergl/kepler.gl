@@ -111,7 +111,8 @@ export default {
       hexagonid: 'H3',
       trip: 'trip',
       s2: 'S2',
-      '3d': '3D'
+      '3d': '3D',
+      vectortile: 'vector tile'
     },
     layerUpdateError:
       'An error occurred during layer update: {errorMessage}. Make sure the format of the input data is valid.',
@@ -396,6 +397,7 @@ export default {
     },
     loadData: {
       upload: 'Load Files',
+      tileset: 'Tileset',
       storage: 'Load from Storage'
     },
     tripInfo: {

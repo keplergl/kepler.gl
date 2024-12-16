@@ -173,6 +173,29 @@ export default function ModalContainerFactory(
       this.props.visStateActions.loadFiles(fileList);
     };
 
+    _onTilesetAdded = (
+      tileset: {name: string; type: string; metadata: Record<string, any>},
+      fullMetadata?: Record<string, any>
+    ) => {
+      this.props.visStateActions.updateVisData(
+        {
+          info: {label: tileset.name, type: tileset.type, format: 'rows'},
+          data: {
+            fields: fullMetadata?.fields || [],
+            rows: []
+          },
+          metadata: {
+            ...tileset.metadata,
+            sourceType: 'mvt'
+          }
+        },
+        {
+          autoCreateLayers: true
+        }
+      );
+      this._closeModal();
+    };
+
     _onExportImage = () => {
       if (!this.props.uiState.exportImage.processing) {
         exportImage(this.props.uiState.exportImage, `${this.props.appName}.png`);
@@ -327,6 +350,7 @@ export default function ModalContainerFactory(
                 {...providerState}
                 onClose={this._closeModal}
                 onFileUpload={this._onFileUpload}
+                onTilesetAdded={this._onTilesetAdded}
                 onLoadCloudMap={this._onLoadCloudMap}
                 loadFiles={uiState.loadFiles}
                 fileLoading={visState.fileLoading}

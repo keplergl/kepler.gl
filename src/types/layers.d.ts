@@ -99,6 +99,17 @@ export type LayerWeightConfig = {
   weightField: VisualChannelField;
 };
 
+export type IndexBy = {
+  format: string;
+  type: string;
+  mappedValue: Record<number, string>;
+  timeDomain: {
+    domain: [number, number];
+    timeSteps: number[];
+    duration?: number;
+  };
+};
+
 export type Field = {
   name: string;
   displayName: string;
@@ -111,6 +122,7 @@ export type Field = {
   filterProps?: FilterProps;
   metadata?: Record<string, any>;
   displayFormat?: string;
+  indexBy?: IndexBy;
 };
 
 export type FieldPair = {
@@ -339,4 +351,16 @@ export type LayerTextConfig = {
   outlineWidth: TextConfigNumber;
   textAnchor: TextConfigSelect;
   textAlignment: TextConfigSelect;
+};
+
+export type LayerCallbacks = {
+  onLayerHover?: (idx: number, value: any) => void;
+  onSetLayerDomain?: (value: unknown) => void;
+  onFilteredItemsChange?: (
+    idx: number,
+    event: {
+      id: string;
+      count: number;
+    }
+  ) => void;
 };

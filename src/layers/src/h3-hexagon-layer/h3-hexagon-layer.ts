@@ -338,7 +338,9 @@ export default class HexagonIdLayer extends Layer {
   }
   /* eslint-enable complexity */
 
-  updateLayerMeta(dataContainer, getHexId) {
+  updateLayerMeta(dataset: KeplerTable, getHexId) {
+    const {dataContainer} = dataset;
+
     const centroids = dataContainer.map((d, index) => {
       const id = getHexId({index});
       if (!h3IsValid(id)) {
