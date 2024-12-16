@@ -92,6 +92,32 @@ export function highlightRows(
   }
 }
 
+export function highlightRowsByColumnValues(
+  datasets: Datasets,
+  layers: Layer[],
+  datasetName: string,
+  columnName: string,
+  selectedValues: unknown[],
+  layerSetIsValid: (layer: Layer, isValid: boolean) => void
+) {
+  const datasetId = Object.keys(datasets).find(dataId => datasets[dataId].label === datasetName);
+  if (!datasetId) return;
+  const dataset = datasets[datasetId];
+  if (dataset) {
+    // get the values of the column
+    const values = Array.from({length: dataset.length}, (_, i) => dataset.getValue(columnName, i));
+    // create a dict using the values
+    const valueDict = values.reduce((acc, value, index) => {
+      acc[value] = index;
+      return acc;
+    }, {});
+    // @ts-expect-error need to fix the type error of value here
+    const selectedIndices = selectedValues.map(value => valueDict[value]);
+    // highlight the rows
+    highlightRows(datasets, layers, datasetName, selectedIndices, layerSetIsValid);
+  }
+}
+
 export function getDatasetContext(datasets: Datasets, layers: Layer[]) {
   const context = 'Please remember the following dataset context:';
   const dataMeta = Object.values(datasets).map(dataset => ({

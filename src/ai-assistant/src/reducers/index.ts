@@ -24,7 +24,7 @@ export type AiAssistantConfig = {
 const initialConfig: AiAssistantConfig = {
   isReady: false,
   provider: 'openai',
-  model: 'gpt-4o-mini',
+  model: 'gpt-4o',
   apiKey: '',
   baseUrl: 'http://localhost:11434',
   temperature: 1.0,
