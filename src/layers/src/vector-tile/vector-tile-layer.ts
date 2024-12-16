@@ -23,9 +23,17 @@ import {
   Field as KeplerField,
   LayerColorConfig,
   LayerHeightConfig,
-  Merge
+  Merge,
+  MapState,
+  BindedLayerCallbacks,
+  VisConfigRange,
+  VisConfigNumber
 } from '@kepler.gl/types';
-import {KeplerTable as KeplerDataset, Datasets as KeplerDatasets} from '@kepler.gl/table';
+import {
+  KeplerTable as KeplerDataset,
+  Datasets as KeplerDatasets,
+  GpuFilter
+} from '@kepler.gl/table';
 import {DataContainerInterface} from '@kepler.gl/utils';
 
 import {getTileUrl} from './utils/vector-tile-utils';
@@ -51,7 +59,8 @@ import {
 import AbstractTileLayer, {
   LayerData as CommonLayerData,
   commonTileVisConfigs,
-  AbstractTileLayerConfig
+  AbstractTileLayerConfig,
+  AbstractTileLayerVisConfigSettings
 } from './abstract-tile-layer';
 import TileDataset from './common-tile/tile-dataset';
 import {
@@ -87,13 +96,13 @@ type LayerData = CommonLayerData & {
 
 type VectorTileLayerRenderOptions = Merge<
   {
-    idx: any;
-    visible: any;
-    mapState: any;
+    idx: number;
+    visible: boolean;
+    mapState: MapState;
     data: any;
-    animationConfig: any;
-    gpuFilter: any;
-    layerCallbacks: any;
+    animationConfig: AnimationConfig;
+    gpuFilter: GpuFilter;
+    layerCallbacks: BindedLayerCallbacks;
   },
   LayerData
 >;
@@ -124,11 +133,22 @@ export type VectorTileLayerConfig = Merge<
     sizeField?: VisualChannelField;
     sizeScale?: string;
     sizeDomain?: VisualChannelDomain;
+    strokeColorField: VisualChannelField;
+  }
+>;
+
+export type VectorTileLayerVisConfigSettings = Merge<
+  AbstractTileLayerVisConfigSettings,
+  {
+    sizeRange: VisConfigRange;
+    strokeWidth: VisConfigNumber;
   }
 >;
 
 export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Feature[]> {
   config!: VectorTileLayerConfig;
+
+  declare visConfigSettings: VectorTileLayerVisConfigSettings;
 
   constructor(props: ConstructorParameters<typeof AbstractTileLayer>[0]) {
     super(props);
@@ -434,7 +454,6 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
 
     const colorField = this.config.colorField as KeplerField;
     const heightField = this.config.heightField as KeplerField;
-    // @ts-expect-error  prop not in LayerConfig
     const strokeColorField = this.config.strokeColorField as KeplerField;
     const sizeField = this.config.sizeField as KeplerField;
 
@@ -488,7 +507,6 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
             },
             getLineColor: {
               strokeColor: visConfig.strokeColor,
-              // @ts-expect-error prop not in LayerConfig
               strokeColorField: this.config.strokeColorField,
               // @ts-expect-error prop not in LayerConfig
               strokeColorScale: this.config.strokeColorScale,
