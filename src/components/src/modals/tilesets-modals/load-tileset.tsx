@@ -46,9 +46,6 @@ type LoadTilesetTabProps = {
   meta: {[key: string]: any};
   isAddingDatasets: boolean;
   onTilesetAdded: (tilesetInfo: any, metadata?: any) => void;
-  onClose: () => void;
-  autoCreateLayers: boolean;
-  onToggleAutoCreateLayers: () => void;
 };
 
 const TILE_TYPES = [
@@ -65,13 +62,7 @@ function isReady(response) {
 }
 
 function LoadTilesetTabFactory() {
-  const LoadTilesetTab: React.FC<LoadTilesetTabProps> = ({
-    onClose,
-    onTilesetAdded,
-    isAddingDatasets,
-    autoCreateLayers,
-    onToggleAutoCreateLayers
-  }) => {
+  const LoadTilesetTab: React.FC<LoadTilesetTabProps> = ({onTilesetAdded, isAddingDatasets}) => {
     const [typeIndex, setTypeIndex] = useState<number>(0);
     const [response, setResponse] = useState<MetaResponse>({});
 
@@ -135,7 +126,6 @@ function LoadTilesetTabFactory() {
         <LoadDataFooter
           disabled={Boolean(error) || !isReady(response)}
           isLoading={loading || isAddingDatasets}
-          onClose={onClose}
           onConfirm={createTileDataset}
           confirmText="Add Tileset"
         />

@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {KeplerTable} from '@kepler.gl/table';
 import {Field as KeplerField} from '@kepler.gl/types';
 import {quickInsertionSort} from '@kepler.gl/utils';
 
