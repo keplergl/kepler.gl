@@ -150,3 +150,6 @@ export {DataRow} from './data-row';
 // Application config
 export {getApplicationConfig, initApplicationConfig} from './application-config';
 export type {KeplerApplicationConfig, MapLibInstance} from './application-config';
+
+// Browser utils
+export {isAppleDevice} from './browser-utils';
