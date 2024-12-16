@@ -16,7 +16,7 @@ import {
   LayerConfigGroupFactory,
   SourceDataSelectorFactory
 } from '@kepler.gl/components';
-import {Layer} from '@kepler.gl/layers';
+import {VectorTileLayer} from '@kepler.gl/layers';
 import {KeplerTable as KeplerDataset} from '@kepler.gl/table';
 
 import VisConfigByZoomInput from './radius-by-zoom-input';
@@ -28,7 +28,7 @@ const StyledLayerConfigurator = styled.div`
 type GetProps<T extends (...args: any[]) => React.FC<any>> = Parameters<ReturnType<T>>[0];
 
 type Props = {
-  layer: Layer;
+  layer: VectorTileLayer;
   dataset?: KeplerDataset;
   visConfiguratorProps: any;
   layerChannelConfigProps: GetProps<typeof ChannelByValueSelectorFactory>;
@@ -96,22 +96,19 @@ function VectorTileLayerConfiguratorFactory(
             {...layerChannelConfigProps}
             channel={layer.visualChannels.strokeColor}
           />
-          {
-            // @ts-expect-error prop not in LayerConfig
-            layer.config.strokeColorField ? (
-              <LayerColorRangeSelector
-                {...visConfiguratorProps}
-                property="strokeColorRange"
-                channel={layer.visualChannels.strokeColor}
-              />
-            ) : (
-              <LayerColorSelector
-                {...visConfiguratorProps}
-                selectedColor={layer.config.visConfig.strokeColor}
-                property="strokeColor"
-              />
-            )
-          }
+          {layer.config.strokeColorField ? (
+            <LayerColorRangeSelector
+              {...visConfiguratorProps}
+              property="strokeColorRange"
+              channel={layer.visualChannels.strokeColor}
+            />
+          ) : (
+            <LayerColorSelector
+              {...visConfiguratorProps}
+              selectedColor={layer.config.visConfig.strokeColor}
+              property="strokeColor"
+            />
+          )}
           <ConfigGroupCollapsibleContent>
             <VisConfigSlider {...layer.visConfigSettings.strokeOpacity} {...visConfiguratorProps} />
           </ConfigGroupCollapsibleContent>
