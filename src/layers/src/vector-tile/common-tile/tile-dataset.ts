@@ -1,15 +1,12 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {isValidNumber} from '../temp-types';
-import {pruneQuantiles} from '../temp-types';
-
-import {copyTable} from '@kepler.gl/table';
-import {createDataContainer, quickInsertionSort} from '@kepler.gl/utils';
+import {KeplerTable} from '@kepler.gl/table';
 import {Field as KeplerField} from '@kepler.gl/types';
+import {quickInsertionSort} from '@kepler.gl/utils';
 
 import IterableTileSet, {RowCountAccessor} from './iterable-tile-set';
-import {KeplerTable} from '@kepler.gl/table';
+import {pruneQuantiles} from '../temp-types';
 
 export type Datum = number | string | null;
 
@@ -47,7 +44,7 @@ export default class TileDataset<T, I extends Iterable<any> = T extends Iterable
   private tileSet: IterableTileSet<I>;
   private tileIds: Set<string> = new Set();
   /** cached version of the Kepler-style full dataset */
-  private cachedDataset: KeplerTable | null = null;
+  // private cachedDataset: KeplerTable | null = null;
   /** Cache for per-tile field stats: tileId -> fieldId -> stats */
   private tileStats: Map<string, Map<string, TileFieldStats>> = new Map();
 
@@ -64,7 +61,7 @@ export default class TileDataset<T, I extends Iterable<any> = T extends Iterable
    * Invalidate the cached data
    */
   invalidateCache(): void {
-    this.cachedDataset = null;
+    // this.cachedDataset = null;
   }
 
   /**

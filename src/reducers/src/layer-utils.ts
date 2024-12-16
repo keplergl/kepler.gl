@@ -14,6 +14,7 @@ import {
   Editor,
   Feature,
   FeatureSelectionContext,
+  BindedLayerCallbacks,
   LayerCallbacks,
   Viewport
 } from '@kepler.gl/types';
@@ -346,13 +347,13 @@ export type ComputeDeckLayersProps = {
 export function bindLayerCallbacks(
   layerCallbacks: LayerCallbacks = {},
   idx: number
-): Record<string, (idx: number, val: any) => void> {
+): BindedLayerCallbacks {
   return Object.keys(layerCallbacks).reduce(
     (accu, key) => ({
       ...accu,
       [key]: val => layerCallbacks[key](idx, val)
     }),
-    {} as Record<string, (_idx: number, val: any) => void>
+    {} as Record<string, (val: unknown) => void>
   );
 }
 

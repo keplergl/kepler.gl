@@ -6,10 +6,18 @@ import styled from 'styled-components';
 
 import {Button} from '@kepler.gl/components';
 
-const AddDataButton = styled(Button)`
+const AddDataButton = styled(Button)<{isLoading?: boolean}>`
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  opacity: ${props => (props.disabled ? 0.6 : 1)};
   height: 40px;
   padding: 9px 32px;
   width: auto;
+
+  svg {
+    margin-right: ${props => (props.isLoading ? '0' : '6px')};
+  }
 `;
 
 const LoadDataFooterContainer = styled.div.attrs({
@@ -36,9 +44,7 @@ type LoadDataFooterProps = {
   disabled?: boolean;
   isLoading?: boolean;
   onConfirm: () => void;
-  onClose?: () => void;
   confirmText: string;
-  cancelText?: string;
   prependText?: string;
   errorText?: string;
 };
@@ -46,10 +52,8 @@ type LoadDataFooterProps = {
 const LoadDataFooter: React.FC<LoadDataFooterProps> = ({
   disabled,
   isLoading,
-  onClose,
   onConfirm,
   confirmText,
-  cancelText = 'Cancel',
   prependText = '',
   errorText = ''
 }) => {

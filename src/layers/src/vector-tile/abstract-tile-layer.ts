@@ -13,7 +13,7 @@ import {
 import {
   AnimationConfig,
   Field,
-  LayerCallbacks,
+  BindedLayerCallbacks,
   VisConfigBoolean,
   VisConfigRange,
   VisConfigColorRange,
@@ -23,6 +23,7 @@ import {
   LayerHeightConfig,
   Filter,
   Field as KeplerField,
+  MapState,
   Merge
 } from '@kepler.gl/types';
 import {findDefaultColorField, DataContainerInterface} from '@kepler.gl/utils';
@@ -64,12 +65,12 @@ export type LayerData = {
 
 export type LayerOpts = {
   idx: number;
-  mapState: any; // UnfoldedMapState;
+  mapState: MapState;
   data: LayerData;
   gpuFilter: GpuFilter;
   animationConfig: AnimationConfig;
   tilesetDataUrl?: string | null;
-  layerCallbacks: LayerCallbacks;
+  layerCallbacks: BindedLayerCallbacks;
 };
 
 export const commonTileVisConfigs = {
@@ -146,7 +147,7 @@ export default abstract class AbstractTileLayer<
   }
 
   protected tileDataset: TileDataset<T, I>;
-  protected setLayerDomain: LayerCallbacks['onSetLayerDomain'] = undefined;
+  protected setLayerDomain: BindedLayerCallbacks['onSetLayerDomain'] = undefined;
 
   protected abstract initTileDataset(): TileDataset<T, I>;
 

@@ -7,7 +7,7 @@ import {Layer as DeckLayer} from '@deck.gl/core/typed';
 import {_Tile2DHeader as Tile2DHeader} from '@deck.gl/geo-layers/typed';
 import {GeoJsonLayer} from '@deck.gl/layers/typed';
 import {MVTSource} from '@loaders.gl/mvt';
-import {PMTilesSource} from '@loaders.gl/pmtiles';
+// import {PMTilesSource} from '@loaders.gl/pmtiles';
 import GL from '@luma.gl/constants';
 
 import {notNullorUndefined} from '@kepler.gl/common-utils';
@@ -48,9 +48,6 @@ import {
   isMobile
 } from './temp-types';
 
-// import RuntimeConfig from '../../runtime-config';
-const RuntimeConfig = {} as any;
-
 import AbstractTileLayer, {
   LayerData as CommonLayerData,
   commonTileVisConfigs,
@@ -65,7 +62,7 @@ import {
   getPropertyByZoom
 } from './common-tile/tile-utils';
 
-import type {VectorTileSource} from '@loaders.gl/loader-utils';
+// import type {VectorTileSource} from '@loaders.gl/loader-utils';
 import type {MVTTileSource} from '@loaders.gl/mvt';
 
 export const DEFAULT_HIGHLIGHT_COLOR = [252, 242, 26, 150];
