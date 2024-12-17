@@ -6,8 +6,7 @@ import {css} from 'styled-components';
 import get from 'lodash.get';
 import document from 'global/document';
 
-import ModalDialogFactory from './modals/modal-dialog';
-import {exportHtml, exportMap, exportJson, exportImage} from '@kepler.gl/utils';
+import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 import {
   exportData,
   getFileFormatNames,
@@ -15,6 +14,9 @@ import {
   MapStyle,
   ProviderState
 } from '@kepler.gl/reducers';
+import {exportHtml, exportMap, exportJson, exportImage} from '@kepler.gl/utils';
+
+import ModalDialogFactory from './modals/modal-dialog';
 
 // modals
 import DeleteDatasetModalFactory from './modals/delete-data-modal';
@@ -187,7 +189,9 @@ export default function ModalContainerFactory(
           metadata: {
             ...tileset.metadata,
             sourceType: 'mvt'
-          }
+          },
+          // vector tile layer only supports gpu filtering for now
+          supportedFilterTypes: [ALL_FIELD_TYPES.real, ALL_FIELD_TYPES.integer]
         },
         {
           autoCreateLayers: true

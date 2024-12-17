@@ -178,10 +178,7 @@ const TILESET_FUNCTIONS: {[key: string]: TilesetFunction} = {
   }
 };
 
-function getTilesetFunctions(tileUrl: string | null, isUnfoldedHosted?: boolean): TilesetFunction {
-  // TODO: It might be possible to sniff the tileset type from the 0/0/0 tile instead
-  if (isUnfoldedHosted) return TILESET_FUNCTIONS['data-api.foursquare.com'];
-
+function getTilesetFunctions(tileUrl: string | null): TilesetFunction {
   let host = '';
   try {
     host = new URL(tileUrl || '').hostname;
@@ -212,8 +209,8 @@ export function parseVectorMetadata(
   metadata: any,
   option?: ParseMetadataOption
 ): TilesetMetadata | null {
-  const {tileUrl = '', isUnfoldedHosted = false, isDataSourceMetadata = false} = option || {};
-  return getTilesetFunctions(tileUrl, isUnfoldedHosted).parseMetadata(metadata, {
+  const {tileUrl = '', isDataSourceMetadata = false} = option || {};
+  return getTilesetFunctions(tileUrl).parseMetadata(metadata, {
     isDataSourceMetadata
   });
 }
@@ -304,7 +301,7 @@ function parseMetadataTippecanoe(metadata: any): TilesetMetadata | null {
 // Temp. parser. Special parsing for metadata returned by MVTSource and PMTilesSource.
 // eslint-disable-next-line complexity
 function parseMetadataTippecanoeFromDataSource(
-  metadata: PMTilesMetadata | TileJSON
+  metadata: PMTilesMetadata | TileJSON | null
 ): TilesetMetadata | null {
   if (!metadata || typeof metadata !== 'object') {
     return null;
@@ -353,6 +350,10 @@ function parseMetadataTippecanoeFromDataSource(
   if (Array.isArray(pmTileMetadata.tilejson?.layers)) {
     // Transform TileJSON['layers'] back to TippecanoeLayer in order to collect fields
     const layers = pmTilesLayerToTippecanoeLayer(pmTileMetadata.tilejson?.layers);
+    result.fields = collectAttributes(layers);
+  } else if (Array.isArray(mvtMetadata.layers)) {
+    // Transform TileJSON['layers'] back to TippecanoeLayer in order to collect fields
+    const layers = pmTilesLayerToTippecanoeLayer(mvtMetadata.layers);
     result.fields = collectAttributes(layers);
   }
 
@@ -590,7 +591,7 @@ export function getFilterProps(
         domain: attribute.values as string[],
         value: attribute.values as string[],
         type: FILTER_TYPES.multiSelect,
-        gpu: true
+        gpu: false
       };
       return filterProps;
     }

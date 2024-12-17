@@ -11,7 +11,8 @@ export enum DatasetType {
 }
 
 export enum VectorTileType {
-  REMOTE = 'remote'
+  REMOTE = 'remote',
+  PMTILES = 'pmtiles'
 }
 
 type VectorTileRemoteMetadata = {

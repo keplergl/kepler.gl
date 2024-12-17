@@ -17,7 +17,7 @@ import {
   Changes:
     - getTileData: handles props.getTileData.
     - renderSubLayers: removed coordinates logic present in original MVTLayer:renderSubLayers.
-    - renderSubLayers: set clipBounds for non-globe views.
+    - renderSubLayers: set clipBounds.
     - loaders.gl & older deck.gl: geojson-table: data = data.features
 */
 
@@ -47,7 +47,8 @@ export class MVTLayer<ExtraProps> extends _MVTLayer<ExtraProps> {
     const {boundingBox} = props.tile;
 
     props.autoHighlight = true;
-    if (!this.context.viewport.resolution && boundingBox) {
+
+    if (boundingBox) {
       props.clipBounds = [...boundingBox[0], ...boundingBox[1]];
       props.extensions = [...(props.extensions || []), new ClipExtension()];
     }
