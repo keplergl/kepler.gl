@@ -6,8 +6,8 @@ import {FeatureCollection, Feature} from 'geojson';
 import {Layer as DeckLayer} from '@deck.gl/core/typed';
 import {_Tile2DHeader as Tile2DHeader} from '@deck.gl/geo-layers/typed';
 import {GeoJsonLayer} from '@deck.gl/layers/typed';
-import {MVTSource} from '@loaders.gl/mvt';
-// import {PMTilesSource} from '@loaders.gl/pmtiles';
+import {MVTSource, MVTTileSource} from '@loaders.gl/mvt';
+import {PMTilesSource, PMTilesTileSource} from '@loaders.gl/pmtiles';
 import GL from '@luma.gl/constants';
 
 import {notNullorUndefined} from '@kepler.gl/common-utils';
@@ -71,9 +71,6 @@ import {
   getPropertyByZoom
 } from './common-tile/tile-utils';
 
-// import type {VectorTileSource} from '@loaders.gl/loader-utils';
-import type {MVTTileSource} from '@loaders.gl/mvt';
-
 export const DEFAULT_HIGHLIGHT_COLOR = [252, 242, 26, 150];
 export const MAX_CACHE_SIZE_MOBILE = 1; // Minimize caching, visible tiles will always be loaded
 export const DEFAULT_STROKE_WIDTH = 1;
@@ -91,7 +88,7 @@ type VectorTile = Tile2DHeader<TileContent>;
 
 type LayerData = CommonLayerData & {
   tilesetDataUrl?: string | null;
-  tileSource: MVTTileSource | null;
+  tileSource: MVTTileSource | PMTilesTileSource | null;
 };
 
 type VectorTileLayerRenderOptions = Merge<
@@ -337,8 +334,6 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
       return;
     }
 
-    // casting like RasterTileLayer, AbstractTileLayer, etc. until various dataset metadata types can settle
-    // see apps/studio/src/unfolded/kepler-types.ts
     const datasetMeta = dataset.metadata as VectorTileMetadata & VectorTileDatasetMetadata;
     this.updateMeta({
       datasetId: dataset.id,
@@ -362,8 +357,6 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
     let tileSource: LayerData['tileSource'] = null;
 
     if (dataset?.type === DatasetType.VECTOR_TILE) {
-      // casting like RasterTileLayer, AbstractTileLayer, etc. until various dataset metadata types can settle
-      // see apps/studio/src/unfolded/kepler-types.ts
       const datasetMetadata = dataset.metadata as VectorTileMetadata & VectorTileDatasetMetadata;
       if (datasetMetadata?.type === VectorTileType.REMOTE) {
         const transformFetch = async (input: RequestInfo | URL, init?: RequestInit | undefined) => {
@@ -387,6 +380,9 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
               }
             })
           : null;
+      } else if (datasetMetadata?.type === VectorTileType.PMTILES) {
+        tilesetDataUrl = datasetMetadata?.tilesetDataUrl;
+        tileSource = tilesetDataUrl ? PMTilesSource.createDataSource(tilesetDataUrl, {}) : null;
       }
     }
 

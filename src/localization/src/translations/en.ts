@@ -208,7 +208,8 @@ export default {
     removeDataset: 'Remove dataset'
   },
   datasetInfo: {
-    rowCount: '{rowCount} rows'
+    rowCount: '{rowCount} rows',
+    vectorTile: 'Vector tile'
   },
   tooltip: {
     hideLayer: 'Hide layer',

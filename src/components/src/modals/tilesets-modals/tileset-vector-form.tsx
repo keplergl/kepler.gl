@@ -5,7 +5,7 @@ import React, {useCallback, useEffect, useState, useMemo} from 'react';
 import styled from 'styled-components';
 
 import {getMetaUrl, parseVectorMetadata, VectorTileMetadata} from '@kepler.gl/layers';
-import {default as useFetchJson} from '../../hooks/use-fetch-json';
+import {default as useFetchVectorTileMetadata} from '../../hooks/use-fetch-vector-tile-metadata';
 
 import {DatasetCreationAttributes, MetaResponse, StyledInput} from './common';
 
@@ -37,7 +37,7 @@ export function getDatasetAttributesFromVectorTile({
     name,
     type: DatasetType.VECTOR_TILE,
     metadata: {
-      type: VectorTileType.REMOTE,
+      type: name.includes('.pmtiles') ? VectorTileType.PMTILES : VectorTileType.REMOTE,
       tilesetDataUrl: dataUrl,
       tilesetMetadataUrl: metadataUrl
     }
@@ -74,7 +74,9 @@ const TilesetVectorForm: React.FC<TilesetVectorFormProps> = ({setResponse}) => {
       event.preventDefault();
       const newTileUrl = event.target.value;
       setTileUrl(newTileUrl);
-      const potentialMetadataUrl = getMetaUrl(newTileUrl);
+      const potentialMetadataUrl = newTileUrl.includes('.pmtiles')
+        ? newTileUrl
+        : getMetaUrl(newTileUrl);
       if (!metadataUrl && potentialMetadataUrl) {
         // check if URL exists before setting it as the metadata URL
         const resp = await fetch(potentialMetadataUrl);
@@ -87,16 +89,16 @@ const TilesetVectorForm: React.FC<TilesetVectorFormProps> = ({setResponse}) => {
     [setTileUrl, tileName, setMetadataUrl, metadataUrl]
   );
   const process = useMemo(() => {
-    return value => parseVectorMetadata(value, {tileUrl: metadataUrl});
+    return value => parseVectorMetadata(value, {tileUrl: metadataUrl, isDataSourceMetadata: true});
   }, [metadataUrl]);
 
   const {
     data: metadata,
     loading,
     error: metaError
-  } = useFetchJson({
+  } = useFetchVectorTileMetadata({
     url: metadataUrl,
-    // @ts-expect-error TODO: process may return processed HexTileMetadata, which includes non-POJO objects
+    type: metadataUrl?.includes('.pmtiles') ? VectorTileType.PMTILES : VectorTileType.REMOTE,
     process
   });
 

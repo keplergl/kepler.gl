@@ -6,11 +6,13 @@ import styled from 'styled-components';
 import {format} from 'd3-format';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {DataContainerInterface} from '@kepler.gl/utils';
+import {DatasetType} from '@kepler.gl/layers';
 
 const numFormat = format(',');
 
 type MiniDataset = {
   dataContainer: DataContainerInterface;
+  type: string;
 };
 
 export type DatasetInfoProps = {
@@ -27,7 +29,11 @@ export default function DatasetInfoFactory() {
   const DatasetInfo: React.FC<DatasetInfoProps> = ({dataset}: DatasetInfoProps) => (
     <StyledDataRowCount className="source-data-rows">
       <FormattedMessage
-        id={'datasetInfo.rowCount'}
+        id={
+          dataset.type === DatasetType.VECTOR_TILE
+            ? 'datasetInfo.vectorTile'
+            : 'datasetInfo.rowCount'
+        }
         values={{rowCount: numFormat(dataset.dataContainer.numRows())}}
       />
     </StyledDataRowCount>
