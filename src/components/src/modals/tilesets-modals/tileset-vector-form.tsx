@@ -37,7 +37,7 @@ export function getDatasetAttributesFromVectorTile({
     name,
     type: DatasetType.VECTOR_TILE,
     metadata: {
-      type: name.includes('.pmtiles') ? VectorTileType.PMTILES : VectorTileType.REMOTE,
+      type: dataUrl.includes('.pmtiles') ? VectorTileType.PMTILES : VectorTileType.REMOTE,
       tilesetDataUrl: dataUrl,
       tilesetMetadataUrl: metadataUrl
     }
