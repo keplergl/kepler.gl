@@ -187,6 +187,7 @@ export default function ModalContainerFactory(
             rows: []
           },
           metadata: {
+            ...fullMetadata,
             ...tileset.metadata,
             sourceType: 'mvt'
           },
