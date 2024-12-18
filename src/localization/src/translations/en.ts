@@ -319,7 +319,8 @@ export default {
       filteredData: 'Filtered data',
       unfilteredData: 'Unfiltered Data',
       fileCount: '{fileCount} Files',
-      rowCount: '{rowCount} Rows'
+      rowCount: '{rowCount} Rows',
+      vectorTileWarning: "* Export Data for Vector Tile datasets isn't supported"
     },
     deleteData: {
       warning: 'you are going to delete this dataset. It will affect {length} layers'
