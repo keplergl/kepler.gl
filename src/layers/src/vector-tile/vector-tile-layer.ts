@@ -100,6 +100,11 @@ type VectorTileLayerRenderOptions = Merge<
     animationConfig: AnimationConfig;
     gpuFilter: GpuFilter;
     layerCallbacks: BindedLayerCallbacks;
+    objectHovered: {
+      index: number;
+      tile: VectorTile;
+      sourceLayer: typeof GeoJsonLayer;
+    };
   },
   LayerData
 >;
@@ -393,6 +398,14 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
     };
   }
 
+  hasHoveredObject(objectInfo) {
+    if (super.hasHoveredObject(objectInfo)) {
+      const features = objectInfo?.tile?.content?.features;
+      return features[objectInfo.index];
+    }
+    return null;
+  }
+
   renderSubLayers(props: Record<string, any>): DeckLayer | DeckLayer[] {
     let {data} = props;
 
@@ -422,7 +435,7 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
 
   // generate a deck layer
   renderLayer(opts: VectorTileLayerRenderOptions): DeckLayer[] {
-    const {mapState, data, animationConfig, gpuFilter, layerCallbacks} = opts;
+    const {mapState, data, animationConfig, gpuFilter, objectHovered, layerCallbacks} = opts;
     const {animation, visConfig} = this.config;
 
     this.setLayerDomain = layerCallbacks.onSetLayerDomain;
@@ -454,6 +467,8 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
     const sizeField = this.config.sizeField as KeplerField;
 
     if (data.tileSource) {
+      let hoveredObject = this.hasHoveredObject(objectHovered);
+
       const layers = [
         new CustomMVTLayer({
           ...defaultLayerProps,
@@ -542,7 +557,28 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
           },
           // Mobile overrides
           ...(mobile ? mobileProps : {})
-        })
+        }),
+        // hover layer
+        ...(hoveredObject
+          ? [
+              new GeoJsonLayer({
+                // @ts-expect-error not typed
+                ...objectHovered.sourceLayer?.props,
+                ...(this.getDefaultHoverLayerProps() as any),
+                visible: true,
+                wrapLongitude: false,
+                data: [hoveredObject],
+                // getLineWidth: 1,
+                // getPointRadius: 10,
+                // getElevation: 0,
+                getLineColor: this.config.highlightColor,
+                getFillColor: this.config.highlightColor,
+                // always draw outline
+                stroked: true,
+                filled: false
+              })
+            ]
+          : [])
       ];
 
       return layers;
