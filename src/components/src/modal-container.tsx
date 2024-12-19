@@ -177,19 +177,18 @@ export default function ModalContainerFactory(
 
     _onTilesetAdded = (
       tileset: {name: string; type: string; metadata: Record<string, any>},
-      fullMetadata?: Record<string, any>
+      processedMetadata?: Record<string, any>
     ) => {
       this.props.visStateActions.updateVisData(
         {
           info: {label: tileset.name, type: tileset.type, format: 'rows'},
           data: {
-            fields: fullMetadata?.fields || [],
+            fields: processedMetadata?.fields || [],
             rows: []
           },
           metadata: {
-            ...fullMetadata,
-            ...tileset.metadata,
-            sourceType: 'mvt'
+            ...processedMetadata,
+            ...tileset.metadata
           },
           // vector tile layer only supports gpu filtering for now
           supportedFilterTypes: [ALL_FIELD_TYPES.real, ALL_FIELD_TYPES.integer]

@@ -22,10 +22,8 @@ import {
   analyzerTypeToFieldType
 } from '@kepler.gl/common-utils';
 
-import {Field as KeplerField} from '@kepler.gl/types';
+import {DatasetType, Field as KeplerField} from '@kepler.gl/types';
 import {KeplerTable as KeplerDataset} from '@kepler.gl/table';
-
-import {DatasetType} from '../temp-types';
 
 import {default as BaseLayer} from '../../base-layer';
 /*

@@ -9,7 +9,7 @@ import {default as useFetchVectorTileMetadata} from '../../hooks/use-fetch-vecto
 
 import {DatasetCreationAttributes, MetaResponse, StyledInput} from './common';
 
-import {DatasetType, VectorTileType} from '@kepler.gl/layers';
+import {DatasetType, VectorTileType} from '@kepler.gl/types';
 
 const TilesetInputContainer = styled.div`
   display: grid;

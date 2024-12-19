@@ -6,31 +6,6 @@ import {Analyzer, DATA_TYPES} from 'type-analyzer';
 import {FilterProps} from '@kepler.gl/table';
 import {Field} from '@kepler.gl/types';
 
-export enum DatasetType {
-  VECTOR_TILE = 'vectorTile'
-}
-
-export enum VectorTileType {
-  REMOTE = 'remote',
-  PMTILES = 'pmtiles'
-}
-
-type VectorTileRemoteMetadata = {
-  type: VectorTileType.REMOTE;
-  tilesetDataUrl: string;
-  tilesetMetadataUrl?: string;
-};
-
-export type VectorTileConfigOptions = {
-  sourceLatColumn?: string;
-  sourceLngColumn?: string;
-  attributes?: string[];
-  excludeAllAttributes?: boolean;
-  tileSizeKb?: number;
-};
-
-export type VectorTileDatasetMetadata = VectorTileRemoteMetadata;
-
 /**
  * Type for transformRequest returned parameters.
  */

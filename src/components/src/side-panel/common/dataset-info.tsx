@@ -6,7 +6,7 @@ import styled from 'styled-components';
 import {format} from 'd3-format';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {DataContainerInterface} from '@kepler.gl/utils';
-import {DatasetType} from '@kepler.gl/layers';
+import {DatasetType} from '@kepler.gl/types';
 
 const numFormat = format(',');
 

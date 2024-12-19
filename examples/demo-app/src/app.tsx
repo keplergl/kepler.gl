@@ -224,7 +224,6 @@ const App = props => {
                 'https://4sq-studio-public.s3.us-west-2.amazonaws.com/pmtiles-test/161727fe-7952-4e57-aa05-850b3086b0b2.pmtiles',
               tilesetMetadataUrl:
                 'https://4sq-studio-public.s3.us-west-2.amazonaws.com/pmtiles-test/161727fe-7952-4e57-aa05-850b3086b0b2.pmtiles',
-              sourceType: 'mvt',
               id: 'sz6uy1xtj',
               format: 'rows',
               label: 'output.pmtiles',
