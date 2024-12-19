@@ -42,7 +42,7 @@ type LoadDataModalProps = {
   onLoadCloudMap: (provider: any, vis: any) => void;
   onTilesetAdded: (
     tileset: {name: string; type: string; metadata: Record<string, any>},
-    fullMetadata?: Record<string, any>
+    processedMetadata?: Record<string, any>
   ) => void;
   fileLoading: FileLoading | false;
   loadingMethods?: LoadingMethod[];

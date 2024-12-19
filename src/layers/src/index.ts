@@ -44,7 +44,7 @@ export {default as AggregationLayer} from './aggregation-layer';
 
 import {default as VectorTileLayer} from './vector-tile/vector-tile-layer';
 export type {VectorTileField, VectorTileMetadata} from './vector-tile/temp-types';
-export {DatasetType, VectorTileType} from './vector-tile/temp-types';
+
 export {
   getMetaUrl,
   parseVectorMetadata,

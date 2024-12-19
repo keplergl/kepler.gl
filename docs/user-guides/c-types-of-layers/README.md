@@ -92,13 +92,13 @@ To use H3 layer, you need a `hex_id` in your dataset, which can be generated usi
 
 To use S2 layer, you need to assign a column containing S2 tokens.
 
-## Vector Tile Layer (Beta)
+## Vector Tile Layer
 
 Vector Tile Layer makes it possible to visualize very large datasets through MVTs (Mapbox Vector Tiles). The layer will only load, decode and render MVTs containing features that are visible within the current viewport.
 
-Currently supported URL templates:
+Supported URL templates:
 
 - MVT (https://api.mapbox.com/v4/mapbox.mapbox-streets-v8/{z}/{x}/{y}.mvt?access_token=your-mapbox-acceess-token)
-- pmtiles (https://4sq-studio-public.s3.us-west-2.amazonaws.com/pmtiles-test/161727fe-7952-4e57-aa05-850b3086b0b2.pmtiles)
+- pmtiles (https://your-cdn/filename.pmtiles)
 
 [Back to table of contents](../README.md)

@@ -6,8 +6,7 @@ import {useCallback, useEffect, useState} from 'react';
 import {MVTSource, TileJSON} from '@loaders.gl/mvt';
 import {PMTilesSource, PMTilesMetadata} from '@loaders.gl/pmtiles';
 
-import {JsonObject} from '@kepler.gl/types';
-import {VectorTileType} from '@kepler.gl/layers';
+import {JsonObject, VectorTileType} from '@kepler.gl/types';
 
 type FetchVectorTileMetadataProps = {
   url: string | null;

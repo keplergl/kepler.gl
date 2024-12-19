@@ -27,7 +27,10 @@ import {
   MapState,
   BindedLayerCallbacks,
   VisConfigRange,
-  VisConfigNumber
+  VisConfigNumber,
+  DatasetType,
+  VectorTileType,
+  VectorTileDatasetMetadata
 } from '@kepler.gl/types';
 import {
   KeplerTable as KeplerDataset,
@@ -46,9 +49,6 @@ import {
   VisualChannelField
 } from '../base-layer';
 import {
-  DatasetType,
-  VectorTileDatasetMetadata,
-  VectorTileType,
   DomainStops,
   VectorTileMetadata,
   getLoaderOptions,
