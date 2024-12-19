@@ -1,13 +1,9 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {Analyzer, DATA_TYPES} from 'type-analyzer';
-
-import {Field} from '@kepler.gl/types';
-
 import {parseGeoJsonRawFeature, getGeojsonFeatureTypes} from '../geojson-layer/geojson-utils';
 import {DataContainerInterface, getSampleContainerData, timeToUnixMilli} from '@kepler.gl/utils';
-import {notNullorUndefined} from '@kepler.gl/common-utils';
+import {containValidTime, notNullorUndefined} from '@kepler.gl/common-utils';
 import {Feature} from '@turf/helpers';
 import {GeoJsonProperties, Geometry} from 'geojson';
 
@@ -28,26 +24,6 @@ export function coordHasLength4(samples): boolean {
     }
   }
   return hasLength4;
-}
-
-/**
- * Check whether geojson linestring's 4th coordinate is 1) not timestamp 2) unix time stamp 3) real date time
- * @param timestamps array to be tested if its elements are timestamp
- * @returns the type of timestamp: unix/datetime/invalid(not timestamp)
- */
-export function containValidTime(timestamps: string[]): Field | null {
-  const formattedTimeStamps = timestamps.map(ts => ({ts}));
-  const ignoredDataTypes = Object.keys(DATA_TYPES).filter(
-    type => ![DATA_TYPES.TIME, DATA_TYPES.DATETIME].includes(type)
-  );
-
-  // ignore all types but TIME to improve performance
-  const analyzedType = Analyzer.computeColMeta(formattedTimeStamps, [], {ignoredDataTypes})[0];
-
-  if (!analyzedType || analyzedType.category !== 'TIME') {
-    return null;
-  }
-  return analyzedType;
 }
 
 /**

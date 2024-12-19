@@ -5,6 +5,7 @@ import {push} from 'react-router-redux';
 import {fetch} from 'global';
 
 import {loadFiles, toggleModal} from '@kepler.gl/actions';
+import {parseUri} from '@kepler.gl/common-utils';
 import {load} from '@loaders.gl/core';
 import {CSVLoader} from '@loaders.gl/csv';
 import {GeoArrowLoader} from '@loaders.gl/arrow';
@@ -16,7 +17,6 @@ import {
   LOADING_SAMPLE_LIST_ERROR_MESSAGE,
   MAP_CONFIG_URL
 } from './constants/default-settings';
-import {parseUri} from './utils/url';
 
 // CONSTANTS
 export const INIT = 'INIT';
