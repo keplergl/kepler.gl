@@ -32,7 +32,6 @@ import {default as TripLayer} from './trip-layer/trip-layer';
 export {defaultLineWidth as tripDefaultLineWidth} from './trip-layer/trip-layer';
 export {
   coordHasLength4,
-  containValidTime,
   isTripGeoJsonField,
   parseTripGeoJsonTimestamp,
   getAnimationDomainFromTimestamps
@@ -43,15 +42,14 @@ export {getS2Center} from './s2-geometry-layer/s2-utils';
 export {default as AggregationLayer} from './aggregation-layer';
 
 import {default as VectorTileLayer} from './vector-tile/vector-tile-layer';
-export type {VectorTileField, VectorTileMetadata} from './vector-tile/temp-types';
 
 export {
   getMetaUrl,
   parseVectorMetadata,
   matchDatasetType
 } from './vector-tile/utils/vector-tile-utils';
+export type {VectorTileMetadata} from './vector-tile/utils/vector-tile-utils';
 export {default as VectorTileIcon} from './vector-tile/vector-tile-icon';
-export type {ZoomStopsConfig} from './vector-tile/common-tile/tile-utils';
 export {default as VectorTileLayer} from './vector-tile/vector-tile-layer';
 
 import {LAYER_TYPES} from '@kepler.gl/constants';

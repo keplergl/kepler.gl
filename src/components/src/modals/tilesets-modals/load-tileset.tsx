@@ -5,15 +5,13 @@ import React, {useCallback, useMemo, useState} from 'react';
 import {AutoSizer} from 'react-virtualized';
 import styled from 'styled-components';
 
+import {VectorTileIcon} from '@kepler.gl/layers';
 import {getError} from '@kepler.gl/utils';
 
 import {MetaResponse} from './common';
+import LoadDataFooter from './load-data-footer';
 import TilesetIcon from './tileset-icon';
 import TilesetVectorForm from './tileset-vector-form';
-
-import {VectorTileIcon} from '@kepler.gl/layers';
-
-import LoadDataFooter from './load-data-footer';
 
 const WIDTH_ICON = '62px';
 

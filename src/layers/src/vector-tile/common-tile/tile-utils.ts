@@ -3,19 +3,12 @@
 
 import {bisectLeft} from 'd3-array';
 
-import {Field as KeplerField} from '@kepler.gl/types';
+import {DatasetType, DomainStops, Field as KeplerField, ZoomStopsConfig} from '@kepler.gl/types';
 import {DomainQuantiles} from '@kepler.gl/utils';
 
-import {DomainStops, ZoomStops} from '../temp-types';
-
 export enum TileType {
-  VECTOR_TILE = 'vectorTile'
+  VECTOR_TILE = DatasetType.VECTOR_TILE
 }
-
-export type ZoomStopsConfig = {
-  enabled?: boolean;
-  stops: ZoomStops | null;
-};
 
 // helper functions
 export function isDomainStops(domain: unknown): domain is DomainStops {
