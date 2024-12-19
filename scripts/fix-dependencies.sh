@@ -13,3 +13,6 @@ yarn babel node_modules/@mapbox/tiny-sdf/index.js | tail -n +2 > node_modules/@m
 if [[ -f "node_modules/react-virtualized/dist/es/WindowScroller/utils/onScroll.js" ]]; then
   sed -i -e '/import { bpfrpt_proptype_WindowScroller } from "..\/WindowScroller.js";/d' node_modules/react-virtualized/dist/es/WindowScroller/utils/onScroll.js
 fi
+
+# fix ERR_REQUIRE_ESM in yarn cover
+yarn babel node_modules/maplibregl-mapbox-request-transformer/src/index.js | tail -n +2 > node_modules/maplibregl-mapbox-request-transformer/src/index.cjs

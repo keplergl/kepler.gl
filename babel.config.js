@@ -32,6 +32,8 @@ const PLUGINS = [
         // We explicitly transpile this ESM library in scripts/fix-dependencies.js and consume the transpiled version here
         // This may not be needed once switch to Jest is complete as it is handled by transformIgnorePatterns
         '@mapbox/tiny-sdf': `${nodeModules}/@mapbox/tiny-sdf/index.cjs`,
+        // fix ERR_REQUIRE_ESM in yarn cover
+        'maplibregl-mapbox-request-transformer': `${nodeModules}/maplibregl-mapbox-request-transformer/src/index.cjs`,
         // compile from @kepler.gl src
         ...RESOLVE_ALIASES,
         // loaders.gl cjs bundle of polyfills is not transpiled properly, use esm instead
