@@ -8,7 +8,6 @@ import {sortableContainer, sortableElement, sortableHandle} from 'react-sortable
 import styled, {css} from 'styled-components';
 
 import {Icons, Input, PanelLabel, Button} from '@kepler.gl/components';
-
 import {ZoomStopsConfig} from '@kepler.gl/layers';
 
 export type ZoomStops = number[][];

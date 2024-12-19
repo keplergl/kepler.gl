@@ -16,3 +16,16 @@ export type VectorTileDatasetMetadata = {
   tilesetDataUrl: string;
   tilesetMetadataUrl?: string;
 };
+
+export type ZoomStops = number[][];
+
+export type DomainStops = {
+  z: number[];
+  stops: ZoomStops;
+  interpolation: 'interpolate';
+};
+
+export type ZoomStopsConfig = {
+  enabled?: boolean;
+  stops: ZoomStops | null;
+};

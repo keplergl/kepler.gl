@@ -5,7 +5,7 @@ import {Field as KeplerField} from '@kepler.gl/types';
 import {quickInsertionSort} from '@kepler.gl/utils';
 
 import IterableTileSet, {RowCountAccessor} from './iterable-tile-set';
-import {pruneQuantiles} from '../temp-types';
+import {pruneQuantiles} from '../utils/vector-tile-utils';
 
 export type Datum = number | string | null;
 

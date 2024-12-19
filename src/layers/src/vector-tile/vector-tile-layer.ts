@@ -30,7 +30,8 @@ import {
   VisConfigNumber,
   DatasetType,
   VectorTileType,
-  VectorTileDatasetMetadata
+  VectorTileDatasetMetadata,
+  DomainStops
 } from '@kepler.gl/types';
 import {
   KeplerTable as KeplerDataset,
@@ -48,13 +49,7 @@ import {
   VisualChannelDomain,
   VisualChannelField
 } from '../base-layer';
-import {
-  DomainStops,
-  VectorTileMetadata,
-  getLoaderOptions,
-  RequestParameters,
-  isMobile
-} from './temp-types';
+import {VectorTileMetadata, getLoaderOptions, isMobile} from './utils/vector-tile-utils';
 
 import AbstractTileLayer, {
   LayerData as CommonLayerData,
@@ -74,6 +69,18 @@ import {
 export const DEFAULT_HIGHLIGHT_COLOR = [252, 242, 26, 150];
 export const MAX_CACHE_SIZE_MOBILE = 1; // Minimize caching, visible tiles will always be loaded
 export const DEFAULT_STROKE_WIDTH = 1;
+
+/**
+ * Type for transformRequest returned parameters.
+ */
+export type RequestParameters = {
+  /** The URL to be requested. */
+  url: string;
+  /** Search parameters to be added onto the URL. */
+  searchParams: URLSearchParams;
+  /** Options passed to fetch. */
+  options: RequestInit;
+};
 
 // This type *seems* to be what loaders.gl currently returns for tile content.
 // Apparently this might be different depending on the loaders version, and for...

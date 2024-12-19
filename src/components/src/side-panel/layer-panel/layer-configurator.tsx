@@ -1060,6 +1060,7 @@ export default function LayerConfiguratorFactory(
       const dataset = getLayerDataset(datasets, layer);
       const renderTemplate = layer.type && `_render${capitalizeFirstLetter(layer.type)}LayerConfig`;
 
+      // show only datasets that can be used by the layer
       const sourceDataSelectorOptions = Object.keys(datasets).reduce(
         (acc, id) => (matchDatasetType(datasets[id], layer) ? {...acc, [id]: datasets[id]} : acc),
         {}

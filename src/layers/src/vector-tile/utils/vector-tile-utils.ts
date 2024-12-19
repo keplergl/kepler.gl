@@ -8,7 +8,6 @@ import Console from 'global/console';
 import uniq from 'lodash.uniq';
 import {DATA_TYPES} from 'type-analyzer';
 
-import {containValidTime, parseUri} from '../temp-types';
 import {ALL_FIELD_TYPES, FILTER_TYPES} from '@kepler.gl/constants';
 import {
   FilterProps,
@@ -18,26 +17,32 @@ import {
 } from '@kepler.gl/table';
 import {clamp, formatNumberByStep, getNumericStepSize, timeToUnixMilli} from '@kepler.gl/utils';
 import {
+  analyzerTypeToFieldType,
+  containValidTime,
   notNullorUndefined as notNullOrUndefined,
-  analyzerTypeToFieldType
+  parseUri
 } from '@kepler.gl/common-utils';
 
 import {DatasetType, Field as KeplerField} from '@kepler.gl/types';
 import {KeplerTable as KeplerDataset} from '@kepler.gl/table';
 
 import {default as BaseLayer} from '../../base-layer';
-/*
-import {
-  parseHexMetadata as parseMetadataHexTile,
-  HexTileMetadata
-} from '../hex-tile/hex-tile-utils';
-*/
+
+export const getLoaderOptions = () => {
+  return {
+    mvt: {
+      workerUrl: `https://unpkg.com/@loaders.gl/mvt/dist/mvt-worker.js`
+    }
+  };
+};
+
+export const isMobile = () => {
+  return false;
+};
 
 export function isTileDataset(dataset: KeplerDataset | {type: string}): boolean {
   return Boolean(dataset?.type === DatasetType.VECTOR_TILE);
 }
-
-export type TilesetMetadata = VectorTileMetadata; // | HexTileMetadata;
 
 type VectorTileField = {
   analyzerType: string;
@@ -58,6 +63,8 @@ export type VectorTileMetadata = {
   description?: string;
   fields: VectorTileField[];
 };
+
+type TilesetMetadata = VectorTileMetadata;
 
 export type TippecanoeLayerAttribute = {
   attribute?: string;
@@ -699,6 +706,12 @@ function attributeTypeToFieldType(aType?: string): {type: string; analyzerType: 
   return attrTypeMap[type];
 }
 
+/**
+ * Returns true if a dataset can be used as source data for a layer.
+ * @param dataset A dataset.
+ * @param layer A layer.
+ * @returns Returns true if a dataset can be used as source data for a layer.
+ */
 export function matchDatasetType(dataset: KeplerDataset, layer: BaseLayer): boolean {
   // allow selection if type is not assigned yet
   if (!layer.type) {
@@ -717,4 +730,17 @@ export function matchDatasetType(dataset: KeplerDataset, layer: BaseLayer): bool
     Array.isArray(layer.supportedDatasetTypes) &&
     layer.supportedDatasetTypes.includes(dataset.type || '')
   );
+}
+
+/**
+ * Remove null/0 values from the bottom of the quantiles. If the column has many nulls
+ * or 0s at the bottom of the quantiles, it will wash out color scales and produce
+ * meaningless "no value" legend entries. We want to keep the first 0 and no others.
+ * Operates in place.
+ */
+export function pruneQuantiles(quantiles: number[]): void {
+  const firstNonZeroIdx = quantiles.findIndex(d => d !== null && d !== 0);
+  if (firstNonZeroIdx > 0) {
+    quantiles.splice(0, firstNonZeroIdx - 1);
+  }
 }
