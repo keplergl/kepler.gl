@@ -480,7 +480,8 @@ export default class PointLayer extends Layer {
   }
   /* eslint-enable complexity */
 
-  updateLayerMeta(dataContainer) {
+  updateLayerMeta(dataset: KeplerTable) {
+    const {dataContainer} = dataset;
     this.dataContainer = dataContainer;
 
     if (this.config.columnMode === COLUMN_MODE_GEOJSON) {
@@ -489,7 +490,7 @@ export default class PointLayer extends Layer {
     } else if (this.config.columnMode === COLUMN_MODE_GEOARROW) {
       const boundsFromMetadata = getBoundsFromArrowMetadata(
         this.config.columns.geoarrow,
-        dataContainer
+        dataContainer as ArrowDataContainer
       );
       if (boundsFromMetadata) {
         this.updateMeta({bounds: boundsFromMetadata});
