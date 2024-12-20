@@ -217,15 +217,14 @@ export default abstract class AbstractTileLayer<
   ): (field: KeplerField, datum: T extends Iterable<infer V> ? V : never) => string | number | null;
 
   accessVSFieldValue(inputField?: Field, indexKey?: number | null): any {
-    return this.accessRowValue(inputField as KeplerField | undefined, indexKey);
+    return this.accessRowValue(inputField, indexKey);
   }
 
   getScaleOptions(channelKey: string): string[] {
     if (channelKey === 'color') {
       const channel = this.visualChannels.color;
       const field = this.config[channel.field];
-      // TODO: Support Jenks for dynamic color
-      // TODO: Support ordinal for integer or string fields
+
       if (
         isDomainQuantiles(field?.filterProps?.domainQuantiles) ||
         this.config.visConfig.dynamicColor ||
@@ -244,7 +243,7 @@ export default abstract class AbstractTileLayer<
 
   setDynamicColorDomain = throttle((): void => {
     const {config, tileDataset, setLayerDomain} = this;
-    const field = config.colorField as KeplerField;
+    const field = config.colorField;
     const {colorDomain, colorScale} = config;
     if (!tileDataset || !setLayerDomain || !field) return;
 
