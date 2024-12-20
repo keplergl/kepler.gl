@@ -17,7 +17,14 @@ import {
   DEFAULT_COLOR_UI,
   LAYER_VIS_CONFIGS
 } from '@kepler.gl/constants';
-import {Layer as KeplerLayer, VisualChannel} from '@kepler.gl/layers';
+import {
+  Layer as KeplerLayer,
+  VisualChannel,
+  DatasetType,
+  TileType,
+  VectorTileType,
+  VectorTileDatasetMetadata
+} from '@kepler.gl/layers';
 import {
   KeplerTable as KeplerDataset,
   Datasets as KeplerDatasets,
@@ -33,11 +40,7 @@ import {
   BindedLayerCallbacks,
   VisConfigRange,
   VisConfigNumber,
-  DatasetType,
-  VectorTileType,
-  VectorTileDatasetMetadata,
-  DomainStops,
-  TileType
+  DomainStops
 } from '@kepler.gl/types';
 import {DataContainerInterface} from '@kepler.gl/utils';
 

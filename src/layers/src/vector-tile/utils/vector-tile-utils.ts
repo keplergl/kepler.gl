@@ -23,10 +23,30 @@ import {
   StringFieldFilterProps,
   KeplerTable as KeplerDataset
 } from '@kepler.gl/table';
-import {DatasetType, Field as KeplerField} from '@kepler.gl/types';
+import {Field as KeplerField} from '@kepler.gl/types';
 import {clamp, formatNumberByStep, getNumericStepSize, timeToUnixMilli} from '@kepler.gl/utils';
 
 import {default as BaseLayer} from '../../base-layer';
+
+export enum DatasetType {
+  LOCAL = 'local',
+  VECTOR_TILE = 'vectorTile'
+}
+
+export enum TileType {
+  VECTOR_TILE = 'vectorTile'
+}
+
+export enum VectorTileType {
+  REMOTE = 'remote',
+  PMTILES = 'pmtiles'
+}
+
+export type VectorTileDatasetMetadata = {
+  type: VectorTileType.REMOTE;
+  tilesetDataUrl: string;
+  tilesetMetadataUrl?: string;
+};
 
 export const getLoaderOptions = () => {
   return {

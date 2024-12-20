@@ -4,10 +4,15 @@
 import React, {useCallback, useEffect, useState, useMemo} from 'react';
 import styled from 'styled-components';
 
-import {getMetaUrl, parseVectorMetadata, VectorTileMetadata} from '@kepler.gl/layers';
+import {
+  getMetaUrl,
+  parseVectorMetadata,
+  VectorTileMetadata,
+  DatasetType,
+  VectorTileType
+} from '@kepler.gl/layers';
 import {TileJSON} from '@loaders.gl/mvt';
 import {PMTilesMetadata} from '@loaders.gl/pmtiles';
-import {DatasetType, VectorTileType} from '@kepler.gl/types';
 
 import {default as useFetchVectorTileMetadata} from '../../hooks/use-fetch-vector-tile-metadata';
 import {DatasetCreationAttributes, MetaResponse, StyledInput} from './common';

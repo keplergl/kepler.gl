@@ -14,7 +14,7 @@ import {
 } from '../common/styled-components';
 import {StyledWarning} from './export-map-modal/components';
 import {injectIntl, IntlShape} from 'react-intl';
-import {DatasetType} from '@kepler.gl/types';
+import {DatasetType} from '@kepler.gl/layers';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {Datasets} from '@kepler.gl/table';
 
