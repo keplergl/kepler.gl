@@ -314,6 +314,7 @@ class KeplerGl(widgets.DOMWidget):
         - config: map config dictionary, if not provided, will use current map config
         - file_name: the html file name, default is keplergl_map.html
         - read_only: if read_only is True, hide side panel to disable map customization
+        - center_map: if center_map is True, the bound of the map will be updated acoording to the current map data
 
         Returns:
         - an html file will be saved to your notebook
