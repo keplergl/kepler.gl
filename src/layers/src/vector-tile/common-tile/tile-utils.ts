@@ -3,11 +3,11 @@
 
 import {bisectLeft} from 'd3-array';
 
-import {DatasetType, DomainStops, Field as KeplerField, ZoomStopsConfig} from '@kepler.gl/types';
+import {DomainStops, Field as KeplerField, ZoomStopsConfig} from '@kepler.gl/types';
 import {DomainQuantiles} from '@kepler.gl/utils';
 
 export enum TileType {
-  VECTOR_TILE = DatasetType.VECTOR_TILE
+  VECTOR_TILE = 'vectorTile'
 }
 
 // helper functions

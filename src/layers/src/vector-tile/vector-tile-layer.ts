@@ -190,7 +190,7 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
     });
   }
 
-  get type(): TileType {
+  get type() {
     return TileType.VECTOR_TILE;
   }
 
@@ -372,7 +372,7 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
       const datasetMetadata = dataset.metadata as VectorTileMetadata & VectorTileDatasetMetadata;
       if (datasetMetadata?.type === VectorTileType.REMOTE) {
         const transformFetch = async (input: RequestInfo | URL, init?: RequestInit | undefined) => {
-          let requestData: RequestParameters = {
+          const requestData: RequestParameters = {
             url: input as string,
             searchParams: new URLSearchParams(),
             options: init ?? {}
@@ -474,7 +474,7 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
     const sizeField = this.config.sizeField as KeplerField;
 
     if (data.tileSource) {
-      let hoveredObject = this.hasHoveredObject(objectHovered);
+      const hoveredObject = this.hasHoveredObject(objectHovered);
 
       const layers = [
         new CustomMVTLayer({

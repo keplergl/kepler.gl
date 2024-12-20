@@ -5,7 +5,7 @@ import React, {useCallback, useEffect, useState, useMemo} from 'react';
 import styled from 'styled-components';
 
 import {getMetaUrl, parseVectorMetadata, VectorTileMetadata} from '@kepler.gl/layers';
-import {DatasetType, VectorTileType} from '@kepler.gl/types';
+import {DatasetType, JsonObject, VectorTileType} from '@kepler.gl/types';
 
 import {default as useFetchVectorTileMetadata} from '../../hooks/use-fetch-vector-tile-metadata';
 import {DatasetCreationAttributes, MetaResponse, StyledInput} from './common';
@@ -88,7 +88,8 @@ const TilesetVectorForm: React.FC<TilesetVectorFormProps> = ({setResponse}) => {
     [setTileUrl, tileName, setMetadataUrl, metadataUrl]
   );
   const process = useMemo(() => {
-    return value => parseVectorMetadata(value, {tileUrl: metadataUrl, isDataSourceMetadata: true});
+    return (value: JsonObject) =>
+      parseVectorMetadata(value, {tileUrl: metadataUrl, isDataSourceMetadata: true});
   }, [metadataUrl]);
 
   const {

@@ -7,17 +7,27 @@ import {MVTSource, TileJSON} from '@loaders.gl/mvt';
 import {PMTilesSource, PMTilesMetadata} from '@loaders.gl/pmtiles';
 
 import {JsonObject, VectorTileType} from '@kepler.gl/types';
+import {VectorTileMetadata} from '@kepler.gl/layers';
 
 type FetchVectorTileMetadataProps = {
   url: string | null;
   type: VectorTileType;
-  process?: (json: JsonObject) => JsonObject | Error | null;
+  process?: (json: JsonObject) => VectorTileMetadata | Error | null;
 };
 
-const DEFAULT_PROCESS_FUNCTION = (json: JsonObject): JsonObject => json;
+const DEFAULT_PROCESS_FUNCTION = (json: JsonObject): VectorTileMetadata => {
+  return {
+    metaJson: null,
+    bounds: null,
+    center: null,
+    maxZoom: null,
+    minZoom: null,
+    fields: []
+  };
+};
 
 type FetchVectorTileMetadataReturn = {
-  data: JsonObject | null;
+  data: VectorTileMetadata | null;
   loading: boolean;
   error: Error | null;
 };
@@ -29,7 +39,7 @@ export default function useFetchVectorTileMetadata({
   process = DEFAULT_PROCESS_FUNCTION
 }: FetchVectorTileMetadataProps): FetchVectorTileMetadataReturn {
   const [error, setError] = useState<Error | null>(null);
-  const [data, setData] = useState<JsonObject | null>(null);
+  const [data, setData] = useState<VectorTileMetadata | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
 
   const setProcessedData = useCallback(

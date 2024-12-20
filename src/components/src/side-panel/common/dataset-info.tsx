@@ -12,7 +12,7 @@ const numFormat = format(',');
 
 type MiniDataset = {
   dataContainer: DataContainerInterface;
-  type: string;
+  type?: string;
 };
 
 export type DatasetInfoProps = {

@@ -4,7 +4,7 @@
 import styled from 'styled-components';
 
 import {InputLight} from '@kepler.gl/components';
-import {JsonObjectOrArray} from '@kepler.gl/types';
+import {VectorTileMetadata} from '@kepler.gl/layers';
 
 export type DatasetCreationAttributes = {
   name: string;
@@ -13,7 +13,7 @@ export type DatasetCreationAttributes = {
 };
 
 export type MetaResponse = {
-  metadata?: JsonObjectOrArray | null;
+  metadata?: VectorTileMetadata | null;
   dataset?: DatasetCreationAttributes | null;
   loading?: boolean;
   error?: Error | null;

@@ -25,7 +25,8 @@ import {
   Filter,
   Field as KeplerField,
   MapState,
-  Merge
+  Merge,
+  ZoomStopsConfig
 } from '@kepler.gl/types';
 import {findDefaultColorField, DataContainerInterface} from '@kepler.gl/utils';
 
@@ -37,7 +38,7 @@ import {
 } from '../base-layer';
 import {isTileDataset} from './utils/vector-tile-utils';
 import TileDataset from './common-tile/tile-dataset';
-import {isIndexedField, isDomainQuantiles, ZoomStopsConfig} from './common-tile/tile-utils';
+import {isIndexedField, isDomainQuantiles} from './common-tile/tile-utils';
 
 const DEFAULT_ELEVATION = 500;
 export const DEFAULT_RADIUS = 1;
