@@ -22,7 +22,8 @@ const DEFAULT_PROCESS_FUNCTION = (json: JsonObject): VectorTileMetadata => {
     center: null,
     maxZoom: null,
     minZoom: null,
-    fields: []
+    fields: [],
+    ...json
   };
 };
 
