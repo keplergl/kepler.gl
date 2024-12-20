@@ -38,7 +38,9 @@ const RESOLVE_LOCAL_ALIASES = {
   // kepler.gl and loaders.gl need to use same apache-arrow
   'apache-arrow': `${NODE_MODULES_DIR}/apache-arrow`,
   // all react-ai-assist needs to be resolved from samenode_modules
-  'react-ai-assist': `${NODE_MODULES_DIR}/react-ai-assist`
+  'react-ai-assist': `${NODE_MODULES_DIR}/react-ai-assist`,
+  // duckdb-wasm needs to be resolved from same node_modules
+  '@duckdb/duckdb-wasm': `${NODE_MODULES_DIR}/@duckdb/duckdb-wasm`
 };
 
 const config = {
