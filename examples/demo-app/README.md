@@ -17,7 +17,7 @@ yarn install
 
 
 #### 2. Mapbox Token and Cloud storage client id
-A collection of enviroment variables to pass mapbox tokens, and client ids for the cloud storages
+A collection of environment variables to pass mapbox tokens, and client ids for the cloud storages
 
 ```sh
 export MapboxAccessToken=<your_mapbox_token>
