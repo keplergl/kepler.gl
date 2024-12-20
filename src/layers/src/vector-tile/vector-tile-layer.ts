@@ -19,6 +19,11 @@ import {
 } from '@kepler.gl/constants';
 import {Layer as KeplerLayer, VisualChannel} from '@kepler.gl/layers';
 import {
+  KeplerTable as KeplerDataset,
+  Datasets as KeplerDatasets,
+  GpuFilter
+} from '@kepler.gl/table';
+import {
   AnimationConfig,
   Field as KeplerField,
   LayerColorConfig,
@@ -31,13 +36,9 @@ import {
   DatasetType,
   VectorTileType,
   VectorTileDatasetMetadata,
-  DomainStops
+  DomainStops,
+  TileType
 } from '@kepler.gl/types';
-import {
-  KeplerTable as KeplerDataset,
-  Datasets as KeplerDatasets,
-  GpuFilter
-} from '@kepler.gl/table';
 import {DataContainerInterface} from '@kepler.gl/utils';
 
 import {getTileUrl} from './utils/vector-tile-utils';
@@ -49,7 +50,7 @@ import {
   VisualChannelDomain,
   VisualChannelField
 } from '../base-layer';
-import {VectorTileMetadata, getLoaderOptions, isMobile} from './utils/vector-tile-utils';
+import {VectorTileMetadata, getLoaderOptions} from './utils/vector-tile-utils';
 
 import AbstractTileLayer, {
   LayerData as CommonLayerData,
@@ -62,7 +63,6 @@ import {
   isDomainStops,
   isDomainQuantiles,
   isIndexedField,
-  TileType,
   getPropertyByZoom
 } from './common-tile/tile-utils';
 
@@ -315,8 +315,6 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
     field?: KeplerField,
     indexKey?: number | null
   ): (field: KeplerField, datum: Feature) => number | null {
-    // indexMap: indexBy? [sourceIdx -> ts -> targetIdx] : [sourceIdx -> targetIdx]
-
     // if is indexed field
     if (isIndexedField(field) && indexKey !== null) {
       const fieldName = indexKey && field?.indexBy?.mappedValue[indexKey];
@@ -423,7 +421,6 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
 
     const tile: Tile2DHeader = props.tile;
     const zoom = tile.index.z;
-    const mobile = isMobile();
 
     return new GeoJsonLayer({
       ...props,
@@ -432,9 +429,9 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
       getElevation: props.getElevationByZoom ? props.getElevation(zoom) : props.getElevation,
       pointRadiusScale: props.getPointRadiusScaleByZoom(zoom),
       // For some reason tile Layer reset autoHighlight to false
-      pickable: !mobile,
-      autoHighlight: !mobile,
-      stroked: props.stroked && !mobile,
+      pickable: true,
+      autoHighlight: true,
+      stroked: props.stroked,
       // wrapLongitude: true causes missing side polygon when extrude is enabled
       wrapLongitude: false
     });
@@ -449,14 +446,7 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
 
     const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
     const eleZoomFactor = this.getElevationZoomFactor(mapState);
-    const mobile = isMobile();
 
-    const mobileProps = {
-      // Turn on to verify that mobile props are in effect
-      pickable: false,
-      autoHighlight: false,
-      maxCacheSize: MAX_CACHE_SIZE_MOBILE
-    };
     const transitions = this.config.visConfig.transition
       ? {
           getFillColor: {
@@ -561,9 +551,7 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
           },
           loadOptions: {
             mvt: getLoaderOptions().mvt
-          },
-          // Mobile overrides
-          ...(mobile ? mobileProps : {})
+          }
         }),
         // hover layer
         ...(hoveredObject
@@ -575,9 +563,6 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
                 visible: true,
                 wrapLongitude: false,
                 data: [hoveredObject],
-                // getLineWidth: 1,
-                // getPointRadius: 10,
-                // getElevation: 0,
                 getLineColor: this.config.highlightColor,
                 getFillColor: this.config.highlightColor,
                 // always draw outline

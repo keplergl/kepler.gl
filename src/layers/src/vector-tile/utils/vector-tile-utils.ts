@@ -1,30 +1,30 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {TileJSON} from '@loaders.gl/mvt';
-import {PMTilesMetadata} from '@loaders.gl/pmtiles';
 import {ascending} from 'd3-array';
 import Console from 'global/console';
 import uniq from 'lodash.uniq';
 import {DATA_TYPES} from 'type-analyzer';
 
-import {ALL_FIELD_TYPES, FILTER_TYPES} from '@kepler.gl/constants';
-import {
-  FilterProps,
-  NumericFieldFilterProps,
-  BooleanFieldFilterProps,
-  StringFieldFilterProps
-} from '@kepler.gl/table';
-import {clamp, formatNumberByStep, getNumericStepSize, timeToUnixMilli} from '@kepler.gl/utils';
+import {TileJSON} from '@loaders.gl/mvt';
+import {PMTilesMetadata} from '@loaders.gl/pmtiles';
+
 import {
   analyzerTypeToFieldType,
   containValidTime,
   notNullorUndefined as notNullOrUndefined,
   parseUri
 } from '@kepler.gl/common-utils';
-
+import {ALL_FIELD_TYPES, FILTER_TYPES} from '@kepler.gl/constants';
+import {
+  FilterProps,
+  NumericFieldFilterProps,
+  BooleanFieldFilterProps,
+  StringFieldFilterProps,
+  KeplerTable as KeplerDataset
+} from '@kepler.gl/table';
 import {DatasetType, Field as KeplerField} from '@kepler.gl/types';
-import {KeplerTable as KeplerDataset} from '@kepler.gl/table';
+import {clamp, formatNumberByStep, getNumericStepSize, timeToUnixMilli} from '@kepler.gl/utils';
 
 import {default as BaseLayer} from '../../base-layer';
 
@@ -34,10 +34,6 @@ export const getLoaderOptions = () => {
       workerUrl: `https://unpkg.com/@loaders.gl/mvt/dist/mvt-worker.js`
     }
   };
-};
-
-export const isMobile = () => {
-  return false;
 };
 
 export function isTileDataset(dataset: KeplerDataset | {type: string}): boolean {

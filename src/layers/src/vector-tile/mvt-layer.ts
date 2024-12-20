@@ -2,8 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {Layer, LayersList} from '@deck.gl/core/typed';
-// @ts-expect-error Module '"@deck.gl/extensions"' has no exported member 'ClipExtension' in @types?
-import {ClipExtension} from '@deck.gl/extensions';
+import {ClipExtension} from '@deck.gl/extensions/typed';
 import {
   MVTLayer as _MVTLayer,
   TileLayer,

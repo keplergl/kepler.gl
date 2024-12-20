@@ -6,6 +6,10 @@ export enum DatasetType {
   VECTOR_TILE = 'vectorTile'
 }
 
+export enum TileType {
+  VECTOR_TILE = 'vectorTile'
+}
+
 export enum VectorTileType {
   REMOTE = 'remote',
   PMTILES = 'pmtiles'

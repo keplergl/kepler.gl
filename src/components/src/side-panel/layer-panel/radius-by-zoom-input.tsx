@@ -8,9 +8,8 @@ import {sortableContainer, sortableElement, sortableHandle} from 'react-sortable
 import styled, {css} from 'styled-components';
 
 import {Icons, Input, PanelLabel, Button} from '@kepler.gl/components';
-import {ZoomStopsConfig} from '@kepler.gl/types';
-
-export type ZoomStops = number[][];
+import {ZoomStops, ZoomStopsConfig} from '@kepler.gl/types';
+import {arrayMove} from '@kepler.gl/utils';
 
 const SliderInput = styled(Input)`
   width: 48px;
@@ -39,6 +38,7 @@ const StyledInputRow = styled.div<StyledInputRowProps>`
 type StyledTrashProps = {
   isEditing?: boolean;
 };
+
 const StyledTrash = styled.div<StyledTrashProps>`
   color: ${props => props.theme.subtextColor};
   display: flex;
@@ -177,12 +177,6 @@ function insertStop(stops: ZoomStops): ZoomStops {
   return newStops;
 }
 
-function arrayMove(arr, from, to) {
-  const array = arr.slice();
-  array.splice(to < 0 ? array.length + to : to, 0, array.splice(from, 1)[0]);
-  return array;
-}
-
 type VisConfigByZoomInputContainerProps = {
   isEditing?: boolean;
 };
@@ -207,9 +201,6 @@ type Props = {
   config: ZoomStopsConfig;
   property: string;
   onChange: (update: Record<string, ZoomStopsConfig>) => void;
-  // TODO: unused
-  unit: unknown;
-  label: unknown;
 };
 
 const VisConfigByZoomInput: React.FC<Props> = ({config = {}, property, onChange}) => {

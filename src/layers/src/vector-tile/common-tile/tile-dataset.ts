@@ -42,8 +42,7 @@ export default class TileDataset<T, I extends Iterable<any> = T extends Iterable
   private tiles: readonly T[];
   private tileSet: IterableTileSet<I>;
   private tileIds: Set<string> = new Set();
-  /** cached version of the Kepler-style full dataset */
-  // private cachedDataset: KeplerTable | null = null;
+
   /** Cache for per-tile field stats: tileId -> fieldId -> stats */
   private tileStats: Map<string, Map<string, TileFieldStats>> = new Map();
 
@@ -59,9 +58,7 @@ export default class TileDataset<T, I extends Iterable<any> = T extends Iterable
   /**
    * Invalidate the cached data
    */
-  invalidateCache(): void {
-    // this.cachedDataset = null;
-  }
+  invalidateCache(): void {}
 
   /**
    * Update the set of tiles in the viewport
