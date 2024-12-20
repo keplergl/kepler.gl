@@ -21,6 +21,8 @@ import {
 import {CLOUD_PROVIDERS_CONFIGURATION} from '../constants/default-settings';
 import {generateHashId} from '../utils/strings';
 
+const {DEFAULT_MAP_CONTROLS} = uiStateUpdaters;
+console.log(DEFAULT_MAP_CONTROLS);
 // INITIAL_APP_STATE
 const initialAppState = {
   appName: 'example',
@@ -69,6 +71,15 @@ const demoReducer = combineReducers({
         [EXPORT_MAP_FORMATS.HTML]: {
           ...DEFAULT_EXPORT_MAP[[EXPORT_MAP_FORMATS.HTML]],
           exportMapboxAccessToken: CLOUD_PROVIDERS_CONFIGURATION.EXPORT_MAPBOX_TOKEN
+        }
+      },
+      mapControls: {
+        ...DEFAULT_MAP_CONTROLS,
+        sqlPanel: {
+          active: false,
+          activeMapIndex: 0,
+          disableClose: false,
+          show: true
         }
       }
     },
