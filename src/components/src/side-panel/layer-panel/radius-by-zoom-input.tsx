@@ -200,6 +200,7 @@ const VisConfigByZoomInputContainer = styled.div<VisConfigByZoomInputContainerPr
 type Props = {
   config: ZoomStopsConfig;
   property: string;
+  label: string;
   onChange: (update: Record<string, ZoomStopsConfig>) => void;
 };
 
