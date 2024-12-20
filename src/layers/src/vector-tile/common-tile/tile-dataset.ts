@@ -58,7 +58,9 @@ export default class TileDataset<T, I extends Iterable<any> = T extends Iterable
   /**
    * Invalidate the cached data
    */
-  invalidateCache(): void {}
+  invalidateCache(): void {
+    // TODO: implement later
+  }
 
   /**
    * Update the set of tiles in the viewport

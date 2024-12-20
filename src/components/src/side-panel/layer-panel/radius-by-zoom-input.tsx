@@ -201,6 +201,7 @@ type Props = {
   config: ZoomStopsConfig;
   property: string;
   label: string;
+  unit: string;
   onChange: (update: Record<string, ZoomStopsConfig>) => void;
 };
 
