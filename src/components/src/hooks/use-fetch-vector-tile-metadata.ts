@@ -6,16 +6,16 @@ import {useCallback, useEffect, useState} from 'react';
 import {MVTSource, TileJSON} from '@loaders.gl/mvt';
 import {PMTilesSource, PMTilesMetadata} from '@loaders.gl/pmtiles';
 
-import {JsonObject, VectorTileType} from '@kepler.gl/types';
+import {VectorTileType} from '@kepler.gl/types';
 import {VectorTileMetadata} from '@kepler.gl/layers';
 
 type FetchVectorTileMetadataProps = {
   url: string | null;
   type: VectorTileType;
-  process?: (json: JsonObject) => VectorTileMetadata | Error | null;
+  process?: (json: PMTilesMetadata | TileJSON) => VectorTileMetadata | Error | null;
 };
 
-const DEFAULT_PROCESS_FUNCTION = (json: JsonObject): VectorTileMetadata => {
+const DEFAULT_PROCESS_FUNCTION = (json: PMTilesMetadata | TileJSON): VectorTileMetadata => {
   return {
     metaJson: null,
     bounds: null,
@@ -48,7 +48,7 @@ export default function useFetchVectorTileMetadata({
       if (!value) {
         return setError(value);
       }
-      const processedData = process(value as any);
+      const processedData = process(value);
       if (processedData instanceof Error) {
         setError(processedData);
       } else {
