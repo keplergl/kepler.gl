@@ -3,7 +3,6 @@
 
 import test from 'tape-catch';
 import cloneDeep from 'lodash.clonedeep';
-import {drainTasksForTesting, succeedTaskWithValues} from 'react-palm/tasks';
 import {colorPaletteToColorRange} from '@kepler.gl/constants';
 import {
   getInitialInputStyle,
@@ -28,7 +27,6 @@ import {
   UIStateActions,
   ProviderActions
 } from '@kepler.gl/actions';
-import {KeplerTable} from '@kepler.gl/table';
 
 // fixtures
 import {
@@ -58,6 +56,14 @@ import testArcData, {arcDataInfo, config as arcDataConfig} from '../fixtures/tes
 import tripGeojson, {tripDataInfo} from '../fixtures/trip-geojson';
 import {processCsvData, processGeojson, processRowObject} from '@kepler.gl/processors';
 import {MOCK_MAP_STYLE} from './mock-map-styles';
+import {
+  applyActions,
+  applyCreateTableTasks,
+  applyExistingDatasetTasks,
+  mockCreateNewDataEntry
+} from './mock-state-utils';
+
+export {applyActions, applyCreateTableTasks, applyExistingDatasetTasks, mockCreateNewDataEntry};
 
 const geojsonFields = cloneDeep(fields);
 const geojsonRows = cloneDeep(rows);
@@ -80,68 +86,8 @@ export const geojsonInfo = {
   params: {file: null}
 };
 
-/**
- * Applies actions one by one using the reducer.
- * After each action drain Tasks and automarically resolve tasks
- * of type CREATE_TABLE_TASK in order to create datasets.
- * @param {Reducer} reducer A reducer to use.
- * @param {State} initialState Initial state.
- * @param {Action | Action[]}actions An array of actions.
- * @returns
- */
-export function applyActions(reducer, initialState, actions) {
-  const actionQ = Array.isArray(actions) ? actions : [actions];
-
-  // remove any existing tasks before actions
-  drainTasksForTesting();
-
-  let updatedState = actionQ.reduce((updatedState, {action, payload}) => {
-    let newState = reducer(updatedState, action(...payload));
-    const tasks = drainTasksForTesting();
-    newState = applyCreateTableTasks(tasks, reducer, newState);
-    return newState;
-  }, initialState);
-
-  return updatedState;
-}
-
 // TODO: need to be deleted and imported from raw-states
 export const InitialState = keplerGlReducer(undefined, {});
-
-/**
- * Mock instant sync result of createNewDataEntry.
- */
-const mockCreateNewDataEntry = ({info, color, opts, data}) => {
-  const table = new KeplerTable({info, color, ...opts});
-  table.importData({data});
-  return table;
-};
-
-/**
- * Execute tasks and mock CREATE_TABLE_TASK with success.
- * @param {Task[]} tasks
- * @param {Reducer} reducer
- * @param {VisState} initialState
- * @returns
- */
-export const applyCreateTableTasks = (tasks, reducer, initialState) => {
-  return tasks.reduce((updatedState, task) => {
-    if (!task.label.includes('CREATE_TABLE_TASK')) return updatedState;
-    const tables = task.payload.map(payload => mockCreateNewDataEntry(payload));
-    return reducer(updatedState, succeedTaskWithValues(task, tables));
-  }, initialState);
-};
-
-/**
- * Execute existing tasts and mock CREATE_TABLE_TASK with success.
- * @param {VisStateReducer} reducer
- * @param {VisState} initialState
- * @returns
- */
-export function applyExistingDatasetTasks(reducer, initialState) {
-  const tasks = drainTasksForTesting();
-  return applyCreateTableTasks(tasks, reducer, initialState);
-}
 
 /**
  * Mock app state with uploaded geojson and csv file

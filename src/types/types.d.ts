@@ -33,3 +33,11 @@ export type ProcessorResult = {
   cols?: any[];
   metadata?: any;
 } | null;
+
+export type Json = JsonScalar | JsonArray | JsonObject;
+export type JsonObjectOrArray = JsonArray | JsonObject;
+export type JsonScalar = string | number | boolean | null;
+export type JsonArray = Json[];
+export type JsonObject = {
+  [key: string]: Json | undefined;
+};

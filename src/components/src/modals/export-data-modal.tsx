@@ -12,7 +12,9 @@ import {
   StyledType,
   CheckMark
 } from '../common/styled-components';
+import {StyledWarning} from './export-map-modal/components';
 import {injectIntl, IntlShape} from 'react-intl';
+import {DatasetType} from '@kepler.gl/layers';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {Datasets} from '@kepler.gl/table';
 
@@ -87,6 +89,14 @@ const ExportDataModalFactory = () => {
         onChangeExportFiltered,
         intl
       } = this.props;
+
+      const exportAllDatasets = selectedDataset ? !datasets[selectedDataset] : true;
+      const showVectorTileWarning = Object.keys(datasets).some(datasetId => {
+        return (
+          datasets[datasetId].type === DatasetType.VECTOR_TILE &&
+          (selectedDataset === datasetId || exportAllDatasets)
+        );
+      });
 
       return (
         <StyledModalContent className="export-data-modal">
@@ -172,6 +182,13 @@ const ExportDataModalFactory = () => {
                 </StyledFilteredOption>
               </div>
             </StyledExportSection>
+            {showVectorTileWarning ? (
+              <div className="title">
+                <StyledWarning>
+                  <FormattedMessage id={'modal.exportData.vectorTileWarning'} />
+                </StyledWarning>
+              </div>
+            ) : null}
           </div>
         </StyledModalContent>
       );

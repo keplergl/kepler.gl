@@ -185,7 +185,8 @@ export default class ScenegraphLayer extends Layer {
     };
   }
 
-  updateLayerMeta(dataContainer, getPosition) {
+  updateLayerMeta(dataset: KeplerTable, getPosition) {
+    const {dataContainer} = dataset;
     const bounds = this.getPointsBounds(dataContainer, getPosition);
     this.updateMeta({bounds});
   }

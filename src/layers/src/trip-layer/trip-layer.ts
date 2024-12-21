@@ -361,7 +361,8 @@ export default class TripLayer extends Layer {
     });
   }
 
-  updateLayerMeta(dataContainer: DataContainerInterface) {
+  updateLayerMeta(dataset: KeplerTable) {
+    const {dataContainer} = dataset;
     let getFeature;
     if (this.config.columnMode === COLUMN_MODE_GEOJSON) {
       getFeature = this.getPositionAccessor(dataContainer);
@@ -408,7 +409,7 @@ export default class TripLayer extends Layer {
       }
     }
 
-    this.updateLayerMeta(dataContainer);
+    this.updateLayerMeta(dataset);
     return this;
   }
 

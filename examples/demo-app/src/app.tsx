@@ -194,6 +194,76 @@ const App = props => {
     );
   }, [dispatch]);
 
+  const _loadVectorTileData = useCallback(() => {
+    dispatch(
+      addDataToMap({
+        datasets: [
+          {
+            info: {
+              label: 'Railroads',
+              id: 'railroads.pmtiles',
+              color: [255, 0, 0],
+              type: 'vectorTile'
+            },
+            data: {
+              rows: [],
+              fields: [
+                {
+                  name: 'continent',
+                  type: 'string',
+                  format: '',
+                  analyzerType: 'STRING'
+                }
+              ]
+            },
+            metadata: {
+              name: 'output.pmtiles',
+              description: 'output.pmtiles',
+              type: 'pmtiles',
+              tilesetDataUrl:
+                'https://4sq-studio-public.s3.us-west-2.amazonaws.com/pmtiles-test/161727fe-7952-4e57-aa05-850b3086b0b2.pmtiles',
+              tilesetMetadataUrl:
+                'https://4sq-studio-public.s3.us-west-2.amazonaws.com/pmtiles-test/161727fe-7952-4e57-aa05-850b3086b0b2.pmtiles',
+              id: 'sz6uy1xtj',
+              format: 'rows',
+              label: 'output.pmtiles',
+              metaJson: null,
+              bounds: [-150.1122219, -51.8952777, 179.3577783, 69.6043747],
+              center: [14.0625, 50.7026397, 6],
+              maxZoom: 6,
+              minZoom: 0,
+              fields: [
+                {
+                  name: 'continent',
+                  id: 'continent',
+                  format: '',
+                  filterProps: {
+                    domain: [
+                      'Africa',
+                      'Asia',
+                      'Europe',
+                      'North America',
+                      'Oceania',
+                      'South America'
+                    ],
+                    value: [],
+                    type: 'multiSelect',
+                    gpu: false
+                  },
+                  type: 'string',
+                  analyzerType: 'STRING'
+                }
+              ]
+            }
+          }
+        ],
+        options: {
+          autoCreateLayers: true
+        }
+      })
+    );
+  }, [dispatch]);
+
   const _loadPointData = useCallback(() => {
     dispatch(
       addDataToMap({
@@ -427,6 +497,7 @@ const App = props => {
     // _loadScenegraphLayer();
     // _loadGpsData();
     // _loadRowData();
+    // _loadVectorTileData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     _loadPointData,
@@ -438,7 +509,8 @@ const App = props => {
     _loadScenegraphLayer,
     _loadGpsData,
     _loadRowData,
-    _replaceData
+    _replaceData,
+    _loadVectorTileData
   ]);
 
   return (

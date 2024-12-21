@@ -21,6 +21,7 @@ type MiniDataset = {
   color: RGBColor;
   label?: string;
   dataContainer: DataContainerInterface;
+  type?: string;
 };
 
 type MiniDatasets = {
