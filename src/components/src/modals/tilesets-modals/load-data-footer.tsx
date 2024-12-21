@@ -4,7 +4,7 @@
 import React from 'react';
 import styled from 'styled-components';
 
-import {Button} from '@kepler.gl/components';
+import {Button} from '../../common';
 
 const AddDataButton = styled(Button)<{isLoading?: boolean}>`
   position: relative;
