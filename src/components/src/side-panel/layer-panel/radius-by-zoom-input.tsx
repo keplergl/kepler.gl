@@ -7,9 +7,10 @@ import React, {useCallback, useState} from 'react';
 import {sortableContainer, sortableElement, sortableHandle} from 'react-sortable-hoc';
 import styled, {css} from 'styled-components';
 
-import {Icons, Input, PanelLabel, Button} from '@kepler.gl/components';
 import {ZoomStops, ZoomStopsConfig} from '@kepler.gl/types';
 import {arrayMove} from '@kepler.gl/utils';
+
+import {Icons, Input, PanelLabel, Button} from '../../common';
 
 const SliderInput = styled(Input)`
   width: 48px;
