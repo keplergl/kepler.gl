@@ -5,21 +5,16 @@ import React from 'react';
 import {connect} from 'react-redux';
 import styled from 'styled-components';
 
-import {
-  LayerColorRangeSelectorFactory,
-  LayerColorSelector,
-  ConfigGroupCollapsibleContent,
-  // factory
-  ChannelByValueSelectorFactory,
-  VisConfigSliderFactory,
-  VisConfigSwitchFactory,
-  LayerConfigGroupFactory,
-  SourceDataSelectorFactory
-} from '@kepler.gl/components';
 import {VectorTileLayer} from '@kepler.gl/layers';
 import {KeplerTable as KeplerDataset} from '@kepler.gl/table';
 
+import SourceDataSelectorFactory from '../common/source-data-selector';
+import ChannelByValueSelectorFactory from './channel-by-value-selector';
+import LayerConfigGroupFactory, {ConfigGroupCollapsibleContent} from './layer-config-group';
+import {LayerColorRangeSelectorFactory, LayerColorSelectorFactory} from './layer-color-selector';
 import VisConfigByZoomInput from './radius-by-zoom-input';
+import VisConfigSliderFactory from './vis-config-slider';
+import VisConfigSwitchFactory from './vis-config-switch';
 
 const StyledLayerConfigurator = styled.div`
   margin-top: 12px;
@@ -38,6 +33,7 @@ type Props = {
 VectorTileLayerConfiguratorFactory.deps = [
   ChannelByValueSelectorFactory,
   LayerColorRangeSelectorFactory,
+  LayerColorSelectorFactory,
   LayerConfigGroupFactory,
   VisConfigSliderFactory,
   VisConfigSwitchFactory,
@@ -47,6 +43,7 @@ VectorTileLayerConfiguratorFactory.deps = [
 function VectorTileLayerConfiguratorFactory(
   ChannelByValueSelector: ReturnType<typeof ChannelByValueSelectorFactory>,
   LayerColorRangeSelector: ReturnType<typeof LayerColorRangeSelectorFactory>,
+  LayerColorSelector: ReturnType<typeof LayerColorSelectorFactory>,
   LayerConfigGroup: ReturnType<typeof LayerConfigGroupFactory>,
   VisConfigSlider: ReturnType<typeof VisConfigSliderFactory>,
   VisConfigSwitch: ReturnType<typeof VisConfigSwitchFactory>
