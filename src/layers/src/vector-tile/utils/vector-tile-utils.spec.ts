@@ -6,11 +6,7 @@ import {DATA_TYPES} from 'type-analyzer';
 import {ALL_FIELD_TYPES, FILTER_TYPES} from '@kepler.gl/constants';
 
 import {getTileUrl, getMetaUrl, parseVectorMetadata as parseMetadata} from './vector-tile-utils';
-import {
-  tileMetadata,
-  parsedMetadata,
-  TIPPECANOE_PIPELINE_METADATA
-} from '../../../../../test/fixtures/tile-metadata';
+import {PMTILES_METADATA, MVT_METADATA} from '../../../../../test/fixtures/tile-metadata';
 
 describe('getTileUrl', () => {
   [
@@ -86,114 +82,40 @@ describe('getMetaUrl', () => {
   });
 });
 
-test('parseMetadata, unknown URL', () => {
-  const metaJson = {
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    vector_layers: [
-      // eslint-disable-next-line @typescript-eslint/naming-convention
-      {id: 'Test', description: '', minzoom: 0, maxzoom: 14, fields: {some_field: 'Number'}}
-    ],
-    tilestats: {
-      layerCount: 1,
-      layers: [
-        {
-          layer: 'Test',
-          attributes: [{attribute: 'some_field', type: 'number', min: 0.3, max: 33.5}]
-        }
-      ]
-    }
-  };
-
+test('parseMetadata, metadata from MVTSource and Mapbox URL', () => {
   expect(
-    parseMetadata(
-      {
-        name: 'Test',
-        description: 'vector tiles',
-        minzoom: '0',
-        maxzoom: '14',
-        center: '-87.088623,30.382353,14',
-        bounds: '-87.271471,30.344584,-86.789198,30.999259',
-        generator: 'tippecanoe v2.24.0',
-        json: JSON.stringify(metaJson)
-      },
-      {tileUrl: 'http://example.com/tiles'}
-    )
+    parseMetadata(MVT_METADATA, {tileUrl: 'https://api.mapbox.com/v4/spam/{z}/{x}/{y}.mvt'})
   ).toEqual({
-    name: 'Test',
-    description: 'vector tiles',
-    metaJson,
-    bounds: [-87.271471, 30.344584, -86.789198, 30.999259],
-    center: [-87.088623, 30.382353, 14],
-    maxZoom: 14,
-    minZoom: 0,
-    fields: [
-      {
-        id: 'some_field',
-        name: 'some_field',
-        format: '',
-        type: ALL_FIELD_TYPES.real,
-        analyzerType: DATA_TYPES.FLOAT,
-        filterProps: {
-          domain: [0.3, 33.5],
-          value: [0.3, 33.5],
-          type: 'range',
-          typeOptions: ['range'],
-          gpu: true,
-          step: 0.01
-        }
-      }
-    ]
-  });
-
-  // Check fixture
-  expect(parseMetadata(tileMetadata)).toMatchObject(parsedMetadata);
-});
-
-test('parseMetadata, Mapbox URL', () => {
-  expect(
-    parseMetadata(
-      {
-        name: 'Test',
-        description: 'vector tiles',
-        minzoom: '0',
-        maxzoom: '14',
-        center: '-87.088623,30.382353,14',
-        bounds: '-87.271471,30.344584,-86.789198,30.999259',
-        generator: 'tippecanoe v2.24.0',
-        // eslint-disable-next-line @typescript-eslint/naming-convention
-        vector_layers: [
-          // eslint-disable-next-line @typescript-eslint/naming-convention
-          {id: 'Test', description: '', minzoom: 0, maxzoom: 14, fields: {some_field: 'Number'}}
-        ]
-      },
-      {tileUrl: 'https://api.mapbox.com/v4/spam/{z}/{x}/{y}.mvt'}
-    )
-  ).toEqual({
-    name: 'Test',
-    description: 'vector tiles',
     metaJson: null,
-    bounds: [-87.271471, 30.344584, -86.789198, 30.999259],
-    center: [-87.088623, 30.382353, 14],
-    maxZoom: 14,
+    bounds: [-180, -85, 180, 85],
+    center: [0, 0, 0],
+    maxZoom: 16,
     minZoom: 0,
     fields: [
       {
-        id: 'some_field',
-        name: 'some_field',
+        name: 'class',
+        id: 'class',
         format: '',
-        type: ALL_FIELD_TYPES.real,
-        analyzerType: DATA_TYPES.FLOAT
+        filterProps: {
+          domain: [],
+          value: [],
+          type: 'multiSelect',
+          gpu: false
+        },
+        type: 'string',
+        analyzerType: 'STRING'
       }
-    ]
+    ],
+    name: 'Mapbox Streets v8',
+    description: ''
   });
 });
 
-test('parseMetadata, pipeline PMTiles', () => {
+test('parseMetadata, PMTiles from PMTileSource', () => {
   expect(
-    parseMetadata(TIPPECANOE_PIPELINE_METADATA, {
+    parseMetadata(PMTILES_METADATA, {
       tileUrl:
-        'https://4sq-studio-data-staging.s3.us-west-2.amazonaws.com/some_path/some_file.pmtiles',
-      isDataSourceMetadata: true
+        'https://4sq-studio-data-staging.s3.us-west-2.amazonaws.com/some_path/some_file.pmtiles'
     })
   ).toEqual({
     name: 'My Custom Tiles',
@@ -281,7 +203,7 @@ describe('parseMetadata, bad cases', () => {
     {name: 'string', input: 'spam', expected: null}
   ].forEach(({name, input, expected}) => {
     test(name, () => {
-      expect(parseMetadata(input)).toBe(expected);
+      expect(parseMetadata(input as any)).toBe(expected);
     });
   });
 });

@@ -218,21 +218,17 @@ export function getMetaUrl(tileUrl: string): string | null {
 }
 type ParseMetadataOption = {
   tileUrl?: string | null;
-  // special parsing for metadata returned by PMTilesSource & MVTSource.
-  isDataSourceMetadata?: boolean;
 };
 /**
  * Parse the metadata for a given tileset
  */
 export function parseVectorMetadata(
   // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-  metadata: any,
+  metadata: PMTilesMetadata | TileJSON,
   option?: ParseMetadataOption
 ): TilesetMetadata | null {
-  const {tileUrl = '', isDataSourceMetadata = false} = option || {};
-  return getTilesetFunctions(tileUrl).parseMetadata(metadata, {
-    isDataSourceMetadata
-  });
+  const {tileUrl = ''} = option || {};
+  return getTilesetFunctions(tileUrl).parseMetadata(metadata);
 }
 
 const MAPBOX_URL_PATT = /\/\{z\}\/\{x\}\/\{y\}\.mvt/;
@@ -241,29 +237,14 @@ function getMetaUrlMapbox(tileUrl = ''): string {
   return tileUrl.replace(MAPBOX_URL_PATT, '.json');
 }
 
-function parseMetadataTileJSON(
-  metadata: any,
-  opts: {isDataSourceMetadata?: boolean}
-): TilesetMetadata | null {
+function parseMetadataTileJSON(metadata: PMTilesMetadata | TileJSON): TilesetMetadata | null {
   const parsed = parseMetadataTippecanoeFromDataSource(metadata);
   if (!parsed) return null;
   // Fields already parsed from `json` property
   if (parsed.fields?.length) {
     return parsed;
   }
-  // Look for fields in vector_layers
-  if (Array.isArray(metadata.vector_layers)) {
-    parsed.fields = metadata.vector_layers.flatMap(layer =>
-      layer.fields
-        ? Object.entries(layer.fields).map(([key, datatype]) => ({
-            id: key,
-            name: key,
-            format: '',
-            ...attributeTypeToFieldType(String(datatype))
-          }))
-        : []
-    );
-  }
+
   return parsed;
 }
 
@@ -412,7 +393,6 @@ function pmTilesLayerToTippecanoeLayer(layers: TileJSON['layers']): TippecanoeLa
   return outLayers;
 }
 
-// eslint-disable-next-line complexity
 function collectAttributes(layers: TippecanoeLayer[] = []): VectorTileField[] {
   const fields = {};
   const indexedAttributes: {[key: string]: TippecanoeLayerAttribute[]} = {};

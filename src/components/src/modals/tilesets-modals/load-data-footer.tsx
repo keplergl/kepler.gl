@@ -29,7 +29,7 @@ const LoadDataFooterContainer = styled.div.attrs({
 
   display: flex;
   justify-content: space-between;
-  padding: 21px 72px;
+  padding: 21px 21px 0px 72px;
   margin: 24px -72px 0;
   align-items: center;
 `;
