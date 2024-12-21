@@ -15,17 +15,20 @@ import {TileJSON} from '@loaders.gl/mvt';
 import {PMTilesMetadata} from '@loaders.gl/pmtiles';
 
 import {default as useFetchVectorTileMetadata} from '../../hooks/use-fetch-vector-tile-metadata';
-import {DatasetCreationAttributes, MetaResponse, StyledInput} from './common';
+import {DatasetCreationAttributes, MetaResponse} from './common';
+import {InputLight} from '../../common';
 
 const TilesetInputContainer = styled.div`
   display: grid;
   grid-template-rows: repeat(3, 1fr);
-  row-gap: ${props => props.theme.spacing24};
+  row-gap: 18px;
+  font-size: 12px;
 `;
 
 const TilesetInputDescription = styled.div`
   text-align: center;
   color: ${props => props.theme.AZURE200};
+  font-size: 11px;
 `;
 
 export type VectorTilesetFormData = {
@@ -142,7 +145,7 @@ const TilesetVectorForm: React.FC<TilesetVectorFormProps> = ({setResponse}) => {
     <TilesetInputContainer>
       <div>
         <label htmlFor="tileset-name">Name</label>
-        <StyledInput
+        <InputLight
           id="tile-name"
           placeholder="Name your tileset"
           value={tileName}
@@ -151,20 +154,20 @@ const TilesetVectorForm: React.FC<TilesetVectorFormProps> = ({setResponse}) => {
       </div>
       <div>
         <label htmlFor="tile-url">Tileset URL</label>
-        <StyledInput
+        <InputLight
           id="tile-url"
           placeholder="Tileset URL"
           value={tileUrl}
           onChange={onTileUrlChange}
         />
         <TilesetInputDescription>
-          Requires &#123;x&#125;, &#123;y&#125;, &#123;z&#125; placeholders in URL. Supports pbf,
-          mvt
+          Requires &#123;x&#125;, &#123;y&#125;, &#123;z&#125; placeholders in URL or .pmtile
+          extension.
         </TilesetInputDescription>
       </div>
       <div>
         <label htmlFor="tile-metadata">Tileset metadata URL</label>
-        <StyledInput
+        <InputLight
           id="tile-metadata"
           placeholder="Tileset metadata"
           value={metadataUrl ?? undefined}

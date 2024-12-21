@@ -602,6 +602,9 @@ ${'```'}
     fileNotSupported: 'File {errorFiles} is not supported.',
     or: 'or'
   },
+  tilesetSetup: {
+    header: 'Setup Vector Tiles'
+  },
   geocoder: {
     title: 'Enter an address or coordinates, ex 37.79,-122.40'
   },

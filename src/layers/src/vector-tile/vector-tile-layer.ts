@@ -393,6 +393,7 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
             })
           : null;
       } else if (datasetMetadata?.type === VectorTileType.PMTILES) {
+        // TODO: to render image pmtiles need to use TileLayer and BitmapLayer (https://github.com/visgl/loaders.gl/blob/master/examples/website/tiles/components/tile-source-layer.ts)
         tilesetDataUrl = datasetMetadata?.tilesetDataUrl;
         tileSource = tilesetDataUrl ? PMTilesSource.createDataSource(tilesetDataUrl, {}) : null;
       }

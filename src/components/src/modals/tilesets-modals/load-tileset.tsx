@@ -2,6 +2,8 @@
 // Copyright contributors to the kepler.gl project
 
 import React, {useCallback, useMemo, useState} from 'react';
+import {IntlShape} from 'react-intl';
+import JSONPretty from 'react-json-pretty';
 import {AutoSizer} from 'react-virtualized';
 import styled from 'styled-components';
 
@@ -10,7 +12,7 @@ import {getError} from '@kepler.gl/utils';
 
 import {MetaResponse} from './common';
 import LoadDataFooter from './load-data-footer';
-import TilesetIcon from './tileset-icon';
+// import TilesetIcon from './tileset-icon';
 import TilesetVectorForm from './tileset-vector-form';
 
 const WIDTH_ICON = '62px';
@@ -22,16 +24,12 @@ const LoadTilesetTabContainer = styled.div`
 const Container = styled.div`
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  column-gap: ${props => props.theme.spacing32};
   background-color: ${props => props.theme.WHITE};
-  padding: ${props => props.theme.spacing32};
 `;
 
 const TilesetTypeContainer = styled.div`
   display: grid;
   grid-template-columns: repeat(4, ${WIDTH_ICON});
-  column-gap: ${props => props.theme.spacing16};
-  margin-bottom: ${props => props.theme.spacing24};
 `;
 
 const MetaContainer = styled.div`
@@ -40,10 +38,42 @@ const MetaContainer = styled.div`
   background-color: ${({theme}) => theme.editorBackground};
 `;
 
+export interface MetaInnerContainerProps {
+  width: number;
+  height: number;
+}
+
+const MetaInnerContainer = styled.div<MetaInnerContainerProps>`
+  position: relative;
+  border: 1px solid ${props => props.theme.selectBorderColorLT};
+  background-color: white;
+  border-radius: 2px;
+  display: inline-block;
+  font: inherit;
+  line-height: 1.5em;
+  padding: 0.5em 3.5em 0.5em 1em;
+  margin-left: 10px;
+  box-sizing: border-box;
+  overflow-y: scroll;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  height: ${props => props.height}px;
+  width: ${props => props.width}px;
+  max-width: 600px;
+`;
+
+const StyledHeaderMessage = styled.div`
+  color: ${props => props.theme.textColorLT};
+  font-size: 14px;
+  margin-bottom: 12px;
+`;
+
 type LoadTilesetTabProps = {
   meta: {[key: string]: any};
   isAddingDatasets: boolean;
   onTilesetAdded: (tilesetInfo: any, metadata?: any) => void;
+  intl: IntlShape;
 };
 
 const TILE_TYPES = [
@@ -60,7 +90,11 @@ function isReady(response) {
 }
 
 function LoadTilesetTabFactory() {
-  const LoadTilesetTab: React.FC<LoadTilesetTabProps> = ({onTilesetAdded, isAddingDatasets}) => {
+  const LoadTilesetTab: React.FC<LoadTilesetTabProps> = ({
+    onTilesetAdded,
+    isAddingDatasets,
+    intl
+  }) => {
     const [typeIndex, setTypeIndex] = useState<number>(0);
     const [response, setResponse] = useState<MetaResponse>({});
 
@@ -78,13 +112,20 @@ function LoadTilesetTabFactory() {
 
     const CurrentForm = TILE_TYPES[typeIndex].Component;
 
+    const tilesetHeaderMessage = `${intl.formatMessage({
+      id: 'tilesetSetup.header'
+    })}`;
+
     return (
       <LoadTilesetTabContainer>
         <Container>
           <div>
+            <StyledHeaderMessage>{tilesetHeaderMessage}</StyledHeaderMessage>
+            {/** 
             <div>
               <label htmlFor="tileset-type">Tileset Type</label>
             </div>
+             * Enable once we support different vector layers
             <TilesetTypeContainer className="tileset-type">
               {TILE_TYPES.map((tileType, index) => (
                 <TilesetIcon
@@ -96,6 +137,7 @@ function LoadTilesetTabFactory() {
                 />
               ))}
             </TilesetTypeContainer>
+            */}
             <div>
               <CurrentForm setResponse={setResponse} />
               {error && <div>{getError(error)}</div>}
@@ -105,17 +147,9 @@ function LoadTilesetTabFactory() {
             {data && (
               <AutoSizer>
                 {({height, width}) => (
-                  <div
-                    style={{
-                      width,
-                      height,
-                      overflow: 'auto',
-                      background: '#eee',
-                      marginLeft: '10px'
-                    }}
-                  >
-                    <pre>{jsonDataText}</pre>
-                  </div>
+                  <MetaInnerContainer height={height} width={width}>
+                    <JSONPretty id="json-pretty" json={jsonDataText} />
+                  </MetaInnerContainer>
                 )}
               </AutoSizer>
             )}
