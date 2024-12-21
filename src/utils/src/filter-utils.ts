@@ -755,6 +755,10 @@ export function isInRange(val: any, domain: number[]): boolean {
     return false;
   }
 
+  if (Array.isArray(val)) {
+    return domain[0] <= val[0] && val[1] <= domain[1];
+  }
+
   return val >= domain[0] && val <= domain[1];
 }
 

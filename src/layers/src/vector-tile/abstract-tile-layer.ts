@@ -83,9 +83,11 @@ export const commonTileVisConfigs = {
   },
   radius: {
     ...LAYER_VIS_CONFIGS.radius,
+    isRanged: true,
     range: [0, 1000],
     step: 0.1,
-    defaultValue: [50, 50]
+    defaultValue: [50, 50],
+    allowCustomValue: false
   } as VisConfigRange,
   enable3d: 'enable3d' as const,
   stroked: {
@@ -102,7 +104,7 @@ export const commonTileVisConfigs = {
       'Smoother transition during animation (enable transition will decrease performance)'
   } as VisConfigBoolean,
   heightRange: 'elevationRange' as const,
-  elevationScale: 'elevationScale' as const,
+  elevationScale: {...LAYER_VIS_CONFIGS.elevationScale, allowCustomValue: false},
   opacity: 'opacity' as const,
   colorRange: 'colorRange' as const,
   // TODO: figure out type for radiusByZoom vis config

@@ -135,7 +135,8 @@ export const vectorTileVisConfigs = {
   strokeWidth: {
     ...LAYER_VIS_CONFIGS.thickness,
     property: 'strokeWidth',
-    defaultValue: 0.5
+    defaultValue: 0.5,
+    allowCustomValue: false
   }
 };
 
