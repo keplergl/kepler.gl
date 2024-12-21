@@ -149,7 +149,7 @@ export class DatasetSchema extends Schema {
     return {
       data: {fields: updatedFields, rows: dataset.allData},
       info: pick(dataset, ['id', 'label', 'color', 'type']),
-      metadata: dataset.metadata || {}
+      ...(dataset.metadata ? {metadata: dataset.metadata} : {})
     };
   }
 }
