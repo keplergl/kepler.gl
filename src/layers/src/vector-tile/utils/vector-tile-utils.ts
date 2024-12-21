@@ -218,7 +218,6 @@ export function getMetaUrl(tileUrl: string): string | null {
 }
 type ParseMetadataOption = {
   tileUrl?: string | null;
-  isUnfoldedHosted?: boolean;
   // special parsing for metadata returned by PMTilesSource & MVTSource.
   isDataSourceMetadata?: boolean;
 };
@@ -246,9 +245,7 @@ function parseMetadataTileJSON(
   metadata: any,
   opts: {isDataSourceMetadata?: boolean}
 ): TilesetMetadata | null {
-  const parsed = opts?.isDataSourceMetadata
-    ? parseMetadataTippecanoeFromDataSource(metadata)
-    : parseMetadataTippecanoe(metadata);
+  const parsed = parseMetadataTippecanoeFromDataSource(metadata);
   if (!parsed) return null;
   // Fields already parsed from `json` property
   if (parsed.fields?.length) {
@@ -278,49 +275,11 @@ function getMetaUrlTippecanoe(tileUrl) {
   return `${baseUrl}/metadata.json`;
 }
 
-function parseMetadataTippecanoe(metadata: any): TilesetMetadata | null {
-  if (!metadata || typeof metadata !== 'object') {
-    return null;
-  }
-
-  let result: TilesetMetadata = {
-    metaJson: null,
-    bounds: null,
-    center: null,
-    maxZoom: null,
-    minZoom: null,
-    fields: []
-  };
-
-  // try to parse json
-  if (metadata.json && typeof metadata.json === 'string') {
-    try {
-      result.metaJson = JSON.parse(metadata.json);
-    } catch (err) {
-      // do nothing
-    }
-  }
-
-  result.bounds = parseBounds(metadata.bounds);
-  result.center = parseCenter(metadata.center);
-  result.maxZoom = safeParseFloat(metadata.maxzoom);
-  result.minZoom = safeParseFloat(metadata.minzoom);
-  result.name = metadata.name || '';
-  result.description = metadata.description || '';
-  if (metadata.tilestats && Array.isArray(metadata.tilestats.layers)) {
-    result.fields = collectAttributes(metadata.tilestats.layers);
-  }
-
-  result = {
-    ...result,
-    ...parseMetaJson(result.metaJson)
-  };
-
-  return result;
-}
-
-// Temp. parser. Special parsing for metadata returned by MVTSource and PMTilesSource.
-// eslint-disable-next-line complexity
+/**
+ * Special parsing for metadata returned by MVTSource and PMTilesSource.
+ * @param metadata Tileset metadata parsed by a DataSouce
+ * @returns Metadata in Kepler-friendly format.
+ */
 function parseMetadataTippecanoeFromDataSource(
   metadata: PMTilesMetadata | TileJSON | null
 ): TilesetMetadata | null {
@@ -367,13 +326,10 @@ function parseMetadataTippecanoeFromDataSource(
   result.name = metadata.name || '';
   result.description = mvtMetadata.description || pmTileMetadata.tilejson?.description || '';
 
-  // TODO update all collectAttributes-related logic to accept TileJSON['layers']
   if (Array.isArray(pmTileMetadata.tilejson?.layers)) {
-    // Transform TileJSON['layers'] back to TippecanoeLayer in order to collect fields
     const layers = pmTilesLayerToTippecanoeLayer(pmTileMetadata.tilejson?.layers);
     result.fields = collectAttributes(layers);
   } else if (Array.isArray(mvtMetadata.layers)) {
-    // Transform TileJSON['layers'] back to TippecanoeLayer in order to collect fields
     const layers = pmTilesLayerToTippecanoeLayer(mvtMetadata.layers);
     result.fields = collectAttributes(layers);
   }
