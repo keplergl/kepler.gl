@@ -3,7 +3,6 @@
 
 import test from 'tape-catch';
 import cloneDeep from 'lodash.clonedeep';
-import {drainTasksForTesting, succeedTaskWithValues} from 'react-palm/tasks';
 import {colorPaletteToColorRange} from '@kepler.gl/constants';
 import {
   getInitialInputStyle,
