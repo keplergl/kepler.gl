@@ -138,8 +138,7 @@ export default abstract class AbstractTileLayer<
   // Type of the iterable data object (for HexTile, this is the same as the tile)
   I extends Iterable<any> = T extends Iterable<any> ? T : never
 > extends Layer {
-  config!: AbstractTileLayerConfig;
-
+  declare config: AbstractTileLayerConfig;
   declare visConfigSettings: AbstractTileLayerVisConfigSettings;
 
   constructor(props: ConstructorParameters<typeof Layer>[0]) {

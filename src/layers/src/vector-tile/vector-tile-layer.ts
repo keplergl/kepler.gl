@@ -158,8 +158,7 @@ export type VectorTileLayerVisConfigSettings = Merge<
 >;
 
 export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Feature[]> {
-  config!: VectorTileLayerConfig;
-
+  declare config: VectorTileLayerConfig;
   declare visConfigSettings: VectorTileLayerVisConfigSettings;
 
   constructor(props: ConstructorParameters<typeof AbstractTileLayer>[0]) {
