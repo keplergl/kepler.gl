@@ -3,8 +3,9 @@
 
 import styled from 'styled-components';
 
-import {InputLight} from '@kepler.gl/components';
 import {VectorTileMetadata} from '@kepler.gl/layers';
+
+import {InputLight} from '../../common';
 
 export type DatasetCreationAttributes = {
   name: string;
