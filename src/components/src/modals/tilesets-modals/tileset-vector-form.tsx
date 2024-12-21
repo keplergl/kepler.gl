@@ -99,7 +99,7 @@ const TilesetVectorForm: React.FC<TilesetVectorFormProps> = ({setResponse}) => {
   );
   const process = useMemo(() => {
     return (value: PMTilesMetadata | TileJSON) =>
-      parseVectorMetadata(value, {tileUrl: metadataUrl, isDataSourceMetadata: true});
+      parseVectorMetadata(value, {tileUrl: metadataUrl});
   }, [metadataUrl]);
 
   const {

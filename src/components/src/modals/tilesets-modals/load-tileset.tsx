@@ -27,6 +27,7 @@ const Container = styled.div`
   background-color: ${props => props.theme.WHITE};
 `;
 
+// @ts-expect-error
 const TilesetTypeContainer = styled.div`
   display: grid;
   grid-template-columns: repeat(4, ${WIDTH_ICON});
@@ -95,6 +96,7 @@ function LoadTilesetTabFactory() {
     isAddingDatasets,
     intl
   }) => {
+    // @ts-expect-error
     const [typeIndex, setTypeIndex] = useState<number>(0);
     const [response, setResponse] = useState<MetaResponse>({});
 
