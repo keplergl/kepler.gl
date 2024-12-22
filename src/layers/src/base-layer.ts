@@ -995,7 +995,8 @@ class Layer {
     // changing 'steps', 'colorBindSafe', 'type' should fall back to predefined palette.
     const isCustomColorReversed =
       visConfig.colorRange.category === 'Custom' &&
-      newConfig.colorRangeConfig?.hasOwnProperty('reversed');
+      newConfig.colorRangeConfig &&
+      Object.prototype.hasOwnProperty.call(newConfig.colorRangeConfig, 'reversed');
 
     const update = isCustomColorReversed
       ? updateCustomColorRangeByColorUI(visConfig[prop], colorUI[prop].colorRangeConfig)
