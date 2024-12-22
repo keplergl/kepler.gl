@@ -8,6 +8,7 @@ import HeatmapLayerIcon from './heatmap-layer-icon';
 import {LayerBaseConfigPartial, LayerWeightConfig, VisualChannels} from '../base-layer';
 import {VisConfigColorRange, VisConfigNumber, HexColor, Merge, LayerColumn} from '@kepler.gl/types';
 import {hexToRgb, DataContainerInterface} from '@kepler.gl/utils';
+import {KeplerTable} from '@kepler.gl/table';
 
 export type HeatmapLayerVisConfigSettings = {
   opacity: VisConfigNumber;
@@ -207,7 +208,9 @@ class HeatmapLayer extends MapboxGLLayer {
     return layerConfig;
   }
 
-  updateLayerMeta(dataContainer) {
+  updateLayerMeta(dataset: KeplerTable) {
+    const {dataContainer} = dataset;
+
     const getPosition = this.getPositionAccessor(dataContainer);
     const bounds = this.getPointsBounds(dataContainer, getPosition);
     this.updateMeta({bounds});

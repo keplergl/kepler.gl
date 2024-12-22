@@ -111,7 +111,8 @@ export default {
       hexagonid: 'H3',
       trip: 'trip',
       s2: 'S2',
-      '3d': '3D'
+      '3d': '3D',
+      vectortile: 'vector tile'
     },
     layerUpdateError:
       'An error occurred during layer update: {errorMessage}. Make sure the format of the input data is valid.',
@@ -207,7 +208,8 @@ export default {
     removeDataset: 'Remove dataset'
   },
   datasetInfo: {
-    rowCount: '{rowCount} rows'
+    rowCount: '{rowCount} rows',
+    vectorTile: 'Vector tile'
   },
   tooltip: {
     hideLayer: 'Hide layer',
@@ -317,7 +319,8 @@ export default {
       filteredData: 'Filtered data',
       unfilteredData: 'Unfiltered Data',
       fileCount: '{fileCount} Files',
-      rowCount: '{rowCount} Rows'
+      rowCount: '{rowCount} Rows',
+      vectorTileWarning: "* Export Data for Vector Tile datasets isn't supported"
     },
     deleteData: {
       warning: 'you are going to delete this dataset. It will affect {length} layers'
@@ -396,6 +399,7 @@ export default {
     },
     loadData: {
       upload: 'Load Files',
+      tileset: 'Tileset',
       storage: 'Load from Storage'
     },
     tripInfo: {
@@ -597,6 +601,9 @@ ${'```'}
     uploading: 'Uploading',
     fileNotSupported: 'File {errorFiles} is not supported.',
     or: 'or'
+  },
+  tilesetSetup: {
+    header: 'Setup Vector Tiles'
   },
   geocoder: {
     title: 'Enter an address or coordinates, ex 37.79,-122.40'

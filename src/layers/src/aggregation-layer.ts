@@ -274,7 +274,8 @@ export default class AggregationLayer extends Layer {
     return this;
   }
 
-  updateLayerMeta(dataContainer, getPosition) {
+  updateLayerMeta(dataset: KeplerTable, getPosition) {
+    const {dataContainer} = dataset;
     // get bounds from points
     const bounds = this.getPointsBounds(dataContainer, getPosition);
 

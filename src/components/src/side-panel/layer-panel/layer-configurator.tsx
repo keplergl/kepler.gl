@@ -25,11 +25,18 @@ import LayerTypeSelectorFactory from './layer-type-selector';
 import TextLabelPanelFactory from './text-label-panel';
 import VisConfigSliderFactory from './vis-config-slider';
 import VisConfigSwitchFactory from './vis-config-switch';
+import VectorTileLayerConfiguratorFactory from './vector-tile-layer-configurator';
 
 import {capitalizeFirstLetter} from '@kepler.gl/utils';
 
 import {AGGREGATION_TYPE_OPTIONS, LAYER_TYPES} from '@kepler.gl/constants';
-import {AggregationLayer, Layer, LayerBaseConfig, VisualChannel} from '@kepler.gl/layers';
+import {
+  AggregationLayer,
+  Layer,
+  LayerBaseConfig,
+  VisualChannel,
+  matchDatasetType
+} from '@kepler.gl/layers';
 
 import {ActionHandler, toggleModal} from '@kepler.gl/actions';
 import {Datasets} from '@kepler.gl/table';
@@ -126,7 +133,8 @@ LayerConfiguratorFactory.deps = [
   LayerColorSelectorFactory,
   LayerColorRangeSelectorFactory,
   ArcLayerColorSelectorFactory,
-  AggrScaleSelectorFactory
+  AggrScaleSelectorFactory,
+  VectorTileLayerConfiguratorFactory
 ];
 
 export default function LayerConfiguratorFactory(
@@ -141,7 +149,8 @@ export default function LayerConfiguratorFactory(
   LayerColorSelector: ReturnType<typeof LayerColorSelectorFactory>,
   LayerColorRangeSelector: ReturnType<typeof LayerColorRangeSelectorFactory>,
   ArcLayerColorSelector: ReturnType<typeof ArcLayerColorSelectorFactory>,
-  AggrScaleSelector: ReturnType<typeof AggrScaleSelectorFactory>
+  AggrScaleSelector: ReturnType<typeof AggrScaleSelectorFactory>,
+  VectorTileLayerConfigurator: ReturnType<typeof VectorTileLayerConfiguratorFactory>
 ): React.ComponentType<LayerConfiguratorProps> {
   class LayerConfigurator extends Component<LayerConfiguratorProps> {
     _renderPointLayerConfig(props) {
@@ -150,6 +159,10 @@ export default function LayerConfiguratorFactory(
 
     _renderIconLayerConfig(props) {
       return this._renderScatterplotLayerConfig(props);
+    }
+
+    _renderVectorTileLayerConfig(props) {
+      return <VectorTileLayerConfigurator {...props} />;
     }
 
     _renderScatterplotLayerConfig({
@@ -1047,6 +1060,12 @@ export default function LayerConfiguratorFactory(
       const dataset = getLayerDataset(datasets, layer);
       const renderTemplate = layer.type && `_render${capitalizeFirstLetter(layer.type)}LayerConfig`;
 
+      // show only datasets that can be used by the layer
+      const sourceDataSelectorOptions = Object.keys(datasets).reduce(
+        (acc, id) => (matchDatasetType(datasets[id], layer) ? {...acc, [id]: datasets[id]} : acc),
+        {}
+      );
+
       return (
         <StyledLayerConfigurator>
           {layer.layerInfoModal && !layer.supportedColumnModes ? (
@@ -1063,7 +1082,7 @@ export default function LayerConfiguratorFactory(
             />
             <ConfigGroupCollapsibleContent>
               <SourceDataSelector
-                datasets={datasets}
+                datasets={sourceDataSelectorOptions}
                 id={layer.id}
                 dataId={config.dataId}
                 // @ts-ignore

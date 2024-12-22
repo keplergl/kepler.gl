@@ -277,7 +277,8 @@ export default class S2GeometryLayer extends Layer {
     return data;
   }
 
-  updateLayerMeta(dataContainer, getS2Token) {
+  updateLayerMeta(dataset: KeplerTable, getS2Token) {
+    const {dataContainer} = dataset;
     // add safe row flag
     const centroids = dataContainer.reduce(
       (acc, entry, index) => {

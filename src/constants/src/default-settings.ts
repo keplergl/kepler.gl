@@ -1169,7 +1169,8 @@ export const MAP_INFO_CHARACTER = {
 // Load data
 export const LOADING_METHODS = keyMirror({
   upload: null,
-  storage: null
+  storage: null,
+  tileset: null
 });
 
 export const DEFAULT_FEATURE_FLAGS = {};

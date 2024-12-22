@@ -463,7 +463,9 @@ export default class ArcLayer extends Layer {
   }
   /* eslint-enable complexity */
 
-  updateLayerMeta(dataContainer) {
+  updateLayerMeta(dataset: KeplerTable) {
+    const {dataContainer} = dataset;
+
     this.dataContainer = dataContainer;
 
     // get bounds from arcs
