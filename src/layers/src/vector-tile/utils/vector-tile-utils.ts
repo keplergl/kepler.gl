@@ -38,12 +38,12 @@ export enum TileType {
 }
 
 export enum VectorTileType {
-  REMOTE = 'remote',
+  MVT = 'mvt',
   PMTILES = 'pmtiles'
 }
 
 export type VectorTileDatasetMetadata = {
-  type: VectorTileType.REMOTE;
+  type: VectorTileType;
   tilesetDataUrl: string;
   tilesetMetadataUrl?: string;
 };

@@ -66,7 +66,7 @@ export default function useFetchVectorTileMetadata({
 
         try {
           const tileSource =
-            type === VectorTileType.REMOTE
+            type === VectorTileType.MVT
               ? MVTSource.createDataSource('', {
                   mvt: {
                     metadataUrl: decodeURIComponent(url)

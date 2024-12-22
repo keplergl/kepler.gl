@@ -52,8 +52,8 @@ export function toArray<T>(item: T | T[]): T[] {
 
 /**
  * Check whether geojson linestring's 4th coordinate is 1) not timestamp 2) unix time stamp 3) real date time
- * @param {array} timestamps array to be tested if its elements are timestamp
- * @returns {Field | null} the type of timestamp: unix/datetime/invalid(not timestamp)
+ * @param timestamps array to be tested if its elements are timestamp
+ * @returns the type of timestamp: unix/datetime/invalid(not timestamp)
  */
 export function containValidTime(timestamps: string[]): Field | null {
   const formattedTimeStamps = timestamps.map(ts => ({ts}));

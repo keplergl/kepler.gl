@@ -94,7 +94,7 @@ To use S2 layer, you need to assign a column containing S2 tokens.
 
 ## Vector Tile Layer
 
-Vector Tile Layer makes it possible to visualize very large datasets through MVTs (Mapbox Vector Tiles). The layer will only load, decode and render MVTs containing features that are visible within the current viewport.
+Vector Tile Layer makes it possible to visualize very large datasets through MVTs (Mapbox Vector Tiles). To optimize performance, the layer only loads and renders tiles containing features that are visible within the current viewport.
 
 Supported URL templates:
 

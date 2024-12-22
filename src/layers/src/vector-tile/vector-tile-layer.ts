@@ -371,7 +371,7 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
 
     if (dataset?.type === DatasetType.VECTOR_TILE) {
       const datasetMetadata = dataset.metadata as VectorTileMetadata & VectorTileDatasetMetadata;
-      if (datasetMetadata?.type === VectorTileType.REMOTE) {
+      if (datasetMetadata?.type === VectorTileType.MVT) {
         const transformFetch = async (input: RequestInfo | URL, init?: RequestInit | undefined) => {
           const requestData: RequestParameters = {
             url: input as string,

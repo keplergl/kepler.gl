@@ -37,6 +37,8 @@ export type VectorTilesetFormData = {
   metadataUrl?: string;
 };
 
+const isPMTilesUrl = (url?: string | null)=> url?.includes('.pmtiles')
+
 export function getDatasetAttributesFromVectorTile({
   name,
   dataUrl,
@@ -46,7 +48,7 @@ export function getDatasetAttributesFromVectorTile({
     name,
     type: DatasetType.VECTOR_TILE,
     metadata: {
-      type: dataUrl.includes('.pmtiles') ? VectorTileType.PMTILES : VectorTileType.REMOTE,
+      type: isPMTilesUrl(dataUrl) ? VectorTileType.PMTILES : VectorTileType.MVT,
       tilesetDataUrl: dataUrl,
       tilesetMetadataUrl: metadataUrl
     }
@@ -83,7 +85,7 @@ const TilesetVectorForm: React.FC<TilesetVectorFormProps> = ({setResponse}) => {
       event.preventDefault();
       const newTileUrl = event.target.value;
       setTileUrl(newTileUrl);
-      const potentialMetadataUrl = newTileUrl.includes('.pmtiles')
+      const potentialMetadataUrl = isPMTilesUrl(newTileUrl)
         ? newTileUrl
         : getMetaUrl(newTileUrl);
       if (!metadataUrl && potentialMetadataUrl) {
@@ -108,7 +110,7 @@ const TilesetVectorForm: React.FC<TilesetVectorFormProps> = ({setResponse}) => {
     error: metaError
   } = useFetchVectorTileMetadata({
     url: metadataUrl,
-    type: metadataUrl?.includes('.pmtiles') ? VectorTileType.PMTILES : VectorTileType.REMOTE,
+    type: isPMTilesUrl(metadataUrl) ? VectorTileType.PMTILES : VectorTileType.MVT,
     process
   });
 
