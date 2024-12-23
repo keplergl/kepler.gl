@@ -307,10 +307,39 @@ test('Components -> ChannelByValueSelector -> ColorScaleSelector -> ColorBreakDi
       showColorChart: true,
       colorRangeConfig: {
         customBreaks: true
+      },
+      customPalette: {
+        name: 'color.customPalette',
+        type: 'custom',
+        category: 'Custom',
+        colors: ['#00939C', '#6BB5B9', '#AAD7D9', '#E6FAFA'],
+        colorMap: [
+          [3032, '#00939C'],
+          [6063, '#6BB5B9'],
+          [9093, '#AAD7D9'],
+          [null, '#E6FAFA']
+        ]
       }
     }
   ];
-  const expectedArgs1 = [{colorScale: 'custom'}, 'color', undefined];
+  const expectedArgs1 = [
+    {colorScale: 'custom'},
+    'color',
+    {
+      colorRange: {
+        name: 'color.customPalette',
+        type: 'custom',
+        category: 'Custom',
+        colors: ['#00939C', '#6BB5B9', '#AAD7D9', '#E6FAFA'],
+        colorMap: [
+          [3032, '#00939C'],
+          [6063, '#6BB5B9'],
+          [9093, '#AAD7D9'],
+          [null, '#E6FAFA']
+        ]
+      }
+    }
+  ];
   t.deepEqual(setColorUI.args[0], expectedArgs, 'should set customBreaks to true');
 
   t.ok(updateLayerVisualChannelConfig.calledOnce, 'should call updateLayerVisualChannelConfig');
