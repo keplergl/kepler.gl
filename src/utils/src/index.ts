@@ -22,7 +22,8 @@ export {
   paletteIsSteps,
   paletteIsType,
   paletteIsColorBlindSafe,
-  updateColorRangeByMatchingPalette
+  updateColorRangeByMatchingPalette,
+  updateCustomColorRangeByColorUI
 } from './color-utils';
 export {errorNotification} from './notifications-utils';
 
