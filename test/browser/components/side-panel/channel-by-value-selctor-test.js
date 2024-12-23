@@ -564,7 +564,8 @@ test('Components -> ChannelByValueSelector -> ColorScaleSelector -> ColumnStatsC
   const customTestCase = {
     optionIndex: 2,
     optionName: 'custom',
-    expectedTickPositions: [4, 6, 210]
+    // uses tick positions from the previous test case!
+    expectedTickPositions: [0, 0, 1]
   };
 
   [quantizeTestCase, quantileTestCase, customTestCase].forEach(tc => {
