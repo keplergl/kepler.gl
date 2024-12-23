@@ -17,10 +17,13 @@ Ref: http://keepachangelog.com/en/0.3.0/
 
 ## [3.1.0-alpha.2] - December 23 2024
 
+- f9b385a6e [fix] Fixed time filter bug where points located at the borders of the domains were not correctly displayed (#2854)
+- 59abc6a19 [fix] fix for custom color scales with tile layer (#2853)
+- 3a4bf667f [feat] histogram and point layer fixes (#2852)
 - f9c52e538 [feat] color scale histogram (#2851)
 - 3e7dc937a [fix] custom palette issues (#2850)
 - d55797991 [docs] Replace yarn global add with yarn dlx for puppeteer installation (#2849)
-- e106c1927 [feat] vector tile layer (#2839)
+- e106c1927 [feat] vector tile layer plumbing (#2839)
 - a2abbf72d [fix] fix yarn cover regression (#2846)
 - 6925bd429 [docs] update demo-app/README.md (#2847)
 - f05b6e37d [chore] Bump nanoid from 3.3.7 to 3.3.8 in /website (#2840)
