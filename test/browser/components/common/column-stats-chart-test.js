@@ -67,9 +67,7 @@ const ColumnStatsChartProps = (filterData = false) => {
 };
 
 const GetTickPositions = colorBreaks => {
-  const x = scaleLinear()
-    .domain([1, 12124])
-    .range([0, HISTOGRAM_WIDTH]);
+  const x = scaleLinear().domain([1, 12124]).range([0, HISTOGRAM_WIDTH]);
   return colorBreaks.map(cb => x(cb.range[1]));
 };
 
@@ -80,7 +78,7 @@ test('Components -> ColumnStatsChart -> ColorChartTick', t => {
   const InitialProps = {
     colors: ['#FFF7F3', '#F369A3'],
     positions: ExpectedTickPositions,
-    onTickMoving: (positions, dragTick) => {
+    onTickMoving: positions => {
       MovedTickPositions = positions;
     },
     onTickChanged: sinon.spy()
@@ -159,26 +157,17 @@ test('Components -> ColumnStatsChart -> ColorChartHeader', t => {
   t.equal(colorChartHeader.length, 1, 'should render 1 ColorChartHeader');
   t.equal(colorChartHeader.children().length, 3, 'should render 3 divs in color chart header');
   t.equal(
-    colorChartHeader
-      .children()
-      .at(0)
-      .text(),
+    colorChartHeader.children().at(0).text(),
     'MIN: 1',
     'should render MIN value in color chart header'
   );
   t.equal(
-    colorChartHeader
-      .children()
-      .at(1)
-      .text(),
+    colorChartHeader.children().at(1).text(),
     'MEAN: 50',
     'should render MEAN value in color chart header'
   );
   t.equal(
-    colorChartHeader
-      .children()
-      .at(2)
-      .text(),
+    colorChartHeader.children().at(2).text(),
     'MAX: 100',
     'should render MAX value in color chart header'
   );
