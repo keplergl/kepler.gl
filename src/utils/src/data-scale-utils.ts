@@ -327,8 +327,11 @@ export function initializeLayerColorMap(layer: Layer, visualChannel: VisualChann
     layer
   });
 
-  const colorBreaks = getLegendOfScale({scale, scaleType, fieldType: field.type});
-
+  const colorBreaks = getLegendOfScale({
+    scale: scale?.byZoom ? scale(0) : scale,
+    scaleType,
+    fieldType: field.type
+  });
   return colorBreaksToColorMap(colorBreaks);
 }
 
