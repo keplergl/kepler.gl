@@ -561,19 +561,13 @@ test('Components -> ChannelByValueSelector -> ColorScaleSelector -> ColumnStatsC
     expectedTickPositions: [0, 0, 1]
   };
 
-  const jenksTestCase = {
-    optionIndex: 2,
-    optionName: 'jenks',
-    expectedTickPositions: [4, 6, 210]
-  };
-
   const customTestCase = {
-    optionIndex: 3,
+    optionIndex: 2,
     optionName: 'custom',
     expectedTickPositions: [4, 6, 210]
   };
 
-  [quantizeTestCase, quantileTestCase, jenksTestCase, customTestCase].forEach(tc => {
+  [quantizeTestCase, quantileTestCase, customTestCase].forEach(tc => {
     // simulate click color scale option
     wrapper
       .find(ColorScaleSelector)
