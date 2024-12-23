@@ -16,7 +16,9 @@ import {
   ColumnSelectorFactory,
   appInjector,
   dropdownListClassList,
-  Checkbox
+  Checkbox,
+  getLayerFields,
+  getLayerDataset
 } from '@kepler.gl/components';
 
 import {StateWFiles, StateWTripGeojson, testCsvDataId} from 'test/helpers/mock-state';
@@ -100,6 +102,7 @@ test('Components -> LayerConfigurator.mount -> default prop 1', t => {
     },
     layerChannelConfigProps: {
       layer: expectedLayer,
+      dataset: expectedDataset,
       fields: expectedDataset.fields,
       onChange: updateLayerVisualChannelConfig,
       setColorUI: updateLayerColorUI
@@ -133,7 +136,7 @@ test('Components -> LayerConfigurator.mount -> default prop 1', t => {
   t.deepEqual(
     args.layerChannelConfigProps,
     expectedArgs.layerChannelConfigProps,
-    'render layer method should receive corrent layerChannelConfigProps arg'
+    'render layer method should receive correct layerChannelConfigProps arg'
   );
 
   t.end();
@@ -368,6 +371,34 @@ test('Components -> LayerConfigurator.mount -> LayerColumnModeConfig ', t => {
     ],
     'should update columnMode'
   );
+
+  t.end();
+});
+
+test('Components -> LayerConfigurator -> getLayerFields', t => {
+  const layer = StateWTripGeojson.visState.layers[0];
+  const datasets = StateWTripGeojson.visState.datasets;
+
+  const fields = getLayerFields(datasets, layer);
+
+  t.equal(fields.length, 5, 'should get 4 fields');
+
+  const expectedFields = datasets.trip_data.fields;
+  t.deepEqual(fields, expectedFields, 'should get 4 fields from the first layer');
+
+  t.end();
+});
+
+test('Components -> LayerConfigurator -> getLayerDataset', t => {
+  const layer = StateWTripGeojson.visState.layers[0];
+  const datasets = StateWTripGeojson.visState.datasets;
+
+  const ds = getLayerDataset(datasets, layer);
+
+  t.equal(ds.id, 'trip_data', 'should get 1 dataset: trip_data');
+
+  const expectedDS = datasets.trip_data;
+  t.deepEqual(ds, expectedDS, 'should get 1 dataset for the input layer');
 
   t.end();
 });

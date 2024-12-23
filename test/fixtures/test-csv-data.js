@@ -742,8 +742,7 @@ export const mergedEpochFilter = {
     [dataId]: {
       '15-minute': histogramFromThreshold(
         getBinThresholds('15-minute', [1472688000000, 1472774400000]),
-        epochMappedValue,
-        epochMappedValue.map((_, i) => i)
+        epochMappedValue
       )
     }
   }
@@ -786,15 +785,13 @@ export const expectedSyncedTsFilter = {
     'test-csv-data-1': {
       '15-second': histogramFromThreshold(
         getBinThresholds('15-second', [1474070995000, 1474072208000]),
-        timeStampmappedValue.slice(0, 20),
-        epochMappedValue.map((_, i) => i)
+        timeStampmappedValue.slice(0, 20)
       )
     },
     'test-csv-data-2': {
       '15-second': histogramFromThreshold(
         getBinThresholds('15-second', [1474070995000, 1474072208000]),
-        timeStampmappedValue.slice(5, timeStampmappedValue.length),
-        epochMappedValue.map((_, i) => i)
+        timeStampmappedValue.slice(5, timeStampmappedValue.length)
       )
     }
   },

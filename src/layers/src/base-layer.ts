@@ -18,7 +18,6 @@ import {
   CHANNEL_SCALE_SUPPORTED_FIELDS,
   ColorRange,
   DEFAULT_COLOR_UI,
-  DEFAULT_CUSTOM_PALETTE,
   DEFAULT_HIGHLIGHT_COLOR,
   DEFAULT_LAYER_LABEL,
   DEFAULT_TEXT_LABEL,
@@ -71,7 +70,12 @@ import {
   updateCustomColorRangeByColorUI
 } from '@kepler.gl/utils';
 import memoize from 'lodash.memoize';
-import {isDomainQuantile, getDomainStepsbyZoom, getThresholdsFromQuantiles} from '@kepler.gl/utils';
+import {
+  initializeCustomPalette,
+  isDomainQuantile,
+  getDomainStepsbyZoom,
+  getThresholdsFromQuantiles
+} from '@kepler.gl/utils';
 
 export type VisualChannelDomain = number[] | string[];
 export type VisualChannelField = Field | null;
@@ -899,11 +903,15 @@ class Layer {
       return;
     }
 
+    if (newConfig.customPalette) {
+      // if new config also set customPalette, no need to initiate new
+      return;
+    }
     const {colorUI, visConfig} = this.config;
 
     if (!visConfig[prop]) return;
     // make copy of current color range to customPalette
-    const customPalette = {
+    let customPalette = {
       ...visConfig[prop]
     };
 
@@ -920,15 +928,12 @@ class Layer {
       }
       // add name|type|category to updateCustomPalette if customBreaks, so that
       // colors will not be override as well when inverse palette with custom break
-      customPalette.name = DEFAULT_CUSTOM_PALETTE.name;
-      customPalette.type = DEFAULT_CUSTOM_PALETTE.type;
-      customPalette.category = DEFAULT_CUSTOM_PALETTE.category;
       // initiate colorMap from current scale
-      customPalette.colorMap = initializeLayerColorMap(this, visualChannels[channelKey]);
+
+      const colorMap = initializeLayerColorMap(this, visualChannels[channelKey]);
+      customPalette = initializeCustomPalette(visConfig[prop], colorMap);
     } else if (newConfig.colorRangeConfig.custom) {
-      customPalette.name = DEFAULT_CUSTOM_PALETTE.name;
-      customPalette.type = DEFAULT_CUSTOM_PALETTE.type;
-      customPalette.category = DEFAULT_CUSTOM_PALETTE.category;
+      customPalette = initializeCustomPalette(visConfig[prop]);
     }
 
     this.updateLayerConfig({

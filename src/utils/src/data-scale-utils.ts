@@ -11,7 +11,7 @@ import {HexColor, MapState} from '@kepler.gl/types';
 
 import {isRgbColor, rgbToHex} from './color-utils';
 import {DataContainerInterface} from './data-container-interface';
-import {formatNumber, reverseFormatNumber, unique} from './data-utils';
+import {formatNumber, isNumber, reverseFormatNumber, unique} from './data-utils';
 import {getTimeWidgetHintFormatter} from './filter-utils';
 import {isPlainObject} from './utils';
 
@@ -261,7 +261,7 @@ export function getQuantLabelFormat(domain, fieldType) {
     ? getTimeLabelFormat(domain)
     : !fieldType
     ? defaultFormat
-    : n => (n ? formatNumber(n, fieldType) : 'no value');
+    : n => (isNumber(n) ? formatNumber(n, fieldType) : 'no value');
 }
 
 /**

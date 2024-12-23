@@ -5,7 +5,9 @@ import React from 'react';
 
 import {CHANNEL_SCALE_SUPPORTED_FIELDS} from '@kepler.gl/constants';
 import {Layer, VisualChannel} from '@kepler.gl/layers';
+import {KeplerTable} from '@kepler.gl/table';
 import {ColorUI, Field, LayerVisConfig} from '@kepler.gl/types';
+
 import DimensionScaleSelectorFactory from './dimension-scale-selector';
 import VisConfigByFieldSelectorFactory from './vis-config-by-field-selector';
 
@@ -18,6 +20,7 @@ export type ChannelByValueSelectorProps = {
     newVisConfig?: Partial<LayerVisConfig>
   ) => void;
   fields: Field[];
+  dataset: KeplerTable | undefined;
   description?: string;
   setColorUI: (
     prop: string,
@@ -43,6 +46,7 @@ export function ChannelByValueSelectorFactory(
     channel,
     onChange,
     fields,
+    dataset,
     description,
     setColorUI,
     disabled
@@ -72,6 +76,7 @@ export function ChannelByValueSelectorFactory(
           <DimensionScaleSelector
             layer={layer}
             channel={channel}
+            dataset={dataset}
             label={`${property} scale`}
             setColorUI={setColorUI}
             onChange={onChange}

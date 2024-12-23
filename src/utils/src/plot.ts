@@ -29,7 +29,7 @@ import {
   AggregationTypes
 } from '@kepler.gl/constants';
 
-import {roundValToStep} from './data-utils';
+import {isNumber, roundValToStep} from './data-utils';
 import {aggregate, AGGREGATION_NAME} from './aggregation';
 import {capitalizeFirstLetter} from './strings';
 import {getDefaultTimeFormat} from './format';
@@ -49,18 +49,24 @@ type Datasets = any;
 export function histogramFromThreshold(
   thresholds: number[],
   values: number[],
-  indexes: number[]
+  valueAccessor?: (d: unknown) => number,
+  filterEmptyBins = true
 ): Bin[] {
-  const bins = d3Histogram()
-    .value(idx => values[idx])
+  const getBins = d3Histogram()
     .domain([thresholds[0], thresholds[thresholds.length - 1]])
-    .thresholds(thresholds)(indexes)
-    .map(bin => ({
-      count: bin.length,
-      indexes: bin,
-      x0: bin.x0,
-      x1: bin.x1
-    }));
+    .thresholds(thresholds);
+
+  if (valueAccessor) {
+    getBins.value(valueAccessor);
+  }
+
+  // @ts-ignore
+  const bins = getBins(values).map(bin => ({
+    count: bin.length,
+    indexes: bin,
+    x0: bin.x0,
+    x1: bin.x1
+  }));
 
   // d3-histogram ignores threshold values outside the domain
   // The first bin.x0 is always equal to the minimum domain value, and the last bin.x1 is always equal to the maximum domain value.
@@ -69,9 +75,38 @@ export function histogramFromThreshold(
   // bins[bins.length - 1].x1 = thresholds[thresholds.length - 1];
 
   // @ts-ignore
-  // filter out bins with 0 counts
-  return bins.filter(b => b.count > 0);
-  // return bins;
+  return filterEmptyBins ? bins.filter(b => b.count > 0) : bins;
+}
+
+/**
+ *
+ * @param values
+ * @param numBins
+ * @param valueAccessor
+ */
+export function histogramFromValues(
+  values: (Millisecond | null | number)[],
+  numBins: number,
+  valueAccessor?: (d: unknown) => number
+) {
+  const getBins = d3Histogram().thresholds(numBins);
+
+  if (valueAccessor) {
+    getBins.value(valueAccessor);
+  }
+
+  // @ts-ignore d3-array types doesn't match
+  return getBins(values)
+    .map(bin => ({
+      count: bin.length,
+      indexes: bin,
+      x0: bin.x0,
+      x1: bin.x1
+    }))
+    .filter(b => {
+      const {x0, x1} = b;
+      return isNumber(x0) && isNumber(x1);
+    });
 }
 
 /**
@@ -142,8 +177,8 @@ export function binByTime(indexes, dataset, interval, filter) {
     return null;
   }
   const intervalBins = getBinThresholds(interval, filter.domain);
-
-  const bins = histogramFromThreshold(intervalBins, mappedValue, indexes);
+  const valueAccessor = idx => mappedValue[idx];
+  const bins = histogramFromThreshold(intervalBins, indexes, valueAccessor);
 
   return bins;
 }

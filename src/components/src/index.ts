@@ -89,6 +89,7 @@ export {
   default as LayerConfiguratorFactory,
   getLayerConfiguratorProps,
   getLayerDataset,
+  getLayerFields,
   getVisConfiguratorProps
 } from './side-panel/layer-panel/layer-configurator';
 export {default as LayerPanelFactory} from './side-panel/layer-panel/layer-panel';
@@ -145,7 +146,7 @@ export {default as MapStyleSelectorFactory} from './side-panel/map-style-panel/m
 export {default as CoordinateInfoFactory} from './map/coordinate-info';
 export {default as LayerHoverInfoFactory} from './map/layer-hover-info';
 export {default as LayerSelectorPanelFactory} from './map/layer-selector-panel';
-export {default as LazzyTippy} from './map/lazy-tippy';
+export {default as LazyTippy} from './map/lazy-tippy';
 export {default as LocalePanelFactory} from './map/locale-panel';
 export {default as MapControlFactory} from './map/map-control';
 export {default as MapControlPanelFactory} from './map/map-control-panel';
@@ -206,8 +207,15 @@ export {default as ResetControlFactory} from './common/animation-control/reset-c
 export {default as SpeedControlFactory} from './common/animation-control/speed-control';
 export {default as WindowActionControlFactory} from './common/animation-control/window-action-control';
 
-export {default as HistogramPlotFactory} from './common/histogram-plot';
+export {default as HistogramPlotFactory, HISTOGRAM_MASK_MODE} from './common/histogram-plot';
 export {default as IconButton} from './common/icon-button';
+export {
+  default as ColumnStatsChartFactory,
+  HISTOGRAM_WIDTH,
+  HISTOGRAM_HEIGHT,
+  ColorChartHeader,
+  ColorChartTick
+} from './common/column-stats-chart';
 export {default as ImagePreview} from './common/image-preview';
 export {default as LineChartFactory} from './common/line-chart';
 export {default as RangeBrushFactory} from './common/range-brush';
