@@ -143,19 +143,20 @@ function ColorBreaksPanelFactory(
           colors: newColors
         };
 
+        // update custom pallette editor
         if (!isEditingCustomBreaks) {
-          // set scale to custom and enable custom pallette editing
           setColorUI({
             colorRangeConfig: {
               customBreaks: true
             },
             customPalette: newCustomPalette
           });
-
-          onScaleChange(SCALE_TYPES.custom, newCustomPalette);
         } else {
           setColorUI({customPalette: newCustomPalette});
         }
+
+        // trigger the map to re-render using newCustomPalette
+        onScaleChange(SCALE_TYPES.custom, newCustomPalette);
       },
       [setColorUI, customPalette, isEditingCustomBreaks, onScaleChange]
     );

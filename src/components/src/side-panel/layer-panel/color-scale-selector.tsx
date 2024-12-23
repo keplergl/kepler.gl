@@ -7,8 +7,8 @@ import styled from 'styled-components';
 import {Accessor, DropdownList, LazyTippy, Typeahead} from '@kepler.gl/components';
 import {ColorRange, SCALE_TYPES} from '@kepler.gl/constants';
 import {Layer, VisualChannelDomain} from '@kepler.gl/layers';
-import {ColorUI, Field} from '@kepler.gl/types';
-import {getLayerColorScale, getLegendOfScale, hasColorMap} from '@kepler.gl/utils';
+import {ColorUI, Field, NestedPartial} from '@kepler.gl/types';
+import {colorBreaksToColorMap, getLayerColorScale, getLegendOfScale, hasColorMap} from '@kepler.gl/utils';
 import ColorBreaksPanelFactory, {ColorBreaksPanelProps} from './color-breaks-panel';
 import {SetColorUIFunc} from './custom-palette';
 import DropdownSelect from '../../common/item-selector/dropdown-select';
@@ -150,14 +150,34 @@ function ColorScaleSelectorFactory(
         // highlight selected option
         if (getOptionValue(val) === SCALE_TYPES.custom) {
           // update custom breaks
+          const customPalette: NestedPartial<ColorRange> = {
+            name: 'color.customPalette',
+            type: 'custom',
+            category: 'Custom',
+            colors: range.colors,
+            colorMap: range.colorMap
+              ? range.colorMap
+              : colorBreaks
+              ? colorBreaksToColorMap(colorBreaks)
+              : undefined
+          };
           setColorUI({
             showColorChart: true,
             colorRangeConfig: {
               customBreaks: true
-            }
+            },
+            customPalette
           });
-          onSelect(SCALE_TYPES.custom);
+          onSelect(SCALE_TYPES.custom, customPalette);
         } else {
+          // not custom
+          if (isEditingColorBreaks) {
+            setColorUI({
+              colorRangeConfig: {
+                customBreaks: false
+              }
+            });
+          }
           if (hasColorMap(range)) {
             // remove custom breaks
             // eslint-disable-next-line no-unused-vars
@@ -166,17 +186,9 @@ function ColorScaleSelectorFactory(
           } else {
             onSelect(getOptionValue(val));
           }
-          // if current is not custom
-          if (isEditingColorBreaks) {
-            setColorUI({
-              colorRangeConfig: {
-                customBreaks: false
-              }
-            });
-          }
         }
       },
-      [setColorUI, onSelect, range, getOptionValue, isEditingColorBreaks]
+      [setColorUI, onSelect, range, getOptionValue, isEditingColorBreaks, colorBreaks]
     );
 
     const onApply = useCallback(() => {
