@@ -41,7 +41,7 @@
     "d3-color": "^2.0.0",
     "d3-scale": "^3.2.3",
     "d3-scale-chromatic": "2.0.0",
-    "d3-time": "^3.1.0",
+    "d3-time": "^2.0.0",
     "global": "^4.3.0",
     "keymirror": "^0.1.1"
   },
