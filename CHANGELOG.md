@@ -23,7 +23,7 @@ Ref: http://keepachangelog.com/en/0.3.0/
 - f9c52e538 [feat] color scale histogram (#2851)
 - 3e7dc937a [fix] custom palette issues (#2850)
 - d55797991 [docs] Replace yarn global add with yarn dlx for puppeteer installation (#2849)
-- e106c1927 [feat] vector tile layer plumbing (#2839)
+- e106c1927 [feat] Plumbing for vector tile layer (#2839)
 - a2abbf72d [fix] fix yarn cover regression (#2846)
 - 6925bd429 [docs] update demo-app/README.md (#2847)
 - f05b6e37d [chore] Bump nanoid from 3.3.7 to 3.3.8 in /website (#2840)
