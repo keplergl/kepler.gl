@@ -30,6 +30,7 @@
     "umd"
   ],
   "dependencies": {
+    "@dnd-kit/sortable": "^7.0.2",
     "@kepler.gl/actions": "3.1.0-alpha.2",
     "@kepler.gl/cloud-providers": "3.1.0-alpha.2",
     "@kepler.gl/common-utils": "3.1.0-alpha.2",

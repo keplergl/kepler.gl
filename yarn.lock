@@ -3318,6 +3318,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@kepler.gl/constants@workspace:src/constants"
   dependencies:
+    "@dnd-kit/modifiers": "npm:^6.0.1"
     "@kepler.gl/types": "npm:3.1.0-alpha.2"
     "@types/d3-scale": "npm:^3.2.2"
     "@types/keymirror": "npm:^0.1.1"
@@ -3439,6 +3440,8 @@ __metadata:
     long: "npm:^4.0.0"
     prop-types: "npm:^15.6.0"
     react: "npm:^18.2.0"
+    react-intl: "npm:^6.3.0"
+    react-markdown: "npm:^6.0.3"
     reselect: "npm:^4.0.0"
     s2-geometry: "npm:^1.2.10"
     styled-components: "npm:^4.1.3"
@@ -3486,6 +3489,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@kepler.gl/reducers@workspace:src/reducers"
   dependencies:
+    "@dnd-kit/sortable": "npm:^7.0.2"
     "@kepler.gl/actions": "npm:3.1.0-alpha.2"
     "@kepler.gl/cloud-providers": "npm:3.1.0-alpha.2"
     "@kepler.gl/common-utils": "npm:3.1.0-alpha.2"
@@ -3597,6 +3601,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@kepler.gl/utils@workspace:src/utils"
   dependencies:
+    "@dnd-kit/sortable": "npm:^7.0.2"
     "@kepler.gl/common-utils": "npm:3.1.0-alpha.2"
     "@kepler.gl/constants": "npm:3.1.0-alpha.2"
     "@kepler.gl/types": "npm:3.1.0-alpha.2"
@@ -3625,12 +3630,14 @@ __metadata:
     lodash.isequal: "npm:^4.5.0"
     lodash.memoize: "npm:^4.1.2"
     lodash.throttle: "npm:^4.1.1"
+    maplibre-gl: "npm:^3.6.2"
     maplibregl-mapbox-request-transformer: "npm:^0.0.2"
     mini-svg-data-uri: "npm:^1.0.3"
     moment-timezone: "npm:^0.5.35"
     react: "npm:^18.2.0"
     react-map-gl: "npm:^7.1.6"
     resize-observer-polyfill: "npm:^1.5.1"
+    suncalc: "npm:^1.9.0"
     type-analyzer: "npm:0.4.0"
   languageName: unknown
   linkType: soft
