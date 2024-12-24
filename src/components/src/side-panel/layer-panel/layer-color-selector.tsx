@@ -3,7 +3,7 @@
 
 import React, {useCallback} from 'react';
 
-import {ColorRange} from '@kepler.gl/constants';
+import {ColorRange} from '@kepler.gl/types';
 import {Layer} from '@kepler.gl/layers';
 import {NestedPartial, RGBColor, ColorUI} from '@kepler.gl/types';
 

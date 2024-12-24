@@ -26,12 +26,12 @@ import ArcLayerIcon from './arc-layer-icon';
 import {isLayerHoveredFromArrow, createGeoArrowPointVector, getFilteredIndex} from '../layer-utils';
 import {
   DEFAULT_LAYER_COLOR,
-  ColorRange,
   PROJECTED_PIXEL_SIZE_MULTIPLIER,
   ALL_FIELD_TYPES
 } from '@kepler.gl/constants';
 
 import {
+  ColorRange,
   RGBColor,
   Merge,
   VisConfigColorRange,

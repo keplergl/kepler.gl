@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {ColorRange} from '@kepler.gl/constants';
+import {ColorRange} from '@kepler.gl/types';
 import {Layer} from '@kepler.gl/layers';
 import {HexColor, MapState} from '@kepler.gl/types';
 import {

@@ -16,7 +16,6 @@ import {
   ALL_FIELD_TYPES,
   CHANNEL_SCALES,
   CHANNEL_SCALE_SUPPORTED_FIELDS,
-  ColorRange,
   DEFAULT_COLOR_UI,
   DEFAULT_HIGHLIGHT_COLOR,
   DEFAULT_LAYER_LABEL,
@@ -46,6 +45,7 @@ import {
 import {generateHashId, toArray, notNullorUndefined} from '@kepler.gl/common-utils';
 import {Datasets, GpuFilter, KeplerTable} from '@kepler.gl/table';
 import {
+  ColorRange,
   ColorUI,
   Field,
   Filter,

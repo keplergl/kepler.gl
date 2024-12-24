@@ -44,10 +44,13 @@
     "@loaders.gl/json": "^4.3.2",
     "@loaders.gl/loader-utils": "^4.3.2",
     "@loaders.gl/parquet": "^4.3.2",
+    "@loaders.gl/schema": "^4.3.2",
     "@mapbox/geojson-normalize": "0.0.1",
     "@nebula.gl/edit-modes": "1.0.2-alpha.1",
     "@turf/helpers": "^6.1.4",
-    "d3-dsv": "^2.0.0"
+    "apache-arrow": ">=15.0.0",
+    "d3-dsv": "^2.0.0",
+    "type-analyzer": "0.4.0"
   },
   "nyc": {
     "sourceMap": false,

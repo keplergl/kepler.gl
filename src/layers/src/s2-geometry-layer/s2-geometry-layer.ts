@@ -5,7 +5,6 @@ import {S2Layer} from '@deck.gl/geo-layers';
 import {
   HIGHLIGH_COLOR_3D,
   CHANNEL_SCALES,
-  ColorRange,
   LAYER_VIS_CONFIGS,
   DEFAULT_COLOR_UI
 } from '@kepler.gl/constants';
@@ -19,6 +18,7 @@ import Layer, {
   LayerHeightConfig
 } from '../base-layer';
 import {
+  ColorRange,
   Merge,
   RGBColor,
   VisConfigBoolean,

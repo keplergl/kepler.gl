@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {ColorRange} from '@kepler.gl/constants';
+import {ColorRange} from '@kepler.gl/types';
 import {FormattedMessage} from '@kepler.gl/localization';
 import React, {Component} from 'react';
 import styled from 'styled-components';

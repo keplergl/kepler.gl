@@ -5,9 +5,9 @@ import {bisectLeft, quantileSorted as d3Quantile, extent} from 'd3-array';
 import moment from 'moment';
 
 import {notNullorUndefined} from '@kepler.gl/common-utils';
-import {ALL_FIELD_TYPES, ColorMap, ColorRange, SCALE_FUNC, SCALE_TYPES} from '@kepler.gl/constants';
+import {ALL_FIELD_TYPES, SCALE_FUNC, SCALE_TYPES} from '@kepler.gl/constants';
 // import {Layer, VisualChannel, VisualChannelDomain} from '@kepler.gl/layers';
-import {HexColor, MapState} from '@kepler.gl/types';
+import {ColorMap, ColorRange, HexColor, MapState} from '@kepler.gl/types';
 
 import {isRgbColor, rgbToHex} from './color-utils';
 import {DataContainerInterface} from './data-container-interface';

@@ -6,6 +6,7 @@ import {PickInfo} from '@deck.gl/core/lib/deck';
 import {default as ActionTypes} from './action-types';
 import {FileCacheItem} from '@kepler.gl/processors';
 import {Layer, LayerBaseConfig} from '@kepler.gl/layers';
+import {KeplerTable} from '@kepler.gl/table';
 import {
   AddDataToMapPayload,
   ValueOf,
@@ -25,7 +26,6 @@ import {
 } from '@kepler.gl/types';
 import {createAction} from '@reduxjs/toolkit';
 
-import {KeplerTable} from '@kepler.gl/table';
 // TODO - import LoaderObject type from @loaders.gl/core when supported
 // TODO - import LoadOptions type from @loaders.gl/core when supported
 
@@ -1598,7 +1598,7 @@ export function setTimeFilterSyncTimelineMode({
 }
 
 export type CreateNewDatasetSuccessPayload = {
-  results: (PromiseFulfilledResult<KeplerTable<any>> | PromiseRejectedResult)[];
+  results: (PromiseFulfilledResult<KeplerTable> | PromiseRejectedResult)[];
   addToMapOptions: AddDataToMapPayload['options'];
 };
 

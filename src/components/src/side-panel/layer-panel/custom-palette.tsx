@@ -21,8 +21,8 @@ import {
 import styled, {StyledComponent, css} from 'styled-components';
 import Portaled from '../../common/portaled';
 
-import {ColorMap, KeyEvent} from '@kepler.gl/constants';
-import {ColorUI, HexColor, NestedPartial} from '@kepler.gl/types';
+import {KeyEvent} from '@kepler.gl/constants';
+import {ColorMap, ColorUI, HexColor, NestedPartial} from '@kepler.gl/types';
 import {colorMapToColorBreaks, isNumericColorBreaks} from '@kepler.gl/utils';
 import {
   addCustomPaletteColor,
@@ -435,9 +435,10 @@ function CustomPaletteFactory(): React.FC<CustomPaletteProps> {
   }) => {
     const [isSorting, setIsSorting] = useState(false);
     const {colors, colorMap} = customPalette;
-    const colorBreaks = useMemo(() => (colorMap ? colorMapToColorBreaks(colorMap) : null), [
-      colorMap
-    ]);
+    const colorBreaks = useMemo(
+      () => (colorMap ? colorMapToColorBreaks(colorMap) : null),
+      [colorMap]
+    );
 
     const onPickerUpdate = useCallback(
       color => {

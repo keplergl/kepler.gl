@@ -80,7 +80,7 @@
     "analyze:bundle": "NODE_OPTIONS=--openssl-legacy-provider webpack --config ./webpack/bundle.js --progress --env.prod",
     "check-licence": "babel-node ./scripts/license-header/bin --license ./FILE-HEADER --dry",
     "add-licence": "babel-node ./scripts/license-header/bin --license ./FILE-HEADER",
-    "prepublishOnly": "yarn workspaces foreach -A run stab && yarn workspaces foreach -A run prepublish && yarn add-licence && yarn build:umd && yarn build:types",
+    "prepublishOnly": "yarn workspaces foreach -At run stab && yarn workspaces foreach -At run prepublishOnly && yarn add-licence && yarn build:umd && yarn build:types",
     "docs": "babel-node ./scripts/documentation.js",
     "typedoc": "typedoc --theme markdown --out typedoc --inputFiles ./src/reducers --inputFiles ./src/actions --excludeExternals --excludeNotExported --excludePrivate",
     "example-version": "babel-node ./scripts/edit-version.js",
