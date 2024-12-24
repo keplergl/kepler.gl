@@ -22,7 +22,7 @@
     "build": "rm -fr dist && babel src --out-dir dist --source-maps inline --extensions '.ts,.tsx,.js,.jsx' --ignore '**/*.d.ts'",
     "build:umd": "NODE_OPTIONS=--openssl-legacy-provider webpack --config ./webpack/umd.js --progress --env.prod",
     "build:types": "tsc --project ./tsconfig.production.json",
-    "prepublish": "babel-node ../../scripts/license-header/bin --license ../../FILE-HEADER && yarn build && yarn build:types",
+    "prepublishOnly": "babel-node ../../scripts/license-header/bin --license ../../FILE-HEADER && yarn build && yarn build:types",
     "stab": "mkdir -p dist && touch dist/index.js"
   },
   "files": [
@@ -33,6 +33,7 @@
     "@kepler.gl/components": "3.1.0-alpha.2",
     "@kepler.gl/constants": "3.1.0-alpha.2",
     "@kepler.gl/layers": "3.1.0-alpha.2",
+    "@kepler.gl/table": "3.1.0-alpha.2",
     "@kepler.gl/types": "3.1.0-alpha.2",
     "@kepler.gl/utils": "3.1.0-alpha.2",
     "color-interpolate": "^1.0.5",

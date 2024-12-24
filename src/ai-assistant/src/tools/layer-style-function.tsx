@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 // This file is used to call the LAYER_VISUAL_CHANNEL_CHANGE to update the layer style
 
 import {

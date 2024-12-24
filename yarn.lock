@@ -3181,6 +3181,7 @@ __metadata:
     "@kepler.gl/components": "npm:3.1.0-alpha.2"
     "@kepler.gl/constants": "npm:3.1.0-alpha.2"
     "@kepler.gl/layers": "npm:3.1.0-alpha.2"
+    "@kepler.gl/table": "npm:3.1.0-alpha.2"
     "@kepler.gl/types": "npm:3.1.0-alpha.2"
     "@kepler.gl/utils": "npm:3.1.0-alpha.2"
     color-interpolate: "npm:^1.0.5"
@@ -3565,7 +3566,6 @@ __metadata:
   dependencies:
     "@kepler.gl/common-utils": "npm:3.1.0-alpha.2"
     "@kepler.gl/constants": "npm:3.1.0-alpha.2"
-    "@kepler.gl/layers": "npm:3.1.0-alpha.2"
     "@kepler.gl/types": "npm:3.1.0-alpha.2"
     "@kepler.gl/utils": "npm:3.1.0-alpha.2"
     "@types/d3-array": "npm:^2.8.0"
