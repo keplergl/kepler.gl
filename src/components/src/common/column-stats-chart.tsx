@@ -439,7 +439,7 @@ function ColumnStatsChartFactory(
 
     return (
       <ColumnStatsChart
-        colorBreaks={colorBreaks || []}
+        colorBreaks={colorBreaks}
         field={field}
         dataset={dataset}
         onChangedUpdater={onChangedUpdater}

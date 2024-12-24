@@ -62,6 +62,6 @@
   },
   "packageManager": "yarn@4.4.0",
   "devDependencies": {
-    "@types/d3-time": "^3"
+    "@types/d3-time": "^2"
   }
 }

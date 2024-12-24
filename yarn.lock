@@ -3161,6 +3161,7 @@ __metadata:
     "@kepler.gl/constants": "npm:3.1.0-alpha.2"
     "@kepler.gl/layers": "npm:3.1.0-alpha.2"
     "@kepler.gl/processors": "npm:3.1.0-alpha.2"
+    "@kepler.gl/table": "npm:3.1.0-alpha.2"
     "@kepler.gl/types": "npm:3.1.0-alpha.2"
     "@kepler.gl/utils": "npm:3.1.0-alpha.2"
     "@reduxjs/toolkit": "npm:^1.7.2"
@@ -3328,7 +3329,7 @@ __metadata:
     "@dnd-kit/modifiers": "npm:^6.0.1"
     "@kepler.gl/types": "npm:3.1.0-alpha.2"
     "@types/d3-scale": "npm:^3.2.2"
-    "@types/d3-time": "npm:^3"
+    "@types/d3-time": "npm:^2"
     "@types/keymirror": "npm:^0.1.1"
     chroma-js: "npm:2.1.2"
     colorbrewer: "npm:^1.5.0"
@@ -9395,13 +9396,6 @@ __metadata:
   version: 2.1.4
   resolution: "@types/d3-time@npm:2.1.4"
   checksum: 10c0/b597bfa51a163d4231e953d6903b06fd6341d0f11a28222a79fafaddb46155d7f458a67c814de53df84926a47dd535897228a475679d228576b0cda87351e534
-  languageName: node
-  linkType: hard
-
-"@types/d3-time@npm:^3":
-  version: 3.0.4
-  resolution: "@types/d3-time@npm:3.0.4"
-  checksum: 10c0/6d9e2255d63f7a313a543113920c612e957d70da4fb0890931da6c2459010291b8b1f95e149a538500c1c99e7e6c89ffcce5554dd29a31ff134a38ea94b6d174
   languageName: node
   linkType: hard
 
