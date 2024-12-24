@@ -7,7 +7,8 @@ import ReactMarkdown from 'react-markdown';
 import {useIntl} from 'react-intl';
 
 import {FormattedMessage} from '@kepler.gl/localization';
-import {Table} from '@kepler.gl/layers';
+
+import Table from '../table';
 
 const InfoModal = styled.div`
   font-size: 13px;

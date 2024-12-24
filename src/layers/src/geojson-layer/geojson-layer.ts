@@ -37,11 +37,11 @@ import {
   GEOJSON_FIELDS,
   HIGHLIGH_COLOR_3D,
   CHANNEL_SCALES,
-  ColorRange,
   LAYER_VIS_CONFIGS,
   DEFAULT_COLOR_UI
 } from '@kepler.gl/constants';
 import {
+  ColorRange,
   VisConfigNumber,
   VisConfigColorSelect,
   VisConfigColorRange,

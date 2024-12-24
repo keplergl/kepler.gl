@@ -30,6 +30,7 @@
     "umd"
   ],
   "dependencies": {
+    "@deck.gl/core": "^8.9.27",
     "@dnd-kit/sortable": "^7.0.2",
     "@kepler.gl/common-utils": "3.1.0-alpha.2",
     "@kepler.gl/constants": "3.1.0-alpha.2",
@@ -48,6 +49,7 @@
     "@types/lodash.throttle": "^4.1.7",
     "apache-arrow": ">=15.0.0",
     "d3-array": "^2.8.0",
+    "d3-color": "^2.0.0",
     "d3-format": "^2.0.0",
     "d3-interpolate": "^2.0.1",
     "decimal.js": "^10.2.0",
@@ -62,12 +64,14 @@
     "maplibre-gl": "^3.6.2",
     "maplibregl-mapbox-request-transformer": "^0.0.2",
     "mini-svg-data-uri": "^1.0.3",
+    "moment": "^2.10.6",
     "moment-timezone": "^0.5.35",
     "react": "^18.2.0",
     "react-map-gl": "^7.1.6",
     "resize-observer-polyfill": "^1.5.1",
     "suncalc": "^1.9.0",
-    "type-analyzer": "0.4.0"
+    "type-analyzer": "0.4.0",
+    "viewport-mercator-project": "^6.0.0"
   },
   "nyc": {
     "sourceMap": false,

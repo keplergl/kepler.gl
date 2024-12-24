@@ -2174,7 +2174,8 @@ export const createNewDatasetSuccessUpdater = (
 ): VisState => {
   // console.log('createNewDatasetSuccessUpdater', action.payload);
   const {results, addToMapOptions} = action.payload;
-  const newDataEntries = results.reduce((accu, result) => {
+  // @ts-expect-error fix KeplerTableModel differences
+  const newDataEntries: Datasets = results.reduce((accu, result) => {
     if (result.status === 'fulfilled') {
       const dataset = result.value;
       return {...accu, [dataset.id]: dataset};

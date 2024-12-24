@@ -9,35 +9,14 @@ import {
   DEFAULT_LAYER_COLOR_PALETTE_STEPS
 } from './default-settings';
 import {
+  ColorRange,
   ColorUI,
-  HexColor,
   LayerTextConfig,
   LayerTextLabel,
   LayerVisConfigSettings,
   RGBAColor
 } from '@kepler.gl/types';
 import {ColorPalette, KEPLER_COLOR_PALETTES, colorPaletteToColorRange} from './color-palettes';
-
-export type ColorMap = [string[] | string | number | null, HexColor][];
-// Key is HexColor but as key we can use only string
-export type ColorLegends = {[key: HexColor]: string};
-
-export type ColorRange = {
-  name?: string;
-  type?: string;
-  category?: string;
-  colors: HexColor[];
-  reversed?: boolean;
-  colorMap?: ColorMap;
-  colorLegends?: ColorLegends;
-};
-
-export type MiniColorRange = {
-  name: string;
-  type: string;
-  category: string;
-  colors: HexColor[];
-};
 
 export type AggregationTypes = keyof typeof AGGREGATION_TYPES;
 

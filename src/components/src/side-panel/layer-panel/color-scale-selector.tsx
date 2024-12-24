@@ -4,16 +4,26 @@
 import React, {useCallback, useMemo, useState} from 'react';
 import styled from 'styled-components';
 
-import {Accessor, DropdownList, LazyTippy, Typeahead} from '@kepler.gl/components';
-import {ColorRange, SCALE_TYPES} from '@kepler.gl/constants';
+import {SCALE_TYPES} from '@kepler.gl/constants';
 import {Layer, VisualChannelDomain} from '@kepler.gl/layers';
-import {ColorUI, Field, NestedPartial} from '@kepler.gl/types';
-import {colorBreaksToColorMap, getLayerColorScale, getLegendOfScale, hasColorMap} from '@kepler.gl/utils';
+import {KeplerTable} from '@kepler.gl/table';
+import {ColorRange, ColorUI, Field, NestedPartial} from '@kepler.gl/types';
+import {
+  colorBreaksToColorMap,
+  getLayerColorScale,
+  getLegendOfScale,
+  hasColorMap
+} from '@kepler.gl/utils';
+
 import ColorBreaksPanelFactory, {ColorBreaksPanelProps} from './color-breaks-panel';
 import {SetColorUIFunc} from './custom-palette';
 import DropdownSelect from '../../common/item-selector/dropdown-select';
-import {KeplerTable} from '@kepler.gl/table';
-import type {Instance as TippyInstance} from 'tippy.js';
+import Accessor from '../../common/item-selector/accessor';
+import DropdownList from '../../common/item-selector/dropdown-list';
+import LazyTippy from '../../map/lazy-tippy';
+import Typeahead from '../../common/item-selector/typeahead';
+
+type TippyInstance = any; // 'tippy-js'
 
 export type ScaleOption = {
   label: string;

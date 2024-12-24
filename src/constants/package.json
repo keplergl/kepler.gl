@@ -30,14 +30,18 @@
     "umd"
   ],
   "dependencies": {
+    "@dnd-kit/core": "^6.0.8",
     "@dnd-kit/modifiers": "^6.0.1",
     "@kepler.gl/types": "3.1.0-alpha.2",
     "@types/d3-scale": "^3.2.2",
     "@types/keymirror": "^0.1.1",
     "chroma-js": "2.1.2",
     "colorbrewer": "^1.5.0",
+    "d3-array": "^2.8.0",
+    "d3-color": "^2.0.0",
     "d3-scale": "^3.2.3",
     "d3-scale-chromatic": "2.0.0",
+    "d3-time": "^3.1.0",
     "global": "^4.3.0",
     "keymirror": "^0.1.1"
   },
@@ -56,5 +60,8 @@
     "node": "18.18.2",
     "yarn": "4.4.0"
   },
-  "packageManager": "yarn@4.4.0"
+  "packageManager": "yarn@4.4.0",
+  "devDependencies": {
+    "@types/d3-time": "^3"
+  }
 }

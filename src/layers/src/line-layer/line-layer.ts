@@ -11,8 +11,9 @@ import {EnhancedLineLayer} from '@kepler.gl/deckgl-layers';
 import LineLayerIcon from './line-layer-icon';
 import {VisualChannel} from '../base-layer';
 import ArcLayer, {ArcLayerConfig} from '../arc-layer/arc-layer';
-import {LAYER_VIS_CONFIGS, ColorRange, PROJECTED_PIXEL_SIZE_MULTIPLIER} from '@kepler.gl/constants';
+import {LAYER_VIS_CONFIGS, PROJECTED_PIXEL_SIZE_MULTIPLIER} from '@kepler.gl/constants';
 import {
+  ColorRange,
   Merge,
   RGBColor,
   VisConfigColorRange,

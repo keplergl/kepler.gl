@@ -15,10 +15,9 @@ import {
   HIGHLIGH_COLOR_3D,
   CHANNEL_SCALES,
   FIELD_OPTS,
-  DEFAULT_AGGREGATION,
-  ColorRange
+  DEFAULT_AGGREGATION
 } from '@kepler.gl/constants';
-import {Field, LayerColumn, Merge} from '@kepler.gl/types';
+import {ColorRange, Field, LayerColumn, Merge} from '@kepler.gl/types';
 import {KeplerTable, Datasets} from '@kepler.gl/table';
 
 type AggregationLayerColumns = {

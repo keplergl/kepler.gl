@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {ColorRange} from '@kepler.gl/constants';
+import {HexColor} from './types';
 
 export type LayerBaseConfig = {
   dataId: string | null;
@@ -167,6 +167,27 @@ export type ColorRangeConfig = {
   custom: boolean;
   customBreaks: boolean;
   colorBlindSafe: boolean;
+};
+
+export type ColorMap = [string[] | string | number | null, HexColor][];
+// Key is HexColor but as key we can use only string
+export type ColorLegends = {[key: HexColor]: string};
+
+export type ColorRange = {
+  name?: string;
+  type?: string;
+  category?: string;
+  colors: HexColor[];
+  reversed?: boolean;
+  colorMap?: ColorMap;
+  colorLegends?: ColorLegends;
+};
+
+export type MiniColorRange = {
+  name: string;
+  type: string;
+  category: string;
+  colors: HexColor[];
 };
 
 export type ColorUI = {

@@ -161,3 +161,5 @@ export {getApplicationConfig, initApplicationConfig} from './application-config'
 export type {KeplerApplicationConfig, MapLibInstance} from './application-config';
 
 export {default as quickInsertionSort} from './quick-insertion-sort';
+
+export type {KeplerTableModel} from './types';

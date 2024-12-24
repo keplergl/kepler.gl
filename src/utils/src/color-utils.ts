@@ -3,13 +3,11 @@
 
 import {
   CategoricalPalette,
-  ColorMap,
   ColorPalette,
-  ColorRange,
   DEFAULT_CUSTOM_PALETTE,
   colorPaletteToColorRange
 } from '@kepler.gl/constants';
-import {ColorRangeConfig, HexColor, RGBColor} from '@kepler.gl/types';
+import {ColorMap, ColorRange, ColorRangeConfig, HexColor, RGBColor} from '@kepler.gl/types';
 import {rgb as d3Rgb} from 'd3-color';
 import {interpolate} from 'd3-interpolate';
 import {arrayInsert, arrayMove} from './utils';
@@ -396,7 +394,7 @@ export function updateCustomColorRangeByColorUI(
  * Update color range after selecting a palette from color range selectoer
  * Copy over colorMap and colorLegends
  */
- export function updateColorRangeBySelectedPalette(oldColorRange, colorPalette, colorConfig) {
+export function updateColorRangeBySelectedPalette(oldColorRange, colorPalette, colorConfig) {
   const {colors: newColors, ...newColorRange} = colorPaletteToColorRange(colorPalette, colorConfig);
 
   const colorRange = {

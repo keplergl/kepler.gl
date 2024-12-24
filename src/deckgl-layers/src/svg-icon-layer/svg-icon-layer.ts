@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {CompositeLayer} from '@deck.gl/core';
+import {CompositeLayer, Position} from '@deck.gl/core';
 import {CompositeLayerProps} from '@deck.gl/core/lib/composite-layer';
-import {Position, RGBAColor} from 'deck.gl';
-import {RGBColor} from '@kepler.gl/types';
+
+import {RGBColor, RGBAColor} from '@kepler.gl/types';
 import ScatterplotIconLayer from './scatterplot-icon-layer';
 
 // default icon geometry is a square

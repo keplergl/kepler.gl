@@ -12,7 +12,6 @@ import {
   validateFiltersUpdateDatasets,
   findById
 } from '@kepler.gl/utils';
-import {getLayerOrderFromLayers} from '@kepler.gl/reducers';
 
 import {Layer, VisualChannel} from '@kepler.gl/layers';
 import {createEffect} from '@kepler.gl/effects';
@@ -33,6 +32,8 @@ import {
   LayerColumn
 } from '@kepler.gl/types';
 import {KeplerTable, Datasets, assignGpuChannels, resetFilterGpuMode} from '@kepler.gl/table';
+
+import {getLayerOrderFromLayers} from './layer-utils';
 
 /**
  * Merge loaded filters with current state, if no fields or data are loaded

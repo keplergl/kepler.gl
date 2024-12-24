@@ -26,11 +26,11 @@ import {
   HIGHLIGH_COLOR_3D,
   DEFAULT_COLOR_UI,
   DEFAULT_TEXT_LABEL,
-  LAYER_VIS_CONFIGS,
-  ColorRange
+  LAYER_VIS_CONFIGS
 } from '@kepler.gl/constants';
 
 import {
+  ColorRange,
   VisConfigBoolean,
   VisConfigColorRange,
   VisConfigNumber,

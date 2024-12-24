@@ -8,6 +8,7 @@ import {hexagonToPolygonGeo} from './hexagon-utils';
 import HexagonLayerIcon from './hexagon-layer-icon';
 import {clamp} from '@kepler.gl/utils';
 import {
+  ColorRange,
   VisConfigBoolean,
   VisConfigColorRange,
   VisConfigNumber,
@@ -15,7 +16,7 @@ import {
   VisConfigSelection,
   Merge
 } from '@kepler.gl/types';
-import {AggregationTypes, ColorRange} from '@kepler.gl/constants';
+import {AggregationTypes} from '@kepler.gl/constants';
 
 export type HexagonLayerVisConfigSettings = {
   opacity: VisConfigNumber;

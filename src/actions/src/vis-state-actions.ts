@@ -25,7 +25,7 @@ import {
 } from '@kepler.gl/types';
 import {createAction} from '@reduxjs/toolkit';
 
-import {KeplerTable} from '@kepler.gl/table';
+import type {KeplerTableModel} from '@kepler.gl/utils';
 // TODO - import LoaderObject type from @loaders.gl/core when supported
 // TODO - import LoadOptions type from @loaders.gl/core when supported
 
@@ -1598,7 +1598,7 @@ export function setTimeFilterSyncTimelineMode({
 }
 
 export type CreateNewDatasetSuccessPayload = {
-  results: (PromiseFulfilledResult<KeplerTable<any>> | PromiseRejectedResult)[];
+  results: (PromiseFulfilledResult<KeplerTableModel<any, any>> | PromiseRejectedResult)[];
   addToMapOptions: AddDataToMapPayload['options'];
 };
 

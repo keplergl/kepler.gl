@@ -31,11 +31,13 @@
   ],
   "dependencies": {
     "@deck.gl/core": "^8.9.27",
+    "@kepler.gl/common-utils": "3.1.0-alpha.2",
     "@kepler.gl/constants": "3.1.0-alpha.2",
     "@kepler.gl/types": "3.1.0-alpha.2",
     "@kepler.gl/utils": "3.1.0-alpha.2",
     "@luma.gl/core": "^8.5.20",
     "@luma.gl/shadertools": "^8.5.20",
+    "moment-timezone": "^0.5.35",
     "suncalc": "^1.9.0"
   },
   "nyc": {

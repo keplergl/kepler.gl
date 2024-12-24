@@ -2,11 +2,18 @@
 // Copyright contributors to the kepler.gl project
 
 import {createSelector} from 'reselect';
-import {CHANNEL_SCALES, SCALE_FUNC, ALL_FIELD_TYPES, ColorRange} from '@kepler.gl/constants';
+import {CHANNEL_SCALES, SCALE_FUNC, ALL_FIELD_TYPES} from '@kepler.gl/constants';
 import MapboxGLLayer, {MapboxLayerGLConfig} from '../mapboxgl-layer';
 import HeatmapLayerIcon from './heatmap-layer-icon';
 import {LayerBaseConfigPartial, LayerWeightConfig, VisualChannels} from '../base-layer';
-import {VisConfigColorRange, VisConfigNumber, HexColor, Merge, LayerColumn} from '@kepler.gl/types';
+import {
+  ColorRange,
+  VisConfigColorRange,
+  VisConfigNumber,
+  HexColor,
+  Merge,
+  LayerColumn
+} from '@kepler.gl/types';
 import {hexToRgb, DataContainerInterface} from '@kepler.gl/utils';
 import {KeplerTable} from '@kepler.gl/table';
 

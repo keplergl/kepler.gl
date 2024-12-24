@@ -39,7 +39,8 @@
     "color-interpolate": "^1.0.5",
     "echarts": "^5.5.1",
     "global": "^4.3.0",
-    "react-ai-assist": "0.0.20"
+    "react-ai-assist": "0.0.20",
+    "react-intl": "^6.3.0"
   },
   "nyc": {
     "sourceMap": false,

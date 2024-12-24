@@ -28,7 +28,6 @@ import {
   LAYER_VIS_CONFIGS,
   DEFAULT_LAYER_COLOR,
   CHANNEL_SCALES,
-  ColorRange,
   DEFAULT_COLOR_UI
 } from '@kepler.gl/constants';
 import {getTextOffsetByRadius, formatTextLabelData} from '../layer-text-label';
@@ -42,6 +41,7 @@ import {
 } from '../layer-utils';
 import {getGeojsonPointDataMaps, GeojsonPointDataMaps} from '../geojson-layer/geojson-utils';
 import {
+  ColorRange,
   Merge,
   RGBColor,
   VisConfigBoolean,
