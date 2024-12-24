@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 export const TASK_LIST =
   '1. Show dataset/layer/variable info.\n2. Change the basemap style.\n3. Load data from url.\n4. Create a map layer using variable.\n5. Filter the data of a variable.\n6. Create a histogram.';
 

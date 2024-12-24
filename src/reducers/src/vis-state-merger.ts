@@ -14,7 +14,7 @@ import {
 } from '@kepler.gl/utils';
 import {getLayerOrderFromLayers} from '@kepler.gl/reducers';
 
-import {Layer} from '@kepler.gl/layers';
+import {Layer, VisualChannel} from '@kepler.gl/layers';
 import {createEffect} from '@kepler.gl/effects';
 import {LAYER_BLENDINGS, OVERLAY_BLENDINGS} from '@kepler.gl/constants';
 import {CURRENT_VERSION, VisState, VisStateMergers, KeplerGLSchemaClass} from '@kepler.gl/schemas';
@@ -706,7 +706,7 @@ export function validateSavedVisualChannels(
   savedLayer: ParsedLayer,
   options: {throwOnError?: boolean} = {}
 ): null | Layer {
-  Object.values(newLayer.visualChannels).forEach(({field, scale, key}) => {
+  (Object.values(newLayer.visualChannels) as VisualChannel[]).forEach(({field, scale, key}) => {
     let foundField;
     if (savedLayer.config) {
       if (savedLayer.config[field]) {

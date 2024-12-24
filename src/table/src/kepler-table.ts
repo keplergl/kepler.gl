@@ -28,7 +28,6 @@ import {
 
 import {getGpuFilterProps, getDatasetFieldIndexForFilter} from './gpu-filter-utils';
 
-import {Layer} from '@kepler.gl/layers';
 import {
   getSortingFunction,
   timeToUnixMilli,
@@ -50,6 +49,9 @@ import {
   FilterChanged
 } from '@kepler.gl/utils';
 import {generateHashId, notNullorUndefined} from '@kepler.gl/common-utils';
+
+// TODO isolate layer type, depends on @kepler.gl/layers
+type Layer = any;
 
 export type GpuFilter = {
   filterRange: number[][];

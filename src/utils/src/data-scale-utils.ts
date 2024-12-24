@@ -6,7 +6,7 @@ import moment from 'moment';
 
 import {notNullorUndefined} from '@kepler.gl/common-utils';
 import {ALL_FIELD_TYPES, ColorMap, ColorRange, SCALE_FUNC, SCALE_TYPES} from '@kepler.gl/constants';
-import {Layer, VisualChannel, VisualChannelDomain} from '@kepler.gl/layers';
+// import {Layer, VisualChannel, VisualChannelDomain} from '@kepler.gl/layers';
 import {HexColor, MapState} from '@kepler.gl/types';
 
 import {isRgbColor, rgbToHex} from './color-utils';
@@ -27,6 +27,11 @@ export type ColorBreakOrdinal = {
 };
 
 export type D3ScaleFunction = Record<string, any> & ((x: any) => any);
+
+// TODO isolate types - depends on @kepler.gl/layers
+type Layer = any;
+type VisualChannel = any;
+type VisualChannelDomain = any;
 
 export type LabelFormat = (n: number) => string;
 type dataValueAccessor = <T>(param: T) => T;

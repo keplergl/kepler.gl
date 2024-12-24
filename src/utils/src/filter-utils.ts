@@ -17,7 +17,7 @@ import {
   LAYER_TYPES,
   FILTER_VIEW_TYPES
 } from '@kepler.gl/constants';
-import {VisState} from '@kepler.gl/schemas';
+// import {VisState} from '@kepler.gl/schemas';
 import * as ScaleUtils from './data-scale-utils';
 import {h3IsValid} from 'h3-js';
 
@@ -54,6 +54,9 @@ export const durationHour = durationMinute * 60;
 export const durationDay = durationHour * 24;
 export const durationWeek = durationDay * 7;
 export const durationYear = durationDay * 365;
+
+// TODO isolate types - depends on @kepler.gl/schemas
+type VisState = any;
 
 export type FilterResult = {
   filteredIndexForDomain?: number[];

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 import {ActionHandler, addLayer} from '@kepler.gl/actions';
 import {LayerClasses} from '@kepler.gl/layers';
 import KeplerTable, {Datasets} from '@kepler.gl/table';

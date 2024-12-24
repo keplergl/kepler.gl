@@ -18,14 +18,6 @@ import {
   LAYER_VIS_CONFIGS
 } from '@kepler.gl/constants';
 import {
-  Layer as KeplerLayer,
-  VisualChannel,
-  DatasetType,
-  TileType,
-  VectorTileType,
-  VectorTileDatasetMetadata
-} from '@kepler.gl/layers';
-import {
   KeplerTable as KeplerDataset,
   Datasets as KeplerDatasets,
   GpuFilter
@@ -48,12 +40,21 @@ import {getTileUrl} from './utils/vector-tile-utils';
 import {MVTLayer as CustomMVTLayer} from './mvt-layer';
 import VectorTileIcon from './vector-tile-icon';
 import {
+  default as KeplerLayer,
   LayerBaseConfig,
   LayerBaseConfigPartial,
+  VisualChannel,
   VisualChannelDomain,
   VisualChannelField
 } from '../base-layer';
-import {VectorTileMetadata, getLoaderOptions} from './utils/vector-tile-utils';
+import {
+  VectorTileMetadata,
+  getLoaderOptions,
+  DatasetType,
+  TileType,
+  VectorTileType,
+  VectorTileDatasetMetadata
+} from './utils/vector-tile-utils';
 
 import AbstractTileLayer, {
   LayerData as CommonLayerData,

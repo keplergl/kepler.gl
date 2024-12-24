@@ -340,7 +340,7 @@ export function LayerLegendContentFactory(
   }) => {
     const visualChannels = layer.getLegendVisualChannels();
     const channelKeys = Object.values(visualChannels);
-    const colorChannels = channelKeys.filter(isColorChannel);
+    const colorChannels = channelKeys.filter(isColorChannel) as VisualChannel[];
     const nonColorChannels = channelKeys.filter(vc => !isColorChannel(vc));
     const width = containerW - 2 * DIMENSIONS.mapControl.padding;
 
@@ -372,7 +372,7 @@ export function LayerLegendContentFactory(
             actionIcons={actionIcons}
           />
         ))}
-        {nonColorChannels.map(visualChannel => {
+        {nonColorChannels.map((visualChannel: VisualChannel) => {
           const matchCondition = !visualChannel.condition || visualChannel.condition(layer.config);
           const enabled = layer.config[visualChannel.field] || visualChannel.defaultMeasure;
 

@@ -1,6 +1,10 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
+import interpolate from 'color-interpolate';
+
 import {Layer} from '@kepler.gl/layers';
 import {Datasets, KeplerTable} from '@kepler.gl/table';
-import interpolate from 'color-interpolate';
 
 export function checkDatasetNotExists(
   datasets: Datasets,
