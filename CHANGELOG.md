@@ -15,7 +15,7 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
-## [3.1.0-alpha.2] - December 23 2024
+## [3.1.0-alpha.2] - December 24 2024
 
 - f9b385a6e [fix] Fixed time filter bug where points located at the borders of the domains were not correctly displayed (#2854)
 - 59abc6a19 [fix] fix for custom color scales with tile layer (#2853)
