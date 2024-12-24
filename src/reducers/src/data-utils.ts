@@ -45,13 +45,12 @@ export function processLayerBounds(layerBounds: Bounds[]): Bounds {
 export function findMapBounds(layers: Layer[]): Bounds | null {
   // find bounds in formatted layerData
   // take ALL layers into account when finding map bounds
-  const availableLayerBounds: Bounds | [] = layers.reduce((res, l) => {
+  const availableLayerBounds = layers.reduce((res, l) => {
     if (l.meta && l.meta.bounds) {
-      // @ts-expect-error
       res.push(l.meta.bounds);
     }
     return res;
-  }, []);
+  }, [] as Bounds[]);
   // return null if no layer is available
   if (availableLayerBounds.length === 0) {
     return null;

@@ -34,6 +34,7 @@ import {
 } from '@kepler.gl/constants';
 import {
   DataContainerInterface,
+  DomainQuantiles,
   getLatLngBounds,
   getSampleContainerData,
   hasColorMap,
@@ -220,7 +221,7 @@ function* generateColor(): Generator<RGBColor> {
     if (index === layerColors.length) {
       index = 0;
     }
-    yield layerColors[index++];
+    yield layerColors[index++] as unknown as RGBColor;
   }
 }
 
@@ -866,7 +867,10 @@ class Layer {
     const colorUIProp = Object.entries(newConfig).reduce((accu, [key, value]) => {
       return {
         ...accu,
-        [key]: isPlainObject(accu[key]) && isPlainObject(value) ? {...accu[key], ...value} : value
+        [key]:
+          isPlainObject(accu[key]) && isPlainObject(value)
+            ? {...accu[key], ...(value as Record<string, unknown>)}
+            : value
       };
     }, previous[prop] || DEFAULT_COLOR_UI);
 
@@ -1095,9 +1099,9 @@ class Layer {
   }
   /**
    * Mapping from visual channels to deck.gl accesors
-   * @param {Object} param Parameters
-   * @param {Function} param.dataAccessor Access kepler.gl layer data from deck.gl layer
-   * @param {import('utils/table-utils/data-container-interface').DataContainerInterface} param.dataContainer DataContainer to use use with dataAccessor
+   * @param param Parameters
+   * @param param.dataAccessor Access kepler.gl layer data from deck.gl layer
+   * @param param.dataContainer DataContainer to use use with dataAccessor
    * @return {Object} attributeAccessors - deck.gl layer attribute accessors
    */
   getAttributeAccessors({
@@ -1192,7 +1196,7 @@ class Layer {
 
   getVisChannelScale(
     scale: string,
-    domain: VisualChannelDomain,
+    domain: VisualChannelDomain | DomainQuantiles,
     range: any,
     fixed?: boolean
   ): GetVisChannelScaleReturnType {

@@ -1070,8 +1070,8 @@ export default function LayerConfiguratorFactory(
       return (
         <StyledLayerConfigurator>
           {layer.layerInfoModal && !layer.supportedColumnModes ? (
-            // @ts-expect-error wrong handler type?
-            <HowToButton onClick={() => openModal(layer.layerInfoModal)} />
+            // TODO figure out handler type. String or return type of layer.layerInfoModal ?
+            <HowToButton onClick={() => openModal(layer.layerInfoModal as any)} />
           ) : null}
           <LayerConfigGroup label={'layer.basic'} collapsible expanded={!layer.hasAllColumns()}>
             <LayerTypeSelector
@@ -1094,8 +1094,8 @@ export default function LayerConfiguratorFactory(
                 supportedColumnModes={layer.supportedColumnModes}
                 id={layer.id}
                 layerConfig={layer.config}
-                // @ts-expect-error wrong handler type?
-                openModal={openModal}
+                // TODO figure out handler type. String or return type of layer.layerInfoModal ?
+                openModal={openModal as any}
                 updateLayerConfig={updateLayerConfig}
                 updateLayerType={updateLayerType}
                 fields={fields}

@@ -15,7 +15,7 @@ import LoadDataFooter from './load-data-footer';
 // import TilesetIcon from './tileset-icon';
 import TilesetVectorForm from './tileset-vector-form';
 
-const WIDTH_ICON = '62px';
+// const WIDTH_ICON = '62px';
 
 const LoadTilesetTabContainer = styled.div`
   color: ${props => props.theme.AZURE};
@@ -27,11 +27,12 @@ const Container = styled.div`
   background-color: ${props => props.theme.WHITE};
 `;
 
-// @ts-expect-error
+/*
 const TilesetTypeContainer = styled.div`
   display: grid;
   grid-template-columns: repeat(4, ${WIDTH_ICON});
 `;
+*/
 
 const MetaContainer = styled.div`
   display: flex;
@@ -96,8 +97,7 @@ function LoadTilesetTabFactory() {
     isAddingDatasets,
     intl
   }) => {
-    // @ts-expect-error
-    const [typeIndex, setTypeIndex] = useState<number>(0);
+    const [typeIndex/*, setTypeIndex*/] = useState<number>(0);
     const [response, setResponse] = useState<MetaResponse>({});
 
     const error = response.error;

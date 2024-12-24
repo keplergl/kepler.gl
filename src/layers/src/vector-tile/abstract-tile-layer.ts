@@ -5,7 +5,6 @@ import throttle from 'lodash.throttle';
 
 import {notNullorUndefined} from '@kepler.gl/common-utils';
 import {SCALE_TYPES, ALL_FIELD_TYPES, LAYER_VIS_CONFIGS} from '@kepler.gl/constants';
-import {Layer, VisualChannel} from '@kepler.gl/layers';
 import {
   KeplerTable as KeplerDataset,
   Datasets as KeplerDatasets,
@@ -31,8 +30,10 @@ import {
 import {findDefaultColorField, DataContainerInterface} from '@kepler.gl/utils';
 
 import {
+  default as KeplerLayer,
   LayerBaseConfig,
   LayerBaseConfigPartial,
+  VisualChannel,
   VisualChannelDomain,
   VisualChannelField
 } from '../base-layer';
@@ -137,13 +138,13 @@ export type AbstractTileLayerConfig = Merge<
 export default abstract class AbstractTileLayer<
   // Type of the tile itself
   T,
-  // Type of the iterable data object (for HexTile, this is the same as the tile)
+  // Type of the iterable data object
   I extends Iterable<any> = T extends Iterable<any> ? T : never
-> extends Layer {
+> extends KeplerLayer {
   declare config: AbstractTileLayerConfig;
   declare visConfigSettings: AbstractTileLayerVisConfigSettings;
 
-  constructor(props: ConstructorParameters<typeof Layer>[0]) {
+  constructor(props: ConstructorParameters<typeof KeplerLayer>[0]) {
     super(props);
     this.registerVisConfig(commonTileVisConfigs);
     this.tileDataset = this.initTileDataset();

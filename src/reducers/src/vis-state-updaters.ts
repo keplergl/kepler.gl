@@ -532,10 +532,9 @@ export function layerConfigChangeUpdater(
       // if layer is going to be visible we sync with filter otherwise we need to check whether other animatable layers exists and are visible
       newState = syncTimeFilterWithLayerTimelineUpdater(newState, {
         idx: filterIndex,
-        // @ts-expect-error why layers are assigned to enable?
         enable: action.newConfig.isVisible
           ? action.newConfig.isVisible
-          : getAnimatableVisibleLayers(state.layers)
+          : getAnimatableVisibleLayers(state.layers).length > 0
       });
     }
   }
@@ -733,8 +732,10 @@ export function layerDataIdChangeUpdater(
     );
     // if cant validate it with data create a new one
     if (!validated) {
-      // @ts-expect-error TODO: checking oldLayer.type !== null
-      newLayer = new state.layerClasses[oldLayer.type]({dataId, id: oldLayer.id});
+      const oldLayerType = oldLayer.type;
+      if (oldLayerType) {
+        newLayer = new state.layerClasses[oldLayerType]({dataId, id: oldLayer.id});
+      }
     } else {
       newLayer = validated;
     }
