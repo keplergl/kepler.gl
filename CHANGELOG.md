@@ -15,6 +15,10 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+## [3.1.0-alpha.3] - December 25 2024
+
+2cd7a859c [chore] fix missing dependencies in workspaces (#2856)
+
 ## [3.1.0-alpha.2] - December 24 2024
 
 - f9b385a6e [fix] Fixed time filter bug where points located at the borders of the domains were not correctly displayed (#2854)
