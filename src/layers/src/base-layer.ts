@@ -13,7 +13,6 @@ import DefaultLayerIcon from './default-layer-icon';
 import {diffUpdateTriggers} from './layer-update';
 
 import {
-  ALL_FIELD_TYPES,
   CHANNEL_SCALES,
   CHANNEL_SCALE_SUPPORTED_FIELDS,
   DEFAULT_COLOR_UI,
@@ -49,11 +48,12 @@ import {
   ColorUI,
   Field,
   Filter,
-  LayerTextLabel,
-  LayerVisConfig,
   LayerVisConfigSettings,
   MapState,
   AnimationConfig,
+  GetVisChannelScaleReturnType,
+  KeplerLayer,
+  LayerBaseConfig,
   LayerColumns,
   LayerColumn,
   ColumnPairs,
@@ -61,9 +61,11 @@ import {
   SupportedColumnMode,
   FieldPair,
   NestedPartial,
-  RGBAColor,
   RGBColor,
-  ValueOf
+  ValueOf,
+  VisualChannel,
+  VisualChannels,
+  VisualChannelDomain
 } from '@kepler.gl/types';
 import {
   getScaleFunction,
@@ -78,47 +80,15 @@ import {
   getThresholdsFromQuantiles
 } from '@kepler.gl/utils';
 
-export type VisualChannelDomain = number[] | string[];
+export type {
+  LayerBaseConfig,
+  VisualChannel,
+  VisualChannels,
+  VisualChannelDomain
+} from '@kepler.gl/types';
+
 export type VisualChannelField = Field | null;
 export type VisualChannelScale = keyof typeof SCALE_TYPES;
-
-export type AggregatedBin = {
-  i: number;
-  value: number;
-  counts: number;
-};
-
-export type LayerBaseConfig = {
-  dataId: string;
-  label: string;
-  color: RGBColor;
-
-  columns: LayerColumns;
-  isVisible: boolean;
-  isConfigActive: boolean;
-  highlightColor: RGBColor | RGBAColor;
-  hidden: boolean;
-
-  visConfig: LayerVisConfig;
-  textLabel: LayerTextLabel[];
-
-  colorUI: {
-    color: ColorUI;
-    colorRange: ColorUI;
-  };
-  animation: {
-    enabled: boolean;
-    domain?: [number, number] | null;
-  };
-
-  // for aggregate layer, aggregatedBins is returned for custom color scale
-  aggregatedBins?: AggregatedBin[];
-
-  columnMode?: string;
-  heightField?: VisualChannelField;
-  heightDomain?: VisualChannelDomain;
-  heightScale?: string;
-};
 
 export type LayerBaseConfigPartial = {dataId: LayerBaseConfig['dataId']} & Partial<LayerBaseConfig>;
 
@@ -155,33 +125,6 @@ export type LayerRadiusConfig = {
 };
 export type LayerWeightConfig = {
   weightField: VisualChannelField;
-};
-
-export type VisualChannels = {[key: string]: VisualChannel};
-
-export type VisualChannelAggregation = 'colorAggregation' | 'sizeAggregation';
-
-export type VisualChannel = {
-  property: string;
-  field: string;
-  scale: string;
-  domain: string;
-  range: string;
-  key: string;
-  channelScaleType: string;
-  nullValue?: any;
-  defaultMeasure?: any;
-  accessor?: string;
-  condition?: (config: any) => boolean;
-  defaultValue?: ((config: any) => any) | any;
-  getAttributeValue?: (config: any) => (d: any) => any;
-
-  // TODO: define fixed
-  fixed?: any;
-
-  supportedFieldTypes?: Array<keyof typeof ALL_FIELD_TYPES>;
-
-  aggregation?: VisualChannelAggregation;
 };
 
 export type VisualChannelDescription = {
@@ -249,12 +192,7 @@ export type BaseLayerConstructorProps = {
   id?: string;
 } & LayerBaseConfigPartial;
 
-export type GetVisChannelScaleReturnType = {
-  (z: number): any;
-  byZoom?: boolean;
-} | null;
-
-class Layer {
+class Layer implements KeplerLayer {
   id: string;
   meta: Record<string, any>;
   visConfigSettings: {

@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {HexColor} from './types';
+import {HexColor, RGBColor, RGBAColor} from './types';
 
 export type LayerBaseConfig = {
-  dataId: string | null;
+  dataId: string;
   label: string;
   color: RGBColor;
 
@@ -26,7 +26,13 @@ export type LayerBaseConfig = {
     domain?: [number, number] | null;
   };
 
+  // for aggregate layer, aggregatedBins is returned for custom color scale
+  aggregatedBins?: AggregatedBin[];
+
   columnMode?: string;
+  heightField?: VisualChannelField;
+  heightDomain?: VisualChannelDomain;
+  heightScale?: string;
 };
 
 /**
@@ -391,4 +397,73 @@ export type BindedLayerCallbacks = {
   onLayerHover?: (value: any) => void;
   onSetLayerDomain?: (value: any) => void;
   onFilteredItemsChange?: (event: {id: string; count: number}) => void;
+};
+
+export type VisualChannelAggregation = 'colorAggregation' | 'sizeAggregation';
+
+export type VisualChannelDomain = number[] | string[];
+
+export type SupportedFieldTypes =
+  | 'boolean'
+  | 'date'
+  | 'geojson'
+  | 'integer'
+  | 'real'
+  | 'string'
+  | 'timestamp'
+  | 'point'
+  | 'array'
+  | 'object'
+  | 'geoarrow'
+  | 'h3';
+
+export type VisualChannel = {
+  property: string;
+  field: string;
+  scale: string;
+  domain: string;
+  range: string;
+  key: string;
+  channelScaleType: string;
+  nullValue?: any;
+  defaultMeasure?: any;
+  accessor?: string;
+  condition?: (config: any) => boolean;
+  defaultValue?: ((config: any) => any) | any;
+  getAttributeValue?: (config: any) => (d: any) => any;
+
+  // TODO: define fixed
+  fixed?: any;
+
+  supportedFieldTypes?: Array<SupportedFieldTypes>;
+
+  aggregation?: VisualChannelAggregation;
+};
+
+export type VisualChannels = {[key: string]: VisualChannel};
+
+export interface KeplerLayer {
+  id: string;
+  meta: Record<string, any>;
+  visConfigSettings: {
+    [key: string]: ValueOf<LayerVisConfigSettings>;
+  };
+  config: LayerBaseConfig;
+
+  getColorScale(
+    colorScale: string,
+    colorDomain: VisualChannelDomain,
+    colorRange: ColorRange
+  ): GetVisChannelScaleReturnType;
+}
+
+export type GetVisChannelScaleReturnType = {
+  (z: number): any;
+  byZoom?: boolean;
+} | null;
+
+export type AggregatedBin = {
+  i: number;
+  value: number;
+  counts: number;
 };

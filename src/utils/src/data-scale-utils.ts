@@ -8,7 +8,16 @@ import {notNullorUndefined} from '@kepler.gl/common-utils';
 import {ALL_FIELD_TYPES, SCALE_FUNC, SCALE_TYPES} from '@kepler.gl/constants';
 // import {AggregatedBin, Layer, VisualChannel, VisualChannelDomain} from '@kepler.gl/layers';
 // import {FilterProps, KeplerTable} from '@kepler.gl/layers';
-import {ColorMap, ColorRange, HexColor, MapState} from '@kepler.gl/types';
+import {
+  AggregatedBin,
+  ColorMap,
+  ColorRange,
+  HexColor,
+  KeplerLayer as Layer,
+  MapState,
+  VisualChannel,
+  VisualChannelDomain
+} from '@kepler.gl/types';
 
 import {isRgbColor, rgbToHex} from './color-utils';
 import {DataContainerInterface} from './data-container-interface';
@@ -30,10 +39,6 @@ export type ColorBreakOrdinal = {
 export type D3ScaleFunction = Record<string, any> & ((x: any) => any);
 
 // TODO isolate types - depends on @kepler.gl/layers
-type Layer = any;
-type VisualChannel = any;
-type VisualChannelDomain = any;
-type AggregatedBin = any;
 type FilterProps = any;
 type KeplerTable = any;
 
