@@ -351,6 +351,22 @@ const OkabeIto = {
 };
 // Bad Data: #DDDDDD
 
+const FSQBrand = {
+  name: 'FSQ Brand',
+  type: PALETTE_TYPES.QUA,
+  category: CATEGORIES.COLORBLIND,
+  colors: ['#3333FF', '#6166EB', '#2ED9C3', '#82E8DB', '#FCCC0A', '#FFDAAF', '#30A5D9', '#97DAF8'],
+  colorBlindSafe: true
+};
+
+const FSQWarmTone = {
+  name: 'FSQ Warm Tone',
+  type: PALETTE_TYPES.QUA,
+  category: CATEGORIES.COLORBLIND,
+  colors: ['#C00B05', '#D150A5', '#E98ECA', '#FECE5A', '#FFDDBF', '#FFB4D3', '#EE5D86', '#D8D2D2'],
+  colorBlindSafe: true
+};
+
 /**
  * Build Categorical color palette
  */
@@ -536,7 +552,7 @@ function buildPaletteBySchemeGroups(
 
 const COLORBREWER_PALETTES = buildPaletteBySchemeGroups(COLORBREWER_SCHEME, CATEGORIES.COLORBREWER);
 const D3_COLOR_PALETTES = buildPaletteBySchemeGroups(D3_COLOR_CHROMATIC_SCHEME, CATEGORIES.D3);
-const UBER_PALETTES: ColorPalette[] = [
+const BRANDED_PALETTES: ColorPalette[] = [
   UberVizDiverging,
   UberVizSequential,
   UberPool,
@@ -554,7 +570,9 @@ const UBER_PALETTES: ColorPalette[] = [
   TolMuted,
   TolMediumContrast,
   TolLight,
-  OkabeIto
+  OkabeIto,
+  FSQBrand,
+  FSQWarmTone
 ]
   .map(recipe =>
     recipe.type === PALETTE_TYPES.QUA ? buildCategoricalPalette(recipe) : buildCustomPalette(recipe)
@@ -562,7 +580,7 @@ const UBER_PALETTES: ColorPalette[] = [
   .filter(Boolean) as ColorPalette[];
 
 export const KEPLER_COLOR_PALETTES: ColorPalette[] = [
-  ...UBER_PALETTES,
+  ...BRANDED_PALETTES,
   ...COLORBREWER_PALETTES,
   ...D3_COLOR_PALETTES
 ];
