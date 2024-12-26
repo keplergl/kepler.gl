@@ -435,15 +435,7 @@ function MapLegendFactory(
     onLayerVisConfigChange,
     actionIcons = defaultActionIcons
   }) => (
-    <div
-      className="map-legend"
-      {...(mapState?.height && {
-        style: {
-          /* subtracting rough size of 4 map control buttons and padding */
-          maxHeight: mapState.height - (isExport ? 0 : 250)
-        }
-      })}
-    >
+    <div className="map-legend">
       {layers.map((layer, index) => {
         if (!layer.isValidToSave() || layer.config.hidden) {
           return null;
