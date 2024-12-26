@@ -163,29 +163,18 @@ function testPointLayerLegend(t, pointLegend, onLayerVisConfigChange) {
     ['#AAD7D9', 'driver_gps']
   ];
   for (let i = 0; i < 3; i++) {
-    const rect = pointLegend
-      .find(LegendRow)
-      .at(i)
-      .find('.legend-row-color')
-      .at(0);
+    const rect = pointLegend.find(LegendRow).at(i).find('.legend-row-color').at(0);
     t.equal(
       rect.props().style.backgroundColor,
       expectedLegend[i][0],
       'should render correct legend color'
     );
-    const input = pointLegend
-      .find(LegendRow)
-      .at(i)
-      .find('input')
-      .at(0);
+    const input = pointLegend.find(LegendRow).at(i).find('input').at(0);
     t.equal(input.props().value, expectedLegend[i][1], 'should render correct legend label');
   }
 
   // test change input
-  const firstLegendInput = pointLegend
-    .find(LegendRow)
-    .at(0)
-    .find('input');
+  const firstLegendInput = pointLegend.find(LegendRow).at(0).find('input');
   const event = {target: {name: 'input-legend-label', value: 'taro'}};
   firstLegendInput.simulate('change', event);
 
@@ -271,10 +260,7 @@ test('Components -> MapLegend.render -> with colorLegends', t => {
   t.equal(firstLegend.find(ResetColorLabel).length, 1, 'should render reset');
 
   // click reset
-  firstLegend
-    .find(ResetColorLabel)
-    .at(0)
-    .simulate('click');
+  firstLegend.find(ResetColorLabel).at(0).simulate('click');
   t.ok(onLayerVisConfigChange.calledOnce, 'should call onLayerVisConfigChange');
 
   t.ok(onLayerVisConfigChange.args[0][0] instanceof PointLayer, 'first arg should be Layer');

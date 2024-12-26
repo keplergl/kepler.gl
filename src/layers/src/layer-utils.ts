@@ -77,7 +77,7 @@ function getBinaryGeometriesFromWKBArrow(
     options?.chunkIndex !== undefined && options?.chunkIndex >= 0
       ? [geoColumn.data[options?.chunkIndex]]
       : geoColumn.data;
-  let globalFeatureIdOffset = options?.chunkOffset || 0;
+  const globalFeatureIdOffset = options?.chunkOffset || 0;
   let featureIndex = globalFeatureIdOffset;
   let bounds: [number, number, number, number] = [Infinity, Infinity, -Infinity, -Infinity];
 
@@ -278,7 +278,7 @@ export function getGeoArrowPointFields(fields: Field[]): Field[] {
  */
 export function createGeoArrowPointVector(
   dataContainer: ArrowDataContainer,
-  getPosition: ({index: number}) => number[]
+  getPosition: ({index}: {index: number}) => number[]
 ): arrow.Vector {
   // TODO update/resize existing vector?
   // TODO find an easier way to create point geo columns
@@ -328,7 +328,7 @@ export function getFilteredIndex(
   existingFilteredIndex: Uint8ClampedArray | null
 ) {
   // contents are initialized with zeros by default, meaning not visible
-  let filteredIndex =
+  const filteredIndex =
     existingFilteredIndex && existingFilteredIndex.length === numElements
       ? existingFilteredIndex
       : new Uint8ClampedArray(numElements);
@@ -354,7 +354,7 @@ export function getNeighbors(
   neighborsField: LayerColumn | undefined,
   dataContainer: DataContainerInterface,
   index: number,
-  getPosition: ({index: number}) => number[]
+  getPosition: ({index}: {index: number}) => number[]
 ): {index: number; position: number[]}[] {
   if (!neighborsField || neighborsField.fieldIdx < 0) return [];
 

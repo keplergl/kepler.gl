@@ -108,7 +108,7 @@ const COMMON_CONFIG = {
   },
 
   devServer: {
-    historyApiFallback: true,
+    historyApiFallback: true
     // Add new options if needed
   },
 
@@ -148,7 +148,7 @@ const addProdConfig = config => {
     output: {
       path: resolve(__dirname, './dist'),
       filename: 'bundle.js',
-      publicPath: "/"
+      publicPath: '/'
     }
   });
 };

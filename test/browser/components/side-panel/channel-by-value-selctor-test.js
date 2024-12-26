@@ -97,19 +97,13 @@ test('Components -> ChannelByValueSelector -> ColorScaleSelector -> disabled', t
   t.equal(wrapper.find(DimensionScaleSelector).length, 1, 'Should render 1 DimensionScaleSelector');
   t.equal(wrapper.find(ColorScaleSelector).length, 1, 'Should render 1 ColorScaleSelector');
   t.equal(
-    wrapper
-      .find(ColorScaleSelector)
-      .at(0)
-      .props().disabled,
+    wrapper.find(ColorScaleSelector).at(0).props().disabled,
     true,
     'Should disabled color scale select if only 1 option'
   );
 
   t.equal(
-    wrapper
-      .find(ColorScaleSelector)
-      .at(0)
-      .find(DropdownSelect).length,
+    wrapper.find(ColorScaleSelector).at(0).find(DropdownSelect).length,
     1,
     'should render 1 DropdownSelect in ColorScaleSelector'
   );
@@ -129,56 +123,29 @@ test('Components -> ChannelByValueSelector -> ColorScaleSelector -> disabled', t
 
   // change color field
   const fieldSelector = wrapper.find(FieldSelector).at(0);
-  fieldSelector
-    .find('.item-selector__dropdown')
-    .at(0)
-    .simulate('click');
+  fieldSelector.find('.item-selector__dropdown').at(0).simulate('click');
 
   // dropdownSelect.simulate('click');
 
+  t.equal(wrapper.find(FieldSelector).at(0).find(Typeahead).length, 1, 'should render Typeahead');
   t.equal(
-    wrapper
-      .find(FieldSelector)
-      .at(0)
-      .find(Typeahead).length,
-    1,
-    'should render Typeahead'
-  );
-  t.equal(
-    wrapper
-      .find(FieldSelector)
-      .at(0)
-      .find(DropdownList).length,
+    wrapper.find(FieldSelector).at(0).find(DropdownList).length,
     1,
     'should render 1 DropdownList'
   );
   t.equal(
-    wrapper
-      .find(FieldSelector)
-      .at(0)
-      .find('.list__item').length,
+    wrapper.find(FieldSelector).at(0).find('.list__item').length,
     10,
     'should render 10 ListItem'
   );
 
   t.equal(
-    wrapper
-      .find(FieldSelector)
-      .at(0)
-      .find('.list__item')
-      .at(5)
-      .find('.list__item__anchor')
-      .text(),
+    wrapper.find(FieldSelector).at(0).find('.list__item').at(5).find('.list__item__anchor').text(),
     'uid',
     'Should render id field at index:5'
   );
   // select id field
-  wrapper
-    .find(FieldSelector)
-    .at(0)
-    .find('.list__item')
-    .at(5)
-    .simulate('click');
+  wrapper.find(FieldSelector).at(0).find('.list__item').at(5).simulate('click');
 
   t.ok(updateLayerVisualChannelConfig.calledOnce, 'Should call updateLayerVisualChannelConfig');
 
@@ -243,20 +210,14 @@ test('Components -> ChannelByValueSelector -> ColorScaleSelector -> ColorBreakDi
   t.equal(wrapper.find(DimensionScaleSelector).length, 1, 'Should render 1 DimensionScaleSelector');
   t.equal(wrapper.find(ColorScaleSelector).length, 1, 'Should render 1 ColorScaleSelector');
   t.equal(
-    wrapper
-      .find(ColorScaleSelector)
-      .at(0)
-      .props().disabled,
+    wrapper.find(ColorScaleSelector).at(0).props().disabled,
     false,
     'Should not disabled color scale select'
   );
 
   // scale optons
   t.equal(
-    wrapper
-      .find(ColorScaleSelector)
-      .at(0)
-      .find('.list__item').length,
+    wrapper.find(ColorScaleSelector).at(0).find('.list__item').length,
     3,
     'should render 3 scale options'
   );
@@ -280,11 +241,7 @@ test('Components -> ChannelByValueSelector -> ColorScaleSelector -> ColorBreakDi
       .at(i)
       .find('div.custom-palette-hex__input__text');
     t.equal(
-      wrapper
-        .find(ColorPaletteItem)
-        .at(i)
-        .find(ColorSwatch)
-        .props().color,
+      wrapper.find(ColorPaletteItem).at(i).find(ColorSwatch).props().color,
       expectedText[i][0],
       'should display correct color'
     );
@@ -293,12 +250,7 @@ test('Components -> ChannelByValueSelector -> ColorScaleSelector -> ColorBreakDi
   }
 
   // select custom scale
-  wrapper
-    .find(ColorScaleSelector)
-    .at(0)
-    .find('.list__item')
-    .at(2)
-    .simulate('click');
+  wrapper.find(ColorScaleSelector).at(0).find('.list__item').at(2).simulate('click');
 
   t.ok(setColorUI.calledOnce, 'should call setColorUI');
   const expectedArgs = [
@@ -370,10 +322,7 @@ test('Components -> ChannelByValueSelector -> ColorScaleSelector -> ColorBreakDi
   t.equal(wrapper.find(ColorSwatch).length, 4, 'Should render 4 ColorSwatch');
 
   for (let i = 0; i < 4; i++) {
-    const inputs = wrapper
-      .find(EditableColorRange)
-      .at(i)
-      .find('input');
+    const inputs = wrapper.find(EditableColorRange).at(i).find('input');
     if (i === 0 || i === 3) {
       t.equal(inputs.length, 1, 'should render 1 input');
       t.equal(
@@ -405,12 +354,7 @@ test('Components -> ChannelByValueSelector -> ColorScaleSelector -> ColorBreakDi
     .simulate('change', {target: {value: '5000'}});
   t.notOk(setColorUI.calledTwice, 'should not call setColorUI');
 
-  wrapper
-    .find(EditableColorRange)
-    .at(1)
-    .find('input')
-    .at(1)
-    .simulate('blur');
+  wrapper.find(EditableColorRange).at(1).find('input').at(1).simulate('blur');
   t.ok(setColorUI.calledTwice, 'should call setColorUI');
   const expectedCustomPalette1 = {
     ...ExpectedCustomPalette.customPalette,
@@ -432,10 +376,7 @@ test('Components -> ChannelByValueSelector -> ColorScaleSelector -> ColorBreakDi
 
   // on confirm custom breaks
   t.equal(wrapper.find(CustomPalette).find(Button).length, 2, 'should render 2 buttons');
-  const confirmButton = wrapper
-    .find(CustomPalette)
-    .find(Button)
-    .at(0);
+  const confirmButton = wrapper.find(CustomPalette).find(Button).at(0);
   t.equal(confirmButton.text(), 'Confirm', 'should render confirm button');
   confirmButton.simulate('click');
 
@@ -493,11 +434,7 @@ test('Components -> ChannelByValueSelector -> ColorScaleSelector -> ColorBreakDi
     children: <ChannelByValueSelector {...InitialProps} layer={updatedState2.visState.layers[0]} />
   });
   // set scale back to standard scale (:quantile)
-  const quantileOption = wrapper
-    .find(ColorScaleSelector)
-    .at(0)
-    .find('.list__item')
-    .at(1);
+  const quantileOption = wrapper.find(ColorScaleSelector).at(0).find('.list__item').at(1);
   t.equal(quantileOption.text(), 'Quantile', '2nd scale option should be quantile');
   quantileOption.simulate('click');
 
@@ -599,12 +536,7 @@ test('Components -> ChannelByValueSelector -> ColorScaleSelector -> ColumnStatsC
 
   [quantizeTestCase, quantileTestCase, customTestCase].forEach(tc => {
     // simulate click color scale option
-    wrapper
-      .find(ColorScaleSelector)
-      .at(0)
-      .find('.list__item')
-      .at(tc.optionIndex)
-      .simulate('click');
+    wrapper.find(ColorScaleSelector).at(0).find('.list__item').at(tc.optionIndex).simulate('click');
 
     // trigger action
     const updatedState2 = coreReducer(

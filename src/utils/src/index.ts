@@ -24,7 +24,7 @@ export {
   paletteIsColorBlindSafe,
   updateColorRangeByMatchingPalette,
   updateCustomColorRangeByColorUI,
-  initializeCustomPalette,
+  initializeCustomPalette
 } from './color-utils';
 export {errorNotification} from './notifications-utils';
 
