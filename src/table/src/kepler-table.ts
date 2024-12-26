@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {console as Console} from 'global/console';
+import Console from 'global/console';
 import {ascending, descending} from 'd3-array';
 
 import {

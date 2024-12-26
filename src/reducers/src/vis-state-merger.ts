@@ -92,9 +92,23 @@ export function replaceFilterDatasetIds(
   savedFilter.forEach(filter => {
     if (filter.dataId.includes(dataId)) {
       const newDataId = filter.dataId.map(d => (d === dataId ? dataIdToUse : d));
+      let plotType;
+      // TODO: more generic approach to save plotType.colorsByDataId
+      if (filter.plotType?.colorsByDataId?.[dataId]) {
+        // replace colorByDataId in filter.plotType
+        const {[dataId]: color, ...rest} = filter.plotType?.colorsByDataId || {};
+        plotType = {
+          ...filter.plotType,
+          colorsByDataId: {
+            ...rest,
+            [dataIdToUse]: color
+          }
+        };
+      }
       replaced.push({
         ...filter,
-        dataId: newDataId
+        dataId: newDataId,
+        ...(plotType ? {plotType} : {})
       });
     }
   });

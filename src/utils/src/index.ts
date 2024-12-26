@@ -100,7 +100,7 @@ export {
   unobserveDimensions
 } from './observe-dimensions';
 export type {Dimensions} from './observe-dimensions';
-export {snapToMarks} from './plot';
+export {snapToMarks, getTimeBins} from './plot';
 export * from './projection-utils';
 export * from './split-map-utils';
 export * from './utils';
