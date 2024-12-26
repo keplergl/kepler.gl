@@ -37,7 +37,7 @@ export type VectorTilesetFormData = {
   metadataUrl?: string;
 };
 
-const isPMTilesUrl = (url?: string | null)=> url?.includes('.pmtiles')
+const isPMTilesUrl = (url?: string | null) => url?.includes('.pmtiles');
 
 export function getDatasetAttributesFromVectorTile({
   name,
@@ -85,9 +85,7 @@ const TilesetVectorForm: React.FC<TilesetVectorFormProps> = ({setResponse}) => {
       event.preventDefault();
       const newTileUrl = event.target.value;
       setTileUrl(newTileUrl);
-      const potentialMetadataUrl = isPMTilesUrl(newTileUrl)
-        ? newTileUrl
-        : getMetaUrl(newTileUrl);
+      const potentialMetadataUrl = isPMTilesUrl(newTileUrl) ? newTileUrl : getMetaUrl(newTileUrl);
       if (!metadataUrl && potentialMetadataUrl) {
         // check if URL exists before setting it as the metadata URL
         const resp = await fetch(potentialMetadataUrl);

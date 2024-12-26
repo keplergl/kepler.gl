@@ -104,7 +104,7 @@ export const LayerClasses = {
   [LAYER_TYPES['3D']]: ScenegraphLayer,
   [LAYER_TYPES.trip]: TripLayer,
   [LAYER_TYPES.s2]: S2GeometryLayer
-  //[LAYER_TYPES['vectorTile']]: VectorTileLayer
+  // [LAYER_TYPES['vectorTile']]: VectorTileLayer
 };
 
 export * from './mapbox-utils';

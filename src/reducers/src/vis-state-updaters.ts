@@ -1144,7 +1144,7 @@ function _removeFilterDataIdAtValueIndex(filter, valueIndex, datasets) {
   };
 }
 
-/***
+/** *
  * Updates a single property of a filter
  */
 function _updateFilterProp(state, filter, prop, value, valueIndex, datasetIds?) {

@@ -529,10 +529,10 @@ test('filterUtils -> scaleSourceDomainToDestination', t => {
   const sourceDomain = [1564174363000, 1564179109000];
   const destinationDomain = [1564174363000, 1564184336370];
 
-  t.deepEqual(scaleSourceDomainToDestination(sourceDomain, destinationDomain), [
-    0,
-    47.586723444532794
-  ]);
+  t.deepEqual(
+    scaleSourceDomainToDestination(sourceDomain, destinationDomain),
+    [0, 47.586723444532794]
+  );
 
   t.end();
 });
@@ -575,15 +575,8 @@ test('filterUtils -> mergeFilterWithTimeline', t => {
     syncTimelineMode: 1,
     step: 1000,
     mappedValue: [
-      1564176748230,
-      1564177260220,
-      1564178662720,
-      1564178735140,
-      1564182284550,
-      1564183811180,
-      1564184245340,
-      1564184331290,
-      1564184336370
+      1564176748230, 1564177260220, 1564178662720, 1564178735140, 1564182284550, 1564183811180,
+      1564184245340, 1564184331290, 1564184336370
     ],
     defaultTimeFormat: 'L LTS',
     fieldType: 'timestamp',

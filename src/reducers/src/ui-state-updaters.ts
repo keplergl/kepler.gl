@@ -373,9 +373,11 @@ export const toggleMapControlUpdater = (
   // The effect panel and ai assistant panel can not be active at the same time
   // so we need to deactivate the other panel when one is activated
   const panelToDeactivate =
-    panelId === MAP_CONTROLS.effect ? MAP_CONTROLS.aiAssistant :
-    panelId === MAP_CONTROLS.aiAssistant ? MAP_CONTROLS.effect :
-    null;
+    panelId === MAP_CONTROLS.effect
+      ? MAP_CONTROLS.aiAssistant
+      : panelId === MAP_CONTROLS.aiAssistant
+      ? MAP_CONTROLS.effect
+      : null;
 
   // If we need to deactivate a competing panel and it's currently active
   if (panelToDeactivate && state.mapControls[panelToDeactivate]?.active) {

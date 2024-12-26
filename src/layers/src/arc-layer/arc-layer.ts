@@ -586,9 +586,7 @@ export default class ArcLayer extends Layer {
   ) {
     // for arrow format, `object` is the Arrow row object Proxy,
     // and index is passed in `hoverInfo`.
-    const index = Boolean(this.geoArrowVector0)
-      ? hoverInfo?.index
-      : (object as {index: number}).index;
+    const index = this.geoArrowVector0 ? hoverInfo?.index : (object as {index: number}).index;
     if (index >= 0) {
       return dataContainer.row(index);
     }

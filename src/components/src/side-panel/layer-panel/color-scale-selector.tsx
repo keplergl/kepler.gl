@@ -300,7 +300,7 @@ function ColorScaleSelectorFactory(
             popperOptions={POPPER_OPTIONS}
             render={attrs => (
               <DropdownWrapper {...attrs}>
-                {/*@ts-ignore*/}
+                {/* @ts-ignore*/}
                 {!dropdownSelectProps.disabled && (
                   <Typeahead
                     {...dropdownSelectProps}
@@ -317,7 +317,7 @@ function ColorScaleSelectorFactory(
             )}
           >
             <div className="dropdown-select">
-              {/*@ts-ignore*/}
+              {/* @ts-ignore*/}
               <DropdownSelect
                 {...dropdownSelectProps}
                 displayOption={displayOption}

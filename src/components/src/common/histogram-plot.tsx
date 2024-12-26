@@ -148,10 +148,7 @@ function HistogramPlotFactory() {
     }, [histogramsByGroup, domain, groupKeys, width, isMasked]);
 
     const x = useMemo(
-      () =>
-        scaleLinear()
-          .domain(domain)
-          .range([barWidth, width]),
+      () => scaleLinear().domain(domain).range([barWidth, width]),
       [domain, width, barWidth]
     );
 

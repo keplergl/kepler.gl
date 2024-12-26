@@ -97,7 +97,7 @@ function LoadTilesetTabFactory() {
     isAddingDatasets,
     intl
   }) => {
-    const [typeIndex/*, setTypeIndex*/] = useState<number>(0);
+    const [typeIndex /* , setTypeIndex*/] = useState<number>(0);
     const [response, setResponse] = useState<MetaResponse>({});
 
     const error = response.error;

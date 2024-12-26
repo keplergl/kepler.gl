@@ -619,7 +619,7 @@ export default class PointLayer extends Layer {
           updateTriggers,
           getFiltered: data.getFiltered
         },
-        Boolean(this.geoArrowVector)
+        this.geoArrowVector
           ? {
               ...opts,
               data: {...opts.data, getPosition}
@@ -653,9 +653,7 @@ export default class PointLayer extends Layer {
   ) {
     // for arrow format, `object` is the Arrow row object Proxy,
     // and index is passed in `hoverInfo`.
-    const index = Boolean(this.geoArrowVector)
-      ? hoverInfo?.index
-      : (object as {index: number}).index;
+    const index = this.geoArrowVector ? hoverInfo?.index : (object as {index: number}).index;
     if (index >= 0) {
       return dataContainer.row(index);
     }

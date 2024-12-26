@@ -369,10 +369,10 @@ function ColumnStatsChartFactory(
     onChangedUpdater
   }) => {
     const fieldName = colorField?.name;
-    const field = useMemo(() => (fieldName ? dataset.getColumnField(fieldName) : null), [
-      dataset,
-      fieldName
-    ]);
+    const field = useMemo(
+      () => (fieldName ? dataset.getColumnField(fieldName) : null),
+      [dataset, fieldName]
+    );
 
     if (!isNumericColorBreaks(colorBreaks)) {
       // TODO: implement display for ordinal breaks
