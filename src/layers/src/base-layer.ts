@@ -52,7 +52,6 @@ import {
   LayerVisConfigSettings,
   MapState,
   AnimationConfig,
-  GetVisChannelScaleReturnType,
   KeplerLayer,
   LayerBaseConfig,
   LayerColumns,
@@ -85,7 +84,8 @@ export type {
   LayerBaseConfig,
   VisualChannel,
   VisualChannels,
-  VisualChannelDomain
+  VisualChannelDomain,
+  AggregatedBin
 } from '@kepler.gl/types';
 
 export type VisualChannelField = Field | null;
