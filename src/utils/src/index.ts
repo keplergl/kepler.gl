@@ -24,7 +24,7 @@ export {
   paletteIsColorBlindSafe,
   updateColorRangeByMatchingPalette,
   updateCustomColorRangeByColorUI,
-  initializeCustomPalette
+  initializeCustomPalette,
 } from './color-utils';
 export {errorNotification} from './notifications-utils';
 
@@ -150,7 +150,8 @@ export {
   isDomainQuantile,
   getDomainStepsbyZoom,
   getThresholdsFromQuantiles,
-  getQuantLabelFormat
+  getQuantLabelFormat,
+  getHistogramDomain
 } from './data-scale-utils';
 export type {ColorBreak, ColorBreakOrdinal, DomainQuantiles, DomainStops} from './data-scale-utils';
 

@@ -7,12 +7,10 @@ import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import styled from 'styled-components';
 
 import {KeplerTable} from '@kepler.gl/table';
-import {Field} from '@kepler.gl/types';
+import {Bin, Field} from '@kepler.gl/types';
 import {
   ColorBreak,
   ColorBreakOrdinal,
-  histogramFromThreshold,
-  histogramFromValues,
   isNumber,
   isNumericColorBreaks,
   useDimensions
@@ -29,7 +27,6 @@ const COLOR_CHART_TICK_WRAPPER_HEIGHT = 10;
 const COLOR_CHART_TICK_HEIGHT = 8;
 const COLOR_CHART_TICK_WIDTH = 4;
 const COLOR_CHART_TICK_BORDER_COLOR = '#999999';
-const HISTOGRAM_BINS = 30;
 
 const StyledContainer = styled.div.attrs({
   className: 'color-chart-loading'
@@ -208,12 +205,18 @@ export type ColumnStatsChartWLoadingProps = {
   colorField: Field;
   dataset: KeplerTable;
   colorBreaks: ColorBreak[] | ColorBreakOrdinal[] | null;
+  allBins: Bin[];
+  filteredBins: Bin[];
+  isFiltered: boolean;
+  histogramDomain: number[];
   onChangedUpdater: (ticks: ColorBreak[]) => void;
 };
 
 export type ColumnStatsChartProps = {
-  field: Field;
-  dataset: KeplerTable;
+  allBins: Bin[];
+  filteredBins: Bin[];
+  isFiltered: boolean;
+  histogramDomain: number[];
   colorBreaks: ColorBreak[];
   onChangedUpdater: (ticks: ColorBreak[]) => void;
 };
@@ -221,8 +224,10 @@ function ColumnStatsChartFactory(
   HistogramPlot: ReturnType<typeof HistogramPlotFactory>
 ): React.FC<ColumnStatsChartWLoadingProps> {
   const ColumnStatsChart: React.FC<ColumnStatsChartProps> = ({
-    field,
-    dataset,
+    allBins,
+    filteredBins,
+    isFiltered,
+    histogramDomain,
     colorBreaks,
     onChangedUpdater
   }) => {
@@ -241,38 +246,6 @@ function ColumnStatsChartFactory(
       isTickChangingRef.current = false;
     }, [ticks]);
 
-    const valueAccessor = useMemo(() => {
-      return idx => dataset.getValue(field.name, idx);
-    }, [dataset, field.name]);
-
-    const columnStats = field.filterProps?.columnStats;
-
-    // get bins with allIndexes
-    const allBins = useMemo(() => {
-      if (columnStats?.bins) {
-        return columnStats?.bins;
-      }
-      return histogramFromValues(dataset.allIndexes, HISTOGRAM_BINS, valueAccessor);
-    }, [columnStats, dataset.allIndexes, valueAccessor]);
-
-    const isFiltered = dataset.filteredIndexForDomain.length !== dataset.allIndexes.length;
-
-    // get filteredBins
-    const filteredBins = useMemo(() => {
-      if (!isFiltered) {
-        return allBins;
-      }
-      // get threholds
-      const filterEmptyBins = false;
-      const threholds = allBins.map(b => b.x0);
-      return histogramFromThreshold(
-        threholds,
-        dataset.filteredIndexForDomain,
-        valueAccessor,
-        filterEmptyBins
-      );
-    }, [dataset, valueAccessor, allBins, isFiltered]);
-
     // histograms used by histogram-plot.js
     const histogramsByGroup = useMemo(
       () => ({
@@ -281,34 +254,6 @@ function ColumnStatsChartFactory(
       }),
       [allBins, filteredBins]
     );
-
-    // get domain (min, max) of histogram
-    const histogramDomain = useMemo(() => {
-      if (columnStats && columnStats.quantiles && columnStats.mean) {
-        // no need to recalcuate min/max/mean if its already in columnStats
-        return [
-          columnStats.quantiles[0].value,
-          columnStats.quantiles[columnStats.quantiles.length - 1].value,
-          columnStats.mean
-        ];
-      }
-      let domainMin = Number.POSITIVE_INFINITY;
-      let domainMax = Number.NEGATIVE_INFINITY;
-      let nValid = 0;
-      let domainSum = 0;
-      dataset.allIndexes.forEach((x, i) => {
-        const val = valueAccessor(x);
-        if (isNumber(val)) {
-          if (val < domainMin) domainMin = val;
-          if (val > domainMax) domainMax = val;
-          domainSum += val;
-          nValid += 1;
-        }
-      });
-      const histogramMean = nValid > 0 ? domainSum / nValid : 0;
-
-      return [domainMin, domainMax, histogramMean];
-    }, [dataset, valueAccessor, columnStats]);
 
     // get colors from colorBreaks
     const domainColors = useMemo(
@@ -417,19 +362,24 @@ function ColumnStatsChartFactory(
     colorField,
     dataset,
     colorBreaks,
+    allBins,
+    filteredBins,
+    isFiltered,
+    histogramDomain,
     onChangedUpdater
   }) => {
-    const fieldName = colorField.name;
-    const field = useMemo(() => dataset.getColumnField(fieldName), [dataset, fieldName]);
+    const fieldName = colorField?.name;
+    const field = useMemo(() => (fieldName ? dataset.getColumnField(fieldName) : null), [
+      dataset,
+      fieldName
+    ]);
 
-    const isLoading = field?.isLoadingStats;
-
-    if (!isNumericColorBreaks(colorBreaks) || !field) {
+    if (!isNumericColorBreaks(colorBreaks)) {
       // TODO: implement display for ordinal breaks
       return null;
     }
 
-    if (isLoading) {
+    if (field?.isLoadingStats) {
       return (
         <StyledContainer>
           <LoadingSpinner />
@@ -440,8 +390,10 @@ function ColumnStatsChartFactory(
     return (
       <ColumnStatsChart
         colorBreaks={colorBreaks}
-        field={field}
-        dataset={dataset}
+        allBins={allBins}
+        filteredBins={filteredBins}
+        isFiltered={isFiltered}
+        histogramDomain={histogramDomain}
         onChangedUpdater={onChangedUpdater}
       />
     );

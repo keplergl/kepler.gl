@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import test from 'tape';
-
+import cloneDeep from 'lodash.clonedeep';
 import {
   getOrdinalDomain,
   getQuantileDomain,
@@ -11,8 +11,10 @@ import {
   createDataContainer,
   getThresholdsFromQuantiles,
   getDomainStepsbyZoom,
-  getQuantLabelFormat
+  getQuantLabelFormat,
+  getHistogramDomain
 } from '@kepler.gl/utils';
+import {StateWFilesFiltersLayerColor} from 'test/helpers/mock-state';
 
 function numberSort(a, b) {
   return a - b;
@@ -174,6 +176,36 @@ test('DataScaleUtils -> getQuantLabelFormat', t => {
   t.deepEqual(format(null), 'no value', 'should get correct quant label format for null');
   t.deepEqual(format(undefined), 'no value', 'should get correct quant label format for undefined');
   t.deepEqual(format(1.0), '1', 'should get correct quant label format for number');
+
+  t.end();
+});
+
+test('DataScaleUtils -> getHistogramDomain', t => {
+  let aggregatedBins = [
+    {i: 0, value: 1, count: 1},
+    {i: 1, value: 2, count: 1},
+    {i: 2, value: 3, count: 1},
+    {i: 3, value: 4, count: 1}
+  ];
+  let histogramDomain = getHistogramDomain({aggregatedBins});
+
+  t.deepEqual(histogramDomain, [1, 4, 2.5]);
+
+  aggregatedBins = null;
+  histogramDomain = getHistogramDomain({aggregatedBins});
+
+  t.deepEqual(histogramDomain, [0, 0, 0]);
+
+  // test dataset
+  const InitialState = cloneDeep(StateWFilesFiltersLayerColor);
+  const {layers, datasets} = InitialState.visState;
+  const pointLayer = layers[0];
+  const dataset = datasets[pointLayer.config.dataId];
+  const field = dataset.fields[6];
+  const fieldValueAccessor = idx => dataset.getValue(field.name, idx);
+
+  histogramDomain = getHistogramDomain({dataset, fieldValueAccessor});
+  t.deepEqual(histogramDomain, [1, 12124, 912.2857142857143]);
 
   t.end();
 });

@@ -51,7 +51,9 @@ function DimensionScaleSelectorFactory(
       value: op
     }));
     const disabled = scaleOptions.length < 2;
-    const isColorScale = channelScaleType === CHANNEL_SCALES.color;
+    const isColorScale =
+      channelScaleType === CHANNEL_SCALES.color ||
+      (layer.config.aggregatedBins && channelScaleType === CHANNEL_SCALES.colorAggr);
 
     const onSelect = useCallback(
       (val, newRange) => onChange({[scale]: val}, key, newRange ? {[range]: newRange} : undefined),
@@ -87,6 +89,7 @@ function DimensionScaleSelectorFactory(
             onSelect={onSelect}
             scaleType={scaleType}
             domain={layer.config[domain]}
+            aggregatedBins={layer.config.aggregatedBins}
             range={layer.config.visConfig[range]}
             setColorUI={_setColorUI}
             colorUIConfig={layer.config.colorUI?.[range]}

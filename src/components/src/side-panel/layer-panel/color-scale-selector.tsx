@@ -4,14 +4,17 @@
 import React, {useCallback, useMemo, useState} from 'react';
 import styled from 'styled-components';
 
-import {SCALE_TYPES} from '@kepler.gl/constants';
-import {Layer, VisualChannelDomain} from '@kepler.gl/layers';
+import {ALL_FIELD_TYPES, SCALE_TYPES} from '@kepler.gl/constants';
+import {AggregatedBin, Layer, VisualChannelDomain} from '@kepler.gl/layers';
 import {KeplerTable} from '@kepler.gl/table';
 import {ColorRange, ColorUI, Field, NestedPartial} from '@kepler.gl/types';
 import {
   colorBreaksToColorMap,
   getLayerColorScale,
   getLegendOfScale,
+  histogramFromValues,
+  histogramFromThreshold,
+  getHistogramDomain,
   hasColorMap
 } from '@kepler.gl/utils';
 
@@ -24,6 +27,8 @@ import LazyTippy from '../../map/lazy-tippy';
 import Typeahead from '../../common/item-selector/typeahead';
 
 type TippyInstance = any; // 'tippy-js'
+
+const HISTOGRAM_BINS = 30;
 
 export type ScaleOption = {
   label: string;
@@ -50,6 +55,7 @@ export type ColorScaleSelectorProps = {
   searchable: boolean;
   displayOption: string;
   getOptionValue: string;
+  aggregatedBins?: AggregatedBin[];
 };
 
 const DropdownPropContext = React.createContext({});
@@ -126,6 +132,7 @@ function ColorScaleSelectorFactory(
     onSelect,
     scaleType,
     domain,
+    aggregatedBins,
     range,
     setColorUI,
     colorUIConfig,
@@ -151,9 +158,61 @@ function ColorScaleSelectorFactory(
 
     const colorBreaks = useMemo(
       () =>
-        colorScale ? getLegendOfScale({scale: colorScale, scaleType, fieldType: field.type}) : null,
-      [colorScale, scaleType, field.type]
+        colorScale
+          ? getLegendOfScale({
+              scale: colorScale,
+              scaleType,
+              fieldType: field?.type ?? ALL_FIELD_TYPES.real
+            })
+          : null,
+      [colorScale, scaleType, field?.type]
     );
+
+    const columnStats = field?.filterProps?.columnStats;
+
+    const fieldValueAccessor = useMemo(() => {
+      return field
+        ? idx => dataset.getValue(field.name, idx)
+        : idx => dataset.dataContainer.rowAsArray(idx);
+    }, [dataset, field]);
+
+    // aggregatedBins should be the raw data
+    const allBins = useMemo(() => {
+      if (aggregatedBins) {
+        return histogramFromValues(
+          Object.values(aggregatedBins).map(bin => bin.i),
+          HISTOGRAM_BINS,
+          idx => aggregatedBins[idx].value
+        );
+      }
+      return columnStats?.bins
+        ? columnStats?.bins
+        : histogramFromValues(dataset.allIndexes, HISTOGRAM_BINS, fieldValueAccessor);
+    }, [aggregatedBins, columnStats, dataset, fieldValueAccessor]);
+
+    const histogramDomain = useMemo(() => {
+      return getHistogramDomain({aggregatedBins, columnStats, dataset, fieldValueAccessor});
+    }, [dataset, fieldValueAccessor, aggregatedBins, columnStats]);
+
+    const isFiltered = aggregatedBins
+      ? false
+      : dataset.filteredIndexForDomain.length !== dataset.allIndexes.length;
+
+    // get filteredBins (not apply to aggregate layer)
+    const filteredBins = useMemo(() => {
+      if (!isFiltered) {
+        return allBins;
+      }
+      // get threholds
+      const filterEmptyBins = false;
+      const threholds = allBins.map(b => b.x0);
+      return histogramFromThreshold(
+        threholds,
+        dataset.filteredIndexForDomain,
+        fieldValueAccessor,
+        filterEmptyBins
+      );
+    }, [dataset, fieldValueAccessor, allBins, isFiltered]);
 
     const onSelectScale = useCallback(
       val => {
@@ -221,6 +280,10 @@ function ColorScaleSelectorFactory(
           colorUIConfig,
           colorBreaks,
           isCustomBreaks,
+          allBins,
+          filteredBins,
+          isFiltered,
+          histogramDomain,
           onScaleChange: onSelect,
           onApply,
           onCancel

@@ -3,7 +3,7 @@
 
 import {SCALE_TYPES} from '@kepler.gl/constants';
 import {KeplerTable} from '@kepler.gl/table';
-import {ColorUI, Field} from '@kepler.gl/types';
+import {Bin, ColorUI, Field} from '@kepler.gl/types';
 import {
   ColorBreak,
   ColorBreakOrdinal,
@@ -83,6 +83,10 @@ export type ColorBreaksPanelProps = {
   dataset: KeplerTable | undefined;
   colorField: Field;
   isCustomBreaks: boolean;
+  allBins: Bin[];
+  filteredBins: Bin[];
+  isFiltered: boolean;
+  histogramDomain: number[];
   setColorUI: SetColorUIFunc;
   onScaleChange: (v: string, visConfg?: Record<string, any>) => void;
   onApply: (e: React.MouseEvent) => void;
@@ -101,6 +105,10 @@ function ColorBreaksPanelFactory(
     dataset,
     colorField,
     isCustomBreaks,
+    allBins,
+    filteredBins,
+    isFiltered,
+    histogramDomain,
     setColorUI,
     onScaleChange,
     onApply,
@@ -168,6 +176,10 @@ function ColorBreaksPanelFactory(
             colorField={colorField}
             dataset={dataset}
             colorBreaks={currentBreaks}
+            allBins={allBins}
+            filteredBins={filteredBins}
+            isFiltered={isFiltered}
+            histogramDomain={histogramDomain}
             onChangedUpdater={onColumnStatsChartChanged}
           />
         ) : null}
