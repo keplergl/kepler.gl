@@ -205,7 +205,7 @@ export function hasPortableWidth(breakPointValues: {palm: number; desk: number})
 }
 
 export function isTest(): boolean {
-  return typeof process !== 'undefined' && process?.env?.NODE_ENV === 'test';
+  return globalThis.process?.env?.NODE_ENV === 'test';
 }
 
 /**
