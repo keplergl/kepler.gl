@@ -217,18 +217,24 @@ class KeplerGl(widgets.DOMWidget):
         '''
         copy = self.data.copy()
 
-        # assume data is a GeoJSON or CSV string, convert it to arrow if use_arrow is True
+        # convert it to arrow if use_arrow is True
         if use_arrow:
             global g_use_arrow
             g_use_arrow = use_arrow
-        try:
-            gdf = geopandas.read_file(data, driver='GeoJSON')
-            copy.update({name: gdf})
-        except Exception:
-            # if it fails, assume it is a csv string
-            # load csv string to a dataframe
-            df = pd.read_csv(data)
-            copy.update({name: df})
+
+        # check if data is already a GeoDataFrame
+        if isinstance(data, geopandas.GeoDataFrame):
+            copy.update({name: data})
+        else:
+            # assume data is a GeoJSON or CSV string
+            try:
+                gdf = geopandas.read_file(data, driver='GeoJSON')
+                copy.update({name: gdf})
+            except Exception:
+                # if it fails, assume it is a csv string
+                # load csv string to a dataframe
+                df = pd.read_csv(data)
+                copy.update({name: df})
 
         self.data = copy
 
