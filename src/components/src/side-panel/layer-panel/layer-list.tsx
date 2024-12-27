@@ -14,6 +14,7 @@ import {CSS} from '@dnd-kit/utilities';
 import LayerPanelFactory from './layer-panel';
 import {findById} from '@kepler.gl/utils';
 import {dataTestIds, SORTABLE_LAYER_TYPE, SORTABLE_SIDE_PANEL_TYPE} from '@kepler.gl/constants';
+import {SplitMap} from '@kepler.gl/types';
 
 export type LayerListProps = {
   datasets: Datasets;
@@ -21,6 +22,7 @@ export type LayerListProps = {
   layerOrder: string[];
   layerClasses: LayerClassesType;
   isSortable?: boolean;
+  splitMap?: SplitMap;
   uiStateActions: typeof UIStateActions;
   visStateActions: typeof VisStateActions;
   mapStateActions: typeof MapStateActions;
@@ -120,7 +122,8 @@ function LayerListFactory(LayerPanel: ReturnType<typeof LayerPanelFactory>) {
       visStateActions,
       mapStateActions,
       layerClasses,
-      isSortable = true
+      isSortable = true,
+      splitMap
     } = props;
     const {toggleModal: openModal} = uiStateActions;
 
@@ -157,6 +160,7 @@ function LayerListFactory(LayerPanel: ReturnType<typeof LayerPanelFactory>) {
         layerColorUIChange: visStateActions.layerColorUIChange,
         layerConfigChange: visStateActions.layerConfigChange,
         layerVisualChannelConfigChange: visStateActions.layerVisualChannelConfigChange,
+        layerToggleVisibility: visStateActions.layerToggleVisibility,
         layerTypeChange: visStateActions.layerTypeChange,
         layerVisConfigChange: visStateActions.layerVisConfigChange,
         layerTextLabelChange: visStateActions.layerTextLabelChange,
@@ -172,9 +176,10 @@ function LayerListFactory(LayerPanel: ReturnType<typeof LayerPanelFactory>) {
       () => ({
         datasets,
         openModal,
-        layerTypeOptions
+        layerTypeOptions,
+        splitMap
       }),
-      [datasets, openModal, layerTypeOptions]
+      [datasets, openModal, layerTypeOptions, splitMap]
     );
 
     return (

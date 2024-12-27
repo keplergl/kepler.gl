@@ -78,6 +78,34 @@ export function layerConfigChange(
     newConfig
   };
 }
+
+export type LayerToggleVisibilityUpdaterAction = {
+  layerId: string;
+  isVisible: boolean;
+  splitMapId?: string;
+};
+
+/**
+ * Update layer visibility depends on splitMap single or dual
+ * @param layerId - layerId to be updated
+ * @param isVisible - whether this layer is visible globally
+ * @param splitMapId - id for this splitMap
+ * @returns action
+ * @public
+ */
+export function layerToggleVisibility(
+  layerId: string,
+  isVisible: boolean,
+  splitMapId?: string
+): Merge<LayerToggleVisibilityUpdaterAction, {type: typeof ActionTypes.LAYER_TOGGLE_VISIBILITY}> {
+  return {
+    type: ActionTypes.LAYER_TOGGLE_VISIBILITY,
+    layerId,
+    isVisible,
+    splitMapId
+  };
+}
+
 export type LayerTextLabelChangeUpdaterAction = {
   oldLayer: Layer;
   idx: number | 'all';
