@@ -1,7 +1,11 @@
 # SPDX-License-Identifier: MIT
 # Copyright contributors to the kepler.gl project
 
-#module for keplergl-jupyter
+# Ignore warnings from IPython.core.formatters for _repr_html_ that returns different types in different versions of IPyWidgets
+import warnings
+warnings.filterwarnings('ignore', category=UserWarning,
+                        module='IPython.core.formatters')
+
 import base64
 import sys
 import json
