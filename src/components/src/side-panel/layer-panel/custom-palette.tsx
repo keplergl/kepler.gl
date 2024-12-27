@@ -299,14 +299,12 @@ export const EditableColorRange: React.FC<EditableColorRangeProps> = ({
   const onChangeLeft = useCallback(
     val => {
       if (editable && editColorMap) editColorMap(parseFloat(val), index - 1);
-      return;
     },
     [editColorMap, index, editable]
   );
   const onChangeRight = useCallback(
     val => {
       if (editable && editColorMap) editColorMap(parseFloat(val), index);
-      return;
     },
     [editColorMap, index, editable]
   );
@@ -314,7 +312,7 @@ export const EditableColorRange: React.FC<EditableColorRangeProps> = ({
   return (
     <StyledRangeInput>
       <ColorPaletteInput
-        value={noMinBound ? 'Less' : item.inputs[0]}
+        value={noMinBound ? 'Less' : item.inputs[0].toString()}
         id={`color-palette-input-${index}-left`}
         width="50px"
         textAlign="end"
@@ -323,7 +321,7 @@ export const EditableColorRange: React.FC<EditableColorRangeProps> = ({
       />
       <Dash />
       <ColorPaletteInput
-        value={noMaxBound ? 'More' : item.inputs[1]}
+        value={noMaxBound ? 'More' : item.inputs[1].toString()}
         id={`color-palette-input-${index}-right`}
         width="50px"
         textAlign="end"

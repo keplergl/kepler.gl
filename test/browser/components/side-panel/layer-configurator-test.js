@@ -154,7 +154,9 @@ test('Components -> LayerConfigurator.mount -> LayerColumnConfig', t => {
       </IntlWrapper>
     );
   }, 'LayerConfigurator should not fail without props');
+
   const baseConfigGroup = wrapper.find(LayerConfigGroup).at(0);
+
   t.equal(
     baseConfigGroup.find(LayerColumnModeConfig).length,
     1,
@@ -240,7 +242,6 @@ test('Components -> LayerConfigurator.mount -> LayerColumnConfig', t => {
 
   // TODO: still need to fix this one
   // for some reason the update config callback is only called once
-
   // click single column
   // clickItemSelectList(fieldSelector2, 2);
 

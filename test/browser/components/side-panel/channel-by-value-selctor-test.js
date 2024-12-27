@@ -327,22 +327,15 @@ test('Components -> ChannelByValueSelector -> ColorScaleSelector -> ColorBreakDi
       t.equal(inputs.length, 1, 'should render 1 input');
       t.equal(
         inputs.at(0).props().value,
-        Number(expectedText[i][i === 0 ? 2 : 1]),
-        'should display correct range'
+        expectedText[i][i === 0 ? 2 : 1],
+        `should display correct range i: ${i}`
       );
     } else {
       t.equal(inputs.length, 2, 'should render 2 inputs');
 
-      t.equal(
-        inputs.at(0).props().value,
-        Number(expectedText[i][1]),
-        'should display correct range'
-      );
-      t.equal(
-        inputs.at(1).props().value,
-        Number(expectedText[i][2]),
-        'should display correct range'
-      );
+      t.equal(inputs.at(0).props().value, expectedText[i][1], `should display correct range ${i}`);
+
+      t.equal(inputs.at(1).props().value, expectedText[i][2], `should display correct range ${i}`);
     }
   }
 
