@@ -221,14 +221,14 @@ class KeplerGl(widgets.DOMWidget):
         if use_arrow:
             global g_use_arrow
             g_use_arrow = use_arrow
-            try:
-                gdf = geopandas.read_file(data, driver='GeoJSON')
-                copy.update({name: gdf})
-            except Exception:
-                # if it fails, assume it is a csv string
-                # load csv string to a dataframe
-                df = pd.read_csv(data)
-                copy.update({name: df})
+        try:
+            gdf = geopandas.read_file(data, driver='GeoJSON')
+            copy.update({name: gdf})
+        except Exception:
+            # if it fails, assume it is a csv string
+            # load csv string to a dataframe
+            df = pd.read_csv(data)
+            copy.update({name: df})
 
         self.data = copy
 
