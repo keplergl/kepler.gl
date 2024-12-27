@@ -4,6 +4,7 @@
 import './data-utils-test';
 import './data-processor-test';
 import './kepler-table-test';
+import './kepler-table-utils-test';
 import './data-container-test';
 import './filter-utils-test';
 import './gpu-filter-utils-test';

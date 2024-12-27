@@ -6,8 +6,9 @@ import styled from 'styled-components';
 
 import {rgbToHex} from '@kepler.gl/utils';
 
-import {Portaled, SingleColorPalette} from '..';
 import {Button} from '../common/styled-components';
+import Portaled from '../common/portaled';
+import SingleColorPalette from '../side-panel/layer-panel/single-color-palette';
 
 export type SingleColorPickerProps = {
   color: [number, number, number];

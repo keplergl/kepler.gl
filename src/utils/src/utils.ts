@@ -5,15 +5,6 @@ import window from 'global/window';
 import {capitalizeFirstLetter} from './strings';
 
 /**
- * Generate a hash string based on number of character
- * @param {number} count
- * @returns {string} hash string
- */
-export function generateHashId(count = 6): string {
-  return Math.random().toString(36).substr(count);
-}
-
-/**
  * Generate a hash string based on string
  * @param str
  * @returns
@@ -67,26 +58,6 @@ export const camelize = (str: string): string => {
     return index === 0 ? match.toLowerCase() : match.toUpperCase();
   });
 };
-
-/**
- * Converts non-arrays to arrays.  Leaves arrays alone.  Converts
- * undefined values to empty arrays ([] instead of [undefined]).
- * Otherwise, just returns [item] for non-array items.
- *
- * @param {*} item
- * @returns {array} boom! much array. very indexed. so useful.
- */
-export function toArray<T>(item: T | T[]): T[] {
-  if (Array.isArray(item)) {
-    return item;
-  }
-
-  if (typeof item === 'undefined' || item === null) {
-    return [];
-  }
-
-  return [item];
-}
 
 /**
  * immutably insert value to an Array or Object
@@ -202,6 +173,23 @@ export function arrayInsert<T>(arr: T[], index: number, val: T): T[] {
   return [...arr.slice(0, index), val, ...arr.slice(index)];
 }
 
+const arrayMoveMutate = (array, from, to) => {
+  array.splice(to < 0 ? array.length + to : to, 0, array.splice(from, 1)[0]);
+};
+
+/**
+ *
+ * @param {any[]} array
+ * @param {number} from
+ * @param {number} to
+ * @returns {any[]}
+ */
+export const arrayMove = <T>(array: T[], from: number, to: number): T[] => {
+  array = array.slice();
+  arrayMoveMutate(array, from, to);
+  return array;
+};
+
 export function hasMobileWidth(breakPointValues: {palm: number; desk: number}): boolean {
   const mobileWidth = window.matchMedia(`(max-width: ${breakPointValues.palm}px)`);
   return mobileWidth.matches;
@@ -230,7 +218,7 @@ export function filterObjectByPredicate(obj, predicate) {
   );
 }
 
-export function isFunction(func): boolean {
+export function isFunction(func: unknown): boolean {
   return typeof func === 'function';
 }
 
@@ -242,9 +230,10 @@ export function findById(id: string): <X extends {id: string}>(arr: X[]) => X | 
  * Returns array difference from
  */
 export function arrayDifference<X extends {id: string}>(source: X[]): (compare: X[]) => X[] {
+  const initial: X[] = [];
   return compare =>
     source.reduce((acc, element) => {
       const foundElement = findById(element.id)(compare);
       return foundElement ? [...acc, foundElement] : acc;
-    }, [] as X[]);
+    }, initial);
 }

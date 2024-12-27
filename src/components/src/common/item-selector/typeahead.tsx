@@ -175,7 +175,12 @@ function noop() {
 class Typeahead extends Component<TypeaheadProps, TypeaheadState> {
   static defaultProps = {
     options: [],
-    customClasses: {},
+    customClasses: {
+      results: 'list-selector',
+      input: 'typeahead__input',
+      listItem: 'list__item',
+      listAnchor: 'list__item__anchor'
+    },
     allowCustomValues: 0,
     initialValue: '',
     value: '',

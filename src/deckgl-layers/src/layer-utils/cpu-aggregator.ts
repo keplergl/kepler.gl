@@ -138,7 +138,7 @@ export function getDimensionValueDomain(this: CPUAggregator, step, props, dimens
 
 export function getDimensionScale(this: CPUAggregator, step, props, dimensionUpdater) {
   const {key} = dimensionUpdater;
-  const {domain, range, scaleType} = step.triggers;
+  const {domain, range, scaleType, fixed} = step.triggers;
   const {onSet} = step;
   if (!this.state.dimensions[key].valueDomain) {
     // the previous step should set valueDomain, if not, something went wrong
@@ -147,10 +147,13 @@ export function getDimensionScale(this: CPUAggregator, step, props, dimensionUpd
 
   const dimensionRange = props[range.prop];
   const dimensionDomain = props[domain.prop] || this.state.dimensions[key].valueDomain;
+  const dimensionFixed = Boolean(fixed && props[fixed.prop]);
 
   const scaleFunctor = getScaleFunctor(scaleType && props[scaleType.prop])();
 
-  const scaleFunc = scaleFunctor.domain(dimensionDomain).range(dimensionRange);
+  const scaleFunc = scaleFunctor
+    .domain(dimensionDomain)
+    .range(dimensionFixed ? dimensionDomain : dimensionRange);
 
   if (typeof onSet === 'object' && typeof props[onSet.props] === 'function') {
     props[onSet.props](scaleFunc.domain());
@@ -356,6 +359,7 @@ export const defaultElevationDimension: DimensionType<number> = {
     {
       key: 'getScaleFunc',
       triggers: {
+        fixed: {prop: 'elevationFixed'},
         domain: {prop: 'elevationDomain'},
         range: {prop: 'elevationRange'},
         scaleType: {prop: 'elevationScaleType'}

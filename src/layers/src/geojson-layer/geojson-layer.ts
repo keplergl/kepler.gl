@@ -38,7 +38,8 @@ import {
   HIGHLIGH_COLOR_3D,
   CHANNEL_SCALES,
   ColorRange,
-  LAYER_VIS_CONFIGS
+  LAYER_VIS_CONFIGS,
+  DEFAULT_COLOR_UI
 } from '@kepler.gl/constants';
 import {
   VisConfigNumber,
@@ -48,7 +49,7 @@ import {
   VisConfigBoolean,
   Merge,
   RGBColor,
-  Field,
+  ProtoDatasetField,
   LayerColumn
 } from '@kepler.gl/types';
 import {KeplerTable} from '@kepler.gl/table';
@@ -205,7 +206,7 @@ const getTableModeFieldValue = (field, data) => {
 
 const geoFieldAccessor =
   ({geojson}: GeoJsonLayerColumnsConfig) =>
-  (dc: DataContainerInterface): Field | null =>
+  (dc: DataContainerInterface): ProtoDatasetField | null =>
     dc.getField ? dc.getField(geojson.fieldIdx) : null;
 
 // access feature properties from geojson sub layer
@@ -376,6 +377,7 @@ export default class GeoJsonLayer extends Layer {
       .filter(
         f =>
           (f.type === 'geojson' || f.type === 'geoarrow') &&
+          f.analyzerType &&
           SUPPORTED_ANALYZER_TYPES[f.analyzerType]
       )
       .map(f => f.name);
@@ -399,8 +401,10 @@ export default class GeoJsonLayer extends Layer {
   }
 
   getDefaultLayerConfig(props: LayerBaseConfigPartial) {
+    const defaultLayerConfig = super.getDefaultLayerConfig(props ?? {});
     return {
-      ...super.getDefaultLayerConfig(props),
+      ...defaultLayerConfig,
+
       columnMode: props?.columnMode ?? DEFAULT_COLUMN_MODE,
       // add height visual channel
       heightField: null,
@@ -415,7 +419,11 @@ export default class GeoJsonLayer extends Layer {
       // add stroke color visual channel
       strokeColorField: null,
       strokeColorDomain: [0, 1],
-      strokeColorScale: 'quantile'
+      strokeColorScale: 'quantile',
+      colorUI: {
+        ...defaultLayerConfig.colorUI,
+        strokeColorRange: DEFAULT_COLOR_UI
+      }
     };
   }
 

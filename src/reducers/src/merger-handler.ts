@@ -2,7 +2,8 @@
 // Copyright contributors to the kepler.gl project
 
 import {getGlobalTaskQueue} from 'react-palm/tasks';
-import {isObject, toArray} from '@kepler.gl/utils';
+import {isObject} from '@kepler.gl/utils';
+import {toArray} from '@kepler.gl/common-utils';
 import {ValueOf} from '@kepler.gl/types';
 import {VisState, Merger, PostMergerPayload} from '@kepler.gl/schemas';
 
@@ -67,7 +68,7 @@ export function mergeStateFromMergers<State extends VisState>(
 
       // check if asyncTask was created (time consuming tasks)
       if (newTasks.length && merger.waitToFinish) {
-        // skip rest, the async merger will call applyMergerupdater() to continue
+        // skip rest, the async merger will call applyMergerUpdater() to continue
         return {mergedState, allMerged: false};
       }
     }

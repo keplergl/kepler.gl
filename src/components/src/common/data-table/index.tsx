@@ -422,6 +422,7 @@ function DataTableFactory(HeaderCell: ReturnType<typeof HeaderCellFactory>) {
 
     pinnedGrid: HTMLDivElement | null = null;
     unpinnedGrid: HTMLDivElement | null = null;
+    hasMounted = false;
 
     state: DataTableState = {
       cellSizeCache: {},
@@ -430,6 +431,7 @@ function DataTableFactory(HeaderCell: ReturnType<typeof HeaderCellFactory>) {
     };
 
     componentDidMount() {
+      this.hasMounted = true;
       window.addEventListener('resize', this.scaleCellsToWidth);
       this.scaleCellsToWidth();
     }
@@ -444,11 +446,9 @@ function DataTableFactory(HeaderCell: ReturnType<typeof HeaderCellFactory>) {
     }
 
     componentWillUnmount() {
+      this.hasMounted = false;
       window.removeEventListener('resize', this.scaleCellsToWidth);
       // fix Warning: Can't perform a React state update on an unmounted component
-      this.setState = () => {
-        return;
-      };
     }
 
     root = createRef<HTMLDivElement>();
@@ -458,12 +458,16 @@ function DataTableFactory(HeaderCell: ReturnType<typeof HeaderCellFactory>) {
       !Array.isArray(pinnedColumns) ? columns : columns.filter(c => !pinnedColumns.includes(c))
     );
 
-    toggleMoreOptions = moreOptionsColumn =>
-      this.setState({
-        moreOptionsColumn:
-          this.state.moreOptionsColumn === moreOptionsColumn ? null : moreOptionsColumn
-      });
-    toggleShowStats = () => this.setState({showStats: !this.state.showStats});
+    toggleMoreOptions = moreOptionsColumn => {
+      if (this.hasMounted)
+        this.setState({
+          moreOptionsColumn:
+            this.state.moreOptionsColumn === moreOptionsColumn ? null : moreOptionsColumn
+        });
+    };
+    toggleShowStats = () => {
+      if (this.hasMounted) this.setState({showStats: !this.state.showStats});
+    };
     getCellSizeCache = () => {
       const {cellSizeCache: propsCache = {}, fixedWidth, pinnedColumns = []} = this.props;
       const unpinnedColumns = this.unpinnedColumns(this.props);
@@ -486,7 +490,7 @@ function DataTableFactory(HeaderCell: ReturnType<typeof HeaderCellFactory>) {
     };
 
     doScaleCellsToWidth = () => {
-      this.setState(this.getCellSizeCache());
+      if (this.hasMounted) this.setState(this.getCellSizeCache());
     };
 
     scaleCellsToWidth = debounce(this.doScaleCellsToWidth, 300);

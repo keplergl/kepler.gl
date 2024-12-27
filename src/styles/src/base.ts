@@ -456,6 +456,8 @@ export const breakPoints = {
   desk: 768
 };
 
+export const aiAssistantPanelWidth = 415;
+
 // effect manager
 export const effectConfiguratorMargin = '18px 0 18px 0';
 export const effectConfiguratorPadding = '0 0 0 18px';
@@ -611,6 +613,8 @@ const secondaryInput = css<SecondaryInputProps>`
   }
 
   :active,
+  :focus,
+  &.focus,
   &.active {
     background-color: ${props => props.theme.secondaryInputBgdActive};
     border-color: ${props => props.theme.secondaryInputBorderActiveColor};
@@ -1561,6 +1565,9 @@ export const theme = {
 
   // COLORS
   BLUE2: 'rgba(85, 88, 219, 0.2)',
+
+  // AI Assistant Panel
+  aiAssistantPanelWidth,
 
   // Effect panel
   effectPanelWidth,

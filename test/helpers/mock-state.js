@@ -3,12 +3,15 @@
 
 import test from 'tape-catch';
 import cloneDeep from 'lodash.clonedeep';
-import {drainTasksForTesting} from 'react-palm/tasks';
-
-import {getInitialInputStyle, keplerGlReducerCore as keplerGlReducer} from '@kepler.gl/reducers';
-
+import {drainTasksForTesting, succeedTaskWithValues} from 'react-palm/tasks';
+import {colorPaletteToColorRange} from '@kepler.gl/constants';
 import {
-  VizColorPalette,
+  getInitialInputStyle,
+  keplerGlReducerCore as keplerGlReducer,
+  syncTimeFilterWithLayerTimelineUpdater
+} from '@kepler.gl/reducers';
+import {
+  KEPLER_COLOR_PALETTES,
   COMPARE_TYPES,
   DEFAULT_LAYER_OPACITY,
   DEFAULT_TEXT_LABEL,
@@ -25,6 +28,7 @@ import {
   UIStateActions,
   ProviderActions
 } from '@kepler.gl/actions';
+import {KeplerTable} from '@kepler.gl/table';
 
 // fixtures
 import {
@@ -76,17 +80,68 @@ export const geojsonInfo = {
   params: {file: null}
 };
 
+/**
+ * Applies actions one by one using the reducer.
+ * After each action drain Tasks and automarically resolve tasks
+ * of type CREATE_TABLE_TASK in order to create datasets.
+ * @param {Reducer} reducer A reducer to use.
+ * @param {State} initialState Initial state.
+ * @param {Action | Action[]}actions An array of actions.
+ * @returns
+ */
 export function applyActions(reducer, initialState, actions) {
   const actionQ = Array.isArray(actions) ? actions : [actions];
 
-  return actionQ.reduce(
-    (updatedState, {action, payload}) => reducer(updatedState, action(...payload)),
-    initialState
-  );
+  // remove any existing tasks before actions
+  drainTasksForTesting();
+
+  let updatedState = actionQ.reduce((updatedState, {action, payload}) => {
+    let newState = reducer(updatedState, action(...payload));
+    const tasks = drainTasksForTesting();
+    newState = applyCreateTableTasks(tasks, reducer, newState);
+    return newState;
+  }, initialState);
+
+  return updatedState;
 }
 
 // TODO: need to be deleted and imported from raw-states
 export const InitialState = keplerGlReducer(undefined, {});
+
+/**
+ * Mock instant sync result of createNewDataEntry.
+ */
+const mockCreateNewDataEntry = ({info, color, opts, data}) => {
+  const table = new KeplerTable({info, color, ...opts});
+  table.importData({data});
+  return table;
+};
+
+/**
+ * Execute tasks and mock CREATE_TABLE_TASK with success.
+ * @param {Task[]} tasks
+ * @param {Reducer} reducer
+ * @param {VisState} initialState
+ * @returns
+ */
+export const applyCreateTableTasks = (tasks, reducer, initialState) => {
+  return tasks.reduce((updatedState, task) => {
+    if (!task.label.includes('CREATE_TABLE_TASK')) return updatedState;
+    const tables = task.payload.map(payload => mockCreateNewDataEntry(payload));
+    return reducer(updatedState, succeedTaskWithValues(task, tables));
+  }, initialState);
+};
+
+/**
+ * Execute existing tasts and mock CREATE_TABLE_TASK with success.
+ * @param {VisStateReducer} reducer
+ * @param {VisState} initialState
+ * @returns
+ */
+export function applyExistingDatasetTasks(reducer, initialState) {
+  const tasks = drainTasksForTesting();
+  return applyCreateTableTasks(tasks, reducer, initialState);
+}
 
 /**
  * Mock app state with uploaded geojson and csv file
@@ -110,8 +165,7 @@ export function mockStateWithFileUpload() {
       payload: [[{info: geojsonInfo, data: {fields: geojsonFields, rows: geojsonRows}}]]
     }
   ]);
-  // cleanup tasks created during loadMapStyles
-  drainTasksForTesting();
+
   // replace layer id and color with controlled value for testing
   updatedState.visState.layers.forEach((l, i) => {
     const oldLayerId = l.id;
@@ -128,6 +182,98 @@ export function mockStateWithFileUpload() {
 
   test(t => {
     t.equal(updatedState.visState.layers.length, 2, 'should auto create 2 layers');
+    t.end();
+  });
+
+  return updatedState;
+}
+
+function mockStateWithLayerCustomColorBreaksLegends() {
+  const initialState = cloneDeep(InitialState);
+  const mockColorRange = {
+    colors: ['#FF000', '#00FF00', '#0000FF'],
+    colorMap: [
+      [1, '#FF0000'],
+      [3, '#00FF00'],
+      [5, '#0000FF']
+    ],
+    colorLegends: {
+      '#FF0000': 'hello'
+    }
+  };
+  // load csv and geojson
+  const updatedState = applyActions(keplerGlReducer, initialState, [
+    {
+      action: MapStyleActions.loadMapStyles,
+      payload: [{dark: MOCK_MAP_STYLE}]
+    },
+    {
+      action: addDataToMap,
+      payload: [
+        {
+          datasets: [
+            {
+              info: csvInfo,
+              data: {fields: testFields, rows: testAllData}
+            }
+          ],
+          config: {
+            version: 'v1',
+            config: {
+              visState: {
+                layers: [
+                  {
+                    type: 'point',
+                    id: 'point-layer-0',
+                    config: {
+                      dataId: csvInfo.id,
+                      columns: {
+                        lat: 'gps_data.lat',
+                        lng: 'gps_data.lng'
+                      },
+                      color: [255, 0, 0],
+                      label: 'pickup',
+                      isVisible: true,
+                      visConfig: {
+                        colorRange: mockColorRange
+                      }
+                    },
+                    visualChannels: {
+                      colorField: {
+                        name: 'uid',
+                        type: 'integer'
+                      },
+                      colorScale: 'custom'
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]);
+
+  test(t => {
+    t.equal(updatedState.visState.layers.length, 1, 'should load 1 layer');
+    t.deepEqual(
+      updatedState.visState.layers[0].config.visConfig.colorRange,
+      mockColorRange,
+      'should load layer colorRange correctly'
+    );
+    t.deepEqual(
+      updatedState.visState.layers[0].config.colorScale,
+      'custom',
+      'should load layer color Scale correctly'
+    );
+
+    t.deepEqual(
+      updatedState.visState.layers[0].config.colorField.name,
+      'uid',
+      'should load colorField correctly'
+    );
+
     t.end();
   });
 
@@ -278,6 +424,8 @@ export function mockStateWithArcNeighbors(state) {
 
   return updatedState;
 }
+
+// export function mockStateWith
 
 export function mockStateWithFilters(state) {
   const initialState = state || mockStateWithFileUpload();
@@ -479,19 +627,22 @@ export function mockStateWithMultipleH3Layers() {
 function mockStateWithTripData() {
   const initialState = cloneDeep(InitialState);
 
-  return keplerGlReducer(
-    initialState,
-    addDataToMap({
-      datasets: {
-        info: {
-          label: 'Sample Trips',
-          id: tripDataId
-        },
-        data: {fields: tripFields, rows: tripRows}
+  const addDataPayload = {
+    datasets: {
+      info: {
+        label: 'Sample Trips',
+        id: tripDataId
       },
-      config: tripConfig
-    })
-  );
+      data: {fields: tripFields, rows: tripRows}
+    },
+    config: tripConfig
+  };
+  return applyActions(keplerGlReducer, initialState, [
+    {
+      action: addDataToMap,
+      payload: [addDataPayload]
+    }
+  ]);
 }
 
 export function mockStateWithLayerDimensions(state) {
@@ -506,12 +657,11 @@ export function mockStateWithLayerDimensions(state) {
   );
 
   const colorFieldPayload = [layer0, {colorField}, 'color'];
-
-  const colorRangePayload = [
-    layer0,
-    {colorRange: VizColorPalette.find(c => c.name === 'Uber Viz Sequential 2')},
-    'color'
-  ];
+  const colorRange = colorPaletteToColorRange(
+    KEPLER_COLOR_PALETTES.find(({name}) => name === 'Uber Viz Sequential'),
+    {steps: 4}
+  );
+  const colorRangePayload = [layer0, {colorRange}, 'color'];
 
   const textLabelField = initialState.visState.datasets[testCsvDataId].fields.find(
     f => f.name === 'date'
@@ -762,6 +912,7 @@ export const expectedSavedLayer0 = {
       elevationPercentile: [0, 100],
       elevationScale: 5,
       enableElevationZoomFactor: true,
+      fixedHeight: false,
       colorAggregation: 'count',
       sizeAggregation: 'count',
       enable3d: false
@@ -801,6 +952,7 @@ export const expectedLoadedLayer0 = {
       elevationPercentile: [0, 100],
       elevationScale: 5,
       enableElevationZoomFactor: true,
+      fixedHeight: false,
       colorAggregation: 'count',
       sizeAggregation: 'count',
       enable3d: false
@@ -811,6 +963,14 @@ export const expectedLoadedLayer0 = {
     sizeScale: 'linear',
     textLabel: [DEFAULT_TEXT_LABEL]
   }
+};
+
+// result of Uber Viz Sequential step 4
+export const expectedColorRangeInLayer = {
+  name: 'Uber Viz Sequential',
+  type: 'sequential',
+  category: 'Uber',
+  colors: ['#00939C', '#6BB5B9', '#AAD7D9', '#E6FAFA']
 };
 
 export const expectedSavedLayer1 = {
@@ -846,12 +1006,7 @@ export const expectedSavedLayer1 = {
       outline: false,
       filled: true,
       thickness: 2,
-      colorRange: {
-        name: 'Uber Viz Sequential 2',
-        type: 'sequential',
-        category: 'Uber',
-        colors: ['#E6FAFA', '#AAD7DA', '#68B4BB', '#00939C']
-      },
+      colorRange: expectedColorRangeInLayer,
       strokeColorRange: DEFAULT_COLOR_RANGE,
       strokeColor: null,
       radiusRange: [0, 50],
@@ -895,12 +1050,7 @@ export const expectedLoadedLayer1 = {
       opacity: DEFAULT_LAYER_OPACITY,
       outline: false,
       thickness: 2,
-      colorRange: {
-        name: 'Uber Viz Sequential 2',
-        type: 'sequential',
-        category: 'Uber',
-        colors: ['#E6FAFA', '#AAD7DA', '#68B4BB', '#00939C']
-      },
+      colorRange: expectedColorRangeInLayer,
       strokeColorRange: DEFAULT_COLOR_RANGE,
       filled: true,
       strokeColor: null,
@@ -1042,6 +1192,7 @@ export const StateWH3Layer = mockStateWithH3Layer();
 export const StateWMultiH3Layers = mockStateWithMultipleH3Layers();
 export const StateWithGeocoderDataset = mockStateWithGeocoderDataset();
 export const StateWLayerStyle = mockStateWithLayerStyling();
+export const StateWLayerCustomColorBreaks = mockStateWithLayerCustomColorBreaksLegends();
 export const StateWTripTable = mockStateWithTripTable();
 export const StateWArcNeighbors = mockStateWithArcNeighbors();
 export const StateWSyncedTimeFilter = mockStateWithSyncedTimeFilter();
@@ -1120,6 +1271,7 @@ export const mockKeplerProps = mockKeplerPropsWithState({state: StateWLayerStyle
 // hover over data index 15
 // tested in map-container-test
 export const expectedLayerHoverProp = {
+  currentTime: null,
   data: mockKeplerProps.visState.datasets[testCsvDataId].dataContainer.row(15),
   fields: mockKeplerProps.visState.datasets[testCsvDataId].fields,
   fieldsToShow:
@@ -1134,3 +1286,20 @@ export const expectedGeojsonLayerHoverProp = {
     mockKeplerProps.visState.interactionConfig.tooltip.config.fieldsToShow[testGeoJsonDataId],
   layer: mockKeplerProps.visState.layers[1]
 };
+
+export function stateWithTimeFilterAndTripLayer() {
+  const initialState = mockStateWithTripData();
+
+  return mockStateWithTripGeojson(initialState);
+}
+
+export function stateWithTimeFilterSyncedWithTripLayer() {
+  const initialState = stateWithTimeFilterAndTripLayer();
+  return {
+    ...initialState,
+    visState: syncTimeFilterWithLayerTimelineUpdater(initialState.visState, {
+      idx: 0,
+      enable: true
+    })
+  };
+}

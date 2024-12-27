@@ -8,10 +8,13 @@ import keplerGlReducer, {
   addDataToMapUpdater,
   replaceDataInMapUpdater,
   fitBoundsUpdater,
-  INITIAL_UI_STATE
+  INITIAL_UI_STATE,
+  visStateReducer,
+  mapStateReducer
 } from '@kepler.gl/reducers';
 import {processCsvData} from '@kepler.gl/processors';
 import {registerEntry} from '@kepler.gl/actions';
+import {drainTasksForTesting, succeedTaskWithValues} from 'react-palm/tasks';
 
 import testCsvData, {sampleConfig, dataWithNulls} from 'test/fixtures/test-csv-data';
 import testHexIdData, {
@@ -21,6 +24,8 @@ import testHexIdData, {
   expectedMergedDataset
 } from 'test/fixtures/test-hex-id-data';
 import {cmpLayers, cmpFilters, cmpDataset, cmpInteraction} from 'test/helpers/comparison-utils';
+import {applyExistingDatasetTasks} from 'test/helpers/mock-state';
+
 const mockRawData = {
   fields: [
     {
@@ -81,19 +86,21 @@ test('#composerStateReducer - addDataToMapUpdater: mapStyle', t => {
     }
   });
 
+  drainTasksForTesting();
+
   t.equal(newState.mapStyle.styleType, 'light', 'Map style is set correctly');
 
   t.end();
 });
 
-test('#composerStateReducer - addDataToMapUpdater: mapState should be centered', t => {
+test('#composerStateReducer - addDataToMapUpdater: mapState should be centered (after dataset tasts are completed)', t => {
   // init kepler.gl root and instance
   const state = keplerGlReducer({}, registerEntry({id: 'test'})).test;
   const mapStateProperties = {
     latitude: 33.88608913680742,
     longitude: -84.43459130456425
   };
-  const newState = addDataToMapUpdater(state, {
+  let newState = addDataToMapUpdater(state, {
     payload: {
       datasets: {
         data: mockRawData,
@@ -109,6 +116,15 @@ test('#composerStateReducer - addDataToMapUpdater: mapState should be centered',
       }
     }
   });
+
+  // create datasets from existing tasks, trigger auto create layers
+  newState.visState = applyExistingDatasetTasks(visStateReducer, newState.visState);
+
+  // layers should generate a fit bounds task
+  const tasks = drainTasksForTesting();
+  t.equal(tasks.length, 1, 'One fit bounds task should be present');
+
+  newState.mapState = mapStateReducer(newState.mapState, succeedTaskWithValues(tasks[0], {}));
 
   t.equal(newState.mapState.latitude, 29.23, 'centerMap: true should override mapState config');
   t.equal(newState.mapState.longitude, 60.71, 'centerMap: true should override mapState config');
@@ -130,6 +146,8 @@ test('#composerStateReducer - addDataToMapUpdater: uiState', t => {
       }
     }
   });
+
+  drainTasksForTesting();
 
   const expectedUIState = {
     ...INITIAL_UI_STATE,
@@ -153,7 +171,7 @@ test('#composerStateReducer - addDataToMapUpdater: keepExistingConfig', t => {
   const state = keplerGlReducer({}, registerEntry({id: 'test'})).test;
 
   // old state contain splitMaps
-  const oldState = addDataToMapUpdater(state, {
+  let oldState = addDataToMapUpdater(state, {
     payload: {
       datasets: {
         data,
@@ -164,6 +182,9 @@ test('#composerStateReducer - addDataToMapUpdater: keepExistingConfig', t => {
       config: sampleConfig.config
     }
   });
+
+  // create datasets from existing tasks, trigger auto create layers
+  oldState = {...oldState, visState: applyExistingDatasetTasks(visStateReducer, oldState.visState)};
 
   const {
     layers: oldLayers,
@@ -177,7 +198,7 @@ test('#composerStateReducer - addDataToMapUpdater: keepExistingConfig', t => {
   const hexDataId = hexIdDataConfig.dataId;
 
   // keepExistingConfig is not defined, default to false
-  const nextState1 = addDataToMapUpdater(oldState, {
+  let nextState1 = addDataToMapUpdater(oldState, {
     payload: {
       datasets: {
         data: hexData,
@@ -189,6 +210,12 @@ test('#composerStateReducer - addDataToMapUpdater: keepExistingConfig', t => {
     }
   });
 
+  // create datasets from existing tasks, trigger auto create layers
+  nextState1 = {
+    ...nextState1,
+    visState: applyExistingDatasetTasks(visStateReducer, nextState1.visState)
+  };
+
   t.deepEqual(nextState1.visState.layerOrder, ['avlgol'], 'Should contain nextState1 layer order');
 
   cmpDataset(t, expectedMergedDataset, nextState1.visState.datasets[hexDataId]);
@@ -199,7 +226,7 @@ test('#composerStateReducer - addDataToMapUpdater: keepExistingConfig', t => {
   cmpFilters(t, mergedFilters, nextState1.visState.filters);
 
   // add data and config keep existing data and config
-  const nextState2 = addDataToMapUpdater(oldState, {
+  let nextState2 = addDataToMapUpdater(oldState, {
     payload: {
       datasets: {
         data: hexData,
@@ -213,6 +240,12 @@ test('#composerStateReducer - addDataToMapUpdater: keepExistingConfig', t => {
       }
     }
   });
+
+  // create datasets from existing tasks, trigger auto create layers
+  nextState2 = {
+    ...nextState2,
+    visState: applyExistingDatasetTasks(visStateReducer, nextState2.visState)
+  };
 
   const actualVisState = nextState2.visState;
 
@@ -378,20 +411,37 @@ test('#composerStateReducer - replaceDataInMapUpdater', t => {
   const state = keplerGlReducer({}, registerEntry({id: 'test'})).test;
 
   // old state contain splitMaps
-  const oldState = addDataToMapUpdater(state, {
+  let oldState = addDataToMapUpdater(state, {
     payload: {
       datasets,
       config: sampleConfig.config
     }
   });
 
+  // create datasets from existing tasks, trigger auto create layers
+  oldState = {...oldState, visState: applyExistingDatasetTasks(visStateReducer, oldState.visState)};
+
   const oldSavedConfig = state.visState.schema.getConfigToSave(oldState).config;
-  const nextState = replaceDataInMapUpdater(oldState, {
+  let nextState = replaceDataInMapUpdater(oldState, {
     payload: {
       datasetToReplaceId: sampleConfig.dataId,
       datasetToUse
     }
   });
+  // create datasets from existing tasks, trigger auto create layers
+  nextState = {
+    ...nextState,
+    visState: applyExistingDatasetTasks(visStateReducer, nextState.visState)
+  };
+
+  // layers should generate a fit bounds task
+  const tasks = drainTasksForTesting();
+  t.equal(tasks.length, 1, 'A fit bounds Task should be present');
+  nextState = {
+    ...nextState,
+    mapState: mapStateReducer(nextState.mapState, succeedTaskWithValues(tasks[0], {}))
+  };
+
   const nextSavedConfig = nextState.visState.schema.getConfigToSave(nextState).config;
 
   const expectedLayers = oldSavedConfig.visState.layers.map(l => ({
@@ -492,21 +542,28 @@ test('#composerStateReducer - replaceDataInMapUpdater: same dataId', t => {
   const state = keplerGlReducer({}, registerEntry({id: 'test'})).test;
 
   // old state contain splitMaps
-  const oldState = addDataToMapUpdater(state, {
+  let oldState = addDataToMapUpdater(state, {
     payload: {
       datasets,
       config: sampleConfig.config
     }
   });
+  // create datasets from existing tasks, trigger auto create layers
+  oldState = {...oldState, visState: applyExistingDatasetTasks(visStateReducer, oldState.visState)};
 
   const oldSavedConfig = state.visState.schema.getConfigToSave(oldState).config;
 
-  const nextState = replaceDataInMapUpdater(oldState, {
+  let nextState = replaceDataInMapUpdater(oldState, {
     payload: {
       datasetToReplaceId: sampleConfig.dataId,
       datasetToUse
     }
   });
+  // create datasets from existing tasks, trigger auto create layers
+  nextState = {
+    ...nextState,
+    visState: applyExistingDatasetTasks(visStateReducer, nextState.visState)
+  };
 
   // dataset should be replaced
   t.ok(nextState.visState.datasets[sampleConfig.dataId], ' dataset should be replaced');

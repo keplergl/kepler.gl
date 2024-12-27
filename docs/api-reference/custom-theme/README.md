@@ -4,7 +4,7 @@ You can pass theme name or object used to customize Kepler.gl style. Kepler.gl p
 
 
 ```js
-import KeplerGl from 'kepler.gl';
+import KeplerGl from '@kepler.gl/components';
 
 const Map = props => (
   <KeplerGl

@@ -2,105 +2,112 @@
 // Copyright contributors to the kepler.gl project
 
 import bbox from '@turf/bbox';
-import {console as Console} from 'global/window';
-import {disableStackCapturing, withTask} from 'react-palm/tasks';
-import cloneDeep from 'lodash.clonedeep';
-import uniq from 'lodash.uniq';
-import get from 'lodash.get';
-import xor from 'lodash.xor';
-import pick from 'lodash.pick';
-import isEqual from 'lodash.isequal';
 import copy from 'copy-to-clipboard';
 import deepmerge from 'deepmerge';
+import {console as Console} from 'global/window';
+import cloneDeep from 'lodash.clonedeep';
+import get from 'lodash.get';
+import isEqual from 'lodash.isequal';
+import pick from 'lodash.pick';
+import uniq from 'lodash.uniq';
+import xor from 'lodash.xor';
+import Task, {disableStackCapturing, withTask} from 'react-palm/tasks';
 // Tasks
-import {LOAD_FILE_TASK, UNWRAP_TASK, PROCESS_FILE_DATA, DELAY_TASK} from '@kepler.gl/tasks';
+import {
+  DELAY_TASK,
+  ACTION_TASK,
+  LOAD_FILE_TASK,
+  PROCESS_FILE_DATA,
+  UNWRAP_TASK
+} from '@kepler.gl/tasks';
 // Actions
 import {
+  ActionTypes,
+  CreateNewDatasetSuccessPayload,
+  MapStateActions,
+  ReceiveMapConfigPayload,
+  VisStateActions,
   applyLayerConfig,
+  createNewDatasetSuccess,
   layerConfigChange,
   layerTypeChange,
   layerVisConfigChange,
   layerVisualChannelConfigChange,
+  loadFileStepSuccess,
   loadFilesErr,
   loadFilesSuccess,
-  loadFileStepSuccess,
   loadNextFile,
   nextFileBatch,
-  ReceiveMapConfigPayload,
-  VisStateActions,
-  MapStateActions,
   processFileContent,
-  ActionTypes
+  fitBounds as fitMapBounds
 } from '@kepler.gl/actions';
 
 // Utils
 import {
-  set,
-  toArray,
-  arrayInsert,
-  generateHashId,
-  isPlainObject,
-  isObject,
+  FILTER_UPDATER_PROPS,
   addNewLayersToSplitMap,
   snapToMarks,
-  computeSplitMapLayers,
-  removeLayerFromSplitMaps,
-  isRgbColor,
-  parseFieldValue,
   applyFilterFieldName,
   applyFiltersToDatasets,
+  arrayInsert,
+  computeSplitMapLayers,
   adjustValueToFilterDomain,
   featureToFilterValue,
   filterDatasetCPU,
-  FILTER_UPDATER_PROPS,
   generatePolygonFilter,
   getDefaultFilter,
   getFilterIdInFeature,
   getTimeWidgetTitleFormatter,
   isInRange,
+  isObject,
+  isPlainObject,
+  isRgbColor,
+  parseFieldValue,
+  removeLayerFromSplitMaps,
+  set,
   mergeFilterDomainStep,
   updateFilterPlot,
   removeFilterPlot,
   isLayerAnimatable
 } from '@kepler.gl/utils';
-
+import {generateHashId, toArray} from '@kepler.gl/common-utils';
 // Mergers
 import {
-  VIS_STATE_MERGERS,
-  validateLayerWithData,
-  createLayerFromConfig,
-  serializeLayer,
-  serializeVisState,
-  parseLayerConfig
-} from './vis-state-merger';
-import {mergeStateFromMergers, isValidMerger} from './merger-handler';
-import {Layer, LayerClasses, LAYER_ID_LENGTH} from '@kepler.gl/layers';
-import {
   ANIMATION_WINDOW,
+  BASE_SPEED,
+  COMPARE_TYPES,
+  DEFAULT_TEXT_LABEL,
   EDITOR_MODES,
-  SORT_ORDER,
   FILTER_TYPES,
   FILTER_VIEW_TYPES,
-  MAX_DEFAULT_TOOLTIPS,
-  DEFAULT_TEXT_LABEL,
-  COMPARE_TYPES,
+  FPS,
   LIGHT_AND_SHADOW_EFFECT,
+  MAX_DEFAULT_TOOLTIPS,
   PLOT_TYPES,
-  SYNC_TIMELINE_MODES,
-  BASE_SPEED,
-  FPS
+  SORT_ORDER,
+  SYNC_TIMELINE_MODES
 } from '@kepler.gl/constants';
+import {LAYER_ID_LENGTH, Layer, LayerClasses} from '@kepler.gl/layers';
 import {
-  pick_,
-  merge_,
-  swap_,
   apply_,
   compose_,
+  filterOutById,
+  merge_,
+  pick_,
   removeElementAtIndex,
-  filterOutById
+  swap_
 } from './composer-helpers';
+import {isValidMerger, mergeStateFromMergers} from './merger-handler';
+import {
+  VIS_STATE_MERGERS,
+  createLayerFromConfig,
+  parseLayerConfig,
+  serializeLayer,
+  serializeVisState,
+  validateLayerWithData
+} from './vis-state-merger';
 
-import KeplerGLSchema, {VisState, Merger, PostMergerPayload} from '@kepler.gl/schemas';
+import KeplerGLSchema, {Merger, PostMergerPayload, VisState} from '@kepler.gl/schemas';
 
 import {
   Filter,
@@ -112,18 +119,18 @@ import {
 } from '@kepler.gl/types';
 import {Loader} from '@loaders.gl/loader-utils';
 
-import {calculateLayerData, findDefaultLayer, getLayerOrderFromLayers} from './layer-utils';
 import {
-  copyTableAndUpdate,
   Datasets,
-  pinTableColumns,
-  sortDatasetByColumn,
   assignGpuChannel,
+  copyTableAndUpdate,
+  createNewDataEntry,
+  pinTableColumns,
   setFilterGpuMode,
-  createNewDataEntry
+  sortDatasetByColumn
 } from '@kepler.gl/table';
 import {findFieldsToShow} from './interaction-utils';
-import {hasPropsToMerge, getPropValueToMerger} from './merger-handler';
+import {calculateLayerData, findDefaultLayer, getLayerOrderFromLayers} from './layer-utils';
+import {getPropValueToMerger, hasPropsToMerge} from './merger-handler';
 import {mergeDatasetsByOrder} from './vis-state-merger';
 import {
   fixEffectOrder,
@@ -137,6 +144,9 @@ import {
   TIME_INTERVALS_ORDERED
 } from '@kepler.gl/utils';
 import {createEffect} from '@kepler.gl/effects';
+import {PayloadAction} from '@reduxjs/toolkit';
+
+import {findMapBounds} from './data-utils';
 
 // react-palm
 // disable capture exception for react-palm call to withTask
@@ -870,14 +880,15 @@ export function layerVisualChannelChangeUpdater(
   state: VisState,
   action: VisStateActions.LayerVisualChannelConfigChangeUpdaterAction
 ): VisState {
-  const {oldLayer, newConfig, channel} = action;
+  const {oldLayer, newConfig, newVisConfig, channel} = action;
   if (!oldLayer.config.dataId) {
     return state;
   }
   const dataset = state.datasets[oldLayer.config.dataId];
 
   const idx = state.layers.findIndex(l => l.id === oldLayer.id);
-  const newLayer = oldLayer.updateLayerConfig(newConfig);
+  let newLayer = oldLayer.updateLayerConfig(newConfig);
+  if (newVisConfig) newLayer = newLayer.updateLayerVisConfig(newVisConfig);
 
   newLayer.updateLayerVisualChannel(dataset, channel);
 
@@ -902,6 +913,7 @@ export function layerVisConfigChangeUpdater(
   const {oldLayer} = action;
   const idx = state.layers.findIndex(l => l.id === oldLayer.id);
   const props = Object.keys(action.newVisConfig);
+
   const newVisConfig = {
     ...oldLayer.config.visConfig,
     ...action.newVisConfig
@@ -954,18 +966,7 @@ export function setFilterAnimationTimeUpdater(
   state: VisState,
   action: VisStateActions.SetFilterAnimationTimeUpdaterAction
 ): VisState {
-  let newState = setFilterUpdater(state, action);
-  const {idx} = action;
-  const filter = newState.filters[idx];
-  if ((filter as TimeRangeFilter).syncedWithLayerTimeline) {
-    const timelineValue = getTimelineFromTrip(filter);
-    const value = state.animationConfig.timeSteps
-      ? snapToMarks(timelineValue, state.animationConfig.timeSteps)
-      : timelineValue;
-    newState = setLayerAnimationTimeUpdater(newState, {value});
-  }
-
-  return newState;
+  return setFilterUpdater(state, action);
 }
 
 /**
@@ -1031,7 +1032,17 @@ export function setFilterUpdater<S extends VisState>(
   for (let i = 0; i < props.length; i++) {
     const prop = props[i];
     const value = values[i];
-    const res = _updateFilterProp(newState, newFilter, prop, value, valueIndex);
+    // We currently do not support passing in name as an array into _updateFilterProp, so we call it multiple times with each name
+    // See the comment in there as to what should be addressed
+    let res;
+    if (prop === 'name' && Array.isArray(value)) {
+      // eslint-disable-next-line no-loop-func
+      res = value.reduce((accu, v) => {
+        return _updateFilterProp(accu, newFilter, prop, v, valueIndex);
+      }, newState);
+    } else {
+      res = _updateFilterProp(newState, newFilter, prop, value, valueIndex);
+    }
     newFilter = res.filter;
     newState = res.state;
     datasetIdsToFilter = datasetIdsToFilter.concat(res.datasetIdsToFilter);
@@ -1065,6 +1076,11 @@ export function setFilterUpdater<S extends VisState>(
   // dataId is an array
   // pass only the dataset we need to update
   newState = updateAllLayerDomainData(newState, datasetIdsToFilter, newFilter);
+
+  // If time range filter value was updated, adjust animation config
+  if (newFilter.type === FILTER_TYPES.timeRange && props.includes('value')) {
+    newState = adjustAnimationConfigWithFilter(newState, action.idx);
+  }
 
   return newState;
 }
@@ -2131,7 +2147,7 @@ export const updateVisDataUpdater = (
   const {config, options} = action;
 
   // apply config if passed from action
-  // TODO: we don't handle asyn mergers here yet
+  // TODO: we don't handle async mergers here yet
   const previousState = config
     ? receiveMapConfigUpdater(state, {
         payload: {config, options}
@@ -2140,19 +2156,37 @@ export const updateVisDataUpdater = (
 
   const datasets = toArray(action.datasets);
 
-  const newDataEntries = datasets.reduce(
-    // @ts-expect-error  Type '{}' is missing the following properties from type 'ProtoDataset': data, info
-    (accu, {info = {}, ...rest} = {}) => ({
-      ...accu,
-      ...(createNewDataEntry({info, ...rest}, state.datasets) || {})
-    }),
-    {}
+  const allCreateDatasetsTasks = datasets.map(
+    ({info = {}, ...rest}) => createNewDataEntry({info, ...rest}, state.datasets) || {}
+  );
+  // call all Tasks
+  const tasks = Task.allSettled(allCreateDatasetsTasks).map(results =>
+    createNewDatasetSuccess({results, addToMapOptions: options})
   );
 
+  return withTask(previousState, tasks);
+};
+
+export const createNewDatasetSuccessUpdater = (
+  state: VisState,
+  action: PayloadAction<CreateNewDatasetSuccessPayload>
+): VisState => {
+  // console.log('createNewDatasetSuccessUpdater', action.payload);
+  const {results, addToMapOptions} = action.payload;
+  const newDataEntries = results.reduce((accu, result) => {
+    if (result.status === 'fulfilled') {
+      const dataset = result.value;
+      return {...accu, [dataset.id]: dataset};
+    } else {
+      // handle create dataset error
+      console.error(result.reason);
+      return accu;
+    }
+  }, {} as Datasets);
   // save new dataset entry to state
   const mergedState = {
-    ...previousState,
-    datasets: mergeDatasetsByOrder(previousState, newDataEntries)
+    ...state,
+    datasets: mergeDatasetsByOrder(state, newDataEntries)
   };
 
   // merge state with config to be merged
@@ -2162,7 +2196,7 @@ export const updateVisDataUpdater = (
   const newDataIds = Object.keys(newDataEntries);
   const postMergerPayload = {
     newDataIds,
-    options,
+    options: addToMapOptions,
     layerMergers
   };
 
@@ -2267,12 +2301,26 @@ function postMergeUpdater(mergedState: VisState, postMergerPayload: PostMergerPa
   updatedState = updateAnimationDomain(updatedState);
 
   // try to process layerMergers after dataset+datasetMergers
-  return layerMergers && layerMergers.length > 0
-    ? applyMergersUpdater(updatedState, {
-        mergers: layerMergers,
-        postMergerPayload: {...postMergerPayload, layerMergers: []}
-      })
-    : updatedState;
+  updatedState =
+    layerMergers && layerMergers.length > 0
+      ? applyMergersUpdater(updatedState, {
+          mergers: layerMergers,
+          postMergerPayload: {...postMergerPayload, layerMergers: []}
+        })
+      : updatedState;
+
+  // center the map once the dataset is created
+  if (newLayers.length && (options || {}).centerMap) {
+    const bounds = findMapBounds(newLayers);
+    if (bounds) {
+      const fitBoundsTask = ACTION_TASK().map(() => {
+        return fitMapBounds(bounds);
+      });
+      updatedState = withTask(updatedState, fitBoundsTask);
+    }
+  }
+
+  return updatedState;
 }
 
 /**
@@ -2783,9 +2831,18 @@ export function updateAnimationDomain<S extends VisState>(state: S): S {
   };
 
   // reset currentTime based on new domain
-  const currentTime = isInRange(state.animationConfig.currentTime, mergedDomain)
+  const syncedFilter = state.filters?.find(f => (f as TimeRangeFilter).syncedWithLayerTimeline) as
+    | TimeRangeFilter
+    | undefined;
+
+  // if synced filter exist wee need to merge animationConfig and filter domains
+  // and validate the current time against the new merged domain
+  const newAnimationDomain = syncedFilter
+    ? mergeTimeDomains([mergedDomain, syncedFilter.domain])
+    : mergedDomain;
+  const currentTime = isInRange(state.animationConfig.currentTime, newAnimationDomain)
     ? state.animationConfig.currentTime
-    : mergedDomain[0];
+    : newAnimationDomain[0];
 
   if (currentTime !== state.animationConfig.currentTime) {
     // if currentTime changed, need to call animationTimeUpdater to re call formatLayerData
@@ -3190,7 +3247,7 @@ export function layerFilteredItemsChangeUpdater<S extends VisState>(
 export function syncTimeFilterWithLayerTimelineUpdater<S extends VisState>(
   state: S,
   action: VisStateActions.SyncTimeFilterWithLayerTimelineAction
-) {
+): S {
   const {idx: filterIdx, enable = false} = action;
 
   const filter = state.filters[filterIdx] as TimeRangeFilter;
@@ -3264,8 +3321,12 @@ export function syncTimeFilterWithLayerTimelineUpdater<S extends VisState>(
       mode: getSyncAnimationMode(newFilter)
     });
 
+    newFilter = newState.filters[filterIdx] as TimeRangeFilter;
+
     // set the animation config value to match filter value
-    return setLayerAnimationTimeUpdater(newState, {value: newState.filters[filterIdx].value[0]});
+    return setLayerAnimationTimeUpdater(newState, {
+      value: newFilter.value[newFilter.syncTimelineMode]
+    });
   }
 
   // set domain and step
@@ -3314,9 +3375,14 @@ export function setTimeFilterTimelineModeUpdater<S extends VisState>(
 ) {
   const {id: filterId, mode: syncTimelineMode} = action;
 
-  const filter = state.filters.find(f => f.id === filterId) as TimeRangeFilter | undefined;
+  const filterIdx = state.filters.findIndex(f => f.id === filterId);
+  if (filterIdx === -1) {
+    return state;
+  }
 
-  if (!filter || !validateSyncAnimationMode(filter, syncTimelineMode)) {
+  const filter = state.filters[filterIdx] as TimeRangeFilter;
+
+  if (!validateSyncAnimationMode(filter, syncTimelineMode)) {
     return state;
   }
 
@@ -3325,13 +3391,27 @@ export function setTimeFilterTimelineModeUpdater<S extends VisState>(
     syncTimelineMode
   };
 
-  return {
+  const newState = {
     ...state,
     filters: swap_<Filter>(newFilter)(state.filters)
   };
+
+  return adjustAnimationConfigWithFilter(newState, filterIdx);
 }
 
-function getTimelineFromTrip(filter) {
+function adjustAnimationConfigWithFilter<S extends VisState>(state: S, filterIdx: number): S {
+  const filter = state.filters[filterIdx];
+  if ((filter as TimeRangeFilter).syncedWithLayerTimeline) {
+    const timelineValue = getTimelineValueFromFilter(filter);
+    const value = state.animationConfig.timeSteps
+      ? snapToMarks(timelineValue, state.animationConfig.timeSteps)
+      : timelineValue;
+    return setLayerAnimationTimeUpdater(state, {value});
+  }
+  return state;
+}
+
+function getTimelineValueFromFilter(filter) {
   return filter.value[filter.syncTimelineMode];
 }
 

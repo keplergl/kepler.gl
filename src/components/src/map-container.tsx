@@ -4,7 +4,7 @@
 // libraries
 import React, {Component, createRef, useMemo} from 'react';
 import styled, {withTheme} from 'styled-components';
-import {Map, MapboxMap, MapRef} from 'react-map-gl';
+import {Map, MapRef} from 'react-map-gl';
 import {PickInfo} from '@deck.gl/core/lib/deck';
 import DeckGL from '@deck.gl/react';
 import {createSelector, Selector} from 'reselect';
@@ -364,7 +364,7 @@ export default function MapContainerFactory(
     }
 
     _deck: any = null;
-    _map: MapboxMap | null = null;
+    _map: GetMapRef | null = null;
     _ref = createRef<HTMLDivElement>();
     _deckGLErrorsElapsed: {[id: string]: number} = {};
 
@@ -987,7 +987,9 @@ export default function MapContainerFactory(
         mapboxAccessToken: currentStyle?.accessToken || mapboxApiAccessToken,
         baseApiUrl: mapboxApiUrl,
         mapLib: getApplicationConfig().getMapLib(),
-        transformRequest: this.props.transformRequest || transformRequest
+        transformRequest:
+          this.props.transformRequest ||
+          transformRequest(currentStyle?.accessToken || mapboxApiAccessToken)
       };
 
       const hasGeocoderLayer = Boolean(layers.find(l => l.id === GEOCODER_LAYER_ID));

@@ -8,7 +8,7 @@ import styled from 'styled-components';
 import RangePlotFactory from './range-plot';
 import Slider from './slider/slider';
 import {Input} from './styled-components';
-import RangeSliderTimelinePanelFactory from '../common/range-slider-timeline-panel';
+import RangeSliderSubAnimationPanelFactory from '../common/range-slider-timeline-panel';
 import {
   observeDimensions,
   unobserveDimensions,
@@ -66,7 +66,7 @@ interface RangeSliderProps {
   step?: number;
   sliderHandleWidth?: number;
   xAxis?: ElementType;
-  timelines?: any[];
+  subAnimations?: any[];
   timelineLabel?: string;
 
   timezone?: string | null;
@@ -88,11 +88,11 @@ interface RangeSliderProps {
 
 const RANGE_SLIDER_TIMELINE_PANEL_STYLE = {marginLeft: '-32px'};
 
-RangeSliderFactory.deps = [RangePlotFactory, RangeSliderTimelinePanelFactory];
+RangeSliderFactory.deps = [RangePlotFactory, RangeSliderSubAnimationPanelFactory];
 
 export default function RangeSliderFactory(
   RangePlot: ReturnType<typeof RangePlotFactory>,
-  RangeSliderTimelinePanel: ReturnType<typeof RangeSliderTimelinePanelFactory>
+  RangeSliderSubAnimationPanel: ReturnType<typeof RangeSliderSubAnimationPanelFactory>
 ): ComponentType<RangeSliderProps> {
   class RangeSlider extends Component<RangeSliderProps> {
     static defaultProps = {
@@ -239,8 +239,8 @@ export default function RangeSliderFactory(
         timeFormat,
         playbackControlWidth,
         setFilterPlot,
-        timelines,
         animationWindow,
+        subAnimations: subAnimations,
         filter,
         datasets
       } = this.props;
@@ -250,10 +250,10 @@ export default function RangeSliderFactory(
       const hasPlot = plotType?.type;
 
       const value = this.props.plotValue || this.filterValueSelector(this.props);
-      const scaledValue = range
-        ? // TODO figure out correct types for value and range
-          scaleSourceDomainToDestination(value as [number, number], range as [number, number])
-        : [0, 0];
+      const scaledValue =
+        subAnimations?.length && range
+          ? scaleSourceDomainToDestination(value as [number, number], range as [number, number])
+          : [0, 0];
       const commonPadding = `${Number(sliderHandleWidth) / 2}px`;
       return (
         <div
@@ -287,9 +287,9 @@ export default function RangeSliderFactory(
                   style={{paddingLeft: commonPadding}}
                 />
               ) : null}
-              {timelines?.length ? (
-                <RangeSliderTimelinePanel
-                  timelines={timelines}
+              {subAnimations?.length ? (
+                <RangeSliderSubAnimationPanel
+                  subAnimations={subAnimations}
                   scaledValue={scaledValue}
                   style={RANGE_SLIDER_TIMELINE_PANEL_STYLE}
                 />

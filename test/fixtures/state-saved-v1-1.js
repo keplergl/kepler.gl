@@ -921,13 +921,14 @@ mergedLayer0.config = {
   radiusDomain: [0, 1],
   colorUI: {
     color: DEFAULT_COLOR_UI,
-    colorRange: DEFAULT_COLOR_UI
+    colorRange: DEFAULT_COLOR_UI,
+    strokeColorRange: DEFAULT_COLOR_UI
   },
   visConfig: {
     opacity: 0.8,
     thickness: 2,
     colorRange: {
-      name: 'ColorBrewer YlGnBu-9',
+      name: 'YlGnBu',
       type: 'sequential',
       category: 'ColorBrewer',
       colors: [
@@ -944,7 +945,7 @@ mergedLayer0.config = {
       reversed: true
     },
     strokeColorRange: {
-      name: 'ColorBrewer YlGnBu-9',
+      name: 'YlGnBu',
       type: 'sequential',
       category: 'ColorBrewer',
       colors: [
@@ -2736,7 +2737,8 @@ mergedLayer1.config = {
   radiusDomain: [0, 1],
   colorUI: {
     color: DEFAULT_COLOR_UI,
-    colorRange: DEFAULT_COLOR_UI
+    colorRange: DEFAULT_COLOR_UI,
+    strokeColorRange: DEFAULT_COLOR_UI
   },
   visConfig: {
     opacity: 0.8,

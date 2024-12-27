@@ -8,21 +8,27 @@ import Layer, {
   LayerColorConfig,
   LayerSizeConfig,
   LayerBounds,
-  LayerBaseConfigPartial
+  LayerBaseConfigPartial,
+  VisualChannel
 } from '../base-layer';
 import {BrushingExtension} from '@deck.gl/extensions';
 import {GeoArrowArcLayer} from '@kepler.gl/deckgl-arrow-layers';
 import {FilterArrowExtension} from '@kepler.gl/deckgl-layers';
 import {ArcLayer as DeckArcLayer} from '@deck.gl/layers';
-import {h3ToGeo} from 'h3-js';
 
-import {hexToRgb, DataContainerInterface, ArrowDataContainer} from '@kepler.gl/utils';
+import {
+  hexToRgb,
+  DataContainerInterface,
+  maybeHexToGeo,
+  ArrowDataContainer
+} from '@kepler.gl/utils';
 import ArcLayerIcon from './arc-layer-icon';
 import {isLayerHoveredFromArrow, createGeoArrowPointVector, getFilteredIndex} from '../layer-utils';
 import {
   DEFAULT_LAYER_COLOR,
   ColorRange,
-  PROJECTED_PIXEL_SIZE_MULTIPLIER
+  PROJECTED_PIXEL_SIZE_MULTIPLIER,
+  ALL_FIELD_TYPES
 } from '@kepler.gl/constants';
 
 import {
@@ -139,37 +145,11 @@ const DEFAULT_COLUMN_MODE = COLUMN_MODE_POINTS;
 const brushingExtension = new BrushingExtension();
 const arrowCPUFilterExtension = new FilterArrowExtension();
 
-export function getPositionFromHexValue(token) {
-  const pos = h3ToGeo(token);
-
-  if (Array.isArray(pos) && pos.every(Number.isFinite)) {
-    return [pos[1], pos[0]];
-  }
-  return null;
-}
-
-function maybeHexToGeo(
-  dc: DataContainerInterface,
-  d: {index: number},
-  lat: LayerColumn,
-  lng: LayerColumn
-) {
-  // lat or lng column could be hex column
-  // we assume string value is hex and try to convert it to geo lat lng
-  const latVal = dc.valueAt(d.index, lat.fieldIdx);
-  const lngVal = dc.valueAt(d.index, lng.fieldIdx);
-
-  return typeof latVal === 'string'
-    ? getPositionFromHexValue(latVal)
-    : typeof lngVal === 'string'
-    ? getPositionFromHexValue(lngVal)
-    : null;
-}
-
-function isOtherFieldString(columns, allFields, key) {
+function isH3Field(columns, allFields, key) {
   const field = allFields[columns[key].fieldIdx];
-  return field && field.type === 'string';
+  return field?.type === ALL_FIELD_TYPES.h3;
 }
+
 export const arcPosAccessor =
   ({lat0, lng0, lat1, lng1, lat, lng, geoarrow0, geoarrow1}: ArcLayerColumnsConfig, columnMode) =>
   (dc: DataContainerInterface) => {
@@ -287,12 +267,12 @@ export default class ArcLayer extends Layer {
     // if one of the lat or lng column is string type, we allow it
     // will try to pass it as hex
     return {
-      lat0: (column, columns, allFields) => isOtherFieldString(columns, allFields, 'lng0'),
-      lng0: (column, columns, allFields) => isOtherFieldString(columns, allFields, 'lat0'),
-      lat1: (column, columns, allFields) => isOtherFieldString(columns, allFields, 'lng1'),
-      lng1: (column, columns, allFields) => isOtherFieldString(columns, allFields, 'lat1'),
-      lat: (column, columns, allFields) => isOtherFieldString(columns, allFields, 'lng'),
-      lng: (column, columns, allFields) => isOtherFieldString(columns, allFields, 'lat')
+      lat0: (column, columns, allFields) => isH3Field(columns, allFields, 'lng0'),
+      lng0: (column, columns, allFields) => isH3Field(columns, allFields, 'lat0'),
+      lat1: (column, columns, allFields) => isH3Field(columns, allFields, 'lng1'),
+      lng1: (column, columns, allFields) => isH3Field(columns, allFields, 'lat1'),
+      lat: (column, columns, allFields) => isH3Field(columns, allFields, 'lng'),
+      lng: (column, columns, allFields) => isH3Field(columns, allFields, 'lat')
     };
   }
 
@@ -611,5 +591,15 @@ export default class ArcLayer extends Layer {
       return dataContainer.row(index);
     }
     return null;
+  }
+
+  getLegendVisualChannels() {
+    let channels: {[key: string]: VisualChannel} = this.visualChannels;
+    if (channels.sourceColor?.field && this.config[channels.sourceColor.field]) {
+      // Remove targetColor to avoid duplicate legend
+      channels = {...channels};
+      delete channels.targetColor;
+    }
+    return channels;
   }
 }

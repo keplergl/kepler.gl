@@ -23,6 +23,9 @@ import {
   EffectPropsPartial,
   SyncTimelineMode
 } from '@kepler.gl/types';
+import {createAction} from '@reduxjs/toolkit';
+
+import {KeplerTable} from '@kepler.gl/table';
 // TODO - import LoaderObject type from @loaders.gl/core when supported
 // TODO - import LoadOptions type from @loaders.gl/core when supported
 
@@ -155,6 +158,7 @@ export type LayerVisualChannelConfigChangeUpdaterAction = {
   oldLayer: Layer;
   newConfig: Partial<LayerBaseConfig>;
   channel: string;
+  newVisConfig?: Partial<LayerVisConfig>;
 };
 /**
  * Update layer visual channel
@@ -168,7 +172,8 @@ export type LayerVisualChannelConfigChangeUpdaterAction = {
 export function layerVisualChannelConfigChange(
   oldLayer: Layer,
   newConfig: Partial<LayerBaseConfig>,
-  channel: string
+  channel: string,
+  newVisConfig?: Partial<LayerVisConfig>
 ): Merge<
   LayerVisualChannelConfigChangeUpdaterAction,
   {type: typeof ActionTypes.LAYER_VISUAL_CHANNEL_CHANGE}
@@ -177,7 +182,8 @@ export function layerVisualChannelConfigChange(
     type: ActionTypes.LAYER_VISUAL_CHANNEL_CHANGE,
     oldLayer,
     newConfig,
-    channel
+    channel,
+    newVisConfig
   };
 }
 export type LayerVisConfigChangeUpdaterAction = {
@@ -767,10 +773,8 @@ export type SetColumnDisplayFormatUpdaterAction = {
  * @public
  */
 export function setColumnDisplayFormat(
-  dataId: string,
-  formats: {
-    [key: string]: string;
-  }
+  dataId: SetColumnDisplayFormatUpdaterAction['dataId'],
+  formats: SetColumnDisplayFormatUpdaterAction['formats']
 ): Merge<
   SetColumnDisplayFormatUpdaterAction,
   {type: typeof ActionTypes.SET_COLUMN_DISPLAY_FORMAT}
@@ -1592,6 +1596,21 @@ export function setTimeFilterSyncTimelineMode({
     mode
   };
 }
+
+export type CreateNewDatasetSuccessPayload = {
+  results: (PromiseFulfilledResult<KeplerTable<any>> | PromiseRejectedResult)[];
+  addToMapOptions: AddDataToMapPayload['options'];
+};
+
+/**
+ * Called when a new dataset is created successfully via async table methods
+ * @param payload
+ * @param payload.results - results of promises.allSettlted
+ * @returns
+ */
+export const createNewDatasetSuccess = createAction<CreateNewDatasetSuccessPayload>(
+  ActionTypes.CREATE_NEW_DATASET_SUCCESS
+);
 
 /**
  * This declaration is needed to group actions in docs

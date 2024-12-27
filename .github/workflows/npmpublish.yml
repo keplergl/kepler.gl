@@ -7,15 +7,22 @@ on:
 jobs:
   publish-npm:
     runs-on: ubuntu-latest
+
+    env:
+      NPM_AUTH_TOKEN: ${{secrets.npm_token}}
+
     steps:
-      - uses: actions/checkout@v2.1.1
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 18
-          registry-url: https://registry.npmjs.org/
-      - run: npm install -g yarn
+      - uses: actions/checkout@v4
+
+      # use Volta to manage yarn/node versions
+      - uses: volta-cli/action@v4
+
+      - run: yarn install
       - run: yarn bootstrap
       - run: npm i -g npm@8.19.2
-      - run: npm --version && npm publish --workspaces --access public
-        env:
-          NODE_AUTH_TOKEN: ${{secrets.npm_token}}
+
+      - name: Login to NPM
+        run: npm config set "//registry.npmjs.org/:_authToken=${NPM_AUTH_TOKEN}"
+
+      - name: Publish
+        run: npm publish --workspaces --access public

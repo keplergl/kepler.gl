@@ -2,39 +2,40 @@
 
 ### Table of Contents
 
--   [visStateUpdaters][1]
-    -   [addFilterUpdater][3]
-    -   [addLayerUpdater][5]
-    -   [applyCPUFilterUpdater][7]
-    -   [enlargeFilterUpdater][9]
-    -   [INITIAL_VIS_STATE][11]
-    -   [interactionConfigChangeUpdater][13]
-    -   [layerClickUpdater][15]
-    -   [layerHoverUpdater][17]
-    -   [layerTypeChangeUpdater][19]
-    -   [layerVisConfigChangeUpdater][21]
-    -   [layerVisualChannelChangeUpdater][23]
-    -   [loadFilesErrUpdater][25]
-    -   [loadFilesUpdater][27]
-    -   [mapClickUpdater][29]
-    -   [receiveMapConfigUpdater][31]
-    -   [removeDatasetUpdater][33]
-    -   [removeFilterUpdater][35]
-    -   [removeLayerUpdater][37]
-    -   [reorderLayerUpdater][39]
-    -   [resetMapConfigUpdater][41]
-    -   [setFilterPlotUpdater][43]
-    -   [setFilterUpdater][45]
-    -   [setMapInfoUpdater][47]
-    -   [showDatasetTableUpdater][49]
-    -   [toggleFilterAnimationUpdater][51]
-    -   [toggleLayerForMapUpdater][53]
-    -   [toggleSplitMapUpdater][55]
-    -   [updateAnimationTimeUpdater][57]
-    -   [updateFilterAnimationSpeedUpdater][59]
-    -   [updateLayerAnimationSpeedUpdater][61]
-    -   [updateLayerBlendingUpdater][63]
-    -   [updateVisDataUpdater][65]
+- [visStateUpdaters](#visstateupdaters)
+  - [addFilterUpdater](#addfilterupdater)
+  - [addLayerUpdater](#addlayerupdater)
+  - [applyCPUFilterUpdater](#applycpufilterupdater)
+  - [enlargeFilterUpdater](#enlargefilterupdater)
+  - [INITIAL\_VIS\_STATE](#initial_vis_state)
+    - [Properties](#properties)
+  - [interactionConfigChangeUpdater](#interactionconfigchangeupdater)
+  - [layerClickUpdater](#layerclickupdater)
+  - [layerHoverUpdater](#layerhoverupdater)
+  - [layerTypeChangeUpdater](#layertypechangeupdater)
+  - [layerVisConfigChangeUpdater](#layervisconfigchangeupdater)
+  - [layerVisualChannelChangeUpdater](#layervisualchannelchangeupdater)
+  - [loadFilesErrUpdater](#loadfileserrupdater)
+  - [loadFilesUpdater](#loadfilesupdater)
+  - [mapClickUpdater](#mapclickupdater)
+  - [receiveMapConfigUpdater](#receivemapconfigupdater)
+  - [removeDatasetUpdater](#removedatasetupdater)
+  - [removeFilterUpdater](#removefilterupdater)
+  - [removeLayerUpdater](#removelayerupdater)
+  - [reorderLayerUpdater](#reorderlayerupdater)
+  - [resetMapConfigUpdater](#resetmapconfigupdater)
+  - [setFilterPlotUpdater](#setfilterplotupdater)
+  - [setFilterUpdater](#setfilterupdater)
+  - [setMapInfoUpdater](#setmapinfoupdater)
+  - [showDatasetTableUpdater](#showdatasettableupdater)
+  - [toggleFilterAnimationUpdater](#togglefilteranimationupdater)
+  - [toggleLayerForMapUpdater](#togglelayerformapupdater)
+  - [toggleSplitMapUpdater](#togglesplitmapupdater)
+  - [updateAnimationTimeUpdater](#updateanimationtimeupdater)
+  - [updateFilterAnimationSpeedUpdater](#updatefilteranimationspeedupdater)
+  - [updateLayerAnimationSpeedUpdater](#updatelayeranimationspeedupdater)
+  - [updateLayerBlendingUpdater](#updatelayerblendingupdater)
+  - [updateVisDataUpdater](#updatevisdataupdater)
 
 ## visStateUpdaters
 
@@ -44,7 +45,7 @@ Read more about [Using updaters][67]
 **Examples**
 
 ```javascript
-import keplerGlReducer, {visStateUpdaters} from 'kepler.gl/reducers';
+import keplerGlReducer, {visStateUpdaters} from '@kepler.gl/reducers';
 // Root Reducer
 const reducers = combineReducers({
  keplerGl: keplerGlReducer,
@@ -111,7 +112,7 @@ When select dataset for export, apply cpu filter to selected dataset
 **Parameters**
 
 -   `state` **[Object][69]** `visState`
--   `action` **[Object][69]** 
+-   `action` **[Object][69]**
     -   `action.dataId` **[string][70]** dataset id
 
 Returns **[Object][69]** nextState
@@ -138,24 +139,24 @@ Type: [Object][69]
 
 #### Properties
 
--   `layers` **[Array][75]** 
--   `layerData` **[Array][75]** 
--   `layerToBeMerged` **[Array][75]** 
--   `layerOrder` **[Array][75]** 
--   `filters` **[Array][75]** 
--   `filterToBeMerged` **[Array][75]** 
--   `datasets` **[Array][75]** 
--   `editingDataset` **[string][70]** 
--   `interactionConfig` **[Object][69]** 
--   `interactionToBeMerged` **[Object][69]** 
--   `layerBlending` **[string][70]** 
--   `hoverInfo` **[Object][69]** 
--   `clicked` **[Object][69]** 
--   `mousePos` **[Object][69]** 
+-   `layers` **[Array][75]**
+-   `layerData` **[Array][75]**
+-   `layerToBeMerged` **[Array][75]**
+-   `layerOrder` **[Array][75]**
+-   `filters` **[Array][75]**
+-   `filterToBeMerged` **[Array][75]**
+-   `datasets` **[Array][75]**
+-   `editingDataset` **[string][70]**
+-   `interactionConfig` **[Object][69]**
+-   `interactionToBeMerged` **[Object][69]**
+-   `layerBlending` **[string][70]**
+-   `hoverInfo` **[Object][69]**
+-   `clicked` **[Object][69]**
+-   `mousePos` **[Object][69]**
 -   `splitMaps` **[Array][75]** a list of objects of layer availabilities and visibilities for each map
--   `layerClasses` **[Object][69]** 
--   `animationConfig` **[Object][69]** 
--   `editor` **[Object][69]** 
+-   `layerClasses` **[Object][69]**
+-   `animationConfig` **[Object][69]**
+-   `editor` **[Object][69]**
 
 ### interactionConfigChangeUpdater
 
@@ -255,7 +256,7 @@ Trigger loading file error
 
 -   `state` **[Object][69]** `visState`
 -   `action` **[Object][69]** action
-    -   `action.error` **any** 
+    -   `action.error` **any**
 
 Returns **[Object][69]** nextState
 
@@ -381,7 +382,7 @@ Set the property of a filter plot
 
 -   `state` **[Object][69]** `visState`
 -   `action` **[Object][69]** action
-    -   `action.idx` **[Number][74]** 
+    -   `action.idx` **[Number][74]**
     -   `action.newProp` **[Object][69]** key value mapping of new prop `{yAxis: 'histogram'}`
 
 Returns **[Object][69]** nextState
@@ -453,8 +454,8 @@ Toggle visibility of a layer in a split map
 
 **Parameters**
 
--   `state` **[Object][69]** 
--   `action` **[Object][69]** 
+-   `state` **[Object][69]**
+-   `action` **[Object][69]**
     -   `action.mapIndex` **[Number][74]** index of the split map
     -   `action.layerId` **[string][70]** id of the layer
 

@@ -291,24 +291,27 @@ export function testUpdateLayer(t, {layerConfig, shouldUpdate}) {
     value: [3, 8.33]
   };
 
-  const stateWithLayer = keplerGlReducerCore(
-    initialState,
-    addDataToMap({
-      datasets: {
-        info: {id: dataId},
-        data: processCsvData(testLayerData)
-      },
+  const addDataToMapPayload = {
+    datasets: {
+      info: {id: dataId},
+      data: processCsvData(testLayerData)
+    },
+    config: {
+      version: 'v1',
       config: {
-        version: 'v1',
-        config: {
-          visState: {
-            layers: [layerConfig],
-            filters: [filter0, filter1]
-          }
+        visState: {
+          layers: [layerConfig],
+          filters: [filter0, filter1]
         }
       }
-    })
-  );
+    }
+  };
+  const stateWithLayer = applyActions(keplerGlReducerCore, initialState, [
+    {
+      action: addDataToMap,
+      payload: [addDataToMapPayload]
+    }
+  ]);
 
   const layer = stateWithLayer.visState.layers[0];
   t.ok(layer, 'should create layer');

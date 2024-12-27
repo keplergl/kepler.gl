@@ -41,10 +41,10 @@ import {
   AnimationConfig
 } from '@kepler.gl/types';
 
+import {generateHashId, toArray, notNullorUndefined, getCentroid} from '@kepler.gl/common-utils';
 import {DataContainerInterface} from './data-container-interface';
-import {generateHashId, set, toArray} from './utils';
-import {notNullorUndefined, timeToUnixMilli, unique} from './data-utils';
-import {getCentroid} from './h3-utils';
+import {set} from './utils';
+import {timeToUnixMilli, unique} from './data-utils';
 import {updateTimeFilterPlotType, updateRangeFilterPlotType} from './plot';
 import {KeplerTableModel} from './types';
 
@@ -339,6 +339,7 @@ export function getFilterProps(
       };
 
     case ALL_FIELD_TYPES.string:
+    case ALL_FIELD_TYPES.h3:
     case ALL_FIELD_TYPES.date:
       // @ts-expect-error
       return {
@@ -995,6 +996,7 @@ export function mergeFilterDomainStep(
 
   switch (filterProps.fieldType) {
     case ALL_FIELD_TYPES.string:
+    case ALL_FIELD_TYPES.h3:
     case ALL_FIELD_TYPES.date:
       return {
         ...newFilter,
@@ -1103,7 +1105,7 @@ export function validateFiltersUpdateDatasets<
   // TODO Better Typings here
   const validated: any[] = [];
   const failed: any[] = [];
-  const {datasets} = state;
+  const {datasets, layers} = state;
   let updatedDatasets = datasets;
 
   // merge filters
@@ -1119,15 +1121,15 @@ export function validateFiltersUpdateDatasets<
         applyToDatasets: string[];
         augmentedDatasets: {[datasetId: string]: any};
       }>(
-        (acc, datasetId, idx) => {
+        (acc, datasetId) => {
           const dataset = updatedDatasets[datasetId];
-          const layers = state.layers.filter(l => l.config.dataId === dataset.id);
+          const datasetLayers = layers.filter(l => l.config.dataId === dataset.id);
           const toValidate = acc.validatedFilter || filterToValidate;
 
           const {filter: updatedFilter, dataset: updatedDataset} = validateFilterWithData(
             acc.augmentedDatasets[datasetId] || dataset,
             toValidate,
-            layers
+            datasetLayers
           );
 
           if (updatedFilter) {
@@ -1154,7 +1156,20 @@ export function validateFiltersUpdateDatasets<
       );
 
       if (validatedFilter && isEqual(datasetIds, applyToDatasets)) {
-        validatedFilter.value = adjustValueToFilterDomain(filterToValidate.value, validatedFilter);
+        let domain = validatedFilter.domain;
+        if ((validatedFilter as TimeRangeFilter).syncedWithLayerTimeline) {
+          const animatableLayers = getAnimatableVisibleLayers(layers);
+          domain = mergeTimeDomains([
+            ...animatableLayers.map(l => l.config.animation.domain || [0, 0]),
+            validatedFilter.domain
+          ]);
+        }
+
+        validatedFilter.value = adjustValueToFilterDomain(filterToValidate.value, {
+          ...validatedFilter,
+          domain
+        });
+
         validated.push(updateFilterPlot(datasets, validatedFilter));
         updatedDatasets = {
           ...updatedDatasets,

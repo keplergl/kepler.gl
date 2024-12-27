@@ -6,12 +6,8 @@ import {Analyzer, DATA_TYPES} from 'type-analyzer';
 import {Field} from '@kepler.gl/types';
 
 import {parseGeoJsonRawFeature, getGeojsonFeatureTypes} from '../geojson-layer/geojson-utils';
-import {
-  DataContainerInterface,
-  getSampleContainerData,
-  notNullorUndefined,
-  timeToUnixMilli
-} from '@kepler.gl/utils';
+import {DataContainerInterface, getSampleContainerData, timeToUnixMilli} from '@kepler.gl/utils';
+import {notNullorUndefined} from '@kepler.gl/common-utils';
 import {Feature} from '@turf/helpers';
 import {GeoJsonProperties, Geometry} from 'geojson';
 

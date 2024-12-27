@@ -140,7 +140,7 @@ test('MapContainerFactory - _renderDeckOverlay', t => {
     getTestCases: assert => [
       {
         name: 'hover',
-        events: [{type: 'mousemove', x: 200, y: 200}, {wait: 50}],
+        events: [{type: 'mousemove', x: 200, y: 200}, {wait: 100}],
         onBeforeEvents,
         // eslint-disable-next-line max-statements
         onAfterEvents: () => {

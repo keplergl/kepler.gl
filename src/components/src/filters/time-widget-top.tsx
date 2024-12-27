@@ -122,6 +122,7 @@ function TimeWidgetTopFactory(FieldSelector: ReturnType<typeof FieldSelectorFact
               <FieldSelector
                 fields={yAxisFields}
                 placement="top"
+                id="selected-time-widget-field"
                 value={filter.yAxis ? filter.yAxis.name : null}
                 onSelect={_setFilterPlotYAxis}
                 placeholder="placeholder.yAxis"

@@ -10,7 +10,7 @@ import Layer, {
   VisualChannelDescription,
   VisualChannels
 } from './base-layer';
-import {hexToRgb, aggregate} from '@kepler.gl/utils';
+import {hexToRgb, aggregate, DataContainerInterface} from '@kepler.gl/utils';
 import {
   HIGHLIGH_COLOR_3D,
   CHANNEL_SCALES,
@@ -18,7 +18,7 @@ import {
   DEFAULT_AGGREGATION,
   ColorRange
 } from '@kepler.gl/constants';
-import {Merge, LayerColumn} from '@kepler.gl/types';
+import {Field, LayerColumn, Merge} from '@kepler.gl/types';
 import {KeplerTable, Datasets} from '@kepler.gl/table';
 
 type AggregationLayerColumns = {
@@ -114,7 +114,8 @@ export default class AggregationLayer extends Layer {
       'coverage',
       'elevationPercentile',
       'elevationScale',
-      'enableElevationZoomFactor'
+      'enableElevationZoomFactor',
+      'fixedHeight'
     ];
   }
 
@@ -170,9 +171,22 @@ export default class AggregationLayer extends Layer {
     };
   }
 
-  getHoverData(object) {
+  getHoverData(object: any, dataContainer: DataContainerInterface, fields: Field[]): any {
+    if (!object) return object;
+    const measure = this.config.visConfig.colorAggregation;
+    // aggregate all fields for the hovered group
+    const aggregatedData = fields.reduce((accu, field) => {
+      accu[field.name] = {
+        measure,
+        value: aggregate(object.points, measure, (d: {index: number}) => {
+          return dataContainer.valueAt(d.index, field.fieldIdx);
+        })
+      };
+      return accu;
+    }, {});
+
     // return aggregated object
-    return object;
+    return {aggregatedData, ...object};
   }
 
   getFilteredItemCount() {
@@ -375,6 +389,8 @@ export default class AggregationLayer extends Layer {
       elevationScale: visConfig.elevationScale * eleZoomFactor,
       elevationScaleType: this.config.sizeScale,
       elevationRange: visConfig.sizeRange,
+      elevationFixed: visConfig.fixedHeight,
+
       elevationLowerPercentile: visConfig.elevationPercentile[0],
       elevationUpperPercentile: visConfig.elevationPercentile[1],
 

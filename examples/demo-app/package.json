@@ -2,6 +2,7 @@
   "scripts": {
     "start": "node esbuild.config.mjs --start",
     "start:local": "NODE_ENV=local node esbuild.config.mjs --start",
+    "start:local-ai": "NODE_ENV=local node esbuild.config.mjs --start --env.ai",
     "start:local-deck": "NODE_ENV=local node esbuild.config.mjs --start --env.deck",
     "start:local-deck-src": "NODE_ENV=local node esbuild.config.mjs --start --env.deck_src",
     "start:local-loaders-src": "NODE_ENV=local node esbuild.config.mjs --start --env.loaders_src",
@@ -43,6 +44,7 @@
     "react-virtualized": "^9.21.0",
     "redux": "^4.2.1",
     "redux-actions": "^2.2.1",
+    "redux-logger": "^3.0.6",
     "redux-thunk": "^1.0.0",
     "styled-components": "^4.1.3"
   },

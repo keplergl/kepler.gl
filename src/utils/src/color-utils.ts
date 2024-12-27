@@ -1,9 +1,18 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import {
+  CategoricalPalette,
+  ColorPalette,
+  ColorRange,
+  colorPaletteToColorRange
+} from '@kepler.gl/constants';
+import {ColorRangeConfig, HexColor, RGBColor} from '@kepler.gl/types';
 import {rgb as d3Rgb} from 'd3-color';
-import {ColorRange} from '@kepler.gl/constants';
-import {HexColor, RGBColor} from '@kepler.gl/types';
+import {interpolate} from 'd3-interpolate';
+import {arrayInsert, arrayMove} from './utils';
+import Console from 'global/console';
+import {KEPLER_COLOR_PALETTES, PALETTE_TYPES} from '@kepler.gl/constants';
 
 /**
  * get r g b from hex code
@@ -47,33 +56,10 @@ export function rgbToHex([r, g, b]: RGBColor): HexColor {
 }
 
 /**
- * Get color group name by parsing name, discard step in the name
- * e.g. Global Warming 6 -> Global Warming
- *
- * @param {Object} colorRange
- * @return {string | null}
+ * Whether color range has custom color map
  */
-export function getColorGroupByName(colorRange: ColorRange): string | null {
-  if (!colorRange || typeof colorRange.name !== 'string') {
-    return null;
-  }
-
-  return colorRange.name.replace(/\b[^a-zA-Z]+$/, '');
-}
-
-/**
- * Get a reversed colorRange
- * @param reversed
- * @param colorRange
- */
-export function reverseColorRange(reversed: boolean, colorRange: ColorRange): ColorRange | null {
-  if (!colorRange) return null;
-  // if (colorRange.reversed) return colorRange;
-  return {
-    ...colorRange,
-    reversed,
-    colors: colorRange.colors.slice().reverse()
-  };
+export function hasColorMap(colorRange: ColorRange): boolean {
+  return Array.isArray(colorRange.colorMap) && Boolean(colorRange.colorMap.length);
 }
 
 /**
@@ -82,7 +68,7 @@ export function reverseColorRange(reversed: boolean, colorRange: ColorRange): Co
  * @param colors
  * @return
  */
-export function createLinearGradient(direction: string, colors: RGBColor[]) {
+export function createLinearGradient(direction: string, colors: RGBColor[]): string {
   const step = parseFloat((100.0 / colors.length).toFixed(2));
   const bands = colors.map((rgb, index) => {
     return `rgba(${rgb.join(',')}, 1) ${step * index}%, rgba(${rgb.join(',')}, 1) ${
@@ -129,4 +115,311 @@ export function isRgbColor(color: unknown): boolean {
  */
 export function normalizeColor(color: number[]): number[] {
   return color.map(component => component / 255.0);
+}
+
+/**
+ * Convert color to Hex
+ */
+export function colorMaybeToHex(color: unknown): HexColor {
+  const rgbColor = colorMaybeToRGB(color);
+  if (rgbColor) return rgbToHex(rgbColor);
+  return '#000000';
+}
+
+/**
+ * Convert color to Hex
+ */
+
+export function interpolateHex(hex1: HexColor, hex2: HexColor): HexColor {
+  return d3Rgb(interpolate(hex1, hex2)(0.5)).hex().toUpperCase();
+}
+
+export function addNewQuantativeColorBreakAtIndex(colorMap, index, newColors) {
+  if (!Array.isArray(colorMap) || !colorMap.length) {
+    return colorMap;
+  }
+
+  if (colorMap.length < 2) {
+    // less then 2, add 1 at end
+    // however shouldn't allow delete when there are 2
+    return newColors.map((c, i) => (i === 0 ? colorMap[i] : [null, c]));
+  }
+
+  // breaks should be 1 less than colors
+  const breaks = colorMap.map(cm => cm[0]).slice(0, colorMap.length - 1);
+
+  // insert new break
+  const newValue =
+    index >= breaks.length - 1
+      ? breaks[breaks.length - 1] +
+        (breaks.length > 1 ? breaks[breaks.length - 1] - breaks[breaks.length - 2] : 0)
+      : (breaks[index] + breaks[index + 1]) / 2;
+
+  const newBreaks = arrayInsert(breaks, index + 1, newValue);
+
+  // asign breaks to color
+  return newColors.map((c, i) =>
+    i === newColors.length - 1 ? [null, c] : [newBreaks[i] === undefined ? null : newBreaks[i], c]
+  );
+}
+
+/**
+ * Add a new color to custom palette
+ */
+export function addCustomPaletteColor(customPalette: ColorRange, index: number): ColorRange {
+  const {colors, colorMap} = customPalette;
+  const update: Partial<ColorRange> = {};
+
+  const newColor =
+    index === colors.length - 1 ? colors[index] : interpolateHex(colors[index], colors[index + 1]);
+
+  update.colors = arrayInsert(colors, index + 1, newColor);
+
+  // add color to colorMap
+  if (colorMap) {
+    update.colorMap = addNewQuantativeColorBreakAtIndex(colorMap, index, update.colors);
+  }
+
+  return {
+    ...customPalette,
+    ...update
+  };
+}
+
+function replaceColorsInColorRange(colorRange, newColors) {
+  const oldColors = colorRange.colors;
+  const updated = {
+    ...colorRange,
+    colors: newColors
+  };
+
+  // update color map
+  // keep value, replace color
+  if (Array.isArray(updated.colorMap)) {
+    updated.colorMap = updated.colorMap.map((cm, i) => [cm[0], newColors[i]]);
+  }
+  // update colorlegends
+  // keep value, replace color
+  if (updated.colorLegends) {
+    updated.colorLegends = Object.keys(updated.colorLegends).reduce((accu, key) => {
+      const colorIdx = oldColors.findIndex(c => c === key);
+      const newColor = newColors[colorIdx];
+
+      return newColor
+        ? {
+            ...accu,
+            [newColor]: updated.colorLegends[key]
+          }
+        : accu;
+    }, {});
+  }
+
+  return updated;
+}
+
+/**
+ * Sort custom palette
+ */
+export function sortCustomPaletteColor(
+  customPalette: ColorRange,
+  oldIndex: number,
+  newIndex: number
+): ColorRange {
+  const {colors} = customPalette;
+
+  const newColors = arrayMove(colors, oldIndex, newIndex);
+  const update = replaceColorsInColorRange(customPalette, newColors);
+
+  // @ts-ignore
+  return {
+    ...customPalette,
+    ...update
+  };
+}
+
+/**
+ * remove a color in custom palette at index
+ */
+export function removeCustomPaletteColor(customPalette: ColorRange, index: number): ColorRange {
+  const {colors, colorMap, colorLegends} = customPalette;
+  const oldValue = colors[index];
+  const update: Partial<ColorRange> = {};
+  update.colors = [...colors];
+
+  if (update.colors.length > 1) {
+    update.colors.splice(index, 1);
+  }
+  // update color map
+  if (Array.isArray(colorMap)) {
+    // find colorMap index
+    const colorMapIndex = colorMap.findIndex(cm => cm[1] === oldValue);
+    if (colorMapIndex >= 0) {
+      update.colorMap = [...colorMap];
+      update.colorMap.splice(colorMapIndex, 1);
+    }
+  }
+  // update color legend
+  if (colorLegends?.[oldValue]) {
+    update.colorLegends = {...colorLegends};
+    delete update.colorLegends[oldValue];
+  }
+
+  return {
+    ...customPalette,
+    ...update
+  };
+}
+
+/**
+ * Update a color in custom palette at index
+ */
+export function updateCustomPaletteColor(
+  customPalette: ColorRange,
+  index: number,
+  newValue: HexColor
+): ColorRange {
+  const {colors} = customPalette;
+  const hex = newValue.toUpperCase();
+  const newColors = [...colors];
+  newColors[index] = hex;
+
+  const update = replaceColorsInColorRange(customPalette, newColors);
+
+  // @ts-ignore
+  return {
+    ...customPalette,
+    ...update
+  };
+}
+
+/**
+ * Get a reversed colorRange
+ */
+export function reverseColorRange(reversed: boolean, colorRange: ColorRange): ColorRange {
+  const newColors = colorRange?.colors.slice().reverse();
+  const updated = replaceColorsInColorRange(colorRange, newColors);
+  updated.reversed = reversed;
+
+  return updated;
+}
+
+/**
+ * Whether palette matches current ColorBlindSafe config
+ */
+export function paletteIsColorBlindSafe(palette: ColorPalette, colorBlindSafe: boolean) {
+  return !colorBlindSafe || (colorBlindSafe && palette.colorBlindSafe);
+}
+
+/**
+ * Whether palette matches current steps config
+ */
+export function isQuaPalette(palette: ColorPalette): palette is CategoricalPalette {
+  return palette.type === PALETTE_TYPES.QUA;
+}
+
+/**
+ * Whether palette matches current steps config
+ */
+export function paletteIsSteps(palette: ColorPalette, steps: number): boolean {
+  return !isQuaPalette(palette) || palette.maxStep >= steps;
+}
+
+/**
+ * Whether palette matches current type config
+ */
+export function paletteIsType(palette: ColorPalette, type: string): boolean {
+  return type === 'all' || type === palette.type;
+}
+/**
+ * Find best match palette based on config, update color range by it
+ */
+export function updateColorRangeByMatchingPalette(
+  currentColorRange: ColorRange,
+  config: ColorRangeConfig
+): ColorRange {
+  const {steps, colorBlindSafe, type} = config;
+
+  const matchingPalette = KEPLER_COLOR_PALETTES.filter(
+    palette =>
+      // palette match type
+      paletteIsType(palette, type) &&
+      // palette has same step
+      paletteIsSteps(palette, steps) &&
+      // palette is colorBlindSafe
+      paletteIsColorBlindSafe(palette, colorBlindSafe)
+  );
+
+  const bestMatch = matchingPalette.length
+    ? matchingPalette.find(p => p.name === currentColorRange.name) || matchingPalette[0]
+    : null;
+
+  if (bestMatch) {
+    return updateColorRangeBySelectedPalette(currentColorRange, bestMatch, config);
+  }
+  // we do nothing
+  Console.warn(
+    `we cant find any preset palette matches requirments: steps=${steps} && colorBlindSafe=${colorBlindSafe}`
+  );
+
+  return currentColorRange;
+}
+
+/**
+ * Update color range after selecting a palette from color range selectoer
+ * Copy over colorMap and colorLegends
+ */
+export function updateColorRangeBySelectedPalette(
+  oldColorRange: ColorRange,
+  colorPalette: ColorPalette,
+  colorConfig: {
+    reversed: boolean;
+    steps: number;
+  }
+): ColorRange {
+  // const {reversed} = colorConfig;
+
+  const colorRange = {
+    ...colorPaletteToColorRange(colorPalette, colorConfig),
+    // ...(reversed ? {reversed} : {}),
+    ...(oldColorRange.colorMap ? {colorMap: oldColorRange.colorMap} : {}),
+    ...(oldColorRange.colorLegends ? {colorLegends: oldColorRange.colorLegends} : {})
+  };
+
+  return replaceColorsInColorRange(colorRange, colorRange.colors);
+}
+
+const UberNameRegex = new RegExp(/^([A-Za-z ])+/g);
+const ColorBrewerRegex = new RegExp(/^ColorBrewer ([A-Za-z1-9])+/g);
+
+/**
+ * convert saved colorRange to colorPalette objevt type/name/category/isColorBlind
+ */
+export function colorRangeBackwardCompatibility(colorRange: ColorRange): ColorRange {
+  if (!colorRange || colorRange.type === 'custom' || colorRange.colorMap) {
+    // don't do anything to custom color palette, or palette with custom breaks
+    return colorRange;
+  }
+  let trimName;
+  if (colorRange.category === 'Uber') {
+    const matchName = (colorRange.name ?? '').match(UberNameRegex);
+    trimName = matchName ? matchName[0].trim() : null;
+    // match Uber Viz Qualitative 1.4 -> Uber Viz Qualitative
+  } else if (colorRange.category === 'ColorBrewer') {
+    const matchName = (colorRange.name ?? '').match(ColorBrewerRegex);
+    trimName = matchName ? matchName[0].replace('ColorBrewer ', '').trim() : null;
+  }
+
+  if (trimName) {
+    const matchingPalette = KEPLER_COLOR_PALETTES.find(p => p.name === trimName);
+    if (matchingPalette) {
+      return {
+        ...colorRange,
+        name: trimName,
+        type: matchingPalette?.type,
+        category: matchingPalette.category
+      };
+    }
+  }
+
+  return colorRange;
 }

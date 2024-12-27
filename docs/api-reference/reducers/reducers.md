@@ -2,14 +2,14 @@
 
 ### Table of Contents
 
--   [keplerGlReducer][1]
-    -   [keplerGlReducer.initialState][3]
-    -   [keplerGlReducer.plugin][6]
--   [mapStateLens][9]
--   [mapStyleLens][11]
--   [providerStateLens][13]
--   [uiStateLens][15]
--   [visStateLens][17]
+- [keplerGlReducer](#keplerglreducer)
+  - [keplerGlReducer.initialState](#keplerglreducerinitialstate)
+  - [keplerGlReducer.plugin](#keplerglreducerplugin)
+- [mapStateLens](#mapstatelens)
+- [mapStyleLens](#mapstylelens)
+- [providerStateLens](#providerstatelens)
+- [uiStateLens](#uistatelens)
+- [visStateLens](#visstatelens)
 
 ## keplerGlReducer
 
@@ -19,7 +19,7 @@ to mount it at another address e.g. `foo` you will need to specify it when you m
 **Examples**
 
 ```javascript
-import keplerGlReducer from 'kepler.gl/reducers';
+import keplerGlReducer from '@kepler.gl/reducers';
 import {createStore, combineReducers, applyMiddleware, compose} from 'redux';
 import {taskMiddleware} from 'react-palm/tasks';
 
@@ -109,7 +109,7 @@ Connect subreducer `mapState`, used with `injectComponents`. Learn more at
 
 **Parameters**
 
--   `reduxState` **any** 
+-   `reduxState` **any**
 
 ## mapStyleLens
 
@@ -118,7 +118,7 @@ Connect subreducer `mapStyle`, used with `injectComponents`. Learn more at
 
 **Parameters**
 
--   `reduxState` **any** 
+-   `reduxState` **any**
 
 ## providerStateLens
 
@@ -127,7 +127,7 @@ Connect subreducer `providerState`, used with `injectComponents`. Learn more at
 
 **Parameters**
 
--   `reduxState` **any** 
+-   `reduxState` **any**
 
 ## uiStateLens
 
@@ -136,7 +136,7 @@ Connect subreducer `uiState`, used with `injectComponents`. Learn more at
 
 **Parameters**
 
--   `reduxState` **any** 
+-   `reduxState` **any**
 
 ## visStateLens
 
@@ -145,7 +145,7 @@ Connect subreducer `visState`, used with `injectComponents`. Learn more at
 
 **Parameters**
 
--   `reduxState` **any** 
+-   `reduxState` **any**
 
 [1]: #keplerglreducer
 

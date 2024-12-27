@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 import esbuild from 'esbuild';
 import {replace} from 'esbuild-plugin-replace';
 
@@ -33,27 +36,30 @@ const RESOLVE_LOCAL_ALIASES = {
   // Suppress useless warnings from react-date-picker's dep
   'tiny-warning': `${SRC_DIR}/utils/src/noop.ts`,
   // kepler.gl and loaders.gl need to use same apache-arrow
-  'apache-arrow': `${NODE_MODULES_DIR}/apache-arrow`
+  'apache-arrow': `${NODE_MODULES_DIR}/apache-arrow`,
+  // all react-ai-assist needs to be resolved from samenode_modules
+  'react-ai-assist': `${NODE_MODULES_DIR}/react-ai-assist`
 };
 
 const config = {
   platform: 'browser',
   format: 'iife',
   logLevel: 'info',
-  loader: {'.js': 'jsx'},
+  loader: {'.js': 'jsx', '.css': 'css'},
   entryPoints: ['src/main.js'],
   outfile: 'dist/bundle.js',
   bundle: true,
   define: {
     NODE_ENV: JSON.stringify(process.env.NODE_ENV || 'production'),
-    'process.env.MapboxAccessToken': JSON.stringify(process.env.MapboxAccessToken), // eslint-disable-line
-    'process.env.DropboxClientId': JSON.stringify(process.env.DropboxClientId), // eslint-disable-line
-    'process.env.MapboxExportToken': JSON.stringify(process.env.MapboxExportToken), // eslint-disable-line
-    'process.env.CartoClientId': JSON.stringify(process.env.CartoClientId), // eslint-disable-line
-    'process.env.FoursquareClientId': JSON.stringify(process.env.FoursquareClientId), // eslint-disable-line
-    'process.env.FoursquareDomain': JSON.stringify(process.env.FoursquareDomain), // eslint-disable-line
-    'process.env.FoursquareAPIURL': JSON.stringify(process.env.FoursquareAPIURL), // eslint-disable-line
-    'process.env.FoursquareUserMapsURL': JSON.stringify(process.env.FoursquareUserMapsURL) // eslint-disable-line
+    'process.env.MapboxAccessToken': JSON.stringify(process.env.MapboxAccessToken || ''),
+    'process.env.DropboxClientId': JSON.stringify(process.env.DropboxClientId || ''),
+    'process.env.MapboxExportToken': JSON.stringify(process.env.MapboxExportToken || ''),
+    'process.env.CartoClientId': JSON.stringify(process.env.CartoClientId || ''),
+    'process.env.FoursquareClientId': JSON.stringify(process.env.FoursquareClientId || ''),
+    'process.env.FoursquareDomain': JSON.stringify(process.env.FoursquareDomain || ''),
+    'process.env.FoursquareAPIURL': JSON.stringify(process.env.FoursquareAPIURL || ''),
+    'process.env.FoursquareUserMapsURL': JSON.stringify(process.env.FoursquareUserMapsURL || ''),
+    'process.env.OpenAIToken': JSON.stringify(process.env.OpenAIToken || '')
   },
   plugins: [
     // automatically injected kepler.gl package version into the bundle
@@ -70,6 +76,13 @@ function addAliases(externals, args) {
   // Combine flags
   const useLocalDeck = args.includes('--env.deck') || args.includes('--env.hubble_src');
   const useRepoDeck = args.includes('--env.deck_src');
+  const useLocalAiAssistant = args.includes('--env.ai');
+
+  // resolve ai-assistant from local dir
+  if (useLocalAiAssistant) {
+    resolveAlias['react-ai-assist'] = join(LIB_DIR, '../ai-assistant/src');
+    resolveAlias['@kepler.gl/ai-assistant'] = join(SRC_DIR, 'ai-assistant/src');
+  }
 
   // resolve deck.gl from local dir
   if (useLocalDeck || useRepoDeck) {

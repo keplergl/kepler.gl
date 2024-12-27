@@ -32,6 +32,29 @@ export default `hex_id,value
 
 export const dataId = 'h3-hex-id';
 
+export const expectedFields = [
+  {
+    analyzerType: 'H3',
+    displayName: 'hex_id',
+    fieldIdx: 0,
+    format: '',
+    id: 'hex_id',
+    name: 'hex_id',
+    type: 'h3',
+    valueAccessor: values => values[0]
+  },
+  {
+    analyzerType: 'INT',
+    displayName: 'value',
+    fieldIdx: 1,
+    format: '',
+    id: 'value',
+    name: 'value',
+    type: 'integer',
+    valueAccessor: values => values[1]
+  }
+];
+
 export const hexIdDataConfig = {
   dataId,
   config: {
@@ -76,7 +99,8 @@ export const hexIdDataConfig = {
                 sizeRange: [0, 500],
                 coverageRange: [0, 1],
                 elevationScale: 5,
-                enableElevationZoomFactor: true
+                enableElevationZoomFactor: true,
+                fixedHeight: false
               },
               textLabel: [
                 {
@@ -180,8 +204,8 @@ const mergedFields = [
     displayName: 'hex_id',
     format: '',
     fieldIdx: 0,
-    type: 'string',
-    analyzerType: 'STRING',
+    type: 'h3',
+    analyzerType: 'H3',
     valueAccessor: values => values[0]
   },
   {
@@ -260,7 +284,7 @@ mergedH3Layer.config = {
       name: 'Global Warming',
       type: 'sequential',
       category: 'Uber',
-      colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
+      colors: ['#4C0035', '#880030', '#B72F15', '#D6610A', '#EF9100', '#FFC300']
     },
     strokeOpacity: 0.8,
     thickness: 2,
@@ -269,7 +293,8 @@ mergedH3Layer.config = {
     coverageRange: [0, 1],
     enable3d: false,
     elevationScale: 5,
-    enableElevationZoomFactor: true
+    enableElevationZoomFactor: true,
+    fixedHeight: false
   },
   textLabel: [
     {

@@ -143,7 +143,7 @@ export const addDataToMapUpdater = (
     ...payload.options
   };
 
-  // check if progresive loading dataset by bataches, and update visState directly
+  // check if progressive loading dataset by batches, and update visState directly
   const isProgressiveLoading =
     Array.isArray(datasets) &&
     datasets[0]?.info.format === 'arrow' &&
@@ -189,6 +189,8 @@ export const addDataToMapUpdater = (
     ),
 
     if_(Boolean(info), pick_('visState')(apply_<VisState, any>(setMapInfoUpdater, {info}))),
+    // Note that fit bounds here won't be called in case datasets are created in Tasks.
+    // A separate Task to update bounds is created once the datasets are ready.
     with_(({visState}) =>
       pick_('mapState')(
         apply_(

@@ -159,12 +159,12 @@ export default {
     weightIntensity: 'Weight Intensity',
     zoomScale: 'Zoom Scale',
     heightRange: 'Height Range',
+    heightMultiplier: 'Height Multiplier',
     fixedHeight: 'Fixed height',
     fixedHeightDescription: 'Use height without modifications',
     allowHover: 'Allow Hover',
     showNeighborOnHover: 'Highlight Neighbors On Hover',
     showHighlightColor: 'Show highlight Color',
-    heightMultiplier: 'Height Multiplier',
     darkModeEnabled: 'Dark base map'
   },
   layerManager: {
@@ -191,7 +191,9 @@ export default {
   },
   layerConfiguration: {
     defaultDescription: 'Calculate {property} based on selected field',
-    howTo: 'How to'
+    howTo: 'How to',
+    showColorChart: 'Show Color Chart',
+    hideColorChart: 'Hide Color Chart'
   },
   filterManager: {
     addFilter: 'Add Filter',
@@ -503,7 +505,9 @@ ${'```'}
       back: 'Back',
       goToPage: 'Go to your Kepler.gl {displayName} page',
       storageMaps: 'Storage / Maps',
-      noSavedMaps: 'No saved maps yet'
+      noSavedMaps: 'No saved maps yet',
+      foursquareStorageMessage:
+        'Only maps saved with Kepler.gl > Save > Foursquare Storage option are shown here'
     }
   },
   header: {
@@ -565,10 +569,11 @@ ${'```'}
   },
   color: {
     customPalette: 'Custom Palette',
-    steps: 'steps',
-    type: 'type',
-    reversed: 'reversed',
-    opacity: 'Opacity',
+    steps: 'Steps',
+    type: 'Type',
+    colorBlindSafe: 'Colorblind Safe',
+    reversed: 'Reversed',
+    disableStepReason: `Can't change number of steps with custom color breaks, use custom palette to edit steps`,
     preset: 'Preset Colors',
     picker: 'Color Picker'
   },
@@ -615,5 +620,27 @@ ${'```'}
   'Bug Report': 'Bug Report',
   'User Guide': 'User Guide',
   Save: 'Save',
-  Share: 'Share'
+  Share: 'Share',
+  mapLegend: {
+    layers: {
+      line: {
+        singleColor: {
+          sourceColor: 'Source',
+          targetColor: 'Target'
+        }
+      },
+      arc: {
+        singleColor: {
+          sourceColor: 'Source',
+          targetColor: 'Target'
+        }
+      },
+      default: {
+        singleColor: {
+          color: 'Fill color',
+          strokeColor: 'Outline'
+        }
+      }
+    }
+  }
 };

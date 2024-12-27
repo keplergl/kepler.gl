@@ -4,8 +4,14 @@
 import uniq from 'lodash.uniq';
 import KeplerTable, {Datasets} from './kepler-table';
 import {ProtoDataset, RGBColor} from '@kepler.gl/types';
+import Task from 'react-palm/tasks';
 
-import {hexToRgb, validateInputData, datasetColorMaker} from '@kepler.gl/utils';
+import {
+  hexToRgb,
+  validateInputData,
+  datasetColorMaker,
+  getApplicationConfig
+} from '@kepler.gl/utils';
 
 // apply a color for each dataset
 // to use as label colors
@@ -19,7 +25,6 @@ const datasetColors = [
   '#A2D4AB'
 ].map(hexToRgb);
 
-/** @type {typeof import('./dataset-utils').getNewDatasetColor} */
 export function getNewDatasetColor(datasets: Datasets): RGBColor {
   const presetColors = datasetColors.map(String);
   const usedColors = uniq(Object.values(datasets).map(d => String(d.color))).filter(c =>
@@ -56,17 +61,31 @@ export function createNewDataEntry(
     // get keplerTable from datasets
     const keplerTable = datasets[info.id];
     // update the data in keplerTable
-    keplerTable.update(validatedData);
-    return {
-      [keplerTable.id]: keplerTable
-    };
+    return UPDATE_TABLE_TASK({table: keplerTable, data: validatedData});
   }
 
   info = info || {};
   const color = info.color || getNewDatasetColor(datasets);
 
-  const keplerTable = new KeplerTable({info, data: validatedData, color, ...opts});
-  return {
-    [keplerTable.id]: keplerTable
-  };
+  return CREATE_TABLE_TASK({
+    info,
+    color,
+    opts,
+    data: validatedData
+  });
 }
+
+async function updateTable({table, data}) {
+  const updated = await table.update(data); // Assuming `table` has an `update` method
+  return updated;
+}
+
+async function createTable({info, color, opts, data}) {
+  const TableClass = getApplicationConfig().table ?? KeplerTable;
+  const table = new TableClass({info, color, ...opts});
+  await table.importData({data});
+
+  return table;
+}
+const UPDATE_TABLE_TASK = Task.fromPromise(updateTable, 'UPDATE_TABLE_TASK');
+const CREATE_TABLE_TASK = Task.fromPromise(createTable, 'CREATE_TABLE_TASK');

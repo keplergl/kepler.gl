@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import {ColorRange} from '@kepler.gl/constants';
+
 export type LayerBaseConfig = {
   dataId: string | null;
   label: string;
@@ -98,16 +100,16 @@ export type LayerWeightConfig = {
 };
 
 export type Field = {
-  analyzerType: string;
-  id?: string;
   name: string;
   displayName: string;
-  format: string;
   type: string;
   fieldIdx: number;
   valueAccessor(v: {index: number}): any;
+  analyzerType?: string;
+  id?: string;
+  format: string;
   filterProps?: FilterProps;
-  metadata?: any;
+  metadata?: Record<string, any>;
   displayFormat?: string;
 };
 
@@ -130,6 +132,8 @@ export type FieldPair = {
   suffix: string[];
 };
 
+export type SizeRange = [number, number];
+
 export type LayerTextLabel = {
   field: Field | null;
   color: RGBColor;
@@ -143,6 +147,15 @@ export type LayerTextLabel = {
   backgroundColor: RGBAColor;
 };
 
+export type ColorRangeConfig = {
+  type: string;
+  steps: number;
+  reversed: boolean;
+  custom: boolean;
+  customBreaks: boolean;
+  colorBlindSafe: boolean;
+};
+
 export type ColorUI = {
   // customPalette in edit
   customPalette: ColorRange;
@@ -150,13 +163,10 @@ export type ColorUI = {
   showSketcher: boolean | number;
   // show color range selection panel
   showDropdown: boolean | number;
+  // show color scale chart
+  showColorChart: boolean;
   // color range selector config
-  colorRangeConfig: {
-    type: string;
-    steps: number;
-    reversed: boolean;
-    custom: boolean;
-  };
+  colorRangeConfig: ColorRangeConfig;
 };
 
 export type VisConfig = {
@@ -187,7 +197,7 @@ export type VisConfigNumber = VisConfig & {
   type: 'number';
   isRanged: false;
   defaultValue: number;
-  range: [number, number];
+  range: SizeRange;
   step: number;
 };
 
@@ -205,8 +215,8 @@ export type VisConfigSelection = VisConfig & {
 export type VisConfigRange = VisConfig & {
   type: 'number';
   isRanged: boolean;
-  range: [number, number];
-  defaultValue: [number, number];
+  range: SizeRange;
+  defaultValue: SizeRange;
   step: number;
 };
 

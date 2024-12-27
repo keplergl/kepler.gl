@@ -14,8 +14,8 @@
   <a href='https://app.fossa.com/projects/custom%2B4458%2Fgithub.com%2Fkeplergl%2Fkepler.gl?ref=badge_shield'>
     <img src='https://app.fossa.com/api/projects/custom%2B4458%2Fgithub.com%2Fkeplergl%2Fkepler.gl.svg?type=shield' alt='Fossa' />
   </a>
-  <a href="https://app.netlify.com/sites/keplergl/deploys" alt="Netlify Status">
-    <img src="https://api.netlify.com/api/v1/badges/0c9b895c-acd0-43fd-8af7-fe960181b686/deploy-status" />
+  <a href="https://app.netlify.com/sites/keplergl/deploys">
+    <img src="https://api.netlify.com/api/v1/badges/0c9b895c-acd0-43fd-8af7-fe960181b686/deploy-status" alt="Netlify Status"/>
   </a>
   <a href='https://coveralls.io/github/keplergl/kepler.gl?branch=master'>
     <img src='https://coveralls.io/repos/github/keplergl/kepler.gl/badge.svg?branch=master' alt='Coverage Status' />
@@ -23,7 +23,7 @@
 </p>
 
 <h1 align="center">
-  kepler.gl | <a href="http://kepler.gl">Website</a> | <a href="http://kepler.gl/#/demo">Demo App</a> | <a href="https://docs.kepler.gl/">Docs</a>
+  kepler.gl | <a href="https://kepler.gl">Website</a> | <a href="https://kepler.gl/#/demo">Demo App</a> | <a href="https://docs.kepler.gl/">Docs</a>
 </h1>
 <h3></h3>
 
@@ -54,29 +54,29 @@ Kepler.gl is also a React component that uses [Redux](https://redux.js.org/) to 
 Use Node 18.18.2 or above, older node versions have not been supported/ tested.
 For best results, use [nvm](https://github.com/creationix/nvm) `nvm install`.
 
-## Install kepler.gl
+## Install kepler.gl modules
 
-Install node (`> 18.18.2`), yarn, and project dependencies
+Kepler.gl consists of different modules. Each module can be added to the project like this:
 
 ```sh
-npm install --save kepler.gl
+npm install --save @kepler.gl/components
 // or
-yarn add kepler.gl
+yarn add @kepler.gl/components
 ```
 
 kepler.gl is built upon [mapbox][mapbox]. You will need a [Mapbox Access Token][mapbox-token] to use it.
 
 If you don't use a module bundler, it's also fine. Kepler.gl npm package includes precompiled production UMD builds in the [umd folder](https://unpkg.com/kepler.gl/umd).
-You can add the script tag to your html file as it follows:
+You can add the script tag to your html file as it follows (latest version of Kepler.gl):
 
 ```html
 <script src="https://unpkg.com/kepler.gl/umd/keplergl.min.js" />
 ```
 
-or if you would like, you can load a specific version
+or if you would like, you can load a specific version:
 
 ```html
-<script src="https://unpkg.com/kepler.gl@2.5.5/umd/keplergl.min.js" />
+<script src="https://unpkg.com/kepler.gl@3.0.0/umd/keplergl.min.js" />
 ```
 
 ## Develop kepler.gl

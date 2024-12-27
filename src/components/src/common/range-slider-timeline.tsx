@@ -22,13 +22,13 @@ const TIMELINE_MARKER_STYLE: CSSProperties = {
   color: '#3D4866'
 };
 
-const containerStyle = {
+const containerStyle: CSSProperties = {
   display: 'flex',
   width: '100%',
   height: '24px'
 };
 
-const iconWrapperStyle = {
+const iconWrapperStyle: CSSProperties = {
   marginRight: '8px',
   cursor: 'pointer'
 };
@@ -41,8 +41,8 @@ const TIMELINE_INDICATOR_STYLE: CSSProperties = {
 };
 
 function RangeSliderTimelineFactory() {
-  const RangeSliderTimeline = ({timeline, scaledValue, style}) => {
-    const {startTime, endTime, syncMode, Icon, label} = timeline;
+  const RangeSliderTimeline = ({subAnimation, scaledValue, style}) => {
+    const {startTime, endTime, syncMode, Icon, label} = subAnimation;
 
     const progressStyle: CSSProperties = {
       left: `${startTime}%`,

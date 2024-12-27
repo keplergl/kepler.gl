@@ -3,9 +3,8 @@
 
 // Constants
 
-export * from './color-palette';
-export * from './color-ranges';
-export * from './custom-color-ranges';
+export * from './colors-by-theme';
+export * from './color-palettes';
 export * from './default-settings';
 export * from './layers';
 export {default as KeyEvent} from './keyevent';

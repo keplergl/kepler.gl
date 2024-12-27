@@ -1,74 +1,73 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React from 'react';
-import * as arrow from 'apache-arrow';
+import {COORDINATE_SYSTEM} from '@deck.gl/core';
+import {GeoArrowTextLayer} from '@kepler.gl/deckgl-arrow-layers';
+import {DataFilterExtension} from '@deck.gl/extensions';
+import {TextLayer} from '@deck.gl/layers';
 import {console as Console} from 'global/window';
 import keymirror from 'keymirror';
-import {DataFilterExtension} from '@deck.gl/extensions';
-import {COORDINATE_SYSTEM} from '@deck.gl/core';
-import {TextLayer} from '@deck.gl/layers';
-import {GeoArrowTextLayer} from '@kepler.gl/deckgl-arrow-layers';
-
+import React from 'react';
+import * as arrow from 'apache-arrow';
 import DefaultLayerIcon from './default-layer-icon';
 import {diffUpdateTriggers} from './layer-update';
 
 import {
   ALL_FIELD_TYPES,
-  NO_VALUE_COLOR,
-  SCALE_TYPES,
   CHANNEL_SCALES,
-  FIELD_OPTS,
-  SCALE_FUNC,
   CHANNEL_SCALE_SUPPORTED_FIELDS,
-  MAX_GPU_FILTERS,
   ColorRange,
-  COLOR_RANGES,
-  DataVizColors,
-  LAYER_VIS_CONFIGS,
-  DEFAULT_TEXT_LABEL,
   DEFAULT_COLOR_UI,
-  UNKNOWN_COLOR_KEY,
+  DEFAULT_CUSTOM_PALETTE,
   DEFAULT_HIGHLIGHT_COLOR,
   DEFAULT_LAYER_LABEL,
+  DEFAULT_TEXT_LABEL,
+  DataVizColors,
+  FIELD_OPTS,
+  LAYER_VIS_CONFIGS,
+  MAX_GPU_FILTERS,
+  NO_VALUE_COLOR,
   PROJECTED_PIXEL_SIZE_MULTIPLIER,
-  TEXT_OUTLINE_MULTIPLIER
+  SCALE_FUNC,
+  SCALE_TYPES,
+  TEXT_OUTLINE_MULTIPLIER,
+  UNKNOWN_COLOR_KEY
 } from '@kepler.gl/constants';
-
 import {
-  generateHashId,
-  getColorGroupByName,
-  reverseColorRange,
-  hexToRgb,
-  getLatLngBounds,
-  isPlainObject,
-  toArray,
-  notNullorUndefined,
   DataContainerInterface,
-  getSampleContainerData
+  getLatLngBounds,
+  getSampleContainerData,
+  hasColorMap,
+  hexToRgb,
+  isPlainObject,
+  isDomainStops,
+  updateColorRangeByMatchingPalette
 } from '@kepler.gl/utils';
-
+import {generateHashId, toArray, notNullorUndefined} from '@kepler.gl/common-utils';
+import {Datasets, GpuFilter, KeplerTable} from '@kepler.gl/table';
 import {
-  RGBColor,
-  RGBAColor,
-  NestedPartial,
-  LayerTextLabel,
   ColorUI,
+  Field,
+  Filter,
+  LayerTextLabel,
   LayerVisConfig,
   LayerVisConfigSettings,
-  Field,
   MapState,
-  Filter,
-  ValueOf,
   AnimationConfig,
   LayerColumns,
   LayerColumn,
   ColumnPairs,
   ColumnLabels,
   SupportedColumnMode,
-  FieldPair
+  FieldPair,
+  NestedPartial,
+  RGBAColor,
+  RGBColor,
+  ValueOf
 } from '@kepler.gl/types';
-import {KeplerTable, Datasets, GpuFilter} from '@kepler.gl/table';
+import {getScaleFunction, initializeLayerColorMap} from '@kepler.gl/utils';
+import memoize from 'lodash.memoize';
+import {isDomainQuantile, getDomainStepsbyZoom, getThresholdsFromQuantiles} from '@kepler.gl/utils';
 
 export type VisualChannelDomain = number[] | string[];
 export type VisualChannelField = Field | null;
@@ -97,6 +96,9 @@ export type LayerBaseConfig = {
     domain?: [number, number] | null;
   };
   columnMode?: string;
+  heightField?: VisualChannelField;
+  heightDomain?: VisualChannelDomain;
+  heightScale?: string;
 };
 
 export type LayerBaseConfigPartial = {dataId: LayerBaseConfig['dataId']} & Partial<LayerBaseConfig>;
@@ -193,6 +195,7 @@ const dataFilterExtension = new DataFilterExtension({
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const defaultDataAccessor = dc => d => d;
+const identity = d => d;
 // Can't use fiedValueAccesor because need the raw data to render tooltip
 // SHAN: Revisit here
 export const defaultGetFieldValue = (field, d) => field.valueAccessor(d);
@@ -226,6 +229,11 @@ export const colorMaker = generateColor();
 export type BaseLayerConstructorProps = {
   id?: string;
 } & LayerBaseConfigPartial;
+
+export type GetVisChannelScaleReturnType = {
+  (z: number): any;
+  byZoom?: boolean;
+} | null;
 
 class Layer {
   id: string;
@@ -642,9 +650,11 @@ class Layer {
    * @returns {number}
    */
   getElevationZoomFactor({zoom, zoomOffset = 0}: {zoom: number; zoomOffset?: number}): number {
-    return this.config.visConfig.enableElevationZoomFactor
-      ? Math.pow(2, Math.max(8 - zoom + zoomOffset, 0))
-      : 1;
+    // enableElevationZoomFactor is used to support existing maps
+    const {fixedHeight, enableElevationZoomFactor} = this.config.visConfig;
+    return fixedHeight || enableElevationZoomFactor === false
+      ? 1
+      : Math.pow(2, Math.max(8 - zoom + zoomOffset, 0));
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -862,28 +872,56 @@ class Layer {
     const isColorRange = visConfig[prop] && visConfig[prop].colors;
 
     if (isColorRange) {
+      // if open dropdown and prop is color range
+      // Automatically set colorRangeConfig's step and reversed
       this.updateColorUIByColorRange(newConfig, prop);
+
+      // if changes in UI is made to 'reversed', 'steps' or steps
+      // update current layer colorRange
       this.updateColorRangeByColorUI(newConfig, previous, prop);
+
+      // if set colorRangeConfig to custom
+      // initiate customPalette to be edited in the ui
       this.updateCustomPalette(newConfig, previous, prop);
     }
 
     return this;
   }
 
+  // if set colorRangeConfig to custom palette or custom breaks
+  // initiate customPalette to be edited in the ui
   updateCustomPalette(newConfig, previous, prop) {
-    if (!newConfig.colorRangeConfig || !newConfig.colorRangeConfig.custom) {
+    if (!newConfig.colorRangeConfig?.custom && !newConfig.colorRangeConfig?.customBreaks) {
       return;
     }
 
     const {colorUI, visConfig} = this.config;
 
     if (!visConfig[prop]) return;
-    const {colors} = visConfig[prop];
+    // make copy of current color range to customPalette
     const customPalette = {
-      ...colorUI[prop].customPalette,
-      name: 'Custom Palette',
-      colors: [...colors]
+      ...visConfig[prop]
     };
+
+    if (newConfig.colorRangeConfig.customBreaks && !customPalette.colorMap) {
+      // find visualChanel
+      const visualChannels = this.visualChannels;
+      const channelKey = Object.keys(visualChannels).find(
+        key => visualChannels[key].range === prop
+      );
+      if (!channelKey) {
+        // should never happn
+        Console.warn(`updateColorUI: Can't find visual channel which range is ${prop}`);
+        return;
+      }
+      // initiate colorMap from current scale
+      customPalette.colorMap = initializeLayerColorMap(this, visualChannels[channelKey]);
+    } else if (newConfig.colorRangeConfig.custom) {
+      customPalette.name = DEFAULT_CUSTOM_PALETTE.name;
+      customPalette.type = DEFAULT_CUSTOM_PALETTE.type;
+      customPalette.category = DEFAULT_CUSTOM_PALETTE.category;
+    }
+
     this.updateLayerConfig({
       colorUI: {
         ...colorUI,
@@ -894,6 +932,7 @@ class Layer {
       }
     });
   }
+
   /**
    * if open dropdown and prop is color range
    * Automatically set colorRangeConfig's step and reversed
@@ -923,7 +962,7 @@ class Layer {
     // only update colorRange if changes in UI is made to 'reversed', 'steps' or steps
     const shouldUpdate =
       newConfig.colorRangeConfig &&
-      ['reversed', 'steps'].some(
+      ['reversed', 'steps', 'colorBlindSafe', 'type'].some(
         key =>
           Object.prototype.hasOwnProperty.call(newConfig.colorRangeConfig, key) &&
           newConfig.colorRangeConfig[key] !==
@@ -932,27 +971,11 @@ class Layer {
     if (!shouldUpdate) return;
 
     const {colorUI, visConfig} = this.config;
-    const {steps, reversed} = colorUI[prop].colorRangeConfig;
-    const colorRange = visConfig[prop];
-    // find based on step or reversed
-    let update;
-    if (Object.prototype.hasOwnProperty.call(newConfig.colorRangeConfig, 'steps')) {
-      const group = getColorGroupByName(colorRange);
 
-      if (group) {
-        const sameGroup = COLOR_RANGES.filter(cr => getColorGroupByName(cr) === group);
-
-        update = sameGroup.find(cr => cr.colors.length === steps);
-
-        if (update && colorRange.reversed) {
-          update = reverseColorRange(true, update);
-        }
-      }
-    }
-
-    if (Object.prototype.hasOwnProperty.call(newConfig.colorRangeConfig, 'reversed')) {
-      update = reverseColorRange(reversed, update || colorRange);
-    }
+    const update = updateColorRangeByMatchingPalette(
+      visConfig[prop],
+      colorUI[prop].colorRangeConfig
+    );
 
     if (update) {
       this.updateLayerVisConfig({[prop]: update});
@@ -1016,22 +1039,30 @@ class Layer {
     );
   }
 
-  getColorScale(colorScale: string, colorDomain: VisualChannelDomain, colorRange: ColorRange) {
-    if (Array.isArray(colorRange.colorMap)) {
+  getColorScale(
+    colorScale: string,
+    colorDomain: VisualChannelDomain,
+    colorRange: ColorRange
+  ): GetVisChannelScaleReturnType {
+    if (hasColorMap(colorRange) && colorScale === SCALE_TYPES.custom) {
       const cMap = new Map();
-      colorRange.colorMap.forEach(([k, v]) => {
+      colorRange.colorMap?.forEach(([k, v]) => {
         cMap.set(k, typeof v === 'string' ? hexToRgb(v) : v);
       });
 
-      const scale = SCALE_FUNC[SCALE_TYPES.ordinal]()
-        .domain(cMap.keys())
-        .range(cMap.values())
-        .unknown(cMap.get(UNKNOWN_COLOR_KEY) || NO_VALUE_COLOR);
-      return scale;
+      const scaleType = colorScale === SCALE_TYPES.custom ? colorScale : SCALE_TYPES.ordinal;
+
+      const scale = getScaleFunction(scaleType, cMap.values(), cMap.keys(), false);
+      scale.unknown(cMap.get(UNKNOWN_COLOR_KEY) || NO_VALUE_COLOR);
+
+      return scale as () => any;
     }
     return this.getVisChannelScale(colorScale, colorDomain, colorRange.colors.map(hexToRgb));
   }
 
+  accessVSFieldValue(field, indexKey) {
+    return defaultGetFieldValue;
+  }
   /**
    * Mapping from visual channels to deck.gl accesors
    * @param {Object} param Parameters
@@ -1041,10 +1072,12 @@ class Layer {
    */
   getAttributeAccessors({
     dataAccessor = defaultDataAccessor,
-    dataContainer
+    dataContainer,
+    indexKey
   }: {
     dataAccessor?: typeof defaultDataAccessor;
     dataContainer: DataContainerInterface;
+    indexKey?: number;
   }) {
     const attributeAccessors: {[key: string]: any} = {};
 
@@ -1082,13 +1115,35 @@ class Layer {
                   isFixed
                 );
 
-          attributeAccessors[accessor] = d =>
-            this.getEncodedChannelValue(
-              scaleFunction,
-              dataAccessor(dataContainer)(d),
-              this.config[field],
-              nullValue
-            );
+          const getFieldValue = this.accessVSFieldValue(this.config[field], indexKey);
+
+          if (scaleFunction) {
+            attributeAccessors[accessor] = scaleFunction.byZoom
+              ? memoize(z => {
+                  const scaleFunc = scaleFunction(z);
+                  return d =>
+                    this.getEncodedChannelValue(
+                      scaleFunc,
+                      dataAccessor(dataContainer)(d),
+                      this.config[field],
+                      nullValue,
+                      getFieldValue
+                    );
+                })
+              : d =>
+                  this.getEncodedChannelValue(
+                    scaleFunction,
+                    dataAccessor(dataContainer)(d),
+                    this.config[field],
+                    nullValue,
+                    getFieldValue
+                  );
+
+            // set getFillColorByZoom to true
+            if (scaleFunction.byZoom) {
+              attributeAccessors[`${accessor}ByZoom`] = true;
+            }
+          }
         } else if (typeof getAttributeValue === 'function') {
           attributeAccessors[accessor] = getAttributeValue(this.config);
         } else {
@@ -1110,7 +1165,40 @@ class Layer {
     domain: VisualChannelDomain,
     range: any,
     fixed?: boolean
-  ): () => any | null {
+  ): GetVisChannelScaleReturnType {
+    // if quantile is provided per zoom
+    if (isDomainQuantile(domain) && scale === SCALE_TYPES.quantile) {
+      const zSteps = domain.z;
+
+      const getScale = function getScaleByZoom(z) {
+        const scaleDomain = getDomainStepsbyZoom(domain.quantiles, zSteps, z);
+        const thresholds = getThresholdsFromQuantiles(scaleDomain, range.length);
+
+        return getScaleFunction('threshold', range, thresholds, false);
+      };
+
+      getScale.byZoom = true;
+      return getScale;
+    } else if (isDomainStops(domain)) {
+      // color is based on zoom
+      const zSteps = domain.z;
+      // get scale function by z
+      // {
+      //  z: [z, z, z],
+      //  stops: [[min, max], [min, max]],
+      //  interpolation: 'interpolate'
+      // }
+
+      const getScale = function getScaleByZoom(z) {
+        const scaleDomain = getDomainStepsbyZoom(domain.stops, zSteps, z);
+
+        return getScaleFunction(scale, range, scaleDomain, fixed);
+      };
+
+      getScale.byZoom = true;
+      return getScale;
+    }
+
     return SCALE_FUNC[fixed ? 'linear' : scale]()
       .domain(domain)
       .range(fixed ? domain : range);
@@ -1118,13 +1206,10 @@ class Layer {
 
   /**
    * Get longitude and latitude bounds of the data.
-   * @param {import('utils/table-utils/data-container-interface').DataContainerInterface} dataContainer DataContainer to calculate bounds for.
-   * @param {(d: {index: number}, dc: import('utils/table-utils/data-container-interface').DataContainerInterface) => number[]} getPosition Access kepler.gl layer data from deck.gl layer
-   * @return {number[]|null} bounds of the data.
    */
   getPointsBounds(
     dataContainer: DataContainerInterface,
-    getPosition?: (x: any, dc: DataContainerInterface) => number[]
+    getPosition: (x: any, dc: DataContainerInterface) => number[] = identity
   ): number[] | null {
     // no need to loop through the entire dataset
     // get a sample of data to calculate bounds
@@ -1313,7 +1398,7 @@ class Layer {
    * @param {string} channel
    * @returns {string[]}
    */
-  getScaleOptions(channel) {
+  getScaleOptions(channel: string): string[] {
     const visualChannel = this.visualChannels[channel];
     const {field, scale, channelScaleType} = visualChannel;
 
@@ -1550,6 +1635,10 @@ class Layer {
   getPositionAccessor(dataContainer?: DataContainerInterface): (...args: any[]) => any {
     // implemented in subclasses
     return () => null;
+  }
+
+  getLegendVisualChannels(): {[key: string]: VisualChannel} {
+    return this.visualChannels;
   }
 }
 

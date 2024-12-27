@@ -14,9 +14,10 @@ const {PointLayer, ArcLayer, GeojsonLayer, LineLayer} = KeplerGlLayers;
 import {wktCsv} from 'test/fixtures/test-csv-data';
 import {cmpLayers} from 'test/helpers/comparison-utils';
 import {getNextColorMakerValue} from 'test/helpers/layer-utils';
+import {createNewDataEntryMock} from 'test/helpers/table-utils';
 import tripGeojson, {timeStampDomain, tripBounds} from 'test/fixtures/trip-geojson';
 import {geoJsonWithStyle} from 'test/fixtures/geojson';
-import {KeplerTable, findPointFieldPairs, createNewDataEntry} from '@kepler.gl/table';
+import {KeplerTable, findPointFieldPairs} from '@kepler.gl/table';
 import {createDataContainer} from '@kepler.gl/utils';
 
 test('layerUtils -> findDefaultLayer.1', t => {
@@ -282,7 +283,9 @@ test('layerUtils -> findDefaultLayer.2', t => {
     info: {
       id: dataId,
       label: 'sf_zip_geo'
-    },
+    }
+  });
+  dataset.importData({
     data: {
       rows: [
         [
@@ -531,7 +534,9 @@ test('layerUtils -> findDefaultLayer:GeojsonLayer', t => {
   const dataset = new KeplerTable({
     info: {
       label: 'sf_zip_geo'
-    },
+    }
+  });
+  dataset.importData({
     data: {
       rows: [
         [
@@ -811,7 +816,7 @@ test('layerUtils -> findDefaultLayer: TripLayer', t => {
   t.end();
 });
 
-test('layerUtils -> findDefaultLayer: TripLayer.1 -> no ts', t => {
+test('layerUtils -> findDefaultLayer: TripLayer.1 -> no ts', async t => {
   // change 3rd coordinate to string
   const modified = tripGeojson.features.map(f => ({
     ...f,
@@ -826,7 +831,7 @@ test('layerUtils -> findDefaultLayer: TripLayer.1 -> no ts', t => {
     features: modified
   };
 
-  const dataset = createNewDataEntry({
+  const dataset = await createNewDataEntryMock({
     info: {id: 'taro'},
     data: processGeojson(noTripGeojson)
   });
@@ -839,7 +844,7 @@ test('layerUtils -> findDefaultLayer: TripLayer.1 -> no ts', t => {
   t.end();
 });
 
-test('layerUtils -> findDefaultLayer: TripLayer.1 -> ts as string', t => {
+test('layerUtils -> findDefaultLayer: TripLayer.1 -> ts as string', async t => {
   const tripData = {
     type: 'FeatureCollection',
     features: [
@@ -858,7 +863,7 @@ test('layerUtils -> findDefaultLayer: TripLayer.1 -> ts as string', t => {
     ]
   };
 
-  const dataset = createNewDataEntry({
+  const dataset = await createNewDataEntryMock({
     info: {id: 'taro'},
     data: processGeojson(tripData)
   });
@@ -901,6 +906,7 @@ test('layerUtils -> getLayerHoverProp', t => {
     object: null
   };
   const args = {
+    animationConfig: visState.animationConfig,
     interactionConfig: visState.interactionConfig,
     hoverInfo: mockHoverInfo,
     layers: visState.layers,
@@ -913,7 +919,8 @@ test('layerUtils -> getLayerHoverProp', t => {
     data: expectedDataset.dataContainer.row(obj.index),
     fields: expectedDataset.fields,
     fieldsToShow: visState.interactionConfig.tooltip.config.fieldsToShow[layer.config.dataId],
-    layer
+    layer,
+    currentTime: visState.animationConfig.currentTime
   };
 
   t.deepEqual(getLayerHoverProp(args), expected, 'should get correct layerHoverProp');

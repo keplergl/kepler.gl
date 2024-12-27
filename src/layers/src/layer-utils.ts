@@ -5,7 +5,13 @@ import * as arrow from 'apache-arrow';
 import {Feature, BBox} from 'geojson';
 import {getGeoMetadata} from '@loaders.gl/gis';
 
-import {Field, FieldPair, SupportedColumnMode, LayerColumn} from '@kepler.gl/types';
+import {
+  Field,
+  ProtoDatasetField,
+  FieldPair,
+  SupportedColumnMode,
+  LayerColumn
+} from '@kepler.gl/types';
 import {DataContainerInterface, ArrowDataContainer} from '@kepler.gl/utils';
 import {
   getBinaryGeometriesFromArrow,
@@ -150,7 +156,7 @@ export function getGeojsonLayerMetaFromArrow({
 }: {
   dataContainer: DataContainerInterface;
   geoColumn: arrow.Vector;
-  geoField: Field;
+  geoField: ProtoDatasetField;
   chunkIndex?: number;
 }): GeojsonLayerMetaProps {
   const encoding = geoField?.metadata?.get('ARROW:extension:name');

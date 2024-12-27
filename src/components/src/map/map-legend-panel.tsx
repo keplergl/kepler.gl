@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import React, {ComponentType, useCallback, useContext, useState} from 'react';
-import styled from 'styled-components';
+import styled, {withTheme} from 'styled-components';
 
 import {Legend} from '../common/icons';
 import {MapControlButton} from '../common/styled-components';
@@ -57,6 +57,7 @@ interface MapLegendPanelIcons {
 }
 
 export type MapLegendPanelProps = {
+  theme: any;
   layers: ReadonlyArray<Layer>;
   scale: number;
   onToggleMapControl: (control: string) => void;
@@ -71,6 +72,7 @@ export type MapLegendPanelProps = {
   isViewportUnsyncAllowed?: boolean;
   onClickControlBtn?: (e?: MouseEvent) => void;
   onLayerVisConfigChange?: (oldLayer: Layer, newVisConfig: Partial<LayerVisConfig>) => void;
+  className: string;
 };
 
 function MapLegendPanelFactory(MapControlTooltip, MapControlPanel, MapLegend) {
@@ -79,6 +81,7 @@ function MapLegendPanelFactory(MapControlTooltip, MapControlPanel, MapLegend) {
   };
 
   const MapLegendPanel: React.FC<MapLegendPanelProps> = ({
+    theme,
     layers,
     mapControls,
     scale,
@@ -91,6 +94,7 @@ function MapLegendPanelFactory(MapControlTooltip, MapControlPanel, MapLegend) {
     onToggleSplitMapViewport,
     onClickControlBtn,
     isViewportUnsyncAllowed = true,
+    className,
     onLayerVisConfigChange
   }) => {
     const mapLegend = mapControls?.mapLegend || ({} as MapControlMapLegend);
@@ -137,7 +141,7 @@ function MapLegendPanelFactory(MapControlTooltip, MapControlPanel, MapLegend) {
     const mapControlPanel = (
       <MapControlPanel
         scale={scale}
-        header={'header.layerLegend'}
+        header="header.layerLegend"
         isPinned={true}
         {...(isPinned
           ? {
@@ -155,11 +159,13 @@ function MapLegendPanelFactory(MapControlTooltip, MapControlPanel, MapLegend) {
         mapState={mapState}
         onToggleSplitMapViewport={onToggleSplitMapViewport}
         isViewportUnsyncAllowed={isViewportUnsyncAllowed}
+        className={className}
       >
         <MapLegend
           layers={layers}
           mapState={mapState}
           disableEdit={disableEdit}
+          isExport={isExport}
           onLayerVisConfigChange={onLayerVisConfigChange}
         />
       </MapControlPanel>
@@ -170,7 +176,15 @@ function MapLegendPanelFactory(MapControlTooltip, MapControlPanel, MapLegend) {
       if (isExport) {
         return mapControlPanel;
       }
-      const pinnedPanel = <PinToBottom offsetRight={offsetRight}>{mapControlPanel}</PinToBottom>;
+      const pinnedOffsetRight =
+        mapControls?.effect?.show && mapControls?.effect?.active
+          ? theme.effectPanelWidth + 10
+          : mapControls?.aiAssistant?.show && mapControls?.aiAssistant?.active
+          ? theme.aiAssistantPanelWidth + 10
+          : 0;
+      const pinnedPanel = (
+        <PinToBottom offsetRight={pinnedOffsetRight}>{mapControlPanel}</PinToBottom>
+      );
       return createPortal(pinnedPanel, rootContext?.current || document.body);
     }
 
@@ -195,7 +209,7 @@ function MapLegendPanelFactory(MapControlTooltip, MapControlPanel, MapLegend) {
   };
 
   MapLegendPanel.displayName = 'MapLegendPanel';
-  return MapLegendPanel;
+  return withTheme(MapLegendPanel);
 }
 
 export default MapLegendPanelFactory;

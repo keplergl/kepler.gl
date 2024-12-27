@@ -1,7 +1,7 @@
 {
   "name": "@kepler.gl/utils",
   "author": "Shan He <shan@uber.com>",
-  "version": "3.0.0",
+  "version": "3.1.0-alpha.1",
   "description": "kepler.gl constants used by kepler.gl components, actions and reducers",
   "license": "MIT",
   "main": "dist/index.js",
@@ -30,8 +30,9 @@
     "umd"
   ],
   "dependencies": {
-    "@kepler.gl/constants": "3.0.0",
-    "@kepler.gl/types": "3.0.0",
+    "@kepler.gl/common-utils": "3.1.0-alpha.1",
+    "@kepler.gl/constants": "3.1.0-alpha.1",
+    "@kepler.gl/types": "3.1.0-alpha.1",
     "@luma.gl/constants": "^8.5.20",
     "@luma.gl/core": "^8.5.20",
     "@mapbox/geo-viewport": "^0.4.1",
@@ -47,6 +48,7 @@
     "apache-arrow": ">=15.0.0",
     "d3-array": "^2.8.0",
     "d3-format": "^2.0.0",
+    "d3-interpolate": "^2.0.1",
     "decimal.js": "^10.2.0",
     "global": "^4.3.0",
     "h3-js": "^3.1.0",
@@ -56,6 +58,7 @@
     "lodash.isequal": "^4.5.0",
     "lodash.memoize": "^4.1.2",
     "lodash.throttle": "^4.1.1",
+    "maplibregl-mapbox-request-transformer": "^0.0.2",
     "mini-svg-data-uri": "^1.0.3",
     "moment-timezone": "^0.5.35",
     "react": "^18.2.0",

@@ -9,6 +9,7 @@ import {GeoArrowArcLayer} from '@kepler.gl/deckgl-arrow-layers';
 import {FilterArrowExtension} from '@kepler.gl/deckgl-layers';
 import {EnhancedLineLayer} from '@kepler.gl/deckgl-layers';
 import LineLayerIcon from './line-layer-icon';
+import {VisualChannel} from '../base-layer';
 import ArcLayer, {ArcLayerConfig} from '../arc-layer/arc-layer';
 import {LAYER_VIS_CONFIGS, ColorRange, PROJECTED_PIXEL_SIZE_MULTIPLIER} from '@kepler.gl/constants';
 import {
@@ -21,7 +22,7 @@ import {
   LayerColumn
 } from '@kepler.gl/types';
 import {default as KeplerTable} from '@kepler.gl/table';
-import {DataContainerInterface} from '@kepler.gl/utils';
+import {DataContainerInterface, maybeHexToGeo} from '@kepler.gl/utils';
 
 export type LineLayerVisConfigSettings = {
   opacity: VisConfigNumber;
@@ -157,21 +158,32 @@ export const linePosAccessor =
           return [start.get(0), start.get(1), 0, end.get(2), end.get(3), 0];
         };
       case COLUMN_MODE_NEIGHBORS:
-        return d => [
-          dc.valueAt(d.index, lng.fieldIdx),
-          dc.valueAt(d.index, lat.fieldIdx),
-          alt?.fieldIdx > -1 ? dc.valueAt(d.index, alt.fieldIdx) : 0
-        ];
+        return d => {
+          const startPos = maybeHexToGeo(dc, d, lat, lng);
+          // only return source point if columnMode is COLUMN_MODE_NEIGHBORS
+
+          return [
+            startPos ? startPos[0] : dc.valueAt(d.index, lng.fieldIdx),
+            startPos ? startPos[1] : dc.valueAt(d.index, lat.fieldIdx),
+            alt?.fieldIdx > -1 ? dc.valueAt(d.index, alt.fieldIdx) : 0
+          ];
+        };
       default:
         // COLUMN_MODE_POINTS
-        return d => [
-          dc.valueAt(d.index, lng0.fieldIdx),
-          dc.valueAt(d.index, lat0.fieldIdx),
-          alt0 && alt0.fieldIdx > -1 ? dc.valueAt(d.index, alt0.fieldIdx) : 0,
-          dc.valueAt(d.index, lng1.fieldIdx),
-          dc.valueAt(d.index, lat1.fieldIdx),
-          alt1 && alt1?.fieldIdx > -1 ? dc.valueAt(d.index, alt1.fieldIdx) : 0
-        ];
+        return d => {
+          // lat or lng column could be hex column
+          // we assume string value is hex and try to convert it to geo lat lng
+          const startPos = maybeHexToGeo(dc, d, lat0, lng0);
+          const endPos = maybeHexToGeo(dc, d, lat1, lng1);
+          return [
+            startPos ? startPos[0] : dc.valueAt(d.index, lng0.fieldIdx),
+            startPos ? startPos[1] : dc.valueAt(d.index, lat0.fieldIdx),
+            alt0 && alt0.fieldIdx > -1 ? dc.valueAt(d.index, alt0.fieldIdx) : 0,
+            endPos ? endPos[0] : dc.valueAt(d.index, lng1.fieldIdx),
+            endPos ? endPos[1] : dc.valueAt(d.index, lat1.fieldIdx),
+            alt1 && alt1?.fieldIdx > -1 ? dc.valueAt(d.index, alt1.fieldIdx) : 0
+          ];
+        };
     }
   };
 
@@ -323,5 +335,15 @@ export default class LineLayer extends ArcLayer {
           ]
         : [])
     ];
+  }
+
+  getLegendVisualChannels() {
+    let channels: {[key: string]: VisualChannel} = this.visualChannels;
+    if (channels.sourceColor?.field && this.config[channels.sourceColor.field]) {
+      // Remove targetColor to avoid duplicate legend
+      channels = {...channels};
+      delete channels.targetColor;
+    }
+    return channels;
   }
 }

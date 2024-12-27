@@ -374,7 +374,8 @@ mergedLayer0.config = {
   textLabel: [DEFAULT_TEXT_LABEL],
   colorUI: {
     color: DEFAULT_COLOR_UI,
-    colorRange: DEFAULT_COLOR_UI
+    colorRange: DEFAULT_COLOR_UI,
+    strokeColorRange: DEFAULT_COLOR_UI
   },
   visConfig: {
     radius: 10,
@@ -385,14 +386,14 @@ mergedLayer0.config = {
     filled: true,
     thickness: 2,
     colorRange: {
-      name: 'ColorBrewer YlGn-6',
+      name: 'YlGn',
       type: 'sequential',
       category: 'ColorBrewer',
       colors: ['#006837', '#31a354', '#78c679', '#addd8e', '#d9f0a3', '#ffffcc'],
       reversed: true
     },
     strokeColorRange: {
-      name: 'ColorBrewer YlGn-6',
+      name: 'YlGn',
       type: 'sequential',
       category: 'ColorBrewer',
       colors: ['#006837', '#31a354', '#78c679', '#addd8e', '#d9f0a3', '#ffffcc'],
@@ -445,7 +446,7 @@ mergedLayer1.config = {
     worldUnitSize: 2.73,
     resolution: 8,
     colorRange: {
-      name: 'Uber Viz Diverging 1',
+      name: 'Uber Viz Diverging',
       type: 'diverging',
       category: 'Uber',
       colors: ['#00939C', '#85C4C8', '#FEEEE8', '#EC9370', '#C22E00'],
@@ -457,6 +458,7 @@ mergedLayer1.config = {
     elevationPercentile: [0, 100],
     elevationScale: 5,
     enableElevationZoomFactor: true,
+    fixedHeight: false,
     colorAggregation: 'count', // if associated colorField value is null, it can only default to 'count'
     sizeAggregation: 'count', // if associated sizeField value is null, it can only default to 'count'
     enable3d: false

@@ -1198,7 +1198,8 @@ mergedLayer2.config = {
   textLabel: [DEFAULT_TEXT_LABEL],
   colorUI: {
     color: DEFAULT_COLOR_UI,
-    colorRange: DEFAULT_COLOR_UI
+    colorRange: DEFAULT_COLOR_UI,
+    strokeColorRange: DEFAULT_COLOR_UI
   },
   hidden: false,
   visConfig: {
@@ -1296,7 +1297,8 @@ mergedLayer3.config = {
     percentile: [0, 100],
     elevationPercentile: [0, 100],
     elevationScale: 10,
-    enableElevationZoomFactor: true
+    enableElevationZoomFactor: true,
+    fixedHeight: false
   },
   animation: {enabled: false}
 };
@@ -1349,7 +1351,8 @@ mergedLayer4.config = {
   textLabel: [DEFAULT_TEXT_LABEL],
   colorUI: {
     color: DEFAULT_COLOR_UI,
-    colorRange: DEFAULT_COLOR_UI
+    colorRange: DEFAULT_COLOR_UI,
+    strokeColorRange: DEFAULT_COLOR_UI
   },
   heightField: null,
   heightDomain: [0, 1],
@@ -1361,7 +1364,7 @@ mergedLayer4.config = {
   radiusScale: 'linear',
   visConfig: {
     colorRange: {
-      name: 'Uber Viz Qualitative 3',
+      name: 'Uber Viz Qualitative',
       type: 'qualitative',
       category: 'Uber',
       colors: [
@@ -1384,7 +1387,7 @@ mergedLayer4.config = {
       reversed: false
     },
     strokeColorRange: {
-      name: 'Uber Viz Qualitative 3',
+      name: 'Uber Viz Qualitative',
       type: 'qualitative',
       category: 'Uber',
       colors: [

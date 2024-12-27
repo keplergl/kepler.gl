@@ -1,7 +1,7 @@
 # Localization
 
 Kepler.gl supports localization through [react-intl]. Locale is determined by `uiState.locale` value.
-Current supported languages are: 
+Current supported languages are:
 
 | locale code | Language   | Default? |
 |-------------|------------|----------|
@@ -20,8 +20,8 @@ By default the first language is English `en`. The default language can be chang
 
 ```js
 import {combineReducers} from 'redux';
-import keplerGlReducer from 'kepler.gl/reducers';
-import {LOCALE_CODES} from 'kepler.gl/localization';
+import keplerGlReducer from '@kepler.gl/reducers';
+import {LOCALE_CODES} from '@kepler.gl/localization';
 
 const customizedKeplerGlReducer = keplerGlReducer.initialState({
   uiState: {
@@ -55,7 +55,7 @@ Let's say we want to add the Swedish language to kepler.gl. Easiest way to add t
   ```
 
 ## Modify default translation or add new translation
-the `localeMessages` prop of `KeplerGl` takes additional translations and merge with default translation. 
+the `localeMessages` prop of `KeplerGl` takes additional translations and merge with default translation.
 
 #### Example 1. Update default translation
 To update the english translation of `layerManager.addData`, pass `localeMessages` like this.
@@ -68,7 +68,7 @@ const localeMessages = {
 };
 
 const App = () => (
-    <KeplerGl 
+    <KeplerGl
       id="map"
       localeMessages={messages}
       mapboxApiAccessToken={Token}
@@ -86,7 +86,7 @@ const localeMessages = {
 };
 
 const App = () => (
-    <KeplerGl 
+    <KeplerGl
       id="map"
       localeMessages={messages}
       mapboxApiAccessToken={Token}

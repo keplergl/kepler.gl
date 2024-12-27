@@ -30,6 +30,7 @@ export {default as Db} from './db';
 export {default as Delete} from './delete';
 export {default as Docs} from './docs';
 export {default as DragNDrop} from './drag-n-drop';
+export {default as Edit} from './edit';
 export {default as Email} from './email';
 export {default as Expand} from './expand';
 export {default as EyeSeen} from './eye-seen';
