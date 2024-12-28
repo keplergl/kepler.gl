@@ -219,9 +219,7 @@ test('DataScaleUtils -> getQuantLegends', t => {
   const labelFormat = d3Format('.1s');
   const domain = [3.1, 5.2, 7.3];
 
-  const scaleFunction = SCALE_FUNC.threshold()
-    .domain(domain)
-    .range(domain);
+  const scaleFunction = SCALE_FUNC.threshold().domain(domain).range(domain);
   scaleFunction.scaleType = 'linear';
 
   const legends = getQuantLegends(scaleFunction, labelFormat);
@@ -235,9 +233,7 @@ test('DataScaleUtils -> getQuantLegends', t => {
   t.deepEqual(legends, expectedColorBreaks, 'should create correct threshold legends');
 
   const customDomain = [3.1, 5.2, 7.3, null];
-  const customScaleFunction = SCALE_FUNC.threshold()
-    .domain(customDomain)
-    .range(customDomain);
+  const customScaleFunction = SCALE_FUNC.threshold().domain(customDomain).range(customDomain);
   customScaleFunction.scaleType = 'custom';
   const customLegends = getQuantLegends(customScaleFunction, labelFormat);
 

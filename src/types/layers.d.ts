@@ -70,6 +70,9 @@ export type SupportedColumnMode = {
   hasHelp?: boolean;
 };
 
+export type VisualChannelField = Field | null;
+export type VisualChannelScale = keyof typeof SCALE_TYPES;
+
 export type LayerColorConfig = {
   colorField: VisualChannelField;
   colorDomain: VisualChannelDomain;

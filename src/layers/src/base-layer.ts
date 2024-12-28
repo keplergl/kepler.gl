@@ -66,7 +66,9 @@ import {
   ValueOf,
   VisualChannel,
   VisualChannels,
-  VisualChannelDomain
+  VisualChannelDomain,
+  VisualChannelField,
+  VisualChannelScale
 } from '@kepler.gl/types';
 import {
   getScaleFunction,
@@ -81,10 +83,15 @@ import {
   getThresholdsFromQuantiles
 } from '@kepler.gl/utils';
 
-export type {LayerBaseConfig, VisualChannel, VisualChannels, VisualChannelDomain, AggregatedBin};
-
-export type VisualChannelField = Field | null;
-export type VisualChannelScale = keyof typeof SCALE_TYPES;
+export type {
+  AggregatedBin,
+  LayerBaseConfig,
+  VisualChannel,
+  VisualChannels,
+  VisualChannelDomain,
+  VisualChannelField,
+  VisualChannelScale
+};
 
 export type LayerBaseConfigPartial = {dataId: LayerBaseConfig['dataId']} & Partial<LayerBaseConfig>;
 

@@ -629,7 +629,7 @@ export function layerToggleVisibilityUpdater(
     return toggleLayerForMapUpdater(newState, toggleLayerForMap(mapIndex, layerId));
   } else {
     // [case 2]: toggle global layer visibility
-    let newLayer = layer.updateLayerConfig({isVisible});
+    const newLayer = layer.updateLayerConfig({isVisible});
     const idx = newState.layers.findIndex(l => l.id === layerId);
 
     newState = updatelayerVisibilty(newState, newLayer, isVisible);
