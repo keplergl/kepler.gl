@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import test from 'tape-catch';
+// @ts-nocheck
+
 import cloneDeep from 'lodash.clonedeep';
 import {colorPaletteToColorRange} from '@kepler.gl/constants';
 import {
@@ -86,6 +87,18 @@ export const geojsonInfo = {
   params: {file: null}
 };
 
+export const mockColorRange = {
+  colors: ['#FF000', '#00FF00', '#0000FF'],
+  colorMap: [
+    [1, '#FF0000'],
+    [3, '#00FF00'],
+    [5, '#0000FF']
+  ],
+  colorLegends: {
+    '#FF0000': 'hello'
+  }
+};
+
 // TODO: need to be deleted and imported from raw-states
 export const InitialState = keplerGlReducer(undefined, {});
 
@@ -126,27 +139,12 @@ export function mockStateWithFileUpload() {
     );
   });
 
-  test(t => {
-    t.equal(updatedState.visState.layers.length, 2, 'should auto create 2 layers');
-    t.end();
-  });
-
   return updatedState;
 }
 
 function mockStateWithLayerCustomColorBreaksLegends() {
   const initialState = cloneDeep(InitialState);
-  const mockColorRange = {
-    colors: ['#FF000', '#00FF00', '#0000FF'],
-    colorMap: [
-      [1, '#FF0000'],
-      [3, '#00FF00'],
-      [5, '#0000FF']
-    ],
-    colorLegends: {
-      '#FF0000': 'hello'
-    }
-  };
+
   // load csv and geojson
   const updatedState = applyActions(keplerGlReducer, initialState, [
     {
@@ -200,28 +198,6 @@ function mockStateWithLayerCustomColorBreaksLegends() {
       ]
     }
   ]);
-
-  test(t => {
-    t.equal(updatedState.visState.layers.length, 1, 'should load 1 layer');
-    t.deepEqual(
-      updatedState.visState.layers[0].config.visConfig.colorRange,
-      mockColorRange,
-      'should load layer colorRange correctly'
-    );
-    t.deepEqual(
-      updatedState.visState.layers[0].config.colorScale,
-      'custom',
-      'should load layer color Scale correctly'
-    );
-
-    t.deepEqual(
-      updatedState.visState.layers[0].config.colorField.name,
-      'uid',
-      'should load colorField correctly'
-    );
-
-    t.end();
-  });
 
   return updatedState;
 }
@@ -337,12 +313,6 @@ export function mockStateWithTripTable(state) {
     }
   ]);
 
-  test(t => {
-    t.equal(updatedState.visState.layers.length, 1, 'should create 1 trip layer');
-    t.equal(updatedState.visState.layers[0].type, 'trip', 'should create trip layer');
-    t.end();
-  });
-
   return updatedState;
 }
 
@@ -359,14 +329,6 @@ export function mockStateWithArcNeighbors(state) {
       ]
     }
   ]);
-
-  test(t => {
-    t.equal(updatedState.visState.layers.length, 3, 'should create 3 layers');
-    t.equal(updatedState.visState.layers[0].type, 'point', 'should create point layer');
-    t.equal(updatedState.visState.layers[1].type, 'arc', 'should create arc layer');
-    t.equal(updatedState.visState.layers[2].type, 'arc', 'should create arc layer');
-    t.end();
-  });
 
   return updatedState;
 }

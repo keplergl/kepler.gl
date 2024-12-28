@@ -44,6 +44,7 @@ import {
 import {generateHashId, toArray, notNullorUndefined} from '@kepler.gl/common-utils';
 import {Datasets, GpuFilter, KeplerTable} from '@kepler.gl/table';
 import {
+  AggregatedBin,
   ColorRange,
   ColorUI,
   Field,
@@ -80,13 +81,7 @@ import {
   getThresholdsFromQuantiles
 } from '@kepler.gl/utils';
 
-export type {
-  LayerBaseConfig,
-  VisualChannel,
-  VisualChannels,
-  VisualChannelDomain,
-  AggregatedBin
-} from '@kepler.gl/types';
+export type {LayerBaseConfig, VisualChannel, VisualChannels, VisualChannelDomain, AggregatedBin};
 
 export type VisualChannelField = Field | null;
 export type VisualChannelScale = keyof typeof SCALE_TYPES;
