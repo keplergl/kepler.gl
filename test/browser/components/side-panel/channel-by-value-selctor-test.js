@@ -99,7 +99,7 @@ test('Components -> ChannelByValueSelector -> ColorScaleSelector -> disabled', t
   t.equal(
     wrapper.find(ColorScaleSelector).at(0).props().disabled,
     false,
-    'Should disabled color scale select if only 1 option'
+    'Should enable ordinal and custom color scale select'
   );
 
   t.equal(
