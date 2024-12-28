@@ -13,6 +13,7 @@ import {
   getLayerColorScale,
   getLegendOfScale,
   histogramFromValues,
+  histogramFromOrdinal,
   histogramFromThreshold,
   getHistogramDomain,
   hasColorMap
@@ -187,8 +188,10 @@ function ColorScaleSelectorFactory(
       }
       return columnStats?.bins
         ? columnStats?.bins
+        : field?.type === ALL_FIELD_TYPES.string
+        ? histogramFromOrdinal(colorScale?.domain() || [], dataset.allIndexes, fieldValueAccessor)
         : histogramFromValues(dataset.allIndexes, HISTOGRAM_BINS, fieldValueAccessor);
-    }, [aggregatedBins, columnStats, dataset, fieldValueAccessor]);
+    }, [aggregatedBins, columnStats, dataset, fieldValueAccessor, colorScale, field?.type]);
 
     const histogramDomain = useMemo(() => {
       return getHistogramDomain({aggregatedBins, columnStats, dataset, fieldValueAccessor});
@@ -218,17 +221,22 @@ function ColorScaleSelectorFactory(
       val => {
         // highlight selected option
         if (getOptionValue(val) === SCALE_TYPES.custom) {
+          const colorMap = range.colorMap
+            ? range.colorMap
+            : colorBreaks
+            ? colorBreaksToColorMap(colorBreaks)
+            : undefined;
+          const colors =
+            field?.type === ALL_FIELD_TYPES.string
+              ? range.colors.slice(0, colorMap?.length)
+              : range.colors;
           // update custom breaks
           const customPalette: NestedPartial<ColorRange> = {
             name: 'color.customPalette',
             type: 'custom',
             category: 'Custom',
-            colors: range.colors,
-            colorMap: range.colorMap
-              ? range.colorMap
-              : colorBreaks
-              ? colorBreaksToColorMap(colorBreaks)
-              : undefined
+            colors,
+            colorMap
           };
           setColorUI({
             showColorChart: true,

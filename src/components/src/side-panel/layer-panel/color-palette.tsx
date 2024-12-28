@@ -59,7 +59,7 @@ const ColorPalette: React.FC<ColorPaletteProps> = ({
   >
     <PaletteWrapper style={{height, transform: `scale(${isReversed ? -1 : 1}, 1)`}}>
       {colors.map((color: number | string, index: number) =>
-        colorWidths ? (
+        colorWidths && colorWidths[index] ? (
           <StyledColorBlock
             key={`${color}-${index}`}
             style={{backgroundColor: String(color), width: colorWidths[index]}}

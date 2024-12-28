@@ -39,6 +39,7 @@ export {
   histogramFromThreshold,
   histogramFromValues,
   histogramFromDomain,
+  histogramFromOrdinal,
   runGpuFilterForPlot,
   updateTimeFilterPlotType
 } from './plot';

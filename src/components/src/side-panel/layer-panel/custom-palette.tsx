@@ -221,7 +221,23 @@ export const DragHandle = SortableHandle<DragHandleProps>(({className, children}
   <StyledDragHandle className={className}>{children}</StyledDragHandle>
 ));
 
-export const ColorPaletteInput = ({value, onChange, id, width, textAlign, editable}) => {
+export type ColorPaletteInputProps = {
+  value: string | number;
+  onChange: (val: unknown) => void;
+  id: string;
+  width: string;
+  textAlign: string;
+  editable: boolean;
+};
+
+export const ColorPaletteInput = ({
+  value,
+  onChange,
+  id,
+  width,
+  textAlign,
+  editable
+}: ColorPaletteInputProps) => {
   const [stateValue, setValue] = useState(value);
   const inputRef = useRef(null);
   useEffect(() => {
@@ -393,7 +409,19 @@ export const CustomPaletteInput: React.FC<CustomPaletteInputProps> = ({
             editColorMap={editColorMapValue}
             editable
           />
-        ) : null}
+        ) : (
+          colorBreaks &&
+          colorBreaks[index] && (
+            <ColorPaletteInput
+              value={colorBreaks[index].label}
+              id={`color-palette-input-${index}-left`}
+              width="auto"
+              textAlign="end"
+              editable={false}
+              onChange={v => v}
+            />
+          )
+        )}
       </div>
       <div className="custom-palette-input__right">
         {!disableAppend ? (

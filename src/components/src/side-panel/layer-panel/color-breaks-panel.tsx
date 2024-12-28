@@ -37,7 +37,9 @@ const StyledColorBreaksDisplay = styled.div.attrs({
 
 const ColorBreaksPanelWrapper = styled.div``;
 
-export const EditButton = ({onClickEdit}) => (
+type EditButtonProps = {onClickEdit: () => void};
+
+export const EditButton: React.FC<EditButtonProps> = ({onClickEdit}) => (
   <Button className="editp__button" link onClick={onClickEdit}>
     <Edit height="16px" />
     Edit
@@ -51,7 +53,7 @@ export type ColorBreaksDisplayProps = {
 
 export const ColorBreaksDisplay: React.FC<ColorBreaksDisplayProps> = ({currentBreaks, onEdit}) => {
   if (!isNumericColorBreaks(currentBreaks)) {
-    // TODO: implement display for ordinal breaks
+    // don't display color breaks for ordinal breaks, user can change it in custom breaks
     return null;
   }
   return (

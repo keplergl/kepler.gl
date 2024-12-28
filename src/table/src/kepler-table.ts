@@ -496,7 +496,9 @@ class KeplerTable<F extends Field = Field> {
       case SCALE_TYPES.linear:
       case SCALE_TYPES.sqrt:
       default:
-        return getLinearDomain(filteredIndexForDomain, indexValueAccessor);
+        return field.type === ALL_FIELD_TYPES.string
+          ? getOrdinalDomain(dataContainer, valueAccessor)
+          : getLinearDomain(filteredIndexForDomain, indexValueAccessor);
     }
   }
 

@@ -109,6 +109,30 @@ export function histogramFromValues(
     });
 }
 
+export function histogramFromOrdinal(
+  domain: [string],
+  values: (Millisecond | null | number)[],
+  valueAccessor?: (d: unknown) => string
+): Bin[] {
+  // @ts-expect-error to typed to expect strings
+  const getBins = d3Histogram().thresholds(domain);
+  if (valueAccessor) {
+    // @ts-expect-error to typed to expect strings
+    getBins.value(valueAccessor);
+  }
+
+  // @ts-expect-error null values aren't expected
+  const bins = getBins(values);
+
+  // @ts-ignore d3-array types doesn't match
+  return bins.map(bin => ({
+    count: bin.length,
+    indexes: bin,
+    x0: bin.x0,
+    x1: bin.x0
+  }));
+}
+
 /**
  *
  * @param domain
