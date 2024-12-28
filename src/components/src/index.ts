@@ -486,3 +486,4 @@ export {CloudListProvider, useCloudListProvider} from './hooks/use-cloud-list-pr
 export {default as useDndEffects} from './hooks/use-dnd-effects';
 export {default as useDndLayers} from './hooks/use-dnd-layers';
 export {default as useFeatureFlags} from './hooks/use-feature-flags';
+export {default as useLegendPosition} from './hooks/use-legend-position';

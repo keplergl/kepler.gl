@@ -10,12 +10,7 @@ export {
 } from './schema-manager';
 
 // eslint-disable-next-line prettier/prettier
-export type {
-  SavedConfigV1,
-  SavedMap,
-  LoadedMap,
-  SavedMapState
-} from './schema-manager';
+export type {SavedConfigV1, SavedMap, LoadedMap, SavedMapState} from './schema-manager';
 export {CURRENT_VERSION, VERSIONS} from './versions';
 export {
   visStateSchemaV1,
@@ -45,4 +40,5 @@ export {
   CustomMapStyleSchema
 } from './map-style-schema';
 export {default as mapStateSchema} from './map-state-schema';
+export {default as uiStateSchema} from './ui-state-schema';
 export {default as Schema} from './schema';

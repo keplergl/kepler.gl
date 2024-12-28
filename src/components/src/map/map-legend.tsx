@@ -416,7 +416,7 @@ export type MapLegendProps = {
   disableEdit?: boolean;
   isExport?: boolean;
   onLayerVisConfigChange?: (oldLayer: Layer, newVisConfig: Partial<LayerVisConfig>) => void;
-  actionIcons: MapLegendIcons;
+  actionIcons?: MapLegendIcons;
 };
 
 MapLegendFactory.deps = [LayerLegendHeaderFactory, LayerLegendContentFactory];

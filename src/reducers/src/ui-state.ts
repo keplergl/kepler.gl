@@ -19,6 +19,7 @@ const actionHandler = {
   [ActionTypes.OPEN_DELETE_MODAL]: uiStateUpdaters.openDeleteModalUpdater,
   [ActionTypes.TOGGLE_MAP_CONTROL]: uiStateUpdaters.toggleMapControlUpdater,
   [ActionTypes.SET_MAP_CONTROL_VISIBILITY]: uiStateUpdaters.setMapControlVisibilityUpdater,
+  [ActionTypes.SET_MAP_CONTROL_SETTINGS]: uiStateUpdaters.setMapControlSettingsUpdater,
   [ActionTypes.ADD_NOTIFICATION]: uiStateUpdaters.addNotificationUpdater,
   [ActionTypes.REMOVE_NOTIFICATION]: uiStateUpdaters.removeNotificationUpdater,
 

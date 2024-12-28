@@ -436,6 +436,33 @@ export const setMapControlVisibilityUpdater = (
 };
 
 /**
+ * Toggle map control settings
+ * @memberof uiStateUpdaters
+ * @param state `uiState`
+ * @param action action
+ * @param action.payload map control panel id, one of the keys of: [`DEFAULT_MAP_CONTROLS`](#default_map_controls)
+ * @returns nextState
+ * @public
+ */
+export const setMapControlSettingsUpdater = (
+  state: UiState,
+  {payload: {panelId, settings}}: UIStateActions.setMapControlSettingsUpdaterAction
+): UiState => {
+  const mapControl = state.mapControls?.[panelId];
+  if (!mapControl) {
+    return state;
+  }
+
+  return {
+    ...state,
+    mapControls: {
+      ...state.mapControls,
+      [panelId]: {...mapControl, settings: {...mapControl.settings, ...settings}}
+    }
+  };
+};
+
+/**
  * Toggle active map control panel
  * @memberof uiStateUpdaters
  * @param state `uiState`
