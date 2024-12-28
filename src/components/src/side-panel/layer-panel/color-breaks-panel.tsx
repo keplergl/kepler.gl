@@ -194,7 +194,7 @@ function ColorBreaksPanelFactory(
               onApply={onApply}
               onCancel={onCilckCancel}
             />
-          ) : currentBreaks ? (
+          ) : currentBreaks && allBins.length > 1 ? (
             <ColorBreaksDisplay
               currentBreaks={currentBreaks}
               onEdit={isCustomBreaks ? onClickEditCustomBreaks : null}
