@@ -38,6 +38,7 @@ import {
   loadFilesSuccess,
   loadNextFile,
   nextFileBatch,
+  setFilter,
   processFileContent,
   fitBounds as fitMapBounds,
   toggleLayerForMap
@@ -102,6 +103,7 @@ import {
   VIS_STATE_MERGERS,
   createLayerFromConfig,
   parseLayerConfig,
+  serializeFilter,
   serializeLayer,
   serializeVisState,
   validateLayerWithData
@@ -1069,6 +1071,37 @@ export function setFilterAnimationWindowUpdater<S extends VisState>(
   const newSyncTimelineMode = getSyncAnimationMode(newFilter as TimeRangeFilter);
 
   return setTimeFilterTimelineModeUpdater(newState, {id, mode: newSyncTimelineMode});
+}
+
+export function applyFilterConfigUpdater(
+  state: VisState,
+  action: VisStateActions.ApplyFilterConfigUpdaterAction
+): VisState {
+  const {filterId, newFilter} = action;
+  const oldFilter = state.filters.find(f => f.id === filterId);
+  if (!oldFilter) {
+    return state;
+  }
+
+  // Serialize the filters to only compare the saved properties
+  const serializedOldFilter = serializeFilter(oldFilter, state.schema) ?? {config: {}};
+  const serializedNewFilter = serializeFilter(newFilter, state.schema);
+  if (!serializedNewFilter || isEqual(serializedOldFilter, serializedNewFilter)) {
+    return state;
+  }
+
+  // If there are any changes to the filter, apply them
+  const changed = pickChangedProps(serializedOldFilter, serializedNewFilter);
+  delete changed['id']; // id should not be changed
+
+  const filterIndex = state.filters.findIndex(f => f.id === filterId);
+  if (filterIndex < 0) {
+    return state;
+  }
+  return setFilterUpdater(
+    state,
+    setFilter(filterIndex, Object.keys(changed), Object.values(changed))
+  );
 }
 
 /**
