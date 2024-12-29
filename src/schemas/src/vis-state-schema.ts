@@ -117,6 +117,7 @@ export type Merger<S extends object> = {
   waitForLayerData?: boolean;
   replaceParentDatasetIds?: ReplaceParentDatasetIdsFunc<ValueOf<S>>;
   saveUnmerged?: (state: S, unmerged: any) => S;
+  combineConfigs?: (configs: S[]) => S;
   getChildDatasetIds?: any;
 };
 export type VisStateMergers<S extends object> = Merger<S>[];
