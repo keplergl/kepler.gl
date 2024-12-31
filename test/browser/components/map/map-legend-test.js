@@ -154,38 +154,27 @@ function testPointLayerLegend(t, pointLegend, onLayerVisConfigChange) {
     'point layer legend should render color by measure: gps_data.types'
   );
 
-  // colors: ["#E6FAFA", "#AAD7DA", "#68B4BB", "#00939C"]
+  // colors: ['#00939C', '#6BB5B9', '#AAD7D9', '#E6FAFA']
   // colorDomain ["driver_analytics", "driver_analytics_0", "driver_gps"]
   t.equal(pointLegend.find(LegendRow).length, 3, 'Should render 3 legends');
   const expectedLegend = [
-    ['#E6FAFA', 'driver_analytics'],
-    ['#AAD7DA', 'driver_analytics_0'],
-    ['#68B4BB', 'driver_gps']
+    ['#00939C', 'driver_analytics'],
+    ['#6BB5B9', 'driver_analytics_0'],
+    ['#AAD7D9', 'driver_gps']
   ];
   for (let i = 0; i < 3; i++) {
-    const rect = pointLegend
-      .find(LegendRow)
-      .at(i)
-      .find('.legend-row-color')
-      .at(0);
+    const rect = pointLegend.find(LegendRow).at(i).find('.legend-row-color').at(0);
     t.equal(
       rect.props().style.backgroundColor,
       expectedLegend[i][0],
       'should render correct legend color'
     );
-    const input = pointLegend
-      .find(LegendRow)
-      .at(i)
-      .find('input')
-      .at(0);
+    const input = pointLegend.find(LegendRow).at(i).find('input').at(0);
     t.equal(input.props().value, expectedLegend[i][1], 'should render correct legend label');
   }
 
   // test change input
-  const firstLegendInput = pointLegend
-    .find(LegendRow)
-    .at(0)
-    .find('input');
+  const firstLegendInput = pointLegend.find(LegendRow).at(0).find('input');
   const event = {target: {name: 'input-legend-label', value: 'taro'}};
   firstLegendInput.simulate('change', event);
 
@@ -199,7 +188,7 @@ function testPointLayerLegend(t, pointLegend, onLayerVisConfigChange) {
   );
   t.deepEqual(
     onLayerVisConfigChange.args[0][1].colorRange.colorLegends,
-    {'#E6FAFA': 'taro'},
+    {'#00939C': 'taro'},
     'second arg should contain colorLegends'
   );
 }
@@ -248,7 +237,7 @@ test('Components -> MapLegend.render -> with colorLegends', t => {
   ptLayer.config.visConfig.colorRange = {
     ...ptLayer.config.visConfig.colorRange,
     colorLegends: {
-      '#E6FAFA': 'taro'
+      '#00939C': 'taro'
     }
   };
   let wrapper;
@@ -271,10 +260,7 @@ test('Components -> MapLegend.render -> with colorLegends', t => {
   t.equal(firstLegend.find(ResetColorLabel).length, 1, 'should render reset');
 
   // click reset
-  firstLegend
-    .find(ResetColorLabel)
-    .at(0)
-    .simulate('click');
+  firstLegend.find(ResetColorLabel).at(0).simulate('click');
   t.ok(onLayerVisConfigChange.calledOnce, 'should call onLayerVisConfigChange');
 
   t.ok(onLayerVisConfigChange.args[0][0] instanceof PointLayer, 'first arg should be Layer');

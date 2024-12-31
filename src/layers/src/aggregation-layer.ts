@@ -16,9 +16,9 @@ import {
   CHANNEL_SCALES,
   FIELD_OPTS,
   DEFAULT_AGGREGATION,
-  ColorRange
+  AGGREGATION_TYPES
 } from '@kepler.gl/constants';
-import {Field, LayerColumn, Merge} from '@kepler.gl/types';
+import {ColorRange, Field, LayerColumn, Merge} from '@kepler.gl/types';
 import {KeplerTable, Datasets} from '@kepler.gl/table';
 
 type AggregationLayerColumns = {
@@ -263,8 +263,9 @@ export default class AggregationLayer extends Layer {
     return this.config[field]
       ? // scale options based on aggregation
         FIELD_OPTS[this.config[field].type].scale[channelScaleType][aggregationType]
-      : // default scale options for point count
-        DEFAULT_AGGREGATION[channelScaleType][aggregationType];
+      : // default scale options for point count: aggregationType should be count since
+        // LAYER_VIS_CONFIGS.aggregation.defaultValue is AGGREGATION_TYPES.average,
+        DEFAULT_AGGREGATION[channelScaleType][AGGREGATION_TYPES.count];
   }
 
   /**
@@ -274,7 +275,8 @@ export default class AggregationLayer extends Layer {
     return this;
   }
 
-  updateLayerMeta(dataContainer, getPosition) {
+  updateLayerMeta(dataset: KeplerTable, getPosition) {
+    const {dataContainer} = dataset;
     // get bounds from points
     const bounds = this.getPointsBounds(dataContainer, getPosition);
 
@@ -379,6 +381,7 @@ export default class AggregationLayer extends Layer {
 
       // color
       colorRange: this.getColorRange(visConfig.colorRange),
+      colorMap: visConfig.colorRange.colorMap,
       colorScaleType: this.config.colorScale,
       upperPercentile: visConfig.percentile[1],
       lowerPercentile: visConfig.percentile[0],

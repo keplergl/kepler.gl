@@ -14,7 +14,7 @@ import {ActionHandler, MapStateActions, VisStateActions, toggleModal} from '@kep
 import {dataTestIds} from '@kepler.gl/constants';
 import {Layer, LayerBaseConfig} from '@kepler.gl/layers';
 import {Datasets} from '@kepler.gl/table';
-import {ColorUI, LayerVisConfig, NestedPartial} from '@kepler.gl/types';
+import {ColorUI, LayerVisConfig, NestedPartial, SplitMap} from '@kepler.gl/types';
 import LayerConfiguratorFactory from './layer-configurator';
 import LayerPanelHeaderFactory from './layer-panel-header';
 
@@ -47,6 +47,8 @@ type LayerPanelProps = {
   zoomToLayer: ActionHandler<typeof MapStateActions.fitBounds>;
   duplicateLayer: ActionHandler<typeof VisStateActions.duplicateLayer>;
   listeners?: React.ElementType;
+  layerToggleVisibility: ActionHandler<typeof VisStateActions.layerToggleVisibility>;
+  splitMap?: SplitMap;
 };
 
 const PanelWrapper = styled.div<{active: boolean}>`
@@ -100,7 +102,7 @@ function LayerPanelFactory(
     _toggleVisibility: MouseEventHandler = e => {
       e.stopPropagation();
       const isVisible = !this.props.layer.config.isVisible;
-      this.updateLayerConfig({isVisible});
+      this.props.layerToggleVisibility(this.props.layer.id, isVisible);
     };
 
     _resetIsValid: MouseEventHandler = e => {
@@ -136,10 +138,12 @@ function LayerPanelFactory(
     };
 
     render() {
-      const {layer, datasets, isDraggable, layerTypeOptions, listeners} = this.props;
+      const {layer, datasets, isDraggable, layerTypeOptions, listeners, splitMap} = this.props;
       const {config, isValid} = layer;
       const {isConfigActive} = config;
-      const allowDuplicate = typeof layer.isValidToSave === 'function' && layer.isValidToSave();
+      const allowDuplicate =
+        typeof layer.isValidToSave === 'function' && layer.isValidToSave() && isValid;
+      const layerVisInSplitMap = splitMap?.layers?.[layer.id];
 
       return (
         <PanelWrapper
@@ -153,7 +157,7 @@ function LayerPanelFactory(
           <LayerPanelHeader
             isConfigActive={isConfigActive}
             layerId={layer.id}
-            isVisible={config.isVisible}
+            isVisible={layerVisInSplitMap ?? config.isVisible}
             isValid={isValid}
             label={config.label}
             labelRCGColorValues={config.dataId ? datasets[config.dataId].color : null}

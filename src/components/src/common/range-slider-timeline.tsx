@@ -2,7 +2,6 @@
 // Copyright contributors to the kepler.gl project
 
 import React, {useMemo} from 'react';
-// eslint-disable-next-line no-unused-vars
 import {CSSProperties} from 'react';
 import {ArrowDownFull, TimelineMarker} from '../common/icons';
 import {Tooltip} from '../common/styled-components';
@@ -22,13 +21,13 @@ const TIMELINE_MARKER_STYLE: CSSProperties = {
   color: '#3D4866'
 };
 
-const containerStyle = {
+const containerStyle: CSSProperties = {
   display: 'flex',
   width: '100%',
   height: '24px'
 };
 
-const iconWrapperStyle = {
+const iconWrapperStyle: CSSProperties = {
   marginRight: '8px',
   cursor: 'pointer'
 };

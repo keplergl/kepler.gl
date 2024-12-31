@@ -8,8 +8,14 @@ import {GLTFLoader, postProcessGLTF} from '@loaders.gl/gltf';
 import Layer, {LayerBaseConfig} from '../base-layer';
 import ScenegraphLayerIcon from './scenegraph-layer-icon';
 import ScenegraphInfoModalFactory from './scenegraph-info-modal';
-import {LAYER_VIS_CONFIGS, ColorRange} from '@kepler.gl/constants';
-import {Merge, VisConfigColorRange, VisConfigNumber, LayerColumn} from '@kepler.gl/types';
+import {LAYER_VIS_CONFIGS} from '@kepler.gl/constants';
+import {
+  ColorRange,
+  Merge,
+  VisConfigColorRange,
+  VisConfigNumber,
+  LayerColumn
+} from '@kepler.gl/types';
 import {default as KeplerTable} from '@kepler.gl/table';
 import {DataContainerInterface} from '@kepler.gl/utils';
 
@@ -185,7 +191,8 @@ export default class ScenegraphLayer extends Layer {
     };
   }
 
-  updateLayerMeta(dataContainer, getPosition) {
+  updateLayerMeta(dataset: KeplerTable, getPosition) {
+    const {dataContainer} = dataset;
     const bounds = this.getPointsBounds(dataContainer, getPosition);
     this.updateMeta({bounds});
   }

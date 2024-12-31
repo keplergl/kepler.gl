@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 import {useSelector} from 'react-redux';
 
 import {ActionHandler, createOrUpdateFilter, setFilter, setFilterPlot} from '@kepler.gl/actions';

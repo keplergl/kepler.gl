@@ -10,13 +10,14 @@ import {
   getInitialMapLayersForSplitMap,
   applyFiltersToDatasets,
   validateFiltersUpdateDatasets,
-  findById
+  findById,
+  aggregate
 } from '@kepler.gl/utils';
-import {getLayerOrderFromLayers} from '@kepler.gl/reducers';
 
-import {Layer} from '@kepler.gl/layers';
+import {Layer, VisualChannel} from '@kepler.gl/layers';
 import {createEffect} from '@kepler.gl/effects';
-import {LAYER_BLENDINGS, OVERLAY_BLENDINGS} from '@kepler.gl/constants';
+import {notNullorUndefined} from '@kepler.gl/common-utils';
+import {AGGREGATION_TYPES, LAYER_BLENDINGS, OVERLAY_BLENDINGS} from '@kepler.gl/constants';
 import {CURRENT_VERSION, VisState, VisStateMergers, KeplerGLSchemaClass} from '@kepler.gl/schemas';
 
 import {
@@ -30,9 +31,14 @@ import {
   Effect as EffectType,
   ParsedEffect,
   LayerColumns,
-  LayerColumn
+  LayerColumn,
+  ParsedFilter,
+  NestedPartial,
+  SavedAnimationConfig
 } from '@kepler.gl/types';
 import {KeplerTable, Datasets, assignGpuChannels, resetFilterGpuMode} from '@kepler.gl/table';
+
+import {getLayerOrderFromLayers} from './layer-utils';
 
 /**
  * Merge loaded filters with current state, if no fields or data are loaded
@@ -91,9 +97,23 @@ export function replaceFilterDatasetIds(
   savedFilter.forEach(filter => {
     if (filter.dataId.includes(dataId)) {
       const newDataId = filter.dataId.map(d => (d === dataId ? dataIdToUse : d));
+      let plotType;
+      // TODO: more generic approach to save plotType.colorsByDataId
+      if (filter.plotType?.colorsByDataId?.[dataId]) {
+        // replace colorByDataId in filter.plotType
+        const {[dataId]: color, ...rest} = filter.plotType?.colorsByDataId || {};
+        plotType = {
+          ...filter.plotType,
+          colorsByDataId: {
+            ...rest,
+            [dataIdToUse]: color
+          }
+        };
+      }
       replaced.push({
         ...filter,
-        dataId: newDataId
+        dataId: newDataId,
+        ...(plotType ? {plotType} : {})
       });
     }
   });
@@ -176,6 +196,17 @@ export function createLayerFromConfig(state: VisState, layerConfig: any): Layer 
   const newLayer = validated[0];
   newLayer.updateLayerDomain(state.datasets);
   return newLayer;
+}
+
+/**
+ * Get loaded filter from state
+ */
+export function serializeFilter(
+  newFilter: Filter,
+  schema: KeplerGLSchemaClass
+): ParsedFilter | undefined {
+  const serializedVisState = serializeVisState({filters: [newFilter]}, schema);
+  return serializedVisState?.filters?.[0];
 }
 
 /**
@@ -307,7 +338,7 @@ export function mergeInteractions<S extends VisState>(
   state: S,
   interactionToBeMerged: Partial<SavedInteractionConfig> | undefined
 ): S {
-  const merged: Partial<SavedInteractionConfig> = {};
+  const merged: NestedPartial<SavedInteractionConfig> = {};
   const unmerged: Partial<SavedInteractionConfig> = {};
 
   if (interactionToBeMerged) {
@@ -372,6 +403,64 @@ export function mergeInteractions<S extends VisState>(
   return nextState;
 }
 
+function combineInteractionConfigs(configs: SavedInteractionConfig[]): SavedInteractionConfig {
+  const combined = {...configs[0]};
+  // handle each property key of an `InteractionConfig`, e.g. tooltip, geocoder, brush, coordinate
+  // by combining values for each among all passed in configs
+
+  for (const key in combined) {
+    const toBeCombinedProps = configs.map(c => c[key]);
+
+    // all of these have an enabled boolean
+    combined[key] = {
+      // are any of the configs' enabled values true?
+      enabled: toBeCombinedProps.some(p => p?.enabled)
+    };
+
+    if (key === 'tooltip') {
+      // are any of the configs' compareMode values true?
+      combined[key].compareMode = toBeCombinedProps.some(p => p?.compareMode);
+
+      // return the compare type mode, it will be either absolute or relative
+      combined[key].compareType = getValueWithHighestOccurrence(
+        toBeCombinedProps.map(p => p.compareType)
+      );
+
+      // combine fieldsToShow among all dataset ids
+      combined[key].fieldsToShow = toBeCombinedProps
+        .map(p => p.fieldsToShow)
+        .reduce((acc, nextFieldsToShow) => {
+          for (const nextDataIdKey in nextFieldsToShow) {
+            const nextTooltipFields = nextFieldsToShow[nextDataIdKey];
+            if (!acc[nextDataIdKey]) {
+              // if the dataset id is not present in the accumulator
+              // then add it with its tooltip fields
+              acc[nextDataIdKey] = nextTooltipFields;
+            } else {
+              // otherwise the dataset id is already present in the accumulator
+              // so only add the next tooltip fields for this dataset's array if they are not already present,
+              // using the tooltipField.name property for uniqueness
+              nextTooltipFields.forEach(nextTF => {
+                if (!acc[nextDataIdKey].find(({name}) => nextTF.name === name)) {
+                  acc[nextDataIdKey].push(nextTF);
+                }
+              });
+            }
+          }
+          return acc;
+        }, {});
+    }
+
+    if (key === 'brush') {
+      // keep the biggest brush size
+      combined[key].size =
+        aggregate(toBeCombinedProps, AGGREGATION_TYPES.maximum, p => p.size) ?? null;
+    }
+  }
+
+  return combined;
+}
+
 function savedUnmergedInteraction<S extends VisState>(
   state: S,
   unmerged: Partial<SavedInteractionConfig>
@@ -407,6 +496,7 @@ function replaceInteractionDatasetIds(interactionConfig, dataId: string, dataIdT
   }
   return null;
 }
+
 /**
  * Merge splitMaps config with current visStete.
  * 1. if current map is split, but splitMap DOESNOT contain maps
@@ -545,6 +635,15 @@ export function mergeLayerBlending<S extends VisState>(
 }
 
 /**
+ * Combines multiple layer blending configs into a single string
+ * by returning the one with the highest occurrence
+ */
+function combineLayerBlendingConfigs(configs: string[]): string | null {
+  // return the mode of the layer blending type
+  return getValueWithHighestOccurrence(configs);
+}
+
+/**
  * Merge overlayBlending with saved
  */
 export function mergeOverlayBlending<S extends VisState>(
@@ -559,6 +658,15 @@ export function mergeOverlayBlending<S extends VisState>(
   }
 
   return state;
+}
+
+/**
+ * Combines multiple overlay blending configs into a single string
+ * by returning the one with the highest occurrence
+ **/
+function combineOverlayBlendingConfigs(configs: string[]): string | null {
+  // return the mode of the overlay blending type
+  return getValueWithHighestOccurrence(configs);
 }
 
 /**
@@ -580,6 +688,14 @@ export function mergeAnimationConfig<S extends VisState>(
   }
 
   return state;
+}
+
+function combineAnimationConfigs(configs: SavedAnimationConfig[]): SavedAnimationConfig {
+  // get the smallest values of currentTime and speed among all configs
+  return {
+    currentTime: aggregate(configs, AGGREGATION_TYPES.minimum, c => c.currentTime) ?? null,
+    speed: aggregate(configs, AGGREGATION_TYPES.minimum, c => c.speed) ?? null
+  };
 }
 
 /**
@@ -706,7 +822,7 @@ export function validateSavedVisualChannels(
   savedLayer: ParsedLayer,
   options: {throwOnError?: boolean} = {}
 ): null | Layer {
-  Object.values(newLayer.visualChannels).forEach(({field, scale, key}) => {
+  (Object.values(newLayer.visualChannels) as VisualChannel[]).forEach(({field, scale, key}) => {
     let foundField;
     if (savedLayer.config) {
       if (savedLayer.config[field]) {
@@ -917,6 +1033,24 @@ export function mergeEditor<S extends VisState>(state: S, savedEditor: SavedEdit
   };
 }
 
+function combineEditorConfigs(configs: SavedEditor[]): SavedEditor {
+  return configs.reduce(
+    (acc, nextConfig) => {
+      return {
+        ...acc,
+        features: [...acc.features, ...(nextConfig.features || [])]
+      };
+    },
+    {
+      // start with:
+      // - empty array for features accumulation
+      // - and are any of the configs' visible values true?
+      features: [],
+      visible: configs.some(c => c?.visible)
+    }
+  );
+}
+
 /**
  * Validate saved layer config with new data,
  * update fieldIdx based on new fields
@@ -944,6 +1078,29 @@ export function mergeDatasetsByOrder(state: VisState, newDataEntries: Datasets):
   return merged;
 }
 
+/**
+ * Simliar purpose to aggregation utils `getMode` function,
+ * but returns the mode in the same value type without coercing to a string.
+ * It ignores `undefined` or `null` values, but returns `null` if no mode could be calculated.
+ */
+function getValueWithHighestOccurrence<T>(arr: T[]): T | null {
+  const tallys = new Map();
+  arr.forEach(value => {
+    if (notNullorUndefined(value)) {
+      if (!tallys.has(value)) {
+        tallys.set(value, 1);
+      } else {
+        tallys.set(value, tallys.get(value) + 1);
+      }
+    }
+  });
+  // return the value with the highest total occurrence count
+  if (tallys.size === 0) {
+    return null;
+  }
+  return [...tallys.entries()]?.reduce((acc, next) => (next[1] > acc[1] ? next : acc))[0];
+}
+
 export const VIS_STATE_MERGERS: VisStateMergers<any> = [
   {
     merge: mergeLayers,
@@ -967,11 +1124,16 @@ export const VIS_STATE_MERGERS: VisStateMergers<any> = [
     prop: 'interactionConfig',
     toMergeProp: 'interactionToBeMerged',
     replaceParentDatasetIds: replaceInteractionDatasetIds,
-    saveUnmerged: savedUnmergedInteraction
+    saveUnmerged: savedUnmergedInteraction,
+    combineConfigs: combineInteractionConfigs
   },
-  {merge: mergeLayerBlending, prop: 'layerBlending'},
-  {merge: mergeOverlayBlending, prop: 'overlayBlending'},
+  {merge: mergeLayerBlending, prop: 'layerBlending', combineConfigs: combineLayerBlendingConfigs},
+  {
+    merge: mergeOverlayBlending,
+    prop: 'overlayBlending',
+    combineConfigs: combineOverlayBlendingConfigs
+  },
   {merge: mergeSplitMaps, prop: 'splitMaps', toMergeProp: 'splitMapsToBeMerged'},
-  {merge: mergeAnimationConfig, prop: 'animationConfig'},
-  {merge: mergeEditor, prop: 'editor'}
+  {merge: mergeAnimationConfig, prop: 'animationConfig', combineConfigs: combineAnimationConfigs},
+  {merge: mergeEditor, prop: 'editor', combineConfigs: combineEditorConfigs}
 ];

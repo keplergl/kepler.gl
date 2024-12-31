@@ -8,7 +8,8 @@ import Layer, {
   LayerColorConfig,
   LayerSizeConfig,
   LayerBounds,
-  LayerBaseConfigPartial
+  LayerBaseConfigPartial,
+  VisualChannel
 } from '../base-layer';
 import {BrushingExtension} from '@deck.gl/extensions';
 import {GeoArrowArcLayer} from '@kepler.gl/deckgl-arrow-layers';
@@ -25,12 +26,12 @@ import ArcLayerIcon from './arc-layer-icon';
 import {isLayerHoveredFromArrow, createGeoArrowPointVector, getFilteredIndex} from '../layer-utils';
 import {
   DEFAULT_LAYER_COLOR,
-  ColorRange,
   PROJECTED_PIXEL_SIZE_MULTIPLIER,
   ALL_FIELD_TYPES
 } from '@kepler.gl/constants';
 
 import {
+  ColorRange,
   RGBColor,
   Merge,
   VisConfigColorRange,
@@ -462,7 +463,9 @@ export default class ArcLayer extends Layer {
   }
   /* eslint-enable complexity */
 
-  updateLayerMeta(dataContainer) {
+  updateLayerMeta(dataset: KeplerTable) {
+    const {dataContainer} = dataset;
+
     this.dataContainer = dataContainer;
 
     // get bounds from arcs
@@ -583,12 +586,20 @@ export default class ArcLayer extends Layer {
   ) {
     // for arrow format, `object` is the Arrow row object Proxy,
     // and index is passed in `hoverInfo`.
-    const index = Boolean(this.geoArrowVector0)
-      ? hoverInfo?.index
-      : (object as {index: number}).index;
+    const index = this.geoArrowVector0 ? hoverInfo?.index : (object as {index: number}).index;
     if (index >= 0) {
       return dataContainer.row(index);
     }
     return null;
+  }
+
+  getLegendVisualChannels() {
+    let channels: {[key: string]: VisualChannel} = this.visualChannels;
+    if (channels.sourceColor?.field && this.config[channels.sourceColor.field]) {
+      // Remove targetColor to avoid duplicate legend
+      channels = {...channels};
+      delete channels.targetColor;
+    }
+    return channels;
   }
 }

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {ComponentType} from 'react';
+import React, {ComponentType, useMemo} from 'react';
 import styled from 'styled-components';
 import classnames from 'classnames';
 import PanelHeaderActionFactory from '../../side-panel/panel-header-action';
@@ -42,6 +42,12 @@ export type FilterPanelHeaderProps = {
   datasets: KeplerTable[];
   filter: Filter;
   removeFilter: () => void;
+  actionItems?: {
+    key: string;
+    tooltip: string;
+    onClick: () => void;
+    icon: React.ElementType;
+  }[];
   actionIcons?: {
     delete: ComponentType;
   };
@@ -64,23 +70,41 @@ function FilterPanelHeaderFactory(
     datasets,
     filter,
     removeFilter,
+    actionItems,
     actionIcons = defaultActionIcons
-  }: FilterPanelHeaderProps) => (
-    <StyledFilterHeader
-      className={classnames('filter-panel__header', className)}
-      $labelRCGColorValues={datasets.map((d: KeplerTable) => d.color)}
-    >
-      <StyledChildrenContainer>{children}</StyledChildrenContainer>
-      <PanelHeaderAction
-        id={filter.id}
-        tooltip="tooltip.delete"
-        tooltipType="error"
-        onClick={removeFilter}
-        hoverColor={'errorColor'}
-        IconComponent={actionIcons.delete}
-      />
-    </StyledFilterHeader>
-  );
+  }: FilterPanelHeaderProps) => {
+    const items = useMemo(
+      () =>
+        actionItems ?? [
+          {
+            key: 'delete',
+            tooltip: 'tooltip.delete',
+            onClick: removeFilter,
+            icon: actionIcons.delete
+          }
+        ],
+      [removeFilter, actionIcons, actionItems]
+    );
+    return (
+      <StyledFilterHeader
+        className={classnames('filter-panel__header', className)}
+        $labelRCGColorValues={datasets.map((d: KeplerTable) => d.color)}
+      >
+        <StyledChildrenContainer>{children}</StyledChildrenContainer>
+        {items.map(item => (
+          <PanelHeaderAction
+            key={item.key}
+            id={filter.id}
+            tooltip={item.tooltip}
+            tooltipType="error"
+            onClick={item.onClick}
+            hoverColor={'errorColor'}
+            IconComponent={item.icon}
+          />
+        ))}
+      </StyledFilterHeader>
+    );
+  };
 
   return FilterPanelHeader;
 }

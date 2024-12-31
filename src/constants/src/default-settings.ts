@@ -633,16 +633,26 @@ export const linearFieldScaleFunctions = {
   [CHANNEL_SCALES.size]: [SCALE_TYPES.linear, SCALE_TYPES.sqrt, SCALE_TYPES.log]
 };
 
+const DEFAULT_AGGREGATION_COLOR_SCALES = [
+  SCALE_TYPES.quantize,
+  SCALE_TYPES.quantile,
+  SCALE_TYPES.custom
+];
+
 export const linearFieldAggrScaleFunctions = {
-  [CHANNEL_SCALES.colorAggr]: {
-    [AGGREGATION_TYPES.average]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile],
-    [AGGREGATION_TYPES.maximum]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile],
-    [AGGREGATION_TYPES.minimum]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile],
-    [AGGREGATION_TYPES.median]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile],
-    [AGGREGATION_TYPES.stdev]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile],
-    [AGGREGATION_TYPES.sum]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile],
-    [AGGREGATION_TYPES.variance]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile]
-  },
+  [CHANNEL_SCALES.colorAggr]: [
+    AGGREGATION_TYPES.average,
+    AGGREGATION_TYPES.maximum,
+    AGGREGATION_TYPES.minimum,
+    AGGREGATION_TYPES.median,
+    AGGREGATION_TYPES.stdev,
+    AGGREGATION_TYPES.sum,
+    AGGREGATION_TYPES.variance,
+    AGGREGATION_TYPES.count
+  ].reduce((prev, cur) => {
+    prev[cur] = DEFAULT_AGGREGATION_COLOR_SCALES;
+    return prev;
+  }, {}),
 
   [CHANNEL_SCALES.sizeAggr]: {
     [AGGREGATION_TYPES.average]: [SCALE_TYPES.linear, SCALE_TYPES.sqrt, SCALE_TYPES.log],
@@ -656,7 +666,7 @@ export const linearFieldAggrScaleFunctions = {
 };
 
 export const ordinalFieldScaleFunctions = {
-  [CHANNEL_SCALES.color]: [SCALE_TYPES.ordinal],
+  [CHANNEL_SCALES.color]: [SCALE_TYPES.ordinal, SCALE_TYPES.custom],
   [CHANNEL_SCALES.radius]: [SCALE_TYPES.point],
   [CHANNEL_SCALES.size]: [SCALE_TYPES.point]
 };
@@ -688,7 +698,7 @@ export const notSupportAggrOpts = {
  */
 export const DEFAULT_AGGREGATION = {
   [CHANNEL_SCALES.colorAggr]: {
-    [AGGREGATION_TYPES.count]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile]
+    [AGGREGATION_TYPES.count]: DEFAULT_AGGREGATION_COLOR_SCALES
   },
   [CHANNEL_SCALES.sizeAggr]: {
     [AGGREGATION_TYPES.count]: [SCALE_TYPES.linear, SCALE_TYPES.sqrt, SCALE_TYPES.log]
@@ -844,6 +854,9 @@ export const DEFAULT_LAYER_COLOR = {
   dropoff_lat: '#FF991F',
   request_lat: '#52A353'
 };
+
+export const DEFAULT_LAYER_COLOR_PALETTE = 'Global Warming';
+export const DEFAULT_LAYER_COLOR_PALETTE_STEPS = 6;
 
 // let user pass in default tooltip fields
 export const DEFAULT_TOOLTIP_FIELDS: any[] = [];
@@ -1166,7 +1179,8 @@ export const MAP_INFO_CHARACTER = {
 // Load data
 export const LOADING_METHODS = keyMirror({
   upload: null,
-  storage: null
+  storage: null,
+  tileset: null
 });
 
 export const DEFAULT_FEATURE_FLAGS = {};

@@ -117,10 +117,10 @@ export default function TimeRangeSliderFactory(
     } = props;
 
     const throttledOnchange = useMemo(() => throttle(onChange, 20), [onChange]);
-    const binsForInterval = useMemo(() => getTimeBinsForInterval(timeBins, plotType?.interval), [
-      timeBins,
-      plotType?.interval
-    ]);
+    const binsForInterval = useMemo(
+      () => getTimeBinsForInterval(timeBins, plotType?.interval),
+      [timeBins, plotType?.interval]
+    );
 
     const style = useMemo(
       () => ({

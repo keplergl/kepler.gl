@@ -17,7 +17,7 @@ import {
   LAYER_TYPES,
   FILTER_VIEW_TYPES
 } from '@kepler.gl/constants';
-import {VisState} from '@kepler.gl/schemas';
+// import {VisState} from '@kepler.gl/schemas';
 import * as ScaleUtils from './data-scale-utils';
 import {h3IsValid} from 'h3-js';
 
@@ -54,6 +54,9 @@ export const durationHour = durationMinute * 60;
 export const durationDay = durationHour * 24;
 export const durationWeek = durationDay * 7;
 export const durationYear = durationDay * 365;
+
+// TODO isolate types - depends on @kepler.gl/schemas
+type VisState = any;
 
 export type FilterResult = {
   filteredIndexForDomain?: number[];
@@ -204,14 +207,17 @@ const filterValidators = {
 
 /**
  * Default validate filter function
- * @param dataset
+ * @param datasets
+ * @param datasetId
  * @param filter
  * @return - {filter, dataset}
  */
 export function validateFilter<K extends KeplerTableModel<K, L>, L>(
-  dataset: K,
+  datasets: Record<string, K>,
+  datasetId: string,
   filter: ParsedFilter
 ): {filter: Filter | null; dataset: K} {
+  const dataset = datasets[datasetId];
   // match filter.dataId
   const failed = {dataset, filter: null};
   const filterDataId = toArray(filter.dataId);
@@ -232,7 +238,8 @@ export function validateFilter<K extends KeplerTableModel<K, L>, L>(
   const fieldName = initializeFilter.name[filterDatasetIndex];
   const {filter: updatedFilter, dataset: updatedDataset} = applyFilterFieldName(
     initializeFilter,
-    dataset,
+    datasets,
+    datasetId,
     fieldName,
     filterDatasetIndex,
     {mergeDomain: true}
@@ -259,19 +266,21 @@ export function validateFilter<K extends KeplerTableModel<K, L>, L>(
 /**
  * Validate saved filter config with new data
  *
- * @param dataset
+ * @param datasets
+ * @param datasetId
  * @param filter - filter to be validate
  * @param layers - layers
  * @return validated filter
  */
 export function validateFilterWithData<K extends KeplerTableModel<K, L>, L>(
-  dataset: K,
+  datasets: Record<string, K>,
+  datasetId: string,
   filter: ParsedFilter,
   layers: L[]
 ): {filter: Filter; dataset: K} {
   return filter.type && Object.prototype.hasOwnProperty.call(filterValidators, filter.type)
-    ? filterValidators[filter.type](dataset, filter, layers)
-    : validateFilter(dataset, filter);
+    ? filterValidators[filter.type](datasets[datasetId], filter, layers)
+    : validateFilter(datasets, datasetId, filter);
 }
 
 /**
@@ -755,6 +764,10 @@ export function isInRange(val: any, domain: number[]): boolean {
     return false;
   }
 
+  if (Array.isArray(val)) {
+    return domain[0] <= val[0] && val[1] <= domain[1];
+  }
+
   return val >= domain[0] && val <= domain[1];
 }
 
@@ -906,7 +919,8 @@ export function applyFiltersToDatasets<
 /**
  * Applies a new field name value to filter and update both filter and dataset
  * @param filter - to be applied the new field name on
- * @param dataset - dataset the field belongs to
+ * @param datasets - All datasets
+ * @param datasetId - Id of the dataset the field belongs to
  * @param fieldName - field.name
  * @param filterDatasetIndex - field.name
  * @param option
@@ -914,7 +928,8 @@ export function applyFiltersToDatasets<
  */
 export function applyFilterFieldName<K extends KeplerTableModel<K, L>, L>(
   filter: Filter,
-  dataset: K,
+  datasets: Record<string, K>,
+  datasetId: string,
   fieldName: string,
   filterDatasetIndex = 0,
   option?: {mergeDomain: boolean}
@@ -928,9 +943,10 @@ export function applyFilterFieldName<K extends KeplerTableModel<K, L>, L>(
       ? option.mergeDomain
       : false;
 
-  const fieldIndex = dataset.getColumnFieldIdx(fieldName);
+  const dataset = datasets[datasetId];
+  const fieldIndex = dataset?.getColumnFieldIdx(fieldName);
   // if no field with same name is found, move to the next datasets
-  if (fieldIndex === -1) {
+  if (!dataset || fieldIndex === -1) {
     // throw new Error(`fieldIndex not found. Dataset must contain a property with name: ${fieldName}`);
     return {filter: null, dataset};
   }
@@ -939,7 +955,8 @@ export function applyFilterFieldName<K extends KeplerTableModel<K, L>, L>(
   const filterProps = dataset.getColumnFilterProps(fieldName);
 
   let newFilter = {
-    ...(mergeDomain ? mergeFilterDomainStep(filter, filterProps) : {...filter, ...filterProps}),
+    ...filter,
+    ...filterProps,
     name: Object.assign([...toArray(filter.name)], {[filterDatasetIndex]: fieldName}),
     fieldIdx: Object.assign([...toArray(filter.fieldIdx)], {
       [filterDatasetIndex]: fieldIndex
@@ -947,6 +964,18 @@ export function applyFilterFieldName<K extends KeplerTableModel<K, L>, L>(
     // Make sure plotType is not overwritten by the default empty plotType
     ...(filter.plotType ? {plotType: filter.plotType} : {})
   };
+
+  if (mergeDomain) {
+    const domainSteps: (Filter & {step?: number}) | null =
+      mergeFilterDomain(newFilter, datasets) ?? ({} as Filter);
+    if (domainSteps) {
+      const {domain, step} = domainSteps;
+      newFilter.domain = domain;
+      if (newFilter.step !== step) {
+        newFilter.step = step;
+      }
+    }
+  }
 
   // TODO: if we don't set filter value in filterProps, we don't need to do this
   if (filterDatasetIndex > 0) {
@@ -964,11 +993,30 @@ export function applyFilterFieldName<K extends KeplerTableModel<K, L>, L>(
 }
 
 /**
+ * Merge the domains of a filter in case it applies to multiple datasets
+ */
+export function mergeFilterDomain(
+  filter: Filter,
+  datasets: Record<string, KeplerTableModel<any, any>>
+): (Filter & {step?: number}) | null {
+  let domainSteps: (Filter & {step?: number}) | null = null;
+  if (!filter?.dataId?.length) {
+    return filter;
+  }
+  filter.dataId.forEach((filterDataId, idx) => {
+    const dataset = datasets[filterDataId];
+    const filterProps = dataset.getColumnFilterProps(filter.name[idx]);
+    domainSteps = mergeFilterDomainStep(domainSteps ?? ({} as Filter), filterProps);
+  });
+  return domainSteps;
+}
+
+/**
  * Merge one filter with other filter prop domain
  */
 /* eslint-disable complexity */
 export function mergeFilterDomainStep(
-  filter: Filter,
+  filter: Filter | null,
   filterProps?: Partial<Filter>
 ): (Filter & {step?: number}) | null {
   if (!filter) {
@@ -1127,7 +1175,12 @@ export function validateFiltersUpdateDatasets<
           const toValidate = acc.validatedFilter || filterToValidate;
 
           const {filter: updatedFilter, dataset: updatedDataset} = validateFilterWithData(
-            acc.augmentedDatasets[datasetId] || dataset,
+            {
+              ...updatedDatasets,
+              ...acc.augmentedDatasets,
+              [datasetId]: acc.augmentedDatasets[datasetId] || dataset
+            },
+            datasetId,
             toValidate,
             datasetLayers
           );

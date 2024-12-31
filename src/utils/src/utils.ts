@@ -133,6 +133,8 @@ type ErrorObject = {
   message?: any;
 };
 
+export const DEFAULT_ERROR_MESSAGE = 'Something went wrong';
+
 /**
  * Get error information of unknown type
  * Extracts as much human readable information as possible
@@ -142,9 +144,12 @@ type ErrorObject = {
  * @param {*}  err - Unknown error
  * @return {string} - human readable error msg
  */
-export function getError(err?: Error | ErrorObject | string): string {
+export function getError(
+  err?: Error | ErrorObject | string,
+  defaultMessage: string = DEFAULT_ERROR_MESSAGE
+): string {
   if (!err) {
-    return 'Something went wrong';
+    return defaultMessage;
   }
 
   if (typeof err === 'string') {
@@ -152,17 +157,16 @@ export function getError(err?: Error | ErrorObject | string): string {
   } else if (err instanceof Error) {
     return err.message;
   } else if (typeof err === 'object') {
-    return err.error
-      ? getError(err.error)
-      : err.err
-      ? getError(err.err)
-      : err.message
+    return Object.prototype.hasOwnProperty.call(err, 'message')
       ? getError(err.message)
+      : Object.prototype.hasOwnProperty.call(err, 'error')
+      ? getError(err.error)
+      : Object.prototype.hasOwnProperty.call(err, 'err')
+      ? getError(err.err)
       : JSON.stringify(err);
   }
 
-  // @ts-ignore
-  return null;
+  return defaultMessage;
 }
 
 export function arrayInsert<T>(arr: T[], index: number, val: T): T[] {
@@ -184,7 +188,7 @@ const arrayMoveMutate = (array, from, to) => {
  * @param {number} to
  * @returns {any[]}
  */
-export const arrayMove = (array, from, to) => {
+export const arrayMove = <T>(array: T[], from: number, to: number): T[] => {
   array = array.slice();
   arrayMoveMutate(array, from, to);
   return array;
@@ -201,7 +205,7 @@ export function hasPortableWidth(breakPointValues: {palm: number; desk: number})
 }
 
 export function isTest(): boolean {
-  return typeof process !== 'undefined' && process?.env?.NODE_ENV === 'test';
+  return globalThis.process?.env?.NODE_ENV === 'test';
 }
 
 /**
@@ -218,7 +222,7 @@ export function filterObjectByPredicate(obj, predicate) {
   );
 }
 
-export function isFunction(func): boolean {
+export function isFunction(func: unknown): boolean {
   return typeof func === 'function';
 }
 

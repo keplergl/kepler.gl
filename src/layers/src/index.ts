@@ -32,7 +32,6 @@ import {default as TripLayer} from './trip-layer/trip-layer';
 export {defaultLineWidth as tripDefaultLineWidth} from './trip-layer/trip-layer';
 export {
   coordHasLength4,
-  containValidTime,
   isTripGeoJsonField,
   parseTripGeoJsonTimestamp,
   getAnimationDomainFromTimestamps
@@ -41,6 +40,24 @@ import {default as S2GeometryLayer} from './s2-geometry-layer/s2-geometry-layer'
 export {defaultElevation as s2DefaultElevation} from './s2-geometry-layer/s2-geometry-layer';
 export {getS2Center} from './s2-geometry-layer/s2-utils';
 export {default as AggregationLayer} from './aggregation-layer';
+
+// import {default as VectorTileLayer} from './vector-tile/vector-tile-layer';
+
+export {
+  getMetaUrl,
+  parseVectorMetadata,
+  matchDatasetType,
+  DatasetType,
+  TileType,
+  VectorTileType
+} from './vector-tile/utils/vector-tile-utils';
+export type {
+  VectorTileDatasetMetadata,
+  VectorTileMetadata
+} from './vector-tile/utils/vector-tile-utils';
+export {default as VectorTileIcon} from './vector-tile/vector-tile-icon';
+export {default as VectorTileLayer} from './vector-tile/vector-tile-layer';
+
 import {LAYER_TYPES} from '@kepler.gl/constants';
 export {parseGeoJsonRawFeature} from './geojson-layer/geojson-utils';
 // base layer
@@ -69,6 +86,7 @@ export const KeplerGlLayers = {
   ScenegraphLayer,
   TripLayer,
   S2GeometryLayer
+  // VectorTileLayer
 };
 
 export type LayerClassesType = typeof LayerClasses;
@@ -86,6 +104,7 @@ export const LayerClasses = {
   [LAYER_TYPES['3D']]: ScenegraphLayer,
   [LAYER_TYPES.trip]: TripLayer,
   [LAYER_TYPES.s2]: S2GeometryLayer
+  // [LAYER_TYPES['vectorTile']]: VectorTileLayer
 };
 
 export * from './mapbox-utils';

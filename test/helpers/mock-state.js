@@ -1,18 +1,17 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import test from 'tape-catch';
-import cloneDeep from 'lodash.clonedeep';
-import {drainTasksForTesting, succeedTaskWithValues} from 'react-palm/tasks';
+// @ts-nocheck
 
+import cloneDeep from 'lodash.clonedeep';
+import {colorPaletteToColorRange} from '@kepler.gl/constants';
 import {
   getInitialInputStyle,
   keplerGlReducerCore as keplerGlReducer,
   syncTimeFilterWithLayerTimelineUpdater
 } from '@kepler.gl/reducers';
-
 import {
-  VizColorPalette,
+  KEPLER_COLOR_PALETTES,
   COMPARE_TYPES,
   DEFAULT_LAYER_OPACITY,
   DEFAULT_TEXT_LABEL,
@@ -29,7 +28,6 @@ import {
   UIStateActions,
   ProviderActions
 } from '@kepler.gl/actions';
-import {KeplerTable} from '@kepler.gl/table';
 
 // fixtures
 import {
@@ -59,6 +57,14 @@ import testArcData, {arcDataInfo, config as arcDataConfig} from '../fixtures/tes
 import tripGeojson, {tripDataInfo} from '../fixtures/trip-geojson';
 import {processCsvData, processGeojson, processRowObject} from '@kepler.gl/processors';
 import {MOCK_MAP_STYLE} from './mock-map-styles';
+import {
+  applyActions,
+  applyCreateTableTasks,
+  applyExistingDatasetTasks,
+  mockCreateNewDataEntry
+} from './mock-state-utils';
+
+export {applyActions, applyCreateTableTasks, applyExistingDatasetTasks, mockCreateNewDataEntry};
 
 const geojsonFields = cloneDeep(fields);
 const geojsonRows = cloneDeep(rows);
@@ -81,68 +87,20 @@ export const geojsonInfo = {
   params: {file: null}
 };
 
-/**
- * Applies actions one by one using the reducer.
- * After each action drain Tasks and automarically resolve tasks
- * of type CREATE_TABLE_TASK in order to create datasets.
- * @param {Reducer} reducer A reducer to use.
- * @param {State} initialState Initial state.
- * @param {Action | Action[]}actions An array of actions.
- * @returns
- */
-export function applyActions(reducer, initialState, actions) {
-  const actionQ = Array.isArray(actions) ? actions : [actions];
-
-  // remove any existing tasks before actions
-  drainTasksForTesting();
-
-  let updatedState = actionQ.reduce((updatedState, {action, payload}) => {
-    let newState = reducer(updatedState, action(...payload));
-    const tasks = drainTasksForTesting();
-    newState = applyCreateTableTasks(tasks, reducer, newState);
-    return newState;
-  }, initialState);
-
-  return updatedState;
-}
+export const mockColorRange = {
+  colors: ['#FF000', '#00FF00', '#0000FF'],
+  colorMap: [
+    [1, '#FF0000'],
+    [3, '#00FF00'],
+    [5, '#0000FF']
+  ],
+  colorLegends: {
+    '#FF0000': 'hello'
+  }
+};
 
 // TODO: need to be deleted and imported from raw-states
 export const InitialState = keplerGlReducer(undefined, {});
-
-/**
- * Mock instant sync result of createNewDataEntry.
- */
-const mockCreateNewDataEntry = ({info, color, opts, data}) => {
-  const table = new KeplerTable({info, color, ...opts});
-  table.importData({data});
-  return table;
-};
-
-/**
- * Execute tasks and mock CREATE_TABLE_TASK with success.
- * @param {Task[]} tasks
- * @param {Reducer} reducer
- * @param {VisState} initialState
- * @returns
- */
-export const applyCreateTableTasks = (tasks, reducer, initialState) => {
-  return tasks.reduce((updatedState, task) => {
-    if (!task.label.includes('CREATE_TABLE_TASK')) return updatedState;
-    const tables = task.payload.map(payload => mockCreateNewDataEntry(payload));
-    return reducer(updatedState, succeedTaskWithValues(task, tables));
-  }, initialState);
-};
-
-/**
- * Execute existing tasts and mock CREATE_TABLE_TASK with success.
- * @param {VisStateReducer} reducer
- * @param {VisState} initialState
- * @returns
- */
-export function applyExistingDatasetTasks(reducer, initialState) {
-  const tasks = drainTasksForTesting();
-  return applyCreateTableTasks(tasks, reducer, initialState);
-}
 
 /**
  * Mock app state with uploaded geojson and csv file
@@ -181,27 +139,12 @@ export function mockStateWithFileUpload() {
     );
   });
 
-  test(t => {
-    t.equal(updatedState.visState.layers.length, 2, 'should auto create 2 layers');
-    t.end();
-  });
-
   return updatedState;
 }
 
 function mockStateWithLayerCustomColorBreaksLegends() {
   const initialState = cloneDeep(InitialState);
-  const mockColorRange = {
-    colors: ['#FF000', '#00FF00', '#0000FF'],
-    colorMap: [
-      [1, '#FF0000'],
-      [3, '#00FF00'],
-      [5, '#0000FF']
-    ],
-    colorLegends: {
-      '#FF0000': 'hello'
-    }
-  };
+
   // load csv and geojson
   const updatedState = applyActions(keplerGlReducer, initialState, [
     {
@@ -255,28 +198,6 @@ function mockStateWithLayerCustomColorBreaksLegends() {
       ]
     }
   ]);
-
-  test(t => {
-    t.equal(updatedState.visState.layers.length, 1, 'should load 1 layer');
-    t.deepEqual(
-      updatedState.visState.layers[0].config.visConfig.colorRange,
-      mockColorRange,
-      'should load layer colorRange correctly'
-    );
-    t.deepEqual(
-      updatedState.visState.layers[0].config.colorScale,
-      'custom',
-      'should load layer color Scale correctly'
-    );
-
-    t.deepEqual(
-      updatedState.visState.layers[0].config.colorField.name,
-      'uid',
-      'should load colorField correctly'
-    );
-
-    t.end();
-  });
 
   return updatedState;
 }
@@ -392,12 +313,6 @@ export function mockStateWithTripTable(state) {
     }
   ]);
 
-  test(t => {
-    t.equal(updatedState.visState.layers.length, 1, 'should create 1 trip layer');
-    t.equal(updatedState.visState.layers[0].type, 'trip', 'should create trip layer');
-    t.end();
-  });
-
   return updatedState;
 }
 
@@ -414,14 +329,6 @@ export function mockStateWithArcNeighbors(state) {
       ]
     }
   ]);
-
-  test(t => {
-    t.equal(updatedState.visState.layers.length, 3, 'should create 3 layers');
-    t.equal(updatedState.visState.layers[0].type, 'point', 'should create point layer');
-    t.equal(updatedState.visState.layers[1].type, 'arc', 'should create arc layer');
-    t.equal(updatedState.visState.layers[2].type, 'arc', 'should create arc layer');
-    t.end();
-  });
 
   return updatedState;
 }
@@ -658,12 +565,11 @@ export function mockStateWithLayerDimensions(state) {
   );
 
   const colorFieldPayload = [layer0, {colorField}, 'color'];
-
-  const colorRangePayload = [
-    layer0,
-    {colorRange: VizColorPalette.find(c => c.name === 'Uber Viz Sequential 2')},
-    'color'
-  ];
+  const colorRange = colorPaletteToColorRange(
+    KEPLER_COLOR_PALETTES.find(({name}) => name === 'Uber Viz Sequential'),
+    {steps: 4}
+  );
+  const colorRangePayload = [layer0, {colorRange}, 'color'];
 
   const textLabelField = initialState.visState.datasets[testCsvDataId].fields.find(
     f => f.name === 'date'
@@ -955,6 +861,7 @@ export const expectedLoadedLayer0 = {
       elevationScale: 5,
       enableElevationZoomFactor: true,
       fixedHeight: false,
+      // LAYER_VIS_CONFIGS.aggregation.defaultValue is AGGREGATION_TYPES.average,
       colorAggregation: 'count',
       sizeAggregation: 'count',
       enable3d: false
@@ -965,6 +872,14 @@ export const expectedLoadedLayer0 = {
     sizeScale: 'linear',
     textLabel: [DEFAULT_TEXT_LABEL]
   }
+};
+
+// result of Uber Viz Sequential step 4
+export const expectedColorRangeInLayer = {
+  name: 'Uber Viz Sequential',
+  type: 'sequential',
+  category: 'Uber',
+  colors: ['#00939C', '#6BB5B9', '#AAD7D9', '#E6FAFA']
 };
 
 export const expectedSavedLayer1 = {
@@ -1000,12 +915,7 @@ export const expectedSavedLayer1 = {
       outline: false,
       filled: true,
       thickness: 2,
-      colorRange: {
-        name: 'Uber Viz Sequential 2',
-        type: 'sequential',
-        category: 'Uber',
-        colors: ['#E6FAFA', '#AAD7DA', '#68B4BB', '#00939C']
-      },
+      colorRange: expectedColorRangeInLayer,
       strokeColorRange: DEFAULT_COLOR_RANGE,
       strokeColor: null,
       radiusRange: [0, 50],
@@ -1049,12 +959,7 @@ export const expectedLoadedLayer1 = {
       opacity: DEFAULT_LAYER_OPACITY,
       outline: false,
       thickness: 2,
-      colorRange: {
-        name: 'Uber Viz Sequential 2',
-        type: 'sequential',
-        category: 'Uber',
-        colors: ['#E6FAFA', '#AAD7DA', '#68B4BB', '#00939C']
-      },
+      colorRange: expectedColorRangeInLayer,
       strokeColorRange: DEFAULT_COLOR_RANGE,
       filled: true,
       strokeColor: null,

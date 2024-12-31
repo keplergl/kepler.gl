@@ -5,7 +5,8 @@ on: push
 jobs:
   build_and_publish:
     runs-on: ubuntu-latest
-    if: "!contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]')"
+    permissions:
+      id-token: write
 
     steps:
       - uses: actions/checkout@v4
@@ -54,17 +55,15 @@ jobs:
       - name: Check Release Tag
         id: check-tag
         run: |
-          if [[ ${{ github.event.ref }} =~ ^refs/tags/v[0-9]+\.[0-9]+\.[0-9]+-jupyter$ ]]; then
+          if [[ ${{ github.event.ref }} =~ ^refs/tags/v[0-9]+\.[0-9]+\.[0-9]+([a|b][0-9])?-jupyter$ ]]; then
               echo ::set-output name=publish::true
           fi
 
-      - name: Publish KeplerGL to Pypi
-        if: steps.check-tag.outputs.publish == 'true'
-        env:
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.pypi_token }}
-        run: |
-          python -m twine upload bindings/kepler.gl-jupyter/dist/*.tar.gz
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          registry-url: 'https://registry.npmjs.org'
 
       - name: Publish kepler-jupyter to NPM
         if: steps.check-tag.outputs.publish == 'true'
@@ -74,4 +73,14 @@ jobs:
         run: |
           source venv/bin/activate
           cd bindings/kepler.gl-jupyter/js
-          npm publish
+          echo "//registry.npmjs.org/:_authToken=${{ secrets.npm_token }}" > .npmrc
+          npm config set registry https://registry.npmjs.org/
+          npm whoami
+          npm config ls
+          npm publish --verbose --access public
+
+      - name: Publish KeplerGL to Pypi
+        if: steps.check-tag.outputs.publish == 'true'
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: bindings/kepler.gl-jupyter/dist/

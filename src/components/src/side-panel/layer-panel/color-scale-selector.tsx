@@ -1,18 +1,35 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import Tippy from '@tippyjs/react/headless';
 import React, {useCallback, useMemo, useState} from 'react';
 import styled from 'styled-components';
 
-import {Accessor, DropdownList, Typeahead} from '@kepler.gl/components';
-import {ColorRange, SCALE_TYPES} from '@kepler.gl/constants';
-import {Layer, VisualChannelDomain} from '@kepler.gl/layers';
-import {ColorUI, Field} from '@kepler.gl/types';
-import {getLayerColorScale, getLegendOfScale, hasColorMap} from '@kepler.gl/utils';
+import {ALL_FIELD_TYPES, SCALE_TYPES} from '@kepler.gl/constants';
+import {AggregatedBin, Layer, VisualChannelDomain} from '@kepler.gl/layers';
+import {KeplerTable} from '@kepler.gl/table';
+import {ColorRange, ColorUI, Field, NestedPartial} from '@kepler.gl/types';
+import {
+  colorBreaksToColorMap,
+  getLayerColorScale,
+  getLegendOfScale,
+  histogramFromValues,
+  histogramFromOrdinal,
+  histogramFromThreshold,
+  getHistogramDomain,
+  hasColorMap
+} from '@kepler.gl/utils';
+
 import ColorBreaksPanelFactory, {ColorBreaksPanelProps} from './color-breaks-panel';
 import {SetColorUIFunc} from './custom-palette';
 import DropdownSelect from '../../common/item-selector/dropdown-select';
+import Accessor from '../../common/item-selector/accessor';
+import DropdownList from '../../common/item-selector/dropdown-list';
+import LazyTippy from '../../map/lazy-tippy';
+import Typeahead from '../../common/item-selector/typeahead';
+
+type TippyInstance = any; // 'tippy-js'
+
+const HISTOGRAM_BINS = 30;
 
 export type ScaleOption = {
   label: string;
@@ -25,6 +42,7 @@ export type ContextProps = ColorBreaksPanelProps;
 export type ColorScaleSelectorProps = {
   layer: Layer;
   field: Field;
+  dataset: KeplerTable;
   scaleType: string;
   domain: VisualChannelDomain;
   range: ColorRange;
@@ -38,6 +56,7 @@ export type ColorScaleSelectorProps = {
   searchable: boolean;
   displayOption: string;
   getOptionValue: string;
+  aggregatedBins?: AggregatedBin[];
 };
 
 const DropdownPropContext = React.createContext({});
@@ -110,9 +129,11 @@ function ColorScaleSelectorFactory(
   const ColorScaleSelector: React.FC<ColorScaleSelectorProps> = ({
     layer,
     field,
+    dataset,
     onSelect,
     scaleType,
     domain,
+    aggregatedBins,
     range,
     setColorUI,
     colorUIConfig,
@@ -123,7 +144,7 @@ function ColorScaleSelectorFactory(
       () => Accessor.generateOptionToStringFor(dropdownSelectProps.getOptionValue),
       [dropdownSelectProps.getOptionValue]
     );
-    const [tippyInstance, setTippyInstance] = useState();
+    const [tippyInstance, setTippyInstance] = useState<TippyInstance>();
     const isEditingColorBreaks = colorUIConfig?.colorRangeConfig?.customBreaks;
     const colorScale = useMemo(
       () =>
@@ -138,21 +159,102 @@ function ColorScaleSelectorFactory(
 
     const colorBreaks = useMemo(
       () =>
-        colorScale ? getLegendOfScale({scale: colorScale, scaleType, fieldType: field.type}) : null,
-      [colorScale, scaleType, field.type]
+        colorScale
+          ? getLegendOfScale({
+              scale: colorScale,
+              scaleType,
+              fieldType: field?.type ?? ALL_FIELD_TYPES.real
+            })
+          : null,
+      [colorScale, scaleType, field?.type]
     );
+
+    const columnStats = field?.filterProps?.columnStats;
+
+    const fieldValueAccessor = useMemo(() => {
+      return field
+        ? idx => dataset.getValue(field.name, idx)
+        : idx => dataset.dataContainer.rowAsArray(idx);
+    }, [dataset, field]);
+
+    // aggregatedBins should be the raw data
+    const allBins = useMemo(() => {
+      if (aggregatedBins) {
+        return histogramFromValues(
+          Object.values(aggregatedBins).map(bin => bin.i),
+          HISTOGRAM_BINS,
+          idx => aggregatedBins[idx].value
+        );
+      }
+      return columnStats?.bins
+        ? columnStats?.bins
+        : field?.type === ALL_FIELD_TYPES.string
+        ? histogramFromOrdinal(colorScale?.domain() || [], dataset.allIndexes, fieldValueAccessor)
+        : histogramFromValues(dataset.allIndexes, HISTOGRAM_BINS, fieldValueAccessor);
+    }, [aggregatedBins, columnStats, dataset, fieldValueAccessor, colorScale, field?.type]);
+
+    const histogramDomain = useMemo(() => {
+      return getHistogramDomain({aggregatedBins, columnStats, dataset, fieldValueAccessor});
+    }, [dataset, fieldValueAccessor, aggregatedBins, columnStats]);
+
+    const isFiltered = aggregatedBins
+      ? false
+      : dataset.filteredIndexForDomain.length !== dataset.allIndexes.length;
+
+    // get filteredBins (not apply to aggregate layer)
+    const filteredBins = useMemo(() => {
+      if (!isFiltered) {
+        return allBins;
+      }
+      // get threholds
+      const filterEmptyBins = false;
+      const threholds = allBins.map(b => b.x0);
+      return histogramFromThreshold(
+        threholds,
+        dataset.filteredIndexForDomain,
+        fieldValueAccessor,
+        filterEmptyBins
+      );
+    }, [dataset, fieldValueAccessor, allBins, isFiltered]);
 
     const onSelectScale = useCallback(
       val => {
+        // highlight selected option
         if (getOptionValue(val) === SCALE_TYPES.custom) {
-          // trigger ui update only, when setting scale to custom
+          const colorMap = range.colorMap
+            ? range.colorMap
+            : colorBreaks
+            ? colorBreaksToColorMap(colorBreaks)
+            : undefined;
+          const colors =
+            field?.type === ALL_FIELD_TYPES.string
+              ? range.colors.slice(0, colorMap?.length)
+              : range.colors;
+          // update custom breaks
+          const customPalette: NestedPartial<ColorRange> = {
+            name: 'color.customPalette',
+            type: 'custom',
+            category: 'Custom',
+            colors,
+            colorMap
+          };
           setColorUI({
             showColorChart: true,
             colorRangeConfig: {
               customBreaks: true
-            }
+            },
+            customPalette
           });
+          onSelect(SCALE_TYPES.custom, customPalette);
         } else {
+          // not custom
+          if (isEditingColorBreaks) {
+            setColorUI({
+              colorRangeConfig: {
+                customBreaks: false
+              }
+            });
+          }
           if (hasColorMap(range)) {
             // remove custom breaks
             // eslint-disable-next-line no-unused-vars
@@ -161,16 +263,9 @@ function ColorScaleSelectorFactory(
           } else {
             onSelect(getOptionValue(val));
           }
-          // if current is not custom
-          setColorUI({
-            colorRangeConfig: {
-              customBreaks: false
-            }
-          });
-          hideTippy(tippyInstance);
         }
       },
-      [setColorUI, onSelect, range, getOptionValue, tippyInstance]
+      [setColorUI, onSelect, range, getOptionValue, isEditingColorBreaks, colorBreaks]
     );
 
     const onApply = useCallback(() => {
@@ -186,43 +281,58 @@ function ColorScaleSelectorFactory(
 
     return (
       <DropdownPropContext.Provider
-        value={{setColorUI, colorUIConfig, colorBreaks, isCustomBreaks, onApply, onCancel}}
+        value={{
+          setColorUI,
+          colorField: field,
+          dataset,
+          colorUIConfig,
+          colorBreaks,
+          isCustomBreaks,
+          allBins,
+          filteredBins,
+          isFiltered,
+          histogramDomain,
+          onScaleChange: onSelect,
+          onApply,
+          onCancel
+        }}
       >
         <StyledColorScaleSelector>
-          <Tippy
+          <LazyTippy
             trigger="click"
             placement="bottom-start"
             appendTo="parent"
             interactive={true}
             hideOnClick={!isEditingColorBreaks}
-            // @ts-ignore
             onCreate={setTippyInstance}
             popperOptions={POPPER_OPTIONS}
             render={attrs => (
               <DropdownWrapper {...attrs}>
-                {/*@ts-ignore*/}
-                <Typeahead
-                  {...dropdownSelectProps}
-                  displayOption={displayOption}
-                  // @ts-ignore
-                  getOptionValue={getOptionValue}
-                  onOptionSelected={onSelectScale}
-                  customListComponent={ColorScaleSelectDropdown}
-                  searchable={false}
-                  showOptionsWhenEmpty
-                />
+                {/* @ts-ignore*/}
+                {!dropdownSelectProps.disabled && (
+                  <Typeahead
+                    {...dropdownSelectProps}
+                    displayOption={displayOption}
+                    // @ts-ignore
+                    getOptionValue={getOptionValue}
+                    onOptionSelected={onSelectScale}
+                    customListComponent={ColorScaleSelectDropdown}
+                    searchable={false}
+                    showOptionsWhenEmpty
+                  />
+                )}
               </DropdownWrapper>
             )}
           >
             <div className="dropdown-select">
-              {/*@ts-ignore*/}
+              {/* @ts-ignore*/}
               <DropdownSelect
                 {...dropdownSelectProps}
                 displayOption={displayOption}
                 value={dropdownSelectProps.selectedItems[0]}
               />
             </div>
-          </Tippy>
+          </LazyTippy>
         </StyledColorScaleSelector>
       </DropdownPropContext.Provider>
     );

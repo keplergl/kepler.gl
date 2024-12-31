@@ -1,15 +1,27 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {notNullorUndefined} from '@kepler.gl/common-utils';
-import {ALL_FIELD_TYPES, ColorMap, ColorRange, SCALE_FUNC, SCALE_TYPES} from '@kepler.gl/constants';
-import {Layer, VisualChannel, VisualChannelDomain} from '@kepler.gl/layers';
-import {HexColor, MapState} from '@kepler.gl/types';
 import {bisectLeft, quantileSorted as d3Quantile, extent} from 'd3-array';
 import moment from 'moment';
+
+import {notNullorUndefined} from '@kepler.gl/common-utils';
+import {ALL_FIELD_TYPES, SCALE_FUNC, SCALE_TYPES} from '@kepler.gl/constants';
+// import {AggregatedBin, Layer, VisualChannel, VisualChannelDomain} from '@kepler.gl/layers';
+// import {FilterProps, KeplerTable} from '@kepler.gl/layers';
+import {
+  AggregatedBin,
+  ColorMap,
+  ColorRange,
+  HexColor,
+  KeplerLayer as Layer,
+  MapState,
+  VisualChannel,
+  VisualChannelDomain
+} from '@kepler.gl/types';
+
 import {isRgbColor, rgbToHex} from './color-utils';
 import {DataContainerInterface} from './data-container-interface';
-import {formatNumber, reverseFormatNumber, unique} from './data-utils';
+import {formatNumber, isNumber, reverseFormatNumber, unique} from './data-utils';
 import {getTimeWidgetHintFormatter} from './filter-utils';
 import {isPlainObject} from './utils';
 
@@ -25,6 +37,10 @@ export type ColorBreakOrdinal = {
 };
 
 export type D3ScaleFunction = Record<string, any> & ((x: any) => any);
+
+// TODO isolate types - depends on @kepler.gl/layers
+type FilterProps = any;
+type KeplerTable = any;
 
 export type LabelFormat = (n: number) => string;
 type dataValueAccessor = <T>(param: T) => T;
@@ -124,20 +140,20 @@ export function getThresholdsFromQuantiles(
 
 /**
  * get the domain at zoom
- * @type {typeof import('./data-scale-utils').getDomainStepsbyZoom}
  */
 export function getDomainStepsbyZoom(domain: any[], steps: number[], z: number): any {
   const i = bisectLeft(steps, z);
 
-  if (i === 0) {
-    return domain[0];
+  if (steps[i] === z) {
+    // If z is an integer value exactly matching a step, return the corresponding domain
+    return domain[i];
   }
-  return domain[i - 1];
+  // Otherwise, return the next coarsest domain
+  return domain[Math.max(i - 1, 0)];
 }
 
 /**
  * Get d3 scale function
- * @type {typeof import('./data-scale-utils').getScaleFunction}
  */
 export function getScaleFunction(
   scale: string,
@@ -216,7 +232,12 @@ export function getQuantLegends(scale: D3ScaleFunction, labelFormat: LabelFormat
   }
   const labels =
     scale.scaleType === 'threshold' || scale.scaleType === 'custom'
-      ? getThresholdLabels(scale, customScaleLabelFormat)
+      ? getThresholdLabels(
+          scale,
+          scale.scaleType === 'custom'
+            ? customScaleLabelFormat
+            : n => (n ? formatNumber(n) : 'no value')
+        )
       : getScaleLabels(scale, labelFormat);
 
   const data = scale.range();
@@ -254,7 +275,7 @@ export function getQuantLabelFormat(domain, fieldType) {
     ? getTimeLabelFormat(domain)
     : !fieldType
     ? defaultFormat
-    : n => formatNumber(n, fieldType);
+    : n => (isNumber(n) ? formatNumber(n, fieldType) : 'no value');
 }
 
 /**
@@ -274,7 +295,7 @@ export function getLegendOfScale({
   if (!scale || scale.byZoom) {
     return [];
   }
-  if (scaleType === SCALE_TYPES.ordinal) {
+  if (scaleType === SCALE_TYPES.ordinal || fieldType === ALL_FIELD_TYPES.string) {
     return getOrdinalLegends(scale);
   }
 
@@ -320,8 +341,11 @@ export function initializeLayerColorMap(layer: Layer, visualChannel: VisualChann
     layer
   });
 
-  const colorBreaks = getLegendOfScale({scale, scaleType, fieldType: field.type});
-
+  const colorBreaks = getLegendOfScale({
+    scale: scale?.byZoom ? scale(0) : scale,
+    scaleType,
+    fieldType: field.type
+  });
   return colorBreaksToColorMap(colorBreaks);
 }
 
@@ -372,6 +396,13 @@ export function colorMapToColorBreaks(colorMap?: ColorMap): ColorBreak[] | null 
     return null;
   }
   const colorBreaks = colorMap.map(([value, color], i) => {
+    if (typeof value === 'string') {
+      // for ordinal string value
+      return {
+        data: color,
+        label: value
+      };
+    }
     const range =
       i === 0
         ? // first
@@ -405,4 +436,56 @@ export function colorMapToColorBreaks(colorMap?: ColorMap): ColorBreak[] | null 
  */
 export function isNumericColorBreaks(colorBreaks: unknown): colorBreaks is ColorBreak[] {
   return Array.isArray(colorBreaks) && colorBreaks.length && colorBreaks[0].inputs;
+}
+
+// return domainMin, domainMax, histogramMean
+export function getHistogramDomain({
+  aggregatedBins,
+  columnStats,
+  dataset,
+  fieldValueAccessor
+}: {
+  aggregatedBins?: AggregatedBin[];
+  columnStats?: FilterProps['columnStats'];
+  dataset?: KeplerTable;
+  fieldValueAccessor: (idx: unknown) => number;
+}) {
+  let domainMin = Number.POSITIVE_INFINITY;
+  let domainMax = Number.NEGATIVE_INFINITY;
+  let nValid = 0;
+  let domainSum = 0;
+
+  if (aggregatedBins) {
+    Object.values(aggregatedBins).forEach(bin => {
+      const val = bin.value;
+      if (isNumber(val)) {
+        if (val < domainMin) domainMin = val;
+        if (val > domainMax) domainMax = val;
+        domainSum += val;
+        nValid += 1;
+      }
+    });
+  } else {
+    if (columnStats && columnStats.quantiles && columnStats.mean) {
+      // no need to recalcuate min/max/mean if its already in columnStats
+      return [
+        columnStats.quantiles[0].value,
+        columnStats.quantiles[columnStats.quantiles.length - 1].value,
+        columnStats.mean
+      ];
+    }
+    if (dataset && fieldValueAccessor) {
+      dataset.allIndexes.forEach((x, i) => {
+        const val = fieldValueAccessor(x);
+        if (isNumber(val)) {
+          if (val < domainMin) domainMin = val;
+          if (val > domainMax) domainMax = val;
+          domainSum += val;
+          nValid += 1;
+        }
+      });
+    }
+  }
+  const histogramMean = nValid > 0 ? domainSum / nValid : 0;
+  return [nValid > 0 ? domainMin : 0, nValid > 0 ? domainMax : 0, histogramMean];
 }

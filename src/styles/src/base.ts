@@ -355,6 +355,8 @@ export const mapControlTop = 52;
 export const rangeBrushBgd = '#3A414C';
 export const histogramFillInRange = activeColor;
 export const histogramFillOutRange = sliderBarColor;
+export const histogramOverlayColor = '#999999';
+export const histogramBreakLineColor = '#505b7c';
 export const axisFontSize = '10px';
 export const axisFontColor = textColor;
 export const timeTitleFontSize = '10px';
@@ -931,6 +933,9 @@ const dropdownListItem = css`
       color: ${props => props.theme.textColorHl};
     }
   }
+  &.selected {
+    background-color: ${props => props.theme.dropdownListHighlightBg};
+  }
 `;
 
 const dropdownListItemLT = css`
@@ -1480,6 +1485,8 @@ export const theme = {
   rangeBrushBgd,
   histogramFillInRange,
   histogramFillOutRange,
+  histogramOverlayColor,
+  histogramBreakLineColor,
   axisFontSize,
   axisFontColor,
   timeTitleFontSize,

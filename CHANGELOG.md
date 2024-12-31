@@ -15,6 +15,55 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+## [3.1.0-alpha.3] - December 25 2024
+
+2cd7a859c [chore] fix missing dependencies in workspaces (#2856)
+
+## [3.1.0-alpha.2] - December 24 2024
+
+- f9b385a6e [fix] Fixed time filter bug where points located at the borders of the domains were not correctly displayed (#2854)
+- 59abc6a19 [fix] fix for custom color scales with tile layer (#2853)
+- 3a4bf667f [feat] histogram and point layer fixes (#2852)
+- f9c52e538 [feat] color scale histogram (#2851)
+- 3e7dc937a [fix] custom palette issues (#2850)
+- d55797991 [docs] Replace yarn global add with yarn dlx for puppeteer installation (#2849)
+- e106c1927 [feat] Plumbing for vector tile layer (#2839)
+- a2abbf72d [fix] fix yarn cover regression (#2846)
+- 6925bd429 [docs] update demo-app/README.md (#2847)
+- f05b6e37d [chore] Bump nanoid from 3.3.7 to 3.3.8 in /website (#2840)
+- 4baa44d9b [chore] Bump nanoid from 3.3.7 to 3.3.8 (#2837)
+- b09d7eb95 [Enhancement] support mapbox url protocol (#2693)
+- 215383661 [Feat] Redesign color range to use chormajs and d3 color function (#2835)
+- bded7af76 [Feat] handle layer color scale by field.domainQuantiles (#2829)
+- 5f7c26bd0 [fix] Prevent duplicate legend in line and arc layers (#2830)
+- 639c7a5b9 [feat] Apply new legend style (#2831)
+- f9c214dd5 [chore] getSelectedFeature (#2832)
+- efdf2ea8d [chore] ts fixes (#2827)
+- 074d123dd [Feat] Add display format setting for table/tooltip (#2826)
+- aec75d819 [Chore] Minor ts refactoring (#2825)
+- 1825b6572 [fix] Expand legend (#2824)
+- bb6a376e8 [fix] adjust time range filter on value set (#2823)
+- cef3faf19 [Feat] add h3 typed column (#2822)
+- c5d42ddc9 [fix] Fix multiple field filtering in setFilterUpdater (#2821)
+- c4d1cfff0 [FEAT] support domain.domainStops in layer color, render color legend based on zoom (#2815)
+- 3a4feac59 [fix] Line layer is not displayed for between hex ids (#2820)
+- 89411c820 [fix] Typescript 4.4 fixes (#2816)
+- 240289603 [feat] Show selected fields in the tooltip for aggregation layers (#2814)
+- 95c6ed14b [chore] Bump elliptic from 6.5.7 to 6.6.1 in /bindings/kepler.gl-jupyter/js (#2818)
+- fb3fa7b58 [chore] Bump cross-spawn from 6.0.5 to 6.0.6 in /website (#2817)
+- f476a1c4c [chore] Bump elliptic from 6.5.7 to 6.6.0 (#2720)
+- c727356f7 [chore] Bump cross-spawn from 6.0.5 to 6.0.6 (#2772)
+- 3950d73ab [chore] Fixes in README.md (#2810)
+- 786aa36cf [Fix] Don't modify height for with fixed height enabled; Height UI unification (#2804)
+- 2178d9057 [fix] show sync layer animations when there is one dataset (#2803)
+- 6f35313f7 [chore] timeline refactoring (#2802)
+- d50bbc831 [fix] Updated plot when changing cross filters (#2801)
+- b4dfa2fce [fix] disable Share Map for FSQ provider (#2808)
+- 86b5dda7e [Feat] AI Assistant [2] (#2777)
+- 5a0cbca66 [Bug] Fix issue with React StrictMode causing Dataset table to not display (#2683)
+- b147db8d5 [chore] Local Development Guide Update (#2806)
+- 6223be939 [fix] Foursquare storage provider improvements (#2800)
+
 ## [3.1.0-alpha.1] - December 3 2024
 
 - f6b37c6af [fix] fixes for exported maps

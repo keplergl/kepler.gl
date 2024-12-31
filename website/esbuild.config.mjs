@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 import esbuild from 'esbuild';
 import { replace } from 'esbuild-plugin-replace';
 import process from 'node:process';

@@ -209,6 +209,7 @@ export type LayerColumnModeConfigProps = {
   fieldPairs?: FieldPair[];
   openModal: (l: LayerInfoModal) => void;
   updateLayerConfig: (config: Partial<LayerBaseConfig>) => void;
+  updateLayerType: (type: string) => void;
 };
 
 LayerColumnModeConfigFactory.deps = [LayerColumnConfigFactory, ColumnModeConfigFactory];

@@ -91,7 +91,7 @@ Install dependencies with Yarn
 
 ```bash
 # Install Puppeteer
-yarn global add puppeteer
+yarn dlx puppeteer
 
 
 # Install JavaScript dependencies:

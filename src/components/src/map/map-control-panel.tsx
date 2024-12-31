@@ -9,6 +9,7 @@ import {Close, Pin} from '../common/icons';
 import Switch from '../common/switch';
 import {MapState} from '@kepler.gl/types';
 import {ActionHandler, toggleSplitMapViewport} from '@kepler.gl/actions';
+import classNames from 'classnames';
 
 const StyledMapControlPanel = styled.div`
   background-color: ${props => props.theme.mapPanelBackgroundColor};
@@ -26,7 +27,7 @@ type StyledMapControlPanelContentProps = {
 const StyledMapControlPanelContent = styled.div.attrs({
   className: 'map-control__panel-content'
 })<StyledMapControlPanelContentProps>`
-  ${props => props.theme.dropdownScrollBar};
+  ${props => props.theme.sidePanelScrollBar};
   max-height: 500px;
   min-height: 100px;
   min-width: ${props => props.theme.mapControl.width}px;
@@ -119,6 +120,7 @@ export type MapControlPanelProps = {
   onToggleSplitMapViewport?: ActionHandler<typeof toggleSplitMapViewport>;
   isViewportUnsyncAllowed?: boolean;
   children?: React.ReactNode;
+  className?: string;
 };
 
 function MapControlPanelFactory() {
@@ -135,7 +137,8 @@ function MapControlPanelFactory() {
       logoComponent,
       mapState,
       onToggleSplitMapViewport,
-      isViewportUnsyncAllowed
+      isViewportUnsyncAllowed,
+      className = 'map-control-panel'
     }) => {
       const {isViewportSynced, isZoomLocked} = mapState || {};
       const onUnlockViewportChange = useCallback(() => {
@@ -148,11 +151,11 @@ function MapControlPanelFactory() {
 
       return (
         <StyledMapControlPanel
-          className="map-control-panel"
           style={{
             transform: `scale(${scale})`,
             marginBottom: '8px !important'
           }}
+          className={classNames('map-control-panel', className)}
         >
           {mapState?.isSplit && isViewportUnsyncAllowed ? (
             <StyledMapControlPanelHeaderSplitViewportsTools>

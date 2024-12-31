@@ -5,8 +5,8 @@
 
 export {
   colorMaybeToRGB,
+  colorRangeBackwardCompatibility,
   createLinearGradient,
-  getColorGroupByName,
   hasColorMap,
   hexToRgb,
   isHexColor,
@@ -14,11 +14,17 @@ export {
   normalizeColor,
   reverseColorRange,
   rgbToHex,
-  updateColorRange,
   addCustomPaletteColor,
   removeCustomPaletteColor,
   sortCustomPaletteColor,
-  updateCustomPaletteColor
+  updateCustomPaletteColor,
+  updateColorRangeBySelectedPalette,
+  paletteIsSteps,
+  paletteIsType,
+  paletteIsColorBlindSafe,
+  updateColorRangeByMatchingPalette,
+  updateCustomColorRangeByColorUI,
+  initializeCustomPalette
 } from './color-utils';
 export {errorNotification} from './notifications-utils';
 
@@ -31,7 +37,9 @@ export {
   adjustValueToAnimationWindow,
   getBinThresholds,
   histogramFromThreshold,
+  histogramFromValues,
   histogramFromDomain,
+  histogramFromOrdinal,
   runGpuFilterForPlot,
   updateTimeFilterPlotType
 } from './plot';
@@ -87,9 +95,13 @@ export {
   scaleMapStyleByResolution
 } from './map-style-utils/mapbox-gl-style-editor';
 export {validateToken} from './mapbox-utils';
-export * from './observe-dimensions';
+export {
+  default as useDimensions,
+  observeDimensions,
+  unobserveDimensions
+} from './observe-dimensions';
 export type {Dimensions} from './observe-dimensions';
-export {snapToMarks} from './plot';
+export {snapToMarks, getTimeBins} from './plot';
 export * from './projection-utils';
 export * from './split-map-utils';
 export * from './utils';
@@ -124,6 +136,7 @@ export type {FilterChanged, FilterResult, dataValueAccessor} from './filter-util
 
 export {
   colorMapToColorBreaks,
+  colorBreaksToColorMap,
   getLayerColorScale,
   getLegendOfScale,
   getLinearDomain,
@@ -134,7 +147,12 @@ export {
   getVisualChannelScaleByZoom,
   initializeLayerColorMap,
   isNumericColorBreaks,
-  isDomainStops
+  isDomainStops,
+  isDomainQuantile,
+  getDomainStepsbyZoom,
+  getThresholdsFromQuantiles,
+  getQuantLabelFormat,
+  getHistogramDomain
 } from './data-scale-utils';
 export type {ColorBreak, ColorBreakOrdinal, DomainQuantiles, DomainStops} from './data-scale-utils';
 
@@ -143,3 +161,7 @@ export {DataRow} from './data-row';
 // Application config
 export {getApplicationConfig, initApplicationConfig} from './application-config';
 export type {KeplerApplicationConfig, MapLibInstance} from './application-config';
+
+export {default as quickInsertionSort} from './quick-insertion-sort';
+
+export type {KeplerTableModel} from './types';

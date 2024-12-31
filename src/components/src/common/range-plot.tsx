@@ -16,7 +16,7 @@ import {Datasets} from '@kepler.gl/table';
 const StyledRangePlot = styled.div`
   margin-bottom: ${props => props.theme.sliderBarHeight}px;
   display: flex;
-  position: 'relative';
+  position: relative;
 `;
 
 interface RangePlotProps {
@@ -57,6 +57,13 @@ const isHistogramPlot = plotType => plotType?.type === PLOT_TYPES.histogram;
 const isLineChart = plotType => plotType?.type === PLOT_TYPES.lineChart;
 const hasHistogram = (plotType, bins) => isHistogramPlot(plotType) && bins;
 const hasLineChart = (plotType, lineChart) => isLineChart(plotType) && lineChart;
+
+const LOADING_SPINNER_CONTAINER_STYLE = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  width: '100%'
+};
 
 export default function RangePlotFactory(
   RangeBrush: ReturnType<typeof RangeBrushFactory>,
@@ -221,14 +228,7 @@ export default function RangePlotFactory(
     return (
       <StyledRangePlot style={rangePlotStyle} className="kg-range-slider__plot">
         {isLoading ? (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '100%'
-            }}
-          >
+          <div style={LOADING_SPINNER_CONTAINER_STYLE}>
             <LoadingSpinner borderColor="transparent" size={40} />
           </div>
         ) : (

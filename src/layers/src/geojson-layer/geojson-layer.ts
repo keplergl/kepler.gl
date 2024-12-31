@@ -37,11 +37,11 @@ import {
   GEOJSON_FIELDS,
   HIGHLIGH_COLOR_3D,
   CHANNEL_SCALES,
-  ColorRange,
   LAYER_VIS_CONFIGS,
   DEFAULT_COLOR_UI
 } from '@kepler.gl/constants';
 import {
+  ColorRange,
   VisConfigNumber,
   VisConfigColorSelect,
   VisConfigColorRange,
@@ -547,7 +547,9 @@ export default class GeoJsonLayer extends Layer {
     return booleanWithin(turfPoint(point), polygon);
   }
 
-  updateLayerMeta(dataContainer) {
+  updateLayerMeta(dataset: KeplerTable) {
+    const {dataContainer} = dataset;
+
     this.dataContainer = dataContainer;
 
     if (dataContainer instanceof ArrowDataContainer) {
@@ -584,7 +586,7 @@ export default class GeoJsonLayer extends Layer {
     }
   }
 
-  setInitialLayerConfig(dataset) {
+  setInitialLayerConfig(dataset: KeplerTable) {
     const {dataContainer} = dataset;
     if (!dataContainer.numRows()) {
       return this;
@@ -603,7 +605,7 @@ export default class GeoJsonLayer extends Layer {
       }
     }
 
-    this.updateLayerMeta(dataContainer);
+    this.updateLayerMeta(dataset);
 
     const {featureTypes} = this.meta;
     // default settings is stroke: true, filled: false

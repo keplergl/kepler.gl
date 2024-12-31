@@ -373,9 +373,11 @@ export const toggleMapControlUpdater = (
   // The effect panel and ai assistant panel can not be active at the same time
   // so we need to deactivate the other panel when one is activated
   const panelToDeactivate =
-    panelId === MAP_CONTROLS.effect ? MAP_CONTROLS.aiAssistant :
-    panelId === MAP_CONTROLS.aiAssistant ? MAP_CONTROLS.effect :
-    null;
+    panelId === MAP_CONTROLS.effect
+      ? MAP_CONTROLS.aiAssistant
+      : panelId === MAP_CONTROLS.aiAssistant
+      ? MAP_CONTROLS.effect
+      : null;
 
   // If we need to deactivate a competing panel and it's currently active
   if (panelToDeactivate && state.mapControls[panelToDeactivate]?.active) {
@@ -429,6 +431,33 @@ export const setMapControlVisibilityUpdater = (
         ...state.mapControls[panelId],
         show: Boolean(show)
       }
+    }
+  };
+};
+
+/**
+ * Toggle map control settings
+ * @memberof uiStateUpdaters
+ * @param state `uiState`
+ * @param action action
+ * @param action.payload map control panel id, one of the keys of: [`DEFAULT_MAP_CONTROLS`](#default_map_controls)
+ * @returns nextState
+ * @public
+ */
+export const setMapControlSettingsUpdater = (
+  state: UiState,
+  {payload: {panelId, settings}}: UIStateActions.setMapControlSettingsUpdaterAction
+): UiState => {
+  const mapControl = state.mapControls?.[panelId];
+  if (!mapControl) {
+    return state;
+  }
+
+  return {
+    ...state,
+    mapControls: {
+      ...state.mapControls,
+      [panelId]: {...mapControl, settings: {...mapControl.settings, ...settings}}
     }
   };
 };

@@ -7,13 +7,14 @@ import {ScatterplotLayer} from '@deck.gl/layers';
 import {DeckGLClusterLayer} from '@kepler.gl/deckgl-layers';
 import ClusterLayerIcon from './cluster-layer-icon';
 import {
+  ColorRange,
+  Merge,
   VisConfigColorRange,
   VisConfigNumber,
   VisConfigRange,
-  VisConfigSelection,
-  Merge
+  VisConfigSelection
 } from '@kepler.gl/types';
-import {CHANNEL_SCALES, AggregationTypes, ColorRange} from '@kepler.gl/constants';
+import {CHANNEL_SCALES, AggregationTypes} from '@kepler.gl/constants';
 import {VisualChannels} from '../base-layer';
 
 export type ClusterLayerVisConfigSettings = {
@@ -117,6 +118,7 @@ export default class ClusterLayer extends AggregationLayer {
 
         // color
         colorRange: this.getColorRange(visConfig.colorRange),
+        colorMap: visConfig.colorRange.colorMap,
         colorScaleType: this.config.colorScale,
         colorAggregation: visConfig.colorAggregation,
 

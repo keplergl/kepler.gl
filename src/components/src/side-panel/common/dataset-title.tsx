@@ -161,11 +161,7 @@ export default function DatasetTitleFactory(
             top={-50}
             onClose={_handleClosePicker}
           >
-            <CustomPicker
-              color={rgbToHex(dataset.color)}
-              onChange={_handleCustomPicker}
-              onSwatchClose={_handleClosePicker}
-            />
+            <CustomPicker color={rgbToHex(dataset.color)} onChange={_handleCustomPicker} />
           </Portaled>
           {showDatasetTable ? (
             <CenterFlexbox className="source-data-arrow">

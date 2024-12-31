@@ -7,8 +7,6 @@ import {SketchPicker, ColorChangeHandler} from 'react-color';
 
 import {HexColor} from '@kepler.gl/types';
 
-import useOnClickOutside from '../../hooks/use-on-click-outside';
-
 // This was put in because 3rd party library react-color doesn't yet cater for customized color of child component <SketchField> which contains HEX/RGB input text box
 // Issue raised: https://github.com/casesandberg/react-color/issues/631
 
@@ -63,13 +61,9 @@ type CustomPickerProps = {
     panelBackground: string;
   };
   onChange: ColorChangeHandler;
-  onSwatchClose: () => void;
 };
 
-const CustomPicker: React.FC<CustomPickerProps> = props => {
-  const {color, onChange, theme} = props;
-  const ref = useOnClickOutside<HTMLDivElement>(props.onSwatchClose);
-
+const CustomPicker: React.FC<CustomPickerProps> = ({color, onChange, theme}: CustomPickerProps) => {
   const pickerStyle = useMemo(
     () => ({
       picker: {
@@ -83,7 +77,7 @@ const CustomPicker: React.FC<CustomPickerProps> = props => {
   );
 
   return (
-    <StyledPicker ref={ref}>
+    <StyledPicker>
       <SketchPicker
         color={color}
         onChange={onChange}

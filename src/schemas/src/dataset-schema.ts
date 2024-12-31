@@ -4,7 +4,7 @@
 import pick from 'lodash.pick';
 import {console as globalConsole} from 'global/window';
 
-import {ProtoDataset, RGBColor} from '@kepler.gl/types';
+import {ProtoDataset, RGBColor, JsonObject} from '@kepler.gl/types';
 import {KeplerTable} from '@kepler.gl/table';
 import {VERSIONS} from './versions';
 import Schema from './schema';
@@ -32,6 +32,8 @@ export type SavedDatasetV1 = {
     color: RGBColor;
     allData: any[][];
     fields: SavedField[];
+    type?: string;
+    metadata?: JsonObject;
   };
 };
 
@@ -90,7 +92,9 @@ export const propertiesV1 = {
     key: 'fields',
     version: VERSIONS.v1,
     properties: fieldPropertiesV1
-  })
+  }),
+  type: null,
+  metadata: null
 };
 
 export class DatasetSchema extends Schema {
@@ -144,7 +148,8 @@ export class DatasetSchema extends Schema {
     // get format of all fields
     return {
       data: {fields: updatedFields, rows: dataset.allData},
-      info: pick(dataset, ['id', 'label', 'color'])
+      info: pick(dataset, ['id', 'label', 'color', 'type']),
+      ...(dataset.metadata ? {metadata: dataset.metadata} : {})
     };
   }
 }

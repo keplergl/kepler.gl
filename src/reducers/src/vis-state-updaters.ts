@@ -38,8 +38,10 @@ import {
   loadFilesSuccess,
   loadNextFile,
   nextFileBatch,
+  setFilter,
   processFileContent,
-  fitBounds as fitMapBounds
+  fitBounds as fitMapBounds,
+  toggleLayerForMap
 } from '@kepler.gl/actions';
 
 // Utils
@@ -65,7 +67,6 @@ import {
   parseFieldValue,
   removeLayerFromSplitMaps,
   set,
-  mergeFilterDomainStep,
   updateFilterPlot,
   removeFilterPlot,
   isLayerAnimatable
@@ -102,6 +103,7 @@ import {
   VIS_STATE_MERGERS,
   createLayerFromConfig,
   parseLayerConfig,
+  serializeFilter,
   serializeLayer,
   serializeVisState,
   validateLayerWithData
@@ -141,7 +143,8 @@ import {
   updateTimeFilterPlotType,
   getDefaultTimeFormat,
   LayerToFilterTimeInterval,
-  TIME_INTERVALS_ORDERED
+  TIME_INTERVALS_ORDERED,
+  mergeFilterDomain
 } from '@kepler.gl/utils';
 import {createEffect} from '@kepler.gl/effects';
 import {PayloadAction} from '@reduxjs/toolkit';
@@ -484,6 +487,19 @@ export function applyLayerConfigUpdater(
   return nextState;
 }
 
+function updatelayerVisibilty(state: VisState, newLayer: Layer, isVisible?: boolean): VisState {
+  let newState = updateStateOnLayerVisibilityChange(state, newLayer);
+  const filterIndex = filterSyncedWithTimeline(state);
+  if (isLayerAnimatable(newLayer) && filterIndex !== -1) {
+    // if layer is going to be visible we sync with filter otherwise we need to check whether other animatable layers exists and are visible
+    newState = syncTimeFilterWithLayerTimelineUpdater(newState, {
+      idx: filterIndex,
+      enable: isVisible ? isVisible : getAnimatableVisibleLayers(state.layers).length > 0
+    });
+  }
+  return newState;
+}
+
 /**
  * Update layer base config: dataId, label, column, isVisible
  * @memberof visStateUpdaters
@@ -526,18 +542,7 @@ export function layerConfigChangeUpdater(
 
   let newState = state;
   if ('isVisible' in action.newConfig) {
-    newState = updateStateOnLayerVisibilityChange(state, newLayer);
-    const filterIndex = filterSyncedWithTimeline(state);
-    if (isLayerAnimatable(newLayer) && filterIndex !== -1) {
-      // if layer is going to be visible we sync with filter otherwise we need to check whether other animatable layers exists and are visible
-      newState = syncTimeFilterWithLayerTimelineUpdater(newState, {
-        idx: filterIndex,
-        // @ts-expect-error why layers are assigned to enable?
-        enable: action.newConfig.isVisible
-          ? action.newConfig.isVisible
-          : getAnimatableVisibleLayers(state.layers)
-      });
-    }
+    newState = updatelayerVisibilty(newState, newLayer, action.newConfig.isVisible);
   }
 
   if ('columns' in action.newConfig && newLayer.config.animation.enabled) {
@@ -566,6 +571,73 @@ export function layerAnimationChangeUpdater<S extends VisState>(state: S, action
   const {layerData, layer} = calculateLayerData(newLayer, state, state.layerData[idx]);
 
   return updateStateWithLayerAndData(state, {layerData, layer, idx});
+}
+
+/**
+ * Update layerId, isVisible, splitMapId
+ * handles two cases:
+ * 1) toggle the visibility of local SplitMap layer (visState.splitMap.layers)
+ * 2) toggle the visibility of global layer (visState.layers)
+
+ * @memberof visStateUpdaters
+ * @returns nextState
+ */
+export function layerToggleVisibilityUpdater(
+  state: VisState,
+  action: VisStateActions.LayerToggleVisibilityUpdaterAction
+): VisState {
+  const {layerId, isVisible, splitMapId} = action;
+  const layer = state.layers.find(d => d.id === layerId);
+
+  if (!layer) {
+    return state;
+  }
+
+  let newState = state;
+
+  if (splitMapId) {
+    // [case 1]: toggle local layer visibility for each SplitMap
+    const mapIndex = newState.splitMaps.findIndex(sm => sm.id === splitMapId);
+    if (isVisible) {
+      // 1) if the layer is invisible globally
+      // -> set global visibility to true
+      newState = layerConfigChangeUpdater(newState, layerConfigChange(layer, {isVisible: true}));
+
+      // -> set local visibility to true and the local visibilities of all other SplitMaps to false
+      return {
+        ...newState,
+        splitMaps: newState.splitMaps.map(sm =>
+          sm.id !== splitMapId
+            ? {
+                ...sm,
+                layers: {
+                  ...sm.layers,
+                  [layerId]: false
+                }
+              }
+            : {
+                ...sm,
+                layers: {
+                  ...sm.layers,
+                  [layerId]: true
+                }
+              }
+        )
+      };
+    }
+    // 2) else when the layer is visible globally
+    return toggleLayerForMapUpdater(newState, toggleLayerForMap(mapIndex, layerId));
+  } else {
+    // [case 2]: toggle global layer visibility
+    let newLayer = layer.updateLayerConfig({isVisible});
+    const idx = newState.layers.findIndex(l => l.id === layerId);
+
+    newState = updatelayerVisibilty(newState, newLayer, isVisible);
+    return updateStateWithLayerAndData(newState, {
+      layer: newLayer,
+      idx
+    });
+  }
 }
 
 /**
@@ -733,8 +805,10 @@ export function layerDataIdChangeUpdater(
     );
     // if cant validate it with data create a new one
     if (!validated) {
-      // @ts-expect-error TODO: checking oldLayer.type !== null
-      newLayer = new state.layerClasses[oldLayer.type]({dataId, id: oldLayer.id});
+      const oldLayerType = oldLayer.type;
+      if (oldLayerType) {
+        newLayer = new state.layerClasses[oldLayerType]({dataId, id: oldLayer.id});
+      }
     } else {
       newLayer = validated;
     }
@@ -999,6 +1073,37 @@ export function setFilterAnimationWindowUpdater<S extends VisState>(
   return setTimeFilterTimelineModeUpdater(newState, {id, mode: newSyncTimelineMode});
 }
 
+export function applyFilterConfigUpdater(
+  state: VisState,
+  action: VisStateActions.ApplyFilterConfigUpdaterAction
+): VisState {
+  const {filterId, newFilter} = action;
+  const oldFilter = state.filters.find(f => f.id === filterId);
+  if (!oldFilter) {
+    return state;
+  }
+
+  // Serialize the filters to only compare the saved properties
+  const serializedOldFilter = serializeFilter(oldFilter, state.schema) ?? {config: {}};
+  const serializedNewFilter = serializeFilter(newFilter, state.schema);
+  if (!serializedNewFilter || isEqual(serializedOldFilter, serializedNewFilter)) {
+    return state;
+  }
+
+  // If there are any changes to the filter, apply them
+  const changed = pickChangedProps(serializedOldFilter, serializedNewFilter);
+  delete changed['id']; // id should not be changed
+
+  const filterIndex = state.filters.findIndex(f => f.id === filterId);
+  if (filterIndex < 0) {
+    return state;
+  }
+  return setFilterUpdater(
+    state,
+    setFilter(filterIndex, Object.keys(changed), Object.values(changed))
+  );
+}
+
 /**
  * Update filter property
  * @memberof visStateUpdaters
@@ -1120,20 +1225,12 @@ function _removeFilterDataIdAtValueIndex(filter, valueIndex, datasets) {
   }
 
   // mergeFieldDomain for the remaining fields
-  // @ts-expect-error figure out correct types to use with mergeFilterDomainStep
-  let domainSteps: Filter & {step?: number | undefined} = {};
-  filter.dataId.forEach((filterDataId, idx) => {
-    const dataset = datasets[filterDataId];
-    const filterProps = dataset.getColumnFilterProps(filter.name[idx]);
-    // @ts-expect-error figure out correct types to use with mergeFilterDomainStep
-    domainSteps = mergeFilterDomainStep(domainSteps, filterProps);
-  });
+  const domainSteps = mergeFilterDomain(filter, datasets);
 
   const nextFilter = {
     ...filter,
     // value: nextValue,
-    domain: domainSteps.domain,
-    step: domainSteps.step
+    ...(domainSteps ? {domain: domainSteps?.domain, step: domainSteps?.step} : {})
   };
 
   const nextValue = adjustValueToFilterDomain(nextFilter.value, nextFilter);
@@ -1143,7 +1240,7 @@ function _removeFilterDataIdAtValueIndex(filter, valueIndex, datasets) {
   };
 }
 
-/***
+/** *
  * Updates a single property of a filter
  */
 function _updateFilterProp(state, filter, prop, value, valueIndex, datasetIds?) {
@@ -1165,7 +1262,8 @@ function _updateFilterProp(state, filter, prop, value, valueIndex, datasetIds?) 
       const datasetId = filter.dataId[valueIndex];
       const {filter: updatedFilter, dataset: newDataset} = applyFilterFieldName(
         filter,
-        state.datasets[datasetId],
+        state.datasets,
+        datasetId,
         value,
         valueIndex,
         {mergeDomain: valueIndex > 0}
@@ -3399,9 +3497,9 @@ export function setTimeFilterTimelineModeUpdater<S extends VisState>(
   return adjustAnimationConfigWithFilter(newState, filterIdx);
 }
 
-function adjustAnimationConfigWithFilter(state, filterIdx) {
+function adjustAnimationConfigWithFilter<S extends VisState>(state: S, filterIdx: number): S {
   const filter = state.filters[filterIdx];
-  if (filter.syncedWithLayerTimeline) {
+  if ((filter as TimeRangeFilter).syncedWithLayerTimeline) {
     const timelineValue = getTimelineValueFromFilter(filter);
     const value = state.animationConfig.timeSteps
       ? snapToMarks(timelineValue, state.animationConfig.timeSteps)

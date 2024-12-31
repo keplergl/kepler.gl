@@ -10,7 +10,7 @@ NOTE: __Version number of the js module **`kelergl-jupyter`** and the python mod
 
 Update `version_info` in keplergl/_version.py in bindings/kepler.gl-jupyter folder.
 Update `"version": "0.x.x"` to match the version info in js/package.json in bindings/kepler.gl-jupyter folder.
-Update `EXTENSION_SPEC_VERSION` to match the js module version. Update `version` in js/package
+Update `EXTENSION_SPEC_VERSION` to match the js module version.
 
 ```
 git add keplergl/_version.py
@@ -25,7 +25,7 @@ Create a tag: `<version>-jupyter` e.g. v0.3.4-jupyter
 
 ```
 git tag -a <version>-jupyter -m "<version>-jupyter"
-git push origin master && git push origin <version>-jupyter
+git push origin <version>-jupyter
 ```
 
 The new tag will trigger the Github Action `build-publish-pypi.yml`: __"Build KeplerGL Python and NPM packages"__. The packages will be built and tested, then published to NPM and PyPI using the secret tokens.

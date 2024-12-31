@@ -49,11 +49,6 @@ export interface Durations {
   milliseconds: number;
 }
 
-export interface AnimatinWindow {
-  free: string;
-  interval: string;
-}
-
 export type TimeInterval = string; // TODO: TimeInterval should be an enum
 
 export interface TickInterval {

@@ -156,10 +156,7 @@ test('Map Popover - render with geojsonLayerHoverProp', t => {
   t.ok(onSetFeatures.called, 'should call onSetFeatures when click select geometry');
 
   // click pin
-  wrapper
-    .find('.popover-pin')
-    .at(0)
-    .simulate('click');
+  wrapper.find('.popover-pin').at(0).simulate('click');
   t.ok(onClose.called, 'should call onClose when click pin');
 
   // render coordinate
@@ -170,32 +167,11 @@ test('Map Popover - render with geojsonLayerHoverProp', t => {
   });
   t.equal(wrapper.find(CoordinateInfo).length, 1, 'Should render CoordinateInfo');
 
-  t.equal(
-    wrapper
-      .find('.row__value')
-      .at(0)
-      .text(),
-    '-31.123457,',
-    'should render lat'
-  );
+  t.equal(wrapper.find('.row__value').at(0).text(), '-31.123457,', 'should render lat');
 
-  t.equal(
-    wrapper
-      .find('.row__value')
-      .at(1)
-      .text(),
-    '127.123457,',
-    'should render longitude'
-  );
+  t.equal(wrapper.find('.row__value').at(1).text(), '127.123457,', 'should render longitude');
 
-  t.equal(
-    wrapper
-      .find('.row__value')
-      .at(2)
-      .text(),
-    '12.1z',
-    'should render zoom'
-  );
+  t.equal(wrapper.find('.row__value').at(2).text(), '12.1z', 'should render zoom');
 
   t.end();
 });

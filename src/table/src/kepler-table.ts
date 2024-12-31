@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {console as Console} from 'global/console';
+import Console from 'global/console';
 import {ascending, descending} from 'd3-array';
 
 import {
@@ -28,7 +28,6 @@ import {
 
 import {getGpuFilterProps, getDatasetFieldIndexForFilter} from './gpu-filter-utils';
 
-import {Layer} from '@kepler.gl/layers';
 import {
   getSortingFunction,
   timeToUnixMilli,
@@ -50,6 +49,9 @@ import {
   FilterChanged
 } from '@kepler.gl/utils';
 import {generateHashId, notNullorUndefined} from '@kepler.gl/common-utils';
+
+// TODO isolate layer type, depends on @kepler.gl/layers
+type Layer = any;
 
 export type GpuFilter = {
   filterRange: number[][];
@@ -75,16 +77,19 @@ export type NumericFieldFilterProps = RangeFieldDomain & {
   type: string;
   typeOptions: string[];
   gpu: boolean;
+  columnStats?: Record<string, any>;
 };
 export type BooleanFieldFilterProps = SelectFieldDomain & {
   type: string;
   value: boolean;
   gpu: boolean;
+  columnStats?: Record<string, any>;
 };
 export type StringFieldFilterProps = MultiSelectFieldDomain & {
   type: string;
   value: string[];
   gpu: boolean;
+  columnStats?: Record<string, any>;
 };
 export type TimeFieldFilterProps = TimeRangeFieldDomain & {
   type: string;
@@ -92,6 +97,7 @@ export type TimeFieldFilterProps = TimeRangeFieldDomain & {
   fixedDomain: boolean;
   value: number[];
   gpu: boolean;
+  columnStats?: Record<string, any>;
 };
 
 // Unique identifier of each field
@@ -490,7 +496,9 @@ class KeplerTable<F extends Field = Field> {
       case SCALE_TYPES.linear:
       case SCALE_TYPES.sqrt:
       default:
-        return getLinearDomain(filteredIndexForDomain, indexValueAccessor);
+        return field.type === ALL_FIELD_TYPES.string
+          ? getOrdinalDomain(dataContainer, valueAccessor)
+          : getLinearDomain(filteredIndexForDomain, indexValueAccessor);
     }
   }
 

@@ -8,6 +8,7 @@ import classnames from 'classnames';
 
 type ColorPaletteProps = {
   colors: RGBColor | HexColor[];
+  colorWidths?: number[];
   height?: number;
   className?: string;
   isSelected?: boolean;
@@ -27,13 +28,13 @@ const PaletteWrapper = styled.div.attrs({
 
 const PaletteContainer = styled.div.attrs(props => ({
   className: classnames('color-range-palette', props.className)
-}))<{isSelected?: boolean}>`
+}))<{isSelected?: boolean; isColorChart?: boolean}>`
   display: flex;
   flex-grow: 1;
-  border-width: 1px;
+  border-width: ${props => (props.isColorChart ? '0px' : '1px')};
   border-style: solid;
   border-color: ${props => (props.isSelected ? '#FFFFFF' : 'transparent')};
-  padding: 4px;
+  padding: ${props => (props.isColorChart ? '0px' : '4px')};
   border-radius: 4px;
 `;
 
@@ -46,15 +47,27 @@ const StyledColorBlock = styled.div.attrs({
 const ColorPalette: React.FC<ColorPaletteProps> = ({
   colors = [],
   height = 10,
+  colorWidths = null,
   className = '',
   isSelected = false,
   isReversed = false
 }) => (
-  <PaletteContainer className={className} isSelected={isSelected}>
+  <PaletteContainer
+    className={className}
+    isSelected={isSelected}
+    isColorChart={Boolean(colorWidths)}
+  >
     <PaletteWrapper style={{height, transform: `scale(${isReversed ? -1 : 1}, 1)`}}>
-      {colors.map((color: number | string, index: number) => (
-        <StyledColorBlock key={`${color}-${index}`} style={{backgroundColor: String(color)}} />
-      ))}
+      {colors.map((color: number | string, index: number) =>
+        colorWidths && colorWidths[index] ? (
+          <StyledColorBlock
+            key={`${color}-${index}`}
+            style={{backgroundColor: String(color), width: colorWidths[index]}}
+          />
+        ) : (
+          <StyledColorBlock key={`${color}-${index}`} style={{backgroundColor: String(color)}} />
+        )
+      )}
     </PaletteWrapper>
   </PaletteContainer>
 );

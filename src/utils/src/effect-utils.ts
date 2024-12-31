@@ -13,10 +13,13 @@ import {
   FILTER_TYPES,
   FILTER_VIEW_TYPES
 } from '@kepler.gl/constants';
-import {VisState} from '@kepler.gl/schemas';
+// import {VisState} from '@kepler.gl/schemas';
 import {MapState, Effect, EffectProps, EffectDescription} from '@kepler.gl/types';
 import {findById} from './utils';
 import {clamp} from './data-utils';
+
+// TODO isolate types - depends on @kepler.gl/schemas
+type VisState = any;
 
 export function computeDeckEffects({
   visState,

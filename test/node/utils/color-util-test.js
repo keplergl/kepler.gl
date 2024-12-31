@@ -3,12 +3,14 @@
 
 import {
   addCustomPaletteColor,
+  colorRangeBackwardCompatibility,
   createLinearGradient,
   removeCustomPaletteColor,
   sortCustomPaletteColor,
   updateCustomPaletteColor
 } from '@kepler.gl/utils';
 import test from 'tape';
+import {KEPLER_COLOR_PALETTES, colorPaletteToColorRange} from '@kepler.gl/constants';
 
 test('createLinearGradient', t => {
   let colors = [[100, 100, 100]];
@@ -288,6 +290,316 @@ test('ColorUtil -> updateCustomPaletteColor', t => {
 
   TEST_CASES.forEach(tc => {
     t.deepEqual(updateCustomPaletteColor(...tc.input), tc.expected, tc.msg);
+  });
+
+  t.end();
+});
+
+test('ColorUtil -> colorPaletteToColorRange', t => {
+  const TEST_CASES = [
+    {
+      name: 'YlOrRd',
+      steps: 8,
+      colors: [
+        '#FFFFCC',
+        '#FFEA9A',
+        '#FECD6A',
+        '#FEA246',
+        '#FC6932',
+        '#E92A21',
+        '#C00624',
+        '#800026'
+      ]
+    },
+    {name: 'Cividis', steps: 4, colors: ['#002051', '#575C6E', '#A49D78', '#FDEA45']},
+    {name: 'Paired', steps: 4, colors: ['#A6CEE3', '#1F78B4', '#B2DF8A', '#33A02C']},
+    {
+      name: 'Accent',
+      steps: 10,
+      colors: [
+        '#7FC97F',
+        '#BEAED4',
+        '#FDC086',
+        '#FFFF99',
+        '#386CB0',
+        '#F0027F',
+        '#BF5B17',
+        '#666666'
+      ]
+    },
+    {name: 'Uber Viz Sequential', steps: 4, colors: ['#00939C', '#6BB5B9', '#AAD7D9', '#E6FAFA']},
+    {
+      name: 'Uber Viz Diverging',
+      steps: 8,
+      colors: [
+        '#00939C',
+        '#5AACB2',
+        '#8BC6C9',
+        '#B9E0E1',
+        '#F8C0AC',
+        '#EB9373',
+        '#D9653D',
+        '#C22E00'
+      ]
+    },
+    {
+      name: 'Tol Vibrant',
+      steps: 6,
+      colors: ['#EE7733', '#0077BB', '#33BBEE', '#EE3377', '#CC3311', '#009988']
+    }
+  ];
+
+  TEST_CASES.forEach(tc => {
+    const colorRange = colorPaletteToColorRange(
+      KEPLER_COLOR_PALETTES.find(p => p.name === tc.name),
+      {steps: tc.steps}
+    );
+
+    t.deepEqual(colorRange.colors, tc.colors, `Should build correct palette: ${tc.name}`);
+  });
+
+  t.end();
+});
+
+test('ColorUtil -> colorRangeBackwardCompatibility', t => {
+  const OLD_COLOR_RANGES_CUSTOM = [
+    {
+      savedColorRange: {
+        name: 'Uber Viz Qualitative 0',
+        type: 'qualitative',
+        category: 'Uber',
+        colors: ['#12939A', '#DDB27C']
+      },
+      loadedColorRange: {
+        name: 'Uber Viz Qualitative',
+        type: 'qualitative',
+        category: 'Uber',
+        colors: ['#12939A', '#DDB27C']
+      }
+    },
+    {
+      savedColorRange: {
+        name: 'Uber Viz Diverging 0.5',
+        type: 'sequential',
+        category: 'Uber',
+        colors: ['#000000', '#111111', '#222222']
+      },
+      loadedColorRange: {
+        name: 'Uber Viz Diverging',
+        type: 'diverging',
+        category: 'Uber',
+        colors: ['#000000', '#111111', '#222222']
+      }
+    },
+    {
+      savedColorRange: {
+        name: 'Uber Viz Sequential 1',
+        type: 'sequential',
+        category: 'Uber',
+        colors: ['#333333', '#444444', '#555555']
+      },
+      loadedColorRange: {
+        name: 'Uber Viz Sequential',
+        type: 'sequential',
+        category: 'Uber',
+        colors: ['#333333', '#444444', '#555555']
+      }
+    },
+    {
+      savedColorRange: {
+        name: 'UberPool',
+        type: 'sequential',
+        category: 'Uber',
+        colors: ['#AAAAAA', '#BBBBBB', '#CCCCCC']
+      },
+      loadedColorRange: {
+        name: 'UberPool',
+        type: 'diverging',
+        category: 'Uber',
+        colors: ['#AAAAAA', '#BBBBBB', '#CCCCCC']
+      }
+    },
+    {
+      savedColorRange: {
+        name: 'UberPool 9',
+        type: 'sequential',
+        category: 'Uber',
+        colors: ['#DDDDDD', '#EEEEEE', '#FFFFFF']
+      },
+      loadedColorRange: {
+        name: 'UberPool',
+        type: 'diverging',
+        category: 'Uber',
+        colors: ['#DDDDDD', '#EEEEEE', '#FFFFFF']
+      }
+    }
+  ];
+
+  const OLD_COLOR_RANGES_COLORBREWER = [
+    {
+      savedColorRange: {
+        name: 'ColorBrewer YlGn-3',
+        category: 'ColorBrewer',
+        colors: ['#000000', '#1111111'],
+        type: 'sequential'
+      },
+      loadedColorRange: {
+        name: 'YlGn',
+        category: 'ColorBrewer',
+        colors: ['#000000', '#1111111'],
+        type: 'sequential'
+      }
+    },
+    {
+      savedColorRange: {
+        name: 'ColorBrewer RdYlBu-11',
+        category: 'ColorBrewer',
+        colors: ['#222222', '#333333'],
+        type: 'diverging'
+      },
+      loadedColorRange: {
+        name: 'RdYlBu',
+        category: 'ColorBrewer',
+        colors: ['#222222', '#333333'],
+        type: 'diverging'
+      }
+    },
+    {
+      savedColorRange: {
+        name: 'ColorBrewer Accent-3',
+        category: 'ColorBrewer',
+        colors: ['#444444', '#555555'],
+        type: 'sequantial'
+      },
+      loadedColorRange: {
+        name: 'Accent',
+        category: 'ColorBrewer',
+        colors: ['#444444', '#555555'],
+        type: 'qualitative'
+      }
+    },
+    {
+      savedColorRange: {
+        name: 'ColorBrewer Set3-4',
+        category: 'ColorBrewer',
+        colors: ['#666666', '#777777'],
+        type: 'sequantial'
+      },
+      loadedColorRange: {
+        name: 'Set3',
+        category: 'ColorBrewer',
+        colors: ['#666666', '#777777'],
+        type: 'qualitative'
+      }
+    }
+  ];
+
+  const CUSTOM_COLOR_BREAK = [
+    {
+      savedColorRange: {
+        category: 'Uber',
+        colors: ['#2FA7AE', '#C22E00'],
+        name: 'Uber Viz Diverging 3.5',
+        reversed: false,
+        type: 'diverging',
+        colorMap: [
+          [200500, '#2FA7AE'],
+          [null, '#C22E00']
+        ]
+      },
+      loadedColorRange: {
+        category: 'Uber',
+        colors: ['#2FA7AE', '#C22E00'],
+        name: 'Uber Viz Diverging 3.5',
+        reversed: false,
+        type: 'diverging',
+        colorMap: [
+          [200500, '#2FA7AE'],
+          [null, '#C22E00']
+        ]
+      }
+    },
+    {
+      savedColorRange: {
+        name: 'color.customPalette',
+        type: 'custom',
+        category: 'Custom',
+        colors: ['#631C80', '#E6FAFA'],
+        colorLegends: {'#631C80': 'purple'}
+      },
+      loadedColorRange: {
+        name: 'color.customPalette',
+        type: 'custom',
+        category: 'Custom',
+        colors: ['#631C80', '#E6FAFA'],
+        colorLegends: {'#631C80': 'purple'}
+      }
+    }
+  ];
+
+  const CUSTOM_COLOR_LEGENDS = [
+    {
+      savedColorRange: {
+        name: 'Ice And Fire 3',
+        type: 'diverging',
+        category: 'Uber',
+        colors: ['#0198BD', '#FAFEB3', '#D50255'],
+        colorLegends: {'#0198BD': 'hwllo'}
+      },
+      loadedColorRange: {
+        name: 'Ice And Fire',
+        type: 'diverging',
+        category: 'Uber',
+        colors: ['#0198BD', '#FAFEB3', '#D50255'],
+        colorLegends: {'#0198BD': 'hwllo'}
+      }
+    }
+  ];
+
+  const NEW_COLOR_RANGES = [
+    {
+      name: 'Uber Viz Diverging',
+      type: 'diverging',
+      category: 'Uber',
+      colors: ['#00939C', '#8BC6C9', '#EB9373', '#C22E00']
+    },
+    {
+      name: 'Okabe Ito',
+      type: 'qualitative',
+      category: 'ColorBlind',
+      colors: ['#E69F00', '#56B4E9', '#009E73', '#F0E442', '#0072B2'],
+      colorLegends: {}
+    },
+    {
+      name: 'PuBu',
+      type: 'sequential',
+      category: 'ColorBrewer',
+      colors: ['#FFF7FB', '#CED1E6', '#72A8CF', '#0D72AD', '#023858'],
+      colorLegends: {}
+    }
+  ];
+
+  // load old color range
+  [
+    ...OLD_COLOR_RANGES_CUSTOM,
+    ...OLD_COLOR_RANGES_COLORBREWER,
+    ...CUSTOM_COLOR_BREAK,
+    ...CUSTOM_COLOR_LEGENDS
+  ].forEach(tc => {
+    t.deepEqual(
+      colorRangeBackwardCompatibility(tc.savedColorRange),
+      tc.loadedColorRange,
+      `should rename and load ${tc.savedColorRange.name} type ${tc.savedColorRange.type} as ${tc.loadedColorRange.name}`
+    );
+  });
+
+  // load new color palettes
+  NEW_COLOR_RANGES.forEach(tc => {
+    t.deepEqual(
+      colorRangeBackwardCompatibility(tc),
+      tc,
+      `should keep load new color palette ${tc.name}`
+    );
   });
 
   t.end();

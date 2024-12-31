@@ -63,6 +63,7 @@ interface DropdownListProps {
   listItemComponent?: ElementType;
   light?: boolean;
   fixedOptions?: any[];
+  selectedItems?: any[]; // Passed through by Typeahead
 }
 
 interface DropdownListState {
@@ -236,7 +237,10 @@ export default class DropdownList extends Component<DropdownListProps, DropdownL
             className={classNames(
               classList.listItem,
               {
-                hover: this.props.selectionIndex === i + valueOffset
+                hover: this.props.selectionIndex === i + valueOffset,
+                selected: (this.props.selectedItems || []).find(
+                  item => display(item) === display(value)
+                )
               },
               this.props.customClasses?.listItem
             )}

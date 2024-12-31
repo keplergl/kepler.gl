@@ -922,17 +922,9 @@ export const mergedFilters = [
         '5-second': histogramFromThreshold(
           getBinThresholds('5-second', [1453770124000, 1453770810000]),
           [
-            1453770810000,
-            1453770279000,
-            1453770358000,
-            1453770124000,
-            1453770131000,
-            1453770395000,
-            1453770173000,
-            1453770394000,
-            1453770540000
-          ],
-          [0, 1, 2, 3, 4, 5, 6, 7, 8]
+            1453770810000, 1453770279000, 1453770358000, 1453770124000, 1453770131000,
+            1453770395000, 1453770173000, 1453770394000, 1453770540000
+          ]
         )
       }
     }
@@ -1364,7 +1356,7 @@ mergedLayer4.config = {
   radiusScale: 'linear',
   visConfig: {
     colorRange: {
-      name: 'Uber Viz Qualitative 3',
+      name: 'Uber Viz Qualitative',
       type: 'qualitative',
       category: 'Uber',
       colors: [
@@ -1387,7 +1379,7 @@ mergedLayer4.config = {
       reversed: false
     },
     strokeColorRange: {
-      name: 'Uber Viz Qualitative 3',
+      name: 'Uber Viz Qualitative',
       type: 'qualitative',
       category: 'Uber',
       colors: [

@@ -89,7 +89,7 @@ const Row: React.FC<RowProps> = ({name, value, deltaValue, url}) => {
             {notNullorUndefined(deltaValue) ? (
               <span
                 className={`row__delta-value ${
-                  deltaValue.toString().charAt(0) === '+' ? 'positive' : 'negative'
+                  deltaValue?.toString().charAt(0) === '+' ? 'positive' : 'negative'
                 }`}
               >
                 {deltaValue}

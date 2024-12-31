@@ -28,7 +28,6 @@ import {
   LAYER_VIS_CONFIGS,
   DEFAULT_LAYER_COLOR,
   CHANNEL_SCALES,
-  ColorRange,
   DEFAULT_COLOR_UI
 } from '@kepler.gl/constants';
 import {getTextOffsetByRadius, formatTextLabelData} from '../layer-text-label';
@@ -42,6 +41,7 @@ import {
 } from '../layer-utils';
 import {getGeojsonPointDataMaps, GeojsonPointDataMaps} from '../geojson-layer/geojson-utils';
 import {
+  ColorRange,
   Merge,
   RGBColor,
   VisConfigBoolean,
@@ -480,7 +480,8 @@ export default class PointLayer extends Layer {
   }
   /* eslint-enable complexity */
 
-  updateLayerMeta(dataContainer) {
+  updateLayerMeta(dataset: KeplerTable) {
+    const {dataContainer} = dataset;
     this.dataContainer = dataContainer;
 
     if (this.config.columnMode === COLUMN_MODE_GEOJSON) {
@@ -489,7 +490,7 @@ export default class PointLayer extends Layer {
     } else if (this.config.columnMode === COLUMN_MODE_GEOARROW) {
       const boundsFromMetadata = getBoundsFromArrowMetadata(
         this.config.columns.geoarrow,
-        dataContainer
+        dataContainer as ArrowDataContainer
       );
       if (boundsFromMetadata) {
         this.updateMeta({bounds: boundsFromMetadata});
@@ -618,7 +619,7 @@ export default class PointLayer extends Layer {
           updateTriggers,
           getFiltered: data.getFiltered
         },
-        Boolean(this.geoArrowVector)
+        this.geoArrowVector
           ? {
               ...opts,
               data: {...opts.data, getPosition}
@@ -652,9 +653,7 @@ export default class PointLayer extends Layer {
   ) {
     // for arrow format, `object` is the Arrow row object Proxy,
     // and index is passed in `hoverInfo`.
-    const index = Boolean(this.geoArrowVector)
-      ? hoverInfo?.index
-      : (object as {index: number}).index;
+    const index = this.geoArrowVector ? hoverInfo?.index : (object as {index: number}).index;
     if (index >= 0) {
       return dataContainer.row(index);
     }

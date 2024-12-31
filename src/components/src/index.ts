@@ -77,7 +77,6 @@ export {LayerBlendingSelector, default as LayerManagerFactory} from './side-pane
 export {default as ColorPalette} from './side-panel/layer-panel/color-palette';
 export {
   ALL_TYPES,
-  ColorPaletteGroup,
   default as ColorRangeSelector,
   PaletteConfig
 } from './side-panel/layer-panel/color-range-selector';
@@ -90,6 +89,7 @@ export {
   default as LayerConfiguratorFactory,
   getLayerConfiguratorProps,
   getLayerDataset,
+  getLayerFields,
   getVisConfiguratorProps
 } from './side-panel/layer-panel/layer-configurator';
 export {default as LayerPanelFactory} from './side-panel/layer-panel/layer-panel';
@@ -101,8 +101,14 @@ export * from './side-panel/layer-panel/channel-by-value-selector';
 export * from './side-panel/layer-panel/color-breaks-panel';
 export * from './side-panel/layer-panel/color-range-selector';
 export * from './side-panel/layer-panel/color-scale-selector';
-export * from './side-panel/layer-panel/custom-palette';
-export {default as CustomPalette} from './side-panel/layer-panel/custom-palette';
+export {
+  AddColorStop,
+  default as CustomPalette,
+  DeleteColorStop,
+  ColorPaletteItem,
+  ColorSwatch,
+  EditableColorRange
+} from './side-panel/layer-panel/custom-palette';
 export {default as CustomPicker} from './side-panel/layer-panel/custom-picker';
 export {default as DatasetLayerGroupFactory} from './side-panel/layer-panel/dataset-layer-group';
 export {default as DatasetLayerSectionFactory} from './side-panel/layer-panel/dataset-layer-section';
@@ -140,7 +146,7 @@ export {default as MapStyleSelectorFactory} from './side-panel/map-style-panel/m
 export {default as CoordinateInfoFactory} from './map/coordinate-info';
 export {default as LayerHoverInfoFactory} from './map/layer-hover-info';
 export {default as LayerSelectorPanelFactory} from './map/layer-selector-panel';
-export {default as LazzyTippy} from './map/lazy-tippy';
+export {default as LazyTippy} from './map/lazy-tippy';
 export {default as LocalePanelFactory} from './map/locale-panel';
 export {default as MapControlFactory} from './map/map-control';
 export {default as MapControlPanelFactory} from './map/map-control-panel';
@@ -159,7 +165,7 @@ export {
 } from './map/map-legend';
 
 export {default as MapLegendPanelFactory} from './map/map-legend-panel';
-export {default as MapPopoverFactory} from './map/map-popover';
+export {default as MapPopoverFactory, getSelectedFeature} from './map/map-popover';
 export {default as MapPopoverContentFactory} from './map/map-popover-content';
 export {default as SplitMapButtonFactory} from './map/split-map-button';
 export {default as Toggle3dButtonFactory} from './map/toggle-3d-button';
@@ -201,8 +207,15 @@ export {default as ResetControlFactory} from './common/animation-control/reset-c
 export {default as SpeedControlFactory} from './common/animation-control/speed-control';
 export {default as WindowActionControlFactory} from './common/animation-control/window-action-control';
 
-export {default as HistogramPlotFactory} from './common/histogram-plot';
+export {default as HistogramPlotFactory, HISTOGRAM_MASK_MODE} from './common/histogram-plot';
 export {default as IconButton} from './common/icon-button';
+export {
+  default as ColumnStatsChartFactory,
+  HISTOGRAM_WIDTH,
+  HISTOGRAM_HEIGHT,
+  ColorChartHeader,
+  ColorChartTick
+} from './common/column-stats-chart';
 export {default as ImagePreview} from './common/image-preview';
 export {default as LineChartFactory} from './common/line-chart';
 export {default as RangeBrushFactory} from './common/range-brush';
@@ -224,6 +237,7 @@ export {default as MultiSelectFilterFactory} from './filters/multi-select-filter
 export {default as RangeFilterFactory} from './filters/range-filter';
 export {default as SingleSelectFilterFactory} from './filters/single-select-filter';
 export {default as TimeRangeFilterPanelFactory} from './filters/filter-panels/time-range-filter-panel';
+export {default as FilterSyncedDatasetPanelFactory} from './filters/filter-panels/filter-synced-dataset-panel';
 export {
   default as TimeRangeFilterFactory,
   timeRangeSliderFieldsSelector
@@ -472,3 +486,4 @@ export {CloudListProvider, useCloudListProvider} from './hooks/use-cloud-list-pr
 export {default as useDndEffects} from './hooks/use-dnd-effects';
 export {default as useDndLayers} from './hooks/use-dnd-layers';
 export {default as useFeatureFlags} from './hooks/use-feature-flags';
+export {default as useLegendPosition} from './hooks/use-legend-position';

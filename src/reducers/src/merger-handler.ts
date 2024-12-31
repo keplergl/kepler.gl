@@ -29,7 +29,7 @@ function callFunctionGetTask(fn: () => any): [any, any] {
 export function mergeStateFromMergers<State extends VisState>(
   state: State,
   initialState: State,
-  mergers: Merger<any>[],
+  mergers: Merger<State>[],
   postMergerPayload: PostMergerPayload
 ): {
   mergedState: State;
@@ -80,7 +80,7 @@ export function mergeStateFromMergers<State extends VisState>(
 
 export function hasPropsToMerge<State extends object>(
   state: State,
-  mergerProps: string | string[]
+  mergerProps?: string | string[]
 ): boolean {
   return Array.isArray(mergerProps)
     ? Boolean(mergerProps.some(p => Object.prototype.hasOwnProperty.call(state, p)))
@@ -89,15 +89,15 @@ export function hasPropsToMerge<State extends object>(
 
 export function getPropValueToMerger<State extends object>(
   state: State,
-  mergerProps: string | string[],
+  mergerProps?: string | string[],
   toMergeProps?: string | string[]
 ): Partial<State> | ValueOf<State> {
-  return Array.isArray(mergerProps)
+  return Array.isArray(mergerProps) && Array.isArray(toMergeProps)
     ? mergerProps.reduce((accu, p, i) => {
         if (!toMergeProps) return accu;
         return {...accu, [toMergeProps[i]]: state[p]};
       }, {})
-    : state[mergerProps];
+    : state[mergerProps as string];
 }
 
 export function resetStateToMergeProps<State extends VisState>(

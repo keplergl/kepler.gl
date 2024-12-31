@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {ColorRange} from '@kepler.gl/constants';
+import {ColorRange} from '@kepler.gl/types';
 import {ColorUI, NestedPartial, RGBAColor, RGBColor} from '@kepler.gl/types';
 import {rgbToHex} from '@kepler.gl/utils';
 import React, {MouseEvent, ComponentType, useState, useCallback} from 'react';

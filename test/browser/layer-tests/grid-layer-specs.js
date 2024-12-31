@@ -328,9 +328,14 @@ test('#GridLayer -> renderLayer', t => {
             `should pass correct data:${i} to grid cell layer`
           );
         });
+
+        const expectedLayerDomain = {
+          domain: [1, 2],
+          aggregatedBins: {1: {i: 1, value: 2, counts: 2}, 2: {i: 2, value: 1, counts: 1}}
+        };
         t.deepEqual(
           spyLayerCallbacks.args[0][0],
-          [1, 2],
+          expectedLayerDomain,
           'should call onSetLayerDomain with correct domain'
         );
 
@@ -443,10 +448,13 @@ test('#GridLayer -> renderLayer', t => {
           {i: 2, value: 1, counts: 1},
           {i: 1, value: 2, counts: 2}
         ];
-
+        const expectedLayerDomain = {
+          domain: [7.13, 11],
+          aggregatedBins: {1: {i: 1, value: 7.13, counts: 2}, 2: {i: 2, value: 11, counts: 1}}
+        };
         t.deepEqual(
           spyLayerCallbacks.args[1][0],
-          [7.13, 11],
+          expectedLayerDomain,
           'should call onSetLayerDomain with correct domain'
         );
         t.deepEqual(

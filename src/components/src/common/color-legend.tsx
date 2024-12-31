@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {ColorRange} from '@kepler.gl/constants';
+import {ColorRange} from '@kepler.gl/types';
 import {Layer} from '@kepler.gl/layers';
 import {HexColor, MapState} from '@kepler.gl/types';
 import {
@@ -28,7 +28,7 @@ const inputCss = css`
 `;
 const StyledLegend = styled.div<{disableEdit: boolean; isExpanded?: boolean}>`
   ${props => props.theme.sidePanelScrollBar};
-  ${props => (props.isExpanded ? '' : `max-height: 180px;`)};
+  ${props => (props.isExpanded ? '' : `max-height: 156px;`)};
   overflow: auto;
   margin-bottom: ${GAP}px;
   display: grid;
@@ -336,7 +336,11 @@ function ColorLegendFactory(LegendRow: ReturnType<typeof LegendRowFactory>) {
     );
 
     return (
-      <StyledLegend disableEdit={disableEdit} isExpanded={isExpanded}>
+      <StyledLegend
+        className="styled-color-legend"
+        disableEdit={disableEdit}
+        isExpanded={isExpanded}
+      >
         {legends.map((legend, i) => (
           <LegendRow
             key={`${legend.data}-${i}`}

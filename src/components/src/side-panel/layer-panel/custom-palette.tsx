@@ -22,7 +22,7 @@ import styled, {StyledComponent, css} from 'styled-components';
 import Portaled from '../../common/portaled';
 
 import {KeyEvent} from '@kepler.gl/constants';
-import {ColorUI, HexColor} from '@kepler.gl/types';
+import {ColorMap, ColorUI, HexColor, NestedPartial} from '@kepler.gl/types';
 import {colorMapToColorBreaks, isNumericColorBreaks} from '@kepler.gl/utils';
 import {
   addCustomPaletteColor,
@@ -42,9 +42,7 @@ export type ActionIcons = {
 };
 
 export type EditColorMapFunc = (v: number, i: number) => void;
-export type SetColorUIFunc = (
-  newConfig: Partial<{[key in keyof ColorUI]: ColorUI[keyof ColorUI]}>
-) => void;
+export type SetColorUIFunc = (newConfig: NestedPartial<ColorUI>) => void;
 
 /**
  * EditableColorRange
@@ -74,6 +72,7 @@ export type CustomPaletteInputProps = {
   inputColorHex: (index: number, v: HexColor) => void;
   editColorMapValue: EditColorMapFunc;
   actionIcons?: ActionIcons;
+  disableAppend?: boolean;
   disableDelete?: boolean;
   onDelete: (index: number) => void;
   onAdd: (index: number) => void;
@@ -97,8 +96,8 @@ const dragHandleActive = css`
 export const ColorPaletteItem = styled.div`
   display: flex;
   align-items: center;
-  padding-top: 6px;
-  padding-bottom: 6px;
+  padding-top: 2px;
+  padding-bottom: 2px;
   z-index: ${props => props.theme.dropdownWrapperZ + 1};
   justify-content: space-between;
 
@@ -222,7 +221,23 @@ export const DragHandle = SortableHandle<DragHandleProps>(({className, children}
   <StyledDragHandle className={className}>{children}</StyledDragHandle>
 ));
 
-export const ColorPaletteInput = ({value, onChange, id, width, textAlign, editable}) => {
+export type ColorPaletteInputProps = {
+  value: string | number;
+  onChange: (val: unknown) => void;
+  id: string;
+  width: string;
+  textAlign: string;
+  editable: boolean;
+};
+
+export const ColorPaletteInput = ({
+  value,
+  onChange,
+  id,
+  width,
+  textAlign,
+  editable
+}: ColorPaletteInputProps) => {
   const [stateValue, setValue] = useState(value);
   const inputRef = useRef(null);
   useEffect(() => {
@@ -300,14 +315,12 @@ export const EditableColorRange: React.FC<EditableColorRangeProps> = ({
   const onChangeLeft = useCallback(
     val => {
       if (editable && editColorMap) editColorMap(parseFloat(val), index - 1);
-      return;
     },
     [editColorMap, index, editable]
   );
   const onChangeRight = useCallback(
     val => {
       if (editable && editColorMap) editColorMap(parseFloat(val), index);
-      return;
     },
     [editColorMap, index, editable]
   );
@@ -315,7 +328,7 @@ export const EditableColorRange: React.FC<EditableColorRangeProps> = ({
   return (
     <StyledRangeInput>
       <ColorPaletteInput
-        value={noMinBound ? 'Less' : item.inputs[0]}
+        value={noMinBound ? 'Less' : item.inputs[0].toString()}
         id={`color-palette-input-${index}-left`}
         width="50px"
         textAlign="end"
@@ -324,7 +337,7 @@ export const EditableColorRange: React.FC<EditableColorRangeProps> = ({
       />
       <Dash />
       <ColorPaletteInput
-        value={noMaxBound ? 'More' : item.inputs[1]}
+        value={noMaxBound ? 'More' : item.inputs[1].toString()}
         id={`color-palette-input-${index}-right`}
         width="50px"
         textAlign="end"
@@ -355,6 +368,7 @@ export const CustomPaletteInput: React.FC<CustomPaletteInputProps> = ({
   inputColorHex,
   editColorMapValue,
   actionIcons = defaultActionIcons,
+  disableAppend,
   disableDelete,
   onDelete,
   onAdd,
@@ -393,10 +407,24 @@ export const CustomPaletteInput: React.FC<CustomPaletteInputProps> = ({
             editColorMap={editColorMapValue}
             editable
           />
-        ) : null}
+        ) : (
+          colorBreaks &&
+          colorBreaks[index] && (
+            <ColorPaletteInput
+              value={colorBreaks[index].label}
+              id={`color-palette-input-${index}-left`}
+              width="auto"
+              textAlign="end"
+              editable={false}
+              onChange={v => v}
+            />
+          )
+        )}
       </div>
       <div className="custom-palette-input__right">
-        <AddColorStop onColorAdd={onColorAdd} IconComponent={actionIcons.add} />
+        {!disableAppend ? (
+          <AddColorStop onColorAdd={onColorAdd} IconComponent={actionIcons.add} />
+        ) : null}
         {!disableDelete ? (
           <DeleteColorStop onColorDelete={onColorDelete} IconComponent={actionIcons.delete} />
         ) : null}
@@ -433,9 +461,10 @@ function CustomPaletteFactory(): React.FC<CustomPaletteProps> {
   }) => {
     const [isSorting, setIsSorting] = useState(false);
     const {colors, colorMap} = customPalette;
-    const colorBreaks = useMemo(() => (colorMap ? colorMapToColorBreaks(colorMap) : null), [
-      colorMap
-    ]);
+    const colorBreaks = useMemo(
+      () => (colorMap ? colorMapToColorBreaks(colorMap) : null),
+      [colorMap]
+    );
 
     const onPickerUpdate = useCallback(
       color => {
@@ -526,13 +555,22 @@ function CustomPaletteFactory(): React.FC<CustomPaletteProps> {
         if (!customPalette.colorMap) {
           return;
         }
-        const newColorMap = customPalette.colorMap.map((cm, i) =>
-          i === index ? [value, cm[1]] : cm
+        const newColorMap = customPalette.colorMap.map(
+          (cm, i) => (i === index ? [value, cm[1]] : cm) as [string, string]
         );
+
+        // sort the user inputs in case the break values are not ordered
+        const breaks = newColorMap
+          .map(cm => cm[0] as string | null)
+          .slice(0, -1)
+          .sort((a, b) => Number(a) - Number(b))
+          .concat(null);
+        const sortedNewColorMap: ColorMap = newColorMap.map((cm, i) => [breaks[i], cm[1]]);
+
         setColorPaletteUI({
           customPalette: {
             ...customPalette,
-            colorMap: newColorMap
+            colorMap: sortedNewColorMap
           }
         });
       },
@@ -557,6 +595,7 @@ function CustomPaletteFactory(): React.FC<CustomPaletteProps> {
               isSorting={isSorting}
               color={color}
               inputColorHex={inputColorHex}
+              disableAppend={colors.length >= 20}
               disableDelete={colors.length <= 2}
               actionIcons={actionIcons}
               onAdd={onAdd}
@@ -569,12 +608,8 @@ function CustomPaletteFactory(): React.FC<CustomPaletteProps> {
         <DividerLine />
         {/* Cancel or Confirm Buttons */}
         <BottomAction onCancel={onCancel} onConfirm={onConfirm} />
-        <Portaled isOpened={showSketcher !== false} left={280} top={-300}>
-          <CustomPicker
-            color={colors[Number(showSketcher)]}
-            onChange={onPickerUpdate}
-            onSwatchClose={onSwatchClose}
-          />
+        <Portaled isOpened={showSketcher !== false} left={280} top={-300} onClose={onSwatchClose}>
+          <CustomPicker color={colors[Number(showSketcher)]} onChange={onPickerUpdate} />
         </Portaled>
       </StyledCustomPalette>
     );

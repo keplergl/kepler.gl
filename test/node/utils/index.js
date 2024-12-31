@@ -22,6 +22,7 @@ import './s2-utils-test';
 import './editor-utils-test';
 import './kepler-gl-utils-test';
 import './timeline-test';
+import './plot-test';
 import './composer-helpers-test';
 import './dom-to-image';
 import './effect-utils-test';

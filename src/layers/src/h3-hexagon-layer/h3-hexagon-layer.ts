@@ -26,11 +26,11 @@ import {
   HIGHLIGH_COLOR_3D,
   DEFAULT_COLOR_UI,
   DEFAULT_TEXT_LABEL,
-  LAYER_VIS_CONFIGS,
-  ColorRange
+  LAYER_VIS_CONFIGS
 } from '@kepler.gl/constants';
 
 import {
+  ColorRange,
   VisConfigBoolean,
   VisConfigColorRange,
   VisConfigNumber,
@@ -338,7 +338,9 @@ export default class HexagonIdLayer extends Layer {
   }
   /* eslint-enable complexity */
 
-  updateLayerMeta(dataContainer, getHexId) {
+  updateLayerMeta(dataset: KeplerTable, getHexId) {
+    const {dataContainer} = dataset;
+
     const centroids = dataContainer.map((d, index) => {
       const id = getHexId({index});
       if (!h3IsValid(id)) {
