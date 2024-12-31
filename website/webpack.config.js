@@ -62,10 +62,9 @@ const COMMON_CONFIG = {
         include: [
           resolve(__dirname, './src'),
           resolve(LIB_DIR, './examples'),
-          resolve(LIB_DIR, './src'),
-          /node_modules\/react-ai-assist/
+          resolve(LIB_DIR, './src')
         ],
-        exclude: [/node_modules\/(?!react-ai-assist)/]
+        exclude: [/node_modules\//]
       },
       // Add css loader for ai-assistant
       {

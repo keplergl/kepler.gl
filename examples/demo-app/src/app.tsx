@@ -9,7 +9,7 @@ import {connect, useDispatch} from 'react-redux';
 import cloneDeep from 'lodash.clonedeep';
 import isEqual from 'lodash.isequal';
 
-import {ScreenshotWrapper} from 'react-ai-assist';
+import {ScreenshotWrapper} from '@openassistant/ui';
 import {
   messages as aiAssistantMessages,
   setStartScreenCapture,

@@ -18,7 +18,7 @@ import {
   CustomFunctionOutputProps,
   ErrorCallbackResult,
   RegisterFunctionCallingProps
-} from 'react-ai-assist';
+} from '@openassistant/core';
 
 export function loadUrlFunctionDefinition(
   context: CustomFunctionContext<ActionHandler<typeof loadFiles> | Loader[] | object>

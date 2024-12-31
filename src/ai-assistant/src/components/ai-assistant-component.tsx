@@ -3,14 +3,12 @@
 
 import React, {useEffect} from 'react';
 import styled, {withTheme} from 'styled-components';
-import {
-  AiAssistant,
-  MessageModel,
-  useAssistant,
-  histogramFunctionDefinition,
-  dataClassifyFunctionDefinition
-} from 'react-ai-assist';
-import 'react-ai-assist/../dist/index.css';
+import {MessageModel, useAssistant} from '@openassistant/core';
+import {dataClassifyFunctionDefinition} from '@openassistant/geoda';
+import {histogramFunctionDefinition} from '@openassistant/echarts';
+import '@openassistant/echarts/dist/index.css';
+import {AiAssistant} from '@openassistant/ui';
+import '@openassistant/ui/dist/index.css';
 
 import {textColorLT} from '@kepler.gl/styles';
 import {ActionHandler} from '@kepler.gl/actions';

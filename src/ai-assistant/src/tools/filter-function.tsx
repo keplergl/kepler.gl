@@ -11,7 +11,7 @@ import {
   CustomFunctionOutputProps,
   ErrorCallbackResult,
   RegisterFunctionCallingProps
-} from 'react-ai-assist';
+} from '@openassistant/core';
 import {checkDatasetNotExists, checkFieldNotExists} from './utils';
 import {getDefaultFilter, getFilterProps, updateFilterPlot} from '@kepler.gl/utils';
 import {RangeFilterFactory, appInjector} from '@kepler.gl/components';

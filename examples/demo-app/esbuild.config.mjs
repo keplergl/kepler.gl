@@ -36,9 +36,7 @@ const RESOLVE_LOCAL_ALIASES = {
   // Suppress useless warnings from react-date-picker's dep
   'tiny-warning': `${SRC_DIR}/utils/src/noop.ts`,
   // kepler.gl and loaders.gl need to use same apache-arrow
-  'apache-arrow': `${NODE_MODULES_DIR}/apache-arrow`,
-  // all react-ai-assist needs to be resolved from samenode_modules
-  'react-ai-assist': `${NODE_MODULES_DIR}/react-ai-assist`
+  'apache-arrow': `${NODE_MODULES_DIR}/apache-arrow`
 };
 
 const config = {
@@ -80,7 +78,10 @@ function addAliases(externals, args) {
 
   // resolve ai-assistant from local dir
   if (useLocalAiAssistant) {
-    resolveAlias['react-ai-assist'] = join(LIB_DIR, '../ai-assistant/src');
+    resolveAlias['@openassistant/core'] = join(LIB_DIR, '../openassistant/packages/core/src');
+    resolveAlias['@openassistant/ui'] = join(LIB_DIR, '../openassistant/packages/ui/src');
+    resolveAlias['@openassistant/echarts'] = join(LIB_DIR, '../openassistant/packages/echarts/src');
+    resolveAlias['@openassistant/geoda'] = join(LIB_DIR, '../openassistant/packages/geoda/src');
     resolveAlias['@kepler.gl/ai-assistant'] = join(SRC_DIR, 'ai-assistant/src');
   }
 

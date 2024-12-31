@@ -81,7 +81,7 @@ const LIBRARY_BUNDLE_CONFIG = () => ({
           `${NODE_MODULES_DIR}/@loaders.gl`,
           `${NODE_MODULES_DIR}/@deck.gl`,
           `${NODE_MODULES_DIR}/@math.gl`,
-          `${NODE_MODULES_DIR}/react-ai-assist`,
+          // `${NODE_MODULES_DIR}/react-ai-assist`,
           `${NODE_MODULES_DIR}/@geoarrow`
         ],
         options: {

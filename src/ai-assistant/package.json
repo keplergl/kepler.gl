@@ -12,7 +12,8 @@
     "react",
     "webgl",
     "visualization",
-    "deck.gl"
+    "deck.gl",
+    "openassistant"
   ],
   "repository": {
     "type": "git",
@@ -35,10 +36,13 @@
     "@kepler.gl/layers": "3.1.0-alpha.1",
     "@kepler.gl/types": "3.1.0-alpha.1",
     "@kepler.gl/utils": "3.1.0-alpha.1",
+    "@openassistant/core": "^0.0.1",
+    "@openassistant/echarts": "^0.0.1",
+    "@openassistant/geoda": "^0.0.1",
+    "@openassistant/ui": "^0.0.1",
     "color-interpolate": "^1.0.5",
     "echarts": "^5.5.1",
-    "global": "^4.3.0",
-    "react-ai-assist": "0.0.20"
+    "global": "^4.3.0"
   },
   "nyc": {
     "sourceMap": false,

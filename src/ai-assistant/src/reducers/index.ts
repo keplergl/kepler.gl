@@ -8,7 +8,7 @@ import {
   SET_START_SCREEN_CAPTURE,
   SET_SCREEN_CAPTURED
 } from '../actions';
-import {MessageModel} from 'react-ai-assist';
+import {MessageModel} from '@openassistant/core';
 
 export type AiAssistantConfig = {
   isReady: boolean;
