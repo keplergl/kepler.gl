@@ -233,7 +233,7 @@ export function getQuantLegends(scale: D3ScaleFunction, labelFormat: LabelFormat
   const thresholdLabelFormat = (n, type) =>
     n && labelFormat ? labelFormat(n) : n ? formatNumber(n, type) : 'no value';
   const labels =
-    scale.scaleType === 'threshold' || scale.scaleType === 'jenks'
+    scale.scaleType === 'threshold'
       ? getThresholdLabels(scale, thresholdLabelFormat)
       : scale.scaleType === 'custom'
       ? getThresholdLabels(scale, customScaleLabelFormat)
