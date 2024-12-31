@@ -84,10 +84,10 @@ export default function useLegendPosition({
         : {y: bottomOffset, anchorY: 'bottom'})
     };
   }, [isSidePanelShown]);
-  const updatePosition = useCallback(() => onChangeSettings({position: calcPosition()}), [
-    calcPosition,
-    onChangeSettings
-  ]);
+  const updatePosition = useCallback(
+    () => onChangeSettings({position: calcPosition()}),
+    [calcPosition, onChangeSettings]
+  );
 
   const startResize = useCallback(() => {
     const content = legendContentRef.current?.querySelector('.map-control__panel-content');

@@ -400,7 +400,7 @@ test('Components -> LayerColorRangeSelector.render -> ColorSelector -> ColorRang
   t.equal(crs.length, 1, 'should render 1 ColorRangeSelector');
 
   const item = crs.find('ColorPaletteItem');
-  t.equal(item.length, 64, `should render ${KEPLER_COLOR_PALETTES.length} Palettes`);
+  t.equal(item.length, 65, `should render ${KEPLER_COLOR_PALETTES.length} Palettes`);
 
   t.equal(
     item.at(0).find(ColorPalette).find('.color-range-palette__block').length,
@@ -500,7 +500,7 @@ test('Components -> LayerColorRangeSelector.render -> ColorSelector -> ColorRang
   t.equal(pc.length, 5, 'should render 5 PaletteConfig');
 
   const cpg = crs.find('ColorPaletteItem');
-  t.equal(cpg.length, 64, `should render ${KEPLER_COLOR_PALETTES.length} Palettes`);
+  t.equal(cpg.length, 65, `should render ${KEPLER_COLOR_PALETTES.length} Palettes`);
 
   const typeSelect = crs.find(PaletteConfig).at(0);
   t.equal(typeSelect.find('.side-panel-panel__label').text(), 'Type', 'should render type');

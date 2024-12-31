@@ -152,7 +152,8 @@ export {
   getDomainStepsbyZoom,
   getThresholdsFromQuantiles,
   getQuantLabelFormat,
-  getHistogramDomain
+  getHistogramDomain,
+  getQuantLegends
 } from './data-scale-utils';
 export type {ColorBreak, ColorBreakOrdinal, DomainQuantiles, DomainStops} from './data-scale-utils';
 

@@ -173,7 +173,7 @@ function ColorBreaksPanelFactory(
 
     return (
       <ColorBreaksPanelWrapper>
-        {dataset ? (
+        {dataset && allBins.length > 1 ? (
           <ColumnStatsChart
             colorField={colorField}
             dataset={dataset}

@@ -629,7 +629,7 @@ export function layerToggleVisibilityUpdater(
     return toggleLayerForMapUpdater(newState, toggleLayerForMap(mapIndex, layerId));
   } else {
     // [case 2]: toggle global layer visibility
-    let newLayer = layer.updateLayerConfig({isVisible});
+    const newLayer = layer.updateLayerConfig({isVisible});
     const idx = newState.layers.findIndex(l => l.id === layerId);
 
     newState = updatelayerVisibilty(newState, newLayer, isVisible);
@@ -3242,7 +3242,24 @@ export function setColumnDisplayFormatUpdater(
   });
 
   const newDataset = copyTableAndUpdate(dataset, {fields: newFields as Field[]});
-  return pick_('datasets')(merge_({[dataId]: newDataset}))(state);
+  let newState = pick_('datasets')(merge_({[dataId]: newDataset}))(state);
+
+  // update colorField displayFormat
+  newState = {
+    ...newState,
+    layers: newState.layers.map(layer =>
+      layer.config?.colorField?.name && layer.config.colorField.name in formats
+        ? layer.updateLayerConfig({
+            colorField: {
+              ...layer.config.colorField,
+              displayFormat: formats[layer.config.colorField.name]
+            }
+          })
+        : layer
+    )
+  };
+
+  return newState;
 }
 
 /**

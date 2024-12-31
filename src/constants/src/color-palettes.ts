@@ -367,6 +367,14 @@ const FSQWarmTone = {
   colorBlindSafe: true
 };
 
+const FSQCoolTone = {
+  name: 'FSQ Cool Tone',
+  type: PALETTE_TYPES.QUA,
+  category: CATEGORIES.COLORBLIND,
+  colors: ['#11439F', '#297EE8', '#95C6C9', '#FECE5A', '#FFDDBF', '#9FB1B7', '#5281B5', '#B9D0FB'],
+  colorBlindSafe: true
+};
+
 /**
  * Build Categorical color palette
  */
@@ -572,7 +580,8 @@ const BRANDED_PALETTES: ColorPalette[] = [
   TolLight,
   OkabeIto,
   FSQBrand,
-  FSQWarmTone
+  FSQWarmTone,
+  FSQCoolTone
 ]
   .map(recipe =>
     recipe.type === PALETTE_TYPES.QUA ? buildCategoricalPalette(recipe) : buildCustomPalette(recipe)
