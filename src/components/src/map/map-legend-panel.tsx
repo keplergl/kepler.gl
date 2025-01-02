@@ -24,6 +24,7 @@ import {withState} from '../injector';
 import MapControlPanelFactory from './map-control-panel';
 import MapControlTooltipFactory from './map-control-tooltip';
 import MapLegendFactory from './map-legend';
+import {restrictToWindowEdges} from '@dnd-kit/modifiers';
 
 const DRAG_RESIZE_ID = 'map-legend-resize';
 const DRAG_MOVE_ID = 'map-legend-move';
@@ -203,6 +204,7 @@ const DraggableLegend = withState(
         onDragStart={handleDragStart}
         onDragMove={handleDragMove}
         onDragEnd={handleDragEnd}
+        modifiers={[restrictToWindowEdges]}
       >
         <DraggableLegendContent
           ref={legendContentRef}
