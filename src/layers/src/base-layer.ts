@@ -73,6 +73,7 @@ import {
 import {
   getScaleFunction,
   initializeLayerColorMap,
+  getCategoricalColorScale,
   updateCustomColorRangeByColorUI
 } from '@kepler.gl/utils';
 import memoize from 'lodash.memoize';
@@ -1030,6 +1031,10 @@ class Layer implements KeplerLayer {
     colorDomain: VisualChannelDomain,
     colorRange: ColorRange
   ): GetVisChannelScaleReturnType {
+    if (colorScale === SCALE_TYPES.customOrdinal) {
+      return getCategoricalColorScale(colorDomain, colorRange);
+    }
+
     if (hasColorMap(colorRange) && colorScale === SCALE_TYPES.custom) {
       const cMap = new Map();
       colorRange.colorMap?.forEach(([k, v]) => {
@@ -1041,7 +1046,7 @@ class Layer implements KeplerLayer {
       const scale = getScaleFunction(scaleType, cMap.values(), cMap.keys(), false);
       scale.unknown(cMap.get(UNKNOWN_COLOR_KEY) || NO_VALUE_COLOR);
 
-      return scale as () => any;
+      return scale as GetVisChannelScaleReturnType;
     }
     return this.getVisChannelScale(colorScale, colorDomain, colorRange.colors.map(hexToRgb));
   }

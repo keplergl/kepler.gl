@@ -12,7 +12,7 @@ import {rgb as d3Rgb} from 'd3-color';
 import {interpolate} from 'd3-interpolate';
 import {arrayInsert, arrayMove} from './utils';
 import Console from 'global/console';
-import {KEPLER_COLOR_PALETTES, PALETTE_TYPES} from '@kepler.gl/constants';
+import {KEPLER_COLOR_PALETTES, PALETTE_TYPES, SCALE_TYPES} from '@kepler.gl/constants';
 
 /**
  * get r g b from hex code
@@ -134,6 +134,17 @@ export function interpolateHex(hex1: HexColor, hex2: HexColor): HexColor {
   return d3Rgb(interpolate(hex1, hex2)(0.5)).hex().toUpperCase();
 }
 
+function addNewCategoricalStepAtIndex(colorMap, index, newColor) {
+  if (!Array.isArray(colorMap) || !colorMap.length) {
+    return colorMap;
+  }
+
+  let newColorMap = colorMap.map(([val, c]) => [Array.isArray(val) ? [...val] : val, c]);
+  newColorMap = arrayInsert(newColorMap, index + 1, [null, newColor]);
+
+  return newColorMap;
+}
+
 export function addNewQuantativeColorBreakAtIndex(colorMap, index, newColors) {
   if (!Array.isArray(colorMap) || !colorMap.length) {
     return colorMap;
@@ -177,7 +188,10 @@ export function addCustomPaletteColor(customPalette: ColorRange, index: number):
 
   // add color to colorMap
   if (colorMap) {
-    update.colorMap = addNewQuantativeColorBreakAtIndex(colorMap, index, update.colors);
+    update.colorMap =
+      customPalette.type === 'customOrdinal'
+        ? addNewCategoricalStepAtIndex(colorMap, index, newColor)
+        : addNewQuantativeColorBreakAtIndex(colorMap, index, update.colors);
   }
 
   return {
@@ -456,5 +470,9 @@ export function initializeCustomPalette(colorRange: ColorRange, colorMap?: Color
     ...(colorMap ? {colorMap} : {})
   };
 
+  // only customPalette.colors are needed for custom palette editor with custom ordinal scale
+  if (!colorMap && colorRange.type === SCALE_TYPES.customOrdinal) {
+    delete customPalette.colorMap;
+  }
   return customPalette;
 }

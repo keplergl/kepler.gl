@@ -393,6 +393,7 @@ export type SCALE_TYPES_DEF = {
   point: 'point';
   threshold: 'threshold';
   custom: 'custom';
+  customOrdinal: 'customOrdinal';
 };
 
 export const SCALE_TYPES: SCALE_TYPES_DEF = keyMirror({
@@ -404,6 +405,7 @@ export const SCALE_TYPES: SCALE_TYPES_DEF = keyMirror({
   log: null,
   threshold: null,
   custom: null,
+  customOrdinal: null,
   // ordinal domain to linear range
   point: null
 });
@@ -416,6 +418,7 @@ export const SCALE_TYPE_NAMES: {[key in keyof SCALE_TYPES_DEF]: string} = {
   log: 'Log',
   threshold: 'Threshold',
   custom: 'Custom Breaks',
+  customOrdinal: 'Custom Ordinal',
   point: 'Point'
 };
 
@@ -432,7 +435,8 @@ export const SCALE_FUNC = {
   [SCALE_TYPES.log]: scaleLog,
   [SCALE_TYPES.point]: scalePoint,
   [SCALE_TYPES.threshold]: scaleThreshold,
-  [SCALE_TYPES.custom]: scaleThreshold
+  [SCALE_TYPES.custom]: scaleThreshold,
+  [SCALE_TYPES.customOrdinal]: scaleOrdinal
 };
 
 export const ALL_FIELD_TYPES = keyMirror({
@@ -666,7 +670,7 @@ export const linearFieldAggrScaleFunctions = {
 };
 
 export const ordinalFieldScaleFunctions = {
-  [CHANNEL_SCALES.color]: [SCALE_TYPES.ordinal],
+  [CHANNEL_SCALES.color]: [SCALE_TYPES.ordinal, SCALE_TYPES.customOrdinal],
   [CHANNEL_SCALES.radius]: [SCALE_TYPES.point],
   [CHANNEL_SCALES.size]: [SCALE_TYPES.point]
 };
@@ -753,7 +757,13 @@ export const FIELD_OPTS = {
   [ALL_FIELD_TYPES.integer]: {
     type: 'numerical',
     scale: {
-      ...linearFieldScaleFunctions,
+      ...{
+        ...linearFieldScaleFunctions,
+        [CHANNEL_SCALES.color]: [
+          ...linearFieldScaleFunctions[CHANNEL_SCALES.color],
+          SCALE_TYPES.customOrdinal
+        ]
+      },
       ...linearFieldAggrScaleFunctions
     },
     format: {

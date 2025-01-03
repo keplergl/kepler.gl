@@ -25,7 +25,7 @@ interface ChickletedInputProps {
   error?: boolean;
   placeholder?: string;
   inputTheme?: string;
-  CustomChickletComponent?: ElementType;
+  CustomChickletComponent?: ElementType | null;
   className?: string;
   reorderItems?: (newOrder: any) => void;
 }

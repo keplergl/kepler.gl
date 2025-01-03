@@ -7,11 +7,11 @@ import styled from 'styled-components';
 import {ALL_FIELD_TYPES, SCALE_TYPES} from '@kepler.gl/constants';
 import {AggregatedBin, Layer, VisualChannelDomain} from '@kepler.gl/layers';
 import {KeplerTable} from '@kepler.gl/table';
-import {ColorRange, ColorUI, Field, NestedPartial} from '@kepler.gl/types';
+import {ColorRange, ColorUI, Field} from '@kepler.gl/types';
 import {
-  colorBreaksToColorMap,
   getLayerColorScale,
   getLegendOfScale,
+  initCustomPaletteByCustomScale,
   histogramFromValues,
   histogramFromThreshold,
   getHistogramDomain,
@@ -56,6 +56,7 @@ export type ColorScaleSelectorProps = {
   displayOption: string;
   getOptionValue: string;
   aggregatedBins?: AggregatedBin[];
+  channelKey: string;
 };
 
 const DropdownPropContext = React.createContext({});
@@ -136,6 +137,7 @@ function ColorScaleSelectorFactory(
     range,
     setColorUI,
     colorUIConfig,
+    channelKey,
     ...dropdownSelectProps
   }) => {
     const displayOption = Accessor.generateOptionToStringFor(dropdownSelectProps.displayOption);
@@ -192,6 +194,10 @@ function ColorScaleSelectorFactory(
       return getHistogramDomain({aggregatedBins, columnStats, dataset, fieldValueAccessor});
     }, [dataset, fieldValueAccessor, aggregatedBins, columnStats]);
 
+    const ordinalDomain = useMemo(() => {
+      return layer.config[layer.visualChannels[channelKey].domain] || [];
+    }, [channelKey, layer.config, layer.visualChannels]);
+
     const isFiltered = aggregatedBins
       ? false
       : dataset.filteredIndexForDomain.length !== dataset.allIndexes.length;
@@ -215,19 +221,15 @@ function ColorScaleSelectorFactory(
     const onSelectScale = useCallback(
       val => {
         // highlight selected option
-        if (getOptionValue(val) === SCALE_TYPES.custom) {
-          // update custom breaks
-          const customPalette: NestedPartial<ColorRange> = {
-            name: 'color.customPalette',
-            type: 'custom',
-            category: 'Custom',
-            colors: range.colors,
-            colorMap: range.colorMap
-              ? range.colorMap
-              : colorBreaks
-              ? colorBreaksToColorMap(colorBreaks)
-              : null
-          };
+        if (!val || isEditingColorBreaks) return;
+        const selectedScale = getOptionValue(val);
+        if (selectedScale === SCALE_TYPES.custom) {
+          const customPalette = initCustomPaletteByCustomScale({
+            scale: selectedScale,
+            field,
+            range,
+            colorBreaks
+          });
           setColorUI({
             showColorChart: true,
             colorRangeConfig: {
@@ -235,39 +237,31 @@ function ColorScaleSelectorFactory(
             },
             customPalette
           });
-          onSelect(SCALE_TYPES.custom, customPalette);
-        } else {
+          onSelect(selectedScale, customPalette);
+        } else if (hasColorMap(range) && selectedScale !== SCALE_TYPES.customOrdinal) {
           // not custom
-          if (isEditingColorBreaks) {
-            setColorUI({
-              colorRangeConfig: {
-                customBreaks: false
-              }
-            });
-          }
-          if (hasColorMap(range)) {
-            // remove custom breaks
-            // eslint-disable-next-line no-unused-vars
-            const {colorMap: _, ...newRange} = range;
-            onSelect(getOptionValue(val), newRange);
-          } else {
-            onSelect(getOptionValue(val));
-          }
+          // remove colorMap
+          // eslint-disable-next-line no-unused-vars
+          const {colorMap: _, ...newRange} = range;
+          onSelect(selectedScale, newRange);
+        } else {
+          onSelect(selectedScale);
         }
       },
-      [setColorUI, onSelect, range, getOptionValue, isEditingColorBreaks, colorBreaks]
+      [isEditingColorBreaks, field, setColorUI, onSelect, range, getOptionValue, colorBreaks]
     );
 
     const onApply = useCallback(() => {
-      onSelect(SCALE_TYPES.custom, colorUIConfig.customPalette);
+      onSelect(scaleType, colorUIConfig.customPalette);
       hideTippy(tippyInstance);
-    }, [onSelect, colorUIConfig.customPalette, tippyInstance]);
+    }, [onSelect, colorUIConfig.customPalette, tippyInstance, scaleType]);
 
     const onCancel = useCallback(() => {
       hideTippy(tippyInstance);
     }, [tippyInstance]);
 
-    const isCustomBreaks = scaleType === SCALE_TYPES.custom;
+    const isCustomBreaks =
+      scaleType === SCALE_TYPES.custom || scaleType === SCALE_TYPES.customOrdinal;
 
     return (
       <DropdownPropContext.Provider
@@ -282,6 +276,7 @@ function ColorScaleSelectorFactory(
           filteredBins,
           isFiltered,
           histogramDomain,
+          ordinalDomain,
           onScaleChange: onSelect,
           onApply,
           onCancel
