@@ -3,10 +3,10 @@
 
 import React from 'react';
 import styled from 'styled-components';
-import {Tooltip} from '../styled-components';
 import IconButton from '../icon-button';
 import {media} from '@kepler.gl/styles';
 import {preciseRound} from '@kepler.gl/utils';
+import TippyTooltip from '../tippy-tooltip';
 
 const StyledSpeedControl = styled.div`
   display: flex;
@@ -20,7 +20,6 @@ const StyledSpeedControl = styled.div`
   }
 `;
 
-const DELAY_SHOW = 500;
 const PRECISE_SPEED_ROUND = 1;
 
 function SpeedControlFactory(AnimationSpeedSlider) {
@@ -36,18 +35,19 @@ function SpeedControlFactory(AnimationSpeedSlider) {
   }) => {
     return showAnimationWindowControl || !updateAnimationSpeed ? null : (
       <StyledSpeedControl>
-        <IconButton
-          data-tip
-          data-for="animate-speed"
-          className="playback-control-button"
-          {...btnStyle}
-          onClick={hideAndShowSpeedControl}
+        <TippyTooltip
+          placement="top"
+          delay={[500, 0]}
+          render={() => <span>{preciseRound(speed, PRECISE_SPEED_ROUND)}x</span>}
         >
-          <playbackIcons.speed height={buttonHeight} />
-          <Tooltip id="animate-speed" place="top" delayShow={DELAY_SHOW} effect="solid">
-            <span>{preciseRound(speed, PRECISE_SPEED_ROUND)}x</span>
-          </Tooltip>
-        </IconButton>
+          <IconButton
+            className="playback-control-button"
+            {...btnStyle}
+            onClick={hideAndShowSpeedControl}
+          >
+            <playbackIcons.speed height={buttonHeight} />
+          </IconButton>
+        </TippyTooltip>
         {isSpeedControlVisible ? (
           <AnimationSpeedSlider
             onHide={hideAndShowSpeedControl}
