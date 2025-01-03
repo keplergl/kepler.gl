@@ -206,7 +206,7 @@ type OverrideByCustomLegendOptions = {
   /**
    * Original Legends
    */
-  currentLegends: ReturnType<typeof getLegendOfScale>;
+  currentLegends?: ReturnType<typeof getLegendOfScale>;
 };
 
 /**
@@ -272,7 +272,7 @@ export function useLayerColorLegends(
     [range?.colorLegends, currentLegends]
   );
 
-  return LegendsWithCustomLegends;
+  return LegendsWithCustomLegends || [];
 }
 
 export type ColorLegendProps = {
