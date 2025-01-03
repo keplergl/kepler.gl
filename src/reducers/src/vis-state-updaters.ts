@@ -3058,7 +3058,7 @@ export function setFeaturesUpdater(
       ...state.editor,
       // only save none filter features to editor
       features: features.filter(f => !getFilterIdInFeature(f)),
-      mode: lastFeature && lastFeature.properties.isClosed ? EDITOR_MODES.EDIT : state.editor.mode
+      mode: lastFeature && lastFeature.properties?.isClosed ? EDITOR_MODES.EDIT : state.editor.mode
     }
   };
 

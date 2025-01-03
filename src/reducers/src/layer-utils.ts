@@ -473,3 +473,12 @@ export function addLayerToLayerOrder(
 ): string[] {
   return [layerId, ...layerOrder];
 }
+
+export function getLayerHoverPropValue(
+  data: DataRow | AggregationLayerHoverData | null | undefined,
+  fieldIndex: number
+) {
+  if (!data) return undefined;
+  if (data instanceof DataRow) return data.valueAt(fieldIndex);
+  return data[fieldIndex];
+}

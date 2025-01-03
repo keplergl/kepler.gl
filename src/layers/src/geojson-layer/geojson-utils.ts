@@ -44,6 +44,7 @@ type FeatureTypeMap = {
 /* eslint-enable */
 
 export function parseGeoJsonRawFeature(rawFeature: unknown): Feature | null {
+  const properties = null; // help ensure that properties is present on the returned geojson feature
   if (typeof rawFeature === 'object') {
     // Support GeoJson feature as object
     // probably need to normalize it as well
@@ -53,9 +54,12 @@ export function parseGeoJsonRawFeature(rawFeature: unknown): Feature | null {
       return null;
     }
 
-    return normalized.features[0];
+    return {properties, ...normalized.features[0]};
   } else if (typeof rawFeature === 'string') {
-    return parseGeometryFromString(rawFeature);
+    const parsedGeometry = parseGeometryFromString(rawFeature);
+    if (!parsedGeometry) return null;
+    // @ts-expect-error verify whether parsedGeometry always contains properties
+    return {properties, ...parsedGeometry};
   } else if (Array.isArray(rawFeature)) {
     // Support GeoJson  LineString as an array of points
     return {
@@ -65,7 +69,7 @@ export function parseGeoJsonRawFeature(rawFeature: unknown): Feature | null {
         coordinates: rawFeature.map(pts => [pts[1], pts[0]]),
         type: 'LineString'
       },
-      properties: {}
+      properties
     };
   }
 
