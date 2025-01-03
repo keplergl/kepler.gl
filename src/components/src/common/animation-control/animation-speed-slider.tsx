@@ -3,9 +3,11 @@
 
 import React, {useCallback} from 'react';
 import styled from 'styled-components';
-import RangeSliderFactory from '../range-slider';
+import {useDismiss, useFloating, useInteractions} from '@floating-ui/react';
+
 import {SPEED_CONTROL_RANGE, SPEED_CONTROL_STEP} from '@kepler.gl/constants';
-import useOnClickOutside from '../../hooks/use-on-click-outside';
+
+import RangeSliderFactory from '../range-slider';
 
 const SliderWrapper = styled.div`
   position: relative;
@@ -41,13 +43,27 @@ export default function AnimationSpeedSliderFactory(
     onHide,
     speed,
     updateAnimationSpeed
-  }) => {
-    const ref = useOnClickOutside<HTMLDivElement>(onHide);
+  }: AnimationSpeedSliderProps) => {
+    // floating-ui boilerplate to establish close on outside click
+    const {refs, context} = useFloating({
+      open: true,
+      onOpenChange: v => {
+        if (!v) {
+          onHide();
+        }
+      }
+    });
+    const dismiss = useDismiss(context);
+    const {getFloatingProps} = useInteractions([dismiss]);
 
     const onChange = useCallback(v => updateAnimationSpeed(v[1]), [updateAnimationSpeed]);
 
     return (
-      <SpeedSliderContainer className="animation-control__speed-slider" ref={ref}>
+      <SpeedSliderContainer
+        className="animation-control__speed-slider"
+        ref={refs.setFloating}
+        {...getFloatingProps()}
+      >
         <SliderWrapper>
           <RangeSlider
             range={SPEED_CONTROL_RANGE}
