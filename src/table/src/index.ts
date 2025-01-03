@@ -13,12 +13,13 @@ export {
 } from './kepler-table';
 /* eslint-disable prettier/prettier */
 export type {
+  BooleanFieldFilterProps,
+  Datasets,
   FilterProps,
   GpuFilter,
-  Datasets,
-  BooleanFieldFilterProps,
   NumericFieldFilterProps,
-  StringFieldFilterProps
+  StringFieldFilterProps,
+  TimeFieldFilterProps
 } from './kepler-table';
 export * from './gpu-filter-utils';
 export * from './dataset-utils';
