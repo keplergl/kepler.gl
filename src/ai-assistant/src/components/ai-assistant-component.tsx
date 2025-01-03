@@ -5,9 +5,9 @@ import React, {useEffect} from 'react';
 import styled, {withTheme} from 'styled-components';
 import {MessageModel, useAssistant} from '@openassistant/core';
 import {dataClassifyFunctionDefinition} from '@openassistant/geoda';
-import {histogramFunctionDefinition} from '@openassistant/echarts';
-import '@openassistant/echarts/dist/index.css';
+import {histogramFunctionDefinition, scatterplotFunctionDefinition} from '@openassistant/echarts';
 import {AiAssistant} from '@openassistant/ui';
+import '@openassistant/echarts/dist/index.css';
 import '@openassistant/ui/dist/index.css';
 
 import {textColorLT} from '@kepler.gl/styles';
@@ -32,7 +32,12 @@ import {filterFunctionDefinition} from '../tools/filter-function';
 import {addLayerFunctionDefinition} from '../tools/layer-creation-function';
 import {updateLayerColorFunctionDefinition} from '../tools/layer-style-function';
 import {SelectedKeplerGlActions} from './ai-assistant-manager';
-import {getDatasetContext, getValuesFromDataset, highlightRows} from '../tools/utils';
+import {
+  getDatasetContext,
+  getScatterplotValuesFromDataset,
+  getValuesFromDataset,
+  highlightRows
+} from '../tools/utils';
 
 export type AiAssistantComponentProps = {
   theme: any;
@@ -92,6 +97,29 @@ function AiAssistantComponentFactory() {
       histogramFunctionDefinition({
         getValues: (datasetName: string, variableName: string): number[] =>
           getValuesFromDataset(visState.datasets, datasetName, variableName),
+        onSelected: (datasetName: string, selectedRowIndices: number[]) =>
+          highlightRows(
+            visState.datasets,
+            visState.layers,
+            datasetName,
+            selectedRowIndices,
+            keplerGlActions.layerSetIsValid
+          )
+      }),
+      scatterplotFunctionDefinition({
+        getValues: (
+          datasetName: string,
+          xVariableName: string,
+          yVariableName: string
+        ): Promise<{x: number[]; y: number[]}> =>
+          Promise.resolve(
+            getScatterplotValuesFromDataset(
+              visState.datasets,
+              datasetName,
+              xVariableName,
+              yVariableName
+            )
+          ),
         onSelected: (datasetName: string, selectedRowIndices: number[]) =>
           highlightRows(
             visState.datasets,

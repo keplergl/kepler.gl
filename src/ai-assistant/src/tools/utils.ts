@@ -57,6 +57,13 @@ export function interpolateColor(originalColors: string[], numberOfColors: numbe
   return hexColors;
 }
 
+/**
+ * Get the values from a dataset for a variable
+ * @param datasets
+ * @param datasetName
+ * @param variableName
+ * @returns {number[]}
+ */
 export function getValuesFromDataset(
   datasets: Datasets,
   datasetName: string,
@@ -70,6 +77,25 @@ export function getValuesFromDataset(
     return Array.from({length: dataset.length}, (_, i) => dataset.getValue(variableName, i));
   }
   return [];
+}
+
+/**
+ * Get the x and y values from a dataset for a scatterplot
+ * @param datasets
+ * @param datasetName
+ * @param xVariableName
+ * @param yVariableName
+ * @returns {x: number[], y: number[]}
+ */
+export function getScatterplotValuesFromDataset(
+  datasets: Datasets,
+  datasetName: string,
+  xVariableName: string,
+  yVariableName: string
+): {x: number[]; y: number[]} {
+  const xValues = getValuesFromDataset(datasets, datasetName, xVariableName);
+  const yValues = getValuesFromDataset(datasets, datasetName, yVariableName);
+  return {x: xValues, y: yValues};
 }
 
 export function highlightRows(

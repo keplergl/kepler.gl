@@ -3195,14 +3195,12 @@ __metadata:
     "@kepler.gl/layers": "npm:3.1.0-alpha.1"
     "@kepler.gl/types": "npm:3.1.0-alpha.1"
     "@kepler.gl/utils": "npm:3.1.0-alpha.1"
-    "@openassistant/core": "npm:^0.0.1"
-    "@openassistant/echarts": "npm:^0.0.1"
-    "@openassistant/geoda": "npm:^0.0.1"
-    "@openassistant/ui": "npm:^0.0.1"
+    "@openassistant/core": "npm:^0.0.3"
+    "@openassistant/echarts": "npm:^0.0.3"
+    "@openassistant/geoda": "npm:^0.0.3"
+    "@openassistant/ui": "npm:^0.0.3"
     color-interpolate: "npm:^1.0.5"
-    echarts: "npm:^5.5.1"
     global: "npm:^4.3.0"
-    tailwindcss: "npm:^3.4.16"
   languageName: unknown
   linkType: soft
 
@@ -6294,7 +6292,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nextui-org/theme@npm:2.4.4":
+"@nextui-org/theme@npm:2.4.4, @nextui-org/theme@npm:^2.4.4":
   version: 2.4.4
   resolution: "@nextui-org/theme@npm:2.4.4"
   dependencies:
@@ -6686,9 +6684,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@openassistant/core@npm:^0.0.1":
-  version: 0.0.1
-  resolution: "@openassistant/core@npm:0.0.1"
+"@openassistant/core@npm:^0.0.3":
+  version: 0.0.3
+  resolution: "@openassistant/core@npm:0.0.3"
   dependencies:
     "@langchain/core": "npm:^0.3.26"
     "@langchain/google-genai": "npm:^0.1.6"
@@ -6696,45 +6694,51 @@ __metadata:
     "@langchain/openai": "npm:^0.3.16"
     axios: "npm:^1.7.9"
   peerDependencies:
-    "@langchain/core": ^0.3.26
-    "@langchain/google-genai": ^0.1.6
-    "@langchain/ollama": ^0.1.4
-    "@langchain/openai": ^0.3.16
-    react: ^18.2.0
-  checksum: 10c0/ea4a346bb19771f40cab8e54209a2bb219c966d2ef829a734c15898a1453b5c620e1e84257a56f0c0d713ab405a3795d8c3cf0e302db2fcc8dc8c427375b318b
+    react: ^18.3.1
+  checksum: 10c0/46c9bfa2c4655ee6dcf95f4496b73b47edc4bb590d4bac8ff51c1abedb04e592e82fc47f35f9b533e96faf2c743b491f97d910c6bdf6b990d7a838cbc7ef584c
   languageName: node
   linkType: hard
 
-"@openassistant/echarts@npm:^0.0.1":
-  version: 0.0.1
-  resolution: "@openassistant/echarts@npm:0.0.1"
+"@openassistant/echarts@npm:^0.0.3":
+  version: 0.0.3
+  resolution: "@openassistant/echarts@npm:0.0.3"
   dependencies:
+    "@iconify/react": "npm:^5.1.0"
+    "@nextui-org/react": "npm:^2.6.10"
+    "@nextui-org/theme": "npm:^2.4.4"
+    echarts: "npm:^5.5.1"
     echarts-for-react: "npm:^3.0.2"
+    framer-motion: "npm:^11.15.0"
+    jstat: "npm:^1.9.6"
     next-themes: "npm:^0.4.4"
     re-resizable: "npm:^6.10.3"
     react-virtualized-auto-sizer: "npm:^1.0.24"
+    simple-statistics: "npm:^7.8.7"
+    tailwindcss: "npm:^3.4.17"
   peerDependencies:
-    echarts: ^5.5.1
-    react: ^18 || ^19
-    react-dom: ^18 || ^19
-  checksum: 10c0/9ed293a5e6634c0376a379730e1daac463006a4d674b6dd36019b4bca3211d460fa83cef62a4c1210b694e27823bebdb4585e4f5c836a4576110ac14a0324f0d
+    "@openassistant/core": "*"
+    react: ^18.3.1
+    react-dom: ^18.3.1
+  checksum: 10c0/eb952f385ca90d4373404321ded338323893cd31f7a0d5b81b0fab623b66fc0161c27da4001e482ab06e77781a2938cac1f9abb35570bc8134276162ed64e09a
   languageName: node
   linkType: hard
 
-"@openassistant/geoda@npm:^0.0.1":
-  version: 0.0.1
-  resolution: "@openassistant/geoda@npm:0.0.1"
+"@openassistant/geoda@npm:^0.0.3":
+  version: 0.0.3
+  resolution: "@openassistant/geoda@npm:0.0.3"
   dependencies:
     geoda-wasm: "npm:^0.0.2"
   peerDependencies:
-    react: ^18.2.0
-  checksum: 10c0/ad6027b7ee3406a34ea3027f78ea66e37674b818c72d81b2dc1bdc4dc1e029db359094f1cbffca390aa6e7d157348c5a992e9f1a651ed975b10338b74329bd2c
+    "@openassistant/core": "*"
+    react: ^18.3.1
+    react-dom: ^18.3.1
+  checksum: 10c0/21f93b3290622f25002d19ebb3560068c1c542e9f1612ba266ab7d20fdacd73daccdb36c39a156cf994db70d2b4549bca9b3736d6d6aa362b9c8d410068d1861
   languageName: node
   linkType: hard
 
-"@openassistant/ui@npm:^0.0.1":
-  version: 0.0.1
-  resolution: "@openassistant/ui@npm:0.0.1"
+"@openassistant/ui@npm:^0.0.3":
+  version: 0.0.3
+  resolution: "@openassistant/ui@npm:0.0.3"
   dependencies:
     "@iconify/react": "npm:^5.1.0"
     "@nextui-org/react": "npm:^2.6.10"
@@ -6742,7 +6746,12 @@ __metadata:
     html2canvas: "npm:^1.4.1"
     next-themes: "npm:^0.4.4"
     react-audio-voice-recorder: "npm:^2.2.0"
-  checksum: 10c0/023945342892103f6758f0eb0bcc667edc8e4a8baa345417c0ca44ae585188a3303ed535543d4384f520646ad95e6c5f5c1f8ee95579f634a183bb25812e8af1
+    tailwindcss: "npm:^3.4.17"
+  peerDependencies:
+    "@openassistant/core": "*"
+    react: ^18.3.1
+    react-dom: ^18.3.1
+  checksum: 10c0/745fcf9afc1bc174d3c2621275e2f7e66458780f4f9d0b86ec409b3661bd826dd2e3a11f443e2346f39d9d92eb27781187ac69dff2294918823f984797661f99
   languageName: node
   linkType: hard
 
@@ -19928,6 +19937,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"jstat@npm:^1.9.6":
+  version: 1.9.6
+  resolution: "jstat@npm:1.9.6"
+  checksum: 10c0/4243295ff7a6f23951ad7247882abe06f08dc5a6cb4086109880642636adaac7f6322d48a0663004b4bd01ed94a64a78cc3a949ce473f23f32a87989a33fda99
+  languageName: node
+  linkType: hard
+
 "jsts@npm:2.7.1":
   version: 2.7.1
   resolution: "jsts@npm:2.7.1"
@@ -26275,6 +26291,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"simple-statistics@npm:^7.8.7":
+  version: 7.8.7
+  resolution: "simple-statistics@npm:7.8.7"
+  checksum: 10c0/9745896653e518aa5a1d0671d8b72109038c5ed4f7b83120cde0ed916aff6f57bce87398c8fc1779a6cde296af5cd4b9e7c949b7cc4aef89a0d7d874fa9039b3
+  languageName: node
+  linkType: hard
+
 "simple-swizzle@npm:^0.2.2":
   version: 0.2.2
   resolution: "simple-swizzle@npm:0.2.2"
@@ -27584,7 +27607,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tailwindcss@npm:^3.4.16":
+"tailwindcss@npm:^3.4.17":
   version: 3.4.17
   resolution: "tailwindcss@npm:3.4.17"
   dependencies:
