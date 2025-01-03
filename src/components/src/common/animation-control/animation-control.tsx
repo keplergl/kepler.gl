@@ -6,7 +6,7 @@ import styled from 'styled-components';
 import classnames from 'classnames';
 
 import {media} from '@kepler.gl/styles';
-import {Timeline} from '@kepler.gl/types';
+import {Timeline, Filter} from '@kepler.gl/types';
 
 import TimelineSliderFactory from '../timeline-slider';
 import PlaybackControlsFactory from './playback-controls';
@@ -68,6 +68,7 @@ const AnimationWidgetInner = styled.div`
 const TIMELINE_PLAYBACK_STYLE = {flex: 1};
 
 export type AnimationControlProps = {
+  filter?: Filter;
   timeline?: Timeline;
   isAnimatable?: boolean;
   isAnimating?: boolean;
@@ -95,6 +96,7 @@ function AnimationControlFactory(
   TimelineSlider: ReturnType<typeof TimelineSliderFactory>
 ) {
   const AnimationControl: React.FC<AnimationControlProps> = ({
+    filter,
     className,
     style,
     isAnimatable,
@@ -135,6 +137,7 @@ function AnimationControlFactory(
           {showControls ? (
             <PlaybackControls
               className="animation-control-playpause"
+              filter={filter}
               isAnimatable={isAnimatable}
               startAnimation={toggleAnimation}
               isAnimating={isAnimating}
