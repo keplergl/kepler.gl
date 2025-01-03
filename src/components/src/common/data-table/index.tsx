@@ -448,7 +448,6 @@ function DataTableFactory(HeaderCell: ReturnType<typeof HeaderCellFactory>) {
     componentWillUnmount() {
       this.hasMounted = false;
       window.removeEventListener('resize', this.scaleCellsToWidth);
-      // fix Warning: Can't perform a React state update on an unmounted component
     }
 
     root = createRef<HTMLDivElement>();
