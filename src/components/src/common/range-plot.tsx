@@ -197,7 +197,7 @@ export default function RangePlotFactory(
           isChangingRef.current = true;
         }
       }
-    }, [plotType, bins]);
+    }, [bins, plotType, setFilterPlot]);
 
     useEffect(() => {
       if (isChangingRef.current) {
@@ -213,7 +213,7 @@ export default function RangePlotFactory(
           isChangingRef.current = true;
         }
       }
-    }, [plotType, lineChart]);
+    }, [lineChart, plotType, setFilterPlot]);
 
     const rangePlotStyle = useMemo(
       () => ({
