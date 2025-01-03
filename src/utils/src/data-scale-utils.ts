@@ -413,7 +413,9 @@ export function getCategoricalColorMap(
 /**
  * Get categorical colorBreaks from colorMap
  */
-export function colorMapToCategoricalColorBreaks(colorMap?: ColorMap): ColorBreakOrdinal[] | null {
+export function colorMapToCategoricalColorBreaks(
+  colorMap?: ColorMap | null
+): ColorBreakOrdinal[] | null {
   if (!colorMap) {
     return null;
   }
@@ -498,7 +500,7 @@ export function colorMapToColorBreaks(colorMap?: ColorMap | null): ColorBreak[] 
  * Whether color breaks is for numeric field
  */
 export function isNumericColorBreaks(colorBreaks: unknown): colorBreaks is ColorBreak[] {
-  return Array.isArray(colorBreaks) && colorBreaks.length && colorBreaks[0].inputs;
+  return Boolean(Array.isArray(colorBreaks) && colorBreaks.length && colorBreaks[0].inputs);
 }
 
 // return domainMin, domainMax, histogramMean
@@ -667,72 +669,65 @@ export function addCategoricalValuesToColorMap(
  */
 export function getCategoricalColorScale(
   colorDomain: number[] | string[],
-  colorRange: ColorRange
+  colorRange: ColorRange,
+  useRgb: boolean = true
 ): (categoryValue: string | number) => RGBColor | RGBAColor {
-  // check if colorDomain changed e.g. by switching variable
-  let oldDomain: (number | string)[] = [];
-  colorRange.colorMap?.forEach(cm => {
-    if (Array.isArray(cm[0])) {
-      oldDomain = oldDomain.concat(cm[0]);
-    } else if (cm[0]) {
-      oldDomain.push(cm[0]);
-    }
-  });
-  oldDomain.sort();
-  colorDomain.sort();
-
-  const keepColorMap =
-    oldDomain.length === colorDomain.length &&
-    oldDomain.every((element, index) => element === colorDomain[index]);
-
-  const cMap = keepColorMap
+  const cMap = colorRange.colorMap
     ? colorRange.colorMap
     : getCategoricalColorMap(colorRange.colors, colorDomain);
-  const valueToColor = cMap.reduce((prev, cm) => {
+
+  const range: number[][] = [];
+  const domain: string[] = [];
+  cMap.forEach(cm => {
     if (Array.isArray(cm[0])) {
-      cm[0].forEach(val => (prev[val] = cm[1]));
+      cm[0].forEach(val => {
+        domain.push(val);
+        range.push(useRgb ? hexToRgb(cm[1]) : cm[1]);
+      });
     } else {
-      prev[cm[0]] = cm[1];
+      domain.push(cm[0]);
+      range.push(useRgb ? hexToRgb(cm[1]) : cm[1]);
     }
-    return prev;
-  }, {});
-  const scale = categoryValue => {
-    if (categoryValue in valueToColor) {
-      return hexToRgb(valueToColor[categoryValue]);
-    }
-    return NO_VALUE_COLOR;
-  };
-  scale.domain = () => colorDomain;
-  scale.range = () => colorRange.colors;
-  return scale;
+  });
+
+  const scale = getScaleFunction(SCALE_TYPES.customOrdinal, range, domain, false);
+  scale.unknown(NO_VALUE_COLOR);
+  return scale as any;
 }
 
 /**
- * initialize customPalette by custom scale
+ * initialize customPalette by custom scale or customOrdinal scale
  */
-export function initCustomPaletteByCustomScale(
-  scale: string,
-  field: Field,
-  range: ColorRange,
-  colorBreaks: ColorBreakOrdinal[] | null
-): ColorUI['customPalette'] {
+export function initCustomPaletteByCustomScale({
+  scale,
+  field,
+  ordinalDomain,
+  range,
+  colorBreaks
+}: {
+  scale: string;
+  field: Field;
+  ordinalDomain?: number[] | string[];
+  range: ColorRange;
+  colorBreaks: ColorBreakOrdinal[] | null;
+}): ColorUI['customPalette'] {
   const customPaletteName = `color.customPalette.${scale}.${field.name}`;
-  const type = scale === SCALE_TYPES.custom ? 'custom' : 'customOrdinal';
-  const colorBreaksToColorMapFunc =
-    scale === SCALE_TYPES.custom ? colorBreaksToColorMap : colorBreaksToCategoricalColorMap;
-  const reuseColorMap = range.colorMap && range.name === customPaletteName && range.type === type;
+  // reuse range.colorMap if the field and scale not changed
+  const reuseColorMap = range.colorMap && range.name === customPaletteName && range.type === scale;
   const colorMap = reuseColorMap
     ? range.colorMap
-    : colorBreaks
-    ? colorBreaksToColorMapFunc(colorBreaks)
+    : scale === SCALE_TYPES.customOrdinal && ordinalDomain
+    ? getCategoricalColorMap(range.colors, ordinalDomain)
+    : colorBreaks && isNumericColorBreaks(colorBreaks)
+    ? colorBreaksToColorMap(colorBreaks)
     : null;
-  const colors = reuseColorMap ? range.colors : colorMap?.map(cm => cm[1]);
+  const colors = reuseColorMap ? range.colors : colorMap ? colorMap.map(cm => cm[1]) : range.colors;
 
   // update custom breaks
   const customPalette: ColorUI['customPalette'] = {
     category: 'Custom',
     name: customPaletteName,
-    type,
+    type: scale,
     colorMap,
     colors: colors || []
   };

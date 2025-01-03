@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React from 'react';
+import React, {useCallback} from 'react';
 
 import {CHANNEL_SCALE_SUPPORTED_FIELDS} from '@kepler.gl/constants';
 import {Layer, VisualChannel} from '@kepler.gl/layers';
@@ -53,6 +53,12 @@ export function ChannelByValueSelectorFactory(
     const supportedFields = fields.filter(({type}) => channelSupportedFieldTypes.includes(type));
     const showScale = !layer.isAggregated && layer.config[scale] && layer.config[field];
     const defaultDescription = 'layerConfiguration.defaultDescription';
+    const updateField = useCallback(
+      val => {
+        onChange({[field]: val}, key);
+      },
+      [onChange, field, key]
+    );
 
     return (
       <div className="channel-by-value-selector">
@@ -65,22 +71,7 @@ export function ChannelByValueSelectorFactory(
           disabled={disabled}
           placeholder={defaultMeasure || 'placeholder.selectField'}
           selectedField={layer.config[field]}
-          updateField={val => {
-            onChange({[field]: val}, key);
-            // reset colorMap
-            const range = layer.config.visConfig[channel.range];
-            setColorUI(channel.range, {
-              customPalette: {
-                category: 'Custom',
-                name: 'color.customPalette',
-                type: 'custom',
-                colors: range.colors
-              },
-              colorRangeConfig: {
-                customBreaks: false
-              }
-            });
-          }}
+          updateField={updateField}
         />
         {showScale && !disabled ? (
           <DimensionScaleSelector

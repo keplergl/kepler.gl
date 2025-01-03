@@ -486,7 +486,6 @@ const SelectedValuesWrapper = styled(DropdownValuesWrapper)<SelectedValuesWrappe
   width: ${props => props.width}px;
   max-height: ${props => props.height}px;
   overflow: auto;
-  margin-bottom: 12px;
 
   .custom-palette-chickleted-input {
     padding: 8px;
@@ -560,24 +559,35 @@ class ModifiedDropdownList extends DropdownList {
   }
 }
 
+export type CategoricalSelectorProps = {
+  index: number;
+  selectedValues: (string | number | null)[];
+  allValues: string[] | number[];
+  addColorMapValue?: (v: (number | string | null)[], i: number) => void;
+  removeColorMapValue?: (v: number | string, i: number) => void;
+  resetColorMapValue?: (i: number) => void;
+  selectRestColorMapValue?: (i: number) => void;
+  editable?: boolean;
+};
+
 // Categorical values selector for editing categorical values
-const CategoricalSelector = ({
+export const CategoricalSelector: React.FC<CategoricalSelectorProps> = ({
   index,
   selectedValues,
   allValues,
   addColorMapValue,
   removeColorMapValue,
   resetColorMapValue,
-  selectRestColorMapValue
-}) => {
+  selectRestColorMapValue,
+  editable = true
+}: CategoricalSelectorProps) => {
   const [showTypeahead, setShowTypeahead] = useState(false);
 
   const onOptionSelected = useCallback(
     value => {
       const previousSelected = toArray(selectedValues);
       const items = uniq(previousSelected.concat(toArray(value)));
-      addColorMapValue(items, index);
-      setShowTypeahead(false);
+      addColorMapValue?.(items, index);
     },
     [selectedValues, index, addColorMapValue]
   );
@@ -592,31 +602,28 @@ const CategoricalSelector = ({
 
   const onRemoveItem = useCallback(
     value => {
-      removeColorMapValue(value, index);
-      setShowTypeahead(false);
+      removeColorMapValue?.(value, index);
     },
     [index, removeColorMapValue]
   );
 
   const onReset = useCallback(() => {
-    resetColorMapValue(index);
+    resetColorMapValue?.(index);
     setShowTypeahead(false);
     return null;
   }, [resetColorMapValue, index]);
 
   const onSelectRest = useCallback(() => {
-    selectRestColorMapValue(index);
+    selectRestColorMapValue?.(index);
     setShowTypeahead(false);
     return null;
   }, [selectRestColorMapValue, index]);
 
-  // reuse the ChickletedInput for popping up selected values
-  // reuse the DropdownList component for selecting category values
   return (
     <StyledCategoricalValuePickerWrapper>
-      <Add height="12px" onClick={onOpenDropdown} />
+      {editable && <Add height="12px" onClick={onOpenDropdown} />}
       <StyledCategoricalValuePicker
-        noBorder={selectedValues.length === 0}
+        noBorder={selectedValues.length === 0 || !editable}
         onClick={onOpenDropdown}
         data-tip
         data-for={`category-values-${index}`}
@@ -637,47 +644,49 @@ const CategoricalSelector = ({
           </Tooltip>
         )}
       </StyledCategoricalValuePicker>
-      <Portaled left={0} top={0} isOpened={showTypeahead} onClose={onCloseDropdown}>
-        {selectedValues.length > 1 && (
-          <SelectedValuesWrapper width={250} height={200}>
-            <ChickletedInput
-              className={'custom-palette-chickleted-input'}
-              selectedItems={selectedValues}
-              placeholder={''}
-              removeItem={onRemoveItem}
-              onClick={() => null}
-              CustomChickletComponent={null}
-            />
-          </SelectedValuesWrapper>
-        )}
-        <DropdownValuesWrapper width={250}>
-          <div style={{position: 'relative'}}>
-            <CategoricalSelectorContext.Provider
-              value={{
-                onReset,
-                onSelectRest
-              }}
-            >
-              <Typeahead
-                customClasses={{
-                  results: 'list-selector',
-                  input: 'typeahead__input',
-                  listItem: 'list__item',
-                  listAnchor: 'list__item__anchor'
-                }}
-                options={allValues}
-                placeholder={'Search'}
-                onOptionSelected={onOptionSelected}
-                customListComponent={ModifiedDropdownList}
-                customListItemComponent={ListItem}
-                searchable={true}
-                showOptionsWhenEmpty
+      {editable && (
+        <Portaled left={0} top={0} isOpened={showTypeahead} onClose={onCloseDropdown}>
+          {selectedValues.length > 1 && (
+            <SelectedValuesWrapper width={250} height={200}>
+              <ChickletedInput
+                className={'custom-palette-chickleted-input'}
                 selectedItems={selectedValues}
+                placeholder={''}
+                removeItem={onRemoveItem}
+                onClick={() => null}
+                CustomChickletComponent={null}
               />
-            </CategoricalSelectorContext.Provider>
-          </div>
-        </DropdownValuesWrapper>
-      </Portaled>
+            </SelectedValuesWrapper>
+          )}
+          <DropdownValuesWrapper width={250}>
+            <div style={{position: 'relative'}}>
+              <CategoricalSelectorContext.Provider
+                value={{
+                  onReset,
+                  onSelectRest
+                }}
+              >
+                <Typeahead
+                  customClasses={{
+                    results: 'list-selector',
+                    input: 'typeahead__input',
+                    listItem: 'list__item',
+                    listAnchor: 'list__item__anchor'
+                  }}
+                  options={allValues}
+                  placeholder={'Search'}
+                  onOptionSelected={onOptionSelected}
+                  customListComponent={ModifiedDropdownList}
+                  customListItemComponent={ListItem}
+                  searchable={true}
+                  showOptionsWhenEmpty
+                  selectedItems={selectedValues}
+                />
+              </CategoricalSelectorContext.Provider>
+            </div>
+          </DropdownValuesWrapper>
+        </Portaled>
+      )}
     </StyledCategoricalValuePickerWrapper>
   );
 };
@@ -687,10 +696,10 @@ export type CategoricalCustomPaletteInputProps = {
   isSorting: boolean;
   color: HexColor;
   colorMap?: ColorMap | null;
-  addColorMapValue: (v: number[] | string[], i: number) => void;
+  addColorMapValue: (v: (number | string | null)[], i: number) => void;
   removeColorMapValue: (v: number | string, i: number) => void;
   resetColorMapValue: (i: number) => void;
-  selectRestColorMapValue: (i: number, v: number[] | string[]) => void;
+  selectRestColorMapValue: (i: number) => void;
   actionIcons?: ActionIcons;
   onDelete: (index: number) => void;
   onAdd: (index: number) => void;
@@ -713,13 +722,10 @@ export const CategoricalCustomPaletteInput: React.FC<CategoricalCustomPaletteInp
   selectRestColorMapValue,
   allValues
 }: CategoricalCustomPaletteInputProps) => {
-  const selectedValues = useMemo(() => {
+  const selectedValues: (number | string | null)[] = useMemo(() => {
     if (!colorMap) return [];
-    const values = Array.isArray(colorMap[index][0])
-      ? colorMap[index][0]
-      : colorMap[index][0]
-      ? [colorMap[index][0]]
-      : [];
+    const value = colorMap[index][0];
+    const values = Array.isArray(value) ? value : value !== null ? [value] : [];
     return values;
   }, [colorMap, index]);
 

@@ -1,15 +1,16 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import {toArray} from '@kepler.gl/common-utils';
 import {SCALE_TYPES} from '@kepler.gl/constants';
 import {KeplerTable} from '@kepler.gl/table';
-import {Bin, ColorUI, Field} from '@kepler.gl/types';
+import {Bin, ColorMap, ColorUI, Field} from '@kepler.gl/types';
 import {
   ColorBreak,
   ColorBreakOrdinal,
   colorBreaksToColorMap,
   colorMapToColorBreaks,
-  isNumericColorBreaks
+  isNumericColorBreaks as notOrdinalColorBreaks
 } from '@kepler.gl/utils';
 import React, {useCallback, useMemo} from 'react';
 import styled from 'styled-components';
@@ -20,6 +21,7 @@ import CustomPaletteFactory, {
   ColorPaletteItem,
   ColorSwatch,
   EditableColorRange,
+  CategoricalSelector,
   SetColorUIFunc
 } from './custom-palette';
 
@@ -52,7 +54,7 @@ export type ColorBreaksDisplayProps = {
 };
 
 export const ColorBreaksDisplay: React.FC<ColorBreaksDisplayProps> = ({currentBreaks, onEdit}) => {
-  if (!isNumericColorBreaks(currentBreaks)) {
+  if (!notOrdinalColorBreaks(currentBreaks)) {
     // don't display color breaks for ordinal breaks, user can change it in custom breaks
     return null;
   }
@@ -76,9 +78,35 @@ export const ColorBreaksDisplay: React.FC<ColorBreaksDisplayProps> = ({currentBr
   );
 };
 
-/**
- * ColorBreaksPanelProps
- */
+export type CategoricalColorDisplayProps = {
+  colorMap?: ColorMap;
+  onEdit: (() => void) | null;
+};
+
+export const CategoricalColorDisplay: React.FC<CategoricalColorDisplayProps> = ({
+  colorMap,
+  onEdit
+}: CategoricalColorDisplayProps) => {
+  return (
+    <StyledColorBreaksDisplay>
+      {onEdit ? <EditButton onClickEdit={onEdit} /> : null}
+      {colorMap?.map((cm, index) => (
+        <ColorPaletteItem className="disabled" key={index}>
+          <div className="custom-palette-input__left">
+            <ColorSwatch color={cm[1]} />
+            <CategoricalSelector
+              index={index}
+              selectedValues={toArray(cm[0])}
+              allValues={[]}
+              editable={false}
+            />
+          </div>
+        </ColorPaletteItem>
+      ))}
+    </StyledColorBreaksDisplay>
+  );
+};
+
 export type ColorBreaksPanelProps = {
   colorBreaks: ColorBreak[] | ColorBreakOrdinal[] | null;
   colorUIConfig: ColorUI;
@@ -89,6 +117,7 @@ export type ColorBreaksPanelProps = {
   filteredBins: Bin[];
   isFiltered: boolean;
   histogramDomain: number[];
+  ordinalDomain: number[] | string[];
   setColorUI: SetColorUIFunc;
   onScaleChange: (v: string, visConfg?: Record<string, any>) => void;
   onApply: (e: React.MouseEvent) => void;
@@ -101,6 +130,7 @@ function ColorBreaksPanelFactory(
   CustomPalette: ReturnType<typeof CustomPaletteFactory>,
   ColumnStatsChart: ReturnType<typeof ColumnStatsChartFactory>
 ): React.FC<ColorBreaksPanelProps> {
+  // eslint-disable-next-line complexity
   const ColorBreaksPanel: React.FC<ColorBreaksPanelProps> = ({
     colorBreaks,
     colorUIConfig,
@@ -111,6 +141,7 @@ function ColorBreaksPanelFactory(
     filteredBins,
     isFiltered,
     histogramDomain,
+    ordinalDomain,
     setColorUI,
     onScaleChange,
     onApply,
@@ -171,11 +202,9 @@ function ColorBreaksPanelFactory(
       [setColorUI, customPalette, isEditingCustomBreaks, onScaleChange]
     );
 
-    const ordinalDomain = useMemo(() => colorBreaks?.map(cb => cb.label), [colorBreaks]);
-
     return (
       <ColorBreaksPanelWrapper>
-        {dataset && allBins.length > 1 && customPalette.type !== 'customOrdinal' ? (
+        {dataset && allBins.length > 1 && notOrdinalColorBreaks(colorBreaks) ? (
           <ColumnStatsChart
             colorField={colorField}
             dataset={dataset}
@@ -197,9 +226,16 @@ function ColorBreaksPanelFactory(
               onApply={onApply}
               onCancel={onCilckCancel}
             />
-          ) : currentBreaks && allBins.length > 1 ? (
+          ) : currentBreaks && allBins.length > 1 && notOrdinalColorBreaks(colorBreaks) ? (
             <ColorBreaksDisplay
               currentBreaks={currentBreaks}
+              onEdit={isCustomBreaks ? onClickEditCustomBreaks : null}
+            />
+          ) : customPalette.colorMap &&
+            customPalette.type === 'customOrdinal' &&
+            customPalette.name?.endsWith(colorField.name) ? (
+            <CategoricalColorDisplay
+              colorMap={customPalette.colorMap}
               onEdit={isCustomBreaks ? onClickEditCustomBreaks : null}
             />
           ) : null}

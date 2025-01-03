@@ -418,7 +418,7 @@ export const SCALE_TYPE_NAMES: {[key in keyof SCALE_TYPES_DEF]: string} = {
   log: 'Log',
   threshold: 'Threshold',
   custom: 'Custom Breaks',
-  customOrdinal: 'Custom Oridinal',
+  customOrdinal: 'Custom Ordinal',
   point: 'Point'
 };
 
@@ -632,12 +632,7 @@ export const AGGREGATION_TYPE_OPTIONS: {id: string; label: string}[] = Object.en
 }));
 
 export const linearFieldScaleFunctions = {
-  [CHANNEL_SCALES.color]: [
-    SCALE_TYPES.quantize,
-    SCALE_TYPES.quantile,
-    SCALE_TYPES.custom,
-    SCALE_TYPES.customOrdinal
-  ],
+  [CHANNEL_SCALES.color]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile, SCALE_TYPES.custom],
   [CHANNEL_SCALES.radius]: [SCALE_TYPES.sqrt],
   [CHANNEL_SCALES.size]: [SCALE_TYPES.linear, SCALE_TYPES.sqrt, SCALE_TYPES.log]
 };
@@ -762,7 +757,13 @@ export const FIELD_OPTS = {
   [ALL_FIELD_TYPES.integer]: {
     type: 'numerical',
     scale: {
-      ...linearFieldScaleFunctions,
+      ...{
+        ...linearFieldScaleFunctions,
+        [CHANNEL_SCALES.color]: [
+          ...linearFieldScaleFunctions[CHANNEL_SCALES.color],
+          SCALE_TYPES.customOrdinal
+        ]
+      },
       ...linearFieldAggrScaleFunctions
     },
     format: {

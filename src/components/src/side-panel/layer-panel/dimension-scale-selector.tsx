@@ -69,7 +69,8 @@ function DimensionScaleSelectorFactory(
       searchable: false,
       onChange: onSelect,
       displayOption: 'label',
-      getOptionValue: 'value'
+      getOptionValue: 'value',
+      channelKey: key
     };
 
     return (
