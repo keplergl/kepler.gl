@@ -326,24 +326,10 @@ export default {
       warning: 'you are going to delete this dataset. It will affect {length} layers'
     },
     addStyle: {
-      publishTitle:
-        '2. If entered mapbox style url in step.1, publish your style at mapbox or provide access token. (Optional)',
-      publishSubtitle1: 'You can create your own map style at',
-      publishSubtitle2: 'and',
-      publishSubtitle3: 'publish',
-      publishSubtitle4: 'it.',
-      publishSubtitle5: 'To use private style, paste your',
-      publishSubtitle6: 'access token',
-      publishSubtitle7:
-        'here. *kepler.gl is a client-side application, data stays in your browser..',
-      exampleToken: 'e.g. pk.abcdefg.xxxxxx',
       pasteTitle: '1. Paste style url',
-      pasteSubtitle0: 'Style url can be a mapbox',
-      pasteSubtitle1: 'What is a',
-      pasteSubtitle2: 'style URL',
-      pasteSubtitle3: 'or a style.json using the',
-      pasteSubtitle4: 'Mapbox GL Style Spec',
-      namingTitle: '3. Name your style'
+      pasteSubtitle3: 'Link to a style.json using the',
+      pasteSubtitle4: 'MapLibre Style Spec',
+      namingTitle: '2. Name your style'
     },
     shareMap: {
       title: 'Share Map',

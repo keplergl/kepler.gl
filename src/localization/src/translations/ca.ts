@@ -272,20 +272,10 @@ export default {
       warning: "estàs a punt d'esborrar aquest conjunt de dades. Afectarà {length} capes"
     },
     addStyle: {
-      publishTitle: "2. Publica el teu estil a Mapbox o proporciona el token d'accés",
-      publishSubtitle1: 'Pots crear el teu propi estil de mapa a',
-      publishSubtitle2: 'i',
-      publishSubtitle3: 'publicar',
-      publishSubtitle4: 'ho.',
-      publishSubtitle5: 'Per utilitzar un estil privat, enganxa el teu',
-      publishSubtitle6: "token d'accés",
-      publishSubtitle7:
-        'aquí. *kepler.gl és una aplicació client, les dades romanen al teu navegador..',
-      exampleToken: 'p.ex. pk.abcdefg.xxxxxx',
       pasteTitle: "1. Enganxa la URL de l'estil",
-      pasteSubtitle1: 'Què és un',
-      pasteSubtitle2: "URL de l'estil",
-      namingTitle: '3. Posa nom al teu estil'
+      pasteSubtitle3: 'Enllaç a un style.json que segueix el',
+      pasteSubtitle4: "MapLibre Especificació d'estil",
+      namingTitle: '2. Posa nom al teu estil'
     },
     shareMap: {
       shareUriTitle: 'Comparteix URL del mapa',
