@@ -282,11 +282,14 @@ export type MapLegendPanelProps = {
   settings: MapLegendControlSettings;
   isSidePanelShown: boolean;
 };
+
+type MapLegendPanelComponentType = React.FC<MapLegendPanelProps>;
+
 function MapLegendPanelFactory(
   MapControlTooltip: ReturnType<typeof MapControlTooltipFactory>,
   MapControlPanel: ReturnType<typeof MapControlPanelFactory>,
   MapLegend: ReturnType<typeof MapLegendFactory>
-): React.FC<MapLegendPanelProps> {
+): MapLegendPanelComponentType {
   const defaultActionIcons = {
     legend: Legend
   };
@@ -394,7 +397,7 @@ function MapLegendPanelFactory(
   );
 
   MapLegendPanel.displayName = 'MapLegendPanel';
-  return withTheme(MapLegendPanel) as React.FC<MapLegendPanelProps>;
+  return withTheme(MapLegendPanel as MapLegendPanelComponentType) as MapLegendPanelComponentType;
 }
 
 export default MapLegendPanelFactory;
