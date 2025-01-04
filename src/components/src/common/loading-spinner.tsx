@@ -32,9 +32,10 @@ export type LoadingWrapperProps = BaseComponentProps & {
   borderColor?: CSSProperties['borderColor'];
 };
 
-const LoadingWrapper: IStyledComponent<'web', LoadingWrapperProps> = styled.div<
+const LoadingWrapper: IStyledComponent<
+  'web',
   LoadingWrapperProps
->`
+> = styled.div<LoadingWrapperProps>`
   border-radius: 50%;
   border: 3px solid ${props => props.borderColor || props.theme.borderColorLT};
   padding: 2px;

@@ -41,7 +41,7 @@ export const ChickletButton: IStyledComponent<
 `;
 
 const DND_MODIFIERS = [restrictToParentElement];
-export const ChickletTag: IStyledComponent<'web', {}> = styled.span`
+export const ChickletTag: IStyledComponent<'web'> = styled.span`
   margin-right: 10px;
   text-overflow: ellipsis;
   width: 100%;

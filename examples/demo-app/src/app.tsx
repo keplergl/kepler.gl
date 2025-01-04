@@ -600,8 +600,8 @@ const App = props => {
                       mapboxApiAccessToken={CLOUD_PROVIDERS_CONFIGURATION.MAPBOX_TOKEN}
                       id="map"
                       /*
-                      * Specify path to keplerGl state, because it is not mount at the root
-                      */
+                       * Specify path to keplerGl state, because it is not mount at the root
+                       */
                       getState={keplerGlGetState}
                       width={width}
                       height={height}

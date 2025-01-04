@@ -27,9 +27,10 @@ export type TypeaheadWrapperProps = BaseComponentProps & {
   ref: React.RefObject<HTMLDivElement>;
 };
 
-const TypeaheadWrapper: IStyledComponent<'web', TypeaheadWrapperProps> = styled.div<
+const TypeaheadWrapper: IStyledComponent<
+  'web',
   TypeaheadWrapperProps
->`
+> = styled.div<TypeaheadWrapperProps>`
   display: flex;
   flex-direction: column;
   background-color: ${props =>
@@ -53,11 +54,13 @@ export type TypeaheadInputProps = BaseComponentProps & {
   type: string;
   disabled?: boolean;
   ref: React.RefObject<HTMLDivElement>;
+  placeholder?: string | undefined;
 };
 
-const TypeaheadInput: IStyledComponent<'web', TypeaheadInputProps> = styled.input<
+const TypeaheadInput: IStyledComponent<
+  'web',
   TypeaheadInputProps
->`
+> = styled.input<TypeaheadInputProps>`
   ${props => (props.light ? props.theme.inputLT : props.theme.secondaryInput)}
   &:hover {
     cursor: pointer;

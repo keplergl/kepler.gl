@@ -49,9 +49,10 @@ export type DatasetModalTabProps = BaseComponentProps & {
   active?: boolean;
 };
 
-export const DatasetModalTab: IStyledComponent<'web', DatasetModalTabProps> = styled.div<
+export const DatasetModalTab: IStyledComponent<
+  'web',
   DatasetModalTabProps
->`
+> = styled.div<DatasetModalTabProps>`
   align-items: center;
   border-bottom: 3px solid ${props => (props.active ? 'black' : 'transparent')};
   cursor: pointer;

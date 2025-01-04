@@ -60,9 +60,10 @@ export type StyledSliderTooltipProps = BaseComponentProps & {
   sliderHandleWidth: number;
 };
 
-const StyledSliderTooltip: IStyledComponent<'web', StyledSliderTooltipProps> = styled.div<
+const StyledSliderTooltip: IStyledComponent<
+  'web',
   StyledSliderTooltipProps
->`
+> = styled.div<StyledSliderTooltipProps>`
   position: absolute;
   border-radius: 3px;
   display: inline-block;

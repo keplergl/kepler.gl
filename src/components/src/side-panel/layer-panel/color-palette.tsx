@@ -9,7 +9,7 @@ import {BaseComponentProps} from '../../types';
 
 type ColorPaletteProps = BaseComponentProps & {
   colors: RGBColor | HexColor[];
-  colorWidths?: number[];
+  colorWidths?: number[] | null;
   height?: number;
   isSelected?: boolean;
   isReversed?: boolean;

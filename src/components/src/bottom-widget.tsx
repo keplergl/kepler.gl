@@ -24,9 +24,10 @@ export type BottomWidgetContainerProps = BaseComponentProps & {
   ref: React.ForwardedRef<HTMLDivElement>;
 };
 
-const BottomWidgetContainer: IStyledComponent<'web', BottomWidgetContainerProps> = styled.div<
+const BottomWidgetContainer: IStyledComponent<
+  'web',
   BottomWidgetContainerProps
->`
+> = styled.div<BottomWidgetContainerProps>`
   display: flex;
   flex-direction: column;
   padding-top: ${props => (props.hasPadding ? props.theme.bottomWidgetPaddingTop : 0)}px;

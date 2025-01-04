@@ -11,9 +11,10 @@ export type TimeValueWrapperProps = BaseComponentProps & {
   isEnlarged?: boolean;
 };
 
-const TimeValueWrapper: IStyledComponent<'web', TimeValueWrapperProps> = styled.div<
+const TimeValueWrapper: IStyledComponent<
+  'web',
   TimeValueWrapperProps
->`
+> = styled.div<TimeValueWrapperProps>`
   display: flex;
   align-items: center;
   font-size: ${props => props.theme.timeTitleFontSize};

@@ -22,6 +22,7 @@ export type ListItemProps<Option> = {
   value: Option;
   displayOption: (opt: Option) => string;
   disabled?: boolean;
+  light?: boolean;
 };
 
 const defaultDisplay = d => d;

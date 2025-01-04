@@ -35,8 +35,9 @@ import {updateLayerColorFunctionDefinition} from '../tools/layer-style-function'
 import {SelectedKeplerGlActions} from './ai-assistant-manager';
 import {getDatasetContext, getValuesFromDataset, highlightRows} from '../tools/utils';
 
+type ThemeProps = {theme: any};
+
 export type AiAssistantComponentProps = {
-  theme: any;
   aiAssistant: AiAssistantState;
   updateAiAssistantMessages: ActionHandler<typeof updateAiAssistantMessages>;
   setStartScreenCapture: ActionHandler<typeof setStartScreenCapture>;
@@ -58,7 +59,7 @@ const StyledAiAssistantComponent = styled.div`
 AiAssistantComponentFactory.deps = [];
 
 function AiAssistantComponentFactory() {
-  const AiAssistantComponent: React.FC<AiAssistantComponentProps> = ({
+  const AiAssistantComponent: React.FC<AiAssistantComponentProps & ThemeProps> = ({
     theme,
     aiAssistant,
     updateAiAssistantMessages,
@@ -67,7 +68,7 @@ function AiAssistantComponentFactory() {
     keplerGlActions,
     mapStyle,
     visState
-  }: AiAssistantComponentProps) => {
+  }: AiAssistantComponentProps & ThemeProps) => {
     const functions = [
       basemapFunctionDefinition({mapStyleChange: keplerGlActions.mapStyleChange, mapStyle}),
       loadUrlFunctionDefinition({
@@ -175,7 +176,7 @@ function AiAssistantComponentFactory() {
     );
   };
 
-  return withTheme(AiAssistantComponent);
+  return withTheme(AiAssistantComponent) as React.FC<AiAssistantComponentProps>;
 }
 
 export default AiAssistantComponentFactory;

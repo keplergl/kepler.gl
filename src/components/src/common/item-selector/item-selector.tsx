@@ -22,9 +22,10 @@ export type DropdownWrapperProps = {
   width: number;
 };
 
-const DropdownWrapper: IStyledComponent<'web', DropdownWrapperProps> = styled.div<
+const DropdownWrapper: IStyledComponent<
+  'web',
   DropdownWrapperProps
->`
+> = styled.div<DropdownWrapperProps>`
   border: 0;
   width: 100%;
   left: 0;

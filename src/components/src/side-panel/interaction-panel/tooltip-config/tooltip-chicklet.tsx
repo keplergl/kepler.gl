@@ -56,8 +56,8 @@ const StyledPopover = styled.div`
 `;
 
 const hashStyles = {
-  SHOW: 'SHOW' as 'SHOW',
-  ACTIVE: 'ACTIVE' as 'ACTIVE'
+  SHOW: 'SHOW' as const,
+  ACTIVE: 'ACTIVE' as const
 };
 
 export type IconDivProps = BaseComponentProps & {

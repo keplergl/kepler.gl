@@ -49,9 +49,10 @@ export type StyledSliderContainerProps = BaseComponentProps & {
   isEnlarged?: boolean;
 };
 
-const StyledSliderContainer: IStyledComponent<'web', StyledSliderContainerProps> = styled.div<
+const StyledSliderContainer: IStyledComponent<
+  'web',
   StyledSliderContainerProps
->`
+> = styled.div<StyledSliderContainerProps>`
   align-items: flex-end;
   display: flex;
   flex-direction: row;
