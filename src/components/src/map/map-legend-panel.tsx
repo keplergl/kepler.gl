@@ -233,7 +233,9 @@ const ImageExportLegend = withTheme(({settings, isSidePanelShown, theme, childre
     isSidePanelShown,
     theme,
     settings,
-    onChangeSettings: () => {}
+    onChangeSettings: () => {
+      // do nothing by default
+    }
   });
 
   const portalRoot = containerRef.current
@@ -285,116 +287,123 @@ export type MapLegendPanelProps = {
 
 type MapLegendPanelComponentType = React.FC<MapLegendPanelProps>;
 
+const defaultActionIcons = {
+  legend: Legend
+};
+
+const MapLegendPanelComponent = ({
+  layers,
+  mapControls,
+  scale,
+  onToggleMapControl,
+  isExport,
+  logoComponent,
+  actionIcons = defaultActionIcons,
+  mapState,
+  onLayerVisConfigChange,
+  onToggleSplitMapViewport,
+  onClickControlBtn,
+  isViewportUnsyncAllowed = true,
+  className,
+  interactionConfig,
+  settings,
+  isSidePanelShown,
+
+  MapControlTooltip,
+  MapControlPanel,
+  MapLegend
+}) => {
+  const mapLegend = mapControls?.mapLegend || ({} as MapControlMapLegend);
+  const {active, disableEdit} = mapLegend || {};
+  const rootContext = useContext(RootContext);
+
+  const onClick = useCallback(() => {
+    onClickControlBtn?.();
+    if (mapControls?.mapDraw?.active) {
+      onToggleMapControl('mapDraw');
+    }
+    onToggleMapControl('mapLegend');
+  }, [onClickControlBtn, onToggleMapControl, mapControls]);
+  const onCloseClick = useCallback(
+    e => {
+      e.preventDefault();
+      onToggleMapControl('mapLegend');
+    },
+    [onToggleMapControl]
+  );
+
+  if (!mapLegend.show) {
+    return null;
+  }
+
+  const legendPanel = active ? (
+    <MapControlPanel
+      scale={scale}
+      header="header.layerLegend"
+      {...{onClick: onCloseClick, pinnable: false, disableClose: false}}
+      isExport={isExport}
+      logoComponent={logoComponent}
+      mapState={mapState}
+      onToggleSplitMapViewport={onToggleSplitMapViewport}
+      isViewportUnsyncAllowed={isViewportUnsyncAllowed}
+      className={className}
+    >
+      <MapLegend
+        layers={layers}
+        mapState={mapState}
+        disableEdit={disableEdit}
+        isExport={isExport}
+        onLayerVisConfigChange={onLayerVisConfigChange}
+      />
+    </MapControlPanel>
+  ) : null;
+
+  return (
+    <>
+      {active ? (
+        hasPortableWidth(breakPointValues) ? (
+          legendPanel
+        ) : isExport ? (
+          <ImageExportLegend isSidePanelShown={isSidePanelShown} settings={settings}>
+            {legendPanel}
+          </ImageExportLegend>
+        ) : (
+          createPortal(
+            <DraggableLegend>{legendPanel}</DraggableLegend>,
+            rootContext?.current ?? document.body
+          )
+        )
+      ) : null}
+      {!isExport ? (
+        <MapControlTooltip id="show-legend" message="tooltip.showLegend">
+          <MapControlButton className="map-control-button show-legend" onClick={onClick}>
+            <actionIcons.legend height="22px" />
+          </MapControlButton>
+        </MapControlTooltip>
+      ) : null}
+    </>
+  );
+};
+
 function MapLegendPanelFactory(
   MapControlTooltip: ReturnType<typeof MapControlTooltipFactory>,
   MapControlPanel: ReturnType<typeof MapControlPanelFactory>,
   MapLegend: ReturnType<typeof MapLegendFactory>
 ): MapLegendPanelComponentType {
-  const defaultActionIcons = {
-    legend: Legend
-  };
-
   const MapLegendPanel = withState(
     [],
     state => {
       const {activeSidePanel, mapControls} = state.demo?.keplerGl.map.uiState ?? {};
       return {
         isSidePanelShown: activeSidePanel,
-        settings: mapControls?.mapLegend?.settings
+        settings: mapControls?.mapLegend?.settings,
+        MapControlTooltip,
+        MapControlPanel,
+        MapLegend
       };
     },
     {setMapControlSettings}
-  )(
-    ({
-      layers,
-      mapControls,
-      scale,
-      onToggleMapControl,
-      isExport,
-      logoComponent,
-      actionIcons = defaultActionIcons,
-      mapState,
-      onLayerVisConfigChange,
-      onToggleSplitMapViewport,
-      onClickControlBtn,
-      isViewportUnsyncAllowed = true,
-      className,
-      interactionConfig,
-      settings,
-      isSidePanelShown
-    }) => {
-      const mapLegend = mapControls?.mapLegend || ({} as MapControlMapLegend);
-      const {active, disableEdit} = mapLegend || {};
-      const rootContext = useContext(RootContext);
-
-      const onClick = useCallback(() => {
-        onClickControlBtn?.();
-        if (mapControls?.mapDraw?.active) {
-          onToggleMapControl('mapDraw');
-        }
-        onToggleMapControl('mapLegend');
-      }, [onClickControlBtn, onToggleMapControl, mapControls]);
-      const onCloseClick = useCallback(
-        e => {
-          e.preventDefault();
-          onToggleMapControl('mapLegend');
-        },
-        [onToggleMapControl]
-      );
-
-      if (!mapLegend.show) {
-        return null;
-      }
-
-      const legendPanel = active ? (
-        <MapControlPanel
-          scale={scale}
-          header="header.layerLegend"
-          {...{onClick: onCloseClick, pinnable: false, disableClose: false}}
-          isExport={isExport}
-          logoComponent={logoComponent}
-          mapState={mapState}
-          onToggleSplitMapViewport={onToggleSplitMapViewport}
-          isViewportUnsyncAllowed={isViewportUnsyncAllowed}
-          className={className}
-        >
-          <MapLegend
-            layers={layers}
-            mapState={mapState}
-            disableEdit={disableEdit}
-            isExport={isExport}
-            onLayerVisConfigChange={onLayerVisConfigChange}
-          />
-        </MapControlPanel>
-      ) : null;
-
-      return (
-        <>
-          {active ? (
-            hasPortableWidth(breakPointValues) ? (
-              legendPanel
-            ) : isExport ? (
-              <ImageExportLegend isSidePanelShown={isSidePanelShown} settings={settings}>
-                {legendPanel}
-              </ImageExportLegend>
-            ) : (
-              createPortal(
-                <DraggableLegend>{legendPanel}</DraggableLegend>,
-                rootContext?.current ?? document.body
-              )
-            )
-          ) : null}
-          {!isExport ? (
-            <MapControlTooltip id="show-legend" message="tooltip.showLegend">
-              <MapControlButton className="map-control-button show-legend" onClick={onClick}>
-                <actionIcons.legend height="22px" />
-              </MapControlButton>
-            </MapControlTooltip>
-          ) : null}
-        </>
-      );
-    }
-  );
+  )(MapLegendPanelComponent);
 
   MapLegendPanel.displayName = 'MapLegendPanel';
   return withTheme(MapLegendPanel as MapLegendPanelComponentType) as MapLegendPanelComponentType;
