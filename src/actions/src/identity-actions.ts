@@ -15,6 +15,13 @@ export type RegisterEntryUpdaterAction = {
     initialUiState?: Partial<UiState>;
   };
 };
+
+export type RenameEntryUpdaterAction = {
+  payload: {
+    oldId: string;
+    newId: string;
+  };
+};
 /**
  *
  * Add a new kepler.gl instance in `keplerGlReducer`. This action is called under-the-hood when a `KeplerGl` component is **mounted** to the dom.
@@ -49,8 +56,8 @@ export const registerEntry: (entry: RegisterEntryUpdaterAction['payload']) => {
  */
 export const deleteEntry: (id: string) => {
   type: typeof ActionTypes.DELETE_ENTRY;
-  payload: string;
-} = createAction(ActionTypes.DELETE_ENTRY, (id: string) => ({payload: id}));
+  payload: {id: string};
+} = createAction(ActionTypes.DELETE_ENTRY, (id: string) => ({payload: {id: id}}));
 
 /**
  *
@@ -66,10 +73,7 @@ export const renameEntry: (
   newId: string
 ) => {
   type: typeof ActionTypes.RENAME_ENTRY;
-  payload: {
-    oldId: string;
-    newId: string;
-  };
+  payload: RenameEntryUpdaterAction['payload'];
 } = createAction(ActionTypes.RENAME_ENTRY, (oldId: string, newId: string) => ({
   payload: {
     oldId,
