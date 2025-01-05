@@ -51,7 +51,7 @@ type LayerPanelProps = {
   splitMap?: SplitMap;
 };
 
-const PanelWrapper = styled.div<{active: boolean}>`
+const PanelWrapper = styled.div`
   font-size: 12px;
   border-radius: 1px;
   z-index: 1000;
@@ -147,7 +147,6 @@ function LayerPanelFactory(
 
       return (
         <PanelWrapper
-          active={isConfigActive}
           className={`layer-panel ${this.props.className}`}
           data-testid={dataTestIds.layerPanel}
           style={this.props.style}

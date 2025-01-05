@@ -286,7 +286,11 @@ export {
 export {default as FileUploadProgress} from './common/file-uploader/file-upload-progress';
 export {default as UploadButton} from './common/file-uploader/upload-button';
 export {default as Accessor} from './common/item-selector/accessor';
-export {ChickletButton, default as ChickletedInput} from './common/item-selector/chickleted-input';
+export {
+  default as ChickletedInput,
+  ChickletButton,
+  ChickletTag
+} from './common/item-selector/chickleted-input';
 export {
   default as DropdownList,
   ListItem,

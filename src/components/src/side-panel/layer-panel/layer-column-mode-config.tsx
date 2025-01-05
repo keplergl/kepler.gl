@@ -17,6 +17,7 @@ import LayerColumnConfigFactory from './layer-column-config';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {Layer, LayerInfoModal, LayerBaseConfig} from '@kepler.gl/layers';
 import {SupportedColumnMode, FieldPair, LayerColumns} from '@kepler.gl/types';
+import {BaseComponentProps} from '../../types';
 
 import {Help} from '../../common/icons';
 
@@ -25,7 +26,7 @@ const TopRow = styled.div`
   justify-content: space-between;
 `;
 
-const Separator = styled(({children, className}) => (
+const Separator = styled(({children, className}: BaseComponentProps) => (
   <div className={className}>
     <div className="separator-line-cell">
       <div className="separator-line" />

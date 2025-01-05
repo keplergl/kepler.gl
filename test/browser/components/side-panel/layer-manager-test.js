@@ -75,20 +75,13 @@ test('Components -> LayerManager -> render -> list view', t => {
   t.ok(wrapper.find(PanelViewListToggle).length === 1, 'should render PanelViewListToggle');
   t.ok(wrapper.find(PanelTitle).length === 1, 'should render PanelTitle');
 
-  const titles = [];
-  const expectedTitles = [
-    'H3 Hexagon 1',
-    'H3 Hexagon 1',
-    'H3 Hexagon 1',
-    'H3 Hexagon 2',
-    'H3 Hexagon 2',
-    'H3 Hexagon 2'
-  ];
-  wrapper.find('.layer__title__editor').forEach(item => titles.push(item.getDOMNode().value));
+  const expectedTitles = ['H3 Hexagon 1', 'H3 Hexagon 1', 'H3 Hexagon 2', 'H3 Hexagon 2'];
+
+  const titles = wrapper.find('.layer__title__editor').map(item => item.getDOMNode().value);
   t.deepEqual(titles, expectedTitles, 'should render panels in correct order');
 
   const layers = wrapper.find('.layer-panel');
-  t.equal(layers.length, 6, 'should render 6 layer panels');
+  t.equal(layers.length, 4, 'should render 4 layer panels');
 
   t.end();
 });
@@ -111,20 +104,14 @@ test('Components -> LayerManager -> render -> order by dataset view', t => {
   t.ok(wrapper.find(PanelViewListToggle).length === 1, 'should render PanelViewListToggle');
   t.ok(wrapper.find(PanelTitle).length === 1, 'should render PanelTitle');
 
-  const titles = [];
-  const expectedTitles = [
-    'H3 Hexagon 1',
-    'H3 Hexagon 1',
-    'H3 Hexagon 1',
-    'H3 Hexagon 2',
-    'H3 Hexagon 2',
-    'H3 Hexagon 2'
-  ];
-  wrapper.find('.layer__title__editor').forEach(item => titles.push(item.getDOMNode().value));
+  //  we have two layers by styled-component will render two elements for each component with the same className
+  const expectedTitles = ['H3 Hexagon 1', 'H3 Hexagon 1', 'H3 Hexagon 2', 'H3 Hexagon 2'];
+  const titles = wrapper.find('.layer__title__editor').map(item => item.getDOMNode().value);
+  t.equal(titles.length, 4, 'Should display two tiles');
   t.deepEqual(titles, expectedTitles, 'should render panels in correct order');
 
   const layers = wrapper.find('.layer-panel');
-  t.equal(layers.length, 6, 'should render 6 layer panels');
+  t.equal(layers.length, 4, 'should render 6 layer panels');
 
   t.end();
 });

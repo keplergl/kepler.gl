@@ -88,7 +88,7 @@ export const StyledConfigGroupHeader = styled.div.attrs({
   margin-bottom: 12px;
   cursor: default;
 
-  :hover {
+  &:hover {
     ${props => props.collapsible && 'cursor: pointer;'}
     .layer-config-group__label {
       color: ${props => props.theme.textColorHl};

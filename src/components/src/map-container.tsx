@@ -179,7 +179,8 @@ const StyledDatasetAttributionsContainer = styled.div<StyledDatasetAttributionsC
   color: ${props => props.theme.labelColor};
   margin-right: 2px;
   line-height: ${props => (props.isPalm ? '1em' : '1.4em')};
-  :hover {
+
+  &:hover {
     white-space: inherit;
   }
 `;

@@ -107,7 +107,7 @@ const StyledLayerPanelHeader = styled(StyledPanelHeader)`
 
   ${props => (props.warning ? getBorderCss('warning') : props.isValid ? '' : getBorderCss('error'))}
 
-  :hover {
+  &:hover {
     cursor: pointer;
     background-color: ${props => props.theme.panelBackgroundHover};
 
@@ -137,7 +137,7 @@ const HeaderActionSection = styled.div<HeaderActionSectionProps>`
   align-items: stretch;
   right: 10px;
   pointer-events: ${props => (props.isEditingLabel ? 'none' : 'all')};
-  :hover {
+  &:hover {
     .layer-panel__header__actions__hidden {
       opacity: 1;
       background-color: ${props => props.theme.panelBackgroundHover};
@@ -160,7 +160,7 @@ const StyledPanelHeaderHiddenActions = styled.div.attrs({
     props.isConfigActive ? props.theme.panelBackgroundHover : props.theme.panelBackground};
   transition: opacity 0.4s ease, background-color 0.4s ease;
 
-  :hover {
+  &:hover {
     opacity: 1;
   }
 `;
@@ -171,7 +171,7 @@ const StyledDragHandle = styled.div`
   opacity: 0;
   z-index: 1000;
 
-  :hover {
+  &:hover {
     cursor: move;
     opacity: 1;
     color: ${props => props.theme.textColorHl};

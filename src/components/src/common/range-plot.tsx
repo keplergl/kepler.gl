@@ -167,7 +167,9 @@ export default function RangePlotFactory(
     );
   };
 
-  const RangePlotWithTheme = withTheme(RangePlot);
+  const RangePlotWithTheme = withTheme(RangePlot) as React.FC<
+    RangePlotProps & Partial<RangeBrushProps>
+  >;
 
   // a container to render spinner or message when the data is too big
   // to generate a plot
@@ -248,5 +250,5 @@ export default function RangePlotFactory(
     );
   };
 
-  return withTheme(WithPlotLoading);
+  return withTheme(WithPlotLoading) as React.FC<Omit<WithPlotLoadingProps, 'theme'>>;
 }

@@ -3,22 +3,23 @@
 
 import React, {Component, RefObject} from 'react';
 import classnames from 'classnames';
-import styled from 'styled-components';
+import styled, {IStyledComponent} from 'styled-components';
 import MouseEventHandler from './mouse-event';
 import {StyleRangeSliderType} from './slider';
+import {BaseComponentProps} from '../../types';
 
-interface StyledSliderProps {
+export type StyledSliderProps = BaseComponentProps & {
   active?: boolean;
   vertical?: boolean;
-}
+};
 
-const StyledSlider = styled.div<StyledSliderProps>`
+const StyledSlider: IStyledComponent<'web', StyledSliderProps> = styled.div<StyledSliderProps>`
   position: relative;
   background-color: ${props =>
     props.active ? props.theme.sliderBarHoverColor : props.theme.sliderBarColor};
   ${props => `${props.vertical ? 'width' : 'height'}: ${props.theme.sliderBarHeight}px`};
   border-radius: ${props => props.theme.sliderBarRadius};
-  :hover {
+  &:hover {
     cursor: pointer;
   }
 `;

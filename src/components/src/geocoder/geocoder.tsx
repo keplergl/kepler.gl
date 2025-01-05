@@ -87,7 +87,7 @@ const StyledContainer = styled.div<StyledContainerProps>`
     display: flex;
     align-items: center;
 
-    :hover {
+    &:hover {
       cursor: pointer;
       color: ${props => props.theme.textColorHl};
     }

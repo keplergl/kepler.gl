@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import React, {forwardRef, useMemo, useCallback} from 'react';
-import styled, {withTheme} from 'styled-components';
+import styled, {withTheme, IStyledComponent} from 'styled-components';
 
 import {FILTER_VIEW_TYPES} from '@kepler.gl/constants';
 import {hasPortableWidth, isSideFilter, mergeFilterWithTimeline} from '@kepler.gl/utils';
@@ -14,15 +14,20 @@ import {bottomWidgetSelector} from './kepler-gl';
 import FilterAnimationControllerFactory from './filter-animation-controller';
 import LayerAnimationControllerFactory from './layer-animation-controller';
 import AnimationControlFactory from './common/animation-control/animation-control';
+import {BaseComponentProps} from './types';
 
 const maxWidth = 1080;
 
-interface BottomWidgetContainerProps {
+export type BottomWidgetContainerProps = BaseComponentProps & {
   hasPadding?: boolean;
-  width?: number;
-}
+  width: number;
+  ref: React.ForwardedRef<HTMLDivElement>;
+};
 
-const BottomWidgetContainer = styled.div<BottomWidgetContainerProps>`
+const BottomWidgetContainer: IStyledComponent<
+  'web',
+  BottomWidgetContainerProps
+> = styled.div<BottomWidgetContainerProps>`
   display: flex;
   flex-direction: column;
   padding-top: ${props => (props.hasPadding ? props.theme.bottomWidgetPaddingTop : 0)}px;
@@ -44,7 +49,7 @@ export type BottomWidgetProps = {
   containerW: number;
 } & ReturnType<typeof bottomWidgetSelector>;
 type ThemeProp = {
-  theme: Record<string, any>;
+  theme: any;
 };
 type BottomWidgetThemedProps = BottomWidgetProps & ThemeProp;
 
@@ -222,11 +227,10 @@ export default function BottomWidgetFactory(
     );
   };
 
-  /* eslint-disable react/display-name */
   return withTheme(
-    // @ts-ignore
-    forwardRef((props: BottomWidgetThemedProps, ref) => <BottomWidget {...props} rootRef={ref} />)
+    forwardRef((props: BottomWidgetThemedProps, ref: React.ForwardedRef<HTMLDivElement>) => (
+      <BottomWidget {...props} rootRef={ref} />
+    ))
   );
-  /* eslint-enable react/display-name */
 }
 /* eslint-enable complexity */

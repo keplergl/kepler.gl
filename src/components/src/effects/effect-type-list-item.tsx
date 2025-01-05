@@ -24,7 +24,7 @@ const StyledListItem = styled.div`
   height: 89px;
   transition: background-color 0.4s;
 
-  :hover {
+  &:hover {
     background-color: ${props => props.theme.effectTypeIconBgHoverColor};
   }
 

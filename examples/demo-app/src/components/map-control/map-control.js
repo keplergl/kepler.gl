@@ -65,7 +65,7 @@ const StyledPanelAction = styled.div`
     }
   }
 
-  :hover {
+  &:hover {
     cursor: pointer;
     a {
       color: ${props => props.theme.textColorHl};

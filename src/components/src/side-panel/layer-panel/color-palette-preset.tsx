@@ -17,7 +17,7 @@ const StyledColorPalette = styled.div`
   justify-content: space-between;
   padding: 12px;
 
-  :hover {
+  &:hover {
     cursor: pointer;
   }
 `;

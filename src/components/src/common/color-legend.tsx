@@ -52,7 +52,7 @@ export function ResetColorLabelFactory() {
     color: ${props => props.theme.labelColorLT};
     cursor: pointer;
 
-    :hover {
+    &:hover {
       color: ${props => props.theme.panelHeaderIconHover};
     }
   `;

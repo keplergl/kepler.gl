@@ -46,7 +46,7 @@ const StyledMapPopover = styled.div`
   overflow-x: auto;
   box-shadow: ${props => props.theme.panelBoxShadow};
 
-  :hover {
+  &:hover {
     background-color: ${props => `${props.theme.panelBackground}dd`};
   }
 
@@ -115,7 +115,7 @@ const PopoverContent = styled.div`
 const StyledIcon = styled.div`
   color: ${props => props.theme.activeColor};
 
-  :hover {
+  &:hover {
     cursor: pointer;
     color: ${props => props.theme.linkBtnColor};
   }
@@ -129,7 +129,7 @@ const StyledSelectGeometry = styled.div`
     margin-right: 6px;
   }
 
-  :hover {
+  &:hover {
     cursor: pointer;
     color: ${props => props.theme.linkBtnColor};
   }

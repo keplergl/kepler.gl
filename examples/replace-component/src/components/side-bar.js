@@ -29,7 +29,7 @@ const StyledCloseButton = styled.div`
   width: 80px;
   right: 0;
 
-  :hover {
+  &:hover {
     cursor: pointer;
     background-color: ${props => props.theme.primaryBtnBgdHover};
   }

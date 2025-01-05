@@ -3,19 +3,22 @@
 
 import React, {Component, createRef, CSSProperties, RefObject} from 'react';
 import classnames from 'classnames';
-import styled from 'styled-components';
+import styled, {IStyledComponent} from 'styled-components';
 import MouseEventHandler from './mouse-event';
 import {StyleRangeSliderType} from './slider';
+import {BaseComponentProps} from '../../types';
 
-interface StyledSliderHandleProps {
+export type StyledSliderHandleProps = StyledSliderTooltipProps & {
   vertical?: boolean;
-  sliderHandleWidth: number;
   active?: boolean;
-}
+  ref: RefObject<Element>;
+};
 
-const StyledSliderHandle = styled.span.attrs(props => ({
-  className: classnames('kg-range-slider__handle', props.className)
-}))<StyledSliderHandleProps>`
+const StyledSliderHandle: IStyledComponent<'web', StyledSliderHandleProps> = styled.span.attrs(
+  props => ({
+    className: classnames('kg-range-slider__handle', props.className)
+  })
+)<StyledSliderHandleProps>`
   position: absolute;
   z-index: 10;
   ${props => (props.vertical ? 'margin-left' : 'margin-top')}: -${props =>
@@ -39,7 +42,7 @@ const StyledSliderHandle = styled.span.attrs(props => ({
   border-color: ${props =>
     props.active ? props.theme.selectBorderColor : props.theme.sliderInactiveBorderColor};
 
-  :hover {
+  &:hover {
     background-color: ${props => props.theme.sliderHandleHoverColor};
     cursor: pointer;
   }
@@ -48,18 +51,19 @@ const StyledSliderHandle = styled.span.attrs(props => ({
   font-size: 6px;
   padding: 0 3px;
   letter-spacing: 1px;
-  :after {
+  &:after {
     content: '${props => props.theme.sliderHandleAfterContent}';
   }
 `;
 
-interface StyledSliderTooltipProps {
-  vertical?: boolean;
+export type StyledSliderTooltipProps = BaseComponentProps & {
   sliderHandleWidth: number;
-  active?: boolean;
-}
+};
 
-const StyledSliderTooltip = styled.div<StyledSliderTooltipProps>`
+const StyledSliderTooltip: IStyledComponent<
+  'web',
+  StyledSliderTooltipProps
+> = styled.div<StyledSliderTooltipProps>`
   position: absolute;
   border-radius: 3px;
   display: inline-block;
@@ -75,22 +79,22 @@ const StyledSliderTooltip = styled.div<StyledSliderTooltipProps>`
   margin-bottom: -6px;
   width: 50px;
 
-  :before,
-  :after {
+  &:before,
+  &:after {
     content: '';
     width: 0;
     height: 0;
     position: absolute;
   }
 
-  :before {
+  &:before {
     border-top: 6px solid transparent;
     border-bottom: 6px solid transparent;
     left: -8px;
     top: 50%;
   }
 
-  :after {
+  &:after {
     border-top: 5px solid transparent;
     border-bottom: 5px solid transparent;
     left: -6px;

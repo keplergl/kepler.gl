@@ -4,6 +4,7 @@
 import React from 'react';
 import test from 'tape';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
+import {STYLED_COMPONENTS_DUPLICATED_ENTRIES} from '../../../helpers/utils';
 import {
   LoadDataModalFactory,
   ModalTabItem,
@@ -25,8 +26,16 @@ test('Components -> LoadDataModal.mount', t => {
     );
   }, 'Show not fail without props');
 
-  t.equal(wrapper.find('.file-uploader').length, 3, 'should render FileUpload');
-  t.equal(wrapper.find('.load-data-modal__tab').length, 3, 'should render ModalTabs');
+  t.equal(
+    wrapper.find('.file-uploader').length,
+    STYLED_COMPONENTS_DUPLICATED_ENTRIES,
+    'should render FileUpload'
+  );
+  t.equal(
+    wrapper.find('.load-data-modal__tab').length,
+    STYLED_COMPONENTS_DUPLICATED_ENTRIES,
+    'should render ModalTabs'
+  );
   t.equal(wrapper.find(LoadStorageMap).length, 0, 'should not render LoadStorageMap');
   t.end();
 });

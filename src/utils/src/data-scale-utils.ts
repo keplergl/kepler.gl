@@ -670,7 +670,7 @@ export function addCategoricalValuesToColorMap(
 export function getCategoricalColorScale(
   colorDomain: number[] | string[],
   colorRange: ColorRange,
-  useRgb: boolean = true
+  useRgb = true
 ): (categoryValue: string | number) => RGBColor | RGBAColor {
   const cMap = colorRange.colorMap
     ? colorRange.colorMap

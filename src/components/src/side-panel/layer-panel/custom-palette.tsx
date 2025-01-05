@@ -19,7 +19,7 @@ import {
   SortableElementProps,
   SortableHandle
 } from 'react-sortable-hoc';
-import styled, {StyledComponent, css} from 'styled-components';
+import styled, {css} from 'styled-components';
 import Portaled from '../../common/portaled';
 import {Tooltip} from '../../common/styled-components';
 import Typeahead from '../../common/item-selector/typeahead';
@@ -125,8 +125,8 @@ export const ColorPaletteItem = styled.div`
     padding-right: 6px;
   }
 
-  :not(.sorting):not(.disabled) {
-    :hover {
+  &:not(.sorting):not(.disabled) {
+    &:hover {
       background-color: ${props => props.theme.panelBackgroundHover};
       ${dragHandleActive};
     }
@@ -147,13 +147,13 @@ const StyledDragHandle = styled.div`
 const StyledAction = styled.div`
   color: ${props => props.theme.subtextColor};
   svg {
-    :hover {
+    &:hover {
       color: ${props => props.theme.subtextColorActive};
     }
   }
 
   margin-left: 4px;
-  :hover {
+  &:hover {
     cursor: pointer;
   }
 `;
@@ -171,7 +171,7 @@ export const ColorSwatch = styled.div.attrs({
   width: 32px;
   height: 18px;
   display: inline-block;
-  :hover {
+  &:hover {
     box-shadow: ${props => props.theme.boxShadow};
     cursor: pointer;
   }
@@ -197,9 +197,7 @@ const StyledAddStepContainer = styled.div`
   }
 `;
 
-const StyledInput = styled(
-  Input as StyledComponent<'input', any, {width: string; textAlign: string; disabled: boolean}, any>
-)`
+const StyledInput = styled(Input)<{width: string; textAlign: string}>`
   width: ${props => props.width ?? '100%'};
   text-align: ${props => props.textAlign ?? 'end'};
   pointer-events: ${props => (props.disabled ? 'none' : 'all')};
@@ -212,7 +210,7 @@ const InputText = styled.div<{width: string; textAlign: string}>`
   width: ${props => props.width ?? '100%'};
   text-align: ${props => props.textAlign ?? 'end'};
 
-  :hover {
+  &:hover {
     cursor: auto;
     background-color: transparent;
     border-color: transparent;
