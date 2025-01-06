@@ -97,7 +97,6 @@ export function provideInitialState(initialState, extraReducers?) {
       [ActionTypes.RENAME_ENTRY]: handleRenameEntry
     };
 
-    // TODO: Understand why the Lint sees an error here, while the IDE does not => Fixed
     return handleActions<KeplerGlStateMap, CombineRegisterUpdateActions>(
       handlers,
       initialCoreState
