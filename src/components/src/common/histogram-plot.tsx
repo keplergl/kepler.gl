@@ -194,6 +194,7 @@ function HistogramPlotFactory() {
                     : histogramStyle.unHighlightedW;
                   return (
                     <Bar
+                      isOverlay={false}
                       inRange={inRange}
                       color={HISTOGRAM_MASK_FGCOLOR}
                       key={`mask-${idx}`}
@@ -271,6 +272,7 @@ function HistogramPlotFactory() {
                 if (startX > 0 && startX + barWidth * histogramStyle.unHighlightedW <= width) {
                   return (
                     <Bar
+                      isOverlay={false}
                       inRange={inRange}
                       color={colorsByGroup?.[key]}
                       key={`bar-${idx}`}

@@ -52,7 +52,7 @@ const StyledDropdownListItem = styled.div`
     }
   }
 
-  :hover,
+  &:hover,
   &.selected {
     cursor: pointer;
     .layer-type-selector__item__icon {

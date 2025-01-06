@@ -40,7 +40,7 @@ const StyledDropdownListItem = styled.div`
     opacity: 0.3;
   }
 
-  :hover {
+  &:hover {
     cursor: pointer;
     .effect-type-selector__item__label {
       color: ${props => props.theme.effectPanelTextMain};

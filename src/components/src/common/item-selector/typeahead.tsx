@@ -5,13 +5,14 @@ import React, {Component, createRef, ElementType, KeyboardEventHandler} from 're
 import {polyfill} from 'react-lifecycles-compat';
 import fuzzy from 'fuzzy';
 import classNames from 'classnames';
-import styled from 'styled-components';
+import styled, {IStyledComponent} from 'styled-components';
 import {console as Console} from 'global/window';
 
 import Accessor from './accessor';
 import DropdownList, {ListItem} from './dropdown-list';
 import {Search} from '../icons';
 import {KeyEvent} from '@kepler.gl/constants';
+import {BaseComponentProps} from '../../types';
 
 const DEFAULT_CLASS = 'typeahead';
 /**
@@ -21,18 +22,22 @@ const DEFAULT_CLASS = 'typeahead';
  * keyboard or mouse to select.
  */
 
-interface TypeaheadWrapperProps {
+export type TypeaheadWrapperProps = BaseComponentProps & {
   light?: boolean;
-}
+  ref: React.RefObject<HTMLDivElement>;
+};
 
-const TypeaheadWrapper = styled.div<TypeaheadWrapperProps>`
+const TypeaheadWrapper: IStyledComponent<
+  'web',
+  TypeaheadWrapperProps
+> = styled.div<TypeaheadWrapperProps>`
   display: flex;
   flex-direction: column;
   background-color: ${props =>
     props.light ? props.theme.dropdownListBgdLT : props.theme.dropdownListBgd};
   box-shadow: ${props => props.theme.dropdownListShadow};
 
-  :focus {
+  &:focus {
     outline: 0;
   }
 `;
@@ -43,8 +48,21 @@ const InputBox = styled.div.attrs({
   padding: 8px;
 `;
 
-const TypeaheadInput = styled.input<TypeaheadWrapperProps>`
-  ${props => (props.light ? props.theme.inputLT : props.theme.secondaryInput)} :hover {
+export type TypeaheadInputProps = BaseComponentProps & {
+  light?: boolean;
+  value?: string;
+  type: string;
+  disabled?: boolean;
+  ref: React.RefObject<HTMLDivElement>;
+  placeholder?: string | undefined;
+};
+
+const TypeaheadInput: IStyledComponent<
+  'web',
+  TypeaheadInputProps
+> = styled.input<TypeaheadInputProps>`
+  ${props => (props.light ? props.theme.inputLT : props.theme.secondaryInput)}
+  &:hover {
     cursor: pointer;
     background-color: ${props =>
       props.light ? props.theme.selectBackgroundLT : props.theme.secondaryInputBgd};

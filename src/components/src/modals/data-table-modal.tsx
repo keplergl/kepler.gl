@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import React from 'react';
-import styled, {withTheme} from 'styled-components';
+import styled, {withTheme, IStyledComponent} from 'styled-components';
 import DatasetLabel from '../common/dataset-label';
 import DataTableFactory from '../common/data-table';
 import {createSelector} from 'reselect';
@@ -14,6 +14,7 @@ import {UiState} from '@kepler.gl/types';
 import {Gear} from '../common/icons';
 import Portaled from '../common/portaled';
 import DataTableConfigFactory from '../common/data-table/display-format';
+import {BaseComponentProps} from '../types';
 
 const MIN_STATS_CELL_SIZE = 122;
 const DEFAULT_SORT_COLUMN = {};
@@ -44,11 +45,14 @@ const DatasetCatalog = styled.div`
   }
 `;
 
-interface DatasetModalTabProps {
+export type DatasetModalTabProps = BaseComponentProps & {
   active?: boolean;
-}
+};
 
-export const DatasetModalTab = styled.div<DatasetModalTabProps>`
+export const DatasetModalTab: IStyledComponent<
+  'web',
+  DatasetModalTabProps
+> = styled.div<DatasetModalTabProps>`
   align-items: center;
   border-bottom: 3px solid ${props => (props.active ? 'black' : 'transparent')};
   cursor: pointer;
@@ -57,7 +61,7 @@ export const DatasetModalTab = styled.div<DatasetModalTabProps>`
   margin: 0 3px;
   padding: 0 5px;
 
-  :hover {
+  &:hover {
     border-bottom: 3px solid black;
   }
 `;
@@ -300,6 +304,8 @@ function DataTableModalFactory(
       );
     }
   }
+
+  // @ts-expect-error figure out the proper way to type
   return withTheme(DataTableModal);
 }
 

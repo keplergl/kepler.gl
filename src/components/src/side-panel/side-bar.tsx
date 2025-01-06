@@ -69,7 +69,7 @@ const StyledCollapseButton = styled.div`
   top: ${props => props.theme.sidePanel.margin.top}px;
   width: 20px;
 
-  :hover {
+  &:hover {
     cursor: pointer;
     box-shadow: none;
     background-color: ${props => props.theme.sideBarCloseBtnBgdHover};

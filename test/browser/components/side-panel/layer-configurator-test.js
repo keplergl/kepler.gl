@@ -30,6 +30,7 @@ import {
   clickItemSelectList
 } from 'test/helpers/component-utils';
 import {act} from 'react-dom/test-utils';
+import {STYLED_COMPONENTS_DUPLICATED_ENTRIES} from '../../../helpers/utils';
 
 // components
 const LayerConfigurator = appInjector.get(LayerConfiguratorFactory);
@@ -289,7 +290,7 @@ test('Components -> LayerConfigurator.mount -> collapsed / expand config group '
   const component = wrapper.find(LayerConfigurator).instance();
   t.equal(
     wrapper.find(LayerConfigGroup).at(0).find('.layer-config-group.collapsed').length,
-    3,
+    STYLED_COMPONENTS_DUPLICATED_ENTRIES,
     'LayerColumnModeConfig should be collapsed'
   );
 

@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import React, {Component, ComponentType} from 'react';
-import styled from 'styled-components';
+import styled, {IStyledComponent} from 'styled-components';
 import classnames from 'classnames';
 import {processRowObject} from '@kepler.gl/processors';
 import {FlyToInterpolator} from '@deck.gl/core/typed';
@@ -19,6 +19,8 @@ import {ActionHandler, removeDataset, updateMap, updateVisData} from '@kepler.gl
 
 import Geocoder, {Result} from './geocoder/geocoder';
 import {MapViewState} from '@deck.gl/core/typed';
+
+import {BaseComponentProps} from './types';
 
 const ICON_LAYER = {
   id: GEOCODER_LAYER_ID,
@@ -50,13 +52,16 @@ function generateConfig(layerOrder) {
   };
 }
 
-interface StyledGeocoderPanelProps {
+export type StyledGeocoderPanelProps = BaseComponentProps & {
+  unsyncedViewports?: boolean;
+  index?: number;
   width?: number;
-  unsyncedViewports: any;
-  index: any;
-}
+};
 
-const StyledGeocoderPanel = styled.div<StyledGeocoderPanelProps>`
+const StyledGeocoderPanel: IStyledComponent<
+  'web',
+  StyledGeocoderPanelProps
+> = styled.div<StyledGeocoderPanelProps>`
   position: absolute;
   top: ${props => props.theme.geocoderTop}px;
   right: ${props =>

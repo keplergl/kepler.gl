@@ -32,11 +32,12 @@ const PROVIDER_MODELS = {
   ]
 };
 
+type ThemeProps = {theme: any};
+
 export type AiAssistantConfigProps = {
-  theme: any;
   aiAssistantConfig: AiAssistantConfig;
   updateAiAssistantConfig: (aiAssistantConfig: AiAssistantConfig) => void;
-} & WrappedComponentProps;
+};
 
 const SectionTitle = styled.div`
   font-size: ${props => props.theme.inputFontSize};
@@ -136,11 +137,9 @@ const StyleErrorMessage = styled.div`
 AiAssistantConfigFactory.deps = [RangeSliderFactory];
 
 function AiAssistantConfigFactory(RangeSlider: ReturnType<typeof RangeSliderFactory>) {
-  const AiAssistantConfig: React.FC<AiAssistantConfigProps> = ({
-    intl,
-    aiAssistantConfig,
-    updateAiAssistantConfig
-  }) => {
+  const AiAssistantConfig: React.FC<
+    AiAssistantConfigProps & WrappedComponentProps & ThemeProps
+  > = ({intl, aiAssistantConfig, updateAiAssistantConfig}) => {
     const [provider, setProvider] = useState(aiAssistantConfig.provider || 'openai');
     const [model, setModel] = useState(aiAssistantConfig.model || PROVIDER_MODELS[provider][0]);
     const [apiKey, setApiKey] = useState(aiAssistantConfig.apiKey || '');
@@ -367,7 +366,7 @@ function AiAssistantConfigFactory(RangeSlider: ReturnType<typeof RangeSliderFact
     );
   };
 
-  return withTheme(injectIntl(AiAssistantConfig));
+  return withTheme(injectIntl(AiAssistantConfig)) as React.FC<AiAssistantConfigProps>;
 }
 
 export default AiAssistantConfigFactory;

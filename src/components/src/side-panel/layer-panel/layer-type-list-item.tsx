@@ -80,7 +80,7 @@ export function LayerTypeListItemFactory() {
     </StyledListItem>
   );
 
-  return withTheme(LayerTypeListItem);
+  return withTheme(LayerTypeListItem) as React.FC<LayerTypeListItemProps>;
 }
 
 export default LayerTypeListItemFactory;

@@ -8,6 +8,7 @@ import styled from 'styled-components';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {Tooltip} from '../common/styled-components';
 import {BaseProps} from '../common/icons';
+import {BaseComponentProps} from '../types';
 
 export type PanelHeaderActionIcon = ComponentType<Partial<BaseProps>>;
 
@@ -29,10 +30,13 @@ type HeaderActionWrapperProps = {
   flush?: boolean;
   active?: boolean;
   hoverColor?: string | null;
-  testId?: string;
+  dataTestId?: any;
 };
 
-const HeaderActionWrapper = styled.div.attrs((props: HeaderActionWrapperProps) => ({
+type HeaderActionWrapperCssProps = {testId?: string} & HeaderActionWrapperProps &
+  BaseComponentProps;
+
+const HeaderActionWrapper = styled.div.attrs<HeaderActionWrapperCssProps>(props => ({
   dataTestId: props.testId
 }))<HeaderActionWrapperProps>`
   margin-left: ${props => (props.flush ? 0 : 8)}px;
@@ -43,7 +47,7 @@ const HeaderActionWrapper = styled.div.attrs((props: HeaderActionWrapperProps) =
 
   cursor: pointer;
 
-  :hover {
+  &:hover {
     color: ${props =>
       props.hoverColor ? props.theme[props.hoverColor] : props.theme.panelHeaderIconHover};
   }

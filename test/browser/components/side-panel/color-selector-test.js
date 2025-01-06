@@ -36,6 +36,7 @@ import {hexToRgb} from '@kepler.gl/utils';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
 import {StateWFilesFiltersLayerColor, StateWTrips} from 'test/helpers/mock-state';
 import {clickItemSelector} from '../../../helpers/component-utils';
+import {STYLED_COMPONENTS_DUPLICATED_ENTRIES} from '../../../helpers/utils';
 
 const ColorSelector = appInjector.get(ColorSelectorFactory);
 const LayerColorSelector = appInjector.get(LayerColorSelectorFactory);
@@ -671,7 +672,8 @@ test('Components -> LayerColorRangeSelector.render -> ColorSelector -> ColorRang
 
   t.equal(
     cp.find('.custom-palette__sortable-items').length,
-    pointLayer.config.colorUI.colorRange.customPalette.colors.length * 3,
+    pointLayer.config.colorUI.colorRange.customPalette.colors.length *
+      STYLED_COMPONENTS_DUPLICATED_ENTRIES,
     'should render same number of custom palette swatch'
   );
 
@@ -929,7 +931,7 @@ test('Components -> ColorSelector.opacity', t => {
   });
 
   // select color
-  wrapper.find('.single-color-palette__block').at(100).simulate('click');
+  wrapper.find('.single-color-palette__block').at(67).simulate('click');
   t.ok(setColor.calledOnce, 'should call setColor once');
   t.ok(setColor.calledWith([228, 155, 0, 100]), 'setColor called with correct color and opacity');
 

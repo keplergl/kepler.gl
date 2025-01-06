@@ -22,6 +22,7 @@ import configureStore from 'redux-mock-store';
 
 import {mockKeplerProps, expectedLayerHoverProp} from '../../helpers/mock-state';
 import {act} from 'react-dom/test-utils';
+import {STYLED_COMPONENTS_DUPLICATED_ENTRIES} from '../../helpers/utils';
 
 const MapContainer = appInjector.get(MapContainerFactory);
 const MapPopover = appInjector.get(MapPopoverFactory);
@@ -218,7 +219,11 @@ test('MapContainerFactory - _renderDeckOverlay', t => {
 
           // test MapPopoverProp
           testMapPopoverProp(t, mapPopoverProps);
-          t.equal(wrapper.find('.map-popover').length, 3, 'should render .map-popover');
+          t.equal(
+            wrapper.find('.map-popover').length,
+            STYLED_COMPONENTS_DUPLICATED_ENTRIES,
+            'should render .map-popover'
+          );
           t.equal(wrapper.find('table').length, 1, 'should render 1 table');
 
           const table = wrapper.find('table').at(0);

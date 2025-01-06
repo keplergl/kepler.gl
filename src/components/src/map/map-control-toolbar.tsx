@@ -3,9 +3,10 @@
 
 import styled from 'styled-components';
 import VerticalToolbar from '../common/vertical-toolbar';
+import {BaseComponentProps} from '../types';
 
 function MapControlToolbar() {
-  const StyledToolbar = styled(VerticalToolbar)`
+  const StyledToolbar = styled(VerticalToolbar)<BaseComponentProps>`
     position: absolute;
     right: 32px;
     transform: translateX(calc(-50% + 45px));

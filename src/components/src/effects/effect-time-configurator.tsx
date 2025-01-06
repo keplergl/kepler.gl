@@ -63,7 +63,7 @@ const StyledButton = styled(Button)`
   padding: 5px;
   border-radius: 4px;
   justify-content: center;
-  :hover {
+  &:hover {
     color: ${props => props.theme.effectPanelTextMain};
     background-color: ${props => props.theme.inputBgdHover};
   }

@@ -30,6 +30,7 @@ import {
 import {testFields, testAllData} from 'test/fixtures/test-csv-data';
 import {geoStyleFields, geoStyleRows} from 'test/fixtures/geojson';
 import {StateWFiles, testCsvDataId, testGeoJsonDataId} from 'test/helpers/mock-state';
+import {STYLED_COMPONENTS_DUPLICATED_ENTRIES} from '../../../helpers/utils';
 
 import {createDataContainer, getFieldFormatLabels} from '@kepler.gl/utils';
 
@@ -330,7 +331,7 @@ test('Components -> DataTableModal -> render DataTable: csv 1', t => {
 
   t.equal(
     wrapper2.find('.header-cell').length,
-    testFields.length * 3,
+    testFields.length * STYLED_COMPONENTS_DUPLICATED_ENTRIES,
     `should render ${testFields.length} headers`
   );
 
@@ -475,7 +476,7 @@ test('Components -> DataTableModal -> render DataTable: sort, pin and display fo
 
   t.equal(
     wrapper2.find('.header-cell').length,
-    testFields.length * 3,
+    testFields.length * STYLED_COMPONENTS_DUPLICATED_ENTRIES, // number of duplicates create by styled-components
     `should render ${testFields.length} headers`
   );
 
@@ -493,7 +494,7 @@ test('Components -> DataTableModal -> render DataTable: sort, pin and display fo
     t.equal(
       wrapper2
         .find('.header-cell')
-        .at(i * 3)
+        .at(i * STYLED_COMPONENTS_DUPLICATED_ENTRIES)
         .find('.col-name__name')
         .text(),
       expectedHeaders[i],
@@ -670,7 +671,11 @@ test('Components -> DataTableModal.render: csv 2', t => {
   });
   wrapper2.update();
 
-  t.equal(wrapper2.find('.header-cell').length, 21, `should render 7 header cells`);
+  t.equal(
+    wrapper2.find('.header-cell').length,
+    7 * STYLED_COMPONENTS_DUPLICATED_ENTRIES,
+    `should render 7 header cells`
+  );
 
   // test header cell
   const expectedHeaders = [
@@ -685,7 +690,7 @@ test('Components -> DataTableModal.render: csv 2', t => {
 
   expectedHeaders.forEach((name, index) => {
     const header = wrapper2.find(`.header-cell.column-${index}`);
-    t.equal(header.length, 3, 'should render 1 header');
+    t.equal(header.length, STYLED_COMPONENTS_DUPLICATED_ENTRIES, 'should render 1 header');
 
     if (index < 6) {
       const cellText = header.find('.col-name__name').text();
@@ -696,7 +701,7 @@ test('Components -> DataTableModal.render: csv 2', t => {
       t.equal(header.find(OptionDropdown).length, 1, 'should render OptionDropdown');
     } else {
       // if ghost cell
-      t.equal(header.at(2).text(), '', 'cell should be empty');
+      t.equal(header.at(1).text(), '', 'cell should be empty');
     }
   });
 

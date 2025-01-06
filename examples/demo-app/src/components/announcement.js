@@ -14,7 +14,7 @@ const StyledLink = styled.a`
   font-weight: 500;
   margin-left: 8px;
 
-  :hover {
+  &:hover {
     cursor: pointer;
   }
 `;
