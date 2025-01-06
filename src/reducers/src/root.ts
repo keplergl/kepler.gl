@@ -1,10 +1,24 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {ActionTypes, keplerGlInit, _actionFor, _updateProperty} from '@kepler.gl/actions';
+import {
+  ActionTypes,
+  keplerGlInit,
+  _actionFor,
+  _updateProperty,
+  RegisterEntryUpdaterAction,
+  RenameEntryUpdaterAction
+} from '@kepler.gl/actions';
 import {handleActions} from 'redux-actions';
 
-import {coreReducerFactory} from './core';
+import {coreReducerFactory, KeplerGlState} from './core';
+
+type KeplerGlStateMap = {
+  [id: string]: Partial<KeplerGlState>;
+};
+
+type CombineRegisterUpdateActions = RegisterEntryUpdaterAction['payload'] &
+  RenameEntryUpdaterAction['payload']; // Extend this type with additional actions to enforce strict typings
 
 // INITIAL_STATE
 const initialCoreState = {};
@@ -13,7 +27,7 @@ export function provideInitialState(initialState, extraReducers?) {
   const coreReducer = coreReducerFactory(initialState, extraReducers);
 
   const handleRegisterEntry = (
-    state,
+    state: KeplerGlStateMap,
     {
       payload: {
         id,
@@ -23,8 +37,10 @@ export function provideInitialState(initialState, extraReducers?) {
         mapStylesReplaceDefault,
         initialUiState
       }
+    }: {
+      payload: RegisterEntryUpdaterAction['payload'];
     }
-  ) => {
+  ): KeplerGlStateMap => {
     // by default, always create a mint state even if the same id already exist
     // if state.id exist and mint=false, keep the existing state
     const previousState = state[id] && mint === false ? state[id] : undefined;
@@ -39,7 +55,10 @@ export function provideInitialState(initialState, extraReducers?) {
     };
   };
 
-  const handleDeleteEntry = (state, {payload: id}) =>
+  const handleDeleteEntry = (
+    state: KeplerGlStateMap,
+    {payload: {id}}: {payload: {id: string}}
+  ): KeplerGlStateMap =>
     Object.keys(state).reduce(
       (accu, curr) => ({
         ...accu,
@@ -48,7 +67,14 @@ export function provideInitialState(initialState, extraReducers?) {
       {}
     );
 
-  const handleRenameEntry = (state, {payload: {oldId, newId}}) =>
+  const handleRenameEntry = (
+    state: KeplerGlStateMap,
+    {
+      payload: {oldId, newId}
+    }: {
+      payload: RenameEntryUpdaterAction['payload'];
+    }
+  ): KeplerGlStateMap =>
     Object.keys(state).reduce(
       (accu, curr) => ({
         ...accu,
@@ -71,8 +97,10 @@ export function provideInitialState(initialState, extraReducers?) {
       [ActionTypes.RENAME_ENTRY]: handleRenameEntry
     };
 
-    // TODO: Understand why the Lint sees an error here, while the IDE does not.
-    return handleActions(handlers, initialCoreState)(state, action);
+    return handleActions<KeplerGlStateMap, CombineRegisterUpdateActions>(
+      handlers,
+      initialCoreState
+    )(state, action);
   };
 }
 
