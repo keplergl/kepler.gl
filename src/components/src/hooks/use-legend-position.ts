@@ -78,7 +78,7 @@ export function useCalcLegendPosition({
         ? {y: topOffset, anchorY: 'top'}
         : {y: bottomOffset, anchorY: 'bottom'})
     };
-  }, [isSidePanelShown]);
+  }, [isSidePanelShown, legendContentRef?.current, sidePanelWidth]);
 }
 
 /**

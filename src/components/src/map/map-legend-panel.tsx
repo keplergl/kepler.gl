@@ -308,7 +308,6 @@ const MapLegendPanelComponent = ({
   interactionConfig,
   settings,
   isSidePanelShown,
-
   MapControlTooltip,
   MapControlPanel,
   MapLegend
