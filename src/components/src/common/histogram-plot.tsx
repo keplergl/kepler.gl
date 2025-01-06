@@ -132,7 +132,7 @@ function HistogramPlotFactory() {
     const barWidth = useMemo(() => {
       if (groupKeys.length === 0) return 0;
       // find histogramsByGroup with max number of bins
-      const maxGroup = groupKeys.reduce((accu, key, idx) => {
+      const maxGroup = groupKeys.reduce((accu, key, _idx) => {
         if (histogramsByGroup[key].length > accu.length) {
           return histogramsByGroup[key];
         }

@@ -18,7 +18,6 @@ export const classList = {
 };
 
 const defaultDisplay = d => d;
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const ListItem = ({value, displayOption = defaultDisplay, disabled, light}) => {
   const displayValue = displayOption(value);
   return (

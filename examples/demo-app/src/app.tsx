@@ -44,7 +44,7 @@ const KeplerGl = require('@kepler.gl/components').injectComponents([
 /* eslint-disable no-unused-vars */
 import sampleTripData, {testCsvData, sampleTripDataConfig} from './data/sample-trip-data';
 import sampleGeojson from './data/sample-small-geojson';
-import sampleGeojsonPoints from './data/sample-geojson-points';
+// import sampleGeojsonPoints from './data/sample-geojson-points';
 import sampleGeojsonConfig from './data/sample-geojson-config';
 import sampleH3Data, {config as h3MapConfig} from './data/sample-hex-id-csv';
 import sampleS2Data, {config as s2MapConfig, dataId as s2DataId} from './data/sample-s2-data';
@@ -149,7 +149,7 @@ const App = props => {
     //   window.setTimeout(_showBanner, 3000);
     // }
     // load sample data
-    // _loadSampleData();
+    _loadSampleData();
 
     // Notifications
     // _loadMockNotifications();
@@ -169,7 +169,6 @@ const App = props => {
     [dispatch]
   );
 
-  // eslint-disable-next-line no-unused-vars
   const _showBanner = useCallback(() => {
     toggleShowBanner(true);
   }, [toggleShowBanner]);
@@ -531,7 +530,6 @@ const App = props => {
     );
   }, []);
 
-  // eslint-disable-next-line no-unused-vars
   const _loadSampleData = useCallback(() => {
     // _loadPointData();
     // _loadGeojsonData();
@@ -543,8 +541,8 @@ const App = props => {
     // _loadGpsData();
     // _loadRowData();
     // _loadVectorTileData();
-    _loadSyncedFilterWTripLayer();
-    _replaceSyncedFilterWTripLayer();
+    // _loadSyncedFilterWTripLayer();
+    // _replaceSyncedFilterWTripLayer();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     _loadPointData,

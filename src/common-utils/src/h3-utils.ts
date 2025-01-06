@@ -36,7 +36,7 @@ export function idToPolygonGeo(object?: {id: H3Index}, properties?: any) {
   };
 }
 
-export const isHexField = (field, fieldIdx, dataContainer) => {
+export const isHexField = (field, _fieldIdx, _dataContainer) => {
   return field.type === ALL_FIELD_TYPES.h3;
 };
 
