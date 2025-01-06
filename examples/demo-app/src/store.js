@@ -8,7 +8,7 @@ import {enhanceReduxMiddleware} from '@kepler.gl/reducers';
 import {createLogger} from 'redux-logger';
 import thunk from 'redux-thunk';
 // eslint-disable-next-line no-unused-vars
-import window from 'global/window';
+import Window from 'global/window';
 
 import demoReducer from './reducers/index';
 
@@ -39,8 +39,8 @@ let composeEnhancers = compose;
  * comment out code below to enable Redux Devtools
  */
 
-if (window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__) {
-  composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__({
+if (Window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__) {
+  composeEnhancers = Window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__({
     actionsBlacklist: [
       '@@kepler.gl/MOUSE_MOVE',
       '@@kepler.gl/UPDATE_MAP',

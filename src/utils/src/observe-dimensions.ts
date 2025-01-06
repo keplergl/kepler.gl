@@ -77,16 +77,16 @@ function getSize(node, entry): Dimensions | null {
  * @param throttleDelay
  * @returns
  */
-export default function useDimensions<T extends Element>(
+export function useDimensions<T extends Element>(
   nodeRef?: RefObject<T>,
   throttleDelay = DEFAULT_THROTTLE_DELAY
 ): [RefObject<T>, Dimensions | null] {
-  const ref = useRef<T>(null);
+  const ref = nodeRef ?? useRef<T>(null);
   const [size, setSize] = useState(null);
 
   useEffect(() => {
     const {current} = ref || {};
-    if (!current || !nodeRef) {
+    if (!current) {
       return;
     }
 
@@ -112,3 +112,5 @@ export default function useDimensions<T extends Element>(
 
   return [ref, size];
 }
+
+export default useDimensions;

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import window from 'global/window';
+import Window from 'global/window';
 import {capitalizeFirstLetter} from './strings';
 
 /**
@@ -32,7 +32,7 @@ export function generateHashIdFromString(str: string): string {
  */
 export function isChrome(): boolean {
   // Chrome 1+
-  return window.chrome && window.chrome.webstore;
+  return Window.chrome && Window.chrome.webstore;
 }
 
 /**
@@ -160,10 +160,10 @@ export function getError(
     return Object.prototype.hasOwnProperty.call(err, 'message')
       ? getError(err.message)
       : Object.prototype.hasOwnProperty.call(err, 'error')
-      ? getError(err.error)
-      : Object.prototype.hasOwnProperty.call(err, 'err')
-      ? getError(err.err)
-      : JSON.stringify(err);
+        ? getError(err.error)
+        : Object.prototype.hasOwnProperty.call(err, 'err')
+          ? getError(err.err)
+          : JSON.stringify(err);
   }
 
   return defaultMessage;
@@ -195,12 +195,12 @@ export const arrayMove = <T>(array: T[], from: number, to: number): T[] => {
 };
 
 export function hasMobileWidth(breakPointValues: {palm: number; desk: number}): boolean {
-  const mobileWidth = window.matchMedia(`(max-width: ${breakPointValues.palm}px)`);
+  const mobileWidth = Window.matchMedia(`(max-width: ${breakPointValues.palm}px)`);
   return mobileWidth.matches;
 }
 
 export function hasPortableWidth(breakPointValues: {palm: number; desk: number}): boolean {
-  const mobileWidth = window.matchMedia(`(max-width: ${breakPointValues.desk}px)`);
+  const mobileWidth = Window.matchMedia(`(max-width: ${breakPointValues.desk}px)`);
   return mobileWidth.matches;
 }
 

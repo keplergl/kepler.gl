@@ -3,7 +3,7 @@
 
 // DROPBOX
 import {Dropbox} from 'dropbox';
-import window from 'global/window';
+import Window from 'global/window';
 import DropboxIcon from './dropbox-icon';
 import {MAP_URI} from '../../constants/default-settings';
 import {KEPLER_FORMAT, Provider} from '@kepler.gl/cloud-providers';
@@ -59,7 +59,7 @@ export default class DropboxProvider extends Provider {
     return new Promise((resolve, reject) => {
       const link = this._authLink();
 
-      const authWindow = window.open(link, '_blank', 'width=1024,height=716');
+      const authWindow = Window.open(link, '_blank', 'width=1024,height=716');
 
       const handleToken = async event => {
         // if user has dev tools this will skip all the react-devtools events
@@ -69,7 +69,7 @@ export default class DropboxProvider extends Provider {
 
         if (authWindow) {
           authWindow.close();
-          window.removeEventListener('message', handleToken);
+          Window.removeEventListener('message', handleToken);
         }
 
         const {token} = event.data;
@@ -83,8 +83,8 @@ export default class DropboxProvider extends Provider {
         // save user name
         const user = await this.getUser();
 
-        if (window.localStorage) {
-          window.localStorage.setItem(
+        if (Window.localStorage) {
+          Window.localStorage.setItem(
             'dropbox',
             JSON.stringify({
               // dropbox token doesn't expire unless revoked by the user
@@ -98,7 +98,7 @@ export default class DropboxProvider extends Provider {
         resolve(user);
       };
 
-      window.addEventListener('message', handleToken);
+      Window.addEventListener('message', handleToken);
     });
   }
 
@@ -204,8 +204,8 @@ export default class DropboxProvider extends Provider {
 
   getUserName() {
     // load user from
-    if (window.localStorage) {
-      const jsonString = window.localStorage.getItem('dropbox');
+    if (Window.localStorage) {
+      const jsonString = Window.localStorage.getItem('dropbox');
       return jsonString && JSON.parse(jsonString).user;
     }
     return null;
@@ -213,8 +213,8 @@ export default class DropboxProvider extends Provider {
 
   async logout() {
     await this._dropbox.authTokenRevoke();
-    if (window.localStorage) {
-      window.localStorage.removeItem('dropbox');
+    if (Window.localStorage) {
+      Window.localStorage.removeItem('dropbox');
     }
     // re instantiate dropbox
     this._initializeDropbox();
@@ -238,7 +238,7 @@ export default class DropboxProvider extends Provider {
    */
   getShareUrl(fullUrl = true) {
     return fullUrl
-      ? `${window.location.protocol}//${window.location.host}/${MAP_URI}${this._shareUrl}`
+      ? `${Window.location.protocol}//${Window.location.host}/${MAP_URI}${this._shareUrl}`
       : `/${MAP_URI}${this._shareUrl}`;
   }
 
@@ -260,8 +260,8 @@ export default class DropboxProvider extends Provider {
    */
   getAccessToken() {
     let token = this._dropbox.getAccessToken();
-    if (!token && window.localStorage) {
-      const jsonString = window.localStorage.getItem('dropbox');
+    if (!token && Window.localStorage) {
+      const jsonString = Window.localStorage.getItem('dropbox');
       token = jsonString && JSON.parse(jsonString).token;
       if (token) {
         this._dropbox.setAccessToken(token);
@@ -280,13 +280,13 @@ export default class DropboxProvider extends Provider {
       return null;
     }
     // dropbox token usually start with # therefore we want to remove the '#'
-    const query = window.location.hash.substring(1);
+    const query = Window.location.hash.substring(1);
     return parseQueryString(query).access_token;
   }
 
   // PRIVATE
   _initializeDropbox() {
-    this._dropbox = new Dropbox({fetch: window.fetch});
+    this._dropbox = new Dropbox({fetch: Window.fetch});
     this._dropbox.setClientId(this.clientId);
   }
 
@@ -323,7 +323,7 @@ export default class DropboxProvider extends Provider {
   // append url after map sharing
   _getMapPermalink(mapLink, fullUrl = true) {
     return fullUrl
-      ? `${window.location.protocol}//${window.location.host}/${MAP_URI}${mapLink}`
+      ? `${Window.location.protocol}//${Window.location.host}/${MAP_URI}${mapLink}`
       : `/${MAP_URI}${mapLink}`;
   }
 
@@ -332,7 +332,7 @@ export default class DropboxProvider extends Provider {
   _getMapPermalinkFromParams({path}, fullURL = true) {
     const mapLink = `demo/map/dropbox?path=${path}`;
     return fullURL
-      ? `${window.location.protocol}//${window.location.host}/${mapLink}`
+      ? `${Window.location.protocol}//${Window.location.host}/${mapLink}`
       : `/${mapLink}`;
   }
   /**
@@ -373,8 +373,8 @@ export default class DropboxProvider extends Provider {
    */
   _authLink(path = 'auth') {
     return this._dropbox.getAuthenticationUrl(
-      `${window.location.origin}/${path}`,
-      btoa(JSON.stringify({handler: 'dropbox', origin: window.location.origin}))
+      `${Window.location.origin}/${path}`,
+      btoa(JSON.stringify({handler: 'dropbox', origin: Window.location.origin}))
     );
   }
 

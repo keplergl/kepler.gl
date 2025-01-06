@@ -300,7 +300,7 @@ export function validateInputData(data: ProtoDataset['data']): ProcessorResult {
     analyzerType: meta[i].analyzerType
   }));
 
-  return {fields: updatedFields, rows};
+  return {fields: updatedFields, rows, cols};
 }
 
 function findNonEmptyRowsAtField(rows: unknown[][], fieldIdx: number, total: number): any[] {

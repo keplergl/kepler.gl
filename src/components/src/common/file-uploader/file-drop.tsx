@@ -6,11 +6,11 @@
  * For React 16.8 compatibility
  */
 import React, {ReactNode} from 'react';
-import window from 'global/window';
+import Window from 'global/window';
 
 export type FileDropProps = {
   dropEffect?: 'copy' | 'move' | 'link' | 'none';
-  frame?: typeof document | typeof window | HTMLElement;
+  frame?: typeof document | typeof Window | HTMLElement;
   className?: string;
   targetClassName?: string;
   draggingOverFrameClassName?: string;
@@ -29,10 +29,10 @@ export type FileDropProps = {
 /** @augments React.PureComponent<FileDropProps> */
 class FileDrop extends React.PureComponent<FileDropProps> {
   static isIE = () =>
-    window &&
-    window.navigator &&
-    ((window.navigator.userAgent || []).includes('MSIE') ||
-      (window.navigator.appVersion || []).includes('Trident/'));
+    Window &&
+    Window.navigator &&
+    ((Window.navigator.userAgent || []).includes('MSIE') ||
+      (Window.navigator.appVersion || []).includes('Trident/'));
 
   static eventHasFiles = event => {
     // In most browsers this is an array, but in IE11 it's an Object :(
@@ -52,7 +52,7 @@ class FileDrop extends React.PureComponent<FileDropProps> {
 
   static defaultProps = {
     dropEffect: 'copy',
-    frame: window ? window.document : undefined,
+    frame: Window ? Window.document : undefined,
     className: 'file-drop',
     targetClassName: 'file-drop-target',
     draggingOverFrameClassName: 'file-drop-dragging-over-frame',
@@ -65,8 +65,8 @@ class FileDrop extends React.PureComponent<FileDropProps> {
   componentDidMount() {
     this.startFrameListeners(this.props.frame);
     this.resetDragging();
-    window.addEventListener('dragover', this.handleWindowDragOverOrDrop);
-    window.addEventListener('drop', this.handleWindowDragOverOrDrop);
+    Window.addEventListener('dragover', this.handleWindowDragOverOrDrop);
+    Window.addEventListener('drop', this.handleWindowDragOverOrDrop);
   }
 
   componentDidUpdate(prevProps) {
@@ -79,8 +79,8 @@ class FileDrop extends React.PureComponent<FileDropProps> {
 
   componentWillUnmount() {
     this.stopFrameListeners(this.props.frame);
-    window.removeEventListener('dragover', this.handleWindowDragOverOrDrop);
-    window.removeEventListener('drop', this.handleWindowDragOverOrDrop);
+    Window.removeEventListener('dragover', this.handleWindowDragOverOrDrop);
+    Window.removeEventListener('drop', this.handleWindowDragOverOrDrop);
   }
 
   resetDragging = () => {
