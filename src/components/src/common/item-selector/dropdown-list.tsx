@@ -26,7 +26,6 @@ export type ListItemProps<Option> = {
 };
 
 const defaultDisplay = d => d;
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const ListItem = ({
   value,
   displayOption = defaultDisplay,

@@ -7,16 +7,23 @@ import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
 import test from 'tape';
 import {appInjector, PlotContainerFactory, plotContainerSelector} from '@kepler.gl/components';
 import {mockKeplerProps} from '../../helpers/mock-state';
+import {Provider} from 'react-redux';
+import configureStore from 'redux-mock-store';
 
 const PlotContainer = appInjector.get(PlotContainerFactory);
 const initialProps = plotContainerSelector(mockKeplerProps);
+const initialState = {mapState: {latitude: 0, longitude: 0}};
+const mockStore = configureStore();
 
 test('PlotContainer -> mount', t => {
+  const store = mockStore(initialState);
   t.doesNotThrow(() => {
     mountWithTheme(
-      <IntlWrapper>
-        <PlotContainer {...initialProps} />
-      </IntlWrapper>
+      <Provider store={store}>
+        <IntlWrapper>
+          <PlotContainer {...initialProps} />
+        </IntlWrapper>
+      </Provider>
     );
   }, 'PlotContainer should not fail without props');
 
@@ -34,11 +41,14 @@ test('PlotContainer -> mount -> imageSize', t => {
     }
   };
 
+  const store = mockStore(initialState);
   t.doesNotThrow(() => {
     wrapper = mountWithTheme(
-      <IntlWrapper>
-        <PlotContainer {...initialProps} exportImageSetting={exportImageSetting} />
-      </IntlWrapper>
+      <Provider store={store}>
+        <IntlWrapper>
+          <PlotContainer {...initialProps} exportImageSetting={exportImageSetting} />
+        </IntlWrapper>
+      </Provider>
     );
   }, 'PlotContainer should not fail without props');
 
@@ -52,9 +62,11 @@ test('PlotContainer -> mount -> imageSize', t => {
 
   t.doesNotThrow(() => {
     wrapper = mountWithTheme(
-      <IntlWrapper>
-        <PlotContainer {...initialProps} exportImageSetting={exportImageSetting} />
-      </IntlWrapper>
+      <Provider store={store}>
+        <IntlWrapper>
+          <PlotContainer {...initialProps} exportImageSetting={exportImageSetting} />
+        </IntlWrapper>
+      </Provider>
     );
   }, 'PlotContainer should not fail without props');
 

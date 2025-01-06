@@ -81,14 +81,26 @@ test('MapControlFactory - display all options', t => {
 });
 
 test('MapControlFactory - display options', t => {
+  const store = mockStore({
+    demo: {
+      keplerGl: {
+        map: {
+          uiState: StateWSplitMaps.uiState
+        }
+      }
+    }
+  });
+
   let wrapper;
   t.doesNotThrow(() => {
     wrapper = mountWithTheme(
-      <IntlWrapper>
-        <MapViewStateContextProvider mapState={initialProps.mapState}>
-          <MapContainer {...initialProps} />
-        </MapViewStateContextProvider>
-      </IntlWrapper>
+      <Provider store={store}>
+        <IntlWrapper>
+          <MapViewStateContextProvider mapState={initialProps.mapState}>
+            <MapContainer {...initialProps} />
+          </MapViewStateContextProvider>
+        </IntlWrapper>
+      </Provider>
     );
   }, 'Map Container should not fail without props');
 
@@ -107,22 +119,15 @@ test('MapControlFactory - display options', t => {
 
   // with split map and active layer selector
   const propsWithSplitMap = mapFieldsSelector(mockKeplerPropsWithState({state: StateWSplitMaps}));
-  const store = mockStore({
-    demo: {
-      keplerGl: {
-        map: {
-          uiState: StateWSplitMaps.uiState
-        }
-      }
-    }
-  });
 
   wrapper.setProps({
     children: (
       <Provider store={store}>
-        <MapViewStateContextProvider mapState={propsWithSplitMap.mapState}>
-          <MapContainer {...propsWithSplitMap} />
-        </MapViewStateContextProvider>
+        <IntlWrapper>
+          <MapViewStateContextProvider mapState={propsWithSplitMap.mapState}>
+            <MapContainer {...propsWithSplitMap} />
+          </MapViewStateContextProvider>
+        </IntlWrapper>
       </Provider>
     )
   });
