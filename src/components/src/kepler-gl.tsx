@@ -109,6 +109,10 @@ const GlobalStyle = styled.div`
   .maplibregl-ctrl .maplibregl-ctrl-logo {
     display: none;
   }
+
+  .mapboxgl-ctrl .mapboxgl-ctrl-logo {
+    display: none;
+  }
 `;
 
 type BottomWidgetOuterProps = {

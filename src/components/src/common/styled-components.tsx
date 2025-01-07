@@ -533,11 +533,24 @@ export const StyledMapContainer = styled.div`
       display: none;
     }
   }
+  .mapboxgl-map {
+    .mapboxgl-missing-css {
+      display: none;
+    }
+    .mapboxgl-ctrl-attrib {
+      display: none;
+    }
+  }
 `;
 
-export const StyledAttrbution = styled.div.attrs({
-  className: 'maplibre-attribution-container'
-})`
+export type StyledAttrbutionProps = {
+  mapLibCssClass: string;
+  mapLibAttributionCssClass: string;
+};
+
+export const StyledAttrbution = styled.div.attrs<StyledAttrbutionProps>(props => ({
+  className: props.mapLibAttributionCssClass
+}))<StyledAttrbutionProps>`
   bottom: 0;
   right: 0;
   position: absolute;
@@ -567,7 +580,7 @@ export const StyledAttrbution = styled.div.attrs({
     align-items: center;
     color: ${props => props.theme.labelColor};
 
-    a.maplibregl-ctrl-logo {
+    a.${props => props.mapLibCssClass}-ctrl-logo {
       width: 72px;
       margin-left: 4px;
       background-size: contain;

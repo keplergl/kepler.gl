@@ -3,7 +3,14 @@
 
 import keyMirror from 'keymirror';
 
-import {BaseMapStyle, EffectDescription, RGBAColor, SyncTimelineMode} from '@kepler.gl/types';
+import {
+  BaseMapStyle,
+  EffectDescription,
+  RGBAColor,
+  SyncTimelineMode,
+  BaseMapColorModes,
+  Merge
+} from '@kepler.gl/types';
 import {
   scaleLinear,
   scaleLog,
@@ -203,7 +210,7 @@ export const BACKGROUND_LAYER_GROUP: DEFAULT_LAYER_GROUP = {
 export const DEFAULT_LAYER_GROUPS: DEFAULT_LAYER_GROUP[] = [
   {
     slug: 'label',
-    filter: ({id}) => id.match(/(?=(label|place-|poi-))/),
+    filter: ({id, type}) => id.match(/(?=(label|place-|poi-))/) || type?.match(/(?=(symbol))/),
     defaultVisibility: true,
     isVisibilityToggleAvailable: true,
     isMoveToTopAvailable: true,
@@ -275,18 +282,85 @@ export const EMPTY_MAPBOX_STYLE = {
   layers: []
 };
 
+export const MAP_LIB_OPTIONS = {
+  MAPBOX: 'mapbox' as const,
+  MAPLIBRE: 'maplibre' as const
+};
+
+export type BaseMapLibraryType = 'mapbox' | 'maplibre';
+
 export const NO_BASEMAP_ICON = `${BASEMAP_ICON_PREFIX}/NO_BASEMAP.png`;
 
-export const DEFAULT_MAP_STYLES: BaseMapStyle[] = [
+export const DEFAULT_BASE_MAP_STYLE = 'dark-matter';
+
+type DefaultBaseMapStyle = Merge<
+  BaseMapStyle,
   {
-    id: NO_MAP_ID,
-    label: 'No Basemap',
-    url: '',
-    icon: NO_BASEMAP_ICON,
-    layerGroups: [BACKGROUND_LAYER_GROUP],
-    colorMode: BASE_MAP_COLOR_MODES.NONE,
-    style: EMPTY_MAPBOX_STYLE
+    colorMode: BaseMapColorModes;
+  }
+>;
+
+export const DEFAULT_NO_BASEMAP_STYLE: DefaultBaseMapStyle = {
+  id: NO_MAP_ID,
+  label: 'No Basemap',
+  url: '',
+  icon: NO_BASEMAP_ICON,
+  layerGroups: [BACKGROUND_LAYER_GROUP],
+  colorMode: BASE_MAP_COLOR_MODES.NONE,
+  style: EMPTY_MAPBOX_STYLE
+};
+
+export const DEFAULT_MAPBOX_STYLES: DefaultBaseMapStyle[] = [
+  {
+    id: 'dark',
+    label: 'Dark',
+    url: 'mapbox://styles/uberdata/cjoqbbf6l9k302sl96tyvka09',
+    icon: `${BASEMAP_ICON_PREFIX}/UBER_DARK_V2.png`,
+    layerGroups: DEFAULT_LAYER_GROUPS,
+    colorMode: BASE_MAP_COLOR_MODES.DARK,
+    complimentaryStyleId: 'light'
   },
+  {
+    id: 'light',
+    label: 'Light',
+    url: 'mapbox://styles/uberdata/cjoqb9j339k1f2sl9t5ic5bn4',
+    icon: `${BASEMAP_ICON_PREFIX}/UBER_LIGHT_V2.png`,
+    layerGroups: DEFAULT_LAYER_GROUPS,
+    colorMode: BASE_MAP_COLOR_MODES.LIGHT,
+    complimentaryStyleId: 'dark'
+  },
+  {
+    id: 'muted',
+    label: 'Muted Light',
+    url: 'mapbox://styles/uberdata/cjfyl03kp1tul2smf5v2tbdd4',
+    icon: `${BASEMAP_ICON_PREFIX}/UBER_MUTED_LIGHT.png`,
+    layerGroups: DEFAULT_LAYER_GROUPS,
+    colorMode: BASE_MAP_COLOR_MODES.LIGHT,
+    complimentaryStyleId: 'muted_night'
+  },
+  {
+    id: 'muted_night',
+    label: 'Muted Night',
+    url: 'mapbox://styles/uberdata/cjfxhlikmaj1b2soyzevnywgs',
+    icon: `${BASEMAP_ICON_PREFIX}/UBER_MUTED_NIGHT.png`,
+    layerGroups: DEFAULT_LAYER_GROUPS,
+    colorMode: BASE_MAP_COLOR_MODES.DARK,
+    complimentaryStyleId: 'muted'
+  }
+];
+
+export const DEFAULT_MAPBOX_SATELITE_STYLES: DefaultBaseMapStyle[] = [
+  {
+    id: 'satellite',
+    label: 'Satellite with streets',
+    url: `mapbox://styles/mapbox/satellite-streets-v11`,
+    icon: `${BASEMAP_ICON_PREFIX}/UBER_SATELLITE.png`,
+    layerGroups: DEFAULT_LAYER_GROUPS,
+    colorMode: BASE_MAP_COLOR_MODES.NONE
+  }
+];
+
+export const DEFAULT_MAPLIBRE_STYLES: DefaultBaseMapStyle[] = [
   {
     id: 'dark-matter',
     label: 'DarkMatter',
@@ -295,15 +369,6 @@ export const DEFAULT_MAP_STYLES: BaseMapStyle[] = [
     layerGroups: DEFAULT_LAYER_GROUPS,
     colorMode: BASE_MAP_COLOR_MODES.DARK,
     complimentaryStyleId: 'positron'
-  },
-  {
-    id: 'dark-matter-nolabels',
-    label: 'DarkMatterNoLabels',
-    url: 'https://basemaps.cartocdn.com/gl/dark-matter-nolabels-gl-style/style.json',
-    icon: `${BASEMAP_ICON_PREFIX}/DARKMATTER_NOLABELS.png`,
-    layerGroups: DEFAULT_LAYER_GROUPS,
-    colorMode: BASE_MAP_COLOR_MODES.DARK,
-    complimentaryStyleId: 'positron-nolabels'
   },
   {
     id: 'positron',
@@ -315,15 +380,6 @@ export const DEFAULT_MAP_STYLES: BaseMapStyle[] = [
     complimentaryStyleId: 'dark-matter'
   },
   {
-    id: 'positron-nolabels',
-    label: 'PositronNoLabels',
-    url: 'https://basemaps.cartocdn.com/gl/positron-nolabels-gl-style/style.json',
-    icon: `${BASEMAP_ICON_PREFIX}/POSITRON_NOLABELS.png`,
-    layerGroups: DEFAULT_LAYER_GROUPS,
-    colorMode: BASE_MAP_COLOR_MODES.LIGHT,
-    complimentaryStyleId: 'dark-matter-nolabels'
-  },
-  {
     id: 'voyager',
     label: 'Voyager',
     url: 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json',
@@ -331,16 +387,14 @@ export const DEFAULT_MAP_STYLES: BaseMapStyle[] = [
     layerGroups: DEFAULT_LAYER_GROUPS,
     colorMode: BASE_MAP_COLOR_MODES.LIGHT,
     complimentaryStyleId: 'dark-matter'
-  },
-  {
-    id: 'voyager-nolabels',
-    label: 'VoyagerNoLabels',
-    url: 'https://basemaps.cartocdn.com/gl/voyager-nolabels-gl-style/style.json',
-    icon: `${BASEMAP_ICON_PREFIX}/VOYAGER_NOLABELS.png`,
-    layerGroups: DEFAULT_LAYER_GROUPS,
-    colorMode: BASE_MAP_COLOR_MODES.LIGHT,
-    complimentaryStyleId: 'dark-matter-nolabels'
   }
+];
+
+export const DEFAULT_MAP_STYLES = [
+  DEFAULT_NO_BASEMAP_STYLE,
+  ...DEFAULT_MAPLIBRE_STYLES,
+  ...DEFAULT_MAPBOX_SATELITE_STYLES,
+  ...DEFAULT_MAPBOX_STYLES
 ];
 
 export const GEOJSON_FIELDS = {

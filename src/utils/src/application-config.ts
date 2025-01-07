@@ -3,7 +3,18 @@
 
 import {MapLib, MapRef} from 'react-map-gl';
 
+import type {BaseMapLibraryType} from '@kepler.gl/constants';
+
 export type MapLibInstance = MapLib<any>;
+export type GetMapRef = ReturnType<MapRef['getMap']>;
+
+export type BaseMapLibraryConfig = {
+  getMapLib: () => Promise<MapLibInstance>;
+  mapLibAttributionCssClass: string;
+  mapLibCssClass: string;
+  mapLibName: string;
+  mapLibUrl: string;
+};
 
 /**
  * A mechanism to override default Kepler values/settings so that we
@@ -18,11 +29,7 @@ export type KeplerApplicationConfig<Map> = {
   defaultExportJsonSettings?: {
     hasData?: boolean;
   };
-  getMapLib?: () => Promise<MapLibInstance>;
-  getMap?: (ref: any) => Map;
-  mapLibCssClass?: string;
-  mapLibName?: string;
-  mapLibUrl?: string;
+  baseMapLibraryConfig?: Record<BaseMapLibraryType, BaseMapLibraryConfig>;
   plugins?: any[];
   // KeplerTable alternative
   // TODO improve typing by exporting KeplerTable interface to @kepler.gl/types
@@ -37,11 +44,24 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig<mapboxgl.Map>
   defaultExportJsonSettings: {
     hasData: true
   },
-  getMapLib: () => import('maplibre-gl'),
-  getMap: (mapRef: MapRef): mapboxgl.Map => mapRef?.getMap(),
-  mapLibCssClass: 'maplibregl',
-  mapLibName: 'MapLibre',
-  mapLibUrl: 'https://www.maplibre.org/',
+
+  baseMapLibraryConfig: {
+    maplibre: {
+      getMapLib: () => import('maplibre-gl'),
+      mapLibCssClass: 'maplibregl',
+      mapLibAttributionCssClass: 'maplibre-attribution-container',
+      mapLibName: 'MapLibre',
+      mapLibUrl: 'https://www.maplibre.org/'
+    },
+    mapbox: {
+      getMapLib: () => import('mapbox-gl'),
+      mapLibCssClass: 'mapboxgl',
+      mapLibAttributionCssClass: 'mapbox-attribution-container',
+      mapLibName: 'Mapbox',
+      mapLibUrl: 'https://www.mapbox.com/'
+    }
+  },
+
   plugins: [],
   // The default table class is KeplerTable.
   // TODO include KeplerTable here when the circular dependency with @kepler.gl/table and @kepler.gl/utils are resolved.

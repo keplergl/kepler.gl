@@ -20539,6 +20539,7 @@ __metadata:
     jest-environment-jsdom: "npm:^29.5.0"
     jsdom: "npm:^24.1.1"
     json-loader: "npm:^0.5.4"
+    mapbox-gl: "npm:1.13.1"
     maplibre-gl: "npm:^3.6.2"
     minimist: "npm:^1.2.6"
     nyc: "npm:^15.1.0"

@@ -114,7 +114,12 @@ export {
 } from './effect-utils';
 
 // Mapbox
-export {isStyleUsingMapboxTiles, transformRequest} from './map-style-utils/mapbox-utils';
+export {
+  isStyleUsingMapboxTiles,
+  isStyleUsingOpenStreetMapTiles,
+  getBaseMapLibrary,
+  transformRequest
+} from './map-style-utils/mapbox-utils';
 
 // Map
 export * from './map-utils';
@@ -169,7 +174,12 @@ export {DataRow} from './data-row';
 
 // Application config
 export {getApplicationConfig, initApplicationConfig} from './application-config';
-export type {KeplerApplicationConfig, MapLibInstance} from './application-config';
+export type {
+  KeplerApplicationConfig,
+  BaseMapLibraryConfig,
+  MapLibInstance,
+  GetMapRef
+} from './application-config';
 
 export {default as quickInsertionSort} from './quick-insertion-sort';
 

@@ -355,6 +355,8 @@ export type CustomStyleType =
   // boolean for backwards compatability with previous map configs
   | boolean;
 
+export type BaseMapColorModes = 'NONE' | 'DARK' | 'LIGHT';
+
 export type BaseMapStyle = {
   id: string;
   label: string;
@@ -364,7 +366,7 @@ export type BaseMapStyle = {
   layerGroups: LayerGroup[];
   accessToken?: string;
   custom?: CustomStyleType;
-  colorMode?: BASE_MAP_COLOR_MODES;
+  colorMode?: BaseMapColorModes;
   complimentaryStyleId?: string;
 };
 

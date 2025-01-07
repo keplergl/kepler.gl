@@ -690,15 +690,21 @@ test('#mapStyleReducer -> MAP_STYLE_CHANGE', t => {
     ...MOCK_MAP_STYLE.style,
     layers: [
       {
+        id: 'roadname_minor',
+        minzoom: 13,
+        source: 'carto',
         type: 'symbol',
-        source: 'composite',
-        id: 'country-label-sm',
-        'source-layer': 'country_label'
-      }
+        'source-layer': 'transportation_name'
+      },
+      {type: 'symbol', source: 'composite', id: 'country-label-sm', 'source-layer': 'country_label'}
     ]
   };
 
-  t.deepEqual(nextState2.topMapStyle, expectedTopStyle2, 'topMapStyle should be set correctly');
+  t.deepEqual(
+    nextState2.topMapStyle,
+    expectedTopStyle2,
+    'topMapStyle should be set correctly - road: false'
+  );
 
   // set style type to light
   const nextState3 = reducer(nextState2, mapStyleChange('positron'));
@@ -740,6 +746,13 @@ test('#mapStyleReducer -> MAP_STYLE_CHANGE', t => {
   const expectedTopStyle3 = {
     ...MOCK_MAP_STYLE_LIGHT.style,
     layers: [
+      {
+        id: 'roadname_minor',
+        minzoom: 13,
+        source: 'carto',
+        type: 'symbol',
+        'source-layer': 'transportation_name'
+      },
       {
         type: 'symbol',
         source: 'composite',
