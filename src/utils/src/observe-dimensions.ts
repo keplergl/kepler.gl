@@ -80,7 +80,7 @@ function getSize(node, entry): Dimensions | null {
 export function useDimensions<T extends Element>(
   nodeRef?: RefObject<T>,
   throttleDelay = DEFAULT_THROTTLE_DELAY
-): [RefObject<T | null>, Dimensions | null] {
+): [RefObject<T>, Dimensions | null] {
   let ref = useRef<T>(null);
   if (nodeRef) {
     ref = nodeRef;
@@ -113,7 +113,7 @@ export function useDimensions<T extends Element>(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [throttleDelay, ref?.current]);
 
-  return [ref, size];
+  return [ref as RefObject<T>, size];
 }
 
 export default useDimensions;
