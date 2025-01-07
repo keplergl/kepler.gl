@@ -38,6 +38,9 @@ import {
   errorNotification,
   setLayerBlending,
   isStyleUsingMapboxTiles,
+  isStyleUsingOpenStreetMapTiles,
+  getBaseMapLibrary,
+  BaseMapLibraryConfig,
   transformRequest,
   observeDimensions,
   unobserveDimensions,
@@ -48,7 +51,8 @@ import {
   normalizeEvent,
   rgbToHex,
   computeDeckEffects,
-  getApplicationConfig
+  getApplicationConfig,
+  GetMapRef
 } from '@kepler.gl/utils';
 import {breakPointValues} from '@kepler.gl/styles';
 
@@ -87,7 +91,6 @@ import {VisState} from '@kepler.gl/schemas';
 const DEBOUNCE_VIEWPORT_PROPAGATE = 10;
 const DEBOUNCE_MOUSE_MOVE_PROPAGATE = 10;
 
-/** @type {{[key: string]: React.CSSProperties}} */
 const MAP_STYLE: {[key: string]: React.CSSProperties} = {
   container: {
     display: 'inline-block',
@@ -108,14 +111,15 @@ const LOCALE_CODES_ARRAY = Object.keys(LOCALE_CODES);
 
 interface StyledMapContainerProps {
   mixBlendMode?: string;
+  mapLibCssClass: string;
 }
 
 const StyledMap = styled(StyledMapContainer)<StyledMapContainerProps>(
-  ({mixBlendMode = 'normal'}) => `
+  ({mixBlendMode = 'normal', mapLibCssClass}) => `
   #default-deckgl-overlay {
     mix-blend-mode: ${mixBlendMode};
   };
-  *[${getApplicationConfig().mapLibCssClass}-children] {
+  *[${mapLibCssClass}-children] {
     position: absolute;
   }
 `
@@ -127,16 +131,20 @@ const nop = () => {
   return;
 };
 
-const MapLibLogo = () => (
+type MapLibLogoProps = {
+  baseMapLibraryConfig: BaseMapLibraryConfig;
+};
+
+const MapLibLogo = ({baseMapLibraryConfig}: MapLibLogoProps) => (
   <div className="attrition-logo">
     Basemap by:
     <a
       style={{marginLeft: '5px'}}
-      className={`${getApplicationConfig().mapLibCssClass}-ctrl-logo`}
+      className={`${baseMapLibraryConfig.mapLibCssClass}-ctrl-logo`}
       target="_blank"
       rel="noopener noreferrer"
-      href={getApplicationConfig().mapLibUrl}
-      aria-label={`${getApplicationConfig().mapLibName} logo`}
+      href={baseMapLibraryConfig.mapLibUrl}
+      aria-label={`${baseMapLibraryConfig.mapLibName} logo`}
     />
   </div>
 );
@@ -211,17 +219,28 @@ const DatasetAttributions = ({
   </>
 );
 
-export const Attribution: React.FC<{
-  showMapboxLogo: boolean;
+type AttributionProps = {
+  showBaseMapLibLogo: boolean;
   showOsmBasemapAttribution: boolean;
   datasetAttributions: DatasetAttribution[];
-}> = ({showMapboxLogo = true, showOsmBasemapAttribution = false, datasetAttributions}) => {
+  baseMapLibraryConfig: BaseMapLibraryConfig;
+};
+
+export const Attribution: React.FC<AttributionProps> = ({
+  showBaseMapLibLogo = true,
+  showOsmBasemapAttribution = false,
+  datasetAttributions,
+  baseMapLibraryConfig
+}: AttributionProps) => {
   const isPalm = hasMobileWidth(breakPointValues);
 
   const memoizedComponents = useMemo(() => {
-    if (!showMapboxLogo) {
+    if (!showBaseMapLibLogo) {
       return (
-        <StyledAttrbution>
+        <StyledAttrbution
+          mapLibCssClass={baseMapLibraryConfig.mapLibCssClass}
+          mapLibAttributionCssClass={baseMapLibraryConfig.mapLibAttributionCssClass}
+        >
           <EndHorizontalFlexbox>
             <DatasetAttributions datasetAttributions={datasetAttributions} isPalm={isPalm} />
             {showOsmBasemapAttribution ? (
@@ -242,21 +261,30 @@ export const Attribution: React.FC<{
     }
 
     return (
-      <StyledAttrbution>
+      <StyledAttrbution
+        mapLibCssClass={baseMapLibraryConfig.mapLibCssClass}
+        mapLibAttributionCssClass={baseMapLibraryConfig.mapLibAttributionCssClass}
+      >
         <EndHorizontalFlexbox>
           <DatasetAttributions datasetAttributions={datasetAttributions} isPalm={isPalm} />
           <div className="attrition-link">
             {datasetAttributions?.length ? <span className="pipe-separator">|</span> : null}
-            {isPalm ? <MapLibLogo /> : null}
+            {isPalm ? <MapLibLogo baseMapLibraryConfig={baseMapLibraryConfig} /> : null}
             <a href="https://kepler.gl/policy/" target="_blank" rel="noopener noreferrer">
               © kepler.gl |{' '}
             </a>
-            {!isPalm ? <MapLibLogo /> : null}
+            {!isPalm ? <MapLibLogo baseMapLibraryConfig={baseMapLibraryConfig} /> : null}
           </div>
         </EndHorizontalFlexbox>
       </StyledAttrbution>
     );
-  }, [showMapboxLogo, showOsmBasemapAttribution, datasetAttributions, isPalm]);
+  }, [
+    showBaseMapLibLogo,
+    showOsmBasemapAttribution,
+    datasetAttributions,
+    isPalm,
+    baseMapLibraryConfig
+  ]);
 
   return memoizedComponents;
 };
@@ -265,8 +293,6 @@ MapContainerFactory.deps = [MapPopoverFactory, MapControlFactory, EditorFactory]
 
 type MapboxStyle = string | object | undefined;
 type PropSelector<R> = Selector<MapContainerProps, R>;
-
-type GetMapRef = ReturnType<ReturnType<typeof getApplicationConfig>['getMap']>;
 
 export interface MapContainerProps {
   visState: VisState;
@@ -301,7 +327,7 @@ export interface MapContainerProps {
 
   topMapContainerProps: any;
   bottomMapContainerProps: any;
-  transformRequest?: any;
+  transformRequest?: (url: string, resourceType?: string) => {url: string};
 
   datasetAttributions?: DatasetAttribution[];
 
@@ -343,7 +369,7 @@ export default function MapContainerFactory(
 
     state = {
       // Determines whether attribution should be visible based the result of loading the map style
-      showMapboxAttribution: true
+      showBaseMapAttribution: true
     };
 
     componentDidMount() {
@@ -493,7 +519,10 @@ export default function MapContainerFactory(
 
       if (update && update.style) {
         // No attributions are needed if the style doesn't reference Mapbox sources
-        this.setState({showMapboxAttribution: isStyleUsingMapboxTiles(update.style)});
+        this.setState({
+          showBaseMapAttribution:
+            isStyleUsingMapboxTiles(update.style) || !isStyleUsingOpenStreetMapTiles(update.style)
+        });
       }
 
       if (typeof this.props.onMapStyleLoaded === 'function') {
@@ -502,8 +531,18 @@ export default function MapContainerFactory(
     };
 
     _setMapRef = mapRef => {
+      // Handle change of the map library
+      if (this._map && mapRef) {
+        const map = mapRef.getMap();
+        if (map && this._map !== map) {
+          this._map?.off(MAPBOXGL_STYLE_UPDATE, nop);
+          this._map?.off(MAPBOXGL_RENDER, nop);
+          this._map = null;
+        }
+      }
+
       if (!this._map && mapRef) {
-        this._map = getApplicationConfig().getMap(mapRef);
+        this._map = mapRef.getMap();
         // i noticed in certain context we don't access the actual map element
         if (!this._map) {
           return;
@@ -964,7 +1003,7 @@ export default function MapContainerFactory(
         mapStateActions,
         MapComponent = Map,
         mapboxApiAccessToken,
-        mapboxApiUrl,
+        // mapboxApiUrl,
         mapControls,
         isExport,
         locale,
@@ -986,13 +1025,17 @@ export default function MapContainerFactory(
 
       // Current style can be a custom style, from which we pull the mapbox API acccess token
       const currentStyle = mapStyle.mapStyles?.[mapStyle.styleType];
+      const baseMapLibraryName = getBaseMapLibrary(currentStyle);
+      const baseMapLibraryConfig =
+        getApplicationConfig().baseMapLibraryConfig?.[baseMapLibraryName];
+
       const internalViewState = this.context?.getInternalViewState(index);
       const mapProps = {
         ...internalViewState,
         preserveDrawingBuffer: true,
         mapboxAccessToken: currentStyle?.accessToken || mapboxApiAccessToken,
-        baseApiUrl: mapboxApiUrl,
-        mapLib: getApplicationConfig().getMapLib(),
+        // baseApiUrl: mapboxApiUrl,
+        mapLib: baseMapLibraryConfig.getMapLib(),
         transformRequest:
           this.props.transformRequest ||
           transformRequest(currentStyle?.accessToken || mapboxApiAccessToken)
@@ -1006,7 +1049,7 @@ export default function MapContainerFactory(
         isInteractive: true,
         children: (
           <MapComponent
-            key="bottom"
+            key={`bottom-${baseMapLibraryName}`}
             {...mapProps}
             mapStyle={mapStyle.bottomMapStyle ?? EMPTY_MAPBOX_STYLE}
             {...bottomMapContainerProps}
@@ -1076,13 +1119,13 @@ export default function MapContainerFactory(
           {this.props.children}
           {mapStyle.topMapStyle ? (
             <MapComponent
-              key="top"
+              key={`top-${baseMapLibraryName}`}
               viewState={internalViewState}
               mapStyle={mapStyle.topMapStyle}
               style={MAP_STYLE.top}
               mapboxAccessToken={mapProps.mapboxAccessToken}
-              baseApiUrl={mapProps.baseApiUrl}
-              mapLib={getApplicationConfig().getMapLib()}
+              transformRequest={mapProps.transformRequest}
+              mapLib={baseMapLibraryConfig.getMapLib()}
               {...topMapContainerProps}
             />
           ) : null}
@@ -1096,9 +1139,10 @@ export default function MapContainerFactory(
           {this._renderMapPopover()}
           {this.props.primary ? (
             <Attribution
-              showMapboxLogo={this.state.showMapboxAttribution}
+              showBaseMapLibLogo={this.state.showBaseMapAttribution}
               showOsmBasemapAttribution={true}
               datasetAttributions={datasetAttributions}
+              baseMapLibraryConfig={baseMapLibraryConfig}
             />
           ) : null}
         </>
@@ -1106,19 +1150,26 @@ export default function MapContainerFactory(
     }
 
     render() {
-      const {visState} = this.props;
+      const {visState, mapStyle} = this.props;
       const mapContent = this._renderMap();
       if (!mapContent) {
         // mapContent can be null if onDeckRender returns null
         // in this case we don't want to render the map
         return null;
       }
+
+      const currentStyle = mapStyle.mapStyles?.[mapStyle.styleType];
+      const baseMapLibraryName = getBaseMapLibrary(currentStyle);
+      const baseMapLibraryConfig =
+        getApplicationConfig().baseMapLibraryConfig?.[baseMapLibraryName];
+
       return (
         <StyledMap
           ref={this._ref}
           style={this.styleSelector(this.props)}
           onContextMenu={event => event.preventDefault()}
           mixBlendMode={visState.overlayBlending}
+          mapLibCssClass={baseMapLibraryConfig.mapLibCssClass}
         >
           {mapContent}
         </StyledMap>

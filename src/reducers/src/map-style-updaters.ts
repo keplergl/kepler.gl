@@ -25,7 +25,8 @@ import {
   NO_MAP_ID,
   DEFAULT_BLDG_COLOR,
   DEFAULT_BACKGROUND_COLOR,
-  BASE_MAP_BACKGROUND_LAYER_IDS
+  BASE_MAP_BACKGROUND_LAYER_IDS,
+  DEFAULT_BASE_MAP_STYLE
 } from '@kepler.gl/constants';
 import {ACTION_TASK, LOAD_MAP_STYLE_TASK} from '@kepler.gl/tasks';
 import {rgb} from 'd3-color';
@@ -72,11 +73,10 @@ export type MapStyle = {
 
 const getDefaultState = (): MapStyle => {
   const visibleLayerGroups = {};
-  const styleType = 'dark-matter';
   const topLayerGroups = {};
 
   return {
-    styleType,
+    styleType: DEFAULT_BASE_MAP_STYLE,
     visibleLayerGroups,
     topLayerGroups,
     mapStyles: DEFAULT_MAP_STYLES.reduce(
@@ -703,7 +703,8 @@ export const inputMapStyleUpdater = (
 
   const icon =
     !isUpdatedIconDataUri && isMapboxStyleUrl
-      ? getStyleImageIcon({
+      ? // Get image icon urls only for mapbox map lib.
+        getStyleImageIcon({
           mapState,
           styleUrl: updated.url || '',
           mapboxApiAccessToken: updated.accessToken || state.mapboxApiAccessToken || '',

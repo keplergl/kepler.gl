@@ -183,6 +183,7 @@
     "jest-environment-jsdom": "^29.5.0",
     "jsdom": "^24.1.1",
     "json-loader": "^0.5.4",
+    "mapbox-gl": "1.13.1",
     "maplibre-gl": "^3.6.2",
     "minimist": "^1.2.6",
     "nyc": "^15.1.0",

@@ -16,7 +16,7 @@ import {
 import {media} from '@kepler.gl/styles';
 
 // Utils
-import {getApplicationConfig, transformRequest} from '@kepler.gl/utils';
+import {getApplicationConfig, getBaseMapLibrary, transformRequest} from '@kepler.gl/utils';
 import {injectIntl, IntlShape} from 'react-intl';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {NO_BASEMAP_ICON} from '@kepler.gl/constants';
@@ -95,6 +95,12 @@ interface AddMapStyleModalProps {
   loadCustomMapStyle: ActionHandler<typeof loadCustomMapStyle>;
   mapboxApiAccessToken: string;
   mapboxApiUrl?: string;
+  transformRequest?: (mapboxKey: string) => (
+    url: string,
+    resourceType: string
+  ) => {
+    url: string;
+  };
   mapState: MapState;
   intl: IntlShape;
 }
@@ -153,16 +159,22 @@ function AddMapStyleModalFactory() {
     };
 
     render() {
-      const {inputStyle, mapState, mapboxApiUrl, intl} = this.props;
+      const {inputStyle, mapState, intl} = this.props;
+
+      const baseMapLibraryName = getBaseMapLibrary(inputStyle);
+      const baseMapLibraryConfig = getApplicationConfig().baseMapLibraryConfig[baseMapLibraryName];
 
       const mapboxApiAccessToken = inputStyle.accessToken || this.props.mapboxApiAccessToken;
       const mapProps = {
         ...mapState,
-        baseApiUrl: mapboxApiUrl,
+        // TODO baseApiUrl should be taken into account in transformRequest as we use dynamic mapLib import
+        // baseApiUrl: mapboxApiUrl,
         mapboxAccessToken: mapboxApiAccessToken,
-        mapLib: getApplicationConfig().getMapLib(),
+        mapLib: baseMapLibraryConfig.getMapLib(),
         preserveDrawingBuffer: true,
-        transformRequest: transformRequest(mapboxApiAccessToken)
+        transformRequest:
+          this.props.transformRequest?.(mapboxApiAccessToken) ||
+          transformRequest(mapboxApiAccessToken)
       };
 
       return (
@@ -205,7 +217,7 @@ function AddMapStyleModalFactory() {
                 />
               </StyledModalSection>
 
-              {/* <StyledModalSection>
+              <StyledModalSection>
                 <div className="modal-section-title">
                   <FormattedMessage id={'modal.addStyle.publishTitle'} />
                 </div>
@@ -243,7 +255,7 @@ function AddMapStyleModalFactory() {
                   onChange={({target: {value}}) => this.props.inputMapStyle({accessToken: value})}
                   placeholder={intl.formatMessage({id: 'modal.addStyle.exampleToken'})}
                 />
-              </StyledModalSection> */}
+              </StyledModalSection>
 
               <StyledModalSection>
                 <div className="modal-section-title">
@@ -253,6 +265,7 @@ function AddMapStyleModalFactory() {
                   type="text"
                   value={inputStyle.label || ''}
                   onChange={({target: {value}}) => this.props.inputMapStyle({label: value})}
+                  placeholder="Name your style"
                 />
               </StyledModalSection>
             </StyledModalVerticalPanel>

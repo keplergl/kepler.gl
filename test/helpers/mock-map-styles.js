@@ -31,7 +31,6 @@ export const MOCK_MAP_STYLE = {
         layout: {visibility: 'visible'},
         paint: {'background-color': '#0e0e0e', 'background-opacity': 1}
       },
-
       {
         id: 'road_path',
         type: 'line',

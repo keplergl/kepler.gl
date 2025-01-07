@@ -32,6 +32,7 @@ import {mapFieldsSelector} from './kepler-gl';
 
 const CLASS_FILTER = [
   'maplibregl-control-container',
+  'mapboxgl-control-container',
   'attrition-link',
   'attrition-logo',
   'map-control__panel-split-viewport-tools'
@@ -47,6 +48,9 @@ const StyledPlotContainer = styled.div`
   .maplibregl-ctrl-bottom-left,
   .maplibregl-ctrl-bottom-right,
   .maplibre-attribution-container,
+  .mapboxgl-ctrl-bottom-left,
+  .mapboxgl-ctrl-bottom-right,
+  .mapbox-attribution-container,
   .map-control__panel-split-viewport-tools {
     display: none;
   }
