@@ -30,6 +30,7 @@
     "@openassistant/ui": "^0.0.4",
     "@types/classnames": "^2.3.1",
     "@types/keymirror": "^0.1.1",
+    "apache-arrow": ">=15.0.0",
     "classnames": "^2.2.1",
     "d3-format": "^2.0.0",
     "dropbox": "^4.0.12",
@@ -67,6 +68,7 @@
   },
   "packageManager": "yarn@4.4.0",
   "devDependencies": {
+    "@types/react": "^18.2.0",
     "esbuild-plugin-replace": "^1.4.0"
   }
 }
