@@ -41,6 +41,7 @@ export type SelectedKeplerGlActions = {
   setFilter: ActionHandler<typeof setFilter>;
   setFilterPlot: ActionHandler<typeof setFilterPlot>;
   layerSetIsValid: ActionHandler<typeof layerSetIsValid>;
+  addTableColumn: ActionHandler<typeof addTableColumn>;
 };
 
 export type AiAssistantManagerState = {

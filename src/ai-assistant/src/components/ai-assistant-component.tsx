@@ -4,7 +4,11 @@
 import React, {useEffect} from 'react';
 import styled, {withTheme} from 'styled-components';
 import {MessageModel, useAssistant} from '@openassistant/core';
-import {dataClassifyFunctionDefinition} from '@openassistant/geoda';
+import {
+  dataClassifyFunctionDefinition,
+  spatialCountFunctionDefinition,
+  SpatialJoinGeometries
+} from '@openassistant/geoda';
 import {histogramFunctionDefinition, scatterplotFunctionDefinition} from '@openassistant/echarts';
 import {AiAssistant} from '@openassistant/ui';
 import '@openassistant/echarts/dist/index.css';
@@ -34,9 +38,11 @@ import {updateLayerColorFunctionDefinition} from '../tools/layer-style-function'
 import {SelectedKeplerGlActions} from './ai-assistant-manager';
 import {
   getDatasetContext,
+  getGeometriesFromDataset,
   getScatterplotValuesFromDataset,
   getValuesFromDataset,
-  highlightRows
+  highlightRows,
+  saveAsDataset
 } from '../tools/utils';
 
 export type AiAssistantComponentProps = {
@@ -72,6 +78,21 @@ function AiAssistantComponentFactory() {
     mapStyle,
     visState
   }: AiAssistantComponentProps) => {
+    // get values from dataset, used by LLM functions
+    const getValuesCallback = (datasetName: string, variableName: string): number[] =>
+      getValuesFromDataset(visState.datasets, datasetName, variableName);
+
+    // highlight rows, used by LLM functions
+    const highlightRowsCallback = (datasetName: string, selectedRowIndices: number[]) =>
+      highlightRows(
+        visState.datasets,
+        visState.layers,
+        datasetName,
+        selectedRowIndices,
+        keplerGlActions.layerSetIsValid
+      );
+
+    // define LLM functions
     const functions = [
       basemapFunctionDefinition({mapStyleChange: keplerGlActions.mapStyleChange, mapStyle}),
       loadUrlFunctionDefinition({
@@ -95,49 +116,36 @@ function AiAssistantComponentFactory() {
         setFilterPlot: keplerGlActions.setFilterPlot
       }),
       histogramFunctionDefinition({
-        getValues: (datasetName: string, variableName: string): number[] =>
-          getValuesFromDataset(visState.datasets, datasetName, variableName),
-        onSelected: (datasetName: string, selectedRowIndices: number[]) =>
-          highlightRows(
-            visState.datasets,
-            visState.layers,
-            datasetName,
-            selectedRowIndices,
-            keplerGlActions.layerSetIsValid
-          )
+        getValues: getValuesCallback,
+        onSelected: highlightRowsCallback
       }),
       scatterplotFunctionDefinition({
-        getValues: (
-          datasetName: string,
-          xVariableName: string,
-          yVariableName: string
-        ): Promise<{x: number[]; y: number[]}> =>
-          Promise.resolve(
-            getScatterplotValuesFromDataset(
-              visState.datasets,
-              datasetName,
-              xVariableName,
-              yVariableName
-            )
-          ),
-        onSelected: (datasetName: string, selectedRowIndices: number[]) =>
-          highlightRows(
-            visState.datasets,
-            visState.layers,
-            datasetName,
-            selectedRowIndices,
-            keplerGlActions.layerSetIsValid
-          )
+        getValues: async (datasetName: string, xVar: string, yVar: string) =>
+          getScatterplotValuesFromDataset(visState.datasets, datasetName, xVar, yVar),
+        onSelected: highlightRowsCallback
       }),
       dataClassifyFunctionDefinition({
-        getValues: (datasetName: string, variableName: string): number[] =>
-          getValuesFromDataset(visState.datasets, datasetName, variableName)
+        getValues: getValuesCallback
+      }),
+      spatialCountFunctionDefinition({
+        getValues: getValuesCallback,
+        getGeometries: (datasetName: string): SpatialJoinGeometries =>
+          getGeometriesFromDataset(
+            visState.datasets,
+            visState.layers,
+            visState.layerData,
+            datasetName
+          ),
+        saveAsDataset: (datasetName: string, data: Record<string, number[]>) =>
+          saveAsDataset(visState.datasets, datasetName, data, keplerGlActions.addDataToMap)
       })
     ];
 
+    // enable voice and screen capture
     const enableVoiceAndScreenCapture =
       aiAssistant.config.provider === 'openai' || aiAssistant.config.provider === 'google';
 
+    // define assistant props
     const assistantProps = {
       name: ASSISTANT_NAME,
       description: ASSISTANT_DESCRIPTION,
@@ -151,12 +159,14 @@ function AiAssistantComponentFactory() {
 
     const {initializeAssistant, addAdditionalContext} = useAssistant(assistantProps);
 
+    // initialize assistant with context
     const initializeAssistantWithContext = async () => {
       await initializeAssistant();
       const context = getDatasetContext(visState.datasets, visState.layers);
       addAdditionalContext({context});
     };
 
+    // initialize assistant with context
     useEffect(() => {
       initializeAssistantWithContext();
       // re-initialize assistant when datasets, filters or layers change

@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 export const TASK_LIST =
-  '1. Show dataset/layer/variable info.\n2. Change the basemap style.\n3. Load data from url.\n4. Create a map layer using variable.\n5. Filter the data of a variable.\n6. Create a histogram.';
+  '1. Show dataset/layer/variable info.\n2. Change the basemap style.\n3. Load data from url.\n4. Create a map layer using variable.\n5. Filter the data of a variable.\n6. Create a histogram.\n7. Classify the data of a variable.\n8. Spatial join two datasets.\n9. Query the data using SQL.';
 
 export const WELCOME_MESSAGE = `Hi, I am Kepler.gl AI Assistant!\nHere are some tasks I can help you with:\n\n${TASK_LIST}`;
 
@@ -14,6 +14,8 @@ When responding to user queries:
    - Identify the appropriate function to call
    - Determine all required parameters
    - If parameters are missing, ask the user to provide them
+   - Please ask the user to confirm the parameters
+   - If the user doesn't agree, try to provide variable functions to the user
    - Execute functions in a sequential order
 
 You can execute multiple functions to complete complex tasks, but execute them one at a time in a logical sequence. Always validate the success of each function call before proceeding to the next one.
