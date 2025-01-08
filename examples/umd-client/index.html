@@ -11,6 +11,7 @@
     />
 
     <!--MapBox css-->
+    <link href="https://api.tiles.mapbox.com/mapbox-gl-js/v1.1.1/mapbox-gl.css" rel="stylesheet" />
     <link href="https://unpkg.com/maplibre-gl@^3/dist/maplibre-gl.css" rel="stylesheet" />
 
     <!-- Load React/Redux -->
@@ -88,8 +89,8 @@
       /** END STORE **/
 
       /** COMPONENTS **/
-      const KeplerElement = (function(react, keplerGl, mapboxToken) {
-        return function(props) {
+      const KeplerElement = (function (react, keplerGl, mapboxToken) {
+        return function (props) {
           return react.createElement(
             'div',
             {style: {position: 'absolute', left: 0, width: '100vw', height: '100vh'}},

@@ -45,8 +45,9 @@ import {
   saveAsDataset
 } from '../tools/utils';
 
+type ThemeProps = {theme: any};
+
 export type AiAssistantComponentProps = {
-  theme: any;
   aiAssistant: AiAssistantState;
   updateAiAssistantMessages: ActionHandler<typeof updateAiAssistantMessages>;
   setStartScreenCapture: ActionHandler<typeof setStartScreenCapture>;
@@ -68,7 +69,7 @@ const StyledAiAssistantComponent = styled.div`
 AiAssistantComponentFactory.deps = [];
 
 function AiAssistantComponentFactory() {
-  const AiAssistantComponent: React.FC<AiAssistantComponentProps> = ({
+  const AiAssistantComponent: React.FC<AiAssistantComponentProps & ThemeProps> = ({
     theme,
     aiAssistant,
     updateAiAssistantMessages,
@@ -77,7 +78,7 @@ function AiAssistantComponentFactory() {
     keplerGlActions,
     mapStyle,
     visState
-  }: AiAssistantComponentProps) => {
+  }: AiAssistantComponentProps & ThemeProps) => {
     // get values from dataset, used by LLM functions
     const getValuesCallback = (datasetName: string, variableName: string): number[] =>
       getValuesFromDataset(visState.datasets, datasetName, variableName);
@@ -216,7 +217,7 @@ function AiAssistantComponentFactory() {
     );
   };
 
-  return withTheme(AiAssistantComponent);
+  return withTheme(AiAssistantComponent) as React.FC<AiAssistantComponentProps>;
 }
 
 export default AiAssistantComponentFactory;

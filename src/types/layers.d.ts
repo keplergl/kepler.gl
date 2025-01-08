@@ -70,6 +70,9 @@ export type SupportedColumnMode = {
   hasHelp?: boolean;
 };
 
+export type VisualChannelField = Field | null;
+export type VisualChannelScale = keyof typeof SCALE_TYPES;
+
 export type LayerColorConfig = {
   colorField: VisualChannelField;
   colorDomain: VisualChannelDomain;
@@ -175,7 +178,7 @@ export type ColorRangeConfig = {
   colorBlindSafe: boolean;
 };
 
-export type ColorMap = [string[] | string | number | null, HexColor][];
+export type ColorMap = [string[] | number[] | string | number | null, HexColor][];
 // Key is HexColor but as key we can use only string
 export type ColorLegends = {[key: HexColor]: string};
 
@@ -185,7 +188,7 @@ export type ColorRange = {
   category?: string;
   colors: HexColor[];
   reversed?: boolean;
-  colorMap?: ColorMap;
+  colorMap?: ColorMap | null;
   colorLegends?: ColorLegends;
 };
 

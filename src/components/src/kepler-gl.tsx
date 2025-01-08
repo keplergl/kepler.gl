@@ -4,7 +4,8 @@
 import React, {Component, createRef, Dispatch} from 'react';
 import Console from 'global/console';
 import {bindActionCreators} from 'redux';
-import styled, {ThemeProvider, withTheme} from 'styled-components';
+import isPropValid from '@emotion/is-prop-valid';
+import styled, {withTheme, StyleSheetManager, ThemeProvider} from 'styled-components';
 import {createSelector} from 'reselect';
 import {connect as keplerGlConnect} from './connect/keplergl-connect';
 import {IntlProvider} from 'react-intl';
@@ -65,6 +66,16 @@ import {theme as basicTheme, themeLT, themeBS, breakPointValues} from '@kepler.g
 import {KeplerGlState} from '@kepler.gl/reducers';
 import {Provider} from '@kepler.gl/cloud-providers';
 
+// This implements the default behavior from styled-components v5
+function shouldForwardProp(propName, target) {
+  if (typeof target === 'string') {
+    // For HTML elements, forward the prop if it is a valid HTML attribute
+    return isPropValid(propName);
+  }
+  // For other elements, forward all props
+  return true;
+}
+
 // Maybe we should think about exporting this or creating a variable
 // as part of the base.js theme
 const GlobalStyle = styled.div`
@@ -98,11 +109,15 @@ const GlobalStyle = styled.div`
   .maplibregl-ctrl .maplibregl-ctrl-logo {
     display: none;
   }
+
+  .mapboxgl-ctrl .mapboxgl-ctrl-logo {
+    display: none;
+  }
 `;
 
-interface BottomWidgetOuterProps {
+type BottomWidgetOuterProps = {
   absolute?: boolean;
-}
+};
 
 const BottomWidgetOuter = styled.div<BottomWidgetOuterProps>(
   ({absolute}) => `
@@ -517,59 +532,65 @@ function KeplerGlFactory(
         <RootContext.Provider value={this.root}>
           <FeatureFlagsContextProvider featureFlags={featureFlags}>
             <IntlProvider locale={uiState.locale} messages={localeMessages[uiState.locale]}>
-              <ThemeProvider theme={theme}>
-                <CloudListProvider providers={cloudProviders}>
-                  <GlobalStyle
-                    className="kepler-gl"
-                    id={`kepler-gl__${id}`}
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      position: 'relative',
-                      width: `${width}px`,
-                      height: `${height}px`
-                    }}
-                    ref={this.root}
-                  >
-                    <NotificationPanel {...notificationPanelFields} />
-                    <DndContext>
-                      {!uiState.readOnly && !readOnly && <SidePanel {...sideFields} />}
-                      <MapsLayout className="maps" mapState={this.props.mapState}>
-                        {mapContainers}
-                      </MapsLayout>
-                    </DndContext>
-                    {isExportingImage && <PlotContainer {...plotContainerFields} />}
-                    {/* 1 geocoder: single mode OR split mode and synced viewports */}
-                    {!isViewportDisjointed(this.props) && interactionConfig.geocoder.enabled && (
-                      <GeoCoderPanel {...geoCoderPanelFields} index={0} unsyncedViewports={false} />
-                    )}
-                    {/* 2 geocoders: split mode and unsynced viewports */}
-                    {isViewportDisjointed(this.props) &&
-                      interactionConfig.geocoder.enabled &&
-                      mapContainers.map((_mapContainer, index) => (
+              <StyleSheetManager shouldForwardProp={shouldForwardProp}>
+                <ThemeProvider theme={theme}>
+                  <CloudListProvider providers={cloudProviders}>
+                    <GlobalStyle
+                      className="kepler-gl"
+                      id={`kepler-gl__${id}`}
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        position: 'relative',
+                        width: `${width}px`,
+                        height: `${height}px`
+                      }}
+                      ref={this.root}
+                    >
+                      <NotificationPanel {...notificationPanelFields} />
+                      <DndContext>
+                        {!uiState.readOnly && !readOnly && <SidePanel {...sideFields} />}
+                        <MapsLayout className="maps" mapState={this.props.mapState}>
+                          {mapContainers}
+                        </MapsLayout>
+                      </DndContext>
+                      {isExportingImage && <PlotContainer {...plotContainerFields} />}
+                      {/* 1 geocoder: single mode OR split mode and synced viewports */}
+                      {!isViewportDisjointed(this.props) && interactionConfig.geocoder.enabled && (
                         <GeoCoderPanel
-                          key={index}
                           {...geoCoderPanelFields}
-                          index={index}
-                          unsyncedViewports={true}
+                          index={0}
+                          unsyncedViewports={false}
                         />
-                      ))}
-                    <BottomWidgetOuter absolute={!hasPortableWidth(breakPointValues)}>
-                      <BottomWidget
-                        rootRef={this.bottomWidgetRef}
-                        {...bottomWidgetFields}
+                      )}
+                      {/* 2 geocoders: split mode and unsynced viewports */}
+                      {isViewportDisjointed(this.props) &&
+                        interactionConfig.geocoder.enabled &&
+                        mapContainers.map((_mapContainer, index) => (
+                          <GeoCoderPanel
+                            key={index}
+                            {...geoCoderPanelFields}
+                            index={index}
+                            unsyncedViewports={true}
+                          />
+                        ))}
+                      <BottomWidgetOuter absolute={!hasPortableWidth(breakPointValues)}>
+                        <BottomWidget
+                          rootRef={this.bottomWidgetRef}
+                          {...bottomWidgetFields}
+                          containerW={dimensions.width}
+                          theme={theme}
+                        />
+                      </BottomWidgetOuter>
+                      <ModalContainer
+                        {...modalContainerFields}
                         containerW={dimensions.width}
-                        theme={theme}
+                        containerH={dimensions.height}
                       />
-                    </BottomWidgetOuter>
-                    <ModalContainer
-                      {...modalContainerFields}
-                      containerW={dimensions.width}
-                      containerH={dimensions.height}
-                    />
-                  </GlobalStyle>
-                </CloudListProvider>
-              </ThemeProvider>
+                    </GlobalStyle>
+                  </CloudListProvider>
+                </ThemeProvider>
+              </StyleSheetManager>
             </IntlProvider>
           </FeatureFlagsContextProvider>
         </RootContext.Provider>

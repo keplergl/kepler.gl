@@ -3,11 +3,14 @@
 
 import {Bounds} from '@kepler.gl/types';
 import {Layer} from '@kepler.gl/layers';
-
-const MAX_LATITUDE = 90;
-const MIN_LATITUDE = -90;
-const MAX_LONGITUDE = 180;
-const MIN_LONGITUDE = -180;
+import {
+  MAX_LATITUDE,
+  MIN_LATITUDE,
+  MAX_LONGITUDE,
+  MIN_LONGITUDE,
+  validateLongitude,
+  validateLatitude
+} from '@kepler.gl/utils';
 
 /**
  * takes a list of layer bounds and returns a single bound
@@ -27,10 +30,10 @@ export function processLayerBounds(layerBounds: Bounds[]): Bounds {
       // at new WebMercatorViewport16 (web-mercator-viewport.js:92:5)
       // at getViewportFromMapState (map-utils.js:46:66)
       return [
-        minLongitude <= MIN_LONGITUDE ? 0 : minLongitude,
-        minLatitude <= MIN_LATITUDE ? 0 : minLatitude,
-        maxLongitude >= MAX_LONGITUDE ? 0 : maxLongitude,
-        maxLatitude >= MAX_LATITUDE ? 0 : maxLatitude
+        validateLongitude(minLongitude),
+        validateLatitude(minLatitude),
+        validateLongitude(maxLongitude),
+        validateLatitude(maxLatitude)
       ];
     },
     [MAX_LONGITUDE, MAX_LATITUDE, MIN_LONGITUDE, MIN_LATITUDE]

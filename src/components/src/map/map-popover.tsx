@@ -11,7 +11,7 @@ import {RootContext} from '../context';
 import {parseGeoJsonRawFeature} from '@kepler.gl/layers';
 import {generateHashId, idToPolygonGeo} from '@kepler.gl/common-utils';
 import {LAYER_TYPES} from '@kepler.gl/constants';
-import {LayerHoverProp} from '@kepler.gl/reducers';
+import {LayerHoverProp, getLayerHoverPropValue} from '@kepler.gl/reducers';
 import {Feature, FeatureSelectionContext} from '@kepler.gl/types';
 import {
   FloatingPortal,
@@ -46,7 +46,7 @@ const StyledMapPopover = styled.div`
   overflow-x: auto;
   box-shadow: ${props => props.theme.panelBoxShadow};
 
-  :hover {
+  &:hover {
     background-color: ${props => `${props.theme.panelBackground}dd`};
   }
 
@@ -115,7 +115,7 @@ const PopoverContent = styled.div`
 const StyledIcon = styled.div`
   color: ${props => props.theme.activeColor};
 
-  :hover {
+  &:hover {
     cursor: pointer;
     color: ${props => props.theme.linkBtnColor};
   }
@@ -129,7 +129,7 @@ const StyledSelectGeometry = styled.div`
     margin-right: 6px;
   }
 
-  :hover {
+  &:hover {
     cursor: pointer;
     color: ${props => props.theme.linkBtnColor};
   }
@@ -144,21 +144,30 @@ export function getSelectedFeature(layerHoverProp: LayerHoverProp | null): Featu
   switch (layer?.type) {
     case LAYER_TYPES.hexagonId:
       fieldIdx = layer.config?.columns?.hex_id?.fieldIdx;
-      selectedFeature = idToPolygonGeo({id: layerHoverProp?.data?.[fieldIdx]}, {isClosed: true});
+      selectedFeature = idToPolygonGeo(
+        {id: getLayerHoverPropValue(layerHoverProp?.data, fieldIdx)},
+        {isClosed: true}
+      );
       break;
     case LAYER_TYPES.geojson:
       fieldIdx = layer.config?.columns?.geojson?.fieldIdx;
-      selectedFeature = parseGeoJsonRawFeature(layerHoverProp?.data?.[fieldIdx]);
+      selectedFeature = parseGeoJsonRawFeature(
+        getLayerHoverPropValue(layerHoverProp?.data, fieldIdx)
+      );
       break;
     default:
       break;
   }
 
-  return {
-    ...selectedFeature,
-    // unique id should be assigned to features in the editor
-    id: generateHashId(8)
-  };
+  if (selectedFeature) {
+    return {
+      ...selectedFeature,
+      // unique id should be assigned to features in the editor
+      id: generateHashId(8)
+    };
+  } else {
+    return null;
+  }
 }
 
 export type MapPopoverProps = {

@@ -3,11 +3,12 @@
 
 import React, {useCallback, useEffect, useRef, useMemo, useState} from 'react';
 import AutoSizer from 'react-virtualized/dist/commonjs/AutoSizer';
-import styled, {ThemeProvider} from 'styled-components';
+import styled, {ThemeProvider, StyleSheetManager} from 'styled-components';
 import window from 'global/window';
 import {connect, useDispatch} from 'react-redux';
 import cloneDeep from 'lodash.clonedeep';
 import isEqual from 'lodash.isequal';
+import isPropValid from '@emotion/is-prop-valid';
 
 import {ScreenshotWrapper} from '@openassistant/ui';
 import {
@@ -44,7 +45,7 @@ const KeplerGl = require('@kepler.gl/components').injectComponents([
 /* eslint-disable no-unused-vars */
 import sampleTripData, {testCsvData, sampleTripDataConfig} from './data/sample-trip-data';
 import sampleGeojson from './data/sample-small-geojson';
-import sampleGeojsonPoints from './data/sample-geojson-points';
+// import sampleGeojsonPoints from './data/sample-geojson-points';
 import sampleGeojsonConfig from './data/sample-geojson-config';
 import sampleH3Data, {config as h3MapConfig} from './data/sample-hex-id-csv';
 import sampleS2Data, {config as s2MapConfig, dataId as s2DataId} from './data/sample-s2-data';
@@ -60,6 +61,16 @@ import sampleGpsData from './data/sample-gps-data';
 import sampleRowData, {config as rowDataConfig} from './data/sample-row-data';
 import {processCsvData, processGeojson, processRowObject} from '@kepler.gl/processors';
 /* eslint-enable no-unused-vars */
+
+// This implements the default behavior from styled-components v5
+function shouldForwardProp(propName, target) {
+  if (typeof target === 'string') {
+    // For HTML elements, forward the prop if it is a valid HTML attribute
+    return isPropValid(propName);
+  }
+  // For other elements, forward all props
+  return true;
+}
 
 const BannerHeight = 48;
 const BannerKey = `banner-${FormLink}`;
@@ -149,7 +160,7 @@ const App = props => {
     //   window.setTimeout(_showBanner, 3000);
     // }
     // load sample data
-    // _loadSampleData();
+    _loadSampleData();
 
     // Notifications
     // _loadMockNotifications();
@@ -169,7 +180,6 @@ const App = props => {
     [dispatch]
   );
 
-  // eslint-disable-next-line no-unused-vars
   const _showBanner = useCallback(() => {
     toggleShowBanner(true);
   }, [toggleShowBanner]);
@@ -531,7 +541,6 @@ const App = props => {
     );
   }, []);
 
-  // eslint-disable-next-line no-unused-vars
   const _loadSampleData = useCallback(() => {
     // _loadPointData();
     // _loadGeojsonData();
@@ -543,8 +552,8 @@ const App = props => {
     // _loadGpsData();
     // _loadRowData();
     // _loadVectorTileData();
-    _loadSyncedFilterWTripLayer();
-    _replaceSyncedFilterWTripLayer();
+    // _loadSyncedFilterWTripLayer();
+    // _replaceSyncedFilterWTripLayer();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     _loadPointData,
@@ -563,49 +572,51 @@ const App = props => {
   ]);
 
   return (
-    <ThemeProvider theme={theme}>
-      <GlobalStyle
-      // this is to apply the same modal style as kepler.gl core
-      // because styled-components doesn't always return a node
-      // https://github.com/styled-components/styled-components/issues/617
-      // ref={node => {
-      //   node ? (this.root = node) : null;
-      // }}
-      >
-        <ScreenshotWrapper
-          startScreenCapture={props.demo.aiAssistant.screenshotToAsk.startScreenCapture}
-          setScreenCaptured={_setScreenCaptured}
-          setStartScreenCapture={_setStartScreenCapture}
+    <StyleSheetManager shouldForwardProp={shouldForwardProp}>
+      <ThemeProvider theme={theme}>
+        <GlobalStyle
+        // this is to apply the same modal style as kepler.gl core
+        // because styled-components doesn't always return a node
+        // https://github.com/styled-components/styled-components/issues/617
+        // ref={node => {
+        //   node ? (this.root = node) : null;
+        // }}
         >
-          <Banner show={showBanner} height={BannerHeight} bgColor="#2E7CF6" onClose={hideBanner}>
-            <Announcement onDisable={_disableBanner} />
-          </Banner>
-          <div style={CONTAINER_STYLE}>
-            <div style={{flexGrow: 1}}>
-              <AutoSizer>
-                {({height, width}) => (
-                  <KeplerGl
-                    mapboxApiAccessToken={CLOUD_PROVIDERS_CONFIGURATION.MAPBOX_TOKEN}
-                    id="map"
-                    /*
-                     * Specify path to keplerGl state, because it is not mount at the root
-                     */
-                    getState={keplerGlGetState}
-                    width={width}
-                    height={height}
-                    cloudProviders={CLOUD_PROVIDERS}
-                    localeMessages={combinedMessages}
-                    onExportToCloudSuccess={onExportFileSuccess}
-                    onLoadCloudMapSuccess={onLoadCloudMapSuccess}
-                    featureFlags={DEFAULT_FEATURE_FLAGS}
-                  />
-                )}
-              </AutoSizer>
+          <ScreenshotWrapper
+            startScreenCapture={props.demo.aiAssistant.screenshotToAsk.startScreenCapture}
+            setScreenCaptured={_setScreenCaptured}
+            setStartScreenCapture={_setStartScreenCapture}
+          >
+            <Banner show={showBanner} height={BannerHeight} bgColor="#2E7CF6" onClose={hideBanner}>
+              <Announcement onDisable={_disableBanner} />
+            </Banner>
+            <div style={CONTAINER_STYLE}>
+              <div style={{flexGrow: 1}}>
+                <AutoSizer>
+                  {({height, width}) => (
+                    <KeplerGl
+                      mapboxApiAccessToken={CLOUD_PROVIDERS_CONFIGURATION.MAPBOX_TOKEN}
+                      id="map"
+                      /*
+                       * Specify path to keplerGl state, because it is not mount at the root
+                       */
+                      getState={keplerGlGetState}
+                      width={width}
+                      height={height}
+                      cloudProviders={CLOUD_PROVIDERS}
+                      localeMessages={combinedMessages}
+                      onExportToCloudSuccess={onExportFileSuccess}
+                      onLoadCloudMapSuccess={onLoadCloudMapSuccess}
+                      featureFlags={DEFAULT_FEATURE_FLAGS}
+                    />
+                  )}
+                </AutoSizer>
+              </div>
             </div>
-          </div>
-        </ScreenshotWrapper>
-      </GlobalStyle>
-    </ThemeProvider>
+          </ScreenshotWrapper>
+        </GlobalStyle>
+      </ThemeProvider>
+    </StyleSheetManager>
   );
 };
 

@@ -66,11 +66,14 @@ import {
   ValueOf,
   VisualChannel,
   VisualChannels,
-  VisualChannelDomain
+  VisualChannelDomain,
+  VisualChannelField,
+  VisualChannelScale
 } from '@kepler.gl/types';
 import {
   getScaleFunction,
   initializeLayerColorMap,
+  getCategoricalColorScale,
   updateCustomColorRangeByColorUI
 } from '@kepler.gl/utils';
 import memoize from 'lodash.memoize';
@@ -81,10 +84,15 @@ import {
   getThresholdsFromQuantiles
 } from '@kepler.gl/utils';
 
-export type {LayerBaseConfig, VisualChannel, VisualChannels, VisualChannelDomain, AggregatedBin};
-
-export type VisualChannelField = Field | null;
-export type VisualChannelScale = keyof typeof SCALE_TYPES;
+export type {
+  AggregatedBin,
+  LayerBaseConfig,
+  VisualChannel,
+  VisualChannels,
+  VisualChannelDomain,
+  VisualChannelField,
+  VisualChannelScale
+};
 
 export type LayerBaseConfigPartial = {dataId: LayerBaseConfig['dataId']} & Partial<LayerBaseConfig>;
 
@@ -194,7 +202,7 @@ class Layer implements KeplerLayer {
   visConfigSettings: {
     [key: string]: ValueOf<LayerVisConfigSettings>;
   };
-  config: LayerBaseConfig;
+  config: LayerBaseConfig & Partial<LayerColorConfig & LayerSizeConfig>;
   // TODO: define _oldDataUpdateTriggers
   _oldDataUpdateTriggers: any;
 
@@ -789,9 +797,10 @@ class Layer implements KeplerLayer {
     return columns;
   }
 
-  updateLayerConfig<LayerConfig extends LayerBaseConfig = LayerBaseConfig>(
-    newConfig: Partial<LayerConfig>
-  ): Layer {
+  updateLayerConfig<
+    LayerConfig extends LayerBaseConfig &
+      Partial<LayerColorConfig & LayerSizeConfig> = LayerBaseConfig
+  >(newConfig: Partial<LayerConfig>): Layer {
     this.config = {...this.config, ...newConfig};
     return this;
   }
@@ -1022,27 +1031,22 @@ class Layer implements KeplerLayer {
     colorDomain: VisualChannelDomain,
     colorRange: ColorRange
   ): GetVisChannelScaleReturnType {
-    if (
-      hasColorMap(colorRange) &&
-      (colorScale === SCALE_TYPES.custom || colorScale === SCALE_TYPES.ordinal)
-    ) {
+    if (colorScale === SCALE_TYPES.customOrdinal) {
+      return getCategoricalColorScale(colorDomain, colorRange);
+    }
+
+    if (hasColorMap(colorRange) && colorScale === SCALE_TYPES.custom) {
       const cMap = new Map();
       colorRange.colorMap?.forEach(([k, v]) => {
         cMap.set(k, typeof v === 'string' ? hexToRgb(v) : v);
       });
 
-      // in kepler, scaleThreshold function will be used for SCALE_TYPES.custom
-      // so we adjust scaleType to SCALE_TYPES.custom to ordinal if necessary
-      const isOrdinalDomain = (colorDomain as (string | number)[]).every(
-        i => typeof i === 'string'
-      );
-      const scaleType =
-        colorScale === SCALE_TYPES.custom && !isOrdinalDomain ? colorScale : SCALE_TYPES.ordinal;
+      const scaleType = colorScale === SCALE_TYPES.custom ? colorScale : SCALE_TYPES.ordinal;
 
       const scale = getScaleFunction(scaleType, cMap.values(), cMap.keys(), false);
       scale.unknown(cMap.get(UNKNOWN_COLOR_KEY) || NO_VALUE_COLOR);
 
-      return scale as () => any;
+      return scale as GetVisChannelScaleReturnType;
     }
     return this.getVisChannelScale(colorScale, colorDomain, colorRange.colors.map(hexToRgb));
   }

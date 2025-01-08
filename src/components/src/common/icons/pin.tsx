@@ -3,9 +3,9 @@
 
 import React, {Component} from 'react';
 import Base, {BaseProps} from './base';
-import styled from 'styled-components';
+import styled, {IStyledComponent} from 'styled-components';
 
-const StyledBase = styled(Base)`
+const StyledBase: IStyledComponent<'web'> = styled(Base)`
   transform: rotate(30deg);
 `;
 

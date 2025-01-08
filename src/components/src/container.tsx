@@ -118,7 +118,15 @@ export function ContainerFactory(
           dispatch(deleteEntry(id));
         }
       };
-    }, [id]);
+    }, [
+      id,
+      dispatch,
+      initialUiState,
+      mapStylesReplaceDefault,
+      mapboxApiAccessToken,
+      mapboxApiUrl,
+      mint
+    ]);
 
     useEffect(() => {
       // check if id has changed, if true, copy state over

@@ -36,6 +36,7 @@ import {hexToRgb} from '@kepler.gl/utils';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
 import {StateWFilesFiltersLayerColor, StateWTrips} from 'test/helpers/mock-state';
 import {clickItemSelector} from '../../../helpers/component-utils';
+import {STYLED_COMPONENTS_DUPLICATED_ENTRIES} from '../../../helpers/utils';
 
 const ColorSelector = appInjector.get(ColorSelectorFactory);
 const LayerColorSelector = appInjector.get(LayerColorSelectorFactory);
@@ -400,7 +401,7 @@ test('Components -> LayerColorRangeSelector.render -> ColorSelector -> ColorRang
   t.equal(crs.length, 1, 'should render 1 ColorRangeSelector');
 
   const item = crs.find('ColorPaletteItem');
-  t.equal(item.length, 64, `should render ${KEPLER_COLOR_PALETTES.length} Palettes`);
+  t.equal(item.length, 65, `should render ${KEPLER_COLOR_PALETTES.length} Palettes`);
 
   t.equal(
     item.at(0).find(ColorPalette).find('.color-range-palette__block').length,
@@ -500,7 +501,7 @@ test('Components -> LayerColorRangeSelector.render -> ColorSelector -> ColorRang
   t.equal(pc.length, 5, 'should render 5 PaletteConfig');
 
   const cpg = crs.find('ColorPaletteItem');
-  t.equal(cpg.length, 64, `should render ${KEPLER_COLOR_PALETTES.length} Palettes`);
+  t.equal(cpg.length, 65, `should render ${KEPLER_COLOR_PALETTES.length} Palettes`);
 
   const typeSelect = crs.find(PaletteConfig).at(0);
   t.equal(typeSelect.find('.side-panel-panel__label').text(), 'Type', 'should render type');
@@ -671,7 +672,8 @@ test('Components -> LayerColorRangeSelector.render -> ColorSelector -> ColorRang
 
   t.equal(
     cp.find('.custom-palette__sortable-items').length,
-    pointLayer.config.colorUI.colorRange.customPalette.colors.length * 3,
+    pointLayer.config.colorUI.colorRange.customPalette.colors.length *
+      STYLED_COMPONENTS_DUPLICATED_ENTRIES,
     'should render same number of custom palette swatch'
   );
 
@@ -929,7 +931,7 @@ test('Components -> ColorSelector.opacity', t => {
   });
 
   // select color
-  wrapper.find('.single-color-palette__block').at(100).simulate('click');
+  wrapper.find('.single-color-palette__block').at(67).simulate('click');
   t.ok(setColor.calledOnce, 'should call setColor once');
   t.ok(setColor.calledWith([228, 155, 0, 100]), 'setColor called with correct color and opacity');
 

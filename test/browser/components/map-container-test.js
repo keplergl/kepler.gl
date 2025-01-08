@@ -3,6 +3,8 @@
 
 import React from 'react';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
+import {Provider} from 'react-redux';
+import configureStore from 'redux-mock-store';
 
 import sinon from 'sinon';
 import test from 'tape';
@@ -17,9 +19,13 @@ import {mockKeplerProps} from '../../helpers/mock-state';
 const MapContainer = appInjector.get(MapContainerFactory);
 const initialProps = mapFieldsSelector(mockKeplerProps);
 
+const initialState = {mapState: {latitude: 0, longitude: 0}};
+const mockStore = configureStore();
+
 test('MapContainerFactory - display all options', t => {
   const onMapStyleLoaded = sinon.spy();
   const onLayerClick = sinon.spy();
+  const store = mockStore(initialState);
 
   const props = {
     ...initialProps,
@@ -36,11 +42,13 @@ test('MapContainerFactory - display all options', t => {
   let wrapper;
   t.doesNotThrow(() => {
     wrapper = mountWithTheme(
-      <IntlWrapper>
-        <MapViewStateContextProvider mapState={props.mapState}>
-          <MapContainer {...props} />
-        </MapViewStateContextProvider>
-      </IntlWrapper>
+      <Provider store={store}>
+        <IntlWrapper>
+          <MapViewStateContextProvider mapState={props.mapState}>
+            <MapContainer {...props} />
+          </MapViewStateContextProvider>
+        </IntlWrapper>
+      </Provider>
     );
   }, 'MapContainer should not fail without props');
 

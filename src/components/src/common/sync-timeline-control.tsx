@@ -50,7 +50,7 @@ function SyncTimelineControlFactory() {
     return (
       <div>
         {Object.values(syncTimelineAnimationItems)
-          .filter((item, index) => item.id !== syncTimelineMode)
+          .filter((item, _index) => item.id !== syncTimelineMode)
           .map(item => (
             <IconButton
               key={item.id}

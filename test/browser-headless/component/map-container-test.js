@@ -17,17 +17,25 @@ import {
 // import {Map} from 'react-map-gl'; // see other TODO below
 import {gl, InteractionTestRunner} from '@deck.gl/test-utils';
 
+import {Provider} from 'react-redux';
+import configureStore from 'redux-mock-store';
+
 import {mockKeplerProps, expectedLayerHoverProp} from '../../helpers/mock-state';
 import {act} from 'react-dom/test-utils';
+import {STYLED_COMPONENTS_DUPLICATED_ENTRIES} from '../../helpers/utils';
 
 const MapContainer = appInjector.get(MapContainerFactory);
 const MapPopover = appInjector.get(MapPopoverFactory);
 const MapControl = appInjector.get(MapControlFactory);
 const initialProps = mapFieldsSelector(mockKeplerProps);
 
+const initialState = {mapState: {latitude: 0, longitude: 0}};
+const mockStore = configureStore();
+
 test('MapContainerFactory - display all options', t => {
   const onMapStyleLoaded = sinon.spy();
   const onLayerClick = sinon.spy();
+  const store = mockStore(initialState);
 
   const props = {
     ...initialProps,
@@ -45,11 +53,13 @@ test('MapContainerFactory - display all options', t => {
   let wrapper;
   t.doesNotThrow(() => {
     wrapper = mountWithTheme(
-      <IntlWrapper>
-        <MapViewStateContextProvider mapState={props.mapState}>
-          <MapContainer {...props} />
-        </MapViewStateContextProvider>
-      </IntlWrapper>
+      <Provider store={store}>
+        <IntlWrapper>
+          <MapViewStateContextProvider mapState={props.mapState}>
+            <MapContainer {...props} />
+          </MapViewStateContextProvider>
+        </IntlWrapper>
+      </Provider>
     );
   }, 'MapContainer should not fail');
 
@@ -77,14 +87,18 @@ test('MapContainerFactory - _renderDeckOverlay', t => {
     ...initialProps,
     mapboxApiAccessToken: 'pyx-11'
   };
+  const store = mockStore(initialState);
+
   let wrapper;
   t.doesNotThrow(() => {
     wrapper = mountWithTheme(
-      <IntlWrapper>
-        <MapViewStateContextProvider mapState={props.mapState}>
-          <MapContainer {...props} />
-        </MapViewStateContextProvider>
-      </IntlWrapper>
+      <Provider store={store}>
+        <IntlWrapper>
+          <MapViewStateContextProvider mapState={props.mapState}>
+            <MapContainer {...props} />
+          </MapViewStateContextProvider>
+        </IntlWrapper>
+      </Provider>
     );
   }, 'MapContainer should not fail');
 
@@ -190,11 +204,13 @@ test('MapContainerFactory - _renderDeckOverlay', t => {
 
           t.doesNotThrow(() => {
             wrapper = mountWithTheme(
-              <IntlWrapper>
-                <MapViewStateContextProvider mapState={propsWithHoverInfo.mapState}>
-                  <MapContainer {...propsWithHoverInfo} />
-                </MapViewStateContextProvider>
-              </IntlWrapper>
+              <Provider store={store}>
+                <IntlWrapper>
+                  <MapViewStateContextProvider mapState={propsWithHoverInfo.mapState}>
+                    <MapContainer {...propsWithHoverInfo} />
+                  </MapViewStateContextProvider>
+                </IntlWrapper>
+              </Provider>
             );
           }, 'render map container with map popover should not fail');
 
@@ -203,7 +219,11 @@ test('MapContainerFactory - _renderDeckOverlay', t => {
 
           // test MapPopoverProp
           testMapPopoverProp(t, mapPopoverProps);
-          t.equal(wrapper.find('.map-popover').length, 3, 'should render .map-popover');
+          t.equal(
+            wrapper.find('.map-popover').length,
+            STYLED_COMPONENTS_DUPLICATED_ENTRIES,
+            'should render .map-popover'
+          );
           t.equal(wrapper.find('table').length, 1, 'should render 1 table');
 
           const table = wrapper.find('table').at(0);

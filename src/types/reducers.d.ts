@@ -260,6 +260,17 @@ export type AnimationConfig = {
   hideControl?: boolean;
 };
 
+export type FilterAnimationConfig = Pick<
+  TimeRangeFilter,
+  | 'dataId'
+  | 'value'
+  | 'animationWindow'
+  | 'speed'
+  | 'syncedWithLayerTimeline'
+  | 'syncTimelineMode'
+  | 'timezone'
+>;
+
 export type Timeline = {
   domain: [number, number] | null;
   value: number | [number, number];
@@ -344,6 +355,8 @@ export type CustomStyleType =
   // boolean for backwards compatability with previous map configs
   | boolean;
 
+export type BaseMapColorModes = 'NONE' | 'DARK' | 'LIGHT';
+
 export type BaseMapStyle = {
   id: string;
   label: string;
@@ -353,7 +366,7 @@ export type BaseMapStyle = {
   layerGroups: LayerGroup[];
   accessToken?: string;
   custom?: CustomStyleType;
-  colorMode?: BASE_MAP_COLOR_MODES;
+  colorMode?: BaseMapColorModes;
   complimentaryStyleId?: string;
 };
 

@@ -2,15 +2,19 @@
 // Copyright contributors to the kepler.gl project
 
 import React from 'react';
-import styled from 'styled-components';
+import styled, {IStyledComponent} from 'styled-components';
 import {Minus} from './icons';
 import {datetimeFormatter} from '@kepler.gl/utils';
+import {BaseComponentProps} from '../types';
 
-interface TimeValueWrapperProps {
+export type TimeValueWrapperProps = BaseComponentProps & {
   isEnlarged?: boolean;
-}
+};
 
-const TimeValueWrapper = styled.div<TimeValueWrapperProps>`
+const TimeValueWrapper: IStyledComponent<
+  'web',
+  TimeValueWrapperProps
+> = styled.div<TimeValueWrapperProps>`
   display: flex;
   align-items: center;
   font-size: ${props => props.theme.timeTitleFontSize};

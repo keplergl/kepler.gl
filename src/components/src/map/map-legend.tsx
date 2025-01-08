@@ -4,6 +4,7 @@
 import React, {FC, useCallback, useState, ComponentType} from 'react';
 import styled from 'styled-components';
 import {rgb} from 'd3-color';
+import {format as d3Format} from 'd3-format';
 import {useIntl} from 'react-intl';
 import ColorLegendFactory, {LegendRowFactory} from '../common/color-legend';
 import RadiusLegend from '../common/radius-legend';
@@ -204,6 +205,9 @@ export function LayerColorLegendFactory(
                   disableEdit={disableEdit}
                   isFixed={isFixed}
                   mapState={mapState}
+                  labelFormat={
+                    colorField?.displayFormat ? d3Format(colorField?.displayFormat) : null
+                  }
                 />
               ) : (
                 <SingleColorLegend
@@ -295,6 +299,7 @@ export type LayerLegendHeaderProps = {
   options?: {
     showLayerName?: boolean;
   };
+  isExport?: boolean;
 };
 
 const isRadiusChannel = visualChannel =>
@@ -449,7 +454,7 @@ function MapLegendFactory(
             key={index}
             width={containerW}
           >
-            <LayerLegendHeader options={options} layer={layer} />
+            <LayerLegendHeader isExport={isExport} options={options} layer={layer} />
             <LayerLegendContent
               containerW={containerW}
               layer={layer}

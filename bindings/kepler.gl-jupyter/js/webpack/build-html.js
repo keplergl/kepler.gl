@@ -75,6 +75,7 @@ module.exports = (rules, plugins) => ({
       inject: true,
       links: [
         'https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/uber-fonts/4.0.0/superfine.css',
+        'https://api.tiles.mapbox.com/mapbox-gl-js/v1.1.1/mapbox-gl.css',
         'https://unpkg.com/maplibre-gl@^3/dist/maplibre-gl.css'
       ],
       scripts: [

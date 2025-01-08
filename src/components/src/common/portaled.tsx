@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {Component, createRef, ElementType, PropsWithChildren} from 'react';
+import React, {Component, createRef, PropsWithChildren} from 'react';
 import debounce from 'lodash.debounce';
 import isEqual from 'lodash.isequal';
 
@@ -117,18 +117,21 @@ const noop = () => {
 };
 
 type PortaledProps = PropsWithChildren<{
-  component: ElementType;
+  right?: number;
+  left?: number;
+  top?: number;
+  component?: React.ElementType<any>;
   onClose?: (
     event: React.MouseEvent<Element, globalThis.MouseEvent> | React.KeyboardEvent<Element>
   ) => void;
-  theme?: any;
-  isOpened?: boolean;
-  top: number;
-  left?: number;
-  right?: number;
+  topOffset?: number;
+  leftOffset?: number;
+  rightOffset?: number;
   overlayZIndex?: number;
+  isOpened?: boolean;
   modalProps?: Partial<ReactModal.Props>;
   modalStyle?: Partial<typeof defaultModalStyle>;
+  theme?: any;
 }>;
 
 interface PortaledState {
@@ -145,16 +148,18 @@ interface PortaledState {
   isVisible: boolean;
 }
 
+const DefaultComponent = 'div';
+
 class Portaled extends Component<PortaledProps, PortaledState> {
   // Make Portaled a component with Error Boundary, so React can recreate
   // this component if the child 'ColorPicker' throws cross-origin error.
   // see function componentDidCatch()
-  static getDerivedStateFromError() {
+  static getDerivedStateFromError(): {hasError: boolean} {
     return {hasError: true};
   }
 
-  static defaultProps = {
-    component: 'div',
+  static defaultProps: PortaledProps = {
+    component: DefaultComponent,
     onClose: noop,
     theme
   };
@@ -174,7 +179,7 @@ class Portaled extends Component<PortaledProps, PortaledState> {
     this.handleScroll();
   }
 
-  componentDidUpdate(prevProps) {
+  componentDidUpdate(prevProps: PortaledProps) {
     const didOpen = this.props.isOpened && !prevProps.isOpened;
     const didClose = !this.props.isOpened && prevProps.isOpened;
     if (didOpen || didClose) {
@@ -228,10 +233,10 @@ class Portaled extends Component<PortaledProps, PortaledState> {
     }
   };
 
-  render() {
+  render(): JSX.Element {
     const {
       // relative
-      component: Comp,
+      component = DefaultComponent,
       overlayZIndex,
       isOpened,
       onClose,
@@ -256,6 +261,8 @@ class Portaled extends Component<PortaledProps, PortaledState> {
         zIndex: overlayZIndex || 9999
       }
     };
+
+    const Comp = component;
 
     return (
       <RootContext.Consumer>

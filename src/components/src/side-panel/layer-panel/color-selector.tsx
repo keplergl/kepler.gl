@@ -1,19 +1,20 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import React, {useCallback, useState, MouseEvent} from 'react';
+import {FormattedMessage} from 'react-intl';
+import styled from 'styled-components';
+import {useDismiss, useFloating, useInteractions} from '@floating-ui/react';
+
 import {ColorRange} from '@kepler.gl/types';
 import {ColorUI, NestedPartial, RGBAColor, RGBColor} from '@kepler.gl/types';
 import {rgbToHex} from '@kepler.gl/utils';
-import React, {MouseEvent, ComponentType, useState, useCallback} from 'react';
-import {FormattedMessage} from 'react-intl';
-import styled from 'styled-components';
+
 import RangeSliderFactory from '../../common/range-slider';
 import {PanelLabel, StyledPanelDropdown} from '../../common/styled-components';
 import ColorPalette from './color-palette';
 import ColorRangeSelectorFactory from './color-range-selector';
 import SingleColorPalette from './single-color-palette';
-
-import useOnClickOutside from '../../hooks/use-on-click-outside';
 
 type ColorSelectorInputProps = {
   active: boolean;
@@ -61,6 +62,12 @@ export const ColorBlock = styled.div<{backgroundcolor: RGBColor}>`
       : 'transparent'};
 `;
 
+const StyledColorSelectorWrapper = styled.div`
+  .selector__dropdown {
+    max-height: 600px; /* increase from the default 500px defined by StyledPanelDropdown */
+  }
+`;
+
 export const ColorSelectorInput = styled.div<ColorSelectorInputProps>`
   ${props => (props.inputTheme === 'secondary' ? props.theme.secondaryInput : props.theme.input)};
   height: ${props => props.theme.inputBoxHeight};
@@ -87,7 +94,10 @@ export const InputBoxContainer = styled.div`
 
 ColorSelectorFactory.deps = [ColorRangeSelectorFactory, RangeSliderFactory];
 
-function ColorSelectorFactory(ColorRangeSelector, RangeSlider): ComponentType<ColorSelectorProps> {
+function ColorSelectorFactory(
+  ColorRangeSelector: ReturnType<typeof ColorRangeSelectorFactory>,
+  RangeSlider: ReturnType<typeof RangeSliderFactory>
+): React.FC<ColorSelectorProps> {
   const ColorSelector: React.FC<ColorSelectorProps> = ({
     colorSets = [],
     colorUI,
@@ -95,25 +105,25 @@ function ColorSelectorFactory(ColorRangeSelector, RangeSlider): ComponentType<Co
     disabled,
     useOpacity,
     setColorUI
-  }) => {
-    const [showDropdown, setShowDropdown] = useState(false);
+  }: ColorSelectorProps) => {
+    const [showDropdown, setShowDropdown] = useState(colorUI ? colorUI.showDropdown : false);
     const showSketcher = colorUI ? colorUI.showSketcher : false;
-
-    const editing = colorUI ? colorUI.showDropdown : showDropdown;
-    const currentEditing =
-      typeof editing === 'number' && colorSets[editing] && typeof colorSets[editing] === 'object';
+    const editingLookup = colorUI ? colorUI.showDropdown : showDropdown;
+    const editingColorSet: ColorSet | false =
+      typeof editingLookup === 'number' && colorSets[editingLookup]
+        ? colorSets[editingLookup]
+        : false;
 
     const closePanelDropdown = useCallback(() => {
-      if (editing === false) {
+      if (editingLookup === false) {
         return;
       }
-
       if (setColorUI) {
         setColorUI({showDropdown: false, showSketcher: false});
       } else {
         setShowDropdown(false);
       }
-    }, [editing, setColorUI, setShowDropdown]);
+    }, [editingLookup, setColorUI, setShowDropdown]);
 
     const handleClickOutside = useCallback(() => {
       if (Number.isInteger(showSketcher)) {
@@ -123,9 +133,19 @@ function ColorSelectorFactory(ColorRangeSelector, RangeSlider): ComponentType<Co
       closePanelDropdown();
     }, [showSketcher, closePanelDropdown]);
 
-    const ref = useOnClickOutside<HTMLDivElement>(handleClickOutside);
+    // floating-ui boilerplate to establish close on outside click
+    const {refs, context} = useFloating({
+      open: true,
+      onOpenChange: v => {
+        if (!v) {
+          handleClickOutside();
+        }
+      }
+    });
+    const dismiss = useDismiss(context);
+    const {getFloatingProps} = useInteractions([dismiss]);
 
-    const onSetColor = useCallback(
+    const setColor = useCallback(
       (colorSet: ColorSet, color: RGBColor | RGBAColor | ColorRange, opacity: number) => {
         const {setColor} = colorSet || {};
         if (!setColor) {
@@ -143,47 +163,54 @@ function ColorSelectorFactory(ColorRangeSelector, RangeSlider): ComponentType<Co
     const onSelectColor = useCallback(
       (color: RGBColor | ColorRange, e: MouseEvent) => {
         if (e) e.stopPropagation();
-        const colorSet = typeof editing === 'number' && colorSets[editing];
+        const colorSet = editingColorSet;
         if (colorSet) {
-          onSetColor(colorSet, color, colorSet.selectedColor[3]);
+          setColor(colorSet, color, colorSet.selectedColor[3]);
         }
       },
-      [editing, colorSets, onSetColor]
+      [colorSets, editingColorSet, setColor]
     );
 
     const onSelectOpacity = useCallback(
-      (opacity: number[], e: MouseEvent) => {
+      (opacity: number[], e: Event | null | undefined) => {
         if (e) e.stopPropagation();
-        const colorSet = typeof editing === 'number' && colorSets[editing];
+        const colorSet = editingColorSet;
         if (colorSet) {
-          onSetColor(colorSet, colorSet.selectedColor, Math.round(opacity[1] * 255));
+          setColor(colorSet, colorSet.selectedColor, Math.round(opacity[1] * 255));
         }
       },
-      [onSetColor, colorSets, editing]
+      [colorSets, editingColorSet, setColor]
     );
 
     const onToggleDropdown = useCallback(
       (e, i) => {
         e.stopPropagation();
         e.preventDefault();
-
+        const showDropdownValue =
+          editingLookup === false
+            ? i // open it for the specific color set index
+            : false; // close it
         if (setColorUI) {
-          setColorUI({showDropdown: i});
+          setColorUI({showDropdown: showDropdownValue});
         } else {
-          setShowDropdown(i);
+          setShowDropdown(showDropdownValue);
         }
       },
-      [setColorUI, setShowDropdown]
+      [editingLookup, setColorUI, setShowDropdown]
     );
 
     return (
-      <div className="color-selector">
+      <StyledColorSelectorWrapper
+        className="color-selector"
+        ref={refs.setFloating}
+        {...getFloatingProps()}
+      >
         <InputBoxContainer>
           {colorSets.map((cSet, i) => (
             <div className="color-select__input-group" key={i}>
               <ColorSelectorInput
                 className="color-selector__selector"
-                active={editing === i}
+                active={editingLookup === i}
                 disabled={disabled}
                 inputTheme={inputTheme}
                 onClick={e => onToggleDropdown(e, i)}
@@ -203,18 +230,18 @@ function ColorSelectorFactory(ColorRangeSelector, RangeSlider): ComponentType<Co
             </div>
           ))}
         </InputBoxContainer>
-        {currentEditing ? (
-          <StyledPanelDropdown className="color-selector__dropdown" ref={ref}>
-            {colorSets[editing as number].isRange ? (
+        {editingColorSet ? (
+          <StyledPanelDropdown className="color-selector__dropdown">
+            {editingColorSet.isRange && colorUI && setColorUI ? (
               <ColorRangeSelector
-                selectedColorRange={colorSets[editing as number].selectedColor as ColorRange}
+                selectedColorRange={editingColorSet.selectedColor as ColorRange}
                 onSelectColorRange={onSelectColor}
                 setColorPaletteUI={setColorUI}
                 colorPaletteUI={colorUI as ColorUI}
               />
             ) : (
               <SingleColorPalette
-                selectedColor={rgbToHex(colorSets[editing as number].selectedColor as RGBColor)}
+                selectedColor={rgbToHex(editingColorSet.selectedColor as RGBColor)}
                 onSelectColor={onSelectColor}
               />
             )}
@@ -225,14 +252,14 @@ function ColorSelectorFactory(ColorRangeSelector, RangeSlider): ComponentType<Co
                 </PanelLabel>
                 <RangeSlider
                   {...OPACITY_SLIDER_PROPS}
-                  value1={colorSets[editing as number].selectedColor[3] / 255}
+                  value1={editingColorSet.selectedColor[3] / 255}
                   onChange={onSelectOpacity}
                 />
               </OpacitySliderWrapper>
             ) : null}
           </StyledPanelDropdown>
         ) : null}
-      </div>
+      </StyledColorSelectorWrapper>
     );
   };
 

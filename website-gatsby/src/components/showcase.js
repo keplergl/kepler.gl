@@ -49,7 +49,7 @@ const NavItem = styled.div`
   transform: ${props => props.isActive && 'scale(1.1)'};
   transition: transform 500ms, filter 500ms;
   cursor: pointer;
-  :hover {
+  &:hover {
     transform: scale(1.1);
   }
 

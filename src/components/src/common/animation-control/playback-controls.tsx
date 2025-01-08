@@ -2,24 +2,29 @@
 // Copyright contributors to the kepler.gl project
 
 import React, {useState, useCallback} from 'react';
-import styled from 'styled-components';
+import styled, {IStyledComponent} from 'styled-components';
 import classnames from 'classnames';
 import {Reset, Play, Pause, Save, Rocket, AnchorWindow, FreeWindow} from '../icons';
 import {ANIMATION_WINDOW} from '@kepler.gl/constants';
+import {Filter, TimeRangeFilter} from '@kepler.gl/types';
 import AnimationSpeedSliderFactory from './animation-speed-slider';
 import WindowActionControlFactory from './window-action-control';
 import AnimationWindowControlFactory, {AnimationItem} from './animation-window-control';
 import ResetControlFactory from './reset-control';
 import PlayControlFactory from './play-control';
 import SpeedControlFactory from './speed-control';
+import {BaseComponentProps} from '../../types';
 
 const DEFAULT_BUTTON_HEIGHT = '20px';
 
-interface StyledAnimationControlsProps {
+export type StyledAnimationControlsProps = BaseComponentProps & {
   width?: number;
-}
+};
 
-const StyledAnimationControls = styled.div<StyledAnimationControlsProps>`
+const StyledAnimationControls: IStyledComponent<
+  'web',
+  StyledAnimationControlsProps
+> = styled.div<StyledAnimationControlsProps>`
   display: flex;
   position: relative;
   width: ${props => props.width}px;
@@ -58,21 +63,22 @@ const DEFAULT_ANIMATE_ITEMS = {
   }
 };
 export interface PlaybackControlsProps {
+  filter?: Filter;
   isAnimatable?: boolean;
   isAnimating?: boolean;
   width?: number;
   speed: number;
-  animationWindow?: string;
+  animationWindow?: null | TimeRangeFilter['animationWindow'];
   setFilterAnimationWindow?: (id: string) => void;
-  updateAnimationSpeed?: (val: number) => void;
+  updateAnimationSpeed?: (idx: number, speed: number) => void;
   pauseAnimation?: () => void;
   resetAnimation?: () => void;
   startAnimation: () => void;
-  playbackIcons?: typeof DEFAULT_ICONS;
+  playbackIcons?: Record<string, React.FC<{height: number}>>;
   animationItems?: {[key: string]: AnimationItem};
   buttonStyle?: string;
   buttonHeight?: string;
-  playbackActionItems?: any[];
+  playbackActionItems?: React.FC[];
   className?: string;
 }
 
@@ -102,8 +108,9 @@ function PlaybackControlsFactory(
 
   // eslint-disable-next-line complexity
   const PlaybackControls: React.FC<PlaybackControlsProps> = ({
-    isAnimatable,
-    isAnimating = true,
+    filter,
+    isAnimatable = true,
+    isAnimating,
     width,
     speed,
     animationWindow = ANIMATION_WINDOW.free,
@@ -154,6 +161,7 @@ function PlaybackControlsFactory(
             animationItems={animationItems}
             animationWindow={animationWindow}
             buttonHeight={buttonHeight}
+            filter={filter}
             setFilterAnimationWindow={setFilterAnimationWindow}
             updateAnimationSpeed={updateAnimationSpeed}
             isAnimating={isAnimating}

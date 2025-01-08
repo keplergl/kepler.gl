@@ -20,6 +20,57 @@ import {isPlainObject} from './utils';
 
 export type FieldFormatter = (value: any) => string;
 
+// We need threat latitude differently otherwise marcator project view throws
+// a projection matrix error
+// Uncaught Error: Pixel project matrix not invertible
+// at WebMercatorViewport16.Viewport6 (viewport.js:81:13)
+export const MAX_LATITUDE = 89.9;
+export const MIN_LATITUDE = -89.9;
+export const MAX_LONGITUDE = 180;
+export const MIN_LONGITUDE = -180;
+
+/**
+ * Validates a latitude value.
+ * Ensures that the latitude is within the defined minimum and maximum latitude bounds.
+ * If the value is out of bounds, it returns the nearest bound value.
+ * @param latitude - The latitude value to validate.
+ * @returns The validated latitude value.
+ */
+export function validateLatitude(latitude: number | undefined): number {
+  return validateCoordinate(latitude ?? 0, MIN_LATITUDE, MAX_LATITUDE);
+}
+
+/**
+ * Validates a longitude value.
+ * Ensures that the longitude is within the defined minimum and maximum longitude bounds.
+ * If the value is out of bounds, it returns the nearest bound value.
+ * @param longitude - The longitude value to validate.
+ * @returns The validated longitude value.
+ */
+export function validateLongitude(longitude: number | undefined): number {
+  return validateCoordinate(longitude ?? 0, MIN_LONGITUDE, MAX_LONGITUDE);
+}
+
+/**
+ * Validates a coordinate value.
+ * Ensures that the value is within the specified minimum and maximum bounds.
+ * If the value is out of bounds, it returns the nearest bound value.
+ * @param value - The coordinate value to validate.
+ * @param minValue - The minimum bound for the value.
+ * @param maxValue - The maximum bound for the value.
+ * @returns The validated coordinate value.
+ */
+export function validateCoordinate(value: number, minValue: number, maxValue: number): number {
+  if (value <= minValue) {
+    return minValue;
+  }
+  if (value >= maxValue) {
+    return maxValue;
+  }
+
+  return value;
+}
+
 /**
  * simple getting unique values of an array
  *
@@ -179,7 +230,7 @@ export function getRoundingDecimalFromStep(step: number): number {
  */
 export function normalizeSliderValue(
   val: number,
-  minValue: number,
+  minValue: number | undefined,
   step: number,
   marks?: number[] | null
 ): number {
@@ -198,7 +249,7 @@ export function normalizeSliderValue(
  * @param val
  * @returns - rounded number
  */
-export function roundValToStep(minValue: number, step: number, val: number): number {
+export function roundValToStep(minValue: number | undefined, step: number, val: number): number {
   if (!isNumber(step) || !isNumber(minValue)) {
     return val;
   }
@@ -273,7 +324,7 @@ export const parseFieldValue = (value: any, type: string): string => {
  * @param field
  */
 export function getFormatter(
-  format: string | Record<string, string> | null,
+  format?: string | Record<string, string> | null,
   field?: Field
 ): FieldFormatter {
   if (!format) {

@@ -90,8 +90,8 @@
     "typescript": "tsc --noEmit",
     "web": "(yarn && yarn install:web && yarn start:web)",
     "deploy": "yarn install:web && cd website && yarn build",
-    "clean": "rm -rf node_modules examples/**/node_modules website/node_modules",
-    "release:patch": "git add CHANGELOG.md && git commit -m 'updated CHANGELOG.md' && npm version patch && git push origin && git push origin --tags",
+    "clean": "rm -rf node_modules examples/**/node_modules website/node_modules .nyc_output coverage jest-coverage tape-coverage",
+    "release:patch": "git add CHANGELOG.md && git commit -m 'updated CHANGELOG.md' && npm version patch && git push origin && git push origin --tags",
     "fix-dependencies": "./scripts/fix-dependencies.sh"
   },
   "files": [
@@ -155,6 +155,7 @@
     "babel-plugin-istanbul": "^6.0.0",
     "babel-plugin-module-resolver": "^4.0.0",
     "babel-plugin-search-and-replace": "^1.0.0",
+    "babel-plugin-styled-components": "^2.1.4",
     "babel-plugin-transform-builtin-extend": "^1.1.0",
     "babelify": "^10.0.0",
     "css-loader": "5.2.7",
@@ -182,6 +183,7 @@
     "jest-environment-jsdom": "^29.5.0",
     "jsdom": "^24.1.1",
     "json-loader": "^0.5.4",
+    "mapbox-gl": "1.13.1",
     "maplibre-gl": "^3.6.2",
     "minimist": "^1.2.6",
     "nyc": "^15.1.0",
@@ -197,7 +199,7 @@
     "sinon-stub-promise": "^4.0.0",
     "source-map-loader": "^1.1.1",
     "style-loader": "2.0.0",
-    "styled-components": "^4.1.3",
+    "styled-components": "6.1.8",
     "stylelint": "^13.6.1",
     "stylelint-config-recommended": "^3.0.0",
     "stylelint-config-styled-components": "^0.1.1",
@@ -238,7 +240,7 @@
     "@luma.gl/webgl": "8.5.21",
     "@types/lodash": "4.17.5",
     "browserslist": "^4.17.0",
-    "caniuse-lite": "^1.0.30001517",
+    "caniuse-lite": "^1.0.30001636",
     "d3-array": "^2.8.0",
     "d3-scale": "^3.2.3",
     "eslint-plugin-jest": "^27.2.1",
@@ -253,7 +255,7 @@
   "peerDependencies": {
     "react": ">=18.2",
     "react-dom": ">=18.2",
-    "styled-components": "^4.x || ^5.x"
+    "styled-components": "6.1.8"
   },
   "nyc": {
     "sourceMap": false,

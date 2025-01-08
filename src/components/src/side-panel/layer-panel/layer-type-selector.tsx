@@ -81,7 +81,7 @@ function LayerTypeSelectorFactory(
     );
   };
 
-  return withTheme(LayerTypeSelector);
+  return withTheme(LayerTypeSelector) as React.FC<Omit<LayerTypeSelectorProps, 'theme'>>;
 }
 
 export default LayerTypeSelectorFactory;

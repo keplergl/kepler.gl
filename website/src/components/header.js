@@ -14,7 +14,7 @@ const StyledLink = styled.a`
   transition: color 500ms;
   display: inline-block;
 
-  :hover {
+  &:hover {
     color: white;
     cursor: pointer;
   }

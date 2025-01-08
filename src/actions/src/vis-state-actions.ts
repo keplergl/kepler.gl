@@ -22,7 +22,9 @@ import {
   ParsedConfig,
   ParsedLayer,
   EffectPropsPartial,
-  SyncTimelineMode
+  SyncTimelineMode,
+  AnimationConfig,
+  FilterAnimationConfig
 } from '@kepler.gl/types';
 import {createAction} from '@reduxjs/toolkit';
 
@@ -59,7 +61,7 @@ export function applyLayerConfig(
 
 export type LayerConfigChangeUpdaterAction = {
   oldLayer: Layer;
-  newConfig: Partial<LayerBaseConfig>;
+  newConfig: Partial<Layer['config']>;
 };
 /**
  * Update layer base config: dataId, label, column, isVisible
@@ -184,7 +186,7 @@ export function layerTypeChange(
 }
 export type LayerVisualChannelConfigChangeUpdaterAction = {
   oldLayer: Layer;
-  newConfig: Partial<LayerBaseConfig>;
+  newConfig: Partial<Layer['config']>;
   channel: string;
   newVisConfig?: Partial<LayerVisConfig>;
 };
@@ -976,6 +978,23 @@ export function updateFilterAnimationSpeed(
     type: ActionTypes.UPDATE_FILTER_ANIMATION_SPEED,
     idx,
     speed
+  };
+}
+
+export type SetAnimationConfigUpdaterAction = {
+  config: AnimationConfig | FilterAnimationConfig;
+};
+/**
+ * Set animation config: works with both layer animation and filter animation
+ * @param config
+ * @returns action
+ */
+export function setAnimationConfig(
+  config: AnimationConfig | FilterAnimationConfig
+): Merge<SetAnimationConfigUpdaterAction, {type: typeof ActionTypes.SET_ANIMATION_CONFIG}> {
+  return {
+    type: ActionTypes.SET_ANIMATION_CONFIG,
+    config
   };
 }
 

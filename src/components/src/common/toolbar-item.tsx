@@ -35,7 +35,7 @@ const StyledDiv = styled.div.attrs(props => ({
     color: ${props => props.theme.textColorHl};
   }
 
-  :hover {
+  &:hover {
     background-color: ${props => props.theme.toolbarItemBgdHover};
     border-color: ${props => props.theme.toolbarItemBorderHover};
     svg {

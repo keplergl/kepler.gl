@@ -18,7 +18,7 @@ import {Effect} from '@kepler.gl/types';
 import {withState} from '../injector';
 import SidePanelTitleFactory from './side-panel-title';
 import EffectListFactory from './effect-list';
-import EffectTypeSelectorFactory from './effect-type-selector';
+import EffectTypeSelectorFactory, {EffectTypeSelectorProps} from './effect-type-selector';
 
 export type EffectManagerState = {
   visStateActions: {
@@ -90,7 +90,7 @@ function EffectManagerFactory(
     const [typeSelectorOpened, setTypeSelectorOpened] = useState(false);
 
     // Prevent shadow effect from being added multiple times
-    const effectOptions = useMemo(() => {
+    const effectOptions: EffectTypeSelectorProps['options'] = useMemo(() => {
       const hasShadow = effects.some(effect => {
         return effect.type === LIGHT_AND_SHADOW_EFFECT.type;
       });
@@ -121,7 +121,7 @@ function EffectManagerFactory(
     return (
       <StyledEffectPanelContainer className="effect-manager">
         <StyledEffectPanel>
-          <StyledEffectPanelHeader>
+          <StyledEffectPanelHeader className="effect-panel-header">
             <SidePanelTitle
               className="effect-manager-title"
               title={intl.formatMessage({id: 'effectManager.effects'})}

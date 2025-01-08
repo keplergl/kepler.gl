@@ -87,13 +87,15 @@ const UploadProgress = ({message, fileName, percent, error, theme}: UploadProgre
   );
 };
 
-interface FileUploadProgressProps {
+type FileUploadProgressProps = {
   fileLoadingProgress: FileLoadingProgress;
   theme: any;
-}
+};
 
-/** @type {React.FunctionComponent<FileUploadProgressProps>} */
-const FileUploadProgress = ({fileLoadingProgress, theme}: FileUploadProgressProps) => (
+const FileUploadProgress: React.FC<FileUploadProgressProps> = ({
+  fileLoadingProgress,
+  theme
+}: FileUploadProgressProps) => (
   <StyledContainer>
     <StyledProgressWrapper>
       {Object.values(fileLoadingProgress).map(item => (
@@ -103,4 +105,4 @@ const FileUploadProgress = ({fileLoadingProgress, theme}: FileUploadProgressProp
   </StyledContainer>
 );
 
-export default withTheme(FileUploadProgress);
+export default withTheme(FileUploadProgress) as React.FC<FileUploadProgressProps>;

@@ -8,7 +8,7 @@ import {createSelector} from 'reselect';
 import {StyledPanelDropdown, Tooltip} from '../common/styled-components';
 import KeplerGlLogo from '../common/logo';
 import {Save, DataTable, Save2, Picture, Db, Map as MapIcon, Share} from '../common/icons';
-import Toolbar from '../common/toolbar';
+import Toolbar, {ToolbarProps} from '../common/toolbar';
 import ToolbarItem, {ToolbarItemProps} from '../common/toolbar-item';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {UiState} from '@kepler.gl/types';
@@ -126,7 +126,7 @@ const StyledPanelAction = styled.div.attrs({
     height: 20px;
   }
 
-  :hover {
+  &:hover {
     cursor: pointer;
     color: ${props => props.theme.textColorHl};
 
@@ -136,7 +136,7 @@ const StyledPanelAction = styled.div.attrs({
   }
 `;
 
-const StyledToolbar = styled(Toolbar)`
+const StyledToolbar = styled(Toolbar)<ToolbarProps>`
   position: absolute;
 `;
 

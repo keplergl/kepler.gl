@@ -114,7 +114,12 @@ export {
 } from './effect-utils';
 
 // Mapbox
-export {isStyleUsingMapboxTiles, transformRequest} from './map-style-utils/mapbox-utils';
+export {
+  isStyleUsingMapboxTiles,
+  isStyleUsingOpenStreetMapTiles,
+  getBaseMapLibrary,
+  transformRequest
+} from './map-style-utils/mapbox-utils';
 
 // Map
 export * from './map-utils';
@@ -152,7 +157,16 @@ export {
   getDomainStepsbyZoom,
   getThresholdsFromQuantiles,
   getQuantLabelFormat,
-  getHistogramDomain
+  getHistogramDomain,
+  getQuantLegends,
+  getCategoricalColorMap,
+  getCategoricalColorScale,
+  initCustomPaletteByCustomScale,
+  colorMapToCategoricalColorBreaks,
+  resetCategoricalColorMapByIndex,
+  selectRestCategoricalColorMapByIndex,
+  removeCategoricalValueFromColorMap,
+  addCategoricalValuesToColorMap
 } from './data-scale-utils';
 export type {ColorBreak, ColorBreakOrdinal, DomainQuantiles, DomainStops} from './data-scale-utils';
 
@@ -160,7 +174,12 @@ export {DataRow} from './data-row';
 
 // Application config
 export {getApplicationConfig, initApplicationConfig} from './application-config';
-export type {KeplerApplicationConfig, MapLibInstance} from './application-config';
+export type {
+  KeplerApplicationConfig,
+  BaseMapLibraryConfig,
+  MapLibInstance,
+  GetMapRef
+} from './application-config';
 
 export {default as quickInsertionSort} from './quick-insertion-sort';
 

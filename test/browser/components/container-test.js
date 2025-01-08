@@ -141,7 +141,12 @@ test('Components -> Container -> Mount with mint:true', t => {
 
   // unmount
   wrapper.unmount();
-  expectedActions0 = {type: '@@kepler.gl/DELETE_ENTRY', payload: 'milkshake'};
+  expectedActions0 = {
+    type: '@@kepler.gl/DELETE_ENTRY',
+    payload: {
+      id: 'milkshake'
+    }
+  };
 
   actions = store.getActions();
   t.deepEqual(actions, [expectedActions0], 'should call unmount');
@@ -315,7 +320,12 @@ test('Components -> Container -> Mount then rename', t => {
   // unmount
   wrapper.unmount();
 
-  const expectedActions2 = {type: '@@kepler.gl/DELETE_ENTRY', payload: 'milkshake-2'};
+  const expectedActions2 = {
+    type: '@@kepler.gl/DELETE_ENTRY',
+    payload: {
+      id: 'milkshake-2'
+    }
+  };
 
   t.deepEqual(store.getActions().pop(), expectedActions2, 'should call unmount milkshake-2');
 

@@ -89,7 +89,7 @@ const DropdownSelectActionRight = styled.div`
   display: flex;
   color: ${props => props.theme.subtextColor};
 
-  :hover {
+  &:hover {
     color: ${props => props.theme.textColor};
   }
 `;

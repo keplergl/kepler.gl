@@ -56,7 +56,7 @@ const StyledTrySampleData = styled.div`
       font-size: 12px;
     `};
 
-    :hover {
+    &:hover {
       color: ${props => props.theme.textColorLT};
     }
 

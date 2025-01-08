@@ -38,7 +38,7 @@ export const StyledToggleOption = styled.div.attrs({
   className: 'layer-panel-toggle-option'
 })<{active: boolean}>`
   color: ${props => (props.active ? props.theme.subtextColorActive : props.theme.panelTabColor)};
-  :hover {
+  &:hover {
     cursor: pointer;
     color: ${props => props.theme.subtextColorActive};
   }

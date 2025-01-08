@@ -22,7 +22,7 @@ const StyledInfoHelper = styled.div<StyledInfoHelperProps>`
     width: ${props => (props.width ? `${props.width}px` : 'auto')};
     max-width: ${props => (props.width ? 'auto' : '100px')};
   }
-  :hover {
+  &:hover {
     cursor: pointer;
     color: ${props => props.theme.textColorHl};
   }

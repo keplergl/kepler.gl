@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React from 'react';
-import styled, {keyframes} from 'styled-components';
+import React, {CSSProperties} from 'react';
+import styled, {keyframes, IStyledComponent} from 'styled-components';
+
+import {BaseComponentProps} from '../types';
 
 const animationName = keyframes`
   0% {
@@ -26,23 +28,26 @@ const Loader = styled.span`
     animation-name: ${animationName};
 }`;
 
-interface LoadingWrapperProps {
-  borderColor?: string;
-}
+export type LoadingWrapperProps = BaseComponentProps & {
+  borderColor?: CSSProperties['borderColor'];
+};
 
-const LoadingWrapper = styled.div<LoadingWrapperProps>`
+const LoadingWrapper: IStyledComponent<
+  'web',
+  LoadingWrapperProps
+> = styled.div<LoadingWrapperProps>`
   border-radius: 50%;
   border: 3px solid ${props => props.borderColor || props.theme.borderColorLT};
   padding: 2px;
 `;
 
-interface LoadingSpinnerProps {
+export type LoadingSpinnerProps = {
   size?: number;
   color?: string;
-  borderColor?: string;
+  borderColor?: CSSProperties['borderColor'];
   strokeWidth?: number;
   gap?: number;
-}
+};
 
 const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
   size = 32,

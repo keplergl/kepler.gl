@@ -7,13 +7,15 @@ import {SketchPicker, ColorChangeHandler} from 'react-color';
 
 import {HexColor} from '@kepler.gl/types';
 
+import {BaseComponentProps} from '../../types';
+
 // This was put in because 3rd party library react-color doesn't yet cater for customized color of child component <SketchField> which contains HEX/RGB input text box
 // Issue raised: https://github.com/casesandberg/react-color/issues/631
 
 type StyledPickerProps = {
   type?: string;
   active?: boolean;
-};
+} & BaseComponentProps;
 
 const StyledPicker = styled.div<StyledPickerProps>`
   .sketch-picker {
@@ -29,7 +31,7 @@ const StyledPicker = styled.div<StyledPickerProps>`
       box-shadow: none !important;
       background-color: ${props => props.theme.inputBgdHover} !important;
 
-      :hover {
+      &:hover {
         cursor: ${props => (props.type === 'number' || props.type === 'text' ? 'text' : 'pointer')};
         background-color: ${props =>
           props.active ? props.theme.inputBgdActive : props.theme.inputBgdHover};
@@ -37,8 +39,8 @@ const StyledPicker = styled.div<StyledPickerProps>`
           props.active ? props.theme.inputBorderActiveColor : props.theme.inputBorderHoverColor};
       }
 
-      :active,
-      :focus,
+      &:active,
+      &:focus,
       &.focus,
       &.active {
         outline: 0;
@@ -89,4 +91,4 @@ const CustomPicker: React.FC<CustomPickerProps> = ({color, onChange, theme}: Cus
   );
 };
 
-export default withTheme(CustomPicker);
+export default withTheme(CustomPicker) as React.FC<Omit<CustomPickerProps, 'theme'>>;

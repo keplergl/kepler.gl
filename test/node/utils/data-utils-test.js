@@ -250,7 +250,7 @@ test('dataUtils -> validateBounds', t => {
         [10, -90, 20, -20],
         [10, -10, 90, -90]
       ],
-      output: [10, -10, 90, -20],
+      output: [10, -89.9, 90, -20],
       message: 'should handle latitude -90,90 correctly'
     },
     {
@@ -258,7 +258,7 @@ test('dataUtils -> validateBounds', t => {
         [-180, -90, 20, -20],
         [15, -190, 25, -25]
       ],
-      output: [0, 0, 25, -20],
+      output: [-180, -89.9, 25, -20],
       message: 'should handle extreme longitude values'
     }
   ];

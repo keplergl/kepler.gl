@@ -41,7 +41,8 @@ import {
   setFilter,
   processFileContent,
   fitBounds as fitMapBounds,
-  toggleLayerForMap
+  toggleLayerForMap,
+  applyFilterConfig
 } from '@kepler.gl/actions';
 
 // Utils
@@ -69,7 +70,8 @@ import {
   set,
   updateFilterPlot,
   removeFilterPlot,
-  isLayerAnimatable
+  isLayerAnimatable,
+  isSideFilter
 } from '@kepler.gl/utils';
 import {generateHashId, toArray} from '@kepler.gl/common-utils';
 // Mergers
@@ -86,7 +88,9 @@ import {
   MAX_DEFAULT_TOOLTIPS,
   PLOT_TYPES,
   SORT_ORDER,
-  SYNC_TIMELINE_MODES
+  SYNC_TIMELINE_MODES,
+  CHANNEL_SCALES,
+  SCALE_TYPES
 } from '@kepler.gl/constants';
 import {LAYER_ID_LENGTH, Layer, LayerClasses} from '@kepler.gl/layers';
 import {
@@ -115,6 +119,7 @@ import {
   Filter,
   InteractionConfig,
   AnimationConfig,
+  FilterAnimationConfig,
   Editor,
   Field,
   TimeRangeFilter
@@ -144,7 +149,8 @@ import {
   getDefaultTimeFormat,
   LayerToFilterTimeInterval,
   TIME_INTERVALS_ORDERED,
-  mergeFilterDomain
+  mergeFilterDomain,
+  initCustomPaletteByCustomScale
 } from '@kepler.gl/utils';
 import {createEffect} from '@kepler.gl/effects';
 import {PayloadAction} from '@reduxjs/toolkit';
@@ -629,7 +635,7 @@ export function layerToggleVisibilityUpdater(
     return toggleLayerForMapUpdater(newState, toggleLayerForMap(mapIndex, layerId));
   } else {
     // [case 2]: toggle global layer visibility
-    let newLayer = layer.updateLayerConfig({isVisible});
+    const newLayer = layer.updateLayerConfig({isVisible});
     const idx = newState.layers.findIndex(l => l.id === layerId);
 
     newState = updatelayerVisibilty(newState, newLayer, isVisible);
@@ -958,6 +964,7 @@ export function layerVisualChannelChangeUpdater(
   if (!oldLayer.config.dataId) {
     return state;
   }
+
   const dataset = state.datasets[oldLayer.config.dataId];
 
   const idx = state.layers.findIndex(l => l.id === oldLayer.id);
@@ -967,11 +974,50 @@ export function layerVisualChannelChangeUpdater(
   newLayer.updateLayerVisualChannel(dataset, channel);
 
   // calling update animation domain first to merge all layer animation domain
-  const updatedState = updateAnimationDomain(state);
+  let updatedState = updateAnimationDomain(state);
+
+  const visualChannel = oldLayer.visualChannels[channel];
+  if (visualChannel?.channelScaleType === CHANNEL_SCALES.color && newConfig[visualChannel.field]) {
+    // if color field changed, set customBreaks to false
+    newLayer.updateLayerColorUI(visualChannel.range, {
+      colorRangeConfig: {
+        ...newLayer.config.colorUI[visualChannel.range].colorRangeConfig,
+        customBreaks: false
+      }
+    });
+
+    updatedState = {
+      ...updatedState,
+      layers: updatedState.layers.map(l => (l.id === oldLayer.id ? newLayer : l))
+    };
+  }
 
   const oldLayerData = updatedState.layerData[idx];
   const {layerData, layer} = calculateLayerData(newLayer, updatedState, oldLayerData);
 
+  if (
+    visualChannel?.channelScaleType === CHANNEL_SCALES.color &&
+    newConfig[visualChannel?.scale] === SCALE_TYPES.customOrdinal &&
+    !newVisConfig
+  ) {
+    // when switching to customOrdinal scale, create a customPalette in colorUI with updated colorDomain
+    const customPalette = initCustomPaletteByCustomScale({
+      scale: SCALE_TYPES.customOrdinal,
+      field: layer.config[visualChannel.field],
+      ordinalDomain: layer.config[layer.visualChannels[channel].domain],
+      range: layer.config.visConfig[visualChannel.range],
+      colorBreaks: null
+    });
+    // update colorRange with new customPalette
+    layer.updateLayerColorUI(visualChannel.range, {
+      showColorChart: true,
+      colorRangeConfig: {
+        ...layer.config.colorUI[visualChannel.range].colorRangeConfig,
+        customBreaks: true
+      },
+      customPalette
+    });
+  }
   return updateStateWithLayerAndData(updatedState, {layerData, layer, idx});
 }
 
@@ -1485,6 +1531,35 @@ export const toggleFilterAnimationUpdater = (
   ...state,
   filters: state.filters.map((f, i) => (i === action.idx ? {...f, isAnimating: !f.isAnimating} : f))
 });
+
+export function isFilterAnimationConfig(config: AnimationConfig | FilterAnimationConfig): boolean {
+  return 'dataId' in config && 'animationWindow' in config;
+}
+
+export function setAnimationConfigUpdater(
+  state: VisState,
+  action: VisStateActions.SetAnimationConfigUpdaterAction
+): VisState {
+  const {config} = action;
+  if (isFilterAnimationConfig(config)) {
+    // Find filter used for animation
+    // Assuming there's only one filter used for animation, see setFilterViewUpdater
+    const filter = state.filters.find(f => !isSideFilter(f));
+    if (!filter) {
+      return state;
+    }
+    const newFilter = {...filter, ...config};
+    return applyFilterConfigUpdater(state, applyFilterConfig(filter.id, newFilter));
+  } else {
+    return {
+      ...state,
+      animationConfig: {
+        ...state.animationConfig,
+        ...config
+      }
+    };
+  }
+}
 
 /**
  * @memberof visStateUpdaters
@@ -2983,7 +3058,7 @@ export function setFeaturesUpdater(
       ...state.editor,
       // only save none filter features to editor
       features: features.filter(f => !getFilterIdInFeature(f)),
-      mode: lastFeature && lastFeature.properties.isClosed ? EDITOR_MODES.EDIT : state.editor.mode
+      mode: lastFeature && lastFeature.properties?.isClosed ? EDITOR_MODES.EDIT : state.editor.mode
     }
   };
 
@@ -3242,7 +3317,24 @@ export function setColumnDisplayFormatUpdater(
   });
 
   const newDataset = copyTableAndUpdate(dataset, {fields: newFields as Field[]});
-  return pick_('datasets')(merge_({[dataId]: newDataset}))(state);
+  let newState = pick_('datasets')(merge_({[dataId]: newDataset}))(state);
+
+  // update colorField displayFormat
+  newState = {
+    ...newState,
+    layers: newState.layers.map(layer =>
+      layer.config?.colorField?.name && layer.config.colorField.name in formats
+        ? layer.updateLayerConfig({
+            colorField: {
+              ...layer.config.colorField,
+              displayFormat: formats[layer.config.colorField.name]
+            }
+          })
+        : layer
+    )
+  };
+
+  return newState;
 }
 
 /**
