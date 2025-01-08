@@ -138,7 +138,17 @@ export const vectorTileVisConfigs = {
     property: 'strokeWidth',
     defaultValue: 0.5,
     allowCustomValue: false
-  }
+  },
+
+  radiusScale: 'radiusScale' as any,
+  radiusRange: {
+    ...LAYER_VIS_CONFIGS.radiusRange,
+    type: 'number',
+    defaultValue: [0, 1],
+    isRanged: true,
+    range: [0, 1],
+    step: 0.01
+  } as VisConfigRange
 };
 
 export type VectorTileLayerConfig = Merge<
@@ -147,7 +157,13 @@ export type VectorTileLayerConfig = Merge<
     sizeField?: VisualChannelField;
     sizeScale?: string;
     sizeDomain?: VisualChannelDomain;
+
     strokeColorField: VisualChannelField;
+
+    radiusField?: VisualChannelField;
+    radiusScale?: string;
+    radiusDomain?: VisualChannelDomain;
+    radiusRange?: any;
   }
 >;
 
@@ -239,6 +255,21 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
         accessor: 'getLineWidth',
         condition: config => config.visConfig.stroked,
         getAttributeValue: config => config.visConfig.strokeWidth || DEFAULT_STROKE_WIDTH
+      },
+      radius: {
+        property: 'radius',
+        field: 'radiusField',
+        scale: 'radiusScale',
+        domain: 'radiusDomain',
+        range: 'radiusRange',
+        key: 'radius',
+        channelScaleType: CHANNEL_SCALES.size,
+        nullValue: 0,
+        getAttributeValue: config => {
+          return config.visConfig.radius || config.radius;
+        },
+        accessor: 'getPointRadius',
+        defaultValue: config => config.radius
       }
     };
   }
@@ -258,7 +289,11 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
         ...defaultLayerConfig.colorUI,
         // @ts-expect-error LayerConfig
         strokeColorRange: DEFAULT_COLOR_UI
-      }
+      },
+
+      radiusField: null,
+      radiusDomain: [0, 1],
+      radiusScale: SCALE_TYPES.linear
     };
   }
 
@@ -432,7 +467,10 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
       data,
       getFillColor: props.getFillColorByZoom ? props.getFillColor(zoom) : props.getFillColor,
       getElevation: props.getElevationByZoom ? props.getElevation(zoom) : props.getElevation,
-      pointRadiusScale: props.getPointRadiusScaleByZoom(zoom),
+      // radius for points
+      pointRadiusScale: props.pointRadiusScale, // props.getPointRadiusScaleByZoom(zoom),
+      pointRadiusUnits: props.pointRadiusUnits,
+      getPointRadius: props.getPointRadius,
       // For some reason tile Layer reset autoHighlight to false
       pickable: true,
       autoHighlight: true,
@@ -467,6 +505,7 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
     const heightField = this.config.heightField as KeplerField;
     const strokeColorField = this.config.strokeColorField as KeplerField;
     const sizeField = this.config.sizeField as KeplerField;
+    const radiusField = this.config.radiusField as KeplerField;
 
     if (data.tileSource) {
       const hoveredObject = this.hasHoveredObject(objectHovered);
@@ -482,6 +521,7 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
           getFilterValue: this.getGpuFilterValueAccessor(opts),
           filterRange: gpuFilter.filterRange,
           lineWidthUnits: 'pixels',
+
           binary: false,
           elevationScale: visConfig.elevationScale * eleZoomFactor,
           extruded: visConfig.enable3d,
@@ -492,7 +532,8 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
           renderSubLayers: this.renderSubLayers,
           // when radiusUnits is meter
           getPointRadiusScaleByZoom: getPropertyByZoom(visConfig.radiusByZoom, visConfig.radius),
-          pointRadiusScale: 1,
+          pointRadiusUnits: visConfig.radiusUnits ? 'pixels' : 'meters',
+          pointRadiusScale: radiusField ? visConfig.radius : 1,
 
           pointRadiusMinPixels: 1,
           autoHighlight: true,
@@ -544,6 +585,14 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
               sizeScale: this.config.sizeScale,
               sizeDomain: this.config.sizeDomain,
               currentTime: isIndexedField(sizeField) ? animationConfig.currentTime : null
+            },
+            getPointRadius: {
+              radius: visConfig.radius,
+              radiusField: this.config.radiusField,
+              radiusScale: this.config.radiusScale,
+              radiusDomain: this.config.radiusDomain,
+              radiusRange: this.config.radiusRange,
+              currentTime: isIndexedField(radiusField) ? animationConfig.currentTime : null
             }
           },
           _subLayerProps: {
