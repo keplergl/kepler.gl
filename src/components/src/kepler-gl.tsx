@@ -65,8 +65,7 @@ import {
   mergeMessages,
   observeDimensions,
   unobserveDimensions,
-  hasPortableWidth,
-  getApplicationConfig
+  hasPortableWidth
 } from '@kepler.gl/utils';
 
 import {theme as basicTheme, themeLT, themeBS, breakPointValues} from '@kepler.gl/styles';
