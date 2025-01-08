@@ -2118,6 +2118,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@dnd-kit/accessibility@npm:^3.1.1":
+  version: 3.1.1
+  resolution: "@dnd-kit/accessibility@npm:3.1.1"
+  dependencies:
+    tslib: "npm:^2.0.0"
+  peerDependencies:
+    react: ">=16.8.0"
+  checksum: 10c0/be0bf41716dc58f9386bc36906ec1ce72b7b42b6d1d0e631d347afe9bd8714a829bd6f58a346dd089b1519e93918ae2f94497411a61a4f5e4d9247c6cfd1fef8
+  languageName: node
+  linkType: hard
+
 "@dnd-kit/core@npm:^6.0.8":
   version: 6.1.0
   resolution: "@dnd-kit/core@npm:6.1.0"
@@ -2129,6 +2140,20 @@ __metadata:
     react: ">=16.8.0"
     react-dom: ">=16.8.0"
   checksum: 10c0/c793eb97cb59285ca8937ebcdfcd27cff09d750ae06722e36ca5ed07925e41abc36a38cff98f9f6056f7a07810878d76909826142a2968330e7e22060e6be584
+  languageName: node
+  linkType: hard
+
+"@dnd-kit/core@npm:^6.1.0":
+  version: 6.3.1
+  resolution: "@dnd-kit/core@npm:6.3.1"
+  dependencies:
+    "@dnd-kit/accessibility": "npm:^3.1.1"
+    "@dnd-kit/utilities": "npm:^3.2.2"
+    tslib: "npm:^2.0.0"
+  peerDependencies:
+    react: ">=16.8.0"
+    react-dom: ">=16.8.0"
+  checksum: 10c0/196db95d81096d9dc248983533eab91ba83591770fa5c894b1ac776f42af0d99522b3fd5bb3923411470e4733fcfa103e6ee17adc17b9b7eb54c7fbec5ff7c52
   languageName: node
   linkType: hard
 
@@ -2145,6 +2170,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@dnd-kit/modifiers@npm:^7.0.0":
+  version: 7.0.0
+  resolution: "@dnd-kit/modifiers@npm:7.0.0"
+  dependencies:
+    "@dnd-kit/utilities": "npm:^3.2.2"
+    tslib: "npm:^2.0.0"
+  peerDependencies:
+    "@dnd-kit/core": ^6.1.0
+    react: ">=16.8.0"
+  checksum: 10c0/542e1d2b6102a5c826118c36158aab23c5437d24008cab4848b0866d3d850b4410c4f465690767dd1f31fde33a1fa9d238675be70f174c179485ce376f0c8aa6
+  languageName: node
+  linkType: hard
+
 "@dnd-kit/sortable@npm:^7.0.2":
   version: 7.0.2
   resolution: "@dnd-kit/sortable@npm:7.0.2"
@@ -2155,6 +2193,19 @@ __metadata:
     "@dnd-kit/core": ^6.0.7
     react: ">=16.8.0"
   checksum: 10c0/06aeb113eeeb470bb2443bf1c48d597157bb3a1caa9740e60c2fa73a3076e753cd083a2d381f0556bd7e9873e851a49ce8ea14796ac02e2d796eabea4e27196d
+  languageName: node
+  linkType: hard
+
+"@dnd-kit/sortable@npm:^8.0.0":
+  version: 8.0.0
+  resolution: "@dnd-kit/sortable@npm:8.0.0"
+  dependencies:
+    "@dnd-kit/utilities": "npm:^3.2.2"
+    tslib: "npm:^2.0.0"
+  peerDependencies:
+    "@dnd-kit/core": ^6.1.0
+    react: ">=16.8.0"
+  checksum: 10c0/a6066c652b892c6a11320c7d8f5c18fdf723e721e8eea37f4ab657dee1ac5e7ca710ac32ce0712a57fe968bc07c13bcea5d5599d90dfdd95619e162befd4d2fb
   languageName: node
   linkType: hard
 
@@ -2169,6 +2220,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@emotion/is-prop-valid@npm:1.2.1":
+  version: 1.2.1
+  resolution: "@emotion/is-prop-valid@npm:1.2.1"
+  dependencies:
+    "@emotion/memoize": "npm:^0.8.1"
+  checksum: 10c0/7c2aabdf0ca9986ca25abc9dae711348308cf18d418d64ffa4c8ffd2114806c47f2e06ba8ee769f38ec67d65bd59ec73f34d94023e81baa1c43510ac86ccd5e6
+  languageName: node
+  linkType: hard
+
 "@emotion/is-prop-valid@npm:^0.8.1":
   version: 0.8.8
   resolution: "@emotion/is-prop-valid@npm:0.8.8"
@@ -2178,10 +2238,40 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@emotion/is-prop-valid@npm:^1.2.1":
+  version: 1.3.1
+  resolution: "@emotion/is-prop-valid@npm:1.3.1"
+  dependencies:
+    "@emotion/memoize": "npm:^0.9.0"
+  checksum: 10c0/123215540c816ff510737ec68dcc499c53ea4deb0bb6c2c27c03ed21046e2e69f6ad07a7a174d271c6cfcbcc9ea44e1763e0cf3875c92192f7689216174803cd
+  languageName: node
+  linkType: hard
+
 "@emotion/memoize@npm:0.7.4":
   version: 0.7.4
   resolution: "@emotion/memoize@npm:0.7.4"
   checksum: 10c0/b2376548fc147b43afd1ff005a80a1a025bd7eb4fb759fdb23e96e5ff290ee8ba16628a332848d600fb91c3cdc319eee5395fa33d8875e5d5a8c4ce18cddc18e
+  languageName: node
+  linkType: hard
+
+"@emotion/memoize@npm:^0.8.1":
+  version: 0.8.1
+  resolution: "@emotion/memoize@npm:0.8.1"
+  checksum: 10c0/dffed372fc3b9fa2ba411e76af22b6bb686fb0cb07694fdfaa6dd2baeb0d5e4968c1a7caa472bfcf06a5997d5e7c7d16b90e993f9a6ffae79a2c3dbdc76dfe78
+  languageName: node
+  linkType: hard
+
+"@emotion/memoize@npm:^0.9.0":
+  version: 0.9.0
+  resolution: "@emotion/memoize@npm:0.9.0"
+  checksum: 10c0/13f474a9201c7f88b543e6ea42f55c04fb2fdc05e6c5a3108aced2f7e7aa7eda7794c56bba02985a46d8aaa914fcdde238727a98341a96e2aec750d372dadd15
+  languageName: node
+  linkType: hard
+
+"@emotion/unitless@npm:0.8.0":
+  version: 0.8.0
+  resolution: "@emotion/unitless@npm:0.8.0"
+  checksum: 10c0/1f2cfb7c0ccb83c20b1c6d8d92a74a93da4b2a440f9a0d49ded08647faf299065a2ffde17e1335920fa10397b85f8635bbfe14f3cd29222a59ea81d978478072
   languageName: node
   linkType: hard
 
@@ -3358,10 +3448,11 @@ __metadata:
   dependencies:
     "@deck.gl/core": "npm:^8.9.27"
     "@deck.gl/react": "npm:^8.9.27"
-    "@dnd-kit/core": "npm:^6.0.8"
-    "@dnd-kit/modifiers": "npm:^6.0.1"
-    "@dnd-kit/sortable": "npm:^7.0.2"
-    "@dnd-kit/utilities": "npm:^3.2.1"
+    "@dnd-kit/core": "npm:^6.1.0"
+    "@dnd-kit/modifiers": "npm:^7.0.0"
+    "@dnd-kit/sortable": "npm:^8.0.0"
+    "@dnd-kit/utilities": "npm:^3.2.2"
+    "@emotion/is-prop-valid": "npm:^1.2.1"
     "@floating-ui/react": "npm:0.25.1"
     "@kepler.gl/actions": "npm:3.1.0-alpha.3"
     "@kepler.gl/cloud-providers": "npm:3.1.0-alpha.3"
@@ -3405,7 +3496,7 @@ __metadata:
     "@types/react-redux": "npm:^7.1.23"
     "@types/react-virtualized": "npm:^9.21.30"
     "@types/react-vis": "npm:1.11.7"
-    "@types/styled-components": "npm:^5.1.25"
+    "@types/styled-components": "npm:^5.1.32"
     classnames: "npm:^2.2.1"
     copy-to-clipboard: "npm:^3.3.1"
     d3-array: "npm:^2.8.0"
@@ -3451,7 +3542,7 @@ __metadata:
     react-vis: "npm:1.11.7"
     redux: "npm:^4.2.1"
     reselect: "npm:^4.0.0"
-    styled-components: "npm:^4.1.3"
+    styled-components: "npm:6.1.8"
     suncalc: "npm:^1.9.0"
     viewport-mercator-project: "npm:^6.0.0"
   languageName: unknown
@@ -3476,8 +3567,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@kepler.gl/constants@workspace:src/constants"
   dependencies:
-    "@dnd-kit/core": "npm:^6.0.8"
-    "@dnd-kit/modifiers": "npm:^6.0.1"
+    "@dnd-kit/core": "npm:^6.1.0"
+    "@dnd-kit/modifiers": "npm:^7.0.0"
     "@kepler.gl/types": "npm:3.1.0-alpha.3"
     "@types/d3-scale": "npm:^3.2.2"
     "@types/d3-time": "npm:^2"
@@ -3716,7 +3807,7 @@ __metadata:
     "@types/keymirror": "npm:^0.1.1"
     "@types/lodash.memoize": "npm:^4.1.7"
     "@types/lodash.uniq": "npm:^4.5.7"
-    "@types/styled-components": "npm:^5.1.25"
+    "@types/styled-components": "npm:^5.1.32"
     apache-arrow: "npm:>=15.0.0"
     d3-array: "npm:^2.8.0"
     d3-shape: "npm:^1.2.0"
@@ -3732,7 +3823,7 @@ __metadata:
     react-markdown: "npm:^6.0.3"
     reselect: "npm:^4.0.0"
     s2-geometry: "npm:^1.2.10"
-    styled-components: "npm:^4.1.3"
+    styled-components: "npm:6.1.8"
     type-analyzer: "npm:0.4.0"
     viewport-mercator-project: "npm:^6.0.0"
   languageName: unknown
@@ -3864,7 +3955,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@kepler.gl/reducers@workspace:src/reducers"
   dependencies:
-    "@dnd-kit/sortable": "npm:^7.0.2"
+    "@dnd-kit/sortable": "npm:^8.0.0"
     "@kepler.gl/actions": "npm:3.1.0-alpha.3"
     "@kepler.gl/cloud-providers": "npm:3.1.0-alpha.3"
     "@kepler.gl/common-utils": "npm:3.1.0-alpha.3"
@@ -3972,8 +4063,8 @@ __metadata:
   resolution: "@kepler.gl/styles@workspace:src/styles"
   dependencies:
     "@kepler.gl/constants": "npm:3.1.0-alpha.3"
-    "@types/styled-components": "npm:^5.1.25"
-    styled-components: "npm:^4.1.3"
+    "@types/styled-components": "npm:^5.1.32"
+    styled-components: "npm:6.1.8"
   languageName: unknown
   linkType: soft
 
@@ -4094,7 +4185,7 @@ __metadata:
   resolution: "@kepler.gl/utils@workspace:src/utils"
   dependencies:
     "@deck.gl/core": "npm:^8.9.27"
-    "@dnd-kit/sortable": "npm:^7.0.2"
+    "@dnd-kit/sortable": "npm:^8.0.0"
     "@kepler.gl/common-utils": "npm:3.1.0-alpha.3"
     "@kepler.gl/constants": "npm:3.1.0-alpha.3"
     "@kepler.gl/types": "npm:3.1.0-alpha.3"
@@ -10772,7 +10863,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/styled-components@npm:^5.1.25":
+"@types/styled-components@npm:^5.1.25, @types/styled-components@npm:^5.1.32":
   version: 5.1.34
   resolution: "@types/styled-components@npm:5.1.34"
   dependencies:
@@ -10780,6 +10871,13 @@ __metadata:
     "@types/react": "npm:*"
     csstype: "npm:^3.0.2"
   checksum: 10c0/5bce93ea2c6161fc45daaf863eefdc20672e839ae486597c40b95e7978e249c160c1bc9706f56cb5152a7ef63cf485d15a9502889169ef945281f511e4b2d5a0
+  languageName: node
+  linkType: hard
+
+"@types/stylis@npm:4.2.0":
+  version: 4.2.0
+  resolution: "@types/stylis@npm:4.2.0"
+  checksum: 10c0/c76c13e76ca485f598a13984cfb5e07bb88a851da5bee213587424a5f101f182c74f4f92d633cebf9abcec40ccebb645d600d184b7e4b42793e3eeca8729b110
   languageName: node
   linkType: hard
 
@@ -12342,7 +12440,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"babel-plugin-styled-components@npm:>= 1":
+"babel-plugin-styled-components@npm:>= 1, babel-plugin-styled-components@npm:^2.1.4":
   version: 2.1.4
   resolution: "babel-plugin-styled-components@npm:2.1.4"
   dependencies:
@@ -13335,10 +13433,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"caniuse-lite@npm:^1.0.30001517":
-  version: 1.0.30001643
-  resolution: "caniuse-lite@npm:1.0.30001643"
-  checksum: 10c0/7fcd0fd180bbe6764311ad57b0d39c23afdcc3bb1d8f804e7a76752c62a85b1bb7cf74b672d9da2f0afe7ad75336ff811a6fe279eb2a54bc04c272b6b62e57f1
+"caniuse-lite@npm:^1.0.30001636":
+  version: 1.0.30001690
+  resolution: "caniuse-lite@npm:1.0.30001690"
+  checksum: 10c0/646bd469032afa90400a84dec30a2b00a6eda62c03ead358117e3f884cda8aacec02ec058a6dbee5eaf9714f83e483b9b0eb4fb42febb8076569f5ca40f1d347
   languageName: node
   linkType: hard
 
@@ -14429,6 +14527,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"css-to-react-native@npm:3.2.0":
+  version: 3.2.0
+  resolution: "css-to-react-native@npm:3.2.0"
+  dependencies:
+    camelize: "npm:^1.0.0"
+    css-color-keywords: "npm:^1.0.0"
+    postcss-value-parser: "npm:^4.0.2"
+  checksum: 10c0/fde850a511d5d3d7c55a1e9b8ed26b69a8ad4868b3487e36ebfbfc0b96fc34bc977d9cd1d61a289d0c74d3f9a662d8cee297da53d4433bf2e27d6acdff8e1003
+  languageName: node
+  linkType: hard
+
 "css-to-react-native@npm:^2.2.2":
   version: 2.3.2
   resolution: "css-to-react-native@npm:2.3.2"
@@ -14499,6 +14608,13 @@ __metadata:
   dependencies:
     rrweb-cssom: "npm:^0.6.0"
   checksum: 10c0/cadf9a8b23e11f4c6d63f21291096a0b0be868bd4ab9c799daa2c5b18330e39e5281605f01da906e901b42f742df0f3b3645af6465e83377ff7d15a88ee432a0
+  languageName: node
+  linkType: hard
+
+"csstype@npm:3.1.2":
+  version: 3.1.2
+  resolution: "csstype@npm:3.1.2"
+  checksum: 10c0/32c038af259897c807ac738d9eab16b3d86747c72b09d5c740978e06f067f9b7b1737e1b75e407c7ab1fe1543dc95f20e202b4786aeb1b8d3bdf5d5ce655e6c6
   languageName: node
   linkType: hard
 
@@ -21230,6 +21346,7 @@ __metadata:
     babel-plugin-istanbul: "npm:^6.0.0"
     babel-plugin-module-resolver: "npm:^4.0.0"
     babel-plugin-search-and-replace: "npm:^1.0.0"
+    babel-plugin-styled-components: "npm:^2.1.4"
     babel-plugin-transform-builtin-extend: "npm:^1.1.0"
     babelify: "npm:^10.0.0"
     css-loader: "npm:5.2.7"
@@ -21258,6 +21375,7 @@ __metadata:
     jest-environment-jsdom: "npm:^29.5.0"
     jsdom: "npm:^24.1.1"
     json-loader: "npm:^0.5.4"
+    mapbox-gl: "npm:1.13.1"
     maplibre-gl: "npm:^3.6.2"
     minimist: "npm:^1.2.6"
     nyc: "npm:^15.1.0"
@@ -21273,7 +21391,7 @@ __metadata:
     sinon-stub-promise: "npm:^4.0.0"
     source-map-loader: "npm:^1.1.1"
     style-loader: "npm:2.0.0"
-    styled-components: "npm:^4.1.3"
+    styled-components: "npm:6.1.8"
     stylelint: "npm:^13.6.1"
     stylelint-config-recommended: "npm:^3.0.0"
     stylelint-config-styled-components: "npm:^0.1.1"
@@ -21296,7 +21414,7 @@ __metadata:
   peerDependencies:
     react: ">=18.2"
     react-dom: ">=18.2"
-    styled-components: ^4.x || ^5.x
+    styled-components: 6.1.8
   languageName: unknown
   linkType: soft
 
@@ -22952,6 +23070,15 @@ __metadata:
   dependencies:
     node-gyp: "npm:latest"
   checksum: 10c0/75775309a21ad179a55250d62ce47322c33ca03d8ddb5ad4c555bd820dd72484b3c59253dd9f41cc68dd63453ef04017407fbd081a549bc030d977079bb798b7
+  languageName: node
+  linkType: hard
+
+"nanoid@npm:^3.3.6":
+  version: 3.3.8
+  resolution: "nanoid@npm:3.3.8"
+  bin:
+    nanoid: bin/nanoid.cjs
+  checksum: 10c0/4b1bb29f6cfebf3be3bc4ad1f1296fb0a10a3043a79f34fbffe75d1621b4318319211cd420549459018ea3592f0d2f159247a6f874911d6d26eaaadda2478120
   languageName: node
   linkType: hard
 
@@ -24753,10 +24880,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"postcss-value-parser@npm:^4.0.0, postcss-value-parser@npm:^4.1.0":
+"postcss-value-parser@npm:^4.0.0, postcss-value-parser@npm:^4.0.2, postcss-value-parser@npm:^4.1.0":
   version: 4.2.0
   resolution: "postcss-value-parser@npm:4.2.0"
   checksum: 10c0/f4142a4f56565f77c1831168e04e3effd9ffcc5aebaf0f538eee4b2d465adfd4b85a44257bb48418202a63806a7da7fe9f56c330aebb3cac898e46b4cbf49161
+  languageName: node
+  linkType: hard
+
+"postcss@npm:8.4.31":
+  version: 8.4.31
+  resolution: "postcss@npm:8.4.31"
+  dependencies:
+    nanoid: "npm:^3.3.6"
+    picocolors: "npm:^1.0.0"
+    source-map-js: "npm:^1.0.2"
+  checksum: 10c0/748b82e6e5fc34034dcf2ae88ea3d11fd09f69b6c50ecdd3b4a875cfc7cdca435c958b211e2cb52355422ab6fccb7d8f2f2923161d7a1b281029e4a913d59acf
   languageName: node
   linkType: hard
 
@@ -27361,7 +27499,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"shallowequal@npm:^1.1.0":
+"shallowequal@npm:1.1.0, shallowequal@npm:^1.1.0":
   version: 1.1.0
   resolution: "shallowequal@npm:1.1.0"
   checksum: 10c0/b926efb51cd0f47aa9bc061add788a4a650550bbe50647962113a4579b60af2abe7b62f9b02314acc6f97151d4cf87033a2b15fc20852fae306d1a095215396c
@@ -27711,7 +27849,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"source-map-js@npm:^1.2.1":
+"source-map-js@npm:^1.0.2, source-map-js@npm:^1.2.1":
   version: 1.2.1
   resolution: "source-map-js@npm:1.2.1"
   checksum: 10c0/7bda1fc4c197e3c6ff17de1b8b2c20e60af81b63a52cb32ec5a5d67a20a7d42651e2cb34ebe93833c5a2a084377e17455854fee3e21e7925c64a51b6a52b0faf
@@ -28461,6 +28599,26 @@ __metadata:
   languageName: node
   linkType: hard
 
+"styled-components@npm:6.1.8":
+  version: 6.1.8
+  resolution: "styled-components@npm:6.1.8"
+  dependencies:
+    "@emotion/is-prop-valid": "npm:1.2.1"
+    "@emotion/unitless": "npm:0.8.0"
+    "@types/stylis": "npm:4.2.0"
+    css-to-react-native: "npm:3.2.0"
+    csstype: "npm:3.1.2"
+    postcss: "npm:8.4.31"
+    shallowequal: "npm:1.1.0"
+    stylis: "npm:4.3.1"
+    tslib: "npm:2.5.0"
+  peerDependencies:
+    react: ">= 16.8.0"
+    react-dom: ">= 16.8.0"
+  checksum: 10c0/fafe4b9198d5d7980c2358821d1a89f86200d55c8eec03670cf12cf43b8a05a77eafaf0872cd85821f68238308e0f5c9d9aa43a62e6987c65b70baa2c3277ab8
+  languageName: node
+  linkType: hard
+
 "styled-components@npm:^4.1.3":
   version: 4.4.1
   resolution: "styled-components@npm:4.4.1"
@@ -28590,6 +28748,13 @@ __metadata:
   peerDependencies:
     stylis: ^3.5.0
   checksum: 10c0/362d1a6473569f702ed814a17ecb0a71f84cb93c45aaf82d6054dd1167d60cc4d2d0bc73dc15eb069cd11ea2d91fefb572f910db64c1b5f07f81296a9c6d0f24
+  languageName: node
+  linkType: hard
+
+"stylis@npm:4.3.1":
+  version: 4.3.1
+  resolution: "stylis@npm:4.3.1"
+  checksum: 10c0/33e8ebd2bfa5f0bd0215f718dc2d3be896e1d00c5bcaeb9a4ae03cf239db6867af9eee230f57229bf1c29499357073ba3e6b547484ba1db2f5de1e8be7d4eee9
   languageName: node
   linkType: hard
 
@@ -29467,6 +29632,13 @@ __metadata:
   version: 2.3.0
   resolution: "tslib@npm:2.3.0"
   checksum: 10c0/a845aed84e7e7dbb4c774582da60d7030ea39d67307250442d35c4c5dd77e4b44007098c37dd079e100029c76055f2a362734b8442ba828f8cc934f15ed9be61
+  languageName: node
+  linkType: hard
+
+"tslib@npm:2.5.0":
+  version: 2.5.0
+  resolution: "tslib@npm:2.5.0"
+  checksum: 10c0/e32fc99cc730dd514e53c44e668d76016e738f0bcc726aad5dbd2d335cf19b87a95a9b1e4f0a9993e370f1d702b5e471cdd4acabcac428a3099d496b9af2021e
   languageName: node
   linkType: hard
 
