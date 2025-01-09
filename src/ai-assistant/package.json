@@ -31,12 +31,14 @@
     "umd"
   ],
   "dependencies": {
+    "@duckdb/duckdb-wasm": "^1.29.0",
     "@kepler.gl/components": "3.1.0-alpha.1",
     "@kepler.gl/constants": "3.1.0-alpha.1",
     "@kepler.gl/layers": "3.1.0-alpha.1",
     "@kepler.gl/types": "3.1.0-alpha.1",
     "@kepler.gl/utils": "3.1.0-alpha.1",
     "@openassistant/core": "^0.0.5",
+    "@openassistant/duckdb": "^0.0.5",
     "@openassistant/echarts": "^0.0.5",
     "@openassistant/geoda": "^0.0.5",
     "@openassistant/ui": "^0.0.5",

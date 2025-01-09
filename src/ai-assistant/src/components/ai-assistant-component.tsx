@@ -11,6 +11,7 @@ import {
 } from '@openassistant/geoda';
 import {histogramFunctionDefinition, scatterplotFunctionDefinition} from '@openassistant/echarts';
 import {AiAssistant} from '@openassistant/ui';
+import {queryDuckDBFunctionDefinition} from '@openassistant/duckdb';
 import '@openassistant/echarts/dist/index.css';
 import '@openassistant/ui/dist/index.css';
 
@@ -32,7 +33,6 @@ import {
   PROMPT_IDEAS,
   WELCOME_MESSAGE
 } from '../constants';
-import {filterFunctionDefinition} from '../tools/filter-function';
 import {addLayerFunctionDefinition} from '../tools/layer-creation-function';
 import {updateLayerColorFunctionDefinition} from '../tools/layer-style-function';
 import {SelectedKeplerGlActions} from './ai-assistant-manager';
@@ -42,6 +42,7 @@ import {
   getScatterplotValuesFromDataset,
   getValuesFromDataset,
   highlightRows,
+  highlightRowsByColumnValues,
   saveAsDataset
 } from '../tools/utils';
 
@@ -93,6 +94,20 @@ function AiAssistantComponentFactory() {
         keplerGlActions.layerSetIsValid
       );
 
+    const highlightRowsByColumnValuesOnSelected = (
+      datasetName: string,
+      columnName: string,
+      selectedValues: unknown[]
+    ) =>
+      highlightRowsByColumnValues(
+        visState.datasets,
+        visState.layers,
+        datasetName,
+        columnName,
+        selectedValues,
+        keplerGlActions.layerSetIsValid
+      );
+
     // define LLM functions
     const functions = [
       basemapFunctionDefinition({mapStyleChange: keplerGlActions.mapStyleChange, mapStyle}),
@@ -109,12 +124,11 @@ function AiAssistantComponentFactory() {
         layerVisualChannelConfigChange: keplerGlActions.layerVisualChannelConfigChange,
         layers: visState.layers
       }),
-      filterFunctionDefinition({
-        datasets: visState.datasets,
-        filters: visState.filters,
-        createOrUpdateFilter: keplerGlActions.createOrUpdateFilter,
-        setFilter: keplerGlActions.setFilter,
-        setFilterPlot: keplerGlActions.setFilterPlot
+      queryDuckDBFunctionDefinition({
+        // duckDB: kepler.gl duckdb instance
+        getValues: (datasetName: string, variableName: string): number[] =>
+          getValuesFromDataset(visState.datasets, datasetName, variableName),
+        onSelected: highlightRowsByColumnValuesOnSelected
       }),
       histogramFunctionDefinition({
         getValues: getValuesCallback,
