@@ -86,6 +86,7 @@ test('parseMetadata, metadata from MVTSource and Mapbox URL', () => {
   expect(
     parseMetadata(MVT_METADATA, {tileUrl: 'https://api.mapbox.com/v4/spam/{z}/{x}/{y}.mvt'})
   ).toEqual({
+    attributions: [],
     metaJson: null,
     bounds: [-180, -85, 180, 85],
     center: [0, 0, 0],
@@ -118,6 +119,7 @@ test('parseMetadata, PMTiles from PMTileSource', () => {
         'https://4sq-studio-data-staging.s3.us-west-2.amazonaws.com/some_path/some_file.pmtiles'
     })
   ).toEqual({
+    attributions: [],
     name: 'My Custom Tiles',
     description: 'My Custom Tiles Description',
     metaJson: null,
@@ -160,6 +162,7 @@ test('parseMetadata, PMTiles from PMTileSource', () => {
 
 test('parseMetadata, empty input', () => {
   expect(parseMetadata({})).toEqual({
+    attributions: [],
     name: '',
     description: '',
     metaJson: null,
@@ -173,6 +176,7 @@ test('parseMetadata, empty input', () => {
   expect(
     parseMetadata({}, {tileUrl: 'http://xyz.api.here.com/some_id/tile/web/{z}_{x}_{y}.pbf'})
   ).toEqual({
+    attributions: [],
     name: '',
     description: '',
     metaJson: null,
@@ -184,6 +188,7 @@ test('parseMetadata, empty input', () => {
   });
 
   expect(parseMetadata({}, {tileUrl: 'https://api.mapbox.com/v4/spam/{z}/{x}/{y}.mvt'})).toEqual({
+    attributions: [],
     name: '',
     description: '',
     metaJson: null,
