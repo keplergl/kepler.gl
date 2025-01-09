@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
 # Copyright contributors to the kepler.gl project
 
-version_info = (0, 3, 5, 'final', 0)
+version_info = (0, 3, 6, 'final', 0)
 
 _specifier_ = {'alpha': 'a', 'beta': 'b', 'candidate': 'rc', 'final': ''}
 
@@ -17,4 +17,4 @@ __version__ = '%s.%s.%s%s'%(major, minor, patch,
 #
 # The major version needs to match that of the JS package.
 # Note: this follows the semver format, which is used to match the JS package version in keplergl-plugin.js
-EXTENSION_SPEC_VERSION = '0.3.5'
+EXTENSION_SPEC_VERSION = '0.3.6'
