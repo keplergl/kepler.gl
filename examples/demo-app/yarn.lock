@@ -3911,9 +3911,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@openassistant/core@npm:^0.0.4":
-  version: 0.0.4
-  resolution: "@openassistant/core@npm:0.0.4"
+"@openassistant/core@npm:^0.0.5":
+  version: 0.0.5
+  resolution: "@openassistant/core@npm:0.0.5"
   dependencies:
     "@langchain/core": "npm:^0.3.26"
     "@langchain/google-genai": "npm:^0.1.6"
@@ -3921,14 +3921,14 @@ __metadata:
     "@langchain/openai": "npm:^0.3.16"
     axios: "npm:^1.7.9"
   peerDependencies:
-    react: ^18.3.1
-  checksum: 10c0/5911f55e9bcf7c2dacb7c469f7873482b1721051dbd513ae3ad45ddc7038e5e90321cb653d722db3720c8869e87770a57f0f357739a5c8d7700ead7f8f33b7e0
+    react: ">=18.2"
+  checksum: 10c0/8600e8f41fc6456f84f1ef2c5a677aa3e27a8beddfed933580b5ec8a918abc01f2c60add1d032edc48582d0a98533ef0a27725bb6950abc87a2126ce799d1ac0
   languageName: node
   linkType: hard
 
-"@openassistant/ui@npm:^0.0.4":
-  version: 0.0.4
-  resolution: "@openassistant/ui@npm:0.0.4"
+"@openassistant/ui@npm:^0.0.5":
+  version: 0.0.5
+  resolution: "@openassistant/ui@npm:0.0.5"
   dependencies:
     "@iconify/react": "npm:^5.1.0"
     "@nextui-org/react": "npm:^2.6.10"
@@ -3939,9 +3939,9 @@ __metadata:
     tailwindcss: "npm:^3.4.17"
   peerDependencies:
     "@openassistant/core": "*"
-    react: ^18.3.1
-    react-dom: ^18.3.1
-  checksum: 10c0/ec454d185259c9682e49afbbe0ab8e3ddf432e3c7cd532901fe0534e88dfac8a7fed516daa1cab971a437456aa5abd830d0edc0fada3c256495659d718b375c9
+    react: ">=18.2"
+    react-dom: ">=18.2"
+  checksum: 10c0/7ad037ab8686d0e41beab2f49bf0f6e3b112715b08d1a63a055adfa60ba410460ccdb7a41fce4f9692222e5f60c5b55fbc217770b3f037dd403cfb34140f4c1d
   languageName: node
   linkType: hard
 
@@ -11679,8 +11679,8 @@ __metadata:
     "@loaders.gl/csv": "npm:^4.3.2"
     "@loaders.gl/json": "npm:^4.3.2"
     "@loaders.gl/parquet": "npm:^4.3.2"
-    "@openassistant/core": "npm:^0.0.4"
-    "@openassistant/ui": "npm:^0.0.4"
+    "@openassistant/core": "npm:^0.0.5"
+    "@openassistant/ui": "npm:^0.0.5"
     "@types/classnames": "npm:^2.3.1"
     "@types/keymirror": "npm:^0.1.1"
     "@types/react": "npm:^18.2.0"

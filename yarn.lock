@@ -3117,10 +3117,10 @@ __metadata:
     "@kepler.gl/layers": "npm:3.1.0-alpha.1"
     "@kepler.gl/types": "npm:3.1.0-alpha.1"
     "@kepler.gl/utils": "npm:3.1.0-alpha.1"
-    "@openassistant/core": "npm:^0.0.4"
-    "@openassistant/echarts": "npm:^0.0.4"
-    "@openassistant/geoda": "npm:^0.0.4"
-    "@openassistant/ui": "npm:^0.0.4"
+    "@openassistant/core": "npm:^0.0.5"
+    "@openassistant/echarts": "npm:^0.0.5"
+    "@openassistant/geoda": "npm:^0.0.5"
+    "@openassistant/ui": "npm:^0.0.5"
     color-interpolate: "npm:^1.0.5"
     global: "npm:^4.3.0"
   languageName: unknown
@@ -6582,9 +6582,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@openassistant/core@npm:^0.0.4":
-  version: 0.0.4
-  resolution: "@openassistant/core@npm:0.0.4"
+"@openassistant/core@npm:^0.0.5":
+  version: 0.0.5
+  resolution: "@openassistant/core@npm:0.0.5"
   dependencies:
     "@langchain/core": "npm:^0.3.26"
     "@langchain/google-genai": "npm:^0.1.6"
@@ -6592,14 +6592,14 @@ __metadata:
     "@langchain/openai": "npm:^0.3.16"
     axios: "npm:^1.7.9"
   peerDependencies:
-    react: ^18.3.1
-  checksum: 10c0/5911f55e9bcf7c2dacb7c469f7873482b1721051dbd513ae3ad45ddc7038e5e90321cb653d722db3720c8869e87770a57f0f357739a5c8d7700ead7f8f33b7e0
+    react: ">=18.2"
+  checksum: 10c0/8600e8f41fc6456f84f1ef2c5a677aa3e27a8beddfed933580b5ec8a918abc01f2c60add1d032edc48582d0a98533ef0a27725bb6950abc87a2126ce799d1ac0
   languageName: node
   linkType: hard
 
-"@openassistant/echarts@npm:^0.0.4":
-  version: 0.0.4
-  resolution: "@openassistant/echarts@npm:0.0.4"
+"@openassistant/echarts@npm:^0.0.5":
+  version: 0.0.5
+  resolution: "@openassistant/echarts@npm:0.0.5"
   dependencies:
     "@iconify/react": "npm:^5.1.0"
     "@nextui-org/react": "npm:^2.6.10"
@@ -6615,33 +6615,34 @@ __metadata:
     tailwindcss: "npm:^3.4.17"
   peerDependencies:
     "@openassistant/core": "*"
-    react: ^18.3.1
-    react-dom: ^18.3.1
-  checksum: 10c0/66f8ee8173b871aab1633b28797f50d61393c21f0b19da8e3ea3812389a7d0580763d05bc2dfc63d09be5b921111ecbdd761f7a17ebcc21f0dfaef125ad68d7c
+    react: ">=18.2"
+    react-dom: ">=18.2"
+  checksum: 10c0/88cb19c816b1684969d44ca9cc2d20a58dfa70c26b3e0dd46c5369bca5cf3b63a2b06202c328fccc0b502011f2af0c8cc3b6763a907b325722834d3650201ce5
   languageName: node
   linkType: hard
 
-"@openassistant/geoda@npm:^0.0.4":
-  version: 0.0.4
-  resolution: "@openassistant/geoda@npm:0.0.4"
+"@openassistant/geoda@npm:^0.0.5":
+  version: 0.0.5
+  resolution: "@openassistant/geoda@npm:0.0.5"
   dependencies:
     "@loaders.gl/core": "npm:^4.3.3"
     "@loaders.gl/schema": "npm:^4.3.3"
     "@nextui-org/react": "npm:^2.6.8"
     framer-motion: "npm:^11.15.0"
-    geoda-wasm: "npm:^0.0.4"
+    geoda-wasm: "npm:^0.0.5"
     tailwindcss: "npm:^3.4.17"
   peerDependencies:
+    "@openassistant/common": "*"
     "@openassistant/core": "*"
-    react: ^18.3.1
-    react-dom: ^18.3.1
-  checksum: 10c0/455a4519475f329a7c3d6ac5e1f8c485b76bae58cd0e183af423e831437a274d4f9cd3e803b02317442f47642ab3811a7b20cdcb114d46a2e14c2eeb148dc583
+    react: ">=18.2"
+    react-dom: ">=18.2"
+  checksum: 10c0/41ddd65905262b17842c870ed8f93616e3f6400d6201829f7be8e2cf15f28f54d7f1586d234f86e5980ae2ee5d7c8f8025fa02219e72982b68f0e718a7ecf43a
   languageName: node
   linkType: hard
 
-"@openassistant/ui@npm:^0.0.4":
-  version: 0.0.4
-  resolution: "@openassistant/ui@npm:0.0.4"
+"@openassistant/ui@npm:^0.0.5":
+  version: 0.0.5
+  resolution: "@openassistant/ui@npm:0.0.5"
   dependencies:
     "@iconify/react": "npm:^5.1.0"
     "@nextui-org/react": "npm:^2.6.10"
@@ -6652,9 +6653,9 @@ __metadata:
     tailwindcss: "npm:^3.4.17"
   peerDependencies:
     "@openassistant/core": "*"
-    react: ^18.3.1
-    react-dom: ^18.3.1
-  checksum: 10c0/ec454d185259c9682e49afbbe0ab8e3ddf432e3c7cd532901fe0534e88dfac8a7fed516daa1cab971a437456aa5abd830d0edc0fada3c256495659d718b375c9
+    react: ">=18.2"
+    react-dom: ">=18.2"
+  checksum: 10c0/7ad037ab8686d0e41beab2f49bf0f6e3b112715b08d1a63a055adfa60ba410460ccdb7a41fce4f9692222e5f60c5b55fbc217770b3f037dd403cfb34140f4c1d
   languageName: node
   linkType: hard
 
@@ -16608,10 +16609,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"geoda-wasm@npm:^0.0.4":
-  version: 0.0.4
-  resolution: "geoda-wasm@npm:0.0.4"
-  checksum: 10c0/8320069013d9e80bcf4e8cd881f47ab0d9e14d321d2b73504203673db1c7bbae20166aaffa50862ee075a64d70da0f6aad5166f7ed132c926f0ce1067553413f
+"geoda-wasm@npm:^0.0.5":
+  version: 0.0.5
+  resolution: "geoda-wasm@npm:0.0.5"
+  dependencies:
+    "@loaders.gl/schema": "npm:^4.1.0-alpha.4"
+    geojson: "npm:^0.5.0"
+  checksum: 10c0/d7f13bb84161112124679251d75b73d14ea3491554adba3304dd119dc518e6578e688667616239917ce61b816a255de445bc50672f5f3e069c1a97ca8b68c52c
   languageName: node
   linkType: hard
 
@@ -16629,7 +16633,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"geojson@npm:0.5.0":
+"geojson@npm:0.5.0, geojson@npm:^0.5.0":
   version: 0.5.0
   resolution: "geojson@npm:0.5.0"
   checksum: 10c0/d7fd376c201933dea1307b7c08032f249f73b9399d6287211f6a523d0efa9260caf2a38319f55075682d53dc4cb4c52b9f9c845f2fd03bef9832903f16177ab0
