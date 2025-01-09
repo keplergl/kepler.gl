@@ -52,6 +52,7 @@ type MiniDataset = {
   id: string;
   color: RGBColor;
   label?: string;
+  disableDataOperation?: boolean;
 };
 
 export type DatasetTitleProps = {
@@ -137,10 +138,11 @@ export default function DatasetTitleFactory(
         if (typeof onTitleClick === 'function') {
           onTitleClick();
         } else if (typeof showDatasetTable === 'function') {
+          if (dataset.disableDataOperation) return;
           showDatasetTable(datasetId);
         }
       },
-      [onTitleClick, showDatasetTable, datasetId]
+      [onTitleClick, showDatasetTable, datasetId, dataset.disableDataOperation]
     );
 
     return (
@@ -168,7 +170,7 @@ export default function DatasetTitleFactory(
               <ArrowRight height="12px" />
             </CenterFlexbox>
           ) : null}
-          {showDatasetTable ? (
+          {showDatasetTable && !dataset.disableDataOperation ? (
             <ShowDataTable id={datasetId} showDatasetTable={showDatasetTable} />
           ) : null}
           {showDeleteDataset ? (
