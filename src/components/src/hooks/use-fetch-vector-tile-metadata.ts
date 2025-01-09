@@ -72,7 +72,7 @@ export default function useFetchVectorTileMetadata({
                     metadataUrl: decodeURIComponent(url)
                   }
                 })
-              : PMTilesSource.createDataSource(decodeURIComponent(url), {});
+              : PMTilesSource.createDataSource(url, {});
 
           const metadata = await tileSource.metadata;
           setProcessedData(metadata);
