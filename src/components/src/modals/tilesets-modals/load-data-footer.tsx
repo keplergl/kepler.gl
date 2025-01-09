@@ -38,7 +38,8 @@ const LoadDataFooterContainer = styled.div.attrs({
 
 const ErrorContainer = styled.div`
   color: red;
-  padding-right: 15px;
+  padding-left: 15px;
+  display: inline-block;
 `;
 
 type LoadDataFooterProps = {
@@ -47,7 +48,7 @@ type LoadDataFooterProps = {
   onConfirm: () => void;
   confirmText: string;
   prependText?: string;
-  errorText?: string;
+  errorText?: string | null;
 };
 
 const LoadDataFooter: React.FC<LoadDataFooterProps & WrappedComponentProps> = ({
@@ -62,7 +63,6 @@ const LoadDataFooter: React.FC<LoadDataFooterProps & WrappedComponentProps> = ({
   return (
     <LoadDataFooterContainer>
       <div>
-        {errorText && <ErrorContainer>{errorText}</ErrorContainer>}
         {prependText}
         <AddDataButton
           disabled={disabled}
@@ -78,6 +78,7 @@ const LoadDataFooter: React.FC<LoadDataFooterProps & WrappedComponentProps> = ({
                 id: confirmText
               })}
         </AddDataButton>
+        {errorText && <ErrorContainer>{errorText}</ErrorContainer>}
       </div>
     </LoadDataFooterContainer>
   );

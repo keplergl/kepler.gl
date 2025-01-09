@@ -75,6 +75,10 @@ export default function useFetchVectorTileMetadata({
               : PMTilesSource.createDataSource(url, {});
 
           const metadata = await tileSource.metadata;
+          // Since we switched to PMTilesSource.createDataSource response errors aren't available here
+          if (!metadata) {
+            throw new Error('Failed to fetch metadata');
+          }
           setProcessedData(metadata);
         } catch (metadataError) {
           setError(metadataError as any);

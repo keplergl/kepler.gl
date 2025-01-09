@@ -142,7 +142,9 @@ function LoadTilesetTabFactory() {
             */}
             <div>
               <CurrentForm setResponse={setResponse} />
+              {/** 
               {error && <div>{getError(error)}</div>}
+              */}
             </div>
           </div>
           <MetaContainer>
@@ -162,6 +164,7 @@ function LoadTilesetTabFactory() {
           isLoading={loading || isAddingDatasets}
           onConfirm={createTileDataset}
           confirmText="tilesetSetup.addTilesetText"
+          errorText={error && getError(error)}
         />
       </LoadTilesetTabContainer>
     );
