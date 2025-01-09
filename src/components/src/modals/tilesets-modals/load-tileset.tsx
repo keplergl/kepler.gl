@@ -161,7 +161,7 @@ function LoadTilesetTabFactory() {
           disabled={Boolean(error) || !isReady(response)}
           isLoading={loading || isAddingDatasets}
           onConfirm={createTileDataset}
-          confirmText="Add Tileset"
+          confirmText="tilesetSetup.addTilesetText"
         />
       </LoadTilesetTabContainer>
     );

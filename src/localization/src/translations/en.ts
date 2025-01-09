@@ -603,7 +603,8 @@ ${'```'}
     or: 'or'
   },
   tilesetSetup: {
-    header: 'Setup Vector Tiles'
+    header: 'Setup Vector Tiles',
+    addTilesetText: 'Add Tileset'
   },
   geocoder: {
     title: 'Enter an address or coordinates, ex 37.79,-122.40'

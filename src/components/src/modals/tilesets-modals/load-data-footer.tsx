@@ -2,9 +2,11 @@
 // Copyright contributors to the kepler.gl project
 
 import React from 'react';
+import {injectIntl, WrappedComponentProps} from 'react-intl';
 import styled from 'styled-components';
 
 import {Button} from '../../common';
+import LoadingSpinner from '../../common/loading-spinner';
 
 const AddDataButton = styled(Button)<{isLoading?: boolean}>`
   position: relative;
@@ -13,7 +15,7 @@ const AddDataButton = styled(Button)<{isLoading?: boolean}>`
   opacity: ${props => (props.disabled ? 0.6 : 1)};
   height: 40px;
   padding: 9px 32px;
-  width: auto;
+  width: ${props => props.width};
 
   svg {
     margin-right: ${props => (props.isLoading ? '0' : '6px')};
@@ -48,14 +50,15 @@ type LoadDataFooterProps = {
   errorText?: string;
 };
 
-const LoadDataFooter: React.FC<LoadDataFooterProps> = ({
+const LoadDataFooter: React.FC<LoadDataFooterProps & WrappedComponentProps> = ({
   disabled,
+  intl,
   isLoading,
   onConfirm,
   confirmText,
   prependText = '',
   errorText = ''
-}) => {
+}: LoadDataFooterProps & WrappedComponentProps) => {
   return (
     <LoadDataFooterContainer>
       <div>
@@ -65,14 +68,19 @@ const LoadDataFooter: React.FC<LoadDataFooterProps> = ({
           disabled={disabled}
           isLoading={isLoading}
           onClick={onConfirm}
-          width="100px"
+          width="130px"
           cta
         >
-          {confirmText}
+          {isLoading && <LoadingSpinner size={12} />}
+          {isLoading
+            ? null
+            : intl.formatMessage({
+                id: confirmText
+              })}
         </AddDataButton>
       </div>
     </LoadDataFooterContainer>
   );
 };
 
-export default LoadDataFooter;
+export default injectIntl(LoadDataFooter) as React.FC<LoadDataFooterProps>;
