@@ -3911,9 +3911,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@openassistant/core@file:/Users/xun/github/openassistant/packages/core/openassistant-core-0.0.4.tgz::locator=root-workspace-0b6124%40workspace%3A.":
+"@openassistant/core@npm:^0.0.4":
   version: 0.0.4
-  resolution: "@openassistant/core@file:/Users/xun/github/openassistant/packages/core/openassistant-core-0.0.4.tgz#/Users/xun/github/openassistant/packages/core/openassistant-core-0.0.4.tgz::hash=27f703&locator=root-workspace-0b6124%40workspace%3A."
+  resolution: "@openassistant/core@npm:0.0.4"
   dependencies:
     "@langchain/core": "npm:^0.3.26"
     "@langchain/google-genai": "npm:^0.1.6"
@@ -3921,14 +3921,14 @@ __metadata:
     "@langchain/openai": "npm:^0.3.16"
     axios: "npm:^1.7.9"
   peerDependencies:
-    react: ">=18.2"
-  checksum: 10c0/b7a4b48747339cd7d35255a3a9aa587d0484ac8f8db6601ffb92ba1d6ed43f1b3f4594d25ad7272099ae7854d76866864e5c14398e5bd06e8c0f6e96ffe35718
+    react: ^18.3.1
+  checksum: 10c0/5911f55e9bcf7c2dacb7c469f7873482b1721051dbd513ae3ad45ddc7038e5e90321cb653d722db3720c8869e87770a57f0f357739a5c8d7700ead7f8f33b7e0
   languageName: node
   linkType: hard
 
-"@openassistant/ui@file:/Users/xun/github/openassistant/packages/ui/openassistant-ui-0.0.4.tgz::locator=root-workspace-0b6124%40workspace%3A.":
+"@openassistant/ui@npm:^0.0.4":
   version: 0.0.4
-  resolution: "@openassistant/ui@file:/Users/xun/github/openassistant/packages/ui/openassistant-ui-0.0.4.tgz#/Users/xun/github/openassistant/packages/ui/openassistant-ui-0.0.4.tgz::hash=56c422&locator=root-workspace-0b6124%40workspace%3A."
+  resolution: "@openassistant/ui@npm:0.0.4"
   dependencies:
     "@iconify/react": "npm:^5.1.0"
     "@nextui-org/react": "npm:^2.6.10"
@@ -3939,9 +3939,9 @@ __metadata:
     tailwindcss: "npm:^3.4.17"
   peerDependencies:
     "@openassistant/core": "*"
-    react: ">=18.2"
-    react-dom: ">=18.2"
-  checksum: 10c0/c78a2611aa0861a52eabaaf7f9f4820f519841e5067e663799c093030f7151e3c3dd0992cbd71bc91236eff5d439dbdd54c8e1702717d3f3727a7037526d971a
+    react: ^18.3.1
+    react-dom: ^18.3.1
+  checksum: 10c0/ec454d185259c9682e49afbbe0ab8e3ddf432e3c7cd532901fe0534e88dfac8a7fed516daa1cab971a437456aa5abd830d0edc0fada3c256495659d718b375c9
   languageName: node
   linkType: hard
 
@@ -11679,8 +11679,8 @@ __metadata:
     "@loaders.gl/csv": "npm:^4.3.2"
     "@loaders.gl/json": "npm:^4.3.2"
     "@loaders.gl/parquet": "npm:^4.3.2"
-    "@openassistant/core": /Users/xun/github/openassistant/packages/core/openassistant-core-0.0.4.tgz
-    "@openassistant/ui": /Users/xun/github/openassistant/packages/ui/openassistant-ui-0.0.4.tgz
+    "@openassistant/core": "npm:^0.0.4"
+    "@openassistant/ui": "npm:^0.0.4"
     "@types/classnames": "npm:^2.3.1"
     "@types/keymirror": "npm:^0.1.1"
     "@types/react": "npm:^18.2.0"
