@@ -13,3 +13,14 @@ export type ZoomStopsConfig = {
   enabled?: boolean;
   stops: ZoomStops | null;
 };
+
+export type DatasetAttribution = {
+  title: string;
+  url: string | null;
+};
+
+export type AttributionWithStyle = DatasetAttribution & {
+  logoUrl: string;
+  height?: number;
+  bottom?: number;
+};

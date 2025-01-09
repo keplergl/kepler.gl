@@ -125,7 +125,7 @@
     "react-virtualized": "^9.22.5",
     "react-vis": "1.11.7",
     "redux": "^4.2.1",
-    "reselect": "^4.0.0",
+    "reselect": "^4.1.0",
     "styled-components": "6.1.8",
     "suncalc": "^1.9.0",
     "viewport-mercator-project": "^6.0.0"

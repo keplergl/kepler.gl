@@ -70,6 +70,7 @@ type VectorTileField = {
 };
 
 export type VectorTileMetadata = {
+  attributions?: unknown[];
   metaJson: any | null;
   bounds: number[] | null;
   center: number[] | null;
@@ -269,6 +270,7 @@ function parseMetadataTippecanoeFromDataSource(
   }
 
   let result: TilesetMetadata = {
+    attributions: [],
     metaJson: null,
     bounds: null,
     center: null,
@@ -317,6 +319,10 @@ function parseMetadataTippecanoeFromDataSource(
 
   result = {
     ...result,
+    attributions:
+      pmTileMetadata.attributions ||
+      (mvtMetadata.htmlAttribution ? [mvtMetadata.htmlAttribution] : undefined) ||
+      [],
     ...parseMetaJson(result.metaJson)
   };
 
