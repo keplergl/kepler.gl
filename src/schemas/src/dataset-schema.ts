@@ -152,7 +152,7 @@ export class DatasetSchema extends Schema {
       data: {fields: updatedFields, rows: dataset.allData},
       info: pick(dataset, ['id', 'label', 'color', 'type']),
       ...(dataset.metadata ? {metadata: dataset.metadata} : {}),
-      disableDataOperation: dataset.disableDataOperation
+      ...(dataset.disableDataOperation ? {disableDataOperation: dataset.disableDataOperation} : {})
     };
   }
 }
