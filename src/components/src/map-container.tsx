@@ -186,7 +186,7 @@ interface StyledDatasetAttributionsContainerProps {
 }
 
 const StyledDatasetAttributionsContainer = styled.div<StyledDatasetAttributionsContainerProps>`
-  max-width: ${props => (props.isPalm ? '130px' : '180px')};
+  max-width: ${props => (props.isPalm ? '200px' : '300px')};
   text-overflow: ellipsis;
   white-space: nowrap;
   overflow: hidden;

@@ -293,11 +293,8 @@ export const geoCoderPanelSelector = (
  * Returns array of unique dataset attributions, each with title and url properties.
  */
 export const datasetAttributionSelector = createSelector(
-  state => {
-    return state.visState.datasets;
-  },
-  (datasets: any[]) => {
-    // TODO collect attributions from layers, and merge with dataset attributions here
+  [state => state.visState.datasets],
+  datasets => {
     const uniqueAttributions: DatasetAttribution[] = [];
     Object.keys(datasets).forEach(key => {
       const ds = datasets[key];
@@ -305,7 +302,26 @@ export const datasetAttributionSelector = createSelector(
       if (Array.isArray(attributions)) {
         attributions.forEach(attribution => {
           if (typeof attribution === 'string') {
-            uniqueAttributions.push({title: attribution, url: null});
+            // attribution can be a raw string or a string with link tags
+            const links = attribution.match(/<a[^]+?a>/g);
+            if (links) {
+              try {
+                links?.forEach(link => {
+                  const href = link.match(/href="([^"]*)/)?.[1];
+                  const title = link.match(/title="([^"]*)/)?.[1];
+                  if (href && title) {
+                    uniqueAttributions.push({
+                      title: `${link.indexOf('&copy;') >= 0 ? '© ' : ''}${title}`,
+                      url: href
+                    });
+                  }
+                });
+              } catch (error) {
+                // just ignore for now
+              }
+            } else {
+              uniqueAttributions.push({title: attribution, url: null});
+            }
           }
         });
       }
@@ -321,7 +337,8 @@ export const datasetAttributionSelector = createSelector(
 export const attributionSelector = createSelector(
   [datasetAttributionSelector],
   datasetAttributions => {
-    const uniqueTextAttributions = [...datasetAttributions];
+    // TODO collect attributions from layers, and merge with dataset attributions here
+    const uniqueTextAttributions = datasetAttributions;
     const logos: AttributionWithStyle[] = [];
 
     return {sources: uniqueTextAttributions, logos};

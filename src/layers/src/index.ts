@@ -56,6 +56,7 @@ export type {
 } from './vector-tile/utils/vector-tile-utils';
 export {default as VectorTileIcon} from './vector-tile/vector-tile-icon';
 export {default as VectorTileLayer} from './vector-tile/vector-tile-layer';
+export {getMVTMetadata} from './vector-tile/mvt-source-utils';
 
 import {LAYER_TYPES} from '@kepler.gl/constants';
 export {parseGeoJsonRawFeature} from './geojson-layer/geojson-utils';
