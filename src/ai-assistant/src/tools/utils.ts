@@ -98,7 +98,7 @@ export function highlightRows(
 
 export function getDatasetContext(datasets: Datasets, layers: Layer[]) {
   const context = 'Please remember the following dataset context:';
-  const dataMeta = Object.values(datasets).map(dataset => ({
+  const dataMeta = Object.values(datasets).map((dataset: KeplerTable) => ({
     datasetName: dataset.label,
     datasetId: dataset.id,
     fields: dataset.fields.map(field => ({[field.name]: field.type})),
