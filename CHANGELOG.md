@@ -15,9 +15,51 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+## [3.1.0-alpha.4] - January 10 2025
+
+- 2753321c5 [feat] Vector Tile layer fixes (#2899)
+- 073c585e4 [Fix] add_data() function failed in keplergl-jupyter
+- 6e425972e [feat] mapbox and maplibre simultaneous support (#2897)
+- 22f9ba14d [Chore] Fix lint error for Register actions (#2896)
+- ccfc2e2ad [fix] Image export legend positioning (#2895)
+- cf02a3ca6 [chore] Upgrade styled components to v6 (#2894)
+- 4c9ffe827 [fix] Prevent infinite useEffects loop in range-plot (#2892)
+- 0b67c5409 [fix] fixed onOptionSelected handler when option is null (#2891)
+- 40ba839e3 [fix] Add ellipsis in LayerTypeListItem (#2890)
+- d0d31bdfa [fix] Handle selecting geojson polygon with missing properties (#2889)
+- 79801bec0 [fix] Tippy tooltips in animation controls (#2888)
+- 0ad53723a [feat] Adding setAnimationConfig action (#2887)
+- 67b001980 [chore] export TimeFieldFilterProps (#2883)
+- 603fde8d1 [fix] Fixed issue when mapstate latitude or langitude are out of bounds (#2882)
+- 92c9e6abc [fix] Use floating-ui to deal with closing on click outside (#2886)
+- 4bcf55bd6 [Feat] Custom color scale for categorical/ordinal field (#2880)
+- 23f603428 [Bug] Prevent dragging legend component outside of container (#2885)
+- d549fcd4e [fix] copy map config style (#2878)
+- 34444fa54 [fix] check for allBins (#2876)
+- 8335ba410 [fix] Custom Color Scale fixes (#2875)
+- 141236513 [chore] Add several vis state mergers combineConfigs and improve TS (#2634)
+- 9f3f08944 [Chore] Add composedReducerSchema to schema manager (#2633)
+- e633177ef [chore] applyFilterConfig action (#2872)
+- ceb930e2d [Fix] incorrect multi-dataset filter domain (#2871)
+- 00dd00279 [fix] show scale options for Point Count in aggregation layers (#2870)
+- a39fcf8c4 [fix] pass strings to color palette inputs (#2873)
+- b89b19c6a [chore] Consolidate vis state tests (#2869)
+- 77e785713 [feat] Support custom ordinal color scale on string field in layer config (#2868)
+- cccc4be2b [feat] Free positioning of the legend (#2874)
+- 2d1d8e5f5 [Fix] add_data() function in keplergl-jupyter (#2867)
+- 3b46abd34 [feat] add LayerToggleVisibility for single splitMap (#2863)
+- b2b6f10c8 [Release] Candidate Kepler-Jupyter v0.3.4 (#2588)
+- 3bf006f41 [fix] Remove legend layer groups height capping (#2864)
+- f1245d7e5 [chore] ts refactoring (#2861)
+- a897715cc [Feat] Add custom color scale for aggregate layers (#2860)
+- 6bc594602 [Feat] replaceDataInMap action - save colorsByDataId (#2859)
+- be2f04e6d [chore] add fsq color palettes (#2862)
+- c7d3777fc [fix] change process to globalThis.process (#2865)
+- 5cb8a3431 [chore] Create SECURITY.md (#2845)
+
 ## [3.1.0-alpha.3] - December 25 2024
 
-2cd7a859c [chore] fix missing dependencies in workspaces (#2856)
+- 2cd7a859c [chore] fix missing dependencies in workspaces (#2856)
 
 ## [3.1.0-alpha.2] - December 24 2024
 

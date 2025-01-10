@@ -4,7 +4,7 @@
 import React, {useCallback, useMemo, useState} from 'react';
 import styled from 'styled-components';
 import {FormattedMessage} from '@kepler.gl/localization';
-import {Datasets} from '@kepler.gl/table';
+import {Datasets, KeplerTable} from '@kepler.gl/table';
 
 import Tippy from '@tippyjs/react';
 import {Add} from '../common/icons';
@@ -99,7 +99,7 @@ const AddByDatasetButton: React.FC<AddByDatasetButtonProps> = ({
   const [tippyInstance, setTippyInstance] = useState();
 
   const options = useMemo(() => {
-    return Object.values(datasets).map(ds => ({
+    return Object.values(datasets).map((ds: KeplerTable) => ({
       label: ds.label,
       value: ds.id,
       color: ds.color

@@ -1,7 +1,7 @@
 {
   "name": "kepler.gl",
   "author": "Shan He <shan@uber.com>",
-  "version": "3.1.0-alpha.3",
+  "version": "3.1.0-alpha.4",
   "description": "kepler.gl is a webgl based application to visualize large scale location data in the browser",
   "license": "MIT",
   "main": "dist/index.js",
@@ -103,7 +103,7 @@
     "@deck.gl/mapbox": "^8.9.27",
     "@hubble.gl/core": "1.2.0-alpha.6",
     "@hubble.gl/react": "1.2.0-alpha.6",
-    "@kepler.gl/components": "3.1.0-alpha.3",
+    "@kepler.gl/components": "3.1.0-alpha.4",
     "@loaders.gl/polyfills": "^4.3.2",
     "@types/mapbox__geo-viewport": "^0.4.1",
     "html-webpack-plugin": "^4.3.0",
