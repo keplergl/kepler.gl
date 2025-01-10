@@ -58,14 +58,14 @@ It may work to use other [node](https://nodejs.org/en/download/package-manager) 
 - Using conda
 ```shell
 conda install jupyter
-conda install notebook 6.0.1
+conda install notebook
 ```
 
 - Using pip
   (When working with `pip` you may want to first create a virtual environment via `python -m venv venv && source ./venv/bin/activate` -- on Ubuntu you will need to install `python3-venv` for that)
 ```shell
 pip install jupyter
-pip install notebook==6.0.1
+pip install notebook
 ```
 
 #### 3. Install GeoPandas
@@ -98,7 +98,7 @@ yarn
 
 Rerun `yarn` if any js dependency has changed (usually after pulling new changes from master).
 
-#### 2. Load mapbox token
+#### 2. Load mapbox token (Optional)
 Add a [Mapbox access token](https://docs.mapbox.com/help/how-mapbox-works/access-tokens/) to the environment.
 
 ```sh
