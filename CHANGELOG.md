@@ -15,9 +15,10 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
-## [3.1.0-alpha.4] - TBD
+## [3.1.0-alpha.4] - January 10 2025
 
-- ...
+- 2753321c5 [feat] Vector Tile layer fixes (#2899)
+- 073c585e4 [Fix] add_data() function failed in keplergl-jupyter
 - 6e425972e [feat] mapbox and maplibre simultaneous support (#2897)
 - 22f9ba14d [Chore] Fix lint error for Register actions (#2896)
 - ccfc2e2ad [fix] Image export legend positioning (#2895)

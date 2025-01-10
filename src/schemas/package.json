@@ -1,7 +1,7 @@
 {
   "name": "@kepler.gl/schemas",
   "author": "Shan He <shan@uber.com>",
-  "version": "3.1.0-alpha.3",
+  "version": "3.1.0-alpha.4",
   "description": "kepler.gl schemas used by kepler.gl components, actions and reducers",
   "license": "MIT",
   "main": "dist/index.js",
@@ -30,12 +30,12 @@
     "umd"
   ],
   "dependencies": {
-    "@kepler.gl/common-utils": "3.1.0-alpha.3",
-    "@kepler.gl/constants": "3.1.0-alpha.3",
-    "@kepler.gl/layers": "3.1.0-alpha.3",
-    "@kepler.gl/table": "3.1.0-alpha.3",
-    "@kepler.gl/types": "3.1.0-alpha.3",
-    "@kepler.gl/utils": "3.1.0-alpha.3",
+    "@kepler.gl/common-utils": "3.1.0-alpha.4",
+    "@kepler.gl/constants": "3.1.0-alpha.4",
+    "@kepler.gl/layers": "3.1.0-alpha.4",
+    "@kepler.gl/table": "3.1.0-alpha.4",
+    "@kepler.gl/types": "3.1.0-alpha.4",
+    "@kepler.gl/utils": "3.1.0-alpha.4",
     "@loaders.gl/loader-utils": "^4.3.2",
     "@types/keymirror": "^0.1.1",
     "@types/lodash.clonedeep": "^4.5.7",
