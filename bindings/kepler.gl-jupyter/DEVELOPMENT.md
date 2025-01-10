@@ -187,7 +187,7 @@ jupyter labextension build .
 jupyter labextension install .
 ```
 
-Alternatively you can build the extension via `jupyter labextension build .` and then manually create a symbolic link from the folder output folder `./kepler-jupyter/labextension` to JupyterLab's folder `labextensions`, e.g. `/Users/test/opt/anaconda3/envs/test37/share/jupyter/labextensions`. You will need to reload the jupyter lab page.
+Alternatively you can build the extension via `jupyter labextension build .` and then manually create a symbolic link from the folder output folder `./kepler-jupyter` to JupyterLab's folder `labextensions`, e.g. `/Users/test/opt/anaconda3/envs/test37/share/jupyter/labextensions`. You will need to reload the jupyter lab page.
 
 The output of the jupyter labextension is defined in the file `js/package.json`:
 ```javascript
