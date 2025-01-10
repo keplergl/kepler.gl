@@ -74,7 +74,7 @@
     "react-palm": "^3.3.8",
     "redux": "^4.2.1",
     "redux-actions": "^2.2.1",
-    "reselect": "^4.0.0"
+    "reselect": "^4.1.0"
   },
   "overrides": {
     "@types/lodash": "4.17.5"

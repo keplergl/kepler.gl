@@ -5,7 +5,7 @@ import React from 'react';
 import styled from 'styled-components';
 import {format} from 'd3-format';
 
-import {DatasetType} from '@kepler.gl/layers';
+import {DatasetType} from '@kepler.gl/constants';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {DataContainerInterface} from '@kepler.gl/utils';
 

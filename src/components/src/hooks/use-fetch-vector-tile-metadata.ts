@@ -3,10 +3,11 @@
 
 import {useCallback, useEffect, useState} from 'react';
 
-import {MVTSource, TileJSON} from '@loaders.gl/mvt';
+import {/* MVTSource,*/ TileJSON} from '@loaders.gl/mvt';
 import {PMTilesSource, PMTilesMetadata} from '@loaders.gl/pmtiles';
 
-import {VectorTileMetadata, VectorTileType} from '@kepler.gl/layers';
+import {VectorTileType} from '@kepler.gl/constants';
+import {getMVTMetadata, VectorTileMetadata} from '@kepler.gl/table';
 
 type FetchVectorTileMetadataProps = {
   url: string | null;
@@ -65,16 +66,25 @@ export default function useFetchVectorTileMetadata({
         setLoading(true);
 
         try {
-          const tileSource =
-            type === VectorTileType.MVT
-              ? MVTSource.createDataSource('', {
-                  mvt: {
-                    metadataUrl: decodeURIComponent(url)
-                  }
-                })
-              : PMTilesSource.createDataSource(decodeURIComponent(url), {});
+          let metadata: PMTilesMetadata | TileJSON | null = null;
+          if (type === VectorTileType.MVT) {
+            metadata = await getMVTMetadata(url);
 
-          const metadata = await tileSource.metadata;
+            // MVTSource returns messy partial metadata
+            // MVTSource.createDataSource('', {
+            //   mvt: {
+            //     metadataUrl: decodeURIComponent(url)
+            //   }
+            // })
+          } else {
+            const tileSource = PMTilesSource.createDataSource(url, {});
+            metadata = await tileSource.metadata;
+          }
+
+          // Since we switched to Source.createDataSource detailed response errors aren't available here...
+          if (!metadata) {
+            throw new Error('Failed to fetch metadata');
+          }
           setProcessedData(metadata);
         } catch (metadataError) {
           setError(metadataError as any);

@@ -6,12 +6,18 @@ import KeplerTable, {Datasets} from './kepler-table';
 import {ProtoDataset, RGBColor} from '@kepler.gl/types';
 import Task from 'react-palm/tasks';
 
+import {DatasetType, VectorTileType} from '@kepler.gl/constants';
 import {
   hexToRgb,
   validateInputData,
   datasetColorMaker,
   getApplicationConfig
 } from '@kepler.gl/utils';
+import {PMTilesSource, PMTilesMetadata} from '@loaders.gl/pmtiles';
+import {/* MVTSource,*/ TileJSON} from '@loaders.gl/mvt';
+
+import {getMVTMetadata} from './tileset/tileset-utils';
+import {parseVectorMetadata} from './tileset/vector-tile-utils';
 
 // apply a color for each dataset
 // to use as label colors
@@ -80,12 +86,71 @@ async function updateTable({table, data}) {
   return updated;
 }
 
-async function createTable({info, color, opts, data}) {
+type CreateTableProps = {
+  info: any;
+  color: RGBColor;
+  opts: {
+    metadata?: Record<string, unknown>;
+  };
+  data: any;
+};
+
+async function createTable(dataasetInfo: CreateTableProps) {
+  const {info, color, opts, data} = dataasetInfo;
+
+  // update metadata for remote tiled datasets
+  const refreshedMetadata = await refreshMetadata(dataasetInfo);
+  const metadata = refreshedMetadata ? {...opts.metadata, ...refreshedMetadata} : opts.metadata;
+
   const TableClass = getApplicationConfig().table ?? KeplerTable;
-  const table = new TableClass({info, color, ...opts});
+  const table = new TableClass({
+    info,
+    color,
+    ...opts,
+    metadata
+  });
   await table.importData({data});
 
   return table;
 }
 const UPDATE_TABLE_TASK = Task.fromPromise(updateTable, 'UPDATE_TABLE_TASK');
 const CREATE_TABLE_TASK = Task.fromPromise(createTable, 'CREATE_TABLE_TASK');
+
+/**
+ * Fetch metadata for vector tile layers using tilesetMetadataUrl from metadata
+ * @param datasetInfo
+ * @returns
+ */
+async function refreshMetadata(datasetInfo: CreateTableProps) {
+  // so far only vector tile layers should refresh metadata
+  if (datasetInfo.info.type !== DatasetType.VECTOR_TILE) {
+    return null;
+  }
+
+  const {type, tilesetMetadataUrl} = datasetInfo.opts.metadata || {};
+
+  if (
+    !(type === VectorTileType.PMTILES || type === VectorTileType.MVT) ||
+    typeof tilesetMetadataUrl !== 'string'
+  ) {
+    return null;
+  }
+
+  try {
+    let rawMetadata: PMTilesMetadata | TileJSON | null = null;
+    if (type === VectorTileType.MVT) {
+      rawMetadata = await getMVTMetadata(tilesetMetadataUrl);
+    } else {
+      const tileSource = PMTilesSource.createDataSource(tilesetMetadataUrl, {});
+      rawMetadata = await tileSource.metadata;
+    }
+
+    if (rawMetadata) {
+      return parseVectorMetadata(rawMetadata);
+    }
+  } catch (err) {
+    // ignore for now, and use old metadata?
+  }
+
+  return null;
+}

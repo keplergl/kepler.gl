@@ -11,7 +11,13 @@ import {connect as keplerGlConnect} from './connect/keplergl-connect';
 import {IntlProvider} from 'react-intl';
 import {messages} from '@kepler.gl/localization';
 import {RootContext, FeatureFlagsContextProvider, FeatureFlags} from './context';
-import {OnErrorCallBack, OnSuccessCallBack, Viewport} from '@kepler.gl/types';
+import {
+  AttributionWithStyle,
+  DatasetAttribution,
+  OnErrorCallBack,
+  OnSuccessCallBack,
+  Viewport
+} from '@kepler.gl/types';
 
 import {
   MapStateActions,
@@ -157,6 +163,7 @@ export const mapFieldsSelector = (props: KeplerGLProps, index = 0) => ({
   mapboxApiAccessToken: props.mapboxApiAccessToken,
   mapboxApiUrl: props.mapboxApiUrl ? props.mapboxApiUrl : DEFAULT_KEPLER_GL_PROPS.mapboxApiUrl,
   mapState: mapStateSelector(props, index),
+  datasetAttributions: attributionSelector(props).sources,
   mapStyle: props.mapStyle,
   onDeckInitialized: props.onDeckInitialized,
   onViewStateChange: props.onViewStateChange,
@@ -281,6 +288,62 @@ export const geoCoderPanelSelector = (
   updateMap: props.mapStateActions.updateMap,
   appWidth: dimensions.width
 });
+
+/**
+ * Returns array of unique dataset attributions, each with title and url properties.
+ */
+export const datasetAttributionSelector = createSelector(
+  [state => state.visState.datasets],
+  datasets => {
+    const uniqueAttributions: DatasetAttribution[] = [];
+    Object.keys(datasets).forEach(key => {
+      const ds = datasets[key];
+      const attributions = ds?.metadata?.attributions;
+      if (Array.isArray(attributions)) {
+        attributions.forEach(attribution => {
+          if (typeof attribution === 'string') {
+            // attribution can be a raw string or a string with link tags
+            const links = attribution.match(/<a[^]+?a>/g);
+            if (links) {
+              try {
+                links?.forEach(link => {
+                  const href = link.match(/href="([^"]*)/)?.[1];
+                  const title = link.match(/title="([^"]*)/)?.[1];
+                  if (href && title) {
+                    uniqueAttributions.push({
+                      title: `${link.indexOf('&copy;') >= 0 ? '© ' : ''}${title}`,
+                      url: href
+                    });
+                  }
+                });
+              } catch (error) {
+                // just ignore for now
+              }
+            } else {
+              uniqueAttributions.push({title: attribution, url: null});
+            }
+          }
+        });
+      }
+    });
+    return uniqueAttributions;
+  }
+);
+
+/**
+ * Deduplicated dataset and layer text attributions and logos.
+ * Returns text attributions and logos to display.
+ */
+export const attributionSelector = createSelector(
+  [datasetAttributionSelector],
+  datasetAttributions => {
+    // TODO collect attributions from layers, and merge with dataset attributions here
+    const uniqueTextAttributions = datasetAttributions;
+    const logos: AttributionWithStyle[] = [];
+
+    return {sources: uniqueTextAttributions, logos};
+  }
+);
 
 export const notificationPanelSelector = (props: KeplerGLProps) => ({
   removeNotification: props.uiStateActions.removeNotification,
@@ -506,6 +569,7 @@ function KeplerGlFactory(
       const modalContainerFields = modalContainerSelector(this.props, this.root.current);
       const geoCoderPanelFields = geoCoderPanelSelector(this.props, dimensions);
       const notificationPanelFields = notificationPanelSelector(this.props);
+
       const mapContainers = !isSplit
         ? [
             <MapContainer

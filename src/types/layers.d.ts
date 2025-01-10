@@ -451,6 +451,9 @@ export interface KeplerLayer {
   };
   config: LayerBaseConfig;
 
+  get type(): string | null;
+  get supportedDatasetTypes(): string[] | null;
+
   getColorScale(
     colorScale: string,
     colorDomain: VisualChannelDomain,

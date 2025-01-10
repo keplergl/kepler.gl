@@ -34,13 +34,16 @@
     "@kepler.gl/constants": "3.1.0-alpha.3",
     "@kepler.gl/types": "3.1.0-alpha.3",
     "@kepler.gl/utils": "3.1.0-alpha.3",
+    "@loaders.gl/mvt": "^4.3.2",
+    "@loaders.gl/pmtiles": "^4.3.2",
     "@types/d3-array": "^2.8.0",
     "@types/lodash.uniq": "^4.5.7",
     "d3-array": "^2.8.0",
     "global": "^4.3.0",
     "lodash.uniq": "^4.0.1",
     "moment": "^2.10.6",
-    "react-palm": "^3.3.8"
+    "react-palm": "^3.3.8",
+    "type-analyzer": "0.4.0"
   },
   "nyc": {
     "sourceMap": false,

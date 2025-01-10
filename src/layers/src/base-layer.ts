@@ -178,7 +178,7 @@ function* generateColor(): Generator<RGBColor> {
     if (index === layerColors.length) {
       index = 0;
     }
-    yield layerColors[index++] as unknown as RGBColor;
+    yield layerColors[index++];
   }
 }
 

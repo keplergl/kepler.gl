@@ -3315,7 +3315,7 @@ __metadata:
     react-virtualized: "npm:^9.22.5"
     react-vis: "npm:1.11.7"
     redux: "npm:^4.2.1"
-    reselect: "npm:^4.0.0"
+    reselect: "npm:^4.1.0"
     styled-components: "npm:6.1.8"
     suncalc: "npm:^1.9.0"
     viewport-mercator-project: "npm:^6.0.0"
@@ -3461,7 +3461,7 @@ __metadata:
     react: "npm:^18.2.0"
     react-intl: "npm:^6.3.0"
     react-markdown: "npm:^6.0.3"
-    reselect: "npm:^4.0.0"
+    reselect: "npm:^4.1.0"
     s2-geometry: "npm:^1.2.10"
     styled-components: "npm:6.1.8"
     type-analyzer: "npm:0.4.0"
@@ -3555,7 +3555,7 @@ __metadata:
     react-palm: "npm:^3.3.8"
     redux: "npm:^4.2.1"
     redux-actions: "npm:^2.2.1"
-    reselect: "npm:^4.0.0"
+    reselect: "npm:^4.1.0"
   languageName: unknown
   linkType: soft
 
@@ -3598,6 +3598,8 @@ __metadata:
     "@kepler.gl/constants": "npm:3.1.0-alpha.3"
     "@kepler.gl/types": "npm:3.1.0-alpha.3"
     "@kepler.gl/utils": "npm:3.1.0-alpha.3"
+    "@loaders.gl/mvt": "npm:^4.3.2"
+    "@loaders.gl/pmtiles": "npm:^4.3.2"
     "@types/d3-array": "npm:^2.8.0"
     "@types/lodash.uniq": "npm:^4.5.7"
     d3-array: "npm:^2.8.0"
@@ -3605,6 +3607,7 @@ __metadata:
     lodash.uniq: "npm:^4.0.1"
     moment: "npm:^2.10.6"
     react-palm: "npm:^3.3.8"
+    type-analyzer: "npm:0.4.0"
   languageName: unknown
   linkType: soft
 
@@ -26256,7 +26259,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"reselect@npm:^4.0.0, reselect@npm:^4.1.8":
+"reselect@npm:^4.0.0, reselect@npm:^4.1.0, reselect@npm:^4.1.8":
   version: 4.1.8
   resolution: "reselect@npm:4.1.8"
   checksum: 10c0/06a305a504affcbb67dd0561ddc8306b35796199c7e15b38934c80606938a021eadcf68cfd58e7bb5e17786601c37602a3362a4665c7bf0a96c1041ceee9d0b7

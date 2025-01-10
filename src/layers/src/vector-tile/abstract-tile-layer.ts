@@ -6,6 +6,7 @@ import throttle from 'lodash.throttle';
 import {notNullorUndefined} from '@kepler.gl/common-utils';
 import {SCALE_TYPES, ALL_FIELD_TYPES, LAYER_VIS_CONFIGS} from '@kepler.gl/constants';
 import {
+  isTileDataset,
   KeplerTable as KeplerDataset,
   Datasets as KeplerDatasets,
   GpuFilter
@@ -37,7 +38,6 @@ import {
   VisualChannelDomain,
   VisualChannelField
 } from '../base-layer';
-import {isTileDataset} from './utils/vector-tile-utils';
 import TileDataset from './common-tile/tile-dataset';
 import {isIndexedField, isDomainQuantiles} from './common-tile/tile-utils';
 
@@ -47,7 +47,8 @@ export const DEFAULT_RADIUS = 1;
 export type AbstractTileLayerVisConfigSettings = {
   strokeColor: VisConfigColorSelect;
   strokeOpacity: VisConfigNumber;
-  radius: VisConfigRange;
+  radius: VisConfigNumber;
+  radiusUnits: VisConfigBoolean;
   enable3d: VisConfigBoolean;
   stroked: VisConfigBoolean;
   transition: VisConfigBoolean;
@@ -84,12 +85,19 @@ export const commonTileVisConfigs = {
   },
   radius: {
     ...LAYER_VIS_CONFIGS.radius,
-    isRanged: true,
-    range: [0, 1000],
+    range: [0.1, 100],
     step: 0.1,
-    defaultValue: [50, 50],
+    defaultValue: DEFAULT_RADIUS,
     allowCustomValue: false
-  } as VisConfigRange,
+  } as VisConfigNumber,
+  radiusUnits: {
+    type: 'boolean',
+    defaultValue: true,
+    label: 'Radius in pixels',
+    group: '',
+    property: 'radiusUnits',
+    description: 'Radius in pixels or in meters'
+  } as VisConfigBoolean,
   enable3d: 'enable3d' as const,
   stroked: {
     ...LAYER_VIS_CONFIGS.stroked,
@@ -400,15 +408,12 @@ export default abstract class AbstractTileLayer<
       indexKey
     });
 
-    const getPointRadius = () => DEFAULT_RADIUS;
-
     const metadata = dataset?.metadata as LayerData | undefined;
 
     return {
       ...(metadata ? {minZoom: metadata.minZoom} : {}),
       ...(metadata ? {maxZoom: metadata.maxZoom} : {}),
-      ...accessors,
-      getPointRadius
+      ...accessors
     };
   }
 
