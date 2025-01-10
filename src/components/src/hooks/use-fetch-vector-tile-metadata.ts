@@ -3,10 +3,11 @@
 
 import {useCallback, useEffect, useState} from 'react';
 
-import {/*MVTSource,*/ TileJSON} from '@loaders.gl/mvt';
+import {/* MVTSource,*/ TileJSON} from '@loaders.gl/mvt';
 import {PMTilesSource, PMTilesMetadata} from '@loaders.gl/pmtiles';
 
-import {getMVTMetadata, VectorTileMetadata, VectorTileType} from '@kepler.gl/layers';
+import {VectorTileType} from '@kepler.gl/constants';
+import {getMVTMetadata, VectorTileMetadata} from '@kepler.gl/table';
 
 type FetchVectorTileMetadataProps = {
   url: string | null;

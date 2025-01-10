@@ -12,15 +12,22 @@ import GL from '@luma.gl/constants';
 
 import {notNullorUndefined} from '@kepler.gl/common-utils';
 import {
+  DatasetType,
+  TileType,
+  VectorTileType,
+  VectorTileDatasetMetadata,
   SCALE_TYPES,
   CHANNEL_SCALES,
   DEFAULT_COLOR_UI,
   LAYER_VIS_CONFIGS
 } from '@kepler.gl/constants';
 import {
+  getTileUrl,
+  getLoaderOptions,
   KeplerTable as KeplerDataset,
   Datasets as KeplerDatasets,
-  GpuFilter
+  GpuFilter,
+  VectorTileMetadata
 } from '@kepler.gl/table';
 import {
   AnimationConfig,
@@ -36,7 +43,6 @@ import {
 } from '@kepler.gl/types';
 import {DataContainerInterface} from '@kepler.gl/utils';
 
-import {getTileUrl} from './utils/vector-tile-utils';
 import {MVTLayer as CustomMVTLayer} from './mvt-layer';
 import VectorTileIcon from './vector-tile-icon';
 import {
@@ -47,14 +53,6 @@ import {
   VisualChannelDomain,
   VisualChannelField
 } from '../base-layer';
-import {
-  VectorTileMetadata,
-  getLoaderOptions,
-  DatasetType,
-  TileType,
-  VectorTileType,
-  VectorTileDatasetMetadata
-} from './utils/vector-tile-utils';
 
 import AbstractTileLayer, {
   LayerData as CommonLayerData,

@@ -27,20 +27,13 @@ import VisConfigSliderFactory from './vis-config-slider';
 import VisConfigSwitchFactory from './vis-config-switch';
 import VectorTileLayerConfiguratorFactory from './vector-tile-layer-configurator';
 
-import {capitalizeFirstLetter} from '@kepler.gl/utils';
-
-import {AGGREGATION_TYPE_OPTIONS, LAYER_TYPES} from '@kepler.gl/constants';
-import {
-  AggregationLayer,
-  Layer,
-  LayerBaseConfig,
-  VisualChannel,
-  matchDatasetType
-} from '@kepler.gl/layers';
-
 import {ActionHandler, toggleModal} from '@kepler.gl/actions';
-import {Datasets} from '@kepler.gl/table';
+import {AGGREGATION_TYPE_OPTIONS, LAYER_TYPES} from '@kepler.gl/constants';
+import {AggregationLayer, Layer, LayerBaseConfig, VisualChannel} from '@kepler.gl/layers';
+
+import {matchDatasetType, Datasets} from '@kepler.gl/table';
 import {ColorUI, LayerVisConfig, NestedPartial} from '@kepler.gl/types';
+import {capitalizeFirstLetter} from '@kepler.gl/utils';
 
 type LayerConfiguratorProps = {
   layer: Layer;

@@ -6,7 +6,7 @@ import {DATA_TYPES} from 'type-analyzer';
 import {ALL_FIELD_TYPES, FILTER_TYPES} from '@kepler.gl/constants';
 
 import {getTileUrl, getMetaUrl, parseVectorMetadata as parseMetadata} from './vector-tile-utils';
-import {PMTILES_METADATA, MVT_METADATA} from '../../../../../test/fixtures/tile-metadata';
+import {PMTILES_METADATA, MVT_METADATA} from '../../../../test/fixtures/tile-metadata';
 
 describe('getTileUrl', () => {
   [

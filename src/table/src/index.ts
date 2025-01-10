@@ -23,3 +23,5 @@ export type {
 } from './kepler-table';
 export * from './gpu-filter-utils';
 export * from './dataset-utils';
+export * from './tileset/tileset-utils';
+export * from './tileset/vector-tile-utils';

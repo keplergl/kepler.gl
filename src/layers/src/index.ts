@@ -42,21 +42,8 @@ export {getS2Center} from './s2-geometry-layer/s2-utils';
 export {default as AggregationLayer} from './aggregation-layer';
 import {default as VectorTileLayer} from './vector-tile/vector-tile-layer';
 
-export {
-  getMetaUrl,
-  parseVectorMetadata,
-  matchDatasetType,
-  DatasetType,
-  TileType,
-  VectorTileType
-} from './vector-tile/utils/vector-tile-utils';
-export type {
-  VectorTileDatasetMetadata,
-  VectorTileMetadata
-} from './vector-tile/utils/vector-tile-utils';
 export {default as VectorTileIcon} from './vector-tile/vector-tile-icon';
 export {default as VectorTileLayer} from './vector-tile/vector-tile-layer';
-export {getMVTMetadata} from './vector-tile/mvt-source-utils';
 
 import {LAYER_TYPES} from '@kepler.gl/constants';
 export {parseGeoJsonRawFeature} from './geojson-layer/geojson-utils';

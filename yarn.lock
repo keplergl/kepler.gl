@@ -3598,6 +3598,8 @@ __metadata:
     "@kepler.gl/constants": "npm:3.1.0-alpha.3"
     "@kepler.gl/types": "npm:3.1.0-alpha.3"
     "@kepler.gl/utils": "npm:3.1.0-alpha.3"
+    "@loaders.gl/mvt": "npm:^4.3.2"
+    "@loaders.gl/pmtiles": "npm:^4.3.2"
     "@types/d3-array": "npm:^2.8.0"
     "@types/lodash.uniq": "npm:^4.5.7"
     d3-array: "npm:^2.8.0"
@@ -3605,6 +3607,7 @@ __metadata:
     lodash.uniq: "npm:^4.0.1"
     moment: "npm:^2.10.6"
     react-palm: "npm:^3.3.8"
+    type-analyzer: "npm:0.4.0"
   languageName: unknown
   linkType: soft
 

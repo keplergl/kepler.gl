@@ -4,13 +4,8 @@
 import React, {useCallback, useEffect, useState, useMemo} from 'react';
 import styled from 'styled-components';
 
-import {
-  getMetaUrl,
-  parseVectorMetadata,
-  VectorTileMetadata,
-  DatasetType,
-  VectorTileType
-} from '@kepler.gl/layers';
+import {DatasetType, VectorTileType} from '@kepler.gl/constants';
+import {getMetaUrl, parseVectorMetadata, VectorTileMetadata} from '@kepler.gl/table';
 import {TileJSON} from '@loaders.gl/mvt';
 import {PMTilesMetadata} from '@loaders.gl/pmtiles';
 

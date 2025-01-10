@@ -2,8 +2,12 @@
 // Copyright contributors to the kepler.gl project
 
 import React, {Component} from 'react';
+import {injectIntl, IntlShape} from 'react-intl';
 
-import {EXPORT_DATA_TYPE_OPTIONS} from '@kepler.gl/constants';
+import {DatasetType, EXPORT_DATA_TYPE_OPTIONS} from '@kepler.gl/constants';
+import {FormattedMessage} from '@kepler.gl/localization';
+import {Datasets} from '@kepler.gl/table';
+
 import {FileType} from '../common/icons';
 import {
   StyledExportSection,
@@ -13,10 +17,6 @@ import {
   CheckMark
 } from '../common/styled-components';
 import {StyledWarning} from './export-map-modal/components';
-import {injectIntl, IntlShape} from 'react-intl';
-import {DatasetType} from '@kepler.gl/layers';
-import {FormattedMessage} from '@kepler.gl/localization';
-import {Datasets} from '@kepler.gl/table';
 
 const getDataRowCount = (
   datasets: Datasets,

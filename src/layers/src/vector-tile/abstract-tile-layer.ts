@@ -6,6 +6,7 @@ import throttle from 'lodash.throttle';
 import {notNullorUndefined} from '@kepler.gl/common-utils';
 import {SCALE_TYPES, ALL_FIELD_TYPES, LAYER_VIS_CONFIGS} from '@kepler.gl/constants';
 import {
+  isTileDataset,
   KeplerTable as KeplerDataset,
   Datasets as KeplerDatasets,
   GpuFilter
@@ -37,7 +38,6 @@ import {
   VisualChannelDomain,
   VisualChannelField
 } from '../base-layer';
-import {isTileDataset} from './utils/vector-tile-utils';
 import TileDataset from './common-tile/tile-dataset';
 import {isIndexedField, isDomainQuantiles} from './common-tile/tile-utils';
 

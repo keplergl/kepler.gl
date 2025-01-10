@@ -1,12 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {
-  MVTSource as _MVTSource,
-  MVTTileSource as _MVTTileSource,
-  TileJSONLoader,
-  TileJSON
-} from '@loaders.gl/mvt';
+import {TileJSONLoader, TileJSON} from '@loaders.gl/mvt';
 
 /**
  * MVTSource in current loaders ignores attribution
