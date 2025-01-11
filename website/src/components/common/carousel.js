@@ -15,6 +15,7 @@ const Container = styled.div`
 
 const Content = styled.div`
   display: flex;
+  width: 100%;
   justify-content: center;
   transform-style: preserve-3d;
   perspective-origin: center;
