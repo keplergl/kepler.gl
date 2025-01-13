@@ -90,7 +90,7 @@ export function onLoadCloudMapSuccess({provider, loadParams}) {
   return dispatch => {
     const mapUrl = provider?.getMapUrl(loadParams);
     if (mapUrl) {
-      const url = `demo/map/${provider.name}?path=${mapUrl}`;
+      const url = `/demo/map/${provider.name}?path=${mapUrl}`;
       dispatch(push(url));
     }
   };
