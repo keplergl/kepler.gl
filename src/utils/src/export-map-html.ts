@@ -50,7 +50,7 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
         <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin></script>
         <script src="https://unpkg.com/redux@4.2.1/dist/redux.js" crossorigin></script>
         <script src="https://unpkg.com/react-redux@8.1.2/dist/react-redux.min.js" crossorigin></script>
-        <script src="https://unpkg.com/styled-components@4.4.1/dist/styled-components.min.js" crossorigin></script>
+        <script src="https://unpkg.com/styled-components@6.1.8/dist/styled-components.min.js" crossorigin></script>
 
         <!-- Load Kepler.gl -->
         <script src="https://unpkg.com/kepler.gl@${version}/umd/keplergl.min.js" crossorigin></script>
