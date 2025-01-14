@@ -219,7 +219,7 @@ const App = props => {
               label: 'Railroads',
               id: 'railroads.pmtiles',
               color: [255, 0, 0],
-              type: 'vectorTile'
+              type: 'vector-tile'
             },
             data: {
               rows: [],

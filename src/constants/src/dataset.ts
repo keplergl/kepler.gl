@@ -3,11 +3,7 @@
 
 export enum DatasetType {
   LOCAL = 'local',
-  VECTOR_TILE = 'vectorTile'
-}
-
-export enum TileType {
-  VECTOR_TILE = 'vectorTile'
+  VECTOR_TILE = 'vector-tile'
 }
 
 export enum VectorTileType {
@@ -16,7 +12,8 @@ export enum VectorTileType {
 }
 
 export type VectorTileDatasetMetadata = {
-  type: VectorTileType;
+  type: 'remote';
+  vectorTileType: VectorTileType;
   tilesetDataUrl: string;
   tilesetMetadataUrl?: string;
 };

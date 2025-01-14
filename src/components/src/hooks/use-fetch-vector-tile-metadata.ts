@@ -11,7 +11,7 @@ import {getMVTMetadata, VectorTileMetadata} from '@kepler.gl/table';
 
 type FetchVectorTileMetadataProps = {
   url: string | null;
-  type: VectorTileType;
+  vectorTileType: VectorTileType;
   process?: (json: PMTilesMetadata | TileJSON) => VectorTileMetadata | Error | null;
 };
 
@@ -35,7 +35,7 @@ type FetchVectorTileMetadataReturn = {
 
 /** Hook to fetch and return mvt or pmtiles metadata. */
 export default function useFetchVectorTileMetadata({
-  type,
+  vectorTileType,
   url,
   process = DEFAULT_PROCESS_FUNCTION
 }: FetchVectorTileMetadataProps): FetchVectorTileMetadataReturn {
@@ -67,7 +67,7 @@ export default function useFetchVectorTileMetadata({
 
         try {
           let metadata: PMTilesMetadata | TileJSON | null = null;
-          if (type === VectorTileType.MVT) {
+          if (vectorTileType === VectorTileType.MVT) {
             metadata = await getMVTMetadata(url);
 
             // MVTSource returns messy partial metadata
@@ -94,7 +94,7 @@ export default function useFetchVectorTileMetadata({
     };
 
     getAndProcessMetadata();
-  }, [url, type, setProcessedData]);
+  }, [url, vectorTileType, setProcessedData]);
 
   return {data, loading, error};
 }

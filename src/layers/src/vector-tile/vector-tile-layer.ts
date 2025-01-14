@@ -13,7 +13,7 @@ import GL from '@luma.gl/constants';
 import {notNullorUndefined} from '@kepler.gl/common-utils';
 import {
   DatasetType,
-  TileType,
+  LAYER_TYPES,
   VectorTileType,
   VectorTileDatasetMetadata,
   SCALE_TYPES,
@@ -210,7 +210,7 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
   }
 
   get type() {
-    return TileType.VECTOR_TILE;
+    return LAYER_TYPES.vectorTile;
   }
 
   get name(): string {
@@ -406,7 +406,7 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
 
     if (dataset?.type === DatasetType.VECTOR_TILE) {
       const datasetMetadata = dataset.metadata as VectorTileMetadata & VectorTileDatasetMetadata;
-      if (datasetMetadata?.type === VectorTileType.MVT) {
+      if (datasetMetadata?.vectorTileType === VectorTileType.MVT) {
         const transformFetch = async (input: RequestInfo | URL, init?: RequestInit | undefined) => {
           const requestData: RequestParameters = {
             url: input as string,
@@ -428,7 +428,7 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
               }
             })
           : null;
-      } else if (datasetMetadata?.type === VectorTileType.PMTILES) {
+      } else if (datasetMetadata?.vectorTileType === VectorTileType.PMTILES) {
         // TODO: to render image pmtiles need to use TileLayer and BitmapLayer (https://github.com/visgl/loaders.gl/blob/master/examples/website/tiles/components/tile-source-layer.ts)
         tilesetDataUrl = datasetMetadata?.tilesetDataUrl;
         tileSource = tilesetDataUrl ? PMTilesSource.createDataSource(tilesetDataUrl, {}) : null;

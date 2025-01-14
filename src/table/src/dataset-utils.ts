@@ -6,7 +6,7 @@ import KeplerTable, {Datasets} from './kepler-table';
 import {ProtoDataset, RGBColor} from '@kepler.gl/types';
 import Task from 'react-palm/tasks';
 
-import {DatasetType, VectorTileType} from '@kepler.gl/constants';
+import {DatasetType, VectorTileType, VectorTileDatasetMetadata} from '@kepler.gl/constants';
 import {
   hexToRgb,
   validateInputData,
@@ -127,10 +127,11 @@ async function refreshMetadata(datasetInfo: CreateTableProps) {
     return null;
   }
 
-  const {type, tilesetMetadataUrl} = datasetInfo.opts.metadata || {};
+  const {vectorTileType, tilesetMetadataUrl} =
+    (datasetInfo.opts.metadata as VectorTileDatasetMetadata) || {};
 
   if (
-    !(type === VectorTileType.PMTILES || type === VectorTileType.MVT) ||
+    !(vectorTileType === VectorTileType.PMTILES || vectorTileType === VectorTileType.MVT) ||
     typeof tilesetMetadataUrl !== 'string'
   ) {
     return null;
@@ -138,7 +139,7 @@ async function refreshMetadata(datasetInfo: CreateTableProps) {
 
   try {
     let rawMetadata: PMTilesMetadata | TileJSON | null = null;
-    if (type === VectorTileType.MVT) {
+    if (vectorTileType === VectorTileType.MVT) {
       rawMetadata = await getMVTMetadata(tilesetMetadataUrl);
     } else {
       const tileSource = PMTilesSource.createDataSource(tilesetMetadataUrl, {});
