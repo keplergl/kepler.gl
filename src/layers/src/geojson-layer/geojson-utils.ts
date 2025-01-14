@@ -13,7 +13,7 @@ import {binaryToGeometry} from '@loaders.gl/gis';
 import {BinaryFeatureCollection} from '@loaders.gl/schema';
 import {DataContainerInterface, getSampleData} from '@kepler.gl/utils';
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
-import {LayerColumns} from '@kepler.gl/types';
+import {LayerColumns, ProtoDatasetField} from '@kepler.gl/types';
 import {KeplerTable} from '@kepler.gl/table';
 
 import {GeojsonLayerMetaProps, assignPointPairToLayerColumn} from '../layer-utils';
@@ -42,6 +42,15 @@ type FeatureTypeMap = {
 };
 
 /* eslint-enable */
+
+/**
+ * Returns true if the field has geoarrow extension.
+ * @param geoField A field to test.
+ * @returns
+ */
+export function fieldIsGeoArrow(geoField?: ProtoDatasetField | null): boolean {
+  return Boolean(geoField?.metadata?.get('ARROW:extension:name'));
+}
 
 export function parseGeoJsonRawFeature(rawFeature: unknown): Feature | null {
   const properties = null; // help ensure that properties is present on the returned geojson feature
