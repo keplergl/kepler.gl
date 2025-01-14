@@ -25,7 +25,8 @@ import {
   DeckGlGeoTypes,
   detectTableColumns,
   COLUMN_MODE_GEOJSON,
-  applyFiltersToTableColumns
+  applyFiltersToTableColumns,
+  fieldIsGeoArrow
 } from './geojson-utils';
 import {
   getGeojsonLayerMetaFromArrow,
@@ -234,6 +235,7 @@ export default class GeoJsonLayer extends Layer {
   declare config: GeoJsonLayerConfig;
   declare visConfigSettings: GeoJsonVisConfigSettings;
   declare meta: GeoJsonLayerMeta;
+  declare geoArrowMode: boolean;
 
   dataToFeature: GeojsonDataMaps = [];
   dataContainer: DataContainerInterface | null = null;
@@ -430,7 +432,7 @@ export default class GeoJsonLayer extends Layer {
   getHoverData(object, dataContainer) {
     // index of dataContainer is saved to feature.properties
     // for arrow format, `object` is the index of the row returned from deck
-    const index = dataContainer instanceof ArrowDataContainer ? object : object?.properties?.index;
+    const index = this.geoArrowMode ? object : object?.properties?.index;
     if (index >= 0) {
       return dataContainer.row(index);
     }
@@ -456,8 +458,12 @@ export default class GeoJsonLayer extends Layer {
   }
 
   calculateDataAttribute(dataset: KeplerTable) {
+    this.geoArrowMode = fieldIsGeoArrow(
+      geoFieldAccessor(this.config.columns)(dataset.dataContainer)
+    );
+
     const {dataContainer, filteredIndex} = dataset;
-    if (dataContainer instanceof ArrowDataContainer) {
+    if (this.geoArrowMode) {
       // TODO add columnMode logic here for ArrowDataContainer?
       // filter geojson/arrow table by values and make a partial copy of the raw table are expensive
       // so we will use filteredIndex to create an attribute e.g. filteredIndex [0|1] for GPU filtering
@@ -552,7 +558,11 @@ export default class GeoJsonLayer extends Layer {
 
     this.dataContainer = dataContainer;
 
-    if (dataContainer instanceof ArrowDataContainer) {
+    this.geoArrowMode = fieldIsGeoArrow(
+      geoFieldAccessor(this.config.columns)(dataset.dataContainer)
+    );
+
+    if (this.geoArrowMode && dataContainer instanceof ArrowDataContainer) {
       const geoColumn = geoColumnAccessor(this.config.columns)(dataContainer);
       const geoField = geoFieldAccessor(this.config.columns)(dataContainer);
 
@@ -625,13 +635,13 @@ export default class GeoJsonLayer extends Layer {
   }
 
   isLayerHovered(objectInfo: ObjectInfo): boolean {
-    return this.dataContainer instanceof ArrowDataContainer
+    return this.geoArrowMode
       ? isLayerHoveredFromArrow(objectInfo, this.id)
       : super.isLayerHovered(objectInfo);
   }
 
   hasHoveredObject(objectInfo: ObjectInfo): Feature | null {
-    return this.dataContainer instanceof ArrowDataContainer
+    return this.geoArrowMode
       ? getHoveredObjectFromArrow(
           objectInfo,
           this.dataContainer,
@@ -680,7 +690,7 @@ export default class GeoJsonLayer extends Layer {
     const {data, ...props} = dataProps;
 
     // arrow table can have multiple chunks, a deck.gl layer is created for each chunk
-    const deckLayerData = this.dataContainer instanceof ArrowDataContainer ? data : [data];
+    const deckLayerData = this.geoArrowMode ? data : [data];
     const deckLayers = deckLayerData.map((d, i) => {
       return new DeckGLGeoJsonLayer({
         ...defaultLayerProps,
