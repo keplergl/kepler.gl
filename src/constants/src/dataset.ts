@@ -6,7 +6,7 @@ export enum DatasetType {
   VECTOR_TILE = 'vector-tile'
 }
 
-export enum VectorTileType {
+export enum RemoteTileFormat {
   MVT = 'mvt',
   PMTILES = 'pmtiles'
 }
@@ -15,7 +15,7 @@ export const REMOTE_TILE = 'remote';
 
 export type VectorTileDatasetMetadata = {
   type: typeof REMOTE_TILE;
-  vectorTileType: VectorTileType;
+  remoteTileFormat: RemoteTileFormat;
   tilesetDataUrl: string;
   tilesetMetadataUrl?: string;
 };

@@ -14,7 +14,7 @@ import {notNullorUndefined} from '@kepler.gl/common-utils';
 import {
   DatasetType,
   LAYER_TYPES,
-  VectorTileType,
+  RemoteTileFormat,
   VectorTileDatasetMetadata,
   SCALE_TYPES,
   CHANNEL_SCALES,
@@ -406,7 +406,8 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
 
     if (dataset?.type === DatasetType.VECTOR_TILE) {
       const datasetMetadata = dataset.metadata as VectorTileMetadata & VectorTileDatasetMetadata;
-      if (datasetMetadata?.vectorTileType === VectorTileType.MVT) {
+      const remoteTileFormat = datasetMetadata?.remoteTileFormat;
+      if (remoteTileFormat === RemoteTileFormat.MVT) {
         const transformFetch = async (input: RequestInfo | URL, init?: RequestInit | undefined) => {
           const requestData: RequestParameters = {
             url: input as string,
@@ -428,7 +429,7 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
               }
             })
           : null;
-      } else if (datasetMetadata?.vectorTileType === VectorTileType.PMTILES) {
+      } else if (remoteTileFormat === RemoteTileFormat.PMTILES) {
         // TODO: to render image pmtiles need to use TileLayer and BitmapLayer (https://github.com/visgl/loaders.gl/blob/master/examples/website/tiles/components/tile-source-layer.ts)
         tilesetDataUrl = datasetMetadata?.tilesetDataUrl;
         tileSource = tilesetDataUrl ? PMTilesSource.createDataSource(tilesetDataUrl, {}) : null;

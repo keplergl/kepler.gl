@@ -6,12 +6,12 @@ import {useCallback, useEffect, useState} from 'react';
 import {/* MVTSource,*/ TileJSON} from '@loaders.gl/mvt';
 import {PMTilesSource, PMTilesMetadata} from '@loaders.gl/pmtiles';
 
-import {VectorTileType} from '@kepler.gl/constants';
+import {RemoteTileFormat} from '@kepler.gl/constants';
 import {getMVTMetadata, VectorTileMetadata} from '@kepler.gl/table';
 
 type FetchVectorTileMetadataProps = {
   url: string | null;
-  vectorTileType: VectorTileType;
+  remoteTileFormat: RemoteTileFormat;
   process?: (json: PMTilesMetadata | TileJSON) => VectorTileMetadata | Error | null;
 };
 
@@ -35,7 +35,7 @@ type FetchVectorTileMetadataReturn = {
 
 /** Hook to fetch and return mvt or pmtiles metadata. */
 export default function useFetchVectorTileMetadata({
-  vectorTileType,
+  remoteTileFormat,
   url,
   process = DEFAULT_PROCESS_FUNCTION
 }: FetchVectorTileMetadataProps): FetchVectorTileMetadataReturn {
@@ -67,7 +67,7 @@ export default function useFetchVectorTileMetadata({
 
         try {
           let metadata: PMTilesMetadata | TileJSON | null = null;
-          if (vectorTileType === VectorTileType.MVT) {
+          if (remoteTileFormat === RemoteTileFormat.MVT) {
             metadata = await getMVTMetadata(url);
 
             // MVTSource returns messy partial metadata
@@ -94,7 +94,7 @@ export default function useFetchVectorTileMetadata({
     };
 
     getAndProcessMetadata();
-  }, [url, vectorTileType, setProcessedData]);
+  }, [url, remoteTileFormat, setProcessedData]);
 
   return {data, loading, error};
 }

@@ -6,7 +6,7 @@ import styled from 'styled-components';
 
 import {
   DatasetType,
-  VectorTileType,
+  RemoteTileFormat,
   VectorTileDatasetMetadata,
   REMOTE_TILE
 } from '@kepler.gl/constants';
@@ -57,7 +57,7 @@ export function getDatasetAttributesFromVectorTile({
     type: DatasetType.VECTOR_TILE,
     metadata: {
       type: REMOTE_TILE,
-      vectorTileType: isPMTilesUrl(dataUrl) ? VectorTileType.PMTILES : VectorTileType.MVT,
+      remoteTileFormat: isPMTilesUrl(dataUrl) ? RemoteTileFormat.PMTILES : RemoteTileFormat.MVT,
       tilesetDataUrl: dataUrl,
       tilesetMetadataUrl: metadataUrl
     }
@@ -128,7 +128,7 @@ const TilesetVectorForm: React.FC<TilesetVectorFormProps> = ({setResponse}) => {
     error: metaError
   } = useFetchVectorTileMetadata({
     url: metadataUrl,
-    vectorTileType: isPMTilesUrl(metadataUrl) ? VectorTileType.PMTILES : VectorTileType.MVT,
+    remoteTileFormat: isPMTilesUrl(metadataUrl) ? RemoteTileFormat.PMTILES : RemoteTileFormat.MVT,
     process
   });
 
