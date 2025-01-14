@@ -4,7 +4,12 @@
 import React, {useCallback, useEffect, useState, useMemo} from 'react';
 import styled from 'styled-components';
 
-import {DatasetType, VectorTileType, VectorTileDatasetMetadata} from '@kepler.gl/constants';
+import {
+  DatasetType,
+  VectorTileType,
+  VectorTileDatasetMetadata,
+  REMOTE_TILE
+} from '@kepler.gl/constants';
 import {TileJSON} from '@loaders.gl/mvt';
 import {PMTilesMetadata} from '@loaders.gl/pmtiles';
 import {getMetaUrl, parseVectorMetadata, VectorTileMetadata} from '@kepler.gl/table';
@@ -51,7 +56,7 @@ export function getDatasetAttributesFromVectorTile({
     name,
     type: DatasetType.VECTOR_TILE,
     metadata: {
-      type: 'remote',
+      type: REMOTE_TILE,
       vectorTileType: isPMTilesUrl(dataUrl) ? VectorTileType.PMTILES : VectorTileType.MVT,
       tilesetDataUrl: dataUrl,
       tilesetMetadataUrl: metadataUrl

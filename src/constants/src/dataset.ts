@@ -11,8 +11,10 @@ export enum VectorTileType {
   PMTILES = 'pmtiles'
 }
 
+export const REMOTE_TILE = 'remote';
+
 export type VectorTileDatasetMetadata = {
-  type: 'remote';
+  type: typeof REMOTE_TILE;
   vectorTileType: VectorTileType;
   tilesetDataUrl: string;
   tilesetMetadataUrl?: string;
