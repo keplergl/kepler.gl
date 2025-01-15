@@ -1,7 +1,7 @@
 {
   "name": "@kepler.gl/deckgl-arrow-layers",
   "author": "Shan He <shan@uber.com>",
-  "version": "3.1.0-alpha.4",
+  "version": "3.1.0-alpha.5",
   "description": "Deck.gl layers with GeoArrow and GeoParquet support",
   "license": "MIT",
   "main": "dist/index.js",

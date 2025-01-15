@@ -24,15 +24,9 @@ const EffectTypeSelector = appInjector.get(EffectTypeSelectorFactory);
 
 const mockStore = configureStore();
 const initialState = {
-  demo: {
-    keplerGl: {
-      map: {
-        visState: {
-          effects: StateWEffects.visState.effects,
-          effectOrder: StateWEffects.visState.effectOrder
-        }
-      }
-    }
+  visState: {
+    effects: StateWEffects.visState.effects,
+    effectOrder: StateWEffects.visState.effectOrder
   },
   mapState: {latitude: 0, longitude: 0}
 };
