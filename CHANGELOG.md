@@ -15,8 +15,14 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
-## [3.1.0-alpha.4] - January 10 2025
+## [3.1.0-alpha.4] - January 15 2025
 
+- 933a91a2f [fix] check for geoarrow extension in geojson layer (#2916)
+- 0abe9979d [fix] opening multiple examples breaks url (#2915)
+- 49e7956e8 [fix] Don't show 0 when description is empty (#2913)
+- cb5d4ed42 [fix] fix styled-components version in exported map (#2907)
+- b1d243363 [fix] adjust tooltip style (#2910)
+- f0c57a869 [fix] fix website commit section
 - 2753321c5 [feat] Vector Tile layer fixes (#2899)
 - 073c585e4 [Fix] add_data() function failed in keplergl-jupyter
 - 6e425972e [feat] mapbox and maplibre simultaneous support (#2897)
