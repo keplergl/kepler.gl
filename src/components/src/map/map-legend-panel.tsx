@@ -12,6 +12,7 @@ import {useMergeRefs} from '@floating-ui/react';
 
 import {ActionHandler, setMapControlSettings, toggleSplitMapViewport} from '@kepler.gl/actions';
 import {Layer} from '@kepler.gl/layers';
+import {uiStateLens} from '@kepler.gl/reducers';
 import {breakPointValues} from '@kepler.gl/styles';
 import {LayerVisConfig, MapControlMapLegend, MapControls, MapState} from '@kepler.gl/types';
 import {hasPortableWidth} from '@kepler.gl/utils';
@@ -150,18 +151,11 @@ const DraggableLegendContent = forwardRef((props: DraggableLegendContentProps, r
   );
 });
 
-const DraggableLegend = withState(
-  [],
-  state => {
-    const {activeSidePanel, mapControls} = state.demo.keplerGl.map.uiState;
-    return {
-      isSidePanelShown: activeSidePanel,
-      settings: mapControls?.mapLegend?.settings
-    };
-  },
-  {setMapControlSettings}
-)(
-  withTheme(({isSidePanelShown, theme, settings, setMapControlSettings, children}) => {
+const DraggableLegend = withState([uiStateLens], state => state, {setMapControlSettings})(
+  withTheme(({uiState, theme, setMapControlSettings, children}) => {
+    const isSidePanelShown = uiState.activeSidePanel;
+    const settings = uiState.mapControls?.mapLegend?.settings;
+
     const legendContentRef = useRef<HTMLElement>(null);
     const onChangeSettings = useCallback(
       newSettings => setMapControlSettings('mapLegend', newSettings),
@@ -300,18 +294,20 @@ const MapLegendPanelComponent = ({
   logoComponent,
   actionIcons = defaultActionIcons,
   mapState,
+  uiState,
   onLayerVisConfigChange,
   onToggleSplitMapViewport,
   onClickControlBtn,
   isViewportUnsyncAllowed = true,
   className,
   interactionConfig,
-  settings,
-  isSidePanelShown,
   MapControlTooltip,
   MapControlPanel,
   MapLegend
 }) => {
+  const isSidePanelShown = uiState.activeSidePanel;
+  const settings = uiState.mapControls?.mapLegend?.settings;
+
   const mapLegend = mapControls?.mapLegend || ({} as MapControlMapLegend);
   const {active, disableEdit} = mapLegend || {};
   const rootContext = useContext(RootContext);
@@ -390,12 +386,9 @@ function MapLegendPanelFactory(
   MapLegend: ReturnType<typeof MapLegendFactory>
 ): MapLegendPanelComponentType {
   const MapLegendPanel = withState(
-    [],
+    [uiStateLens],
     state => {
-      const {activeSidePanel, mapControls} = state.demo?.keplerGl.map.uiState ?? {};
       return {
-        isSidePanelShown: activeSidePanel,
-        settings: mapControls?.mapLegend?.settings,
         MapControlTooltip,
         MapControlPanel,
         MapLegend

@@ -13,6 +13,7 @@ import {
   ActionHandler
 } from '@kepler.gl/actions';
 import {LIGHT_AND_SHADOW_EFFECT, EFFECT_DESCRIPTIONS} from '@kepler.gl/constants';
+import {visStateLens} from '@kepler.gl/reducers';
 import {Effect} from '@kepler.gl/types';
 
 import {withState} from '../injector';
@@ -21,6 +22,7 @@ import EffectListFactory from './effect-list';
 import EffectTypeSelectorFactory, {EffectTypeSelectorProps} from './effect-type-selector';
 
 export type EffectManagerState = {
+  visState: any;
   visStateActions: {
     addEffect: ActionHandler<typeof addEffect>;
     updateEffect: ActionHandler<typeof updateEffect>;
@@ -85,7 +87,9 @@ function EffectManagerFactory(
   EffectTypeSelector: ReturnType<typeof EffectTypeSelectorFactory>
 ): React.FC<EffectManagerProps> {
   const EffectManager = (props: EffectManagerWithIntlProp & EffectManagerState) => {
-    const {intl, visStateActions, effects, effectOrder, children} = props;
+    const {intl, visStateActions, visState, children} = props;
+    const effects = visState.effects;
+    const effectOrder = visState.effectOrder;
     const {addEffect: visStateAddEffect} = visStateActions;
     const [typeSelectorOpened, setTypeSelectorOpened] = useState(false);
 
@@ -149,19 +153,9 @@ function EffectManagerFactory(
     );
   };
 
-  return withState(
-    [],
-    state => {
-      const visState = state.demo.keplerGl.map.visState;
-      return {
-        effects: visState.effects,
-        effectOrder: visState.effectOrder
-      };
-    },
-    {
-      visStateActions: {addEffect, updateEffect, removeEffect, reorderEffect}
-    }
-  )(injectIntl(EffectManager)) as React.FC<EffectManagerProps>;
+  return withState([visStateLens], state => state, {
+    visStateActions: {addEffect, updateEffect, removeEffect, reorderEffect}
+  })(injectIntl(EffectManager)) as React.FC<EffectManagerProps>;
 }
 
 export default EffectManagerFactory;
