@@ -82,13 +82,7 @@ test('MapControlFactory - display all options', t => {
 
 test('MapControlFactory - display options', t => {
   const store = mockStore({
-    demo: {
-      keplerGl: {
-        map: {
-          uiState: StateWSplitMaps.uiState
-        }
-      }
-    }
+    uiState: StateWSplitMaps.uiState
   });
 
   let wrapper;
@@ -183,13 +177,7 @@ test('MapControlFactory - click options', t => {
   );
 
   const store = mockStore({
-    demo: {
-      keplerGl: {
-        map: {
-          uiState: StateWSplitMaps.uiState
-        }
-      }
-    }
+    uiState: StateWSplitMaps.uiState
   });
 
   let wrapper;
@@ -264,13 +252,7 @@ test('MapControlFactory - show panels', t => {
   let mapContainerProps = mapFieldsSelector(mockKeplerPropsWithState({state: updateState}));
 
   const store = mockStore({
-    demo: {
-      keplerGl: {
-        map: {
-          uiState: updateState.uiState
-        }
-      }
-    }
+    uiState: updateState.uiState
   });
 
   let wrapper;
