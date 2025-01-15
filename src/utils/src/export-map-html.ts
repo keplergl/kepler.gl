@@ -23,9 +23,12 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
         <!--Uber Font-->
         <link rel="stylesheet" href="https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/uber-fonts/4.0.0/superfine.css">
 
+        <!--Kepler css-->
+        <link href="https://unpkg.com/kepler.gl@${version}/umd/keplergl.min.css" rel="stylesheet" />
+
         <!--MapBox css-->
-        <link href="https://api.tiles.mapbox.com/mapbox-gl-js/v1.1.1/mapbox-gl.css" rel="stylesheet">
-        <link href="https://unpkg.com/maplibre-gl@^3/dist/maplibre-gl.css" rel="stylesheet">
+        <link href="https://api.tiles.mapbox.com/mapbox-gl-js/v1.1.1/mapbox-gl.css" rel="stylesheet" />
+        <link href="https://unpkg.com/maplibre-gl@^3/dist/maplibre-gl.css" rel="stylesheet" />
 
         <!-— facebook open graph tags -->
         <meta property="og:url" content="http://kepler.gl/" />
@@ -103,7 +106,7 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
 
           /** STORE **/
           const reducers = (function createReducers(redux, keplerGl) {
-            return redux.combineReducers({
+            const demoReducer = redux.combineReducers({
               // mount keplerGl reducer
               keplerGl: keplerGl.keplerGlReducer.initialState({
                 uiState: {
@@ -111,6 +114,9 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
                   currentModal: null
                 }
               })
+            });
+            return redux.combineReducers({
+              demo: demoReducer,
             });
           }(Redux, KeplerGl));
 
@@ -136,6 +142,7 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
           /** END STORE **/
 
           /** COMPONENTS **/
+          const getState = state => state.demo.keplerGl;
           var KeplerElement = (function makeKeplerElement(react, keplerGl, mapboxToken) {
             var LogoSvg = function LogoSvg() {
               return react.createElement(
@@ -192,6 +199,7 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
                 {style: {position: 'absolute', left: 0, width: '100vw', height: '100vh'}},
                 ${options.mode === EXPORT_HTML_MAP_MODES.READ ? 'LogoSvg(),' : ''}
                 react.createElement(keplerGl.KeplerGl, {
+                  getState,
                   mapboxApiAccessToken: mapboxToken,
                   id: "map",
                   width: windowDimension.width,
