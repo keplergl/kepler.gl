@@ -106,7 +106,7 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
 
           /** STORE **/
           const reducers = (function createReducers(redux, keplerGl) {
-            const demoReducer = redux.combineReducers({
+            return redux.combineReducers({
               // mount keplerGl reducer
               keplerGl: keplerGl.keplerGlReducer.initialState({
                 uiState: {
@@ -114,9 +114,6 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
                   currentModal: null
                 }
               })
-            });
-            return redux.combineReducers({
-              demo: demoReducer,
             });
           }(Redux, KeplerGl));
 
@@ -142,7 +139,6 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
           /** END STORE **/
 
           /** COMPONENTS **/
-          const getState = state => state.demo.keplerGl;
           var KeplerElement = (function makeKeplerElement(react, keplerGl, mapboxToken) {
             var LogoSvg = function LogoSvg() {
               return react.createElement(
@@ -199,7 +195,6 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
                 {style: {position: 'absolute', left: 0, width: '100vw', height: '100vh'}},
                 ${options.mode === EXPORT_HTML_MAP_MODES.READ ? 'LogoSvg(),' : ''}
                 react.createElement(keplerGl.KeplerGl, {
-                  getState,
                   mapboxApiAccessToken: mapboxToken,
                   id: "map",
                   width: windowDimension.width,
