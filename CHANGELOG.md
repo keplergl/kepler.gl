@@ -15,6 +15,10 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+## [3.1.0-alpha.5] - January 15 2025
+
+- b117b08ab [fix] fix for exported html maps
+
 ## [3.1.0-alpha.4] - January 15 2025
 
 - 933a91a2f [fix] check for geoarrow extension in geojson layer (#2916)

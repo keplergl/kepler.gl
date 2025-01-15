@@ -1,7 +1,7 @@
 {
   "name": "@kepler.gl/ai-assistant",
   "author": "Xun Li<lixun910@gmail.com>",
-  "version": "3.1.0-alpha.4",
+  "version": "3.1.0-alpha.5",
   "description": "kepler.gl AI assistant",
   "license": "MIT",
   "main": "dist/index.js",
@@ -30,12 +30,12 @@
     "umd"
   ],
   "dependencies": {
-    "@kepler.gl/components": "3.1.0-alpha.4",
-    "@kepler.gl/constants": "3.1.0-alpha.4",
-    "@kepler.gl/layers": "3.1.0-alpha.4",
-    "@kepler.gl/table": "3.1.0-alpha.4",
-    "@kepler.gl/types": "3.1.0-alpha.4",
-    "@kepler.gl/utils": "3.1.0-alpha.4",
+    "@kepler.gl/components": "3.1.0-alpha.5",
+    "@kepler.gl/constants": "3.1.0-alpha.5",
+    "@kepler.gl/layers": "3.1.0-alpha.5",
+    "@kepler.gl/table": "3.1.0-alpha.5",
+    "@kepler.gl/types": "3.1.0-alpha.5",
+    "@kepler.gl/utils": "3.1.0-alpha.5",
     "color-interpolate": "^1.0.5",
     "echarts": "^5.5.1",
     "global": "^4.3.0",
