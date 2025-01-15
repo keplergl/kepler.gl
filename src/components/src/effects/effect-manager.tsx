@@ -15,6 +15,7 @@ import {
 import {LIGHT_AND_SHADOW_EFFECT, EFFECT_DESCRIPTIONS} from '@kepler.gl/constants';
 import {visStateLens} from '@kepler.gl/reducers';
 import {Effect} from '@kepler.gl/types';
+import {VisState} from '@kepler.gl/schemas';
 
 import {withState} from '../injector';
 import SidePanelTitleFactory from './side-panel-title';
@@ -22,7 +23,7 @@ import EffectListFactory from './effect-list';
 import EffectTypeSelectorFactory, {EffectTypeSelectorProps} from './effect-type-selector';
 
 export type EffectManagerState = {
-  visState: any;
+  visState: VisState;
   visStateActions: {
     addEffect: ActionHandler<typeof addEffect>;
     updateEffect: ActionHandler<typeof updateEffect>;
@@ -88,8 +89,7 @@ function EffectManagerFactory(
 ): React.FC<EffectManagerProps> {
   const EffectManager = (props: EffectManagerWithIntlProp & EffectManagerState) => {
     const {intl, visStateActions, visState, children} = props;
-    const effects = visState.effects;
-    const effectOrder = visState.effectOrder;
+    const {effects, effectOrder} = visState;
     const {addEffect: visStateAddEffect} = visStateActions;
     const [typeSelectorOpened, setTypeSelectorOpened] = useState(false);
 
