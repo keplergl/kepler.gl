@@ -219,7 +219,7 @@ const App = props => {
               label: 'Railroads',
               id: 'railroads.pmtiles',
               color: [255, 0, 0],
-              type: 'vectorTile'
+              type: 'vector-tile'
             },
             data: {
               rows: [],
@@ -235,7 +235,8 @@ const App = props => {
             metadata: {
               name: 'output.pmtiles',
               description: 'output.pmtiles',
-              type: 'pmtiles',
+              type: 'remote',
+              remoteTileFormat: 'pmtiles',
               tilesetDataUrl:
                 'https://4sq-studio-public.s3.us-west-2.amazonaws.com/pmtiles-test/161727fe-7952-4e57-aa05-850b3086b0b2.pmtiles',
               tilesetMetadataUrl:

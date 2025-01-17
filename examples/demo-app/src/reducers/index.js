@@ -93,26 +93,32 @@ export const loadRemoteResourceSuccess = (state, action) => {
   const datasetId = action.options.id || generateHashId(6);
   const {dataUrl} = action.options;
 
-  const {shape} = action.response;
+  const {shape} = dataUrl ? action.response : {};
   let processorMethod = processRowObject;
   let unprocessedData = action.response;
-  if (shape === 'arrow-table') {
-    processorMethod = processArrowTable;
-  } else if (shape === 'object-row-table') {
-    processorMethod = processRowObject;
-    unprocessedData = action.response.data;
-  } else if (dataUrl.includes('.json') || dataUrl.includes('.geojson')) {
-    processorMethod = processGeojson;
-  } else {
-    throw new Error('Failed to select data processor');
+
+  if (dataUrl) {
+    if (shape === 'arrow-table') {
+      processorMethod = processArrowTable;
+    } else if (shape === 'object-row-table') {
+      processorMethod = processRowObject;
+      unprocessedData = action.response.data;
+    } else if (dataUrl.includes('.json') || dataUrl.includes('.geojson')) {
+      processorMethod = processGeojson;
+    } else {
+      throw new Error('Failed to select data processor');
+    }
   }
 
-  const datasets = {
-    info: {
-      id: datasetId
-    },
-    data: processorMethod(unprocessedData)
-  };
+  const datasets = dataUrl
+    ? {
+        info: {
+          id: datasetId
+        },
+        data: processorMethod(unprocessedData)
+      }
+    : // remote datasets like vector tile datasets
+      action.remoteDatasetConfig;
 
   const config = action.config ? KeplerGlSchema.parseSavedConfig(action.config) : null;
 

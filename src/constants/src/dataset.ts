@@ -3,20 +3,19 @@
 
 export enum DatasetType {
   LOCAL = 'local',
-  VECTOR_TILE = 'vectorTile'
+  VECTOR_TILE = 'vector-tile'
 }
 
-export enum TileType {
-  VECTOR_TILE = 'vectorTile'
-}
-
-export enum VectorTileType {
+export enum RemoteTileFormat {
   MVT = 'mvt',
   PMTILES = 'pmtiles'
 }
 
+export const REMOTE_TILE = 'remote';
+
 export type VectorTileDatasetMetadata = {
-  type: VectorTileType;
+  type: typeof REMOTE_TILE;
+  remoteTileFormat: RemoteTileFormat;
   tilesetDataUrl: string;
   tilesetMetadataUrl?: string;
 };

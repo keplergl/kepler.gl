@@ -6,7 +6,7 @@ import KeplerTable, {Datasets} from './kepler-table';
 import {ProtoDataset, RGBColor} from '@kepler.gl/types';
 import Task from 'react-palm/tasks';
 
-import {DatasetType, VectorTileType} from '@kepler.gl/constants';
+import {DatasetType, RemoteTileFormat, VectorTileDatasetMetadata} from '@kepler.gl/constants';
 import {
   hexToRgb,
   validateInputData,
@@ -95,12 +95,16 @@ type CreateTableProps = {
   data: any;
 };
 
-async function createTable(dataasetInfo: CreateTableProps) {
-  const {info, color, opts, data} = dataasetInfo;
+async function createTable(datasetInfo: CreateTableProps) {
+  const {info, color, opts, data} = datasetInfo;
 
   // update metadata for remote tiled datasets
-  const refreshedMetadata = await refreshMetadata(dataasetInfo);
-  const metadata = refreshedMetadata ? {...opts.metadata, ...refreshedMetadata} : opts.metadata;
+  const refreshedMetadata = await refreshRemoteData(datasetInfo);
+  let metadata = opts.metadata;
+  if (refreshedMetadata) {
+    metadata = {...opts.metadata, ...refreshedMetadata};
+    data.fields = metadata?.fields;
+  }
 
   const TableClass = getApplicationConfig().table ?? KeplerTable;
   const table = new TableClass({
@@ -121,16 +125,17 @@ const CREATE_TABLE_TASK = Task.fromPromise(createTable, 'CREATE_TABLE_TASK');
  * @param datasetInfo
  * @returns
  */
-async function refreshMetadata(datasetInfo: CreateTableProps) {
+async function refreshRemoteData(datasetInfo: CreateTableProps) {
   // so far only vector tile layers should refresh metadata
   if (datasetInfo.info.type !== DatasetType.VECTOR_TILE) {
     return null;
   }
 
-  const {type, tilesetMetadataUrl} = datasetInfo.opts.metadata || {};
+  const {remoteTileFormat, tilesetMetadataUrl} =
+    (datasetInfo.opts.metadata as VectorTileDatasetMetadata) || {};
 
   if (
-    !(type === VectorTileType.PMTILES || type === VectorTileType.MVT) ||
+    !(remoteTileFormat === RemoteTileFormat.PMTILES || remoteTileFormat === RemoteTileFormat.MVT) ||
     typeof tilesetMetadataUrl !== 'string'
   ) {
     return null;
@@ -138,7 +143,7 @@ async function refreshMetadata(datasetInfo: CreateTableProps) {
 
   try {
     let rawMetadata: PMTilesMetadata | TileJSON | null = null;
-    if (type === VectorTileType.MVT) {
+    if (remoteTileFormat === RemoteTileFormat.MVT) {
       rawMetadata = await getMVTMetadata(tilesetMetadataUrl);
     } else {
       const tileSource = PMTilesSource.createDataSource(tilesetMetadataUrl, {});

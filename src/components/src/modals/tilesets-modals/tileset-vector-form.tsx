@@ -4,10 +4,16 @@
 import React, {useCallback, useEffect, useState, useMemo} from 'react';
 import styled from 'styled-components';
 
-import {DatasetType, VectorTileType} from '@kepler.gl/constants';
-import {getMetaUrl, parseVectorMetadata, VectorTileMetadata} from '@kepler.gl/table';
+import {
+  DatasetType,
+  RemoteTileFormat,
+  VectorTileDatasetMetadata,
+  REMOTE_TILE
+} from '@kepler.gl/constants';
 import {TileJSON} from '@loaders.gl/mvt';
 import {PMTilesMetadata} from '@loaders.gl/pmtiles';
+import {getMetaUrl, parseVectorMetadata, VectorTileMetadata} from '@kepler.gl/table';
+import {Merge} from '@kepler.gl/types';
 
 import {default as useFetchVectorTileMetadata} from '../../hooks/use-fetch-vector-tile-metadata';
 import {DatasetCreationAttributes, MetaResponse} from './common';
@@ -34,16 +40,24 @@ export type VectorTilesetFormData = {
 
 const isPMTilesUrl = (url?: string | null) => url?.includes('.pmtiles');
 
+export type VectorTileDatasetCreationAttributes = Merge<
+  DatasetCreationAttributes,
+  {
+    metadata: VectorTileDatasetMetadata;
+  }
+>;
+
 export function getDatasetAttributesFromVectorTile({
   name,
   dataUrl,
   metadataUrl
-}: VectorTilesetFormData): DatasetCreationAttributes {
+}: VectorTilesetFormData): VectorTileDatasetCreationAttributes {
   return {
     name,
     type: DatasetType.VECTOR_TILE,
     metadata: {
-      type: isPMTilesUrl(dataUrl) ? VectorTileType.PMTILES : VectorTileType.MVT,
+      type: REMOTE_TILE,
+      remoteTileFormat: isPMTilesUrl(dataUrl) ? RemoteTileFormat.PMTILES : RemoteTileFormat.MVT,
       tilesetDataUrl: dataUrl,
       tilesetMetadataUrl: metadataUrl
     }
@@ -114,7 +128,7 @@ const TilesetVectorForm: React.FC<TilesetVectorFormProps> = ({setResponse}) => {
     error: metaError
   } = useFetchVectorTileMetadata({
     url: metadataUrl,
-    type: isPMTilesUrl(metadataUrl) ? VectorTileType.PMTILES : VectorTileType.MVT,
+    remoteTileFormat: isPMTilesUrl(metadataUrl) ? RemoteTileFormat.PMTILES : RemoteTileFormat.MVT,
     process
   });
 

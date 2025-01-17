@@ -40,7 +40,7 @@ import {default as S2GeometryLayer} from './s2-geometry-layer/s2-geometry-layer'
 export {defaultElevation as s2DefaultElevation} from './s2-geometry-layer/s2-geometry-layer';
 export {getS2Center} from './s2-geometry-layer/s2-utils';
 export {default as AggregationLayer} from './aggregation-layer';
-//import {default as VectorTileLayer} from './vector-tile/vector-tile-layer';
+// import {default as VectorTileLayer} from './vector-tile/vector-tile-layer';
 
 export {default as VectorTileIcon} from './vector-tile/vector-tile-icon';
 export {default as VectorTileLayer} from './vector-tile/vector-tile-layer';
