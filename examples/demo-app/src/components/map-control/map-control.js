@@ -125,7 +125,9 @@ export function SampleMapPanel(props) {
           <div className="project-links">
             <LinkButton
               label="Data"
-              href={getURL(props.currentSample.dataUrl)}
+              href={getURL(
+                props.currentSample.dataUrl || props.currentSample.remoteDatasetConfigUrl
+              )}
               iconComponent={Icons.Files}
               height="15px"
             />
