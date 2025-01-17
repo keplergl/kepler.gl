@@ -95,12 +95,16 @@ type CreateTableProps = {
   data: any;
 };
 
-async function createTable(dataasetInfo: CreateTableProps) {
-  const {info, color, opts, data} = dataasetInfo;
+async function createTable(datasetInfo: CreateTableProps) {
+  const {info, color, opts, data} = datasetInfo;
 
   // update metadata for remote tiled datasets
-  const refreshedMetadata = await refreshMetadata(dataasetInfo);
-  const metadata = refreshedMetadata ? {...opts.metadata, ...refreshedMetadata} : opts.metadata;
+  const refreshedMetadata = await refreshRemoteData(datasetInfo);
+  let metadata = opts.metadata;
+  if (refreshedMetadata) {
+    metadata = {...opts.metadata, ...refreshedMetadata};
+    data.fields = metadata?.fields;
+  }
 
   const TableClass = getApplicationConfig().table ?? KeplerTable;
   const table = new TableClass({
@@ -121,7 +125,7 @@ const CREATE_TABLE_TASK = Task.fromPromise(createTable, 'CREATE_TABLE_TASK');
  * @param datasetInfo
  * @returns
  */
-async function refreshMetadata(datasetInfo: CreateTableProps) {
+async function refreshRemoteData(datasetInfo: CreateTableProps) {
   // so far only vector tile layers should refresh metadata
   if (datasetInfo.info.type !== DatasetType.VECTOR_TILE) {
     return null;
