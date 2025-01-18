@@ -676,7 +676,7 @@ export const loadCustomMapStyleUpdater = (
         }
       : {}),
     ...(icon ? {icon} : {}),
-    ...(error ? {error} : {})
+    ...(error !== undefined ? {error} : {})
   }
 });
 
@@ -697,7 +697,7 @@ export const inputMapStyleUpdater = (
   // differentiate between either a url to hosted style json that needs an icon url,
   // or an icon already available client-side as a data uri
   const isUpdatedIconDataUri = updated.icon?.startsWith('data:image');
-  const isValid = Boolean(updated.uploadedFile);
+  const isValid = true; // Boolean(updated.uploadedFile);
   const isMapboxStyleUrl =
     updated.url?.startsWith('mapbox://') || updated.url?.includes('mapbox.com');
 

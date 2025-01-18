@@ -46,6 +46,7 @@ const PreviewMap = styled.div`
 
   .preview-title.error {
     color: ${props => props.theme.errorColor};
+    max-width: 250px;
   }
 
   ${media.portable`
@@ -89,6 +90,10 @@ const InlineLink = styled.a`
   }
 `;
 
+const nop = () => {
+  return;
+};
+
 interface AddMapStyleModalProps {
   inputMapStyle: ActionHandler<typeof inputMapStyle>;
   inputStyle: InputStyle;
@@ -131,11 +136,20 @@ function AddMapStyleModalFactory() {
       return null;
     }
 
-    mapRef: MapRef | null | undefined;
-    _map: MapboxMap | undefined;
+    _map: MapboxMap | undefined | null;
 
-    componentDidUpdate() {
-      const map = this.mapRef && this.mapRef.getMap();
+    _setMapRef = (mapRef: MapRef) => {
+      // Handle change of the basemap library
+      if (this._map && mapRef) {
+        const map = mapRef.getMap();
+        if (map && this._map !== map) {
+          this._map.off('style.load', nop);
+          this._map.off('error', nop);
+          this._map = null;
+        }
+      }
+
+      const map = mapRef && mapRef.getMap();
       if (map && this._map !== map) {
         this._map = map;
 
@@ -148,7 +162,7 @@ function AddMapStyleModalFactory() {
           this.loadMapStyleError();
         });
       }
-    }
+    };
 
     loadMapStyleJson = style => {
       this.props.loadCustomMapStyle({style, error: false});
@@ -286,10 +300,8 @@ function AddMapStyleModalFactory() {
                   <StyledMapContainer>
                     <Map
                       {...mapProps}
-                      ref={el => {
-                        this.mapRef = el;
-                      }}
-                      key={this.state.reRenderKey}
+                      ref={this._setMapRef}
+                      key={`${baseMapLibraryName}-${this.state.reRenderKey}-${inputStyle.url}-${mapboxApiAccessToken}`}
                       style={{
                         width: MapW,
                         height: MapH
