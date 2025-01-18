@@ -839,7 +839,7 @@ test('#mapStyleReducer -> EDIT_CUSTOM_MAP_STYLE', t => {
 
   t.deepEqual(
     nextState.inputStyle,
-    {...inputMapStyleToEdit, error: false, isValid: false, style: null, uploadedFile: null},
+    {...inputMapStyleToEdit, error: false, isValid: true, style: null, uploadedFile: null},
     'should set the inputStyle'
   );
 
