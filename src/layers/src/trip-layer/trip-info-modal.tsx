@@ -8,7 +8,7 @@ import {useIntl} from 'react-intl';
 
 import {FormattedMessage} from '@kepler.gl/localization';
 
-import Table from '../table';
+import Table from '../example-table';
 
 const InfoModal = styled.div`
   font-size: 13px;
