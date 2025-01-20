@@ -21,6 +21,7 @@ import {
 // CONSTANTS
 export const INIT = 'INIT';
 export const LOAD_REMOTE_RESOURCE_SUCCESS = 'LOAD_REMOTE_RESOURCE_SUCCESS';
+export const LOAD_REMOTE_DATASET_PROCESSED_SUCCESS = 'LOAD_REMOTE_DATASET_PROCESSED_SUCCESS';
 export const LOAD_REMOTE_RESOURCE_ERROR = 'LOAD_REMOTE_RESOURCE_ERROR';
 export const LOAD_MAP_SAMPLE_FILE = 'LOAD_MAP_SAMPLE_FILE';
 export const SET_SAMPLE_LOADING_STATUS = 'SET_SAMPLE_LOADING_STATUS';
@@ -43,6 +44,13 @@ export function loadRemoteResourceSuccess(response, config, options, remoteDatas
     config,
     options,
     remoteDatasetConfig
+  };
+}
+
+export function loadRemoteDatasetProcessedSuccessAction(result) {
+  return {
+    type: LOAD_REMOTE_DATASET_PROCESSED_SUCCESS,
+    payload: result
   };
 }
 

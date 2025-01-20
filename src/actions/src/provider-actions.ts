@@ -12,7 +12,8 @@ import {
 import {Provider} from '@kepler.gl/cloud-providers';
 
 // eslint-disable-next-line prettier/prettier
-const assignType = <T>(obj: T): { [K in keyof T]: `${typeof ACTION_PREFIX}${string & K}`; } => obj as any
+const assignType = <T>(obj: T): {[K in keyof T]: `${typeof ACTION_PREFIX}${string & K}`} =>
+  obj as any;
 export const ActionTypes = assignType({
   EXPORT_FILE_TO_CLOUD: `${ACTION_PREFIX}EXPORT_FILE_TO_CLOUD`,
   EXPORT_FILE_SUCCESS: `${ACTION_PREFIX}EXPORT_FILE_SUCCESS`,
@@ -21,6 +22,7 @@ export const ActionTypes = assignType({
   POST_SAVE_LOAD_SUCCESS: `${ACTION_PREFIX}POST_SAVE_LOAD_SUCCESS`,
   LOAD_CLOUD_MAP: `${ACTION_PREFIX}LOAD_CLOUD_MAP`,
   LOAD_CLOUD_MAP_SUCCESS: `${ACTION_PREFIX}LOAD_CLOUD_MAP_SUCCESS`,
+  LOAD_CLOUD_MAP_SUCCESS_2: `${ACTION_PREFIX}LOAD_CLOUD_MAP_SUCCESS_2`,
   LOAD_CLOUD_MAP_ERROR: `${ACTION_PREFIX}LOAD_CLOUD_MAP_ERROR`
 });
 
@@ -107,6 +109,17 @@ export const loadCloudMapSuccess: (p: LoadCloudMapSuccessPayload) => {
   type: typeof ActionTypes.LOAD_CLOUD_MAP_SUCCESS;
   payload: LoadCloudMapSuccessPayload;
 } = createAction(ActionTypes.LOAD_CLOUD_MAP_SUCCESS, (payload: LoadCloudMapSuccessPayload) => ({
+  payload
+}));
+
+/** LOAD_CLOUD_MAP_SUCCESS_2 */
+export type LoadCloudMapSuccess2Payload = LoadCloudMapSuccessPayload & {
+  datasetsPayload: any;
+};
+export const loadCloudMapSuccess2: (p: LoadCloudMapSuccess2Payload) => {
+  type: typeof ActionTypes.LOAD_CLOUD_MAP_SUCCESS_2;
+  payload: LoadCloudMapSuccess2Payload;
+} = createAction(ActionTypes.LOAD_CLOUD_MAP_SUCCESS_2, (payload: LoadCloudMapSuccess2Payload) => ({
   payload
 }));
 
