@@ -162,7 +162,7 @@ export const loadRemoteResourceSuccess = (state, action) => {
     unprocessedData
   }).bimap(
     datasets => loadRemoteDatasetProcessedSuccessAction({...action, datasets}),
-    error => {
+    () => {
       throw new Error('loadRemoteResource data processor failed');
     }
   );
