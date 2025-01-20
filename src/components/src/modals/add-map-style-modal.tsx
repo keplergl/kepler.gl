@@ -294,6 +294,7 @@ function AddMapStyleModalFactory() {
                   : (inputStyle.style && inputStyle.style.name) || ''}
               </div>
               <StyledPreviewImage className="preview-image">
+                {/** Note, we need the Map to render with errored params to get style.error messages */}
                 {!inputStyle.isValid ? (
                   <div className="preview-image-spinner" />
                 ) : (
