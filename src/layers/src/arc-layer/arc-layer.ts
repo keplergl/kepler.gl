@@ -562,7 +562,7 @@ export default class ArcLayer extends Layer {
     ];
   }
 
-  hasHoveredObject(objectInfo: {index: number; object?: {index: number}}) {
+  hasHoveredObject(objectInfo: {index: number}) {
     if (
       isLayerHoveredFromArrow(objectInfo, this.id) &&
       objectInfo.index >= 0 &&
