@@ -31,7 +31,7 @@ import {
   DATASET_FORMATS,
   OVERWRITE_MAP_ID
 } from '@kepler.gl/constants';
-import {ExportFileToCloudPayload} from '@kepler.gl/types';
+import {AddDataToMapPayload, ExportFileToCloudPayload} from '@kepler.gl/types';
 
 import {FILE_CONFLICT_MSG, MapListItem} from '@kepler.gl/cloud-providers';
 import {DATASET_HANDLERS} from '@kepler.gl/processors';
@@ -294,11 +294,19 @@ function getDatasetHandler(format) {
  * @param param0
  * @returns
  */
-async function parseLoadMapResponseTask({response, loadParams, provider}) {
+async function parseLoadMapResponseTask({
+  response,
+  loadParams,
+  provider
+}: {
+  response: ProviderActions.LoadCloudMapSuccessPayload['response'];
+  loadParams: ProviderActions.LoadCloudMapSuccessPayload['loadParams'];
+  provider: ProviderActions.LoadCloudMapSuccessPayload['provider'];
+}) {
   const {map, format} = response;
   const processorMethod = getDatasetHandler(format);
 
-  let parsedDatasets = [];
+  let parsedDatasets: AddDataToMapPayload['datasets'] = [];
 
   if (
     format === DATASET_FORMATS.keplergl &&
@@ -362,7 +370,7 @@ export const loadCloudMapSuccessUpdater = (
     loadParams,
     provider
   }).bimap(
-    datasetsPayload => {
+    (datasetsPayload: AddDataToMapPayload) => {
       return loadCloudMapSuccess2({...action.payload, datasetsPayload});
     },
     error =>
