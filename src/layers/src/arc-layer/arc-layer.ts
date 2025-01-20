@@ -563,24 +563,22 @@ export default class ArcLayer extends Layer {
   }
 
   hasHoveredObject(objectInfo: {index: number; object?: {index: number}}) {
-    // objectInfo.index can point to data of arcs created in neighbor mode, so get index to source data.
-    const index =
-      this.config.columnMode === COLUMN_MODE_NEIGHBORS
-        ? objectInfo?.object?.index
-        : objectInfo?.index;
-
     if (
       isLayerHoveredFromArrow(objectInfo, this.id) &&
       objectInfo.index >= 0 &&
       this.dataContainer
     ) {
-      return {
-        index,
-        position: this.getPositionAccessor(this.dataContainer)({index})
-      };
+      // objectInfo.index can point to data of arcs created in neighbor mode, so get index to source data.
+      const hoveredObject = super.hasHoveredObject(objectInfo);
+      return hoveredObject
+        ? {
+            index: hoveredObject.index,
+            position: this.getPositionAccessor(this.dataContainer)({index: hoveredObject.index})
+          }
+        : null;
     }
 
-    return super.hasHoveredObject({index});
+    return super.hasHoveredObject(objectInfo);
   }
 
   getHoverData(
