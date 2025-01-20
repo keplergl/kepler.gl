@@ -161,6 +161,7 @@ export const loadRemoteResourceSuccess = (state, action) => {
       throw new Error('loadRemoteResource data processor failed');
     }
   );
+
   return withTask(state, task);
 };
 

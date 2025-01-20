@@ -2354,7 +2354,7 @@ export const createNewDatasetSuccessUpdater = (
       // handle create dataset error
       console.error(
         'createNewDatasetSuccessUpdater: failed',
-        result?.reason || (result as any)?.value
+        result.reason || (result as any).value
       );
       return accu;
     }
