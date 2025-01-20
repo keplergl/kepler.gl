@@ -3,19 +3,24 @@
 
 import {combineReducers} from 'redux';
 import {handleActions} from 'redux-actions';
+import Task, {withTask} from 'react-palm/tasks';
 
-import keplerGlReducer, {combinedUpdaters, uiStateUpdaters} from '@kepler.gl/reducers';
-import {processGeojson, processRowObject, processArrowTable} from '@kepler.gl/processors';
-import KeplerGlSchema from '@kepler.gl/schemas';
-import {EXPORT_MAP_FORMATS} from '@kepler.gl/constants';
 import {aiAssistantReducer} from '@kepler.gl/ai-assistant';
+import {EXPORT_MAP_FORMATS} from '@kepler.gl/constants';
+import {processGeojson, processRowObject, processArrowTable} from '@kepler.gl/processors';
+import keplerGlReducer, {combinedUpdaters, uiStateUpdaters} from '@kepler.gl/reducers';
+import KeplerGlSchema from '@kepler.gl/schemas';
+import {KeplerTable} from '@kepler.gl/table';
+import {getApplicationConfig} from '@kepler.gl/utils';
 
 import {
   INIT,
   LOAD_MAP_SAMPLE_FILE,
   LOAD_REMOTE_RESOURCE_SUCCESS,
+  LOAD_REMOTE_DATASET_PROCESSED_SUCCESS,
   LOAD_REMOTE_RESOURCE_ERROR,
-  SET_SAMPLE_LOADING_STATUS
+  SET_SAMPLE_LOADING_STATUS,
+  loadRemoteDatasetProcessedSuccessAction
 } from '../actions';
 
 import {CLOUD_PROVIDERS_CONFIGURATION} from '../constants/default-settings';
