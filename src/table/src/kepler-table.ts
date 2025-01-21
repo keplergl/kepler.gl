@@ -153,7 +153,7 @@ class KeplerTable<F extends Field = Field> {
   // table-injected metadata
   metadata: Record<string, any>;
 
-  getFileProcessor?: () => {data; format};
+  getFileProcessor?: (data: any, inputFormat?: string) => {data: any; format: string};
 
   constructor({
     info,

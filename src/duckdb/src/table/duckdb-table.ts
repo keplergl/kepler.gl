@@ -235,7 +235,7 @@ export class KeplerGlDuckDbTable extends KeplerTable {
     return super.update({cols, rows: [], fields: []});
   }
 
-  static detFileProcessor = function (data, inputFormat) {
+  static getFileProcessor = function (data: any, inputFormat?: string) {
     let processor;
     let format;
     if (inputFormat === DATASET_FORMATS.arrow || isArrowData(data)) {
