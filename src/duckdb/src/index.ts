@@ -1,6 +1,4 @@
-// SPDX-License-Identifier: MIT
-// Copyright contributors to the kepler.gl project
-
-const DUCK = 0;
-
-export default DUCK;
+import {keplerGlDuckDBPlugin} from './plugin';
+export {KeplerGlDuckDbTable} from './table/duckdb-table';
+export {SqlPanel} from './components';
+export default keplerGlDuckDBPlugin;
