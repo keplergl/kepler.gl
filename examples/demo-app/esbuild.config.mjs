@@ -11,6 +11,9 @@ import {join} from 'node:path';
 import KeplerPackage from '../../package.json' assert {type: 'json'};
 
 const args = process.argv;
+
+const BASE_NODE_MODULES_DIR = './node_modules';
+
 const LIB_DIR = '../../';
 const NODE_MODULES_DIR = join(LIB_DIR, 'node_modules');
 const SRC_DIR = join(LIB_DIR, 'src');
@@ -39,6 +42,24 @@ const RESOLVE_LOCAL_ALIASES = {
   'apache-arrow': `${NODE_MODULES_DIR}/apache-arrow`,
   // all react-ai-assist needs to be resolved from samenode_modules
   'react-ai-assist': `${NODE_MODULES_DIR}/react-ai-assist`
+};
+
+const getThirdPartyLibraryAliases = useKeplerNodeModules => {
+  const node_modules_dir = useKeplerNodeModules ? NODE_MODULES_DIR : BASE_NODE_MODULES_DIR;
+
+  return {
+    react: `${node_modules_dir}/react`,
+    'react-dom': `${node_modules_dir}/react-dom`,
+    'react-redux': `${node_modules_dir}/react-redux/lib`,
+    'styled-components': `${node_modules_dir}/styled-components`,
+    'react-intl': `${node_modules_dir}/react-intl`,
+    // Suppress useless warnings from react-date-picker's dep
+    ...(useKeplerNodeModules ? {'tiny-warning': `${SRC_DIR}/utils/src/noop.ts`} : {}),
+    // kepler.gl and loaders.gl need to use same apache-arrow
+    'apache-arrow': `${node_modules_dir}/apache-arrow`,
+    // all react-ai-assist needs to be resolved from samenode_modules
+    'react-ai-assist': `${node_modules_dir}/react-ai-assist`
+  };
 };
 
 const config = {
@@ -71,7 +92,7 @@ const config = {
 };
 
 function addAliases(externals, args) {
-  const resolveAlias = RESOLVE_LOCAL_ALIASES;
+  const resolveAlias = getThirdPartyLibraryAliases(true);
 
   // Combine flags
   const useLocalDeck = args.includes('--env.deck') || args.includes('--env.hubble_src');
@@ -207,7 +228,7 @@ function openURL(url) {
         // add alias to resolve libraries so there is only one copy of them
         ...(process.env.NODE_ENV === 'local'
           ? {alias: localAliases}
-          : {alias: RESOLVE_LOCAL_ALIASES}),
+          : {alias: getThirdPartyLibraryAliases(false)}),
         banner: {
           js: `new EventSource('/esbuild').addEventListener('change', () => location.reload());`
         }
