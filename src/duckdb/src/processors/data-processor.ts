@@ -7,8 +7,8 @@ import {
   generateHashId,
   notNullorUndefined
 } from '@kepler.gl/common-utils';
-import {KeplerProtoField} from '@kepler.gl/types';
-import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
+import {Field as KeplerProtoField} from '@kepler.gl/types';
+import {ALL_FIELD_TYPES, GUIDES_FILE_FORMAT_DOC} from '@kepler.gl/constants';
 import {processKeplerglJSON} from '@kepler.gl/processors';
 
 import {getDuckDB} from '../init';
@@ -32,7 +32,7 @@ enum COLUMN_TYPES {
   TIMESTAMP = 'TIMESTAMP',
   VARCHAR = 'VARCHAR'
 }
-// https://duckdb.org/docs/data/csv/auto_detection.html#type-detection
+// @ts-expect-error https://duckdb.org/docs/data/csv/auto_detection.html#type-detection
 const COLUMN_TYPES_PRIORITIES = [
   'GEOMETRY',
   'BOOLEAN',
@@ -129,7 +129,7 @@ export async function processKeplerglJSONforDuckDb(
  * Process uploaded csv returned by loaders.gl as row object and string value
  */
 export async function processCsvRowObject(
-  rawData: Record<string, unknown>[]
+  rawData: Record<string, string | null>[]
 ): Promise<ProcessorResult> {
   if (!Array.isArray(rawData) || !rawData.length) {
     return {
@@ -194,7 +194,7 @@ function toCSVRow(row: unknown[]): string {
 }
 
 // Use DucckDB to detect csv column schema
-async function sniffCsvSchema(sample: RowData[]) {
+async function sniffCsvSchema(sample: RowData) {
   if (!Array.isArray(sample) || sample.length < 0) {
     return;
   }
@@ -229,7 +229,7 @@ async function sniffCsvSchema(sample: RowData[]) {
   return schema;
 }
 
-export async function processGeojson(rawData: unknown): ProcessorResult {
+export function processGeojson(rawData: unknown): ProcessorResult {
   const normalizedGeojson = normalize(rawData);
 
   if (!normalizedGeojson || !Array.isArray(normalizedGeojson.features)) {
@@ -239,9 +239,11 @@ export async function processGeojson(rawData: unknown): ProcessorResult {
     throw error;
     // fail to normalize geojson
   }
-  console.log(normalizedGeojson);
+  // console.log(normalizedGeojson);
 
   return {
-    rows: normalizedGeojson
+    rows: normalizedGeojson,
+    // TODO get fields to preserve field names?
+    fields: []
   };
 }
