@@ -205,7 +205,9 @@ function openURL(url) {
         minify: false,
         sourcemap: true,
         // add alias to resolve libraries so there is only one copy of them
-        ...(process.env.NODE_ENV === 'local' ? {alias: localAliases} : {}),
+        ...(process.env.NODE_ENV === 'local'
+          ? {alias: localAliases}
+          : {alias: RESOLVE_LOCAL_ALIASES}),
         banner: {
           js: `new EventSource('/esbuild').addEventListener('change', () => location.reload());`
         }
