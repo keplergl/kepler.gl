@@ -3392,6 +3392,15 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@kepler.gl/duckdb@workspace:src/duckdb":
+  version: 0.0.0-use.local
+  resolution: "@kepler.gl/duckdb@workspace:src/duckdb"
+  dependencies:
+    "@kepler.gl/constants": "npm:3.1.0-alpha.5"
+    "@kepler.gl/types": "npm:3.1.0-alpha.5"
+  languageName: unknown
+  linkType: soft
+
 "@kepler.gl/effects@npm:3.1.0-alpha.5, @kepler.gl/effects@workspace:src/effects":
   version: 0.0.0-use.local
   resolution: "@kepler.gl/effects@workspace:src/effects"
