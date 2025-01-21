@@ -34,7 +34,7 @@
     "./src/effects",
     "./src/reducers",
     "./src/components",
-    "./src/duck-db",
+    "./src/duckdb",
     "./src/ai-assistant"
   ],
   "repository": {
