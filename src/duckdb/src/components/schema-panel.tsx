@@ -3,8 +3,20 @@ import {useSelector} from 'react-redux';
 import styled from 'styled-components';
 import {arrowDataTypeToFieldType} from '@kepler.gl/utils';
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
-import {Tree, DatasetNode, ColumnNode} from './tree';
+import {VisState} from '@kepler.gl/schemas';
+import {Tree, DatasetNode, ColumnNode, TreeNodeData} from './tree';
 import {getDuckDB} from '../init';
+
+// TODO note that demo state is available in demo-app, but not when add modules to dependencies in a custom map
+type State = {
+  demo?: {
+    keplerGl: {
+      map: {
+        visState: VisState;
+      };
+    };
+  };
+};
 
 const StyledSchemaPanel = styled.div`
   color: ${props => props.theme.textColor};
@@ -49,8 +61,8 @@ function getSchemaSuggestion(result) {
   }, []);
 }
 export const SchemaPanel = ({setTableSchema}) => {
-  const [columnSchemas, setColumnSchemas] = useState([]);
-  const datasets = useSelector(state => state?.demo?.keplerGl?.map?.visState.datasets);
+  const [columnSchemas, setColumnSchemas] = useState<TreeNodeData<{type: string}>[]>([]);
+  const datasets = useSelector((state: State) => state?.demo?.keplerGl?.map?.visState.datasets);
   useEffect(() => {
     getTableSchema();
   }, [datasets]);
@@ -77,12 +89,13 @@ export const SchemaPanel = ({setTableSchema}) => {
           <Tree
             key={data.key}
             treeData={data}
-            renderNode={(node, isOpen) => {
+            renderNode={node => {
               if (node.object.type === 'dataset') {
                 return <DatasetNode node={node} />;
               } else if (node.object.type === 'column') {
                 return <ColumnNode node={node} />;
               }
+              return null;
             }}
           />
         ))

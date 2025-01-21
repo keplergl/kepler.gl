@@ -23,7 +23,7 @@ const MONACO_OPTIONS: monaco.editor.IStandaloneEditorConstructionOptions = {
 
 function parseSqlAndFindTableNameAndAliases(sql: string) {
   const regex = /\b(?:FROM|JOIN)\s+([^\s.]+(?:\.[^\s.]+)?)\s*(?:AS)?\s*([^\s,]+)?/gi;
-  const tables = [];
+  const tables: {table_name: string; alias: string}[] = [];
 
   while (true) {
     const match = regex.exec(sql);
@@ -63,7 +63,10 @@ const MonacoEditor: React.FC<MonacoEditorProps> = ({
   isReadOnly
 }) => {
   // private editor?: monaco.editor.IStandaloneCodeEditor;
-  const schemaTableNames = useMemo(() => uniq(tableSchema.map(d => d.table_name)), [tableSchema]);
+  const schemaTableNames = useMemo(
+    () => (tableSchema ? uniq(tableSchema.map(d => d.table_name)) : []),
+    [tableSchema]
+  );
   const schemaTableNamesSet = useMemo(() => new Set(schemaTableNames), [schemaTableNames]);
   const handleRunQueryRef = useRef(onRunQuery);
   handleRunQueryRef.current = onRunQuery;
@@ -94,7 +97,8 @@ const MonacoEditor: React.FC<MonacoEditorProps> = ({
               insertText: 'This is a piece of custom code',
               insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
               documentation: 'This is a piece of custom code'
-            }
+              // TODO: range is missing
+            } as monaco.languages.CompletionItem
           ];
 
           const fullQueryText = model.getValue();
@@ -121,11 +125,15 @@ const MonacoEditor: React.FC<MonacoEditorProps> = ({
 
           if (lastTokenBeforeSpace && /from|join|update|into/.test(lastTokenBeforeSpace)) {
             suggestions.push(
-              ...schemaTableNames.map(table_name => ({
-                label: table_name,
-                kind: monaco.languages.CompletionItemKind.Field,
-                insertText: table_name
-              }))
+              ...schemaTableNames.map(
+                table_name =>
+                  ({
+                    label: table_name,
+                    kind: monaco.languages.CompletionItemKind.Field,
+                    insertText: table_name
+                    // TODO: range is missing
+                  } as monaco.languages.CompletionItem)
+              )
             );
           }
 
@@ -136,15 +144,19 @@ const MonacoEditor: React.FC<MonacoEditorProps> = ({
             } else if (tableNamesAndAliases.get(lastTokenBeforeDot)) {
               table_name = tableNamesAndAliases.get(lastTokenBeforeDot) as string;
             }
-            if (table_name) {
+            if (table_name && tableSchema) {
               suggestions.push(
                 ...tableSchema
                   .filter(d => d.table_name === table_name)
-                  .map(({table_name, column_name}) => ({
-                    label: column_name,
-                    kind: monaco.languages.CompletionItemKind.Field,
-                    insertText: column_name
-                  }))
+                  .map(
+                    ({table_name, column_name}) =>
+                      ({
+                        label: column_name,
+                        kind: monaco.languages.CompletionItemKind.Field,
+                        insertText: column_name
+                        // TODO: range is missing
+                      } as monaco.languages.CompletionItem)
+                  )
               );
             }
           }

@@ -120,7 +120,7 @@ export const SqlPanel: React.FC<SqlPanelProps> = ({initialSql = ''}) => {
     const params = new URLSearchParams(window.location.search);
     return params.get('sql') || initialSql;
   });
-  const [result, setResult] = useState<null | arrow.Table> (null);
+  const [result, setResult] = useState<null | arrow.Table>(null);
   const [error, setError] = useState<Error | null>(null);
   const [counter, setCounter] = useState(0);
   const [tableSchema, setTableSchema] = useState([]);
@@ -176,7 +176,8 @@ export const SqlPanel: React.FC<SqlPanelProps> = ({initialSql = ''}) => {
     const datasetToAdd = {
       data: {
         fields: keplerFields,
-        rows: result
+        // TODO type AddDataToMapPayload -> rows -> + arrow.Table
+        rows: result as any
       },
       info: {
         id: generateHashId(),

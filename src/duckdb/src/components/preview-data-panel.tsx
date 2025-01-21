@@ -31,11 +31,11 @@ export type ColMeta = {
 };
 
 export type DataTableStyle = {
-  minCellSize: number;
-  cellPadding: number;
-  fontSize: number;
-  font: string;
-  optionsButton: number;
+  minCellSize?: number;
+  cellPadding?: number;
+  fontSize?: number;
+  font?: string;
+  optionsButton?: number;
 };
 
 export type PreviewDataPanelProps = BaseComponentProps & {
@@ -153,4 +153,6 @@ const PreviewDataPanelWOTheme: React.FC<PreviewDataPanelProps> = ({
   );
 };
 
-export const PreviewDataPanel = withTheme(PreviewDataPanelWOTheme);
+export const PreviewDataPanel = withTheme(
+  PreviewDataPanelWOTheme
+) as React.FC<PreviewDataPanelProps>;
