@@ -38,7 +38,7 @@ export function Tree<T>(props: TreeProps<T>): React.ReactElement {
 
 export type TreeNodeProps<T> = {
   treeData: TreeNodeData<T>;
-  renderNode: (node: TreeNodeData<T>, isOpen: boolean) => JSX.Element;
+  renderNode: (node: TreeNodeData<T>, isOpen: boolean) => JSX.Element | null;
 };
 
 const StyledCollapsibleTriggerContent = styled.div`
@@ -50,7 +50,7 @@ const StyledCollapsibleTriggerContent = styled.div`
 /**
  * Component that renders a tree node.
  */
-function TreeNode<T>(props: TreeNodeProps<T>): JSX.Element {
+function TreeNode<T>(props: TreeNodeProps<T>): JSX.Element | null {
   const {treeData, renderNode} = props;
   const {children} = treeData;
   const [isOpen, setIsOpen] = useState(Boolean(treeData.isOpen));

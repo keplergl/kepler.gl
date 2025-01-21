@@ -7,7 +7,7 @@ import {
   generateHashId,
   notNullorUndefined
 } from '@kepler.gl/common-utils';
-import {Field as KeplerProtoField} from '@kepler.gl/types';
+import {ProtoDatasetField} from '@kepler.gl/types';
 import {ALL_FIELD_TYPES, GUIDES_FILE_FORMAT_DOC} from '@kepler.gl/constants';
 import {processKeplerglJSON} from '@kepler.gl/processors';
 
@@ -15,11 +15,14 @@ import {getDuckDB} from '../init';
 
 export const CSV_NULLS = /^(null|NULL|Null|NaN|\/N||)$/;
 
-type RowData = Record<string, unknown>[];
+type RowsAsArray = any[][];
+type RowsAsObject = Record<string, unknown>[];
+type RowData = RowsAsArray | RowsAsObject;
+
 export type ProcessorResult = {
   cols?: arrow.Vector[];
   rows: RowData;
-  fields: KeplerProtoField[];
+  fields: ProtoDatasetField[];
 };
 
 enum COLUMN_TYPES {
@@ -200,8 +203,8 @@ async function sniffCsvSchema(sample: RowData) {
   }
   const headerRow = toCSVRow(Object.keys(sample[0]));
 
-  const csvContent = sample.reduce(
-    (accu, row) => `${accu}${toCSVRow(Object.values(row))}`,
+  const csvContent = (sample as (any[] | Record<string, unknown>)[]).reduce(
+    (accu: string, row) => `${accu}${toCSVRow(Object.values(row))}`,
     headerRow
   );
 

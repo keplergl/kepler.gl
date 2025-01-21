@@ -38,7 +38,8 @@ module.exports = {
     'consistent-return': 0,
     'comma-dangle': 1,
     'enzyme-deprecation/no-shallow': 2,
-    'enzyme-deprecation/no-mount': 2
+    'enzyme-deprecation/no-mount': 2,
+    'no-constant-condition': ['error', {checkLoops: false}]
   },
   overrides: [
     {

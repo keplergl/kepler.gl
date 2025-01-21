@@ -151,7 +151,9 @@ class KeplerTable<F extends Field = Field> {
   disableDataOperation?: boolean;
 
   // table-injected metadata
-  metadata: object;
+  metadata: Record<string, any>;
+
+  getFileProcessor?: () => {data; format};
 
   constructor({
     info,
@@ -202,7 +204,7 @@ class KeplerTable<F extends Field = Field> {
     this.gpuFilter = getGpuFilterProps([], this.id, [], undefined);
   }
 
-  importData({data}: {data: ProtoDataset['data']}) {
+  async importData({data}: {data: ProtoDataset['data']}) {
     const dataContainerData = data.cols ? data.cols : data.rows;
     const inputDataFormat = data.cols ? DataForm.COLS_ARRAY : DataForm.ROWS_ARRAY;
 
@@ -236,7 +238,7 @@ class KeplerTable<F extends Field = Field> {
    * update table with new data
    * @param data - new data e.g. the arrow data with new batches loaded
    */
-  update(data: ProtoDataset['data']) {
+  async update(data: ProtoDataset['data']) {
     const dataContainerData = data.cols ? data.cols : data.rows;
     this.dataContainer.update?.(dataContainerData);
     this.allIndexes = this.dataContainer.getPlainIndex();

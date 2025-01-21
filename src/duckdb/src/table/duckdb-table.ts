@@ -3,7 +3,7 @@ import {AsyncDuckDB, AsyncDuckDBConnection} from '@duckdb/duckdb-wasm';
 
 import {DatasetType, DATASET_FORMATS} from '@kepler.gl/constants';
 import {KeplerTable} from '@kepler.gl/table';
-import {Field} from '@kepler.gl/types';
+import {Field, ProtoDatasetField} from '@kepler.gl/types';
 import {
   arrowSchemaToFields,
   isArrowData,
@@ -24,6 +24,12 @@ import {
 // TODO format geojson, all binary geogson columns should be tranformed to wkb
 const GEOMETRY_COLUMN = 'geom';
 
+type ImportDataToDuckProps = {
+  data: ProcessorResult;
+  db: AsyncDuckDB;
+  c: AsyncDuckDBConnection;
+};
+
 /**
  * Creates an arrow table from arrow vectors and fields.
  * @param columns An array of arrow vectors.
@@ -31,7 +37,7 @@ const GEOMETRY_COLUMN = 'geom';
  * @returns An arrow table.
  */
 // TODO: consider using original drag&dropped arrow table, as it could contain extra metadata, not passed to the fields.
-const restoreArrowTable = (columns: arrow.Vector[], fields: Field[]) => {
+const restoreArrowTable = (columns: arrow.Vector[], fields: ProtoDatasetField[]) => {
   const creaOpts = {};
   fields.map((field, index) => {
     creaOpts[field.name] = columns[index];
@@ -48,40 +54,11 @@ const dropIfTableExists = async (c: AsyncDuckDBConnection, tableName: string) =>
 };
 
 export class KeplerGlDuckDbTable extends KeplerTable {
-  // fields and data
-  fields: Field[];
-
-  //   dataContainer: DataContainerInterface;
-
-  //   allIndexes: number[];
-  //   filteredIndex: number[];
-  //   filteredIdxCPU?: number[];
-  //   filteredIndexForDomain: number[];
-  //   fieldPairs: FieldPair[];
-  //   gpuFilter: GpuFilter;
-  //   filterRecord?: FilterRecord;
-  //   filterRecordCPU?: FilterRecord;
-  //   changedFilters?: any;
-
-  // table-injected metadata
-  //   sortColumn?: {
-  // column name: sorted idx
-  // [key: string]: string; // ASCENDING | DESCENDING | UNSORT
-  //   };
-  //   sortOrder?: number[] | null;
-
-  //   pinnedColumns?: string[];
-  //   supportedFilterTypes?: string[] | null;
-  //   disableDataOperation?: boolean;
-
-  // table-injected metadata
-  //   metadata: Record<string, any>;
-
   constructor(props) {
     super(props);
   }
 
-  async importRowData({data, db, c}: {data: ProcessorResult}): Promise<void> {
+  async importRowData({data, db, c}: ImportDataToDuckProps): Promise<void> {
     try {
       const {fields, rows} = data;
 
@@ -90,7 +67,6 @@ export class KeplerGlDuckDbTable extends KeplerTable {
       const rowsForDb = Array.isArray(rows[0])
         ? rows.map(row => {
             const newRow = {};
-            // @ts-expect-error
             row.forEach((value, index) => {
               newRow[fields[index].name] = value;
             });
@@ -101,6 +77,7 @@ export class KeplerGlDuckDbTable extends KeplerTable {
       await db.registerFileText(this.id, JSON.stringify(rowsForDb));
 
       const columns = fields.reduce((acc, field, index) => {
+        // @ts-expect-error TODO extend fields to contain duckDBColumnType
         return `${acc}${index > 0 ? ',' : ''} '${field.name}': '${field.duckDBColumnType}'`;
       }, '');
 
@@ -116,15 +93,7 @@ export class KeplerGlDuckDbTable extends KeplerTable {
     }
   }
 
-  async importGeoJsonData({
-    data,
-    db,
-    c
-  }: {
-    data: ProcessorResult;
-    db: AsyncDuckDB;
-    c: AsyncDuckDBConnection;
-  }): Promise<void> {
+  async importGeoJsonData({data, db, c}: ImportDataToDuckProps): Promise<void> {
     try {
       const {rows} = data;
       await db.registerFileText(this.id, JSON.stringify(rows));
@@ -142,20 +111,14 @@ export class KeplerGlDuckDbTable extends KeplerTable {
     }
   }
 
-  async importArrowData({
-    data,
-    db,
-    c
-  }: {
-    data: ProcessorResult;
-    db: AsyncDuckDB;
-    c: AsyncDuckDBConnection;
-  }): Promise<void> {
+  async importArrowData({data, db, c}: ImportDataToDuckProps): Promise<void> {
     try {
       // 1) data.rows contains an arrow table created by Add to Map data from DuckDb query.
       // 2) arrow table is in cols & fields when a file is dragged & dropped into Add Data To Map dialog.
       const arrowTable =
-        data.rows instanceof arrow.Table ? data.rows : restoreArrowTable(data.cols, data.fields);
+        data.rows instanceof arrow.Table
+          ? data.rows
+          : restoreArrowTable(data.cols || [], data.fields);
 
       const setupSql = `
         install spatial;
@@ -234,7 +197,9 @@ export class KeplerGlDuckDbTable extends KeplerTable {
       geoField?.metadata.set('ARROW:extension:name', 'geoarrow.wkb');
 
       fields = data.fields ?? arrowSchemaToFields(arrowResult.schema);
-      cols = [...Array(arrowResult.numCols).keys()].map(i => arrowResult.getChildAt(i));
+      cols = [...Array(arrowResult.numCols).keys()]
+        .map(i => arrowResult.getChildAt(i))
+        .filter(col => col) as arrow.Vector[];
     } catch (error) {
       // Known issues:
       // 1) ST_AsWKB binder error, no type match
@@ -249,13 +214,13 @@ export class KeplerGlDuckDbTable extends KeplerTable {
   async importData({data}: {data: ProcessorResult}): Promise<void> {
     // VectorTile is a special case, ignore for now
     if (this.type === DatasetType.VECTOR_TILE) {
-      super.importData({data});
+      super.importData({data: {...data, rows: []}});
       return;
     }
 
     const {fields, cols} = await this.createTableAndGetArrow(data);
 
-    super.importData({data: {fields, cols}});
+    super.importData({data: {fields, cols, rows: []}});
   }
 
   async update(data) {
@@ -267,28 +232,27 @@ export class KeplerGlDuckDbTable extends KeplerTable {
 
     const {cols} = await this.createTableAndGetArrow(data);
 
-    return super.update({cols});
+    return super.update({cols, rows: [], fields: []});
   }
-}
 
-/** process uploaded file (by loaders.gl loaders) into a unified shape to import into Duckdb */
-KeplerGlDuckDbTable.getFileProcessor = function (data, inputFormat) {
-  let processor;
-  let format;
-  if (inputFormat === DATASET_FORMATS.arrow || isArrowData(data)) {
-    format = DATASET_FORMATS.arrow;
-    // TODO injest arrow files from disk without loaders
-    processor = processArrowBatches;
-  } else if (inputFormat === DATASET_FORMATS.keplergl || isKeplerGlMap(data)) {
-    format = DATASET_FORMATS.keplergl;
-    processor = processKeplerglJSONforDuckDb;
-  } else if (inputFormat === DATASET_FORMATS.row || isRowObject(data)) {
-    // csv file goes here
-    format = DATASET_FORMATS.row;
-    processor = processCsvRowObject; // directly import json object into duckdb-wasm
-  } else if (inputFormat === DATASET_FORMATS.geojson || isGeoJson(data)) {
-    format = DATASET_FORMATS.geojson;
-    processor = processGeojson;
-  }
-  return {processor, format};
-};
+  static detFileProcessor = function (data, inputFormat) {
+    let processor;
+    let format;
+    if (inputFormat === DATASET_FORMATS.arrow || isArrowData(data)) {
+      format = DATASET_FORMATS.arrow;
+      // TODO injest arrow files from disk without loaders
+      processor = processArrowBatches;
+    } else if (inputFormat === DATASET_FORMATS.keplergl || isKeplerGlMap(data)) {
+      format = DATASET_FORMATS.keplergl;
+      processor = processKeplerglJSONforDuckDb;
+    } else if (inputFormat === DATASET_FORMATS.row || isRowObject(data)) {
+      // csv file goes here
+      format = DATASET_FORMATS.row;
+      processor = processCsvRowObject; // directly import json object into duckdb-wasm
+    } else if (inputFormat === DATASET_FORMATS.geojson || isGeoJson(data)) {
+      format = DATASET_FORMATS.geojson;
+      processor = processGeojson;
+    }
+    return {processor, format};
+  };
+}
