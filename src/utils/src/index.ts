@@ -181,6 +181,9 @@ export type {
   GetMapRef
 } from './application-config';
 
+// Browser utils
+export {isAppleDevice} from './browser-utils';
+
 export {default as quickInsertionSort} from './quick-insertion-sort';
 
 export type {KeplerTableModel} from './types';
