@@ -208,7 +208,7 @@ function openURL(url) {
         sourcemap: false,
         // Add alias resolution for build
         alias: {
-          ...RESOLVE_LOCAL_ALIASES
+          ...getThirdPartyLibraryAliases(true)
         },
         // Add these production optimizations
         define: {
