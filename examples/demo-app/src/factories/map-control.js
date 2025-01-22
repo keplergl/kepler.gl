@@ -7,8 +7,7 @@ import {
   withState,
   MapControlFactory,
   EffectControlFactory,
-  EffectManagerFactory,
-  MapControlButton
+  EffectManagerFactory
 } from '@kepler.gl/components';
 import {AiAssistantControlFactory, AiAssistantManagerFactory} from '@kepler.gl/ai-assistant';
 import {SampleMapPanel} from '../components/map-control/map-control';

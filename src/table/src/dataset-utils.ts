@@ -9,7 +9,7 @@ import Task from 'react-palm/tasks';
 import {DatasetType, RemoteTileFormat, VectorTileDatasetMetadata} from '@kepler.gl/constants';
 import {
   hexToRgb,
-  validateInputData,
+  // validateInputData,
   datasetColorMaker,
   getApplicationConfig
 } from '@kepler.gl/utils';
