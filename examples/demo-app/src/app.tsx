@@ -163,8 +163,9 @@ const App = props => {
     _loadSampleData();
 
     // Notifications
-    // _loadMockNotifications();
-  }, [dispatch, id, provider, query]);
+
+    // no dependencies, as this was part of componentDidMount
+  }, []);
 
   const _setStartScreenCapture = useCallback(
     flag => {
