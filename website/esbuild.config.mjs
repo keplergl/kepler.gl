@@ -39,7 +39,7 @@ const config = {
   entryPoints: [
     'src/main.js',
   ],
-  outdir: 'dist',
+  outdir: 'dist/bundle.js',
   bundle: true,
   define: {
     NODE_ENV: JSON.stringify(process.env.NODE_ENV || 'production'),
@@ -78,7 +78,8 @@ function openURL(url) {
       .build({
         ...config,
         minify: true,
-        sourcemap: false
+        sourcemap: false,
+        alias: RESOLVE_LOCAL_ALIASES
       })
       .catch(e => {
         console.error(e);

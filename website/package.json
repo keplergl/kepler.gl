@@ -6,12 +6,14 @@
   "main": "dist/index.js",
   "version": "0.0.1",
   "scripts": {
+    "dev": "node esbuild.config.mjs --start",
+    "esbuild": "yarn build-clean && yarn build-static && node esbuild.config.mjs --build",
     "start": "webpack serve --mode development --env prod --static-directory ./src/static --progress --open",
     "start-prod": "webpack serve --mode production --env prod --static-directory ./src/static --progress --open",
     "build-clean": "rm -rf ./dist && mkdir dist",
     "build-static": "cp -r ./src/static/* dist",
     "build-script": "NODE_OPTIONS=--openssl-legacy-provider webpack --mode production --env prod",
-    "build": "yarn build-clean && yarn build-static && yarn build-script",
+    "build": "yarn build-clean && yarn build-static && yarn esbuild",
     "lint": "eslint src"
   },
   "dependencies": {
