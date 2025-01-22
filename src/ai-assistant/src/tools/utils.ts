@@ -5,9 +5,6 @@ import interpolate from 'color-interpolate';
 
 import {Layer} from '@kepler.gl/layers';
 import {Datasets, KeplerTable} from '@kepler.gl/table';
-
-import {Layer} from '@kepler.gl/layers';
-import {Datasets, KeplerTable} from '@kepler.gl/table';
 import {SpatialJoinGeometries} from '@openassistant/geoda';
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 import {AddDataToMapPayload, ProtoDataset, ProtoDatasetField} from '@kepler.gl/types';
@@ -178,11 +175,11 @@ export function getDatasetContext(datasets: Datasets, layers: Layer[]) {
         // get the valid geometry columns as string
         geometryColumns: Object.fromEntries(
           Object.entries(layer.config.columns)
-            .filter(([_, value]) => value !== null)
+            .filter(([, value]) => value !== null)
             .map(([key, value]) => [
               key,
               typeof value === 'object' && value !== null
-                ? Object.fromEntries(Object.entries(value).filter(([_, v]) => v !== null))
+                ? Object.fromEntries(Object.entries(value).filter(([, v]) => v !== null))
                 : value
             ])
         )
