@@ -568,10 +568,14 @@ export default class ArcLayer extends Layer {
       objectInfo.index >= 0 &&
       this.dataContainer
     ) {
-      return {
-        index: objectInfo.index,
-        position: this.getPositionAccessor(this.dataContainer)(objectInfo)
-      };
+      // objectInfo.index can point to data of arcs created in neighbor mode, so get index to source data.
+      const hoveredObject = super.hasHoveredObject(objectInfo);
+      return hoveredObject
+        ? {
+            index: hoveredObject.index,
+            position: this.getPositionAccessor(this.dataContainer)({index: hoveredObject.index})
+          }
+        : null;
     }
 
     return super.hasHoveredObject(objectInfo);

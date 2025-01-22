@@ -703,6 +703,7 @@ export type CategoricalCustomPaletteInputProps = {
   onAdd: (index: number) => void;
   onToggleSketcher: (index: number) => void;
   allValues: string[] | number[];
+  disableDelete?: boolean;
 };
 
 export const CategoricalCustomPaletteInput: React.FC<CategoricalCustomPaletteInputProps> = ({
@@ -712,6 +713,7 @@ export const CategoricalCustomPaletteInput: React.FC<CategoricalCustomPaletteInp
   colorMap,
   actionIcons = defaultActionIcons,
   onDelete,
+  disableDelete,
   onAdd,
   onToggleSketcher,
   addColorMapValue,
@@ -721,7 +723,7 @@ export const CategoricalCustomPaletteInput: React.FC<CategoricalCustomPaletteInp
   allValues
 }: CategoricalCustomPaletteInputProps) => {
   const selectedValues: (number | string | null)[] = useMemo(() => {
-    if (!colorMap) return [];
+    if (!colorMap || !colorMap[index]) return [];
     const value = colorMap[index][0];
     const values = Array.isArray(value) ? value : value !== null ? [value] : [];
     return values;
@@ -750,7 +752,9 @@ export const CategoricalCustomPaletteInput: React.FC<CategoricalCustomPaletteInp
         )}
       </div>
       <div className="custom-palette-input__right">
-        <DeleteColorStop onColorDelete={onColorDelete} IconComponent={actionIcons.delete} />
+        {!disableDelete ? (
+          <DeleteColorStop onColorDelete={onColorDelete} IconComponent={actionIcons.delete} />
+        ) : null}
       </div>
     </SortableItem>
   );
@@ -1012,6 +1016,7 @@ function CustomPaletteFactory(): React.FC<CustomPaletteProps> {
                   actionIcons={actionIcons}
                   onAdd={onAdd}
                   onDelete={onDelete}
+                  disableDelete={colors.length <= 2}
                   onToggleSketcher={onToggleSketcher}
                   addColorMapValue={addCategoricalColorMapValue}
                   removeColorMapValue={removeCategoricalColorMapValue}

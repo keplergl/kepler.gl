@@ -48,8 +48,3 @@ export type SidePanelProps = {
   onSaveMap?: () => void;
   version: string;
 };
-
-export type DatasetAttribution = {
-  title: string;
-  url: string;
-};

@@ -15,7 +15,7 @@ import {
   notNullorUndefined as notNullOrUndefined,
   parseUri
 } from '@kepler.gl/common-utils';
-import {ALL_FIELD_TYPES, FILTER_TYPES} from '@kepler.gl/constants';
+import {DatasetType, ALL_FIELD_TYPES, FILTER_TYPES} from '@kepler.gl/constants';
 import {
   FilterProps,
   NumericFieldFilterProps,
@@ -23,30 +23,8 @@ import {
   StringFieldFilterProps,
   KeplerTable as KeplerDataset
 } from '@kepler.gl/table';
-import {Field as KeplerField} from '@kepler.gl/types';
+import {Field as KeplerField, KeplerLayer} from '@kepler.gl/types';
 import {clamp, formatNumberByStep, getNumericStepSize, timeToUnixMilli} from '@kepler.gl/utils';
-
-import {default as BaseLayer} from '../../base-layer';
-
-export enum DatasetType {
-  LOCAL = 'local',
-  VECTOR_TILE = 'vectorTile'
-}
-
-export enum TileType {
-  VECTOR_TILE = 'vectorTile'
-}
-
-export enum VectorTileType {
-  MVT = 'mvt',
-  PMTILES = 'pmtiles'
-}
-
-export type VectorTileDatasetMetadata = {
-  type: VectorTileType;
-  tilesetDataUrl: string;
-  tilesetMetadataUrl?: string;
-};
 
 export const getLoaderOptions = () => {
   return {
@@ -70,6 +48,7 @@ type VectorTileField = {
 };
 
 export type VectorTileMetadata = {
+  attributions?: unknown[];
   metaJson: any | null;
   bounds: number[] | null;
   center: number[] | null;
@@ -269,6 +248,7 @@ function parseMetadataTippecanoeFromDataSource(
   }
 
   let result: TilesetMetadata = {
+    attributions: [],
     metaJson: null,
     bounds: null,
     center: null,
@@ -317,6 +297,10 @@ function parseMetadataTippecanoeFromDataSource(
 
   result = {
     ...result,
+    attributions:
+      pmTileMetadata.attributions ||
+      (mvtMetadata.htmlAttribution ? [mvtMetadata.htmlAttribution] : undefined) ||
+      [],
     ...parseMetaJson(result.metaJson)
   };
 
@@ -664,7 +648,7 @@ function attributeTypeToFieldType(aType?: string): {type: string; analyzerType: 
  * @param layer A layer.
  * @returns Returns true if a dataset can be used as source data for a layer.
  */
-export function matchDatasetType(dataset: KeplerDataset, layer: BaseLayer): boolean {
+export function matchDatasetType(dataset: KeplerDataset, layer: KeplerLayer): boolean {
   // allow selection if type is not assigned yet
   if (!layer.type) {
     return true;
@@ -682,17 +666,4 @@ export function matchDatasetType(dataset: KeplerDataset, layer: BaseLayer): bool
     Array.isArray(layer.supportedDatasetTypes) &&
     layer.supportedDatasetTypes.includes(dataset.type || '')
   );
-}
-
-/**
- * Remove null/0 values from the bottom of the quantiles. If the column has many nulls
- * or 0s at the bottom of the quantiles, it will wash out color scales and produce
- * meaningless "no value" legend entries. We want to keep the first 0 and no others.
- * Operates in place.
- */
-export function pruneQuantiles(quantiles: number[]): void {
-  const firstNonZeroIdx = quantiles.findIndex(d => d !== null && d !== 0);
-  if (firstNonZeroIdx > 0) {
-    quantiles.splice(0, firstNonZeroIdx - 1);
-  }
 }

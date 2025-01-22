@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 import {renderHook} from '@testing-library/react';
 import {useLegendPosition} from '@kepler.gl/components';
 

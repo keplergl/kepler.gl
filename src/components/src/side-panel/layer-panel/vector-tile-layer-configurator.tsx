@@ -162,7 +162,8 @@ function VectorTileLayerConfiguratorFactory(
         <LayerConfigGroup
           {...visConfiguratorProps}
           label={'layer.radius'}
-          description="Point radius in meters"
+          description="Point radius in pixels or meters"
+          collapsible
         >
           {layer.config.visConfig.radiusByZoom?.enabled && visConfiguratorProps.onChange ? (
             <VisConfigByZoomInput
@@ -179,6 +180,16 @@ function VectorTileLayerConfiguratorFactory(
               label={false}
             />
           )}
+
+          <ConfigGroupCollapsibleContent>
+            {layerChannelConfigProps.fields ? (
+              <ChannelByValueSelector
+                {...layerChannelConfigProps}
+                channel={layer.visualChannels.radius}
+              />
+            ) : null}
+            <VisConfigSwitch {...layer.visConfigSettings.radiusUnits} {...visConfiguratorProps} />
+          </ConfigGroupCollapsibleContent>
         </LayerConfigGroup>
       </StyledLayerConfigurator>
     );

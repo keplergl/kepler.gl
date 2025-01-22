@@ -12,15 +12,22 @@ import GL from '@luma.gl/constants';
 
 import {notNullorUndefined} from '@kepler.gl/common-utils';
 import {
+  DatasetType,
+  LAYER_TYPES,
+  RemoteTileFormat,
+  VectorTileDatasetMetadata,
   SCALE_TYPES,
   CHANNEL_SCALES,
   DEFAULT_COLOR_UI,
   LAYER_VIS_CONFIGS
 } from '@kepler.gl/constants';
 import {
+  getTileUrl,
+  getLoaderOptions,
   KeplerTable as KeplerDataset,
   Datasets as KeplerDatasets,
-  GpuFilter
+  GpuFilter,
+  VectorTileMetadata
 } from '@kepler.gl/table';
 import {
   AnimationConfig,
@@ -36,7 +43,6 @@ import {
 } from '@kepler.gl/types';
 import {DataContainerInterface} from '@kepler.gl/utils';
 
-import {getTileUrl} from './utils/vector-tile-utils';
 import {MVTLayer as CustomMVTLayer} from './mvt-layer';
 import VectorTileIcon from './vector-tile-icon';
 import {
@@ -47,14 +53,6 @@ import {
   VisualChannelDomain,
   VisualChannelField
 } from '../base-layer';
-import {
-  VectorTileMetadata,
-  getLoaderOptions,
-  DatasetType,
-  TileType,
-  VectorTileType,
-  VectorTileDatasetMetadata
-} from './utils/vector-tile-utils';
 
 import AbstractTileLayer, {
   LayerData as CommonLayerData,
@@ -70,7 +68,8 @@ import {
   getPropertyByZoom
 } from './common-tile/tile-utils';
 
-export const DEFAULT_HIGHLIGHT_COLOR = [252, 242, 26, 150];
+export const DEFAULT_HIGHLIGHT_FILL_COLOR = [252, 242, 26, 150];
+export const DEFAULT_HIGHLIGHT_STROKE_COLOR = [252, 242, 26, 255];
 export const MAX_CACHE_SIZE_MOBILE = 1; // Minimize caching, visible tiles will always be loaded
 export const DEFAULT_STROKE_WIDTH = 1;
 
@@ -138,7 +137,17 @@ export const vectorTileVisConfigs = {
     property: 'strokeWidth',
     defaultValue: 0.5,
     allowCustomValue: false
-  }
+  },
+
+  radiusScale: 'radiusScale' as any,
+  radiusRange: {
+    ...LAYER_VIS_CONFIGS.radiusRange,
+    type: 'number',
+    defaultValue: [0, 1],
+    isRanged: true,
+    range: [0, 1],
+    step: 0.01
+  } as VisConfigRange
 };
 
 export type VectorTileLayerConfig = Merge<
@@ -147,7 +156,13 @@ export type VectorTileLayerConfig = Merge<
     sizeField?: VisualChannelField;
     sizeScale?: string;
     sizeDomain?: VisualChannelDomain;
+
     strokeColorField: VisualChannelField;
+
+    radiusField?: VisualChannelField;
+    radiusScale?: string;
+    radiusDomain?: VisualChannelDomain;
+    radiusRange?: any;
   }
 >;
 
@@ -195,7 +210,7 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
   }
 
   get type() {
-    return TileType.VECTOR_TILE;
+    return LAYER_TYPES.vectorTile;
   }
 
   get name(): string {
@@ -239,6 +254,21 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
         accessor: 'getLineWidth',
         condition: config => config.visConfig.stroked,
         getAttributeValue: config => config.visConfig.strokeWidth || DEFAULT_STROKE_WIDTH
+      },
+      radius: {
+        property: 'radius',
+        field: 'radiusField',
+        scale: 'radiusScale',
+        domain: 'radiusDomain',
+        range: 'radiusRange',
+        key: 'radius',
+        channelScaleType: CHANNEL_SCALES.size,
+        nullValue: 0,
+        getAttributeValue: config => {
+          return config.visConfig.radius || config.radius;
+        },
+        accessor: 'getPointRadius',
+        defaultValue: config => config.radius
       }
     };
   }
@@ -258,7 +288,11 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
         ...defaultLayerConfig.colorUI,
         // @ts-expect-error LayerConfig
         strokeColorRange: DEFAULT_COLOR_UI
-      }
+      },
+
+      radiusField: null,
+      radiusDomain: [0, 1],
+      radiusScale: SCALE_TYPES.linear
     };
   }
 
@@ -372,7 +406,8 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
 
     if (dataset?.type === DatasetType.VECTOR_TILE) {
       const datasetMetadata = dataset.metadata as VectorTileMetadata & VectorTileDatasetMetadata;
-      if (datasetMetadata?.type === VectorTileType.MVT) {
+      const remoteTileFormat = datasetMetadata?.remoteTileFormat;
+      if (remoteTileFormat === RemoteTileFormat.MVT) {
         const transformFetch = async (input: RequestInfo | URL, init?: RequestInit | undefined) => {
           const requestData: RequestParameters = {
             url: input as string,
@@ -394,7 +429,7 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
               }
             })
           : null;
-      } else if (datasetMetadata?.type === VectorTileType.PMTILES) {
+      } else if (remoteTileFormat === RemoteTileFormat.PMTILES) {
         // TODO: to render image pmtiles need to use TileLayer and BitmapLayer (https://github.com/visgl/loaders.gl/blob/master/examples/website/tiles/components/tile-source-layer.ts)
         tilesetDataUrl = datasetMetadata?.tilesetDataUrl;
         tileSource = tilesetDataUrl ? PMTilesSource.createDataSource(tilesetDataUrl, {}) : null;
@@ -432,7 +467,10 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
       data,
       getFillColor: props.getFillColorByZoom ? props.getFillColor(zoom) : props.getFillColor,
       getElevation: props.getElevationByZoom ? props.getElevation(zoom) : props.getElevation,
-      pointRadiusScale: props.getPointRadiusScaleByZoom(zoom),
+      // radius for points
+      pointRadiusScale: props.pointRadiusScale, // props.getPointRadiusScaleByZoom(zoom),
+      pointRadiusUnits: props.pointRadiusUnits,
+      getPointRadius: props.getPointRadius,
       // For some reason tile Layer reset autoHighlight to false
       pickable: true,
       autoHighlight: true,
@@ -467,6 +505,7 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
     const heightField = this.config.heightField as KeplerField;
     const strokeColorField = this.config.strokeColorField as KeplerField;
     const sizeField = this.config.sizeField as KeplerField;
+    const radiusField = this.config.radiusField as KeplerField;
 
     if (data.tileSource) {
       const hoveredObject = this.hasHoveredObject(objectHovered);
@@ -482,6 +521,7 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
           getFilterValue: this.getGpuFilterValueAccessor(opts),
           filterRange: gpuFilter.filterRange,
           lineWidthUnits: 'pixels',
+
           binary: false,
           elevationScale: visConfig.elevationScale * eleZoomFactor,
           extruded: visConfig.enable3d,
@@ -492,11 +532,12 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
           renderSubLayers: this.renderSubLayers,
           // when radiusUnits is meter
           getPointRadiusScaleByZoom: getPropertyByZoom(visConfig.radiusByZoom, visConfig.radius),
-          pointRadiusScale: 1,
+          pointRadiusUnits: visConfig.radiusUnits ? 'pixels' : 'meters',
+          pointRadiusScale: radiusField ? visConfig.radius : 1,
 
           pointRadiusMinPixels: 1,
           autoHighlight: true,
-          highlightColor: DEFAULT_HIGHLIGHT_COLOR,
+          highlightColor: DEFAULT_HIGHLIGHT_FILL_COLOR,
           pickable: true,
           transitions,
           updateTriggers: {
@@ -544,6 +585,14 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
               sizeScale: this.config.sizeScale,
               sizeDomain: this.config.sizeDomain,
               currentTime: isIndexedField(sizeField) ? animationConfig.currentTime : null
+            },
+            getPointRadius: {
+              radius: visConfig.radius,
+              radiusField: this.config.radiusField,
+              radiusScale: this.config.radiusScale,
+              radiusDomain: this.config.radiusDomain,
+              radiusRange: this.config.radiusRange,
+              currentTime: isIndexedField(radiusField) ? animationConfig.currentTime : null
             }
           },
           _subLayerProps: {
@@ -562,17 +611,18 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
         ...(hoveredObject
           ? [
               new GeoJsonLayer({
-                // @ts-expect-error not typed
+                // @ts-expect-error props not typed?
                 ...objectHovered.sourceLayer?.props,
                 ...(this.getDefaultHoverLayerProps() as any),
                 visible: true,
                 wrapLongitude: false,
                 data: [hoveredObject],
-                getLineColor: this.config.highlightColor,
-                getFillColor: this.config.highlightColor,
-                // always draw outline
+                getLineColor: DEFAULT_HIGHLIGHT_STROKE_COLOR,
+                getFillColor: DEFAULT_HIGHLIGHT_FILL_COLOR,
+                getLineWidth: visConfig.strokeWidth + 1,
+                lineWidthUnits: 'pixels',
                 stroked: true,
-                filled: false
+                filled: true
               })
             ]
           : [])

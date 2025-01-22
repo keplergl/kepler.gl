@@ -17,6 +17,7 @@ const actionHandler = {
   [ActionTypes.POST_SAVE_LOAD_SUCCESS]: providerStateUpdaters.postSaveLoadSuccessUpdater,
   [ActionTypes.LOAD_CLOUD_MAP]: providerStateUpdaters.loadCloudMapUpdater,
   [ActionTypes.LOAD_CLOUD_MAP_SUCCESS]: providerStateUpdaters.loadCloudMapSuccessUpdater,
+  [ActionTypes.LOAD_CLOUD_MAP_SUCCESS_2]: providerStateUpdaters.loadCloudMapSuccess2Updater,
   [ActionTypes.LOAD_CLOUD_MAP_ERROR]: providerStateUpdaters.loadCloudMapErrorUpdater
 };
 

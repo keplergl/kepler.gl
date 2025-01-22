@@ -1,0 +1,57 @@
+{
+  "name": "@kepler.gl/duckdb",
+  "author": "Shan He <heshan0131@gmail.com>",
+  "version": "3.1.0-alpha.5",
+  "description": "DuckDB plugin for Kepler.gl",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "keywords": [
+    "duckdb"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/keplergl/kepler.gl.git"
+  },
+  "scripts": {
+    "build": "rm -fr dist && babel src --out-dir dist --source-maps inline --extensions '.ts,.tsx,.js,.jsx' --ignore '**/*.d.ts'",
+    "build:umd": "NODE_OPTIONS=--openssl-legacy-provider webpack --config ./webpack/umd.js --progress --env.prod",
+    "build:types": "tsc --project ./tsconfig.production.json",
+    "prepublishOnly": "babel-node ../../scripts/license-header/bin --license ../../FILE-HEADER && yarn build && yarn build:types",
+    "stab": "mkdir -p dist && touch dist/index.js"
+  },
+  "files": [
+    "dist",
+    "umd"
+  ],
+  "dependencies": {
+    "@duckdb/duckdb-wasm": "^1.28.0",
+    "@kepler.gl/common-utils": "3.1.0-alpha.5",
+    "@kepler.gl/constants": "3.1.0-alpha.5",
+    "@kepler.gl/processors": "3.1.0-alpha.5",
+    "@kepler.gl/table": "3.1.0-alpha.5",
+    "@kepler.gl/types": "3.1.0-alpha.5",
+    "@monaco-editor/react": "^4.6.0",
+    "@radix-ui/react-collapsible": "^1.1.0",
+    "apache-arrow": ">=15.0.0",
+    "monaco-editor": "^0.52.0",
+    "react-resizable-panels": "^2.1.7"
+  },
+  "nyc": {
+    "sourceMap": false,
+    "instrument": false
+  },
+  "maintainers": [
+    "Shan He <heshan0131@gmail.com>",
+    "Igor Dykhta <dikhta.igor@gmail.com>",
+    "Ilya Boyandin <ilya@boyandin.me>"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "volta": {
+    "node": "18.18.2",
+    "yarn": "4.4.0"
+  },
+  "packageManager": "yarn@4.4.0"
+}

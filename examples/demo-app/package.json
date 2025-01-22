@@ -1,6 +1,9 @@
 {
   "scripts": {
     "start": "node esbuild.config.mjs --start",
+    "build": "node esbuild.config.mjs --build",
+    "deploy": "yarn build && netlify deploy -d dist",
+    "deploy:prod": "yarn build && netlify deploy -d dist --prod",
     "start:local": "NODE_ENV=local node esbuild.config.mjs --start",
     "start:local-ai": "NODE_ENV=local node esbuild.config.mjs --start --env.ai",
     "start:local-deck": "NODE_ENV=local node esbuild.config.mjs --start --env.deck",
@@ -12,15 +15,15 @@
     "@auth0/auth0-spa-js": "^2.1.2",
     "@carto/toolkit": "0.0.1-rc.18",
     "@emotion/is-prop-valid": "^1.2.1",
-    "@kepler.gl/actions": "^3.0.0-alpha.1",
-    "@kepler.gl/cloud-providers": "^3.0.0-alpha.1",
-    "@kepler.gl/components": "^3.0.0-alpha.1",
-    "@kepler.gl/constants": "^3.0.0-alpha.1",
-    "@kepler.gl/processors": "^3.0.0-alpha.1",
-    "@kepler.gl/reducers": "^3.0.0-alpha.1",
-    "@kepler.gl/schemas": "^3.0.0-alpha.1",
-    "@kepler.gl/styles": "^3.0.0-alpha.1",
-    "@kepler.gl/utils": "^3.0.0-alpha.1",
+    "@kepler.gl/actions": "^3.1.0-alpha.5",
+    "@kepler.gl/cloud-providers": "^3.1.0-alpha.5",
+    "@kepler.gl/components": "^3.1.0-alpha.5",
+    "@kepler.gl/constants": "^3.1.0-alpha.5",
+    "@kepler.gl/processors": "^3.1.0-alpha.5",
+    "@kepler.gl/reducers": "^3.1.0-alpha.5",
+    "@kepler.gl/schemas": "^3.1.0-alpha.5",
+    "@kepler.gl/styles": "^3.1.0-alpha.5",
+    "@kepler.gl/utils": "^3.1.0-alpha.5",
     "@loaders.gl/arrow": "^4.3.2",
     "@loaders.gl/core": "^4.3.2",
     "@loaders.gl/csv": "^4.3.2",
@@ -36,6 +39,7 @@
     "keymirror": "^0.1.1",
     "prop-types": "^15.6.0",
     "react": "^18.2.0",
+    "react-ai-assist": "0.0.20",
     "react-dom": "^18.2.0",
     "react-intl": "^6.3.0",
     "react-markdown": "^6.0.3",
@@ -65,6 +69,7 @@
   },
   "packageManager": "yarn@4.4.0",
   "devDependencies": {
+    "@dotenv-run/esbuild": "^1.5.0",
     "esbuild-plugin-replace": "^1.4.0"
   }
 }

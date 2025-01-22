@@ -3,6 +3,7 @@
 
 import esbuild from 'esbuild';
 import {replace} from 'esbuild-plugin-replace';
+import {dotenvRun} from '@dotenv-run/esbuild';
 
 import process from 'node:process';
 import fs from 'node:fs';
@@ -11,6 +12,9 @@ import {join} from 'node:path';
 import KeplerPackage from '../../package.json' assert {type: 'json'};
 
 const args = process.argv;
+
+const BASE_NODE_MODULES_DIR = './node_modules';
+
 const LIB_DIR = '../../';
 const NODE_MODULES_DIR = join(LIB_DIR, 'node_modules');
 const SRC_DIR = join(LIB_DIR, 'src');
@@ -26,42 +30,54 @@ const EXTERNAL_HUBBLE_SRC = join(LIB_DIR, '../../hubble.gl');
 
 const port = 8080;
 
-// add alias to serve from kepler src, resolve libraries so there is only one copy of them
-const RESOLVE_LOCAL_ALIASES = {
-  react: `${NODE_MODULES_DIR}/react`,
-  'react-dom': `${NODE_MODULES_DIR}/react-dom`,
-  'react-redux': `${NODE_MODULES_DIR}/react-redux/lib`,
-  'styled-components': `${NODE_MODULES_DIR}/styled-components`,
-  'react-intl': `${NODE_MODULES_DIR}/react-intl`,
-  // Suppress useless warnings from react-date-picker's dep
-  'tiny-warning': `${SRC_DIR}/utils/src/noop.ts`,
-  // kepler.gl and loaders.gl need to use same apache-arrow
-  'apache-arrow': `${NODE_MODULES_DIR}/apache-arrow`,
-  // all react-ai-assist needs to be resolved from samenode_modules
-  'react-ai-assist': `${NODE_MODULES_DIR}/react-ai-assist`
+const getThirdPartyLibraryAliases = useKeplerNodeModules => {
+  const nodeModulesDir = useKeplerNodeModules ? NODE_MODULES_DIR : BASE_NODE_MODULES_DIR;
+
+  const localSources = useKeplerNodeModules
+    ? {
+        // Suppress useless warnings from react-date-picker's dep
+        'tiny-warning': `${SRC_DIR}/utils/src/noop.ts`
+      }
+    : {};
+
+  return {
+    ...localSources,
+    react: `${nodeModulesDir}/react`,
+    'react-dom': `${nodeModulesDir}/react-dom`,
+    'react-redux': `${nodeModulesDir}/react-redux/lib`,
+    'styled-components': `${nodeModulesDir}/styled-components`,
+    'react-intl': `${nodeModulesDir}/react-intl`,
+    // kepler.gl and loaders.gl need to use same apache-arrow
+    'apache-arrow': `${nodeModulesDir}/apache-arrow`,
+    // all react-ai-assist needs to be resolved from samenode_modules
+    'react-ai-assist': `${nodeModulesDir}/react-ai-assist`
+  };
 };
 
+const NODE_ENV = JSON.stringify(process.env.NODE_ENV || 'production');
 const config = {
   platform: 'browser',
   format: 'iife',
   logLevel: 'info',
-  loader: {'.js': 'jsx', '.css': 'css'},
+  loader: {
+    '.js': 'jsx',
+    '.css': 'css',
+    '.ttf': 'file',
+    '.woff': 'file',
+    '.woff2': 'file'
+  },
   entryPoints: ['src/main.js'],
   outfile: 'dist/bundle.js',
   bundle: true,
   define: {
-    NODE_ENV: JSON.stringify(process.env.NODE_ENV || 'production'),
-    'process.env.MapboxAccessToken': JSON.stringify(process.env.MapboxAccessToken || ''),
-    'process.env.DropboxClientId': JSON.stringify(process.env.DropboxClientId || ''),
-    'process.env.MapboxExportToken': JSON.stringify(process.env.MapboxExportToken || ''),
-    'process.env.CartoClientId': JSON.stringify(process.env.CartoClientId || ''),
-    'process.env.FoursquareClientId': JSON.stringify(process.env.FoursquareClientId || ''),
-    'process.env.FoursquareDomain': JSON.stringify(process.env.FoursquareDomain || ''),
-    'process.env.FoursquareAPIURL': JSON.stringify(process.env.FoursquareAPIURL || ''),
-    'process.env.FoursquareUserMapsURL': JSON.stringify(process.env.FoursquareUserMapsURL || ''),
-    'process.env.OpenAIToken': JSON.stringify(process.env.OpenAIToken || '')
+    NODE_ENV
   },
   plugins: [
+    dotenvRun({
+      verbose: true,
+      environment: NODE_ENV,
+      root: '../../.env'
+    }),
     // automatically injected kepler.gl package version into the bundle
     replace({
       __PACKAGE_VERSION__: KeplerPackage.version,
@@ -71,7 +87,7 @@ const config = {
 };
 
 function addAliases(externals, args) {
-  const resolveAlias = RESOLVE_LOCAL_ALIASES;
+  const resolveAlias = getThirdPartyLibraryAliases(true);
 
   // Combine flags
   const useLocalDeck = args.includes('--env.deck') || args.includes('--env.hubble_src');
@@ -188,9 +204,35 @@ function openURL(url) {
     await esbuild
       .build({
         ...config,
-
         minify: true,
-        sourcemap: false
+        sourcemap: false,
+        // Add alias resolution for build
+        alias: {
+          ...getThirdPartyLibraryAliases(true)
+        },
+        // Add these production optimizations
+        define: {
+          ...config.define,
+          'process.env.NODE_ENV': '"production"'
+        },
+        drop: ['console', 'debugger'],
+        treeShaking: true,
+        metafile: true,
+        // Optionally generate a bundle analysis
+        plugins: [
+          ...config.plugins,
+          {
+            name: 'bundle-analyzer',
+            setup(build) {
+              build.onEnd(result => {
+                if (result.metafile) {
+                  // Write bundle analysis to disk
+                  fs.writeFileSync('meta.json', JSON.stringify(result.metafile));
+                }
+              });
+            }
+          }
+        ]
       })
       .catch(e => {
         console.error(e);
@@ -205,7 +247,9 @@ function openURL(url) {
         minify: false,
         sourcemap: true,
         // add alias to resolve libraries so there is only one copy of them
-        ...(process.env.NODE_ENV === 'local' ? {alias: localAliases} : {}),
+        ...(process.env.NODE_ENV === 'local'
+          ? {alias: localAliases}
+          : {alias: getThirdPartyLibraryAliases(false)}),
         banner: {
           js: `new EventSource('/esbuild').addEventListener('change', () => location.reload());`
         }

@@ -21,6 +21,7 @@ import {
 // CONSTANTS
 export const INIT = 'INIT';
 export const LOAD_REMOTE_RESOURCE_SUCCESS = 'LOAD_REMOTE_RESOURCE_SUCCESS';
+export const LOAD_REMOTE_DATASET_PROCESSED_SUCCESS = 'LOAD_REMOTE_DATASET_PROCESSED_SUCCESS';
 export const LOAD_REMOTE_RESOURCE_ERROR = 'LOAD_REMOTE_RESOURCE_ERROR';
 export const LOAD_MAP_SAMPLE_FILE = 'LOAD_MAP_SAMPLE_FILE';
 export const SET_SAMPLE_LOADING_STATUS = 'SET_SAMPLE_LOADING_STATUS';
@@ -36,12 +37,20 @@ export function initApp() {
   };
 }
 
-export function loadRemoteResourceSuccess(response, config, options) {
+export function loadRemoteResourceSuccess(response, config, options, remoteDatasetConfig) {
   return {
     type: LOAD_REMOTE_RESOURCE_SUCCESS,
     response,
     config,
-    options
+    options,
+    remoteDatasetConfig
+  };
+}
+
+export function loadRemoteDatasetProcessedSuccessAction(result) {
+  return {
+    type: LOAD_REMOTE_DATASET_PROCESSED_SUCCESS,
+    payload: result
   };
 }
 
@@ -90,7 +99,7 @@ export function onLoadCloudMapSuccess({provider, loadParams}) {
   return dispatch => {
     const mapUrl = provider?.getMapUrl(loadParams);
     if (mapUrl) {
-      const url = `demo/map/${provider.name}?path=${mapUrl}`;
+      const url = `/demo/map/${provider.name}?path=${mapUrl}`;
       dispatch(push(url));
     }
   };
@@ -191,12 +200,17 @@ export function loadSample(options, pushRoute = true) {
 function loadRemoteSampleMap(options) {
   return dispatch => {
     // Load configuration first
-    const {configUrl, dataUrl} = options;
+    const {configUrl, dataUrl, remoteDatasetConfigUrl} = options;
+    const toLoad = [loadRemoteConfig(configUrl)];
+    toLoad.push(dataUrl ? loadRemoteData(dataUrl) : null);
+    // Load remote dataset config for tiled layers
+    toLoad.push(remoteDatasetConfigUrl ? loadRemoteConfig(remoteDatasetConfigUrl) : null);
 
-    Promise.all([loadRemoteConfig(configUrl), loadRemoteData(dataUrl)]).then(
-      ([config, data]) => {
+    Promise.all(toLoad).then(
+      ([config, data, remoteDatasetConfig]) => {
         // TODO: these two actions can be merged
-        dispatch(loadRemoteResourceSuccess(data, config, options));
+        dispatch(loadRemoteResourceSuccess(data, config, options, remoteDatasetConfig));
+        // TODO: toggleModal when async dataset task is done, show the spinner until then
         dispatch(toggleModal(null));
       },
       error => {

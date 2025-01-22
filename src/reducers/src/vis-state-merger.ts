@@ -14,7 +14,7 @@ import {
   aggregate
 } from '@kepler.gl/utils';
 
-import {Layer, VisualChannel} from '@kepler.gl/layers';
+import {Layer} from '@kepler.gl/layers';
 import {createEffect} from '@kepler.gl/effects';
 import {notNullorUndefined} from '@kepler.gl/common-utils';
 import {AGGREGATION_TYPES, LAYER_BLENDINGS, OVERLAY_BLENDINGS} from '@kepler.gl/constants';
@@ -822,7 +822,7 @@ export function validateSavedVisualChannels(
   savedLayer: ParsedLayer,
   options: {throwOnError?: boolean} = {}
 ): null | Layer {
-  (Object.values(newLayer.visualChannels) as VisualChannel[]).forEach(({field, scale, key}) => {
+  Object.values(newLayer.visualChannels).forEach(({field, scale, key}) => {
     let foundField;
     if (savedLayer.config) {
       if (savedLayer.config[field]) {

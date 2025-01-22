@@ -2177,6 +2177,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@duckdb/duckdb-wasm@npm:^1.28.0":
+  version: 1.29.0
+  resolution: "@duckdb/duckdb-wasm@npm:1.29.0"
+  dependencies:
+    apache-arrow: "npm:^17.0.0"
+  checksum: 10c0/caa550b09433adb709f997241ef00fd7ee93dc4cb4a03838d9d978536fdc640c80ef0f2c294248c688e4a38231be42287e4aba655e13d94bcd9aff4767a404a0
+  languageName: node
+  linkType: hard
+
 "@emotion/is-prop-valid@npm:1.2.1":
   version: 1.2.1
   resolution: "@emotion/is-prop-valid@npm:1.2.1"
@@ -3152,18 +3161,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@kepler.gl/actions@npm:3.1.0-alpha.3, @kepler.gl/actions@workspace:src/actions":
+"@kepler.gl/actions@npm:3.1.0-alpha.5, @kepler.gl/actions@workspace:src/actions":
   version: 0.0.0-use.local
   resolution: "@kepler.gl/actions@workspace:src/actions"
   dependencies:
     "@deck.gl/core": "npm:^8.9.27"
-    "@kepler.gl/cloud-providers": "npm:3.1.0-alpha.3"
-    "@kepler.gl/constants": "npm:3.1.0-alpha.3"
-    "@kepler.gl/layers": "npm:3.1.0-alpha.3"
-    "@kepler.gl/processors": "npm:3.1.0-alpha.3"
-    "@kepler.gl/table": "npm:3.1.0-alpha.3"
-    "@kepler.gl/types": "npm:3.1.0-alpha.3"
-    "@kepler.gl/utils": "npm:3.1.0-alpha.3"
+    "@kepler.gl/cloud-providers": "npm:3.1.0-alpha.5"
+    "@kepler.gl/constants": "npm:3.1.0-alpha.5"
+    "@kepler.gl/layers": "npm:3.1.0-alpha.5"
+    "@kepler.gl/processors": "npm:3.1.0-alpha.5"
+    "@kepler.gl/table": "npm:3.1.0-alpha.5"
+    "@kepler.gl/types": "npm:3.1.0-alpha.5"
+    "@kepler.gl/utils": "npm:3.1.0-alpha.5"
     "@reduxjs/toolkit": "npm:^1.7.2"
     "@types/lodash.curry": "npm:^4.1.7"
     "@types/react-redux": "npm:^7.1.23"
@@ -3180,12 +3189,12 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@kepler.gl/ai-assistant@workspace:src/ai-assistant"
   dependencies:
-    "@kepler.gl/components": "npm:3.1.0-alpha.3"
-    "@kepler.gl/constants": "npm:3.1.0-alpha.3"
-    "@kepler.gl/layers": "npm:3.1.0-alpha.3"
-    "@kepler.gl/table": "npm:3.1.0-alpha.3"
-    "@kepler.gl/types": "npm:3.1.0-alpha.3"
-    "@kepler.gl/utils": "npm:3.1.0-alpha.3"
+    "@kepler.gl/components": "npm:3.1.0-alpha.5"
+    "@kepler.gl/constants": "npm:3.1.0-alpha.5"
+    "@kepler.gl/layers": "npm:3.1.0-alpha.5"
+    "@kepler.gl/table": "npm:3.1.0-alpha.5"
+    "@kepler.gl/types": "npm:3.1.0-alpha.5"
+    "@kepler.gl/utils": "npm:3.1.0-alpha.5"
     color-interpolate: "npm:^1.0.5"
     echarts: "npm:^5.5.1"
     global: "npm:^4.3.0"
@@ -3194,21 +3203,21 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@kepler.gl/cloud-providers@npm:3.1.0-alpha.3, @kepler.gl/cloud-providers@workspace:src/cloud-providers":
+"@kepler.gl/cloud-providers@npm:3.1.0-alpha.5, @kepler.gl/cloud-providers@workspace:src/cloud-providers":
   version: 0.0.0-use.local
   resolution: "@kepler.gl/cloud-providers@workspace:src/cloud-providers"
   dependencies:
-    "@kepler.gl/types": "npm:3.1.0-alpha.3"
+    "@kepler.gl/types": "npm:3.1.0-alpha.5"
     react: "npm:^18.2.0"
   languageName: unknown
   linkType: soft
 
-"@kepler.gl/common-utils@npm:3.1.0-alpha.3, @kepler.gl/common-utils@workspace:src/common-utils":
+"@kepler.gl/common-utils@npm:3.1.0-alpha.5, @kepler.gl/common-utils@workspace:src/common-utils":
   version: 0.0.0-use.local
   resolution: "@kepler.gl/common-utils@workspace:src/common-utils"
   dependencies:
-    "@kepler.gl/constants": "npm:3.1.0-alpha.3"
-    "@kepler.gl/types": "npm:3.1.0-alpha.3"
+    "@kepler.gl/constants": "npm:3.1.0-alpha.5"
+    "@kepler.gl/types": "npm:3.1.0-alpha.5"
     d3-array: "npm:^2.8.0"
     global: "npm:^4.3.0"
     h3-js: "npm:^3.1.0"
@@ -3216,7 +3225,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@kepler.gl/components@npm:3.1.0-alpha.3, @kepler.gl/components@workspace:src/components":
+"@kepler.gl/components@npm:3.1.0-alpha.5, @kepler.gl/components@workspace:src/components":
   version: 0.0.0-use.local
   resolution: "@kepler.gl/components@workspace:src/components"
   dependencies:
@@ -3228,20 +3237,20 @@ __metadata:
     "@dnd-kit/utilities": "npm:^3.2.2"
     "@emotion/is-prop-valid": "npm:^1.2.1"
     "@floating-ui/react": "npm:0.25.1"
-    "@kepler.gl/actions": "npm:3.1.0-alpha.3"
-    "@kepler.gl/cloud-providers": "npm:3.1.0-alpha.3"
-    "@kepler.gl/common-utils": "npm:3.1.0-alpha.3"
-    "@kepler.gl/constants": "npm:3.1.0-alpha.3"
-    "@kepler.gl/effects": "npm:3.1.0-alpha.3"
-    "@kepler.gl/layers": "npm:3.1.0-alpha.3"
-    "@kepler.gl/localization": "npm:3.1.0-alpha.3"
-    "@kepler.gl/processors": "npm:3.1.0-alpha.3"
-    "@kepler.gl/reducers": "npm:3.1.0-alpha.3"
-    "@kepler.gl/schemas": "npm:3.1.0-alpha.3"
-    "@kepler.gl/styles": "npm:3.1.0-alpha.3"
-    "@kepler.gl/table": "npm:3.1.0-alpha.3"
-    "@kepler.gl/types": "npm:3.1.0-alpha.3"
-    "@kepler.gl/utils": "npm:3.1.0-alpha.3"
+    "@kepler.gl/actions": "npm:3.1.0-alpha.5"
+    "@kepler.gl/cloud-providers": "npm:3.1.0-alpha.5"
+    "@kepler.gl/common-utils": "npm:3.1.0-alpha.5"
+    "@kepler.gl/constants": "npm:3.1.0-alpha.5"
+    "@kepler.gl/effects": "npm:3.1.0-alpha.5"
+    "@kepler.gl/layers": "npm:3.1.0-alpha.5"
+    "@kepler.gl/localization": "npm:3.1.0-alpha.5"
+    "@kepler.gl/processors": "npm:3.1.0-alpha.5"
+    "@kepler.gl/reducers": "npm:3.1.0-alpha.5"
+    "@kepler.gl/schemas": "npm:3.1.0-alpha.5"
+    "@kepler.gl/styles": "npm:3.1.0-alpha.5"
+    "@kepler.gl/table": "npm:3.1.0-alpha.5"
+    "@kepler.gl/types": "npm:3.1.0-alpha.5"
+    "@kepler.gl/utils": "npm:3.1.0-alpha.5"
     "@loaders.gl/mvt": "npm:^4.3.2"
     "@loaders.gl/pmtiles": "npm:^4.3.2"
     "@mapbox/mapbox-sdk": "npm:^0.15.3"
@@ -3315,20 +3324,20 @@ __metadata:
     react-virtualized: "npm:^9.22.5"
     react-vis: "npm:1.11.7"
     redux: "npm:^4.2.1"
-    reselect: "npm:^4.0.0"
+    reselect: "npm:^4.1.0"
     styled-components: "npm:6.1.8"
     suncalc: "npm:^1.9.0"
     viewport-mercator-project: "npm:^6.0.0"
   languageName: unknown
   linkType: soft
 
-"@kepler.gl/constants@npm:3.1.0-alpha.3, @kepler.gl/constants@workspace:src/constants":
+"@kepler.gl/constants@npm:3.1.0-alpha.5, @kepler.gl/constants@workspace:src/constants":
   version: 0.0.0-use.local
   resolution: "@kepler.gl/constants@workspace:src/constants"
   dependencies:
     "@dnd-kit/core": "npm:^6.1.0"
     "@dnd-kit/modifiers": "npm:^7.0.0"
-    "@kepler.gl/types": "npm:3.1.0-alpha.3"
+    "@kepler.gl/types": "npm:3.1.0-alpha.5"
     "@types/d3-scale": "npm:^3.2.2"
     "@types/d3-time": "npm:^2"
     "@types/keymirror": "npm:^0.1.1"
@@ -3344,7 +3353,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@kepler.gl/deckgl-arrow-layers@npm:3.1.0-alpha.3, @kepler.gl/deckgl-arrow-layers@workspace:src/deckgl-arrow-layers":
+"@kepler.gl/deckgl-arrow-layers@npm:3.1.0-alpha.5, @kepler.gl/deckgl-arrow-layers@workspace:src/deckgl-arrow-layers":
   version: 0.0.0-use.local
   resolution: "@kepler.gl/deckgl-arrow-layers@workspace:src/deckgl-arrow-layers"
   dependencies:
@@ -3362,7 +3371,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@kepler.gl/deckgl-layers@npm:3.1.0-alpha.3, @kepler.gl/deckgl-layers@workspace:src/deckgl-layers":
+"@kepler.gl/deckgl-layers@npm:3.1.0-alpha.5, @kepler.gl/deckgl-layers@workspace:src/deckgl-layers":
   version: 0.0.0-use.local
   resolution: "@kepler.gl/deckgl-layers@workspace:src/deckgl-layers"
   dependencies:
@@ -3371,9 +3380,9 @@ __metadata:
     "@deck.gl/core": "npm:^8.9.27"
     "@deck.gl/geo-layers": "npm:^8.9.27"
     "@deck.gl/layers": "npm:^8.9.27"
-    "@kepler.gl/constants": "npm:3.1.0-alpha.3"
-    "@kepler.gl/types": "npm:3.1.0-alpha.3"
-    "@kepler.gl/utils": "npm:3.1.0-alpha.3"
+    "@kepler.gl/constants": "npm:3.1.0-alpha.5"
+    "@kepler.gl/types": "npm:3.1.0-alpha.5"
+    "@kepler.gl/utils": "npm:3.1.0-alpha.5"
     "@luma.gl/constants": "npm:^8.5.20"
     "@luma.gl/core": "npm:^8.5.20"
     "@mapbox/geo-viewport": "npm:^0.4.1"
@@ -3392,15 +3401,33 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@kepler.gl/effects@npm:3.1.0-alpha.3, @kepler.gl/effects@workspace:src/effects":
+"@kepler.gl/duckdb@workspace:src/duckdb":
+  version: 0.0.0-use.local
+  resolution: "@kepler.gl/duckdb@workspace:src/duckdb"
+  dependencies:
+    "@duckdb/duckdb-wasm": "npm:^1.28.0"
+    "@kepler.gl/common-utils": "npm:3.1.0-alpha.5"
+    "@kepler.gl/constants": "npm:3.1.0-alpha.5"
+    "@kepler.gl/processors": "npm:3.1.0-alpha.5"
+    "@kepler.gl/table": "npm:3.1.0-alpha.5"
+    "@kepler.gl/types": "npm:3.1.0-alpha.5"
+    "@monaco-editor/react": "npm:^4.6.0"
+    "@radix-ui/react-collapsible": "npm:^1.1.0"
+    apache-arrow: "npm:>=15.0.0"
+    monaco-editor: "npm:^0.52.0"
+    react-resizable-panels: "npm:^2.1.7"
+  languageName: unknown
+  linkType: soft
+
+"@kepler.gl/effects@npm:3.1.0-alpha.5, @kepler.gl/effects@workspace:src/effects":
   version: 0.0.0-use.local
   resolution: "@kepler.gl/effects@workspace:src/effects"
   dependencies:
     "@deck.gl/core": "npm:^8.9.27"
-    "@kepler.gl/common-utils": "npm:3.1.0-alpha.3"
-    "@kepler.gl/constants": "npm:3.1.0-alpha.3"
-    "@kepler.gl/types": "npm:3.1.0-alpha.3"
-    "@kepler.gl/utils": "npm:3.1.0-alpha.3"
+    "@kepler.gl/common-utils": "npm:3.1.0-alpha.5"
+    "@kepler.gl/constants": "npm:3.1.0-alpha.5"
+    "@kepler.gl/types": "npm:3.1.0-alpha.5"
+    "@kepler.gl/utils": "npm:3.1.0-alpha.5"
     "@luma.gl/core": "npm:^8.5.20"
     "@luma.gl/shadertools": "npm:^8.5.20"
     moment-timezone: "npm:^0.5.35"
@@ -3408,7 +3435,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@kepler.gl/layers@npm:3.1.0-alpha.3, @kepler.gl/layers@workspace:src/layers":
+"@kepler.gl/layers@npm:3.1.0-alpha.5, @kepler.gl/layers@workspace:src/layers":
   version: 0.0.0-use.local
   resolution: "@kepler.gl/layers@workspace:src/layers"
   dependencies:
@@ -3418,14 +3445,14 @@ __metadata:
     "@deck.gl/geo-layers": "npm:^8.9.27"
     "@deck.gl/layers": "npm:^8.9.27"
     "@deck.gl/mesh-layers": "npm:^8.9.27"
-    "@kepler.gl/common-utils": "npm:3.1.0-alpha.3"
-    "@kepler.gl/constants": "npm:3.1.0-alpha.3"
-    "@kepler.gl/deckgl-arrow-layers": "npm:3.1.0-alpha.3"
-    "@kepler.gl/deckgl-layers": "npm:3.1.0-alpha.3"
-    "@kepler.gl/localization": "npm:3.1.0-alpha.3"
-    "@kepler.gl/table": "npm:3.1.0-alpha.3"
-    "@kepler.gl/types": "npm:3.1.0-alpha.3"
-    "@kepler.gl/utils": "npm:3.1.0-alpha.3"
+    "@kepler.gl/common-utils": "npm:3.1.0-alpha.5"
+    "@kepler.gl/constants": "npm:3.1.0-alpha.5"
+    "@kepler.gl/deckgl-arrow-layers": "npm:3.1.0-alpha.5"
+    "@kepler.gl/deckgl-layers": "npm:3.1.0-alpha.5"
+    "@kepler.gl/localization": "npm:3.1.0-alpha.5"
+    "@kepler.gl/table": "npm:3.1.0-alpha.5"
+    "@kepler.gl/types": "npm:3.1.0-alpha.5"
+    "@kepler.gl/utils": "npm:3.1.0-alpha.5"
     "@loaders.gl/arrow": "npm:^4.3.2"
     "@loaders.gl/core": "npm:^4.3.2"
     "@loaders.gl/gis": "npm:^4.3.2"
@@ -3461,7 +3488,7 @@ __metadata:
     react: "npm:^18.2.0"
     react-intl: "npm:^6.3.0"
     react-markdown: "npm:^6.0.3"
-    reselect: "npm:^4.0.0"
+    reselect: "npm:^4.1.0"
     s2-geometry: "npm:^1.2.10"
     styled-components: "npm:6.1.8"
     type-analyzer: "npm:0.4.0"
@@ -3469,7 +3496,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@kepler.gl/localization@npm:3.1.0-alpha.3, @kepler.gl/localization@workspace:src/localization":
+"@kepler.gl/localization@npm:3.1.0-alpha.5, @kepler.gl/localization@workspace:src/localization":
   version: 0.0.0-use.local
   resolution: "@kepler.gl/localization@workspace:src/localization"
   dependencies:
@@ -3479,17 +3506,17 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@kepler.gl/processors@npm:3.1.0-alpha.3, @kepler.gl/processors@workspace:src/processors":
+"@kepler.gl/processors@npm:3.1.0-alpha.5, @kepler.gl/processors@workspace:src/processors":
   version: 0.0.0-use.local
   resolution: "@kepler.gl/processors@workspace:src/processors"
   dependencies:
     "@danmarshall/deckgl-typings": "npm:4.9.22"
-    "@kepler.gl/common-utils": "npm:3.1.0-alpha.3"
-    "@kepler.gl/constants": "npm:3.1.0-alpha.3"
-    "@kepler.gl/schemas": "npm:3.1.0-alpha.3"
-    "@kepler.gl/table": "npm:3.1.0-alpha.3"
-    "@kepler.gl/types": "npm:3.1.0-alpha.3"
-    "@kepler.gl/utils": "npm:3.1.0-alpha.3"
+    "@kepler.gl/common-utils": "npm:3.1.0-alpha.5"
+    "@kepler.gl/constants": "npm:3.1.0-alpha.5"
+    "@kepler.gl/schemas": "npm:3.1.0-alpha.5"
+    "@kepler.gl/table": "npm:3.1.0-alpha.5"
+    "@kepler.gl/types": "npm:3.1.0-alpha.5"
+    "@kepler.gl/utils": "npm:3.1.0-alpha.5"
     "@loaders.gl/arrow": "npm:^4.3.2"
     "@loaders.gl/core": "npm:^4.3.2"
     "@loaders.gl/csv": "npm:^4.3.2"
@@ -3507,26 +3534,26 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@kepler.gl/reducers@npm:3.1.0-alpha.3, @kepler.gl/reducers@workspace:src/reducers":
+"@kepler.gl/reducers@npm:3.1.0-alpha.5, @kepler.gl/reducers@workspace:src/reducers":
   version: 0.0.0-use.local
   resolution: "@kepler.gl/reducers@workspace:src/reducers"
   dependencies:
     "@dnd-kit/sortable": "npm:^8.0.0"
-    "@kepler.gl/actions": "npm:3.1.0-alpha.3"
-    "@kepler.gl/cloud-providers": "npm:3.1.0-alpha.3"
-    "@kepler.gl/common-utils": "npm:3.1.0-alpha.3"
-    "@kepler.gl/constants": "npm:3.1.0-alpha.3"
-    "@kepler.gl/deckgl-arrow-layers": "npm:3.1.0-alpha.3"
-    "@kepler.gl/deckgl-layers": "npm:3.1.0-alpha.3"
-    "@kepler.gl/effects": "npm:3.1.0-alpha.3"
-    "@kepler.gl/layers": "npm:3.1.0-alpha.3"
-    "@kepler.gl/localization": "npm:3.1.0-alpha.3"
-    "@kepler.gl/processors": "npm:3.1.0-alpha.3"
-    "@kepler.gl/schemas": "npm:3.1.0-alpha.3"
-    "@kepler.gl/table": "npm:3.1.0-alpha.3"
-    "@kepler.gl/tasks": "npm:3.1.0-alpha.3"
-    "@kepler.gl/types": "npm:3.1.0-alpha.3"
-    "@kepler.gl/utils": "npm:3.1.0-alpha.3"
+    "@kepler.gl/actions": "npm:3.1.0-alpha.5"
+    "@kepler.gl/cloud-providers": "npm:3.1.0-alpha.5"
+    "@kepler.gl/common-utils": "npm:3.1.0-alpha.5"
+    "@kepler.gl/constants": "npm:3.1.0-alpha.5"
+    "@kepler.gl/deckgl-arrow-layers": "npm:3.1.0-alpha.5"
+    "@kepler.gl/deckgl-layers": "npm:3.1.0-alpha.5"
+    "@kepler.gl/effects": "npm:3.1.0-alpha.5"
+    "@kepler.gl/layers": "npm:3.1.0-alpha.5"
+    "@kepler.gl/localization": "npm:3.1.0-alpha.5"
+    "@kepler.gl/processors": "npm:3.1.0-alpha.5"
+    "@kepler.gl/schemas": "npm:3.1.0-alpha.5"
+    "@kepler.gl/table": "npm:3.1.0-alpha.5"
+    "@kepler.gl/tasks": "npm:3.1.0-alpha.5"
+    "@kepler.gl/types": "npm:3.1.0-alpha.5"
+    "@kepler.gl/utils": "npm:3.1.0-alpha.5"
     "@loaders.gl/loader-utils": "npm:^4.3.2"
     "@mapbox/geo-viewport": "npm:^0.4.1"
     "@math.gl/web-mercator": "npm:^3.6.2"
@@ -3555,20 +3582,20 @@ __metadata:
     react-palm: "npm:^3.3.8"
     redux: "npm:^4.2.1"
     redux-actions: "npm:^2.2.1"
-    reselect: "npm:^4.0.0"
+    reselect: "npm:^4.1.0"
   languageName: unknown
   linkType: soft
 
-"@kepler.gl/schemas@npm:3.1.0-alpha.3, @kepler.gl/schemas@workspace:src/schemas":
+"@kepler.gl/schemas@npm:3.1.0-alpha.5, @kepler.gl/schemas@workspace:src/schemas":
   version: 0.0.0-use.local
   resolution: "@kepler.gl/schemas@workspace:src/schemas"
   dependencies:
-    "@kepler.gl/common-utils": "npm:3.1.0-alpha.3"
-    "@kepler.gl/constants": "npm:3.1.0-alpha.3"
-    "@kepler.gl/layers": "npm:3.1.0-alpha.3"
-    "@kepler.gl/table": "npm:3.1.0-alpha.3"
-    "@kepler.gl/types": "npm:3.1.0-alpha.3"
-    "@kepler.gl/utils": "npm:3.1.0-alpha.3"
+    "@kepler.gl/common-utils": "npm:3.1.0-alpha.5"
+    "@kepler.gl/constants": "npm:3.1.0-alpha.5"
+    "@kepler.gl/layers": "npm:3.1.0-alpha.5"
+    "@kepler.gl/table": "npm:3.1.0-alpha.5"
+    "@kepler.gl/types": "npm:3.1.0-alpha.5"
+    "@kepler.gl/utils": "npm:3.1.0-alpha.5"
     "@loaders.gl/loader-utils": "npm:^4.3.2"
     "@types/keymirror": "npm:^0.1.1"
     "@types/lodash.clonedeep": "npm:^4.5.7"
@@ -3580,24 +3607,26 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@kepler.gl/styles@npm:3.1.0-alpha.3, @kepler.gl/styles@workspace:src/styles":
+"@kepler.gl/styles@npm:3.1.0-alpha.5, @kepler.gl/styles@workspace:src/styles":
   version: 0.0.0-use.local
   resolution: "@kepler.gl/styles@workspace:src/styles"
   dependencies:
-    "@kepler.gl/constants": "npm:3.1.0-alpha.3"
+    "@kepler.gl/constants": "npm:3.1.0-alpha.5"
     "@types/styled-components": "npm:^5.1.32"
     styled-components: "npm:6.1.8"
   languageName: unknown
   linkType: soft
 
-"@kepler.gl/table@npm:3.1.0-alpha.3, @kepler.gl/table@workspace:src/table":
+"@kepler.gl/table@npm:3.1.0-alpha.5, @kepler.gl/table@workspace:src/table":
   version: 0.0.0-use.local
   resolution: "@kepler.gl/table@workspace:src/table"
   dependencies:
-    "@kepler.gl/common-utils": "npm:3.1.0-alpha.3"
-    "@kepler.gl/constants": "npm:3.1.0-alpha.3"
-    "@kepler.gl/types": "npm:3.1.0-alpha.3"
-    "@kepler.gl/utils": "npm:3.1.0-alpha.3"
+    "@kepler.gl/common-utils": "npm:3.1.0-alpha.5"
+    "@kepler.gl/constants": "npm:3.1.0-alpha.5"
+    "@kepler.gl/types": "npm:3.1.0-alpha.5"
+    "@kepler.gl/utils": "npm:3.1.0-alpha.5"
+    "@loaders.gl/mvt": "npm:^4.3.2"
+    "@loaders.gl/pmtiles": "npm:^4.3.2"
     "@types/d3-array": "npm:^2.8.0"
     "@types/lodash.uniq": "npm:^4.5.7"
     d3-array: "npm:^2.8.0"
@@ -3605,33 +3634,34 @@ __metadata:
     lodash.uniq: "npm:^4.0.1"
     moment: "npm:^2.10.6"
     react-palm: "npm:^3.3.8"
+    type-analyzer: "npm:0.4.0"
   languageName: unknown
   linkType: soft
 
-"@kepler.gl/tasks@npm:3.1.0-alpha.3, @kepler.gl/tasks@workspace:src/tasks":
+"@kepler.gl/tasks@npm:3.1.0-alpha.5, @kepler.gl/tasks@workspace:src/tasks":
   version: 0.0.0-use.local
   resolution: "@kepler.gl/tasks@workspace:src/tasks"
   dependencies:
-    "@kepler.gl/processors": "npm:3.1.0-alpha.3"
+    "@kepler.gl/processors": "npm:3.1.0-alpha.5"
     react-palm: "npm:^3.3.8"
   languageName: unknown
   linkType: soft
 
-"@kepler.gl/types@npm:3.1.0-alpha.3, @kepler.gl/types@workspace:src/types":
+"@kepler.gl/types@npm:3.1.0-alpha.5, @kepler.gl/types@workspace:src/types":
   version: 0.0.0-use.local
   resolution: "@kepler.gl/types@workspace:src/types"
   languageName: unknown
   linkType: soft
 
-"@kepler.gl/utils@npm:3.1.0-alpha.3, @kepler.gl/utils@workspace:src/utils":
+"@kepler.gl/utils@npm:3.1.0-alpha.5, @kepler.gl/utils@workspace:src/utils":
   version: 0.0.0-use.local
   resolution: "@kepler.gl/utils@workspace:src/utils"
   dependencies:
     "@deck.gl/core": "npm:^8.9.27"
     "@dnd-kit/sortable": "npm:^8.0.0"
-    "@kepler.gl/common-utils": "npm:3.1.0-alpha.3"
-    "@kepler.gl/constants": "npm:3.1.0-alpha.3"
-    "@kepler.gl/types": "npm:3.1.0-alpha.3"
+    "@kepler.gl/common-utils": "npm:3.1.0-alpha.5"
+    "@kepler.gl/constants": "npm:3.1.0-alpha.5"
+    "@kepler.gl/types": "npm:3.1.0-alpha.5"
     "@luma.gl/constants": "npm:^8.5.20"
     "@luma.gl/core": "npm:^8.5.20"
     "@mapbox/geo-viewport": "npm:^0.4.1"
@@ -5029,6 +5059,30 @@ __metadata:
   version: 3.3.14
   resolution: "@mdn/browser-compat-data@npm:3.3.14"
   checksum: 10c0/24c27db413ba23d8adb768a01b556bf62876b30e30eb12a8a562d1b833e9bd4c86a42d804611797ef4796a1f0d116791d7b82c65f3743a7d94014f2af01781f9
+  languageName: node
+  linkType: hard
+
+"@monaco-editor/loader@npm:^1.4.0":
+  version: 1.4.0
+  resolution: "@monaco-editor/loader@npm:1.4.0"
+  dependencies:
+    state-local: "npm:^1.0.6"
+  peerDependencies:
+    monaco-editor: ">= 0.21.0 < 1"
+  checksum: 10c0/68938350adf2f42363a801d87f5d00c87d397d4cba7041141af10a9216bd35c85209b4723a26d56cb32e68eef61471deda2a450f8892891118fbdce7fa1d987d
+  languageName: node
+  linkType: hard
+
+"@monaco-editor/react@npm:^4.6.0":
+  version: 4.6.0
+  resolution: "@monaco-editor/react@npm:4.6.0"
+  dependencies:
+    "@monaco-editor/loader": "npm:^1.4.0"
+  peerDependencies:
+    monaco-editor: ">= 0.25.0 < 1"
+    react: ^16.8.0 || ^17.0.0 || ^18.0.0
+    react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
+  checksum: 10c0/231e9a9b66a530db326f6732de0ebffcce6b79dcfaf4948923d78b9a3d5e2a04b7a06e1f85bbbca45a5ae15c107a124e4c5c46cabadc20a498fb5f2d05f7f379
   languageName: node
   linkType: hard
 
@@ -6650,6 +6704,175 @@ __metadata:
   bin:
     browsers: lib/cjs/main-cli.js
   checksum: 10c0/8665a7d5be5e1489855780b7684bf94a55647b54a8391474cbdc1defdb2e4e6642722ef1d20bfabe49d3aed3eec2c8db41d6eabc24440f4a16d071effc5a1049
+  languageName: node
+  linkType: hard
+
+"@radix-ui/primitive@npm:1.1.1":
+  version: 1.1.1
+  resolution: "@radix-ui/primitive@npm:1.1.1"
+  checksum: 10c0/6457bd8d1aa4ecb948e5d2a2484fc570698b2ab472db6d915a8f1eec04823f80423efa60b5ba840f0693bec2ca380333cc5f3b52586b40f407d9f572f9261f8d
+  languageName: node
+  linkType: hard
+
+"@radix-ui/react-collapsible@npm:^1.1.0":
+  version: 1.1.2
+  resolution: "@radix-ui/react-collapsible@npm:1.1.2"
+  dependencies:
+    "@radix-ui/primitive": "npm:1.1.1"
+    "@radix-ui/react-compose-refs": "npm:1.1.1"
+    "@radix-ui/react-context": "npm:1.1.1"
+    "@radix-ui/react-id": "npm:1.1.0"
+    "@radix-ui/react-presence": "npm:1.1.2"
+    "@radix-ui/react-primitive": "npm:2.0.1"
+    "@radix-ui/react-use-controllable-state": "npm:1.1.0"
+    "@radix-ui/react-use-layout-effect": "npm:1.1.0"
+  peerDependencies:
+    "@types/react": "*"
+    "@types/react-dom": "*"
+    react: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
+    react-dom: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
+  peerDependenciesMeta:
+    "@types/react":
+      optional: true
+    "@types/react-dom":
+      optional: true
+  checksum: 10c0/8a725539c0c259ea53a0e35d4ddd3acca42cab5113fd537758450ad1e76f0b757423f18aca29364f963bef4f0624d57feb32bf9d12a3ea6b2c084b523ba65205
+  languageName: node
+  linkType: hard
+
+"@radix-ui/react-compose-refs@npm:1.1.1":
+  version: 1.1.1
+  resolution: "@radix-ui/react-compose-refs@npm:1.1.1"
+  peerDependencies:
+    "@types/react": "*"
+    react: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
+  peerDependenciesMeta:
+    "@types/react":
+      optional: true
+  checksum: 10c0/3e84580024e66e3cc5b9ae79355e787815c1d2a3c7d46e7f47900a29c33751ca24cf4ac8903314957ab1f7788aebe1687e2258641c188cf94653f7ddf8f70627
+  languageName: node
+  linkType: hard
+
+"@radix-ui/react-context@npm:1.1.1":
+  version: 1.1.1
+  resolution: "@radix-ui/react-context@npm:1.1.1"
+  peerDependencies:
+    "@types/react": "*"
+    react: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
+  peerDependenciesMeta:
+    "@types/react":
+      optional: true
+  checksum: 10c0/fc4ace9d79d7954c715ade765e06c95d7e1b12a63a536bcbe842fb904f03f88fc5bd6e38d44bd23243d37a270b4c44380fedddaeeae2d274f0b898a20665aba2
+  languageName: node
+  linkType: hard
+
+"@radix-ui/react-id@npm:1.1.0":
+  version: 1.1.0
+  resolution: "@radix-ui/react-id@npm:1.1.0"
+  dependencies:
+    "@radix-ui/react-use-layout-effect": "npm:1.1.0"
+  peerDependencies:
+    "@types/react": "*"
+    react: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
+  peerDependenciesMeta:
+    "@types/react":
+      optional: true
+  checksum: 10c0/acf13e29e51ee96336837fc0cfecc306328b20b0e0070f6f0f7aa7a621ded4a1ee5537cfad58456f64bae76caa7f8769231e88dc7dc106197347ee433c275a79
+  languageName: node
+  linkType: hard
+
+"@radix-ui/react-presence@npm:1.1.2":
+  version: 1.1.2
+  resolution: "@radix-ui/react-presence@npm:1.1.2"
+  dependencies:
+    "@radix-ui/react-compose-refs": "npm:1.1.1"
+    "@radix-ui/react-use-layout-effect": "npm:1.1.0"
+  peerDependencies:
+    "@types/react": "*"
+    "@types/react-dom": "*"
+    react: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
+    react-dom: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
+  peerDependenciesMeta:
+    "@types/react":
+      optional: true
+    "@types/react-dom":
+      optional: true
+  checksum: 10c0/0c6fa281368636308044df3be4c1f02733094b5e35ba04f26e610dd1c4315a245ffc758e0e176c444742a7a46f4328af1a9d8181e860175ec39338d06525a78d
+  languageName: node
+  linkType: hard
+
+"@radix-ui/react-primitive@npm:2.0.1":
+  version: 2.0.1
+  resolution: "@radix-ui/react-primitive@npm:2.0.1"
+  dependencies:
+    "@radix-ui/react-slot": "npm:1.1.1"
+  peerDependencies:
+    "@types/react": "*"
+    "@types/react-dom": "*"
+    react: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
+    react-dom: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
+  peerDependenciesMeta:
+    "@types/react":
+      optional: true
+    "@types/react-dom":
+      optional: true
+  checksum: 10c0/6a562bec14f8e9fbfe0012d6c2932b0e54518fed898fa0622300c463611e77a4ca28a969f0cd484efd6570c01c5665dd6151f736262317d01715bc4da1a7dea6
+  languageName: node
+  linkType: hard
+
+"@radix-ui/react-slot@npm:1.1.1":
+  version: 1.1.1
+  resolution: "@radix-ui/react-slot@npm:1.1.1"
+  dependencies:
+    "@radix-ui/react-compose-refs": "npm:1.1.1"
+  peerDependencies:
+    "@types/react": "*"
+    react: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
+  peerDependenciesMeta:
+    "@types/react":
+      optional: true
+  checksum: 10c0/f3cc71c16529c67a8407a89e0ac13a868cafa0cd05ca185b464db609aa5996a3f00588695518e420bd47ffdb4cc2f76c14cc12ea5a38fc2ca3578a30d2ca58b9
+  languageName: node
+  linkType: hard
+
+"@radix-ui/react-use-callback-ref@npm:1.1.0":
+  version: 1.1.0
+  resolution: "@radix-ui/react-use-callback-ref@npm:1.1.0"
+  peerDependencies:
+    "@types/react": "*"
+    react: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
+  peerDependenciesMeta:
+    "@types/react":
+      optional: true
+  checksum: 10c0/e954863f3baa151faf89ac052a5468b42650efca924417470efd1bd254b411a94c69c30de2fdbb90187b38cb984795978e12e30423dc41e4309d93d53b66d819
+  languageName: node
+  linkType: hard
+
+"@radix-ui/react-use-controllable-state@npm:1.1.0":
+  version: 1.1.0
+  resolution: "@radix-ui/react-use-controllable-state@npm:1.1.0"
+  dependencies:
+    "@radix-ui/react-use-callback-ref": "npm:1.1.0"
+  peerDependencies:
+    "@types/react": "*"
+    react: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
+  peerDependenciesMeta:
+    "@types/react":
+      optional: true
+  checksum: 10c0/2af883b5b25822ac226e60a6bfde647c0123a76345052a90219026059b3f7225844b2c13a9a16fba859c1cda5fb3d057f2a04503f71780e607516492db4eb3a1
+  languageName: node
+  linkType: hard
+
+"@radix-ui/react-use-layout-effect@npm:1.1.0":
+  version: 1.1.0
+  resolution: "@radix-ui/react-use-layout-effect@npm:1.1.0"
+  peerDependencies:
+    "@types/react": "*"
+    react: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
+  peerDependenciesMeta:
+    "@types/react":
+      optional: true
+  checksum: 10c0/9bf87ece1845c038ed95863cfccf9d75f557c2400d606343bab0ab3192b9806b9840e6aa0a0333fdf3e83cf9982632852192f3e68d7d8367bc8c788dfdf8e62b
   languageName: node
   linkType: hard
 
@@ -10894,7 +11117,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"apache-arrow@npm:>= 15.0.0, apache-arrow@npm:>=15, apache-arrow@npm:>=15.0.0":
+"apache-arrow@npm:>= 15.0.0, apache-arrow@npm:>=15, apache-arrow@npm:>=15.0.0, apache-arrow@npm:^17.0.0":
   version: 17.0.0
   resolution: "apache-arrow@npm:17.0.0"
   dependencies:
@@ -20485,7 +20708,7 @@ __metadata:
     "@deck.gl/test-utils": "npm:^8.9.27"
     "@hubble.gl/core": "npm:1.2.0-alpha.6"
     "@hubble.gl/react": "npm:1.2.0-alpha.6"
-    "@kepler.gl/components": "npm:3.1.0-alpha.3"
+    "@kepler.gl/components": "npm:3.1.0-alpha.5"
     "@loaders.gl/polyfills": "npm:^4.3.2"
     "@luma.gl/test-utils": "npm:^8.5.20"
     "@nebula.gl/layers": "npm:1.0.2-alpha.1"
@@ -22330,6 +22553,13 @@ __metadata:
   version: 2.30.1
   resolution: "moment@npm:2.30.1"
   checksum: 10c0/865e4279418c6de666fca7786607705fd0189d8a7b7624e2e56be99290ac846f90878a6f602e34b4e0455c549b85385b1baf9966845962b313699e7cb847543a
+  languageName: node
+  linkType: hard
+
+"monaco-editor@npm:^0.52.0":
+  version: 0.52.2
+  resolution: "monaco-editor@npm:0.52.2"
+  checksum: 10c0/5a92da64f1e2ab375c0ce99364137f794d057c97bed10ecc65a08d6e6846804b8ecbd377eacf01e498f7dfbe1b21e8be64f728256681448f0484df90e767b435
   languageName: node
   linkType: hard
 
@@ -25397,6 +25627,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-resizable-panels@npm:^2.1.7":
+  version: 2.1.7
+  resolution: "react-resizable-panels@npm:2.1.7"
+  peerDependencies:
+    react: ^16.14.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^19.0.0-rc
+    react-dom: ^16.14.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^19.0.0-rc
+  checksum: 10c0/644a57960507b809f571bf8c95f07a04e3aeb9b20405a1d9d8cb6deb72d2462192e6e5e9751237347e7818179a619a6f65de4b355e276334d10b8cfe737ca4e1
+  languageName: node
+  linkType: hard
+
 "react-shallow-renderer@npm:^16.15.0":
   version: 16.15.0
   resolution: "react-shallow-renderer@npm:16.15.0"
@@ -26256,7 +26496,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"reselect@npm:^4.0.0, reselect@npm:^4.1.8":
+"reselect@npm:^4.0.0, reselect@npm:^4.1.0, reselect@npm:^4.1.8":
   version: 4.1.8
   resolution: "reselect@npm:4.1.8"
   checksum: 10c0/06a305a504affcbb67dd0561ddc8306b35796199c7e15b38934c80606938a021eadcf68cfd58e7bb5e17786601c37602a3362a4665c7bf0a96c1041ceee9d0b7
@@ -27541,6 +27781,13 @@ __metadata:
   dependencies:
     escape-string-regexp: "npm:^2.0.0"
   checksum: 10c0/651c9f87667e077584bbe848acaecc6049bc71979f1e9a46c7b920cad4431c388df0f51b8ad7cfd6eed3db97a2878d0fc8b3122979439ea8bac29c61c95eec8a
+  languageName: node
+  linkType: hard
+
+"state-local@npm:^1.0.6":
+  version: 1.0.7
+  resolution: "state-local@npm:1.0.7"
+  checksum: 10c0/8dc7daeac71844452fafb514a6d6b6f40d7e2b33df398309ea1c7b3948d6110c57f112b7196500a10c54fdde40291488c52c875575670fb5c819602deca48bd9
   languageName: node
   linkType: hard
 

@@ -33,7 +33,14 @@ import {
   EditorLayerUtils,
   AggregatedBin
 } from '@kepler.gl/layers';
-import {MapState, MapControls, Viewport, SplitMap, SplitMapLayers} from '@kepler.gl/types';
+import {
+  DatasetAttribution,
+  MapState,
+  MapControls,
+  Viewport,
+  SplitMap,
+  SplitMapLayers
+} from '@kepler.gl/types';
 import {
   errorNotification,
   setLayerBlending,
@@ -71,7 +78,6 @@ import {
 import {MapViewStateContext} from './map-view-state-context';
 
 import ErrorBoundary from './common/error-boundary';
-import {DatasetAttribution} from './types';
 import {LOCALE_CODES} from '@kepler.gl/localization';
 import {MapView} from '@deck.gl/core';
 import {
@@ -180,12 +186,13 @@ interface StyledDatasetAttributionsContainerProps {
 }
 
 const StyledDatasetAttributionsContainer = styled.div<StyledDatasetAttributionsContainerProps>`
-  max-width: ${props => (props.isPalm ? '130px' : '180px')};
+  max-width: ${props => (props.isPalm ? '200px' : '300px')};
   text-overflow: ellipsis;
   white-space: nowrap;
   overflow: hidden;
   color: ${props => props.theme.labelColor};
   margin-right: 2px;
+  margin-bottom: 1px;
   line-height: ${props => (props.isPalm ? '1em' : '1.4em')};
 
   &:hover {

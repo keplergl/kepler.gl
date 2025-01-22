@@ -48,3 +48,16 @@ export function getPropertyByZoom(
     return stops[i - 1][1];
   };
 }
+
+/**
+ * Remove null/0 values from the bottom of the quantiles. If the column has many nulls
+ * or 0s at the bottom of the quantiles, it will wash out color scales and produce
+ * meaningless "no value" legend entries. We want to keep the first 0 and no others.
+ * Operates in place.
+ */
+export function pruneQuantiles(quantiles: number[]): void {
+  const firstNonZeroIdx = quantiles.findIndex(d => d !== null && d !== 0);
+  if (firstNonZeroIdx > 0) {
+    quantiles.splice(0, firstNonZeroIdx - 1);
+  }
+}

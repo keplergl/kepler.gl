@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {VectorTileMetadata} from '@kepler.gl/layers';
+import {VectorTileMetadata} from '@kepler.gl/table';
 
 export type DatasetCreationAttributes = {
   name: string;
