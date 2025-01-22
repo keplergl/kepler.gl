@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 import * as arrow from 'apache-arrow';
 import normalize from '@mapbox/geojson-normalize';
 
