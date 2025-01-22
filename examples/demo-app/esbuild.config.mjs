@@ -48,9 +48,7 @@ const getThirdPartyLibraryAliases = useKeplerNodeModules => {
     'styled-components': `${nodeModulesDir}/styled-components`,
     'react-intl': `${nodeModulesDir}/react-intl`,
     // kepler.gl and loaders.gl need to use same apache-arrow
-    'apache-arrow': `${nodeModulesDir}/apache-arrow`,
-    // all react-ai-assist needs to be resolved from samenode_modules
-    'react-ai-assist': `${nodeModulesDir}/react-ai-assist`
+    'apache-arrow': `${nodeModulesDir}/apache-arrow`
   };
 };
 
@@ -70,7 +68,8 @@ const config = {
   outfile: 'dist/bundle.js',
   bundle: true,
   define: {
-    NODE_ENV
+    'process.env.NODE_ENV': NODE_ENV,
+    'process.env': JSON.stringify(process.env)
   },
   plugins: [
     dotenvRun({
