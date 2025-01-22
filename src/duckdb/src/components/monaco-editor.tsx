@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 import React, {useCallback, useMemo, useRef} from 'react';
 import Editor, {OnChange, OnMount} from '@monaco-editor/react';
 import * as monaco from 'monaco-editor';

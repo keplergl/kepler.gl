@@ -1,4 +1,5 @@
-// Copyright 2022 Foursquare Labs, Inc. All Rights Reserved.
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
 
 import React, {useCallback, useMemo, useState, CSSProperties} from 'react';
 
