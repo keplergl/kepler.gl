@@ -244,9 +244,10 @@ export function processGeojson(rawData: unknown): ProcessorResult {
   }
   // console.log(normalizedGeojson);
 
+  // @ts-expect-error Don't pass empty fields, as duck db outputs empty dataset
   return {
-    rows: normalizedGeojson,
+    rows: normalizedGeojson
     // TODO get fields to preserve field names?
-    fields: []
+    // fields: []
   };
 }

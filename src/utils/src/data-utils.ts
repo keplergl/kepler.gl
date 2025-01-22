@@ -303,12 +303,12 @@ export const FIELD_DISPLAY_FORMAT: {
       : '',
   [ALL_FIELD_TYPES.geoarrow]: d => d,
   [ALL_FIELD_TYPES.object]: (value: any) => {
-    if (typeof value?.toString === 'function') {
-      return value.toString();
-    }
     try {
       return JSON.stringify(value);
     } catch (e) {
+      if (typeof value?.toString === 'function') {
+        return value.toString();
+      }
       return String(value);
     }
   },

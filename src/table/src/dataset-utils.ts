@@ -9,7 +9,7 @@ import Task from 'react-palm/tasks';
 import {DatasetType, RemoteTileFormat, VectorTileDatasetMetadata} from '@kepler.gl/constants';
 import {
   hexToRgb,
-  // validateInputData,
+  validateInputData,
   datasetColorMaker,
   getApplicationConfig
 } from '@kepler.gl/utils';
@@ -57,12 +57,13 @@ export function createNewDataEntry(
   {info, data, ...opts}: ProtoDataset,
   datasets: Datasets = {}
 ): Datasets {
-  // ! restore
-  // const validatedData = validateInputData(data);
-  // if (!validatedData) {
-  //   return {};
-  // }
-  const validatedData = data;
+  let validatedData = validateInputData(data);
+  if (!validatedData) {
+    // For DuckDb plugin return original data?
+    // return {};
+    validatedData = data;
+  }
+
   // check if dataset already exists, and update it when loading data by batches incrementally
   if (info && info.id && datasets[info.id]) {
     // get keplerTable from datasets
