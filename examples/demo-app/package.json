@@ -1,6 +1,9 @@
 {
   "scripts": {
     "start": "node esbuild.config.mjs --start",
+    "build": "node esbuild.config.mjs --build",
+    "deploy": "yarn build && netlify deploy -d dist",
+    "deploy:prod": "yarn build && netlify deploy -d dist --prod",
     "start:local": "NODE_ENV=local node esbuild.config.mjs --start",
     "start:local-ai": "NODE_ENV=local node esbuild.config.mjs --start --env.ai",
     "start:local-deck": "NODE_ENV=local node esbuild.config.mjs --start --env.deck",
@@ -66,6 +69,7 @@
   },
   "packageManager": "yarn@4.4.0",
   "devDependencies": {
+    "@dotenv-run/esbuild": "^1.5.0",
     "esbuild-plugin-replace": "^1.4.0"
   }
 }
