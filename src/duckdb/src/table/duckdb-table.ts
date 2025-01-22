@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 import * as arrow from 'apache-arrow';
 import {AsyncDuckDB, AsyncDuckDBConnection} from '@duckdb/duckdb-wasm';
 
@@ -54,6 +57,11 @@ const dropIfTableExists = async (c: AsyncDuckDBConnection, tableName: string) =>
 };
 
 export class KeplerGlDuckDbTable extends KeplerTable {
+  declare readonly id: string;
+  declare label: string;
+  declare type: string;
+  declare metadata: Record<string, any>;
+
   constructor(props) {
     super(props);
   }

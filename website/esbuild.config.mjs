@@ -27,6 +27,14 @@ const RESOLVE_LOCAL_ALIASES = {
   echarts: `${NODE_MODULES_DIR}/echarts`
 };
 
+// Add kepler.gl submodule aliases
+const workspaces = WebsitePackage.workspaces;
+workspaces.forEach(workspace => {
+  // workspace =  "./src/types",  "./src/constants", etc
+  const moduleName = workspace.split('/').pop();
+  RESOLVE_LOCAL_ALIASES[`@kepler.gl/${moduleName}`] = join(SRC_DIR, `${moduleName}/src`);
+});
+
 const config = {
   platform: 'browser',
   format: 'iife',
@@ -41,7 +49,7 @@ const config = {
   entryPoints: [
     'src/main.js',
   ],
-  outdir: 'dist',
+  outfile: 'dist/bundle.js',
   bundle: true,
   define: {
     NODE_ENV: JSON.stringify(process.env.NODE_ENV || 'production'),
@@ -74,13 +82,48 @@ function openURL(url) {
   }
 }
 
+function logError(msg) {
+  console.log('\x1b[31m%s\x1b[0m', msg);
+}
+
+function logInstruction(msg) {
+  console.log('\x1b[36m%s\x1b[0m', msg);
+}
+
+function validateEnvVariable(variable, instruction) {
+  if (!process.env[variable]) {
+    logError(`Error! ${variable} is not defined`);
+    logInstruction(`Make sure to run "export ${variable}=<token>" before deploy the website`);
+    logInstruction(instruction);
+    throw new Error(`Missing ${variable}`);
+  }
+}
+
 (async () => {
   if (args.includes('--build')) {
+    // Validate environment variables before production build
+    const ENV_VARIABLES_WITH_INSTRUCTIONS = {
+      MapboxAccessToken: 'Get your Mapbox token at https://www.mapbox.com/help/how-access-tokens-work/',
+      DropboxClientId: 'Get your Dropbox key at https://www.dropbox.com/developers',
+      MapboxExportToken: 'Get your Mapbox token at https://www.mapbox.com/help/how-access-tokens-work/',
+      CartoClientId: 'Get your CARTO client id',
+      FoursquareClientId: 'Get your Foursquare client id',
+      FoursquareDomain: 'Set your Foursquare domain',
+      FoursquareAPIURL: 'Set your Foursquare API URL',
+      FoursquareUserMapsURL: 'Set your Foursquare User Maps URL'
+    };
+
+    // Validate all environment variables
+    Object.entries(ENV_VARIABLES_WITH_INSTRUCTIONS).forEach(([variable, instruction]) => {
+      validateEnvVariable(variable, instruction);
+    });
+
     await esbuild
       .build({
         ...config,
         minify: true,
-        sourcemap: false
+        sourcemap: false,
+        alias: RESOLVE_LOCAL_ALIASES
       })
       .catch(e => {
         console.error(e);
