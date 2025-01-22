@@ -39,7 +39,7 @@ const config = {
   entryPoints: [
     'src/main.js',
   ],
-  outdir: 'dist/bundle.js',
+  outfile: 'dist/bundle.js',
   bundle: true,
   define: {
     NODE_ENV: JSON.stringify(process.env.NODE_ENV || 'production'),
