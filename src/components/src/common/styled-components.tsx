@@ -158,7 +158,7 @@ export const Tooltip: IStyledComponent<'web', TooltipAttrsProps> = styled(
   &.__react_component_tooltip {
     font-size: ${props => props.theme.tooltipFontSize};
     font-weight: 400;
-    padding: 7px 18px;
+    padding: 10px 18px;
     box-shadow: ${props => props.theme.tooltipBoxShadow};
 
     &.type-dark {

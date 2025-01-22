@@ -1,7 +1,7 @@
 {
   "name": "@kepler.gl/ai-assistant",
   "author": "Xun Li<lixun910@gmail.com>",
-  "version": "3.1.0-alpha.1",
+  "version": "3.1.0-alpha.5",
   "description": "kepler.gl AI assistant",
   "license": "MIT",
   "main": "dist/index.js",
@@ -12,8 +12,7 @@
     "react",
     "webgl",
     "visualization",
-    "deck.gl",
-    "openassistant"
+    "deck.gl"
   ],
   "repository": {
     "type": "git",
@@ -31,21 +30,17 @@
     "umd"
   ],
   "dependencies": {
-    "@duckdb/duckdb-wasm": "^1.29.0",
-    "@kepler.gl/components": "3.1.0-alpha.1",
-    "@kepler.gl/constants": "3.1.0-alpha.1",
-    "@kepler.gl/layers": "3.1.0-alpha.1",
-    "@kepler.gl/types": "3.1.0-alpha.1",
-    "@kepler.gl/utils": "3.1.0-alpha.1",
-    "@openassistant/core": "^0.0.5",
-    "@openassistant/duckdb": "^0.0.5",
-    "@openassistant/echarts": "^0.0.5",
-    "@openassistant/geoda": "^0.0.5",
-    "@openassistant/ui": "^0.0.5",
-    "color-interpolate": "^1.0.5"
-  },
-  "devDependencies": {
-    "global": "^4.3.0"
+    "@kepler.gl/components": "3.1.0-alpha.5",
+    "@kepler.gl/constants": "3.1.0-alpha.5",
+    "@kepler.gl/layers": "3.1.0-alpha.5",
+    "@kepler.gl/table": "3.1.0-alpha.5",
+    "@kepler.gl/types": "3.1.0-alpha.5",
+    "@kepler.gl/utils": "3.1.0-alpha.5",
+    "color-interpolate": "^1.0.5",
+    "echarts": "^5.5.1",
+    "global": "^4.3.0",
+    "react-ai-assist": "0.0.20",
+    "react-intl": "^6.3.0"
   },
   "nyc": {
     "sourceMap": false,

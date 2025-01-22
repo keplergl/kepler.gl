@@ -2,9 +2,11 @@
 // Copyright contributors to the kepler.gl project
 
 import React from 'react';
+import {injectIntl, WrappedComponentProps} from 'react-intl';
 import styled from 'styled-components';
 
 import {Button} from '../../common';
+import LoadingSpinner from '../../common/loading-spinner';
 
 const AddDataButton = styled(Button)<{isLoading?: boolean}>`
   position: relative;
@@ -13,7 +15,7 @@ const AddDataButton = styled(Button)<{isLoading?: boolean}>`
   opacity: ${props => (props.disabled ? 0.6 : 1)};
   height: 40px;
   padding: 9px 32px;
-  width: auto;
+  width: ${props => props.width};
 
   svg {
     margin-right: ${props => (props.isLoading ? '0' : '6px')};
@@ -36,7 +38,8 @@ const LoadDataFooterContainer = styled.div.attrs({
 
 const ErrorContainer = styled.div`
   color: red;
-  padding-right: 15px;
+  padding-left: 15px;
+  display: inline-block;
 `;
 
 type LoadDataFooterProps = {
@@ -45,34 +48,40 @@ type LoadDataFooterProps = {
   onConfirm: () => void;
   confirmText: string;
   prependText?: string;
-  errorText?: string;
+  errorText?: string | null;
 };
 
-const LoadDataFooter: React.FC<LoadDataFooterProps> = ({
+const LoadDataFooter: React.FC<LoadDataFooterProps & WrappedComponentProps> = ({
   disabled,
+  intl,
   isLoading,
   onConfirm,
   confirmText,
   prependText = '',
   errorText = ''
-}) => {
+}: LoadDataFooterProps & WrappedComponentProps) => {
   return (
     <LoadDataFooterContainer>
       <div>
-        {errorText && <ErrorContainer>{errorText}</ErrorContainer>}
         {prependText}
         <AddDataButton
           disabled={disabled}
           isLoading={isLoading}
           onClick={onConfirm}
-          width="100px"
+          width="130px"
           cta
         >
-          {confirmText}
+          {isLoading && <LoadingSpinner size={12} />}
+          {isLoading
+            ? null
+            : intl.formatMessage({
+                id: confirmText
+              })}
         </AddDataButton>
+        {errorText && <ErrorContainer>{errorText}</ErrorContainer>}
       </div>
     </LoadDataFooterContainer>
   );
 };
 
-export default LoadDataFooter;
+export default injectIntl(LoadDataFooter) as React.FC<LoadDataFooterProps>;

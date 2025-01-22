@@ -12,7 +12,7 @@ import configureStore from 'redux-mock-store';
 
 const PlotContainer = appInjector.get(PlotContainerFactory);
 const initialProps = plotContainerSelector(mockKeplerProps);
-const initialState = {mapState: {latitude: 0, longitude: 0}};
+const initialState = {mapState: {latitude: 0, longitude: 0}, uiState: mockKeplerProps.uiState};
 const mockStore = configureStore();
 
 test('PlotContainer -> mount', t => {

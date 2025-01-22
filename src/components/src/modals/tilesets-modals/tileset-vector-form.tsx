@@ -5,14 +5,15 @@ import React, {useCallback, useEffect, useState, useMemo} from 'react';
 import styled from 'styled-components';
 
 import {
-  getMetaUrl,
-  parseVectorMetadata,
-  VectorTileMetadata,
   DatasetType,
-  VectorTileType
-} from '@kepler.gl/layers';
+  RemoteTileFormat,
+  VectorTileDatasetMetadata,
+  REMOTE_TILE
+} from '@kepler.gl/constants';
 import {TileJSON} from '@loaders.gl/mvt';
 import {PMTilesMetadata} from '@loaders.gl/pmtiles';
+import {getMetaUrl, parseVectorMetadata, VectorTileMetadata} from '@kepler.gl/table';
+import {Merge} from '@kepler.gl/types';
 
 import {default as useFetchVectorTileMetadata} from '../../hooks/use-fetch-vector-tile-metadata';
 import {DatasetCreationAttributes, MetaResponse} from './common';
@@ -39,16 +40,24 @@ export type VectorTilesetFormData = {
 
 const isPMTilesUrl = (url?: string | null) => url?.includes('.pmtiles');
 
+export type VectorTileDatasetCreationAttributes = Merge<
+  DatasetCreationAttributes,
+  {
+    metadata: VectorTileDatasetMetadata;
+  }
+>;
+
 export function getDatasetAttributesFromVectorTile({
   name,
   dataUrl,
   metadataUrl
-}: VectorTilesetFormData): DatasetCreationAttributes {
+}: VectorTilesetFormData): VectorTileDatasetCreationAttributes {
   return {
     name,
     type: DatasetType.VECTOR_TILE,
     metadata: {
-      type: isPMTilesUrl(dataUrl) ? VectorTileType.PMTILES : VectorTileType.MVT,
+      type: REMOTE_TILE,
+      remoteTileFormat: isPMTilesUrl(dataUrl) ? RemoteTileFormat.PMTILES : RemoteTileFormat.MVT,
       tilesetDataUrl: dataUrl,
       tilesetMetadataUrl: metadataUrl
     }
@@ -63,6 +72,7 @@ const TilesetVectorForm: React.FC<TilesetVectorFormProps> = ({setResponse}) => {
   const [tileName, setTileName] = useState<string>('');
   const [tileUrl, setTileUrl] = useState<string>('');
   const [metadataUrl, setMetadataUrl] = useState<string | null>('');
+  const [initialFetchError, setInitialFetchError] = useState<Error | null>(null);
 
   const onTileNameChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -89,7 +99,16 @@ const TilesetVectorForm: React.FC<TilesetVectorFormProps> = ({setResponse}) => {
       if (!metadataUrl && potentialMetadataUrl) {
         // check if URL exists before setting it as the metadata URL
         const resp = await fetch(potentialMetadataUrl);
-        if (resp.ok) setMetadataUrl(potentialMetadataUrl);
+        if (resp.ok) {
+          setInitialFetchError(null);
+          setMetadataUrl(potentialMetadataUrl);
+        } else {
+          setInitialFetchError(
+            new Error(`Metadata loading failed: ${resp.status} ${resp.statusText}`)
+          );
+        }
+      } else {
+        setInitialFetchError(null);
       }
       if (!tileName) {
         setTileName(newTileUrl.split('/').pop() || newTileUrl);
@@ -97,6 +116,7 @@ const TilesetVectorForm: React.FC<TilesetVectorFormProps> = ({setResponse}) => {
     },
     [setTileUrl, tileName, setMetadataUrl, metadataUrl]
   );
+
   const process = useMemo(() => {
     return (value: PMTilesMetadata | TileJSON) =>
       parseVectorMetadata(value, {tileUrl: metadataUrl});
@@ -108,7 +128,7 @@ const TilesetVectorForm: React.FC<TilesetVectorFormProps> = ({setResponse}) => {
     error: metaError
   } = useFetchVectorTileMetadata({
     url: metadataUrl,
-    type: isPMTilesUrl(metadataUrl) ? VectorTileType.PMTILES : VectorTileType.MVT,
+    remoteTileFormat: isPMTilesUrl(metadataUrl) ? RemoteTileFormat.PMTILES : RemoteTileFormat.MVT,
     process
   });
 
@@ -123,17 +143,26 @@ const TilesetVectorForm: React.FC<TilesetVectorFormProps> = ({setResponse}) => {
         metadata,
         dataset,
         loading,
-        error: metaError
+        error: metaError || initialFetchError
       });
     } else {
       setResponse({
         metadata,
         dataset: null,
         loading,
-        error: metaError
+        error: metaError || initialFetchError
       });
     }
-  }, [setResponse, metadata, loading, metaError, tileUrl, tileName, metadataUrl]);
+  }, [
+    setResponse,
+    metadata,
+    loading,
+    metaError,
+    initialFetchError,
+    tileUrl,
+    tileName,
+    metadataUrl
+  ]);
 
   useEffect(() => {
     if (metadata) {

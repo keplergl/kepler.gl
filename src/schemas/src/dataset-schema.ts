@@ -34,6 +34,7 @@ export type SavedDatasetV1 = {
     fields: SavedField[];
     type?: string;
     metadata?: JsonObject;
+    disableDataOperation?: boolean;
   };
 };
 
@@ -94,7 +95,8 @@ export const propertiesV1 = {
     properties: fieldPropertiesV1
   }),
   type: null,
-  metadata: null
+  metadata: null,
+  disableDataOperation: null
 };
 
 export class DatasetSchema extends Schema {
@@ -149,7 +151,8 @@ export class DatasetSchema extends Schema {
     return {
       data: {fields: updatedFields, rows: dataset.allData},
       info: pick(dataset, ['id', 'label', 'color', 'type']),
-      ...(dataset.metadata ? {metadata: dataset.metadata} : {})
+      ...(dataset.metadata ? {metadata: dataset.metadata} : {}),
+      ...(dataset.disableDataOperation ? {disableDataOperation: dataset.disableDataOperation} : {})
     };
   }
 }

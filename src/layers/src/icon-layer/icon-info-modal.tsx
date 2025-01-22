@@ -5,7 +5,8 @@ import React from 'react';
 import styled from 'styled-components';
 import {line} from 'd3-shape';
 import {FormattedMessage} from '@kepler.gl/localization';
-import Table from '../table';
+
+import Table from '../example-table';
 
 const CenterFlexbox = styled.div`
   display: flex;

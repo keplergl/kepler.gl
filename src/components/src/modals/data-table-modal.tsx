@@ -91,7 +91,7 @@ const DatasetTabsUnmemoized: React.FC<DatasetTabsUnmemoizedProps> = ({
 }) => (
   <DatasetCatalog className="dataset-modal-catalog">
     <div className="overflow-horizontal">
-      {Object.values(datasets).map(dataset => (
+      {Object.values(datasets).map((dataset: KeplerTable) => (
         <DatasetModalTab
           className="dataset-modal-tab"
           active={dataset === activeDataset}

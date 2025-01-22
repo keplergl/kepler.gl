@@ -191,7 +191,8 @@ export default function ModalContainerFactory(
             ...tileset.metadata
           },
           // vector tile layer only supports gpu filtering for now
-          supportedFilterTypes: [ALL_FIELD_TYPES.real, ALL_FIELD_TYPES.integer]
+          supportedFilterTypes: [ALL_FIELD_TYPES.real, ALL_FIELD_TYPES.integer],
+          disableDataOperation: true
         },
         {
           autoCreateLayers: true
@@ -465,7 +466,10 @@ export default function ModalContainerFactory(
               onConfirm: this._onAddCustomMapStyle,
               confirmButton: {
                 large: true,
-                disabled: !mapStyle.inputStyle.url || !mapStyle.inputStyle.label,
+                disabled:
+                  mapStyle.inputStyle.error ||
+                  !mapStyle.inputStyle.url ||
+                  !mapStyle.inputStyle.label,
                 children: 'modal.button.addStyle'
               }
             };
