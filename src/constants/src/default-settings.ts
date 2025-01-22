@@ -1254,7 +1254,8 @@ export const DATASET_FORMATS = keyMirror({
   geojson: null,
   csv: null,
   keplergl: null,
-  arrow: null
+  arrow: null,
+  duckdb: null
 });
 
 export const MAP_CONTROLS = keyMirror({

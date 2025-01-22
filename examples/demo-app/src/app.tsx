@@ -16,7 +16,10 @@ import {
   setStartScreenCapture,
   setScreenCaptured
 } from '@kepler.gl/ai-assistant';
-import {theme} from '@kepler.gl/styles';
+import {panelBorderColor, theme} from '@kepler.gl/styles';
+import {useSelector} from 'react-redux';
+import {ParsedConfig} from '@kepler.gl/types';
+import {SqlPanel} from '@kepler.gl/duckdb';
 import Banner from './components/banner';
 import Announcement, {FormLink} from './components/announcement';
 import {replaceLoadDataModal} from './factories/load-data-modal';
@@ -32,8 +35,15 @@ import {
   onLoadCloudMapSuccess
 } from './actions';
 
-import {loadCloudMap, addDataToMap, replaceDataInMap} from '@kepler.gl/actions';
+import {
+  loadCloudMap,
+  addDataToMap,
+  replaceDataInMap,
+  toggleMapControl,
+  toggleModal
+} from '@kepler.gl/actions';
 import {CLOUD_PROVIDERS} from './cloud-providers';
+import {Panel, PanelGroup, PanelResizeHandle} from 'react-resizable-panels';
 
 const KeplerGl = require('@kepler.gl/components').injectComponents([
   replaceLoadDataModal(),
@@ -60,6 +70,7 @@ import sampleIconCsv from './data/sample-icon-csv';
 import sampleGpsData from './data/sample-gps-data';
 import sampleRowData, {config as rowDataConfig} from './data/sample-row-data';
 import {processCsvData, processGeojson, processRowObject} from '@kepler.gl/processors';
+
 /* eslint-enable no-unused-vars */
 
 // This implements the default behavior from styled-components v5
@@ -113,14 +124,28 @@ const CONTAINER_STYLE = {
   left: 0,
   top: 0,
   display: 'flex',
-  flexDirection: 'row'
+  flexDirection: 'column',
+  backgroundColor: '#333'
 };
+
+const StyledResizeHandle = styled(PanelResizeHandle)`
+  background-color: ${panelBorderColor};
+  &:hover {
+    background-color: #555;
+  }
+  width: 100%;
+  height: 5px;
+  cursor: row-resize;
+`;
 
 const App = props => {
   const [showBanner, toggleShowBanner] = useState(false);
   const {params: {id, provider} = {}, location: {query = {}} = {}} = props;
   const dispatch = useDispatch();
 
+  const isSqlPanelOpen = useSelector(
+    state => state?.demo?.keplerGl?.map?.uiState.mapControls.sqlPanel.active
+  );
   const prevQueryRef = useRef<number>(null);
 
   useEffect(() => {
@@ -155,6 +180,11 @@ const App = props => {
       dispatch(loadRemoteMap({dataUrl: query.mapUrl}));
     }
 
+    if (query.sql) {
+      dispatch(toggleMapControl('sqlPanel', 0));
+      dispatch(toggleModal(null));
+    }
+
     // delay zs to show the banner
     // if (!window.localStorage.getItem(BannerKey)) {
     //   window.setTimeout(_showBanner, 3000);
@@ -163,6 +193,7 @@ const App = props => {
     _loadSampleData();
 
     // Notifications
+    // _loadMockNotifications();
 
     // no dependencies, as this was part of componentDidMount
   }, []);
@@ -405,7 +436,7 @@ const App = props => {
         options: {
           keepExistingConfig: true
         },
-        config: sampleGeojsonConfig
+        config: sampleGeojsonConfig as ParsedConfig
       })
     );
   }, [dispatch]);
@@ -503,7 +534,7 @@ const App = props => {
             data: processCsvData(sampleS2Data)
           }
         ],
-        config: s2MapConfig,
+        config: s2MapConfig as ParsedConfig,
         options: {
           keepExistingConfig: true
         }
@@ -593,27 +624,35 @@ const App = props => {
               <Announcement onDisable={_disableBanner} />
             </Banner>
             <div style={CONTAINER_STYLE}>
-              <div style={{flexGrow: 1}}>
-                <AutoSizer>
-                  {({height, width}) => (
-                    <KeplerGl
-                      mapboxApiAccessToken={CLOUD_PROVIDERS_CONFIGURATION.MAPBOX_TOKEN}
-                      id="map"
-                      /*
-                       * Specify path to keplerGl state, because it is not mount at the root
-                       */
-                      getState={keplerGlGetState}
-                      width={width}
-                      height={height}
-                      cloudProviders={CLOUD_PROVIDERS}
-                      localeMessages={combinedMessages}
-                      onExportToCloudSuccess={onExportFileSuccess}
-                      onLoadCloudMapSuccess={onLoadCloudMapSuccess}
-                      featureFlags={DEFAULT_FEATURE_FLAGS}
-                    />
-                  )}
-                </AutoSizer>
-              </div>
+              <PanelGroup direction="vertical">
+                <Panel defaultSize={isSqlPanelOpen ? 60 : 100}>
+                  <AutoSizer>
+                    {({height, width}) => (
+                      <KeplerGl
+                        mapboxApiAccessToken={CLOUD_PROVIDERS_CONFIGURATION.MAPBOX_TOKEN}
+                        id="map"
+                        getState={keplerGlGetState}
+                        width={width}
+                        height={height}
+                        cloudProviders={CLOUD_PROVIDERS}
+                        localeMessages={combinedMessages}
+                        onExportToCloudSuccess={onExportFileSuccess}
+                        onLoadCloudMapSuccess={onLoadCloudMapSuccess}
+                        featureFlags={DEFAULT_FEATURE_FLAGS}
+                      />
+                    )}
+                  </AutoSizer>
+                </Panel>
+
+                {isSqlPanelOpen && (
+                  <>
+                    <StyledResizeHandle />
+                    <Panel defaultSize={40} minSize={20}>
+                      <SqlPanel initialSql={query.sql || ''} />
+                    </Panel>
+                  </>
+                )}
+              </PanelGroup>
             </div>
           </ScreenshotWrapper>
         </GlobalStyle>
