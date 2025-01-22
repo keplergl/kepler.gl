@@ -1,6 +1,3 @@
-// SPDX-License-Identifier: MIT
-// Copyright contributors to the kepler.gl project
-
 import React, {useCallback, useEffect, useState} from 'react';
 import {useSelector} from 'react-redux';
 import styled from 'styled-components';

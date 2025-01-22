@@ -1,6 +1,3 @@
-// SPDX-License-Identifier: MIT
-// Copyright contributors to the kepler.gl project
-
 // git@github.com:holdenmatt/duckdb-wasm-kit.git
 const FgRed = '\x1b[31m';
 const ResetColors = '\x1b[0m';

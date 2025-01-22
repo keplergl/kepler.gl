@@ -23,8 +23,6 @@ const RESOLVE_LOCAL_ALIASES = {
   'react-intl': `${NODE_MODULES_DIR}/react-intl`,
   'tiny-warning': `${SRC_DIR}/utils/src/noop.ts`,
   'apache-arrow': `${NODE_MODULES_DIR}/apache-arrow`,
-  'react-ai-assist': `${NODE_MODULES_DIR}/react-ai-assist`,
-  echarts: `${NODE_MODULES_DIR}/echarts`
 };
 
 // Add kepler.gl submodule aliases

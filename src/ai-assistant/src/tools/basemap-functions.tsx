@@ -13,7 +13,7 @@ import {
   CustomFunctionOutputProps,
   ErrorCallbackResult,
   RegisterFunctionCallingProps
-} from 'react-ai-assist';
+} from '@openassistant/core';
 
 export function basemapFunctionDefinition(
   context: CustomFunctionContext<ActionHandler<typeof mapStyleChange> | MapStyle>

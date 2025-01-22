@@ -1,5 +1,4 @@
-// SPDX-License-Identifier: MIT
-// Copyright contributors to the kepler.gl project
+// Copyright 2022 Foursquare Labs, Inc. All Rights Reserved.
 
 import {Collapsible, CollapsibleTrigger, CollapsibleContent} from '@radix-ui/react-collapsible';
 import styled from 'styled-components';

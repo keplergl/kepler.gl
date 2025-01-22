@@ -109,7 +109,7 @@ export class KeplerGlDuckDbTable extends KeplerTable {
       const createTableSql = `
         install spatial;
         load spatial;
-        CREATE TABLE '${this.label}' AS 
+        CREATE TABLE '${this.label}' AS
         SELECT *
         FROM ST_READ('${this.id}');
       `;

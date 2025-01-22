@@ -15,21 +15,6 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
-## [3.1.0-alpha.6] - January 22 2025
-
-803b2f540 [fix] remove dependencies from useEffect (prev componentDidMount in app.tsx) (#2930)
-57926442f [fix] use saved map config for saved maps instead of zoom in to data (#2929)
-4af609245 [chore] add dot.env, updates to demo-app build, update gitignore (#2928)
-ce23c7668 [feat] duckdb module updates (#2927)
-fc974d852 [feat] duckdb module placeholder (#2926)
-d1b3c9799 [fix] demo-app resolve to proper node_modules (#2925)
-594250bc7 [fix] fix demo-app yarn start (#2924)
-913ba1ce0 [feat] support for table plugin in demo examples and privately stored datasets (#2923)
-630728190 [fix] fixes for style editor preview and error (#2919)
-d6aa2757e [fix] fix neighbor mode hovering crash in arc/line layers (#2920)
-e2bd71d4e [fix] fix csv table examples for layers (#2921)
-a6e151a0f [fix] vector tile layer fixes (#2911)
-
 ## [3.1.0-alpha.5] - January 15 2025
 
 - b117b08ab [fix] fix for exported html maps

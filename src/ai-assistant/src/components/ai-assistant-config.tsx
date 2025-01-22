@@ -14,13 +14,16 @@ import {
 } from '@kepler.gl/components';
 import {AiAssistantConfig} from '../index';
 import ApiKey from '../icons/api-key';
-import {testApiKey} from 'react-ai-assist';
+import {testApiKey} from '@openassistant/core';
 
 const PROVIDER_MODELS = {
-  openai: ['gpt-4o', 'gpt-4o-mini', 'gpt-3.5-turbo-0125', 'gpt-3.5-turbo'],
-  google: ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-1.0-pro'],
+  openai: ['o1-mini', 'o1-preview', 'gpt-4o', 'gpt-4o-mini', 'gpt-3.5-turbo-0125', 'gpt-3.5-turbo'],
+  google: ['gemini-2.0-flash-exp', 'gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-1.0-pro'],
   ollama: [
+    'phi4',
     'qwen2.5-coder',
+    'qwq',
+    'llama3.3',
     'llama3.2',
     'llama3.1',
     'llama3.1:70b',

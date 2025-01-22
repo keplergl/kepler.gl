@@ -10,7 +10,7 @@ import cloneDeep from 'lodash.clonedeep';
 import isEqual from 'lodash.isequal';
 import isPropValid from '@emotion/is-prop-valid';
 
-import {ScreenshotWrapper} from 'react-ai-assist';
+import {ScreenshotWrapper} from '@openassistant/ui';
 import {
   messages as aiAssistantMessages,
   setStartScreenCapture,
@@ -588,6 +588,7 @@ const App = props => {
             startScreenCapture={props.demo.aiAssistant.screenshotToAsk.startScreenCapture}
             setScreenCaptured={_setScreenCaptured}
             setStartScreenCapture={_setStartScreenCapture}
+            className="h-screen"
           >
             <Banner show={showBanner} height={BannerHeight} bgColor="#2E7CF6" onClose={hideBanner}>
               <Announcement onDisable={_disableBanner} />

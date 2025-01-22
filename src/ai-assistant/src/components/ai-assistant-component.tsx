@@ -3,14 +3,17 @@
 
 import React, {useEffect} from 'react';
 import styled, {withTheme} from 'styled-components';
+import {MessageModel, useAssistant} from '@openassistant/core';
 import {
-  AiAssistant,
-  MessageModel,
-  useAssistant,
-  histogramFunctionDefinition,
-  queryDuckDBFunctionDefinition
-} from 'react-ai-assist';
-import 'react-ai-assist/dist/index.css';
+  dataClassifyFunctionDefinition,
+  spatialCountFunctionDefinition,
+  SpatialJoinGeometries
+} from '@openassistant/geoda';
+import {histogramFunctionDefinition, scatterplotFunctionDefinition} from '@openassistant/echarts';
+import {AiAssistant} from '@openassistant/ui';
+import {queryDuckDBFunctionDefinition} from '@openassistant/duckdb';
+import '@openassistant/echarts/dist/index.css';
+import '@openassistant/ui/dist/index.css';
 
 import {textColorLT} from '@kepler.gl/styles';
 import {ActionHandler} from '@kepler.gl/actions';
@@ -30,15 +33,17 @@ import {
   PROMPT_IDEAS,
   WELCOME_MESSAGE
 } from '../constants';
-import {filterFunctionDefinition} from '../tools/filter-function';
 import {addLayerFunctionDefinition} from '../tools/layer-creation-function';
 import {updateLayerColorFunctionDefinition} from '../tools/layer-style-function';
 import {SelectedKeplerGlActions} from './ai-assistant-manager';
 import {
   getDatasetContext,
+  getGeometriesFromDataset,
+  getScatterplotValuesFromDataset,
   getValuesFromDataset,
   highlightRows,
-  highlightRowsByColumnValues
+  highlightRowsByColumnValues,
+  saveAsDataset
 } from '../tools/utils';
 
 type ThemeProps = {theme: any};
@@ -74,8 +79,13 @@ function AiAssistantComponentFactory() {
     keplerGlActions,
     mapStyle,
     visState
-  }: AiAssistantComponentProps) => {
-    const highlightRowsOnSelected = (datasetName: string, selectedRowIndices: number[]) =>
+  }: AiAssistantComponentProps & ThemeProps) => {
+    // get values from dataset, used by LLM functions
+    const getValuesCallback = (datasetName: string, variableName: string): number[] =>
+      getValuesFromDataset(visState.datasets, datasetName, variableName);
+
+    // highlight rows, used by LLM functions
+    const highlightRowsCallback = (datasetName: string, selectedRowIndices: number[]) =>
       highlightRows(
         visState.datasets,
         visState.layers,
@@ -98,6 +108,7 @@ function AiAssistantComponentFactory() {
         keplerGlActions.layerSetIsValid
       );
 
+    // define LLM functions
     const functions = [
       basemapFunctionDefinition({mapStyleChange: keplerGlActions.mapStyleChange, mapStyle}),
       loadUrlFunctionDefinition({
@@ -113,29 +124,43 @@ function AiAssistantComponentFactory() {
         layerVisualChannelConfigChange: keplerGlActions.layerVisualChannelConfigChange,
         layers: visState.layers
       }),
-      filterFunctionDefinition({
-        datasets: visState.datasets,
-        filters: visState.filters,
-        createOrUpdateFilter: keplerGlActions.createOrUpdateFilter,
-        setFilter: keplerGlActions.setFilter,
-        setFilterPlot: keplerGlActions.setFilterPlot
-      }),
-      histogramFunctionDefinition({
-        getValues: (datasetName: string, variableName: string): number[] =>
-          getValuesFromDataset(visState.datasets, datasetName, variableName),
-        onSelected: highlightRowsOnSelected
-      }),
       queryDuckDBFunctionDefinition({
         // duckDB: kepler.gl duckdb instance
         getValues: (datasetName: string, variableName: string): number[] =>
           getValuesFromDataset(visState.datasets, datasetName, variableName),
         onSelected: highlightRowsByColumnValuesOnSelected
+      }),
+      histogramFunctionDefinition({
+        getValues: getValuesCallback,
+        onSelected: highlightRowsCallback
+      }),
+      scatterplotFunctionDefinition({
+        getValues: async (datasetName: string, xVar: string, yVar: string) =>
+          getScatterplotValuesFromDataset(visState.datasets, datasetName, xVar, yVar),
+        onSelected: highlightRowsCallback
+      }),
+      dataClassifyFunctionDefinition({
+        getValues: getValuesCallback
+      }),
+      spatialCountFunctionDefinition({
+        getValues: getValuesCallback,
+        getGeometries: (datasetName: string): SpatialJoinGeometries =>
+          getGeometriesFromDataset(
+            visState.datasets,
+            visState.layers,
+            visState.layerData,
+            datasetName
+          ),
+        saveAsDataset: (datasetName: string, data: Record<string, number[]>) =>
+          saveAsDataset(visState.datasets, datasetName, data, keplerGlActions.addDataToMap)
       })
     ];
 
+    // enable voice and screen capture
     const enableVoiceAndScreenCapture =
       aiAssistant.config.provider === 'openai' || aiAssistant.config.provider === 'google';
 
+    // define assistant props
     const assistantProps = {
       name: ASSISTANT_NAME,
       description: ASSISTANT_DESCRIPTION,
@@ -149,12 +174,14 @@ function AiAssistantComponentFactory() {
 
     const {initializeAssistant, addAdditionalContext} = useAssistant(assistantProps);
 
+    // initialize assistant with context
     const initializeAssistantWithContext = async () => {
       await initializeAssistant();
       const context = getDatasetContext(visState.datasets, visState.layers);
       addAdditionalContext({context});
     };
 
+    // initialize assistant with context
     useEffect(() => {
       initializeAssistantWithContext();
       // re-initialize assistant when datasets, filters or layers change

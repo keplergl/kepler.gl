@@ -1,6 +1,3 @@
-// SPDX-License-Identifier: MIT
-// Copyright contributors to the kepler.gl project
-
 import * as arrow from 'apache-arrow';
 import React, {useCallback, useState, useEffect} from 'react';
 import {useDispatch} from 'react-redux';
