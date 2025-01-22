@@ -338,7 +338,11 @@ async function parseLoadMapResponseTask({
   return {
     datasets: parsedDatasets,
     info,
-    ...(map.config ? {config: map.config} : {})
+    ...(map.config ? {config: map.config} : {}),
+    options: {
+      // do not center map when loading cloud map
+      centerMap: false
+    }
   };
 }
 
