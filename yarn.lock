@@ -3200,7 +3200,7 @@ __metadata:
     "@openassistant/duckdb": "npm:^0.0.6"
     "@openassistant/echarts": "npm:^0.0.6"
     "@openassistant/geoda": "npm:^0.0.6"
-    "@openassistant/ui": "npm:^0.0.6"
+    "@openassistant/ui": "npm:^0.0.7"
     color-interpolate: "npm:^1.0.5"
     echarts: "npm:^5.5.1"
     global: "npm:^4.3.0"
@@ -6352,9 +6352,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@openassistant/ui@npm:^0.0.6":
-  version: 0.0.6
-  resolution: "@openassistant/ui@npm:0.0.6"
+"@openassistant/ui@npm:^0.0.7":
+  version: 0.0.7
+  resolution: "@openassistant/ui@npm:0.0.7"
   dependencies:
     "@iconify/react": "npm:^5.1.0"
     "@nextui-org/react": "npm:^2.6.10"
@@ -6367,7 +6367,7 @@ __metadata:
     "@openassistant/core": "*"
     react: ">=18.2"
     react-dom: ">=18.2"
-  checksum: 10c0/0a3a04a65c02fee7554185266bd5b9b7b70171d0e098d5f9e021aae7e4016392f07f1533a6c57dcb013c9709e8c99ab0710950a43bc304f2063d17a4bb23a18e
+  checksum: 10c0/40858209041a89a680dbab4e4465351837be833fed44333f7928823fcf4f903e6e3a64b2e75fbaf1c05ccfd165b9834c33fda392e246500adcd468e42929d11b
   languageName: node
   linkType: hard
 

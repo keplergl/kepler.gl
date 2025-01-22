@@ -4037,9 +4037,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@openassistant/ui@file:/Users/xun/github/openassistant/packages/ui/openassistant-ui-0.0.6.tgz::locator=root-workspace-0b6124%40workspace%3A.":
-  version: 0.0.6
-  resolution: "@openassistant/ui@file:/Users/xun/github/openassistant/packages/ui/openassistant-ui-0.0.6.tgz#/Users/xun/github/openassistant/packages/ui/openassistant-ui-0.0.6.tgz::hash=8c540c&locator=root-workspace-0b6124%40workspace%3A."
+"@openassistant/ui@npm:^0.0.7":
+  version: 0.0.7
+  resolution: "@openassistant/ui@npm:0.0.7"
   dependencies:
     "@iconify/react": "npm:^5.1.0"
     "@nextui-org/react": "npm:^2.6.10"
@@ -4052,7 +4052,7 @@ __metadata:
     "@openassistant/core": "*"
     react: ">=18.2"
     react-dom: ">=18.2"
-  checksum: 10c0/80d49c0643c1040f13866c6349720e164386ec8055b9b82fd53648091106d7ce051d49c3967d91aca27d1d771935fe5368701fb0728581f10cecbe645c6fc978
+  checksum: 10c0/40858209041a89a680dbab4e4465351837be833fed44333f7928823fcf4f903e6e3a64b2e75fbaf1c05ccfd165b9834c33fda392e246500adcd468e42929d11b
   languageName: node
   linkType: hard
 
@@ -12715,7 +12715,7 @@ __metadata:
     "@loaders.gl/json": "npm:^4.3.2"
     "@loaders.gl/parquet": "npm:^4.3.2"
     "@openassistant/core": "npm:^0.0.6"
-    "@openassistant/ui": /Users/xun/github/openassistant/packages/ui/openassistant-ui-0.0.6.tgz
+    "@openassistant/ui": "npm:^0.0.7"
     "@types/classnames": "npm:^2.3.1"
     "@types/keymirror": "npm:^0.1.1"
     "@types/react": "npm:^18.2.0"
