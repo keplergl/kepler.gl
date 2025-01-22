@@ -587,6 +587,7 @@ const App = props => {
             startScreenCapture={props.demo.aiAssistant.screenshotToAsk.startScreenCapture}
             setScreenCaptured={_setScreenCaptured}
             setStartScreenCapture={_setStartScreenCapture}
+            className="h-screen"
           >
             <Banner show={showBanner} height={BannerHeight} bgColor="#2E7CF6" onClose={hideBanner}>
               <Announcement onDisable={_disableBanner} />

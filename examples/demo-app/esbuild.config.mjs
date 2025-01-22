@@ -29,19 +29,6 @@ const EXTERNAL_HUBBLE_SRC = join(LIB_DIR, '../../hubble.gl');
 
 const port = 8080;
 
-// add alias to serve from kepler src, resolve libraries so there is only one copy of them
-const RESOLVE_LOCAL_ALIASES = {
-  react: `${NODE_MODULES_DIR}/react`,
-  'react-dom': `${NODE_MODULES_DIR}/react-dom`,
-  'react-redux': `${NODE_MODULES_DIR}/react-redux/lib`,
-  'styled-components': `${NODE_MODULES_DIR}/styled-components`,
-  'react-intl': `${NODE_MODULES_DIR}/react-intl`,
-  // Suppress useless warnings from react-date-picker's dep
-  'tiny-warning': `${SRC_DIR}/utils/src/noop.ts`,
-  // kepler.gl and loaders.gl need to use same apache-arrow
-  'apache-arrow': `${NODE_MODULES_DIR}/apache-arrow`
-};
-
 const getThirdPartyLibraryAliases = useKeplerNodeModules => {
   const node_modules_dir = useKeplerNodeModules ? NODE_MODULES_DIR : BASE_NODE_MODULES_DIR;
 
@@ -54,9 +41,7 @@ const getThirdPartyLibraryAliases = useKeplerNodeModules => {
     // Suppress useless warnings from react-date-picker's dep
     ...(useKeplerNodeModules ? {'tiny-warning': `${SRC_DIR}/utils/src/noop.ts`} : {}),
     // kepler.gl and loaders.gl need to use same apache-arrow
-    'apache-arrow': `${node_modules_dir}/apache-arrow`,
-    // all react-ai-assist needs to be resolved from samenode_modules
-    'react-ai-assist': `${node_modules_dir}/react-ai-assist`
+    'apache-arrow': `${node_modules_dir}/apache-arrow`
   };
 };
 
@@ -103,6 +88,8 @@ function addAliases(externals, args) {
     resolveAlias['@openassistant/ui'] = join(LIB_DIR, '../openassistant/packages/ui/src');
     resolveAlias['@openassistant/echarts'] = join(LIB_DIR, '../openassistant/packages/echarts/src');
     resolveAlias['@openassistant/geoda'] = join(LIB_DIR, '../openassistant/packages/geoda/src');
+    resolveAlias['@openassistant/duckdb'] = join(LIB_DIR, '../openassistant/packages/duckdb/src');
+    resolveAlias['@openassistant/common'] = join(LIB_DIR, '../openassistant/packages/common/src');
     resolveAlias['@kepler.gl/ai-assistant'] = join(SRC_DIR, 'ai-assistant/src');
   }
 
