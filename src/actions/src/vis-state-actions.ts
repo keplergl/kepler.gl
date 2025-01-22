@@ -840,7 +840,7 @@ export function setColumnDisplayFormat(
 }
 
 export type AddDataToMapUpdaterOptions = {
-  centrMap?: boolean;
+  centerMap?: boolean;
   readOnly?: boolean;
   keepExistingConfig?: boolean;
 };
