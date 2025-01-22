@@ -219,7 +219,7 @@ async function sniffCsvSchema(sample: RowData) {
 
   // https://duckdb.org/docs/data/csv/auto_detection.html
   const result = await c.query(`
-        FROM sniff_csv('${fileName}-${generateHashId}.csv',
+        FROM sniff_csv('${fileName}-${generateHashId}.csv', 
         sample_size = 500,
         auto_type_candidates = ['FLOAT', 'INTEGER', 'TIMESTAMP', 'DATE', 'TIME', 'VARCHAR', 'BOOLEAN']);
     `);

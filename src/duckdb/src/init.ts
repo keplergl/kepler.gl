@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 // git@github.com:holdenmatt/duckdb-wasm-kit.git
 import * as duckdb from '@duckdb/duckdb-wasm';
 import {AsyncDuckDB, DuckDBConfig} from '@duckdb/duckdb-wasm';
