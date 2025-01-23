@@ -65,7 +65,8 @@ import {
   mergeMessages,
   observeDimensions,
   unobserveDimensions,
-  hasPortableWidth
+  hasPortableWidth,
+  getApplicationConfig
 } from '@kepler.gl/utils';
 
 import {theme as basicTheme, themeLT, themeBS, breakPointValues} from '@kepler.gl/styles';
@@ -481,10 +482,10 @@ function KeplerGlFactory(
             ...theme
           }
         : theme === THEME.light
-          ? themeLT
-          : theme === THEME.base
-            ? themeBS
-            : theme
+        ? themeLT
+        : theme === THEME.base
+        ? themeBS
+        : theme
     );
 
     datasetsSelector = props => props.visState.datasets;
