@@ -25,6 +25,7 @@ import {
 import {default as KeplerTable} from '@kepler.gl/table';
 import PointLayerIcon from './point-layer-icon';
 import {
+  DatasetType,
   LAYER_VIS_CONFIGS,
   DEFAULT_LAYER_COLOR,
   CHANNEL_SCALES,
@@ -321,13 +322,17 @@ export default class PointLayer extends Layer {
     return this;
   }
 
-  static findDefaultLayerProps({fieldPairs = []}: KeplerTable) {
+  static findDefaultLayerProps({fieldPairs = [], type}: KeplerTable) {
     const props: {
       label: string;
       color?: RGBColor;
       isVisible?: boolean;
       columns?: PointLayerColumnsConfig;
     }[] = [];
+
+    if (type === DatasetType.VECTOR_TILE) {
+      return props;
+    }
 
     // Make layer for each pair
     fieldPairs.forEach(pair => {
