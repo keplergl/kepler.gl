@@ -8,7 +8,7 @@ import {
   CustomFunctionContext,
   CustomFunctionOutputProps,
   ErrorCallbackResult
-} from 'react-ai-assist';
+} from '@openassistant/core';
 import {ActionHandler, layerVisualChannelConfigChange} from '@kepler.gl/actions';
 import {Layer, LayerBaseConfig} from '@kepler.gl/layers';
 

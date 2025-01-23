@@ -19,7 +19,6 @@ const reducers = combineReducers({
 
 export const middlewares = enhanceReduxMiddleware([thunk, routerMiddleware(browserHistory)]);
 
-// eslint-disable-next-line no-process-env
 if (NODE_ENV === 'local') {
   // Redux logger
   const logger = createLogger({
