@@ -11,29 +11,41 @@ This is the src code of kepler.gl demo app. You can copy this folder out and run
 
 #### 1. Install Dependencies
 
+Go to the root directory and install the dependencies using yarn:
+
+```sh
+yarn bootstrap
+```
+
+Then, go to the `examples/demo-app` directory and install the dependencies using yarn:
+
 ```sh
 yarn install
 ```
 
-
-#### 2. Mapbox Token and Cloud storage client id
-A collection of environment variables to pass mapbox tokens, and client ids for the cloud storages
+#### 2. Environment Variables
+Create a `.env` file at the root directory by copying from `.env.template`:
 
 ```sh
-export MapboxAccessToken=<your_mapbox_token>
-export DropboxClientId=<your_dropbox_client_id>
-export MapboxExportToken=<your_mapbox_export_token>
-export CartoClientId=<your_carto_client_id>
-export FoursquareClientId=<your_foursquare_client_id>
-export FoursquareDomain=<your_foursquare_domain>
-export FoursquareUserMapsURL=<your_foursquare_user_map_url>
+cp .env.template .env
+```
 
+Then update the following environment variables in your `.env` file:
+
+```sh
+MAPBOX_ACCESS_TOKEN=<your_mapbox_token>
+DROPBOX_CLIENT_ID=<your_dropbox_client_id>
+MAPBOX_EXPORT_TOKEN=<your_mapbox_export_token>
+CARTO_CLIENT_ID=<your_carto_client_id>
+FOURSQUARE_CLIENT_ID=<your_foursquare_client_id>
+FOURSQUARE_DOMAIN=<your_foursquare_domain>
+FOURSQUARE_USER_MAPS_URL=<your_foursquare_user_map_url>
 ```
 
 #### 3. Start the app
 
 ```sh
-yarn start
+yarn start:local
 ```
 
 [yarn-install]: https://yarnpkg.com/getting-started/install
