@@ -68,8 +68,7 @@ const config = {
   outfile: 'dist/bundle.js',
   bundle: true,
   define: {
-    'process.env.NODE_ENV': NODE_ENV,
-    'process.env': JSON.stringify(process.env)
+    NODE_ENV
   },
   plugins: [
     dotenvRun({
