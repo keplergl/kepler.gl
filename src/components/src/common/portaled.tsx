@@ -9,7 +9,7 @@ import {canUseDOM} from 'exenv';
 import {withTheme} from 'styled-components';
 import {RootContext} from '../context';
 import Modal from 'react-modal';
-import window from 'global/window';
+import Window from 'global/window';
 import {theme} from '@kepler.gl/styles';
 
 const listeners = {};
@@ -18,19 +18,19 @@ const startListening = () => Object.keys(listeners).forEach(key => listeners[key
 
 const getPageOffset = () => ({
   x:
-    window.pageXOffset !== undefined
-      ? window.pageXOffset
+    Window.pageXOffset !== undefined
+      ? Window.pageXOffset
       : (document.documentElement || document.body.parentNode || document.body).scrollLeft,
   y:
-    window.pageYOffset !== undefined
-      ? window.pageYOffset
+    Window.pageYOffset !== undefined
+      ? Window.pageYOffset
       : (document.documentElement || document.body.parentNode || document.body).scrollTop
 });
 
 const addEventListeners = () => {
   if (document && document.body)
     document.body.addEventListener('mousewheel', debounce(startListening, 100, {leading: true}));
-  window.addEventListener('resize', debounce(startListening, 50, {leading: true}));
+  Window.addEventListener('resize', debounce(startListening, 50, {leading: true}));
 };
 
 interface GetChildPosProps {
@@ -56,21 +56,21 @@ export const getChildPos = ({offsets, rect, childRect, pageOffset, padding}: Get
     top: pageOffset.y + rect.top + (topOffset || 0),
     ...(anchorLeft
       ? {left: pageOffset.x + rect.left + (leftOffset || 0)}
-      : {right: window.innerWidth - rect.right - pageOffset.x + (rightOffset || 0)})
+      : {right: Window.innerWidth - rect.right - pageOffset.x + (rightOffset || 0)})
   };
 
   const leftOrRight = anchorLeft ? 'left' : 'right';
 
   if (pos[leftOrRight] && pos[leftOrRight] < 0) {
     pos[leftOrRight] = padding;
-  } else if (pos[leftOrRight] && pos[leftOrRight] + childRect.width > window.innerWidth) {
-    pos[leftOrRight] = window.innerWidth - childRect.width - padding;
+  } else if (pos[leftOrRight] && pos[leftOrRight] + childRect.width > Window.innerWidth) {
+    pos[leftOrRight] = Window.innerWidth - childRect.width - padding;
   }
 
   if (pos.top < 0) {
     pos.top = padding;
-  } else if (pos.top + childRect.height > window.innerHeight) {
-    pos.top = window.innerHeight - childRect.height - padding;
+  } else if (pos.top + childRect.height > Window.innerHeight) {
+    pos.top = Window.innerHeight - childRect.height - padding;
   }
 
   return pos;
@@ -183,7 +183,7 @@ class Portaled extends Component<PortaledProps, PortaledState> {
     const didOpen = this.props.isOpened && !prevProps.isOpened;
     const didClose = !this.props.isOpened && prevProps.isOpened;
     if (didOpen || didClose) {
-      window.requestAnimationFrame(() => {
+      Window.requestAnimationFrame(() => {
         if (this._unmounted) return;
         this.setState({isVisible: Boolean(didOpen)});
       });

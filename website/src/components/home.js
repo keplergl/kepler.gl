@@ -3,7 +3,7 @@
 
 import React, {PureComponent} from 'react';
 import {ThemeProvider} from 'styled-components';
-import window from 'global/window';
+import Window from 'global/window';
 
 import {theme} from '../styles';
 import {SECTIONS} from '../content';
@@ -57,7 +57,7 @@ export default class Home extends PureComponent {
 
   _disableBanner = () => {
     this._hideBanner();
-    window.localStorage.setItem(BannerKey, 'true');
+    Window.localStorage.setItem(BannerKey, 'true');
   };
 
   render() {

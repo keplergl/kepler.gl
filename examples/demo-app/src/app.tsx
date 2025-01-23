@@ -4,7 +4,7 @@
 import React, {useCallback, useEffect, useRef, useMemo, useState} from 'react';
 import AutoSizer from 'react-virtualized/dist/commonjs/AutoSizer';
 import styled, {ThemeProvider, StyleSheetManager} from 'styled-components';
-import window from 'global/window';
+import Window from 'global/window';
 import {connect, useDispatch} from 'react-redux';
 import cloneDeep from 'lodash.clonedeep';
 import isEqual from 'lodash.isequal';
@@ -191,7 +191,7 @@ const App = props => {
 
   const _disableBanner = useCallback(() => {
     hideBanner();
-    window.localStorage.setItem(BannerKey, 'true');
+    Window.localStorage.setItem(BannerKey, 'true');
   }, [hideBanner]);
 
   const _loadRowData = useCallback(() => {
@@ -456,7 +456,7 @@ const App = props => {
       features: sampleGeojsonPoints.features.slice(0, 5)
     });
     _loadGeojsonData();
-    window.setTimeout(() => {
+    Window.setTimeout(() => {
       dispatch(
         replaceDataInMap({
           datasetToReplaceId: 'bart-stops-geo',
