@@ -446,7 +446,7 @@ function KeplerGlFactory(
     };
 
     componentDidMount() {
-      if (getApplicationConfig().mapLibName === 'Mapbox') {
+      if (getApplicationConfig().baseMapLibraryConfig?.['mapbox']?.mapLibName === 'Mapbox') {
         this._validateMapboxToken();
       }
       this._loadMapStyle();
