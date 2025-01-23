@@ -83,8 +83,12 @@ function TreeNode<T>(props: TreeNodeProps<T>): JSX.Element | null {
   );
 }
 
+const StyledDatasetNode = styled.div`
+  font-weight: bold;
+`;
+
 export const DatasetNode = ({node}) => {
-  return <div>{node.object.tableName}</div>;
+  return <StyledDatasetNode>{node.object.tableName}</StyledDatasetNode>;
 };
 
 const StyledColumnNode = styled.div`
