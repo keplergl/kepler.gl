@@ -3,7 +3,7 @@
 
 import React, {useEffect, useState} from 'react';
 import styled from 'styled-components';
-import window from 'global/window';
+import Window from 'global/window';
 import {connect} from 'react-redux';
 import KeplerGl from '@kepler.gl/components';
 
@@ -46,16 +46,16 @@ const StyleSwitch = styled.div`
 function App() {
   const [customTheme, setTheme] = useState(false);
   const [windowDimension, setDimension] = useState({
-    width: window.innerWidth,
-    height: window.innerHeight
+    width: Window.innerWidth,
+    height: Window.innerHeight
   });
 
   useEffect(() => {
     const handleResize = () => {
-      setDimension({width: window.innerWidth, height: window.innerHeight});
+      setDimension({width: Window.innerWidth, height: Window.innerHeight});
     };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    Window.addEventListener('resize', handleResize);
+    return () => Window.removeEventListener('resize', handleResize);
   }, []);
 
   return (

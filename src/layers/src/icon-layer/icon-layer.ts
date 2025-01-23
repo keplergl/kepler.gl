@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import window from 'global/window';
+import Window from 'global/window';
 import {BrushingExtension} from '@deck.gl/extensions';
 import GL from '@luma.gl/constants';
 
@@ -65,12 +65,11 @@ export const SVG_ICON_URL = `${KEPLER_UNFOLDED_BUCKET}/icons/svg-icons.json`;
 export const iconPosAccessor =
   ({lat, lng, altitude}: IconLayerColumnsConfig) =>
   (dc: DataContainerInterface) =>
-  d =>
-    [
-      dc.valueAt(d.index, lng.fieldIdx),
-      dc.valueAt(d.index, lat.fieldIdx),
-      altitude?.fieldIdx > -1 ? dc.valueAt(d.index, altitude.fieldIdx) : 0
-    ];
+  d => [
+    dc.valueAt(d.index, lng.fieldIdx),
+    dc.valueAt(d.index, lat.fieldIdx),
+    altitude?.fieldIdx > -1 ? dc.valueAt(d.index, altitude.fieldIdx) : 0
+  ];
 
 export const iconAccessor =
   ({icon}: IconLayerColumnsConfig) =>
@@ -205,9 +204,8 @@ export default class IconLayer extends Layer {
       cache: 'no-cache'
     };
 
-    if (window.fetch && this.svgIconUrl) {
-      window
-        .fetch(this.svgIconUrl, fetchConfig)
+    if (Window.fetch && this.svgIconUrl) {
+      Window.fetch(this.svgIconUrl, fetchConfig)
         .then(response => response.json())
         .then((parsed: {svgIcons?: any[]} = {}) => {
           this.setSvgIcons(parsed.svgIcons);

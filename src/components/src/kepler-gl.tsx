@@ -65,7 +65,8 @@ import {
   mergeMessages,
   observeDimensions,
   unobserveDimensions,
-  hasPortableWidth
+  hasPortableWidth,
+  getApplicationConfig
 } from '@kepler.gl/utils';
 
 import {theme as basicTheme, themeLT, themeBS, breakPointValues} from '@kepler.gl/styles';
@@ -445,7 +446,9 @@ function KeplerGlFactory(
     };
 
     componentDidMount() {
-      this._validateMapboxToken();
+      if (getApplicationConfig().baseMapLibraryConfig?.['mapbox']?.mapLibName === 'Mapbox') {
+        this._validateMapboxToken();
+      }
       this._loadMapStyle();
       if (typeof this.props.onKeplerGlInitialized === 'function') {
         this.props.onKeplerGlInitialized();

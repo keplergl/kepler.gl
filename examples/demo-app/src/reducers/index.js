@@ -186,6 +186,16 @@ const loadRemoteDatasetProcessedSuccess = (state, action) => {
 
   const parsedConfig = config ? KeplerGlSchema.parseSavedConfig(config) : null;
 
+  // a hack to use minZoom and maxZoom from examples
+  if (parsedConfig?.mapState) {
+    if (typeof config?.config?.mapState?.maxZoom === 'number') {
+      parsedConfig.mapState.maxZoom = config.config.mapState.maxZoom;
+    }
+    if (typeof config?.config?.mapState?.minZoom === 'number') {
+      parsedConfig.mapState.minZoom = config.config.mapState.maxZoom;
+    }
+  }
+
   const keplerGlInstance = combinedUpdaters.addDataToMapUpdater(
     state.keplerGl.map, // "map" is the id of your kepler.gl instance
     {

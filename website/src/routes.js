@@ -4,7 +4,7 @@
 import React from 'react';
 import {Router, Route, IndexRoute, browserHistory} from 'react-router';
 import {syncHistoryWithStore} from 'react-router-redux';
-import window from 'global/window';
+import Window from 'global/window';
 import store from './reducers';
 import Home from './components/home';
 import App from './components/app';
@@ -20,7 +20,7 @@ const trackPageChange = location => {
 
   if (links.length === 3) {
     const sampleId = links[2];
-    window.gtag('event', 'load_sample', {
+    Window.gtag('event', 'load_sample', {
       event_label: sampleId,
       value: sampleId
     });

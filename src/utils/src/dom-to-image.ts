@@ -6,7 +6,7 @@
  * Modified by heshan0131 to allow loading external stylesheets and inline webfonts
  */
 
-import window from 'global/window';
+import Window from 'global/window';
 import document from 'global/document';
 import Console from 'global/console';
 import svgToMiniDataURI from 'mini-svg-data-uri';
@@ -194,7 +194,7 @@ function cloneNode(node, filter, root) {
     .then(clone => processClone(node, clone));
 
   function makeNodeCopy(nd) {
-    if (nd instanceof window.HTMLCanvasElement) {
+    if (nd instanceof Window.HTMLCanvasElement) {
       return makeImage(nd.toDataURL());
     }
     return nd.cloneNode(false);
@@ -240,7 +240,7 @@ function inlineImages(node) {
 function makeSvgDataUri(node, width, height, escapeXhtmlForWebpack = true) {
   return Promise.resolve(node).then(nd => {
     nd.setAttribute('xmlns', 'http://www.w3.org/1999/xhtml');
-    const serializedString = new window.XMLSerializer().serializeToString(nd);
+    const serializedString = new Window.XMLSerializer().serializeToString(nd);
 
     const xhtml = escapeXhtmlForWebpack ? escapeXhtml(serializedString) : serializedString;
     const foreignObject = `<foreignObject x="0" y="0" width="100%" height="100%">${xhtml}</foreignObject>`;
@@ -332,7 +332,7 @@ function newFontFaces() {
 
     function selectWebFontRules(cssRules) {
       return cssRules
-        .filter(rule => rule.type === window.CSSRule.FONT_FACE_RULE)
+        .filter(rule => rule.type === Window.CSSRule.FONT_FACE_RULE)
         .filter(rule => inliner.shouldProcess(rule.style.getPropertyValue('src')));
     }
 
@@ -343,8 +343,7 @@ function newFontFaces() {
             // cloudfont doesn't have allow origin header properly set
             // error response will remain in cache
             const cache = sheet.href.includes('uber-fonts') ? 'no-cache' : 'default';
-            return window
-              .fetch(sheet.href, {credentials: 'omit', cache})
+            return Window.fetch(sheet.href, {credentials: 'omit', cache})
               .then(response => response.text())
               .then(text => {
                 const result = setStyleSheetBaseHref(text, sheet.href);

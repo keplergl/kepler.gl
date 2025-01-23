@@ -65,11 +65,10 @@ const COMMON_CONFIG = {
           resolve(__dirname, './src'),
           resolve(LIB_DIR, './examples'),
           resolve(LIB_DIR, './src'),
-          /node_modules\/react-ai-assist/,
           /node_modules\/@monaco-editor/,
           /node_modules\/@radix-ui/
         ],
-        exclude: [/node_modules\/(?!(@monaco-editor|@radix-ui|react-ai-assist))/]
+        exclude: [/node_modules\/(?!(@monaco-editor|@radix-ui))/]
       },
       // Add css loader for ai-assistant
       {

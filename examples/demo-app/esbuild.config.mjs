@@ -48,9 +48,7 @@ const getThirdPartyLibraryAliases = useKeplerNodeModules => {
     'styled-components': `${nodeModulesDir}/styled-components`,
     'react-intl': `${nodeModulesDir}/react-intl`,
     // kepler.gl and loaders.gl need to use same apache-arrow
-    'apache-arrow': `${nodeModulesDir}/apache-arrow`,
-    // all react-ai-assist needs to be resolved from samenode_modules
-    'react-ai-assist': `${nodeModulesDir}/react-ai-assist`
+    'apache-arrow': `${nodeModulesDir}/apache-arrow`
   };
 };
 
@@ -96,7 +94,12 @@ function addAliases(externals, args) {
 
   // resolve ai-assistant from local dir
   if (useLocalAiAssistant) {
-    resolveAlias['react-ai-assist'] = join(LIB_DIR, '../ai-assistant/src');
+    resolveAlias['@openassistant/core'] = join(LIB_DIR, '../openassistant/packages/core/src');
+    resolveAlias['@openassistant/ui'] = join(LIB_DIR, '../openassistant/packages/ui/src');
+    resolveAlias['@openassistant/echarts'] = join(LIB_DIR, '../openassistant/packages/echarts/src');
+    resolveAlias['@openassistant/geoda'] = join(LIB_DIR, '../openassistant/packages/geoda/src');
+    resolveAlias['@openassistant/duckdb'] = join(LIB_DIR, '../openassistant/packages/duckdb/src');
+    resolveAlias['@openassistant/common'] = join(LIB_DIR, '../openassistant/packages/common/src');
     resolveAlias['@kepler.gl/ai-assistant'] = join(SRC_DIR, 'ai-assistant/src');
   }
 

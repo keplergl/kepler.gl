@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {MessageModel} from 'react-ai-assist';
+import {MessageModel} from '@openassistant/core';
 import {AiAssistantConfig} from './reducers';
 
-const ACTION_PREFIX = '@@react-ai-assistant/';
+const ACTION_PREFIX = '@@openassistant/';
 
 export const UPDATE_AI_ASSISTANT_CONFIG = `${ACTION_PREFIX}UPDATE_AI_ASSISTANT_CONFIG`;
 export const UPDATE_AI_ASSISTANT_MESSAGES = `${ACTION_PREFIX}UPDATE_AI_ASSISTANT_MESSAGES`;
