@@ -331,7 +331,7 @@ export default class PointLayer extends Layer {
     }[] = [];
 
     if (type === DatasetType.VECTOR_TILE) {
-      return props;
+      return {props};
     }
 
     // Make layer for each pair
