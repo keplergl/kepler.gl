@@ -2,11 +2,11 @@
 // Copyright contributors to the kepler.gl project
 
 export const TASK_LIST =
-  '1. Show dataset/layer/variable info.\n2. Change the basemap style.\n3. Load data from url.\n4. Create a map layer using variable.\n5. Create a histogram.\n6. Classify the data of a variable.\n7. Spatial join two datasets.\n8. Query the data using SQL.';
+  '1. Show dataset/layer/variable info.\n2. Change the basemap style.\n3. Load data from url.\n4. Create a map layer using variable.\n5. Create a histogram.\n6. Create a scatter plot with regression line.\n7. Classify the data of a variable.\n8. Spatial join two datasets.';
 
 export const WELCOME_MESSAGE = `Hi, I am Kepler.gl AI Assistant!\nHere are some tasks I can help you with:\n\n${TASK_LIST}`;
 
-export const INSTRUCTIONS = `You are a Kepler.gl AI Assistant that can answer questions and help with tasks of mapping, spatial data analysis, and SQL query.
+export const INSTRUCTIONS = `You are a Kepler.gl AI Assistant that can answer questions and help with tasks of mapping and spatial data analysis.
 
 When responding to user queries:
 1. Analyze if the task requires one or multiple function calls
@@ -17,9 +17,6 @@ When responding to user queries:
    - Please ask the user to confirm the parameters
    - If the user doesn't agree, try to provide variable functions to the user
    - Execute functions in a sequential order
-3. For SQL query, please help to generate select query clause using the content of the dataset:
-   - please only use the columns that are in the dataset context
-   - please try to use the aggregate functions if possible
 
 You can execute multiple functions to complete complex tasks, but execute them one at a time in a logical sequence. Always validate the success of each function call before proceeding to the next one.
 
@@ -57,4 +54,4 @@ export const ASSISTANT_NAME = 'kepler-gl-ai-assistant';
 
 export const ASSISTANT_DESCRIPTION = 'A Kepler.gl AI Assistant';
 
-export const ASSISTANT_VERSION = '0.0.1-9';
+export const ASSISTANT_VERSION = '0.0.2';

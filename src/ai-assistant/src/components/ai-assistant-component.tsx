@@ -11,7 +11,6 @@ import {
 } from '@openassistant/geoda';
 import {histogramFunctionDefinition, scatterplotFunctionDefinition} from '@openassistant/echarts';
 import {AiAssistant} from '@openassistant/ui';
-import {queryDuckDBFunctionDefinition} from '@openassistant/duckdb';
 import '@openassistant/echarts/dist/index.css';
 import '@openassistant/ui/dist/index.css';
 
@@ -84,27 +83,13 @@ function AiAssistantComponentFactory() {
     const getValuesCallback = (datasetName: string, variableName: string): number[] =>
       getValuesFromDataset(visState.datasets, datasetName, variableName);
 
-    // highlight rows, used by LLM functions
+    // highlight rows, used by LLM functions and plots (scatterplot, histogram)
     const highlightRowsCallback = (datasetName: string, selectedRowIndices: number[]) =>
       highlightRows(
         visState.datasets,
         visState.layers,
         datasetName,
         selectedRowIndices,
-        keplerGlActions.layerSetIsValid
-      );
-
-    const highlightRowsByColumnValuesOnSelected = (
-      datasetName: string,
-      columnName: string,
-      selectedValues: unknown[]
-    ) =>
-      highlightRowsByColumnValues(
-        visState.datasets,
-        visState.layers,
-        datasetName,
-        columnName,
-        selectedValues,
         keplerGlActions.layerSetIsValid
       );
 
@@ -123,12 +108,6 @@ function AiAssistantComponentFactory() {
       updateLayerColorFunctionDefinition({
         layerVisualChannelConfigChange: keplerGlActions.layerVisualChannelConfigChange,
         layers: visState.layers
-      }),
-      queryDuckDBFunctionDefinition({
-        // duckDB: kepler.gl duckdb instance
-        getValues: (datasetName: string, variableName: string): number[] =>
-          getValuesFromDataset(visState.datasets, datasetName, variableName),
-        onSelected: highlightRowsByColumnValuesOnSelected
       }),
       histogramFunctionDefinition({
         getValues: getValuesCallback,
