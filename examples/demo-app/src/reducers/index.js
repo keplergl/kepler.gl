@@ -27,7 +27,7 @@ import {CLOUD_PROVIDERS_CONFIGURATION} from '../constants/default-settings';
 import {generateHashId} from '../utils/strings';
 
 const {DEFAULT_MAP_CONTROLS} = uiStateUpdaters;
-// console.log(DEFAULT_MAP_CONTROLS);
+
 // INITIAL_APP_STATE
 const initialAppState = {
   appName: 'example',

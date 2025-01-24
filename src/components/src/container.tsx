@@ -90,7 +90,6 @@ export function ContainerFactory(
     } = props;
     const prevId = usePreviousId(id);
     const dispatch = useDispatch();
-    // initialize DuckDb
 
     useEffect(() => {
       // add a new entry to reducer

@@ -172,8 +172,7 @@ export function getGeojsonLayerMetaFromArrow({
   };
 
   // getBinaryGeometriesFromArrow doesn't support geoarrow.wkb
-  // TODO why EXTENSION_NAME.WKB is undefined?
-  if (encoding === 'geoarrow.wkb' /* EXTENSION_NAME.WKB*/) {
+  if (encoding === EXTENSION_NAME.WKB) {
     return getBinaryGeometriesFromWKBArrow(geoColumn, options);
   }
 

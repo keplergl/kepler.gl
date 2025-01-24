@@ -181,7 +181,6 @@ export class KeplerGlDuckDbTable extends KeplerTable {
     }
 
     return {
-      // this is standard Kepler.gl field from geojson processor
       addWKBMetadata: {...SUGGESTED_GEOM_COLUMNS},
       // use metadata from arrow table
       useNewFields: true
@@ -306,11 +305,12 @@ export class KeplerGlDuckDbTable extends KeplerTable {
  * Note that this function can generate wrong geometry types.
  * @param arrowTable Arrow table to update.
  * @param canCastST_asWKB A map with fields that are likely in DeckDB's internal WBK format.
+ * @param addWKBMetadata A map with field names that usually used to store WKB geometry.
  */
 const restoreGeoarrowMetadata = async (
   arrowTable: arrow.Table,
   canCastST_asWKB: Record<string, boolean>,
-  addWKBMetadata
+  addWKBMetadata: Record<string, boolean>
 ) => {
   arrowTable.schema.fields.forEach(f => {
     if (arrow.DataType.isBinary(f.type) && (addWKBMetadata[f.name] || canCastST_asWKB[f.name])) {

@@ -306,9 +306,6 @@ export const FIELD_DISPLAY_FORMAT: {
     try {
       return JSON.stringify(value);
     } catch (e) {
-      if (typeof value?.toString === 'function') {
-        return value.toString();
-      }
       return String(value);
     }
   },
