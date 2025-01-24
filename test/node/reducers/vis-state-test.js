@@ -5626,6 +5626,8 @@ test('#visStateReducer -> PIN_TABLE_COLUMN', t => {
 });
 
 test('#visStateReducer -> LOAD_FILES', async t => {
+  drainTasksForTesting();
+
   const loadFilesSuccessSpy = sinon.spy(VisStateActions, 'loadFilesSuccess');
   const loadFileErrSpy = sinon.spy(Console, 'warn');
   const initialState = CloneDeep(InitialState).visState;
@@ -5653,8 +5655,8 @@ test('#visStateReducer -> LOAD_FILES', async t => {
   const nextState = reducer(initialState, VisStateActions.loadFiles(mockFiles));
 
   const tasks = drainTasksForTesting();
-  t.equal(tasks.length, 2, 'should ceate 2 tasks');
-  const task1 = tasks[1];
+  t.equal(tasks.length, 1, 'should ceate 1 task');
+  const task1 = tasks[0];
 
   const expectedTask1 = {
     type: 'LOAD_FILE_TASK',
