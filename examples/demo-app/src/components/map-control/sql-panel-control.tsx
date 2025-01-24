@@ -3,18 +3,17 @@
 
 import React, {useCallback, ComponentType} from 'react';
 
+import {MapControlButton, MapControlTooltipFactory} from '@kepler.gl/components';
 import {MapControls} from '@kepler.gl/types';
 
-import {MapControlButton, MapControlTooltipFactory} from '@kepler.gl/components';
-
-interface EffectControlIcons {
-  effectsIcon: ComponentType<any>;
+interface SQLControlIcons {
+  sqlPanelIcon: ComponentType<any>;
 }
 
 export type SqlPanelControlProps = {
   mapControls: MapControls;
   onToggleMapControl: (control: string) => void;
-  actionIcons: EffectControlIcons;
+  actionIcons: SQLControlIcons;
 };
 
 SqlPanelControlFactory.deps = [MapControlTooltipFactory];
@@ -31,14 +30,12 @@ export default function SqlPanelControlFactory(
       [onToggleMapControl]
     );
 
-    // ! fix here!
-
-    const showControl = mapControls?.effect?.show;
+    const showControl = mapControls?.sqlPanel?.show;
     if (!showControl) {
       return null;
     }
 
-    const active = mapControls?.effect?.active;
+    const active = mapControls?.sqlPanel?.active;
     return (
       <MapControlTooltip
         id="show-sql-panel"

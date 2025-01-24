@@ -193,7 +193,6 @@ const App = props => {
     _loadSampleData();
 
     // Notifications
-    // _loadMockNotifications();
 
     // no dependencies, as this was part of componentDidMount
   }, []);
