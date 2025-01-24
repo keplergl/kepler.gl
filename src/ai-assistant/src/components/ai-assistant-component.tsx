@@ -41,7 +41,6 @@ import {
   getScatterplotValuesFromDataset,
   getValuesFromDataset,
   highlightRows,
-  highlightRowsByColumnValues,
   saveAsDataset
 } from '../tools/utils';
 
