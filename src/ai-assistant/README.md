@@ -16,7 +16,7 @@ An example of how the AI Assistant Module can be used to update a basemap in Kep
 
 This flow enables a seamless interaction where a user can update a basemap in Kepler.gl through a simple AI-driven prompt, showcasing the integration of LLMs with application actions and rendering.
 
-The AI Assistant Module `OpenAssistant` (Github: https://github.com/lixun910/openassistant) is a open-source project that helps adding AI capabilities to your React SPA applications while keeping your data secure and private.
+The AI Assistant Module `OpenAssistant` (Github: https://github.com/geodacenter/openassistant) is a open-source project that helps adding AI capabilities to your React SPA applications while keeping your data secure and private.
 
 Key features:
 
@@ -40,8 +40,10 @@ From the previous PRs, we have a working prototype of the AI Assistant Module wi
 2. Change the basemap style.
 3. Load data from url.
 4. Create a map layer using variable.
-5. Filter the data of a variable.
-6. Create a histogram.
+5. Create a histogram.
+6. Create a scatter plot with regression line.
+7. Classify the data of a variable.
+8. Spatial join two datasets.
 
 The next step is to integrate more kepler.gl features into the AI Assistant Module.
 
@@ -49,14 +51,14 @@ The next step is to integrate more kepler.gl features into the AI Assistant Modu
 
 Support more kepler.gl map layers
 
-- [ ] create map layer based on the dataset metadata (variable names and types)
+- [x] create map layer based on the dataset metadata (variable names and types)
 - [ ] edit layer properties based on the [layer attributes](https://docs.kepler.gl/docs/user-guides/d-layer-attributes)
 - [ ] blend and rearrange layers
 
 Support color palette
 
 - [ ] choose color palette for the layer
-- [ ] create custom color palette
+- [x] create custom color palette
 
 Support custom map styles
 
