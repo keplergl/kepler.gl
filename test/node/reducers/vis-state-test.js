@@ -5655,7 +5655,7 @@ test('#visStateReducer -> LOAD_FILES', async t => {
   const nextState = reducer(initialState, VisStateActions.loadFiles(mockFiles));
 
   const tasks = drainTasksForTesting();
-  t.equal(tasks.length, 1, 'should ceate 1 task');
+  t.equal(tasks.length, 1, 'should create 1 task');
   const task1 = tasks[0];
 
   const expectedTask1 = {
