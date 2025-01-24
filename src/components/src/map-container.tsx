@@ -91,7 +91,7 @@ import {
 } from '@kepler.gl/reducers';
 import {VisState} from '@kepler.gl/schemas';
 
-import LayersLoadingIndicator from './layers-loading-indicator';
+import LoadingIndicator from './loading-indicator';
 
 // Debounce the propagation of viewport change and mouse moves to redux store.
 // This is to avoid too many renders of other components when the map is
@@ -1154,13 +1154,13 @@ export default function MapContainerFactory(
             : null}
           {this._renderMapPopover()}
           {primary !== isSplit ? (
-            <LayersLoadingIndicator
+            <LoadingIndicator
               isVisible={Boolean(isLoadingIndicatorVisible)}
               activeSidePanel={Boolean(activeSidePanel)}
               sidePanelWidth={sidePanelWidth}
             >
               Loading...
-            </LayersLoadingIndicator>
+            </LoadingIndicator>
           ) : null}
           {this.props.primary ? (
             <Attribution

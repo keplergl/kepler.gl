@@ -24,15 +24,19 @@ export const StyledContainer = styled.div<StyledContainerProps>`
   font-size: 12px;
 `;
 
-type LayersLoadingIndicatorProps = {
+type LoadingIndicatorProps = {
   isVisible?: boolean;
   activeSidePanel?: boolean;
   sidePanelWidth?: number;
 };
 
-const LayersLoadingIndicator: React.FC<
-  PropsWithChildren<LayersLoadingIndicatorProps> & {theme: any}
-> = ({isVisible, children, activeSidePanel, sidePanelWidth, theme}) => {
+const LoadingIndicator: React.FC<PropsWithChildren<LoadingIndicatorProps> & {theme: any}> = ({
+  isVisible,
+  children,
+  activeSidePanel,
+  sidePanelWidth,
+  theme
+}) => {
   const left = (activeSidePanel ? sidePanelWidth || 0 : 0) + theme.sidePanel.margin.left;
 
   return (
@@ -42,6 +46,4 @@ const LayersLoadingIndicator: React.FC<
   );
 };
 
-export default withTheme(LayersLoadingIndicator) as React.FC<
-  PropsWithChildren<LayersLoadingIndicatorProps>
->;
+export default withTheme(LoadingIndicator) as React.FC<PropsWithChildren<LoadingIndicatorProps>>;
