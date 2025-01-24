@@ -41,6 +41,7 @@ import {
   setFilter,
   processFileContent,
   fitBounds as fitMapBounds,
+  setLoadingIndicator,
   toggleLayerForMap,
   applyFilterConfig
 } from '@kepler.gl/actions';
@@ -2327,17 +2328,23 @@ export const updateVisDataUpdater = (
       })
     : state;
 
+  // indicate that something is in progress
+  const setIsLoadingTask = ACTION_TASK().map(() => {
+    return setLoadingIndicator({change: 1});
+  });
+  const updatedState = withTask(previousState, setIsLoadingTask);
+
   const datasets = toArray(action.datasets);
 
   const allCreateDatasetsTasks = datasets.map(
     ({info = {}, ...rest}) => createNewDataEntry({info, ...rest}, state.datasets) || {}
   );
   // call all Tasks
-  const tasks = Task.allSettled(allCreateDatasetsTasks).map(results =>
+  const datasetTasks = Task.allSettled(allCreateDatasetsTasks).map(results =>
     createNewDatasetSuccess({results, addToMapOptions: options})
   );
 
-  return withTask(previousState, tasks);
+  return withTask(updatedState, datasetTasks);
 };
 
 export const createNewDatasetSuccessUpdater = (
@@ -2376,7 +2383,16 @@ export const createNewDatasetSuccessUpdater = (
     layerMergers
   };
 
-  return applyMergersUpdater(mergedState, {mergers: datasetMergers, postMergerPayload});
+  const updatedState = applyMergersUpdater(mergedState, {
+    mergers: datasetMergers,
+    postMergerPayload
+  });
+
+  // resolve active loading initiated by updateVisDataUpdater
+  const setIsLoadingTask = ACTION_TASK().map(() => {
+    return setLoadingIndicator({change: -1});
+  });
+  return withTask(updatedState, setIsLoadingTask);
 };
 
 /**
