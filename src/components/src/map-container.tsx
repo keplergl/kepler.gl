@@ -91,6 +91,8 @@ import {
 } from '@kepler.gl/reducers';
 import {VisState} from '@kepler.gl/schemas';
 
+import LayersLoadingIndicator from './layers-loading-indicator';
+
 // Debounce the propagation of viewport change and mouse moves to redux store.
 // This is to avoid too many renders of other components when the map is
 // being panned/zoomed (leading to laggy basemap/deck syncing).
@@ -323,6 +325,10 @@ export interface MapContainerProps {
   index?: number;
   deleteMapLabels?: (containerId: string, layerId: string) => void;
   containerId?: number;
+
+  isLoadingIndicatorVisible?: boolean;
+  activeSidePanel: string | null;
+  sidePanelWidth?: number;
 
   locale?: any;
   theme?: any;
@@ -1022,7 +1028,10 @@ export default function MapContainerFactory(
         topMapContainerProps,
         theme,
         datasetAttributions = [],
-        containerId = 0
+        containerId = 0,
+        isLoadingIndicatorVisible,
+        activeSidePanel,
+        sidePanelWidth
       } = this.props;
 
       const {layers, datasets, editor, interactionConfig} = visState;
@@ -1144,6 +1153,15 @@ export default function MapContainerFactory(
               )
             : null}
           {this._renderMapPopover()}
+          {primary !== isSplit ? (
+            <LayersLoadingIndicator
+              isVisible={Boolean(isLoadingIndicatorVisible)}
+              activeSidePanel={Boolean(activeSidePanel)}
+              sidePanelWidth={sidePanelWidth}
+            >
+              Loading...
+            </LayersLoadingIndicator>
+          ) : null}
           {this.props.primary ? (
             <Attribution
               showBaseMapLibLogo={this.state.showBaseMapAttribution}
