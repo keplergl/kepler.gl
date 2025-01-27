@@ -4,6 +4,7 @@
 import pick from 'lodash.pick';
 import {console as globalConsole} from 'global/window';
 
+import {DATASET_FORMATS} from '@kepler.gl/constants';
 import {ProtoDataset, RGBColor, JsonObject} from '@kepler.gl/types';
 import {KeplerTable} from '@kepler.gl/table';
 import {VERSIONS} from './versions';
@@ -106,7 +107,15 @@ export class DatasetSchema extends Schema {
     const datasetFlattened = dataset.dataContainer
       ? {
           ...dataset,
-          allData: dataset.dataContainer.flattenData()
+          allData: dataset.dataContainer.flattenData(),
+          // we use flattenData to save arrow tables,
+          // but once flattened it's not an arrow file anymore.
+          metadata: {
+            ...dataset.metadata,
+            ...(dataset.metadata.format === DATASET_FORMATS.arrow
+              ? {format: DATASET_FORMATS.row}
+              : {})
+          }
         }
       : dataset;
 
