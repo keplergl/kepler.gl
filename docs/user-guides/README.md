@@ -37,6 +37,7 @@ This guide will teach you how to perform data analysis in Kepler.gl by adding da
 * [H3](./c-types-of-layers/j-h3.md)
 * [Trip](./c-types-of-layers/k-trip.md)
 * [S2](./c-types-of-layers/l-s2.md)
+* [Vector](./c-types-of-layers/vector.md)
 
 #### [Layer attributes](./d-layer-attributes.md)
 
@@ -59,6 +60,9 @@ This guide will teach you how to perform data analysis in Kepler.gl by adding da
 * [Display legend](./m-map-settings.md#display-legend)
 * [Split maps](./m-map-settings.md#split-maps)
 
+#### [SQL Data Explorer](./sql-data-explorer.md)
+
+#### [AI Assistant](./ai-assistant.md)
 
 #### [Time playback](./h-playback.md)
 
