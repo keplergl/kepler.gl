@@ -37,7 +37,6 @@
     "@kepler.gl/types": "3.1.0-alpha.6",
     "@kepler.gl/utils": "3.1.0-alpha.6",
     "@openassistant/core": "^0.0.6",
-    "@openassistant/duckdb": "^0.0.6",
     "@openassistant/echarts": "^0.0.6",
     "@openassistant/geoda": "^0.0.6",
     "@openassistant/ui": "^0.0.7",
