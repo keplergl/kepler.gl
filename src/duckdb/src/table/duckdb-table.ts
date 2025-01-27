@@ -33,6 +33,8 @@ import {
   isGeoArrowMultiPolygon
 } from './duckdb-table-utils';
 
+// TODO use files from disk or url directly, without parsing by loaders and then ingection into DeckDb
+
 /**
  * Default DuckDb geometry columns created by ST_READ
  */
