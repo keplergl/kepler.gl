@@ -19,6 +19,7 @@ import {
 import {panelBorderColor, theme} from '@kepler.gl/styles';
 import {useSelector} from 'react-redux';
 import {ParsedConfig} from '@kepler.gl/types';
+import {getApplicationConfig} from '@kepler.gl/utils';
 import {SqlPanel} from '@kepler.gl/duckdb';
 import Banner from './components/banner';
 import Announcement, {FormLink} from './components/announcement';
@@ -143,8 +144,10 @@ const App = props => {
   const {params: {id, provider} = {}, location: {query = {}} = {}} = props;
   const dispatch = useDispatch();
 
+  const duckDbPluginEnabled = (getApplicationConfig().plugins || []).some(p => p.name === 'duckdb');
+
   const isSqlPanelOpen = useSelector(
-    state => state?.demo?.keplerGl?.map?.uiState.mapControls.sqlPanel.active
+    state => duckDbPluginEnabled && state?.demo?.keplerGl?.map?.uiState.mapControls.sqlPanel?.active
   );
   const prevQueryRef = useRef<number>(null);
 
@@ -180,7 +183,7 @@ const App = props => {
       dispatch(loadRemoteMap({dataUrl: query.mapUrl}));
     }
 
-    if (query.sql) {
+    if (duckDbPluginEnabled && query.sql) {
       dispatch(toggleMapControl('sqlPanel', 0));
       dispatch(toggleModal(null));
     }
