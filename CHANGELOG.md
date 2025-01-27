@@ -15,20 +15,33 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+## [3.1.0-alpha.7] - January 27 2025
+
+- 7356c5afe [fix] hotfix for arrow saving / loading, without support of binary data (#2943)
+- 4031451b0 [feat] duckdb plugin (#2798)
+- 029bcc548 [feat] loading indicator (#2936)
+- 1a68d1bd2 [Chore] Remove SQL plugin for AI Assistant (#2938)
+- 4be4b6987 [Misc] Update demo-app README.md (#2934)
+- b38054fa8 [Feat] AI Assistant Query (#2819)
+- 4cd912097 [fix] Added 24 limit for maximum zoom (#2635)
+- b1bddd5fb [chore] Fixes for using in a vite app (#2898)
+- 4d1bfb3d0 [feat] minZoom and maxZoom for examples (#2933)
+- 81be74920 [fix] don't auto create point layer from vector tiles (#2932)
+
 ## [3.1.0-alpha.6] - January 22 2025
 
-803b2f540 [fix] remove dependencies from useEffect (prev componentDidMount in app.tsx) (#2930)
-57926442f [fix] use saved map config for saved maps instead of zoom in to data (#2929)
-4af609245 [chore] add dot.env, updates to demo-app build, update gitignore (#2928)
-ce23c7668 [feat] duckdb module updates (#2927)
-fc974d852 [feat] duckdb module placeholder (#2926)
-d1b3c9799 [fix] demo-app resolve to proper node_modules (#2925)
-594250bc7 [fix] fix demo-app yarn start (#2924)
-913ba1ce0 [feat] support for table plugin in demo examples and privately stored datasets (#2923)
-630728190 [fix] fixes for style editor preview and error (#2919)
-d6aa2757e [fix] fix neighbor mode hovering crash in arc/line layers (#2920)
-e2bd71d4e [fix] fix csv table examples for layers (#2921)
-a6e151a0f [fix] vector tile layer fixes (#2911)
+- 803b2f540 [fix] remove dependencies from useEffect (prev componentDidMount in app.tsx) (#2930)
+- 57926442f [fix] use saved map config for saved maps instead of zoom in to data (#2929)
+- 4af609245 [chore] add dot.env, updates to demo-app build, update gitignore (#2928)
+- ce23c7668 [feat] duckdb module updates (#2927)
+- fc974d852 [feat] duckdb module placeholder (#2926)
+- d1b3c9799 [fix] demo-app resolve to proper node_modules (#2925)
+- 594250bc7 [fix] fix demo-app yarn start (#2924)
+- 913ba1ce0 [feat] support for table plugin in demo examples and privately stored datasets (#2923)
+- 630728190 [fix] fixes for style editor preview and error (#2919)
+- d6aa2757e [fix] fix neighbor mode hovering crash in arc/line layers (#2920)
+- e2bd71d4e [fix] fix csv table examples for layers (#2921)
+- a6e151a0f [fix] vector tile layer fixes (#2911)
 
 ## [3.1.0-alpha.5] - January 15 2025
 
