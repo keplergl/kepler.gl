@@ -312,8 +312,8 @@ export function highlightRowsByColumnValues(
       acc[value] = index;
       return acc;
     }, {});
-    // @ts-expect-error need to fix the type error of value here
-    const selectedIndices = selectedValues.map(value => valueDict[value]);
+    // need to fix the type error of value here
+    const selectedIndices = selectedValues.map(value => valueDict[value as any]);
     // highlight the rows
     highlightRows(datasets, layers, datasetName, selectedIndices, layerSetIsValid);
   }
