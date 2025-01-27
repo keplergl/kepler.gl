@@ -29,8 +29,8 @@ import {generateHashId} from '../utils/strings';
 
 // initialize kepler application with duckdb plugin
 initApplicationConfig({
-  // plugins: [keplerGlDuckdbPlugin],
-  // table: KeplerGlDuckDbTable
+  plugins: [keplerGlDuckdbPlugin],
+  table: KeplerGlDuckDbTable
 });
 
 const {DEFAULT_MAP_CONTROLS} = uiStateUpdaters;
@@ -87,7 +87,7 @@ const demoReducer = combineReducers({
       },
       mapControls: {
         ...DEFAULT_MAP_CONTROLS,
-        // TODO find a better way not to add sqlPanel
+        // TODO find a better way not to add extra controls optionally - from plugin?
         ...((getApplicationConfig().plugins || []).some(p => p.name === 'duckdb')
           ? {
               sqlPanel: {
