@@ -29,8 +29,8 @@ import {generateHashId} from '../utils/strings';
 
 // initialize kepler application with duckdb plugin
 initApplicationConfig({
-  plugins: [keplerGlDuckdbPlugin],
-  table: KeplerGlDuckDbTable
+  // plugins: [keplerGlDuckdbPlugin],
+  // table: KeplerGlDuckDbTable
 });
 
 const {DEFAULT_MAP_CONTROLS} = uiStateUpdaters;
