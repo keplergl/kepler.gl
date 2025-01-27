@@ -15,6 +15,18 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+## [3.1.0-alpha.7] - January 27 2025
+
+- 4031451b0 [feat] duckdb plugin (#2798)
+- 029bcc548 [feat] loading indicator (#2936)
+- 1a68d1bd2 [Chore] Remove SQL plugin for AI Assistant (#2938)
+- 4be4b6987 [Misc] Update demo-app README.md (#2934)
+- b38054fa8 [Feat] AI Assistant Query (#2819)
+- 4cd912097 [fix] Added 24 limit for maximum zoom (#2635)
+- b1bddd5fb [chore] Fixes for using in a vite app (#2898)
+- 4d1bfb3d0 [feat] minZoom and maxZoom for examples (#2933)
+- 81be74920 [fix] don't auto create point layer from vector tiles
+
 ## [3.1.0-alpha.6] - January 22 2025
 
 - 803b2f540 [fix] remove dependencies from useEffect (prev componentDidMount in app.tsx) (#2930)
