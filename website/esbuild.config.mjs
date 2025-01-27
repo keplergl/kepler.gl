@@ -42,7 +42,10 @@ const config = {
     '.css': 'css',
     '.png': 'file',
     '.jpg': 'file',
-    '.svg': 'file'
+    '.svg': 'file',
+    '.ttf': 'file',
+    '.woff': 'file',
+    '.woff2': 'file'
   },
   entryPoints: [
     'src/main.js',
