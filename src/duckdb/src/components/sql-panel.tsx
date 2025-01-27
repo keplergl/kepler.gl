@@ -118,6 +118,8 @@ type SqlPanelProps = {
   initialSql?: string;
 };
 
+const SCHEMA_PANEL_STYLE = {overflow: 'auto'};
+
 export const SqlPanel: React.FC<SqlPanelProps> = ({initialSql = ''}) => {
   const [sql, setSql] = useState(() => {
     const params = new URLSearchParams(window.location.search);
@@ -196,7 +198,7 @@ export const SqlPanel: React.FC<SqlPanelProps> = ({initialSql = ''}) => {
   return (
     <StyledSqlPanel>
       <PanelGroup direction="horizontal">
-        <Panel defaultSize={20} minSize={15}>
+        <Panel defaultSize={20} minSize={15} style={SCHEMA_PANEL_STYLE}>
           <SchemaPanel setTableSchema={setTableSchema} />
         </Panel>
 

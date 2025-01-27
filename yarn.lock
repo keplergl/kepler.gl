@@ -20515,6 +20515,7 @@ __metadata:
     mapbox-gl: "npm:1.13.1"
     maplibre-gl: "npm:^3.6.2"
     minimist: "npm:^1.2.6"
+    monaco-editor: "npm:^0.52.0"
     nyc: "npm:^15.1.0"
     prettier: "npm:2.8.8"
     progress-bar-webpack-plugin: "npm:^2.1.0"

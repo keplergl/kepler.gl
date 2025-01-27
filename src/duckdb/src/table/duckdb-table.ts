@@ -24,13 +24,50 @@ import {
   ProcessorResult
 } from '../processors/data-processor';
 
-// TODO format geojson, all binary geogson columns should be tranformed to wkb
-const GEOMETRY_COLUMN = 'geom';
+import {
+  isGeoArrowPoint,
+  isGeoArrowLineString,
+  isGeoArrowPolygon,
+  isGeoArrowMultiPoint,
+  isGeoArrowMultiLineString,
+  isGeoArrowMultiPolygon
+} from './duckdb-table-utils';
+
+// TODO use files from disk or url directly, without parsing by loaders and then ingection into DeckDb
+
+/**
+ * Default DuckDb geometry columns created by ST_READ
+ */
+const DUCKDB_GEOM_COLUMN = 'geom';
+const DUCKDB_WKB_COLUMN = 'wkb_geometry';
+
+/**
+ Default column name for processed geojson in Kepler.
+ Use this name to rename default 'geom' column from DuckDb
+ in order to support Kepler maps saved before introduction of DuckDb plugin.
+ */
+const KEPLER_GEOM_FROM_GEOJSON_COLUMN = '_geojson';
+
+/**
+ * Names of columns that most likely contain binary wkb geometry
+ */
+const SUGGESTED_GEOM_COLUMNS = {
+  [KEPLER_GEOM_FROM_GEOJSON_COLUMN]: true,
+  [DUCKDB_GEOM_COLUMN]: true,
+  geometry: true
+};
 
 type ImportDataToDuckProps = {
   data: ProcessorResult;
   db: AsyncDuckDB;
   c: AsyncDuckDBConnection;
+};
+
+type ImportDataToDuckResult = {
+  // DuckDb drops geoarrow metadata, so try to preserve someting
+  addWKBMetadata?: Record<string, boolean>;
+  // Use fields from arrow table even if fields are provided
+  useNewFields?: boolean;
 };
 
 /**
@@ -101,7 +138,7 @@ export class KeplerGlDuckDbTable extends KeplerTable {
     }
   }
 
-  async importGeoJsonData({data, db, c}: ImportDataToDuckProps): Promise<void> {
+  async importGeoJsonData({data, db, c}: ImportDataToDuckProps): Promise<ImportDataToDuckResult> {
     try {
       const {rows} = data;
       await db.registerFileText(this.id, JSON.stringify(rows));
@@ -111,15 +148,20 @@ export class KeplerGlDuckDbTable extends KeplerTable {
         load spatial;
         CREATE TABLE '${this.label}' AS 
         SELECT *
-        FROM ST_READ('${this.id}');
+        FROM ST_READ('${this.id}', keep_wkb = TRUE);
+        ALTER TABLE '${this.label}' RENAME '${DUCKDB_WKB_COLUMN}' TO '${KEPLER_GEOM_FROM_GEOJSON_COLUMN}';
       `;
       await c.query(createTableSql);
     } catch (error) {
       console.error('importGeoJsonData', error);
     }
+
+    return {
+      addWKBMetadata: {[KEPLER_GEOM_FROM_GEOJSON_COLUMN]: true}
+    };
   }
 
-  async importArrowData({data, db, c}: ImportDataToDuckProps): Promise<void> {
+  async importArrowData({data, db, c}: ImportDataToDuckProps): Promise<ImportDataToDuckResult> {
     try {
       // 1) data.rows contains an arrow table created by Add to Map data from DuckDb query.
       // 2) arrow table is in cols & fields when a file is dragged & dropped into Add Data To Map dialog.
@@ -139,6 +181,12 @@ export class KeplerGlDuckDbTable extends KeplerTable {
       // 1) Arrow Type with extension name: geoarrow.point and format: +w:2 is not currently supported in DuckDB.
       console.error('importArrowData', error);
     }
+
+    return {
+      addWKBMetadata: {...SUGGESTED_GEOM_COLUMNS},
+      // use metadata from arrow table
+      useNewFields: true
+    };
   }
 
   /**
@@ -165,12 +213,13 @@ export class KeplerGlDuckDbTable extends KeplerTable {
       }
     }
 
+    let importDetails: ImportDataToDuckResult | undefined;
     if (format === DATASET_FORMATS.row) {
       await this.importRowData({data, db, c});
     } else if (format === DATASET_FORMATS.geojson) {
-      await this.importGeoJsonData({data, db, c});
+      importDetails = await this.importGeoJsonData({data, db, c});
     } else if (format === DATASET_FORMATS.arrow) {
-      await this.importArrowData({data, db, c});
+      importDetails = await this.importArrowData({data, db, c});
     } else {
       console.error('Unrecognized format', format);
     }
@@ -179,32 +228,20 @@ export class KeplerGlDuckDbTable extends KeplerTable {
     let cols: arrow.Vector[] = [];
 
     try {
-      // We need to transform the binary geometry column to proper wkb.
-      // First check whether such a column exists, then query with ST_AsWKB.
-      const dummyResult = await c.query(`
-        SELECT * FROM '${tableName}' LIMIT 0;
-      `);
-      const hasBinaryGeoField = Boolean(
-        dummyResult.schema.fields.find(
-          f => f.name === GEOMETRY_COLUMN && arrow.DataType.isBinary(f.type)
-        )
-      );
+      const {addWKBMetadata = {}, useNewFields = false} = importDetails || {};
 
-      // TODO don't do this for all columns named 'geom', check whether it's a wkb and not something else!
-      // query and transform geometry column to wkb
-      const arrowResult = await c.query(
-        `SELECT * ${
-          hasBinaryGeoField
-            ? `EXCLUDE ${GEOMETRY_COLUMN}, ST_AsWKB(${GEOMETRY_COLUMN}) as ${GEOMETRY_COLUMN}`
-            : ''
-        } FROM '${tableName}';`
-      );
-      const geoField = arrowResult.schema.fields.find(
-        f => f.name === GEOMETRY_COLUMN && arrow.DataType.isBinary(f.type)
-      );
-      geoField?.metadata.set('ARROW:extension:name', 'geoarrow.wkb');
+      // Try to figure out whether geometry should be transformed by ST_AsWKB
+      // TODO if canCastST_asWKB contains any keys then add ST_AsWKB to the following query
+      const canCastST_asWKB = await tryST_AsWKB({tableName, c});
 
-      fields = data.fields ?? arrowSchemaToFields(arrowResult.schema);
+      const getArrowQuery = `SELECT * FROM '${tableName}';`;
+      const arrowResult = await c.query(getArrowQuery);
+
+      restoreGeoarrowMetadata(arrowResult, canCastST_asWKB, addWKBMetadata);
+
+      fields = useNewFields
+        ? arrowSchemaToFields(arrowResult.schema)
+        : data.fields ?? arrowSchemaToFields(arrowResult.schema);
       cols = [...Array(arrowResult.numCols).keys()]
         .map(i => arrowResult.getChildAt(i))
         .filter(col => col) as arrow.Vector[];
@@ -263,4 +300,68 @@ export class KeplerGlDuckDbTable extends KeplerTable {
     }
     return {processor, format};
   };
+
+  static getInputDataValidator = function () {
+    return d => d;
+  };
 }
+
+/**
+ * Try to restore geoarrow metadata lost during DuckDb ingestion.
+ * Note that this function can generate wrong geometry types.
+ * @param arrowTable Arrow table to update.
+ * @param canCastST_asWKB A map with fields that are likely in DeckDB's internal WBK format.
+ * @param addWKBMetadata A map with field names that usually used to store WKB geometry.
+ */
+const restoreGeoarrowMetadata = async (
+  arrowTable: arrow.Table,
+  canCastST_asWKB: Record<string, boolean>,
+  addWKBMetadata: Record<string, boolean>
+) => {
+  arrowTable.schema.fields.forEach(f => {
+    if (arrow.DataType.isBinary(f.type) && (addWKBMetadata[f.name] || canCastST_asWKB[f.name])) {
+      f.metadata.set('ARROW:extension:name', 'geoarrow.wkb');
+    } else if (isGeoArrowPoint(f.type)) {
+      f.metadata.set('ARROW:extension:name', 'geoarrow.point');
+    } else if (isGeoArrowLineString(f.type)) {
+      f.metadata.set('ARROW:extension:name', 'geoarrow.linestring');
+    } else if (isGeoArrowPolygon(f.type)) {
+      f.metadata.set('ARROW:extension:name', 'geoarrow.polygon');
+    } else if (isGeoArrowMultiPoint(f.type)) {
+      f.metadata.set('ARROW:extension:name', 'geoarrow.multipoint');
+    } else if (isGeoArrowMultiLineString(f.type)) {
+      f.metadata.set('ARROW:extension:name', 'geoarrow.multilinestring');
+    } else if (isGeoArrowMultiPolygon(f.type)) {
+      f.metadata.set('ARROW:extension:name', 'geoarrow.multipolygon');
+    }
+  });
+};
+
+/**
+ * For all binary columns tries to transform geometry from DuckDB's internal format into proper WKB.
+ * @param props
+ * @returns A map of fields that should be transformed to valid WKB.
+ */
+const tryST_AsWKB = async (props: {tableName: string; c: AsyncDuckDBConnection}) => {
+  const {c, tableName} = props;
+
+  const resultWithSchema = await c.query(`
+        SELECT * FROM '${tableName}' LIMIT 0;
+      `);
+  const binaryColumns = resultWithSchema.schema.fields.filter(f => arrow.DataType.isBinary(f.type));
+
+  const canCastST_asWKB: Record<string, boolean> = {};
+  for (const column of binaryColumns) {
+    try {
+      const columnName = column.name;
+      const query = `SELECT * EXCLUDE ${columnName}, ST_AsWKB(${columnName}) as ${columnName} FROM '${tableName}' LIMIT 1;`;
+      await c.query(query);
+
+      canCastST_asWKB[column.name] = true;
+    } catch (error) {
+      canCastST_asWKB[column.name] = false;
+    }
+  }
+
+  return canCastST_asWKB;
+};
