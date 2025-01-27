@@ -17,4 +17,4 @@ SELECT * FROM 'https://raw.githubusercontent.com/keplergl/kepler.gl-data/refs/he
 
 <!-- Image/gif -->
 
-Once you have a data selection you are satisfied with, click **Add to Map**. Your new dataset will be added to kepler. If you have column that contain recognizable geography data, (i.e. lat/lng columns or polygon geometries), layers will automatically be created.
+Once you have a data selection you are satisfied with, click **Add to Map**. Your new dataset will be added to kepler. If you have a column that contains recognizable geography data, (i.e. lat/lng columns or polygon geometries), layers will automatically be created.

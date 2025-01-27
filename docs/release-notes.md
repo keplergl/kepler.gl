@@ -8,16 +8,16 @@ _Released January, 2025_
 
 ### Vector Tiles 
 
-The new [Vector Tile layer](/docs/user-guides/c-types-of-layers/vector.md) allows the map to dynamically retrieve data based on the user's viewport and zoom level. This initial release supports both mapbox vector tiles and remote .pmtiles.
+The new [Vector Tile layer](/docs/user-guides/c-types-of-layers/vector.md) allows the map to dynamically retrieve data based on the user's viewport and zoom level. This initial release supports both Mapbox vector tiles and remote .pmtiles.
 
-By leveraging the efficiency of vector tiles, users can visualize complex, large-scale datasets without compromising performance, making it easier to explore and analyze geospatial data in real-time.
+By leveraging the efficiency of vector tiles, users can visualize complex, large-scale datasets without compromising performance, making it easier to explore and analyze geospatial data.
 
 <!-- Image/GIF -->
 
 
 ### DuckDB Support
 
-Leverage DuckDB directly within kepler.glyour geospatial projects with big data. Write and execute SQL queries to perform custom analyses, instantly visualizing the results on your map in real time.
+Leverage DuckDB directly within kepler.gl your geospatial projects with big data. Write and execute SQL queries to perform custom analyses, instantly visualizing the results on your map.
  
 DuckDB enables in-browser data processing, allowing you to work with large datasets without the need for external infrastructure.
 
@@ -55,9 +55,9 @@ Includes various updates to the user interface for animation (for both time filt
 
 <!-- Image/GIF -->
 
-### Legend Improvemts
+### Legend Improvements
 
-The legend is now both movable and resizable, support the editing of legend values, and offers a scale for radius scaling.
+The legend is now both movable and resizable, supports the editing of legend values, and offers a scale for radius scaling.
 
 <!-- Image/GIF -->
 
@@ -70,7 +70,7 @@ A number of improvements to layers, including:
 - Arc layer supports creation from h3
 - A vast number of other layer improvements
 
-This release also includes a wide range of bug fixes and performance improvements, which can be viewed in the [visit the full change log](../CHANGELOG.md)
+This release also includes a wide range of bug fixes and performance improvements, which can be viewed in the [full change log.](../CHANGELOG.md)
 
 
 

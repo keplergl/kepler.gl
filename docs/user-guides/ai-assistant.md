@@ -1,8 +1,8 @@
 # AI Assistant
 
-> Note: This features is currently undergoing development. Stay tuned for updates!
+> Note: This feature is currently undergoing development. Stay tuned for updates!
 
-Kepler.gl's AI assistant can help at many steps of your geospatial analysis:
+kepler.gl's AI assistant can help with many steps of your geospatial analysis:
 
 - Data Loading: Assists with SQL queries, data filtering, and data interpretation.
 - Basic Visualization: Helps customize base maps, color schemes, and other layer elements.

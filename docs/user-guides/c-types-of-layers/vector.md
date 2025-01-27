@@ -8,7 +8,7 @@ Vector layers use the three basic GIS features â€“ lines, points, and polygons â
 
 # Settings
 
-The follow sections detail every setting available in the Vector Layer.
+The following tables describe every setting in the Vector Tile layer.
 
 ## Basic
 
@@ -58,7 +58,7 @@ Height settings for the vector layer. Height is best viewed with the 3D  viewing
 | Setting         | Description                                        |
 | --------------- | -------------------------------------------------- |
 | Height Slider   | Increase to raise the height of the layer objects. |
-| Height Based On | A column to base the height off of.                |
+| Height Based On | A column to base the height on.                |
 | Height Scale    | Choose from linear, sqrt, and log.                 |
 | Fixed Height    | Applies height without additional modifications.   |
 
