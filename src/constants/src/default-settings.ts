@@ -113,7 +113,7 @@ export const KEPLER_GL_WEBSITE = 'http://kepler.gl/';
 export const DIMENSIONS = {
   sidePanel: {
     width: 300,
-    margin: {top: 20, left: 20, bottom: 30, right: 20},
+    margin: {top: 12, left: 12, bottom: 12, right: 20},
     headerHeight: 96
   },
   mapControl: {
@@ -1254,7 +1254,8 @@ export const DATASET_FORMATS = keyMirror({
   geojson: null,
   csv: null,
   keplergl: null,
-  arrow: null
+  arrow: null,
+  duckdb: null
 });
 
 export const MAP_CONTROLS = keyMirror({

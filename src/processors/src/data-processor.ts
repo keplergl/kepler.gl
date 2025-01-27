@@ -303,11 +303,9 @@ export function processGeojson(rawData: unknown): ProcessorResult {
   const normalizedGeojson = normalize(rawData);
 
   if (!normalizedGeojson || !Array.isArray(normalizedGeojson.features)) {
-    const error = new Error(
+    throw new Error(
       `Read File Failed: File is not a valid GeoJSON. Read more about [supported file format](${GUIDES_FILE_FORMAT_DOC})`
     );
-    throw error;
-    // fail to normalize geojson
   }
 
   // getting all feature fields
