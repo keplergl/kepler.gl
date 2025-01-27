@@ -57,11 +57,15 @@ export function createNewDataEntry(
   {info, data, ...opts}: ProtoDataset,
   datasets: Datasets = {}
 ): Datasets {
-  let validatedData = validateInputData(data);
+  const TableClass = getApplicationConfig().table ?? KeplerTable;
+  let dataValidator = validateInputData;
+  if (typeof TableClass.getInputDataValidator === 'function') {
+    dataValidator = TableClass.getInputDataValidator();
+  }
+
+  const validatedData = dataValidator(data);
   if (!validatedData) {
-    // For DuckDb plugin return original data?
-    // return {};
-    validatedData = data;
+    return {};
   }
 
   // check if dataset already exists, and update it when loading data by batches incrementally

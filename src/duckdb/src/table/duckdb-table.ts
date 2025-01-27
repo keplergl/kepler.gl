@@ -298,6 +298,10 @@ export class KeplerGlDuckDbTable extends KeplerTable {
     }
     return {processor, format};
   };
+
+  static getInputDataValidator = function () {
+    return d => d;
+  };
 }
 
 /**
