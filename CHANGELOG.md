@@ -17,6 +17,7 @@ Ref: http://keepachangelog.com/en/0.3.0/
 
 ## [3.1.0-alpha.7] - January 27 2025
 
+- 7356c5afe [fix] hotfix for arrow saving / loading, without support of binary data (#2943)
 - 4031451b0 [feat] duckdb plugin (#2798)
 - 029bcc548 [feat] loading indicator (#2936)
 - 1a68d1bd2 [Chore] Remove SQL plugin for AI Assistant (#2938)
@@ -25,7 +26,7 @@ Ref: http://keepachangelog.com/en/0.3.0/
 - 4cd912097 [fix] Added 24 limit for maximum zoom (#2635)
 - b1bddd5fb [chore] Fixes for using in a vite app (#2898)
 - 4d1bfb3d0 [feat] minZoom and maxZoom for examples (#2933)
-- 81be74920 [fix] don't auto create point layer from vector tiles
+- 81be74920 [fix] don't auto create point layer from vector tiles (#2932)
 
 ## [3.1.0-alpha.6] - January 22 2025
 
