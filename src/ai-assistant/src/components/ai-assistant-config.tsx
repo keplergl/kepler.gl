@@ -16,6 +16,7 @@ import {AiAssistantConfig} from '../index';
 import ApiKey from '../icons/api-key';
 import {testApiKey} from '@openassistant/core';
 import PROVIDER_MODELS from '../config/models.json';
+import {useLocalStorage} from 'usehooks-ts';
 
 type ThemeProps = {theme: any};
 
@@ -125,12 +126,27 @@ function AiAssistantConfigFactory(RangeSlider: ReturnType<typeof RangeSliderFact
   const AiAssistantConfig: React.FC<
     AiAssistantConfigProps & WrappedComponentProps & ThemeProps
   > = ({intl, aiAssistantConfig, updateAiAssistantConfig}) => {
-    const [provider, setProvider] = useState(aiAssistantConfig.provider || 'openai');
-    const [model, setModel] = useState(aiAssistantConfig.model || PROVIDER_MODELS[provider][0]);
-    const [apiKey, setApiKey] = useState(aiAssistantConfig.apiKey || '');
-    const [temperature, setTemperature] = useState(aiAssistantConfig.temperature || 0.8);
-    const [topP, setTopP] = useState(aiAssistantConfig.topP || 0.8);
-    const [baseUrl, setBaseUrl] = useState(aiAssistantConfig.baseUrl || 'http://localhost:11434');
+    const [provider, setProvider] = useLocalStorage(
+      'ai-assistant-provider',
+      aiAssistantConfig.provider || 'openai'
+    );
+    const [model, setModel] = useLocalStorage(
+      'ai-assistant-model',
+      aiAssistantConfig.model || PROVIDER_MODELS[provider][0]
+    );
+    const [apiKey, setApiKey] = useLocalStorage(
+      'ai-assistant-api-key',
+      aiAssistantConfig.apiKey || ''
+    );
+    const [temperature, setTemperature] = useLocalStorage(
+      'ai-assistant-temperature',
+      aiAssistantConfig.temperature || 0.8
+    );
+    const [topP, setTopP] = useLocalStorage('ai-assistant-top-p', aiAssistantConfig.topP || 0.8);
+    const [baseUrl, setBaseUrl] = useLocalStorage(
+      'ai-assistant-base-url',
+      aiAssistantConfig.baseUrl || 'http://localhost:11434'
+    );
     const [connectionError, setConnectionError] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
     const [isRunning, setIsRunning] = useState(false);
