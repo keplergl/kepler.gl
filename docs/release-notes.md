@@ -17,7 +17,7 @@ By leveraging the efficiency of vector tiles, users can visualize complex, large
 
 ### DuckDB Support
 
-Leverage DuckDB directly within kepler.gl your geospatial projects with big data. Write and execute SQL queries to perform custom analyses, instantly visualizing the results on your map.
+Leverage DuckDB directly within kepler.gl your geospatial projects with big data. Write and execute SQL queries to perform custom analyses, visualizing the results on your map.
  
 DuckDB enables in-browser data processing, allowing you to work with large datasets without the need for external infrastructure.
 
