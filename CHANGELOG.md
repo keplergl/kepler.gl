@@ -15,6 +15,8 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+## [3.1.0] - January 28 2025
+
 ## [3.1.0-alpha.7] - January 27 2025
 
 - 7356c5afe [fix] hotfix for arrow saving / loading, without support of binary data (#2943)
