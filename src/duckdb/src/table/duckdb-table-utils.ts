@@ -10,6 +10,73 @@
 // TODO: Remove once Kepler.gl is upgraded to loaders.gl 4.4+
 
 import {DataType} from 'apache-arrow/type';
+import {DuckDBDataProtocol} from '@duckdb/duckdb-wasm';
+
+import {getDuckDB} from '../init';
+
+export async function tableFromFile(file) {
+  if (!file) return;
+
+  const db = await getDuckDB();
+  const c = await db.connect();
+
+  try {
+    await db.registerFileHandle(file.name, file, DuckDBDataProtocol.BROWSER_FILEREADER, true);
+
+    const tableName = file.name;
+    const sourceName = file.name;
+
+    const fileExtensions = ['arrow', 'csv', 'geojson', 'json', 'parquet'];
+    const fileExt = fileExtensions.find(ext => file.name.endsWith(ext));
+    if (fileExt === 'csv') {
+      const createTableSql = `
+          CREATE TABLE '${tableName}' AS
+          SELECT *
+          FROM read_csv('${sourceName}', header = true, auto_detect = true, sample_size = -1);
+        `;
+      await c.query(createTableSql);
+    } else if (fileExt === 'json') {
+      const createTableSql = `
+          CREATE TABLE '${tableName}' AS
+          SELECT *
+          FROM read_json_auto('${sourceName}');
+        `;
+      await c.query(createTableSql);
+    } else if (fileExt === 'geojson') {
+      const createTableSql = `
+          install spatial;
+          load spatial;
+          CREATE TABLE '${tableName}' AS
+          SELECT *
+          FROM ST_READ('${sourceName}', keep_wkb = TRUE);
+        `;
+      await c.query(createTableSql);
+    } else if (fileExt === 'parquet') {
+      const createTableSql = `
+          
+          CREATE TABLE '${tableName}' AS
+          SELECT *
+          FROM read_parquet('${sourceName}')
+        `;
+      await c.query(createTableSql);
+    } else if (fileExt === 'arrow') {
+      // TODO - how to insert arrow file handle?
+      /*
+        const setupSql = `
+          install spatial;
+          load spatial;
+        `;
+        await c.query(setupSql);
+        // ???
+        await c.insertArrowTable(arrowTable, {name: this.label});
+        */
+    }
+
+    // TODO - types like arrowSchemaToFields
+  } catch (err) {}
+
+  c.close();
+}
 
 /** Checks whether the given Apache Arrow JS type is a Point data type */
 export function isGeoArrowPoint(type: DataType) {

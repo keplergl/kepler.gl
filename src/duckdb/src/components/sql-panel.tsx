@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import * as arrow from 'apache-arrow';
-import React, {useCallback, useState, useEffect} from 'react';
+import React, {useCallback, useState, useEffect, useRef} from 'react';
 import {useDispatch} from 'react-redux';
 import styled from 'styled-components';
 import {Panel, PanelGroup, PanelResizeHandle} from 'react-resizable-panels';
@@ -13,10 +13,12 @@ import {getDuckDB} from '../init';
 import {Button, IconButton, Tooltip} from '@kepler.gl/components';
 import {generateHashId} from '@kepler.gl/common-utils';
 import {addDataToMap} from '@kepler.gl/actions';
-import {Icons, LoadingSpinner} from '@kepler.gl/components';
+import {FileDrop, Icons, LoadingSpinner} from '@kepler.gl/components';
 import {sidePanelBg, panelBorderColor} from '@kepler.gl/styles';
 import {isAppleDevice} from '@kepler.gl/utils';
 import {arrowSchemaToFields} from '@kepler.gl/processors';
+
+import {tableFromFile} from '../table/duckdb-table-utils';
 
 const StyledSqlPanel = styled.div`
   display: flex;
@@ -114,6 +116,17 @@ const StyledErrorContainer = styled.pre`
   overflow: auto;
 `;
 
+interface StyledDragPanelProps {
+  dragOver?: boolean;
+}
+
+const StyledFileDropArea = styled(FileDrop)<StyledDragPanelProps>`
+  height: 100%;
+  border-width: 1px;
+  border: 1px ${props => (props.dragOver ? 'solid' : 'dashed')}
+    ${props => (props.dragOver ? props.theme.subtextColorLT : 'transparent')};
+`;
+
 type SqlPanelProps = {
   initialSql?: string;
 };
@@ -125,6 +138,8 @@ export const SqlPanel: React.FC<SqlPanelProps> = ({initialSql = ''}) => {
     const params = new URLSearchParams(window.location.search);
     return params.get('sql') || initialSql;
   });
+  const [droppedFile, setDroppedFile] = useState<File | null>(null);
+  const [dragState, setDragState] = useState(false);
   const [result, setResult] = useState<null | arrow.Table>(null);
   const [error, setError] = useState<Error | null>(null);
   const [counter, setCounter] = useState(0);
@@ -132,6 +147,8 @@ export const SqlPanel: React.FC<SqlPanelProps> = ({initialSql = ''}) => {
   const [isRunning, setIsRunning] = useState(false);
   const [isMac] = useState(() => isAppleDevice());
   const dispatch = useDispatch();
+
+  const droppedFileAreaRef = useRef(null);
 
   useEffect(() => {
     const currentUrl = new URL(window.location.href);
@@ -195,11 +212,62 @@ export const SqlPanel: React.FC<SqlPanelProps> = ({initialSql = ''}) => {
     setCounter(counter + 1);
   }, [result, counter, dispatch]);
 
+  const isValidFileType = useCallback(filename => {
+    const fileExtensions = ['arrow', 'csv', 'geojson', 'json', 'parquet'];
+    const fileExt = fileExtensions.find(ext => filename.endsWith(ext));
+    return Boolean(fileExt);
+  }, []);
+
+  useEffect(() => {
+    createTableFromDroppedFile(droppedFile);
+  }, [droppedFile]);
+
+  const createTableFromDroppedFile = useCallback(async droppedFile => {
+    await tableFromFile(droppedFile);
+
+    setDroppedFile(null);
+    setDragState(false);
+  }, []);
+
+  const handleFileInput = useCallback((fileList: FileList, event: any) => {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+
+    const files = [...fileList].filter(Boolean);
+
+    const disableExtensionFilter = false;
+
+    const filesToLoad: File[] = [];
+    const errorFiles: string[] = [];
+    for (const file of files) {
+      if (disableExtensionFilter || isValidFileType(file.name)) {
+        filesToLoad.push(file);
+      } else {
+        errorFiles.push(file.name);
+      }
+    }
+
+    if (filesToLoad.length > 0) {
+      setDroppedFile(filesToLoad[0]);
+    }
+  }, []);
+
   return (
     <StyledSqlPanel>
       <PanelGroup direction="horizontal">
         <Panel defaultSize={20} minSize={15} style={SCHEMA_PANEL_STYLE}>
-          <SchemaPanel setTableSchema={setTableSchema} />
+          <StyledFileDropArea
+            dragOver={dragState}
+            onDragOver={() => setDragState(true)}
+            onDragLeave={() => setDragState(false)}
+            frame={droppedFileAreaRef.current || document}
+            onDrop={handleFileInput}
+            className="file-uploader__file-drop"
+          >
+            <SchemaPanel setTableSchema={setTableSchema} droppedFile={droppedFile} />
+          </StyledFileDropArea>
         </Panel>
 
         <StyledResizeHandle />

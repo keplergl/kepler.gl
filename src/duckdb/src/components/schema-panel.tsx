@@ -63,12 +63,12 @@ function getSchemaSuggestion(result) {
     return accu.concat(columns);
   }, []);
 }
-export const SchemaPanel = ({setTableSchema}) => {
+export const SchemaPanel = ({setTableSchema, droppedFile}) => {
   const [columnSchemas, setColumnSchemas] = useState<TreeNodeData<{type: string}>[]>([]);
   const datasets = useSelector((state: State) => state?.demo?.keplerGl?.map?.visState.datasets);
   useEffect(() => {
     getTableSchema();
-  }, [datasets]);
+  }, [datasets, droppedFile]);
   const getTableSchema = useCallback(async () => {
     const db = await getDuckDB();
     const c = await db.connect();
