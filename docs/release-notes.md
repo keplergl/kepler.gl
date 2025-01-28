@@ -8,7 +8,7 @@ _Released January, 2025_
 
 ### Vector Tiles 
 
-The new [Vector Tile layer](/docs/user-guides/c-types-of-layers/vector.md) allows the map to dynamically retrieve data based on the user's viewport and zoom level. This initial release supports both Mapbox vector tiles and remote .pmtiles.
+The new [Vector Tile layer](/docs/user-guides/c-types-of-layers/vector.md) allows the map to dynamically retrieve data based on the user's viewport and zoom level. This initial release supports both Mapbox Vector Tiles and PMTiles.
 
 By leveraging the efficiency of vector tiles, users can visualize complex, large-scale datasets without compromising performance, making it easier to explore and analyze geospatial data.
 
