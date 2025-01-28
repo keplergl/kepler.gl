@@ -1,5 +1,7 @@
 # SQL/DuckDB Data Explorer 
 
+> Note: This feature is currently undergoing development. Stay tuned for updates!
+
 The new SQL data explorer provides a DucKDB instance where you can use SQL to transform and add data to the map.
 
 <!-- Image -->
