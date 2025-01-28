@@ -17,9 +17,23 @@ import ApiKey from '../icons/api-key';
 import {testApiKey} from '@openassistant/core';
 
 const PROVIDER_MODELS = {
-  openai: ['o1-mini', 'o1-preview', 'gpt-4o', 'gpt-4o-mini', 'gpt-3.5-turbo-0125', 'gpt-3.5-turbo'],
+  deepseek: ['deepseek-chat', 'deepseek-reasoner'],
+  openai: [
+    'o1-mini',
+    'o1-preview',
+    'o1',
+    'gpt-4o',
+    'gpt-4o-mini',
+    'gpt-3.5-turbo-0125',
+    'gpt-3.5-turbo'
+  ],
   google: ['gemini-2.0-flash-exp', 'gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-1.0-pro'],
   ollama: [
+    'deepseek-r1', // default 7b model
+    'deepseek-r1:14b',
+    'deepseek-r1:32b',
+    'deepseek-r1:70b',
+    'deepseek-r1:671b',
     'phi4',
     'qwen2.5-coder',
     'qwq',
@@ -191,29 +205,45 @@ function AiAssistantConfigFactory(RangeSlider: ReturnType<typeof RangeSliderFact
 
     const onStartChat = async () => {
       setIsRunning(true);
-      const {success, service} = await testApiKey({
-        modelProvider: provider,
-        modelName: model,
-        apiKey: apiKey,
-        baseUrl: baseUrl
-      });
-      const errorMessage = !success
-        ? service === 'ollama'
-          ? 'Connection failed: maybe invalid Ollama Base URL'
-          : 'Connection failed: maybe invalid API Key'
-        : '';
-      setConnectionError(!success);
-      setErrorMessage(errorMessage);
-      updateAiAssistantConfig({
-        provider: provider,
-        model: model,
-        apiKey: apiKey,
-        baseUrl: baseUrl,
-        isReady: success,
-        temperature: temperature,
-        topP: topP
-      });
-      setIsRunning(false);
+      try {
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Connection timeout after 15 seconds')), 15000);
+        });
+
+        const testPromise = testApiKey({
+          modelProvider: provider,
+          modelName: model,
+          apiKey: apiKey,
+          baseUrl: baseUrl
+        });
+
+        const result = (await Promise.race([testPromise, timeoutPromise])) as {
+          success: boolean;
+          service: string;
+        };
+        const {success, service} = result;
+        const errorMessage = !success
+          ? service === 'ollama'
+            ? 'Connection failed: maybe invalid Ollama Base URL'
+            : 'Connection failed: maybe invalid API Key'
+          : '';
+        setConnectionError(!success);
+        setErrorMessage(errorMessage);
+        updateAiAssistantConfig({
+          provider: provider,
+          model: model,
+          apiKey: apiKey,
+          baseUrl: baseUrl,
+          isReady: success,
+          temperature: temperature,
+          topP: topP
+        });
+      } catch (error) {
+        setConnectionError(true);
+        setErrorMessage(error instanceof Error ? error.message : 'Connection failed');
+      } finally {
+        setIsRunning(false);
+      }
     };
 
     return (
