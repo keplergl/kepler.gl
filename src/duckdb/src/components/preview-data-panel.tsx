@@ -143,11 +143,8 @@ const PreviewDataPanelWOTheme: React.FC<PreviewDataPanelProps> = ({
       cellSizeCache={cellSizeCache}
       dataContainer={dataContainer}
       pinnedColumns={pinnedColumns}
-      //   sortColumn={sortColumnConfig}
       copyTableColumn={copyTableColumn}
       pinTableColumn={pinTableColumn}
-      //   sortTableColumn={setTableSortColumn}
-      setColumnDisplayFormat={setColumnDisplayFormat ?? (() => null)}
     />
   );
 };

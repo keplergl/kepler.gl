@@ -6,7 +6,13 @@ import {initializeDuckDb} from './init';
 export const keplerGlDuckDBPlugin = {
   name: 'duckdb',
   async init() {
-    await initializeDuckDb();
+    await initializeDuckDb({
+      config: {
+        query: {
+          castBigIntToDouble: true
+        }
+      }
+    });
     console.log('kepler.gl DuckDB Plugin initialized');
   }
 };
