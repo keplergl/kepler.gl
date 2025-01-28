@@ -12,11 +12,11 @@ The following tables describe every setting in the Vector Tile layer.
 
 ## Basic
 
-Core settings for the Vector Layer.
+Core settings for the Vector layer.
 
 | Setting    | Description                                  |
 | ---------- | -------------------------------------------- |
-| Layer Type | Must be Vector Tile to use the Vector Layer. |
+| Layer Type | Must be Vector Tile to use the Vector layer. |
 
 ## Fill Color
 
@@ -26,12 +26,12 @@ Settings related to the fill color of the vector data.
 | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Color Based On | The field to base the fill color on.                                                                                                                   |
 | Color Scale    | The color scale and palette for the fill color.                                                                     |
-| Dynamic Color  | Enable to estimate color range and scale based on data visible in the current viewport. When panning the map, the color scale will update dynamically. |
+| Dynamic Color  | Enable to estimate color range and scale based on tiles selected for rendering. When panning the map, the color scale will update dynamically. |
 | Opacity        | The opacity of the fill color. 100 = fully opaque, 0 = fully transparent.                                                                              |
 
 ## Stroke Color
 
-Settings related to the stroke/outline color of the vector layer.
+Settings related to the stroke/outline color of the Vector layer.
 
 | Setting               | Description                                                                        |
 | --------------------- | ---------------------------------------------------------------------------------- |
@@ -42,7 +42,7 @@ Settings related to the stroke/outline color of the vector layer.
 
 ## Stroke Width
 
-Settings related to the stroke/outline width of the vector layer.
+Settings related to the stroke/outline width of the Vector layer.
 
 | Setting             | Description                                                                                                                            |
 | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
@@ -53,7 +53,9 @@ Settings related to the stroke/outline width of the vector layer.
 
 ## Height
 
-Height settings for the vector layer. Height is best viewed with the 3D  viewing mode.
+> Note: Height only affects polygons on your map, not points.
+
+Height settings for the Vector layer. Height is best viewed with the 3D viewing mode.
 
 | Setting         | Description                                        |
 | --------------- | -------------------------------------------------- |
