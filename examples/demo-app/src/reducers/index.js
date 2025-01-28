@@ -27,7 +27,7 @@ import {
 import {CLOUD_PROVIDERS_CONFIGURATION} from '../constants/default-settings';
 import {generateHashId} from '../utils/strings';
 
-// initialize kepler application with duckdb plugin
+// initialize kepler demo-app with duckdb plugin
 initApplicationConfig({
   plugins: [keplerGlDuckdbPlugin],
   table: KeplerGlDuckDbTable,
