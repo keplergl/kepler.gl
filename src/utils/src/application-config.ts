@@ -34,6 +34,9 @@ export type KeplerApplicationConfig<Map> = {
   // KeplerTable alternative
   // TODO improve typing by exporting KeplerTable interface to @kepler.gl/types
   table?: any;
+
+  // disable progressive loading for arrow files
+  useArrowProgressiveLoading?: boolean;
 };
 
 const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig<mapboxgl.Map>> = {
@@ -65,7 +68,9 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig<mapboxgl.Map>
   plugins: [],
   // The default table class is KeplerTable.
   // TODO include KeplerTable here when the circular dependency with @kepler.gl/table and @kepler.gl/utils are resolved.
-  table: null
+  table: null,
+
+  useArrowProgressiveLoading: true
 };
 
 const applicationConfig: Required<KeplerApplicationConfig<mapboxgl.Map>> =
