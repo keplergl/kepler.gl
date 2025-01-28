@@ -15,7 +15,9 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
-## [3.1.0] - January 28 2025
+## [3.1.0] - January 29 2025
+
+- ...
 
 ## [3.1.0-alpha.7] - January 27 2025
 
