@@ -197,7 +197,7 @@ const loadRemoteDatasetProcessedSuccess = (state, action) => {
       parsedConfig.mapState.maxZoom = config.config.mapState.maxZoom;
     }
     if (typeof config?.config?.mapState?.minZoom === 'number') {
-      parsedConfig.mapState.minZoom = config.config.mapState.maxZoom;
+      parsedConfig.mapState.minZoom = config.config.mapState.minZoom;
     }
   }
 
