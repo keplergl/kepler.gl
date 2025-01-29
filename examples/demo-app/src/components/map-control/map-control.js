@@ -27,13 +27,6 @@ const StyledProjectPanel = styled.div`
     font-weight: 500;
     display: flex;
     justify-content: space-between;
-
-    div {
-      .release-icon {
-        font-size: 20px;
-        padding-left: 10px;
-      }
-    }
   }
 
   .project-description {
@@ -181,10 +174,7 @@ export function BannerMapPanel() {
       {isActive ? (
         <StyledProjectPanel>
           <div className="project-title">
-            <div>
-              {'Kepler.gl 3.1 is here!'}
-              <span className="release-icon">{'🚀'}</span>
-            </div>
+            <div>{'Kepler.gl 3.1 + DuckDB is here!'}</div>
 
             <CloseButton
               onClick={() => {
