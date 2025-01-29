@@ -186,7 +186,7 @@ export const SqlPanel: React.FC<SqlPanelProps> = ({initialSql = ''}) => {
       },
       info: {
         id: generateHashId(),
-        label: `Query Result${counter > 0 ? ` (${counter})` : ''}`,
+        label: `query-result-${counter > 0 ? `${counter}` : ''}`,
         format: 'arrow'
       }
     };
