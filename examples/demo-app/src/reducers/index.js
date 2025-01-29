@@ -31,7 +31,8 @@ import {generateHashId} from '../utils/strings';
 initApplicationConfig({
   plugins: [keplerGlDuckdbPlugin],
   table: KeplerGlDuckDbTable,
-  useArrowProgressiveLoading: false
+  useArrowProgressiveLoading: false,
+  showReleaseBanner: false
 });
 
 const {DEFAULT_MAP_CONTROLS} = uiStateUpdaters;
