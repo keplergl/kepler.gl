@@ -27,13 +27,6 @@ const StyledProjectPanel = styled.div`
     font-weight: 500;
     display: flex;
     justify-content: space-between;
-
-    div {
-      .release-icon {
-        font-size: 20px;
-        padding-left: 10px;
-      }
-    }
   }
 
   .project-description {
@@ -181,10 +174,7 @@ export function BannerMapPanel() {
       {isActive ? (
         <StyledProjectPanel>
           <div className="project-title">
-            <div>
-              {'Kepler.gl 3.1 is here!'}
-              <span className="release-icon">{'🚀'}</span>
-            </div>
+            <div>{'Kepler.gl 3.1 + DuckDB is here!'}</div>
 
             <CloseButton
               onClick={() => {
@@ -196,7 +186,7 @@ export function BannerMapPanel() {
           <div className="project-description">
             <ReactMarkdown components={{a: LinkRenderer}}>
               {
-                'Check out our new [DuckDB plugin preview](https://kepler-preview.foursquare.com) for data analysis, exploration and in-browser data processing in Kepler.gl.'
+                '[Click here](https://kepler-preview.foursquare.com) to check out the preview of Kepler.gl 3.1 with DuckDB enabled!'
               }
             </ReactMarkdown>
           </div>
