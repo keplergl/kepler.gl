@@ -102,8 +102,8 @@ export const propertiesV1 = {
 };
 
 /**
- * Prepare data for plain export as part of json / html.
- * 1) Arrow tables can store Timestamps as BigInts, convert to ISOString compatible with Kepler.gl timestamp / TIMESTAMP.
+ * Prepare a data container for export as part of json / html.
+ * 1) Arrow tables can store Timestamps as BigInts, so convert numbers to ISOStrings compatible with Kepler.gl's TIMESTAMP.
  * @param dataContainer A data container to flatten.
  * @returns Row based data.
  */
