@@ -1,21 +1,23 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useState} from 'react';
 import classnames from 'classnames';
-import styled from 'styled-components';
-import {Icons, IconRoundSmall, MapControlButton} from '@kepler.gl/components';
-
+import React, {useState} from 'react';
 import ReactMarkdown from 'react-markdown';
+import styled from 'styled-components';
+import {useLocalStorage} from 'usehooks-ts';
+
+import {Icons, IconRoundSmall, MapControlButton} from '@kepler.gl/components';
+import {getApplicationConfig} from '@kepler.gl/utils';
 
 const StyledFloatingPanel = styled.div`
   margin-right: 12px;
-  margin-top: 20px;
+  margin-top: 12px;
 `;
 
 const StyledProjectPanel = styled.div`
   background: ${props => props.theme.panelBackground};
-  padding: 16px 20px;
+  padding: 16px 16px 16px 20px;
   width: 280px;
   box-shadow: ${props => props.theme.panelBoxShadow};
 
@@ -25,6 +27,13 @@ const StyledProjectPanel = styled.div`
     font-weight: 500;
     display: flex;
     justify-content: space-between;
+
+    div {
+      .release-icon {
+        font-size: 20px;
+        padding-left: 10px;
+      }
+    }
   }
 
   .project-description {
@@ -39,7 +48,7 @@ const StyledProjectPanel = styled.div`
   }
 
   .project-links {
-    margin-top: 20px;
+    margin-top: 16px;
     width: 100%;
     display: flex;
     align-items: center;
@@ -137,6 +146,59 @@ export function SampleMapPanel(props) {
               iconComponent={Icons.CodeAlt}
               height="17px"
             />
+          </div>
+        </StyledProjectPanel>
+      ) : (
+        <MapControlButton
+          className={classnames('map-control-button', 'info-panel', {isActive})}
+          onClick={e => {
+            e.preventDefault();
+            setActive(true);
+          }}
+        >
+          <Icons.Docs height="18px" />
+        </MapControlButton>
+      )}
+    </StyledFloatingPanel>
+  );
+}
+
+export function BannerMapPanel(props) {
+  const [isActive, setActive] = useState(true);
+  // Once the banner is closed, the user won't see the banner during next sessions.
+  const [showBanner, setShowBanner] = useLocalStorage(
+    'show-duckdb-preview-banner',
+    getApplicationConfig().showReleaseBanner
+  );
+  const [wasVisible] = useState(showBanner);
+
+  if (!showBanner && !wasVisible) {
+    return null;
+  }
+
+  return (
+    <StyledFloatingPanel>
+      {isActive ? (
+        <StyledProjectPanel>
+          <div className="project-title">
+            <div>
+              {'Kepler.gl 3.1 is here!'}
+              <span className="release-icon">{'🚀'}</span>
+            </div>
+
+            <CloseButton
+              onClick={() => {
+                setShowBanner(false);
+                setActive(false);
+              }}
+            />
+          </div>
+          <div className="project-description">
+            <ReactMarkdown components={{a: LinkRenderer}}>
+              {
+                'Check out our new [DuckDB plugin preview](https://kepler-preview.foursquare.com) for data analysis, exploration and in-browser data processing in Kepler.gl.'
+              }
+            </ReactMarkdown>
           </div>
         </StyledProjectPanel>
       ) : (
