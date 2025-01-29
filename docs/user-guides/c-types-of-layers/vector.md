@@ -3,9 +3,7 @@
 
 Vector layers use the three basic GIS features – lines, points, and polygons – to represent real-world features in digital format.
 
-
-{% embed url="https://4sq-studio-public.s3.us-west-2.amazonaws.com/statics/keplergl/images/kepler-gl-vector-tiles-fsq.mp4" %}
-
+![Vector layer](https://4sq-studio-public.s3.us-west-2.amazonaws.com/statics/keplergl/images/kepler-vector.gif 'Vector layer')
 
 # Settings
 
@@ -64,17 +62,6 @@ Height settings for the Vector layer. Height is best viewed with the 3D viewing 
 | Height Based On | A column to base the height on.                |
 | Height Scale    | Choose from linear, sqrt, and log.                 |
 | Fixed Height    | Applies height without additional modifications.   |
-
-
-<!-- Remove after testing -->
-
-## Video Alternative 
-
-<video controls autoplay loop>
-  <source src="https://4sq-studio-public.s3.us-west-2.amazonaws.com/statics/keplergl/images/kepler-gl-vector-tiles-fsq.mp4" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
-
 
 
 

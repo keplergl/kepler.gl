@@ -1,6 +1,7 @@
 # Table of contents
 
 * [Welcome](README.md)
+* [What's new?](docs/release-notes.md)
 * [Docs](docs/README.md)
   * [User guides](docs/user-guides/README.md)
     * [Get Started](docs/user-guides/j-get-started.md)
