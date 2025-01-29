@@ -10,6 +10,7 @@ import {KeplerTable} from '@kepler.gl/table';
 import {VERSIONS} from './versions';
 import Schema from './schema';
 import {getFieldsFromData, getSampleForTypeAnalyze} from '@kepler.gl/common-utils';
+import {ArrowDataContainer, DataContainerInterface} from '@kepler.gl/utils';
 
 export type SavedField = {
   name: string;
@@ -100,6 +101,32 @@ export const propertiesV1 = {
   disableDataOperation: null
 };
 
+/**
+ * Prepare data for plain export as part of json / html.
+ * 1) Arrow tables can store Timestamps as BigInts, convert to ISOString compatible with Kepler.gl timestamp / TIMESTAMP.
+ * @param dataContainer A data container to flatten.
+ * @returns Row based data.
+ */
+const getAllDataForSaving = (dataContainer: DataContainerInterface): any[][] => {
+  const allData = dataContainer.flattenData();
+
+  if (dataContainer instanceof ArrowDataContainer) {
+    const numColumns = dataContainer.numColumns();
+
+    for (let columnIndex = 0; columnIndex < numColumns; ++columnIndex) {
+      const column = dataContainer.getColumn(columnIndex);
+      // TODO why arrow.Type.Timestamp is undefined?
+      if (column.type.typeId === 10) {
+        allData.forEach(row => {
+          row[columnIndex] = new Date(row[columnIndex]).toISOString();
+        });
+      }
+    }
+  }
+
+  return allData;
+};
+
 export class DatasetSchema extends Schema {
   key = 'dataset';
 
@@ -107,7 +134,7 @@ export class DatasetSchema extends Schema {
     const datasetFlattened = dataset.dataContainer
       ? {
           ...dataset,
-          allData: dataset.dataContainer.flattenData(),
+          allData: getAllDataForSaving(dataset.dataContainer),
           // we use flattenData to save arrow tables,
           // but once flattened it's not an arrow file anymore.
           metadata: {
