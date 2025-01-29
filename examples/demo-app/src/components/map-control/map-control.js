@@ -196,7 +196,7 @@ export function BannerMapPanel() {
           <div className="project-description">
             <ReactMarkdown components={{a: LinkRenderer}}>
               {
-                'Check out our new [DuckDB plugin preview](https://kepler-preview.foursquare.com) for data analysis, exploration and in-browser data processing in Kepler.gl.'
+                '[Click here](https://kepler-preview.foursquare.com) to check out the preview of Kepler.gl 3.1 with DuckDB enabled!'
               }
             </ReactMarkdown>
           </div>
