@@ -2,16 +2,11 @@
 
 > Note: This feature is currently undergoing development. Stay tuned for updates!
 
-kepler.gl's AI assistant can help with many steps of your geospatial analysis:
-
-- Data Loading: Assists with SQL queries, data filtering, and data interpretation.
-- Basic Visualization: Helps customize base maps, color schemes, and other layer elements.
-- Advanced Analysis: Can help with tasks like spatial joins between points and polygons, creating histograms and scatter plots, and much more.
-
+The AI assistant in Kepler.gl is not only a LLM based chatbot, it is engineered to help users with creating maps and analyzing their spatial data. The AI assistant provides a new way that allows users to interact with the data and the map in a more natural and creative way.
 
 ![AI Assistant](https://4sq-studio-public.s3.us-west-2.amazonaws.com/statics/keplergl/images/kepler-ai-assistant.png)
 
-While you can chat with it using the model and provider of your choosing, kepler.gl's AI assistant is heavily integrated with the mapping application, automatically updating the map, synchronizing selections between the AI assistant panel and the layers, and much more.
+Create a geojson layer using population with quantile color scale, and update its colors inspired by Van Gogh's Starry Night.` or `Check the correlation between temperature and precipitation in the dataset.
 
 
 ## Supported Providers
