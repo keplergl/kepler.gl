@@ -15,25 +15,8 @@ import {
 import {AiAssistantConfig} from '../index';
 import ApiKey from '../icons/api-key';
 import {testApiKey} from '@openassistant/core';
-
-const PROVIDER_MODELS = {
-  openai: ['o1-mini', 'o1-preview', 'gpt-4o', 'gpt-4o-mini', 'gpt-3.5-turbo-0125', 'gpt-3.5-turbo'],
-  google: ['gemini-2.0-flash-exp', 'gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-1.0-pro'],
-  ollama: [
-    'phi4',
-    'qwen2.5-coder',
-    'qwq',
-    'llama3.3',
-    'llama3.2',
-    'llama3.1',
-    'llama3.1:70b',
-    'qwen2',
-    'llava',
-    'mistral',
-    'gemma2',
-    'phi3.5'
-  ]
-};
+import PROVIDER_MODELS from '../config/models.json';
+import {useLocalStorage} from 'usehooks-ts';
 
 type ThemeProps = {theme: any};
 
@@ -143,12 +126,27 @@ function AiAssistantConfigFactory(RangeSlider: ReturnType<typeof RangeSliderFact
   const AiAssistantConfig: React.FC<
     AiAssistantConfigProps & WrappedComponentProps & ThemeProps
   > = ({intl, aiAssistantConfig, updateAiAssistantConfig}) => {
-    const [provider, setProvider] = useState(aiAssistantConfig.provider || 'openai');
-    const [model, setModel] = useState(aiAssistantConfig.model || PROVIDER_MODELS[provider][0]);
-    const [apiKey, setApiKey] = useState(aiAssistantConfig.apiKey || '');
-    const [temperature, setTemperature] = useState(aiAssistantConfig.temperature || 0.8);
-    const [topP, setTopP] = useState(aiAssistantConfig.topP || 0.8);
-    const [baseUrl, setBaseUrl] = useState(aiAssistantConfig.baseUrl || 'http://localhost:11434');
+    const [provider, setProvider] = useLocalStorage(
+      'ai-assistant-provider',
+      aiAssistantConfig.provider || 'openai'
+    );
+    const [model, setModel] = useLocalStorage(
+      'ai-assistant-model',
+      aiAssistantConfig.model || PROVIDER_MODELS[provider][0]
+    );
+    const [apiKey, setApiKey] = useLocalStorage(
+      'ai-assistant-api-key',
+      aiAssistantConfig.apiKey || ''
+    );
+    const [temperature, setTemperature] = useLocalStorage(
+      'ai-assistant-temperature',
+      aiAssistantConfig.temperature || 0.8
+    );
+    const [topP, setTopP] = useLocalStorage('ai-assistant-top-p', aiAssistantConfig.topP || 0.8);
+    const [baseUrl, setBaseUrl] = useLocalStorage(
+      'ai-assistant-base-url',
+      aiAssistantConfig.baseUrl || 'http://localhost:11434'
+    );
     const [connectionError, setConnectionError] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
     const [isRunning, setIsRunning] = useState(false);
@@ -191,29 +189,45 @@ function AiAssistantConfigFactory(RangeSlider: ReturnType<typeof RangeSliderFact
 
     const onStartChat = async () => {
       setIsRunning(true);
-      const {success, service} = await testApiKey({
-        modelProvider: provider,
-        modelName: model,
-        apiKey: apiKey,
-        baseUrl: baseUrl
-      });
-      const errorMessage = !success
-        ? service === 'ollama'
-          ? 'Connection failed: maybe invalid Ollama Base URL'
-          : 'Connection failed: maybe invalid API Key'
-        : '';
-      setConnectionError(!success);
-      setErrorMessage(errorMessage);
-      updateAiAssistantConfig({
-        provider: provider,
-        model: model,
-        apiKey: apiKey,
-        baseUrl: baseUrl,
-        isReady: success,
-        temperature: temperature,
-        topP: topP
-      });
-      setIsRunning(false);
+      try {
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Connection timeout after 15 seconds')), 15000);
+        });
+
+        const testPromise = testApiKey({
+          modelProvider: provider,
+          modelName: model,
+          apiKey: apiKey,
+          baseUrl: baseUrl
+        });
+
+        const result = (await Promise.race([testPromise, timeoutPromise])) as {
+          success: boolean;
+          service: string;
+        };
+        const {success, service} = result;
+        const errorMessage = !success
+          ? service === 'ollama'
+            ? 'Connection failed: maybe invalid Ollama Base URL'
+            : 'Connection failed: maybe invalid API Key'
+          : '';
+        setConnectionError(!success);
+        setErrorMessage(errorMessage);
+        updateAiAssistantConfig({
+          provider: provider,
+          model: model,
+          apiKey: apiKey,
+          baseUrl: baseUrl,
+          isReady: success,
+          temperature: temperature,
+          topP: topP
+        });
+      } catch (error) {
+        setConnectionError(true);
+        setErrorMessage(error instanceof Error ? error.message : 'Connection failed');
+      } finally {
+        setIsRunning(false);
+      }
     };
 
     return (

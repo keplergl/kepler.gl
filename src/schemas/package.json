@@ -40,6 +40,7 @@
     "@types/keymirror": "^0.1.1",
     "@types/lodash.clonedeep": "^4.5.7",
     "@types/lodash.pick": "^4.4.6",
+    "apache-arrow": ">=15.0.0",
     "global": "^4.3.0",
     "keymirror": "^0.1.1",
     "lodash.clonedeep": "^4.0.1",

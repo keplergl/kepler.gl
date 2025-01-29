@@ -72,7 +72,8 @@ import {
   updateFilterPlot,
   removeFilterPlot,
   isLayerAnimatable,
-  isSideFilter
+  isSideFilter,
+  getApplicationConfig
 } from '@kepler.gl/utils';
 import {generateHashId, toArray} from '@kepler.gl/common-utils';
 // Mergers
@@ -2789,7 +2790,9 @@ export const nextFileBatchUpdater = (
   });
 
   return withTask(stateWithProgress, [
-    ...(fileName.endsWith('arrow') && accumulated?.data?.length > 0
+    ...(getApplicationConfig().useArrowProgressiveLoading &&
+    fileName.endsWith('arrow') &&
+    accumulated?.data?.length > 0
       ? [
           PROCESS_FILE_DATA({content: accumulated, fileCache: []}).bimap(
             result => loadFilesSuccess(result),

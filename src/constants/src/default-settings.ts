@@ -536,13 +536,13 @@ export const TABLE_OPTION_LIST: TableOption[] = [
     value: TABLE_OPTION.SORT_ASC,
     display: 'Sort Ascending',
     icon: 'ArrowUp',
-    condition: props => props.sortMode !== SORT_ORDER.ASCENDING
+    condition: props => props.sortTableColumn && props.sortMode !== SORT_ORDER.ASCENDING
   },
   {
     value: TABLE_OPTION.SORT_DES,
     display: 'Sort Descending',
     icon: 'ArrowDown',
-    condition: props => props.sortMode !== SORT_ORDER.DESCENDING
+    condition: props => props.sortTableColumn && props.sortMode !== SORT_ORDER.DESCENDING
   },
   {
     value: TABLE_OPTION.UNSORT,
@@ -563,7 +563,12 @@ export const TABLE_OPTION_LIST: TableOption[] = [
     condition: props => props.isPinned
   },
   {value: TABLE_OPTION.COPY, display: 'Copy Column', icon: 'Clipboard'},
-  {value: TABLE_OPTION.FORMAT_COLUMN, display: 'Format Column', icon: 'Hash'}
+  {
+    value: TABLE_OPTION.FORMAT_COLUMN,
+    display: 'Format Column',
+    icon: 'Hash',
+    condition: props => props.setDisplayFormat
+  }
 ];
 
 const YELLOW = '248, 194, 28';

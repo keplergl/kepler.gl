@@ -11,8 +11,7 @@ import {processGeojson, processRowObject, processArrowTable} from '@kepler.gl/pr
 import keplerGlReducer, {combinedUpdaters, uiStateUpdaters} from '@kepler.gl/reducers';
 import KeplerGlSchema from '@kepler.gl/schemas';
 import {KeplerTable} from '@kepler.gl/table';
-import {getApplicationConfig, initApplicationConfig} from '@kepler.gl/utils';
-// import keplerGlDuckdbPlugin, {KeplerGlDuckDbTable} from '@kepler.gl/duckdb';
+import {getApplicationConfig} from '@kepler.gl/utils';
 
 import {
   INIT,
@@ -26,12 +25,6 @@ import {
 
 import {CLOUD_PROVIDERS_CONFIGURATION} from '../constants/default-settings';
 import {generateHashId} from '../utils/strings';
-
-// initialize kepler application with duckdb plugin
-initApplicationConfig({
-  // plugins: [keplerGlDuckdbPlugin],
-  // table: KeplerGlDuckDbTable
-});
 
 const {DEFAULT_MAP_CONTROLS} = uiStateUpdaters;
 

@@ -3,14 +3,16 @@
 
 import React from 'react';
 import styled from 'styled-components';
+
+import {AiAssistantControlFactory, AiAssistantManagerFactory} from '@kepler.gl/ai-assistant';
 import {
   withState,
   MapControlFactory,
   EffectControlFactory,
   EffectManagerFactory
 } from '@kepler.gl/components';
-import {AiAssistantControlFactory, AiAssistantManagerFactory} from '@kepler.gl/ai-assistant';
-import {SampleMapPanel} from '../components/map-control/map-control';
+
+import {BannerMapPanel, SampleMapPanel} from '../components/map-control/map-control';
 import SqlPanelControlFactory from '../components/map-control/sql-panel-control';
 
 const StyledMapControlPanel = styled.div`
@@ -87,6 +89,7 @@ function CustomMapControlFactory(
         fullHeight={showAiAssistant}
       >
         <StyledMapControlPanel>
+          {<BannerMapPanel {...props} />}
           {!props.isExport && props.currentSample ? <SampleMapPanel {...props} /> : null}
           <MapControl {...props} top={0} actionComponents={actionComponents} />
         </StyledMapControlPanel>
