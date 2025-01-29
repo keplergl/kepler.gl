@@ -4,7 +4,9 @@
 
 The AI assistant in Kepler.gl is not only a LLM based chatbot, it is engineered to help users with creating maps and analyzing their spatial data. The AI assistant provides a new way that allows users to interact with the data and the map in a more natural and creative way.
 
-Create a geojson layer using population with quantile colr scale, and update its colors inspired by Van Gogh's Starry Night.` or `Check the correlation between temperature and precipitation in the dataset.
+![AI Assistant](https://4sq-studio-public.s3.us-west-2.amazonaws.com/statics/keplergl/images/kepler-ai-assistant.png)
+
+Create a geojson layer using population with quantile color scale, and update its colors inspired by Van Gogh's Starry Night.` or `Check the correlation between temperature and precipitation in the dataset.
 
 
 ## Supported Providers
