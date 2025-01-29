@@ -20543,6 +20543,7 @@ __metadata:
     typedoc-plugin-markdown: "npm:^3.0.11"
     typescript: "npm:4.7.2"
     url-loader: "npm:^4.1.1"
+    usehooks-ts: "npm:^3.1.0"
     watchify: "npm:^3.6.1"
     webpack: "npm:^4.29.0"
     webpack-bundle-analyzer: "npm:^3.3.2"
