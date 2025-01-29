@@ -163,7 +163,7 @@ export function SampleMapPanel(props) {
   );
 }
 
-export function BannerMapPanel(props) {
+export function BannerMapPanel() {
   const [isActive, setActive] = useState(true);
   // Once the banner is closed, the user won't see the banner during next sessions.
   const [showBanner, setShowBanner] = useLocalStorage(
