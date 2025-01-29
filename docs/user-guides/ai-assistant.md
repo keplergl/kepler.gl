@@ -44,11 +44,7 @@ This feature enables users to capture a screenshot anywhere within kepler.gl app
 
 For example, users can take a screenshot of the map (or partial of the map) and ask questions about the map e.g. *`how many counties are in this screenshot`*, or take a screenshot of the layer configuration panel and ask questions about how to use it, e.g. *`How can I adjust the opacity`*. Users can even take a screenshot of the plots in the chat panel and ask questions about the plots e.g. *`Can you give me a summary of the plot?`*.
 
-<<<<<<< HEAD
-<!-- image 1 -->
-=======
 ![Screenshot to ask](https://4sq-studio-public.s3.us-west-2.amazonaws.com/statics/keplergl/images/kepler-ai-assistant-screenshot.png 'Screenshot to ask')
->>>>>>> 898d3024 (added proper image fallback text)
 
 #### How to use this feature?
 
@@ -65,11 +61,7 @@ This feature enables users to "talk" to the AI assistant. After clicking the "Ta
 
 When using the voice-to-text feature for the first time, users will be prompted to grant microphone access. The browser will display a permission dialog that looks like this:
 
-<<<<<<< HEAD
-<!-- image 2-->
-=======
 ![Talk to ask](https://4sq-studio-public.s3.us-west-2.amazonaws.com/statics/keplergl/images/kepler-ai-assistant-talk-to-ask.png 'Talk to ask')
->>>>>>> 898d3024 (added proper image fallback text)
 
 After granting access, users can start talking to the AI assistant.
 
@@ -87,11 +79,7 @@ Function calling enables the AI Assistant to perform specialized tasks that LLMs
 
 Yes, the data you used in kepler.gl stays within the browser, and will **never** be sent to the LLM. Using function tools, we can engineer the AI assistant to use only the meta data for function calling, e.g. the name of the dataset, the name of the layer, the name of the variables, etc. Here is a process diagram to show how the AI assistant works:
 
-<<<<<<< HEAD
-<!-- image 3 -->
-=======
 ![AI Assistant Diagram](https://4sq-studio-public.s3.us-west-2.amazonaws.com/statics/keplergl/images/kepler-ai-assistant-diagram.png 'AI Assistant Diagram')
->>>>>>> 898d3024 (added proper image fallback text)
 
 ### Actions available to use
 
@@ -147,9 +135,5 @@ The regression details include:
 
 This scatter plot can help users to explore the relationship between two variables, and explore the heterogeneity of the data by selecting different points.
 
-<<<<<<< HEAD
-<!-- image 4 -->
-=======
 ![Scatterplot](https://4sq-studio-public.s3.us-west-2.amazonaws.com/statics/keplergl/images/kepler-ai-assistant-scatterplot.png 'Scatterplot')
->>>>>>> 898d3024 (added proper image fallback text)
 
