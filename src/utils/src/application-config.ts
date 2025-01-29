@@ -73,7 +73,7 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig<mapboxgl.Map>
   table: null,
 
   useArrowProgressiveLoading: true,
-  showReleaseBanner: false
+  showReleaseBanner: true
 };
 
 const applicationConfig: Required<KeplerApplicationConfig<mapboxgl.Map>> =
