@@ -113,7 +113,7 @@ export const KEPLER_GL_WEBSITE = 'http://kepler.gl/';
 export const DIMENSIONS = {
   sidePanel: {
     width: 300,
-    margin: {top: 20, left: 20, bottom: 30, right: 20},
+    margin: {top: 12, left: 12, bottom: 12, right: 20},
     headerHeight: 96
   },
   mapControl: {
@@ -536,13 +536,13 @@ export const TABLE_OPTION_LIST: TableOption[] = [
     value: TABLE_OPTION.SORT_ASC,
     display: 'Sort Ascending',
     icon: 'ArrowUp',
-    condition: props => props.sortMode !== SORT_ORDER.ASCENDING
+    condition: props => props.sortTableColumn && props.sortMode !== SORT_ORDER.ASCENDING
   },
   {
     value: TABLE_OPTION.SORT_DES,
     display: 'Sort Descending',
     icon: 'ArrowDown',
-    condition: props => props.sortMode !== SORT_ORDER.DESCENDING
+    condition: props => props.sortTableColumn && props.sortMode !== SORT_ORDER.DESCENDING
   },
   {
     value: TABLE_OPTION.UNSORT,
@@ -563,7 +563,12 @@ export const TABLE_OPTION_LIST: TableOption[] = [
     condition: props => props.isPinned
   },
   {value: TABLE_OPTION.COPY, display: 'Copy Column', icon: 'Clipboard'},
-  {value: TABLE_OPTION.FORMAT_COLUMN, display: 'Format Column', icon: 'Hash'}
+  {
+    value: TABLE_OPTION.FORMAT_COLUMN,
+    display: 'Format Column',
+    icon: 'Hash',
+    condition: props => props.setDisplayFormat
+  }
 ];
 
 const YELLOW = '248, 194, 28';
@@ -1254,7 +1259,8 @@ export const DATASET_FORMATS = keyMirror({
   geojson: null,
   csv: null,
   keplergl: null,
-  arrow: null
+  arrow: null,
+  duckdb: null
 });
 
 export const MAP_CONTROLS = keyMirror({

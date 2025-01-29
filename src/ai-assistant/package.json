@@ -1,7 +1,7 @@
 {
   "name": "@kepler.gl/ai-assistant",
   "author": "Xun Li<lixun910@gmail.com>",
-  "version": "3.1.0-alpha.6",
+  "version": "3.1.0-alpha.7",
   "description": "kepler.gl AI assistant",
   "license": "MIT",
   "main": "dist/index.js",
@@ -30,21 +30,21 @@
     "umd"
   ],
   "dependencies": {
-    "@kepler.gl/components": "3.1.0-alpha.6",
-    "@kepler.gl/constants": "3.1.0-alpha.6",
-    "@kepler.gl/layers": "3.1.0-alpha.6",
-    "@kepler.gl/table": "3.1.0-alpha.6",
-    "@kepler.gl/types": "3.1.0-alpha.6",
-    "@kepler.gl/utils": "3.1.0-alpha.6",
-    "@openassistant/core": "^0.0.6",
-    "@openassistant/duckdb": "^0.0.6",
+    "@kepler.gl/components": "3.1.0-alpha.7",
+    "@kepler.gl/constants": "3.1.0-alpha.7",
+    "@kepler.gl/layers": "3.1.0-alpha.7",
+    "@kepler.gl/table": "3.1.0-alpha.7",
+    "@kepler.gl/types": "3.1.0-alpha.7",
+    "@kepler.gl/utils": "3.1.0-alpha.7",
+    "@openassistant/core": "^0.0.7",
     "@openassistant/echarts": "^0.0.6",
     "@openassistant/geoda": "^0.0.6",
     "@openassistant/ui": "^0.0.7",
     "color-interpolate": "^1.0.5",
     "echarts": "^5.5.1",
     "global": "^4.3.0",
-    "react-intl": "^6.3.0"
+    "react-intl": "^6.3.0",
+    "usehooks-ts": "^3.1.0"
   },
   "nyc": {
     "sourceMap": false,

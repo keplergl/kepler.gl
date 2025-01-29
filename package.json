@@ -1,7 +1,7 @@
 {
   "name": "kepler.gl",
   "author": "Shan He <shan@uber.com>",
-  "version": "3.1.0-alpha.6",
+  "version": "3.1.0-alpha.7",
   "description": "kepler.gl is a webgl based application to visualize large scale location data in the browser",
   "license": "MIT",
   "main": "dist/index.js",
@@ -42,7 +42,7 @@
     "url": "https://github.com/keplergl/kepler.gl.git"
   },
   "scripts": {
-    "bootstrap": "PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true yarn install && yarn fix-dependencies",
+    "bootstrap": "PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true git submodule update --init --recursive && yarn install && yarn fix-dependencies",
     "install:example": "cd examples/demo-app && NODE_OPTIONS=--openssl-legacy-provider yarn",
     "install:web": "yarn install:example && cd website && yarn",
     "install-and-start": "node ./scripts/install-and-start",
@@ -104,10 +104,11 @@
     "@deck.gl/mapbox": "^8.9.27",
     "@hubble.gl/core": "1.2.0-alpha.6",
     "@hubble.gl/react": "1.2.0-alpha.6",
-    "@kepler.gl/components": "3.1.0-alpha.6",
+    "@kepler.gl/components": "3.1.0-alpha.7",
     "@loaders.gl/polyfills": "^4.3.2",
     "@types/mapbox__geo-viewport": "^0.4.1",
     "html-webpack-plugin": "^4.3.0",
+    "monaco-editor": "^0.52.0",
     "typedoc": "^0.19.2"
   },
   "devDependencies": {

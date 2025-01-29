@@ -70,7 +70,7 @@ export type FormatterDropdownProps = {
   top: number;
   isOpened: boolean;
   displayFormat?: string;
-  setDisplayFormat: (displayFormat: TooltipFormat) => void;
+  setDisplayFormat?: (displayFormat: TooltipFormat) => void;
   onClose: () => void;
   formatLabels: TooltipFormat[];
 };
@@ -91,7 +91,7 @@ export const FormatterDropdown: React.FC<FormatterDropdownProps> = (
 
   const onSelectDisplayFormat = useCallback(
     result => {
-      setDisplayFormat(result);
+      setDisplayFormat?.(result);
       onClose();
     },
     [setDisplayFormat, onClose]
@@ -117,10 +117,10 @@ export interface OptionDropdownProps {
   column: string;
   colMeta: ColMeta;
   toggleMoreOptions: (column: string) => void;
-  sortTableColumn: (sort: string) => void;
+  sortTableColumn?: (sort: string) => void;
   pinTableColumn: () => void;
   copyTableColumn: () => void;
-  setDisplayFormat: (displayFormat: any) => void;
+  setDisplayFormat?: (displayFormat: any) => void;
   sortMode?: string;
   isSorted?: string;
   isPinned?: boolean;
@@ -142,13 +142,13 @@ const OptionDropdown = (props: OptionDropdownProps) => {
     ({value}) => {
       switch (value) {
         case TABLE_OPTION.SORT_ASC:
-          sortTableColumn(SORT_ORDER.ASCENDING);
+          sortTableColumn?.(SORT_ORDER.ASCENDING);
           break;
         case TABLE_OPTION.SORT_DES:
-          sortTableColumn(SORT_ORDER.DESCENDING);
+          sortTableColumn?.(SORT_ORDER.DESCENDING);
           break;
         case TABLE_OPTION.UNSORT:
-          sortTableColumn(SORT_ORDER.UNSORT);
+          sortTableColumn?.(SORT_ORDER.UNSORT);
           break;
         case TABLE_OPTION.PIN:
           pinTableColumn();

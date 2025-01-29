@@ -243,13 +243,12 @@ export function processGeojson(rawData: unknown): ProcessorResult {
       `Read File Failed: File is not a valid GeoJSON. Read more about [supported file format](${GUIDES_FILE_FORMAT_DOC})`
     );
     throw error;
-    // fail to normalize geojson
   }
-  // console.log(normalizedGeojson);
 
+  // @ts-expect-error Don't pass empty fields, as duck db outputs an empty dataset
   return {
-    rows: normalizedGeojson,
+    rows: normalizedGeojson
     // TODO get fields to preserve field names?
-    fields: []
+    // fields: []
   };
 }

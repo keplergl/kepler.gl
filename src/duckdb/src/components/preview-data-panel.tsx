@@ -59,8 +59,6 @@ const PreviewDataPanelWOTheme: React.FC<PreviewDataPanelProps> = ({
   const [pinnedColumns, setPinnedColumns] = useState<string[]>(defaultPinnedColumns);
   const fields = useMemo(() => arrowSchemaToFields(result.schema), [result.schema]);
   const dataContainer = useMemo(() => {
-    // const fields = arrowSchemaToFields(result.schema);
-
     const cols = [...Array(result.numCols).keys()].map(i => result.getChildAt(i));
 
     const dataContainer = createDataContainer(cols, {
@@ -145,11 +143,8 @@ const PreviewDataPanelWOTheme: React.FC<PreviewDataPanelProps> = ({
       cellSizeCache={cellSizeCache}
       dataContainer={dataContainer}
       pinnedColumns={pinnedColumns}
-      //   sortColumn={sortColumnConfig}
       copyTableColumn={copyTableColumn}
       pinTableColumn={pinTableColumn}
-      //   sortTableColumn={setTableSortColumn}
-      setColumnDisplayFormat={setColumnDisplayFormat ?? (() => null)}
     />
   );
 };

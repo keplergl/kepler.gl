@@ -41,6 +41,7 @@ import {
   setFilter,
   processFileContent,
   fitBounds as fitMapBounds,
+  setLoadingIndicator,
   toggleLayerForMap,
   applyFilterConfig
 } from '@kepler.gl/actions';
@@ -71,7 +72,8 @@ import {
   updateFilterPlot,
   removeFilterPlot,
   isLayerAnimatable,
-  isSideFilter
+  isSideFilter,
+  getApplicationConfig
 } from '@kepler.gl/utils';
 import {generateHashId, toArray} from '@kepler.gl/common-utils';
 // Mergers
@@ -2327,17 +2329,23 @@ export const updateVisDataUpdater = (
       })
     : state;
 
+  // indicate that something is in progress
+  const setIsLoadingTask = ACTION_TASK().map(() => {
+    return setLoadingIndicator({change: 1});
+  });
+  const updatedState = withTask(previousState, setIsLoadingTask);
+
   const datasets = toArray(action.datasets);
 
   const allCreateDatasetsTasks = datasets.map(
     ({info = {}, ...rest}) => createNewDataEntry({info, ...rest}, state.datasets) || {}
   );
   // call all Tasks
-  const tasks = Task.allSettled(allCreateDatasetsTasks).map(results =>
+  const datasetTasks = Task.allSettled(allCreateDatasetsTasks).map(results =>
     createNewDatasetSuccess({results, addToMapOptions: options})
   );
 
-  return withTask(previousState, tasks);
+  return withTask(updatedState, datasetTasks);
 };
 
 export const createNewDatasetSuccessUpdater = (
@@ -2376,7 +2384,16 @@ export const createNewDatasetSuccessUpdater = (
     layerMergers
   };
 
-  return applyMergersUpdater(mergedState, {mergers: datasetMergers, postMergerPayload});
+  const updatedState = applyMergersUpdater(mergedState, {
+    mergers: datasetMergers,
+    postMergerPayload
+  });
+
+  // resolve active loading initiated by updateVisDataUpdater
+  const setIsLoadingTask = ACTION_TASK().map(() => {
+    return setLoadingIndicator({change: -1});
+  });
+  return withTask(updatedState, setIsLoadingTask);
 };
 
 /**
@@ -2773,7 +2790,9 @@ export const nextFileBatchUpdater = (
   });
 
   return withTask(stateWithProgress, [
-    ...(fileName.endsWith('arrow') && accumulated?.data?.length > 0
+    ...(getApplicationConfig().useArrowProgressiveLoading &&
+    fileName.endsWith('arrow') &&
+    accumulated?.data?.length > 0
       ? [
           PROCESS_FILE_DATA({content: accumulated, fileCache: []}).bimap(
             result => loadFilesSuccess(result),

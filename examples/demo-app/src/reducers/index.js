@@ -26,6 +26,8 @@ import {
 import {CLOUD_PROVIDERS_CONFIGURATION} from '../constants/default-settings';
 import {generateHashId} from '../utils/strings';
 
+const {DEFAULT_MAP_CONTROLS} = uiStateUpdaters;
+
 // INITIAL_APP_STATE
 const initialAppState = {
   appName: 'example',
@@ -75,6 +77,20 @@ const demoReducer = combineReducers({
           ...DEFAULT_EXPORT_MAP[[EXPORT_MAP_FORMATS.HTML]],
           exportMapboxAccessToken: CLOUD_PROVIDERS_CONFIGURATION.EXPORT_MAPBOX_TOKEN
         }
+      },
+      mapControls: {
+        ...DEFAULT_MAP_CONTROLS,
+        // TODO find a better way not to add extra controls optionally - from plugin?
+        ...((getApplicationConfig().plugins || []).some(p => p.name === 'duckdb')
+          ? {
+              sqlPanel: {
+                active: false,
+                activeMapIndex: 0,
+                disableClose: false,
+                show: true
+              }
+            }
+          : {})
       }
     },
     visState: {

@@ -472,6 +472,8 @@ export type UiState = {
   filterPanelListView: PanelListView;
   // side panel close button visibility
   isSidePanelCloseButtonVisible: boolean | null;
+  // positive value indicates that something is loading
+  loadingIndicatorValue?: number;
 };
 
 /** Width of viewport */
