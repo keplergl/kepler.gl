@@ -8,15 +8,15 @@ import {CLOUD_PROVIDERS_CONFIGURATION} from '../constants/default-settings';
 import FoursquareProvider from './foursquare/foursquare-provider';
 
 const {
-  DROPBOX_CLIENT_ID,
-  CARTO_CLIENT_ID,
+  // DROPBOX_CLIENT_ID,
+  // CARTO_CLIENT_ID,
   FOURSQUARE_CLIENT_ID,
   FOURSQUARE_DOMAIN,
   FOURSQUARE_API_URL,
   FOURSQUARE_USER_MAPS_URL
 } = CLOUD_PROVIDERS_CONFIGURATION;
 
-const DROPBOX_CLIENT_NAME = 'Kepler.gl Demo App';
+// const DROPBOX_CLIENT_NAME = 'Kepler.gl Demo App';
 
 export const DEFAULT_CLOUD_PROVIDER = 'dropbox';
 
