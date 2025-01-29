@@ -3,6 +3,7 @@
 
 import pick from 'lodash.pick';
 import {console as globalConsole} from 'global/window';
+import {Type as ArrowTypes} from 'apache-arrow';
 
 import {DATASET_FORMATS} from '@kepler.gl/constants';
 import {ProtoDataset, RGBColor, JsonObject} from '@kepler.gl/types';
@@ -102,6 +103,7 @@ export const propertiesV1 = {
 };
 
 /**
+ * TODO Consider moving this cast to ArrowDataContainer?
  * Prepare a data container for export as part of json / html.
  * 1) Arrow tables can store Timestamps as BigInts, so convert numbers to ISOStrings compatible with Kepler.gl's TIMESTAMP.
  * @param dataContainer A data container to flatten.
@@ -115,8 +117,12 @@ const getAllDataForSaving = (dataContainer: DataContainerInterface): any[][] => 
 
     for (let columnIndex = 0; columnIndex < numColumns; ++columnIndex) {
       const column = dataContainer.getColumn(columnIndex);
-      // TODO why arrow.Type.Timestamp is undefined?
-      if (column.type.typeId === 10) {
+      const typeId = column.type?.typeId;
+      if (
+        typeId === ArrowTypes.Timestamp ||
+        typeId === ArrowTypes.Date ||
+        typeId === ArrowTypes.Time
+      ) {
         allData.forEach(row => {
           row[columnIndex] = new Date(row[columnIndex]).toISOString();
         });
