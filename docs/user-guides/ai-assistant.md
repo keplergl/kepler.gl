@@ -8,9 +8,11 @@ kepler.gl's AI assistant can help with many steps of your geospatial analysis:
 - Basic Visualization: Helps customize base maps, color schemes, and other layer elements.
 - Advanced Analysis: Can help with tasks like spatial joins between points and polygons, creating histograms and scatter plots, and much more.
 
+
+![AI Assistant](https://4sq-studio-public.s3.us-west-2.amazonaws.com/statics/keplergl/images/kepler-ai-assistant.png)
+
 While you can chat with it using the model and provider of your choosing, kepler.gl's AI assistant is heavily integrated with the mapping application, automatically updating the map, synchronizing selections between the AI assistant panel and the layers, and much more.
 
-<!-- Gif -->
 
 ## Supported Providers
 

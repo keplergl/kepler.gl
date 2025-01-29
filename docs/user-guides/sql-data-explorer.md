@@ -4,8 +4,7 @@
 
 The new SQL data explorer provides a DucKDB instance where you can use SQL to transform and add data to the map.
 
-<!-- Image -->
-
+![SQL Data Explorer](https://4sq-studio-public.s3.us-west-2.amazonaws.com/statics/keplergl/images/kepler-duck-db.png)
 
 You will need local data (i.e. data upload for your machine) or data accessible via a remote URL.
 
@@ -17,6 +16,5 @@ The data does not need to be pre-loaded to kepler -- you may also select data re
 SELECT * FROM 'https://raw.githubusercontent.com/keplergl/kepler.gl-data/refs/heads/master/earthquakes/data.csv'
 ```
 
-<!-- Image/gif -->
 
 Once you have a data selection you are satisfied with, click **Add to Map**. Your new dataset will be added to kepler. If you have a column that contains recognizable geography data, (i.e. lat/lng columns or polygon geometries), layers will automatically be created.
