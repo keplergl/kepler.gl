@@ -3,7 +3,7 @@
 
 Vector layers use the three basic GIS features – lines, points, and polygons – to represent real-world features in digital format.
 
-![Vector layer](https://4sq-studio-public.s3.us-west-2.amazonaws.com/statics/keplergl/images/kepler-vector.gif)
+![Vector layer](https://4sq-studio-public.s3.us-west-2.amazonaws.com/statics/keplergl/images/kepler-vector.gif 'Vector layer')
 
 # Settings
 

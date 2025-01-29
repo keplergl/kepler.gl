@@ -4,7 +4,7 @@
 
 The new SQL data explorer provides a DucKDB instance where you can use SQL to transform and add data to the map.
 
-![SQL Data Explorer](https://4sq-studio-public.s3.us-west-2.amazonaws.com/statics/keplergl/images/kepler-duck-db.png)
+![SQL Data Explorer](https://4sq-studio-public.s3.us-west-2.amazonaws.com/statics/keplergl/images/kepler-duck-db.png 'SQL Data Explorer')
 
 You will need local data (i.e. data upload for your machine) or data accessible via a remote URL.
 
