@@ -4097,9 +4097,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@openassistant/core@npm:^0.0.6":
-  version: 0.0.6
-  resolution: "@openassistant/core@npm:0.0.6"
+"@openassistant/core@npm:^0.0.7":
+  version: 0.0.7
+  resolution: "@openassistant/core@npm:0.0.7"
   dependencies:
     "@langchain/core": "npm:^0.3.26"
     "@langchain/google-genai": "npm:^0.1.6"
@@ -4108,7 +4108,7 @@ __metadata:
     axios: "npm:^1.7.9"
   peerDependencies:
     react: ">=18.2"
-  checksum: 10c0/cf88b2b503f99877820822a6c5f47133ae2d5bbb8ea4b714598833b79ebb30a990e6f4fa8b8ae654a37ad36462db0ddabbf71354ed5049cb1400ea7cfa31a2e0
+  checksum: 10c0/ac9432dbda04528197a8d1d69133054f5c87dbc9706412db47cfbff7e797821e163505b1c45304cb3dba52f4c67f9864b93e2d3c0e285d953676a27ee666a83d
   languageName: node
   linkType: hard
 
@@ -13018,7 +13018,7 @@ __metadata:
     "@loaders.gl/csv": "npm:^4.3.2"
     "@loaders.gl/json": "npm:^4.3.2"
     "@loaders.gl/parquet": "npm:^4.3.2"
-    "@openassistant/core": "npm:^0.0.6"
+    "@openassistant/core": "npm:^0.0.7"
     "@openassistant/ui": "npm:^0.0.7"
     "@types/classnames": "npm:^2.3.1"
     "@types/keymirror": "npm:^0.1.1"
@@ -13045,6 +13045,7 @@ __metadata:
     redux-logger: "npm:^3.0.6"
     redux-thunk: "npm:^1.0.0"
     styled-components: "npm:6.1.8"
+    usehooks-ts: "npm:^3.1.0"
   languageName: unknown
   linkType: soft
 
@@ -14222,6 +14223,17 @@ __metadata:
   peerDependencies:
     react: ^16.8.0 || ^17.0.0 || ^18.0.0
   checksum: 10c0/23b1597c10adf15b26ade9e8c318d8cc0abc9ec0ab5fc7ca7338da92e89c2536abd150a5891bf076836c352fdfa104fc7231fb48f806fd9960e0cbe03601abaf
+  languageName: node
+  linkType: hard
+
+"usehooks-ts@npm:^3.1.0":
+  version: 3.1.0
+  resolution: "usehooks-ts@npm:3.1.0"
+  dependencies:
+    lodash.debounce: "npm:^4.0.8"
+  peerDependencies:
+    react: ^16.8.0  || ^17 || ^18
+  checksum: 10c0/2204d8c95109302bdaaa51a66bf216f3dba750f1d2795c20ecba75ba1c44a070a253935d537ef536514ab6e363bcc02ccc78b5ad63576ff8d880d577cf3fc48f
   languageName: node
   linkType: hard
 

@@ -30,7 +30,7 @@
     "@loaders.gl/csv": "^4.3.2",
     "@loaders.gl/json": "^4.3.2",
     "@loaders.gl/parquet": "^4.3.2",
-    "@openassistant/core": "^0.0.6",
+    "@openassistant/core": "^0.0.7",
     "@openassistant/ui": "^0.0.7",
     "@types/classnames": "^2.3.1",
     "@types/keymirror": "^0.1.1",
@@ -55,7 +55,8 @@
     "redux-actions": "^2.2.1",
     "redux-logger": "^3.0.6",
     "redux-thunk": "^1.0.0",
-    "styled-components": "6.1.8"
+    "styled-components": "6.1.8",
+    "usehooks-ts": "^3.1.0"
   },
   "resolutions": {
     "@luma.gl/core": "8.5.21",

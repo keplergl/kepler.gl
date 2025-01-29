@@ -212,6 +212,7 @@
     "typedoc-plugin-markdown": "^3.0.11",
     "typescript": "4.7.2",
     "url-loader": "^4.1.1",
+    "usehooks-ts": "^3.1.0",
     "watchify": "^3.6.1",
     "webpack": "^4.29.0",
     "webpack-bundle-analyzer": "^3.3.2",

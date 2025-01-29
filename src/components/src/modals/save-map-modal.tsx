@@ -61,6 +61,10 @@ const StyledSaveMapModal = styled.div.attrs({
   }
 `;
 
+const StyledCompactExportSection = styled(StyledExportSection)`
+  margin: 5px 0;
+`;
+
 const nop = () => {
   return;
 };
@@ -224,7 +228,7 @@ function SaveMapModalFactory() {
                     </div>
                   </StyledExportSection>
                 ) : null}
-                <StyledExportSection>
+                <StyledCompactExportSection>
                   <div className="description image-preview-panel">
                     <ImagePreview
                       exportImage={exportImage}
@@ -246,7 +250,7 @@ function SaveMapModalFactory() {
                       onChangeInput={onChangeInput}
                     />
                   )}
-                </StyledExportSection>
+                </StyledCompactExportSection>
               </>
             )}
             {providerError ? (
