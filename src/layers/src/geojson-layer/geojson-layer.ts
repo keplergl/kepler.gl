@@ -612,6 +612,8 @@ export default class GeoJsonLayer extends Layer {
           ...columnConfig,
           columnMode: COLUMN_MODE_TABLE
         });
+      } else {
+        return this;
       }
     }
 

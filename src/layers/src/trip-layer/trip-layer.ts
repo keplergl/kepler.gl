@@ -407,6 +407,8 @@ export default class TripLayer extends Layer {
           ...columnConfig,
           columnMode: COLUMN_MODE_TABLE
         });
+      } else {
+        return this;
       }
     }
 
