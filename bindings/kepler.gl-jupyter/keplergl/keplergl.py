@@ -49,7 +49,11 @@ def _df_to_dict(df):
     - dictionary: a dictionary variable that can be used in Kepler.gl
 
     '''
-    return df.to_dict('split')
+    df_copy = df.copy()
+    for col in df_copy.columns:
+        if pd.api.types.is_datetime64_any_dtype(df_copy[col]):
+            df_copy[col] = df_copy[col].astype(str)
+    return df_copy.to_dict('split')
 
 
 def _df_to_arrow(df: pd.DataFrame):
