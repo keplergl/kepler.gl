@@ -50,9 +50,14 @@ def _df_to_dict(df):
 
     '''
     df_copy = df.copy()
+    # Convert all columns that aren't JSON serializable to strings
     for col in df_copy.columns:
-        if pd.api.types.is_datetime64_any_dtype(df_copy[col]):
+        try:
+            # just check the first item in the colum
+            json.dumps(df_copy[col].iloc[0] if len(df_copy) > 0 else None)
+        except (TypeError, OverflowError):
             df_copy[col] = df_copy[col].astype(str)
+
     return df_copy.to_dict('split')
 
 
