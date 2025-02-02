@@ -1,22 +1,30 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import * as arrow from 'apache-arrow';
 import React, {useCallback, useState, useEffect} from 'react';
 import {useDispatch} from 'react-redux';
 import styled from 'styled-components';
 import {Panel, PanelGroup, PanelResizeHandle} from 'react-resizable-panels';
-import MonacoEditor from './monaco-editor';
-import {SchemaPanel} from './schema-panel';
-import {PreviewDataPanel} from './preview-data-panel';
-import {getDuckDB} from '../init';
-import {Button, IconButton, Tooltip} from '@kepler.gl/components';
-import {generateHashId} from '@kepler.gl/common-utils';
+
 import {addDataToMap} from '@kepler.gl/actions';
-import {Icons, LoadingSpinner} from '@kepler.gl/components';
+import {generateHashId} from '@kepler.gl/common-utils';
+import {Button, IconButton, Icons, LoadingSpinner, Tooltip} from '@kepler.gl/components';
+
+import {arrowSchemaToFields} from '@kepler.gl/processors';
 import {sidePanelBg, panelBorderColor} from '@kepler.gl/styles';
 import {isAppleDevice} from '@kepler.gl/utils';
-import {arrowSchemaToFields} from '@kepler.gl/processors';
+
+import MonacoEditor from './monaco-editor';
+import {SchemaPanel} from './schema-panel';
+import {PreviewDataPanel, QueryResult} from './preview-data-panel';
+import {getDuckDB} from '../init';
+import {
+  constructST_asWKBQuery,
+  getDuckDBColumnTypes,
+  getDuckDBColumnTypesMap,
+  getGeometryColumns,
+  setGeoArrowWKBExtension
+} from '../table/duckdb-table-utils';
 
 const StyledSqlPanel = styled.div`
   display: flex;
@@ -125,7 +133,7 @@ export const SqlPanel: React.FC<SqlPanelProps> = ({initialSql = ''}) => {
     const params = new URLSearchParams(window.location.search);
     return params.get('sql') || initialSql;
   });
-  const [result, setResult] = useState<null | arrow.Table>(null);
+  const [result, setResult] = useState<null | QueryResult>(null);
   const [error, setError] = useState<Error | null>(null);
   const [counter, setCounter] = useState(0);
   const [tableSchema, setTableSchema] = useState([]);
@@ -154,8 +162,22 @@ export const SqlPanel: React.FC<SqlPanelProps> = ({initialSql = ''}) => {
       const db = await getDuckDB();
       const connection = await db.connect();
 
-      const arrowResult = await connection.query(sql);
-      setResult(arrowResult);
+      // FIND a cheap way to get DuckDb types with a single query - temp table? cte?
+      const tableName = 'temp_keplergl_table';
+
+      await connection.query(`CREATE OR REPLACE TABLE '${tableName}' AS ${sql}`);
+
+      const duckDbColumns = await getDuckDBColumnTypes(connection, tableName);
+      const columnsToConvertToWKB = getGeometryColumns(duckDbColumns);
+      const adjustedQuery = constructST_asWKBQuery(tableName, columnsToConvertToWKB);
+      const arrowResult = await connection.query(adjustedQuery);
+      setGeoArrowWKBExtension(arrowResult, duckDbColumns);
+
+      await connection.query(`DROP TABLE ${tableName};`);
+
+      const duckDbTypesMap = getDuckDBColumnTypesMap(duckDbColumns);
+
+      setResult({table: arrowResult, duckDbTypesMap});
       setError(null);
 
       connection.close();
@@ -176,13 +198,13 @@ export const SqlPanel: React.FC<SqlPanelProps> = ({initialSql = ''}) => {
   const onAddResultToMap = useCallback(() => {
     if (!result) return;
 
-    const keplerFields = arrowSchemaToFields(result.schema);
+    const keplerFields = arrowSchemaToFields(result.table, result.duckDbTypesMap);
 
     const datasetToAdd = {
       data: {
         fields: keplerFields,
         // TODO type AddDataToMapPayload -> rows -> + arrow.Table
-        rows: result as any
+        rows: result.table as any
       },
       info: {
         id: generateHashId(),
@@ -250,7 +272,7 @@ export const SqlPanel: React.FC<SqlPanelProps> = ({initialSql = ''}) => {
                       <Button secondary onClick={onAddResultToMap}>
                         Add to Map
                       </Button>
-                      <div>{result.numRows} rows</div>
+                      <div>{result.table.numRows} rows</div>
                     </StyledResultActions>
                     <PreviewDataPanel
                       result={result}

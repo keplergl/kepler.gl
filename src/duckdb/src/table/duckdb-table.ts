@@ -4,7 +4,7 @@
 import * as arrow from 'apache-arrow';
 import {AsyncDuckDB, AsyncDuckDBConnection} from '@duckdb/duckdb-wasm';
 
-import {DatasetType, DATASET_FORMATS} from '@kepler.gl/constants';
+import {DatasetType, DATASET_FORMATS, GEOARROW_EXTENSIONS} from '@kepler.gl/constants';
 import {KeplerTable} from '@kepler.gl/table';
 import {Field, ProtoDatasetField} from '@kepler.gl/types';
 import {
@@ -33,6 +33,13 @@ import {
   isGeoArrowMultiPolygon
 } from './duckdb-table-utils';
 
+import {
+  constructST_asWKBQuery,
+  getDuckDBColumnTypes,
+  getDuckDBColumnTypesMap,
+  getGeometryColumns
+} from '../table/duckdb-table-utils';
+
 // TODO use files from disk or url directly, without parsing by loaders and then ingection into DeckDb
 
 /**
@@ -52,9 +59,9 @@ const KEPLER_GEOM_FROM_GEOJSON_COLUMN = '_geojson';
  * Names of columns that most likely contain binary wkb geometry
  */
 const SUGGESTED_GEOM_COLUMNS = {
-  [KEPLER_GEOM_FROM_GEOJSON_COLUMN]: true,
-  [DUCKDB_GEOM_COLUMN]: true,
-  geometry: true
+  [KEPLER_GEOM_FROM_GEOJSON_COLUMN]: GEOARROW_EXTENSIONS.WKB,
+  [DUCKDB_GEOM_COLUMN]: GEOARROW_EXTENSIONS.WKB,
+  geometry: GEOARROW_EXTENSIONS.WKB
 };
 
 type ImportDataToDuckProps = {
@@ -65,7 +72,7 @@ type ImportDataToDuckProps = {
 
 type ImportDataToDuckResult = {
   // DuckDb drops geoarrow metadata, so try to preserve someting
-  addWKBMetadata?: Record<string, boolean>;
+  geoarrowMetadata?: Record<string, string>;
   // Use fields from arrow table even if fields are provided
   useNewFields?: boolean;
 };
@@ -77,12 +84,50 @@ type ImportDataToDuckResult = {
  * @returns An arrow table.
  */
 // TODO: consider using original drag&dropped arrow table, as it could contain extra metadata, not passed to the fields.
-const restoreArrowTable = (columns: arrow.Vector[], fields: ProtoDatasetField[]) => {
+const restoreArrowTable = (
+  columns: arrow.Vector[],
+  fields: ProtoDatasetField[],
+  arrowSchema?: arrow.Schema
+) => {
   const creaOpts = {};
   fields.map((field, index) => {
     creaOpts[field.name] = columns[index];
   });
-  return new arrow.Table(creaOpts);
+
+  return arrowSchema ? new arrow.Table(arrowSchema, creaOpts) : new arrow.Table(creaOpts);
+};
+
+/**
+ * DuckDb throws when geoarrow extensions are present in metadata.
+ * @param table An arrow table to clear from extensions.
+ * @returns A map of per field removed geoarrow extensions.
+ */
+const removeUnsupportedExtensions = (table: arrow.Table): Record<string, string> => {
+  const removedMetadata: Record<string, string> = {};
+  table.schema.fields.forEach(field => {
+    const extension = field.metadata.get('ARROW:extension:name');
+    if (extension?.startsWith('geoarrow')) {
+      removedMetadata[field.name] = extension;
+      field.metadata.delete('ARROW:extension:name');
+    }
+  });
+  return removedMetadata;
+};
+
+/**
+ * Restore removed metadata extensions after a call to removeUnsupportedExtensions.
+ * @param table An arrow table to restore extensions.
+ */
+const restoreUnsupportedExtensions = (
+  table: arrow.Table,
+  removedExtensions: Record<string, string>
+) => {
+  table.schema.fields.forEach(field => {
+    const extension = removedExtensions[field.name];
+    if (extension) {
+      field.metadata.set('ARROW:extension:name', extension);
+    }
+  });
 };
 
 const dropIfTableExists = async (c: AsyncDuckDBConnection, tableName: string) => {
@@ -157,18 +202,23 @@ export class KeplerGlDuckDbTable extends KeplerTable {
     }
 
     return {
-      addWKBMetadata: {[KEPLER_GEOM_FROM_GEOJSON_COLUMN]: true}
+      geoarrowMetadata: {[KEPLER_GEOM_FROM_GEOJSON_COLUMN]: GEOARROW_EXTENSIONS.WKB}
     };
   }
 
   async importArrowData({data, db, c}: ImportDataToDuckProps): Promise<ImportDataToDuckResult> {
+    let adjustedMetadata = {};
     try {
       // 1) data.rows contains an arrow table created by Add to Map data from DuckDb query.
       // 2) arrow table is in cols & fields when a file is dragged & dropped into Add Data To Map dialog.
       const arrowTable =
         data.rows instanceof arrow.Table
           ? data.rows
-          : restoreArrowTable(data.cols || [], data.fields);
+          : // @ts-expect-error original arrowSchema isn't defined in ProtoDataset
+            restoreArrowTable(data.cols || [], data.fields, data.arrowSchema);
+
+      // remove unsupported extensions that throw extensions in DuckDb
+      const removedExtensions = removeUnsupportedExtensions(arrowTable);
 
       const setupSql = `
         install spatial;
@@ -176,6 +226,11 @@ export class KeplerGlDuckDbTable extends KeplerTable {
       `;
       await c.query(setupSql);
       await c.insertArrowTable(arrowTable, {name: this.label});
+
+      // TODO DuckDb Geometry > Arrow WKB_BLOB > DuckDb BLOB
+
+      // restore unsupported extensions that throw extensions in DuckDb
+      restoreUnsupportedExtensions(arrowTable, removedExtensions);
     } catch (error) {
       // Known issues:
       // 1) Arrow Type with extension name: geoarrow.point and format: +w:2 is not currently supported in DuckDB.
@@ -183,8 +238,8 @@ export class KeplerGlDuckDbTable extends KeplerTable {
     }
 
     return {
-      addWKBMetadata: {...SUGGESTED_GEOM_COLUMNS},
-      // use metadata from arrow table
+      geoarrowMetadata: {...SUGGESTED_GEOM_COLUMNS, ...adjustedMetadata},
+      // use fields generated from the created arrow table
       useNewFields: true
     };
   }
@@ -228,27 +283,26 @@ export class KeplerGlDuckDbTable extends KeplerTable {
     let cols: arrow.Vector[] = [];
 
     try {
-      const {addWKBMetadata = {}, useNewFields = false} = importDetails || {};
+      const {geoarrowMetadata = {}, useNewFields = false} = importDetails || {};
 
-      // Try to figure out whether geometry should be transformed by ST_AsWKB
-      // TODO if canCastST_asWKB contains any keys then add ST_AsWKB to the following query
-      const canCastST_asWKB = await tryST_AsWKB({tableName, c});
+      const duckDbColumns = await getDuckDBColumnTypes(c, tableName);
+      const duckDbTypesMap = getDuckDBColumnTypesMap(duckDbColumns);
+      const columnsToConvertToWKB = getGeometryColumns(duckDbColumns);
+      const adjustedQuery = constructST_asWKBQuery(tableName, columnsToConvertToWKB);
+      const arrowResult = await c.query(adjustedQuery);
 
-      const getArrowQuery = `SELECT * FROM '${tableName}';`;
-      const arrowResult = await c.query(getArrowQuery);
+      // TODO if arrow table then just use the original one, instead of the new one form the query?
 
-      restoreGeoarrowMetadata(arrowResult, canCastST_asWKB, addWKBMetadata);
+      restoreGeoarrowMetadata(arrowResult, geoarrowMetadata);
 
       fields = useNewFields
-        ? arrowSchemaToFields(arrowResult.schema)
-        : data.fields ?? arrowSchemaToFields(arrowResult.schema);
+        ? arrowSchemaToFields(arrowResult, duckDbTypesMap)
+        : data.fields ?? arrowSchemaToFields(arrowResult, duckDbTypesMap);
       cols = [...Array(arrowResult.numCols).keys()]
         .map(i => arrowResult.getChildAt(i))
         .filter(col => col) as arrow.Vector[];
     } catch (error) {
-      // Known issues:
-      // 1) ST_AsWKB binder error, no type match
-      console.error('DuckDb table: binary geometry column to wkb', error);
+      console.error('DuckDb table: createTableAndGetArrow', error);
     }
 
     await c.close();
@@ -285,7 +339,6 @@ export class KeplerGlDuckDbTable extends KeplerTable {
     let format;
     if (inputFormat === DATASET_FORMATS.arrow || isArrowData(data)) {
       format = DATASET_FORMATS.arrow;
-      // TODO injest arrow files from disk without loaders
       processor = processArrowBatches;
     } else if (inputFormat === DATASET_FORMATS.keplergl || isKeplerGlMap(data)) {
       format = DATASET_FORMATS.keplergl;
@@ -310,58 +363,27 @@ export class KeplerGlDuckDbTable extends KeplerTable {
  * Try to restore geoarrow metadata lost during DuckDb ingestion.
  * Note that this function can generate wrong geometry types.
  * @param arrowTable Arrow table to update.
- * @param canCastST_asWKB A map with fields that are likely in DeckDB's internal WBK format.
- * @param addWKBMetadata A map with field names that usually used to store WKB geometry.
+ * @param geoarrowMetadata A map with field names that usually used to store geoarrow geometry.
  */
 const restoreGeoarrowMetadata = async (
   arrowTable: arrow.Table,
-  canCastST_asWKB: Record<string, boolean>,
-  addWKBMetadata: Record<string, boolean>
+  geoarrowMetadata: Record<string, string>
 ) => {
   arrowTable.schema.fields.forEach(f => {
-    if (arrow.DataType.isBinary(f.type) && (addWKBMetadata[f.name] || canCastST_asWKB[f.name])) {
-      f.metadata.set('ARROW:extension:name', 'geoarrow.wkb');
+    if (arrow.DataType.isBinary(f.type) && geoarrowMetadata[f.name]) {
+      f.metadata.set('ARROW:extension:name', geoarrowMetadata[f.name]);
     } else if (isGeoArrowPoint(f.type)) {
-      f.metadata.set('ARROW:extension:name', 'geoarrow.point');
+      f.metadata.set('ARROW:extension:name', GEOARROW_EXTENSIONS.POINT);
     } else if (isGeoArrowLineString(f.type)) {
-      f.metadata.set('ARROW:extension:name', 'geoarrow.linestring');
+      f.metadata.set('ARROW:extension:name', GEOARROW_EXTENSIONS.LINESTRING);
     } else if (isGeoArrowPolygon(f.type)) {
-      f.metadata.set('ARROW:extension:name', 'geoarrow.polygon');
+      f.metadata.set('ARROW:extension:name', GEOARROW_EXTENSIONS.POLYGON);
     } else if (isGeoArrowMultiPoint(f.type)) {
-      f.metadata.set('ARROW:extension:name', 'geoarrow.multipoint');
+      f.metadata.set('ARROW:extension:name', GEOARROW_EXTENSIONS.MULTIPOINT);
     } else if (isGeoArrowMultiLineString(f.type)) {
-      f.metadata.set('ARROW:extension:name', 'geoarrow.multilinestring');
+      f.metadata.set('ARROW:extension:name', GEOARROW_EXTENSIONS.MULTILINESTRING);
     } else if (isGeoArrowMultiPolygon(f.type)) {
-      f.metadata.set('ARROW:extension:name', 'geoarrow.multipolygon');
+      f.metadata.set('ARROW:extension:name', GEOARROW_EXTENSIONS.MULTIPOLYGON);
     }
   });
-};
-
-/**
- * For all binary columns tries to transform geometry from DuckDB's internal format into proper WKB.
- * @param props
- * @returns A map of fields that should be transformed to valid WKB.
- */
-const tryST_AsWKB = async (props: {tableName: string; c: AsyncDuckDBConnection}) => {
-  const {c, tableName} = props;
-
-  const resultWithSchema = await c.query(`
-        SELECT * FROM '${tableName}' LIMIT 0;
-      `);
-  const binaryColumns = resultWithSchema.schema.fields.filter(f => arrow.DataType.isBinary(f.type));
-
-  const canCastST_asWKB: Record<string, boolean> = {};
-  for (const column of binaryColumns) {
-    try {
-      const columnName = column.name;
-      const query = `SELECT * EXCLUDE ${columnName}, ST_AsWKB(${columnName}) as ${columnName} FROM '${tableName}' LIMIT 1;`;
-      await c.query(query);
-
-      canCastST_asWKB[column.name] = true;
-    } catch (error) {
-      canCastST_asWKB[column.name] = false;
-    }
-  }
-
-  return canCastST_asWKB;
 };

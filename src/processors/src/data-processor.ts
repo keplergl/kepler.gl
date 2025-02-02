@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import * as arrow from 'apache-arrow';
+import {range} from 'd3-array';
 import {csvParseRows} from 'd3-dsv';
 import {DATA_TYPES as AnalyzerDATA_TYPES} from 'type-analyzer';
 import normalize from '@mapbox/geojson-normalize';
@@ -393,27 +394,101 @@ export function processArrowTable(arrowTable: ArrowTable): ProcessorResult | nul
   return processArrowBatches(arrowTable.data.batches);
 }
 
-export function arrowSchemaToFields(schema: arrow.Schema): Field[] {
-  return schema.fields.map((field: arrow.Field, index: number) => {
-    const isGeoArrowColumn = field.metadata.get('ARROW:extension:name')?.startsWith('geoarrow');
+export function arrowSchemaToFields(
+  table: arrow.Table,
+  fieldTypeSuggestions: Record<string, string> = {}
+): Field[] {
+  // analyze fields with standard Kepler logic
+  const headerRow = table.schema.fields.map(f => f.name);
+  const sample = getSampleForTypeAnalyzeArrow(table, headerRow);
+  const keplerFields = getFieldsFromData(sample, headerRow);
+
+  return table.schema.fields.map((field: arrow.Field, fieldIndex: number) => {
+    let type = arrowDataTypeToFieldType(field.type);
+    let analyzerType = arrowDataTypeToAnalyzerDataType(field.type);
+    let format = '';
+
+    // geometry fields produced by DuckDb's st_asgeojson()
+    if (fieldTypeSuggestions[field.name] === 'JSON') {
+      type = ALL_FIELD_TYPES.geojson;
+      analyzerType = AnalyzerDATA_TYPES.GEOMETRY_FROM_STRING;
+    } else if (
+      fieldTypeSuggestions[field.name] === 'GEOMETRY' ||
+      field.metadata.get('ARROW:extension:name')?.startsWith('geoarrow')
+    ) {
+      type = ALL_FIELD_TYPES.geoarrow;
+      analyzerType = AnalyzerDATA_TYPES.GEOMETRY;
+    } else {
+      // TODO should we use Kepler getFieldsFromData instead
+      // of arrowDataTypeToFieldType for all fields?
+      const keplerField = keplerFields[fieldIndex];
+      if (keplerField.type === ALL_FIELD_TYPES.timestamp) {
+        type = keplerField.type;
+        analyzerType = keplerField.analyzerType;
+        format = keplerField.format;
+      }
+    }
+
     return {
       ...field,
       name: field.name,
       id: field.name,
       displayName: field.name,
-      format: '',
-      fieldIdx: index,
-      type: isGeoArrowColumn ? ALL_FIELD_TYPES.geoarrow : arrowDataTypeToFieldType(field.type),
-      analyzerType: isGeoArrowColumn
-        ? AnalyzerDATA_TYPES.GEOMETRY
-        : arrowDataTypeToAnalyzerDataType(field.type),
+      format: format,
+      fieldIdx: fieldIndex,
+      type,
+      analyzerType,
       valueAccessor: (dc: any) => d => {
-        return dc.valueAt(d.index, index);
+        // TODO BigInts from Arrow convert to Number() ?
+        return dc.valueAt(d.index, fieldIndex);
       },
       metadata: field.metadata
     };
   });
 }
+
+/**
+ * Getting sample data for analyzing field type for Arrow tables.
+ */
+export function getSampleForTypeAnalyzeArrow(
+  table: arrow.Table,
+  fields: string[],
+  sampleCount: number = 50
+): any {
+  const total = Math.min(sampleCount, table.numRows);
+  // const fieldOrder = fields.map(f => f.name);
+  const sample = range(0, total, 1).map(() => ({}));
+
+  if (table.numRows < 1) {
+    return [];
+  }
+
+  // collect sample data for each field
+  fields.forEach((field, fieldIdx) => {
+    // row counter
+    let rowIndex = 0;
+    // sample counter
+    let sampleIndex = 0;
+
+    while (sampleIndex < total) {
+      if (rowIndex >= table.numRows) {
+        // if depleted data pool
+        sample[sampleIndex][field] = null;
+        sampleIndex++;
+      } else if (notNullorUndefined(table.getChildAt(fieldIdx)?.get(rowIndex))) {
+        const value = table.getChildAt(fieldIdx)?.get(rowIndex);
+        sample[sampleIndex][field] = typeof value === 'string' ? value.trim() : value;
+        sampleIndex++;
+        rowIndex++;
+      } else {
+        rowIndex++;
+      }
+    }
+  });
+
+  return sample;
+}
+
 /**
  * Parse arrow batches returned from parseInBatches()
  *
@@ -425,12 +500,19 @@ export function processArrowBatches(arrowBatches: arrow.RecordBatch[]): Processo
     return null;
   }
   const arrowTable = new arrow.Table(arrowBatches);
-  const fields = arrowSchemaToFields(arrowTable.schema);
+  const fields = arrowSchemaToFields(arrowTable);
 
   const cols = [...Array(arrowTable.numCols).keys()].map(i => arrowTable.getChildAt(i));
 
   // return empty rows and use raw arrow table to construct column-wise data container
-  return {fields, rows: [], cols, metadata: arrowTable.schema.metadata};
+  return {
+    fields,
+    rows: [],
+    cols,
+    metadata: arrowTable.schema.metadata,
+    // @ts-expect-error Save original arrow schema, for better ingestion into DuckDB
+    arrowSchema: arrowTable.schema
+  };
 }
 
 export const DATASET_HANDLERS = {

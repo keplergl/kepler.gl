@@ -26,8 +26,9 @@ import {
 } from '../utils/utils';
 import {GeoArrowExtraPickingProps, computeChunkOffsets, getPickingInfo} from '../utils/picking';
 import {ColorAccessor, FloatAccessor, GeoArrowPickingInfo, ExtensionProps} from '../types';
-import {EXTENSION_NAME} from '../constants';
 import {validateAccessors} from '../utils/validate';
+
+import {GEOARROW_EXTENSIONS} from '@kepler.gl/constants';
 
 /** All properties supported by GeoArrowScatterplotLayer */
 export type GeoArrowScatterplotLayerProps = Omit<
@@ -121,12 +122,12 @@ export class GeoArrowScatterplotLayer<ExtraProps extends object = object> extend
 
       throw new Error('getPosition should pass in an arrow Vector of Point or MultiPoint type');
     } else {
-      const pointVector = getGeometryVector(table, EXTENSION_NAME.POINT);
+      const pointVector = getGeometryVector(table, GEOARROW_EXTENSIONS.POINT);
       if (pointVector !== null) {
         return this._renderLayersPoint(pointVector);
       }
 
-      const multiPointVector = getGeometryVector(table, EXTENSION_NAME.MULTIPOINT);
+      const multiPointVector = getGeometryVector(table, GEOARROW_EXTENSIONS.MULTIPOINT);
       if (multiPointVector !== null) {
         return this._renderLayersMultiPoint(multiPointVector);
       }
