@@ -73,6 +73,7 @@ export default class FoursquareProvider extends Provider {
       clientId,
       scope: FOURSQUARE_AUTH_SCOPE,
       authorizationParams: {
+        prompt: 'login',
         redirect_uri: window.location.origin,
         audience: FOURSQUARE_AUTH_AUDIENCE
       },
