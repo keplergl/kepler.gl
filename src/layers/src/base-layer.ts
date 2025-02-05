@@ -564,7 +564,7 @@ class Layer implements KeplerLayer {
     // key = 'lat'
     const {pair, fieldPairKey} = this.columnPairs?.[key] || {};
 
-    if (typeof fieldPairKey === 'string' && !pair[fieldPairKey]) {
+    if (typeof fieldPairKey === 'string' && !fieldPairs[fieldPairKey]) {
       // do not allow `key: undefined` to creep into the `updatedColumn` object
       return this.config.columns;
     }
