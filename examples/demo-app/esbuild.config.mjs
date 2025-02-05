@@ -52,6 +52,31 @@ const getThirdPartyLibraryAliases = useKeplerNodeModules => {
   };
 };
 
+// Env variables required for demo app
+const requiredEnvVariables = [
+  'MapboxAccessToken',
+  'DropboxClientId',
+  'MapboxExportToken',
+  'CartoClientId',
+  'FoursquareClientId',
+  'FoursquareDomain',
+  'FoursquareAPIURL',
+  'FoursquareUserMapsURL'
+];
+
+/**
+ * Check for all required env variables to be present
+ */
+const checkEnvVariables = () => {
+  const missingVars = requiredEnvVariables.filter(key => !process.env[key]);
+
+  if (missingVars.length > 0) {
+    console.warn(`⚠️  Warning: Missing environment variables: ${missingVars.join(', ')}`);
+  } else {
+    console.log('✅ All required environment variables are set.');
+  }
+};
+
 const NODE_ENV = JSON.stringify(process.env.NODE_ENV || 'production');
 const config = {
   platform: 'browser',
@@ -240,6 +265,9 @@ function openURL(url) {
       .catch(e => {
         console.error(e);
         process.exit(1);
+      })
+      .then(() => {
+        checkEnvVariables();
       });
   }
 
@@ -258,6 +286,8 @@ function openURL(url) {
         }
       })
       .then(async ctx => {
+        checkEnvVariables();
+
         await ctx.watch();
         await ctx.serve({
           servedir: 'dist',
