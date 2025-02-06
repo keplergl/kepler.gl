@@ -29,8 +29,11 @@ import {generateHashId} from '../utils/strings';
 
 // initialize kepler demo-app with duckdb plugin
 initApplicationConfig({
+  // Custom UI for DuckDB
   plugins: [keplerGlDuckdbPlugin],
+  // async data ingestion to DuckDb
   table: KeplerGlDuckDbTable,
+  // progressive loading is sync, doesn't wait properly for a dataset to be created in DuckDB
   useArrowProgressiveLoading: false,
   showReleaseBanner: false
 });
