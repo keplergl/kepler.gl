@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {createSelector} from 'reselect';
-import {CHANNEL_SCALES, SCALE_FUNC, ALL_FIELD_TYPES} from '@kepler.gl/constants';
+import {CHANNEL_SCALES, ALL_FIELD_TYPES} from '@kepler.gl/constants';
 import MapboxGLLayer, {MapboxLayerGLConfig} from '../mapboxgl-layer';
 import HeatmapLayerIcon from './heatmap-layer-icon';
 import {LayerBaseConfigPartial, LayerWeightConfig, VisualChannels} from '../base-layer';
