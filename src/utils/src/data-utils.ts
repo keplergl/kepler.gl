@@ -289,8 +289,8 @@ export const floatFormatter = v => (isNumber(v) ? String(roundToFour(v)) : '');
  * @param uint8Array WKB in Uint8Array form.
  * @returns hex WKB string.
  */
-export function uint8ArrayToHex(uint8Array: Uint8Array): string {
-  return Array.from(uint8Array)
+export function uint8ArrayToHex(data: Uint8Array): string {
+  return Array.from(data)
     .map(byte => (byte as any).toString(16).padStart(2, '0'))
     .join('');
 }
