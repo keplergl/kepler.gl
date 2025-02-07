@@ -67,6 +67,7 @@
     "@types/lodash.uniq": "^4.5.7",
     "@types/styled-components": "^5.1.32",
     "apache-arrow": ">=15.0.0",
+    "buffer": "6.0.3",
     "d3-array": "^2.8.0",
     "d3-shape": "^1.2.0",
     "global": "^4.3.0",
