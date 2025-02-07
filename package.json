@@ -93,7 +93,10 @@
     "deploy": "yarn install:web && cd website && yarn build",
     "clean": "rm -rf node_modules examples/**/node_modules website/node_modules .nyc_output coverage jest-coverage tape-coverage",
     "release:patch": "git add CHANGELOG.md && git commit -m 'updated CHANGELOG.md' && npm version patch && git push origin && git push origin --tags",
-    "fix-dependencies": "./scripts/fix-dependencies.sh"
+    "fix-dependencies": "./scripts/fix-dependencies.sh",
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs"
   },
   "files": [
     "dist",
@@ -213,6 +216,7 @@
     "typescript": "4.7.2",
     "url-loader": "^4.1.1",
     "usehooks-ts": "^3.1.0",
+    "vitepress": "^1.6.3",
     "watchify": "^3.6.1",
     "webpack": "^4.29.0",
     "webpack-bundle-analyzer": "^3.3.2",
