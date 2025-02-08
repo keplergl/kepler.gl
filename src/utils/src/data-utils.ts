@@ -345,7 +345,7 @@ export const FIELD_DISPLAY_FORMAT: {
 /**
  * Parse field value and type and return a string representation
  */
-export const parseFieldValue = (value: any, type: string, field: Field): string => {
+export const parseFieldValue = (value: any, type: string, field?: Field): string => {
   if (!notNullorUndefined(value)) {
     return '';
   }
