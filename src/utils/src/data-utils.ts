@@ -284,6 +284,17 @@ export const defaultFormatter: FieldFormatter = v => (notNullorUndefined(v) ? St
 
 export const floatFormatter = v => (isNumber(v) ? String(roundToFour(v)) : '');
 
+/**
+ * Transforms a WKB in Uint8Array form into a hex WKB string.
+ * @param uint8Array WKB in Uint8Array form.
+ * @returns hex WKB string.
+ */
+export function uint8ArrayToHex(data: Uint8Array): string {
+  return Array.from(data)
+    .map(byte => (byte as any).toString(16).padStart(2, '0'))
+    .join('');
+}
+
 export const FIELD_DISPLAY_FORMAT: {
   [key: string]: FieldFormatter;
 } = {
@@ -301,7 +312,12 @@ export const FIELD_DISPLAY_FORMAT: {
       : Array.isArray(d)
       ? `[${String(d)}]`
       : '',
-  [ALL_FIELD_TYPES.geoarrow]: d => d,
+  [ALL_FIELD_TYPES.geoarrow]: d => {
+    if (d instanceof Uint8Array) {
+      return uint8ArrayToHex(d);
+    }
+    return d;
+  },
   [ALL_FIELD_TYPES.object]: (value: any) => {
     try {
       return JSON.stringify(value);
