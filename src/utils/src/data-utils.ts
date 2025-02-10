@@ -23,7 +23,7 @@ import {isPlainObject} from './utils';
 
 export type FieldFormatter = (value: any, field?: Field) => string;
 
-// We need threat latitude differently otherwise marcator project view throws
+// We need threat latitude differently otherwise mercator project view throws
 // a projection matrix error
 // Uncaught Error: Pixel project matrix not invertible
 // at WebMercatorViewport16.Viewport6 (viewport.js:81:13)
