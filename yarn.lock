@@ -3633,6 +3633,7 @@ __metadata:
     "@kepler.gl/common-utils": "npm:3.1.0"
     "@kepler.gl/constants": "npm:3.1.0"
     "@kepler.gl/types": "npm:3.1.0"
+    "@loaders.gl/arrow": "npm:^4.3.2"
     "@luma.gl/constants": "npm:^8.5.20"
     "@luma.gl/core": "npm:^8.5.20"
     "@mapbox/geo-viewport": "npm:^0.4.1"
