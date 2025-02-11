@@ -5,5 +5,6 @@ export const CLOUDFRONT = 'https://d1a3f4spazzrp4.cloudfront.net';
 export const KEPLER_GL_BUCKET = 'kepler.gl';
 export const WEBSITE_ASSET_FOLDER = 'website';
 export const DEMO_LINK = '/demo';
+export const DEMO_DUCKDB_LINK = 'https://kepler-preview.foursquare.com/';
 export const KEPLER_FSQ_BUCKET =
   'https://studio-public-data.foursquare.com/statics/keplergl/images';
