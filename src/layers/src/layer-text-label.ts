@@ -69,7 +69,9 @@ export const formatTextLabelData = ({
 
     const getTextAccessor: (d: {index: number}) => string = textLabelAccessor(tl)(dataContainer);
     let characterSet;
+    let getText: typeof getTextAccessor | arrow.Vector = getTextAccessor;
 
+    let rebuildArrowTextVector = true;
     if (
       !triggerChanged?.[`getLabelCharacterSet-${i}`] &&
       oldLayerData &&
@@ -77,6 +79,8 @@ export const formatTextLabelData = ({
       oldLayerData.textLabels[i]
     ) {
       characterSet = oldLayerData.textLabels[i].characterSet;
+      getText = oldLayerData.textLabels[i].getText;
+      rebuildArrowTextVector = false;
     } else {
       if (data instanceof arrow.Table) {
         // we don't filter out arrow tables,
@@ -100,13 +104,20 @@ export const formatTextLabelData = ({
       }
     }
 
-    let getText: typeof getTextAccessor | arrow.Vector = getTextAccessor;
     // For Arrow Layers getText has to be an arrow vector.
     // For now check here for ArrowTable, not ArrowDataContainer.
-    if (data instanceof arrow.Table && dataContainer instanceof ArrowDataContainer) {
-      // TODO the data has to be a column of string type.
-      // as numerical and other columns types lack valueOffsets prop.
+    if (
+      rebuildArrowTextVector &&
+      data instanceof arrow.Table &&
+      dataContainer instanceof ArrowDataContainer
+    ) {
       getText = dataContainer.getColumn(tl.field.fieldIdx);
+      try {
+        getText = getArrowTextVector(getText as arrow.Vector, getTextAccessor);
+      } catch (error) {
+        // empty text labels
+        getText = getArrowTextVector(getText, () => ' ');
+      }
     }
 
     return {
@@ -114,4 +125,42 @@ export const formatTextLabelData = ({
       getText
     };
   });
+};
+
+/**
+ * Get an arrow vector suitable to render text labels with arrow layers.
+ * @param getText A candidate arrow vector to use for text labels.
+ * @param getTextAccessor Text label accessor.
+ */
+export const getArrowTextVector = (
+  candidateTextVector: arrow.Vector,
+  getTextAccessor: ({index}: {index: number}) => string
+): arrow.Vector => {
+  // if the passed vector is suitable for text labels
+  if (arrow.DataType.isUtf8(candidateTextVector?.type)) {
+    return candidateTextVector;
+  }
+
+  // create utf8 vector from source vector with the same number of batches.
+  // @ts-expect-error
+  const offsets = candidateTextVector._offsets;
+  const numOffsets = offsets.length;
+  const batchVectors: arrow.Vector[] = [];
+  const datum = {index: 0};
+  for (let batchIndex = 0; batchIndex < numOffsets - 1; batchIndex++) {
+    const batchStart = offsets[batchIndex];
+    const batchEnd = offsets[batchIndex + 1];
+
+    const batchLabels: string[] = [];
+    for (let rowIndex = batchStart; rowIndex < batchEnd; ++rowIndex) {
+      datum.index = rowIndex;
+      batchLabels.push(getTextAccessor(datum));
+    }
+
+    batchVectors.push(arrow.vectorFromArray(batchLabels, new arrow.Utf8()));
+  }
+
+  const input = batchVectors.flatMap(x => x.data).flat(Number.POSITIVE_INFINITY);
+
+  return new arrow.Vector(input);
 };
