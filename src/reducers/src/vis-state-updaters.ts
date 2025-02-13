@@ -903,7 +903,18 @@ export function layerTypeChangeUpdater(
     // get a mint layer, with new id and type
     // because deck.gl uses id to match between new and old layer.
     // If type has changed but id is the same, it will break
-    newLayer.assignConfigToLayer(oldLayer.config, oldLayer.visConfigSettings);
+
+    const defaultLayerProps =
+      typeof state.layerClasses[newType].findDefaultLayerProps === 'function'
+        ? state.layerClasses[newType].findDefaultLayerProps(state.datasets[newLayer.config.dataId])
+        : null;
+
+    newLayer.assignConfigToLayer(
+      oldLayer.config,
+      oldLayer.visConfigSettings,
+      state.datasets,
+      defaultLayerProps
+    );
     newLayer.updateLayerDomain(state.datasets);
   }
 

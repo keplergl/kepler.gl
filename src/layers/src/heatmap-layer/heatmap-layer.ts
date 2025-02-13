@@ -17,6 +17,8 @@ import {
 import {hexToRgb, DataContainerInterface} from '@kepler.gl/utils';
 import {KeplerTable} from '@kepler.gl/table';
 
+import {getGeoArrowPointLayerProps, FindDefaultLayerPropsReturnValue} from '../layer-utils';
+
 export type HeatmapLayerVisConfigSettings = {
   opacity: VisConfigNumber;
   colorRange: VisConfigColorRange;
@@ -155,6 +157,15 @@ class HeatmapLayer extends MapboxGLLayer {
       return this.hasColumnValue(columns.geoarrow);
     }
     return super.hasAllColumns();
+  }
+
+  static findDefaultLayerProps(dataset: KeplerTable): FindDefaultLayerPropsReturnValue {
+    const altProps = getGeoArrowPointLayerProps(dataset);
+
+    return {
+      props: [],
+      altProps
+    };
   }
 
   get visualChannels(): VisualChannels {
