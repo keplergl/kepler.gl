@@ -10,7 +10,7 @@ import IconLayerIcon from './icon-layer-icon';
 import {ICON_FIELDS, KEPLER_UNFOLDED_BUCKET} from '@kepler.gl/constants';
 import IconInfoModalFactory from './icon-info-modal';
 import Layer, {LayerBaseConfig, LayerBaseConfigPartial} from '../base-layer';
-import {assignPointPairToLayerColumn} from '../layer-utils';
+import {assignPointPairToLayerColumn, FindDefaultLayerPropsReturnValue} from '../layer-utils';
 import {isTest} from '@kepler.gl/utils';
 import {getTextOffsetByRadius, formatTextLabelData} from '../layer-text-label';
 import {default as KeplerTable} from '@kepler.gl/table';
@@ -225,8 +225,8 @@ export default class IconLayer extends Layer {
     this._layerInfoModal = IconInfoModalFactory(svgIcons);
   }
 
-  static findDefaultLayerProps({fieldPairs = [], fields = []}: KeplerTable) {
-    const notFound = {props: []};
+  static findDefaultLayerProps({fieldPairs = [], fields = []}: KeplerTable): FindDefaultLayerPropsReturnValue {
+    const notFound: FindDefaultLayerPropsReturnValue = {props: []};
     if (!fieldPairs.length || !fields.length) {
       return notFound;
     }

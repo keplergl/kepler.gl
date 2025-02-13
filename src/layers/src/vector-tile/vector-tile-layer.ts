@@ -53,6 +53,7 @@ import {
   VisualChannelDomain,
   VisualChannelField
 } from '../base-layer';
+import {FindDefaultLayerPropsReturnValue} from '../layer-utils';
 
 import AbstractTileLayer, {
   LayerData as CommonLayerData,
@@ -186,9 +187,7 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
 
   meta = {};
 
-  static findDefaultLayerProps(dataset: KeplerDataset): {
-    props: {dataId: string; label?: string; isVisible: boolean}[];
-  } {
+  static findDefaultLayerProps(dataset: KeplerDataset): FindDefaultLayerPropsReturnValue {
     if (dataset.type !== DatasetType.VECTOR_TILE) {
       return {props: []};
     }

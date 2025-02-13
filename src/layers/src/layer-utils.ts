@@ -5,12 +5,15 @@ import * as arrow from 'apache-arrow';
 import {Feature, BBox} from 'geojson';
 import {getGeoMetadata} from '@loaders.gl/gis';
 
+import {KeplerTable} from '@kepler.gl/table';
 import {
   Field,
   ProtoDatasetField,
   FieldPair,
   SupportedColumnMode,
-  LayerColumn
+  LayerColumn,
+  LayerColumns,
+  RGBColor
 } from '@kepler.gl/types';
 import {DataContainerInterface, ArrowDataContainer} from '@kepler.gl/utils';
 import {
@@ -33,7 +36,23 @@ import {
 
 import {DeckGlGeoTypes, GeojsonDataMaps} from './geojson-layer/geojson-utils';
 
-export function assignPointPairToLayerColumn(pair: FieldPair, hasAlt: boolean) {
+export type FindDefaultLayerProps = {
+  label: string;
+  color?: RGBColor;
+  isVisible?: boolean;
+  columns?: Record<string, LayerColumn>;
+};
+
+export type FindDefaultLayerPropsReturnValue = {
+  /** Layer props to create layers by default when a dataset is added */
+  props: FindDefaultLayerProps[];
+  /** layer props of possible alternative layer configurations, not created by default */
+  altProps?: FindDefaultLayerProps[];
+  /** Already found layer configurations */
+  foundLayers?: (FindDefaultLayerProps & {type: string})[];
+};
+
+export function assignPointPairToLayerColumn(pair: FieldPair, hasAlt: boolean): Record<string, LayerColumn> {
   const {lat, lng, altitude} = pair.pair;
   if (!hasAlt) {
     return {lat, lng};
@@ -410,4 +429,62 @@ export function getBoundsFromArrowMetadata(
   }
 
   return false;
+}
+
+/**
+ * Finds and returns the first satisfied column mode based on the provided columns and fields.
+ * @param supportedColumnModes - An array of supported column modes to check.
+ * @param columns - The available columns.
+ * @param fields - Optional table fields to be used for extra verification.
+ * @returns The first column mode that satisfies the required conditions, or undefined if none match.
+ */
+export function getSatisfiedColumnMode(
+  columnModes: SupportedColumnMode[] | null,
+  columns: LayerColumns | undefined,
+  fields?: KeplerTable['fields']
+): SupportedColumnMode | undefined {
+  return columnModes?.find(mode => {
+    return mode.requiredColumns?.every(requriedCol => {
+      const column = columns?.[requriedCol];
+      if (column?.value) {
+        if (mode.verifyField && fields?.[column.fieldIdx]) {
+          const field = fields[column.fieldIdx];
+          return mode.verifyField(field);
+        }
+        return true;
+      }
+      return false;
+    });
+  });
+}
+
+/**
+ * Returns true if the field is of geoarrow point format.
+ * @param field A field.
+ * @returns Returns true if the field is of geoarrow point format.
+ */
+export function isGeoArrowPointField(field: Field) {
+  return (
+    field.type === 'geoarrow' &&
+    field.metadata?.get('ARROW:extension:name') === EXTENSION_NAME.POINT
+  );
+}
+
+/**
+ * Create default geoarrow column props based on the dataset.
+ * @param dataset A dataset to create layer props from.
+ * @returns  geoarrow column props.
+ */
+export function getGeoArrowPointLayerProps(dataset: KeplerTable) {
+  const {label} = dataset;
+  const altProps: FindDefaultLayerProps[] = [];
+  dataset.fields.forEach(field => {
+    if (isGeoArrowPointField(field)) {
+      altProps.push({
+        label: (typeof label === 'string' && label.replace(/\.[^/.]+$/, '')) || field.name,
+        columns: {geoarrow: {value: field.name, fieldIdx: field.fieldIdx}}
+      });
+    }
+  });
+  return altProps;
 }

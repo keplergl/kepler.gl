@@ -582,7 +582,7 @@ export default class GeoJsonLayer extends Layer {
         this.updateMeta({bounds, fixedRadius, featureTypes});
         this.dataToFeature = [...this.dataToFeature, ...dataToFeature];
       }
-    } else if (this.dataToFeature.length === 0) {
+    } else if (this.dataToFeature.length === 0 || this.config.columnMode === COLUMN_MODE_TABLE) {
       const getFeature = this.getPositionAccessor(dataContainer);
 
       const {dataToFeature, bounds, fixedRadius, featureTypes, centroids} = getGeojsonLayerMeta({

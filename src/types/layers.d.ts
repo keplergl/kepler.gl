@@ -68,6 +68,7 @@ export type SupportedColumnMode = {
   requiredColumns: string[];
   optionalColumns?: string[];
   hasHelp?: boolean;
+  verifyField?: (field: Field) => boolean;
 };
 
 export type VisualChannelField = Field | null;
