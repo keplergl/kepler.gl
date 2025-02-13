@@ -40,7 +40,7 @@ export type FindDefaultLayerProps = {
   label: string;
   color?: RGBColor;
   isVisible?: boolean;
-  columns?: Record<string, LayerColumn>;
+  columns?: Record<string, LayerColumn | undefined>;
 };
 
 export type FindDefaultLayerPropsReturnValue = {
