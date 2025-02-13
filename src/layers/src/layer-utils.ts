@@ -49,7 +49,7 @@ export type FindDefaultLayerPropsReturnValue = {
   /** layer props of possible alternative layer configurations, not created by default */
   altProps?: FindDefaultLayerProps[];
   /** Already found layer configurations */
-  foundLayers?: FindDefaultLayerProps[];
+  foundLayers?: (FindDefaultLayerProps & {type: string})[];
 };
 
 export function assignPointPairToLayerColumn(pair: FieldPair, hasAlt: boolean): Record<string, LayerColumn> {
