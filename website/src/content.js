@@ -218,14 +218,14 @@ export const EXAMPLES = [
     description:
       "Foursquare's Open Source Places dataset with 100+ million locations in a single PMTiles file",
     image: fsqCdnUrl('pmtiles-fsq-places.png'),
-    url: '/demo/mvt_population'
+    url: '/demo/fsq_places'
   },
   {
     title: 'Population (MVT Tiles)',
     description:
       'USA Population Mapbox Vector Tiles with total population per geometry and age statistics',
     image: fsqCdnUrl('population-mvt.png'),
-    url: '/demo/fsq_places'
+    url: '/demo/mvt_population'
   },
   {
     title: 'Travel Times from Uber Movement',
