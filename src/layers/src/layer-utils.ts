@@ -40,7 +40,7 @@ export type FindDefaultLayerProps = {
   label: string;
   color?: RGBColor;
   isVisible?: boolean;
-  columns?: Record<string, LayerColumn | undefined>;
+  columns?: Record<string, LayerColumn>;
 };
 
 export type FindDefaultLayerPropsReturnValue = {
@@ -52,7 +52,7 @@ export type FindDefaultLayerPropsReturnValue = {
   foundLayers?: FindDefaultLayerProps[];
 };
 
-export function assignPointPairToLayerColumn(pair: FieldPair, hasAlt: boolean) {
+export function assignPointPairToLayerColumn(pair: FieldPair, hasAlt: boolean): Record<string, LayerColumn> {
   const {lat, lng, altitude} = pair.pair;
   if (!hasAlt) {
     return {lat, lng};
