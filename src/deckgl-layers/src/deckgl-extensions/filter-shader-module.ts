@@ -15,10 +15,11 @@ const vs = `
 const fs = ``;
 
 const inject = {
-  // create degenerate vertices instead of discarding pixels in the fragment shader
-  'vs:DECKGL_FILTER_GL_POSITION': `
+  // create degenerate vertices in vertex shader instead of discarding pixels in the fragment shader.
+  'vs:#main-start': `
     if (FILTER_ARROW_ATTRIB == 0.) {
-      position = vec4(0., 0., 0., 0.);
+      gl_Position = vec4(0.0, 0.0, 0.0, 1.0);
+      return;
     }
   `
 };

@@ -53,8 +53,7 @@ export type {
   LayerBaseConfig,
   VisualChannelDomain,
   VisualChannel,
-  VisualChannelDescription,
-  FindDefaultLayerPropsReturnValue
+  VisualChannelDescription
 } from './base-layer';
 export * from './base-layer';
 

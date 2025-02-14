@@ -49,7 +49,16 @@ def _df_to_dict(df):
     - dictionary: a dictionary variable that can be used in Kepler.gl
 
     '''
-    return df.to_dict('split')
+    df_copy = df.copy()
+    # Convert all columns that aren't JSON serializable to strings
+    for col in df_copy.columns:
+        try:
+            # just check the first item in the colum
+            json.dumps(df_copy[col].iloc[0] if len(df_copy) > 0 else None)
+        except (TypeError, OverflowError):
+            df_copy[col] = df_copy[col].astype(str)
+
+    return df_copy.to_dict('split')
 
 
 def _df_to_arrow(df: pd.DataFrame):

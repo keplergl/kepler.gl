@@ -9,7 +9,7 @@ import {media, breakPoints} from '../styles';
 import {HERO_IMAGES, HERO_IMAGES_SCALED} from '../content';
 import SlideShow from './common/slideshow';
 import {LinkButton, GithubButton} from './common/styled-components';
-import {DEMO_LINK} from '../constants';
+import {DEMO_DUCKDB_LINK, DEMO_LINK} from '../constants';
 
 import {Container, Content, HeroImage, LogoImage, StyledCaption} from './common/styles';
 
@@ -92,6 +92,13 @@ export default class Hero extends PureComponent {
             <ButtonContainer>
               <LinkButton large href={DEMO_LINK}>
                 Get Started
+              </LinkButton>
+              <LinkButton
+                large
+                href={DEMO_DUCKDB_LINK}
+                style={{marginLeft: '5px', backgroundColor: '#20469c'}}
+              >
+                Try with DuckDB
               </LinkButton>
               <GithubButton
                 href="https://github.com/keplergl/kepler.gl"

@@ -263,7 +263,7 @@ Ref: http://keepachangelog.com/en/0.3.0/
 - 1f9757b8 [feat] Pass in custom transformRequest function (#2534)
 - b644f203 [Fix] layer popover mapIndex (#2535)
 - 4b3c950f [fix] Fix sample maps (#2529)
-- 55fb2426 [chore]] Update COC to OpenJS (#2496)
+- 55fb2426 [chore] Update COC to OpenJS (#2496)
 - 0959de6a [Feat]Support Zoom to layer in layer panel (#2516)
 - ac0d3575 [Chore] docs: Add GeoArrow to supported formats (#2503)
 - 084d807f [Chore] Bump path-parse from 1.0.6 to 1.0.7 (#1569)
