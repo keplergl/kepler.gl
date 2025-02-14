@@ -146,6 +146,7 @@ function AiAssistantComponentFactory() {
       modelProvider: aiAssistant.config.provider,
       model: aiAssistant.config.model,
       apiKey: aiAssistant.config.apiKey,
+      baseUrl: aiAssistant.config.baseUrl,
       instructions: INSTRUCTIONS,
       functions
     };

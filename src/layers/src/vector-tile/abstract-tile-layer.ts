@@ -40,6 +40,7 @@ import {
 } from '../base-layer';
 import TileDataset from './common-tile/tile-dataset';
 import {isIndexedField, isDomainQuantiles} from './common-tile/tile-utils';
+import {FindDefaultLayerPropsReturnValue} from '../layer-utils';
 
 const DEFAULT_ELEVATION = 500;
 export const DEFAULT_RADIUS = 1;
@@ -163,9 +164,7 @@ export default abstract class AbstractTileLayer<
 
   protected abstract initTileDataset(): TileDataset<T, I>;
 
-  static findDefaultLayerProps(dataset: KeplerDataset): {
-    props: {dataId: string; label?: string; isVisible: boolean}[];
-  } {
+  static findDefaultLayerProps(dataset: KeplerDataset): FindDefaultLayerPropsReturnValue {
     if (!isTileDataset(dataset)) {
       return {props: []};
     }

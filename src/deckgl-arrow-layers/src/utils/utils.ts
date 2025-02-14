@@ -214,21 +214,24 @@ export function assignAccessor(args: AssignAccessorProps) {
  * @param input: the input array to expand
  * @param size : the number of nested elements in the input array per geometry. So for example, for RGB data this would be 3, for RGBA this would be 4. For radius, this would be 1.
  * @param geomOffsets : an offsets array mapping from the geometry to the coordinate indexes. So in the case of a LineStringArray, this is retrieved directly from the GeoArrow storage. In the case of a PolygonArray, this comes from the resolved indexes that need to be given to the SolidPolygonLayer anyways.
+ * @param numPositions : end position in geomOffsets, as geomOffsets can potentially contain preallocated zeroes in the end of the buffer.
  *
  * @return  {TypedArray} values expanded to be per-coordinate
  */
 export function expandArrayToCoords<T extends TypedArray>(
   input: T,
   size: number,
-  geomOffsets: Int32Array
+  geomOffsets: Int32Array,
+  numPositions?: number
 ): T {
-  const numCoords = geomOffsets[geomOffsets.length - 1];
+  const lastIndex = numPositions || geomOffsets.length - 1;
+  const numCoords = geomOffsets[lastIndex];
   // @ts-expect-error
   const outputArray: T = new input.constructor(numCoords * size);
 
   // geomIdx is an index into the geomOffsets array
   // geomIdx is also the geometry/table index
-  for (let geomIdx = 0; geomIdx < geomOffsets.length - 1; geomIdx++) {
+  for (let geomIdx = 0; geomIdx < lastIndex; geomIdx++) {
     // geomOffsets maps from the geometry index to the coord index
     // So here we get the range of coords that this geometry covers
     const lastCoordIdx = geomOffsets[geomIdx];

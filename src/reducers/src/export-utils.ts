@@ -69,7 +69,7 @@ export function formatCsv(data: DataContainerInterface, fields: Field[]): string
 
   // parse geojson object as string
   for (const row of data.rows(true)) {
-    formattedData.push(row.map((d, i) => parseFieldValue(d, fields[i].type)));
+    formattedData.push(row.map((d, i) => parseFieldValue(d, fields[i].type, fields[i])));
   }
 
   return csvFormatRows(formattedData);
