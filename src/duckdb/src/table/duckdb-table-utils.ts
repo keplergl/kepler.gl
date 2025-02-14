@@ -13,7 +13,7 @@ import * as arrow from 'apache-arrow';
 import {DataType} from 'apache-arrow/type';
 import {AsyncDuckDBConnection} from '@duckdb/duckdb-wasm';
 
-import {GEOARROW_EXTENSIONS} from '@kepler.gl/constants';
+import {GEOARROW_EXTENSIONS, GEOARROW_METADATA_KEY} from '@kepler.gl/constants';
 
 export type DuckDbColumnDesc = {name: string; type: string};
 
@@ -76,7 +76,7 @@ export function setGeoArrowWKBExtension(table: arrow.Table, columns: DuckDbColum
   table.schema.fields.forEach(field => {
     const info = columns.find(t => t.name === field.name);
     if (info?.type === 'GEOMETRY') {
-      field.metadata.set('ARROW:extension:name', GEOARROW_EXTENSIONS.WKB);
+      field.metadata.set(GEOARROW_METADATA_KEY, GEOARROW_EXTENSIONS.WKB);
     }
   });
 }

@@ -1579,6 +1579,8 @@ export const SYNC_TIMELINE_MODES: Record<string, SyncTimelineMode> = {
   end: 1
 };
 
+export const GEOARROW_METADATA_KEY = 'ARROW:extension:name';
+
 /**
  * Enum holding GeoArrow extension type names
  */

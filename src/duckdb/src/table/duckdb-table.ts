@@ -4,7 +4,7 @@
 import * as arrow from 'apache-arrow';
 import {AsyncDuckDB, AsyncDuckDBConnection} from '@duckdb/duckdb-wasm';
 
-import {DatasetType, DATASET_FORMATS, GEOARROW_EXTENSIONS} from '@kepler.gl/constants';
+import {DatasetType, DATASET_FORMATS, GEOARROW_EXTENSIONS, GEOARROW_METADATA_KEY} from '@kepler.gl/constants';
 import {KeplerTable} from '@kepler.gl/table';
 import {Field, ProtoDatasetField} from '@kepler.gl/types';
 import {
@@ -105,10 +105,10 @@ const restoreArrowTable = (
 const removeUnsupportedExtensions = (table: arrow.Table): Record<string, string> => {
   const removedMetadata: Record<string, string> = {};
   table.schema.fields.forEach(field => {
-    const extension = field.metadata.get('ARROW:extension:name');
+    const extension = field.metadata.get(GEOARROW_METADATA_KEY);
     if (extension?.startsWith('geoarrow')) {
       removedMetadata[field.name] = extension;
-      field.metadata.delete('ARROW:extension:name');
+      field.metadata.delete(GEOARROW_METADATA_KEY);
     }
   });
   return removedMetadata;
@@ -125,7 +125,7 @@ const restoreUnsupportedExtensions = (
   table.schema.fields.forEach(field => {
     const extension = removedExtensions[field.name];
     if (extension) {
-      field.metadata.set('ARROW:extension:name', extension);
+      field.metadata.set(GEOARROW_METADATA_KEY, extension);
     }
   });
 };
@@ -371,19 +371,19 @@ const restoreGeoarrowMetadata = async (
 ) => {
   arrowTable.schema.fields.forEach(f => {
     if (arrow.DataType.isBinary(f.type) && geoarrowMetadata[f.name]) {
-      f.metadata.set('ARROW:extension:name', geoarrowMetadata[f.name]);
+      f.metadata.set(GEOARROW_METADATA_KEY, geoarrowMetadata[f.name]);
     } else if (isGeoArrowPoint(f.type)) {
-      f.metadata.set('ARROW:extension:name', GEOARROW_EXTENSIONS.POINT);
+      f.metadata.set(GEOARROW_METADATA_KEY, GEOARROW_EXTENSIONS.POINT);
     } else if (isGeoArrowLineString(f.type)) {
-      f.metadata.set('ARROW:extension:name', GEOARROW_EXTENSIONS.LINESTRING);
+      f.metadata.set(GEOARROW_METADATA_KEY, GEOARROW_EXTENSIONS.LINESTRING);
     } else if (isGeoArrowPolygon(f.type)) {
-      f.metadata.set('ARROW:extension:name', GEOARROW_EXTENSIONS.POLYGON);
+      f.metadata.set(GEOARROW_METADATA_KEY, GEOARROW_EXTENSIONS.POLYGON);
     } else if (isGeoArrowMultiPoint(f.type)) {
-      f.metadata.set('ARROW:extension:name', GEOARROW_EXTENSIONS.MULTIPOINT);
+      f.metadata.set(GEOARROW_METADATA_KEY, GEOARROW_EXTENSIONS.MULTIPOINT);
     } else if (isGeoArrowMultiLineString(f.type)) {
-      f.metadata.set('ARROW:extension:name', GEOARROW_EXTENSIONS.MULTILINESTRING);
+      f.metadata.set(GEOARROW_METADATA_KEY, GEOARROW_EXTENSIONS.MULTILINESTRING);
     } else if (isGeoArrowMultiPolygon(f.type)) {
-      f.metadata.set('ARROW:extension:name', GEOARROW_EXTENSIONS.MULTIPOLYGON);
+      f.metadata.set(GEOARROW_METADATA_KEY, GEOARROW_EXTENSIONS.MULTIPOLYGON);
     }
   });
 };
