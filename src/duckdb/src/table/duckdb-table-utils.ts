@@ -15,10 +15,10 @@ import {AsyncDuckDBConnection} from '@duckdb/duckdb-wasm';
 
 import {GEOARROW_EXTENSIONS, GEOARROW_METADATA_KEY} from '@kepler.gl/constants';
 
-export type DuckDbColumnDesc = {name: string; type: string};
+export type DuckDBColumnDesc = {name: string; type: string};
 
 /**
- * Queries a table for description.
+ * Queries a DuckDB table for the schema description.
  * @param connection An active DuckDB connection.
  * @param tableName A name of DuckDB table to query.
  * @returns An array of column names and DuckDB types.
@@ -26,10 +26,10 @@ export type DuckDbColumnDesc = {name: string; type: string};
 export async function getDuckDBColumnTypes(
   connection: AsyncDuckDBConnection,
   tableName: string
-): Promise<DuckDbColumnDesc[]> {
+): Promise<DuckDBColumnDesc[]> {
   const resDescribe = await connection.query(`DESCRIBE "${tableName}";`);
 
-  const duckDbTypes: DuckDbColumnDesc[] = [];
+  const duckDbTypes: DuckDBColumnDesc[] = [];
   const numRows = resDescribe.numRows;
   for (let i = 0; i < numRows; ++i) {
     const columnName = resDescribe.getChildAt(0)?.get(i);
@@ -44,15 +44,26 @@ export async function getDuckDBColumnTypes(
   return duckDbTypes;
 }
 
-export function getDuckDBColumnTypesMap(columns: DuckDbColumnDesc[]) {
+/**
+ * Generates a mapping of column names to their corresponding DuckDB data types.
+ * @param columns An array of column descriptions from DuckDB. Check getDuckDBColumnTypes.
+ * @returns A record where keys are column names and values are their data types.
+ */
+export function getDuckDBColumnTypesMap(columns: DuckDBColumnDesc[]) {
   return columns.reduce((acc, value) => {
     acc[value.name] = value.type;
     return acc;
   }, {} as Record<string, string>);
 }
 
+/**
+ * Constructs an SQL query to select all columns from a given table,
+ * converting specified columns to Well-Known Binary (WKB) format using ST_AsWKB.
+ * @param tableName The name of the table from which to select data.
+ * @param columnsToConvertToWKB An array of column names that should be converted to WKB format.
+ * @returns The constructed SQL query.
+ */
 export function constructST_asWKBQuery(tableName: string, columnsToConvertToWKB: string[]): string {
-  // ST_AsWKB for GEOMETRY columns
   const exclude =
     columnsToConvertToWKB.length > 0 ? `EXCLUDE ${columnsToConvertToWKB.join(', ')}` : '';
   const asWKB =
@@ -62,17 +73,21 @@ export function constructST_asWKBQuery(tableName: string, columnsToConvertToWKB:
   return `SELECT * ${exclude} ${asWKB} FROM '${tableName}';`;
 }
 
-export function getGeometryColumns(columns: DuckDbColumnDesc[]): string[] {
-  const geometryColumns: string[] = [];
-  columns.forEach(f => {
-    if (f.type === 'GEOMETRY') {
-      geometryColumns.push(f.name);
-    }
-  });
-  return geometryColumns;
+/**
+ * Finds the names of columns that have a GEOMETRY type.
+ * @param columns An array of column descriptors from a DuckDB table.
+ * @returns An array of column names that are of type GEOMETRY.
+ */
+export function getGeometryColumns(columns: DuckDBColumnDesc[]): string[] {
+  return columns.filter(column => column.type === 'GEOMETRY').map(column => column.name);
 }
 
-export function setGeoArrowWKBExtension(table: arrow.Table, columns: DuckDbColumnDesc[]) {
+/**
+ * Sets the GeoArrow WKB extension metadata for columns of type GEOMETRY in an Arrow table.
+ * @param {arrow.Table} table The Apache Arrow table whose schema fields will be modified.
+ * @param {DuckDBColumnDesc[]} columns An array of column descriptors from a DuckDB table.
+ */
+export function setGeoArrowWKBExtension(table: arrow.Table, columns: DuckDBColumnDesc[]) {
   table.schema.fields.forEach(field => {
     const info = columns.find(t => t.name === field.name);
     if (info?.type === 'GEOMETRY') {
