@@ -18,6 +18,9 @@ import {ScatterplotLayer} from '@deck.gl/layers/typed';
 import type {ScatterplotLayerProps} from '@deck.gl/layers/typed';
 import * as arrow from 'apache-arrow';
 import * as ga from '@geoarrow/geoarrow-js';
+
+import {GEOARROW_EXTENSIONS} from '@kepler.gl/constants';
+
 import {
   assignAccessor,
   extractAccessorsFromProps,
@@ -27,8 +30,6 @@ import {
 import {GeoArrowExtraPickingProps, computeChunkOffsets, getPickingInfo} from '../utils/picking';
 import {ColorAccessor, FloatAccessor, GeoArrowPickingInfo, ExtensionProps} from '../types';
 import {validateAccessors} from '../utils/validate';
-
-import {GEOARROW_EXTENSIONS} from '@kepler.gl/constants';
 
 /** All properties supported by GeoArrowScatterplotLayer */
 export type GeoArrowScatterplotLayerProps = Omit<

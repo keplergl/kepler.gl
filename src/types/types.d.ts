@@ -41,3 +41,17 @@ export type JsonArray = Json[];
 export type JsonObject = {
   [key: string]: Json | undefined;
 };
+
+/**
+ * Types to mock apache-arrow types
+ */
+
+export interface ApacheVectorInterface {
+  length: number;
+}
+
+export interface ArrowTableInterface {
+  get numRows(): number;
+
+  getChildAt: (index: number) => Vector;
+}

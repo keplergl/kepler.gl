@@ -2,7 +2,6 @@
 // Copyright contributors to the kepler.gl project
 
 import * as arrow from 'apache-arrow';
-import {range} from 'd3-array';
 import {csvParseRows} from 'd3-dsv';
 import {DATA_TYPES as AnalyzerDATA_TYPES} from 'type-analyzer';
 import normalize from '@mapbox/geojson-normalize';
@@ -18,6 +17,7 @@ import {
 import {
   analyzerTypeToFieldType,
   getSampleForTypeAnalyze,
+  getSampleForTypeAnalyzeArrow,
   getFieldsFromData,
   h3IsValid,
   notNullorUndefined,
@@ -439,54 +439,12 @@ export function arrowSchemaToFields(
       type,
       analyzerType,
       valueAccessor: (dc: any) => d => {
-        // TODO BigInts from Arrow convert to Number() ?
+        // TODO BigInts from Arrow convert to Number(), but this won't cover all access paths
         return dc.valueAt(d.index, fieldIndex);
       },
       metadata: field.metadata
     };
   });
-}
-
-/**
- * Getting sample data for analyzing field type for Arrow tables.
- */
-export function getSampleForTypeAnalyzeArrow(
-  table: arrow.Table,
-  fields: string[],
-  sampleCount: number = 50
-): any {
-  const total = Math.min(sampleCount, table.numRows);
-  // const fieldOrder = fields.map(f => f.name);
-  const sample = range(0, total, 1).map(() => ({}));
-
-  if (table.numRows < 1) {
-    return [];
-  }
-
-  // collect sample data for each field
-  fields.forEach((field, fieldIdx) => {
-    // row counter
-    let rowIndex = 0;
-    // sample counter
-    let sampleIndex = 0;
-
-    while (sampleIndex < total) {
-      if (rowIndex >= table.numRows) {
-        // if depleted data pool
-        sample[sampleIndex][field] = null;
-        sampleIndex++;
-      } else if (notNullorUndefined(table.getChildAt(fieldIdx)?.get(rowIndex))) {
-        const value = table.getChildAt(fieldIdx)?.get(rowIndex);
-        sample[sampleIndex][field] = typeof value === 'string' ? value.trim() : value;
-        sampleIndex++;
-        rowIndex++;
-      } else {
-        rowIndex++;
-      }
-    }
-  });
-
-  return sample;
 }
 
 /**

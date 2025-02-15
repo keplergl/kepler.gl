@@ -8,7 +8,11 @@ import {
   TOOLTIP_FORMATS,
   TOOLTIP_FORMAT_TYPES
 } from '@kepler.gl/constants';
-import {getSampleForTypeAnalyze, getFieldsFromData} from '@kepler.gl/common-utils';
+import {
+  getSampleForTypeAnalyze,
+  getSampleForTypeAnalyzeArrow,
+  getFieldsFromData
+} from '@kepler.gl/common-utils';
 import {Analyzer} from 'type-analyzer';
 import assert from 'assert';
 
@@ -262,7 +266,7 @@ export function validateInputData(data: ProtoDataset['data']): ProcessorResult {
     }
 
     if (!f.analyzerType) {
-      assert(`field missing analyzerType ${f.type}`);
+      assert(`field ${i} missing analyzerType`);
       return false;
     }
 
@@ -290,14 +294,17 @@ export function validateInputData(data: ProtoDataset['data']): ProcessorResult {
     return {rows, fields, cols};
   }
 
-  // TODO the following part doesn't expoct columnar Arrow datasets!
-
   // if any field has missing type, recalculate it for everyone
   // because we simply lost faith in humanity
-  const sampleData = getSampleForTypeAnalyze({
-    fields: fields.map(f => f.name),
-    rows
-  });
+  const sampleData = cols
+    ? getSampleForTypeAnalyzeArrow(
+        cols,
+        fields.map(f => f.name)
+      )
+    : getSampleForTypeAnalyze({
+        fields: fields.map(f => f.name),
+        rows
+      });
   const fieldOrder = fields.map(f => f.name);
   const meta = getFieldsFromData(sampleData, fieldOrder);
   const updatedFields = fields.map((f, i) => ({
