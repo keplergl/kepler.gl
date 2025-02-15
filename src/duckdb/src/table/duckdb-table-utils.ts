@@ -84,8 +84,8 @@ export function getGeometryColumns(columns: DuckDBColumnDesc[]): string[] {
 
 /**
  * Sets the GeoArrow WKB extension metadata for columns of type GEOMETRY in an Arrow table.
- * @param {arrow.Table} table The Apache Arrow table whose schema fields will be modified.
- * @param {DuckDBColumnDesc[]} columns An array of column descriptors from a DuckDB table.
+ * @param table The Apache Arrow table whose schema fields will be modified.
+ * @param columns An array of column descriptors from a DuckDB table.
  */
 export function setGeoArrowWKBExtension(table: arrow.Table, columns: DuckDBColumnDesc[]) {
   table.schema.fields.forEach(field => {
