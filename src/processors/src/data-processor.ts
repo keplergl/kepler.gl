@@ -6,7 +6,13 @@ import {csvParseRows} from 'd3-dsv';
 import {DATA_TYPES as AnalyzerDATA_TYPES} from 'type-analyzer';
 import normalize from '@mapbox/geojson-normalize';
 import {ArrowTable} from '@loaders.gl/schema';
-import {ALL_FIELD_TYPES, DATASET_FORMATS, GUIDES_FILE_FORMAT_DOC} from '@kepler.gl/constants';
+import {
+  ALL_FIELD_TYPES,
+  DATASET_FORMATS,
+  GEOARROW_EXTENSIONS,
+  GEOARROW_METADATA_KEY,
+  GUIDES_FILE_FORMAT_DOC
+} from '@kepler.gl/constants';
 import {ProcessorResult, Field} from '@kepler.gl/types';
 import {
   arrowDataTypeToAnalyzerDataType,
@@ -394,6 +400,34 @@ export function processArrowTable(arrowTable: ArrowTable): ProcessorResult | nul
   return processArrowBatches(arrowTable.data.batches);
 }
 
+/**
+ * Extracts GeoArrow metadata from an Apache Arrow table schema.
+ * For geoparquet files geoarrow metadata isn't present in fields, so extract extra info from schema.
+ * @param table The Apache Arrow table to extract metadata from.
+ * @returns An object mapping column names to their GeoArrow encoding type.
+ * @throws Logs an error message if parsing of metadata fails.
+ */
+export function getGeoArrowMetadataFromSchema(table: arrow.Table): Record<string, string> {
+  const geoArrowMetadata: Record<string, string> = {};
+  try {
+    const geoString = table.schema.metadata?.get('geo');
+    if (geoString) {
+      const parsed = JSON.parse(geoString);
+      if (parsed.columns) {
+        Object.keys(parsed.columns).forEach(columnName => {
+          const columnData = parsed.columns[columnName];
+          if (columnData?.encoding === 'WKB') {
+            geoArrowMetadata[columnName] = GEOARROW_EXTENSIONS.WKB;
+          }
+        });
+      }
+    }
+  } catch (error) {
+    console.error('An error during arrow table schema metadata parsing');
+  }
+  return geoArrowMetadata;
+}
+
 export function arrowSchemaToFields(
   table: arrow.Table,
   fieldTypeSuggestions: Record<string, string> = {}
@@ -402,6 +436,7 @@ export function arrowSchemaToFields(
   const headerRow = table.schema.fields.map(f => f.name);
   const sample = getSampleForTypeAnalyzeArrow(table, headerRow);
   const keplerFields = getFieldsFromData(sample, headerRow);
+  const geoArrowMetadata = getGeoArrowMetadataFromSchema(table);
 
   return table.schema.fields.map((field: arrow.Field, fieldIndex: number) => {
     let type = arrowDataTypeToFieldType(field.type);
@@ -414,10 +449,14 @@ export function arrowSchemaToFields(
       analyzerType = AnalyzerDATA_TYPES.GEOMETRY_FROM_STRING;
     } else if (
       fieldTypeSuggestions[field.name] === 'GEOMETRY' ||
-      field.metadata.get('ARROW:extension:name')?.startsWith('geoarrow')
+      field.metadata.get(GEOARROW_METADATA_KEY)?.startsWith('geoarrow')
     ) {
       type = ALL_FIELD_TYPES.geoarrow;
       analyzerType = AnalyzerDATA_TYPES.GEOMETRY;
+    } else if (geoArrowMetadata[field.name]) {
+      type = ALL_FIELD_TYPES.geoarrow;
+      analyzerType = AnalyzerDATA_TYPES.GEOMETRY;
+      field.metadata?.set(GEOARROW_METADATA_KEY, geoArrowMetadata[field.name]);
     } else {
       // TODO should we use Kepler getFieldsFromData instead
       // of arrowDataTypeToFieldType for all fields?
