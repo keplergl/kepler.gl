@@ -173,7 +173,7 @@ export class KeplerGlDuckDbTable extends KeplerTable {
           : // @ts-expect-error original arrowSchema isn't defined in ProtoDataset
             restoreArrowTable(data.cols || [], data.fields, data.arrowSchema);
 
-      // remove unsupported extensions from an arrow table that throw extensions in DuckDb.
+      // remove unsupported extensions from an arrow table that throw extensions in DuckDB.
       const removedExtensions = removeUnsupportedExtensions(arrowTable);
 
       const setupSql = `
@@ -247,7 +247,7 @@ export class KeplerGlDuckDbTable extends KeplerTable {
       const adjustedQuery = constructST_asWKBQuery(tableName, columnsToConvertToWKB);
       const arrowResult = await c.query(adjustedQuery);
 
-      // TODO if arrow table then just use the original one, instead of the new one form the query?
+      // TODO if format is an arrow table then just use the original one, instead of the new table from the query?
 
       restoreGeoarrowMetadata(arrowResult, geoarrowMetadata);
 
@@ -258,7 +258,7 @@ export class KeplerGlDuckDbTable extends KeplerTable {
         .map(i => arrowResult.getChildAt(i))
         .filter(col => col) as arrow.Vector[];
     } catch (error) {
-      console.error('DuckDb table: createTableAndGetArrow', error);
+      console.error('DuckDB table: createTableAndGetArrow', error);
     }
 
     await c.close();
