@@ -14,6 +14,7 @@ import {DataType} from 'apache-arrow/type';
 import {AsyncDuckDBConnection} from '@duckdb/duckdb-wasm';
 
 import {GEOARROW_EXTENSIONS, GEOARROW_METADATA_KEY} from '@kepler.gl/constants';
+import {ProtoDatasetField} from '@kepler.gl/types';
 
 export type DuckDBColumnDesc = {name: string; type: string};
 
@@ -95,6 +96,60 @@ export function setGeoArrowWKBExtension(table: arrow.Table, columns: DuckDBColum
     }
   });
 }
+
+/**
+ * Creates an arrow table from an array of arrow vectors and fields.
+ * @param columns An array of arrow vectors.
+ * @param fields An array of fields per arrow vector.
+ * @param arrowSchema Optional arrow table schema when available.
+ * @returns An arrow table.
+ */
+export const restoreArrowTable = (
+  columns: arrow.Vector[],
+  fields: ProtoDatasetField[],
+  arrowSchema?: arrow.Schema
+) => {
+  const creaOpts = {};
+  fields.map((field, index) => {
+    creaOpts[field.name] = columns[index];
+  });
+
+  return arrowSchema ? new arrow.Table(arrowSchema, creaOpts) : new arrow.Table(creaOpts);
+};
+
+/**
+ * DuckDb throws when geoarrow extensions are present in metadata.
+ * @param table An arrow table to clear from extensions.
+ * @returns A map of removed per field geoarrow extensions.
+ */
+export const removeUnsupportedExtensions = (table: arrow.Table): Record<string, string> => {
+  const removedMetadata: Record<string, string> = {};
+  table.schema.fields.forEach(field => {
+    const extension = field.metadata.get(GEOARROW_METADATA_KEY);
+    if (extension?.startsWith('geoarrow')) {
+      removedMetadata[field.name] = extension;
+      field.metadata.delete(GEOARROW_METADATA_KEY);
+    }
+  });
+  return removedMetadata;
+};
+
+/**
+ * Restore removed metadata extensions after a call to removeUnsupportedExtensions.
+ * @param table An arrow table to restore geoarrow extensions.
+ * @param removedExtensions A map of per field geoarrow extensions to restore.
+ */
+export const restoreUnsupportedExtensions = (
+  table: arrow.Table,
+  removedExtensions: Record<string, string>
+) => {
+  table.schema.fields.forEach(field => {
+    const extension = removedExtensions[field.name];
+    if (extension) {
+      field.metadata.set(GEOARROW_METADATA_KEY, extension);
+    }
+  });
+};
 
 /** Checks whether the given Apache Arrow JS type is a Point data type */
 export function isGeoArrowPoint(type: DataType) {

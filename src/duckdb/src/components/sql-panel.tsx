@@ -162,9 +162,10 @@ export const SqlPanel: React.FC<SqlPanelProps> = ({initialSql = ''}) => {
       const db = await getDuckDB();
       const connection = await db.connect();
 
-      // FIND a cheap way to get DuckDb types with a single query - temp table? cte?
+      // TODO find a cheap way to get DuckDb types with a single query - temp table? cte?
       const tableName = 'temp_keplergl_table';
 
+      // TODO Split the query and apply this logic only for the last SELECT ?
       await connection.query(`CREATE OR REPLACE TABLE '${tableName}' AS ${sql}`);
 
       const duckDbColumns = await getDuckDBColumnTypes(connection, tableName);

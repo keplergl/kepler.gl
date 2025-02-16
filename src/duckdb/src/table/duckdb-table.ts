@@ -4,9 +4,14 @@
 import * as arrow from 'apache-arrow';
 import {AsyncDuckDB, AsyncDuckDBConnection} from '@duckdb/duckdb-wasm';
 
-import {DatasetType, DATASET_FORMATS, GEOARROW_EXTENSIONS, GEOARROW_METADATA_KEY} from '@kepler.gl/constants';
+import {
+  DatasetType,
+  DATASET_FORMATS,
+  GEOARROW_EXTENSIONS,
+  GEOARROW_METADATA_KEY
+} from '@kepler.gl/constants';
 import {KeplerTable} from '@kepler.gl/table';
-import {Field, ProtoDatasetField} from '@kepler.gl/types';
+import {Field} from '@kepler.gl/types';
 import {
   arrowSchemaToFields,
   isArrowData,
@@ -37,7 +42,10 @@ import {
   constructST_asWKBQuery,
   getDuckDBColumnTypes,
   getDuckDBColumnTypesMap,
-  getGeometryColumns
+  getGeometryColumns,
+  removeUnsupportedExtensions,
+  restoreArrowTable,
+  restoreUnsupportedExtensions
 } from '../table/duckdb-table-utils';
 
 // TODO use files from disk or url directly, without parsing by loaders and then ingection into DeckDb
@@ -71,63 +79,10 @@ type ImportDataToDuckProps = {
 };
 
 type ImportDataToDuckResult = {
-  // DuckDb drops geoarrow metadata, so try to preserve someting
+  // DuckDb drops geoarrow metadata, so try to preserve and then restore the extension name
   geoarrowMetadata?: Record<string, string>;
   // Use fields from arrow table even if fields are provided
   useNewFields?: boolean;
-};
-
-/**
- * Creates an arrow table from arrow vectors and fields.
- * @param columns An array of arrow vectors.
- * @param fields An array of fields per arrow vector.
- * @returns An arrow table.
- */
-// TODO: consider using original drag&dropped arrow table, as it could contain extra metadata, not passed to the fields.
-const restoreArrowTable = (
-  columns: arrow.Vector[],
-  fields: ProtoDatasetField[],
-  arrowSchema?: arrow.Schema
-) => {
-  const creaOpts = {};
-  fields.map((field, index) => {
-    creaOpts[field.name] = columns[index];
-  });
-
-  return arrowSchema ? new arrow.Table(arrowSchema, creaOpts) : new arrow.Table(creaOpts);
-};
-
-/**
- * DuckDb throws when geoarrow extensions are present in metadata.
- * @param table An arrow table to clear from extensions.
- * @returns A map of per field removed geoarrow extensions.
- */
-const removeUnsupportedExtensions = (table: arrow.Table): Record<string, string> => {
-  const removedMetadata: Record<string, string> = {};
-  table.schema.fields.forEach(field => {
-    const extension = field.metadata.get(GEOARROW_METADATA_KEY);
-    if (extension?.startsWith('geoarrow')) {
-      removedMetadata[field.name] = extension;
-      field.metadata.delete(GEOARROW_METADATA_KEY);
-    }
-  });
-  return removedMetadata;
-};
-
-/**
- * Restore removed metadata extensions after a call to removeUnsupportedExtensions.
- * @param table An arrow table to restore extensions.
- */
-const restoreUnsupportedExtensions = (
-  table: arrow.Table,
-  removedExtensions: Record<string, string>
-) => {
-  table.schema.fields.forEach(field => {
-    const extension = removedExtensions[field.name];
-    if (extension) {
-      field.metadata.set(GEOARROW_METADATA_KEY, extension);
-    }
-  });
 };
 
 const dropIfTableExists = async (c: AsyncDuckDBConnection, tableName: string) => {
@@ -202,6 +157,7 @@ export class KeplerGlDuckDbTable extends KeplerTable {
     }
 
     return {
+      // _geojson column is created from geometry with keep_wkb flag and contains valid WKB data.
       geoarrowMetadata: {[KEPLER_GEOM_FROM_GEOJSON_COLUMN]: GEOARROW_EXTENSIONS.WKB}
     };
   }
@@ -217,7 +173,7 @@ export class KeplerGlDuckDbTable extends KeplerTable {
           : // @ts-expect-error original arrowSchema isn't defined in ProtoDataset
             restoreArrowTable(data.cols || [], data.fields, data.arrowSchema);
 
-      // remove unsupported extensions that throw extensions in DuckDb
+      // remove unsupported extensions from an arrow table that throw extensions in DuckDb.
       const removedExtensions = removeUnsupportedExtensions(arrowTable);
 
       const setupSql = `
