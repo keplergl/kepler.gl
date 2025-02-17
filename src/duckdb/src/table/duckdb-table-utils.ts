@@ -244,3 +244,134 @@ export function isGeoArrowMultiPolygon(type: DataType) {
 
   return true;
 }
+
+/**
+ * Checks if the given SQL query is a SELECT query by using the EXPLAIN command.
+ * @param connection The DuckDB connection instance.
+ * @param query The SQL query to check.
+ * @returns Resolves to `true` if the query is a SELECT statement, otherwise `false`.
+ */
+export async function checkIsSelectQuery(
+  connection: AsyncDuckDBConnection,
+  query: string
+): Promise<boolean> {
+  try {
+    const result = await connection.query(`EXPLAIN (${query})`);
+    return result.numRows > 0;
+  } catch (error) {
+    return false;
+  }
+}
+
+/**
+ * Split a string with potentially multiple SQL queries (separated as usual by ';') into an array of queries.
+ * This implementation:
+ *  - Handles single and double quoted strings with proper escaping
+ *  - Ignores semicolons in line comments (--) and block comments (slash asterisk)
+ *  - Trims whitespace from queries
+ *  - Handles SQL-style escaped quotes ('' inside strings)
+ *  - Returns only non-empty queries
+ * @param input A string with potentially multiple SQL queries.
+ * @returns An array of queries.
+ */
+export function splitSqlStatements(input: string): string[] {
+  const queries: string[] = [];
+  let currentQuery = '';
+  let inSingleQuote = false;
+  let inDoubleQuote = false;
+  let inLineComment = false;
+  let inBlockComment = false;
+
+  for (let i = 0; i < input.length; i++) {
+    const char = input[i];
+
+    if (inLineComment) {
+      currentQuery += char;
+      if (char === '\n') {
+        inLineComment = false;
+      }
+      continue;
+    }
+
+    if (inBlockComment) {
+      currentQuery += char;
+      if (char === '*' && input[i + 1] === '/') {
+        inBlockComment = false;
+        currentQuery += input[++i]; // Consume '/'
+      }
+      continue;
+    }
+
+    if (inSingleQuote) {
+      currentQuery += char;
+      if (char === "'") {
+        // Handle escaped single quotes in SQL
+        if (i + 1 < input.length && input[i + 1] === "'") {
+          currentQuery += input[++i];
+        } else {
+          inSingleQuote = false;
+        }
+      }
+      continue;
+    }
+
+    if (inDoubleQuote) {
+      currentQuery += char;
+      if (char === '"') {
+        // Handle escaped double quotes
+        if (i + 1 < input.length && input[i + 1] === '"') {
+          currentQuery += input[++i];
+        } else {
+          inDoubleQuote = false;
+        }
+      }
+      continue;
+    }
+
+    // Check for comment starts
+    if (char === '-' && input[i + 1] === '-') {
+      inLineComment = true;
+      currentQuery += char + input[++i];
+      continue;
+    }
+
+    if (char === '/' && input[i + 1] === '*') {
+      inBlockComment = true;
+      currentQuery += char + input[++i];
+      continue;
+    }
+
+    // Check for quote starts
+    if (char === "'") {
+      inSingleQuote = true;
+      currentQuery += char;
+      continue;
+    }
+
+    if (char === '"') {
+      inDoubleQuote = true;
+      currentQuery += char;
+      continue;
+    }
+
+    // Handle query separator
+    if (char === ';') {
+      const trimmed = currentQuery.trim();
+      if (trimmed.length > 0) {
+        queries.push(trimmed);
+      }
+      currentQuery = '';
+      continue;
+    }
+
+    currentQuery += char;
+  }
+
+  // Add the final query
+  const trimmed = currentQuery.trim();
+  if (trimmed.length > 0) {
+    queries.push(trimmed);
+  }
+
+  return queries;
+}

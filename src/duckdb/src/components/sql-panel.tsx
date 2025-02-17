@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import * as arrow from 'apache-arrow';
 import React, {useCallback, useState, useEffect} from 'react';
 import {useDispatch} from 'react-redux';
 import styled from 'styled-components';
@@ -23,7 +24,9 @@ import {
   getDuckDBColumnTypes,
   getDuckDBColumnTypesMap,
   getGeometryColumns,
-  setGeoArrowWKBExtension
+  setGeoArrowWKBExtension,
+  splitSqlStatements,
+  checkIsSelectQuery
 } from '../table/duckdb-table-utils';
 
 const StyledSqlPanel = styled.div`
@@ -163,20 +166,43 @@ export const SqlPanel: React.FC<SqlPanelProps> = ({initialSql = ''}) => {
       const connection = await db.connect();
 
       // TODO find a cheap way to get DuckDb types with a single query - temp table? cte?
-      const tableName = 'temp_keplergl_table';
+      const tempTableName = 'temp_keplergl_table';
 
-      // TODO Split the query and apply this logic only for the last SELECT ?
-      await connection.query(`CREATE OR REPLACE TABLE '${tableName}' AS ${sql}`);
+      const sqlStatements = splitSqlStatements(sql);
 
-      const duckDbColumns = await getDuckDBColumnTypes(connection, tableName);
-      const columnsToConvertToWKB = getGeometryColumns(duckDbColumns);
-      const adjustedQuery = constructST_asWKBQuery(tableName, columnsToConvertToWKB);
-      const arrowResult = await connection.query(adjustedQuery);
-      setGeoArrowWKBExtension(arrowResult, duckDbColumns);
+      let arrowResult: arrow.Table | null = null;
+      let duckDbTypesMap = {};
 
-      await connection.query(`DROP TABLE ${tableName};`);
+      for (const query of sqlStatements) {
+        const isLastQuery = query === sqlStatements[sqlStatements.length - 1];
+        if (isLastQuery && (await checkIsSelectQuery(connection, query))) {
+          // we need to detect GEOMETRY columns without two queries to remote resources
 
-      const duckDbTypesMap = getDuckDBColumnTypesMap(duckDbColumns);
+          // 1) create temp table from the original query.
+          await connection.query(`CREATE OR REPLACE TABLE '${tempTableName}' AS ${sql}`);
+
+          // 2) query duckdb types and detect candidate columns for ST_asWKB transform.
+          const duckDbColumns = await getDuckDBColumnTypes(connection, tempTableName);
+          duckDbTypesMap = getDuckDBColumnTypesMap(duckDbColumns);
+          const columnsToConvertToWKB = getGeometryColumns(duckDbColumns);
+
+          // 3) query GEOMETRY columns as WKB.
+          const adjustedQuery = constructST_asWKBQuery(tempTableName, columnsToConvertToWKB);
+          arrowResult = await connection.query(adjustedQuery);
+
+          // 4) set geoarrow extenstion for the arrow table as DuckDB doesn't support the geoarrow extension.
+          setGeoArrowWKBExtension(arrowResult, duckDbColumns);
+
+          // 5) remove temp table
+          await connection.query(`DROP TABLE ${tempTableName};`);
+        } else {
+          await connection.query(query);
+        }
+      }
+
+      if (!arrowResult) {
+        throw new Error('no result');
+      }
 
       setResult({table: arrowResult, duckDbTypesMap});
       setError(null);
