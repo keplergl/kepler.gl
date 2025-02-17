@@ -174,7 +174,7 @@ export class KeplerGlDuckDbTable extends KeplerTable {
             restoreArrowTable(data.cols || [], data.fields, data.arrowSchema);
 
       // remove unsupported extensions from an arrow table that throw extensions in DuckDB.
-      const removedExtensions = removeUnsupportedExtensions(arrowTable);
+      adjustedMetadata = removeUnsupportedExtensions(arrowTable);
 
       const setupSql = `
         install spatial;
@@ -183,10 +183,8 @@ export class KeplerGlDuckDbTable extends KeplerTable {
       await c.query(setupSql);
       await c.insertArrowTable(arrowTable, {name: this.label});
 
-      // TODO DuckDb Geometry > Arrow WKB_BLOB > DuckDb BLOB
-
       // restore unsupported extensions that throw extensions in DuckDb
-      restoreUnsupportedExtensions(arrowTable, removedExtensions);
+      restoreUnsupportedExtensions(arrowTable, adjustedMetadata);
     } catch (error) {
       // Known issues:
       // 1) Arrow Type with extension name: geoarrow.point and format: +w:2 is not currently supported in DuckDB.

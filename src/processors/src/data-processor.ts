@@ -5,7 +5,10 @@ import * as arrow from 'apache-arrow';
 import {csvParseRows} from 'd3-dsv';
 import {DATA_TYPES as AnalyzerDATA_TYPES} from 'type-analyzer';
 import normalize from '@mapbox/geojson-normalize';
+import {parseSync} from '@loaders.gl/core';
 import {ArrowTable} from '@loaders.gl/schema';
+import {WKBLoader} from '@loaders.gl/wkt';
+
 import {
   ALL_FIELD_TYPES,
   DATASET_FORMATS,
@@ -463,6 +466,21 @@ export function arrowSchemaToFields(
       type = ALL_FIELD_TYPES.geoarrow;
       analyzerType = AnalyzerDATA_TYPES.GEOMETRY;
       field.metadata?.set(GEOARROW_METADATA_KEY, geoArrowMetadata[field.name]);
+    } else if (fieldTypeSuggestions[field.name] === 'BLOB') {
+      // When arrow wkb column saved to DuckDB as BLOB without any metadata, then queried back
+      try {
+        const data = table.getChildAt(fieldIndex)?.get(0);
+        if (data) {
+          const binaryGeo = parseSync(data, WKBLoader);
+          if (binaryGeo) {
+            type = ALL_FIELD_TYPES.geoarrow;
+            analyzerType = AnalyzerDATA_TYPES.GEOMETRY;
+            field.metadata?.set(GEOARROW_METADATA_KEY, GEOARROW_EXTENSIONS.WKB);
+          }
+        }
+      } catch (error) {
+        // ignore, not WKB
+      }
     } else {
       // TODO should we use Kepler getFieldsFromData instead
       // of arrowDataTypeToFieldType for all fields?

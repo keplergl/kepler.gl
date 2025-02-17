@@ -10,7 +10,6 @@ import {Panel, PanelGroup, PanelResizeHandle} from 'react-resizable-panels';
 import {addDataToMap} from '@kepler.gl/actions';
 import {generateHashId} from '@kepler.gl/common-utils';
 import {Button, IconButton, Icons, LoadingSpinner, Tooltip} from '@kepler.gl/components';
-
 import {arrowSchemaToFields} from '@kepler.gl/processors';
 import {sidePanelBg, panelBorderColor} from '@kepler.gl/styles';
 import {isAppleDevice} from '@kepler.gl/utils';
@@ -176,7 +175,7 @@ export const SqlPanel: React.FC<SqlPanelProps> = ({initialSql = ''}) => {
       for (const query of sqlStatements) {
         const isLastQuery = query === sqlStatements[sqlStatements.length - 1];
         if (isLastQuery && (await checkIsSelectQuery(connection, query))) {
-          // we need to detect GEOMETRY columns without two queries to remote resources
+          // We need to detect GEOMETRY columns without two queries to remote resources
 
           // 1) create temp table from the original query.
           await connection.query(`CREATE OR REPLACE TABLE '${tempTableName}' AS ${sql}`);
