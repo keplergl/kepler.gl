@@ -3300,7 +3300,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@kepler.gl/constants@npm:3.1.0, @kepler.gl/constants@workspace:src/constants":
+"@kepler.gl/constants@npm:3.1.0, @kepler.gl/constants@npm:^3.1.0, @kepler.gl/constants@workspace:src/constants":
   version: 0.0.0-use.local
   resolution: "@kepler.gl/constants@workspace:src/constants"
   dependencies:
@@ -3327,6 +3327,7 @@ __metadata:
   resolution: "@kepler.gl/deckgl-arrow-layers@workspace:src/deckgl-arrow-layers"
   dependencies:
     "@geoarrow/geoarrow-js": "npm:^0.3.0"
+    "@kepler.gl/constants": "npm:^3.1.0"
     "@math.gl/core": "npm:^4.0.0"
     "@math.gl/polygon": "npm:^4.0.0"
     "@math.gl/types": "npm:^4.0.0"
@@ -3495,6 +3496,7 @@ __metadata:
     "@loaders.gl/loader-utils": "npm:^4.3.2"
     "@loaders.gl/parquet": "npm:^4.3.2"
     "@loaders.gl/schema": "npm:^4.3.2"
+    "@loaders.gl/wkt": "npm:^4.3.2"
     "@mapbox/geojson-normalize": "npm:0.0.1"
     "@nebula.gl/edit-modes": "npm:1.0.2-alpha.1"
     "@turf/helpers": "npm:^6.1.4"

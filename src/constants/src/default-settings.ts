@@ -1578,3 +1578,18 @@ export const SYNC_TIMELINE_MODES: Record<string, SyncTimelineMode> = {
   start: 0,
   end: 1
 };
+
+export const GEOARROW_METADATA_KEY = 'ARROW:extension:name';
+
+/**
+ * Enum holding GeoArrow extension type names
+ */
+export enum GEOARROW_EXTENSIONS {
+  POINT = 'geoarrow.point',
+  LINESTRING = 'geoarrow.linestring',
+  POLYGON = 'geoarrow.polygon',
+  MULTIPOINT = 'geoarrow.multipoint',
+  MULTILINESTRING = 'geoarrow.multilinestring',
+  MULTIPOLYGON = 'geoarrow.multipolygon',
+  WKB = 'geoarrow.wkb'
+}

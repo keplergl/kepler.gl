@@ -3,7 +3,7 @@
 
 import pick from 'lodash.pick';
 import {console as globalConsole} from 'global/window';
-import {Type as ArrowTypes} from 'apache-arrow';
+import * as arrow from 'apache-arrow';
 
 import {DATASET_FORMATS} from '@kepler.gl/constants';
 import {ProtoDataset, RGBColor, JsonObject} from '@kepler.gl/types';
@@ -117,11 +117,10 @@ const getAllDataForSaving = (dataContainer: DataContainerInterface): any[][] => 
 
     for (let columnIndex = 0; columnIndex < numColumns; ++columnIndex) {
       const column = dataContainer.getColumn(columnIndex);
-      const typeId = column.type?.typeId;
       if (
-        typeId === ArrowTypes.Timestamp ||
-        typeId === ArrowTypes.Date ||
-        typeId === ArrowTypes.Time
+        arrow.DataType.isTimestamp(column.type) ||
+        arrow.DataType.isDate(column.type) ||
+        arrow.DataType.isTime(column.type)
       ) {
         allData.forEach(row => {
           row[columnIndex] = new Date(row[columnIndex]).toISOString();

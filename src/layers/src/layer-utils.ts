@@ -5,6 +5,7 @@ import * as arrow from 'apache-arrow';
 import {Feature, BBox} from 'geojson';
 import {getGeoMetadata} from '@loaders.gl/gis';
 
+import {GEOARROW_EXTENSIONS, GEOARROW_METADATA_KEY} from '@kepler.gl/constants';
 import {KeplerTable} from '@kepler.gl/table';
 import {
   Field,
@@ -22,7 +23,6 @@ import {
   BinaryGeometriesFromArrowOptions,
   updateBoundsFromGeoArrowSamples
 } from '@loaders.gl/arrow';
-import {EXTENSION_NAME} from '@kepler.gl/deckgl-arrow-layers';
 
 import {WKBLoader} from '@loaders.gl/wkt';
 import {geojsonToBinary} from '@loaders.gl/gis';
@@ -178,7 +178,7 @@ export function getGeojsonLayerMetaFromArrow({
   geoField: ProtoDatasetField;
   chunkIndex?: number;
 }): GeojsonLayerMetaProps {
-  const encoding = geoField?.metadata?.get('ARROW:extension:name');
+  const encoding = geoField?.metadata?.get(GEOARROW_METADATA_KEY);
   const options: BinaryGeometriesFromArrowOptions = {
     ...(chunkIndex !== undefined && chunkIndex >= 0
       ? {
@@ -191,7 +191,7 @@ export function getGeojsonLayerMetaFromArrow({
   };
 
   // getBinaryGeometriesFromArrow doesn't support geoarrow.wkb
-  if (encoding === EXTENSION_NAME.WKB) {
+  if (encoding === GEOARROW_EXTENSIONS.WKB) {
     return getBinaryGeometriesFromWKBArrow(geoColumn, options);
   }
 
@@ -239,7 +239,7 @@ export function getHoveredObjectFromArrow(
     const rawGeometry = col?.get(objectInfo.index);
 
     const field = fieldAccessor(dataContainer);
-    const encoding = field?.metadata?.get('ARROW:extension:name');
+    const encoding = field?.metadata?.get(GEOARROW_METADATA_KEY);
 
     const hoveredFeature = parseGeometryFromArrow(rawGeometry, encoding);
 
@@ -284,7 +284,7 @@ export function getGeoArrowPointFields(fields: Field[]): Field[] {
   return fields.filter(field => {
     return (
       field.type === 'geoarrow' &&
-      field.metadata?.get('ARROW:extension:name') === EXTENSION_NAME.POINT
+      field.metadata?.get(GEOARROW_METADATA_KEY) === GEOARROW_EXTENSIONS.POINT
     );
   });
 }
@@ -310,7 +310,7 @@ export function createGeoArrowPointVector(
   const precision = 2;
 
   const metadata = new Map();
-  metadata.set('ARROW:extension:name', EXTENSION_NAME.POINT);
+  metadata.set(GEOARROW_METADATA_KEY, GEOARROW_EXTENSIONS.POINT);
 
   const childField = new arrow.Field('xyz', new arrow.Float(precision), false, metadata);
   const fixedSizeList = new arrow.FixedSizeList(numCoords, childField);
@@ -466,7 +466,7 @@ export function getSatisfiedColumnMode(
 export function isGeoArrowPointField(field: Field) {
   return (
     field.type === 'geoarrow' &&
-    field.metadata?.get('ARROW:extension:name') === EXTENSION_NAME.POINT
+    field.metadata?.get(GEOARROW_METADATA_KEY) === GEOARROW_EXTENSIONS.POINT
   );
 }
 
