@@ -375,3 +375,11 @@ export function splitSqlStatements(input: string): string[] {
 
   return queries;
 }
+
+export function removeSQLComments(sql: string): string {
+  // Remove multi-line comments (/* ... */)
+  sql = sql.replace(/\/\*[\s\S]*?\*\//g, '');
+  // Remove single-line comments (-- ...)
+  sql = sql.replace(/--.*$/gm, '');
+  return sql.trim();
+}

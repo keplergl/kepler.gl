@@ -25,7 +25,8 @@ import {
   getGeometryColumns,
   setGeoArrowWKBExtension,
   splitSqlStatements,
-  checkIsSelectQuery
+  checkIsSelectQuery,
+  removeSQLComments
 } from '../table/duckdb-table-utils';
 
 const StyledSqlPanel = styled.div`
@@ -156,7 +157,8 @@ export const SqlPanel: React.FC<SqlPanelProps> = ({initialSql = ''}) => {
   const runQuery = useCallback(async () => {
     setIsRunning(true);
     try {
-      if (!sql?.trim()) {
+      const adjustedQuery = sql ? removeSQLComments(sql) : null;
+      if (!adjustedQuery) {
         setError(new Error('Query is empty'));
         return;
       }
@@ -167,18 +169,19 @@ export const SqlPanel: React.FC<SqlPanelProps> = ({initialSql = ''}) => {
       // TODO find a cheap way to get DuckDb types with a single query - temp table? cte?
       const tempTableName = 'temp_keplergl_table';
 
-      const sqlStatements = splitSqlStatements(sql);
+      // remove commetns
+      const sqlStatements = splitSqlStatements(adjustedQuery);
 
       let arrowResult: arrow.Table | null = null;
       let duckDbTypesMap = {};
 
-      for (const query of sqlStatements) {
-        const isLastQuery = query === sqlStatements[sqlStatements.length - 1];
-        if (isLastQuery && (await checkIsSelectQuery(connection, query))) {
+      for (const statement of sqlStatements) {
+        const isLastQuery = statement === sqlStatements[sqlStatements.length - 1];
+        if (isLastQuery && (await checkIsSelectQuery(connection, statement))) {
           // We need to detect GEOMETRY columns without two queries to remote resources
 
           // 1) create temp table from the original query.
-          await connection.query(`CREATE OR REPLACE TABLE '${tempTableName}' AS ${sql}`);
+          await connection.query(`CREATE OR REPLACE TABLE '${tempTableName}' AS ${statement}`);
 
           // 2) query duckdb types and detect candidate columns for ST_asWKB transform.
           const duckDbColumns = await getDuckDBColumnTypes(connection, tempTableName);
@@ -195,7 +198,7 @@ export const SqlPanel: React.FC<SqlPanelProps> = ({initialSql = ''}) => {
           // 5) remove temp table
           await connection.query(`DROP TABLE ${tempTableName};`);
         } else {
-          await connection.query(query);
+          await connection.query(statement);
         }
       }
 
