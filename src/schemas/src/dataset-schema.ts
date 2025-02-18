@@ -5,13 +5,13 @@ import pick from 'lodash.pick';
 import {console as globalConsole} from 'global/window';
 import * as arrow from 'apache-arrow';
 
-import {DATASET_FORMATS} from '@kepler.gl/constants';
+import {ALL_FIELD_TYPES, DATASET_FORMATS} from '@kepler.gl/constants';
 import {ProtoDataset, RGBColor, JsonObject} from '@kepler.gl/types';
 import {KeplerTable} from '@kepler.gl/table';
 import {VERSIONS} from './versions';
 import Schema from './schema';
 import {getFieldsFromData, getSampleForTypeAnalyze} from '@kepler.gl/common-utils';
-import {ArrowDataContainer, DataContainerInterface} from '@kepler.gl/utils';
+import {ArrowDataContainer, DataContainerInterface, FIELD_DISPLAY_FORMAT} from '@kepler.gl/utils';
 
 export type SavedField = {
   name: string;
@@ -104,8 +104,9 @@ export const propertiesV1 = {
 
 /**
  * TODO Consider moving this cast to ArrowDataContainer?
- * Prepare a data container for export as part of json / html.
+ * Prepare a data container for export as part of json / html files.
  * 1) Arrow tables can store Timestamps as BigInts, so convert numbers to ISOStrings compatible with Kepler.gl's TIMESTAMP.
+ * 2) Geoarrow binary buffers converted to hex wkb
  * @param dataContainer A data container to flatten.
  * @returns Row based data.
  */
@@ -117,6 +118,8 @@ const getAllDataForSaving = (dataContainer: DataContainerInterface): any[][] => 
 
     for (let columnIndex = 0; columnIndex < numColumns; ++columnIndex) {
       const column = dataContainer.getColumn(columnIndex);
+      const field = dataContainer.getField(columnIndex);
+
       if (
         arrow.DataType.isTimestamp(column.type) ||
         arrow.DataType.isDate(column.type) ||
@@ -125,11 +128,36 @@ const getAllDataForSaving = (dataContainer: DataContainerInterface): any[][] => 
         allData.forEach(row => {
           row[columnIndex] = new Date(row[columnIndex]).toISOString();
         });
+      } else if (field.type === ALL_FIELD_TYPES.geoarrow) {
+        const formatter = FIELD_DISPLAY_FORMAT[ALL_FIELD_TYPES.geoarrow];
+        allData.forEach(row => {
+          row[columnIndex] = formatter(row[columnIndex], field as any);
+        });
       }
     }
   }
 
   return allData;
+};
+
+/**
+ * Transforms fields for saving as part of json / html files.
+ * @param fields The array of fields from a Kepler table.
+ * @returns The transformed fields array with GeoArrow types updated to GeoJSON.
+ */
+const getFieldsForSaving = (fields: KeplerTable['fields']) => {
+  return fields.map(field => {
+    if (field.type === ALL_FIELD_TYPES.geoarrow) {
+      // geoarrow binary data is transformed to hex wkb in getAllDataForSaving, so update the field accordingly
+      return {
+        name: field.name,
+        type: ALL_FIELD_TYPES.geojson,
+        format: '',
+        analyzerType: 'GEOMETRY'
+      };
+    }
+    return field;
+  });
 };
 
 export class DatasetSchema extends Schema {
@@ -140,6 +168,7 @@ export class DatasetSchema extends Schema {
       ? {
           ...dataset,
           allData: getAllDataForSaving(dataset.dataContainer),
+          fields: getFieldsForSaving(dataset.fields),
           // we use flattenData to save arrow tables,
           // but once flattened it's not an arrow file anymore.
           metadata: {
