@@ -11,8 +11,7 @@ import {processGeojson, processRowObject, processArrowTable} from '@kepler.gl/pr
 import keplerGlReducer, {combinedUpdaters, uiStateUpdaters} from '@kepler.gl/reducers';
 import KeplerGlSchema from '@kepler.gl/schemas';
 import {KeplerTable} from '@kepler.gl/table';
-import {getApplicationConfig, initApplicationConfig} from '@kepler.gl/utils';
-import keplerGlDuckdbPlugin, {KeplerGlDuckDbTable} from '@kepler.gl/duckdb';
+import {getApplicationConfig} from '@kepler.gl/utils';
 
 import {
   INIT,
@@ -26,17 +25,6 @@ import {
 
 import {CLOUD_PROVIDERS_CONFIGURATION} from '../constants/default-settings';
 import {generateHashId} from '../utils/strings';
-
-// initialize kepler demo-app with duckdb plugin
-initApplicationConfig({
-  // Custom UI for DuckDB
-  plugins: [keplerGlDuckdbPlugin],
-  // async data ingestion to DuckDb
-  table: KeplerGlDuckDbTable,
-  // progressive loading is sync, doesn't wait properly for a dataset to be created in DuckDB
-  useArrowProgressiveLoading: false,
-  showReleaseBanner: false
-});
 
 const {DEFAULT_MAP_CONTROLS} = uiStateUpdaters;
 
