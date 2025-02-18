@@ -388,3 +388,18 @@ export function removeSQLComments(sql: string): string {
   sql = sql.replace(/--.*$/gm, '');
   return sql.trim();
 }
+
+/**
+ * Drops a table if it exists in the DuckDB database.
+ * @param connection The DuckDB connection instance.
+ * @param tableName The name of the table to drop.
+ * @returns A promise that resolves when the operation is complete.
+ * @throws Logs an error if the table drop operation fails.
+ */
+export const dropTableIfExists = async (connection: AsyncDuckDBConnection, tableName: string) => {
+  try {
+    await connection.query(`DROP TABLE IF EXISTS "${tableName}";`);
+  } catch (error) {
+    console.error('Dropping table failed', tableName, error);
+  }
+};

@@ -40,6 +40,7 @@ import {
 
 import {
   constructST_asWKBQuery,
+  dropTableIfExists,
   getDuckDBColumnTypes,
   getDuckDBColumnTypesMap,
   getGeometryColumns,
@@ -83,14 +84,6 @@ type ImportDataToDuckResult = {
   geoarrowMetadata?: Record<string, string>;
   // Use fields from arrow table even if fields are provided
   useNewFields?: boolean;
-};
-
-const dropIfTableExists = async (c: AsyncDuckDBConnection, tableName: string) => {
-  try {
-    await c.query(`DROP TABLE IF EXISTS "${tableName}";`);
-  } catch (error) {
-    console.error('Dropping table failed', tableName, error);
-  }
 };
 
 export class KeplerGlDuckDbTable extends KeplerTable {
@@ -172,7 +165,7 @@ export class KeplerGlDuckDbTable extends KeplerTable {
           ? data.rows
           : restoreArrowTable(data.cols || [], data.fields, data.arrowSchema);
 
-      // remove unsupported extensions from an arrow table that throw extensions in DuckDB.
+      // remove unsupported extensions from an arrow table that throw exceptions in DuckDB.
       adjustedMetadata = removeUnsupportedExtensions(arrowTable);
 
       const setupSql = `
@@ -182,7 +175,7 @@ export class KeplerGlDuckDbTable extends KeplerTable {
       await c.query(setupSql);
       await c.insertArrowTable(arrowTable, {name: this.label});
 
-      // restore unsupported extensions that throw extensions in DuckDb
+      // restore unsupported extensions that throw exceptions in DuckDb
       restoreUnsupportedExtensions(arrowTable, adjustedMetadata);
     } catch (error) {
       // Known issues:
@@ -207,7 +200,7 @@ export class KeplerGlDuckDbTable extends KeplerTable {
     const c = await db.connect();
 
     const tableName = this.label;
-    await dropIfTableExists(c, tableName);
+    await dropTableIfExists(c, tableName);
 
     let format = this.metadata.format;
     if (!format) {

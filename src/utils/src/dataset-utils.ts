@@ -335,7 +335,7 @@ function findNonEmptyRowsAtFieldArrow(
   total: number
 ): any[] {
   const sample: any[] = [];
-  const numRows = cols[0].length;
+  const numRows = cols[fieldIdx].length;
   let i = 0;
   while (sample.length < total && i < numRows) {
     if (notNullorUndefined(cols[fieldIdx].get(i))) {

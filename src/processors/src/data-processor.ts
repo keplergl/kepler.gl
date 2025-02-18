@@ -434,7 +434,7 @@ export function getGeoArrowMetadataFromSchema(table: arrow.Table): Record<string
 
 /**
  * Converts an Apache Arrow table schema into an array of Kepler.gl field objects.
- * @param table - The Apache Arrow table whose schema needs to be converted.
+ * @param table The Apache Arrow table whose schema needs to be converted.
  * @param fieldTypeSuggestions Optional mapping of field names to suggested field types.
  * @returns An array of field objects suitable for Kepler.gl.
  */
