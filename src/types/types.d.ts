@@ -32,6 +32,9 @@ export type ProcessorResult = {
   rows: any[][];
   cols?: any[];
   metadata?: any;
+  /** Optional schema for arrow tables with metadata preserved. */
+  // TODO: Should we use a loaded arrow.Table in cols instead of an array of arrow.Vectors? Why was an array of arrow.Vectors chosen?
+  arrowSchema?: any;
 } | null;
 
 export type Json = JsonScalar | JsonArray | JsonObject;

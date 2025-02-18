@@ -530,7 +530,8 @@ export function processArrowBatches(arrowBatches: arrow.RecordBatch[]): Processo
     rows: [],
     cols,
     metadata: arrowTable.schema.metadata,
-    // @ts-expect-error Save original arrow schema, for better ingestion into DuckDB
+    // Save original arrow schema, for better ingestion into DuckDB.
+    // TODO consider returning arrowTable in cols, not an array of Vectors from arrowTable.
     arrowSchema: arrowTable.schema
   };
 }

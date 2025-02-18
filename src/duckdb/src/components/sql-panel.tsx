@@ -166,33 +166,31 @@ export const SqlPanel: React.FC<SqlPanelProps> = ({initialSql = ''}) => {
       const db = await getDuckDB();
       const connection = await db.connect();
 
-      // TODO find a cheap way to get DuckDb types with a single query - temp table? cte?
+      // TODO find a cheap way to get DuckDb types with a single query to a remote resource - temp table? cte?
       const tempTableName = 'temp_keplergl_table';
 
-      // remove commetns
+      // remove comments
       const sqlStatements = splitSqlStatements(adjustedQuery);
 
       let arrowResult: arrow.Table | null = null;
-      let duckDbTypesMap = {};
+      let tableDuckDBTypes = {};
 
       for (const statement of sqlStatements) {
         const isLastQuery = statement === sqlStatements[sqlStatements.length - 1];
         if (isLastQuery && (await checkIsSelectQuery(connection, statement))) {
-          // We need to detect GEOMETRY columns without two queries to remote resources
-
           // 1) create temp table from the original query.
           await connection.query(`CREATE OR REPLACE TABLE '${tempTableName}' AS ${statement}`);
 
           // 2) query duckdb types and detect candidate columns for ST_asWKB transform.
           const duckDbColumns = await getDuckDBColumnTypes(connection, tempTableName);
-          duckDbTypesMap = getDuckDBColumnTypesMap(duckDbColumns);
+          tableDuckDBTypes = getDuckDBColumnTypesMap(duckDbColumns);
           const columnsToConvertToWKB = getGeometryColumns(duckDbColumns);
 
           // 3) query GEOMETRY columns as WKB.
           const adjustedQuery = constructST_asWKBQuery(tempTableName, columnsToConvertToWKB);
           arrowResult = await connection.query(adjustedQuery);
 
-          // 4) set geoarrow extenstion for the arrow table as DuckDB doesn't support the geoarrow extension.
+          // 4) set geoarrow extension for the arrow table as DuckDB doesn't support the geoarrow extension.
           setGeoArrowWKBExtension(arrowResult, duckDbColumns);
 
           // 5) remove temp table
@@ -206,7 +204,7 @@ export const SqlPanel: React.FC<SqlPanelProps> = ({initialSql = ''}) => {
         throw new Error('no result');
       }
 
-      setResult({table: arrowResult, duckDbTypesMap});
+      setResult({table: arrowResult, tableDuckDBTypes});
       setError(null);
 
       connection.close();
@@ -227,7 +225,7 @@ export const SqlPanel: React.FC<SqlPanelProps> = ({initialSql = ''}) => {
   const onAddResultToMap = useCallback(() => {
     if (!result) return;
 
-    const keplerFields = arrowSchemaToFields(result.table, result.duckDbTypesMap);
+    const keplerFields = arrowSchemaToFields(result.table, result.tableDuckDBTypes);
 
     const datasetToAdd = {
       data: {

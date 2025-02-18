@@ -41,7 +41,7 @@ export type DataTableStyle = {
 
 export type QueryResult = {
   table: arrow.Table;
-  duckDbTypesMap: Record<string, string>;
+  tableDuckDBTypes: Record<string, string>;
 };
 
 export type PreviewDataPanelProps = BaseComponentProps & {
@@ -62,7 +62,10 @@ const PreviewDataPanelWOTheme: React.FC<PreviewDataPanelProps> = ({
   theme
 }) => {
   const [pinnedColumns, setPinnedColumns] = useState<string[]>(defaultPinnedColumns);
-  const fields = useMemo(() => arrowSchemaToFields(result.table, result.duckDbTypesMap), [result]);
+  const fields = useMemo(
+    () => arrowSchemaToFields(result.table, result.tableDuckDBTypes),
+    [result]
+  );
   const dataContainer = useMemo(() => {
     const cols = [...Array(result.table.numCols).keys()].map(i => result.table.getChildAt(i));
 

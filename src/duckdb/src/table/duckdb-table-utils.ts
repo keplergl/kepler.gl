@@ -376,6 +376,11 @@ export function splitSqlStatements(input: string): string[] {
   return queries;
 }
 
+/**
+ * Removes SQL comments from a given SQL string.
+ * @param sql The SQL query string from which comments should be removed.
+ * @returns The cleaned SQL string without comments.
+ */
 export function removeSQLComments(sql: string): string {
   // Remove multi-line comments (/* ... */)
   sql = sql.replace(/\/\*[\s\S]*?\*\//g, '');

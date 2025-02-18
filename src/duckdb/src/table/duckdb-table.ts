@@ -73,7 +73,7 @@ const SUGGESTED_GEOM_COLUMNS = {
 };
 
 type ImportDataToDuckProps = {
-  data: ProcessorResult;
+  data: ProcessorResult & {arrowSchema: arrow.Schema};
   db: AsyncDuckDB;
   c: AsyncDuckDBConnection;
 };
@@ -170,8 +170,7 @@ export class KeplerGlDuckDbTable extends KeplerTable {
       const arrowTable =
         data.rows instanceof arrow.Table
           ? data.rows
-          : // @ts-expect-error original arrowSchema isn't defined in ProtoDataset
-            restoreArrowTable(data.cols || [], data.fields, data.arrowSchema);
+          : restoreArrowTable(data.cols || [], data.fields, data.arrowSchema);
 
       // remove unsupported extensions from an arrow table that throw extensions in DuckDB.
       adjustedMetadata = removeUnsupportedExtensions(arrowTable);
@@ -240,7 +239,7 @@ export class KeplerGlDuckDbTable extends KeplerTable {
       const {geoarrowMetadata = {}, useNewFields = false} = importDetails || {};
 
       const duckDbColumns = await getDuckDBColumnTypes(c, tableName);
-      const duckDbTypesMap = getDuckDBColumnTypesMap(duckDbColumns);
+      const tableDuckDBTypes = getDuckDBColumnTypesMap(duckDbColumns);
       const columnsToConvertToWKB = getGeometryColumns(duckDbColumns);
       const adjustedQuery = constructST_asWKBQuery(tableName, columnsToConvertToWKB);
       const arrowResult = await c.query(adjustedQuery);
@@ -250,8 +249,8 @@ export class KeplerGlDuckDbTable extends KeplerTable {
       restoreGeoarrowMetadata(arrowResult, geoarrowMetadata);
 
       fields = useNewFields
-        ? arrowSchemaToFields(arrowResult, duckDbTypesMap)
-        : data.fields ?? arrowSchemaToFields(arrowResult, duckDbTypesMap);
+        ? arrowSchemaToFields(arrowResult, tableDuckDBTypes)
+        : data.fields ?? arrowSchemaToFields(arrowResult, tableDuckDBTypes);
       cols = [...Array(arrowResult.numCols).keys()]
         .map(i => arrowResult.getChildAt(i))
         .filter(col => col) as arrow.Vector[];
