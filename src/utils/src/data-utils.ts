@@ -16,12 +16,12 @@ import {
   TooltipFormat
 } from '@kepler.gl/constants';
 import {notNullorUndefined} from '@kepler.gl/common-utils';
-import {Field, Millisecond} from '@kepler.gl/types';
+import {Field, Millisecond, ProtoDatasetField} from '@kepler.gl/types';
 
 import {snapToMarks} from './plot';
 import {isPlainObject} from './utils';
 
-export type FieldFormatter = (value: any, field?: Field) => string;
+export type FieldFormatter = (value: any, field?: ProtoDatasetField) => string;
 
 // We need threat latitude differently otherwise mercator project view throws
 // a projection matrix error

@@ -128,10 +128,10 @@ const getAllDataForSaving = (dataContainer: DataContainerInterface): any[][] => 
         allData.forEach(row => {
           row[columnIndex] = new Date(row[columnIndex]).toISOString();
         });
-      } else if (field.type === ALL_FIELD_TYPES.geoarrow) {
+      } else if (field?.type === ALL_FIELD_TYPES.geoarrow) {
         const formatter = FIELD_DISPLAY_FORMAT[ALL_FIELD_TYPES.geoarrow];
         allData.forEach(row => {
-          row[columnIndex] = formatter(row[columnIndex], field as any);
+          row[columnIndex] = formatter(row[columnIndex], field);
         });
       }
     }
