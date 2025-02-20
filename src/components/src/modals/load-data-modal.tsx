@@ -14,6 +14,7 @@ import LoadingDialog from './loading-dialog';
 
 import {LOADING_METHODS} from '@kepler.gl/constants';
 import {FileLoading, FileLoadingProgress, LoadFiles} from '@kepler.gl/types';
+import {isTest} from '@kepler.gl/utils';
 
 const StyledLoadDataModal = styled.div.attrs({
   className: 'load-data-modal'
@@ -29,7 +30,8 @@ const noop = () => {
 };
 const getDefaultMethod = <T,>(methods: T[] = []) =>
   // Try sample data modal by default for DuckDB preview
-  Array.isArray(methods) ? get(methods, [4]) : null;
+  // Note: In tests only 3 methods are available
+  Array.isArray(methods) ? get(methods, [isTest() ? 0 : 4]) : null;
 export interface LoadingMethod {
   id: string;
   label: string;
