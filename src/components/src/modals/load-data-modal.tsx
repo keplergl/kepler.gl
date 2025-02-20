@@ -28,12 +28,17 @@ const noop = () => {
   return;
 };
 const getDefaultMethod = <T,>(methods: T[] = []) =>
-  Array.isArray(methods) ? get(methods, [0]) : null;
+  // Try sample data modal by default for DuckDB preview
+  Array.isArray(methods) ? get(methods, [4]) : null;
 export interface LoadingMethod {
   id: string;
   label: string;
   elementType: React.ComponentType<any>;
-  tabElementType?: React.ComponentType<{onClick: React.MouseEventHandler; intl: IntlShape}>;
+  tabElementType?: React.ComponentType<{
+    onClick: React.MouseEventHandler;
+    intl: IntlShape;
+    className?: string;
+  }>;
 }
 
 type LoadDataModalProps = {
