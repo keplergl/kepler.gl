@@ -28,10 +28,11 @@ const StyledTrySampleData = styled.div`
   display: flex;
   margin-bottom: 0px;
   margin-left: 84px;
-  padding-bottom: 12px;
+  padding-bottom: 9px;
   flex-grow: 1;
   justify-content: flex-end;
   color: ${props => props.theme.subtextColorLT};
+  border-bottom: 3px solid transparent;
 
   .demo-map-title {
     margin-left: 16px;

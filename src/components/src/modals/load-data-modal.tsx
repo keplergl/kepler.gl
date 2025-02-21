@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useState} from 'react';
+import React, {useState, useCallback} from 'react';
 import styled from 'styled-components';
 import get from 'lodash.get';
 import {IntlShape, useIntl} from 'react-intl';
@@ -30,8 +30,8 @@ const noop = () => {
 };
 const getDefaultMethod = <T,>(methods: T[] = []) =>
   // Try sample data modal by default for DuckDB preview
-  // Note: In tests only 3 methods are available
-  Array.isArray(methods) ? get(methods, [isTest() ? 0 : 4]) : null;
+  // Note: In tests only 3 loading methods are available
+  Array.isArray(methods) ? get(methods, [isTest() && methods.length > 4 ? 0 : 4]) : null;
 export interface LoadingMethod {
   id: string;
   label: string;
@@ -108,15 +108,25 @@ export function LoadDataModalFactory(
     ...restProps
   }) => {
     const intl = useIntl();
+
+    // const {loadingMethods, isCloudMapLoading} = props;
+    const [currentMethod, toggleMethod] = useState(getDefaultMethod(loadingMethods));
+
+    const loadDataMethod = loadingMethods.find(ldm => ldm.id === 'upload');
+    const enableLoadDataModal = useCallback(() => {
+      if (loadDataMethod) {
+        toggleMethod(loadDataMethod);
+      }
+    }, [loadDataMethod, toggleMethod]);
+
     const currentModalProps = {
       ...restProps,
       onFileUpload,
       onTilesetAdded,
       fileLoading,
-      isCloudMapLoading
+      isCloudMapLoading,
+      enableLoadDataModal
     };
-    // const {loadingMethods, isCloudMapLoading} = props;
-    const [currentMethod, toggleMethod] = useState(getDefaultMethod(loadingMethods));
 
     const ElementType = currentMethod?.elementType;
 
