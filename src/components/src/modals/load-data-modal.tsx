@@ -106,7 +106,7 @@ export function LoadDataModalFactory(
     loadingMethods = defaultLoadingMethods,
     isCloudMapLoading,
     ...restProps
-  }) => {
+  }: LoadDataModalProps) => {
     const intl = useIntl();
 
     // const {loadingMethods, isCloudMapLoading} = props;
