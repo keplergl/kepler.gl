@@ -31,7 +31,7 @@ const noop = () => {
 const getDefaultMethod = <T,>(methods: T[] = []) =>
   // Try sample data modal by default for DuckDB preview
   // Note: In tests only 3 loading methods are available
-  Array.isArray(methods) ? get(methods, [isTest() && methods.length > 4 ? 0 : 4]) : null;
+  Array.isArray(methods) ? get(methods, [isTest() && methods.length > 4 ? 4 : 0]) : null;
 export interface LoadingMethod {
   id: string;
   label: string;
