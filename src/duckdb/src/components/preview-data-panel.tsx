@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import * as arrow from 'apache-arrow';
 import React, {useCallback, useMemo, useState, CSSProperties} from 'react';
+import {withTheme} from 'styled-components';
 
 import {DataTable, renderedSize} from '@kepler.gl/components';
-import {parseFieldValue, createDataContainer} from '@kepler.gl/utils';
 import {arrowSchemaToFields} from '@kepler.gl/processors';
-import {DataForm} from '@kepler.gl/utils';
-import {withTheme} from 'styled-components';
+import {parseFieldValue, createDataContainer, DataForm} from '@kepler.gl/utils';
 
 type BaseComponentProps = {
   className?: string;
@@ -39,14 +39,19 @@ export type DataTableStyle = {
   optionsButton?: number;
 };
 
+export type QueryResult = {
+  table: arrow.Table;
+  tableDuckDBTypes: Record<string, string>;
+};
+
 export type PreviewDataPanelProps = BaseComponentProps & {
-  result: any;
+  result: QueryResult;
   rowsToCalculatePreview?: number;
   theme?: any;
   setColumnDisplayFormat?: (formats: {[key: string]: string}) => void;
   defaultPinnedColumns?: string[];
   dataTableStyle: DataTableStyle;
-  onAddResultToMap: (result: any) => void;
+  onAddResultToMap: (result: QueryResult) => void;
 };
 
 const PreviewDataPanelWOTheme: React.FC<PreviewDataPanelProps> = ({
@@ -57,9 +62,12 @@ const PreviewDataPanelWOTheme: React.FC<PreviewDataPanelProps> = ({
   theme
 }) => {
   const [pinnedColumns, setPinnedColumns] = useState<string[]>(defaultPinnedColumns);
-  const fields = useMemo(() => arrowSchemaToFields(result.schema), [result.schema]);
+  const fields = useMemo(
+    () => arrowSchemaToFields(result.table, result.tableDuckDBTypes),
+    [result]
+  );
   const dataContainer = useMemo(() => {
-    const cols = [...Array(result.numCols).keys()].map(i => result.getChildAt(i));
+    const cols = [...Array(result.table.numCols).keys()].map(i => result.table.getChildAt(i));
 
     const dataContainer = createDataContainer(cols, {
       fields,

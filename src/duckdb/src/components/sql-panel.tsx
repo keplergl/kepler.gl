@@ -6,17 +6,28 @@ import React, {useCallback, useState, useEffect, useRef} from 'react';
 import {useDispatch} from 'react-redux';
 import styled from 'styled-components';
 import {Panel, PanelGroup, PanelResizeHandle} from 'react-resizable-panels';
-import MonacoEditor from './monaco-editor';
-import {SchemaPanel} from './schema-panel';
-import {PreviewDataPanel} from './preview-data-panel';
-import {getDuckDB} from '../init';
-import {Button, IconButton, Tooltip} from '@kepler.gl/components';
-import {generateHashId} from '@kepler.gl/common-utils';
+
 import {addDataToMap} from '@kepler.gl/actions';
-import {FileDrop, Icons, LoadingSpinner} from '@kepler.gl/components';
+import {generateHashId} from '@kepler.gl/common-utils';
+import {Button, FileDrop, IconButton, Icons, LoadingSpinner, Tooltip} from '@kepler.gl/components';
+import {arrowSchemaToFields} from '@kepler.gl/processors';
 import {sidePanelBg, panelBorderColor} from '@kepler.gl/styles';
 import {isAppleDevice} from '@kepler.gl/utils';
-import {arrowSchemaToFields} from '@kepler.gl/processors';
+
+import MonacoEditor from './monaco-editor';
+import {SchemaPanel} from './schema-panel';
+import {PreviewDataPanel, QueryResult} from './preview-data-panel';
+import {getDuckDB} from '../init';
+import {
+  constructST_asWKBQuery,
+  getDuckDBColumnTypes,
+  getDuckDBColumnTypesMap,
+  getGeometryColumns,
+  setGeoArrowWKBExtension,
+  splitSqlStatements,
+  checkIsSelectQuery,
+  removeSQLComments
+} from '../table/duckdb-table-utils';
 
 import {tableFromFile} from '../table/duckdb-table-utils';
 
@@ -140,7 +151,7 @@ export const SqlPanel: React.FC<SqlPanelProps> = ({initialSql = ''}) => {
   });
   const [droppedFile, setDroppedFile] = useState<File | null>(null);
   const [dragState, setDragState] = useState(false);
-  const [result, setResult] = useState<null | arrow.Table>(null);
+  const [result, setResult] = useState<null | QueryResult>(null);
   const [error, setError] = useState<Error | null>(null);
   const [counter, setCounter] = useState(0);
   const [tableSchema, setTableSchema] = useState([]);
@@ -163,7 +174,8 @@ export const SqlPanel: React.FC<SqlPanelProps> = ({initialSql = ''}) => {
   const runQuery = useCallback(async () => {
     setIsRunning(true);
     try {
-      if (!sql?.trim()) {
+      const adjustedQuery = sql ? removeSQLComments(sql) : null;
+      if (!adjustedQuery) {
         setError(new Error('Query is empty'));
         return;
       }
@@ -171,8 +183,45 @@ export const SqlPanel: React.FC<SqlPanelProps> = ({initialSql = ''}) => {
       const db = await getDuckDB();
       const connection = await db.connect();
 
-      const arrowResult = await connection.query(sql);
-      setResult(arrowResult);
+      // TODO find a cheap way to get DuckDb types with a single query to a remote resource - temp table? cte?
+      const tempTableName = 'temp_keplergl_table';
+
+      // remove comments
+      const sqlStatements = splitSqlStatements(adjustedQuery);
+
+      let arrowResult: arrow.Table | null = null;
+      let tableDuckDBTypes = {};
+
+      for (const statement of sqlStatements) {
+        const isLastQuery = statement === sqlStatements[sqlStatements.length - 1];
+        if (isLastQuery && (await checkIsSelectQuery(connection, statement))) {
+          // 1) create temp table from the original query.
+          await connection.query(`CREATE OR REPLACE TABLE '${tempTableName}' AS ${statement}`);
+
+          // 2) query duckdb types and detect candidate columns for ST_asWKB transform.
+          const duckDbColumns = await getDuckDBColumnTypes(connection, tempTableName);
+          tableDuckDBTypes = getDuckDBColumnTypesMap(duckDbColumns);
+          const columnsToConvertToWKB = getGeometryColumns(duckDbColumns);
+
+          // 3) query GEOMETRY columns as WKB.
+          const adjustedQuery = constructST_asWKBQuery(tempTableName, columnsToConvertToWKB);
+          arrowResult = await connection.query(adjustedQuery);
+
+          // 4) set geoarrow extension for the arrow table as DuckDB doesn't support the geoarrow extension.
+          setGeoArrowWKBExtension(arrowResult, duckDbColumns);
+
+          // 5) remove temp table
+          await connection.query(`DROP TABLE ${tempTableName};`);
+        } else {
+          await connection.query(statement);
+        }
+      }
+
+      if (!arrowResult) {
+        throw new Error('no result');
+      }
+
+      setResult({table: arrowResult, tableDuckDBTypes});
       setError(null);
 
       connection.close();
@@ -193,17 +242,17 @@ export const SqlPanel: React.FC<SqlPanelProps> = ({initialSql = ''}) => {
   const onAddResultToMap = useCallback(() => {
     if (!result) return;
 
-    const keplerFields = arrowSchemaToFields(result.schema);
+    const keplerFields = arrowSchemaToFields(result.table, result.tableDuckDBTypes);
 
     const datasetToAdd = {
       data: {
         fields: keplerFields,
         // TODO type AddDataToMapPayload -> rows -> + arrow.Table
-        rows: result as any
+        rows: result.table as any
       },
       info: {
         id: generateHashId(),
-        label: `Query Result${counter > 0 ? ` (${counter})` : ''}`,
+        label: `query_result${counter > 0 ? `_${counter}` : ''}`,
         format: 'arrow'
       }
     };
@@ -318,7 +367,7 @@ export const SqlPanel: React.FC<SqlPanelProps> = ({initialSql = ''}) => {
                       <Button secondary onClick={onAddResultToMap}>
                         Add to Map
                       </Button>
-                      <div>{result.numRows} rows</div>
+                      <div>{result.table.numRows} rows</div>
                     </StyledResultActions>
                     <PreviewDataPanel
                       result={result}

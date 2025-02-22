@@ -11,6 +11,7 @@ import React from 'react';
 import * as arrow from 'apache-arrow';
 import DefaultLayerIcon from './default-layer-icon';
 import {diffUpdateTriggers} from './layer-update';
+import {getSatisfiedColumnMode, FindDefaultLayerPropsReturnValue} from './layer-utils';
 
 import {
   CHANNEL_SCALES,
@@ -145,7 +146,7 @@ export type UpdateTrigger = {
   [key: string]: any;
 };
 export type LayerBounds = [number, number, number, number];
-export type FindDefaultLayerPropsReturnValue = {props: any[]; foundLayers?: any[]};
+
 /**
  * Approx. number of points to sample in a large data set
  */
@@ -386,6 +387,7 @@ class Layer implements KeplerLayer {
   get supportedDatasetTypes(): string[] | null {
     return null;
   }
+
   /*
    * Given a dataset, automatically find props to create layer based on it
    * and return the props and previous found layers.
@@ -564,7 +566,7 @@ class Layer implements KeplerLayer {
     // key = 'lat'
     const {pair, fieldPairKey} = this.columnPairs?.[key] || {};
 
-    if (typeof fieldPairKey === 'string' && !pair[fieldPairKey]) {
+    if (typeof fieldPairKey === 'string' && !fieldPairs[fieldPairKey]) {
       // do not allow `key: undefined` to creep into the `updatedColumn` object
       return this.config.columns;
     }
@@ -660,8 +662,15 @@ class Layer implements KeplerLayer {
    * When change layer type, try to copy over layer configs as much as possible
    * @param configToCopy - config to copy over
    * @param visConfigSettings - visConfig settings of config to copy
+   * @param datasets - current datasets.
+   * @param defaultLayerProps - default layer creation configurations for current layer and datasets.
    */
-  assignConfigToLayer(configToCopy, visConfigSettings) {
+  assignConfigToLayer(
+    configToCopy: LayerBaseConfig & Partial<LayerColorConfig & LayerSizeConfig>,
+    visConfigSettings: {[key: string]: ValueOf<LayerVisConfigSettings>},
+    datasets?: Datasets,
+    defaultLayerProps?: FindDefaultLayerPropsReturnValue | null
+  ) {
     // don't deep merge visualChannel field
     // don't deep merge color range, reversed: is not a key by default
     const shallowCopy = ['colorRange', 'strokeColorRange'].concat(
@@ -690,10 +699,40 @@ class Layer implements KeplerLayer {
 
     // update columNode based on new columns
     if (this.config.columnMode && this.supportedColumnModes) {
-      // find a mode with all requied columns
-      const satisfiedColumnMode = this.supportedColumnModes?.find(mode => {
-        return mode.requiredColumns?.every(requriedCol => copied.columns?.[requriedCol]?.value);
-      });
+      const dataset = datasets?.[this.config.dataId];
+      // try to find a mode with all requied columns from the source config
+      let satisfiedColumnMode = getSatisfiedColumnMode(
+        this.supportedColumnModes,
+        copied.columns,
+        dataset?.fields
+      );
+
+      // if no suitable column mode found or no such columMode exists for the layer
+      // then try use one of the automatically detected layer configs
+      if (!satisfiedColumnMode) {
+        const options = [
+          ...(defaultLayerProps?.props || []),
+          ...(defaultLayerProps?.altProps || [])
+        ];
+        if (options.length) {
+          // Use the first of the default configurations
+          const defaultColumnConfig = options[0].columns;
+
+          satisfiedColumnMode = getSatisfiedColumnMode(
+            this.supportedColumnModes,
+            defaultColumnConfig,
+            dataset?.fields
+          );
+
+          if (satisfiedColumnMode) {
+            copied.columns = {
+              ...copied.columns,
+              ...defaultColumnConfig
+            };
+          }
+        }
+      }
+
       copied.columnMode = satisfiedColumnMode?.key || copied.columnMode;
     }
 

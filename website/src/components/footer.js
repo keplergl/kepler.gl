@@ -11,7 +11,7 @@ import {media} from '../styles';
 import MapboxLogo from './mapbox-logo';
 import NetlifyLogo from './netlify-logo';
 import FoursquareLogo from './foursquare-logo';
-import {DEMO_LINK} from '../constants';
+import {DEMO_DUCKDB_LINK, DEMO_LINK} from '../constants';
 
 const Container = styled.div`
   background: #242730;
@@ -149,6 +149,13 @@ export default class Footer extends PureComponent {
           <ButtonContainer>
             <LinkButton large href={DEMO_LINK}>
               Get Started
+            </LinkButton>
+            <LinkButton
+              large
+              href={DEMO_DUCKDB_LINK}
+              style={{marginLeft: '5px', backgroundColor: '#20469c'}}
+            >
+              Try with DuckDB
             </LinkButton>
             <LinkButton
               large

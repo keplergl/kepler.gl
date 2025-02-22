@@ -15,6 +15,19 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+## [3.1.0] - January 29 2025
+
+- 089aa8cf8 [chore] vector tiles refactoring (#2945)
+- 405c36e23 [fix] DuckDB: make query result title more reusable (#2956)
+- 8033578f2 [docs] update docs for Kepler.gl release 3.1 (#2941)
+- b1953cff7 [feat] banner with extra release info (#2955)
+- e95c4e5a4 [fix] arrow tables - save timestamps as iso date string (#2953)
+- 4aef54a93 [fix] adjust margin for map save modal to show Save button without scrolling (#2954)
+- f00b4b88d [chore] testing mp4 embed with gitbook (#2951)
+- f292d6181 [Chore] Add DeepSeek in Ai Assistant (#2946)
+- c5484e1ae [fix] plumbing for DuckDB plugin support (#2949)
+- da9988532 [chore] demo-app bump kepler.gl version (#2944)
+
 ## [3.1.0-alpha.7] - January 27 2025
 
 - 7356c5afe [fix] hotfix for arrow saving / loading, without support of binary data (#2943)
@@ -250,7 +263,7 @@ Ref: http://keepachangelog.com/en/0.3.0/
 - 1f9757b8 [feat] Pass in custom transformRequest function (#2534)
 - b644f203 [Fix] layer popover mapIndex (#2535)
 - 4b3c950f [fix] Fix sample maps (#2529)
-- 55fb2426 [chore]] Update COC to OpenJS (#2496)
+- 55fb2426 [chore] Update COC to OpenJS (#2496)
 - 0959de6a [Feat]Support Zoom to layer in layer panel (#2516)
 - ac0d3575 [Chore] docs: Add GeoArrow to supported formats (#2503)
 - 084d807f [Chore] Bump path-parse from 1.0.6 to 1.0.7 (#1569)

@@ -36,9 +36,12 @@ import {
   assignPointPairToLayerColumn,
   isLayerHoveredFromArrow,
   getBoundsFromArrowMetadata,
+  getGeoArrowPointLayerProps,
+  isGeoArrowPointField,
   createGeoArrowPointVector,
   getFilteredIndex,
-  getNeighbors
+  getNeighbors,
+  FindDefaultLayerProps
 } from '../layer-utils';
 import {getGeojsonPointDataMaps, GeojsonPointDataMaps} from '../geojson-layer/geojson-utils';
 import {
@@ -150,12 +153,14 @@ const SUPPORTED_COLUMN_MODES = [
   {
     key: COLUMN_MODE_GEOJSON,
     label: 'GeoJSON Feature',
-    requiredColumns: geojsonRequiredColumns
+    requiredColumns: geojsonRequiredColumns,
+    verifyField: f => !isGeoArrowPointField(f)
   },
   {
     key: COLUMN_MODE_GEOARROW,
     label: 'Geoarrow Points',
-    requiredColumns: geoarrowRequiredColumns
+    requiredColumns: geoarrowRequiredColumns,
+    verifyField: f => isGeoArrowPointField(f)
   }
 ];
 const DEFAULT_COLUMN_MODE = COLUMN_MODE_POINTS;
@@ -322,13 +327,10 @@ export default class PointLayer extends Layer {
     return this;
   }
 
-  static findDefaultLayerProps({fieldPairs = [], type}: KeplerTable) {
-    const props: {
-      label: string;
-      color?: RGBColor;
-      isVisible?: boolean;
-      columns?: PointLayerColumnsConfig;
-    }[] = [];
+  static findDefaultLayerProps(dataset: KeplerTable) {
+    const {fieldPairs = [], type} = dataset;
+
+    const props: FindDefaultLayerProps[] = [];
 
     if (type === DatasetType.VECTOR_TILE) {
       return {props};
@@ -362,7 +364,9 @@ export default class PointLayer extends Layer {
       props.push(prop);
     });
 
-    return {props};
+    const altProps = getGeoArrowPointLayerProps(dataset);
+
+    return {props, altProps};
   }
 
   getDefaultLayerConfig(props: LayerBaseConfigPartial) {

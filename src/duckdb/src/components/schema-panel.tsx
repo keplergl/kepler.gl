@@ -4,11 +4,14 @@
 import React, {useCallback, useEffect, useState} from 'react';
 import {useSelector} from 'react-redux';
 import styled from 'styled-components';
-import {arrowDataTypeToFieldType} from '@kepler.gl/utils';
-import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
+import {AsyncDuckDBConnection} from '@duckdb/duckdb-wasm';
+
+import {arrowSchemaToFields} from '@kepler.gl/processors';
 import {VisState} from '@kepler.gl/schemas';
+
 import {Tree, DatasetNode, ColumnNode, TreeNodeData} from './tree';
 import {getDuckDB} from '../init';
+import {getDuckDBColumnTypes, getDuckDBColumnTypesMap} from '../table/duckdb-table-utils';
 
 // TODO note that demo state is available in demo-app, but not when add modules to dependencies in a custom map
 type State = {
@@ -28,26 +31,26 @@ const StyledSchemaPanel = styled.div`
   font-family: ${props => props.theme.fontFamily};
 `;
 
-async function getColumnSchema(c, name) {
-  const columnResult = await c.query(`Select * from '${name}' LIMIT 1;`);
+async function getColumnSchema(connection: AsyncDuckDBConnection, tableName: string) {
+  const columnResult = await connection.query(`Select * from '${tableName}' LIMIT 1;`);
+
+  const columnDescribe = await getDuckDBColumnTypes(connection, tableName);
+  const keplerFields = arrowSchemaToFields(columnResult, getDuckDBColumnTypesMap(columnDescribe));
 
   return {
-    key: name,
+    key: tableName,
     object: {
       type: 'dataset',
-      tableName: name
+      tableName: tableName
     },
-    children: columnResult.schema.fields.map(field => {
-      const isGeoArrowColumn = field.metadata.get('ARROW:extension:name')?.startsWith('geoarrow');
+    children: columnResult.schema.fields.map((field, fieldIndex) => {
       return {
         key: field.name,
         object: {
           type: 'column',
           name: field.name,
           arrowType: field.type,
-          fieldType: isGeoArrowColumn
-            ? ALL_FIELD_TYPES.geoarrow
-            : arrowDataTypeToFieldType(field.type)
+          fieldType: keplerFields[fieldIndex].type
         }
       };
     })

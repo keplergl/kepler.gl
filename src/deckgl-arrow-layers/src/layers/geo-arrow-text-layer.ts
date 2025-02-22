@@ -18,6 +18,9 @@ import {TextLayer} from '@deck.gl/layers/typed';
 import type {TextLayerProps} from '@deck.gl/layers';
 import * as arrow from 'apache-arrow';
 import * as ga from '@geoarrow/geoarrow-js';
+
+import {GEOARROW_EXTENSIONS} from '@kepler.gl/constants';
+
 import {
   assignAccessor,
   expandArrayToCoords,
@@ -26,7 +29,6 @@ import {
 } from '../utils/utils';
 import {GeoArrowExtraPickingProps, computeChunkOffsets, getPickingInfo} from '../utils/picking';
 import {ColorAccessor, FloatAccessor, GeoArrowPickingInfo, ExtensionProps} from '../types';
-import {EXTENSION_NAME} from '../constants';
 import {validateAccessors} from '../utils/validate';
 
 /** All properties supported by GeoArrowTextLayer */
@@ -167,7 +169,7 @@ export class GeoArrowTextLayer<ExtraProps extends object = object> extends Compo
 
       throw new Error('getPosition should pass in an arrow Vector of Point type');
     } else {
-      const pointVector = getGeometryVector(table, EXTENSION_NAME.POINT);
+      const pointVector = getGeometryVector(table, GEOARROW_EXTENSIONS.POINT);
       if (pointVector !== null) {
         return this._renderLayersPoint(pointVector);
       }
@@ -196,9 +198,10 @@ export class GeoArrowTextLayer<ExtraProps extends object = object> extends Compo
       const geometryData = geometryColumn.data[recordBatchIdx];
       const flatCoordsData = ga.child.getPointChild(geometryData);
       const flatCoordinateArray = flatCoordsData.values;
+
       const textData = this.props.getText.data[recordBatchIdx];
+      const numLabels = textData.length;
       const textValues = textData.values;
-      // ! TODO valueOffsets are only present for string columns
       const characterOffsets = textData.valueOffsets;
 
       // @ts-expect-error how to properly retrieve batch offset?
@@ -226,7 +229,8 @@ export class GeoArrowTextLayer<ExtraProps extends object = object> extends Compo
               value: expandArrayToCoords(
                 flatCoordinateArray,
                 geometryData.type.listSize,
-                characterOffsets
+                characterOffsets,
+                numLabels
               ),
               size: geometryData.type.listSize
             },

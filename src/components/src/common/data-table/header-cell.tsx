@@ -119,7 +119,7 @@ const HeaderCellFactory = (FieldToken: React.FC<FieldTokenProps>) => {
     const firstCell = columnIndex === 0;
     const isFormatted = Boolean(colMeta[column]?.displayFormat);
     const formatLabels = isFormatted ? getFieldFormatLabels(colMeta[column].type) : [];
-    const onSortTable = useCallback(() => sortTableColumn(column), [sortTableColumn, column]);
+    const onSortTable = useCallback(() => sortTableColumn?.(column), [sortTableColumn, column]);
     const onToggleOptionMenu = useCallback(
       () => toggleMoreOptions(column),
       [toggleMoreOptions, column]

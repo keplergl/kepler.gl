@@ -1,9 +1,12 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import * as arrow from 'apache-arrow';
 import assert from 'assert';
 import {format as d3Format} from 'd3-format';
 import moment from 'moment-timezone';
+
+import {parseGeometryFromArrow} from '@loaders.gl/arrow';
 
 import {
   ALL_FIELD_TYPES,
@@ -13,14 +16,14 @@ import {
   TooltipFormat
 } from '@kepler.gl/constants';
 import {notNullorUndefined} from '@kepler.gl/common-utils';
-import {Field, Millisecond} from '@kepler.gl/types';
+import {Field, Millisecond, ProtoDatasetField} from '@kepler.gl/types';
 
 import {snapToMarks} from './plot';
 import {isPlainObject} from './utils';
 
-export type FieldFormatter = (value: any) => string;
+export type FieldFormatter = (value: any, field?: ProtoDatasetField) => string;
 
-// We need threat latitude differently otherwise marcator project view throws
+// We need threat latitude differently otherwise mercator project view throws
 // a projection matrix error
 // Uncaught Error: Pixel project matrix not invertible
 // at WebMercatorViewport16.Viewport6 (viewport.js:81:13)
@@ -284,6 +287,17 @@ export const defaultFormatter: FieldFormatter = v => (notNullorUndefined(v) ? St
 
 export const floatFormatter = v => (isNumber(v) ? String(roundToFour(v)) : '');
 
+/**
+ * Transforms a WKB in Uint8Array form into a hex WKB string.
+ * @param uint8Array WKB in Uint8Array form.
+ * @returns hex WKB string.
+ */
+export function uint8ArrayToHex(data: Uint8Array): string {
+  return Array.from(data)
+    .map(byte => (byte as any).toString(16).padStart(2, '0'))
+    .join('');
+}
+
 export const FIELD_DISPLAY_FORMAT: {
   [key: string]: FieldFormatter;
 } = {
@@ -301,7 +315,22 @@ export const FIELD_DISPLAY_FORMAT: {
       : Array.isArray(d)
       ? `[${String(d)}]`
       : '',
-  [ALL_FIELD_TYPES.geoarrow]: d => d,
+  [ALL_FIELD_TYPES.geoarrow]: (data, field) => {
+    if (data instanceof arrow.Vector) {
+      try {
+        const encoding = field?.metadata?.get('ARROW:extension:name');
+        if (encoding) {
+          const geometry = parseGeometryFromArrow(data, encoding);
+          return JSON.stringify(geometry);
+        }
+      } catch (error) {
+        // ignore for now
+      }
+    } else if (data instanceof Uint8Array) {
+      return uint8ArrayToHex(data);
+    }
+    return data;
+  },
   [ALL_FIELD_TYPES.object]: (value: any) => {
     try {
       return JSON.stringify(value);
@@ -309,14 +338,14 @@ export const FIELD_DISPLAY_FORMAT: {
       return String(value);
     }
   },
-  [ALL_FIELD_TYPES.array]: JSON.stringify,
+  [ALL_FIELD_TYPES.array]: d => JSON.stringify(d),
   [ALL_FIELD_TYPES.h3]: defaultFormatter
 };
 
 /**
  * Parse field value and type and return a string representation
  */
-export const parseFieldValue = (value: any, type: string): string => {
+export const parseFieldValue = (value: any, type: string, field?: Field): string => {
   if (!notNullorUndefined(value)) {
     return '';
   }
@@ -326,7 +355,7 @@ export const parseFieldValue = (value: any, type: string): string => {
   if (typeof value === 'bigint') {
     return value.toString();
   }
-  return FIELD_DISPLAY_FORMAT[type] ? FIELD_DISPLAY_FORMAT[type](value) : String(value);
+  return FIELD_DISPLAY_FORMAT[type] ? FIELD_DISPLAY_FORMAT[type](value, field) : String(value);
 };
 
 /**

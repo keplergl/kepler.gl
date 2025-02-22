@@ -244,7 +244,7 @@ export default class TripLayer extends Layer {
 
   static findDefaultLayerProps(
     {label, fields = [], dataContainer, id}: KeplerTable,
-    foundLayers: any[]
+    foundLayers?: any[]
   ) {
     const geojsonColumns = fields.filter(f => f.type === 'geojson').map(f => f.name);
 
@@ -268,7 +268,7 @@ export default class TripLayer extends Layer {
         })),
 
         // if a geojson layer is created from this column, delete it
-        foundLayers: foundLayers.filter(
+        foundLayers: foundLayers?.filter(
           prop =>
             prop.type !== 'geojson' ||
             prop.dataId !== id ||
@@ -407,6 +407,8 @@ export default class TripLayer extends Layer {
           ...columnConfig,
           columnMode: COLUMN_MODE_TABLE
         });
+      } else {
+        return this;
       }
     }
 

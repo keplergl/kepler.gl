@@ -20,6 +20,7 @@ import {
 } from '@kepler.gl/types';
 import {
   FindDefaultLayerPropsReturnValue,
+  FindDefaultLayerProps,
   Layer,
   LayerClassesType,
   OVERLAY_TYPE_CONST,
@@ -86,7 +87,7 @@ export function findDefaultLayer(dataset: KeplerTable, layerClasses: LayerClasse
         }))
       );
     },
-    [] as (LayerClassesType[keyof LayerClassesType] & {type: string})[]
+    [] as (FindDefaultLayerProps & {type: string})[]
   );
 
   // go through all layerProps to create layer
