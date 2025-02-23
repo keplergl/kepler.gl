@@ -15,7 +15,7 @@ import {sidePanelBg, panelBorderColor} from '@kepler.gl/styles';
 import {isAppleDevice} from '@kepler.gl/utils';
 
 import MonacoEditor from './monaco-editor';
-import {SchemaPanel} from './schema-panel';
+import {SchemaPanel, SchemaSuggestion} from './schema-panel';
 import {PreviewDataPanel, QueryResult} from './preview-data-panel';
 import {getDuckDB} from '../init';
 import {
@@ -154,7 +154,7 @@ export const SqlPanel: React.FC<SqlPanelProps> = ({initialSql = ''}) => {
   const [result, setResult] = useState<null | QueryResult>(null);
   const [error, setError] = useState<Error | null>(null);
   const [counter, setCounter] = useState(0);
-  const [tableSchema, setTableSchema] = useState([]);
+  const [tableSchema, setTableSchema] = useState<SchemaSuggestion[]>([]);
   const [isRunning, setIsRunning] = useState(false);
   const [isMac] = useState(() => isAppleDevice());
   const dispatch = useDispatch();
@@ -278,7 +278,7 @@ export const SqlPanel: React.FC<SqlPanelProps> = ({initialSql = ''}) => {
     setDragState(false);
   }, []);
 
-  const handleFileInput = useCallback((fileList: FileList, event: any) => {
+  const handleFileInput = useCallback((fileList: FileList, event: DragEvent) => {
     if (event) {
       event.preventDefault();
       event.stopPropagation();

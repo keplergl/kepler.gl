@@ -57,7 +57,7 @@ async function getColumnSchema(connection: AsyncDuckDBConnection, tableName: str
   };
 }
 
-type SchemaSuggestion = {column_name: string; table_name: string};
+export type SchemaSuggestion = {column_name: string; table_name: string};
 
 function getSchemaSuggestion(result: {key: string; children: {key: string}[]}[]) {
   return result.reduce((accu, data) => {
