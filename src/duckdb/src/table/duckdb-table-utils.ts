@@ -18,6 +18,8 @@ import {ProtoDatasetField} from '@kepler.gl/types';
 
 import {getDuckDB} from '../init';
 
+export const SUPPORTED_DUCKDB_DROP_EXTENSIONS = ['arrow', 'csv', 'geojson', 'json', 'parquet'];
+
 export type DuckDBColumnDesc = {name: string; type: string};
 
 /**
@@ -407,12 +409,17 @@ export const dropTableIfExists = async (connection: AsyncDuckDBConnection, table
 };
 
 /**
- * Imports a file into DuckDB as a table, supporting multiple formats including Arrow, CSV, GeoJSON, JSON, and Parquet.
+ * Imports a file into DuckDB as a table, supporting multiple formats from SUPPORTED_DUCKDB_DROP_EXTENSIONS.
  * @param file The file to be imported.
  * @returns A promise that resolves when the file has been processed into a DuckDB table.
  */
 export async function tableFromFile(file: File | null): Promise<void> {
   if (!file) return;
+
+  const fileExt = SUPPORTED_DUCKDB_DROP_EXTENSIONS.find(ext => file.name.endsWith(ext));
+  if (!fileExt) {
+    return;
+  }
 
   const db = await getDuckDB();
   const c = await db.connect();
@@ -421,19 +428,14 @@ export async function tableFromFile(file: File | null): Promise<void> {
     const tableName = file.name;
     const sourceName = 'temp_file_handle';
 
-    const fileExtensions = ['arrow', 'csv', 'geojson', 'json', 'parquet'];
-    const fileExt = fileExtensions.find(ext => file.name.endsWith(ext));
+    c.query(`install spatial;
+      load spatial;`);
 
     if (fileExt === 'arrow') {
       const arrayBuffer = await file.arrayBuffer();
       const uint8Array = new Uint8Array(arrayBuffer);
       const arrowTable = arrow.tableFromIPC(uint8Array);
 
-      const setupSql = `
-        install spatial;
-        load spatial;
-      `;
-      await c.query(setupSql);
       await c.insertArrowTable(arrowTable, {name: tableName});
     } else {
       await db.registerFileHandle(sourceName, file, DuckDBDataProtocol.BROWSER_FILEREADER, true);
@@ -452,8 +454,6 @@ export async function tableFromFile(file: File | null): Promise<void> {
           `);
       } else if (fileExt === 'geojson') {
         await c.query(`
-            install spatial;
-            load spatial;
             CREATE TABLE '${tableName}' AS
             SELECT *
             FROM ST_READ('${sourceName}', keep_wkb = TRUE);

@@ -26,10 +26,10 @@ import {
   setGeoArrowWKBExtension,
   splitSqlStatements,
   checkIsSelectQuery,
-  removeSQLComments
+  removeSQLComments,
+  tableFromFile,
+  SUPPORTED_DUCKDB_DROP_EXTENSIONS
 } from '../table/duckdb-table-utils';
-
-import {tableFromFile} from '../table/duckdb-table-utils';
 
 const StyledSqlPanel = styled.div`
   display: flex;
@@ -262,8 +262,7 @@ export const SqlPanel: React.FC<SqlPanelProps> = ({initialSql = ''}) => {
   }, [result, counter, dispatch]);
 
   const isValidFileType = useCallback(filename => {
-    const fileExtensions = ['arrow', 'csv', 'geojson', 'json', 'parquet'];
-    const fileExt = fileExtensions.find(ext => filename.endsWith(ext));
+    const fileExt = SUPPORTED_DUCKDB_DROP_EXTENSIONS.find(ext => filename.endsWith(ext));
     return Boolean(fileExt);
   }, []);
 
