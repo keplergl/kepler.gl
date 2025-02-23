@@ -474,6 +474,8 @@ export async function tableFromFile(file: File | null): Promise<void> {
 
     // Some parquet files:
     // - Invalid Input Error: Geoparquet column 'geometry' does not have geometry types
+
+    // ! error message to output
   }
 
   c.close();
