@@ -57,28 +57,36 @@ async function getColumnSchema(connection: AsyncDuckDBConnection, tableName: str
   };
 }
 
-function getSchemaSuggestion(result) {
+export type SchemaSuggestion = {column_name: string; table_name: string};
+
+function getSchemaSuggestion(result: {key: string; children: {key: string}[]}[]) {
   return result.reduce((accu, data) => {
     const columns = data.children.map(child => ({
       column_name: child.key,
       table_name: data.key
     }));
     return accu.concat(columns);
-  }, []);
+  }, [] as SchemaSuggestion[]);
 }
-export const SchemaPanel = ({setTableSchema}) => {
+
+type SchemaPanelProps = {
+  setTableSchema: (tableScheama: SchemaSuggestion[]) => void;
+  droppedFile: File | null;
+};
+
+export const SchemaPanel = ({setTableSchema, droppedFile}: SchemaPanelProps) => {
   const [columnSchemas, setColumnSchemas] = useState<TreeNodeData<{type: string}>[]>([]);
   const datasets = useSelector((state: State) => state?.demo?.keplerGl?.map?.visState.datasets);
   useEffect(() => {
     getTableSchema();
-  }, [datasets]);
+  }, [datasets, droppedFile]);
   const getTableSchema = useCallback(async () => {
     const db = await getDuckDB();
     const c = await db.connect();
 
     const tableResult = await c.query('SHOW TABLES;');
 
-    const tableNames = tableResult.getChildAt(0)?.toJSON();
+    const tableNames: string[] | undefined = tableResult.getChildAt(0)?.toJSON();
 
     const result = await Promise.all((tableNames || [])?.map(name => getColumnSchema(c, name)));
     const tableSchema = getSchemaSuggestion(result);
