@@ -406,65 +406,75 @@ export const dropTableIfExists = async (connection: AsyncDuckDBConnection, table
   }
 };
 
-export async function tableFromFile(file) {
+/**
+ * Imports a file into DuckDB as a table, supporting multiple formats including Arrow, CSV, GeoJSON, JSON, and Parquet.
+ * @param file The file to be imported.
+ * @returns A promise that resolves when the file has been processed into a DuckDB table.
+ */
+export async function tableFromFile(file: File | null): Promise<void> {
   if (!file) return;
 
   const db = await getDuckDB();
   const c = await db.connect();
 
   try {
-    await db.registerFileHandle(file.name, file, DuckDBDataProtocol.BROWSER_FILEREADER, true);
-
     const tableName = file.name;
-    const sourceName = file.name;
+    const sourceName = 'temp_file_handle';
 
     const fileExtensions = ['arrow', 'csv', 'geojson', 'json', 'parquet'];
     const fileExt = fileExtensions.find(ext => file.name.endsWith(ext));
-    if (fileExt === 'csv') {
-      const createTableSql = `
-          CREATE TABLE '${tableName}' AS
-          SELECT *
-          FROM read_csv('${sourceName}', header = true, auto_detect = true, sample_size = -1);
-        `;
-      await c.query(createTableSql);
-    } else if (fileExt === 'json') {
-      const createTableSql = `
-          CREATE TABLE '${tableName}' AS
-          SELECT *
-          FROM read_json_auto('${sourceName}');
-        `;
-      await c.query(createTableSql);
-    } else if (fileExt === 'geojson') {
-      const createTableSql = `
-          install spatial;
-          load spatial;
-          CREATE TABLE '${tableName}' AS
-          SELECT *
-          FROM ST_READ('${sourceName}', keep_wkb = TRUE);
-        `;
-      await c.query(createTableSql);
-    } else if (fileExt === 'parquet') {
-      const createTableSql = `
-          
-          CREATE TABLE '${tableName}' AS
-          SELECT *
-          FROM read_parquet('${sourceName}')
-        `;
-      await c.query(createTableSql);
-    } else if (fileExt === 'arrow') {
-      // TODO - how to insert arrow file handle?
-      /*
-        const setupSql = `
-          install spatial;
-          load spatial;
-        `;
-        await c.query(setupSql);
-        // ???
-        await c.insertArrowTable(arrowTable, {name: this.label});
-        */
-    }
 
-    // TODO - types like arrowSchemaToFields
-  } catch (err) {}
+    if (fileExt === 'arrow') {
+      const arrayBuffer = await file.arrayBuffer();
+      const uint8Array = new Uint8Array(arrayBuffer);
+      const arrowTable = arrow.tableFromIPC(uint8Array);
+
+      const setupSql = `
+        install spatial;
+        load spatial;
+      `;
+      await c.query(setupSql);
+      await c.insertArrowTable(arrowTable, {name: tableName});
+    } else {
+      await db.registerFileHandle(sourceName, file, DuckDBDataProtocol.BROWSER_FILEREADER, true);
+
+      if (fileExt === 'csv') {
+        await c.query(`
+            CREATE TABLE '${tableName}' AS
+            SELECT *
+            FROM read_csv('${sourceName}', header = true, auto_detect = true, sample_size = -1);
+          `);
+      } else if (fileExt === 'json') {
+        await c.query(`
+            CREATE TABLE '${tableName}' AS
+            SELECT *
+            FROM read_json_auto('${sourceName}');
+          `);
+      } else if (fileExt === 'geojson') {
+        await c.query(`
+            install spatial;
+            load spatial;
+            CREATE TABLE '${tableName}' AS
+            SELECT *
+            FROM ST_READ('${sourceName}', keep_wkb = TRUE);
+          `);
+      } else if (fileExt === 'parquet') {
+        await c.query(`
+            CREATE TABLE '${tableName}' AS
+            SELECT *
+            FROM read_parquet('${sourceName}')
+          `);
+      }
+    }
+  } catch (error) {
+    console.error('An error in tableFromFile', error);
+
+    // Arrow files:
+    // - remove geoarrow extensions
+
+    // Some parquet files:
+    // - Invalid Input Error: Geoparquet column 'geometry' does not have geometry types
+  }
+
   c.close();
 }

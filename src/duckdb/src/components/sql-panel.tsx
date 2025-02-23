@@ -271,7 +271,7 @@ export const SqlPanel: React.FC<SqlPanelProps> = ({initialSql = ''}) => {
     createTableFromDroppedFile(droppedFile);
   }, [droppedFile]);
 
-  const createTableFromDroppedFile = useCallback(async droppedFile => {
+  const createTableFromDroppedFile = useCallback(async (droppedFile: File | null) => {
     await tableFromFile(droppedFile);
 
     setDroppedFile(null);
