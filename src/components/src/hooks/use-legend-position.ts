@@ -54,10 +54,9 @@ export function useCalcLegendPosition({
   isSidePanelShown,
   sidePanelWidth
 }: UseCalcLegendPositionProps) {
-  const legendContentRefCurrent = legendContentRef?.current;
   return useCallback((): MapLegendControlSettings['position'] => {
-    const root = legendContentRefCurrent?.closest('.kepler-gl');
-    const legendContent = legendContentRefCurrent;
+    const root = legendContentRef.current?.closest('.kepler-gl');
+    const legendContent = legendContentRef.current;
     if (!legendContent || !(root instanceof HTMLElement)) {
       return DEFAULT_POSITION;
     }
@@ -82,7 +81,8 @@ export function useCalcLegendPosition({
         ? {y: topOffset, anchorY: 'top'}
         : {y: bottomOffset, anchorY: 'bottom'})
     };
-  }, [isSidePanelShown, legendContentRefCurrent, sidePanelWidth]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isSidePanelShown, sidePanelWidth]);
 }
 
 /**
@@ -117,6 +117,7 @@ export default function useLegendPosition({
     if (content instanceof HTMLElement) {
       startHeightRef.current = content.offsetHeight;
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const resize = useCallback(
     deltaY => {
@@ -134,6 +135,7 @@ export default function useLegendPosition({
         }
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [contentHeight, pos, onChangeSettings]
   );
 
@@ -153,7 +155,7 @@ export default function useLegendPosition({
         });
       }
     }
-  }, [isSidePanelShown, onChangeSettings]);
+  }, [isSidePanelShown, onChangeSettings, sidePanelWidth]);
 
   return {positionStyles, updatePosition, contentHeight, startResize, resize};
 }
