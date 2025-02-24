@@ -38,6 +38,9 @@ const _initializeDuckDb = async (config?: DuckDBConfig): Promise<AsyncDuckDB> =>
   // Select a bundle based on browser checks
   const JSDELIVR_BUNDLES = duckdb.getJsDelivrBundles();
   const bundle = await duckdb.selectBundle(JSDELIVR_BUNDLES);
+  if (!bundle.mainWorker) {
+    throw new Error('Failed to initialize DuckDB');
+  }
 
   const worker_url = URL.createObjectURL(
     new Blob([`importScripts("${bundle.mainWorker!}");`], {

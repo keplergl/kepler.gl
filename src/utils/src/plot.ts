@@ -588,7 +588,7 @@ export function updateTimeFilterPlotType(
   filter: TimeRangeFilter,
   plotType: TimeRangeFilter['plotType'],
   datasets: Datasets,
-  dataId?: string
+  _dataId?: string
 ): TimeRangeFilter {
   let nextFilter = filter;
   let nextPlotType = plotType;
@@ -655,7 +655,7 @@ export function updateRangeFilterPlotType(
   filter: RangeFilter,
   plotType: RangeFilter['plotType'],
   datasets: Datasets,
-  dataId?: string
+  _dataId?: string
 ): RangeFilter {
   const nextFilter = {
     ...filter,

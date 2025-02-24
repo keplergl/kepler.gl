@@ -171,7 +171,6 @@ function getBinaryGeometriesFromWKBArrow(
 }
 
 export function getGeojsonLayerMetaFromArrow({
-  dataContainer,
   geoColumn,
   geoField,
   chunkIndex
