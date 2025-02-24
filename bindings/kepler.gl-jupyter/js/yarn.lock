@@ -16063,10 +16063,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"strnum@npm:^1.0.5":
-  version: 1.0.5
-  resolution: "strnum@npm:1.0.5"
-  checksum: 10c0/64fb8cc2effbd585a6821faa73ad97d4b553c8927e49086a162ffd2cc818787643390b89d567460a8e74300148d11ac052e21c921ef2049f2987f4b1b89a7ff1
+"strnum@npm:^1.1.1":
+  version: 1.1.1
+  resolution: "strnum@npm:1.1.1"
+  checksum: 10c0/c016034f9896ea99c4a22a8a8142d1ec72dba8d514ddec399f96998d5d2ab9f9e5b6c75c761d9730c3244b794022b1a63ec293f0da41ab0a994e3584020ba1ad
   languageName: node
   linkType: hard
 
