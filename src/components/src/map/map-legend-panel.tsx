@@ -300,7 +300,6 @@ const MapLegendPanelComponent = ({
   onClickControlBtn,
   isViewportUnsyncAllowed = true,
   className,
-  interactionConfig,
   MapControlTooltip,
   MapControlPanel,
   MapLegend
@@ -387,7 +386,7 @@ function MapLegendPanelFactory(
 ): MapLegendPanelComponentType {
   const MapLegendPanel = withState(
     [uiStateLens],
-    state => {
+    _state => {
       return {
         MapControlTooltip,
         MapControlPanel,

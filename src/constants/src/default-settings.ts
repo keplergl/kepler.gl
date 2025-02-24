@@ -901,7 +901,7 @@ export const FIELD_OPTS = {
       ...notSupportAggrOpts
     },
     format: {
-      legend: d => '...',
+      legend: () => '...',
       tooltip: []
     }
   }

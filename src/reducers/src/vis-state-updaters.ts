@@ -1401,7 +1401,7 @@ function _updateFilterProp(state, filter, prop, value, valueIndex, datasetIds?) 
  */
 export const setFilterPlotUpdater = (
   state: VisState,
-  {idx, newProp, valueIndex = 0}: VisStateActions.SetFilterPlotUpdaterAction
+  {idx, newProp}: VisStateActions.SetFilterPlotUpdaterAction
 ): VisState => {
   if (!state.filters[idx]) {
     Console.error(`filters[${idx}] is undefined`);

@@ -57,7 +57,6 @@ export type PreviewDataPanelProps = BaseComponentProps & {
 const PreviewDataPanelWOTheme: React.FC<PreviewDataPanelProps> = ({
   result,
   rowsToCalculatePreview = DEFAULT_ROWS_TO_CALCULATE_PREVIEW,
-  setColumnDisplayFormat,
   defaultPinnedColumns = [],
   theme
 }) => {

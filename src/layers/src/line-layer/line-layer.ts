@@ -231,7 +231,7 @@ export default class LineLayer extends ArcLayer {
     };
   }
 
-  static findDefaultLayerProps({fields, fieldPairs = []}: KeplerTable): {
+  static findDefaultLayerProps({fieldPairs = []}: KeplerTable): {
     props: {color?: RGBColor; columns: LineLayerColumnsConfig; label: string}[];
   } {
     if (fieldPairs.length < 2) {

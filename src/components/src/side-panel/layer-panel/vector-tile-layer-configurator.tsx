@@ -50,7 +50,6 @@ function VectorTileLayerConfiguratorFactory(
 ): React.FC<Props> {
   const VectorTileLayerConfigurator = ({
     layer,
-    dataset,
     visConfiguratorProps,
     layerChannelConfigProps,
     layerConfiguratorProps

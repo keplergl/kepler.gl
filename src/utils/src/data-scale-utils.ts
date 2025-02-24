@@ -208,7 +208,7 @@ function getScaleLabels(
   scale: D3ScaleFunction,
   labelFormat: LabelFormat
 ): Omit<ColorBreak, 'data'>[] {
-  return scale.range().map((d, i) => {
+  return scale.range().map(d => {
     // @ts-ignore
     const invert = scale.invertExtent(d);
     const inputs = [
@@ -419,7 +419,7 @@ export function colorMapToCategoricalColorBreaks(
   if (!colorMap) {
     return null;
   }
-  const colorBreaks = colorMap.map(([value, color], i) => {
+  const colorBreaks = colorMap.map(([value, color]) => {
     return {
       data: color,
       label: value
@@ -540,7 +540,7 @@ export function getHistogramDomain({
       ];
     }
     if (dataset && fieldValueAccessor) {
-      dataset.allIndexes.forEach((x, i) => {
+      dataset.allIndexes.forEach(x => {
         const val = fieldValueAccessor(x);
         if (isNumber(val)) {
           if (val < domainMin) domainMin = val;

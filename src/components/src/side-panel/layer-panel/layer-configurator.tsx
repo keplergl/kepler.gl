@@ -276,12 +276,7 @@ export default function LayerConfiguratorFactory(
       );
     }
 
-    _renderClusterLayerConfig({
-      layer,
-      visConfiguratorProps,
-      layerConfiguratorProps,
-      layerChannelConfigProps
-    }) {
+    _renderClusterLayerConfig({layer, visConfiguratorProps, layerChannelConfigProps}) {
       return (
         <StyledLayerVisualConfigurator>
           {/* Color */}
@@ -352,12 +347,7 @@ export default function LayerConfiguratorFactory(
       return this._renderAggregationLayerConfig(props);
     }
 
-    _renderAggregationLayerConfig({
-      layer,
-      visConfiguratorProps,
-      layerConfiguratorProps,
-      layerChannelConfigProps
-    }) {
+    _renderAggregationLayerConfig({layer, visConfiguratorProps, layerChannelConfigProps}) {
       const {config} = layer;
       const {
         visConfig: {enable3d, fixedHeight}
