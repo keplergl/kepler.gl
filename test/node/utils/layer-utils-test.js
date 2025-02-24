@@ -664,8 +664,7 @@ test('layerUtils -> findDefaultLayer:GeojsonLayer.wkt', t => {
     }
   });
 
-  // eslint-disable-next-line no-unused-vars
-  const [layer1Color, strokeColor1, layer2Color, strokeColor2] = getNextColorMakerValue(4);
+  const [_layer1Color, strokeColor1, _layer2Color, strokeColor2] = getNextColorMakerValue(4);
   expected1.updateLayerVisConfig({
     filled: true,
     stroked: true,

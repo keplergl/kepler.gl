@@ -43,7 +43,7 @@ const _initializeDuckDb = async (config?: DuckDBConfig): Promise<AsyncDuckDB> =>
   }
 
   const worker_url = URL.createObjectURL(
-    new Blob([`importScripts("${bundle.mainWorker!}");`], {
+    new Blob([`importScripts("${bundle.mainWorker}");`], {
       type: 'text/javascript'
     })
   );

@@ -20,7 +20,7 @@ export type BaseMapLibraryConfig = {
  * A mechanism to override default Kepler values/settings so that we
  * without having to make application-specific changes to the kepler repo.
  */
-export type KeplerApplicationConfig<Map> = {
+export type KeplerApplicationConfig = {
   /** Default name of export HTML file, can be overridden by user */
   defaultHtmlName?: string;
   defaultImageName?: string;
@@ -41,7 +41,7 @@ export type KeplerApplicationConfig<Map> = {
   showReleaseBanner?: boolean;
 };
 
-const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig<mapboxgl.Map>> = {
+const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
   defaultHtmlName: 'kepler.gl.html',
   defaultImageName: 'kepler.gl.png',
   defaultJsonName: 'kepler.gl.json',
@@ -76,12 +76,10 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig<mapboxgl.Map>
   showReleaseBanner: true
 };
 
-const applicationConfig: Required<KeplerApplicationConfig<mapboxgl.Map>> =
-  DEFAULT_APPLICATION_CONFIG;
+const applicationConfig: Required<KeplerApplicationConfig> = DEFAULT_APPLICATION_CONFIG;
 
-export const getApplicationConfig = (): Required<KeplerApplicationConfig<mapboxgl.Map>> =>
-  applicationConfig;
+export const getApplicationConfig = (): Required<KeplerApplicationConfig> => applicationConfig;
 
-export function initApplicationConfig<M>(appConfig: KeplerApplicationConfig<M> = {}) {
+export function initApplicationConfig(appConfig: KeplerApplicationConfig = {}) {
   Object.assign(applicationConfig, appConfig);
 }
