@@ -4,8 +4,12 @@
 import {parseGeoJsonRawFeature, getGeojsonFeatureTypes} from '../geojson-layer/geojson-utils';
 import {DataContainerInterface, getSampleContainerData, timeToUnixMilli} from '@kepler.gl/utils';
 import {containValidTime, notNullorUndefined} from '@kepler.gl/common-utils';
+import {BinaryFeatureCollection} from '@loaders.gl/schema';
 import {Feature} from '@turf/helpers';
 import {GeoJsonProperties, Geometry} from 'geojson';
+
+// TODO: We should check for 4 !
+const NUM_DIMENSIONS_FOR_TRIPS = 3;
 
 /**
  * Parse geojson from string
@@ -101,6 +105,92 @@ export function parseTripGeoJsonTimestamp(dataToFeature: any[]) {
   const animationDomain = getAnimationDomainFromTimestamps(dataToTimeStamp);
 
   return {dataToTimeStamp, animationDomain};
+}
+
+/**
+ * Converts Deck.gl's BinaryFeatureCollection into regular json features supported by TripLayer.
+ * TODO: investigate whether BinaryFeatureCollection can be easily passed to Trips Layer as attributes.
+ * Info for (sublayer) Deck.gl's PathsLayer: https://deck.gl/docs/api-reference/layers/path-layer#use-binary-attributes
+ * @param dataToFeature An array of binary feature collections. Only lines are checked.
+ * @returns TripLayer-compatible features and timestamps.
+ */
+export function parseTripGeoJsonFromGeoArrow(dataToFeature: BinaryFeatureCollection[]): {
+  dataToTimeStamp: number[][];
+  dataToFeatureOut: Feature[];
+  animationDomain: [number, number] | null;
+} {
+  // Analyze type based on coordinates of the 1st lineString
+  // select a sample trip to analyze time format
+  const empty = {dataToTimeStamp: [], dataToFeatureOut: [], animationDomain: null};
+
+  // We need 4 dimensions
+  const lines = dataToFeature[0].lines;
+  if (!lines || lines.positions?.size !== NUM_DIMENSIONS_FOR_TRIPS) {
+    return empty;
+  }
+
+  const positions = lines.positions.value;
+  const pathIndices = lines.pathIndices.value;
+
+  // Check for proper type fo the time values
+  const timestampsSample: number[] = [];
+  for (let i = NUM_DIMENSIONS_FOR_TRIPS - 1; i < positions.length; i += NUM_DIMENSIONS_FOR_TRIPS) {
+    timestampsSample.push(positions[i]);
+  }
+  const analyzedType = containValidTime(
+    timestampsSample as any[] /* why only strings are expected? */
+  );
+  if (!analyzedType) {
+    return empty;
+  }
+  const {format} = analyzedType;
+  const getTimeValue = value => {
+    return value && notNullorUndefined(value) ? timeToUnixMilli(value, format) : null;
+  };
+
+  // Transform binary buffers to standard Features and separate timestamp data.
+  const dataToFeatureOut: Feature[] = [];
+  const dataToTimeStamp: number[][] = [];
+  lines.properties.forEach((f, featureIndex) => {
+    // get number of coordinates in current path
+    const prevIndex = pathIndices[featureIndex];
+    const numCoordinates = pathIndices[featureIndex + 1] - prevIndex;
+    const baseShift = prevIndex * NUM_DIMENSIONS_FOR_TRIPS;
+
+    const coordinates: number[][] = [];
+    const timeValues: number[] = [];
+    for (let coordIndex = 0; coordIndex < numCoordinates; ++coordIndex) {
+      const baseIndex = baseShift + coordIndex * NUM_DIMENSIONS_FOR_TRIPS;
+
+      // TODO add elevation, this was used for testing with DuckDB
+      const coordinate = [positions[baseIndex], positions[baseIndex + 1], 0];
+
+      const timeValue = positions[baseIndex + NUM_DIMENSIONS_FOR_TRIPS - 1];
+      const parsedTimeValue = getTimeValue(timeValue);
+
+      if (parsedTimeValue) {
+        coordinates.push(coordinate);
+        timeValues.push(parsedTimeValue);
+      }
+    }
+
+    dataToFeatureOut.push({
+      type: 'Feature',
+      geometry: {
+        type: 'LineString',
+        coordinates
+      },
+      properties: {
+        index: featureIndex
+      }
+    });
+
+    dataToTimeStamp.push(timeValues);
+  });
+
+  const animationDomain = getAnimationDomainFromTimestamps(dataToTimeStamp);
+
+  return {dataToTimeStamp, dataToFeatureOut, animationDomain};
 }
 
 function findMinFromSorted(list: number[]) {

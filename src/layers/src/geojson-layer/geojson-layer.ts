@@ -53,7 +53,7 @@ import {
   ProtoDatasetField,
   LayerColumn
 } from '@kepler.gl/types';
-import {KeplerTable} from '@kepler.gl/table';
+import {KeplerTable, Datasets} from '@kepler.gl/table';
 import {DataContainerInterface, ArrowDataContainer} from '@kepler.gl/utils';
 import {FilterArrowExtension} from '@kepler.gl/deckgl-layers';
 import GeojsonInfoModalFactory from './geojson-info-modal';
@@ -182,7 +182,7 @@ type ObjectInfo = {
 export const featureAccessor =
   ({geojson}: GeoJsonLayerColumnsConfig) =>
   (dc: DataContainerInterface) =>
-  d =>
+  (d: {index: number}) =>
     dc.valueAt(d.index, geojson.fieldIdx);
 
 const geoColumnAccessor =
@@ -232,15 +232,17 @@ const SUPPORTED_COLUMN_MODES = [
 const DEFAULT_COLUMN_MODE = COLUMN_MODE_GEOJSON;
 
 export default class GeoJsonLayer extends Layer {
-  declare config: GeoJsonLayerConfig;
   declare visConfigSettings: GeoJsonVisConfigSettings;
+  declare config: GeoJsonLayerConfig;
   declare meta: GeoJsonLayerMeta;
   declare geoArrowMode: boolean;
 
   dataToFeature: GeojsonDataMaps = [];
   dataContainer: DataContainerInterface | null = null;
+
   filteredIndex: Uint8ClampedArray | null = null;
   filteredIndexTrigger: number[] | null = null;
+
   centroids: Array<number[] | null> = [];
 
   _layerInfoModal: {
@@ -250,21 +252,26 @@ export default class GeoJsonLayer extends Layer {
 
   constructor(props) {
     super(props);
-
     this.registerVisConfig(geojsonVisConfigs);
-    this.getPositionAccessor = (dataContainer: DataContainerInterface) =>
-      featureAccessor(this.config.columns)(dataContainer);
     this._layerInfoModal = {
       [COLUMN_MODE_TABLE]: GeojsonInfoModalFactory(COLUMN_MODE_TABLE),
       [COLUMN_MODE_GEOJSON]: GeojsonInfoModalFactory(COLUMN_MODE_GEOJSON)
     };
+
+    this.getPositionAccessor = (dataContainer: DataContainerInterface) =>
+      featureAccessor(this.config.columns)(dataContainer);
+  }
+
+  get supportedColumnModes() {
+    return SUPPORTED_COLUMN_MODES;
+  }
+
+  static get type(): 'geojson' {
+    return 'geojson';
   }
 
   get type() {
     return GeoJsonLayer.type;
-  }
-  static get type(): 'geojson' {
-    return 'geojson';
   }
 
   get name(): 'Polygon' {
@@ -277,10 +284,6 @@ export default class GeoJsonLayer extends Layer {
 
   get columnPairs() {
     return this.defaultPointColumnPairs;
-  }
-
-  get supportedColumnModes() {
-    return SUPPORTED_COLUMN_MODES;
   }
 
   get layerInfoModal() {
@@ -501,7 +504,7 @@ export default class GeoJsonLayer extends Layer {
     }
   }
 
-  formatLayerData(datasets, oldLayerData) {
+  formatLayerData(datasets: Datasets, oldLayerData) {
     if (this.config.dataId === null) {
       return {};
     }
@@ -525,12 +528,14 @@ export default class GeoJsonLayer extends Layer {
       return this.filteredIndex ? this.filteredIndex[d.properties.index] : 1;
     };
 
+    const getFilterValue = gpuFilter.filterValueAccessor(dataContainer)(
+      indexAccessor,
+      filterValueAccessor
+    );
+
     return {
       data,
-      getFilterValue: gpuFilter.filterValueAccessor(dataContainer)(
-        indexAccessor,
-        filterValueAccessor
-      ),
+      getFilterValue,
       getFiltered: isFilteredAccessor,
       ...accessors
     };
