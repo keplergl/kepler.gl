@@ -170,7 +170,7 @@ const MonacoEditor: React.FC<MonacoEditorProps> = ({
         }
       });
     },
-    [tableSchema, schemaTableNames]
+    [tableSchema, schemaTableNames, schemaTableNamesSet]
   );
 
   return (
