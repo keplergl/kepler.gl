@@ -248,7 +248,7 @@
     "dot-prop": "6.0.0",
     "kind-of": "6.0.3",
     "jpeg-js": "^0.4.3",
-    "lodash": "4.17.19",
+    "lodash": "4.17.21",
     "minimist": "1.2.6",
     "node-fetch": "2.6.1",
     "tough-cookie": "4.0.0"

@@ -3393,7 +3393,7 @@ __metadata:
     "@types/supercluster": "npm:^7.1.0"
     d3-array: "npm:^2.8.0"
     global: "npm:^4.3.0"
-    lodash: "npm:4.17.19"
+    lodash: "npm:4.17.21"
     lodash.memoize: "npm:^4.1.2"
     pbf: "npm:^3.1.0"
     supercluster: "npm:^7.1.0"
@@ -21405,10 +21405,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lodash@npm:4.17.19":
-  version: 4.17.19
-  resolution: "lodash@npm:4.17.19"
-  checksum: 10c0/4b52239385eff3100493af8475529fdfe1868721aab6b5ff663f9afb3cfaa2dfb853df7c9f603ae197118aad7ad0fd3cfca6ec584ff58050565d909e60271a8c
+"lodash@npm:4.17.21":
+  version: 4.17.21
+  resolution: "lodash@npm:4.17.21"
+  checksum: 10c0/d8cbea072bb08655bb4c989da418994b073a608dffa608b09ac04b43a791b12aeae7cd7ad919aa4c925f33b48490b5cfe6c1f71d827956071dae2e7bb3a6b74c
   languageName: node
   linkType: hard
 
