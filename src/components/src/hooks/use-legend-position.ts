@@ -54,9 +54,10 @@ export function useCalcLegendPosition({
   isSidePanelShown,
   sidePanelWidth
 }: UseCalcLegendPositionProps) {
+  const legendContentRefCurrent = legendContentRef?.current;
   return useCallback((): MapLegendControlSettings['position'] => {
-    const root = legendContentRef.current?.closest('.kepler-gl');
-    const legendContent = legendContentRef.current;
+    const root = legendContentRefCurrent?.closest('.kepler-gl');
+    const legendContent = legendContentRefCurrent;
     if (!legendContent || !(root instanceof HTMLElement)) {
       return DEFAULT_POSITION;
     }
@@ -81,7 +82,7 @@ export function useCalcLegendPosition({
         ? {y: topOffset, anchorY: 'top'}
         : {y: bottomOffset, anchorY: 'bottom'})
     };
-  }, [isSidePanelShown, legendContentRef?.current, sidePanelWidth]);
+  }, [isSidePanelShown, legendContentRefCurrent, sidePanelWidth]);
 }
 
 /**
