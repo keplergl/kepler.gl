@@ -92,7 +92,7 @@ const MonacoEditor: React.FC<MonacoEditorProps> = ({
       });
 
       monaco.languages.registerCompletionItemProvider('*', {
-        provideCompletionItems: (model, position, context, cancelationToken) => {
+        provideCompletionItems: (model, position, _context, _cancelationToken) => {
           const suggestions: monaco.languages.CompletionItem[] = [
             {
               label: 'myCustomSnippet',
