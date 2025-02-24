@@ -40,7 +40,11 @@ module.exports = {
     'enzyme-deprecation/no-shallow': 2,
     'enzyme-deprecation/no-mount': 2,
     'no-constant-condition': ['error', {checkLoops: false}],
-    'no-unused-vars': ['warn', {argsIgnorePattern: '^_', varsIgnorePattern: '^_'}]
+    'no-unused-vars': ['warn', {argsIgnorePattern: '^_', varsIgnorePattern: '^_'}],
+    '@typescript-eslint/no-unused-vars': [
+      'warn',
+      {argsIgnorePattern: '^_', varsIgnorePattern: '^_'}
+    ]
   },
   overrides: [
     {

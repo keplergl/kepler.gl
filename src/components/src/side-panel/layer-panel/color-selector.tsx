@@ -168,7 +168,7 @@ function ColorSelectorFactory(
           setColor(colorSet, color, colorSet.selectedColor[3]);
         }
       },
-      [colorSets, editingColorSet, setColor]
+      [editingColorSet, setColor]
     );
 
     const onSelectOpacity = useCallback(
@@ -179,7 +179,7 @@ function ColorSelectorFactory(
           setColor(colorSet, colorSet.selectedColor, Math.round(opacity[1] * 255));
         }
       },
-      [colorSets, editingColorSet, setColor]
+      [editingColorSet, setColor]
     );
 
     const onToggleDropdown = useCallback(
