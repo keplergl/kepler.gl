@@ -540,7 +540,7 @@ export function getHistogramDomain({
       ];
     }
     if (dataset && fieldValueAccessor) {
-      dataset.allIndexes.forEach((x, i) => {
+      dataset.allIndexes.forEach(x => {
         const val = fieldValueAccessor(x);
         if (isNumber(val)) {
           if (val < domainMin) domainMin = val;

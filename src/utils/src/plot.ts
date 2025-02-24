@@ -172,7 +172,7 @@ export function getTimeBins(
 ): TimeBins {
   let bins = filter.timeBins || {};
 
-  filter.dataId.forEach((dataId, dataIdIdx) => {
+  filter.dataId.forEach(dataId => {
     // reuse bins if filterData did not change
     if (bins[dataId] && bins[dataId][interval]) {
       return;
@@ -396,7 +396,7 @@ export const getAggregationOptiosnBasedOnField = field => {
 function getDelta(
   bins: LineDatum[],
   y: number,
-  interval: PlotType['interval']
+  _interval: PlotType['interval']
 ): Partial<LineDatum> & {delta: 'last'; pct: number | null} {
   // if (WOW[interval]) return getWow(bins, y, interval);
   const lastBin = bins[bins.length - 1];
@@ -441,7 +441,7 @@ export function getLineChart(datasets: Datasets, filter: Filter): LineChart {
   const getYValue = getValueAggrFunc(yAxis, aggregation, dataset);
 
   const init: LineDatum[] = [];
-  const series = (bins || []).reduce((accu, bin, i) => {
+  const series = (bins || []).reduce((accu, bin) => {
     const y = getYValue(bin);
     const delta = getDelta(accu, y, interval);
     accu.push({

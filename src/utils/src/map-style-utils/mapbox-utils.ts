@@ -45,9 +45,9 @@ export function isStyleUsingOpenStreetMapTiles(mapStyle: any) {
  * @returns transformed url
  */
 export const transformRequest = (
-  mapboxKey: string
+  _mapboxKey: string
 ): ((url: string, resourceType: string) => {url: string}) => {
-  return (url: string, resourceType: string) => {
+  return (url: string, _resourceType: string) => {
     /*
     if (isMapboxURL(url)) {
       // ! TODO - use MapBox directly?
