@@ -69,9 +69,7 @@ function getSchemaSuggestion(result) {
 export const SchemaPanel = ({setTableSchema}) => {
   const [columnSchemas, setColumnSchemas] = useState<TreeNodeData<{type: string}>[]>([]);
   const datasets = useSelector((state: State) => state?.demo?.keplerGl?.map?.visState.datasets);
-  useEffect(() => {
-    getTableSchema();
-  }, [datasets]);
+
   const getTableSchema = useCallback(async () => {
     const db = await getDuckDB();
     const c = await db.connect();
@@ -87,6 +85,10 @@ export const SchemaPanel = ({setTableSchema}) => {
     setTableSchema(tableSchema);
     c.close();
   }, [setColumnSchemas, setTableSchema]);
+
+  useEffect(() => {
+    getTableSchema();
+  }, [datasets, getTableSchema]);
 
   return (
     <StyledSchemaPanel>

@@ -152,7 +152,7 @@ const MonacoEditor: React.FC<MonacoEditorProps> = ({
                 ...tableSchema
                   .filter(d => d.table_name === table_name)
                   .map(
-                    ({table_name, column_name}) =>
+                    ({column_name}) =>
                       ({
                         label: column_name,
                         kind: monaco.languages.CompletionItemKind.Field,
@@ -170,7 +170,7 @@ const MonacoEditor: React.FC<MonacoEditorProps> = ({
         }
       });
     },
-    [tableSchema]
+    [tableSchema, schemaTableNames]
   );
 
   return (
