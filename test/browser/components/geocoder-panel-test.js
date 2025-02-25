@@ -223,8 +223,14 @@ test('GeocoderPanel - render', t => {
 test('Geocoder -> testForCoordinates', t => {
   t.deepEqual(
     testForCoordinates('21.22,-138.0'),
-    [true, 21.22, -138.0],
+    [true, -138.0, 21.22],
     'should recognize valid coordinates'
+  );
+
+  t.deepEqual(
+    testForCoordinates(' -21.122, -123.4321 '),
+    [true, -123.4321, -21.122],
+    'should recognize valid coordinates and trim spaces, and a whitespace after the comma'
   );
 
   t.deepEqual(
@@ -236,13 +242,20 @@ test('Geocoder -> testForCoordinates', t => {
   t.deepEqual(
     testForCoordinates('91,123'),
     [false, '91,123'],
-    'should recognize invalid coordinates'
+    'should recognize invalid integer coordinates'
   );
 
   t.deepEqual(
-    testForCoordinates('-21.122, -123.4321'),
-    [true, -21.122, -123.4321],
-    'should recognize valid coordinates'
+    testForCoordinates('91.0,-138.0'),
+    [false, '91.0,-138.0'],
+    'should recognize out of bounds latitude'
   );
+
+  t.deepEqual(
+    testForCoordinates('50.0,200.0'),
+    [false, '50.0,200.0'],
+    'should recognize out of bounds longitude'
+  );
+
   t.end();
 });
