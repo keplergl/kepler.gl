@@ -197,6 +197,10 @@ export default class IconLayer extends Layer {
     };
   }
 
+  getZoomFactor({zoom, zoomOffset = 0}: {zoom: number, zoomOffset?: number}) {
+    return Math.pow(2, 14 - zoom + zoomOffset);
+  }
+
   getSvgIcons() {
     const fetchConfig = {
       method: 'GET',
