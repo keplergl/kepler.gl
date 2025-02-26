@@ -250,8 +250,8 @@ export default function ModalContainerFactory(
       });
     };
 
-    _onOverwriteMap = () => {
-      this._onSaveMap(true);
+    _onOverwriteMap = (provider) => {
+      this._onSaveMap(provider, true);
     };
 
     _onShareMapUrl = provider => {
