@@ -11,6 +11,7 @@ export type MapData = {
 export type ExportFileOptions = {
   isPublic?: boolean;
   overwrite?: boolean;
+  mapIdToOverwrite?: string | null;
 };
 export type OnErrorCallBack = (error: Error) => any;
 export type OnSuccessCallBack = (p: {
