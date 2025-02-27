@@ -109,12 +109,16 @@ export default class FoursquareProvider extends Provider {
   }
 
   async uploadMap({mapData, options = {}}) {
-    // TODO: handle replace
-    const mode = options.overwrite ? 'overwrite' : 'add';
     const method = options.overwrite ? 'PUT' : 'POST';
     const {map, thumbnail} = mapData;
 
-    const {title = '', description = '', id} = map.info;
+    const {title = '', description = '', loadParams} = map.info;
+    
+    const mapIdToOverwrite = options.mapIdToOverwrite || loadParams?.id;
+    if(options.overwrite && !mapIdToOverwrite){
+      throw new Error("Foursquare storage provider: no map id to overwrite");
+    }
+
     const headers = await this.getHeaders();
     const payload = {
       name: title,
@@ -125,8 +129,22 @@ export default class FoursquareProvider extends Provider {
       }
     };
 
+
+
+    // To overwrite map.latestState we have to fetch the map first
+    if(options.overwrite){
+      const response = await fetch(`${this.apiURL}/v1/maps/${mapIdToOverwrite}`, {
+        method: "GET",
+        headers
+      });
+
+      const data = await response.json();
+      payload.latestState = data.latestState;
+      payload.latestState.data = map;
+    }
+
     const mapResponse = await fetch(
-      `${this.apiURL}/v1/maps${mode === 'overwrite' ? `/${id}` : ''}`,
+      `${this.apiURL}/v1/maps${options.overwrite ? `/${mapIdToOverwrite}` : ''}`,
       {
         method,
         headers,
@@ -136,6 +154,7 @@ export default class FoursquareProvider extends Provider {
 
     const createdMap = await mapResponse.json();
 
+    if(!options.overwrite){
     await fetch(`${this.apiURL}/v1/maps/${createdMap.id}/thumbnail`, {
       method: 'PUT',
       headers: {
@@ -144,8 +163,11 @@ export default class FoursquareProvider extends Provider {
       },
       body: thumbnail
     });
+  }
 
-    return map;
+    // pass through fsq map id
+    const newMapData = extractMapFromFSQResponse(createdMap);
+    return {...newMapData, info: {...newMapData.info, id: createdMap.id}};
   }
 
   async listMaps() {

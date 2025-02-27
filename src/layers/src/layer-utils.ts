@@ -52,7 +52,10 @@ export type FindDefaultLayerPropsReturnValue = {
   foundLayers?: (FindDefaultLayerProps & {type: string})[];
 };
 
-export function assignPointPairToLayerColumn(pair: FieldPair, hasAlt: boolean): Record<string, LayerColumn> {
+export function assignPointPairToLayerColumn(
+  pair: FieldPair,
+  hasAlt: boolean
+): Record<string, LayerColumn> {
   const {lat, lng, altitude} = pair.pair;
   if (!hasAlt) {
     return {lat, lng};
@@ -168,7 +171,6 @@ function getBinaryGeometriesFromWKBArrow(
 }
 
 export function getGeojsonLayerMetaFromArrow({
-  dataContainer,
   geoColumn,
   geoField,
   chunkIndex

@@ -714,7 +714,6 @@ export const CategoricalCustomPaletteInput: React.FC<CategoricalCustomPaletteInp
   actionIcons = defaultActionIcons,
   onDelete,
   disableDelete,
-  onAdd,
   onToggleSketcher,
   addColorMapValue,
   removeColorMapValue,

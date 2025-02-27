@@ -55,7 +55,7 @@ const KeplerGl = require('@kepler.gl/components').injectComponents([
 // Sample data
 /* eslint-disable no-unused-vars */
 import sampleTripData, {testCsvData, sampleTripDataConfig} from './data/sample-trip-data';
-import sampleGeojson from './data/sample-small-geojson';
+// import sampleGeojson from './data/sample-small-geojson';
 // import sampleGeojsonPoints from './data/sample-geojson-points';
 import sampleGeojsonConfig from './data/sample-geojson-config';
 import sampleH3Data, {config as h3MapConfig} from './data/sample-hex-id-csv';
@@ -199,6 +199,7 @@ const App = props => {
     // Notifications
 
     // no dependencies, as this was part of componentDidMount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const _setStartScreenCapture = useCallback(
@@ -215,9 +216,11 @@ const App = props => {
     [dispatch]
   );
 
+  /*
   const _showBanner = useCallback(() => {
     toggleShowBanner(true);
   }, [toggleShowBanner]);
+  */
 
   const hideBanner = useCallback(() => {
     toggleShowBanner(false);

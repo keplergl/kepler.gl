@@ -21,6 +21,7 @@ const RESOLVE_LOCAL_ALIASES = {
   'react-redux': `${NODE_MODULES_DIR}/react-redux/lib`,
   'styled-components': `${NODE_MODULES_DIR}/styled-components`,
   'react-intl': `${NODE_MODULES_DIR}/react-intl`,
+  'react-palm': `${NODE_MODULES_DIR}/react-palm`,
   'tiny-warning': `${SRC_DIR}/utils/src/noop.ts`,
   'apache-arrow': `${NODE_MODULES_DIR}/apache-arrow`,
 };

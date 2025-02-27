@@ -48,6 +48,7 @@ const getThirdPartyLibraryAliases = useKeplerNodeModules => {
     'react-redux': `${nodeModulesDir}/react-redux/lib`,
     'styled-components': `${nodeModulesDir}/styled-components`,
     'react-intl': `${nodeModulesDir}/react-intl`,
+    'react-palm': `${nodeModulesDir}/react-palm`,
     // kepler.gl and loaders.gl need to use same apache-arrow
     'apache-arrow': `${nodeModulesDir}/apache-arrow`
   };

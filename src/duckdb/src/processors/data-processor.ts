@@ -38,8 +38,8 @@ enum COLUMN_TYPES {
   TIMESTAMP = 'TIMESTAMP',
   VARCHAR = 'VARCHAR'
 }
-// @ts-expect-error https://duckdb.org/docs/data/csv/auto_detection.html#type-detection
-const COLUMN_TYPES_PRIORITIES = [
+// https://duckdb.org/docs/data/csv/auto_detection.html#type-detection
+export const COLUMN_TYPES_PRIORITIES = [
   'GEOMETRY',
   'BOOLEAN',
   'INTEGER',

@@ -42,8 +42,7 @@ describe('mapUtils', () => {
       const viewState = {...INITIAL_MAP_STATE, width: 0, height: 0};
       onViewPortChange(viewState, mockOnUpdateMap, mockOnViewStateChange);
 
-      /* eslint-disable no-unused-vars */
-      const {width, height, ...restViewState} = INITIAL_MAP_STATE;
+      const {width: _width, height: _height, ...restViewState} = INITIAL_MAP_STATE;
       expect(mockOnUpdateMap).toHaveBeenCalledWith({...restViewState, transitionDuration: 0}, 0);
     });
 

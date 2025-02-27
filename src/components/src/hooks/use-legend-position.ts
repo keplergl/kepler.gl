@@ -81,7 +81,8 @@ export function useCalcLegendPosition({
         ? {y: topOffset, anchorY: 'top'}
         : {y: bottomOffset, anchorY: 'bottom'})
     };
-  }, [isSidePanelShown, legendContentRef?.current, sidePanelWidth]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isSidePanelShown, sidePanelWidth]);
 }
 
 /**
@@ -116,6 +117,7 @@ export default function useLegendPosition({
     if (content instanceof HTMLElement) {
       startHeightRef.current = content.offsetHeight;
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const resize = useCallback(
     deltaY => {
@@ -133,6 +135,7 @@ export default function useLegendPosition({
         }
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [contentHeight, pos, onChangeSettings]
   );
 
@@ -152,7 +155,7 @@ export default function useLegendPosition({
         });
       }
     }
-  }, [isSidePanelShown, onChangeSettings]);
+  }, [isSidePanelShown, onChangeSettings, sidePanelWidth]);
 
   return {positionStyles, updatePosition, contentHeight, startResize, resize};
 }

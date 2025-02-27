@@ -228,12 +228,12 @@ export default function ModalContainerFactory(
       const toSave = exportMap(this.props);
 
       this.props.providerActions.exportFileToCloud({
-        // @ts-ignore
         mapData: toSave,
         provider,
         options: {
           isPublic,
-          overwrite
+          overwrite,
+          mapIdToOverwrite: this.props.providerState.savedMapId
         },
         closeModal,
         onSuccess: this.props.onExportToCloudSuccess,
@@ -250,8 +250,8 @@ export default function ModalContainerFactory(
       });
     };
 
-    _onOverwriteMap = () => {
-      this._onSaveMap(true);
+    _onOverwriteMap = (provider) => {
+      this._onSaveMap(provider, true);
     };
 
     _onShareMapUrl = provider => {

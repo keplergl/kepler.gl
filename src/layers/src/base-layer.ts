@@ -1090,7 +1090,7 @@ class Layer implements KeplerLayer {
     return this.getVisChannelScale(colorScale, colorDomain, colorRange.colors.map(hexToRgb));
   }
 
-  accessVSFieldValue(field, indexKey) {
+  accessVSFieldValue(_field, _indexKey) {
     return defaultGetFieldValue;
   }
   /**
