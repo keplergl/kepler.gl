@@ -62,8 +62,7 @@ function isDataSeparatedCoords(
  * this time deck.gl only supports interleaved.
  */
 // TODO: this hasn't been tested yet
-// @ts-expect-error
-function convertStructToFixedSizeList(
+export function convertStructToFixedSizeList(
   coords:
     | arrow.Data<arrow.FixedSizeList<arrow.Float64>>
     | arrow.Data<arrow.Struct<{x: arrow.Float64; y: arrow.Float64}>>

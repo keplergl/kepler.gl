@@ -26,12 +26,7 @@ export type ListItemProps<Option> = {
 };
 
 const defaultDisplay = d => d;
-export const ListItem = ({
-  value,
-  displayOption = defaultDisplay,
-  disabled,
-  light
-}: ListItemProps<any>) => {
+export const ListItem = ({value, displayOption = defaultDisplay, disabled}: ListItemProps<any>) => {
   const displayValue = displayOption(value);
   return (
     <span title={displayValue} className={classNames(classList.listItemAnchor, {disabled})}>

@@ -49,6 +49,7 @@ export type ProviderState = {
   currentProvider: string | null;
   successInfo: any;
   mapSaved: null | string;
+  savedMapId: null | string;
   initialState?: any;
   visualizations: MapListItem[];
 };
@@ -60,6 +61,7 @@ export const INITIAL_PROVIDER_STATE: ProviderState = {
   currentProvider: null,
   successInfo: {},
   mapSaved: null,
+  savedMapId: null,
   visualizations: []
 };
 
@@ -154,7 +156,8 @@ export const exportFileSuccessUpdater = (
     successInfo: response,
     ...(!options.isPublic
       ? {
-          mapSaved: provider.name
+          mapSaved: provider.name,
+          savedMapId: response?.info?.id ?? null
         }
       : {})
   };

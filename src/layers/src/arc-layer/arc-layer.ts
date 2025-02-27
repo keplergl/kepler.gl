@@ -293,7 +293,7 @@ export default class ArcLayer extends Layer {
     return hasStart && hasNeibors;
   }
 
-  static findDefaultLayerProps({fields, fieldPairs = []}: KeplerTable): {
+  static findDefaultLayerProps({fieldPairs = []}: KeplerTable): {
     props: {color?: RGBColor; columns: ArcLayerColumnsConfig; label: string}[];
   } {
     if (fieldPairs.length < 2) {

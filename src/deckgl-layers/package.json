@@ -48,7 +48,7 @@
     "@types/supercluster": "^7.1.0",
     "d3-array": "^2.8.0",
     "global": "^4.3.0",
-    "lodash": "4.17.19",
+    "lodash": "4.17.21",
     "lodash.memoize": "^4.1.2",
     "pbf": "^3.1.0",
     "supercluster": "^7.1.0",

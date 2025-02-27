@@ -73,7 +73,7 @@ export function constructST_asWKBQuery(tableName: string, columnsToConvertToWKB:
     columnsToConvertToWKB.length > 0 ? `EXCLUDE ${columnsToConvertToWKB.join(', ')}` : '';
   const asWKB =
     columnsToConvertToWKB.length > 0
-      ? ', ' + columnsToConvertToWKB.map(column => `ST_AsWKB(${column}) as ${column}`).join(', ')
+      ? `, ${columnsToConvertToWKB.map(column => `ST_AsWKB(${column}) as ${column}`).join(', ')}`
       : '';
   return `SELECT * ${exclude} ${asWKB} FROM '${tableName}';`;
 }

@@ -5931,8 +5931,7 @@ test('#visStateReducer -> LOAD_FILES', async t => {
   t.equal(task10.type, 'DELAY_TASK', 'should return an DELAY_TASK for onFinish');
 
   // calling delayed task succeed to trigger load next file
-  /* eslint-disable no-unused-vars */
-  const resultState11 = reducer(resultState10, succeedTaskInTest(task10));
+  const _resultState11 = reducer(resultState10, succeedTaskInTest(task10));
 
   t.ok(loadFilesSuccessSpy.calledOnce);
   const expectedArgs = [
@@ -5994,7 +5993,7 @@ test('#visStateReducer -> layerFilteredItemsChange', t => {
     count: 100
   };
   const layer = StateWFiles.visState.layers[0];
-  const nextState = reducer(
+  const _nextState = reducer(
     StateWFiles.visState,
     VisStateActions.layerFilteredItemsChange(layer, mockEvent)
   );

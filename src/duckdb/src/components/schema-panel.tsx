@@ -77,9 +77,7 @@ type SchemaPanelProps = {
 export const SchemaPanel = ({setTableSchema, droppedFile}: SchemaPanelProps) => {
   const [columnSchemas, setColumnSchemas] = useState<TreeNodeData<{type: string}>[]>([]);
   const datasets = useSelector((state: State) => state?.demo?.keplerGl?.map?.visState.datasets);
-  useEffect(() => {
-    getTableSchema();
-  }, [datasets, droppedFile]);
+  
   const getTableSchema = useCallback(async () => {
     const db = await getDuckDB();
     const c = await db.connect();
@@ -95,6 +93,10 @@ export const SchemaPanel = ({setTableSchema, droppedFile}: SchemaPanelProps) => 
     setTableSchema(tableSchema);
     c.close();
   }, [setColumnSchemas, setTableSchema]);
+
+  useEffect(() => {
+    getTableSchema();
+  }, [datasets, getTableSchema]);
 
   return (
     <StyledSchemaPanel>

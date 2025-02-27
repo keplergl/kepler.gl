@@ -155,7 +155,7 @@ export class KeplerGlDuckDbTable extends KeplerTable {
     };
   }
 
-  async importArrowData({data, db, c}: ImportDataToDuckProps): Promise<ImportDataToDuckResult> {
+  async importArrowData({data, c}: ImportDataToDuckProps): Promise<ImportDataToDuckResult> {
     let adjustedMetadata = {};
     try {
       // 1) data.rows contains an arrow table created by Add to Map data from DuckDb query.

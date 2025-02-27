@@ -148,23 +148,21 @@ export default function LayerConfiguratorFactory(
 ): React.ComponentType<LayerConfiguratorProps> {
   class LayerConfigurator extends Component<LayerConfiguratorProps> {
     _renderPointLayerConfig(props) {
-      return this._renderScatterplotLayerConfig(props);
+      return this._renderScatterplotLayerConfig(props, true);
     }
 
     _renderIconLayerConfig(props) {
-      return this._renderScatterplotLayerConfig(props);
+      return this._renderScatterplotLayerConfig(props, false);
     }
 
     _renderVectorTileLayerConfig(props) {
       return <VectorTileLayerConfigurator {...props} />;
     }
 
-    _renderScatterplotLayerConfig({
-      layer,
-      visConfiguratorProps,
-      layerChannelConfigProps,
-      layerConfiguratorProps
-    }) {
+    _renderScatterplotLayerConfig(
+      {layer, visConfiguratorProps, layerChannelConfigProps, layerConfiguratorProps},
+      showInteractionControls
+    ) {
       return (
         <StyledLayerVisualConfigurator>
           {/* Fill Color */}
@@ -259,29 +257,26 @@ export default function LayerConfiguratorFactory(
           />
 
           {/* Interaction */}
-          <LayerConfigGroup label={'layer.interaction'} collapsible>
-            <VisConfigSwitch {...layer.visConfigSettings.allowHover} {...visConfiguratorProps} />
-            <ConfigGroupCollapsibleContent>
-              <VisConfigSwitch
-                {...layer.visConfigSettings.showNeighborOnHover}
-                {...visConfiguratorProps}
-              />
-              <VisConfigSwitch
-                {...layer.visConfigSettings.showHighlightColor}
-                {...visConfiguratorProps}
-              />
-            </ConfigGroupCollapsibleContent>
-          </LayerConfigGroup>
+          {showInteractionControls ? (
+            <LayerConfigGroup label={'layer.interaction'} collapsible>
+              <VisConfigSwitch {...layer.visConfigSettings.allowHover} {...visConfiguratorProps} />
+              <ConfigGroupCollapsibleContent>
+                <VisConfigSwitch
+                  {...layer.visConfigSettings.showNeighborOnHover}
+                  {...visConfiguratorProps}
+                />
+                <VisConfigSwitch
+                  {...layer.visConfigSettings.showHighlightColor}
+                  {...visConfiguratorProps}
+                />
+              </ConfigGroupCollapsibleContent>
+            </LayerConfigGroup>
+          ) : null}
         </StyledLayerVisualConfigurator>
       );
     }
 
-    _renderClusterLayerConfig({
-      layer,
-      visConfiguratorProps,
-      layerConfiguratorProps,
-      layerChannelConfigProps
-    }) {
+    _renderClusterLayerConfig({layer, visConfiguratorProps, layerChannelConfigProps}) {
       return (
         <StyledLayerVisualConfigurator>
           {/* Color */}
@@ -352,12 +347,7 @@ export default function LayerConfiguratorFactory(
       return this._renderAggregationLayerConfig(props);
     }
 
-    _renderAggregationLayerConfig({
-      layer,
-      visConfiguratorProps,
-      layerConfiguratorProps,
-      layerChannelConfigProps
-    }) {
+    _renderAggregationLayerConfig({layer, visConfiguratorProps, layerChannelConfigProps}) {
       const {config} = layer;
       const {
         visConfig: {enable3d, fixedHeight}

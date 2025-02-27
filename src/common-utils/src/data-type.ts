@@ -90,7 +90,7 @@ export function getSampleForTypeAnalyze({
 export function getSampleForTypeAnalyzeArrow(
   table: ArrowTableInterface | ApacheVectorInterface[],
   fields: string[],
-  sampleCount: number = 50
+  sampleCount = 50
 ): any[] {
   const isTable = !Array.isArray(table);
 
