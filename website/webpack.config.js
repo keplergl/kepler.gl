@@ -86,7 +86,7 @@ const COMMON_CONFIG = {
       // for compiling apache-arrow ESM module
       {
         test: /\.mjs$/,
-        include: /node_modules\/apache-arrow/,
+        include: /node_modules[\\/]apache-arrow/,
         type: 'javascript/auto'
       },
       {
@@ -101,10 +101,10 @@ const COMMON_CONFIG = {
         loader: 'babel-loader',
         options: BABEL_CONFIG,
         include: [
-          /node_modules\/@probe.gl/,
-          /node_modules\/@loaders.gl/,
-          /node_modules\/@math.gl/,
-          /node_modules\/@geoarrow/
+          /node_modules[\\/]@probe.gl/,
+          /node_modules[\\/]@loaders.gl/,
+          /node_modules[\\/]@math.gl/,
+          /node_modules[\\/]@geoarrow/
         ]
       },
       {
@@ -145,7 +145,7 @@ const addDevConfig = config => {
     test: /\.js$/,
     use: ['source-map-loader'],
     enforce: 'pre',
-    exclude: [/node_modules\/react-palm/, /node_modules\/react-data-grid/]
+    exclude: [/node_modules[\\/]react-palm/, /node_modules[\\/]react-data-grid/]
   });
 
   return Object.assign(config, {
