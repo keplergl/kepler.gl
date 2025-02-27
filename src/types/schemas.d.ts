@@ -3,7 +3,7 @@
 
 import {RGBColor, Merge, RequireFrom} from './types';
 
-import {Filter, TooltipInfo, AnimationConfig, SplitMap, Feature} from './reducers';
+import {Filter, InteractionConfig, AnimationConfig, SplitMap, Feature} from './reducers';
 
 import {LayerTextLabel} from './layers';
 
@@ -23,21 +23,23 @@ export type SavedFilter = {
   } | null;
   speed: Filter['speed'];
   layerId: Filter['layerId'];
+  syncedWithLayerTimeline: Filter['syncedWithLayerTimeline'];
+  syncTimelineMode: Filter['syncTimelineMode'];
 };
 export type MinSavedFilter = RequireFrom<SavedFilter, 'dataId' | 'id' | 'name' | 'type' | 'value'>;
 export type ParsedFilter = SavedFilter | MinSavedFilter;
 
 export type SavedInteractionConfig = {
-  tooltip: TooltipInfo['config'] & {
+  tooltip: InteractionConfig['tooltip']['config'] & {
     enabled: boolean;
   };
-  geocoder: TooltipInfo['geocoder'] & {
+  geocoder: {
     enabled: boolean;
   };
-  brush: TooltipInfo['brush'] & {
+  brush: InteractionConfig['brush']['config'] & {
     enabled: boolean;
   };
-  coordinate: TooltipInfo['coordinate'] & {
+  coordinate: {
     enabled: boolean;
   };
 };
@@ -58,6 +60,7 @@ export type SavedLayer = {
     columns: {
       [key: string]: string;
     };
+    columnMode: string;
     isVisible: boolean;
     visConfig: Record<string, any>;
     hidden: boolean;
@@ -130,6 +133,18 @@ export type ParsedVisState = {
   animationConfig?: Partial<SavedAnimationConfig>;
 };
 
+export type ParsedUiState = {
+  mapControls: {
+    mapLegend: {
+      active: boolean;
+      settings: {
+        position: string;
+        contentHeight: number;
+      };
+    };
+  };
+};
+
 export type SavedMapState = {
   bearing: number;
   dragRotate: boolean;
@@ -197,6 +212,7 @@ export type ParsedConfig = {
   visState?: ParsedVisState;
   mapState?: ParsedMapState;
   mapStyle?: ParsedMapStyle;
+  uiState?: ParsedUiState;
 };
 
 export type SavedField = {

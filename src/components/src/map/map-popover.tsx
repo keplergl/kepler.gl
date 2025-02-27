@@ -1,19 +1,26 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useState, useCallback} from 'react';
+import React, {useState, useCallback, useContext} from 'react';
 import styled from 'styled-components';
 import MapPopoverContentFactory from './map-popover-content';
 import {Pin, ArrowLeft, ArrowRight, CursorPoint} from '../common/icons';
 import {injectIntl, IntlShape} from 'react-intl';
 import {FormattedMessage} from '@kepler.gl/localization';
-import Tippy from '@tippyjs/react/headless';
-import {RootContext} from '../';
+import {RootContext} from '../context';
 import {parseGeoJsonRawFeature} from '@kepler.gl/layers';
-import {idToPolygonGeo, generateHashId} from '@kepler.gl/utils';
+import {generateHashId, idToPolygonGeo} from '@kepler.gl/common-utils';
 import {LAYER_TYPES} from '@kepler.gl/constants';
-import {LayerHoverProp} from '@kepler.gl/reducers';
+import {LayerHoverProp, getLayerHoverPropValue} from '@kepler.gl/reducers';
 import {Feature, FeatureSelectionContext} from '@kepler.gl/types';
+import {
+  FloatingPortal,
+  flip,
+  offset,
+  useClientPoint,
+  useFloating,
+  useInteractions
+} from '@floating-ui/react';
 
 const SELECTABLE_LAYERS: string[] = [LAYER_TYPES.hexagonId, LAYER_TYPES.geojson];
 const MAX_WIDTH = 500;
@@ -22,6 +29,7 @@ const MAX_HEIGHT = 600;
 const StyledMapPopover = styled.div`
   display: flex;
   flex-direction: column;
+
   max-width: ${MAX_WIDTH}px;
   max-height: ${MAX_HEIGHT}px;
   padding: 14px;
@@ -34,11 +42,11 @@ const StyledMapPopover = styled.div`
   font-weight: 500;
   background-color: ${props => props.theme.panelBackground};
   color: ${props => props.theme.textColor};
-  z-index: 1000;
+  z-index: 98; /* should be below 99 which is side pane */
   overflow-x: auto;
   box-shadow: ${props => props.theme.panelBoxShadow};
 
-  :hover {
+  &:hover {
     background-color: ${props => `${props.theme.panelBackground}dd`};
   }
 
@@ -107,7 +115,7 @@ const PopoverContent = styled.div`
 const StyledIcon = styled.div`
   color: ${props => props.theme.activeColor};
 
-  :hover {
+  &:hover {
     cursor: pointer;
     color: ${props => props.theme.linkBtnColor};
   }
@@ -121,60 +129,13 @@ const StyledSelectGeometry = styled.div`
     margin-right: 6px;
   }
 
-  :hover {
+  &:hover {
     cursor: pointer;
     color: ${props => props.theme.linkBtnColor};
   }
 `;
 
 MapPopoverFactory.deps = [MapPopoverContentFactory];
-
-function createVirtualReference(container, x, y, size = 0) {
-  const bounds =
-    container && container.getBoundingClientRect ? container.getBoundingClientRect() : {};
-  const left = (bounds.left || 0) + x - size / 2;
-  const top = (bounds.top || 0) + y - size / 2;
-  return {
-    left,
-    top,
-    right: left + size,
-    bottom: top + size,
-    width: size,
-    height: size,
-    // These properties are present to meet the DOMRect interface
-    y: top,
-    x: left,
-    toJSON() {
-      return this;
-    }
-  };
-}
-
-function getOffsetForPlacement({placement}, gap = 20) {
-  switch (placement) {
-    case 'top-start':
-    case 'bottom-start':
-      return [gap, gap];
-    case 'top-end':
-    case 'bottom-end':
-      return [-gap, gap];
-    default:
-      return [0, 0];
-  }
-}
-
-function getPopperOptions(container) {
-  return {
-    modifiers: [
-      {
-        name: 'preventOverflow',
-        options: {
-          boundary: container
-        }
-      }
-    ]
-  };
-}
 
 export function getSelectedFeature(layerHoverProp: LayerHoverProp | null): Feature | null {
   const layer = layerHoverProp?.layer;
@@ -183,21 +144,30 @@ export function getSelectedFeature(layerHoverProp: LayerHoverProp | null): Featu
   switch (layer?.type) {
     case LAYER_TYPES.hexagonId:
       fieldIdx = layer.config?.columns?.hex_id?.fieldIdx;
-      selectedFeature = idToPolygonGeo({id: layerHoverProp?.data?.[fieldIdx]}, {isClosed: true});
+      selectedFeature = idToPolygonGeo(
+        {id: getLayerHoverPropValue(layerHoverProp?.data, fieldIdx)},
+        {isClosed: true}
+      );
       break;
     case LAYER_TYPES.geojson:
       fieldIdx = layer.config?.columns?.geojson?.fieldIdx;
-      selectedFeature = parseGeoJsonRawFeature(layerHoverProp?.data?.[fieldIdx]);
+      selectedFeature = parseGeoJsonRawFeature(
+        getLayerHoverPropValue(layerHoverProp?.data, fieldIdx)
+      );
       break;
     default:
       break;
   }
 
-  return {
-    ...selectedFeature,
-    // unique id should be assigned to features in the editor
-    id: generateHashId(8)
-  };
+  if (selectedFeature) {
+    return {
+      ...selectedFeature,
+      // unique id should be assigned to features in the editor
+      id: generateHashId(8)
+    };
+  } else {
+    return null;
+  }
 }
 
 export type MapPopoverProps = {
@@ -242,7 +212,11 @@ export default function MapPopoverFactory(
     const [horizontalPlacement, setHorizontalPlacement] = useState('start');
     const moveLeft = () => setHorizontalPlacement('end');
     const moveRight = () => setHorizontalPlacement('start');
-
+    const rootContext = useContext(RootContext);
+    const {refs, context, floatingStyles} = useFloating({
+      placement: `${horizontalPlacement == 'end' ? 'left' : 'right'}-start`,
+      middleware: [offset({mainAxis: 20, alignmentAxis: 20}), flip()]
+    });
     const onSetSelectedFeature = useCallback(() => {
       const clickContext = {
         mapIndex: 0,
@@ -260,65 +234,60 @@ export default function MapPopoverFactory(
       onClose();
     }, [onClose, onSetFeatures, x, y, setSelectedFeature, layerHoverProp, featureCollection]);
 
+    const containerBounds = container?.getBoundingClientRect();
+    const clientPoint = useClientPoint(context, {
+      x: (containerBounds?.left || 0) + x,
+      y: (containerBounds?.top || 0) + y
+    });
+    const {getFloatingProps} = useInteractions([clientPoint]);
+
     return (
-      <RootContext.Consumer>
-        {context => (
-          <Tippy
-            popperOptions={getPopperOptions(container)}
-            zIndex={98} /* should be below side panel's z-index of 99  */
-            visible={true}
-            interactive={true}
-            // @ts-ignore
-            getReferenceClientRect={() => createVirtualReference(container, x, y)}
-            // @ts-ignore
-            placement={`bottom-${horizontalPlacement}`}
-            // @ts-ignore
-            offset={getOffsetForPlacement}
-            appendTo={context?.current || document.body}
-            render={attrs => (
-              <StyledMapPopover {...attrs} className="map-popover">
-                {frozen ? (
-                  <PinnedButtons>
-                    {horizontalPlacement === 'start' && (
-                      <StyledIcon className="popover-arrow-left" onClick={moveLeft}>
-                        <ArrowLeft />
-                      </StyledIcon>
-                    )}
-                    <StyledIcon className="popover-pin" onClick={onClose}>
-                      <Pin height="16px" />
-                    </StyledIcon>
-                    {horizontalPlacement === 'end' && (
-                      <StyledIcon className="popover-arrow-right" onClick={moveRight}>
-                        <ArrowRight />
-                      </StyledIcon>
-                    )}
-                    {isBase && (
-                      <div className="primary-label">
-                        <FormattedMessage id="mapPopover.primary" />
-                      </div>
-                    )}
-                  </PinnedButtons>
-                ) : null}
-                <PopoverContent>
-                  <MapPopoverContent
-                    coordinate={coordinate}
-                    zoom={zoom}
-                    layerHoverProp={layerHoverProp}
-                  />
-                </PopoverContent>
-                {layerHoverProp?.layer?.type &&
-                SELECTABLE_LAYERS.includes(layerHoverProp?.layer?.type) &&
-                frozen ? (
-                  <StyledSelectGeometry className="select-geometry" onClick={onSetSelectedFeature}>
-                    <CursorPoint />
-                    Select Geometry
-                  </StyledSelectGeometry>
-                ) : null}
-              </StyledMapPopover>
-            )}
-          />
-        )}
-      </RootContext.Consumer>
+      <FloatingPortal root={rootContext?.current}>
+        <StyledMapPopover
+          className="map-popover"
+          ref={refs.setFloating}
+          style={floatingStyles}
+          {...getFloatingProps()}
+        >
+          {frozen ? (
+            <PinnedButtons>
+              {horizontalPlacement === 'start' && (
+                <StyledIcon className="popover-arrow-left" onClick={moveLeft}>
+                  <ArrowLeft />
+                </StyledIcon>
+              )}
+              <StyledIcon className="popover-pin" onClick={onClose}>
+                <Pin height="16px" />
+              </StyledIcon>
+              {horizontalPlacement === 'end' && (
+                <StyledIcon className="popover-arrow-right" onClick={moveRight}>
+                  <ArrowRight />
+                </StyledIcon>
+              )}
+              {isBase && (
+                <div className="primary-label">
+                  <FormattedMessage id="mapPopover.primary" />
+                </div>
+              )}
+            </PinnedButtons>
+          ) : null}
+          <PopoverContent>
+            <MapPopoverContent
+              coordinate={coordinate}
+              zoom={zoom}
+              layerHoverProp={layerHoverProp}
+            />
+          </PopoverContent>
+          {layerHoverProp?.layer?.type &&
+          SELECTABLE_LAYERS.includes(layerHoverProp?.layer?.type) &&
+          frozen ? (
+            <StyledSelectGeometry className="select-geometry" onClick={onSetSelectedFeature}>
+              <CursorPoint />
+              Select Geometry
+            </StyledSelectGeometry>
+          ) : null}
+        </StyledMapPopover>
+      </FloatingPortal>
     );
   };
   return injectIntl(MapPopover);

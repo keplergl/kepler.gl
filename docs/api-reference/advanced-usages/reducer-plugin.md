@@ -6,7 +6,7 @@ For advanced users, who want to add additional action handler to kepler.gl reduc
 
 ```js
 import {combineReducers} from 'redux';
-import keplerGlReducer from 'kepler.gl/reducers';
+import keplerGlReducer from '@kepler.gl/reducers';
 
 const customizedKeplerGlReducer = keplerGlReducer
  .plugin({

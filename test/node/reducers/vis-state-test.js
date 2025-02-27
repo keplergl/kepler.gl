@@ -9,6 +9,7 @@ import {console as Console} from 'global/window';
 import {drainTasksForTesting, succeedTaskInTest, errorTaskInTest} from 'react-palm/tasks';
 import CloneDeep from 'lodash.clonedeep';
 
+import SchemaManager from '@kepler.gl/schemas';
 import {VisStateActions, MapStateActions} from '@kepler.gl/actions';
 import {
   visStateReducer as reducer,
@@ -17,20 +18,39 @@ import {
   serializeLayer,
   validateLayerWithData,
   defaultInteractionConfig,
-  prepareStateForDatasetReplace
+  prepareStateForDatasetReplace,
+  syncTimeFilterWithLayerTimelineUpdater,
+  setTimeFilterTimelineModeUpdater,
+  setFilterAnimationTimeUpdater,
+  setFilterAnimationWindowUpdater
 } from '@kepler.gl/reducers';
 
 import {processCsvData, processGeojson} from '@kepler.gl/processors';
-import {Layer, KeplerGlLayers} from '@kepler.gl/layers';
-import {KeplerTable, createNewDataEntry, maybeToDate} from '@kepler.gl/table';
-import {createDataContainer, getDefaultFilter} from '@kepler.gl/utils';
+import {Layer, KeplerGlLayers, COLUMN_MODE_TABLE} from '@kepler.gl/layers';
+import {maybeToDate} from '@kepler.gl/table';
+import {
+  createDataContainer,
+  applyFilterFieldName,
+  getAnimatableVisibleLayers,
+  getDefaultFilter,
+  histogramFromDomain,
+  TileTimeInterval
+} from '@kepler.gl/utils';
 import {
   ALL_FIELD_TYPES,
   EDITOR_MODES,
   LAYER_VIS_CONFIGS,
   DEFAULT_TEXT_LABEL,
   DEFAULT_COLOR_UI,
-  FILTER_VIEW_TYPES
+  FILTER_VIEW_TYPES,
+  LIGHT_AND_SHADOW_EFFECT,
+  ANIMATION_WINDOW,
+  BINS,
+  INTERVAL,
+  LAYER_TYPES,
+  SYNC_TIMELINE_MODES,
+  KEPLER_COLOR_PALETTES,
+  colorPaletteToColorRange
 } from '@kepler.gl/constants';
 
 const {ArcLayer, PointLayer, GeojsonLayer, LineLayer, TripLayer} = KeplerGlLayers;
@@ -40,6 +60,7 @@ import testData, {
   mergedTimeFilter,
   testFields,
   testAllData,
+  expectedSyncedTsFilter,
   testCsvFieldPairs
 } from 'test/fixtures/test-csv-data';
 import {
@@ -50,7 +71,7 @@ import {
   fields as geojsonFields,
   rows as geojsonRows
 } from 'test/fixtures/geojson';
-
+import tripCsvData, {tripCsvDataInfo, expectedCoordinates} from 'test/fixtures/test-trip-csv-data';
 import tripGeojson, {timeStampDomain, tripDataInfo} from 'test/fixtures/trip-geojson';
 import {mockPolygonFeature, mockPolygonFeature2, mockPolygonData} from 'test/fixtures/polygon';
 
@@ -72,12 +93,23 @@ import {
   StateWFilters,
   StateWFiles,
   StateWFilesFiltersLayerColor,
+  StateWSyncedTimeFilter,
   StateWH3Layer,
   testCsvDataId,
   testGeoJsonDataId,
-  InitialState
+  InitialState,
+  stateWithTimeFilterAndTripLayer
 } from 'test/helpers/mock-state';
 import {getNextColorMakerValue} from 'test/helpers/layer-utils';
+import {expectedTripLayerConfig} from '../../fixtures/test-trip-csv-data';
+import {
+  testCsvDataSlice1,
+  testCsvDataSlice2,
+  testCsvDataSlice1Id,
+  testCsvDataSlice2Id
+} from '../../fixtures/test-csv-data';
+import {mockStateWithSyncedFilterAndTripLayer} from '../../fixtures/synced-filter-with-trip-layer';
+import {createNewDataEntryMock} from 'test/helpers/table-utils';
 
 const mockData = {
   fields: [
@@ -179,7 +211,6 @@ const expectedFieldParis = [
     suffix: ['lat', 'lng']
   }
 ];
-
 const mockFilter = {
   fieldIdx: 0,
   name: mockData.fields[0].name,
@@ -333,16 +364,17 @@ test('#visStateReducer -> LAYER_TYPE_CHANGE.0', t => {
   t.end();
 });
 
-test('#visStateReducer -> LAYER_TYPE_CHANGE.1', t => {
+test('#visStateReducer -> LAYER_TYPE_CHANGE.1', async t => {
   const layer = new Layer({id: 'more_layer'});
   const oldState = {
     ...INITIAL_VIS_STATE,
-    datasets: {
-      puppy: {
-        data: mockData.data,
+    datasets: await createNewDataEntryMock({
+      info: {id: 'puppy', label: 'puppy'},
+      data: {
+        rows: mockData.data,
         fields: mockData.fields
       }
-    },
+    }),
     layers: [{id: 'existing_layer'}, layer],
     layerData: [[{data: [1, 2, 3]}, {data: [4, 5, 6]}]],
     layerOrder: ['more_layer', 'existing_layer'],
@@ -403,14 +435,14 @@ test('#visStateReducer -> LAYER_TYPE_CHANGE.1', t => {
   t.end();
 });
 
-test('#visStateReducer -> LAYER_TYPE_CHANGE.2', t => {
+test('#visStateReducer -> LAYER_TYPE_CHANGE.2', async t => {
   const pointLayer = new PointLayer({id: 'a', dataId: 'smoothie'});
   const mockColorRange = {
     name: 'abc',
     isReversed: true,
     colors: ['a', 'b', 'c']
   };
-  const datasets = createNewDataEntry({
+  const datasets = await createNewDataEntryMock({
     info: {id: 'smoothie'},
     data: {
       rows: testAllData,
@@ -430,10 +462,12 @@ test('#visStateReducer -> LAYER_TYPE_CHANGE.2', t => {
     ...stringField,
     valueAccessor: stringField.valueAccessor(datasets.smoothie.dataContainer)
   };
+
   let nextState = reducer(
     oldState,
     VisStateActions.layerVisualChannelConfigChange(pointLayer, {colorField: stringField}, 'color')
   );
+
   nextState = reducer(
     nextState,
     VisStateActions.layerVisConfigChange(nextState.layers[0], {
@@ -512,7 +546,7 @@ test('#visStateReducer -> LAYER_TYPE_CHANGE.2', t => {
   t.end();
 });
 
-test('#visStateReducer -> LAYER_TYPE_CHANGE.3 -> animationConfig', t => {
+test('#visStateReducer -> LAYER_TYPE_CHANGE.3 -> animationConfig', async t => {
   const layer = new GeojsonLayer({
     label: 'taro and blue',
     dataId: 'taro',
@@ -522,7 +556,7 @@ test('#visStateReducer -> LAYER_TYPE_CHANGE.3 -> animationConfig', t => {
     id: 'taro'
   });
 
-  const dataset = createNewDataEntry({
+  const dataset = await createNewDataEntryMock({
     info: {id: 'taro'},
     data: processGeojson(tripGeojson)
   });
@@ -554,6 +588,8 @@ test('#visStateReducer -> LAYER_TYPE_CHANGE.3 -> animationConfig', t => {
       ...DEFAULT_ANIMATION_CONFIG,
       domain: timeStampDomain,
       currentTime: timeStampDomain[0],
+      duration: null,
+      timeSteps: null,
       defaultTimeFormat: 'L LTS'
     },
     'should update visState.animationConfig'
@@ -596,7 +632,13 @@ test('#visStateReducer -> LAYER_CONFIG_CHANGE -> isVisible -> animationConfig', 
       ...DEFAULT_ANIMATION_CONFIG,
       domain: null,
       currentTime: 1565577261000,
-      isAnimating: false
+      speed: 1,
+      isAnimating: false,
+      duration: null,
+      timeSteps: null,
+      defaultTimeFormat: null,
+      timeFormat: null,
+      timezone: null
     },
     'should set animationConfig to default'
   );
@@ -612,6 +654,8 @@ test('#visStateReducer -> LAYER_CONFIG_CHANGE -> isVisible -> animationConfig', 
       ...nextState2.animationConfig,
       domain: timeStampDomain,
       currentTime: timeStampDomain[0],
+      duration: null,
+      timeSteps: null,
       defaultTimeFormat: 'L LTS'
     },
     'should set animationConfig domain and currentTime'
@@ -654,6 +698,92 @@ test('#visStateReducer -> LAYER_CONFIG_CHANGE -> isVisible -> splitMaps', t => {
   t.end();
 });
 
+test('#visStateReducer -> LAYER_CONFIG_CHANGE -> columnMode', t => {
+  const initialState = InitialState.visState;
+  // const initialState = cloneDeep(state || InitialState);
+  const updatedState = applyActions(reducer, initialState, [
+    {
+      action: VisStateActions.updateVisData,
+      payload: [{info: tripCsvDataInfo, data: processCsvData(tripCsvData)}]
+    }
+  ]);
+
+  const pointLayer = updatedState.layers[0];
+  // change layer type to trip
+  const updatedState2 = reducer(updatedState, VisStateActions.layerTypeChange(pointLayer, 'trip'));
+  // trip Layer
+  const tripLayer = updatedState2.layers[0];
+
+  // update trip layer column mode
+  const nextState = reducer(
+    updatedState2,
+    VisStateActions.layerConfigChange(tripLayer, {
+      columnMode: COLUMN_MODE_TABLE
+    })
+  );
+
+  const expectedLayerConfigColumns = {
+    geojson: {value: null, fieldIdx: -1},
+    id: {value: null, fieldIdx: -1},
+    lat: {value: 'location-lat', fieldIdx: 2},
+    lng: {value: 'location-lng', fieldIdx: 1},
+    timestamp: {value: null, fieldIdx: -1},
+    altitude: {value: 'location-alt', fieldIdx: 6, optional: true}
+  };
+  t.deepEqual(
+    nextState.layers[0].config.columns,
+    expectedLayerConfigColumns,
+    'should update layer columns'
+  );
+  t.equal(
+    nextState.layers[0].config.columnMode,
+    COLUMN_MODE_TABLE,
+    'should update layer columnMode'
+  );
+
+  t.deepEqual(nextState.layerData[0], {}, 'should not format layer data without all columns');
+  // update trip layer column mode and columns id, timestap
+  const nextState1 = reducer(
+    nextState,
+    VisStateActions.layerConfigChange(nextState.layers[0], {
+      columns: {
+        ...expectedLayerConfigColumns,
+        timestamp: {value: 'timestamp', fieldIdx: 0},
+        id: {value: 'name', fieldIdx: 5}
+      }
+    })
+  );
+  t.ok(nextState1.layerData[0].data, 'should format layer data with columns');
+  t.equal(nextState1.layerData[0].data.length, 2, 'Should format 2 geojson features');
+
+  t.deepEqual(
+    nextState1.layerData[0].data[0].geometry.coordinates.slice(0, 2),
+    expectedCoordinates,
+    'feature[0] coordinates should be correct'
+  );
+  t.deepEqual(
+    nextState1.layerData[0].data[0].properties.index,
+    0,
+    'feature[0] properties index should be correct'
+  );
+  t.deepEqual(
+    nextState1.layerData[0].data[0].properties.values.length,
+    8,
+    'feature[0] properties values should have correct length'
+  );
+  const stateToSave = SchemaManager.save({visState: nextState1});
+  const savedTripLayer = stateToSave.config.config.visState.layers[0];
+  t.equal(savedTripLayer.config.columnMode, COLUMN_MODE_TABLE, 'should save columnMode');
+  t.deepEqual(
+    savedTripLayer.config.columns,
+    expectedTripLayerConfig.config.columns,
+    'should save trip layer config columns'
+  );
+
+  // console.log(JSON.stringify(stateToSave.config.config.visState.layers[0], null, 2));
+  t.end();
+});
+
 test('visStateReducer -> layerDataIdChangeUpdater', t => {
   const initialState = CloneDeep(StateWFilesFiltersLayerColor).visState;
   const pointLayer = initialState.layers[0];
@@ -667,16 +797,9 @@ test('visStateReducer -> layerDataIdChangeUpdater', t => {
   const updatedLayer = nextState.layers[0];
 
   t.equal(updatedLayer.config.dataId, testGeoJsonDataId, 'should update point layer dataId');
-  t.deepEqual(
-    updatedLayer.config.columns,
-    {
-      altitude: {value: null, fieldIdx: -1, optional: true},
-      lat: {value: null, fieldIdx: -1},
-      lng: {value: null, fieldIdx: -1}
-    },
-    'should not update point layer column'
-  );
-  t.equal(updatedLayer.config.colorField, null, 'should not update point layer colorField');
+  const expectedLayerColumns = new PointLayer({}).config.columns;
+  t.deepEqual(updatedLayer.config.columns, expectedLayerColumns, 'should reset point layer column');
+  t.equal(updatedLayer.config.colorField, null, 'should not assign point layer colorField');
 
   // add layer
   const nextState1 = reducer(nextState, VisStateActions.addLayer());
@@ -706,16 +829,20 @@ test('visStateReducer -> layerDataIdChangeUpdater', t => {
 
 test('visStateReducer -> layerDataIdChangeUpdater -> geojson', t => {
   const initialState = CloneDeep(StateWFilesFiltersLayerColor).visState;
-  const nextState = reducer(
-    initialState,
+  const nextState = applyActions(reducer, initialState, [
     // add another geojson
-    VisStateActions.updateVisData([
-      {
-        info: {id: 'geojson2', label: 'Some Geojson'},
-        data: {fields: geojsonFields, rows: geojsonRows.slice(0, 3)}
-      }
-    ])
-  );
+    {
+      action: VisStateActions.updateVisData,
+      payload: [
+        [
+          {
+            info: {id: 'geojson2', label: 'Some Geojson'},
+            data: {fields: geojsonFields, rows: geojsonRows.slice(0, 3)}
+          }
+        ]
+      ]
+    }
+  ]);
 
   // find geojson layer
   const index = nextState.layers.findIndex(l => l.type === 'geojson');
@@ -756,10 +883,12 @@ test('visStateReducer -> layerDataIdChangeUpdater -> validation', t => {
     ...row.slice(fieldIdx + 1, row.length)
   ]);
   // add another dataset
-  const nextState = reducer(
-    initialState,
-    VisStateActions.updateVisData([{info: newDataInfo, data: {fields, rows}}])
-  );
+  const nextState = applyActions(reducer, initialState, [
+    {
+      action: VisStateActions.updateVisData,
+      payload: [[{info: newDataInfo, data: {fields, rows}}]]
+    }
+  ]);
 
   const nextState1 = reducer(
     nextState,
@@ -781,7 +910,10 @@ test('visStateReducer -> layerDataIdChangeUpdater -> validation', t => {
     {
       altitude: {value: null, fieldIdx: -1, optional: true},
       lat: {value: 'gps_data.lat', fieldIdx: 1},
-      lng: {value: 'gps_data.lng', fieldIdx: 2}
+      lng: {value: 'gps_data.lng', fieldIdx: 2},
+      neighbors: {value: null, fieldIdx: -1, optional: true},
+      geojson: {value: null, fieldIdx: -1},
+      geoarrow: {value: null, fieldIdx: -1}
     },
     'should update point layer column'
   );
@@ -966,7 +1098,7 @@ test('#visStateReducer -> REMOVE_FILTER', t => {
         [0, 0]
       ],
       filterValueUpdateTriggers: {
-        gpuFilter_0: 'time',
+        gpuFilter_0: {name: 'time', domain0: 1474588800000},
         gpuFilter_1: null,
         gpuFilter_2: null,
         gpuFilter_3: null
@@ -992,6 +1124,12 @@ test('#visStateReducer -> REMOVE_FILTER', t => {
     ...dataset1,
     filteredIndex: dataset1.allIndexes,
     filteredIndexForDomain: dataset1.allIndexes,
+    changedFilters: {
+      dynamicDomain: {'RATE-1': 'deleted'},
+      fixedDomain: null,
+      cpu: {'RATE-1': 'deleted'},
+      gpu: null
+    },
     filterRecord: {
       dynamicDomain: [],
       fixedDomain: [],
@@ -1234,16 +1372,20 @@ test('#visStateReducer -> UPDATE_VIS_DATA.1 -> No data', t => {
 test('#visStateReducer -> UPDATE_VIS_DATA.2 -> to empty state', t => {
   const oldState = INITIAL_VIS_STATE;
 
-  const newState = reducer(
-    oldState,
-    VisStateActions.updateVisData([
-      {
-        data: mockRawData,
-        info: {id: 'smoothie', label: 'exciting dataset'},
-        metadata: {album: 'taro_and_blue'}
-      }
-    ])
-  );
+  const newState = applyActions(reducer, oldState, [
+    {
+      action: VisStateActions.updateVisData,
+      payload: [
+        [
+          {
+            data: mockRawData,
+            info: {id: 'smoothie', label: 'exciting dataset'},
+            metadata: {album: 'taro_and_blue'}
+          }
+        ]
+      ]
+    }
+  ]);
 
   const expectedDatasets = {
     smoothie: {
@@ -1288,6 +1430,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA.2 -> to empty state', t => {
   const expectedArcLayer = new ArcLayer({
     dataId: 'smoothie',
     label: 'start_point -> end_point arc',
+    isVisible: false,
     columns: {
       lat0: {fieldIdx: 0, value: 'start_point_lat'},
       lng0: {fieldIdx: 1, value: 'start_point_lng'},
@@ -1299,6 +1442,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA.2 -> to empty state', t => {
   const expectedLineLayer = new LineLayer({
     dataId: 'smoothie',
     label: 'start_point -> end_point line',
+    isVisible: false,
     columns: {
       lat0: {fieldIdx: 0, value: 'start_point_lat'},
       lng0: {fieldIdx: 1, value: 'start_point_lng'},
@@ -1324,8 +1468,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA.2 -> to empty state', t => {
       lat: {fieldIdx: 0, value: 'start_point_lat'},
       lng: {fieldIdx: 1, value: 'start_point_lng'},
       altitude: {fieldIdx: -1, value: null, optional: true}
-    },
-    isVisible: true
+    }
   });
 
   expectedPointLayer1.meta = {
@@ -1368,62 +1511,13 @@ test('#visStateReducer -> UPDATE_VIS_DATA.2 -> to empty state', t => {
 });
 
 test('#visStateReducer -> UPDATE_VIS_DATA.3 -> merge w/ existing state', t => {
-  const mockLayer = new PointLayer({
-    dataId: 'snowflake',
-    columns: {
-      lat: {
-        value: 'start_point_lat',
-        fieldIdx: 0
-      },
-      lng: {
-        value: 'start_point_lng',
-        fieldIdx: 1
-      }
-    }
-  });
-  const snowflake = new KeplerTable({
-    data: {
-      fields: [{name: 'a'}, {name: 'b'}],
-      rows: [['something'], ['something_else']]
-    },
-    info: {
-      id: 'snowflake'
-    }
-  });
-
   const oldState = {
-    ...INITIAL_VIS_STATE,
-    layers: [mockLayer],
-    layerData: [
-      [1, 2],
-      [3, 4],
-      [5, 6],
-      [7, 8]
-    ],
-    datasets: {
-      snowflake
-    },
-    filters: [
-      {name: 'hello', dataId: ['a']},
-      {name: 'world', dataId: ['b']}
-    ],
-    interactionConfig: {
-      tooltip: {
-        id: 'tooltip',
-        enabled: true,
-        icon: 'messages',
-        config: {
-          fieldsToShow: {snowflake: ['a']}
-        }
-      }
-    },
-    layerOrder: [mockLayer.id],
-    layerBlending: 'additive',
-    splitMaps: []
+    ...StateWFiles.visState,
+    layerBlending: 'additive'
   };
 
   const expectedDatasets = {
-    snowflake,
+    ...StateWFiles.visState.datasets,
     smoothie: {
       metadata: {
         id: 'smoothie',
@@ -1463,43 +1557,50 @@ test('#visStateReducer -> UPDATE_VIS_DATA.3 -> merge w/ existing state', t => {
     }
   };
 
-  const expectedInteractionTooltip = {
-    fieldsToShow: {snowflake: ['a'], smoothie: []}
+  const expectedTooltip = {
+    ...oldState.interactionConfig.tooltip.config.fieldsToShow,
+    smoothie: []
   };
 
-  const newState = reducer(
-    oldState,
-    VisStateActions.updateVisData([
-      {
-        data: mockRawData,
-        info: {id: 'smoothie', label: 'smoothie and milkshake'}
-      }
-    ])
-  );
+  const newState = applyActions(reducer, oldState, [
+    {
+      action: VisStateActions.updateVisData,
+      payload: [
+        [
+          {
+            data: mockRawData,
+            info: {id: 'smoothie', label: 'smoothie and milkshake'}
+          }
+        ]
+      ]
+    }
+  ]);
 
   Object.keys(expectedDatasets).forEach(key =>
     cmpDataset(t, expectedDatasets[key], newState.datasets[key])
   );
-  t.equal(newState.layers.length, 5, 'should find 1 arc aline and 2 point layers');
+  t.equal(newState.layers.length, 6, 'should find 1 arc 1 line and 2 point layers');
   t.deepEqual(
     newState.layerOrder,
     [
-      newState.layers[1].id,
       newState.layers[2].id,
       newState.layers[3].id,
       newState.layers[4].id,
+      newState.layers[5].id,
+      newState.layers[1].id,
       newState.layers[0].id
     ],
     'should add new layer index to layer order, put them on top'
   );
-  t.equal(newState.layers[1].config.dataId, 'smoothie', 'should save dataId to layer');
   t.equal(newState.layers[2].config.dataId, 'smoothie', 'should save dataId to layer');
   t.equal(newState.layers[3].config.dataId, 'smoothie', 'should save dataId to layer');
-  t.equal(newState.layerData.length, 5, 'should calculate layerData');
-  t.equal(newState.filters.length, 2, 'should keep original filters');
+  t.equal(newState.layers[4].config.dataId, 'smoothie', 'should save dataId to layer');
+  t.equal(newState.layers[5].config.dataId, 'smoothie', 'should save dataId to layer');
+  t.equal(newState.layerData.length, 6, 'should calculate layerData');
+
   t.deepEqual(
-    newState.interactionConfig.tooltip.config,
-    expectedInteractionTooltip,
+    newState.interactionConfig.tooltip.config.fieldsToShow,
+    expectedTooltip,
     'should set interaction config back to default'
   );
   t.equal(newState.layerBlending, 'additive', 'should keep layerBlending');
@@ -1525,7 +1626,12 @@ test('#visStateReducer -> UPDATE_VIS_DATA.4.Geojson -> geojson data', t => {
   const [layer1Color, layer1StrokeColor] = getNextColorMakerValue(2);
 
   // receive data
-  const initialState = reducer(initialVisState, VisStateActions.updateVisData(payload));
+  const initialState = applyActions(reducer, initialVisState, [
+    {
+      action: VisStateActions.updateVisData,
+      payload: [payload]
+    }
+  ]);
 
   const expectedDatasets = {
     metadata: {
@@ -1624,7 +1730,12 @@ test('#visStateReducer -> UPDATE_VIS_DATA.4.Geojson -> with config', t => {
   ];
 
   // receive data
-  const initialState = reducer(initialVisState, VisStateActions.updateVisData(payload));
+  const initialState = applyActions(reducer, initialVisState, [
+    {
+      action: VisStateActions.updateVisData,
+      payload: [payload]
+    }
+  ]);
 
   t.equal(initialState.layers.length, 1, 'should create 1 layer');
 
@@ -1658,7 +1769,12 @@ test('#visStateReducer -> UPDATE_VIS_DATA.4.Geojson -> with config', t => {
     }
   };
 
-  const testState = reducer(initialState, VisStateActions.updateVisData(datasets, {}, config));
+  const testState = applyActions(reducer, initialState, [
+    {
+      action: VisStateActions.updateVisData,
+      payload: [datasets, {}, config]
+    }
+  ]);
 
   t.deepEqual(
     Object.keys(testState.datasets),
@@ -1695,8 +1811,6 @@ test('#visStateReducer -> UPDATE_VIS_DATA -> mergeFilters', t => {
   const expectedFilterProps = {
     domain: [12.249990000000002, 12.290000000000001],
     step: 0.00001,
-    histogram: [1], // test not empty
-    enlargedHistogram: [2], // test not empty
     fieldType: 'real',
     view: FILTER_VIEW_TYPES.side,
     type: mockFilter.type,
@@ -1711,14 +1825,12 @@ test('#visStateReducer -> UPDATE_VIS_DATA -> mergeFilters', t => {
     dataId: ['smoothie'],
     fieldIdx: [0],
     id: '38chejr',
-    freeze: true,
     fixedDomain: false,
     view: FILTER_VIEW_TYPES.enlarged,
-    plotType: 'histogram',
+    plotType: {type: 'histogram'},
     yAxis: null,
     gpu: true,
     gpuChannel: [0],
-    interval: null,
     name: [mockFilter.name],
     speed: 1,
     isAnimating: false,
@@ -1726,15 +1838,19 @@ test('#visStateReducer -> UPDATE_VIS_DATA -> mergeFilters', t => {
     value: mockFilter.value
   };
 
-  const newState = reducer(
-    oldState,
-    VisStateActions.updateVisData([
-      {
-        data: mockRawData,
-        info: {id: 'smoothie', label: 'smoothie and milkshake'}
-      }
-    ])
-  );
+  const newState = applyActions(reducer, oldState, [
+    {
+      action: VisStateActions.updateVisData,
+      payload: [
+        [
+          {
+            data: mockRawData,
+            info: {id: 'smoothie', label: 'smoothie and milkshake'}
+          }
+        ]
+      ]
+    }
+  ]);
 
   const dc = createDataContainer(mockRawData.rows, {fields: mockRawData.fields});
   const allIndexes = dc.getPlainIndex();
@@ -1777,7 +1893,10 @@ test('#visStateReducer -> UPDATE_VIS_DATA -> mergeFilters', t => {
           [0, 0]
         ],
         filterValueUpdateTriggers: {
-          gpuFilter_0: mockFilter.name,
+          gpuFilter_0: {
+            name: mockFilter.name,
+            domain0: 12.249990000000002
+          },
           gpuFilter_1: null,
           gpuFilter_2: null,
           gpuFilter_3: null
@@ -1870,31 +1989,39 @@ test('#visStateReducer -> UPDATE_VIS_DATA.SPLIT_MAPS', t => {
     layerOrder: [layers[2].id, layers[1].id, layers[0].id, layers[3].id]
   };
 
-  const newState = reducer(
-    oldState,
-    VisStateActions.updateVisData([
-      {
-        data: mockRawData,
-        info: {id: 'smoothie', label: 'smoothie and milkshake'}
-      }
-    ])
-  );
+  const newState = applyActions(reducer, oldState, [
+    {
+      action: VisStateActions.updateVisData,
+      payload: [
+        [
+          {
+            data: mockRawData,
+            info: {id: 'smoothie', label: 'smoothie and milkshake'}
+          }
+        ]
+      ]
+    }
+  ]);
 
   // first visible layer should be point
   const id1 = newState.layers[4].id;
+  // 2nd visible layer
+  const id2 = newState.layers[5].id;
   const expectedSplitMaps = [
     {
       layers: {
         a: true,
         b: false,
-        [id1]: true
+        [id1]: true,
+        [id2]: true
       }
     },
     {
       layers: {
         a: false,
         b: true,
-        [id1]: true
+        [id1]: true,
+        [id2]: true
       }
     }
   ];
@@ -1933,16 +2060,23 @@ test('#visStateReducer -> setFilter.dynamicDomain & cpu', t => {
   ];
 
   // receive data
-  const initialState = reducer(INITIAL_VIS_STATE, VisStateActions.updateVisData(payload));
+  const initialState = applyActions(reducer, INITIAL_VIS_STATE, [
+    {
+      action: VisStateActions.updateVisData,
+      payload: [payload]
+    }
+  ]);
 
   const expectedLayer1 = new PointLayer({
     isVisible: true,
     dataId: 'smoothie',
+    columnMode: 'points',
     label: 'gps_data',
     columns: {
       lat: {value: 'gps_data.lat', fieldIdx: 1},
       lng: {value: 'gps_data.lng', fieldIdx: 2},
-      altitude: {value: null, fieldIdx: -1, optional: true}
+      altitude: {value: null, fieldIdx: -1, optional: true},
+      neighbors: {value: null, fieldIdx: -1, optional: true}
     }
   });
 
@@ -1961,7 +2095,6 @@ test('#visStateReducer -> setFilter.dynamicDomain & cpu', t => {
 
   const expectedFilter = {
     dataId: ['smoothie'],
-    freeze: false,
     id: 'donnot test me yet',
     enabled: true,
     name: [],
@@ -1972,10 +2105,9 @@ test('#visStateReducer -> setFilter.dynamicDomain & cpu', t => {
     view: FILTER_VIEW_TYPES.side,
     isAnimating: false,
     animationWindow: 'free',
-    plotType: 'histogram',
+    plotType: {type: 'histogram'},
     yAxis: null,
     speed: 1,
-    interval: null,
     gpu: false,
     fieldIdx: []
   };
@@ -1991,7 +2123,6 @@ test('#visStateReducer -> setFilter.dynamicDomain & cpu', t => {
 
   const expectedFilterWName = {
     dataId: ['smoothie'],
-    freeze: true,
     id: filterId,
     enabled: true,
     name: ['date'],
@@ -2004,10 +2135,9 @@ test('#visStateReducer -> setFilter.dynamicDomain & cpu', t => {
     isAnimating: false,
     animationWindow: 'free',
     fieldType: 'date',
-    plotType: 'histogram',
+    plotType: {type: 'histogram'},
     yAxis: null,
     speed: 1,
-    interval: null,
     gpu: false
   };
 
@@ -2239,7 +2369,6 @@ test('#visStateReducer -> SET_FILTER.name', t => {
   const expectedFilter0 = oldFilter0;
   const expectedFilter1 = {
     dataId: [testGeoJsonDataId],
-    freeze: true,
     id: 'RATE-1',
     enabled: true,
     fixedDomain: false,
@@ -2252,16 +2381,20 @@ test('#visStateReducer -> SET_FILTER.name', t => {
     fieldIdx: [2],
     domain: [94105, 94111],
     value: [94105, 94111],
-    plotType: 'histogram',
+    plotType: {type: 'histogram'},
     yAxis: null,
-    interval: null,
     fieldType: 'integer',
     step: 0.01,
-    histogram: [],
-    enlargedHistogram: 'dont test me',
     typeOptions: ['range'],
     gpu: true,
-    gpuChannel: [0]
+    gpuChannel: [0],
+    bins: {
+      [testGeoJsonDataId]: histogramFromDomain(
+        [94105, 94111],
+        geojsonRows.map(d => d[2]),
+        BINS
+      )
+    }
   };
 
   cmpFilters(t, [expectedFilter0, expectedFilter1], updated.filters);
@@ -2271,31 +2404,282 @@ test('#visStateReducer -> SET_FILTER.name', t => {
 
 test('#visStateReducer -> SET_FILTER.dataId', t => {
   const oldState = CloneDeep(StateWFilters.visState);
+  const oldFilter = {...oldState.filters[1]};
   let newState = reducer(oldState, VisStateActions.setFilter(1, 'dataId', testCsvDataId));
 
   let newFilter = newState.filters[1];
-  let expectedFilter = {
-    ...getDefaultFilter({dataId: testCsvDataId}),
-    id: newFilter.id
-  };
+  let expectedFilter = getDefaultFilter({dataId: testCsvDataId, id: oldFilter.id});
 
   t.deepEqual(newFilter, expectedFilter, 'Should create a new filter using the provided dataId');
 
   // Using an array of dataId
-  newState = reducer(newState, VisStateActions.setFilter(1, 'dataId', [testCsvDataId]));
+  newState = reducer(newState, VisStateActions.setFilter(1, 'dataId', testCsvDataId, 0));
 
   newFilter = newState.filters[1];
 
-  expectedFilter = {
-    ...getDefaultFilter({dataId: testCsvDataId}),
-    id: newFilter.id
-  };
+  expectedFilter = getDefaultFilter({dataId: testCsvDataId, id: newFilter.id});
 
   t.deepEqual(
     newFilter,
     expectedFilter,
     'Should create a new filter using the provided list of dataId'
   );
+
+  t.end();
+});
+
+test('#visStateReducer -> SET_FILTER synced', t => {
+  const initialState = StateWSyncedTimeFilter.visState;
+  const oldFilter = {...initialState.filters[0]};
+  const filterId = oldFilter.id;
+
+  // test synced filter
+  expectedSyncedTsFilter.id = filterId;
+
+  const expectedFilteredDataset1 = {
+    ...initialState.datasets[testCsvDataSlice1Id],
+    changedFilters: {
+      dynamicDomain: null,
+      fixedDomain: {
+        [filterId]: 'value_changed'
+      },
+      cpu: null,
+      gpu: {
+        [filterId]: 'value_changed'
+      }
+    },
+    filterRecord: {
+      cpu: [],
+      dynamicDomain: [],
+      fixedDomain: [
+        // filterRecord cmparison util only check the name
+        {
+          name: ['gps_data.utc_timestamp', 'gps_data.utc_timestamp']
+        }
+      ],
+      gpu: [
+        // filterRecord cmparison util only check the name
+        {
+          name: ['gps_data.utc_timestamp', 'gps_data.utc_timestamp']
+        }
+      ]
+    },
+    gpuFilter: {
+      filterRange: [
+        [121000, 1193000],
+        [0, 0],
+        [0, 0],
+        [0, 0]
+      ],
+      filterValueAccessor: {
+        inputs: [
+          {
+            data: testCsvDataSlice1[1],
+            index: 1
+          }
+        ],
+        result: [1474071056000 - 1474070995000, 0, 0, 0]
+      },
+      filterValueUpdateTriggers: {
+        gpuFilter_0: {
+          name: 'gps_data.utc_timestamp',
+          domain0: 1474070995000
+        },
+        gpuFilter_1: null,
+        gpuFilter_2: null,
+        gpuFilter_3: null
+      }
+    }
+  };
+
+  const expectedFilteredDataset2 = {
+    ...initialState.datasets[testCsvDataSlice2Id],
+    changedFilters: {
+      dynamicDomain: null,
+      fixedDomain: {
+        [filterId]: 'value_changed'
+      },
+      cpu: null,
+      gpu: {
+        [filterId]: 'value_changed'
+      }
+    },
+    filterRecord: {
+      cpu: [],
+      dynamicDomain: [],
+      fixedDomain: [
+        // filterRecord cmparison util only check the name
+        {
+          name: ['gps_data.utc_timestamp', 'gps_data.utc_timestamp']
+        }
+      ],
+      gpu: [
+        // filterRecord cmparison util only check the name
+        {
+          name: ['gps_data.utc_timestamp', 'gps_data.utc_timestamp']
+        }
+      ]
+    },
+    gpuFilter: {
+      filterRange: [
+        [121000, 1193000],
+        [0, 0],
+        [0, 0],
+        [0, 0]
+      ],
+      filterValueAccessor: {
+        inputs: [
+          {
+            data: testCsvDataSlice2[1],
+            index: 1
+          }
+        ],
+        // 1474071056000
+        result: [1474071363000 - 1474070995000, 0, 0, 0]
+      },
+      filterValueUpdateTriggers: {
+        gpuFilter_0: {
+          name: 'gps_data.utc_timestamp',
+          domain0: 1474070995000
+        },
+        gpuFilter_1: null,
+        gpuFilter_2: null,
+        gpuFilter_3: null
+      }
+    }
+  };
+  cmpFilters(t, expectedSyncedTsFilter, initialState.filters[0]);
+  cmpDataset(t, expectedFilteredDataset1, initialState.datasets[testCsvDataSlice1Id]);
+  cmpDataset(t, expectedFilteredDataset2, initialState.datasets[testCsvDataSlice2Id]);
+
+  t.end();
+});
+
+test('#visStateReducer -> SET_FILTER synced -> remove 1', t => {
+  const initialState = StateWSyncedTimeFilter.visState;
+  const oldFilter = {...initialState.filters[0]};
+  const filterId = oldFilter.id;
+  // remove dataset at filter
+  const resultState = reducer(initialState, VisStateActions.setFilter(0, 'dataId', null, 0));
+  const expectedFilter = {
+    ...expectedSyncedTsFilter,
+    id: oldFilter.id,
+    dataId: ['test-csv-data-2'],
+    name: ['gps_data.utc_timestamp'],
+    fieldIdx: [0],
+    // reset domain
+    domain: [1474071301000, 1474072208000],
+    // adjust value
+    value: [1474071301000, 1474072188000],
+    gpuChannel: [0],
+    timeBins: {
+      'test-csv-data-2': expectedSyncedTsFilter.timeBins['test-csv-data-2']
+    }
+  };
+
+  const expectedFilteredDataset1 = {
+    ...initialState.datasets[testCsvDataSlice1Id],
+    changedFilters: {
+      dynamicDomain: null,
+      fixedDomain: {
+        [filterId]: 'deleted'
+      },
+      cpu: null,
+      gpu: {
+        [filterId]: 'deleted'
+      }
+    },
+    filterRecord: {
+      cpu: [],
+      dynamicDomain: [],
+      fixedDomain: [],
+      gpu: []
+    },
+    gpuFilter: {
+      filterRange: [
+        [0, 0],
+        [0, 0],
+        [0, 0],
+        [0, 0]
+      ],
+      filterValueAccessor: {
+        inputs: [
+          {
+            data: testCsvDataSlice1[1],
+            index: 1
+          }
+        ],
+        result: [0, 0, 0, 0]
+      },
+      filterValueUpdateTriggers: {
+        gpuFilter_0: null,
+        gpuFilter_1: null,
+        gpuFilter_2: null,
+        gpuFilter_3: null
+      }
+    }
+  };
+
+  const expectedFilteredDataset2 = {
+    ...initialState.datasets[testCsvDataSlice2Id],
+    changedFilters: {
+      dynamicDomain: null,
+      fixedDomain: {
+        [filterId]: 'dataId_changed'
+      },
+      cpu: null,
+      gpu: {
+        [filterId]: 'dataId_changed'
+      }
+    },
+    filterRecord: {
+      cpu: [],
+      dynamicDomain: [],
+      fixedDomain: [
+        // filterRecord cmparison util only check the name
+        {
+          name: ['gps_data.utc_timestamp']
+        }
+      ],
+      gpu: [
+        // filterRecord cmparison util only check the name
+        {
+          name: ['gps_data.utc_timestamp']
+        }
+      ]
+    },
+    gpuFilter: {
+      filterRange: [
+        [0, 887000],
+        [0, 0],
+        [0, 0],
+        [0, 0]
+      ],
+      filterValueAccessor: {
+        inputs: [
+          {
+            data: testCsvDataSlice2[1],
+            index: 1
+          }
+        ],
+        // 1474071056000
+        result: [1474071363000 - 1474071301000, 0, 0, 0]
+      },
+      filterValueUpdateTriggers: {
+        gpuFilter_0: {
+          name: 'gps_data.utc_timestamp',
+          domain0: 1474071301000
+        },
+        gpuFilter_1: null,
+        gpuFilter_2: null,
+        gpuFilter_3: null
+      }
+    }
+  };
+
+  cmpFilters(t, expectedFilter, resultState.filters[0]);
+  cmpDataset(t, expectedFilteredDataset1, resultState.datasets[testCsvDataSlice1Id]);
+  cmpDataset(t, expectedFilteredDataset2, resultState.datasets[testCsvDataSlice2Id]);
 
   t.end();
 });
@@ -2313,7 +2697,12 @@ function testSetFilterDynamicDomainGPU(t, setFilter) {
   ];
 
   // receive data
-  const initialState = reducer(INITIAL_VIS_STATE, VisStateActions.updateVisData(payload));
+  const initialState = applyActions(reducer, INITIAL_VIS_STATE, [
+    {
+      action: VisStateActions.updateVisData,
+      payload: [payload]
+    }
+  ]);
 
   // add filter
   const stateWithFilter = reducer(initialState, VisStateActions.addFilter('milkshake'));
@@ -2323,7 +2712,6 @@ function testSetFilterDynamicDomainGPU(t, setFilter) {
 
   const expectedFilterWName = {
     dataId: ['milkshake'],
-    freeze: true,
     enabled: true,
     id: stateWithFilter.filters[0].id,
     name: ['TRIPS'],
@@ -2334,20 +2722,53 @@ function testSetFilterDynamicDomainGPU(t, setFilter) {
     value: [4, 20],
     view: FILTER_VIEW_TYPES.side,
     fixedDomain: false,
-    histogram: [],
-    enlargedHistogram: [],
     isAnimating: false,
     animationWindow: 'free',
     fieldType: 'integer',
     typeOptions: ['range'],
-    plotType: 'histogram',
+    plotType: {type: 'histogram'},
     yAxis: null,
-    interval: null,
     speed: 1,
     gpu: true,
-    gpuChannel: [0]
+    gpuChannel: [0],
+    bins: {
+      milkshake: [
+        {count: 1, x0: 4, x1: 4.5},
+        {count: 0, x0: 4.5, x1: 5},
+        {count: 0, x0: 5, x1: 5.5},
+        {count: 0, x0: 5.5, x1: 6},
+        {count: 0, x0: 6, x1: 6.5},
+        {count: 0, x0: 6.5, x1: 7},
+        {count: 0, x0: 7, x1: 7.5},
+        {count: 0, x0: 7.5, x1: 8},
+        {count: 0, x0: 8, x1: 8.5},
+        {count: 0, x0: 8.5, x1: 9},
+        {count: 0, x0: 9, x1: 9.5},
+        {count: 0, x0: 9.5, x1: 10},
+        {count: 0, x0: 10, x1: 10.5},
+        {count: 0, x0: 10.5, x1: 11},
+        {count: 1, x0: 11, x1: 11.5},
+        {count: 0, x0: 11.5, x1: 12},
+        {count: 0, x0: 12, x1: 12.5},
+        {count: 0, x0: 12.5, x1: 13},
+        {count: 0, x0: 13, x1: 13.5},
+        {count: 0, x0: 13.5, x1: 14},
+        {count: 0, x0: 14, x1: 14.5},
+        {count: 0, x0: 14.5, x1: 15},
+        {count: 0, x0: 15, x1: 15.5},
+        {count: 0, x0: 15.5, x1: 16},
+        {count: 0, x0: 16, x1: 16.5},
+        {count: 0, x0: 16.5, x1: 17},
+        {count: 0, x0: 17, x1: 17.5},
+        {count: 0, x0: 17.5, x1: 18},
+        {count: 0, x0: 18, x1: 18.5},
+        {count: 0, x0: 18.5, x1: 19},
+        {count: 0, x0: 19, x1: 19.5},
+        {count: 0, x0: 19.5, x1: 20},
+        {count: 1, x0: 20, x1: 20}
+      ]
+    }
   };
-
   // test filter
   cmpFilters(t, expectedFilterWName, stateWithFilterName.filters[0]);
 
@@ -2387,7 +2808,7 @@ function testSetFilterDynamicDomainGPU(t, setFilter) {
         [0, 0]
       ],
       filterValueUpdateTriggers: {
-        gpuFilter_0: 'TRIPS',
+        gpuFilter_0: {name: 'TRIPS', domain0: 4},
         gpuFilter_1: null,
         gpuFilter_2: null,
         gpuFilter_3: null
@@ -2458,7 +2879,7 @@ test('#visStateReducer -> UPDATE_FILTER_ANIMATION_SPEED', t => {
   t.end();
 });
 
-test('#visStateReducer -> setFilter.fixedDomain & DynamicDomain & gpu & cpu', t => {
+test('#visStateReducer -> setFilter.fixedDomain & DynamicDomain & gpu & cpu', async t => {
   // get test data
   const {fields, rows} = processCsvData(testData);
   const payload = [
@@ -2471,13 +2892,15 @@ test('#visStateReducer -> setFilter.fixedDomain & DynamicDomain & gpu & cpu', t 
     }
   ];
 
-  const datasetSmoothie = createNewDataEntry({
-    info: {id: 'smoothie', label: 'queen smoothie'},
-    data: {
-      rows: testAllData,
-      fields: testFields
-    }
-  }).smoothie;
+  const datasetSmoothie = (
+    await createNewDataEntryMock({
+      info: {id: 'smoothie', label: 'queen smoothie'},
+      data: {
+        rows: testAllData,
+        fields: testFields
+      }
+    })
+  ).smoothie;
 
   // add fixedDomain & gpu filter
   const stateWidthTsFilter = applyActions(reducer, INITIAL_VIS_STATE, [
@@ -2504,7 +2927,6 @@ test('#visStateReducer -> setFilter.fixedDomain & DynamicDomain & gpu & cpu', t 
 
   const expectedFilterTs = {
     dataId: ['smoothie'],
-    freeze: true,
     fixedDomain: true,
     id: filterId,
     name: ['gps_data.utc_timestamp'],
@@ -2513,9 +2935,13 @@ test('#visStateReducer -> setFilter.fixedDomain & DynamicDomain & gpu & cpu', t 
     domain: [1474070995000, 1474072208000],
     value: [1474071425000, 1474071740000],
     step: 1000,
-    plotType: 'histogram',
+    plotType: {
+      type: 'histogram',
+      interval: '15-second',
+      aggregation: 'sum',
+      defaultTimeFormat: 'L  LTS'
+    },
     yAxis: null,
-    interval: null,
     speed: 1,
     mappedValue: [
       1474070995000, 1474071056000, 1474071116000, 1474071178000, 1474071240000, 1474071301000,
@@ -2523,15 +2949,129 @@ test('#visStateReducer -> setFilter.fixedDomain & DynamicDomain & gpu & cpu', t 
       1474071677000, 1474071740000, 1474071802000, 1474071864000, 1474071928000, 1474071989000,
       1474072051000, 1474072115000, 1474072180000, 1474072203000, 1474072203000, 1474072208000
     ],
-    histogram: [],
-    enlargedHistogram: [],
     view: FILTER_VIEW_TYPES.enlarged,
     isAnimating: false,
     animationWindow: 'free',
     fieldType: 'timestamp',
     gpu: true,
     gpuChannel: [0],
-    defaultTimeFormat: 'L LTS'
+    defaultTimeFormat: 'L LTS',
+    timeBins: {
+      smoothie: {
+        '15-second': [
+          {
+            count: 1,
+            x0: 1474070985000,
+            x1: 1474071000000
+          },
+          {
+            count: 1,
+            x0: 1474071045000,
+            x1: 1474071060000
+          },
+          {
+            count: 1,
+            x0: 1474071105000,
+            x1: 1474071120000
+          },
+          {
+            count: 1,
+            x0: 1474071165000,
+            x1: 1474071180000
+          },
+          {
+            count: 1,
+            x0: 1474071240000,
+            x1: 1474071255000
+          },
+          {
+            count: 1,
+            x0: 1474071300000,
+            x1: 1474071315000
+          },
+          {
+            count: 1,
+            x0: 1474071360000,
+            x1: 1474071375000
+          },
+          {
+            count: 1,
+            x0: 1474071420000,
+            x1: 1474071435000
+          },
+          {
+            count: 1,
+            x0: 1474071480000,
+            x1: 1474071495000
+          },
+          {
+            count: 1,
+            x0: 1474071540000,
+            x1: 1474071555000
+          },
+          {
+            count: 1,
+            x0: 1474071555000,
+            x1: 1474071570000
+          },
+          {
+            count: 1,
+            x0: 1474071600000,
+            x1: 1474071615000
+          },
+          {
+            count: 1,
+            x0: 1474071675000,
+            x1: 1474071690000
+          },
+          {
+            count: 1,
+            x0: 1474071735000,
+            x1: 1474071750000
+          },
+          {
+            count: 1,
+            x0: 1474071795000,
+            x1: 1474071810000
+          },
+          {
+            count: 1,
+            x0: 1474071855000,
+            x1: 1474071870000
+          },
+          {
+            count: 1,
+            x0: 1474071915000,
+            x1: 1474071930000
+          },
+          {
+            count: 1,
+            x0: 1474071975000,
+            x1: 1474071990000
+          },
+          {
+            count: 1,
+            x0: 1474072050000,
+            x1: 1474072065000
+          },
+          {
+            count: 1,
+            x0: 1474072110000,
+            x1: 1474072125000
+          },
+          {
+            count: 1,
+            x0: 1474072170000,
+            x1: 1474072185000
+          },
+          {
+            count: 3,
+            x0: 1474072200000,
+            x1: 1474072215000
+          }
+        ]
+      }
+    }
   };
 
   // cmpFilters(t, expectedFilterTs, stateWidthTsFilter.filters[0]);
@@ -2547,12 +3087,11 @@ test('#visStateReducer -> setFilter.fixedDomain & DynamicDomain & gpu & cpu', t 
               domain: [1474070995000, 1474072208000],
               step: 1000,
               mappedValue: expectedFilterTs.mappedValue,
-              histogram: stateWidthTsFilter.filters[0].histogram,
-              enlargedHistogram: stateWidthTsFilter.filters[0].enlargedHistogram,
               fieldType: 'timestamp',
               type: 'timeRange',
               view: FILTER_VIEW_TYPES.enlarged,
               fixedDomain: true,
+              plotType: {},
               value: [1474070995000, 1474072208000],
               gpu: true,
               defaultTimeFormat: 'L LTS'
@@ -2574,7 +3113,7 @@ test('#visStateReducer -> setFilter.fixedDomain & DynamicDomain & gpu & cpu', t 
         [0, 0]
       ],
       filterValueUpdateTriggers: {
-        gpuFilter_0: 'gps_data.utc_timestamp',
+        gpuFilter_0: {name: 'gps_data.utc_timestamp', domain0: 1474070995000},
         gpuFilter_1: null,
         gpuFilter_2: null,
         gpuFilter_3: null
@@ -2645,7 +3184,7 @@ test('#visStateReducer -> setFilter.fixedDomain & DynamicDomain & gpu & cpu', t 
         [0, 0]
       ],
       filterValueUpdateTriggers: {
-        gpuFilter_0: 'gps_data.utc_timestamp',
+        gpuFilter_0: {name: 'gps_data.utc_timestamp', domain0: 1474070995000},
         gpuFilter_1: null,
         gpuFilter_2: null,
         gpuFilter_3: null
@@ -2679,7 +3218,7 @@ test('#visStateReducer -> setFilter.fixedDomain & DynamicDomain & gpu & cpu', t 
   t.end();
 });
 
-test('#visStateReducer -> SET_FILTER_PLOT', t => {
+test('#visStateReducer -> SET_FILTER_PLOT.yAxis', t => {
   // get test data
   const {fields, rows} = processCsvData(testData);
   const payload = [
@@ -2693,7 +3232,12 @@ test('#visStateReducer -> SET_FILTER_PLOT', t => {
   ];
 
   // receive data
-  const initialState = reducer(INITIAL_VIS_STATE, VisStateActions.updateVisData(payload));
+  const initialState = applyActions(reducer, INITIAL_VIS_STATE, [
+    {
+      action: VisStateActions.updateVisData,
+      payload: [payload]
+    }
+  ]);
 
   // add filter
   const stateWithFilter = reducer(initialState, VisStateActions.addFilter('smoothie'));
@@ -2714,39 +3258,174 @@ test('#visStateReducer -> SET_FILTER_PLOT', t => {
     VisStateActions.setFilterPlot(0, {yAxis: yAxisField})
   );
 
+  const bins = [
+    {
+      count: 1,
+      x0: 1474070985000,
+      x1: 1474071000000
+    },
+    {
+      count: 1,
+      x0: 1474071045000,
+      x1: 1474071060000
+    },
+    {
+      count: 1,
+      x0: 1474071105000,
+      x1: 1474071120000
+    },
+    {
+      count: 1,
+      x0: 1474071165000,
+      x1: 1474071180000
+    },
+    {
+      count: 1,
+      x0: 1474071240000,
+      x1: 1474071255000
+    },
+    {
+      count: 1,
+      x0: 1474071300000,
+      x1: 1474071315000
+    },
+    {
+      count: 1,
+      x0: 1474071360000,
+      x1: 1474071375000
+    },
+    {
+      count: 1,
+      x0: 1474071420000,
+      x1: 1474071435000
+    },
+    {
+      count: 1,
+      x0: 1474071480000,
+      x1: 1474071495000
+    },
+    {
+      count: 1,
+      x0: 1474071540000,
+      x1: 1474071555000
+    },
+    {
+      count: 1,
+      x0: 1474071555000,
+      x1: 1474071570000
+    },
+    {
+      count: 1,
+      x0: 1474071600000,
+      x1: 1474071615000
+    },
+    {
+      count: 1,
+      x0: 1474071675000,
+      x1: 1474071690000
+    },
+    {
+      count: 1,
+      x0: 1474071735000,
+      x1: 1474071750000
+    },
+    {
+      count: 1,
+      x0: 1474071795000,
+      x1: 1474071810000
+    },
+    {
+      count: 1,
+      x0: 1474071855000,
+      x1: 1474071870000
+    },
+    {
+      count: 1,
+      x0: 1474071915000,
+      x1: 1474071930000
+    },
+    {
+      count: 1,
+      x0: 1474071975000,
+      x1: 1474071990000
+    },
+    {
+      count: 1,
+      x0: 1474072050000,
+      x1: 1474072065000
+    },
+    {
+      count: 1,
+      x0: 1474072110000,
+      x1: 1474072125000
+    },
+    {
+      count: 1,
+      x0: 1474072170000,
+      x1: 1474072185000
+    },
+    {
+      count: 3,
+      x0: 1474072200000,
+      x1: 1474072215000
+    }
+  ];
+
   const expectedFilterWName = {
-    ...getDefaultFilter({dataId: 'smoothie'}),
-    freeze: true,
+    ...getDefaultFilter({dataId: 'smoothie', id: filterId}),
     fixedDomain: true,
-    id: filterId,
     name: ['gps_data.utc_timestamp'],
     type: 'timeRange',
     fieldIdx: [0],
     domain: [1474070995000, 1474072208000],
     value: [1474070995000, 1474072208000],
     step: 1000,
-    plotType: 'lineChart',
+    plotType: {
+      interval: '15-second',
+      defaultTimeFormat: 'L  LTS',
+      type: 'lineChart',
+      aggregation: 'sum'
+    },
     yAxis: yAxisField,
-    interval: null,
     lineChart: {
-      series: [
-        {x: 1474070995000, y: 1},
-        {x: 1474071056000, y: 2},
-        {x: 1474071116000, y: 3},
-        {x: 1474071178000, y: 4},
-        {x: 1474071240000, y: 5},
-        {x: 1474071301000, y: 12124},
-        {x: 1474071363000, y: 222},
-        {x: 1474071425000, y: 345},
-        {x: 1474071864000, y: 1},
-        {x: 1474071989000, y: 43},
-        {x: 1474072051000, y: 4},
-        {x: 1474072115000, y: 5},
-        {x: 1474072203000, y: 6},
-        {x: 1474072203000, y: 7}
-      ],
-      yDomain: [1, 12124],
-      xDomain: [1474070995000, 1474072203000]
+      yDomain: [0, 12124],
+      xDomain: [1474070985000, 1474072215000],
+      interval: '15-second',
+      aggregation: 'sum',
+      series: {
+        lines: [
+          [
+            {x: 1474070985000, y: 1, delta: 'last', pct: null},
+            {x: 1474071045000, y: 2, delta: 'last', pct: 1},
+            {x: 1474071105000, y: 3, delta: 'last', pct: 0.5},
+            {x: 1474071165000, y: 4, delta: 'last', pct: 0.3333333333333333},
+            {x: 1474071240000, y: 5, delta: 'last', pct: 0.25},
+            {x: 1474071300000, y: 12124, delta: 'last', pct: 2423.8},
+            {x: 1474071360000, y: 222, delta: 'last', pct: -0.9816892114813592},
+            {x: 1474071420000, y: 345, delta: 'last', pct: 0.5540540540540541},
+            {x: 1474071480000, y: 0, delta: 'last', pct: -1},
+            {x: 1474071540000, y: 0, delta: 'last', pct: null},
+            {x: 1474071555000, y: 0, delta: 'last', pct: null},
+            {x: 1474071600000, y: 0, delta: 'last', pct: null},
+            {x: 1474071675000, y: 0, delta: 'last', pct: null},
+            {x: 1474071735000, y: 0, delta: 'last', pct: null},
+            {x: 1474071795000, y: 0, delta: 'last', pct: null},
+            {x: 1474071855000, y: 1, delta: 'last', pct: null},
+            {x: 1474071915000, y: 0, delta: 'last', pct: -1},
+            {x: 1474071975000, y: 43, delta: 'last', pct: null},
+            {x: 1474072050000, y: 4, delta: 'last', pct: -0.9069767441860465},
+            {x: 1474072110000, y: 5, delta: 'last', pct: 0.25},
+            {x: 1474072170000, y: 0, delta: 'last', pct: -1},
+            {x: 1474072200000, y: 13, delta: 'last', pct: null}
+          ]
+        ],
+        markers: []
+      },
+      yAxis: 'uid',
+      title: 'Total of uid',
+      fieldType: 'integer',
+      allTime: {title: 'All Time Average', value: 580.5454545454545},
+      bins
     },
     speed: 1,
     mappedValue: [
@@ -2755,19 +3434,96 @@ test('#visStateReducer -> SET_FILTER_PLOT', t => {
       1474071677000, 1474071740000, 1474071802000, 1474071864000, 1474071928000, 1474071989000,
       1474072051000, 1474072115000, 1474072180000, 1474072203000, 1474072203000, 1474072208000
     ],
-    histogram: [],
-    enlargedHistogram: [],
     view: FILTER_VIEW_TYPES.enlarged,
     isAnimating: false,
     animationWindow: 'free',
     fieldType: 'timestamp',
     gpu: true,
     gpuChannel: [0],
-    defaultTimeFormat: 'L LTS'
+    defaultTimeFormat: 'L LTS',
+    timeBins: {
+      smoothie: {
+        '15-second': bins
+      }
+    }
   };
 
+  t.deepEqual(
+    stateWithFilterPlot.filters[0].lineChart.bins,
+    stateWithFilterPlot.filters[0].timeBins.smoothie['15-second'],
+    'Timebins and lineChart bins should have the same value'
+  );
+
+  // stateWithFilterPlot.filters[0].lineChart.bins = [];
+  // expectedFilterWName.lineChart.bins = [];
   // test filter
   cmpFilters(t, expectedFilterWName, stateWithFilterPlot.filters[0]);
+
+  // set filterPlot yAxis again
+  // const yAxisField2 = stateWithFilterName.datasets.smoothie.fields.find(
+  //   f => f.name === 'gps_data.lat'
+  // );
+  // const stateWithFilterPlot2 = reducer(
+  //   stateWithFilterPlot,
+  //   VisStateActions.setFilterPlot(0, {yAxis: yAxisField2})
+  // );
+  // const expectedFilterWName2 = {
+  //   ...expectedFilterWName,
+  //   yAxis: yAxisField2,
+  //   lineChart: {
+  //     yDomain: [29.9870074, 90.18377960000001],
+  //     xDomain: [1474070985000, 1474072215000],
+  //     interval: '15-second',
+  //     aggregation: 'sum',
+  //     series: {
+  //       lines: [
+  //         [
+  //           {x: 1474070985000, y: 29.9900937, delta: 'last', pct: null},
+  //           {x: 1474071045000, y: 29.9927699, delta: 'last', pct: 0.00008923613333024682},
+  //           {x: 1474071105000, y: 29.9907261, delta: 'last', pct: -0.00006814308937832221},
+  //           {x: 1474071165000, y: 29.9870074, delta: 'last', pct: -0.0001239949972401734},
+  //           {x: 1474071240000, y: 29.9923041, delta: 'last', pct: 0.00017663316413490536},
+  //           {x: 1474071300000, y: 29.9968249, delta: 'last', pct: 0.00015073200061350596},
+  //           {x: 1474071360000, y: 30.0037217, delta: 'last', pct: 0.0002299176670528158},
+  //           {x: 1474071420000, y: 30.0116207, delta: 'last', pct: 0.00026326733993142846},
+  //           {x: 1474071480000, y: 30.0208925, delta: 'last', pct: 0.0003089403299035078},
+  //           {x: 1474071540000, y: 30.0218999, delta: 'last', pct: 0.000033556630603251856},
+  //           {x: 1474071555000, y: 30.0229344, delta: 'last', pct: 0.00003445817897751978},
+  //           {x: 1474071600000, y: 30.0264237, delta: 'last', pct: 0.0001162211512542309},
+  //           {x: 1474071675000, y: 30.0292134, delta: 'last', pct: 0.00009290816741525582},
+  //           {x: 1474071735000, y: 30.034391, delta: 'last', pct: 0.00017241876871805346},
+  //           {x: 1474071795000, y: 30.0352752, delta: 'last', pct: 0.000029439584774718954},
+  //           {x: 1474071855000, y: 30.0395918, delta: 'last', pct: 0.00014371767767252643},
+  //           {x: 1474071915000, y: 30.0497387, delta: 'last', pct: 0.00033778421716099144},
+  //           {x: 1474071975000, y: 30.0538936, delta: 'last', pct: 0.00013826742526714978},
+  //           {x: 1474072050000, y: 30.060911, delta: 'last', pct: 0.0002334938724878657},
+  //           {x: 1474072110000, y: 30.060334, delta: 'last', pct: -0.000019194361741060598},
+  //           {x: 1474072170000, y: 30.0554663, delta: 'last', pct: -0.0001619310018312477},
+  //           {x: 1474072200000, y: 90.18377960000001, delta: 'last', pct: 2.0005782874844305}
+  //         ]
+  //       ],
+  //       markers: []
+  //     },
+  //     yAxis: 'gps_data.lat',
+  //     title: 'Total of gps_data.lat',
+  //     fieldType: 'real',
+  //     allTime: {title: 'All Time Average', value: 32.757264254545454}
+  //   }
+  // };
+  // // gps_data.lat
+  // cmpFilters(t, expectedFilterWName2, stateWithFilterPlot2.filters[0]);
+  //
+  // // set filterPlot type
+  // const stateWithFilterPlotHistogram = reducer(
+  //   stateWithFilterPlot2,
+  //   VisStateActions.setFilterPlot(0, {plotType: {type: 'histogram'}})
+  // );
+  // t.deepEqual(
+  //   stateWithFilterPlotHistogram.filters[0].plotType,
+  //   {interval: '15-second', defaultTimeFormat: 'L  LTS', type: 'histogram', aggregation: 'sum'},
+  //   'should set filter plotType to histogram'
+  // );
+
   t.end();
 });
 
@@ -2817,6 +3573,7 @@ test('#visStateReducer -> REMOVE_DATASET w filter and layer', t => {
   const oldState = CloneDeep(StateWFilters.visState);
 
   const expectedState = {
+    ...oldState,
     layers: [oldState.layers[1]],
     filters: [oldState.filters[1]],
     layerData: [oldState.layerData[1]],
@@ -2828,6 +3585,7 @@ test('#visStateReducer -> REMOVE_DATASET w filter and layer', t => {
     effectOrder: [],
 
     interactionConfig: {
+      ...oldState.interactionConfig,
       tooltip: {
         id: 'tooltip',
         label: 'interactions.tooltip',
@@ -2860,38 +3618,8 @@ test('#visStateReducer -> REMOVE_DATASET w filter and layer', t => {
             ]
           }
         }
-      },
-      brush: oldState.interactionConfig.brush,
-      coordinate: oldState.interactionConfig.coordinate,
-      geocoder: oldState.interactionConfig.geocoder
-    },
-    editingDataset: oldState.editingDataset,
-    layerBlending: oldState.layerBlending,
-    overlayBlending: oldState.overlayBlending,
-    hoverInfo: oldState.hoverInfo,
-    clicked: oldState.clicked,
-    mousePos: oldState.mousePos,
-    maxDefaultTooltips: oldState.maxDefaultTooltips,
-    splitMaps: oldState.splitMaps,
-    layerClasses: oldState.layerClasses,
-    animationConfig: oldState.animationConfig,
-    initialState: oldState.initialState,
-    layerToBeMerged: [],
-    filterToBeMerged: [],
-    interactionToBeMerged: {},
-    splitMapsToBeMerged: [],
-    editor: oldState.editor,
-    mapInfo: {
-      title: '',
-      description: ''
-    },
-    fileLoading: oldState.fileLoading,
-    fileLoadingProgress: oldState.fileLoadingProgress,
-    loaders: oldState.loaders,
-    loadOptions: oldState.loadOptions,
-    mergers: oldState.mergers,
-    schema: oldState.schema,
-    isMergingDatasets: {}
+      }
+    }
   };
 
   const newReducer = reducer(oldState, VisStateActions.removeDataset(testCsvDataId));
@@ -2904,6 +3632,33 @@ test('#visStateReducer -> REMOVE_DATASET w filter and layer', t => {
   Object.keys(expectedState).forEach(key => {
     t.deepEqual(newReducer[key], expectedState[key], `newReducer.${key} should be correct`);
   });
+
+  t.end();
+});
+
+test('#visStateReducer -> REMOVE_DATASET w synced filter', t => {
+  const initialState = CloneDeep(StateWSyncedTimeFilter.visState);
+  const oldFilter = {...initialState.filters[0]};
+
+  const resultState = reducer(initialState, VisStateActions.removeDataset(testCsvDataSlice1Id));
+
+  t.equal(resultState.filters.length, 1, 'should still have 1 filter');
+  const expectedFilter = {
+    ...expectedSyncedTsFilter,
+    id: oldFilter.id,
+    dataId: ['test-csv-data-2'],
+    name: ['gps_data.utc_timestamp'],
+    fieldIdx: [0],
+    // reset domain
+    domain: [1474071301000, 1474072208000],
+    // adjust value
+    value: [1474071301000, 1474072188000],
+    gpuChannel: [0],
+    timeBins: {
+      'test-csv-data-2': expectedSyncedTsFilter.timeBins['test-csv-data-2']
+    }
+  };
+  cmpFilters(t, expectedFilter, resultState.filters[0]);
 
   t.end();
 });
@@ -3019,7 +3774,9 @@ test('#visStateReducer -> SPLIT_MAP: REMOVE_LAYER. set animation domain', t => {
     splitMaps: [],
     animationConfig: {
       domain: [1568502710000, 1568503060000],
-      currentTime: 1568502970000
+      currentTime: 1568502970000,
+      duration: null,
+      timeSteps: null
     }
   };
 
@@ -3027,6 +3784,8 @@ test('#visStateReducer -> SPLIT_MAP: REMOVE_LAYER. set animation domain', t => {
   const expectedAnimationConfig = {
     domain: [1568502810000, 1568503060000],
     currentTime: 1568502970000,
+    duration: null,
+    timeSteps: null,
     defaultTimeFormat: 'L LTS'
   };
 
@@ -3040,6 +3799,8 @@ test('#visStateReducer -> SPLIT_MAP: REMOVE_LAYER. set animation domain', t => {
   const expectedAnimationConfig2 = {
     domain: [1568502710000, 1568502960000],
     currentTime: 1568502710000,
+    duration: null,
+    timeSteps: null,
     defaultTimeFormat: 'L LTS'
   };
   t.deepEqual(
@@ -3054,6 +3815,9 @@ test('#visStateReducer -> SPLIT_MAP: REMOVE_LAYER. set animation domain', t => {
     {
       domain: null,
       currentTime: 1568502710000,
+      isAnimating: false,
+      duration: null,
+      timeSteps: null,
       defaultTimeFormat: null
     },
     'remove last animation layer and set animation config to default'
@@ -3066,6 +3830,7 @@ test('#visStateReducer -> SPLIT_MAP: REMOVE_DATASET', t => {
   const oldState = StateWSplitMaps.visState;
 
   const expectedState = {
+    ...oldState,
     layers: [oldState.layers[0]],
     layerData: [oldState.layerData[0]],
     layerOrder: [oldState.layers[0].id],
@@ -3076,6 +3841,7 @@ test('#visStateReducer -> SPLIT_MAP: REMOVE_DATASET', t => {
     effects: [],
     effectOrder: [],
     interactionConfig: {
+      ...oldState.interactionConfig,
       tooltip: {
         id: 'tooltip',
         label: 'interactions.tooltip',
@@ -3108,38 +3874,9 @@ test('#visStateReducer -> SPLIT_MAP: REMOVE_DATASET', t => {
             ]
           }
         }
-      },
-      brush: oldState.interactionConfig.brush,
-      coordinate: oldState.interactionConfig.coordinate,
-      geocoder: oldState.interactionConfig.geocoder
+      }
     },
-    splitMaps: [{layers: {'point-0': false}}, {layers: {'point-0': true}}],
-    editingDataset: oldState.editingDataset,
-    layerBlending: oldState.layerBlending,
-    overlayBlending: oldState.overlayBlending,
-    hoverInfo: oldState.hoverInfo,
-    clicked: oldState.clicked,
-    mousePos: oldState.mousePos,
-    maxDefaultTooltips: oldState.maxDefaultTooltips,
-    layerClasses: oldState.layerClasses,
-    animationConfig: DEFAULT_ANIMATION_CONFIG,
-    initialState: oldState.initialState,
-    layerToBeMerged: [],
-    filterToBeMerged: [],
-    interactionToBeMerged: {},
-    splitMapsToBeMerged: [],
-    editor: oldState.editor,
-    mapInfo: {
-      title: '',
-      description: ''
-    },
-    fileLoading: oldState.fileLoading,
-    fileLoadingProgress: oldState.fileLoadingProgress,
-    loaders: oldState.loaders,
-    loadOptions: oldState.loadOptions,
-    schema: oldState.schema,
-    mergers: oldState.mergers,
-    isMergingDatasets: {}
+    splitMaps: [{layers: {'point-0': false}}, {layers: {'point-0': true}}]
   };
 
   const newReducer = reducer(oldState, VisStateActions.removeDataset(testGeoJsonDataId));
@@ -3439,7 +4176,8 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. show dropdown', t => {
       ...DEFAULT_COLOR_UI,
       showDropdown: 0
     },
-    colorRange: DEFAULT_COLOR_UI
+    colorRange: DEFAULT_COLOR_UI,
+    strokeColorRange: DEFAULT_COLOR_UI
   };
 
   t.deepEqual(
@@ -3461,7 +4199,7 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. show dropdown', t => {
   );
   t.deepEqual(
     nextState1.layers[0].config.colorUI,
-    {color: DEFAULT_COLOR_UI, colorRange: DEFAULT_COLOR_UI},
+    {color: DEFAULT_COLOR_UI, colorRange: DEFAULT_COLOR_UI, strokeColorRange: DEFAULT_COLOR_UI},
     'should update colorUI.showDropdown'
   );
 
@@ -3474,14 +4212,17 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. show dropdown', t => {
 
   const expectedColorUI2 = {
     color: DEFAULT_COLOR_UI,
+    strokeColorRange: DEFAULT_COLOR_UI,
     colorRange: {
       ...DEFAULT_COLOR_UI,
       showDropdown: 0,
       colorRangeConfig: {
+        colorBlindSafe: false,
         type: 'all',
         steps: 4,
         reversed: false,
-        custom: false
+        custom: false,
+        customBreaks: false
       }
     }
   };
@@ -3497,7 +4238,6 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. show dropdown', t => {
 test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. colorRangeConfig.step', t => {
   const initialState = CloneDeep(StateWFilesFiltersLayerColor.visState);
   const pointLayer = initialState.layers[0];
-
   const oldColorRange = CloneDeep(pointLayer.config.visConfig.colorRange);
 
   t.equal(oldColorRange.colors.length, 4, 'old color range should have 4 colors');
@@ -3519,24 +4259,26 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. colorRangeConfig.step', t => {
 
   const expectedColorUI = {
     color: DEFAULT_COLOR_UI,
+    strokeColorRange: DEFAULT_COLOR_UI,
     colorRange: {
       ...DEFAULT_COLOR_UI,
       showDropdown: 0,
       colorRangeConfig: {
+        colorBlindSafe: false,
         type: 'all',
         steps: 6,
         reversed: false,
-        custom: false
+        custom: false,
+        customBreaks: false
       }
     }
   };
 
-  const expectedColorRange = {
-    name: 'Uber Viz Sequential 4',
-    type: 'sequential',
-    category: 'Uber',
-    colors: ['#E6FAFA', '#C1E5E6', '#9DD0D4', '#75BBC1', '#4BA7AF', '#00939C']
-  };
+  const expectedColorRange = colorPaletteToColorRange(
+    KEPLER_COLOR_PALETTES.find(({name}) => name === 'Uber Viz Sequential'),
+    {steps: 6, reversed: false}
+  );
+
   t.deepEqual(
     nextState.layers[0].config.colorUI,
     expectedColorUI,
@@ -3558,25 +4300,25 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. colorRangeConfig.step', t => {
 
   const expectedColorUI2 = {
     color: DEFAULT_COLOR_UI,
+    strokeColorRange: DEFAULT_COLOR_UI,
     colorRange: {
       ...DEFAULT_COLOR_UI,
       showDropdown: 0,
       colorRangeConfig: {
+        colorBlindSafe: false,
         type: 'all',
         steps: 6,
         reversed: true,
-        custom: false
+        custom: false,
+        customBreaks: false
       }
     }
   };
 
-  const expectedColorRange2 = {
-    name: 'Uber Viz Sequential 4',
-    type: 'sequential',
-    category: 'Uber',
-    colors: ['#00939C', '#4BA7AF', '#75BBC1', '#9DD0D4', '#C1E5E6', '#E6FAFA'],
-    reversed: true
-  };
+  const expectedColorRange2 = colorPaletteToColorRange(
+    KEPLER_COLOR_PALETTES.find(({name}) => name === 'Uber Viz Sequential'),
+    {steps: 6, reversed: true}
+  );
 
   t.deepEqual(
     nextState2.layers[0].config.colorUI,
@@ -3599,34 +4341,25 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. colorRangeConfig.step', t => {
 
   const expectedColorUI3 = {
     color: DEFAULT_COLOR_UI,
+    strokeColorRange: DEFAULT_COLOR_UI,
     colorRange: {
       ...DEFAULT_COLOR_UI,
       showDropdown: 0,
       colorRangeConfig: {
+        colorBlindSafe: false,
         type: 'all',
         steps: 8,
         reversed: true,
-        custom: false
+        custom: false,
+        customBreaks: false
       }
     }
   };
 
-  const expectedColorRange3 = {
-    name: 'Uber Viz Sequential 6',
-    type: 'sequential',
-    category: 'Uber',
-    colors: [
-      '#E6FAFA',
-      '#C1E5E6',
-      '#9DD0D4',
-      '#75BBC1',
-      '#4BA7AF',
-      '#00939C',
-      '#108188',
-      '#0E7077'
-    ].reverse(),
-    reversed: true
-  };
+  const expectedColorRange3 = colorPaletteToColorRange(
+    KEPLER_COLOR_PALETTES.find(({name}) => name === 'Uber Viz Sequential'),
+    {steps: 8, reversed: true}
+  );
 
   t.deepEqual(
     nextState3.layers[0].config.colorUI,
@@ -3643,23 +4376,31 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. colorRangeConfig.step', t => {
   const nextState4 = reducer(
     nextState,
     VisStateActions.layerColorUIChange(nextState3.layers[0], 'colorRange', {
-      colorRangeConfig: {steps: 11}
+      colorRangeConfig: {type: 'diverging'}
     })
   );
 
   const expectedColorUI4 = {
     color: DEFAULT_COLOR_UI,
+    strokeColorRange: DEFAULT_COLOR_UI,
     colorRange: {
       ...DEFAULT_COLOR_UI,
       showDropdown: 0,
       colorRangeConfig: {
-        type: 'all',
-        steps: 11,
+        colorBlindSafe: false,
+        type: 'diverging',
+        steps: 8,
         reversed: true,
-        custom: false
+        custom: false,
+        customBreaks: false
       }
     }
   };
+  const expectedColorRange8 = colorPaletteToColorRange(
+    KEPLER_COLOR_PALETTES.find(({name}) => name === 'Uber Viz Diverging'),
+    {steps: 8, reversed: true}
+  );
+
   t.deepEqual(
     nextState4.layers[0].config.colorUI,
     expectedColorUI4,
@@ -3667,8 +4408,8 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. colorRangeConfig.step', t => {
   );
   t.deepEqual(
     nextState4.layers[0].config.visConfig.colorRange,
-    expectedColorRange3,
-    'should note update visConfig.colorRange when no match'
+    expectedColorRange8,
+    'should get first valid visConfig.colorRange when no match'
   );
 
   t.end();
@@ -3697,20 +4438,23 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom Palette', t => {
 
   const expectedColorUI = {
     color: DEFAULT_COLOR_UI,
+    strokeColorRange: DEFAULT_COLOR_UI,
     colorRange: {
       ...DEFAULT_COLOR_UI,
       customPalette: {
-        name: 'Custom Palette',
+        name: 'color.customPalette',
         type: 'custom',
         category: 'Custom',
         colors: oldColorRange.colors
       },
       showDropdown: 0,
       colorRangeConfig: {
+        colorBlindSafe: false,
         type: 'all',
         steps: 4,
         reversed: false,
-        custom: true
+        custom: true,
+        customBreaks: false
       }
     }
   };
@@ -3730,20 +4474,23 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom Palette', t => {
 
   const expectedColorUI2 = {
     color: DEFAULT_COLOR_UI,
+    strokeColorRange: DEFAULT_COLOR_UI,
     colorRange: {
       ...DEFAULT_COLOR_UI,
       customPalette: {
-        name: 'Custom Palette',
+        name: 'color.customPalette',
         type: 'custom',
         category: 'Custom',
         colors: ['aaa', 'bbb', 'ccc']
       },
       showDropdown: 0,
       colorRangeConfig: {
+        colorBlindSafe: false,
         type: 'all',
         steps: 4,
         reversed: false,
-        custom: true
+        custom: true,
+        customBreaks: false
       }
     }
   };
@@ -3764,20 +4511,24 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom Palette', t => {
 
   const expectedColorUI3 = {
     color: DEFAULT_COLOR_UI,
+    strokeColorRange: DEFAULT_COLOR_UI,
     colorRange: {
+      ...DEFAULT_COLOR_UI,
       showSketcher: 1,
       customPalette: {
-        name: 'Custom Palette',
+        name: 'color.customPalette',
         type: 'custom',
         category: 'Custom',
         colors: ['aaa', 'bbb', 'ccc']
       },
       showDropdown: 0,
       colorRangeConfig: {
+        colorBlindSafe: false,
         type: 'all',
         steps: 4,
         reversed: false,
-        custom: true
+        custom: true,
+        customBreaks: false
       }
     }
   };
@@ -3796,20 +4547,24 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom Palette', t => {
 
   const expectedColorUI4 = {
     color: DEFAULT_COLOR_UI,
+    strokeColorRange: DEFAULT_COLOR_UI,
     colorRange: {
+      ...DEFAULT_COLOR_UI,
       showSketcher: 1,
       customPalette: {
-        name: 'Custom Palette',
+        name: 'color.customPalette',
         type: 'custom',
         category: 'Custom',
         colors: ['bbb', 'ccc', 'aaa']
       },
       showDropdown: 0,
       colorRangeConfig: {
+        colorBlindSafe: false,
         type: 'all',
         steps: 4,
         reversed: false,
-        custom: true
+        custom: true,
+        customBreaks: false
       }
     }
   };
@@ -3825,7 +4580,7 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom Palette', t => {
     nextState4,
     VisStateActions.layerVisConfigChange(nextState4.layers[0], {
       colorRange: {
-        name: 'Custom Palette',
+        name: 'color.customPalette',
         type: 'custom',
         category: 'Custom',
         colors: ['bbb', 'ccc', 'aaa']
@@ -3845,21 +4600,25 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom Palette', t => {
 
   const expectedColorUI6 = {
     color: DEFAULT_COLOR_UI,
+    strokeColorRange: DEFAULT_COLOR_UI,
     colorRange: {
+      ...DEFAULT_COLOR_UI,
       showSketcher: 1,
       // keep the customPalette
       customPalette: {
-        name: 'Custom Palette',
+        name: 'color.customPalette',
         type: 'custom',
         category: 'Custom',
         colors: ['bbb', 'ccc', 'aaa']
       },
       showDropdown: 0,
       colorRangeConfig: {
+        colorBlindSafe: false,
         type: 'all',
         steps: 4,
         reversed: false,
-        custom: false
+        custom: false,
+        customBreaks: false
       }
     }
   };
@@ -3873,13 +4632,26 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom Palette', t => {
   t.deepEqual(
     nextState6.layers[0].config.visConfig.colorRange,
     {
-      name: 'Custom Palette',
+      name: 'color.customPalette',
       type: 'custom',
       category: 'Custom',
       colors: ['bbb', 'ccc', 'aaa']
     },
     'should set visConfig.colorRange'
   );
+
+  // color colorMap and colorLegends to colorRange
+  nextState6.layers[0].config.visConfig.colorRange = {
+    ...nextState6.layers[0].config.visConfig.colorRange,
+    colorLegends: {
+      bbb: 'custom legend'
+    },
+    colorMap: [
+      [1, 'bbb'],
+      [2, 'ccc'],
+      [null, 'aaa']
+    ]
+  };
 
   // open it again
   const nextState7 = reducer(
@@ -3893,21 +4665,33 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom Palette', t => {
 
   const expectedColorUI7 = {
     color: DEFAULT_COLOR_UI,
+    strokeColorRange: DEFAULT_COLOR_UI,
     colorRange: {
       showSketcher: 1,
       // keep the customPalette
       customPalette: {
-        name: 'Custom Palette',
+        name: 'color.customPalette',
         type: 'custom',
         category: 'Custom',
-        colors: ['bbb', 'ccc', 'aaa']
+        colors: ['bbb', 'ccc', 'aaa'],
+        colorLegends: {
+          bbb: 'custom legend'
+        },
+        colorMap: [
+          [1, 'bbb'],
+          [2, 'ccc'],
+          [null, 'aaa']
+        ]
       },
       showDropdown: 0,
+      showColorChart: false,
       colorRangeConfig: {
+        colorBlindSafe: false,
         type: 'all',
         steps: 4,
         reversed: false,
-        custom: true
+        custom: true,
+        customBreaks: false
       }
     }
   };
@@ -3917,6 +4701,55 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom Palette', t => {
     expectedColorUI7,
     'should set colorRangeConfig.custom true'
   );
+  t.end();
+});
+
+test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom breaks', t => {
+  const initialState = CloneDeep(StateWFilesFiltersLayerColor.visState);
+  const pointLayer = initialState.layers[0];
+
+  const nextState = reducer(
+    initialState,
+    VisStateActions.layerColorUIChange(pointLayer, 'colorRange', {
+      colorRangeConfig: {customBreaks: true}
+    })
+  );
+
+  // Explain: with redesigned color range using chormajs/d3, create customBreaks
+  // will lead to customPalette, which won't be overrided by predefined colorPalette
+  const expectedColorUI = {
+    color: DEFAULT_COLOR_UI,
+    strokeColorRange: DEFAULT_COLOR_UI,
+    colorRange: {
+      ...DEFAULT_COLOR_UI,
+      customPalette: {
+        name: 'color.customPalette',
+        type: 'custom',
+        category: 'Custom',
+        colors: ['#00939C', '#6BB5B9', '#AAD7D9', '#E6FAFA'],
+        colorMap: [
+          ['driver_analytics', '#00939C'],
+          ['driver_analytics_0', '#6BB5B9'],
+          ['driver_gps', '#AAD7D9']
+        ]
+      },
+      colorRangeConfig: {
+        type: 'all',
+        colorBlindSafe: false,
+        steps: 6,
+        reversed: false,
+        custom: false,
+        customBreaks: true
+      }
+    }
+  };
+
+  t.deepEqual(
+    nextState.layers[0].config.colorUI,
+    expectedColorUI,
+    'should set customBreaks: true and update colorUI.customPalette with default colorMap'
+  );
+
   t.end();
 });
 
@@ -4034,7 +4867,12 @@ test('#visStateReducer -> POLYGON: Create polygon filter', t => {
   };
 
   // visStateUpdateVisDataUpdater - creates 4 layers
-  let newReducer = reducer(state, VisStateActions.updateVisData(datasets, options, {}));
+  let newReducer = applyActions(reducer, state, [
+    {
+      action: VisStateActions.updateVisData,
+      payload: [datasets, options, {}]
+    }
+  ]);
 
   // add new polygon feature
   newReducer = reducer(newReducer, VisStateActions.setFeatures([mockPolygonFeature]));
@@ -4054,7 +4892,6 @@ test('#visStateReducer -> POLYGON: Create polygon filter', t => {
   const expectedFilter = {
     id: newFilter.id,
     dataId: [firstDataset],
-    freeze: false,
     enabled: true,
     fixedDomain: true,
     view: FILTER_VIEW_TYPES.side,
@@ -4073,9 +4910,8 @@ test('#visStateReducer -> POLYGON: Create polygon filter', t => {
         filterId: newFilter.id
       }
     },
-    plotType: 'histogram',
+    plotType: {type: 'histogram'},
     yAxis: null,
-    interval: null,
     layerId: [newReducer.layers[0].id],
     gpu: false
   };
@@ -4103,7 +4939,12 @@ test('#visStateReducer -> POLYGON: Create polygon filter', t => {
   t.equal(newReducer.layerData[1].data.length, 0, 'Layer Point 2 show show 0 points');
 
   // Adding a new dataset - creates extra 4 layers
-  newReducer = reducer(newReducer, VisStateActions.updateVisData(datasets, options, {}));
+  newReducer = applyActions(reducer, newReducer, [
+    {
+      action: VisStateActions.updateVisData,
+      payload: [datasets, options, {}]
+    }
+  ]);
 
   t.equal(newReducer.layerData[4].data.length, 4, 'Layer Point 5 should full data');
 
@@ -4240,7 +5081,12 @@ test('#visStateReducer -> POLYGON: Toggle filter feature', t => {
   };
 
   // visStateUpdateVisDataUpdater - creates 4 layers
-  let newReducer = reducer(state, VisStateActions.updateVisData(datasets, options, {}));
+  let newReducer = applyActions(reducer, state, [
+    {
+      action: VisStateActions.updateVisData,
+      payload: [datasets, options, {}]
+    }
+  ]);
 
   newReducer = reducer(newReducer, VisStateActions.addLayer());
 
@@ -4263,7 +5109,6 @@ test('#visStateReducer -> POLYGON: Toggle filter feature', t => {
   const expectedFilter = {
     id: newFilter.id,
     dataId: ['puppy'],
-    freeze: false,
     enabled: true,
     fixedDomain: true,
     view: FILTER_VIEW_TYPES.side,
@@ -4282,9 +5127,8 @@ test('#visStateReducer -> POLYGON: Toggle filter feature', t => {
         filterId: newFilter.id
       }
     },
-    plotType: 'histogram',
+    plotType: {type: 'histogram'},
     yAxis: null,
-    interval: null,
     layerId: [newReducer.layers[0].id],
     gpu: false
   };
@@ -4412,7 +5256,12 @@ test('#visStateReducer -> POLYGON: delete polygon filter', t => {
   };
 
   // visStateUpdateVisDataUpdater - creates 4 layers
-  let newReducer = reducer(state, VisStateActions.updateVisData(datasets, options, {}));
+  let newReducer = applyActions(reducer, state, [
+    {
+      action: VisStateActions.updateVisData,
+      payload: [datasets, options, {}]
+    }
+  ]);
 
   newReducer = reducer(newReducer, VisStateActions.addLayer());
 
@@ -4777,6 +5626,8 @@ test('#visStateReducer -> PIN_TABLE_COLUMN', t => {
 });
 
 test('#visStateReducer -> LOAD_FILES', async t => {
+  drainTasksForTesting();
+
   const loadFilesSuccessSpy = sinon.spy(VisStateActions, 'loadFilesSuccess');
   const loadFileErrSpy = sinon.spy(Console, 'warn');
   const initialState = CloneDeep(InitialState).visState;
@@ -4802,9 +5653,10 @@ test('#visStateReducer -> LOAD_FILES', async t => {
   }
 
   const nextState = reducer(initialState, VisStateActions.loadFiles(mockFiles));
-  const [task1, ...more] = drainTasksForTesting();
 
-  t.equal(more.length, 0, 'should ceate 1 task');
+  const tasks = drainTasksForTesting();
+  t.equal(tasks.length, 1, 'should create 1 task');
+  const task1 = tasks[0];
 
   const expectedTask1 = {
     type: 'LOAD_FILE_TASK',
@@ -5079,8 +5931,7 @@ test('#visStateReducer -> LOAD_FILES', async t => {
   t.equal(task10.type, 'DELAY_TASK', 'should return an DELAY_TASK for onFinish');
 
   // calling delayed task succeed to trigger load next file
-  /* eslint-disable no-unused-vars */
-  const resultState11 = reducer(resultState10, succeedTaskInTest(task10));
+  const _resultState11 = reducer(resultState10, succeedTaskInTest(task10));
 
   t.ok(loadFilesSuccessSpy.calledOnce);
   const expectedArgs = [
@@ -5133,6 +5984,401 @@ test('#visStateReducer -> setFilterAnimationTimeConfig', t => {
     VisStateActions.setFilterAnimationTimeConfig(0, {timezone: 'America/New_York'})
   );
   t.equal(nextState1.filters[0].timezone, 'America/New_York', 'should set filter timeFormat');
+  t.end();
+});
+
+test('#visStateReducer -> layerFilteredItemsChange', t => {
+  const mockEvent = {
+    id: 'point-layer-1',
+    count: 100
+  };
+  const layer = StateWFiles.visState.layers[0];
+  const _nextState = reducer(
+    StateWFiles.visState,
+    VisStateActions.layerFilteredItemsChange(layer, mockEvent)
+  );
+  const expected = {'point-layer-1': 100};
+
+  t.deepEqual(layer.filteredItemCount, expected, 'should set filteredItemCount on layer');
+
+  t.end();
+});
+
+test('#visStateReducer -> applyFilterFieldName', t => {
+  const stateToSave = CloneDeep(StateWFilters);
+
+  const oldFilter = stateToSave.visState.filters[0];
+  const datasets = stateToSave.visState.datasets;
+  const {filter: newFilter} = applyFilterFieldName(
+    oldFilter,
+    datasets,
+    oldFilter.dataId,
+    oldFilter.name[0]
+  );
+  t.deepEqual(
+    oldFilter.plotType,
+    newFilter.plotType,
+    'Should not overwrite plotType (by the default empty object)'
+  );
+
+  t.end();
+});
+
+function mockStateWithFilterAndIntervalBasedAnimationLayer() {
+  let visState = stateWithTimeFilterAndTripLayer().visState;
+  visState = reducer(visState, VisStateActions.addLayer());
+  const mockedMetaData = {
+    minZoom: 0,
+    maxZoom: 4,
+    fields: [
+      {
+        id: 'Fires',
+        name: 'Fires',
+        type: 'real',
+        analyzerType: 'FLOAT',
+        format: '',
+        filterProps: {
+          fieldType: 'real',
+          domain: [1, 400],
+          domainStops: {
+            z: [0, 1, 2, 3],
+            stops: [
+              [1, 100],
+              [1, 200],
+              [1, 300],
+              [1, 400]
+            ],
+            interpolation: 'interpolate'
+          },
+          domainQuantiles: {
+            z: [0, 1, 2, 3],
+            quantiles: Array.from({length: 4}).map(() => [0, 10])
+          },
+          histogram: null,
+          value: [1, 400],
+          type: 'range',
+          typeOptions: ['range'],
+          gpu: true,
+          step: 1
+        },
+        indexBy: {
+          format: 'x',
+          type: 'timestamp',
+          mappedValue: {
+            1580515200000: 'Fires|1580515200000',
+            1583020800000: 'Fires|1583020800000',
+            1585699200000: 'Fires|1585699200000',
+            1588291200000: 'Fires|1588291200000'
+          },
+          timeDomain: {
+            domain: [1580515200000, 1588291200000],
+            timeSteps: [1580515200000, 1583020800000, 1585699200000, 1588291200000],
+            duration: 1000
+          }
+        }
+      }
+    ],
+    resolutionOffset: 4,
+    targetTimeInterval: TileTimeInterval.DAY,
+    tilesetIndex: undefined,
+    zipUrl: undefined
+  };
+
+  const lastLayerIndex = visState.layers.length - 1;
+  const layer = visState.layers[lastLayerIndex];
+  layer.meta = mockedMetaData;
+  layer.config = {
+    ...visState.layers[lastLayerIndex].config,
+    animation: {
+      domain: visState.animationConfig.domain,
+      timeSteps: visState.animationConfig.domain,
+      duration: 1000,
+      enabled: true,
+      startTime: visState.animationConfig.domain[0]
+    }
+  };
+
+  visState.layers[lastLayerIndex] = layer;
+
+  return visState;
+}
+
+test('#visStateReducer -> sync with time filter with trip layer', t => {
+  let visState = mockStateWithSyncedFilterAndTripLayer().visState;
+
+  const animatableLayers = getAnimatableVisibleLayers(visState.layers);
+  t.equal(animatableLayers.length, 1, 'Should find 1 animatable layer');
+  t.equal(animatableLayers[0].type, LAYER_TYPES.trip, 'Should find 1 animatable trip layer');
+
+  const originalDomain = [...visState.filters[0].domain];
+
+  // ============
+  // Enable sync
+  // ============
+  visState = syncTimeFilterWithLayerTimelineUpdater(visState, {
+    idx: 0,
+    enable: true
+  });
+
+  let newFilter = visState.filters[0];
+
+  // check syncedWithLayerTimeline
+  t.equal(
+    newFilter.syncedWithLayerTimeline,
+    true,
+    'Should have set syncedWithLayerTimeline to true'
+  );
+
+  // check animation window wasn't updated
+  t.equal(newFilter.animationWindow, visState.filters[0].animationWindow);
+
+  // check syncTimelineMode
+  t.equal(
+    newFilter.syncTimelineMode,
+    SYNC_TIMELINE_MODES.end,
+    'Should have set syncTimelineMode to SYNC_TIMELINE_MODES.end'
+  );
+
+  // check filter domains
+  t.deepEqual(newFilter.domain, originalDomain, 'Should not change the domain value');
+
+  // check filter value
+  t.deepEqual(
+    newFilter.value,
+    [1564174363000, 1564184336370],
+    'Should have set filter value by combining filter and animationConfig domains'
+  );
+
+  // check animationConfig value
+  t.equal(
+    visState.animationConfig.currentTime,
+    newFilter.value[newFilter.syncTimelineMode],
+    'Should have set animationConfig value to filter value[0]'
+  );
+
+  visState = setFilterAnimationTimeUpdater(visState, {
+    idx: 0,
+    prop: 'value',
+    value: [1474588800000, 1474588800010]
+  });
+
+  newFilter = visState.filters[0];
+  t.equal(
+    visState.animationConfig.currentTime,
+    newFilter.value[newFilter.syncTimelineMode],
+    'Animation config current time value should match the filter value newFilter.syncTimelineMode=SYNC_TIMELINE_MODES.end'
+  );
+
+  // update syncTimelineMode
+  visState = setTimeFilterTimelineModeUpdater(visState, {
+    id: newFilter.id,
+    mode: SYNC_TIMELINE_MODES.start
+  });
+
+  newFilter = visState.filters[0];
+
+  // check syncTimelineMode
+  t.equal(
+    newFilter.syncTimelineMode,
+    SYNC_TIMELINE_MODES.start,
+    'Should have set syncTimelineMode to SYNC_TIMELINE_MODES.start'
+  );
+  // check animation config new value
+  t.equal(
+    visState.animationConfig.currentTime,
+    newFilter.value[newFilter.syncTimelineMode],
+    'Animation config current time value should match the filter value newFilter.syncTimelineMode=SYNC_TIMELINE_MODES.start'
+  );
+
+  // update filter animation window to INCREMENTAL
+  visState = setFilterAnimationWindowUpdater(visState, {
+    id: newFilter.id,
+    animationWindow: ANIMATION_WINDOW.incremental
+  });
+  newFilter = visState.filters[0];
+
+  // check syncTimelineMode is back to SYNC_TIMELINE_MODES.end
+  t.equal(
+    newFilter.syncTimelineMode,
+    SYNC_TIMELINE_MODES.end,
+    'SyncTimelineMode should be set to SYNC_TIMELINE_MODES.end when we switch to incremental mode'
+  );
+
+  // check animationConfig currentTime should be set to filter.value[filter.syncTimelineMode]
+  t.equal(
+    visState.animationConfig.currentTime,
+    newFilter.value[newFilter.syncTimelineMode],
+    'SyncTimelineMode should be set to SYNC_TIMELINE_MODES.end when we switch to incremental mode'
+  );
+
+  // update filter animation window to INCREMENTAL
+  visState = setFilterAnimationWindowUpdater(visState, {
+    id: newFilter.id,
+    animationWindow: ANIMATION_WINDOW.interval
+  });
+  newFilter = visState.filters[0];
+
+  // check syncTimelineMode should stay the same
+  t.equal(
+    newFilter.syncTimelineMode,
+    SYNC_TIMELINE_MODES.end,
+    'SyncTimelineMode should be set to SYNC_TIMELINE_MODES.end when we switch to incremental mode'
+  );
+
+  // check animationConfig currentTime value should stay the same
+  t.equal(
+    visState.animationConfig.currentTime,
+    newFilter.value[newFilter.syncTimelineMode],
+    'SyncTimelineMode should remain the same with interval mode'
+  );
+
+  // ============
+  // Disable sync
+  // ============
+
+  visState = syncTimeFilterWithLayerTimelineUpdater(visState, {
+    idx: 0,
+    enable: false
+  });
+
+  newFilter = visState.filters[0];
+
+  t.equal(
+    newFilter.animationWindow,
+    ANIMATION_WINDOW.interval,
+    'Should keep the same filter animationWindow value'
+  );
+
+  // check syncedWithLayerTimeline
+  t.equal(
+    newFilter.syncedWithLayerTimeline,
+    false,
+    'Should have set syncedWithLayerTimeline to false'
+  );
+
+  // check syncTimelineMode
+  t.equal(
+    newFilter.syncTimelineMode,
+    SYNC_TIMELINE_MODES.end,
+    'Should have set syncTimelineMode to end (1)'
+  );
+
+  // check filter domains
+  t.deepEqual(newFilter.domain, originalDomain, 'Should not change the domain value');
+
+  // check filter value
+  t.deepEqual(newFilter.value, newFilter.domain, 'Should have set filter value to match domain');
+
+  // check animationConfig value
+  t.equal(
+    visState.animationConfig.currentTime,
+    visState.animationConfig.domain[0],
+    'Should have set animationConfig value to filter value[0]'
+  );
+
+  t.end();
+});
+
+test('#visStateReducer -> sync with time filter with hextile layer', t => {
+  let visState = mockStateWithFilterAndIntervalBasedAnimationLayer();
+  const animatableLayers = getAnimatableVisibleLayers(visState.layers);
+  t.equal(animatableLayers.length, 2, 'Should find 1 animatable layer');
+  t.equal(animatableLayers[0].type, LAYER_TYPES.trip, 'Should find 1 animatable trip layer');
+
+  const originalDomain = [...visState.filters[0].domain];
+
+  // ============
+  // Enable sync
+  // ============
+  visState = syncTimeFilterWithLayerTimelineUpdater(visState, {
+    idx: 0,
+    enable: true
+  });
+
+  let newFilter = visState.filters[0];
+
+  // check syncedWithLayerTimeline
+  t.equal(
+    newFilter.syncedWithLayerTimeline,
+    true,
+    'Should have set syncedWithLayerTimeline to true'
+  );
+
+  // check syncTimelineMode
+  t.equal(
+    newFilter.syncTimelineMode,
+    SYNC_TIMELINE_MODES.end,
+    'Should have set syncTimelineMode to SYNC_TIMELINE_MODES.end (1)'
+  );
+
+  // check animation window to interval
+  t.equal(
+    newFilter.animationWindow,
+    ANIMATION_WINDOW.interval,
+    'Should have set filter animation window to interval'
+  );
+
+  // check plotType interval to match hextile interval
+  t.equal(
+    newFilter.plotType.interval,
+    INTERVAL['1-day'],
+    'Should have set plotType interval to 1-day'
+  );
+
+  // check filter domains
+  t.deepEqual(newFilter.domain, originalDomain, 'Should not change the domain value');
+
+  // check filter value
+  t.deepEqual(
+    newFilter.value,
+    [1421348739000, 1421348739000],
+    'Should have set filter value to the first interval step'
+  );
+
+  // check animationConfig value
+  t.equal(
+    visState.animationConfig.currentTime,
+    newFilter.value[newFilter.syncTimelineMode],
+    'Should have set animationConfig value to filter value[0]'
+  );
+
+  // ============
+  // Disable sync
+  // ============
+  visState = syncTimeFilterWithLayerTimelineUpdater(visState, {
+    idx: 0,
+    enable: false
+  });
+
+  newFilter = visState.filters[0];
+
+  // check syncedWithLayerTimeline
+  t.equal(
+    newFilter.syncedWithLayerTimeline,
+    false,
+    'Should have set syncedWithLayerTimeline to false'
+  );
+
+  // check syncTimelineMode
+  t.equal(
+    newFilter.syncTimelineMode,
+    SYNC_TIMELINE_MODES.end,
+    'Should have set syncTimelineMode to end (1)'
+  );
+
+  // check filter domains
+  t.deepEqual(newFilter.domain, originalDomain, 'Should not change the domain value');
+
+  // check filter value
+  t.deepEqual(newFilter.value, newFilter.domain, 'Should have set filter value to match domain');
+
+  // check animationConfig value
+  t.equal(
+    visState.animationConfig.currentTime,
+    visState.animationConfig.domain[0],
+    'Should have set animationConfig value to filter value[0]'
+  );
+
   t.end();
 });
 
@@ -5426,12 +6672,25 @@ test('#VisStateUpdater -> addEffect', t => {
     nextState,
     VisStateActions.addEffect({
       id: 'e_shadow',
-      type: 'lightAndShadow',
+      type: LIGHT_AND_SHADOW_EFFECT.type,
       parameters: {timestamp: 1689280466362, timezone: 'UTC'}
     })
   );
 
   t.equal(nextState.effects.length, 2, 'should add second effect');
+
+  nextState = reducer(
+    nextState,
+    VisStateActions.addEffect({
+      type: LIGHT_AND_SHADOW_EFFECT.type
+    })
+  );
+
+  t.equal(
+    nextState.effects.length,
+    2,
+    `shouldn't add second ${LIGHT_AND_SHADOW_EFFECT.name} effect`
+  );
 
   const expectedEffect2 = {
     id: 'e_shadow',
@@ -5584,6 +6843,262 @@ test('#VisStateUpdater -> removeEffect', t => {
   nextState = reducer(nextState, VisStateActions.removeEffect('e_2'));
 
   t.equal(nextState.effectOrder.length, 2, 'should be 2 ids in effectOrder');
+
+  t.end();
+});
+
+test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. enable custom palette', t => {
+  const initialState = CloneDeep(StateWFilesFiltersLayerColor.visState);
+  const pointLayer = initialState.layers[0];
+
+  const nextState = reducer(
+    initialState,
+    VisStateActions.layerColorUIChange(pointLayer, 'colorRange', {
+      colorRangeConfig: {custom: true}
+    })
+  );
+
+  const expectedColorUI = {
+    color: DEFAULT_COLOR_UI,
+    strokeColorRange: DEFAULT_COLOR_UI,
+    colorRange: {
+      ...DEFAULT_COLOR_UI,
+      customPalette: {
+        name: 'color.customPalette',
+        type: 'custom',
+        category: 'Custom',
+        colors: ['#00939C', '#6BB5B9', '#AAD7D9', '#E6FAFA']
+      },
+      colorRangeConfig: {
+        type: 'all',
+        colorBlindSafe: false,
+        steps: 6,
+        reversed: false,
+        custom: true,
+        customBreaks: false
+      }
+    }
+  };
+
+  t.deepEqual(
+    nextState.layers[0].config.colorUI,
+    expectedColorUI,
+    'should set customPalette when one clicks Custom Palette and Confirm button'
+  );
+
+  t.end();
+});
+
+test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom palette - delete color item', t => {
+  const initialState = CloneDeep(StateWFilesFiltersLayerColor.visState);
+  const pointLayer = initialState.layers[0];
+
+  const customPalette = {
+    customPalette: {
+      colors: ['#6BB5B9', '#AAD7D9', '#E6FAFA'],
+      name: 'color.customPalette',
+      type: 'custom',
+      category: 'Custom'
+    }
+  };
+
+  const nextState = reducer(
+    initialState,
+    VisStateActions.layerColorUIChange(pointLayer, 'colorRange', {
+      colorRangeConfig: {custom: true}
+    })
+  );
+
+  const deleteState = reducer(
+    nextState,
+    VisStateActions.layerColorUIChange(pointLayer, 'colorRange', customPalette)
+  );
+
+  const expectedColorUI = {
+    color: DEFAULT_COLOR_UI,
+    strokeColorRange: DEFAULT_COLOR_UI,
+    colorRange: {
+      ...DEFAULT_COLOR_UI,
+      customPalette: {
+        name: 'color.customPalette',
+        type: 'custom',
+        category: 'Custom',
+        colors: ['#6BB5B9', '#AAD7D9', '#E6FAFA']
+      },
+      colorRangeConfig: {
+        type: 'all',
+        colorBlindSafe: false,
+        steps: 3,
+        reversed: false,
+        custom: true,
+        customBreaks: false
+      }
+    }
+  };
+
+  t.deepEqual(
+    deleteState.layers[0].config.colorUI,
+    expectedColorUI,
+    'should set customPalette when one deletes a color item from Custom Palette'
+  );
+
+  let confirmState = reducer(
+    deleteState,
+    VisStateActions.layerColorUIChange(pointLayer, 'colorRange', {
+      colorRangeConfig: {custom: false}
+    })
+  );
+
+  // simulate Confirm button action
+  confirmState = reducer(
+    confirmState,
+    VisStateActions.layerVisConfigChange(pointLayer, {
+      colorRange: {
+        name: 'color.customPalette',
+        type: 'custom',
+        category: 'Custom',
+        colors: ['#6BB5B9', '#AAD7D9', '#E6FAFA']
+      }
+    })
+  );
+
+  const reverseState = reducer(
+    confirmState,
+    VisStateActions.layerColorUIChange(pointLayer, 'colorRange', {
+      colorRangeConfig: {reversed: true}
+    })
+  );
+
+  const expectedReversedColorUI = {
+    ...expectedColorUI,
+    colorRange: {
+      ...expectedColorUI.colorRange,
+      colorRangeConfig: {
+        type: 'all',
+        colorBlindSafe: false,
+        steps: 3,
+        reversed: true,
+        custom: false,
+        customBreaks: false
+      }
+    }
+  };
+
+  t.deepEqual(
+    reverseState.layers[0].config.colorUI,
+    expectedReversedColorUI,
+    'should set customPalette when one deletes a color item from Custom Palette and reverse it'
+  );
+
+  const expectedReversedVisConfigColorRange = {
+    category: 'Custom',
+    colors: ['#E6FAFA', '#AAD7D9', '#6BB5B9'],
+    name: 'color.customPalette',
+    reversed: true,
+    type: 'custom'
+  };
+
+  t.deepEqual(
+    reverseState.layers[0].config.visConfig.colorRange,
+    expectedReversedVisConfigColorRange,
+    'should set visConfig.ColorRange when one deletes a color item from Custom Palette and reverse it'
+  );
+
+  t.end();
+});
+
+test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom palette - select new steps', t => {
+  const initialState = CloneDeep(StateWFilesFiltersLayerColor.visState);
+  const pointLayer = initialState.layers[0];
+
+  const customPalette = {
+    customPalette: {
+      colors: ['#6BB5B9', '#AAD7D9', '#E6FAFA'],
+      name: 'color.customPalette',
+      type: 'custom',
+      category: 'Custom'
+    }
+  };
+
+  const nextState = reducer(
+    initialState,
+    VisStateActions.layerColorUIChange(pointLayer, 'colorRange', {
+      colorRangeConfig: {custom: true}
+    })
+  );
+
+  const deleteState = reducer(
+    nextState,
+    VisStateActions.layerColorUIChange(pointLayer, 'colorRange', customPalette)
+  );
+
+  let confirmState = reducer(
+    deleteState,
+    VisStateActions.layerColorUIChange(pointLayer, 'colorRange', {
+      colorRangeConfig: {custom: false}
+    })
+  );
+
+  // simulate Confirm button action
+  confirmState = reducer(
+    confirmState,
+    VisStateActions.layerVisConfigChange(pointLayer, {
+      colorRange: {
+        name: 'color.customPalette',
+        type: 'custom',
+        category: 'Custom',
+        colors: ['#6BB5B9', '#AAD7D9', '#E6FAFA']
+      }
+    })
+  );
+
+  const stepsState = reducer(
+    confirmState,
+    VisStateActions.layerColorUIChange(pointLayer, 'colorRange', {
+      colorRangeConfig: {steps: 4}
+    })
+  );
+
+  const expectedColorUI = {
+    color: DEFAULT_COLOR_UI,
+    strokeColorRange: DEFAULT_COLOR_UI,
+    colorRange: {
+      ...DEFAULT_COLOR_UI,
+      customPalette: {
+        name: 'color.customPalette',
+        type: 'custom',
+        category: 'Custom',
+        colors: ['#6BB5B9', '#AAD7D9', '#E6FAFA']
+      },
+      colorRangeConfig: {
+        type: 'all',
+        colorBlindSafe: false,
+        steps: 4,
+        reversed: false,
+        custom: false,
+        customBreaks: false
+      }
+    }
+  };
+
+  const expectedVisConfigColorRange = {
+    colors: ['#00939C', '#8BC6C9', '#EB9373', '#C22E00'],
+    name: 'Uber Viz Diverging',
+    type: 'diverging',
+    category: 'Uber'
+  };
+
+  t.deepEqual(
+    stepsState.layers[0].config.colorUI,
+    expectedColorUI,
+    'should set correct step in colorRangeConfig when one deletes a color item from Custom Palette and select new steps'
+  );
+
+  t.deepEqual(
+    stepsState.layers[0].config.visConfig.colorRange,
+    expectedVisConfigColorRange,
+    'should set predefined palette in visConfig.colorRange when one deletes a color item from Custom Palette and select new steps'
+  );
 
   t.end();
 });

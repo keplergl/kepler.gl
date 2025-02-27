@@ -1,96 +1,98 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React from 'react';
+import {COORDINATE_SYSTEM} from '@deck.gl/core';
+import {GeoArrowTextLayer} from '@kepler.gl/deckgl-arrow-layers';
+import {DataFilterExtension} from '@deck.gl/extensions';
+import {TextLayer} from '@deck.gl/layers';
 import {console as Console} from 'global/window';
 import keymirror from 'keymirror';
-import {DataFilterExtension} from '@deck.gl/extensions';
-import {COORDINATE_SYSTEM} from '@deck.gl/core';
-import {TextLayer} from '@deck.gl/layers';
-
+import React from 'react';
+import * as arrow from 'apache-arrow';
 import DefaultLayerIcon from './default-layer-icon';
 import {diffUpdateTriggers} from './layer-update';
+import {getSatisfiedColumnMode, FindDefaultLayerPropsReturnValue} from './layer-utils';
 
 import {
-  ALL_FIELD_TYPES,
-  NO_VALUE_COLOR,
-  SCALE_TYPES,
   CHANNEL_SCALES,
-  FIELD_OPTS,
-  SCALE_FUNC,
   CHANNEL_SCALE_SUPPORTED_FIELDS,
-  MAX_GPU_FILTERS,
-  ColorRange,
-  COLOR_RANGES,
-  DataVizColors,
-  LAYER_VIS_CONFIGS,
-  DEFAULT_TEXT_LABEL,
   DEFAULT_COLOR_UI,
-  UNKNOWN_COLOR_KEY,
   DEFAULT_HIGHLIGHT_COLOR,
   DEFAULT_LAYER_LABEL,
+  DEFAULT_TEXT_LABEL,
+  DataVizColors,
+  FIELD_OPTS,
+  LAYER_VIS_CONFIGS,
+  MAX_GPU_FILTERS,
+  NO_VALUE_COLOR,
   PROJECTED_PIXEL_SIZE_MULTIPLIER,
-  TEXT_OUTLINE_MULTIPLIER
+  SCALE_FUNC,
+  SCALE_TYPES,
+  TEXT_OUTLINE_MULTIPLIER,
+  UNKNOWN_COLOR_KEY
 } from '@kepler.gl/constants';
-
 import {
-  generateHashId,
-  getColorGroupByName,
-  reverseColorRange,
-  hexToRgb,
-  getLatLngBounds,
-  isPlainObject,
-  notNullorUndefined,
   DataContainerInterface,
-  getSampleContainerData
+  DomainQuantiles,
+  getLatLngBounds,
+  getSampleContainerData,
+  hasColorMap,
+  hexToRgb,
+  isPlainObject,
+  isDomainStops,
+  updateColorRangeByMatchingPalette
+} from '@kepler.gl/utils';
+import {generateHashId, toArray, notNullorUndefined} from '@kepler.gl/common-utils';
+import {Datasets, GpuFilter, KeplerTable} from '@kepler.gl/table';
+import {
+  AggregatedBin,
+  ColorRange,
+  ColorUI,
+  Field,
+  Filter,
+  GetVisChannelScaleReturnType,
+  LayerVisConfigSettings,
+  MapState,
+  AnimationConfig,
+  KeplerLayer,
+  LayerBaseConfig,
+  LayerColumns,
+  LayerColumn,
+  ColumnPairs,
+  ColumnLabels,
+  SupportedColumnMode,
+  FieldPair,
+  NestedPartial,
+  RGBColor,
+  ValueOf,
+  VisualChannel,
+  VisualChannels,
+  VisualChannelDomain,
+  VisualChannelField,
+  VisualChannelScale
+} from '@kepler.gl/types';
+import {
+  getScaleFunction,
+  initializeLayerColorMap,
+  getCategoricalColorScale,
+  updateCustomColorRangeByColorUI
+} from '@kepler.gl/utils';
+import memoize from 'lodash.memoize';
+import {
+  initializeCustomPalette,
+  isDomainQuantile,
+  getDomainStepsbyZoom,
+  getThresholdsFromQuantiles
 } from '@kepler.gl/utils';
 
-import {
-  RGBColor,
-  RGBAColor,
-  ValueOf,
-  NestedPartial,
-  LayerTextLabel,
-  ColorUI,
-  LayerVisConfig,
-  LayerVisConfigSettings,
-  Field,
-  MapState,
-  Filter
-} from '@kepler.gl/types';
-import {KeplerTable, Datasets, GpuFilter} from '@kepler.gl/table';
-
-export type LayerColumn = {value: string | null; fieldIdx: number; optional?: boolean};
-
-export type LayerColumns = {
-  [key: string]: LayerColumn;
-};
-export type VisualChannelDomain = number[] | string[];
-export type VisualChannelField = Field | null;
-export type VisualChannelScale = keyof typeof SCALE_TYPES;
-
-export type LayerBaseConfig = {
-  dataId: string;
-  label: string;
-  color: RGBColor;
-
-  columns: LayerColumns;
-  isVisible: boolean;
-  isConfigActive: boolean;
-  highlightColor: RGBColor | RGBAColor;
-  hidden: boolean;
-
-  visConfig: LayerVisConfig;
-  textLabel: LayerTextLabel[];
-
-  colorUI: {
-    color: ColorUI;
-    colorRange: ColorUI;
-  };
-  animation: {
-    enabled: boolean;
-    domain?: null;
-  };
+export type {
+  AggregatedBin,
+  LayerBaseConfig,
+  VisualChannel,
+  VisualChannels,
+  VisualChannelDomain,
+  VisualChannelField,
+  VisualChannelScale
 };
 
 export type LayerBaseConfigPartial = {dataId: LayerBaseConfig['dataId']} & Partial<LayerBaseConfig>;
@@ -130,44 +132,10 @@ export type LayerWeightConfig = {
   weightField: VisualChannelField;
 };
 
-export type VisualChannels = {[key: string]: VisualChannel};
-
-export type VisualChannelAggregation = 'colorAggregation' | 'sizeAggregation';
-
-export type VisualChannel = {
-  property: string;
-  field: string;
-  scale: string;
-  domain: string;
-  range: string;
-  key: string;
-  channelScaleType: string;
-  nullValue?: any;
-  defaultMeasure?: any;
-  accessor?: string;
-  condition?: (config: any) => boolean;
-  defaultValue?: ((config: any) => any) | any;
-  getAttributeValue?: (config: any) => (d: any) => any;
-
-  // TODO: define fixed
-  fixed?: any;
-
-  supportedFieldTypes?: Array<keyof typeof ALL_FIELD_TYPES>;
-
-  aggregation?: VisualChannelAggregation;
-};
-
 export type VisualChannelDescription = {
   label: string;
   measure: string | undefined;
 };
-
-export type ColumnPair = {
-  pair: string;
-  fieldPairKey: string;
-};
-
-export type ColumnPairs = {[key: string]: ColumnPair};
 
 type ColumnValidator = (column: LayerColumn, columns: LayerColumns, allFields: Field[]) => boolean;
 
@@ -178,7 +146,7 @@ export type UpdateTrigger = {
   [key: string]: any;
 };
 export type LayerBounds = [number, number, number, number];
-export type FindDefaultLayerPropsReturnValue = {props: any[]; foundLayers?: any[]};
+
 /**
  * Approx. number of points to sample in a large data set
  */
@@ -186,11 +154,18 @@ export const LAYER_ID_LENGTH = 6;
 
 const MAX_SAMPLE_SIZE = 5000;
 const defaultDomain: [number, number] = [0, 1];
-const dataFilterExtension = new DataFilterExtension({filterSize: MAX_GPU_FILTERS});
+const dataFilterExtension = new DataFilterExtension({
+  filterSize: MAX_GPU_FILTERS,
+  // @ts-expect-error not typed
+  countItems: true
+});
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const defaultDataAccessor = dc => d => d;
-const defaultGetFieldValue = (field, d) => field.valueAccessor(d);
+const identity = d => d;
+// Can't use fiedValueAccesor because need the raw data to render tooltip
+// SHAN: Revisit here
+export const defaultGetFieldValue = (field, d) => field.valueAccessor(d);
 
 export const OVERLAY_TYPE_CONST = keymirror({
   deckgl: null,
@@ -208,42 +183,61 @@ function* generateColor(): Generator<RGBColor> {
   }
 }
 
+export type LayerInfoModal = {
+  id: string;
+  template: React.FC<void>;
+  modalProps: {
+    title: string;
+  };
+};
+
 export const colorMaker = generateColor();
 
 export type BaseLayerConstructorProps = {
   id?: string;
 } & LayerBaseConfigPartial;
 
-class Layer {
+class Layer implements KeplerLayer {
   id: string;
   meta: Record<string, any>;
   visConfigSettings: {
     [key: string]: ValueOf<LayerVisConfigSettings>;
   };
-  config: LayerBaseConfig;
+  config: LayerBaseConfig & Partial<LayerColorConfig & LayerSizeConfig>;
   // TODO: define _oldDataUpdateTriggers
   _oldDataUpdateTriggers: any;
 
   isValid: boolean;
   errorMessage: string | null;
+  filteredItemCount: {
+    [deckLayerId: string]: number;
+  };
 
   constructor(props: BaseLayerConstructorProps) {
     this.id = props.id || generateHashId(LAYER_ID_LENGTH);
-
     // meta
     this.meta = {};
 
     // visConfigSettings
     this.visConfigSettings = {};
 
-    this.config = this.getDefaultLayerConfig({
-      columns: this.getLayerColumns(),
-      ...props
-    });
+    this.config = this.getDefaultLayerConfig(props);
+
+    // set columnMode from supported columns
+    if (!this.config.columnMode) {
+      const {supportedColumnModes} = this;
+      if (supportedColumnModes?.length) {
+        this.config.columnMode = supportedColumnModes[0]?.key;
+      }
+    }
+    // then set column, columnMode should already been set
+    this.config.columns = this.getLayerColumns(props.columns);
 
     // false indicates that the layer caused an error, and was disabled
     this.isValid = true;
     this.errorMessage = null;
+    // item count
+    this.filteredItemCount = {};
   }
 
   get layerIcon(): React.ElementType {
@@ -258,7 +252,7 @@ class Layer {
     return null;
   }
 
-  get name() {
+  get name(): string | null {
     return this.type;
   }
 
@@ -267,10 +261,24 @@ class Layer {
   }
 
   get requiredLayerColumns(): string[] {
+    const {supportedColumnModes} = this;
+    if (supportedColumnModes) {
+      return supportedColumnModes.reduce<string[]>(
+        (acc, obj) => (obj.requiredColumns ? acc.concat(obj.requiredColumns) : acc),
+        []
+      );
+    }
     return [];
   }
 
   get optionalColumns(): string[] {
+    const {supportedColumnModes} = this;
+    if (supportedColumnModes) {
+      return supportedColumnModes.reduce<string[]>(
+        (acc, obj) => (obj.optionalColumns ? acc.concat(obj.optionalColumns) : acc),
+        []
+      );
+    }
     return [];
   }
 
@@ -316,13 +324,21 @@ class Layer {
     return null;
   }
 
+  /**
+   * Column labels if its different than column key
+   */
+  get columnLabels(): ColumnLabels | null {
+    return null;
+  }
+
   /*
    * Default point column pairs, can be used for point based layers: point, icon etc.
    */
   get defaultPointColumnPairs(): ColumnPairs {
     return {
-      lat: {pair: 'lng', fieldPairKey: 'lat'},
-      lng: {pair: 'lat', fieldPairKey: 'lng'}
+      lat: {pair: ['lng', 'altitude'], fieldPairKey: 'lat'},
+      lng: {pair: ['lat', 'altitude'], fieldPairKey: 'lng'},
+      altitude: {pair: ['lng', 'lat'], fieldPairKey: 'altitude'}
     };
   }
 
@@ -331,10 +347,17 @@ class Layer {
    */
   get defaultLinkColumnPairs(): ColumnPairs {
     return {
+      lat: {pair: ['lng', 'alt'], fieldPairKey: 'lat'},
+      lng: {pair: ['lat', 'alt'], fieldPairKey: 'lng'},
+      alt: {pair: ['lng', 'lat'], fieldPairKey: 'altitude'},
+
       lat0: {pair: 'lng0', fieldPairKey: 'lat'},
       lng0: {pair: 'lat0', fieldPairKey: 'lng'},
+      alt0: {pair: ['lng0', 'lat0'], fieldPairKey: 'altitude'},
+
       lat1: {pair: 'lng1', fieldPairKey: 'lat'},
-      lng1: {pair: 'lat1', fieldPairKey: 'lng'}
+      lng1: {pair: 'lat1', fieldPairKey: 'lng'},
+      alt1: {pair: ['lng1', 'lat1'], fieldPairKey: 'altitude'}
     };
   }
 
@@ -350,13 +373,21 @@ class Layer {
    *   };
    * }
    */
-  get layerInfoModal(): any {
+  get layerInfoModal(): LayerInfoModal | Record<string, LayerInfoModal> | null {
+    return null;
+  }
+
+  /**
+   * Returns which column modes this layer supports
+   */
+  get supportedColumnModes(): SupportedColumnMode[] | null {
     return null;
   }
 
   get supportedDatasetTypes(): string[] | null {
     return null;
   }
+
   /*
    * Given a dataset, automatically find props to create layer based on it
    * and return the props and previous found layers.
@@ -398,10 +429,10 @@ class Layer {
       return null;
     }
 
-    return this.getAllPossibleColumnParis(requiredColumns);
+    return this.getAllPossibleColumnPairs(requiredColumns);
   }
 
-  static getAllPossibleColumnParis(requiredColumns) {
+  static getAllPossibleColumnPairs(requiredColumns) {
     // for multiple matched field for one required column, return multiple
     // combinations, e. g. if column a has 2 matched, column b has 3 matched
     // 6 possible column pairs will be returned
@@ -452,11 +483,12 @@ class Layer {
       dataId: props.dataId,
       label: props.label || DEFAULT_LAYER_LABEL,
       color: props.color || colorMaker.next().value,
-      columns: props.columns || {},
-      isVisible: props.isVisible || false,
-      isConfigActive: props.isConfigActive || false,
+      // set columns later
+      columns: {},
+      isVisible: props.isVisible ?? true,
+      isConfigActive: props.isConfigActive ?? false,
       highlightColor: props.highlightColor || DEFAULT_HIGHLIGHT_COLOR,
-      hidden: props.hidden || false,
+      hidden: props.hidden ?? false,
 
       // TODO: refactor this into separate visual Channel config
       // color by field, domain is set by filters, field, scale type
@@ -477,7 +509,8 @@ class Layer {
         color: DEFAULT_COLOR_UI,
         colorRange: DEFAULT_COLOR_UI
       },
-      animation: {enabled: false}
+      animation: {enabled: false},
+      ...(props.columnMode ? {columnMode: props.columnMode} : {})
     };
   }
 
@@ -503,11 +536,8 @@ class Layer {
 
   /**
    * Assign a field to layer column, return column config
-   * @param key - Column Key
-   * @param field - Selected field
-   * @returns {{}} - Column config
    */
-  assignColumn(key: string, field: Field): LayerColumns {
+  assignColumn(key: string, field: {name: string; fieldIdx: number}): LayerColumns {
     // field value could be null for optional columns
     const update = field
       ? {
@@ -519,7 +549,7 @@ class Layer {
     return {
       ...this.config.columns,
       [key]: {
-        ...this.config.columns[key],
+        ...this.config.columns?.[key],
         ...update
       }
     };
@@ -527,30 +557,41 @@ class Layer {
 
   /**
    * Assign a field pair to column config, return column config
-   * @param key - Column Key
-   * @param pair - field Pair
-   * @returns {object} - Column config
    */
-  assignColumnPairs(key: string, pair: string): LayerColumns {
+  assignColumnPairs(key: string, fieldPairs: FieldPair): LayerColumns {
     if (!this.columnPairs || !this.columnPairs?.[key]) {
       // should not end in this state
       return this.config.columns;
     }
+    // key = 'lat'
+    const {pair, fieldPairKey} = this.columnPairs?.[key] || {};
 
-    const {pair: partnerKey, fieldPairKey} = this.columnPairs?.[key] || {};
-
-    if (!pair[fieldPairKey]) {
+    if (typeof fieldPairKey === 'string' && !fieldPairs[fieldPairKey]) {
       // do not allow `key: undefined` to creep into the `updatedColumn` object
       return this.config.columns;
     }
 
-    const {fieldPairKey: partnerFieldPairKey} = this.columnPairs?.[partnerKey] || {};
-
-    return {
+    // pair = ['lng', 'alt] | 'lng'
+    const updatedColumn = {
       ...this.config.columns,
-      [key]: pair[fieldPairKey],
-      [partnerKey]: pair[partnerFieldPairKey]
+      // @ts-expect-error fieldPairKey can be string[] here?
+      [key]: fieldPairs[fieldPairKey]
     };
+
+    const partnerKeys = toArray(pair);
+    for (const partnerKey of partnerKeys) {
+      if (
+        this.config.columns[partnerKey] &&
+        this.columnPairs?.[partnerKey] &&
+        // @ts-ignore
+        fieldPairs[this.columnPairs?.[partnerKey].fieldPairKey]
+      ) {
+        // @ts-ignore
+        updatedColumn[partnerKey] = fieldPairs[this.columnPairs?.[partnerKey].fieldPairKey];
+      }
+    }
+
+    return updatedColumn;
   }
 
   /**
@@ -572,13 +613,15 @@ class Layer {
    * @returns {number}
    */
   getElevationZoomFactor({zoom, zoomOffset = 0}: {zoom: number; zoomOffset?: number}): number {
-    return this.config.visConfig.enableElevationZoomFactor
-      ? Math.pow(2, Math.max(8 - zoom + zoomOffset, 0))
-      : 1;
+    // enableElevationZoomFactor is used to support existing maps
+    const {fixedHeight, enableElevationZoomFactor} = this.config.visConfig;
+    return fixedHeight || enableElevationZoomFactor === false
+      ? 1
+      : Math.pow(2, Math.max(8 - zoom + zoomOffset, 0));
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  formatLayerData(datasets: Datasets, oldLayerData?: any) {
+  formatLayerData(datasets: Datasets, oldLayerData?: unknown, animationConfig?: AnimationConfig) {
     return {};
   }
 
@@ -588,7 +631,16 @@ class Layer {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  getHoverData(object, dataContainer: DataContainerInterface, fields: Field[]) {
+  getHoverData(
+    object: any,
+    dataContainer: DataContainerInterface,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    fields?: Field[],
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    animationConfig?: AnimationConfig,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    hoverInfo?: {index: number}
+  ): any {
     if (!object) {
       return null;
     }
@@ -598,12 +650,27 @@ class Layer {
     return dataContainer.row(object.index);
   }
 
+  getFilteredItemCount(): number | null {
+    // use first layer
+    if (Object.keys(this.filteredItemCount).length) {
+      const firstLayer = Object.keys(this.filteredItemCount)[0];
+      return this.filteredItemCount[firstLayer];
+    }
+    return null;
+  }
   /**
    * When change layer type, try to copy over layer configs as much as possible
    * @param configToCopy - config to copy over
    * @param visConfigSettings - visConfig settings of config to copy
+   * @param datasets - current datasets.
+   * @param defaultLayerProps - default layer creation configurations for current layer and datasets.
    */
-  assignConfigToLayer(configToCopy, visConfigSettings) {
+  assignConfigToLayer(
+    configToCopy: LayerBaseConfig & Partial<LayerColorConfig & LayerSizeConfig>,
+    visConfigSettings: {[key: string]: ValueOf<LayerVisConfigSettings>},
+    datasets?: Datasets,
+    defaultLayerProps?: FindDefaultLayerPropsReturnValue | null
+  ) {
     // don't deep merge visualChannel field
     // don't deep merge color range, reversed: is not a key by default
     const shallowCopy = ['colorRange', 'strokeColorRange'].concat(
@@ -630,6 +697,45 @@ class Layer {
       notToCopy
     });
 
+    // update columNode based on new columns
+    if (this.config.columnMode && this.supportedColumnModes) {
+      const dataset = datasets?.[this.config.dataId];
+      // try to find a mode with all requied columns from the source config
+      let satisfiedColumnMode = getSatisfiedColumnMode(
+        this.supportedColumnModes,
+        copied.columns,
+        dataset?.fields
+      );
+
+      // if no suitable column mode found or no such columMode exists for the layer
+      // then try use one of the automatically detected layer configs
+      if (!satisfiedColumnMode) {
+        const options = [
+          ...(defaultLayerProps?.props || []),
+          ...(defaultLayerProps?.altProps || [])
+        ];
+        if (options.length) {
+          // Use the first of the default configurations
+          const defaultColumnConfig = options[0].columns;
+
+          satisfiedColumnMode = getSatisfiedColumnMode(
+            this.supportedColumnModes,
+            defaultColumnConfig,
+            dataset?.fields
+          );
+
+          if (satisfiedColumnMode) {
+            copied.columns = {
+              ...copied.columns,
+              ...defaultColumnConfig
+            };
+          }
+        }
+      }
+
+      copied.columnMode = satisfiedColumnMode?.key || copied.columnMode;
+    }
+
     this.updateLayerConfig(copied);
     // validate visualChannel field type and scale types
     Object.keys(this.visualChannels).forEach(channel => {
@@ -652,7 +758,7 @@ class Layer {
     configToCopy,
     {shallowCopy = [], notToCopy = []}: {shallowCopy?: string[]; notToCopy?: string[]} = {}
   ) {
-    const copied = {};
+    const copied: {columnMode?: string; columns?: LayerColumns} = {};
     Object.keys(currentConfig).forEach(key => {
       if (
         isPlainObject(currentConfig[key]) &&
@@ -698,31 +804,42 @@ class Layer {
     });
   }
 
-  getLayerColumns() {
-    const columnValidators = this.columnValidators;
+  getLayerColumns(propsColumns = {}) {
+    const columnValidators = this.columnValidators || {};
     const required = this.requiredLayerColumns.reduce(
       (accu, key) => ({
         ...accu,
         [key]: columnValidators[key]
-          ? {value: null, fieldIdx: -1, validator: columnValidators[key]}
-          : {value: null, fieldIdx: -1}
+          ? {
+              value: propsColumns[key]?.value ?? null,
+              fieldIdx: propsColumns[key]?.fieldIdx ?? -1,
+              validator: columnValidators[key]
+            }
+          : {value: propsColumns[key]?.value ?? null, fieldIdx: propsColumns[key]?.fieldIdx ?? -1}
       }),
       {}
     );
     const optional = this.optionalColumns.reduce(
       (accu, key) => ({
         ...accu,
-        [key]: {value: null, fieldIdx: -1, optional: true}
+        [key]: {
+          value: propsColumns[key]?.value ?? null,
+          fieldIdx: propsColumns[key]?.fieldIdx ?? -1,
+          optional: true
+        }
       }),
       {}
     );
 
-    return {...required, ...optional};
+    const columns = {...required, ...optional};
+
+    return columns;
   }
 
-  updateLayerConfig<LayerConfig extends LayerBaseConfig = LayerBaseConfig>(
-    newConfig: Partial<LayerConfig>
-  ): Layer {
+  updateLayerConfig<
+    LayerConfig extends LayerBaseConfig &
+      Partial<LayerColorConfig & LayerSizeConfig> = LayerBaseConfig
+  >(newConfig: Partial<LayerConfig>): Layer {
     this.config = {...this.config, ...newConfig};
     return this;
   }
@@ -742,7 +859,10 @@ class Layer {
     const colorUIProp = Object.entries(newConfig).reduce((accu, [key, value]) => {
       return {
         ...accu,
-        [key]: isPlainObject(accu[key]) && isPlainObject(value) ? {...accu[key], ...value} : value
+        [key]:
+          isPlainObject(accu[key]) && isPlainObject(value)
+            ? {...accu[key], ...(value as Record<string, unknown>)}
+            : value
       };
     }, previous[prop] || DEFAULT_COLOR_UI);
 
@@ -756,28 +876,62 @@ class Layer {
     const isColorRange = visConfig[prop] && visConfig[prop].colors;
 
     if (isColorRange) {
+      // if open dropdown and prop is color range
+      // Automatically set colorRangeConfig's step and reversed
       this.updateColorUIByColorRange(newConfig, prop);
+
+      // if changes in UI is made to 'reversed', 'steps' or steps
+      // update current layer colorRange
       this.updateColorRangeByColorUI(newConfig, previous, prop);
+
+      // if set colorRangeConfig to custom
+      // initiate customPalette to be edited in the ui
       this.updateCustomPalette(newConfig, previous, prop);
     }
 
     return this;
   }
 
+  // if set colorRangeConfig to custom palette or custom breaks
+  // initiate customPalette to be edited in the ui
   updateCustomPalette(newConfig, previous, prop) {
-    if (!newConfig.colorRangeConfig || !newConfig.colorRangeConfig.custom) {
+    if (!newConfig.colorRangeConfig?.custom && !newConfig.colorRangeConfig?.customBreaks) {
       return;
     }
 
+    if (newConfig.customPalette) {
+      // if new config also set customPalette, no need to initiate new
+      return;
+    }
     const {colorUI, visConfig} = this.config;
 
     if (!visConfig[prop]) return;
-    const {colors} = visConfig[prop];
-    const customPalette = {
-      ...colorUI[prop].customPalette,
-      name: 'Custom Palette',
-      colors: [...colors]
+    // make copy of current color range to customPalette
+    let customPalette = {
+      ...visConfig[prop]
     };
+
+    if (newConfig.colorRangeConfig.customBreaks && !customPalette.colorMap) {
+      // find visualChanel
+      const visualChannels = this.visualChannels;
+      const channelKey = Object.keys(visualChannels).find(
+        key => visualChannels[key].range === prop
+      );
+      if (!channelKey) {
+        // should never happn
+        Console.warn(`updateColorUI: Can't find visual channel which range is ${prop}`);
+        return;
+      }
+      // add name|type|category to updateCustomPalette if customBreaks, so that
+      // colors will not be override as well when inverse palette with custom break
+      // initiate colorMap from current scale
+
+      const colorMap = initializeLayerColorMap(this, visualChannels[channelKey]);
+      customPalette = initializeCustomPalette(visConfig[prop], colorMap);
+    } else if (newConfig.colorRangeConfig.custom) {
+      customPalette = initializeCustomPalette(visConfig[prop]);
+    }
+
     this.updateLayerConfig({
       colorUI: {
         ...colorUI,
@@ -788,6 +942,7 @@ class Layer {
       }
     });
   }
+
   /**
    * if open dropdown and prop is color range
    * Automatically set colorRangeConfig's step and reversed
@@ -795,9 +950,17 @@ class Layer {
    * @param {*} prop
    */
   updateColorUIByColorRange(newConfig, prop) {
-    if (typeof newConfig.showDropdown !== 'number') return;
-
     const {colorUI, visConfig} = this.config;
+
+    // when custom palette adds/removes step, the number in "Steps" input control
+    // should be updated as well
+    const isCustom = newConfig.customPalette?.category === 'Custom';
+    const customStepsChanged = isCustom
+      ? newConfig.customPalette.colors.length !== visConfig[prop].colors.length
+      : false;
+
+    if (typeof newConfig.showDropdown !== 'number' && !customStepsChanged) return;
+
     this.updateLayerConfig({
       colorUI: {
         ...colorUI,
@@ -805,7 +968,9 @@ class Layer {
           ...colorUI[prop],
           colorRangeConfig: {
             ...colorUI[prop].colorRangeConfig,
-            steps: visConfig[prop].colors.length,
+            steps: customStepsChanged
+              ? colorUI[prop].customPalette.colors.length
+              : visConfig[prop].colors.length,
             reversed: Boolean(visConfig[prop].reversed)
           }
         }
@@ -817,7 +982,7 @@ class Layer {
     // only update colorRange if changes in UI is made to 'reversed', 'steps' or steps
     const shouldUpdate =
       newConfig.colorRangeConfig &&
-      ['reversed', 'steps'].some(
+      ['reversed', 'steps', 'colorBlindSafe', 'type'].some(
         key =>
           Object.prototype.hasOwnProperty.call(newConfig.colorRangeConfig, key) &&
           newConfig.colorRangeConfig[key] !==
@@ -826,44 +991,47 @@ class Layer {
     if (!shouldUpdate) return;
 
     const {colorUI, visConfig} = this.config;
-    const {steps, reversed} = colorUI[prop].colorRangeConfig;
-    const colorRange = visConfig[prop];
-    // find based on step or reversed
-    let update;
-    if (Object.prototype.hasOwnProperty.call(newConfig.colorRangeConfig, 'steps')) {
-      const group = getColorGroupByName(colorRange);
 
-      if (group) {
-        const sameGroup = COLOR_RANGES.filter(cr => getColorGroupByName(cr) === group);
+    // for custom palette, one can only 'reverse' the colors in custom palette.
+    // changing 'steps', 'colorBindSafe', 'type' should fall back to predefined palette.
+    const isCustomColorReversed =
+      visConfig.colorRange.category === 'Custom' &&
+      newConfig.colorRangeConfig &&
+      Object.prototype.hasOwnProperty.call(newConfig.colorRangeConfig, 'reversed');
 
-        update = sameGroup.find(cr => cr.colors.length === steps);
-
-        if (update && colorRange.reversed) {
-          update = reverseColorRange(true, update);
-        }
-      }
-    }
-
-    if (Object.prototype.hasOwnProperty.call(newConfig.colorRangeConfig, 'reversed')) {
-      update = reverseColorRange(reversed, update || colorRange);
-    }
+    const update = isCustomColorReversed
+      ? updateCustomColorRangeByColorUI(visConfig[prop], colorUI[prop].colorRangeConfig)
+      : updateColorRangeByMatchingPalette(visConfig[prop], colorUI[prop].colorRangeConfig);
 
     if (update) {
       this.updateLayerVisConfig({[prop]: update});
     }
   }
-
+  hasColumnValue(column?: LayerColumn) {
+    return Boolean(column && column.value && column.fieldIdx > -1);
+  }
+  hasRequiredColumn(column?: LayerColumn) {
+    return Boolean(column && (column.optional || this.hasColumnValue(column)));
+  }
   /**
    * Check whether layer has all columns
    * @returns yes or no
    */
   hasAllColumns(): boolean {
-    const {columns} = this.config;
-    return (
+    const {columns, columnMode} = this.config;
+    // if layer has different column mode, check if have all required columns of current column Mode
+    if (columnMode) {
+      const currentColumnModes = (this.supportedColumnModes || []).find(
+        colMode => colMode.key === columnMode
+      );
+      return Boolean(
+        currentColumnModes !== undefined &&
+          currentColumnModes.requiredColumns?.every(colKey => this.hasColumnValue(columns[colKey]))
+      );
+    }
+    return Boolean(
       columns &&
-      Object.values(columns).every(column => {
-        return Boolean(column && (column.optional || (column.value && column.fieldIdx > -1)));
-      })
+        Object.values(columns).every((column?: LayerColumn) => this.hasRequiredColumn(column))
     );
   }
 
@@ -873,11 +1041,15 @@ class Layer {
    * @param {Array | Object} layerData
    * @returns {boolean} yes or no
    */
-  hasLayerData(layerData) {
+  hasLayerData(layerData: {data: unknown[] | arrow.Table}) {
     if (!layerData) {
       return false;
     }
-    return Boolean(layerData.data && layerData.data.length);
+
+    return Boolean(
+      layerData.data &&
+        ((layerData.data as unknown[]).length || (layerData.data as arrow.Table).numRows)
+    );
   }
 
   isValidToSave(): boolean {
@@ -893,35 +1065,49 @@ class Layer {
     );
   }
 
-  getColorScale(colorScale: string, colorDomain: VisualChannelDomain, colorRange: ColorRange) {
-    if (Array.isArray(colorRange.colorMap)) {
+  getColorScale(
+    colorScale: string,
+    colorDomain: VisualChannelDomain,
+    colorRange: ColorRange
+  ): GetVisChannelScaleReturnType {
+    if (colorScale === SCALE_TYPES.customOrdinal) {
+      return getCategoricalColorScale(colorDomain, colorRange);
+    }
+
+    if (hasColorMap(colorRange) && colorScale === SCALE_TYPES.custom) {
       const cMap = new Map();
-      colorRange.colorMap.forEach(([k, v]) => {
+      colorRange.colorMap?.forEach(([k, v]) => {
         cMap.set(k, typeof v === 'string' ? hexToRgb(v) : v);
       });
 
-      const scale = SCALE_FUNC[SCALE_TYPES.ordinal]()
-        .domain(cMap.keys())
-        .range(cMap.values())
-        .unknown(cMap.get(UNKNOWN_COLOR_KEY) || NO_VALUE_COLOR);
-      return scale;
+      const scaleType = colorScale === SCALE_TYPES.custom ? colorScale : SCALE_TYPES.ordinal;
+
+      const scale = getScaleFunction(scaleType, cMap.values(), cMap.keys(), false);
+      scale.unknown(cMap.get(UNKNOWN_COLOR_KEY) || NO_VALUE_COLOR);
+
+      return scale as GetVisChannelScaleReturnType;
     }
     return this.getVisChannelScale(colorScale, colorDomain, colorRange.colors.map(hexToRgb));
   }
 
+  accessVSFieldValue(_field, _indexKey) {
+    return defaultGetFieldValue;
+  }
   /**
    * Mapping from visual channels to deck.gl accesors
-   * @param {Object} param Parameters
-   * @param {Function} param.dataAccessor Access kepler.gl layer data from deck.gl layer
-   * @param {import('utils/table-utils/data-container-interface').DataContainerInterface} param.dataContainer DataContainer to use use with dataAccessor
+   * @param param Parameters
+   * @param param.dataAccessor Access kepler.gl layer data from deck.gl layer
+   * @param param.dataContainer DataContainer to use use with dataAccessor
    * @return {Object} attributeAccessors - deck.gl layer attribute accessors
    */
   getAttributeAccessors({
     dataAccessor = defaultDataAccessor,
-    dataContainer
+    dataContainer,
+    indexKey
   }: {
     dataAccessor?: typeof defaultDataAccessor;
     dataContainer: DataContainerInterface;
+    indexKey?: number | null;
   }) {
     const attributeAccessors: {[key: string]: any} = {};
 
@@ -959,13 +1145,35 @@ class Layer {
                   isFixed
                 );
 
-          attributeAccessors[accessor] = d =>
-            this.getEncodedChannelValue(
-              scaleFunction,
-              dataAccessor(dataContainer)(d),
-              this.config[field],
-              nullValue
-            );
+          const getFieldValue = this.accessVSFieldValue(this.config[field], indexKey);
+
+          if (scaleFunction) {
+            attributeAccessors[accessor] = scaleFunction.byZoom
+              ? memoize(z => {
+                  const scaleFunc = scaleFunction(z);
+                  return d =>
+                    this.getEncodedChannelValue(
+                      scaleFunc,
+                      dataAccessor(dataContainer)(d),
+                      this.config[field],
+                      nullValue,
+                      getFieldValue
+                    );
+                })
+              : d =>
+                  this.getEncodedChannelValue(
+                    scaleFunction,
+                    dataAccessor(dataContainer)(d),
+                    this.config[field],
+                    nullValue,
+                    getFieldValue
+                  );
+
+            // set getFillColorByZoom to true
+            if (scaleFunction.byZoom) {
+              attributeAccessors[`${accessor}ByZoom`] = true;
+            }
+          }
         } else if (typeof getAttributeValue === 'function') {
           attributeAccessors[accessor] = getAttributeValue(this.config);
         } else {
@@ -984,10 +1192,43 @@ class Layer {
 
   getVisChannelScale(
     scale: string,
-    domain: VisualChannelDomain,
+    domain: VisualChannelDomain | DomainQuantiles,
     range: any,
     fixed?: boolean
-  ): () => any | null {
+  ): GetVisChannelScaleReturnType {
+    // if quantile is provided per zoom
+    if (isDomainQuantile(domain) && scale === SCALE_TYPES.quantile) {
+      const zSteps = domain.z;
+
+      const getScale = function getScaleByZoom(z) {
+        const scaleDomain = getDomainStepsbyZoom(domain.quantiles, zSteps, z);
+        const thresholds = getThresholdsFromQuantiles(scaleDomain, range.length);
+
+        return getScaleFunction('threshold', range, thresholds, false);
+      };
+
+      getScale.byZoom = true;
+      return getScale;
+    } else if (isDomainStops(domain)) {
+      // color is based on zoom
+      const zSteps = domain.z;
+      // get scale function by z
+      // {
+      //  z: [z, z, z],
+      //  stops: [[min, max], [min, max]],
+      //  interpolation: 'interpolate'
+      // }
+
+      const getScale = function getScaleByZoom(z) {
+        const scaleDomain = getDomainStepsbyZoom(domain.stops, zSteps, z);
+
+        return getScaleFunction(scale, range, scaleDomain, fixed);
+      };
+
+      getScale.byZoom = true;
+      return getScale;
+    }
+
     return SCALE_FUNC[fixed ? 'linear' : scale]()
       .domain(domain)
       .range(fixed ? domain : range);
@@ -995,13 +1236,10 @@ class Layer {
 
   /**
    * Get longitude and latitude bounds of the data.
-   * @param {import('utils/table-utils/data-container-interface').DataContainerInterface} dataContainer DataContainer to calculate bounds for.
-   * @param {(d: {index: number}, dc: import('utils/table-utils/data-container-interface').DataContainerInterface) => number[]} getPosition Access kepler.gl layer data from deck.gl layer
-   * @return {number[]|null} bounds of the data.
    */
   getPointsBounds(
     dataContainer: DataContainerInterface,
-    getPosition?: (x: any, dc: DataContainerInterface) => number[]
+    getPosition: (x: any, dc: DataContainerInterface) => number[] = identity
   ): number[] | null {
     // no need to loop through the entire dataset
     // get a sample of data to calculate bounds
@@ -1036,8 +1274,6 @@ class Layer {
     nullValue = NO_VALUE_COLOR,
     getValue = defaultGetFieldValue
   ) {
-    // @ts-expect-error TODO: VisualChannelField better typing
-    const {type} = field;
     const value = getValue(field, data);
 
     if (!notNullorUndefined(value)) {
@@ -1045,10 +1281,8 @@ class Layer {
     }
 
     let attributeValue;
-    if (type === ALL_FIELD_TYPES.timestamp) {
-      // shouldn't need to convert here
-      // scale Function should take care of it
-      attributeValue = scale(new Date(value));
+    if (Array.isArray(value)) {
+      attributeValue = value.map(scale);
     } else {
       attributeValue = scale(value);
     }
@@ -1092,7 +1326,10 @@ class Layer {
     const triggerChanged = this.getChangedTriggers(dataUpdateTriggers);
 
     if (triggerChanged && (triggerChanged.getMeta || triggerChanged.getData)) {
-      this.updateLayerMeta(dataContainer, getPosition);
+      this.updateLayerMeta(layerDataset, getPosition);
+
+      // reset filteredItemCount
+      this.filteredItemCount = {};
     }
 
     let data = [];
@@ -1191,7 +1428,7 @@ class Layer {
    * @param {string} channel
    * @returns {string[]}
    */
-  getScaleOptions(channel) {
+  getScaleOptions(channel: string): string[] {
     const visualChannel = this.visualChannels[channel];
     const {field, scale, channelScaleType} = visualChannel;
 
@@ -1284,11 +1521,13 @@ class Layer {
     idx,
     gpuFilter,
     mapState,
+    layerCallbacks,
     visible
   }: {
     idx: number;
     gpuFilter: GpuFilter;
     mapState: MapState;
+    layerCallbacks: any;
     visible: boolean;
   }) {
     return {
@@ -1305,6 +1544,7 @@ class Layer {
       // data filtering
       extensions: [dataFilterExtension],
       filterRange: gpuFilter ? gpuFilter.filterRange : undefined,
+      onFilteredItemsChange: gpuFilter ? layerCallbacks?.onFilteredItemsChange : undefined,
 
       // layer should be visible and if splitMap, shown in to one of panel
       visible: this.config.isVisible && visible
@@ -1323,15 +1563,19 @@ class Layer {
   renderTextLabelLayer(
     {
       getPosition,
+      getFiltered,
       getPixelOffset,
       backgroundProps,
       updateTriggers,
       sharedProps
     }: {
-      getPosition: any;
-      getPixelOffset: any;
-      backgroundProps?: any;
-      updateTriggers: any;
+      getPosition?: ((d: any) => number[]) | arrow.Vector;
+      getFiltered?: (data: {index: number}, objectInfo: {index: number}) => number;
+      getPixelOffset: (textLabel: any) => number[] | ((d: any) => number[]);
+      backgroundProps?: {background: boolean};
+      updateTriggers: {
+        [key: string]: any;
+      };
       sharedProps: any;
     },
     renderOpts
@@ -1339,18 +1583,22 @@ class Layer {
     const {data, mapState} = renderOpts;
     const {textLabel} = this.config;
 
+    const TextLayerClass = data.data instanceof arrow.Table ? GeoArrowTextLayer : TextLayer;
+
     return data.textLabels.reduce((accu, d, i) => {
       if (d.getText) {
         const background = textLabel[i].background || backgroundProps?.background;
 
         accu.push(
-          new TextLayer({
+          // @ts-expect-error
+          new TextLayerClass({
             ...sharedProps,
             id: `${this.id}-label-${textLabel[i].field?.name}`,
             data: data.data,
             visible: this.config.isVisible,
             getText: d.getText,
             getPosition,
+            getFiltered,
             characterSet: d.characterSet,
             getPixelOffset: getPixelOffset(textLabel[i]),
             getSize: PROJECTED_PIXEL_SIZE_MULTIPLIER,
@@ -1409,7 +1657,7 @@ class Layer {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  updateLayerMeta(dataContainer: DataContainerInterface, getPosition) {
+  updateLayerMeta(dataset: KeplerTable, getPosition) {
     // implemented in subclasses
   }
 
@@ -1417,6 +1665,10 @@ class Layer {
   getPositionAccessor(dataContainer?: DataContainerInterface): (...args: any[]) => any {
     // implemented in subclasses
     return () => null;
+  }
+
+  getLegendVisualChannels(): {[key: string]: VisualChannel} {
+    return this.visualChannels;
   }
 }
 

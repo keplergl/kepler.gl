@@ -37,7 +37,7 @@ const StyledMapDropdown = styled(StyledPanelHeader)<StyledMapDropdownProps>`
     opacity: 0;
   }
 
-  :hover {
+  &:hover {
     cursor: pointer;
     background-color: ${props => props.theme.panelBackgroundHover};
   }
@@ -57,7 +57,7 @@ const StyledMapDropdown = styled(StyledPanelHeader)<StyledMapDropdownProps>`
   }
 
   /* show callout dot if props.hasCallout and theme provides calloutDot base styles */
-  :after {
+  &:after {
     ${({theme}) => theme.calloutDot}
     background-color: #00ACF5;
     top: 12px;

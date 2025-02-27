@@ -1,16 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import window from 'global/window';
-
-/**
- * Generate a hash string based on number of character
- * @param {number} count
- * @returns {string} hash string
- */
-export function generateHashId(count = 6): string {
-  return Math.random().toString(36).substr(count);
-}
+import Window from 'global/window';
+import {capitalizeFirstLetter} from './strings';
 
 /**
  * Generate a hash string based on string
@@ -40,16 +32,7 @@ export function generateHashIdFromString(str: string): string {
  */
 export function isChrome(): boolean {
   // Chrome 1+
-  return window.chrome && window.chrome.webstore;
-}
-
-/**
- * Capitalize first letter of a string
- * @param {string} str
- * @returns {string}
- */
-export function capitalizeFirstLetter(str) {
-  return typeof str === 'string' ? str.charAt(0).toUpperCase() + str.slice(1) : str;
+  return Window.chrome && Window.chrome.webstore;
 }
 
 /**
@@ -75,26 +58,6 @@ export const camelize = (str: string): string => {
     return index === 0 ? match.toLowerCase() : match.toUpperCase();
   });
 };
-
-/**
- * Converts non-arrays to arrays.  Leaves arrays alone.  Converts
- * undefined values to empty arrays ([] instead of [undefined]).
- * Otherwise, just returns [item] for non-array items.
- *
- * @param {*} item
- * @returns {array} boom! much array. very indexed. so useful.
- */
-export function toArray<T>(item: T | T[]): T[] {
-  if (Array.isArray(item)) {
-    return item;
-  }
-
-  if (typeof item === 'undefined' || item === null) {
-    return [];
-  }
-
-  return [item];
-}
 
 /**
  * immutably insert value to an Array or Object
@@ -170,6 +133,8 @@ type ErrorObject = {
   message?: any;
 };
 
+export const DEFAULT_ERROR_MESSAGE = 'Something went wrong';
+
 /**
  * Get error information of unknown type
  * Extracts as much human readable information as possible
@@ -179,9 +144,12 @@ type ErrorObject = {
  * @param {*}  err - Unknown error
  * @return {string} - human readable error msg
  */
-export function getError(err?: Error | ErrorObject | string): string {
+export function getError(
+  err?: Error | ErrorObject | string,
+  defaultMessage: string = DEFAULT_ERROR_MESSAGE
+): string {
   if (!err) {
-    return 'Something went wrong';
+    return defaultMessage;
   }
 
   if (typeof err === 'string') {
@@ -189,17 +157,16 @@ export function getError(err?: Error | ErrorObject | string): string {
   } else if (err instanceof Error) {
     return err.message;
   } else if (typeof err === 'object') {
-    return err.error
-      ? getError(err.error)
-      : err.err
-      ? getError(err.err)
-      : err.message
+    return Object.prototype.hasOwnProperty.call(err, 'message')
       ? getError(err.message)
-      : JSON.stringify(err);
+      : Object.prototype.hasOwnProperty.call(err, 'error')
+        ? getError(err.error)
+        : Object.prototype.hasOwnProperty.call(err, 'err')
+          ? getError(err.err)
+          : JSON.stringify(err);
   }
 
-  // @ts-ignore
-  return null;
+  return defaultMessage;
 }
 
 export function arrayInsert<T>(arr: T[], index: number, val: T): T[] {
@@ -210,18 +177,35 @@ export function arrayInsert<T>(arr: T[], index: number, val: T): T[] {
   return [...arr.slice(0, index), val, ...arr.slice(index)];
 }
 
+const arrayMoveMutate = (array, from, to) => {
+  array.splice(to < 0 ? array.length + to : to, 0, array.splice(from, 1)[0]);
+};
+
+/**
+ *
+ * @param {any[]} array
+ * @param {number} from
+ * @param {number} to
+ * @returns {any[]}
+ */
+export const arrayMove = <T>(array: T[], from: number, to: number): T[] => {
+  array = array.slice();
+  arrayMoveMutate(array, from, to);
+  return array;
+};
+
 export function hasMobileWidth(breakPointValues: {palm: number; desk: number}): boolean {
-  const mobileWidth = window.matchMedia(`(max-width: ${breakPointValues.palm}px)`);
+  const mobileWidth = Window.matchMedia(`(max-width: ${breakPointValues.palm}px)`);
   return mobileWidth.matches;
 }
 
 export function hasPortableWidth(breakPointValues: {palm: number; desk: number}): boolean {
-  const mobileWidth = window.matchMedia(`(max-width: ${breakPointValues.desk}px)`);
+  const mobileWidth = Window.matchMedia(`(max-width: ${breakPointValues.desk}px)`);
   return mobileWidth.matches;
 }
 
 export function isTest(): boolean {
-  return typeof process !== 'undefined' && process?.env?.NODE_ENV === 'test';
+  return globalThis.process?.env?.NODE_ENV === 'test';
 }
 
 /**
@@ -238,7 +222,7 @@ export function filterObjectByPredicate(obj, predicate) {
   );
 }
 
-export function isFunction(func): boolean {
+export function isFunction(func: unknown): boolean {
   return typeof func === 'function';
 }
 
@@ -250,9 +234,10 @@ export function findById(id: string): <X extends {id: string}>(arr: X[]) => X | 
  * Returns array difference from
  */
 export function arrayDifference<X extends {id: string}>(source: X[]): (compare: X[]) => X[] {
+  const initial: X[] = [];
   return compare =>
     source.reduce((acc, element) => {
       const foundElement = findById(element.id)(compare);
       return foundElement ? [...acc, foundElement] : acc;
-    }, [] as X[]);
+    }, initial);
 }

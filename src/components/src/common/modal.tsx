@@ -4,14 +4,16 @@
 import React, {Component, ReactNode, PropsWithChildren} from 'react';
 import {FormattedMessage} from '@kepler.gl/localization';
 
-import styled, {FlattenSimpleInterpolation} from 'styled-components';
+import styled, {css} from 'styled-components';
 import Modal from 'react-modal';
 import {Delete} from './icons';
 import {Button} from './styled-components';
 import {media} from '@kepler.gl/styles';
 
+type CssStyleType = ReturnType<typeof css>;
+
 interface ModalContentWrapperProps {
-  cssStyle?: FlattenSimpleInterpolation | string;
+  cssStyle?: CssStyleType | string;
 }
 
 const ModalContentWrapper = styled.div<ModalContentWrapperProps>`
@@ -88,7 +90,7 @@ const CloseButton = styled.div`
   top: 24px;
   right: 24px;
 
-  :hover {
+  &:hover {
     cursor: pointer;
   }
 `;
@@ -166,7 +168,7 @@ export const ModalFooter: React.FC<ModalFooterProps> = ({
   );
 };
 
-interface ModalDialogOwnProps {
+export interface ModalDialogOwnProps {
   footer: boolean;
   close: boolean;
   isOpen: boolean;
@@ -178,7 +180,7 @@ interface ModalDialogOwnProps {
   confirmButtonLabel?: string;
   cancelButton?: ModalButtonProps;
   cancelButtonLabel?: string;
-  cssStyle?: FlattenSimpleInterpolation | string;
+  cssStyle?: CssStyleType | string;
   style?: React.CSSProperties;
   theme: any;
   children?: ReactNode;
@@ -253,6 +255,7 @@ const StyledModal = styled(ModalDialog)`
   transition: ${props => props.theme.transition};
   padding-left: 40px;
   padding-right: 40px;
+  outline: none;
 
   ${media.portable`
     padding-left: 24px;
@@ -264,7 +267,7 @@ const StyledModal = styled(ModalDialog)`
     padding-right: 0;
   `};
 
-  :focus {
+  &:focus {
     outline: 0;
   }
 `;

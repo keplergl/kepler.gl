@@ -3,7 +3,7 @@
 
 // @ts-nocheck This is a hack, don't check types
 
-import {console as Console} from 'global/window';
+// import {console as Console} from 'global/window';
 import {LightingEffect, shadow} from '@deck.gl/core';
 import {Texture2D, ProgramManager} from '@luma.gl/core';
 
@@ -18,7 +18,7 @@ import {Texture2D, ProgramManager} from '@luma.gl/core';
 export function insertBefore(vs, type, insertBeforeText, textToInsert) {
   const at = vs.indexOf(insertBeforeText);
   if (at < 0) {
-    Console.error(`Cannot edit ${type} layer shader`);
+    // Console.error(`Cannot edit ${type} layer shader`);
     return vs;
   }
 

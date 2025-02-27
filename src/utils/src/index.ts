@@ -4,15 +4,27 @@
 // UTILS
 
 export {
+  colorMaybeToRGB,
+  colorRangeBackwardCompatibility,
+  createLinearGradient,
+  hasColorMap,
   hexToRgb,
   isHexColor,
-  rgbToHex,
-  getColorGroupByName,
-  reverseColorRange,
-  createLinearGradient,
-  colorMaybeToRGB,
   isRgbColor,
-  normalizeColor
+  normalizeColor,
+  reverseColorRange,
+  rgbToHex,
+  addCustomPaletteColor,
+  removeCustomPaletteColor,
+  sortCustomPaletteColor,
+  updateCustomPaletteColor,
+  updateColorRangeBySelectedPalette,
+  paletteIsSteps,
+  paletteIsType,
+  paletteIsColorBlindSafe,
+  updateColorRangeByMatchingPalette,
+  updateCustomColorRangeByColorUI,
+  initializeCustomPalette
 } from './color-utils';
 export {errorNotification} from './notifications-utils';
 
@@ -20,70 +32,79 @@ export {createNotification, exportImageError, successNotification} from './notif
 
 export {setStyleSheetBaseHref} from './dom-utils';
 export {default as domtoimage} from './dom-to-image';
-export {getFrequency, getMode, aggregate} from './aggregate-utils';
-// eslint-disable-next-line prettier/prettier
-export type {FieldFormatter} from './data-utils';
-export * from './data-utils';
+export {getFrequency, getMode, aggregate} from './aggregation';
 export {
-  getTimelineFromAnimationConfig,
-  getTimelineFromFilter,
+  adjustValueToAnimationWindow,
+  getBinThresholds,
+  histogramFromThreshold,
+  histogramFromValues,
+  histogramFromDomain,
+  histogramFromOrdinal,
+  runGpuFilterForPlot,
+  updateTimeFilterPlotType
+} from './plot';
+// eslint-disable-next-line prettier/prettier
+export * from './data-utils';
+export type {FieldFormatter} from './data-utils';
+export * from './strings';
+export {
   SAMPLE_TIMELINE,
-  TIMELINE_MODES
+  TIMELINE_MODES,
+  TIME_INTERVALS_ORDERED,
+  LayerToFilterTimeInterval,
+  TileTimeInterval,
+  getTimelineFromAnimationConfig,
+  getTimelineFromFilter
 } from './time';
+export {maybeHexToGeo, getPositionFromHexValue} from './position-utils';
 
 export {
   datasetColorMaker,
   findDefaultColorField,
-  ACCEPTED_ANALYZER_TYPES,
-  validateInputData,
-  getSampleForTypeAnalyze,
-  getFieldsFromData,
-  renameDuplicateFields,
-  analyzerTypeToFieldType,
+  getFieldFormatLabels,
   getFormatLabels,
-  getFieldFormatLabels
+  validateInputData
 } from './dataset-utils';
-export {getFormatValue} from './format';
 export {exportMapToHTML} from './export-map-html';
 export {
-  DEFAULT_IMAGE_NAME,
-  DEFAULT_HTML_NAME,
-  DEFAULT_JSON_NAME,
-  DEFAULT_DATA_NAME,
-  DEFAULT_EXPORT_JSON_SETTINGS,
-  isMSEdge,
-  getScaleFromImageSize,
   calculateExportImageSize,
   convertToPng,
   dataURItoBlob,
   downloadFile,
-  exportImage,
-  exportToJsonString,
-  getMapJSON,
-  exportJson,
   exportHtml,
+  exportImage,
+  exportJson,
   exportMap,
-  default as exporters
+  exportToJsonString,
+  default as exporters,
+  getMapJSON,
+  getScaleFromImageSize,
+  isMSEdge
 } from './export-utils';
+export {getFormatValue, getDefaultTimeFormat} from './format';
 export {setLayerBlending} from './gl-utils';
 export {flattenMessages, mergeMessages} from './locale-utils';
-export type {Dimensions} from './observe-dimensions';
-export * from './observe-dimensions';
-export * from './projection-utils';
-export {validateToken} from './mapbox-utils';
+export {isValidMapInfo} from './map-info-utils';
 export {
-  getDefaultLayerGroupVisibility,
-  editTopMapStyle,
   editBottomMapStyle,
+  editTopMapStyle,
+  getDefaultLayerGroupVisibility,
   getStyleDownloadUrl,
   getStyleImageIcon,
-  scaleMapStyleByResolution,
-  mergeLayerGroupVisibility
+  mergeLayerGroupVisibility,
+  scaleMapStyleByResolution
 } from './map-style-utils/mapbox-gl-style-editor';
-export {isValidMapInfo} from './map-info-utils';
-export * from './utils';
+export {validateToken} from './mapbox-utils';
+export {
+  default as useDimensions,
+  observeDimensions,
+  unobserveDimensions
+} from './observe-dimensions';
+export type {Dimensions} from './observe-dimensions';
+export {snapToMarks, getTimeBins} from './plot';
+export * from './projection-utils';
 export * from './split-map-utils';
-export {snapToMarks} from './plot';
+export * from './utils';
 
 export {
   computeDeckEffects,
@@ -93,34 +114,76 @@ export {
 } from './effect-utils';
 
 // Mapbox
-export {transformRequest, isStyleUsingMapboxTiles} from './map-style-utils/mapbox-utils';
+export {
+  isStyleUsingMapboxTiles,
+  isStyleUsingOpenStreetMapTiles,
+  getBaseMapLibrary,
+  transformRequest
+} from './map-style-utils/mapbox-utils';
 
 // Map
 export * from './map-utils';
 
 export {
-  createDataContainer,
-  createIndexedDataContainer,
-  getSampleData as getSampleContainerData,
-  DataForm
-} from './data-container-utils';
+  ArrowDataContainer,
+  arrowDataTypeToAnalyzerDataType,
+  arrowDataTypeToFieldType
+} from './arrow-data-container';
 export type {DataContainerInterface} from './data-container-interface';
 export {
-  ArrowDataContainer,
-  arrowDataTypeToFieldType,
-  arrowDataTypeToAnalyzerDataType
-} from './arrow-data-container';
-export type {FilterResult, FilterChanged, dataValueAccessor} from './filter-utils';
+  DataForm,
+  createDataContainer,
+  createIndexedDataContainer,
+  getSampleData as getSampleContainerData
+} from './data-container-utils';
 export * from './filter-utils';
+export type {FilterChanged, FilterResult, dataValueAccessor} from './filter-utils';
 
 export {
-  getQuantileDomain,
-  getOrdinalDomain,
+  colorMapToColorBreaks,
+  colorBreaksToColorMap,
+  getLayerColorScale,
+  getLegendOfScale,
   getLinearDomain,
-  getLogDomain
+  getLogDomain,
+  getOrdinalDomain,
+  getQuantileDomain,
+  getScaleFunction,
+  getVisualChannelScaleByZoom,
+  initializeLayerColorMap,
+  isNumericColorBreaks,
+  isDomainStops,
+  isDomainQuantile,
+  getDomainStepsbyZoom,
+  getThresholdsFromQuantiles,
+  getQuantLabelFormat,
+  getHistogramDomain,
+  getQuantLegends,
+  getCategoricalColorMap,
+  getCategoricalColorScale,
+  initCustomPaletteByCustomScale,
+  colorMapToCategoricalColorBreaks,
+  resetCategoricalColorMapByIndex,
+  selectRestCategoricalColorMapByIndex,
+  removeCategoricalValueFromColorMap,
+  addCategoricalValuesToColorMap
 } from './data-scale-utils';
+export type {ColorBreak, ColorBreakOrdinal, DomainQuantiles, DomainStops} from './data-scale-utils';
 
 export {DataRow} from './data-row';
 
-export type {Centroid} from './h3-utils';
-export {getCentroid, idToPolygonGeo, h3IsValid, getHexFields} from './h3-utils';
+// Application config
+export {getApplicationConfig, initApplicationConfig} from './application-config';
+export type {
+  KeplerApplicationConfig,
+  BaseMapLibraryConfig,
+  MapLibInstance,
+  GetMapRef
+} from './application-config';
+
+// Browser utils
+export {isAppleDevice} from './browser-utils';
+
+export {default as quickInsertionSort} from './quick-insertion-sort';
+
+export type {KeplerTableModel} from './types';

@@ -2,8 +2,8 @@
 // Copyright contributors to the kepler.gl project
 
 import {KeplerGlLayers} from '@kepler.gl/layers';
-import {createDataContainer} from '@kepler.gl/utils';
-import {DEFAULT_COLOR_UI} from '@kepler.gl/constants';
+import {createDataContainer, histogramFromDomain} from '@kepler.gl/utils';
+import {DEFAULT_COLOR_UI, BINS} from '@kepler.gl/constants';
 const {H3Layer} = KeplerGlLayers;
 
 export default `hex_id,value
@@ -31,6 +31,29 @@ export default `hex_id,value
 8928309532bffff,1`;
 
 export const dataId = 'h3-hex-id';
+
+export const expectedFields = [
+  {
+    analyzerType: 'H3',
+    displayName: 'hex_id',
+    fieldIdx: 0,
+    format: '',
+    id: 'hex_id',
+    name: 'hex_id',
+    type: 'h3',
+    valueAccessor: values => values[0]
+  },
+  {
+    analyzerType: 'INT',
+    displayName: 'value',
+    fieldIdx: 1,
+    format: '',
+    id: 'value',
+    name: 'value',
+    type: 'integer',
+    valueAccessor: values => values[1]
+  }
+];
 
 export const hexIdDataConfig = {
   dataId,
@@ -76,7 +99,8 @@ export const hexIdDataConfig = {
                 sizeRange: [0, 500],
                 coverageRange: [0, 1],
                 elevationScale: 5,
-                enableElevationZoomFactor: true
+                enableElevationZoomFactor: true,
+                fixedHeight: false
               },
               textLabel: [
                 {
@@ -150,23 +174,26 @@ export const mergedFilters = [
     type: 'range',
     value: [11.2, 28],
     view: 'side',
-    freeze: true,
-    plotType: 'histogram',
+    plotType: {type: 'histogram'},
     yAxis: null,
     isAnimating: false,
     animationWindow: 'free',
     fieldIdx: [1],
     domain: [1, 76],
     step: 0.01,
-    interval: null,
-    histogram: ['Not tested'],
-    enlargedHistogram: ['Not tested'],
     speed: 1,
     fieldType: 'integer',
     typeOptions: ['range'],
     fixedDomain: false,
     gpuChannel: [0],
-    gpu: true
+    gpu: true,
+    bins: {
+      'h3-hex-id': histogramFromDomain(
+        [1, 76],
+        [64, 73, 65, 74, 66, 76, 43, 40, 36, 27, 32, 26, 19, 18, 1, 3, 2, 4, 6, 1, 1, 1],
+        BINS
+      )
+    }
   }
 ];
 
@@ -177,8 +204,8 @@ const mergedFields = [
     displayName: 'hex_id',
     format: '',
     fieldIdx: 0,
-    type: 'string',
-    analyzerType: 'STRING',
+    type: 'h3',
+    analyzerType: 'H3',
     valueAccessor: values => values[0]
   },
   {
@@ -193,125 +220,6 @@ const mergedFields = [
     filterProps: {
       domain: [1, 76],
       step: 0.01,
-      histogram: [
-        {count: 4, x0: 1, x1: 2},
-        {count: 2, x0: 2, x1: 4},
-        {count: 1, x0: 4, x1: 6},
-        {count: 1, x0: 6, x1: 8},
-        {count: 0, x0: 8, x1: 10},
-        {count: 0, x0: 10, x1: 12},
-        {count: 0, x0: 12, x1: 14},
-        {count: 0, x0: 14, x1: 16},
-        {count: 0, x0: 16, x1: 18},
-        {count: 2, x0: 18, x1: 20},
-        {count: 0, x0: 20, x1: 22},
-        {count: 0, x0: 22, x1: 24},
-        {count: 0, x0: 24, x1: 26},
-        {count: 2, x0: 26, x1: 28},
-        {count: 0, x0: 28, x1: 30},
-        {count: 0, x0: 30, x1: 32},
-        {count: 1, x0: 32, x1: 34},
-        {count: 0, x0: 34, x1: 36},
-        {count: 1, x0: 36, x1: 38},
-        {count: 0, x0: 38, x1: 40},
-        {count: 1, x0: 40, x1: 42},
-        {count: 1, x0: 42, x1: 44},
-        {count: 0, x0: 44, x1: 46},
-        {count: 0, x0: 46, x1: 48},
-        {count: 0, x0: 48, x1: 50},
-        {count: 0, x0: 50, x1: 52},
-        {count: 0, x0: 52, x1: 54},
-        {count: 0, x0: 54, x1: 56},
-        {count: 0, x0: 56, x1: 58},
-        {count: 0, x0: 58, x1: 60},
-        {count: 0, x0: 60, x1: 62},
-        {count: 0, x0: 62, x1: 64},
-        {count: 2, x0: 64, x1: 66},
-        {count: 1, x0: 66, x1: 68},
-        {count: 0, x0: 68, x1: 70},
-        {count: 0, x0: 70, x1: 72},
-        {count: 1, x0: 72, x1: 74},
-        {count: 1, x0: 74, x1: 76},
-        {count: 1, x0: 76, x1: 76}
-      ],
-      enlargedHistogram: [
-        {count: 4, x0: 1, x1: 2},
-        {count: 1, x0: 2, x1: 3},
-        {count: 1, x0: 3, x1: 4},
-        {count: 1, x0: 4, x1: 5},
-        {count: 0, x0: 5, x1: 6},
-        {count: 1, x0: 6, x1: 7},
-        {count: 0, x0: 7, x1: 8},
-        {count: 0, x0: 8, x1: 9},
-        {count: 0, x0: 9, x1: 10},
-        {count: 0, x0: 10, x1: 11},
-        {count: 0, x0: 11, x1: 12},
-        {count: 0, x0: 12, x1: 13},
-        {count: 0, x0: 13, x1: 14},
-        {count: 0, x0: 14, x1: 15},
-        {count: 0, x0: 15, x1: 16},
-        {count: 0, x0: 16, x1: 17},
-        {count: 0, x0: 17, x1: 18},
-        {count: 1, x0: 18, x1: 19},
-        {count: 1, x0: 19, x1: 20},
-        {count: 0, x0: 20, x1: 21},
-        {count: 0, x0: 21, x1: 22},
-        {count: 0, x0: 22, x1: 23},
-        {count: 0, x0: 23, x1: 24},
-        {count: 0, x0: 24, x1: 25},
-        {count: 0, x0: 25, x1: 26},
-        {count: 1, x0: 26, x1: 27},
-        {count: 1, x0: 27, x1: 28},
-        {count: 0, x0: 28, x1: 29},
-        {count: 0, x0: 29, x1: 30},
-        {count: 0, x0: 30, x1: 31},
-        {count: 0, x0: 31, x1: 32},
-        {count: 1, x0: 32, x1: 33},
-        {count: 0, x0: 33, x1: 34},
-        {count: 0, x0: 34, x1: 35},
-        {count: 0, x0: 35, x1: 36},
-        {count: 1, x0: 36, x1: 37},
-        {count: 0, x0: 37, x1: 38},
-        {count: 0, x0: 38, x1: 39},
-        {count: 0, x0: 39, x1: 40},
-        {count: 1, x0: 40, x1: 41},
-        {count: 0, x0: 41, x1: 42},
-        {count: 0, x0: 42, x1: 43},
-        {count: 1, x0: 43, x1: 44},
-        {count: 0, x0: 44, x1: 45},
-        {count: 0, x0: 45, x1: 46},
-        {count: 0, x0: 46, x1: 47},
-        {count: 0, x0: 47, x1: 48},
-        {count: 0, x0: 48, x1: 49},
-        {count: 0, x0: 49, x1: 50},
-        {count: 0, x0: 50, x1: 51},
-        {count: 0, x0: 51, x1: 52},
-        {count: 0, x0: 52, x1: 53},
-        {count: 0, x0: 53, x1: 54},
-        {count: 0, x0: 54, x1: 55},
-        {count: 0, x0: 55, x1: 56},
-        {count: 0, x0: 56, x1: 57},
-        {count: 0, x0: 57, x1: 58},
-        {count: 0, x0: 58, x1: 59},
-        {count: 0, x0: 59, x1: 60},
-        {count: 0, x0: 60, x1: 61},
-        {count: 0, x0: 61, x1: 62},
-        {count: 0, x0: 62, x1: 63},
-        {count: 0, x0: 63, x1: 64},
-        {count: 1, x0: 64, x1: 65},
-        {count: 1, x0: 65, x1: 66},
-        {count: 1, x0: 66, x1: 67},
-        {count: 0, x0: 67, x1: 68},
-        {count: 0, x0: 68, x1: 69},
-        {count: 0, x0: 69, x1: 70},
-        {count: 0, x0: 70, x1: 71},
-        {count: 0, x0: 71, x1: 72},
-        {count: 0, x0: 72, x1: 73},
-        {count: 1, x0: 73, x1: 74},
-        {count: 1, x0: 74, x1: 75},
-        {count: 0, x0: 75, x1: 76},
-        {count: 1, x0: 76, x1: 76}
-      ],
       fieldType: 'integer',
       value: [1, 76],
       type: 'range',
@@ -376,7 +284,7 @@ mergedH3Layer.config = {
       name: 'Global Warming',
       type: 'sequential',
       category: 'Uber',
-      colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
+      colors: ['#4C0035', '#880030', '#B72F15', '#D6610A', '#EF9100', '#FFC300']
     },
     strokeOpacity: 0.8,
     thickness: 2,
@@ -385,7 +293,8 @@ mergedH3Layer.config = {
     coverageRange: [0, 1],
     enable3d: false,
     elevationScale: 5,
-    enableElevationZoomFactor: true
+    enableElevationZoomFactor: true,
+    fixedHeight: false
   },
   textLabel: [
     {
@@ -465,7 +374,7 @@ export const expectedMergedDataset = {
       [0, 0]
     ],
     filterValueUpdateTriggers: {
-      gpuFilter_0: 'value',
+      gpuFilter_0: {name: 'value', domain0: 1},
       gpuFilter_1: null,
       gpuFilter_2: null,
       gpuFilter_3: null

@@ -4,10 +4,13 @@
 import {combineReducers, createStore, applyMiddleware, compose} from 'redux';
 import {routerReducer, routerMiddleware} from 'react-router-redux';
 import {browserHistory} from 'react-router';
-import {enhanceReduxMiddleware} from '@kepler.gl/reducers';
+import {createLogger} from 'redux-logger';
 import thunk from 'redux-thunk';
+
+import {enhanceReduxMiddleware} from '@kepler.gl/reducers';
+
 // eslint-disable-next-line no-unused-vars
-import window from 'global/window';
+import Window from 'global/window';
 
 import demoReducer from './reducers/index';
 
@@ -17,6 +20,14 @@ const reducers = combineReducers({
 });
 
 export const middlewares = enhanceReduxMiddleware([thunk, routerMiddleware(browserHistory)]);
+
+if (NODE_ENV === 'local') {
+  // Redux logger
+  const logger = createLogger({
+    collapsed: () => true // Collapse all actions for more compact log
+  });
+  middlewares.push(logger);
+}
 
 export const enhancers = [applyMiddleware(...middlewares)];
 
@@ -29,8 +40,8 @@ let composeEnhancers = compose;
  * comment out code below to enable Redux Devtools
  */
 
-if (window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__) {
-  composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__({
+if (Window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__) {
+  composeEnhancers = Window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__({
     actionsBlacklist: [
       '@@kepler.gl/MOUSE_MOVE',
       '@@kepler.gl/UPDATE_MAP',

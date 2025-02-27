@@ -29,6 +29,7 @@ package-lock.json
 npm-debug.log
 .history/
 .yarn
+.npmrc
 
 .pnp.*
 .yarn/*
@@ -37,3 +38,8 @@ npm-debug.log
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
+
+# Local Netlify folder
+.netlify
+meta.json
+.env

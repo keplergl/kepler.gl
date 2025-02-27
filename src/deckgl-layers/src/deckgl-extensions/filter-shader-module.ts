@@ -15,19 +15,11 @@ const vs = `
 const fs = ``;
 
 const inject = {
-  'vs:#decl': `
-    varying float is_filtered;
-  `,
-  'vs:#main-end': `
-    is_filtered = FILTER_ARROW_ATTRIB;
-  `,
-  'fs:#decl': `
-    varying float is_filtered;
-  `,
-  'fs:DECKGL_FILTER_COLOR': `
-    // abandon the fragments if  it is not filtered
-    if (is_filtered == 0.) {
-      discard;
+  // create degenerate vertices in vertex shader instead of discarding pixels in the fragment shader.
+  'vs:#main-start': `
+    if (FILTER_ARROW_ATTRIB == 0.) {
+      gl_Position = vec4(0.0, 0.0, 0.0, 1.0);
+      return;
     }
   `
 };

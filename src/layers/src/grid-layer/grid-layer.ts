@@ -7,6 +7,7 @@ import AggregationLayer, {AggregationLayerConfig} from '../aggregation-layer';
 import {pointToPolygonGeo} from './grid-utils';
 import GridLayerIcon from './grid-layer-icon';
 import {
+  ColorRange,
   VisConfigBoolean,
   VisConfigColorRange,
   VisConfigNumber,
@@ -14,7 +15,7 @@ import {
   VisConfigSelection,
   Merge
 } from '@kepler.gl/types';
-import {AggregationTypes, ColorRange} from '@kepler.gl/constants';
+import {AggregationTypes} from '@kepler.gl/constants';
 
 export type GridLayerVisConfigSettings = {
   opacity: VisConfigNumber;
@@ -58,6 +59,7 @@ export const gridVisConfigs: {
   elevationPercentile: 'elevationPercentile';
   elevationScale: 'elevationScale';
   enableElevationZoomFactor: 'enableElevationZoomFactor';
+  fixedHeight: 'fixedHeight';
   colorAggregation: 'colorAggregation';
   sizeAggregation: 'sizeAggregation';
   enable3d: 'enable3d';
@@ -71,6 +73,7 @@ export const gridVisConfigs: {
   elevationPercentile: 'elevationPercentile',
   elevationScale: 'elevationScale',
   enableElevationZoomFactor: 'enableElevationZoomFactor',
+  fixedHeight: 'fixedHeight',
   colorAggregation: 'colorAggregation',
   sizeAggregation: 'sizeAggregation',
   enable3d: 'enable3d'

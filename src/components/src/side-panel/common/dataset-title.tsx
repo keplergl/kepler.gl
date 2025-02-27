@@ -24,7 +24,7 @@ const StyledDatasetTitle = styled.div<StyledDatasetTitleProps>`
   .source-data-arrow {
     height: 16px;
   }
-  :hover {
+  &:hover {
     cursor: ${props => (props.clickable ? 'pointer' : 'auto')};
 
     .dataset-name {
@@ -52,6 +52,7 @@ type MiniDataset = {
   id: string;
   color: RGBColor;
   label?: string;
+  disableDataOperation?: boolean;
 };
 
 export type DatasetTitleProps = {
@@ -137,10 +138,11 @@ export default function DatasetTitleFactory(
         if (typeof onTitleClick === 'function') {
           onTitleClick();
         } else if (typeof showDatasetTable === 'function') {
+          if (dataset.disableDataOperation) return;
           showDatasetTable(datasetId);
         }
       },
-      [onTitleClick, showDatasetTable, datasetId]
+      [onTitleClick, showDatasetTable, datasetId, dataset.disableDataOperation]
     );
 
     return (
@@ -161,18 +163,14 @@ export default function DatasetTitleFactory(
             top={-50}
             onClose={_handleClosePicker}
           >
-            <CustomPicker
-              color={rgbToHex(dataset.color)}
-              onChange={_handleCustomPicker}
-              onSwatchClose={_handleClosePicker}
-            />
+            <CustomPicker color={rgbToHex(dataset.color)} onChange={_handleCustomPicker} />
           </Portaled>
           {showDatasetTable ? (
             <CenterFlexbox className="source-data-arrow">
               <ArrowRight height="12px" />
             </CenterFlexbox>
           ) : null}
-          {showDatasetTable ? (
+          {showDatasetTable && !dataset.disableDataOperation ? (
             <ShowDataTable id={datasetId} showDatasetTable={showDatasetTable} />
           ) : null}
           {showDeleteDataset ? (

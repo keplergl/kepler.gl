@@ -8,10 +8,17 @@ import styled from 'styled-components';
 import RangePlotFactory from './range-plot';
 import Slider from './slider/slider';
 import {Input} from './styled-components';
-
-import {observeDimensions, unobserveDimensions, roundValToStep, clamp} from '@kepler.gl/utils';
-import {LineChart, Filter} from '@kepler.gl/types';
+import RangeSliderSubAnimationPanelFactory from '../common/range-slider-timeline-panel';
+import {
+  observeDimensions,
+  unobserveDimensions,
+  roundValToStep,
+  clamp,
+  scaleSourceDomainToDestination
+} from '@kepler.gl/utils';
+import {LineChart, Filter, Bins} from '@kepler.gl/types';
 import {Datasets} from '@kepler.gl/table';
+import {ActionHandler, setFilterPlot} from '@kepler.gl/actions';
 
 interface SliderInputProps {
   flush?: boolean;
@@ -49,7 +56,8 @@ interface RangeSliderProps {
   value0: number;
   value1: number;
   onChange?: (val: number[], e?: Event | null) => void; // TODO
-  histogram?: any[];
+  setFilterPlot?: ActionHandler<typeof setFilterPlot>;
+  bins?: Bins;
   isRanged?: boolean;
   isEnlarged?: boolean;
   showInput?: boolean;
@@ -58,23 +66,33 @@ interface RangeSliderProps {
   step?: number;
   sliderHandleWidth?: number;
   xAxis?: ElementType;
+  subAnimations?: any[];
+  timelineLabel?: string;
+
   timezone?: string | null;
   timeFormat?: string;
   playbackControlWidth?: number;
   lineChart?: LineChart;
   marks?: number[];
-  plotType?: string;
+  plotType?: {
+    [key: string]: any;
+  };
   plotValue?: number[];
 
   animationWindow?: string;
   filter?: Filter;
   datasets?: Datasets;
+
+  invertTrendColor?: boolean;
 }
 
-RangeSliderFactory.deps = [RangePlotFactory];
+const RANGE_SLIDER_TIMELINE_PANEL_STYLE = {marginLeft: '-32px'};
+
+RangeSliderFactory.deps = [RangePlotFactory, RangeSliderSubAnimationPanelFactory];
 
 export default function RangeSliderFactory(
-  RangePlot: ReturnType<typeof RangePlotFactory>
+  RangePlot: ReturnType<typeof RangePlotFactory>,
+  RangeSliderSubAnimationPanel: ReturnType<typeof RangeSliderSubAnimationPanelFactory>
 ): ComponentType<RangeSliderProps> {
   class RangeSlider extends Component<RangeSliderProps> {
     static defaultProps = {
@@ -209,8 +227,10 @@ export default function RangeSliderFactory(
       const {
         isRanged,
         showInput,
-        histogram,
+        bins,
         lineChart,
+        plotType,
+        invertTrendColor,
         range,
         onChange = noop,
         sliderHandleWidth,
@@ -218,27 +238,37 @@ export default function RangeSliderFactory(
         timezone,
         timeFormat,
         playbackControlWidth,
+        setFilterPlot,
         animationWindow,
+        subAnimations: subAnimations,
         filter,
         datasets
       } = this.props;
 
       const {width} = this.state;
       const plotWidth = Math.max(width - Number(sliderHandleWidth), 0);
-      const renderPlot = (histogram && histogram.length) || lineChart;
+      const hasPlot = plotType?.type;
+
+      const value = this.props.plotValue || this.filterValueSelector(this.props);
+      const scaledValue =
+        subAnimations?.length && range
+          ? scaleSourceDomainToDestination(value as [number, number], range as [number, number])
+          : [0, 0];
+      const commonPadding = `${Number(sliderHandleWidth) / 2}px`;
       return (
         <div
           className="kg-range-slider"
-          style={{width: '100%', padding: `0 ${Number(sliderHandleWidth) / 2}px`}}
+          style={{width: '100%', padding: `0 ${commonPadding}`}}
           ref={this.setSliderContainer}
         >
           {Array.isArray(range) && range.every(Number.isFinite) && (
             <>
-              {renderPlot ? (
+              {hasPlot ? (
                 <RangePlot
-                  histogram={histogram}
-                  lineChart={this.props.lineChart}
-                  plotType={this.props.plotType}
+                  bins={bins}
+                  lineChart={lineChart}
+                  plotType={plotType}
+                  invertTrendColor={invertTrendColor}
                   isEnlarged={this.props.isEnlarged}
                   onBrush={(val0, val1) => onChange([val0, val1])}
                   marks={this.props.marks}
@@ -246,13 +276,22 @@ export default function RangeSliderFactory(
                   filter={filter}
                   datasets={datasets}
                   range={range}
-                  value={this.props.plotValue || this.filterValueSelector(this.props)}
+                  value={value}
                   width={plotWidth}
                   isRanged={isRanged}
                   step={step}
                   timezone={timezone}
                   timeFormat={timeFormat}
                   playbackControlWidth={playbackControlWidth}
+                  setFilterPlot={setFilterPlot}
+                  style={{paddingLeft: commonPadding}}
+                />
+              ) : null}
+              {subAnimations?.length ? (
+                <RangeSliderSubAnimationPanel
+                  subAnimations={subAnimations}
+                  scaledValue={scaledValue}
+                  style={RANGE_SLIDER_TIMELINE_PANEL_STYLE}
                 />
               ) : null}
               <SliderWrapper

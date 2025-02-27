@@ -84,11 +84,6 @@ type HeaderActionSectionProps = {
 
 export type LayerPanelHeaderActionSectionProps = LayerPanelHeaderProps & HeaderActionSectionProps;
 
-export const defaultProps = {
-  isDragNDropEnabled: true,
-  showRemoveLayer: true
-};
-
 const getBorderCss = status =>
   css`
     border-top: 2px solid ${({theme}) => theme.notificationColors[status]};
@@ -112,7 +107,7 @@ const StyledLayerPanelHeader = styled(StyledPanelHeader)`
 
   ${props => (props.warning ? getBorderCss('warning') : props.isValid ? '' : getBorderCss('error'))}
 
-  :hover {
+  &:hover {
     cursor: pointer;
     background-color: ${props => props.theme.panelBackgroundHover};
 
@@ -142,7 +137,7 @@ const HeaderActionSection = styled.div<HeaderActionSectionProps>`
   align-items: stretch;
   right: 10px;
   pointer-events: ${props => (props.isEditingLabel ? 'none' : 'all')};
-  :hover {
+  &:hover {
     .layer-panel__header__actions__hidden {
       opacity: 1;
       background-color: ${props => props.theme.panelBackgroundHover};
@@ -165,7 +160,7 @@ const StyledPanelHeaderHiddenActions = styled.div.attrs({
     props.isConfigActive ? props.theme.panelBackgroundHover : props.theme.panelBackground};
   transition: opacity 0.4s ease, background-color 0.4s ease;
 
-  :hover {
+  &:hover {
     opacity: 1;
   }
 `;
@@ -176,7 +171,7 @@ const StyledDragHandle = styled.div`
   opacity: 0;
   z-index: 1000;
 
-  :hover {
+  &:hover {
     cursor: move;
     opacity: 1;
     color: ${props => props.theme.textColorHl};
@@ -282,7 +277,7 @@ export function LayerPanelHeaderActionSectionFactory(
       onDuplicateLayer,
       onRemoveLayer,
       onZoomToLayer,
-      showRemoveLayer,
+      showRemoveLayer = true,
       isEditingLabel,
       // TODO: may not contain all necessary icons for all actions, e.g. actionIcons.duplicate. Need to to merge rather than replace
       actionIcons = defaultActionIcons
@@ -386,7 +381,7 @@ function LayerPanelHeaderFactory(
   const LayerPanelHeader: React.FC<LayerPanelHeaderProps> = props => {
     const {
       isConfigActive,
-      isDragNDropEnabled,
+      isDragNDropEnabled = true,
       isValid,
       warning,
       label,
@@ -435,8 +430,6 @@ function LayerPanelHeaderFactory(
       </StyledLayerPanelHeader>
     );
   };
-
-  LayerPanelHeader.defaultProps = defaultProps;
 
   return LayerPanelHeader;
 }

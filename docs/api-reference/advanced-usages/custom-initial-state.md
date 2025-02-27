@@ -6,7 +6,7 @@ Here is an example modify `uiState` `initialState` to hide side panel, and selec
 
 ```js
 import {combineReducers} from 'redux';
-import keplerGlReducer from 'kepler.gl/reducers';
+import {keplerGlReducer} from '@kepler.gl/reducers';
 
 const customizedKeplerGlReducer = keplerGlReducer
   .initialState({

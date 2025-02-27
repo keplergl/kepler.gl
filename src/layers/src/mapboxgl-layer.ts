@@ -1,29 +1,35 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import Layer, {
-  LayerBaseConfig,
-  LayerColumn,
-  OVERLAY_TYPE_CONST,
-  VisualChannels
-} from './base-layer';
+import Layer, {LayerBaseConfig, OVERLAY_TYPE_CONST, VisualChannels} from './base-layer';
 import {createSelector} from 'reselect';
 
 import {geoJsonFromData, prefixGpuField, gpuFilterToMapboxFilter} from './mapbox-utils';
 import {default as KeplerTable} from '@kepler.gl/table';
-import {Merge} from '@kepler.gl/types';
+import {Merge, LayerColumn} from '@kepler.gl/types';
 
 type MapboxLayerGLColumns = {
   lat: LayerColumn;
   lng: LayerColumn;
+
+  // COLUMN_MODE_GEOARROW
+  geoarrow?: LayerColumn;
 };
 
 export type MapboxLayerGLConfig = Merge<LayerBaseConfig, {columns: MapboxLayerGLColumns}>;
 
-export const mapboxRequiredColumns: ['lat', 'lng'] = ['lat', 'lng'];
+export const COLUMN_MODE_POINTS = 'points';
+export const mapboxRequiredColumns = ['lat', 'lng'];
+const SUPPORTED_COLUMN_MODES = [
+  {
+    key: COLUMN_MODE_POINTS,
+    label: 'Points',
+    requiredColumns: mapboxRequiredColumns
+  }
+];
 
-export const pointColResolver = ({lat, lng}: MapboxLayerGLColumns) =>
-  `${lat.fieldIdx}-${lng.fieldIdx}`;
+export const pointColResolver = ({lat, lng, geoarrow}: MapboxLayerGLColumns, columnMode?: string) =>
+  `${columnMode}-${lat.fieldIdx}-${lng.fieldIdx}-${geoarrow?.fieldIdx}`;
 
 class MapboxLayerGL extends Layer {
   declare config: MapboxLayerGLConfig;
@@ -40,8 +46,8 @@ class MapboxLayerGL extends Layer {
     return true;
   }
 
-  get requiredLayerColumns() {
-    return mapboxRequiredColumns;
+  get supportedColumnModes() {
+    return SUPPORTED_COLUMN_MODES;
   }
 
   get columnPairs() {
@@ -58,7 +64,8 @@ class MapboxLayerGL extends Layer {
   datasetSelector = (config: MapboxLayerGLConfig) => config.dataId;
   gpuFilterSelector = (config: MapboxLayerGLConfig, datasets) =>
     ((config.dataId && datasets[config.dataId]) || {}).gpuFilter;
-  columnsSelector = (config: MapboxLayerGLConfig) => pointColResolver(config.columns);
+  columnsSelector = (config: MapboxLayerGLConfig) =>
+    pointColResolver(config.columns, config.columnMode);
 
   sourceSelector = createSelector(
     this.datasetSelector,
@@ -137,14 +144,14 @@ class MapboxLayerGL extends Layer {
       ? d => {
           const filterValue = valueAccessor(d);
           return Object.values(filterValueUpdateTriggers).reduce(
-            (accu: any, name, i) => ({
+            (accu: any, gpu: any, i) => ({
               ...accu,
-              ...(name ? {[prefixGpuField(name)]: filterValue[i]} : {})
+              ...(gpu?.name ? {[prefixGpuField(gpu.name)]: filterValue[i]} : {})
             }),
-            {}
-          ) as any;
+            {} as {[id: string]: number | number[]}
+          ) as Record<string, number | number[]>;
         }
-      : () => ({} as any);
+      : () => ({} as Record<string, number | number[]>);
 
     const getProperties = d => ({
       ...getPropertyFromVisualChanel(d),

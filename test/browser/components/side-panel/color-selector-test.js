@@ -2,44 +2,48 @@
 // Copyright contributors to the kepler.gl project
 
 /* eslint-disable max-statements, enzyme-deprecation/no-mount */
-import React from 'react';
-import test from 'tape';
 import {mount} from 'enzyme';
-import sinon from 'sinon';
 import cloneDeep from 'lodash.clonedeep';
+import React from 'react';
+import sinon from 'sinon';
+import test from 'tape';
+
+import {appInjector, Button, ColorPalette} from '@kepler.gl/components';
 
 import {
-  appInjector,
+  AddColorStop,
+  ArcLayerColorSelectorFactory,
+  ColorBlock,
+  ColorRangeSelectorFactory,
   ColorSelectorFactory,
   ColorSelectorInput,
-  ColorBlock,
-  LayerColorSelectorFactory,
-  LayerColorRangeSelectorFactory,
-  ArcLayerColorSelectorFactory,
+  CustomPaletteFactory,
+  CustomPicker,
+  DeleteColorStop,
+  EditableColorRange,
   getLayerConfiguratorProps,
   getVisConfiguratorProps,
-  SingleColorPalette,
-  ColorRangeSelector,
+  LayerColorRangeSelectorFactory,
+  LayerColorSelectorFactory,
   PaletteConfig,
-  ColorPaletteGroup,
-  ALL_TYPES,
-  ColorPalette,
-  CustomPalette,
-  CustomPicker,
-  Button,
-  Portaled
+  Portaled,
+  SingleColorPalette
 } from '@kepler.gl/components';
 
-import {COLOR_RANGES} from '@kepler.gl/constants';
+import {KEPLER_COLOR_PALETTES} from '@kepler.gl/constants';
 
-import {StateWFilesFiltersLayerColor, StateWTrips} from 'test/helpers/mock-state';
-import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
 import {hexToRgb} from '@kepler.gl/utils';
+import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
+import {StateWFilesFiltersLayerColor, StateWTrips} from 'test/helpers/mock-state';
+import {clickItemSelector} from '../../../helpers/component-utils';
+import {STYLED_COMPONENTS_DUPLICATED_ENTRIES} from '../../../helpers/utils';
 
 const ColorSelector = appInjector.get(ColorSelectorFactory);
 const LayerColorSelector = appInjector.get(LayerColorSelectorFactory);
 const LayerColorRangeSelector = appInjector.get(LayerColorRangeSelectorFactory);
 const ArcLayerColorSelector = appInjector.get(ArcLayerColorSelectorFactory);
+const ColorRangeSelector = appInjector.get(ColorRangeSelectorFactory);
+const CustomPalette = appInjector.get(CustomPaletteFactory);
 
 test('Components -> ColorSelector.render', t => {
   t.doesNotThrow(() => {
@@ -107,7 +111,7 @@ test('Components -> LayerColorSelector.render -> render layer color', t => {
 
   const csInput = wrapper.find(ColorSelectorInput);
   t.equal(csInput.length, 1, 'should render 1 ColorSelectorInput');
-  csInput.simulate('mousedown');
+  csInput.simulate('click');
 
   t.ok(updateLayerColorUI.calledOnce, 'should call updateLayerColorUI');
   t.ok(updateLayerVisConfig.notCalled, 'should not call updateLayerColorUI');
@@ -235,7 +239,7 @@ test('Components -> ArcLayerColorSelector.render -> render single color', t => {
 
   const csInput = wrapper.find(ColorSelectorInput);
   t.equal(csInput.length, 2, 'should render 2 ColorSelectorInput');
-  csInput.at(1).simulate('mousedown');
+  csInput.at(1).simulate('click');
 
   t.ok(updateLayerColorUI.calledOnce, 'should call updateLayerColorUI when mousedown 2nd block');
   t.ok(
@@ -344,7 +348,7 @@ test('Components -> LayerColorRangeSelector.render -> ColorSelector', t => {
   // simulate click
   const csInput = wrapper.find(ColorSelectorInput);
   t.equal(csInput.length, 1, 'should render 2 ColorSelectorInput');
-  csInput.at(0).simulate('mousedown');
+  csInput.at(0).simulate('click');
 
   t.ok(updateLayerColorUI.calledOnce, 'should call updateLayerColorUI when mousedown 2nd block');
   t.ok(
@@ -359,7 +363,7 @@ test('Components -> LayerColorRangeSelector.render -> ColorSelector', t => {
   t.end();
 });
 
-test('Components -> LayerColorRangeSelector.render -> ColorSelector -> ColorRangeSelector -> select type', t => {
+test('Components -> LayerColorRangeSelector.render -> ColorSelector -> ColorRangeSelector -> select palette', t => {
   const initialState = StateWTrips.visState;
   const {layers} = initialState;
 
@@ -396,21 +400,111 @@ test('Components -> LayerColorRangeSelector.render -> ColorSelector -> ColorRang
   const crs = wrapper.find(ColorRangeSelector);
   t.equal(crs.length, 1, 'should render 1 ColorRangeSelector');
 
-  const pc = crs.find(PaletteConfig);
-  t.equal(pc.length, 4, 'should render 4 PaletteConfig');
-
-  const cpg = crs.find(ColorPaletteGroup);
-  t.equal(cpg.length, 1, 'should render 1 ColorPaletteGroup');
-
-  const expectedGroups = COLOR_RANGES.filter(cr => cr.colors.length === 6).length + 1;
+  const item = crs.find('ColorPaletteItem');
+  t.equal(item.length, 65, `should render ${KEPLER_COLOR_PALETTES.length} Palettes`);
 
   t.equal(
-    wrapper.find(ColorPalette).length,
-    expectedGroups,
-    `should render ${expectedGroups} ColorPalette`
+    item.at(0).find(ColorPalette).find('.color-range-palette__block').length,
+    8,
+    'should render 8 color block'
   );
+
+  const expectedColor = `rgb(${hexToRgb('#00939C').join(', ')})`;
+  const firstColor = item
+    .at(0)
+    .find(ColorPalette)
+    .find('.color-range-palette__block')
+    .at(0)
+    .getDOMNode()
+    .style.getPropertyValue('background-color');
+
+  t.equal(firstColor, expectedColor, 'should render correct background color');
+
+  // click 1st item
+  item.at(0).find('.color-palette-outer').simulate('click');
+  t.ok(updateLayerVisConfig.calledOnce, 'should call updateLayerVisConfig');
+
+  t.deepEqual(
+    updateLayerVisConfig.args[0][0].colorRange,
+    {
+      name: 'Uber Viz Diverging',
+      type: 'diverging',
+      category: 'Uber',
+      colors: [
+        '#C22E00',
+        '#D9653D',
+        '#EB9373',
+        '#F8C0AC',
+        '#B9E0E1',
+        '#8BC6C9',
+        '#5AACB2',
+        '#00939C'
+      ],
+      reversed: true
+    },
+    'should call updateLayerVisConfig with updated colorRange'
+  );
+
+  t.end();
+});
+
+test('Components -> LayerColorRangeSelector.render -> ColorSelector -> ColorRangeSelector -> select type', t => {
+  const initialState = StateWTrips.visState;
+  const {layers} = initialState;
+
+  // set showDropdown to true
+  const pointLayer = layers
+    .find(l => l.type === 'point')
+    .updateLayerColorUI('colorRange', {showDropdown: 0});
+  // color range
+  // {
+  //   name: 'Ice And Fire 8',
+  //   type: 'diverging',
+  //   category: 'Uber',
+  //   colors: [
+  //     '#7F1941', '#D50255',
+  //     '#FEAD54', '#FEEDB1',
+  //     '#E8FEB5', '#49E3CE',
+  //     '#0198BD', '#007A99'
+  //   ],
+  //   reversed: true
+  // }
+  const updateLayerConfig = sinon.spy();
+  const updateLayerVisConfig = sinon.spy();
+  const updateLayerColorUI = sinon.spy();
+
+  const mockProps = {
+    layer: pointLayer,
+    datasets: initialState.datasets,
+    updateLayerConfig,
+    updateLayerVisConfig,
+    updateLayerColorUI
+  };
+  const visConfiguratorProps = getVisConfiguratorProps(mockProps);
+  let wrapper;
+
+  t.doesNotThrow(() => {
+    wrapper = mountWithTheme(
+      <IntlWrapper>
+        <LayerColorRangeSelector {...visConfiguratorProps} />
+      </IntlWrapper>
+    );
+  }, 'Should not fail render color range select');
+
+  // open color dropdown
+  t.equal(wrapper.find('.color-range-selector').length, 1, 'should render 1 color-range-selector');
+
+  const crs = wrapper.find(ColorRangeSelector);
+  t.equal(crs.length, 1, 'should render 1 ColorRangeSelector');
+
+  const pc = crs.find(PaletteConfig);
+  t.equal(pc.length, 5, 'should render 5 PaletteConfig');
+
+  const cpg = crs.find('ColorPaletteItem');
+  t.equal(cpg.length, 65, `should render ${KEPLER_COLOR_PALETTES.length} Palettes`);
+
   const typeSelect = crs.find(PaletteConfig).at(0);
-  t.equal(typeSelect.find('.side-panel-panel__label').text(), 'type', 'should render type');
+  t.equal(typeSelect.find('.side-panel-panel__label').text(), 'Type', 'should render type');
 
   // click on type select
   t.equal(
@@ -419,16 +513,16 @@ test('Components -> LayerColorRangeSelector.render -> ColorSelector -> ColorRang
     'should render item selector dropdown input'
   );
 
-  typeSelect.find('.item-selector__dropdown').at(0).simulate('click');
+  clickItemSelector(typeSelect);
 
   wrapper.update();
 
   const listItem = wrapper.find('.list__item');
-  t.equal(listItem.length, 6, 'should render item selector typeahead');
+  t.equal(listItem.length, 5, 'should render item selector typeahead');
 
   t.deepEqual(
     listItem.map(nd => nd.at(0).find('.list__item__anchor').at(0).text()),
-    ALL_TYPES,
+    ['Sequential', 'Qualitative', 'Diverging', 'Cyclical', 'All'],
     'should render all types'
   );
 
@@ -439,7 +533,7 @@ test('Components -> LayerColorRangeSelector.render -> ColorSelector -> ColorRang
     'colorRange',
     {
       colorRangeConfig: {
-        type: 'qualitative'
+        type: 'diverging'
       }
     }
   ];
@@ -453,7 +547,7 @@ test('Components -> LayerColorRangeSelector.render -> ColorSelector -> ColorRang
   const reverseSwitch = crs.find(PaletteConfig).at(2);
   t.equal(
     reverseSwitch.find('.side-panel-panel__label').text(),
-    'reversed',
+    'Reversed',
     'should render reversed switch'
   );
 
@@ -475,17 +569,17 @@ test('Components -> LayerColorRangeSelector.render -> ColorSelector -> ColorRang
   t.deepEqual(
     updateLayerColorUI.args[1],
     expectedArgs1,
-    'should call updateLayerColorUI with reversed: true'
+    'should call updateLayerColorUI with reversed: false'
   );
 
-  const customSwitch = crs.find(PaletteConfig).at(3);
+  const colorBlindSwitch = crs.find(PaletteConfig).at(3);
   t.equal(
-    customSwitch.find('.side-panel-panel__label').text(),
-    'Custom Palette',
-    'should render custom switch'
+    colorBlindSwitch.find('.side-panel-panel__label').text(),
+    'Colorblind Safe',
+    'should render Colorblind Safe switch'
   );
 
-  customSwitch.find('input').at(0).simulate('change');
+  colorBlindSwitch.find('input').at(0).simulate('change');
 
   t.ok(
     updateLayerColorUI.callCount === 3,
@@ -495,13 +589,40 @@ test('Components -> LayerColorRangeSelector.render -> ColorSelector -> ColorRang
     'colorRange',
     {
       colorRangeConfig: {
-        custom: true
+        colorBlindSafe: true
       }
     }
   ];
   t.deepEqual(
     updateLayerColorUI.args[2],
     expectedArgs3,
+    'should call updateLayerColorUI with colorBlindSwitch: true'
+  );
+
+  const customSwitch = crs.find(PaletteConfig).at(4);
+  t.equal(
+    customSwitch.find('.side-panel-panel__label').text(),
+    'Custom Palette',
+    'should render custom switch'
+  );
+
+  customSwitch.find('input').at(0).simulate('change');
+
+  t.ok(
+    updateLayerColorUI.callCount === 4,
+    'updateLayerColorUI should be called when click custom switch'
+  );
+  const expectedArgs4 = [
+    'colorRange',
+    {
+      colorRangeConfig: {
+        custom: true
+      }
+    }
+  ];
+  t.deepEqual(
+    updateLayerColorUI.args[3],
+    expectedArgs4,
     'should call updateLayerColorUI with custom: true'
   );
   t.end();
@@ -551,7 +672,8 @@ test('Components -> LayerColorRangeSelector.render -> ColorSelector -> ColorRang
 
   t.equal(
     cp.find('.custom-palette__sortable-items').length,
-    pointLayer.config.colorUI.colorRange.customPalette.colors.length * 3,
+    pointLayer.config.colorUI.colorRange.customPalette.colors.length *
+      STYLED_COMPONENTS_DUPLICATED_ENTRIES,
     'should render same number of custom palette swatch'
   );
 
@@ -579,6 +701,7 @@ test('Components -> LayerColorRangeSelector.render -> ColorSelector -> ColorRang
     updateLayerVisConfig,
     updateLayerColorUI
   };
+
   const visConfiguratorProps = getVisConfiguratorProps(mockProps);
   let wrapper;
   t.doesNotThrow(() => {
@@ -604,12 +727,15 @@ test('Components -> LayerColorRangeSelector.render -> ColorSelector -> ColorRang
   // reversed: true }
   const cp = wrapper.find(CustomPalette);
   t.equal(cp.length, 1, 'should render 1 CustomPalette');
+  t.equal(cp.find(EditableColorRange).length, 0, 'Should not render EditableColorRange');
 
   // add step
-  t.equal(cp.find(Button).length, 3, 'should render 3 buttons');
+  t.equal(cp.find(Button).length, 2, 'should render 2 buttons');
+  t.equal(cp.find(AddColorStop).length, 8, 'Should render 8 add color buttons');
+  t.equal(cp.find(DeleteColorStop).length, 8, 'Should render 8 delete color buttons');
 
   // click add step
-  cp.find(Button).at(0).simulate('click');
+  cp.find(AddColorStop).at(0).simulate('click');
 
   t.deepEqual(
     updateLayerColorUI.args[0],
@@ -617,15 +743,19 @@ test('Components -> LayerColorRangeSelector.render -> ColorSelector -> ColorRang
       'colorRange',
       {
         customPalette: {
+          name: 'color.customPalette',
+          type: 'custom',
+          category: 'Custom',
+          reversed: true,
           colors: [
             '#7F1941',
+            '#AA0E4B',
             '#D50255',
             '#FEAD54',
             '#FEEDB1',
             '#E8FEB5',
             '#49E3CE',
             '#0198BD',
-            '#007A99',
             '#007A99'
           ]
         }
@@ -634,11 +764,31 @@ test('Components -> LayerColorRangeSelector.render -> ColorSelector -> ColorRang
     'should add color to custom palette when click add step'
   );
 
-  // click cancel
-  cp.find(Button).at(1).simulate('click');
+  // click delete step
+  cp.find(DeleteColorStop).at(1).simulate('click');
 
   t.deepEqual(
     updateLayerColorUI.args[1],
+    [
+      'colorRange',
+      {
+        customPalette: {
+          name: 'color.customPalette',
+          type: 'custom',
+          category: 'Custom',
+          reversed: true,
+          colors: ['#7F1941', '#FEAD54', '#FEEDB1', '#E8FEB5', '#49E3CE', '#0198BD', '#007A99']
+        }
+      }
+    ],
+    'should delete color to custom palette when click add step'
+  );
+
+  // click cancel
+  cp.find(Button).at(0).simulate('click');
+
+  t.deepEqual(
+    updateLayerColorUI.args[2],
     [
       'colorRange',
       {
@@ -650,7 +800,7 @@ test('Components -> LayerColorRangeSelector.render -> ColorSelector -> ColorRang
   );
 
   // click apply
-  cp.find(Button).at(2).simulate('click');
+  cp.find(Button).at(1).simulate('click');
 
   t.deepEqual(
     updateLayerColorUI.args[2],
@@ -669,9 +819,10 @@ test('Components -> LayerColorRangeSelector.render -> ColorSelector -> ColorRang
     [
       {
         colorRange: {
-          name: 'Custom Palette',
+          name: 'color.customPalette',
           type: 'custom',
           category: 'Custom',
+          reversed: true,
           colors: [
             '#7F1941',
             '#D50255',
@@ -774,13 +925,13 @@ test('Components -> ColorSelector.opacity', t => {
   }, 'Mount should not fail');
 
   // show palette
-  wrapper.find('.color-selector__selector').at(0).invoke('onMouseDown')({
+  wrapper.find('.color-selector__selector').at(0).invoke('onClick')({
     preventDefault() {},
     stopPropagation() {}
   });
 
   // select color
-  wrapper.find('.single-color-palette__block').at(100).simulate('click');
+  wrapper.find('.single-color-palette__block').at(67).simulate('click');
   t.ok(setColor.calledOnce, 'should call setColor once');
   t.ok(setColor.calledWith([228, 155, 0, 100]), 'setColor called with correct color and opacity');
 

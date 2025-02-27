@@ -2,116 +2,162 @@
 // Copyright contributors to the kepler.gl project
 
 import bbox from '@turf/bbox';
-import {console as Console} from 'global/window';
-import {disableStackCapturing, withTask} from 'react-palm/tasks';
-import cloneDeep from 'lodash.clonedeep';
-import uniq from 'lodash.uniq';
-import get from 'lodash.get';
-import xor from 'lodash.xor';
-import pick from 'lodash.pick';
-import isEqual from 'lodash.isequal';
 import copy from 'copy-to-clipboard';
 import deepmerge from 'deepmerge';
+import {console as Console} from 'global/window';
+import cloneDeep from 'lodash.clonedeep';
+import get from 'lodash.get';
+import isEqual from 'lodash.isequal';
+import pick from 'lodash.pick';
+import uniq from 'lodash.uniq';
+import xor from 'lodash.xor';
+import Task, {disableStackCapturing, withTask} from 'react-palm/tasks';
 // Tasks
-import {LOAD_FILE_TASK, UNWRAP_TASK, PROCESS_FILE_DATA, DELAY_TASK} from '@kepler.gl/tasks';
+import {
+  DELAY_TASK,
+  ACTION_TASK,
+  LOAD_FILE_TASK,
+  PROCESS_FILE_DATA,
+  UNWRAP_TASK
+} from '@kepler.gl/tasks';
 // Actions
 import {
+  ActionTypes,
+  CreateNewDatasetSuccessPayload,
+  MapStateActions,
+  ReceiveMapConfigPayload,
+  VisStateActions,
   applyLayerConfig,
+  createNewDatasetSuccess,
   layerConfigChange,
   layerTypeChange,
   layerVisConfigChange,
   layerVisualChannelConfigChange,
+  loadFileStepSuccess,
   loadFilesErr,
   loadFilesSuccess,
-  loadFileStepSuccess,
   loadNextFile,
   nextFileBatch,
-  ReceiveMapConfigPayload,
-  VisStateActions,
-  MapStateActions,
+  setFilter,
   processFileContent,
-  ActionTypes
+  fitBounds as fitMapBounds,
+  setLoadingIndicator,
+  toggleLayerForMap,
+  applyFilterConfig
 } from '@kepler.gl/actions';
 
 // Utils
 import {
-  set,
-  toArray,
-  arrayInsert,
-  generateHashId,
-  isPlainObject,
-  isObject,
+  FILTER_UPDATER_PROPS,
   addNewLayersToSplitMap,
-  computeSplitMapLayers,
-  removeLayerFromSplitMaps,
-  isRgbColor,
-  parseFieldValue,
+  snapToMarks,
   applyFilterFieldName,
   applyFiltersToDatasets,
+  arrayInsert,
+  computeSplitMapLayers,
+  adjustValueToFilterDomain,
   featureToFilterValue,
   filterDatasetCPU,
-  FILTER_UPDATER_PROPS,
   generatePolygonFilter,
   getDefaultFilter,
   getFilterIdInFeature,
   getTimeWidgetTitleFormatter,
   isInRange,
-  LIMITED_FILTER_EFFECT_PROPS,
-  updateFilterDataId,
-  getFilterPlot,
-  getDefaultFilterPlotType
+  isObject,
+  isPlainObject,
+  isRgbColor,
+  parseFieldValue,
+  removeLayerFromSplitMaps,
+  set,
+  updateFilterPlot,
+  removeFilterPlot,
+  isLayerAnimatable,
+  isSideFilter,
+  getApplicationConfig
 } from '@kepler.gl/utils';
-
+import {generateHashId, toArray} from '@kepler.gl/common-utils';
 // Mergers
 import {
-  VIS_STATE_MERGERS,
-  validateLayerWithData,
-  createLayerFromConfig,
-  serializeLayer,
-  serializeVisState,
-  parseLayerConfig
-} from './vis-state-merger';
-import {mergeStateFromMergers, isValidMerger} from './merger-handler';
-import {Layer, LayerClasses, LAYER_ID_LENGTH} from '@kepler.gl/layers';
-import {
+  ANIMATION_WINDOW,
+  BASE_SPEED,
+  COMPARE_TYPES,
+  DEFAULT_TEXT_LABEL,
   EDITOR_MODES,
-  SORT_ORDER,
   FILTER_TYPES,
   FILTER_VIEW_TYPES,
+  FPS,
+  LIGHT_AND_SHADOW_EFFECT,
   MAX_DEFAULT_TOOLTIPS,
-  DEFAULT_TEXT_LABEL,
-  COMPARE_TYPES
+  PLOT_TYPES,
+  SORT_ORDER,
+  SYNC_TIMELINE_MODES,
+  CHANNEL_SCALES,
+  SCALE_TYPES
 } from '@kepler.gl/constants';
+import {LAYER_ID_LENGTH, Layer, LayerClasses} from '@kepler.gl/layers';
 import {
-  pick_,
-  merge_,
-  swap_,
   apply_,
   compose_,
+  filterOutById,
+  merge_,
+  pick_,
   removeElementAtIndex,
-  filterOutById
+  swap_
 } from './composer-helpers';
+import {isValidMerger, mergeStateFromMergers} from './merger-handler';
+import {
+  VIS_STATE_MERGERS,
+  createLayerFromConfig,
+  parseLayerConfig,
+  serializeFilter,
+  serializeLayer,
+  serializeVisState,
+  validateLayerWithData
+} from './vis-state-merger';
 
-import KeplerGLSchema, {VisState, Merger, PostMergerPayload} from '@kepler.gl/schemas';
+import KeplerGLSchema, {Merger, PostMergerPayload, VisState} from '@kepler.gl/schemas';
 
-import {Filter, InteractionConfig, AnimationConfig, Editor, Field} from '@kepler.gl/types';
+import {
+  Filter,
+  InteractionConfig,
+  AnimationConfig,
+  FilterAnimationConfig,
+  Editor,
+  Field,
+  TimeRangeFilter
+} from '@kepler.gl/types';
 import {Loader} from '@loaders.gl/loader-utils';
 
-import {calculateLayerData, findDefaultLayer, getLayerOrderFromLayers} from './layer-utils';
 import {
-  copyTableAndUpdate,
   Datasets,
-  pinTableColumns,
-  sortDatasetByColumn,
   assignGpuChannel,
+  copyTableAndUpdate,
+  createNewDataEntry,
+  pinTableColumns,
   setFilterGpuMode,
-  createNewDataEntry
+  sortDatasetByColumn
 } from '@kepler.gl/table';
 import {findFieldsToShow} from './interaction-utils';
-import {hasPropsToMerge, getPropValueToMerger} from './merger-handler';
+import {calculateLayerData, findDefaultLayer, getLayerOrderFromLayers} from './layer-utils';
+import {getPropValueToMerger, hasPropsToMerge} from './merger-handler';
 import {mergeDatasetsByOrder} from './vis-state-merger';
-import {fixEffectOrder} from '@kepler.gl/utils';
+import {
+  fixEffectOrder,
+  getAnimatableVisibleLayers,
+  getIntervalBasedAnimationLayers,
+  mergeTimeDomains,
+  adjustValueToAnimationWindow,
+  updateTimeFilterPlotType,
+  getDefaultTimeFormat,
+  LayerToFilterTimeInterval,
+  TIME_INTERVALS_ORDERED,
+  mergeFilterDomain,
+  initCustomPaletteByCustomScale
+} from '@kepler.gl/utils';
 import {createEffect} from '@kepler.gl/effects';
+import {PayloadAction} from '@reduxjs/toolkit';
+
+import {findMapBounds} from './data-utils';
 
 // react-palm
 // disable capture exception for react-palm call to withTask
@@ -197,6 +243,7 @@ export const DEFAULT_ANIMATION_CONFIG: AnimationConfig = {
   currentTime: null,
   speed: 1,
   isAnimating: false,
+  timeSteps: null,
   timeFormat: null,
   timezone: null,
   defaultTimeFormat: null,
@@ -319,7 +366,7 @@ export function updateStateOnLayerVisibilityChange<S extends VisState>(state: S,
   }
 
   if (layer.config.animation.enabled) {
-    newState = updateAnimationDomain(state);
+    newState = updateAnimationDomain(newState);
   }
 
   return newState;
@@ -448,6 +495,19 @@ export function applyLayerConfigUpdater(
   return nextState;
 }
 
+function updatelayerVisibilty(state: VisState, newLayer: Layer, isVisible?: boolean): VisState {
+  let newState = updateStateOnLayerVisibilityChange(state, newLayer);
+  const filterIndex = filterSyncedWithTimeline(state);
+  if (isLayerAnimatable(newLayer) && filterIndex !== -1) {
+    // if layer is going to be visible we sync with filter otherwise we need to check whether other animatable layers exists and are visible
+    newState = syncTimeFilterWithLayerTimelineUpdater(newState, {
+      idx: filterIndex,
+      enable: isVisible ? isVisible : getAnimatableVisibleLayers(state.layers).length > 0
+    });
+  }
+  return newState;
+}
+
 /**
  * Update layer base config: dataId, label, column, isVisible
  * @memberof visStateUpdaters
@@ -490,7 +550,12 @@ export function layerConfigChangeUpdater(
 
   let newState = state;
   if ('isVisible' in action.newConfig) {
-    newState = updateStateOnLayerVisibilityChange(state, newLayer);
+    newState = updatelayerVisibilty(newState, newLayer, action.newConfig.isVisible);
+  }
+
+  if ('columns' in action.newConfig && newLayer.config.animation.enabled) {
+    // TODO: Shan, make the animation config function more robust
+    newState = updateAnimationDomain(newState);
   }
 
   return updateStateWithLayerAndData(newState, {
@@ -498,6 +563,98 @@ export function layerConfigChangeUpdater(
     layerData,
     idx
   });
+}
+
+export function layerAnimationChangeUpdater<S extends VisState>(state: S, action): S {
+  const {oldLayer, prop, value} = action;
+  const idx = state.layers.findIndex(l => l.id === oldLayer.id);
+
+  const newLayer = oldLayer.updateLayerConfig({
+    animation: {
+      ...oldLayer.config.animation,
+      [prop]: value
+    }
+  });
+
+  const {layerData, layer} = calculateLayerData(newLayer, state, state.layerData[idx]);
+
+  return updateStateWithLayerAndData(state, {layerData, layer, idx});
+}
+
+/**
+ * Update layerId, isVisible, splitMapId
+ * handles two cases:
+ * 1) toggle the visibility of local SplitMap layer (visState.splitMap.layers)
+ * 2) toggle the visibility of global layer (visState.layers)
+
+ * @memberof visStateUpdaters
+ * @returns nextState
+ */
+export function layerToggleVisibilityUpdater(
+  state: VisState,
+  action: VisStateActions.LayerToggleVisibilityUpdaterAction
+): VisState {
+  const {layerId, isVisible, splitMapId} = action;
+  const layer = state.layers.find(d => d.id === layerId);
+
+  if (!layer) {
+    return state;
+  }
+
+  let newState = state;
+
+  if (splitMapId) {
+    // [case 1]: toggle local layer visibility for each SplitMap
+    const mapIndex = newState.splitMaps.findIndex(sm => sm.id === splitMapId);
+    if (isVisible) {
+      // 1) if the layer is invisible globally
+      // -> set global visibility to true
+      newState = layerConfigChangeUpdater(newState, layerConfigChange(layer, {isVisible: true}));
+
+      // -> set local visibility to true and the local visibilities of all other SplitMaps to false
+      return {
+        ...newState,
+        splitMaps: newState.splitMaps.map(sm =>
+          sm.id !== splitMapId
+            ? {
+                ...sm,
+                layers: {
+                  ...sm.layers,
+                  [layerId]: false
+                }
+              }
+            : {
+                ...sm,
+                layers: {
+                  ...sm.layers,
+                  [layerId]: true
+                }
+              }
+        )
+      };
+    }
+    // 2) else when the layer is visible globally
+    return toggleLayerForMapUpdater(newState, toggleLayerForMap(mapIndex, layerId));
+  } else {
+    // [case 2]: toggle global layer visibility
+    const newLayer = layer.updateLayerConfig({isVisible});
+    const idx = newState.layers.findIndex(l => l.id === layerId);
+
+    newState = updatelayerVisibilty(newState, newLayer, isVisible);
+    return updateStateWithLayerAndData(newState, {
+      layer: newLayer,
+      idx
+    });
+  }
+}
+
+/**
+ *
+ * @param state
+ * @returns index of the filter synced to timeline or -1
+ */
+function filterSyncedWithTimeline(state: VisState): number {
+  return state.filters.findIndex(f => (f as TimeRangeFilter).syncedWithLayerTimeline);
 }
 
 /**
@@ -645,6 +802,7 @@ export function layerDataIdChangeUpdater(
   const idx = state.layers.findIndex(l => l.id === oldLayer.id);
 
   let newLayer = oldLayer.updateLayerConfig({dataId});
+
   // this may happen when a layer is new (type: null and no columns) but it's not ready to be saved
   if (newLayer.isValidToSave()) {
     const validated = validateExistingLayerWithData(
@@ -655,8 +813,10 @@ export function layerDataIdChangeUpdater(
     );
     // if cant validate it with data create a new one
     if (!validated) {
-      // @ts-expect-error TODO: checking oldLayer.type !== null
-      newLayer = new state.layerClasses[oldLayer.type]({dataId, id: oldLayer.id});
+      const oldLayerType = oldLayer.type;
+      if (oldLayerType) {
+        newLayer = new state.layerClasses[oldLayerType]({dataId, id: oldLayer.id});
+      }
     } else {
       newLayer = validated;
     }
@@ -702,16 +862,12 @@ export function setInitialLayerConfig(layer, datasets, layerClasses): Layer {
       ...props[0],
       label: newLayer.config.label,
       dataId: newLayer.config.dataId,
-      isVisible: true,
       isConfigActive: newLayer.config.isConfigActive
     });
-
-    return typeof newLayer.setInitialLayerConfig === 'function'
-      ? newLayer.setInitialLayerConfig(dataset)
-      : newLayer;
   }
-
-  return newLayer;
+  return typeof newLayer.setInitialLayerConfig === 'function'
+    ? newLayer.setInitialLayerConfig(dataset)
+    : newLayer;
 }
 /**
  * Update layer type. Previews layer config will be copied if applicable.
@@ -747,7 +903,18 @@ export function layerTypeChangeUpdater(
     // get a mint layer, with new id and type
     // because deck.gl uses id to match between new and old layer.
     // If type has changed but id is the same, it will break
-    newLayer.assignConfigToLayer(oldLayer.config, oldLayer.visConfigSettings);
+
+    const defaultLayerProps =
+      typeof state.layerClasses[newType].findDefaultLayerProps === 'function'
+        ? state.layerClasses[newType].findDefaultLayerProps(state.datasets[newLayer.config.dataId])
+        : null;
+
+    newLayer.assignConfigToLayer(
+      oldLayer.config,
+      oldLayer.visConfigSettings,
+      state.datasets,
+      defaultLayerProps
+    );
     newLayer.updateLayerDomain(state.datasets);
   }
 
@@ -806,21 +973,65 @@ export function layerVisualChannelChangeUpdater(
   state: VisState,
   action: VisStateActions.LayerVisualChannelConfigChangeUpdaterAction
 ): VisState {
-  const {oldLayer, newConfig, channel} = action;
+  const {oldLayer, newConfig, newVisConfig, channel} = action;
   if (!oldLayer.config.dataId) {
     return state;
   }
+
   const dataset = state.datasets[oldLayer.config.dataId];
 
   const idx = state.layers.findIndex(l => l.id === oldLayer.id);
-  const newLayer = oldLayer.updateLayerConfig(newConfig);
+  let newLayer = oldLayer.updateLayerConfig(newConfig);
+  if (newVisConfig) newLayer = newLayer.updateLayerVisConfig(newVisConfig);
 
   newLayer.updateLayerVisualChannel(dataset, channel);
 
-  const oldLayerData = state.layerData[idx];
-  const {layerData, layer} = calculateLayerData(newLayer, state, oldLayerData);
+  // calling update animation domain first to merge all layer animation domain
+  let updatedState = updateAnimationDomain(state);
 
-  return updateStateWithLayerAndData(state, {layerData, layer, idx});
+  const visualChannel = oldLayer.visualChannels[channel];
+  if (visualChannel?.channelScaleType === CHANNEL_SCALES.color && newConfig[visualChannel.field]) {
+    // if color field changed, set customBreaks to false
+    newLayer.updateLayerColorUI(visualChannel.range, {
+      colorRangeConfig: {
+        ...newLayer.config.colorUI[visualChannel.range].colorRangeConfig,
+        customBreaks: false
+      }
+    });
+
+    updatedState = {
+      ...updatedState,
+      layers: updatedState.layers.map(l => (l.id === oldLayer.id ? newLayer : l))
+    };
+  }
+
+  const oldLayerData = updatedState.layerData[idx];
+  const {layerData, layer} = calculateLayerData(newLayer, updatedState, oldLayerData);
+
+  if (
+    visualChannel?.channelScaleType === CHANNEL_SCALES.color &&
+    newConfig[visualChannel?.scale] === SCALE_TYPES.customOrdinal &&
+    !newVisConfig
+  ) {
+    // when switching to customOrdinal scale, create a customPalette in colorUI with updated colorDomain
+    const customPalette = initCustomPaletteByCustomScale({
+      scale: SCALE_TYPES.customOrdinal,
+      field: layer.config[visualChannel.field],
+      ordinalDomain: layer.config[layer.visualChannels[channel].domain],
+      range: layer.config.visConfig[visualChannel.range],
+      colorBreaks: null
+    });
+    // update colorRange with new customPalette
+    layer.updateLayerColorUI(visualChannel.range, {
+      showColorChart: true,
+      colorRangeConfig: {
+        ...layer.config.colorUI[visualChannel.range].colorRangeConfig,
+        customBreaks: true
+      },
+      customPalette
+    });
+  }
+  return updateStateWithLayerAndData(updatedState, {layerData, layer, idx});
 }
 
 /**
@@ -835,6 +1046,7 @@ export function layerVisConfigChangeUpdater(
   const {oldLayer} = action;
   const idx = state.layers.findIndex(l => l.id === oldLayer.id);
   const props = Object.keys(action.newVisConfig);
+
   const newVisConfig = {
     ...oldLayer.config.visConfig,
     ...action.newVisConfig
@@ -850,6 +1062,33 @@ export function layerVisConfigChangeUpdater(
 
   return updateStateWithLayerAndData(state, {layer: newLayer, idx});
 }
+
+/**
+ * Reset animation config current time to a specified value
+ * @memberof visStateUpdaters
+ * @public
+ *
+ */
+export const setLayerAnimationTimeUpdater = <S extends VisState>(
+  state: S,
+  {value}: VisStateActions.SetLayerAnimationTimeUpdaterAction
+): S => {
+  const currentTime = Array.isArray(value) ? value[0] : value;
+  const nextState = {
+    ...state,
+    animationConfig: {
+      ...state.animationConfig,
+      currentTime
+    }
+  };
+  // update animation config for each layer
+  return state.layers.reduce((accu, l) => {
+    if (l.config.animation.enabled && l.type !== 'trip') {
+      return layerAnimationChangeUpdater(accu, {oldLayer: l, prop: 'currentTime', currentTime});
+    }
+    return accu;
+  }, nextState);
+};
 
 /**
  * Update filter property
@@ -868,89 +1107,248 @@ export function setFilterAnimationTimeUpdater(
  * @memberof visStateUpdaters
  * @public
  */
-export function setFilterAnimationWindowUpdater(
-  state: VisState,
+export function setFilterAnimationWindowUpdater<S extends VisState>(
+  state: S,
   {id, animationWindow}: VisStateActions.SetFilterAnimationWindowUpdaterAction
-): VisState {
-  return {
-    ...state,
-    filters: state.filters.map(f =>
-      f.id === id
-        ? {
-            ...f,
-            animationWindow
-          }
-        : f
-    )
+): S {
+  const filter = state.filters.find(f => f.id === id);
+
+  if (!filter) {
+    return state;
+  }
+
+  const newFilter = {
+    ...filter,
+    animationWindow
   };
+
+  const newState = {
+    ...state,
+    filters: swap_<Filter>(newFilter)(state.filters)
+  };
+
+  const newSyncTimelineMode = getSyncAnimationMode(newFilter as TimeRangeFilter);
+
+  return setTimeFilterTimelineModeUpdater(newState, {id, mode: newSyncTimelineMode});
 }
+
+export function applyFilterConfigUpdater(
+  state: VisState,
+  action: VisStateActions.ApplyFilterConfigUpdaterAction
+): VisState {
+  const {filterId, newFilter} = action;
+  const oldFilter = state.filters.find(f => f.id === filterId);
+  if (!oldFilter) {
+    return state;
+  }
+
+  // Serialize the filters to only compare the saved properties
+  const serializedOldFilter = serializeFilter(oldFilter, state.schema) ?? {config: {}};
+  const serializedNewFilter = serializeFilter(newFilter, state.schema);
+  if (!serializedNewFilter || isEqual(serializedOldFilter, serializedNewFilter)) {
+    return state;
+  }
+
+  // If there are any changes to the filter, apply them
+  const changed = pickChangedProps(serializedOldFilter, serializedNewFilter);
+  delete changed['id']; // id should not be changed
+
+  const filterIndex = state.filters.findIndex(f => f.id === filterId);
+  if (filterIndex < 0) {
+    return state;
+  }
+  return setFilterUpdater(
+    state,
+    setFilter(filterIndex, Object.keys(changed), Object.values(changed))
+  );
+}
+
 /**
  * Update filter property
  * @memberof visStateUpdaters
  * @public
  */
-export function setFilterUpdater(
-  state: VisState,
+export function setFilterUpdater<S extends VisState>(
+  state: S,
   action: VisStateActions.SetFilterUpdaterAction
-): VisState {
-  const {idx, prop, value, valueIndex = 0} = action;
+): S {
+  const {idx, valueIndex = 0} = action;
   const oldFilter = state.filters[idx];
-
   if (!oldFilter) {
     Console.error(`filters.${idx} is undefined`);
     return state;
   }
-  let newFilter = set([prop], value, oldFilter);
+  if (
+    Array.isArray(action.prop) &&
+    (!Array.isArray(action.value) || action.prop.length !== action.value.length)
+  ) {
+    Console.error('Expecting value to be an array of the same length, since prop is an array');
+    return state;
+  }
+  // convert prop and value to array
+  const props = toArray(action.prop);
+  const values = Array.isArray(action.prop) ? toArray(action.value) : [action.value];
+
+  let newFilter = oldFilter;
   let newState = state;
 
-  const {dataId} = newFilter;
+  let datasetIdsToFilter: string[] = [];
+  for (let i = 0; i < props.length; i++) {
+    const prop = props[i];
+    const value = values[i];
+    // We currently do not support passing in name as an array into _updateFilterProp, so we call it multiple times with each name
+    // See the comment in there as to what should be addressed
+    let res;
+    if (prop === 'name' && Array.isArray(value)) {
+      // eslint-disable-next-line no-loop-func
+      res = value.reduce((accu, v) => {
+        return _updateFilterProp(accu, newFilter, prop, v, valueIndex);
+      }, newState);
+    } else {
+      res = _updateFilterProp(newState, newFilter, prop, value, valueIndex);
+    }
+    newFilter = res.filter;
+    newState = res.state;
+    datasetIdsToFilter = datasetIdsToFilter.concat(res.datasetIdsToFilter);
+  }
 
-  // Ensuring backward compatibility
-  let datasetIds = toArray(dataId);
+  const enlargedFilter = state.filters.find(f => f.view === FILTER_VIEW_TYPES.enlarged);
 
+  if (enlargedFilter && enlargedFilter.id !== newFilter.id) {
+    // there should be only one enlarged filter
+    newFilter.view = FILTER_VIEW_TYPES.side;
+  }
+
+  // save new filters to newState
+  newState = set(['filters', idx], newFilter, newState);
+
+  // filter data
+  const filteredDatasets = applyFiltersToDatasets(
+    uniq(datasetIdsToFilter),
+    newState.datasets,
+    newState.filters,
+    newState.layers
+  );
+
+  newState = set(['datasets'], filteredDatasets, newState);
+
+  // need to update filterPlot after filter Dataset for plot to update on filtered result
+  const filterWithPLot = updateFilterPlot(newState.datasets, newState.filters[idx]);
+
+  newState = set(['filters', idx], filterWithPLot, newState);
+
+  // dataId is an array
+  // pass only the dataset we need to update
+  newState = updateAllLayerDomainData(newState, datasetIdsToFilter, newFilter);
+
+  // If time range filter value was updated, adjust animation config
+  if (newFilter.type === FILTER_TYPES.timeRange && props.includes('value')) {
+    newState = adjustAnimationConfigWithFilter(newState, action.idx);
+  }
+
+  return newState;
+}
+
+function _updateFilterDataIdAtValueIndex(filter, valueIndex, value, datasets) {
+  let newFilter = filter;
+  if (filter.dataId[valueIndex]) {
+    // if dataId already exist
+    newFilter = _removeFilterDataIdAtValueIndex(filter, valueIndex, datasets);
+  }
+  if (value) {
+    const nextValue = newFilter.dataId.slice();
+    nextValue[valueIndex] = value;
+    newFilter = set(['dataId'], nextValue, newFilter);
+  }
+  return newFilter;
+}
+
+function _removeFilterDataIdAtValueIndex(filter, valueIndex, datasets) {
+  const dataId = filter.dataId[valueIndex];
+
+  if (filter.dataId.length === 1 && valueIndex === 0) {
+    // if remove the only dataId, create an empty filter instead;
+    return getDefaultFilter({id: filter.id});
+  }
+
+  if (dataId) {
+    filter = removeFilterPlot(filter, dataId);
+  }
+
+  for (const prop of ['dataId', 'name', 'fieldIdx', 'gpuChannel']) {
+    if (Array.isArray(filter[prop])) {
+      const nextVal = filter[prop].slice();
+      nextVal.splice(valueIndex, 1);
+      filter = set([prop], nextVal, filter);
+    }
+  }
+
+  // mergeFieldDomain for the remaining fields
+  const domainSteps = mergeFilterDomain(filter, datasets);
+
+  const nextFilter = {
+    ...filter,
+    // value: nextValue,
+    ...(domainSteps ? {domain: domainSteps?.domain, step: domainSteps?.step} : {})
+  };
+
+  const nextValue = adjustValueToFilterDomain(nextFilter.value, nextFilter);
+  return {
+    ...nextFilter,
+    value: nextValue
+  };
+}
+
+/** *
+ * Updates a single property of a filter
+ */
+function _updateFilterProp(state, filter, prop, value, valueIndex, datasetIds?) {
+  let datasetIdsToFilter: string[] = [];
   switch (prop) {
-    // TODO: Next PR for UI if we update dataId, we need to consider two cases:
+    // TODO: Next PR for UI if we update filterDataId, we need to consider two cases:
     // 1. dataId is empty: create a default filter
     // 2. Add a new dataset id
-    case FILTER_UPDATER_PROPS.dataId:
-      // if trying to update filter dataId. create an empty new filter
-      newFilter = updateFilterDataId(dataId);
+    case FILTER_UPDATER_PROPS.dataId: {
+      const oldDataId = [...filter.dataId];
+      filter = _updateFilterDataIdAtValueIndex(filter, valueIndex, value, state.datasets);
+      datasetIdsToFilter = uniq([...oldDataId, ...filter.dataId]);
       break;
-
+    }
     case FILTER_UPDATER_PROPS.name: {
       // we are supporting the current functionality
       // TODO: Next PR for UI filter name will only update filter name but it won't have side effects
       // we are gonna use pair of datasets and fieldIdx to update the filter
-      const datasetId = newFilter.dataId[valueIndex];
+      const datasetId = filter.dataId[valueIndex];
       const {filter: updatedFilter, dataset: newDataset} = applyFilterFieldName(
-        newFilter,
-        state.datasets[datasetId],
+        filter,
+        state.datasets,
+        datasetId,
         value,
         valueIndex,
-        {mergeDomain: false}
+        {mergeDomain: valueIndex > 0}
       );
-      if (!updatedFilter) {
-        return state;
+      if (updatedFilter) {
+        filter = updatedFilter;
+        if (filter.gpu) {
+          filter = setFilterGpuMode(filter, state.filters);
+          filter = assignGpuChannel(filter, state.filters);
+        }
+        state = set(['datasets', datasetId], newDataset, state);
+        // remove filter Plot at datasetId, so it will be recalculated
+        filter = removeFilterPlot(filter, datasetId);
+
+        datasetIdsToFilter = updatedFilter.dataId;
       }
-
-      newFilter = updatedFilter;
-
-      if (newFilter.gpu) {
-        newFilter = setFilterGpuMode(newFilter, state.filters);
-        newFilter = assignGpuChannel(newFilter, state.filters);
-      }
-
-      newState = set(['datasets', datasetId], newDataset, state);
-
       // only filter the current dataset
       break;
     }
+
     case FILTER_UPDATER_PROPS.layerId: {
       // We need to update only datasetId/s if we have added/removed layers
       // - check for layerId changes (XOR works because of string values)
       // if no differences between layerIds, don't do any filtering
       // @ts-ignore
-      const layerIdDifference = xor(newFilter.layerId, oldFilter.layerId);
+      const layerIdDifference = xor(value, filter.layerId);
 
       const layerDataIds = uniq<string>(
         layerIdDifference
@@ -964,11 +1362,11 @@ export function setFilterUpdater(
       );
 
       // only filter datasetsIds
-      datasetIds = layerDataIds;
+      datasetIdsToFilter = layerDataIds;
 
       // Update newFilter dataIds
       const newDataIds = uniq<string>(
-        newFilter.layerId
+        value
           ?.map(lid =>
             get(
               state.layers.find(l => l.id === lid),
@@ -978,49 +1376,23 @@ export function setFilterUpdater(
           .filter(d => d) as string[]
       );
 
-      newFilter = {
-        ...newFilter,
+      filter = {
+        ...filter,
+        layerId: value,
         dataId: newDataIds
       };
-
       break;
     }
+
     default:
+      filter = set([prop], value, filter);
+      datasetIdsToFilter = [...filter.dataId];
       break;
   }
 
-  const enlargedFilter = state.filters.find(f => f.view === FILTER_VIEW_TYPES.enlarged);
-
-  if (enlargedFilter && enlargedFilter.id !== newFilter.id) {
-    // there should be only one enlarged filter
-    newFilter.view = FILTER_VIEW_TYPES.side;
-  }
-
-  // save new filters to newState
-  newState = set(['filters', idx], newFilter, newState);
-
-  // if we are currently setting a prop that only requires to filter the current
-  // dataset we will pass only the current dataset to applyFiltersToDatasets and
-  // updateAllLayerDomainData otherwise we pass the all list of datasets as defined in dataId
-  const datasetIdsToFilter = LIMITED_FILTER_EFFECT_PROPS[prop]
-    ? [datasetIds[valueIndex]]
-    : datasetIds;
-
-  // filter data
-  const filteredDatasets = applyFiltersToDatasets(
-    datasetIdsToFilter,
-    newState.datasets,
-    newState.filters,
-    newState.layers
-  );
-
-  newState = set(['datasets'], filteredDatasets, newState);
-  // dataId is an array
-  // pass only the dataset we need to update
-  newState = updateAllLayerDomainData(newState, datasetIdsToFilter, newFilter);
-
-  return newState;
+  return {filter, datasetIds, datasetIdsToFilter, state};
 }
+/* eslint-enable max-statements */
 
 /**
  * Set the property of a filter plot
@@ -1029,21 +1401,25 @@ export function setFilterUpdater(
  */
 export const setFilterPlotUpdater = (
   state: VisState,
-  {idx, newProp, valueIndex = 0}: VisStateActions.SetFilterPlotUpdaterAction
+  {idx, newProp}: VisStateActions.SetFilterPlotUpdaterAction
 ): VisState => {
-  let newFilter = {...state.filters[idx], ...newProp};
-  const prop = Object.keys(newProp)[0];
-  if (prop === 'yAxis') {
-    const plotType = getDefaultFilterPlotType(newFilter);
-    // TODO: plot is not supported in multi dataset filter for now
-    if (plotType) {
-      newFilter = {
-        ...newFilter,
-        ...getFilterPlot({...newFilter, plotType}, state.datasets[newFilter.dataId[valueIndex]]),
-        plotType
-      };
+  if (!state.filters[idx]) {
+    Console.error(`filters[${idx}] is undefined`);
+    return state;
+  }
+  let newFilter = state.filters[idx];
+
+  for (const prop in newProp) {
+    if (prop === 'plotType') {
+      newFilter = pick_('plotType')(merge_(newProp.plotType))(newFilter);
+    } else if (prop === 'yAxis') {
+      const chartType = newProp.yAxis ? PLOT_TYPES.lineChart : PLOT_TYPES.histogram;
+
+      newFilter = pick_('plotType')(merge_({type: chartType}))(merge_(newProp)(newFilter));
     }
   }
+
+  newFilter = updateFilterPlot(state.datasets, newFilter);
 
   return {
     ...state,
@@ -1066,6 +1442,70 @@ export const addFilterUpdater = (
         ...state,
         filters: [...state.filters, getDefaultFilter({dataId: action.dataId, id: action.id})]
       };
+
+/**
+ * Create or update a filter
+ * @memberof visStateUpdaters
+ * @public
+ */
+export const createOrUpdateFilterUpdater = (
+  state: VisState,
+  action: VisStateActions.CreateOrUpdateFilterUpdaterAction
+): VisState => {
+  const {id, dataId, field, value} = action;
+
+  let newState = state;
+  const originalIndex = newState.filters.findIndex(f => f.id === id);
+  let filterIndex = originalIndex;
+  if (!id && !dataId) {
+    return newState;
+  }
+  if (originalIndex < 0 && dataId) {
+    newState = addFilterUpdater(newState, {dataId});
+    if (newState.filters.length !== state.filters.length + 1) {
+      // No new filter was added
+      return state;
+    }
+    // Here we are assuming that the filter was added at the end
+    filterIndex = newState.filters.length - 1;
+    newState.filters[filterIndex] = {
+      ...newState.filters[filterIndex],
+      ...(id ? {id} : null)
+    };
+  }
+
+  // No need to update this if it's a newly created filter
+  // First we make sure all the dataIds that fields refer to are updated
+  if (originalIndex >= 0 && dataId) {
+    // If the dataId is an array, we need to update each one individually as they need a correct valueIndex passed
+    newState = (Array.isArray(dataId) ? dataId : [dataId]).reduce((accu, d, index) => {
+      return setFilterUpdater(accu, {
+        idx: filterIndex,
+        prop: 'dataId',
+        value: d,
+        valueIndex: index
+      });
+    }, newState);
+  }
+  // Then we update the fields
+  if (field) {
+    // If the field is an array, we need to update each field individually as they need a correct valueIndex passed
+    newState = (Array.isArray(field) ? field : [field]).reduce((accu, f, index) => {
+      return setFilterUpdater(accu, {
+        idx: filterIndex,
+        prop: 'name',
+        value: f,
+        valueIndex: index
+      });
+    }, newState);
+  }
+  // Then we update the value separately
+  if (value !== null && typeof value !== 'undefined') {
+    newState = setFilterUpdater(newState, {idx: filterIndex, prop: 'value', value});
+  }
+
+  return newState;
+};
 
 /**
  * Set layer color palette ui state
@@ -1104,6 +1544,35 @@ export const toggleFilterAnimationUpdater = (
   ...state,
   filters: state.filters.map((f, i) => (i === action.idx ? {...f, isAnimating: !f.isAnimating} : f))
 });
+
+export function isFilterAnimationConfig(config: AnimationConfig | FilterAnimationConfig): boolean {
+  return 'dataId' in config && 'animationWindow' in config;
+}
+
+export function setAnimationConfigUpdater(
+  state: VisState,
+  action: VisStateActions.SetAnimationConfigUpdaterAction
+): VisState {
+  const {config} = action;
+  if (isFilterAnimationConfig(config)) {
+    // Find filter used for animation
+    // Assuming there's only one filter used for animation, see setFilterViewUpdater
+    const filter = state.filters.find(f => !isSideFilter(f));
+    if (!filter) {
+      return state;
+    }
+    const newFilter = {...filter, ...config};
+    return applyFilterConfigUpdater(state, applyFilterConfig(filter.id, newFilter));
+  } else {
+    return {
+      ...state,
+      animationConfig: {
+        ...state.animationConfig,
+        ...config
+      }
+    };
+  }
+}
 
 /**
  * @memberof visStateUpdaters
@@ -1145,23 +1614,6 @@ export const updateFilterAnimationSpeedUpdater = (
 ): VisState => ({
   ...state,
   filters: state.filters.map((f, i) => (i === action.idx ? {...f, speed: action.speed} : f))
-});
-
-/**
- * Reset animation config current time to a specified value
- * @memberof visStateUpdaters
- * @public
- *
- */
-export const setLayerAnimationTimeUpdater = (
-  state: VisState,
-  {value}: VisStateActions.SetLayerAnimationTimeUpdaterAction
-): VisState => ({
-  ...state,
-  animationConfig: {
-    ...state.animationConfig,
-    currentTime: value
-  }
 });
 
 /**
@@ -1436,6 +1888,14 @@ export const addEffectUpdater = (
   state: VisState,
   action: VisStateActions.AddEffectUpdaterAction
 ): VisState => {
+  if (
+    action.config?.type === LIGHT_AND_SHADOW_EFFECT.type &&
+    state.effects.some(effect => effect.type === LIGHT_AND_SHADOW_EFFECT.type)
+  ) {
+    Console.warn(`Can't add more than one ${LIGHT_AND_SHADOW_EFFECT.name} effect`);
+    return state;
+  }
+
   const newEffect = createEffect(action.config);
 
   // collapse configurators for other effects
@@ -1559,8 +2019,18 @@ export function removeDatasetUpdater<T extends VisState>(
     datasets: newDatasets
   });
 
-  // remove filters
-  const filters = newState.filters.filter(filter => !filter.dataId.includes(datasetKey));
+  // update filters
+  const filters: Filter[] = [];
+  for (const filter of newState.filters) {
+    const valueIndex = filter.dataId.indexOf(datasetKey);
+    if (valueIndex >= 0 && filter.dataId.length > 1) {
+      // only remove one synced dataset from the filter
+      filters.push(_removeFilterDataIdAtValueIndex(filter, valueIndex, datasets));
+    } else if (valueIndex < 0) {
+      // leave the filter as is
+      filters.push(filter);
+    }
+  }
 
   newState = {...newState, filters};
 
@@ -1863,28 +2333,55 @@ export const updateVisDataUpdater = (
   const {config, options} = action;
 
   // apply config if passed from action
-  // TODO: we don't handle asyn mergers here yet
+  // TODO: we don't handle async mergers here yet
   const previousState = config
     ? receiveMapConfigUpdater(state, {
         payload: {config, options}
       })
     : state;
 
+  // indicate that something is in progress
+  const setIsLoadingTask = ACTION_TASK().map(() => {
+    return setLoadingIndicator({change: 1});
+  });
+  const updatedState = withTask(previousState, setIsLoadingTask);
+
   const datasets = toArray(action.datasets);
 
-  const newDataEntries = datasets.reduce(
-    // @ts-expect-error  Type '{}' is missing the following properties from type 'ProtoDataset': data, info
-    (accu, {info = {}, ...rest} = {}) => ({
-      ...accu,
-      ...(createNewDataEntry({info, ...rest}, state.datasets) || {})
-    }),
-    {}
+  const allCreateDatasetsTasks = datasets.map(
+    ({info = {}, ...rest}) => createNewDataEntry({info, ...rest}, state.datasets) || {}
+  );
+  // call all Tasks
+  const datasetTasks = Task.allSettled(allCreateDatasetsTasks).map(results =>
+    createNewDatasetSuccess({results, addToMapOptions: options})
   );
 
+  return withTask(updatedState, datasetTasks);
+};
+
+export const createNewDatasetSuccessUpdater = (
+  state: VisState,
+  action: PayloadAction<CreateNewDatasetSuccessPayload>
+): VisState => {
+  // console.log('createNewDatasetSuccessUpdater', action.payload);
+  const {results, addToMapOptions} = action.payload;
+  const newDataEntries = results.reduce((accu, result) => {
+    if (result.status === 'fulfilled') {
+      const dataset = result.value;
+      return {...accu, [dataset.id]: dataset};
+    } else {
+      // handle create dataset error
+      console.error(
+        'createNewDatasetSuccessUpdater: failed',
+        result.reason || (result as any).value
+      );
+      return accu;
+    }
+  }, {} as Datasets);
   // save new dataset entry to state
   const mergedState = {
-    ...previousState,
-    datasets: mergeDatasetsByOrder(previousState, newDataEntries)
+    ...state,
+    datasets: mergeDatasetsByOrder(state, newDataEntries)
   };
 
   // merge state with config to be merged
@@ -1894,11 +2391,20 @@ export const updateVisDataUpdater = (
   const newDataIds = Object.keys(newDataEntries);
   const postMergerPayload = {
     newDataIds,
-    options,
+    options: addToMapOptions,
     layerMergers
   };
 
-  return applyMergersUpdater(mergedState, {mergers: datasetMergers, postMergerPayload});
+  const updatedState = applyMergersUpdater(mergedState, {
+    mergers: datasetMergers,
+    postMergerPayload
+  });
+
+  // resolve active loading initiated by updateVisDataUpdater
+  const setIsLoadingTask = ACTION_TASK().map(() => {
+    return setLoadingIndicator({change: -1});
+  });
+  return withTask(updatedState, setIsLoadingTask);
 };
 
 /**
@@ -1999,12 +2505,26 @@ function postMergeUpdater(mergedState: VisState, postMergerPayload: PostMergerPa
   updatedState = updateAnimationDomain(updatedState);
 
   // try to process layerMergers after dataset+datasetMergers
-  return layerMergers && layerMergers.length > 0
-    ? applyMergersUpdater(updatedState, {
-        mergers: layerMergers,
-        postMergerPayload: {...postMergerPayload, layerMergers: []}
-      })
-    : updatedState;
+  updatedState =
+    layerMergers && layerMergers.length > 0
+      ? applyMergersUpdater(updatedState, {
+          mergers: layerMergers,
+          postMergerPayload: {...postMergerPayload, layerMergers: []}
+        })
+      : updatedState;
+
+  // center the map once the dataset is created
+  if (newLayers.length && (options || {}).centerMap) {
+    const bounds = findMapBounds(newLayers);
+    if (bounds) {
+      const fitBoundsTask = ACTION_TASK().map(() => {
+        return fitMapBounds(bounds);
+      });
+      updatedState = withTask(updatedState, fitBoundsTask);
+    }
+  }
+
+  return updatedState;
 }
 
 /**
@@ -2281,7 +2801,9 @@ export const nextFileBatchUpdater = (
   });
 
   return withTask(stateWithProgress, [
-    ...(fileName.endsWith('arrow') && accumulated?.data?.length > 0
+    ...(getApplicationConfig().useArrowProgressiveLoading &&
+    fileName.endsWith('arrow') &&
+    accumulated?.data?.length > 0
       ? [
           PROCESS_FILE_DATA({content: accumulated, fileCache: []}).bimap(
             result => loadFilesSuccess(result),
@@ -2430,11 +2952,11 @@ export function updateFileLoadingProgressUpdater(state, {fileName, progress}) {
 /**
  * Helper function to update layer domains for an array of datasets
  */
-export function updateAllLayerDomainData(
-  state: VisState,
+export function updateAllLayerDomainData<S extends VisState>(
+  state: S,
   dataId: string | string[],
   updatedFilter?: Filter
-): VisState {
+): S {
   const dataIds = typeof dataId === 'string' ? [dataId] : dataId;
   const newLayers: Layer[] = [];
   const newLayerData: any[] = [];
@@ -2468,14 +2990,7 @@ export function updateAllLayerDomainData(
 
 export function updateAnimationDomain<S extends VisState>(state: S): S {
   // merge all animatable layer domain and update global config
-  const animatableLayers = state.layers.filter(
-    l =>
-      l.config.isVisible &&
-      l.config.animation &&
-      l.config.animation.enabled &&
-      // @ts-expect-error trip-layer-only
-      Array.isArray(l.animationDomain)
-  );
+  const animatableLayers = getAnimatableVisibleLayers(state.layers);
 
   if (!animatableLayers.length) {
     return {
@@ -2483,33 +2998,64 @@ export function updateAnimationDomain<S extends VisState>(state: S): S {
       animationConfig: {
         ...state.animationConfig,
         domain: null,
+        isAnimating: false,
+        timeSteps: null,
         defaultTimeFormat: null
       }
     };
   }
 
-  const mergedDomain: [number, number] = animatableLayers.reduce(
-    (accu, layer) => [
-      // @ts-expect-error trip-layer-only
-      Math.min(accu[0], layer.animationDomain[0]),
-      // @ts-expect-error trip-layer-only
-      Math.max(accu[1], layer.animationDomain[1])
-    ],
-    [Number(Infinity), -Infinity]
-  );
+  const layerDomains = animatableLayers.map(l => l.config.animation.domain || []);
+  // @ts-ignore
+  const mergedDomain = mergeTimeDomains(layerDomains);
   const defaultTimeFormat = getTimeWidgetTitleFormatter(mergedDomain);
 
-  return {
+  // merge timeSteps
+  let mergedTimeSteps: number[] | null = uniq<number>(
+    animatableLayers.reduce((accu, layer) => {
+      accu.push(...(layer.config.animation.timeSteps || []));
+      return accu;
+    }, [])
+  ).sort();
+
+  mergedTimeSteps = mergedTimeSteps.length ? mergedTimeSteps : null;
+
+  // TODO: better handling of duration calculation
+  const duration = mergedTimeSteps
+    ? (BASE_SPEED * (1000 / FPS)) / mergedTimeSteps.length / (state.animationConfig.speed || 1)
+    : null;
+
+  const nextState = {
     ...state,
     animationConfig: {
       ...state.animationConfig,
-      currentTime: isInRange(state.animationConfig.currentTime, mergedDomain)
-        ? state.animationConfig.currentTime
-        : mergedDomain[0],
       domain: mergedDomain,
-      defaultTimeFormat
+      defaultTimeFormat,
+      duration,
+      timeSteps: mergedTimeSteps
     }
   };
+
+  // reset currentTime based on new domain
+  const syncedFilter = state.filters?.find(f => (f as TimeRangeFilter).syncedWithLayerTimeline) as
+    | TimeRangeFilter
+    | undefined;
+
+  // if synced filter exist wee need to merge animationConfig and filter domains
+  // and validate the current time against the new merged domain
+  const newAnimationDomain = syncedFilter
+    ? mergeTimeDomains([mergedDomain, syncedFilter.domain])
+    : mergedDomain;
+  const currentTime = isInRange(state.animationConfig.currentTime, newAnimationDomain)
+    ? state.animationConfig.currentTime
+    : newAnimationDomain[0];
+
+  if (currentTime !== state.animationConfig.currentTime) {
+    // if currentTime changed, need to call animationTimeUpdater to re call formatLayerData
+    return setLayerAnimationTimeUpdater(nextState, {value: currentTime});
+  }
+
+  return nextState;
 }
 
 /**
@@ -2545,7 +3091,7 @@ export function setFeaturesUpdater(
       ...state.editor,
       // only save none filter features to editor
       features: features.filter(f => !getFilterIdInFeature(f)),
-      mode: lastFeature && lastFeature.properties.isClosed ? EDITOR_MODES.EDIT : state.editor.mode
+      mode: lastFeature && lastFeature.properties?.isClosed ? EDITOR_MODES.EDIT : state.editor.mode
     }
   };
 
@@ -2804,7 +3350,24 @@ export function setColumnDisplayFormatUpdater(
   });
 
   const newDataset = copyTableAndUpdate(dataset, {fields: newFields as Field[]});
-  return pick_('datasets')(merge_({[dataId]: newDataset}))(state);
+  let newState = pick_('datasets')(merge_({[dataId]: newDataset}))(state);
+
+  // update colorField displayFormat
+  newState = {
+    ...newState,
+    layers: newState.layers.map(layer =>
+      layer.config?.colorField?.name && layer.config.colorField.name in formats
+        ? layer.updateLayerConfig({
+            colorField: {
+              ...layer.config.colorField,
+              displayFormat: formats[layer.config.colorField.name]
+            }
+          })
+        : layer
+    )
+  };
+
+  return newState;
 }
 
 /**
@@ -2860,6 +3423,7 @@ function checkTimeConfigArgs(config) {
     return accu;
   }, {});
 }
+
 /**
  * Update editor
  */
@@ -2872,6 +3436,248 @@ export function setLayerAnimationTimeConfigUpdater(
   }
   const updates = checkTimeConfigArgs(config);
   return pick_('animationConfig')(merge_(updates))(state);
+}
+
+/**
+ * Update editor
+ */
+export function layerFilteredItemsChangeUpdater<S extends VisState>(
+  state: S,
+  action: VisStateActions.LayerFilteredItemsChangeAction
+): S {
+  const {event, layer} = action;
+  const {id: deckglLayerId, count} = event;
+  if (!layer) {
+    Console.warn(`layerFilteredItems layer doesnt exists`);
+    return state;
+  }
+  if (layer.filteredItemCount?.[deckglLayerId] === count) {
+    return state;
+  }
+
+  layer.filteredItemCount = {
+    ...layer.filteredItemCount,
+    [deckglLayerId]: count
+  };
+
+  return {
+    ...state,
+    layers: swap_(layer)(state.layers)
+  };
+}
+
+// eslint-disable-next-line max-statements
+export function syncTimeFilterWithLayerTimelineUpdater<S extends VisState>(
+  state: S,
+  action: VisStateActions.SyncTimeFilterWithLayerTimelineAction
+): S {
+  const {idx: filterIdx, enable = false} = action;
+
+  const filter = state.filters[filterIdx] as TimeRangeFilter;
+
+  let newState = state;
+  let newFilter = filter;
+
+  // if we enable sync we are going to merge filter and animationConfig domains and store into filter.domain
+  if (enable) {
+    const animatableLayers = getAnimatableVisibleLayers(newState.layers);
+    // if no animatableLayers are present we simply return
+    if (!animatableLayers.length) {
+      return newState;
+    }
+
+    const intervalBasedAnimationLayers = getIntervalBasedAnimationLayers(animatableLayers);
+    const hasIntervalBasedAnimationLayer = Boolean(intervalBasedAnimationLayers.length);
+
+    const newFilterDomain = mergeTimeDomains([filter.domain, newState.animationConfig.domain]);
+
+    // we only update animationWindow if we have interval based animation layers with defined intervals and the current filter animation window is not interval
+    if (hasIntervalBasedAnimationLayer) {
+      if (filter.animationWindow !== ANIMATION_WINDOW.interval) {
+        newState = setFilterAnimationWindowUpdater(newState, {
+          id: filter.id,
+          animationWindow: ANIMATION_WINDOW.interval
+        });
+      }
+
+      newFilter = newState.filters[filterIdx] as TimeRangeFilter;
+
+      // adjust time filter interval
+      newFilter = adjustTimeFilterInterval(newState, newFilter);
+
+      // replace filter in state with newFilter
+      newState = {
+        ...newState,
+        filters: swap_<Filter>(newFilter)(newState.filters)
+      };
+    }
+
+    newFilter = newState.filters[filterIdx] as TimeRangeFilter;
+
+    // adjust value based on new domain
+    const newFilterValue = adjustValueToFilterDomain(
+      newFilter.animationWindow === ANIMATION_WINDOW.interval
+        ? [newFilterDomain[0], newFilterDomain[0]]
+        : newFilterDomain,
+      {...newFilter, domain: newFilterDomain}
+    );
+
+    newState = setFilterUpdater(newState, {
+      idx: filterIdx,
+      prop: 'value',
+      value: newFilterValue
+    });
+
+    newFilter = {
+      ...(newState.filters[filterIdx] as TimeRangeFilter),
+      syncedWithLayerTimeline: true
+    };
+
+    // replace filter in state with newFilter
+    newState = {
+      ...newState,
+      filters: swap_<Filter>(newFilter)(newState.filters)
+    };
+
+    newState = setTimeFilterTimelineModeUpdater(newState, {
+      id: newFilter.id,
+      mode: getSyncAnimationMode(newFilter)
+    });
+
+    newFilter = newState.filters[filterIdx] as TimeRangeFilter;
+
+    // set the animation config value to match filter value
+    return setLayerAnimationTimeUpdater(newState, {
+      value: newFilter.value[newFilter.syncTimelineMode]
+    });
+  }
+
+  // set domain and step
+  newFilter = {
+    ...filter,
+    syncedWithLayerTimeline: false
+  };
+
+  // replace filter in state with newFilter
+  newState = {
+    ...newState,
+    filters: swap_<Filter>(newFilter)(newState.filters)
+  };
+
+  // reset sync timeline mode
+  newState = setTimeFilterTimelineModeUpdater(newState, {
+    id: newFilter.id,
+    mode: SYNC_TIMELINE_MODES.end
+  });
+
+  newFilter = newState.filters[filterIdx] as TimeRangeFilter;
+
+  // reset filter value
+  const newFilterValue = adjustValueToFilterDomain(newFilter.domain, newFilter);
+
+  newState = setFilterUpdater(newState, {
+    idx: filterIdx,
+    prop: 'value',
+    value: newFilterValue
+  });
+
+  newState = setTimeFilterTimelineModeUpdater(newState, {
+    id: newFilter.id,
+    mode: getSyncAnimationMode(newFilter)
+  });
+
+  // reset animation config current time to
+  return setLayerAnimationTimeUpdater(newState, {
+    value: newState.animationConfig.domain?.[0] ?? null
+  });
+}
+
+export function setTimeFilterTimelineModeUpdater<S extends VisState>(
+  state: S,
+  action: VisStateActions.setTimeFilterSyncTimelineModeAction
+) {
+  const {id: filterId, mode: syncTimelineMode} = action;
+
+  const filterIdx = state.filters.findIndex(f => f.id === filterId);
+  if (filterIdx === -1) {
+    return state;
+  }
+
+  const filter = state.filters[filterIdx] as TimeRangeFilter;
+
+  if (!validateSyncAnimationMode(filter, syncTimelineMode)) {
+    return state;
+  }
+
+  const newFilter = {
+    ...filter,
+    syncTimelineMode
+  };
+
+  const newState = {
+    ...state,
+    filters: swap_<Filter>(newFilter)(state.filters)
+  };
+
+  return adjustAnimationConfigWithFilter(newState, filterIdx);
+}
+
+function adjustAnimationConfigWithFilter<S extends VisState>(state: S, filterIdx: number): S {
+  const filter = state.filters[filterIdx];
+  if ((filter as TimeRangeFilter).syncedWithLayerTimeline) {
+    const timelineValue = getTimelineValueFromFilter(filter);
+    const value = state.animationConfig.timeSteps
+      ? snapToMarks(timelineValue, state.animationConfig.timeSteps)
+      : timelineValue;
+    return setLayerAnimationTimeUpdater(state, {value});
+  }
+  return state;
+}
+
+function getTimelineValueFromFilter(filter) {
+  return filter.value[filter.syncTimelineMode];
+}
+
+function getSyncAnimationMode(filter: TimeRangeFilter) {
+  if (filter.animationWindow === ANIMATION_WINDOW.free) {
+    return filter.syncTimelineMode ?? SYNC_TIMELINE_MODES.end;
+  }
+
+  return SYNC_TIMELINE_MODES.end;
+}
+
+function validateSyncAnimationMode(filter: TimeRangeFilter, newMode: number) {
+  return !(
+    filter.animationWindow !== ANIMATION_WINDOW.free && newMode === SYNC_TIMELINE_MODES.start
+  );
+}
+
+function adjustTimeFilterInterval(state, filter) {
+  const intervalBasedAnimationLayers = getIntervalBasedAnimationLayers(state.layers);
+
+  let interval: string | null = null;
+  if (intervalBasedAnimationLayers.length > 0) {
+    // @ts-ignore
+    const intervalIndex = intervalBasedAnimationLayers.reduce((currentIndex, l) => {
+      if (l.meta.targetTimeInterval) {
+        const newIndex = TIME_INTERVALS_ORDERED.findIndex(i => i === l.meta.targetTimeInterval);
+        return newIndex > -1 && newIndex < currentIndex ? newIndex : currentIndex;
+      }
+    }, TIME_INTERVALS_ORDERED.length - 1);
+    // @ts-ignore
+    const hexTileInterval = TIME_INTERVALS_ORDERED[intervalIndex];
+    interval = LayerToFilterTimeInterval[hexTileInterval];
+  }
+
+  if (!interval) {
+    return filter;
+  }
+
+  // adjust filter
+  const timeFormat = getDefaultTimeFormat(interval);
+  const updatedPlotType = {...filter.plotType, interval, timeFormat};
+  const newFilter = updateTimeFilterPlotType(filter, updatedPlotType, state.datasets);
+  return adjustValueToAnimationWindow(state, newFilter);
 }
 
 // Find dataId from a saved visState property:

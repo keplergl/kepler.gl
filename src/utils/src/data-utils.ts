@@ -1,9 +1,12 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import * as arrow from 'apache-arrow';
 import assert from 'assert';
 import {format as d3Format} from 'd3-format';
 import moment from 'moment-timezone';
+
+import {parseGeometryFromArrow} from '@loaders.gl/arrow';
 
 import {
   ALL_FIELD_TYPES,
@@ -12,12 +15,64 @@ import {
   TOOLTIP_KEY,
   TooltipFormat
 } from '@kepler.gl/constants';
-import {Millisecond, Field} from '@kepler.gl/types';
+import {notNullorUndefined} from '@kepler.gl/common-utils';
+import {Field, Millisecond, ProtoDatasetField} from '@kepler.gl/types';
 
 import {snapToMarks} from './plot';
 import {isPlainObject} from './utils';
 
-export type FieldFormatter = (value: any) => string;
+export type FieldFormatter = (value: any, field?: ProtoDatasetField) => string;
+
+// We need threat latitude differently otherwise mercator project view throws
+// a projection matrix error
+// Uncaught Error: Pixel project matrix not invertible
+// at WebMercatorViewport16.Viewport6 (viewport.js:81:13)
+export const MAX_LATITUDE = 89.9;
+export const MIN_LATITUDE = -89.9;
+export const MAX_LONGITUDE = 180;
+export const MIN_LONGITUDE = -180;
+
+/**
+ * Validates a latitude value.
+ * Ensures that the latitude is within the defined minimum and maximum latitude bounds.
+ * If the value is out of bounds, it returns the nearest bound value.
+ * @param latitude - The latitude value to validate.
+ * @returns The validated latitude value.
+ */
+export function validateLatitude(latitude: number | undefined): number {
+  return validateCoordinate(latitude ?? 0, MIN_LATITUDE, MAX_LATITUDE);
+}
+
+/**
+ * Validates a longitude value.
+ * Ensures that the longitude is within the defined minimum and maximum longitude bounds.
+ * If the value is out of bounds, it returns the nearest bound value.
+ * @param longitude - The longitude value to validate.
+ * @returns The validated longitude value.
+ */
+export function validateLongitude(longitude: number | undefined): number {
+  return validateCoordinate(longitude ?? 0, MIN_LONGITUDE, MAX_LONGITUDE);
+}
+
+/**
+ * Validates a coordinate value.
+ * Ensures that the value is within the specified minimum and maximum bounds.
+ * If the value is out of bounds, it returns the nearest bound value.
+ * @param value - The coordinate value to validate.
+ * @param minValue - The minimum bound for the value.
+ * @param maxValue - The maximum bound for the value.
+ * @returns The validated coordinate value.
+ */
+export function validateCoordinate(value: number, minValue: number, maxValue: number): number {
+  if (value <= minValue) {
+    return minValue;
+  }
+  if (value >= maxValue) {
+    return maxValue;
+  }
+
+  return value;
+}
 
 /**
  * simple getting unique values of an array
@@ -87,16 +142,9 @@ export function timeToUnixMilli(value: string | number | Date, format: string): 
 }
 
 /**
- * whether null or undefined
- */
-export function notNullorUndefined<T extends NonNullable<any>>(d: T | null | undefined): d is T {
-  return d !== undefined && d !== null;
-}
-
-/**
  * Whether d is a number, this filtered out NaN as well
  */
-export function isNumber(d: any): boolean {
+export function isNumber(d: unknown): d is number {
   return Number.isFinite(d);
 }
 
@@ -185,9 +233,9 @@ export function getRoundingDecimalFromStep(step: number): number {
  */
 export function normalizeSliderValue(
   val: number,
-  minValue: number,
+  minValue: number | undefined,
   step: number,
-  marks?: number[]
+  marks?: number[] | null
 ): number {
   if (marks && marks.length) {
     // Use in slider, given a number and an array of numbers, return the nears number from the array
@@ -204,7 +252,7 @@ export function normalizeSliderValue(
  * @param val
  * @returns - rounded number
  */
-export function roundValToStep(minValue: number, step: number, val: number): number {
+export function roundValToStep(minValue: number | undefined, step: number, val: number): number {
   if (!isNumber(step) || !isNumber(minValue)) {
     return val;
   }
@@ -239,6 +287,17 @@ export const defaultFormatter: FieldFormatter = v => (notNullorUndefined(v) ? St
 
 export const floatFormatter = v => (isNumber(v) ? String(roundToFour(v)) : '');
 
+/**
+ * Transforms a WKB in Uint8Array form into a hex WKB string.
+ * @param uint8Array WKB in Uint8Array form.
+ * @returns hex WKB string.
+ */
+export function uint8ArrayToHex(data: Uint8Array): string {
+  return Array.from(data)
+    .map(byte => (byte as any).toString(16).padStart(2, '0'))
+    .join('');
+}
+
 export const FIELD_DISPLAY_FORMAT: {
   [key: string]: FieldFormatter;
 } = {
@@ -256,35 +315,47 @@ export const FIELD_DISPLAY_FORMAT: {
       : Array.isArray(d)
       ? `[${String(d)}]`
       : '',
-  [ALL_FIELD_TYPES.geoarrow]: d => d,
-  [ALL_FIELD_TYPES.object]: JSON.stringify,
-  [ALL_FIELD_TYPES.array]: JSON.stringify
+  [ALL_FIELD_TYPES.geoarrow]: (data, field) => {
+    if (data instanceof arrow.Vector) {
+      try {
+        const encoding = field?.metadata?.get('ARROW:extension:name');
+        if (encoding) {
+          const geometry = parseGeometryFromArrow(data, encoding);
+          return JSON.stringify(geometry);
+        }
+      } catch (error) {
+        // ignore for now
+      }
+    } else if (data instanceof Uint8Array) {
+      return uint8ArrayToHex(data);
+    }
+    return data;
+  },
+  [ALL_FIELD_TYPES.object]: (value: any) => {
+    try {
+      return JSON.stringify(value);
+    } catch (e) {
+      return String(value);
+    }
+  },
+  [ALL_FIELD_TYPES.array]: d => JSON.stringify(d),
+  [ALL_FIELD_TYPES.h3]: defaultFormatter
 };
 
 /**
  * Parse field value and type and return a string representation
  */
-export const parseFieldValue = (value: any, type: string): string => {
+export const parseFieldValue = (value: any, type: string, field?: Field): string => {
   if (!notNullorUndefined(value)) {
     return '';
   }
-  return FIELD_DISPLAY_FORMAT[type] ? FIELD_DISPLAY_FORMAT[type](value) : String(value);
-};
-
-const arrayMoveMutate = <T>(array: T[], from: number, to: number) => {
-  array.splice(to < 0 ? array.length + to : to, 0, array.splice(from, 1)[0]);
-};
-
-/**
- *
- * @param array
- * @param from
- * @param to
- */
-export const arrayMove = <T>(array: T[], from: number, to: number): T[] => {
-  array = array.slice();
-  arrayMoveMutate(array, from, to);
-  return array;
+  // BigInt values cannot be serialized with JSON.stringify() directly
+  // We need to explicitly convert them to strings using .toString()
+  // See: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt#use_within_json
+  if (typeof value === 'bigint') {
+    return value.toString();
+  }
+  return FIELD_DISPLAY_FORMAT[type] ? FIELD_DISPLAY_FORMAT[type](value, field) : String(value);
 };
 
 /**
@@ -294,7 +365,7 @@ export const arrayMove = <T>(array: T[], from: number, to: number): T[] => {
  * @param field
  */
 export function getFormatter(
-  format: string | Record<string, string>,
+  format?: string | Record<string, string> | null,
   field?: Field
 ): FieldFormatter {
   if (!format) {
@@ -415,6 +486,47 @@ export function formatNumber(n: number, type?: string): string {
   }
 }
 
+const transformation = {
+  Y: Math.pow(10, 24),
+  Z: Math.pow(10, 21),
+  E: Math.pow(10, 18),
+  P: Math.pow(10, 15),
+  T: Math.pow(10, 12),
+  G: Math.pow(10, 9),
+  M: Math.pow(10, 6),
+  k: Math.pow(10, 3),
+  h: Math.pow(10, 2),
+  da: Math.pow(10, 1),
+  d: Math.pow(10, -1),
+  c: Math.pow(10, -2),
+  m: Math.pow(10, -3),
+  μ: Math.pow(10, -6),
+  n: Math.pow(10, -9),
+  p: Math.pow(10, -12),
+  f: Math.pow(10, -15),
+  a: Math.pow(10, -18),
+  z: Math.pow(10, -21),
+  y: Math.pow(10, -24)
+};
+
+/**
+ * Convert a formatted number from string back to number
+ */
+export function reverseFormatNumber(str: string): number {
+  let returnValue: number | null = null;
+  const strNum = str.trim().replace(/,/g, '');
+  Object.entries(transformation).forEach(d => {
+    if (strNum.includes(d[0])) {
+      returnValue = parseFloat(strNum) * d[1];
+      return true;
+    }
+    return false;
+  });
+
+  // if no transformer found, convert to nuber regardless
+  return returnValue === null ? Number(strNum) : returnValue;
+}
+
 /**
  * Format epoch milliseconds with a format string
  * @type timezone
@@ -423,11 +535,7 @@ export function datetimeFormatter(
   timezone?: string | null
 ): (format?: string) => (ts: number) => string {
   return timezone
-    ? format => ts =>
-        moment
-          .utc(ts)
-          .tz(timezone)
-          .format(format)
+    ? format => ts => moment.utc(ts).tz(timezone).format(format)
     : // return empty string instead of 'Invalid date' if ts is undefined/null
-      format => ts => (ts ? moment.utc(ts).format(format) : '');
+      format => ts => ts ? moment.utc(ts).format(format) : '';
 }

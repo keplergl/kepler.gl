@@ -2,10 +2,10 @@
 
 ### Installation
 
-Use <b>Node v6</b> and above, older node versions have not been tested
+Use <b>Node v18</b> and above, older node versions have not been tested
 
 ```sh
-npm install --save kepler.gl
+npm install --save kepler.gl @kepler.gl/components @kepler.gl/reducers
 ```
 
 ### Get Mapbox Token
@@ -16,12 +16,83 @@ Kepler.gl is built on top of [Mapbox GL](https://www.mapbox.com). A mapbox accou
 
 ![Basic Usage][basic-usage]
 
+#### 0. Working Template
+
+```js
+import * as React from "react";
+import ReactDOM from "react-dom/client";
+import document from "global/document";
+
+import { applyMiddleware, combineReducers, compose, createStore } from "redux";
+import { connect, Provider } from "react-redux";
+
+import keplerGlReducer, { enhanceReduxMiddleware } from "@kepler.gl/reducers";
+import KeplerGl from "@kepler.gl/components";
+
+import AutoSizer from "react-virtualized/dist/commonjs/AutoSizer";
+
+const reducers = combineReducers({
+  keplerGl: keplerGlReducer.initialState({
+    uiState: {
+      readOnly: false,
+      currentModal: null,
+    },
+  }),
+});
+
+const middleWares = enhanceReduxMiddleware([
+  // Add other middlewares here
+]);
+
+const enhancers = applyMiddleware(...middleWares);
+
+const initialState = {};
+const store = createStore(reducers, initialState, compose(enhancers));
+
+const App2 = () => (
+  <div
+    style={{
+      position: "absolute",
+      top: "0px",
+      left: "0px",
+      width: "100%",
+      height: "100%",
+    }}
+  >
+    <AutoSizer>
+      {({ height, width }) => (
+        <KeplerGl
+          mapboxApiAccessToken="xxx" // Replace with your mapbox token
+          id="map"
+          width={width}
+          height={height}
+        />
+      )}
+    </AutoSizer>
+  </div>
+);
+
+const mapStateToProps = (state) => state;
+const dispatchToProps = (dispatch) => ({ dispatch });
+const ConnectedApp = connect(mapStateToProps, dispatchToProps)(App2);
+const Root = () => (
+  <Provider store={store}>
+    <App2 />
+  </Provider>
+);
+
+export default Root;
+```
+
+
+
+
 #### 1. Mount reducer
 
 Kepler.gl uses [Redux](https://redux.js.org/) to manage its internal state, along with [react-palm](https://github.com/btford/react-palm) middleware to handle side effects. Mount kepler.gl reducer in your store, apply  `taskMiddleware`.
 
 ```js
-import keplerGlReducer from 'kepler.gl/reducers';
+import keplerGlReducer from '@kepler.gl/reducers';
 import {createStore, combineReducers, applyMiddleware} from 'redux';
 import {taskMiddleware} from 'react-palm/tasks';
 
@@ -42,7 +113,7 @@ mounted at root of your reducer, you will need to specify the path to it when yo
 #### 2. Mount component
 
 ```js
-import KeplerGl from 'kepler.gl';
+import KeplerGl from '@kepler.gl/components';
 
 const Map = props => (
   <KeplerGl
@@ -61,7 +132,7 @@ Read more about [addDataToMap](./actions/actions.md#adddatatomap)
 
 
 ```js
-import {addDataToMap} from 'kepler.gl/actions';
+import {addDataToMap} from '@kepler.gl/actions';
 
 this.props.dispatch(
   addDataToMap({

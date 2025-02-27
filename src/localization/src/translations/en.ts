@@ -76,6 +76,7 @@ export default {
   },
   layer: {
     required: 'Required*',
+    columnModesSeparator: 'Or',
     radius: 'Radius',
     color: 'Color',
     fillColor: 'Fill Color',
@@ -110,10 +111,12 @@ export default {
       hexagonid: 'H3',
       trip: 'trip',
       s2: 'S2',
-      '3d': '3D'
+      '3d': '3D',
+      vectortile: 'vector tile'
     },
     layerUpdateError:
-      'An error occurred during layer update: {errorMessage}. Make sure the format of the input data is valid.'
+      'An error occurred during layer update: {errorMessage}. Make sure the format of the input data is valid.',
+    interaction: 'Interaction'
   },
   layerVisConfigs: {
     angle: 'Angle',
@@ -125,6 +128,9 @@ export default {
     radiusRange: 'Radius Range',
     clusterRadius: 'Cluster Radius in Pixels',
     radiusRangePixels: 'Radius Range in pixels',
+    billboard: 'Billboard',
+    billboardDescription: 'Orient geometry towards the camera',
+    fadeTrail: 'Fade trail',
     opacity: 'Opacity',
     coverage: 'Coverage',
     outline: 'Outline',
@@ -154,9 +160,12 @@ export default {
     weightIntensity: 'Weight Intensity',
     zoomScale: 'Zoom Scale',
     heightRange: 'Height Range',
+    heightMultiplier: 'Height Multiplier',
     fixedHeight: 'Fixed height',
     fixedHeightDescription: 'Use height without modifications',
-    heightMultiplier: 'Height Multiplier',
+    allowHover: 'Allow Hover',
+    showNeighborOnHover: 'Highlight Neighbors On Hover',
+    showHighlightColor: 'Show highlight Color',
     darkModeEnabled: 'Dark base map'
   },
   layerManager: {
@@ -183,17 +192,24 @@ export default {
   },
   layerConfiguration: {
     defaultDescription: 'Calculate {property} based on selected field',
-    howTo: 'How to'
+    howTo: 'How to',
+    showColorChart: 'Show Color Chart',
+    hideColorChart: 'Hide Color Chart'
   },
   filterManager: {
-    addFilter: 'Add Filter'
+    addFilter: 'Add Filter',
+    timeFilterSync: 'Synced datasets',
+    timeLayerSync: 'Link with the layer timeline',
+    timeLayerUnsync: 'Unlink with the layer timeline',
+    column: 'Column'
   },
   datasetTitle: {
     showDataTable: 'Show data table',
     removeDataset: 'Remove dataset'
   },
   datasetInfo: {
-    rowCount: '{rowCount} rows'
+    rowCount: '{rowCount} rows',
+    vectorTile: 'Vector tile'
   },
   tooltip: {
     hideLayer: 'Hide layer',
@@ -220,6 +236,7 @@ export default {
     removeBaseMapStyle: 'Remove base map style',
     delete: 'Delete',
     timePlayback: 'Time Playback',
+    timeFilterSync: 'Sync with a column from another dataset',
     cloudStorage: 'Cloud Storage',
     '3DMap': '3D Map',
     animationByWindow: 'Moving Time Window',
@@ -229,6 +246,10 @@ export default {
     pause: 'pause',
     reset: 'reset',
     export: 'export',
+    timeLayerSync: 'Link with the layer timeline',
+    timeLayerUnsync: 'Unlink with the layer timeline',
+    syncTimelineStart: 'Start of current filter timeframe',
+    syncTimelineEnd: 'End of current filter timeframe',
     showEffectPanel: 'Show effect panel',
     hideEffectPanel: 'Hide effect panel',
     removeEffect: 'Remove effect',
@@ -298,7 +319,8 @@ export default {
       filteredData: 'Filtered data',
       unfilteredData: 'Unfiltered Data',
       fileCount: '{fileCount} Files',
-      rowCount: '{rowCount} Rows'
+      rowCount: '{rowCount} Rows',
+      vectorTileWarning: "* Export Data for Vector Tile datasets isn't supported"
     },
     deleteData: {
       warning: 'you are going to delete this dataset. It will affect {length} layers'
@@ -377,16 +399,94 @@ export default {
     },
     loadData: {
       upload: 'Load Files',
+      tileset: 'Tileset',
       storage: 'Load from Storage'
     },
     tripInfo: {
-      title: 'How to enable trip animation',
-      description1:
-        'In order to animate the path, the geoJSON data needs to contain `LineString` in its feature geometry, and the coordinates in the LineString need to have 4 elements in the formats of',
-      code: ' [longitude, latitude, altitude, timestamp] ',
-      description2:
-        'with the last element being a timestamp. Valid timestamp formats include unix in seconds such as `1564184363` or in milliseconds such as `1564184363000`.',
-      example: 'Example:'
+      title: 'Create trips from GeoJson',
+      titleTable: 'Create trips from a list of points',
+      description1: `To animate the path, the GeoJSON data needs to contain \`LineString\` in its feature geometry, and the coordinates in the LineString need to have 4 elements in the formats of
+${'```json'}
+[longitude, latitude, altitude, timestamp]
+${'```'}
+The 3rd element is a timestamp. Valid timestamp formats include unix in seconds such as \`1564184363\` or in milliseconds such as \`1564184363000\`.`,
+      descriptionTable1:
+        'Trips can be created by joining a list of points from latitude and longitude, sort by timestamps and group by uniq ids.',
+      example: 'Example GeoJSON',
+      exampleTable: 'Example Csv'
+    },
+    polygonInfo: {
+      title: 'Create polygon layer from GeoJSON feature',
+      titleTable: 'Create path from points',
+      description: `Polygon can be created from
+__1 .A GeoJSON Feature Collection__
+__2. A Csv contains geometry column__
+
+### 1. Create polygon from GeoJSON file
+
+When upload a GeoJSON file contains FeatureCollection, a polygon layer will be auto-created
+
+Example GeoJSON
+${'```json'}
+{
+  "type": "FeatureCollection",
+  "features": [{
+      "type": "Feature",
+      "geometry": {
+          "type": "Point",
+          "coordinates": [102.0, 0.5]
+      },
+      "properties": {
+          "prop0": "value0"
+      }
+  }, {
+      "type": "Feature",
+      "geometry": {
+          "type": "LineString",
+          "coordinates": [
+              [102.0, 0.0],
+              [103.0, 1.0],
+              [104.0, 0.0],
+              [105.0, 1.0]
+          ]
+      },
+      "properties": {
+        "prop0": "value0"
+      }
+  }]
+}
+${'```'}
+
+### 2. Create polygon from a Geometry column in Csv table
+Geometries (Polygons, Points, LindStrings etc) can be embedded into CSV as a \`GeoJSON\` or \`WKT\` formatted string. 
+
+#### 2.1 \`GeoJSON\` string
+Example data.csv with \`GeoJSON\` string
+${'```txt'}
+id,_geojson
+1,"{""type"":""Polygon"",""coordinates"":[[[-74.158491,40.835947],[-74.157914,40.83902]]]}"
+${'```'}
+
+#### 2.2 \`WKT\` string
+Example data.csv with \`WKT\` string
+[The Well-Known Text (WKT)](https://dev.mysql.com/doc/refman/5.7/en/gis-data-formats.html#gis-wkt-format) representation of geometry values is designed for exchanging geometry data in ASCII form. 
+
+Example data.csv with WKT
+${'```txt'}
+id,_geojson
+1,"POLYGON((0 0,10 0,10 10,0 10,0 0),(5 5,7 5,7 7,5 7, 5 5))"
+${'```'}
+`,
+      descriptionTable: `Paths can be created by joining a list of points from latitude and longitude, sort by an index field (e.g. timestamp) and group by uniq ids.
+
+  ### Layer columns:
+  - **id**: - *required* - A \`id\` column is used to group by points. Points with the same id will be joined into a single path.
+  - **lat**: - *required* - The latitude of the point
+  - **lon**: - *required* - The longitude of the point
+  - **alt**: - *optional* - The altitude of the point
+  - **sort by**: - *optional* - A \`sort by\` column is used to sort the points, if not specified, points will be sorted by row index.
+`,
+      exampleTable: 'Example CSV'
     },
     iconInfo: {
       title: 'How to draw icons',
@@ -409,7 +509,9 @@ export default {
       back: 'Back',
       goToPage: 'Go to your Kepler.gl {displayName} page',
       storageMaps: 'Storage / Maps',
-      noSavedMaps: 'No saved maps yet'
+      noSavedMaps: 'No saved maps yet',
+      foursquareStorageMessage:
+        'Only maps saved with Kepler.gl > Save > Foursquare Storage option are shown here'
     }
   },
   header: {
@@ -438,16 +540,24 @@ export default {
   columns: {
     title: 'Columns',
     lat: 'lat',
-    lng: 'lon',
+    lng: 'lng',
     altitude: 'altitude',
+    alt: 'altitude',
+    id: 'id',
+    timestamp: 'time',
     icon: 'icon',
     geojson: 'geojson',
+    geoarrow: 'geoarrow',
+    geoarrow0: 'geoarrow source',
+    geoarrow1: 'geoarrow target',
     token: 'token',
+    sortBy: 'sort by',
+    neighbors: 'neighbors',
     arc: {
-      lat0: 'source lat',
-      lng0: 'source lng',
-      lat1: 'target lat',
-      lng1: 'target lng'
+      lat0: 'source lat or hex id',
+      lng0: 'source lng or hex id',
+      lat1: 'target lat or hex id',
+      lng1: 'target lng or hex id'
     },
     line: {
       alt0: 'source altitude',
@@ -463,10 +573,13 @@ export default {
   },
   color: {
     customPalette: 'Custom Palette',
-    steps: 'steps',
-    type: 'type',
-    reversed: 'reversed',
-    opacity: 'Opacity'
+    steps: 'Steps',
+    type: 'Type',
+    colorBlindSafe: 'Colorblind Safe',
+    reversed: 'Reversed',
+    disableStepReason: `Can't change number of steps with custom color breaks, use custom palette to edit steps`,
+    preset: 'Preset Colors',
+    picker: 'Color Picker'
   },
   scale: {
     colorScale: 'Color Scale',
@@ -488,6 +601,10 @@ export default {
     uploading: 'Uploading',
     fileNotSupported: 'File {errorFiles} is not supported.',
     or: 'or'
+  },
+  tilesetSetup: {
+    header: 'Setup Vector Tiles',
+    addTilesetText: 'Add Tileset'
   },
   geocoder: {
     title: 'Enter an address or coordinates, ex 37.79,-122.40'
@@ -511,5 +628,27 @@ export default {
   'Bug Report': 'Bug Report',
   'User Guide': 'User Guide',
   Save: 'Save',
-  Share: 'Share'
+  Share: 'Share',
+  mapLegend: {
+    layers: {
+      line: {
+        singleColor: {
+          sourceColor: 'Source',
+          targetColor: 'Target'
+        }
+      },
+      arc: {
+        singleColor: {
+          sourceColor: 'Source',
+          targetColor: 'Target'
+        }
+      },
+      default: {
+        singleColor: {
+          color: 'Fill color',
+          strokeColor: 'Outline'
+        }
+      }
+    }
+  }
 };

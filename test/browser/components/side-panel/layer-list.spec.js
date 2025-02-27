@@ -20,18 +20,10 @@ import {keplerGlReducerCore as keplerGlReducer} from '@kepler.gl/reducers';
 import {renderWithTheme} from '../../../helpers/component-jest-utils';
 import testLayerData from '../../../fixtures/test-layer-data';
 import {dataId as csvDataId} from '../../../fixtures/test-csv-data';
+import {applyActions} from '../../../helpers/mock-state-utils';
 
 // TODO: need to be deleted and imported from raw-states
 const InitialState = keplerGlReducer(undefined, keplerGlInit({}));
-
-function applyActions(reducer, initialState, actions) {
-  const actionQ = Array.isArray(actions) ? actions : [actions];
-
-  return actionQ.reduce(
-    (updatedState, {action, payload}) => reducer(updatedState, action(...payload)),
-    initialState
-  );
-}
 
 function mockStateWithMultipleH3Layers() {
   const initialState = cloneDeep(InitialState);

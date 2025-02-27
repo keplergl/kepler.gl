@@ -16,7 +16,9 @@ const en = {
     '* CORS policy must be defined on your custom url domain in order to be accessible. For more info ',
   'loadRemoteMap.clickHere':
     '<a rel="noopener noreferrer" target="_blank" href="{corsLink}">click here</a>',
-  'loadRemoteMap.fetch': 'Fetch'
+  'loadRemoteMap.fetch': 'Fetch',
+  'tooltip.hideSQLPanel': 'Hide SQL Panel',
+  'tooltip.showSQLPanel': 'Show SQL Panel'
 };
 
 export const messages = {

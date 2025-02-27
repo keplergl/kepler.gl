@@ -38,7 +38,13 @@ module.exports = {
     'consistent-return': 0,
     'comma-dangle': 1,
     'enzyme-deprecation/no-shallow': 2,
-    'enzyme-deprecation/no-mount': 2
+    'enzyme-deprecation/no-mount': 2,
+    'no-constant-condition': ['error', {checkLoops: false}],
+    'no-unused-vars': ['warn', {argsIgnorePattern: '^_', varsIgnorePattern: '^_'}],
+    '@typescript-eslint/no-unused-vars': [
+      'warn',
+      {argsIgnorePattern: '^_', varsIgnorePattern: '^_'}
+    ]
   },
   overrides: [
     {

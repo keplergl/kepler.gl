@@ -115,6 +115,9 @@ export default {
     radiusRange: 'Alcance do Raio',
     clusterRadius: 'Raio do Agrupamento em pixels',
     radiusRangePixels: 'Alcance do Raio em pixels',
+    billboard: 'Câmera de rosto',
+    billboardDescription: 'Oriente a geometria em direção à câmera',
+    fadeTrail: 'Fade trilha',
     opacity: 'Opacidade',
     coverage: 'Cobertura',
     outline: 'Contorno',
@@ -146,9 +149,9 @@ export default {
     weightIntensity: 'Intensidade da Espessura',
     zoomScale: 'Escala do Zoom',
     heightRange: 'Alcance da Altura',
+    heightMultiplier: 'Multiplicador de altura',
     fixedHeight: 'Altura fixa',
-    fixedHeightDescription: 'Use a altura sem modificações',
-    heightMultiplier: 'Multiplicador de altura'
+    fixedHeightDescription: 'Use a altura sem modificações'
   },
   layerManager: {
     addData: 'Adicionar Dados',

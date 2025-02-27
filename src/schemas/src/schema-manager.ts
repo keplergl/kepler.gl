@@ -9,6 +9,7 @@ import mapStyleSchema from './map-style-schema';
 import mapStateSchema from './map-state-schema';
 import {SavedDatasetV1, ParsedDataset} from './dataset-schema';
 import {visStateSchema} from './vis-state-schema';
+import uiStateSchema from './ui-state-schema';
 
 import {CURRENT_VERSION, VERSIONS} from './versions';
 import {isPlainObject} from '@kepler.gl/utils';
@@ -71,7 +72,21 @@ export const reducerSchema: {
 } = {
   visState: visStateSchema,
   mapState: mapStateSchema,
-  mapStyle: mapStyleSchema
+  mapStyle: mapStyleSchema,
+  uiState: uiStateSchema
+};
+
+export interface ComposedReducerSchema {
+  save(state: any): any;
+  load(config: SavedMap): SavedMap;
+}
+
+export type KeplerGLSchemaProps = {
+  reducers?: typeof reducerSchema;
+  datasets?: typeof datasetSchema;
+  validVersions?: typeof VERSIONS;
+  version?: 'v1';
+  composedReducerSchema?: ComposedReducerSchema;
 };
 
 export class KeplerGLSchema {
@@ -81,22 +96,20 @@ export class KeplerGLSchema {
   _datasetSchema: typeof datasetSchema;
   _datasetLastSaved: SavedDatasetV1[] | null;
   _savedDataset: SavedDatasetV1[] | null;
+  _composedReducerSchema: ComposedReducerSchema | null;
 
   constructor({
     reducers = reducerSchema,
     datasets = datasetSchema,
     validVersions = VERSIONS,
-    version = CURRENT_VERSION
-  }: {
-    reducers?: typeof reducerSchema;
-    datasets?: typeof datasetSchema;
-    validVersions?: typeof VERSIONS;
-    version?: 'v1';
-  } = {}) {
+    version = CURRENT_VERSION,
+    composedReducerSchema
+  }: KeplerGLSchemaProps = {}) {
     this._validVersions = validVersions;
     this._version = version;
     this._reducerSchemas = reducers;
     this._datasetSchema = datasets;
+    this._composedReducerSchema = composedReducerSchema || null;
 
     this._datasetLastSaved = null;
     this._savedDataset = null;
@@ -199,14 +212,18 @@ export class KeplerGLSchema {
 
   /**
    * Get App config to save
-   * @param {Object} state - app state
-   * @returns {{version: String, config: Object}} - config to save
+   * @param state - app state
+   * @returns - config to save
    */
   getConfigToSave(state: any): SavedConfigV1 {
+    const toSave =
+      typeof this._composedReducerSchema?.save === 'function'
+        ? this._composedReducerSchema.save(state)
+        : state;
     const config = Object.keys(this._reducerSchemas).reduce(
       (accu, key) => ({
         ...accu,
-        ...(state[key] ? this._reducerSchemas[key][this._version].save(state[key]) : {})
+        ...(toSave[key] ? this._reducerSchemas[key][this._version].save(toSave[key]) : {})
       }),
       {}
     );
@@ -244,11 +261,16 @@ export class KeplerGLSchema {
       return null;
     }
 
-    return Object.keys(config).reduce(
+    const toLoad =
+      typeof this._composedReducerSchema?.load === 'function'
+        ? this._composedReducerSchema.load(config)
+        : config;
+
+    return Object.keys(toLoad).reduce(
       (accu, key) => ({
         ...accu,
         ...(key in this._reducerSchemas
-          ? this._reducerSchemas[key][validVersion].load(config[key])
+          ? this._reducerSchemas[key][validVersion].load(toLoad[key])
           : {})
       }),
       {}

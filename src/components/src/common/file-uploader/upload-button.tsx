@@ -10,7 +10,7 @@ const Wrapper = styled.div`
   font-size: 12px;
   text-decoration: underline;
 
-  :hover {
+  &:hover {
     cursor: pointer;
     font-weight: 500;
   }

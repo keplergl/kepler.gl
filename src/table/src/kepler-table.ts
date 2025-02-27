@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {console as Console} from 'global/console';
+import Console from 'global/console';
 import {ascending, descending} from 'd3-array';
 
 import {
@@ -19,14 +19,16 @@ import {
   Filter,
   ProtoDataset,
   FilterRecord,
-  FilterDatasetOpt
+  FilterDatasetOpt,
+  RangeFieldDomain,
+  SelectFieldDomain,
+  MultiSelectFieldDomain,
+  TimeRangeFieldDomain
 } from '@kepler.gl/types';
 
 import {getGpuFilterProps, getDatasetFieldIndexForFilter} from './gpu-filter-utils';
 
-import {Layer} from '@kepler.gl/layers';
 import {
-  generateHashId,
   getSortingFunction,
   timeToUnixMilli,
   createDataContainer,
@@ -44,18 +46,58 @@ import {
   getOrdinalDomain,
   getQuantileDomain,
   DataContainerInterface,
-  notNullorUndefined
+  FilterChanged
 } from '@kepler.gl/utils';
+import {generateHashId, notNullorUndefined} from '@kepler.gl/common-utils';
+
+// TODO isolate layer type, depends on @kepler.gl/layers
+type Layer = any;
 
 export type GpuFilter = {
   filterRange: number[][];
-  filterValueUpdateTriggers: any;
+  filterValueUpdateTriggers: {
+    [id: string]: {name: string; domain0: number} | null;
+  };
   filterValueAccessor: (
     dc: DataContainerInterface
   ) => (
     getIndex?: (any) => number,
     getData?: (dc_: DataContainerInterface, d: any, fieldIndex: number) => any
-  ) => (d: any) => number[];
+  ) => (d: any, objectInfo?: {index: number}) => (number | number[])[];
+};
+
+export type FilterProps =
+  | NumericFieldFilterProps
+  | BooleanFieldFilterProps
+  | StringFieldFilterProps
+  | TimeFieldFilterProps;
+
+export type NumericFieldFilterProps = RangeFieldDomain & {
+  value: [number, number];
+  type: string;
+  typeOptions: string[];
+  gpu: boolean;
+  columnStats?: Record<string, any>;
+};
+export type BooleanFieldFilterProps = SelectFieldDomain & {
+  type: string;
+  value: boolean;
+  gpu: boolean;
+  columnStats?: Record<string, any>;
+};
+export type StringFieldFilterProps = MultiSelectFieldDomain & {
+  type: string;
+  value: string[];
+  gpu: boolean;
+  columnStats?: Record<string, any>;
+};
+export type TimeFieldFilterProps = TimeRangeFieldDomain & {
+  type: string;
+  view: Filter['view'];
+  fixedDomain: boolean;
+  value: number[];
+  gpu: boolean;
+  columnStats?: Record<string, any>;
 };
 
 // Unique identifier of each field
@@ -75,7 +117,7 @@ export function maybeToDate(
   return dc.valueAt(d.index, fieldIdx);
 }
 
-class KeplerTable {
+class KeplerTable<F extends Field = Field> {
   readonly id: string;
 
   type?: string;
@@ -83,19 +125,19 @@ class KeplerTable {
   color: RGBColor;
 
   // fields and data
-  fields: Field[];
+  fields: F[] = [];
 
   dataContainer: DataContainerInterface;
 
-  allIndexes: number[];
-  filteredIndex: number[];
+  allIndexes: number[] = [];
+  filteredIndex: number[] = [];
   filteredIdxCPU?: number[];
-  filteredIndexForDomain: number[];
-  fieldPairs: FieldPair[];
+  filteredIndexForDomain: number[] = [];
+  fieldPairs: FieldPair[] = [];
   gpuFilter: GpuFilter;
   filterRecord?: FilterRecord;
   filterRecordCPU?: FilterRecord;
-  changedFilters?: any;
+  changedFilters?: FilterChanged;
 
   // table-injected metadata
   sortColumn?: {
@@ -109,18 +151,18 @@ class KeplerTable {
   disableDataOperation?: boolean;
 
   // table-injected metadata
-  metadata: object;
+  metadata: Record<string, any>;
+
+  getFileProcessor?: (data: any, inputFormat?: string) => {data: any; format: string};
 
   constructor({
     info,
-    data,
     color,
     metadata,
     supportedFilterTypes = null,
     disableDataOperation = false
   }: {
     info?: ProtoDataset['info'];
-    data: ProtoDataset['data'];
     color: RGBColor;
     metadata?: ProtoDataset['metadata'];
     supportedFilterTypes?: ProtoDataset['supportedFilterTypes'];
@@ -132,32 +174,13 @@ class KeplerTable {
     //   return this;
     // }
 
-    const dataContainerData = data.cols ? data.cols : data.rows;
-    const inputDataFormat = data.cols ? DataForm.COLS_ARRAY : DataForm.ROWS_ARRAY;
-
-    const dataContainer = createDataContainer(dataContainerData, {
-      // @ts-expect-error ProtoDataset field missing property fieldIdx, valueAccessor
-      fields: data.fields,
-      inputDataFormat
-    });
-
     const datasetInfo = {
       id: generateHashId(4),
       label: 'new dataset',
       type: '',
       ...info
     };
-    const dataId = datasetInfo.id;
-    // @ts-expect-error
-    const fields: Field[] = data.fields.map((f, i) => ({
-      ...f,
-      fieldIdx: i,
-      id: f.name,
-      displayName: f.displayName || f.name,
-      valueAccessor: getFieldValueAccessor(f, i, dataContainer)
-    }));
 
-    const allIndexes = dataContainer.getPlainIndex();
     const defaultMetadata = {
       id: datasetInfo.id,
       // @ts-ignore
@@ -174,27 +197,55 @@ class KeplerTable {
       ...metadata
     };
 
+    this.supportedFilterTypes = supportedFilterTypes;
+    this.disableDataOperation = disableDataOperation;
+
+    this.dataContainer = createDataContainer([]);
+    this.gpuFilter = getGpuFilterProps([], this.id, [], undefined);
+  }
+
+  async importData({data}: {data: ProtoDataset['data']}) {
+    const dataContainerData = data.cols ? data.cols : data.rows;
+    const inputDataFormat = data.cols ? DataForm.COLS_ARRAY : DataForm.ROWS_ARRAY;
+
+    const dataContainer = createDataContainer(dataContainerData, {
+      fields: data.fields,
+      inputDataFormat
+    });
+
+    const fields: Field[] = data.fields.map((f, i) => ({
+      ...f,
+      fieldIdx: i,
+      id: f.name,
+      displayName: f.displayName || f.name,
+      analyzerType: f.analyzerType || ALL_FIELD_TYPES.string,
+      format: f.format || '',
+      valueAccessor: getFieldValueAccessor(f, i, dataContainer)
+    }));
+
+    const allIndexes = dataContainer.getPlainIndex();
     this.dataContainer = dataContainer;
     this.allIndexes = allIndexes;
     this.filteredIndex = allIndexes;
     this.filteredIndexForDomain = allIndexes;
     this.fieldPairs = findPointFieldPairs(fields);
+    // @ts-expect-error Make sure that fields satisfies F extends Field
     this.fields = fields;
-    this.gpuFilter = getGpuFilterProps([], dataId, fields);
-    this.supportedFilterTypes = supportedFilterTypes;
-    this.disableDataOperation = disableDataOperation;
+    this.gpuFilter = getGpuFilterProps([], this.id, fields, undefined);
   }
 
   /**
    * update table with new data
    * @param data - new data e.g. the arrow data with new batches loaded
    */
-  update(data: ProtoDataset['data']) {
+  async update(data: ProtoDataset['data']) {
     const dataContainerData = data.cols ? data.cols : data.rows;
     this.dataContainer.update?.(dataContainerData);
     this.allIndexes = this.dataContainer.getPlainIndex();
     this.filteredIndex = this.allIndexes;
     this.filteredIndexForDomain = this.allIndexes;
+
+    return this;
   }
 
   get length() {
@@ -205,7 +256,7 @@ class KeplerTable {
    * Get field
    * @param columnName
    */
-  getColumnField(columnName: string): Field | undefined {
+  getColumnField(columnName: string): F | undefined {
     const field = this.fields.find(fd => fd[FID_KEY] === columnName);
     this._assetField(columnName, field);
     return field;
@@ -244,7 +295,7 @@ class KeplerTable {
    * @param fieldIdx
    * @param newField
    */
-  updateColumnField(fieldIdx: number, newField: Field): void {
+  updateColumnField(fieldIdx: number, newField: F): void {
     this.fields = Object.assign([...this.fields], {[fieldIdx]: newField});
   }
 
@@ -260,7 +311,7 @@ class KeplerTable {
    * Save filterProps to field and retrieve it
    * @param columnName
    */
-  getColumnFilterProps(columnName: string): Field['filterProps'] | null | undefined {
+  getColumnFilterProps(columnName: string): F['filterProps'] | null | undefined {
     const fieldIdx = this.getColumnFieldIdx(columnName);
     if (fieldIdx < 0) {
       return null;
@@ -292,24 +343,22 @@ class KeplerTable {
    * @param layers
    * @param opt
    */
-  filterTable(filters: Filter[], layers: Layer[], opt?: FilterDatasetOpt): KeplerTable {
+  filterTable(filters: Filter[], layers: Layer[], opt?: FilterDatasetOpt): KeplerTable<Field> {
     const {dataContainer, id: dataId, filterRecord: oldFilterRecord, fields} = this;
 
     // if there is no filters
     const filterRecord = getFilterRecord(dataId, filters, opt || {});
 
     this.filterRecord = filterRecord;
-    this.gpuFilter = getGpuFilterProps(filters, dataId, fields);
+    this.gpuFilter = getGpuFilterProps(filters, dataId, fields, this.gpuFilter);
 
-    // const newDataset = set(['filterRecord'], filterRecord, dataset);
+    this.changedFilters = diffFilters(filterRecord, oldFilterRecord);
 
     if (!filters.length) {
       this.filteredIndex = this.allIndexes;
       this.filteredIndexForDomain = this.allIndexes;
       return this;
     }
-
-    this.changedFilters = diffFilters(filterRecord, oldFilterRecord);
 
     // generate 2 sets of filter result
     // filteredIndex used to calculate layer data
@@ -350,7 +399,7 @@ class KeplerTable {
    * @param filters
    * @param layers
    */
-  filterTableCPU(filters: Filter[], layers: Layer[]): KeplerTable {
+  filterTableCPU(filters: Filter[], layers: Layer[]): KeplerTable<Field> {
     const opt = {
       cpuOnly: true,
       ignoreDomain: true
@@ -388,7 +437,7 @@ class KeplerTable {
    * Calculate field domain based on field type and data
    * for Filter
    */
-  getColumnFilterDomain(field: Field): FieldDomain {
+  getColumnFilterDomain(field: F): FieldDomain {
     const {dataContainer} = this;
     const {valueAccessor} = field;
 
@@ -404,6 +453,7 @@ class KeplerTable {
         return {domain: [true, false]};
 
       case ALL_FIELD_TYPES.string:
+      case ALL_FIELD_TYPES.h3:
       case ALL_FIELD_TYPES.date:
         domain = getOrdinalDomain(dataContainer, valueAccessor);
         return {domain};
@@ -419,10 +469,7 @@ class KeplerTable {
   /**
    *  Get the domain of this column based on scale type
    */
-  getColumnLayerDomain(
-    field: Field,
-    scaleType: string
-  ): number[] | string[] | [number, number] | null {
+  getColumnLayerDomain(field: F, scaleType: string): number[] | string[] | [number, number] | null {
     const {dataContainer, filteredIndexForDomain} = this;
 
     if (!SCALE_TYPES[scaleType]) {
@@ -436,6 +483,7 @@ class KeplerTable {
 
     switch (scaleType) {
       case SCALE_TYPES.ordinal:
+      case SCALE_TYPES.customOrdinal:
       case SCALE_TYPES.point:
         // do not recalculate ordinal domain based on filtered data
         // don't need to update ordinal domain every time
@@ -450,6 +498,7 @@ class KeplerTable {
       case SCALE_TYPES.quantize:
       case SCALE_TYPES.linear:
       case SCALE_TYPES.sqrt:
+      case SCALE_TYPES.custom:
       default:
         return getLinearDomain(filteredIndexForDomain, indexValueAccessor);
     }
@@ -481,7 +530,7 @@ class KeplerTable {
 }
 
 export type Datasets = {
-  [key: string]: KeplerTable;
+  [key: string]: KeplerTable<Field>;
 };
 
 // HELPER FUNCTIONS (MAINLY EXPORTED FOR TEST...)
@@ -541,7 +590,7 @@ export function findPointFieldPairs(fields: Field[]): FieldPair[] {
               },
               ...(altIdx > -1
                 ? {
-                    alt: {
+                    altitude: {
                       fieldIdx: altIdx,
                       value: fields[altIdx].name
                     }
@@ -566,10 +615,10 @@ export function findPointFieldPairs(fields: Field[]): FieldPair[] {
  * @type
  */
 export function sortDatasetByColumn(
-  dataset: KeplerTable,
+  dataset: KeplerTable<Field>,
   column: string,
   mode?: string
-): KeplerTable {
+): KeplerTable<Field> {
   const {allIndexes, fields, dataContainer} = dataset;
   const fieldIndex = fields.findIndex(f => f.name === column);
   if (fieldIndex < 0) {
@@ -605,7 +654,7 @@ export function sortDatasetByColumn(
   return dataset;
 }
 
-export function pinTableColumns(dataset: KeplerTable, column: string): KeplerTable {
+export function pinTableColumns(dataset: KeplerTable<Field>, column: string): KeplerTable<Field> {
   const field = dataset.getColumnField(column);
   if (!field) {
     return dataset;
@@ -623,7 +672,7 @@ export function pinTableColumns(dataset: KeplerTable, column: string): KeplerTab
   return copyTableAndUpdate(dataset, {pinnedColumns});
 }
 
-export function copyTable(original: KeplerTable): KeplerTable {
+export function copyTable(original: KeplerTable<Field>): KeplerTable<Field> {
   return Object.assign(Object.create(Object.getPrototypeOf(original)), original);
 }
 
@@ -632,9 +681,9 @@ export function copyTable(original: KeplerTable): KeplerTable {
  * @returns
  */
 export function copyTableAndUpdate(
-  original: KeplerTable,
-  options: Partial<KeplerTable> = {}
-): KeplerTable {
+  original: KeplerTable<Field>,
+  options: Partial<KeplerTable<Field>> = {}
+): KeplerTable<Field> {
   return Object.entries(options).reduce((acc, entry) => {
     acc[entry[0]] = entry[1];
     return acc;

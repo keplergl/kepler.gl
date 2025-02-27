@@ -25,6 +25,7 @@ const StyledListItem = styled.div`
   &.list {
     display: flex;
     align-items: center;
+    overflow: hidden;
 
     .layer-type-selector__item__icon {
       color: ${props => props.theme.activeColor};
@@ -33,6 +34,12 @@ const StyledListItem = styled.div`
       height: ${props => props.theme.layerTypeIconSizeSM}px;
       width: ${props => props.theme.layerTypeIconSizeSM}px;
       margin-right: 12px;
+    }
+
+    .layer-type-selector__item__label {
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
     }
   }
 
@@ -55,9 +62,9 @@ const StyledListItem = styled.div`
 `;
 
 export function LayerTypeListItemFactory() {
-  const LayerTypeListItem: React.FC<WithThemeProps> = ({value, isTile, theme}) => (
+  const LayerTypeListItem: React.FC<WithThemeProps> = ({value, isTile, theme, className}) => (
     <StyledListItem
-      className={classNames('layer-type-selector__item__inner', {
+      className={classNames('layer-type-selector__item__inner', className, {
         list: !isTile
       })}
     >
@@ -73,7 +80,7 @@ export function LayerTypeListItemFactory() {
     </StyledListItem>
   );
 
-  return withTheme(LayerTypeListItem);
+  return withTheme(LayerTypeListItem) as React.FC<LayerTypeListItemProps>;
 }
 
 export default LayerTypeListItemFactory;

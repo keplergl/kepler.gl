@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useCallback, useState} from 'react';
+import React, {useCallback, useMemo} from 'react';
 import styled from 'styled-components';
+import {FILTER_VIEW_TYPES} from '@kepler.gl/constants';
 import {BottomWidgetInner} from '../common/styled-components';
 import TimeRangeSliderFactory from '../common/time-range-slider';
 import FloatingTimeDisplayFactory from '../common/animation-control/floating-time-display';
@@ -24,21 +25,22 @@ function TimeWidgetFactory(
   const TimeWidget: React.FC<TimeWidgetProps> = ({
     datasets,
     filter,
+    layers,
     index,
     readOnly,
     showTimeDisplay,
     setFilterAnimationTime,
     onClose,
+    onToggleMinify,
     resetAnimation,
     isAnimatable,
     updateAnimationSpeed,
     toggleAnimation,
     setFilterPlot,
     setFilterAnimationWindow,
+    animationConfig,
     timeline
   }: TimeWidgetProps) => {
-    const [isMinified, setMinified] = useState(false);
-
     const _updateAnimationSpeed = useCallback(
       speed => updateAnimationSpeed(index, speed),
       [updateAnimationSpeed, index]
@@ -46,7 +48,7 @@ function TimeWidgetFactory(
 
     const _toggleAnimation = useCallback(() => toggleAnimation(index), [toggleAnimation, index]);
 
-    const _onToggleMinify = useCallback(() => setMinified(!isMinified), [setMinified, isMinified]);
+    const isMinified = useMemo(() => filter.view === FILTER_VIEW_TYPES.minified, [filter]);
 
     const _setFilterAnimationWindow = useCallback(
       animationWindow => setFilterAnimationWindow({id: filter.id, animationWindow}),
@@ -58,22 +60,32 @@ function TimeWidgetFactory(
       [setFilterAnimationTime, index]
     );
 
+    const _setFilterPlot = useCallback(
+      (newProp, valueIndex) => setFilterPlot(index, newProp, valueIndex),
+      [index, setFilterPlot]
+    );
+
+    const timeRangeSlideProps = useMemo(
+      () => timeRangeSliderFieldsSelector(filter, datasets, layers),
+      [filter, datasets, layers]
+    );
+
     return (
       <TimeBottomWidgetInner className="bottom-widget--inner">
         <TimeWidgetTop
           filter={filter}
           readOnly={readOnly}
           datasets={datasets}
-          setFilterPlot={setFilterPlot}
+          setFilterPlot={_setFilterPlot}
           index={index}
           onClose={onClose}
-          onToggleMinify={_onToggleMinify}
+          onToggleMinify={onToggleMinify}
           isMinified={isMinified}
         />
         {/* Once AnimationControl is able to display large timeline*/}
         {/* we can replace TimeRangeSlider with AnimationControl*/}
         <TimeRangeSlider
-          {...timeRangeSliderFieldsSelector(filter)}
+          {...timeRangeSlideProps}
           onChange={timeSliderOnChange}
           toggleAnimation={_toggleAnimation}
           updateAnimationSpeed={_updateAnimationSpeed}
@@ -81,6 +93,8 @@ function TimeWidgetFactory(
           hideTimeTitle={showTimeDisplay}
           resetAnimation={resetAnimation}
           isAnimatable={isAnimatable}
+          setFilterPlot={_setFilterPlot}
+          animationConfig={animationConfig}
           isMinified={isMinified}
           timeline={timeline}
         />

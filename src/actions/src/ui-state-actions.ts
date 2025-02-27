@@ -17,7 +17,7 @@ export type ToggleSidePanelUpdaterAction = {
  * @public
  */
 export const toggleSidePanel: (
-  id: string | null
+  id: ToggleSidePanelUpdaterAction['payload']
 ) => Merge<ToggleSidePanelUpdaterAction, {type: typeof ActionTypes.TOGGLE_SIDE_PANEL}> =
   createAction(ActionTypes.TOGGLE_SIDE_PANEL, (id: string | null) => ({payload: id}));
 
@@ -154,6 +154,30 @@ export const setMapControlVisibility: (
     }
   })
 );
+
+/** SET_MAP_CONTROL_SETTINGS */
+export type setMapControlSettingsUpdaterAction = {
+  payload: {
+    panelId: string;
+    settings: Record<string, unknown>;
+  };
+};
+
+/**
+ * Set map control settings
+ * @memberof uiStateActions
+ * @param panelId - map control panel id, one of the keys of: [`DEFAULT_MAP_CONTROLS`](#default_map_controls)
+ * @public
+ */
+export const setMapControlSettings: (
+  panelId: string,
+  settings: Record<string, unknown>
+) => Merge<
+  setMapControlSettingsUpdaterAction,
+  {type: typeof ActionTypes.SET_MAP_CONTROL_SETTINGS}
+> = createAction(ActionTypes.SET_MAP_CONTROL_SETTINGS, (panelId, settings) => ({
+  payload: {panelId, settings}
+}));
 
 /** OPEN_DELETE_MODAL */
 export type OpenDeleteModalUpdaterAction = {
@@ -471,3 +495,25 @@ export const togglePanelListView: (
 // @ts-ignore
 const uiStateActions = null;
 /* eslint-enable @typescript-eslint/no-unused-vars */
+
+/** SET_LOADING_INDICATOR */
+export type SetLoadingIndicatorAction = {
+  payload: {
+    change: number;
+  };
+};
+
+/**
+ * Change of number of active loading actions.
+ * @memberof uiStateActions
+ * @param payload
+ * @param payload.change Change of number of active loading actions.
+ * @public
+ */
+export const setLoadingIndicator: (
+  payload: SetLoadingIndicatorAction['payload']
+) => Merge<SetLoadingIndicatorAction, {type: typeof ActionTypes.SET_LOADING_INDICATOR}> =
+  createAction(
+    ActionTypes.SET_LOADING_INDICATOR,
+    (payload: SetLoadingIndicatorAction['payload']) => ({payload})
+  );

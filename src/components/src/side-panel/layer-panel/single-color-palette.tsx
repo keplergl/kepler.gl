@@ -1,70 +1,90 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {MouseEvent} from 'react';
-import {range} from 'd3-array';
+import React, {MouseEvent, useCallback, useState} from 'react';
 import styled from 'styled-components';
+import classnames from 'classnames';
+
 import {hexToRgb} from '@kepler.gl/utils';
+import {FormattedMessage} from '@kepler.gl/localization';
+import {Themes} from '@kepler.gl/constants';
+import {ColorRange, HexColor, RGBColor} from '@kepler.gl/types';
 
-import {ColorsByTheme, Themes, ColorRange} from '@kepler.gl/constants';
-import {RGBColor} from '@kepler.gl/types';
+import CustomPicker from './custom-picker';
+import PresetColorPalette from './color-palette-preset';
 
-export type SingleColorPaletteProps = {
-  onSelectColor: (color: RGBColor | ColorRange, e: MouseEvent) => void;
-  // hex value
-  selectedColor: string;
+const MODE = {
+  preset: 'preset',
+  picker: 'picker'
 };
 
-const PALETTE_HEIGHT = '8px';
-const ROWS = 22;
+export type SingleColorPaletteProps = {
+  selectedColor: HexColor;
+  onSelectColor: (color: RGBColor | ColorRange, e: MouseEvent) => void;
+};
 
-const StyledColorPalette = styled.div`
+const StyledColorPickerTop = styled.div`
+  border-bottom: 1px solid ${({theme}) => theme.dropdownListBorderTop};
   display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  padding: 12px;
-
-  :hover {
-    cursor: pointer;
+  padding-top: 2px 4px 0 4px;
+  .color-palette-tab {
+    padding: 8px 0;
+    margin: 0 8px;
+    color: ${({theme}) => theme.subtextColor};
+    border-bottom: 2px;
+    border-bottom-style: solid;
+    border-bottom-color: transparent;
+    &.active {
+      color: ${({theme}) => theme.textColorHl};
+      border-bottom-color: ${({theme}) => theme.panelToggleBorderColor};
+    }
+    &:hover {
+      cursor: pointer;
+      color: ${props => props.theme.textColorHl};
+    }
   }
 `;
 
-const StyledColorColumn = styled.div`
-  display: flex;
-  flex-grow: 1;
-  flex-direction: column;
-  justify-content: space-between;
-`;
-
-const StyledColorBlock = styled.div<{selected: boolean}>`
-  flex-grow: 1;
-  height: ${PALETTE_HEIGHT};
-  border-width: 1px;
-  border-style: solid;
-`;
-
-const SingleColorPalette: React.FC<SingleColorPaletteProps> = ({selectedColor, onSelectColor}) => (
-  <StyledColorPalette className="single-color-palette">
-    {Themes.map(theme => (
-      <StyledColorColumn key={theme} className="single-color-palette__column">
-        {range(1, ROWS + 1, 1).map(key => (
-          <StyledColorBlock
-            className="single-color-palette__block"
-            style={{
-              backgroundColor: ColorsByTheme[theme][key],
-              borderColor:
-                selectedColor === ColorsByTheme[theme][key].toUpperCase()
-                  ? 'white'
-                  : ColorsByTheme[theme][key]
-            }}
-            key={`${theme}_${key}`}
-            selected={selectedColor === ColorsByTheme[theme][key].toUpperCase()}
-            onClick={e => onSelectColor(hexToRgb(ColorsByTheme[theme][key]), e)}
-          />
-        ))}
-      </StyledColorColumn>
+const ColorPickerTop = ({setMode, mode}) => (
+  <StyledColorPickerTop>
+    {Object.keys(MODE).map(modeId => (
+      <div
+        onClick={() => setMode(modeId)}
+        key={modeId}
+        className={classnames('color-palette-tab', {active: mode === modeId})}
+      >
+        <FormattedMessage id={`color.${modeId}`} />
+      </div>
     ))}
-  </StyledColorPalette>
+  </StyledColorPickerTop>
 );
+
+const SingleColorPalette: React.FC<SingleColorPaletteProps> = ({
+  selectedColor,
+  onSelectColor
+}: SingleColorPaletteProps) => {
+  const [mode, setMode] = useState(MODE.preset);
+  const onSetColor = useCallback(
+    (color, e) => {
+      // color picker return an object, with color.hex
+      const hex = color.hex || color;
+      onSelectColor(hexToRgb(hex), e);
+    },
+    [onSelectColor]
+  );
+  return (
+    <div className="single-color-palette">
+      <ColorPickerTop mode={mode} setMode={setMode} />
+      {mode === MODE.preset ? (
+        <PresetColorPalette
+          themes={Themes}
+          onSelectColor={onSetColor}
+          selectedColor={selectedColor}
+        />
+      ) : null}
+      {mode === MODE.picker ? <CustomPicker color={selectedColor} onChange={onSetColor} /> : null}
+    </div>
+  );
+};
 
 export default SingleColorPalette;

@@ -3,10 +3,8 @@
 
 import React from 'react';
 import {FormattedMessage} from '@kepler.gl/localization';
-import {Tooltip} from '../styled-components';
 import IconButton from '../icon-button';
-
-const DELAY_SHOW = 500;
+import TippyTooltip from '../tippy-tooltip';
 
 function ResetControlFactory() {
   const ResetControl = ({
@@ -17,18 +15,15 @@ function ResetControlFactory() {
     buttonHeight
   }) => {
     return showAnimationWindowControl ? null : (
-      <IconButton
-        data-tip
-        data-for="animate-reset"
-        className="playback-control-button"
-        onClick={resetAnimation}
-        {...btnStyle}
+      <TippyTooltip
+        placement="top"
+        delay={[500, 0]}
+        render={() => <FormattedMessage id="tooltip.reset" />}
       >
-        <playbackIcons.reset height={buttonHeight} />
-        <Tooltip id="animate-reset" place="top" delayShow={DELAY_SHOW} effect="solid">
-          <FormattedMessage id="tooltip.reset" />
-        </Tooltip>
-      </IconButton>
+        <IconButton className="playback-control-button" onClick={resetAnimation} {...btnStyle}>
+          <playbackIcons.reset height={buttonHeight} />
+        </IconButton>
+      </TippyTooltip>
     );
   };
 

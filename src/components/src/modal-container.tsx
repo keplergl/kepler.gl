@@ -6,8 +6,7 @@ import {css} from 'styled-components';
 import get from 'lodash.get';
 import document from 'global/document';
 
-import ModalDialogFactory from './modals/modal-dialog';
-import {exportHtml, exportMap, exportJson, exportImage} from '@kepler.gl/utils';
+import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 import {
   exportData,
   getFileFormatNames,
@@ -15,6 +14,9 @@ import {
   MapStyle,
   ProviderState
 } from '@kepler.gl/reducers';
+import {exportHtml, exportMap, exportJson, exportImage} from '@kepler.gl/utils';
+
+import ModalDialogFactory from './modals/modal-dialog';
 
 // modals
 import DeleteDatasetModalFactory from './modals/delete-data-modal';
@@ -173,6 +175,32 @@ export default function ModalContainerFactory(
       this.props.visStateActions.loadFiles(fileList);
     };
 
+    _onTilesetAdded = (
+      tileset: {name: string; type: string; metadata: Record<string, any>},
+      processedMetadata?: Record<string, any>
+    ) => {
+      this.props.visStateActions.updateVisData(
+        {
+          info: {label: tileset.name, type: tileset.type, format: 'rows'},
+          data: {
+            fields: processedMetadata?.fields || [],
+            rows: []
+          },
+          metadata: {
+            ...processedMetadata,
+            ...tileset.metadata
+          },
+          // vector tile layer only supports gpu filtering for now
+          supportedFilterTypes: [ALL_FIELD_TYPES.real, ALL_FIELD_TYPES.integer],
+          disableDataOperation: true
+        },
+        {
+          autoCreateLayers: true
+        }
+      );
+      this._closeModal();
+    };
+
     _onExportImage = () => {
       if (!this.props.uiState.exportImage.processing) {
         exportImage(this.props.uiState.exportImage, `${this.props.appName}.png`);
@@ -200,12 +228,12 @@ export default function ModalContainerFactory(
       const toSave = exportMap(this.props);
 
       this.props.providerActions.exportFileToCloud({
-        // @ts-ignore
         mapData: toSave,
         provider,
         options: {
           isPublic,
-          overwrite
+          overwrite,
+          mapIdToOverwrite: this.props.providerState.savedMapId
         },
         closeModal,
         onSuccess: this.props.onExportToCloudSuccess,
@@ -222,8 +250,8 @@ export default function ModalContainerFactory(
       });
     };
 
-    _onOverwriteMap = () => {
-      this._onSaveMap(true);
+    _onOverwriteMap = (provider) => {
+      this._onSaveMap(provider, true);
     };
 
     _onShareMapUrl = provider => {
@@ -327,6 +355,7 @@ export default function ModalContainerFactory(
                 {...providerState}
                 onClose={this._closeModal}
                 onFileUpload={this._onFileUpload}
+                onTilesetAdded={this._onTilesetAdded}
                 onLoadCloudMap={this._onLoadCloudMap}
                 loadFiles={uiState.loadFiles}
                 fileLoading={visState.fileLoading}
@@ -437,7 +466,10 @@ export default function ModalContainerFactory(
               onConfirm: this._onAddCustomMapStyle,
               confirmButton: {
                 large: true,
-                disabled: !mapStyle.inputStyle.url,
+                disabled:
+                  mapStyle.inputStyle.error ||
+                  !mapStyle.inputStyle.url ||
+                  !mapStyle.inputStyle.label,
                 children: 'modal.button.addStyle'
               }
             };

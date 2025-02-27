@@ -8,7 +8,12 @@ import {fitBounds} from '@math.gl/web-mercator';
 import deepmerge from 'deepmerge';
 import pick from 'lodash.pick';
 
-import {getCenterAndZoomFromBounds, validateBounds, MAPBOX_TILE_SIZE} from '@kepler.gl/utils';
+import {
+  getCenterAndZoomFromBounds,
+  validateBounds,
+  MAPBOX_TILE_SIZE,
+  validateViewPort
+} from '@kepler.gl/utils';
 import {MapStateActions, ReceiveMapConfigPayload, ActionTypes} from '@kepler.gl/actions';
 import {MapState, Bounds, Viewport} from '@kepler.gl/types';
 
@@ -101,7 +106,8 @@ export const updateMapUpdater = (
   state: MapState,
   action: MapStateActions.UpdateMapUpdaterAction
 ): MapState => {
-  const {viewport, mapIndex = 0} = action.payload;
+  const {viewport: inputViewport, mapIndex = 0} = action.payload;
+  const viewport = validateViewPort(inputViewport);
 
   if (state.isViewportSynced) {
     // The `updateViewport` function is typed as (Viewport, Viewport) -> Viewport but here the
@@ -271,6 +277,9 @@ export const receiveMapConfigUpdater = (
       payload: bounds
     });
   }
+
+  // make sure we validate map state before we merge
+  mergedState = validateViewPort(mergedState);
 
   return {
     ...mergedState,

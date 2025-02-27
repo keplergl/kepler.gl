@@ -3,16 +3,20 @@
 
 import keyMirror from 'keymirror';
 
-import {ColorRange, DEFAULT_COLOR_RANGE} from './color-ranges';
-import {AGGREGATION_TYPES} from './default-settings';
-
 import {
+  AGGREGATION_TYPES,
+  DEFAULT_LAYER_COLOR_PALETTE,
+  DEFAULT_LAYER_COLOR_PALETTE_STEPS
+} from './default-settings';
+import {
+  ColorRange,
   ColorUI,
   LayerTextConfig,
   LayerTextLabel,
   LayerVisConfigSettings,
   RGBAColor
 } from '@kepler.gl/types';
+import {ColorPalette, KEPLER_COLOR_PALETTES, colorPaletteToColorRange} from './color-palettes';
 
 export type AggregationTypes = keyof typeof AGGREGATION_TYPES;
 
@@ -25,13 +29,13 @@ export const PROPERTY_GROUPS = keyMirror({
   // for heatmap aggregation
   cell: null,
   precision: null,
-  display: null
+  display: null,
+  interaction: null
 });
 
 export const DEFAULT_LAYER_OPACITY = 0.8;
 export const DEFAULT_HIGHLIGHT_COLOR: RGBAColor = [252, 242, 26, 255];
 export const DEFAULT_LAYER_LABEL = 'new layer';
-export {DEFAULT_COLOR_RANGE};
 
 export const DEFAULT_TEXT_LABEL: LayerTextLabel = {
   field: null,
@@ -45,6 +49,15 @@ export const DEFAULT_TEXT_LABEL: LayerTextLabel = {
   background: false,
   backgroundColor: [0, 0, 200, 255]
 };
+
+const DEFAULT_COLOR_PALETTE = KEPLER_COLOR_PALETTES.find(
+  ({name}) => name === DEFAULT_LAYER_COLOR_PALETTE
+) as ColorPalette;
+
+export const DEFAULT_COLOR_RANGE = colorPaletteToColorRange(DEFAULT_COLOR_PALETTE, {
+  reversed: false,
+  steps: DEFAULT_LAYER_COLOR_PALETTE_STEPS
+});
 
 export const DEFAULT_CUSTOM_PALETTE: ColorRange = {
   name: 'color.customPalette',
@@ -62,12 +75,16 @@ export const DEFAULT_COLOR_UI: ColorUI = {
   showSketcher: false,
   // show color range selection panel
   showDropdown: false,
+  // show color chart
+  showColorChart: false,
   // color range selector config
   colorRangeConfig: {
     type: 'all',
     steps: 6,
     reversed: false,
-    custom: false
+    colorBlindSafe: false,
+    custom: false,
+    customBreaks: false
   }
 };
 
@@ -104,6 +121,21 @@ export const LAYER_VIS_CONFIGS: LayerVisConfigSettings = {
     group: PROPERTY_GROUPS.stroke,
     property: 'trailLength',
     allowCustomValue: true
+  },
+  fadeTrail: {
+    defaultValue: true,
+    type: 'boolean',
+    label: 'layerVisConfigs.fadeTrail',
+    group: PROPERTY_GROUPS.stroke,
+    property: 'fadeTrail'
+  },
+  billboard: {
+    defaultValue: false,
+    type: 'boolean',
+    label: 'layerVisConfigs.billboard',
+    description: 'layerVisConfigs.billboardDescription',
+    group: PROPERTY_GROUPS.display,
+    property: 'billboard'
   },
   // radius is actually radiusScale in deck.gl
   radius: {
@@ -329,7 +361,7 @@ export const LAYER_VIS_CONFIGS: LayerVisConfigSettings = {
     defaultValue: 5,
     label: 'layerVisConfigs.elevationScale',
     isRanged: false,
-    range: [0, 100],
+    range: [0, 1000],
     step: 0.1,
     group: PROPERTY_GROUPS.height,
     property: 'elevationScale',
@@ -451,6 +483,27 @@ export const LAYER_VIS_CONFIGS: LayerVisConfigSettings = {
     label: 'layerVisConfigs.darkModeEnabled',
     property: 'darkBaseMapEnabled',
     group: PROPERTY_GROUPS.display
+  },
+  allowHover: {
+    type: 'boolean',
+    defaultValue: true,
+    label: 'layerVisConfigs.allowHover',
+    group: PROPERTY_GROUPS.interaction,
+    property: 'allowHover'
+  },
+  showNeighborOnHover: {
+    type: 'boolean',
+    defaultValue: false,
+    label: 'layerVisConfigs.showNeighborOnHover',
+    group: PROPERTY_GROUPS.interaction,
+    property: 'showNeighborOnHover'
+  },
+  showHighlightColor: {
+    type: 'boolean',
+    defaultValue: true,
+    label: 'layerVisConfigs.showHighlightColor',
+    group: PROPERTY_GROUPS.interaction,
+    property: 'showHighlightColor'
   }
 };
 
@@ -499,7 +552,8 @@ export const LAYER_TYPES = keyMirror({
   hexagonId: null,
   '3D': null,
   trip: null,
-  s2: null
+  s2: null,
+  vectorTile: null
 });
 
 export const EDITOR_AVAILABLE_LAYERS: string[] = [

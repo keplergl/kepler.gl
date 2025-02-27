@@ -10,11 +10,11 @@ You can add a dispatch function to your component that dispatches actions to a s
 
 ```js
 // component
-import KeplerGl from 'kepler.gl';
+import {KeplerGl} from '@kepler.gl/components';
 import {connect} from 'react-redux';
 
 // import action and forward dispatcher
-import {toggleFullScreen, forwardTo} from 'kepler.gl/actions';
+import {toggleFullScreen, forwardTo} from '@kepler.gl/actions';
 
 
 const MapContainer = props => (
@@ -44,10 +44,10 @@ You can also simply wrap an action into a forward action with the `wrapTo` helpe
 
 ```js
 // component
-import KeplerGl from 'kepler.gl';
+import {KeplerGl} from '@kepler.gl/components';
 
 // action and wrapper
-import {toggleFullScreen, wrapTo} from 'kepler.gl/actions';
+import {toggleFullScreen, wrapTo} from '@kepler.gl/actions';
 
 // create a function to wrapper action payload to 'foo'
 const wrapToMap = wrapTo('foo');

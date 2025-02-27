@@ -18,13 +18,21 @@ type StyledContainerProps = {
 
 // matches only valid coordinates
 const COORDINATE_REGEX_STRING =
-  '^[-+]?([1-8]?\\d(\\.\\d+)?|90(\\.0+)?),\\s*[-+]?(180(\\.0+)?|((1[0-7]\\d)|([1-9]?\\d))(\\.\\d+)?)';
+  '(^[-+]?(?:[1-8]?\\d(?:\\.\\d+)?|90(?:\\.0+)?)),\\s*([-+]?(?:180(?:\\.0+)?|(?:(?:1[0-7]\\d)|(?:[1-9]?\\d))(?:\\.\\d+)?))$';
+
 const COORDINATE_REGEX = RegExp(COORDINATE_REGEX_STRING);
 
 const PLACEHOLDER = 'Enter an address or coordinates, ex 37.79,-122.40';
 
 let debounceTimeout: NodeJS.Timeout | null = null;
 
+/**
+ * Tests if a given query string contains valid coordinates.
+ * @param query The input string to test for coordinates.
+ * @returns A tuple where:
+ *   - If valid, returns `[true, longitude, latitude]`.
+ *   - If invalid, returns `[false, query]`.
+ */
 export const testForCoordinates = (query: string): [true, number, number] | [false, string] => {
   const isValid = COORDINATE_REGEX.test(query.trim());
 
@@ -33,8 +41,10 @@ export const testForCoordinates = (query: string): [true, number, number] | [fal
   }
 
   const tokens = query.trim().split(',');
+  const latitude = Number(tokens[0]);
+  const longitude = Number(tokens[1]);
 
-  return [isValid, Number(tokens[0]), Number(tokens[1])];
+  return [isValid, longitude, latitude];
 };
 
 const StyledContainer = styled.div<StyledContainerProps>`
@@ -87,7 +97,7 @@ const StyledContainer = styled.div<StyledContainerProps>`
     display: flex;
     align-items: center;
 
-    :hover {
+    &:hover {
       cursor: pointer;
       color: ${props => props.theme.textColorHl};
     }
@@ -121,7 +131,6 @@ type IntlProps = {
   intl: IntlShape;
 };
 
-/** @type {import('./geocoder').GeocoderComponent} */
 const GeoCoder: React.FC<GeocoderProps & IntlProps> = ({
   mapboxApiAccessToken,
   className = '',
@@ -155,9 +164,8 @@ const GeoCoder: React.FC<GeocoderProps & IntlProps> = ({
       setInputValue(queryString);
       const resultCoordinates = testForCoordinates(queryString);
       if (resultCoordinates[0]) {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const [_, latitude, longitude] = resultCoordinates;
-        setResults([{center: [latitude, longitude], place_name: queryString}]);
+        const [_isValid, longitude, latitude] = resultCoordinates;
+        setResults([{center: [longitude, latitude], place_name: queryString}]);
       } else {
         if (debounceTimeout) {
           clearTimeout(debounceTimeout);

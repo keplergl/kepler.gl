@@ -1,69 +1,44 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useMemo} from 'react';
-import {PanelLabel, SidePanelSection} from '../../common/styled-components';
-import ItemSelector from '../../common/item-selector/item-selector';
-import DatasetTagFactory from './dataset-tag';
+import React from 'react';
+
 import {FormattedMessage} from '@kepler.gl/localization';
-import {DatasetItemProps, SourceDataSelectorProps} from './types';
 
-const defaultPlaceHolder = 'Select A Dataset';
+import {PanelLabel, SidePanelSection} from '../../common/styled-components';
+import SourceDataSelectorContentFactory from './source-data-selector-content';
+import {SourceDataSelectorProps} from './types';
 
-SourceDataSelectorFactory.deps = [DatasetTagFactory];
+SourceDataSelectorFactory.deps = [SourceDataSelectorContentFactory];
 
 export default function SourceDataSelectorFactory(
-  DatasetTag: ReturnType<typeof DatasetTagFactory>
+  DataSourceSelectorContent: ReturnType<typeof SourceDataSelectorContentFactory>
 ): React.FC<SourceDataSelectorProps> {
-  const DatasetItem = ({value}: DatasetItemProps) => <DatasetTag dataset={value} />;
-
-  const SourceDataSelector: React.FC<SourceDataSelectorProps> = ({
-    dataId,
-    datasets,
-    disabled,
-    onSelect,
-    defaultValue,
-    inputTheme
-  }: SourceDataSelectorProps) => {
-    const dsOptions = useMemo(
-      () =>
-        Object.values(datasets).map(ds => ({
-          label: ds.label,
-          value: ds.id,
-          color: ds.color
-        })),
-      [datasets]
-    );
-
-    const selectedItems = useMemo(
-      () => (dataId ? ((Array.isArray(dataId) && dataId) || [dataId]).map(id => datasets[id]) : []),
-      [dataId, datasets]
-    );
-
-    return (
+  const SourceDataSelector: React.FC<SourceDataSelectorProps> = React.memo(
+    ({
+      dataId,
+      datasets,
+      disabled,
+      onSelect,
+      defaultValue = 'Select A Dataset',
+      inputTheme
+    }: SourceDataSelectorProps) => (
       <SidePanelSection className="data-source-selector">
         <PanelLabel>
           <FormattedMessage id={'misc.dataSource'} />
         </PanelLabel>
-        <ItemSelector
+        <DataSourceSelectorContent
           inputTheme={inputTheme}
-          selectedItems={selectedItems}
-          options={dsOptions}
-          getOptionValue={'value'}
-          filterOption={'label'}
-          multiSelect={false}
-          onChange={onSelect}
-          placeholder={defaultValue}
-          disabled={Boolean(disabled)}
-          displayOption={'label'}
-          DropDownLineItemRenderComponent={DatasetItem}
+          datasets={datasets}
+          dataId={dataId}
+          onSelect={onSelect}
+          defaultValue={defaultValue}
+          disabled={disabled}
         />
       </SidePanelSection>
-    );
-  };
+    )
+  );
 
-  SourceDataSelector.defaultProps = {
-    defaultValue: defaultPlaceHolder
-  };
+  SourceDataSelector.displayName = 'SourceDataSelector';
   return SourceDataSelector;
 }

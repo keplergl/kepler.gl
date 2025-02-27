@@ -11,7 +11,7 @@ import {loadRemoteMap, loadSample, loadSampleConfigurations} from '../actions';
 
 const CustomLoadDataModalFactory = (...deps) => {
   const LoadDataModal = LoadDataModalFactory(...deps);
-  const defaultLoadingMethods = LoadDataModal.defaultProps.loadingMethods;
+  const defaultLoadingMethods = LoadDataModal.defaultLoadingMethods;
   const additionalMethods = {
     remote: {
       id: LOADING_METHODS.remote,
@@ -27,21 +27,23 @@ const CustomLoadDataModalFactory = (...deps) => {
   };
 
   // add more loading methods
-  LoadDataModal.defaultProps = {
-    ...LoadDataModal.defaultProps,
-    loadingMethods: [
-      defaultLoadingMethods.find(lm => lm.id === 'upload'),
-      additionalMethods.remote,
-      defaultLoadingMethods.find(lm => lm.id === 'storage'),
-      additionalMethods.sample
-    ]
-  };
+  const loadingMethods = [
+    defaultLoadingMethods.find(lm => lm.id === 'upload'),
+    defaultLoadingMethods.find(lm => lm.id === 'tileset'),
+    additionalMethods.remote,
+    defaultLoadingMethods.find(lm => lm.id === 'storage'),
+    additionalMethods.sample
+  ];
 
-  return withState([], state => ({...state.demo.app, ...state.demo.keplerGl.map.uiState}), {
-    onLoadSample: loadSample,
-    onLoadRemoteMap: loadRemoteMap,
-    loadSampleConfigurations
-  })(LoadDataModal);
+  return withState(
+    [],
+    state => ({...state.demo.app, ...state.demo.keplerGl.map.uiState, loadingMethods}),
+    {
+      onLoadSample: loadSample,
+      onLoadRemoteMap: loadRemoteMap,
+      loadSampleConfigurations
+    }
+  )(LoadDataModal);
 };
 
 CustomLoadDataModalFactory.deps = LoadDataModalFactory.deps;

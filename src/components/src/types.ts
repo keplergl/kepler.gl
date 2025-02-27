@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {ComponentType} from 'react';
+import React, {HTMLAttributes, PropsWithChildren} from 'react';
 import {MapStyle} from '@kepler.gl/reducers';
 import {Layer, LayerClassesType} from '@kepler.gl/layers';
 import {Filter, InteractionConfig, UiState} from '@kepler.gl/types';
@@ -14,11 +14,13 @@ import {
 } from '@kepler.gl/actions';
 import {Datasets} from '@kepler.gl/table';
 
+export type BaseComponentProps = PropsWithChildren<HTMLAttributes<unknown>>;
+
 export type SidePanelItem = {
   id: string;
   label: string;
-  iconComponent: ComponentType<any>;
-  component: ComponentType<any>;
+  iconComponent: React.ComponentType<any>;
+  component: React.ComponentType<any>;
 };
 
 export type SidePanelProps = {
@@ -40,14 +42,9 @@ export type SidePanelProps = {
   mapStateActions: typeof MapStateActions;
   mapStyleActions: typeof MapStyleActions;
   uiState: UiState;
-  availableProviders: {hasShare?: boolean; hasStorage?: boolean};
+  availableProviders: {[k: string]: {hasShare?: boolean; hasStorage?: boolean}};
   mapSaved?: string | null;
   panels?: SidePanelItem[];
   onSaveMap?: () => void;
   version: string;
-};
-
-export type DatasetAttribution = {
-  title: string;
-  url: string;
 };

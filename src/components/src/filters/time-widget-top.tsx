@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import React, {useCallback, useMemo} from 'react';
-import styled from 'styled-components';
+import styled, {IStyledComponent} from 'styled-components';
 import {Clock, Close, LineChart, ArrowDown, ArrowUp} from '../common/icons';
 import FieldSelectorFactory from '../common/field-selector';
 import {SelectTextBold, IconRoundSmall, CenterFlexbox} from '../common/styled-components';
@@ -11,7 +11,7 @@ import {Field} from '@kepler.gl/types';
 
 const TOP_SECTION_HEIGHT = '36px';
 
-const TopSectionWrapper = styled.div.attrs({
+const TopSectionWrapper: IStyledComponent<'web', TopSectionWrapperProps> = styled.div.attrs({
   className: 'time-widget--top'
 })<TopSectionWrapperProps>`
   display: flex;
@@ -34,8 +34,8 @@ const TopSectionWrapper = styled.div.attrs({
       padding: 4px 10px 4px 4px;
       border-color: transparent;
 
-      :active,
-      :focus,
+      &:active,
+      &:focus,
       &.focus,
       &.active {
         background: transparent;
@@ -89,7 +89,6 @@ function TimeWidgetTopFactory(FieldSelector: ReturnType<typeof FieldSelectorFact
     readOnly,
     datasets,
     setFilterPlot,
-    index,
     onClose,
     isMinified,
     onToggleMinify
@@ -102,8 +101,8 @@ function TimeWidgetTopFactory(FieldSelector: ReturnType<typeof FieldSelectorFact
       [datasets, filter.dataId]
     );
     const _setFilterPlotYAxis = useCallback(
-      value => setFilterPlot(index, {yAxis: value}),
-      [setFilterPlot, index]
+      value => setFilterPlot({yAxis: value}),
+      [setFilterPlot]
     );
 
     return (
@@ -123,6 +122,7 @@ function TimeWidgetTopFactory(FieldSelector: ReturnType<typeof FieldSelectorFact
               <FieldSelector
                 fields={yAxisFields}
                 placement="top"
+                id="selected-time-widget-field"
                 value={filter.yAxis ? filter.yAxis.name : null}
                 onSelect={_setFilterPlotYAxis}
                 placeholder="placeholder.yAxis"

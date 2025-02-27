@@ -36,8 +36,8 @@ const StyledInput = styled.input`
   outline: 0;
   font-size: ${props => props.theme.inputFontSize};
 
-  :active,
-  :focus,
+  &:active,
+  &:focus,
   &.focus,
   &.active {
     outline: 0;

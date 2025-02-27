@@ -173,7 +173,7 @@ export const Container = styled.div<ContainerProps>`
     }
   }
 
-  :focus {
+  &:focus {
     outline: none;
   }
 `;
@@ -194,7 +194,7 @@ const columnWidthFunction =
   };
 
 interface GetRowCellProps {
-  dataContainer: DataContainerInterface;
+  dataContainer: DataContainerInterface | null;
   columns: (string & {ghost?: boolean})[];
   column: string;
   colMeta;
@@ -212,7 +212,7 @@ const defaultGetRowCell = (
   const rowIdx = sortOrder && sortOrder.length ? get(sortOrder, rowIndex) : rowIndex;
   const {type} = colMeta[column];
 
-  const value = dataContainer.valueAt(rowIdx, columns.indexOf(column));
+  const value = dataContainer?.valueAt(rowIdx, columns.indexOf(column));
   return value === null || value === undefined || value === ''
     ? ''
     : formatter
@@ -237,7 +237,7 @@ const StyledStatsControl = styled.div<StatsControlProps>`
   font-size: 12px;
   color: ${props => props.theme.activeColor};
   background-color: ${props => props.theme.headerCellStatsControlBackground};
-  :hover {
+  &:hover {
     cursor: pointer;
   }
 
@@ -279,8 +279,8 @@ interface TableSectionProps {
   isPinned?: boolean;
   columns: (string & {ghost?: boolean})[];
   headerGridProps?;
-  fixedWidth?: number;
-  fixedHeight?: number;
+  fixedWidth?: number | null;
+  fixedHeight?: number | null;
   onScroll?: (params: OnScrollParams) => void;
   scrollTop?: number;
   dataGridProps: {
@@ -381,15 +381,15 @@ export interface DataTableProps {
   cellSizeCache?: CellSizeCache;
   pinnedColumns?: string[];
   columns: (string & {ghost?: boolean})[];
-  fixedWidth?: number;
+  fixedWidth?: number | null;
   theme?: any;
-  dataContainer: DataContainerInterface;
-  fixedHeight?: number;
+  dataContainer: DataContainerInterface | null;
+  fixedHeight?: number | null;
   colMeta: ColMeta;
   sortColumn: SortColumn;
   sortTableColumn: (column: string, mode?: string) => void;
   pinTableColumn: (column: string) => void;
-  setColumnDisplayFormat: (formats: {[key: string]: string}) => void;
+  setColumnDisplayFormat?: (formats: {[key: string]: string}) => void;
   copyTableColumn: (column: string) => void;
   sortOrder?: number[] | null;
   showStats?: boolean;
@@ -405,7 +405,9 @@ interface DataTableState {
 }
 
 DataTableFactory.deps = [HeaderCellFactory];
-function DataTableFactory(HeaderCell: ReturnType<typeof HeaderCellFactory>) {
+function DataTableFactory(
+  HeaderCell: ReturnType<typeof HeaderCellFactory>
+): React.ComponentType<DataTableProps> {
   class DataTable extends Component<DataTableProps, DataTableState> {
     static defaultProps = {
       dataContainer: null,
@@ -422,6 +424,7 @@ function DataTableFactory(HeaderCell: ReturnType<typeof HeaderCellFactory>) {
 
     pinnedGrid: HTMLDivElement | null = null;
     unpinnedGrid: HTMLDivElement | null = null;
+    hasMounted = false;
 
     state: DataTableState = {
       cellSizeCache: {},
@@ -430,6 +433,7 @@ function DataTableFactory(HeaderCell: ReturnType<typeof HeaderCellFactory>) {
     };
 
     componentDidMount() {
+      this.hasMounted = true;
       window.addEventListener('resize', this.scaleCellsToWidth);
       this.scaleCellsToWidth();
     }
@@ -444,11 +448,8 @@ function DataTableFactory(HeaderCell: ReturnType<typeof HeaderCellFactory>) {
     }
 
     componentWillUnmount() {
+      this.hasMounted = false;
       window.removeEventListener('resize', this.scaleCellsToWidth);
-      // fix Warning: Can't perform a React state update on an unmounted component
-      this.setState = () => {
-        return;
-      };
     }
 
     root = createRef<HTMLDivElement>();
@@ -458,12 +459,16 @@ function DataTableFactory(HeaderCell: ReturnType<typeof HeaderCellFactory>) {
       !Array.isArray(pinnedColumns) ? columns : columns.filter(c => !pinnedColumns.includes(c))
     );
 
-    toggleMoreOptions = moreOptionsColumn =>
-      this.setState({
-        moreOptionsColumn:
-          this.state.moreOptionsColumn === moreOptionsColumn ? null : moreOptionsColumn
-      });
-    toggleShowStats = () => this.setState({showStats: !this.state.showStats});
+    toggleMoreOptions = moreOptionsColumn => {
+      if (this.hasMounted)
+        this.setState({
+          moreOptionsColumn:
+            this.state.moreOptionsColumn === moreOptionsColumn ? null : moreOptionsColumn
+        });
+    };
+    toggleShowStats = () => {
+      if (this.hasMounted) this.setState({showStats: !this.state.showStats});
+    };
     getCellSizeCache = () => {
       const {cellSizeCache: propsCache = {}, fixedWidth, pinnedColumns = []} = this.props;
       const unpinnedColumns = this.unpinnedColumns(this.props);
@@ -486,7 +491,7 @@ function DataTableFactory(HeaderCell: ReturnType<typeof HeaderCellFactory>) {
     };
 
     doScaleCellsToWidth = () => {
-      this.setState(this.getCellSizeCache());
+      if (this.hasMounted) this.setState(this.getCellSizeCache());
     };
 
     scaleCellsToWidth = debounce(this.doScaleCellsToWidth, 300);
@@ -695,7 +700,7 @@ function DataTableFactory(HeaderCell: ReturnType<typeof HeaderCellFactory>) {
     }
   }
 
-  return withTheme(DataTable) as React.ComponentType<DataTableProps>;
+  return withTheme(DataTable as React.ComponentType<DataTableProps>);
 }
 
 export default DataTableFactory;

@@ -167,14 +167,14 @@ export const parsedConfigV0 = {
             colorRange: {
               category: 'ColorBrewer',
               colors: ['#ffffcc', '#d9f0a3', '#addd8e', '#78c679', '#31a354', '#006837'],
-              name: 'ColorBrewer YlGn-6',
+              name: 'YlGn',
               reversed: false,
               type: 'sequential'
             },
             strokeColorRange: {
               category: 'ColorBrewer',
               colors: ['#ffffcc', '#d9f0a3', '#addd8e', '#78c679', '#31a354', '#006837'],
-              name: 'ColorBrewer YlGn-6',
+              name: 'YlGn',
               reversed: false,
               type: 'sequential'
             },

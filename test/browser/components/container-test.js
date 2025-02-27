@@ -141,7 +141,12 @@ test('Components -> Container -> Mount with mint:true', t => {
 
   // unmount
   wrapper.unmount();
-  expectedActions0 = {type: '@@kepler.gl/DELETE_ENTRY', payload: 'milkshake'};
+  expectedActions0 = {
+    type: '@@kepler.gl/DELETE_ENTRY',
+    payload: {
+      id: 'milkshake'
+    }
+  };
 
   actions = store.getActions();
   t.deepEqual(actions, [expectedActions0], 'should call unmount');
@@ -244,13 +249,15 @@ test('Components -> Container -> Mount then rename', t => {
   // mount with mint: false
   t.doesNotThrow(() => {
     wrapper = mount(
-      <Container
-        getState={s => s.smoothie}
-        id={testId.id}
-        mapboxApiAccessToken="hello.world"
-        dispatch={dispatch}
-        store={store}
-      />
+      <Provider store={store}>
+        <Container
+          getState={s => s.smoothie}
+          id={testId.id}
+          mapboxApiAccessToken="hello.world"
+          dispatch={dispatch}
+          store={store}
+        />
+      </Provider>
     );
   }, 'Should not throw error when mount');
 
@@ -283,14 +290,24 @@ test('Components -> Container -> Mount then rename', t => {
   };
   t.deepEqual(nextState, expectedState, 'should register milkshake to root reducer');
 
-  wrapper.setProps({id: 'milkshake-2'});
-  // actions = store.getActions();
+  wrapper.setProps({
+    children: (
+      <Container
+        getState={s => s.smoothie}
+        id={'milkshake-2'}
+        mapboxApiAccessToken="hello.world"
+        dispatch={dispatch}
+        store={store}
+      />
+    )
+  });
+
   const expectedActions1 = {
     type: '@@kepler.gl/RENAME_ENTRY',
     payload: {oldId: 'milkshake', newId: 'milkshake-2'}
   };
 
-  t.deepEqual(store.getActions().pop(), expectedActions1, 'should rename entry');
+  t.deepEqual(store.getActions().pop(), expectedActions1, 'should rename entry ');
 
   const nextState1 = appReducer(nextState, expectedActions1);
   const expectedState1 = {
@@ -303,7 +320,12 @@ test('Components -> Container -> Mount then rename', t => {
   // unmount
   wrapper.unmount();
 
-  const expectedActions2 = {type: '@@kepler.gl/DELETE_ENTRY', payload: 'milkshake-2'};
+  const expectedActions2 = {
+    type: '@@kepler.gl/DELETE_ENTRY',
+    payload: {
+      id: 'milkshake-2'
+    }
+  };
 
   t.deepEqual(store.getActions().pop(), expectedActions2, 'should call unmount milkshake-2');
 

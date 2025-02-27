@@ -87,6 +87,7 @@ test('#LineLayer -> formatLayerData', t => {
             }
           ],
           getFilterValue: () => {},
+          getFiltered: () => {},
           getColor: () => {},
           getTargetColor: () => {},
           getWidth: () => {}
@@ -147,6 +148,7 @@ test('#LineLayer -> formatLayerData', t => {
         const expectedLayerData = {
           data: [],
           getFilterValue: () => {},
+          getFiltered: () => {},
           getColor: () => {},
           getTargetColor: () => {},
           getWidth: () => {}
@@ -212,6 +214,7 @@ test('#LineLayer -> formatLayerData', t => {
             }
           ],
           getFilterValue: () => {},
+          getFiltered: () => {},
           getColor: () => {},
           getTargetColor: () => {},
           getWidth: () => {}

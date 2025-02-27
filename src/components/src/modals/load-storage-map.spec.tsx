@@ -4,12 +4,16 @@
 // @ts-nocheck
 import React from 'react';
 import {fireEvent, waitFor} from '@testing-library/react';
+import InfoHelperFactory from '../common/info-helper';
+import CloudHeaderFactory from './cloud-components/cloud-header';
 import LoadStorageMapFactory from './load-storage-map';
 import {renderWithTheme} from 'test/helpers/component-jest-utils';
 import {useCloudListProvider} from '../hooks/use-cloud-list-provider';
 import {dataTestIds} from '@kepler.gl/constants';
 
-const LoadStorageMap = LoadStorageMapFactory();
+const InfoHelper = InfoHelperFactory();
+const CloudHeader = CloudHeaderFactory(InfoHelper);
+const LoadStorageMap = LoadStorageMapFactory(CloudHeader);
 
 const DEFAULT_MAPS = [
   {

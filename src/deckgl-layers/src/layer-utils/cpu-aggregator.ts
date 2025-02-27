@@ -126,19 +126,28 @@ export function getDimensionValueDomain(this: CPUAggregator, step, props, dimens
     return;
   }
 
-  // for log and sqrt scale, returns linear domain by default
-  // TODO: support other scale function domain in bin sorter
-  const valueDomain = this.state.dimensions[key].sortedBins.getValueDomainByScale(
-    props[scaleType.prop],
-    [props[lowerPercentile.prop], props[upperPercentile.prop]]
-  );
+  let valueDomain =
+    // for log and sqrt scale, returns linear domain by default
+    // TODO: support other scale function domain in bin sorter
+    this.state.dimensions[key].sortedBins.getValueDomainByScale(props[scaleType.prop], [
+      props[lowerPercentile.prop],
+      props[upperPercentile.prop]
+    ]);
+
+  if (props.colorScaleType === 'custom' && props.colorMap) {
+    // for custom scale, return custom breaks as value domain directly
+    valueDomain = props.colorMap.reduce(
+      (prev, cur) => (Number.isFinite(cur[0]) ? prev.concat(cur[0]) : prev),
+      []
+    );
+  }
 
   this._setDimensionState(key, {valueDomain});
 }
 
 export function getDimensionScale(this: CPUAggregator, step, props, dimensionUpdater) {
   const {key} = dimensionUpdater;
-  const {domain, range, scaleType} = step.triggers;
+  const {domain, range, scaleType, fixed} = step.triggers;
   const {onSet} = step;
   if (!this.state.dimensions[key].valueDomain) {
     // the previous step should set valueDomain, if not, something went wrong
@@ -147,13 +156,17 @@ export function getDimensionScale(this: CPUAggregator, step, props, dimensionUpd
 
   const dimensionRange = props[range.prop];
   const dimensionDomain = props[domain.prop] || this.state.dimensions[key].valueDomain;
+  const dimensionFixed = Boolean(fixed && props[fixed.prop]);
 
   const scaleFunctor = getScaleFunctor(scaleType && props[scaleType.prop])();
 
-  const scaleFunc = scaleFunctor.domain(dimensionDomain).range(dimensionRange);
+  const scaleFunc = scaleFunctor
+    .domain(dimensionDomain)
+    .range(dimensionFixed ? dimensionDomain : dimensionRange);
 
   if (typeof onSet === 'object' && typeof props[onSet.props] === 'function') {
-    props[onSet.props](scaleFunc.domain());
+    const sortedBins = this.state.dimensions[key].sortedBins;
+    props[onSet.props]({domain: scaleFunc.domain(), aggregatedBins: sortedBins.binMap});
   }
   this._setDimensionState(key, {scaleFunc});
 }
@@ -224,7 +237,10 @@ function getSubLayerAccessor(dimensionState, dimension) {
     const cv = bin && bin.value;
     const domain = scaleFunc.domain();
 
-    const isValueInDomain = cv >= domain[0] && cv <= domain[domain.length - 1];
+    const isValueInDomain =
+      scaleFunc.scaleType === 'custom'
+        ? cv >= sortedBins.minValue && cv <= sortedBins.maxValue
+        : cv >= domain[0] && cv <= domain[domain.length - 1];
 
     // if cell value is outside domain, set alpha to 0
     return isValueInDomain ? scaleFunc(cv) : dimension.nullValue;
@@ -356,6 +372,7 @@ export const defaultElevationDimension: DimensionType<number> = {
     {
       key: 'getScaleFunc',
       triggers: {
+        fixed: {prop: 'elevationFixed'},
         domain: {prop: 'elevationDomain'},
         range: {prop: 'elevationRange'},
         scaleType: {prop: 'elevationScaleType'}

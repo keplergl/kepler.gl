@@ -7,9 +7,12 @@ import {Auth0Client} from '@auth0/auth0-spa-js';
 
 const NAME = 'foursquare';
 const DISPLAY_NAME = 'Foursquare';
+const STORAGE_MESSAGE = 'modal.loadStorageMap.foursquareStorageMessage';
+
 const APP_NAME = 'Kepler.gl';
 
 const FOURSQUARE_PRIVATE_STORAGE_ENABLED = true;
+const FOURSQUARE_SHARING_ENABLED = false;
 const FOURSQUARE_AUTH_AUDIENCE = 'https://foursquare.com/api/';
 const FOURSQUARE_AUTH_SCOPE = 'openid profile email';
 
@@ -35,6 +38,22 @@ function convertFSQModelToMapItem(model, baseApi) {
   };
 }
 
+/**
+ * Custom Auth0 popup window to change window height to fit FSQ auth window.
+ */
+export const openPopup = url => {
+  const width = 400;
+  const height = 765;
+  const left = window.screenX + (window.innerWidth - width) / 2;
+  const top = window.screenY + (window.innerHeight - height) / 2;
+
+  return window.open(
+    url,
+    'auth0:authorize:popup',
+    `left=${left},top=${top},width=${width},height=${height},resizable,scrollbars=yes,status=1`
+  );
+};
+
 function extractMapFromFSQResponse(response) {
   const {
     latestState: {data}
@@ -44,7 +63,7 @@ function extractMapFromFSQResponse(response) {
 
 export default class FoursquareProvider extends Provider {
   constructor({clientId, authDomain, apiURL, userMapsURL}) {
-    super({name: NAME, displayName: DISPLAY_NAME, icon: FSQIcon});
+    super({name: NAME, displayName: DISPLAY_NAME, storageMessage: STORAGE_MESSAGE, icon: FSQIcon});
     this.icon = FSQIcon;
     this.appName = APP_NAME;
     this.apiURL = apiURL;
@@ -54,6 +73,7 @@ export default class FoursquareProvider extends Provider {
       clientId,
       scope: FOURSQUARE_AUTH_SCOPE,
       authorizationParams: {
+        prompt: 'login',
         redirect_uri: window.location.origin,
         audience: FOURSQUARE_AUTH_AUDIENCE
       },
@@ -69,12 +89,16 @@ export default class FoursquareProvider extends Provider {
     return FOURSQUARE_PRIVATE_STORAGE_ENABLED;
   }
 
+  hasSharingUrl() {
+    return FOURSQUARE_SHARING_ENABLED;
+  }
+
   async getUser() {
     return this._auth0.getUser();
   }
 
   async login() {
-    return this._auth0.loginWithPopup();
+    return this._auth0.loginWithPopup(undefined, {popup: openPopup()});
   }
 
   async logout() {
@@ -85,12 +109,16 @@ export default class FoursquareProvider extends Provider {
   }
 
   async uploadMap({mapData, options = {}}) {
-    // TODO: handle replace
-    const mode = options.overwrite ? 'overwrite' : 'add';
     const method = options.overwrite ? 'PUT' : 'POST';
     const {map, thumbnail} = mapData;
 
-    const {title = '', description = '', id} = map.info;
+    const {title = '', description = '', loadParams} = map.info;
+    
+    const mapIdToOverwrite = options.mapIdToOverwrite || loadParams?.id;
+    if(options.overwrite && !mapIdToOverwrite){
+      throw new Error("Foursquare storage provider: no map id to overwrite");
+    }
+
     const headers = await this.getHeaders();
     const payload = {
       name: title,
@@ -101,8 +129,22 @@ export default class FoursquareProvider extends Provider {
       }
     };
 
+
+
+    // To overwrite map.latestState we have to fetch the map first
+    if(options.overwrite){
+      const response = await fetch(`${this.apiURL}/v1/maps/${mapIdToOverwrite}`, {
+        method: "GET",
+        headers
+      });
+
+      const data = await response.json();
+      payload.latestState = data.latestState;
+      payload.latestState.data = map;
+    }
+
     const mapResponse = await fetch(
-      `${this.apiURL}/v1/maps${mode === 'overwrite' ? `/${id}` : ''}`,
+      `${this.apiURL}/v1/maps${options.overwrite ? `/${mapIdToOverwrite}` : ''}`,
       {
         method,
         headers,
@@ -110,9 +152,10 @@ export default class FoursquareProvider extends Provider {
       }
     );
 
-    const createMap = await mapResponse.json();
+    const createdMap = await mapResponse.json();
 
-    await fetch(`${this.apiURL}/v1/maps/${createMap.id}/thumbnail`, {
+    if(!options.overwrite){
+    await fetch(`${this.apiURL}/v1/maps/${createdMap.id}/thumbnail`, {
       method: 'PUT',
       headers: {
         ...headers,
@@ -120,8 +163,11 @@ export default class FoursquareProvider extends Provider {
       },
       body: thumbnail
     });
+  }
 
-    return map;
+    // pass through fsq map id
+    const newMapData = extractMapFromFSQResponse(createdMap);
+    return {...newMapData, info: {...newMapData.info, id: createdMap.id}};
   }
 
   async listMaps() {
@@ -135,13 +181,23 @@ export default class FoursquareProvider extends Provider {
       }
     );
     const data = await response.json();
-    return data.items.map(map => convertFSQModelToMapItem(map, `${this.apiURL}/v1/maps`));
+    return (data?.items || []).map(map => convertFSQModelToMapItem(map, `${this.apiURL}/v1/maps`));
   }
 
   async downloadMap(loadParams) {
-    const {id} = loadParams;
+    let {id, path} = loadParams;
     if (!id) {
-      return Promise.reject('No Map is was provider as part of loadParams');
+      // try to get map id from foursquare map path
+      if (typeof path === 'string') {
+        const pathId = /((\w{4,12}-?)){5}/.exec(path)[0];
+        if (pathId) {
+          id = pathId;
+        }
+      }
+    }
+
+    if (!id) {
+      return Promise.reject('No Map id was provider as part of loadParams');
     }
     const headers = await this.getHeaders();
 
@@ -160,7 +216,7 @@ export default class FoursquareProvider extends Provider {
 
   getMapUrl(loadParams) {
     const {id} = loadParams;
-    return `${this.apiURL}/v1/maps/${id}`;
+    return id ? `${this.apiURL}/v1/maps/${id}` : null;
   }
 
   getManagementUrl() {

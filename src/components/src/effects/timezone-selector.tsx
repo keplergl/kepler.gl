@@ -62,7 +62,7 @@ function TimezoneSelectorFactory() {
     );
   };
 
-  return withTheme(TimezoneTypeSelector);
+  return withTheme(TimezoneTypeSelector) as React.FC<Omit<TimezoneSelectorProps, 'theme'>>;
 }
 
 export default TimezoneSelectorFactory;

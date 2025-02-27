@@ -14,8 +14,12 @@ function RangeFilterPanelFactory(
   RangeFilterComponent: ReturnType<typeof RangeFilterFactory>
 ) {
   const RangeFilterPanel: FilterPanelComponent<RangeFilter> = React.memo(
-    ({idx, datasets, allAvailableFields, filter, removeFilter, setFilter}) => {
+    ({idx, datasets, allAvailableFields, filter, removeFilter, setFilter, setFilterPlot}) => {
       const onSetFilter = useCallback(value => setFilter(idx, 'value', value), [idx, setFilter]);
+      const onSetFilterPlot = useCallback(
+        (newProp, valueIndex) => setFilterPlot(idx, newProp, valueIndex),
+        [idx, setFilterPlot]
+      );
 
       return (
         <div className="range-filter-panel">
@@ -29,7 +33,11 @@ function RangeFilterPanelFactory(
           >
             {filter.type && (
               <div className="filter-panel__filter">
-                <RangeFilterComponent filter={filter} setFilter={onSetFilter} />
+                <RangeFilterComponent
+                  filter={filter}
+                  setFilter={onSetFilter}
+                  setFilterPlot={onSetFilterPlot}
+                />
               </div>
             )}
           </FieldPanelWithFieldSelect>

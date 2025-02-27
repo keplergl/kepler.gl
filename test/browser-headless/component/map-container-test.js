@@ -15,20 +15,27 @@ import {
   MapViewStateContextProvider
 } from '@kepler.gl/components';
 // import {Map} from 'react-map-gl'; // see other TODO below
-import Tippy from '@tippyjs/react/headless';
 import {gl, InteractionTestRunner} from '@deck.gl/test-utils';
+
+import {Provider} from 'react-redux';
+import configureStore from 'redux-mock-store';
 
 import {mockKeplerProps, expectedLayerHoverProp} from '../../helpers/mock-state';
 import {act} from 'react-dom/test-utils';
+import {STYLED_COMPONENTS_DUPLICATED_ENTRIES} from '../../helpers/utils';
 
 const MapContainer = appInjector.get(MapContainerFactory);
 const MapPopover = appInjector.get(MapPopoverFactory);
 const MapControl = appInjector.get(MapControlFactory);
 const initialProps = mapFieldsSelector(mockKeplerProps);
 
+const initialState = {mapState: {latitude: 0, longitude: 0}};
+const mockStore = configureStore();
+
 test('MapContainerFactory - display all options', t => {
   const onMapStyleLoaded = sinon.spy();
   const onLayerClick = sinon.spy();
+  const store = mockStore(initialState);
 
   const props = {
     ...initialProps,
@@ -46,11 +53,13 @@ test('MapContainerFactory - display all options', t => {
   let wrapper;
   t.doesNotThrow(() => {
     wrapper = mountWithTheme(
-      <IntlWrapper>
-        <MapViewStateContextProvider mapState={props.mapState}>
-          <MapContainer {...props} />
-        </MapViewStateContextProvider>
-      </IntlWrapper>
+      <Provider store={store}>
+        <IntlWrapper>
+          <MapViewStateContextProvider mapState={props.mapState}>
+            <MapContainer {...props} />
+          </MapViewStateContextProvider>
+        </IntlWrapper>
+      </Provider>
     );
   }, 'MapContainer should not fail');
 
@@ -78,14 +87,18 @@ test('MapContainerFactory - _renderDeckOverlay', t => {
     ...initialProps,
     mapboxApiAccessToken: 'pyx-11'
   };
+  const store = mockStore(initialState);
+
   let wrapper;
   t.doesNotThrow(() => {
     wrapper = mountWithTheme(
-      <IntlWrapper>
-        <MapViewStateContextProvider mapState={props.mapState}>
-          <MapContainer {...props} />
-        </MapViewStateContextProvider>
-      </IntlWrapper>
+      <Provider store={store}>
+        <IntlWrapper>
+          <MapViewStateContextProvider mapState={props.mapState}>
+            <MapContainer {...props} />
+          </MapViewStateContextProvider>
+        </IntlWrapper>
+      </Provider>
     );
   }, 'MapContainer should not fail');
 
@@ -141,19 +154,14 @@ test('MapContainerFactory - _renderDeckOverlay', t => {
     getTestCases: assert => [
       {
         name: 'hover',
-        events: [{type: 'mousemove', x: 200, y: 200}, {wait: 50}],
+        events: [{type: 'mousemove', x: 200, y: 200}, {wait: 100}],
         onBeforeEvents,
         // eslint-disable-next-line max-statements
-        onAfterEvents: ({layers}) => {
+        onAfterEvents: () => {
           assert.is(hoverEvents.length, 1, 'onHover is called');
           assert.is(hoverEvents[0].info.index, 15, 'object is picked');
           assert.is(hoverEvents[0].info.picked, true, 'object is picked');
           assert.is(hoverEvents[0].info.mapIndex, 0, 'onHover includes mapIndex value');
-          assert.deepEqual(
-            layers[0].state.model.getUniforms().picking_uSelectedColor,
-            [16, 0, 0],
-            'autoHighlight parameter is set'
-          );
 
           [
             // test picking info
@@ -182,6 +190,7 @@ test('MapContainerFactory - _renderDeckOverlay', t => {
           // asign info object to to state and test map popover
           const propsWithHoverInfo = {
             ...initialProps,
+            mapboxApiAccessToken: 'pyx-11',
             visState: {
               ...initialProps.visState,
               hoverInfo: hoverEvents[0].info,
@@ -195,11 +204,13 @@ test('MapContainerFactory - _renderDeckOverlay', t => {
 
           t.doesNotThrow(() => {
             wrapper = mountWithTheme(
-              <IntlWrapper>
-                <MapViewStateContextProvider mapState={propsWithHoverInfo.mapState}>
-                  <MapContainer {...propsWithHoverInfo} />
-                </MapViewStateContextProvider>
-              </IntlWrapper>
+              <Provider store={store}>
+                <IntlWrapper>
+                  <MapViewStateContextProvider mapState={propsWithHoverInfo.mapState}>
+                    <MapContainer {...propsWithHoverInfo} />
+                  </MapViewStateContextProvider>
+                </IntlWrapper>
+              </Provider>
             );
           }, 'render map container with map popover should not fail');
 
@@ -208,34 +219,16 @@ test('MapContainerFactory - _renderDeckOverlay', t => {
 
           // test MapPopoverProp
           testMapPopoverProp(t, mapPopoverProps);
-          // map control and map popover both uses Tippy
-          t.equal(wrapper.find(Tippy).length, 2, 'should render Tippy');
+          t.equal(
+            wrapper.find('.map-popover').length,
+            STYLED_COMPONENTS_DUPLICATED_ENTRIES,
+            'should render .map-popover'
+          );
           t.equal(wrapper.find('table').length, 1, 'should render 1 table');
 
           const table = wrapper.find('table').at(0);
           const rows = table.find('.layer-hover-info__row');
           t.equal(rows.length, 5, 'should render 5 rows');
-          const tippyProps = wrapper.find(Tippy).at(1).props();
-
-          const expectedClientRect = {
-            bottom: 200,
-            height: 0,
-            left: 200,
-            right: 200,
-            top: 200,
-            width: 0,
-            y: 200,
-            x: 200
-          };
-
-          const rect = tippyProps.getReferenceClientRect();
-          delete rect.toJSON;
-
-          t.deepEqual(
-            rect,
-            expectedClientRect,
-            'getReferenceClientRect should return correct rect'
-          );
 
           const expectedTooltips = [
             ['gps_data.utc_timestamp', '2016-09-17 00:24:24'],

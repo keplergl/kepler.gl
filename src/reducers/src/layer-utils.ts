@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import Console from 'global/console';
+
 import {arrayMove} from '@dnd-kit/sortable';
 import {GEOCODER_LAYER_ID} from '@kepler.gl/constants';
 import {Layer as DeckLayer, LayerProps as DeckLayerProps} from '@deck.gl/core/typed';
@@ -9,21 +11,23 @@ import {
   TooltipField,
   CompareType,
   SplitMapLayers,
-  InteractionConfig,
   Editor,
   Feature,
   FeatureSelectionContext,
+  BindedLayerCallbacks,
+  LayerCallbacks,
   Viewport
 } from '@kepler.gl/types';
 import {
   FindDefaultLayerPropsReturnValue,
+  FindDefaultLayerProps,
   Layer,
   LayerClassesType,
   OVERLAY_TYPE_CONST,
   getEditorLayer
 } from '@kepler.gl/layers';
 
-import KeplerTable, {Datasets} from '@kepler.gl/table';
+import KeplerTable from '@kepler.gl/table';
 import {VisState} from '@kepler.gl/schemas';
 import {isFunction, getMapLayersFromSplitMaps, DataRow} from '@kepler.gl/utils';
 import {ThreeDBuildingLayer} from '@kepler.gl/deckgl-layers';
@@ -32,7 +36,18 @@ export type LayersToRender = {
   [layerId: string]: boolean;
 };
 
-export type AggregationLayerHoverData = {points: any[]; colorValue?: any; elevationValue?: any};
+export type AggregationLayerHoverData = {
+  points: any[];
+  colorValue?: any;
+  elevationValue?: any;
+  aggregatedData?: Record<
+    string,
+    {
+      measure: string;
+      value?: any;
+    }
+  >;
+};
 
 export type LayerHoverProp = {
   data: DataRow | AggregationLayerHoverData | null;
@@ -41,6 +56,7 @@ export type LayerHoverProp = {
   layer: Layer;
   primaryData?: DataRow | AggregationLayerHoverData | null;
   compareType?: CompareType;
+  currentTime?: VisState['animationConfig']['currentTime'];
 };
 
 /**
@@ -50,6 +66,7 @@ export function findDefaultLayer(dataset: KeplerTable, layerClasses: LayerClasse
   if (!dataset) {
     return [];
   }
+
   const layerProps = (Object.keys(layerClasses) as Array<keyof LayerClassesType>).reduce(
     (previous, lc) => {
       const result: FindDefaultLayerPropsReturnValue =
@@ -64,16 +81,17 @@ export function findDefaultLayer(dataset: KeplerTable, layerClasses: LayerClasse
         props.map(p => ({
           ...p,
           type: lc,
-          dataId: dataset.id
+          dataId: dataset.id,
+          // set arc layer initial visiblity to false, because arcs tend to be too musy
+          ...(lc === 'arc' || lc === 'line' ? {isVisible: false} : {})
         }))
       );
     },
-    [] as LayerClassesType[keyof LayerClassesType][]
+    [] as (FindDefaultLayerProps & {type: string})[]
   );
 
   // go through all layerProps to create layer
   return layerProps.map(props => {
-    // @ts-expect-error TODO: checking props.type !== null
     const layer = new layerClasses[props.type](props);
     return typeof layer.setInitialLayerConfig === 'function' && dataset.dataContainer
       ? layer.setInitialLayerConfig(dataset)
@@ -123,6 +141,7 @@ export function calculateLayerData<S extends MinVisStateForLayerData>(
     layer.isValid = true;
     layer.errorMessage = null;
   } catch (err) {
+    Console.error(err);
     layer = layer.updateLayerConfig({
       isVisible: false
     });
@@ -142,20 +161,21 @@ export function calculateLayerData<S extends MinVisStateForLayerData>(
 
 /**
  * Calculate props passed to LayerHoverInfo
- * @type {typeof import('./layer-utils').getLayerHoverProp}
  */
 export function getLayerHoverProp({
+  animationConfig,
   interactionConfig,
   hoverInfo,
   layers,
   layersToRender,
   datasets
 }: {
-  interactionConfig: InteractionConfig;
-  hoverInfo: any;
-  layers: Layer[];
+  interactionConfig: VisState['interactionConfig'];
+  animationConfig: VisState['animationConfig'];
+  hoverInfo: VisState['hoverInfo'];
+  layers: VisState['layers'];
   layersToRender: LayersToRender;
-  datasets: Datasets;
+  datasets: VisState['datasets'];
 }): LayerHoverProp | null {
   if (interactionConfig.tooltip.enabled && hoverInfo && hoverInfo.picked) {
     // if anything hovered
@@ -182,7 +202,9 @@ export function getLayerHoverProp({
       const data: DataRow | null = layer.getHoverData(
         object || hoverInfo.index,
         dataContainer,
-        fields
+        fields,
+        animationConfig,
+        hoverInfo
       );
       if (!data) {
         return null;
@@ -193,7 +215,8 @@ export function getLayerHoverProp({
         data,
         fields,
         fieldsToShow,
-        layer
+        layer,
+        currentTime: animationConfig.currentTime
       };
     }
   }
@@ -228,7 +251,8 @@ export function renderDeckGlLayer(props: any, layerCallbacks: {[key: string]: an
     mapState,
     animationConfig,
     objectHovered,
-    visible
+    visible,
+    dataset
   });
 }
 
@@ -320,20 +344,18 @@ export type ComputeDeckLayersProps = {
   };
 };
 
-export function bindLayerCallbacks(layerCallbacks: LayerCallbacks = {}, idx: number) {
+export function bindLayerCallbacks(
+  layerCallbacks: LayerCallbacks = {},
+  idx: number
+): BindedLayerCallbacks {
   return Object.keys(layerCallbacks).reduce(
     (accu, key) => ({
       ...accu,
       [key]: val => layerCallbacks[key](idx, val)
     }),
-    {} as Record<string, (_idx: number, val: any) => void>
+    {} as Record<string, (val: unknown) => void>
   );
 }
-
-export type LayerCallbacks = {
-  onLayerHover?: (idx: number, value: any) => void;
-  onSetLayerDomain?: (idx: number, value: any) => void;
-};
 
 // eslint-disable-next-line complexity
 export function computeDeckLayers(
@@ -451,4 +473,13 @@ export function addLayerToLayerOrder(
   layerId: string
 ): string[] {
   return [layerId, ...layerOrder];
+}
+
+export function getLayerHoverPropValue(
+  data: DataRow | AggregationLayerHoverData | null | undefined,
+  fieldIndex: number
+) {
+  if (!data) return undefined;
+  if (data instanceof DataRow) return data.valueAt(fieldIndex);
+  return data[fieldIndex];
 }

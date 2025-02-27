@@ -11,6 +11,7 @@ export type MapData = {
 export type ExportFileOptions = {
   isPublic?: boolean;
   overwrite?: boolean;
+  mapIdToOverwrite?: string | null;
 };
 export type OnErrorCallBack = (error: Error) => any;
 export type OnSuccessCallBack = (p: {
@@ -31,6 +32,15 @@ export type ExportFileToCloudPayload = {
 /**
  * Input dataset parsed to addDataToMap
  */
+export type ProtoDatasetField = {
+  name: string;
+  type: string;
+  format?: string;
+  displayName?: string;
+  analyzerType?: string;
+  id?: string;
+  metadata?: Record<string, any>;
+};
 export type ProtoDataset = {
   info: {
     id?: string;
@@ -41,14 +51,7 @@ export type ProtoDataset = {
     hidden?: boolean;
   };
   data: {
-    fields: {
-      name: string;
-      type?: string;
-      format?: string;
-      displayName?: string;
-      analyzerType?: string;
-      id?: string;
-    }[];
+    fields: ProtoDatasetField[];
     rows: any[][];
     cols?: any[];
   };

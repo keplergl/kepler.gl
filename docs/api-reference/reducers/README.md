@@ -14,14 +14,14 @@ It is immportant to understand the relationship between __kepler.gl reducer__, _
 ## KeplerGl Reducer
 
 To connect kepler.gl components to your Redux app you'll need the following pieces from the kepler.gl package:
-- Redux Reducer: `keplerGlReducer` imported from `kepler.gl/reducers`
-- React Component: `KeplerGl` imported from `kepler.gl`
+- Redux Reducer: `keplerGlReducer` imported from `@kepler.gl/reducers`
+- React Component: `KeplerGl` imported from `@kepler.gl/components`
 
 These are the only 2 pieces you need to get kepler.gl up and running in your app. When you mount kepler.gl reducer in your app reducer (with `combineReducers`), it will then managers __ALL__ KeplerGl component instances that you add to your app. Each kepler.gl instance state is stored in a instance reduccer.
 
 For instance, if you have 2 kepler.gl components in your App:
 ```js
-import KeplerGl from 'kepler.gl';
+import KeplerGl from '@kepler.gl/components';
 
 const MapApp = () => (
   <div>
@@ -73,7 +73,7 @@ User can import a specific action handler in their root reducer and use it to di
 Here is an example how you can listen to an app action `QUERY_SUCCESS` and call `updateVisDataUpdater` to load data into kepler.gl.
 
 ```js
-import keplerGlReducer, {visStateUpdaters} from 'kepler.gl/reducers';
+import keplerGlReducer, {visStateUpdaters} from '@kepler.gl/reducers';
 
 // Root Reducer
 const reducers = combineReducers({

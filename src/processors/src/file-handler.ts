@@ -5,12 +5,19 @@ import * as arrow from 'apache-arrow';
 import {parseInBatches} from '@loaders.gl/core';
 import {JSONLoader, _JSONPath} from '@loaders.gl/json';
 import {CSVLoader} from '@loaders.gl/csv';
-import {ArrowLoader} from '@loaders.gl/arrow';
+import {GeoArrowLoader} from '@loaders.gl/arrow';
+import {ParquetWasmLoader} from '@loaders.gl/parquet';
 import {Loader} from '@loaders.gl/loader-utils';
-import {generateHashId, isPlainObject, generateHashIdFromString} from '@kepler.gl/utils';
+import {
+  isPlainObject,
+  generateHashIdFromString,
+  getApplicationConfig,
+  getError
+} from '@kepler.gl/utils';
+import {generateHashId} from '@kepler.gl/common-utils';
 import {DATASET_FORMATS} from '@kepler.gl/constants';
-import {LoadedMap, ProcessorResult} from '@kepler.gl/types';
-import {Feature, AddDataToMapPayload} from '@kepler.gl/types';
+import {AddDataToMapPayload, Feature, LoadedMap, ProcessorResult} from '@kepler.gl/types';
+import {KeplerTable} from '@kepler.gl/table';
 import {FeatureCollection} from '@turf/helpers';
 
 import {
@@ -36,6 +43,10 @@ const CSV_LOADER_OPTIONS = {
 const ARROW_LOADER_OPTIONS = {
   shape: 'arrow-table',
   batchDebounceMs: 10 // time to delay between batches, for incremental loading
+};
+
+const PARQUET_LOADER_OPTIONS = {
+  shape: 'arrow-table'
 };
 
 const JSON_LOADER_OPTIONS = {
@@ -72,7 +83,7 @@ export function isArrowTable(table: any): table is arrow.Table {
  * @returns {boolean} - true if data is an ArrowData object type guarded
  */
 export function isArrowData(data: any): boolean {
-  return Array.isArray(data) && Boolean(data[0].data && data[0].schema);
+  return Array.isArray(data) && Boolean(data.length && data[0].data && data[0].schema);
 }
 
 export function isGeoJson(json: unknown): json is Feature | FeatureCollection {
@@ -179,11 +190,12 @@ export async function readFileInBatches({
   loaders: Loader[];
   loadOptions: any;
 }): Promise<AsyncGenerator> {
-  loaders = [JSONLoader, CSVLoader, ArrowLoader, ...loaders];
+  loaders = [JSONLoader, CSVLoader, GeoArrowLoader, ParquetWasmLoader, ...loaders];
   loadOptions = {
     csv: CSV_LOADER_OPTIONS,
     arrow: ARROW_LOADER_OPTIONS,
     json: JSON_LOADER_OPTIONS,
+    parquet: PARQUET_LOADER_OPTIONS,
     metadata: true,
     ...loadOptions
   };
@@ -194,21 +206,29 @@ export async function readFileInBatches({
   return readBatch(progressIterator, file.name);
 }
 
-export function processFileData({
+export async function processFileData({
   content,
   fileCache
 }: {
   content: ProcessFileDataContent;
   fileCache: FileCacheItem[];
 }): Promise<FileCacheItem[]> {
-  return new Promise((resolve, reject) => {
-    const {fileName, data} = content;
-    let format: string | undefined;
-    let processor: ((data: any) => ProcessorResult | LoadedMap | null) | undefined;
+  const {fileName, data} = content;
+  let format: string | undefined;
+  let processor: ((data: any) => ProcessorResult | LoadedMap | null) | undefined;
+  console.log('Processing file', fileName);
+  // generate unique id with length of 4 using fileName string
+  const id = generateHashIdFromString(fileName);
+  // decide on which table class to use based on application config
+  const table = getApplicationConfig().table ?? KeplerTable;
 
-    // generate unique id with length of 4 using fileName string
-    const id = generateHashIdFromString(fileName);
-
+  if (typeof table.getFileProcessor === 'function') {
+    // use custom processors from table class
+    const processorResult = table.getFileProcessor(data);
+    format = processorResult.format;
+    processor = processorResult.processor;
+  } else {
+    // use default processors
     if (isArrowData(data)) {
       format = DATASET_FORMATS.arrow;
       processor = processArrowBatches;
@@ -216,31 +236,37 @@ export function processFileData({
       format = DATASET_FORMATS.keplergl;
       processor = processKeplerglJSON;
     } else if (isRowObject(data)) {
+      // csv file goes here
       format = DATASET_FORMATS.row;
       processor = processRowObject;
     } else if (isGeoJson(data)) {
       format = DATASET_FORMATS.geojson;
       processor = processGeojson;
     }
-
-    if (format && processor) {
-      const result = processor(data);
-
-      resolve([
-        ...fileCache,
-        {
-          data: result,
-          info: {
-            id,
-            label: content.fileName,
-            format
-          }
-        }
-      ]);
+  }
+  if (format && processor) {
+    // eslint-disable-next-line no-useless-catch
+    let result;
+    try {
+      result = await processor(data);
+    } catch (error) {
+      throw new Error(`Can not process uploaded file, ${getError(error as Error)}`);
     }
 
-    reject('Unknown File Format');
-  });
+    return [
+      ...fileCache,
+      {
+        data: result,
+        info: {
+          id,
+          label: content.fileName,
+          format
+        }
+      }
+    ];
+  } else {
+    throw new Error('Can not process uploaded file, unknown file format');
+  }
 }
 
 export function filesToDataPayload(fileCache: FileCacheItem[]): AddDataToMapPayload[] {

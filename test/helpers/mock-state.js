@@ -1,14 +1,17 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import test from 'tape-catch';
+// @ts-nocheck
+
 import cloneDeep from 'lodash.clonedeep';
-import {drainTasksForTesting} from 'react-palm/tasks';
-
-import {getInitialInputStyle, keplerGlReducerCore as keplerGlReducer} from '@kepler.gl/reducers';
-
+import {colorPaletteToColorRange} from '@kepler.gl/constants';
 import {
-  VizColorPalette,
+  getInitialInputStyle,
+  keplerGlReducerCore as keplerGlReducer,
+  syncTimeFilterWithLayerTimelineUpdater
+} from '@kepler.gl/reducers';
+import {
+  KEPLER_COLOR_PALETTES,
   COMPARE_TYPES,
   DEFAULT_LAYER_OPACITY,
   DEFAULT_TEXT_LABEL,
@@ -27,7 +30,16 @@ import {
 } from '@kepler.gl/actions';
 
 // fixtures
-import {dataId as csvDataId, testFields, testAllData} from '../fixtures/test-csv-data';
+import {
+  dataId as csvDataId,
+  testFields,
+  testAllData,
+  testCsvDataSlice1,
+  testCsvDataSlice1Id,
+  testCsvDataSlice2,
+  testCsvDataSlice2Id,
+  syncTimeFilterValue
+} from '../fixtures/test-csv-data';
 import testLayerData from '../fixtures/test-layer-data';
 
 import {fields, rows, geoJsonDataId} from '../fixtures/geojson';
@@ -37,9 +49,22 @@ import {
   config as tripConfig,
   dataId as tripDataId
 } from '../fixtures/test-trip-data';
+import tripCsvData, {
+  tripCsvDataInfo,
+  expectedTripLayerConfig
+} from '../fixtures/test-trip-csv-data';
+import testArcData, {arcDataInfo, config as arcDataConfig} from '../fixtures/test-arc-data';
 import tripGeojson, {tripDataInfo} from '../fixtures/trip-geojson';
-import {processCsvData, processGeojson} from '@kepler.gl/processors';
+import {processCsvData, processGeojson, processRowObject} from '@kepler.gl/processors';
 import {MOCK_MAP_STYLE} from './mock-map-styles';
+import {
+  applyActions,
+  applyCreateTableTasks,
+  applyExistingDatasetTasks,
+  mockCreateNewDataEntry
+} from './mock-state-utils';
+
+export {applyActions, applyCreateTableTasks, applyExistingDatasetTasks, mockCreateNewDataEntry};
 
 const geojsonFields = cloneDeep(fields);
 const geojsonRows = cloneDeep(rows);
@@ -62,14 +87,17 @@ export const geojsonInfo = {
   params: {file: null}
 };
 
-export function applyActions(reducer, initialState, actions) {
-  const actionQ = Array.isArray(actions) ? actions : [actions];
-
-  return actionQ.reduce(
-    (updatedState, {action, payload}) => reducer(updatedState, action(...payload)),
-    initialState
-  );
-}
+export const mockColorRange = {
+  colors: ['#FF000', '#00FF00', '#0000FF'],
+  colorMap: [
+    [1, '#FF0000'],
+    [3, '#00FF00'],
+    [5, '#0000FF']
+  ],
+  colorLegends: {
+    '#FF0000': 'hello'
+  }
+};
 
 // TODO: need to be deleted and imported from raw-states
 export const InitialState = keplerGlReducer(undefined, {});
@@ -96,8 +124,7 @@ export function mockStateWithFileUpload() {
       payload: [[{info: geojsonInfo, data: {fields: geojsonFields, rows: geojsonRows}}]]
     }
   ]);
-  // cleanup tasks created during loadMapStyles
-  drainTasksForTesting();
+
   // replace layer id and color with controlled value for testing
   updatedState.visState.layers.forEach((l, i) => {
     const oldLayerId = l.id;
@@ -112,16 +139,136 @@ export function mockStateWithFileUpload() {
     );
   });
 
-  test(t => {
-    t.equal(updatedState.visState.layers.length, 2, 'should auto create 2 layers');
-    t.end();
-  });
+  return updatedState;
+}
+
+function mockStateWithLayerCustomColorBreaksLegends() {
+  const initialState = cloneDeep(InitialState);
+
+  // load csv and geojson
+  const updatedState = applyActions(keplerGlReducer, initialState, [
+    {
+      action: MapStyleActions.loadMapStyles,
+      payload: [{dark: MOCK_MAP_STYLE}]
+    },
+    {
+      action: addDataToMap,
+      payload: [
+        {
+          datasets: [
+            {
+              info: csvInfo,
+              data: {fields: testFields, rows: testAllData}
+            }
+          ],
+          config: {
+            version: 'v1',
+            config: {
+              visState: {
+                layers: [
+                  {
+                    type: 'point',
+                    id: 'point-layer-0',
+                    config: {
+                      dataId: csvInfo.id,
+                      columns: {
+                        lat: 'gps_data.lat',
+                        lng: 'gps_data.lng'
+                      },
+                      color: [255, 0, 0],
+                      label: 'pickup',
+                      isVisible: true,
+                      visConfig: {
+                        colorRange: mockColorRange
+                      }
+                    },
+                    visualChannels: {
+                      colorField: {
+                        name: 'uid',
+                        type: 'integer'
+                      },
+                      colorScale: 'custom'
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]);
 
   return updatedState;
 }
 
-function mockStateWithTripGeojson() {
+function mockStateWithSyncedTimeFilter() {
   const initialState = cloneDeep(InitialState);
+  // load 2 csv data
+  const updatedState = applyActions(keplerGlReducer, initialState, [
+    {
+      action: MapStyleActions.loadMapStyles,
+      payload: [{dark: MOCK_MAP_STYLE}]
+    },
+    {
+      action: VisStateActions.updateVisData,
+      payload: [
+        [
+          {
+            info: {
+              id: testCsvDataSlice1Id,
+              label: 'hello.csv',
+              color: [255, 0, 0]
+            },
+            data: {fields: testFields, rows: testCsvDataSlice1}
+          }
+        ]
+      ]
+    },
+    {
+      action: VisStateActions.updateVisData,
+      payload: [
+        [
+          {
+            info: {
+              id: testCsvDataSlice2Id,
+              label: 'world.csv',
+              color: [0, 255, 0]
+            },
+            data: {fields: testFields, rows: testCsvDataSlice2}
+          }
+        ]
+      ]
+    },
+    // add 1 filter
+    {action: VisStateActions.addFilter, payload: ['test-csv-data-1']},
+
+    // set filter name to 'time', and value
+    {
+      action: VisStateActions.setFilter,
+      // ['2016-09-17 00:11:56', '2016-09-17 00:21:17']
+      payload: [0, ['name', 'value'], ['gps_data.utc_timestamp', [1474071116000, 1474071677000]]]
+    },
+
+    // set filter name and dataId and index 1
+    {
+      action: VisStateActions.setFilter,
+      payload: [0, ['dataId', 'name'], ['test-csv-data-2', 'gps_data.utc_timestamp'], 1]
+    },
+
+    // set filter name to 'time', and value
+    {
+      action: VisStateActions.setFilter,
+      // ['2016-09-17 00:11:56', '2016-09-17 00:21:17']
+      payload: [0, ['value'], [syncTimeFilterValue]]
+    }
+  ]);
+
+  return updatedState;
+}
+
+export function mockStateWithTripGeojson(state) {
+  const initialState = cloneDeep(state || InitialState);
 
   // load csv and geojson
   const updatedState = applyActions(keplerGlReducer, initialState, [
@@ -145,20 +292,60 @@ function mockStateWithTripGeojson() {
   return updatedState;
 }
 
-function mockStateWithFilters(state) {
+export function mockStateWithTripTable(state) {
+  const initialState = cloneDeep(state || InitialState);
+  const updatedState = applyActions(keplerGlReducer, initialState, [
+    {
+      action: addDataToMap,
+      payload: [
+        {
+          datasets: {info: tripCsvDataInfo, data: processCsvData(tripCsvData)},
+          config: {
+            version: 'v1',
+            config: {
+              visState: {
+                layers: [expectedTripLayerConfig]
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]);
+
+  return updatedState;
+}
+
+export function mockStateWithArcNeighbors(state) {
+  const initialState = cloneDeep(state || InitialState);
+  const updatedState = applyActions(keplerGlReducer, initialState, [
+    {
+      action: addDataToMap,
+      payload: [
+        {
+          datasets: {info: arcDataInfo, data: processRowObject(testArcData)},
+          config: arcDataConfig
+        }
+      ]
+    }
+  ]);
+
+  return updatedState;
+}
+
+// export function mockStateWith
+
+export function mockStateWithFilters(state) {
   const initialState = state || mockStateWithFileUpload();
 
   const prepareState = applyActions(keplerGlReducer, initialState, [
     // add filter
     {action: VisStateActions.addFilter, payload: [testCsvDataId]},
 
-    // set filter to 'time'
-    {action: VisStateActions.setFilter, payload: [0, 'name', 'time']},
-
-    // set filter value
+    // set filter name to 'time', and value
     {
       action: VisStateActions.setFilter,
-      payload: [0, 'value', [1474606800000, 1474617600000]]
+      payload: [0, ['name', 'value'], ['time', [1474606800000, 1474617600000]]]
     },
 
     // set filter animation speed
@@ -171,10 +358,7 @@ function mockStateWithFilters(state) {
     {action: VisStateActions.addFilter, payload: [testGeoJsonDataId]},
 
     // set filter to 'RATE'
-    {action: VisStateActions.setFilter, payload: [1, 'name', 'RATE']},
-
-    // set filter value
-    {action: VisStateActions.setFilter, payload: [1, 'value', ['a']]}
+    {action: VisStateActions.setFilter, payload: [1, ['name', 'value'], ['RATE', ['a']]]}
   ]);
 
   // replace filter id with controlled value for easy testing
@@ -204,7 +388,7 @@ function mockStateWithMultiFilters() {
     // add another filter
     {action: VisStateActions.addFilter, payload: [testGeoJsonDataId]},
 
-    // set filter to 'RATE'
+    // set filter to 'TRIPS'
     {action: VisStateActions.setFilter, payload: [3, 'name', 'TRIPS']},
 
     // set filter value
@@ -351,19 +535,22 @@ export function mockStateWithMultipleH3Layers() {
 function mockStateWithTripData() {
   const initialState = cloneDeep(InitialState);
 
-  return keplerGlReducer(
-    initialState,
-    addDataToMap({
-      datasets: {
-        info: {
-          label: 'Sample Trips',
-          id: tripDataId
-        },
-        data: {fields: tripFields, rows: tripRows}
+  const addDataPayload = {
+    datasets: {
+      info: {
+        label: 'Sample Trips',
+        id: tripDataId
       },
-      config: tripConfig
-    })
-  );
+      data: {fields: tripFields, rows: tripRows}
+    },
+    config: tripConfig
+  };
+  return applyActions(keplerGlReducer, initialState, [
+    {
+      action: addDataToMap,
+      payload: [addDataPayload]
+    }
+  ]);
 }
 
 export function mockStateWithLayerDimensions(state) {
@@ -378,12 +565,11 @@ export function mockStateWithLayerDimensions(state) {
   );
 
   const colorFieldPayload = [layer0, {colorField}, 'color'];
-
-  const colorRangePayload = [
-    layer0,
-    {colorRange: VizColorPalette.find(c => c.name === 'Uber Viz Sequential 2')},
-    'color'
-  ];
+  const colorRange = colorPaletteToColorRange(
+    KEPLER_COLOR_PALETTES.find(({name}) => name === 'Uber Viz Sequential'),
+    {steps: 4}
+  );
+  const colorRangePayload = [layer0, {colorRange}, 'color'];
 
   const textLabelField = initialState.visState.datasets[testCsvDataId].fields.find(
     f => f.name === 'date'
@@ -634,6 +820,7 @@ export const expectedSavedLayer0 = {
       elevationPercentile: [0, 100],
       elevationScale: 5,
       enableElevationZoomFactor: true,
+      fixedHeight: false,
       colorAggregation: 'count',
       sizeAggregation: 'count',
       enable3d: false
@@ -673,6 +860,8 @@ export const expectedLoadedLayer0 = {
       elevationPercentile: [0, 100],
       elevationScale: 5,
       enableElevationZoomFactor: true,
+      fixedHeight: false,
+      // LAYER_VIS_CONFIGS.aggregation.defaultValue is AGGREGATION_TYPES.average,
       colorAggregation: 'count',
       sizeAggregation: 'count',
       enable3d: false
@@ -685,12 +874,21 @@ export const expectedLoadedLayer0 = {
   }
 };
 
+// result of Uber Viz Sequential step 4
+export const expectedColorRangeInLayer = {
+  name: 'Uber Viz Sequential',
+  type: 'sequential',
+  category: 'Uber',
+  colors: ['#00939C', '#6BB5B9', '#AAD7D9', '#E6FAFA']
+};
+
 export const expectedSavedLayer1 = {
   id: 'point-0',
   type: 'point',
   config: {
     dataId: testCsvDataId,
     label: 'gps_data',
+    columnMode: 'points',
     highlightColor: DEFAULT_HIGHLIGHT_COLOR,
     color: [0, 0, 0],
     columns: {
@@ -711,20 +909,19 @@ export const expectedSavedLayer1 = {
     isVisible: true,
     visConfig: {
       radius: 10,
+      billboard: false,
       fixedRadius: false,
       opacity: DEFAULT_LAYER_OPACITY,
       outline: false,
       filled: true,
       thickness: 2,
-      colorRange: {
-        name: 'Uber Viz Sequential 2',
-        type: 'sequential',
-        category: 'Uber',
-        colors: ['#E6FAFA', '#AAD7DA', '#68B4BB', '#00939C']
-      },
+      colorRange: expectedColorRangeInLayer,
       strokeColorRange: DEFAULT_COLOR_RANGE,
       strokeColor: null,
-      radiusRange: [0, 50]
+      radiusRange: [0, 50],
+      allowHover: true,
+      showNeighborOnHover: false,
+      showHighlightColor: true
     }
   },
   visualChannels: {
@@ -746,6 +943,7 @@ export const expectedLoadedLayer1 = {
   config: {
     dataId: testCsvDataId,
     label: 'gps_data',
+    columnMode: 'points',
     highlightColor: DEFAULT_HIGHLIGHT_COLOR,
     color: [0, 0, 0],
     columns: {
@@ -756,20 +954,19 @@ export const expectedLoadedLayer1 = {
     isVisible: true,
     visConfig: {
       radius: 10,
+      billboard: false,
       fixedRadius: false,
       opacity: DEFAULT_LAYER_OPACITY,
       outline: false,
       thickness: 2,
-      colorRange: {
-        name: 'Uber Viz Sequential 2',
-        type: 'sequential',
-        category: 'Uber',
-        colors: ['#E6FAFA', '#AAD7DA', '#68B4BB', '#00939C']
-      },
+      colorRange: expectedColorRangeInLayer,
       strokeColorRange: DEFAULT_COLOR_RANGE,
       filled: true,
       strokeColor: null,
-      radiusRange: [0, 50]
+      radiusRange: [0, 50],
+      allowHover: true,
+      showNeighborOnHover: false,
+      showHighlightColor: true
     },
     colorField: {
       name: 'gps_data.types',
@@ -804,6 +1001,7 @@ export const expectedSavedLayer2 = {
     columns: {
       geojson: '_geojson'
     },
+    columnMode: 'geojson',
     hidden: false,
     isVisible: true,
     visConfig: {
@@ -851,6 +1049,7 @@ export const expectedLoadedLayer2 = {
     columns: {
       geojson: '_geojson'
     },
+    columnMode: 'geojson',
     hidden: false,
     isVisible: true,
     visConfig: {
@@ -902,6 +1101,10 @@ export const StateWH3Layer = mockStateWithH3Layer();
 export const StateWMultiH3Layers = mockStateWithMultipleH3Layers();
 export const StateWithGeocoderDataset = mockStateWithGeocoderDataset();
 export const StateWLayerStyle = mockStateWithLayerStyling();
+export const StateWLayerCustomColorBreaks = mockStateWithLayerCustomColorBreaksLegends();
+export const StateWTripTable = mockStateWithTripTable();
+export const StateWArcNeighbors = mockStateWithArcNeighbors();
+export const StateWSyncedTimeFilter = mockStateWithSyncedTimeFilter();
 
 export const expectedSavedTripLayer = {
   id: 'trip-0',
@@ -911,6 +1114,7 @@ export const expectedSavedTripLayer = {
     label: 'Trip Data',
     highlightColor: DEFAULT_HIGHLIGHT_COLOR,
     color: [0, 0, 0],
+    columnMode: 'geojson',
     columns: {
       geojson: '_geojson'
     },
@@ -921,6 +1125,8 @@ export const expectedSavedTripLayer = {
       thickness: 0.5,
       colorRange: DEFAULT_COLOR_RANGE,
       trailLength: 180,
+      fadeTrail: true,
+      billboard: false,
       sizeRange: [0, 10]
     },
     textLabel: [DEFAULT_TEXT_LABEL]
@@ -974,6 +1180,7 @@ export const mockKeplerProps = mockKeplerPropsWithState({state: StateWLayerStyle
 // hover over data index 15
 // tested in map-container-test
 export const expectedLayerHoverProp = {
+  currentTime: null,
   data: mockKeplerProps.visState.datasets[testCsvDataId].dataContainer.row(15),
   fields: mockKeplerProps.visState.datasets[testCsvDataId].fields,
   fieldsToShow:
@@ -988,3 +1195,20 @@ export const expectedGeojsonLayerHoverProp = {
     mockKeplerProps.visState.interactionConfig.tooltip.config.fieldsToShow[testGeoJsonDataId],
   layer: mockKeplerProps.visState.layers[1]
 };
+
+export function stateWithTimeFilterAndTripLayer() {
+  const initialState = mockStateWithTripData();
+
+  return mockStateWithTripGeojson(initialState);
+}
+
+export function stateWithTimeFilterSyncedWithTripLayer() {
+  const initialState = stateWithTimeFilterAndTripLayer();
+  return {
+    ...initialState,
+    visState: syncTimeFilterWithLayerTimelineUpdater(initialState.visState, {
+      idx: 0,
+      enable: true
+    })
+  };
+}

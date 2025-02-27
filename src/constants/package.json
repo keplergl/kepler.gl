@@ -1,7 +1,7 @@
 {
   "name": "@kepler.gl/constants",
   "author": "Shan He <shan@uber.com>",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "description": "kepler.gl constants used by kepler.gl components, actions and reducers",
   "license": "MIT",
   "main": "dist/index.js",
@@ -22,7 +22,7 @@
     "build": "rm -fr dist && babel src --out-dir dist --source-maps inline --extensions '.ts,.tsx,.js,.jsx' --ignore '**/*.d.ts'",
     "build:umd": "NODE_OPTIONS=--openssl-legacy-provider webpack --config ./webpack/umd.js --progress --env.prod",
     "build:types": "tsc --project ./tsconfig.production.json",
-    "prepublish": "babel-node ../../scripts/license-header/bin --license ../../FILE-HEADER && yarn build && yarn build:umd && yarn build:types",
+    "prepublishOnly": "babel-node ../../scripts/license-header/bin --license ../../FILE-HEADER && yarn build && yarn build:umd && yarn build:types",
     "stab": "mkdir -p dist && touch dist/index.js"
   },
   "files": [
@@ -30,11 +30,18 @@
     "umd"
   ],
   "dependencies": {
-    "@kepler.gl/types": "3.0.0",
+    "@dnd-kit/core": "^6.1.0",
+    "@dnd-kit/modifiers": "^7.0.0",
+    "@kepler.gl/types": "3.1.0",
     "@types/d3-scale": "^3.2.2",
     "@types/keymirror": "^0.1.1",
+    "chroma-js": "2.1.2",
     "colorbrewer": "^1.5.0",
+    "d3-array": "^2.8.0",
+    "d3-color": "^2.0.0",
     "d3-scale": "^3.2.3",
+    "d3-scale-chromatic": "2.0.0",
+    "d3-time": "^2.0.0",
     "global": "^4.3.0",
     "keymirror": "^0.1.1"
   },
@@ -53,5 +60,8 @@
     "node": "18.18.2",
     "yarn": "4.4.0"
   },
-  "packageManager": "yarn@4.4.0"
+  "packageManager": "yarn@4.4.0",
+  "devDependencies": {
+    "@types/d3-time": "^2"
+  }
 }

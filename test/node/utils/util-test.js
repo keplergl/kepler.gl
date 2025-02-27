@@ -1,16 +1,17 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import test from 'tape';
 import {
-  set,
-  toArray,
-  getError,
+  arrayInsert,
+  arrayMove,
   camelToTitle,
   camelize,
   capitalizeFirstLetter,
-  arrayInsert
+  getError,
+  set
 } from '@kepler.gl/utils';
+import {toArray} from '@kepler.gl/common-utils';
+import test from 'tape';
 
 test('Utils -> set', t => {
   const obj1 = {map: {map1: 'world'}};
@@ -89,5 +90,13 @@ test('Utils -> arrayInsert', t => {
   t.deepEqual(arrayInsert([1, 2, 3], 0, 6), [6, 1, 2, 3], 'should insert val at index');
   t.deepEqual(arrayInsert(null, 1, 0), null, 'should insert val at index');
   t.deepEqual(arrayInsert([1, 2, 3], 3, 4), [1, 2, 3, 4], 'should insert val at index');
+  t.end();
+});
+
+test('Utils -> arrayMove', t => {
+  const arr = [4, 1, 9, 3, 11];
+  t.deepEqual(arrayMove(arr, 2, 1), [4, 9, 1, 3, 11], 'should move array');
+  t.deepEqual(arrayMove(arr, 2, 5), [4, 1, 3, 11, 9], 'should move array');
+  t.deepEqual(arrayMove(arr, 2, -1), [4, 1, 3, 11, 9], 'should move array');
   t.end();
 });

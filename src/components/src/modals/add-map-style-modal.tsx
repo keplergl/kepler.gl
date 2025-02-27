@@ -5,7 +5,7 @@ import React, {Component} from 'react';
 import {polyfill} from 'react-lifecycles-compat';
 import classnames from 'classnames';
 import styled from 'styled-components';
-import MapGLMap, {MapRef} from 'react-map-gl/maplibre';
+import {Map, MapboxMap, MapRef} from 'react-map-gl';
 import {
   StyledModalContent,
   InputLight,
@@ -16,11 +16,10 @@ import {
 import {media} from '@kepler.gl/styles';
 
 // Utils
-import {transformRequest} from '@kepler.gl/utils';
+import {getApplicationConfig, getBaseMapLibrary, transformRequest} from '@kepler.gl/utils';
 import {injectIntl, IntlShape} from 'react-intl';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {NO_BASEMAP_ICON} from '@kepler.gl/constants';
-import maplibregl from 'maplibre-gl';
 import {InputStyle, MapState} from '@kepler.gl/types';
 import {ActionHandler, inputMapStyle, loadCustomMapStyle} from '@kepler.gl/actions';
 
@@ -47,6 +46,7 @@ const PreviewMap = styled.div`
 
   .preview-title.error {
     color: ${props => props.theme.errorColor};
+    max-width: 250px;
   }
 
   ${media.portable`
@@ -85,10 +85,14 @@ const StyledPreviewImage = styled.div`
 const InlineLink = styled.a`
   font-weight: 500;
 
-  :hover {
+  &:hover {
     cursor: pointer;
   }
 `;
+
+const nop = () => {
+  return;
+};
 
 interface AddMapStyleModalProps {
   inputMapStyle: ActionHandler<typeof inputMapStyle>;
@@ -96,6 +100,12 @@ interface AddMapStyleModalProps {
   loadCustomMapStyle: ActionHandler<typeof loadCustomMapStyle>;
   mapboxApiAccessToken: string;
   mapboxApiUrl?: string;
+  transformRequest?: (mapboxKey: string) => (
+    url: string,
+    resourceType: string
+  ) => {
+    url: string;
+  };
   mapState: MapState;
   intl: IntlShape;
 }
@@ -126,11 +136,20 @@ function AddMapStyleModalFactory() {
       return null;
     }
 
-    mapRef: MapRef | null | undefined;
-    _map: maplibregl.Map | undefined;
+    _map: MapboxMap | undefined | null;
 
-    componentDidUpdate() {
-      const map = this.mapRef && this.mapRef.getMap();
+    _setMapRef = (mapRef: MapRef) => {
+      // Handle change of the basemap library
+      if (this._map && mapRef) {
+        const map = mapRef.getMap();
+        if (map && this._map !== map) {
+          this._map.off('style.load', nop);
+          this._map.off('error', nop);
+          this._map = null;
+        }
+      }
+
+      const map = mapRef && mapRef.getMap();
       if (map && this._map !== map) {
         this._map = map;
 
@@ -143,7 +162,7 @@ function AddMapStyleModalFactory() {
           this.loadMapStyleError();
         });
       }
-    }
+    };
 
     loadMapStyleJson = style => {
       this.props.loadCustomMapStyle({style, error: false});
@@ -154,16 +173,22 @@ function AddMapStyleModalFactory() {
     };
 
     render() {
-      const {inputStyle, mapState, mapboxApiUrl, intl} = this.props;
+      const {inputStyle, mapState, intl} = this.props;
+
+      const baseMapLibraryName = getBaseMapLibrary(inputStyle);
+      const baseMapLibraryConfig = getApplicationConfig().baseMapLibraryConfig[baseMapLibraryName];
 
       const mapboxApiAccessToken = inputStyle.accessToken || this.props.mapboxApiAccessToken;
       const mapProps = {
         ...mapState,
-        baseApiUrl: mapboxApiUrl,
+        // TODO baseApiUrl should be taken into account in transformRequest as we use dynamic mapLib import
+        // baseApiUrl: mapboxApiUrl,
         mapboxAccessToken: mapboxApiAccessToken,
-        mapLib: maplibregl,
+        mapLib: baseMapLibraryConfig.getMapLib(),
         preserveDrawingBuffer: true,
-        transformRequest
+        transformRequest:
+          this.props.transformRequest?.(mapboxApiAccessToken) ||
+          transformRequest(mapboxApiAccessToken)
       };
 
       return (
@@ -206,7 +231,7 @@ function AddMapStyleModalFactory() {
                 />
               </StyledModalSection>
 
-              {/* <StyledModalSection>
+              <StyledModalSection>
                 <div className="modal-section-title">
                   <FormattedMessage id={'modal.addStyle.publishTitle'} />
                 </div>
@@ -244,7 +269,7 @@ function AddMapStyleModalFactory() {
                   onChange={({target: {value}}) => this.props.inputMapStyle({accessToken: value})}
                   placeholder={intl.formatMessage({id: 'modal.addStyle.exampleToken'})}
                 />
-              </StyledModalSection> */}
+              </StyledModalSection>
 
               <StyledModalSection>
                 <div className="modal-section-title">
@@ -254,6 +279,7 @@ function AddMapStyleModalFactory() {
                   type="text"
                   value={inputStyle.label || ''}
                   onChange={({target: {value}}) => this.props.inputMapStyle({label: value})}
+                  placeholder="Name your style"
                 />
               </StyledModalSection>
             </StyledModalVerticalPanel>
@@ -268,16 +294,15 @@ function AddMapStyleModalFactory() {
                   : (inputStyle.style && inputStyle.style.name) || ''}
               </div>
               <StyledPreviewImage className="preview-image">
+                {/** Note, we need the Map to render with errored params to get style.error messages */}
                 {!inputStyle.isValid ? (
                   <div className="preview-image-spinner" />
                 ) : (
                   <StyledMapContainer>
-                    <MapGLMap
+                    <Map
                       {...mapProps}
-                      ref={el => {
-                        this.mapRef = el;
-                      }}
-                      key={this.state.reRenderKey}
+                      ref={this._setMapRef}
+                      key={`${baseMapLibraryName}-${this.state.reRenderKey}-${inputStyle.url}-${mapboxApiAccessToken}`}
                       style={{
                         width: MapW,
                         height: MapH

@@ -4,6 +4,20 @@
 import test from 'tape';
 import moment from 'moment';
 import {getDistanceScales} from 'viewport-mercator-project';
+import {scaleQuantize} from 'd3-scale';
+import cloneDeep from 'lodash.clonedeep';
+
+import {DEFAULT_TEXT_LABEL, PROJECTED_PIXEL_SIZE_MULTIPLIER} from '@kepler.gl/constants';
+import {KeplerGlLayers} from '@kepler.gl/layers';
+import {processGeojson} from '@kepler.gl/processors';
+import {INITIAL_MAP_STATE} from '@kepler.gl/reducers';
+import {copyTableAndUpdate} from '@kepler.gl/table';
+import {hexToRgb} from '@kepler.gl/utils';
+
+import {geoJsonWithStyle, geojsonData} from 'test/fixtures/geojson';
+import testArcData, {pointFromNeighbor} from 'test/fixtures/test-arc-data';
+import {StateWArcNeighbors} from 'test/helpers/mock-state';
+import {createNewDataEntryMock} from 'test/helpers/table-utils';
 import {
   testCreateCases,
   testFormatLayerDataCases,
@@ -15,11 +29,6 @@ import {
   pointLayerMeta,
   fieldDomain
 } from 'test/helpers/layer-utils';
-
-import {copyTableAndUpdate} from '@kepler.gl/table';
-import {KeplerGlLayers} from '@kepler.gl/layers';
-import {INITIAL_MAP_STATE} from '@kepler.gl/reducers';
-import {DEFAULT_TEXT_LABEL, PROJECTED_PIXEL_SIZE_MULTIPLIER} from '@kepler.gl/constants';
 
 const {PointLayer} = KeplerGlLayers;
 
@@ -40,8 +49,9 @@ test('#PointLayer -> constructor', t => {
           t.deepEqual(
             layer.columnPairs,
             {
-              lat: {pair: 'lng', fieldPairKey: 'lat'},
-              lng: {pair: 'lat', fieldPairKey: 'lng'}
+              lat: {pair: ['lng', 'altitude'], fieldPairKey: 'lat'},
+              lng: {pair: ['lat', 'altitude'], fieldPairKey: 'lng'},
+              altitude: {pair: ['lng', 'lat'], fieldPairKey: 'altitude'}
             },
             'columnPairs should be correct'
           );
@@ -57,7 +67,6 @@ test('#PointLayer -> constructor', t => {
 test('#PointLayer -> formatLayerData', t => {
   const filteredIndex = [0, 2, 4];
   const filterDomain0 = 1474071056000;
-
   const TEST_CASES = [
     {
       name: 'Point gps point.1',
@@ -119,6 +128,7 @@ test('#PointLayer -> formatLayerData', t => {
             }
           ],
           getFilterValue: () => {},
+          getFiltered: () => {},
           getFillColor: () => {},
           getLineColor: () => {},
           getRadius: () => {},
@@ -229,6 +239,7 @@ test('#PointLayer -> formatLayerData', t => {
             }
           ],
           getFilterValue: () => {},
+          getFiltered: () => {},
           getLineColor: () => {},
           getFillColor: () => {},
           getRadius: () => {},
@@ -321,6 +332,7 @@ test('#PointLayer -> formatLayerData', t => {
             }
           ],
           getFilterValue: () => {},
+          getFiltered: () => {},
           getLineColor: () => {},
           getFillColor: () => {},
           getRadius: () => {},
@@ -404,6 +416,7 @@ test('#PointLayer -> formatLayerData', t => {
             }
           ],
           getFilterValue: () => {},
+          getFiltered: () => {},
           getLineColor: () => {},
           getFillColor: () => {},
           getRadius: () => {},
@@ -424,6 +437,116 @@ test('#PointLayer -> formatLayerData', t => {
         t.deepEqual(layer.config.sizeDomain, [0, 1], 'should update layer sizeDomain');
         // getRadius should be a constant because sizeField is null
         t.equal(layerData.getRadius, 1, 'getRadius should return current radius');
+      }
+    },
+    {
+      name: 'Arc data from neighbors',
+      layer: pointFromNeighbor,
+      datasets: StateWArcNeighbors.visState.datasets,
+      assert: result => {
+        const {layerData} = result;
+        const expectedLayerData = {
+          data: [
+            {
+              index: 0,
+              position: [testArcData[0].longitude, testArcData[0].latitude, 0],
+              neighbors: testArcData[0].neighbors
+            },
+            {
+              index: 1,
+              position: [testArcData[1].longitude, testArcData[1].latitude, 0],
+              neighbors: testArcData[1].neighbors
+            }
+          ]
+        };
+
+        for (let i = 0; i < 2; i++) {
+          t.deepEqual(
+            layerData.data[i],
+            expectedLayerData.data[i],
+            'should format correct point layerData data with neighbors'
+          );
+        }
+      }
+    },
+    {
+      name: 'Test gps point.2 Data colorFields, domainStops',
+      layer: {
+        type: 'point',
+        id: 'test_layer_2',
+        config: {
+          dataId,
+          label: 'some point file',
+          columns: {
+            lat: 'lat',
+            lng: 'lng'
+          },
+          visConfig: {
+            outline: true,
+            fixedRadius: true,
+            colorRange: {
+              colors: ['#010101', '#020202', '#030303', '#040404', '#050505', '#060606', '#070707']
+            },
+            strokeColor: [4, 5, 6]
+          },
+          // color by id(integer)
+          colorField: {
+            type: 'integer',
+            name: 'id'
+          },
+          colorScale: 'quantize'
+        }
+      },
+      datasets: {
+        [dataId]: copyTableAndUpdate(preparedDataset, {filteredIndex})
+      },
+      assert: result => {
+        const {layer} = result;
+        layer.config.colorDomain = {
+          z: [2, 3, 4, 5],
+          stops: [
+            [0, 20],
+            [0, 30],
+            [0, 40],
+            [0, 50]
+          ]
+        };
+
+        const layerData = layer.formatLayerData({
+          [dataId]: copyTableAndUpdate(preparedDataset, {filteredIndex})
+        });
+
+        // get scale function
+        const getFillColor0 = layerData.getFillColor(1);
+        const getFillColor = layerData.getFillColor(1);
+        t.equal(layerData.getFillColorByZoom, true, 'should set getFillColorByZoom to truthy');
+        t.equal(getFillColor0, getFillColor, 'function should be memoized');
+
+        const expectedScale = scaleQuantize()
+          .domain([0, 20])
+          .range(layer.config.visConfig.colorRange.colors);
+
+        const expectedColors = [
+          hexToRgb(expectedScale(preparedDataset.dataContainer.row(0).valueAt(7))),
+          [0, 0, 0, 0],
+          hexToRgb(expectedScale(preparedDataset.dataContainer.row(2).valueAt(7))),
+          hexToRgb(expectedScale(preparedDataset.dataContainer.row(3).valueAt(7))),
+          hexToRgb(expectedScale(preparedDataset.dataContainer.row(4).valueAt(7))),
+          hexToRgb(expectedScale(preparedDataset.dataContainer.row(5).valueAt(7)))
+        ];
+        for (let i = 0; i < 6; i++) {
+          t.deepEqual(
+            getFillColor({
+              data: preparedDataset.dataContainer.row(i),
+              index: i
+            }),
+            expectedColors[i],
+            `Should get corrent value from zoom scale for ${preparedDataset.dataContainer
+              .row(i)
+              .valueAt(7)}`
+          );
+        }
+        // should use domain [0, 20]
       }
     }
   ];
@@ -690,5 +813,388 @@ test('#PointLayer -> updateLayer', t => {
   };
 
   testUpdateLayer(t, {layerConfig, shouldUpdate});
+  t.end();
+});
+
+test('#PointLayer -> formatLayerData -> Geojson column mode', async t => {
+  // create a mockup GeoJson dataset with Point and MultiPoint geometry
+  const geoJsonWithMultiPoint = cloneDeep(geoJsonWithStyle);
+  geoJsonWithMultiPoint.features.push({
+    type: 'Feature',
+    properties: {
+      fillColor: [1, 2, 3],
+      lineColor: [4, 5, 6],
+      lineWidth: 1,
+      elevation: 10,
+      radius: 5
+    },
+    geometry: {
+      type: 'MultiPoint',
+      coordinates: [
+        [-122.0, 37.4],
+        [-121.9, 37.5]
+      ]
+    }
+  });
+
+  const geoJsonWithGeometryCollection = cloneDeep(geoJsonWithStyle);
+  geoJsonWithGeometryCollection.features.push({
+    type: 'Feature',
+    properties: {
+      fillColor: [1, 2, 3],
+      lineColor: [4, 5, 6],
+      lineWidth: 1,
+      elevation: 10,
+      radius: 5
+    },
+    geometry: {
+      type: 'GeometryCollection',
+      geometries: [
+        {
+          type: 'Point',
+          coordinates: [-121.8, 37.6]
+        },
+        {
+          type: 'MultiPoint',
+          coordinates: [
+            [-122.0, 37.4],
+            [-121.9, 37.5]
+          ]
+        }
+      ]
+    }
+  });
+
+  const geoJsonWithNull = cloneDeep(geoJsonWithStyle);
+
+  const geojsonPointDataset = processGeojson(geoJsonWithStyle);
+  const geojsonPolygonDataset = processGeojson(geojsonData);
+  const geojsonMultiPolygonDataset = processGeojson(geoJsonWithMultiPoint);
+  const geojsonGeometryCollectionDataset = processGeojson(geoJsonWithGeometryCollection);
+
+  // mockup invalid geojson object or string geojson object
+  const geojsonPointWithNullDataset = processGeojson(geoJsonWithNull);
+  geojsonPointWithNullDataset.rows.push([undefined, [7, 8, 9], [4, 5, 6], 3, 10, 5]);
+  geojsonPointWithNullDataset.rows.push(['', [7, 8, 9], [4, 5, 6], 3, 10, 5]);
+
+  const TEST_CASES = [
+    {
+      name: 'Geojson point.1',
+      layer: {
+        type: 'point',
+        id: 'test_geojson_layer_1',
+        config: {
+          color: [1, 2, 3],
+          dataId,
+          label: 'some geometry file',
+          columnMode: 'geojson',
+          columns: {
+            geojson: '_geojson'
+          }
+        }
+      },
+      datasets: await createNewDataEntryMock({
+        info: {id: dataId},
+        data: geojsonPointDataset
+      }),
+      assert: result => {
+        const {layerData} = result;
+        // ! layerData is empty here
+        const expectedLayerData = {
+          data: [
+            {
+              index: 0,
+              position: [-122.1, 37.3]
+            },
+            {
+              index: 1,
+              position: [-122.2, 37.2]
+            },
+            {
+              index: 2,
+              position: [-122.3, 37.1]
+            }
+          ],
+          getFilterValue: () => {},
+          getLineColor: () => {},
+          getFillColor: () => {},
+          getRadius: () => {},
+          getPosition: () => {},
+          textLabels: []
+        };
+        t.deepEqual(
+          Object.keys(layerData).sort,
+          Object.keys(expectedLayerData).sort,
+          'layerData should have 7 keys'
+        );
+        // data
+        t.deepEqual(
+          layerData.data,
+          expectedLayerData.data,
+          'should format correct geojson layerData'
+        );
+
+        // getPosition
+        t.deepEqual(
+          layerData.getPosition(layerData.data[0]),
+          [-122.1, 37.3],
+          'getPosition should return correct lat lng'
+        );
+      }
+    },
+    {
+      name: 'Geojson polygon.2',
+      layer: {
+        type: 'point',
+        id: 'test_geojson_layer_2',
+        config: {
+          color: [1, 2, 3],
+          dataId,
+          label: 'some geometry file',
+          columnMode: 'geojson',
+          columns: {
+            geojson: '_geojson'
+          }
+        }
+      },
+      datasets: await createNewDataEntryMock({
+        info: {id: dataId},
+        data: geojsonPolygonDataset
+      }),
+      assert: result => {
+        const {layerData} = result;
+        const expectedLayerData = {
+          data: [],
+          getFilterValue: () => {},
+          getLineColor: () => {},
+          getFillColor: () => {},
+          getRadius: () => {},
+          getPosition: () => {},
+          textLabels: []
+        };
+        t.deepEqual(
+          Object.keys(layerData).sort,
+          Object.keys(expectedLayerData).sort,
+          'layerData should have 7 keys'
+        );
+        // data
+        t.deepEqual(
+          layerData.data,
+          expectedLayerData.data,
+          'should format correct geojson layerData'
+        );
+        // empty data since Point layer only supports GeoJson column with Point geometries
+        t.equal(layerData.data.length, 0, 'geojson layerData.data should be empty');
+      }
+    },
+    {
+      name: 'Geojson point.3',
+      layer: {
+        type: 'point',
+        id: 'test_geojson_layer_3',
+        config: {
+          color: [1, 2, 3],
+          dataId,
+          label: 'some geometry file',
+          columnMode: 'geojson',
+          columns: {
+            geojson: '_geojson'
+          }
+        }
+      },
+      datasets: await createNewDataEntryMock({
+        info: {id: dataId},
+        data: geojsonMultiPolygonDataset
+      }),
+      assert: result => {
+        const {layerData} = result;
+        const expectedLayerData = {
+          data: [
+            {
+              index: 0,
+              position: [-122.1, 37.3]
+            },
+            {
+              index: 1,
+              position: [-122.2, 37.2]
+            },
+            {
+              index: 2,
+              position: [-122.3, 37.1]
+            },
+            {
+              index: 3,
+              position: [-122.0, 37.4]
+            },
+            {
+              index: 3,
+              position: [-121.9, 37.5]
+            }
+          ],
+          getFilterValue: () => {},
+          getLineColor: () => {},
+          getFillColor: () => {},
+          getRadius: () => {},
+          getPosition: () => {},
+          textLabels: []
+        };
+        t.deepEqual(
+          Object.keys(layerData).sort,
+          Object.keys(expectedLayerData).sort,
+          'layerData should have 7 keys'
+        );
+        // data
+        t.deepEqual(
+          layerData.data,
+          expectedLayerData.data,
+          'should format correct geojson layerData'
+        );
+        // getPosition
+        t.deepEqual(
+          layerData.getPosition(layerData.data[0]),
+          [-122.1, 37.3],
+          'getPosition should return correct lat lng'
+        );
+      }
+    },
+    {
+      name: 'Geojson GeometryCollection point.4',
+      layer: {
+        type: 'point',
+        id: 'test_geojson_layer_4',
+        config: {
+          color: [1, 2, 3],
+          dataId,
+          label: 'some geometry file',
+          columnMode: 'geojson',
+          columns: {
+            geojson: '_geojson'
+          }
+        }
+      },
+      datasets: await createNewDataEntryMock({
+        info: {id: dataId},
+        data: geojsonGeometryCollectionDataset
+      }),
+      assert: result => {
+        const {layerData} = result;
+        const expectedLayerData = {
+          data: [
+            {
+              index: 0,
+              position: [-122.1, 37.3]
+            },
+            {
+              index: 1,
+              position: [-122.2, 37.2]
+            },
+            {
+              index: 2,
+              position: [-122.3, 37.1]
+            },
+            {
+              index: 3,
+              position: [-121.8, 37.6]
+            },
+            {
+              index: 3,
+              position: [-122.0, 37.4]
+            },
+            {
+              index: 3,
+              position: [-121.9, 37.5]
+            }
+          ],
+          getFilterValue: () => {},
+          getLineColor: () => {},
+          getFillColor: () => {},
+          getRadius: () => {},
+          getPosition: () => {},
+          textLabels: []
+        };
+        t.deepEqual(
+          Object.keys(layerData).sort,
+          Object.keys(expectedLayerData).sort,
+          'layerData should have 7 keys'
+        );
+        // data
+        t.deepEqual(
+          layerData.data,
+          expectedLayerData.data,
+          'should format correct geojson layerData'
+        );
+        // getPosition
+        t.deepEqual(
+          layerData.getPosition(layerData.data[0]),
+          [-122.1, 37.3],
+          'getPosition should return correct lat lng'
+        );
+      }
+    },
+    {
+      name: 'Geojson with null point.5',
+      layer: {
+        type: 'point',
+        id: 'test_geojson_layer_5',
+        config: {
+          color: [1, 2, 3],
+          dataId,
+          label: 'some geometry file',
+          columnMode: 'geojson',
+          columns: {
+            geojson: '_geojson'
+          }
+        }
+      },
+      datasets: await createNewDataEntryMock({
+        info: {id: dataId},
+        data: geojsonPointWithNullDataset
+      }),
+      assert: result => {
+        const {layerData} = result;
+        const expectedLayerData = {
+          data: [
+            {
+              index: 0,
+              position: [-122.1, 37.3]
+            },
+            {
+              index: 1,
+              position: [-122.2, 37.2]
+            },
+            {
+              index: 2,
+              position: [-122.3, 37.1]
+            }
+          ],
+          getFilterValue: () => {},
+          getLineColor: () => {},
+          getFillColor: () => {},
+          getRadius: () => {},
+          getPosition: () => {},
+          textLabels: []
+        };
+        t.deepEqual(
+          Object.keys(layerData).sort,
+          Object.keys(expectedLayerData).sort,
+          'layerData should have 7 keys'
+        );
+        // data
+        t.deepEqual(
+          layerData.data,
+          expectedLayerData.data,
+          'should format correct geojson layerData'
+        );
+        // getPosition
+        t.deepEqual(
+          layerData.getPosition(layerData.data[0]),
+          [-122.1, 37.3],
+          'getPosition should return correct lat lng'
+        );
+      }
+    }
+  ];
+
+  testFormatLayerDataCases(t, PointLayer, TEST_CASES);
   t.end();
 });

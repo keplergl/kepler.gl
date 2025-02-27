@@ -2,12 +2,12 @@
 // Copyright contributors to the kepler.gl project
 
 import {DataRow, SharedRowOptions} from './data-row';
-import {Field} from '@kepler.gl/types';
+import {ProtoDatasetField} from '@kepler.gl/types';
 import {DataContainerInterface, RangeOptions} from './data-container-interface';
 
 type RowDataContainerInput = {
   rows: any[][];
-  fields?: Field[];
+  fields?: ProtoDatasetField[];
 };
 
 /**

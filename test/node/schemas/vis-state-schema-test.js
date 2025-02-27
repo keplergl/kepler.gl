@@ -7,18 +7,22 @@ import {cmpFilters, cmpSavedLayers} from 'test/helpers/comparison-utils';
 import SchemaManager, {CURRENT_VERSION, visStateSchema} from '@kepler.gl/schemas';
 
 import {
+  StateWArcNeighbors,
+  StateWEffects,
   StateWFiles,
   StateWFilesFiltersLayerColor,
-  StateWEffects,
+  StateWLayerCustomColorBreaks,
   StateWTooltipFormat,
+  StateWTripGeojson,
+  StateWTripTable,
   expectedSavedLayer0,
   expectedLoadedLayer0,
   expectedSavedLayer1,
   expectedLoadedLayer1,
   expectedSavedLayer2,
   expectedLoadedLayer2,
-  StateWTripGeojson,
   expectedSavedTripLayer,
+  mockColorRange,
   testCsvDataId,
   testGeoJsonDataId
 } from 'test/helpers/mock-state';
@@ -99,7 +103,12 @@ test('#visStateSchema -> v1 -> save load filters', t => {
       type: 'timeRange',
       value: [1474606800000, 1474617600000],
       view: 'enlarged',
-      plotType: 'histogram',
+      plotType: {
+        interval: '1-hour',
+        defaultTimeFormat: 'L  H A',
+        type: 'histogram',
+        aggregation: 'sum'
+      },
       yAxis: null,
       animationWindow: 'free',
       speed: 4
@@ -112,7 +121,9 @@ test('#visStateSchema -> v1 -> save load filters', t => {
       type: 'multiSelect',
       value: ['a'],
       view: 'side',
-      plotType: 'histogram',
+      plotType: {
+        type: 'histogram'
+      },
       yAxis: null,
       animationWindow: 'free',
       speed: 1
@@ -432,5 +443,50 @@ test('#visStateSchema -> v1 -> save load effects (deprecated beta config)', t =>
     'Effects should be loaded as expected'
   );
 
+  t.end();
+});
+
+test('#visStateSchema -> auto create layers', t => {
+  const state = cloneDeep(StateWFiles);
+  t.equal(state.visState.layers.length, 2, 'should auto create 2 layers');
+  t.end();
+});
+
+test('#visStateSchema -> color properties', t => {
+  const state = cloneDeep(StateWLayerCustomColorBreaks);
+  t.equal(state.visState.layers.length, 1, 'should load 1 layer');
+  t.deepEqual(
+    state.visState.layers[0].config.visConfig.colorRange,
+    mockColorRange,
+    'should load layer colorRange correctly'
+  );
+  t.deepEqual(
+    state.visState.layers[0].config.colorScale,
+    'custom',
+    'should load layer color Scale correctly'
+  );
+
+  t.deepEqual(
+    state.visState.layers[0].config.colorField.name,
+    'uid',
+    'should load colorField correctly'
+  );
+
+  t.end();
+});
+
+test('#visStateSchema -> create trip layers', t => {
+  const state = cloneDeep(StateWTripTable);
+  t.equal(state.visState.layers.length, 1, 'should create 1 trip layer');
+  t.equal(state.visState.layers[0].type, 'trip', 'should create trip layer');
+  t.end();
+});
+
+test('#visStateSchema -> create point and arc layers', t => {
+  const state = cloneDeep(StateWArcNeighbors);
+  t.equal(state.visState.layers.length, 3, 'should create 3 layers');
+  t.equal(state.visState.layers[0].type, 'point', 'should create point layer');
+  t.equal(state.visState.layers[1].type, 'arc', 'should create arc layer');
+  t.equal(state.visState.layers[2].type, 'arc', 'should create arc layer');
   t.end();
 });

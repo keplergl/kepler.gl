@@ -12,9 +12,9 @@ import {
   createIndexedDataContainer,
   DataContainerInterface,
   parseFieldValue,
-  downloadFile,
-  DEFAULT_DATA_NAME
+  downloadFile
 } from '@kepler.gl/utils';
+import {getApplicationConfig} from '@kepler.gl/utils';
 
 interface StateType {
   visState: {datasets: Datasets};
@@ -26,7 +26,7 @@ export function exportData(state: StateType, options) {
   const {datasets} = visState;
   const {selectedDataset, dataType, filtered} = options;
   // get the selected data
-  const filename = appName ? appName : DEFAULT_DATA_NAME;
+  const filename = appName ? appName : getApplicationConfig().defaultDataName;
   const selectedDatasets = datasets[selectedDataset]
     ? [datasets[selectedDataset]]
     : Object.values(datasets);
@@ -69,7 +69,7 @@ export function formatCsv(data: DataContainerInterface, fields: Field[]): string
 
   // parse geojson object as string
   for (const row of data.rows(true)) {
-    formattedData.push(row.map((d, i) => parseFieldValue(d, fields[i].type)));
+    formattedData.push(row.map((d, i) => parseFieldValue(d, fields[i].type, fields[i])));
   }
 
   return csvFormatRows(formattedData);

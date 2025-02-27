@@ -9,12 +9,16 @@ import sinon from 'sinon';
 
 import {
   LayerConfiguratorFactory,
+  LayerColumnModeConfigFactory,
   LayerColumnConfigFactory,
   LayerConfigGroupFactory,
   FieldSelectorFactory,
   ColumnSelectorFactory,
   appInjector,
-  dropdownListClassList
+  dropdownListClassList,
+  Checkbox,
+  getLayerFields,
+  getLayerDataset
 } from '@kepler.gl/components';
 
 import {StateWFiles, StateWTripGeojson, testCsvDataId} from 'test/helpers/mock-state';
@@ -26,9 +30,11 @@ import {
   clickItemSelectList
 } from 'test/helpers/component-utils';
 import {act} from 'react-dom/test-utils';
+import {STYLED_COMPONENTS_DUPLICATED_ENTRIES} from '../../../helpers/utils';
 
 // components
 const LayerConfigurator = appInjector.get(LayerConfiguratorFactory);
+const LayerColumnModeConfig = appInjector.get(LayerColumnModeConfigFactory);
 const LayerColumnConfig = appInjector.get(LayerColumnConfigFactory);
 const LayerConfigGroup = appInjector.get(LayerConfigGroupFactory);
 const ColumnSelector = appInjector.get(ColumnSelectorFactory);
@@ -97,8 +103,10 @@ test('Components -> LayerConfigurator.mount -> default prop 1', t => {
     },
     layerChannelConfigProps: {
       layer: expectedLayer,
+      dataset: expectedDataset,
       fields: expectedDataset.fields,
-      onChange: updateLayerVisualChannelConfig
+      onChange: updateLayerVisualChannelConfig,
+      setColorUI: updateLayerColorUI
     }
   };
 
@@ -129,13 +137,13 @@ test('Components -> LayerConfigurator.mount -> default prop 1', t => {
   t.deepEqual(
     args.layerChannelConfigProps,
     expectedArgs.layerChannelConfigProps,
-    'render layer method should receive corrent layerChannelConfigProps arg'
+    'render layer method should receive correct layerChannelConfigProps arg'
   );
 
   t.end();
 });
 
-test('Components -> LayerConfigurator.mount -> defaut prop 2', t => {
+test('Components -> LayerConfigurator.mount -> LayerColumnConfig', t => {
   // mount
   const updateLayerConfigSpy = sinon.spy();
 
@@ -150,12 +158,23 @@ test('Components -> LayerConfigurator.mount -> defaut prop 2', t => {
 
   const baseConfigGroup = wrapper.find(LayerConfigGroup).at(0);
 
-  t.equal(baseConfigGroup.find(LayerColumnConfig).length, 1, 'should render 1 LayerColumnConfig');
+  t.equal(
+    baseConfigGroup.find(LayerColumnModeConfig).length,
+    1,
+    'should render 1 LayerColumnModeConfig'
+  );
+  t.equal(baseConfigGroup.find(LayerColumnConfig).length, 3, 'should render 2 LayerColumnConfig');
 
   t.equal(
     baseConfigGroup.find(LayerColumnConfig).at(0).find(ColumnSelector).length,
-    3,
-    'Should render 3 ColumnSelector'
+    4,
+    'Should render 4 ColumnSelector for Point columns'
+  );
+
+  t.equal(
+    baseConfigGroup.find(LayerColumnConfig).at(1).find(ColumnSelector).length,
+    1,
+    'Should render 1 ColumnSelector for GeoJSON feature'
   );
 
   // open fieldSelector
@@ -207,7 +226,10 @@ test('Components -> LayerConfigurator.mount -> defaut prop 2', t => {
             value: 'gps_data.lng',
             fieldIdx: 2
           },
-          altitude: {value: null, fieldIdx: -1, optional: true}
+          altitude: {value: null, fieldIdx: -1, optional: true},
+          neighbors: {value: null, fieldIdx: -1, optional: true},
+          geojson: {value: null, fieldIdx: -1},
+          geoarrow: {value: null, fieldIdx: -1}
         }
       }
     ],
@@ -238,7 +260,9 @@ test('Components -> LayerConfigurator.mount -> defaut prop 2', t => {
   //          value: 'gps_data.lng',
   //          fieldIdx: 2
   //        },
-  //        altitude: {value: null, fieldIdx: -1, optional: true}
+  //        altitude: {value: null, fieldIdx: -1, optional: true},
+  //        neighbors: {value: null, fieldIdx: -1, optional: true},
+  //        geojson: {value: null, fieldIdx: -1}
   //      }
   //    }
   //  ],
@@ -266,8 +290,8 @@ test('Components -> LayerConfigurator.mount -> collapsed / expand config group '
   const component = wrapper.find(LayerConfigurator).instance();
   t.equal(
     wrapper.find(LayerConfigGroup).at(0).find('.layer-config-group.collapsed').length,
-    3,
-    'LayerConfigGroup should be collapsed'
+    STYLED_COMPONENTS_DUPLICATED_ENTRIES,
+    'LayerColumnModeConfig should be collapsed'
   );
 
   const spy = sinon.spy(component, '_renderScatterplotLayerConfig');
@@ -288,8 +312,95 @@ test('Components -> LayerConfigurator.mount -> collapsed / expand config group '
   t.equal(
     wrapper.find(LayerConfigGroup).at(0).find('.layer-config-group.collapsed').length,
     0,
-    'LayerConfigGroup should be expanded'
+    'LayerColumnModeConfig should be expanded'
   );
+
+  t.end();
+});
+
+test('Components -> LayerConfigurator.mount -> LayerColumnModeConfig ', t => {
+  const updateLayerConfigSpy = sinon.spy();
+
+  const propsWithTripLayer = {
+    ...defaultProps,
+    updateLayerConfig: updateLayerConfigSpy,
+    layer: StateWTripGeojson.visState.layers[0],
+    datasets: StateWTripGeojson.visState.datasets
+  };
+
+  let wrapper;
+  t.doesNotThrow(() => {
+    wrapper = mountWithTheme(
+      <IntlWrapper>
+        <LayerConfigurator {...propsWithTripLayer} />
+      </IntlWrapper>
+    );
+  }, 'LayerConfigurator should not fail without props');
+  const baseConfigGroup = wrapper.find(LayerConfigGroup).at(0);
+  t.equal(
+    baseConfigGroup.find(LayerColumnModeConfig).length,
+    1,
+    'should render 1 LayerColumnModeConfig'
+  );
+  t.equal(baseConfigGroup.find(LayerColumnConfig).length, 2, 'should render 2 LayerColumnConfig');
+
+  // 1 columne mode panel
+  const checkbox = baseConfigGroup
+    .find(LayerColumnModeConfig)
+    .find('.layer-column-mode-panel')
+    .at(0)
+    .find(Checkbox);
+
+  t.equal(checkbox.props().label, 'GeoJSON', 'should render correct checkbox prop');
+  t.equal(checkbox.props().checked, true, 'should render correct checkbox prop');
+
+  // check the other selection
+  const checkbox2 = baseConfigGroup
+    .find(LayerColumnModeConfig)
+    .find('.layer-column-mode-panel')
+    .at(1)
+    .find(Checkbox);
+
+  checkbox2.find('input').at(0).simulate('change', {target: {}});
+  t.ok(updateLayerConfigSpy.calledOnce, 'updateLayerConfig called');
+
+  t.deepEqual(
+    updateLayerConfigSpy.args[0],
+    [
+      {
+        columnMode: 'table'
+      }
+    ],
+    'should update columnMode'
+  );
+
+  t.end();
+});
+
+test('Components -> LayerConfigurator -> getLayerFields', t => {
+  const layer = StateWTripGeojson.visState.layers[0];
+  const datasets = StateWTripGeojson.visState.datasets;
+
+  const fields = getLayerFields(datasets, layer);
+
+  t.equal(fields.length, 5, 'should get 4 fields');
+
+  const expectedFields = datasets.trip_data.fields;
+  t.deepEqual(fields, expectedFields, 'should get 4 fields from the first layer');
+
+  t.end();
+});
+
+test('Components -> LayerConfigurator -> getLayerDataset', t => {
+  const layer = StateWTripGeojson.visState.layers[0];
+  const datasets = StateWTripGeojson.visState.datasets;
+
+  const ds = getLayerDataset(datasets, layer);
+
+  t.equal(ds.id, 'trip_data', 'should get 1 dataset: trip_data');
+
+  const expectedDS = datasets.trip_data;
+  t.deepEqual(ds, expectedDS, 'should get 1 dataset for the input layer');
 
   t.end();
 });

@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 // @ts-nocheck
-import {KEPLER_GL_VERSION, EXPORT_HTML_MAP_MODES} from '@kepler.gl/constants';
+import {EXPORT_HTML_MAP_MODES, KEPLER_GL_VERSION} from '@kepler.gl/constants';
 
 /**
  * This method is used to create an html file which will inlcude kepler and map data
@@ -23,8 +23,12 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
         <!--Uber Font-->
         <link rel="stylesheet" href="https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/uber-fonts/4.0.0/superfine.css">
 
+        <!--Kepler css-->
+        <link href="https://unpkg.com/kepler.gl@${version}/umd/keplergl.min.css" rel="stylesheet">
+
         <!--MapBox css-->
-        <link href="https:https://unpkg.com/maplibre-gl@^3/dist/maplibre-gl.css" rel="stylesheet">
+        <link href="https://api.tiles.mapbox.com/mapbox-gl-js/v1.1.1/mapbox-gl.css" rel="stylesheet">
+        <link href="https://unpkg.com/maplibre-gl@^3/dist/maplibre-gl.css" rel="stylesheet">
 
         <!-— facebook open graph tags -->
         <meta property="og:url" content="http://kepler.gl/" />
@@ -45,11 +49,11 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
         <meta name="twitter:image" content="https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/kepler.gl-meta-tag.png" />
 
         <!-- Load React/Redux -->
-        <script src="https://unpkg.com/react@16.8.4/umd/react.production.min.js" crossorigin></script>
-        <script src="https://unpkg.com/react-dom@16.8.4/umd/react-dom.production.min.js" crossorigin></script>
-        <script src="https://unpkg.com/redux@3.7.2/dist/redux.js" crossorigin></script>
-        <script src="https://unpkg.com/react-redux@7.1.3/dist/react-redux.min.js" crossorigin></script>
-        <script src="https://unpkg.com/styled-components@4.1.3/dist/styled-components.min.js" crossorigin></script>
+        <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin></script>
+        <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin></script>
+        <script src="https://unpkg.com/redux@4.2.1/dist/redux.js" crossorigin></script>
+        <script src="https://unpkg.com/react-redux@8.1.2/dist/react-redux.min.js" crossorigin></script>
+        <script src="https://unpkg.com/styled-components@6.1.8/dist/styled-components.min.js" crossorigin></script>
 
         <!-- Load Kepler.gl -->
         <script src="https://unpkg.com/kepler.gl@${version}/umd/keplergl.min.js" crossorigin></script>
@@ -211,7 +215,9 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
 
           /** Render **/
           (function render(react, reactDOM, app) {
-            reactDOM.render(app, document.getElementById('app'));
+            const container = document.getElementById('app');
+            const root = reactDOM.createRoot(container);
+            root.render(app);
           }(React, ReactDOM, app));
         </script>
         <!-- The next script will show how to interact directly with Kepler map store -->
@@ -230,13 +236,18 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
               config
             );
 
-            store.dispatch(keplerGl.addDataToMap({
-              datasets: loadedData.datasets,
-              config: loadedData.config,
-              options: {
-                centerMap: false
-              }
-            }));
+            // For some reason Kepler overwrites the config without extra wait time
+            window.setTimeout(() => {
+              store.dispatch(
+                keplerGl.addDataToMap({
+                  datasets: loadedData.datasets,
+                  config: loadedData.config,
+                  options: {
+                    centerMap: false,
+                  },
+                })
+              );
+            }, 500);
           }(KeplerGl, store))
         </script>
       </body>

@@ -54,7 +54,7 @@ test('#Heatmaplayer -> formatLayerData -> w/ GpuFilter', t => {
   const expectedConfig = {
     type: 'heatmap',
     id: 'heatmap-test-1',
-    source: `${dataId}-1-2`,
+    source: `${dataId}-points-1-2--1`,
     layout: {visibility: 'visible'},
     filter: ['all', ['>=', 'gpu:utc_timestamp', 39000], ['<=', 'gpu:utc_timestamp', 552000]],
     paint: {
@@ -67,15 +67,15 @@ test('#Heatmaplayer -> formatLayerData -> w/ GpuFilter', t => {
         0,
         'rgba(0,0,0,0)',
         0.14285714285714285,
-        'rgb(90,24,70)',
+        'rgb(76,0,53)',
         0.2857142857142857,
-        'rgb(144,12,63)',
+        'rgb(136,0,48)',
         0.42857142857142855,
-        'rgb(199,0,57)',
+        'rgb(183,47,21)',
         0.5714285714285714,
-        'rgb(227,97,28)',
+        'rgb(214,97,10)',
         0.7142857142857143,
-        'rgb(241,146,14)',
+        'rgb(239,145,0)',
         0.8571428571428571,
         'rgb(255,195,0)'
       ],
@@ -110,7 +110,8 @@ test('#Heatmaplayer -> formatLayerData -> w/ GpuFilter', t => {
         const expectedLayerData = {
           columns: {
             lat: {value: 'lat', fieldIdx: 1},
-            lng: {value: 'lng', fieldIdx: 2}
+            lng: {value: 'lng', fieldIdx: 2},
+            geoarrow: {value: null, fieldIdx: -1}
           },
           config: expectedConfig,
           data: {
@@ -187,7 +188,7 @@ test('#Heatmaplayer -> formatLayerData -> w/o GpuFilter', t => {
   const expectedConfig = {
     type: 'heatmap',
     id: 'heatmap-test-1',
-    source: `${testCsvDataId}-1-2`,
+    source: `${testCsvDataId}-points-1-2--1`,
     layout: {visibility: 'visible'},
     paint: {
       'heatmap-weight': 1,
@@ -237,7 +238,8 @@ test('#Heatmaplayer -> formatLayerData -> w/o GpuFilter', t => {
         const expectedLayerData = {
           columns: {
             lat: {value: 'gps_data.lat', fieldIdx: 1},
-            lng: {value: 'gps_data.lng', fieldIdx: 2}
+            lng: {value: 'gps_data.lng', fieldIdx: 2},
+            geoarrow: {value: null, fieldIdx: -1}
           },
           config: expectedConfig,
           weightField: null,

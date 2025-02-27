@@ -4,8 +4,9 @@
 import moment from 'moment';
 import {MAX_GPU_FILTERS, FILTER_TYPES} from '@kepler.gl/constants';
 import {Field, Filter} from '@kepler.gl/types';
+import {set, DataContainerInterface} from '@kepler.gl/utils';
+import {toArray, notNullorUndefined} from '@kepler.gl/common-utils';
 
-import {set, toArray, notNullorUndefined, DataContainerInterface} from '@kepler.gl/utils';
 import {GpuFilter} from './kepler-table';
 
 /**
@@ -150,41 +151,71 @@ const defaultGetData = (dc: DataContainerInterface, d: any, fieldIndex: number) 
   return dc.valueAt(d.index, fieldIndex);
 };
 
-/**
- * @param channels
- * @param dataId
- * @param fields
- * @return {Function} getFilterValue
- */
 const getFilterValueAccessor =
   (channels: (Filter | undefined)[], dataId: string, fields: any[]) =>
   (dc: DataContainerInterface) =>
   (getIndex = defaultGetIndex, getData = defaultGetData) =>
-  d =>
+  (d, objectInfo?: {index: number}) => {
     // for empty channel, value is 0 and min max would be [0, 0]
-    channels.map(filter => {
+    const channelValues = channels.map(filter => {
       if (!filter) {
         return 0;
       }
       const fieldIndex = getDatasetFieldIndexForFilter(dataId, filter);
       const field = fields[fieldIndex];
 
-      const value =
-        filter.type === FILTER_TYPES.timeRange
-          ? field.filterProps && Array.isArray(field.filterProps.mappedValue)
-            ? field.filterProps.mappedValue[getIndex(d)]
-            : moment.utc(getData(dc, d, fieldIndex)).valueOf()
-          : getData(dc, d, fieldIndex);
+      let value;
+      // d can be undefined when called from attribute updater from deck,
+      // when data is an ArrowTable, so use objectInfo instead.
+      const data = getData(dc, d || objectInfo, fieldIndex);
+      if (typeof data === 'function') {
+        value = data(field);
+      } else {
+        value =
+          filter.type === FILTER_TYPES.timeRange
+            ? field.filterProps && Array.isArray(field.filterProps.mappedValue)
+              ? field.filterProps.mappedValue[getIndex(d)]
+              : moment.utc(data).valueOf()
+            : data;
+      }
 
-      return notNullorUndefined(value) ? value - filter.domain?.[0] : Number.MIN_SAFE_INTEGER;
+      return notNullorUndefined(value)
+        ? Array.isArray(value)
+          ? value.map(v => v - filter.domain?.[0])
+          : value - filter.domain?.[0]
+        : Number.MIN_SAFE_INTEGER;
     });
+
+    // TODO: can we refactor the above to avoid the transformation below?
+    const arrChannel = channelValues.find(v => Array.isArray(v));
+    if (Array.isArray(arrChannel)) {
+      // Convert info form supported by DataFilterExtension (relevant for TripLayer)
+      const vals: number[][] = [];
+      // if there are multiple arrays, they should have the same length
+      for (let i = 0; i < arrChannel.length; i++) {
+        vals.push(channelValues.map(v => (Array.isArray(v) ? v[i] : v)));
+      }
+      return vals;
+    }
+
+    return channelValues;
+  };
+
+function isFilterTriggerEqual(a, b) {
+  return a === b || (a?.name === b?.name && a?.domain0 === b?.domain0);
+}
 
 /**
  * Get filter properties for gpu filtering
  */
-export function getGpuFilterProps(filters: Filter[], dataId: string, fields: Field[]): GpuFilter {
+export function getGpuFilterProps(
+  filters: Filter[],
+  dataId: string,
+  fields: Field[],
+  oldGpuFilter?: GpuFilter
+): GpuFilter {
   const filterRange = getEmptyFilterRange();
-  const triggers = {};
+  const triggers: GpuFilter['filterValueUpdateTriggers'] = {};
 
   // array of filter for each channel, undefined, if no filter is assigned to that channel
   const channels: (Filter | undefined)[] = [];
@@ -200,8 +231,18 @@ export function getGpuFilterProps(filters: Filter[], dataId: string, fields: Fie
 
     filterRange[i][0] = filter ? filter.value[0] - filter.domain?.[0] : 0;
     filterRange[i][1] = filter ? filter.value[1] - filter.domain?.[0] : 0;
+    const oldFilterTrigger = oldGpuFilter?.filterValueUpdateTriggers?.[`gpuFilter_${i}`] || null;
 
-    triggers[`gpuFilter_${i}`] = filter ? filter.name[filter.dataId.indexOf(dataId)] : null;
+    const trigger = filter
+      ? {
+          name: filter.name[filter.dataId.indexOf(dataId)],
+          domain0: filter.domain?.[0]
+        }
+      : null;
+    // don't create a new object, cause deck.gl use shallow compare
+    triggers[`gpuFilter_${i}`] = isFilterTriggerEqual(trigger, oldFilterTrigger)
+      ? oldFilterTrigger
+      : trigger;
     channels.push(filter);
   }
 

@@ -5,7 +5,6 @@ import Layer, {
   LayerBaseConfig,
   LayerBaseConfigPartial,
   LayerColorConfig,
-  LayerColumn,
   LayerCoverageConfig,
   LayerSizeConfig
 } from '../base-layer';
@@ -18,27 +17,26 @@ import {
   idToPolygonGeo,
   h3IsValid,
   getHexFields,
-  Centroid,
-  findDefaultColorField,
-  DataContainerInterface,
-  createDataContainer
-} from '@kepler.gl/utils';
+  Centroid
+} from '@kepler.gl/common-utils';
+import {findDefaultColorField, DataContainerInterface, createDataContainer} from '@kepler.gl/utils';
 import H3HexagonLayerIcon from './h3-hexagon-layer-icon';
 import {
   CHANNEL_SCALES,
   HIGHLIGH_COLOR_3D,
   DEFAULT_COLOR_UI,
   DEFAULT_TEXT_LABEL,
-  LAYER_VIS_CONFIGS,
-  ColorRange
+  LAYER_VIS_CONFIGS
 } from '@kepler.gl/constants';
 
 import {
+  ColorRange,
   VisConfigBoolean,
   VisConfigColorRange,
   VisConfigNumber,
   VisConfigRange,
-  Merge
+  Merge,
+  LayerColumn
 } from '@kepler.gl/types';
 import {KeplerTable} from '@kepler.gl/table';
 
@@ -116,6 +114,7 @@ export const HexagonIdVisConfigs: {
   coverageRange: 'coverageRange';
   elevationScale: 'elevationScale';
   enableElevationZoomFactor: 'enableElevationZoomFactor';
+  fixedHeight: 'fixedHeight';
 } = {
   colorRange: 'colorRange',
   filled: {
@@ -143,7 +142,8 @@ export const HexagonIdVisConfigs: {
   sizeRange: 'elevationRange',
   coverageRange: 'coverageRange',
   elevationScale: 'elevationScale',
-  enableElevationZoomFactor: 'enableElevationZoomFactor'
+  enableElevationZoomFactor: 'enableElevationZoomFactor',
+  fixedHeight: 'fixedHeight'
 };
 
 const brushingExtension = new BrushingExtension();
@@ -338,7 +338,9 @@ export default class HexagonIdLayer extends Layer {
   }
   /* eslint-enable complexity */
 
-  updateLayerMeta(dataContainer, getHexId) {
+  updateLayerMeta(dataset: KeplerTable, getHexId) {
+    const {dataContainer} = dataset;
+
     const centroids = dataContainer.map((d, index) => {
       const id = getHexId({index});
       if (!h3IsValid(id)) {

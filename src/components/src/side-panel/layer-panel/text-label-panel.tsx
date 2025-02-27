@@ -1,11 +1,14 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {Component} from 'react';
+import {ColorRange} from '@kepler.gl/types';
 import {FormattedMessage} from '@kepler.gl/localization';
-import {ColorRange} from '@kepler.gl/constants';
+import React, {Component} from 'react';
 import styled from 'styled-components';
 
+import {Add} from '../../common/icons';
+import ItemSelector from '../../common/item-selector/item-selector';
+import RangeSliderFactory from '../../common/range-slider';
 import {
   Button,
   PanelLabel,
@@ -13,19 +16,16 @@ import {
   SidePanelSection,
   SpaceBetweenFlexbox
 } from '../../common/styled-components';
-import {Add} from '../../common/icons';
-import ColorSelectorFactory from './color-selector';
 import Switch from '../../common/switch';
-import ItemSelector from '../../common/item-selector/item-selector';
 import LayerConfigGroupFactory, {
   ConfigGroupCollapsibleContent,
   ConfigGroupCollapsibleHeader
 } from './layer-config-group';
-import RangeSliderFactory from '../../common/range-slider';
 
-import FieldSelectorFactory from '../../common/field-selector';
-import {RGBColor, RGBAColor, LayerTextLabel, Field} from '@kepler.gl/types';
 import {LAYER_TEXT_CONFIGS} from '@kepler.gl/constants';
+import {Field, LayerTextLabel, RGBAColor, RGBColor} from '@kepler.gl/types';
+import FieldSelectorFactory from '../../common/field-selector';
+import ColorSelectorFactory from './color-selector';
 
 const SwitchWrapper = styled.div`
   display: flex;

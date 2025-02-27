@@ -13,14 +13,17 @@ import {
   ActionHandler
 } from '@kepler.gl/actions';
 import {LIGHT_AND_SHADOW_EFFECT, EFFECT_DESCRIPTIONS} from '@kepler.gl/constants';
+import {visStateLens} from '@kepler.gl/reducers';
 import {Effect} from '@kepler.gl/types';
+import {VisState} from '@kepler.gl/schemas';
 
 import {withState} from '../injector';
 import SidePanelTitleFactory from './side-panel-title';
 import EffectListFactory from './effect-list';
-import EffectTypeSelectorFactory from './effect-type-selector';
+import EffectTypeSelectorFactory, {EffectTypeSelectorProps} from './effect-type-selector';
 
 export type EffectManagerState = {
+  visState: VisState;
   visStateActions: {
     addEffect: ActionHandler<typeof addEffect>;
     updateEffect: ActionHandler<typeof updateEffect>;
@@ -85,12 +88,13 @@ function EffectManagerFactory(
   EffectTypeSelector: ReturnType<typeof EffectTypeSelectorFactory>
 ): React.FC<EffectManagerProps> {
   const EffectManager = (props: EffectManagerWithIntlProp & EffectManagerState) => {
-    const {intl, visStateActions, effects, effectOrder, children} = props;
+    const {intl, visStateActions, visState, children} = props;
+    const {effects, effectOrder} = visState;
     const {addEffect: visStateAddEffect} = visStateActions;
     const [typeSelectorOpened, setTypeSelectorOpened] = useState(false);
 
     // Prevent shadow effect from being added multiple times
-    const effectOptions = useMemo(() => {
+    const effectOptions: EffectTypeSelectorProps['options'] = useMemo(() => {
       const hasShadow = effects.some(effect => {
         return effect.type === LIGHT_AND_SHADOW_EFFECT.type;
       });
@@ -121,7 +125,7 @@ function EffectManagerFactory(
     return (
       <StyledEffectPanelContainer className="effect-manager">
         <StyledEffectPanel>
-          <StyledEffectPanelHeader>
+          <StyledEffectPanelHeader className="effect-panel-header">
             <SidePanelTitle
               className="effect-manager-title"
               title={intl.formatMessage({id: 'effectManager.effects'})}
@@ -149,19 +153,9 @@ function EffectManagerFactory(
     );
   };
 
-  return withState(
-    [],
-    state => {
-      const visState = state.demo.keplerGl.map.visState;
-      return {
-        effects: visState.effects,
-        effectOrder: visState.effectOrder
-      };
-    },
-    {
-      visStateActions: {addEffect, updateEffect, removeEffect, reorderEffect}
-    }
-  )(injectIntl(EffectManager)) as React.FC<EffectManagerProps>;
+  return withState([visStateLens], state => state, {
+    visStateActions: {addEffect, updateEffect, removeEffect, reorderEffect}
+  })(injectIntl(EffectManager)) as React.FC<EffectManagerProps>;
 }
 
 export default EffectManagerFactory;

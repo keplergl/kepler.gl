@@ -204,7 +204,7 @@ export type ReplaceDataInMapPayload = {
 /**
  * Initialize kepler.gl reducer. It is used to pass in `mapboxApiAccessToken` to `mapStyle` reducer.
  * @memberof main
- * @param {object} payload
+ * @param payload
  * @param payload.datasetToReplaceId - mapboxApiAccessToken to be saved to mapStyle reducer
  * @param payload.datasetToUse - mapboxApiUrl to be saved to mapStyle reducer.
  * @public

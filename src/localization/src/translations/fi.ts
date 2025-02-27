@@ -115,6 +115,9 @@ export default {
     radiusRange: 'Säteen rajat',
     clusterRadius: 'Klusterien säde pikseleinä',
     radiusRangePixels: 'Säteen rajat pikseleinä',
+    billboard: 'Billboard -tila',
+    billboardDescription: 'Suuntaa geometria kameraa kohti',
+    fadeTrail: 'Häipyvä polku',
     opacity: 'Läpinäkyvyys',
     coverage: 'Kattavuus',
     outline: 'Ääriviiva',
@@ -145,9 +148,9 @@ export default {
     weightIntensity: 'Painotuksen intensiteetti',
     zoomScale: 'Zoomausskaala',
     heightRange: 'Korkeuden rajat',
+    heightMultiplier: 'Korkeuskerroin',
     fixedHeight: 'Kiinteä korkeus',
-    fixedHeightDescription: 'Käytä korkeutta ilman muutoksia',
-    heightMultiplier: 'Korkeuskerroin'
+    fixedHeightDescription: 'Käytä korkeutta ilman muutoksia'
   },
   layerManager: {
     addData: 'Lisää aineisto',

@@ -29,7 +29,7 @@ const StyledEffectTimeSelector = styled.div`
   }
   border: 1px solid ${props => props.theme.inputBgd};
   border-radius: 4px;
-  :hover {
+  &:hover {
     border: 1px solid ${props => props.theme.inputBgdHover};
   }
   .active {
@@ -59,7 +59,7 @@ const DropdownListWrapper = styled.div`
 const StyledDropdownListItem = styled.div`
   padding: 10px 5px 9px 10px;
   width: 100%;
-  :hover {
+  &:hover {
     background-color: ${props => props.theme.effectPanelElementColorSelected};
     cursor: pointer;
   }
@@ -179,7 +179,7 @@ function EffectTimeSelectorFactory() {
     );
   };
 
-  return withTheme(EffectTimeSelector);
+  return withTheme(EffectTimeSelector) as React.FC<Omit<EffectTimeSelectorProps, 'theme'>>;
 }
 
 export default EffectTimeSelectorFactory;

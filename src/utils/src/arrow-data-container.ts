@@ -4,7 +4,7 @@
 import * as arrow from 'apache-arrow';
 import {console as globalConsole} from 'global/window';
 import {DATA_TYPES as AnalyzerDATA_TYPES} from 'type-analyzer';
-import {Field} from '@kepler.gl/types';
+import {ProtoDatasetField} from '@kepler.gl/types';
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 
 import {DataRow, SharedRowOptions} from './data-row';
@@ -12,7 +12,7 @@ import {DataContainerInterface, RangeOptions} from './data-container-interface';
 
 type ArrowDataContainerInput = {
   cols: arrow.Vector[];
-  fields?: Field[];
+  fields?: ProtoDatasetField[];
 };
 
 /**
@@ -44,10 +44,13 @@ export class ArrowDataContainer implements DataContainerInterface {
   _cols: arrow.Vector[];
   _numColumns: number;
   _numRows: number;
-  _fields: Field[];
+  _fields: ProtoDatasetField[];
   _numChunks: number;
   // cache column data to make valueAt() faster
   // _colData: any[][];
+
+  /** An arrow table recreated from vectors */
+  _arrowTable: arrow.Table;
 
   constructor(data: ArrowDataContainerInput) {
     if (!data.cols) {
@@ -64,6 +67,24 @@ export class ArrowDataContainer implements DataContainerInterface {
     this._fields = data.fields || [];
     this._numChunks = data.cols[0].data.length;
     // this._colData = data.cols.map(c => c.toArray());
+
+    this._arrowTable = this._createTable();
+  }
+
+  /**
+   * Restores internal Arrow table from vectors.
+   * TODO: consider using original arrow table, as it could contain extra metadata, not passed to the fields.
+   */
+  private _createTable() {
+    const creaOpts = {};
+    this._fields.map((field, index) => {
+      creaOpts[field.name] = this._cols[index];
+    });
+    return new arrow.Table(creaOpts);
+  }
+
+  getTable() {
+    return this._arrowTable;
   }
 
   update(updateData: arrow.Vector<any>[]) {
@@ -71,6 +92,9 @@ export class ArrowDataContainer implements DataContainerInterface {
     this._numColumns = this._cols.length;
     this._numRows = this._cols[0].length;
     this._numChunks = this._cols[0].data.length;
+
+    this._arrowTable = this._createTable();
+
     // cache column data to make valueAt() faster
     // this._colData = this._cols.map(c => c.toArray());
   }
@@ -120,7 +144,7 @@ export class ArrowDataContainer implements DataContainerInterface {
     return this._cols[columnIndex];
   }
 
-  getField(columnIndex: number): Field {
+  getField(columnIndex: number): ProtoDatasetField {
     return this._fields[columnIndex];
   }
 

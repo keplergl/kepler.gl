@@ -4,13 +4,20 @@
 import React, {Component, createRef, Dispatch} from 'react';
 import Console from 'global/console';
 import {bindActionCreators} from 'redux';
-import styled, {ThemeProvider, withTheme} from 'styled-components';
+import isPropValid from '@emotion/is-prop-valid';
+import styled, {withTheme, StyleSheetManager, ThemeProvider} from 'styled-components';
 import {createSelector} from 'reselect';
 import {connect as keplerGlConnect} from './connect/keplergl-connect';
 import {IntlProvider} from 'react-intl';
 import {messages} from '@kepler.gl/localization';
 import {RootContext, FeatureFlagsContextProvider, FeatureFlags} from './context';
-import {OnErrorCallBack, OnSuccessCallBack, Viewport} from '@kepler.gl/types';
+import {
+  AttributionWithStyle,
+  DatasetAttribution,
+  OnErrorCallBack,
+  OnSuccessCallBack,
+  Viewport
+} from '@kepler.gl/types';
 
 import {
   MapStateActions,
@@ -19,6 +26,8 @@ import {
   UIStateActions,
   VisStateActions
 } from '@kepler.gl/actions';
+
+import {generateHashId} from '@kepler.gl/common-utils';
 
 type KeplerGlActions = {
   visStateActions: typeof VisStateActions;
@@ -52,17 +61,27 @@ import {CloudListProvider} from './hooks/use-cloud-list-provider';
 
 import {
   filterObjectByPredicate,
-  generateHashId,
   validateToken,
   mergeMessages,
   observeDimensions,
   unobserveDimensions,
-  hasPortableWidth
+  hasPortableWidth,
+  getApplicationConfig
 } from '@kepler.gl/utils';
 
 import {theme as basicTheme, themeLT, themeBS, breakPointValues} from '@kepler.gl/styles';
 import {KeplerGlState} from '@kepler.gl/reducers';
 import {Provider} from '@kepler.gl/cloud-providers';
+
+// This implements the default behavior from styled-components v5
+function shouldForwardProp(propName, target) {
+  if (typeof target === 'string') {
+    // For HTML elements, forward the prop if it is a valid HTML attribute
+    return isPropValid(propName);
+  }
+  // For other elements, forward all props
+  return true;
+}
 
 // Maybe we should think about exporting this or creating a variable
 // as part of the base.js theme
@@ -97,11 +116,15 @@ const GlobalStyle = styled.div`
   .maplibregl-ctrl .maplibregl-ctrl-logo {
     display: none;
   }
+
+  .mapboxgl-ctrl .mapboxgl-ctrl-logo {
+    display: none;
+  }
 `;
 
-interface BottomWidgetOuterProps {
+type BottomWidgetOuterProps = {
   absolute?: boolean;
-}
+};
 
 const BottomWidgetOuter = styled.div<BottomWidgetOuterProps>(
   ({absolute}) => `
@@ -141,6 +164,7 @@ export const mapFieldsSelector = (props: KeplerGLProps, index = 0) => ({
   mapboxApiAccessToken: props.mapboxApiAccessToken,
   mapboxApiUrl: props.mapboxApiUrl ? props.mapboxApiUrl : DEFAULT_KEPLER_GL_PROPS.mapboxApiUrl,
   mapState: mapStateSelector(props, index),
+  datasetAttributions: attributionSelector(props).sources,
   mapStyle: props.mapStyle,
   onDeckInitialized: props.onDeckInitialized,
   onViewStateChange: props.onViewStateChange,
@@ -158,6 +182,8 @@ export const mapFieldsSelector = (props: KeplerGLProps, index = 0) => ({
   mapControls: props.uiState.mapControls,
   readOnly: props.uiState.readOnly,
   locale: props.uiState.locale,
+  isLoadingIndicatorVisible: Number(props.uiState.loadingIndicatorValue) > 0,
+  sidePanelWidth: props.sidePanelWidth ? props.sidePanelWidth : DEFAULT_KEPLER_GL_PROPS.width,
 
   // mapStyle
   topMapContainerProps: props.topMapContainerProps,
@@ -266,6 +292,62 @@ export const geoCoderPanelSelector = (
   appWidth: dimensions.width
 });
 
+/**
+ * Returns array of unique dataset attributions, each with title and url properties.
+ */
+export const datasetAttributionSelector = createSelector(
+  [state => state.visState.datasets],
+  datasets => {
+    const uniqueAttributions: DatasetAttribution[] = [];
+    Object.keys(datasets).forEach(key => {
+      const ds = datasets[key];
+      const attributions = ds?.metadata?.attributions;
+      if (Array.isArray(attributions)) {
+        attributions.forEach(attribution => {
+          if (typeof attribution === 'string') {
+            // attribution can be a raw string or a string with link tags
+            const links = attribution.match(/<a[^]+?a>/g);
+            if (links) {
+              try {
+                links?.forEach(link => {
+                  const href = link.match(/href="([^"]*)/)?.[1];
+                  const title = link.match(/title="([^"]*)/)?.[1];
+                  if (href && title) {
+                    uniqueAttributions.push({
+                      title: `${link.indexOf('&copy;') >= 0 ? '© ' : ''}${title}`,
+                      url: href
+                    });
+                  }
+                });
+              } catch (error) {
+                // just ignore for now
+              }
+            } else {
+              uniqueAttributions.push({title: attribution, url: null});
+            }
+          }
+        });
+      }
+    });
+    return uniqueAttributions;
+  }
+);
+
+/**
+ * Deduplicated dataset and layer text attributions and logos.
+ * Returns text attributions and logos to display.
+ */
+export const attributionSelector = createSelector(
+  [datasetAttributionSelector],
+  datasetAttributions => {
+    // TODO collect attributions from layers, and merge with dataset attributions here
+    const uniqueTextAttributions = datasetAttributions;
+    const logos: AttributionWithStyle[] = [];
+
+    return {sources: uniqueTextAttributions, logos};
+  }
+);
+
 export const notificationPanelSelector = (props: KeplerGLProps) => ({
   removeNotification: props.uiStateActions.removeNotification,
   notifications: props.uiState.notifications
@@ -366,7 +448,9 @@ function KeplerGlFactory(
     };
 
     componentDidMount() {
-      this._validateMapboxToken();
+      if (getApplicationConfig().baseMapLibraryConfig?.['mapbox']?.mapLibName === 'Mapbox') {
+        this._validateMapboxToken();
+      }
       this._loadMapStyle();
       if (typeof this.props.onKeplerGlInitialized === 'function') {
         this.props.onKeplerGlInitialized();
@@ -490,6 +574,7 @@ function KeplerGlFactory(
       const modalContainerFields = modalContainerSelector(this.props, this.root.current);
       const geoCoderPanelFields = geoCoderPanelSelector(this.props, dimensions);
       const notificationPanelFields = notificationPanelSelector(this.props);
+
       const mapContainers = !isSplit
         ? [
             <MapContainer
@@ -516,59 +601,65 @@ function KeplerGlFactory(
         <RootContext.Provider value={this.root}>
           <FeatureFlagsContextProvider featureFlags={featureFlags}>
             <IntlProvider locale={uiState.locale} messages={localeMessages[uiState.locale]}>
-              <ThemeProvider theme={theme}>
-                <CloudListProvider providers={cloudProviders}>
-                  <GlobalStyle
-                    className="kepler-gl"
-                    id={`kepler-gl__${id}`}
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      position: 'relative',
-                      width: `${width}px`,
-                      height: `${height}px`
-                    }}
-                    ref={this.root}
-                  >
-                    <NotificationPanel {...notificationPanelFields} />
-                    <DndContext>
-                      {!uiState.readOnly && !readOnly && <SidePanel {...sideFields} />}
-                      <MapsLayout className="maps" mapState={this.props.mapState}>
-                        {mapContainers}
-                      </MapsLayout>
-                    </DndContext>
-                    {isExportingImage && <PlotContainer {...plotContainerFields} />}
-                    {/* 1 geocoder: single mode OR split mode and synced viewports */}
-                    {!isViewportDisjointed(this.props) && interactionConfig.geocoder.enabled && (
-                      <GeoCoderPanel {...geoCoderPanelFields} index={0} unsyncedViewports={false} />
-                    )}
-                    {/* 2 geocoders: split mode and unsynced viewports */}
-                    {isViewportDisjointed(this.props) &&
-                      interactionConfig.geocoder.enabled &&
-                      mapContainers.map((_mapContainer, index) => (
+              <StyleSheetManager shouldForwardProp={shouldForwardProp}>
+                <ThemeProvider theme={theme}>
+                  <CloudListProvider providers={cloudProviders}>
+                    <GlobalStyle
+                      className="kepler-gl"
+                      id={`kepler-gl__${id}`}
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        position: 'relative',
+                        width: `${width}px`,
+                        height: `${height}px`
+                      }}
+                      ref={this.root}
+                    >
+                      <NotificationPanel {...notificationPanelFields} />
+                      <DndContext>
+                        {!uiState.readOnly && !readOnly && <SidePanel {...sideFields} />}
+                        <MapsLayout className="maps" mapState={this.props.mapState}>
+                          {mapContainers}
+                        </MapsLayout>
+                      </DndContext>
+                      {isExportingImage && <PlotContainer {...plotContainerFields} />}
+                      {/* 1 geocoder: single mode OR split mode and synced viewports */}
+                      {!isViewportDisjointed(this.props) && interactionConfig.geocoder.enabled && (
                         <GeoCoderPanel
-                          key={index}
                           {...geoCoderPanelFields}
-                          index={index}
-                          unsyncedViewports={true}
+                          index={0}
+                          unsyncedViewports={false}
                         />
-                      ))}
-                    <BottomWidgetOuter absolute={!hasPortableWidth(breakPointValues)}>
-                      <BottomWidget
-                        rootRef={this.bottomWidgetRef}
-                        {...bottomWidgetFields}
+                      )}
+                      {/* 2 geocoders: split mode and unsynced viewports */}
+                      {isViewportDisjointed(this.props) &&
+                        interactionConfig.geocoder.enabled &&
+                        mapContainers.map((_mapContainer, index) => (
+                          <GeoCoderPanel
+                            key={index}
+                            {...geoCoderPanelFields}
+                            index={index}
+                            unsyncedViewports={true}
+                          />
+                        ))}
+                      <BottomWidgetOuter absolute={!hasPortableWidth(breakPointValues)}>
+                        <BottomWidget
+                          rootRef={this.bottomWidgetRef}
+                          {...bottomWidgetFields}
+                          containerW={dimensions.width}
+                          theme={theme}
+                        />
+                      </BottomWidgetOuter>
+                      <ModalContainer
+                        {...modalContainerFields}
                         containerW={dimensions.width}
-                        theme={theme}
+                        containerH={dimensions.height}
                       />
-                    </BottomWidgetOuter>
-                    <ModalContainer
-                      {...modalContainerFields}
-                      containerW={dimensions.width}
-                      containerH={dimensions.height}
-                    />
-                  </GlobalStyle>
-                </CloudListProvider>
-              </ThemeProvider>
+                    </GlobalStyle>
+                  </CloudListProvider>
+                </ThemeProvider>
+              </StyleSheetManager>
             </IntlProvider>
           </FeatureFlagsContextProvider>
         </RootContext.Provider>

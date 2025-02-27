@@ -7,13 +7,7 @@ import tripGeojson, {
   dataToTimeStamp
 } from 'test/fixtures/trip-geojson';
 import {KeplerGlLayers} from '@kepler.gl/layers';
-import {
-  DEFAULT_LAYER_OPACITY,
-  DEFAULT_TEXT_LABEL,
-  DEFAULT_COLOR_RANGE,
-  DEFAULT_COLOR_UI
-} from '@kepler.gl/constants';
-
+import {DEFAULT_LAYER_OPACITY, DEFAULT_TEXT_LABEL, DEFAULT_COLOR_UI} from '@kepler.gl/constants';
 const {TripLayer} = KeplerGlLayers;
 
 export const savedStateV1TripGeoJson = {
@@ -151,6 +145,7 @@ export const savedStateV1TripGeoJson = {
             type: 'trip',
             config: {
               dataId: 'trip_data',
+              columnMode: 'geojson',
               label: 'Trip Data',
               color: [0, 0, 0],
               columns: {
@@ -166,7 +161,7 @@ export const savedStateV1TripGeoJson = {
                   category: 'Uber',
                   colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
                 },
-                trailLength: 180,
+                billboard: false,
                 sizeRange: [0, 10]
               },
               textLabel: [
@@ -237,8 +232,16 @@ export const mergedLayer0 = new TripLayer({
 mergedLayer0.config = {
   dataId: 'trip_data',
   label: 'Trip Data',
+  columnMode: 'geojson',
   color: [0, 0, 0],
-  columns: {geojson: {value: '_geojson', fieldIdx: 0}},
+  columns: {
+    altitude: {value: null, fieldIdx: -1, optional: true},
+    geojson: {value: '_geojson', fieldIdx: 0, optional: false},
+    id: {value: null, fieldIdx: -1, optional: true},
+    lat: {value: null, fieldIdx: -1, optional: true},
+    lng: {value: null, fieldIdx: -1, optional: true},
+    timestamp: {value: null, fieldIdx: -1, optional: true}
+  },
   hidden: false,
   isVisible: true,
   isConfigActive: false,
@@ -256,8 +259,15 @@ mergedLayer0.config = {
   visConfig: {
     opacity: DEFAULT_LAYER_OPACITY,
     thickness: 0.5,
-    colorRange: DEFAULT_COLOR_RANGE,
+    colorRange: {
+      name: 'Global Warming',
+      type: 'sequential',
+      category: 'Uber',
+      colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
+    },
     trailLength: 180,
+    fadeTrail: true,
+    billboard: false,
     sizeRange: [0, 10]
   },
   textLabel: [DEFAULT_TEXT_LABEL],

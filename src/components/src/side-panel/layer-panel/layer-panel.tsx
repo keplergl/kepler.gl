@@ -2,21 +2,21 @@
 // Copyright contributors to the kepler.gl project
 
 import React, {
+  CSSProperties,
+  ChangeEventHandler,
   Component,
   MouseEventHandler,
-  TouchEventHandler,
-  CSSProperties,
-  ChangeEventHandler
+  TouchEventHandler
 } from 'react';
 import styled from 'styled-components';
 
+import {ActionHandler, MapStateActions, VisStateActions, toggleModal} from '@kepler.gl/actions';
+import {dataTestIds} from '@kepler.gl/constants';
+import {Layer, LayerBaseConfig} from '@kepler.gl/layers';
+import {Datasets} from '@kepler.gl/table';
+import {ColorUI, LayerVisConfig, NestedPartial, SplitMap} from '@kepler.gl/types';
 import LayerConfiguratorFactory from './layer-configurator';
 import LayerPanelHeaderFactory from './layer-panel-header';
-import {dataTestIds} from '@kepler.gl/constants';
-import {NestedPartial, LayerVisConfig, ColorUI} from '@kepler.gl/types';
-import {Layer, LayerBaseConfig} from '@kepler.gl/layers';
-import {toggleModal, VisStateActions, MapStateActions, ActionHandler} from '@kepler.gl/actions';
-import {Datasets} from '@kepler.gl/table';
 
 type LayerPanelProps = {
   className?: string;
@@ -47,9 +47,11 @@ type LayerPanelProps = {
   zoomToLayer: ActionHandler<typeof MapStateActions.fitBounds>;
   duplicateLayer: ActionHandler<typeof VisStateActions.duplicateLayer>;
   listeners?: React.ElementType;
+  layerToggleVisibility: ActionHandler<typeof VisStateActions.layerToggleVisibility>;
+  splitMap?: SplitMap;
 };
 
-const PanelWrapper = styled.div<{active: boolean}>`
+const PanelWrapper = styled.div`
   font-size: 12px;
   border-radius: 1px;
   z-index: 1000;
@@ -85,8 +87,12 @@ function LayerPanelFactory(
       this.props.layerTextLabelChange(this.props.layer, ...args);
     };
 
-    updateLayerVisualChannelConfig = (newConfig: Partial<LayerBaseConfig>, channel: string) => {
-      this.props.layerVisualChannelConfigChange(this.props.layer, newConfig, channel);
+    updateLayerVisualChannelConfig = (
+      newConfig: Partial<LayerBaseConfig>,
+      channel: string,
+      newVisConfig?: Partial<LayerVisConfig>
+    ) => {
+      this.props.layerVisualChannelConfigChange(this.props.layer, newConfig, channel, newVisConfig);
     };
 
     _updateLayerLabel: ChangeEventHandler<HTMLInputElement> = ({target: {value}}) => {
@@ -96,7 +102,7 @@ function LayerPanelFactory(
     _toggleVisibility: MouseEventHandler = e => {
       e.stopPropagation();
       const isVisible = !this.props.layer.config.isVisible;
-      this.updateLayerConfig({isVisible});
+      this.props.layerToggleVisibility(this.props.layer.id, isVisible);
     };
 
     _resetIsValid: MouseEventHandler = e => {
@@ -132,14 +138,15 @@ function LayerPanelFactory(
     };
 
     render() {
-      const {layer, datasets, isDraggable, layerTypeOptions, listeners} = this.props;
+      const {layer, datasets, isDraggable, layerTypeOptions, listeners, splitMap} = this.props;
       const {config, isValid} = layer;
       const {isConfigActive} = config;
-      const allowDuplicate = typeof layer.isValidToSave === 'function' && layer.isValidToSave();
+      const allowDuplicate =
+        typeof layer.isValidToSave === 'function' && layer.isValidToSave() && isValid;
+      const layerVisInSplitMap = splitMap?.layers?.[layer.id];
 
       return (
         <PanelWrapper
-          active={isConfigActive}
           className={`layer-panel ${this.props.className}`}
           data-testid={dataTestIds.layerPanel}
           style={this.props.style}
@@ -149,7 +156,7 @@ function LayerPanelFactory(
           <LayerPanelHeader
             isConfigActive={isConfigActive}
             layerId={layer.id}
-            isVisible={config.isVisible}
+            isVisible={layerVisInSplitMap ?? config.isVisible}
             isValid={isValid}
             label={config.label}
             labelRCGColorValues={config.dataId ? datasets[config.dataId].color : null}

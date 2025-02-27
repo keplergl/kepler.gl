@@ -1,16 +1,15 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {Component, ComponentType, Dispatch} from 'react';
-import {connect, ConnectedProps} from 'react-redux';
-import memoize from 'lodash.memoize';
+import React, {useRef, ComponentType, Dispatch, useEffect, useMemo} from 'react';
+import {connect, ConnectedProps, useDispatch} from 'react-redux';
+
 import {console as Console} from 'global/window';
 import {injector, provideRecipesToInjector, flattenDeps} from './injector';
 import KeplerGlFactory from './kepler-gl';
-
 import {registerEntry, deleteEntry, renameEntry, forwardTo} from '@kepler.gl/actions';
-import {notNullorUndefined} from '@kepler.gl/utils';
 import {KeplerGlState} from '@kepler.gl/reducers';
+import {getApplicationConfig} from '@kepler.gl/utils';
 
 export const ERROR_MSG = {
   noState:
@@ -69,26 +68,32 @@ export function ContainerFactory(
     * @public
    */
 
-  class Container extends Component<PropsFromRedux> {
-    // default id and address if not provided
-    static defaultProps = {
-      id: 'map',
-      getState: state => state.keplerGl,
-      mint: true
-    };
+  function usePreviousId(value) {
+    const ref = useRef();
+    useEffect(() => {
+      ref.current = value;
+    });
+    return ref.current;
+  }
 
-    componentDidMount() {
-      const {
-        id,
-        mint,
-        mapboxApiAccessToken,
-        mapboxApiUrl,
-        mapStylesReplaceDefault,
-        initialUiState
-      } = this.props;
+  const Container: React.FC<PropsFromRedux> = props => {
+    const {
+      // default id and address if not provided
+      id = 'map',
+      getState = state => state.keplerGl,
+      mint = true,
+      mapboxApiAccessToken,
+      mapboxApiUrl,
+      mapStylesReplaceDefault,
+      initialUiState,
+      state
+    } = props;
+    const prevId = usePreviousId(id);
+    const dispatch = useDispatch();
 
+    useEffect(() => {
       // add a new entry to reducer
-      this.props.dispatch(
+      dispatch(
         registerEntry({
           id,
           mint,
@@ -98,56 +103,61 @@ export function ContainerFactory(
           initialUiState
         })
       );
-    }
 
-    componentDidUpdate(prevProps) {
+      // initialize plugins
+      if (getApplicationConfig().plugins.length) {
+        getApplicationConfig().plugins.forEach(async plugin => {
+          await plugin.init();
+        });
+      }
+
+      // cleanup
+      return () => {
+        if (mint !== false) {
+          // delete entry in reducer
+          dispatch(deleteEntry(id));
+        }
+      };
+    }, [
+      id,
+      dispatch,
+      initialUiState,
+      mapStylesReplaceDefault,
+      mapboxApiAccessToken,
+      mapboxApiUrl,
+      mint
+    ]);
+
+    useEffect(() => {
       // check if id has changed, if true, copy state over
-      if (
-        notNullorUndefined(prevProps.id) &&
-        notNullorUndefined(this.props.id) &&
-        prevProps.id !== this.props.id
-      ) {
-        this.props.dispatch(renameEntry(prevProps.id, this.props.id));
+      if (prevId && id && prevId !== id) {
+        dispatch(renameEntry(prevId, id));
       }
+    }, [dispatch, prevId, id]);
+
+    const stateSelector = useMemo(
+      () => keplerState => {
+        if (!getState(keplerState)) {
+          // log error
+          Console.error(ERROR_MSG.noState);
+
+          return null;
+        }
+        return getState(keplerState)[id];
+      },
+      [id, getState]
+    );
+    const forwardDispatch = useMemo(() => forwardTo(id, dispatch), [id, dispatch]);
+
+    // const selector = getSelector(id, getState);
+
+    if (!stateSelector || !stateSelector(state)) {
+      // instance state hasn't been mounted yet
+      return <div />;
     }
 
-    componentWillUnmount() {
-      if (this.props.mint !== false) {
-        // delete entry in reducer
-        this.props.dispatch(deleteEntry(this.props.id));
-      }
-    }
-
-    getSelector = memoize((id, getState) => state => {
-      if (!getState(state)) {
-        // log error
-        Console.error(ERROR_MSG.noState);
-
-        return null;
-      }
-      return getState(state)[id];
-    });
-    getDispatch = memoize((id, dispatch) => forwardTo(id, dispatch));
-
-    render() {
-      const {id, getState, dispatch, state} = this.props;
-      const selector = this.getSelector(id, getState);
-
-      if (!selector || !selector(state)) {
-        // instance state hasn't been mounted yet
-        return <div />;
-      }
-
-      return (
-        <KeplerGl
-          {...this.props}
-          id={id}
-          selector={selector}
-          dispatch={this.getDispatch(id, dispatch)}
-        />
-      );
-    }
-  }
+    return <KeplerGl {...props} id={id} selector={stateSelector} dispatch={forwardDispatch} />;
+  };
 
   return connector(Container);
 }

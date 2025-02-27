@@ -14,8 +14,8 @@
   <a href='https://app.fossa.com/projects/custom%2B4458%2Fgithub.com%2Fkeplergl%2Fkepler.gl?ref=badge_shield'>
     <img src='https://app.fossa.com/api/projects/custom%2B4458%2Fgithub.com%2Fkeplergl%2Fkepler.gl.svg?type=shield' alt='Fossa' />
   </a>
-  <a href="https://app.netlify.com/sites/keplergl/deploys" alt="Netlify Status">
-    <img src="https://api.netlify.com/api/v1/badges/0c9b895c-acd0-43fd-8af7-fe960181b686/deploy-status" />
+  <a href="https://app.netlify.com/sites/keplergl/deploys">
+    <img src="https://api.netlify.com/api/v1/badges/0c9b895c-acd0-43fd-8af7-fe960181b686/deploy-status" alt="Netlify Status"/>
   </a>
   <a href='https://coveralls.io/github/keplergl/kepler.gl?branch=master'>
     <img src='https://coveralls.io/repos/github/keplergl/kepler.gl/badge.svg?branch=master' alt='Coverage Status' />
@@ -23,7 +23,7 @@
 </p>
 
 <h1 align="center">
-  kepler.gl | <a href="http://kepler.gl">Website</a> | <a href="http://kepler.gl/#/demo">Demo App</a> | <a href="https://docs.kepler.gl/">Docs</a>
+  kepler.gl | <a href="https://kepler.gl">Website</a> | <a href="https://kepler.gl/#/demo">Demo App</a> | <a href="https://docs.kepler.gl/">Docs</a>
 </h1>
 <h3></h3>
 
@@ -33,7 +33,7 @@
 
 [Kepler.gl][web] is a data-agnostic, high-performance web-based application for visual exploration of large-scale geolocation data sets. Built on top of [MapLibre GL](https://maplibre.org/) and [deck.gl](https://deck.gl/), kepler.gl can render millions of points representing thousands of trips and perform spatial aggregations on the fly.
 
-Kepler.gl is also a React component that uses [Redux](https://redux.js.org/) to manage its state and data flow. It can be embedded into other React-Redux applications and is highly customizable. For information on how to embed kepler.gl in your app take a look at this step-by-step [tutorial][vis-academy] on vis.academy.
+Kepler.gl is also a React component that uses [Redux](https://redux.js.org/) to manage its state and data flow. It can be embedded into other React-Redux applications and is highly customizable. For information on how to embed kepler.gl in your app take a look at this step-by-step [tutorial](https://github.com/uber-archive/vis-academy/blob/master/src/docs/kepler.gl/0-setup.md) on vis.academy.
 
 ## Links
 
@@ -54,29 +54,29 @@ Kepler.gl is also a React component that uses [Redux](https://redux.js.org/) to 
 Use Node 18.18.2 or above, older node versions have not been supported/ tested.
 For best results, use [nvm](https://github.com/creationix/nvm) `nvm install`.
 
-## Install kepler.gl
+## Install kepler.gl modules
 
-Install node (`> 18.18.2`), yarn, and project dependencies
+Kepler.gl consists of different modules. Each module can be added to the project like this:
 
 ```sh
-npm install --save kepler.gl
+npm install --save @kepler.gl/components
 // or
-yarn add kepler.gl
+yarn add @kepler.gl/components
 ```
 
 kepler.gl is built upon [mapbox][mapbox]. You will need a [Mapbox Access Token][mapbox-token] to use it.
 
 If you don't use a module bundler, it's also fine. Kepler.gl npm package includes precompiled production UMD builds in the [umd folder](https://unpkg.com/kepler.gl/umd).
-You can add the script tag to your html file as it follows:
+You can add the script tag to your html file as it follows (latest version of Kepler.gl):
 
 ```html
 <script src="https://unpkg.com/kepler.gl/umd/keplergl.min.js" />
 ```
 
-or if you would like, you can load a specific version
+or if you would like, you can load a specific version:
 
 ```html
-<script src="https://unpkg.com/kepler.gl@2.5.5/umd/keplergl.min.js" />
+<script src="https://unpkg.com/kepler.gl@3.0.0/umd/keplergl.min.js" />
 ```
 
 ## Develop kepler.gl
@@ -149,122 +149,32 @@ const Map = props => (
 );
 ```
 
-#### Props
+### Props
 
-##### `id` (String, required)
+| Prop Name                     | Type        | Default Value              | Description                                                                                                                                                                                                             |
+|-------------------------------|-------------|----------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `id`                           | String      | `map`                      | The unique identifier for the KeplerGl instance. Required when multiple KeplerGl instances exist. It maps to the state in the reducer (e.g. component with id `foo` can be found in`state.keplerGl.foo`).               |
+| `mapboxApiAccessToken`         | String      | `undefined`                | API token for Mapbox, used for rendering base maps. Create a free token at [Mapbox](https://www.mapbox.com).                                                                                                            |
+| `getState`                     | Function    | `state => state.keplerGl`   | Function that specifies the path to the root KeplerGl state in the reducer.                                                                                                                                             |
+| `width`                        | Number      | `800`                      | The width of the KeplerGl UI in pixels.                                                                                                                                                                                 |
+| `height`                       | Number      | `800`                      | The height of the KeplerGl UI in pixels.                                                                                                                                                                                |
+| `appName`                      | String      | `Kepler.Gl`                | The app name displayed in the side panel header.                                                                                                                                                                        |
+| `version`                      | String      | `v1.0`                     | The version displayed in the side panel header.                                                                                                                                                                         |
+| `onSaveMap`                    | Function    | `undefined`                | A function called when the "Save Map URL" in side panel header is clicked.                                                                                                                                              |
+| `onViewStateChange`            | Function    | `undefined`                | Triggered when the map viewport is updated. Receives `viewState` parameter with updated values like longitude, latitude, zoom, etc.                                                                                     |
+| `getMapboxRef(mapbox, index)`  | Function    | `undefined`                | Called when `KeplerGl` adds or removes a MapContainer with an inner Mapbox map. `mapbox` is a `MapRef` when added, or `null` when removed. `index` is `0` for the first map and `1` for the second map in a split view. |
+| `actions`                      | Object      | `{}`                       | Custom action creators to override the default KeplerGl action creators. Only use custom action when you want to modify action payload.                                                                                 |
+| `mint`                         | Boolean     | `true`                     | Determines whether to load a fresh empty state when mounted. When `false`, the state persists across remounts. Useful for modal use cases.                                                                              |
+| `theme`                        | Object/String| `null`                     | Set to `"dark"`, `"light"`, or `"base"`, or pass a theme object to customize KeplerGl’s style.                                                                                                                          |
+| `mapboxApiUrl`                 | String      | `https://api.mapbox.com`    | The Mapbox API URL if you are using a custom Mapbox tile server.                                                                                                                                                        |
+| `mapStylesReplaceDefault`      | Boolean     | `false`                    | Set to `true` to replace default map styles with custom ones. (see ```mapStyles``` prop)                                                                                                                                      |
+| `mapStyles`                    | Array       | `[]`                       | An array of [custom map styles](#example-custom-map-style)  for the map style selection panel. Styles replace the default ones if `mapStylesReplaceDefault` is `true`.                                                  |
+| `initialUiState`               | Object      | `undefined`                | The initial UI state applied to the `uiState` reducer.                                                                                                                                                                  |
+| `localeMessages`               | Object      | `undefined`                | Used to modify or add new translations. Read more about [Localization][localization].                                                                                                                                   |
 
-- Default: `map`
+#### Example Custom Map Style
 
-The id of this KeplerGl instance. `id` is required if you have multiple
-KeplerGl instances in your app. It defines the prop name of the KeplerGl state that is
-stored in the KeplerGl reducer. For example, the state of the KeplerGl component with id `foo` is
-stored in `state.keplerGl.foo`.
-
-In case you create multiple kepler.gl instances using the same id, the kepler.gl state defined by the entry will be
-overridden by the latest instance and reset to a blank state.
-
-##### `mapboxApiAccessToken` (String, required\*)
-
-- Default: `undefined`
-
-By default, kepler.gl uses mapbox-gl.js to render its base maps. You can create a free account at [mapbox][mapbox] and create a token at [www.mapbox.com/account/access-tokens][mapbox-token].
-
-If you replaced kepler.gl default map styles with your own, and they are not Mapbox styles. `mapboxApiAccessToken` will not be required.
-
-Read more about [Custom Map Styles][custom-map-styles].
-
-##### `getState` (Function, optional)
-
-- Default: `state => state.keplerGl`
-
-The path to the root keplerGl state in your reducer.
-
-##### `width` (Number, optional)
-
-- Default: `800`
-
-Width of the KeplerGl UI.
-
-##### `height` (Number, optional)
-
-- Default: `800`
-
-##### `appName` (String, optional)
-
-- Default: `Kepler.Gl`
-
-App name displayed in side panel header
-
-##### `version` (String, optional)
-
-- Default: `v1.0`
-
-version displayed in side panel header
-
-##### `onSaveMap` (Function, optional)
-
-- Default: `undefined`
-
-Action called when click Save Map Url in side panel header.
-
-##### `onViewStateChange` (Function, optional)
-
-- Default: `undefined`
-- Parameter: `viewState` - An updated view state object containing parameters such as longitude, latitude, zoom etc
-
-Action triggered when map viewport is updated.
-
-##### `getMapboxRef(mapbox, index)` (Function, optional)
-
-- Default: `undefined`
-
-Function called when `KeplerGL` adds or removes a `MapContainer` component having an inner Mapbox map.
-
-The `mapbox` argument is an [`MapRef`](https://visgl.github.io/react-map-gl/docs/api-reference/types#mapref) when added or `null` when removed.
-
-The `index` argument is 0 for a single map or 1 for an additional map (since `KeplerGL` supports an optional split map view).
-
-##### `actions` (Object, optional)
-
-- Default: `{}`
-
-Actions creators to replace default kepler.gl action creator. Only use custom action when you want to modify action payload.
-
-##### `mint` (Boolean, optional)
-
-- Default: `true`
-
-Whether to load a fresh empty state when component is mounted. when parse `mint: true` kepler.gl component will always load a fresh state when re-mount the same component, state inside this component will be destroyed once its unmounted.
-By Parsing `mint: false` kepler.gl will keep the component state in the store even when it is unmounted, and use it as initial state when re-mounted again. This is useful when mounting kepler.gl in a modal, and keep the same map when re-open.
-
-Read more about [Components][components].
-
-##### `theme` (Object | String, optional)
-
-- default: `null`
-
-One of `"dark"`, `"light"` or `"base"`
-You can pass theme name or object used to customize Kepler.gl style. Kepler.gl provide an `'light'` theme besides the default 'dark' theme. When pass in a theme object Kepler.gl will use the value passed as input to override values from [theme](https://github.com/keplergl/kepler.gl/blob/master/src/styles/base.js).
-
-Read more about [Custom Theme][custom-theme]
-
-#### `mapboxApiUrl` (String, optional)
-
-- Default: `https://api.mapbox.com`
-
-If you are using your own mapbox tile server, you can pass in your own tile server api url.
-
-#### `mapStylesReplaceDefault` (Boolean, optional)
-
-- Default: `false`
-
-kepler.gl provide 4 map styles to choose from. Pass `true` if you want to supply your own `mapStyles`. See Below.
-
-#### `mapStyles` (Array, optional)
-
-- Default: `[]`
-
-You can supply additional map styles to be displayed in [map style selection panel](https://github.com/keplergl/kepler.gl/blob/master/docs/user-guides/f-map-styles/1-base-map-styles.md). By default, additional map styles will be added to default map styles. If pass `mapStylesReplaceDefault: true`, they will replace the default ones. kepler.gl will attempt to group layers of your style based on its `id` naming convention and use it to allow toggle visibility of [base map layers](https://github.com/keplergl/kepler.gl/blob/master/docs/user-guides/f-map-styles/2-map-layers.md). Supply your own `layerGroups` to override default for more accurate layer grouping.
+You can supply additional map styles to be displayed in [map style selection panel](https://github.com/keplergl/kepler.gl/blob/master/docs/user-guides/f-map-styles/1-base-map-styles.md). By default, additional map styles will be added to default map styles. If you pass `mapStylesReplaceDefault: true`, they will replace the default ones. kepler.gl will attempt to group layers of your style based on its `id` naming convention and use it to allow toggle visibility of [base map layers](https://github.com/keplergl/kepler.gl/blob/master/docs/user-guides/f-map-styles/2-map-layers.md). Supply your own `layerGroups` to override default for more accurate layer grouping.
 
 Each `mapStyles` should has the following properties:
 
@@ -288,7 +198,6 @@ const mapStyles = [
         defaultVisibility: true
       },
       {
-        // adding this will keep the 3d building option
         slug: '3d building',
         filter: () => false,
         defaultVisibility: false
@@ -297,20 +206,6 @@ const mapStyles = [
   }
 ];
 ```
-
-Read more about [Custom Map Styles][custom-map-styles].
-
-#### `initialUiState` (object, optional)
-
-- Default: `undefined`
-
-Intial UI State applied to uiState reducer, value will be shallow merged with default [`INITIAL_UI_STATE`](https://docs.kepler.gl/docs/api-reference/reducers/ui-state#initial_ui_state)
-
-#### `localeMessages` (object, optional)
-
-- Default: `undefined` Modify default translation or add new translation
-
-Read more about [Localization][localization].
 
 ### 3. Dispatch custom actions to `keplerGl` reducer.
 
@@ -327,7 +222,7 @@ e.g. `updateVisDataUpdater` is the updater for `ActionTypes.UPDATE_VIS_DATA` (ta
 Here is an example how you can listen to an app action `QUERY_SUCCESS` and call `updateVisDataUpdater` to load data into Kepler.Gl.
 
 ```js
-import keplerGlReducer, {visStateUpdaters} from 'kepler.gl/reducers';
+import {keplerGlReducer, visStateUpdaters} from '@kepler.gl/reducers';
 
 // Root Reducer
 const reducers = combineReducers({

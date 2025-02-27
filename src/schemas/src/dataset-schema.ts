@@ -3,12 +3,15 @@
 
 import pick from 'lodash.pick';
 import {console as globalConsole} from 'global/window';
+import * as arrow from 'apache-arrow';
 
-import {ProtoDataset, RGBColor} from '@kepler.gl/types';
+import {ALL_FIELD_TYPES, DATASET_FORMATS} from '@kepler.gl/constants';
+import {ProtoDataset, RGBColor, JsonObject} from '@kepler.gl/types';
 import {KeplerTable} from '@kepler.gl/table';
 import {VERSIONS} from './versions';
 import Schema from './schema';
-import {getFieldsFromData, getSampleForTypeAnalyze} from '@kepler.gl/utils';
+import {getFieldsFromData, getSampleForTypeAnalyze} from '@kepler.gl/common-utils';
+import {ArrowDataContainer, DataContainerInterface, FIELD_DISPLAY_FORMAT} from '@kepler.gl/utils';
 
 export type SavedField = {
   name: string;
@@ -32,6 +35,9 @@ export type SavedDatasetV1 = {
     color: RGBColor;
     allData: any[][];
     fields: SavedField[];
+    type?: string;
+    metadata?: JsonObject;
+    disableDataOperation?: boolean;
   };
 };
 
@@ -90,7 +96,68 @@ export const propertiesV1 = {
     key: 'fields',
     version: VERSIONS.v1,
     properties: fieldPropertiesV1
-  })
+  }),
+  type: null,
+  metadata: null,
+  disableDataOperation: null
+};
+
+/**
+ * TODO Consider moving this cast to ArrowDataContainer?
+ * Prepare a data container for export as part of json / html files.
+ * 1) Arrow tables can store Timestamps as BigInts, so convert numbers to ISOStrings compatible with Kepler.gl's TIMESTAMP.
+ * 2) Geoarrow binary buffers converted to hex wkb
+ * @param dataContainer A data container to flatten.
+ * @returns Row based data.
+ */
+const getAllDataForSaving = (dataContainer: DataContainerInterface): any[][] => {
+  const allData = dataContainer.flattenData();
+
+  if (dataContainer instanceof ArrowDataContainer) {
+    const numColumns = dataContainer.numColumns();
+
+    for (let columnIndex = 0; columnIndex < numColumns; ++columnIndex) {
+      const column = dataContainer.getColumn(columnIndex);
+      const field = dataContainer.getField(columnIndex);
+
+      if (
+        arrow.DataType.isTimestamp(column.type) ||
+        arrow.DataType.isDate(column.type) ||
+        arrow.DataType.isTime(column.type)
+      ) {
+        allData.forEach(row => {
+          row[columnIndex] = new Date(row[columnIndex]).toISOString();
+        });
+      } else if (field?.type === ALL_FIELD_TYPES.geoarrow) {
+        const formatter = FIELD_DISPLAY_FORMAT[ALL_FIELD_TYPES.geoarrow];
+        allData.forEach(row => {
+          row[columnIndex] = formatter(row[columnIndex], field);
+        });
+      }
+    }
+  }
+
+  return allData;
+};
+
+/**
+ * Transforms fields for saving as part of json / html files.
+ * @param fields The array of fields from a Kepler table.
+ * @returns The transformed fields array with GeoArrow types updated to GeoJSON.
+ */
+const getFieldsForSaving = (fields: KeplerTable['fields']) => {
+  return fields.map(field => {
+    if (field.type === ALL_FIELD_TYPES.geoarrow) {
+      // geoarrow binary data is transformed to hex wkb in getAllDataForSaving, so update the field accordingly
+      return {
+        name: field.name,
+        type: ALL_FIELD_TYPES.geojson,
+        format: '',
+        analyzerType: 'GEOMETRY'
+      };
+    }
+    return field;
+  });
 };
 
 export class DatasetSchema extends Schema {
@@ -100,7 +167,16 @@ export class DatasetSchema extends Schema {
     const datasetFlattened = dataset.dataContainer
       ? {
           ...dataset,
-          allData: dataset.dataContainer.flattenData()
+          allData: getAllDataForSaving(dataset.dataContainer),
+          fields: getFieldsForSaving(dataset.fields),
+          // we use flattenData to save arrow tables,
+          // but once flattened it's not an arrow file anymore.
+          metadata: {
+            ...dataset.metadata,
+            ...(dataset.metadata.format === DATASET_FORMATS.arrow
+              ? {format: DATASET_FORMATS.row}
+              : {})
+          }
         }
       : dataset;
 
@@ -144,7 +220,9 @@ export class DatasetSchema extends Schema {
     // get format of all fields
     return {
       data: {fields: updatedFields, rows: dataset.allData},
-      info: pick(dataset, ['id', 'label', 'color'])
+      info: pick(dataset, ['id', 'label', 'color', 'type']),
+      ...(dataset.metadata ? {metadata: dataset.metadata} : {}),
+      ...(dataset.disableDataOperation ? {disableDataOperation: dataset.disableDataOperation} : {})
     };
   }
 }

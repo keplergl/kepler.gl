@@ -5,20 +5,33 @@ import * as arrow from 'apache-arrow';
 import {csvParseRows} from 'd3-dsv';
 import {DATA_TYPES as AnalyzerDATA_TYPES} from 'type-analyzer';
 import normalize from '@mapbox/geojson-normalize';
+import {parseSync} from '@loaders.gl/core';
 import {ArrowTable} from '@loaders.gl/schema';
-import {ALL_FIELD_TYPES, DATASET_FORMATS, GUIDES_FILE_FORMAT_DOC} from '@kepler.gl/constants';
+import {WKBLoader} from '@loaders.gl/wkt';
+
+import {
+  ALL_FIELD_TYPES,
+  DATASET_FORMATS,
+  GEOARROW_EXTENSIONS,
+  GEOARROW_METADATA_KEY,
+  GUIDES_FILE_FORMAT_DOC
+} from '@kepler.gl/constants';
 import {ProcessorResult, Field} from '@kepler.gl/types';
 import {
   arrowDataTypeToAnalyzerDataType,
   arrowDataTypeToFieldType,
-  notNullorUndefined,
   hasOwnProperty,
-  isPlainObject,
+  isPlainObject
+} from '@kepler.gl/utils';
+import {
   analyzerTypeToFieldType,
   getSampleForTypeAnalyze,
+  getSampleForTypeAnalyzeArrow,
   getFieldsFromData,
+  h3IsValid,
+  notNullorUndefined,
   toArray
-} from '@kepler.gl/utils';
+} from '@kepler.gl/common-utils';
 import {KeplerGlSchema, ParsedDataset, SavedMap, LoadedMap} from '@kepler.gl/schemas';
 import {Feature} from '@nebula.gl/edit-modes';
 
@@ -65,6 +78,11 @@ export const PARSE_FIELD_VALUE_FROM_STRING = {
   [ALL_FIELD_TYPES.array]: {
     valid: Array.isArray,
     parse: tryParseJsonString
+  },
+
+  [ALL_FIELD_TYPES.h3]: {
+    valid: d => h3IsValid(d),
+    parse: d => d
   }
 };
 
@@ -247,7 +265,7 @@ export function processRowObject(rawData: unknown[]): ProcessorResult {
   const keys = Object.keys(rawData[0]); // [lat, lng, value]
   const rows = rawData.map(d => keys.map(key => d[key])); // [[31.27, 127.56, 3]]
 
-  // row object an still contain values like `Null` or `N/A`
+  // row object can still contain values like `Null` or `N/A`
   cleanUpFalsyCsvValue(rows);
 
   return processCsvData(rows, keys);
@@ -295,11 +313,9 @@ export function processGeojson(rawData: unknown): ProcessorResult {
   const normalizedGeojson = normalize(rawData);
 
   if (!normalizedGeojson || !Array.isArray(normalizedGeojson.features)) {
-    const error = new Error(
+    throw new Error(
       `Read File Failed: File is not a valid GeoJSON. Read more about [supported file format](${GUIDES_FILE_FORMAT_DOC})`
     );
-    throw error;
-    // fail to normalize geojson
   }
 
   // getting all feature fields
@@ -388,6 +404,112 @@ export function processArrowTable(arrowTable: ArrowTable): ProcessorResult | nul
 }
 
 /**
+ * Extracts GeoArrow metadata from an Apache Arrow table schema.
+ * For geoparquet files geoarrow metadata isn't present in fields, so extract extra info from schema.
+ * @param table The Apache Arrow table to extract metadata from.
+ * @returns An object mapping column names to their GeoArrow encoding type.
+ * @throws Logs an error message if parsing of metadata fails.
+ */
+export function getGeoArrowMetadataFromSchema(table: arrow.Table): Record<string, string> {
+  const geoArrowMetadata: Record<string, string> = {};
+  try {
+    const geoString = table.schema.metadata?.get('geo');
+    if (geoString) {
+      const parsedGeoString = JSON.parse(geoString);
+      if (parsedGeoString.columns) {
+        Object.keys(parsedGeoString.columns).forEach(columnName => {
+          const columnData = parsedGeoString.columns[columnName];
+          if (columnData?.encoding === 'WKB') {
+            geoArrowMetadata[columnName] = GEOARROW_EXTENSIONS.WKB;
+          }
+          // TODO potentially there are other types but no datasets to test
+        });
+      }
+    }
+  } catch (error) {
+    console.error('An error during arrow table schema metadata parsing');
+  }
+  return geoArrowMetadata;
+}
+
+/**
+ * Converts an Apache Arrow table schema into an array of Kepler.gl field objects.
+ * @param table The Apache Arrow table whose schema needs to be converted.
+ * @param fieldTypeSuggestions Optional mapping of field names to suggested field types.
+ * @returns An array of field objects suitable for Kepler.gl.
+ */
+export function arrowSchemaToFields(
+  table: arrow.Table,
+  fieldTypeSuggestions: Record<string, string> = {}
+): Field[] {
+  const headerRow = table.schema.fields.map(f => f.name);
+  const sample = getSampleForTypeAnalyzeArrow(table, headerRow);
+  const keplerFields = getFieldsFromData(sample, headerRow);
+  const geoArrowMetadata = getGeoArrowMetadataFromSchema(table);
+
+  return table.schema.fields.map((field: arrow.Field, fieldIndex: number) => {
+    let type = arrowDataTypeToFieldType(field.type);
+    let analyzerType = arrowDataTypeToAnalyzerDataType(field.type);
+    let format = '';
+
+    // geometry fields produced by DuckDB's st_asgeojson()
+    if (fieldTypeSuggestions[field.name] === 'JSON') {
+      type = ALL_FIELD_TYPES.geojson;
+      analyzerType = AnalyzerDATA_TYPES.GEOMETRY_FROM_STRING;
+    } else if (
+      fieldTypeSuggestions[field.name] === 'GEOMETRY' ||
+      field.metadata.get(GEOARROW_METADATA_KEY)?.startsWith('geoarrow')
+    ) {
+      type = ALL_FIELD_TYPES.geoarrow;
+      analyzerType = AnalyzerDATA_TYPES.GEOMETRY;
+    } else if (geoArrowMetadata[field.name]) {
+      type = ALL_FIELD_TYPES.geoarrow;
+      analyzerType = AnalyzerDATA_TYPES.GEOMETRY;
+      field.metadata?.set(GEOARROW_METADATA_KEY, geoArrowMetadata[field.name]);
+    } else if (fieldTypeSuggestions[field.name] === 'BLOB') {
+      // When arrow wkb column saved to DuckDB as BLOB without any metadata, then queried back
+      try {
+        const data = table.getChildAt(fieldIndex)?.get(0);
+        if (data) {
+          const binaryGeo = parseSync(data, WKBLoader);
+          if (binaryGeo) {
+            type = ALL_FIELD_TYPES.geoarrow;
+            analyzerType = AnalyzerDATA_TYPES.GEOMETRY;
+            field.metadata?.set(GEOARROW_METADATA_KEY, GEOARROW_EXTENSIONS.WKB);
+          }
+        }
+      } catch (error) {
+        // ignore, not WKB
+      }
+    } else {
+      // TODO should we use Kepler getFieldsFromData instead
+      // of arrowDataTypeToFieldType for all fields?
+      const keplerField = keplerFields[fieldIndex];
+      if (keplerField.type === ALL_FIELD_TYPES.timestamp) {
+        type = keplerField.type;
+        analyzerType = keplerField.analyzerType;
+        format = keplerField.format;
+      }
+    }
+
+    return {
+      ...field,
+      name: field.name,
+      id: field.name,
+      displayName: field.name,
+      format: format,
+      fieldIdx: fieldIndex,
+      type,
+      analyzerType,
+      valueAccessor: (dc: any) => d => {
+        return dc.valueAt(d.index, fieldIndex);
+      },
+      metadata: field.metadata
+    };
+  });
+}
+
+/**
  * Parse arrow batches returned from parseInBatches()
  *
  * @param arrowTable the arrow table to parse
@@ -398,31 +520,20 @@ export function processArrowBatches(arrowBatches: arrow.RecordBatch[]): Processo
     return null;
   }
   const arrowTable = new arrow.Table(arrowBatches);
-  const fields: Field[] = [];
-
-  // parse fields
-  arrowTable.schema.fields.forEach((field: arrow.Field, index: number) => {
-    const isGeometryColumn = field.metadata.get('ARROW:extension:name')?.startsWith('geoarrow');
-    fields.push({
-      name: field.name,
-      id: field.name,
-      displayName: field.name,
-      format: '',
-      fieldIdx: index,
-      type: isGeometryColumn ? ALL_FIELD_TYPES.geoarrow : arrowDataTypeToFieldType(field.type),
-      analyzerType: isGeometryColumn
-        ? AnalyzerDATA_TYPES.GEOMETRY
-        : arrowDataTypeToAnalyzerDataType(field.type),
-      valueAccessor: (dc: any) => d => {
-        return dc.valueAt(d.index, index);
-      },
-      metadata: field.metadata
-    });
-  });
+  const fields = arrowSchemaToFields(arrowTable);
 
   const cols = [...Array(arrowTable.numCols).keys()].map(i => arrowTable.getChildAt(i));
+
   // return empty rows and use raw arrow table to construct column-wise data container
-  return {fields, rows: [], cols, metadata: arrowTable.schema.metadata};
+  return {
+    fields,
+    rows: [],
+    cols,
+    metadata: arrowTable.schema.metadata,
+    // Save original arrow schema, for better ingestion into DuckDB.
+    // TODO consider returning arrowTable in cols, not an array of Vectors from arrowTable.
+    arrowSchema: arrowTable.schema
+  };
 }
 
 export const DATASET_HANDLERS = {

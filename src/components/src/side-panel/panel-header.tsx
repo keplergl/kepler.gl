@@ -5,15 +5,15 @@ import React, {Component, useCallback} from 'react';
 import styled from 'styled-components';
 import classnames from 'classnames';
 import {createSelector} from 'reselect';
-import {Tooltip} from '../common/styled-components';
+import {StyledPanelDropdown, Tooltip} from '../common/styled-components';
 import KeplerGlLogo from '../common/logo';
 import {Save, DataTable, Save2, Picture, Db, Map as MapIcon, Share} from '../common/icons';
-import ClickOutsideCloseDropdown from './panel-dropdown';
-import Toolbar from '../common/toolbar';
+import Toolbar, {ToolbarProps} from '../common/toolbar';
 import ToolbarItem, {ToolbarItemProps} from '../common/toolbar-item';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {UiState} from '@kepler.gl/types';
 import {BaseProps} from '../common/icons';
+import useOnClickOutside from '../hooks/use-on-click-outside';
 
 type StyledPanelActionProps = {
   active?: boolean;
@@ -126,7 +126,7 @@ const StyledPanelAction = styled.div.attrs({
     height: 20px;
   }
 
-  :hover {
+  &:hover {
     cursor: pointer;
     color: ${props => props.theme.textColorHl};
 
@@ -136,7 +136,7 @@ const StyledPanelAction = styled.div.attrs({
   }
 `;
 
-const StyledToolbar = styled(Toolbar)`
+const StyledToolbar = styled(Toolbar)<ToolbarProps>`
   position: absolute;
 `;
 
@@ -173,24 +173,23 @@ export {PanelAction};
 
 export const PanelHeaderDropdownFactory = () => {
   const PanelHeaderDropdown: React.FC<PanelHeaderDropdownProps> = ({items, show, onClose, id}) => {
+    const ref = useOnClickOutside<HTMLDivElement>(onClose);
     return (
       <StyledToolbar show={show} className={`${id}-dropdown`}>
-        <ClickOutsideCloseDropdown
-          className="panel-header-dropdown__inner"
-          show={show}
-          onClose={onClose}
-        >
-          {items.map(item => (
-            <ToolbarItem
-              id={item.key}
-              key={item.key}
-              label={item.label}
-              icon={item.icon}
-              onClick={item.onClick}
-              onClose={onClose}
-            />
-          ))}
-        </ClickOutsideCloseDropdown>
+        {show ? (
+          <StyledPanelDropdown type="dark" ref={ref} className="panel-header-dropdown__inner">
+            {items.map(item => (
+              <ToolbarItem
+                id={item.key}
+                key={item.key}
+                label={item.label}
+                icon={item.icon}
+                onClick={item.onClick}
+                onClose={onClose}
+              />
+            ))}
+          </StyledPanelDropdown>
+        ) : null}
       </StyledToolbar>
     );
   };
@@ -215,52 +214,53 @@ export const SaveExportDropdownFactory = (
 ) => {
   const dropdownItemsSelector = getDropdownItemsSelector();
 
+  const defaultItems = [
+    {
+      label: 'toolbar.exportImage',
+      icon: Picture,
+      key: 'image',
+      onClick: props => props.onExportImage
+    },
+    {
+      label: 'toolbar.exportData',
+      icon: DataTable,
+      key: 'data',
+      onClick: props => props.onExportData
+    },
+    {
+      label: 'toolbar.exportMap',
+      icon: MapIcon,
+      key: 'map',
+      onClick: props => props.onExportMap
+    },
+    {
+      label: 'toolbar.saveMap',
+      icon: Save2,
+      key: 'save',
+      onClick: props => props.onSaveMap
+    },
+    {
+      label: 'toolbar.shareMapURL',
+      icon: Share,
+      key: 'share',
+      onClick: props => props.onShareMap
+    }
+  ];
+
   const SaveExportDropdown: React.FC<DropdownComponentProps> & {
-    defaultProps: {items: ToolbarItemProps[]};
-  } = props => (
-    <PanelHeaderDropdown
-      items={dropdownItemsSelector(props)}
-      show={props.show}
-      onClose={props.onClose}
-      id="save-export"
-    />
-  );
-
-  SaveExportDropdown.defaultProps = {
-    items: [
-      {
-        label: 'toolbar.exportImage',
-        icon: Picture,
-        key: 'image',
-        onClick: props => props.onExportImage
-      },
-      {
-        label: 'toolbar.exportData',
-        icon: DataTable,
-        key: 'data',
-        onClick: props => props.onExportData
-      },
-      {
-        label: 'toolbar.exportMap',
-        icon: MapIcon,
-        key: 'map',
-        onClick: props => props.onExportMap
-      },
-      {
-        label: 'toolbar.saveMap',
-        icon: Save2,
-        key: 'save',
-        onClick: props => props.onSaveMap
-      },
-      {
-        label: 'toolbar.shareMapURL',
-        icon: Share,
-        key: 'share',
-        onClick: props => props.onShareMap
-      }
-    ]
+    defaultItems: ToolbarItemProps[];
+  } = ({items = defaultItems, ...restProps}) => {
+    const props = {...restProps, items};
+    return (
+      <PanelHeaderDropdown
+        items={dropdownItemsSelector(props)}
+        show={props.show}
+        onClose={props.onClose}
+        id="save-export"
+      />
+    );
   };
-
+  SaveExportDropdown.defaultItems = defaultItems;
   return SaveExportDropdown;
 };
 SaveExportDropdownFactory.deps = [PanelHeaderDropdownFactory];
@@ -269,31 +269,34 @@ export const CloudStorageDropdownFactory = (
   PanelHeaderDropdown: ReturnType<typeof PanelHeaderDropdownFactory>
 ) => {
   const dropdownItemsSelector = getDropdownItemsSelector();
-
-  const CloudStorageDropdown: React.FC<DropdownComponentProps> = props => (
-    <PanelHeaderDropdown
-      items={dropdownItemsSelector(props)}
-      show={props.show}
-      onClose={props.onClose}
-      id="cloud-storage"
-    />
-  );
-  CloudStorageDropdown.defaultProps = {
-    items: [
-      {
-        label: 'Save',
-        icon: Save2,
-        key: 'save',
-        onClick: props => props.onSaveToStorage
-      },
-      {
-        label: 'Save As',
-        icon: Save2,
-        key: 'saveAs',
-        onClick: props => props.onSaveAsToStorage
-      }
-    ]
+  const defaultItems = [
+    {
+      label: 'Save',
+      icon: Save2,
+      key: 'save',
+      onClick: props => props.onSaveToStorage
+    },
+    {
+      label: 'Save As',
+      icon: Save2,
+      key: 'saveAs',
+      onClick: props => props.onSaveAsToStorage
+    }
+  ];
+  const CloudStorageDropdown: React.FC<DropdownComponentProps> & {
+    defaultItems: DropdownComponentProps['items'];
+  } = ({items = defaultItems, ...restProps}) => {
+    const props = {...restProps, items};
+    return (
+      <PanelHeaderDropdown
+        items={dropdownItemsSelector(props)}
+        show={props.show}
+        onClose={props.onClose}
+        id="cloud-storage"
+      />
+    );
   };
+  CloudStorageDropdown.defaultItems = defaultItems;
   return CloudStorageDropdown;
 };
 CloudStorageDropdownFactory.deps = [PanelHeaderDropdownFactory];

@@ -4,7 +4,7 @@
 import React, {Component, CSSProperties, KeyboardEvent} from 'react';
 import {createPortal} from 'react-dom';
 import styled from 'styled-components';
-import window from 'global/window';
+import Window from 'global/window';
 import classnames from 'classnames';
 import get from 'lodash.get';
 import {createSelector} from 'reselect';
@@ -102,11 +102,11 @@ export default function EditorFactory(
     state = {};
 
     componentDidMount() {
-      window.addEventListener('keydown', this._onKeyPressed);
+      Window.addEventListener('keydown', this._onKeyPressed);
     }
 
     componentWillUnmount() {
-      window.removeEventListener('keydown', this._onKeyPressed);
+      Window.removeEventListener('keydown', this._onKeyPressed);
     }
 
     layerSelector = (props: EditorProps) => props.layers;

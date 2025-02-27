@@ -9,7 +9,7 @@ import moment from 'moment';
 
 import {IntlWrapper, mountWithTheme, mockHTMLElementClientSize} from 'test/helpers/component-utils';
 import {setFilterAnimationTimeConfig} from '@kepler.gl/actions';
-import {visStateReducer as reducer} from '@kepler.gl/reducers';
+import {visStateReducer as reducer, DEFAULT_ANIMATION_CONFIG} from '@kepler.gl/reducers';
 
 import {
   TimeWidgetFactory,
@@ -57,7 +57,8 @@ const defaultProps = {
   onClose: nop,
   onToggleMinify: nop,
   setFilterPlot: nop,
-  setFilterAnimationWindow: nop
+  setFilterAnimationWindow: nop,
+  animationConfig: DEFAULT_ANIMATION_CONFIG
 };
 
 // call to set filter timezone and timeformat
@@ -126,6 +127,12 @@ test('Components -> TimeWidget.mount -> test actions', t => {
     );
   }, 'mount TimeWidget should not fail');
 
+  // t.ok(setFilterPlot.calledOnce, 'should call setFilterPlot when 1st mount to set plotType');
+  // t.deepEqual(
+  //   setFilterPlot.getCall(0).args,
+  //   [0, {plotType: {type: 'histogram'}}, undefined],
+  //   'should set plotType to linechart'
+  // );
   t.equal(wrapper.find(Icons.Close).length, 1, 'should render Close icon');
   t.equal(wrapper.find(Icons.Reset).length, 1, 'should render Reset icon');
   t.equal(wrapper.find(Icons.Play).length, 1, 'should render Play icon');
@@ -196,9 +203,10 @@ test('Components -> TimeWidget.mount -> test actions', t => {
   t.equal(wrapper.find(Typeahead).length, 1, 'should render dropdown select');
 
   wrapper.find(Typeahead).find('.field-selector_list-item').at(0).simulate('click');
-  t.equal(setFilterPlot.args[0][0], 0, 'should pass filteridx to setFilterPlot');
+  t.ok(setFilterPlot.calledOnce, 'should call setFilterPlot again');
+  t.equal(setFilterPlot.getCall(0).args[0], 0, 'should pass filteridx to setFilterPlot');
   t.equal(
-    setFilterPlot.args[0][1].yAxis.name,
+    setFilterPlot.getCall(0).args[1].yAxis.name,
     'gps_data.lat',
     'should pass correct yAxis to setFilterPlot'
   );
@@ -338,7 +346,7 @@ test('Components -> TimeWidget.mount -> TimeSliderMarker', t => {
 
   // moment.utc(1474588800000) -> "2016-09-23 00:00"
   // moment.utc(1474617600000) -> "2016-09-23 08:00"
-  // Enyme cant detect element appended by d3
+  // Enzyme cant detect element appended by d3
   const expectedMarks = [
     'Fri 23',
     '01 AM',
@@ -350,9 +358,10 @@ test('Components -> TimeWidget.mount -> TimeSliderMarker', t => {
     '07 AM',
     '08 AM'
   ];
+
   expectedMarks.forEach(mark => {
     t.ok(
-      d3Html.includes(`<text fill="currentColor" y="12" dy="0.71em">${mark}</text>`),
+      d3Html.includes(`<text fill="currentColor" y="8" dy="0.71em">${mark}</text>`),
       `should render correct time marker ${mark}`
     );
   });
@@ -378,14 +387,15 @@ test('Components -> TimeWidget.mount -> TimeSliderMarker', t => {
     '03 AM',
     '04 AM'
   ];
+
   expectedMarks2.forEach(mark => {
     t.ok(
-      d3Html.includes(`<text fill="currentColor" y="12" dy="0.71em">${mark}</text>`),
+      d3Html.includes(`<text fill="currentColor" y="8" dy="0.71em">${mark}</text>`),
       `should render correct time marker ${mark}`
     );
   });
 
-  const inalidFilter = {
+  const invalidFilter = {
     ...StateWFilters.visState.filters[0],
     domain: null
   };
@@ -393,7 +403,7 @@ test('Components -> TimeWidget.mount -> TimeSliderMarker', t => {
   // set TimeWidget prop
   t.doesNotThrow(() => {
     wrapper.setProps({
-      children: <TimeWidget {...defaultProps} filter={inalidFilter} />
+      children: <TimeWidget {...defaultProps} filter={invalidFilter} />
     });
   }, 'mount TimeWidget with invalid filter should not fail');
 

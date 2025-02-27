@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import {getBinThresholds, histogramFromThreshold} from '@kepler.gl/utils';
+
 /* eslint-disable max-len */
 const data = `gps_data.utc_timestamp,gps_data.lat,gps_data.lng,gps_data.types,epoch,has_result,uid,time,begintrip_ts_utc,begintrip_ts_local,date
 2016-09-17 00:09:55,29.9900937,31.2590542,driver_analytics_0,1472688000000,False,1,2016-09-23T00:00:00.000Z,2016-10-01 09:41:39+00:00,2016-10-01 09:41:39+00:00,2016-09-23
@@ -139,6 +141,7 @@ export const config = {
               elevationPercentile: [0, 100],
               elevationScale: 5,
               enableElevationZoomFactor: true,
+              fixedHeight: false,
               colorAggregation: 'count',
               sizeAggregation: 'count',
               enable3d: false
@@ -621,207 +624,31 @@ export const epochMappedValue = [
   1472774400000, 1472774400000, 1472774400000, 1472774400000, 1472774400000, 1472774400000
 ];
 
-export const timeHistogram = [
-  {count: 8, x0: 1474588800000, x1: 1474589000000},
-  {count: 0, x0: 1474589000000, x1: 1474590000000},
-  {count: 0, x0: 1474590000000, x1: 1474591000000},
-  {count: 0, x0: 1474591000000, x1: 1474592000000},
-  {count: 0, x0: 1474592000000, x1: 1474593000000},
-  {count: 0, x0: 1474593000000, x1: 1474594000000},
-  {count: 0, x0: 1474594000000, x1: 1474595000000},
-  {count: 0, x0: 1474595000000, x1: 1474596000000},
-  {count: 0, x0: 1474596000000, x1: 1474597000000},
-  {count: 0, x0: 1474597000000, x1: 1474598000000},
-  {count: 0, x0: 1474598000000, x1: 1474599000000},
-  {count: 0, x0: 1474599000000, x1: 1474600000000},
-  {count: 0, x0: 1474600000000, x1: 1474601000000},
-  {count: 0, x0: 1474601000000, x1: 1474602000000},
-  {count: 0, x0: 1474602000000, x1: 1474603000000},
-  {count: 0, x0: 1474603000000, x1: 1474604000000},
-  {count: 0, x0: 1474604000000, x1: 1474605000000},
-  {count: 0, x0: 1474605000000, x1: 1474606000000},
-  {count: 3, x0: 1474606000000, x1: 1474607000000},
-  {count: 0, x0: 1474607000000, x1: 1474608000000},
-  {count: 0, x0: 1474608000000, x1: 1474609000000},
-  {count: 0, x0: 1474609000000, x1: 1474610000000},
-  {count: 3, x0: 1474610000000, x1: 1474611000000},
-  {count: 0, x0: 1474611000000, x1: 1474612000000},
-  {count: 0, x0: 1474612000000, x1: 1474613000000},
-  {count: 0, x0: 1474613000000, x1: 1474614000000},
-  {count: 5, x0: 1474614000000, x1: 1474615000000},
-  {count: 0, x0: 1474615000000, x1: 1474616000000},
-  {count: 0, x0: 1474616000000, x1: 1474617000000},
-  {count: 3, x0: 1474617000000, x1: 1474617600000}
-];
-
-export const enlargedTimeHistogram = [
-  {count: 8, x0: 1474588800000, x1: 1474589000000},
-  {count: 0, x0: 1474589000000, x1: 1474589200000},
-  {count: 0, x0: 1474589200000, x1: 1474589400000},
-  {count: 0, x0: 1474589400000, x1: 1474589600000},
-  {count: 0, x0: 1474589600000, x1: 1474589800000},
-  {count: 0, x0: 1474589800000, x1: 1474590000000},
-  {count: 0, x0: 1474590000000, x1: 1474590200000},
-  {count: 0, x0: 1474590200000, x1: 1474590400000},
-  {count: 0, x0: 1474590400000, x1: 1474590600000},
-  {count: 0, x0: 1474590600000, x1: 1474590800000},
-  {count: 0, x0: 1474590800000, x1: 1474591000000},
-  {count: 0, x0: 1474591000000, x1: 1474591200000},
-  {count: 0, x0: 1474591200000, x1: 1474591400000},
-  {count: 0, x0: 1474591400000, x1: 1474591600000},
-  {count: 0, x0: 1474591600000, x1: 1474591800000},
-  {count: 0, x0: 1474591800000, x1: 1474592000000},
-  {count: 0, x0: 1474592000000, x1: 1474592200000},
-  {count: 0, x0: 1474592200000, x1: 1474592400000},
-  {count: 0, x0: 1474592400000, x1: 1474592600000},
-  {count: 0, x0: 1474592600000, x1: 1474592800000},
-  {count: 0, x0: 1474592800000, x1: 1474593000000},
-  {count: 0, x0: 1474593000000, x1: 1474593200000},
-  {count: 0, x0: 1474593200000, x1: 1474593400000},
-  {count: 0, x0: 1474593400000, x1: 1474593600000},
-  {count: 0, x0: 1474593600000, x1: 1474593800000},
-  {count: 0, x0: 1474593800000, x1: 1474594000000},
-  {count: 0, x0: 1474594000000, x1: 1474594200000},
-  {count: 0, x0: 1474594200000, x1: 1474594400000},
-  {count: 0, x0: 1474594400000, x1: 1474594600000},
-  {count: 0, x0: 1474594600000, x1: 1474594800000},
-  {count: 0, x0: 1474594800000, x1: 1474595000000},
-  {count: 0, x0: 1474595000000, x1: 1474595200000},
-  {count: 0, x0: 1474595200000, x1: 1474595400000},
-  {count: 0, x0: 1474595400000, x1: 1474595600000},
-  {count: 0, x0: 1474595600000, x1: 1474595800000},
-  {count: 0, x0: 1474595800000, x1: 1474596000000},
-  {count: 0, x0: 1474596000000, x1: 1474596200000},
-  {count: 0, x0: 1474596200000, x1: 1474596400000},
-  {count: 0, x0: 1474596400000, x1: 1474596600000},
-  {count: 0, x0: 1474596600000, x1: 1474596800000},
-  {count: 0, x0: 1474596800000, x1: 1474597000000},
-  {count: 0, x0: 1474597000000, x1: 1474597200000},
-  {count: 0, x0: 1474597200000, x1: 1474597400000},
-  {count: 0, x0: 1474597400000, x1: 1474597600000},
-  {count: 0, x0: 1474597600000, x1: 1474597800000},
-  {count: 0, x0: 1474597800000, x1: 1474598000000},
-  {count: 0, x0: 1474598000000, x1: 1474598200000},
-  {count: 0, x0: 1474598200000, x1: 1474598400000},
-  {count: 0, x0: 1474598400000, x1: 1474598600000},
-  {count: 0, x0: 1474598600000, x1: 1474598800000},
-  {count: 0, x0: 1474598800000, x1: 1474599000000},
-  {count: 0, x0: 1474599000000, x1: 1474599200000},
-  {count: 0, x0: 1474599200000, x1: 1474599400000},
-  {count: 0, x0: 1474599400000, x1: 1474599600000},
-  {count: 0, x0: 1474599600000, x1: 1474599800000},
-  {count: 0, x0: 1474599800000, x1: 1474600000000},
-  {count: 0, x0: 1474600000000, x1: 1474600200000},
-  {count: 0, x0: 1474600200000, x1: 1474600400000},
-  {count: 0, x0: 1474600400000, x1: 1474600600000},
-  {count: 0, x0: 1474600600000, x1: 1474600800000},
-  {count: 0, x0: 1474600800000, x1: 1474601000000},
-  {count: 0, x0: 1474601000000, x1: 1474601200000},
-  {count: 0, x0: 1474601200000, x1: 1474601400000},
-  {count: 0, x0: 1474601400000, x1: 1474601600000},
-  {count: 0, x0: 1474601600000, x1: 1474601800000},
-  {count: 0, x0: 1474601800000, x1: 1474602000000},
-  {count: 0, x0: 1474602000000, x1: 1474602200000},
-  {count: 0, x0: 1474602200000, x1: 1474602400000},
-  {count: 0, x0: 1474602400000, x1: 1474602600000},
-  {count: 0, x0: 1474602600000, x1: 1474602800000},
-  {count: 0, x0: 1474602800000, x1: 1474603000000},
-  {count: 0, x0: 1474603000000, x1: 1474603200000},
-  {count: 0, x0: 1474603200000, x1: 1474603400000},
-  {count: 0, x0: 1474603400000, x1: 1474603600000},
-  {count: 0, x0: 1474603600000, x1: 1474603800000},
-  {count: 0, x0: 1474603800000, x1: 1474604000000},
-  {count: 0, x0: 1474604000000, x1: 1474604200000},
-  {count: 0, x0: 1474604200000, x1: 1474604400000},
-  {count: 0, x0: 1474604400000, x1: 1474604600000},
-  {count: 0, x0: 1474604600000, x1: 1474604800000},
-  {count: 0, x0: 1474604800000, x1: 1474605000000},
-  {count: 0, x0: 1474605000000, x1: 1474605200000},
-  {count: 0, x0: 1474605200000, x1: 1474605400000},
-  {count: 0, x0: 1474605400000, x1: 1474605600000},
-  {count: 0, x0: 1474605600000, x1: 1474605800000},
-  {count: 0, x0: 1474605800000, x1: 1474606000000},
-  {count: 0, x0: 1474606000000, x1: 1474606200000},
-  {count: 0, x0: 1474606200000, x1: 1474606400000},
-  {count: 0, x0: 1474606400000, x1: 1474606600000},
-  {count: 0, x0: 1474606600000, x1: 1474606800000},
-  {count: 3, x0: 1474606800000, x1: 1474607000000},
-  {count: 0, x0: 1474607000000, x1: 1474607200000},
-  {count: 0, x0: 1474607200000, x1: 1474607400000},
-  {count: 0, x0: 1474607400000, x1: 1474607600000},
-  {count: 0, x0: 1474607600000, x1: 1474607800000},
-  {count: 0, x0: 1474607800000, x1: 1474608000000},
-  {count: 0, x0: 1474608000000, x1: 1474608200000},
-  {count: 0, x0: 1474608200000, x1: 1474608400000},
-  {count: 0, x0: 1474608400000, x1: 1474608600000},
-  {count: 0, x0: 1474608600000, x1: 1474608800000},
-  {count: 0, x0: 1474608800000, x1: 1474609000000},
-  {count: 0, x0: 1474609000000, x1: 1474609200000},
-  {count: 0, x0: 1474609200000, x1: 1474609400000},
-  {count: 0, x0: 1474609400000, x1: 1474609600000},
-  {count: 0, x0: 1474609600000, x1: 1474609800000},
-  {count: 0, x0: 1474609800000, x1: 1474610000000},
-  {count: 0, x0: 1474610000000, x1: 1474610200000},
-  {count: 0, x0: 1474610200000, x1: 1474610400000},
-  {count: 3, x0: 1474610400000, x1: 1474610600000},
-  {count: 0, x0: 1474610600000, x1: 1474610800000},
-  {count: 0, x0: 1474610800000, x1: 1474611000000},
-  {count: 0, x0: 1474611000000, x1: 1474611200000},
-  {count: 0, x0: 1474611200000, x1: 1474611400000},
-  {count: 0, x0: 1474611400000, x1: 1474611600000},
-  {count: 0, x0: 1474611600000, x1: 1474611800000},
-  {count: 0, x0: 1474611800000, x1: 1474612000000},
-  {count: 0, x0: 1474612000000, x1: 1474612200000},
-  {count: 0, x0: 1474612200000, x1: 1474612400000},
-  {count: 0, x0: 1474612400000, x1: 1474612600000},
-  {count: 0, x0: 1474612600000, x1: 1474612800000},
-  {count: 0, x0: 1474612800000, x1: 1474613000000},
-  {count: 0, x0: 1474613000000, x1: 1474613200000},
-  {count: 0, x0: 1474613200000, x1: 1474613400000},
-  {count: 0, x0: 1474613400000, x1: 1474613600000},
-  {count: 0, x0: 1474613600000, x1: 1474613800000},
-  {count: 0, x0: 1474613800000, x1: 1474614000000},
-  {count: 5, x0: 1474614000000, x1: 1474614200000},
-  {count: 0, x0: 1474614200000, x1: 1474614400000},
-  {count: 0, x0: 1474614400000, x1: 1474614600000},
-  {count: 0, x0: 1474614600000, x1: 1474614800000},
-  {count: 0, x0: 1474614800000, x1: 1474615000000},
-  {count: 0, x0: 1474615000000, x1: 1474615200000},
-  {count: 0, x0: 1474615200000, x1: 1474615400000},
-  {count: 0, x0: 1474615400000, x1: 1474615600000},
-  {count: 0, x0: 1474615600000, x1: 1474615800000},
-  {count: 0, x0: 1474615800000, x1: 1474616000000},
-  {count: 0, x0: 1474616000000, x1: 1474616200000},
-  {count: 0, x0: 1474616200000, x1: 1474616400000},
-  {count: 0, x0: 1474616400000, x1: 1474616600000},
-  {count: 0, x0: 1474616600000, x1: 1474616800000},
-  {count: 0, x0: 1474616800000, x1: 1474617000000},
-  {count: 0, x0: 1474617000000, x1: 1474617200000},
-  {count: 0, x0: 1474617200000, x1: 1474617400000},
-  {count: 0, x0: 1474617400000, x1: 1474617600000},
-  {count: 3, x0: 1474617600000, x1: 1474617600000}
+export const timeStampmappedValue = [
+  1474070995000, 1474071056000, 1474071116000, 1474071178000, 1474071240000, 1474071301000,
+  1474071363000, 1474071425000, 1474071489000, 1474071552000, 1474071567000, 1474071614000,
+  1474071677000, 1474071740000, 1474071802000, 1474071864000, 1474071928000, 1474071989000,
+  1474072051000, 1474072115000, 1474072180000, 1474072203000, 1474072203000, 1474072208000
 ];
 
 export const timeFilterProps = {
   domain: [1474588800000, 1474617600000],
   step: 1000,
   mappedValue: timeMappedValue,
-  histogram: timeHistogram,
-  enlargedHistogram: enlargedTimeHistogram,
   fieldType: 'timestamp',
   type: 'timeRange',
   view: 'enlarged',
   fixedDomain: true,
   gpu: true,
   value: [1474588800000, 1474617600000],
-  defaultTimeFormat: 'L LTS'
+  defaultTimeFormat: 'L LTS',
+  plotType: {}
 };
 
 export const mergedTimeFilter = {
   ...timeFilterProps,
   animationWindow: 'free',
   dataId: [dataId],
-  freeze: true,
   id: 'time-0',
   enabled: true,
   fixedDomain: true,
@@ -831,26 +658,40 @@ export const mergedTimeFilter = {
   name: ['time'],
   type: 'timeRange',
   fieldIdx: [7],
-  plotType: 'histogram',
+  plotType: {
+    interval: '1-hour',
+    defaultTimeFormat: 'L  H A',
+    type: 'histogram',
+    aggregation: 'sum'
+  },
   yAxis: null,
-  interval: null,
   value: [1474606800000, 1474617600000],
-  gpuChannel: [0]
+  gpuChannel: [0],
+  timeBins: {
+    [dataId]: {
+      '1-hour': [
+        {count: 8, indexes: [0, 1, 2, 3, 4, 7, 8, 15], x0: 1474588800000, x1: 1474592400000},
+        {count: 3, indexes: [5, 6, 10], x0: 1474606800000, x1: 1474610400000},
+        {count: 3, indexes: [9, 13, 14], x0: 1474610400000, x1: 1474614000000},
+        {count: 5, indexes: [16, 17, 18, 19, 20], x0: 1474614000000, x1: 1474617600000},
+        {count: 3, indexes: [21, 22, 23], x0: 1474617600000, x1: 1474621200000}
+      ]
+    }
+  }
 };
 
 export const epochFilterProps = {
   domain: [1472688000000, 1472774400000],
   step: 1000,
   mappedValue: epochMappedValue,
-  histogram: 'dont test me',
-  enlargedHistogram: 'dont test me',
   fieldType: 'timestamp',
   type: 'timeRange',
   view: 'enlarged',
   fixedDomain: true,
   gpu: true,
   value: [1472688000000, 1472774400000],
-  defaultTimeFormat: 'L LTS'
+  defaultTimeFormat: 'L LTS',
+  plotType: {}
 };
 
 // value set mockStateWithFilters 1472700000000, 1472760000000
@@ -858,7 +699,6 @@ export const mergedEpochFilter = {
   ...epochFilterProps,
   animationWindow: 'free',
   dataId: [dataId],
-  freeze: true,
   id: 'epoch-1',
   enabled: true,
   fixedDomain: true,
@@ -868,12 +708,79 @@ export const mergedEpochFilter = {
   name: ['epoch'],
   type: 'timeRange',
   fieldIdx: [4],
-  plotType: 'histogram',
+  plotType: {
+    interval: '15-minute',
+    defaultTimeFormat: 'L  LT',
+    type: 'histogram',
+    aggregation: 'sum'
+  },
   yAxis: null,
-  interval: null,
   value: [1472700000000, 1472760000000],
   // time filter is in channel 0
-  gpuChannel: [1]
+  gpuChannel: [1],
+  timeBins: {
+    [dataId]: {
+      '15-minute': histogramFromThreshold(
+        getBinThresholds('15-minute', [1472688000000, 1472774400000]),
+        epochMappedValue
+      )
+    }
+  }
+};
+
+export const expectedSyncedTsFilter = {
+  id: 'filter-0',
+  enabled: true,
+  dataId: ['test-csv-data-1', 'test-csv-data-2'],
+  name: ['gps_data.utc_timestamp', 'gps_data.utc_timestamp'],
+  fieldIdx: [0, 0],
+  // domain
+  // 2016-09-17 00:09:55 // 1474070995000
+  // 2016-09-17 00:30:08 // 1474072208000
+  domain: [1474070995000, 1474072208000],
+  value: [1474071116000, 1474072188000],
+  animationWindow: 'free',
+  defaultTimeFormat: 'L LTS',
+  view: 'enlarged',
+  fieldType: 'timestamp',
+  fixedDomain: true,
+  gpu: true,
+  gpuChannel: [0, 0],
+  isAnimating: false,
+  plotType: {
+    interval: '15-second',
+    defaultTimeFormat: 'L  LTS',
+    type: 'histogram',
+    aggregation: 'sum',
+    colorsByDataId: {
+      'test-csv-data-1': '#FF0000',
+      'test-csv-data-2': '#00FF00'
+    }
+  },
+  speed: 1,
+  step: 1000,
+  type: 'timeRange',
+  yAxis: null,
+  timeBins: {
+    'test-csv-data-1': {
+      '15-second': histogramFromThreshold(
+        getBinThresholds('15-second', [1474070995000, 1474072208000]),
+        timeStampmappedValue.slice(0, 20)
+      )
+    },
+    'test-csv-data-2': {
+      '15-second': histogramFromThreshold(
+        getBinThresholds('15-second', [1474070995000, 1474072208000]),
+        timeStampmappedValue.slice(5, timeStampmappedValue.length)
+      )
+    }
+  },
+  mappedValue: [
+    1474071301000, 1474071363000, 1474071425000, 1474071489000, 1474071552000, 1474071567000,
+    1474071614000, 1474071677000, 1474071740000, 1474071802000, 1474071864000, 1474071928000,
+    1474071989000, 1474072051000, 1474072115000, 1474072180000, 1474072203000, 1474072203000,
+    1474072208000
+  ]
 };
 
 export const dateFilterProps = {
@@ -889,7 +796,6 @@ export const mergedDateFilter = {
   ...dateFilterProps,
   animationWindow: 'free',
   dataId: [dataId],
-  freeze: true,
   id: 'date-2',
   enabled: true,
   fixedDomain: false,
@@ -900,9 +806,10 @@ export const mergedDateFilter = {
   type: 'multiSelect',
   fieldIdx: [10],
   value: ['2016-09-24', '2016-09-23'],
-  plotType: 'histogram',
-  yAxis: null,
-  interval: null
+  plotType: {
+    type: 'histogram'
+  },
+  yAxis: null
 };
 
 export const wktCsvFields = [
@@ -1346,6 +1253,17 @@ export const testAllData = [
     null
   ]
 ];
+
+export const testCsvDataSlice1 = testAllData.slice(0, 20);
+export const testCsvDataSlice1Id = 'test-csv-data-1';
+export const timeFieldDomainSlice1 = [1474070995000, 1474072115000];
+
+export const testCsvDataSlice2 = testAllData.slice(5, testAllData.length);
+export const timeFieldDomainSlice2 = [1474071301000, 1474072208000];
+export const testCsvDataSlice2Id = 'test-csv-data-2';
+
+// the synced value intersect domain of both slices
+export const syncTimeFilterValue = [1474071116000, 1474072188000];
 
 export default data;
 

@@ -3,8 +3,9 @@
 
 import React, {Component, ElementType} from 'react';
 import classNames from 'classnames';
-import styled from 'styled-components';
+import styled, {IStyledComponent} from 'styled-components';
 import {INIT_FILTER_ITEMS_IN_DROPDOWN} from '@kepler.gl/constants';
+import {BaseComponentProps} from '../../types';
 
 const LEFT_BUTTON = 0;
 
@@ -17,9 +18,15 @@ export const classList = {
   listItemFixed: 'list__item__fixed'
 };
 
+export type ListItemProps<Option> = {
+  value: Option;
+  displayOption: (opt: Option) => string;
+  disabled?: boolean;
+  light?: boolean;
+};
+
 const defaultDisplay = d => d;
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export const ListItem = ({value, displayOption = defaultDisplay, disabled, light}) => {
+export const ListItem = ({value, displayOption = defaultDisplay, disabled}: ListItemProps<any>) => {
   const displayValue = displayOption(value);
   return (
     <span title={displayValue} className={classNames(classList.listItemAnchor, {disabled})}>
@@ -28,11 +35,14 @@ export const ListItem = ({value, displayOption = defaultDisplay, disabled, light
   );
 };
 
-interface DropdownListWrapperProps {
+export type DropdownListWrapperProps = BaseComponentProps & {
   light?: boolean;
-}
+};
 
-const DropdownListWrapper = styled.div<DropdownListWrapperProps>`
+const DropdownListWrapper: IStyledComponent<
+  'web',
+  DropdownListWrapperProps
+> = styled.div<DropdownListWrapperProps>`
   background-color: ${props =>
     props.light ? props.theme.dropdownListBgdLT : props.theme.dropdownListBgd};
   border-top: 1px solid
@@ -63,6 +73,7 @@ interface DropdownListProps {
   listItemComponent?: ElementType;
   light?: boolean;
   fixedOptions?: any[];
+  selectedItems?: any[]; // Passed through by Typeahead
 }
 
 interface DropdownListState {
@@ -225,7 +236,7 @@ export default class DropdownList extends Component<DropdownListProps, DropdownL
                 onMouseDown={e => this._onClick(value, e)}
                 onClick={e => this._onClick(value, e)}
               >
-                <CustomListItemComponent value={value} displayOption={display} />
+                <CustomListItemComponent value={value} displayOption={display} light={light} />
               </div>
             ))}
           </div>
@@ -236,7 +247,10 @@ export default class DropdownList extends Component<DropdownListProps, DropdownL
             className={classNames(
               classList.listItem,
               {
-                hover: this.props.selectionIndex === i + valueOffset
+                hover: this.props.selectionIndex === i + valueOffset,
+                selected: (this.props.selectedItems || []).find(
+                  item => display(item) === display(value)
+                )
               },
               this.props.customClasses?.listItem
             )}

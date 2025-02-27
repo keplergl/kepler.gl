@@ -3,15 +3,20 @@
 
 /* eslint-disable max-statements */
 
+import {drainTasksForTesting, succeedTaskWithValues} from 'react-palm/tasks';
 import test from 'tape';
+
+import {registerEntry} from '@kepler.gl/actions';
+import {processCsvData} from '@kepler.gl/processors';
 import keplerGlReducer, {
   addDataToMapUpdater,
   replaceDataInMapUpdater,
   fitBoundsUpdater,
-  INITIAL_UI_STATE
+  INITIAL_UI_STATE,
+  visStateReducer,
+  mapStateReducer
 } from '@kepler.gl/reducers';
-import {processCsvData} from '@kepler.gl/processors';
-import {registerEntry} from '@kepler.gl/actions';
+import {getTimeBins} from '@kepler.gl/utils';
 
 import testCsvData, {sampleConfig, dataWithNulls} from 'test/fixtures/test-csv-data';
 import testHexIdData, {
@@ -21,6 +26,11 @@ import testHexIdData, {
   expectedMergedDataset
 } from 'test/fixtures/test-hex-id-data';
 import {cmpLayers, cmpFilters, cmpDataset, cmpInteraction} from 'test/helpers/comparison-utils';
+import {applyExistingDatasetTasks} from 'test/helpers/mock-state';
+
+import {StateWSyncedTimeFilter} from '../../helpers/mock-state';
+import {testCsvDataSlice1Id, testCsvDataSlice2Id} from '../../fixtures/test-csv-data';
+
 const mockRawData = {
   fields: [
     {
@@ -81,19 +91,21 @@ test('#composerStateReducer - addDataToMapUpdater: mapStyle', t => {
     }
   });
 
+  drainTasksForTesting();
+
   t.equal(newState.mapStyle.styleType, 'light', 'Map style is set correctly');
 
   t.end();
 });
 
-test('#composerStateReducer - addDataToMapUpdater: mapState should be centered', t => {
+test('#composerStateReducer - addDataToMapUpdater: mapState should be centered (after dataset tasts are completed)', t => {
   // init kepler.gl root and instance
   const state = keplerGlReducer({}, registerEntry({id: 'test'})).test;
   const mapStateProperties = {
     latitude: 33.88608913680742,
     longitude: -84.43459130456425
   };
-  const newState = addDataToMapUpdater(state, {
+  let newState = addDataToMapUpdater(state, {
     payload: {
       datasets: {
         data: mockRawData,
@@ -109,6 +121,15 @@ test('#composerStateReducer - addDataToMapUpdater: mapState should be centered',
       }
     }
   });
+
+  // create datasets from existing tasks, trigger auto create layers
+  newState.visState = applyExistingDatasetTasks(visStateReducer, newState.visState);
+
+  // layers should generate a fit bounds task
+  const tasks = drainTasksForTesting();
+  t.equal(tasks.length, 2, 'Should create one fit bounds task and one setLoadingIndicator task');
+
+  newState.mapState = mapStateReducer(newState.mapState, succeedTaskWithValues(tasks[0], {}));
 
   t.equal(newState.mapState.latitude, 29.23, 'centerMap: true should override mapState config');
   t.equal(newState.mapState.longitude, 60.71, 'centerMap: true should override mapState config');
@@ -130,6 +151,8 @@ test('#composerStateReducer - addDataToMapUpdater: uiState', t => {
       }
     }
   });
+
+  drainTasksForTesting();
 
   const expectedUIState = {
     ...INITIAL_UI_STATE,
@@ -153,7 +176,7 @@ test('#composerStateReducer - addDataToMapUpdater: keepExistingConfig', t => {
   const state = keplerGlReducer({}, registerEntry({id: 'test'})).test;
 
   // old state contain splitMaps
-  const oldState = addDataToMapUpdater(state, {
+  let oldState = addDataToMapUpdater(state, {
     payload: {
       datasets: {
         data,
@@ -164,6 +187,9 @@ test('#composerStateReducer - addDataToMapUpdater: keepExistingConfig', t => {
       config: sampleConfig.config
     }
   });
+
+  // create datasets from existing tasks, trigger auto create layers
+  oldState = {...oldState, visState: applyExistingDatasetTasks(visStateReducer, oldState.visState)};
 
   const {
     layers: oldLayers,
@@ -177,7 +203,7 @@ test('#composerStateReducer - addDataToMapUpdater: keepExistingConfig', t => {
   const hexDataId = hexIdDataConfig.dataId;
 
   // keepExistingConfig is not defined, default to false
-  const nextState1 = addDataToMapUpdater(oldState, {
+  let nextState1 = addDataToMapUpdater(oldState, {
     payload: {
       datasets: {
         data: hexData,
@@ -189,6 +215,12 @@ test('#composerStateReducer - addDataToMapUpdater: keepExistingConfig', t => {
     }
   });
 
+  // create datasets from existing tasks, trigger auto create layers
+  nextState1 = {
+    ...nextState1,
+    visState: applyExistingDatasetTasks(visStateReducer, nextState1.visState)
+  };
+
   t.deepEqual(nextState1.visState.layerOrder, ['avlgol'], 'Should contain nextState1 layer order');
 
   cmpDataset(t, expectedMergedDataset, nextState1.visState.datasets[hexDataId]);
@@ -199,7 +231,7 @@ test('#composerStateReducer - addDataToMapUpdater: keepExistingConfig', t => {
   cmpFilters(t, mergedFilters, nextState1.visState.filters);
 
   // add data and config keep existing data and config
-  const nextState2 = addDataToMapUpdater(oldState, {
+  let nextState2 = addDataToMapUpdater(oldState, {
     payload: {
       datasets: {
         data: hexData,
@@ -213,6 +245,12 @@ test('#composerStateReducer - addDataToMapUpdater: keepExistingConfig', t => {
       }
     }
   });
+
+  // create datasets from existing tasks, trigger auto create layers
+  nextState2 = {
+    ...nextState2,
+    visState: applyExistingDatasetTasks(visStateReducer, nextState2.visState)
+  };
 
   const actualVisState = nextState2.visState;
 
@@ -378,20 +416,37 @@ test('#composerStateReducer - replaceDataInMapUpdater', t => {
   const state = keplerGlReducer({}, registerEntry({id: 'test'})).test;
 
   // old state contain splitMaps
-  const oldState = addDataToMapUpdater(state, {
+  let oldState = addDataToMapUpdater(state, {
     payload: {
       datasets,
       config: sampleConfig.config
     }
   });
 
+  // create datasets from existing tasks, trigger auto create layers
+  oldState = {...oldState, visState: applyExistingDatasetTasks(visStateReducer, oldState.visState)};
+
   const oldSavedConfig = state.visState.schema.getConfigToSave(oldState).config;
-  const nextState = replaceDataInMapUpdater(oldState, {
+  let nextState = replaceDataInMapUpdater(oldState, {
     payload: {
       datasetToReplaceId: sampleConfig.dataId,
       datasetToUse
     }
   });
+  // create datasets from existing tasks, trigger auto create layers
+  nextState = {
+    ...nextState,
+    visState: applyExistingDatasetTasks(visStateReducer, nextState.visState)
+  };
+
+  // layers should generate a fit bounds task
+  const tasks = drainTasksForTesting();
+  t.equal(tasks.length, 2, 'Should create one fit bounds task and one setLoadingIndicator task');
+  nextState = {
+    ...nextState,
+    mapState: mapStateReducer(nextState.mapState, succeedTaskWithValues(tasks[0], {}))
+  };
+
   const nextSavedConfig = nextState.visState.schema.getConfigToSave(nextState).config;
 
   const expectedLayers = oldSavedConfig.visState.layers.map(l => ({
@@ -492,21 +547,28 @@ test('#composerStateReducer - replaceDataInMapUpdater: same dataId', t => {
   const state = keplerGlReducer({}, registerEntry({id: 'test'})).test;
 
   // old state contain splitMaps
-  const oldState = addDataToMapUpdater(state, {
+  let oldState = addDataToMapUpdater(state, {
     payload: {
       datasets,
       config: sampleConfig.config
     }
   });
+  // create datasets from existing tasks, trigger auto create layers
+  oldState = {...oldState, visState: applyExistingDatasetTasks(visStateReducer, oldState.visState)};
 
   const oldSavedConfig = state.visState.schema.getConfigToSave(oldState).config;
 
-  const nextState = replaceDataInMapUpdater(oldState, {
+  let nextState = replaceDataInMapUpdater(oldState, {
     payload: {
       datasetToReplaceId: sampleConfig.dataId,
       datasetToUse
     }
   });
+  // create datasets from existing tasks, trigger auto create layers
+  nextState = {
+    ...nextState,
+    visState: applyExistingDatasetTasks(visStateReducer, nextState.visState)
+  };
 
   // dataset should be replaced
   t.ok(nextState.visState.datasets[sampleConfig.dataId], ' dataset should be replaced');
@@ -520,5 +582,143 @@ test('#composerStateReducer - replaceDataInMapUpdater: same dataId', t => {
     }
   }));
   t.deepEqual(nextSavedConfig.visState.layers, expectedLayers, 'should replace layer dataId');
+  t.end();
+});
+
+test('#composerStateReducer - replaceDataInMapUpdater: syncedTimeFilter & match', t => {
+  const oldState = StateWSyncedTimeFilter;
+  const dataIdToReplace = 'dataset_to_replace';
+
+  const datasetToUse = {
+    data: processCsvData(dataWithNulls),
+    info: {
+      id: dataIdToReplace
+    }
+  };
+
+  let nextState = replaceDataInMapUpdater(oldState, {
+    payload: {
+      datasetToReplaceId: testCsvDataSlice1Id,
+      datasetToUse
+    }
+  });
+  // create datasets from existing tasks, trigger auto create layers
+  nextState = {
+    ...nextState,
+    visState: applyExistingDatasetTasks(visStateReducer, nextState.visState)
+  };
+
+  const oldFilter = oldState.visState.filters[0];
+  const expectedFilter = {
+    ...oldState.visState.filters[0],
+    dataId: [dataIdToReplace, testCsvDataSlice2Id],
+    // union [147407 1056000, 147407 1677000]; [147407 1301000, 1474072208000];
+    domain: [1474071056000, 1474072208000],
+    // value [1474071116000, 1474072188000] is still within so it doesnt change
+    value: oldState.visState.filters[0].value,
+    timeBins: {},
+    plotType: {
+      ...oldState.visState.filters[0].plotType,
+      colorsByDataId: {
+        [dataIdToReplace]: '#FF0000',
+        'test-csv-data-2': '#00FF00'
+      }
+    }
+  };
+
+  // should recalculate timeBins based on new datasets
+  expectedFilter.timeBins = getTimeBins(
+    expectedFilter,
+    nextState.visState.datasets,
+    oldFilter.plotType.interval
+  );
+
+  t.deepEqual(
+    nextState.visState.filters,
+    [expectedFilter],
+    'should replace dataset with syncd filter'
+  );
+  const expectedDomain0 = 1474071056000;
+  const expectedGpuFilter = {
+    filterRange: [
+      [expectedFilter.value[0] - expectedDomain0, expectedFilter.value[1] - expectedDomain0],
+      [0, 0],
+      [0, 0],
+      [0, 0]
+    ],
+    filterValueUpdateTriggers: {
+      gpuFilter_0: {name: 'gps_data.utc_timestamp', domain0: expectedDomain0},
+      gpuFilter_1: null,
+      gpuFilter_2: null,
+      gpuFilter_3: null
+    },
+    filterValueAccessor: 'dont test me'
+  };
+  t.deepEqual(
+    nextState.visState.datasets[dataIdToReplace].gpuFilter.filterRange,
+    expectedGpuFilter.filterRange,
+    'gpu filterRange should be correct'
+  );
+  t.deepEqual(
+    nextState.visState.datasets[dataIdToReplace].gpuFilter.filterValueUpdateTriggers,
+    expectedGpuFilter.filterValueUpdateTriggers,
+    'gpu filterValueUpdateTriggers should be correct'
+  );
+  t.deepEqual(
+    nextState.visState.datasets[testCsvDataSlice2Id].gpuFilter.filterRange,
+    expectedGpuFilter.filterRange,
+    'gpu filterRange should be correct'
+  );
+  t.deepEqual(
+    nextState.visState.datasets[testCsvDataSlice2Id].gpuFilter.filterValueUpdateTriggers,
+    expectedGpuFilter.filterValueUpdateTriggers,
+    'gpu filterValueUpdateTriggers should be correct'
+  );
+
+  t.end();
+});
+
+test('#composerStateReducer - replaceDataInMapUpdater: syncedTimeFilter & no match', t => {
+  const oldState = StateWSyncedTimeFilter;
+  const dataIdToReplace = 'dataset_to_replace';
+
+  const datasetToUse = {
+    // a different dataset with no match
+    data: processCsvData(testHexIdData),
+    info: {
+      id: dataIdToReplace
+    }
+  };
+
+  let nextState = replaceDataInMapUpdater(oldState, {
+    payload: {
+      datasetToReplaceId: testCsvDataSlice1Id,
+      datasetToUse
+    }
+  });
+  // create datasets from existing tasks, trigger auto create layers
+  nextState = {
+    ...nextState,
+    visState: applyExistingDatasetTasks(visStateReducer, nextState.visState)
+  };
+
+  t.equal(nextState.visState.filters.length, 0, 'should not merge filter if no match');
+  t.equal(
+    nextState.visState.layers.length,
+    1,
+    'should only keep 1 layer (not able to merge the other)'
+  );
+
+  t.deepEqual(oldState.visState.layers[1], nextState.visState.layers[0], 'should keep 1 layer');
+
+  t.equal(nextState.visState.layerToBeMerged.length, 1, 'should keep unmerged in layerToBeMerged');
+  t.equal(
+    nextState.visState.filterToBeMerged.length,
+    1,
+    'should keep unmerged in filterToBeMerged'
+  );
+
+  t.deepEqual(nextState.visState.interactionToBeMerged, {}, 'should reset interactionToBeMerged');
+  t.deepEqual(nextState.visState.splitMapsToBeMerged, [], 'should reset splitMapsToBeMerged');
   t.end();
 });

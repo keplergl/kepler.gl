@@ -44,12 +44,12 @@ test('#timeline -> getTimelineFromFilter', t => {
     ],
     defaultTimeFormat: 'L LTS',
     fieldType: 'timestamp',
+    timeBins: {},
     gpuChannel: [0]
   };
 
-  const timeline = getTimelineFromFilter(filter);
   t.deepEqual(
-    Object.keys(timeline),
+    Object.keys(getTimelineFromFilter(filter)),
     [
       'value',
       'enableInteraction',
@@ -61,6 +61,7 @@ test('#timeline -> getTimelineFromFilter', t => {
       'defaultTimeFormat',
       'timeFormat',
       'timezone',
+      'timeBins',
       'animationWindow',
       'marks'
     ],
@@ -82,10 +83,8 @@ test('#timeline -> getTimelineFromAnimationConfig', t => {
     duration: null
   };
 
-  const timeline = getTimelineFromAnimationConfig(animationConfig);
-
   t.deepEqual(
-    Object.keys(timeline),
+    Object.keys(getTimelineFromAnimationConfig(animationConfig)),
     [
       'value',
       'enableInteraction',
@@ -96,6 +95,7 @@ test('#timeline -> getTimelineFromAnimationConfig', t => {
       'defaultTimeFormat',
       'timeFormat',
       'timezone',
+      'timeBins',
       'marks'
     ],
     'Should generate the correct keys for animationConfig timeline'

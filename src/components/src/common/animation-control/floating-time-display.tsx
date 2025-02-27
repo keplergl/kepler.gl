@@ -144,7 +144,7 @@ export default function FloatingTimeDisplayFactory() {
 
           return accu;
         },
-        {displayDate: [], displayTime: []}
+        {displayDate: [], displayTime: []} as {displayDate: string[]; displayTime: string[]}
       );
     }, [currentTime, timeFormat, defaultTimeFormat, timezone]);
 

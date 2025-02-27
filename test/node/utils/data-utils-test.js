@@ -10,12 +10,12 @@ import {
   normalizeSliderValue,
   roundValToStep,
   snapToMarks,
-  arrayMove,
   getFormatter,
   defaultFormatter,
   formatNumber,
   roundToFour
 } from '@kepler.gl/utils';
+import {processLayerBounds} from '@kepler.gl/reducers';
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 
 test('dataUtils -> clamp', t => {
@@ -99,14 +99,6 @@ test('dataUtils -> normalizeSliderValue', t => {
   t.equal(normalizeSliderValue(4.4, 0, undefined), 4.4, 'is step is not defined return value');
   t.equal(normalizeSliderValue(4.4, undefined, 1), 4.4, 'is minValue is not defined return value');
 
-  t.end();
-});
-
-test('dataUtils -> arrayMove', t => {
-  const arr = [4, 1, 9, 3, 11];
-  t.deepEqual(arrayMove(arr, 2, 1), [4, 9, 1, 3, 11], 'should move array');
-  t.deepEqual(arrayMove(arr, 2, 5), [4, 1, 3, 11, 9], 'should move array');
-  t.deepEqual(arrayMove(arr, 2, -1), [4, 1, 3, 11, 9], 'should move array');
   t.end();
 });
 
@@ -233,6 +225,47 @@ test('dataUtils -> formatNumber', t => {
   TEST_CASES.forEach(tc => {
     const output = formatNumber(...tc.input);
     t.equal(output, tc.output, `formatNumber should be correct when ${tc.message}`);
+  });
+
+  t.end();
+});
+
+test('dataUtils -> validateBounds', t => {
+  const TEST_CASES = [
+    {
+      input: [[10, -10, 20, -20]],
+      output: [10, -10, 20, -20],
+      message: 'should return the same bound for a single bound'
+    },
+    {
+      input: [
+        [10, -10, 20, -20],
+        [15, -15, 25, -25]
+      ],
+      output: [10, -15, 25, -20],
+      message: 'should return a combined bound for multiple bounds'
+    },
+    {
+      input: [
+        [10, -90, 20, -20],
+        [10, -10, 90, -90]
+      ],
+      output: [10, -89.9, 90, -20],
+      message: 'should handle latitude -90,90 correctly'
+    },
+    {
+      input: [
+        [-180, -90, 20, -20],
+        [15, -190, 25, -25]
+      ],
+      output: [-180, -89.9, 25, -20],
+      message: 'should handle extreme longitude values'
+    }
+  ];
+
+  TEST_CASES.forEach(tc => {
+    const output = processLayerBounds(tc.input);
+    t.deepEqual(output, tc.output, tc.message);
   });
 
   t.end();

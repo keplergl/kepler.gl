@@ -235,7 +235,7 @@ test('Components -> injector -> withState.lens', t => {
 });
 
 test('Components -> injector -> withState.mapStateToProps', t => {
-  const CustomHeader = () => <div clssName="my-test-header-3">smoothie</div>;
+  const CustomHeader = () => <div className="my-test-header-3">smoothie</div>;
   const myCustomHeaderFactory = () =>
     withState([], state => ({ids: Object.keys(state)}))(CustomHeader);
 
@@ -307,7 +307,7 @@ test('Components -> injector -> actions', t => {
 });
 
 test('Components -> injector -> provideRecipesToInjector', t => {
-  /// Header1 -> Header 2 -> Header 3
+  // Header1 -> Header 2 -> Header 3
   const spyMyHeader3Factory = sinon.spy();
   const spyMyHeader2Factory = sinon.spy();
   const spyMyHeader1Factory = sinon.spy();

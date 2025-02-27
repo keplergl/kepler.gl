@@ -6,20 +6,19 @@ import Layer, {
   LayerBaseConfig,
   LayerBaseConfigPartial,
   LayerColorConfig,
-  LayerColumn,
   LayerSizeConfig,
   VisualChannelDescription,
   VisualChannels
 } from './base-layer';
-import {hexToRgb, aggregate} from '@kepler.gl/utils';
+import {hexToRgb, aggregate, DataContainerInterface} from '@kepler.gl/utils';
 import {
   HIGHLIGH_COLOR_3D,
   CHANNEL_SCALES,
   FIELD_OPTS,
   DEFAULT_AGGREGATION,
-  ColorRange
+  AGGREGATION_TYPES
 } from '@kepler.gl/constants';
-import {Merge} from '@kepler.gl/types';
+import {ColorRange, Field, LayerColumn, Merge} from '@kepler.gl/types';
 import {KeplerTable, Datasets} from '@kepler.gl/table';
 
 type AggregationLayerColumns = {
@@ -49,7 +48,10 @@ export const getValueAggrFunc = getPointData => (field, aggregation) => points =
     : points.length;
 
 export const getFilterDataFunc =
-  (filterRange: number[][], getFilterValue: (d: any) => number[]): ((d: any) => boolean) =>
+  (
+    filterRange: number[][],
+    getFilterValue: (d: unknown) => (number | number[])[]
+  ): ((d: unknown) => boolean) =>
   pt =>
     getFilterValue(pt).every((val, i) => val >= filterRange[i][0] && val <= filterRange[i][1]);
 
@@ -112,7 +114,8 @@ export default class AggregationLayer extends Layer {
       'coverage',
       'elevationPercentile',
       'elevationScale',
-      'enableElevationZoomFactor'
+      'enableElevationZoomFactor',
+      'fixedHeight'
     ];
   }
 
@@ -168,9 +171,27 @@ export default class AggregationLayer extends Layer {
     };
   }
 
-  getHoverData(object) {
+  getHoverData(object: any, dataContainer: DataContainerInterface, fields: Field[]): any {
+    if (!object) return object;
+    const measure = this.config.visConfig.colorAggregation;
+    // aggregate all fields for the hovered group
+    const aggregatedData = fields.reduce((accu, field) => {
+      accu[field.name] = {
+        measure,
+        value: aggregate(object.points, measure, (d: {index: number}) => {
+          return dataContainer.valueAt(d.index, field.fieldIdx);
+        })
+      };
+      return accu;
+    }, {});
+
     // return aggregated object
-    return object;
+    return {aggregatedData, ...object};
+  }
+
+  getFilteredItemCount() {
+    // gpu filter not supported
+    return null;
   }
 
   /**
@@ -242,8 +263,9 @@ export default class AggregationLayer extends Layer {
     return this.config[field]
       ? // scale options based on aggregation
         FIELD_OPTS[this.config[field].type].scale[channelScaleType][aggregationType]
-      : // default scale options for point count
-        DEFAULT_AGGREGATION[channelScaleType][aggregationType];
+      : // default scale options for point count: aggregationType should be count since
+        // LAYER_VIS_CONFIGS.aggregation.defaultValue is AGGREGATION_TYPES.average,
+        DEFAULT_AGGREGATION[channelScaleType][AGGREGATION_TYPES.count];
   }
 
   /**
@@ -253,7 +275,8 @@ export default class AggregationLayer extends Layer {
     return this;
   }
 
-  updateLayerMeta(dataContainer, getPosition) {
+  updateLayerMeta(dataset: KeplerTable, getPosition) {
+    const {dataContainer} = dataset;
     // get bounds from points
     const bounds = this.getPointsBounds(dataContainer, getPosition);
 
@@ -358,6 +381,7 @@ export default class AggregationLayer extends Layer {
 
       // color
       colorRange: this.getColorRange(visConfig.colorRange),
+      colorMap: visConfig.colorRange.colorMap,
       colorScaleType: this.config.colorScale,
       upperPercentile: visConfig.percentile[1],
       lowerPercentile: visConfig.percentile[0],
@@ -368,6 +392,8 @@ export default class AggregationLayer extends Layer {
       elevationScale: visConfig.elevationScale * eleZoomFactor,
       elevationScaleType: this.config.sizeScale,
       elevationRange: visConfig.sizeRange,
+      elevationFixed: visConfig.fixedHeight,
+
       elevationLowerPercentile: visConfig.elevationPercentile[0],
       elevationUpperPercentile: visConfig.elevationPercentile[1],
 

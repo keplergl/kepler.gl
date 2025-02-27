@@ -13,11 +13,11 @@ import {
   editTopMapStyle,
   editBottomMapStyle,
   getStyleImageIcon,
-  generateHashId,
   isPlainObject,
   hexToRgb,
   colorMaybeToRGB
 } from '@kepler.gl/utils';
+import {generateHashId} from '@kepler.gl/common-utils';
 import {
   DEFAULT_MAP_STYLES,
   DEFAULT_LAYER_GROUPS,
@@ -25,7 +25,8 @@ import {
   NO_MAP_ID,
   DEFAULT_BLDG_COLOR,
   DEFAULT_BACKGROUND_COLOR,
-  BASE_MAP_BACKGROUND_LAYER_IDS
+  BASE_MAP_BACKGROUND_LAYER_IDS,
+  DEFAULT_BASE_MAP_STYLE
 } from '@kepler.gl/constants';
 import {ACTION_TASK, LOAD_MAP_STYLE_TASK} from '@kepler.gl/tasks';
 import {rgb} from 'd3-color';
@@ -72,11 +73,10 @@ export type MapStyle = {
 
 const getDefaultState = (): MapStyle => {
   const visibleLayerGroups = {};
-  const styleType = 'dark-matter';
   const topLayerGroups = {};
 
   return {
-    styleType,
+    styleType: DEFAULT_BASE_MAP_STYLE,
     visibleLayerGroups,
     topLayerGroups,
     mapStyles: DEFAULT_MAP_STYLES.reduce(
@@ -676,7 +676,7 @@ export const loadCustomMapStyleUpdater = (
         }
       : {}),
     ...(icon ? {icon} : {}),
-    ...(error ? {error} : {})
+    ...(error !== undefined ? {error} : {})
   }
 });
 
@@ -697,13 +697,13 @@ export const inputMapStyleUpdater = (
   // differentiate between either a url to hosted style json that needs an icon url,
   // or an icon already available client-side as a data uri
   const isUpdatedIconDataUri = updated.icon?.startsWith('data:image');
-  const isValid = Boolean(updated.uploadedFile);
   const isMapboxStyleUrl =
     updated.url?.startsWith('mapbox://') || updated.url?.includes('mapbox.com');
 
   const icon =
     !isUpdatedIconDataUri && isMapboxStyleUrl
-      ? getStyleImageIcon({
+      ? // Get image icon urls only for mapbox map lib.
+        getStyleImageIcon({
           mapState,
           styleUrl: updated.url || '',
           mapboxApiAccessToken: updated.accessToken || state.mapboxApiAccessToken || '',
@@ -715,7 +715,7 @@ export const inputMapStyleUpdater = (
     ...state,
     inputStyle: {
       ...updated,
-      isValid,
+      isValid: true,
       icon
     }
   };

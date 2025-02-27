@@ -4,6 +4,8 @@
 import {
   toggleModalUpdater,
   loadFilesSuccessUpdater as uiStateLoadFilesSuccessUpdater,
+  setMapControlSettingsUpdater as uiStateSetMapControlSettingsUpdater,
+  toggleMapControlUpdater as uiStateToggleMapControlUpdater,
   toggleMapControlUpdater,
   toggleSplitMapUpdater as uiStateToggleSplitMapUpdater
 } from './ui-state-updaters';
@@ -143,7 +145,7 @@ export const addDataToMapUpdater = (
     ...payload.options
   };
 
-  // check if progresive loading dataset by bataches, and update visState directly
+  // check if progressive loading dataset by batches, and update visState directly
   const isProgressiveLoading =
     Array.isArray(datasets) &&
     datasets[0]?.info.format === 'arrow' &&
@@ -189,6 +191,8 @@ export const addDataToMapUpdater = (
     ),
 
     if_(Boolean(info), pick_('visState')(apply_<VisState, any>(setMapInfoUpdater, {info}))),
+    // Note that fit bounds here won't be called in case datasets are created in Tasks.
+    // A separate Task to update bounds is created once the datasets are ready.
     with_(({visState}) =>
       pick_('mapState')(
         apply_(
@@ -203,6 +207,26 @@ export const addDataToMapUpdater = (
     ),
     pick_('mapStyle')(apply_(styleMapConfigUpdater, payload_({config: parsedConfig, options}))),
     pick_('uiState')(apply_(uiStateLoadFilesSuccessUpdater, payload_(null))),
+
+    if_(
+      Boolean(parsedConfig?.uiState?.mapControls?.mapLegend?.active),
+      pick_('uiState')(
+        apply_(uiStateToggleMapControlUpdater, payload_({panelId: 'mapLegend', index: 0}))
+      )
+    ),
+
+    if_(
+      Boolean(parsedConfig?.uiState?.mapControls?.mapLegend?.settings),
+      pick_('uiState')(
+        apply_(
+          uiStateSetMapControlSettingsUpdater,
+          payload_({
+            panelId: 'mapLegend',
+            settings: parsedConfig?.uiState?.mapControls?.mapLegend?.settings ?? {}
+          })
+        )
+      )
+    ),
     pick_('uiState')(apply_(toggleModalUpdater, payload_(null))),
     pick_('uiState')(
       merge_(

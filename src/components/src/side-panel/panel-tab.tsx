@@ -38,7 +38,7 @@ export const StyledPanelTab = styled.div.attrs({
   padding-bottom: ${props => props.theme.panelToggleBottomPadding}px;
   width: ${props => props.theme.panelTabWidth};
 
-  :hover {
+  &:hover {
     cursor: pointer;
     color: ${props => props.theme.textColorHl};
   }

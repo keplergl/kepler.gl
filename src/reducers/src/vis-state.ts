@@ -12,7 +12,11 @@ import * as visStateUpdaters from './vis-state-updaters';
 const actionHandler = {
   [ActionTypes.ADD_FILTER]: visStateUpdaters.addFilterUpdater,
 
+  [ActionTypes.CREATE_OR_UPDATE_FILTER]: visStateUpdaters.createOrUpdateFilterUpdater,
+
   [ActionTypes.ADD_LAYER]: visStateUpdaters.addLayerUpdater,
+
+  [ActionTypes.APPLY_FILTER_CONFIG]: visStateUpdaters.applyFilterConfigUpdater,
 
   [ActionTypes.APPLY_LAYER_CONFIG]: visStateUpdaters.applyLayerConfigUpdater,
 
@@ -33,6 +37,8 @@ const actionHandler = {
   [ActionTypes.LAYER_TYPE_CHANGE]: visStateUpdaters.layerTypeChangeUpdater,
 
   [ActionTypes.LAYER_VIS_CONFIG_CHANGE]: visStateUpdaters.layerVisConfigChangeUpdater,
+
+  [ActionTypes.LAYER_TOGGLE_VISIBILITY]: visStateUpdaters.layerToggleVisibilityUpdater,
 
   [ActionTypes.LAYER_TEXT_LABEL_CHANGE]: visStateUpdaters.layerTextLabelChangeUpdater,
 
@@ -89,6 +95,8 @@ const actionHandler = {
 
   [ActionTypes.UPDATE_FILTER_ANIMATION_SPEED]: visStateUpdaters.updateFilterAnimationSpeedUpdater,
 
+  [ActionTypes.SET_ANIMATION_CONFIG]: visStateUpdaters.setAnimationConfigUpdater,
+
   [ActionTypes.SET_LAYER_ANIMATION_TIME]: visStateUpdaters.setLayerAnimationTimeUpdater,
 
   [ActionTypes.UPDATE_LAYER_ANIMATION_SPEED]: visStateUpdaters.updateLayerAnimationSpeedUpdater,
@@ -138,13 +146,22 @@ const actionHandler = {
   [ActionTypes.SET_LAYER_ANIMATION_TIME_CONFIG]:
     visStateUpdaters.setLayerAnimationTimeConfigUpdater,
 
+  [ActionTypes.LAYER_FILTERED_ITEMS_CHANGE]: visStateUpdaters.layerFilteredItemsChangeUpdater,
+
+  [ActionTypes.SYNC_TIME_FILTER_WITH_LAYER_TIMELINE]:
+    visStateUpdaters.syncTimeFilterWithLayerTimelineUpdater,
+
+  [ActionTypes.SYNC_TIME_FILTER_TIMELINE_MODE]: visStateUpdaters.setTimeFilterTimelineModeUpdater,
+
   [ActionTypes.ADD_EFFECT]: visStateUpdaters.addEffectUpdater,
 
   [ActionTypes.REORDER_EFFECT]: visStateUpdaters.reorderEffectUpdater,
 
   [ActionTypes.REMOVE_EFFECT]: visStateUpdaters.removeEffectUpdater,
 
-  [ActionTypes.UPDATE_EFFECT]: visStateUpdaters.updateEffectUpdater
+  [ActionTypes.UPDATE_EFFECT]: visStateUpdaters.updateEffectUpdater,
+
+  [ActionTypes.CREATE_NEW_DATASET_SUCCESS]: visStateUpdaters.createNewDatasetSuccessUpdater
 };
 
 // construct vis-state reducer

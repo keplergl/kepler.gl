@@ -5,7 +5,7 @@
 
 import {ActionTypes} from '@kepler.gl/actions';
 import {LOCATION_CHANGE} from 'react-router-redux';
-import window from 'global/window';
+import Window from 'global/window';
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 import get from 'lodash.get';
 
@@ -85,11 +85,11 @@ const trackingInformation = {
 const EXCLUDED_ACTIONS = [ActionTypes.LAYER_HOVER, ActionTypes.UPDATE_MAP];
 
 const analyticsMiddleware = store => next => action => {
-  if (window.gtag && !EXCLUDED_ACTIONS.includes(action.type)) {
+  if (Window.gtag && !EXCLUDED_ACTIONS.includes(action.type)) {
     const payload = action.payload || action;
 
     // eslint-disable-next-line no-undef
-    window.gtag('event', 'action', {
+    Window.gtag('event', 'action', {
       event_category: action.type,
       event_label: trackingInformation[action.type]
         ? JSON.stringify(trackingInformation[action.type](payload, store))

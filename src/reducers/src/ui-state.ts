@@ -19,6 +19,7 @@ const actionHandler = {
   [ActionTypes.OPEN_DELETE_MODAL]: uiStateUpdaters.openDeleteModalUpdater,
   [ActionTypes.TOGGLE_MAP_CONTROL]: uiStateUpdaters.toggleMapControlUpdater,
   [ActionTypes.SET_MAP_CONTROL_VISIBILITY]: uiStateUpdaters.setMapControlVisibilityUpdater,
+  [ActionTypes.SET_MAP_CONTROL_SETTINGS]: uiStateUpdaters.setMapControlSettingsUpdater,
   [ActionTypes.ADD_NOTIFICATION]: uiStateUpdaters.addNotificationUpdater,
   [ActionTypes.REMOVE_NOTIFICATION]: uiStateUpdaters.removeNotificationUpdater,
 
@@ -43,7 +44,9 @@ const actionHandler = {
   [ActionTypes.TOGGLE_SPLIT_MAP]: uiStateUpdaters.toggleSplitMapUpdater,
   [ActionTypes.SHOW_DATASET_TABLE]: uiStateUpdaters.showDatasetTableUpdater,
   [ActionTypes.SET_LOCALE]: uiStateUpdaters.setLocaleUpdater,
-  [ActionTypes.TOGGLE_PANEL_LIST_VIEW]: uiStateUpdaters.togglePanelListViewUpdater
+  [ActionTypes.TOGGLE_PANEL_LIST_VIEW]: uiStateUpdaters.togglePanelListViewUpdater,
+
+  [ActionTypes.SET_LOADING_INDICATOR]: uiStateUpdaters.setLoadingIndicatorUpdater
 };
 
 /* Reducer */

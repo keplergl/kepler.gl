@@ -305,9 +305,18 @@ test('#ClusterLayer -> renderLayer', t => {
           expectedScatterplotData,
           'should pass correct data to cluster layer'
         );
+
+        const expectedColorDomain = {
+          domain: [1, 1, 1],
+          aggregatedBins: {
+            0: {i: 0, value: 1, counts: 1},
+            1: {i: 1, value: 1, counts: 1},
+            2: {i: 2, value: 1, counts: 1}
+          }
+        };
         t.deepEqual(
           spyLayerCallbacks.args[0][0],
-          [1, 1, 1],
+          expectedColorDomain,
           'should call onSetLayerDomain with correct domain'
         );
 

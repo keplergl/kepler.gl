@@ -6,6 +6,7 @@ import {PickInfo} from '@deck.gl/core/lib/deck';
 import {default as ActionTypes} from './action-types';
 import {FileCacheItem} from '@kepler.gl/processors';
 import {Layer, LayerBaseConfig} from '@kepler.gl/layers';
+import {KeplerTable} from '@kepler.gl/table';
 import {
   AddDataToMapPayload,
   ValueOf,
@@ -20,8 +21,13 @@ import {
   Filter,
   ParsedConfig,
   ParsedLayer,
-  EffectPropsPartial
+  EffectPropsPartial,
+  SyncTimelineMode,
+  AnimationConfig,
+  FilterAnimationConfig
 } from '@kepler.gl/types';
+import {createAction} from '@reduxjs/toolkit';
+
 // TODO - import LoaderObject type from @loaders.gl/core when supported
 // TODO - import LoadOptions type from @loaders.gl/core when supported
 
@@ -55,7 +61,7 @@ export function applyLayerConfig(
 
 export type LayerConfigChangeUpdaterAction = {
   oldLayer: Layer;
-  newConfig: Partial<LayerBaseConfig>;
+  newConfig: Partial<Layer['config']>;
 };
 /**
  * Update layer base config: dataId, label, column, isVisible
@@ -74,6 +80,34 @@ export function layerConfigChange(
     newConfig
   };
 }
+
+export type LayerToggleVisibilityUpdaterAction = {
+  layerId: string;
+  isVisible: boolean;
+  splitMapId?: string;
+};
+
+/**
+ * Update layer visibility depends on splitMap single or dual
+ * @param layerId - layerId to be updated
+ * @param isVisible - whether this layer is visible globally
+ * @param splitMapId - id for this splitMap
+ * @returns action
+ * @public
+ */
+export function layerToggleVisibility(
+  layerId: string,
+  isVisible: boolean,
+  splitMapId?: string
+): Merge<LayerToggleVisibilityUpdaterAction, {type: typeof ActionTypes.LAYER_TOGGLE_VISIBILITY}> {
+  return {
+    type: ActionTypes.LAYER_TOGGLE_VISIBILITY,
+    layerId,
+    isVisible,
+    splitMapId
+  };
+}
+
 export type LayerTextLabelChangeUpdaterAction = {
   oldLayer: Layer;
   idx: number | 'all';
@@ -152,8 +186,9 @@ export function layerTypeChange(
 }
 export type LayerVisualChannelConfigChangeUpdaterAction = {
   oldLayer: Layer;
-  newConfig: Partial<LayerBaseConfig>;
+  newConfig: Partial<Layer['config']>;
   channel: string;
+  newVisConfig?: Partial<LayerVisConfig>;
 };
 /**
  * Update layer visual channel
@@ -167,7 +202,8 @@ export type LayerVisualChannelConfigChangeUpdaterAction = {
 export function layerVisualChannelConfigChange(
   oldLayer: Layer,
   newConfig: Partial<LayerBaseConfig>,
-  channel: string
+  channel: string,
+  newVisConfig?: Partial<LayerVisConfig>
 ): Merge<
   LayerVisualChannelConfigChangeUpdaterAction,
   {type: typeof ActionTypes.LAYER_VISUAL_CHANNEL_CHANGE}
@@ -176,7 +212,8 @@ export function layerVisualChannelConfigChange(
     type: ActionTypes.LAYER_VISUAL_CHANNEL_CHANGE,
     oldLayer,
     newConfig,
-    channel
+    channel,
+    newVisConfig
   };
 }
 export type LayerVisConfigChangeUpdaterAction = {
@@ -290,9 +327,32 @@ export function interactionConfigChange(
   };
 }
 
+export type ApplyFilterConfigUpdaterAction = {
+  filterId: string;
+  newFilter: Filter;
+};
+
+/**
+ * Update filter config
+ * @param filterId - id of the filter to be updated
+ * @param newFilter - new filter config
+ * @returns action
+ * @public
+ */
+export function applyFilterConfig(
+  filterId: string,
+  newFilter: Filter
+): Merge<ApplyFilterConfigUpdaterAction, {type: typeof ActionTypes.APPLY_FILTER_CONFIG}> {
+  return {
+    type: ActionTypes.APPLY_FILTER_CONFIG,
+    filterId,
+    newFilter
+  };
+}
+
 export type SetFilterUpdaterAction = {
   idx: number;
-  prop: string;
+  prop: string | string[];
   value: any;
   valueIndex?: number;
 };
@@ -301,6 +361,8 @@ export type SetFilterUpdaterAction = {
  * @memberof visStateActions
  * @param idx -`idx` of filter to be updated
  * @param prop - `prop` of filter, e,g, `dataId`, `name`, `value`
+ *                or an array e.g. ['idx', 'name']. in that case the value
+ *                should also be an array of the corresponding values (by index)
  * @param value - new value
  * @param valueIndex - dataId index
  * @returns action
@@ -308,7 +370,7 @@ export type SetFilterUpdaterAction = {
  */
 export function setFilter(
   idx: number,
-  prop: string,
+  prop: string | string[],
   value: any,
   valueIndex?: number
 ): Merge<SetFilterUpdaterAction, {type: typeof ActionTypes.SET_FILTER}> {
@@ -398,6 +460,35 @@ export function addFilter(
     type: ActionTypes.ADD_FILTER,
     dataId,
     id
+  };
+}
+
+export type CreateOrUpdateFilterUpdaterAction = {
+  id?: string;
+  dataId?: string | string[];
+  field?: string | string[];
+  value?: any;
+};
+
+/**
+ * Create or updates a filter
+ * @memberof visStateActions
+ * @param dataId - dataset `id` this new filter is associated with
+ * @returns action
+ * @public
+ */
+export function createOrUpdateFilter(
+  id?: string,
+  dataId?: string | string[],
+  field?: string | string[],
+  value?: any
+): Merge<CreateOrUpdateFilterUpdaterAction, {type: typeof ActionTypes.CREATE_OR_UPDATE_FILTER}> {
+  return {
+    type: ActionTypes.CREATE_OR_UPDATE_FILTER,
+    id,
+    dataId,
+    field,
+    value
   };
 }
 
@@ -735,10 +826,8 @@ export type SetColumnDisplayFormatUpdaterAction = {
  * @public
  */
 export function setColumnDisplayFormat(
-  dataId: string,
-  formats: {
-    [key: string]: string;
-  }
+  dataId: SetColumnDisplayFormatUpdaterAction['dataId'],
+  formats: SetColumnDisplayFormatUpdaterAction['formats']
 ): Merge<
   SetColumnDisplayFormatUpdaterAction,
   {type: typeof ActionTypes.SET_COLUMN_DISPLAY_FORMAT}
@@ -751,7 +840,7 @@ export function setColumnDisplayFormat(
 }
 
 export type AddDataToMapUpdaterOptions = {
-  centrMap?: boolean;
+  centerMap?: boolean;
   readOnly?: boolean;
   keepExistingConfig?: boolean;
 };
@@ -892,8 +981,25 @@ export function updateFilterAnimationSpeed(
   };
 }
 
+export type SetAnimationConfigUpdaterAction = {
+  config: AnimationConfig | FilterAnimationConfig;
+};
+/**
+ * Set animation config: works with both layer animation and filter animation
+ * @param config
+ * @returns action
+ */
+export function setAnimationConfig(
+  config: AnimationConfig | FilterAnimationConfig
+): Merge<SetAnimationConfigUpdaterAction, {type: typeof ActionTypes.SET_ANIMATION_CONFIG}> {
+  return {
+    type: ActionTypes.SET_ANIMATION_CONFIG,
+    config
+  };
+}
+
 export type SetLayerAnimationTimeUpdaterAction = {
-  value: number;
+  value: number | null;
 };
 /**
  * Reset animation
@@ -1105,9 +1211,13 @@ export function toggleLayerForMap(
   };
 }
 
+type FilterPlotNewProp = {
+  yAxis?: null | Record<string, any>;
+  plotType?: {type: string};
+};
 export type SetFilterPlotUpdaterAction = {
   idx: number;
-  newProp: object;
+  newProp: FilterPlotNewProp;
   valueIndex?: number;
 };
 /**
@@ -1121,7 +1231,7 @@ export type SetFilterPlotUpdaterAction = {
  */
 export function setFilterPlot(
   idx: number,
-  newProp: object,
+  newProp: FilterPlotNewProp,
   valueIndex?: number
 ): Merge<SetFilterPlotUpdaterAction, {type: typeof ActionTypes.SET_FILTER_PLOT}> {
   return {
@@ -1492,6 +1602,85 @@ export function setFilterAnimationTimeConfig(
     config
   };
 }
+
+export type LayerFilteredItemsChangeAction = {
+  event: {
+    id: string;
+    count: number;
+  };
+  layer: Layer;
+};
+
+/**
+ * deck.gl layer gpu filter callback
+ * @memberof visStateActions
+ * @param layer
+ * @param event
+ * @return action
+ */
+export function layerFilteredItemsChange(
+  layer: LayerFilteredItemsChangeAction['layer'],
+  event: LayerFilteredItemsChangeAction['event']
+): Merge<LayerFilteredItemsChangeAction, {type: typeof ActionTypes.LAYER_FILTERED_ITEMS_CHANGE}> {
+  return {
+    type: ActionTypes.LAYER_FILTERED_ITEMS_CHANGE,
+    layer,
+    event
+  };
+}
+
+export type SyncTimeFilterWithLayerTimelineAction = {
+  idx: number;
+  enable: boolean;
+};
+
+export function syncTimeFilterWithLayerTimeline(
+  idx: SyncTimeFilterWithLayerTimelineAction['idx'],
+  enable: SyncTimeFilterWithLayerTimelineAction['enable']
+): Merge<
+  SyncTimeFilterWithLayerTimelineAction,
+  {type: typeof ActionTypes.SYNC_TIME_FILTER_WITH_LAYER_TIMELINE}
+> {
+  return {
+    type: ActionTypes.SYNC_TIME_FILTER_WITH_LAYER_TIMELINE,
+    idx,
+    enable
+  };
+}
+
+export type setTimeFilterSyncTimelineModeAction = {
+  id: string;
+  mode: SyncTimelineMode;
+};
+
+export function setTimeFilterSyncTimelineMode({
+  id,
+  mode
+}: setTimeFilterSyncTimelineModeAction): Merge<
+  setTimeFilterSyncTimelineModeAction,
+  {type: typeof ActionTypes.SYNC_TIME_FILTER_TIMELINE_MODE}
+> {
+  return {
+    type: ActionTypes.SYNC_TIME_FILTER_TIMELINE_MODE,
+    id,
+    mode
+  };
+}
+
+export type CreateNewDatasetSuccessPayload = {
+  results: (PromiseFulfilledResult<KeplerTable> | PromiseRejectedResult)[];
+  addToMapOptions: AddDataToMapPayload['options'];
+};
+
+/**
+ * Called when a new dataset is created successfully via async table methods
+ * @param payload
+ * @param payload.results - results of promises.allSettlted
+ * @returns
+ */
+export const createNewDatasetSuccess = createAction<CreateNewDatasetSuccessPayload>(
+  ActionTypes.CREATE_NEW_DATASET_SUCCESS
+);
 
 /**
  * This declaration is needed to group actions in docs

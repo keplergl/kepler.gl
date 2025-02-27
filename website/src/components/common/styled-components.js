@@ -54,10 +54,10 @@ const buttonStyles = css`
   width: ${props => props.width || 'auto'};
   text-transform: uppercase;
 
-  :hover,
-  :focus,
-  :active,
-  :visited,
+  &:hover,
+  &:focus,
+  &:active,
+  &:visited,
   &.active {
     background-color: ${props =>
       props.negative

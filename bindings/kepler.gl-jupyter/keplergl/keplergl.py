@@ -1,7 +1,11 @@
 # SPDX-License-Identifier: MIT
 # Copyright contributors to the kepler.gl project
 
-#module for keplergl-jupyter
+# Ignore warnings from IPython.core.formatters for _repr_html_ that returns different types in different versions of IPyWidgets
+import warnings
+warnings.filterwarnings('ignore', category=UserWarning,
+                        module='IPython.core.formatters')
+
 import base64
 import sys
 import json
@@ -45,7 +49,16 @@ def _df_to_dict(df):
     - dictionary: a dictionary variable that can be used in Kepler.gl
 
     '''
-    return df.to_dict('split')
+    df_copy = df.copy()
+    # Convert all columns that aren't JSON serializable to strings
+    for col in df_copy.columns:
+        try:
+            # just check the first item in the colum
+            json.dumps(df_copy[col].iloc[0] if len(df_copy) > 0 else None)
+        except (TypeError, OverflowError):
+            df_copy[col] = df_copy[col].astype(str)
+
+    return df_copy.to_dict('split')
 
 
 def _df_to_arrow(df: pd.DataFrame):
@@ -205,26 +218,15 @@ class KeplerGl(widgets.DOMWidget):
         ''' Send data to Voyager
 
         Inputs:
-        - data string, can be a csv string or json string
+        - data string, can be a dataframe, csv string or json string
         - name string
 
         Example of use:
             keplergl.add_data(data_string, name="data_1")
         '''
+        normalized = _normalize_data(data, use_arrow)
         copy = self.data.copy()
-
-        # assume data is a GeoJSON or CSV string, convert it to arrow if use_arrow is True
-        if use_arrow:
-            global g_use_arrow
-            g_use_arrow = use_arrow
-            try:
-                gdf = geopandas.read_file(data, driver='GeoJSON')
-                copy.update({name: gdf})
-            except Exception:
-                # if it fails, assume it is a csv string
-                # load csv string to a dataframe
-                df = pd.read_csv(data)
-                copy.update({name: df})
+        copy.update({name: normalized})
 
         self.data = copy
 
