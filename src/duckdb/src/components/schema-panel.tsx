@@ -6,6 +6,7 @@ import {useSelector} from 'react-redux';
 import styled from 'styled-components';
 import {AsyncDuckDBConnection} from '@duckdb/duckdb-wasm';
 
+import {LoadingSpinner} from '@kepler.gl/components';
 import {arrowSchemaToFields} from '@kepler.gl/processors';
 import {VisState} from '@kepler.gl/schemas';
 
@@ -29,6 +30,14 @@ const StyledSchemaPanel = styled.div`
   font-size: 12px;
   padding: 12px;
   font-family: ${props => props.theme.fontFamily};
+  height: 100%;
+`;
+
+const StyledLoadingSpinnerWrapper = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
 `;
 
 async function getColumnSchema(connection: AsyncDuckDBConnection, tableName: string) {
@@ -77,7 +86,7 @@ type SchemaPanelProps = {
 export const SchemaPanel = ({setTableSchema, droppedFile}: SchemaPanelProps) => {
   const [columnSchemas, setColumnSchemas] = useState<TreeNodeData<{type: string}>[]>([]);
   const datasets = useSelector((state: State) => state?.demo?.keplerGl?.map?.visState.datasets);
-  
+
   const getTableSchema = useCallback(async () => {
     const db = await getDuckDB();
     const c = await db.connect();
@@ -96,7 +105,7 @@ export const SchemaPanel = ({setTableSchema, droppedFile}: SchemaPanelProps) => 
 
   useEffect(() => {
     getTableSchema();
-  }, [datasets, getTableSchema]);
+  }, [datasets, droppedFile, getTableSchema]);
 
   return (
     <StyledSchemaPanel>
@@ -115,6 +124,10 @@ export const SchemaPanel = ({setTableSchema, droppedFile}: SchemaPanelProps) => 
             }}
           />
         ))
+      ) : droppedFile ? (
+        <StyledLoadingSpinnerWrapper>
+          <LoadingSpinner />
+        </StyledLoadingSpinnerWrapper>
       ) : (
         <div>No tables found</div>
       )}

@@ -136,6 +136,9 @@ const StyledFileDropArea = styled(FileDrop)<StyledDragPanelProps>`
   border-width: 1px;
   border: 1px ${props => (props.dragOver ? 'solid' : 'dashed')}
     ${props => (props.dragOver ? props.theme.subtextColorLT : 'transparent')};
+  .file-drop-target {
+    height: 100%;
+  }
 `;
 
 type SqlPanelProps = {
