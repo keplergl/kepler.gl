@@ -89,6 +89,8 @@ const StyledSchemaPanelDropMessage = styled.div`
   align-items: center;
   height: 100%;
   flex-direction: column;
+  text-align: center;
+
   div {
     margin: 5px;
   }
@@ -109,7 +111,7 @@ export const SchemaPanelDropMessage = () => {
   return (
     <StyledSchemaPanelDropMessage>
       <div className="header">
-        <StyledAddIcon /> Add files
+        <StyledAddIcon /> Add files to DuckDB
       </div>
       <div className="bold">Supported formats: </div>
       <div>.csv, .json, .geojson, .parquet, .arrow</div>
