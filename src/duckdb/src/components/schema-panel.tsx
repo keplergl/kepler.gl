@@ -81,6 +81,7 @@ function getSchemaSuggestion(result: {key: string; children: {key: string}[]}[])
 type SchemaPanelProps = {
   setTableSchema: (tableSchema: SchemaSuggestion[]) => void;
   droppedFile: File | null;
+  schemaUpdateTrigger: any;
 };
 
 const StyledSchemaPanelDropMessage = styled.div`
@@ -120,7 +121,11 @@ export const SchemaPanelDropMessage = () => {
   );
 };
 
-export const SchemaPanel = ({setTableSchema, droppedFile}: SchemaPanelProps) => {
+export const SchemaPanel = ({
+  setTableSchema,
+  droppedFile,
+  schemaUpdateTrigger
+}: SchemaPanelProps) => {
   const [columnSchemas, setColumnSchemas] = useState<TreeNodeData<{type: string}>[]>([]);
   const datasets = useSelector((state: State) => state?.demo?.keplerGl?.map?.visState.datasets);
 
@@ -138,7 +143,7 @@ export const SchemaPanel = ({setTableSchema, droppedFile}: SchemaPanelProps) => 
     setColumnSchemas(result);
     setTableSchema(tableSchema);
     c.close();
-  }, [setColumnSchemas, setTableSchema]);
+  }, [setColumnSchemas, setTableSchema, schemaUpdateTrigger]);
 
   useEffect(() => {
     getTableSchema();

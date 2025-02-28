@@ -155,6 +155,7 @@ export const SqlPanel: React.FC<SqlPanelProps> = ({initialSql = ''}) => {
   const [droppedFile, setDroppedFile] = useState<File | null>(null);
   const [dragState, setDragState] = useState(false);
   const [result, setResult] = useState<null | QueryResult>(null);
+  const [schemaUpdateTrigger, setSchemaUpdateTrigger] = useState<number>(0);
   const [error, setError] = useState<Error | null>(null);
   const [counter, setCounter] = useState(0);
   const [tableSchema, setTableSchema] = useState<SchemaSuggestion[]>([]);
@@ -185,6 +186,8 @@ export const SqlPanel: React.FC<SqlPanelProps> = ({initialSql = ''}) => {
 
       const db = await getDuckDB();
       const connection = await db.connect();
+
+      setSchemaUpdateTrigger(Date.now());
 
       // TODO find a cheap way to get DuckDb types with a single query to a remote resource - temp table? cte?
       const tempTableName = 'temp_keplergl_table';
@@ -220,12 +223,11 @@ export const SqlPanel: React.FC<SqlPanelProps> = ({initialSql = ''}) => {
         }
       }
 
-      if (!arrowResult) {
-        throw new Error('no result');
+      // Show preview only for the result of the last query
+      if (arrowResult) {
+        setResult({table: arrowResult, tableDuckDBTypes});
+        setError(null);
       }
-
-      setResult({table: arrowResult, tableDuckDBTypes});
-      setError(null);
 
       connection.close();
     } catch (e) {
@@ -320,7 +322,7 @@ export const SqlPanel: React.FC<SqlPanelProps> = ({initialSql = ''}) => {
   return (
     <StyledSqlPanel>
       <PanelGroup direction="horizontal">
-        <Panel defaultSize={20} minSize={15} style={SCHEMA_PANEL_STYLE}>
+        <Panel defaultSize={20} minSize={15} style={SCHEMA_PANEL_STYLE} className="schema-panel">
           <StyledFileDropArea
             dragOver={dragState}
             onDragOver={() => setDragState(true)}
@@ -329,7 +331,11 @@ export const SqlPanel: React.FC<SqlPanelProps> = ({initialSql = ''}) => {
             onDrop={handleFileInput}
             className="file-uploader__file-drop"
           >
-            <SchemaPanel setTableSchema={setTableSchema} droppedFile={droppedFile} />
+            <SchemaPanel
+              setTableSchema={setTableSchema}
+              droppedFile={droppedFile}
+              schemaUpdateTrigger={schemaUpdateTrigger}
+            />
           </StyledFileDropArea>
         </Panel>
 
