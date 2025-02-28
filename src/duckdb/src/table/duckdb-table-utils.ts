@@ -501,13 +501,12 @@ Possible reasons:
  * @param fileName The input file name to be sanitized.
  * @returns A valid DuckDB table name.
  */
-export function sanitizeDuckDBTableName(fileName: string) {
+export function sanitizeDuckDBTableName(fileName: string): string {
   // Replace invalid characters with underscores
   let name = fileName.replace(/[^a-zA-Z0-9_]/g, '_');
   // Ensure it doesn't start with a digit
   if (/^\d/.test(name)) {
     name = 't_' + name;
   }
-  // Ensure it's not empty
   return name || 'default_table';
 }

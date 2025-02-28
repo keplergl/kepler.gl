@@ -79,7 +79,7 @@ function getSchemaSuggestion(result: {key: string; children: {key: string}[]}[])
 }
 
 type SchemaPanelProps = {
-  setTableSchema: (tableScheama: SchemaSuggestion[]) => void;
+  setTableSchema: (tableSchema: SchemaSuggestion[]) => void;
   droppedFile: File | null;
 };
 
