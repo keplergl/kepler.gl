@@ -309,6 +309,8 @@ export const SqlPanel: React.FC<SqlPanelProps> = ({initialSql = ''}) => {
 
     if (filesToLoad.length > 0) {
       setDroppedFile(filesToLoad[0]);
+    } else if (errorFiles.length > 0) {
+      setError(new Error(`Unsupported file formats: ${errorFiles.join(', ')}`));
     }
   }, []);
 
