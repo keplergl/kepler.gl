@@ -6,6 +6,7 @@ import {useSelector} from 'react-redux';
 import styled from 'styled-components';
 import {AsyncDuckDBConnection} from '@duckdb/duckdb-wasm';
 
+import {LoadingSpinner, Icons} from '@kepler.gl/components';
 import {arrowSchemaToFields} from '@kepler.gl/processors';
 import {VisState} from '@kepler.gl/schemas';
 
@@ -29,6 +30,14 @@ const StyledSchemaPanel = styled.div`
   font-size: 12px;
   padding: 12px;
   font-family: ${props => props.theme.fontFamily};
+  height: 100%;
+`;
+
+const StyledLoadingSpinnerWrapper = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
 `;
 
 async function getColumnSchema(connection: AsyncDuckDBConnection, tableName: string) {
@@ -57,16 +66,61 @@ async function getColumnSchema(connection: AsyncDuckDBConnection, tableName: str
   };
 }
 
-function getSchemaSuggestion(result) {
+export type SchemaSuggestion = {column_name: string; table_name: string};
+
+function getSchemaSuggestion(result: {key: string; children: {key: string}[]}[]) {
   return result.reduce((accu, data) => {
     const columns = data.children.map(child => ({
       column_name: child.key,
       table_name: data.key
     }));
     return accu.concat(columns);
-  }, []);
+  }, [] as SchemaSuggestion[]);
 }
-export const SchemaPanel = ({setTableSchema}) => {
+
+type SchemaPanelProps = {
+  setTableSchema: (tableSchema: SchemaSuggestion[]) => void;
+  droppedFile: File | null;
+};
+
+const StyledSchemaPanelDropMessage = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  flex-direction: column;
+  text-align: center;
+
+  div {
+    margin: 5px;
+  }
+  .header {
+    font-size: 15px;
+  }
+  .bold {
+    font-weight: 700;
+  }
+`;
+
+const StyledAddIcon = styled(Icons.Add)`
+  display: inline;
+  margin-top: -3px;
+`;
+
+export const SchemaPanelDropMessage = () => {
+  return (
+    <StyledSchemaPanelDropMessage>
+      <div className="header">
+        <StyledAddIcon /> Add files to DuckDB
+      </div>
+      <div className="bold">Supported formats: </div>
+      <div>.csv, .json, .geojson, .parquet, .arrow</div>
+      <div>Files you add will stay local to your browser.</div>
+    </StyledSchemaPanelDropMessage>
+  );
+};
+
+export const SchemaPanel = ({setTableSchema, droppedFile}: SchemaPanelProps) => {
   const [columnSchemas, setColumnSchemas] = useState<TreeNodeData<{type: string}>[]>([]);
   const datasets = useSelector((state: State) => state?.demo?.keplerGl?.map?.visState.datasets);
 
@@ -76,7 +130,7 @@ export const SchemaPanel = ({setTableSchema}) => {
 
     const tableResult = await c.query('SHOW TABLES;');
 
-    const tableNames = tableResult.getChildAt(0)?.toJSON();
+    const tableNames: string[] | undefined = tableResult.getChildAt(0)?.toJSON();
 
     const result = await Promise.all((tableNames || [])?.map(name => getColumnSchema(c, name)));
     const tableSchema = getSchemaSuggestion(result);
@@ -88,7 +142,7 @@ export const SchemaPanel = ({setTableSchema}) => {
 
   useEffect(() => {
     getTableSchema();
-  }, [datasets, getTableSchema]);
+  }, [datasets, droppedFile, getTableSchema]);
 
   return (
     <StyledSchemaPanel>
@@ -107,8 +161,12 @@ export const SchemaPanel = ({setTableSchema}) => {
             }}
           />
         ))
+      ) : droppedFile ? (
+        <StyledLoadingSpinnerWrapper>
+          <LoadingSpinner />
+        </StyledLoadingSpinnerWrapper>
       ) : (
-        <div>No tables found</div>
+        <SchemaPanelDropMessage />
       )}
     </StyledSchemaPanel>
   );
