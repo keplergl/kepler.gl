@@ -11,10 +11,14 @@
 
 import * as arrow from 'apache-arrow';
 import {DataType} from 'apache-arrow/type';
-import {AsyncDuckDBConnection} from '@duckdb/duckdb-wasm';
+import {AsyncDuckDBConnection, DuckDBDataProtocol} from '@duckdb/duckdb-wasm';
 
 import {GEOARROW_EXTENSIONS, GEOARROW_METADATA_KEY} from '@kepler.gl/constants';
 import {ProtoDatasetField} from '@kepler.gl/types';
+
+import {getDuckDB} from '../init';
+
+export const SUPPORTED_DUCKDB_DROP_EXTENSIONS = ['arrow', 'csv', 'geojson', 'json', 'parquet'];
 
 export type DuckDBColumnDesc = {name: string; type: string};
 
@@ -403,3 +407,106 @@ export const dropTableIfExists = async (connection: AsyncDuckDBConnection, table
     console.error('Dropping table failed', tableName, error);
   }
 };
+
+/**
+ * Imports a file into DuckDB as a table, supporting multiple formats from SUPPORTED_DUCKDB_DROP_EXTENSIONS.
+ * @param file The file to be imported.
+ * @returns A promise that resolves when the file has been processed into a DuckDB table.
+ */
+export async function tableFromFile(file: File | null): Promise<null | Error> {
+  if (!file) return new Error('File Drag & Drop: No file');
+
+  const fileExt = SUPPORTED_DUCKDB_DROP_EXTENSIONS.find(ext => file.name.endsWith(ext));
+  if (!fileExt) {
+    return new Error("File Drag & Drop: File extension isn't supported");
+  }
+
+  const db = await getDuckDB();
+  const c = await db.connect();
+
+  let error: Error | null = null;
+
+  try {
+    const tableName = sanitizeDuckDBTableName(file.name);
+    const sourceName = 'temp_file_handle';
+
+    c.query(`install spatial;
+      load spatial;`);
+
+    if (fileExt === 'arrow') {
+      const arrayBuffer = await file.arrayBuffer();
+      const uint8Array = new Uint8Array(arrayBuffer);
+      const arrowTable = arrow.tableFromIPC(uint8Array);
+
+      await c.insertArrowTable(arrowTable, {name: tableName});
+    } else {
+      await db.registerFileHandle(sourceName, file, DuckDBDataProtocol.BROWSER_FILEREADER, true);
+
+      if (fileExt === 'csv') {
+        await c.query(`
+            CREATE TABLE '${tableName}' AS
+            SELECT *
+            FROM read_csv('${sourceName}', header = true, auto_detect = true, sample_size = -1);
+          `);
+      } else if (fileExt === 'json') {
+        await c.query(`
+            CREATE TABLE '${tableName}' AS
+            SELECT *
+            FROM read_json_auto('${sourceName}');
+          `);
+      } else if (fileExt === 'geojson') {
+        await c.query(`
+            CREATE TABLE '${tableName}' AS
+            SELECT *
+            FROM ST_READ('${sourceName}', keep_wkb = TRUE);
+          `);
+      } else if (fileExt === 'parquet') {
+        await c.query(`
+            CREATE TABLE '${tableName}' AS
+            SELECT *
+            FROM read_parquet('${sourceName}')
+          `);
+      }
+    }
+  } catch (errorData) {
+    if (errorData instanceof Error) {
+      const message = errorData.message || '';
+      // output more readable errors for known issues
+      if (message.includes('Arrow Type with extension name: geoarrow')) {
+        error = new Error(
+          'The GeoArrow extensions are not implemented in the connected DuckDB version.'
+        );
+      } else if (message.includes("Geoparquet column 'geometry' does not have geometry types")) {
+        error = new Error(
+          `Invalid Input Error: Geoparquet column 'geometry' does not have geometry types.
+Possible reasons:
+  - Old .parquet files that don't match the Parquet format specification.
+  - Unsupported compression.`
+        );
+      }
+    }
+
+    if (!error) {
+      error = errorData as Error;
+    }
+  }
+
+  c.close();
+
+  return error;
+}
+
+/**
+ * Sanitizes a file name to be a valid DuckDB table name.
+ * @param fileName The input file name to be sanitized.
+ * @returns A valid DuckDB table name.
+ */
+export function sanitizeDuckDBTableName(fileName: string): string {
+  // Replace invalid characters with underscores
+  let name = fileName.replace(/[^a-zA-Z0-9_]/g, '_');
+  // Ensure it doesn't start with a digit
+  if (/^\d/.test(name)) {
+    name = 't_' + name;
+  }
+  return name || 'default_table';
+}
