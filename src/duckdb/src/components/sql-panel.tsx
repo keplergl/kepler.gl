@@ -274,7 +274,14 @@ export const SqlPanel: React.FC<SqlPanelProps> = ({initialSql = ''}) => {
   }, [droppedFile]);
 
   const createTableFromDroppedFile = useCallback(async (droppedFile: File | null) => {
-    await tableFromFile(droppedFile);
+    if (droppedFile) {
+      const error = await tableFromFile(droppedFile);
+      if (error) {
+        setError(error);
+      } else {
+        setError(null);
+      }
+    }
 
     setDroppedFile(null);
     setDragState(false);
@@ -354,7 +361,7 @@ export const SqlPanel: React.FC<SqlPanelProps> = ({initialSql = ''}) => {
               </Panel>
 
               <StyledVerticalResizeHandle />
-              <Panel>
+              <Panel className="preview-panel">
                 {isRunning ? (
                   <StyledLoadingContainer>
                     <LoadingSpinner />

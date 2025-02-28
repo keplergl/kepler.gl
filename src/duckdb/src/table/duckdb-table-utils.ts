@@ -413,16 +413,18 @@ export const dropTableIfExists = async (connection: AsyncDuckDBConnection, table
  * @param file The file to be imported.
  * @returns A promise that resolves when the file has been processed into a DuckDB table.
  */
-export async function tableFromFile(file: File | null): Promise<void> {
-  if (!file) return;
+export async function tableFromFile(file: File | null): Promise<null | Error> {
+  if (!file) return new Error('File Drag & Drop: No file');
 
   const fileExt = SUPPORTED_DUCKDB_DROP_EXTENSIONS.find(ext => file.name.endsWith(ext));
   if (!fileExt) {
-    return;
+    return new Error("File Drag & Drop: File extension isn't supported");
   }
 
   const db = await getDuckDB();
   const c = await db.connect();
+
+  let error: Error | null = null;
 
   try {
     const tableName = file.name;
@@ -466,17 +468,30 @@ export async function tableFromFile(file: File | null): Promise<void> {
           `);
       }
     }
-  } catch (error) {
-    console.error('An error in tableFromFile', error);
+  } catch (errorData) {
+    if (errorData instanceof Error) {
+      const message = errorData.message || '';
+      // output more readable errors for known issues
+      if (message.includes('Arrow Type with extension name: geoarrow')) {
+        error = new Error(
+          'The GeoArrow extensions are not implemented in the connected DuckDB version.'
+        );
+      } else if (message.includes("Geoparquet column 'geometry' does not have geometry types")) {
+        error = new Error(
+          `Invalid Input Error: Geoparquet column 'geometry' does not have geometry types.
+Possible reasons:
+  - Old .parquet files that don't match the Parquet format specification.
+  - Unsupported compression.`
+        );
+      }
+    }
 
-    // Arrow files:
-    // - remove geoarrow extensions
-
-    // Some parquet files:
-    // - Invalid Input Error: Geoparquet column 'geometry' does not have geometry types
-
-    // ! error message to output
+    if (!error) {
+      error = errorData as Error;
+    }
   }
 
   c.close();
+
+  return error;
 }
