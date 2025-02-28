@@ -81,7 +81,7 @@ function getSchemaSuggestion(result: {key: string; children: {key: string}[]}[])
 type SchemaPanelProps = {
   setTableSchema: (tableSchema: SchemaSuggestion[]) => void;
   droppedFile: File | null;
-  schemaUpdateTrigger: any;
+  schemaUpdateTrigger: number;
 };
 
 const StyledSchemaPanelDropMessage = styled.div`
