@@ -269,10 +269,6 @@ export const SqlPanel: React.FC<SqlPanelProps> = ({initialSql = ''}) => {
     return Boolean(fileExt);
   }, []);
 
-  useEffect(() => {
-    createTableFromDroppedFile(droppedFile);
-  }, [droppedFile]);
-
   const createTableFromDroppedFile = useCallback(async (droppedFile: File | null) => {
     if (droppedFile) {
       const error = await tableFromFile(droppedFile);
@@ -287,32 +283,39 @@ export const SqlPanel: React.FC<SqlPanelProps> = ({initialSql = ''}) => {
     setDragState(false);
   }, []);
 
-  const handleFileInput = useCallback((fileList: FileList, event: DragEvent) => {
-    if (event) {
-      event.preventDefault();
-      event.stopPropagation();
-    }
+  useEffect(() => {
+    createTableFromDroppedFile(droppedFile);
+  }, [droppedFile, createTableFromDroppedFile]);
 
-    const files = [...fileList].filter(Boolean);
-
-    const disableExtensionFilter = false;
-
-    const filesToLoad: File[] = [];
-    const errorFiles: string[] = [];
-    for (const file of files) {
-      if (disableExtensionFilter || isValidFileType(file.name)) {
-        filesToLoad.push(file);
-      } else {
-        errorFiles.push(file.name);
+  const handleFileInput = useCallback(
+    (fileList: FileList, event: DragEvent) => {
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
       }
-    }
 
-    if (filesToLoad.length > 0) {
-      setDroppedFile(filesToLoad[0]);
-    } else if (errorFiles.length > 0) {
-      setError(new Error(`Unsupported file formats: ${errorFiles.join(', ')}`));
-    }
-  }, []);
+      const files = [...fileList].filter(Boolean);
+
+      const disableExtensionFilter = false;
+
+      const filesToLoad: File[] = [];
+      const errorFiles: string[] = [];
+      for (const file of files) {
+        if (disableExtensionFilter || isValidFileType(file.name)) {
+          filesToLoad.push(file);
+        } else {
+          errorFiles.push(file.name);
+        }
+      }
+
+      if (filesToLoad.length > 0) {
+        setDroppedFile(filesToLoad[0]);
+      } else if (errorFiles.length > 0) {
+        setError(new Error(`Unsupported file formats: ${errorFiles.join(', ')}`));
+      }
+    },
+    [isValidFileType]
+  );
 
   return (
     <StyledSqlPanel>
