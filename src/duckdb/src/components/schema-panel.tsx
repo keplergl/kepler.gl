@@ -6,7 +6,7 @@ import {useSelector} from 'react-redux';
 import styled from 'styled-components';
 import {AsyncDuckDBConnection} from '@duckdb/duckdb-wasm';
 
-import {LoadingSpinner} from '@kepler.gl/components';
+import {LoadingSpinner, Icons} from '@kepler.gl/components';
 import {arrowSchemaToFields} from '@kepler.gl/processors';
 import {VisState} from '@kepler.gl/schemas';
 
@@ -83,6 +83,41 @@ type SchemaPanelProps = {
   droppedFile: File | null;
 };
 
+const StyledSchemaPanelDropMessage = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  flex-direction: column;
+  div {
+    margin: 5px;
+  }
+  .header {
+    font-size: 15px;
+  }
+  .bold {
+    font-weight: 700;
+  }
+`;
+
+const StyledAddIcon = styled(Icons.Add)`
+  display: inline;
+  margin-top: -3px;
+`;
+
+export const SchemaPanelDropMessage = () => {
+  return (
+    <StyledSchemaPanelDropMessage>
+      <div className="header">
+        <StyledAddIcon /> Add files
+      </div>
+      <div className="bold">Supported formats: </div>
+      <div>.csv, .json, .geojson, .parquet, .arrow</div>
+      <div>Files you add will stay local to your browser.</div>
+    </StyledSchemaPanelDropMessage>
+  );
+};
+
 export const SchemaPanel = ({setTableSchema, droppedFile}: SchemaPanelProps) => {
   const [columnSchemas, setColumnSchemas] = useState<TreeNodeData<{type: string}>[]>([]);
   const datasets = useSelector((state: State) => state?.demo?.keplerGl?.map?.visState.datasets);
@@ -129,7 +164,7 @@ export const SchemaPanel = ({setTableSchema, droppedFile}: SchemaPanelProps) => 
           <LoadingSpinner />
         </StyledLoadingSpinnerWrapper>
       ) : (
-        <div>No tables found</div>
+        <SchemaPanelDropMessage />
       )}
     </StyledSchemaPanel>
   );
