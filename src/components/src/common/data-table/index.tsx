@@ -404,6 +404,8 @@ interface DataTableState {
   showStats?: boolean;
 }
 
+const DUMMY_STYLE = {};
+
 DataTableFactory.deps = [HeaderCellFactory];
 function DataTableFactory(
   HeaderCell: ReturnType<typeof HeaderCellFactory>
@@ -550,6 +552,8 @@ function DataTableFactory(
           props={props}
           toggleMoreOptions={toggleMoreOptions}
           moreOptionsColumn={moreOptionsColumn}
+          // pass dummy style to prevent warnings from react-virtualized Grid
+          style={DUMMY_STYLE}
         />
       );
       return HeaderCellRenderer;

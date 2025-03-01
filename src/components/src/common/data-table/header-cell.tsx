@@ -91,6 +91,7 @@ type HeaderCellProps = {
   props: DataTableProps;
   toggleMoreOptions: (moreOptionsColumn: string) => void;
   moreOptionsColumn: null | string;
+  style: CSSProperties;
 };
 
 const HeaderCellFactory = (FieldToken: React.FC<FieldTokenProps>) => {
