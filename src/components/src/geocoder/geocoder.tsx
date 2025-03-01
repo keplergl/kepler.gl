@@ -148,7 +148,6 @@ const GeoCoder: React.FC<GeocoderProps & IntlProps> = ({
   const [inputValue, setInputValue] = useState('');
   const [showResults, setShowResults] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
-  /** @type {import('./geocoder').Results} */
   const initialResults: Result[] = [];
   const [results, setResults] = useState(initialResults);
   const [selectedIndex, setSelectedIndex] = useState(0);
