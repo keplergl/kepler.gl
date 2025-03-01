@@ -104,15 +104,16 @@ const FileDrop = ({
       // the event bubbles up to the frame. By keeping count of how many "dragenters" we get, we can tell if they are still
       // "draggingOverFrame" (b/c you get one "dragenter" initially, and one "dragenter"/one "dragleave" for every bubble)
       // This is far better than a "dragover" handler, which would be calling `setState` continuously.
-      setFrameDragCounter(frameDragCounter + (event.type === 'dragenter' ? 1 : -1));
+      const newDragCounterValue = frameDragCounter + (event.type === 'dragenter' ? 1 : -1);
+      setFrameDragCounter(newDragCounterValue);
 
-      if (frameDragCounter === 1) {
+      if (newDragCounterValue === 1) {
         setDraggingOverFrame(true);
         if (onFrameDragEnter) onFrameDragEnter(event);
         return;
       }
 
-      if (frameDragCounter === 0) {
+      if (newDragCounterValue === 0) {
         setDraggingOverFrame(false);
         if (onFrameDragLeave) onFrameDragLeave(event);
         return;
