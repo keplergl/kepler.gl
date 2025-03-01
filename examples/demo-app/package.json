@@ -45,7 +45,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-intl": "^6.3.0",
-    "react-markdown": "^6.0.3",
+    "react-markdown": "^8.0.7",
     "react-redux": "^8.0.5",
     "react-resizable-panels": "^2.1.7",
     "react-router": "3.2.5",

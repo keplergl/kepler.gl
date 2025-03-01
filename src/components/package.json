@@ -116,7 +116,7 @@
     "react-json-pretty": "^2.2.0",
     "react-lifecycles-compat": "^3.0.4",
     "react-map-gl": "^7.1.6",
-    "react-markdown": "^6.0.3",
+    "react-markdown": "^8.0.7",
     "react-modal": "^3.12.1",
     "react-redux": "^8.0.5",
     "react-sortable-hoc": "^1.8.3",
