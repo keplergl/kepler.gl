@@ -11,6 +11,7 @@ import {KeyEvent} from '@kepler.gl/constants';
 import {Input} from '../common/styled-components';
 import {Search, Delete} from '../common/icons';
 import {Viewport} from '@kepler.gl/types';
+import {isTest} from '@kepler.gl/utils';
 
 type StyledContainerProps = {
   width?: number;
@@ -153,7 +154,7 @@ const GeoCoder: React.FC<GeocoderProps & IntlProps> = ({
   const [selectedIndex, setSelectedIndex] = useState(0);
 
   const client = useMemo(
-    () => geocoderService({accessToken: mapboxApiAccessToken}),
+    () => (isTest() ? null : geocoderService({accessToken: mapboxApiAccessToken})),
     [mapboxApiAccessToken]
   );
 

@@ -12,7 +12,7 @@ import {cmpDatasetData, cmpObjectKeys} from '../../helpers/comparison-utils';
 import {InitialState} from 'test/helpers/mock-state';
 
 const GeocoderPanel = appInjector.get(GeocoderPanelFactory);
-const MAPBOX_TOKEN = process.env.MapboxAccessToken;
+const MAPBOX_TOKEN = 'pk.eyJ1Ijoi.d9YD6z';
 
 test('GeocoderPanel - render', t => {
   const enabled = true;
@@ -147,7 +147,7 @@ test('GeocoderPanel - render', t => {
   }, 'Should render');
 
   t.equal(wrapper.find(GeocoderPanel).length, 1, 'Should display 1 GeoCoderPanel');
-  t.equal(wrapper.find('GeoCoder').length, 1, 'Should display 0 Geocoder because of invalid key');
+  t.equal(wrapper.find('GeoCoder').length, 1, 'Should display 1 Geocoder');
 
   const geoCoderInstance = wrapper.find('GeoCoder');
   const onSelected = geoCoderInstance.props().onSelected;
