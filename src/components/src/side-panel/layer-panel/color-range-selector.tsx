@@ -105,16 +105,19 @@ const CONFIG_SETTINGS = {
 };
 const displayOption = d => capitalizeFirstLetter(d);
 const getOptionValue = d => d;
+const noop = () => {
+  // do nothing
+};
 
 ColorRangeSelectorFactory.deps = [CustomPaletteFactory];
 function ColorRangeSelectorFactory(
   CustomPalette: ReturnType<typeof CustomPaletteFactory>
 ): React.FC<ColorRangeSelectorProps> {
   const ColorRangeSelector: React.FC<ColorRangeSelectorProps> = ({
-    colorPalettes,
+    colorPalettes = KEPLER_COLOR_PALETTES,
     colorPaletteUI,
-    setColorPaletteUI,
-    onSelectColorRange,
+    setColorPaletteUI = noop,
+    onSelectColorRange = noop,
     selectedColorRange
   }) => {
     const {customPalette, showSketcher, colorRangeConfig} = colorPaletteUI;
@@ -212,14 +215,6 @@ function ColorRangeSelectorFactory(
         )}
       </StyledColorRangeSelector>
     );
-  };
-
-  ColorRangeSelector.defaultProps = {
-    colorPalettes: KEPLER_COLOR_PALETTES,
-    // eslint-disable-next-line @typescript-eslint/no-empty-function
-    onSelectColorRange: () => {},
-    // eslint-disable-next-line @typescript-eslint/no-empty-function
-    setColorPaletteUI: () => {}
   };
 
   return ColorRangeSelector;
