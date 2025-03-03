@@ -60,7 +60,6 @@ import {
 } from '@kepler.gl/actions';
 import {ModalDialogProps} from './common/modal';
 import {Provider} from '@kepler.gl/cloud-providers';
-import {findDOMNode} from 'react-dom';
 import {VisState} from '@kepler.gl/schemas';
 
 const DataTableModalStyle = css`
@@ -250,7 +249,7 @@ export default function ModalContainerFactory(
       });
     };
 
-    _onOverwriteMap = (provider) => {
+    _onOverwriteMap = provider => {
       this._onSaveMap(provider, true);
     };
 
@@ -532,7 +531,7 @@ export default function ModalContainerFactory(
 
       return rootNode ? (
         <ModalDialog
-          parentSelector={() => findDOMNode(rootNode) as HTMLElement}
+          parentSelector={() => rootNode as HTMLElement}
           isOpen={Boolean(currentModal)}
           onCancel={this._closeModal}
           {...modalProps}

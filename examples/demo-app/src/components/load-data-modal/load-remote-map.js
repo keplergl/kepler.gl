@@ -5,9 +5,11 @@
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
-import {CORS_LINK} from '../../constants/default-settings';
-import {FormattedMessage} from 'react-intl';
+
 import {Button} from '@kepler.gl/components';
+import {FormattedMessage} from '@kepler.gl/localization';
+
+import {CORS_LINK} from '../../constants/default-settings';
 import {validateUrl} from '../../utils/url';
 
 const propTypes = {
@@ -122,8 +124,10 @@ class LoadRemoteMap extends Component {
             </ul>
           </StyledInputLabel>
           <StyledInputLabel>
-            <FormattedMessage id={'loadRemoteMap.cors'} />{' '}
-            <FormattedMessage id={'loadRemoteMap.clickHere'} values={CORS_LINK_MESSAGE} />
+            <FormattedMessage id={'loadRemoteMap.cors'} />
+            <a rel="noopener noreferrer" target="_blank" href={CORS_LINK_MESSAGE.corsLink}>
+              <FormattedMessage id={'loadRemoteMap.clickHere'} />
+            </a>
           </StyledInputLabel>
           <StyledFromGroup>
             <StyledInput
