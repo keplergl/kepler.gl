@@ -187,6 +187,7 @@ export const SqlPanel: React.FC<SqlPanelProps> = ({initialSql = ''}) => {
       const db = await getDuckDB();
       const connection = await db.connect();
 
+      // Indicate that there may be a possible change in DuckDB.
       setSchemaUpdateTrigger(Date.now());
 
       // TODO find a cheap way to get DuckDb types with a single query to a remote resource - temp table? cte?
