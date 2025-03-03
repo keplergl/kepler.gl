@@ -187,13 +187,14 @@ const FileDrop = ({
   );
 
   useEffect(() => {
-    // if (prevProps.frame !== this.props.frame) {
     // componentDidUpdate
-    resetDragging();
-    stopFrameListeners(prevFrame.current);
-    startFrameListeners(frame);
+    if (prevFrame.current !== frame) {
+      resetDragging();
+      stopFrameListeners(prevFrame.current);
+      startFrameListeners(frame);
 
-    prevFrame.current = frame;
+      prevFrame.current = frame;
+    }
   }, [frame, resetDragging, stopFrameListeners, startFrameListeners]);
 
   // Render
