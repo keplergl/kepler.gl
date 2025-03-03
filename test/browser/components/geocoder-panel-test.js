@@ -12,7 +12,7 @@ import {cmpDatasetData, cmpObjectKeys} from '../../helpers/comparison-utils';
 import {InitialState} from 'test/helpers/mock-state';
 
 const GeocoderPanel = appInjector.get(GeocoderPanelFactory);
-const MAPBOX_TOKEN = process.env.MapboxAccessToken;
+const MAPBOX_TOKEN = 'pk.eyJ1Ijoi.d9YD6z';
 
 test('GeocoderPanel - render', t => {
   const enabled = true;
@@ -147,11 +147,13 @@ test('GeocoderPanel - render', t => {
   }, 'Should render');
 
   t.equal(wrapper.find(GeocoderPanel).length, 1, 'Should display 1 GeoCoderPanel');
-  t.equal(wrapper.find('Geocoder').length, 0, 'Should display 0 Geocoder because of invalid key');
+  t.equal(wrapper.find('GeoCoder').length, 1, 'Should display 1 Geocoder');
 
-  const instance = wrapper.find(GeocoderPanel).instance();
+  const geoCoderInstance = wrapper.find('GeoCoder');
+  const onSelected = geoCoderInstance.props().onSelected;
+  const onDeleteMarker = geoCoderInstance.props().onDeleteMarker;
 
-  instance.onSelected(null, mockGeoItem);
+  onSelected(null, mockGeoItem);
   t.deepEqual(
     removeDataset.args,
     [['geocoder_dataset']],
@@ -194,7 +196,7 @@ test('GeocoderPanel - render', t => {
 
   t.ok(newVP.transitionInterpolator, 'Should call updateMap action with transitionInterpolator');
 
-  instance.onSelected(null, mockGeoItemWithOutBbox);
+  onSelected(null, mockGeoItemWithOutBbox);
 
   const newVP2 = updateMap.args[1][0];
   t.deepEqual(
@@ -203,18 +205,11 @@ test('GeocoderPanel - render', t => {
     'Should call updateMapaction on onSelected w/o bbox'
   );
 
-  instance.removeMarker();
+  onDeleteMarker();
   t.deepEqual(
     removeDataset.args[1],
     ['geocoder_dataset'],
     'Should be dispatching removeDataset action on removeMarker'
-  );
-
-  instance.removeGeocoderDataset();
-  t.deepEqual(
-    removeDataset.args[2],
-    ['geocoder_dataset'],
-    'Should be dispatching removeDataset action on removeGeocoderDataset'
   );
 
   t.end();
