@@ -6,25 +6,28 @@ import Console from 'global/console';
 import uniq from 'lodash.uniq';
 import {DATA_TYPES} from 'type-analyzer';
 
-import {TileJSON} from '@loaders.gl/mvt';
-import {PMTilesMetadata} from '@loaders.gl/pmtiles';
+import {MVTSource, TileJSON} from '@loaders.gl/mvt';
+import {PMTilesSource, PMTilesMetadata} from '@loaders.gl/pmtiles';
 
 import {
   analyzerTypeToFieldType,
   containValidTime,
   notNullorUndefined as notNullOrUndefined,
-  parseUri
+  parseUri,
+  getFieldsFromData
 } from '@kepler.gl/common-utils';
-import {DatasetType, ALL_FIELD_TYPES, FILTER_TYPES} from '@kepler.gl/constants';
+import {DatasetType, ALL_FIELD_TYPES, FILTER_TYPES, RemoteTileFormat} from '@kepler.gl/constants';
+
+import {Feature, Field as KeplerField, KeplerLayer} from '@kepler.gl/types';
+import {clamp, formatNumberByStep, getNumericStepSize, timeToUnixMilli} from '@kepler.gl/utils';
+
 import {
   FilterProps,
   NumericFieldFilterProps,
   BooleanFieldFilterProps,
   StringFieldFilterProps,
-  KeplerTable as KeplerDataset
-} from '@kepler.gl/table';
-import {Field as KeplerField, KeplerLayer} from '@kepler.gl/types';
-import {clamp, formatNumberByStep, getNumericStepSize, timeToUnixMilli} from '@kepler.gl/utils';
+  default as KeplerDataset
+} from '../kepler-table';
 
 export const getLoaderOptions = () => {
   return {
@@ -666,4 +669,110 @@ export function matchDatasetType(dataset: KeplerDataset, layer: KeplerLayer): bo
     Array.isArray(layer.supportedDatasetTypes) &&
     layer.supportedDatasetTypes.includes(dataset.type || '')
   );
+}
+
+type GetFieldsFromTileProps = {
+  remoteTileFormat: RemoteTileFormat;
+  tilesetUrl: string | null;
+  metadataUrl: string | null;
+  metadata: VectorTileMetadata | null;
+};
+
+/**
+ * Note: this function is for tilesets that don't include fields in metadata.
+ * Extracts fields from a tile and updates the metadata object with found fields.
+ * @param params.remoteTileFormat The format of the remote tile (MVT or PMTiles).
+ * @param params.tilesetUrl The URL of the tileset.
+ * @param params.metadataUrl The URL of the metadata.
+ * @param params.metadata The metadata object containing fields and tile properties.
+ */
+export const getFieldsFromTile = async ({
+  remoteTileFormat,
+  tilesetUrl,
+  metadataUrl,
+  metadata
+}: GetFieldsFromTileProps) => {
+  try {
+    if (
+      tilesetUrl &&
+      metadataUrl &&
+      metadata &&
+      metadata.fields?.length === 0 &&
+      metadata.minZoom &&
+      metadata.bounds?.length === 4
+    ) {
+      const lon = (metadata.bounds[0] + metadata.bounds[2]) / 2;
+      const lat = (metadata.bounds[1] + metadata.bounds[3]) / 2;
+      const tileIndices = lonLatToTileIndex(lon, lat, metadata.minZoom);
+
+      let tileSource: any = null;
+      if (remoteTileFormat === RemoteTileFormat.MVT) {
+        tileSource = MVTSource.createDataSource(decodeURIComponent(tilesetUrl), {
+          mvt: {
+            metadataUrl: decodeURIComponent(metadataUrl)
+          }
+        });
+      } else {
+        tileSource = PMTilesSource.createDataSource(tilesetUrl, {});
+      }
+
+      const tile = await tileSource.getTileData({index: tileIndices});
+      const updatedFields = tileToFields(tile).map(f => {
+        return {
+          analyzerType: f.analyzerType || ALL_FIELD_TYPES.string,
+          format: f.format,
+          id: f.id || f.name,
+          name: f.name,
+          type: f.type
+        };
+      });
+
+      metadata.fields = updatedFields;
+    }
+  } catch {
+    // ignore, as this is experimental fallback
+  }
+};
+
+const tileToFields = (tile: {features: Feature[]}): KeplerField[] => {
+  if (tile?.features?.length > 0) {
+    const header = Object.keys(tile.features[0].properties);
+    const output = tile.features.map(f => {
+      const obj = {};
+      header.forEach(val => {
+        obj[val] = f.properties[val];
+      });
+      return obj;
+    });
+    return getFieldsFromData(output, header);
+  }
+  return [];
+};
+
+/**
+ * Converts longitude, latitude, and zoom level into vector tile indices (x, y, z).
+ * @param lon Longitude in degrees, ranging from -180 to 180.
+ * @param lat Latitude in degrees, ranging from -90 to 90.
+ * @param zoom Zoom level (integer), where higher values provide more detail.
+ * @returns Tile indices with x and y coordinates and zoom level z.
+ */
+function lonLatToTileIndex(lon: number, lat: number, zoom: number) {
+  if (lat < -85.0511 || lat > 85.0511) {
+    throw new Error('Latitude out of range. Must be between -85.0511 and 85.0511.');
+  }
+  if (zoom < 0) {
+    throw new Error('Zoom level must be a non-negative integer.');
+  }
+
+  // 2^zoom (number of tiles per axis at given zoom level)
+  const scale = 1 << zoom;
+  // Convert longitude to tile X
+  const x = Math.floor(((lon + 180) / 360) * scale);
+  // Convert latitude to tile Y
+  const latRad = (lat * Math.PI) / 180;
+  const y = Math.floor(
+    ((1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2) * scale
+  );
+
+  return {x, y, z: zoom};
 }

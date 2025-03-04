@@ -1,16 +1,17 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {useCallback, useEffect, useState} from 'react';
+import {useEffect, useState} from 'react';
 
-import {/* MVTSource,*/ TileJSON} from '@loaders.gl/mvt';
+import {TileJSON} from '@loaders.gl/mvt';
 import {PMTilesSource, PMTilesMetadata} from '@loaders.gl/pmtiles';
 
 import {RemoteTileFormat} from '@kepler.gl/constants';
-import {getMVTMetadata, VectorTileMetadata} from '@kepler.gl/table';
+import {getMVTMetadata, VectorTileMetadata, getFieldsFromTile} from '@kepler.gl/table';
 
 type FetchVectorTileMetadataProps = {
-  url: string | null;
+  metadataUrl: string | null;
+  tilesetUrl: string | null;
   remoteTileFormat: RemoteTileFormat;
   process?: (json: PMTilesMetadata | TileJSON) => VectorTileMetadata | Error | null;
 };
@@ -36,39 +37,25 @@ type FetchVectorTileMetadataReturn = {
 /** Hook to fetch and return mvt or pmtiles metadata. */
 export default function useFetchVectorTileMetadata({
   remoteTileFormat,
-  url,
+  tilesetUrl,
+  metadataUrl,
   process = DEFAULT_PROCESS_FUNCTION
 }: FetchVectorTileMetadataProps): FetchVectorTileMetadataReturn {
   const [error, setError] = useState<Error | null>(null);
   const [data, setData] = useState<VectorTileMetadata | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
 
-  const setProcessedData = useCallback(
-    (value: PMTilesMetadata | TileJSON | null) => {
-      if (!value) {
-        return setError(value);
-      }
-      const processedData = process(value);
-      if (processedData instanceof Error) {
-        setError(processedData);
-      } else {
-        setData(processedData);
-      }
-    },
-    [setError, setData, process]
-  );
-
   useEffect(() => {
     const getAndProcessMetadata = async () => {
       setError(null);
       setData(null);
-      if (url) {
+      if (metadataUrl) {
         setLoading(true);
 
         try {
           let metadata: PMTilesMetadata | TileJSON | null = null;
           if (remoteTileFormat === RemoteTileFormat.MVT) {
-            metadata = await getMVTMetadata(url);
+            metadata = await getMVTMetadata(metadataUrl);
 
             // MVTSource returns messy partial metadata
             // MVTSource.createDataSource('', {
@@ -77,7 +64,7 @@ export default function useFetchVectorTileMetadata({
             //   }
             // })
           } else {
-            const tileSource = PMTilesSource.createDataSource(url, {});
+            const tileSource = PMTilesSource.createDataSource(metadataUrl, {});
             metadata = await tileSource.metadata;
           }
 
@@ -85,7 +72,26 @@ export default function useFetchVectorTileMetadata({
           if (!metadata) {
             throw new Error('Failed to fetch metadata');
           }
-          setProcessedData(metadata);
+
+          if (!metadata) {
+            return setError(metadata);
+          }
+
+          const processedMetadata = process(metadata);
+          if (processedMetadata instanceof Error) {
+            setError(processedMetadata);
+          } else {
+            setError(null);
+
+            await getFieldsFromTile({
+              remoteTileFormat,
+              tilesetUrl,
+              metadataUrl,
+              metadata: processedMetadata
+            });
+
+            setData(processedMetadata);
+          }
         } catch (metadataError) {
           setError(metadataError as any);
         }
@@ -94,7 +100,7 @@ export default function useFetchVectorTileMetadata({
     };
 
     getAndProcessMetadata();
-  }, [url, remoteTileFormat, setProcessedData]);
+  }, [metadataUrl, tilesetUrl, remoteTileFormat, setError, setData, process]);
 
   return {data, loading, error};
 }
