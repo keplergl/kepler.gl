@@ -187,9 +187,6 @@ export const SqlPanel: React.FC<SqlPanelProps> = ({initialSql = ''}) => {
       const db = await getDuckDB();
       const connection = await db.connect();
 
-      // Indicate that there may be a possible change in DuckDB.
-      setSchemaUpdateTrigger(Date.now());
-
       // TODO find a cheap way to get DuckDb types with a single query to a remote resource - temp table? cte?
       const tempTableName = 'temp_keplergl_table';
 
@@ -230,12 +227,15 @@ export const SqlPanel: React.FC<SqlPanelProps> = ({initialSql = ''}) => {
         setError(null);
       }
 
-      connection.close();
+      await connection.close();
     } catch (e) {
       setError(e as Error);
     } finally {
       setIsRunning(false);
     }
+
+    // Indicate that there may be a possible change in DuckDB.
+    setSchemaUpdateTrigger(Date.now());
   }, [sql]);
 
   const onChange = useCallback(
