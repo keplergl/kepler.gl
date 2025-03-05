@@ -95,10 +95,12 @@ const TilesetVectorForm: React.FC<TilesetVectorFormProps> = ({setResponse}) => {
       event.preventDefault();
       const newTileUrl = event.target.value;
       setTileUrl(newTileUrl);
-      const potentialMetadataUrl = isPMTilesUrl(newTileUrl) ? newTileUrl : getMetaUrl(newTileUrl);
+
+      const usePMTiles = isPMTilesUrl(newTileUrl);
+      const potentialMetadataUrl = usePMTiles ? newTileUrl : getMetaUrl(newTileUrl);
       if (!metadataUrl && potentialMetadataUrl) {
         // check if URL exists before setting it as the metadata URL
-        const resp = await fetch(potentialMetadataUrl, {method: 'HEAD'});
+        const resp = usePMTiles ? ({ok: true} as Response) : await fetch(potentialMetadataUrl);
         if (resp.ok) {
           setInitialFetchError(null);
           setMetadataUrl(potentialMetadataUrl);
