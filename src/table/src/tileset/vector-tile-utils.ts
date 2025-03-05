@@ -680,8 +680,8 @@ type GetFieldsFromTileProps = {
 };
 
 /**
- * Note: this function is for tilesets that don't include fields in metadata.
  * Extracts fields from a tile and updates the metadata object with found fields.
+ * Note: this function is for tilesets that don't include fields in metadata (most likely saved with older spec.).
  * @param params.remoteTileFormat The format of the remote tile (MVT or PMTiles).
  * @param params.tilesetUrl The URL of the tileset.
  * @param params.metadataUrl The URL of the metadata.
