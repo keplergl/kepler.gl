@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import {DATA_TYPES as ANALYZER_DATA_TYPES} from 'type-analyzer';
 import {ascending} from 'd3-array';
 import Console from 'global/console';
 import uniq from 'lodash.uniq';
@@ -719,11 +720,9 @@ export const getFieldsFromTile = async ({
       const tile = await tileSource.getTileData({index: tileIndices});
       const updatedFields = tileToFields(tile).map(f => {
         return {
+          ...f,
           analyzerType: f.analyzerType || ALL_FIELD_TYPES.string,
-          format: f.format,
-          id: f.id || f.name,
-          name: f.name,
-          type: f.type
+          id: f.id || f.name
         };
       });
 
@@ -734,17 +733,35 @@ export const getFieldsFromTile = async ({
   }
 };
 
+/**
+ * Converts tile features into Kepler fields.
+ * @param tile The tile object containing features.
+ * @returns An array of Kepler fields derived from the tile's features.
+ */
 const tileToFields = (tile: {features: Feature[]}): KeplerField[] => {
   if (tile?.features?.length > 0) {
     const header = Object.keys(tile.features[0].properties);
     const output = tile.features.map(f => {
       const obj = {};
-      header.forEach(val => {
-        obj[val] = f.properties[val];
+      header.forEach(columnName => {
+        obj[columnName] = f.properties[columnName];
       });
       return obj;
     });
-    return getFieldsFromData(output, header);
+
+    const fields = getFieldsFromData(output, header);
+    // extra transformation of strings to numbers for tiles isn't implemented, so use string, not computed types
+    return fields.map(f => {
+      const forceString =
+        (f.type === 'integer' || f.type === 'float') &&
+        typeof tile.features[0].properties[f.name] === 'string';
+
+      return {
+        ...f,
+        analyzerType: forceString ? ANALYZER_DATA_TYPES.STRING : f.analyzerType,
+        type: forceString ? 'string' : f.type
+      };
+    });
   }
   return [];
 };

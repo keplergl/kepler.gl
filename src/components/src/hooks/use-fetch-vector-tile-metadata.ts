@@ -73,10 +73,6 @@ export default function useFetchVectorTileMetadata({
             throw new Error('Failed to fetch metadata');
           }
 
-          if (!metadata) {
-            return setError(metadata);
-          }
-
           const processedMetadata = process(metadata);
           if (processedMetadata instanceof Error) {
             setError(processedMetadata);
