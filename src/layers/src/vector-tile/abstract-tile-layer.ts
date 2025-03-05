@@ -65,6 +65,7 @@ export type AbstractTileLayerVisConfigSettings = {
 export type LayerData = {
   minZoom?: number;
   maxZoom?: number;
+  bounds?: number[];
   getPointRadius?: () => number;
 };
 
@@ -408,10 +409,16 @@ export default abstract class AbstractTileLayer<
     });
 
     const metadata = dataset?.metadata as LayerData | undefined;
+    const metadataToData = metadata
+      ? {
+          minZoom: metadata.minZoom,
+          maxZoom: metadata.maxZoom,
+          bounds: metadata.bounds
+        }
+      : {};
 
     return {
-      ...(metadata ? {minZoom: metadata.minZoom} : {}),
-      ...(metadata ? {maxZoom: metadata.maxZoom} : {}),
+      ...metadataToData,
       ...accessors
     };
   }
