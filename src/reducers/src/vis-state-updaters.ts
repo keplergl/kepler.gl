@@ -2391,9 +2391,6 @@ export const createNewDatasetSuccessUpdater = (
   const {results, addToMapOptions} = action.payload;
   const newDataEntries = results.reduce((accu, result) => {
     if (result.status === 'fulfilled') {
-      if (result.value.type === '@@kepler.gl/ADD_NOTIFICATION') {
-        return accu;
-      }
       const dataset = result.value;
       return {...accu, [dataset.id]: dataset};
     } else {
