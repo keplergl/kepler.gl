@@ -100,6 +100,7 @@ const TilesetVectorForm: React.FC<TilesetVectorFormProps> = ({setResponse}) => {
       const potentialMetadataUrl = usePMTiles ? newTileUrl : getMetaUrl(newTileUrl);
       if (!metadataUrl && potentialMetadataUrl) {
         // check if URL exists before setting it as the metadata URL
+        // Note: The {method: HEAD} request often fails, likely due to individual storage settings.
         const resp = usePMTiles ? ({ok: true} as Response) : await fetch(potentialMetadataUrl);
         if (resp.ok) {
           setInitialFetchError(null);

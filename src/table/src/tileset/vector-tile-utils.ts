@@ -706,18 +706,15 @@ export const getFieldsFromTile = async ({
       const lat = (metadata.bounds[1] + metadata.bounds[3]) / 2;
       const tileIndices = lonLatToTileIndex(lon, lat, metadata.minZoom);
 
-      let tileSource: any = null;
-      if (remoteTileFormat === RemoteTileFormat.MVT) {
-        tileSource = MVTSource.createDataSource(decodeURIComponent(tilesetUrl), {
-          mvt: {
-            metadataUrl: decodeURIComponent(metadataUrl)
-          }
-        });
-      } else {
-        tileSource = PMTilesSource.createDataSource(tilesetUrl, {});
-      }
-
-      const tile = await tileSource.getTileData({index: tileIndices});
+      const tileSource =
+        remoteTileFormat === RemoteTileFormat.MVT
+          ? MVTSource.createDataSource(decodeURIComponent(tilesetUrl), {
+              mvt: {
+                metadataUrl: decodeURIComponent(metadataUrl)
+              }
+            })
+          : PMTilesSource.createDataSource(tilesetUrl, {});
+      const tile = await tileSource.getTileData({index: tileIndices} as any);
       const updatedFields = tileToFields(tile).map(f => {
         return {
           ...f,
