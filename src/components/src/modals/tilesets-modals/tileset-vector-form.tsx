@@ -95,10 +95,13 @@ const TilesetVectorForm: React.FC<TilesetVectorFormProps> = ({setResponse}) => {
       event.preventDefault();
       const newTileUrl = event.target.value;
       setTileUrl(newTileUrl);
-      const potentialMetadataUrl = isPMTilesUrl(newTileUrl) ? newTileUrl : getMetaUrl(newTileUrl);
+
+      const usePMTiles = isPMTilesUrl(newTileUrl);
+      const potentialMetadataUrl = usePMTiles ? newTileUrl : getMetaUrl(newTileUrl);
       if (!metadataUrl && potentialMetadataUrl) {
         // check if URL exists before setting it as the metadata URL
-        const resp = await fetch(potentialMetadataUrl);
+        // Note: The {method: HEAD} request often fails, likely due to individual storage settings.
+        const resp = usePMTiles ? ({ok: true} as Response) : await fetch(potentialMetadataUrl);
         if (resp.ok) {
           setInitialFetchError(null);
           setMetadataUrl(potentialMetadataUrl);
@@ -127,10 +130,16 @@ const TilesetVectorForm: React.FC<TilesetVectorFormProps> = ({setResponse}) => {
     loading,
     error: metaError
   } = useFetchVectorTileMetadata({
-    url: metadataUrl,
+    metadataUrl,
+    tilesetUrl: tileUrl,
     remoteTileFormat: isPMTilesUrl(metadataUrl) ? RemoteTileFormat.PMTILES : RemoteTileFormat.MVT,
     process
   });
+
+  // reset initial fetch error if the metadata is available
+  if (metadata && initialFetchError) {
+    setInitialFetchError(null);
+  }
 
   useEffect(() => {
     if (tileName && tileUrl) {

@@ -194,7 +194,8 @@ export default function ModalContainerFactory(
           disableDataOperation: true
         },
         {
-          autoCreateLayers: true
+          autoCreateLayers: true,
+          centerMap: true
         }
       );
       this._closeModal();
