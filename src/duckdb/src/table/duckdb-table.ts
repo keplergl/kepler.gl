@@ -10,8 +10,6 @@ import {
   GEOARROW_EXTENSIONS,
   GEOARROW_METADATA_KEY
 } from '@kepler.gl/constants';
-import {KeplerTable} from '@kepler.gl/table';
-import {Field} from '@kepler.gl/types';
 import {
   arrowSchemaToFields,
   isArrowData,
@@ -20,6 +18,8 @@ import {
   isRowObject,
   processArrowBatches
 } from '@kepler.gl/processors';
+import {KeplerTable} from '@kepler.gl/table';
+import {Field} from '@kepler.gl/types';
 
 import {getDuckDB} from '../init';
 import {
@@ -301,6 +301,7 @@ export class KeplerGlDuckDbTable extends KeplerTable {
   };
 
   static getInputDataValidator = function () {
+    // In DuckDB mode data is validated later during import.
     return d => d;
   };
 }
