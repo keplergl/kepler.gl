@@ -142,7 +142,7 @@ export const SchemaPanel = ({
 
     setColumnSchemas(result);
     setTableSchema(tableSchema);
-    c.close();
+    await c.close();
 
     // schemaUpdateTrigger indicates possible change in DuckDB
     // eslint-disable-next-line react-hooks/exhaustive-deps
