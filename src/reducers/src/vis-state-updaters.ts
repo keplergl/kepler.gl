@@ -2350,15 +2350,15 @@ export const updateVisDataUpdater = (
 
   const datasets = toArray(action.datasets);
 
-  const createDatasetsTasks: Task[] = [];
-  const notificationsTasks: Task[] = [];
+  const createDatasetTasks: Task[] = [];
+  const notificationTasks: Task[] = [];
 
   datasets.forEach(({info = {}, ...rest}, datasetIndex) => {
     const task = createNewDataEntry({info, ...rest}, state.datasets);
     if (task) {
-      createDatasetsTasks.push(task);
+      createDatasetTasks.push(task);
     } else {
-      notificationsTasks.push(
+      notificationTasks.push(
         ACTION_TASK().map(() =>
           addNotification(
             errorNotification({
@@ -2371,15 +2371,15 @@ export const updateVisDataUpdater = (
     }
   });
 
-  const datasetsAllSettledTask = createDatasetsTasks.length
-    ? Task.allSettled(createDatasetsTasks).map(results =>
+  const datasetsAllSettledTask = createDatasetTasks.length
+    ? Task.allSettled(createDatasetTasks).map(results =>
         createNewDatasetSuccess({results, addToMapOptions: options})
       )
     : null;
 
   return withTask(updatedState, [
     ...(datasetsAllSettledTask ? [datasetsAllSettledTask] : []),
-    ...notificationsTasks
+    ...notificationTasks
   ]);
 };
 
