@@ -22,6 +22,7 @@ import {
 } from '@kepler.gl/tasks';
 // Actions
 import {
+  addNotification,
   ActionTypes,
   CreateNewDatasetSuccessPayload,
   MapStateActions,
@@ -56,6 +57,7 @@ import {
   arrayInsert,
   computeSplitMapLayers,
   adjustValueToFilterDomain,
+  errorNotification,
   featureToFilterValue,
   filterDatasetCPU,
   generatePolygonFilter,
@@ -2348,15 +2350,37 @@ export const updateVisDataUpdater = (
 
   const datasets = toArray(action.datasets);
 
-  const allCreateDatasetsTasks = datasets.map(
-    ({info = {}, ...rest}) => createNewDataEntry({info, ...rest}, state.datasets) || {}
-  );
-  // call all Tasks
-  const datasetTasks = Task.allSettled(allCreateDatasetsTasks).map(results =>
-    createNewDatasetSuccess({results, addToMapOptions: options})
-  );
+  const createDatasetsTasks: Task[] = [];
+  const notificationsTasks: Task[] = [];
 
-  return withTask(updatedState, datasetTasks);
+  datasets.forEach(({info = {}, ...rest}, datasetIndex) => {
+    const task = createNewDataEntry({info, ...rest}, state.datasets);
+    if (task) {
+      createDatasetsTasks.push(task);
+    } else {
+      notificationsTasks.push(
+        ACTION_TASK().map(() =>
+          addNotification(
+            errorNotification({
+              message: `Failed to create a new dataset due to data verification errors`,
+              id: `dataset-failed-${datasetIndex}`
+            })
+          )
+        )
+      );
+    }
+  });
+
+  const datasetsAllSettledTask = createDatasetsTasks.length
+    ? Task.allSettled(createDatasetsTasks).map(results =>
+        createNewDatasetSuccess({results, addToMapOptions: options})
+      )
+    : null;
+
+  return withTask(updatedState, [
+    ...(datasetsAllSettledTask ? [datasetsAllSettledTask] : []),
+    ...notificationsTasks
+  ]);
 };
 
 export const createNewDatasetSuccessUpdater = (
@@ -2367,6 +2391,9 @@ export const createNewDatasetSuccessUpdater = (
   const {results, addToMapOptions} = action.payload;
   const newDataEntries = results.reduce((accu, result) => {
     if (result.status === 'fulfilled') {
+      if (result.value.type === '@@kepler.gl/ADD_NOTIFICATION') {
+        return accu;
+      }
       const dataset = result.value;
       return {...accu, [dataset.id]: dataset};
     } else {

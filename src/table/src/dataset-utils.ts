@@ -56,7 +56,7 @@ export function getNewDatasetColor(datasets: Datasets): RGBColor {
 export function createNewDataEntry(
   {info, data, ...opts}: ProtoDataset,
   datasets: Datasets = {}
-): Datasets {
+): Datasets | null {
   const TableClass = getApplicationConfig().table ?? KeplerTable;
   let dataValidator = validateInputData;
   if (typeof TableClass.getInputDataValidator === 'function') {
@@ -65,7 +65,7 @@ export function createNewDataEntry(
 
   const validatedData = dataValidator(data);
   if (!validatedData) {
-    return {};
+    return null;
   }
 
   // check if dataset already exists, and update it when loading data by batches incrementally
