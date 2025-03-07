@@ -39,6 +39,10 @@ export type KeplerApplicationConfig = {
   useArrowProgressiveLoading?: boolean;
   // Show built-in banner associated with the current version of Kepler.gl
   showReleaseBanner?: boolean;
+  // Use the onFilteredItemsChange callback for DataFilterExtension.
+  // Enabling this option may cause performance issues when dealing with a large number of layers or sublayers,
+  // especially if large Arrow files are split into relatively small batches (should be fixed in the future).
+  useOnFilteredItemsChange?: boolean;
 };
 
 const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
@@ -73,7 +77,8 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
   table: null,
 
   useArrowProgressiveLoading: true,
-  showReleaseBanner: true
+  showReleaseBanner: true,
+  useOnFilteredItemsChange: false
 };
 
 const applicationConfig: Required<KeplerApplicationConfig> = DEFAULT_APPLICATION_CONFIG;
