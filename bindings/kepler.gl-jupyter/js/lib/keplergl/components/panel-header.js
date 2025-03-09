@@ -5,11 +5,14 @@ import {PanelHeaderFactory, Icons, withState} from '@kepler.gl/components';
 import {toggleModal} from '@kepler.gl/actions';
 import React from 'react';
 import {IntlProvider} from 'react-intl';
+import {visStateLens} from 'kepler.gl/reducers';
+import {exportJson} from 'kepler.gl/dist/utils/export-utils'
 
 const KEPLER_DOC = 'https://docs.kepler.gl/docs/keplergl-jupyter';
 
 export function CustomPanelHeaderFactory() {
   const PanelHeader = PanelHeaderFactory();
+  const defaultActionItems = PanelHeader.defaultProps.actionItems;
 
   const actionItems = props => [
     {
@@ -19,6 +22,12 @@ export function CustomPanelHeaderFactory() {
       blank: true,
       tooltip: 'tooltip.documentation',
       onClick: () => {}
+    },
+    {
+      ...defaultActionItems.find(item => item.id === 'save'),
+      label: null,
+      tooltip: 'Save Map',
+      onClick: () => exportJson({visState: props.visState})
     }
   ];
 
@@ -27,7 +36,7 @@ export function CustomPanelHeaderFactory() {
       <PanelHeader {...props} actionItems={actionItems(props)} />
     </IntlProvider>
   );
-  return withState([], state => state, {
+  return withState([visStateLens], state => state, {
     toggleModal
   })(JupyterPanelHeader);
 }
