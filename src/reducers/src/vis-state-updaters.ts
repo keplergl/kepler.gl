@@ -22,6 +22,7 @@ import {
 } from '@kepler.gl/tasks';
 // Actions
 import {
+  addNotification,
   ActionTypes,
   CreateNewDatasetSuccessPayload,
   MapStateActions,
@@ -56,6 +57,7 @@ import {
   arrayInsert,
   computeSplitMapLayers,
   adjustValueToFilterDomain,
+  errorNotification,
   featureToFilterValue,
   filterDatasetCPU,
   generatePolygonFilter,
@@ -2348,15 +2350,37 @@ export const updateVisDataUpdater = (
 
   const datasets = toArray(action.datasets);
 
-  const allCreateDatasetsTasks = datasets.map(
-    ({info = {}, ...rest}) => createNewDataEntry({info, ...rest}, state.datasets) || {}
-  );
-  // call all Tasks
-  const datasetTasks = Task.allSettled(allCreateDatasetsTasks).map(results =>
-    createNewDatasetSuccess({results, addToMapOptions: options})
-  );
+  const createDatasetTasks: Task[] = [];
+  const notificationTasks: Task[] = [];
 
-  return withTask(updatedState, datasetTasks);
+  datasets.forEach(({info = {}, ...rest}, datasetIndex) => {
+    const task = createNewDataEntry({info, ...rest}, state.datasets);
+    if (task) {
+      createDatasetTasks.push(task);
+    } else {
+      notificationTasks.push(
+        ACTION_TASK().map(() =>
+          addNotification(
+            errorNotification({
+              message: `Failed to create a new dataset due to data verification errors`,
+              id: `dataset-failed-${datasetIndex}`
+            })
+          )
+        )
+      );
+    }
+  });
+
+  const datasetsAllSettledTask = createDatasetTasks.length
+    ? Task.allSettled(createDatasetTasks).map(results =>
+        createNewDatasetSuccess({results, addToMapOptions: options})
+      )
+    : null;
+
+  return withTask(updatedState, [
+    ...(datasetsAllSettledTask ? [datasetsAllSettledTask] : []),
+    ...notificationTasks
+  ]);
 };
 
 export const createNewDatasetSuccessUpdater = (
