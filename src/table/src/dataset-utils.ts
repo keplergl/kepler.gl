@@ -17,7 +17,7 @@ import {PMTilesSource, PMTilesMetadata} from '@loaders.gl/pmtiles';
 import {/* MVTSource,*/ TileJSON} from '@loaders.gl/mvt';
 
 import {getMVTMetadata} from './tileset/tileset-utils';
-import {parseVectorMetadata} from './tileset/vector-tile-utils';
+import {parseVectorMetadata, getFieldsFromTile} from './tileset/vector-tile-utils';
 
 // apply a color for each dataset
 // to use as label colors
@@ -56,7 +56,7 @@ export function getNewDatasetColor(datasets: Datasets): RGBColor {
 export function createNewDataEntry(
   {info, data, ...opts}: ProtoDataset,
   datasets: Datasets = {}
-): Datasets {
+): Datasets | null {
   const TableClass = getApplicationConfig().table ?? KeplerTable;
   let dataValidator = validateInputData;
   if (typeof TableClass.getInputDataValidator === 'function') {
@@ -65,7 +65,7 @@ export function createNewDataEntry(
 
   const validatedData = dataValidator(data);
   if (!validatedData) {
-    return {};
+    return null;
   }
 
   // check if dataset already exists, and update it when loading data by batches incrementally
@@ -137,12 +137,13 @@ async function refreshRemoteData(datasetInfo: CreateTableProps) {
     return null;
   }
 
-  const {remoteTileFormat, tilesetMetadataUrl} =
+  const {remoteTileFormat, tilesetMetadataUrl, tilesetDataUrl} =
     (datasetInfo.opts.metadata as VectorTileDatasetMetadata) || {};
 
   if (
     !(remoteTileFormat === RemoteTileFormat.PMTILES || remoteTileFormat === RemoteTileFormat.MVT) ||
-    typeof tilesetMetadataUrl !== 'string'
+    typeof tilesetMetadataUrl !== 'string' ||
+    typeof tilesetDataUrl !== 'string'
   ) {
     return null;
   }
@@ -157,7 +158,16 @@ async function refreshRemoteData(datasetInfo: CreateTableProps) {
     }
 
     if (rawMetadata) {
-      return parseVectorMetadata(rawMetadata);
+      const metadata = parseVectorMetadata(rawMetadata);
+
+      await getFieldsFromTile({
+        remoteTileFormat,
+        tilesetUrl: tilesetDataUrl,
+        metadataUrl: tilesetMetadataUrl,
+        metadata
+      });
+
+      return metadata;
     }
   } catch (err) {
     // ignore for now, and use old metadata?

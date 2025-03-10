@@ -491,7 +491,7 @@ Possible reasons:
     }
   }
 
-  c.close();
+  await c.close();
 
   return error;
 }
@@ -506,7 +506,7 @@ export function sanitizeDuckDBTableName(fileName: string): string {
   let name = fileName.replace(/[^a-zA-Z0-9_]/g, '_');
   // Ensure it doesn't start with a digit
   if (/^\d/.test(name)) {
-    name = 't_' + name;
+    name = `t_${name}`;
   }
   return name || 'default_table';
 }

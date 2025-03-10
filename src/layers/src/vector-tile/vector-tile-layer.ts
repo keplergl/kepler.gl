@@ -5,7 +5,7 @@ import {FeatureCollection, Feature} from 'geojson';
 
 import {Layer as DeckLayer} from '@deck.gl/core/typed';
 import {_Tile2DHeader as Tile2DHeader} from '@deck.gl/geo-layers/typed';
-import {GeoJsonLayer} from '@deck.gl/layers/typed';
+import {GeoJsonLayer, PathLayer} from '@deck.gl/layers/typed';
 import {MVTSource, MVTTileSource} from '@loaders.gl/mvt';
 import {PMTilesSource, PMTilesTileSource} from '@loaders.gl/pmtiles';
 import GL from '@luma.gl/constants';
@@ -174,6 +174,35 @@ export type VectorTileLayerVisConfigSettings = Merge<
     strokeWidth: VisConfigNumber;
   }
 >;
+
+export function tileLayerBoundsLayer(id: string, props: {bounds?: number[]}): DeckLayer[] {
+  const {bounds} = props;
+  if (bounds?.length !== 4) return [];
+
+  const data = [
+    {
+      path: [
+        [bounds[0], bounds[1]],
+        [bounds[2], bounds[1]],
+        [bounds[2], bounds[3]],
+        [bounds[0], bounds[3]],
+        [bounds[0], bounds[1]]
+      ]
+    }
+  ];
+
+  const layer = new PathLayer({
+    id: `${id}-vector-tile-bounds`,
+    data,
+    getPath: d => d.path,
+    getColor: [128, 128, 128, 255],
+    getWidth: 1,
+    widthUnits: 'pixels',
+    pickable: false
+  });
+
+  return [layer];
+}
 
 export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Feature[]> {
   declare config: VectorTileLayerConfig;
@@ -625,6 +654,7 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
               })
             ]
           : [])
+        // ...tileLayerBoundsLayer(defaultLayerProps.id, data),
       ];
 
       return layers;
