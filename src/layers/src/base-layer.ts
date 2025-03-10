@@ -34,6 +34,7 @@ import {
 import {
   DataContainerInterface,
   DomainQuantiles,
+  getApplicationConfig,
   getLatLngBounds,
   getSampleContainerData,
   hasColorMap,
@@ -156,8 +157,9 @@ const MAX_SAMPLE_SIZE = 5000;
 const defaultDomain: [number, number] = [0, 1];
 const dataFilterExtension = new DataFilterExtension({
   filterSize: MAX_GPU_FILTERS,
+  // `countItems` option. It enables the GPU to report the number of objects that pass the filter criteria via the `onFilteredItemsChange` callback.
   // @ts-expect-error not typed
-  countItems: true
+  countItems: getApplicationConfig().useOnFilteredItemsChange ?? false
 });
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
