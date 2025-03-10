@@ -15,8 +15,10 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
-## [3.1.1] - March 10 2025
+## [3.1.1] - March 11 2025
 
+- e271c8f8c [fix] fix for potential freeze during add data pipeline (#3015)
+- 9eef01c48 [fix] make onFilteredItemsChange callback optional (#3016)
 - 7107e4177 [fix] fixes for vector-tile layer (#3013)
 - b4b979d59 [fix] schema panel displays temp table (#3014)
 - ed2b5f322 [chore] fix react deprecation warnings (#3011)
