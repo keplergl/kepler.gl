@@ -1,6 +1,5 @@
 # Vector Layer
 
-
 Vector layers use the three basic GIS features – lines, points, and polygons – to represent real-world features in digital format.
 
 ![Vector layer](https://4sq-studio-public.s3.us-west-2.amazonaws.com/statics/keplergl/images/kepler-vector.gif 'Vector layer')
@@ -21,12 +20,12 @@ Core settings for the Vector layer.
 
 Settings related to the fill color of the vector data.
 
-| Setting        | Description                                                                                                                                            |
-| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Color Based On | The field to base the fill color on.                                                                                                                   |
-| Color Scale    | The color scale and palette for the fill color.                                                                     |
+| Setting        | Description                                                                                                                                    |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| Color Based On | The field to base the fill color on.                                                                                                           |
+| Color Scale    | The color scale and palette for the fill color.                                                                                                |
 | Dynamic Color  | Enable to estimate color range and scale based on tiles selected for rendering. When panning the map, the color scale will update dynamically. |
-| Opacity        | The opacity of the fill color. 100 = fully opaque, 0 = fully transparent.                                                                              |
+| Opacity        | The opacity of the fill color. 100 = fully opaque, 0 = fully transparent.                                                                      |
 
 ## Stroke Color
 
@@ -59,10 +58,8 @@ Height settings for the Vector layer. Height is best viewed with the 3D viewing 
 | Setting         | Description                                        |
 | --------------- | -------------------------------------------------- |
 | Height Slider   | Increase to raise the height of the layer objects. |
-| Height Based On | A column to base the height on.                |
+| Height Based On | A column to base the height on.                    |
 | Height Scale    | Choose from linear, sqrt, and log.                 |
 | Fixed Height    | Applies height without additional modifications.   |
-
-
 
 [Back to table of contents](../README.md)
