@@ -184,7 +184,7 @@ const TilesetVectorForm: React.FC<TilesetVectorFormProps> = ({setResponse}) => {
       <div>
         <label htmlFor="tileset-name">Name</label>
         <InputLight
-          id="tile-name"
+          id="tileset-name"
           placeholder="Name your tileset"
           value={tileName}
           onChange={onTileNameChange}

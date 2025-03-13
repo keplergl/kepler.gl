@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {VectorTileMetadata} from '@kepler.gl/table';
+import {VectorTileMetadata, RasterTileMetadata} from '@kepler.gl/table';
 
 export type DatasetCreationAttributes = {
   name: string;
@@ -10,7 +10,7 @@ export type DatasetCreationAttributes = {
 };
 
 export type MetaResponse = {
-  metadata?: VectorTileMetadata | null;
+  metadata?: VectorTileMetadata | RasterTileMetadata | null;
   dataset?: DatasetCreationAttributes | null;
   loading?: boolean;
   error?: Error | null;

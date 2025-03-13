@@ -17,7 +17,13 @@ type TileIconProps = {
 
 const TileIcon = styled.div<TileIconProps>`
   background-color: ${props => props.theme.GREY10};
-  color: ${props => (props.selected ? props.theme.BLUE : props.theme.AZURE200)};
+  color: ${props =>
+    props.selected ? props.theme.primaryBtnBgdHover : props.theme.secondaryBtnBgd};
+  opacity: ${props => (props.selected ? 1 : 0.5)};
+`;
+
+const TileLabel = styled.div<TileIconProps>`
+  font-weight: ${props => (props.selected ? 'bold' : 'normal')};
 `;
 
 type TilesetIconProps = {
@@ -30,7 +36,7 @@ type TilesetIconProps = {
 const TilesetIcon: React.FC<TilesetIconProps> = ({Icon, name, onClick, selected = false}) => (
   <TileIconContainer onClick={onClick}>
     <TileIcon selected={selected}>{Icon}</TileIcon>
-    <div>{name}</div>
+    <TileLabel selected={selected}>{name}</TileLabel>
   </TileIconContainer>
 );
 

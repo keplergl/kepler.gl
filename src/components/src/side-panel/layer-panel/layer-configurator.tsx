@@ -25,6 +25,8 @@ import LayerTypeSelectorFactory from './layer-type-selector';
 import TextLabelPanelFactory from './text-label-panel';
 import VisConfigSliderFactory from './vis-config-slider';
 import VisConfigSwitchFactory from './vis-config-switch';
+
+import RasterTileLayerConfiguratorFactory from './raster-tile-layer-configurator';
 import VectorTileLayerConfiguratorFactory from './vector-tile-layer-configurator';
 
 import {ActionHandler, toggleModal} from '@kepler.gl/actions';
@@ -128,7 +130,8 @@ LayerConfiguratorFactory.deps = [
   LayerColorRangeSelectorFactory,
   ArcLayerColorSelectorFactory,
   AggrScaleSelectorFactory,
-  VectorTileLayerConfiguratorFactory
+  VectorTileLayerConfiguratorFactory,
+  RasterTileLayerConfiguratorFactory
 ];
 
 export default function LayerConfiguratorFactory(
@@ -144,7 +147,8 @@ export default function LayerConfiguratorFactory(
   LayerColorRangeSelector: ReturnType<typeof LayerColorRangeSelectorFactory>,
   ArcLayerColorSelector: ReturnType<typeof ArcLayerColorSelectorFactory>,
   AggrScaleSelector: ReturnType<typeof AggrScaleSelectorFactory>,
-  VectorTileLayerConfigurator: ReturnType<typeof VectorTileLayerConfiguratorFactory>
+  VectorTileLayerConfigurator: ReturnType<typeof VectorTileLayerConfiguratorFactory>,
+  RasterTileLayerConfigurator: ReturnType<typeof RasterTileLayerConfiguratorFactory>
 ): React.ComponentType<LayerConfiguratorProps> {
   class LayerConfigurator extends Component<LayerConfiguratorProps> {
     _renderPointLayerConfig(props) {
@@ -157,6 +161,10 @@ export default function LayerConfiguratorFactory(
 
     _renderVectorTileLayerConfig(props) {
       return <VectorTileLayerConfigurator {...props} />;
+    }
+
+    _renderRasterTileLayerConfig(props) {
+      return <RasterTileLayerConfigurator {...props} />;
     }
 
     _renderScatterplotLayerConfig(
