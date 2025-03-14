@@ -45,6 +45,14 @@ import {default as VectorTileLayer} from './vector-tile/vector-tile-layer';
 export {default as VectorTileIcon} from './vector-tile/vector-tile-icon';
 export {default as VectorTileLayer} from './vector-tile/vector-tile-layer';
 
+import {default as RasterTileLayer} from './raster-tile/raster-tile-layer';
+export {default as RasterTileIcon} from './raster-tile/raster-tile-icon';
+export {default as RasterTileLayer} from './raster-tile/raster-tile-layer';
+export {CATEGORICAL_COLORMAP_ID, PRESET_OPTIONS} from './raster-tile/config';
+export {getCategoricalColormapDataUrl} from './raster-tile/image';
+export * from './raster-tile/types';
+export * from './raster-tile/raster-tile-utils';
+
 import {LAYER_TYPES} from '@kepler.gl/constants';
 export {parseGeoJsonRawFeature} from './geojson-layer/geojson-utils';
 // base layer
@@ -72,7 +80,8 @@ export const KeplerGlLayers = {
   ScenegraphLayer,
   TripLayer,
   S2GeometryLayer,
-  VectorTileLayer
+  VectorTileLayer,
+  RasterTileLayer
 };
 
 export type LayerClassesType = typeof LayerClasses;
@@ -90,7 +99,8 @@ export const LayerClasses = {
   [LAYER_TYPES['3D']]: ScenegraphLayer,
   [LAYER_TYPES.trip]: TripLayer,
   [LAYER_TYPES.s2]: S2GeometryLayer,
-  [LAYER_TYPES['vectorTile']]: VectorTileLayer
+  [LAYER_TYPES['vectorTile']]: VectorTileLayer,
+  [LAYER_TYPES['rasterTile']]: RasterTileLayer
 };
 
 export * from './mapbox-utils';

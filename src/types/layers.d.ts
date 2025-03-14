@@ -250,6 +250,11 @@ export type VisConfigBoolean = VisConfig & {
   defaultValue: boolean;
 };
 
+export type VisConfigInput = VisConfig & {
+  type: 'input';
+  defaultValue: string | null;
+};
+
 export type VisConfigSelection = VisConfig & {
   type: 'select';
   defaultValue: string;

@@ -1593,3 +1593,14 @@ export enum GEOARROW_EXTENSIONS {
   MULTIPOLYGON = 'geoarrow.multipolygon',
   WKB = 'geoarrow.wkb'
 }
+
+export const CdnUrlConfigBase = 'https://studio-public-data.foursquare.com/statics';
+export const CdnUrlConfig = {
+  rasterColorMap: (colormapId: string) => {
+    return `${CdnUrlConfigBase}/raster/colormaps/${colormapId}.png`;
+  }
+};
+
+export const RuntimeConfig = {
+  rasterTransformRequest: null
+};
