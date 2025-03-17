@@ -1602,5 +1602,14 @@ export const CdnUrlConfig = {
 };
 
 export const RuntimeConfig = {
-  rasterTransformRequest: null
+  /** An array of URLs to shards of the raster tile server to be used by the raster tile layer. */
+  rasterServerUrls: [
+    'https://d1q7gb82o5qayp.cloudfront.net',
+    'https://d34k46lorssas.cloudfront.net',
+    'https://d2k92ng3gmu32o.cloudfront.net'
+  ],
+  /** A URL for a STAC API instance used for searching through STAC Items in a Collection. */
+  rasterStacSearchUrl: null,
+  rasterTransformRequest: null,
+  onRasterTileLoadUpdate: null
 };

@@ -30,11 +30,19 @@ import {
   default as KeplerDataset
 } from '../kepler-table';
 
+const LOADERS_CDN_URL = 'https://unpkg.com/@loaders.gl';
+
 export const getLoaderOptions = () => {
   return {
     mvt: {
       workerUrl: `https://unpkg.com/@loaders.gl/mvt/dist/mvt-worker.js`
     }
+    /*'quantized-mesh': {
+      workerUrl: `${LOADERS_CDN_URL}/terrain/dist/quantized-mesh-worker.js`
+    },
+    npy: {
+      workerUrl: `${LOADERS_CDN_URL}/textures/dist/npy-worker.js`
+    }*/
   };
 };
 

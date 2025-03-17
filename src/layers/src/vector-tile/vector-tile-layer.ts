@@ -237,7 +237,7 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
     });
   }
 
-  get type() {
+  get type(): string {
     return LAYER_TYPES.vectorTile;
   }
 
