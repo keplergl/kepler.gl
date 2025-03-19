@@ -11,12 +11,11 @@
 
 import * as arrow from 'apache-arrow';
 import {DataType} from 'apache-arrow/type';
-import {AsyncDuckDBConnection, DuckDBDataProtocol} from '@duckdb/duckdb-wasm';
+import {DuckDBDataProtocol} from '@duckdb/duckdb-wasm';
 
 import {GEOARROW_EXTENSIONS, GEOARROW_METADATA_KEY} from '@kepler.gl/constants';
 import {ProtoDatasetField} from '@kepler.gl/types';
-
-import {getDuckDB} from '../init';
+import {DatabaseConnection, getApplicationConfig} from '@kepler.gl/utils';
 
 export const SUPPORTED_DUCKDB_DROP_EXTENSIONS = ['arrow', 'csv', 'geojson', 'json', 'parquet'];
 
@@ -29,7 +28,7 @@ export type DuckDBColumnDesc = {name: string; type: string};
  * @returns An array of column names and DuckDB types.
  */
 export async function getDuckDBColumnTypes(
-  connection: AsyncDuckDBConnection,
+  connection: DatabaseConnection,
   tableName: string
 ): Promise<DuckDBColumnDesc[]> {
   const resDescribe = await connection.query(`DESCRIBE "${tableName}";`);
@@ -256,7 +255,7 @@ export function isGeoArrowMultiPolygon(type: DataType) {
  * @returns Resolves to `true` if the query is a SELECT statement, otherwise `false`.
  */
 export async function checkIsSelectQuery(
-  connection: AsyncDuckDBConnection,
+  connection: DatabaseConnection,
   query: string
 ): Promise<boolean> {
   try {
@@ -400,7 +399,7 @@ export function removeSQLComments(sql: string): string {
  * @returns A promise that resolves when the operation is complete.
  * @throws Logs an error if the table drop operation fails.
  */
-export const dropTableIfExists = async (connection: AsyncDuckDBConnection, tableName: string) => {
+export const dropTableIfExists = async (connection: DatabaseConnection, tableName: string) => {
   try {
     await connection.query(`DROP TABLE IF EXISTS "${tableName}";`);
   } catch (error) {
@@ -421,7 +420,10 @@ export async function tableFromFile(file: File | null): Promise<null | Error> {
     return new Error("File Drag & Drop: File extension isn't supported");
   }
 
-  const db = await getDuckDB();
+  const db = await getApplicationConfig().database;
+  if (!db) {
+    return new Error('The database is not configured properly.');
+  }
   const c = await db.connect();
 
   let error: Error | null = null;

@@ -12,12 +12,12 @@ import {generateHashId} from '@kepler.gl/common-utils';
 import {Button, FileDrop, IconButton, Icons, LoadingSpinner, Tooltip} from '@kepler.gl/components';
 import {arrowSchemaToFields} from '@kepler.gl/processors';
 import {sidePanelBg, panelBorderColor} from '@kepler.gl/styles';
-import {isAppleDevice} from '@kepler.gl/utils';
+import {isAppleDevice, getApplicationConfig} from '@kepler.gl/utils';
 
 import MonacoEditor from './monaco-editor';
 import {SchemaPanel, SchemaSuggestion} from './schema-panel';
 import {PreviewDataPanel, QueryResult} from './preview-data-panel';
-import {getDuckDB} from '../init';
+
 import {
   constructST_asWKBQuery,
   getDuckDBColumnTypes,
@@ -184,7 +184,11 @@ export const SqlPanel: React.FC<SqlPanelProps> = ({initialSql = ''}) => {
         return;
       }
 
-      const db = await getDuckDB();
+      const db = getApplicationConfig().database;
+      if (!db) {
+        setError(new Error('The database is not configured properly.'));
+        return;
+      }
       const connection = await db.connect();
 
       // TODO find a cheap way to get DuckDb types with a single query to a remote resource - temp table? cte?
