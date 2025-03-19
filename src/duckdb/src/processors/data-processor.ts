@@ -212,6 +212,7 @@ async function sniffCsvSchema(sample: RowData) {
 
   const db = getApplicationConfig().database;
   if (!db) {
+    console.error('The database is not configured properly.');
     return;
   }
   const c = await db.connect();
