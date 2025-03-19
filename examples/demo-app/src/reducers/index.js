@@ -11,8 +11,10 @@ import {processGeojson, processRowObject, processArrowTable} from '@kepler.gl/pr
 import keplerGlReducer, {combinedUpdaters, uiStateUpdaters} from '@kepler.gl/reducers';
 import KeplerGlSchema from '@kepler.gl/schemas';
 import {KeplerTable} from '@kepler.gl/table';
-import {getApplicationConfig, initApplicationConfig} from '@kepler.gl/utils';
-import keplerGlDuckdbPlugin, {KeplerGlDuckDbTable, DuckDBWasmAdapter} from '@kepler.gl/duckdb';
+import {getApplicationConfig} from '@kepler.gl/utils';
+
+// import {getApplicationConfig, initApplicationConfig} from '@kepler.gl/utils';
+// import keplerGlDuckdbPlugin, {KeplerGlDuckDbTable, DuckDBWasmAdapter} from '@kepler.gl/duckdb';
 
 import {
   INIT,
