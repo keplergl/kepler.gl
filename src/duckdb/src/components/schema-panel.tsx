@@ -4,14 +4,13 @@
 import React, {useCallback, useEffect, useState} from 'react';
 import {useSelector} from 'react-redux';
 import styled from 'styled-components';
-import {AsyncDuckDBConnection} from '@duckdb/duckdb-wasm';
 
 import {LoadingSpinner, Icons} from '@kepler.gl/components';
 import {arrowSchemaToFields} from '@kepler.gl/processors';
 import {VisState} from '@kepler.gl/schemas';
+import {getApplicationConfig, DatabaseConnection} from '@kepler.gl/utils';
 
 import {Tree, DatasetNode, ColumnNode, TreeNodeData} from './tree';
-import {getDuckDB} from '../init';
 import {getDuckDBColumnTypes, getDuckDBColumnTypesMap} from '../table/duckdb-table-utils';
 
 // TODO note that demo state is available in demo-app, but not when add modules to dependencies in a custom map
@@ -40,7 +39,7 @@ const StyledLoadingSpinnerWrapper = styled.div`
   height: 100%;
 `;
 
-async function getColumnSchema(connection: AsyncDuckDBConnection, tableName: string) {
+async function getColumnSchema(connection: DatabaseConnection, tableName: string) {
   const columnResult = await connection.query(`Select * from '${tableName}' LIMIT 1;`);
 
   const columnDescribe = await getDuckDBColumnTypes(connection, tableName);
@@ -130,7 +129,11 @@ export const SchemaPanel = ({
   const datasets = useSelector((state: State) => state?.demo?.keplerGl?.map?.visState.datasets);
 
   const getTableSchema = useCallback(async () => {
-    const db = await getDuckDB();
+    const db = getApplicationConfig().database;
+    if (!db) {
+      console.error('The database is not configured properly.');
+      return;
+    }
     const c = await db.connect();
 
     const tableResult = await c.query('SHOW TABLES;');
