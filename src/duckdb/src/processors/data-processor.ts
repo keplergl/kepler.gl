@@ -13,8 +13,7 @@ import {
 import {ProtoDatasetField} from '@kepler.gl/types';
 import {ALL_FIELD_TYPES, GUIDES_FILE_FORMAT_DOC} from '@kepler.gl/constants';
 import {processKeplerglJSON} from '@kepler.gl/processors';
-
-import {getDuckDB} from '../init';
+import {getApplicationConfig} from '@kepler.gl/utils';
 
 export const CSV_NULLS = /^(null|NULL|Null|NaN|\/N||)$/;
 
@@ -211,7 +210,11 @@ async function sniffCsvSchema(sample: RowData) {
     headerRow
   );
 
-  const db = await getDuckDB();
+  const db = getApplicationConfig().database;
+  if (!db) {
+    console.error('The database is not configured properly.');
+    return;
+  }
   const c = await db.connect();
 
   const fileName = generateHashId();

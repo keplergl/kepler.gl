@@ -180,6 +180,7 @@ export type {
   MapLibInstance,
   GetMapRef
 } from './application-config';
+export type {DatabaseAdapter, DatabaseConnection} from './application-config-types';
 
 // Browser utils
 export {isAppleDevice} from './browser-utils';
