@@ -18,6 +18,8 @@ Kepler.gl is built on top of [Mapbox GL](https://www.mapbox.com). A mapbox accou
 
 #### 0. Working Template
 
+Check full example on [Github](https://github.com/keplergl/kepler.gl/tree/master/examples/get-started).
+
 ```js
 import * as React from "react";
 import ReactDOM from "react-dom/client";
@@ -49,7 +51,7 @@ const enhancers = applyMiddleware(...middleWares);
 const initialState = {};
 const store = createStore(reducers, initialState, compose(enhancers));
 
-const App2 = () => (
+const App = () => (
   <div
     style={{
       position: "absolute",
@@ -74,10 +76,10 @@ const App2 = () => (
 
 const mapStateToProps = (state) => state;
 const dispatchToProps = (dispatch) => ({ dispatch });
-const ConnectedApp = connect(mapStateToProps, dispatchToProps)(App2);
+const ConnectedApp = connect(mapStateToProps, dispatchToProps)(App);
 const Root = () => (
   <Provider store={store}>
-    <App2 />
+    <ConnectedApp />
   </Provider>
 );
 

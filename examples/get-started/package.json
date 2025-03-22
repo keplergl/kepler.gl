@@ -1,0 +1,32 @@
+{
+  "name": "kepler-app-esbuild",
+  "version": "0.0.1",
+  "license": "MIT",
+  "scripts": {
+    "bootstrap": "yarn install && yarn",
+    "build": "node esbuild.config.mjs --build",
+    "start": "node esbuild.config.mjs --start"
+  },
+  "dependencies": {
+    "@kepler.gl/components": "3.1.1",
+    "@kepler.gl/reducers": "3.1.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-redux": "^8.0.5",
+    "react-scripts": "^5.0.1"
+  },
+  "devDependencies": {
+    "@types/mapbox-gl": "^2.7.10",
+    "@types/node": "^18.15.3",
+    "@types/react": "^18.0.28",
+    "@types/react-dom": "^18.0.11",
+    "assert": "^2.1.0",
+    "axios": "^1.3.4",
+    "esbuild": "^0.25.0",
+    "esbuild-plugin-copy": "^2.1.1",
+    "html-loader": "^4.2.0",
+    "ts-loader": "^9.4.2",
+    "ts-node": "^10.9.1",
+    "typescript": "^4.9.5"
+  }
+}
