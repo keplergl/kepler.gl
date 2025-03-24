@@ -430,7 +430,7 @@ export default class RasterTileLayer extends Layer {
       enableTerrain
     } = visConfig;
 
-    const shouldLoadTerrain = Boolean(enableTerrain && dragRotate && !globe.enabled);
+    const shouldLoadTerrain = Boolean(enableTerrain && dragRotate);
 
     // This is a hack to support the existing Microsoft Map SDK Demo, where we select between
     // different mosaics through the Map SDK. The choice was previously made to leave the mosaic
