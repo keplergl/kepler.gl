@@ -4,6 +4,7 @@
 import {MapLib, MapRef} from 'react-map-gl';
 
 import type {BaseMapLibraryType} from '@kepler.gl/constants';
+import {DEFAULT_MAPBOX_STYLES, DEFAULT_MAPLIBRE_STYLES} from '@kepler.gl/constants';
 
 import type {DatabaseAdapter} from './application-config-types';
 
@@ -37,6 +38,9 @@ export type KeplerApplicationConfig = {
   // TODO improve typing by exporting KeplerTable interface to @kepler.gl/types
   table?: any;
   database?: DatabaseAdapter | null;
+
+  mapStyles?: any[];
+  defaultMapStyle?: any;
 
   // Disable progressive loading for arrow files
   useArrowProgressiveLoading?: boolean;
@@ -73,6 +77,12 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
       mapLibUrl: 'https://www.mapbox.com/'
     }
   },
+
+  // mapStyles: DEFAULT_MAPBOX_STYLES,
+  // defaultMapStyle: 'dark',
+
+  mapStyles: DEFAULT_MAPLIBRE_STYLES,
+  defaultMapStyle: 'voyager',
 
   plugins: [],
   // The default table class is KeplerTable.

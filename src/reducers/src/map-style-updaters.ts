@@ -7,6 +7,7 @@ import Console from 'global/console';
 
 // Utils
 import {
+  getApplicationConfig,
   getDefaultLayerGroupVisibility,
   getStyleDownloadUrl,
   mergeLayerGroupVisibility,
@@ -76,10 +77,10 @@ const getDefaultState = (): MapStyle => {
   const topLayerGroups = {};
 
   return {
-    styleType: DEFAULT_BASE_MAP_STYLE,
+    styleType: getApplicationConfig().defaultMapStyle || DEFAULT_BASE_MAP_STYLE,
     visibleLayerGroups,
     topLayerGroups,
-    mapStyles: DEFAULT_MAP_STYLES.reduce(
+    mapStyles: (getApplicationConfig().mapStyles || DEFAULT_MAP_STYLES).reduce(
       (accu, curr) => ({
         ...accu,
         [curr.id]: curr

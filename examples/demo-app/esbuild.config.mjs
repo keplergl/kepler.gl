@@ -278,6 +278,7 @@ function openURL(url) {
         ...config,
         minify: false,
         sourcemap: true,
+        external: ['mapbox-gl'],
         // add alias to resolve libraries so there is only one copy of them
         ...(process.env.NODE_ENV === 'local'
           ? {alias: localAliases}
