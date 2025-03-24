@@ -36,7 +36,7 @@ import RasterIcon from './raster-tile-icon';
 import {
   getDataSourceParams,
   getAvailableMosaics,
-  isCustomUnfoldedStac,
+  isCustomStac,
   getMaxRequests,
   bboxIntersects,
   computeZRange,
@@ -259,7 +259,7 @@ export default class RasterTileLayer extends Layer {
       // 0, and we don't have low-zoom tiles.
       if (
         stac.type === 'Feature' ||
-        (isCustomUnfoldedStac(stac) && stac.id === DATA_SOURCE_IDS.PLANET_NICFI)
+        (isCustomStac(stac) && stac.id === DATA_SOURCE_IDS.PLANET_NICFI)
       ) {
         this.updateMeta({bounds});
       }
@@ -291,7 +291,7 @@ export default class RasterTileLayer extends Layer {
       this.updateLayerVisConfig({preset: availablePresets[0]});
     }
 
-    if (!isCustomUnfoldedStac(stac)) {
+    if (!isCustomStac(stac)) {
       return this;
     }
 
@@ -313,7 +313,7 @@ export default class RasterTileLayer extends Layer {
   validateVisConfig(dataset: KeplerDataset, visConfig) {
     const stac = dataset?.metadata;
 
-    if (!stac || !isCustomUnfoldedStac(stac)) {
+    if (!stac || !isCustomStac(stac)) {
       return {
         ...visConfig,
         // set mosaicId to null

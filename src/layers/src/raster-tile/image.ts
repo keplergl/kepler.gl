@@ -20,7 +20,7 @@ import {
   COLORMAP_TEXTURE_PARAMETERS
 } from './gpu-utils';
 import {
-  isCustomUnfoldedStac,
+  isCustomStac,
   CATEGORICAL_TEXTURE_WIDTH,
   generateCategoricalBitmapArray
 } from './raster-tile-utils';
@@ -227,7 +227,7 @@ async function getSingleAssetSTACRequest(
 
   let useMask = true;
 
-  if (isCustomUnfoldedStac(stac) && stac.id === DATA_SOURCE_IDS.NAIP) {
+  if (isCustomStac(stac) && stac.id === DATA_SOURCE_IDS.NAIP) {
     // This is a hack to allow continuous scrolling for NAIP across original and overview data
     // Original COGs have zoom levels 12-17; overview images have zoom levels 6-12
     if (z < 12 && mosaicId) {
@@ -262,7 +262,7 @@ async function getSingleAssetSTACRequest(
     const planetUrl = getPlanetUrl(options);
     url = planetUrl?.url || null;
     urlParams = planetUrl?.urlParams || null;
-  } else if (isCustomUnfoldedStac(stac) && stac.type !== 'Feature') {
+  } else if (isCustomStac(stac) && stac.type !== 'Feature') {
     // stac is a Collection
     urlParams = getMosaicUrlParams({stac, mosaicId, loadAssetIds, loadBandIndexes, mask: useMask});
     url = getTitilerUrl({stac, useSTACSearching, x, y, z});
@@ -340,7 +340,7 @@ async function getMultiAssetSTACRequest(
       const url = getTitilerUrl({stac, useSTACSearching, x, y, z});
       return {url, params};
     });
-  } else if (isCustomUnfoldedStac(stac) && mosaicId && stac.type !== 'Feature') {
+  } else if (isCustomStac(stac) && mosaicId && stac.type !== 'Feature') {
     requestData = zip3(loadAssetIds, loadBandIndexes, requestMask).map(
       ([assetId, bandIndex, mask]) => {
         const params = getMosaicUrlParams({

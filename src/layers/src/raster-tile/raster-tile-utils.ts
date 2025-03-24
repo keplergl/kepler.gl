@@ -73,8 +73,16 @@ export const dtypeMaxValue: Record<DataTypeOfTheBand, number | null> = {
   other: null
 };
 
-export function isCustomUnfoldedStac(stac: CompleteSTACObject): boolean {
-  return Boolean(stac.unfolded);
+/**
+ * Checks if a STAC collection has a specified flag set.
+ * This function helps determine whether a STAC collection supports custom logic
+ * based on the presence of a specific flag.
+ * @param stac The STAC collection to check.
+ * @param flag The flag to look for in the STAC object.
+ * @returns `true` if the flag is set, otherwise `false`.
+ */
+export function isCustomStac(stac: CompleteSTACObject, flag = 'unfolded'): boolean {
+  return Boolean(stac[flag]);
 }
 
 /**
@@ -87,7 +95,7 @@ export function isCustomUnfoldedStac(stac: CompleteSTACObject): boolean {
  * @return If True, supports custom searching
  */
 export function isSearchableStac(stac: CompleteSTACObject): boolean {
-  return isCustomUnfoldedStac(stac) && stac.id === DATA_SOURCE_IDS.SENTINEL;
+  return isCustomStac(stac) && stac.id === DATA_SOURCE_IDS.SENTINEL;
 
   // return stac.type !== 'Feature' && stac?.providers.some(
   //   provider =>
@@ -97,7 +105,7 @@ export function isSearchableStac(stac: CompleteSTACObject): boolean {
 }
 
 function getZoomRange(stac: CompleteSTACObject): [number, number] {
-  if (isCustomUnfoldedStac(stac) && ZOOM_RANGES[stac.id]) {
+  if (isCustomStac(stac) && ZOOM_RANGES[stac.id]) {
     return ZOOM_RANGES[stac.id];
   }
 
@@ -163,7 +171,7 @@ function getPixelRange(
   let maxPixelValue;
 
   // TODO: define these in STAC metadata
-  if (isCustomUnfoldedStac(stac) && MAX_PIXEL_VALUES[stac.id]) {
+  if (isCustomStac(stac) && MAX_PIXEL_VALUES[stac.id]) {
     maxPixelValue = MAX_PIXEL_VALUES[stac.id];
   } else {
     if (!dtype) {
