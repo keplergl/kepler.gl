@@ -580,7 +580,7 @@ export function getAvailableMosaics(stac: CompleteSTACObject): ConfigOption[] | 
     return null;
   }
 
-  // TODO: codify "Unfolded" STAC extension so that TS understands this attribute
+  // !
   return (stac?.unfolded as {mosaics: ConfigOption[]})?.mosaics;
 }
 

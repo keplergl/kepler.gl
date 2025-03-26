@@ -135,7 +135,7 @@ function getWebGL2TextureParameters(data: NPYLoaderDataTypes): WebGLTextureForma
 }
 
 /**
- * We had a custom request to enable discrete-valued colormaps (e.g. from the output of
+ * Discrete-valued colormaps (e.g. from the output of
  * classification algorithms) in the raster layer. Previously, the values passed to
  * `TEXTURE_MIN_FILTER` and `TEXTURE_MAG_FILTER` were `GL.LINEAR`, which meant that the GPU would
  * linearly interpolate values between two neighboring colormap pixel values. Setting these values
@@ -424,8 +424,7 @@ export function getModules({images, props}: {images: ImageData; props: RenderSub
       // Subtract off the local min
       moduleProps.linearRescaleOffset = -min;
 
-      // Clamp to [0, 1]
-      // I think this is done automatically?
+      // Clamp to [0, 1] done automatically?
     } else {
       modules.push(linearRescale);
       moduleProps.linearRescaleScaler = 1 / maxPixelValue;

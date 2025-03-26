@@ -11,9 +11,9 @@ export enum DataConnectionType {
 const dataProxyAPI = null;
 type PlanetDataConnection = any;
 
-// import {Item, Collection} from '@fsq/stac-types';
-type Item = any;
-type Collection = any;
+import {StacTypes} from '@kepler.gl/types';
+type Item = StacTypes.STACItem;
+type Collection = StacTypes.STACCollection;
 
 import {RuntimeConfig} from '@kepler.gl/constants';
 

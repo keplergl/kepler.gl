@@ -4,13 +4,6 @@
 import React, {useEffect, useMemo} from 'react';
 import styled from 'styled-components';
 
-import {capitalizeFirstLetter} from '@kepler.gl/utils';
-
-// import {EOBand} from '@fsq/stac-types';
-type EOBand = any;
-
-const STAC_SEARCH_UI_ENABLED = false;
-
 import {
   PanelLabel,
   PanelLabelWrapper,
@@ -25,11 +18,6 @@ import {
   LayerConfigGroupFactory,
   Switch
 } from '@kepler.gl/components';
-import {FormattedMessage} from '@kepler.gl/localization';
-
-import {CATEGORICAL_COLORMAP_ID, PRESET_OPTIONS} from '@kepler.gl/layers';
-import {getColorMapListItemComponent} from './raster-tile-colormap-list-item';
-import {RasterTileLayer} from '@kepler.gl/layers';
 import {
   filterAvailablePresets,
   getAvailableMosaics,
@@ -39,10 +27,23 @@ import {
   isColormapAllowed,
   isFilterAllowed,
   isRescalingAllowed,
-  isSearchableStac
+  isSearchableStac,
+  CompleteSTACObject,
+  DataSourceParams,
+  PresetOption,
+  RasterTileLayer,
+  CATEGORICAL_COLORMAP_ID,
+  PRESET_OPTIONS
 } from '@kepler.gl/layers';
-import {CompleteSTACObject, DataSourceParams, PresetOption} from '@kepler.gl/layers';
+import {FormattedMessage} from '@kepler.gl/localization';
+import {capitalizeFirstLetter} from '@kepler.gl/utils';
 import {KeplerTable as KeplerDataset} from '@kepler.gl/table';
+import type {StacTypes} from '@kepler.gl/types';
+
+import {getColorMapListItemComponent} from './raster-tile-colormap-list-item';
+
+type EOBand = StacTypes.Band;
+const STAC_SEARCH_UI_ENABLED = false;
 
 const StyledVisConfigSwitch = styled.div`
   display: flex;
@@ -185,7 +186,7 @@ function RasterTileLayerConfiguratorFactory(
   const STACCheckConfiguratorWrapper = ({layer, visConfiguratorProps, dataset}: Props) => {
     const stac = dataset?.metadata;
 
-    // If no dataset is loaded into Studio, stac can be undefined
+    // If no dataset is loaded into Kepler, stac can be undefined
     if (!stac) {
       return null;
     }
@@ -215,12 +216,11 @@ function RasterTileLayerConfiguratorFactory(
     const availablePresets = useMemo(() => filterAvailablePresets(stac, PRESET_OPTIONS), [stac]);
     const availableMosaics = useMemo(() => getAvailableMosaics(stac), [stac]);
 
-    // For now it's possible that non-raster metadata will be passed to the raster configurator, so
-    // availablePresets may be null
+    // it's possible that non-raster metadata will be passed to the raster configurator, so availablePresets may be null
     const presetOptions = useMemo(
       () =>
         (
-          layer.visConfigSettings.preset.options as {
+          layer.visConfigSettings.preset.options as unknown as {
             id: string;
             label: string;
           }[]
@@ -229,7 +229,12 @@ function RasterTileLayerConfiguratorFactory(
     );
     const singleBandOptions = useMemo(() => getBandSelectorOptions(stac), [stac]);
     const colormapOptions = useMemo(() => {
-      const options = [...layer.visConfigSettings.colormapId.options];
+      const options = [
+        ...(layer.visConfigSettings.colormapId.options as unknown as {
+          id: string;
+          label: string;
+        }[])
+      ];
       const categoricalListItem = getCategoricalColormapListItem(categoricalColorMap);
       if (categoricalListItem) {
         options.push(categoricalListItem);
@@ -243,7 +248,6 @@ function RasterTileLayerConfiguratorFactory(
     const filterAllowed = isFilterAllowed(bandCombination);
 
     // Here we show the UI when useSTACSearching is explicitly set to true so that the UI shows up
-    // from the Map SDK when forcing STAC searching to be turned on
     const stacSearchAllowed = isSearchableStac(stac) || useSTACSearching;
 
     const selectedColormap =

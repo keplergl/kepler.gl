@@ -405,7 +405,7 @@ export default class RasterTileLayer extends Layer {
 
     const {visConfig} = this.config;
     const {id, opacity, visible} = this.getDefaultDeckLayerProps(opts);
-    const {dragRotate, globe} = mapState;
+    const {dragRotate} = mapState;
 
     const {
       preset,
@@ -432,14 +432,10 @@ export default class RasterTileLayer extends Layer {
 
     const shouldLoadTerrain = Boolean(enableTerrain && dragRotate);
 
-    // This is a hack to support the existing Microsoft Map SDK Demo, where we select between
-    // different mosaics through the Map SDK. The choice was previously made to leave the mosaic
-    // selection (mosaicId) as part of the visConfig instead of the dataset metadata, so that it's
-    // easier to switch between different time periods in the same dataset. However at the moment
-    // the Map SDK _addTileset can only modify opts.data, not the visConfig itself.
-    //
-    // Most of the time this block will never be triggered, because other than temporarily from the
-    // Map SDK, landsatMosaic should never exist in a STAC object
+    // This is a hack, where we select between different mosaics.
+    // Mosaic selection (mosaicId) as part of the visConfig instead of the dataset metadata, so that it's
+    // easier to switch between different time periods in the same dataset.
+    // Most of the time this block will never be triggered, landsatMosaic should never exist in a STAC object.
     let {mosaicId} = visConfig;
     if (stac.id === DATA_SOURCE_IDS.LANDSAT && stac.landsatMosaic) {
       mosaicId = stac.landsatMosaic;
@@ -593,8 +589,7 @@ export default class RasterTileLayer extends Layer {
     onTileUpdate?.({status: 'loading', ...tileInfo, remainingTiles: ++tilesBeingLoaded});
 
     // Wrap loading images into a try/catch because tiles that are only briefly in view will be
-    // aborted. The `AbortController.abort()` creates a DOMException error, and the Sentry popup will
-    // show on any unhandled exception.
+    // aborted. The `AbortController.abort()` creates a DOMException error.
     // Note that since loading is async, try/catch will only work when awaited inside the try block
     try {
       const [images, terrain] = await Promise.all([
@@ -693,7 +688,6 @@ function renderSubLayers(props: RenderSubLayersProps): DeckLayer<any> | DeckLaye
         modules,
         moduleProps,
         bounds: [west, south, east, north],
-        // Used for GlobeView
         _imageCoordinateSystem: COORDINATE_SYSTEM.CARTESIAN
       });
 }

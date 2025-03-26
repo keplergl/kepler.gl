@@ -5,27 +5,15 @@ import {_Tile2DHeader} from '@deck.gl/geo-layers/typed';
 import {TypedArray} from '@loaders.gl/loader-utils/src/types';
 import {Texture2DProps} from '@luma.gl/webgl';
 
-/*
-import {
-  Item,
-  Collection,
-  EOExtension,
-  ItemAssetsExtension,
-  RasterExtension,
-  DataTypeOfTheBand
-} from '@fsq/stac-types';
-*/
-
-type Item = any;
-type Collection = any;
-type EOExtension = any;
-type ItemAssetsExtension = any;
-type RasterExtension = any;
-type DataTypeOfTheBand = any;
-
-import type {ColorMap} from '@kepler.gl/types';
-
 import {KeplerTable as KeplerDataset} from '@kepler.gl/table';
+import type {ColorMap, StacTypes} from '@kepler.gl/types';
+
+type Item = StacTypes.STACItem;
+type Collection = StacTypes.STACCollection;
+type EOExtension = StacTypes.EOExtension;
+type ItemAssetsExtension = StacTypes.ItemAssetsDefinitionExtension;
+type RasterExtension = StacTypes.RasterExtension;
+type DataTypeOfTheBand = StacTypes.DataTypeOfTheBand;
 
 export type STACObject = Item | Collection;
 

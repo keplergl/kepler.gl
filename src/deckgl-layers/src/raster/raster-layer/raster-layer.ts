@@ -36,7 +36,7 @@ export default class RasterLayer extends BitmapLayer<RasterLayerAddedProps> {
     // Only initialize shader hook functions _once globally_
     // Since the program manager is shared across all layers, but many layers
     // might be created, this solves the performance issue of always adding new
-    // hook functions. See #22
+    // hook functions.
     if (!programManager._hookFunctions.includes(fsStr1)) {
       programManager.addShaderHook(fsStr1);
     }
@@ -81,8 +81,6 @@ export default class RasterLayer extends BitmapLayer<RasterLayerAddedProps> {
       .draw();
   }
 
-  // Typed as any upstream
-  // https://github.com/visgl/deck.gl/blob/3ffdc5ef90ccf3d5699186f02c8807caadf70e3a/modules/core/src/lib/layer.ts#L440
   getShaders(): any {
     const {gl} = this.context;
     const {modules = []} = this.props;

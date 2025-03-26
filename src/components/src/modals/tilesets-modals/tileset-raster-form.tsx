@@ -96,12 +96,9 @@ const RasterTileForm: React.FC<RasterTileFormProps> = ({setResponse}) => {
     setCurrentUrl(value);
   }, []);
 
-  // Note(Kyle): So the metadata is actually being fetched twice? Once here to display in the modal,
-  // and another time in DOWNLOAD_RASTER_METADATA_TASK?
-  // Note(Kyle): As of Sep 2022, we've added support for rendering STAC Collections through the Map
-  // SDK, but rendering a STAC Collection requires a STAC search server that has the collection's
-  // Item data indexed. So we don't want to permit collections to be added through our UI at this
-  // point.
+  // Note: There is support for rendering STAC Collections,
+  // but rendering a STAC Collection requires a STAC search server that has the collection's
+  // Item data indexed. So we don't want to permit collections to be added through this UI at this point.
   const {
     data: metadata,
     loading,
@@ -149,7 +146,7 @@ const RasterTileForm: React.FC<RasterTileFormProps> = ({setResponse}) => {
           value={metadataUrl ?? undefined}
           onChange={onMetadataUrlChange}
         />
-        <TilesetInputDescription>Supports STAC JSON</TilesetInputDescription>
+        <TilesetInputDescription>Supports STAC JSON (Items only)</TilesetInputDescription>
       </div>
     </TilesetInputContainer>
   );

@@ -110,6 +110,6 @@ Raster layers are used to show satellite and aerial imagery. They allow you to w
 Supported URL templates:
 
 - Raster layers can reference user-provided, custom Cloud-Optimized GeoTIFFs (COG) by providing standardized Spatio-Temporal Asset Catalog (STAC) metadata.
-- The metadata file must be a valid STAC Item, version 1.0.0 or higher. STAC Collections and Catalogs are not currently supported.
+- The metadata file must be a valid **STAC Item**, version 1.0.0 or higher. STAC Collections and Catalogs are not currently supported.
 - Raster data referenced in STAC assets should be Cloud-Optimized GeoTIFFs and need to be publicly accessible via HTTPS.
 - STAC item must have Electro-Optical and Raster extensions, and at least one asset must have both eo:bands and raster:bands information. common_name must be provided in eo:bands and data_type must be provided in raster:bands
