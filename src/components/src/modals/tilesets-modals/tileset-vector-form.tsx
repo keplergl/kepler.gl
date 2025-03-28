@@ -175,7 +175,10 @@ const TilesetVectorForm: React.FC<TilesetVectorFormProps> = ({setResponse}) => {
 
   useEffect(() => {
     if (metadata) {
-      setTileName((metadata as VectorTileMetadata).name || '');
+      const name = (metadata as VectorTileMetadata).name;
+      if (name) {
+        setTileName(name);
+      }
     }
   }, [metadata]);
 
