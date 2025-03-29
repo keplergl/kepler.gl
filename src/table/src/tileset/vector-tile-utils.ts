@@ -69,6 +69,7 @@ export type VectorTileMetadata = {
   name?: string;
   description?: string;
   fields: VectorTileField[];
+  pmtilesInRasterFormat?: boolean;
 };
 
 type TilesetMetadata = VectorTileMetadata;
@@ -231,6 +232,11 @@ function getMetaUrlMapbox(tileUrl = ''): string {
 function parseMetadataTileJSON(metadata: PMTilesMetadata | TileJSON): TilesetMetadata | null {
   const parsed = parseMetadataTippecanoeFromDataSource(metadata);
   if (!parsed) return null;
+
+  // PMTiles can potentially be of RasterTile format
+  parsed.pmtilesInRasterFormat =
+    (metadata as PMTilesMetadata).tileMIMEType !== 'application/vnd.mapbox-vector-tile';
+
   // Fields already parsed from `json` property
   if (parsed.fields?.length) {
     return parsed;
@@ -708,7 +714,8 @@ export const getFieldsFromTile = async ({
       metadata &&
       metadata.fields?.length === 0 &&
       metadata.minZoom &&
-      metadata.bounds?.length === 4
+      metadata.bounds?.length === 4 &&
+      !metadata.pmtilesInRasterFormat
     ) {
       const lon = (metadata.bounds[0] + metadata.bounds[2]) / 2;
       const lat = (metadata.bounds[1] + metadata.bounds[3]) / 2;

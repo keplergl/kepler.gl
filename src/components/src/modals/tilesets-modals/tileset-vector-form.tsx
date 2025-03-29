@@ -19,6 +19,8 @@ import {default as useFetchVectorTileMetadata} from '../../hooks/use-fetch-vecto
 import {DatasetCreationAttributes, MetaResponse} from './common';
 import {InputLight} from '../../common';
 
+import {getDatasetAttributesFromRasterTile} from './tileset-raster-form';
+
 const TilesetInputContainer = styled.div`
   display: grid;
   grid-template-rows: repeat(3, 1fr);
@@ -143,11 +145,17 @@ const TilesetVectorForm: React.FC<TilesetVectorFormProps> = ({setResponse}) => {
 
   useEffect(() => {
     if (tileName && tileUrl) {
-      const dataset = getDatasetAttributesFromVectorTile({
-        name: tileName,
-        dataUrl: tileUrl,
-        metadataUrl: metadataUrl ?? undefined
-      });
+      // pmtiles can be of raster format, so try to create a raster tile dataset instead
+      const dataset = metadata?.pmtilesInRasterFormat
+        ? getDatasetAttributesFromRasterTile({
+            name: tileName,
+            metadataUrl: tileUrl
+          })
+        : getDatasetAttributesFromVectorTile({
+            name: tileName,
+            dataUrl: tileUrl,
+            metadataUrl: metadataUrl ?? undefined
+          });
       setResponse({
         metadata,
         dataset,

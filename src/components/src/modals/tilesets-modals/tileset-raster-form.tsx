@@ -4,8 +4,8 @@
 import React, {useCallback, useEffect, useState} from 'react';
 import styled from 'styled-components';
 
-import {DatasetType, RasterTileDatasetMetadata} from '@kepler.gl/constants';
-import {JsonObjectOrArray, Merge} from '@kepler.gl/types';
+import {DatasetType} from '@kepler.gl/constants';
+import {JsonObjectOrArray} from '@kepler.gl/types';
 import {parseRasterMetadata} from '@kepler.gl/table';
 
 import {default as useFetchJson} from '../../hooks/use-fetch-json';
@@ -24,31 +24,6 @@ const TilesetInputDescription = styled.div`
   color: ${props => props.theme.AZURE200};
   font-size: 11px;
 `;
-
-export type RasterTilesetFormData = {
-  name: string;
-  metadataUrl?: string;
-};
-
-export type RasterTileDatasetCreationAttributes = Merge<
-  DatasetCreationAttributes,
-  {
-    metadata: RasterTileDatasetMetadata;
-  }
->;
-
-export function getDatasetAttributesFromVectorTile({
-  name,
-  metadataUrl
-}): RasterTileDatasetCreationAttributes {
-  return {
-    name,
-    type: DatasetType.RASTER_TILE,
-    metadata: {
-      metadataUrl: metadataUrl
-    }
-  };
-}
 
 export type RasterTilesetMeta = {
   name: string;
