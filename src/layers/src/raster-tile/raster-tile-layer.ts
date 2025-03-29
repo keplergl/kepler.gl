@@ -227,12 +227,10 @@ export default class RasterTileLayer extends Layer {
     return Boolean(this.type && this.config.isVisible);
   }
 
-  // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types,  @typescript-eslint/no-unused-vars
-  formatLayerData(datasets, oldLayerData) {
+  formatLayerData(datasets) {
     const dataset = datasets[this.config.dataId || ''];
-
     if (!dataset) {
-      return null;
+      return {};
     }
 
     // call updateData to updateLayerMeta
@@ -243,7 +241,7 @@ export default class RasterTileLayer extends Layer {
       this.updateLayerMeta(dataset);
     }
 
-    return dataset;
+    return {dataset};
   }
 
   updateLayerMeta(dataset: KeplerRasterDataset): void {
@@ -395,7 +393,7 @@ export default class RasterTileLayer extends Layer {
   // generate a deck layer
   renderLayer(opts): TileLayer<any>[] {
     const {data, mapState} = opts;
-    const stac = data?.metadata;
+    const stac = data?.dataset?.metadata;
 
     // If a tabular dataset is loaded, and then the layer type is switched from Point to Raster Tile
     // layer, this `stac` object will exist but will not be raster metadata

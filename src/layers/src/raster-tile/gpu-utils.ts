@@ -31,7 +31,8 @@ const {
   colormap: colormapModule,
   filter,
   saturation,
-  reorderBands
+  reorderBands,
+  rgbaImage
 } = RasterWebGL;
 
 import {getLoaderOptions} from '@kepler.gl/table';
@@ -387,6 +388,14 @@ export function getModules({images, props}: {images: ImageData; props: RenderSub
 
   // Array of luma.gl WebGL modules to pass to the RasterLayer
   const modules: ShaderModule[] = [];
+
+  // use rgba image directly
+  if (images.imageRgba) {
+    modules.push(rgbaImage);
+
+    // no support for other modules atm for direct rgba mode
+    return {modules, moduleProps};
+  }
 
   if (Array.isArray(images.imageBands) && images.imageBands.length > 0) {
     modules.push(getCombineBandsModule(images.imageBands));

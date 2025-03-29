@@ -212,6 +212,7 @@ export interface ImageData {
   imageColormap?: Texture2DProps | null;
   imageMask?: Texture2DProps | null;
   imagePan?: Texture2DProps | null;
+  imageRgba?: Texture2DProps | null;
 }
 
 export type AssetRequestData = {
