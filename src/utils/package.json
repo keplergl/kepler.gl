@@ -62,6 +62,7 @@
     "lodash.isequal": "^4.5.0",
     "lodash.memoize": "^4.1.2",
     "lodash.throttle": "^4.1.1",
+    "mapbox-gl": "^1.13.1",
     "maplibre-gl": "^3.6.2",
     "maplibregl-mapbox-request-transformer": "^0.0.2",
     "mini-svg-data-uri": "^1.0.3",
