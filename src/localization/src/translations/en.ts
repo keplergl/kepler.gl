@@ -322,8 +322,7 @@ export default {
       unfilteredData: 'Unfiltered Data',
       fileCount: '{fileCount} Files',
       rowCount: '{rowCount} Rows',
-      vectorTileWarning: "* Export Data for Vector Tile datasets isn't supported",
-      rasterTileWarning: "* Export Data for Raster Tile datasets isn't supported"
+      tiledDatasetWarning: "* Export Data for Tiled datasets isn't supported"
     },
     deleteData: {
       warning: 'you are going to delete this dataset. It will affect {length} layers'

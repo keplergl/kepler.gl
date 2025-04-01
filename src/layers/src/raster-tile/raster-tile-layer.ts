@@ -233,7 +233,7 @@ export default class RasterTileLayer extends Layer {
     return Boolean(this.type && this.config.isVisible);
   }
 
-  formatLayerData(datasets: Datasets, oldLayerData: any) {
+  formatLayerData(datasets: Datasets, oldLayerData?: any) {
     const {dataId} = this.config;
     if (!notNullorUndefined(dataId)) {
       return {};
