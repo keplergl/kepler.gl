@@ -543,14 +543,18 @@ export const StyledMapContainer = styled.div`
   }
 `;
 
-export type StyledAttrbutionProps = {
+export type StyledAttributionProps = {
   mapLibCssClass: string;
   mapLibAttributionCssClass: string;
 };
 
-export const StyledAttrbution = styled.div.attrs<StyledAttrbutionProps>(props => ({
-  className: props.mapLibAttributionCssClass
-}))<StyledAttrbutionProps>`
+export const StyledAttribution = styled.div
+  .withConfig({
+    shouldForwardProp: prop => !['mapLibCssClass', 'mapLibAttributionCssClass'].includes(prop)
+  })
+  .attrs<StyledAttributionProps>(props => ({
+    className: props.mapLibAttributionCssClass
+  }))<StyledAttributionProps>`
   bottom: 0;
   right: 0;
   position: absolute;
@@ -722,9 +726,13 @@ interface MapControlButtonProps {
   active?: boolean;
 }
 
-export const MapControlButton = styled(Button).attrs(props => ({
-  className: classnames('map-control-button', props.className)
-}))<MapControlButtonProps>`
+export const MapControlButton = styled(Button)
+  .withConfig({
+    shouldForwardProp: prop => !['active'].includes(prop)
+  })
+  .attrs(props => ({
+    className: classnames('map-control-button', props.className)
+  }))<MapControlButtonProps>`
   box-shadow: 0 6px 12px 0 rgba(0, 0, 0, 0.16);
   height: 32px;
   width: 32px;
