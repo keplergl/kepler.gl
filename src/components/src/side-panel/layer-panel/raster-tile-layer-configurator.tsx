@@ -287,6 +287,22 @@ function RasterTileLayerConfiguratorFactory(
       }
     }, [visConfiguratorProps, dynamicColor, isDynamicColorsOnly]);
 
+    // For PMTiles in raster format, only show opacity and terrain options for now
+    if (stac.pmtilesInRasterFormat) {
+      return (
+        <StyledLayerConfigurator>
+          <LayerConfigGroup {...visConfiguratorProps} label="Visual Settings" collapsible={false}>
+            <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
+          </LayerConfigGroup>
+          ;
+          <LayerConfigGroup {...visConfiguratorProps} label="Terrain">
+            <VisConfigSwitch {...visConfiguratorProps} {...layer.visConfigSettings.enableTerrain} />
+          </LayerConfigGroup>
+          ;
+        </StyledLayerConfigurator>
+      );
+    }
+
     return (
       <StyledLayerConfigurator>
         {availablePresets && (
