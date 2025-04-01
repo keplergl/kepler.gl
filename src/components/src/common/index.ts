@@ -30,7 +30,7 @@ export {
   SidePanelDivider,
   SidePanelSection,
   SpaceBetweenFlexbox,
-  StyledAttrbution,
+  StyledAttribution,
   StyledExportSection,
   StyledFilterContent,
   StyledFilteredOption,

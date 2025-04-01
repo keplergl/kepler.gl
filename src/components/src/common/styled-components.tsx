@@ -217,35 +217,35 @@ export const Button = styled.button.attrs(props => ({
     props.negative
       ? props.theme.negativeBtnBgd
       : props.secondary
-      ? props.theme.secondaryBtnBgd
-      : props.link
-      ? props.theme.linkBtnBgd
-      : props.floating
-      ? props.theme.floatingBtnBgd
-      : props.cta
-      ? props.theme.ctaBtnBgd
-      : props.theme.primaryBtnBgd};
+        ? props.theme.secondaryBtnBgd
+        : props.link
+          ? props.theme.linkBtnBgd
+          : props.floating
+            ? props.theme.floatingBtnBgd
+            : props.cta
+              ? props.theme.ctaBtnBgd
+              : props.theme.primaryBtnBgd};
   border-radius: ${props => props.theme.primaryBtnRadius};
   color: ${props =>
     props.negative
       ? props.theme.negativeBtnColor
       : props.secondary
-      ? props.theme.secondaryBtnColor
-      : props.link
-      ? props.theme.linkBtnColor
-      : props.floating
-      ? props.theme.floatingBtnColor
-      : props.cta
-      ? props.theme.ctaBtnColor
-      : props.theme.primaryBtnColor};
+        ? props.theme.secondaryBtnColor
+        : props.link
+          ? props.theme.linkBtnColor
+          : props.floating
+            ? props.theme.floatingBtnColor
+            : props.cta
+              ? props.theme.ctaBtnColor
+              : props.theme.primaryBtnColor};
   cursor: pointer;
   display: inline-flex;
   font-size: ${props =>
     props.large
       ? props.theme.primaryBtnFontSizeLarge
       : props.small
-      ? props.theme.primaryBtnFontSizeSmall
-      : props.theme.primaryBtnFontSizeDefault};
+        ? props.theme.primaryBtnFontSizeSmall
+        : props.theme.primaryBtnFontSizeDefault};
   font-weight: 500;
   font-family: ${props => props.theme.btnFontFamily};
   justify-content: center;
@@ -263,12 +263,12 @@ export const Button = styled.button.attrs(props => ({
     props.negative
       ? props.theme.negativeBtnBorder
       : props.secondary
-      ? props.theme.secondaryBtnBorder
-      : props.floating
-      ? props.theme.floatingBtnBorder
-      : props.link
-      ? props.theme.linkBtnBorder
-      : props.theme.primaryBtnBorder};
+        ? props.theme.secondaryBtnBorder
+        : props.floating
+          ? props.theme.floatingBtnBorder
+          : props.link
+            ? props.theme.linkBtnBorder
+            : props.theme.primaryBtnBorder};
   &:hover,
   &:focus,
   &:active,
@@ -277,26 +277,26 @@ export const Button = styled.button.attrs(props => ({
       props.negative
         ? props.theme.negativeBtnBgdHover
         : props.secondary
-        ? props.theme.secondaryBtnBgdHover
-        : props.link
-        ? props.theme.linkBtnActBgdHover
-        : props.floating
-        ? props.theme.floatingBtnBgdHover
-        : props.cta
-        ? props.theme.ctaBtnBgdHover
-        : props.theme.primaryBtnBgdHover};
+          ? props.theme.secondaryBtnBgdHover
+          : props.link
+            ? props.theme.linkBtnActBgdHover
+            : props.floating
+              ? props.theme.floatingBtnBgdHover
+              : props.cta
+                ? props.theme.ctaBtnBgdHover
+                : props.theme.primaryBtnBgdHover};
     color: ${props =>
       props.negative
         ? props.theme.negativeBtnActColor
         : props.secondary
-        ? props.theme.secondaryBtnActColor
-        : props.link
-        ? props.theme.linkBtnActColor
-        : props.floating
-        ? props.theme.floatingBtnActColor
-        : props.cta
-        ? props.theme.ctaBtnActColor
-        : props.theme.primaryBtnActColor};
+          ? props.theme.secondaryBtnActColor
+          : props.link
+            ? props.theme.linkBtnActColor
+            : props.floating
+              ? props.theme.floatingBtnActColor
+              : props.cta
+                ? props.theme.ctaBtnActColor
+                : props.theme.primaryBtnActColor};
   }
 
   svg {
@@ -543,14 +543,18 @@ export const StyledMapContainer = styled.div`
   }
 `;
 
-export type StyledAttrbutionProps = {
+export type StyledAttributionProps = {
   mapLibCssClass: string;
   mapLibAttributionCssClass: string;
 };
 
-export const StyledAttrbution = styled.div.attrs<StyledAttrbutionProps>(props => ({
-  className: props.mapLibAttributionCssClass
-}))<StyledAttrbutionProps>`
+export const StyledAttribution = styled.div
+  .withConfig({
+    shouldForwardProp: prop => !['mapLibCssClass', 'mapLibAttributionCssClass'].includes(prop)
+  })
+  .attrs<StyledAttributionProps>(props => ({
+    className: props.mapLibAttributionCssClass
+  }))<StyledAttributionProps>`
   bottom: 0;
   right: 0;
   position: absolute;
@@ -653,19 +657,32 @@ export const StyledExportSection = styled.div<StyledExportSectionProps>`
       width: 250px;
       height: 36px;
 
-      background-image: linear-gradient(45deg, transparent 50%, gray 50%),
+      background-image:
+        linear-gradient(45deg, transparent 50%, gray 50%),
         linear-gradient(135deg, gray 50%, transparent 50%), linear-gradient(to right, #ccc, #ccc);
-      background-position: calc(100% - 20px) calc(1em + 2px), calc(100% - 15px) calc(1em + 2px),
+      background-position:
+        calc(100% - 20px) calc(1em + 2px),
+        calc(100% - 15px) calc(1em + 2px),
         calc(100% - 2.5em) 4.5em;
-      background-size: 5px 5px, 5px 5px, 1px 1.5em;
+      background-size:
+        5px 5px,
+        5px 5px,
+        1px 1.5em;
       background-repeat: no-repeat;
     }
 
     select:focus {
-      background-image: linear-gradient(45deg, green 50%, transparent 50%),
+      background-image:
+        linear-gradient(45deg, green 50%, transparent 50%),
         linear-gradient(135deg, transparent 50%, green 50%), linear-gradient(to right, #ccc, #ccc);
-      background-position: calc(100% - 15px) 1em, calc(100% - 20px) 1em, calc(100% - 2.5em) 4.5em;
-      background-size: 5px 5px, 5px 5px, 1px 1.5em;
+      background-position:
+        calc(100% - 15px) 1em,
+        calc(100% - 20px) 1em,
+        calc(100% - 2.5em) 4.5em;
+      background-size:
+        5px 5px,
+        5px 5px,
+        1px 1.5em;
       background-repeat: no-repeat;
       border-color: green;
       outline: 0;
@@ -722,9 +739,13 @@ interface MapControlButtonProps {
   active?: boolean;
 }
 
-export const MapControlButton = styled(Button).attrs(props => ({
-  className: classnames('map-control-button', props.className)
-}))<MapControlButtonProps>`
+export const MapControlButton = styled(Button)
+  .withConfig({
+    shouldForwardProp: prop => !['active'].includes(prop)
+  })
+  .attrs(props => ({
+    className: classnames('map-control-button', props.className)
+  }))<MapControlButtonProps>`
   box-shadow: 0 6px 12px 0 rgba(0, 0, 0, 0.16);
   height: 32px;
   width: 32px;

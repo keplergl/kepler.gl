@@ -18,14 +18,14 @@ import {Datasets} from '@kepler.gl/table';
 import {MapStateActions, UIStateActions} from '@kepler.gl/actions';
 
 interface StyledMapControlProps {
-  top?: number;
+  $top?: number;
 }
 
 const StyledMapControl = styled.div<StyledMapControlProps>`
   right: 0;
   padding: ${props => props.theme.mapControl.padding}px;
   z-index: 10;
-  margin-top: ${props => props.top || 0}px;
+  margin-top: ${props => props.$top || 0}px;
   position: absolute;
   display: grid;
   row-gap: 8px;
@@ -122,7 +122,7 @@ function MapControlFactory(
       ...restProps
     };
     return (
-      <StyledMapControl className="map-control" top={top}>
+      <StyledMapControl className="map-control" $top={top}>
         {actionComponents.map((ActionComponent, index) => (
           <ActionComponent key={index} className="map-control-action" {...actionComponentProps} />
         ))}
