@@ -362,7 +362,13 @@ export function generateCategoricalColormapTexture(
 // TODO: would probably be simpler to only pass in the props actually used by this function. That
 // would mean a smaller object than RenderSubLayersProps
 // eslint-disable-next-line max-statements, complexity
-export function getModules({images, props}: {images: ImageData; props: RenderSubLayersProps}): {
+export function getModules({
+  images,
+  props
+}: {
+  images: Partial<ImageData>;
+  props: RenderSubLayersProps;
+}): {
   modules: ShaderModule[];
   moduleProps: Record<string, any>;
 } {

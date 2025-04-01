@@ -3,10 +3,12 @@
 
 import {COORDINATE_SYSTEM, Layer as DeckLayer} from '@deck.gl/core/typed';
 import {TileLayer, GeoBoundingBox} from '@deck.gl/geo-layers/typed';
+import {PMTilesSource, PMTilesTileSource} from '@loaders.gl/pmtiles';
 import {Texture2DProps} from '@luma.gl/webgl';
 import memoize from 'lodash.memoize';
 import {Matrix4} from 'math.gl';
 
+import {PathLayer} from '@deck.gl/layers/typed';
 import {DatasetType, RuntimeConfig, LAYER_TYPES} from '@kepler.gl/constants';
 import {RasterLayer, RasterMeshLayer} from '@kepler.gl/deckgl-layers';
 import {Layer, VisualChannel} from '@kepler.gl/layers';
@@ -22,6 +24,7 @@ import {
   VisConfigNumber
 } from '@kepler.gl/types';
 
+import {notNullorUndefined} from '@kepler.gl/common-utils';
 import {KeplerTable as KeplerDataset} from '@kepler.gl/table';
 
 import {
@@ -56,7 +59,8 @@ import {
   KeplerRasterDataset,
   Tile2DHeader,
   PresetOption,
-  CompleteSTACObject
+  CompleteSTACObject,
+  TerrainData
 } from './types';
 
 import {FindDefaultLayerPropsReturnValue} from '../layer-utils';
@@ -91,7 +95,12 @@ const devicePixelRatio: number = Math.min(
 // Global counter that represents the number of tiles currently being loaded across all the raster tile layers
 let tilesBeingLoaded = 0;
 
-export type RasterTileLayerVisConfigSettings = {
+export type RasterTileLayerVisConfigCommonSettings = {
+  opacity: VisConfigNumber;
+  enableTerrain: VisConfigBoolean;
+};
+
+export type RasterTileLayerVisConfigSettings = RasterTileLayerVisConfigCommonSettings & {
   preset: VisConfigSelection;
   mosaicId: VisConfigSelection;
   useSTACSearching: VisConfigBoolean;
@@ -109,10 +118,8 @@ export type RasterTileLayerVisConfigSettings = {
   saturationValue: VisConfigNumber;
   filterEnabled: VisConfigBoolean;
   filterRange: VisConfigRange;
-  opacity: VisConfigNumber;
   _stacQuery: VisConfigInput;
   singleBandName: VisConfigSelection;
-  enableTerrain: VisConfigBoolean;
 };
 
 export default class RasterTileLayer extends Layer {
@@ -228,10 +235,11 @@ export default class RasterTileLayer extends Layer {
   }
 
   formatLayerData(datasets) {
-    const dataset = datasets[this.config.dataId || ''];
-    if (!dataset) {
+    const {dataId} = this.config;
+    if (!notNullorUndefined(dataId)) {
       return {};
     }
+    const dataset = datasets[dataId];
 
     // call updateData to updateLayerMeta
     const dataUpdateTriggers = this.getDataUpdateTriggers(dataset);
@@ -241,16 +249,28 @@ export default class RasterTileLayer extends Layer {
       this.updateLayerMeta(dataset);
     }
 
-    return {dataset};
+    let tileSource: PMTilesTileSource | null = null;
+    if (dataset.metadata?.pmtilesInRasterFormat) {
+      const metadataUrl = dataset.metadata.metadataUrl;
+      tileSource = metadataUrl ? PMTilesSource.createDataSource(metadataUrl, {}) : null;
+    }
+
+    return {dataset, tileSource};
   }
 
   updateLayerMeta(dataset: KeplerRasterDataset): void {
     if (dataset.type !== DatasetType.RASTER_TILE) {
       return;
     }
-    const stac = dataset?.metadata;
-    const bounds = getSTACBounds(stac);
 
+    const stac = dataset.metadata;
+    if (stac.pmtilesInRasterFormat) {
+      return this.updateMeta({
+        bounds: stac.bounds
+      });
+    }
+
+    const bounds = getSTACBounds(stac);
     if (bounds) {
       // If either a STAC Item (i.e. stac.type === 'Feature') or Planet NICFI, then set map bounds.
       // But we don't want to set bounds for Landsat or Sentinel because it would zoom out to zoom
@@ -271,6 +291,10 @@ export default class RasterTileLayer extends Layer {
     const stac = dataset?.metadata;
 
     if (!stac) {
+      return this;
+    }
+
+    if (stac.pmtilesInRasterFormat) {
       return this;
     }
 
@@ -392,6 +416,15 @@ export default class RasterTileLayer extends Layer {
 
   // generate a deck layer
   renderLayer(opts): TileLayer<any>[] {
+    const {data} = opts;
+
+    if (data?.dataset?.metadata?.pmtilesInRasterFormat) {
+      return this.renderPMTilesLayer(opts);
+    }
+    return this.renderStacLayer(opts);
+  }
+
+  private renderStacLayer(opts): TileLayer<any>[] {
     const {data, mapState} = opts;
     const stac = data?.dataset?.metadata;
 
@@ -502,9 +535,7 @@ export default class RasterTileLayer extends Layer {
       tileSize: 512 / devicePixelRatio,
       getTileData: (args: any) => this.getTileData({...args, ...getTileDataCustomProps}),
       onViewportLoad: this.onViewportLoad.bind(this),
-      // TS doesn't know we'll pass appropriate props here, and
-      // in fact there's no guarantee that we will - may be able to fix with Deck 8.9
-      renderSubLayers,
+      renderSubLayers: renderSubLayersStac,
       maxRequests: getMaxRequests(stac),
       // Passing visible on to TileLayer is necessary for split view to work
       visible,
@@ -556,6 +587,62 @@ export default class RasterTileLayer extends Layer {
     });
 
     return [tileLayer];
+  }
+
+  private renderPMTilesLayer(opts): TileLayer<any>[] {
+    const {id, opacity, visible} = this.getDefaultDeckLayerProps(opts);
+
+    const {data, mapState} = opts;
+    const metadata = data?.dataset?.metadata;
+
+    const tileSource = data.tileSource;
+    const showTileBorders = true;
+    const minZoom = metadata.minZoom || 0;
+    const maxZoom = metadata.maxZoom || 30;
+
+    const {dragRotate} = mapState;
+    const {visConfig} = this.config;
+    const {enableTerrain} = visConfig;
+    const shouldLoadTerrain = Boolean(enableTerrain && dragRotate);
+
+    return [
+      new TileLayer({
+        id,
+        getTileData: (args: any) =>
+          this.getTileDataPMTiles({...args, shouldLoadTerrain}, tileSource),
+
+        // Assume the pmtiles file support HTTP/2, so we aren't limited by the browser to a certain number per domain.
+        maxRequests: 20,
+
+        pickable: true,
+        autoHighlight: showTileBorders,
+
+        onViewportLoad: this.onViewportLoad.bind(this),
+
+        minZoom,
+        maxZoom,
+        tileSize: 512 / devicePixelRatio,
+        zoomOffset: devicePixelRatio === 1 ? -1 : 0,
+        renderSubLayers: renderSubLayersPMTiles,
+
+        tileSource,
+        showTileBorders,
+
+        visible,
+        opacity,
+
+        updateTriggers: {
+          getTileData: [shouldLoadTerrain]
+        },
+        // Props for 3D mode
+        ...(shouldLoadTerrain
+          ? {
+              zRange: this.meta.zRange || null,
+              refinementStrategy: 'no-overlap'
+            }
+          : {})
+      })
+    ];
   }
 
   async getTileData(props: GetTileDataProps): Promise<GetTileDataOutput> {
@@ -621,9 +708,59 @@ export default class RasterTileLayer extends Layer {
       throw error;
     }
   }
+
+  async getTileDataPMTiles(props: GetTileDataProps, tileSource): Promise<any> {
+    const {
+      shouldLoadTerrain,
+      globalBounds,
+      bbox: {west, south, east, north},
+      index
+    } = props;
+
+    if (globalBounds && !bboxIntersects(globalBounds, [west, south, east, north])) {
+      // tile is outside of STAC object's bounding box; don't fetch tile
+      return null;
+    }
+
+    const tileInfo: Pick<RasterTileLoadEvent, 'assetUrls' | 'tileIndex'> = {
+      assetUrls: ['pmtiles'],
+      tileIndex: [index.x, index.y, index.z]
+    };
+    const onTileUpdate = RuntimeConfig.onRasterTileLoadUpdate as any;
+    onTileUpdate?.({status: 'loading', ...tileInfo, remainingTiles: ++tilesBeingLoaded});
+
+    try {
+      const [image, terrain] = await Promise.all([
+        tileSource.getTileData(props),
+        shouldLoadTerrain ? loadTerrain(props) : null
+      ]);
+
+      let minPixelValue: number | null = null;
+      let maxPixelValue: number | null = null;
+      if (image) {
+        const [min, max] = this.getMinMaxPixelValues([{data: image}]);
+        minPixelValue = min;
+        maxPixelValue = max;
+      }
+      onTileUpdate?.({status: 'loaded', ...tileInfo, remainingTiles: --tilesBeingLoaded});
+
+      // Add terrain data only if we requested it above
+      return {image, minPixelValue, maxPixelValue, ...(terrain ? {terrain} : {})};
+    } catch (error) {
+      if ((error as any).name === 'AbortError') {
+        // tile was aborted
+        onTileUpdate?.({status: 'canceled', ...tileInfo, remainingTiles: --tilesBeingLoaded});
+        return null;
+      }
+
+      // Some other unhandled error
+      onTileUpdate?.({status: 'failed', error, ...tileInfo, remainingTiles: --tilesBeingLoaded});
+      throw error;
+    }
+  }
 }
 
-function renderSubLayers(props: RenderSubLayersProps): DeckLayer<any> | DeckLayer<any>[] {
+function renderSubLayersStac(props: RenderSubLayersProps): DeckLayer<any> | DeckLayer<any>[] {
   const {
     tile,
     data,
@@ -702,4 +839,119 @@ export function getMercatorModelMatrix(tile: {x: number; y: number; z: number}):
   const yOffset = WORLD_SIZE * (1 - tile.y / worldScale);
 
   return new Matrix4().translate([xOffset, yOffset, 0]).scale([xScale, yScale, 1]);
+}
+
+function renderSubLayersPMTiles(props: {
+  id: string;
+  data: any;
+  tileSource: any;
+  showTileBorders: any;
+  minZoom: any;
+  maxZoom: any;
+  tile: any;
+}) {
+  const {
+    tileSource,
+    showTileBorders,
+    minZoom,
+    maxZoom,
+    tile: {
+      index: {z: zoom},
+      bbox: {west, south, east, north}
+    }
+  } = props;
+
+  const layers: any[] = [];
+
+  if (props.data.image) {
+    switch (tileSource.mimeType) {
+      case 'image/png':
+      case 'image/jpeg':
+      case 'image/webp':
+      case 'image/avif':
+        layers.push(getRasterLayerPMTiles(props));
+        break;
+
+      default:
+        break;
+    }
+  }
+
+  // Debug tile borders
+  const borderColor = zoom <= minZoom || zoom >= maxZoom ? [255, 0, 0, 255] : [0, 0, 255, 255];
+  if (showTileBorders) {
+    layers.push(
+      new PathLayer({
+        id: `${props.id}-border`,
+        data: [
+          [
+            [west, north],
+            [west, south],
+            [east, south],
+            [east, north],
+            [west, north]
+          ]
+        ],
+        getPath: d => d,
+        getColor: borderColor as any,
+        widthMinPixels: 4
+      })
+    );
+  }
+
+  return layers;
+}
+
+function getRasterLayerPMTiles(props: {
+  id: string;
+  data: any;
+  tileSource: any;
+  showTileBorders: any;
+  minZoom: any;
+  maxZoom: any;
+  tile: any;
+}) {
+  const {tile, data} = props;
+  const bbox = tile.bbox as GeoBoundingBox;
+  const {west, south, east, north} = bbox;
+
+  if (!data?.image) {
+    return [];
+  }
+
+  const images = {imageRgba: {data: data.image}};
+  const {terrain} = data;
+
+  const {modules, moduleProps} = getModules({
+    images,
+    props: {minPixelValue: 0, maxPixelValue: 255}
+  });
+
+  return terrain
+    ? new RasterMeshLayer(props, {
+        id: `raster-3d-layer-${props.id}`,
+        // Dummy data
+        data: [1],
+        mesh: terrain,
+        images,
+        modules,
+        moduleProps,
+
+        getPolygonOffset: null,
+        coordinateSystem: COORDINATE_SYSTEM.CARTESIAN,
+        modelMatrix: getMercatorModelMatrix(tile.index),
+        getPosition: () => [0, 0, 0],
+        // Color to use if surfaceImage is unavailable
+        getColor: [255, 255, 255]
+        // material: false
+      })
+    : new RasterLayer(props, {
+        id: `raster-2d-layer-${props.id}`,
+        data: null,
+        images,
+        modules,
+        moduleProps,
+        bounds: [west, south, east, north],
+        _imageCoordinateSystem: COORDINATE_SYSTEM.CARTESIAN
+      });
 }
