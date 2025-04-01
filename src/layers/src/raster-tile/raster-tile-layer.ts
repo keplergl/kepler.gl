@@ -252,11 +252,8 @@ export default class RasterTileLayer extends Layer {
     if (dataset.metadata?.pmtilesInRasterFormat) {
       const metadataUrl = dataset.metadata.metadataUrl;
       // use the old tile source if it exists and matches the new metadataUrl
-      if (
-        oldLayerData.dataset === dataset &&
-        oldLayerData.tileSource &&
-        oldLayerData.tileSource.data === metadataUrl
-      ) {
+      const {oldDataset, oldTileSource} = oldLayerData || {};
+      if (oldDataset === dataset && oldTileSource?.data === metadataUrl) {
         tileSource = oldLayerData.tileSource;
       } else {
         tileSource = metadataUrl ? PMTilesSource.createDataSource(metadataUrl, {}) : null;
