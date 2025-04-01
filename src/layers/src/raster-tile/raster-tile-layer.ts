@@ -25,7 +25,7 @@ import {
 } from '@kepler.gl/types';
 
 import {notNullorUndefined} from '@kepler.gl/common-utils';
-import {KeplerTable as KeplerDataset} from '@kepler.gl/table';
+import {Datasets, KeplerTable as KeplerDataset} from '@kepler.gl/table';
 
 import {
   rasterVisConfigs,
@@ -59,8 +59,7 @@ import {
   KeplerRasterDataset,
   Tile2DHeader,
   PresetOption,
-  CompleteSTACObject,
-  TerrainData
+  CompleteSTACObject
 } from './types';
 
 import {FindDefaultLayerPropsReturnValue} from '../layer-utils';
@@ -234,7 +233,7 @@ export default class RasterTileLayer extends Layer {
     return Boolean(this.type && this.config.isVisible);
   }
 
-  formatLayerData(datasets) {
+  formatLayerData(datasets: Datasets, oldLayerData: any) {
     const {dataId} = this.config;
     if (!notNullorUndefined(dataId)) {
       return {};
@@ -246,13 +245,22 @@ export default class RasterTileLayer extends Layer {
     const triggerChanged = this.getChangedTriggers(dataUpdateTriggers);
 
     if (triggerChanged && triggerChanged.getMeta) {
-      this.updateLayerMeta(dataset);
+      this.updateLayerMeta(dataset as KeplerRasterDataset);
     }
 
     let tileSource: PMTilesTileSource | null = null;
     if (dataset.metadata?.pmtilesInRasterFormat) {
       const metadataUrl = dataset.metadata.metadataUrl;
-      tileSource = metadataUrl ? PMTilesSource.createDataSource(metadataUrl, {}) : null;
+      // use the old tile source if it exists and matches the new metadataUrl
+      if (
+        oldLayerData.dataset === dataset &&
+        oldLayerData.tileSource &&
+        oldLayerData.tileSource.data === metadataUrl
+      ) {
+        tileSource = oldLayerData.tileSource;
+      } else {
+        tileSource = metadataUrl ? PMTilesSource.createDataSource(metadataUrl, {}) : null;
+      }
     }
 
     return {dataset, tileSource};
