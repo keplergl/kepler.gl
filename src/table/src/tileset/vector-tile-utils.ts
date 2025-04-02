@@ -17,7 +17,13 @@ import {
   parseUri,
   getFieldsFromData
 } from '@kepler.gl/common-utils';
-import {DatasetType, ALL_FIELD_TYPES, FILTER_TYPES, RemoteTileFormat} from '@kepler.gl/constants';
+import {
+  DatasetType,
+  ALL_FIELD_TYPES,
+  FILTER_TYPES,
+  PMTilesType,
+  RemoteTileFormat
+} from '@kepler.gl/constants';
 
 import {Feature, Field as KeplerField, KeplerLayer} from '@kepler.gl/types';
 import {clamp, formatNumberByStep, getNumericStepSize, timeToUnixMilli} from '@kepler.gl/utils';
@@ -69,7 +75,9 @@ export type VectorTileMetadata = {
   name?: string;
   description?: string;
   fields: VectorTileField[];
-  pmtilesInRasterFormat?: boolean;
+
+  // if the tileset is of pmtiles format then include info about type of pmtiles
+  pmtilesType?: PMTilesType;
 };
 
 type TilesetMetadata = VectorTileMetadata;
@@ -233,9 +241,12 @@ function parseMetadataTileJSON(metadata: PMTilesMetadata | TileJSON): TilesetMet
   const parsed = parseMetadataTippecanoeFromDataSource(metadata);
   if (!parsed) return null;
 
-  // PMTiles can potentially be of RasterTile format
-  parsed.pmtilesInRasterFormat =
-    (metadata as PMTilesMetadata).tileMIMEType !== 'application/vnd.mapbox-vector-tile';
+  // PMTiles can potentially be in RasterTile format
+  const mimeType = (metadata as PMTilesMetadata).tileMIMEType;
+  if (mimeType) {
+    parsed.pmtilesType =
+      mimeType === 'application/vnd.mapbox-vector-tile' ? PMTilesType.MVT : PMTilesType.RASTER;
+  }
 
   // Fields already parsed from `json` property
   if (parsed.fields?.length) {
@@ -715,7 +726,7 @@ export const getFieldsFromTile = async ({
       metadata.fields?.length === 0 &&
       metadata.minZoom &&
       metadata.bounds?.length === 4 &&
-      !metadata.pmtilesInRasterFormat
+      metadata.pmtilesType === PMTilesType.MVT
     ) {
       const lon = (metadata.bounds[0] + metadata.bounds[2]) / 2;
       const lat = (metadata.bounds[1] + metadata.bounds[3]) / 2;

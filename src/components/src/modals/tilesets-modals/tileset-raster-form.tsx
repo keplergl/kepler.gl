@@ -4,12 +4,12 @@
 import React, {useCallback, useEffect, useState} from 'react';
 import styled from 'styled-components';
 
-import {DatasetType} from '@kepler.gl/constants';
+import {DatasetType, RasterTileType, PMTilesType} from '@kepler.gl/constants';
 import {JsonObjectOrArray} from '@kepler.gl/types';
-import {parseRasterMetadata} from '@kepler.gl/table';
+import {parseRasterMetadata, parseVectorMetadata} from '@kepler.gl/table';
 
-import {default as useFetchJson} from '../../hooks/use-fetch-json';
-import {DatasetCreationAttributes, MetaResponse} from './common';
+import {default as useFetchJson} from '../../hooks/use-fetch-raster-tile-metadata';
+import {isPMTilesUrl, DatasetCreationAttributes, MetaResponse} from './common';
 import {InputLight} from '../../common';
 
 const TilesetInputContainer = styled.div`
@@ -47,8 +47,14 @@ type RasterTileFormProps = {
   setResponse: (response: MetaResponse) => void;
 };
 
-const parseMetadataDisallowCollections = (metadata: JsonObjectOrArray) =>
-  parseRasterMetadata(metadata, {allowCollections: false});
+const parseMetadataDisallowCollections = (
+  metadata: JsonObjectOrArray,
+  {metadataUrl, rasterTileType}: {metadataUrl: string; rasterTileType: RasterTileType}
+) => {
+  return rasterTileType === RasterTileType.PMTILES
+    ? parseVectorMetadata(metadata, {tileUrl: metadataUrl})
+    : parseRasterMetadata(metadata, {allowCollections: false});
+};
 
 const RasterTileForm: React.FC<RasterTileFormProps> = ({setResponse}) => {
   const [tileName, setTileName] = useState<string>('');
@@ -80,11 +86,21 @@ const RasterTileForm: React.FC<RasterTileFormProps> = ({setResponse}) => {
     error: metaError
   } = useFetchJson({
     url: currentUrl,
+    rasterTileType: isPMTilesUrl(currentUrl) ? RasterTileType.PMTILES : RasterTileType.STAC,
     process: parseMetadataDisallowCollections
   });
 
   useEffect(() => {
     if (tileName && metadataUrl) {
+      if (metadata?.pmtilesType === PMTilesType.MVT) {
+        return setResponse({
+          metadata,
+          dataset: null,
+          loading,
+          error: new Error('For .pmtiles in mvt format, please use the Vector Tile form.')
+        });
+      }
+
       const dataset = getDatasetAttributesFromRasterTile({name: tileName, metadataUrl});
       setResponse({
         metadata: metadata as any,
@@ -121,7 +137,9 @@ const RasterTileForm: React.FC<RasterTileFormProps> = ({setResponse}) => {
           value={metadataUrl ?? undefined}
           onChange={onMetadataUrlChange}
         />
-        <TilesetInputDescription>Supports STAC JSON (Items only)</TilesetInputDescription>
+        <TilesetInputDescription>
+          Supports STAC JSON (Items only) or .pmtiles in raster format
+        </TilesetInputDescription>
       </div>
     </TilesetInputContainer>
   );

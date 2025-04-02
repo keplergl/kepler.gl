@@ -15,3 +15,5 @@ export type MetaResponse = {
   loading?: boolean;
   error?: Error | null;
 };
+
+export const isPMTilesUrl = (url?: string | null) => url?.includes('.pmtiles');

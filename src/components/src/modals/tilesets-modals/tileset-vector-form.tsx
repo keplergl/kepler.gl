@@ -6,6 +6,7 @@ import styled from 'styled-components';
 
 import {
   DatasetType,
+  PMTilesType,
   RemoteTileFormat,
   VectorTileDatasetMetadata,
   REMOTE_TILE
@@ -16,10 +17,8 @@ import {getMetaUrl, parseVectorMetadata, VectorTileMetadata} from '@kepler.gl/ta
 import {Merge} from '@kepler.gl/types';
 
 import {default as useFetchVectorTileMetadata} from '../../hooks/use-fetch-vector-tile-metadata';
-import {DatasetCreationAttributes, MetaResponse} from './common';
+import {isPMTilesUrl, DatasetCreationAttributes, MetaResponse} from './common';
 import {InputLight} from '../../common';
-
-import {getDatasetAttributesFromRasterTile} from './tileset-raster-form';
 
 const TilesetInputContainer = styled.div`
   display: grid;
@@ -39,8 +38,6 @@ export type VectorTilesetFormData = {
   dataUrl: string;
   metadataUrl?: string;
 };
-
-const isPMTilesUrl = (url?: string | null) => url?.includes('.pmtiles');
 
 export type VectorTileDatasetCreationAttributes = Merge<
   DatasetCreationAttributes,
@@ -145,17 +142,21 @@ const TilesetVectorForm: React.FC<TilesetVectorFormProps> = ({setResponse}) => {
 
   useEffect(() => {
     if (tileName && tileUrl) {
-      // pmtiles can be of raster format, so try to create a raster tile dataset instead
-      const dataset = metadata?.pmtilesInRasterFormat
-        ? getDatasetAttributesFromRasterTile({
-            name: tileName,
-            metadataUrl: tileUrl
-          })
-        : getDatasetAttributesFromVectorTile({
-            name: tileName,
-            dataUrl: tileUrl,
-            metadataUrl: metadataUrl ?? undefined
-          });
+      if (metadata?.pmtilesType === PMTilesType.RASTER) {
+        return setResponse({
+          metadata,
+          dataset: null,
+          loading,
+          error: new Error('For .pmtiles in raster format, please use the Raster Tile form.')
+        });
+      }
+
+      // pmtiles can be in raster format, so try to create a raster tile dataset instead
+      const dataset = getDatasetAttributesFromVectorTile({
+        name: tileName,
+        dataUrl: tileUrl,
+        metadataUrl: metadataUrl ?? undefined
+      });
       setResponse({
         metadata,
         dataset,

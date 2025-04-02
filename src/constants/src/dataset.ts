@@ -12,6 +12,11 @@ export enum RemoteTileFormat {
   PMTILES = 'pmtiles'
 }
 
+export enum PMTilesType {
+  RASTER = 'raster',
+  MVT = 'mvt'
+}
+
 export const REMOTE_TILE = 'remote';
 
 export type VectorTileDatasetMetadata = {
@@ -47,7 +52,17 @@ export type RasterTileRemoteMetadata = {
   metadataUrl: string;
 };
 
+export enum RasterTileType {
+  STAC = 'stac',
+  PMTILES = 'pmtiles'
+}
+
+export type RasterTileMetadataSourceType = {
+  pmtilesType?: PMTilesType;
+};
+
 /**
  * Raster tileset metadata.
  */
-export type RasterTileDatasetMetadata = RasterTileLocalMetadata | RasterTileRemoteMetadata;
+export type RasterTileDatasetMetadata = (RasterTileLocalMetadata | RasterTileRemoteMetadata) &
+  RasterTileMetadataSourceType;

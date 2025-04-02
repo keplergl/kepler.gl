@@ -9,7 +9,7 @@ import memoize from 'lodash.memoize';
 import {Matrix4} from 'math.gl';
 
 import {PathLayer} from '@deck.gl/layers/typed';
-import {DatasetType, RuntimeConfig, LAYER_TYPES} from '@kepler.gl/constants';
+import {DatasetType, PMTilesType, RuntimeConfig, LAYER_TYPES} from '@kepler.gl/constants';
 import {RasterLayer, RasterMeshLayer} from '@kepler.gl/deckgl-layers';
 import {Layer, VisualChannel} from '@kepler.gl/layers';
 import {
@@ -249,7 +249,7 @@ export default class RasterTileLayer extends Layer {
     }
 
     let tileSource: PMTilesTileSource | null = null;
-    if (dataset.metadata?.pmtilesInRasterFormat) {
+    if (dataset.metadata?.pmtilesType === PMTilesType.RASTER) {
       const metadataUrl = dataset.metadata.metadataUrl;
       // use the old tile source if it exists and matches the new metadataUrl
       const {dataset: oldDataset, tileSource: oldTileSource} = oldLayerData || {};
@@ -269,7 +269,7 @@ export default class RasterTileLayer extends Layer {
     }
 
     const stac = dataset.metadata;
-    if (stac.pmtilesInRasterFormat) {
+    if (stac.pmtilesType === PMTilesType.RASTER) {
       return this.updateMeta({
         bounds: stac.bounds
       });
@@ -299,7 +299,7 @@ export default class RasterTileLayer extends Layer {
       return this;
     }
 
-    if (stac.pmtilesInRasterFormat) {
+    if (stac.pmtilesType === PMTilesType.RASTER) {
       return this;
     }
 
@@ -423,7 +423,7 @@ export default class RasterTileLayer extends Layer {
   renderLayer(opts): TileLayer<any>[] {
     const {data} = opts;
 
-    if (data?.dataset?.metadata?.pmtilesInRasterFormat) {
+    if (data?.dataset?.metadata?.pmtilesType === PMTilesType.RASTER) {
       return this.renderPMTilesLayer(opts);
     }
     return this.renderStacLayer(opts);
