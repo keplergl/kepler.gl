@@ -3,7 +3,7 @@
 
 import {z} from 'zod';
 
-import {RGBColorSchema} from './color';
+import {RGBColorSchema} from '../color';
 
 export const EffectTypeSchema = z.enum([
   'brightnessContrast',

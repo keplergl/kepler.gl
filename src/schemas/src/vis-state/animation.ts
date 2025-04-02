@@ -3,7 +3,7 @@
 
 import {z} from 'zod';
 
-import {TimeRangeFilterSchema} from './filter';
+import {TimeRangeFilterSchema} from '../filter';
 
 export const AnimationTimeFormat = z.enum(['L', 'L LT', 'L LTS']);
 export type AnimationTimeFormat = z.infer<typeof AnimationTimeFormat>;

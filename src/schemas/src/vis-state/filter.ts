@@ -8,7 +8,7 @@ import {
   AggregationKeySchema,
   TIME_INTERVAL_DESC,
   TimeIntervalSchema
-} from './common';
+} from '../common';
 
 export const FilterTypesSchema = z.enum(['range', 'select', 'multiSelect', 'timeRange', 'polygon']);
 export type FilterTypesSchema = z.infer<typeof FilterTypesSchema>;
