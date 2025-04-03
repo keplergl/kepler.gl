@@ -868,7 +868,7 @@ function renderSubLayersPMTiles(props: {
 
   const layers: any[] = [];
 
-  if (props.data.image) {
+  if (props.data?.image) {
     switch (tileSource.mimeType) {
       case 'image/png':
       case 'image/jpeg':

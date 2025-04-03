@@ -119,6 +119,25 @@ export function getStacApiUrlParams(options: {
   });
 }
 
+export function bandIndexesToURLParams(
+  urlParams: URLSearchParams,
+  bandIndexes: BandIndexes
+): URLSearchParams {
+  if (RuntimeConfig.rasterServerTitilerIsNew) {
+    // for newer titiler versions
+    bandIndexes.forEach(bandIndex => {
+      urlParams.append('bidx', String(bandIndex + 1));
+    });
+  } else {
+    // The parameter in titiler is `bands` for landsat/sentinel and `bidx` for COG
+    // GDAL/Rasterio/rio-tiler start band indexing at one
+    // older titiler versions
+    urlParams.append('bidx', bandIndexes.map(val => val + 1).join(','));
+  }
+
+  return urlParams;
+}
+
 export function getMosaicUrlParams(options: {
   stac: CompleteSTACCollection;
   mosaicId: string | null;
@@ -142,13 +161,12 @@ export function getMosaicUrlParams(options: {
       url: mosaicId
     });
   } else if (stac.id === DATA_SOURCE_IDS.NAIP) {
-    return new URLSearchParams({
-      // GDAL/Rasterio/rio-tiler start band indexing at one
-      bidx: loadBandIndexes.map(val => val + 1).join(','),
+    const urlParams = new URLSearchParams({
       // eslint-disable-next-line @typescript-eslint/naming-convention
       return_mask: String(mask),
       url: mosaicId
     });
+    return bandIndexesToURLParams(urlParams, loadBandIndexes);
   }
 
   return null;
@@ -167,14 +185,12 @@ export function getSingleCOGUrlParams(options: {
     return null;
   }
 
-  return new URLSearchParams({
-    // The parameter in titiler is `bands` for landsat/sentinel and `bidx` for COG
-    // GDAL/Rasterio/rio-tiler start band indexing at one
-    bidx: loadBandIndexes.map(val => val + 1).join(','),
+  const urlParams = new URLSearchParams({
     // eslint-disable-next-line @typescript-eslint/naming-convention
     return_mask: String(mask),
     url
   });
+  return bandIndexesToURLParams(urlParams, loadBandIndexes);
 }
 
 /**
@@ -193,7 +209,7 @@ export function getTitilerUrl(options: {
   const pathStem = getTitilerPathMapping(stac, useSTACSearching);
   const scale = TILE_SIZE === 512 ? '@2x' : '';
   const domain = chooseDomain(RuntimeConfig.rasterServerUrls, x, y);
-  return `${domain}/${pathStem}/tiles/${z}/${x}/${y}${scale}.npy`;
+  return `${domain}/${pathStem}/tiles/WebMercatorQuad/${z}/${x}/${y}${scale}.npy`;
 }
 
 export function getTitilerPathMapping(stac: CompleteSTACObject, useSTACSearching = false): string {
