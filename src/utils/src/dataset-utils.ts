@@ -240,8 +240,8 @@ export function validateInputData(data: ProtoDataset['data']): ProcessorResult {
   } else if (!Array.isArray(data.fields)) {
     assert('addDataToMap Error: expect dataset.data.fields to be an array');
     return null;
-  } else if (!Array.isArray(data.rows)) {
-    assert('addDataToMap Error: expect dataset.data.rows to be an array');
+  } else if (!Array.isArray(data.rows) && !Array.isArray(data.cols)) {
+    assert('addDataToMap Error: expect dataset.data.rows or cols to be an array');
     return null;
   }
 
