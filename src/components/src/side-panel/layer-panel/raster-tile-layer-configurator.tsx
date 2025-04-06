@@ -289,7 +289,7 @@ function RasterTileLayerConfiguratorFactory(
     }, [visConfiguratorProps, dynamicColor, isDynamicColorsOnly]);
 
     // For PMTiles in raster format, only show opacity and terrain options for now
-    if (stac.rasterSourceType === RemoteTileFormat.PMTILES) {
+    if (stac.pmtilesType === RemoteTileFormat.PMTILES) {
       return (
         <StyledLayerConfigurator>
           <LayerConfigGroup {...visConfiguratorProps} label="Visual Settings" collapsible={false}>
