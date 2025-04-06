@@ -18,7 +18,7 @@ import {
   LayerConfigGroupFactory,
   Switch
 } from '@kepler.gl/components';
-import {RemoteTileFormat} from '@kepler.gl/constants';
+import {PMTilesType} from '@kepler.gl/constants';
 import {
   filterAvailablePresets,
   getAvailableMosaics,
@@ -289,7 +289,7 @@ function RasterTileLayerConfiguratorFactory(
     }, [visConfiguratorProps, dynamicColor, isDynamicColorsOnly]);
 
     // For PMTiles in raster format, only show opacity and terrain options for now
-    if (stac.pmtilesType === RemoteTileFormat.PMTILES) {
+    if (stac.pmtilesType === PMTilesType.RASTER) {
       return (
         <StyledLayerConfigurator>
           <LayerConfigGroup {...visConfiguratorProps} label="Visual Settings" collapsible={false}>
