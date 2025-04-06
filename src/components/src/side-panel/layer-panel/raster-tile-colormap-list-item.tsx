@@ -4,7 +4,7 @@
 import React from 'react';
 import styled from 'styled-components';
 
-import {CdnUrlConfig as cdnUrls} from '@kepler.gl/constants';
+import {RasterLayerConfig as cdnUrls} from '@kepler.gl/constants';
 import {getCategoricalColormapDataUrl} from '@kepler.gl/layers';
 import type {CategoricalColormapOptions} from '@kepler.gl/layers';
 

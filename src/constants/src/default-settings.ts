@@ -1594,10 +1594,9 @@ export enum GEOARROW_EXTENSIONS {
   WKB = 'geoarrow.wkb'
 }
 
-export const CdnUrlConfigBase = 'https://studio-public-data.foursquare.com/statics';
-export const CdnUrlConfig = {
+export const RasterLayerConfig = {
   rasterColorMap: (colormapId: string) => {
-    return `${CdnUrlConfigBase}/raster/colormaps/${colormapId}.png`;
+    return `${KEPLER_UNFOLDED_BUCKET}/raster/colormaps/${colormapId}.png`;
   }
 };
 

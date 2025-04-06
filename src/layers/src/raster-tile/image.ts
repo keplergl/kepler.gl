@@ -9,7 +9,7 @@ import {load} from '@loaders.gl/core';
 import {QuantizedMeshLoader} from '@loaders.gl/terrain';
 import memoize from 'lodash.memoize';
 
-import {CdnUrlConfig as cdnUrls, RuntimeConfig} from '@kepler.gl/constants';
+import {RasterLayerConfig as cdnUrls, RuntimeConfig} from '@kepler.gl/constants';
 import {getLoaderOptions} from '@kepler.gl/table';
 
 import {CATEGORICAL_COLORMAP_ID, DATA_SOURCE_IDS} from './config';
