@@ -735,10 +735,9 @@ export default class RasterTileLayer extends Layer {
     onTileUpdate?.({status: 'loading', ...tileInfo, remainingTiles: ++tilesBeingLoaded});
 
     try {
-      const [image, terrain] = await Promise.all([
-        tileSource.getTileData(props),
-        shouldLoadTerrain ? loadTerrain(props) : null
-      ]);
+      const [image] = await Promise.all([tileSource.getTileData(props)]);
+      // For nwo check if the base tile exists, as this can cause loading to get stuck with "sparse" PMTiles.
+      const terrain = image && shouldLoadTerrain ? await loadTerrain(props) : null;
 
       let minPixelValue: number | null = null;
       let maxPixelValue: number | null = null;

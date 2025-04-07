@@ -123,7 +123,7 @@ export function bandIndexesToURLParams(
   urlParams: URLSearchParams,
   bandIndexes: BandIndexes
 ): URLSearchParams {
-  if (RuntimeConfig.rasterServerTitilerIsNew) {
+  if (RuntimeConfig.rasterServerTitilerIsCustom) {
     // for newer titiler versions
     bandIndexes.forEach(bandIndex => {
       urlParams.append('bidx', String(bandIndex + 1));
@@ -313,7 +313,6 @@ export function getTerrainUrl(x: number, y: number, z: number, meshMaxError: num
 
   const params = new URLSearchParams({
     url: 'terrarium',
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     mesh_max_error: meshMaxError.toFixed(2)
   });
   const domain = chooseDomain(RuntimeConfig.rasterServerUrls, x, y);
