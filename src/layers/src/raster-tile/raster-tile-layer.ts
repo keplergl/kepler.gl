@@ -99,7 +99,6 @@ export type RasterTileLayerVisConfigCommonSettings = {
 
 export type RasterTileLayerVisConfigSettings = RasterTileLayerVisConfigCommonSettings & {
   preset: VisConfigSelection;
-  mosaicId: VisConfigSelection;
   useSTACSearching: VisConfigBoolean;
   stacSearchProvider: VisConfigSelection;
   startDate: VisConfigInput;
@@ -418,15 +417,6 @@ export default class RasterTileLayer extends Layer {
 
     const shouldLoadTerrain = Boolean(enableTerrain && dragRotate);
 
-    // This is a hack, where we select between different mosaics.
-    // Mosaic selection (mosaicId) as part of the visConfig instead of the dataset metadata, so that it's
-    // easier to switch between different time periods in the same dataset.
-    // Most of the time this block will never be triggered, landsatMosaic should never exist in a STAC object.
-    let {mosaicId} = visConfig;
-    if (stac.id === DATA_SOURCE_IDS.LANDSAT && stac.landsatMosaic) {
-      mosaicId = stac.landsatMosaic;
-    }
-
     if (new Date(endDate) < new Date(startDate)) {
       return [];
     }
@@ -469,7 +459,6 @@ export default class RasterTileLayer extends Layer {
       stac,
       loadAssetIds,
       loadBandIndexes,
-      mosaicId,
       colormapId,
       shouldLoadTerrain,
       globalBounds,
@@ -497,7 +486,6 @@ export default class RasterTileLayer extends Layer {
       updateTriggers: {
         getTileData: [
           shouldLoadTerrain,
-          mosaicId,
           // Colormap has changed
           colormapId,
           // assets to be loaded has changed

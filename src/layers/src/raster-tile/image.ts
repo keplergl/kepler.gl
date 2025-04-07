@@ -31,7 +31,6 @@ import {
 } from './types';
 import {
   getTitilerUrl,
-  getPlanetUrl,
   getTerrainUrl,
   getSingleCOGUrlParams,
   getStacApiUrlParams,
@@ -238,10 +237,6 @@ async function getSingleAssetSTACRequest(
       _stacQuery
     });
     url = getTitilerUrl({stac, useSTACSearching, x, y, z});
-  } else if (stac.id === DATA_SOURCE_IDS.PLANET_NICFI) {
-    const planetUrl = getPlanetUrl(options);
-    url = planetUrl?.url || null;
-    urlParams = planetUrl?.urlParams || null;
   } else if (stac.type === 'Feature') {
     // stac is an Item
     urlParams = getSingleCOGUrlParams({
@@ -277,7 +272,6 @@ async function getMultiAssetSTACRequest(
 ): Promise<AssetRequestData[] | null> {
   const {
     stac,
-    mosaicId,
     loadAssetIds,
     loadBandIndexes,
     signal,

@@ -138,40 +138,6 @@ export function bandIndexesToURLParams(
   return urlParams;
 }
 
-export function getMosaicUrlParams(options: {
-  stac: CompleteSTACCollection;
-  mosaicId: string | null;
-  loadAssetIds: AssetIds;
-  loadBandIndexes: BandIndexes;
-  mask?: boolean;
-}): URLSearchParams | null {
-  const {stac, loadBandIndexes, loadAssetIds, mosaicId, mask = false} = options;
-
-  if (!mosaicId) {
-    return null;
-  }
-
-  // Right now the parameter in titiler is `bands` for landsat/sentinel and `bidx` for "normal"
-  // mosaicjson (NAIP)
-  if (stac.id === DATA_SOURCE_IDS.LANDSAT || stac.id === DATA_SOURCE_IDS.SENTINEL) {
-    return new URLSearchParams({
-      bands: loadAssetIds.join(','),
-      // eslint-disable-next-line @typescript-eslint/naming-convention
-      return_mask: String(mask),
-      url: mosaicId
-    });
-  } else if (stac.id === DATA_SOURCE_IDS.NAIP) {
-    const urlParams = new URLSearchParams({
-      // eslint-disable-next-line @typescript-eslint/naming-convention
-      return_mask: String(mask),
-      url: mosaicId
-    });
-    return bandIndexesToURLParams(urlParams, loadBandIndexes);
-  }
-
-  return null;
-}
-
 export function getSingleCOGUrlParams(options: {
   stac: CompleteSTACItem;
   loadAssetId: string;
@@ -235,64 +201,6 @@ export function getMetaUrl(imageUrl: string): string {
   const domain = getApplicationConfig().rasterServerUrls[0];
   const baseUrl = `${domain}/cog/info?`;
   return baseUrl + params.toString();
-}
-
-/**
- * Construct the URL information for raster tile requests sent to Planet's servers
- *
- * This is specifically used for the planet-nicfi dataset where we load data exclusively from
- * Planet's backend.
- */
-export function getPlanetUrl(
-  options: GetTileDataProps
-): {url: string; urlParams: URLSearchParams} | null {
-  const {
-    index: {x, y, z},
-    mosaicId,
-    stac
-  } = options;
-  const dataConnection = (stac.sensitive as {dataConnection?: PlanetDataConnection})
-    ?.dataConnection;
-
-  if (!mosaicId) {
-    return null;
-  }
-
-  let apiKey: string | null = null;
-
-  if (dataConnection) {
-    apiKey = dataConnection.metadata.apiKey;
-  }
-
-  const domain = chooseDomain(PLANET_DOMAINS, x, y);
-  // proc=off is seen in the NPY requests Planet makes from its browser
-  // I assume this just turns off any backend processing
-  const planetParams = new URLSearchParams({proc: 'off'});
-  const baseUrl = `${domain}/basemaps/v1/planet-tiles/${mosaicId}/gmap/${z}/${x}/${y}.npy`;
-
-  // apiKey will be null in the case of published map, in that case we use the data-proxy which will handle the auth part
-  if (apiKey !== null) {
-    planetParams.set('api_key', apiKey);
-    return {
-      url: baseUrl,
-      urlParams: planetParams
-    };
-  } else if (stac.dataConnectionId) {
-    const dataProxyParams = new URLSearchParams({
-      type: DataConnectionType.PLANET,
-      target: `${baseUrl}?${planetParams.toString()}`,
-      connectionId: stac.dataConnectionId as string
-    });
-
-    // ! we don't have Data Proxy
-    const dataProxyAPI = null;
-    return {
-      url: `${dataProxyAPI.url}${dataProxyAPI.dataProxyPath}`,
-      urlParams: dataProxyParams
-    };
-  }
-
-  return null;
 }
 
 /**

@@ -511,15 +511,6 @@ export const rasterVisConfigs = {
     property: 'preset',
     group: ''
   } as VisConfigSelection,
-  mosaicId: {
-    type: 'select',
-    defaultValue: null,
-    label: 'Mosaic',
-    // defined dynamically from STAC item/collection
-    options: [],
-    property: 'mosaicId',
-    group: ''
-  } as VisConfigSelection,
   useSTACSearching: {
     type: 'boolean',
     property: 'useSTACSearching',

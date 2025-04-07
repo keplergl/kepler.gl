@@ -122,7 +122,6 @@ export type CategoricalColormapOptions = {
  */
 export type GetTileDataCustomProps = Pick<AssetRequestInfo, 'loadAssetIds' | 'loadBandIndexes'> & {
   stac: CompleteSTACObject;
-  mosaicId: string | null;
   colormapId: string;
   categoricalColorMap: ColorMap;
   minCategoricalBandValue?: number;

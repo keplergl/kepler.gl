@@ -97,7 +97,6 @@ export type RasterTileLayerSchema = {
     dataId: string | null;
     visConfig: {
       preset: string;
-      mosaidId: string | null;
       useSTACSearching: boolean;
       stacSearchProvider?: 'earth-search' | 'microsoft';
       startDate?: string;
