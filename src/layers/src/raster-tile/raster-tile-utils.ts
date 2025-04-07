@@ -73,21 +73,9 @@ export const dtypeMaxValue: Record<DataTypeOfTheBand, number | null> = {
 };
 
 /**
- * Checks if a STAC collection has a specified flag set.
- * This function helps determine whether a STAC collection supports custom logic
- * based on the presence of a specific flag.
- * @param stac The STAC collection to check.
- * @param flag The flag to look for in the STAC object.
- * @returns `true` if the flag is set, otherwise `false`.
- */
-export function isCustomStac(stac: CompleteSTACObject, flag = 'unfolded'): boolean {
-  return Boolean(stac[flag]);
-}
-
-/**
  * Is this a STAC Collection that supports custom searching
  * TODO: currently this is a custom hack to support Sentinel. It will need to be generalized before
- * being accessible from production.
+ * being accessible
  *
  * @param stac  STAC object
  *
@@ -103,18 +91,15 @@ export function isSearchableStac(stac: CompleteSTACObject): boolean {
   // );
 }
 
-function getZoomRange(stac: CompleteSTACObject): [number, number] {
-  if (isCustomStac(stac) && ZOOM_RANGES[stac.id]) {
-    return ZOOM_RANGES[stac.id];
-  }
+function getZoomRange(_stac: CompleteSTACObject): [number, number] {
+  // if (ZOOM_RANGES[stac.id]) {
+  //  return ZOOM_RANGES[stac.id];
+  // }
 
+  // TODO
+  // For a single COG, having a full zoom range isn't really a problem.
+  // the /cog/info endpoint doesn't describe zoom levels because it doesn't know the projection to serve the image in.
   // Default minzoom, maxzoom: [0, 20]
-  // TODO: implement this for STAC
-  // TODO: Fix this to be accurate for the image and its overviews
-  // That said, for a single COG, having a full zoom range isn't really a problem.
-  // Hardcode min/max zooms
-  // the /cog/info endpoint doesn't describe zoom levels because it doesn't know the projection to
-  // serve the image in.
   return [0, 20];
 }
 
@@ -165,20 +150,13 @@ function getPixelRange(
   dtype: DataTypeOfTheBand | null,
   [minRasterStatsValue, maxRasterStatsValue]: [number | undefined, number | undefined]
 ): [number, number] | null {
+  if (!dtype) {
+    return null;
+  }
+
   // TODO: might not always be desired to leave min pixel value at 0
   const minPixelValue = 0;
-  let maxPixelValue;
-
-  // TODO: define these in STAC metadata
-  if (isCustomStac(stac) && MAX_PIXEL_VALUES[stac.id]) {
-    maxPixelValue = MAX_PIXEL_VALUES[stac.id];
-  } else {
-    if (!dtype) {
-      return null;
-    }
-
-    maxPixelValue = dtypeMaxValue[dtype];
-  }
+  const maxPixelValue = dtypeMaxValue[dtype];
 
   if (
     !Number.isFinite(maxPixelValue) &&
@@ -562,25 +540,6 @@ export function filterAvailablePresets(
   }
 
   return availablePresetIds;
-}
-
-/**
- * Load available mosaics
- * Return object should be an array of objects with keys `label` and `id`
- * If the STAC is one of our custom files, it will have an unfolded.mosaics key. In general, this
- * field does not exist, however.
- *
- * @param stac STAC Object
- *
- * @return  Available mosaic options
- */
-export function getAvailableMosaics(stac: CompleteSTACObject): ConfigOption[] | null {
-  if (!stac) {
-    return null;
-  }
-
-  // !
-  return (stac?.unfolded as {mosaics: ConfigOption[]})?.mosaics;
 }
 
 // TODO: would be better to have a generic here to relax the requirement that all input STACs have

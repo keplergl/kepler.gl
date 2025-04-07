@@ -20,11 +20,7 @@ import {
   loadImage,
   COLORMAP_TEXTURE_PARAMETERS
 } from './gpu-utils';
-import {
-  isCustomStac,
-  CATEGORICAL_TEXTURE_WIDTH,
-  generateCategoricalBitmapArray
-} from './raster-tile-utils';
+import {CATEGORICAL_TEXTURE_WIDTH, generateCategoricalBitmapArray} from './raster-tile-utils';
 import {
   GetTileDataProps,
   ImageData,
@@ -37,7 +33,6 @@ import {
   getTitilerUrl,
   getPlanetUrl,
   getTerrainUrl,
-  getMosaicUrlParams,
   getSingleCOGUrlParams,
   getStacApiUrlParams,
   getMeshMaxError
@@ -225,25 +220,8 @@ async function getSingleAssetSTACRequest(
     endDate,
     _stacQuery
   } = options;
-  let {mosaicId} = options;
 
-  let useMask = true;
-
-  if (isCustomStac(stac) && stac.id === DATA_SOURCE_IDS.NAIP) {
-    // This is a hack to allow continuous scrolling for NAIP across original and overview data
-    // Original COGs have zoom levels 12-17; overview images have zoom levels 6-12
-    if (z < 12 && mosaicId) {
-      mosaicId = mosaicId.replace('naip', 'naip-overviews');
-    }
-
-    // Turn off fetching a mask for NAIP data specifically. In general, we want to download a nodata
-    // mask, because that lets us hide areas of invalid pixels. However, ESRI (which manages the
-    // NAIP bucket on S3), messed up storing the data, and set the NIR band as the alpha band. The
-    // mask module below removes any pixels with values <1, but since NAIP is only 8-bit, it doesn't
-    // have good dynamic range, and so it isn't uncommon to have values of 0 in the near-infrared
-    // band.
-    useMask = false;
-  }
+  const useMask = true;
 
   // Only a single URL because only a single asset
   let url: string | null = null;
@@ -264,14 +242,6 @@ async function getSingleAssetSTACRequest(
     const planetUrl = getPlanetUrl(options);
     url = planetUrl?.url || null;
     urlParams = planetUrl?.urlParams || null;
-  } else if (isCustomStac(stac) && stac.type !== 'Feature') {
-    // stac is a Collection
-    urlParams = getMosaicUrlParams({stac, mosaicId, loadAssetIds, loadBandIndexes, mask: useMask});
-    url = getTitilerUrl({stac, useSTACSearching, x, y, z});
-    // For NAIP required bands are set in the request parameters so that in response we have only required bands
-    if (stac.id === DATA_SOURCE_IDS.NAIP) {
-      responseRequiredBandIndices = null;
-    }
   } else if (stac.type === 'Feature') {
     // stac is an Item
     urlParams = getSingleCOGUrlParams({
@@ -342,20 +312,6 @@ async function getMultiAssetSTACRequest(
       const url = getTitilerUrl({stac, useSTACSearching, x, y, z});
       return {url, params};
     });
-  } else if (isCustomStac(stac) && mosaicId && stac.type !== 'Feature') {
-    requestData = zip3(loadAssetIds, loadBandIndexes, requestMask).map(
-      ([assetId, bandIndex, mask]) => {
-        const params = getMosaicUrlParams({
-          stac,
-          mosaicId,
-          loadAssetIds: [assetId],
-          loadBandIndexes: [bandIndex],
-          mask
-        });
-        const url = getTitilerUrl({stac, useSTACSearching, x, y, z});
-        return {url, params};
-      }
-    );
   } else if (stac.type === 'Feature') {
     requestData = zip3(loadAssetIds, loadBandIndexes, requestMask).map(
       ([assetId, bandIndex, mask]) => {

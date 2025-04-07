@@ -27,19 +27,12 @@ import {
 import {notNullorUndefined} from '@kepler.gl/common-utils';
 import {Datasets, KeplerTable as KeplerDataset} from '@kepler.gl/table';
 
-import {
-  rasterVisConfigs,
-  PRESET_OPTIONS,
-  DATA_SOURCE_COLOR_DEFAULTS,
-  DATA_SOURCE_IDS
-} from './config';
+import {rasterVisConfigs, PRESET_OPTIONS, DATA_SOURCE_IDS} from './config';
 import {getModules} from './gpu-utils';
 import {getSTACImageRequests, loadImages, loadTerrain} from './image';
 import RasterIcon from './raster-tile-icon';
 import {
   getDataSourceParams,
-  getAvailableMosaics,
-  isCustomStac,
   getMaxRequests,
   bboxIntersects,
   computeZRange,
@@ -282,13 +275,10 @@ export default class RasterTileLayer extends Layer {
 
     const bounds = getSTACBounds(stac);
     if (bounds) {
-      // If either a STAC Item (i.e. stac.type === 'Feature') or Planet NICFI, then set map bounds.
+      // If a STAC Item (i.e. stac.type === 'Feature'), then set map bounds.
       // But we don't want to set bounds for Landsat or Sentinel because it would zoom out to zoom
       // 0, and we don't have low-zoom tiles.
-      if (
-        stac.type === 'Feature' ||
-        (isCustomStac(stac) && stac.id === DATA_SOURCE_IDS.PLANET_NICFI)
-      ) {
+      if (stac.type === 'Feature') {
         this.updateMeta({bounds});
       }
     }
@@ -323,52 +313,7 @@ export default class RasterTileLayer extends Layer {
       this.updateLayerVisConfig({preset: availablePresets[0]});
     }
 
-    if (!isCustomStac(stac)) {
-      return this;
-    }
-
-    // Set default mosaic
-    const availableMosaics = getAvailableMosaics(stac);
-    if (Array.isArray(availableMosaics) && availableMosaics.length > 0) {
-      this.updateLayerVisConfig({mosaicId: availableMosaics[availableMosaics.length - 1].id});
-    }
-
-    // Set default color rescaling
-    const colorDefaults = DATA_SOURCE_COLOR_DEFAULTS[stac.id];
-    if (colorDefaults) {
-      this.updateLayerVisConfig(colorDefaults);
-    }
-
     return this;
-  }
-
-  validateVisConfig(dataset: KeplerDataset, visConfig) {
-    const stac = dataset?.metadata;
-
-    if (!stac || !isCustomStac(stac)) {
-      return {
-        ...visConfig,
-        // set mosaicId to null
-        mosaicId: null
-      };
-    }
-
-    // Set default mosaic
-    let mosaicId;
-    const availableMosaics = getAvailableMosaics(stac);
-
-    if (Array.isArray(availableMosaics) && availableMosaics.length > 0) {
-      mosaicId = !availableMosaics.some(({id}) => id === visConfig.mosaicId)
-        ? availableMosaics[availableMosaics.length - 1].id
-        : visConfig.mosaicId;
-    } else {
-      // no availableMosaics
-      mosaicId = null;
-    }
-    return {
-      ...visConfig,
-      mosaicId
-    };
   }
 
   /**

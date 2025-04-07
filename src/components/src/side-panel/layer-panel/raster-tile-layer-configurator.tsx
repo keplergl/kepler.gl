@@ -21,7 +21,6 @@ import {
 import {PMTilesType} from '@kepler.gl/constants';
 import {
   filterAvailablePresets,
-  getAvailableMosaics,
   getEOBands,
   getRasterStatisticsMinMax,
   getSingleBandPresetOptions,
@@ -215,7 +214,6 @@ function RasterTileLayerConfiguratorFactory(
     const stac: CompleteSTACObject = dataset?.metadata as any;
 
     const availablePresets = useMemo(() => filterAvailablePresets(stac, PRESET_OPTIONS), [stac]);
-    const availableMosaics = useMemo(() => getAvailableMosaics(stac), [stac]);
 
     // it's possible that non-raster metadata will be passed to the raster configurator, so availablePresets may be null
     const presetOptions = useMemo(
@@ -254,7 +252,6 @@ function RasterTileLayerConfiguratorFactory(
     const selectedColormap =
       findVisConfigItemById(layer, 'colormapId') ||
       getCategoricalColormapListItem(categoricalColorMap);
-    const selectedMosaic = findItemById(layer, availableMosaics, 'mosaicId');
     const selectedPreset = findVisConfigItemById(layer, 'preset');
     const selectedSingleBandName = findItemById(layer, singleBandOptions, 'singleBandName');
 
@@ -411,35 +408,7 @@ function RasterTileLayerConfiguratorFactory(
                     />
                     <DescriptionText>Date format must be "YYYY-MM-DD"</DescriptionText>
                   </SidePanelSection>
-                ) : (
-                  availableMosaics && (
-                    <SidePanelSection>
-                      <PanelLabelWrapper>
-                        <PanelLabel>Mosaic</PanelLabel>
-                        <InfoHelper
-                          id="mosaic"
-                          description="Select a mosaic to choose imagery from a specific time range."
-                        />
-                      </PanelLabelWrapper>
-                      <ItemSelector
-                        selectedItems={selectedMosaic}
-                        options={availableMosaics}
-                        placeholder="Choose a mosaic"
-                        multiSelect={false}
-                        searchable={false}
-                        displayOption="label"
-                        getOptionValue="id"
-                        onChange={val => {
-                          // TODO: check when switching layers so that you don't mismatch allowed mosaics with layers
-                          visConfiguratorProps.onChange({mosaicId: val});
-                        }}
-                      />
-                      {selectedMosaic?.description ? (
-                        <DescriptionText>{selectedMosaic?.description}</DescriptionText>
-                      ) : null}
-                    </SidePanelSection>
-                  )
-                )}
+                ) : null}
               </>
             )}
           </LayerConfigGroup>
