@@ -43,6 +43,27 @@ export type KeplerApplicationConfig = {
   // Enabling this option may cause performance issues when dealing with a large number of layers or sublayers,
   // especially if large Arrow files are split into relatively small batches (should be fixed in the future).
   useOnFilteredItemsChange?: boolean;
+
+  // Raster Tile layer config
+  /** Titiler v0.11 vs v0.21 */
+  rasterServerTitilerIsCustom?: boolean;
+  /** titiler raster servers
+   * An array of URLs to shards of the raster tile server to be used by the raster tile layer.
+   * - getTitilerUrl
+   * - getTerrainUrl
+   * - getMetaUrl
+   * - used in getMaxRequests
+   */
+  rasterServerUrls?: string[];
+  /** A URL for a STAC API instance used for searching through STAC Items in a Collection. */
+  rasterStacSearchUrl?: string | null;
+  rasterTransformRequest?:
+    | ((params: {url: string; searchParams: URLSearchParams; options: any}) => {
+        url: string;
+        searchParams: URLSearchParams;
+        options: any;
+      })
+    | null;
 };
 
 const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
@@ -78,7 +99,18 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
 
   useArrowProgressiveLoading: true,
   showReleaseBanner: true,
-  useOnFilteredItemsChange: false
+  useOnFilteredItemsChange: false,
+
+  // Raster Tile layer config
+  rasterServerTitilerIsCustom: false,
+  rasterServerUrls: [
+    // 'http://localhost:8000'
+    'https://d1q7gb82o5qayp.cloudfront.net',
+    'https://d34k46lorssas.cloudfront.net',
+    'https://d2k92ng3gmu32o.cloudfront.net'
+  ],
+  rasterStacSearchUrl: null,
+  rasterTransformRequest: null
 };
 
 const applicationConfig: Required<KeplerApplicationConfig> = DEFAULT_APPLICATION_CONFIG;

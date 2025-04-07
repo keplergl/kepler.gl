@@ -15,7 +15,7 @@ import {StacTypes} from '@kepler.gl/types';
 type Item = StacTypes.STACItem;
 type Collection = StacTypes.STACCollection;
 
-import {RuntimeConfig} from '@kepler.gl/constants';
+import {getApplicationConfig} from '@kepler.gl/utils';
 
 import {DATA_SOURCE_IDS} from './config';
 import {
@@ -104,7 +104,7 @@ export function getStacApiUrlParams(options: {
 }): URLSearchParams | null {
   const {loadAssetIds, stacSearchProvider, mask = false} = options;
   const query = options._stacQuery || JSON.stringify(constructStacApiQuery(options));
-  const searchUrl = RuntimeConfig.rasterStacSearchUrl || getStacApiUrl(stacSearchProvider);
+  const searchUrl = getApplicationConfig().rasterStacSearchUrl || getStacApiUrl(stacSearchProvider);
 
   if (!searchUrl) {
     return null;
@@ -123,7 +123,7 @@ export function bandIndexesToURLParams(
   urlParams: URLSearchParams,
   bandIndexes: BandIndexes
 ): URLSearchParams {
-  if (RuntimeConfig.rasterServerTitilerIsCustom) {
+  if (getApplicationConfig().rasterServerTitilerIsCustom) {
     // for newer titiler versions
     bandIndexes.forEach(bandIndex => {
       urlParams.append('bidx', String(bandIndex + 1));
@@ -208,7 +208,7 @@ export function getTitilerUrl(options: {
 
   const pathStem = getTitilerPathMapping(stac, useSTACSearching);
   const scale = TILE_SIZE === 512 ? '@2x' : '';
-  const domain = chooseDomain(RuntimeConfig.rasterServerUrls, x, y);
+  const domain = chooseDomain(getApplicationConfig().rasterServerUrls, x, y);
   return `${domain}/${pathStem}/tiles/WebMercatorQuad/${z}/${x}/${y}${scale}.npy`;
 }
 
@@ -232,7 +232,7 @@ export function getMetaUrl(imageUrl: string): string {
     url: imageUrl
   });
 
-  const domain = RuntimeConfig.rasterServerUrls[0];
+  const domain = getApplicationConfig().rasterServerUrls[0];
   const baseUrl = `${domain}/cog/info?`;
   return baseUrl + params.toString();
 }
@@ -315,7 +315,7 @@ export function getTerrainUrl(x: number, y: number, z: number, meshMaxError: num
     url: 'terrarium',
     mesh_max_error: meshMaxError.toFixed(2)
   });
-  const domain = chooseDomain(RuntimeConfig.rasterServerUrls, x, y);
+  const domain = chooseDomain(getApplicationConfig().rasterServerUrls, x, y);
   const baseUrl = `${domain}/mesh/tiles/${z}/${x}/${y}${scale}.terrain?`;
   return baseUrl + params.toString();
 }

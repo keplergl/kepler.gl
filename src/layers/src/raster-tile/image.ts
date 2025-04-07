@@ -9,8 +9,9 @@ import {load} from '@loaders.gl/core';
 import {QuantizedMeshLoader} from '@loaders.gl/terrain';
 import memoize from 'lodash.memoize';
 
-import {RasterLayerConfig as cdnUrls, RuntimeConfig} from '@kepler.gl/constants';
+import {RasterLayerConfig as cdnUrls} from '@kepler.gl/constants';
 import {getLoaderOptions} from '@kepler.gl/table';
+import {getApplicationConfig} from '@kepler.gl/utils';
 
 import {CATEGORICAL_COLORMAP_ID, DATA_SOURCE_IDS} from './config';
 import {
@@ -187,9 +188,10 @@ export async function getAssetRequest({
   let requestUrl = url;
   let requestParams = params ?? new URLSearchParams();
   let requestOptions = options;
-  // If a rasterTransformRequest function is provided, use it to transform the request
-  if (RuntimeConfig.rasterTransformRequest) {
-    const transformedRequest = await RuntimeConfig.rasterTransformRequest({
+
+  const {rasterTransformRequest} = getApplicationConfig();
+  if (rasterTransformRequest) {
+    const transformedRequest = await rasterTransformRequest({
       url: requestUrl,
       searchParams: requestParams,
       options: requestOptions

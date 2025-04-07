@@ -14,8 +14,7 @@ type Collection = any;
 type EOBand = any;
 type DataTypeOfTheBand = any;
 
-import {RuntimeConfig} from '@kepler.gl/constants';
-import {hexToRgb} from '@kepler.gl/utils';
+import {getApplicationConfig, hexToRgb} from '@kepler.gl/utils';
 
 import {ZOOM_RANGES, MAX_PIXEL_VALUES, PRESET_OPTIONS, DATA_SOURCE_IDS} from './config';
 import {
@@ -651,7 +650,7 @@ export function getMaxRequests(stac: Item | Collection): number {
     return PLANET_DOMAINS.length * 6;
   }
 
-  return RuntimeConfig.rasterServerUrls.length * 6;
+  return getApplicationConfig().rasterServerUrls.length * 6;
 }
 
 /**

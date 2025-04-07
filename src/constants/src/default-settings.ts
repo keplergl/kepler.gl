@@ -1599,26 +1599,3 @@ export const RasterLayerConfig = {
     return `${KEPLER_UNFOLDED_BUCKET}/raster/colormaps/${colormapId}.png`;
   }
 };
-
-export const RuntimeConfig = {
-  /**
-   * An array of URLs to shards of the raster tile server to be used by the raster tile layer.
-   * - getTitilerUrl
-   * - getTerrainUrl
-   * - getMetaUrl
-   * - used in getMaxRequests
-   */
-  rasterServerUrls: [
-    // 'http://localhost:8000'
-    'https://d1q7gb82o5qayp.cloudfront.net',
-    'https://d34k46lorssas.cloudfront.net',
-    'https://d2k92ng3gmu32o.cloudfront.net'
-  ],
-
-  // Titiler v0.11 vs v0.21
-  rasterServerTitilerIsCustom: false,
-
-  /** A URL for a STAC API instance used for searching through STAC Items in a Collection. */
-  rasterStacSearchUrl: null,
-  rasterTransformRequest: null
-};
