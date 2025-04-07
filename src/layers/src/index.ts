@@ -47,7 +47,10 @@ export {default as VectorTileLayer} from './vector-tile/vector-tile-layer';
 
 import {default as RasterTileLayer} from './raster-tile/raster-tile-layer';
 export {default as RasterTileIcon} from './raster-tile/raster-tile-icon';
-export {default as RasterTileLayer} from './raster-tile/raster-tile-layer';
+export {
+  default as RasterTileLayer,
+  isTilesBeingLoaded as isRasterTilesBeingLoaded
+} from './raster-tile/raster-tile-layer';
 export {CATEGORICAL_COLORMAP_ID, PRESET_OPTIONS} from './raster-tile/config';
 export {getCategoricalColormapDataUrl} from './raster-tile/image';
 export * from './raster-tile/types';

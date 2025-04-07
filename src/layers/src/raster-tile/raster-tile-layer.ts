@@ -94,6 +94,11 @@ const devicePixelRatio: number = Math.min(
 // Global counter that represents the number of tiles currently being loaded across all the raster tile layers
 let tilesBeingLoaded = 0;
 
+// This is a temp solution, as we don't have proper logic to track loading of asycn layers atm in Kepler.gl
+export const isTilesBeingLoaded = () => {
+  return tilesBeingLoaded > 0;
+};
+
 export type RasterTileLayerVisConfigCommonSettings = {
   opacity: VisConfigNumber;
   enableTerrain: VisConfigBoolean;
@@ -654,10 +659,8 @@ export default class RasterTileLayer extends Layer {
     const {
       shouldLoadTerrain,
       globalBounds,
-      bbox: {west, south, east, north},
-      index
+      bbox: {west, south, east, north}
     } = props;
-    const onTileUpdate = RuntimeConfig.onRasterTileLoadUpdate as any;
 
     if (globalBounds && !bboxIntersects(globalBounds, [west, south, east, north])) {
       // tile is outside of STAC object's bounding box; don't fetch tile
@@ -672,11 +675,7 @@ export default class RasterTileLayer extends Layer {
       return {images: null, ...(terrain ? {terrain} : {})};
     }
 
-    const tileInfo: Pick<RasterTileLoadEvent, 'assetUrls' | 'tileIndex'> = {
-      assetUrls: assetRequests.map(req => req.url),
-      tileIndex: [index.x, index.y, index.z]
-    };
-    onTileUpdate?.({status: 'loading', ...tileInfo, remainingTiles: ++tilesBeingLoaded});
+    tilesBeingLoaded += 1;
 
     // Wrap loading images into a try/catch because tiles that are only briefly in view will be
     // aborted. The `AbortController.abort()` creates a DOMException error.
@@ -692,7 +691,7 @@ export default class RasterTileLayer extends Layer {
       ]);
 
       const [min, max] = this.getMinMaxPixelValues(images.imageBands);
-      onTileUpdate?.({status: 'loaded', ...tileInfo, remainingTiles: --tilesBeingLoaded});
+      tilesBeingLoaded -= 1;
 
       // Add terrain data only if we requested it above
       return {
@@ -702,14 +701,13 @@ export default class RasterTileLayer extends Layer {
         maxPixelValue: max
       };
     } catch (error) {
+      tilesBeingLoaded -= 1;
       if ((error as any).name === 'AbortError') {
         // tile was aborted
-        onTileUpdate?.({status: 'canceled', ...tileInfo, remainingTiles: --tilesBeingLoaded});
         return null;
       }
 
       // Some other unhandled error
-      onTileUpdate?.({status: 'failed', error, ...tileInfo, remainingTiles: --tilesBeingLoaded});
       throw error;
     }
   }
@@ -718,8 +716,7 @@ export default class RasterTileLayer extends Layer {
     const {
       shouldLoadTerrain,
       globalBounds,
-      bbox: {west, south, east, north},
-      index
+      bbox: {west, south, east, north}
     } = props;
 
     if (globalBounds && !bboxIntersects(globalBounds, [west, south, east, north])) {
@@ -727,12 +724,7 @@ export default class RasterTileLayer extends Layer {
       return null;
     }
 
-    const tileInfo: Pick<RasterTileLoadEvent, 'assetUrls' | 'tileIndex'> = {
-      assetUrls: ['pmtiles'],
-      tileIndex: [index.x, index.y, index.z]
-    };
-    const onTileUpdate = RuntimeConfig.onRasterTileLoadUpdate as any;
-    onTileUpdate?.({status: 'loading', ...tileInfo, remainingTiles: ++tilesBeingLoaded});
+    tilesBeingLoaded += 1;
 
     try {
       const [image] = await Promise.all([tileSource.getTileData(props)]);
@@ -746,19 +738,19 @@ export default class RasterTileLayer extends Layer {
         minPixelValue = min;
         maxPixelValue = max;
       }
-      onTileUpdate?.({status: 'loaded', ...tileInfo, remainingTiles: --tilesBeingLoaded});
+      tilesBeingLoaded -= 1;
 
       // Add terrain data only if we requested it above
       return {image, minPixelValue, maxPixelValue, ...(terrain ? {terrain} : {})};
     } catch (error) {
+      tilesBeingLoaded -= 1;
+
       if ((error as any).name === 'AbortError') {
         // tile was aborted
-        onTileUpdate?.({status: 'canceled', ...tileInfo, remainingTiles: --tilesBeingLoaded});
         return null;
       }
 
       // Some other unhandled error
-      onTileUpdate?.({status: 'failed', error, ...tileInfo, remainingTiles: --tilesBeingLoaded});
       throw error;
     }
   }

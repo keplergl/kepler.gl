@@ -31,7 +31,8 @@ import {
   LayerBaseConfig,
   VisualChannelDomain,
   EditorLayerUtils,
-  AggregatedBin
+  AggregatedBin,
+  isRasterTilesBeingLoaded
 } from '@kepler.gl/layers';
 import {
   DatasetAttribution,
@@ -1155,7 +1156,7 @@ export default function MapContainerFactory(
           {this._renderMapPopover()}
           {primary !== isSplit ? (
             <LoadingIndicator
-              isVisible={Boolean(isLoadingIndicatorVisible)}
+              isVisible={isLoadingIndicatorVisible || isRasterTilesBeingLoaded()}
               activeSidePanel={Boolean(activeSidePanel)}
               sidePanelWidth={sidePanelWidth}
             >

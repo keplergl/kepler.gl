@@ -1620,8 +1620,5 @@ export const RuntimeConfig = {
 
   /** A URL for a STAC API instance used for searching through STAC Items in a Collection. */
   rasterStacSearchUrl: null,
-  rasterTransformRequest: null,
-
-  // A function that is called when a raster tile is loaded. It receives the tile URL and the response object.
-  onRasterTileLoadUpdate: null
+  rasterTransformRequest: null
 };
