@@ -37,7 +37,7 @@ const LoadingIndicator: React.FC<PropsWithChildren<LoadingIndicatorProps> & {the
   sidePanelWidth,
   theme
 }) => {
-  const left = (activeSidePanel ? sidePanelWidth || 0 : 0) + theme.sidePanel.margin.left;
+  const left = (activeSidePanel ? (sidePanelWidth || 0) + 3 : 0) + theme.sidePanel.margin.left;
 
   return (
     <StyledContainer isVisible={isVisible} left={left}>

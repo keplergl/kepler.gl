@@ -9,7 +9,7 @@ import memoize from 'lodash.memoize';
 import {Matrix4} from 'math.gl';
 
 import {PathLayer} from '@deck.gl/layers/typed';
-import {DatasetType, PMTilesType, RuntimeConfig, LAYER_TYPES} from '@kepler.gl/constants';
+import {DatasetType, PMTilesType, LAYER_TYPES} from '@kepler.gl/constants';
 import {RasterLayer, RasterMeshLayer} from '@kepler.gl/deckgl-layers';
 import {Layer, VisualChannel} from '@kepler.gl/layers';
 import {
@@ -675,7 +675,7 @@ export default class RasterTileLayer extends Layer {
       return {images: null, ...(terrain ? {terrain} : {})};
     }
 
-    tilesBeingLoaded += 1;
+    tilesBeingLoaded++;
 
     // Wrap loading images into a try/catch because tiles that are only briefly in view will be
     // aborted. The `AbortController.abort()` creates a DOMException error.
@@ -691,7 +691,7 @@ export default class RasterTileLayer extends Layer {
       ]);
 
       const [min, max] = this.getMinMaxPixelValues(images.imageBands);
-      tilesBeingLoaded -= 1;
+      tilesBeingLoaded--;
 
       // Add terrain data only if we requested it above
       return {
@@ -701,7 +701,7 @@ export default class RasterTileLayer extends Layer {
         maxPixelValue: max
       };
     } catch (error) {
-      tilesBeingLoaded -= 1;
+      tilesBeingLoaded--;
       if ((error as any).name === 'AbortError') {
         // tile was aborted
         return null;
@@ -724,7 +724,7 @@ export default class RasterTileLayer extends Layer {
       return null;
     }
 
-    tilesBeingLoaded += 1;
+    tilesBeingLoaded++;
 
     try {
       const [image] = await Promise.all([tileSource.getTileData(props)]);
@@ -738,12 +738,12 @@ export default class RasterTileLayer extends Layer {
         minPixelValue = min;
         maxPixelValue = max;
       }
-      tilesBeingLoaded -= 1;
+      tilesBeingLoaded--;
 
       // Add terrain data only if we requested it above
       return {image, minPixelValue, maxPixelValue, ...(terrain ? {terrain} : {})};
     } catch (error) {
-      tilesBeingLoaded -= 1;
+      tilesBeingLoaded--;
 
       if ((error as any).name === 'AbortError') {
         // tile was aborted
