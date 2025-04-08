@@ -124,8 +124,10 @@ function findItemById(layer, options, prop) {
 function getBandSelectorOptions(stac: CompleteSTACObject): {id?: string; label?: string}[] {
   const eoBands = getEOBands(stac) || [];
   return eoBands.map((eoBand: EOBand) => ({
-    id: eoBand.name,
-    label: eoBand.common_name ? `${eoBand.name} (${eoBand.common_name})` : eoBand.name
+    id: eoBand.name || eoBand.common_name,
+    label: eoBand.common_name
+      ? `${eoBand.name || eoBand.common_name} (${eoBand.common_name})`
+      : eoBand.name
   }));
 }
 

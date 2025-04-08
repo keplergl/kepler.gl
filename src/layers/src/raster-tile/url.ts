@@ -10,7 +10,7 @@ type Collection = StacTypes.STACCollection;
 
 import {getApplicationConfig} from '@kepler.gl/utils';
 
-import {DATA_SOURCE_IDS, DEFAULT_BAND_MAPPINGS} from './config';
+import {DEFAULT_BAND_MAPPINGS} from './config';
 import {
   CompleteSTACObject,
   AssetIds,
@@ -20,16 +20,6 @@ import {
 } from './types';
 
 const TILE_SIZE: 256 | 512 = 256;
-
-// For now, it's still required to use these endpoints since the MosaicJSON documents store the
-// *sceneids* and not the full S3 path, so `sceneid_parser` must be called on the scene to find its
-// S3 path
-const TITILER_PATH_MAPPING: Record<DATA_SOURCE_IDS, string | null> = {
-  [DATA_SOURCE_IDS.SENTINEL_2_C1_L2A]: 'sentinel2/mosaicjson',
-  [DATA_SOURCE_IDS.SENTINEL_2_L1A]: 'sentinel2/mosaicjson',
-  [DATA_SOURCE_IDS.SENTINEL_2_L1C]: 'sentinel2/mosaicjson',
-  [DATA_SOURCE_IDS.SENTINEL_2_PRE_C1_L2A]: 'sentinel2/mosaicjson'
-};
 
 interface StacSearchInfo {
   sentinelCollectionName: string[];
@@ -185,13 +175,7 @@ export function getTitilerPathMapping(stac: CompleteSTACObject, useSTACSearching
     return 'stac/mosaic';
   }
 
-  const customMosaics = Boolean(stac?.unfolded?.mosaics);
-
-  if (!customMosaics) {
-    return 'cog';
-  }
-
-  return TITILER_PATH_MAPPING[stac.id];
+  return 'cog';
 }
 
 // TODO: update this with new backend api to construct stac from image

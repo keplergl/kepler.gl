@@ -41,15 +41,6 @@ function validateSTAC(stac: JsonObjectOrArray, options: {allowCollections: boole
     return Error('Metadata must be an object.');
   }
 
-  if (stac?.type === 'Collection' && stac?.unfolded) {
-    // Explicitly allow Collection files with a non-null Unfolded key (where we store mosaics)
-    // Note that all raster metadata goes through this function, even when added from the Data
-    // Catalog (instead of the Add-Data modal).
-    // If a dataset added from the Data Catalog fails validation, the value of `data.metadata`
-    // received by the layer will still be the _dataset record_(!) not the fetched dataset metadata
-    return null;
-  }
-
   if ((!allowCollections && stac?.type === 'Collection') || stac?.type === 'Catalog') {
     return Error('Custom STAC Collections and Catalogs are not supported.');
   }
