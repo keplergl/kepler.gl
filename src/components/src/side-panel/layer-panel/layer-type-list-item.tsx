@@ -58,6 +58,7 @@ const StyledListItem = styled.div`
     font-size: 12px;
     text-align: center;
     color: ${props => props.theme.selectColor};
+    max-width: ${props => props.theme.layerTypeIconSizeL}px;
   }
 `;
 
