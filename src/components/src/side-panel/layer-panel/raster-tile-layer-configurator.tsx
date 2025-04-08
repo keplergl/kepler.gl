@@ -376,7 +376,7 @@ function RasterTileLayerConfiguratorFactory(
                     <ItemSelector
                       {...layer.visConfigSettings.stacSearchProvider}
                       selectedItems={findVisConfigItemById(layer, 'stacSearchProvider')}
-                      placeholder="Choose a mosaic"
+                      placeholder="Choose search provider"
                       multiSelect={false}
                       searchable={false}
                       displayOption="label"

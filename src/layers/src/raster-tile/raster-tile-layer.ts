@@ -27,7 +27,7 @@ import {
 import {notNullorUndefined} from '@kepler.gl/common-utils';
 import {Datasets, KeplerTable as KeplerDataset} from '@kepler.gl/table';
 
-import {rasterVisConfigs, PRESET_OPTIONS, DATA_SOURCE_IDS} from './config';
+import {rasterVisConfigs, PRESET_OPTIONS, DATA_SOURCE_COLOR_DEFAULTS} from './config';
 import {getModules} from './gpu-utils';
 import {getSTACImageRequests, loadImages, loadTerrain} from './image';
 import RasterIcon from './raster-tile-icon';
@@ -297,6 +297,11 @@ export default class RasterTileLayer extends Layer {
       return this;
     }
 
+    // When a STAC Collection is added, useStacSearching should be true to prevent a black screen
+    this.updateLayerVisConfig({
+      useSTACSearching: stac.type === 'Collection'
+    });
+
     // Set singleBandName if there is only one band
     const availableBands = getEOBands(stac) || [];
     if (availableBands?.length === 1) {
@@ -310,6 +315,12 @@ export default class RasterTileLayer extends Layer {
       !availablePresets?.includes(this.visConfigSettings.preset.defaultValue as string)
     ) {
       this.updateLayerVisConfig({preset: availablePresets[0]});
+    }
+
+    // Set default color rescaling
+    const colorDefaults = DATA_SOURCE_COLOR_DEFAULTS[stac.id];
+    if (colorDefaults) {
+      this.updateLayerVisConfig(colorDefaults);
     }
 
     return this;

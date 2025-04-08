@@ -18,41 +18,31 @@ import {ColorRescaling, ConfigOption, PresetData, BandCombination} from './types
  */
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export enum DATA_SOURCE_IDS {
-  LANDSAT = 'landsat-8-c1-l1',
-  SENTINEL = 'sentinel-s2-l2a',
-  NAIP = 'naip-analytic',
-  PLANET_NICFI = 'planet-nicfi'
+  SENTINEL_2_L1C = 'sentinel-2-l1c',
+  SENTINEL_2_L1A = 'sentinel-2-l2a',
+  SENTINEL_2_C1_L2A = 'sentinel-2-c1-l2a',
+  SENTINEL_2_PRE_C1_L2A = 'sentinel-2-pre-c1-l2a'
+  // LANDSAT = 'landsat-8-c1-l1',
+  // NAIP = 'naip-analytic',
+  // PLANET_NICFI = 'planet-nicfi'
 }
 
+const DEFAULT_SENTINEL_COLOR_DEFAULTS = {
+  gammaContrastFactor: 1.75,
+  sigmoidalContrastFactor: 18,
+  sigmoidalBiasFactor: 0.16,
+  saturationValue: 1.7
+};
+
 /**
- * Per-data source color rescaling defaults
+ * Per-data source color rescaling defaults for known collections
  */
-// TODO: put these in STAC item as a custom attribute?
 export const DATA_SOURCE_COLOR_DEFAULTS: Record<DATA_SOURCE_IDS, ColorRescaling> = {
-  [DATA_SOURCE_IDS.PLANET_NICFI]: {
-    gammaContrastFactor: 1.3,
-    sigmoidalContrastFactor: 7,
-    sigmoidalBiasFactor: 0.16,
-    saturationValue: 1
-  },
-  [DATA_SOURCE_IDS.LANDSAT]: {
-    gammaContrastFactor: 1.2,
-    sigmoidalContrastFactor: 30,
-    sigmoidalBiasFactor: 0.18,
-    saturationValue: 1
-  },
-  [DATA_SOURCE_IDS.SENTINEL]: {
-    gammaContrastFactor: 1.2,
-    sigmoidalContrastFactor: 7,
-    sigmoidalBiasFactor: 0.19,
-    saturationValue: 1
-  },
-  [DATA_SOURCE_IDS.NAIP]: {
-    gammaContrastFactor: 1,
-    sigmoidalContrastFactor: 6,
-    sigmoidalBiasFactor: 0.3,
-    saturationValue: 1.2
-  }
+  // Note: good for True Color, too saturated for other channels
+  [DATA_SOURCE_IDS.SENTINEL_2_L1C]: DEFAULT_SENTINEL_COLOR_DEFAULTS,
+  [DATA_SOURCE_IDS.SENTINEL_2_L1A]: DEFAULT_SENTINEL_COLOR_DEFAULTS,
+  [DATA_SOURCE_IDS.SENTINEL_2_C1_L2A]: DEFAULT_SENTINEL_COLOR_DEFAULTS,
+  [DATA_SOURCE_IDS.SENTINEL_2_PRE_C1_L2A]: DEFAULT_SENTINEL_COLOR_DEFAULTS
 };
 
 /**
@@ -169,23 +159,24 @@ export const PRESET_OPTIONS: Record<string, PresetData> = {
  */
 // TODO: use render:max_overview_gsd from STAC
 export const ZOOM_RANGES: Record<DATA_SOURCE_IDS, [number, number]> = {
-  [DATA_SOURCE_IDS.LANDSAT]: [7, 12],
-  [DATA_SOURCE_IDS.SENTINEL]: [8, 13],
-  [DATA_SOURCE_IDS.NAIP]: [5, 17],
-  [DATA_SOURCE_IDS.PLANET_NICFI]: [2, 18]
+  [DATA_SOURCE_IDS.SENTINEL_2_C1_L2A]: [8, 13],
+  [DATA_SOURCE_IDS.SENTINEL_2_L1A]: [8, 13],
+  [DATA_SOURCE_IDS.SENTINEL_2_L1C]: [8, 13],
+  [DATA_SOURCE_IDS.SENTINEL_2_PRE_C1_L2A]: [8, 13]
 };
 
 /**
  * Bit depth for each data source
  *
- * Landsat-8 is 16-bit; Sentinel-2 and Planet are 12-bit; NAIP is 8-bit
+ * Sentinel-2 is 12-bit;
+ * Landsat-8 is 16-bit; Planet is 12-bit; NAIP is 8-bit
  */
 // TODO: use range value and dtype in STAC collection instead of this
 export const MAX_PIXEL_VALUES: Record<DATA_SOURCE_IDS, number> = {
-  [DATA_SOURCE_IDS.LANDSAT]: Math.pow(2, 16) - 1,
-  [DATA_SOURCE_IDS.SENTINEL]: Math.pow(2, 12) - 1,
-  [DATA_SOURCE_IDS.NAIP]: Math.pow(2, 8) - 1,
-  [DATA_SOURCE_IDS.PLANET_NICFI]: Math.pow(2, 12) - 1
+  [DATA_SOURCE_IDS.SENTINEL_2_C1_L2A]: Math.pow(2, 12) - 1,
+  [DATA_SOURCE_IDS.SENTINEL_2_L1A]: Math.pow(2, 12) - 1,
+  [DATA_SOURCE_IDS.SENTINEL_2_L1C]: Math.pow(2, 12) - 1,
+  [DATA_SOURCE_IDS.SENTINEL_2_PRE_C1_L2A]: Math.pow(2, 12) - 1
 };
 
 /**
@@ -526,13 +517,13 @@ export const rasterVisConfigs = {
   } as VisConfigSelection,
   startDate: {
     type: 'input',
-    defaultValue: '2019-02-02',
+    defaultValue: '2020-02-02',
     label: 'Start Date',
     property: 'startDate'
   } as VisConfigInput,
   endDate: {
     type: 'input',
-    defaultValue: '2019-03-02',
+    defaultValue: '2020-03-02',
     label: 'End Date',
     property: 'endDate'
   } as VisConfigInput,

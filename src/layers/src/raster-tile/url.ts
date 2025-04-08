@@ -4,13 +4,6 @@
 /* Utilities for creating request urls */
 /* global URLSearchParams */
 
-// import {DataConnectionType, dataProxyAPI, PlanetDataConnection} from '@fsq/api';
-export enum DataConnectionType {
-  PLANET = 'planet'
-}
-const dataProxyAPI = null;
-type PlanetDataConnection = any;
-
 import {StacTypes} from '@kepler.gl/types';
 type Item = StacTypes.STACItem;
 type Collection = StacTypes.STACCollection;
@@ -20,17 +13,11 @@ import {getApplicationConfig} from '@kepler.gl/utils';
 import {DATA_SOURCE_IDS} from './config';
 import {
   CompleteSTACObject,
-  GetTileDataProps,
   AssetIds,
   BandIndexes,
   CompleteSTACItem,
   CompleteSTACCollection
 } from './types';
-
-// Four subdomains numbered tiles0 to tiles3
-export const PLANET_DOMAINS: string[] = Array(4)
-  .fill(0)
-  .map((_, i) => `https://tiles${i}.planet.com`);
 
 const TILE_SIZE: 256 | 512 = 256;
 
@@ -38,11 +25,10 @@ const TILE_SIZE: 256 | 512 = 256;
 // *sceneids* and not the full S3 path, so `sceneid_parser` must be called on the scene to find its
 // S3 path
 const TITILER_PATH_MAPPING: Record<DATA_SOURCE_IDS, string | null> = {
-  [DATA_SOURCE_IDS.LANDSAT]: 'landsat_c2/mosaicjson',
-  [DATA_SOURCE_IDS.SENTINEL]: 'sentinel2/mosaicjson',
-  [DATA_SOURCE_IDS.NAIP]: 'mosaicjson',
-  // For planet data, we fetch from Planet's servers directly
-  [DATA_SOURCE_IDS.PLANET_NICFI]: null
+  [DATA_SOURCE_IDS.SENTINEL_2_C1_L2A]: 'sentinel2/mosaicjson',
+  [DATA_SOURCE_IDS.SENTINEL_2_L1A]: 'sentinel2/mosaicjson',
+  [DATA_SOURCE_IDS.SENTINEL_2_L1C]: 'sentinel2/mosaicjson',
+  [DATA_SOURCE_IDS.SENTINEL_2_PRE_C1_L2A]: 'sentinel2/mosaicjson'
 };
 
 interface StacSearchInfo {

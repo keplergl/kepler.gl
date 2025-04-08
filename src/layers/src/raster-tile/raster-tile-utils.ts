@@ -16,11 +16,10 @@ type DataTypeOfTheBand = any;
 
 import {getApplicationConfig, hexToRgb} from '@kepler.gl/utils';
 
-import {ZOOM_RANGES, MAX_PIXEL_VALUES, PRESET_OPTIONS, DATA_SOURCE_IDS} from './config';
+import {PRESET_OPTIONS} from './config';
 import {
   DataSourceParams,
   PresetData,
-  ConfigOption,
   CompleteSTACObject,
   CompleteSTACAssetLinks,
   AssetIds,
@@ -32,7 +31,6 @@ import {
   BandCombination,
   CategoricalColormapOptions
 } from './types';
-import {PLANET_DOMAINS} from './url';
 
 export const CATEGORICAL_TEXTURE_WIDTH = 256;
 
@@ -79,10 +77,10 @@ export const dtypeMaxValue: Record<DataTypeOfTheBand, number | null> = {
  *
  * @param stac  STAC object
  *
- * @return If True, supports custom searching
+ * @return If True, supports searching
  */
 export function isSearchableStac(stac: CompleteSTACObject): boolean {
-  return isCustomStac(stac) && stac.id === DATA_SOURCE_IDS.SENTINEL;
+  return stac.type === 'Collection';
 
   // return stac.type !== 'Feature' && stac?.providers.some(
   //   provider =>
@@ -105,26 +103,24 @@ function getZoomRange(_stac: CompleteSTACObject): [number, number] {
 
 /**
  * Infer data type from STAC item
- *
+
  * This uses the `raster` extension, which is not yet very common
  *
  * @param stac stac object
  *
  * @return
  */
-function getDataType(usableAssets: CompleteSTACAssetLinks): DataTypeOfTheBand | null {
+function getDataType(
+  usableAssets: CompleteSTACAssetLinks,
+  typesToCheck?: string[]
+): DataTypeOfTheBand | null {
   const dataTypes = new Set<DataTypeOfTheBand>();
   for (const assetName in usableAssets) {
     const asset = usableAssets[assetName];
-
     if (!asset) {
       continue;
     }
-
-    // Even though data_type is no longer used, we keep this check so that existing published maps
-    // still work. See https://github.com/foursquare/studio-monorepo/pull/1817
-    if (asset['file:data_type']) {
-      dataTypes.add(String(asset['file:data_type']) as DataTypeOfTheBand);
+    if (typesToCheck && !typesToCheck.includes(assetName)) {
       continue;
     }
 
@@ -264,8 +260,7 @@ function consolidateBandIndexes(
     // (because of larger download sizes). In the future may want separate loading paths if we
     // encounter single asset objects with > 4 bands.
 
-    // TODO: eo:bands can be _either_ on each asset _or_ on the STAC's properties, which
-    // is not currently handled
+    // TODO: eo:bands can be _either_ on each asset _or_ on the STAC's properties, which is not currently handled
     loadBandIndexes = (asset['eo:bands'] as EOBand[])?.map((_, idx) => idx);
     renderBandIndexes = bandIndexes;
   } else {
@@ -416,13 +411,6 @@ export function getDataSourceParams(
   const usableAssets = getUsableAssets(stac);
   const {commonNames, bandCombination} = PRESET_OPTIONS[presetId];
   const [minZoom, maxZoom] = getZoomRange(stac);
-  const dtype = getDataType(usableAssets);
-  const [minRasterStatsValue, maxRasterStatsValue] = getRasterStatisticsMinMax(
-    stac,
-    presetId,
-    presetOptions?.singleBand
-  );
-  const pixelRange = getPixelRange(stac, dtype, [minRasterStatsValue, maxRasterStatsValue]);
 
   let bandInfo: AssetRequestInfo | null = null;
   if (bandCombination === 'single') {
@@ -433,7 +421,17 @@ export function getDataSourceParams(
     return null;
   }
 
-  if (!bandInfo || !pixelRange || !dtype) {
+  if (!bandInfo) return null;
+
+  const dtype = getDataType(usableAssets, bandInfo.loadAssetIds);
+  const [minRasterStatsValue, maxRasterStatsValue] = getRasterStatisticsMinMax(
+    stac,
+    presetId,
+    presetOptions?.singleBand
+  );
+  const pixelRange = getPixelRange(stac, dtype, [minRasterStatsValue, maxRasterStatsValue]);
+
+  if (!pixelRange || !dtype) {
     return null;
   }
 
@@ -603,12 +601,7 @@ export function getUsableAssets(stac: CompleteSTACObject): CompleteSTACAssetLink
  *
  * @return Number of permissible concurrent requests
  */
-export function getMaxRequests(stac: Item | Collection): number {
-  // Planet has 4 subdomains to load image tiles from
-  if (stac.id === DATA_SOURCE_IDS.PLANET_NICFI) {
-    return PLANET_DOMAINS.length * 6;
-  }
-
+export function getMaxRequests(_stac: Item | Collection): number {
   return getApplicationConfig().rasterServerUrls.length * 6;
 }
 
