@@ -34,6 +34,71 @@ const DEFAULT_SENTINEL_COLOR_DEFAULTS = {
   saturationValue: 1.7
 };
 
+const DEFAULT_SENTINEL_BAND_MAPPING = {
+  coastal: 'B01',
+  blue: 'B02',
+  green: 'B03',
+  red: 'B04',
+  rededge1: 'B05',
+  rededge2: 'B06',
+  rededge3: 'B07',
+  nir: 'B08',
+  nir08: 'B8A',
+  nir09: 'B09',
+  cirrus: 'B10',
+  swir11: 'B11',
+  swir16: 'B11',
+  swir12: 'B12',
+  swir22: 'B12'
+};
+
+const DEFAULT_MODIS_BAND_MAPPING = {
+  sur_refl_b01: 'B01',
+  sur_refl_b02: 'B02',
+  sur_refl_b03: 'B03',
+  sur_refl_b04: 'B04',
+  sur_refl_b05: 'B05',
+  sur_refl_b06: 'B06',
+  sur_refl_b07: 'B07',
+  Nadir_Reflectance_Band1: 'B01',
+  Nadir_Reflectance_Band2: 'B02',
+  Nadir_Reflectance_Band3: 'B03',
+  Nadir_Reflectance_Band4: 'B04',
+  Nadir_Reflectance_Band5: 'B05',
+  Nadir_Reflectance_Band6: 'B06',
+  Nadir_Reflectance_Band7: 'B07'
+};
+
+const DEFAULT_LANDSAT_C2_L1_BAND_MAPPING = {
+  green: 'B01',
+  red: 'B02',
+  nir08: 'B03',
+  nir09: 'B04'
+};
+
+const DEFAULT_LANDSAT_C2_L2_BAND_MAPPING = {
+  blue: 'B01',
+  green: 'B02',
+  red: 'B03',
+  nir08: 'B04',
+  swir16: 'B05',
+  lwir: 'B06',
+  swir22: 'B07',
+  coastal: 'B01'
+};
+
+export const DEFAULT_BAND_MAPPINGS = {
+  [DATA_SOURCE_IDS.SENTINEL_2_L1C]: DEFAULT_SENTINEL_BAND_MAPPING,
+  [DATA_SOURCE_IDS.SENTINEL_2_L1A]: DEFAULT_SENTINEL_BAND_MAPPING,
+  [DATA_SOURCE_IDS.SENTINEL_2_C1_L2A]: DEFAULT_SENTINEL_BAND_MAPPING,
+  [DATA_SOURCE_IDS.SENTINEL_2_PRE_C1_L2A]: DEFAULT_SENTINEL_BAND_MAPPING,
+  'modis-09A1-061': DEFAULT_MODIS_BAND_MAPPING,
+  'modis-43A4-061': DEFAULT_MODIS_BAND_MAPPING,
+  'modis-09Q1-061': DEFAULT_MODIS_BAND_MAPPING,
+  'landsat-c2-l1': DEFAULT_LANDSAT_C2_L1_BAND_MAPPING,
+  'landsat-c2-l2': DEFAULT_LANDSAT_C2_L2_BAND_MAPPING
+};
+
 /**
  * Per-data source color rescaling defaults for known collections
  */

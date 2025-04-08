@@ -10,7 +10,7 @@ type Collection = StacTypes.STACCollection;
 
 import {getApplicationConfig} from '@kepler.gl/utils';
 
-import {DATA_SOURCE_IDS} from './config';
+import {DATA_SOURCE_IDS, DEFAULT_BAND_MAPPINGS} from './config';
 import {
   CompleteSTACObject,
   AssetIds,
@@ -88,7 +88,7 @@ export function getStacApiUrlParams(options: {
   loadAssetIds: AssetIds;
   _stacQuery?: string;
 }): URLSearchParams | null {
-  const {loadAssetIds, stacSearchProvider, mask = false} = options;
+  const {stac, loadAssetIds, stacSearchProvider, mask = false} = options;
   const query = options._stacQuery || JSON.stringify(constructStacApiQuery(options));
   const searchUrl = getApplicationConfig().rasterStacSearchUrl || getStacApiUrl(stacSearchProvider);
 
@@ -96,8 +96,24 @@ export function getStacApiUrlParams(options: {
     return null;
   }
 
+  const bandIndexAssets = loadAssetIds.map(assetId => {
+    const mapping = DEFAULT_BAND_MAPPINGS[stac.id];
+    if (!mapping) {
+      // TODO provide a UI to setup custom band mapping
+      return assetId;
+    }
+
+    const bandIndex = mapping[assetId];
+    if (bandIndex) {
+      return bandIndex;
+    }
+
+    // This is most likely incorrect as BXX is expected, not common name
+    return assetId;
+  });
+
   return new URLSearchParams({
-    assets: loadAssetIds.join(','),
+    assets: bandIndexAssets.join(','),
     // eslint-disable-next-line @typescript-eslint/naming-convention
     return_mask: String(mask),
     url: searchUrl,
