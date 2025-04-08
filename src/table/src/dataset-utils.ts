@@ -220,7 +220,7 @@ async function refreshRasterTileMetadata(datasetInfo: CreateTableProps): Promise
       }
       const rawMetadata = await response.json();
 
-      const metadata = parseRasterMetadata(rawMetadata, {allowCollections: false});
+      const metadata = parseRasterMetadata(rawMetadata, {allowCollections: true});
       if (metadata instanceof Error) {
         throw new Error(`Failed to parse metadata ${metadata.message}`);
       }

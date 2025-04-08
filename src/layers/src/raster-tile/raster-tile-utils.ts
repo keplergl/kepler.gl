@@ -358,7 +358,11 @@ export function getSingleBandPresetOptions(
   singleBandName: string
 ): PresetOption['singleBand'] {
   const usableAssets = getUsableAssets(stac);
-  const assetData = findAssetWithName(usableAssets, singleBandName, 'name');
+  let assetData = findAssetWithName(usableAssets, singleBandName, 'name');
+  if (!assetData) {
+    // some collections have common_name instead of name
+    assetData = findAssetWithName(usableAssets, singleBandName, 'common_name');
+  }
   let singleBand: PresetOption['singleBand'];
   if (assetData) {
     const [assetId, bandIndex] = assetData;

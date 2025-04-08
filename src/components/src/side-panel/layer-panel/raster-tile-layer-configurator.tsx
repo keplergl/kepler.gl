@@ -33,7 +33,9 @@ import {
   PresetOption,
   RasterTileLayer,
   CATEGORICAL_COLORMAP_ID,
-  PRESET_OPTIONS
+  PRESET_OPTIONS,
+  RASTER_COLOR_RESET_PARAMS,
+  DATA_SOURCE_COLOR_DEFAULTS
 } from '@kepler.gl/layers';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {capitalizeFirstLetter} from '@kepler.gl/utils';
@@ -43,7 +45,7 @@ import type {StacTypes} from '@kepler.gl/types';
 import {getColorMapListItemComponent} from './raster-tile-colormap-list-item';
 
 type EOBand = StacTypes.Band;
-const STAC_SEARCH_UI_ENABLED = false;
+const STAC_SEARCH_UI_ENABLED = true;
 
 const StyledVisConfigSwitch = styled.div`
   display: flex;
@@ -163,6 +165,40 @@ function isDataSourceColorRangeAvailable(
     maxPixelValue = dataSourceParams.maxPixelValue;
   }
   return minPixelValue !== null && maxPixelValue !== null;
+}
+
+/**
+ * Updates color parameters based on a change in visualization preset.
+ *
+ * This function adjusts the color processing parameters when the visualization
+ * preset changes, based on whether the preset is switching to or from a
+ * single-band. Determines whether to apply color
+ * enhancements or reset parameters based on the preset transition.
+ *
+ * @param stac A STAC (SpatioTemporal Asset Catalog) object representing the dataset.
+ * @param newPreset The old visualization preset being applied.
+ * @param newPreset The new visualization preset being applied.
+ * @returns The updated color parameters to apply.
+ */
+function updateColorParamsOnPresetChange(
+  stac: CompleteSTACObject,
+  oldPreset: string,
+  newPreset: string
+) {
+  let colorParams = {};
+  const colorOverrides = DATA_SOURCE_COLOR_DEFAULTS[stac.id];
+  if (colorOverrides) return colorParams;
+
+  const bandOfInterest = 'singleBand';
+  if (oldPreset === bandOfInterest && newPreset !== bandOfInterest) {
+    // enchance colors for multiband combinations
+    colorParams = colorOverrides;
+  } else if (oldPreset !== bandOfInterest && newPreset === bandOfInterest) {
+    // reset image processng params
+    colorParams = RASTER_COLOR_RESET_PARAMS;
+  }
+
+  return colorParams;
 }
 
 type Props = {
@@ -322,8 +358,13 @@ function RasterTileLayerConfiguratorFactory(
                 searchable={false}
                 displayOption="label"
                 getOptionValue="id"
-                onChange={val => {
-                  visConfiguratorProps.onChange({preset: val});
+                onChange={newPreset => {
+                  const overrides = updateColorParamsOnPresetChange(
+                    stac,
+                    visConfiguratorProps.layer.config.visConfig.preset,
+                    newPreset as string
+                  );
+                  visConfiguratorProps.onChange({...overrides, preset: newPreset});
                 }}
               />
               {selectedPreset?.description ? (

@@ -14,24 +14,40 @@ import {ColorRescaling, ConfigOption, PresetData, BandCombination} from './types
 
 /**
  * Data Source IDs
- * These must be kept in sync with the value of stac.id in our custom STAC files
  */
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export enum DATA_SOURCE_IDS {
   SENTINEL_2_L1C = 'sentinel-2-l1c',
   SENTINEL_2_L1A = 'sentinel-2-l2a',
   SENTINEL_2_C1_L2A = 'sentinel-2-c1-l2a',
-  SENTINEL_2_PRE_C1_L2A = 'sentinel-2-pre-c1-l2a'
-  // LANDSAT = 'landsat-8-c1-l1',
+  SENTINEL_2_PRE_C1_L2A = 'sentinel-2-pre-c1-l2a',
+  LANDSAT_C2_L1 = 'landsat-c2-l1',
+  LANDSAT_C2_L2 = 'landsat-c2-l2'
+
   // NAIP = 'naip-analytic',
   // PLANET_NICFI = 'planet-nicfi'
 }
 
+export const RASTER_COLOR_RESET_PARAMS = {
+  gammaContrastFactor: 1,
+  sigmoidalContrastFactor: 0,
+  sigmoidalBiasFactor: 0.5,
+  saturationValue: 1.0,
+  dynamicColor: false
+};
+
 const DEFAULT_SENTINEL_COLOR_DEFAULTS = {
-  gammaContrastFactor: 1.75,
-  sigmoidalContrastFactor: 18,
-  sigmoidalBiasFactor: 0.16,
-  saturationValue: 1.7
+  gammaContrastFactor: 2.2,
+  sigmoidalContrastFactor: 23,
+  sigmoidalBiasFactor: 0.12,
+  saturationValue: 2.0
+};
+
+const DEFAULT_MODIS_COLOR_DEFAULTS = {
+  gammaContrastFactor: 2.0,
+  sigmoidalContrastFactor: 8,
+  sigmoidalBiasFactor: 0.13,
+  saturationValue: 1.1
 };
 
 const DEFAULT_SENTINEL_BAND_MAPPING = {
@@ -84,7 +100,8 @@ const DEFAULT_LANDSAT_C2_L2_BAND_MAPPING = {
   swir16: 'B05',
   lwir: 'B06',
   swir22: 'B07',
-  coastal: 'B01'
+  coastal: 'B01',
+  lwir11: 'B06'
 };
 
 export const DEFAULT_BAND_MAPPINGS = {
@@ -107,7 +124,11 @@ export const DATA_SOURCE_COLOR_DEFAULTS: Record<DATA_SOURCE_IDS, ColorRescaling>
   [DATA_SOURCE_IDS.SENTINEL_2_L1C]: DEFAULT_SENTINEL_COLOR_DEFAULTS,
   [DATA_SOURCE_IDS.SENTINEL_2_L1A]: DEFAULT_SENTINEL_COLOR_DEFAULTS,
   [DATA_SOURCE_IDS.SENTINEL_2_C1_L2A]: DEFAULT_SENTINEL_COLOR_DEFAULTS,
-  [DATA_SOURCE_IDS.SENTINEL_2_PRE_C1_L2A]: DEFAULT_SENTINEL_COLOR_DEFAULTS
+  [DATA_SOURCE_IDS.SENTINEL_2_PRE_C1_L2A]: DEFAULT_SENTINEL_COLOR_DEFAULTS,
+  [DATA_SOURCE_IDS.LANDSAT_C2_L2]: DEFAULT_SENTINEL_COLOR_DEFAULTS,
+  'modis-09A1-061': DEFAULT_MODIS_COLOR_DEFAULTS,
+  'modis-43A4-061': DEFAULT_MODIS_COLOR_DEFAULTS,
+  'modis-09Q1-061': DEFAULT_MODIS_COLOR_DEFAULTS
 };
 
 /**

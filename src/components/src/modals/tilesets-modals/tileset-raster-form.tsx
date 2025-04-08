@@ -47,13 +47,13 @@ type RasterTileFormProps = {
   setResponse: (response: MetaResponse) => void;
 };
 
-const parseMetadataDisallowCollections = (
+const parseMetadataAllowCollections = (
   metadata: JsonObjectOrArray,
   {metadataUrl, rasterTileType}: {metadataUrl: string; rasterTileType: RasterTileType}
 ) => {
   return rasterTileType === RasterTileType.PMTILES
     ? parseVectorMetadata(metadata, {tileUrl: metadataUrl})
-    : parseRasterMetadata(metadata, {allowCollections: false});
+    : parseRasterMetadata(metadata, {allowCollections: true});
 };
 
 const RasterTileForm: React.FC<RasterTileFormProps> = ({setResponse}) => {
@@ -87,7 +87,7 @@ const RasterTileForm: React.FC<RasterTileFormProps> = ({setResponse}) => {
   } = useFetchJson({
     url: currentUrl,
     rasterTileType: isPMTilesUrl(currentUrl) ? RasterTileType.PMTILES : RasterTileType.STAC,
-    process: parseMetadataDisallowCollections
+    process: parseMetadataAllowCollections
   });
 
   useEffect(() => {
@@ -138,7 +138,8 @@ const RasterTileForm: React.FC<RasterTileFormProps> = ({setResponse}) => {
           onChange={onMetadataUrlChange}
         />
         <TilesetInputDescription>
-          Supports STAC JSON (Items only) or .pmtiles in raster format
+          Supports raster .pmtiles. Limited support for STAC Items and Collections (EO and Raster
+          extensions required).
         </TilesetInputDescription>
       </div>
     </TilesetInputContainer>

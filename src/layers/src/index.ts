@@ -51,7 +51,12 @@ export {
   default as RasterTileLayer,
   isTilesBeingLoaded as isRasterTilesBeingLoaded
 } from './raster-tile/raster-tile-layer';
-export {CATEGORICAL_COLORMAP_ID, PRESET_OPTIONS} from './raster-tile/config';
+export {
+  CATEGORICAL_COLORMAP_ID,
+  DATA_SOURCE_COLOR_DEFAULTS,
+  RASTER_COLOR_RESET_PARAMS,
+  PRESET_OPTIONS
+} from './raster-tile/config';
 export {getCategoricalColormapDataUrl} from './raster-tile/image';
 export * from './raster-tile/types';
 export * from './raster-tile/raster-tile-utils';
