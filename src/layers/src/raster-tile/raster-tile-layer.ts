@@ -328,9 +328,10 @@ export default class RasterTileLayer extends Layer {
       this.updateLayerVisConfig({preset: availablePresets[0]});
     }
 
-    // Set default color rescaling
+    // Apply improved image processing props only for non single band modes
+    const preset = this.config.visConfig.preset;
     const colorDefaults = DATA_SOURCE_COLOR_DEFAULTS[stac.id];
-    if (colorDefaults) {
+    if (colorDefaults && preset !== 'singleBand') {
       this.updateLayerVisConfig(colorDefaults);
     }
 
