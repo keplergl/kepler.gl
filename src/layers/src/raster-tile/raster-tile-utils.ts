@@ -14,6 +14,7 @@ type Collection = any;
 type EOBand = any;
 type DataTypeOfTheBand = any;
 
+import {StacTypes} from '@kepler.gl/types';
 import {getApplicationConfig, hexToRgb} from '@kepler.gl/utils';
 
 import {PRESET_OPTIONS} from './config';
@@ -687,4 +688,33 @@ export function generateCategoricalBitmapArray(
     }
   }
   return data;
+}
+
+export function timeRangeToStacTemporalInterval(
+  stac: StacTypes.STACCollection,
+  startDate: string,
+  endDate: string
+): {startDate: string; endDate: string} {
+  // TODO support multiple temporal intervals
+  const interval = stac.extent?.temporal?.interval?.[0];
+  if (!interval || !interval[0]) return {startDate, endDate};
+
+  const collectionStart = interval[0] ? new Date(interval[0]) : new Date();
+  const collectionEnd = interval[1] ? new Date(interval[1]) : new Date();
+
+  const layerStart = new Date(startDate);
+  const layerEnd = new Date(endDate);
+
+  const clippedStart =
+    layerStart < collectionStart || layerStart > collectionEnd ? collectionStart : layerStart;
+  let clippedEnd = layerEnd > collectionEnd ? collectionEnd : layerEnd;
+  if (clippedStart > clippedEnd) {
+    clippedEnd = new Date(clippedStart);
+    clippedEnd.setDate(clippedEnd.getDate() + 1);
+  }
+
+  return {
+    startDate: clippedStart.toISOString().split('T')[0],
+    endDate: clippedEnd.toISOString().split('T')[0]
+  };
 }

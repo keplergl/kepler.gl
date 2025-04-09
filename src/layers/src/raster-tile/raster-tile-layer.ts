@@ -295,7 +295,7 @@ export default class RasterTileLayer extends Layer {
   }
 
   /**
-   * Run when adding a new dataset from the data catalog
+   * Run when adding a new dataset
    */
   setInitialLayerConfig(dataset: KeplerDataset): RasterTileLayer {
     const stac = dataset?.metadata;
@@ -334,6 +334,16 @@ export default class RasterTileLayer extends Layer {
     if (colorDefaults && preset !== 'singleBand') {
       this.updateLayerVisConfig(colorDefaults);
     }
+
+    /*
+    LandSat specifies temporal bounds but the valid data is actually after end date
+    const updatedDates = timeRangeToStacTemporalInterval(
+      stac as StacTypes.STACCollection,
+      this.config.visConfig.startDate,
+      this.config.visConfig.endDate
+    );
+    this.updateLayerVisConfig(updatedDates);
+    */
 
     return this;
   }
