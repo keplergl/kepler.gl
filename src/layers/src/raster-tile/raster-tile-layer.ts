@@ -92,6 +92,8 @@ export const isTilesBeingLoaded = () => {
   return tilesBeingLoaded > 0;
 };
 
+export const LOAD_ELEVATION_AFTER_ZOOM = 8.9;
+
 export type RasterTileLayerVisConfigCommonSettings = {
   opacity: VisConfigNumber;
   enableTerrain: VisConfigBoolean;
@@ -603,7 +605,8 @@ export default class RasterTileLayer extends Layer {
     const {
       shouldLoadTerrain,
       globalBounds,
-      bbox: {west, south, east, north}
+      bbox: {west, south, east, north},
+      index: {z: zoom}
     } = props;
 
     if (globalBounds && !bboxIntersects(globalBounds, [west, south, east, north])) {
@@ -615,7 +618,8 @@ export default class RasterTileLayer extends Layer {
     // No assets to load, most likely due to props being invalid/unsupported
     if (!assetRequests) {
       // We still issue the loadTerrain request if applicable
-      const terrain = shouldLoadTerrain && (await loadTerrain(props));
+      const terrain =
+        shouldLoadTerrain && LOAD_ELEVATION_AFTER_ZOOM < zoom && (await loadTerrain(props));
       return {images: null, ...(terrain ? {terrain} : {})};
     }
 
@@ -631,7 +635,7 @@ export default class RasterTileLayer extends Layer {
           minValue: props.minCategoricalBandValue,
           maxValue: props.maxCategoricalBandValue
         }),
-        shouldLoadTerrain ? loadTerrain(props) : null
+        shouldLoadTerrain && LOAD_ELEVATION_AFTER_ZOOM < zoom ? loadTerrain(props) : null
       ]);
 
       const [min, max] = this.getMinMaxPixelValues(images.imageBands);
@@ -660,7 +664,8 @@ export default class RasterTileLayer extends Layer {
     const {
       shouldLoadTerrain,
       globalBounds,
-      bbox: {west, south, east, north}
+      bbox: {west, south, east, north},
+      index: {z: zoom}
     } = props;
 
     if (globalBounds && !bboxIntersects(globalBounds, [west, south, east, north])) {
@@ -673,7 +678,10 @@ export default class RasterTileLayer extends Layer {
     try {
       const [image] = await Promise.all([tileSource.getTileData(props)]);
       // For nwo check if the base tile exists, as this can cause loading to get stuck with "sparse" PMTiles.
-      const terrain = image && shouldLoadTerrain ? await loadTerrain(props) : null;
+      const terrain =
+        image && shouldLoadTerrain && LOAD_ELEVATION_AFTER_ZOOM < zoom
+          ? await loadTerrain(props)
+          : null;
 
       let minPixelValue: number | null = null;
       let maxPixelValue: number | null = null;
