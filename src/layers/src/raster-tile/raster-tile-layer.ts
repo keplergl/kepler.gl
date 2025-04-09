@@ -26,6 +26,7 @@ import {
 
 import {notNullorUndefined} from '@kepler.gl/common-utils';
 import {Datasets, KeplerTable as KeplerDataset} from '@kepler.gl/table';
+import {getApplicationConfig} from '@kepler.gl/utils';
 
 import {rasterVisConfigs, PRESET_OPTIONS, DATA_SOURCE_COLOR_DEFAULTS} from './config';
 import {getModules} from './gpu-utils';
@@ -93,6 +94,14 @@ export const isTilesBeingLoaded = () => {
 };
 
 export const LOAD_ELEVATION_AFTER_ZOOM = 8.9;
+
+const getShouldLoadTerrain = (mapState, visConfig) => {
+  return Boolean(
+    visConfig.enableTerrain &&
+      mapState.dragRotate &&
+      getApplicationConfig().rasterServerSupportsElevation
+  );
+};
 
 export type RasterTileLayerVisConfigCommonSettings = {
   opacity: VisConfigNumber;
@@ -403,7 +412,6 @@ export default class RasterTileLayer extends Layer {
 
     const {visConfig} = this.config;
     const {id, opacity, visible} = this.getDefaultDeckLayerProps(opts);
-    const {dragRotate} = mapState;
 
     const {
       preset,
@@ -424,11 +432,10 @@ export default class RasterTileLayer extends Layer {
       _stacQuery,
       singleBandName,
       colorRange: {colorMap: categoricalColorMap},
-      dynamicColor,
-      enableTerrain
+      dynamicColor
     } = visConfig;
 
-    const shouldLoadTerrain = Boolean(enableTerrain && dragRotate);
+    const shouldLoadTerrain = getShouldLoadTerrain(mapState, visConfig);
 
     if (new Date(endDate) < new Date(startDate)) {
       return [];
@@ -550,16 +557,14 @@ export default class RasterTileLayer extends Layer {
 
     const {data, mapState} = opts;
     const metadata = data?.dataset?.metadata;
+    const {visConfig} = this.config;
 
     const tileSource = data.tileSource;
     const showTileBorders = true;
     const minZoom = metadata.minZoom || 0;
     const maxZoom = metadata.maxZoom || 30;
 
-    const {dragRotate} = mapState;
-    const {visConfig} = this.config;
-    const {enableTerrain} = visConfig;
-    const shouldLoadTerrain = Boolean(enableTerrain && dragRotate);
+    const shouldLoadTerrain = getShouldLoadTerrain(mapState, visConfig);
 
     return [
       new TileLayer({

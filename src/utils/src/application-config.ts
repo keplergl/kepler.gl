@@ -64,6 +64,8 @@ export type KeplerApplicationConfig = {
         options: any;
       })
     | null;
+  /** If true then try to fetch quantized elevation meshes from raster servers */
+  rasterServerSupportsElevation?: boolean;
 };
 
 const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
@@ -110,7 +112,8 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
     'https://d2k92ng3gmu32o.cloudfront.net'
   ],
   rasterStacSearchUrl: null,
-  rasterTransformRequest: null
+  rasterTransformRequest: null,
+  rasterServerSupportsElevation: true
 };
 
 const applicationConfig: Required<KeplerApplicationConfig> = DEFAULT_APPLICATION_CONFIG;
