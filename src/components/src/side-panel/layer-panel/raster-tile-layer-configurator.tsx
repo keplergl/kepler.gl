@@ -38,7 +38,7 @@ import {
   DATA_SOURCE_COLOR_DEFAULTS
 } from '@kepler.gl/layers';
 import {FormattedMessage} from '@kepler.gl/localization';
-import {capitalizeFirstLetter} from '@kepler.gl/utils';
+import {capitalizeFirstLetter, getApplicationConfig} from '@kepler.gl/utils';
 import {KeplerTable as KeplerDataset} from '@kepler.gl/table';
 import type {StacTypes} from '@kepler.gl/types';
 
@@ -330,11 +330,14 @@ function RasterTileLayerConfiguratorFactory(
           <LayerConfigGroup {...visConfiguratorProps} label="Visual Settings" collapsible={false}>
             <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
           </LayerConfigGroup>
-          ;
-          <LayerConfigGroup {...visConfiguratorProps} label="Terrain">
-            <VisConfigSwitch {...visConfiguratorProps} {...layer.visConfigSettings.enableTerrain} />
-          </LayerConfigGroup>
-          ;
+          {getApplicationConfig().rasterServerSupportsElevation && (
+            <LayerConfigGroup {...visConfiguratorProps} label="Terrain">
+              <VisConfigSwitch
+                {...visConfiguratorProps}
+                {...layer.visConfigSettings.enableTerrain}
+              />
+            </LayerConfigGroup>
+          )}
         </StyledLayerConfigurator>
       );
     }
@@ -533,9 +536,11 @@ function RasterTileLayerConfiguratorFactory(
           </LayerConfigGroup>
         )}
 
-        <LayerConfigGroup {...visConfiguratorProps} label="Terrain">
-          <VisConfigSwitch {...visConfiguratorProps} {...layer.visConfigSettings.enableTerrain} />
-        </LayerConfigGroup>
+        {getApplicationConfig().rasterServerSupportsElevation && (
+          <LayerConfigGroup {...visConfiguratorProps} label="Terrain">
+            <VisConfigSwitch {...visConfiguratorProps} {...layer.visConfigSettings.enableTerrain} />
+          </LayerConfigGroup>
+        )}
       </StyledLayerConfigurator>
     );
   };
