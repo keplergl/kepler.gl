@@ -156,7 +156,11 @@ function RangeBrushFactory(): React.ComponentType<RangeBrushProps> {
       } = this.props;
       const [prevVal0, prevVal1] = prevProps.value;
 
-      if (prevProps.width !== width || prevProps.range[0] !== this.props.range[0] || prevProps.range[1] !== this.props.range[1]) {
+      if (
+        prevProps.width !== width ||
+        prevProps.range[0] !== this.props.range[0] ||
+        prevProps.range[1] !== this.props.range[1]
+      ) {
         // dimension change should not trigger this._brushed
         this.moving = true;
         if (this.brush) this.root?.call(this.brush);

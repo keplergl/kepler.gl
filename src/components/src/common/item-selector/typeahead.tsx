@@ -383,8 +383,8 @@ class Typeahead extends Component<TypeaheadProps, TypeaheadState> {
     let option = selection
       ? selection
       : this.state.searchResults.length > 0
-        ? this.state.searchResults[0]
-        : null;
+      ? this.state.searchResults[0]
+      : null;
 
     if (option === null && this._hasCustomValue()) {
       option = this._getCustomValue();

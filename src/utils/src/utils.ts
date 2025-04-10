@@ -160,10 +160,10 @@ export function getError(
     return Object.prototype.hasOwnProperty.call(err, 'message')
       ? getError(err.message)
       : Object.prototype.hasOwnProperty.call(err, 'error')
-        ? getError(err.error)
-        : Object.prototype.hasOwnProperty.call(err, 'err')
-          ? getError(err.err)
-          : JSON.stringify(err);
+      ? getError(err.error)
+      : Object.prototype.hasOwnProperty.call(err, 'err')
+      ? getError(err.err)
+      : JSON.stringify(err);
   }
 
   return defaultMessage;

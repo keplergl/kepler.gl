@@ -113,10 +113,10 @@ export default class FoursquareProvider extends Provider {
     const {map, thumbnail} = mapData;
 
     const {title = '', description = '', loadParams} = map.info;
-    
+
     const mapIdToOverwrite = options.mapIdToOverwrite || loadParams?.id;
-    if(options.overwrite && !mapIdToOverwrite){
-      throw new Error("Foursquare storage provider: no map id to overwrite");
+    if (options.overwrite && !mapIdToOverwrite) {
+      throw new Error('Foursquare storage provider: no map id to overwrite');
     }
 
     const headers = await this.getHeaders();
@@ -129,12 +129,10 @@ export default class FoursquareProvider extends Provider {
       }
     };
 
-
-
     // To overwrite map.latestState we have to fetch the map first
-    if(options.overwrite){
+    if (options.overwrite) {
       const response = await fetch(`${this.apiURL}/v1/maps/${mapIdToOverwrite}`, {
-        method: "GET",
+        method: 'GET',
         headers
       });
 
@@ -154,16 +152,16 @@ export default class FoursquareProvider extends Provider {
 
     const createdMap = await mapResponse.json();
 
-    if(!options.overwrite){
-    await fetch(`${this.apiURL}/v1/maps/${createdMap.id}/thumbnail`, {
-      method: 'PUT',
-      headers: {
-        ...headers,
-        'Content-Type': 'image/png'
-      },
-      body: thumbnail
-    });
-  }
+    if (!options.overwrite) {
+      await fetch(`${this.apiURL}/v1/maps/${createdMap.id}/thumbnail`, {
+        method: 'PUT',
+        headers: {
+          ...headers,
+          'Content-Type': 'image/png'
+        },
+        body: thumbnail
+      });
+    }
 
     // pass through fsq map id
     const newMapData = extractMapFromFSQResponse(createdMap);

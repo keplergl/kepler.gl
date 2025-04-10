@@ -33,11 +33,11 @@ type HeaderActionWrapperProps = {
   $dataTestId?: any;
 };
 
-type HeaderActionWrapperCssProps = {testId?: string} & HeaderActionWrapperProps &
+type HeaderActionWrapperCssProps = {$testId?: string} & HeaderActionWrapperProps &
   BaseComponentProps;
 
 const HeaderActionWrapper = styled.div.attrs<HeaderActionWrapperCssProps>(props => ({
-  dataTestId: props.$testId
+  $dataTestId: props.$testId
 }))<HeaderActionWrapperProps>`
   margin-left: ${props => (props.$flush ? 0 : 8)}px;
   display: flex;

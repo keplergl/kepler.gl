@@ -60,49 +60,51 @@ export type StyledSliderTooltipProps = BaseComponentProps & {
   $sliderHandleWidth: number;
 };
 
-const StyledSliderTooltip: IStyledComponent<'web', StyledSliderTooltipProps> =
-  styled.div<StyledSliderTooltipProps>`
+const StyledSliderTooltip: IStyledComponent<
+  'web',
+  StyledSliderTooltipProps
+> = styled.div<StyledSliderTooltipProps>`
+  position: absolute;
+  border-radius: 3px;
+  display: inline-block;
+  pointer-events: none;
+  transition: opacity 0.3s ease-out;
+  z-index: 999;
+  margin-left: ${props => props.$sliderHandleWidth + 12}px;
+  font-size: 9.5px;
+  font-weight: 500;
+  padding: 7px 10px;
+  background-color: ${props => props.theme.tooltipBg};
+  color: ${props => props.theme.tooltipColor};
+  margin-bottom: -6px;
+  width: 50px;
+
+  &:before,
+  &:after {
+    content: '';
+    width: 0;
+    height: 0;
     position: absolute;
-    border-radius: 3px;
-    display: inline-block;
-    pointer-events: none;
-    transition: opacity 0.3s ease-out;
-    z-index: 999;
-    margin-left: ${props => props.$sliderHandleWidth + 12}px;
-    font-size: 9.5px;
-    font-weight: 500;
-    padding: 7px 10px;
-    background-color: ${props => props.theme.tooltipBg};
-    color: ${props => props.theme.tooltipColor};
-    margin-bottom: -6px;
-    width: 50px;
+  }
 
-    &:before,
-    &:after {
-      content: '';
-      width: 0;
-      height: 0;
-      position: absolute;
-    }
+  &:before {
+    border-top: 6px solid transparent;
+    border-bottom: 6px solid transparent;
+    left: -8px;
+    top: 50%;
+  }
 
-    &:before {
-      border-top: 6px solid transparent;
-      border-bottom: 6px solid transparent;
-      left: -8px;
-      top: 50%;
-    }
-
-    &:after {
-      border-top: 5px solid transparent;
-      border-bottom: 5px solid transparent;
-      left: -6px;
-      top: 50%;
-      margin-top: -4px;
-      border-right-color: ${props => props.theme.tooltipBg};
-      border-right-style: solid;
-      border-right-width: 6px;
-    }
-  `;
+  &:after {
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+    left: -6px;
+    top: 50%;
+    margin-top: -4px;
+    border-right-color: ${props => props.theme.tooltipBg};
+    border-right-style: solid;
+    border-right-width: 6px;
+  }
+`;
 
 type SliderTooltipProps = {
   value?: number | null;

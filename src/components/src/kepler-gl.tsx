@@ -475,10 +475,10 @@ function KeplerGlFactory(
             ...theme
           }
         : theme === THEME.light
-          ? themeLT
-          : theme === THEME.base
-            ? themeBS
-            : theme
+        ? themeLT
+        : theme === THEME.base
+        ? themeBS
+        : theme
     );
 
     datasetsSelector = props => props.visState.datasets;
