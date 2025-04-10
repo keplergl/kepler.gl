@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {Component, useCallback} from 'react';
+import React, {useCallback} from 'react';
 
 import {injectIntl, WrappedComponentProps} from 'react-intl';
 import styled from 'styled-components';
@@ -153,111 +153,112 @@ function LayerManagerFactory(
   AddLayerButton: ReturnType<typeof AddLayerButtonFactory>,
   InfoHelper: ReturnType<typeof InfoHelperFactory>
 ) {
-  class LayerManager extends Component<LayerManagerProps> {
-    _addLayer = (dataset: string) => {
-      const {visStateActions} = this.props;
-      visStateActions.addLayer(undefined, dataset);
-    };
+  const LayerManager: React.FC<LayerManagerProps> = ({
+    layers,
+    datasets,
+    intl,
+    layerOrder,
+    panelListView,
+    panelMetadata,
+    layerClasses,
+    layerBlending,
+    overlayBlending,
+    showAddDataModal,
+    updateTableColor,
+    showDatasetTable,
+    removeDataset,
+    uiStateActions,
+    visStateActions,
+    mapStateActions
+  }) => {
+    const {addLayer} = visStateActions;
+    const {togglePanelListView} = uiStateActions;
+    const onAddLayer = useCallback(
+      (dataset: string) => {
+        addLayer(undefined, dataset);
+      },
+      [addLayer]
+    );
 
-    _togglePanelListView = (listView: string) => {
-      const {uiStateActions} = this.props;
-      uiStateActions.togglePanelListView({panelId: 'layer', listView});
-    };
+    const onTogglePanelListView = useCallback(
+      (listView: string) => {
+        togglePanelListView({panelId: 'layer', listView});
+      },
+      [togglePanelListView]
+    );
 
-    render() {
-      const {
-        layers,
-        datasets,
-        intl,
-        layerOrder,
-        showAddDataModal,
-        updateTableColor,
-        showDatasetTable,
-        removeDataset,
-        uiStateActions,
-        visStateActions,
-        mapStateActions,
-        panelListView,
-        panelMetadata
-      } = this.props;
+    const isSortByDatasetMode = panelListView === PANEL_VIEW_TOGGLES.byDataset;
 
-      const isSortByDatasetMode = panelListView === PANEL_VIEW_TOGGLES.byDataset;
-
-      return (
-        <div className="layer-manager">
-          <SidePanelSection>
-            <PanelViewListToggle
-              togglePanelListView={this._togglePanelListView}
-              mode={panelListView}
+    return (
+      <div className="layer-manager">
+        <SidePanelSection>
+          <PanelViewListToggle togglePanelListView={onTogglePanelListView} mode={panelListView} />
+        </SidePanelSection>
+        <DatasetSection
+          datasets={datasets}
+          showDatasetTable={showDatasetTable}
+          updateTableColor={updateTableColor}
+          removeDataset={removeDataset}
+          showDeleteDataset
+          showDatasetList={!isSortByDatasetMode}
+          showAddDataModal={showAddDataModal}
+        />
+        <SidePanelDivider />
+        <SidePanelSection>
+          <PanelTitle
+            className="layer-manager-title"
+            title={intl.formatMessage({id: panelMetadata.label})}
+          >
+            <AddLayerButton datasets={datasets} onAdd={onAddLayer} />
+          </PanelTitle>
+        </SidePanelSection>
+        <SidePanelSection>
+          {isSortByDatasetMode ? (
+            <DatasetLayerGroup
+              datasets={datasets}
+              showDatasetTable={showDatasetTable}
+              layers={layers}
+              updateTableColor={updateTableColor}
+              removeDataset={removeDataset}
+              layerOrder={layerOrder}
+              layerClasses={layerClasses}
+              uiStateActions={uiStateActions}
+              visStateActions={visStateActions}
+              mapStateActions={mapStateActions}
+              showDeleteDataset
             />
-          </SidePanelSection>
-          <DatasetSection
-            datasets={datasets}
-            showDatasetTable={showDatasetTable}
-            updateTableColor={updateTableColor}
-            removeDataset={removeDataset}
-            showDeleteDataset
-            showDatasetList={!isSortByDatasetMode}
-            showAddDataModal={showAddDataModal}
-          />
-          <SidePanelDivider />
-          <SidePanelSection>
-            <PanelTitle
-              className="layer-manager-title"
-              title={intl.formatMessage({id: panelMetadata.label})}
-            >
-              <AddLayerButton datasets={datasets} onAdd={this._addLayer} />
-            </PanelTitle>
-          </SidePanelSection>
-          <SidePanelSection>
-            {isSortByDatasetMode ? (
-              <DatasetLayerGroup
-                datasets={datasets}
-                showDatasetTable={showDatasetTable}
-                layers={layers}
-                updateTableColor={updateTableColor}
-                removeDataset={removeDataset}
-                layerOrder={layerOrder}
-                layerClasses={this.props.layerClasses}
-                uiStateActions={uiStateActions}
-                visStateActions={visStateActions}
-                mapStateActions={mapStateActions}
-                showDeleteDataset
-              />
-            ) : (
-              // TODO replace ignore
-              // @ts-ignore
-              <LayerList
-                layers={layers}
-                datasets={datasets}
-                layerOrder={layerOrder}
-                uiStateActions={uiStateActions}
-                visStateActions={visStateActions}
-                mapStateActions={mapStateActions}
-                layerClasses={this.props.layerClasses}
-              />
-            )}
-          </SidePanelSection>
-          <LayerBlendingSelector
-            layerBlending={this.props.layerBlending}
-            updateLayerBlending={visStateActions.updateLayerBlending}
-            intl={intl}
-          />
-          <OverlayBlendingSelector
-            overlayBlending={this.props.overlayBlending}
-            updateOverlayBlending={visStateActions.updateOverlayBlending}
-            intl={intl}
-            infoHelper={
-              <InfoHelper
-                id={`overlayBlending-description`}
-                description={'overlayBlending.description'}
-              />
-            }
-          />
-        </div>
-      );
-    }
-  }
+          ) : (
+            <LayerList
+              layers={layers}
+              datasets={datasets}
+              layerOrder={layerOrder}
+              uiStateActions={uiStateActions}
+              visStateActions={visStateActions}
+              mapStateActions={mapStateActions}
+              layerClasses={layerClasses}
+            />
+          )}
+        </SidePanelSection>
+        <LayerBlendingSelector
+          layerBlending={layerBlending}
+          updateLayerBlending={visStateActions.updateLayerBlending}
+          intl={intl}
+        />
+        <OverlayBlendingSelector
+          overlayBlending={overlayBlending}
+          updateOverlayBlending={visStateActions.updateOverlayBlending}
+          intl={intl}
+          infoHelper={
+            <InfoHelper
+              id={`overlayBlending-description`}
+              description={'overlayBlending.description'}
+            />
+          }
+        />
+      </div>
+    );
+  };
+
   return injectIntl(LayerManager);
 }
 

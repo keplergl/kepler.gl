@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {Component} from 'react';
-import {createSelector} from 'reselect';
+import React, {useState, useMemo, useCallback} from 'react';
 
 import {Button} from '../common/styled-components';
 import MapStyleSelectorFactory from './map-style-panel/map-style-selector';
@@ -15,7 +14,6 @@ import {injectIntl, WrappedComponentProps} from 'react-intl';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {MapStyle} from '@kepler.gl/reducers';
 import {MapStyleActions} from '@kepler.gl/actions';
-import {MapStyles} from '@kepler.gl/types';
 
 export type MapManagerProps = {
   mapStyle: MapStyle;
@@ -37,87 +35,86 @@ function MapManagerFactory(
   LayerGroupSelector: ReturnType<typeof LayerGroupSelectorFactory>,
   PanelTitle: ReturnType<typeof PanelTitleFactory>
 ) {
-  class MapManager extends Component<MapManagerProps> {
-    state = {
-      isSelecting: false
-    };
+  const MapManager: React.FC<MapManagerProps> = ({
+    mapStyle,
+    intl,
+    mapStyleActions,
+    showAddMapStyleModal,
+    panelMetadata
+  }) => {
+    const [isSelecting, setIsSelecting] = useState(false);
+    const {mapStyleChange, removeCustomMapStyle} = mapStyleActions;
+    const currentStyle = mapStyle.mapStyles[mapStyle.styleType] || {};
+    const editableLayers = currentStyle.layerGroups || [];
 
-    _toggleSelecting = () => {
-      this.setState({isSelecting: !this.state.isSelecting});
-    };
+    const toggleSelecting = useCallback(() => {
+      setIsSelecting(prev => !prev);
+    }, [setIsSelecting]);
 
-    _selectStyle = (val: string) => {
-      const {mapStyleActions} = this.props;
-      const {mapStyleChange} = mapStyleActions;
-      mapStyleChange(val);
-      this._toggleSelecting();
-    };
-
-    getCustomMapStylesActions = createSelector(
-      (props: MapManagerProps) => props.mapStyle.mapStyles,
-      (props: MapManagerProps) => props.mapStyleActions,
-      (mapStyles: MapStyles, mapStyleActions) => {
-        const actionsPerCustomStyle = {};
-        Object.values(mapStyles)
-          .filter(mapStyle => {
-            return Boolean(mapStyle.custom);
-          })
-          .forEach(({id}) => {
-            actionsPerCustomStyle[id] = [
-              {
-                id: `remove-map-style-${id}`,
-                IconComponent: Trash,
-                tooltip: 'tooltip.removeBaseMapStyle',
-                onClick: () => mapStyleActions.removeCustomMapStyle({id})
-              }
-            ];
-          });
-        return actionsPerCustomStyle;
-      }
+    const mapStyles = mapStyle.mapStyles;
+    const selectStyle = useCallback(
+      (val: string) => {
+        mapStyleChange(val);
+        setIsSelecting(false);
+      },
+      [mapStyleChange, setIsSelecting]
     );
 
-    render() {
-      const {mapStyle, intl, mapStyleActions, showAddMapStyleModal, panelMetadata} = this.props;
-      const currentStyle = mapStyle.mapStyles[mapStyle.styleType] || {};
-      const editableLayers = currentStyle.layerGroups || [];
-      const customMapStylesActions = this.getCustomMapStylesActions(this.props);
+    const customMapStylesActions = useMemo(() => {
+      const actionsPerCustomStyle = {};
+      Object.values(mapStyles)
+        .filter(mapStyle => {
+          return Boolean(mapStyle.custom);
+        })
+        .forEach(({id}) => {
+          actionsPerCustomStyle[id] = [
+            {
+              id: `remove-map-style-${id}`,
+              IconComponent: Trash,
+              tooltip: 'tooltip.removeBaseMapStyle',
+              onClick: () => removeCustomMapStyle({id})
+            }
+          ];
+        });
+      return actionsPerCustomStyle;
+    }, [mapStyles, removeCustomMapStyle]);
 
-      return (
-        <div className="map-style-panel">
-          <PanelTitle
-            className="map-manager-title"
-            title={intl.formatMessage({id: panelMetadata.label})}
-          >
-            <Button className="add-map-style-button" onClick={showAddMapStyleModal}>
-              <Add height="12px" />
-              <FormattedMessage id={'mapManager.addMapStyle'} />
-            </Button>
-          </PanelTitle>
-          <div>
-            <MapStyleSelector
-              mapStyle={mapStyle}
-              isSelecting={this.state.isSelecting}
-              onChange={this._selectStyle}
-              toggleActive={this._toggleSelecting}
-              customMapStylesActions={customMapStylesActions}
+    return (
+      <div className="map-style-panel">
+        <PanelTitle
+          className="map-manager-title"
+          title={intl.formatMessage({id: panelMetadata.label})}
+        >
+          <Button className="add-map-style-button" onClick={showAddMapStyleModal}>
+            <Add height="12px" />
+            <FormattedMessage id={'mapManager.addMapStyle'} />
+          </Button>
+        </PanelTitle>
+        <div>
+          <MapStyleSelector
+            mapStyle={mapStyle}
+            isSelecting={isSelecting}
+            onChange={selectStyle}
+            toggleActive={toggleSelecting}
+            customMapStylesActions={customMapStylesActions}
+          />
+          {editableLayers.length ? (
+            <LayerGroupSelector
+              layers={mapStyle.visibleLayerGroups}
+              editableLayers={editableLayers}
+              topLayers={mapStyle.topLayerGroups}
+              onChange={mapStyleActions.mapConfigChange}
+              threeDBuildingColor={mapStyle.threeDBuildingColor}
+              on3dBuildingColorChange={mapStyleActions.set3dBuildingColor}
+              backgroundColor={mapStyle.backgroundColor}
+              onBackgroundColorChange={mapStyleActions.setBackgroundColor}
             />
-            {editableLayers.length ? (
-              <LayerGroupSelector
-                layers={mapStyle.visibleLayerGroups}
-                editableLayers={editableLayers}
-                topLayers={mapStyle.topLayerGroups}
-                onChange={mapStyleActions.mapConfigChange}
-                threeDBuildingColor={mapStyle.threeDBuildingColor}
-                on3dBuildingColorChange={mapStyleActions.set3dBuildingColor}
-                backgroundColor={mapStyle.backgroundColor}
-                onBackgroundColorChange={mapStyleActions.setBackgroundColor}
-              />
-            ) : null}
-          </div>
+          ) : null}
         </div>
-      );
-    }
-  }
+      </div>
+    );
+  };
+
   return injectIntl(MapManager);
 }
 

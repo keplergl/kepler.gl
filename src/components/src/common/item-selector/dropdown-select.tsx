@@ -9,6 +9,7 @@ import {FormattedMessage} from '@kepler.gl/localization';
 
 import {ArrowDown, Delete} from '../icons';
 import {ListItem} from './dropdown-list';
+import {shouldForwardProp} from '../styled-components';
 
 export type ListItemProps<Option> = {
   value: Option;
@@ -34,9 +35,11 @@ export type DropdownSelectProps<Option> = {
   DropDownLineItemRenderComponent?: ComponentType<ListItemProps<Option>>;
 };
 
-export const StyledDropdownSelect = styled.div.attrs<{className?: string}>({
-  className: 'item-selector__dropdown'
-})<{
+export const StyledDropdownSelect = styled.div
+  .withConfig({shouldForwardProp})
+  .attrs<{className?: string}>({
+    className: 'item-selector__dropdown'
+  })<{
   size: DropdownSelectProps<any>['size'];
   inputTheme: DropdownSelectProps<any>['inputTheme'];
 }>`
@@ -44,8 +47,8 @@ export const StyledDropdownSelect = styled.div.attrs<{className?: string}>({
     props.inputTheme === 'secondary'
       ? props.theme.secondaryInput
       : props.inputTheme === 'light'
-      ? props.theme.inputLT
-      : props.theme.input};
+        ? props.theme.inputLT
+        : props.theme.input};
 
   height: ${props =>
     props.size === 'small' ? props.theme.inputBoxHeightSmall : props.theme.inputBoxHeight};
@@ -55,7 +58,7 @@ export const StyledDropdownSelect = styled.div.attrs<{className?: string}>({
   }
 `;
 
-export const DropdownSelectValue = styled.span<{
+export const DropdownSelectValue = styled.span.withConfig({shouldForwardProp})<{
   inputTheme: DropdownSelectProps<any>['inputTheme'];
   hasPlaceholder: boolean;
 }>`
@@ -63,10 +66,10 @@ export const DropdownSelectValue = styled.span<{
     props.hasPlaceholder && props.inputTheme === 'light'
       ? props.theme.selectColorPlaceHolderLT
       : props.hasPlaceholder
-      ? props.theme.selectColorPlaceHolder
-      : props.inputTheme === 'light'
-      ? props.theme.selectColorLT
-      : props.theme.selectColor};
+        ? props.theme.selectColorPlaceHolder
+        : props.inputTheme === 'light'
+          ? props.theme.selectColorLT
+          : props.theme.selectColor};
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
