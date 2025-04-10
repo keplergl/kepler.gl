@@ -13,7 +13,7 @@ import DropdownList, {ListItem} from './dropdown-list';
 import {Search} from '../icons';
 import {KeyEvent} from '@kepler.gl/constants';
 import {BaseComponentProps} from '../../types';
-
+import {shouldForwardProp} from '../styled-components';
 const DEFAULT_CLASS = 'typeahead';
 /**
  * Copied mostly from 'react-typeahead', an auto-completing text input
@@ -27,10 +27,9 @@ export type TypeaheadWrapperProps = BaseComponentProps & {
   ref: React.RefObject<HTMLDivElement>;
 };
 
-const TypeaheadWrapper: IStyledComponent<
-  'web',
-  TypeaheadWrapperProps
-> = styled.div<TypeaheadWrapperProps>`
+const TypeaheadWrapper: IStyledComponent<'web', TypeaheadWrapperProps> = styled.div.withConfig({
+  shouldForwardProp
+})<TypeaheadWrapperProps>`
   display: flex;
   flex-direction: column;
   background-color: ${props =>
@@ -57,10 +56,9 @@ export type TypeaheadInputProps = BaseComponentProps & {
   placeholder?: string | undefined;
 };
 
-const TypeaheadInput: IStyledComponent<
-  'web',
-  TypeaheadInputProps
-> = styled.input<TypeaheadInputProps>`
+const TypeaheadInput: IStyledComponent<'web', TypeaheadInputProps> = styled.input.withConfig({
+  shouldForwardProp
+})<TypeaheadInputProps>`
   ${props => (props.light ? props.theme.inputLT : props.theme.secondaryInput)}
   &:hover {
     cursor: pointer;
@@ -385,8 +383,8 @@ class Typeahead extends Component<TypeaheadProps, TypeaheadState> {
     let option = selection
       ? selection
       : this.state.searchResults.length > 0
-      ? this.state.searchResults[0]
-      : null;
+        ? this.state.searchResults[0]
+        : null;
 
     if (option === null && this._hasCustomValue()) {
       option = this._getCustomValue();

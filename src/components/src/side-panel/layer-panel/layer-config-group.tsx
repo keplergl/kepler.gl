@@ -8,6 +8,7 @@ import {FormattedMessage} from 'react-intl';
 import Switch from '../../common/switch';
 import InfoHelperFactory from '../../common/info-helper';
 import {VertThreeDots} from '../../common/icons';
+import {shouldForwardProp} from '../../common/styled-components';
 import {Layer} from '@kepler.gl/layers';
 import {LayerVisConfig} from '@kepler.gl/types';
 
@@ -79,7 +80,7 @@ interface StyledConfigGroupHeaderProps {
   collapsible?: boolean;
 }
 
-export const StyledConfigGroupHeader = styled.div.attrs({
+export const StyledConfigGroupHeader = styled.div.withConfig({shouldForwardProp}).attrs({
   className: 'layer-config-group__header'
 })<StyledConfigGroupHeaderProps>`
   display: flex;

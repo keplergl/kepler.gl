@@ -9,8 +9,8 @@ import {StyleRangeSliderType} from './slider';
 import {BaseComponentProps} from '../../types';
 
 export type StyledSliderHandleProps = StyledSliderTooltipProps & {
-  vertical?: boolean;
-  active?: boolean;
+  $vertical?: boolean;
+  $active?: boolean;
   ref: RefObject<Element>;
 };
 
@@ -21,16 +21,16 @@ const StyledSliderHandle: IStyledComponent<'web', StyledSliderHandleProps> = sty
 )<StyledSliderHandleProps>`
   position: absolute;
   z-index: 10;
-  ${props => (props.vertical ? 'margin-left' : 'margin-top')}: -${props =>
-    (props.sliderHandleWidth - props.theme.sliderBarHeight) / 2}px;
+  ${props => (props.$vertical ? 'margin-left' : 'margin-top')}: -${props =>
+    (props.$sliderHandleWidth - props.theme.sliderBarHeight) / 2}px;
 
   height: ${props =>
-    Number.isFinite(props.sliderHandleWidth)
-      ? props.sliderHandleWidth
+    Number.isFinite(props.$sliderHandleWidth)
+      ? props.$sliderHandleWidth
       : props.theme.sliderHandleHeight}px;
   width: ${props =>
-    Number.isFinite(props.sliderHandleWidth)
-      ? props.sliderHandleWidth
+    Number.isFinite(props.$sliderHandleWidth)
+      ? props.$sliderHandleWidth
       : props.theme.sliderHandleHeight}px;
   box-shadow: ${props => props.theme.sliderHandleShadow};
   background-color: ${props => props.theme.sliderHandleColor};
@@ -40,7 +40,7 @@ const StyledSliderHandle: IStyledComponent<'web', StyledSliderHandleProps> = sty
   border-radius: ${props => props.theme.sliderBorderRadius};
   border-style: solid;
   border-color: ${props =>
-    props.active ? props.theme.selectBorderColor : props.theme.sliderInactiveBorderColor};
+    props.$active ? props.theme.selectBorderColor : props.theme.sliderInactiveBorderColor};
 
   &:hover {
     background-color: ${props => props.theme.sliderHandleHoverColor};
@@ -57,54 +57,52 @@ const StyledSliderHandle: IStyledComponent<'web', StyledSliderHandleProps> = sty
 `;
 
 export type StyledSliderTooltipProps = BaseComponentProps & {
-  sliderHandleWidth: number;
+  $sliderHandleWidth: number;
 };
 
-const StyledSliderTooltip: IStyledComponent<
-  'web',
-  StyledSliderTooltipProps
-> = styled.div<StyledSliderTooltipProps>`
-  position: absolute;
-  border-radius: 3px;
-  display: inline-block;
-  pointer-events: none;
-  transition: opacity 0.3s ease-out;
-  z-index: 999;
-  margin-left: ${props => props.sliderHandleWidth + 12}px;
-  font-size: 9.5px;
-  font-weight: 500;
-  padding: 7px 10px;
-  background-color: ${props => props.theme.tooltipBg};
-  color: ${props => props.theme.tooltipColor};
-  margin-bottom: -6px;
-  width: 50px;
-
-  &:before,
-  &:after {
-    content: '';
-    width: 0;
-    height: 0;
+const StyledSliderTooltip: IStyledComponent<'web', StyledSliderTooltipProps> =
+  styled.div<StyledSliderTooltipProps>`
     position: absolute;
-  }
+    border-radius: 3px;
+    display: inline-block;
+    pointer-events: none;
+    transition: opacity 0.3s ease-out;
+    z-index: 999;
+    margin-left: ${props => props.$sliderHandleWidth + 12}px;
+    font-size: 9.5px;
+    font-weight: 500;
+    padding: 7px 10px;
+    background-color: ${props => props.theme.tooltipBg};
+    color: ${props => props.theme.tooltipColor};
+    margin-bottom: -6px;
+    width: 50px;
 
-  &:before {
-    border-top: 6px solid transparent;
-    border-bottom: 6px solid transparent;
-    left: -8px;
-    top: 50%;
-  }
+    &:before,
+    &:after {
+      content: '';
+      width: 0;
+      height: 0;
+      position: absolute;
+    }
 
-  &:after {
-    border-top: 5px solid transparent;
-    border-bottom: 5px solid transparent;
-    left: -6px;
-    top: 50%;
-    margin-top: -4px;
-    border-right-color: ${props => props.theme.tooltipBg};
-    border-right-style: solid;
-    border-right-width: 6px;
-  }
-`;
+    &:before {
+      border-top: 6px solid transparent;
+      border-bottom: 6px solid transparent;
+      left: -8px;
+      top: 50%;
+    }
+
+    &:after {
+      border-top: 5px solid transparent;
+      border-bottom: 5px solid transparent;
+      left: -6px;
+      top: 50%;
+      margin-top: -4px;
+      border-right-color: ${props => props.theme.tooltipBg};
+      border-right-style: solid;
+      border-right-width: 6px;
+    }
+  `;
 
 type SliderTooltipProps = {
   value?: number | null;
@@ -120,7 +118,7 @@ const SliderTooltip = ({
   sliderHandleWidth
 }: SliderTooltipProps) => {
   return (
-    <StyledSliderTooltip sliderHandleWidth={sliderHandleWidth} style={style}>
+    <StyledSliderTooltip $sliderHandleWidth={sliderHandleWidth} style={style}>
       {format(value)}
     </StyledSliderTooltip>
   );
@@ -186,9 +184,9 @@ export default class SliderHandle extends Component {
             'kg-range-slider__handle--active': this.state.mouseOver
           })}
           ref={this.ref}
-          sliderHandleWidth={this.props.sliderHandleWidth}
-          active={this.state.mouseOver}
-          vertical={this.props.vertical}
+          $sliderHandleWidth={this.props.sliderHandleWidth}
+          $active={this.state.mouseOver}
+          $vertical={this.props.vertical}
           style={style}
           onMouseDown={this.mouseEvent.handleMouseDown}
           onTouchStart={this.mouseEvent.handleTouchStart}

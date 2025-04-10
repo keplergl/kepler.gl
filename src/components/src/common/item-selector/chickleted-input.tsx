@@ -17,28 +17,26 @@ export type ChickletButtonProps = BaseComponentProps & {
   ref?: (node: HTMLElement | null) => void;
 };
 
-export const ChickletButton: IStyledComponent<
-  'web',
-  ChickletButtonProps
-> = styled.div<ChickletButtonProps>`
-  background: ${props =>
-    props.inputTheme === 'light' ? props.theme.chickletBgdLT : props.theme.chickletBgd};
-  border-radius: 1px;
-  color: ${props =>
-    props.inputTheme === 'light' ? props.theme.textColorLT : props.theme.textColor};
-  font-size: 11px;
-  line-height: 20px;
-  margin: 4px 10px 4px 3px;
-  padding: 2px 6px;
-  display: flex;
-  align-items: center;
-  max-width: calc(100% - 8px);
-
-  &:hover {
+export const ChickletButton: IStyledComponent<'web', ChickletButtonProps> =
+  styled.div<ChickletButtonProps>`
+    background: ${props =>
+      props.inputTheme === 'light' ? props.theme.chickletBgdLT : props.theme.chickletBgd};
+    border-radius: 1px;
     color: ${props =>
-      props.inputTheme === 'light' ? props.theme.textColorHlLT : props.theme.textColorHl};
-  }
-`;
+      props.inputTheme === 'light' ? props.theme.textColorLT : props.theme.textColor};
+    font-size: 11px;
+    line-height: 20px;
+    margin: 4px 10px 4px 3px;
+    padding: 2px 6px;
+    display: flex;
+    align-items: center;
+    max-width: calc(100% - 8px);
+
+    &:hover {
+      color: ${props =>
+        props.inputTheme === 'light' ? props.theme.textColorHlLT : props.theme.textColorHl};
+    }
+  `;
 
 const DND_MODIFIERS = [restrictToParentElement];
 export const ChickletTag: IStyledComponent<'web'> = styled.span`
@@ -67,28 +65,26 @@ const Chicklet = ({disabled, name, remove, inputTheme}: ChickletProps) => (
 );
 
 export type ChickletedInputContainerProps = BaseComponentProps & {
-  inputTheme?: string;
-  hasPlaceholder?: boolean;
+  $inputTheme?: string;
+  $hasPlaceholder?: boolean;
   focus?: HTMLInputElement['focus'];
   disabled?: boolean;
   onClick?: (e: React.MouseEvent) => void;
 };
 
-const ChickletedInputContainer: IStyledComponent<
-  'web',
-  ChickletedInputContainerProps
-> = styled.div<ChickletedInputContainerProps>`
-  ${props =>
-    props.inputTheme === 'secondary'
-      ? props.theme.secondaryChickletedInput
-      : props.inputTheme === 'light'
-      ? props.theme.chickletedInputLT
-      : props.theme.chickletedInput}
+const ChickletedInputContainer: IStyledComponent<'web', ChickletedInputContainerProps> =
+  styled.div<ChickletedInputContainerProps>`
+    ${props =>
+      props.$inputTheme === 'secondary'
+        ? props.theme.secondaryChickletedInput
+        : props.$inputTheme === 'light'
+          ? props.theme.chickletedInputLT
+          : props.theme.chickletedInput}
 
-  color: ${props =>
-    props.hasPlaceholder ? props.theme.selectColorPlaceHolder : props.theme.selectColor};
-  overflow: hidden;
-`;
+    color: ${props =>
+      props.$hasPlaceholder ? props.theme.selectColorPlaceHolder : props.theme.selectColor};
+    overflow: hidden;
+  `;
 
 const ChickletedItem = ({
   item,
@@ -181,8 +177,8 @@ const ChickletedInput: React.FC<ChickletedInputProps> = ({
     <ChickletedInputContainer
       className={`${className} chickleted-input`}
       onClick={onClick}
-      inputTheme={inputTheme}
-      hasPlaceholder={!selectedItems || !selectedItems.length}
+      $inputTheme={inputTheme}
+      $hasPlaceholder={!selectedItems || !selectedItems.length}
     >
       <DndContext
         onDragEnd={handleDragEnd}

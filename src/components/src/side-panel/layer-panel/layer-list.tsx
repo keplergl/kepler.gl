@@ -40,14 +40,14 @@ const Container = styled.div`
 `;
 
 interface SortableStyledItemProps {
-  transition?: string;
-  transform?: string;
+  $transition?: string;
+  $transform?: string;
 }
 
 const SortableStyledItem = styled.div<SortableStyledItemProps>`
   z-index: ${props => props.theme.dropdownWrapperZ + 1};
-  transition: ${props => props.transition};
-  transform: ${props => props.transform};
+  transition: ${props => props.$transition};
+  transform: ${props => props.$transform};
   &.sorting {
     opacity: 0.3;
     pointer-events: none;
@@ -96,8 +96,8 @@ function LayerListFactory(LayerPanel: ReturnType<typeof LayerPanelFactory>) {
           {sorting: isDragging}
         )}
         data-testid={disabled ? dataTestIds.staticLayerItem : dataTestIds.sortableLayerItem}
-        transform={CSS.Transform.toString(transform)}
-        transition={transition}
+        $transform={CSS.Transform.toString(transform)}
+        $transition={transition}
         {...attributes}
       >
         <LayerPanel

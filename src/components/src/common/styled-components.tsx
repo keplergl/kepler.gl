@@ -220,7 +220,7 @@ export type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 // this needs to be an actual button to be able to set disabled attribute correctly
-export const Button = styled.button.attrs(props => ({
+export const Button = styled.button.withConfig({shouldForwardProp}).attrs(props => ({
   className: classnames('button', props.className)
 }))<ButtonProps>`
   align-items: center;
@@ -319,18 +319,18 @@ interface InputProps {
   secondary?: boolean;
 }
 
-export const Input = styled.input<InputProps>`
+export const Input = styled.input.withConfig({shouldForwardProp})<InputProps>`
   ${props => (props.secondary ? props.theme.secondaryInput : props.theme.input)};
 `;
 
-export const InputLight = styled.input`
+export const InputLight = styled.input.withConfig({shouldForwardProp})`
   ${props => props.theme.inputLT};
 `;
 
-export const TextArea = styled.textarea<InputProps>`
+export const TextArea = styled.textarea.withConfig({shouldForwardProp})<InputProps>`
   ${props => (props.secondary ? props.theme.secondaryInput : props.theme.input)};
 `;
-export const TextAreaLight = styled.textarea`
+export const TextAreaLight = styled.textarea.withConfig({shouldForwardProp})`
   ${props => props.theme.inputLT} height: auto;
   white-space: pre-wrap;
 `;
@@ -411,7 +411,7 @@ interface SelectionButtonProps {
   selected?: boolean;
 }
 
-export const SelectionButton = styled.div<SelectionButtonProps>`
+export const SelectionButton = styled.div.withConfig({shouldForwardProp})<SelectionButtonProps>`
   position: relative;
   border-radius: 2px;
   border: 1px solid
