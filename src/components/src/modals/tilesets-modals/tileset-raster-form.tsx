@@ -16,7 +16,7 @@ import {InputLight} from '../../common';
 
 const TilesetInputContainer = styled.div`
   display: grid;
-  /* grid-template-rows: repeat(3, 1fr); */
+  grid-template-rows: repeat(3, 1fr);
   row-gap: 18px;
   font-size: 12px;
 `;
@@ -120,17 +120,21 @@ const RasterTileForm: React.FC<RasterTileFormProps> = ({setResponse}) => {
 
       // check for raster tile servers for STAC items and collections
       let rasterTileServers;
-      if (!error && !metadata?.pmtilesType) {
+      if (
+        !error /* // We need raster tile servers for PMTiles when we plan to use elevation
+        && !metadata?.pmtilesType
+        */
+      ) {
         rasterTileServers = rasterTileServerUrls
           .split(',')
           .map(server => server.trim())
-          .filter(s => s);
+          .filter(server => server);
         if (
           rasterTileServers.length < 1 ||
           !rasterTileServers.every(server => validateUrl(server))
         ) {
           error = new Error(
-            'Provide valid raster tile server urls for STAC items and collections.'
+            'Provide valid raster tile server urls to support STAC and elevations.'
           );
         }
       }
@@ -186,8 +190,7 @@ const RasterTileForm: React.FC<RasterTileFormProps> = ({setResponse}) => {
           onChange={onMetadataUrlChange}
         />
         <TilesetInputDescription>
-          Supports raster .pmtiles. Limited support for STAC Items and Collections (EO and Raster
-          extensions required).
+          Supports raster .pmtiles. Limited support for STAC Items and Collections.
         </TilesetInputDescription>
       </div>
       <div>
@@ -199,7 +202,7 @@ const RasterTileForm: React.FC<RasterTileFormProps> = ({setResponse}) => {
           onChange={onRasterTileServerUrlsChange}
         />
         <TilesetInputDescription>
-          A list of raster tile servers for Cloud Optimized GeoTIFF tilesets.
+          Raster tile server URLs for Cloud Optimized GeoTIFF tilesets and elevation.
         </TilesetInputDescription>
       </div>
     </TilesetInputContainer>

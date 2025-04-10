@@ -95,9 +95,13 @@ export const isTilesBeingLoaded = () => {
 
 export const LOAD_ELEVATION_AFTER_ZOOM = 8.9;
 
-const getShouldLoadTerrain = (mapState, visConfig) => {
+const getShouldLoadTerrain = (stac, mapState, visConfig) => {
   return Boolean(
-    visConfig.enableTerrain &&
+    // we need a raster tile server for elevations even when we user PMTiles
+    stac.rasterTileServerUrls?.length > 0 &&
+      // check the switch from the layer configurator
+      visConfig.enableTerrain &&
+      // for now only in 3D mode, not top mode
       mapState.dragRotate &&
       getApplicationConfig().rasterServerSupportsElevation
   );
@@ -446,7 +450,7 @@ export default class RasterTileLayer extends Layer {
       dynamicColor
     } = visConfig;
 
-    const shouldLoadTerrain = getShouldLoadTerrain(mapState, visConfig);
+    const shouldLoadTerrain = getShouldLoadTerrain(stac, mapState, visConfig);
 
     if (new Date(endDate) < new Date(startDate)) {
       return [];
@@ -575,13 +579,13 @@ export default class RasterTileLayer extends Layer {
     const minZoom = metadata.minZoom || 0;
     const maxZoom = metadata.maxZoom || 30;
 
-    const shouldLoadTerrain = getShouldLoadTerrain(mapState, visConfig);
+    const shouldLoadTerrain = getShouldLoadTerrain(metadata, mapState, visConfig);
 
     return [
       new TileLayer({
         id,
         getTileData: (args: any) =>
-          this.getTileDataPMTiles({...args, shouldLoadTerrain}, tileSource),
+          this.getTileDataPMTiles({...args, shouldLoadTerrain, metadata}, tileSource),
 
         // Assume the pmtiles file support HTTP/2, so we aren't limited by the browser to a certain number per domain.
         maxRequests: 20,
@@ -635,7 +639,13 @@ export default class RasterTileLayer extends Layer {
     if (!assetRequests) {
       // We still issue the loadTerrain request if applicable
       const terrain =
-        shouldLoadTerrain && LOAD_ELEVATION_AFTER_ZOOM < zoom && (await loadTerrain(props));
+        shouldLoadTerrain &&
+        LOAD_ELEVATION_AFTER_ZOOM < zoom &&
+        (await loadTerrain({
+          index: props.index,
+          signal: props.signal,
+          rasterTileServerUrls: props.stac.rasterTileServerUrls
+        }));
       return {images: null, ...(terrain ? {terrain} : {})};
     }
 
@@ -651,7 +661,13 @@ export default class RasterTileLayer extends Layer {
           minValue: props.minCategoricalBandValue,
           maxValue: props.maxCategoricalBandValue
         }),
-        shouldLoadTerrain && LOAD_ELEVATION_AFTER_ZOOM < zoom ? loadTerrain(props) : null
+        shouldLoadTerrain && LOAD_ELEVATION_AFTER_ZOOM < zoom
+          ? loadTerrain({
+              index: props.index,
+              signal: props.signal,
+              rasterTileServerUrls: props.stac.rasterTileServerUrls
+            })
+          : null
       ]);
 
       const [min, max] = this.getMinMaxPixelValues(images.imageBands);
@@ -681,7 +697,8 @@ export default class RasterTileLayer extends Layer {
       shouldLoadTerrain,
       globalBounds,
       bbox: {west, south, east, north},
-      index: {z: zoom}
+      index: {z: zoom},
+      metadata
     } = props;
 
     if (globalBounds && !bboxIntersects(globalBounds, [west, south, east, north])) {
@@ -696,7 +713,11 @@ export default class RasterTileLayer extends Layer {
       // For nwo check if the base tile exists, as this can cause loading to get stuck with "sparse" PMTiles.
       const terrain =
         image && shouldLoadTerrain && LOAD_ELEVATION_AFTER_ZOOM < zoom
-          ? await loadTerrain(props)
+          ? await loadTerrain({
+              index: props.index,
+              signal: props.signal,
+              rasterTileServerUrls: metadata.rasterTileServerUrls
+            })
           : null;
 
       let minPixelValue: number | null = null;

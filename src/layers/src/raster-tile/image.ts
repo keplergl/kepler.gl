@@ -13,7 +13,7 @@ import {RasterLayerConfig as cdnUrls} from '@kepler.gl/constants';
 import {getLoaderOptions} from '@kepler.gl/table';
 import {getApplicationConfig} from '@kepler.gl/utils';
 
-import {CATEGORICAL_COLORMAP_ID, DATA_SOURCE_IDS} from './config';
+import {CATEGORICAL_COLORMAP_ID} from './config';
 import {
   loadNpyArray,
   generateCategoricalColormapTexture,
@@ -401,14 +401,19 @@ export function getCategoricalColormapDataUrl(
   return getImageDataURL(bitmap, CATEGORICAL_TEXTURE_WIDTH, 1);
 }
 
-export function loadTerrain(props: GetTileDataProps): Promise<TerrainData> {
+export function loadTerrain(props: {
+  index: {x: number; y: number; z: number};
+  signal: AbortSignal;
+  rasterTileServerUrls: string[];
+}): Promise<TerrainData> {
   const {
     index: {x, y, z},
-    signal
+    signal,
+    rasterTileServerUrls
   } = props;
 
   const meshMaxError = getMeshMaxError(z, MESH_MULTIPLIER);
-  const terrainUrl = getTerrainUrl(x, y, z, meshMaxError);
+  const terrainUrl = getTerrainUrl(rasterTileServerUrls, x, y, z, meshMaxError);
   const loaderOptions = getLoaderOptions();
 
   return load(terrainUrl, QuantizedMeshLoader, {

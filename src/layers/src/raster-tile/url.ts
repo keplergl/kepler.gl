@@ -166,7 +166,7 @@ export function getTitilerUrl(options: {
 
   const pathStem = getTitilerPathMapping(stac, useSTACSearching);
   const scale = TILE_SIZE === 512 ? '@2x' : '';
-  const domain = chooseDomain(getApplicationConfig().rasterServerUrls, x, y);
+  const domain = chooseDomain(stac.rasterTileServerUrls, x, y);
   return `${domain}/${pathStem}/tiles/WebMercatorQuad/${z}/${x}/${y}${scale}.npy`;
 }
 
@@ -176,17 +176,6 @@ export function getTitilerPathMapping(stac: CompleteSTACObject, useSTACSearching
   }
 
   return 'cog';
-}
-
-// TODO: update this with new backend api to construct stac from image
-export function getMetaUrl(imageUrl: string): string {
-  const params = new URLSearchParams({
-    url: imageUrl
-  });
-
-  const domain = getApplicationConfig().rasterServerUrls[0];
-  const baseUrl = `${domain}/cog/info?`;
-  return baseUrl + params.toString();
 }
 
 /**
@@ -202,14 +191,20 @@ function chooseDomain(domains: string[], x: number, y: number): string {
   return domains[index];
 }
 
-export function getTerrainUrl(x: number, y: number, z: number, meshMaxError: number): string {
+export function getTerrainUrl(
+  rasterTileServerUrls: string[],
+  x: number,
+  y: number,
+  z: number,
+  meshMaxError: number
+): string {
   const scale = TILE_SIZE === 512 ? '@2x' : '';
 
   const params = new URLSearchParams({
     url: 'terrarium',
     mesh_max_error: meshMaxError.toFixed(2)
   });
-  const domain = chooseDomain(getApplicationConfig().rasterServerUrls, x, y);
+  const domain = chooseDomain(rasterTileServerUrls, x, y);
   const baseUrl = `${domain}/mesh/tiles/${z}/${x}/${y}${scale}.terrain?`;
   return baseUrl + params.toString();
 }

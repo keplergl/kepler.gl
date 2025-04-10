@@ -15,7 +15,7 @@ type EOBand = any;
 type DataTypeOfTheBand = any;
 
 import {StacTypes} from '@kepler.gl/types';
-import {getApplicationConfig, hexToRgb} from '@kepler.gl/utils';
+import {hexToRgb} from '@kepler.gl/utils';
 
 import {PRESET_OPTIONS} from './config';
 import {
@@ -606,8 +606,8 @@ export function getUsableAssets(stac: CompleteSTACObject): CompleteSTACAssetLink
  *
  * @return Number of permissible concurrent requests
  */
-export function getMaxRequests(_stac: Item | Collection): number {
-  return getApplicationConfig().rasterServerUrls.length * 6;
+export function getMaxRequests(stac: Item | Collection): number {
+  return stac.rasterTileServerUrls.length * 6;
 }
 
 /**
