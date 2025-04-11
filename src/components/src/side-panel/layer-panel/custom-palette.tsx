@@ -632,8 +632,8 @@ export const CategoricalSelector: React.FC<CategoricalSelectorProps> = ({
         {selectedValues.length === 0
           ? 'Add Value'
           : selectedValues.length === 1
-            ? selectedValues[0]
-            : `${selectedValues.length} selected`}
+          ? selectedValues[0]
+          : `${selectedValues.length} selected`}
         {selectedValues.length > 1 && (
           <Tooltip id={`category-values-${index}`} place="top" interactive={true}>
             <StyledTooltipContent>

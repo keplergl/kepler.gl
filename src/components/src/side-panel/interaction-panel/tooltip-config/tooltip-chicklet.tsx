@@ -71,8 +71,8 @@ const IconDiv: IStyledComponent<'web', IconDivProps> = styled.div.attrs({
     props.$status === hashStyles.SHOW
       ? props.theme.subtextColorActive
       : props.$status === hashStyles.ACTIVE
-        ? props.theme.activeColor
-        : props.theme.textColor};
+      ? props.theme.activeColor
+      : props.theme.textColor};
 `;
 
 export type SortableStyledItemProps = BaseComponentProps & {
@@ -80,20 +80,22 @@ export type SortableStyledItemProps = BaseComponentProps & {
   $transform?: CSSProperties['transform'];
   ref: (node: HTMLElement | null) => void;
 };
-const SortableStyledItem: IStyledComponent<'web', SortableStyledItemProps> =
-  styled.div<SortableStyledItemProps>`
-    transition: ${props => props.$transition};
-    transform: ${props => props.$transform};
-    &.sorting {
-      opacity: 0.3;
-      pointer-events: none;
+const SortableStyledItem: IStyledComponent<
+  'web',
+  SortableStyledItemProps
+> = styled.div<SortableStyledItemProps>`
+  transition: ${props => props.$transition};
+  transform: ${props => props.$transform};
+  &.sorting {
+    opacity: 0.3;
+    pointer-events: none;
+  }
+  &:hover {
+    .tooltip-chicklet__drag-handler {
+      opacity: 1;
     }
-    &:hover {
-      .tooltip-chicklet__drag-handler {
-        opacity: 1;
-      }
-    }
-  `;
+  }
+`;
 
 const StyledDragHandle = styled.div.attrs({
   className: 'tooltip-chicklet__drag-handler'

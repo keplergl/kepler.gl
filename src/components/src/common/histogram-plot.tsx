@@ -48,8 +48,8 @@ const BarUnmemoized = styled.rect<BarType>(
     $isOverlay
       ? `fill: ${$color ?? theme.histogramOverlayColor};`
       : $inRange
-        ? `fill: ${$color ?? theme.histogramFillInRange};`
-        : `fill: ${$color ? hcl($color).darker() : theme.histogramFillOutRange};`
+      ? `fill: ${$color ?? theme.histogramFillInRange};`
+      : `fill: ${$color ? hcl($color).darker() : theme.histogramFillOutRange};`
   }
 `
 );

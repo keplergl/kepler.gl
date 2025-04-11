@@ -39,15 +39,17 @@ export type DropdownListWrapperProps = BaseComponentProps & {
   $light?: boolean;
 };
 
-const DropdownListWrapper: IStyledComponent<'web', DropdownListWrapperProps> =
-  styled.div<DropdownListWrapperProps>`
-    background-color: ${props =>
-      props.$light ? props.theme.dropdownListBgdLT : props.theme.dropdownListBgd};
-    border-top: 1px solid
-      ${props =>
-        props.$light ? props.theme.dropdownListBorderTopLT : props.theme.dropdownListBorderTop};
-    ${props => (props.$light ? props.theme.dropdownListLT : props.theme.dropdownList)};
-  `;
+const DropdownListWrapper: IStyledComponent<
+  'web',
+  DropdownListWrapperProps
+> = styled.div<DropdownListWrapperProps>`
+  background-color: ${props =>
+    props.$light ? props.theme.dropdownListBgdLT : props.theme.dropdownListBgd};
+  border-top: 1px solid
+    ${props =>
+      props.$light ? props.theme.dropdownListBorderTopLT : props.theme.dropdownListBorderTop};
+  ${props => (props.$light ? props.theme.dropdownListLT : props.theme.dropdownList)};
+`;
 
 const DropdownFooterWrapper = styled.div`
   height: '0px';
