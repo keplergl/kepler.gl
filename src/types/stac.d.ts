@@ -808,3 +808,23 @@ export interface StacExtensions {
   stac_extensions: unknown[];
   [k: string]: unknown;
 }
+
+/**
+ * STAC Item or Collection
+ */
+export type STACObject = STACItem | STACCollection;
+
+/**
+ * STAC Item including our required extensions: EO and Raster
+ */
+export type CompleteSTACItem = STACItem & EOExtension & RasterExtension;
+
+/**
+ * STAC Collection including our required extensions: Item Assets, EO, and Raster
+ */
+export type CompleteSTACCollection = STACCollection &
+  ItemAssetsDefinitionExtension &
+  EOExtension &
+  RasterExtension;
+
+export type CompleteSTACObject = CompleteSTACItem | CompleteSTACCollection;

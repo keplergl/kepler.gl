@@ -6,23 +6,24 @@ import {useEffect, useState} from 'react';
 
 import {PMTilesSource, PMTilesMetadata} from '@loaders.gl/pmtiles';
 
-import {JsonObjectOrArray} from '@kepler.gl/types';
+import {VectorTileMetadata} from '@kepler.gl/table';
+import {JsonObjectOrArray, StacTypes} from '@kepler.gl/types';
 import {RasterTileType} from '@kepler.gl/constants';
+
+type RasterMetadataResponse = VectorTileMetadata | StacTypes.CompleteSTACObject | null;
 
 export type FetchJsonProps = {
   url: string | null;
   rasterTileType: RasterTileType;
   options?: JsonObjectOrArray;
-  process?: (
-    json: JsonObjectOrArray,
+  process: (
+    json: PMTilesMetadata | JsonObjectOrArray,
     options: {metadataUrl: string; rasterTileType: RasterTileType}
-  ) => JsonObjectOrArray | Error | null;
+  ) => RasterMetadataResponse | Error;
 };
 
-const DEFAULT_PROCESS_FUNCTION = (json: JsonObjectOrArray): JsonObjectOrArray => json;
-
 export type UseFetchJsonReturn = {
-  data: JsonObjectOrArray | null;
+  data: RasterMetadataResponse;
   loading: boolean;
   error: Error | null;
 };
@@ -31,10 +32,10 @@ export default function useFetchJson({
   url,
   rasterTileType,
   options,
-  process = DEFAULT_PROCESS_FUNCTION
+  process
 }: FetchJsonProps): UseFetchJsonReturn {
   const [error, setError] = useState<Error | null>(null);
-  const [data, setData] = useState<JsonObjectOrArray | null>(null);
+  const [data, setData] = useState<RasterMetadataResponse>(null);
   const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
@@ -45,7 +46,7 @@ export default function useFetchJson({
         setLoading(true);
 
         try {
-          let rawMetadata: PMTilesMetadata | null = null;
+          let rawMetadata: PMTilesMetadata | JsonObjectOrArray | null = null;
           if (rasterTileType === RasterTileType.PMTILES) {
             const tileSource = PMTilesSource.createDataSource(url, {});
             rawMetadata = await tileSource.metadata;
@@ -61,7 +62,7 @@ export default function useFetchJson({
             throw new Error('Failed to fetch metadata');
           }
 
-          const processedMetadata = process(rawMetadata as any, {rasterTileType, metadataUrl: url});
+          const processedMetadata = process(rawMetadata, {rasterTileType, metadataUrl: url});
           if (processedMetadata instanceof Error) {
             setError(processedMetadata);
           } else {
@@ -69,7 +70,7 @@ export default function useFetchJson({
             setData(processedMetadata);
           }
         } catch (metadataError) {
-          setError(metadataError as any);
+          setError(metadataError as Error);
         }
         setLoading(false);
       }

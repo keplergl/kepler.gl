@@ -5,9 +5,6 @@
 /* global URLSearchParams */
 
 import {StacTypes} from '@kepler.gl/types';
-type Item = StacTypes.STACItem;
-type Collection = StacTypes.STACCollection;
-
 import {getApplicationConfig} from '@kepler.gl/utils';
 
 import {DEFAULT_BAND_MAPPINGS} from './config';
@@ -18,6 +15,9 @@ import {
   CompleteSTACItem,
   CompleteSTACCollection
 } from './types';
+
+type Item = StacTypes.STACItem;
+type Collection = StacTypes.STACCollection;
 
 const TILE_SIZE: 256 | 512 = 256;
 

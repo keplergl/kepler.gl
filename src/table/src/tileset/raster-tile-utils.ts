@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {JsonObjectOrArray} from '@kepler.gl/types';
+import {JsonObjectOrArray, StacTypes} from '@kepler.gl/types';
 
 // Define these as regex to allow any semver major version 1
 const EO_EXT_ID = /https:\/\/stac-extensions.github.io\/eo\/v1[\d.]+\/schema.json/;
@@ -12,18 +12,17 @@ const ITEM_ASSETS_EXT_ID =
 export function parseRasterMetadata(
   metadata: JsonObjectOrArray,
   options: {allowCollections: boolean}
-): JsonObjectOrArray | Error | null {
+): StacTypes.CompleteSTACObject | Error | null {
   if (!metadata || typeof metadata !== 'object') {
     return null;
   }
 
-  // When called from the SDK we allow collections, otherwise no
   const error = validateSTAC(metadata, options);
   if (error !== null) {
     return error;
   }
 
-  return metadata;
+  return metadata as StacTypes.CompleteSTACObject;
 }
 
 // eslint-disable-next-line complexity
@@ -91,9 +90,3 @@ function validateSTAC(stac: JsonObjectOrArray, options: {allowCollections: boole
 
   return null;
 }
-
-export type RasterTileMetadata = {
-  name: string;
-  imageUrl: string;
-  metadataUrl: string;
-};

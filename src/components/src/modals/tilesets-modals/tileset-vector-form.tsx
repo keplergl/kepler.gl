@@ -4,6 +4,7 @@
 import React, {useCallback, useEffect, useState, useMemo} from 'react';
 import styled from 'styled-components';
 
+import {isPMTilesUrl} from '@kepler.gl/common-utils';
 import {
   DatasetType,
   PMTilesType,
@@ -17,7 +18,7 @@ import {getMetaUrl, parseVectorMetadata, VectorTileMetadata} from '@kepler.gl/ta
 import {Merge} from '@kepler.gl/types';
 
 import {default as useFetchVectorTileMetadata} from '../../hooks/use-fetch-vector-tile-metadata';
-import {isPMTilesUrl, DatasetCreationAttributes, MetaResponse} from './common';
+import {DatasetCreationAttributes, MetaResponse} from './common';
 import {InputLight} from '../../common';
 
 const TilesetInputContainer = styled.div`

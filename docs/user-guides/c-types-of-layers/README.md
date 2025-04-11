@@ -115,3 +115,4 @@ Supported URL templates:
     - The metadata file must be a valid *STAC Item* or *STAC Collection*, version 1.0.0 or higher.
     - Raster data referenced in STAC assets should be Cloud-Optimized GeoTIFFs and need to be publicly accessible via HTTPS.
     - STAC item and collections *must have Electro-Optical and Raster extensions*, and at least one asset must have both eo:bands and raster:bands information. common_name must be provided in eo:bands and data_type must be provided in raster:bands.
+    - Users must use their own instances of raster tile servers, such as Titiler. [TODO: add instructions]

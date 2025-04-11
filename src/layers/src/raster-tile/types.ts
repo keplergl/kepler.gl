@@ -8,29 +8,12 @@ import {Texture2DProps} from '@luma.gl/webgl';
 import {KeplerTable as KeplerDataset} from '@kepler.gl/table';
 import type {ColorMap, StacTypes} from '@kepler.gl/types';
 
-type Item = StacTypes.STACItem;
-type Collection = StacTypes.STACCollection;
-type EOExtension = StacTypes.EOExtension;
-type ItemAssetsExtension = StacTypes.ItemAssetsDefinitionExtension;
-type RasterExtension = StacTypes.RasterExtension;
+export type STACObject = StacTypes.STACObject;
+export type CompleteSTACItem = StacTypes.CompleteSTACItem;
+export type CompleteSTACCollection = StacTypes.CompleteSTACCollection;
+export type CompleteSTACObject = StacTypes.CompleteSTACObject;
+
 type DataTypeOfTheBand = StacTypes.DataTypeOfTheBand;
-
-export type STACObject = Item | Collection;
-
-/**
- * STAC Item including our required extensions: EO and Raster
- */
-export type CompleteSTACItem = Item & EOExtension & RasterExtension;
-
-/**
- * STAC Collection including our required extensions: Item Assets, EO, and Raster
- */
-export type CompleteSTACCollection = Collection &
-  ItemAssetsExtension &
-  EOExtension &
-  RasterExtension;
-
-export type CompleteSTACObject = CompleteSTACItem | CompleteSTACCollection;
 
 export type CompleteSTACAssetLinks =
   | CompleteSTACItem['assets']

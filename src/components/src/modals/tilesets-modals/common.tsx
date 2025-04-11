@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {VectorTileMetadata, RasterTileMetadata} from '@kepler.gl/table';
+import type {VectorTileMetadata} from '@kepler.gl/table';
+import type {StacTypes} from '@kepler.gl/types';
 
 export type DatasetCreationAttributes = {
   name: string;
@@ -10,10 +11,8 @@ export type DatasetCreationAttributes = {
 };
 
 export type MetaResponse = {
-  metadata?: VectorTileMetadata | RasterTileMetadata | null;
+  metadata?: VectorTileMetadata | StacTypes.CompleteSTACObject | null;
   dataset?: DatasetCreationAttributes | null;
   loading?: boolean;
   error?: Error | null;
 };
-
-export const isPMTilesUrl = (url?: string | null) => url?.includes('.pmtiles');

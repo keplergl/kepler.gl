@@ -4,14 +4,16 @@
 import React, {useCallback, useEffect, useState} from 'react';
 import styled from 'styled-components';
 
-import {validateUrl} from '@kepler.gl/common-utils';
+import {PMTilesMetadata} from '@loaders.gl/pmtiles';
+
+import {isPMTilesUrl, validateUrl} from '@kepler.gl/common-utils';
 import {DatasetType, RasterTileType, PMTilesType} from '@kepler.gl/constants';
 import {JsonObjectOrArray} from '@kepler.gl/types';
 import {parseRasterMetadata, parseVectorMetadata} from '@kepler.gl/table';
 import {getApplicationConfig} from '@kepler.gl/utils';
 
 import {default as useFetchJson} from '../../hooks/use-fetch-raster-tile-metadata';
-import {isPMTilesUrl, DatasetCreationAttributes, MetaResponse} from './common';
+import {DatasetCreationAttributes, MetaResponse} from './common';
 import {InputLight} from '../../common';
 
 const TilesetInputContainer = styled.div`
@@ -53,12 +55,14 @@ type RasterTileFormProps = {
 };
 
 const parseMetadataAllowCollections = (
-  metadata: JsonObjectOrArray,
+  metadata: JsonObjectOrArray | PMTilesMetadata,
   {metadataUrl, rasterTileType}: {metadataUrl: string; rasterTileType: RasterTileType}
 ) => {
   return rasterTileType === RasterTileType.PMTILES
-    ? parseVectorMetadata(metadata, {tileUrl: metadataUrl})
-    : parseRasterMetadata(metadata, {allowCollections: true});
+    ? parseVectorMetadata(metadata as PMTilesMetadata, {
+        tileUrl: metadataUrl
+      })
+    : parseRasterMetadata(metadata as JsonObjectOrArray, {allowCollections: true});
 };
 
 const RasterTileForm: React.FC<RasterTileFormProps> = ({setResponse}) => {
@@ -93,9 +97,6 @@ const RasterTileForm: React.FC<RasterTileFormProps> = ({setResponse}) => {
     [setRasterTileServerUrls]
   );
 
-  // Note: There is support for rendering STAC Collections,
-  // but rendering a STAC Collection requires a STAC search server that has the collection's
-  // Item data indexed. So we don't want to permit collections to be added through this UI at this point.
   const {
     data: metadata,
     loading,

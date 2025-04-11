@@ -65,3 +65,10 @@ export function validateUrl(str) {
     return false;
   }
 }
+
+/**
+ * Checks whether a given URL points to a PMTiles file.
+ * @param url The URL to check.
+ * @returns True if the URL includes '.pmtiles', otherwise false.
+ */
+export const isPMTilesUrl = (url?: string | null) => url?.includes('.pmtiles');
