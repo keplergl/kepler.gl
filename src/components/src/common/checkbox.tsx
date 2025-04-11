@@ -5,6 +5,7 @@ import classnames from 'classnames';
 import pick from 'lodash.pick';
 import React, {ChangeEventHandler, Component, FocusEventHandler, ReactNode} from 'react';
 import styled from 'styled-components';
+import {shouldForwardProp} from './styled-components';
 
 function noop() {
   return;
@@ -14,7 +15,7 @@ interface StyledSwitchInputProps {
   secondary?: boolean;
 }
 
-const StyledSwitchInput = styled.label<StyledSwitchInputProps>`
+const StyledSwitchInput = styled.label.withConfig({shouldForwardProp})<StyledSwitchInputProps>`
   ${props => (props.secondary ? props.theme.secondarySwitch : props.theme.inputSwitch)};
 `;
 
@@ -22,11 +23,11 @@ const StyledCheckboxInput = styled.label`
   ${props => props.theme.inputCheckbox};
 `;
 
-const StyledRadiuInput = styled.label<StyledSwitchInputProps>`
+const StyledRadiuInput = styled.label.withConfig({shouldForwardProp})<StyledSwitchInputProps>`
   ${props => (props.secondary ? props.theme.secondaryRadio : props.theme.inputRadio)};
 `;
 
-const HiddenInput = styled.input`
+const HiddenInput = styled.input.withConfig({shouldForwardProp})`
   position: absolute;
   opacity: 0;
 `;
@@ -36,7 +37,7 @@ interface StyledCheckboxProps {
   disabled?: boolean;
 }
 
-const StyledCheckbox = styled.div<StyledCheckboxProps>`
+const StyledCheckbox = styled.div.withConfig({shouldForwardProp})<StyledCheckboxProps>`
   display: flex;
   min-height: ${props => props.theme.switchHeight}px;
   margin-left: ${props => (props.type === 'radio' ? 0 : props.theme.switchLabelMargin)}px;
@@ -110,8 +111,8 @@ export default class Checkbox extends Component<CheckboxProps> {
       this.props.type === 'checkbox'
         ? StyledCheckboxInput
         : this.props.type === 'radio'
-        ? StyledRadiuInput
-        : StyledSwitchInput;
+          ? StyledRadiuInput
+          : StyledSwitchInput;
 
     return (
       <StyledCheckbox

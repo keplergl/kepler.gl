@@ -38,17 +38,18 @@ const HistogramBreakLine = styled.g`
 `;
 
 type BarType = {
-  inRange: boolean;
-  isOverlay: boolean;
+  $inRange: boolean;
+  $isOverlay: boolean;
+  $color?: string;
 };
 const BarUnmemoized = styled.rect<BarType>(
-  ({theme, inRange, isOverlay, color}) => `
+  ({theme, $inRange, $isOverlay, $color}) => `
   ${
-    isOverlay
-      ? `fill: ${color ?? theme.histogramOverlayColor};`
-      : inRange
-      ? `fill: ${color ?? theme.histogramFillInRange};`
-      : `fill: ${color ? hcl(color).darker() : theme.histogramFillOutRange};`
+    $isOverlay
+      ? `fill: ${$color ?? theme.histogramOverlayColor};`
+      : $inRange
+        ? `fill: ${$color ?? theme.histogramFillInRange};`
+        : `fill: ${$color ? hcl($color).darker() : theme.histogramFillOutRange};`
   }
 `
 );
@@ -194,9 +195,9 @@ function HistogramPlotFactory() {
                     : histogramStyle.unHighlightedW;
                   return (
                     <Bar
-                      isOverlay={false}
-                      inRange={inRange}
-                      color={HISTOGRAM_MASK_FGCOLOR}
+                      $isOverlay={false}
+                      $inRange={inRange}
+                      $color={HISTOGRAM_MASK_FGCOLOR}
                       key={`mask-${idx}`}
                       height={y(bar[countProp])}
                       width={barWidth * wRatio}
@@ -228,8 +229,8 @@ function HistogramPlotFactory() {
                 const wRatio = inRange ? histogramStyle.highlightW : histogramStyle.unHighlightedW;
                 return (
                   <Bar
-                    inRange={inRange}
-                    isOverlay={true}
+                    $inRange={inRange}
+                    $isOverlay={true}
                     key={`bar-${idx}`}
                     height={maskHeight}
                     width={barWidth * wRatio}
@@ -272,9 +273,9 @@ function HistogramPlotFactory() {
                 if (startX > 0 && startX + barWidth * histogramStyle.unHighlightedW <= width) {
                   return (
                     <Bar
-                      isOverlay={false}
-                      inRange={inRange}
-                      color={colorsByGroup?.[key]}
+                      $isOverlay={false}
+                      $inRange={inRange}
+                      $color={colorsByGroup?.[key]}
                       key={`bar-${idx}`}
                       height={y(bar[countProp])}
                       width={barWidth * wRatio}

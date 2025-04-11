@@ -25,7 +25,7 @@ import {Tooltip} from '../../common/styled-components';
 import Typeahead from '../../common/item-selector/typeahead';
 import ChickletedInput from '../../common/item-selector/chickleted-input';
 import DropdownList, {ListItem} from '../../common/item-selector/dropdown-list';
-
+import {shouldForwardProp} from '../../common/styled-components';
 import {toArray} from '@kepler.gl/common-utils';
 import {KeyEvent} from '@kepler.gl/constants';
 import {ColorMap, ColorUI, HexColor, NestedPartial} from '@kepler.gl/types';
@@ -197,13 +197,16 @@ const StyledAddStepContainer = styled.div`
   }
 `;
 
-const StyledInput = styled(Input)<{width: string; textAlign: string}>`
+const StyledInput = styled(Input).withConfig({shouldForwardProp})<{
+  width: string;
+  textAlign: string;
+}>`
   width: ${props => props.width ?? '100%'};
   text-align: ${props => props.textAlign ?? 'end'};
   pointer-events: ${props => (props.disabled ? 'none' : 'all')};
 `;
 
-const InputText = styled.div<{width: string; textAlign: string}>`
+const InputText = styled.div.withConfig({shouldForwardProp})<{width: string; textAlign: string}>`
   ${props => props.theme.input};
   background-color: transparent;
   border-color: transparent;
@@ -629,8 +632,8 @@ export const CategoricalSelector: React.FC<CategoricalSelectorProps> = ({
         {selectedValues.length === 0
           ? 'Add Value'
           : selectedValues.length === 1
-          ? selectedValues[0]
-          : `${selectedValues.length} selected`}
+            ? selectedValues[0]
+            : `${selectedValues.length} selected`}
         {selectedValues.length > 1 && (
           <Tooltip id={`category-values-${index}`} place="top" interactive={true}>
             <StyledTooltipContent>

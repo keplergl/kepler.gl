@@ -13,8 +13,8 @@ import {Tooltip} from '../../common/styled-components';
 import CustomPicker from '../layer-panel/custom-picker';
 import {ColorBlock} from '../layer-panel/color-selector';
 
-const LayerGroupColorPickerWrapper = styled.div<{extraMarginRight?: boolean; disabled?: boolean}>`
-  margin-right: ${props => (props.extraMarginRight ? 0 : 24)}px;
+const LayerGroupColorPickerWrapper = styled.div<{$extraMarginRight?: boolean; disabled?: boolean}>`
+  margin-right: ${props => (props.$extraMarginRight ? 0 : 24)}px;
   cursor: pointer;
   ${props =>
     props.disabled &&
@@ -61,7 +61,7 @@ function LayerGroupColorPickerFactory() {
     );
 
     return (
-      <LayerGroupColorPickerWrapper extraMarginRight={extraMarginRight} disabled={disabled}>
+      <LayerGroupColorPickerWrapper $extraMarginRight={extraMarginRight} disabled={disabled}>
         <ColorBlock
           backgroundcolor={color}
           onClick={onColorBlockClick}

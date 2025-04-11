@@ -8,14 +8,14 @@ import {BrushBehavior, brushX} from 'd3-brush';
 import {normalizeSliderValue} from '@kepler.gl/utils';
 
 interface StyledGProps {
-  isRanged?: boolean;
+  $isRanged?: boolean;
 }
 
 const StyledG = styled.g<StyledGProps>`
   .selection {
     stroke: none;
-    fill: ${props => (props.isRanged ? props.theme.rangeBrushBgd : props.theme.BLUE2)};
-    fill-opacity: ${props => (props.isRanged ? 0.3 : 1)};
+    fill: ${props => (props.$isRanged ? props.theme.rangeBrushBgd : props.theme.BLUE2)};
+    fill-opacity: ${props => (props.$isRanged ? 0.3 : 1)};
   }
   .handle {
     fill: ${props => props.theme.BLUE2};
@@ -255,7 +255,7 @@ function RangeBrushFactory(): React.ComponentType<RangeBrushProps> {
     render() {
       const {isRanged} = this.props;
       return (
-        <StyledG className="kg-range-slider__brush" isRanged={isRanged} ref={this.rootContainer} />
+        <StyledG className="kg-range-slider__brush" $isRanged={isRanged} ref={this.rootContainer} />
       );
     }
   }

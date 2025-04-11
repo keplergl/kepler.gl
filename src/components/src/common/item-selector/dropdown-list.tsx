@@ -36,20 +36,18 @@ export const ListItem = ({value, displayOption = defaultDisplay, disabled}: List
 };
 
 export type DropdownListWrapperProps = BaseComponentProps & {
-  light?: boolean;
+  $light?: boolean;
 };
 
-const DropdownListWrapper: IStyledComponent<
-  'web',
-  DropdownListWrapperProps
-> = styled.div<DropdownListWrapperProps>`
-  background-color: ${props =>
-    props.light ? props.theme.dropdownListBgdLT : props.theme.dropdownListBgd};
-  border-top: 1px solid
-    ${props =>
-      props.light ? props.theme.dropdownListBorderTopLT : props.theme.dropdownListBorderTop};
-  ${props => (props.light ? props.theme.dropdownListLT : props.theme.dropdownList)};
-`;
+const DropdownListWrapper: IStyledComponent<'web', DropdownListWrapperProps> =
+  styled.div<DropdownListWrapperProps>`
+    background-color: ${props =>
+      props.$light ? props.theme.dropdownListBgdLT : props.theme.dropdownListBgd};
+    border-top: 1px solid
+      ${props =>
+        props.$light ? props.theme.dropdownListBorderTopLT : props.theme.dropdownListBorderTop};
+    ${props => (props.$light ? props.theme.dropdownListLT : props.theme.dropdownList)};
+  `;
 
 const DropdownFooterWrapper = styled.div`
   height: '0px';
@@ -212,7 +210,7 @@ export default class DropdownList extends Component<DropdownListProps, DropdownL
     return (
       <DropdownListWrapper
         className={classNames(classList.list, this.props.customClasses?.results)}
-        light={light}
+        $light={light}
       >
         {this.props.customListHeaderComponent ? (
           <div className={classNames(classList.listHeader, this.props.customClasses?.listHeader)}>

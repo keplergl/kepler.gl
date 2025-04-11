@@ -16,16 +16,16 @@ import {toArray} from '@kepler.gl/common-utils';
 import {injectIntl, IntlShape} from 'react-intl';
 import {ListItemProps} from './dropdown-select';
 import DropdownSelect from './dropdown-select';
+import {shouldForwardProp} from '../styled-components';
 
 export type DropdownWrapperProps = {
   placement?: string;
   width: number;
 };
 
-const DropdownWrapper: IStyledComponent<
-  'web',
-  DropdownWrapperProps
-> = styled.div<DropdownWrapperProps>`
+const DropdownWrapper: IStyledComponent<'web', DropdownWrapperProps> = styled.div.withConfig({
+  shouldForwardProp
+})<DropdownWrapperProps>`
   border: 0;
   width: 100%;
   left: 0;
