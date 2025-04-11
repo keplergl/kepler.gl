@@ -109,9 +109,9 @@ Raster layers are used to show satellite and aerial imagery. They allow you to w
 
 Supported URL templates:
 
-- Users can reference remote .pmtiles files in raster format for raster layers by supplying a direct link to the file.
+- Users can reference remote **.pmtiles files in raster format** for raster layers by supplying a direct link to the file.
 
-- Custom Cloud-Optimized GeoTIFFs (COG) can also be used in raster layers by providing standardized Spatio-Temporal Asset Catalog (STAC) metadata.
-    - The metadata file must be a valid **STAC Item** or **STAC Collection**, version 1.0.0 or higher.
+- **Cloud-Optimized GeoTIFFs (COG)** can also be used in raster layers by providing standardized Spatio-Temporal Asset Catalog (STAC) metadata.
+    - The metadata file must be a valid *STAC Item* or *STAC Collection*, version 1.0.0 or higher.
     - Raster data referenced in STAC assets should be Cloud-Optimized GeoTIFFs and need to be publicly accessible via HTTPS.
-    - STAC item and collections must have Electro-Optical and Raster extensions, and at least one asset must have both eo:bands and raster:bands information. common_name must be provided in eo:bands and data_type must be provided in raster:bands.
+    - STAC item and collections *must have Electro-Optical and Raster extensions*, and at least one asset must have both eo:bands and raster:bands information. common_name must be provided in eo:bands and data_type must be provided in raster:bands.
