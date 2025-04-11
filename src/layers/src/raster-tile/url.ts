@@ -80,7 +80,7 @@ export function getStacApiUrlParams(options: {
 }): URLSearchParams | null {
   const {stac, loadAssetIds, stacSearchProvider, mask = false} = options;
   const query = options._stacQuery || JSON.stringify(constructStacApiQuery(options));
-  const searchUrl = getApplicationConfig().rasterStacSearchUrl || getStacApiUrl(stacSearchProvider);
+  const searchUrl = getStacApiUrl(stacSearchProvider);
 
   if (!searchUrl) {
     return null;
@@ -115,7 +115,7 @@ export function bandIndexesToURLParams(
   urlParams: URLSearchParams,
   bandIndexes: BandIndexes
 ): URLSearchParams {
-  if (getApplicationConfig().rasterServerTitilerIsCustom) {
+  if (getApplicationConfig().rasterServerUseLatestTitiler) {
     // for newer titiler versions
     bandIndexes.forEach(bandIndex => {
       urlParams.append('bidx', String(bandIndex + 1));

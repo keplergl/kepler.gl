@@ -11,7 +11,6 @@ import memoize from 'lodash.memoize';
 
 import {RasterLayerConfig as cdnUrls} from '@kepler.gl/constants';
 import {getLoaderOptions} from '@kepler.gl/table';
-import {getApplicationConfig} from '@kepler.gl/utils';
 
 import {CATEGORICAL_COLORMAP_ID} from './config';
 import {
@@ -179,22 +178,9 @@ export async function getAssetRequest({
   useMask?: boolean;
   responseRequiredBandIndices?: number[] | null;
 }): Promise<AssetRequestData> {
-  let requestUrl = url;
-  let requestParams = params ?? new URLSearchParams();
-  let requestOptions = options;
-
-  const {rasterTransformRequest} = getApplicationConfig();
-  if (rasterTransformRequest) {
-    const transformedRequest = await rasterTransformRequest({
-      url: requestUrl,
-      searchParams: requestParams,
-      options: requestOptions
-    });
-
-    requestUrl = transformedRequest.url;
-    requestParams = transformedRequest.searchParams;
-    requestOptions = transformedRequest.options;
-  }
+  const requestUrl = url;
+  const requestParams = params ?? new URLSearchParams();
+  const requestOptions = options;
 
   const assetUrl = requestParams ? `${requestUrl}?${requestParams.toString()}` : requestUrl;
   return {url: assetUrl, options: requestOptions, useMask, responseRequiredBandIndices};

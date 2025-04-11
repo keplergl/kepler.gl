@@ -46,24 +46,9 @@ export type KeplerApplicationConfig = {
 
   // Raster Tile layer config
   /** Titiler v0.11 vs v0.21 */
-  rasterServerTitilerIsCustom?: boolean;
-  /** titiler raster servers
-   * An array of URLs to shards of the raster tile server to be used by the raster tile layer.
-   * - getTitilerUrl
-   * - getTerrainUrl
-   * - getMetaUrl
-   * - used in getMaxRequests
-   */
+  rasterServerUseLatestTitiler?: boolean;
+  /** An array of URLs to shards of the raster tile server to be used by the raster tile layer. */
   rasterServerUrls?: string[];
-  /** A URL for a STAC API instance used for searching through STAC Items in a Collection. */
-  rasterStacSearchUrl?: string | null;
-  rasterTransformRequest?:
-    | ((params: {url: string; searchParams: URLSearchParams; options: any}) => {
-        url: string;
-        searchParams: URLSearchParams;
-        options: any;
-      })
-    | null;
   /** If true then try to fetch quantized elevation meshes from raster servers */
   rasterServerSupportsElevation?: boolean;
 };
@@ -104,15 +89,9 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
   useOnFilteredItemsChange: false,
 
   // Raster Tile layer config
-  rasterServerTitilerIsCustom: false,
-  rasterServerUrls: [
-    // 'http://localhost:8000'
-    'https://d1q7gb82o5qayp.cloudfront.net',
-    'https://d34k46lorssas.cloudfront.net',
-    'https://d2k92ng3gmu32o.cloudfront.net'
-  ],
-  rasterStacSearchUrl: null,
-  rasterTransformRequest: null,
+  rasterServerUseLatestTitiler: true,
+  // TODO: provide a default free server or leave blank
+  rasterServerUrls: ['http://localhost:8000'],
   rasterServerSupportsElevation: true
 };
 
