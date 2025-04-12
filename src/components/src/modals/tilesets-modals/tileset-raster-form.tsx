@@ -109,7 +109,9 @@ const RasterTileForm: React.FC<RasterTileFormProps> = ({setResponse}) => {
 
   useEffect(() => {
     if (tileName && metadataUrl) {
-      if (metadata?.pmtilesType === PMTilesType.MVT) {
+      const pmtilesType = metadata?.pmtilesType;
+
+      if (pmtilesType === PMTilesType.MVT) {
         return setResponse({
           metadata,
           dataset: null,
@@ -117,14 +119,14 @@ const RasterTileForm: React.FC<RasterTileFormProps> = ({setResponse}) => {
           error: new Error('For .pmtiles in mvt format, please use the Vector Tile form.')
         });
       }
+
       let error = metaError;
 
       // check for raster tile servers for STAC items and collections
       let rasterTileServers;
       if (
-        !error /* // We need raster tile servers for PMTiles when we plan to use elevation
-        && !metadata?.pmtilesType
-        */
+        !error
+        // We still need raster tile servers for PMTiles when we plan to use elevation
       ) {
         rasterTileServers = rasterTileServerUrls
           .split(',')
@@ -134,9 +136,15 @@ const RasterTileForm: React.FC<RasterTileFormProps> = ({setResponse}) => {
           rasterTileServers.length < 1 ||
           !rasterTileServers.every(server => validateUrl(server))
         ) {
-          error = new Error(
-            'Provide valid raster tile server urls to support STAC and elevations.'
-          );
+          if (pmtilesType) {
+            // For raster tiles elevation support is optional
+            // TODO display a warning, but not a blocking error
+            rasterTileServers = [];
+          } else {
+            error = new Error(
+              'Provide valid raster tile server urls to support STAC and elevations.'
+            );
+          }
         }
       }
 
@@ -147,14 +155,14 @@ const RasterTileForm: React.FC<RasterTileFormProps> = ({setResponse}) => {
       });
 
       setResponse({
-        metadata: metadata as any,
+        metadata,
         dataset,
         loading,
         error
       });
     } else {
       setResponse({
-        metadata: metadata as any,
+        metadata,
         dataset: null,
         loading,
         error: metaError

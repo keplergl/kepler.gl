@@ -8,12 +8,6 @@
 import {TypedArray} from '@loaders.gl/loader-utils/src/types';
 import {isArray} from '@math.gl/core';
 
-// import {Item, Collection, EOBand, DataTypeOfTheBand} from '@fsq/stac-types';
-type Item = any;
-type Collection = any;
-type EOBand = any;
-type DataTypeOfTheBand = any;
-
 import {StacTypes} from '@kepler.gl/types';
 import {hexToRgb} from '@kepler.gl/utils';
 
@@ -32,6 +26,11 @@ import {
   BandCombination,
   CategoricalColormapOptions
 } from './types';
+
+type Item = StacTypes.STACItem;
+type Collection = StacTypes.STACCollection;
+type EOBand = StacTypes.Band;
+type DataTypeOfTheBand = StacTypes.DataTypeOfTheBand;
 
 export const CATEGORICAL_TEXTURE_WIDTH = 256;
 
