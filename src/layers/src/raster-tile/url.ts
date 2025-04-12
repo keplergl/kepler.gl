@@ -26,9 +26,6 @@ interface StacSearchInfo {
   stacSearchUrl: string;
 }
 
-/**
- * This is a quick implementation to support searching Sentinel-2 STAC using two providers. It only works for Sentinel-2 at this point.
- */
 const STAC_SEARCH_DATA: Record<string, StacSearchInfo> = {
   // Commenting out Microsoft for now
   // microsoft: {
@@ -104,7 +101,6 @@ export function getStacApiUrlParams(options: {
 
   return new URLSearchParams({
     assets: bandIndexAssets.join(','),
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     return_mask: String(mask),
     url: searchUrl,
     query
@@ -144,7 +140,6 @@ export function getSingleCOGUrlParams(options: {
   }
 
   const urlParams = new URLSearchParams({
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     return_mask: String(mask),
     url
   });

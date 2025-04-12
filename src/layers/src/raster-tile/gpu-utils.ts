@@ -11,6 +11,7 @@ import {NPYLoader} from '@loaders.gl/textures';
 import GL from '@luma.gl/constants';
 import {Texture2DProps} from '@luma.gl/webgl';
 
+import {getLoaderOptions} from '@kepler.gl/constants';
 import {RasterWebGL} from '@kepler.gl/deckgl-layers';
 
 type ShaderModule = RasterWebGL.ShaderModule;
@@ -34,8 +35,6 @@ const {
   reorderBands,
   rgbaImage
 } = RasterWebGL;
-
-import {getLoaderOptions} from '@kepler.gl/table';
 
 import {
   CATEGORICAL_TEXTURE_WIDTH,
@@ -395,7 +394,7 @@ export function getModules({
   // Array of luma.gl WebGL modules to pass to the RasterLayer
   const modules: ShaderModule[] = [];
 
-  // use rgba image directly
+  // use rgba image directly. Used for raster .pmtiles rendering
   if (images.imageRgba) {
     modules.push(rgbaImage);
 

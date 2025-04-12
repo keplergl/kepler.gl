@@ -90,32 +90,3 @@ export const RasterTileLayerPresets = keyMirror({
   nbr2: null,
   singleBand: null
 });
-
-export type RasterTileLayerSchema = {
-  type: 'rasterTile';
-  config: {
-    dataId: string | null;
-    visConfig: {
-      preset: string;
-      useSTACSearching: boolean;
-      stacSearchProvider?: 'earth-search' | 'microsoft';
-      startDate?: string;
-      endData?: string;
-      dynamicColor?: boolean;
-      colormapId?: string;
-      colorRange?: any;
-      linearRescalingFactor: number;
-      nonLinearRescaling: boolean;
-      gammaContrastFactor: number;
-      sigmoidalContrastFactor: number;
-      sigmoidalBiasFactor: number;
-      saturationValue: number;
-      filterEnabled: boolean;
-      filterRange: [number, number];
-      opacity: number;
-      _stacQuery?: string | null;
-      singleBandName?: string | null;
-      enableTerrain?: boolean;
-    };
-  };
-};

@@ -219,7 +219,6 @@ export interface NPYLoaderResponse {
   data: NPYLoaderDataTypes;
   header: {
     descr: string;
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     fortran_order: boolean;
     shape: number[];
   };

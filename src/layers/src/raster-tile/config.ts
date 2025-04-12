@@ -13,19 +13,18 @@ import {
 import {ColorRescaling, ConfigOption, PresetData, BandCombination} from './types';
 
 /**
- * Data Source IDs
+ * Known Data Source IDs that work with current STAC Layer limitations
  */
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export enum DATA_SOURCE_IDS {
   SENTINEL_2_L1C = 'sentinel-2-l1c',
   SENTINEL_2_L1A = 'sentinel-2-l2a',
   SENTINEL_2_C1_L2A = 'sentinel-2-c1-l2a',
   SENTINEL_2_PRE_C1_L2A = 'sentinel-2-pre-c1-l2a',
   LANDSAT_C2_L1 = 'landsat-c2-l1',
-  LANDSAT_C2_L2 = 'landsat-c2-l2'
-
-  // NAIP = 'naip-analytic',
-  // PLANET_NICFI = 'planet-nicfi'
+  LANDSAT_C2_L2 = 'landsat-c2-l2',
+  MODIS_09A1_061 = 'modis-09A1-061',
+  MODIS_43A4_061 = 'modis-43A4-061',
+  MOIDS_09Q1_061 = 'modis-09Q1-061'
 }
 
 export const RASTER_COLOR_RESET_PARAMS = {
@@ -109,11 +108,11 @@ export const DEFAULT_BAND_MAPPINGS = {
   [DATA_SOURCE_IDS.SENTINEL_2_L1A]: DEFAULT_SENTINEL_BAND_MAPPING,
   [DATA_SOURCE_IDS.SENTINEL_2_C1_L2A]: DEFAULT_SENTINEL_BAND_MAPPING,
   [DATA_SOURCE_IDS.SENTINEL_2_PRE_C1_L2A]: DEFAULT_SENTINEL_BAND_MAPPING,
-  'modis-09A1-061': DEFAULT_MODIS_BAND_MAPPING,
-  'modis-43A4-061': DEFAULT_MODIS_BAND_MAPPING,
-  'modis-09Q1-061': DEFAULT_MODIS_BAND_MAPPING,
-  'landsat-c2-l1': DEFAULT_LANDSAT_C2_L1_BAND_MAPPING,
-  'landsat-c2-l2': DEFAULT_LANDSAT_C2_L2_BAND_MAPPING
+  [DATA_SOURCE_IDS.LANDSAT_C2_L1]: DEFAULT_LANDSAT_C2_L1_BAND_MAPPING,
+  [DATA_SOURCE_IDS.LANDSAT_C2_L2]: DEFAULT_LANDSAT_C2_L2_BAND_MAPPING,
+  [DATA_SOURCE_IDS.MODIS_09A1_061]: DEFAULT_MODIS_BAND_MAPPING,
+  [DATA_SOURCE_IDS.MODIS_43A4_061]: DEFAULT_MODIS_BAND_MAPPING,
+  [DATA_SOURCE_IDS.MOIDS_09Q1_061]: DEFAULT_MODIS_BAND_MAPPING
 };
 
 /**
@@ -125,10 +124,11 @@ export const DATA_SOURCE_COLOR_DEFAULTS: Record<DATA_SOURCE_IDS, ColorRescaling>
   [DATA_SOURCE_IDS.SENTINEL_2_L1A]: DEFAULT_SENTINEL_COLOR_DEFAULTS,
   [DATA_SOURCE_IDS.SENTINEL_2_C1_L2A]: DEFAULT_SENTINEL_COLOR_DEFAULTS,
   [DATA_SOURCE_IDS.SENTINEL_2_PRE_C1_L2A]: DEFAULT_SENTINEL_COLOR_DEFAULTS,
+  [DATA_SOURCE_IDS.LANDSAT_C2_L1]: DEFAULT_SENTINEL_COLOR_DEFAULTS,
   [DATA_SOURCE_IDS.LANDSAT_C2_L2]: DEFAULT_SENTINEL_COLOR_DEFAULTS,
-  'modis-09A1-061': DEFAULT_MODIS_COLOR_DEFAULTS,
-  'modis-43A4-061': DEFAULT_MODIS_COLOR_DEFAULTS,
-  'modis-09Q1-061': DEFAULT_MODIS_COLOR_DEFAULTS
+  [DATA_SOURCE_IDS.MODIS_09A1_061]: DEFAULT_MODIS_COLOR_DEFAULTS,
+  [DATA_SOURCE_IDS.MODIS_43A4_061]: DEFAULT_MODIS_COLOR_DEFAULTS,
+  [DATA_SOURCE_IDS.MOIDS_09Q1_061]: DEFAULT_MODIS_COLOR_DEFAULTS
 };
 
 /**
@@ -248,21 +248,29 @@ export const ZOOM_RANGES: Record<DATA_SOURCE_IDS, [number, number]> = {
   [DATA_SOURCE_IDS.SENTINEL_2_C1_L2A]: [8, 13],
   [DATA_SOURCE_IDS.SENTINEL_2_L1A]: [8, 13],
   [DATA_SOURCE_IDS.SENTINEL_2_L1C]: [8, 13],
-  [DATA_SOURCE_IDS.SENTINEL_2_PRE_C1_L2A]: [8, 13]
+  [DATA_SOURCE_IDS.SENTINEL_2_PRE_C1_L2A]: [8, 13],
+  [DATA_SOURCE_IDS.LANDSAT_C2_L1]: [7, 12],
+  [DATA_SOURCE_IDS.LANDSAT_C2_L2]: [7, 12],
+  [DATA_SOURCE_IDS.MODIS_09A1_061]: [7, 13],
+  [DATA_SOURCE_IDS.MODIS_43A4_061]: [7, 13],
+  [DATA_SOURCE_IDS.MOIDS_09Q1_061]: [7, 13]
 };
 
 /**
  * Bit depth for each data source
- *
- * Sentinel-2 is 12-bit;
- * Landsat-8 is 16-bit; Planet is 12-bit; NAIP is 8-bit
+ * Sentinel-2 is 12-bit; Landsat-8 is 16-bit; Planet is 12-bit; NAIP is 8-bit
  */
 // TODO: use range value and dtype in STAC collection instead of this
 export const MAX_PIXEL_VALUES: Record<DATA_SOURCE_IDS, number> = {
   [DATA_SOURCE_IDS.SENTINEL_2_C1_L2A]: Math.pow(2, 12) - 1,
   [DATA_SOURCE_IDS.SENTINEL_2_L1A]: Math.pow(2, 12) - 1,
   [DATA_SOURCE_IDS.SENTINEL_2_L1C]: Math.pow(2, 12) - 1,
-  [DATA_SOURCE_IDS.SENTINEL_2_PRE_C1_L2A]: Math.pow(2, 12) - 1
+  [DATA_SOURCE_IDS.SENTINEL_2_PRE_C1_L2A]: Math.pow(2, 12) - 1,
+  [DATA_SOURCE_IDS.LANDSAT_C2_L1]: Math.pow(2, 16) - 1,
+  [DATA_SOURCE_IDS.LANDSAT_C2_L2]: Math.pow(2, 16) - 1,
+  [DATA_SOURCE_IDS.MODIS_09A1_061]: Math.pow(2, 12) - 1,
+  [DATA_SOURCE_IDS.MODIS_43A4_061]: Math.pow(2, 12) - 1,
+  [DATA_SOURCE_IDS.MOIDS_09Q1_061]: Math.pow(2, 12) - 1
 };
 
 /**
@@ -565,7 +573,6 @@ export const COLORMAP_OPTIONS: readonly ConfigOption[] = [
 ];
 
 const STAC_SEARCH_PROVIDERS: ConfigOption[] = [
-  // Commenting out Microsoft for now
   // {
   //   label: 'Microsoft Planetary Computer',
   //   id: 'microsoft'

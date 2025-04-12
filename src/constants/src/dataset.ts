@@ -37,9 +37,7 @@ export type RasterTileLocalMetadata = {
 
   /** URL for tileset metadata. */
   metadataUrl?: string;
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   stac_version: string;
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   stac_extensions: string[];
   assets: Record<string, any>;
 };

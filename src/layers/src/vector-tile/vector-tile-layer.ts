@@ -12,6 +12,7 @@ import GL from '@luma.gl/constants';
 
 import {notNullorUndefined} from '@kepler.gl/common-utils';
 import {
+  getLoaderOptions,
   DatasetType,
   LAYER_TYPES,
   RemoteTileFormat,
@@ -23,7 +24,6 @@ import {
 } from '@kepler.gl/constants';
 import {
   getTileUrl,
-  getLoaderOptions,
   KeplerTable as KeplerDataset,
   Datasets as KeplerDatasets,
   GpuFilter,

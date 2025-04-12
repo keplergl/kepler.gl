@@ -11,7 +11,7 @@ import {isArray} from '@math.gl/core';
 import {StacTypes} from '@kepler.gl/types';
 import {hexToRgb} from '@kepler.gl/utils';
 
-import {PRESET_OPTIONS} from './config';
+import {PRESET_OPTIONS, ZOOM_RANGES} from './config';
 import {
   DataSourceParams,
   PresetData,
@@ -72,11 +72,8 @@ export const dtypeMaxValue: Record<DataTypeOfTheBand, number | null> = {
 
 /**
  * Is this a STAC Collection that supports custom searching
- * TODO: currently this is a custom hack to support Sentinel. It will need to be generalized before
- * being accessible
- *
+ * TODO: currently this is a custom hack to support Sentinel. It will need to be generalized before being accessible
  * @param stac  STAC object
- *
  * @return If True, supports searching
  */
 export function isSearchableStac(stac: CompleteSTACObject): boolean {
@@ -89,12 +86,11 @@ export function isSearchableStac(stac: CompleteSTACObject): boolean {
   // );
 }
 
-function getZoomRange(_stac: CompleteSTACObject): [number, number] {
-  // if (ZOOM_RANGES[stac.id]) {
-  //  return ZOOM_RANGES[stac.id];
-  // }
+function getZoomRange(stac: CompleteSTACObject): [number, number] {
+  if (ZOOM_RANGES[stac.id]) {
+    return ZOOM_RANGES[stac.id];
+  }
 
-  // TODO
   // For a single COG, having a full zoom range isn't really a problem.
   // the /cog/info endpoint doesn't describe zoom levels because it doesn't know the projection to serve the image in.
   // Default minzoom, maxzoom: [0, 20]
@@ -103,12 +99,9 @@ function getZoomRange(_stac: CompleteSTACObject): [number, number] {
 
 /**
  * Infer data type from STAC item
-
  * This uses the `raster` extension, which is not yet very common
- *
  * @param stac stac object
- *
- * @return
+ * @return Data type of the band
  */
 function getDataType(
   usableAssets: CompleteSTACAssetLinks,
@@ -188,12 +181,9 @@ export function getImageMinMax(imageData: TypedArray): [number | null, number | 
 
 /**
  * Find asset names and band indexes for given commonNames
- *
- * Right now in Studio, our available methods of rendering raster data are quite simple. We only allow a user to choose among `presets`, and under the hood we select which data files to load.
- *
- * @param usableAssets         [stac description]
+ * Right now in Kepler, our available methods of rendering raster data are quite simple. We only allow a user to choose among `presets`, and under the hood we select which data files to load.
+ * @param usableAssets [stac description]
  * @param commonNames  an array of eo:common_name to search within bands
- *
  * @return Band information or null if not all bands exist
  */
 export function getBandIdsForCommonNames(
@@ -232,11 +222,9 @@ export function getBandIdsForCommonNames(
 
 /**
  * Consolidate asset/band info into load info and render info
- *
  * @param stac STAC object
  * @param assetIds
  * @param bandIndexes
- *
  * @return Asset information
  */
 function consolidateBandIndexes(
@@ -274,11 +262,9 @@ function consolidateBandIndexes(
 
 /**
  * Find the Asset in the STAC object that containing an eo:band with the desired common_name or name
- *
  * @param assets assets object. Keys should be asset name and values should be asset data
  * @param name  name or common_name in eo:bands
  * @param property 'name' or 'common_name'
- *
  * @return name of asset containing desired band, index of band within asset
  */
 export function findAssetWithName(
@@ -401,10 +387,8 @@ export function getMinMaxFromTile2DHeaders(tiles: (Tile2DHeader | null)[]): [num
 
 /**
  * Get loading params
- *
  * @param stac STAC Object
  * @param preset Preset for display
- *
  * @return Parameters for loading data
  */
 export function getDataSourceParams(
@@ -461,9 +445,7 @@ export function getDataSourceParams(
 
 /**
  * Get Bounding Box of STAC object
- *
  * @param stac
- *
  * @return bounding box
  */
 export function getSTACBounds(stac: Item | Collection): number[] | null {
@@ -479,9 +461,7 @@ export function getSTACBounds(stac: Item | Collection): number[] | null {
 
 /**
  * Get all eo:band objects from STAC object
- *
  * @param stac  STAC object
- *
  * @return array of eo:band objects or null
  */
 export function getEOBands(stac: CompleteSTACObject): EOBand[] | null {
@@ -503,14 +483,11 @@ export function getEOBands(stac: CompleteSTACObject): EOBand[] | null {
 
 /**
  * Filter presets by those that can be used with the given stac item
- *
  * Each preset has a commonNames key, which is a list of eo `common_name` values. Some STAC items
  * may not have assets that span all of these combinations of `common_name`, so this filters the
  * input array.
- *
  * @param stac           STAC object
  * @param presetData  object with requirements for each preset
- *
  * @return An array of preset option ids that can be used with the given STAC item
  */
 export function filterAvailablePresets(
@@ -544,8 +521,7 @@ export function filterAvailablePresets(
   return availablePresetIds;
 }
 
-// TODO: would be better to have a generic here to relax the requirement that all input STACs have
-// all extensions we list.
+// TODO: would be better to have a generic here to relax the requirement that all input STACs have all extensions we list.
 export function getAssets(stac: CompleteSTACObject): CompleteSTACAssetLinks {
   // stac is an Item
   if (stac.type === 'Feature') {
@@ -562,9 +538,7 @@ export function getAssets(stac: CompleteSTACObject): CompleteSTACAssetLinks {
  * Find usable assets in main assets object
  * The `assets` object can point to many different objects, including original XML or JSON metadata,
  * thumbnails, etc. These aren't usable as image data in Studio.
- *
  * @param stac  STAC object
- *
  * @return asset mapping including only assets usable in Studio
  */
 export function getUsableAssets(stac: CompleteSTACObject): CompleteSTACAssetLinks {
@@ -600,9 +574,7 @@ export function getUsableAssets(stac: CompleteSTACObject): CompleteSTACAssetLink
  * Get the max number of requests the TileLayer should be able to send at once
  * With HTTP 1 under Chrome, you can make a max of 6 concurrent requests per domain, so this number
  * should be 6 * number of domains tiles are loaded from.
- *
  * @param stac STAC object
- *
  * @return Number of permissible concurrent requests
  */
 export function getMaxRequests(stac: Item | Collection): number {
@@ -611,10 +583,8 @@ export function getMaxRequests(stac: Item | Collection): number {
 
 /**
  * Determine if two axis-aligned boxes intersect
- *
  * @param bbox1  axis-aligned box
  * @param bbox2  axis-aligned box
- *
  * @return true if boxes intersect
  */
 export function bboxIntersects(bbox1: number[], bbox2: number[]): boolean {
@@ -634,7 +604,6 @@ export function bboxIntersects(bbox1: number[], bbox2: number[]): boolean {
 /**
  * Compute zRange of tiles in viewport.
  * Derived from https://github.com/visgl/deck.gl/blob/8d824a4b836fee3bfebe6fc962e0f03d8c1dbd0d/modules/geo-layers/src/terrain-layer/terrain-layer.js#L173-L196
- *
  * @param tiles Array of tiles in current viewport
  */
 export function computeZRange(tiles: (Tile2DHeader | null)[] | null): [number, number] | null {

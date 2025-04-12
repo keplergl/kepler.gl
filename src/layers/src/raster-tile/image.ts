@@ -9,8 +9,7 @@ import {load} from '@loaders.gl/core';
 import {QuantizedMeshLoader} from '@loaders.gl/terrain';
 import memoize from 'lodash.memoize';
 
-import {RasterLayerConfig as cdnUrls} from '@kepler.gl/constants';
-import {getLoaderOptions} from '@kepler.gl/table';
+import {getLoaderOptions, RasterLayerResources as cdnUrls} from '@kepler.gl/constants';
 
 import {CATEGORICAL_COLORMAP_ID} from './config';
 import {
@@ -37,7 +36,6 @@ import {
 } from './url';
 
 /**
- * ! from image-export.ts
  * Create dataUrl image from bitmap array
  * @param bitmap - RGBA byte bitmap array
  * @param width - width of the image

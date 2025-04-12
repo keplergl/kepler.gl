@@ -11,8 +11,6 @@ import {GetUniformsOutput, ShaderModule} from '../types';
 // multispectral intensities.
 // Original code from https://github.com/mapbox/rio-pansharpen
 //
-// NOTE: I originally clamped the output to the 0-1 range. Clamping was removed
-// to support 16 bit-depth textures
 const fs1 = `\
 uniform sampler2D bitmapTexturePan;
 uniform float panWeight;

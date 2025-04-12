@@ -59,26 +59,6 @@ import {
 import {FindDefaultLayerPropsReturnValue} from '../layer-utils';
 import {default as KeplerLayer, LayerBaseConfigPartial} from '../base-layer';
 
-type RasterTileLoadBaseEvent = {
-  /* URLs that the tile assets are being requested from. */
-  assetUrls: string[];
-  /* Tile coordinates [x, y, z]. */
-  tileIndex: [number, number, number];
-  /* Total number of tiles that are being loaded. */
-  remainingTiles: number;
-};
-type RasterTileLoadProgressEvent = RasterTileLoadBaseEvent & {
-  /* Current loading status. */
-  status: 'loading' | 'loaded' | 'canceled';
-};
-type RasterTileLoadErrorEvent = RasterTileLoadBaseEvent & {
-  /* Current loading status. */
-  status: 'failed';
-  /* Error that occurred during loading. */
-  error: Error;
-};
-export type RasterTileLoadEvent = RasterTileLoadProgressEvent | RasterTileLoadErrorEvent;
-
 // Adjust tileSize to devicePixelRatio, but not higher than 2 to reduce requests to server
 const devicePixelRatio: number = Math.min(
   2,
@@ -141,9 +121,6 @@ export default class RasterTileLayer extends Layer {
   /** Max bands image data value, based on the current viewport */
   maxViewportPixelValue = -Infinity;
   /** Memoized method that calculates data source params */
-
-  /** Disable editing of the legends */
-  disableLegends = true;
 
   getDataSourceParams: (
     stac: CompleteSTACObject,
@@ -340,7 +317,7 @@ export default class RasterTileLayer extends Layer {
     }
 
     /*
-    LandSat specifies temporal bounds but the valid data is actually after end date
+    LandSat specifies temporal bounds but the valid data is after end date
     const updatedDates = timeRangeToStacTemporalInterval(
       stac as StacTypes.STACCollection,
       this.config.visConfig.startDate,
@@ -575,7 +552,7 @@ export default class RasterTileLayer extends Layer {
     const {visConfig} = this.config;
 
     const tileSource = data.tileSource;
-    const showTileBorders = true;
+    const showTileBorders = false;
     const minZoom = metadata.minZoom || 0;
     const maxZoom = metadata.maxZoom || 30;
 
@@ -734,7 +711,7 @@ export default class RasterTileLayer extends Layer {
     } catch (error) {
       tilesBeingLoaded--;
 
-      if ((error as any).name === 'AbortError') {
+      if ((error as Error).name === 'AbortError') {
         // tile was aborted
         return null;
       }
@@ -887,15 +864,7 @@ function renderSubLayersPMTiles(props: {
   return layers;
 }
 
-function getRasterLayerPMTiles(props: {
-  id: string;
-  data: any;
-  tileSource: any;
-  showTileBorders: any;
-  minZoom: any;
-  maxZoom: any;
-  tile: any;
-}) {
+function getRasterLayerPMTiles(props: {id: string; data: any; tile: any}) {
   const {tile, data} = props;
   const bbox = tile.bbox as GeoBoundingBox;
   const {west, south, east, north} = bbox;

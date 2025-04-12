@@ -170,9 +170,8 @@ export default class RasterLayer extends BitmapLayer<RasterLayerAddedProps> {
       for (const image of Object.values(this.state.images)) {
         if (Array.isArray(image)) {
           image.map(x => x && x.delete());
-        } else {
-          // eslint-disable-next-line no-unused-expressions
-          image && image.delete();
+        } else if (image) {
+          image.delete();
         }
       }
     }

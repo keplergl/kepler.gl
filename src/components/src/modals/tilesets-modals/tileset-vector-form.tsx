@@ -152,7 +152,6 @@ const TilesetVectorForm: React.FC<TilesetVectorFormProps> = ({setResponse}) => {
         });
       }
 
-      // pmtiles can be in raster format, so try to create a raster tile dataset instead
       const dataset = getDatasetAttributesFromVectorTile({
         name: tileName,
         dataUrl: tileUrl,

@@ -28,9 +28,9 @@ function validateGeometryAttributes(attributes) {
 
 /*
  * Convert mesh data into geometry
- * @returns {Geometry} geometry
+ * @returns geometry
  */
-function getGeometry(data) {
+function getGeometry(data): Geometry {
   if (data.attributes) {
     validateGeometryAttributes(data.attributes);
     if (data instanceof Geometry) {
@@ -206,9 +206,8 @@ export default class RasterMeshLayer extends SimpleMeshLayer<any, RasterLayerAdd
       for (const image of Object.values(this.state.images)) {
         if (Array.isArray(image)) {
           image.map(x => x && x.delete());
-        } else {
-          // eslint-disable-next-line no-unused-expressions
-          image && image.delete();
+        } else if (image) {
+          image.delete();
         }
       }
     }

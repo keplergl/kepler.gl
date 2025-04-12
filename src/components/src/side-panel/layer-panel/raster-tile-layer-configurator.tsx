@@ -45,6 +45,7 @@ import type {StacTypes} from '@kepler.gl/types';
 import {getColorMapListItemComponent} from './raster-tile-colormap-list-item';
 
 type EOBand = StacTypes.Band;
+
 const STAC_SEARCH_UI_ENABLED = true;
 
 const StyledVisConfigSwitch = styled.div`
@@ -56,8 +57,7 @@ const StyledVisConfigSwitch = styled.div`
   }
 `;
 
-// Needed until STAC search is out of beta, then we can go back to standard VisConfigSwitch
-const BetaVisConfigSwitch = ({
+const CustomVisConfigSwitch = ({
   layer: {id, config},
   property,
   onChange,
@@ -201,7 +201,7 @@ function updateColorParamsOnPresetChange(
   return colorParams;
 }
 
-type Props = {
+type RasterTileLayerConfiguratorProps = {
   layer: RasterTileLayer;
   visConfiguratorProps: any;
   dataset: KeplerDataset;
@@ -217,11 +217,15 @@ function RasterTileLayerConfiguratorFactory(
   LayerConfigGroup: ReturnType<typeof LayerConfigGroupFactory>,
   VisConfigSlider: ReturnType<typeof VisConfigSliderFactory>,
   InfoHelper: ReturnType<typeof InfoHelperFactory>
-): React.FC<Props> {
+): React.FC<RasterTileLayerConfiguratorProps> {
   /**
    * Wrapper around configurator to check for dataset.metadata being null/undefined
    */
-  const STACCheckConfiguratorWrapper = ({layer, visConfiguratorProps, dataset}: Props) => {
+  const STACCheckConfiguratorWrapper = ({
+    layer,
+    visConfiguratorProps,
+    dataset
+  }: RasterTileLayerConfiguratorProps) => {
     const stac = dataset?.metadata;
 
     // If no dataset is loaded into Kepler, stac can be undefined
@@ -239,7 +243,11 @@ function RasterTileLayerConfiguratorFactory(
   };
 
   // eslint-disable-next-line complexity
-  const RasterTileLayerConfigurator: React.FC<Props> = ({layer, visConfiguratorProps, dataset}) => {
+  const RasterTileLayerConfigurator: React.FC<RasterTileLayerConfiguratorProps> = ({
+    layer,
+    visConfiguratorProps,
+    dataset
+  }) => {
     const {
       preset,
       nonLinearRescaling,
@@ -248,12 +256,11 @@ function RasterTileLayerConfiguratorFactory(
       dynamicColor,
       singleBandName
     } = layer.config.visConfig;
-    // TODO: This cast is not type safe, and code below will throw if this is inaccurate
-    const stac: CompleteSTACObject = dataset?.metadata as any;
+
+    const stac = dataset?.metadata as CompleteSTACObject;
 
     const availablePresets = useMemo(() => filterAvailablePresets(stac, PRESET_OPTIONS), [stac]);
 
-    // it's possible that non-raster metadata will be passed to the raster configurator, so availablePresets may be null
     const presetOptions = useMemo(
       () =>
         (
@@ -406,7 +413,7 @@ function RasterTileLayerConfiguratorFactory(
             )}
 
             {STAC_SEARCH_UI_ENABLED && stacSearchAllowed && (
-              <BetaVisConfigSwitch
+              <CustomVisConfigSwitch
                 {...layer.visConfigSettings.useSTACSearching}
                 {...visConfiguratorProps}
               />

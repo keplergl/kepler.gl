@@ -54,7 +54,6 @@ function validateSTAC(stac: JsonObjectOrArray, options: {allowCollections: boole
 
   const isCollection = stac?.type === 'Collection';
 
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   const required_extensions = [EO_EXT_ID, RASTER_EXT_ID];
   if (isCollection) {
     required_extensions.push(ITEM_ASSETS_EXT_ID);
