@@ -4,20 +4,6 @@
 import React, {useEffect, useMemo} from 'react';
 import styled from 'styled-components';
 
-import {
-  PanelLabel,
-  PanelLabelWrapper,
-  Input,
-  VisConfigSwitch,
-  ItemSelector,
-  SidePanelSection,
-
-  // factory
-  InfoHelperFactory,
-  VisConfigSliderFactory,
-  LayerConfigGroupFactory,
-  Switch
-} from '@kepler.gl/components';
 import {PMTilesType} from '@kepler.gl/constants';
 import {
   filterAvailablePresets,
@@ -43,6 +29,19 @@ import {KeplerTable as KeplerDataset} from '@kepler.gl/table';
 import type {StacTypes} from '@kepler.gl/types';
 
 import {getColorMapListItemComponent} from './raster-tile-colormap-list-item';
+
+import {
+  Input,
+  PanelLabel,
+  PanelLabelWrapper,
+  SidePanelSection
+} from '../../common/styled-components';
+import Switch from '../../common/switch';
+import InfoHelperFactory from '../../common/info-helper';
+import ItemSelector from '../../common/item-selector/item-selector';
+import VisConfigSliderFactory from '../../side-panel/layer-panel/vis-config-slider';
+import LayerConfigGroupFactory from '../../side-panel/layer-panel/layer-config-group';
+import VisConfigSwitchFactory from '../../side-panel/layer-panel/vis-config-switch';
 
 type EOBand = StacTypes.Band;
 
@@ -210,13 +209,15 @@ type RasterTileLayerConfiguratorProps = {
 RasterTileLayerConfiguratorFactory.deps = [
   LayerConfigGroupFactory,
   VisConfigSliderFactory,
-  InfoHelperFactory
+  InfoHelperFactory,
+  VisConfigSwitchFactory
 ];
 
 function RasterTileLayerConfiguratorFactory(
   LayerConfigGroup: ReturnType<typeof LayerConfigGroupFactory>,
   VisConfigSlider: ReturnType<typeof VisConfigSliderFactory>,
-  InfoHelper: ReturnType<typeof InfoHelperFactory>
+  InfoHelper: ReturnType<typeof InfoHelperFactory>,
+  VisConfigSwitch: ReturnType<typeof VisConfigSwitchFactory>
 ): React.FC<RasterTileLayerConfiguratorProps> {
   /**
    * Wrapper around configurator to check for dataset.metadata being null/undefined
