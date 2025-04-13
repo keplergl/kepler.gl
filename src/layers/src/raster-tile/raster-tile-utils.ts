@@ -147,6 +147,11 @@ function getPixelRange(
   const minPixelValue = 0;
   const maxPixelValue = dtypeMaxValue[dtype];
 
+  // TODO check if this early return is expected
+  if (!maxPixelValue) {
+    return null;
+  }
+
   if (
     !Number.isFinite(maxPixelValue) &&
     typeof minRasterStatsValue === 'number' &&
@@ -577,8 +582,8 @@ export function getUsableAssets(stac: CompleteSTACObject): CompleteSTACAssetLink
  * @param stac STAC object
  * @return Number of permissible concurrent requests
  */
-export function getMaxRequests(stac: Item | Collection): number {
-  return stac.rasterTileServerUrls.length * 6;
+export function getMaxRequests(rasterTileServerUrls: []): number {
+  return (rasterTileServerUrls.length || 1) * 6;
 }
 
 /**

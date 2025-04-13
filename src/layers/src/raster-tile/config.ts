@@ -6,7 +6,7 @@ import {
   VisConfigBoolean,
   VisConfigNumber,
   VisConfigRange,
-  VisConfigSelection,
+  VisConfigObjectSelection,
   VisConfigInput
 } from '@kepler.gl/types';
 
@@ -588,13 +588,13 @@ const STAC_SEARCH_PROVIDERS: ConfigOption[] = [
  */
 export const rasterVisConfigs = {
   preset: {
-    type: 'select',
+    type: 'object-select',
     defaultValue: 'trueColor',
     label: 'Preset',
     options: Object.values(PRESET_OPTIONS),
     property: 'preset',
     group: ''
-  } as VisConfigSelection,
+  } as VisConfigObjectSelection,
   useSTACSearching: {
     type: 'boolean',
     property: 'useSTACSearching',
@@ -602,12 +602,12 @@ export const rasterVisConfigs = {
     label: 'Use STAC Searching'
   } as VisConfigBoolean,
   stacSearchProvider: {
-    type: 'select',
+    type: 'object-select',
     defaultValue: 'earth-search',
     label: 'STAC Search Provider',
     options: STAC_SEARCH_PROVIDERS,
     property: 'stacSearchProvider'
-  } as VisConfigSelection,
+  } as VisConfigObjectSelection,
   startDate: {
     type: 'input',
     defaultValue: '2020-02-02',
@@ -629,13 +629,13 @@ export const rasterVisConfigs = {
     description: 'Use a dynamic color scale based on data visible in the viewport'
   } as VisConfigBoolean,
   colormapId: {
-    type: 'select',
+    type: 'object-select',
     defaultValue: 'cfastie',
     label: 'Colormap',
     options: COLORMAP_OPTIONS,
     property: 'colormapId',
     group: ''
-  } as VisConfigSelection,
+  } as VisConfigObjectSelection,
   // kepler's visConfig from kepler.gl https://github.com/foursquare/kepler.gl/blob/490a8938ffa1fac025e8d1997481acc1bffe4abd/src/layers/layer-factory.js#L228
   // key `colorRange` is required becuase it is hardcoded in kepler.gl
   // to make shallow copy of the visConfig item
@@ -732,14 +732,14 @@ export const rasterVisConfigs = {
     type: 'input'
   } as VisConfigInput,
   singleBandName: {
-    type: 'select',
+    type: 'object-select',
     defaultValue: null,
     label: 'Name of single band to render',
     // defined dynamically from STAC item/collection
     options: [],
     property: 'singleBandName',
     group: ''
-  } as VisConfigSelection,
+  } as VisConfigObjectSelection,
   enableTerrain: {
     type: 'boolean',
     defaultValue: true,

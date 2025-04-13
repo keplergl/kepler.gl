@@ -65,7 +65,7 @@ interface WebGLTextureFormat {
  * Convert TypedArray to WebGL2 Texture Parameters
  */
 function getWebGL2TextureParameters(data: NPYLoaderDataTypes): WebGLTextureFormat | never {
-  if (data instanceof Uint8Array) {
+  if (data instanceof Uint8Array || data instanceof Uint8ClampedArray) {
     return {
       // Note: texture data has no auto-rescaling; pixel values stay as 0-255
       format: GL.R8UI,
@@ -366,12 +366,27 @@ export function getModules({
   props
 }: {
   images: Partial<ImageData>;
-  props: RenderSubLayersProps;
+  props?: RenderSubLayersProps;
 }): {
   modules: ShaderModule[];
   moduleProps: Record<string, any>;
 } {
   const moduleProps: Record<string, any> = {};
+  // Array of luma.gl WebGL modules to pass to the RasterLayer
+  const modules: ShaderModule[] = [];
+
+  // use rgba image directly. Used for raster .pmtiles rendering
+  if (images.imageRgba) {
+    modules.push(rgbaImage);
+
+    // no support for other modules atm for direct rgba mode
+    return {modules, moduleProps};
+  }
+
+  if (!props) {
+    return {modules, moduleProps};
+  }
+
   const {
     renderBandIndexes,
     nonLinearRescaling,
@@ -390,17 +405,6 @@ export function getModules({
     maxCategoricalBandValue,
     hasCategoricalColorMap
   } = props;
-
-  // Array of luma.gl WebGL modules to pass to the RasterLayer
-  const modules: ShaderModule[] = [];
-
-  // use rgba image directly. Used for raster .pmtiles rendering
-  if (images.imageRgba) {
-    modules.push(rgbaImage);
-
-    // no support for other modules atm for direct rgba mode
-    return {modules, moduleProps};
-  }
 
   if (Array.isArray(images.imageBands) && images.imageBands.length > 0) {
     modules.push(getCombineBandsModule(images.imageBands));

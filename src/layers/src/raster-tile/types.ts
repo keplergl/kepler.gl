@@ -99,12 +99,14 @@ export type CategoricalColormapOptions = {
   maxValue?: number;
 };
 
+export type ExtendedKeplerSTAC = {rasterTileServerUrls?: []};
+
 /**
  * Custom fields we pass on to the getTileData callback
  * Anything required to know _what data to load_ should be passed in here.
  */
 export type GetTileDataCustomProps = Pick<AssetRequestInfo, 'loadAssetIds' | 'loadBandIndexes'> & {
-  stac: CompleteSTACObject;
+  stac: CompleteSTACObject & ExtendedKeplerSTAC;
   colormapId: string;
   categoricalColorMap: ColorMap;
   minCategoricalBandValue?: number;
@@ -207,6 +209,7 @@ export type AssetRequestData = {
 
 export type NPYLoaderDataTypes =
   | Uint8Array
+  | Uint8ClampedArray
   | Int8Array
   | Uint16Array
   | Int16Array
@@ -219,7 +222,6 @@ export interface NPYLoaderResponse {
   data: NPYLoaderDataTypes;
   header: {
     descr: string;
-    fortran_order: boolean;
     shape: number[];
   };
 }

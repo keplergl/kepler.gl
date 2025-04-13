@@ -406,5 +406,5 @@ export function loadTerrain(props: {
       ...loaderOptions['quantized-mesh'],
       skirtHeight: meshMaxError * 2
     }
-  });
+  }) as Promise<TerrainData>;
 }

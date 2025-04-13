@@ -25,7 +25,7 @@ import {
 } from '@kepler.gl/types';
 
 import {notNullorUndefined} from '@kepler.gl/common-utils';
-import {Datasets, KeplerTable as KeplerDataset} from '@kepler.gl/table';
+import {Datasets, KeplerTable as KeplerDataset, VectorTileMetadata} from '@kepler.gl/table';
 import {getApplicationConfig} from '@kepler.gl/utils';
 
 import {rasterVisConfigs, PRESET_OPTIONS, DATA_SOURCE_COLOR_DEFAULTS} from './config';
@@ -46,6 +46,7 @@ import {
 } from './raster-tile-utils';
 import {
   GetTileDataCustomProps,
+  GetTileDataDefaultProps,
   GetTileDataProps,
   RenderSubLayersProps,
   GetTileDataOutput,
@@ -279,7 +280,7 @@ export default class RasterTileLayer extends Layer {
    * Run when adding a new dataset
    */
   setInitialLayerConfig(dataset: KeplerDataset): RasterTileLayer {
-    const stac = dataset?.metadata;
+    const stac = dataset?.metadata as GetTileDataCustomProps['stac'];
 
     if (!stac) {
       return this;
@@ -394,7 +395,7 @@ export default class RasterTileLayer extends Layer {
 
   private renderStacLayer(opts): TileLayer<any>[] {
     const {data, mapState} = opts;
-    const stac = data?.dataset?.metadata;
+    const stac = data?.dataset?.metadata as GetTileDataCustomProps['stac'];
 
     // If a tabular dataset is loaded, and then the layer type is switched from Point to Raster Tile
     // layer, this `stac` object will exist but will not be raster metadata
@@ -491,8 +492,9 @@ export default class RasterTileLayer extends Layer {
       tileSize: 512 / devicePixelRatio,
       getTileData: (args: any) => this.getTileData({...args, ...getTileDataCustomProps}),
       onViewportLoad: this.onViewportLoad.bind(this),
+      // @ts-expect-error - TS doesn't know we'll pass appropriate props here
       renderSubLayers: renderSubLayersStac,
-      maxRequests: getMaxRequests(stac),
+      maxRequests: getMaxRequests(stac.rasterTileServerUrls || []),
       // Passing visible on to TileLayer is necessary for split view to work
       visible,
       updateTriggers: {
@@ -548,7 +550,7 @@ export default class RasterTileLayer extends Layer {
     const {id, opacity, visible} = this.getDefaultDeckLayerProps(opts);
 
     const {data, mapState} = opts;
-    const metadata = data?.dataset?.metadata;
+    const metadata = data?.dataset?.metadata as VectorTileMetadata;
     const {visConfig} = this.config;
 
     const tileSource = data.tileSource;
@@ -559,7 +561,7 @@ export default class RasterTileLayer extends Layer {
     const shouldLoadTerrain = getShouldLoadTerrain(metadata, mapState, visConfig);
 
     return [
-      new TileLayer({
+      new TileLayer<any, RasterTileLayerVisConfigCommonSettings>({
         id,
         getTileData: (args: any) =>
           this.getTileDataPMTiles({...args, shouldLoadTerrain, metadata}, tileSource),
@@ -576,6 +578,7 @@ export default class RasterTileLayer extends Layer {
         maxZoom,
         tileSize: 512 / devicePixelRatio,
         zoomOffset: devicePixelRatio === 1 ? -1 : 0,
+        // @ts-expect-error - TS doesn't know we'll pass appropriate props here
         renderSubLayers: renderSubLayersPMTiles,
 
         tileSource,
@@ -621,7 +624,7 @@ export default class RasterTileLayer extends Layer {
         (await loadTerrain({
           index: props.index,
           signal: props.signal,
-          rasterTileServerUrls: props.stac.rasterTileServerUrls
+          rasterTileServerUrls: props.stac.rasterTileServerUrls || []
         }));
       return {images: null, ...(terrain ? {terrain} : {})};
     }
@@ -642,7 +645,7 @@ export default class RasterTileLayer extends Layer {
           ? loadTerrain({
               index: props.index,
               signal: props.signal,
-              rasterTileServerUrls: props.stac.rasterTileServerUrls
+              rasterTileServerUrls: props.stac.rasterTileServerUrls || []
             })
           : null
       ]);
@@ -669,7 +672,14 @@ export default class RasterTileLayer extends Layer {
     }
   }
 
-  async getTileDataPMTiles(props: GetTileDataProps, tileSource): Promise<any> {
+  async getTileDataPMTiles(
+    props: GetTileDataDefaultProps & {
+      shouldLoadTerrain: boolean;
+      metadata: {rasterTileServerUrls: string[]};
+      globalBounds: DataSourceParams['globalBounds'];
+    },
+    tileSource
+  ): Promise<any> {
     const {
       shouldLoadTerrain,
       globalBounds,
@@ -877,8 +887,7 @@ function getRasterLayerPMTiles(props: {id: string; data: any; tile: any}) {
   const {terrain} = data;
 
   const {modules, moduleProps} = getModules({
-    images,
-    props: {minPixelValue: 0, maxPixelValue: 255}
+    images
   });
 
   return terrain
@@ -901,7 +910,7 @@ function getRasterLayerPMTiles(props: {id: string; data: any; tile: any}) {
       })
     : new RasterLayer(props, {
         id: `raster-2d-layer-${props.id}`,
-        data: null,
+        data: null as never,
         images,
         modules,
         moduleProps,

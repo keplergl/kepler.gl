@@ -9,11 +9,11 @@ import {getApplicationConfig} from '@kepler.gl/utils';
 
 import {DEFAULT_BAND_MAPPINGS} from './config';
 import {
-  CompleteSTACObject,
   AssetIds,
   BandIndexes,
   CompleteSTACItem,
-  CompleteSTACCollection
+  CompleteSTACCollection,
+  GetTileDataProps
 } from './types';
 
 type Item = StacTypes.STACItem;
@@ -150,7 +150,7 @@ export function getSingleCOGUrlParams(options: {
  * Construct full URL to load tile from a Titiler-based backend
  */
 export function getTitilerUrl(options: {
-  stac: CompleteSTACObject;
+  stac: GetTileDataProps['stac'];
   useSTACSearching: boolean;
   x: number;
   y: number;
@@ -159,13 +159,20 @@ export function getTitilerUrl(options: {
   // mask Set to false for mosaics because entire image is assumed to be valid
   const {stac, useSTACSearching, x, y, z} = options;
 
+  if (!stac.rasterTileServerUrls?.length) {
+    throw new Error('No raster tile servers');
+  }
+
   const pathStem = getTitilerPathMapping(stac, useSTACSearching);
   const scale = TILE_SIZE === 512 ? '@2x' : '';
   const domain = chooseDomain(stac.rasterTileServerUrls, x, y);
   return `${domain}/${pathStem}/tiles/WebMercatorQuad/${z}/${x}/${y}${scale}.npy`;
 }
 
-export function getTitilerPathMapping(stac: CompleteSTACObject, useSTACSearching = false): string {
+export function getTitilerPathMapping(
+  stac: GetTileDataProps['stac'],
+  useSTACSearching = false
+): string {
   if (useSTACSearching) {
     return 'stac/mosaic';
   }
