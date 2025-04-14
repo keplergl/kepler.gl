@@ -14,11 +14,13 @@ function getUniforms(opts: {imageBands?: Texture2D[]} = {}): GetUniformsOutput {
 
   const [bitmapTextureR, bitmapTextureG, bitmapTextureB, bitmapTextureA] = imageBands;
 
+  // return default values to prevent deck.gl validation warnings.
+  // Note: all bands must be set for the shadow effect to work as expected.
   return {
-    bitmapTextureR,
-    bitmapTextureG,
-    bitmapTextureB,
-    bitmapTextureA
+    bitmapTextureR: bitmapTextureR || bitmapTextureR,
+    bitmapTextureG: bitmapTextureG || bitmapTextureR,
+    bitmapTextureB: bitmapTextureB || bitmapTextureR,
+    bitmapTextureA: bitmapTextureA || bitmapTextureR
   };
 }
 
