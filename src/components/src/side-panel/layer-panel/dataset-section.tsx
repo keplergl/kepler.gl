@@ -26,7 +26,7 @@ type DatasetSectionProps = {
   showAddDataModal: () => void;
 };
 
-const StyledDatasetTitle = styled.div<{showDatasetList?: boolean}>`
+const StyledDatasetTitle = styled.div<{$showDatasetList?: boolean}>`
   line-height: ${props => props.theme.sidePanelTitleLineHeight};
   font-weight: 400;
   letter-spacing: 1.25px;
@@ -35,7 +35,7 @@ const StyledDatasetTitle = styled.div<{showDatasetList?: boolean}>`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: ${props => (props.showDatasetList ? '16px' : '4px')};
+  margin-bottom: ${props => (props.$showDatasetList ? '16px' : '4px')};
 `;
 
 const StyledDatasetSection = styled.div`
@@ -79,7 +79,7 @@ function DatasetSectionFactory(
 
     return (
       <StyledDatasetSection>
-        <StyledDatasetTitle showDatasetList={showDatasetList}>
+        <StyledDatasetTitle $showDatasetList={showDatasetList}>
           <span>Datasets{datasetCount ? `(${datasetCount})` : ''}</span>
           <AddDataButton onClick={showAddDataModal} isInactive={!datasetCount} />
         </StyledDatasetTitle>

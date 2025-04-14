@@ -61,31 +61,31 @@ const hashStyles = {
 };
 
 export type IconDivProps = BaseComponentProps & {
-  status?: 'SHOW' | 'ACTIVE' | null;
+  $status?: 'SHOW' | 'ACTIVE' | null;
 };
 
 const IconDiv: IStyledComponent<'web', IconDivProps> = styled.div.attrs({
   className: 'tooltip-chicklet__icon'
 })<IconDivProps>`
   color: ${props =>
-    props.status === hashStyles.SHOW
+    props.$status === hashStyles.SHOW
       ? props.theme.subtextColorActive
-      : props.status === hashStyles.ACTIVE
+      : props.$status === hashStyles.ACTIVE
       ? props.theme.activeColor
       : props.theme.textColor};
 `;
 
 export type SortableStyledItemProps = BaseComponentProps & {
-  transition?: CSSProperties['transition'];
-  transform?: CSSProperties['transform'];
+  $transition?: CSSProperties['transition'];
+  $transform?: CSSProperties['transform'];
   ref: (node: HTMLElement | null) => void;
 };
 const SortableStyledItem: IStyledComponent<
   'web',
   SortableStyledItemProps
 > = styled.div<SortableStyledItemProps>`
-  transition: ${props => props.transition};
-  transform: ${props => props.transform};
+  transition: ${props => props.$transition};
+  transform: ${props => props.$transform};
   &.sorting {
     opacity: 0.3;
     pointer-events: none;
@@ -174,8 +174,8 @@ function TooltipChickletFactory(
       <SortableStyledItem
         ref={setNodeRef}
         className={classnames('sortable-layer-items', {sorting: isDragging})}
-        transform={CSS.Translate.toString(transform)}
-        transition={transition || ''}
+        $transform={CSS.Translate.toString(transform)}
+        $transition={transition || ''}
         {...attributes}
       >
         <ChickletButton>
@@ -198,7 +198,7 @@ function TooltipChickletFactory(
                 )}
               >
                 <ChickletAddon>
-                  <IconDiv status={hashStyle}>
+                  <IconDiv $status={hashStyle}>
                     <Hash
                       height="8px"
                       onClick={e => {

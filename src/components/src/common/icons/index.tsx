@@ -4,7 +4,7 @@
 export {default as Base} from './base';
 
 // eslint-disable-next-line prettier/prettier
-export type {BaseProps} from './base'
+export type {BaseProps} from './base';
 
 export {default as Add} from './add';
 export {default as AnchorWindow} from './anchor_window';

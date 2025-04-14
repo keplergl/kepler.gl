@@ -11,6 +11,7 @@ import {restrictToParentElement} from '@dnd-kit/modifiers';
 import Delete from '../icons/delete';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {BaseComponentProps} from '../../types';
+import {shouldForwardProp} from '../styled-components';
 
 export type ChickletButtonProps = BaseComponentProps & {
   inputTheme?: string;
@@ -77,7 +78,7 @@ export type ChickletedInputContainerProps = BaseComponentProps & {
 const ChickletedInputContainer: IStyledComponent<
   'web',
   ChickletedInputContainerProps
-> = styled.div<ChickletedInputContainerProps>`
+> = styled.div.withConfig({shouldForwardProp})<ChickletedInputContainerProps>`
   ${props =>
     props.inputTheme === 'secondary'
       ? props.theme.secondaryChickletedInput

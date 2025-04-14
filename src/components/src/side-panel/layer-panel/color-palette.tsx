@@ -28,8 +28,8 @@ const PaletteWrapper = styled.div.attrs({
 `;
 
 export type PaletteContainerProps = BaseComponentProps & {
-  isColorChart?: boolean;
-  isSelected?: boolean;
+  $isColorChart?: boolean;
+  $isSelected?: boolean;
 };
 
 const PaletteContainer: IStyledComponent<'web', PaletteContainerProps> = styled.div.attrs(
@@ -39,10 +39,10 @@ const PaletteContainer: IStyledComponent<'web', PaletteContainerProps> = styled.
 )<PaletteContainerProps>`
   display: flex;
   flex-grow: 1;
-  border-width: ${props => (props.isColorChart ? '0px' : '1px')};
+  border-width: ${props => (props.$isColorChart ? '0px' : '1px')};
   border-style: solid;
-  border-color: ${props => (props.isSelected ? '#FFFFFF' : 'transparent')};
-  padding: ${props => (props.isColorChart ? '0px' : '4px')};
+  border-color: ${props => (props.$isSelected ? '#FFFFFF' : 'transparent')};
+  padding: ${props => (props.$isColorChart ? '0px' : '4px')};
   border-radius: 4px;
 `;
 
@@ -67,8 +67,8 @@ const ColorPalette = ({
   return (
     <PaletteContainer
       className={className}
-      isSelected={isSelected}
-      isColorChart={Boolean(colorWidths)}
+      $isSelected={isSelected}
+      $isColorChart={Boolean(colorWidths)}
     >
       <PaletteWrapper style={paletteWrapperStyle}>
         {colors.map((color: number | string, index: number) =>

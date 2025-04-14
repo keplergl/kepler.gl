@@ -21,28 +21,28 @@ import {Datasets} from '@kepler.gl/table';
 import {ActionHandler, setFilterPlot} from '@kepler.gl/actions';
 
 interface SliderInputProps {
-  flush?: boolean;
-  inputSize?: string;
+  $flush?: boolean;
+  $inputSize?: string;
 }
 const noop = () => {
   return;
 };
 const SliderInput = styled(Input)<SliderInputProps>`
   width: ${props => props.theme.sliderInputWidth}px;
-  margin-left: ${props => (props.flush ? 0 : props.inputSize === 'tiny' ? 12 : 18)}px;
+  margin-left: ${props => (props.$flush ? 0 : props.$inputSize === 'tiny' ? 12 : 18)}px;
   font-size: ${props => props.theme.sliderInputFontSize}; // 10px // 12px;
   padding: ${props => props.theme.sliderInputPadding}; // 4px 6px; // 6px 12px;
 `;
 
 interface SliderWrapperProps {
-  isRanged?: boolean;
-  showInput?: boolean;
+  $isRanged?: boolean;
+  $showInput?: boolean;
 }
 
 const SliderWrapper = styled.div<SliderWrapperProps>`
   display: flex;
   position: relative;
-  align-items: ${props => (!props.isRanged && props.showInput ? 'center' : 'flex-start')};
+  align-items: ${props => (!props.$isRanged && props.$showInput ? 'center' : 'flex-start')};
 `;
 
 const RangeInputWrapper = styled.div`
@@ -215,8 +215,8 @@ export default function RangeSliderFactory(
             }
           }}
           onBlur={update}
-          flush={key === 'value0'}
-          inputSize={this.props.inputSize}
+          $flush={key === 'value0'}
+          $inputSize={this.props.inputSize}
           secondary={this.props.inputTheme === 'secondary'}
         />
       );
@@ -296,8 +296,8 @@ export default function RangeSliderFactory(
               ) : null}
               <SliderWrapper
                 className="kg-range-slider__slider"
-                isRanged={isRanged}
-                showInput={showInput}
+                $isRanged={isRanged}
+                $showInput={showInput}
               >
                 {this.props.xAxis ? (
                   <div style={{height: '30px'}}>

@@ -8,8 +8,19 @@ import DatePicker from 'react-date-picker';
 import TimePicker from 'react-time-picker';
 import ReactTooltip, {TooltipProps} from 'react-tooltip';
 import styled, {IStyledComponent} from 'styled-components';
+import isPropValid from '@emotion/is-prop-valid';
 
 import {BaseComponentProps} from '../types';
+
+// This implements the default behavior from styled-components v5
+export function shouldForwardProp(propName, target) {
+  if (typeof target === 'string') {
+    // For HTML elements, forward the prop if it is a valid HTML attribute
+    return isPropValid(propName);
+  }
+  // For other elements, forward all props
+  return true;
+}
 
 export const SelectText = styled.span`
   color: ${props => props.theme.labelColor};
@@ -209,7 +220,7 @@ export type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 // this needs to be an actual button to be able to set disabled attribute correctly
-export const Button = styled.button.attrs(props => ({
+export const Button = styled.button.withConfig({shouldForwardProp}).attrs(props => ({
   className: classnames('button', props.className)
 }))<ButtonProps>`
   align-items: center;
@@ -308,18 +319,18 @@ interface InputProps {
   secondary?: boolean;
 }
 
-export const Input = styled.input<InputProps>`
+export const Input = styled.input.withConfig({shouldForwardProp})<InputProps>`
   ${props => (props.secondary ? props.theme.secondaryInput : props.theme.input)};
 `;
 
-export const InputLight = styled.input`
+export const InputLight = styled.input.withConfig({shouldForwardProp})`
   ${props => props.theme.inputLT};
 `;
 
-export const TextArea = styled.textarea<InputProps>`
+export const TextArea = styled.textarea.withConfig({shouldForwardProp})<InputProps>`
   ${props => (props.secondary ? props.theme.secondaryInput : props.theme.input)};
 `;
-export const TextAreaLight = styled.textarea`
+export const TextAreaLight = styled.textarea.withConfig({shouldForwardProp})`
   ${props => props.theme.inputLT} height: auto;
   white-space: pre-wrap;
 `;
@@ -335,7 +346,7 @@ export interface StyledPanelHeaderProps {
   isValid?: boolean;
 }
 
-export const StyledPanelHeader = styled.div<StyledPanelHeaderProps>`
+export const StyledPanelHeader = styled.div.withConfig({shouldForwardProp})<StyledPanelHeaderProps>`
   background-color: ${props =>
     props.active ? props.theme.panelBackgroundHover : props.theme.panelBackground};
   border-left: 3px solid
@@ -388,7 +399,7 @@ interface DatasetSquareProps {
   backgroundColor: RGBColor;
 }
 
-export const DatasetSquare = styled.div<DatasetSquareProps>`
+export const DatasetSquare = styled.div.withConfig({shouldForwardProp})<DatasetSquareProps>`
   display: inline-block;
   width: 10px;
   height: 10px;
@@ -400,7 +411,7 @@ interface SelectionButtonProps {
   selected?: boolean;
 }
 
-export const SelectionButton = styled.div<SelectionButtonProps>`
+export const SelectionButton = styled.div.withConfig({shouldForwardProp})<SelectionButtonProps>`
   position: relative;
   border-radius: 2px;
   border: 1px solid
