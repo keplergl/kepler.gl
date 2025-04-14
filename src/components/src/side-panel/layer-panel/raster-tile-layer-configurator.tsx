@@ -15,6 +15,7 @@ import {
   isRescalingAllowed,
   isSearchableStac,
   CompleteSTACObject,
+  GetTileDataCustomProps,
   DataSourceParams,
   PresetOption,
   RasterTileLayer,
@@ -258,7 +259,7 @@ function RasterTileLayerConfiguratorFactory(
       singleBandName
     } = layer.config.visConfig;
 
-    const stac = dataset?.metadata as CompleteSTACObject;
+    const stac = dataset?.metadata as GetTileDataCustomProps['stac'];
 
     const availablePresets = useMemo(() => filterAvailablePresets(stac, PRESET_OPTIONS), [stac]);
 
@@ -338,14 +339,15 @@ function RasterTileLayerConfiguratorFactory(
           <LayerConfigGroup {...visConfiguratorProps} label="Visual Settings" collapsible={false}>
             <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
           </LayerConfigGroup>
-          {getApplicationConfig().rasterServerSupportsElevation && (
-            <LayerConfigGroup {...visConfiguratorProps} label="Terrain">
-              <VisConfigSwitch
-                {...visConfiguratorProps}
-                {...layer.visConfigSettings.enableTerrain}
-              />
-            </LayerConfigGroup>
-          )}
+          {getApplicationConfig().rasterServerSupportsElevation &&
+            stac.rasterTileServerUrls?.length && (
+              <LayerConfigGroup {...visConfiguratorProps} label="Terrain">
+                <VisConfigSwitch
+                  {...visConfiguratorProps}
+                  {...layer.visConfigSettings.enableTerrain}
+                />
+              </LayerConfigGroup>
+            )}
         </StyledLayerConfigurator>
       );
     }
@@ -544,11 +546,15 @@ function RasterTileLayerConfiguratorFactory(
           </LayerConfigGroup>
         )}
 
-        {getApplicationConfig().rasterServerSupportsElevation && (
-          <LayerConfigGroup {...visConfiguratorProps} label="Terrain">
-            <VisConfigSwitch {...visConfiguratorProps} {...layer.visConfigSettings.enableTerrain} />
-          </LayerConfigGroup>
-        )}
+        {getApplicationConfig().rasterServerSupportsElevation &&
+          stac.rasterTileServerUrls?.length && (
+            <LayerConfigGroup {...visConfiguratorProps} label="Terrain">
+              <VisConfigSwitch
+                {...visConfiguratorProps}
+                {...layer.visConfigSettings.enableTerrain}
+              />
+            </LayerConfigGroup>
+          )}
       </StyledLayerConfigurator>
     );
   };
