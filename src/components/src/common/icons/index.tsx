@@ -112,3 +112,4 @@ export {default as EdgeWorkEffectIcon} from './effects/edge-work';
 export {default as VignetteEffectIcon} from './effects/vignette';
 export {default as MagnifyEffectIcon} from './effects/magnify';
 export {default as HexagonalPixelateEffectIcon} from './effects/hexagonal-pixelate';
+export {default as ZoomIn} from './zoom-in';
