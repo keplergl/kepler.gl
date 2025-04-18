@@ -14,6 +14,10 @@ export {default as EnhancedLineLayer} from './line-layer/line-layer';
 export {default as SvgIconLayer} from './svg-icon-layer/svg-icon-layer';
 export {default as FilterArrowExtension} from './deckgl-extensions/filter-arrow-layer';
 
+export {default as RasterLayer} from './raster/raster-layer/raster-layer';
+export {default as RasterMeshLayer} from './raster/raster-mesh-layer/raster-mesh-layer';
+export * as RasterWebGL from './raster/webgl';
+
 export * from './layer-utils/shader-utils';
 
 export * from './3d-building-layer/types';

@@ -250,10 +250,23 @@ export type VisConfigBoolean = VisConfig & {
   defaultValue: boolean;
 };
 
+export type VisConfigInput = VisConfig & {
+  type: 'input';
+  defaultValue: string | null;
+};
+
 export type VisConfigSelection = VisConfig & {
   type: 'select';
   defaultValue: string;
   options: string[];
+};
+
+export type VisConfigObjectSelection = VisConfig & {
+  type: 'object-select';
+  // the value is id of one of the options
+  defaultValue: string | null;
+  // an array of objects with ids
+  options: object[];
 };
 
 export type VisConfigRange = VisConfig & {
@@ -273,6 +286,16 @@ export type VisConfigColorRange = VisConfig & {
   type: 'color-range-select';
   defaultValue: ColorRange;
 };
+
+export type LayerVisConfigTypes =
+  | VisConfigBoolean
+  | VisConfigNumber
+  | VisConfigRange
+  | VisConfigColorRange
+  | VisConfigColorSelect
+  | VisConfigInput
+  | VisConfigSelect
+  | VisConfigObjectSelection;
 
 export type LayerVisConfigSettings = {
   thickness: VisConfigNumber;
@@ -318,6 +341,7 @@ export type LayerVisConfigSettings = {
   allowHover: VisConfigBoolean;
   showNeighborOnHover: VisConfigBoolean;
   showHighlightColor: VisConfigBoolean;
+  [key: string]: LayerVisConfigTypes;
 };
 
 // TODO: Move this to individual layers

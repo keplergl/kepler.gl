@@ -33,6 +33,8 @@ export default function DatasetInfoFactory() {
         id={
           dataset.type === DatasetType.VECTOR_TILE
             ? 'datasetInfo.vectorTile'
+            : dataset.type === DatasetType.RASTER_TILE
+            ? 'datasetInfo.rasterTile'
             : 'datasetInfo.rowCount'
         }
         values={{rowCount: numFormat(dataset.dataContainer.numRows())}}

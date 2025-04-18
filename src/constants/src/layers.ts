@@ -553,7 +553,8 @@ export const LAYER_TYPES = keyMirror({
   '3D': null,
   trip: null,
   s2: null,
-  vectorTile: null
+  vectorTile: null,
+  rasterTile: null
 });
 
 export const EDITOR_AVAILABLE_LAYERS: string[] = [

@@ -6,7 +6,13 @@ import KeplerTable, {Datasets} from './kepler-table';
 import {ProtoDataset, RGBColor} from '@kepler.gl/types';
 import Task from 'react-palm/tasks';
 
-import {DatasetType, RemoteTileFormat, VectorTileDatasetMetadata} from '@kepler.gl/constants';
+import {
+  DatasetType,
+  RasterTileDatasetMetadata,
+  PMTilesType,
+  RemoteTileFormat,
+  VectorTileDatasetMetadata
+} from '@kepler.gl/constants';
 import {
   hexToRgb,
   validateInputData,
@@ -17,7 +23,12 @@ import {PMTilesSource, PMTilesMetadata} from '@loaders.gl/pmtiles';
 import {/* MVTSource,*/ TileJSON} from '@loaders.gl/mvt';
 
 import {getMVTMetadata} from './tileset/tileset-utils';
-import {parseVectorMetadata, getFieldsFromTile} from './tileset/vector-tile-utils';
+import {parseRasterMetadata} from './tileset/raster-tile-utils';
+import {
+  parseVectorMetadata,
+  getFieldsFromTile,
+  VectorTileMetadata
+} from './tileset/vector-tile-utils';
 
 // apply a color for each dataset
 // to use as label colors
@@ -109,7 +120,9 @@ async function createTable(datasetInfo: CreateTableProps) {
   let metadata = opts.metadata;
   if (refreshedMetadata) {
     metadata = {...opts.metadata, ...refreshedMetadata};
-    data.fields = metadata?.fields;
+    if (metadata.fields) {
+      data.fields = metadata.fields;
+    }
   }
 
   const TableClass = getApplicationConfig().table ?? KeplerTable;
@@ -131,12 +144,21 @@ const CREATE_TABLE_TASK = Task.fromPromise(createTable, 'CREATE_TABLE_TASK');
  * @param datasetInfo
  * @returns
  */
-async function refreshRemoteData(datasetInfo: CreateTableProps) {
-  // so far only vector tile layers should refresh metadata
-  if (datasetInfo.info.type !== DatasetType.VECTOR_TILE) {
-    return null;
+async function refreshRemoteData(datasetInfo: CreateTableProps): Promise<object | null> {
+  const {type} = datasetInfo.info;
+  switch (type) {
+    case DatasetType.VECTOR_TILE:
+      return await refreshVectorTileMetadata(datasetInfo);
+    case DatasetType.RASTER_TILE:
+      return await refreshRasterTileMetadata(datasetInfo);
+    default:
+      return null;
   }
+}
 
+async function refreshVectorTileMetadata(
+  datasetInfo: CreateTableProps
+): Promise<VectorTileMetadata | null> {
   const {remoteTileFormat, tilesetMetadataUrl, tilesetDataUrl} =
     (datasetInfo.opts.metadata as VectorTileDatasetMetadata) || {};
 
@@ -170,8 +192,43 @@ async function refreshRemoteData(datasetInfo: CreateTableProps) {
       return metadata;
     }
   } catch (err) {
-    // ignore for now, and use old metadata?
+    // ignore for now, and use old metadata
+  }
+  return null;
+}
+
+async function refreshRasterTileMetadata(datasetInfo: CreateTableProps): Promise<any | null> {
+  const {metadataUrl, pmtilesType} = (datasetInfo.opts.metadata as RasterTileDatasetMetadata) || {};
+
+  if (typeof metadataUrl !== 'string') {
+    return null;
   }
 
+  try {
+    if (pmtilesType === PMTilesType.RASTER) {
+      const tileSource = PMTilesSource.createDataSource(metadataUrl, {});
+      const rawMetadata: PMTilesMetadata = await tileSource.metadata;
+
+      if (rawMetadata) {
+        return parseVectorMetadata(rawMetadata);
+      }
+    } else {
+      // it's stac raster tiles
+      const response = await fetch(metadataUrl);
+      if (!response.ok) {
+        throw new Error(`Failed Fetch ${metadataUrl}`);
+      }
+      const rawMetadata = await response.json();
+
+      const metadata = parseRasterMetadata(rawMetadata, {allowCollections: true});
+      if (metadata instanceof Error) {
+        throw new Error(`Failed to parse metadata ${metadata.message}`);
+      }
+
+      return metadata;
+    }
+  } catch (err) {
+    // ignore for now, and use old metadata
+  }
   return null;
 }

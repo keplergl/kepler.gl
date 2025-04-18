@@ -7,15 +7,16 @@ import JSONPretty from 'react-json-pretty';
 import {AutoSizer} from 'react-virtualized';
 import styled from 'styled-components';
 
-import {VectorTileIcon} from '@kepler.gl/layers';
+import {VectorTileIcon, RasterTileIcon} from '@kepler.gl/layers';
 import {getError} from '@kepler.gl/utils';
 
 import {MetaResponse} from './common';
 import LoadDataFooter from './load-data-footer';
-// import TilesetIcon from './tileset-icon';
+import TilesetIcon from './tileset-icon';
 import TilesetVectorForm from './tileset-vector-form';
+import TilesetRasterForm from './tileset-raster-form';
 
-// const WIDTH_ICON = '62px';
+const WIDTH_ICON = '70px';
 
 const LoadTilesetTabContainer = styled.div`
   color: ${props => props.theme.AZURE};
@@ -27,12 +28,12 @@ const Container = styled.div`
   background-color: ${props => props.theme.WHITE};
 `;
 
-/*
 const TilesetTypeContainer = styled.div`
   display: grid;
   grid-template-columns: repeat(4, ${WIDTH_ICON});
+  column-gap: 10px;
+  margin-bottom: 20px;
 `;
-*/
 
 const MetaContainer = styled.div`
   display: flex;
@@ -68,7 +69,6 @@ const MetaInnerContainer = styled.div<MetaInnerContainerProps>`
 const StyledHeaderMessage = styled.div`
   color: ${props => props.theme.textColorLT};
   font-size: 14px;
-  margin-bottom: 12px;
 `;
 
 type LoadTilesetTabProps = {
@@ -84,6 +84,12 @@ const TILE_TYPES = [
     label: 'Vector Tile',
     Icon: VectorTileIcon,
     Component: TilesetVectorForm
+  },
+  {
+    id: 'rasterTile',
+    label: 'Raster Tile',
+    Icon: RasterTileIcon,
+    Component: TilesetRasterForm
   }
 ];
 
@@ -92,12 +98,8 @@ function isReady(response) {
 }
 
 function LoadTilesetTabFactory() {
-  const LoadTilesetTab: React.FC<LoadTilesetTabProps> = ({
-    onTilesetAdded,
-    isAddingDatasets,
-    intl
-  }) => {
-    const [typeIndex /* , setTypeIndex*/] = useState<number>(0);
+  const LoadTilesetTab: React.FC<LoadTilesetTabProps> = ({onTilesetAdded, isAddingDatasets}) => {
+    const [typeIndex, setTypeIndex] = useState<number>(0);
     const [response, setResponse] = useState<MetaResponse>({});
 
     const error = response.error;
@@ -114,20 +116,12 @@ function LoadTilesetTabFactory() {
 
     const CurrentForm = TILE_TYPES[typeIndex].Component;
 
-    const tilesetHeaderMessage = `${intl.formatMessage({
-      id: 'tilesetSetup.header'
-    })}`;
-
     return (
       <LoadTilesetTabContainer>
         <Container>
           <div>
-            <StyledHeaderMessage>{tilesetHeaderMessage}</StyledHeaderMessage>
-            {/** 
-            <div>
-              <label htmlFor="tileset-type">Tileset Type</label>
-            </div>
-             * Enable once we support different vector layers
+            <StyledHeaderMessage>Tileset Type</StyledHeaderMessage>
+
             <TilesetTypeContainer className="tileset-type">
               {TILE_TYPES.map((tileType, index) => (
                 <TilesetIcon
@@ -139,7 +133,6 @@ function LoadTilesetTabFactory() {
                 />
               ))}
             </TilesetTypeContainer>
-            */}
             <div>
               <CurrentForm setResponse={setResponse} />
               {/** 

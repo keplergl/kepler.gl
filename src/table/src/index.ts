@@ -25,3 +25,4 @@ export * from './gpu-filter-utils';
 export * from './dataset-utils';
 export * from './tileset/tileset-utils';
 export * from './tileset/vector-tile-utils';
+export * from './tileset/raster-tile-utils';

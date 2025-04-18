@@ -52,3 +52,23 @@ parseUri.options = {
       /^(?:(?![^:@]+:[^:@\/]*@)([^:\/?#.]+):)?(?:\/\/)?((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/
   }
 };
+
+/**
+ * Validates an url
+ * @param str
+ */
+export function validateUrl(str) {
+  try {
+    new URL(str);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Checks whether a given URL points to a PMTiles file.
+ * @param url The URL to check.
+ * @returns True if the URL includes '.pmtiles', otherwise false.
+ */
+export const isPMTilesUrl = (url?: string | null) => url?.includes('.pmtiles');

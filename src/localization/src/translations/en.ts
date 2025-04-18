@@ -112,7 +112,8 @@ export default {
       trip: 'trip',
       s2: 'S2',
       '3d': '3D',
-      vectortile: 'vector tile'
+      vectortile: 'vector tile',
+      rastertile: 'raster tile'
     },
     layerUpdateError:
       'An error occurred during layer update: {errorMessage}. Make sure the format of the input data is valid.',
@@ -209,7 +210,8 @@ export default {
   },
   datasetInfo: {
     rowCount: '{rowCount} rows',
-    vectorTile: 'Vector tile'
+    vectorTile: 'Vector tile',
+    rasterTile: 'Raster tile'
   },
   tooltip: {
     hideLayer: 'Hide layer',
@@ -320,7 +322,7 @@ export default {
       unfilteredData: 'Unfiltered Data',
       fileCount: '{fileCount} Files',
       rowCount: '{rowCount} Rows',
-      vectorTileWarning: "* Export Data for Vector Tile datasets isn't supported"
+      tiledDatasetWarning: "* Export Data for Tiled datasets isn't supported"
     },
     deleteData: {
       warning: 'you are going to delete this dataset. It will affect {length} layers'
@@ -604,6 +606,7 @@ ${'```'}
   },
   tilesetSetup: {
     header: 'Setup Vector Tiles',
+    rasterTileHeader: 'Setup Raster Tiles',
     addTilesetText: 'Add Tileset'
   },
   geocoder: {

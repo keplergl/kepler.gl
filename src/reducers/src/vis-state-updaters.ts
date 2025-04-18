@@ -2342,13 +2342,16 @@ export const updateVisDataUpdater = (
       })
     : state;
 
-  // indicate that something is in progress
-  const setIsLoadingTask = ACTION_TASK().map(() => {
-    return setLoadingIndicator({change: 1});
-  });
-  const updatedState = withTask(previousState, setIsLoadingTask);
-
   const datasets = toArray(action.datasets);
+
+  let updatedState = previousState;
+  if (datasets.length) {
+    // indicate that dataset setup / loading is in progress
+    const setIsLoadingTask = ACTION_TASK().map(() => {
+      return setLoadingIndicator({change: 1});
+    });
+    updatedState = withTask(previousState, setIsLoadingTask);
+  }
 
   const createDatasetTasks: Task[] = [];
   const notificationTasks: Task[] = [];

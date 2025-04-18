@@ -91,9 +91,10 @@ const ExportDataModalFactory = () => {
       } = this.props;
 
       const exportAllDatasets = selectedDataset ? !datasets[selectedDataset] : true;
-      const showVectorTileWarning = Object.keys(datasets).some(datasetId => {
+      const showTiledDatasetWarning = Object.keys(datasets).some(datasetId => {
         return (
-          datasets[datasetId].type === DatasetType.VECTOR_TILE &&
+          (datasets[datasetId].type === DatasetType.VECTOR_TILE ||
+            datasets[datasetId].type === DatasetType.RASTER_TILE) &&
           (selectedDataset === datasetId || exportAllDatasets)
         );
       });
@@ -182,10 +183,10 @@ const ExportDataModalFactory = () => {
                 </StyledFilteredOption>
               </div>
             </StyledExportSection>
-            {showVectorTileWarning ? (
+            {showTiledDatasetWarning ? (
               <div className="title">
                 <StyledWarning>
-                  <FormattedMessage id={'modal.exportData.vectorTileWarning'} />
+                  <FormattedMessage id={'modal.exportData.tiledDatasetWarning'} />
                 </StyledWarning>
               </div>
             ) : null}
