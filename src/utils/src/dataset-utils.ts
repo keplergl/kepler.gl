@@ -159,7 +159,7 @@ export function findDefaultColorField({
   fieldPairs: FieldPair[];
 }): null | Field {
   const fieldsWithoutExcluded = fields.filter(field => {
-    if (field.type !== ALL_FIELD_TYPES.real && field.type !== ALL_FIELD_TYPES.integer) {
+    if (field.type !== ALL_FIELD_TYPES.real) {
       // Only select numeric fields.
       return false;
     }

@@ -31,7 +31,7 @@ export async function getDuckDBColumnTypes(
   connection: DatabaseConnection,
   tableName: string
 ): Promise<DuckDBColumnDesc[]> {
-  const resDescribe = await connection.query(`DESCRIBE "${tableName}";`);
+  const resDescribe = await connection.query(`DESCRIBE "${tableName}"`);
 
   const duckDbTypes: DuckDBColumnDesc[] = [];
   const numRows = resDescribe.numRows;
@@ -74,7 +74,7 @@ export function constructST_asWKBQuery(tableName: string, columnsToConvertToWKB:
     columnsToConvertToWKB.length > 0
       ? `, ${columnsToConvertToWKB.map(column => `ST_AsWKB(${column}) as ${column}`).join(', ')}`
       : '';
-  return `SELECT * ${exclude} ${asWKB} FROM '${tableName}';`;
+  return `SELECT * ${exclude} ${asWKB} FROM '${tableName}'`;
 }
 
 /**
