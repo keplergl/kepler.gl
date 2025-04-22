@@ -69,6 +69,9 @@ export type MapControlProps = {
   logoComponent?: React.FC | React.ReactNode;
   isExport?: boolean;
 
+  setMapControlSettings: typeof UIStateActions.setMapControlSettings;
+  activeSidePanel: string | null;
+
   // optional
   mapState?: MapState;
   readOnly?: boolean;
