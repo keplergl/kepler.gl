@@ -3,20 +3,12 @@
 
 import {useMemo, useRef, useCallback, useEffect} from 'react';
 
-export type MapLegendControlSettings = {
-  position: {
-    x: number;
-    y: number;
-    anchorX: 'left' | 'right';
-    anchorY: 'top' | 'bottom';
-  };
-  contentHeight: number;
-};
+import {MapLegendControlSettings} from '@kepler.gl/types';
 
 type Params = {
   legendContentRef: React.MutableRefObject<HTMLElement | null>;
   isSidePanelShown: boolean;
-  settings: MapLegendControlSettings;
+  settings?: MapLegendControlSettings;
   onChangeSettings: (settings: Partial<MapLegendControlSettings>) => void;
   theme: Record<string, any>;
 };

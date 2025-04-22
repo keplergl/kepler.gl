@@ -1111,6 +1111,8 @@ export default function MapContainerFactory(
             onToggleEditorVisibility={visStateActions.toggleEditorVisibility}
             onLayerVisConfigChange={visStateActions.layerVisConfigChange}
             mapHeight={mapState.height}
+            setMapControlSettings={uiStateActions.setMapControlSettings}
+            activeSidePanel={activeSidePanel}
           />
           {isSplitSelector(this.props) && <Droppable containerId={containerId} />}
 

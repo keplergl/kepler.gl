@@ -3,7 +3,15 @@
 
 import classnames from 'classnames';
 import {createPortal} from 'react-dom';
-import React, {ComponentType, FC, forwardRef, useCallback, useContext, useRef} from 'react';
+import React, {
+  ComponentType,
+  FC,
+  forwardRef,
+  useCallback,
+  useContext,
+  useRef,
+  PropsWithChildren
+} from 'react';
 import styled, {withTheme} from 'styled-components';
 
 import {DndContext, useDraggable} from '@dnd-kit/core';
@@ -12,15 +20,15 @@ import {useMergeRefs} from '@floating-ui/react';
 
 import {ActionHandler, setMapControlSettings, toggleSplitMapViewport} from '@kepler.gl/actions';
 import {Layer} from '@kepler.gl/layers';
-import {uiStateLens} from '@kepler.gl/reducers';
 import {breakPointValues} from '@kepler.gl/styles';
 import {LayerVisConfig, MapControlMapLegend, MapControls, MapState} from '@kepler.gl/types';
 import {hasPortableWidth} from '@kepler.gl/utils';
+import {MapLegendControlSettings} from '@kepler.gl/types';
 
 import {Legend, DraggableDots, HorizontalResizeHandle} from '../common/icons';
 import {MapControlButton} from '../common/styled-components';
 import {RootContext} from '../context';
-import useLegendPosition, {MapLegendControlSettings} from '../hooks/use-legend-position';
+import useLegendPosition from '../hooks/use-legend-position';
 import {withState} from '../injector';
 import MapControlPanelFactory from './map-control-panel';
 import MapControlTooltipFactory from './map-control-tooltip';
@@ -151,10 +159,22 @@ const DraggableLegendContent = forwardRef((props: DraggableLegendContentProps, r
   );
 });
 
-const DraggableLegend = withState([uiStateLens], state => state, {setMapControlSettings})(
-  withTheme(({uiState, theme, setMapControlSettings, children}) => {
-    const isSidePanelShown = uiState.activeSidePanel;
-    const settings = uiState.mapControls?.mapLegend?.settings;
+type DraggableLegendProps = PropsWithChildren<{
+  activeSidePanel: string | null;
+  mapControls: MapControls;
+  setMapControlSettings: typeof setMapControlSettings;
+}>;
+
+const DraggableLegend = withTheme(
+  ({
+    activeSidePanel,
+    children,
+    mapControls,
+    setMapControlSettings,
+    theme
+  }: DraggableLegendProps & {theme: any}) => {
+    const isSidePanelShown = Boolean(activeSidePanel);
+    const settings = mapControls?.mapLegend?.settings;
 
     const legendContentRef = useRef<HTMLElement>(null);
     const onChangeSettings = useCallback(
@@ -209,8 +229,8 @@ const DraggableLegend = withState([uiStateLens], state => state, {setMapControlS
         </DraggableLegendContent>
       </DndContext>
     );
-  })
-) as FC<{children: React.ReactNode}>;
+  }
+) as FC<DraggableLegendProps>;
 
 type ImageExportLegendProps = {
   settings: MapLegendControlSettings;
@@ -294,18 +314,18 @@ const MapLegendPanelComponent = ({
   logoComponent,
   actionIcons = defaultActionIcons,
   mapState,
-  uiState,
   onLayerVisConfigChange,
   onToggleSplitMapViewport,
   onClickControlBtn,
+  activeSidePanel,
+  setMapControlSettings,
   isViewportUnsyncAllowed = true,
   className,
   MapControlTooltip,
   MapControlPanel,
   MapLegend
 }) => {
-  const isSidePanelShown = uiState.activeSidePanel;
-  const settings = uiState.mapControls?.mapLegend?.settings;
+  const settings = mapControls?.mapLegend?.settings;
 
   const mapLegend = mapControls?.mapLegend || ({} as MapControlMapLegend);
   const {active, disableEdit} = mapLegend || {};
@@ -358,12 +378,18 @@ const MapLegendPanelComponent = ({
         hasPortableWidth(breakPointValues) ? (
           legendPanel
         ) : isExport ? (
-          <ImageExportLegend isSidePanelShown={isSidePanelShown} settings={settings}>
+          <ImageExportLegend isSidePanelShown={activeSidePanel} settings={settings}>
             {legendPanel}
           </ImageExportLegend>
         ) : (
           createPortal(
-            <DraggableLegend>{legendPanel}</DraggableLegend>,
+            <DraggableLegend
+              activeSidePanel={activeSidePanel}
+              mapControls={mapControls}
+              setMapControlSettings={setMapControlSettings}
+            >
+              {legendPanel}
+            </DraggableLegend>,
             rootContext?.current ?? document.body
           )
         )
@@ -384,17 +410,13 @@ function MapLegendPanelFactory(
   MapControlPanel: ReturnType<typeof MapControlPanelFactory>,
   MapLegend: ReturnType<typeof MapLegendFactory>
 ): MapLegendPanelComponentType {
-  const MapLegendPanel = withState(
-    [uiStateLens],
-    _state => {
-      return {
-        MapControlTooltip,
-        MapControlPanel,
-        MapLegend
-      };
-    },
-    {setMapControlSettings}
-  )(MapLegendPanelComponent);
+  const MapLegendPanel = withState([], _state => {
+    return {
+      MapControlTooltip,
+      MapControlPanel,
+      MapLegend
+    };
+  })(MapLegendPanelComponent);
 
   MapLegendPanel.displayName = 'MapLegendPanel';
   return withTheme(MapLegendPanel as MapLegendPanelComponentType) as MapLegendPanelComponentType;

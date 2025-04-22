@@ -415,8 +415,20 @@ export type MapControlItem = {
   disableClose?: boolean;
   activeMapIndex?: number;
 };
+
+export type MapLegendControlSettings = {
+  position: {
+    x: number;
+    y: number;
+    anchorX: 'left' | 'right';
+    anchorY: 'top' | 'bottom';
+  };
+  contentHeight: number;
+};
+
 export type MapControlMapLegend = MapControlItem & {
   disableEdit?: boolean;
+  settings: MapLegendControlSettings;
 };
 export type MapControls = {
   visibleLayers?: MapControlItem;
