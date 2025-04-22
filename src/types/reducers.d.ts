@@ -428,7 +428,7 @@ export type MapLegendControlSettings = {
 
 export type MapControlMapLegend = MapControlItem & {
   disableEdit?: boolean;
-  settings: MapLegendControlSettings;
+  settings?: MapLegendControlSettings;
 };
 export type MapControls = {
   visibleLayers?: MapControlItem;
