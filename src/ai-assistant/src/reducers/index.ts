@@ -15,7 +15,7 @@ export type AiAssistantConfig = {
   provider: string;
   model: string;
   apiKey: string;
-  baseUrl: string;
+  baseUrl?: string;
   temperature: number;
   topP: number;
 };

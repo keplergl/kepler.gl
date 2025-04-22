@@ -1,32 +1,49 @@
 {
-  "deepseek": ["deepseek-chat", "deepseek-reasoner"],
   "openai": [
-    "o1-mini",
-    "o1-preview",
-    "o1",
+    "gpt-4.1",
     "gpt-4o",
     "gpt-4o-mini",
-    "gpt-3.5-turbo-0125",
-    "gpt-3.5-turbo"
+    "gpt-4",
+    "gpt-3.5-turbo",
+    "o1",
+    "o1-preview",
+    "o1-mini"
   ],
-  "google": ["gemini-2.0-flash-exp", "gemini-1.5-flash", "gemini-1.5-pro", "gemini-1.0-pro"],
+  "google": [
+    "gemini-2.5-pro-exp-03-25",
+    "gemini-2.0-flash",
+    "gemini-1.5-flash",
+    "gemini-1.5-pro",
+    "gemini-1.0-pro"
+  ],
+  "deepseek": ["deepseek-chat"],
+  "anthropic": [
+    "claude-3.7-sonnet",
+    "claude-3.5-sonnet",
+    "claude-3.5-haiku",
+    "claude-3-opus",
+    "claude-3-sonnet",
+    "claude-3-haiku"
+  ],
+  "xai": [
+    "grok-3",
+    "grok-3-fast",
+    "grok-3-mini",
+    "grok-3-mini-fast"
+  ],
   "ollama": [
-    "deepseek-r1",
-    "deepseek-r1:14b",
-    "deepseek-r1:32b",
-    "deepseek-r1:70b",
-    "deepseek-r1:671b",
-    "phi4",
-    "qwen2.5-coder",
-    "qwq",
-    "llama3.3",
-    "llama3.2",
-    "llama3.1",
-    "llama3.1:70b",
-    "qwen2",
+    "deepseek-coder",
+    "deepseek-coder:6.7b",
+    "deepseek-coder:33b",
+    "phi-2",
+    "qwen:14b",
+    "qwen:72b",
+    "llama2",
+    "llama2:70b",
     "llava",
     "mistral",
-    "gemma2",
-    "phi3.5"
+    "gemma:2b",
+    "gemma:7b",
+    "phi-3"
   ]
 }

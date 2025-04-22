@@ -1,15 +1,9 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 import styled, {withTheme} from 'styled-components';
 import {MessageModel, useAssistant} from '@openassistant/core';
-import {
-  dataClassifyFunctionDefinition,
-  spatialCountFunctionDefinition,
-  SpatialJoinGeometries
-} from '@openassistant/geoda';
-import {histogramFunctionDefinition, scatterplotFunctionDefinition} from '@openassistant/echarts';
 import {AiAssistant} from '@openassistant/ui';
 import '@openassistant/echarts/dist/index.css';
 import '@openassistant/ui/dist/index.css';
@@ -18,9 +12,6 @@ import {textColorLT} from '@kepler.gl/styles';
 import {ActionHandler} from '@kepler.gl/actions';
 import {MapStyle} from '@kepler.gl/reducers';
 import {VisState} from '@kepler.gl/schemas';
-
-import {basemapFunctionDefinition} from '../tools/basemap-functions';
-import {loadUrlFunctionDefinition} from '../tools/loadurl-function';
 
 import {AiAssistantState} from '../reducers';
 import {setScreenCaptured, setStartScreenCapture, updateAiAssistantMessages} from '../actions';
@@ -32,17 +23,9 @@ import {
   PROMPT_IDEAS,
   WELCOME_MESSAGE
 } from '../constants';
-import {addLayerFunctionDefinition} from '../tools/layer-creation-function';
-import {updateLayerColorFunctionDefinition} from '../tools/layer-style-function';
 import {SelectedKeplerGlActions} from './ai-assistant-manager';
-import {
-  getDatasetContext,
-  getGeometriesFromDataset,
-  getScatterplotValuesFromDataset,
-  getValuesFromDataset,
-  highlightRows,
-  saveAsDataset
-} from '../tools/utils';
+import {getDatasetContext} from '../tools/utils';
+import {setupLLMFunctions} from '../tools/tools';
 
 type ThemeProps = {theme: any};
 
@@ -78,61 +61,12 @@ function AiAssistantComponentFactory() {
     mapStyle,
     visState
   }: AiAssistantComponentProps & ThemeProps) => {
-    // get values from dataset, used by LLM functions
-    const getValuesCallback = (datasetName: string, variableName: string): number[] =>
-      getValuesFromDataset(visState.datasets, datasetName, variableName);
-
-    // highlight rows, used by LLM functions and plots (scatterplot, histogram)
-    const highlightRowsCallback = (datasetName: string, selectedRowIndices: number[]) =>
-      highlightRows(
-        visState.datasets,
-        visState.layers,
-        datasetName,
-        selectedRowIndices,
-        keplerGlActions.layerSetIsValid
-      );
-
     // define LLM functions
-    const functions = [
-      basemapFunctionDefinition({mapStyleChange: keplerGlActions.mapStyleChange, mapStyle}),
-      loadUrlFunctionDefinition({
-        addDataToMap: keplerGlActions.addDataToMap,
-        loaders: visState.loaders,
-        loadOptions: visState.loadOptions
-      }),
-      addLayerFunctionDefinition({
-        addLayer: keplerGlActions.addLayer,
-        datasets: visState.datasets
-      }),
-      updateLayerColorFunctionDefinition({
-        layerVisualChannelConfigChange: keplerGlActions.layerVisualChannelConfigChange,
-        layers: visState.layers
-      }),
-      histogramFunctionDefinition({
-        getValues: getValuesCallback,
-        onSelected: highlightRowsCallback
-      }),
-      scatterplotFunctionDefinition({
-        getValues: async (datasetName: string, xVar: string, yVar: string) =>
-          getScatterplotValuesFromDataset(visState.datasets, datasetName, xVar, yVar),
-        onSelected: highlightRowsCallback
-      }),
-      dataClassifyFunctionDefinition({
-        getValues: getValuesCallback
-      }),
-      spatialCountFunctionDefinition({
-        getValues: getValuesCallback,
-        getGeometries: (datasetName: string): SpatialJoinGeometries =>
-          getGeometriesFromDataset(
-            visState.datasets,
-            visState.layers,
-            visState.layerData,
-            datasetName
-          ),
-        saveAsDataset: (datasetName: string, data: Record<string, number[]>) =>
-          saveAsDataset(visState.datasets, datasetName, data, keplerGlActions.addDataToMap)
-      })
-    ];
+    const functions = setupLLMFunctions({
+      visState,
+      keplerGlActions,
+      mapStyle
+    });
 
     // enable voice and screen capture
     const enableVoiceAndScreenCapture =
@@ -147,30 +81,34 @@ function AiAssistantComponentFactory() {
       model: aiAssistant.config.model,
       apiKey: aiAssistant.config.apiKey,
       baseUrl: aiAssistant.config.baseUrl,
-      instructions: INSTRUCTIONS,
       functions
     };
 
-    const {initializeAssistant, addAdditionalContext} = useAssistant(assistantProps);
+    const [datasetMetaData, setDatasetMetaData] = useState<string>('');
 
-    // initialize assistant with context
-    const initializeAssistantWithContext = async () => {
-      await initializeAssistant();
-      const context = getDatasetContext(visState.datasets, visState.layers);
-      addAdditionalContext({context});
-    };
-
-    // initialize assistant with context
+    // get dataset meta data
     useEffect(() => {
-      initializeAssistantWithContext();
+      const metaData = getDatasetContext(visState.datasets, visState.layers);
+      setDatasetMetaData(metaData);
       // re-initialize assistant when datasets, filters or layers change
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [visState.datasets, visState.filters, visState.layers]);
 
+    // use dataset meta data in LLM instructions
+    const instructions = `${INSTRUCTIONS}\n\n${datasetMetaData}`;
+
+    const {initializeAssistant} = useAssistant({
+      ...assistantProps,
+      instructions
+    });
+
+    useEffect(() => {
+      initializeAssistant();
+    }, [initializeAssistant]);
+
     const onRestartAssistant = () => {
       // clean up aiAssistant state
       updateAiAssistantMessages([]);
-      initializeAssistantWithContext();
     };
 
     const onMessagesUpdated = (messages: MessageModel[]) => {
@@ -189,11 +127,12 @@ function AiAssistantComponentFactory() {
       <StyledAiAssistantComponent className="ai-assistant-component">
         <AiAssistant
           {...assistantProps}
+          instructions={instructions}
           theme={theme.textColor === textColorLT ? 'light' : 'dark'}
           welcomeMessage={WELCOME_MESSAGE}
           temperature={aiAssistant.config.temperature}
           topP={aiAssistant.config.topP}
-          historyMessages={aiAssistant.messages}
+          initialMessages={aiAssistant.messages}
           onMessagesUpdated={onMessagesUpdated}
           enableVoice={enableVoiceAndScreenCapture}
           enableScreenCapture={enableVoiceAndScreenCapture}

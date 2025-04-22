@@ -15,6 +15,23 @@ import {
 import {checkDatasetNotExists, checkFieldNotExists, interpolateColor} from './utils';
 import {findDefaultLayer} from '@kepler.gl/reducers';
 import React, {useEffect} from 'react';
+import { tool } from '@openassistant/core';
+import { z } from 'zod';
+
+export const addLayer = tool({
+  description: 'add a kepler.gl map layer',
+  parameters: z.object({
+    datasetName: z.string(),
+    layerType: z.enum(['point', 'arc', 'line', 'grid', 'hexagon', 'geojson', 'cluster', 'heatmap', 'h3', 'trip', 's2']),
+    fieldName: z.string(),
+    colorScale: z.enum(['quantile', 'quantize', 'ordinal', 'custom'])
+  }),
+  execute: executeAddLayer,
+  context: {
+    datasets: Datasets;
+    addLayer: ActionHandler<typeof addLayer>;
+  }
+});
 
 export function addLayerFunctionDefinition(
   context: CustomFunctionContext<ActionHandler<typeof addLayer> | Datasets>

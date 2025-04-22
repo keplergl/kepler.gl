@@ -41,7 +41,6 @@
     "@openassistant/geoda": "^0.0.6",
     "@openassistant/ui": "^0.0.7",
     "color-interpolate": "^1.0.5",
-    "echarts": "^5.5.1",
     "global": "^4.3.0",
     "react-intl": "^6.3.0",
     "usehooks-ts": "^3.1.0"

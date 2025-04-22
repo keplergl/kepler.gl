@@ -14,9 +14,9 @@ import {
 } from '@kepler.gl/components';
 import {AiAssistantConfig} from '../index';
 import ApiKey from '../icons/api-key';
-import {testApiKey} from '@openassistant/core';
 import PROVIDER_MODELS from '../config/models.json';
 import {useLocalStorage} from 'usehooks-ts';
+import {GetAssistantModelByProvider} from '@openassistant/core';
 
 type ThemeProps = {theme: any};
 
@@ -194,20 +194,17 @@ function AiAssistantConfigFactory(RangeSlider: ReturnType<typeof RangeSliderFact
           setTimeout(() => reject(new Error('Connection timeout after 15 seconds')), 15000);
         });
 
-        const testPromise = testApiKey({
-          modelProvider: provider,
-          modelName: model,
-          apiKey: apiKey,
-          baseUrl: baseUrl
+        const AssistantModel = GetAssistantModelByProvider({
+          provider: provider
         });
 
-        const result = (await Promise.race([testPromise, timeoutPromise])) as {
-          success: boolean;
-          service: string;
-        };
-        const {success, service} = result;
+        const success = (await Promise.race([
+          AssistantModel?.testConnection(apiKey, model),
+          timeoutPromise
+        ])) as boolean;
+
         const errorMessage = !success
-          ? service === 'ollama'
+          ? provider === 'ollama'
             ? 'Connection failed: maybe invalid Ollama Base URL'
             : 'Connection failed: maybe invalid API Key'
           : '';
