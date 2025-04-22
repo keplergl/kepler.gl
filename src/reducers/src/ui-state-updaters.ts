@@ -379,6 +379,16 @@ export const toggleMapControlUpdater = (
       ? MAP_CONTROLS.effect
       : null;
 
+  // To to toggle the mapDraw and mapLocal dropdowns
+  // We have to deactivate the other active dropdown
+  // In future it might be better to generalize this logic
+  const dropdownToDeactivate =
+    panelId === MAP_CONTROLS.mapDraw
+      ? MAP_CONTROLS.mapLocale
+      : panelId === MAP_CONTROLS.mapLocale
+      ? MAP_CONTROLS.mapDraw
+      : null;
+
   // If we need to deactivate a competing panel and it's currently active
   if (panelToDeactivate && state.mapControls[panelToDeactivate]?.active) {
     updatedState = {
@@ -387,6 +397,20 @@ export const toggleMapControlUpdater = (
         ...updatedState.mapControls,
         [panelToDeactivate]: {
           ...updatedState.mapControls[panelToDeactivate],
+          active: false
+        }
+      }
+    };
+  }
+
+  // If we need to deactivate a competing dropdown and it's currently active
+  if (dropdownToDeactivate && state.mapControls[dropdownToDeactivate]?.active) {
+    updatedState = {
+      ...state,
+      mapControls: {
+        ...updatedState.mapControls,
+        [dropdownToDeactivate]: {
+          ...updatedState.mapControls[dropdownToDeactivate],
           active: false
         }
       }
