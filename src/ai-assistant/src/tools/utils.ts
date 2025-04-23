@@ -10,31 +10,6 @@ import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 import {AddDataToMapPayload, ProtoDataset, ProtoDatasetField} from '@kepler.gl/types';
 
 /**
- * For LLM tool to check if the dataset exists in kepler.gl
- * @param datasets The kepler.gl datasets
- * @param datasetName The name of the dataset
- */
-export function checkDatasetNotExists(datasets: Datasets, datasetName: string) {
-  const datasetId = Object.keys(datasets).find(dataId => datasets[dataId].label === datasetName);
-  if (!datasetId) {
-    throw new Error('Dataset not found.');
-  }
-}
-
-/**
- * For LLM tool to check if the field exists
- * @param dataset The kepler.gl dataset
- * @param fieldName The name of the field
- */
-export function checkFieldNotExists(dataset: KeplerTable, fieldName: string) {
-  const field = dataset.fields.find(f => f.name === fieldName);
-  if (!field) {
-    throw new Error('Field not found.');
-  }
-  return null;
-}
-
-/**
  * Interpolate the colors from the original colors with the given number of colors
  * @param originalColors The original colors
  * @param numberOfColors The number of colors
@@ -74,25 +49,6 @@ export function getValuesFromDataset(
     return Array.from({length: dataset.length}, (_, i) => dataset.getValue(variableName, i));
   }
   return [];
-}
-
-/**
- * Get the x and y values from a dataset for a scatterplot
- * @param datasets
- * @param datasetName
- * @param xVariableName
- * @param yVariableName
- * @returns {x: number[], y: number[]}
- */
-export function getScatterplotValuesFromDataset(
-  datasets: Datasets,
-  datasetName: string,
-  xVariableName: string,
-  yVariableName: string
-): {x: number[]; y: number[]} {
-  const xValues = getValuesFromDataset(datasets, datasetName, xVariableName);
-  const yValues = getValuesFromDataset(datasets, datasetName, yVariableName);
-  return {x: xValues, y: yValues};
 }
 
 /**
@@ -200,8 +156,8 @@ export function getGeometriesFromDataset(
 export function saveAsDataset(
   datasets: Datasets,
   datasetName: string,
-  data: Record<string, number[]>,
-  addDataToMap: (data: AddDataToMapPayload) => void
+  newDatasetName: string,
+  data: Record<string, number[]>
 ) {
   // find datasetId from datasets
   const datasetId = Object.keys(datasets).find(dataId => datasets[dataId].label === datasetName);
@@ -240,7 +196,6 @@ export function saveAsDataset(
     ]);
 
   // create new dataset
-  const newDatasetName = `${datasetName}_joined`;
   const newDataset: ProtoDataset = {
     info: {
       id: newDatasetName,
@@ -252,7 +207,7 @@ export function saveAsDataset(
     }
   };
 
-  addDataToMap({datasets: [newDataset], options: {autoCreateLayers: true, centerMap: true}});
+  return newDataset;
 }
 
 /**

@@ -17,6 +17,7 @@ Note:
 - Please try to use the provided tools to solve the problem.
 - If the tools are missing parameters, please ask the user to provide the parameters.
 - If the tools are failed, please try to fix the error and return the reason to user in a markdown format.
+- Please ONLY use the datasets and layers provided below. Dataset name can contain spaces.
 `;
 
 export const PROMPT_IDEAS = [

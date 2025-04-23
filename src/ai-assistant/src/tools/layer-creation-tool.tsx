@@ -11,17 +11,6 @@ import {tool} from '@openassistant/core';
 import {z} from 'zod';
 import {useEffect} from 'react';
 
-function AddLayerToolComponent({layer, datasetId}) {
-  const dispatch = useDispatch();
-
-  useEffect(() => {
-    dispatch(addLayerAction(layer, datasetId));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  return null;
-}
-
 export const addLayer = tool<
   // parameters
   z.ZodObject<{
@@ -235,7 +224,7 @@ async function executeAddLayer(args, options): Promise<ExecuteAddLayerResult> {
   }
 }
 
-function guessDefaultLayer(dataset: KeplerTable, layerType: string) {
+export function guessDefaultLayer(dataset: KeplerTable, layerType: string) {
   // special case for hexagon layer, which could be implemented as findDefaultLayerProps() in hexagon-layer.tsx
   if (layerType === 'hexagon') {
     if (dataset.fieldPairs && dataset.fieldPairs.length > 0) {
@@ -251,4 +240,15 @@ function guessDefaultLayer(dataset: KeplerTable, layerType: string) {
   const defaultLayers = findDefaultLayer(dataset, LayerClasses);
   const layer = defaultLayers.find(l => l.type === layerType);
   return layer || defaultLayers.length > 0 ? defaultLayers[0] : null;
+}
+
+export function AddLayerToolComponent({layer, datasetId}) {
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(addLayerAction(layer, datasetId));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return null;
 }

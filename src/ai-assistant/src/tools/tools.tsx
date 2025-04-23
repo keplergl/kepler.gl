@@ -15,12 +15,30 @@ import {
   scatterplot,
   ScatterplotTool
 } from '@openassistant/echarts';
-import {getValuesFromDataset, highlightRows} from './utils';
+import {getGeometriesFromDataset, getValuesFromDataset, highlightRows} from './utils';
 import {Datasets} from '@kepler.gl/table';
 import {theme as keplerTheme, textColorLT} from '@kepler.gl/styles';
 import {Layer} from '@kepler.gl/layers';
 import {layerSetIsValid} from '@kepler.gl/actions';
 import {Dispatch} from 'redux';
+import {
+  dataClassify,
+  DataClassifyTool,
+  spatialWeights,
+  SpatialWeightsTool,
+  globalMoran,
+  GlobalMoranTool,
+  spatialRegression,
+  SpatialRegressionTool,
+  lisa,
+  LisaTool,
+  spatialJoin,
+  SpatialJoinTool,
+  getUsStateGeojson,
+  getUsCountyGeojson,
+  getUsZipcodeGeojson
+} from '@openassistant/geoda';
+import {LisaToolComponent} from './lisa-tool';
 
 export function setupLLMTools({visState, dispatch}: {visState: VisState; dispatch: Dispatch}) {
   // context for tools
@@ -68,7 +86,8 @@ export function setupLLMTools({visState, dispatch}: {visState: VisState; dispatc
     addLayer: addLayerTool,
     updateLayerColor: updateLayerColorTool,
     loadData: loadDataTool,
-    ...getEchartsTools(visState.datasets, visState.layers, dispatch)
+    ...getEchartsTools(visState.datasets, visState.layers, dispatch),
+    ...getGeoDaTools(visState.datasets, visState.layers, visState.layerData, dispatch)
   };
 }
 
@@ -161,5 +180,79 @@ function getEchartsTools(datasets: Datasets, layers: Layer[], dispatch: Dispatch
     histogramTool,
     pcpTool,
     scatterplotTool
+  };
+}
+
+function getGeoDaTools(datasets: Datasets, layers: Layer[], layerData: any[], dispatch: Dispatch) {
+  const getValues = async (datasetName: string, variableName: string) => {
+    const values = getValuesFromDataset(datasets, datasetName, variableName);
+    return values;
+  };
+
+  const getGeometries = async (datasetName: string) => {
+    const geoms = getGeometriesFromDataset(datasets, layers, layerData, datasetName);
+    return geoms;
+  };
+
+  const classifyTool: DataClassifyTool = {
+    ...dataClassify,
+    context: {
+      ...dataClassify.context,
+      getValues
+    }
+  };
+
+  const weightsTool: SpatialWeightsTool = {
+    ...spatialWeights,
+    context: {
+      ...spatialWeights.context,
+      getGeometries
+    }
+  };
+
+  const globalMoranTool: GlobalMoranTool = {
+    ...globalMoran,
+    context: {
+      ...globalMoran.context,
+      getValues
+    }
+  };
+
+  const regressionTool: SpatialRegressionTool = {
+    ...spatialRegression,
+    context: {
+      ...spatialRegression.context,
+      getValues
+    }
+  };
+
+  const lisaTool: LisaTool = {
+    ...lisa,
+    context: {
+      ...lisa.context,
+      getValues
+    },
+    component: LisaToolComponent
+  };
+
+  const spatialJoinTool: SpatialJoinTool = {
+    ...spatialJoin,
+    context: {
+      ...spatialJoin.context,
+      getValues,
+      getGeometries
+    }
+  };
+
+  return {
+    classifyTool,
+    weightsTool,
+    globalMoranTool,
+    regressionTool,
+    lisaTool,
+    spatialJoinTool,
+    getUsStateGeojson,
+    getUsCountyGeojson,
+    getUsZipcodeGeojson
   };
 }
