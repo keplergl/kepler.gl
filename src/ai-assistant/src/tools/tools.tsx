@@ -15,11 +15,14 @@ import {
   scatterplot,
   ScatterplotTool
 } from '@openassistant/echarts';
-import {getValuesFromDataset} from './utils';
+import {getValuesFromDataset, highlightRows} from './utils';
 import {Datasets} from '@kepler.gl/table';
 import {theme as keplerTheme, textColorLT} from '@kepler.gl/styles';
+import {Layer} from '@kepler.gl/layers';
+import {layerSetIsValid} from '@kepler.gl/actions';
+import {Dispatch} from 'redux';
 
-export function setupLLMTools({visState}: {visState: VisState}) {
+export function setupLLMTools({visState, dispatch}: {visState: VisState; dispatch: Dispatch}) {
   // context for tools
   const getDatasets = () => {
     return visState.datasets;
@@ -65,16 +68,24 @@ export function setupLLMTools({visState}: {visState: VisState}) {
     addLayer: addLayerTool,
     updateLayerColor: updateLayerColorTool,
     loadData: loadDataTool,
-    ...getEchartsTools(visState.datasets)
+    ...getEchartsTools(visState.datasets, visState.layers, dispatch)
   };
 }
 
-function getEchartsTools(datasets: Datasets) {
+function getEchartsTools(datasets: Datasets, layers: Layer[], dispatch: Dispatch) {
   // context for tools
   const getValues = async (datasetName: string, variableName: string) => {
     const values = getValuesFromDataset(datasets, datasetName, variableName);
     return values;
   };
+
+  const onSelected = (datasetName: string, selectedIndices: number[]) => {
+    const triggerLayerReRender = (layer: Layer, isValid: boolean) => {
+      dispatch(layerSetIsValid(layer, isValid));
+    };
+    highlightRows(datasets, layers, datasetName, selectedIndices, triggerLayerReRender);
+  };
+
   const theme = keplerTheme.textColor === textColorLT ? 'light' : 'dark';
 
   // Create the boxplot tool with the getValues implementation
@@ -82,7 +93,8 @@ function getEchartsTools(datasets: Datasets) {
     ...boxplot,
     context: {
       ...boxplot.context,
-      getValues: getValues,
+      getValues,
+      onSelected,
       config: {
         ...boxplot.context?.config,
         theme
@@ -95,7 +107,8 @@ function getEchartsTools(datasets: Datasets) {
     ...bubbleChart,
     context: {
       ...bubbleChart.context,
-      getValues: getValues,
+      getValues,
+      onSelected,
       config: {
         ...bubbleChart.context?.config,
         theme
@@ -107,7 +120,8 @@ function getEchartsTools(datasets: Datasets) {
     ...histogram,
     context: {
       ...histogram.context,
-      getValues: getValues,
+      getValues,
+      onSelected,
       config: {
         ...histogram.context?.config,
         theme
@@ -119,7 +133,12 @@ function getEchartsTools(datasets: Datasets) {
     ...pcp,
     context: {
       ...pcp.context,
-      getValues: getValues
+      getValues,
+      onSelected,
+      config: {
+        ...pcp.context?.config,
+        theme
+      }
     }
   };
 
@@ -127,7 +146,12 @@ function getEchartsTools(datasets: Datasets) {
     ...scatterplot,
     context: {
       ...scatterplot.context,
-      getValues: getValues
+      getValues,
+      onSelected,
+      config: {
+        ...scatterplot.context?.config,
+        theme
+      }
     }
   };
 

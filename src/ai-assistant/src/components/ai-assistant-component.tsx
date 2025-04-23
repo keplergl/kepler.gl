@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import React, {useEffect, useState} from 'react';
-import {useSelector} from 'react-redux';
+import {useDispatch, useSelector} from 'react-redux';
 import styled from 'styled-components';
 import {textColorLT, theme} from '@kepler.gl/styles';
 import {MessageModel, useAssistant} from '@openassistant/core';
@@ -35,9 +35,10 @@ const StyledAiAssistantComponent = styled.div`
 export function AiAssistantComponent() {
   const visState = useSelector((state: State) => state.demo.keplerGl.map.visState);
   const aiAssistant = useSelector((state: State) => state.demo.aiAssistant);
+  const dispatch = useDispatch();
 
   // define LLM functions
-  const tools = setupLLMTools({visState});
+  const tools = setupLLMTools({visState, dispatch});
 
   // enable voice and screen capture
   const enableVoiceAndScreenCapture =
