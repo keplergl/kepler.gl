@@ -14,7 +14,8 @@ import {ScreenshotWrapper} from '@openassistant/ui';
 import {
   messages as aiAssistantMessages,
   setStartScreenCapture,
-  setScreenCaptured
+  setScreenCaptured,
+  AiAssistantPanel
 } from '@kepler.gl/ai-assistant';
 import {panelBorderColor, theme} from '@kepler.gl/styles';
 import {useSelector} from 'react-redux';
@@ -139,6 +140,17 @@ const StyledResizeHandle = styled(PanelResizeHandle)`
   cursor: row-resize;
 `;
 
+const StyledVerticalResizeHandle = styled(PanelResizeHandle)`
+  background-color: ${panelBorderColor};
+  width: 4px;
+  height: 100%;
+  cursor: row-resize;
+
+  &:hover {
+    background-color: #555;
+  }
+`;
+
 const App = props => {
   const [showBanner, toggleShowBanner] = useState(false);
   const {params: {id, provider} = {}, location: {query = {}} = {}} = props;
@@ -150,6 +162,11 @@ const App = props => {
   const isSqlPanelOpen = useSelector(
     state => duckDbPluginEnabled && state?.demo?.keplerGl?.map?.uiState.mapControls.sqlPanel?.active
   );
+
+  const isAiAssistantPanelOpen = useSelector(
+    state => state?.demo?.keplerGl?.map?.uiState.mapControls.aiAssistant?.active
+  );
+
   const prevQueryRef = useRef<number>(null);
 
   useEffect(() => {
@@ -631,31 +648,43 @@ const App = props => {
               <Announcement onDisable={_disableBanner} />
             </Banner>
             <div style={CONTAINER_STYLE}>
-              <PanelGroup direction="vertical">
-                <Panel defaultSize={isSqlPanelOpen ? 60 : 100}>
-                  <AutoSizer>
-                    {({height, width}) => (
-                      <KeplerGl
-                        mapboxApiAccessToken={CLOUD_PROVIDERS_CONFIGURATION.MAPBOX_TOKEN}
-                        id="map"
-                        getState={keplerGlGetState}
-                        width={width}
-                        height={height}
-                        cloudProviders={CLOUD_PROVIDERS}
-                        localeMessages={combinedMessages}
-                        onExportToCloudSuccess={onExportFileSuccess}
-                        onLoadCloudMapSuccess={onLoadCloudMapSuccess}
-                        featureFlags={DEFAULT_FEATURE_FLAGS}
-                      />
-                    )}
-                  </AutoSizer>
-                </Panel>
+              <PanelGroup direction="horizontal">
+                <Panel defaultSize={isAiAssistantPanelOpen ? 70 : 100}>
+                  <PanelGroup direction="vertical">
+                    <Panel defaultSize={isSqlPanelOpen ? 60 : 100}>
+                      <AutoSizer>
+                        {({height, width}) => (
+                          <KeplerGl
+                            mapboxApiAccessToken={CLOUD_PROVIDERS_CONFIGURATION.MAPBOX_TOKEN}
+                            id="map"
+                            getState={keplerGlGetState}
+                            width={width}
+                            height={height}
+                            cloudProviders={CLOUD_PROVIDERS}
+                            localeMessages={combinedMessages}
+                            onExportToCloudSuccess={onExportFileSuccess}
+                            onLoadCloudMapSuccess={onLoadCloudMapSuccess}
+                            featureFlags={DEFAULT_FEATURE_FLAGS}
+                          />
+                        )}
+                      </AutoSizer>
+                    </Panel>
 
-                {isSqlPanelOpen && (
+                    {isSqlPanelOpen && (
+                      <>
+                        <StyledResizeHandle />
+                        <Panel defaultSize={40} minSize={20}>
+                          <SqlPanel initialSql={query.sql || ''} />
+                        </Panel>
+                      </>
+                    )}
+                  </PanelGroup>
+                </Panel>
+                {isAiAssistantPanelOpen && (
                   <>
-                    <StyledResizeHandle />
-                    <Panel defaultSize={40} minSize={20}>
-                      <SqlPanel initialSql={query.sql || ''} />
+                    <StyledVerticalResizeHandle />
+                    <Panel defaultSize={30} minSize={20}>
+                      <AiAssistantPanel />
                     </Panel>
                   </>
                 )}

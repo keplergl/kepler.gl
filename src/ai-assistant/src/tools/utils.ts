@@ -10,52 +10,26 @@ import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 import {AddDataToMapPayload, ProtoDataset, ProtoDatasetField} from '@kepler.gl/types';
 
 /**
- * Check if the dataset exists
+ * For LLM tool to check if the dataset exists in kepler.gl
  * @param datasets The kepler.gl datasets
  * @param datasetName The name of the dataset
- * @param functionName The name of the function
- * @returns The result of the check
  */
-export function checkDatasetNotExists(
-  datasets: Datasets,
-  datasetName: string,
-  functionName: string
-) {
+export function checkDatasetNotExists(datasets: Datasets, datasetName: string) {
   const datasetId = Object.keys(datasets).find(dataId => datasets[dataId].label === datasetName);
   if (!datasetId) {
-    return {
-      name: functionName,
-      result: {
-        success: false,
-        details: `Dataset not found. Please specify one from the following datasets: ${Object.keys(
-          datasets
-        ).join(', ')}`
-      }
-    };
+    throw new Error('Dataset not found.');
   }
-  return null;
 }
 
 /**
- * Check if the field exists
+ * For LLM tool to check if the field exists
  * @param dataset The kepler.gl dataset
  * @param fieldName The name of the field
- * @param functionName The name of the function
- * @returns The result of the check
  */
-export function checkFieldNotExists(dataset: KeplerTable, fieldName: string, functionName: string) {
+export function checkFieldNotExists(dataset: KeplerTable, fieldName: string) {
   const field = dataset.fields.find(f => f.name === fieldName);
   if (!field) {
-    return {
-      type: 'layer',
-      name: functionName,
-      result: {
-        success: false,
-        details: `Field not found. Please specify one from the following fields: ${dataset.fields
-          .map(f => f.name)
-          .join(', ')}`
-      }
-    };
+    throw new Error('Field not found.');
   }
   return null;
 }
@@ -159,8 +133,9 @@ export function highlightRows(
  * @param layers The kepler.gl layers
  * @returns The dataset context
  */
-export function getDatasetContext(datasets: Datasets, layers: Layer[]) {
-  const context = 'Please remember the following dataset context:';
+export function getDatasetContext(datasets?: Datasets, layers?: Layer[]) {
+  if (!datasets || !layers) return '';
+  const context = 'Please use the following datasets and layers to answer the user question:';
   const dataMeta = Object.values(datasets).map((dataset: KeplerTable) => ({
     datasetName: dataset.label,
     datasetId: dataset.id,

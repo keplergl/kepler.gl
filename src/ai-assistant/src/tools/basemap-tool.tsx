@@ -4,6 +4,8 @@
 import {DEFAULT_MAP_STYLES} from '@kepler.gl/constants';
 import {tool} from '@openassistant/core';
 import {z} from 'zod';
+import {useEffect} from 'react';
+import {useDispatch} from 'react-redux';
 
 export const basemap = tool<
   // parameters of the tool
@@ -21,7 +23,9 @@ export const basemap = tool<
     >;
   }>,
   // return type of the tool
-  ExecuteBasemapResult['llmResult']
+  ExecuteBasemapResult['llmResult'],
+  // additional data of the tool
+  ExecuteBasemapResult['additionalData']
 >({
   description: 'change basemap',
   parameters: z.object({
@@ -35,8 +39,11 @@ export const basemap = tool<
       'voyager-nolabels'
     ])
   }),
-  execute: executeBasemap
+  execute: executeBasemap,
+  component: BasemapToolComponent
 });
+
+export type BasemapTool = typeof basemap;
 
 type ExecuteBasemapResult = {
   llmResult: {
@@ -45,37 +52,26 @@ type ExecuteBasemapResult = {
     details?: string;
     instruction?: string;
   };
+  additionalData?: {
+    styleType: string;
+  };
 };
 
-type BasemapFunctionContext = {
-  mapStyleChange: (styleType: string) => void;
-};
-
-function isBasemapContext(context: any): context is BasemapFunctionContext {
-  return typeof context.mapStyleChange === 'function';
-}
-
-async function executeBasemap({styleType}, options): Promise<ExecuteBasemapResult> {
+async function executeBasemap({styleType}): Promise<ExecuteBasemapResult> {
   try {
-    if (!isBasemapContext(options.context)) {
-      throw new Error('Invalid basemap context. Please provide a valid context.');
-    }
-
-    const {mapStyleChange} = options.context;
-
     // check if styleType is valid
     if (!DEFAULT_MAP_STYLES.find(style => style.id === styleType)) {
       throw new Error(`Invalid basemap style: ${styleType}.`);
     }
 
-    // change the basemap style
-    mapStyleChange(styleType);
-
     return {
       llmResult: {
         success: true,
         styleType,
-        details: `Yes, I can help to change the basemap style to ${styleType}.`
+        details: `basemap style changed to ${styleType}.`
+      },
+      additionalData: {
+        styleType
       }
     };
   } catch (error) {
@@ -89,4 +85,15 @@ async function executeBasemap({styleType}, options): Promise<ExecuteBasemapResul
       }
     };
   }
+}
+
+export function BasemapToolComponent({mapStyleChange, styleType}) {
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(mapStyleChange(styleType));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return null;
 }

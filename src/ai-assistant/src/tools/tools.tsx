@@ -1,83 +1,141 @@
-import {SpatialJoinGeometries} from '@openassistant/geoda';
-import {SelectedKeplerGlActions} from '../components/ai-assistant-manager';
-import {MapStyle} from '@kepler.gl/reducers';
 import {VisState} from '@kepler.gl/schemas';
-import {basemapFunctionDefinition} from './basemap-functions';
-import {loadUrlFunctionDefinition} from './loadurl-function';
-import {addLayerFunctionDefinition} from './layer-creation-function';
-import {updateLayerColorFunctionDefinition} from './layer-style-function';
-import {histogramFunctionDefinition, scatterplotFunctionDefinition} from '@openassistant/echarts';
-import {dataClassifyFunctionDefinition, spatialCountFunctionDefinition} from '@openassistant/geoda';
+import {basemap} from './basemap-tool';
+import {addLayer, AddLayerTool} from './layer-creation-tool';
+import {updateLayerColor} from './layer-style-tool';
+import {loadData, LoadDataTool} from './loaddata-tool';
 import {
-  getGeometriesFromDataset,
-  getScatterplotValuesFromDataset,
-  getValuesFromDataset,
-  highlightRows,
-  saveAsDataset
-} from './utils';
+  boxplot,
+  BoxplotTool,
+  bubbleChart,
+  BubbleChartTool,
+  histogram,
+  HistogramTool,
+  pcp,
+  PCPTool,
+  scatterplot,
+  ScatterplotTool
+} from '@openassistant/echarts';
+import {getValuesFromDataset} from './utils';
+import {Datasets} from '@kepler.gl/table';
+import {theme as keplerTheme, textColorLT} from '@kepler.gl/styles';
 
-export function setupLLMFunctions({
-  visState,
-  keplerGlActions,
-  mapStyle
-}: {
-  visState: VisState;
-  keplerGlActions: SelectedKeplerGlActions;
-  mapStyle: MapStyle;
-}) {
-  // get values from dataset, used by LLM functions
-  const getValuesCallback = async (datasetName: string, variableName: string): Promise<number[]> =>
-    getValuesFromDataset(visState.datasets, datasetName, variableName);
+export function setupLLMTools({visState}: {visState: VisState}) {
+  // context for tools
+  const getDatasets = () => {
+    return visState.datasets;
+  };
 
-  // highlight rows, used by LLM functions and plots (scatterplot, histogram)
-  const highlightRowsCallback = (datasetName: string, selectedRowIndices: number[]) =>
-    highlightRows(
-      visState.datasets,
-      visState.layers,
-      datasetName,
-      selectedRowIndices,
-      keplerGlActions.layerSetIsValid
-    );
+  const getLayers = () => {
+    return visState.layers;
+  };
 
-  // define LLM functions
-  return [
-    basemapFunctionDefinition({mapStyleChange: keplerGlActions.mapStyleChange, mapStyle}),
-    loadUrlFunctionDefinition({
-      addDataToMap: keplerGlActions.addDataToMap,
+  const getLoaders = () => {
+    return {
       loaders: visState.loaders,
       loadOptions: visState.loadOptions
-    }),
-    addLayerFunctionDefinition({
-      addLayer: keplerGlActions.addLayer,
-      datasets: visState.datasets
-    }),
-    updateLayerColorFunctionDefinition({
-      layerVisualChannelConfigChange: keplerGlActions.layerVisualChannelConfigChange,
-      layers: visState.layers
-    }),
-    histogramFunctionDefinition({
-      getValues: getValuesCallback,
-      onSelected: highlightRowsCallback
-    }),
-    scatterplotFunctionDefinition({
-      getValues: async (datasetName: string, xVar: string, yVar: string) =>
-        getScatterplotValuesFromDataset(visState.datasets, datasetName, xVar, yVar),
-      onSelected: highlightRowsCallback
-    }),
-    dataClassifyFunctionDefinition({
-      getValues: getValuesCallback
-    }),
-    spatialCountFunctionDefinition({
-      getValues: getValuesCallback,
-      getGeometries: (datasetName: string): SpatialJoinGeometries =>
-        getGeometriesFromDataset(
-          visState.datasets,
-          visState.layers,
-          visState.layerData,
-          datasetName
-        ),
-      saveAsDataset: (datasetName: string, data: Record<string, number[]>) =>
-        saveAsDataset(visState.datasets, datasetName, data, keplerGlActions.addDataToMap)
-    })
-  ];
+    };
+  };
+
+  // tool: addLayer
+  const addLayerTool: AddLayerTool = {
+    ...addLayer,
+    context: {
+      getDatasets
+    }
+  };
+
+  // tool: updateLayerColor
+  const updateLayerColorTool = {
+    ...updateLayerColor,
+    context: {
+      getLayers
+    }
+  };
+
+  // tool: loadData
+  const loadDataTool: LoadDataTool = {
+    ...loadData,
+    context: {
+      getLoaders
+    }
+  };
+
+  return {
+    basemap,
+    addLayer: addLayerTool,
+    updateLayerColor: updateLayerColorTool,
+    loadData: loadDataTool,
+    ...getEchartsTools(visState.datasets)
+  };
+}
+
+function getEchartsTools(datasets: Datasets) {
+  // context for tools
+  const getValues = async (datasetName: string, variableName: string) => {
+    const values = getValuesFromDataset(datasets, datasetName, variableName);
+    return values;
+  };
+  const theme = keplerTheme.textColor === textColorLT ? 'light' : 'dark';
+
+  // Create the boxplot tool with the getValues implementation
+  const boxplotTool: BoxplotTool = {
+    ...boxplot,
+    context: {
+      ...boxplot.context,
+      getValues: getValues,
+      config: {
+        ...boxplot.context?.config,
+        theme
+      }
+    }
+  };
+
+  // Create the bubble chart tool with the getValues implementation
+  const bubbleChartTool: BubbleChartTool = {
+    ...bubbleChart,
+    context: {
+      ...bubbleChart.context,
+      getValues: getValues,
+      config: {
+        ...bubbleChart.context?.config,
+        theme
+      }
+    }
+  };
+
+  const histogramTool: HistogramTool = {
+    ...histogram,
+    context: {
+      ...histogram.context,
+      getValues: getValues,
+      config: {
+        ...histogram.context?.config,
+        theme
+      }
+    }
+  };
+
+  const pcpTool: PCPTool = {
+    ...pcp,
+    context: {
+      ...pcp.context,
+      getValues: getValues
+    }
+  };
+
+  const scatterplotTool: ScatterplotTool = {
+    ...scatterplot,
+    context: {
+      ...scatterplot.context,
+      getValues: getValues
+    }
+  };
+
+  return {
+    boxplotTool,
+    bubbleChartTool,
+    histogramTool,
+    pcpTool,
+    scatterplotTool
+  };
 }

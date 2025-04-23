@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import {useEffect} from 'react';
+import {useDispatch} from 'react-redux';
 import {tool} from '@openassistant/core';
 import {z} from 'zod';
 import {addDataToMap} from '@kepler.gl/actions';
-import {ActionHandler} from '@kepler.gl/actions';
 import {Loader} from '@loaders.gl/loader-utils';
 import {ProtoDataset} from '@kepler.gl/types';
 import {readFileInBatches, processFileData, ProcessFileDataContent} from '@kepler.gl/processors';
@@ -15,14 +16,26 @@ export const loadData = tool<
     url: z.ZodString;
   }>,
   // return type of the tool
-  ExecuteLoadDataResult['llmResult']
+  ExecuteLoadDataResult['llmResult'],
+  // additional data of the tool
+  ExecuteLoadDataResult['additionalData'],
+  // context of the tool
+  LoadDataToolContext
 >({
   description: 'load data from a URL or file',
   parameters: z.object({
     url: z.string().describe('The URL or file path to load data from')
   }),
-  execute: executeLoadData
+  execute: executeLoadData,
+  context: {
+    getLoaders: () => {
+      throw new Error('getLoaders() not implemented.');
+    }
+  },
+  component: LoadDataToolComponent
 });
+
+export type LoadDataTool = typeof loadData;
 
 type ExecuteLoadDataResult = {
   llmResult: {
@@ -30,19 +43,22 @@ type ExecuteLoadDataResult = {
     url: string;
     details?: string;
     dataInfo?: object;
-    columnNameAndType?: string;
     instruction?: string;
+  };
+  additionalData?: {
+    parsedData: ProtoDataset[];
   };
 };
 
-type LoadDataFunctionContext = {
-  addDataToMap: ActionHandler<typeof addDataToMap>;
-  loaders?: Loader[];
-  loadOptions?: object;
+type LoadDataToolContext = {
+  getLoaders: () => {
+    loaders?: Loader[];
+    loadOptions?: object;
+  };
 };
 
-function isLoadDataContext(context: any): context is LoadDataFunctionContext {
-  return context && typeof context.addDataToMap === 'function';
+function isLoadDataContext(context: any): context is LoadDataToolContext {
+  return context && typeof context.getLoaders === 'function';
 }
 
 async function executeLoadData({url}, options): Promise<ExecuteLoadDataResult> {
@@ -50,8 +66,12 @@ async function executeLoadData({url}, options): Promise<ExecuteLoadDataResult> {
     if (!isLoadDataContext(options.context)) {
       throw new Error('Invalid load data context. Please provide a valid context.');
     }
+    if (!isLoadDataContext(options.context)) {
+      throw new Error('Invalid load data context. Please provide a valid context.');
+    }
 
-    const {addDataToMap, loaders, loadOptions} = options.context;
+    const {getLoaders} = options.context;
+    const {loaders, loadOptions} = getLoaders();
 
     // Validate URL
     try {
@@ -96,26 +116,18 @@ async function executeLoadData({url}, options): Promise<ExecuteLoadDataResult> {
       }
     }
 
-    const data = parsedData[0].data;
-    const columnNameAndType = data.fields.map(field => ({name: field.name, type: field.type}));
+    // get metadata for LLM
     const dataInfo = parsedData[0].info;
-
-    // Add data to map
-    await addDataToMap({
-      datasets: parsedData,
-      options: {
-        autoCreateLayers: true,
-        centerMap: true
-      }
-    });
 
     return {
       llmResult: {
         success: true,
         url,
         details: `Successfully loaded data from ${url}`,
-        dataInfo,
-        columnNameAndType: JSON.stringify(columnNameAndType)
+        dataInfo
+      },
+      additionalData: {
+        parsedData
       }
     };
   } catch (error: unknown) {
@@ -130,4 +142,23 @@ async function executeLoadData({url}, options): Promise<ExecuteLoadDataResult> {
       }
     };
   }
+}
+
+export function LoadDataToolComponent({parsedData}) {
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(
+      addDataToMap({
+        datasets: parsedData,
+        options: {
+          autoCreateLayers: true,
+          centerMap: true
+        }
+      })
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return null;
 }
