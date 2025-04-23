@@ -2336,19 +2336,16 @@ export const updateVisDataUpdater = (
 
   // apply config if passed from action
   // TODO: we don't handle async mergers here yet
-  const previousState = config
+  let updatedState = config
     ? receiveMapConfigUpdater(state, {
         payload: {config, options}
       })
     : state;
 
-  // indicate that something is in progress
-  const setIsLoadingTask = ACTION_TASK().map(() => {
-    return setLoadingIndicator({change: 1});
-  });
-  const updatedState = withTask(previousState, setIsLoadingTask);
-
   const datasets = toArray(action.datasets);
+  if (!datasets.length) {
+    return updatedState;
+  }
 
   const createDatasetTasks: Task[] = [];
   const notificationTasks: Task[] = [];
@@ -2376,6 +2373,14 @@ export const updateVisDataUpdater = (
         createNewDatasetSuccess({results, addToMapOptions: options})
       )
     : null;
+
+  if (datasetsAllSettledTask) {
+    // indicate that something is in progress
+    const setIsLoadingTask = ACTION_TASK().map(() => {
+      return setLoadingIndicator({change: 1});
+    });
+    updatedState = withTask(updatedState, setIsLoadingTask);
+  }
 
   return withTask(updatedState, [
     ...(datasetsAllSettledTask ? [datasetsAllSettledTask] : []),
