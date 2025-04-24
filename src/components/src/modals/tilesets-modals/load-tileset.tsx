@@ -16,6 +16,9 @@ import TilesetIcon from './tileset-icon';
 import TilesetVectorForm from './tileset-vector-form';
 import TilesetRasterForm from './tileset-raster-form';
 
+import WMSLayerIcon from 'src/layers/src/wms-layer/wms-layer-icon';
+import TilesetWMSForm from './tileset-wms-form';
+
 const WIDTH_ICON = '70px';
 
 const LoadTilesetTabContainer = styled.div`
@@ -93,7 +96,13 @@ const TILE_TYPES = [
     label: 'Raster Tile',
     Icon: RasterTileIcon,
     Component: TilesetRasterForm
-  }
+  },
+  {
+    id: 'wms',
+    label: 'WMS',
+    Icon: WMSLayerIcon,
+    Component: TilesetWMSForm
+  },
 ];
 
 function isReady(response) {
@@ -144,9 +153,7 @@ function LoadTilesetTabFactory() {
             </TilesetTypeContainer>
             <div>
               <CurrentForm setResponse={setResponse} />
-              {/** 
               {error && <div>{getError(error)}</div>}
-              */}
             </div>
           </div>
           <MetaContainer>

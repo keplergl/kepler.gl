@@ -20771,6 +20771,7 @@ __metadata:
     webpack-dev-server: "npm:^3.1.14"
     webpack-hot-middleware: "npm:^2.24.3"
     webpack-stats-plugin: "npm:^0.2.1"
+    wms-capabilities: "npm:^0.6.0"
   peerDependencies:
     react: ">=18.2"
     react-dom: ">=18.2"
@@ -31300,6 +31301,15 @@ __metadata:
   version: 1.3.3
   resolution: "wkt-parser@npm:1.3.3"
   checksum: 10c0/900fcdaea02828407742c4ea370b46a04c48ed95f63cde3db8e5b90c5a1b80da9827b43eb58940dd8cf790a971f9b8c42022b1548bce29a11153e699eef5bcb4
+  languageName: node
+  linkType: hard
+
+"wms-capabilities@npm:^0.6.0":
+  version: 0.6.0
+  resolution: "wms-capabilities@npm:0.6.0"
+  bin:
+    wmscapabilities: bin/wmscapabilities
+  checksum: 10c0/ea01a948c730a3e0e185e96b0d451a87a59671c7677426702b7cd591e74d5624ee79777b4b57e0bab550fa5bfd1b4ad89a8c7460296a1d8a46e58a3494702d9a
   languageName: node
   linkType: hard
 

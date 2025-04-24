@@ -109,7 +109,8 @@
     "@types/mapbox__geo-viewport": "^0.4.1",
     "html-webpack-plugin": "^4.3.0",
     "monaco-editor": "^0.52.0",
-    "typedoc": "^0.19.2"
+    "typedoc": "^0.19.2",
+    "wms-capabilities": "^0.6.0"
   },
   "devDependencies": {
     "@babel/cli": "^7.12.1",
