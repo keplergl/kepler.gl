@@ -2,12 +2,12 @@
 // Copyright contributors to the kepler.gl project
 
 import interpolate from 'color-interpolate';
-
-import {Layer} from '@kepler.gl/layers';
+import {Feature} from 'geojson';
+import {Layer, VectorTileLayer} from '@kepler.gl/layers';
 import {Datasets, KeplerTable} from '@kepler.gl/table';
 import {SpatialJoinGeometries} from '@openassistant/geoda';
-import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
-import {AddDataToMapPayload, ProtoDataset, ProtoDatasetField} from '@kepler.gl/types';
+import {ALL_FIELD_TYPES, LAYER_TYPES} from '@kepler.gl/constants';
+import {Field, ProtoDataset, ProtoDatasetField} from '@kepler.gl/types';
 
 /**
  * Interpolate the colors from the original colors with the given number of colors
@@ -38,6 +38,7 @@ export function interpolateColor(originalColors: string[], numberOfColors: numbe
  */
 export function getValuesFromDataset(
   datasets: Datasets,
+  layers: Layer[],
   datasetName: string,
   variableName: string
 ): number[] {
@@ -46,9 +47,38 @@ export function getValuesFromDataset(
   if (!datasetId) return [];
   const dataset = datasets[datasetId];
   if (dataset) {
+    // for vector-tile, getting values from layerData
+    if (dataset.type === 'vector-tile') {
+      // get field from dataset
+      const field = dataset.fields.find(field => field.name === variableName);
+      if (!field) return [];
+      return getValuesFromVectorTileLayer(datasetId, layers, field);
+    }
     return Array.from({length: dataset.length}, (_, i) => dataset.getValue(variableName, i));
   }
   return [];
+}
+
+function isVectorTileLayer(layer: Layer): layer is VectorTileLayer {
+  return layer.type === LAYER_TYPES.vectorTile;
+}
+
+function getValuesFromVectorTileLayer(datasetId: string, layers: Layer[], field: Field) {
+  // get the index of the layer
+  const layerIndex = layers.findIndex(layer => layer.config.dataId === datasetId);
+  if (layerIndex === -1) return [];
+  const layer = layers[layerIndex];
+  if (!isVectorTileLayer(layer)) return [];
+  const accessor = layer.accessRowValue(field);
+  const values: number[] = [];
+  // @ts-expect-error TODO fix this later in the vector-tile layer
+  for (const row of layer.tileDataset.tileSet) {
+    const value = accessor(field, row);
+    if (value === null) break;
+    values.push(value);
+  }
+  console.log('value length:', values.length);
+  return values;
 }
 
 /**
@@ -140,6 +170,18 @@ export function getGeometriesFromDataset(
   // get the index of the layer
   const layerIndex = layers.findIndex(layer => layer.config.dataId === dataset.id);
   if (layerIndex === -1) return [];
+
+  const layer = layers[layerIndex];
+
+  // if layer is vector-tile, get the geometries from the layer
+  if (isVectorTileLayer(layer)) {
+    const geometries: Feature[] = [];
+    // @ts-expect-error TODO fix this later in the vector-tile layer
+    for (const row of layer.tileDataset.tileSet) {
+      geometries.push(row);
+    }
+    return geometries;
+  }
 
   const geometries = layerData[layerIndex];
 

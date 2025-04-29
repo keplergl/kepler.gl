@@ -2,7 +2,7 @@ import {useEffect} from 'react';
 import {useDispatch, useSelector} from 'react-redux';
 import {addDataToMap, addLayer} from '@kepler.gl/actions';
 import {saveAsDataset} from './utils';
-import {guessDefaultLayer} from './layer-creation-tool';
+import {guessDefaultLayer} from './kepler-tools/layer-creation-tool';
 import {State} from '../components/ai-assistant-manager';
 
 export function LisaToolComponent({
@@ -65,22 +65,29 @@ export function LisaToolComponent({
         name: 'clusters',
         type: 'integer'
       };
+      const colorDomain = Array.from({length: colors.length}, (_, i) => i);
       const newLayer = {
         id: layer.id,
         type: layer.type,
         config: {
           ...layer.config,
+          dataId: datasetId,
+          columns: Object.keys(layer.config.columns).reduce((acc, key) => {
+            acc[key] = layer.config.columns[key].value;
+            return acc;
+          }, {}),
           colorScale: 'ordinal',
           colorField,
-          strokeColorScale: 'ordinal',
-          strokeColorField: colorField
-        },
-        visConfig: {
-          ...layer.config.visConfig,
-          colorRange: {
-            ...layer.config.visConfig.colorRange,
-            colors: colors,
-            colorMap: colors.map((color, index) => [index, color])
+          strokeColorField: null,
+          visConfig: {
+            ...layer.config.visConfig,
+            colorRange: {
+              ...layer.config.visConfig.colorRange,
+              colorDomain,
+              colors: colors,
+              colorMap: colors.map((color, index) => [index, color])
+            },
+            stroked: false
           }
         }
       };

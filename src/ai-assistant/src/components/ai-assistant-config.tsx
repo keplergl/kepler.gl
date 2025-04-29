@@ -138,12 +138,16 @@ export const AiAssistantConfig = injectIntl(function AiAssistantConfig({
   );
   const [temperature, setTemperature] = useLocalStorage(
     'ai-assistant-temperature',
-    aiAssistantConfig.temperature || 0.8
+    aiAssistantConfig.temperature || 0.0
   );
-  const [topP, setTopP] = useLocalStorage('ai-assistant-top-p', aiAssistantConfig.topP || 0.8);
+  const [topP, setTopP] = useLocalStorage('ai-assistant-top-p', aiAssistantConfig.topP || 1.0);
   const [baseUrl, setBaseUrl] = useLocalStorage(
     'ai-assistant-base-url',
     aiAssistantConfig.baseUrl || 'http://localhost:11434'
+  );
+  const [mapboxToken, setMapboxToken] = useLocalStorage(
+    'ai-assistant-mapbox-token',
+    aiAssistantConfig.mapboxToken || ''
   );
   const [connectionError, setConnectionError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -185,6 +189,10 @@ export const AiAssistantConfig = injectIntl(function AiAssistantConfig({
     setErrorMessage('');
   };
 
+  const onMapboxTokenChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setMapboxToken(e.target.value);
+  };
+
   const onStartChat = async () => {
     setIsRunning(true);
     try {
@@ -216,7 +224,8 @@ export const AiAssistantConfig = injectIntl(function AiAssistantConfig({
           baseUrl: baseUrl,
           isReady: success,
           temperature: temperature,
-          topP: topP
+          topP: topP,
+          mapboxToken: mapboxToken
         })
       );
     } catch (error) {
@@ -367,6 +376,22 @@ export const AiAssistantConfig = injectIntl(function AiAssistantConfig({
           step={0.1}
         />
       </StyleSliderWrapper>
+      <>
+        <PanelLabelWrapper>
+          <SectionTitle>Mapbox Token (optional: route/isochrone)</SectionTitle>
+        </PanelLabelWrapper>
+        <div className="api-key-input">
+          <div className="api-key-input__icon">
+            <ApiKey height="20px" />
+          </div>
+          <Input
+            type="text"
+            onChange={onMapboxTokenChange}
+            placeholder="Enter your Mapbox Token"
+            value={mapboxToken}
+          />
+        </div>
+      </>
       <StyledButton>
         <Button onClick={onStartChat} width={'100%'}>
           {isRunning && <LoadingSpinner size={12} />}

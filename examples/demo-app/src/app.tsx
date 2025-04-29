@@ -9,13 +9,14 @@ import {connect, useDispatch} from 'react-redux';
 import cloneDeep from 'lodash/cloneDeep';
 import isEqual from 'lodash/isEqual';
 import isPropValid from '@emotion/is-prop-valid';
-
+import {WebMercatorViewport} from '@deck.gl/core';
 import {ScreenshotWrapper} from '@openassistant/ui';
 import {
   messages as aiAssistantMessages,
   setStartScreenCapture,
   setScreenCaptured,
-  AiAssistantPanel
+  AiAssistantPanel,
+  setMapBoundary
 } from '@kepler.gl/ai-assistant';
 import {panelBorderColor, theme} from '@kepler.gl/styles';
 import {useSelector} from 'react-redux';
@@ -218,6 +219,16 @@ const App = props => {
     // no dependencies, as this was part of componentDidMount
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const onViewStateChange = useCallback(
+    viewState => {
+      const viewport = new WebMercatorViewport(viewState);
+      const nw = viewport.unproject([0, 0]);
+      const se = viewport.unproject([viewport.width, viewport.height]);
+      dispatch(setMapBoundary([nw, se]));
+    },
+    [dispatch]
+  );
 
   const _setStartScreenCapture = useCallback(
     flag => {
@@ -665,6 +676,7 @@ const App = props => {
                             onExportToCloudSuccess={onExportFileSuccess}
                             onLoadCloudMapSuccess={onLoadCloudMapSuccess}
                             featureFlags={DEFAULT_FEATURE_FLAGS}
+                            onViewStateChange={onViewStateChange}
                           />
                         )}
                       </AutoSizer>

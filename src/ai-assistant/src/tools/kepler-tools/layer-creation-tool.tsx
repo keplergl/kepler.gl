@@ -6,7 +6,7 @@ import {LayerClasses} from '@kepler.gl/layers';
 import KeplerTable, {Datasets} from '@kepler.gl/table';
 import {findDefaultLayer} from '@kepler.gl/reducers';
 import {addLayer as addLayerAction} from '@kepler.gl/actions';
-import {interpolateColor} from './utils';
+import {interpolateColor} from '../utils';
 import {tool} from '@openassistant/core';
 import {z} from 'zod';
 import {useEffect} from 'react';
@@ -79,7 +79,7 @@ type AddLayerArgs = {
   layerType: string;
   fieldName: string;
   colorScale: string;
-  customColorScale: Array<[number, string]>;
+  customColorScale: Array<number>;
 };
 
 function isAddLayerArgs(args: any): args is AddLayerArgs {

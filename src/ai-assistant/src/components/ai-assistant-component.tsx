@@ -38,7 +38,7 @@ export function AiAssistantComponent() {
   const dispatch = useDispatch();
 
   // define LLM functions
-  const tools = setupLLMTools({visState, dispatch});
+  const tools = setupLLMTools({visState, aiAssistant, dispatch});
 
   // enable voice and screen capture
   const enableVoiceAndScreenCapture =
