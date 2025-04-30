@@ -164,7 +164,9 @@ export function getGeometriesFromDataset(
   datasetName: string
 ): SpatialJoinGeometries {
   const datasetId = Object.keys(datasets).find(dataId => datasets[dataId].label === datasetName);
-  if (!datasetId) return [];
+  if (!datasetId) {
+    throw new Error(`Dataset ${datasetName} not found`);
+  }
   const dataset = datasets[datasetId];
 
   // get the index of the layer
@@ -197,6 +199,7 @@ export function getGeometriesFromDataset(
  */
 export function saveAsDataset(
   datasets: Datasets,
+  layers: Layer[],
   datasetName: string,
   newDatasetName: string,
   data: Record<string, number[]>
@@ -206,7 +209,14 @@ export function saveAsDataset(
   if (!datasetId) return;
 
   const leftDataset = datasets[datasetId];
-  const numRows = leftDataset.length;
+  let numRows = leftDataset.length;
+  let geometries: Feature[];
+
+  if (leftDataset.type === 'vector-tile') {
+    // we need to get geometries from the vector-tile layer
+    geometries = getFeaturesFromVectorTile(leftDataset, layers) || [];
+    numRows = geometries.length;
+  }
 
   const fields: ProtoDatasetField[] = [
     // New fields from data
@@ -222,7 +232,18 @@ export function saveAsDataset(
       id: field.id || `${field.name}_${index}`,
       displayName: field.displayName,
       type: field.type
-    }))
+    })),
+    // add geometry column for vector-tile
+    ...(leftDataset.type === 'vector-tile'
+      ? [
+          {
+            name: '_geojson',
+            id: '_geojson',
+            displayName: '_geojson',
+            type: 'geojson'
+          }
+        ]
+      : [])
   ];
 
   // Pre-calculate data values array
@@ -234,7 +255,13 @@ export function saveAsDataset(
       // New data values
       ...dataValues.map(col => col[rowIdx]),
       // Existing dataset values
-      ...leftDataset.fields.map(field => leftDataset.getValue(field.name, rowIdx))
+      ...leftDataset.fields.map(field =>
+        leftDataset.type === 'vector-tile'
+          ? geometries[rowIdx].properties?.[field.name]
+          : leftDataset.getValue(field.name, rowIdx)
+      ),
+      // geometry column for vector-tile
+      ...(leftDataset.type === 'vector-tile' ? [geometries[rowIdx]] : [])
     ]);
 
   // create new dataset
@@ -289,4 +316,20 @@ export function highlightRowsByColumnValues(
     // highlight the rows
     highlightRows(datasets, layers, datasetName, selectedIndices, layerSetIsValid);
   }
+}
+
+function getFeaturesFromVectorTile(leftDataset: KeplerTable, layers: Layer[]) {
+  const layerIndex = layers.findIndex(layer => layer.config.dataId === leftDataset.id);
+  if (layerIndex === -1) return;
+
+  const layer = layers[layerIndex];
+  if (!isVectorTileLayer(layer)) return;
+
+  const features: Feature[] = [];
+  // @ts-expect-error TODO fix this later in the vector-tile layer
+  for (const row of layer.tileDataset.tileSet) {
+    features.push(row);
+  }
+
+  return features;
 }

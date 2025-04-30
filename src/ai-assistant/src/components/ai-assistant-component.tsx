@@ -5,10 +5,10 @@ import React, {useEffect, useState} from 'react';
 import {useDispatch, useSelector} from 'react-redux';
 import styled from 'styled-components';
 import {textColorLT, theme} from '@kepler.gl/styles';
-import {MessageModel, useAssistant} from '@openassistant/core';
+import {MessageModel} from '@openassistant/core';
 import {AiAssistant} from '@openassistant/ui';
-import '@openassistant/echarts/../dist/index.esm.css';
-import '@openassistant/ui/../dist/bundle.css';
+import '@openassistant/echarts/dist/index.css';
+import '@openassistant/ui/dist/index.css';
 
 import {setScreenCaptured, setStartScreenCapture, updateAiAssistantMessages} from '../actions';
 import {
@@ -68,15 +68,6 @@ export function AiAssistantComponent() {
 
   // use dataset meta data in LLM instructions
   const instructions = `${INSTRUCTIONS}\n\n${datasetMetaData}`;
-
-  const {initializeAssistant} = useAssistant({
-    ...assistantProps,
-    instructions
-  });
-
-  useEffect(() => {
-    initializeAssistant();
-  }, [initializeAssistant]);
 
   const onRestartAssistant = () => {
     // clean up aiAssistant state

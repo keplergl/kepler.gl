@@ -16,8 +16,8 @@ export function setupLLMTools({
   dispatch: Dispatch;
 }) {
   return {
-    ...getKeplerTools(visState, aiAssistant, dispatch),
+    ...getKeplerTools(visState, aiAssistant),
     ...getEchartsTools(visState.datasets, visState.layers, dispatch),
-    ...getGeoTools(aiAssistant, visState.datasets, visState.layers, visState.layerData, dispatch)
+    ...getGeoTools(aiAssistant, visState.datasets, visState.layers, visState.layerData)
   };
 }

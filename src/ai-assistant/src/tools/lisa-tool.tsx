@@ -1,4 +1,4 @@
-import {useEffect} from 'react';
+import {useEffect, useState} from 'react';
 import {useDispatch, useSelector} from 'react-redux';
 import {addDataToMap, addLayer} from '@kepler.gl/actions';
 import {saveAsDataset} from './utils';
@@ -17,10 +17,21 @@ export function LisaToolComponent({
   labels,
   colors
 }) {
+  // Add validation check for input dataset
+  if (datasetName.startsWith('lisa_')) {
+    throw new Error('Cannot use a previous LISA dataset as input for a new LISA analysis. Please use the original dataset instead.');
+  }
+
   const datasets = useSelector((state: State) => state.demo.keplerGl.map.visState.datasets);
+  const layers = useSelector((state: State) => state.demo.keplerGl.map.visState.layers);
   const dispatch = useDispatch();
+  const [newDatasetName, setNewDatasetName] = useState<string | null>(null);
 
   useEffect(() => {
+    // Generate dataset name
+    const tmpDatasetName = `lisa_${new Date().toISOString()}`;
+    setNewDatasetName(tmpDatasetName);
+
     // save the Lisa result to current dataset
     const lisaData: Record<string, number[]> = {
       clusters,
@@ -37,8 +48,7 @@ export function LisaToolComponent({
       )
     };
     // create a new geojson layer using clusters with ordinal color scale and customColorScale and colors
-    const newDatasetName = `${datasetName}_lisa`;
-    const newDataset = saveAsDataset(datasets, datasetName, newDatasetName, lisaData);
+    const newDataset = saveAsDataset(datasets, layers, datasetName, tmpDatasetName, lisaData);
     if (newDataset) {
       // add the new dataset to the map
       dispatch(
@@ -49,8 +59,9 @@ export function LisaToolComponent({
   }, []);
 
   useEffect(() => {
-    // find the new dataset in the datasets
-    const newDatasetName = `${datasetName}_lisa`;
+    if (!newDatasetName) return;
+
+    // create a layer for the new dataset in the datasets
     const datasetId = Object.keys(datasets).find(
       dataId => datasets[dataId].label === newDatasetName
     );
@@ -66,6 +77,10 @@ export function LisaToolComponent({
         type: 'integer'
       };
       const colorDomain = Array.from({length: colors.length}, (_, i) => i);
+      const colorLegends = {};
+      for (let i = 0; i < colors.length; i++) {
+        colorLegends[colors[i]] = labels[i];
+      }
       const newLayer = {
         id: layer.id,
         type: layer.type,
@@ -76,7 +91,7 @@ export function LisaToolComponent({
             acc[key] = layer.config.columns[key].value;
             return acc;
           }, {}),
-          colorScale: 'ordinal',
+          colorScale: 'customOrdinal',
           colorField,
           strokeColorField: null,
           visConfig: {
@@ -85,7 +100,8 @@ export function LisaToolComponent({
               ...layer.config.visConfig.colorRange,
               colorDomain,
               colors: colors,
-              colorMap: colors.map((color, index) => [index, color])
+              colorMap: colors.map((color, index) => [index, color]),
+              colorLegends
             },
             stroked: false
           }
@@ -94,6 +110,6 @@ export function LisaToolComponent({
       dispatch(addLayer(newLayer, datasetId));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [datasets]);
+  }, [datasets, newDatasetName]);
   return null;
 }

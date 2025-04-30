@@ -7,11 +7,11 @@ import {z} from 'zod';
 import {useEffect} from 'react';
 import {useDispatch} from 'react-redux';
 
-export const basemap = tool<
-  // parameters of the tool
-  z.ZodObject<{
-    styleType: z.ZodEnum<
-      [
+export const basemap = tool({
+  description: 'change basemap',
+  parameters: z
+    .object({
+      styleType: z.enum([
         'dark-matter',
         'dark-matter-nolabels',
         'no_map',
@@ -19,26 +19,9 @@ export const basemap = tool<
         'positron-nolabels',
         'voyager',
         'voyager-nolabels'
-      ]
-    >;
-  }>,
-  // return type of the tool
-  ExecuteBasemapResult['llmResult'],
-  // additional data of the tool
-  ExecuteBasemapResult['additionalData']
->({
-  description: 'change basemap',
-  parameters: z.object({
-    styleType: z.enum([
-      'dark-matter',
-      'dark-matter-nolabels',
-      'no_map',
-      'positron',
-      'positron-nolabels',
-      'voyager',
-      'voyager-nolabels'
-    ])
-  }),
+      ])
+    })
+    .strict(),
   execute: executeBasemap,
   component: BasemapToolComponent
 });

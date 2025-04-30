@@ -2724,30 +2724,30 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@geoda/core@npm:^0.0.6":
-  version: 0.0.6
-  resolution: "@geoda/core@npm:0.0.6"
+"@geoda/core@npm:^0.0.9":
+  version: 0.0.9
+  resolution: "@geoda/core@npm:0.0.9"
   dependencies:
     "@loaders.gl/schema": "npm:^4.1.0-alpha.4"
     geojson: "npm:^0.5.0"
-  checksum: 10c0/d45fffb0f3689abb74f42471f4efc386d9ebfc67ff0399357e5a06f5160d5dff1698c89f26b75aa28e390fb76aeada6b12a18af8c8fdda07e9a67738e54a9ac6
+  checksum: 10c0/2d19e616a3813d7bc61f867f9717e2557b1371fcd28fcccc42a404fbc87cf1d3d770994541f53bb7a8c8f8cf6ab8a51201a70a4b6c8c790555b63bd332029731
   languageName: node
   linkType: hard
 
-"@geoda/lisa@npm:^0.0.6":
-  version: 0.0.6
-  resolution: "@geoda/lisa@npm:0.0.6"
+"@geoda/lisa@npm:^0.0.9":
+  version: 0.0.9
+  resolution: "@geoda/lisa@npm:0.0.9"
   dependencies:
     "@loaders.gl/schema": "npm:^4.1.0-alpha.4"
     geojson: "npm:^0.5.0"
-  checksum: 10c0/c438f8cf768cf4dad87a19d994b1ed2caa5933ae7801130d94fdfd5976f2b110c6af798a9ca3cb21feca30cb90bd75adf2200afd22d4cfe92bca2cadf18c7f83
+  checksum: 10c0/0165c22f8f3003a41fff2fb969af947d79869e2163822094553baccdab260b14dcbb1af15619e25d60770bd68d699999d5898fa2b048f6c7770e1a513a4e9d32
   languageName: node
   linkType: hard
 
-"@geoda/regression@npm:^0.0.6":
-  version: 0.0.6
-  resolution: "@geoda/regression@npm:0.0.6"
-  checksum: 10c0/1bc6526624c13a3b4c013af9bbab672fa7b185b355b749c7357b95a5d43ff1163b83179a5423696cfa23afcbe460c99622d0703f46083d2628f527b53d67a93a
+"@geoda/regression@npm:^0.0.9":
+  version: 0.0.9
+  resolution: "@geoda/regression@npm:0.0.9"
+  checksum: 10c0/130942d7b6f0b76b621273f0338320def6e95918cc7a5f7eadac04f4d5c630759aac6296734f910fa7a92c3f732f6b7f8204c6b780ae1f269048a9138d278636
   languageName: node
   linkType: hard
 
@@ -3245,10 +3245,11 @@ __metadata:
     "@kepler.gl/table": "npm:3.1.1"
     "@kepler.gl/types": "npm:3.1.1"
     "@kepler.gl/utils": "npm:3.1.1"
-    "@openassistant/core": "npm:^0.3.0"
-    "@openassistant/echarts": "npm:^0.3.0"
-    "@openassistant/geoda": "npm:^0.3.0"
-    "@openassistant/ui": "npm:^0.3.0"
+    "@openassistant/core": "npm:^0.3.1"
+    "@openassistant/echarts": "npm:^0.3.1"
+    "@openassistant/geoda": "npm:^0.3.1"
+    "@openassistant/osm": "npm:^0.3.1"
+    "@openassistant/ui": "npm:^0.3.1"
     color-interpolate: "npm:^1.0.5"
     global: "npm:^4.3.0"
     react-intl: "npm:^6.3.0"
@@ -6341,9 +6342,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@openassistant/common@npm:0.3.0":
-  version: 0.3.0
-  resolution: "@openassistant/common@npm:0.3.0"
+"@openassistant/common@npm:0.3.1":
+  version: 0.3.1
+  resolution: "@openassistant/common@npm:0.3.1"
   dependencies:
     "@iconify/react": "npm:^5.1.0"
     "@nextui-org/react": "npm:^2.6.10"
@@ -6352,13 +6353,13 @@ __metadata:
   peerDependencies:
     react: ">=18.2"
     react-dom: ">=18.2"
-  checksum: 10c0/b335ff64d2d638a5577e9ae10bf3071c9e9e5c84f1e96e8ed408f041fc07ca77aabbd6c0f1a7f70bfcbcf34f35bb567ad299810133eeb8aa39b5dcacfa493996
+  checksum: 10c0/0f6aeb00f275fd88c3cc1fa229e0994e43011bf9c04c56f6e168f5449a89ccbf1c082c9fdcf2984eec50f95dfb6727e523a3c9371932d8480a1d6f51c04639ba
   languageName: node
   linkType: hard
 
-"@openassistant/core@npm:0.3.0, @openassistant/core@npm:^0.3.0":
-  version: 0.3.0
-  resolution: "@openassistant/core@npm:0.3.0"
+"@openassistant/core@npm:0.3.1, @openassistant/core@npm:^0.3.1":
+  version: 0.3.1
+  resolution: "@openassistant/core@npm:0.3.1"
   dependencies:
     "@ai-sdk/openai": "npm:^1.1.5"
     "@ai-sdk/react": "npm:^1.1.7"
@@ -6387,19 +6388,19 @@ __metadata:
       optional: true
     ollama-ai-provider:
       optional: true
-  checksum: 10c0/e963d25546069380fe1443535aa6b356143dfb83fe22314fc92723df5cf0aaacc4f11fa6ba9056edc8f17a8b0a40ccb02f54327b88b3c54f6991ecd3f0cfca0b
+  checksum: 10c0/b043cb7b5f0e9043d9212479e8cae2de8c2fa4380a548a0eccf9c55695564f78a4e7f0e12bb0cab24db5211242aa68db4a1434415efc26f1e077009918d36f33
   languageName: node
   linkType: hard
 
-"@openassistant/echarts@npm:0.3.0, @openassistant/echarts@npm:^0.3.0":
-  version: 0.3.0
-  resolution: "@openassistant/echarts@npm:0.3.0"
+"@openassistant/echarts@npm:0.3.1, @openassistant/echarts@npm:^0.3.1":
+  version: 0.3.1
+  resolution: "@openassistant/echarts@npm:0.3.1"
   dependencies:
     "@iconify/react": "npm:^5.1.0"
     "@nextui-org/react": "npm:^2.6.10"
     "@nextui-org/theme": "npm:^2.4.4"
-    "@openassistant/common": "npm:0.3.0"
-    "@openassistant/core": "npm:0.3.0"
+    "@openassistant/common": "npm:0.3.1"
+    "@openassistant/core": "npm:0.3.1"
     echarts: "npm:^5.5.1"
     echarts-for-react: "npm:^3.0.2"
     framer-motion: "npm:^11.15.0"
@@ -6412,39 +6413,51 @@ __metadata:
   peerDependencies:
     react: ">=18.2"
     react-dom: ">=18.2"
-  checksum: 10c0/d439a14d6a2ac04b4adb8b827a5d06ece440658f204003fb14a0dc2b10bfd33d259723fc2d1cf4c0d36064fd141ee026f228490cf17d69458b1105c7db168b92
+  checksum: 10c0/e9060a21ea8a91976536079fcafd0601213e5782a04055a72d82b5986c0a6162dcd9810a019415ac53baf0bbf9b8a5ee5c21d6d62381ca0ceaa51dbdb9b2d888
   languageName: node
   linkType: hard
 
-"@openassistant/geoda@npm:^0.3.0":
-  version: 0.3.0
-  resolution: "@openassistant/geoda@npm:0.3.0"
+"@openassistant/geoda@npm:^0.3.1":
+  version: 0.3.1
+  resolution: "@openassistant/geoda@npm:0.3.1"
   dependencies:
-    "@geoda/core": "npm:^0.0.6"
-    "@geoda/lisa": "npm:^0.0.6"
-    "@geoda/regression": "npm:^0.0.6"
+    "@geoda/core": "npm:^0.0.9"
+    "@geoda/lisa": "npm:^0.0.9"
+    "@geoda/regression": "npm:^0.0.9"
     "@loaders.gl/core": "npm:^4.3.3"
+    "@loaders.gl/gis": "npm:^4.3.3"
     "@loaders.gl/schema": "npm:^4.3.3"
     "@nextui-org/react": "npm:^2.6.8"
-    "@openassistant/common": "npm:0.3.0"
-    "@openassistant/core": "npm:0.3.0"
-    "@openassistant/echarts": "npm:0.3.0"
+    "@openassistant/common": "npm:0.3.1"
+    "@openassistant/core": "npm:0.3.1"
+    "@openassistant/echarts": "npm:0.3.1"
     framer-motion: "npm:^11.15.0"
     tailwindcss: "npm:^3.4.17"
   peerDependencies:
     react: ">=18.2"
     react-dom: ">=18.2"
-  checksum: 10c0/07064fe1a5b2db9b5a2260d75cfdfb88e5158eaf2dbda07d2f154cbd2fcf451a99997f8e7f69e14dc3b24babd681e4eec46d7c57b0d25c014db63ae9d13d0ee5
+  checksum: 10c0/6940b3c9851a6c6f84b27d7e969f6b06447e756297457d7fdcde4a9e39d1da08120a2e8e3742f19594bef8e0cb5a47a869b396e1d9a51e9110021a3d14340dd7
   languageName: node
   linkType: hard
 
-"@openassistant/ui@npm:^0.3.0":
-  version: 0.3.0
-  resolution: "@openassistant/ui@npm:0.3.0"
+"@openassistant/osm@npm:^0.3.1":
+  version: 0.3.1
+  resolution: "@openassistant/osm@npm:0.3.1"
+  dependencies:
+    "@openassistant/core": "npm:0.3.1"
+    zip3: "npm:^1.0.4"
+    zod: "npm:^3.22.4"
+  checksum: 10c0/18df84db595de4e04bf6bfa0f5bfc136fe0ccf2922430a92be53fcbe0b0e5bb6c9990b209991c30c6306f2afada8e940437896780ca19c6c4030a562e96739bd
+  languageName: node
+  linkType: hard
+
+"@openassistant/ui@npm:^0.3.1":
+  version: 0.3.1
+  resolution: "@openassistant/ui@npm:0.3.1"
   dependencies:
     "@iconify/react": "npm:^5.1.0"
     "@nextui-org/react": "npm:^2.6.10"
-    "@openassistant/core": "npm:0.3.0"
+    "@openassistant/core": "npm:0.3.1"
     framer-motion: "npm:^11.15.0"
     html2canvas: "npm:^1.4.1"
     next-themes: "npm:^0.4.4"
@@ -6455,7 +6468,7 @@ __metadata:
   peerDependencies:
     react: ">=18.2"
     react-dom: ">=18.2"
-  checksum: 10c0/5e8d9d9d442a98721efa54fd2f94918724ac6e08492ec48ac94b285cb06e67fde37bd20666a424b5e56d993384caa3e0be5cdc2cee0642fb360b02e92ab4b211
+  checksum: 10c0/7d867712cc39cd64e3cd0b08d51c8132d23657317b5b1e91fd1131c2dbe9ce221f8f67e097703fdcf3c320243a64f3be80191eae696d96bb438e21b29e01c043
   languageName: node
   linkType: hard
 
@@ -31802,6 +31815,13 @@ __metadata:
   version: 0.1.0
   resolution: "yocto-queue@npm:0.1.0"
   checksum: 10c0/dceb44c28578b31641e13695d200d34ec4ab3966a5729814d5445b194933c096b7ced71494ce53a0e8820685d1d010df8b2422e5bf2cdea7e469d97ffbea306f
+  languageName: node
+  linkType: hard
+
+"zip3@npm:^1.0.4":
+  version: 1.0.4
+  resolution: "zip3@npm:1.0.4"
+  checksum: 10c0/28d9cb2efac02d93483ee037dad7f6b1afdc66bc3b5ebae3467f68bf4364f76d8339b1e314b21063bd89f0a5c0bba357faf43ff5bec8ea2683bc27c95c4be2b7
   languageName: node
   linkType: hard
 

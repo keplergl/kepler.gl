@@ -1,3 +1,5 @@
+import React, {useEffect} from 'react';
+import {useDispatch} from 'react-redux';
 import {
   dataClassify,
   DataClassifyTool,
@@ -11,7 +13,7 @@ import {
   LisaTool,
   spatialJoin,
   SpatialJoinTool,
-  getGeoDaCachedData
+  SpatialJoinToolComponent
 } from '@openassistant/geoda';
 import {
   getUsStateGeojson,
@@ -25,7 +27,8 @@ import {
 } from '@openassistant/osm';
 import {Datasets} from '@kepler.gl/table';
 import {Layer} from '@kepler.gl/layers';
-import {Dispatch} from 'redux';
+import {processFileData} from '@kepler.gl/processors';
+import {addDataToMap} from '@kepler.gl/actions';
 
 import {LisaToolComponent} from './lisa-tool';
 import {getGeometriesFromDataset, getValuesFromDataset} from './utils';
@@ -35,8 +38,7 @@ export function getGeoTools(
   aiAssistant: AiAssistantState,
   datasets: Datasets,
   layers: Layer[],
-  layerData: any[],
-  dispatch: Dispatch
+  layerData: any[]
 ) {
   // context for geo tools
   const getValues = async (datasetName: string, variableName: string) => {
@@ -48,14 +50,9 @@ export function getGeoTools(
     let geoms = getGeometriesFromDataset(datasets, layers, layerData, datasetName);
     if (geoms.length === 0) {
       // get the geoms from the cache
-      let geojson = getCachedData(datasetName);
+      const geojson = getCachedData(datasetName);
       if (geojson) {
         geoms = geojson.features;
-      } else {
-        geojson = getGeoDaCachedData(datasetName);
-        if (geojson) {
-          geoms = geojson.features;
-        }
       }
     }
     return geoms;
@@ -116,7 +113,8 @@ export function getGeoTools(
       ...spatialJoin.context,
       getValues,
       getGeometries
-    }
+    },
+    component: CustomSpatialJoinToolComponent
   };
 
   const routingTool = {
@@ -150,4 +148,31 @@ export function getGeoTools(
     routing: routingTool,
     isochrone: isochroneTool
   };
+}
+
+function CustomSpatialJoinToolComponent(props) {
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    async function addJoinedDatasetToMap() {
+      if (props.joinedDatasetId && props.joinedDataset) {
+        // add the joined dataset to kepler.gl
+        const parsedData = await processFileData({
+          content: {
+            data: props.joinedDataset,
+            fileName: props.joinedDatasetId
+          },
+          fileCache: []
+        });
+
+        dispatch(
+          addDataToMap({datasets: parsedData, options: {autoCreateLayers: true, centerMap: false}})
+        );
+      }
+    }
+    addJoinedDatasetToMap();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return <SpatialJoinToolComponent {...props} />;
 }

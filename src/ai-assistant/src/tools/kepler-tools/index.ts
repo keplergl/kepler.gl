@@ -1,4 +1,3 @@
-import {Dispatch} from 'redux';
 import {VisState} from '@kepler.gl/schemas';
 
 import {basemap} from './basemap-tool';
@@ -9,11 +8,7 @@ import {mapBoundary} from './boundary-tool';
 import {saveDataToMap} from './save-data-tool';
 import {AiAssistantState} from '../../reducers';
 
-export function getKeplerTools(
-  visState: VisState,
-  aiAssistant: AiAssistantState,
-  dispatch: Dispatch
-) {
+export function getKeplerTools(visState: VisState, aiAssistant: AiAssistantState) {
   // context for tools
   const getDatasets = () => {
     return visState.datasets;
