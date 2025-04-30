@@ -437,6 +437,7 @@ export {
   StyledPanelDropdown,
   StyledPanelHeader,
   StyledType,
+  shouldForwardProp,
   TextArea,
   TextAreaLight,
   Tooltip,

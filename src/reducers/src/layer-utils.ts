@@ -3,7 +3,6 @@
 
 import Console from 'global/console';
 
-import {arrayMove} from '@dnd-kit/sortable';
 import {GEOCODER_LAYER_ID} from '@kepler.gl/constants';
 import {Layer as DeckLayer, LayerProps as DeckLayerProps} from '@deck.gl/core/typed';
 import {
@@ -30,6 +29,8 @@ import {
 import KeplerTable from '@kepler.gl/table';
 import {VisState} from '@kepler.gl/schemas';
 import {isFunction, getMapLayersFromSplitMaps, DataRow} from '@kepler.gl/utils';
+import {arrayMove} from '@kepler.gl/common-utils';
+
 import {ThreeDBuildingLayer} from '@kepler.gl/deckgl-layers';
 
 export type LayersToRender = {

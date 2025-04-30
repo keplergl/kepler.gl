@@ -5,11 +5,13 @@ import React, {MouseEventHandler, ReactNode, useMemo, useCallback} from 'react';
 
 import styled, {IStyledComponent} from 'styled-components';
 import {DndContext, DragOverlay, pointerWithin} from '@dnd-kit/core';
-import {SortableContext, useSortable, arrayMove} from '@dnd-kit/sortable';
+import {SortableContext, useSortable} from '@dnd-kit/sortable';
 import {restrictToParentElement} from '@dnd-kit/modifiers';
 
-import Delete from '../icons/delete';
 import {FormattedMessage} from '@kepler.gl/localization';
+import {arrayMove} from '@kepler.gl/common-utils';
+
+import Delete from '../icons/delete';
 import {BaseComponentProps} from '../../types';
 import {shouldForwardProp} from '../styled-components';
 

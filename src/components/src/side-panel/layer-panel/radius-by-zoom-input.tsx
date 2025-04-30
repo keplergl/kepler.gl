@@ -8,7 +8,7 @@ import {sortableContainer, sortableElement, sortableHandle} from 'react-sortable
 import styled, {css} from 'styled-components';
 
 import {ZoomStops, ZoomStopsConfig} from '@kepler.gl/types';
-import {arrayMove} from '@kepler.gl/utils';
+import {arrayMove} from '@kepler.gl/common-utils';
 
 import {Icons, Input, PanelLabel, Button} from '../../common';
 

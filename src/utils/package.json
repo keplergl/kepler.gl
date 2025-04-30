@@ -31,7 +31,6 @@
   ],
   "dependencies": {
     "@deck.gl/core": "^8.9.27",
-    "@dnd-kit/sortable": "^8.0.0",
     "@kepler.gl/common-utils": "3.1.2",
     "@kepler.gl/constants": "3.1.2",
     "@kepler.gl/types": "3.1.2",

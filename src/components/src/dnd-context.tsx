@@ -4,21 +4,20 @@
 import React, {useCallback, useMemo, PropsWithChildren} from 'react';
 import styled from 'styled-components';
 import {DndContext as DndKitContext, DragOverlay} from '@dnd-kit/core';
-import Console from 'global/console';
 
-import {
-  DND_EMPTY_MODIFIERS,
-  DND_MODIFIERS,
-  SORTABLE_LAYER_TYPE,
-  SORTABLE_EFFECT_TYPE
-} from '@kepler.gl/constants';
-import {visStateLens} from '@kepler.gl/reducers';
+import Console from 'global/console';
 import {VisState} from '@kepler.gl/schemas';
 
 import LayerPanelHeaderFactory from './side-panel/layer-panel/layer-panel-header';
-import {withState} from './injector';
 import useDndLayers from './hooks/use-dnd-layers';
 import useDndEffects from './hooks/use-dnd-effects';
+
+import {
+  DND_MODIFIERS,
+  DND_EMPTY_MODIFIERS,
+  SORTABLE_LAYER_TYPE,
+  SORTABLE_EFFECT_TYPE
+} from './common/dnd-layer-items';
 
 export type DndContextProps = PropsWithChildren<{
   visState: VisState;
@@ -39,7 +38,7 @@ DndContextFactory.deps = [LayerPanelHeaderFactory];
 
 function DndContextFactory(
   LayerPanelHeader: ReturnType<typeof LayerPanelHeaderFactory>
-): React.FC<PropsWithChildren> {
+): React.FC<DndContextProps> {
   const LayerPanelOverlay = ({layer, datasets}) => {
     const color =
       layer.config.dataId && datasets[layer.config.dataId]
@@ -116,7 +115,7 @@ function DndContextFactory(
       },
       [onLayerDragEnd, onEffectDragEnd]
     );
-
+    console.log('dndContext', {activeLayer});
     return (
       <DndKitContext onDragStart={onDragStart} onDragEnd={onDragEnd} modifiers={dndModifiers}>
         {children}
@@ -131,7 +130,7 @@ function DndContextFactory(
     );
   };
 
-  return withState([visStateLens], state => state)(DndContext) as React.FC<PropsWithChildren>;
+  return DndContext;
 }
 
 export default DndContextFactory;

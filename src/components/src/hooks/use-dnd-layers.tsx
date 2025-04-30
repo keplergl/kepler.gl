@@ -9,7 +9,7 @@ import {
   DROPPABLE_MAP_CONTAINER_TYPE,
   SORTABLE_LAYER_TYPE,
   SORTABLE_SIDE_PANEL_TYPE
-} from '@kepler.gl/constants';
+} from '../common/dnd-layer-items';
 import {reorderLayerOrder} from '@kepler.gl/reducers';
 import {Layer} from '@kepler.gl/layers';
 

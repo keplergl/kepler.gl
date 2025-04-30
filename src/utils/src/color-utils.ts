@@ -7,6 +7,7 @@ import {
   DEFAULT_CUSTOM_PALETTE,
   colorPaletteToColorRange
 } from '@kepler.gl/constants';
+import {arrayMove} from '@kepler.gl/common-utils';
 import {
   ColorMap,
   ColorRange,
@@ -17,7 +18,7 @@ import {
 } from '@kepler.gl/types';
 import {rgb as d3Rgb} from 'd3-color';
 import {interpolate} from 'd3-interpolate';
-import {arrayInsert, arrayMove} from './utils';
+import {arrayInsert} from './utils';
 import Console from 'global/console';
 import {KEPLER_COLOR_PALETTES, PALETTE_TYPES, SCALE_TYPES} from '@kepler.gl/constants';
 
