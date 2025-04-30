@@ -5,7 +5,7 @@
 import React from 'react';
 import test from 'tape';
 import {mount} from 'enzyme';
-import cloneDeep from 'lodash.clonedeep';
+import cloneDeep from 'lodash/cloneDeep';
 import sinon from 'sinon';
 
 import {

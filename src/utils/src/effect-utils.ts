@@ -3,7 +3,7 @@
 
 import {arrayMove} from '@dnd-kit/sortable';
 import SunCalc from 'suncalc';
-import cloneDeep from 'lodash.clonedeep';
+import cloneDeep from 'lodash/cloneDeep';
 
 import {PostProcessEffect} from '@deck.gl/core/typed';
 

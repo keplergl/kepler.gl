@@ -6,9 +6,9 @@ import {act} from 'react-dom/test-utils';
 import test from 'tape-catch';
 import global from 'global';
 import sinon from 'sinon';
-import flatten from 'lodash.flattendeep';
+import flatten from 'lodash/flattenDeep';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
-import CloneDeep from 'lodash.clonedeep';
+import CloneDeep from 'lodash/cloneDeep';
 import {VisStateActions} from '@kepler.gl/actions';
 import {visStateReducer} from '@kepler.gl/reducers';
 

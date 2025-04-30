@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import classnames from 'classnames';
-import pick from 'lodash.pick';
+import pick from 'lodash/pick';
 import React, {ChangeEventHandler, Component, FocusEventHandler, ReactNode} from 'react';
 import styled from 'styled-components';
 import {shouldForwardProp} from './styled-components';

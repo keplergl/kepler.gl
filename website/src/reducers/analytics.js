@@ -7,7 +7,7 @@ import {ActionTypes} from '@kepler.gl/actions';
 import {LOCATION_CHANGE} from 'react-router-redux';
 import Window from 'global/window';
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
-import get from 'lodash.get';
+import get from 'lodash/get';
 
 const getPayload = action => (action ? action.payload : null);
 

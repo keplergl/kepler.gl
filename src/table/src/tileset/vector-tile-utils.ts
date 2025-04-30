@@ -4,7 +4,7 @@
 import {DATA_TYPES as ANALYZER_DATA_TYPES} from 'type-analyzer';
 import {ascending} from 'd3-array';
 import Console from 'global/console';
-import uniq from 'lodash.uniq';
+import uniq from 'lodash/uniq';
 import {DATA_TYPES} from 'type-analyzer';
 
 import {MVTSource, TileJSON} from '@loaders.gl/mvt';

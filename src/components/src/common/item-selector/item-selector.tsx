@@ -3,7 +3,7 @@
 
 import React, {Component, createRef, ComponentType, MouseEventHandler, RefObject} from 'react';
 import classnames from 'classnames';
-import uniqBy from 'lodash.uniqby';
+import uniqBy from 'lodash/uniqBy';
 import styled, {IStyledComponent} from 'styled-components';
 
 import Accessor from './accessor';

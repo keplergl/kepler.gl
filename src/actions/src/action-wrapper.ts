@@ -4,7 +4,7 @@
 export const FORWARD = '@redux-forward/FORWARD';
 export const ADDRESS_PREFIX = '@@KG_';
 
-import curry from 'lodash.curry';
+import curry from 'lodash/curry';
 
 export const getActionForwardAddress = id => `${ADDRESS_PREFIX}${id.toUpperCase()}`;
 

@@ -4,7 +4,7 @@
 import React from 'react';
 import sinon from 'sinon';
 import test from 'tape';
-import uniq from 'lodash.uniq';
+import uniq from 'lodash/uniq';
 
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
 import {

@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import Task, {withTask} from 'react-palm/tasks';
-import cloneDeep from 'lodash.clonedeep';
+import cloneDeep from 'lodash/cloneDeep';
 import Console from 'global/console';
 
 // Utils

@@ -11,7 +11,7 @@ import React, {
   useRef,
   useState
 } from 'react';
-import uniq from 'lodash.uniq';
+import uniq from 'lodash/uniq';
 import {
   SortableContainer,
   SortableContainerProps,

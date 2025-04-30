@@ -3,7 +3,7 @@
 
 import React, {useState} from 'react';
 import styled from 'styled-components';
-import get from 'lodash.get';
+import get from 'lodash/get';
 import {IntlShape, useIntl} from 'react-intl';
 
 import FileUploadFactory from '../common/file-uploader/file-upload';
