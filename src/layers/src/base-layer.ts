@@ -1666,7 +1666,7 @@ class Layer implements KeplerLayer {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   getPositionAccessor(
     _dataContainer?: DataContainerInterface,
-    // TODO pass only data container for the next major version
+    // TODO refactor for the next major version to pass only dataset
     _dataset?: KeplerTable
   ): (...args: any[]) => any {
     // implemented in subclasses
