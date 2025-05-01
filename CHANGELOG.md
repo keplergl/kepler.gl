@@ -15,6 +15,22 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+## [3.1.2] - May 1 2025
+
+- fb3615b90 [chore] extra duckdb utils export (#3063)
+- a0d14b770 [fix] updateVisDataUpdater early exit (#3058)
+- 111b3180d [chore] pass props directly to Draggable legend, not withState (#3055)
+- 6bb6c98a1 [fix] Legend positioning fixes (#3052)
+- 7d601f110 [fix] Only open either the mapDraw dropdown or locale dropdown (#3056)
+- 52a2d2a2b [CHORE] disable auto lyaer creation based on color by int column (#3049)
+- e935ef51d [chore] extra exports from duckdb module (#3050)
+- 864dbe5c6 [Chore] Fix more style components warnings (#3047)
+- 9de30e2ba [Chore] Export duckdub utils, allow cols in validate dataset (#3042)
+- 6cc1ee4ef [Bug] Fix styled-components warnings for passing props to Dom (#3039)
+- cb5c14f81 [Bug] Add mapbox-gl dep to prevent Failed to resolve import in vite (#3036)
+- 7c3365fcf [chore] Get started minimal example with esbuild (#3028)
+- 224975a25 [chore] pass duckDB adapter via application config (#3023)
+
 ## [3.1.1] - March 11 2025
 
 - e271c8f8c [fix] fix for potential freeze during add data pipeline (#3015)
