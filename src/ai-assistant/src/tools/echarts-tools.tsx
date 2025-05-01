@@ -14,6 +14,7 @@ import {theme as keplerTheme, textColorLT} from '@kepler.gl/styles';
 import {layerSetIsValid} from '@kepler.gl/actions';
 import {Datasets} from '@kepler.gl/table';
 import {Layer} from '@kepler.gl/layers';
+import {Dispatch} from 'redux';
 
 import {getValuesFromDataset, highlightRows} from './utils';
 

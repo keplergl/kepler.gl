@@ -23,7 +23,9 @@ import {
   geocoding,
   routing,
   isochrone,
-  getCachedData
+  getCachedData,
+  IsochroneTool,
+  RoutingTool
 } from '@openassistant/osm';
 import {Datasets} from '@kepler.gl/table';
 import {Layer} from '@kepler.gl/layers';
@@ -33,6 +35,7 @@ import {addDataToMap} from '@kepler.gl/actions';
 import {LisaToolComponent} from './lisa-tool';
 import {getGeometriesFromDataset, getValuesFromDataset} from './utils';
 import {AiAssistantState} from '../reducers';
+import {ExtendedTool} from '@openassistant/core';
 
 export function getGeoTools(
   aiAssistant: AiAssistantState,
@@ -117,7 +120,7 @@ export function getGeoTools(
     component: CustomSpatialJoinToolComponent
   };
 
-  const routingTool = {
+  const routingTool: RoutingTool = {
     ...routing,
     context: {
       ...routing.context,
@@ -125,7 +128,7 @@ export function getGeoTools(
     }
   };
 
-  const isochroneTool = {
+  const isochroneTool: IsochroneTool = {
     ...isochrone,
     context: {
       ...isochrone.context,
@@ -140,13 +143,13 @@ export function getGeoTools(
     regressionTool,
     lisaTool,
     spatialJoinTool,
-    getUsStateGeojson,
-    getUsCountyGeojson,
-    getUsZipcodeGeojson,
-    queryUSZipcodes,
-    geocoding,
-    routing: routingTool,
-    isochrone: isochroneTool
+    getUsStateGeojson: getUsStateGeojson as ExtendedTool<any>,
+    getUsCountyGeojson: getUsCountyGeojson as ExtendedTool<any>,
+    getUsZipcodeGeojson: getUsZipcodeGeojson as ExtendedTool<any>,
+    queryUSZipcodes: queryUSZipcodes as ExtendedTool<any>,
+    geocoding: geocoding as ExtendedTool<any>,
+    routing: routingTool as ExtendedTool<any>,
+    isochrone: isochroneTool as ExtendedTool<any>
   };
 }
 

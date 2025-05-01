@@ -26,9 +26,10 @@ export const saveDataToMap = tool({
       const result: FeatureCollection[] = [];
 
       for (const datasetName of datasetNames) {
-        const geoms: FeatureCollection = getCachedData(datasetName);
+        const geoms = getCachedData(datasetName);
         if (geoms) {
-          result.push(geoms);
+          // TODO: the geoms could be BinaryGeometry here
+          result.push(geoms as FeatureCollection);
           loadedDatasetNames.push(datasetName);
           // remove the dataset from the cache
           removeCachedData(datasetName);
