@@ -51,7 +51,7 @@ export function getGeoTools(
     if (geoms.length === 0) {
       // get the geoms from the cache
       const geojson = getCachedData(datasetName);
-      if (geojson) {
+      if (geojson && 'features' in geojson) {
         geoms = geojson.features;
       }
     }
@@ -150,6 +150,9 @@ export function getGeoTools(
   };
 }
 
+/**
+ * Use SpatialJoinToolComponent adding join result to kepler.gl
+ */
 function CustomSpatialJoinToolComponent(props) {
   const dispatch = useDispatch();
 

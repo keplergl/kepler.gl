@@ -62,8 +62,7 @@ const requiredEnvVariables = [
   'FoursquareClientId',
   'FoursquareDomain',
   'FoursquareAPIURL',
-  'FoursquareUserMapsURL',
-  'GRAPHHOPPER_API_KEY'
+  'FoursquareUserMapsURL'
 ];
 
 /**

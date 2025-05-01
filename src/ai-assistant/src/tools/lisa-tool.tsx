@@ -5,6 +5,9 @@ import {saveAsDataset} from './utils';
 import {guessDefaultLayer} from './kepler-tools/layer-creation-tool';
 import {State} from '../components/ai-assistant-manager';
 
+/**
+ * Use LisaToolComponent adding Lisa result to kepler.gl
+ */
 export function LisaToolComponent({
   datasetName,
   significanceThreshold,
@@ -19,7 +22,9 @@ export function LisaToolComponent({
 }) {
   // Add validation check for input dataset
   if (datasetName.startsWith('lisa_')) {
-    throw new Error('Cannot use a previous LISA dataset as input for a new LISA analysis. Please use the original dataset instead.');
+    throw new Error(
+      'Cannot use a previous LISA dataset as input for a new LISA analysis. Please use the original dataset instead.'
+    );
   }
 
   const datasets = useSelector((state: State) => state.demo.keplerGl.map.visState.datasets);

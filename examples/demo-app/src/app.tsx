@@ -12,7 +12,6 @@ import isPropValid from '@emotion/is-prop-valid';
 import {WebMercatorViewport} from '@deck.gl/core';
 import {ScreenshotWrapper} from '@openassistant/ui';
 import {
-  messages as aiAssistantMessages,
   setStartScreenCapture,
   setScreenCaptured,
   AiAssistantPanel,
@@ -220,6 +219,10 @@ const App = props => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  /**
+   * Update map boundary when view state changes, used by ai-assistant to
+   * get data from vector tiles when map boundary changes
+   */
   const onViewStateChange = useCallback(
     viewState => {
       const viewport = new WebMercatorViewport(viewState);
@@ -600,8 +603,7 @@ const App = props => {
       (acc, language) => ({
         ...acc,
         [language]: {
-          ...(messages[language] || {}),
-          ...(aiAssistantMessages[language] || {})
+          ...(messages[language] || {})
         }
       }),
       {}
