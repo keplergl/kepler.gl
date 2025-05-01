@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useCallback, useEffect, useRef, useMemo, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import AutoSizer from 'react-virtualized/dist/commonjs/AutoSizer';
 import styled, {ThemeProvider, StyleSheetManager} from 'styled-components';
 import Window from 'global/window';
 import {connect, useDispatch} from 'react-redux';
-import cloneDeep from 'lodash/cloneDeep';
-import isEqual from 'lodash/isEqual';
+import cloneDeep from 'lodash.clonedeep';
+import isEqual from 'lodash.isequal';
+import {useSelector} from 'react-redux';
 import isPropValid from '@emotion/is-prop-valid';
 import {WebMercatorViewport} from '@deck.gl/core';
 import {ScreenshotWrapper} from '@openassistant/ui';
@@ -18,7 +19,6 @@ import {
   setMapBoundary
 } from '@kepler.gl/ai-assistant';
 import {panelBorderColor, theme} from '@kepler.gl/styles';
-import {useSelector} from 'react-redux';
 import {ParsedConfig} from '@kepler.gl/types';
 import {getApplicationConfig} from '@kepler.gl/utils';
 import {SqlPanel} from '@kepler.gl/duckdb';
@@ -228,7 +228,7 @@ const App = props => {
       const viewport = new WebMercatorViewport(viewState);
       const nw = viewport.unproject([0, 0]);
       const se = viewport.unproject([viewport.width, viewport.height]);
-      dispatch(setMapBoundary([nw, se]));
+      dispatch(setMapBoundary(nw, se));
     },
     [dispatch]
   );
@@ -598,18 +598,6 @@ const App = props => {
     );
   }, [dispatch]);
 
-  const combinedMessages = useMemo(() => {
-    return Object.keys(messages).reduce(
-      (acc, language) => ({
-        ...acc,
-        [language]: {
-          ...(messages[language] || {})
-        }
-      }),
-      {}
-    );
-  }, []);
-
   const _loadSampleData = useCallback(() => {
     // _loadPointData();
     // _loadGeojsonData();
@@ -674,7 +662,7 @@ const App = props => {
                             width={width}
                             height={height}
                             cloudProviders={CLOUD_PROVIDERS}
-                            localeMessages={combinedMessages}
+                            localeMessages={messages}
                             onExportToCloudSuccess={onExportFileSuccess}
                             onLoadCloudMapSuccess={onLoadCloudMapSuccess}
                             featureFlags={DEFAULT_FEATURE_FLAGS}

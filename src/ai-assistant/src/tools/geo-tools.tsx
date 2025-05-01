@@ -143,6 +143,7 @@ export function getGeoTools(
     regressionTool,
     lisaTool,
     spatialJoinTool,
+    // TODO: fix types
     getUsStateGeojson: getUsStateGeojson as ExtendedTool<any>,
     getUsCountyGeojson: getUsCountyGeojson as ExtendedTool<any>,
     getUsZipcodeGeojson: getUsZipcodeGeojson as ExtendedTool<any>,
@@ -154,7 +155,7 @@ export function getGeoTools(
 }
 
 /**
- * Use SpatialJoinToolComponent adding join result to kepler.gl
+ * Use SpatialJoinToolComponent to add the join result to kepler.gl
  */
 function CustomSpatialJoinToolComponent(props) {
   const dispatch = useDispatch();

@@ -19,9 +19,7 @@ import PROVIDER_MODELS from '../config/models.json';
 import {useLocalStorage} from 'usehooks-ts';
 import {GetAssistantModelByProvider} from '@openassistant/core';
 import {updateAiAssistantConfig} from '../actions';
-import {IntlProvider} from 'react-intl';
-import {messages} from '../localization';
-import {flattenMessages} from '@kepler.gl/utils';
+import {FormattedMessage, useIntl} from 'react-intl';
 
 const SectionTitle = styled.div`
   font-size: ${props => props.theme.inputFontSize};
@@ -123,6 +121,7 @@ const RangeSlider = appInjector.get(RangeSliderFactory);
 export function AiAssistantConfig() {
   const dispatch = useDispatch();
   const aiAssistantConfig = useSelector((state: State) => state.demo.aiAssistant.config);
+  const intl = useIntl();
 
   const [provider, setProvider] = useLocalStorage(
     'ai-assistant-provider',
@@ -237,113 +236,52 @@ export function AiAssistantConfig() {
   };
 
   return (
-    <IntlProvider locale="en" messages={flattenMessages(messages.en)}>
-      <StyledAiAssistantConfig className="ai-assistant-config__type">
-        <PanelLabelWrapper>
-          <SectionTitle>Select AI Provider</SectionTitle>
-        </PanelLabelWrapper>
-        <StyledWrapper>
-          <StyledItemSelector
-            selectedItems={provider}
-            options={Object.keys(PROVIDER_MODELS)}
-            multiSelect={false}
-            disabled={false}
-            placeholder="aiAssistantManager.aiProvider"
-            onChange={onAiProviderSelect}
-            filterOption="name"
-            getOptionValue={op => op}
-            displayOption={op => op}
-            searchable={false}
-            showArrow={true}
-          />
-        </StyledWrapper>
-        <PanelLabelWrapper>
-          <SectionTitle>Select LLM Model</SectionTitle>
-        </PanelLabelWrapper>
-        <StyledWrapper>
-          <StyledItemSelector
-            selectedItems={model}
-            options={PROVIDER_MODELS[provider]}
-            multiSelect={false}
-            disabled={false}
-            placeholder="aiAssistantManager.llmModel.placeholder"
-            onChange={onLLMModelSelect}
-            filterOption="name"
-            getOptionValue={op => op}
-            displayOption={op => op}
-            searchable={false}
-            showArrow={true}
-          />
-        </StyledWrapper>
-        {provider !== 'ollama' ? (
-          <>
-            <PanelLabelWrapper>
-              <SectionTitle>Enter API Key</SectionTitle>
-            </PanelLabelWrapper>
-            <div className="api-key-input">
-              <div className="api-key-input__icon">
-                <ApiKey height="20px" />
-              </div>
-              <Input
-                type="text"
-                onChange={onApiKeyChange}
-                placeholder="Enter your API Key"
-                value={apiKey}
-              />
-            </div>
-          </>
-        ) : (
-          <>
-            <PanelLabelWrapper>
-              <SectionTitle>Ollama Base URL</SectionTitle>
-            </PanelLabelWrapper>
-            <div className="api-key-input">
-              <div className="api-key-input__icon">
-                <ApiKey height="20px" />
-              </div>
-              <Input
-                type="text"
-                onChange={onBaseUrlChange}
-                placeholder="Enter Ollama Base URL"
-                value={baseUrl}
-              />
-            </div>
-          </>
-        )}
-        {connectionError && (
-          <StyleErrorMessage className="error-message">{errorMessage}</StyleErrorMessage>
-        )}
-        <PanelLabelWrapper>
-          <SectionTitle>Temperature</SectionTitle>
-        </PanelLabelWrapper>
-        <StyleSliderWrapper>
-          <RangeSlider
-            showInput={true}
-            isRanged={false}
-            value0={0}
-            value1={temperature}
-            onChange={onTemperatureChange}
-            range={[0, 2]}
-            step={0.1}
-          />
-        </StyleSliderWrapper>
-        <PanelLabelWrapper>
-          <SectionTitle>Top P</SectionTitle>
-        </PanelLabelWrapper>
-        <StyleSliderWrapper>
-          <RangeSlider
-            showInput={true}
-            isRanged={false}
-            value0={0}
-            value1={topP}
-            onChange={onTopPChange}
-            range={[0, 1]}
-            step={0.1}
-          />
-        </StyleSliderWrapper>
+    <StyledAiAssistantConfig className="ai-assistant-config__type">
+      <PanelLabelWrapper>
+        <SectionTitle>
+          <FormattedMessage id="aiAssistantManager.aiProvider" />
+        </SectionTitle>
+      </PanelLabelWrapper>
+      <StyledWrapper>
+        <StyledItemSelector
+          selectedItems={provider}
+          options={Object.keys(PROVIDER_MODELS)}
+          multiSelect={false}
+          disabled={false}
+          onChange={onAiProviderSelect}
+          filterOption="name"
+          getOptionValue={op => op}
+          displayOption={op => op}
+          searchable={false}
+          showArrow={true}
+        />
+      </StyledWrapper>
+      <PanelLabelWrapper>
+        <SectionTitle>
+          <FormattedMessage id="aiAssistantManager.llmModel.title" />
+        </SectionTitle>
+      </PanelLabelWrapper>
+      <StyledWrapper>
+        <StyledItemSelector
+          selectedItems={model}
+          options={PROVIDER_MODELS[provider]}
+          multiSelect={false}
+          disabled={false}
+          placeholder="Select LLM Model"
+          onChange={onLLMModelSelect}
+          filterOption="name"
+          getOptionValue={op => op}
+          displayOption={op => op}
+          searchable={false}
+          showArrow={true}
+        />
+      </StyledWrapper>
+      {provider !== 'ollama' ? (
         <>
           <PanelLabelWrapper>
-            <SectionTitle>Mapbox Token (optional: route/isochrone)</SectionTitle>
+            <SectionTitle>
+              <FormattedMessage id="aiAssistantManager.apiKey.placeholder" />
+            </SectionTitle>
           </PanelLabelWrapper>
           <div className="api-key-input">
             <div className="api-key-input__icon">
@@ -351,19 +289,89 @@ export function AiAssistantConfig() {
             </div>
             <Input
               type="text"
-              onChange={onMapboxTokenChange}
-              placeholder="Enter your Mapbox Token"
-              value={mapboxToken}
+              onChange={onApiKeyChange}
+              placeholder={intl.formatMessage({id: 'aiAssistantManager.apiKey.placeholder'})}
+              value={apiKey}
             />
           </div>
         </>
-        <StyledButton>
-          <Button onClick={onStartChat} width={'100%'}>
-            {isRunning && <LoadingSpinner size={12} />}
-            Let's Chat
-          </Button>
-        </StyledButton>
-      </StyledAiAssistantConfig>
-    </IntlProvider>
+      ) : (
+        <>
+          <PanelLabelWrapper>
+            <SectionTitle>
+              <FormattedMessage id="aiAssistantManager.baseUrl.placeholder" />
+            </SectionTitle>
+          </PanelLabelWrapper>
+          <div className="api-key-input">
+            <div className="api-key-input__icon">
+              <ApiKey height="20px" />
+            </div>
+            <Input
+              type="text"
+              onChange={onBaseUrlChange}
+              placeholder={intl.formatMessage({id: 'aiAssistantManager.baseUrl.placeholder'})}
+              value={baseUrl}
+            />
+          </div>
+        </>
+      )}
+      {connectionError && (
+        <StyleErrorMessage className="error-message">{errorMessage}</StyleErrorMessage>
+      )}
+      <PanelLabelWrapper>
+        <SectionTitle>
+          <FormattedMessage id="aiAssistantManager.temperature.title" />
+        </SectionTitle>
+      </PanelLabelWrapper>
+      <StyleSliderWrapper>
+        <RangeSlider
+          showInput={true}
+          isRanged={false}
+          value0={0}
+          value1={temperature}
+          onChange={onTemperatureChange}
+          range={[0, 2]}
+          step={0.1}
+        />
+      </StyleSliderWrapper>
+      <PanelLabelWrapper>
+        <SectionTitle>
+          <FormattedMessage id="aiAssistantManager.topP.title" />
+        </SectionTitle>
+      </PanelLabelWrapper>
+      <StyleSliderWrapper>
+        <RangeSlider
+          showInput={true}
+          isRanged={false}
+          value0={0}
+          value1={topP}
+          onChange={onTopPChange}
+          range={[0, 1]}
+          step={0.1}
+        />
+      </StyleSliderWrapper>
+      <>
+        <PanelLabelWrapper>
+          <SectionTitle>Mapbox Token (optional: route/isochrone)</SectionTitle>
+        </PanelLabelWrapper>
+        <div className="api-key-input">
+          <div className="api-key-input__icon">
+            <ApiKey height="20px" />
+          </div>
+          <Input
+            type="text"
+            onChange={onMapboxTokenChange}
+            placeholder="Enter your Mapbox Token"
+            value={mapboxToken}
+          />
+        </div>
+      </>
+      <StyledButton>
+        <Button onClick={onStartChat} width={'100%'}>
+          {isRunning && <LoadingSpinner size={12} />}
+          <FormattedMessage id="aiAssistantManager.startChat" />
+        </Button>
+      </StyledButton>
+    </StyledAiAssistantConfig>
   );
 }

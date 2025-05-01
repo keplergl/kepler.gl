@@ -1,9 +1,12 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useCallback} from 'react';
+import React, {useCallback, useMemo} from 'react';
 import styled from 'styled-components';
 import {useSelector, useDispatch} from 'react-redux';
+import {IntlProvider} from 'react-intl';
+import {flattenMessages} from '@kepler.gl/utils';
+import {messages as keplerGlMessages} from '@kepler.gl/localization';
 
 import {MapStyle} from '@kepler.gl/reducers';
 import {SidePanelTitleFactory, Icons} from '@kepler.gl/components';
@@ -13,6 +16,7 @@ import {AiAssistantState} from '../index';
 import {updateAiAssistantConfig} from '../actions';
 import {AiAssistantConfig} from './ai-assistant-config';
 import {AiAssistantComponent} from './ai-assistant-component';
+import {messages} from '../localization';
 
 const StyledAiAssistantPanelContainer = styled.div`
   display: flex;
@@ -60,6 +64,7 @@ export type State = {
   demo: {
     keplerGl: {
       map: {
+        uiState: {locale: string};
         visState: VisState;
         mapStyle: MapStyle;
       };
@@ -71,6 +76,7 @@ export type State = {
 export function AiAssistantPanel() {
   const dispatch = useDispatch();
   const aiAssistant = useSelector((state: State) => state.demo.aiAssistant);
+  const locale = useSelector((state: State) => state.demo.keplerGl.map.uiState.locale);
 
   const onConfigButtonClick = useCallback(() => {
     if (aiAssistant) {
@@ -79,19 +85,35 @@ export function AiAssistantPanel() {
     }
   }, [aiAssistant, dispatch]);
 
-  return (
-    <StyledAiAssistantPanelContainer className="ai-assistant-manager">
-      <StyledAiAssistantPanel>
-        <StyledAiAssistantPanelHeader>
-          <SidePanelTitle className="ai-assistant-manager-title" title="AI Assistant">
-            <Icons.Settings onClick={onConfigButtonClick} />
-          </SidePanelTitle>
-        </StyledAiAssistantPanelHeader>
+  // combine keplerGlMessages and messages
+  const combinedMessages = useMemo(() => {
+    return Object.keys(messages).reduce(
+      (acc, language) => ({
+        ...acc,
+        [language]: {
+          ...(messages[language] || {}),
+          ...(keplerGlMessages[language] || {})
+        }
+      }),
+      {}
+    );
+  }, []);
 
-        <StyledAiAssistantPanelContent>
-          {!aiAssistant?.config.isReady ? <AiAssistantConfig /> : <AiAssistantComponent />}
-        </StyledAiAssistantPanelContent>
-      </StyledAiAssistantPanel>
-    </StyledAiAssistantPanelContainer>
+  return (
+    <IntlProvider locale={locale} messages={flattenMessages(combinedMessages[locale])}>
+      <StyledAiAssistantPanelContainer className="ai-assistant-manager">
+        <StyledAiAssistantPanel>
+          <StyledAiAssistantPanelHeader>
+            <SidePanelTitle className="ai-assistant-manager-title" title="AI Assistant">
+              <Icons.Settings onClick={onConfigButtonClick} />
+            </SidePanelTitle>
+          </StyledAiAssistantPanelHeader>
+
+          <StyledAiAssistantPanelContent>
+            {!aiAssistant?.config.isReady ? <AiAssistantConfig /> : <AiAssistantComponent />}
+          </StyledAiAssistantPanelContent>
+        </StyledAiAssistantPanel>
+      </StyledAiAssistantPanelContainer>
+    </IntlProvider>
   );
 }
