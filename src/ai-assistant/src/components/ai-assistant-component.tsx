@@ -9,7 +9,6 @@ import {MessageModel} from '@openassistant/core';
 import {AiAssistant} from '@openassistant/ui';
 import '@openassistant/echarts/dist/index.css';
 import '@openassistant/ui/dist/index.css';
-
 import {setScreenCaptured, setStartScreenCapture, updateAiAssistantMessages} from '../actions';
 import {
   ASSISTANT_DESCRIPTION,
@@ -62,7 +61,7 @@ export function AiAssistantComponent() {
   useEffect(() => {
     const metaData = getDatasetContext(visState?.datasets, visState?.layers || []);
     setDatasetMetaData(metaData);
-    // re-initialize assistant when datasets, filters or layers change
+    // re-initialize assistant when datasets or layers change
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visState?.datasets, visState?.layers]);
 

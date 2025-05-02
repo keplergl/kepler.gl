@@ -1,7 +1,7 @@
 import {tool} from '@openassistant/core';
 import {getCachedData, generateId, removeCachedData} from '@openassistant/osm';
 import {z} from 'zod';
-import React, {useEffect} from 'react';
+import {useEffect} from 'react';
 import {useDispatch} from 'react-redux';
 import {processFileData} from '@kepler.gl/processors';
 import {addDataToMap} from '@kepler.gl/actions';
@@ -9,17 +9,12 @@ import {FeatureCollection} from 'geojson';
 
 export const saveDataToMap = tool({
   description:
-    'Save data generated from other tools e.g. buffer, zipcode, county, state, isochrone, etc. to kepler.gl',
+    'Save data generated from other tools e.g. buffer, zipcode, county, state, isochrone, etc. to kepler.gl. Please avoid using blank space or special characters in the saveDatasetName.',
   parameters: z.object({
     datasetNames: z.array(z.string()),
-    saveDatasetName: z
-      .string()
-      .optional()
-      .describe(
-        'The name of the dataset to save. Please avoid using blank space or special characters.'
-      )
+    saveDatasetName: z.string()
   }),
-  execute: async (args: {datasetNames: string[]; saveDatasetName?: string}) => {
+  execute: async (args: {datasetNames: string[]; saveDatasetName?: string | null}) => {
     try {
       const {datasetNames, saveDatasetName} = args;
       const loadedDatasetNames: string[] = [];
@@ -41,7 +36,7 @@ export const saveDataToMap = tool({
       }
 
       // create a unique id for the combined datasets
-      const datasetId = `${saveDatasetName}_${generateId()}` || generateId();
+      const datasetId = saveDatasetName ? `${saveDatasetName}_${generateId()}` : generateId();
 
       return {
         llmResult: {
@@ -108,5 +103,5 @@ export function SaveDataToMapToolComponent({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return <div>UsZipcodeToolComponent</div>;
+  return null;
 }

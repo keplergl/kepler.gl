@@ -77,7 +77,6 @@ function getValuesFromVectorTileLayer(datasetId: string, layers: Layer[], field:
     if (value === null) break;
     values.push(value);
   }
-  console.log('value length:', values.length);
   return values;
 }
 
