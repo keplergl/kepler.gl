@@ -3,14 +3,13 @@
 
 import {
   arrayInsert,
-  arrayMove,
   camelToTitle,
   camelize,
   capitalizeFirstLetter,
   getError,
   set
 } from '@kepler.gl/utils';
-import {toArray} from '@kepler.gl/common-utils';
+import {toArray, arrayMove} from '@kepler.gl/common-utils';
 import test from 'tape';
 
 test('Utils -> set', t => {

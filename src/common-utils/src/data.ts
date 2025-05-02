@@ -51,6 +51,16 @@ export function toArray<T>(item: T | T[]): T[] {
 }
 
 /**
+ * Move an array item to a different position. Returns a new array with the item moved to the new position.
+ */
+export function arrayMove<T>(array: T[], from: number, to: number): T[] {
+  const newArray = array.slice();
+  newArray.splice(to < 0 ? newArray.length + to : to, 0, newArray.splice(from, 1)[0]);
+
+  return newArray;
+}
+
+/**
  * Check whether geojson linestring's 4th coordinate is 1) not timestamp 2) unix time stamp 3) real date time
  * @param timestamps array to be tested if its elements are timestamp
  * @returns the type of timestamp: unix/datetime/invalid(not timestamp)

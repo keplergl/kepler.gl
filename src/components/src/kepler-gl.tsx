@@ -608,7 +608,7 @@ function KeplerGlFactory(
                       ref={this.root}
                     >
                       <NotificationPanel {...notificationPanelFields} />
-                      <DndContext>
+                      <DndContext visState={visState}>
                         {!uiState.readOnly && !readOnly && <SidePanel {...sideFields} />}
                         <MapsLayout className="maps" mapState={this.props.mapState}>
                           {mapContainers}

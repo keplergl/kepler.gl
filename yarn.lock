@@ -3326,8 +3326,6 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@kepler.gl/constants@workspace:src/constants"
   dependencies:
-    "@dnd-kit/core": "npm:^6.1.0"
-    "@dnd-kit/modifiers": "npm:^7.0.0"
     "@kepler.gl/types": "npm:3.1.2"
     "@types/d3-scale": "npm:^3.2.2"
     "@types/d3-time": "npm:^2"
@@ -3532,7 +3530,6 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@kepler.gl/reducers@workspace:src/reducers"
   dependencies:
-    "@dnd-kit/sortable": "npm:^8.0.0"
     "@kepler.gl/actions": "npm:3.1.2"
     "@kepler.gl/cloud-providers": "npm:3.1.2"
     "@kepler.gl/common-utils": "npm:3.1.2"
@@ -3660,7 +3657,6 @@ __metadata:
   resolution: "@kepler.gl/utils@workspace:src/utils"
   dependencies:
     "@deck.gl/core": "npm:^8.9.27"
-    "@dnd-kit/sortable": "npm:^8.0.0"
     "@kepler.gl/common-utils": "npm:3.1.2"
     "@kepler.gl/constants": "npm:3.1.2"
     "@kepler.gl/types": "npm:3.1.2"

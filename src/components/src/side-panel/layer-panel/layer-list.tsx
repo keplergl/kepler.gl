@@ -13,8 +13,9 @@ import {useSortable, SortableContext, verticalListSortingStrategy} from '@dnd-ki
 import {CSS} from '@dnd-kit/utilities';
 import LayerPanelFactory from './layer-panel';
 import {findById} from '@kepler.gl/utils';
-import {dataTestIds, SORTABLE_LAYER_TYPE, SORTABLE_SIDE_PANEL_TYPE} from '@kepler.gl/constants';
+import {dataTestIds} from '@kepler.gl/constants';
 import {SplitMap} from '@kepler.gl/types';
+import {SORTABLE_LAYER_TYPE, SORTABLE_SIDE_PANEL_TYPE} from '../../common/dnd-layer-items';
 
 export type LayerListProps = {
   datasets: Datasets;

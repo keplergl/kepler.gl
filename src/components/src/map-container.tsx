@@ -70,10 +70,10 @@ import {
   THROTTLE_NOTIFICATION_TIME,
   DEFAULT_PICKING_RADIUS,
   NO_MAP_ID,
-  EMPTY_MAPBOX_STYLE,
-  DROPPABLE_MAP_CONTAINER_TYPE
+  EMPTY_MAPBOX_STYLE
 } from '@kepler.gl/constants';
 
+import {DROPPABLE_MAP_CONTAINER_TYPE} from './common/dnd-layer-items';
 // Contexts
 import {MapViewStateContext} from './map-view-state-context';
 
