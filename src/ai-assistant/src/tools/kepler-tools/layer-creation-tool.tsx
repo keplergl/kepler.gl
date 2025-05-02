@@ -60,10 +60,10 @@ export const addLayer = tool<
       'trip',
       's2'
     ]),
-    colorScale: z.enum(['quantile', 'quantize', 'ordinal', 'custom']).nullable(),
+    colorScale: z.enum(['quantile', 'quantize', 'ordinal', 'custom']).optional(),
     customColorScale: z
       .array(z.number())
-      .nullable()
+      .optional()
       .describe(
         'An array of numeric breakpoints used to define custom color intervals. Only applicable when colorScale is set to "custom"'
       )
