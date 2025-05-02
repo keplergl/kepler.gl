@@ -49,7 +49,9 @@ export {
   getVisibleDatasets,
   makeGetActionCreators,
   mapFieldsSelector,
-  plotContainerSelector
+  bottomWidgetSelector,
+  plotContainerSelector,
+  geoCoderPanelSelector
 } from './kepler-gl';
 export {default as LayerAnimationControllerFactory} from './layer-animation-controller';
 export {Attribution, default as MapContainerFactory} from './map-container';
