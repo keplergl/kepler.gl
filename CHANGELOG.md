@@ -15,6 +15,10 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+## [3.1.3] - May 2 2025
+
+- d5ef5f713 [Chore] remove dnd-kit from dependency of utils and reducer, remove use of withState in dnd context (#3067)
+
 ## [3.1.2] - May 1 2025
 
 - fb3615b90 [chore] extra duckdb utils export (#3063)
