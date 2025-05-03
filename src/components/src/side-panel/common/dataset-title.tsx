@@ -88,7 +88,7 @@ const RemoveDataset = ({datasetKey, removeDataset}: RemoveDatasetProps) => (
     data-for={`delete-${datasetKey}`}
   >
     <Trash
-      height="18px"
+      height="14px"
       onClick={e => {
         e.stopPropagation();
         removeDataset?.(datasetKey);

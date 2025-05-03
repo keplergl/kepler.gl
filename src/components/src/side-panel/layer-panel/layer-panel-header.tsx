@@ -364,7 +364,7 @@ export const HeaderWarning = ({warning, id}) => (
 );
 
 const defaultActionIcons = {
-  remove: props => <Trash {...props} height="20px" />,
+  remove: props => <Trash {...props} height="16px" />,
   visible: props => <EyeSeen {...props} height="16px" />,
   hidden: props => <EyeUnseen {...props} height="16px" />,
   enableConfig: props => <ArrowDown {...props} height="18px" />,
