@@ -104,6 +104,10 @@ const GlobalStyle = styled.div`
     color: ${props => props.theme.labelColor};
   }
 
+  :focus {
+    outline: none;
+  }
+
   .maplibregl-ctrl .maplibregl-ctrl-logo {
     display: none;
   }

@@ -65,7 +65,7 @@ interface ChickletProps {
 const Chicklet = ({disabled, name, remove, inputTheme}: ChickletProps) => (
   <ChickletButton inputTheme={inputTheme}>
     <ChickletTag>{name}</ChickletTag>
-    <Delete onClick={disabled ? undefined : remove} />
+    <Delete height="16px" onClick={disabled ? undefined : remove} />
   </ChickletButton>
 );
 

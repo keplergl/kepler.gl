@@ -140,7 +140,7 @@ function DropdownSelect<Option>({
       </DropdownSelectValue>
       {erasable && hasValue ? (
         <DropdownSelectActionRight>
-          <Delete height="12px" onClick={onErase} />
+          <Delete height="16px" onClick={onErase} />
         </DropdownSelectActionRight>
       ) : showArrow ? (
         <DropdownSelectActionRight>

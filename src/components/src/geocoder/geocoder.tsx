@@ -282,7 +282,7 @@ const GeoCoder: React.FC<GeocoderProps & IntlProps> = ({
         />
         {showDelete ? (
           <div className="remove-result">
-            <Delete height="12px" onClick={onMarkDeleted} />
+            <Delete height="16px" onClick={onMarkDeleted} />
           </div>
         ) : null}
       </div>

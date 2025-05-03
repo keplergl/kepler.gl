@@ -4,11 +4,11 @@
 import React, {Component} from 'react';
 import Base, {BaseProps} from './base';
 
-export default class Save2 extends Component<Partial<BaseProps>> {
+export default class PointerClick extends Component<Partial<BaseProps>> {
   static defaultProps = {
     height: '16px',
     viewBox: '0 0 24 24',
-    predefinedClassName: 'data-ex-icons-save2'
+    predefinedClassName: 'data-ex-icons-pointer-click'
   };
 
   render() {
@@ -20,9 +20,11 @@ export default class Save2 extends Component<Partial<BaseProps>> {
         strokeLinecap="round"
         strokeLinejoin="round"
       >
-        <path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" />
-        <path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7" />
-        <path d="M7 3v4a1 1 0 0 0 1 1h7" />
+        <path d="M14 4.1 12 6" />
+        <path d="m5.1 8-2.9-.8" />
+        <path d="m6 12-1.9 2" />
+        <path d="M7.2 2.2 8 5.1" />
+        <path d="M9.037 9.69a.498.498 0 0 1 .653-.653l11 4.5a.5.5 0 0 1-.074.949l-4.349 1.041a1 1 0 0 0-.74.739l-1.04 4.35a.5.5 0 0 1-.95.074z" />
       </Base>
     );
   }

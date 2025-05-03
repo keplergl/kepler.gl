@@ -19,7 +19,7 @@ import {StyledDatasetTitleProps, RemoveDatasetProps, ShowDataTableProps} from '.
 const StyledDatasetTitle = styled.div<StyledDatasetTitleProps>`
   color: ${props => props.theme.textColor};
   display: flex;
-  align-items: flex-start;
+  align-items: center;
 
   .source-data-arrow {
     height: 16px;

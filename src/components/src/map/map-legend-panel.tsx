@@ -308,7 +308,7 @@ type MapLegendPanelComponents = {
 type MapLegendPanelComponentType = React.FC<MapLegendPanelProps>;
 
 const defaultActionIcons = {
-  legend: Legend
+  legend: props => <Legend {...props} height="18px" />
 };
 
 const MapLegendPanelComponent = ({

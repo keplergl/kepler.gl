@@ -21,7 +21,7 @@ import {
   VertDots,
   WarningSign,
   Reset,
-  Crosshairs
+  ZoomIn
 } from '../../common/icons';
 
 import {InlineInput, StyledPanelHeader} from '../../common/styled-components';
@@ -364,13 +364,13 @@ export const HeaderWarning = ({warning, id}) => (
 );
 
 const defaultActionIcons = {
-  remove: Trash,
-  visible: EyeSeen,
-  hidden: EyeUnseen,
-  enableConfig: ArrowDown,
-  duplicate: Copy,
+  remove: props => <Trash {...props} height="16px" />,
+  visible: props => <EyeSeen {...props} height="16px" />,
+  hidden: props => <EyeUnseen {...props} height="16px" />,
+  enableConfig: props => <ArrowDown {...props} height="18px" />,
+  duplicate: props => <Copy {...props} height="14px" />,
   resetIsValid: Reset,
-  crosshairs: Crosshairs
+  crosshairs: props => <ZoomIn {...props} height="14px" />
 };
 
 LayerPanelHeaderFactory.deps = [LayerTitleSectionFactory, LayerPanelHeaderActionSectionFactory];

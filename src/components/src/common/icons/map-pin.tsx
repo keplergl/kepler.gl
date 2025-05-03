@@ -4,11 +4,11 @@
 import React, {Component} from 'react';
 import Base, {BaseProps} from './base';
 
-export default class Save2 extends Component<Partial<BaseProps>> {
+export default class MapPin extends Component<Partial<BaseProps>> {
   static defaultProps = {
     height: '16px',
     viewBox: '0 0 24 24',
-    predefinedClassName: 'data-ex-icons-save2'
+    predefinedClassName: 'data-ex-icons-map-pin'
   };
 
   render() {
@@ -20,9 +20,9 @@ export default class Save2 extends Component<Partial<BaseProps>> {
         strokeLinecap="round"
         strokeLinejoin="round"
       >
-        <path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" />
-        <path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7" />
-        <path d="M7 3v4a1 1 0 0 0 1 1h7" />
+        <path d="M18 8c0 3.613-3.869 7.429-5.393 8.795a1 1 0 0 1-1.214 0C9.87 15.429 6 11.613 6 8a6 6 0 0 1 12 0" />
+        <circle cx="12" cy="8" r="2" />
+        <path d="M8.714 14h-3.71a1 1 0 0 0-.948.683l-2.004 6A1 1 0 0 0 3 22h18a1 1 0 0 0 .948-1.316l-2-6a1 1 0 0 0-.949-.684h-3.712" />
       </Base>
     );
   }
