@@ -115,7 +115,7 @@ function DndContextFactory(
       },
       [onLayerDragEnd, onEffectDragEnd]
     );
-    console.log('dndContext', {activeLayer});
+
     return (
       <DndKitContext onDragStart={onDragStart} onDragEnd={onDragEnd} modifiers={dndModifiers}>
         {children}

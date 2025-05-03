@@ -7,7 +7,7 @@ import classnames from 'classnames';
 import {createSelector} from 'reselect';
 import {StyledPanelDropdown, Tooltip} from '../common/styled-components';
 import KeplerGlLogo from '../common/logo';
-import {Save, DataTable, Save2, Picture, Db, MapIcon, Share} from '../common/icons';
+import {Save, DataTable, Save2, Picture, Db, BaseMap, Share} from '../common/icons';
 import Toolbar, {ToolbarProps} from '../common/toolbar';
 import ToolbarItem, {ToolbarItemProps} from '../common/toolbar-item';
 import {FormattedMessage} from '@kepler.gl/localization';
@@ -158,7 +158,7 @@ const PanelAction: React.FC<PanelActionProps> = React.memo(({item, showExportDro
     >
       {item.label ? <p>{item.label}</p> : null}
       <a target={item.blank ? '_blank' : ''} href={item.href} rel="noreferrer">
-        <item.iconComponent height="20px" {...item.iconComponentProps} />
+        <item.iconComponent height="18px" {...item.iconComponentProps} />
       </a>
       {item.tooltip ? (
         <Tooltip id={`${item.id}-action`} place="bottom" delayShow={500} effect="solid">
@@ -229,7 +229,7 @@ export const SaveExportDropdownFactory = (
     },
     {
       label: 'toolbar.exportMap',
-      icon: MapIcon,
+      icon: BaseMap,
       key: 'map',
       onClick: props => props.onExportMap
     },

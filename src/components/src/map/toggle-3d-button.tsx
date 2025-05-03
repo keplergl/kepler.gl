@@ -23,7 +23,7 @@ export type Toggle3dButtonProps = {
 
 function Toggle3dButtonFactory(MapControlTooltip) {
   const defaultActionIcons = {
-    cube: Cube3d
+    cube: props => <Cube3d {...props} height="18px" />
   };
   /** @type {import('./toggle-3d-button').Toggle3dButtonComponent} */
   const Toggle3dButton: React.FC<Toggle3dButtonProps> = ({

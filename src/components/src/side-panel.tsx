@@ -15,7 +15,7 @@ import {
   ADD_MAP_STYLE_ID
 } from '@kepler.gl/constants';
 
-import {BaseMap, Layers, FilterFunnel, Settings} from './common/icons';
+import {BaseMap, Layers, FilterFunnel, PointerClick} from './common/icons';
 
 import SidebarFactory from './side-panel/side-bar';
 import PanelHeaderFactory from './side-panel/panel-header';
@@ -78,7 +78,7 @@ export default function SidePanelFactory(
   const SIDEBAR_ICONS = {
     layer: props => <Layers {...props} height="18px" />,
     filter: props => <FilterFunnel {...props} height="18px" />,
-    interaction: props => <Settings {...props} height="18px" />,
+    interaction: props => <PointerClick {...props} height="18px" />,
     map: props => <BaseMap {...props} height="18px" />
   };
 

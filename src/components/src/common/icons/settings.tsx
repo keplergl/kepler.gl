@@ -16,9 +16,9 @@ export default class Settings extends Component<Partial<BaseProps>> {
       <Base
         {...this.props}
         style={{fill: 'none', stroke: 'currentcolor'}}
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
       >
         <path d="M20 7h-9" />
         <path d="M14 17H5" />
