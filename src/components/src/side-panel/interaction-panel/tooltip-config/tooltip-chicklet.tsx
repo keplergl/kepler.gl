@@ -244,7 +244,7 @@ function TooltipChickletFactory(
               )}
             </ChickletAddonWrapper>
           )}
-          <Delete onClick={disabled ? null : remove} />
+          <Delete height="16px" onClick={disabled ? null : remove} />
         </ChickletButton>
       </SortableStyledItem>
     );

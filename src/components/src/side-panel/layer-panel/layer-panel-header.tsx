@@ -367,7 +367,7 @@ const defaultActionIcons = {
   remove: props => <Trash {...props} height="20px" />,
   visible: props => <EyeSeen {...props} height="16px" />,
   hidden: props => <EyeUnseen {...props} height="16px" />,
-  enableConfig: ArrowDown,
+  enableConfig: props => <ArrowDown {...props} height="18px" />,
   duplicate: props => <Copy {...props} height="14px" />,
   resetIsValid: Reset,
   crosshairs: props => <ZoomIn {...props} height="14px" />

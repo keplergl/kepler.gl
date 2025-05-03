@@ -7,7 +7,7 @@ import classnames from 'classnames';
 import {createSelector} from 'reselect';
 import {StyledPanelDropdown, Tooltip} from '../common/styled-components';
 import KeplerGlLogo from '../common/logo';
-import {Save, DataTable, Save2, Picture, Db, Map as MapIcon, Share} from '../common/icons';
+import {Save, DataTable, Save2, Picture, Db, MapIcon, Share} from '../common/icons';
 import Toolbar, {ToolbarProps} from '../common/toolbar';
 import ToolbarItem, {ToolbarItemProps} from '../common/toolbar-item';
 import {FormattedMessage} from '@kepler.gl/localization';
