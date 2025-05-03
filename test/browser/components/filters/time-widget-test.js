@@ -153,7 +153,7 @@ test('Components -> TimeWidget.mount -> test actions', t => {
   t.deepEqual(toggleAnimation.args[0], [0], 'should call toggle animation');
 
   // hit speed icon
-  wrapper.find(Icons.Rocket).at(0).simulate('click');
+  wrapper.find(Icons.Speed).at(0).simulate('click');
 
   t.equal(wrapper.find(AnimationSpeedSlider).length, 1, 'should render AnimationSpeedSlider');
   t.equal(
