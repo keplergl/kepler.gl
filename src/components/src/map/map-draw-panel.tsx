@@ -89,7 +89,7 @@ function MapDrawPanelFactory(
               }}
               active={isActive}
             >
-              <actionIcons.polygon height="22px" />
+              <actionIcons.polygon height="18px" />
             </MapControlButton>
           </MapControlTooltip>
         </div>
