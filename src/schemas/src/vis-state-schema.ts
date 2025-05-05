@@ -693,7 +693,7 @@ export class InteractionSchemaV1 extends Schema {
   load(interactionConfig: SavedInteractionConfig): {
     interactionConfig: Partial<SavedInteractionConfig>;
   } {
-    const modifiedConfig = interactionConfig;
+    const modifiedConfig = cloneDeep(interactionConfig);
     Object.keys(interactionConfig).forEach(configType => {
       if (configType === 'tooltip') {
         const fieldsToShow = modifiedConfig[configType].fieldsToShow;
