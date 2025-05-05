@@ -22,6 +22,7 @@ import {
 import {findDefaultColorField, DataContainerInterface, createDataContainer} from '@kepler.gl/utils';
 import H3HexagonLayerIcon from './h3-hexagon-layer-icon';
 import {
+  ALL_FIELD_TYPES,
   CHANNEL_SCALES,
   HIGHLIGH_COLOR_3D,
   DEFAULT_COLOR_UI,
@@ -38,7 +39,7 @@ import {
   Merge,
   LayerColumn
 } from '@kepler.gl/types';
-import {KeplerTable} from '@kepler.gl/table';
+import {Datasets, KeplerTable} from '@kepler.gl/table';
 
 import {getTextOffsetByRadius, formatTextLabelData} from '../layer-text-label';
 
@@ -95,6 +96,22 @@ export const hexIdAccessor =
   (dc: DataContainerInterface) =>
   d =>
     dc.valueAt(d.index, hex_id.fieldIdx);
+
+/** Accessor that tries to convert h3 indicies in decimal form to hex form */
+export const hexIdExAccessor =
+  ({hex_id}: HexagonIdLayerColumnsConfig) =>
+  (dc: DataContainerInterface) =>
+  d => {
+    const value = dc.valueAt(d.index, hex_id.fieldIdx);
+    if (h3IsValid(value)) {
+      return value;
+    }
+    try {
+      return BigInt(value).toString(16);
+    } catch {
+      return null;
+    }
+  };
 
 export const defaultElevation = 500;
 export const defaultCoverage = 1;
@@ -156,8 +173,12 @@ export default class HexagonIdLayer extends Layer {
     super(props);
     this.dataToFeature = {centroids: []};
     this.registerVisConfig(HexagonIdVisConfigs);
-    this.getPositionAccessor = (dataContainer: DataContainerInterface) =>
-      hexIdAccessor(this.config.columns)(dataContainer);
+    this.getPositionAccessor = (dataContainer: DataContainerInterface, dataset?: KeplerTable) => {
+      const fieldType = dataset?.fields[this.config.columns.hex_id.fieldIdx].type;
+      return fieldType === ALL_FIELD_TYPES.h3
+        ? hexIdAccessor(this.config.columns)(dataContainer)
+        : hexIdExAccessor(this.config.columns)(dataContainer);
+    };
   }
 
   get type(): 'hexagonId' {
@@ -308,12 +329,14 @@ export default class HexagonIdLayer extends Layer {
 
   // TODO: fix complexity
   /* eslint-disable complexity */
-  formatLayerData(datasets, oldLayerData) {
+  formatLayerData(datasets: Datasets, oldLayerData) {
     if (this.config.dataId === null) {
       return {};
     }
-    const {gpuFilter, dataContainer} = datasets[this.config.dataId];
-    const getHexId = this.getPositionAccessor(dataContainer);
+
+    const dataset = datasets[this.config.dataId];
+    const {gpuFilter, dataContainer} = dataset;
+    const getHexId = this.getPositionAccessor(dataContainer, dataset);
     const {data, triggerChanged} = this.updateData(datasets, oldLayerData);
     const accessors = this.getAttributeAccessors({dataContainer});
     const {textLabel} = this.config;
