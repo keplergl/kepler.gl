@@ -89,17 +89,19 @@ export function parseGeoJsonRawFeature(rawFeature: unknown): Feature | null {
 export function getGeojsonLayerMeta({
   dataContainer,
   getFeature,
-  config
+  config,
+  sortByColumn
 }: {
   dataContainer: DataContainerInterface;
   getFeature: GetFeature;
   config: LayerBaseConfig;
+  sortByColumn?: string;
 }): GeojsonLayerMetaProps {
   const dataToFeature =
     config.columnMode === COLUMN_MODE_GEOJSON
       ? getGeojsonDataMaps(dataContainer, getFeature)
       : // COLUMN_MODE_TABLE
-        groupColumnsAsGeoJson(dataContainer, config.columns, 'sortBy');
+        groupColumnsAsGeoJson(dataContainer, config.columns, sortByColumn || 'sortBy');
 
   // get bounds from features
   const bounds = getGeojsonBounds(dataToFeature);
