@@ -17,6 +17,8 @@ Ref: http://keepachangelog.com/en/0.3.0/
 
 ## [3.1.4] - May 5 2025
 
+- 03b8ea0a9 [Chore] Use clonedeep in interaction config load (#3080)
+- a6104eafe [Chore] drop lodash per-method packages in favor of the main lodash (#3065)
 - abb3fd473 [feat] h3 layer from decimal format (#3066)
 - 191f66161 [fix] fix for exported maps. Change react-markdown to markdown-to-jsx (#3077)
 - 3c83e74b3 [chore] Added types in Action (#3075)
