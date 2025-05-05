@@ -6,7 +6,7 @@ import React, {Component, createRef} from 'react';
 import {createSelector} from 'reselect';
 import styled from 'styled-components';
 import {Map} from 'react-map-gl';
-import debounce from 'lodash.debounce';
+import debounce from 'lodash/debounce';
 import {
   exportImageError,
   scaleMapStyleByResolution,

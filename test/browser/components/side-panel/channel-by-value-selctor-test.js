@@ -6,7 +6,7 @@
 import {layerColorUIChange, layerVisualChannelConfigChange} from '@kepler.gl/actions';
 import {keplerGlReducerCore as coreReducer} from '@kepler.gl/reducers';
 import {ColorBreaksDisplay} from '@kepler.gl/components';
-import cloneDeep from 'lodash.clonedeep';
+import cloneDeep from 'lodash/cloneDeep';
 import React from 'react';
 import sinon from 'sinon';
 import test from 'tape';

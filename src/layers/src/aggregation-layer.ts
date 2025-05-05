@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import memoize from 'lodash.memoize';
+import memoize from 'lodash/memoize';
 import Layer, {
   LayerBaseConfig,
   LayerBaseConfigPartial,

@@ -2,9 +2,9 @@
 // Copyright contributors to the kepler.gl project
 
 import test from 'tape';
-import cloneDeep from 'lodash.clonedeep';
+import cloneDeep from 'lodash/cloneDeep';
 import Task, {withTask, drainTasksForTesting, succeedTaskInTest} from 'react-palm/tasks';
-import CloneDeep from 'lodash.clonedeep';
+import CloneDeep from 'lodash/cloneDeep';
 
 import keplerGlReducer, {
   mergeFilters,

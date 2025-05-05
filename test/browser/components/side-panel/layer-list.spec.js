@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import React from 'react';
-import cloneDeep from 'lodash.clonedeep';
+import cloneDeep from 'lodash/cloneDeep';
 
 import {fireEvent, screen} from '@testing-library/react';
 import {dataTestIds} from '@kepler.gl/constants';

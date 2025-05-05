@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {bisectLeft, quantileSorted as d3Quantile, extent} from 'd3-array';
-import uniq from 'lodash.uniq';
+import uniq from 'lodash/uniq';
 import moment from 'moment';
 
 import {notNullorUndefined, toArray} from '@kepler.gl/common-utils';
