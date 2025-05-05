@@ -480,11 +480,11 @@ ${'```'}
       descriptionTable: `Paths can be created by joining a list of points from latitude and longitude, sort by an index field (e.g. timestamp) and group by uniq ids.
 
   ### Layer columns:
-  - **id**: - *required* - A \`id\` column is used to group by points. Points with the same id will be joined into a single path.
-  - **lat**: - *required* - The latitude of the point
-  - **lon**: - *required* - The longitude of the point
-  - **alt**: - *optional* - The altitude of the point
-  - **sort by**: - *optional* - A \`sort by\` column is used to sort the points, if not specified, points will be sorted by row index.
+  - **id**: - *required*&nbsp;- A \`id\` column is used to group by points. Points with the same id will be joined into a single path.
+  - **lat**: - *required*&nbsp;- The latitude of the point
+  - **lon**: - *required*&nbsp;- The longitude of the point
+  - **alt**: - *optional*&nbsp;- The altitude of the point
+  - **sort by**: - *optional*&nbsp;- A \`sort by\` column is used to sort the points, if not specified, points will be sorted by row index.
 `,
       exampleTable: 'Example CSV'
     },

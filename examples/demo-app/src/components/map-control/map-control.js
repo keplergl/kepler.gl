@@ -3,11 +3,11 @@
 
 import classnames from 'classnames';
 import React, {useState} from 'react';
-import ReactMarkdown from 'react-markdown';
+import Markdown from 'markdown-to-jsx';
 import styled from 'styled-components';
 import {useLocalStorage} from 'usehooks-ts';
 
-import {Icons, IconRoundSmall, MapControlButton} from '@kepler.gl/components';
+import {Icons, IconRoundSmall, LinkRenderer, MapControlButton} from '@kepler.gl/components';
 import {getApplicationConfig} from '@kepler.gl/utils';
 
 const StyledFloatingPanel = styled.div`
@@ -90,14 +90,6 @@ const CloseButton = ({onClick}) => (
   </IconRoundSmall>
 );
 
-const LinkRenderer = props => {
-  return (
-    <a href={props.href} target="_blank" rel="noopener noreferrer">
-      {props.children}
-    </a>
-  );
-};
-
 // convert https://raw.githubusercontent.com/keplergl/kepler.gl-data/master/nyctrips/config.json
 // to https://github.com/keplergl/kepler.gl-data/blob/master/movement_pittsburgh/config.json
 function getURL(url) {
@@ -120,9 +112,17 @@ export function SampleMapPanel(props) {
             <CloseButton onClick={() => setActive(false)} />
           </div>
           <div className="project-description">
-            <ReactMarkdown components={{a: LinkRenderer}}>
+            <Markdown
+              options={{
+                overrides: {
+                  a: {
+                    component: LinkRenderer
+                  }
+                }
+              }}
+            >
               {props.currentSample.detail || props.currentSample.description}
-            </ReactMarkdown>
+            </Markdown>
           </div>
           <div className="project-links">
             <LinkButton
@@ -184,11 +184,19 @@ export function BannerMapPanel() {
             />
           </div>
           <div className="project-description">
-            <ReactMarkdown components={{a: LinkRenderer}}>
+            <Markdown
+              options={{
+                overrides: {
+                  a: {
+                    component: LinkRenderer
+                  }
+                }
+              }}
+            >
               {
                 '[Click here](https://kepler-preview.foursquare.com) to check out the preview of Kepler.gl 3.1 with DuckDB enabled!'
               }
-            </ReactMarkdown>
+            </Markdown>
           </div>
         </StyledProjectPanel>
       ) : (

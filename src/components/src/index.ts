@@ -211,6 +211,7 @@ export {default as WindowActionControlFactory} from './common/animation-control/
 
 export {default as HistogramPlotFactory, HISTOGRAM_MASK_MODE} from './common/histogram-plot';
 export {default as IconButton} from './common/icon-button';
+export {default as LinkRenderer} from './common/link-renderer';
 export {
   default as ColumnStatsChartFactory,
   HISTOGRAM_WIDTH,

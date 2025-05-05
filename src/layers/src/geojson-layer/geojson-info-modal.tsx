@@ -3,7 +3,7 @@
 
 import React from 'react';
 import styled from 'styled-components';
-import ReactMarkdown from 'react-markdown';
+import Markdown from 'markdown-to-jsx';
 import {useIntl} from 'react-intl';
 
 import {FormattedMessage} from '@kepler.gl/localization';
@@ -70,14 +70,14 @@ const GeojsonInfoModalFactory = columnMode => {
     return (
       <InfoModal className="geojson-info-modal">
         <div className="geojson-info-modal__description">
-          <ReactMarkdown
-            children={intl.formatMessage({
+          <Markdown>
+            {intl.formatMessage({
               id:
                 columnMode === 'geojson'
                   ? 'modal.polygonInfo.description'
                   : 'modal.polygonInfo.descriptionTable'
             })}
-          />
+          </Markdown>
         </div>
         {columnMode === 'table' ? (
           <div className="geojson-info-modal__example">
