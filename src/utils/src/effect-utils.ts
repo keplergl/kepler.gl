@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import SunCalc from 'suncalc';
-import cloneDeep from 'lodash.clonedeep';
+import cloneDeep from 'lodash/cloneDeep';
 
 import {PostProcessEffect} from '@deck.gl/core/typed';
 

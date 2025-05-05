@@ -7,7 +7,7 @@ import sinon from 'sinon';
 import {console as Console} from 'global/window';
 
 import {drainTasksForTesting, succeedTaskInTest, errorTaskInTest} from 'react-palm/tasks';
-import CloneDeep from 'lodash.clonedeep';
+import CloneDeep from 'lodash/cloneDeep';
 
 import SchemaManager from '@kepler.gl/schemas';
 import {VisStateActions, MapStateActions} from '@kepler.gl/actions';

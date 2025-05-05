@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import cloneDeep from 'lodash.clonedeep';
+import cloneDeep from 'lodash/cloneDeep';
 
 import {keplerGlReducer} from '@kepler.gl/reducers';
 import {addDataToMap} from '@kepler.gl/actions';

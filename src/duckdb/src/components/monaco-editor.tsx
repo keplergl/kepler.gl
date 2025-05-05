@@ -5,8 +5,8 @@ import React, {useCallback, useMemo, useRef} from 'react';
 import Editor, {OnChange, OnMount} from '@monaco-editor/react';
 import * as monaco from 'monaco-editor';
 // import {tableSchema as DEFAULT_SCHEMA} from './table-schema';
-import uniq from 'lodash.uniq';
-import uniqBy from 'lodash.uniqby';
+import uniq from 'lodash/uniq';
+import uniqBy from 'lodash/uniqBy';
 
 const MONACO_OPTIONS: monaco.editor.IStandaloneEditorConstructionOptions = {
   minimap: {enabled: false},

@@ -6,7 +6,7 @@ export const ADDRESS_PREFIX = '@@KG_';
 import {Dispatch} from 'redux';
 import {ActionTypes} from './action-types';
 
-import curry from 'lodash.curry';
+import curry from 'lodash/curry';
 
 interface IKeplerGlAction {
   type: (typeof ActionTypes)[keyof typeof ActionTypes];

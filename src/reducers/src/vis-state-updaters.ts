@@ -5,12 +5,12 @@ import bbox from '@turf/bbox';
 import copy from 'copy-to-clipboard';
 import deepmerge from 'deepmerge';
 import {console as Console} from 'global/window';
-import cloneDeep from 'lodash.clonedeep';
-import get from 'lodash.get';
-import isEqual from 'lodash.isequal';
-import pick from 'lodash.pick';
-import uniq from 'lodash.uniq';
-import xor from 'lodash.xor';
+import cloneDeep from 'lodash/cloneDeep';
+import get from 'lodash/get';
+import isEqual from 'lodash/isEqual';
+import pick from 'lodash/pick';
+import uniq from 'lodash/uniq';
+import xor from 'lodash/xor';
 import Task, {disableStackCapturing, withTask} from 'react-palm/tasks';
 // Tasks
 import {

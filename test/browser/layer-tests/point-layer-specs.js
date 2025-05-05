@@ -5,7 +5,7 @@ import test from 'tape';
 import moment from 'moment';
 import {getDistanceScales} from 'viewport-mercator-project';
 import {scaleQuantize} from 'd3-scale';
-import cloneDeep from 'lodash.clonedeep';
+import cloneDeep from 'lodash/cloneDeep';
 
 import {DEFAULT_TEXT_LABEL, PROJECTED_PIXEL_SIZE_MULTIPLIER} from '@kepler.gl/constants';
 import {KeplerGlLayers} from '@kepler.gl/layers';

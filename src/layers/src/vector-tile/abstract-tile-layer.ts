@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import throttle from 'lodash.throttle';
+import throttle from 'lodash/throttle';
 
 import {notNullorUndefined} from '@kepler.gl/common-utils';
 import {SCALE_TYPES, ALL_FIELD_TYPES, LAYER_VIS_CONFIGS} from '@kepler.gl/constants';

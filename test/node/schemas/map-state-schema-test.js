@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import test from 'tape';
-import cloneDeep from 'lodash.clonedeep';
+import cloneDeep from 'lodash/cloneDeep';
 import SchemaManager from '@kepler.gl/schemas';
 import {InitialState} from 'test/helpers/mock-state';
 

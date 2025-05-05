@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import test from 'tape';
-import cloneDeep from 'lodash.clonedeep';
+import cloneDeep from 'lodash/cloneDeep';
 import {processCsvData, processGeojson} from '@kepler.gl/processors';
 import {LayerClasses, KeplerGlLayers} from '@kepler.gl/layers';
 import {GEOJSON_FIELDS} from '@kepler.gl/constants';
