@@ -40,9 +40,7 @@ const getPlugins = isTest => {
           // compile from @kepler.gl src
           ...RESOLVE_ALIASES,
           // loaders.gl cjs bundle of polyfills is not transpiled properly, use esm instead
-          '@loaders.gl/polyfills': `${nodeModules}/@loaders.gl/polyfills/src`,
-          // react-markdown is pure ESM module, not really used during tests
-          ...(isTest ? {'react-markdown': `${srcDir}/utils/src/noop.ts`} : {})
+          '@loaders.gl/polyfills': `${nodeModules}/@loaders.gl/polyfills/src`
         }
       }
     ],
