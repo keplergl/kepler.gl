@@ -748,7 +748,7 @@ export const MapControlButton = styled(Button)
   height: 32px;
   width: 32px;
   padding: 0;
-  border-radius: 0;
+  border-radius: ${props => props.theme.floatingBtnRadius};
   background-color: ${props =>
     props.active ? props.theme.floatingBtnBgdHover : props.theme.floatingBtnBgd};
   color: ${props =>
