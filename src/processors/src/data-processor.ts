@@ -262,8 +262,9 @@ export function processRowObject(rawData: unknown[]): ProcessorResult {
     };
   }
 
-  const keys = Object.keys(rawData[0]); // [lat, lng, value]
-  const rows = rawData.map(d => keys.map(key => d[key])); // [[31.27, 127.56, 3]]
+  const firstRow = rawData[0] as Record<string, unknown>;
+  const keys = Object.keys(firstRow); // [lat, lng, value]
+  const rows = rawData.map(d => keys.map(key => (d as Record<string, unknown>)[key])); // [[31.27, 127.56, 3]]
 
   // row object can still contain values like `Null` or `N/A`
   cleanUpFalsyCsvValue(rows);
