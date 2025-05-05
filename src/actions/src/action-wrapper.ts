@@ -11,8 +11,8 @@ import curry from 'lodash.curry';
 interface IKeplerGlAction {
   type: (typeof ActionTypes)[keyof typeof ActionTypes];
   // TODO: Construct a type depending on the payload
-  payload: any;
-  meta: {
+  payload?: any;
+  meta?: {
     _forward_?: string;
     _addr_?: string;
     _id_?: string;
@@ -117,7 +117,7 @@ export const unwrap = (action: IKeplerGlAction) =>
  */
 export const _actionFor = (id: string, action: IKeplerGlAction) =>
   isForwardAction(action)
-    ? action.meta._addr_ === getActionForwardAddress(id)
+    ? action.meta?._addr_ === getActionForwardAddress(id)
       ? action.payload
       : {}
     : action;
