@@ -489,9 +489,9 @@ function compare(num1: number | undefined, num2: number | undefined, operator: s
   return Number.isFinite(num1) && Number.isFinite(num2)
     ? Math[operator](num1 as number, num2 as number)
     : Number.isFinite(num1)
-    ? num1
+    ? (num1 as number)
     : Number.isFinite(num2)
-    ? num2
+    ? (num2 as number)
     : NaN;
 }
 
