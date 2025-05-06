@@ -107,6 +107,7 @@ export const floatingBtnBorder = '0';
 export const floatingBtnBorderHover = '0';
 export const floatingBtnColor = subtextColor;
 export const floatingBtnActColor = subtextColorActive;
+export const floatingBtnRadius = '0px';
 
 export const selectionBtnBgd = 'transparent';
 export const selectionBtnActBgd = 'transparent';
@@ -1321,6 +1322,7 @@ export const theme = {
   floatingBtnBorderHover,
   floatingBtnColor,
   floatingBtnActColor,
+  floatingBtnRadius,
 
   ctaBtnBgd,
   ctaBtnBgdHover,

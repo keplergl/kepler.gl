@@ -129,7 +129,7 @@ export interface DataContainerInterface {
    * @returns A new array with each element being the result of the func callback.
    */
   mapIndex(
-    func: ({index: number}, dataContainer: DataContainerInterface) => any,
+    func: ({index}: {index: number}, dataContainer: DataContainerInterface) => any,
     options?: RangeOptions
   ): any[];
 

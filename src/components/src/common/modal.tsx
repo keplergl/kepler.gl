@@ -224,7 +224,7 @@ export class ModalDialog extends Component<ModalDialogProps> {
         <ModalContentWrapper className="modal--wrapper" cssStyle={props.cssStyle}>
           {props.close && (
             <CloseButton className="modal--close" onClick={props.onCancel}>
-              <Delete height="14px" />
+              <Delete height="18px" />
             </CloseButton>
           )}
           <div>

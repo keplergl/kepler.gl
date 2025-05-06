@@ -49,7 +49,9 @@ export {
   getVisibleDatasets,
   makeGetActionCreators,
   mapFieldsSelector,
-  plotContainerSelector
+  bottomWidgetSelector,
+  plotContainerSelector,
+  geoCoderPanelSelector
 } from './kepler-gl';
 export {default as LayerAnimationControllerFactory} from './layer-animation-controller';
 export {Attribution, default as MapContainerFactory} from './map-container';
@@ -209,6 +211,7 @@ export {default as WindowActionControlFactory} from './common/animation-control/
 
 export {default as HistogramPlotFactory, HISTOGRAM_MASK_MODE} from './common/histogram-plot';
 export {default as IconButton} from './common/icon-button';
+export {default as LinkRenderer} from './common/link-renderer';
 export {
   default as ColumnStatsChartFactory,
   HISTOGRAM_WIDTH,
@@ -425,7 +428,7 @@ export {
   SidePanelDivider,
   SidePanelSection,
   SpaceBetweenFlexbox,
-  StyledAttrbution,
+  StyledAttribution,
   StyledExportSection,
   StyledFilterContent,
   StyledFilteredOption,
@@ -437,6 +440,7 @@ export {
   StyledPanelDropdown,
   StyledPanelHeader,
   StyledType,
+  shouldForwardProp,
   TextArea,
   TextAreaLight,
   Tooltip,

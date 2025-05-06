@@ -117,7 +117,7 @@ export class RowDataContainer implements DataContainerInterface {
   }
 
   mapIndex<T>(
-    func: ({index: number}, dc: DataContainerInterface) => T,
+    func: ({index}: {index: number}, dc: DataContainerInterface) => T,
     options: RangeOptions = {}
   ): T[] {
     const {start = 0, end = this.numRows()} = options;

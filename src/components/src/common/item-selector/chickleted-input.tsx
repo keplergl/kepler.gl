@@ -5,12 +5,15 @@ import React, {MouseEventHandler, ReactNode, useMemo, useCallback} from 'react';
 
 import styled, {IStyledComponent} from 'styled-components';
 import {DndContext, DragOverlay, pointerWithin} from '@dnd-kit/core';
-import {SortableContext, useSortable, arrayMove} from '@dnd-kit/sortable';
+import {SortableContext, useSortable} from '@dnd-kit/sortable';
 import {restrictToParentElement} from '@dnd-kit/modifiers';
 
-import Delete from '../icons/delete';
 import {FormattedMessage} from '@kepler.gl/localization';
+import {arrayMove} from '@kepler.gl/common-utils';
+
+import Delete from '../icons/delete';
 import {BaseComponentProps} from '../../types';
+import {shouldForwardProp} from '../styled-components';
 
 export type ChickletButtonProps = BaseComponentProps & {
   inputTheme?: string;
@@ -62,7 +65,7 @@ interface ChickletProps {
 const Chicklet = ({disabled, name, remove, inputTheme}: ChickletProps) => (
   <ChickletButton inputTheme={inputTheme}>
     <ChickletTag>{name}</ChickletTag>
-    <Delete onClick={disabled ? undefined : remove} />
+    <Delete height="16px" onClick={disabled ? undefined : remove} />
   </ChickletButton>
 );
 
@@ -77,7 +80,7 @@ export type ChickletedInputContainerProps = BaseComponentProps & {
 const ChickletedInputContainer: IStyledComponent<
   'web',
   ChickletedInputContainerProps
-> = styled.div<ChickletedInputContainerProps>`
+> = styled.div.withConfig({shouldForwardProp})<ChickletedInputContainerProps>`
   ${props =>
     props.inputTheme === 'secondary'
       ? props.theme.secondaryChickletedInput

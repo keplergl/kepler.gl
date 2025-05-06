@@ -315,7 +315,7 @@ export class KeplerGlDuckDbTable extends KeplerTable {
  * @param arrowTable Arrow table to update.
  * @param geoarrowMetadata A map with field names that usually used to store geoarrow geometry.
  */
-const restoreGeoarrowMetadata = async (
+export const restoreGeoarrowMetadata = (
   arrowTable: arrow.Table,
   geoarrowMetadata: Record<string, string>
 ) => {

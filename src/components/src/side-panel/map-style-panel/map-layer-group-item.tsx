@@ -28,8 +28,8 @@ const StyledLayerGroupItem = styled.div`
   }
 `;
 
-const LayerLabel = styled(PanelLabelBold)<{active: boolean}>`
-  color: ${props => (props.active ? props.theme.textColor : props.theme.labelColor)};
+const LayerLabel = styled(PanelLabelBold)<{$active: boolean}>`
+  color: ${props => (props.$active ? props.theme.textColor : props.theme.labelColor)};
 `;
 
 export type LayerGroupItemActionIcons = {
@@ -99,13 +99,13 @@ function LayerGroupItemFactory(LayerGroupColorPicker) {
               active={layers[slug]}
               flush
             />
-            <LayerLabel active={layers[slug]}>
+            <LayerLabel $active={layers[slug]}>
               <FormattedMessage id={`mapLayers.${camelize(slug)}`} />
             </LayerLabel>
           </PanelLabelWrapper>
         ) : (
           <CenterFlexbox>
-            <LayerLabel style={{marginLeft: '28px'}} active={true}>
+            <LayerLabel style={{marginLeft: '28px'}} $active={true}>
               <FormattedMessage id={`mapLayers.${camelize(slug)}`} />
             </LayerLabel>
           </CenterFlexbox>

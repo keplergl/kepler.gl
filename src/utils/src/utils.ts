@@ -160,10 +160,10 @@ export function getError(
     return Object.prototype.hasOwnProperty.call(err, 'message')
       ? getError(err.message)
       : Object.prototype.hasOwnProperty.call(err, 'error')
-        ? getError(err.error)
-        : Object.prototype.hasOwnProperty.call(err, 'err')
-          ? getError(err.err)
-          : JSON.stringify(err);
+      ? getError(err.error)
+      : Object.prototype.hasOwnProperty.call(err, 'err')
+      ? getError(err.err)
+      : JSON.stringify(err);
   }
 
   return defaultMessage;
@@ -176,23 +176,6 @@ export function arrayInsert<T>(arr: T[], index: number, val: T): T[] {
 
   return [...arr.slice(0, index), val, ...arr.slice(index)];
 }
-
-const arrayMoveMutate = (array, from, to) => {
-  array.splice(to < 0 ? array.length + to : to, 0, array.splice(from, 1)[0]);
-};
-
-/**
- *
- * @param {any[]} array
- * @param {number} from
- * @param {number} to
- * @returns {any[]}
- */
-export const arrayMove = <T>(array: T[], from: number, to: number): T[] => {
-  array = array.slice();
-  arrayMoveMutate(array, from, to);
-  return array;
-};
 
 export function hasMobileWidth(breakPointValues: {palm: number; desk: number}): boolean {
   const mobileWidth = Window.matchMedia(`(max-width: ${breakPointValues.palm}px)`);

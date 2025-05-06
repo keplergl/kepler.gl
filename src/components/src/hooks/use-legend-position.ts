@@ -3,20 +3,12 @@
 
 import {useMemo, useRef, useCallback, useEffect} from 'react';
 
-export type MapLegendControlSettings = {
-  position: {
-    x: number;
-    y: number;
-    anchorX: 'left' | 'right';
-    anchorY: 'top' | 'bottom';
-  };
-  contentHeight: number;
-};
+import {MapLegendControlSettings} from '@kepler.gl/types';
 
 type Params = {
   legendContentRef: React.MutableRefObject<HTMLElement | null>;
   isSidePanelShown: boolean;
-  settings: MapLegendControlSettings;
+  settings?: MapLegendControlSettings;
   onChangeSettings: (settings: Partial<MapLegendControlSettings>) => void;
   theme: Record<string, any>;
 };
@@ -42,6 +34,7 @@ const DEFAULT_POSITION: MapLegendControlSettings['position'] = {
   anchorY: 'bottom'
 };
 const MIN_CONTENT_HEIGHT = 100;
+const MAP_CONTROL_HEADER_FULL_HEIGHT = 34;
 
 export type UseCalcLegendPositionProps = {
   legendContentRef: React.MutableRefObject<HTMLElement | null>;
@@ -70,7 +63,7 @@ export function useCalcLegendPosition({
     );
     const rightOffset = Math.max(MARGIN.right, mapRootBounds.right - legendRect.right);
 
-    const topOffset = Math.max(MARGIN.top, legendRect.top);
+    const topOffset = Math.max(MARGIN.top, legendRect.top - mapRootBounds.top);
     const bottomOffset = Math.max(MARGIN.bottom, mapRootBounds.bottom - legendRect.bottom);
 
     return {
@@ -124,9 +117,10 @@ export default function useLegendPosition({
       const root = legendContentRef.current?.closest('.kepler-gl');
       const legendContent = legendContentRef.current;
       if (root instanceof HTMLElement && legendContent) {
+        const mapRootBounds = root.getBoundingClientRect();
         const legendRect = legendContent.getBoundingClientRect();
         const nextHeight = Math.min(
-          root.offsetHeight - legendRect.top - 100,
+          mapRootBounds.bottom - (legendRect.top + MAP_CONTROL_HEADER_FULL_HEIGHT + MARGIN.bottom),
           Math.max(MIN_CONTENT_HEIGHT, startHeightRef.current + deltaY)
         );
         onChangeSettings({contentHeight: nextHeight});

@@ -5,7 +5,10 @@ import {renderHook, act} from '@testing-library/react';
 import {useDispatch} from 'react-redux';
 import {useDndEffects} from '@kepler.gl/components';
 import {reorderEffect, updateEffect} from '@kepler.gl/actions';
-import {SORTABLE_EFFECT_PANEL_TYPE, SORTABLE_EFFECT_TYPE} from '@kepler.gl/constants';
+import {
+  SORTABLE_EFFECT_PANEL_TYPE,
+  SORTABLE_EFFECT_TYPE
+} from '@kepler.gl/components/common/dnd-layer-items';
 import {reorderEffectOrder} from '@kepler.gl/utils';
 
 // Mock useDispatch hook

@@ -29,7 +29,7 @@ export type RemoveDatasetProps = {
 };
 
 export type StyledDatasetTitleProps = {
-  clickable: boolean;
+  $clickable: boolean;
 };
 
 export type DatasetItemProps = {

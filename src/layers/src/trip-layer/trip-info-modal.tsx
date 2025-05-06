@@ -3,7 +3,7 @@
 
 import React from 'react';
 import styled from 'styled-components';
-import ReactMarkdown from 'react-markdown';
+import Markdown from 'markdown-to-jsx';
 import {useIntl} from 'react-intl';
 
 import {FormattedMessage} from '@kepler.gl/localization';
@@ -94,14 +94,14 @@ const TripInfoModalFactory = columnMode => {
     return (
       <InfoModal className="trip-info-modal">
         <div className="trip-info-modal__description">
-          <ReactMarkdown
-            children={intl.formatMessage({
+          <Markdown>
+            {intl.formatMessage({
               id:
                 columnMode === 'geojson'
                   ? 'modal.tripInfo.description1'
                   : 'modal.tripInfo.descriptionTable1'
             })}
-          />
+          </Markdown>
         </div>
         <div className="trip-info-modal__example">
           <StyledTitle>
@@ -111,11 +111,7 @@ const TripInfoModalFactory = columnMode => {
               }
             />
           </StyledTitle>
-          {columnMode === 'geojson' ? (
-            <ReactMarkdown children={codeExampleGeojson} />
-          ) : (
-            <ExampleTable />
-          )}
+          {columnMode === 'geojson' ? <Markdown>{codeExampleGeojson}</Markdown> : <ExampleTable />}
         </div>
       </InfoModal>
     );

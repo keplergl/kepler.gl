@@ -6,7 +6,7 @@ import {createPortal} from 'react-dom';
 import styled from 'styled-components';
 import Window from 'global/window';
 import classnames from 'classnames';
-import get from 'lodash.get';
+import get from 'lodash/get';
 import {createSelector} from 'reselect';
 import FeatureActionPanelFactory, {FeatureActionPanelProps} from './feature-action-panel';
 import {

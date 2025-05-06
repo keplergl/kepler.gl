@@ -19,10 +19,10 @@ const DatasetTagWrapper = styled.div`
   font-size: 11px;
   letter-spacing: 0.2px;
   overflow: auto;
-
+  display: flex;
+  align-items: center;
   .dataset-color {
     flex-shrink: 0;
-    margin-top: 3px;
   }
 
   .dataset-name {

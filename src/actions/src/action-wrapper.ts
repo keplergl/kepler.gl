@@ -3,10 +3,24 @@
 
 export const FORWARD = '@redux-forward/FORWARD';
 export const ADDRESS_PREFIX = '@@KG_';
+import {Dispatch} from 'redux';
+import {ActionTypes} from './action-types';
 
-import curry from 'lodash.curry';
+import curry from 'lodash/curry';
 
-export const getActionForwardAddress = id => `${ADDRESS_PREFIX}${id.toUpperCase()}`;
+interface IKeplerGlAction {
+  type: (typeof ActionTypes)[keyof typeof ActionTypes];
+  // TODO: Construct a type depending on the payload
+  payload?: any;
+  meta?: {
+    _forward_?: string;
+    _addr_?: string;
+    _id_?: string;
+    [key: string]: any;
+  };
+}
+
+export const getActionForwardAddress = (id: string) => `${ADDRESS_PREFIX}${id.toUpperCase()}`;
 
 /**
  * Wrap an action into a forward action that only modify the state of a specific
@@ -51,7 +65,7 @@ export const getActionForwardAddress = id => `${ADDRESS_PREFIX}${id.toUpperCase(
  * const wrapToMap1 = wrapTo('map_1');
  * this.props.dispatch(wrapToMap1(togglePerspective()));
  */
-export const wrapTo = curry((id, action) => ({
+export const wrapTo = curry((id: string, action: IKeplerGlAction) => ({
   // keep original action.type
   type: action.type,
 
@@ -79,7 +93,7 @@ export const wrapTo = curry((id, action) => ({
  * @returns {boolean} boolean - whether the action is a forward action
  * @public
  */
-export const isForwardAction = action => {
+export const isForwardAction = (action: IKeplerGlAction) => {
   return Boolean(action && action.meta && action.meta._forward_ === FORWARD);
 };
 
@@ -90,7 +104,8 @@ export const isForwardAction = action => {
  * @returns {Object} - unwrapped action
  * @public
  */
-export const unwrap = action => (isForwardAction(action) ? unwrap(action.payload) : action);
+export const unwrap = (action: IKeplerGlAction) =>
+  isForwardAction(action) ? unwrap(action.payload) : action;
 
 /**
  * Given an id, returns the action for that id.
@@ -100,9 +115,9 @@ export const unwrap = action => (isForwardAction(action) ? unwrap(action.payload
  * @param {Object} action
  * @private
  */
-export const _actionFor = (id, action) =>
+export const _actionFor = (id: string, action: IKeplerGlAction) =>
   isForwardAction(action)
-    ? action.meta._addr_ === getActionForwardAddress(id)
+    ? action.meta?._addr_ === getActionForwardAddress(id)
       ? action.payload
       : {}
     : action;
@@ -135,7 +150,9 @@ export const _actionFor = (id, action) =>
  *  mapDispatchToProps
  * )(MapContainer);
  */
-export const forwardTo = (id, dispatch) => action => dispatch(wrapTo(id, action));
+export const forwardTo =
+  (id: string, dispatch: Dispatch<IKeplerGlAction>) => (action: IKeplerGlAction) =>
+    dispatch(wrapTo(id, action));
 
 /**
  * Update the state of a kepler.gl instance
@@ -145,7 +162,7 @@ export const forwardTo = (id, dispatch) => action => dispatch(wrapTo(id, action)
  * @param {Object} nextState
  * @private
  */
-export const _updateProperty = (state, id, nextState) =>
+export const _updateProperty = (state, id: string, nextState) =>
   state[id] === nextState
     ? state
     : {

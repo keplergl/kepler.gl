@@ -4,10 +4,11 @@
 import React, {Component} from 'react';
 import styled from 'styled-components';
 import {Delete, Info, Warning, Checkmark} from '../common/icons';
-import ReactMarkdown from 'react-markdown';
+import Markdown from 'markdown-to-jsx';
 import {dataTestIds} from '@kepler.gl/constants';
 import {ActionHandler, removeNotification as removeNotificationActions} from '@kepler.gl/actions';
 
+import LinkRenderer from '../common/link-renderer';
 interface NotificationItemContentBlockProps {
   isExpanded?: boolean;
 }
@@ -104,14 +105,6 @@ const icons = {
   success: <Checkmark data-testid={dataTestIds.successIcon} />
 };
 
-const LinkRenderer = props => {
-  return (
-    <a href={props.href} target="_blank" rel="noopener noreferrer">
-      {props.children}
-    </a>
-  );
-};
-
 interface NotificationItemProps {
   notification: {
     id: string;
@@ -157,7 +150,17 @@ export default function NotificationItemFactory() {
               {icons[notification.type]}
             </NotificationIcon>
             <NotificationMessage isExpanded={isExpanded} theme={this.props.theme}>
-              <ReactMarkdown components={{a: LinkRenderer}}>{notification.message}</ReactMarkdown>
+              <Markdown
+                options={{
+                  overrides: {
+                    a: {
+                      component: LinkRenderer
+                    }
+                  }
+                }}
+              >
+                {notification.message}
+              </Markdown>
             </NotificationMessage>
             {typeof removeNotification === 'function' ? (
               <div className="notification-item--action">

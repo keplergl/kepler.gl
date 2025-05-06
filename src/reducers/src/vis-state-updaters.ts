@@ -5,12 +5,12 @@ import bbox from '@turf/bbox';
 import copy from 'copy-to-clipboard';
 import deepmerge from 'deepmerge';
 import {console as Console} from 'global/window';
-import cloneDeep from 'lodash.clonedeep';
-import get from 'lodash.get';
-import isEqual from 'lodash.isequal';
-import pick from 'lodash.pick';
-import uniq from 'lodash.uniq';
-import xor from 'lodash.xor';
+import cloneDeep from 'lodash/cloneDeep';
+import get from 'lodash/get';
+import isEqual from 'lodash/isEqual';
+import pick from 'lodash/pick';
+import uniq from 'lodash/uniq';
+import xor from 'lodash/xor';
 import Task, {disableStackCapturing, withTask} from 'react-palm/tasks';
 // Tasks
 import {
@@ -2336,19 +2336,16 @@ export const updateVisDataUpdater = (
 
   // apply config if passed from action
   // TODO: we don't handle async mergers here yet
-  const previousState = config
+  let updatedState = config
     ? receiveMapConfigUpdater(state, {
         payload: {config, options}
       })
     : state;
 
-  // indicate that something is in progress
-  const setIsLoadingTask = ACTION_TASK().map(() => {
-    return setLoadingIndicator({change: 1});
-  });
-  const updatedState = withTask(previousState, setIsLoadingTask);
-
   const datasets = toArray(action.datasets);
+  if (!datasets.length) {
+    return updatedState;
+  }
 
   const createDatasetTasks: Task[] = [];
   const notificationTasks: Task[] = [];
@@ -2376,6 +2373,14 @@ export const updateVisDataUpdater = (
         createNewDatasetSuccess({results, addToMapOptions: options})
       )
     : null;
+
+  if (datasetsAllSettledTask) {
+    // indicate that something is in progress
+    const setIsLoadingTask = ACTION_TASK().map(() => {
+      return setLoadingIndicator({change: 1});
+    });
+    updatedState = withTask(updatedState, setIsLoadingTask);
+  }
 
   return withTask(updatedState, [
     ...(datasetsAllSettledTask ? [datasetsAllSettledTask] : []),

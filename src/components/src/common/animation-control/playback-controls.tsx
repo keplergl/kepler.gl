@@ -4,7 +4,7 @@
 import React, {useState, useCallback} from 'react';
 import styled, {IStyledComponent} from 'styled-components';
 import classnames from 'classnames';
-import {Reset, Play, Pause, Save, Rocket, AnchorWindow, FreeWindow} from '../icons';
+import {Reset, Play, Pause, Save, Speed, AnchorWindow, FreeWindow} from '../icons';
 import {ANIMATION_WINDOW} from '@kepler.gl/constants';
 import {Filter, TimeRangeFilter} from '@kepler.gl/types';
 import AnimationSpeedSliderFactory from './animation-speed-slider';
@@ -36,12 +36,12 @@ const StyledAnimationControls: IStyledComponent<
 
 const DEFAULT_ICONS = {
   /* eslint-disable react/display-name */
-  reset: () => <Reset height="18px" />,
-  play: () => <Play height="18px" />,
-  pause: () => <Pause height="18px" />,
-  export: () => <Save height="18px" />,
+  reset: () => <Reset height="16px" />,
+  play: () => <Play height="16px" />,
+  pause: () => <Pause height="16px" />,
+  export: () => <Save height="16px" />,
   /* eslint-enable react/display-name */
-  speed: Rocket,
+  speed: () => <Speed height="16px" />,
   animationFree: FreeWindow,
   animationIncremental: AnchorWindow
 };

@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {arrayMove} from '@dnd-kit/sortable';
 import SunCalc from 'suncalc';
-import cloneDeep from 'lodash.clonedeep';
+import cloneDeep from 'lodash/cloneDeep';
 
 import {PostProcessEffect} from '@deck.gl/core/typed';
 
@@ -13,7 +12,7 @@ import {
   FILTER_TYPES,
   FILTER_VIEW_TYPES
 } from '@kepler.gl/constants';
-// import {VisState} from '@kepler.gl/schemas';
+import {arrayMove} from '@kepler.gl/common-utils';
 import {MapState, Effect, EffectProps, EffectDescription} from '@kepler.gl/types';
 import {findById} from './utils';
 import {clamp} from './data-utils';

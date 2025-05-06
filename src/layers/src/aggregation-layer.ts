@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import memoize from 'lodash.memoize';
+import memoize from 'lodash/memoize';
 import Layer, {
   LayerBaseConfig,
   LayerBaseConfigPartial,
@@ -53,7 +53,9 @@ export const getFilterDataFunc =
     getFilterValue: (d: unknown) => (number | number[])[]
   ): ((d: unknown) => boolean) =>
   pt =>
-    getFilterValue(pt).every((val, i) => val >= filterRange[i][0] && val <= filterRange[i][1]);
+    getFilterValue(pt).every((val, i) => {
+      return typeof val === 'number' ? val >= filterRange[i][0] && val <= filterRange[i][1] : false;
+    });
 
 const getLayerColorRange = (colorRange: ColorRange) => colorRange.colors.map(hexToRgb);
 

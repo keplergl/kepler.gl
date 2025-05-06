@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import Supercluster from 'supercluster';
-import memoize from 'lodash.memoize';
+import memoize from 'lodash/memoize';
 import {MemoizedFunction} from 'lodash';
 import {BBox, Position} from 'geojson';
 

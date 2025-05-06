@@ -2,8 +2,8 @@
 // Copyright contributors to the kepler.gl project
 
 import keyMirror from 'keymirror';
-import get from 'lodash.get';
-import isEqual from 'lodash.isequal';
+import get from 'lodash/get';
+import isEqual from 'lodash/isEqual';
 import {ascending, extent} from 'd3-array';
 
 import booleanWithin from '@turf/boolean-within';

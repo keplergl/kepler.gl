@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import pick from 'lodash.pick';
+import pick from 'lodash/pick';
 import {VERSIONS} from './versions';
 import {LAYER_VIS_CONFIGS, FILTER_VIEW_TYPES} from '@kepler.gl/constants';
 import {colorRangeBackwardCompatibility, isFilterValidToSave, findById} from '@kepler.gl/utils';
 import {notNullorUndefined} from '@kepler.gl/common-utils';
 import Schema from './schema';
-import cloneDeep from 'lodash.clonedeep';
+import cloneDeep from 'lodash/cloneDeep';
 import {
   AddDataToMapOptions,
   AnimationConfig,
@@ -693,7 +693,7 @@ export class InteractionSchemaV1 extends Schema {
   load(interactionConfig: SavedInteractionConfig): {
     interactionConfig: Partial<SavedInteractionConfig>;
   } {
-    const modifiedConfig = interactionConfig;
+    const modifiedConfig = cloneDeep(interactionConfig);
     Object.keys(interactionConfig).forEach(configType => {
       if (configType === 'tooltip') {
         const fieldsToShow = modifiedConfig[configType].fieldsToShow;

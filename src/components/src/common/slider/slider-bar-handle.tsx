@@ -9,15 +9,15 @@ import {StyleRangeSliderType} from './slider';
 import {BaseComponentProps} from '../../types';
 
 export type StyledSliderProps = BaseComponentProps & {
-  active?: boolean;
-  vertical?: boolean;
+  $active?: boolean;
+  $vertical?: boolean;
 };
 
 const StyledSlider: IStyledComponent<'web', StyledSliderProps> = styled.div<StyledSliderProps>`
   position: relative;
   background-color: ${props =>
-    props.active ? props.theme.sliderBarHoverColor : props.theme.sliderBarColor};
-  ${props => `${props.vertical ? 'width' : 'height'}: ${props.theme.sliderBarHeight}px`};
+    props.$active ? props.theme.sliderBarHoverColor : props.theme.sliderBarColor};
+  ${props => `${props.$vertical ? 'width' : 'height'}: ${props.theme.sliderBarHeight}px`};
   border-radius: ${props => props.theme.sliderBarRadius};
   &:hover {
     cursor: pointer;
@@ -79,7 +79,7 @@ export default class SliderBarHandle extends Component {
 
     return (
       <StyledSlider
-        active={this.state.mouseOver}
+        $active={this.state.mouseOver}
         className={classnames('kg-range-slider__bar', {
           'kg-range-slider__bar--active': this.state.mouseOver
         })}

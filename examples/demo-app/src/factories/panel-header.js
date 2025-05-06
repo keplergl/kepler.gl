@@ -20,7 +20,7 @@ export function CustomPanelHeaderFactory(...deps) {
       },
       {
         id: 'docs',
-        iconComponent: Icons.Docs,
+        iconComponent: Icons.Docs2,
         href: USER_GUIDE_DOC,
         blank: true,
         tooltip: 'User Guide',

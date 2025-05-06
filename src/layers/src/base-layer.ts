@@ -78,7 +78,7 @@ import {
   getCategoricalColorScale,
   updateCustomColorRangeByColorUI
 } from '@kepler.gl/utils';
-import memoize from 'lodash.memoize';
+import memoize from 'lodash/memoize';
 import {
   initializeCustomPalette,
   isDomainQuantile,
@@ -1323,7 +1323,7 @@ class Layer implements KeplerLayer {
     const layerDataset = datasets[this.config.dataId];
     const {dataContainer} = layerDataset;
 
-    const getPosition = this.getPositionAccessor(dataContainer);
+    const getPosition = this.getPositionAccessor(dataContainer, layerDataset);
     const dataUpdateTriggers = this.getDataUpdateTriggers(layerDataset);
     const triggerChanged = this.getChangedTriggers(dataUpdateTriggers);
 
@@ -1664,7 +1664,11 @@ class Layer implements KeplerLayer {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  getPositionAccessor(dataContainer?: DataContainerInterface): (...args: any[]) => any {
+  getPositionAccessor(
+    _dataContainer?: DataContainerInterface,
+    // TODO refactor for the next major version to pass only dataset
+    _dataset?: KeplerTable
+  ): (...args: any[]) => any {
     // implemented in subclasses
     return () => null;
   }

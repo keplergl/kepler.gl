@@ -76,7 +76,7 @@ function LayerSelectorPanelFactory(
           data-tip
           data-for="toggle-layer"
         >
-          <Layers height="22px" />
+          <Layers height="16px" />
           <MapControlTooltip
             id="toggle-layer"
             message={isActive ? 'tooltip.hideLayerPanel' : 'tooltip.showLayerPanel'}

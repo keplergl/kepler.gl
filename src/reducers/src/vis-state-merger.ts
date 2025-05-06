@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import uniq from 'lodash.uniq';
-import pick from 'lodash.pick';
-import flattenDeep from 'lodash.flattendeep';
+import uniq from 'lodash/uniq';
+import pick from 'lodash/pick';
+import flattenDeep from 'lodash/flattenDeep';
 import deepmerge from 'deepmerge';
 import {
   arrayInsert,

@@ -2,8 +2,8 @@
 // Copyright contributors to the kepler.gl project
 
 import React, {Component, createRef, PropsWithChildren} from 'react';
-import debounce from 'lodash.debounce';
-import isEqual from 'lodash.isequal';
+import debounce from 'lodash/debounce';
+import isEqual from 'lodash/isEqual';
 
 import {canUseDOM} from 'exenv';
 import {withTheme} from 'styled-components';

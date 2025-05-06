@@ -171,7 +171,8 @@ function decorate(target, savedInitialState = {}) {
     }
 
     // use 'function' keyword to enable 'this'
-    return decorate((state = {}, action: {type?: string} = {}) => {
+    // TODO: temporarily making action type to any, will fix that by creating a shared action interface
+    return decorate((state = {}, action: any = {}) => {
       let nextState = state;
       if (action.type && !options?.override?.[action.type]) {
         nextState = this(state, action);

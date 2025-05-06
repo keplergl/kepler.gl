@@ -11,7 +11,7 @@ import {ColorUI, NestedPartial, RGBAColor, RGBColor} from '@kepler.gl/types';
 import {rgbToHex} from '@kepler.gl/utils';
 
 import RangeSliderFactory from '../../common/range-slider';
-import {PanelLabel, StyledPanelDropdown} from '../../common/styled-components';
+import {PanelLabel, shouldForwardProp, StyledPanelDropdown} from '../../common/styled-components';
 import ColorPalette from './color-palette';
 import ColorRangeSelectorFactory from './color-range-selector';
 import SingleColorPalette from './single-color-palette';
@@ -52,7 +52,9 @@ const OPACITY_SLIDER_PROPS = {
   showInput: true
 };
 
-export const ColorBlock = styled.div<{backgroundcolor: RGBColor}>`
+export const ColorBlock = styled.div.withConfig({
+  shouldForwardProp
+})<{backgroundcolor: RGBColor}>`
   width: 32px;
   height: 18px;
   border-radius: 1px;
@@ -68,7 +70,9 @@ const StyledColorSelectorWrapper = styled.div`
   }
 `;
 
-export const ColorSelectorInput = styled.div<ColorSelectorInputProps>`
+export const ColorSelectorInput = styled.div.withConfig({
+  shouldForwardProp
+})<ColorSelectorInputProps>`
   ${props => (props.inputTheme === 'secondary' ? props.theme.secondaryInput : props.theme.input)};
   height: ${props => props.theme.inputBoxHeight};
 
