@@ -51,6 +51,7 @@ export {
   mapFieldsSelector,
   bottomWidgetSelector,
   plotContainerSelector,
+  modalContainerSelector,
   geoCoderPanelSelector
 } from './kepler-gl';
 export {default as LayerAnimationControllerFactory} from './layer-animation-controller';
