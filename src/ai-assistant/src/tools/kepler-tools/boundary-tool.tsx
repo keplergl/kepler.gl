@@ -1,12 +1,26 @@
 import {tool} from '@openassistant/utils';
 import {z} from 'zod';
 
+type MapBoundaryContext = {
+  getMapBoundary: () => {
+    nw: [number, number];
+    se: [number, number];
+  };
+};
+
+function isMapBoundaryContext(context: unknown): context is MapBoundaryContext {
+  return typeof context === 'object' && context !== null && 'getMapBoundary' in context;
+}
+
 export const mapBoundary = tool({
   description:
     'Get the boundary of the map. Northwest and Southeast coordinates in [longitude, latitude] format.',
   parameters: z.object({}),
   execute: async (args, options) => {
     try {
+      if (!isMapBoundaryContext(options?.context)) {
+        throw new Error('context getMapBoundary() not implemented.');
+      }
       const {getMapBoundary} = options.context;
       const boundary = getMapBoundary();
       return {
