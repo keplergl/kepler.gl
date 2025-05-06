@@ -1,4 +1,4 @@
-import {tool} from '@openassistant/core';
+import {tool} from '@openassistant/utils';
 import {getCachedData, generateId, removeCachedData} from '@openassistant/osm';
 import {z} from 'zod';
 import {useEffect} from 'react';

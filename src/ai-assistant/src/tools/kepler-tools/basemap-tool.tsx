@@ -2,26 +2,24 @@
 // Copyright contributors to the kepler.gl project
 
 import {DEFAULT_MAP_STYLES} from '@kepler.gl/constants';
-import {tool} from '@openassistant/core';
+import {tool} from '@openassistant/utils';
 import {z} from 'zod';
 import {useEffect} from 'react';
 import {useDispatch} from 'react-redux';
 
 export const basemap = tool({
   description: 'change basemap',
-  parameters: z
-    .object({
-      styleType: z.enum([
-        'dark-matter',
-        'dark-matter-nolabels',
-        'no_map',
-        'positron',
-        'positron-nolabels',
-        'voyager',
-        'voyager-nolabels'
-      ])
-    })
-    .strict(),
+  parameters: z.object({
+    styleType: z.enum([
+      'dark-matter',
+      'dark-matter-nolabels',
+      'no_map',
+      'positron',
+      'positron-nolabels',
+      'voyager',
+      'voyager-nolabels'
+    ])
+  }),
   execute: executeBasemap,
   component: BasemapToolComponent
 });

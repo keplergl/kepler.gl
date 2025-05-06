@@ -7,7 +7,7 @@ import KeplerTable, {Datasets} from '@kepler.gl/table';
 import {findDefaultLayer} from '@kepler.gl/reducers';
 import {addLayer as addLayerAction} from '@kepler.gl/actions';
 import {interpolateColor} from '../utils';
-import {tool} from '@openassistant/core';
+import {tool} from '@openassistant/utils';
 import {z} from 'zod';
 import {useEffect} from 'react';
 

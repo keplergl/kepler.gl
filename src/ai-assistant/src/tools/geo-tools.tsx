@@ -13,7 +13,13 @@ import {
   LisaTool,
   spatialJoin,
   SpatialJoinTool,
-  SpatialJoinToolComponent
+  SpatialJoinToolComponent,
+  buffer,
+  centroid,
+  dissolve,
+  length,
+  area,
+  perimeter
 } from '@openassistant/geoda';
 import {
   getUsStateGeojson,
@@ -35,7 +41,6 @@ import {addDataToMap} from '@kepler.gl/actions';
 import {LisaToolComponent} from './lisa-tool';
 import {getGeometriesFromDataset, getValuesFromDataset} from './utils';
 import {AiAssistantState} from '../reducers';
-import {ExtendedTool} from '@openassistant/core';
 
 export function getGeoTools(
   aiAssistant: AiAssistantState,
@@ -143,14 +148,19 @@ export function getGeoTools(
     regressionTool,
     lisaTool,
     spatialJoinTool,
-    // TODO: fix types
-    getUsStateGeojson: getUsStateGeojson as ExtendedTool<any>,
-    getUsCountyGeojson: getUsCountyGeojson as ExtendedTool<any>,
-    getUsZipcodeGeojson: getUsZipcodeGeojson as ExtendedTool<any>,
-    queryUSZipcodes: queryUSZipcodes as ExtendedTool<any>,
-    geocoding: geocoding as ExtendedTool<any>,
-    routing: routingTool as ExtendedTool<any>,
-    isochrone: isochroneTool as ExtendedTool<any>
+    buffer,
+    centroid,
+    dissolve,
+    length,
+    area,
+    perimeter,
+    getUsStateGeojson,
+    getUsCountyGeojson,
+    getUsZipcodeGeojson,
+    queryUSZipcodes,
+    geocoding,
+    routing: routingTool,
+    isochrone: isochroneTool
   };
 }
 

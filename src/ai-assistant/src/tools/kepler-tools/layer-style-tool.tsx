@@ -4,7 +4,7 @@
 // This file is used to call the LAYER_VISUAL_CHANNEL_CHANGE to update the layer style
 
 import {useEffect} from 'react';
-import {tool} from '@openassistant/core';
+import {tool} from '@openassistant/utils';
 import {layerVisualChannelConfigChange} from '@kepler.gl/actions';
 import {Layer, LayerBaseConfig} from '@kepler.gl/layers';
 import {LayerVisConfig} from '@kepler.gl/types';

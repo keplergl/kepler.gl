@@ -3,7 +3,7 @@
 
 import {useEffect} from 'react';
 import {useDispatch} from 'react-redux';
-import {tool} from '@openassistant/core';
+import {tool} from '@openassistant/utils';
 import {z} from 'zod';
 import {addDataToMap} from '@kepler.gl/actions';
 import {Loader} from '@loaders.gl/loader-utils';

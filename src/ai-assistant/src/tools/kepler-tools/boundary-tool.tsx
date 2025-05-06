@@ -1,4 +1,4 @@
-import {tool} from '@openassistant/core';
+import {tool} from '@openassistant/utils';
 import {z} from 'zod';
 
 export const mapBoundary = tool({
