@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useState} from 'react';
+import React, {useState, useCallback} from 'react';
 import styled from 'styled-components';
 import get from 'lodash/get';
 import {IntlShape, useIntl} from 'react-intl';
@@ -14,6 +14,7 @@ import LoadingDialog from './loading-dialog';
 
 import {LOADING_METHODS} from '@kepler.gl/constants';
 import {FileLoading, FileLoadingProgress, LoadFiles} from '@kepler.gl/types';
+import {isTest} from '@kepler.gl/utils';
 
 const StyledLoadDataModal = styled.div.attrs({
   className: 'load-data-modal'
@@ -28,12 +29,18 @@ const noop = () => {
   return;
 };
 const getDefaultMethod = <T,>(methods: T[] = []) =>
-  Array.isArray(methods) ? get(methods, [0]) : null;
+  // Try sample data modal by default for DuckDB preview
+  // Note: In tests only 3 loading methods are available
+  Array.isArray(methods) ? get(methods, [isTest() && methods.length > 4 ? 4 : 0]) : null;
 export interface LoadingMethod {
   id: string;
   label: string;
   elementType: React.ComponentType<any>;
-  tabElementType?: React.ComponentType<{onClick: React.MouseEventHandler; intl: IntlShape}>;
+  tabElementType?: React.ComponentType<{
+    onClick: React.MouseEventHandler;
+    intl: IntlShape;
+    className?: string;
+  }>;
 }
 
 type LoadDataModalProps = {
@@ -99,17 +106,27 @@ export function LoadDataModalFactory(
     loadingMethods = defaultLoadingMethods,
     isCloudMapLoading,
     ...restProps
-  }) => {
+  }: LoadDataModalProps) => {
     const intl = useIntl();
+
+    // const {loadingMethods, isCloudMapLoading} = props;
+    const [currentMethod, toggleMethod] = useState(getDefaultMethod(loadingMethods));
+
+    const loadDataMethod = loadingMethods.find(ldm => ldm.id === 'upload');
+    const enableLoadDataModal = useCallback(() => {
+      if (loadDataMethod) {
+        toggleMethod(loadDataMethod);
+      }
+    }, [loadDataMethod, toggleMethod]);
+
     const currentModalProps = {
       ...restProps,
       onFileUpload,
       onTilesetAdded,
       fileLoading,
-      isCloudMapLoading
+      isCloudMapLoading,
+      enableLoadDataModal
     };
-    // const {loadingMethods, isCloudMapLoading} = props;
-    const [currentMethod, toggleMethod] = useState(getDefaultMethod(loadingMethods));
 
     const ElementType = currentMethod?.elementType;
 
