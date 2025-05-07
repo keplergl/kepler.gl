@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import memoize from 'lodash.memoize';
-import clondDeep from 'lodash.clonedeep';
+import memoize from 'lodash/memoize';
+import clondDeep from 'lodash/cloneDeep';
 import {
   DEFAULT_LAYER_GROUPS,
   DEFAULT_MAPBOX_API_URL,

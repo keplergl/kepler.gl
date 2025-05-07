@@ -9,6 +9,7 @@ import {FormattedMessage} from '@kepler.gl/localization';
 
 import {ArrowDown, Delete} from '../icons';
 import {ListItem} from './dropdown-list';
+import {shouldForwardProp} from '../styled-components';
 
 export type ListItemProps<Option> = {
   value: Option;
@@ -34,9 +35,11 @@ export type DropdownSelectProps<Option> = {
   DropDownLineItemRenderComponent?: ComponentType<ListItemProps<Option>>;
 };
 
-export const StyledDropdownSelect = styled.div.attrs<{className?: string}>({
-  className: 'item-selector__dropdown'
-})<{
+export const StyledDropdownSelect = styled.div
+  .withConfig({shouldForwardProp})
+  .attrs<{className?: string}>({
+    className: 'item-selector__dropdown'
+  })<{
   size: DropdownSelectProps<any>['size'];
   inputTheme: DropdownSelectProps<any>['inputTheme'];
 }>`
@@ -55,7 +58,7 @@ export const StyledDropdownSelect = styled.div.attrs<{className?: string}>({
   }
 `;
 
-export const DropdownSelectValue = styled.span<{
+export const DropdownSelectValue = styled.span.withConfig({shouldForwardProp})<{
   inputTheme: DropdownSelectProps<any>['inputTheme'];
   hasPlaceholder: boolean;
 }>`
@@ -137,7 +140,7 @@ function DropdownSelect<Option>({
       </DropdownSelectValue>
       {erasable && hasValue ? (
         <DropdownSelectActionRight>
-          <Delete height="12px" onClick={onErase} />
+          <Delete height="16px" onClick={onErase} />
         </DropdownSelectActionRight>
       ) : showArrow ? (
         <DropdownSelectActionRight>

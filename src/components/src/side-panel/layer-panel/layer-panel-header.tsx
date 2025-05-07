@@ -11,7 +11,7 @@ import React, {
 import classnames from 'classnames';
 import styled, {css} from 'styled-components';
 import PanelHeaderActionFactory from '../panel-header-action';
-import {Tooltip} from '../../common/styled-components';
+import {Tooltip, shouldForwardProp} from '../../common/styled-components';
 import {
   Copy,
   ArrowDown,
@@ -21,7 +21,7 @@ import {
   VertDots,
   WarningSign,
   Reset,
-  Crosshairs
+  ZoomIn
 } from '../../common/icons';
 
 import {InlineInput, StyledPanelHeader} from '../../common/styled-components';
@@ -84,12 +84,11 @@ type HeaderActionSectionProps = {
 
 export type LayerPanelHeaderActionSectionProps = LayerPanelHeaderProps & HeaderActionSectionProps;
 
-const getBorderCss = status =>
-  css`
-    border-top: 2px solid ${({theme}) => theme.notificationColors[status]};
-    border-bottom: 2px solid ${({theme}) => theme.notificationColors[status]};
-    border-right: 2px solid ${({theme}) => theme.notificationColors[status]};
-  `;
+const getBorderCss = status => css`
+  border-top: 2px solid ${({theme}) => theme.notificationColors[status]};
+  border-bottom: 2px solid ${({theme}) => theme.notificationColors[status]};
+  border-right: 2px solid ${({theme}) => theme.notificationColors[status]};
+`;
 
 const StyledLayerPanelHeader = styled(StyledPanelHeader)`
   height: ${props => props.theme.layerPanelHeaderHeight}px;
@@ -130,7 +129,7 @@ const HeaderLabelSection = styled.div`
   padding-right: 50px;
 `;
 
-const HeaderActionSection = styled.div<HeaderActionSectionProps>`
+const HeaderActionSection = styled.div.withConfig({shouldForwardProp})<HeaderActionSectionProps>`
   display: flex;
   position: absolute;
   height: 100%;
@@ -150,7 +149,7 @@ type StyledPanelHeaderHiddenActionsProps = {
 };
 
 // Hiden actions only show up on hover
-const StyledPanelHeaderHiddenActions = styled.div.attrs({
+const StyledPanelHeaderHiddenActions = styled.div.withConfig({shouldForwardProp}).attrs({
   className: 'layer-panel__header__actions__hidden'
 })<StyledPanelHeaderHiddenActionsProps>`
   opacity: 0;
@@ -158,7 +157,9 @@ const StyledPanelHeaderHiddenActions = styled.div.attrs({
   align-items: center;
   background-color: ${props =>
     props.isConfigActive ? props.theme.panelBackgroundHover : props.theme.panelBackground};
-  transition: opacity 0.4s ease, background-color 0.4s ease;
+  transition:
+    opacity 0.4s ease,
+    background-color 0.4s ease;
 
   &:hover {
     opacity: 1;
@@ -363,13 +364,13 @@ export const HeaderWarning = ({warning, id}) => (
 );
 
 const defaultActionIcons = {
-  remove: Trash,
-  visible: EyeSeen,
-  hidden: EyeUnseen,
-  enableConfig: ArrowDown,
-  duplicate: Copy,
+  remove: props => <Trash {...props} height="16px" />,
+  visible: props => <EyeSeen {...props} height="16px" />,
+  hidden: props => <EyeUnseen {...props} height="16px" />,
+  enableConfig: props => <ArrowDown {...props} height="18px" />,
+  duplicate: props => <Copy {...props} height="14px" />,
   resetIsValid: Reset,
-  crosshairs: Crosshairs
+  crosshairs: props => <ZoomIn {...props} height="14px" />
 };
 
 LayerPanelHeaderFactory.deps = [LayerTitleSectionFactory, LayerPanelHeaderActionSectionFactory];

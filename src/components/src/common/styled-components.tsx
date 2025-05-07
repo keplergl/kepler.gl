@@ -8,8 +8,19 @@ import DatePicker from 'react-date-picker';
 import TimePicker from 'react-time-picker';
 import ReactTooltip, {TooltipProps} from 'react-tooltip';
 import styled, {IStyledComponent} from 'styled-components';
+import isPropValid from '@emotion/is-prop-valid';
 
 import {BaseComponentProps} from '../types';
+
+// This implements the default behavior from styled-components v5
+export function shouldForwardProp(propName, target) {
+  if (typeof target === 'string') {
+    // For HTML elements, forward the prop if it is a valid HTML attribute
+    return isPropValid(propName);
+  }
+  // For other elements, forward all props
+  return true;
+}
 
 export const SelectText = styled.span`
   color: ${props => props.theme.labelColor};
@@ -209,7 +220,7 @@ export type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 // this needs to be an actual button to be able to set disabled attribute correctly
-export const Button = styled.button.attrs(props => ({
+export const Button = styled.button.withConfig({shouldForwardProp}).attrs(props => ({
   className: classnames('button', props.className)
 }))<ButtonProps>`
   align-items: center;
@@ -308,18 +319,18 @@ interface InputProps {
   secondary?: boolean;
 }
 
-export const Input = styled.input<InputProps>`
+export const Input = styled.input.withConfig({shouldForwardProp})<InputProps>`
   ${props => (props.secondary ? props.theme.secondaryInput : props.theme.input)};
 `;
 
-export const InputLight = styled.input`
+export const InputLight = styled.input.withConfig({shouldForwardProp})`
   ${props => props.theme.inputLT};
 `;
 
-export const TextArea = styled.textarea<InputProps>`
+export const TextArea = styled.textarea.withConfig({shouldForwardProp})<InputProps>`
   ${props => (props.secondary ? props.theme.secondaryInput : props.theme.input)};
 `;
-export const TextAreaLight = styled.textarea`
+export const TextAreaLight = styled.textarea.withConfig({shouldForwardProp})`
   ${props => props.theme.inputLT} height: auto;
   white-space: pre-wrap;
 `;
@@ -335,7 +346,7 @@ export interface StyledPanelHeaderProps {
   isValid?: boolean;
 }
 
-export const StyledPanelHeader = styled.div<StyledPanelHeaderProps>`
+export const StyledPanelHeader = styled.div.withConfig({shouldForwardProp})<StyledPanelHeaderProps>`
   background-color: ${props =>
     props.active ? props.theme.panelBackgroundHover : props.theme.panelBackground};
   border-left: 3px solid
@@ -388,7 +399,7 @@ interface DatasetSquareProps {
   backgroundColor: RGBColor;
 }
 
-export const DatasetSquare = styled.div<DatasetSquareProps>`
+export const DatasetSquare = styled.div.withConfig({shouldForwardProp})<DatasetSquareProps>`
   display: inline-block;
   width: 10px;
   height: 10px;
@@ -400,7 +411,7 @@ interface SelectionButtonProps {
   selected?: boolean;
 }
 
-export const SelectionButton = styled.div<SelectionButtonProps>`
+export const SelectionButton = styled.div.withConfig({shouldForwardProp})<SelectionButtonProps>`
   position: relative;
   border-radius: 2px;
   border: 1px solid
@@ -543,14 +554,18 @@ export const StyledMapContainer = styled.div`
   }
 `;
 
-export type StyledAttrbutionProps = {
+export type StyledAttributionProps = {
   mapLibCssClass: string;
   mapLibAttributionCssClass: string;
 };
 
-export const StyledAttrbution = styled.div.attrs<StyledAttrbutionProps>(props => ({
-  className: props.mapLibAttributionCssClass
-}))<StyledAttrbutionProps>`
+export const StyledAttribution = styled.div
+  .withConfig({
+    shouldForwardProp: prop => !['mapLibCssClass', 'mapLibAttributionCssClass'].includes(prop)
+  })
+  .attrs<StyledAttributionProps>(props => ({
+    className: props.mapLibAttributionCssClass
+  }))<StyledAttributionProps>`
   bottom: 0;
   right: 0;
   position: absolute;
@@ -722,14 +737,18 @@ interface MapControlButtonProps {
   active?: boolean;
 }
 
-export const MapControlButton = styled(Button).attrs(props => ({
-  className: classnames('map-control-button', props.className)
-}))<MapControlButtonProps>`
+export const MapControlButton = styled(Button)
+  .withConfig({
+    shouldForwardProp: prop => !['active'].includes(prop)
+  })
+  .attrs(props => ({
+    className: classnames('map-control-button', props.className)
+  }))<MapControlButtonProps>`
   box-shadow: 0 6px 12px 0 rgba(0, 0, 0, 0.16);
   height: 32px;
   width: 32px;
   padding: 0;
-  border-radius: 0;
+  border-radius: ${props => props.theme.floatingBtnRadius};
   background-color: ${props =>
     props.active ? props.theme.floatingBtnBgdHover : props.theme.floatingBtnBgd};
   color: ${props =>

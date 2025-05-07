@@ -8,30 +8,29 @@ The AI assistant in Kepler.gl is not only a LLM based chatbot, it is engineered 
 
 Your conversations can be advanced: `Create a geojson layer using population with quantile color scale and update its colors inspired by Van Gogh's Starry Night`. Or: `Check the correlation between temperature and precipitation in the dataset`.
 
-
 ## Supported Providers
 
 The following providers and models are currently supported.
 
 > Note: we are working on feature to allow users specify their own providers, models and base URL.
 
-| **Provider** | **Models**                                                                                      |
-|--------------|------------------------------------------------------------------------------------------------|
-| **OpenAI**   | `gpt-4o`, `gpt-4o-mini`, `gpt-3.5-turbo`, `gpt-3.5-turbo-0125`, `o1-mini`, `o1-preview`          |
-| **Google**   | `gemini-2.0-flash-exp`, `gemini-1.5-flash`, `gemini-1.5-pro`, `gemini-1.0-pro`                   |
-| **Ollama** (local)  | `deepseek-r1`, `phi4`, `phi3.5`, `qwen2.5-coder`, `qwen2`, `qawa`, `llava`, `mistral`, `gemma2`, `llama3.3`, `llama3.2`, `llama3.1`, `llama3.1:70b` |
-| **DeepSeek** | `deepseek-chat`, `deepseek-reasoner` |
+| **Provider**       | **Models**                                                                                                                                          |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **OpenAI**         | `gpt-4o`, `gpt-4o-mini`, `gpt-3.5-turbo`, `gpt-3.5-turbo-0125`, `o1-mini`, `o1-preview`                                                             |
+| **Google**         | `gemini-2.0-flash-exp`, `gemini-1.5-flash`, `gemini-1.5-pro`, `gemini-1.0-pro`                                                                      |
+| **Ollama** (local) | `deepseek-r1`, `phi4`, `phi3.5`, `qwen2.5-coder`, `qwen2`, `qawa`, `llava`, `mistral`, `gemma2`, `llama3.3`, `llama3.2`, `llama3.1`, `llama3.1:70b` |
+| **DeepSeek**       | `deepseek-chat`, `deepseek-reasoner`                                                                                                                |
 
 ## Parameters
 
 Before initating the AI assistant, the following parameters are required. A temperature and Top P are selected for you; however, you will need to provide an API key for a remote model, and a base URL for local models.
 
-| **Parameter** | **Description**                                                                                 |
-|---------------|-------------------------------------------------------------------------------------------------|
+| **Parameter**   | **Description**                                                                                                                        |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
 | **Temperature** | Controls the randomness of the model's output. Range: `0-2`, Default: `1`. Lower values make responses more focused and deterministic. |
 | **Top P**       | Controls the diversity of the output by limiting the cumulative probability of token selection. Range: `0-1`, Default: `0.8`.          |
-| **API Key**   | Required for OpenAI (`gpt` models) and Google (`gemini` models).                                                                      |
-| **Base URL**  | Required for Ollama (`localhost:11434` or another specified base URL).                                                                |
+| **API Key**     | Required for OpenAI (`gpt` models) and Google (`gemini` models).                                                                       |
+| **Base URL**    | Required for Ollama (`localhost:11434` or another specified base URL).                                                                 |
 
 ## Built-in Features
 
@@ -42,7 +41,7 @@ Before initating the AI assistant, the following parameters are required. A temp
 
 This feature enables users to capture a screenshot anywhere within kepler.gl application and ask questions about the screenshot.
 
-For example, users can take a screenshot of the map (or partial of the map) and ask questions about the map e.g. *`how many counties are in this screenshot`*, or take a screenshot of the layer configuration panel and ask questions about how to use it, e.g. *`How can I adjust the opacity`*. Users can even take a screenshot of the plots in the chat panel and ask questions about the plots e.g. *`Can you give me a summary of the plot?`*.
+For example, users can take a screenshot of the map (or partial of the map) and ask questions about the map e.g. _`how many counties are in this screenshot`_, or take a screenshot of the layer configuration panel and ask questions about how to use it, e.g. _`How can I adjust the opacity`_. Users can even take a screenshot of the plots in the chat panel and ask questions about the plots e.g. _`Can you give me a summary of the plot?`_.
 
 ![Screenshot to ask](https://4sq-studio-public.s3.us-west-2.amazonaws.com/statics/keplergl/images/kepler-ai-assistant-screenshot.png 'Screenshot to ask')
 
@@ -100,11 +99,11 @@ The current supported actions are:
 - Spatial Analysis:
   - Spatial join two datasets (e.g. count points and polygons).
 
-> Note: to see our plan to add more actions to the AI assistant, please check out this [Kepler.gl RFC]([https://github.com/kepler-gl/kepler.gl/issues/4689](https://github.com/keplergl/kepler.gl/discussions/2843)) and the [integration of GeoDa with Kepler.gl]([text](https://github.com/GeoDaCenter/openassistant/wiki/Integration-Kepler.gl---GeoDaLib))
+> Note: to see our plan to add more actions to the AI assistant, please check out this [Kepler.gl RFC](<[https://github.com/kepler-gl/kepler.gl/issues/4689](https://github.com/keplergl/kepler.gl/discussions/2843)>) and the [integration of GeoDa with Kepler.gl](<[text](https://github.com/GeoDaCenter/openassistant/wiki/Integration-Kepler.gl---GeoDaLib)>)
 
 Users can simply describe what they want to accomplish in plain text, and the AI Assistant will invoke the appropriate function with the correct parameters that your application can execute. The LLM will identify if the question can be answered by using one or multiple function tools, and the LLM will ask the user to confirm the parameters of each function call.
 
-> *Can you classify the data of the variable "population" using natural breaks and create a geojson layer using the breaks with colors inspired by Van Gogh's Starry Night.*
+> _Can you classify the data of the variable "population" using natural breaks and create a geojson layer using the breaks with colors inspired by Van Gogh's Starry Night._
 
 #### Plots
 
@@ -136,4 +135,3 @@ The regression details include:
 This scatter plot can help users to explore the relationship between two variables, and explore the heterogeneity of the data by selecting different points.
 
 ![Scatterplot](https://4sq-studio-public.s3.us-west-2.amazonaws.com/statics/keplergl/images/kepler-ai-assistant-scatterplot.png 'Scatterplot')
-

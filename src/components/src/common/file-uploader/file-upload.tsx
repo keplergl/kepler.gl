@@ -12,20 +12,15 @@ import {FileLoading, FileLoadingProgress} from '@kepler.gl/types';
 
 import {isChrome} from '@kepler.gl/utils';
 import {GUIDES_FILE_FORMAT_DOC} from '@kepler.gl/constants';
-import ReactMarkdown from 'react-markdown';
+import Markdown from 'markdown-to-jsx';
 // Breakpoints
 import {FormattedMessage} from '@kepler.gl/localization';
 import {media} from '@kepler.gl/styles';
 
+import LinkRenderer from '../link-renderer';
+
 const fileIconColor = '#D3D8E0';
 
-const LinkRenderer = props => {
-  return (
-    <a href={props.href} target="_blank" rel="noopener noreferrer">
-      {props.children}
-    </a>
-  );
-};
 const StyledUploadMessage = styled.div`
   color: ${props => props.theme.textColorLT};
   font-size: 14px;
@@ -234,7 +229,17 @@ function FileUploadFactory() {
               className="file-uploader__file-drop"
             >
               <StyledUploadMessage className="file-upload__message">
-                <ReactMarkdown components={{a: LinkRenderer}}>{fileUploadInfoText}</ReactMarkdown>
+                <Markdown
+                  options={{
+                    overrides: {
+                      a: {
+                        component: LinkRenderer
+                      }
+                    }
+                  }}
+                >
+                  {fileUploadInfoText}
+                </Markdown>
               </StyledUploadMessage>
               <StyledFileDrop dragOver={dragOver}>
                 <StyledFileTypeFow className="file-type-row">

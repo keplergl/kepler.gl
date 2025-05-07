@@ -14,21 +14,21 @@ function noop() {
 }
 
 interface StyledRangeSliderProps {
-  vertical?: boolean;
+  $vertical?: boolean;
 }
 
 const StyledRangeSlider = styled.div<StyledRangeSliderProps>`
   position: relative;
   background-color: ${props => props.theme.sliderBarBgd};
-  ${props => `${props.vertical ? 'width' : 'height'}: ${props.theme.sliderBarHeight}px`};
-  ${props => `${props.vertical ? 'height' : 'width'}: 100%`};
+  ${props => `${props.$vertical ? 'width' : 'height'}: ${props.theme.sliderBarHeight}px`};
+  ${props => `${props.$vertical ? 'height' : 'width'}: 100%`};
 `;
 
 export type StyleRangeSliderType = typeof StyledRangeSlider & HTMLDivElement;
 
 interface SliderWrapperProps {
-  isRanged?: boolean;
-  vertical?: boolean;
+  $isRanged?: boolean;
+  $vertical?: boolean;
 }
 
 const SliderWrapper = styled.div<SliderWrapperProps>`
@@ -185,11 +185,11 @@ export default class Slider extends Component<SliderProps> {
       <SliderWrapper
         className={classnames('kg-slider', {...classSet, disabled}, className)}
         ref={this.ref}
-        isRanged={isRanged}
-        vertical={vertical}
+        $isRanged={isRanged}
+        $vertical={vertical}
         style={style}
       >
-        <StyledRangeSlider className="kg-range-slider" vertical={vertical} ref={this.track}>
+        <StyledRangeSlider className="kg-range-slider" $vertical={vertical} ref={this.track}>
           <SliderHandle
             left={this.calcHandleLeft0(width, v0Left)}
             valueListener={this.slide0Listener}

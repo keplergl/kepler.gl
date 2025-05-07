@@ -5,6 +5,8 @@ import {MapLib, MapRef} from 'react-map-gl';
 
 import type {BaseMapLibraryType} from '@kepler.gl/constants';
 
+import type {DatabaseAdapter} from './application-config-types';
+
 export type MapLibInstance = MapLib<any>;
 export type GetMapRef = ReturnType<MapRef['getMap']>;
 
@@ -34,6 +36,7 @@ export type KeplerApplicationConfig = {
   // KeplerTable alternative
   // TODO improve typing by exporting KeplerTable interface to @kepler.gl/types
   table?: any;
+  database?: DatabaseAdapter | null;
 
   // Disable progressive loading for arrow files
   useArrowProgressiveLoading?: boolean;
@@ -83,6 +86,7 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
   // The default table class is KeplerTable.
   // TODO include KeplerTable here when the circular dependency with @kepler.gl/table and @kepler.gl/utils are resolved.
   table: null,
+  database: null,
 
   useArrowProgressiveLoading: true,
   showReleaseBanner: true,

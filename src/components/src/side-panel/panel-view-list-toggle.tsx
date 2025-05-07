@@ -36,8 +36,8 @@ const PanelViewListToggleWrapper = styled.div.attrs({
 
 export const StyledToggleOption = styled.div.attrs({
   className: 'layer-panel-toggle-option'
-})<{active: boolean}>`
-  color: ${props => (props.active ? props.theme.subtextColorActive : props.theme.panelTabColor)};
+})<{$active: boolean}>`
+  color: ${props => (props.$active ? props.theme.subtextColorActive : props.theme.panelTabColor)};
   &:hover {
     cursor: pointer;
     color: ${props => props.theme.subtextColorActive};
@@ -49,7 +49,7 @@ function ToggleOptionFactory() {
     <StyledToggleOption
       data-tip
       data-for={`${option.id}-toggle-option`}
-      active={isActive}
+      $active={isActive}
       onClick={onClick}
     >
       <option.iconComponent height="20px" />

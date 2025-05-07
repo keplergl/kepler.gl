@@ -7,7 +7,7 @@ import classnames from 'classnames';
 import {CSS} from '@dnd-kit/utilities';
 import {useSortable, SortableContext, verticalListSortingStrategy} from '@dnd-kit/sortable';
 
-import {dataTestIds, SORTABLE_EFFECT_TYPE, SORTABLE_EFFECT_PANEL_TYPE} from '@kepler.gl/constants';
+import {dataTestIds} from '@kepler.gl/constants';
 import {findById} from '@kepler.gl/utils';
 import {Effect} from '@kepler.gl/types';
 import {
@@ -18,6 +18,7 @@ import {
   ActionHandler
 } from '@kepler.gl/actions';
 
+import {SORTABLE_EFFECT_TYPE, SORTABLE_EFFECT_PANEL_TYPE} from '../common/dnd-layer-items';
 import EffectPanelFactory from './effect-panel';
 
 export type EffectListProps = {

@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import React, {useEffect} from 'react';
-import get from 'lodash.get';
+import get from 'lodash/get';
 
 import {MAP_THUMBNAIL_DIMENSION, EXPORT_IMG_RATIOS} from '@kepler.gl/constants';
 import {SetExportImageSettingUpdaterAction} from '@kepler.gl/actions';

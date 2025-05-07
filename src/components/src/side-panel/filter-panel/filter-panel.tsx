@@ -4,7 +4,7 @@
 import React, {Component} from 'react';
 import {createSelector} from 'reselect';
 import styled from 'styled-components';
-import get from 'lodash.get';
+import get from 'lodash/get';
 import {ALL_FIELD_TYPES, FILTER_TYPES} from '@kepler.gl/constants';
 
 import NewFilterPanelFactory from '../../filters/filter-panels/new-filter-panel';

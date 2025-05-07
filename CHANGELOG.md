@@ -15,6 +15,86 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+## [3.1.4] - May 5 2025
+
+- 03b8ea0a9 [Chore] Use clonedeep in interaction config load (#3080)
+- a6104eafe [Chore] drop lodash per-method packages in favor of the main lodash (#3065)
+- abb3fd473 [feat] h3 layer from decimal format (#3066)
+- 191f66161 [fix] fix for exported maps. Change react-markdown to markdown-to-jsx (#3077)
+- 3c83e74b3 [chore] Added types in Action (#3075)
+- 8baddbbaf [Chore] export bottom widget field selector (#3078)
+- afc21c263 [chore] Fix TypeScript Errors (#3076)
+- 822cd0e32 [Style] align icon styles, use lucid icons (#3073)
+
+## [3.1.3] - May 2 2025
+
+- d5ef5f713 [Chore] remove dnd-kit from dependency of utils and reducer, remove use of withState in dnd context (#3067)
+
+## [3.1.2] - May 1 2025
+
+- fb3615b90 [chore] extra duckdb utils export (#3063)
+- a0d14b770 [fix] updateVisDataUpdater early exit (#3058)
+- 111b3180d [chore] pass props directly to Draggable legend, not withState (#3055)
+- 6bb6c98a1 [fix] Legend positioning fixes (#3052)
+- 7d601f110 [fix] Only open either the mapDraw dropdown or locale dropdown (#3056)
+- 52a2d2a2b [CHORE] disable auto lyaer creation based on color by int column (#3049)
+- e935ef51d [chore] extra exports from duckdb module (#3050)
+- 864dbe5c6 [Chore] Fix more style components warnings (#3047)
+- 9de30e2ba [Chore] Export duckdub utils, allow cols in validate dataset (#3042)
+- 6cc1ee4ef [Bug] Fix styled-components warnings for passing props to Dom (#3039)
+- cb5c14f81 [Bug] Add mapbox-gl dep to prevent Failed to resolve import in vite (#3036)
+- 7c3365fcf [chore] Get started minimal example with esbuild (#3028)
+- 224975a25 [chore] pass duckDB adapter via application config (#3023)
+
+## [3.1.1] - March 11 2025
+
+- e271c8f8c [fix] fix for potential freeze during add data pipeline (#3015)
+- 9eef01c48 [fix] make onFilteredItemsChange callback optional (#3016)
+- 7107e4177 [fix] fixes for vector-tile layer (#3013)
+- b4b979d59 [fix] schema panel displays temp table (#3014)
+- ed2b5f322 [chore] fix react deprecation warnings (#3011)
+- ba75087a1 [fix] DuckDB: update schema after running a query (#3009)
+- b57b1ff9a [chore] update umd example to latest stable release (#3010)
+- 9762dc379 [feat] DuckDb plugin: drag and drop file directly as table (#2952)
+- 8e737e8cc [chore] changes to webpack.config path separators (#2623)
+- 8fbb3b0b4 [fix] Fix Save map action for FSQ provider (overwrite logic) (#3006)
+- df829fbe9 [fix] fix for geocoder coordinates (#3002)
+- 44acecf2a [fix] adjust getZoomFactor for icon layer (#3004)
+- 69ea2a176 [fix] fix for Icon layer UI (#3003)
+- 702b49e3f [fix] Fix for More than one copy of react-palm was loaded error message (#3007)
+- a67a7fcab [Bug] make sure the RangeBrush updates on slider range changes (#2047)
+- 631f7a304 [fix] Update geojson-utils.ts to support GeometryCollections (#2059)
+- ce867606f [chore] Bump express from 4.19.2 to 4.21.0 (#2655)
+- c9dd05f32 [chore] Bump nanoid from 3.3.7 to 3.3.8 in /bindings/kepler.gl-jupyter/js (#2906)
+- b2e24345c [chore] Bump fast-xml-parser from 4.4.0 to 4.5.0 (#2688)
+- 976b079b3 [chore] Bump lodash from 4.17.19 to 4.17.21 in /src/deckgl-layers (#2858)
+- 4074b320f [chore] Bump esbuild from 0.23.1 to 0.25.0 in /examples/demo-app (#2994)
+- 57573d344 [chore] Bump elliptic from 6.6.0 to 6.6.1 (#2997)
+- c5dbd571d [chore] Fix lint issues displayed on GitHub's File Changes page (#3001)
+- b98a39def [fix] Transform binary buffers to hex wkb when saved to json/hmtl maps (#2998)
+- 221b243c2 [feat] improvements to duckDB column type handling (#2970)
+- d30a95bcd [fix] improvements for layer type change logic (#2995)
+- 547ffeb0c [fix] arrow text labels from non-string source vectors (#2990)
+- 7e2e619e2 [chore] updates to website (#2992)
+- 7e2db2b7d [chore] Improved Props and Gettings Started Docs (#2993)
+- 1216d235b [fix] export geoarrow to CSV as geojson (#2988)
+- 2c525ed8e [fix] restore suport for string wkb; save binary wkb as hex wkb (#2982)
+- e149384df [chore] update to hubble.gl 1.4 (#2987)
+- c39778ce9 [fix] AI Assistant sends messages to 127.0.0.1 instead of remote Ollama URL (#2985)
+- 81780f5ab [chore] Update README.md (#2981)
+- f8fbf2461 [fix] heatmap renders nothing with black color or duplicate color (#2978)
+- 11350eecb [chore] check for required env variables in demo-app and output a warning (#2977)
+- 0325ef6ee [fix] FSQ storage provider - use prompt instead of auto login after logout (#2975)
+- bbe51b980 [fix] fix for point column suggestion not working (#2974)
+- fa1cc4f1e [chore] Rename ".env.template " to ".env.template" to prevent git clone fail (#2976)
+- 47cd3da81 [keplergl-jupyter] Release v0.3.7 #2969
+- 7bbe0b839 [Jupyter][Fix] convert datetimes to str so they can convert to json (#2968)
+- 5367abaee [fix] fix geojson and trip layer crash without data (#2964)
+- e1c9f869c [fix] FSQ Storage provider temp fix (#2960)
+- 098ee9b42 [fix] fix for minzoom in examples (#2959)
+- f7f10379e [chore] update demo-app version (#2958)
+- ab17e7565 [chore] update banner mesasge (#2957)
+
 ## [3.1.0] - January 29 2025
 
 - 089aa8cf8 [chore] vector tiles refactoring (#2945)

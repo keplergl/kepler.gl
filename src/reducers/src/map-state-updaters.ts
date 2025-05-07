@@ -6,7 +6,7 @@ import booleanWithin from '@turf/boolean-within';
 import bboxPolygon from '@turf/bbox-polygon';
 import {fitBounds} from '@math.gl/web-mercator';
 import deepmerge from 'deepmerge';
-import pick from 'lodash.pick';
+import pick from 'lodash/pick';
 
 import {
   getCenterAndZoomFromBounds,

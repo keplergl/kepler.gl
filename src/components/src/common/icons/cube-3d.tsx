@@ -6,16 +6,23 @@ import Base, {BaseProps} from './base';
 
 export default class Cube3D extends Component<Partial<BaseProps>> {
   static defaultProps = {
-    height: '16px',
-    predefinedClassName: 'data-ex-icons-cube3d'
+    height: '24px',
+    viewBox: '0 0 24 24',
+    predefinedClassName: 'data-ex-icons-layers'
   };
 
   render() {
     return (
-      <Base {...this.props}>
-        <path d="M29.2,29.57,9.52,40.93V20a2.81,2.81,0,0,1,1.4-2.43L29.2,7.06Z" />
-        <path d="M32.08,34.38l21,10.82L33.4,56.56a2.78,2.78,0,0,1-2.8,0L12.12,45.91Z" />
-        <path d="M54.48,20v19.6L34.8,29.49V7.06L53.09,17.61A2.81,2.81,0,0,1,54.48,20Z" />
+      <Base
+        {...this.props}
+        style={{fill: 'none', stroke: 'currentcolor'}}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
+        <path d="m3.3 7 8.7 5 8.7-5" />
+        <path d="M12 22V12" />
       </Base>
     );
   }

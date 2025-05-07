@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import memoize from 'lodash.memoize';
-import uniq from 'lodash.uniq';
+import memoize from 'lodash/memoize';
+import uniq from 'lodash/uniq';
 import Layer, {LayerBaseConfig, defaultGetFieldValue} from '../base-layer';
 import {TripsLayer as DeckGLTripsLayer} from '@deck.gl/geo-layers';
 

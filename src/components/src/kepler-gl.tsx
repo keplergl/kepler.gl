@@ -4,7 +4,6 @@
 import React, {Component, createRef, Dispatch} from 'react';
 import Console from 'global/console';
 import {bindActionCreators} from 'redux';
-import isPropValid from '@emotion/is-prop-valid';
 import styled, {withTheme, StyleSheetManager, ThemeProvider} from 'styled-components';
 import {createSelector} from 'reselect';
 import {connect as keplerGlConnect} from './connect/keplergl-connect';
@@ -28,6 +27,8 @@ import {
 } from '@kepler.gl/actions';
 
 import {generateHashId} from '@kepler.gl/common-utils';
+
+import {shouldForwardProp} from './common/styled-components';
 
 type KeplerGlActions = {
   visStateActions: typeof VisStateActions;
@@ -73,16 +74,6 @@ import {theme as basicTheme, themeLT, themeBS, breakPointValues} from '@kepler.g
 import {KeplerGlState} from '@kepler.gl/reducers';
 import {Provider} from '@kepler.gl/cloud-providers';
 
-// This implements the default behavior from styled-components v5
-function shouldForwardProp(propName, target) {
-  if (typeof target === 'string') {
-    // For HTML elements, forward the prop if it is a valid HTML attribute
-    return isPropValid(propName);
-  }
-  // For other elements, forward all props
-  return true;
-}
-
 // Maybe we should think about exporting this or creating a variable
 // as part of the base.js theme
 const GlobalStyle = styled.div`
@@ -111,6 +102,10 @@ const GlobalStyle = styled.div`
   a {
     text-decoration: none;
     color: ${props => props.theme.labelColor};
+  }
+
+  :focus {
+    outline: none;
   }
 
   .maplibregl-ctrl .maplibregl-ctrl-logo {
@@ -617,7 +612,7 @@ function KeplerGlFactory(
                       ref={this.root}
                     >
                       <NotificationPanel {...notificationPanelFields} />
-                      <DndContext>
+                      <DndContext visState={visState}>
                         {!uiState.readOnly && !readOnly && <SidePanel {...sideFields} />}
                         <MapsLayout className="maps" mapState={this.props.mapState}>
                           {mapContainers}

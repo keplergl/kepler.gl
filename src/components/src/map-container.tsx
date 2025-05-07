@@ -9,7 +9,7 @@ import {PickInfo} from '@deck.gl/core/lib/deck';
 import DeckGL from '@deck.gl/react';
 import {createSelector, Selector} from 'reselect';
 import {useDroppable} from '@dnd-kit/core';
-import debounce from 'lodash.debounce';
+import debounce from 'lodash/debounce';
 
 import {VisStateActions, MapStateActions, UIStateActions} from '@kepler.gl/actions';
 
@@ -18,7 +18,7 @@ import MapPopoverFactory from './map/map-popover';
 import MapControlFactory from './map/map-control';
 import {
   StyledMapContainer,
-  StyledAttrbution,
+  StyledAttribution,
   EndHorizontalFlexbox
 } from './common/styled-components';
 
@@ -71,10 +71,10 @@ import {
   THROTTLE_NOTIFICATION_TIME,
   DEFAULT_PICKING_RADIUS,
   NO_MAP_ID,
-  EMPTY_MAPBOX_STYLE,
-  DROPPABLE_MAP_CONTAINER_TYPE
+  EMPTY_MAPBOX_STYLE
 } from '@kepler.gl/constants';
 
+import {DROPPABLE_MAP_CONTAINER_TYPE} from './common/dnd-layer-items';
 // Contexts
 import {MapViewStateContext} from './map-view-state-context';
 
@@ -119,16 +119,16 @@ const MAP_STYLE: {[key: string]: React.CSSProperties} = {
 const LOCALE_CODES_ARRAY = Object.keys(LOCALE_CODES);
 
 interface StyledMapContainerProps {
-  mixBlendMode?: string;
-  mapLibCssClass: string;
+  $mixBlendMode?: string;
+  $mapLibCssClass: string;
 }
 
 const StyledMap = styled(StyledMapContainer)<StyledMapContainerProps>(
-  ({mixBlendMode = 'normal', mapLibCssClass}) => `
+  ({$mixBlendMode = 'normal', $mapLibCssClass}) => `
   #default-deckgl-overlay {
-    mix-blend-mode: ${mixBlendMode};
+    mix-blend-mode: ${$mixBlendMode};
   };
-  *[${mapLibCssClass}-children] {
+  *[${$mapLibCssClass}-children] {
     position: absolute;
   }
 `
@@ -247,7 +247,7 @@ export const Attribution: React.FC<AttributionProps> = ({
   const memoizedComponents = useMemo(() => {
     if (!showBaseMapLibLogo) {
       return (
-        <StyledAttrbution
+        <StyledAttribution
           mapLibCssClass={baseMapLibraryConfig.mapLibCssClass}
           mapLibAttributionCssClass={baseMapLibraryConfig.mapLibAttributionCssClass}
         >
@@ -266,12 +266,12 @@ export const Attribution: React.FC<AttributionProps> = ({
               </div>
             ) : null}
           </EndHorizontalFlexbox>
-        </StyledAttrbution>
+        </StyledAttribution>
       );
     }
 
     return (
-      <StyledAttrbution
+      <StyledAttribution
         mapLibCssClass={baseMapLibraryConfig.mapLibCssClass}
         mapLibAttributionCssClass={baseMapLibraryConfig.mapLibAttributionCssClass}
       >
@@ -286,7 +286,7 @@ export const Attribution: React.FC<AttributionProps> = ({
             {!isPalm ? <MapLibLogo baseMapLibraryConfig={baseMapLibraryConfig} /> : null}
           </div>
         </EndHorizontalFlexbox>
-      </StyledAttrbution>
+      </StyledAttribution>
     );
   }, [
     showBaseMapLibLogo,
@@ -1112,6 +1112,8 @@ export default function MapContainerFactory(
             onToggleEditorVisibility={visStateActions.toggleEditorVisibility}
             onLayerVisConfigChange={visStateActions.layerVisConfigChange}
             mapHeight={mapState.height}
+            setMapControlSettings={uiStateActions.setMapControlSettings}
+            activeSidePanel={activeSidePanel}
           />
           {isSplitSelector(this.props) && <Droppable containerId={containerId} />}
 
@@ -1194,8 +1196,8 @@ export default function MapContainerFactory(
           ref={this._ref}
           style={this.styleSelector(this.props)}
           onContextMenu={event => event.preventDefault()}
-          mixBlendMode={visState.overlayBlending}
-          mapLibCssClass={baseMapLibraryConfig.mapLibCssClass}
+          $mixBlendMode={visState.overlayBlending}
+          $mapLibCssClass={baseMapLibraryConfig.mapLibCssClass}
         >
           {mapContent}
         </StyledMap>

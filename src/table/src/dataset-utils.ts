@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import uniq from 'lodash.uniq';
+import uniq from 'lodash/uniq';
 import KeplerTable, {Datasets} from './kepler-table';
 import {ProtoDataset, RGBColor} from '@kepler.gl/types';
 import Task from 'react-palm/tasks';

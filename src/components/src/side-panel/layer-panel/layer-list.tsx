@@ -13,8 +13,9 @@ import {useSortable, SortableContext, verticalListSortingStrategy} from '@dnd-ki
 import {CSS} from '@dnd-kit/utilities';
 import LayerPanelFactory from './layer-panel';
 import {findById} from '@kepler.gl/utils';
-import {dataTestIds, SORTABLE_LAYER_TYPE, SORTABLE_SIDE_PANEL_TYPE} from '@kepler.gl/constants';
+import {dataTestIds} from '@kepler.gl/constants';
 import {SplitMap} from '@kepler.gl/types';
+import {SORTABLE_LAYER_TYPE, SORTABLE_SIDE_PANEL_TYPE} from '../../common/dnd-layer-items';
 
 export type LayerListProps = {
   datasets: Datasets;
@@ -40,14 +41,14 @@ const Container = styled.div`
 `;
 
 interface SortableStyledItemProps {
-  transition?: string;
-  transform?: string;
+  $transition?: string;
+  $transform?: string;
 }
 
 const SortableStyledItem = styled.div<SortableStyledItemProps>`
   z-index: ${props => props.theme.dropdownWrapperZ + 1};
-  transition: ${props => props.transition};
-  transform: ${props => props.transform};
+  transition: ${props => props.$transition};
+  transform: ${props => props.$transform};
   &.sorting {
     opacity: 0.3;
     pointer-events: none;
@@ -96,8 +97,8 @@ function LayerListFactory(LayerPanel: ReturnType<typeof LayerPanelFactory>) {
           {sorting: isDragging}
         )}
         data-testid={disabled ? dataTestIds.staticLayerItem : dataTestIds.sortableLayerItem}
-        transform={CSS.Transform.toString(transform)}
-        transition={transition}
+        $transform={CSS.Transform.toString(transform)}
+        $transition={transition}
         {...attributes}
       >
         <LayerPanel

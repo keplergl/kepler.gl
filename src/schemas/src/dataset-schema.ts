@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import pick from 'lodash.pick';
+import pick from 'lodash/pick';
 import {console as globalConsole} from 'global/window';
 import * as arrow from 'apache-arrow';
 

@@ -6,8 +6,8 @@ import {ScrollSync, AutoSizer, OnScrollParams, GridProps, Index} from 'react-vir
 import styled, {withTheme} from 'styled-components';
 import classnames from 'classnames';
 import {createSelector} from 'reselect';
-import get from 'lodash.get';
-import debounce from 'lodash.debounce';
+import get from 'lodash/get';
+import debounce from 'lodash/debounce';
 import {ArrowDown} from '../icons';
 
 import {CellSizeCache} from './cell-size';

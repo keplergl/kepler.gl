@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {processKeplerglJSON} from '@kepler.gl/processors';
-import CloneDeep from 'lodash.clonedeep';
+import CloneDeep from 'lodash/cloneDeep';
 import {keplerGlReducerCore as coreReducer} from '@kepler.gl/reducers';
 import {addDataToMap} from '@kepler.gl/actions';
 import {InitialState} from '../helpers/mock-state';

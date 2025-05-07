@@ -6,8 +6,8 @@ import AutoSizer from 'react-virtualized/dist/commonjs/AutoSizer';
 import styled, {ThemeProvider, StyleSheetManager} from 'styled-components';
 import Window from 'global/window';
 import {connect, useDispatch} from 'react-redux';
-import cloneDeep from 'lodash.clonedeep';
-import isEqual from 'lodash.isequal';
+import cloneDeep from 'lodash/cloneDeep';
+import isEqual from 'lodash/isEqual';
 import isPropValid from '@emotion/is-prop-valid';
 
 import {ScreenshotWrapper} from '@openassistant/ui';

@@ -5,7 +5,7 @@ import test from 'tape';
 import sinon from 'sinon';
 import {console as Console} from 'global/window';
 import {DATA_TYPES} from 'type-analyzer';
-import cloneDeep from 'lodash.clonedeep';
+import cloneDeep from 'lodash/cloneDeep';
 
 import testData, {
   dataWithNulls,

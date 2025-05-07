@@ -19,16 +19,16 @@ import {StyledDatasetTitleProps, RemoveDatasetProps, ShowDataTableProps} from '.
 const StyledDatasetTitle = styled.div<StyledDatasetTitleProps>`
   color: ${props => props.theme.textColor};
   display: flex;
-  align-items: flex-start;
+  align-items: center;
 
   .source-data-arrow {
     height: 16px;
   }
   &:hover {
-    cursor: ${props => (props.clickable ? 'pointer' : 'auto')};
+    cursor: ${props => (props.$clickable ? 'pointer' : 'auto')};
 
     .dataset-name {
-      color: ${props => (props.clickable ? props.theme.textColorHl : props.theme.textColor)};
+      color: ${props => (props.$clickable ? props.theme.textColorHl : props.theme.textColor)};
     }
 
     .dataset-action {
@@ -149,7 +149,7 @@ export default function DatasetTitleFactory(
       <div className="custom-palette-panel" ref={root}>
         <StyledDatasetTitle
           className="source-data-title"
-          clickable={Boolean(showDatasetTable || onTitleClick)}
+          $clickable={Boolean(showDatasetTable || onTitleClick)}
         >
           <DatasetTag
             dataset={dataset}

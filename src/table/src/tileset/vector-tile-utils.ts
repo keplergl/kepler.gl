@@ -4,7 +4,7 @@
 import {DATA_TYPES as ANALYZER_DATA_TYPES} from 'type-analyzer';
 import {ascending} from 'd3-array';
 import Console from 'global/console';
-import uniq from 'lodash.uniq';
+import uniq from 'lodash/uniq';
 import {DATA_TYPES} from 'type-analyzer';
 
 import {MVTSource, TileJSON} from '@loaders.gl/mvt';
@@ -498,9 +498,9 @@ function compare(num1: number | undefined, num2: number | undefined, operator: s
   return Number.isFinite(num1) && Number.isFinite(num2)
     ? Math[operator](num1 as number, num2 as number)
     : Number.isFinite(num1)
-    ? num1
+    ? (num1 as number)
     : Number.isFinite(num2)
-    ? num2
+    ? (num2 as number)
     : NaN;
 }
 
