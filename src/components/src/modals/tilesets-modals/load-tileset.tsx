@@ -24,6 +24,7 @@ const LoadTilesetTabContainer = styled.div`
 const Container = styled.div`
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-gap: 20px;
   background-color: ${props => props.theme.WHITE};
 `;
 
@@ -54,7 +55,6 @@ const MetaInnerContainer = styled.div<MetaInnerContainerProps>`
   font: inherit;
   line-height: 1.5em;
   padding: 0.5em 3.5em 0.5em 1em;
-  margin-left: 10px;
   box-sizing: border-box;
   overflow-y: scroll;
   overflow-x: auto;
@@ -62,6 +62,9 @@ const MetaInnerContainer = styled.div<MetaInnerContainerProps>`
   word-wrap: break-word;
   height: ${props => props.height}px;
   width: ${props => props.width}px;
+  color: ${props => props.theme.textColorLT};
+  font-size: 11px;
+  font-family: ${props => props.theme.fontFamily};
   max-width: 600px;
 `;
 
