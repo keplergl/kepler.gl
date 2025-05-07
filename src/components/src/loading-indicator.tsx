@@ -30,6 +30,9 @@ type LoadingIndicatorProps = {
   sidePanelWidth?: number;
 };
 
+/** Extra adjustment for the loading indicator when side panel is visible */
+const LEFT_POSITION_ADJUSTMENT = 3;
+
 const LoadingIndicator: React.FC<PropsWithChildren<LoadingIndicatorProps> & {theme: any}> = ({
   isVisible,
   children,
@@ -37,7 +40,9 @@ const LoadingIndicator: React.FC<PropsWithChildren<LoadingIndicatorProps> & {the
   sidePanelWidth,
   theme
 }) => {
-  const left = (activeSidePanel ? (sidePanelWidth || 0) + 3 : 0) + theme.sidePanel.margin.left;
+  const left =
+    (activeSidePanel ? (sidePanelWidth || 0) + LEFT_POSITION_ADJUSTMENT : 0) +
+    theme.sidePanel.margin.left;
 
   return (
     <StyledContainer isVisible={isVisible} left={left}>
