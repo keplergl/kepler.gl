@@ -1,23 +1,24 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useCallback, useEffect, useRef, useMemo, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import AutoSizer from 'react-virtualized/dist/commonjs/AutoSizer';
 import styled, {ThemeProvider, StyleSheetManager} from 'styled-components';
 import Window from 'global/window';
 import {connect, useDispatch} from 'react-redux';
-import cloneDeep from 'lodash/cloneDeep';
-import isEqual from 'lodash/isEqual';
+import cloneDeep from 'lodash.clonedeep';
+import isEqual from 'lodash.isequal';
+import {useSelector} from 'react-redux';
 import isPropValid from '@emotion/is-prop-valid';
-
+import {WebMercatorViewport} from '@deck.gl/core';
 import {ScreenshotWrapper} from '@openassistant/ui';
 import {
-  messages as aiAssistantMessages,
   setStartScreenCapture,
-  setScreenCaptured
+  setScreenCaptured,
+  AiAssistantPanel,
+  setMapBoundary
 } from '@kepler.gl/ai-assistant';
 import {panelBorderColor, theme} from '@kepler.gl/styles';
-import {useSelector} from 'react-redux';
 import {ParsedConfig} from '@kepler.gl/types';
 import {getApplicationConfig} from '@kepler.gl/utils';
 import {SqlPanel} from '@kepler.gl/duckdb';
@@ -139,6 +140,17 @@ const StyledResizeHandle = styled(PanelResizeHandle)`
   cursor: row-resize;
 `;
 
+const StyledVerticalResizeHandle = styled(PanelResizeHandle)`
+  background-color: ${panelBorderColor};
+  width: 4px;
+  height: 100%;
+  cursor: row-resize;
+
+  &:hover {
+    background-color: #555;
+  }
+`;
+
 const App = props => {
   const [showBanner, toggleShowBanner] = useState(false);
   const {params: {id, provider} = {}, location: {query = {}} = {}} = props;
@@ -150,6 +162,11 @@ const App = props => {
   const isSqlPanelOpen = useSelector(
     state => duckDbPluginEnabled && state?.demo?.keplerGl?.map?.uiState.mapControls.sqlPanel?.active
   );
+
+  const isAiAssistantPanelOpen = useSelector(
+    state => state?.demo?.keplerGl?.map?.uiState.mapControls.aiAssistant?.active
+  );
+
   const prevQueryRef = useRef<number>(null);
 
   useEffect(() => {
@@ -201,6 +218,20 @@ const App = props => {
     // no dependencies, as this was part of componentDidMount
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  /**
+   * Update map boundary when view state changes, used by ai-assistant to
+   * get data from vector tiles when map boundary changes
+   */
+  const onViewStateChange = useCallback(
+    viewState => {
+      const viewport = new WebMercatorViewport(viewState);
+      const nw = viewport.unproject([0, 0]);
+      const se = viewport.unproject([viewport.width, viewport.height]);
+      dispatch(setMapBoundary(nw, se));
+    },
+    [dispatch]
+  );
 
   const _setStartScreenCapture = useCallback(
     flag => {
@@ -567,19 +598,6 @@ const App = props => {
     );
   }, [dispatch]);
 
-  const combinedMessages = useMemo(() => {
-    return Object.keys(messages).reduce(
-      (acc, language) => ({
-        ...acc,
-        [language]: {
-          ...(messages[language] || {}),
-          ...(aiAssistantMessages[language] || {})
-        }
-      }),
-      {}
-    );
-  }, []);
-
   const _loadSampleData = useCallback(() => {
     // _loadPointData();
     // _loadGeojsonData();
@@ -631,31 +649,44 @@ const App = props => {
               <Announcement onDisable={_disableBanner} />
             </Banner>
             <div style={CONTAINER_STYLE}>
-              <PanelGroup direction="vertical">
-                <Panel defaultSize={isSqlPanelOpen ? 60 : 100}>
-                  <AutoSizer>
-                    {({height, width}) => (
-                      <KeplerGl
-                        mapboxApiAccessToken={CLOUD_PROVIDERS_CONFIGURATION.MAPBOX_TOKEN}
-                        id="map"
-                        getState={keplerGlGetState}
-                        width={width}
-                        height={height}
-                        cloudProviders={CLOUD_PROVIDERS}
-                        localeMessages={combinedMessages}
-                        onExportToCloudSuccess={onExportFileSuccess}
-                        onLoadCloudMapSuccess={onLoadCloudMapSuccess}
-                        featureFlags={DEFAULT_FEATURE_FLAGS}
-                      />
-                    )}
-                  </AutoSizer>
-                </Panel>
+              <PanelGroup direction="horizontal">
+                <Panel defaultSize={isAiAssistantPanelOpen ? 70 : 100}>
+                  <PanelGroup direction="vertical">
+                    <Panel defaultSize={isSqlPanelOpen ? 60 : 100}>
+                      <AutoSizer>
+                        {({height, width}) => (
+                          <KeplerGl
+                            mapboxApiAccessToken={CLOUD_PROVIDERS_CONFIGURATION.MAPBOX_TOKEN}
+                            id="map"
+                            getState={keplerGlGetState}
+                            width={width}
+                            height={height}
+                            cloudProviders={CLOUD_PROVIDERS}
+                            localeMessages={messages}
+                            onExportToCloudSuccess={onExportFileSuccess}
+                            onLoadCloudMapSuccess={onLoadCloudMapSuccess}
+                            featureFlags={DEFAULT_FEATURE_FLAGS}
+                            onViewStateChange={onViewStateChange}
+                          />
+                        )}
+                      </AutoSizer>
+                    </Panel>
 
-                {isSqlPanelOpen && (
+                    {isSqlPanelOpen && (
+                      <>
+                        <StyledResizeHandle />
+                        <Panel defaultSize={40} minSize={20}>
+                          <SqlPanel initialSql={query.sql || ''} />
+                        </Panel>
+                      </>
+                    )}
+                  </PanelGroup>
+                </Panel>
+                {isAiAssistantPanelOpen && (
                   <>
-                    <StyledResizeHandle />
-                    <Panel defaultSize={40} minSize={20}>
-                      <SqlPanel initialSql={query.sql || ''} />
+                    <StyledVerticalResizeHandle />
+                    <Panel defaultSize={30} minSize={20}>
+                      <AiAssistantPanel />
                     </Panel>
                   </>
                 )}

@@ -2,63 +2,12 @@
 // Copyright contributors to the kepler.gl project
 
 import interpolate from 'color-interpolate';
-
-import {Layer} from '@kepler.gl/layers';
+import {Feature} from 'geojson';
+import {Layer, VectorTileLayer} from '@kepler.gl/layers';
 import {Datasets, KeplerTable} from '@kepler.gl/table';
 import {SpatialJoinGeometries} from '@openassistant/geoda';
-import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
-import {AddDataToMapPayload, ProtoDataset, ProtoDatasetField} from '@kepler.gl/types';
-
-/**
- * Check if the dataset exists
- * @param datasets The kepler.gl datasets
- * @param datasetName The name of the dataset
- * @param functionName The name of the function
- * @returns The result of the check
- */
-export function checkDatasetNotExists(
-  datasets: Datasets,
-  datasetName: string,
-  functionName: string
-) {
-  const datasetId = Object.keys(datasets).find(dataId => datasets[dataId].label === datasetName);
-  if (!datasetId) {
-    return {
-      name: functionName,
-      result: {
-        success: false,
-        details: `Dataset not found. Please specify one from the following datasets: ${Object.keys(
-          datasets
-        ).join(', ')}`
-      }
-    };
-  }
-  return null;
-}
-
-/**
- * Check if the field exists
- * @param dataset The kepler.gl dataset
- * @param fieldName The name of the field
- * @param functionName The name of the function
- * @returns The result of the check
- */
-export function checkFieldNotExists(dataset: KeplerTable, fieldName: string, functionName: string) {
-  const field = dataset.fields.find(f => f.name === fieldName);
-  if (!field) {
-    return {
-      type: 'layer',
-      name: functionName,
-      result: {
-        success: false,
-        details: `Field not found. Please specify one from the following fields: ${dataset.fields
-          .map(f => f.name)
-          .join(', ')}`
-      }
-    };
-  }
-  return null;
-}
+import {ALL_FIELD_TYPES, LAYER_TYPES} from '@kepler.gl/constants';
+import {Field, ProtoDataset, ProtoDatasetField} from '@kepler.gl/types';
 
 /**
  * Interpolate the colors from the original colors with the given number of colors
@@ -89,36 +38,54 @@ export function interpolateColor(originalColors: string[], numberOfColors: numbe
  */
 export function getValuesFromDataset(
   datasets: Datasets,
+  layers: Layer[],
   datasetName: string,
   variableName: string
-): number[] {
+): unknown[] {
   // find which dataset has the variableName
   const datasetId = Object.keys(datasets).find(dataId => datasets[dataId].label === datasetName);
-  if (!datasetId) return [];
+  if (!datasetId) {
+    throw new Error(`Dataset ${datasetName} not found`);
+  }
   const dataset = datasets[datasetId];
   if (dataset) {
+    // check if field exists
+    const field = dataset.fields.find(field => field.name === variableName);
+    if (!field) {
+      throw new Error(`Field ${variableName} not found in dataset ${datasetName}`);
+    }
+    // for vector-tile, getting values from layerData
+    if (dataset.type === 'vector-tile') {
+      // get field from dataset
+      const field = dataset.fields.find(field => field.name === variableName);
+      if (field) {
+        return getValuesFromVectorTileLayer(datasetId, layers, field);
+      }
+    }
     return Array.from({length: dataset.length}, (_, i) => dataset.getValue(variableName, i));
   }
   return [];
 }
 
-/**
- * Get the x and y values from a dataset for a scatterplot
- * @param datasets
- * @param datasetName
- * @param xVariableName
- * @param yVariableName
- * @returns {x: number[], y: number[]}
- */
-export function getScatterplotValuesFromDataset(
-  datasets: Datasets,
-  datasetName: string,
-  xVariableName: string,
-  yVariableName: string
-): {x: number[]; y: number[]} {
-  const xValues = getValuesFromDataset(datasets, datasetName, xVariableName);
-  const yValues = getValuesFromDataset(datasets, datasetName, yVariableName);
-  return {x: xValues, y: yValues};
+function isVectorTileLayer(layer: Layer): layer is VectorTileLayer {
+  return layer.type === LAYER_TYPES.vectorTile;
+}
+
+export function getValuesFromVectorTileLayer(datasetId: string, layers: Layer[], field: Field) {
+  // get the index of the layer
+  const layerIndex = layers.findIndex(layer => layer.config.dataId === datasetId);
+  if (layerIndex === -1) return [];
+  const layer = layers[layerIndex];
+  if (!isVectorTileLayer(layer)) return [];
+  const accessor = layer.accessRowValue(field);
+  const values: unknown[] = [];
+  // @ts-expect-error TODO fix this later in the vector-tile layer
+  for (const row of layer.tileDataset.tileSet) {
+    const value = accessor(field, row);
+    if (value === null) break;
+    values.push(value);
+  }
+  return values;
 }
 
 /**
@@ -159,8 +126,9 @@ export function highlightRows(
  * @param layers The kepler.gl layers
  * @returns The dataset context
  */
-export function getDatasetContext(datasets: Datasets, layers: Layer[]) {
-  const context = 'Please remember the following dataset context:';
+export function getDatasetContext(datasets?: Datasets, layers?: Layer[]) {
+  if (!datasets || !layers) return '';
+  const context = 'Please ONLY use the following datasets and layers to answer the user question:';
   const dataMeta = Object.values(datasets).map((dataset: KeplerTable) => ({
     datasetName: dataset.label,
     datasetId: dataset.id,
@@ -203,16 +171,45 @@ export function getGeometriesFromDataset(
   datasetName: string
 ): SpatialJoinGeometries {
   const datasetId = Object.keys(datasets).find(dataId => datasets[dataId].label === datasetName);
-  if (!datasetId) return [];
+  if (!datasetId) {
+    return [];
+  }
   const dataset = datasets[datasetId];
 
-  // get the index of the layer
-  const layerIndex = layers.findIndex(layer => layer.config.dataId === dataset.id);
-  if (layerIndex === -1) return [];
+  // if layer is vector-tile, get the geometries from the layer
+  if (dataset.type === 'vector-tile') {
+    // find the vector-tile layer
+    const selected = layers.filter(layer => layer.config.dataId === dataset.id);
+    const layer = selected.find(layer => layer.type === LAYER_TYPES.vectorTile);
+    if (!layer) return [];
 
-  const geometries = layerData[layerIndex];
+    const geometries: Feature[] = [];
+    // @ts-expect-error TODO fix this later in the vector-tile layer
+    for (const row of layer.tileDataset.tileSet) {
+      geometries.push(row);
+    }
+    return geometries;
+  }
 
-  return geometries?.data;
+  // for non-vector-tile dataset, get the geometries from the possible layer
+  const selectedLayers = layers.filter(layer => layer.config.dataId === dataset.id);
+  if (selectedLayers.length === 0) return [];
+
+  // find geojson layer, then point layer, then other layers
+  const geojsonLayer = selectedLayers.find(layer => layer.type === LAYER_TYPES.geojson);
+  const pointLayer = selectedLayers.find(layer => layer.type === LAYER_TYPES.point);
+  const otherLayers = selectedLayers.filter(
+    layer => layer.type !== LAYER_TYPES.geojson && layer.type !== LAYER_TYPES.point
+  );
+
+  const validLayer = geojsonLayer || pointLayer || otherLayers[0];
+  if (validLayer) {
+    const layerIndex = layers.findIndex(layer => layer.id === validLayer.id);
+    const geometries = layerData[layerIndex];
+    return geometries.data;
+  }
+
+  return [];
 }
 
 /**
@@ -224,16 +221,28 @@ export function getGeometriesFromDataset(
  */
 export function saveAsDataset(
   datasets: Datasets,
+  layers: Layer[],
   datasetName: string,
-  data: Record<string, number[]>,
-  addDataToMap: (data: AddDataToMapPayload) => void
+  newDatasetName: string,
+  data: Record<string, number[]>
 ) {
   // find datasetId from datasets
   const datasetId = Object.keys(datasets).find(dataId => datasets[dataId].label === datasetName);
   if (!datasetId) return;
 
+  // check if newDatasetName already exists
+  if (Object.keys(datasets).includes(newDatasetName)) return;
+
+  // Save the data as a new dataset by joining it with the left dataset
   const leftDataset = datasets[datasetId];
-  const numRows = leftDataset.length;
+  let numRows = leftDataset.length;
+  let geometries: Feature[];
+
+  if (leftDataset.type === 'vector-tile') {
+    // we need to get geometries from the vector-tile layer
+    geometries = getFeaturesFromVectorTile(leftDataset, layers) || [];
+    numRows = geometries.length;
+  }
 
   const fields: ProtoDatasetField[] = [
     // New fields from data
@@ -249,7 +258,18 @@ export function saveAsDataset(
       id: field.id || `${field.name}_${index}`,
       displayName: field.displayName,
       type: field.type
-    }))
+    })),
+    // add geometry column for vector-tile
+    ...(leftDataset.type === 'vector-tile'
+      ? [
+          {
+            name: '_geojson',
+            id: '_geojson',
+            displayName: '_geojson',
+            type: 'geojson'
+          }
+        ]
+      : [])
   ];
 
   // Pre-calculate data values array
@@ -261,11 +281,16 @@ export function saveAsDataset(
       // New data values
       ...dataValues.map(col => col[rowIdx]),
       // Existing dataset values
-      ...leftDataset.fields.map(field => leftDataset.getValue(field.name, rowIdx))
+      ...leftDataset.fields.map(field =>
+        leftDataset.type === 'vector-tile'
+          ? geometries[rowIdx].properties?.[field.name]
+          : leftDataset.getValue(field.name, rowIdx)
+      ),
+      // geometry column for vector-tile
+      ...(leftDataset.type === 'vector-tile' ? [geometries[rowIdx]] : [])
     ]);
 
   // create new dataset
-  const newDatasetName = `${datasetName}_joined`;
   const newDataset: ProtoDataset = {
     info: {
       id: newDatasetName,
@@ -277,7 +302,7 @@ export function saveAsDataset(
     }
   };
 
-  addDataToMap({datasets: [newDataset], options: {autoCreateLayers: true, centerMap: true}});
+  return newDataset;
 }
 
 /**
@@ -317,4 +342,20 @@ export function highlightRowsByColumnValues(
     // highlight the rows
     highlightRows(datasets, layers, datasetName, selectedIndices, layerSetIsValid);
   }
+}
+
+function getFeaturesFromVectorTile(leftDataset: KeplerTable, layers: Layer[]) {
+  const layerIndex = layers.findIndex(layer => layer.config.dataId === leftDataset.id);
+  if (layerIndex === -1) return;
+
+  const layer = layers[layerIndex];
+  if (!isVectorTileLayer(layer)) return;
+
+  const features: Feature[] = [];
+  // @ts-expect-error TODO fix this later in the vector-tile layer
+  for (const row of layer.tileDataset.tileSet) {
+    features.push(row);
+  }
+
+  return features;
 }

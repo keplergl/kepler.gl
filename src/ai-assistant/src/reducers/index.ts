@@ -6,7 +6,8 @@ import {
   UPDATE_AI_ASSISTANT_CONFIG,
   UPDATE_AI_ASSISTANT_MESSAGES,
   SET_START_SCREEN_CAPTURE,
-  SET_SCREEN_CAPTURED
+  SET_SCREEN_CAPTURED,
+  SET_MAP_BOUNDARY
 } from '../actions';
 import {MessageModel} from '@openassistant/core';
 
@@ -15,9 +16,10 @@ export type AiAssistantConfig = {
   provider: string;
   model: string;
   apiKey: string;
-  baseUrl: string;
+  baseUrl?: string;
   temperature: number;
   topP: number;
+  mapboxToken?: string;
 };
 
 // Initial state for the reducer
@@ -27,8 +29,8 @@ const initialConfig: AiAssistantConfig = {
   model: 'gpt-4o',
   apiKey: '',
   baseUrl: 'http://localhost:11434',
-  temperature: 1.0,
-  topP: 0.8
+  temperature: 0.0,
+  topP: 1.0
 };
 
 export type AiAssistantState = {
@@ -37,6 +39,12 @@ export type AiAssistantState = {
   screenshotToAsk: {
     startScreenCapture: boolean;
     screenCaptured: string;
+  };
+  keplerGl?: {
+    mapBoundary?: {
+      nw: [number, number];
+      se: [number, number];
+    };
   };
 };
 
@@ -54,7 +62,8 @@ export const aiAssistantReducer = handleActions<AiAssistantState, any>(
     [UPDATE_AI_ASSISTANT_CONFIG]: updateAiAssistantConfigHandler,
     [UPDATE_AI_ASSISTANT_MESSAGES]: updateAiAssistantMessagesHandler,
     [SET_START_SCREEN_CAPTURE]: setStartScreenCaptureHandler,
-    [SET_SCREEN_CAPTURED]: setScreenCapturedHandler
+    [SET_SCREEN_CAPTURED]: setScreenCapturedHandler,
+    [SET_MAP_BOUNDARY]: setMapBoundaryHandler
   },
   initialState
 );
@@ -87,5 +96,18 @@ function setScreenCapturedHandler(state: AiAssistantState, action: Action<string
   return {
     ...state,
     screenshotToAsk: {...state.screenshotToAsk, screenCaptured: action.payload}
+  };
+}
+
+function setMapBoundaryHandler(
+  state: AiAssistantState,
+  action: Action<{nw: [number, number]; se: [number, number]}>
+) {
+  return {
+    ...state,
+    keplerGl: {
+      ...state.keplerGl,
+      mapBoundary: action.payload
+    }
   };
 }
