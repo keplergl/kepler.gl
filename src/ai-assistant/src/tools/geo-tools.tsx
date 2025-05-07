@@ -13,6 +13,7 @@ import {
   LisaTool,
   spatialJoin,
   SpatialJoinTool,
+  spatialFilter,
   SpatialJoinToolComponent,
   buffer,
   centroid,
@@ -51,7 +52,7 @@ export function getGeoTools(
   // context for geo tools
   const getValues = async (datasetName: string, variableName: string) => {
     const values = getValuesFromDataset(datasets, layers, datasetName, variableName);
-    return values;
+    return values as number[];
   };
 
   const getGeometries = async (datasetName: string) => {
@@ -125,6 +126,16 @@ export function getGeoTools(
     component: CustomSpatialJoinToolComponent
   };
 
+  const spatialFilterTool = {
+    ...spatialFilter,
+    context: {
+      ...spatialFilter.context,
+      getValues,
+      getGeometries
+    },
+    component: CustomSpatialJoinToolComponent
+  };
+
   const routingTool: RoutingTool = {
     ...routing,
     context: {
@@ -148,6 +159,7 @@ export function getGeoTools(
     regressionTool,
     lisaTool,
     spatialJoinTool,
+    spatialFilterTool,
     buffer,
     centroid,
     dissolve,

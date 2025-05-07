@@ -1,4 +1,4 @@
-import {useEffect, useState} from 'react';
+import {useEffect} from 'react';
 import {useDispatch, useSelector} from 'react-redux';
 import {addDataToMap, addLayer} from '@kepler.gl/actions';
 import {saveAsDataset} from './utils';
@@ -10,6 +10,7 @@ import {State} from '../components/ai-assistant-manager';
  */
 export function LisaToolComponent({
   datasetName,
+  lisaDatasetName,
   significanceThreshold,
   clusters,
   lagValues,
@@ -20,24 +21,12 @@ export function LisaToolComponent({
   labels,
   colors
 }) {
-  // Add validation check for input dataset
-  if (datasetName.startsWith('lisa_')) {
-    throw new Error(
-      'Cannot use a previous LISA dataset as input for a new LISA analysis. Please use the original dataset instead.'
-    );
-  }
-
   const datasets = useSelector((state: State) => state.demo.keplerGl.map.visState.datasets);
   const layers = useSelector((state: State) => state.demo.keplerGl.map.visState.layers);
   const dispatch = useDispatch();
-  const [newDatasetName, setNewDatasetName] = useState<string | null>(null);
 
+  // save the result from lisa tool to a new lisa dataset
   useEffect(() => {
-    // Generate dataset name
-    const tmpDatasetName = `lisa_${new Date().toISOString()}`;
-    setNewDatasetName(tmpDatasetName);
-
-    // save the Lisa result to current dataset
     const lisaData: Record<string, number[]> = {
       clusters,
       lagValues,
@@ -53,7 +42,7 @@ export function LisaToolComponent({
       )
     };
     // create a new geojson layer using clusters with ordinal color scale and customColorScale and colors
-    const newDataset = saveAsDataset(datasets, layers, datasetName, tmpDatasetName, lisaData);
+    const newDataset = saveAsDataset(datasets, layers, datasetName, lisaDatasetName, lisaData);
     if (newDataset) {
       // add the new dataset to the map
       dispatch(
@@ -63,17 +52,20 @@ export function LisaToolComponent({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // create a LISA layer for the new lisa dataset
   useEffect(() => {
-    if (!newDatasetName) return;
-
-    // create a layer for the new dataset in the datasets
     const datasetId = Object.keys(datasets).find(
-      dataId => datasets[dataId].label === newDatasetName
+      dataId => datasets[dataId].label === lisaDatasetName
     );
     if (!datasetId) return;
 
     const newDataset = datasets[datasetId];
     if (newDataset) {
+      const layerId = `${lisaDatasetName}_lisa`;
+      // check if the layer already exists?
+      if (layers.find(l => l.id === layerId)) {
+        return;
+      }
       // add a new layer for the new dataset
       const layer = guessDefaultLayer(newDataset, 'geojson');
       if (!layer) return;
@@ -87,7 +79,7 @@ export function LisaToolComponent({
         colorLegends[colors[i]] = labels[i];
       }
       const newLayer = {
-        id: layer.id,
+        id: layerId,
         type: layer.type,
         config: {
           ...layer.config,
@@ -115,6 +107,6 @@ export function LisaToolComponent({
       dispatch(addLayer(newLayer, datasetId));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [datasets, newDatasetName]);
+  }, [datasets]);
   return null;
 }

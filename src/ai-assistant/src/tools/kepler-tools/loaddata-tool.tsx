@@ -66,9 +66,6 @@ async function executeLoadData({url}, options): Promise<ExecuteLoadDataResult> {
     if (!isLoadDataContext(options.context)) {
       throw new Error('Invalid load data context. Please provide a valid context.');
     }
-    if (!isLoadDataContext(options.context)) {
-      throw new Error('Invalid load data context. Please provide a valid context.');
-    }
 
     const {getLoaders} = options.context;
     const {loaders, loadOptions} = getLoaders();

@@ -41,6 +41,7 @@ export const saveDataToMap = tool({
       return {
         llmResult: {
           success: true,
+          savedDatasetName: datasetId,
           details: `Successfully save dataset: ${datasetId} in kepler.gl`
         },
         additionalData: {

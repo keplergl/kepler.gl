@@ -18,7 +18,7 @@ export const mapBoundary = tool({
   parameters: z.object({}),
   execute: async (args, options) => {
     try {
-      if (!isMapBoundaryContext(options?.context)) {
+      if (!options?.context || !isMapBoundaryContext(options.context)) {
         throw new Error('context getMapBoundary() not implemented.');
       }
       const {getMapBoundary} = options.context;

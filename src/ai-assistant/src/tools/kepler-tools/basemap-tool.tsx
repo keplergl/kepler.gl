@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {DEFAULT_MAP_STYLES} from '@kepler.gl/constants';
+import {mapStyleChange} from '@kepler.gl/actions';
 import {tool} from '@openassistant/utils';
 import {z} from 'zod';
 import {useEffect} from 'react';
@@ -11,13 +12,15 @@ export const basemap = tool({
   description: 'change basemap',
   parameters: z.object({
     styleType: z.enum([
-      'dark-matter',
-      'dark-matter-nolabels',
       'no_map',
+      'dark-matter',
       'positron',
-      'positron-nolabels',
       'voyager',
-      'voyager-nolabels'
+      'satellite',
+      'dark',
+      'light',
+      'muted',
+      'muted_night'
     ])
   }),
   execute: executeBasemap,
@@ -68,7 +71,7 @@ async function executeBasemap({styleType}): Promise<ExecuteBasemapResult> {
   }
 }
 
-export function BasemapToolComponent({mapStyleChange, styleType}) {
+export function BasemapToolComponent({styleType}) {
   const dispatch = useDispatch();
 
   useEffect(() => {

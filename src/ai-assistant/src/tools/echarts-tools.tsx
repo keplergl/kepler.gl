@@ -22,7 +22,7 @@ export function getEchartsTools(datasets: Datasets, layers: Layer[], dispatch: D
   // context for tools
   const getValues = async (datasetName: string, variableName: string) => {
     const values = getValuesFromDataset(datasets, layers, datasetName, variableName);
-    return values;
+    return values as number[];
   };
 
   const onSelected = (datasetName: string, selectedIndices: number[]) => {

@@ -5,6 +5,7 @@ import {AiAssistantState} from '../reducers';
 import {getEchartsTools} from './echarts-tools';
 import {getGeoTools} from './geo-tools';
 import {getKeplerTools} from './kepler-tools';
+import {getQueryTool} from './query-tool';
 
 export function setupLLMTools({
   visState,
@@ -18,6 +19,7 @@ export function setupLLMTools({
   return {
     ...getKeplerTools(visState, aiAssistant),
     ...getEchartsTools(visState.datasets, visState.layers, dispatch),
-    ...getGeoTools(aiAssistant, visState.datasets, visState.layers, visState.layerData)
+    ...getGeoTools(aiAssistant, visState.datasets, visState.layers, visState.layerData),
+    ...getQueryTool(visState.datasets, visState.layers)
   };
 }

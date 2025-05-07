@@ -41,18 +41,26 @@ export function getValuesFromDataset(
   layers: Layer[],
   datasetName: string,
   variableName: string
-): number[] {
+): unknown[] {
   // find which dataset has the variableName
   const datasetId = Object.keys(datasets).find(dataId => datasets[dataId].label === datasetName);
-  if (!datasetId) return [];
+  if (!datasetId) {
+    throw new Error(`Dataset ${datasetName} not found`);
+  }
   const dataset = datasets[datasetId];
   if (dataset) {
+    // check if field exists
+    const field = dataset.fields.find(field => field.name === variableName);
+    if (!field) {
+      throw new Error(`Field ${variableName} not found in dataset ${datasetName}`);
+    }
     // for vector-tile, getting values from layerData
     if (dataset.type === 'vector-tile') {
       // get field from dataset
       const field = dataset.fields.find(field => field.name === variableName);
-      if (!field) return [];
-      return getValuesFromVectorTileLayer(datasetId, layers, field);
+      if (field) {
+        return getValuesFromVectorTileLayer(datasetId, layers, field);
+      }
     }
     return Array.from({length: dataset.length}, (_, i) => dataset.getValue(variableName, i));
   }
@@ -63,14 +71,14 @@ function isVectorTileLayer(layer: Layer): layer is VectorTileLayer {
   return layer.type === LAYER_TYPES.vectorTile;
 }
 
-function getValuesFromVectorTileLayer(datasetId: string, layers: Layer[], field: Field) {
+export function getValuesFromVectorTileLayer(datasetId: string, layers: Layer[], field: Field) {
   // get the index of the layer
   const layerIndex = layers.findIndex(layer => layer.config.dataId === datasetId);
   if (layerIndex === -1) return [];
   const layer = layers[layerIndex];
   if (!isVectorTileLayer(layer)) return [];
   const accessor = layer.accessRowValue(field);
-  const values: number[] = [];
+  const values: unknown[] = [];
   // @ts-expect-error TODO fix this later in the vector-tile layer
   for (const row of layer.tileDataset.tileSet) {
     const value = accessor(field, row);
@@ -120,7 +128,7 @@ export function highlightRows(
  */
 export function getDatasetContext(datasets?: Datasets, layers?: Layer[]) {
   if (!datasets || !layers) return '';
-  const context = 'Please use the following datasets and layers to answer the user question:';
+  const context = 'Please ONLY use the following datasets and layers to answer the user question:';
   const dataMeta = Object.values(datasets).map((dataset: KeplerTable) => ({
     datasetName: dataset.label,
     datasetId: dataset.id,
@@ -164,18 +172,17 @@ export function getGeometriesFromDataset(
 ): SpatialJoinGeometries {
   const datasetId = Object.keys(datasets).find(dataId => datasets[dataId].label === datasetName);
   if (!datasetId) {
-    throw new Error(`Dataset ${datasetName} not found`);
+    return [];
   }
   const dataset = datasets[datasetId];
 
-  // get the index of the layer
-  const layerIndex = layers.findIndex(layer => layer.config.dataId === dataset.id);
-  if (layerIndex === -1) return [];
-
-  const layer = layers[layerIndex];
-
   // if layer is vector-tile, get the geometries from the layer
-  if (isVectorTileLayer(layer)) {
+  if (dataset.type === 'vector-tile') {
+    // find the vector-tile layer
+    const selected = layers.filter(layer => layer.config.dataId === dataset.id);
+    const layer = selected.find(layer => layer.type === LAYER_TYPES.vectorTile);
+    if (!layer) return [];
+
     const geometries: Feature[] = [];
     // @ts-expect-error TODO fix this later in the vector-tile layer
     for (const row of layer.tileDataset.tileSet) {
@@ -184,9 +191,25 @@ export function getGeometriesFromDataset(
     return geometries;
   }
 
-  const geometries = layerData[layerIndex];
+  // for non-vector-tile dataset, get the geometries from the possible layer
+  const selectedLayers = layers.filter(layer => layer.config.dataId === dataset.id);
+  if (selectedLayers.length === 0) return [];
 
-  return geometries?.data;
+  // find geojson layer, then point layer, then other layers
+  const geojsonLayer = selectedLayers.find(layer => layer.type === LAYER_TYPES.geojson);
+  const pointLayer = selectedLayers.find(layer => layer.type === LAYER_TYPES.point);
+  const otherLayers = selectedLayers.filter(
+    layer => layer.type !== LAYER_TYPES.geojson && layer.type !== LAYER_TYPES.point
+  );
+
+  const validLayer = geojsonLayer || pointLayer || otherLayers[0];
+  if (validLayer) {
+    const layerIndex = layers.findIndex(layer => layer.id === validLayer.id);
+    const geometries = layerData[layerIndex];
+    return geometries.data;
+  }
+
+  return [];
 }
 
 /**
@@ -207,6 +230,10 @@ export function saveAsDataset(
   const datasetId = Object.keys(datasets).find(dataId => datasets[dataId].label === datasetName);
   if (!datasetId) return;
 
+  // check if newDatasetName already exists
+  if (Object.keys(datasets).includes(newDatasetName)) return;
+
+  // Save the data as a new dataset by joining it with the left dataset
   const leftDataset = datasets[datasetId];
   let numRows = leftDataset.length;
   let geometries: Feature[];
