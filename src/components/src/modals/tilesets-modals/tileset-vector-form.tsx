@@ -4,8 +4,10 @@
 import React, {useCallback, useEffect, useState, useMemo} from 'react';
 import styled from 'styled-components';
 
+import {isPMTilesUrl} from '@kepler.gl/common-utils';
 import {
   DatasetType,
+  PMTilesType,
   RemoteTileFormat,
   VectorTileDatasetMetadata,
   REMOTE_TILE
@@ -37,8 +39,6 @@ export type VectorTilesetFormData = {
   dataUrl: string;
   metadataUrl?: string;
 };
-
-const isPMTilesUrl = (url?: string | null) => url?.includes('.pmtiles');
 
 export type VectorTileDatasetCreationAttributes = Merge<
   DatasetCreationAttributes,
@@ -143,6 +143,15 @@ const TilesetVectorForm: React.FC<TilesetVectorFormProps> = ({setResponse}) => {
 
   useEffect(() => {
     if (tileName && tileUrl) {
+      if (metadata?.pmtilesType === PMTilesType.RASTER) {
+        return setResponse({
+          metadata,
+          dataset: null,
+          loading,
+          error: new Error('For .pmtiles in raster format, please use the Raster Tile form.')
+        });
+      }
+
       const dataset = getDatasetAttributesFromVectorTile({
         name: tileName,
         dataUrl: tileUrl,
@@ -175,7 +184,10 @@ const TilesetVectorForm: React.FC<TilesetVectorFormProps> = ({setResponse}) => {
 
   useEffect(() => {
     if (metadata) {
-      setTileName((metadata as VectorTileMetadata).name || '');
+      const name = (metadata as VectorTileMetadata).name;
+      if (name) {
+        setTileName(name);
+      }
     }
   }, [metadata]);
 
@@ -184,7 +196,7 @@ const TilesetVectorForm: React.FC<TilesetVectorFormProps> = ({setResponse}) => {
       <div>
         <label htmlFor="tileset-name">Name</label>
         <InputLight
-          id="tile-name"
+          id="tileset-name"
           placeholder="Name your tileset"
           value={tileName}
           onChange={onTileNameChange}

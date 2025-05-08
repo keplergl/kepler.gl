@@ -1593,3 +1593,25 @@ export enum GEOARROW_EXTENSIONS {
   MULTIPOLYGON = 'geoarrow.multipolygon',
   WKB = 'geoarrow.wkb'
 }
+
+export const RasterLayerResources = {
+  rasterColorMap: (colormapId: string) => {
+    return `${KEPLER_UNFOLDED_BUCKET}/raster/colormaps/${colormapId}.png`;
+  }
+};
+
+export const LOADERS_CDN_URL = 'https://unpkg.com/@loaders.gl';
+
+export const getLoaderOptions = () => {
+  return {
+    mvt: {
+      workerUrl: `${LOADERS_CDN_URL}/mvt/dist/mvt-worker.js`
+    },
+    'quantized-mesh': {
+      // workerUrl: `${LOADERS_CDN_URL}/terrain/dist/quantized-mesh-worker.js`
+    },
+    npy: {
+      // workerUrl: `${LOADERS_CDN_URL}/textures/dist/npy-worker.js`
+    }
+  };
+};

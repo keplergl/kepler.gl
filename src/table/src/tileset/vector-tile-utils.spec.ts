@@ -156,7 +156,8 @@ test('parseMetadata, PMTiles from PMTileSource', () => {
           gpu: false
         }
       }
-    ]
+    ],
+    pmtilesType: 'mvt'
   });
 });
 

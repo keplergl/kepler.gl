@@ -9,6 +9,7 @@ import LayerListFactory from './layer-list';
 import {Layer, LayerClassesType} from '@kepler.gl/layers';
 import {UIStateActions, ActionHandler, VisStateActions, MapStateActions} from '@kepler.gl/actions';
 import {KeplerTable, Datasets} from '@kepler.gl/table';
+import {getApplicationConfig} from '@kepler.gl/utils';
 
 type DatasetLayerSectionProps = {
   datasets: Datasets;
@@ -57,6 +58,14 @@ function DatasetLayerSectionFactory(
       return {[dataset.id]: dataset};
     }, [dataset]);
 
+    const enableRasterTileLayer = getApplicationConfig().enableRasterTileLayer;
+    const filteredLayerClasses = useMemo(() => {
+      if (enableRasterTileLayer) return layerClasses;
+      /* eslint-disable @typescript-eslint/no-unused-vars */
+      const {rasterTile, ...restClasses} = layerClasses;
+      return restClasses as LayerClassesType;
+    }, [enableRasterTileLayer, layerClasses]);
+
     return (
       <DatasetLayerSectionWrapper>
         <SourceDataCatalog
@@ -70,7 +79,7 @@ function DatasetLayerSectionFactory(
           datasets={datasets}
           layerOrder={layerOrder}
           layers={layers}
-          layerClasses={layerClasses}
+          layerClasses={filteredLayerClasses}
           uiStateActions={uiStateActions}
           visStateActions={visStateActions}
           mapStateActions={mapStateActions}

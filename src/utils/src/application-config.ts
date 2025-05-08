@@ -46,6 +46,16 @@ export type KeplerApplicationConfig = {
   // Enabling this option may cause performance issues when dealing with a large number of layers or sublayers,
   // especially if large Arrow files are split into relatively small batches (should be fixed in the future).
   useOnFilteredItemsChange?: boolean;
+
+  // Raster Tile layer config
+  // Raster Tile layer is under development and not ready for production use. Disabled by default.
+  enableRasterTileLayer?: boolean;
+  /** Titiler v0.11 vs v0.21 */
+  rasterServerUseLatestTitiler?: boolean;
+  /** An array of URLs to shards of the raster tile server to be used by the raster tile layer. */
+  rasterServerUrls?: string[];
+  /** If true then try to fetch quantized elevation meshes from raster servers */
+  rasterServerSupportsElevation?: boolean;
 };
 
 const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
@@ -82,7 +92,14 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
 
   useArrowProgressiveLoading: true,
   showReleaseBanner: true,
-  useOnFilteredItemsChange: false
+  useOnFilteredItemsChange: false,
+
+  // Raster Tile layer config
+  enableRasterTileLayer: false,
+  rasterServerUseLatestTitiler: true,
+  // TODO: provide a default free server or leave blank
+  rasterServerUrls: ['http://localhost:8000'],
+  rasterServerSupportsElevation: true
 };
 
 const applicationConfig: Required<KeplerApplicationConfig> = DEFAULT_APPLICATION_CONFIG;
