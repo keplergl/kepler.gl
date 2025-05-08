@@ -15,6 +15,11 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+## [3.1.6] - May 8 2025
+
+- 33203a6de [fix] fix loading indicotor not hidden regression (#3088)
+- 913176bb6 [bug] fix lodash imports regression (#3089)
+
 ## [3.1.5] - May 8 2025
 
 - 223d14b60 [chore] ts fixes
