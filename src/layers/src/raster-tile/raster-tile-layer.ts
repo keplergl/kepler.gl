@@ -11,11 +11,11 @@ import {Matrix4} from 'math.gl';
 import {PathLayer} from '@deck.gl/layers/typed';
 import {DatasetType, PMTilesType, LAYER_TYPES} from '@kepler.gl/constants';
 import {RasterLayer, RasterMeshLayer} from '@kepler.gl/deckgl-layers';
-import {Layer, VisualChannel} from '@kepler.gl/layers';
 import {
   LayerBaseConfig,
   LayerColorConfig,
   LayerHeightConfig,
+  VisualChannel,
   VisConfigColorRange,
   VisConfigSelection,
   VisConfigBoolean,
@@ -114,8 +114,13 @@ export type RasterTileLayerVisConfigSettings = RasterTileLayerVisConfigCommonSet
   singleBandName: VisConfigSelection;
 };
 
-export default class RasterTileLayer extends Layer {
+type RasterTileLayerMeta = {
+  zRange: number[] | null;
+};
+
+export default class RasterTileLayer extends KeplerLayer {
   declare visConfigSettings: RasterTileLayerVisConfigSettings;
+  declare meta: RasterTileLayerMeta;
 
   /** Min bands image data value, based on the current viewport */
   minViewportPixelValue = Infinity;
