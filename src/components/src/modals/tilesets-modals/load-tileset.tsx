@@ -8,7 +8,7 @@ import {AutoSizer} from 'react-virtualized';
 import styled from 'styled-components';
 
 import {VectorTileIcon, RasterTileIcon} from '@kepler.gl/layers';
-import {getError} from '@kepler.gl/utils';
+import {getError, getApplicationConfig} from '@kepler.gl/utils';
 
 import {MetaResponse} from './common';
 import LoadDataFooter from './load-data-footer';
@@ -114,7 +114,13 @@ function LoadTilesetTabFactory() {
       }
     }, [onTilesetAdded, response]);
 
-    const CurrentForm = TILE_TYPES[typeIndex].Component;
+    // temp patch to hide raster tile layer while in development
+    const enableRasterTileLayer = getApplicationConfig().enableRasterTileLayer;
+    const tileTypes = useMemo(() => {
+      return enableRasterTileLayer ? TILE_TYPES : [TILE_TYPES[0]];
+    }, [enableRasterTileLayer]);
+
+    const CurrentForm = tileTypes[typeIndex].Component;
 
     return (
       <LoadTilesetTabContainer>
@@ -123,7 +129,7 @@ function LoadTilesetTabFactory() {
             <StyledHeaderMessage>Tileset Type</StyledHeaderMessage>
 
             <TilesetTypeContainer className="tileset-type">
-              {TILE_TYPES.map((tileType, index) => (
+              {tileTypes.map((tileType, index) => (
                 <TilesetIcon
                   key={tileType.label}
                   name={tileType.label}

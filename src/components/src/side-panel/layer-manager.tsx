@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useCallback} from 'react';
+import React, {useCallback, useMemo} from 'react';
 
 import {injectIntl, WrappedComponentProps} from 'react-intl';
 import styled from 'styled-components';
@@ -24,6 +24,7 @@ import {UIStateActions, VisStateActions, MapStateActions, ActionHandler} from '@
 import {SidePanelItem} from '../types';
 import {PanelListView} from '@kepler.gl/types';
 import {Datasets} from '@kepler.gl/table';
+import {getApplicationConfig} from '@kepler.gl/utils';
 
 type LayerBlendingSelectorProps = {
   layerBlending: string;
@@ -189,6 +190,14 @@ function LayerManagerFactory(
 
     const isSortByDatasetMode = panelListView === PANEL_VIEW_TOGGLES.byDataset;
 
+    const enableRasterTileLayer = getApplicationConfig().enableRasterTileLayer;
+    const filteredLayerClasses = useMemo(() => {
+      if (enableRasterTileLayer) return layerClasses;
+      /* eslint-disable @typescript-eslint/no-unused-vars */
+      const {rasterTile, ...restClasses} = layerClasses;
+      return restClasses as LayerClassesType;
+    }, [enableRasterTileLayer, layerClasses]);
+
     return (
       <div className="layer-manager">
         <SidePanelSection>
@@ -221,7 +230,7 @@ function LayerManagerFactory(
               updateTableColor={updateTableColor}
               removeDataset={removeDataset}
               layerOrder={layerOrder}
-              layerClasses={layerClasses}
+              layerClasses={filteredLayerClasses}
               uiStateActions={uiStateActions}
               visStateActions={visStateActions}
               mapStateActions={mapStateActions}
@@ -235,7 +244,7 @@ function LayerManagerFactory(
               uiStateActions={uiStateActions}
               visStateActions={visStateActions}
               mapStateActions={mapStateActions}
-              layerClasses={layerClasses}
+              layerClasses={filteredLayerClasses}
             />
           )}
         </SidePanelSection>
