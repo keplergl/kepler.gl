@@ -7,7 +7,7 @@
 
 import {load} from '@loaders.gl/core';
 import {QuantizedMeshLoader} from '@loaders.gl/terrain';
-import memoize from 'lodash.memoize';
+import memoize from 'lodash/memoize';
 
 import {getLoaderOptions, RasterLayerResources as cdnUrls} from '@kepler.gl/constants';
 
