@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 import {VisState} from '@kepler.gl/schemas';
 
 import {basemap} from './basemap-tool';
