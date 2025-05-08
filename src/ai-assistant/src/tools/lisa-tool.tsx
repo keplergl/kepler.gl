@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 import {useEffect} from 'react';
 import {useDispatch, useSelector} from 'react-redux';
 import {addDataToMap, addLayer} from '@kepler.gl/actions';

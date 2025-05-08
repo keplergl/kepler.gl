@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 import {tool} from '@openassistant/utils';
 import {getCachedData, generateId, removeCachedData} from '@openassistant/osm';
 import {z} from 'zod';
