@@ -15,6 +15,14 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+## [3.1.5] - May 8 2025
+
+- 223d14b60 [chore] ts fixes
+- 3570ac429 [feat] Raster Tile Layer - development in progress (#3048)
+- 07e5beae2 [chore] import add tileset dialog styling (#3085)
+- 6568c0c94 [Feat] Add Spatial Data Analysis tools to AI Assistants (#3057)
+- fd08fa1a9 [Chore] export more kepler-gl prop selector (#3081)
+
 ## [3.1.4] - May 5 2025
 
 - 03b8ea0a9 [Chore] Use clonedeep in interaction config load (#3080)
