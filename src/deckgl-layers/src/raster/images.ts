@@ -4,7 +4,7 @@
 import GL from '@luma.gl/constants';
 import {isWebGL2, Texture2D} from '@luma.gl/core';
 import type {Texture2DProps} from '@luma.gl/webgl';
-import isEqual from 'lodash.isequal';
+import isEqual from 'lodash/isEqual';
 
 import type {ImageInput, ImageState} from './types';
 

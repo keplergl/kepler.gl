@@ -5,7 +5,7 @@ import {COORDINATE_SYSTEM, Layer as DeckLayer} from '@deck.gl/core/typed';
 import {TileLayer, GeoBoundingBox} from '@deck.gl/geo-layers/typed';
 import {PMTilesSource, PMTilesTileSource} from '@loaders.gl/pmtiles';
 import {Texture2DProps} from '@luma.gl/webgl';
-import memoize from 'lodash.memoize';
+import memoize from 'lodash/memoize';
 import {Matrix4} from 'math.gl';
 
 import {PathLayer} from '@deck.gl/layers/typed';
