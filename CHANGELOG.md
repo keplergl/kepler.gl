@@ -15,6 +15,8 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+## [3.1.6] - May 8 2025
+
 ## [3.1.5] - May 8 2025
 
 - 223d14b60 [chore] ts fixes
