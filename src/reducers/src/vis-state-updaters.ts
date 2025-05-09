@@ -44,7 +44,8 @@ import {
   fitBounds as fitMapBounds,
   setLoadingIndicator,
   toggleLayerForMap,
-  applyFilterConfig
+  applyFilterConfig,
+  SetLoadingIndicatorPayload
 } from '@kepler.gl/actions';
 
 // Utils
@@ -102,6 +103,7 @@ import {
   compose_,
   filterOutById,
   merge_,
+  payload_,
   pick_,
   removeElementAtIndex,
   swap_
@@ -323,6 +325,8 @@ export const INITIAL_VIS_STATE: VisState = {
 
   fileLoading: false,
   fileLoadingProgress: {},
+  // for loading datasets
+  loadingIndicatorValue: 0,
 
   loaders: [],
   loadOptions: {},
@@ -2375,11 +2379,7 @@ export const updateVisDataUpdater = (
     : null;
 
   if (datasetsAllSettledTask) {
-    // indicate that something is in progress
-    const setIsLoadingTask = ACTION_TASK().map(() => {
-      return setLoadingIndicator({change: 1});
-    });
-    updatedState = withTask(updatedState, setIsLoadingTask);
+    updatedState = setLoadingIndicatorUpdater(updatedState, payload_({change: 1, type: ''}));
   }
 
   return withTask(updatedState, [
@@ -2392,7 +2392,6 @@ export const createNewDatasetSuccessUpdater = (
   state: VisState,
   action: PayloadAction<CreateNewDatasetSuccessPayload>
 ): VisState => {
-  // console.log('createNewDatasetSuccessUpdater', action.payload);
   const {results, addToMapOptions} = action.payload;
   const newDataEntries = results.reduce((accu, result) => {
     if (result.status === 'fulfilled') {
@@ -2429,11 +2428,7 @@ export const createNewDatasetSuccessUpdater = (
     postMergerPayload
   });
 
-  // resolve active loading initiated by updateVisDataUpdater
-  const setIsLoadingTask = ACTION_TASK().map(() => {
-    return setLoadingIndicator({change: -1});
-  });
-  return withTask(updatedState, setIsLoadingTask);
+  return setLoadingIndicatorUpdater(updatedState, payload_({change: -1}));
 };
 
 /**
@@ -2543,16 +2538,17 @@ function postMergeUpdater(mergedState: VisState, postMergerPayload: PostMergerPa
       : updatedState;
 
   // center the map once the dataset is created
-  if (newLayers.length && (options || {}).centerMap) {
-    const bounds = findMapBounds(newLayers);
-    if (bounds) {
-      const fitBoundsTask = ACTION_TASK().map(() => {
-        return fitMapBounds(bounds);
-      });
-      updatedState = withTask(updatedState, fitBoundsTask);
-    }
-  }
+  // if (newLayers.length && (options || {}).centerMap) {
+  //   const bounds = findMapBounds(newLayers);
+  //   if (bounds) {
+  //     const fitBoundsTask = ACTION_TASK().map(() => {
+  //       return fitMapBounds(bounds);
+  //     });
+  //     updatedState = withTask(updatedState, fitBoundsTask);
+  //   }
+  // }
 
+  // need to center map here if we have new layers
   return updatedState;
 }
 
@@ -3650,6 +3646,30 @@ export function setTimeFilterTimelineModeUpdater<S extends VisState>(
 
   return adjustAnimationConfigWithFilter(newState, filterIdx);
 }
+
+/**
+ * Update state of the loading indicator.
+ * @memberof visStateUpdaters
+ * @param state visState
+ * @param action
+ * @param action.payload Payload with change of number of active loading actions.
+ * @returns nextState
+ * @public
+ */
+export const setLoadingIndicatorUpdater = (
+  state: VisState,
+  {payload: {change}}: {payload: SetLoadingIndicatorPayload}
+): VisState => {
+  let {loadingIndicatorValue} = state;
+  if (!loadingIndicatorValue) {
+    loadingIndicatorValue = 0;
+  }
+
+  return {
+    ...state,
+    loadingIndicatorValue: Math.max(loadingIndicatorValue + change, 0)
+  };
+};
 
 function adjustAnimationConfigWithFilter<S extends VisState>(state: S, filterIdx: number): S {
   const filter = state.filters[filterIdx];
