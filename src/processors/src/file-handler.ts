@@ -216,7 +216,6 @@ export async function processFileData({
   const {fileName, data} = content;
   let format: string | undefined;
   let processor: ((data: any) => ProcessorResult | LoadedMap | null) | undefined;
-  console.log('Processing file', fileName);
   // generate unique id with length of 4 using fileName string
   const id = generateHashIdFromString(fileName);
   // decide on which table class to use based on application config

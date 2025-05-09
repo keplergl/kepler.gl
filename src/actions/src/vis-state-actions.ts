@@ -1634,6 +1634,13 @@ export type SyncTimeFilterWithLayerTimelineAction = {
   enable: boolean;
 };
 
+/**
+ * Sync time filter with layer timeline
+ * @memberof visStateActions
+ * @param idx
+ * @param enable
+ * @return action
+ */
 export function syncTimeFilterWithLayerTimeline(
   idx: SyncTimeFilterWithLayerTimelineAction['idx'],
   enable: SyncTimeFilterWithLayerTimelineAction['enable']
@@ -1653,6 +1660,13 @@ export type setTimeFilterSyncTimelineModeAction = {
   mode: SyncTimelineMode;
 };
 
+/**
+ * Set time filter sync timeline mode
+ * @memberof visStateActions
+ * @param id
+ * @param mode
+ * @return action
+ */
 export function setTimeFilterSyncTimelineMode({
   id,
   mode
@@ -1674,12 +1688,28 @@ export type CreateNewDatasetSuccessPayload = {
 
 /**
  * Called when a new dataset is created successfully via async table methods
+ * @memberof visStateActions
  * @param payload
  * @param payload.results - results of promises.allSettlted
  * @returns
  */
 export const createNewDatasetSuccess = createAction<CreateNewDatasetSuccessPayload>(
   ActionTypes.CREATE_NEW_DATASET_SUCCESS
+);
+
+export type SetLoadingIndicatorPayload = {
+  change: number;
+};
+
+/**
+ * Change of number of active loading items, used to render loading indicator.
+ * @memberof visStateActions
+ * @param payload
+ * @param payload.change Change of number of active loading actions.
+ * @public
+ */
+export const setLoadingIndicator = createAction<SetLoadingIndicatorPayload>(
+  ActionTypes.SET_LOADING_INDICATOR
 );
 
 /**

@@ -177,7 +177,7 @@ export const mapFieldsSelector = (props: KeplerGLProps, index = 0) => ({
   mapControls: props.uiState.mapControls,
   readOnly: props.uiState.readOnly,
   locale: props.uiState.locale,
-  isLoadingIndicatorVisible: Number(props.uiState.loadingIndicatorValue) > 0,
+  isLoadingIndicatorVisible: Number(props.visState.loadingIndicatorValue) > 0,
   sidePanelWidth: props.sidePanelWidth ? props.sidePanelWidth : DEFAULT_KEPLER_GL_PROPS.width,
 
   // mapStyle

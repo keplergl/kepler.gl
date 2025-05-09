@@ -75,6 +75,7 @@ export interface VisState {
   splitMapsToBeMerged: SplitMap[];
   fileLoading: FileLoading | false;
   fileLoadingProgress: FileLoadingProgress;
+  loadingIndicatorValue: number;
   loaders: Loader[];
   loadOptions: object;
   initialState?: Partial<VisState>;

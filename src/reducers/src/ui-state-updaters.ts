@@ -925,27 +925,3 @@ export const togglePanelListViewUpdater = (
     [stateProp]: listView
   };
 };
-
-/**
- * Update state of the loading indicator.
- * @memberof uiStateUpdaters
- * @param state uiState
- * @param action
- * @param action.payload Payload with change of number of active loading actions.
- * @returns nextState
- * @public
- */
-export const setLoadingIndicatorUpdater = (
-  state: UiState,
-  {payload: {change}}: UIStateActions.SetLoadingIndicatorAction
-): UiState => {
-  let {loadingIndicatorValue} = state;
-  if (!loadingIndicatorValue) {
-    loadingIndicatorValue = 0;
-  }
-
-  return {
-    ...state,
-    loadingIndicatorValue: Math.max(loadingIndicatorValue + change, 0)
-  };
-};
