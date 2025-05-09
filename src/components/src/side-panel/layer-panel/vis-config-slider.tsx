@@ -64,7 +64,7 @@ const CustomInputLabel = styled.label`
 const RangeInput = styled.input`
   ${props => props.theme.input};
   font-size: ${props => props.theme.sliderInputFontSize};
-  width: 44px;
+  width: ${props => props.theme.customRangeInputWidth}px;
   overflow: auto;
   height: 20px;
   margin-top: 5px;
@@ -82,7 +82,7 @@ const LazyInput: React.FC<LazyInputProps> = ({value, onChange, name}) => {
       switch (e.keyCode) {
         case KeyEvent.DOM_VK_ENTER:
         case KeyEvent.DOM_VK_RETURN:
-          onChange(stateValue);
+          onChange(name, stateValue);
           if (inputRef !== null) {
             // @ts-ignore
             inputRef?.current.blur();
@@ -92,7 +92,7 @@ const LazyInput: React.FC<LazyInputProps> = ({value, onChange, name}) => {
           break;
       }
     },
-    [onChange, stateValue]
+    [onChange, name, stateValue]
   );
 
   const _onChange = useCallback(e => setValue(e.target.value), [setValue]);
@@ -114,8 +114,15 @@ const LazyInput: React.FC<LazyInputProps> = ({value, onChange, name}) => {
 const CustomInput: React.FC<CustomInputProps> = ({isRanged, value, onChangeCustomInput}) => {
   const onChangeInput = useCallback(
     (name, v) => {
-      if (isRanged) onChangeCustomInput(name === 'value0' ? [v, value[1]] : [value[0], v]);
-      else onChangeCustomInput(v);
+      const prevValue = isRanged ? (name === 'value1' ? value[0] : value[1]) : value;
+      const valueAsNumber = Number(v);
+      const convertedValue =
+        typeof prevValue === 'number' ? (isNaN(valueAsNumber) ? prevValue : valueAsNumber) : v;
+      if (isRanged)
+        onChangeCustomInput(
+          name === 'value0' ? [convertedValue, value[1]] : [value[0], convertedValue]
+        );
+      else onChangeCustomInput(convertedValue);
     },
     [isRanged, value, onChangeCustomInput]
   );

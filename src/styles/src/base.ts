@@ -343,6 +343,9 @@ export const sliderMarginTopIsTime = -12;
 export const sliderMarginTop = 12;
 export const sliderMarginBottom = 12;
 
+// Custom Range Input
+export const customRangeInputWidth = 100;
+
 // Geocoder
 export const geocoderWidth = 360;
 export const geocoderTop = 20;
@@ -1473,6 +1476,9 @@ export const theme = {
   sliderMarginTopIsTime,
   sliderMarginTop,
   sliderMarginBottom,
+
+  // Custom Range Input
+  customRangeInputWidth,
 
   // Geocoder
   geocoderWidth,
