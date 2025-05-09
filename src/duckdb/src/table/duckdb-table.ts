@@ -139,7 +139,7 @@ export class KeplerGlDuckDbTable extends KeplerTable {
       const createTableSql = `
         install spatial;
         load spatial;
-        CREATES TABLE '${this.label}' AS 
+        CREATE TABLE '${this.label}' AS 
         SELECT *
         FROM ST_READ('${this.id}', keep_wkb = TRUE);
         ALTER TABLE '${this.label}' RENAME '${DUCKDB_WKB_COLUMN}' TO '${KEPLER_GEOM_FROM_GEOJSON_COLUMN}';
