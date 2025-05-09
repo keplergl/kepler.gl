@@ -115,7 +115,9 @@ const CustomInput: React.FC<CustomInputProps> = ({isRanged, value, onChangeCusto
   const onChangeInput = useCallback(
     (name, v) => {
       const prevValue = isRanged ? (name === 'value1' ? value[0] : value[1]) : value;
-      const convertedValue = typeof prevValue === 'number' ? Number(v) || prevValue : v;
+      const valueAsNumber = Number(v);
+      const convertedValue =
+        typeof prevValue === 'number' ? (isNaN(valueAsNumber) ? prevValue : valueAsNumber) : v;
       if (isRanged)
         onChangeCustomInput(
           name === 'value0' ? [convertedValue, value[1]] : [value[0], convertedValue]
