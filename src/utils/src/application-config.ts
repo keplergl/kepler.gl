@@ -3,6 +3,7 @@
 
 import {MapLib, MapRef} from 'react-map-gl';
 
+import {KEPLER_UNFOLDED_BUCKET} from '@kepler.gl/constants';
 import type {BaseMapLibraryType} from '@kepler.gl/constants';
 
 import type {DatabaseAdapter} from './application-config-types';
@@ -87,7 +88,7 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
     }
   },
 
-  cdnUrl: 'https://studio-public-data.foursquare.com/statics/keplergl',
+  cdnUrl: KEPLER_UNFOLDED_BUCKET,
 
   plugins: [],
   // The default table class is KeplerTable.
