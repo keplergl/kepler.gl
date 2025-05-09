@@ -9,7 +9,7 @@ import {load} from '@loaders.gl/core';
 import {QuantizedMeshLoader} from '@loaders.gl/terrain';
 import memoize from 'lodash/memoize';
 
-import {getLoaderOptions, RasterLayerResources as cdnUrls} from '@kepler.gl/constants';
+import {getLoaderOptions} from '@kepler.gl/constants';
 
 import {CATEGORICAL_COLORMAP_ID} from './config';
 import {
@@ -32,7 +32,8 @@ import {
   getTerrainUrl,
   getSingleCOGUrlParams,
   getStacApiUrlParams,
-  getMeshMaxError
+  getMeshMaxError,
+  RasterLayerResources
 } from './url';
 
 /**
@@ -128,7 +129,10 @@ async function loadColormap(colormapId: string): Promise<ColormapImageData | nul
     return null;
   }
 
-  const request = await getAssetRequest({url: cdnUrls.rasterColorMap(colormapId), options: {}});
+  const request = await getAssetRequest({
+    url: RasterLayerResources.rasterColorMap(colormapId),
+    options: {}
+  });
   return loadImage(request.url, COLORMAP_TEXTURE_PARAMETERS, request.options);
 }
 
