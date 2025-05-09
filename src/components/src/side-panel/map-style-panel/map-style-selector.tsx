@@ -9,6 +9,7 @@ import {FormattedMessage} from '@kepler.gl/localization';
 import {MapStyle} from '@kepler.gl/reducers';
 import {NO_BASEMAP_ICON} from '@kepler.gl/constants';
 import {MapStyles} from '@kepler.gl/types';
+import {getApplicationConfig} from '@kepler.gl/utils';
 
 import {ArrowDown} from '../../common/icons';
 import PanelHeaderActionFactory from '../panel-header-action';
@@ -113,7 +114,12 @@ function MapStyleSelectorFactory(PanelHeaderAction: ReturnType<typeof PanelHeade
         </PanelLabel>
 
         {Object.values(mapStyles).map(
-          ({id, custom, icon = NO_BASEMAP_ICON, label = 'Untitled'}) => (
+          ({
+            id,
+            custom,
+            icon = `${getApplicationConfig().cdnUrl}/${NO_BASEMAP_ICON}`,
+            label = 'Untitled'
+          }) => (
             <StyledMapDropdown
               className={classnames('map-dropdown-option', {
                 collapsed: !isSelecting && id !== styleType,
@@ -124,7 +130,7 @@ function MapStyleSelectorFactory(PanelHeaderAction: ReturnType<typeof PanelHeade
               hasCallout={Boolean(custom)}
             >
               <PanelHeaderContent className="map-title-block">
-                <img className="map-preview" src={icon} />
+                <img className="map-preview" src={`${getApplicationConfig().cdnUrl}/${icon}`} />
                 <PanelHeaderTitle className="map-preview-name">{label}</PanelHeaderTitle>
               </PanelHeaderContent>
               {!isSelecting ? (

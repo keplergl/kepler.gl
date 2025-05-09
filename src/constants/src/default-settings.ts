@@ -25,7 +25,7 @@ import {TOOLTIP_FORMAT_TYPES} from './tooltip';
 
 export const ACTION_PREFIX = '@@kepler.gl/';
 export const KEPLER_UNFOLDED_BUCKET = 'https://studio-public-data.foursquare.com/statics/keplergl';
-export const BASEMAP_ICON_PREFIX = `${KEPLER_UNFOLDED_BUCKET}/geodude`;
+export const BASEMAP_ICON_PREFIX = `geodude`;
 export const DEFAULT_MAPBOX_API_URL = 'https://api.mapbox.com';
 export const TRANSITION_DURATION = 0;
 
@@ -1593,12 +1593,6 @@ export enum GEOARROW_EXTENSIONS {
   MULTIPOLYGON = 'geoarrow.multipolygon',
   WKB = 'geoarrow.wkb'
 }
-
-export const RasterLayerResources = {
-  rasterColorMap: (colormapId: string) => {
-    return `${KEPLER_UNFOLDED_BUCKET}/raster/colormaps/${colormapId}.png`;
-  }
-};
 
 export const LOADERS_CDN_URL = 'https://unpkg.com/@loaders.gl';
 

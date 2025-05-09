@@ -57,6 +57,7 @@ export {
   RASTER_COLOR_RESET_PARAMS,
   PRESET_OPTIONS
 } from './raster-tile/config';
+export {RasterLayerResources} from './raster-tile/url';
 export {getCategoricalColormapDataUrl} from './raster-tile/image';
 export * from './raster-tile/types';
 export * from './raster-tile/raster-tile-utils';

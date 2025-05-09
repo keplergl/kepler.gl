@@ -47,6 +47,9 @@ export type KeplerApplicationConfig = {
   // especially if large Arrow files are split into relatively small batches (should be fixed in the future).
   useOnFilteredItemsChange?: boolean;
 
+  // A URL to the CDN where the kepler.gl assets are hosted.
+  cdnUrl?: string;
+
   // Raster Tile layer config
   // Raster Tile layer is under development and not ready for production use. Disabled by default.
   enableRasterTileLayer?: boolean;
@@ -83,6 +86,8 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
       mapLibUrl: 'https://www.mapbox.com/'
     }
   },
+
+  cdnUrl: 'https://studio-public-data.foursquare.com/statics/keplergl',
 
   plugins: [],
   // The default table class is KeplerTable.

@@ -15,7 +15,8 @@ import {
   getStyleImageIcon,
   isPlainObject,
   hexToRgb,
-  colorMaybeToRGB
+  colorMaybeToRGB,
+  getApplicationConfig
 } from '@kepler.gl/utils';
 import {generateHashId} from '@kepler.gl/common-utils';
 import {
@@ -75,6 +76,8 @@ const getDefaultState = (): MapStyle => {
   const visibleLayerGroups = {};
   const topLayerGroups = {};
 
+  const cdnUrl = getApplicationConfig().cdnUrl;
+
   return {
     styleType: DEFAULT_BASE_MAP_STYLE,
     visibleLayerGroups,
@@ -82,7 +85,10 @@ const getDefaultState = (): MapStyle => {
     mapStyles: DEFAULT_MAP_STYLES.reduce(
       (accu, curr) => ({
         ...accu,
-        [curr.id]: curr
+        [curr.id]: {
+          curr,
+          icon: `${cdnUrl}/${curr.icon}`
+        }
       }),
       {}
     ),
