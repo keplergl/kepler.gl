@@ -86,7 +86,7 @@ const getDefaultState = (): MapStyle => {
       (accu, curr) => ({
         ...accu,
         [curr.id]: {
-          curr,
+          ...curr,
           icon: `${cdnUrl}/${curr.icon}`
         }
       }),

@@ -130,7 +130,7 @@ function MapStyleSelectorFactory(PanelHeaderAction: ReturnType<typeof PanelHeade
               hasCallout={Boolean(custom)}
             >
               <PanelHeaderContent className="map-title-block">
-                <img className="map-preview" src={`${getApplicationConfig().cdnUrl}/${icon}`} />
+                <img className="map-preview" src={icon} />
                 <PanelHeaderTitle className="map-preview-name">{label}</PanelHeaderTitle>
               </PanelHeaderContent>
               {!isSelecting ? (
