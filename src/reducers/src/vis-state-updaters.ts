@@ -2394,7 +2394,7 @@ export const createNewDatasetSuccessUpdater = (
   const {results, addToMapOptions} = action.payload;
 
   const notificationTasks: Task[] = [];
-  console.log('createNewDatasetSuccessUpdater', results);
+
   const newDataEntries = results.reduce((accu, result, idx) => {
     if (result.status === 'fulfilled') {
       const dataset = result.value;
@@ -2550,15 +2550,15 @@ function postMergeUpdater(mergedState: VisState, postMergerPayload: PostMergerPa
       : updatedState;
 
   // center the map once the dataset is created
-  // if (newLayers.length && (options || {}).centerMap) {
-  //   const bounds = findMapBounds(newLayers);
-  //   if (bounds) {
-  //     const fitBoundsTask = ACTION_TASK().map(() => {
-  //       return fitMapBounds(bounds);
-  //     });
-  //     updatedState = withTask(updatedState, fitBoundsTask);
-  //   }
-  // }
+  if (newLayers.length && (options || {}).centerMap) {
+    const bounds = findMapBounds(newLayers);
+    if (bounds) {
+      const fitBoundsTask = ACTION_TASK().map(() => {
+        return fitMapBounds(bounds);
+      });
+      updatedState = withTask(updatedState, fitBoundsTask);
+    }
+  }
 
   // need to center map here if we have new layers
   return updatedState;
