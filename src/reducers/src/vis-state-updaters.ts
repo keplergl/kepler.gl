@@ -42,7 +42,6 @@ import {
   setFilter,
   processFileContent,
   fitBounds as fitMapBounds,
-  setLoadingIndicator,
   toggleLayerForMap,
   applyFilterConfig,
   SetLoadingIndicatorPayload
@@ -2393,15 +2392,25 @@ export const createNewDatasetSuccessUpdater = (
   action: PayloadAction<CreateNewDatasetSuccessPayload>
 ): VisState => {
   const {results, addToMapOptions} = action.payload;
-  const newDataEntries = results.reduce((accu, result) => {
+
+  const notificationTasks: Task[] = [];
+  console.log('createNewDatasetSuccessUpdater', results);
+  const newDataEntries = results.reduce((accu, result, idx) => {
     if (result.status === 'fulfilled') {
       const dataset = result.value;
       return {...accu, [dataset.id]: dataset};
     } else {
-      // handle create dataset error
-      console.error(
-        'createNewDatasetSuccessUpdater: failed',
-        result.reason || (result as any).value
+      // show error notification on UI
+      notificationTasks.push(
+        ACTION_TASK().map(() =>
+          addNotification(
+            errorNotification({
+              message: `Dataset error: Failed to create a new dataset:
+              ${result.reason || (result as any).value}`,
+              id: `dataset-create-failed-${idx}`
+            })
+          )
+        )
       );
       return accu;
     }
@@ -2428,7 +2437,10 @@ export const createNewDatasetSuccessUpdater = (
     postMergerPayload
   });
 
-  return setLoadingIndicatorUpdater(updatedState, payload_({change: -1}));
+  return withTask(
+    setLoadingIndicatorUpdater(updatedState, payload_({change: -1})),
+    notificationTasks
+  );
 };
 
 /**

@@ -23,10 +23,10 @@ export const middlewares = enhanceReduxMiddleware([thunk, routerMiddleware(brows
 
 if (NODE_ENV === 'local') {
   // Redux logger
-  const logger = createLogger({
-    collapsed: () => true // Collapse all actions for more compact log
-  });
-  middlewares.push(logger);
+  // const logger = createLogger({
+  //   collapsed: () => true // Collapse all actions for more compact log
+  // });
+  // middlewares.push(logger);
 }
 
 export const enhancers = [applyMiddleware(...middlewares)];
