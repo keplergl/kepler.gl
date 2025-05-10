@@ -49,7 +49,7 @@ import {default as RasterTileLayer} from './raster-tile/raster-tile-layer';
 export {default as RasterTileIcon} from './raster-tile/raster-tile-icon';
 export {
   default as RasterTileLayer,
-  isTilesBeingLoaded as isRasterTilesBeingLoaded
+  getNumRasterTilesBeingLoaded
 } from './raster-tile/raster-tile-layer';
 export {
   CATEGORICAL_COLORMAP_ID,

@@ -4,6 +4,8 @@
 import React, {PropsWithChildren} from 'react';
 import styled, {withTheme} from 'styled-components';
 
+import {getNumRasterTilesBeingLoaded} from '@kepler.gl/layers';
+
 type StyledContainerProps = {
   $isVisible?: boolean;
   $left: number;
@@ -33,9 +35,8 @@ type LoadingIndicatorProps = {
 /** Extra adjustment for the loading indicator when side panel is visible */
 const LEFT_POSITION_ADJUSTMENT = 3;
 
-const LoadingIndicator: React.FC<PropsWithChildren<LoadingIndicatorProps> & {theme: any}> = ({
+const LoadingIndicator: React.FC<LoadingIndicatorProps & {theme: any}> = ({
   isVisible,
-  children,
   activeSidePanel,
   sidePanelWidth,
   theme
@@ -44,9 +45,18 @@ const LoadingIndicator: React.FC<PropsWithChildren<LoadingIndicatorProps> & {the
     (activeSidePanel ? (sidePanelWidth || 0) + LEFT_POSITION_ADJUSTMENT : 0) +
     theme.sidePanel.margin.left;
 
+  // Helper message to track number of raster tiles that are being loaded
+  const numRasterTilesInProgress = getNumRasterTilesBeingLoaded();
+  const extraMessage =
+    numRasterTilesInProgress < 1
+      ? ''
+      : `${numRasterTilesInProgress} raster tile${
+          numRasterTilesInProgress === 1 ? ' is' : 's are'
+        } being loaded`;
+
   return (
     <StyledContainer $isVisible={isVisible} $left={left}>
-      {children}
+      {`Loading... ${extraMessage}`}
     </StyledContainer>
   );
 };

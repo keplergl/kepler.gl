@@ -484,3 +484,11 @@ export function getLayerHoverPropValue(
   if (data instanceof DataRow) return data.valueAt(fieldIndex);
   return data[fieldIndex];
 }
+
+/** Checks if any Deck layers are in the process of loading. */
+export function areAnyDeckLayersLoading(layers: DeckLayer[]): boolean {
+  return layers.some(
+    // layer.isLoaded changes frequently in Deck (even on hover) so we check additional properties
+    layer => layer.internalState && !layer.isLoaded
+  );
+}
