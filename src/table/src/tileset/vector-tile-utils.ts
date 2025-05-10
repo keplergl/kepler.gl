@@ -710,7 +710,7 @@ export const getFieldsFromTile = async ({
       metadata.fields?.length === 0 &&
       metadata.minZoom &&
       metadata.bounds?.length === 4 &&
-      metadata.pmtilesType === PMTilesType.MVT
+      (!metadata.pmtilesType || metadata.pmtilesType === PMTilesType.MVT)
     ) {
       const lon = (metadata.bounds[0] + metadata.bounds[2]) / 2;
       const lat = (metadata.bounds[1] + metadata.bounds[3]) / 2;
