@@ -1452,8 +1452,8 @@ export type SetEditorModeUpdaterAction = {
  * @returns action
  * @public
  * @example
- * import {setMapMode} from 'kepler.gl/actions';
- * import {EDITOR_MODES} from 'kepler.gl/constants';
+ * import {setMapMode} from '@kepler.gl/actions';
+ * import {EDITOR_MODES} from '@kepler.gl/constants';
  *
  * this.props.dispatch(setMapMode(EDITOR_MODES.DRAW_POLYGON));
  */
