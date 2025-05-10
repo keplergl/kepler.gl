@@ -1014,7 +1014,7 @@ export default function MapContainerFactory(
     }, DEBOUNCE_MOUSE_MOVE_PROPAGATE);
 
     _onLayerLoadingStateChange = debounce(() => {
-      // trigger loading indicator update without any change
+      // trigger loading indicator update without any change to update UI
       this.props.uiStateActions.setLoadingIndicator({change: 0});
     }, DEBOUNCE_LOADING_STATE_PROPAGATE);
 
