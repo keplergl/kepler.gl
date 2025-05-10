@@ -31,8 +31,7 @@ import {
   LayerBaseConfig,
   VisualChannelDomain,
   EditorLayerUtils,
-  AggregatedBin,
-  isRasterTilesBeingLoaded
+  AggregatedBin
 } from '@kepler.gl/layers';
 import {
   DatasetAttribution,
@@ -83,6 +82,7 @@ import {LOCALE_CODES} from '@kepler.gl/localization';
 import {MapView} from '@deck.gl/core';
 import {
   MapStyle,
+  areAnyDeckLayersLoading,
   computeDeckLayers,
   getLayerHoverProp,
   LayerHoverProp,
@@ -365,6 +365,8 @@ export default function MapContainerFactory(
 ): React.ComponentType<MapContainerProps> {
   class MapContainer extends Component<MapContainerProps> {
     displayName = 'MapContainer';
+
+    private anyActiveLayerLoading = false;
 
     static contextType = MapViewStateContext;
 
@@ -947,6 +949,12 @@ export default function MapContainerFactory(
               if (typeof deckRenderCallbacks?.onDeckAfterRender === 'function') {
                 deckRenderCallbacks.onDeckAfterRender(allDeckGlProps);
               }
+
+              const anyActiveLayerLoading = areAnyDeckLayersLoading(allDeckGlProps.layers);
+              if (anyActiveLayerLoading !== this.anyActiveLayerLoading) {
+                this._onSmthLoadingChanges();
+              }
+              this.anyActiveLayerLoading = anyActiveLayerLoading;
             }}
           >
             {children}
@@ -1001,6 +1009,10 @@ export default function MapContainerFactory(
     _onMouseMoveDebounced = debounce((event, viewport) => {
       this.props.visStateActions.onMouseMove(normalizeEvent(event, viewport));
     }, DEBOUNCE_MOUSE_MOVE_PROPAGATE);
+
+    _onSmthLoadingChanges = debounce(() => {
+      this.props.uiStateActions.setLoadingIndicator({change: 0});
+    }, 100);
 
     _toggleMapControl = panelId => {
       const {index, uiStateActions} = this.props;
@@ -1158,12 +1170,10 @@ export default function MapContainerFactory(
           {this._renderMapPopover()}
           {primary !== isSplit ? (
             <LoadingIndicator
-              isVisible={isLoadingIndicatorVisible || isRasterTilesBeingLoaded()}
+              isVisible={Boolean(isLoadingIndicatorVisible || this.anyActiveLayerLoading)}
               activeSidePanel={Boolean(activeSidePanel)}
               sidePanelWidth={sidePanelWidth}
-            >
-              Loading...
-            </LoadingIndicator>
+            />
           ) : null}
           {this.props.primary ? (
             <Attribution

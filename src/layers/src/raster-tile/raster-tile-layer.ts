@@ -69,9 +69,9 @@ const devicePixelRatio: number = Math.min(
 // Global counter that represents the number of tiles currently being loaded across all the raster tile layers
 let tilesBeingLoaded = 0;
 
-// This is a temp solution, as we don't have proper logic to track loading of asycn layers atm in Kepler.gl
-export const isTilesBeingLoaded = () => {
-  return tilesBeingLoaded > 0;
+// This is a temp solution to track loading
+export const getNumRasterTilesBeingLoaded = () => {
+  return tilesBeingLoaded;
 };
 
 export const LOAD_ELEVATION_AFTER_ZOOM = 8.9;
