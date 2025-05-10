@@ -953,8 +953,8 @@ export default function MapContainerFactory(
               const anyActiveLayerLoading = areAnyDeckLayersLoading(allDeckGlProps.layers);
               if (anyActiveLayerLoading !== this.anyActiveLayerLoading) {
                 this._onSmthLoadingChanges();
+                this.anyActiveLayerLoading = anyActiveLayerLoading;
               }
-              this.anyActiveLayerLoading = anyActiveLayerLoading;
             }}
           >
             {children}
