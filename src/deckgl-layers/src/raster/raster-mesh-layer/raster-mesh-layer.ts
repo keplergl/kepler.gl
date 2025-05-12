@@ -8,7 +8,6 @@ import {Model, Geometry, isWebGL2} from '@luma.gl/core';
 import {ProgramManager} from '@luma.gl/engine';
 import {UniformsOptions} from '@luma.gl/webgl/src/classes/uniforms';
 
-import {shouldComposeModelMatrix} from './matrix';
 import fsWebGL1 from './raster-mesh-layer-webgl1.fs';
 import vsWebGL1 from './raster-mesh-layer-webgl1.vs';
 import fsWebGL2 from './raster-mesh-layer-webgl2.fs';
@@ -181,14 +180,12 @@ export default class RasterMeshLayer extends SimpleMeshLayer<any, RasterLayerAdd
       return;
     }
 
-    const {viewport} = this.context;
-    const {sizeScale, coordinateSystem, _instanced} = this.props;
+    const {sizeScale} = this.props;
 
     model
       .setUniforms(
         Object.assign({}, uniforms, {
           sizeScale,
-          composeModelMatrix: !_instanced || shouldComposeModelMatrix(viewport, coordinateSystem),
           flatShading: !this.state.hasNormals
         })
       )
@@ -221,7 +218,7 @@ export default class RasterMeshLayer extends SimpleMeshLayer<any, RasterLayerAdd
       Object.assign({}, this.getShaders(), {
         id: this.props.id,
         geometry: getGeometry(mesh),
-        isInstanced: true
+        isInstanced: false
       })
     );
 

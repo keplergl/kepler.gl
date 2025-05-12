@@ -6,7 +6,6 @@ import {TileLayer, GeoBoundingBox} from '@deck.gl/geo-layers/typed';
 import {PMTilesSource, PMTilesTileSource} from '@loaders.gl/pmtiles';
 import {Texture2DProps} from '@luma.gl/webgl';
 import memoize from 'lodash/memoize';
-import {Matrix4} from 'math.gl';
 
 import {PathLayer} from '@deck.gl/layers/typed';
 import {DatasetType, PMTilesType, LAYER_TYPES} from '@kepler.gl/constants';
@@ -399,7 +398,7 @@ export default class RasterTileLayer extends KeplerLayer {
   }
 
   private renderStacLayer(opts): TileLayer<any>[] {
-    const {data, mapState} = opts;
+    const {data, mapState, experimentalContext} = opts;
     const stac = data?.dataset?.metadata as GetTileDataCustomProps['stac'];
 
     // If a tabular dataset is loaded, and then the layer type is switched from Point to Raster Tile
@@ -410,6 +409,8 @@ export default class RasterTileLayer extends KeplerLayer {
 
     const {visConfig} = this.config;
     const {id, opacity, visible} = this.getDefaultDeckLayerProps(opts);
+
+    const hasShadowEffect = experimentalContext?.hasShadowEffect;
 
     const {
       preset,
@@ -545,7 +546,8 @@ export default class RasterTileLayer extends KeplerLayer {
       dataType,
       minCategoricalBandValue,
       maxCategoricalBandValue,
-      hasCategoricalColorMap: Boolean(categoricalColorMap)
+      hasCategoricalColorMap: Boolean(categoricalColorMap),
+      hasShadowEffect
     });
 
     return [tileLayer];
@@ -627,6 +629,7 @@ export default class RasterTileLayer extends KeplerLayer {
         shouldLoadTerrain &&
         LOAD_ELEVATION_AFTER_ZOOM < zoom &&
         (await loadTerrain({
+          boundsForGemetry: [west, north, east, south],
           index: props.index,
           signal: props.signal,
           rasterTileServerUrls: props.stac.rasterTileServerUrls || []
@@ -648,6 +651,7 @@ export default class RasterTileLayer extends KeplerLayer {
         }),
         shouldLoadTerrain && LOAD_ELEVATION_AFTER_ZOOM < zoom
           ? loadTerrain({
+              boundsForGemetry: [west, north, east, south],
               index: props.index,
               signal: props.signal,
               rasterTileServerUrls: props.stac.rasterTileServerUrls || []
@@ -706,6 +710,7 @@ export default class RasterTileLayer extends KeplerLayer {
       const terrain =
         image && shouldLoadTerrain && LOAD_ELEVATION_AFTER_ZOOM < zoom
           ? await loadTerrain({
+              boundsForGemetry: [west, north, east, south],
               index: props.index,
               signal: props.signal,
               rasterTileServerUrls: metadata.rasterTileServerUrls
@@ -778,7 +783,7 @@ function renderSubLayersStac(props: RenderSubLayersProps): DeckLayer<any> | Deck
 
   return terrain
     ? new RasterMeshLayer(props, {
-        id: `raster-3d-layer-${props.id}`,
+        id: `raster-3d-layer-${props.id}-${props.hasShadowEffect ? 'shadow' : ''}`,
         // Dummy data
         data: [1],
         mesh: terrain,
@@ -787,9 +792,7 @@ function renderSubLayersStac(props: RenderSubLayersProps): DeckLayer<any> | Deck
         moduleProps,
 
         getPolygonOffset: null,
-        coordinateSystem: COORDINATE_SYSTEM.CARTESIAN,
-        modelMatrix: getMercatorModelMatrix(tile.index),
-        getPosition: () => [0, 0, 0],
+        coordinateSystem: COORDINATE_SYSTEM.LNGLAT,
         // Color to use if surfaceImage is unavailable
         getColor: [255, 255, 255]
         // material: false
@@ -802,20 +805,6 @@ function renderSubLayersStac(props: RenderSubLayersProps): DeckLayer<any> | Deck
         bounds: [west, south, east, north],
         _imageCoordinateSystem: COORDINATE_SYSTEM.CARTESIAN
       });
-}
-
-// From https://github.com/uber/deck.gl/blob/b1901b11cbdcb82b317e1579ff236d1ca1d03ea7/modules/geo-layers/src/mvt-tile-layer/mvt-tile-layer.js#L41-L52
-export function getMercatorModelMatrix(tile: {x: number; y: number; z: number}): Matrix4 {
-  const WORLD_SIZE = 512;
-  const worldScale = Math.pow(2, tile.z);
-
-  const xScale = WORLD_SIZE / worldScale;
-  const yScale = -xScale;
-
-  const xOffset = (WORLD_SIZE * tile.x) / worldScale;
-  const yOffset = WORLD_SIZE * (1 - tile.y / worldScale);
-
-  return new Matrix4().translate([xOffset, yOffset, 0]).scale([xScale, yScale, 1]);
 }
 
 function renderSubLayersPMTiles(props: {
@@ -906,9 +895,7 @@ function getRasterLayerPMTiles(props: {id: string; data: any; tile: any}) {
         moduleProps,
 
         getPolygonOffset: null,
-        coordinateSystem: COORDINATE_SYSTEM.CARTESIAN,
-        modelMatrix: getMercatorModelMatrix(tile.index),
-        getPosition: () => [0, 0, 0],
+        coordinateSystem: COORDINATE_SYSTEM.LNGLAT,
         // Color to use if surfaceImage is unavailable
         getColor: [255, 255, 255]
         // material: false
