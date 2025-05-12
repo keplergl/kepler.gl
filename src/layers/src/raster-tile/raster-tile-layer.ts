@@ -629,7 +629,7 @@ export default class RasterTileLayer extends KeplerLayer {
         shouldLoadTerrain &&
         LOAD_ELEVATION_AFTER_ZOOM < zoom &&
         (await loadTerrain({
-          boundsForGemetry: [west, north, east, south],
+          boundsForGeometry: [west, north, east, south],
           index: props.index,
           signal: props.signal,
           rasterTileServerUrls: props.stac.rasterTileServerUrls || []
@@ -651,7 +651,7 @@ export default class RasterTileLayer extends KeplerLayer {
         }),
         shouldLoadTerrain && LOAD_ELEVATION_AFTER_ZOOM < zoom
           ? loadTerrain({
-              boundsForGemetry: [west, north, east, south],
+              boundsForGeometry: [west, north, east, south],
               index: props.index,
               signal: props.signal,
               rasterTileServerUrls: props.stac.rasterTileServerUrls || []
@@ -710,7 +710,7 @@ export default class RasterTileLayer extends KeplerLayer {
       const terrain =
         image && shouldLoadTerrain && LOAD_ELEVATION_AFTER_ZOOM < zoom
           ? await loadTerrain({
-              boundsForGemetry: [west, north, east, south],
+              boundsForGeometry: [west, north, east, south],
               index: props.index,
               signal: props.signal,
               rasterTileServerUrls: metadata.rasterTileServerUrls
