@@ -781,9 +781,11 @@ function renderSubLayersStac(props: RenderSubLayersProps): DeckLayer<any> | Deck
     props: {...props, minPixelValue, maxPixelValue}
   });
 
+  const idSuffix = props.hasShadowEffect ? 'shadow' : '';
+
   return terrain
     ? new RasterMeshLayer(props, {
-        id: `raster-3d-layer-${props.id}-${props.hasShadowEffect ? 'shadow' : ''}`,
+        id: `raster-3d-layer-${props.id}-${idSuffix}`,
         // Dummy data
         data: [1],
         mesh: terrain,
@@ -798,7 +800,7 @@ function renderSubLayersStac(props: RenderSubLayersProps): DeckLayer<any> | Deck
         // material: false
       })
     : new RasterLayer(props, {
-        id: `raster-2d-layer-${props.id}`,
+        id: `raster-2d-layer-${props.id}-${idSuffix}`,
         images,
         modules,
         moduleProps,
