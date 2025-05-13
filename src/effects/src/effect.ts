@@ -50,6 +50,11 @@ export class Effect implements EffectInterface {
     // implemented in subclasses
   }
 
+  clone(): Effect {
+    const props = this.getDefaultProps(this);
+    return new (this.constructor as new (props: EffectPropsPartial) => this)(props);
+  }
+
   getDefaultProps(props: EffectPropsPartial = {}): EffectProps {
     return {
       id: props.id || `e_${generateHashId(6)}`,
