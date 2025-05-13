@@ -389,13 +389,20 @@ export function getCategoricalColormapDataUrl(
   return getImageDataURL(bitmap, CATEGORICAL_TEXTURE_WIDTH, 1);
 }
 
-export function loadTerrain(props: {
+/**
+ * Load terrain mesh from raster tile server
+ * @param props - properties to load terrain data
+ * @returns terrain mesh data
+ */
+export async function loadTerrain(props: {
   index: {x: number; y: number; z: number};
   signal: AbortSignal;
   rasterTileServerUrls: string[];
+  boundsForGeometry?: [number, number, number, number];
 }): Promise<TerrainData> {
   const {
     index: {x, y, z},
+    boundsForGeometry,
     signal,
     rasterTileServerUrls
   } = props;
@@ -408,6 +415,7 @@ export function loadTerrain(props: {
     fetch: {signal},
     'quantized-mesh': {
       ...loaderOptions['quantized-mesh'],
+      bounds: boundsForGeometry,
       skirtHeight: meshMaxError * 2
     }
   }) as Promise<TerrainData>;

@@ -5,23 +5,12 @@ export default `\
 #version 300 es
 #define SHADER_NAME raster-mesh-layer-vs
 
-// Scale the model
-uniform float sizeScale;
-uniform bool composeModelMatrix;
-
 // Primitive attributes
 in vec3 positions;
+in vec3 positions64Low;
 in vec3 normals;
 in vec3 colors;
 in vec2 texCoords;
-
-// Instance attributes
-in vec3 instancePositions;
-in vec3 instancePositions64Low;
-in vec4 instanceColors;
-in vec3 instancePickingColors;
-in mat3 instanceModelMatrix;
-in vec3 instanceTranslation;
 
 // Outputs to fragment shader
 out vec2 vTexCoord;
@@ -30,32 +19,22 @@ out vec3 normals_commonspace;
 out vec4 position_commonspace;
 out vec4 vColor;
 
+const vec3 pickingColor = vec3(1.0, 0.0, 0.0);
+const vec3 defaultNormal = vec3(0.0, 0.0, 1.0);
+
 void main(void) {
-  geometry.worldPosition = instancePositions;
+  geometry.worldPosition = positions;
   geometry.uv = texCoords;
-  geometry.pickingColor = instancePickingColors;
+  geometry.pickingColor = pickingColor;
+
+  gl_Position = project_position_to_clipspace(positions, positions64Low, vec3(0.0), geometry.position);
+  position_commonspace = geometry.position;
+  DECKGL_FILTER_GL_POSITION(gl_Position, geometry);
 
   vTexCoord = texCoords;
   cameraPosition = project_uCameraPosition;
-  normals_commonspace = project_normal(instanceModelMatrix * normals);
-  vColor = vec4(colors * instanceColors.rgb, instanceColors.a);
-  geometry.normal = normals_commonspace;
-
-  vec3 pos = (instanceModelMatrix * positions) * sizeScale + instanceTranslation;
-
-  if (composeModelMatrix) {
-    DECKGL_FILTER_SIZE(pos, geometry);
-    gl_Position = project_position_to_clipspace(pos + instancePositions, instancePositions64Low, vec3(0.0), position_commonspace);
-  }
-  else {
-    pos = project_size(pos);
-    DECKGL_FILTER_SIZE(pos, geometry);
-    gl_Position = project_position_to_clipspace(instancePositions, instancePositions64Low, pos, position_commonspace);
-  }
-
-  geometry.position = position_commonspace;
-  DECKGL_FILTER_GL_POSITION(gl_Position, geometry);
-
+  
+  vColor = vec4(colors, 1.0);
   DECKGL_FILTER_COLOR(vColor, geometry);
 }
 `;
