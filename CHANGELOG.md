@@ -18,7 +18,7 @@ Ref: http://keepachangelog.com/en/0.3.0/
 ## [3.1.7] - May 14 2025
 
 - 014059b97 [fix] fixes for raster tile layer (#3102)
-- 518c515d1 [feat] loading indicator improvements (#3097)
+- 518c515d1 [feat] loading indicator improvements for tiled layers (#3097)
 - e290f281e [fix] fix for getFieldsFromTile regression (#3099)
 - 7087ffe15 [fix] fix tooltip crashing for trip layer (#3103)
 - a231ebfc1 [fix] fix for image export with effects (#3105)
