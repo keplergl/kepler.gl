@@ -1677,11 +1677,11 @@ export const setFilterViewUpdater = (
             view
           }
         : shouldResetOtherFiltersView
-          ? {
-              ...f,
-              view: FILTER_VIEW_TYPES.side
-            }
-          : f
+        ? {
+            ...f,
+            view: FILTER_VIEW_TYPES.side
+          }
+        : f
     )
   };
 };
@@ -2395,15 +2395,7 @@ export const updateVisDataUpdater = (
     : null;
 
   if (datasetsAllSettledTask) {
-<<<<<<< Updated upstream
     updatedState = setLoadingIndicatorUpdater(updatedState, payload_({change: 1, type: ''}));
-=======
-    // indicate that something is in progress
-    const setIsLoadingTask = ACTION_TASK_SET_LOADING().map(() => {
-      return setLoadingIndicator({change: 1});
-    });
-    updatedState = withTask(updatedState, setIsLoadingTask);
->>>>>>> Stashed changes
   }
 
   return withTask(updatedState, [
@@ -2417,7 +2409,7 @@ export const createNewDatasetSuccessUpdater = (
   action: PayloadAction<CreateNewDatasetSuccessPayload>
 ): VisState => {
   const {results, addToMapOptions} = action.payload;
-
+  console.log('createNewDatasetSuccessUpdater');
   const notificationTasks: Task[] = [];
 
   const newDataEntries = results.reduce((accu, result, idx) => {
@@ -2462,18 +2454,10 @@ export const createNewDatasetSuccessUpdater = (
     postMergerPayload
   });
 
-<<<<<<< Updated upstream
   return withTask(
     setLoadingIndicatorUpdater(updatedState, payload_({change: -1})),
     notificationTasks
   );
-=======
-  // resolve active loading initiated by updateVisDataUpdater
-  const setIsLoadingTask = ACTION_TASK_SET_LOADING().map(() => {
-    return setLoadingIndicator({change: -1});
-  });
-  return withTask(updatedState, setIsLoadingTask);
->>>>>>> Stashed changes
 };
 
 /**
@@ -2512,6 +2496,7 @@ export function applyMergersUpdater(
  */
 function postMergeUpdater(mergedState: VisState, postMergerPayload: PostMergerPayload): VisState {
   const {newDataIds, options, layerMergers} = postMergerPayload;
+  console.log('postMergeUpdater');
   const newFilters = mergedState.filters.filter(f =>
     f.dataId.find(fDataId => newDataIds.includes(fDataId))
   );
@@ -2589,6 +2574,7 @@ function postMergeUpdater(mergedState: VisState, postMergerPayload: PostMergerPa
       const fitBoundsTask = ACTION_TASK_FIT_BOUNDS().map(() => {
         return fitMapBounds(bounds);
       });
+      console.log('withTask: FIT_BOUNDS');
       updatedState = withTask(updatedState, fitBoundsTask);
     }
   }
@@ -3837,12 +3823,12 @@ function moveValueToBeMerged(state, propValues, {prop, toMergeProp, saveUnmerged
     prop === 'layers'
       ? propValues.reduce((accu, propValue) => removeLayerUpdater(accu, {id: propValue.id}), state)
       : Array.isArray(state[prop])
-        ? {
-            ...state,
-            [prop]: state[prop].filter(p => !propValues.find(propValue => p.id === propValue.id))
-          }
-        : // if not array, we won't remove it, remove dataset should handle it
-          state;
+      ? {
+          ...state,
+          [prop]: state[prop].filter(p => !propValues.find(propValue => p.id === propValue.id))
+        }
+      : // if not array, we won't remove it, remove dataset should handle it
+        state;
 
   // move to stateToBeMerged
   const toBeMerged = {
@@ -3850,15 +3836,15 @@ function moveValueToBeMerged(state, propValues, {prop, toMergeProp, saveUnmerged
       ? // call merge saveUnmerged method
         saveUnmerged(stateRemoved, propValues)
       : // if toMergeProp is araay, append to it
-        Array.isArray(stateRemoved[toMergeProp])
-        ? [...stateRemoved[toMergeProp], ...propValues]
-        : // save propValues to toMerge
-          isObject(stateRemoved[toMergeProp])
-          ? {
-              ...stateRemoved[toMergeProp],
-              ...propValues
-            }
-          : stateRemoved[toMergeProp]
+      Array.isArray(stateRemoved[toMergeProp])
+      ? [...stateRemoved[toMergeProp], ...propValues]
+      : // save propValues to toMerge
+      isObject(stateRemoved[toMergeProp])
+      ? {
+          ...stateRemoved[toMergeProp],
+          ...propValues
+        }
+      : stateRemoved[toMergeProp]
   };
 
   return {
