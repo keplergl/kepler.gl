@@ -20,7 +20,7 @@ import MapsLayoutFactory from './maps-layout';
 import {MapViewStateContextProvider} from './map-view-state-context';
 
 import {GEOCODER_LAYER_ID, ExportImage} from '@kepler.gl/constants';
-import {SplitMap} from '@kepler.gl/types';
+import {Effect, SplitMap} from '@kepler.gl/types';
 import {
   ActionHandler,
   addNotification,
@@ -84,15 +84,27 @@ interface PlotContainerProps {
   enableErrorNotification?: boolean;
 }
 
+interface PlotContainerState {
+  plotEffects: Effect[];
+}
+
 export default function PlotContainerFactory(
   MapContainer: ReturnType<typeof MapContainerFactory>,
   MapsLayout: ReturnType<typeof MapsLayoutFactory>
 ): React.ComponentType<PlotContainerProps> {
-  class PlotContainer extends Component<PlotContainerProps> {
+  class PlotContainer extends Component<PlotContainerProps, PlotContainerState> {
     constructor(props) {
       super(props);
       this._onMapRender = debounce(this._onMapRender, 500);
       this._retrieveNewScreenshot = debounce(this._retrieveNewScreenshot, 500);
+
+      this.state = {
+        plotEffects: this.getEffectsForPlot()
+      };
+    }
+
+    private getEffectsForPlot() {
+      return this.props.mapFields.visState.effects.map(effect => effect.clone());
     }
 
     componentDidMount() {
@@ -226,6 +238,11 @@ export default function PlotContainerFactory(
             preserveDrawingBuffer: true,
             useDevicePixels: false
           }
+        },
+        visState: {
+          ...mapFields.visState,
+          // Make sure to use effects not associated with a different WebGL context
+          effects: this.state.plotEffects
         }
       };
 

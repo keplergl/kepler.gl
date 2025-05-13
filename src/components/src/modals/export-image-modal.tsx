@@ -51,7 +51,6 @@ export interface ExportImageModalProps {
 }
 
 const ExportImageModalFactory = () => {
-  /** @type {typeof import('./export-image-modal').ExportImageModal} */
   const ExportImageModal: React.FC<ExportImageModalProps> = ({
     mapW,
     mapH,
