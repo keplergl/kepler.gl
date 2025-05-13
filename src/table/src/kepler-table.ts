@@ -108,13 +108,14 @@ export function maybeToDate(
   fieldIdx: number,
   format: string,
   dc: DataContainerInterface,
-  d: {index: number}
+  // An object with row index or a materialized row array (for materialized hover info from trip layer)
+  d: {index: number} | any[]
 ) {
   if (isTime) {
-    return timeToUnixMilli(dc.valueAt(d.index, fieldIdx), format);
+    return timeToUnixMilli(Array.isArray(d) ? d[fieldIdx] : dc.valueAt(d.index, fieldIdx), format);
   }
 
-  return dc.valueAt(d.index, fieldIdx);
+  return Array.isArray(d) ? d[fieldIdx] : dc.valueAt(d.index, fieldIdx);
 }
 
 class KeplerTable<F extends Field = Field> {
