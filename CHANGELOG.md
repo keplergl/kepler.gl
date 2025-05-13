@@ -15,6 +15,19 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+## [3.1.7] - May 14 2025
+
+- 014059b97 [fix] fixes for raster tile layer (#3102)
+- 518c515d1 [feat] loading indicator improvements for tiled layers (#3097)
+- e290f281e [fix] fix for getFieldsFromTile regression (#3099)
+- 7087ffe15 [fix] fix tooltip crashing for trip layer (#3103)
+- a231ebfc1 [fix] fix for image export with effects (#3105)
+- da38e26b9 [chore] Update Comments in actions (#3098)
+- 21aac1c85 [fix] fixes for custom input (#3095)
+- 271b8cc98 [fix] fix types publishing for table module (#3096)
+- 3d3bb9b54 [chore] add cdnUrl option to application config (#3093)
+- 9cdf73ea4 [Bug] remove layer item z-index (#3091)
+
 ## [3.1.6] - May 8 2025
 
 - 33203a6de [fix] fix loading indicotor not hidden regression (#3088)
