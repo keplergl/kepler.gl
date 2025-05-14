@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import classNames from 'classnames';
 import React, {ComponentType} from 'react';
 import styled, {withTheme} from 'styled-components';
-import {KEPLER_UNFOLDED_BUCKET} from '@kepler.gl/constants';
-import classNames from 'classnames';
+
 import {FormattedMessage} from '@kepler.gl/localization';
+import {getApplicationConfig} from '@kepler.gl/utils';
+
 import {BaseProps} from '../../common/icons';
 
 export type LayerTypeListItemProps = {
@@ -21,7 +23,11 @@ type WithThemeProps = LayerTypeListItemProps & {theme: Record<string, string>};
 
 export type LayerTypeListItemType = React.FC<LayerTypeListItemProps>;
 
-const StyledListItem = styled.div`
+type StyledListItemProps = {
+  cdnUrl: string;
+};
+
+const StyledListItem = styled.div<StyledListItemProps>`
   &.list {
     display: flex;
     align-items: center;
@@ -46,7 +52,7 @@ const StyledListItem = styled.div`
   .layer-type-selector__item__icon {
     color: ${props => props.theme.labelColor};
     display: flex;
-    background-image: url(${`${KEPLER_UNFOLDED_BUCKET}/images/kepler.gl-layer-icon-bg.png`});
+    background-image: url(${props => `${props.cdnUrl}/images/kepler.gl-layer-icon-bg.png`});
     background-size: ${props => props.theme.layerTypeIconSizeL}px
       ${props => props.theme.layerTypeIconSizeL}px;
     height: ${props => props.theme.layerTypeIconSizeL}px;
@@ -58,6 +64,7 @@ const StyledListItem = styled.div`
     font-size: 12px;
     text-align: center;
     color: ${props => props.theme.selectColor};
+    max-width: ${props => props.theme.layerTypeIconSizeL}px;
   }
 `;
 
@@ -67,6 +74,7 @@ export function LayerTypeListItemFactory() {
       className={classNames('layer-type-selector__item__inner', className, {
         list: !isTile
       })}
+      cdnUrl={getApplicationConfig().cdnUrl}
     >
       <div className="layer-type-selector__item__icon">
         <value.icon height={`${isTile ? theme.layerTypeIconSizeL : theme.layerTypeIconSizeSM}px`} />

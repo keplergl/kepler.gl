@@ -54,7 +54,7 @@ export type ActionHandlers<T extends {[k: string]: Handler}> = {
  * @example
  *
  * // app.js
- * import {addDataToMap} from 'kepler.gl/actions';
+ * import {addDataToMap} from '@kepler.gl/actions';
  *
  * const sampleTripData = {
  *  fields: [
@@ -146,8 +146,8 @@ export type ReceiveMapConfigPayload = {
  * @param {boolean} options.autoCreateLayers whether to automatically create layers based on dataset columns `default: true`.
  * @public
  * @example
- * import {receiveMapConfig} from 'kepler.gl/actions';
- * import KeplerGlSchema from 'kepler.gl/schemas';
+ * import {receiveMapConfig} from '@kepler.gl/actions';
+ * import KeplerGlSchema from '@kepler.gl/schemas';
  *
  * const parsedConfig = KeplerGlSchema.parseSavedConfig(config);
  * this.props.dispatch(receiveMapConfig(parsedConfig));

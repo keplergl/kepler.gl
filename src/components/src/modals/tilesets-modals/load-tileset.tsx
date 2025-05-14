@@ -7,15 +7,16 @@ import JSONPretty from 'react-json-pretty';
 import {AutoSizer} from 'react-virtualized';
 import styled from 'styled-components';
 
-import {VectorTileIcon} from '@kepler.gl/layers';
-import {getError} from '@kepler.gl/utils';
+import {VectorTileIcon, RasterTileIcon} from '@kepler.gl/layers';
+import {getError, getApplicationConfig} from '@kepler.gl/utils';
 
 import {MetaResponse} from './common';
 import LoadDataFooter from './load-data-footer';
-// import TilesetIcon from './tileset-icon';
+import TilesetIcon from './tileset-icon';
 import TilesetVectorForm from './tileset-vector-form';
+import TilesetRasterForm from './tileset-raster-form';
 
-// const WIDTH_ICON = '62px';
+const WIDTH_ICON = '70px';
 
 const LoadTilesetTabContainer = styled.div`
   color: ${props => props.theme.AZURE};
@@ -24,15 +25,16 @@ const LoadTilesetTabContainer = styled.div`
 const Container = styled.div`
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-gap: 20px;
   background-color: ${props => props.theme.WHITE};
 `;
 
-/*
 const TilesetTypeContainer = styled.div`
   display: grid;
   grid-template-columns: repeat(4, ${WIDTH_ICON});
+  column-gap: 10px;
+  margin-bottom: 20px;
 `;
-*/
 
 const MetaContainer = styled.div`
   display: flex;
@@ -54,7 +56,6 @@ const MetaInnerContainer = styled.div<MetaInnerContainerProps>`
   font: inherit;
   line-height: 1.5em;
   padding: 0.5em 3.5em 0.5em 1em;
-  margin-left: 10px;
   box-sizing: border-box;
   overflow-y: scroll;
   overflow-x: auto;
@@ -62,13 +63,15 @@ const MetaInnerContainer = styled.div<MetaInnerContainerProps>`
   word-wrap: break-word;
   height: ${props => props.height}px;
   width: ${props => props.width}px;
+  color: ${props => props.theme.textColorLT};
+  font-size: 11px;
+  font-family: ${props => props.theme.fontFamily};
   max-width: 600px;
 `;
 
 const StyledHeaderMessage = styled.div`
   color: ${props => props.theme.textColorLT};
   font-size: 14px;
-  margin-bottom: 12px;
 `;
 
 type LoadTilesetTabProps = {
@@ -84,6 +87,12 @@ const TILE_TYPES = [
     label: 'Vector Tile',
     Icon: VectorTileIcon,
     Component: TilesetVectorForm
+  },
+  {
+    id: 'rasterTile',
+    label: 'Raster Tile',
+    Icon: RasterTileIcon,
+    Component: TilesetRasterForm
   }
 ];
 
@@ -92,12 +101,8 @@ function isReady(response) {
 }
 
 function LoadTilesetTabFactory() {
-  const LoadTilesetTab: React.FC<LoadTilesetTabProps> = ({
-    onTilesetAdded,
-    isAddingDatasets,
-    intl
-  }) => {
-    const [typeIndex /* , setTypeIndex*/] = useState<number>(0);
+  const LoadTilesetTab: React.FC<LoadTilesetTabProps> = ({onTilesetAdded, isAddingDatasets}) => {
+    const [typeIndex, setTypeIndex] = useState<number>(0);
     const [response, setResponse] = useState<MetaResponse>({});
 
     const error = response.error;
@@ -112,24 +117,22 @@ function LoadTilesetTabFactory() {
       }
     }, [onTilesetAdded, response]);
 
-    const CurrentForm = TILE_TYPES[typeIndex].Component;
+    // temp patch to hide raster tile layer while in development
+    const enableRasterTileLayer = getApplicationConfig().enableRasterTileLayer;
+    const tileTypes = useMemo(() => {
+      return enableRasterTileLayer ? TILE_TYPES : [TILE_TYPES[0]];
+    }, [enableRasterTileLayer]);
 
-    const tilesetHeaderMessage = `${intl.formatMessage({
-      id: 'tilesetSetup.header'
-    })}`;
+    const CurrentForm = tileTypes[typeIndex].Component;
 
     return (
       <LoadTilesetTabContainer>
         <Container>
           <div>
-            <StyledHeaderMessage>{tilesetHeaderMessage}</StyledHeaderMessage>
-            {/** 
-            <div>
-              <label htmlFor="tileset-type">Tileset Type</label>
-            </div>
-             * Enable once we support different vector layers
+            <StyledHeaderMessage>Tileset Type</StyledHeaderMessage>
+
             <TilesetTypeContainer className="tileset-type">
-              {TILE_TYPES.map((tileType, index) => (
+              {tileTypes.map((tileType, index) => (
                 <TilesetIcon
                   key={tileType.label}
                   name={tileType.label}
@@ -139,7 +142,6 @@ function LoadTilesetTabFactory() {
                 />
               ))}
             </TilesetTypeContainer>
-            */}
             <div>
               <CurrentForm setResponse={setResponse} />
               {/** 

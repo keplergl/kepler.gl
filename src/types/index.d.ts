@@ -9,3 +9,5 @@ export * from './types';
 export * from './components';
 export * from './effects';
 export * from './datasets';
+
+export * as StacTypes from './stac';

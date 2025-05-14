@@ -4,13 +4,13 @@
 import React from 'react';
 import styled from 'styled-components';
 
-import {AiAssistantControlFactory, AiAssistantManagerFactory} from '@kepler.gl/ai-assistant';
 import {
   withState,
   MapControlFactory,
   EffectControlFactory,
   EffectManagerFactory
 } from '@kepler.gl/components';
+import {AiAssistantControlFactory} from '@kepler.gl/ai-assistant';
 
 import {BannerMapPanel, SampleMapPanel} from '../components/map-control/map-control';
 import SqlPanelControlFactory from '../components/map-control/sql-panel-control';
@@ -58,36 +58,29 @@ const StyledMapControlOverlay = styled.div`
 CustomMapControlFactory.deps = [
   EffectControlFactory,
   EffectManagerFactory,
-  AiAssistantControlFactory,
-  AiAssistantManagerFactory,
   SqlPanelControlFactory,
+  AiAssistantControlFactory,
   ...MapControlFactory.deps
 ];
 function CustomMapControlFactory(
   EffectControl,
   EffectManager,
-  AiAssistantControl,
-  AiAssistantManager,
   SqlPanelControl,
+  AiAssistantControl,
   ...deps
 ) {
   const MapControl = MapControlFactory(...deps);
   const actionComponents = [
     ...(MapControl.defaultActionComponents ?? []),
     EffectControl,
-    AiAssistantControl,
-    SqlPanelControl
+    SqlPanelControl,
+    AiAssistantControl
   ];
 
   const CustomMapControl = props => {
     const showEffects = Boolean(props.mapControls?.effect?.active);
-    const showAiAssistant = Boolean(props.mapControls?.aiAssistant?.active);
     return (
-      <StyledMapControlOverlay
-        top={props.top}
-        rightPanelVisible={showEffects || showAiAssistant}
-        fullHeight={showAiAssistant}
-      >
+      <StyledMapControlOverlay top={props.top} rightPanelVisible={showEffects}>
         <StyledMapControlPanel>
           {<BannerMapPanel {...props} />}
           {!props.isExport && props.currentSample ? <SampleMapPanel {...props} /> : null}
@@ -95,7 +88,6 @@ function CustomMapControlFactory(
         </StyledMapControlPanel>
         <StyledMapControlContextPanel>
           {showEffects ? <EffectManager /> : null}
-          {showAiAssistant ? <AiAssistantManager /> : null}
         </StyledMapControlContextPanel>
       </StyledMapControlOverlay>
     );

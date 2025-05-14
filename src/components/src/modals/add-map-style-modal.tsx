@@ -224,7 +224,7 @@ function AddMapStyleModalFactory() {
                     this.props.inputMapStyle({
                       url: value,
                       id: 'Custom Style',
-                      icon: NO_BASEMAP_ICON
+                      icon: `${getApplicationConfig().cdnUrl}/${NO_BASEMAP_ICON}`
                     })
                   }
                   placeholder="e.g. https://basemaps.cartocdn.com/gl/positron-gl-style/style.json"

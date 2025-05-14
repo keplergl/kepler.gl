@@ -60,6 +60,7 @@ export * from './vis-state-updaters';
 
 export {INITIAL_UI_STATE} from './ui-state-updaters';
 
+export {getDefaultMapStyles} from './map-style-updaters';
 export type {MapboxStyleUrl, MapStyle} from './map-style-updaters';
 
 export * from './data-utils';

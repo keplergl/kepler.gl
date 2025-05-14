@@ -56,7 +56,7 @@ export const getActionForwardAddress = (id: string) => `${ADDRESS_PREFIX}${id.to
  * @public
  * @example
  *
- * import {wrapTo, togglePerspective} from 'kepler.gl/actions';
+ * import {wrapTo, togglePerspective} from '@kepler.gl/actions';
  *
  * // This action will only dispatch to the KeplerGl instance with `id: map_1`
  * this.props.dispatch(wrapTo('map_1', togglePerspective()));
@@ -131,7 +131,7 @@ export const _actionFor = (id: string, action: IKeplerGlAction) =>
  * @example
  *
  * // action and forward dispatcher
- * import {toggleSplitMap, forwardTo} from 'kepler.gl/actions';
+ * import {toggleSplitMap, forwardTo} from '@kepler.gl/actions';
  * import {connect} from 'react-redux';
  *
  * const MapContainer = props => (

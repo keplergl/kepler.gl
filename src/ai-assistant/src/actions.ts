@@ -10,7 +10,7 @@ export const UPDATE_AI_ASSISTANT_CONFIG = `${ACTION_PREFIX}UPDATE_AI_ASSISTANT_C
 export const UPDATE_AI_ASSISTANT_MESSAGES = `${ACTION_PREFIX}UPDATE_AI_ASSISTANT_MESSAGES`;
 export const SET_START_SCREEN_CAPTURE = `${ACTION_PREFIX}SET_START_SCREEN_CAPTURE`;
 export const SET_SCREEN_CAPTURED = `${ACTION_PREFIX}SET_SCREEN_CAPTURED`;
-
+export const SET_MAP_BOUNDARY = `${ACTION_PREFIX}SET_MAP_BOUNDARY`;
 // Action creators
 export function updateAiAssistantConfig(config: AiAssistantConfig) {
   return {
@@ -37,5 +37,12 @@ export function setScreenCaptured(screenshot: string) {
   return {
     type: SET_SCREEN_CAPTURED,
     payload: screenshot
+  };
+}
+
+export function setMapBoundary(nw: [number, number], se: [number, number]) {
+  return {
+    type: SET_MAP_BOUNDARY,
+    payload: {nw, se}
   };
 }

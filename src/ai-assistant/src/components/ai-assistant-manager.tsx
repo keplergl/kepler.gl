@@ -1,65 +1,22 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useCallback} from 'react';
+import React, {useCallback, useMemo} from 'react';
 import styled from 'styled-components';
-import {injectIntl, IntlShape} from 'react-intl';
+import {useSelector, useDispatch} from 'react-redux';
+import {IntlProvider} from 'react-intl';
+import {flattenMessages} from '@kepler.gl/utils';
+import {messages as keplerGlMessages} from '@kepler.gl/localization';
 
-import {MapStyle, mapStyleLens, visStateLens} from '@kepler.gl/reducers';
-import {
-  ActionHandler,
-  mapStyleChange,
-  loadFiles,
-  addDataToMap,
-  addLayer,
-  createOrUpdateFilter,
-  setFilter,
-  setFilterPlot,
-  layerSetIsValid,
-  layerVisualChannelConfigChange
-} from '@kepler.gl/actions';
-import {withState, SidePanelTitleFactory, Icons} from '@kepler.gl/components';
+import {MapStyle} from '@kepler.gl/reducers';
+import {SidePanelTitleFactory, Icons} from '@kepler.gl/components';
 import {VisState} from '@kepler.gl/schemas';
 
 import {AiAssistantState} from '../index';
-import {
-  updateAiAssistantConfig,
-  updateAiAssistantMessages,
-  setStartScreenCapture,
-  setScreenCaptured
-} from '../actions';
-import AiAssistantConfigFactory from './ai-assistant-config';
-import AiAssistantComponentFactory from './ai-assistant-component';
-
-export type SelectedKeplerGlActions = {
-  mapStyleChange: ActionHandler<typeof mapStyleChange>;
-  loadFiles: ActionHandler<typeof loadFiles>;
-  addDataToMap: ActionHandler<typeof addDataToMap>;
-  addLayer: ActionHandler<typeof addLayer>;
-  layerVisualChannelConfigChange: ActionHandler<typeof layerVisualChannelConfigChange>;
-  createOrUpdateFilter: ActionHandler<typeof createOrUpdateFilter>;
-  setFilter: ActionHandler<typeof setFilter>;
-  setFilterPlot: ActionHandler<typeof setFilterPlot>;
-  layerSetIsValid: ActionHandler<typeof layerSetIsValid>;
-};
-
-export type AiAssistantManagerState = {
-  aiAssistantActions: {
-    updateAiAssistantConfig: ActionHandler<typeof updateAiAssistantConfig>;
-    updateAiAssistantMessages: ActionHandler<typeof updateAiAssistantMessages>;
-    setStartScreenCapture: ActionHandler<typeof setStartScreenCapture>;
-    setScreenCaptured: ActionHandler<typeof setScreenCaptured>;
-  };
-  keplerGlActions: SelectedKeplerGlActions;
-  aiAssistant: AiAssistantState;
-  mapStyle: MapStyle;
-  visState: VisState;
-  children: React.ReactNode;
-};
-
-export type AiAssistantManagerProps = AiAssistantManagerWithIntlProp & AiAssistantManagerState;
-
-export type AiAssistantManagerWithIntlProp = {intl: IntlShape};
+import {updateAiAssistantConfig} from '../actions';
+import {AiAssistantConfig} from './ai-assistant-config';
+import {AiAssistantComponent} from './ai-assistant-component';
+import {messages} from '../localization';
 
 const StyledAiAssistantPanelContainer = styled.div`
   display: flex;
@@ -69,8 +26,7 @@ const StyledAiAssistantPanelContainer = styled.div`
   justify-content: space-between;
   overflow: hidden;
   height: 100%;
-  min-width: ${props => props.theme.aiAssistantPanelWidth}px;
-  max-width: ${props => props.theme.aiAssistantPanelWidth}px;
+  width: 100%;
   & > * {
     /* all children should allow input */
     pointer-events: all;
@@ -102,94 +58,62 @@ const StyledAiAssistantPanelContent = styled.div`
   height: 100%;
 `;
 
-AiAssistantManagerFactory.deps = [
-  SidePanelTitleFactory,
-  AiAssistantConfigFactory,
-  AiAssistantComponentFactory
-];
+const SidePanelTitle = SidePanelTitleFactory();
 
-function AiAssistantManagerFactory(
-  SidePanelTitle: ReturnType<typeof SidePanelTitleFactory>,
-  AiAssistantConfig: ReturnType<typeof AiAssistantConfigFactory>,
-  AiAssistantComponent: ReturnType<typeof AiAssistantComponentFactory>
-): React.FC<AiAssistantManagerProps> {
-  const AiAssistantManager = (props: AiAssistantManagerWithIntlProp & AiAssistantManagerState) => {
-    const {intl, aiAssistantActions, aiAssistant, children, keplerGlActions, mapStyle, visState} =
-      props;
+export type State = {
+  demo: {
+    keplerGl: {
+      map: {
+        uiState: {locale: string};
+        visState: VisState;
+        mapStyle: MapStyle;
+      };
+    };
+    aiAssistant: AiAssistantState;
+  };
+};
 
-    const onConfigButtonClick = useCallback(() => {
+export function AiAssistantPanel() {
+  const dispatch = useDispatch();
+  const aiAssistant = useSelector((state: State) => state.demo.aiAssistant);
+  const locale = useSelector((state: State) => state.demo.keplerGl.map.uiState.locale);
+
+  const onConfigButtonClick = useCallback(() => {
+    if (aiAssistant) {
       // set aiAssistant.config.isReady to false so we can render the config component
-      aiAssistantActions.updateAiAssistantConfig({...aiAssistant.config, isReady: false});
-    }, [aiAssistant.config, aiAssistantActions]);
+      dispatch(updateAiAssistantConfig({...aiAssistant.config, isReady: false}));
+    }
+  }, [aiAssistant, dispatch]);
 
-    return (
+  // combine keplerGlMessages and messages
+  const combinedMessages = useMemo(() => {
+    return Object.keys(messages).reduce(
+      (acc, language) => ({
+        ...acc,
+        [language]: {
+          ...(messages[language] || {}),
+          ...(keplerGlMessages[language] || {})
+        }
+      }),
+      {}
+    );
+  }, []);
+
+  return (
+    <IntlProvider locale={locale} messages={flattenMessages(combinedMessages[locale])}>
       <StyledAiAssistantPanelContainer className="ai-assistant-manager">
         <StyledAiAssistantPanel>
           <StyledAiAssistantPanelHeader>
-            <SidePanelTitle
-              className="ai-assistant-manager-title"
-              title={intl.formatMessage({
-                id: 'aiAssistantManager.title',
-                defaultMessage: 'AI Assistant'
-              })}
-            >
+            <SidePanelTitle className="ai-assistant-manager-title" title="AI Assistant">
               <Icons.Settings onClick={onConfigButtonClick} />
             </SidePanelTitle>
           </StyledAiAssistantPanelHeader>
 
           <StyledAiAssistantPanelContent>
-            {!aiAssistant.config.isReady ? (
-              <AiAssistantConfig
-                aiAssistantConfig={aiAssistant.config}
-                updateAiAssistantConfig={aiAssistantActions.updateAiAssistantConfig}
-              />
-            ) : (
-              <AiAssistantComponent
-                aiAssistant={aiAssistant}
-                updateAiAssistantMessages={aiAssistantActions.updateAiAssistantMessages}
-                setStartScreenCapture={aiAssistantActions.setStartScreenCapture}
-                setScreenCaptured={aiAssistantActions.setScreenCaptured}
-                keplerGlActions={keplerGlActions}
-                mapStyle={mapStyle}
-                visState={visState}
-              />
-            )}
+            {!aiAssistant?.config.isReady ? <AiAssistantConfig /> : <AiAssistantComponent />}
           </StyledAiAssistantPanelContent>
         </StyledAiAssistantPanel>
-        {children}
       </StyledAiAssistantPanelContainer>
-    );
-  };
-
-  return withState(
-    [visStateLens, mapStyleLens],
-    state => {
-      // todo: find a better way to get the state key
-      const stateKey = Object.keys(state)[0];
-      return {
-        aiAssistant: state[stateKey].aiAssistant
-      };
-    },
-    {
-      keplerGlActions: {
-        mapStyleChange,
-        loadFiles,
-        addDataToMap,
-        addLayer,
-        createOrUpdateFilter,
-        setFilter,
-        setFilterPlot,
-        layerSetIsValid,
-        layerVisualChannelConfigChange
-      },
-      aiAssistantActions: {
-        updateAiAssistantConfig,
-        updateAiAssistantMessages,
-        setStartScreenCapture,
-        setScreenCaptured
-      }
-    }
-  )(injectIntl(AiAssistantManager)) as React.FC<AiAssistantManagerProps>;
+    </IntlProvider>
+  );
 }
-
-export default AiAssistantManagerFactory;

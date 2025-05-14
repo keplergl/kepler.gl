@@ -6,11 +6,11 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 
+import {validateUrl} from '@kepler.gl/common-utils';
 import {Button} from '@kepler.gl/components';
 import {FormattedMessage} from '@kepler.gl/localization';
 
 import {CORS_LINK} from '../../constants/default-settings';
-import {validateUrl} from '../../utils/url';
 
 const propTypes = {
   onLoadRemoteMap: PropTypes.func.isRequired
