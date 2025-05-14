@@ -2409,7 +2409,6 @@ export const createNewDatasetSuccessUpdater = (
   action: PayloadAction<CreateNewDatasetSuccessPayload>
 ): VisState => {
   const {results, addToMapOptions} = action.payload;
-  console.log('createNewDatasetSuccessUpdater');
   const notificationTasks: Task[] = [];
 
   const newDataEntries = results.reduce((accu, result, idx) => {
@@ -2496,7 +2495,6 @@ export function applyMergersUpdater(
  */
 function postMergeUpdater(mergedState: VisState, postMergerPayload: PostMergerPayload): VisState {
   const {newDataIds, options, layerMergers} = postMergerPayload;
-  console.log('postMergeUpdater');
   const newFilters = mergedState.filters.filter(f =>
     f.dataId.find(fDataId => newDataIds.includes(fDataId))
   );
@@ -2574,7 +2572,6 @@ function postMergeUpdater(mergedState: VisState, postMergerPayload: PostMergerPa
       const fitBoundsTask = ACTION_TASK_FIT_BOUNDS().map(() => {
         return fitMapBounds(bounds);
       });
-      console.log('withTask: FIT_BOUNDS');
       updatedState = withTask(updatedState, fitBoundsTask);
     }
   }
