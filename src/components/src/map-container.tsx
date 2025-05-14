@@ -1015,7 +1015,7 @@ export default function MapContainerFactory(
 
     _onLayerLoadingStateChange = debounce(() => {
       // trigger loading indicator update without any change to update UI
-      this.props.uiStateActions.setLoadingIndicator({change: 0});
+      this.props.visStateActions.setLoadingIndicator({change: 0});
     }, DEBOUNCE_LOADING_STATE_PROPAGATE);
 
     _toggleMapControl = panelId => {
