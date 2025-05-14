@@ -65,9 +65,10 @@ type CustomPickerProps = {
   onChange: ColorChangeHandler;
 };
 
-const CustomPicker: React.FC<CustomPickerProps> = (props: CustomPickerProps) => {
-  // When using SketchPicker, the parent component CustomPicker can be invoked as a function without props using ReactDOM.
-  const {color, onChange, theme} = props || {};
+// Note: When using SketchPicker, the parent component CustomPicker can be invoked as a function without props using ReactDOM.
+const CustomPicker: React.FC<CustomPickerProps> = (props = {} as CustomPickerProps) => {
+  const {color, onChange, theme} = props;
+
   const pickerStyle = useMemo(
     () => ({
       picker: {
