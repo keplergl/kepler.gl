@@ -127,6 +127,7 @@ export class KeplerGlDuckDbTable extends KeplerTable {
       await c.query(createTableSql);
     } catch (error) {
       console.log('importRowData', error);
+      throw error;
     }
   }
 
@@ -143,9 +144,11 @@ export class KeplerGlDuckDbTable extends KeplerTable {
         FROM ST_READ('${this.id}', keep_wkb = TRUE);
         ALTER TABLE '${this.label}' RENAME '${DUCKDB_WKB_COLUMN}' TO '${KEPLER_GEOM_FROM_GEOJSON_COLUMN}';
       `;
+
       await c.query(createTableSql);
     } catch (error) {
       console.error('importGeoJsonData', error);
+      throw error;
     }
 
     return {
@@ -180,6 +183,7 @@ export class KeplerGlDuckDbTable extends KeplerTable {
       // Known issues:
       // 1) Arrow Type with extension name: geoarrow.point and format: +w:2 is not currently supported in DuckDB.
       console.error('importArrowData', error);
+      throw error;
     }
 
     return {
@@ -252,6 +256,7 @@ export class KeplerGlDuckDbTable extends KeplerTable {
         .filter(col => col) as arrow.Vector[];
     } catch (error) {
       console.error('DuckDB table: createTableAndGetArrow', error);
+      throw error;
     }
 
     await c.close();

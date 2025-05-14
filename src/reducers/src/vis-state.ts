@@ -161,7 +161,9 @@ const actionHandler = {
 
   [ActionTypes.UPDATE_EFFECT]: visStateUpdaters.updateEffectUpdater,
 
-  [ActionTypes.CREATE_NEW_DATASET_SUCCESS]: visStateUpdaters.createNewDatasetSuccessUpdater
+  [ActionTypes.CREATE_NEW_DATASET_SUCCESS]: visStateUpdaters.createNewDatasetSuccessUpdater,
+
+  [ActionTypes.SET_LOADING_INDICATOR]: visStateUpdaters.setLoadingIndicatorUpdater
 };
 
 // construct vis-state reducer
