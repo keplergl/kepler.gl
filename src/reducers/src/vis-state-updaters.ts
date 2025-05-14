@@ -349,11 +349,6 @@ export const ACTION_TASK_ADD_NOTIFICATION = Task.fromCallback(
   'ACTION_TASK_ADD_NOTIFICATION'
 );
 
-export const ACTION_TASK_SET_LOADING = Task.fromCallback(
-  (_, cb) => cb(),
-
-  'ACTION_TASK_SET_LOADING'
-);
 type UpdateStateWithLayerAndDataType = {
   layers: Layer[];
   layerData: any[];
