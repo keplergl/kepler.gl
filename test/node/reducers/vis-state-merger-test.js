@@ -2217,7 +2217,7 @@ test('VisStateMerger -> asynс mergers', t => {
 
   t.ok(nextState.test.visState.datasets[testCsvDataId], 'should add csv data');
   const tasks = drainTasksForTesting();
-  t.equal(tasks.length, 2, 'Should create one fit bounds task and one setLoadingIndicator task');
+  t.equal(tasks.length, 1, 'Should create one fit bounds task');
   t.equal(tasks[0].type, 'MOCK_MERGE_TASK', 'should create merger task');
 
   // add another dataset will async merger is in process

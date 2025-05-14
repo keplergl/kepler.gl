@@ -127,7 +127,7 @@ test('#composerStateReducer - addDataToMapUpdater: mapState should be centered (
 
   // layers should generate a fit bounds task
   const tasks = drainTasksForTesting();
-  t.equal(tasks.length, 2, 'Should create one fit bounds task and one setLoadingIndicator task');
+  t.equal(tasks.length, 1, 'Should create one fit bounds task');
 
   newState.mapState = mapStateReducer(newState.mapState, succeedTaskWithValues(tasks[0], {}));
 
@@ -441,7 +441,7 @@ test('#composerStateReducer - replaceDataInMapUpdater', t => {
 
   // layers should generate a fit bounds task
   const tasks = drainTasksForTesting();
-  t.equal(tasks.length, 2, 'Should create one fit bounds task and one setLoadingIndicator task');
+  t.equal(tasks.length, 1, 'Should create one fit bounds task');
   nextState = {
     ...nextState,
     mapState: mapStateReducer(nextState.mapState, succeedTaskWithValues(tasks[0], {}))
