@@ -6,6 +6,7 @@ import styled, {withTheme} from 'styled-components';
 import {SketchPicker, ColorChangeHandler} from 'react-color';
 
 import {HexColor} from '@kepler.gl/types';
+import {panelBackground} from '@kepler.gl/styles';
 
 import {BaseComponentProps} from '../../types';
 
@@ -65,8 +66,18 @@ type CustomPickerProps = {
   onChange: ColorChangeHandler;
 };
 
+const defaultProps: CustomPickerProps = {
+  color: '#f00',
+  theme: {
+    panelBackground
+  },
+  onChange: () => {
+    // no-op
+  }
+};
+
 // Note: When using SketchPicker, the parent component CustomPicker can be invoked as a function without props using ReactDOM.
-const CustomPicker: React.FC<CustomPickerProps> = (props = {} as CustomPickerProps) => {
+const CustomPicker: React.FC<CustomPickerProps> = (props = defaultProps) => {
   const {color, onChange, theme} = props;
 
   const pickerStyle = useMemo(
