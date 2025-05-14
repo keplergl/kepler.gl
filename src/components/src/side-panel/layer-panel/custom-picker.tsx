@@ -76,7 +76,7 @@ const defaultProps: CustomPickerProps = {
   }
 };
 
-// Note: When using SketchPicker, the parent component CustomPicker can be invoked as a function without props using ReactDOM.
+// Note: When using SketchPicker, the parent component CustomPicker can be invoked as a function without props by ReactDOM.
 const CustomPicker: React.FC<CustomPickerProps> = (props = defaultProps) => {
   const {color, onChange, theme} = props;
 
