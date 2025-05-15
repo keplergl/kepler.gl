@@ -73,7 +73,6 @@ const TYPEAHEAD_INPUT_CLASS = 'typeahead__input';
 export type AddByDatasetButtonProps = {
   datasets: Datasets;
   onAdd: (dataId: string) => void;
-  width: string;
   buttonIntlId: string;
   inactive?: boolean;
   className?: string;
@@ -92,7 +91,6 @@ const AddByDatasetButton: React.FC<AddByDatasetButtonProps> = ({
   datasets,
   onAdd,
   buttonIntlId,
-  width,
   className,
   inactive
 }) => {
