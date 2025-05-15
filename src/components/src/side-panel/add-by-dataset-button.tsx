@@ -134,7 +134,6 @@ const AddByDatasetButton: React.FC<AddByDatasetButtonProps> = ({
     <Button
       tabIndex={-1}
       className={className || 'add-by-dataset-button'}
-      width={width}
       onClick={onClickBtn}
       disabled={!options.length || inactive}
     >

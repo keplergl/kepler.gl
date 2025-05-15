@@ -47,7 +47,7 @@ const StyledMapPopover = styled.div`
   box-shadow: ${props => props.theme.panelBoxShadow};
 
   &:hover {
-    background-color: ${props => `${props.theme.panelBackground}dd`};
+    background-color: ${props => `${props.theme.panelBackground}`};
   }
 
   .primary-label {
