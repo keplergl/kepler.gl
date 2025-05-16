@@ -1672,11 +1672,11 @@ export const setFilterViewUpdater = (
             view
           }
         : shouldResetOtherFiltersView
-          ? {
-              ...f,
-              view: FILTER_VIEW_TYPES.side
-            }
-          : f
+        ? {
+            ...f,
+            view: FILTER_VIEW_TYPES.side
+          }
+        : f
     )
   };
 };
@@ -3824,12 +3824,12 @@ function moveValueToBeMerged(state, propValues, {prop, toMergeProp, saveUnmerged
     prop === 'layers'
       ? propValues.reduce((accu, propValue) => removeLayerUpdater(accu, {id: propValue.id}), state)
       : Array.isArray(state[prop])
-        ? {
-            ...state,
-            [prop]: state[prop].filter(p => !propValues.find(propValue => p.id === propValue.id))
-          }
-        : // if not array, we won't remove it, remove dataset should handle it
-          state;
+      ? {
+          ...state,
+          [prop]: state[prop].filter(p => !propValues.find(propValue => p.id === propValue.id))
+        }
+      : // if not array, we won't remove it, remove dataset should handle it
+        state;
 
   // move to stateToBeMerged
   const toBeMerged = {
@@ -3837,15 +3837,15 @@ function moveValueToBeMerged(state, propValues, {prop, toMergeProp, saveUnmerged
       ? // call merge saveUnmerged method
         saveUnmerged(stateRemoved, propValues)
       : // if toMergeProp is araay, append to it
-        Array.isArray(stateRemoved[toMergeProp])
-        ? [...stateRemoved[toMergeProp], ...propValues]
-        : // save propValues to toMerge
-          isObject(stateRemoved[toMergeProp])
-          ? {
-              ...stateRemoved[toMergeProp],
-              ...propValues
-            }
-          : stateRemoved[toMergeProp]
+      Array.isArray(stateRemoved[toMergeProp])
+      ? [...stateRemoved[toMergeProp], ...propValues]
+      : // save propValues to toMerge
+      isObject(stateRemoved[toMergeProp])
+      ? {
+          ...stateRemoved[toMergeProp],
+          ...propValues
+        }
+      : stateRemoved[toMergeProp]
   };
 
   return {
