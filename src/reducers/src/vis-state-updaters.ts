@@ -3181,12 +3181,21 @@ export const setSelectedFeatureUpdater = (
   {feature, selectionContext}: VisStateActions.SetSelectedFeatureUpdaterAction
 ): VisState => {
   // add bbox for polygon filter to speed up filtering
-  if (feature && feature.properties) feature.properties.bbox = bbox(feature);
+  let selectedFeature = feature;
+  if (feature?.properties) {
+    selectedFeature = {
+      ...feature,
+      properties: {
+        ...feature.properties,
+        bbox: bbox(feature)
+      }
+    };
+  }
   return {
     ...state,
     editor: {
       ...state.editor,
-      selectedFeature: feature,
+      selectedFeature,
       selectionContext
     }
   };
