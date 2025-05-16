@@ -5,9 +5,8 @@ import React, {useCallback, useEffect, useState} from 'react';
 import styled from 'styled-components';
 import WMSCapabilities from 'wms-capabilities';
 
-
 import {DatasetType, REMOTE_TILE, RemoteTileFormat} from '@kepler.gl/constants';
-import {DatasetCreationAttributes} from './common';
+import {MetaResponse} from './common';
 import {InputLight} from '../../common';
 
 const TilesetInputContainer = styled.div`
@@ -22,22 +21,16 @@ const TilesetInputDescription = styled.div`
   color: ${props => props.theme.AZURE200};
   font-size: 11px;
 `;
-
-type TilesetVectorFormProps = {
-  setResponse: (response: {
-    metadata: null;
-    dataset: DatasetCreationAttributes | null;
-    loading: boolean;
-    error: string | null;
-  }) => void;
+type WMSTileFormProps = {
+  setResponse: (response: MetaResponse) => void;
 };
 
-const TilesetWMSForm: React.FC<TilesetVectorFormProps> = ({setResponse}) => {
+const TilesetWMSForm: React.FC<WMSTileFormProps> = ({setResponse}) => {
   const [layerName, setLayerName] = useState<string>('');
   const [wmsUrl, setWmsUrl] = useState<string>('');
   const [metadata, setMetadata] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<Error | null>(null);
   const [availableLayers, setAvailableLayers] = useState<{name: string; title: string}[]>([]);
 
   const onLayerNameChange = useCallback(
@@ -84,7 +77,7 @@ const TilesetWMSForm: React.FC<TilesetVectorFormProps> = ({setResponse}) => {
 
         setMetadata(json);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Unknown error');
+        setError(err instanceof Error ? err : new Error('Unknown error'));
         setMetadata(null);
       } finally {
         setLoading(false);
@@ -120,7 +113,7 @@ const TilesetWMSForm: React.FC<TilesetVectorFormProps> = ({setResponse}) => {
         error
       });
     }
-  }, [setResponse, layerName, wmsUrl, metadata, loading, error]);
+  }, [setResponse, layerName, wmsUrl, metadata, loading, error, availableLayers]);
 
   return (
     <TilesetInputContainer>

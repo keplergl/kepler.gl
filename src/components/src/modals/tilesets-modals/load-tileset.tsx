@@ -102,7 +102,7 @@ const TILE_TYPES = [
     label: 'WMS',
     Icon: WMSLayerIcon,
     Component: TilesetWMSForm
-  },
+  }
 ];
 
 function isReady(response) {
