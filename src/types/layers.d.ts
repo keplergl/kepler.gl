@@ -162,6 +162,7 @@ export type LayerTextLabel = {
   color: RGBColor;
   background: boolean;
   size: number;
+  weight: number;
   offset: [number, number];
   anchor: string;
   alignment: string;
@@ -404,6 +405,7 @@ export type TextConfigNumber = {
 
 export type LayerTextConfig = {
   fontSize: TextConfigNumber;
+  fontWeight: TextConfigNumber;
   outlineWidth: TextConfigNumber;
   textAnchor: TextConfigSelect;
   textAlignment: TextConfigSelect;
