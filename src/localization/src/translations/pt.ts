@@ -194,6 +194,8 @@ export default {
     disable3DMap: 'Desabilitar Mapa 3D',
     DrawOnMap: 'Desenhar no mapa',
     selectLocale: 'Selecionar língua',
+    showAiAssistantPanel: 'Mostrar painel de AI Assistant',
+    hideAiAssistantPanel: 'Esconder painel de AI Assistant',
     hideLayerPanel: 'Esconder painel de camada',
     showLayerPanel: 'Mostrar painel de camada',
     moveToTop: 'Mover para o topo das camadas',

@@ -187,6 +187,8 @@ export default {
     disable3DMap: 'Отключить 3D Карту',
     DrawOnMap: 'Рисовать на карте',
     selectLocale: 'Выберите регион',
+    showAiAssistantPanel: 'Показать панель AI Assistant',
+    hideAiAssistantPanel: 'Скрыть панель AI Assistant',
     hideLayerPanel: 'Скрыть панель слоев',
     showLayerPanel: 'Показать панель слоев',
     moveToTop: 'Перейти к верхним слоям данных',
