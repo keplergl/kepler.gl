@@ -195,6 +195,8 @@ export default {
     disable3DMap: 'Desactiva mapa 3D',
     DrawOnMap: 'Dibuixa al mapa',
     selectLocale: 'Selecciona configuració regional',
+    showAiAssistantPanel: 'Mostra el tauler de AI Assistant',
+    hideAiAssistantPanel: 'Oculta el tauler de AI Assistant',
     hideLayerPanel: 'Oculta el tauler de capes',
     showLayerPanel: 'Mostra el tauler de capes',
     moveToTop: 'Desplaça a dalt de tot de les capes de dades',
