@@ -10,11 +10,11 @@
     "o1-mini"
   ],
   "google": [
-    "gemini-2.5-pro-exp-03-25",
+    "gemini-2.5-flash-preview-04-17",
+    "gemini-2.5-pro-preview-05-06",
     "gemini-2.0-flash",
     "gemini-1.5-flash",
-    "gemini-1.5-pro",
-    "gemini-1.0-pro"
+    "gemini-1.5-pro"
   ],
   "deepseek": ["deepseek-chat"],
   "anthropic": [
@@ -25,25 +25,6 @@
     "claude-3-sonnet",
     "claude-3-haiku"
   ],
-  "xai": [
-    "grok-3",
-    "grok-3-fast",
-    "grok-3-mini",
-    "grok-3-mini-fast"
-  ],
-  "ollama": [
-    "deepseek-coder",
-    "deepseek-coder:6.7b",
-    "deepseek-coder:33b",
-    "phi-2",
-    "qwen:14b",
-    "qwen:72b",
-    "llama2",
-    "llama2:70b",
-    "llava",
-    "mistral",
-    "gemma:2b",
-    "gemma:7b",
-    "phi-3"
-  ]
+  "xai": ["grok-3", "grok-3-fast", "grok-3-mini", "grok-3-mini-fast"],
+  "ollama": ["deepseek-r1", "gemma3", "llama4", "llama3.3", "mistral", "phi4", "qwen3", "qwen2.5"]
 }
