@@ -152,7 +152,7 @@ export function AiAssistantConfig() {
   const [topP, setTopP] = useLocalStorage('ai-assistant-top-p', aiAssistantConfig.topP || 1.0);
   const [baseUrl, setBaseUrl] = useLocalStorage(
     'ai-assistant-base-url',
-    aiAssistantConfig.baseUrl || 'http://localhost:11434'
+    aiAssistantConfig.baseUrl || 'http://localhost:11434/api'
   );
   const [mapboxToken, setMapboxToken] = useLocalStorage(
     'ai-assistant-mapbox-token',
