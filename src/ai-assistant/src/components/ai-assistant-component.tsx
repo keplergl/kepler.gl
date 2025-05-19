@@ -5,10 +5,11 @@ import React, {useEffect, useState} from 'react';
 import {useDispatch, useSelector} from 'react-redux';
 import styled from 'styled-components';
 import {textColorLT, theme} from '@kepler.gl/styles';
-import {MessageModel} from '@openassistant/core';
+import {MessageModel, useAssistant} from '@openassistant/core';
 import {AiAssistant} from '@openassistant/ui';
-import '@openassistant/echarts/dist/index.css';
-import '@openassistant/ui/dist/index.css';
+// import '@openassistant/echarts/dist/index.css';
+// import '@openassistant/ui/dist/index.css';
+import '@openassistant/ui/../dist/bundle.css';
 import {setScreenCaptured, setStartScreenCapture, updateAiAssistantMessages} from '../actions';
 import {
   ASSISTANT_DESCRIPTION,
@@ -57,16 +58,45 @@ export function AiAssistantComponent() {
 
   const [datasetMetaData, setDatasetMetaData] = useState<string>('');
 
-  // get dataset meta data
+  const [ideas, setIdeas] = useState<{title: string; description: string}[]>([]);
+
+  // get dataset meta data and re-initialize assistant when datasets or layers change
   useEffect(() => {
     const metaData = getDatasetContext(visState?.datasets, visState?.layers || []);
     setDatasetMetaData(metaData);
-    // re-initialize assistant when datasets or layers change
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visState?.datasets, visState?.layers]);
 
   // use dataset meta data in LLM instructions
   const instructions = `${INSTRUCTIONS}\n\n${datasetMetaData}`;
+
+  // generate ideas from LLM
+  const {temporaryPrompt} = useAssistant({...assistantProps, instructions});
+
+  const generateIdeas = async () => {
+    try {
+      const response = await temporaryPrompt({
+        prompt: PROMPT_IDEAS,
+        temperature: 1.0
+      });
+      // find [{},{}...] in the text and parse it as json, handling whitespace
+      const match = response.match(/\[\s*\{.*\}\s*\]/s);
+      if (match) {
+        const json = JSON.parse(match[0]);
+        setIdeas(json);
+      }
+    } catch (error) {
+      console.error('Error generating ideas', error);
+    }
+  };
+
+  useEffect(() => {
+    // get ideas UI component
+    if (ideas.length === 0 && datasetMetaData.length > 0) {
+      generateIdeas();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [datasetMetaData]);
 
   const onRestartAssistant = () => {
     // clean up aiAssistant state
@@ -105,7 +135,8 @@ export function AiAssistantComponent() {
         fontSize={'text-tiny'}
         botMessageClassName={''}
         githubIssueLink={'https://github.com/keplergl/kepler.gl/issues'}
-        ideas={PROMPT_IDEAS}
+        ideas={ideas}
+        onRefreshIdeas={generateIdeas}
       />
     </StyledAiAssistantComponent>
   );
