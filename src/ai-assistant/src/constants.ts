@@ -45,32 +45,21 @@ Note:
   1. Please use the dataset name or dataset label as the datasetName argument, not the dataset id
 `;
 
-export const PROMPT_IDEAS = [
-  {
-    title: 'Data Insight',
-    description: 'What is the distribution of the variable?'
-  },
-  {
-    title: 'Spatial Analysis',
-    description: 'Is the variable spatially clustered?'
-  },
-  {
-    title: 'GeoTools',
-    description: 'How many events in California?'
-  },
-  {
-    title: 'Load Data',
-    description: 'load data from https://geodacenter.github.io/data-and-lab/data/lehd.geojson'
-  },
-  {
-    title: 'Create a Map Layer',
-    description: 'update its color inspired by Van Gogh Starry Night'
-  },
-  {
-    title: 'Change Basemap ',
-    description: 'use Positron style'
-  }
+export const PROMPT_IDEAS = `Return ONLY a JSON array of 5 ideas based on the tools in current context.
+IMPORTANT: please mention tool in a user-friendly title, and use actual field name in the description.
+Do not include any other text or explanation.
+Randomly pick 5 tools.
+Format:
+[{
+  "title": "Data Insight",
+  "description": "What is the distribution of HR60?"
+},
+{
+  "title": "Spatial Analysis",
+  "description": "Is HR60 spatially clustered?"
+},
 ];
+`;
 
 export const ASSISTANT_NAME = 'kepler-gl-ai-assistant';
 
