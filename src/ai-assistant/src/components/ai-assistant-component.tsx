@@ -7,9 +7,8 @@ import styled from 'styled-components';
 import {textColorLT, theme} from '@kepler.gl/styles';
 import {MessageModel, useAssistant} from '@openassistant/core';
 import {AiAssistant} from '@openassistant/ui';
-// import '@openassistant/echarts/dist/index.css';
-// import '@openassistant/ui/dist/index.css';
-import '@openassistant/ui/../dist/bundle.css';
+import '@openassistant/echarts/dist/index.css';
+import '@openassistant/ui/dist/index.css';
 import {setScreenCaptured, setStartScreenCapture, updateAiAssistantMessages} from '../actions';
 import {
   ASSISTANT_DESCRIPTION,
@@ -80,7 +79,7 @@ export function AiAssistantComponent() {
         temperature: 1.0
       });
       // find [{},{}...] in the text and parse it as json, handling whitespace
-      const match = response.match(/\[\s*\{.*\}\s*\]/s);
+      const match = response?.match(/\[\s*\{.*\}\s*\]/s);
       if (match) {
         const json = JSON.parse(match[0]);
         setIdeas(json);
