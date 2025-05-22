@@ -4710,9 +4710,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@openassistant/core@npm:0.4.3, @openassistant/core@npm:^0.4.3":
-  version: 0.4.3
-  resolution: "@openassistant/core@npm:0.4.3"
+"@openassistant/core@npm:0.4.4, @openassistant/core@npm:^0.4.4":
+  version: 0.4.4
+  resolution: "@openassistant/core@npm:0.4.4"
   dependencies:
     "@ai-sdk/openai": "npm:^1.3.21"
     "@ai-sdk/react": "npm:^1.2.11"
@@ -4741,7 +4741,7 @@ __metadata:
       optional: true
     ollama-ai-provider:
       optional: true
-  checksum: 10c0/4981ffe30c60174990b8dc9eb19f5fc51d26ad766bd33bc30dc0e8b2875ef65baedb564a9de87326a73a1d7adaf4cdcaa75f94572ebb73693dbb8c0648b12412
+  checksum: 10c0/79ab709cd7e993b93758ab9ec1ac4e15a861ac8b3647de3fe9b19e2188f2056fec50fd9a4ed6d26c1026595d4b98758e84d274e8d028bba2c112db2252a63272
   languageName: node
   linkType: hard
 
@@ -4822,13 +4822,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@openassistant/ui@npm:^0.4.3":
-  version: 0.4.3
-  resolution: "@openassistant/ui@npm:0.4.3"
+"@openassistant/ui@npm:^0.4.4":
+  version: 0.4.4
+  resolution: "@openassistant/ui@npm:0.4.4"
   dependencies:
     "@iconify/react": "npm:^5.1.0"
     "@nextui-org/react": "npm:^2.6.10"
-    "@openassistant/core": "npm:0.4.3"
+    "@openassistant/core": "npm:0.4.4"
     framer-motion: "npm:^11.15.0"
     html2canvas: "npm:^1.4.1"
     next-themes: "npm:^0.4.4"
@@ -4839,7 +4839,7 @@ __metadata:
   peerDependencies:
     react: ">=18.2"
     react-dom: ">=18.2"
-  checksum: 10c0/eeeb1c35aa1102a9984f2116cd9a35bb4df59dca8a16c50b72b5585ede635b9f12d5e62e39cb51a6f18508098f4e6a23e88fcc76d97baef7bbb02feca8786f22
+  checksum: 10c0/642f8e606e2abab5ef710ba17a4e14a0d8926b1c57fb79b8a816adaaad342dbe058cfa58ab279bf09e43459dbcef0c04e1eb4d0e916211b9c4faa91a6aabae68
   languageName: node
   linkType: hard
 
@@ -14934,8 +14934,8 @@ __metadata:
     "@loaders.gl/csv": "npm:^4.3.2"
     "@loaders.gl/json": "npm:^4.3.2"
     "@loaders.gl/parquet": "npm:^4.3.2"
-    "@openassistant/core": "npm:^0.4.3"
-    "@openassistant/ui": "npm:^0.4.3"
+    "@openassistant/core": "npm:^0.4.4"
+    "@openassistant/ui": "npm:^0.4.4"
     "@types/classnames": "npm:^2.3.1"
     "@types/keymirror": "npm:^0.1.1"
     apache-arrow: "npm:>=15.0.0"
