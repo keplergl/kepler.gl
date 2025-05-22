@@ -1680,7 +1680,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA.4.Geojson -> geojson data', t => {
   });
 
   expectedLayer.updateLayerVisConfig({
-    stroked: false,
+    stroked: true,
     filled: true,
     strokeColor: layer1StrokeColor
   });

@@ -1016,7 +1016,7 @@ export const expectedSavedLayer2 = {
       heightRange: [0, 500],
       elevationScale: 5,
       fixedHeight: false,
-      stroked: false,
+      stroked: true,
       filled: true,
       enable3d: false,
       wireframe: false,
@@ -1065,7 +1065,7 @@ export const expectedLoadedLayer2 = {
       heightRange: [0, 500],
       elevationScale: 5,
       fixedHeight: false,
-      stroked: false,
+      stroked: true,
       filled: true,
       enable3d: false,
       wireframe: false

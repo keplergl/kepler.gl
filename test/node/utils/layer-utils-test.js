@@ -600,7 +600,7 @@ test('layerUtils -> findDefaultLayer:GeojsonLayer', t => {
   expected1.updateLayerVisConfig({filled: true, stroked: false});
   expected2.updateLayerVisConfig({
     filled: true,
-    stroked: false,
+    stroked: true,
     strokeColor: layer2Stroke
   });
 
@@ -667,12 +667,12 @@ test('layerUtils -> findDefaultLayer:GeojsonLayer.wkt', t => {
   const [_layer1Color, strokeColor1, _layer2Color, strokeColor2] = getNextColorMakerValue(4);
   expected1.updateLayerVisConfig({
     filled: true,
-    stroked: false,
+    stroked: true,
     strokeColor: strokeColor1
   });
   expected2.updateLayerVisConfig({
     filled: true,
-    stroked: false,
+    stroked: true,
     strokeColor: strokeColor2
   });
 

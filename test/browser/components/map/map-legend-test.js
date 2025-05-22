@@ -49,11 +49,6 @@ test('Components -> MapLegend.render -> with layers', t => {
   const {layers} = initialState.visState;
   let wrapper;
 
-  const geojsonLayer = layers.find(l => l.id === 'geojson-1');
-  geojsonLayer?.updateLayerVisConfig({
-    stroked: true
-  });
-
   t.doesNotThrow(() => {
     wrapper = mountWithTheme(
       <IntlWrapper>
