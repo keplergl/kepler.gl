@@ -7,8 +7,9 @@ import styled from 'styled-components';
 import {textColorLT, theme} from '@kepler.gl/styles';
 import {MessageModel, useAssistant} from '@openassistant/core';
 import {AiAssistant} from '@openassistant/ui';
-import '@openassistant/echarts/dist/index.css';
-import '@openassistant/ui/dist/index.css';
+// import '@openassistant/echarts/dist/index.css';
+// import '@openassistant/ui/dist/index.css';
+import '@openassistant/ui/../dist/bundle.css';
 import {setScreenCaptured, setStartScreenCapture, updateAiAssistantMessages} from '../actions';
 import {
   ASSISTANT_DESCRIPTION,

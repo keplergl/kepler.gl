@@ -38,7 +38,8 @@ import {
   isochrone,
   getCachedData,
   IsochroneTool,
-  RoutingTool
+  RoutingTool,
+  roads
 } from '@openassistant/osm';
 import {Datasets} from '@kepler.gl/table';
 import {Layer} from '@kepler.gl/layers';
@@ -206,6 +207,14 @@ export function getGeoTools(
     }
   };
 
+  const roadsTool = {
+    ...roads,
+    context: {
+      ...roads.context,
+      getGeometries
+    }
+  };
+
   return {
     classifyTool,
     weightsTool,
@@ -226,7 +235,8 @@ export function getGeoTools(
     queryUSZipcodes,
     geocoding,
     routing: routingTool,
-    isochrone: isochroneTool
+    isochrone: isochroneTool,
+    roads: roadsTool
   };
 }
 
