@@ -81,6 +81,7 @@ export function LisaToolComponent({
       for (let i = 0; i < colors.length; i++) {
         colorLegends[colors[i]] = labels[i];
       }
+      const colorMap = colors.map((color, index) => [index, color]);
       const newLayer = {
         id: layerId,
         type: layer.type,
@@ -93,17 +94,27 @@ export function LisaToolComponent({
           }, {}),
           colorScale: 'customOrdinal',
           colorField,
-          strokeColorField: null,
+          strokeColorDomain: colorDomain,
+          strokeColorField: colorField,
+          strokeColorScale: 'customOrdinal',
           visConfig: {
             ...layer.config.visConfig,
             colorRange: {
               ...layer.config.visConfig.colorRange,
               colorDomain,
-              colors: colors,
-              colorMap: colors.map((color, index) => [index, color]),
+              colors,
+              colorMap,
               colorLegends
             },
-            stroked: false
+            strokeColorRange: {
+              category: 'Custom',
+              name: 'custom',
+              colors,
+              colorMap
+            },
+            strokeOpacity: 1,
+            stroked: true,
+            strokedWidth: 0.5
           }
         }
       };
