@@ -625,7 +625,7 @@ export default class GeoJsonLayer extends Layer {
       // set both fill and stroke to true
       return this.updateLayerVisConfig({
         filled: true,
-        stroked: true,
+        stroked: false,
         strokeColor: colorMaker.next().value
       });
     } else if (featureTypes && featureTypes.point) {
