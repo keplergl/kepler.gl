@@ -15,6 +15,17 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+## [3.1.8] - May 26 2025
+
+- fd4702c4f [perf] disable strokes by default for polygons in geojson layer (#3118)
+- 1542bb6f7 [Feat] Add OSM road tool to support point analysis on road networks (#3117)
+- 9da33316c [feat] Generate "idea" buttons from LLM (#3115)
+- 330030185 [Fix] AI Connection to Ollama failed (#3113)
+- be6ee823a [Bug] fix update selected feature bbox (#3110)
+- 0dcacc66e [fix] Custom picker fix when called during initialization (#3107)
+- 4fc1344a1 [Chore] style tweak (#3109)
+- 3769aaf74 [Chore] Better handle add data to map error and loading indicator (#3106)
+
 ## [3.1.7] - May 14 2025
 
 - 014059b97 [fix] fixes for raster tile layer (#3102)
