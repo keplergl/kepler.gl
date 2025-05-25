@@ -74,7 +74,7 @@ export function castDuckDBTypesForKepler(
   columns: DuckDBColumnDesc[],
   options = {geometryToWKB: true, bigIntToDouble: true}
 ): string {
-  const base = columns.map(column => {
+  const modifiedColumns = columns.map(column => {
     const {name, type} = column;
     if (type === 'GEOMETRY' && options.geometryToWKB) {
       return `ST_AsWKB(${name}) as ${name}`;
@@ -84,7 +84,7 @@ export function castDuckDBTypesForKepler(
     return name;
   });
 
-  return `SELECT ${base.join(', ')} FROM '${tableName}'`;
+  return `SELECT ${modifiedColumns.join(', ')} FROM '${tableName}'`;
 }
 
 /**
