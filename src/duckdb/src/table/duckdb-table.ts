@@ -38,11 +38,10 @@ import {
 } from './duckdb-table-utils';
 
 import {
-  constructST_asWKBQuery,
+  castDuckDBTypesForKepler,
   dropTableIfExists,
   getDuckDBColumnTypes,
   getDuckDBColumnTypesMap,
-  getGeometryColumns,
   removeUnsupportedExtensions,
   restoreArrowTable,
   restoreUnsupportedExtensions
@@ -240,8 +239,7 @@ export class KeplerGlDuckDbTable extends KeplerTable {
 
       const duckDbColumns = await getDuckDBColumnTypes(c, tableName);
       const tableDuckDBTypes = getDuckDBColumnTypesMap(duckDbColumns);
-      const columnsToConvertToWKB = getGeometryColumns(duckDbColumns);
-      const adjustedQuery = constructST_asWKBQuery(tableName, columnsToConvertToWKB);
+      const adjustedQuery = castDuckDBTypesForKepler(tableName, duckDbColumns);
       const arrowResult = await c.query(adjustedQuery);
 
       // TODO if format is an arrow table then just use the original one, instead of the new table from the query?
