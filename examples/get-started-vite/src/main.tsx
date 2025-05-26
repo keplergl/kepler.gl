@@ -32,7 +32,7 @@ const enhancers = applyMiddleware(...middleWares);
 const initialState = {};
 const store = createStore(reducers, initialState, compose(enhancers));
 
-const App2 = () => (
+const App = () => (
   <div
     style={{
       position: 'absolute',
@@ -57,7 +57,7 @@ const App2 = () => (
 
 const mapStateToProps = (state: KeplerGlState) => state;
 const dispatchToProps = (dispatch: Dispatch<any>) => ({dispatch});
-const ConnectedApp = connect(mapStateToProps, dispatchToProps)(App2);
+const ConnectedApp = connect(mapStateToProps, dispatchToProps)(App);
 const Root = () => (
   <Provider store={store}>
     <ConnectedApp />
