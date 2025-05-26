@@ -17,6 +17,8 @@ Ref: http://keepachangelog.com/en/0.3.0/
 
 ## [3.1.8] - May 26 2025
 
+- 4fd570c3e [example] Kepler.gl getting started example with Vite (#3123)
+- f57173d35 [fix] DuckDB - cast BigInts to Double by default (#3120)
 - fd4702c4f [perf] disable strokes by default for polygons in geojson layer (#3118)
 - 1542bb6f7 [Feat] Add OSM road tool to support point analysis on road networks (#3117)
 - 9da33316c [feat] Generate "idea" buttons from LLM (#3115)
