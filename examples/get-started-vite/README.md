@@ -4,11 +4,6 @@ This example uses [Kepler.gl](https://kepler.gl/) with Vite as the build tool.
 
 ## Development
 
-### Prerequisites
-
-- Node.js (v18 or higher)
-- Yarn package manager
-
 ### Installation
 
 ```bash
