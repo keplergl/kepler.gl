@@ -62,28 +62,29 @@ export function getDuckDBColumnTypesMap(columns: DuckDBColumnDesc[]) {
 
 /**
  * Constructs an SQL query to select all columns from a given table,
- * converting specified columns to Well-Known Binary (WKB) format using ST_AsWKB.
+ * converting specified columns to Well-Known Binary (WKB) format using ST_AsWKB,
+ * and casting BIGINT columns to DOUBLE if specified.
  * @param tableName The name of the table from which to select data.
- * @param columnsToConvertToWKB An array of column names that should be converted to WKB format.
+ * @param columns An array of column descriptors, each with a type and name.
+ * @param options Optional parameters to control the conversion behavior.
  * @returns The constructed SQL query.
  */
-export function constructST_asWKBQuery(tableName: string, columnsToConvertToWKB: string[]): string {
-  const exclude =
-    columnsToConvertToWKB.length > 0 ? `EXCLUDE ${columnsToConvertToWKB.join(', ')}` : '';
-  const asWKB =
-    columnsToConvertToWKB.length > 0
-      ? `, ${columnsToConvertToWKB.map(column => `ST_AsWKB(${column}) as ${column}`).join(', ')}`
-      : '';
-  return `SELECT * ${exclude} ${asWKB} FROM '${tableName}'`;
-}
+export function castDuckDBTypesForKepler(
+  tableName: string,
+  columns: DuckDBColumnDesc[],
+  options = {geometryToWKB: true, bigIntToDouble: true}
+): string {
+  const modifiedColumns = columns.map(column => {
+    const {name, type} = column;
+    if (type === 'GEOMETRY' && options.geometryToWKB) {
+      return `ST_AsWKB(${name}) as ${name}`;
+    } else if (type === 'BIGINT' && options.bigIntToDouble) {
+      return `CAST(${name} AS DOUBLE) as ${name}`;
+    }
+    return name;
+  });
 
-/**
- * Finds the names of columns that have a GEOMETRY type.
- * @param columns An array of column descriptors from a DuckDB table.
- * @returns An array of column names that are of type GEOMETRY.
- */
-export function getGeometryColumns(columns: DuckDBColumnDesc[]): string[] {
-  return columns.filter(column => column.type === 'GEOMETRY').map(column => column.name);
+  return `SELECT ${modifiedColumns.join(', ')} FROM '${tableName}'`;
 }
 
 /**
