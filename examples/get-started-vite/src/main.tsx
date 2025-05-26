@@ -1,16 +1,13 @@
-import React, { Dispatch } from "react";
-import ReactDOM from "react-dom/client";
-import { connect, Provider } from "react-redux";
+import React, {Dispatch} from 'react';
+import ReactDOM from 'react-dom/client';
+import {connect, Provider} from 'react-redux';
 
-import { applyMiddleware, combineReducers, compose, createStore } from "redux";
+import {applyMiddleware, combineReducers, compose, createStore} from 'redux';
 
-import KeplerGl from "@kepler.gl/components";
-import keplerGlReducer, {
-  enhanceReduxMiddleware,
-  KeplerGlState,
-} from "@kepler.gl/reducers";
+import KeplerGl from '@kepler.gl/components';
+import keplerGlReducer, {enhanceReduxMiddleware, KeplerGlState} from '@kepler.gl/reducers';
 
-import AutoSizer from "react-virtualized/dist/commonjs/AutoSizer";
+import AutoSizer from 'react-virtualized/dist/commonjs/AutoSizer';
 
 // create reducers
 const reducers = combineReducers({
@@ -18,9 +15,9 @@ const reducers = combineReducers({
   keplerGl: keplerGlReducer.initialState({
     uiState: {
       readOnly: false,
-      currentModal: null,
-    },
-  }),
+      currentModal: null
+    }
+  })
 });
 
 // create middlewares
@@ -38,15 +35,15 @@ const store = createStore(reducers, initialState, compose(enhancers));
 const App2 = () => (
   <div
     style={{
-      position: "absolute",
-      top: "0px",
-      left: "0px",
-      width: "100%",
-      height: "100%",
+      position: 'absolute',
+      top: '0px',
+      left: '0px',
+      width: '100%',
+      height: '100%'
     }}
   >
     <AutoSizer>
-      {({ height, width }) => (
+      {({height, width}) => (
         <KeplerGl
           mapboxApiAccessToken="pk.eyJ1IjoiaWdvcjEzMTMxMyIsImEiOiJjbTRtMWxoMnIwN3VhMmlxOGRnZ3AxcGhhIn0.d9YD6z5nsBNzPXrXWzIaAA"
           id="map"
@@ -59,15 +56,15 @@ const App2 = () => (
 );
 
 const mapStateToProps = (state: KeplerGlState) => state;
-const dispatchToProps = (dispatch: Dispatch<any>) => ({ dispatch });
+const dispatchToProps = (dispatch: Dispatch<any>) => ({dispatch});
 const ConnectedApp = connect(mapStateToProps, dispatchToProps)(App2);
 const Root = () => (
   <Provider store={store}>
-    <App2 />
+    <ConnectedApp />
   </Provider>
 );
 
-const container = document.getElementById("root");
+const container = document.getElementById('root');
 if (container) {
   const root = ReactDOM.createRoot(container);
   root.render(<Root />);
