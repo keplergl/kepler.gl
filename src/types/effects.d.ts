@@ -46,4 +46,5 @@ export interface Effect {
   setProps(props: Partial<EffectProps>): void;
   isValidToSave(): boolean;
   getParameterDescriptions(): EffectParameterDescription[];
+  clone(): Effect;
 }

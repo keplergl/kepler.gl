@@ -15,6 +15,32 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+## [3.1.8] - May 26 2025
+
+- 4fd570c3e [example] Kepler.gl getting started example with Vite (#3123)
+- f57173d35 [fix] DuckDB - cast BigInts to Double by default (#3120)
+- fd4702c4f [perf] disable strokes by default for polygons in geojson layer (#3118)
+- 1542bb6f7 [Feat] Add OSM road tool to support point analysis on road networks (#3117)
+- 9da33316c [feat] Generate "idea" buttons from LLM (#3115)
+- 330030185 [Fix] AI Connection to Ollama failed (#3113)
+- be6ee823a [Bug] fix update selected feature bbox (#3110)
+- 0dcacc66e [fix] Custom picker fix when called during initialization (#3107)
+- 4fc1344a1 [Chore] style tweak (#3109)
+- 3769aaf74 [Chore] Better handle add data to map error and loading indicator (#3106)
+
+## [3.1.7] - May 14 2025
+
+- 014059b97 [fix] fixes for raster tile layer (#3102)
+- 518c515d1 [feat] loading indicator improvements for tiled layers (#3097)
+- e290f281e [fix] fix for getFieldsFromTile regression (#3099)
+- 7087ffe15 [fix] fix tooltip crashing for trip layer (#3103)
+- a231ebfc1 [fix] fix for image export with effects (#3105)
+- da38e26b9 [chore] Update Comments in actions (#3098)
+- 21aac1c85 [fix] fixes for custom input (#3095)
+- 271b8cc98 [fix] fix types publishing for table module (#3096)
+- 3d3bb9b54 [chore] add cdnUrl option to application config (#3093)
+- 9cdf73ea4 [Bug] remove layer item z-index (#3091)
+
 ## [3.1.6] - May 8 2025
 
 - 33203a6de [fix] fix loading indicotor not hidden regression (#3088)

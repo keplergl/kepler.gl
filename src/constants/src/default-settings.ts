@@ -25,7 +25,7 @@ import {TOOLTIP_FORMAT_TYPES} from './tooltip';
 
 export const ACTION_PREFIX = '@@kepler.gl/';
 export const KEPLER_UNFOLDED_BUCKET = 'https://studio-public-data.foursquare.com/statics/keplergl';
-export const BASEMAP_ICON_PREFIX = `${KEPLER_UNFOLDED_BUCKET}/geodude`;
+export const BASEMAP_ICON_PREFIX = `geodude`;
 export const DEFAULT_MAPBOX_API_URL = 'https://api.mapbox.com';
 export const TRANSITION_DURATION = 0;
 
@@ -1594,24 +1594,19 @@ export enum GEOARROW_EXTENSIONS {
   WKB = 'geoarrow.wkb'
 }
 
-export const RasterLayerResources = {
-  rasterColorMap: (colormapId: string) => {
-    return `${KEPLER_UNFOLDED_BUCKET}/raster/colormaps/${colormapId}.png`;
-  }
-};
-
+export const LOADERS_CDN_VERSION = '4.3.2';
 export const LOADERS_CDN_URL = 'https://unpkg.com/@loaders.gl';
 
 export const getLoaderOptions = () => {
   return {
     mvt: {
-      workerUrl: `${LOADERS_CDN_URL}/mvt/dist/mvt-worker.js`
+      workerUrl: `${LOADERS_CDN_URL}/mvt@${LOADERS_CDN_VERSION}/dist/mvt-worker.js`
     },
     'quantized-mesh': {
-      // workerUrl: `${LOADERS_CDN_URL}/terrain/dist/quantized-mesh-worker.js`
+      workerUrl: `${LOADERS_CDN_URL}/terrain@${LOADERS_CDN_VERSION}/dist/quantized-mesh-worker.js`
     },
     npy: {
-      // workerUrl: `${LOADERS_CDN_URL}/textures/dist/npy-worker.js`
+      workerUrl: `${LOADERS_CDN_URL}/textures@${LOADERS_CDN_VERSION}/dist/npy-worker.js`
     }
   };
 };

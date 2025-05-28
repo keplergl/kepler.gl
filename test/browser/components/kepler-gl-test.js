@@ -10,7 +10,7 @@ import {drainTasksForTesting, succeedTaskWithValues} from 'react-palm/tasks';
 import configureStore from 'redux-mock-store';
 import {Provider} from 'react-redux';
 
-import {keplerGlReducerCore as coreReducer} from '@kepler.gl/reducers';
+import {keplerGlReducerCore as coreReducer, getDefaultMapStyles} from '@kepler.gl/reducers';
 import {keplerGlInit, ActionTypes} from '@kepler.gl/actions';
 import {
   appInjector,
@@ -23,7 +23,12 @@ import {
   GeocoderPanelFactory,
   NotificationPanelFactory
 } from '@kepler.gl/components';
-import {DEFAULT_MAP_STYLES, EXPORT_IMAGE_ID, GEOCODER_DATASET_NAME} from '@kepler.gl/constants';
+import {
+  DEFAULT_MAP_STYLES,
+  EXPORT_IMAGE_ID,
+  GEOCODER_DATASET_NAME,
+  KEPLER_UNFOLDED_BUCKET
+} from '@kepler.gl/constants';
 // mock state
 import {StateWithGeocoderDataset} from 'test/helpers/mock-state';
 
@@ -235,7 +240,7 @@ test('Components -> KeplerGl -> Mount -> Load default map style task', t => {
     {
       type: ActionTypes.LOAD_MAP_STYLES,
       payload: {
-        newStyles: DEFAULT_MAP_STYLES.reduce((accu, curr) => ({...accu, [curr.id]: curr}), {}),
+        newStyles: getDefaultMapStyles(KEPLER_UNFOLDED_BUCKET),
         onSuccess: undefined
       }
     }
@@ -269,6 +274,7 @@ test('Components -> KeplerGl -> Mount -> Load default map style task', t => {
     ...tmpState.mapStyle.mapStyles,
     'dark-matter': {
       ...DEFAULT_MAP_STYLES[1],
+      icon: `${KEPLER_UNFOLDED_BUCKET}/${DEFAULT_MAP_STYLES[1].icon}`,
       style: {layers: [], name: 'dark'}
     }
   };

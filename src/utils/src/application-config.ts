@@ -3,6 +3,7 @@
 
 import {MapLib, MapRef} from 'react-map-gl';
 
+import {KEPLER_UNFOLDED_BUCKET} from '@kepler.gl/constants';
 import type {BaseMapLibraryType} from '@kepler.gl/constants';
 
 import type {DatabaseAdapter} from './application-config-types';
@@ -47,6 +48,9 @@ export type KeplerApplicationConfig = {
   // especially if large Arrow files are split into relatively small batches (should be fixed in the future).
   useOnFilteredItemsChange?: boolean;
 
+  // A URL to the CDN where the kepler.gl assets are hosted.
+  cdnUrl?: string;
+
   // Raster Tile layer config
   // Raster Tile layer is under development and not ready for production use. Disabled by default.
   enableRasterTileLayer?: boolean;
@@ -88,6 +92,8 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
       mapLibUrl: 'https://www.mapbox.com/'
     }
   },
+
+  cdnUrl: KEPLER_UNFOLDED_BUCKET,
 
   plugins: [],
   // The default table class is KeplerTable.

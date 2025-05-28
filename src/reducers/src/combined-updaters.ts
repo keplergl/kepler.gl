@@ -183,6 +183,7 @@ export const addDataToMapUpdater = (
 
   return compose_<KeplerGlState>([
     pick_('visState')(
+      // this part can be async
       apply_<VisState, any>(visStateUpdateVisDataUpdater, {
         datasets,
         options,

@@ -234,6 +234,8 @@ export default {
     disable3DMap: 'Disable 3D Map',
     DrawOnMap: 'Draw on map',
     selectLocale: 'Select locale',
+    showAiAssistantPanel: 'Show AI Assistant',
+    hideAiAssistantPanel: 'Hide AI Assistant',
     hideLayerPanel: 'Hide layer panel',
     showLayerPanel: 'Show layer panel',
     moveToTop: 'Move to top of data layers',
@@ -463,7 +465,7 @@ ${'```json'}
 ${'```'}
 
 ### 2. Create polygon from a Geometry column in Csv table
-Geometries (Polygons, Points, LindStrings etc) can be embedded into CSV as a \`GeoJSON\` or \`WKT\` formatted string. 
+Geometries (Polygons, Points, LindStrings etc) can be embedded into CSV as a \`GeoJSON\` or \`WKT\` formatted string.
 
 #### 2.1 \`GeoJSON\` string
 Example data.csv with \`GeoJSON\` string
@@ -474,7 +476,7 @@ ${'```'}
 
 #### 2.2 \`WKT\` string
 Example data.csv with \`WKT\` string
-[The Well-Known Text (WKT)](https://dev.mysql.com/doc/refman/5.7/en/gis-data-formats.html#gis-wkt-format) representation of geometry values is designed for exchanging geometry data in ASCII form. 
+[The Well-Known Text (WKT)](https://dev.mysql.com/doc/refman/5.7/en/gis-data-formats.html#gis-wkt-format) representation of geometry values is designed for exchanging geometry data in ASCII form.
 
 Example data.csv with WKT
 ${'```txt'}

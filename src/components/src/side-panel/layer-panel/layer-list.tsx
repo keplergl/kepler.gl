@@ -46,7 +46,6 @@ interface SortableStyledItemProps {
 }
 
 const SortableStyledItem = styled.div<SortableStyledItemProps>`
-  z-index: ${props => props.theme.dropdownWrapperZ + 1};
   transition: ${props => props.$transition};
   transform: ${props => props.$transform};
   &.sorting {

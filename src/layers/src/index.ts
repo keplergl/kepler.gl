@@ -49,7 +49,7 @@ import {default as RasterTileLayer} from './raster-tile/raster-tile-layer';
 export {default as RasterTileIcon} from './raster-tile/raster-tile-icon';
 export {
   default as RasterTileLayer,
-  isTilesBeingLoaded as isRasterTilesBeingLoaded
+  getNumRasterTilesBeingLoaded
 } from './raster-tile/raster-tile-layer';
 export {
   CATEGORICAL_COLORMAP_ID,
@@ -57,6 +57,7 @@ export {
   RASTER_COLOR_RESET_PARAMS,
   PRESET_OPTIONS
 } from './raster-tile/config';
+export {RasterLayerResources} from './raster-tile/url';
 export {getCategoricalColormapDataUrl} from './raster-tile/image';
 export * from './raster-tile/types';
 export * from './raster-tile/raster-tile-utils';

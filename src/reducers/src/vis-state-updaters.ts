@@ -42,9 +42,9 @@ import {
   setFilter,
   processFileContent,
   fitBounds as fitMapBounds,
-  setLoadingIndicator,
   toggleLayerForMap,
-  applyFilterConfig
+  applyFilterConfig,
+  SetLoadingIndicatorPayload
 } from '@kepler.gl/actions';
 
 // Utils
@@ -102,6 +102,7 @@ import {
   compose_,
   filterOutById,
   merge_,
+  payload_,
   pick_,
   removeElementAtIndex,
   swap_
@@ -323,6 +324,8 @@ export const INITIAL_VIS_STATE: VisState = {
 
   fileLoading: false,
   fileLoadingProgress: {},
+  // for loading datasets
+  loadingIndicatorValue: 0,
 
   loaders: [],
   loadOptions: {},
@@ -333,6 +336,18 @@ export const INITIAL_VIS_STATE: VisState = {
   // kepler schemas
   schema: KeplerGLSchema
 };
+
+export const ACTION_TASK_FIT_BOUNDS = Task.fromCallback(
+  (_, cb) => cb(),
+
+  'ACTION_TASK_FIT_BOUNDS'
+);
+
+export const ACTION_TASK_ADD_NOTIFICATION = Task.fromCallback(
+  (_, cb) => cb(),
+
+  'ACTION_TASK_ADD_NOTIFICATION'
+);
 
 type UpdateStateWithLayerAndDataType = {
   layers: Layer[];
@@ -2356,7 +2371,7 @@ export const updateVisDataUpdater = (
       createDatasetTasks.push(task);
     } else {
       notificationTasks.push(
-        ACTION_TASK().map(() =>
+        ACTION_TASK_ADD_NOTIFICATION().map(() =>
           addNotification(
             errorNotification({
               message: `Failed to create a new dataset due to data verification errors`,
@@ -2375,11 +2390,7 @@ export const updateVisDataUpdater = (
     : null;
 
   if (datasetsAllSettledTask) {
-    // indicate that something is in progress
-    const setIsLoadingTask = ACTION_TASK().map(() => {
-      return setLoadingIndicator({change: 1});
-    });
-    updatedState = withTask(updatedState, setIsLoadingTask);
+    updatedState = setLoadingIndicatorUpdater(updatedState, payload_({change: 1, type: ''}));
   }
 
   return withTask(updatedState, [
@@ -2392,17 +2403,25 @@ export const createNewDatasetSuccessUpdater = (
   state: VisState,
   action: PayloadAction<CreateNewDatasetSuccessPayload>
 ): VisState => {
-  // console.log('createNewDatasetSuccessUpdater', action.payload);
   const {results, addToMapOptions} = action.payload;
-  const newDataEntries = results.reduce((accu, result) => {
+  const notificationTasks: Task[] = [];
+
+  const newDataEntries = results.reduce((accu, result, idx) => {
     if (result.status === 'fulfilled') {
       const dataset = result.value;
       return {...accu, [dataset.id]: dataset};
     } else {
-      // handle create dataset error
-      console.error(
-        'createNewDatasetSuccessUpdater: failed',
-        result.reason || (result as any).value
+      // show error notification on UI
+      notificationTasks.push(
+        ACTION_TASK().map(() =>
+          addNotification(
+            errorNotification({
+              message: `Dataset error: Failed to create a new dataset:
+              ${result.reason || (result as any).value}`,
+              id: `dataset-create-failed-${idx}`
+            })
+          )
+        )
       );
       return accu;
     }
@@ -2429,11 +2448,10 @@ export const createNewDatasetSuccessUpdater = (
     postMergerPayload
   });
 
-  // resolve active loading initiated by updateVisDataUpdater
-  const setIsLoadingTask = ACTION_TASK().map(() => {
-    return setLoadingIndicator({change: -1});
-  });
-  return withTask(updatedState, setIsLoadingTask);
+  return withTask(
+    setLoadingIndicatorUpdater(updatedState, payload_({change: -1})),
+    notificationTasks
+  );
 };
 
 /**
@@ -2546,13 +2564,14 @@ function postMergeUpdater(mergedState: VisState, postMergerPayload: PostMergerPa
   if (newLayers.length && (options || {}).centerMap) {
     const bounds = findMapBounds(newLayers);
     if (bounds) {
-      const fitBoundsTask = ACTION_TASK().map(() => {
+      const fitBoundsTask = ACTION_TASK_FIT_BOUNDS().map(() => {
         return fitMapBounds(bounds);
       });
       updatedState = withTask(updatedState, fitBoundsTask);
     }
   }
 
+  // need to center map here if we have new layers
   return updatedState;
 }
 
@@ -3162,12 +3181,21 @@ export const setSelectedFeatureUpdater = (
   {feature, selectionContext}: VisStateActions.SetSelectedFeatureUpdaterAction
 ): VisState => {
   // add bbox for polygon filter to speed up filtering
-  if (feature && feature.properties) feature.properties.bbox = bbox(feature);
+  let selectedFeature = feature;
+  if (feature?.properties) {
+    selectedFeature = {
+      ...feature,
+      properties: {
+        ...feature.properties,
+        bbox: bbox(feature)
+      }
+    };
+  }
   return {
     ...state,
     editor: {
       ...state.editor,
-      selectedFeature: feature,
+      selectedFeature,
       selectionContext
     }
   };
@@ -3650,6 +3678,30 @@ export function setTimeFilterTimelineModeUpdater<S extends VisState>(
 
   return adjustAnimationConfigWithFilter(newState, filterIdx);
 }
+
+/**
+ * Update state of the loading indicator.
+ * @memberof visStateUpdaters
+ * @param state visState
+ * @param action
+ * @param action.payload Payload with change of number of active loading actions.
+ * @returns nextState
+ * @public
+ */
+export const setLoadingIndicatorUpdater = (
+  state: VisState,
+  {payload: {change}}: {payload: SetLoadingIndicatorPayload}
+): VisState => {
+  let {loadingIndicatorValue} = state;
+  if (!loadingIndicatorValue) {
+    loadingIndicatorValue = 0;
+  }
+
+  return {
+    ...state,
+    loadingIndicatorValue: Math.max(loadingIndicatorValue + change, 0)
+  };
+};
 
 function adjustAnimationConfigWithFilter<S extends VisState>(state: S, filterIdx: number): S {
   const filter = state.filters[filterIdx];

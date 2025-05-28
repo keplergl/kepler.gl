@@ -19,10 +19,9 @@ import {SchemaPanel, SchemaSuggestion} from './schema-panel';
 import {PreviewDataPanel, QueryResult} from './preview-data-panel';
 
 import {
-  constructST_asWKBQuery,
+  castDuckDBTypesForKepler,
   getDuckDBColumnTypes,
   getDuckDBColumnTypesMap,
-  getGeometryColumns,
   setGeoArrowWKBExtension,
   splitSqlStatements,
   checkIsSelectQuery,
@@ -209,10 +208,9 @@ export const SqlPanel: React.FC<SqlPanelProps> = ({initialSql = ''}) => {
           // 2) query duckdb types and detect candidate columns for ST_asWKB transform.
           const duckDbColumns = await getDuckDBColumnTypes(connection, tempTableName);
           tableDuckDBTypes = getDuckDBColumnTypesMap(duckDbColumns);
-          const columnsToConvertToWKB = getGeometryColumns(duckDbColumns);
 
-          // 3) query GEOMETRY columns as WKB.
-          const adjustedQuery = constructST_asWKBQuery(tempTableName, columnsToConvertToWKB);
+          // 3) cast GEOMETRY columns to WKB and BigInt to double.
+          const adjustedQuery = castDuckDBTypesForKepler(tempTableName, duckDbColumns);
           arrowResult = await connection.query(adjustedQuery);
 
           // 4) set geoarrow extension for the arrow table as DuckDB doesn't support the geoarrow extension.

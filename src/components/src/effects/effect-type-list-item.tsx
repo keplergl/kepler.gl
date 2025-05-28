@@ -5,8 +5,8 @@ import React from 'react';
 import styled, {withTheme} from 'styled-components';
 import classNames from 'classnames';
 
-import {KEPLER_UNFOLDED_BUCKET} from '@kepler.gl/constants';
 import {FormattedMessage} from '@kepler.gl/localization';
+import {getApplicationConfig} from '@kepler.gl/utils';
 
 import {Add} from '../common/icons';
 
@@ -30,9 +30,6 @@ const StyledListItem = styled.div`
 
   .effect-type-selector__item__icon {
     display: flex;
-    background-image: url(${`${KEPLER_UNFOLDED_BUCKET}/images/kepler.gl-layer-icon-bg.png`});
-    background-size: ${props => props.theme.effectTypeIconSizeL}px
-      ${props => props.theme.effectTypeIconSizeL}px;
     height: ${props => props.theme.effectTypeIconSizeL}px;
     width: ${props => props.theme.effectTypeIconSizeL}px;
     border-radius: 2px;
@@ -80,7 +77,7 @@ const getImageUrl = type => {
     /[A-Z]+(?![a-z])|[A-Z]/g,
     ($, ofs) => (ofs ? '-' : '') + $.toLowerCase()
   );
-  return `${KEPLER_UNFOLDED_BUCKET}/images/effects/${kebab}.png`;
+  return `${getApplicationConfig().cdnUrl}/images/effects/${kebab}.png`;
 };
 
 export function EffectTypeListItemFactory() {

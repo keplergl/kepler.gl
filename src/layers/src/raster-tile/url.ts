@@ -222,3 +222,9 @@ export function getTerrainUrl(
 export function getMeshMaxError(z: number, multiplier: number): number {
   return (77067.34 / (1 << z)) * multiplier;
 }
+
+export const RasterLayerResources = {
+  rasterColorMap: (colormapId: string) => {
+    return `${getApplicationConfig().cdnUrl}/raster/colormaps/${colormapId}.png`;
+  }
+};

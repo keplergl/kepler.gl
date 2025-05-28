@@ -215,6 +215,9 @@ export const defaultElevation = 500;
 export const defaultLineWidth = 1;
 export const defaultRadius = 1;
 
+// don't use strokes by default for datasets with large number of polygons
+const DEFAULT_POLYGON_STROKE_LIMIT = 100000;
+
 export const COLUMN_MODE_TABLE = 'table';
 const SUPPORTED_COLUMN_MODES = [
   {
@@ -625,7 +628,7 @@ export default class GeoJsonLayer extends Layer {
       // set both fill and stroke to true
       return this.updateLayerVisConfig({
         filled: true,
-        stroked: true,
+        stroked: dataContainer.numRows() < DEFAULT_POLYGON_STROKE_LIMIT,
         strokeColor: colorMaker.next().value
       });
     } else if (featureTypes && featureTypes.point) {

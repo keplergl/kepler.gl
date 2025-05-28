@@ -4,8 +4,7 @@
 import React from 'react';
 import styled from 'styled-components';
 
-import {RasterLayerResources as cdnUrls} from '@kepler.gl/constants';
-import {getCategoricalColormapDataUrl} from '@kepler.gl/layers';
+import {getCategoricalColormapDataUrl, RasterLayerResources} from '@kepler.gl/layers';
 import type {CategoricalColormapOptions} from '@kepler.gl/layers';
 
 const StyledColorMapListItem = styled.div`
@@ -40,7 +39,7 @@ const ColorMapImg: React.FC<{id: string; categoricalOptions: CategoricalColormap
     }
     url = dataUrl;
   } else {
-    url = cdnUrls.rasterColorMap(id);
+    url = RasterLayerResources.rasterColorMap(id);
   }
   return <img src={url} style={{width: '100%', height: '100%'}} />;
 };

@@ -11,7 +11,8 @@ import {
   RangeSliderFactory,
   Button,
   LoadingSpinner,
-  appInjector
+  appInjector,
+  Checkbox
 } from '@kepler.gl/components';
 import {State} from '../index';
 import ApiKey from '../icons/api-key';
@@ -56,6 +57,15 @@ const StyledAiAssistantConfig = styled.div`
       caret-color: unset;
     }
   }
+`;
+
+// Ollama model input wrapper: checkbox + 'Input Model Name:' + input
+// all children element have width based on the content
+const OllamaModelInputWrapper = styled.div`
+  display: flex;
+  flex-direction: row;
+  gap: 4px;
+  align-items: center;
 `;
 
 const StyledWrapper = styled.div`
@@ -142,12 +152,14 @@ export function AiAssistantConfig() {
   const [topP, setTopP] = useLocalStorage('ai-assistant-top-p', aiAssistantConfig.topP || 1.0);
   const [baseUrl, setBaseUrl] = useLocalStorage(
     'ai-assistant-base-url',
-    aiAssistantConfig.baseUrl || 'http://localhost:11434'
+    aiAssistantConfig.baseUrl || 'http://localhost:11434/api'
   );
   const [mapboxToken, setMapboxToken] = useLocalStorage(
     'ai-assistant-mapbox-token',
     aiAssistantConfig.mapboxToken || ''
   );
+  const [ollamaModelInputChecked, setOllamaModelInputChecked] = useState(false);
+  const [ollamaModelInputValue, setOllamaModelInputValue] = useState('');
   const [connectionError, setConnectionError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [isRunning, setIsRunning] = useState(false);
@@ -190,6 +202,19 @@ export function AiAssistantConfig() {
 
   const onMapboxTokenChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setMapboxToken(e.target.value);
+  };
+
+  const onOllamaModelInputChecked = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setOllamaModelInputChecked(e.target.checked);
+    if (!e.target.checked) {
+      // use model from selector
+      setModel('');
+    }
+  };
+
+  const onOllamaModelInputValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setOllamaModelInputValue(e.target.value);
+    setModel(e.target.value);
   };
 
   const onStartChat = async () => {
@@ -261,21 +286,42 @@ export function AiAssistantConfig() {
           <FormattedMessage id="aiAssistantManager.llmModel.title" />
         </SectionTitle>
       </PanelLabelWrapper>
-      <StyledWrapper>
-        <StyledItemSelector
-          selectedItems={model}
-          options={PROVIDER_MODELS[provider]}
-          multiSelect={false}
-          disabled={false}
-          placeholder="Select LLM Model"
-          onChange={onLLMModelSelect}
-          filterOption="name"
-          getOptionValue={op => op}
-          displayOption={op => op}
-          searchable={false}
-          showArrow={true}
-        />
-      </StyledWrapper>
+      {((provider === 'ollama' && !ollamaModelInputChecked) || provider !== 'ollama') && (
+        <StyledWrapper>
+          <StyledItemSelector
+            selectedItems={model}
+            options={PROVIDER_MODELS[provider]}
+            multiSelect={false}
+            disabled={provider === 'ollama' ? ollamaModelInputChecked : false}
+            placeholder="Select LLM Model"
+            onChange={onLLMModelSelect}
+            filterOption="name"
+            getOptionValue={op => op}
+            displayOption={op => op}
+            searchable={false}
+            showArrow={true}
+          />
+        </StyledWrapper>
+      )}
+      {provider === 'ollama' && (
+        <OllamaModelInputWrapper>
+          <div style={{width: '250px'}}>
+            <Checkbox
+              id="ollama-model-input"
+              label="Input Model Name"
+              onChange={onOllamaModelInputChecked}
+              checked={ollamaModelInputChecked}
+            />
+          </div>
+          <Input
+            type="text"
+            onChange={onOllamaModelInputValueChange}
+            placeholder="Enter Model Name"
+            value={ollamaModelInputValue}
+            disabled={!ollamaModelInputChecked}
+          />
+        </OllamaModelInputWrapper>
+      )}
       {provider !== 'ollama' ? (
         <>
           <PanelLabelWrapper>
@@ -352,7 +398,7 @@ export function AiAssistantConfig() {
       </StyleSliderWrapper>
       <>
         <PanelLabelWrapper>
-          <SectionTitle>Mapbox Token (optional: route/isochrone)</SectionTitle>
+          <SectionTitle>Mapbox Token (optional for route/isochrone)</SectionTitle>
         </PanelLabelWrapper>
         <div className="api-key-input">
           <div className="api-key-input__icon">

@@ -23,7 +23,10 @@ import {
   dissolve,
   length,
   area,
-  perimeter
+  perimeter,
+  BufferTool,
+  CentroidTool,
+  DissolveTool
 } from '@openassistant/geoda';
 import {
   getUsStateGeojson,
@@ -35,7 +38,8 @@ import {
   isochrone,
   getCachedData,
   IsochroneTool,
-  RoutingTool
+  RoutingTool,
+  roads
 } from '@openassistant/osm';
 import {Datasets} from '@kepler.gl/table';
 import {Layer} from '@kepler.gl/layers';
@@ -155,6 +159,62 @@ export function getGeoTools(
     }
   };
 
+  const bufferTool: BufferTool = {
+    ...buffer,
+    context: {
+      ...buffer.context,
+      getGeometries
+    }
+  };
+
+  const centroidTool: CentroidTool = {
+    ...centroid,
+    context: {
+      ...centroid.context,
+      getGeometries
+    }
+  };
+
+  const dissolveTool: DissolveTool = {
+    ...dissolve,
+    context: {
+      ...dissolve.context,
+      getGeometries
+    }
+  };
+
+  const lengthTool = {
+    ...length,
+    context: {
+      ...length.context,
+      getGeometries
+    }
+  };
+
+  const areaTool = {
+    ...area,
+    context: {
+      ...area.context,
+      getGeometries
+    }
+  };
+
+  const perimeterTool = {
+    ...perimeter,
+    context: {
+      ...perimeter.context,
+      getGeometries
+    }
+  };
+
+  const roadsTool = {
+    ...roads,
+    context: {
+      ...roads.context,
+      getGeometries
+    }
+  };
+
   return {
     classifyTool,
     weightsTool,
@@ -163,19 +223,20 @@ export function getGeoTools(
     lisaTool,
     spatialJoinTool,
     spatialFilterTool,
-    buffer,
-    centroid,
-    dissolve,
-    length,
-    area,
-    perimeter,
+    bufferTool,
+    centroidTool,
+    dissolveTool,
+    lengthTool,
+    areaTool,
+    perimeterTool,
     getUsStateGeojson,
     getUsCountyGeojson,
     getUsZipcodeGeojson,
     queryUSZipcodes,
     geocoding,
     routing: routingTool,
-    isochrone: isochroneTool
+    isochrone: isochroneTool,
+    roads: roadsTool
   };
 }
 

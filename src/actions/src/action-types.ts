@@ -15,8 +15,8 @@ export const ACTION_PREFIX = '@@kepler.gl/';
  * import {createStore, combineReducers, applyMiddleware} from 'redux';
  * import {taskMiddleware} from 'react-palm/tasks';
  *
- * import keplerGlReducer from 'kepler.gl/reducers';
- * import {ActionTypes} from 'kepler.gl/actions';
+ * import keplerGlReducer from '@kepler.gl/reducers';
+ * import {ActionTypes} from '@kepler.gl/actions';
  *
  * const appReducer = handleActions({
  *   // listen on kepler.gl map update action to store a copy of viewport in app state

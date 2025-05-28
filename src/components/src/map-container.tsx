@@ -31,8 +31,7 @@ import {
   LayerBaseConfig,
   VisualChannelDomain,
   EditorLayerUtils,
-  AggregatedBin,
-  isRasterTilesBeingLoaded
+  AggregatedBin
 } from '@kepler.gl/layers';
 import {
   DatasetAttribution,
@@ -83,6 +82,7 @@ import {LOCALE_CODES} from '@kepler.gl/localization';
 import {MapView} from '@deck.gl/core';
 import {
   MapStyle,
+  areAnyDeckLayersLoading,
   computeDeckLayers,
   getLayerHoverProp,
   LayerHoverProp,
@@ -99,6 +99,9 @@ import LoadingIndicator from './loading-indicator';
 // being panned/zoomed (leading to laggy basemap/deck syncing).
 const DEBOUNCE_VIEWPORT_PROPAGATE = 10;
 const DEBOUNCE_MOUSE_MOVE_PROPAGATE = 10;
+
+// How long should we wait between layer loading state changes before triggering a UI update
+const DEBOUNCE_LOADING_STATE_PROPAGATE = 100;
 
 const MAP_STYLE: {[key: string]: React.CSSProperties} = {
   container: {
@@ -365,6 +368,8 @@ export default function MapContainerFactory(
 ): React.ComponentType<MapContainerProps> {
   class MapContainer extends Component<MapContainerProps> {
     displayName = 'MapContainer';
+
+    private anyActiveLayerLoading = false;
 
     static contextType = MapViewStateContext;
 
@@ -947,6 +952,12 @@ export default function MapContainerFactory(
               if (typeof deckRenderCallbacks?.onDeckAfterRender === 'function') {
                 deckRenderCallbacks.onDeckAfterRender(allDeckGlProps);
               }
+
+              const anyActiveLayerLoading = areAnyDeckLayersLoading(allDeckGlProps.layers);
+              if (anyActiveLayerLoading !== this.anyActiveLayerLoading) {
+                this._onLayerLoadingStateChange();
+                this.anyActiveLayerLoading = anyActiveLayerLoading;
+              }
             }}
           >
             {children}
@@ -1001,6 +1012,11 @@ export default function MapContainerFactory(
     _onMouseMoveDebounced = debounce((event, viewport) => {
       this.props.visStateActions.onMouseMove(normalizeEvent(event, viewport));
     }, DEBOUNCE_MOUSE_MOVE_PROPAGATE);
+
+    _onLayerLoadingStateChange = debounce(() => {
+      // trigger loading indicator update without any change to update UI
+      this.props.visStateActions.setLoadingIndicator({change: 0});
+    }, DEBOUNCE_LOADING_STATE_PROPAGATE);
 
     _toggleMapControl = panelId => {
       const {index, uiStateActions} = this.props;
@@ -1158,12 +1174,10 @@ export default function MapContainerFactory(
           {this._renderMapPopover()}
           {primary !== isSplit ? (
             <LoadingIndicator
-              isVisible={isLoadingIndicatorVisible || isRasterTilesBeingLoaded()}
+              isVisible={Boolean(isLoadingIndicatorVisible || this.anyActiveLayerLoading)}
               activeSidePanel={Boolean(activeSidePanel)}
               sidePanelWidth={sidePanelWidth}
-            >
-              Loading...
-            </LoadingIndicator>
+            />
           ) : null}
           {this.props.primary ? (
             <Attribution

@@ -7,14 +7,14 @@ import GL from '@luma.gl/constants';
 
 import {SvgIconLayer} from '@kepler.gl/deckgl-layers';
 import IconLayerIcon from './icon-layer-icon';
-import {ICON_FIELDS, KEPLER_UNFOLDED_BUCKET} from '@kepler.gl/constants';
+import {ICON_FIELDS} from '@kepler.gl/constants';
 import IconInfoModalFactory from './icon-info-modal';
 import Layer, {LayerBaseConfig, LayerBaseConfigPartial} from '../base-layer';
 import {assignPointPairToLayerColumn, FindDefaultLayerPropsReturnValue} from '../layer-utils';
 import {isTest} from '@kepler.gl/utils';
 import {getTextOffsetByRadius, formatTextLabelData} from '../layer-text-label';
 import {default as KeplerTable} from '@kepler.gl/table';
-import {DataContainerInterface} from '@kepler.gl/utils';
+import {getApplicationConfig, DataContainerInterface} from '@kepler.gl/utils';
 import {
   ColorRange,
   VisConfigBoolean,
@@ -59,8 +59,6 @@ export type IconLayerConfig = Merge<
 export type IconLayerData = {index: number; icon: string};
 
 const brushingExtension = new BrushingExtension();
-
-export const SVG_ICON_URL = `${KEPLER_UNFOLDED_BUCKET}/icons/svg-icons.json`;
 
 export const iconPosAccessor =
   ({lat, lng, altitude}: IconLayerColumnsConfig) =>
@@ -147,7 +145,7 @@ export default class IconLayer extends Layer {
   }
 
   get svgIconUrl() {
-    return SVG_ICON_URL;
+    return `${getApplicationConfig().cdnUrl}/icons/svg-icons.json`;
   }
 
   get type(): 'icon' {

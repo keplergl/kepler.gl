@@ -16,7 +16,6 @@ function AddFilterButtonFactory() {
       <AddByDatasetButton
         datasets={datasets}
         className="add-filter-button"
-        width="105px"
         onAdd={onAdd}
         buttonIntlId="filterManager.addFilter"
       />

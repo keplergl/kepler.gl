@@ -3,7 +3,7 @@
 
 import Console from 'global/console';
 
-import {GEOCODER_LAYER_ID} from '@kepler.gl/constants';
+import {GEOCODER_LAYER_ID, LIGHT_AND_SHADOW_EFFECT} from '@kepler.gl/constants';
 import {Layer as DeckLayer, LayerProps as DeckLayerProps} from '@deck.gl/core/typed';
 import {
   Field,
@@ -236,7 +236,8 @@ export function renderDeckGlLayer(props: any, layerCallbacks: {[key: string]: an
     mapState,
     interactionConfig,
     animationConfig,
-    mapLayers
+    mapLayers,
+    experimentalContext
   } = props;
   const dataset = datasets[layer.config.dataId];
   const {gpuFilter} = dataset || {};
@@ -253,7 +254,8 @@ export function renderDeckGlLayer(props: any, layerCallbacks: {[key: string]: an
     animationConfig,
     objectHovered,
     visible,
-    dataset
+    dataset,
+    experimentalContext
   });
 }
 
@@ -367,6 +369,7 @@ export function computeDeckLayers(
 ): Layer[] {
   const {
     datasets,
+    effects,
     layers,
     layerOrder,
     layerData,
@@ -381,6 +384,10 @@ export function computeDeckLayers(
     options || {};
 
   let dataLayers: any[] = [];
+
+  const hasShadowEffect = effects.some(effect => {
+    return effect.type === LIGHT_AND_SHADOW_EFFECT.type;
+  });
 
   if (layerData && layerData.length) {
     const mapLayers = getMapLayersFromSplitMaps(splitMaps, mapIndex || 0);
@@ -409,7 +416,10 @@ export function computeDeckLayers(
             mapState,
             interactionConfig,
             animationConfig,
-            mapLayers
+            mapLayers,
+            experimentalContext: {
+              hasShadowEffect
+            }
           },
           bindedLayerCallbacks
         );
@@ -483,4 +493,12 @@ export function getLayerHoverPropValue(
   if (!data) return undefined;
   if (data instanceof DataRow) return data.valueAt(fieldIndex);
   return data[fieldIndex];
+}
+
+/** Checks if any Deck layers are in the process of loading. */
+export function areAnyDeckLayersLoading(layers: DeckLayer[]): boolean {
+  return layers.some(
+    // layer.isLoaded changes frequently in Deck (even on hover) so we check additional properties
+    layer => layer.internalState && !layer.isLoaded
+  );
 }
