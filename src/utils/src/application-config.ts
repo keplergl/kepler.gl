@@ -50,6 +50,11 @@ export type KeplerApplicationConfig = {
   // Raster Tile layer config
   // Raster Tile layer is under development and not ready for production use. Disabled by default.
   enableRasterTileLayer?: boolean;
+
+  // WMS layer config -- Experimental
+  // WMS layer is under development and not ready for production use. Disabled by default.
+  enableWMSLayer?: boolean;
+
   /** Titiler v0.11 vs v0.21 */
   rasterServerUseLatestTitiler?: boolean;
   /** An array of URLs to shards of the raster tile server to be used by the raster tile layer. */
@@ -97,6 +102,11 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
   // Raster Tile layer config
   enableRasterTileLayer: false,
   rasterServerUseLatestTitiler: true,
+
+  // WMS layer config
+  // TODO: enabled for development purposes only, remove in production
+  enableWMSLayer: true,
+
   // TODO: provide a default free server or leave blank
   rasterServerUrls: ['http://localhost:8000'],
   rasterServerSupportsElevation: true

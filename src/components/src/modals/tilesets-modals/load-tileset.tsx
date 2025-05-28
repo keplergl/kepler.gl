@@ -128,9 +128,21 @@ function LoadTilesetTabFactory() {
 
     // temp patch to hide raster tile layer while in development
     const enableRasterTileLayer = getApplicationConfig().enableRasterTileLayer;
+    const enableWMSLayer = getApplicationConfig().enableWMSLayer;
+
+    // Filter tile types based on application config
     const tileTypes = useMemo(() => {
-      return enableRasterTileLayer ? TILE_TYPES : [TILE_TYPES[0]];
-    }, [enableRasterTileLayer]);
+      const types = TILE_TYPES.filter(tileType => {
+        if (tileType.id === 'rasterTile') {
+          return enableRasterTileLayer;
+        }
+        if (tileType.id === 'wms') {
+          return enableWMSLayer;
+        }
+        return true; // Include all other types by default
+      });
+      return types;
+    }, [enableRasterTileLayer, enableWMSLayer]);
 
     const CurrentForm = tileTypes[typeIndex].Component;
 
