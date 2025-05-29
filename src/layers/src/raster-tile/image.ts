@@ -420,7 +420,7 @@ export async function loadTerrain(props: {
         'quantized-mesh': {
           ...loaderOptions['quantized-mesh'],
           bounds: boundsForGeometry,
-          skirtHeight: meshMaxError * 2
+          skirtHeight: meshMaxError * 3
         }
       })) as Promise<TerrainData>;
     } catch (error) {
