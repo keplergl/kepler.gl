@@ -343,7 +343,7 @@ export async function loadNpyArray(
           error.response?.status as number
         )
       ) {
-        await sleep(getApplicationConfig().rasterServerRetryDelay); // Exponential backoff
+        await sleep(getApplicationConfig().rasterServerRetryDelay);
         continue;
       }
       return null;
