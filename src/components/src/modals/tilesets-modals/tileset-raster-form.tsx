@@ -67,7 +67,6 @@ const parseMetadataAllowCollections = (
 
 const RasterTileForm: React.FC<RasterTileFormProps> = ({setResponse}) => {
   const [tileName, setTileName] = useState<string>('');
-  const [currentUrl, setCurrentUrl] = useState<string>('');
   const [metadataUrl, setMetadataUrl] = useState<string>('');
   const [rasterTileServerUrls, setRasterTileServerUrls] = useState<string>(
     (getApplicationConfig().rasterServerUrls || []).join(',')
@@ -84,9 +83,10 @@ const RasterTileForm: React.FC<RasterTileFormProps> = ({setResponse}) => {
   const onMetadataUrlChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     event.preventDefault();
     const {value} = event.target;
-    setMetadataUrl(value);
-    setTileName(value.split('/').pop() || '');
-    setCurrentUrl(value);
+    // Remove trailing slash if present
+    const cleanUrl = value.endsWith('/') ? value.slice(0, -1) : value;
+    setMetadataUrl(cleanUrl);
+    setTileName(cleanUrl.split('/').pop() || '');
   }, []);
 
   const onRasterTileServerUrlsChange = useCallback(
@@ -102,8 +102,8 @@ const RasterTileForm: React.FC<RasterTileFormProps> = ({setResponse}) => {
     loading,
     error: metaError
   } = useFetchJson({
-    url: currentUrl,
-    rasterTileType: isPMTilesUrl(currentUrl) ? RasterTileType.PMTILES : RasterTileType.STAC,
+    url: metadataUrl,
+    rasterTileType: isPMTilesUrl(metadataUrl) ? RasterTileType.PMTILES : RasterTileType.STAC,
     process: parseMetadataAllowCollections
   });
 
@@ -168,16 +168,7 @@ const RasterTileForm: React.FC<RasterTileFormProps> = ({setResponse}) => {
         error: metaError
       });
     }
-  }, [
-    metadata,
-    loading,
-    metaError,
-    currentUrl,
-    tileName,
-    metadataUrl,
-    rasterTileServerUrls,
-    setResponse
-  ]);
+  }, [metadata, loading, metaError, tileName, metadataUrl, rasterTileServerUrls, setResponse]);
 
   return (
     <TilesetInputContainer>
@@ -194,7 +185,7 @@ const RasterTileForm: React.FC<RasterTileFormProps> = ({setResponse}) => {
         <label htmlFor="tile-metadata">Tileset metadata URL</label>
         <InputLight
           id="tile-metadata"
-          placeholder="Tileset metadata"
+          placeholder="Tileset metadata URL"
           value={metadataUrl ?? undefined}
           onChange={onMetadataUrlChange}
         />

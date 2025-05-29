@@ -5,11 +5,13 @@
  * Utility functions to create objects to pass to deck.gl-raster
  */
 
-import {load} from '@loaders.gl/core';
+import {load, FetchError} from '@loaders.gl/core';
 import {QuantizedMeshLoader} from '@loaders.gl/terrain';
 import memoize from 'lodash/memoize';
 
+import {sleep} from '@kepler.gl/common-utils';
 import {getLoaderOptions} from '@kepler.gl/constants';
+import {getApplicationConfig} from '@kepler.gl/utils';
 
 import {CATEGORICAL_COLORMAP_ID} from './config';
 import {
@@ -399,7 +401,7 @@ export async function loadTerrain(props: {
   signal: AbortSignal;
   rasterTileServerUrls: string[];
   boundsForGeometry?: [number, number, number, number];
-}): Promise<TerrainData> {
+}): Promise<TerrainData | null> {
   const {
     index: {x, y, z},
     boundsForGeometry,
@@ -411,12 +413,29 @@ export async function loadTerrain(props: {
   const terrainUrl = getTerrainUrl(rasterTileServerUrls, x, y, z, meshMaxError);
   const loaderOptions = getLoaderOptions();
 
-  return load(terrainUrl, QuantizedMeshLoader, {
-    fetch: {signal},
-    'quantized-mesh': {
-      ...loaderOptions['quantized-mesh'],
-      bounds: boundsForGeometry,
-      skirtHeight: meshMaxError * 2
+  for (let attempt = 0; attempt <= getApplicationConfig().rasterServerMaxRetries; attempt++) {
+    try {
+      return (await load(terrainUrl, QuantizedMeshLoader, {
+        fetch: {signal},
+        'quantized-mesh': {
+          ...loaderOptions['quantized-mesh'],
+          bounds: boundsForGeometry,
+          skirtHeight: meshMaxError * 2
+        }
+      })) as Promise<TerrainData>;
+    } catch (error) {
+      // Retry if Service Temporarily Unavailable 503 error etc.
+      if (
+        error instanceof FetchError &&
+        getApplicationConfig().rasterServerServerErrorsToRetry?.includes(
+          error.response?.status as number
+        )
+      ) {
+        await sleep(getApplicationConfig().rasterServerRetryDelay);
+        continue;
+      }
+      console.error(error);
     }
-  }) as Promise<TerrainData>;
+  }
+  return null;
 }
