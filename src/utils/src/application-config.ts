@@ -110,6 +110,8 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
   enableRasterTileLayer: false,
   rasterServerUseLatestTitiler: true,
   // TODO: provide a default free server or leave blank
+  rasterServerUrls: ['http://localhost:8000'],
+  rasterServerSupportsElevation: true,
   rasterServerMaxRetries: 1,
   rasterServerRetryDelay: 10000,
   rasterServerServerErrorsToRetry: [503]
