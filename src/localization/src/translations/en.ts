@@ -96,6 +96,7 @@ export default {
     aggregateBy: 'Aggregate {field} by',
     '3DModel': '3D Model',
     '3DModelOptions': '3D Model Options',
+    wms: 'WMS',
     type: {
       point: 'point',
       arc: 'arc',
@@ -113,7 +114,8 @@ export default {
       s2: 'S2',
       '3d': '3D',
       vectortile: 'vector tile',
-      rastertile: 'raster tile'
+      rastertile: 'raster tile',
+      wms: 'WMS'
     },
     layerUpdateError:
       'An error occurred during layer update: {errorMessage}. Make sure the format of the input data is valid.',
@@ -211,7 +213,8 @@ export default {
   datasetInfo: {
     rowCount: '{rowCount} rows',
     vectorTile: 'Vector tile',
-    rasterTile: 'Raster tile'
+    rasterTile: 'Raster tile',
+    wmsTile: 'WMS tile'
   },
   tooltip: {
     hideLayer: 'Hide layer',
