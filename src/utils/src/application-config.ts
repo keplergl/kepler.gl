@@ -56,11 +56,11 @@ export type KeplerApplicationConfig = {
   enableRasterTileLayer?: boolean;
   /** Whether to use Titiler v0.21 API endpoints instead of v0.11 */
   rasterServerUseLatestTitiler?: boolean;
-  /** An array of URLs to shards of the raster tile server to be used by the raster tile layer. Multiple URLs can be provided as a comma-separated string. */
+  /** An array of URLs to shards of the raster tile server to be used by the raster tile layer. */
   rasterServerUrls?: string[];
   /** If true then try to fetch quantized elevation meshes from raster servers */
   rasterServerSupportsElevation?: boolean;
-  /** How many times to retry a request if case of Service Temporarily Unavailable error */
+  /** How many times to retry a request if case of rasterServerServerErrorsToRetry errors */
   rasterServerMaxRetries?: number;
   /** How long between retries */
   rasterServerRetryDelay?: number;

@@ -256,8 +256,7 @@ async function getSingleAssetSTACRequest(
   }
 
   return await getAssetRequest({
-    url: urlInfo.url,
-    rasterServerUrl: urlInfo.rasterServerUrl,
+    ...urlInfo,
     params: urlParams,
     options: {signal},
     useMask,
