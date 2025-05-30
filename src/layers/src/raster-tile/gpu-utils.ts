@@ -348,7 +348,6 @@ export async function loadNpyArray(
         await sleep(getApplicationConfig().rasterServerRetryDelay);
         continue;
       }
-      return null;
     }
   }
   return null;

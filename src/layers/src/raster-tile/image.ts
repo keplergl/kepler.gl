@@ -436,7 +436,6 @@ export async function loadTerrain(props: {
         await sleep(getApplicationConfig().rasterServerRetryDelay);
         continue;
       }
-      console.error(error);
     }
   }
   return null;
