@@ -155,7 +155,7 @@ export function getTitilerUrl(options: {
   x: number;
   y: number;
   z: number;
-}): string {
+}): {url: string; rasterServerUrl: string} {
   // mask Set to false for mosaics because entire image is assumed to be valid
   const {stac, useSTACSearching, x, y, z} = options;
 
@@ -166,7 +166,10 @@ export function getTitilerUrl(options: {
   const pathStem = getTitilerPathMapping(stac, useSTACSearching);
   const scale = TILE_SIZE === 512 ? '@2x' : '';
   const domain = chooseDomain(stac.rasterTileServerUrls, x, y);
-  return `${domain}/${pathStem}/tiles/WebMercatorQuad/${z}/${x}/${y}${scale}.npy`;
+  return {
+    url: `${domain}/${pathStem}/tiles/WebMercatorQuad/${z}/${x}/${y}${scale}.npy`,
+    rasterServerUrl: domain
+  };
 }
 
 export function getTitilerPathMapping(
@@ -199,7 +202,7 @@ export function getTerrainUrl(
   y: number,
   z: number,
   meshMaxError: number
-): string {
+): {url: string; rasterServerUrl: string} {
   const scale = TILE_SIZE === 512 ? '@2x' : '';
 
   const params = new URLSearchParams({
@@ -208,7 +211,7 @@ export function getTerrainUrl(
   });
   const domain = chooseDomain(rasterTileServerUrls, x, y);
   const baseUrl = `${domain}/mesh/tiles/${z}/${x}/${y}${scale}.terrain?`;
-  return baseUrl + params.toString();
+  return {url: baseUrl + params.toString(), rasterServerUrl: domain};
 }
 
 /**

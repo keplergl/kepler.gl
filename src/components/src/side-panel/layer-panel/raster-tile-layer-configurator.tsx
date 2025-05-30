@@ -41,7 +41,9 @@ import Switch from '../../common/switch';
 import InfoHelperFactory from '../../common/info-helper';
 import ItemSelector from '../../common/item-selector/item-selector';
 import VisConfigSliderFactory from '../../side-panel/layer-panel/vis-config-slider';
-import LayerConfigGroupFactory from '../../side-panel/layer-panel/layer-config-group';
+import LayerConfigGroupFactory, {
+  ConfigGroupCollapsibleContent
+} from '../../side-panel/layer-panel/layer-config-group';
 import VisConfigSwitchFactory from '../../side-panel/layer-panel/vis-config-switch';
 
 type EOBand = StacTypes.Band;
@@ -332,6 +334,26 @@ function RasterTileLayerConfiguratorFactory(
       }
     }, [visConfiguratorProps, dynamicColor, isDynamicColorsOnly]);
 
+    const elevationUI = (
+      <>
+        {getApplicationConfig().rasterServerSupportsElevation &&
+          stac.rasterTileServerUrls?.length && (
+            <LayerConfigGroup
+              {...(layer.visConfigSettings.enableTerrain || {label: 'layer.color'})}
+              {...visConfiguratorProps}
+              collapsible
+            >
+              <ConfigGroupCollapsibleContent>
+                <VisConfigSwitch
+                  {...visConfiguratorProps}
+                  {...layer.visConfigSettings.enableTerrainTopView}
+                />
+              </ConfigGroupCollapsibleContent>
+            </LayerConfigGroup>
+          )}
+      </>
+    );
+
     // For PMTiles in raster format, only show opacity and terrain options for now
     if (stac.pmtilesType === PMTilesType.RASTER) {
       return (
@@ -339,15 +361,7 @@ function RasterTileLayerConfiguratorFactory(
           <LayerConfigGroup {...visConfiguratorProps} label="Visual Settings" collapsible={false}>
             <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
           </LayerConfigGroup>
-          {getApplicationConfig().rasterServerSupportsElevation &&
-            stac.rasterTileServerUrls?.length && (
-              <LayerConfigGroup {...visConfiguratorProps} label="Terrain">
-                <VisConfigSwitch
-                  {...visConfiguratorProps}
-                  {...layer.visConfigSettings.enableTerrain}
-                />
-              </LayerConfigGroup>
-            )}
+          {elevationUI}
         </StyledLayerConfigurator>
       );
     }
@@ -546,15 +560,7 @@ function RasterTileLayerConfiguratorFactory(
           </LayerConfigGroup>
         )}
 
-        {getApplicationConfig().rasterServerSupportsElevation &&
-          stac.rasterTileServerUrls?.length && (
-            <LayerConfigGroup {...visConfiguratorProps} label="Terrain">
-              <VisConfigSwitch
-                {...visConfiguratorProps}
-                {...layer.visConfigSettings.enableTerrain}
-              />
-            </LayerConfigGroup>
-          )}
+        {elevationUI}
       </StyledLayerConfigurator>
     );
   };

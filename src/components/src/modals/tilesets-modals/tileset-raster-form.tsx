@@ -67,27 +67,36 @@ const parseMetadataAllowCollections = (
 
 const RasterTileForm: React.FC<RasterTileFormProps> = ({setResponse}) => {
   const [tileName, setTileName] = useState<string>('');
-  const [currentUrl, setCurrentUrl] = useState<string>('');
+  const [tileNameWasModified, setTileNameWasModified] = useState<boolean>(false);
   const [metadataUrl, setMetadataUrl] = useState<string>('');
   const [rasterTileServerUrls, setRasterTileServerUrls] = useState<string>(
     (getApplicationConfig().rasterServerUrls || []).join(',')
   );
 
+  // Remove trailing slash to prevent issues with raster tile servers
+  const clearedMetadataUrl = metadataUrl.endsWith('/') ? metadataUrl.slice(0, -1) : metadataUrl;
+
   const onTileNameChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
       event.preventDefault();
+      setTileNameWasModified(true);
       setTileName(event.target.value);
     },
     [setTileName]
   );
 
-  const onMetadataUrlChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    event.preventDefault();
-    const {value} = event.target;
-    setMetadataUrl(value);
-    setTileName(value.split('/').pop() || '');
-    setCurrentUrl(value);
-  }, []);
+  const onMetadataUrlChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      event.preventDefault();
+      const {value} = event.target;
+      setMetadataUrl(value);
+
+      if (!tileNameWasModified) {
+        setTileName(value.split('/').filter(Boolean).pop() || '');
+      }
+    },
+    [tileNameWasModified]
+  );
 
   const onRasterTileServerUrlsChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -102,13 +111,13 @@ const RasterTileForm: React.FC<RasterTileFormProps> = ({setResponse}) => {
     loading,
     error: metaError
   } = useFetchJson({
-    url: currentUrl,
-    rasterTileType: isPMTilesUrl(currentUrl) ? RasterTileType.PMTILES : RasterTileType.STAC,
+    url: clearedMetadataUrl,
+    rasterTileType: isPMTilesUrl(clearedMetadataUrl) ? RasterTileType.PMTILES : RasterTileType.STAC,
     process: parseMetadataAllowCollections
   });
 
   useEffect(() => {
-    if (tileName && metadataUrl) {
+    if (tileName && clearedMetadataUrl) {
       const pmtilesType = metadata?.pmtilesType;
 
       if (pmtilesType === PMTilesType.MVT) {
@@ -150,7 +159,7 @@ const RasterTileForm: React.FC<RasterTileFormProps> = ({setResponse}) => {
 
       const dataset = getDatasetAttributesFromRasterTile({
         name: tileName,
-        metadataUrl,
+        metadataUrl: clearedMetadataUrl,
         rasterTileServerUrls: rasterTileServers
       });
 
@@ -172,9 +181,8 @@ const RasterTileForm: React.FC<RasterTileFormProps> = ({setResponse}) => {
     metadata,
     loading,
     metaError,
-    currentUrl,
     tileName,
-    metadataUrl,
+    clearedMetadataUrl,
     rasterTileServerUrls,
     setResponse
   ]);
@@ -194,7 +202,7 @@ const RasterTileForm: React.FC<RasterTileFormProps> = ({setResponse}) => {
         <label htmlFor="tile-metadata">Tileset metadata URL</label>
         <InputLight
           id="tile-metadata"
-          placeholder="Tileset metadata"
+          placeholder="Tileset metadata URL"
           value={metadataUrl ?? undefined}
           onChange={onMetadataUrlChange}
         />

@@ -81,8 +81,8 @@ const getShouldLoadTerrain = (stac, mapState, visConfig) => {
     stac.rasterTileServerUrls?.length > 0 &&
       // check the switch from the layer configurator
       visConfig.enableTerrain &&
-      // for now only in 3D mode, not top mode
-      mapState.dragRotate &&
+      // disabled in Top view by default
+      (mapState.dragRotate || visConfig.enableTerrainTopView) &&
       getApplicationConfig().rasterServerSupportsElevation
   );
 };
@@ -90,6 +90,7 @@ const getShouldLoadTerrain = (stac, mapState, visConfig) => {
 export type RasterTileLayerVisConfigCommonSettings = {
   opacity: VisConfigNumber;
   enableTerrain: VisConfigBoolean;
+  enableTerrainTopView: VisConfigBoolean;
 };
 
 export type RasterTileLayerVisConfigSettings = RasterTileLayerVisConfigCommonSettings & {

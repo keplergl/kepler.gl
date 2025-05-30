@@ -746,6 +746,13 @@ export const rasterVisConfigs = {
     label: 'Enable 3D terrain',
     group: '',
     property: 'enableTerrain',
-    description: 'Use 3D terrain when available. Only affects Map View in 3D mode.'
+    description: 'Use terrain when terrain data is available. By default enabled for 3D Map.'
+  } as VisConfigBoolean,
+  enableTerrainTopView: {
+    type: 'boolean',
+    defaultValue: false,
+    label: 'Enable in Top view',
+    group: '',
+    property: 'enableTerrainTopView'
   } as VisConfigBoolean
 };

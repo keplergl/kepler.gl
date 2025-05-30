@@ -5,11 +5,13 @@
  * Utility functions to create objects to pass to deck.gl-raster
  */
 
-import {load} from '@loaders.gl/core';
+import {load, FetchError} from '@loaders.gl/core';
 import {QuantizedMeshLoader} from '@loaders.gl/terrain';
 import memoize from 'lodash/memoize';
 
+import {sleep} from '@kepler.gl/common-utils';
 import {getLoaderOptions} from '@kepler.gl/constants';
+import {getApplicationConfig} from '@kepler.gl/utils';
 
 import {CATEGORICAL_COLORMAP_ID} from './config';
 import {
@@ -35,6 +37,7 @@ import {
   getMeshMaxError,
   RasterLayerResources
 } from './url';
+import {getRequestThrottle} from './request-throttle';
 
 /**
  * Create dataUrl image from bitmap array
@@ -68,6 +71,14 @@ export function getImageDataURL(bitmap: Uint8Array, width: number, height: numbe
 // A smaller number towards 0 will cause generation of mesh data with a smaller max error and thus a
 // higher resolution mesh
 const MESH_MULTIPLIER = 0.8;
+
+/**
+ * Multiplier used to calculate the height of terrain mesh skirts.
+ * The skirt is an extension of the terrain mesh that helps prevent gaps between terrain tiles
+ * by extending the mesh edges downward. This multiplier is applied to the mesh's maximum error
+ * to determine the skirt height, ensuring no gaps are visible.
+ */
+const SKIRT_HEIGHT_MULTIPLIER = 3;
 
 /**
  * Load images required for raster tile
@@ -131,6 +142,7 @@ async function loadColormap(colormapId: string): Promise<ColormapImageData | nul
 
   const request = await getAssetRequest({
     url: RasterLayerResources.rasterColorMap(colormapId),
+    rasterServerUrl: '',
     options: {}
   });
   return loadImage(request.url, COLORMAP_TEXTURE_PARAMETERS, request.options);
@@ -169,12 +181,14 @@ export async function loadSTACImageData(requests: AssetRequestData[]): Promise<I
  */
 export async function getAssetRequest({
   url,
+  rasterServerUrl,
   params,
   options,
   useMask = true,
   responseRequiredBandIndices
 }: {
   url: string;
+  rasterServerUrl: string;
   params?: URLSearchParams | null;
   options: RequestInit;
   useMask?: boolean;
@@ -185,7 +199,13 @@ export async function getAssetRequest({
   const requestOptions = options;
 
   const assetUrl = requestParams ? `${requestUrl}?${requestParams.toString()}` : requestUrl;
-  return {url: assetUrl, options: requestOptions, useMask, responseRequiredBandIndices};
+  return {
+    url: assetUrl,
+    rasterServerUrl,
+    options: requestOptions,
+    useMask,
+    responseRequiredBandIndices
+  };
 }
 
 /**
@@ -211,7 +231,7 @@ async function getSingleAssetSTACRequest(
   const useMask = true;
 
   // Only a single URL because only a single asset
-  let url: string | null = null;
+  let urlInfo: {url: string; rasterServerUrl: string} | null = null;
   let urlParams: URLSearchParams | null = new URLSearchParams();
   let responseRequiredBandIndices: number[] | null = loadBandIndexes;
   if (useSTACSearching && stac.type !== 'Feature') {
@@ -224,7 +244,7 @@ async function getSingleAssetSTACRequest(
       loadAssetIds,
       _stacQuery
     });
-    url = getTitilerUrl({stac, useSTACSearching, x, y, z});
+    urlInfo = getTitilerUrl({stac, useSTACSearching, x, y, z});
   } else if (stac.type === 'Feature') {
     // stac is an Item
     urlParams = getSingleCOGUrlParams({
@@ -233,18 +253,18 @@ async function getSingleAssetSTACRequest(
       loadBandIndexes,
       mask: useMask
     });
-    url = getTitilerUrl({stac, useSTACSearching, x, y, z});
+    urlInfo = getTitilerUrl({stac, useSTACSearching, x, y, z});
     responseRequiredBandIndices = null;
   } else {
     return null;
   }
 
-  if (!url) {
+  if (!urlInfo.url) {
     return null;
   }
 
   return await getAssetRequest({
-    url,
+    ...urlInfo,
     params: urlParams,
     options: {signal},
     useMask,
@@ -272,7 +292,12 @@ async function getMultiAssetSTACRequest(
   } = options;
 
   // Multiple urls, one for each asset
-  let requestData: {url: string; params: URLSearchParams | null; options?: RequestInit}[] = [];
+  let requestData: {
+    url: string;
+    rasterServerUrl: string;
+    params: URLSearchParams | null;
+    options?: RequestInit;
+  }[] = [];
 
   // We assume that there's only one validity mask for the entire asset, and therefore any of the
   // requests would return the same validity bitmap. Therefore we only request a mask for the first
@@ -291,8 +316,8 @@ async function getMultiAssetSTACRequest(
         loadAssetIds: [assetId],
         _stacQuery
       });
-      const url = getTitilerUrl({stac, useSTACSearching, x, y, z});
-      return {url, params};
+      const urlInfo = getTitilerUrl({stac, useSTACSearching, x, y, z});
+      return {...urlInfo, params};
     });
   } else if (stac.type === 'Feature') {
     requestData = zip3(loadAssetIds, loadBandIndexes, requestMask).map(
@@ -303,8 +328,8 @@ async function getMultiAssetSTACRequest(
           loadBandIndexes: [bandIndex],
           mask
         });
-        const url = getTitilerUrl({stac, useSTACSearching, x, y, z});
-        return {url, params};
+        const urlInfo = getTitilerUrl({stac, useSTACSearching, x, y, z});
+        return {...urlInfo, params};
       }
     );
   }
@@ -399,7 +424,7 @@ export async function loadTerrain(props: {
   signal: AbortSignal;
   rasterTileServerUrls: string[];
   boundsForGeometry?: [number, number, number, number];
-}): Promise<TerrainData> {
+}): Promise<TerrainData | null> {
   const {
     index: {x, y, z},
     boundsForGeometry,
@@ -408,15 +433,40 @@ export async function loadTerrain(props: {
   } = props;
 
   const meshMaxError = getMeshMaxError(z, MESH_MULTIPLIER);
-  const terrainUrl = getTerrainUrl(rasterTileServerUrls, x, y, z, meshMaxError);
+  const terrainUrlInfo = getTerrainUrl(rasterTileServerUrls, x, y, z, meshMaxError);
   const loaderOptions = getLoaderOptions();
+  const numAttempts = 1 + getApplicationConfig().rasterServerMaxRetries;
 
-  return load(terrainUrl, QuantizedMeshLoader, {
-    fetch: {signal},
-    'quantized-mesh': {
-      ...loaderOptions['quantized-mesh'],
-      bounds: boundsForGeometry,
-      skirtHeight: meshMaxError * 2
+  const mesh = await getRequestThrottle().throttleRequest(
+    terrainUrlInfo.rasterServerUrl,
+    async () => {
+      for (let attempt = 0; attempt < numAttempts; attempt++) {
+        try {
+          return (await load(terrainUrlInfo.url, QuantizedMeshLoader, {
+            fetch: {signal},
+            'quantized-mesh': {
+              ...loaderOptions['quantized-mesh'],
+              bounds: boundsForGeometry,
+              skirtHeight: meshMaxError * SKIRT_HEIGHT_MULTIPLIER
+            }
+          })) as Promise<TerrainData>;
+        } catch (error) {
+          // Retry if Service Temporarily Unavailable 503 error etc.
+          if (
+            attempt < numAttempts &&
+            error instanceof FetchError &&
+            getApplicationConfig().rasterServerServerErrorsToRetry?.includes(
+              error.response?.status as number
+            )
+          ) {
+            await sleep(getApplicationConfig().rasterServerRetryDelay);
+            continue;
+          }
+        }
+      }
+      return null;
     }
-  }) as Promise<TerrainData>;
+  );
+
+  return mesh;
 }
