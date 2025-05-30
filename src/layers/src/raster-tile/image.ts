@@ -73,6 +73,14 @@ export function getImageDataURL(bitmap: Uint8Array, width: number, height: numbe
 const MESH_MULTIPLIER = 0.8;
 
 /**
+ * Multiplier used to calculate the height of terrain mesh skirts.
+ * The skirt is an extension of the terrain mesh that helps prevent gaps between terrain tiles
+ * by extending the mesh edges downward. This multiplier is applied to the mesh's maximum error
+ * to determine the skirt height, ensuring no gaps are visible.
+ */
+const SKIRT_HEIGHT_MULTIPLIER = 3;
+
+/**
  * Load images required for raster tile
  * @param assetRequests - STAC asset requests
  * @param colormapId - colormap id
@@ -439,7 +447,7 @@ export async function loadTerrain(props: {
             'quantized-mesh': {
               ...loaderOptions['quantized-mesh'],
               bounds: boundsForGeometry,
-              skirtHeight: meshMaxError * 3
+              skirtHeight: meshMaxError * SKIRT_HEIGHT_MULTIPLIER
             }
           })) as Promise<TerrainData>;
         } catch (error) {
