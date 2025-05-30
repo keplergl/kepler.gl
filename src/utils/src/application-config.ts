@@ -109,12 +109,10 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
   useOnFilteredItemsChange: false,
 
   // Raster Tile layer config
-  enableRasterTileLayer: true,
+  enableRasterTileLayer: false,
   rasterServerUseLatestTitiler: true,
   // TODO: provide a default free server or leave blank
-  rasterServerUrls: [
-    'https://d1q7gb82o5qayp.cloudfront.net, https://d34k46lorssas.cloudfront.net, https://d2k92ng3gmu32o.cloudfront.net'
-  ],
+  rasterServerUrls: [],
   rasterServerSupportsElevation: true,
   rasterServerMaxRetries: 1,
   rasterServerRetryDelay: 10000,

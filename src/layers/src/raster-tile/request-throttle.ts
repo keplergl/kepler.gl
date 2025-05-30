@@ -36,7 +36,7 @@ class RequestThrottle {
       : 'No active server queues';
   }
 
-  async throttleRequest<T>(serverKey: string, requestFn: () => Promise<T>): Promise<T> {
+  async throttleRequest<T>(serverKey: string, requestFunction: () => Promise<T>): Promise<T> {
     const serverQueue = this.getServerQueue(serverKey);
 
     if (
@@ -47,12 +47,12 @@ class RequestThrottle {
       await new Promise<void>(resolve => {
         serverQueue.queue.push(async () => {
           try {
-            const result = await requestFn();
+            const result = await requestFunction();
             resolve();
             return result;
           } catch (error) {
             resolve();
-            throw error;
+            return null;
           }
         });
       });
@@ -60,8 +60,7 @@ class RequestThrottle {
 
     serverQueue.activeRequests++;
     try {
-      const result = await requestFn();
-      return result;
+      return await requestFunction();
     } finally {
       serverQueue.activeRequests--;
       // Process next request in queue if any
@@ -74,8 +73,9 @@ class RequestThrottle {
 }
 
 // Create a singleton instance
-const requestThrottle = new RequestThrottle();
+let requestThrottle: RequestThrottle | null = null;
 
 export function getRequestThrottle(): RequestThrottle {
+  if (!requestThrottle) requestThrottle = new RequestThrottle();
   return requestThrottle;
 }
