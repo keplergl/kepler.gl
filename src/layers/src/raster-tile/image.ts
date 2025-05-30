@@ -412,8 +412,9 @@ export async function loadTerrain(props: {
   const meshMaxError = getMeshMaxError(z, MESH_MULTIPLIER);
   const terrainUrl = getTerrainUrl(rasterTileServerUrls, x, y, z, meshMaxError);
   const loaderOptions = getLoaderOptions();
+  const numAttempts = 1 + getApplicationConfig().rasterServerMaxRetries;
 
-  for (let attempt = 0; attempt <= getApplicationConfig().rasterServerMaxRetries; attempt++) {
+  for (let attempt = 0; attempt < numAttempts; attempt++) {
     try {
       return (await load(terrainUrl, QuantizedMeshLoader, {
         fetch: {signal},
@@ -426,6 +427,7 @@ export async function loadTerrain(props: {
     } catch (error) {
       // Retry if Service Temporarily Unavailable 503 error etc.
       if (
+        attempt < numAttempts &&
         error instanceof FetchError &&
         getApplicationConfig().rasterServerServerErrorsToRetry?.includes(
           error.response?.status as number

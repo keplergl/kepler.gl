@@ -276,7 +276,8 @@ export async function loadNpyArray(
   split: boolean,
   options?: LoadingOptions
 ): Promise<Texture2DProps | Texture2DProps[] | null> {
-  for (let attempt = 0; attempt <= getApplicationConfig().rasterServerMaxRetries; attempt++) {
+  const numAttempts = 1 + getApplicationConfig().rasterServerMaxRetries;
+  for (let attempt = 0; attempt < numAttempts; attempt++) {
     try {
       const {npy: npyOptions} = getLoaderOptions();
       const response: NPYLoaderResponse = await load(request.url, NPYLoader, {
@@ -338,6 +339,7 @@ export async function loadNpyArray(
     } catch (error) {
       // Retry if Service Temporarily Unavailable 503 error etc.
       if (
+        attempt < numAttempts &&
         error instanceof FetchError &&
         getApplicationConfig().rasterServerServerErrorsToRetry?.includes(
           error.response?.status as number
