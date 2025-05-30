@@ -29,10 +29,7 @@ Note:
      a. Always perform a spatial statistical test (e.g., Local Moran's I)
      b. Explain the results in context
      c. STRICT RULE: Never use datasets generated from previous LISA tools (dataset name with "lisa_" prefix) as input for a new LISA analysis
-  3. For spatial joins:
-     a. Use the points dataset as the first (left) dataset
-     b. Explain the join operation and its purpose
-  4. For using road or line dataset in spatial analysis (e.g. local moran, spatial weights, and spatial join):
+  3. For using road or line dataset in spatial analysis (e.g. local moran, spatial weights, and spatial join):
      a. buffer the road by 1 meter first
      b. save the buffered road as a new dataset
      c. if needed, spatial join by buffered road (left) with points (right)
