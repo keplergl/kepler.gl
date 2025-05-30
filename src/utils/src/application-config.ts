@@ -66,6 +66,8 @@ export type KeplerApplicationConfig = {
   rasterServerRetryDelay?: number;
   /** An array of HTTP status codes that should be retried when encountered. */
   rasterServerServerErrorsToRetry?: number[];
+  /** Maximum number of simultaneous requests per raster server. 0 - no limit */
+  rasterServerMaxPerServerRequests?: number;
 };
 
 const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
@@ -107,14 +109,17 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
   useOnFilteredItemsChange: false,
 
   // Raster Tile layer config
-  enableRasterTileLayer: false,
+  enableRasterTileLayer: true,
   rasterServerUseLatestTitiler: true,
   // TODO: provide a default free server or leave blank
-  rasterServerUrls: ['http://localhost:8000'],
+  rasterServerUrls: [
+    'https://d1q7gb82o5qayp.cloudfront.net, https://d34k46lorssas.cloudfront.net, https://d2k92ng3gmu32o.cloudfront.net'
+  ],
   rasterServerSupportsElevation: true,
   rasterServerMaxRetries: 1,
   rasterServerRetryDelay: 10000,
-  rasterServerServerErrorsToRetry: [503]
+  rasterServerServerErrorsToRetry: [503],
+  rasterServerMaxPerServerRequests: 0
 };
 
 const applicationConfig: Required<KeplerApplicationConfig> = DEFAULT_APPLICATION_CONFIG;
