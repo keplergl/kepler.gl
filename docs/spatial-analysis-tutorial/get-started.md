@@ -8,13 +8,11 @@ To use AI Assistant, you can click the "AI Assistant" button in the top right co
 
 <img width="334" alt="Screenshot 2025-05-30 at 12 48 08 PM" src="https://github.com/user-attachments/assets/2ac83229-bb2b-4009-a857-7fb9922b15cb" />
 
-
 ## Configure AI Assistant
 
 You will see the AI Assistant configuration panel on the right side of the Kepler.gl UI. You can adjust the width of the panel by dragging the border between the panel and the Kepler.gl UI.
 
 <img width="481" alt="Screenshot 2025-05-30 at 12 49 15 PM" src="https://github.com/user-attachments/assets/0cf9282d-b949-457a-ac35-e64306509869" />
-
 
 The configuration panel includes several important settings:
 
@@ -82,7 +80,7 @@ Fine-tune the diversity of AI responses with the Top P parameter:
 If you plan to use routing or isochrone analysis features, you can optionally provide your Mapbox access token. This enables advanced spatial analysis capabilities like:
 
 - Route e.g. "What is the driving route from 123 Main St to 456 Main St in San Francisco?"
-- Isochrone  e.g. "What is the 30-minute travel time isochrone from 123 Main St in San Francisco?"
+- Isochrone e.g. "What is the 30-minute travel time isochrone from 123 Main St in San Francisco?"
 
 ## Use AI Assistant
 
@@ -103,7 +101,7 @@ what datasets are available to use?
 what tools are available to use?
 :::
 
-### Tips for Effective Interaction
+#### Tips for Effective Prompting
 
 - **Be specific**: Include details about the data columns, analysis type, or visualization you want
 - **Use examples**: Reference specific field names or geographic areas in your dataset
@@ -116,26 +114,55 @@ The AI Assistant includes several advanced features to enhance your interaction 
 
 #### Screenshot to Ask
 
-Click the **"Screenshot to Ask"** button to capture specific areas of your map or interface and ask questions about them. This feature is particularly useful when you want to:
-- Ask about specific visual patterns in your map
-- Get help with specific UI elements
-- Troubleshoot visualization issues
-- Get contextual help about what you're seeing
+Click the **"Screenshot to Ask"** button to capture specific areas of your map or interface and ask questions about them.
 
-For detailed instructions on using the screen capture feature, visit the [Screen Capture documentation](https://openassistant-doc.vercel.app/docs/chatui/screencapture).
+<img width="334" alt="Screenshot 2025-05-30 at 12 48 08 PM" src="https://openassistant-doc.vercel.app/img/screenshot-dark.png" />
+
+##### How to use screenshot to ask?
+
+**Taking Screenshots**
+
+1. Click the "Screenshot to Ask" button in the chat interface
+2. A semi-transparent overlay will appear
+3. Click and drag to select the area you want to capture
+4. Release to complete the capture
+
+**Asking Questions**
+
+1. After capturing, the screenshot will be attached to your next message
+2. Type your question about the captured area
+3. Send your message to get AI assistance
+
+**Managing Screenshots**
+
+1. Click the "X" button on the screenshot preview to remove it
+2. Use onRemoveScreenshot callback for programmatic removal
 
 #### Talk to Ask (Voice-to-Text)
 
-Use the **"Talk to Ask"** button to record your voice and convert it to text automatically. This hands-free approach allows you to:
-- Quickly dictate complex analysis requests
-- Work more efficiently when your hands are busy
-- Interact naturally with the assistant
+The voice-to-text feature allows users to record their voice, which will be converted to text using the LLM.
 
-The voice-to-text feature supports multiple AI providers and automatically transcribes your speech into the chat input field.
+<img width="334" alt="Screenshot 2025-05-30 at 12 48 08 PM" src="https://openassistant-doc.vercel.app/img/voice-light.png" />
 
-For complete setup and usage instructions, see the [Voice-to-Text documentation](https://openassistant-doc.vercel.app/docs/chatui/voice-to-text).
+##### How to use voice-to-text?
 
+When using the voice-to-text feature for the first time, users will be prompted to grant microphone access. The browser will display a permission dialog that looks like this:
 
+Users can choose from three options:
 
-The AI Assistant is designed to understand spatial analysis terminology and can help with both simple tasks like creating basic visualizations and complex workflows like multi-step spatial regression analysis.
+- **Allow while visiting the site**: Grants temporary microphone access
+- **Allow this time**: Grants one-time microphone access
+- **Never allow**: Blocks microphone access
 
+Then, user can start recording their voice. User can stop recording by clicking the stop button or by clicking the microphone icon again. The text will be translated by LLM and displayed in the input box.
+
+This feature is only available with certain AI providers:
+
+- OpenAI (using Whisper model)
+- Google (using Gemini)
+
+If using an unsupported provider, you'll receive a "Method not implemented" error.
+
+## Next Tutorial
+
+Next Tutorial: [Spatial Data Wrangling](./spatial-data-wrangling.md)
