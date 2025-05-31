@@ -13,12 +13,16 @@ import React, {
 } from 'react';
 import uniq from 'lodash/uniq';
 import {
-  SortableContainer,
-  SortableContainerProps,
-  SortableElement,
-  SortableElementProps,
-  SortableHandle
-} from 'react-sortable-hoc';
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent
+} from '@dnd-kit/core';
+import {SortableContext, useSortable, verticalListSortingStrategy} from '@dnd-kit/sortable';
+import {CSS} from '@dnd-kit/utilities';
 import styled, {css} from 'styled-components';
 import Portaled from '../../common/portaled';
 import {Tooltip} from '../../common/styled-components';
@@ -220,33 +224,69 @@ const InputText = styled.div.withConfig({shouldForwardProp})<{width: string; tex
   }
 `;
 
-type SortableItemProps = SortableElementProps & {
-  children?: React.ReactNode;
+type SortableItemProps = {
+  id: string;
+  children: (listeners: any) => React.ReactNode;
   className?: string;
   isSorting: boolean;
 };
 
-const SortableItem = SortableElement<SortableItemProps>(({children, isSorting}) => (
-  <ColorPaletteItem className={classnames('custom-palette__sortable-items', {sorting: isSorting})}>
-    {children}
-  </ColorPaletteItem>
-));
-
-type WrappedSortableContainerProps = SortableContainerProps & {
-  children?: React.ReactNode;
-  className?: string;
+const SortableItem = ({id, children, isSorting}: SortableItemProps) => {
+  const {attributes, listeners, setNodeRef, transform, transition, isDragging} = useSortable({id});
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 1 : 0
+  };
+  return (
+    <ColorPaletteItem
+      ref={setNodeRef}
+      style={style}
+      className={classnames('custom-palette__sortable-items', {sorting: isSorting || isDragging})}
+      {...attributes}
+    >
+      {children(listeners)}
+    </ColorPaletteItem>
+  );
 };
 
-// TODO: Should className be applied to the div here?
-const WrappedSortableContainer = SortableContainer<WrappedSortableContainerProps>(
-  ({children, className}) => <div className={className}>{children}</div>
+type WrappedSortableContainerProps = {
+  children?: React.ReactNode;
+  className?: string;
+  onSortEnd: (event: DragEndEvent) => void;
+  onSortStart: () => void;
+};
+
+const WrappedSortableContainer = ({
+  children,
+  className,
+  onSortEnd,
+  onSortStart
+}: WrappedSortableContainerProps) => {
+  const sensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor));
+  return (
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragEnd={onSortEnd}
+      onDragStart={onSortStart}
+    >
+      <SortableContext
+        items={React.Children.map(children, (_, index) => `${index}`) || []}
+        strategy={verticalListSortingStrategy}
+      >
+        <div className={className}>{children}</div>
+      </SortableContext>
+    </DndContext>
+  );
+};
+
+type DragHandleProps = PropsWithChildren<{className?: string}>;
+const DragHandle = ({className, children, ...listeners}: DragHandleProps & any) => (
+  <StyledDragHandle className={className} {...listeners}>
+    {children}
+  </StyledDragHandle>
 );
-
-type DragHandleProps = PropsWithChildren<{className?: string; listeners?: unknown}>;
-
-export const DragHandle = SortableHandle<DragHandleProps>(({className, children}) => (
-  <StyledDragHandle className={className}>{children}</StyledDragHandle>
-));
 
 export type ColorPaletteInputProps = {
   value: string | number;
@@ -408,42 +448,46 @@ export const CustomPaletteInput: React.FC<CustomPaletteInputProps> = ({
   const showHexInput = !colorBreaks;
 
   return (
-    <SortableItem index={index} isSorting={isSorting}>
-      <div className="custom-palette-input__left">
-        <DragHandle className="layer__drag-handle">
-          <actionIcons.sort height="20px" />
-        </DragHandle>
-        <ColorSwatch color={color} onClick={onClickSwtach} />
-        {showHexInput ? (
-          <StyledColorHexInput>
-            <ColorPaletteInput
-              value={color.toUpperCase()}
-              onChange={onColorInput}
-              id={`input-layer-label-${index}`}
-              editable
-              textAlign="left"
-              width="70px"
-            />
-          </StyledColorHexInput>
-        ) : null}
-        {isNumericColorBreaks(colorBreaks) ? (
-          <EditableColorRange
-            item={colorBreaks[index]}
-            isLast={index === colorBreaks.length - 1}
-            index={index}
-            editColorMap={editColorMapValue}
-            editable
-          />
-        ) : null}
-      </div>
-      <div className="custom-palette-input__right">
-        {!disableAppend ? (
-          <AddColorStop onColorAdd={onColorAdd} IconComponent={actionIcons.add} />
-        ) : null}
-        {!disableDelete ? (
-          <DeleteColorStop onColorDelete={onColorDelete} IconComponent={actionIcons.delete} />
-        ) : null}
-      </div>
+    <SortableItem id={`${index}`} isSorting={isSorting}>
+      {listeners => (
+        <>
+          <div className="custom-palette-input__left">
+            <DragHandle className="layer__drag-handle" {...listeners}>
+              <actionIcons.sort height="20px" />
+            </DragHandle>
+            <ColorSwatch color={color} onClick={onClickSwtach} />
+            {showHexInput ? (
+              <StyledColorHexInput>
+                <ColorPaletteInput
+                  value={color.toUpperCase()}
+                  onChange={onColorInput}
+                  id={`input-layer-label-${index}`}
+                  editable
+                  textAlign="left"
+                  width="70px"
+                />
+              </StyledColorHexInput>
+            ) : null}
+            {isNumericColorBreaks(colorBreaks) ? (
+              <EditableColorRange
+                item={colorBreaks[index]}
+                isLast={index === colorBreaks.length - 1}
+                index={index}
+                editColorMap={editColorMapValue}
+                editable
+              />
+            ) : null}
+          </div>
+          <div className="custom-palette-input__right">
+            {!disableAppend ? (
+              <AddColorStop onColorAdd={onColorAdd} IconComponent={actionIcons.add} />
+            ) : null}
+            {!disableDelete ? (
+              <DeleteColorStop onColorDelete={onColorDelete} IconComponent={actionIcons.delete} />
+            ) : null}
+          </div>
+        </>
+      )}
     </SortableItem>
   );
 };
@@ -735,29 +779,33 @@ export const CategoricalCustomPaletteInput: React.FC<CategoricalCustomPaletteInp
   const onColorDelete = useCallback(() => onDelete(index), [onDelete, index]);
 
   return (
-    <SortableItem index={index} isSorting={isSorting}>
-      <div className="custom-palette-input__left">
-        <DragHandle className="layer__drag-handle">
-          <actionIcons.sort height="20px" />
-        </DragHandle>
-        <ColorSwatch color={color} onClick={onClickSwtach} />
-        {colorMap && colorMap[index] && (
-          <CategoricalSelector
-            selectedValues={selectedValues}
-            allValues={allValues}
-            addColorMapValue={addColorMapValue}
-            removeColorMapValue={removeColorMapValue}
-            resetColorMapValue={resetColorMapValue}
-            selectRestColorMapValue={selectRestColorMapValue}
-            index={index}
-          />
-        )}
-      </div>
-      <div className="custom-palette-input__right">
-        {!disableDelete ? (
-          <DeleteColorStop onColorDelete={onColorDelete} IconComponent={actionIcons.delete} />
-        ) : null}
-      </div>
+    <SortableItem id={`${index}`} isSorting={isSorting}>
+      {listeners => (
+        <>
+          <div className="custom-palette-input__left">
+            <DragHandle className="layer__drag-handle" {...listeners}>
+              <actionIcons.sort height="20px" />
+            </DragHandle>
+            <ColorSwatch color={color} onClick={onClickSwtach} />
+            {colorMap && colorMap[index] && (
+              <CategoricalSelector
+                selectedValues={selectedValues}
+                allValues={allValues}
+                addColorMapValue={addColorMapValue}
+                removeColorMapValue={removeColorMapValue}
+                resetColorMapValue={resetColorMapValue}
+                selectRestColorMapValue={selectRestColorMapValue}
+                index={index}
+              />
+            )}
+          </div>
+          <div className="custom-palette-input__right">
+            {!disableDelete ? (
+              <DeleteColorStop onColorDelete={onColorDelete} IconComponent={actionIcons.delete} />
+            ) : null}
+          </div>
+        </>
+      )}
     </SortableItem>
   );
 };
@@ -864,19 +912,24 @@ function CustomPaletteFactory(): React.FC<CustomPaletteProps> {
     );
 
     const onSortEnd = useCallback(
-      ({oldIndex, newIndex}) => {
-        const newCustomPalette = sortCustomPaletteColor(customPalette, oldIndex, newIndex);
-        setColorPaletteUI({
-          customPalette: newCustomPalette
-        });
+      (event: DragEndEvent) => {
+        const {active, over} = event;
+        if (over && active.id !== over.id) {
+          const oldIndex = colors.findIndex((_, i) => `${i}` === active.id);
+          const newIndex = colors.findIndex((_, i) => `${i}` === over.id);
+          const newCustomPalette = sortCustomPaletteColor(customPalette, oldIndex, newIndex);
+          setColorPaletteUI({
+            customPalette: newCustomPalette
+          });
+        }
         setIsSorting(false);
       },
-      [customPalette, setColorPaletteUI, setIsSorting]
+      [colors, customPalette, setColorPaletteUI]
     );
 
     const onSortStart = useCallback(() => {
       setIsSorting(true);
-    }, [setIsSorting]);
+    }, []);
 
     const inputColorHex = useCallback(
       (index, value) => {
@@ -986,9 +1039,6 @@ function CustomPaletteFactory(): React.FC<CustomPaletteProps> {
           className="custom-palette__sortable-container"
           onSortEnd={onSortEnd}
           onSortStart={onSortStart}
-          lockAxis="y"
-          helperClass="sorting-colors"
-          useDragHandle
         >
           {colors.map((color, index) =>
             customPalette.type === 'custom' ? (
