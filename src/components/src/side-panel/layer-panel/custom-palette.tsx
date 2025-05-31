@@ -272,7 +272,7 @@ const WrappedSortableContainer = ({
       onDragStart={onSortStart}
     >
       <SortableContext
-        items={React.Children.map(children, (_, index) => `${index}`) || []}
+        items={React.Children.map(children, (_, index) => index) || []}
         strategy={verticalListSortingStrategy}
       >
         <div className={className}>{children}</div>
@@ -448,7 +448,7 @@ export const CustomPaletteInput: React.FC<CustomPaletteInputProps> = ({
   const showHexInput = !colorBreaks;
 
   return (
-    <SortableItem id={`${index}`} isSorting={isSorting}>
+    <SortableItem id={index} isSorting={isSorting}>
       {listeners => (
         <>
           <div className="custom-palette-input__left">
@@ -779,7 +779,7 @@ export const CategoricalCustomPaletteInput: React.FC<CategoricalCustomPaletteInp
   const onColorDelete = useCallback(() => onDelete(index), [onDelete, index]);
 
   return (
-    <SortableItem id={`${index}`} isSorting={isSorting}>
+    <SortableItem id={index} isSorting={isSorting}>
       {listeners => (
         <>
           <div className="custom-palette-input__left">
@@ -915,8 +915,8 @@ function CustomPaletteFactory(): React.FC<CustomPaletteProps> {
       (event: DragEndEvent) => {
         const {active, over} = event;
         if (over && active.id !== over.id) {
-          const oldIndex = colors.findIndex((_, i) => `${i}` === active.id);
-          const newIndex = colors.findIndex((_, i) => `${i}` === over.id);
+          const oldIndex = colors.findIndex((_, index) => index === active.id);
+          const newIndex = colors.findIndex((_, index) => index === over.id);
           const newCustomPalette = sortCustomPaletteColor(customPalette, oldIndex, newIndex);
           setColorPaletteUI({
             customPalette: newCustomPalette
@@ -924,12 +924,12 @@ function CustomPaletteFactory(): React.FC<CustomPaletteProps> {
         }
         setIsSorting(false);
       },
-      [colors, customPalette, setColorPaletteUI]
+      [colors, customPalette, setIsSorting, setColorPaletteUI]
     );
 
     const onSortStart = useCallback(() => {
       setIsSorting(true);
-    }, []);
+    }, [setIsSorting]);
 
     const inputColorHex = useCallback(
       (index, value) => {
