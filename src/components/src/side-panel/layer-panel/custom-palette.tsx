@@ -282,7 +282,7 @@ const WrappedSortableContainer = ({
 };
 
 type DragHandleProps = PropsWithChildren<{className?: string}>;
-const DragHandle = ({className, children, ...listeners}: DragHandleProps & any) => (
+const DragHandle = ({className, children, ...listeners}: DragHandleProps) => (
   <StyledDragHandle className={className} {...listeners}>
     {children}
   </StyledDragHandle>
