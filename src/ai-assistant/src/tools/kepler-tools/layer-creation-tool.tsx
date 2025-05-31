@@ -41,12 +41,14 @@ export const addLayer = tool<
   // context
   AddLayerFunctionContext
 >({
-  description: 'add a kepler.gl map layer',
+  description: 'Add a kepler.gl map layer from a dataset and color it by a field.',
   parameters: z.object({
     datasetName: z
       .string()
       .describe('The name of the dataset. Note: please do NOT use the datasetId.'),
-    fieldName: z.string(),
+    fieldName: z
+      .string()
+      .describe('The name of the field which the values will be used to color the layer.'),
     layerType: z.enum([
       'point',
       'arc',

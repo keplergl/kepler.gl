@@ -22,7 +22,7 @@ export const loadData = tool<
   // context of the tool
   LoadDataToolContext
 >({
-  description: 'load data from a URL or file',
+  description: `Load data from a URL. A map layer will be created automatically.`,
   parameters: z.object({
     url: z.string().describe('The URL or file path to load data from')
   }),
