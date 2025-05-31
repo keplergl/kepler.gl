@@ -448,7 +448,7 @@ export const CustomPaletteInput: React.FC<CustomPaletteInputProps> = ({
   const showHexInput = !colorBreaks;
 
   return (
-    <SortableItem id={index} isSorting={isSorting}>
+    <SortableItem id={`${index}`} isSorting={isSorting}>
       {listeners => (
         <>
           <div className="custom-palette-input__left">
@@ -779,7 +779,7 @@ export const CategoricalCustomPaletteInput: React.FC<CategoricalCustomPaletteInp
   const onColorDelete = useCallback(() => onDelete(index), [onDelete, index]);
 
   return (
-    <SortableItem id={index} isSorting={isSorting}>
+    <SortableItem id={`${index}`} isSorting={isSorting}>
       {listeners => (
         <>
           <div className="custom-palette-input__left">
