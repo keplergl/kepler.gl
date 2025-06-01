@@ -137,12 +137,12 @@ export default class ClusterLayer extends AggregationLayer {
       // hover layer
       ...(hoveredObject
         ? [
-            new ScatterplotLayer<{radius: number}>({
+            new ScatterplotLayer<{scaledRadiusValue: number}>({
               id: `${this.id}-hovered`,
               visible: defaultLayerProps.visible,
               data: [hoveredObject],
               getFillColor: this.config.highlightColor,
-              getRadius: d => d.radius,
+              getRadius: (d: {scaledRadiusValue: number}) => d.scaledRadiusValue,
               radiusScale: 1,
               pickable: false
             })
