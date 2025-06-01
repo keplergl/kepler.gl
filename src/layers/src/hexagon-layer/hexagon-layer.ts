@@ -6,7 +6,6 @@ import AggregationLayer, {AggregationLayerConfig} from '../aggregation-layer';
 import {EnhancedHexagonLayer} from '@kepler.gl/deckgl-layers';
 import {hexagonToPolygonGeo} from './hexagon-utils';
 import HexagonLayerIcon from './hexagon-layer-icon';
-import {clamp} from '@kepler.gl/utils';
 import {
   ColorRange,
   VisConfigBoolean,
