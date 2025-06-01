@@ -92,7 +92,9 @@ export default class ClusterLayer extends AggregationLayer {
     const updateTriggers = {
       getColorValue: {
         colorField: this.config.colorField,
-        colorAggregation: this.config.visConfig.colorAggregation
+        colorAggregation: this.config.visConfig.colorAggregation,
+        colorRange: visConfig.colorRange,
+        colorMap: visConfig.colorRange.colorMap
       },
       filterData: {
         filterRange: gpuFilter.filterRange,
