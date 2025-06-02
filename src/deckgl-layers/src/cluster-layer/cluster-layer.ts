@@ -135,7 +135,10 @@ const clusterLayerDimensions: [DimensionType<RGBAColor>, DimensionType<number>] 
     getSubLayerAccessor: getSubLayerRadius,
     getPickingInfo: (dimensionState, cell, layerProps) => {
       const radiusValue = layerProps.getRadiusValue(cell);
-      return {radiusValue};
+      const {scaleFunc} = dimensionState;
+      const scaledRadiusValue = scaleFunc ? scaleFunc(radiusValue) : radiusValue;
+
+      return {radiusValue, scaledRadiusValue};
     }
   }
 ];
@@ -187,7 +190,15 @@ export default class ClusterLayer extends AggregationLayer<
   }
 
   getPickingInfo({info}) {
-    return this.state.cpuAggregator.getPickingInfo({info}, this.props);
+    const obj = this.state.cpuAggregator.getPickingInfo({info}, this.props);
+    if (obj?.object) {
+      // @ts-expect-error
+      const distanceScale = getDistanceScales(this.context.viewport);
+      const metersPerPixel = distanceScale.metersPerPixel[0];
+      obj.object.scaledRadiusValue = obj.object.scaledRadiusValue * metersPerPixel;
+    }
+
+    return obj;
   }
 
   _getSublayerUpdateTriggers() {
