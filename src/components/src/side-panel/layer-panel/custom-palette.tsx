@@ -272,7 +272,7 @@ const WrappedSortableContainer = ({
       onDragStart={onSortStart}
     >
       <SortableContext
-        items={React.Children.map(children, (_, index) => index) || []}
+        items={React.Children.map(children, (_, index) => `${index}`) || []}
         strategy={verticalListSortingStrategy}
       >
         <div className={className}>{children}</div>
@@ -915,8 +915,8 @@ function CustomPaletteFactory(): React.FC<CustomPaletteProps> {
       (event: DragEndEvent) => {
         const {active, over} = event;
         if (over && active.id !== over.id) {
-          const oldIndex = colors.findIndex((_, index) => index === active.id);
-          const newIndex = colors.findIndex((_, index) => index === over.id);
+          const oldIndex = colors.findIndex((_, index) => `${index}` === active.id);
+          const newIndex = colors.findIndex((_, index) => `${index}` === over.id);
           const newCustomPalette = sortCustomPaletteColor(customPalette, oldIndex, newIndex);
           setColorPaletteUI({
             customPalette: newCustomPalette
