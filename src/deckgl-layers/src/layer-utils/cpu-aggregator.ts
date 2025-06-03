@@ -163,6 +163,7 @@ export function getDimensionScale(this: CPUAggregator, step, props, dimensionUpd
   const scaleFunc = scaleFunctor
     .domain(dimensionDomain)
     .range(dimensionFixed ? dimensionDomain : dimensionRange);
+  scaleFunc.scaleType = props.colorScaleType;
 
   if (typeof onSet === 'object' && typeof props[onSet.props] === 'function') {
     const sortedBins = this.state.dimensions[key].sortedBins;
