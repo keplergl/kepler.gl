@@ -229,7 +229,7 @@ function decorate(target, savedInitialState = {}) {
  * to mount it at another address e.g. `foo` you will need to specify it when you mount `KeplerGl` component in your app with `getState: state => state.foo`
  * @public
  * @example
- * import keplerGlReducer from 'kepler.gl/reducers';
+ * import keplerGlReducer from '@kepler.gl/reducers';
  * import {createStore, combineReducers, applyMiddleware, compose} from 'redux';
  * import {taskMiddleware} from 'react-palm/tasks';
  *

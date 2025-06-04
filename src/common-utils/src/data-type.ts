@@ -197,7 +197,7 @@ export function analyzerTypeToFieldType(aType: string): string {
  * @public
  * @example
  *
- * import {getFieldsFromData} from 'kepler.gl/common-utils';
+ * import {getFieldsFromData} from '@kepler.gl/common-utils';
  * const data = [{
  *   time: '2016-09-17 00:09:55',
  *   value: '4',

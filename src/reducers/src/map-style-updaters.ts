@@ -114,7 +114,7 @@ const getDefaultState = (): MapStyle => {
  * @public
  * @example
  *
- * import keplerGlReducer, {mapStyleUpdaters} from 'kepler.gl/reducers';
+ * import keplerGlReducer, {mapStyleUpdaters} from '@kepler.gl/reducers';
  * // Root Reducer
  * const reducers = combineReducers({
  *  keplerGl: keplerGlReducer,

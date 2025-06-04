@@ -173,7 +173,7 @@ disableStackCapturing();
  * @public
  * @example
  *
- * import keplerGlReducer, {visStateUpdaters} from 'kepler.gl/reducers';
+ * import keplerGlReducer, {visStateUpdaters} from '@kepler.gl/reducers';
  * // Root Reducer
  * const reducers = combineReducers({
  *  keplerGl: keplerGlReducer,
