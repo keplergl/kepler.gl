@@ -23,7 +23,7 @@ import {MapState, Bounds, Viewport} from '@kepler.gl/types';
  * @public
  * @example
  *
- * import keplerGlReducer, {mapStateUpdaters} from 'kepler.gl/reducers';
+ * import keplerGlReducer, {mapStateUpdaters} from '@kepler.gl/reducers';
  * // Root Reducer
  * const reducers = combineReducers({
  *  keplerGl: keplerGlReducer,

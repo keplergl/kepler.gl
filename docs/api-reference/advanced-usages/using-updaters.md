@@ -8,7 +8,7 @@ To achieve the same result with `togglePerspective` updating kepler.gl's map per
 
 ```js
 // action and forward dispatcher
-import {togglePerspective} from 'kepler.gl/actions';
+import {togglePerspective} from '@kepler.gl/actions';
 
 const MapContainer = ({dispatch}) => (
   <div>

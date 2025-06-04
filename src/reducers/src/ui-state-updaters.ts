@@ -44,7 +44,7 @@ export const DEFAULT_MODAL = ADD_DATA_ID;
  * @public
  * @example
  *
- * import keplerGlReducer, {uiStateUpdaters} from 'kepler.gl/reducers';
+ * import keplerGlReducer, {uiStateUpdaters} from '@kepler.gl/reducers';
  * // Root Reducer
  * const reducers = combineReducers({
  *  keplerGl: keplerGlReducer,
