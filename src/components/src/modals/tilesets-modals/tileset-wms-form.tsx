@@ -3,7 +3,8 @@
 
 import React, {useCallback, useEffect, useState} from 'react';
 import styled from 'styled-components';
-import WMSCapabilities from 'wms-capabilities';
+import {WMSCapabilities, WMSCapabilitiesLoader} from '@loaders.gl/wms';
+import {load} from '@loaders.gl/core';
 
 import {DatasetType, REMOTE_TILE, RemoteTileFormat} from '@kepler.gl/constants';
 import {MetaResponse} from './common';
@@ -51,31 +52,36 @@ const TilesetWMSForm: React.FC<WMSTileFormProps> = ({setResponse}) => {
       try {
         setLoading(true);
         setError(null);
-        const response = await fetch(`${newWmsUrl}?service=WMS&request=GetCapabilities`);
-        if (!response.ok) {
-          throw new Error(`Failed to fetch GetCapabilities: ${response.statusText}`);
-        }
-        const text = await response.text();
-        const json = new WMSCapabilities(text, DOMParser).toJSON();
+        const data = (await load(
+          `${newWmsUrl}?service=WMS&request=GetCapabilities`,
+          WMSCapabilitiesLoader
+        )) as WMSCapabilities;
 
         // Extract name or title from GetCapabilities response
-        const serviceTitle = json?.Service?.Title;
+        const serviceTitle = data?.title;
         if (serviceTitle && !layerName) {
           setLayerName(serviceTitle);
         }
 
-        const layers = json?.Capability?.Layer?.Layer;
+        // Flatten layers if they are nested
+        const layers = data.layers.flatMap(layer => {
+          if (layer.layers && layer.layers.length > 0) {
+            return layer.layers;
+          }
+          return layer;
+        });
+
         if (Array.isArray(layers)) {
           const layerOptions = layers.map((layer: any) => ({
-            name: layer.Name,
-            title: layer.Title || layer.Name
+            name: layer.name,
+            title: layer.title || layer.name
           }));
           setAvailableLayers(layerOptions);
         } else {
           setAvailableLayers([]);
         }
 
-        setMetadata(json);
+        setMetadata(data);
       } catch (err) {
         setError(err instanceof Error ? err : new Error('Unknown error'));
         setMetadata(null);
