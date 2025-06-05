@@ -10,9 +10,9 @@ import {
   RESOLUTIONS,
   EXPORT_IMG_RATIOS,
   FourByThreeRatioOption,
-  OneXResolutionOption,
-  ExportImage
+  OneXResolutionOption
 } from '@kepler.gl/constants';
+import {ExportImage} from '@kepler.gl/types';
 import {generateHashId} from '@kepler.gl/common-utils';
 import domtoimage from './dom-to-image';
 import {set} from './utils';

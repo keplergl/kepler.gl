@@ -15,7 +15,8 @@ import {
   DatasetAttribution,
   OnErrorCallBack,
   OnSuccessCallBack,
-  Viewport
+  Viewport,
+  MapState
 } from '@kepler.gl/types';
 
 import {
@@ -139,20 +140,27 @@ export const isViewportDisjointed = props => {
   );
 };
 
-export const mapStateSelector = (props: any, index: number): any => {
-  if (!Number.isFinite(index)) {
-    // either no index arg or an invalid index was provided
-    // it is expected to be either 0 or 1 when in split mode
-    // only use the mapState
-    return props.mapState;
-  }
-
-  return isViewportDisjointed(props)
-    ? // mix together the viewport properties intended for this disjointed <MapContainer> with the other necessary mapState properties
-      {...props.mapState, ...props.mapState.splitMapViewports[index]}
-    : // otherwise only use the mapState
-      props.mapState;
+type MapStateProps = {
+  mapState: MapState;
 };
+
+export const mapStateSelector = createSelector(
+  [(props: MapStateProps) => props.mapState, (_: MapStateProps, index?: number) => index],
+  (mapState: MapState, index?: number): MapState => {
+    if (!Number.isFinite(index)) {
+      // either no index arg or an invalid index was provided
+      // it is expected to be either 0 or 1 when in split mode
+      // only use the mapState
+      return mapState;
+    }
+
+    return isViewportDisjointed({mapState})
+      ? // mix together the viewport properties intended for this disjointed <MapContainer> with the other necessary mapState properties
+        {...mapState, ...mapState.splitMapViewports[index || 0]}
+      : // otherwise only use the mapState
+        mapState;
+  }
+);
 
 export const mapFieldsSelector = (props: KeplerGLProps, index = 0) => ({
   getMapboxRef: props.getMapboxRef,
@@ -223,7 +231,13 @@ export const sidePanelSelector = (props: KeplerGLProps, availableProviders, filt
 export const plotContainerSelector = (props: KeplerGLProps) => ({
   width: props.width,
   height: props.height,
-  exportImageSetting: props.uiState.exportImage,
+  ratio: props.uiState.exportImage.ratio,
+  resolution: props.uiState.exportImage.resolution,
+  legend: props.uiState.exportImage.legend,
+  center: props.uiState.exportImage.center,
+  imageSize: props.uiState.exportImage.imageSize,
+  escapeXhtmlForWebpack: props.uiState.exportImage.escapeXhtmlForWebpack,
+
   mapFields: mapFieldsSelector(props),
   addNotification: props.uiStateActions.addNotification,
   setExportImageSetting: props.uiStateActions.setExportImageSetting,

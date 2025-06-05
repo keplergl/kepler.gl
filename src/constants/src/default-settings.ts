@@ -983,28 +983,6 @@ export const EXPORT_IMG_RATIOS = keyMirror({
   CUSTOM: null
 });
 
-export type ExportImage = {
-  ratio: keyof typeof EXPORT_IMG_RATIOS;
-  resolution: keyof typeof RESOLUTIONS;
-  legend: boolean;
-  mapH: number;
-  mapW: number;
-  imageSize: {
-    zoomOffset: number;
-    scale: number;
-    imageW: number;
-    imageH: number;
-  };
-  // exporting state
-  imageDataUri: string;
-  exporting: boolean;
-  processing: boolean;
-  error: Error | false;
-  escapeXhtmlForWebpack?: boolean;
-  // This field was not in the .d.ts file
-  center: boolean;
-};
-
 export type ImageRatioOption = {
   id: keyof typeof EXPORT_IMG_RATIOS;
   label: string;
