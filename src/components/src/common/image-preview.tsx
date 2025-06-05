@@ -14,7 +14,8 @@ const StyledImagePreview = styled.div.attrs({
   flex-direction: column;
   flex: 1;
   justify-content: center;
-  padding: 30px;
+  width: 100%;
+  height: 100%;
 
   .dimension,
   .instruction {
@@ -26,7 +27,17 @@ const StyledImagePreview = styled.div.attrs({
     border-radius: 4px;
     box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.18);
     width: 100%;
+    max-width: 400px;
     position: relative;
+    overflow: hidden;
+  }
+
+  .preview-image-container {
+    position: relative;
+    width: 100%;
+    height: 0;
+    padding-bottom: var(--aspect-ratio);
+    max-height: 400px;
   }
 
   .preview-image-placeholder {
@@ -35,6 +46,7 @@ const StyledImagePreview = styled.div.attrs({
     left: 0;
     width: 100%;
     height: 100%;
+    object-fit: contain;
   }
 
   .preview-image-spinner {
@@ -48,13 +60,21 @@ const StyledImagePreview = styled.div.attrs({
     padding: 12px;
     color: ${props => props.theme.errorColor};
     text-align: center;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 `;
 
 interface ImagePreviewProps {
   exportImage?: ExportImage;
   width?: number;
-  showDimension?: false;
+  showDimension?: boolean;
 }
 
 /**
@@ -63,7 +83,7 @@ interface ImagePreviewProps {
  * @param {number} [props.width]
  * @param {boolean} [props.showDimension]
  */
-const ImagePreview = ({exportImage, width = 400, showDimension = false}: ImagePreviewProps) => {
+const ImagePreview = ({exportImage, showDimension = false}: ImagePreviewProps) => {
   const {
     error,
     imageDataUri,
@@ -71,30 +91,30 @@ const ImagePreview = ({exportImage, width = 400, showDimension = false}: ImagePr
     imageSize: {imageW = 0, imageH = 0} = {}
   } = exportImage || {};
 
-  const imageStyle = {
-    width: `${width}px`,
-    height: `${(imageH / (imageW || 1)) * width}px`
-  };
+  // Calculate aspect ratio percentage for padding-bottom trick
+  const aspectRatio = imageW && imageH ? (imageH / imageW) * 100 : 75; // default to 4:3 if no dimensions
 
   return (
-    <StyledImagePreview>
+    <StyledImagePreview style={{'--aspect-ratio': `${aspectRatio}%`} as React.CSSProperties}>
       {showDimension ? (
         <div className="dimension">
           {imageW} pixel x {imageH} pixel
         </div>
       ) : null}
-      <div className="preview-image" style={imageStyle}>
-        {processing ? (
-          <div className="preview-image-spinner">
-            <LoadingSpinner />
-          </div>
-        ) : error ? (
-          <div className="preview-image--error">
-            <span>{error.message || 'Generate map image failed!'}</span>
-          </div>
-        ) : (
-          <img className="preview-image-placeholder" src={imageDataUri} />
-        )}
+      <div className="preview-image">
+        <div className="preview-image-container">
+          {processing ? (
+            <div className="preview-image-spinner">
+              <LoadingSpinner />
+            </div>
+          ) : error ? (
+            <div className="preview-image--error">
+              <span>{error.message || 'Generate map image failed!'}</span>
+            </div>
+          ) : (
+            <img className="preview-image-placeholder" src={imageDataUri} alt="Map preview" />
+          )}
+        </div>
       </div>
     </StyledImagePreview>
   );
