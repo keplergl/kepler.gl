@@ -11,8 +11,7 @@ import {
   EXPORT_IMG_RATIOS,
   EXPORT_MAP_FORMATS,
   RESOLUTIONS,
-  MAP_CONTROLS,
-  ExportImage
+  MAP_CONTROLS
 } from '@kepler.gl/constants';
 import {LOCALE_CODES} from '@kepler.gl/localization';
 import {createNotification, errorNotification, calculateExportImageSize} from '@kepler.gl/utils';
@@ -29,6 +28,7 @@ import {
   ExportHtml,
   ExportJson,
   ExportMap,
+  ExportImage,
   MapControlItem,
   MapControls,
   UiState

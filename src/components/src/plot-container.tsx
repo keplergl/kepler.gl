@@ -19,7 +19,7 @@ import MapsLayoutFactory from './maps-layout';
 import {MapViewStateContextProvider} from './map-view-state-context';
 
 import {GEOCODER_LAYER_ID} from '@kepler.gl/constants';
-import {Effect, SplitMap, ExportImageImageSize} from '@kepler.gl/types';
+import {Effect, SplitMap, ExportImage} from '@kepler.gl/types';
 import {
   ActionHandler,
   addNotification,
@@ -72,11 +72,11 @@ const StyledMapContainer = styled.div<StyledMapContainerProps>`
 
 interface PlotContainerProps {
   // Image export settings
-  ratio?: number;
-  resolution?: number;
+  ratio?: string;
+  resolution?: string;
   legend?: boolean;
   center?: boolean;
-  imageSize: ExportImageImageSize;
+  imageSize: ExportImage['imageSize'];
   escapeXhtmlForWebpack?: boolean;
 
   // Map settings
@@ -160,24 +160,25 @@ export default function PlotContainerFactory(
     }, [mapFields.mapStyle, scale]);
 
     // Memoize the retrieveNewScreenshot callback
-    const retrieveNewScreenshot = useCallback(
-      debounce(() => {
-        if (plottingAreaRef.current) {
-          convertToPng(plottingAreaRef.current, {
-            filter: DOM_FILTER_FUNC,
-            width: imageSize.imageW,
-            height: imageSize.imageH,
-            escapeXhtmlForWebpack
-          })
-            .then(setExportImageDataUri)
-            .catch(err => {
-              setExportImageError(err);
-              if (enableErrorNotification) {
-                addNotification(exportImageError({err}));
-              }
-            });
-        }
-      }, 500),
+    const debouncedScreenshot = useMemo(
+      () =>
+        debounce(() => {
+          if (plottingAreaRef.current) {
+            convertToPng(plottingAreaRef.current, {
+              filter: DOM_FILTER_FUNC,
+              width: imageSize.imageW,
+              height: imageSize.imageH,
+              escapeXhtmlForWebpack
+            })
+              .then(setExportImageDataUri)
+              .catch(err => {
+                setExportImageError(err);
+                if (enableErrorNotification) {
+                  addNotification(exportImageError({err}));
+                }
+              });
+          }
+        }, 500),
       [
         imageSize.imageW,
         imageSize.imageH,
@@ -189,15 +190,20 @@ export default function PlotContainerFactory(
       ]
     );
 
+    const retrieveNewScreenshot = useCallback(debouncedScreenshot, [debouncedScreenshot]);
+
     // Memoize the onMapRender callback
-    const onMapRender = useCallback(
-      debounce(map => {
-        if (map.isStyleLoaded()) {
-          retrieveNewScreenshot();
-        }
-      }, 500),
+    const debouncedMapRender = useMemo(
+      () =>
+        debounce(map => {
+          if (map.isStyleLoaded()) {
+            retrieveNewScreenshot();
+          }
+        }, 500),
       [retrieveNewScreenshot]
     );
+
+    const onMapRender = useCallback(debouncedMapRender, [debouncedMapRender]);
 
     // Initial setup effect
     useEffect(() => {

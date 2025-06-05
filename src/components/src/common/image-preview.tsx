@@ -4,7 +4,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import LoadingSpinner from './loading-spinner';
-import {ExportImage} from '@kepler.gl/constants';
+import {ExportImage} from '@kepler.gl/types';
 
 const StyledImagePreview = styled.div.attrs({
   className: 'image-preview'
