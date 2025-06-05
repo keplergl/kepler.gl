@@ -264,7 +264,6 @@ export default function PlotContainerFactory(
         mapStyle: scaledMapStyle,
         mapState: newMapState,
         mapControls: {
-          ...mapFields.mapControls,
           mapLegend: {
             show: Boolean(legend),
             active: true
