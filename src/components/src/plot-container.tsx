@@ -2,8 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 // libraries
-import React, {Component, createRef} from 'react';
-import {createSelector} from 'reselect';
+import React, {useRef, useEffect, useState, useCallback, useMemo} from 'react';
 import styled from 'styled-components';
 import {Map} from 'react-map-gl';
 import debounce from 'lodash/debounce';
@@ -19,8 +18,8 @@ import MapContainerFactory from './map-container';
 import MapsLayoutFactory from './maps-layout';
 import {MapViewStateContextProvider} from './map-view-state-context';
 
-import {GEOCODER_LAYER_ID, ExportImage} from '@kepler.gl/constants';
-import {Effect, SplitMap} from '@kepler.gl/types';
+import {GEOCODER_LAYER_ID} from '@kepler.gl/constants';
+import {Effect, SplitMap, ExportImageImageSize} from '@kepler.gl/types';
 import {
   ActionHandler,
   addNotification,
@@ -72,165 +71,207 @@ const StyledMapContainer = styled.div<StyledMapContainerProps>`
 `;
 
 interface PlotContainerProps {
-  width?: number;
-  height?: number;
-  exportImageSetting: ExportImage;
-  addNotification: ActionHandler<typeof addNotification>;
+  // Image export settings
+  ratio?: number;
+  resolution?: number;
+  legend?: boolean;
+  center?: boolean;
+  imageSize: ExportImageImageSize;
+  escapeXhtmlForWebpack?: boolean;
+
+  // Map settings
   mapFields: ReturnType<typeof mapFieldsSelector>;
+  splitMaps?: SplitMap[];
+
+  // Callbacks
   setExportImageSetting: typeof setExportImageSetting;
   setExportImageDataUri: typeof setExportImageDataUri;
   setExportImageError: typeof setExportImageError;
-  splitMaps?: SplitMap[];
-  enableErrorNotification?: boolean;
-}
+  addNotification: ActionHandler<typeof addNotification>;
 
-interface PlotContainerState {
-  plotEffects: Effect[];
+  // Flags
+  enableErrorNotification?: boolean;
 }
 
 export default function PlotContainerFactory(
   MapContainer: ReturnType<typeof MapContainerFactory>,
   MapsLayout: ReturnType<typeof MapsLayoutFactory>
 ): React.ComponentType<PlotContainerProps> {
-  class PlotContainer extends Component<PlotContainerProps, PlotContainerState> {
-    constructor(props) {
-      super(props);
-      this._onMapRender = debounce(this._onMapRender, 500);
-      this._retrieveNewScreenshot = debounce(this._retrieveNewScreenshot, 500);
+  function PlotContainer({
+    // Image export settings
+    ratio,
+    resolution,
+    legend = false,
+    center,
+    imageSize,
+    escapeXhtmlForWebpack,
 
-      this.state = {
-        plotEffects: this.getEffectsForPlot()
-      };
-    }
+    // Map settings
+    mapFields,
+    splitMaps = [],
 
-    private getEffectsForPlot() {
-      return this.props.mapFields.visState.effects.map(effect => effect.clone());
-    }
+    // Callbacks
+    setExportImageSetting,
+    setExportImageDataUri,
+    setExportImageError,
+    addNotification,
 
-    componentDidMount() {
-      this.props.setExportImageSetting({processing: true});
-    }
+    // Flags
+    enableErrorNotification
+  }: PlotContainerProps) {
+    const plottingAreaRef = useRef<HTMLDivElement>(null);
+    const [plotEffects] = useState<Effect[]>(() =>
+      mapFields.visState.effects.map(effect => effect.clone())
+    );
 
-    componentDidUpdate(prevProps) {
-      // re-fetch the new screenshot only when ratio legend or resolution changes
-      const checks = ['ratio', 'resolution', 'legend'];
-      const shouldRetrieveScreenshot = checks.some(
-        item => this.props.exportImageSetting[item] !== prevProps.exportImageSetting[item]
-      );
-      if (shouldRetrieveScreenshot) {
-        this.props.setExportImageSetting({processing: true});
-        this._retrieveNewScreenshot();
-      }
-    }
+    const {mapState} = mapFields;
 
-    plottingAreaRef = createRef<HTMLDivElement>();
-
-    mapStyleSelector = props => props.mapFields.mapStyle;
-    mapScaleSelector = props => {
-      const {imageSize} = props.exportImageSetting;
-      const {mapState} = props.mapFields;
+    // Memoize the scale calculation
+    const scale = useMemo(() => {
       if (imageSize.scale) {
         return imageSize.scale;
       }
 
-      const scale = getScaleFromImageSize(
+      const calculatedScale = getScaleFromImageSize(
         imageSize.imageW,
         imageSize.imageH,
         mapState.width * (mapState.isSplit ? 2 : 1),
         mapState.height
       );
 
-      return scale > 0 ? scale : 1;
-    };
+      return calculatedScale > 0 ? calculatedScale : 1;
+    }, [
+      imageSize.scale,
+      imageSize.imageW,
+      imageSize.imageH,
+      mapState.width,
+      mapState.height,
+      mapState.isSplit
+    ]);
 
-    scaledMapStyleSelector = createSelector(
-      this.mapStyleSelector,
-      this.mapScaleSelector,
-      (mapStyle, scale) => ({
+    // Memoize the map style
+    const scaledMapStyle = useMemo(() => {
+      const mapStyle = mapFields.mapStyle;
+      return {
         ...mapStyle,
         bottomMapStyle: scaleMapStyleByResolution(mapStyle.bottomMapStyle, scale),
         topMapStyle: scaleMapStyleByResolution(mapStyle.topMapStyle, scale)
-      })
+      };
+    }, [mapFields.mapStyle, scale]);
+
+    // Memoize the retrieveNewScreenshot callback
+    const retrieveNewScreenshot = useCallback(
+      debounce(() => {
+        if (plottingAreaRef.current) {
+          convertToPng(plottingAreaRef.current, {
+            filter: DOM_FILTER_FUNC,
+            width: imageSize.imageW,
+            height: imageSize.imageH,
+            escapeXhtmlForWebpack
+          })
+            .then(setExportImageDataUri)
+            .catch(err => {
+              setExportImageError(err);
+              if (enableErrorNotification) {
+                addNotification(exportImageError({err}));
+              }
+            });
+        }
+      }, 500),
+      [
+        imageSize.imageW,
+        imageSize.imageH,
+        escapeXhtmlForWebpack,
+        setExportImageDataUri,
+        setExportImageError,
+        enableErrorNotification,
+        addNotification
+      ]
     );
 
-    _onMapRender = map => {
-      if (map.isStyleLoaded()) {
-        this._retrieveNewScreenshot();
+    // Memoize the onMapRender callback
+    const onMapRender = useCallback(
+      debounce(map => {
+        if (map.isStyleLoaded()) {
+          retrieveNewScreenshot();
+        }
+      }, 500),
+      [retrieveNewScreenshot]
+    );
+
+    // Initial setup effect
+    useEffect(() => {
+      setExportImageSetting({processing: true});
+    }, [setExportImageSetting]);
+
+    // Screenshot update effect
+    useEffect(() => {
+      if (ratio !== undefined || resolution !== undefined || legend !== undefined) {
+        setExportImageSetting({processing: true});
+        retrieveNewScreenshot();
       }
-    };
+    }, [ratio, resolution, legend, setExportImageSetting, retrieveNewScreenshot]);
 
-    _retrieveNewScreenshot = () => {
-      if (this.plottingAreaRef.current) {
-        const {imageSize, escapeXhtmlForWebpack} = this.props.exportImageSetting;
-        convertToPng(this.plottingAreaRef.current, {
-          filter: DOM_FILTER_FUNC,
-          width: imageSize.imageW,
-          height: imageSize.imageH,
-          escapeXhtmlForWebpack
-        })
-          .then(this.props.setExportImageDataUri)
-          .catch(err => {
-            this.props.setExportImageError(err);
-            if (this.props.enableErrorNotification) {
-              this.props.addNotification(exportImageError({err}));
-            }
-          });
-      }
-    };
-
-    render() {
-      const {exportImageSetting, mapFields, splitMaps = []} = this.props;
-      const {mapState, visState} = mapFields;
-      const {layers, layerData} = visState;
-      const {imageSize, legend} = exportImageSetting;
-
-      const isSplit = splitMaps && splitMaps.length > 1;
-
+    // Memoize size calculations
+    const {size, width, height} = useMemo(() => {
       const size = {
-        width: imageSize?.imageW || 1,
-        height: imageSize?.imageH || 1
+        width: imageSize.imageW || 1,
+        height: imageSize.imageH || 1
       };
-      const width = size.width / (isSplit ? 2 : 1);
-      const height = size.height;
-      const scale = this.mapScaleSelector(this.props);
-      const newMapState = {
+      const isSplit = splitMaps.length > 1;
+      return {
+        size,
+        width: size.width / (isSplit ? 2 : 1),
+        height: size.height
+      };
+    }, [imageSize.imageW, imageSize.imageH, splitMaps.length]);
+
+    // Memoize map state
+    const newMapState = useMemo(() => {
+      const baseMapState = {
         ...mapState,
         width,
         height,
         zoom: mapState.zoom + (Math.log2(scale) || 0)
       };
 
-      // center and all layer bounds
-      if (exportImageSetting.center) {
-        const renderedLayers = layers.filter(
-          (layer, idx) => layer.id !== GEOCODER_LAYER_ID && layer.shouldRenderLayer(layerData[idx])
+      if (center) {
+        const renderedLayers = mapFields.visState.layers.filter(
+          (layer, idx) =>
+            layer.id !== GEOCODER_LAYER_ID &&
+            layer.shouldRenderLayer(mapFields.visState.layerData[idx])
         );
         const bounds = findMapBounds(renderedLayers);
         const centerAndZoom = getCenterAndZoomFromBounds(bounds, {width, height});
         if (centerAndZoom) {
           const zoom = Number.isFinite(centerAndZoom.zoom) ? centerAndZoom.zoom : mapState.zoom;
-
-          newMapState.longitude = centerAndZoom.center[0];
-          newMapState.latitude = centerAndZoom.center[1];
-          newMapState.zoom = zoom + Number(Math.log2(scale) || 0);
+          return {
+            ...baseMapState,
+            longitude: centerAndZoom.center[0],
+            latitude: centerAndZoom.center[1],
+            zoom: zoom + Number(Math.log2(scale) || 0)
+          };
         }
       }
 
-      const mapProps = {
-        ...mapFields,
-        mapStyle: this.scaledMapStyleSelector(this.props),
+      return baseMapState;
+    }, [mapState, width, height, scale, center, mapFields.visState]);
 
-        // override viewport based on export settings
+    // Memoize map props
+    const mapProps = useMemo(
+      () => ({
+        ...mapFields,
+        mapStyle: scaledMapStyle,
         mapState: newMapState,
         mapControls: {
-          // override map legend visibility
+          ...mapFields.mapControls,
           mapLegend: {
-            show: legend,
+            show: Boolean(legend),
             active: true
           }
         },
         MapComponent: Map,
-        onMapRender: this._onMapRender,
+        onMapRender,
         isExport: true,
         deckGlProps: {
           ...mapFields.deckGlProps,
@@ -241,30 +282,33 @@ export default function PlotContainerFactory(
         },
         visState: {
           ...mapFields.visState,
-          // Make sure to use effects not associated with a different WebGL context
-          effects: this.state.plotEffects
+          effects: plotEffects
         }
-      };
+      }),
+      [mapFields, scaledMapStyle, newMapState, legend, onMapRender, plotEffects]
+    );
 
-      const mapContainers = !isSplit ? (
-        <MapContainer index={0} primary={true} {...mapProps} />
-      ) : (
-        <MapsLayout className="plot-container-maps" mapState={newMapState}>
-          {splitMaps.map((settings, index) => (
-            <MapContainer key={index} index={index} primary={index === 1} {...mapProps} />
-          ))}
-        </MapsLayout>
-      );
-      return (
-        <StyledPlotContainer className="export-map-instance">
-          <StyledMapContainer ref={this.plottingAreaRef} width={size.width} height={size.height}>
-            <MapViewStateContextProvider mapState={newMapState}>
-              {mapContainers}
-            </MapViewStateContextProvider>
-          </StyledMapContainer>
-        </StyledPlotContainer>
-      );
-    }
+    const isSplit = splitMaps.length > 1;
+    const mapContainers = !isSplit ? (
+      <MapContainer index={0} primary={true} {...mapProps} />
+    ) : (
+      <MapsLayout className="plot-container-maps" mapState={newMapState}>
+        {splitMaps.map((settings, index) => (
+          <MapContainer key={index} index={index} primary={index === 1} {...mapProps} />
+        ))}
+      </MapsLayout>
+    );
+
+    return (
+      <StyledPlotContainer className="export-map-instance">
+        <StyledMapContainer ref={plottingAreaRef} width={size.width} height={size.height}>
+          <MapViewStateContextProvider mapState={newMapState}>
+            {mapContainers}
+          </MapViewStateContextProvider>
+        </StyledMapContainer>
+      </StyledPlotContainer>
+    );
   }
-  return PlotContainer;
+
+  return React.memo(PlotContainer);
 }

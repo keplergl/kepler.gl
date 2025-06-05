@@ -541,14 +541,19 @@ export const setExportImageSettingUpdater = (
 export const setExportImageDataUriUpdater = (
   state: UiState,
   {payload: dataUri}: UIStateActions.SetExportImageDataUriUpdaterAction
-): UiState => ({
-  ...state,
-  exportImage: {
-    ...state.exportImage,
-    processing: false,
-    imageDataUri: dataUri
+): UiState => {
+  if (dataUri === state.exportImage.imageDataUri) {
+    return state;
   }
-});
+  return {
+    ...state,
+    exportImage: {
+      ...state.exportImage,
+      processing: false,
+      imageDataUri: dataUri
+    }
+  };
+};
 
 /**
  * @memberof uiStateUpdaters
