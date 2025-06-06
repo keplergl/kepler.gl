@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {Component} from 'react';
+import React from 'react';
 import styled from 'styled-components';
 
 import NotificationItemFactory from './notification-panel/notification-item';
@@ -33,33 +33,26 @@ interface NotificationPanelProps {
 
 export default function NotificationPanelFactory(
   NotificationItem: ReturnType<typeof NotificationItemFactory>
-): React.ComponentClass<NotificationPanelProps> {
-  class NotificationPanelUnmemoized extends Component<NotificationPanelProps> {
-    static displayName = 'NotificationPanel';
+): React.FC<NotificationPanelProps> {
+  const NotificationPanel: React.FC<NotificationPanelProps> = ({
+    notifications,
+    removeNotification
+  }) => {
+    const globalNotifications = notifications.filter(
+      n => n.topic === DEFAULT_NOTIFICATION_TOPICS.global
+    );
 
-    render() {
-      const globalNotifications = this.props.notifications.filter(
-        n => n.topic === DEFAULT_NOTIFICATION_TOPICS.global
-      );
-      return (
-        <NotificationPanelContent
-          className="notification-panel"
-          style={{display: globalNotifications.length ? 'block' : 'none'}}
-        >
-          {globalNotifications.map(n => (
-            <NotificationItem
-              key={n.id}
-              notification={n}
-              removeNotification={this.props.removeNotification}
-            />
-          ))}
-        </NotificationPanelContent>
-      );
-    }
-  }
+    return (
+      <NotificationPanelContent
+        className="notification-panel"
+        style={{display: globalNotifications.length ? 'block' : 'none'}}
+      >
+        {globalNotifications.map(n => (
+          <NotificationItem key={n.id} notification={n} removeNotification={removeNotification} />
+        ))}
+      </NotificationPanelContent>
+    );
+  };
 
-  const NotificationPanel = React.memo(
-    NotificationPanelUnmemoized
-  ) as unknown as typeof NotificationPanelUnmemoized;
   return NotificationPanel;
 }

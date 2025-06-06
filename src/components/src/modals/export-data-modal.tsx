@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {Component} from 'react';
+import React, {useEffect} from 'react';
 import {injectIntl, IntlShape} from 'react-intl';
 
 import {DatasetType, EXPORT_DATA_TYPE_OPTIONS} from '@kepler.gl/constants';
@@ -67,134 +67,132 @@ export interface ExportDataModalProps {
 }
 
 const ExportDataModalFactory = () => {
-  class ExportDataModal extends Component<ExportDataModalProps> {
-    componentDidMount() {
-      const toCPUFilter = this.props.selectedDataset || Object.keys(this.props.datasets);
-      this.props.applyCPUFilter(toCPUFilter);
-    }
+  const ExportDataModal = ({
+    supportedDataTypes = EXPORT_DATA_TYPE_OPTIONS,
+    datasets,
+    selectedDataset,
+    dataType,
+    filtered,
+    onChangeExportDataType,
+    onChangeExportFiltered,
+    applyCPUFilter,
+    onChangeExportSelectedDataset,
+    intl
+  }: ExportDataModalProps) => {
+    useEffect(() => {
+      const toCPUFilter = selectedDataset || Object.keys(datasets);
+      applyCPUFilter(toCPUFilter);
+    }, [selectedDataset, datasets, applyCPUFilter]);
 
-    _onSelectDataset: React.ChangeEventHandler<HTMLSelectElement> = ({target: {value}}) => {
-      this.props.applyCPUFilter(value);
-      this.props.onChangeExportSelectedDataset(value);
+    const onSelectDataset: React.ChangeEventHandler<HTMLSelectElement> = ({target: {value}}) => {
+      applyCPUFilter(value);
+      onChangeExportSelectedDataset(value);
     };
 
-    render() {
-      const {
-        supportedDataTypes = EXPORT_DATA_TYPE_OPTIONS,
-        datasets,
-        selectedDataset,
-        dataType,
-        filtered,
-        onChangeExportDataType,
-        onChangeExportFiltered,
-        intl
-      } = this.props;
-
-      const exportAllDatasets = selectedDataset ? !datasets[selectedDataset] : true;
-      const showTiledDatasetWarning = Object.keys(datasets).some(datasetId => {
-        return (
-          (datasets[datasetId].type === DatasetType.VECTOR_TILE ||
-            datasets[datasetId].type === DatasetType.RASTER_TILE) &&
-          (selectedDataset === datasetId || exportAllDatasets)
-        );
-      });
-
+    const exportAllDatasets = selectedDataset ? !datasets[selectedDataset] : true;
+    const showTiledDatasetWarning = Object.keys(datasets).some(datasetId => {
       return (
-        <StyledModalContent className="export-data-modal">
-          <div>
-            <StyledExportSection>
-              <div className="description">
-                <div className="title">
-                  <FormattedMessage id={'modal.exportData.datasetTitle'} />
-                </div>
-                <div className="subtitle">
-                  <FormattedMessage id={'modal.exportData.datasetSubtitle'} />
-                </div>
-              </div>
-              <div className="selection">
-                <select value={selectedDataset} onChange={this._onSelectDataset}>
-                  {[intl.formatMessage({id: 'modal.exportData.allDatasets'})]
-                    .concat(Object.keys(datasets))
-                    .map(d => (
-                      <option key={d} value={d}>
-                        {(datasets[d] && datasets[d].label) || d}
-                      </option>
-                    ))}
-                </select>
-              </div>
-            </StyledExportSection>
-            <StyledExportSection>
-              <div className="description">
-                <div className="title">
-                  <FormattedMessage id={'modal.exportData.dataTypeTitle'} />
-                </div>
-                <div className="subtitle">
-                  <FormattedMessage id={'modal.exportData.dataTypeSubtitle'} />
-                </div>
-              </div>
-              <div className="selection">
-                {supportedDataTypes.map(op => (
-                  <StyledType
-                    key={op.id}
-                    selected={dataType === op.id}
-                    onClick={() => op.available && onChangeExportDataType(op.id)}
-                  >
-                    <FileType ext={op.label} height="80px" fontSize="11px" />
-                    {dataType === op.id && <CheckMark />}
-                  </StyledType>
-                ))}
-              </div>
-            </StyledExportSection>
-            <StyledExportSection>
-              <div className="description">
-                <div className="title">
-                  <FormattedMessage id={'modal.exportData.dataTypeTitle'} />
-                </div>
-                <div className="subtitle">
-                  <FormattedMessage id={'modal.exportData.filterDataSubtitle'} />
-                </div>
-              </div>
-              <div className="selection">
-                <StyledFilteredOption
-                  className="unfiltered-option"
-                  selected={!filtered}
-                  onClick={() => onChangeExportFiltered(false)}
-                >
-                  <div className="filter-option-title">
-                    <FormattedMessage id={'modal.exportData.unfilteredData'} />
-                  </div>
-                  <div className="filter-option-subtitle">
-                    {getDataRowCount(datasets, selectedDataset, false, intl)}
-                  </div>
-                  {!filtered && <CheckMark />}
-                </StyledFilteredOption>
-                <StyledFilteredOption
-                  className="filtered-option"
-                  selected={filtered}
-                  onClick={() => onChangeExportFiltered(true)}
-                >
-                  <div className="filter-option-title">
-                    <FormattedMessage id={'modal.exportData.filteredData'} />
-                  </div>
-                  <div className="filter-option-subtitle">
-                    {getDataRowCount(datasets, selectedDataset, true, intl)}
-                  </div>
-                  {filtered && <CheckMark />}
-                </StyledFilteredOption>
-              </div>
-            </StyledExportSection>
-            {showTiledDatasetWarning ? (
-              <div className="title">
-                <StyledWarning>
-                  <FormattedMessage id={'modal.exportData.tiledDatasetWarning'} />
-                </StyledWarning>
-              </div>
-            ) : null}
-          </div>
-        </StyledModalContent>
+        (datasets[datasetId].type === DatasetType.VECTOR_TILE ||
+          datasets[datasetId].type === DatasetType.RASTER_TILE) &&
+        (selectedDataset === datasetId || exportAllDatasets)
       );
-    }
-  }
+    });
+
+    return (
+      <StyledModalContent className="export-data-modal">
+        <div>
+          <StyledExportSection>
+            <div className="description">
+              <div className="title">
+                <FormattedMessage id={'modal.exportData.datasetTitle'} />
+              </div>
+              <div className="subtitle">
+                <FormattedMessage id={'modal.exportData.datasetSubtitle'} />
+              </div>
+            </div>
+            <div className="selection">
+              <select value={selectedDataset} onChange={onSelectDataset}>
+                {[intl.formatMessage({id: 'modal.exportData.allDatasets'})]
+                  .concat(Object.keys(datasets))
+                  .map(d => (
+                    <option key={d} value={d}>
+                      {(datasets[d] && datasets[d].label) || d}
+                    </option>
+                  ))}
+              </select>
+            </div>
+          </StyledExportSection>
+          <StyledExportSection>
+            <div className="description">
+              <div className="title">
+                <FormattedMessage id={'modal.exportData.dataTypeTitle'} />
+              </div>
+              <div className="subtitle">
+                <FormattedMessage id={'modal.exportData.dataTypeSubtitle'} />
+              </div>
+            </div>
+            <div className="selection">
+              {supportedDataTypes.map(op => (
+                <StyledType
+                  key={op.id}
+                  selected={dataType === op.id}
+                  onClick={() => op.available && onChangeExportDataType(op.id)}
+                >
+                  <FileType ext={op.label} height="80px" fontSize="11px" />
+                  {dataType === op.id && <CheckMark />}
+                </StyledType>
+              ))}
+            </div>
+          </StyledExportSection>
+          <StyledExportSection>
+            <div className="description">
+              <div className="title">
+                <FormattedMessage id={'modal.exportData.dataTypeTitle'} />
+              </div>
+              <div className="subtitle">
+                <FormattedMessage id={'modal.exportData.filterDataSubtitle'} />
+              </div>
+            </div>
+            <div className="selection">
+              <StyledFilteredOption
+                className="unfiltered-option"
+                selected={!filtered}
+                onClick={() => onChangeExportFiltered(false)}
+              >
+                <div className="filter-option-title">
+                  <FormattedMessage id={'modal.exportData.unfilteredData'} />
+                </div>
+                <div className="filter-option-subtitle">
+                  {getDataRowCount(datasets, selectedDataset, false, intl)}
+                </div>
+                {!filtered && <CheckMark />}
+              </StyledFilteredOption>
+              <StyledFilteredOption
+                className="filtered-option"
+                selected={filtered}
+                onClick={() => onChangeExportFiltered(true)}
+              >
+                <div className="filter-option-title">
+                  <FormattedMessage id={'modal.exportData.filteredData'} />
+                </div>
+                <div className="filter-option-subtitle">
+                  {getDataRowCount(datasets, selectedDataset, true, intl)}
+                </div>
+                {filtered && <CheckMark />}
+              </StyledFilteredOption>
+            </div>
+          </StyledExportSection>
+          {showTiledDatasetWarning ? (
+            <div className="title">
+              <StyledWarning>
+                <FormattedMessage id={'modal.exportData.tiledDatasetWarning'} />
+              </StyledWarning>
+            </div>
+          ) : null}
+        </div>
+      </StyledModalContent>
+    );
+  };
 
   return injectIntl(ExportDataModal);
 };
