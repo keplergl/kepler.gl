@@ -202,6 +202,7 @@ export interface ImageData {
 
 export type AssetRequestData = {
   url: string;
+  rasterServerUrl: string;
   options: RequestInit;
   useMask: boolean;
   /** Pass this property through the request to pick specific bands from the response */

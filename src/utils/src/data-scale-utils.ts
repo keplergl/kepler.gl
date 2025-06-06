@@ -706,12 +706,12 @@ export function initCustomPaletteByCustomScale({
   colorBreaks
 }: {
   scale: string;
-  field: Field;
+  field?: Field;
   ordinalDomain?: number[] | string[];
   range: ColorRange;
   colorBreaks: ColorBreakOrdinal[] | null;
 }): ColorUI['customPalette'] {
-  const customPaletteName = `color.customPalette.${scale}.${field.name}`;
+  const customPaletteName = `color.customPalette.${scale}.${field?.name || 'point-count'}`;
   // reuse range.colorMap if the field and scale not changed
   const reuseColorMap = range.colorMap && range.name === customPaletteName && range.type === scale;
   const colorMap = reuseColorMap

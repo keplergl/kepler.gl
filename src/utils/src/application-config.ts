@@ -59,12 +59,20 @@ export type KeplerApplicationConfig = {
   // WMS layer is under development and not ready for production use. Disabled by default.
   enableWMSLayer?: boolean;
 
-  /** Titiler v0.11 vs v0.21 */
+  /** Whether to use Titiler v0.21 API endpoints instead of v0.11 */
   rasterServerUseLatestTitiler?: boolean;
   /** An array of URLs to shards of the raster tile server to be used by the raster tile layer. */
   rasterServerUrls?: string[];
   /** If true then try to fetch quantized elevation meshes from raster servers */
   rasterServerSupportsElevation?: boolean;
+  /** How many times to retry a request if case of rasterServerServerErrorsToRetry errors */
+  rasterServerMaxRetries?: number;
+  /** How long between retries */
+  rasterServerRetryDelay?: number;
+  /** An array of HTTP status codes that should be retried when encountered. */
+  rasterServerServerErrorsToRetry?: number[];
+  /** Maximum number of simultaneous requests per raster server. 0 - no limit */
+  rasterServerMaxPerServerRequests?: number;
 };
 
 const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
@@ -114,8 +122,12 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
   enableWMSLayer: true,
 
   // TODO: provide a default free server or leave blank
-  rasterServerUrls: ['http://localhost:8000'],
-  rasterServerSupportsElevation: true
+  rasterServerUrls: [],
+  rasterServerSupportsElevation: true,
+  rasterServerMaxRetries: 1,
+  rasterServerRetryDelay: 10000,
+  rasterServerServerErrorsToRetry: [503],
+  rasterServerMaxPerServerRequests: 0
 };
 
 const applicationConfig: Required<KeplerApplicationConfig> = DEFAULT_APPLICATION_CONFIG;

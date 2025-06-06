@@ -365,7 +365,9 @@ export default class AggregationLayer extends Layer {
     const updateTriggers = {
       getColorValue: {
         colorField: this.config.colorField,
-        colorAggregation: this.config.visConfig.colorAggregation
+        colorAggregation: this.config.visConfig.colorAggregation,
+        colorRange: visConfig.colorRange,
+        colorMap: visConfig.colorRange.colorMap
       },
       getElevationValue: {
         sizeField: this.config.sizeField,
