@@ -169,7 +169,8 @@ export default {
     allowHover: 'Allow Hover',
     showNeighborOnHover: 'Highlight Neighbors On Hover',
     showHighlightColor: 'Show highlight Color',
-    darkModeEnabled: 'Dark base map'
+    darkModeEnabled: 'Dark base map',
+    transparentBackground: 'Transparent Background'
   },
   layerManager: {
     addData: 'Add Data',

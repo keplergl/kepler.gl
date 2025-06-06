@@ -1,60 +1,63 @@
 // Imports
-// @ts-expect-error 
+// @ts-expect-error
 import {_WMSLayer as DeckWMSLayer} from '@deck.gl/geo-layers';
-import AbstractTileLayer, {
-  AbstractTileLayerConfig,
-  AbstractTileLayerVisConfigSettings,
-  LayerData as CommonLayerData
-} from '../vector-tile/abstract-tile-layer';
-import {Field, Merge, VisConfigNumber, VisConfigSelection} from 'src/types';
+import {
+  Field,
+  LayerBaseConfig,
+  VisConfigBoolean,
+  VisConfigNumber,
+  VisConfigSelection
+} from 'src/types';
 import TileDataset from '../vector-tile/common-tile/tile-dataset';
 import WMSLayerIcon from './wms-layer-icon';
 import {FindDefaultLayerPropsReturnValue} from '../layer-utils';
 import {DatasetType, LAYER_TYPES} from '@kepler.gl/constants';
 import {KeplerTable as KeplerDataset} from '@kepler.gl/table';
+import AbstractTileLayer, {
+  AbstractTileLayerVisConfigSettings,
+  LayerData
+} from '../vector-tile/abstract-tile-layer';
 import {notNullorUndefined} from '@kepler.gl/common-utils';
 
 // Types
-type WMSFeature = {
+export type WMSTile = {
   id: string;
   url: string;
-  layer: string;
 };
 
 export const wmsTileVisConfigs = {
-  opacity: 'opacity' as const
+  opacity: 'opacity' as const,
+  transparent: 'transparent' as const
 };
 
 export type WMSLayerVisConfig = {
   opacity: number;
+  transparent?: boolean;
   wmsLayer: {
     name: string;
     title: string;
   };
 };
 
-export type WMSLayerConfig = Merge<
-  AbstractTileLayerConfig,
-  {
-    visConfig: WMSLayerVisConfig;
-  }
->;
+export type WMSLayerConfig = LayerBaseConfig & {
+  visConfig: WMSLayerVisConfig;
+};
 
-export type WMSLayerVisConfigSettings = Merge<
-  AbstractTileLayerVisConfigSettings,
-  {
-    opacity: VisConfigNumber;
-    wmsLayer: VisConfigSelection;
-  }
->;
+// Extend visConfigSettings to satisfy AbstractTileLayer
+export type WMSLayerVisConfigSettings = AbstractTileLayerVisConfigSettings & {
+  opacity: VisConfigNumber;
+  transparent: VisConfigBoolean;
+  wmsLayer: VisConfigSelection;
+};
 
-type LayerData = CommonLayerData & {
+// Extend LayerData for WMS
+export type WMSLayerData = LayerData & {
   tilesetDataUrl?: string | null;
   metadata?: any;
 };
 
 // Class Definition
-export default class WMSLayer extends AbstractTileLayer<WMSFeature> {
+export default class WMSLayer extends AbstractTileLayer<WMSTile, any[]> {
   declare config: WMSLayerConfig;
   declare visConfigSettings: WMSLayerVisConfigSettings;
 
@@ -72,10 +75,10 @@ export default class WMSLayer extends AbstractTileLayer<WMSFeature> {
     };
 
     this.registerVisConfig(wmsTileVisConfigs);
-
     this.updateLayerVisConfig({
       opacity: 0.8, // Default opacity
-      wmsLayer: defaultWmsLayer
+      wmsLayer: defaultWmsLayer,
+      transparent: false
     });
   }
 
@@ -111,58 +114,69 @@ export default class WMSLayer extends AbstractTileLayer<WMSFeature> {
     return [DatasetType.WMS_TILE];
   }
 
-  protected initTileDataset(): TileDataset<WMSFeature, never> {
-    return new TileDataset<WMSFeature, never>({
-      getTileId: tile => tile.id,
-      getIterable: () => null as never, // Return null to match the 'never' type
-      getRowCount: () => 0, // Return 0 row count for 'never' type
-      getRowValue: () => {
-        return () => null; // Return null for 'never' type
-      }
+  protected initTileDataset() {
+    // Provide dummy accessors for raster/WMS
+    return new TileDataset<WMSTile, any[]>({
+      getTileId: tile => tile?.id || 'wms',
+      getIterable: _tile => [],
+      getRowCount: () => 0,
+      getRowValue: () => () => null
     });
   }
 
-  formatLayerData(datasets, oldLayerData, animationConfig): LayerData {
+  accessRowValue(_field?: Field, _indexKey?: number | null) {
+    // WMS layers are raster, so no row access; return a dummy accessor
+    return () => null;
+  }
+
+  formatLayerData(datasets, oldLayerData, animationConfig): WMSLayerData {
     const {dataId} = this.config;
-
     if (!notNullorUndefined(dataId)) {
-      return {tilesetDataUrl: null};
+      return {
+        ...super.formatLayerData(datasets, oldLayerData, animationConfig),
+        tilesetDataUrl: null,
+        metadata: null
+      };
     }
-
     const dataset = datasets[dataId];
     const metadata = dataset.metadata;
 
-    // Use metadata to configure your layer
-    const tilesetDataUrl = metadata?.tilesetDataUrl || null;
-
     return {
       ...super.formatLayerData(datasets, oldLayerData, animationConfig),
-      tilesetDataUrl,
-      metadata
+      tilesetDataUrl: metadata?.tilesetDataUrl || null, // URL for WMS tiles
+      metadata: dataset?.metadata
     };
   }
 
   renderLayer(opts) {
     const {visConfig} = this.config;
     const {data} = opts;
-
     const wmsLayer = visConfig.wmsLayer.name ?? data.metadata?.layers?.[0]?.name ?? null;
+    const template = {
+      LAYERS: '{layers}',
+      BBOX: '{east},{north},{west},{south}',
+      TRANSPARENT: visConfig.transparent ? 'TRUE' : 'FALSE',
+      FORMAT: 'image/png',
+      REQUEST: 'GetMap',
+      SERVICE: 'WMS',
+      WIDTH: '{width}',
+      HEIGHT: '{height}',
+      VERSION: data.metadata?.version || '1.3.0',
+      CRS: 'EPSG:3857'
+    };
+
+    const qs = Object.entries(template)
+      .map(([key, value]) => `${key}=${value}`)
+      .join('&');
 
     return [
       new DeckWMSLayer({
-        data: data.tilesetDataUrl,
-        serviceType: 'wms',
+        data: `${data.tilesetDataUrl}?${qs}`,
+        serviceType: 'template',
         layers: [wmsLayer],
         opacity: visConfig.opacity,
+        id: this.id
       })
     ];
-  }
-
-  // Protected/Private Methods
-  accessRowValue(
-    field?: Field,
-    indexKey?: number | null
-  ): (field: Field, datum: never) => string | number | null {
-    throw new Error('Method not implemented.');
   }
 }

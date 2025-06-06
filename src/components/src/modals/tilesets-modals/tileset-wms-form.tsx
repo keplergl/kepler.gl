@@ -33,6 +33,7 @@ const TilesetWMSForm: React.FC<WMSTileFormProps> = ({setResponse}) => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<Error | null>(null);
   const [availableLayers, setAvailableLayers] = useState<{name: string; title: string}[]>([]);
+  const [wmsVersion, setWmsVersion] = useState<string>('1.3.0');
 
   const onLayerNameChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -81,6 +82,10 @@ const TilesetWMSForm: React.FC<WMSTileFormProps> = ({setResponse}) => {
           setAvailableLayers([]);
         }
 
+        // Set WMS version
+        const version = data.version || '1.3.0';
+        setWmsVersion(version);
+
         setMetadata(data);
       } catch (err) {
         setError(err instanceof Error ? err : new Error('Unknown error'));
@@ -102,7 +107,8 @@ const TilesetWMSForm: React.FC<WMSTileFormProps> = ({setResponse}) => {
           remoteTileFormat: RemoteTileFormat.WMS,
           tilesetDataUrl: wmsUrl,
           tilesetMetadataUrl: `${wmsUrl}?service=WMS&request=GetCapabilities`,
-          layers: availableLayers
+          layers: availableLayers,
+          wmsVersion: wmsVersion
         }
       };
       setResponse({
@@ -119,7 +125,7 @@ const TilesetWMSForm: React.FC<WMSTileFormProps> = ({setResponse}) => {
         error
       });
     }
-  }, [setResponse, layerName, wmsUrl, metadata, loading, error, availableLayers]);
+  }, [setResponse, layerName, wmsUrl, metadata, loading, error, availableLayers, wmsVersion]);
 
   return (
     <TilesetInputContainer>
