@@ -16,6 +16,9 @@ import TilesetIcon from './tileset-icon';
 import TilesetVectorForm from './tileset-vector-form';
 import TilesetRasterForm from './tileset-raster-form';
 
+import WMSLayerIcon from 'src/layers/src/wms-layer/wms-layer-icon';
+import TilesetWMSForm from './tileset-wms-form';
+
 const WIDTH_ICON = '70px';
 
 const LoadTilesetTabContainer = styled.div`
@@ -93,6 +96,12 @@ const TILE_TYPES = [
     label: 'Raster Tile',
     Icon: RasterTileIcon,
     Component: TilesetRasterForm
+  },
+  {
+    id: 'wms',
+    label: 'WMS',
+    Icon: WMSLayerIcon,
+    Component: TilesetWMSForm
   }
 ];
 
@@ -119,9 +128,21 @@ function LoadTilesetTabFactory() {
 
     // temp patch to hide raster tile layer while in development
     const enableRasterTileLayer = getApplicationConfig().enableRasterTileLayer;
+    const enableWMSLayer = getApplicationConfig().enableWMSLayer;
+
+    // Filter tile types based on application config
     const tileTypes = useMemo(() => {
-      return enableRasterTileLayer ? TILE_TYPES : [TILE_TYPES[0]];
-    }, [enableRasterTileLayer]);
+      const types = TILE_TYPES.filter(tileType => {
+        if (tileType.id === 'rasterTile') {
+          return enableRasterTileLayer;
+        }
+        if (tileType.id === 'wms') {
+          return enableWMSLayer;
+        }
+        return true; // Include all other types by default
+      });
+      return types;
+    }, [enableRasterTileLayer, enableWMSLayer]);
 
     const CurrentForm = tileTypes[typeIndex].Component;
 
@@ -144,9 +165,7 @@ function LoadTilesetTabFactory() {
             </TilesetTypeContainer>
             <div>
               <CurrentForm setResponse={setResponse} />
-              {/** 
               {error && <div>{getError(error)}</div>}
-              */}
             </div>
           </div>
           <MetaContainer>
