@@ -18,11 +18,9 @@ import {getApplicationConfig} from '@kepler.gl/utils';
 
 import {
   INIT,
-  LOAD_MAP_SAMPLE_FILE,
   LOAD_REMOTE_RESOURCE_SUCCESS,
   LOAD_REMOTE_DATASET_PROCESSED_SUCCESS,
   LOAD_REMOTE_RESOURCE_ERROR,
-  SET_SAMPLE_LOADING_STATUS,
   loadRemoteDatasetProcessedSuccessAction
 } from '../actions';
 
@@ -55,13 +53,7 @@ const {DEFAULT_MAP_CONTROLS} = uiStateUpdaters;
 const initialAppState = {
   appName: 'example',
   loaded: false,
-  sampleMaps: [], // this is used to store sample maps fetch from a remote json file
-  isMapLoading: false, // determine whether we are loading a sample map,
   error: null // contains error when loading/retrieving data/configuration
-  // {
-  //   status: null,
-  //   message: null
-  // }
 };
 
 // App reducer
@@ -70,14 +62,6 @@ export const appReducer = handleActions(
     [INIT]: state => ({
       ...state,
       loaded: true
-    }),
-    [LOAD_MAP_SAMPLE_FILE]: (state, action) => ({
-      ...state,
-      sampleMaps: action.samples
-    }),
-    [SET_SAMPLE_LOADING_STATUS]: (state, action) => ({
-      ...state,
-      isMapLoading: action.isMapLoading
     })
   },
   initialAppState
@@ -241,8 +225,8 @@ const loadRemoteDatasetProcessedSuccess = (state, action) => {
     ...state,
     app: {
       ...state.app,
-      currentSample: options,
-      isMapLoading: false // we turn off the spinner
+      currentSample: options
+      // isMapLoading: false // we turn off the spinner
     },
     keplerGl: {
       ...state.keplerGl, // in case you keep multiple instances
@@ -261,10 +245,6 @@ export const loadRemoteResourceError = (state, action) => {
 
   return {
     ...state,
-    app: {
-      ...state.app,
-      isMapLoading: false // we turn of the spinner
-    },
     keplerGl: {
       ...state.keplerGl, // in case you keep multiple instances
       map: {
