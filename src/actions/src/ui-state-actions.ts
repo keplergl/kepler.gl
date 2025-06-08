@@ -3,8 +3,7 @@
 
 import {createAction} from '@reduxjs/toolkit';
 import {default as ActionTypes} from './action-types';
-import {Merge} from '@kepler.gl/types';
-import {ExportImage} from '@kepler.gl/constants';
+import {Merge, ExportImage} from '@kepler.gl/types';
 
 /** TOGGLE_SIDE_PANEL */
 export type ToggleSidePanelUpdaterAction = {

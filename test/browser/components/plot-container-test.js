@@ -32,13 +32,10 @@ test('PlotContainer -> mount', t => {
 
 test('PlotContainer -> mount -> imageSize', t => {
   let wrapper;
-  const exportImageSetting = {
-    ...initialProps.exportImageSetting,
-    imageSize: {
-      ...initialProps.exportImageSetting.imageSize,
-      imageW: 800,
-      imageH: 600
-    }
+  const imageSize = {
+    scale: 1,
+    imageW: 800,
+    imageH: 600
   };
 
   const store = mockStore(initialState);
@@ -46,7 +43,15 @@ test('PlotContainer -> mount -> imageSize', t => {
     wrapper = mountWithTheme(
       <Provider store={store}>
         <IntlWrapper>
-          <PlotContainer {...initialProps} exportImageSetting={exportImageSetting} />
+          <PlotContainer
+            {...initialProps}
+            imageSize={imageSize}
+            mapFields={initialProps.mapFields}
+            setExportImageSetting={() => {}}
+            setExportImageDataUri={() => {}}
+            setExportImageError={() => {}}
+            addNotification={() => {}}
+          />
         </IntlWrapper>
       </Provider>
     );
@@ -58,13 +63,20 @@ test('PlotContainer -> mount -> imageSize', t => {
   t.equal(map.props.mapState.height, 600, 'should send imageH to mapState');
 
   // set center to be true
-  exportImageSetting.center = true;
-
   t.doesNotThrow(() => {
     wrapper = mountWithTheme(
       <Provider store={store}>
         <IntlWrapper>
-          <PlotContainer {...initialProps} exportImageSetting={exportImageSetting} />
+          <PlotContainer
+            {...initialProps}
+            imageSize={imageSize}
+            center={true}
+            mapFields={initialProps.mapFields}
+            setExportImageSetting={() => {}}
+            setExportImageDataUri={() => {}}
+            setExportImageError={() => {}}
+            addNotification={() => {}}
+          />
         </IntlWrapper>
       </Provider>
     );

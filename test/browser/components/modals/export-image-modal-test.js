@@ -105,8 +105,9 @@ test('Components -> ExportImageModal.preview image', t => {
     ...INITIAL_UI_STATE.exportImage,
     imageDataUri,
     imageSize: {
-      imageH: 500,
-      imageW: 500
+      scale: 1,
+      imageW: 500,
+      imageH: 500
     }
   };
   let wrapper;
@@ -126,13 +127,13 @@ test('Components -> ExportImageModal.preview image', t => {
 
   t.equal(
     wrapper.find('.preview-image-placeholder').html(),
-    '<img class="preview-image-placeholder" src="data:image/png;base64,2i3u">',
+    '<img class="preview-image-placeholder" src="data:image/png;base64,2i3u" alt="Map preview">',
     'should render image with src'
   );
 
   t.equal(
     wrapper.find('.preview-image').html(),
-    '<div class="preview-image" style="width: 400px; height: 400px;"><img class="preview-image-placeholder" src="data:image/png;base64,2i3u"></div>',
+    '<div class="preview-image"><div class="preview-image-container"><img class="preview-image-placeholder" src="data:image/png;base64,2i3u" alt="Map preview"></div></div>',
     'should render preview image with src'
   );
 

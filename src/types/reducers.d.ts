@@ -387,6 +387,7 @@ export declare type ExportImage = {
   processing: boolean;
   error: Error | false;
   center: boolean;
+  escapeXhtmlForWebpack?: boolean;
 };
 
 export type ExportData = {
