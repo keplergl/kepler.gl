@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {Component} from 'react';
+import React, {useState, useEffect} from 'react';
 import styled from 'styled-components';
 import {Delete, Info, Warning, Checkmark} from '../common/icons';
 import Markdown from 'markdown-to-jsx';
@@ -118,58 +118,56 @@ interface NotificationItemProps {
 }
 
 export default function NotificationItemFactory() {
-  return class NotificationItem extends Component<NotificationItemProps> {
-    state = {
-      isExpanded: false
-    };
+  return function NotificationItem({
+    notification,
+    removeNotification,
+    isExpanded: initialIsExpanded,
+    theme
+  }: NotificationItemProps) {
+    const [isExpanded, setIsExpanded] = useState(false);
 
-    componentDidMount() {
-      if (this.props.isExpanded) {
-        this.setState({isExpanded: true});
+    useEffect(() => {
+      if (initialIsExpanded) {
+        setIsExpanded(true);
       }
-    }
+    }, [initialIsExpanded]);
 
-    render() {
-      const {notification, removeNotification} = this.props;
-      const {isExpanded} = this.state;
-
-      return (
-        <NotificationItemContentBlock isExpanded={isExpanded} theme={this.props.theme}>
-          {(notification.count || 0) > 1 ? (
-            <NotificationCounter type={notification.type} theme={this.props.theme}>
-              {notification.count}
-            </NotificationCounter>
-          ) : null}
-          <NotificationItemContent
-            className="notification-item"
-            type={notification.type}
-            isExpanded={isExpanded}
-            onClick={() => this.setState({isExpanded: !isExpanded})}
-          >
-            <NotificationIcon className="notification-item--icon">
-              {icons[notification.type]}
-            </NotificationIcon>
-            <NotificationMessage isExpanded={isExpanded} theme={this.props.theme}>
-              <Markdown
-                options={{
-                  overrides: {
-                    a: {
-                      component: LinkRenderer
-                    }
+    return (
+      <NotificationItemContentBlock isExpanded={isExpanded} theme={theme}>
+        {(notification.count || 0) > 1 ? (
+          <NotificationCounter type={notification.type} theme={theme}>
+            {notification.count}
+          </NotificationCounter>
+        ) : null}
+        <NotificationItemContent
+          className="notification-item"
+          type={notification.type}
+          isExpanded={isExpanded}
+          onClick={() => setIsExpanded(!isExpanded)}
+        >
+          <NotificationIcon className="notification-item--icon">
+            {icons[notification.type]}
+          </NotificationIcon>
+          <NotificationMessage isExpanded={isExpanded} theme={theme}>
+            <Markdown
+              options={{
+                overrides: {
+                  a: {
+                    component: LinkRenderer
                   }
-                }}
-              >
-                {notification.message}
-              </Markdown>
-            </NotificationMessage>
-            {typeof removeNotification === 'function' ? (
-              <div className="notification-item--action">
-                <DeleteIcon height="10px" onClick={() => removeNotification(notification.id)} />
-              </div>
-            ) : null}
-          </NotificationItemContent>
-        </NotificationItemContentBlock>
-      );
-    }
+                }
+              }}
+            >
+              {notification.message}
+            </Markdown>
+          </NotificationMessage>
+          {typeof removeNotification === 'function' ? (
+            <div className="notification-item--action">
+              <DeleteIcon height="10px" onClick={() => removeNotification(notification.id)} />
+            </div>
+          ) : null}
+        </NotificationItemContent>
+      </NotificationItemContentBlock>
+    );
   };
 }

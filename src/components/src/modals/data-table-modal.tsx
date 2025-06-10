@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React from 'react';
+import React, {useState, useRef, useMemo, useCallback} from 'react';
 import styled, {withTheme, IStyledComponent} from 'styled-components';
 import DatasetLabel from '../common/dataset-label';
 import DataTableFactory from '../common/data-table';
-import {createSelector} from 'reselect';
 import {renderedSize} from '../common/data-table/cell-size';
 import CanvasHack from '../common/data-table/canvas';
 import KeplerTable, {Datasets} from '@kepler.gl/table';
@@ -144,50 +143,62 @@ function DataTableModalFactory(
   DataTable: ReturnType<typeof DataTableFactory>,
   DataTableConfig: ReturnType<typeof DataTableConfigFactory>
 ): React.ComponentType<Omit<DataTableModalProps, 'theme'>> {
-  class DataTableModal extends React.Component<DataTableModalProps> {
-    state = {
-      showConfig: false
-    };
+  const DataTableModal: React.FC<DataTableModalProps> = ({
+    theme,
+    dataId = '',
+    sortTableColumn,
+    pinTableColumn,
+    copyTableColumn: copyTableColumnProp,
+    datasets,
+    showDatasetTable,
+    showTab = true,
+    setColumnDisplayFormat: setColumnDisplayFormatProp,
+    uiStateActions,
+    uiState
+  }) => {
+    const [showConfig, setShowConfig] = useState(false);
+    const datasetCellSizeCache = useRef<Record<string, any>>({});
 
-    datasetCellSizeCache = {};
-    dataId = ({dataId = ''}: DataTableModalProps) => dataId;
-    datasets = (props: DataTableModalProps) => props.datasets;
-    fields = ({datasets, dataId = ''}: DataTableModalProps) => (datasets[dataId] || {}).fields;
-    columns = createSelector(this.fields, fields => fields.map(f => f.name));
-    colMeta = createSelector([this.fields, this.datasets], fields =>
-      fields.reduce(
-        (acc, {name, displayName, type, filterProps, format, displayFormat}) => ({
-          ...acc,
-          [name]: {
-            name: displayName || name,
-            type,
-            ...(format ? {format} : {}),
-            ...(displayFormat ? {displayFormat} : {}),
-            ...(filterProps?.columnStats ? {columnStats: filterProps.columnStats} : {})
-          }
-        }),
-        {}
-      )
+    const fields = useMemo(() => (datasets[dataId] || {}).fields, [datasets, dataId]);
+
+    const columns = useMemo(() => fields?.map(f => f.name) || [], [fields]);
+
+    const colMeta = useMemo(
+      () =>
+        fields?.reduce(
+          (acc, {name, displayName, type, filterProps, format, displayFormat}) => ({
+            ...acc,
+            [name]: {
+              name: displayName || name,
+              type,
+              ...(format ? {format} : {}),
+              ...(displayFormat ? {displayFormat} : {}),
+              ...(filterProps?.columnStats ? {columnStats: filterProps.columnStats} : {})
+            }
+          }),
+          {}
+        ) || {},
+      [fields]
     );
 
-    cellSizeCache = createSelector(this.dataId, this.datasets, (dataId, datasets) => {
+    const cellSizeCache = useMemo(() => {
       if (!datasets[dataId]) {
         return {};
       }
       const {fields, dataContainer} = datasets[dataId];
 
       let showCalculate: boolean | null = null;
-      if (!this.datasetCellSizeCache[dataId]) {
+      if (!datasetCellSizeCache.current[dataId]) {
         showCalculate = true;
       } else if (
-        this.datasetCellSizeCache[dataId].fields !== fields ||
-        this.datasetCellSizeCache[dataId].dataContainer !== dataContainer
+        datasetCellSizeCache.current[dataId].fields !== fields ||
+        datasetCellSizeCache.current[dataId].dataContainer !== dataContainer
       ) {
         showCalculate = true;
       }
 
       if (!showCalculate) {
-        return this.datasetCellSizeCache[dataId].cellSizeCache;
+        return datasetCellSizeCache.current[dataId].cellSizeCache;
       }
 
       const cellSizeCache = fields.reduce(
@@ -200,113 +211,111 @@ function DataTableModalFactory(
             },
             colIdx,
             type: field.type,
-            fontSize: this.props.theme.cellFontSize,
-            font: this.props.theme.fontFamily,
+            fontSize: theme.cellFontSize,
+            font: theme.fontFamily,
             minCellSize: MIN_STATS_CELL_SIZE
           })
         }),
         {}
       );
+
       // save it to cache
-      this.datasetCellSizeCache[dataId] = {
+      datasetCellSizeCache.current[dataId] = {
         cellSizeCache,
         fields,
         dataContainer
       };
       return cellSizeCache;
-    });
+    }, [dataId, datasets, theme]);
 
-    copyTableColumn = (column: string) => {
-      const {dataId = '', copyTableColumn} = this.props;
-      copyTableColumn(dataId, column);
-    };
+    const handleCopyTableColumn = useCallback(
+      (column: string) => {
+        copyTableColumnProp(dataId, column);
+      },
+      [copyTableColumnProp, dataId]
+    );
 
-    pinTableColumn = (column: string) => {
-      const {dataId = '', pinTableColumn} = this.props;
-      pinTableColumn(dataId, column);
-    };
+    const handlePinTableColumn = useCallback(
+      (column: string) => {
+        pinTableColumn(dataId, column);
+      },
+      [pinTableColumn, dataId]
+    );
 
-    sortTableColumn = (column: string, mode?: string) => {
-      const {dataId = '', sortTableColumn} = this.props;
-      sortTableColumn(dataId, column, mode);
-    };
+    const handleSortTableColumn = useCallback(
+      (column: string, mode?: string) => {
+        sortTableColumn(dataId, column, mode);
+      },
+      [sortTableColumn, dataId]
+    );
 
-    setColumnDisplayFormat = formats => {
-      const {dataId, setColumnDisplayFormat} = this.props;
-      if (dataId) setColumnDisplayFormat(dataId, formats);
-    };
+    const handleSetColumnDisplayFormat = useCallback(
+      formats => {
+        if (dataId) setColumnDisplayFormatProp(dataId, formats);
+      },
+      [setColumnDisplayFormatProp, dataId]
+    );
 
-    onOpenConfig = () => {
-      this.setState({showConfig: true});
-    };
+    const onOpenConfig = useCallback(() => {
+      setShowConfig(true);
+    }, []);
 
-    onCloseConfig = () => {
-      this.setState({showConfig: false});
-    };
+    const onCloseConfig = useCallback(() => {
+      setShowConfig(false);
+    }, []);
 
-    render() {
-      const {datasets, dataId, showDatasetTable, showTab = true} = this.props;
-      if (!datasets || !dataId) {
-        return null;
-      }
-      const activeDataset = datasets[dataId];
-      const columns = this.columns(this.props);
-      const colMeta = this.colMeta(this.props);
-      const cellSizeCache = this.cellSizeCache(this.props);
+    if (!datasets || !dataId) {
+      return null;
+    }
 
-      return (
-        <StyledModal className="dataset-modal" id="dataset-modal">
-          <CanvasHack />
-          <TableContainer>
-            {showTab ? (
-              <DatasetTabs
-                activeDataset={activeDataset}
-                datasets={datasets}
-                showDatasetTable={showDatasetTable}
-              />
-            ) : null}
-            <StyledConfigureButton className="display-config-button">
-              <Gear onClick={this.onOpenConfig} />
-              <Portaled
-                right={240}
-                top={20}
-                isOpened={this.state.showConfig}
-                onClose={this.onCloseConfig}
-              >
-                <DataTableConfig
-                  columns={columns}
-                  colMeta={colMeta}
-                  setColumnDisplayFormat={this.setColumnDisplayFormat}
-                  onClose={this.onCloseConfig}
-                />
-              </Portaled>
-            </StyledConfigureButton>
-            {datasets[dataId] ? (
-              <DataTable
-                key={dataId}
-                dataId={dataId}
+    const activeDataset = datasets[dataId];
+
+    return (
+      <StyledModal className="dataset-modal" id="dataset-modal">
+        <CanvasHack />
+        <TableContainer>
+          {showTab ? (
+            <DatasetTabs
+              activeDataset={activeDataset}
+              datasets={datasets}
+              showDatasetTable={showDatasetTable}
+            />
+          ) : null}
+          <StyledConfigureButton className="display-config-button">
+            <Gear onClick={onOpenConfig} />
+            <Portaled right={240} top={20} isOpened={showConfig} onClose={onCloseConfig}>
+              <DataTableConfig
                 columns={columns}
                 colMeta={colMeta}
-                cellSizeCache={cellSizeCache}
-                dataContainer={activeDataset.dataContainer}
-                pinnedColumns={activeDataset.pinnedColumns}
-                sortOrder={activeDataset.sortOrder}
-                sortColumn={activeDataset.sortColumn || DEFAULT_SORT_COLUMN}
-                copyTableColumn={this.copyTableColumn}
-                pinTableColumn={this.pinTableColumn}
-                sortTableColumn={this.sortTableColumn}
-                setColumnDisplayFormat={this.setColumnDisplayFormat}
-                hasStats={false}
+                setColumnDisplayFormat={handleSetColumnDisplayFormat}
+                onClose={onCloseConfig}
               />
-            ) : null}
-          </TableContainer>
-        </StyledModal>
-      );
-    }
-  }
+            </Portaled>
+          </StyledConfigureButton>
+          {datasets[dataId] ? (
+            <DataTable
+              key={dataId}
+              dataId={dataId}
+              columns={columns}
+              colMeta={colMeta}
+              cellSizeCache={cellSizeCache}
+              dataContainer={activeDataset.dataContainer}
+              pinnedColumns={activeDataset.pinnedColumns}
+              sortOrder={activeDataset.sortOrder}
+              sortColumn={activeDataset.sortColumn || DEFAULT_SORT_COLUMN}
+              copyTableColumn={handleCopyTableColumn}
+              pinTableColumn={handlePinTableColumn}
+              sortTableColumn={handleSortTableColumn}
+              setColumnDisplayFormat={handleSetColumnDisplayFormat}
+              hasStats={false}
+            />
+          ) : null}
+        </TableContainer>
+      </StyledModal>
+    );
+  };
 
-  // @ts-expect-error figure out the proper way to type
-  return withTheme(DataTableModal);
+  return withTheme(DataTableModal) as React.ComponentType<Omit<DataTableModalProps, 'theme'>>;
 }
 
 export default DataTableModalFactory;

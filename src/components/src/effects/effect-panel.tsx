@@ -7,7 +7,7 @@ import classnames from 'classnames';
 import PropTypes from 'prop-types';
 
 import {dataTestIds, LIGHT_AND_SHADOW_EFFECT} from '@kepler.gl/constants';
-import {removeEffect, updateEffect} from '@kepler.gl/actions';
+import {ActionHandler, removeEffect, updateEffect} from '@kepler.gl/actions';
 import {Effect} from '@kepler.gl/types';
 
 import EffectPanelHeaderFactory from './effect-panel-header';
@@ -18,8 +18,8 @@ export type EffectPanelProps = {
   effect: Effect;
   isDraggable: boolean;
   listeners: any;
-  removeEffect: typeof removeEffect;
-  updateEffect: typeof updateEffect;
+  removeEffect: ActionHandler<typeof removeEffect>;
+  updateEffect: ActionHandler<typeof updateEffect>;
 
   style?: React.CSSProperties;
   onMouseDown: React.MouseEventHandler<HTMLDivElement>;
@@ -119,7 +119,6 @@ function EffectPanelFactory(
     }
   }
 
-  // @ts-expect-error fix The types of 'propTypes.isDraggable[nominalTypeHack]' are incompatible between these types.
   return EffectPanel;
 }
 
