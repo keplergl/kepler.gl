@@ -24,26 +24,34 @@ const StyledLoadDataModal = styled.div.attrs({
   flex-direction: column;
 `;
 
-const noop = () => {
+const noop = (): void => {
   return;
 };
-const getDefaultMethod = <T,>(methods: T[] = []) =>
+
+const getDefaultMethod = <T,>(methods: T[] = []): T | null =>
   Array.isArray(methods) ? get(methods, [0]) : null;
+
 export interface LoadingMethod {
   id: string;
   label: string;
   elementType: React.ComponentType<any>;
-  tabElementType?: React.ComponentType<{onClick: React.MouseEventHandler; intl: IntlShape}>;
+  tabElementType?: React.ComponentType<{
+    onClick: React.MouseEventHandler;
+    intl: IntlShape;
+  }>;
+}
+
+interface TilesetMetadata {
+  name: string;
+  type: string;
+  metadata: Record<string, any>;
 }
 
 type LoadDataModalProps = {
   // call backs
   onFileUpload: (files: File[]) => void;
   onLoadCloudMap: (provider: any, vis: any) => void;
-  onTilesetAdded: (
-    tileset: {name: string; type: string; metadata: Record<string, any>},
-    processedMetadata?: Record<string, any>
-  ) => void;
+  onTilesetAdded: (tileset: TilesetMetadata, processedMetadata?: Record<string, any>) => void;
   fileLoading: FileLoading | false;
   loadingMethods?: LoadingMethod[];
   /** A list of names of supported formats suitable to present to user */
@@ -53,26 +61,32 @@ type LoadDataModalProps = {
   isCloudMapLoading: boolean;
   /** Set to true if app wants to do its own file filtering */
   disableExtensionFilter?: boolean;
-  onClose?: (...args: any) => any;
-
+  onClose?: (...args: any[]) => any;
   loadFiles: LoadFiles;
   fileLoadingProgress: FileLoadingProgress;
 };
+
+type FactoryDeps = [
+  ReturnType<typeof ModalTabsFactory>,
+  ReturnType<typeof FileUploadFactory>,
+  ReturnType<typeof LoadStorageMapFactory>,
+  ReturnType<typeof LoadTilesetFactory>
+];
 
 LoadDataModalFactory.deps = [
   ModalTabsFactory,
   FileUploadFactory,
   LoadStorageMapFactory,
   LoadTilesetFactory
-];
+] as const;
 
 export function LoadDataModalFactory(
-  ModalTabs: ReturnType<typeof ModalTabsFactory>,
-  FileUpload: ReturnType<typeof FileUploadFactory>,
-  LoadStorageMap: ReturnType<typeof LoadStorageMapFactory>,
-  LoadTileset: ReturnType<typeof LoadTilesetFactory>
+  ModalTabs: FactoryDeps[0],
+  FileUpload: FactoryDeps[1],
+  LoadStorageMap: FactoryDeps[2],
+  LoadTileset: FactoryDeps[3]
 ) {
-  const defaultLoadingMethods = [
+  const defaultLoadingMethods: LoadingMethod[] = [
     {
       id: LOADING_METHODS.upload,
       label: 'modal.loadData.upload',
@@ -90,9 +104,11 @@ export function LoadDataModalFactory(
     }
   ];
 
-  const LoadDataModal: React.FC<LoadDataModalProps> & {
-    defaultLoadingMethods: LoadDataModalProps['loadingMethods'];
-  } = ({
+  type LoadDataModalComponent = React.FC<LoadDataModalProps> & {
+    defaultLoadingMethods: LoadingMethod[];
+  };
+
+  const LoadDataModal: LoadDataModalComponent = ({
     onFileUpload = noop,
     onTilesetAdded = noop,
     fileLoading = false,
@@ -108,8 +124,10 @@ export function LoadDataModalFactory(
       fileLoading,
       isCloudMapLoading
     };
-    // const {loadingMethods, isCloudMapLoading} = props;
-    const [currentMethod, toggleMethod] = useState(getDefaultMethod(loadingMethods));
+
+    const [currentMethod, toggleMethod] = useState<LoadingMethod | null>(
+      getDefaultMethod(loadingMethods)
+    );
 
     const ElementType = currentMethod?.elementType;
 
