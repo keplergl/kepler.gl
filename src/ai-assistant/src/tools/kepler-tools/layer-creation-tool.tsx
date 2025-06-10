@@ -6,16 +6,16 @@ import {LayerClasses} from '@kepler.gl/layers';
 import KeplerTable, {Datasets} from '@kepler.gl/table';
 import {findDefaultLayer} from '@kepler.gl/reducers';
 import {addLayer as addLayerAction} from '@kepler.gl/actions';
-import {interpolateColor} from '../utils';
-import {tool} from '@openassistant/utils';
+import {extendedTool, generateId} from '@openassistant/utils';
 import {z} from 'zod';
 import {useEffect} from 'react';
 
-export const addLayer = tool<
+export const addLayer = extendedTool<
   // parameters
   z.ZodObject<{
     datasetName: z.ZodString;
-    fieldName: z.ZodString;
+    latitudeColumn: z.ZodOptional<z.ZodString>;
+    longitudeColumn: z.ZodOptional<z.ZodString>;
     layerType: z.ZodEnum<
       [
         'point',
@@ -31,8 +31,17 @@ export const addLayer = tool<
         's2'
       ]
     >;
-    colorScale: z.ZodOptional<z.ZodEnum<['quantile', 'quantize', 'ordinal', 'custom']>>;
-    customColorScale: z.ZodOptional<z.ZodArray<z.ZodNumber>>;
+    colorBy: z.ZodOptional<z.ZodString>;
+    colorType: z.ZodOptional<z.ZodEnum<['breaks', 'unique']>>;
+    colorMap: z.ZodOptional<
+      z.ZodArray<
+        z.ZodObject<{
+          value: z.ZodUnion<[z.ZodString, z.ZodNumber, z.ZodNull]>;
+          color: z.ZodString;
+          label: z.ZodOptional<z.ZodString>;
+        }>
+      >
+    >;
   }>,
   // return type
   ExecuteAddLayerResult['llmResult'],
@@ -41,14 +50,29 @@ export const addLayer = tool<
   // context
   AddLayerFunctionContext
 >({
-  description: 'Add a kepler.gl map layer from a dataset and color it by a field.',
+  description: `Add a kepler.gl map layer from a dataset.
+You can create basic map layer without color styling, or enhanced map layer with color visualization.
+
+For basic maps:
+- Simply use datasetName, geometryColumn (if needed), latitudeColumn/longitudeColumn (for point maps), and mapType
+- Omit color-related parameters for simple visualization
+
+For colored maps:
+- If user requests color visualization, use available columns in the dataset
+- Use dataClassify tool to classify data into bins or unique values when needed
+- Generate colorBrewer colors automatically if user doesn't specify colors
+- For colorType 'breaks': [{value: 3, color: '#f7fcb9'}, {value: 10, color: '#addd8e'}, {value: null, color: '#31a354'}]
+- For colorType 'unique': [{value: 'a', color: '#f7fcb9'}, {value: 'b', color: '#addd8e'}, {value: 'c', color: '#31a354'}]
+
+For geojson datasets:
+- Use geometryColumn: '_geojson' and mapType: 'geojson' even for point collections
+`,
   parameters: z.object({
     datasetName: z
       .string()
       .describe('The name of the dataset. Note: please do NOT use the datasetId.'),
-    fieldName: z
-      .string()
-      .describe('The name of the field which the values will be used to color the layer.'),
+    latitudeColumn: z.string().optional(),
+    longitudeColumn: z.string().optional(),
     layerType: z.enum([
       'point',
       'arc',
@@ -62,13 +86,17 @@ export const addLayer = tool<
       'trip',
       's2'
     ]),
-    colorScale: z.enum(['quantile', 'quantize', 'ordinal', 'custom']).optional(),
-    customColorScale: z
-      .array(z.number())
-      .optional()
-      .describe(
-        'An array of numeric breakpoints used to define custom color intervals. Only applicable when colorScale is set to "custom"'
+    colorBy: z.string().optional(),
+    colorType: z.enum(['breaks', 'unique']).optional(),
+    colorMap: z
+      .array(
+        z.object({
+          value: z.union([z.string(), z.number(), z.null()]),
+          color: z.string(),
+          label: z.string().optional()
+        })
       )
+      .optional()
   }),
   execute: executeAddLayer,
   component: AddLayerToolComponent
@@ -79,19 +107,15 @@ export type AddLayerTool = typeof addLayer;
 type AddLayerArgs = {
   datasetName: string;
   layerType: string;
-  fieldName: string;
-  colorScale: string;
-  customColorScale: Array<number>;
+  latitudeColumn?: string;
+  longitudeColumn?: string;
+  colorBy?: string;
+  colorType?: string;
+  colorMap?: Array<{value: string | number | null; color: string; label?: string}>;
 };
 
 function isAddLayerArgs(args: any): args is AddLayerArgs {
-  return (
-    typeof args === 'object' &&
-    args !== null &&
-    'datasetName' in args &&
-    'fieldName' in args &&
-    'layerType' in args
-  );
+  return typeof args === 'object' && args !== null && 'datasetName' in args && 'layerType' in args;
 }
 
 type AddLayerFunctionContext = {
@@ -126,7 +150,8 @@ async function executeAddLayer(args, options): Promise<ExecuteAddLayerResult> {
       throw new Error('Invalid addLayer context');
     }
 
-    const {datasetName, fieldName, layerType, colorScale = 'quantile', customColorScale} = args;
+    const {datasetName, latitudeColumn, longitudeColumn, layerType, colorBy, colorType, colorMap} =
+      args;
 
     const datasets = options.context.getDatasets();
 
@@ -138,76 +163,87 @@ async function executeAddLayer(args, options): Promise<ExecuteAddLayerResult> {
 
     // check if field exists in the dataset
     const dataset = datasets[datasetId];
-    const field = dataset.fields.find(f => f.name === fieldName);
-    if (!field) {
-      throw new Error(`Field ${fieldName} not found.`);
-    }
-
-    // check colorScale is valid
-    if (!['quantile', 'quantize', 'ordinal', 'custom'].includes(colorScale)) {
-      throw new Error(`Invalid color scale: ${colorScale}.`);
-    }
-
-    // check if customColorScale is available
-    if (colorScale === 'custom' && !customColorScale) {
-      throw new Error('Custom color scale or breaks is required when colorScale is "custom".');
-    }
 
     // check if layerType is valid
-    const layer = guessDefaultLayer(dataset, layerType);
+    let layer = guessDefaultLayer(dataset, layerType);
 
+    const layerId = layer?.id || `layer_${generateId()}`;
+
+    if (!layer) {
+      // for point layer, try to creat a point layer manually if LLM sugggests Lat/Lng fields
+      if (layerType === 'point' && latitudeColumn && longitudeColumn) {
+        layer = {
+          id: layerId,
+          type: 'point',
+          config: {
+            dataId: datasetId,
+            label: `${datasetName}-${layerType}`,
+            columns: {
+              lat: {value: latitudeColumn, fieldIdx: dataset.getColumnFieldIdx(latitudeColumn)},
+              lng: {value: longitudeColumn, fieldIdx: dataset.getColumnFieldIdx(longitudeColumn)}
+            }
+          },
+          visConfig: {
+            colorRange: {
+              name: 'Ice And Fire',
+              type: 'diverging',
+              category: 'Uber',
+              colors: ['#D50255', '#FEAD54', '#FEEDB1', '#E8FEB5', '#49E3CE', '#0198BD']
+            }
+          }
+        } as any;
+      }
+    }
     if (!layer) {
       throw new Error(`Invalid layer type: ${layerType}.`);
     }
 
-    const colorField = {
-      name: field.name,
-      type: field.type
-    };
-
-    // create custom colorRange if needed
-    let customColorRange = layer.config.visConfig.colorRange;
-    if (colorScale === 'custom') {
-      const newColors = interpolateColor(customColorRange.colors, customColorScale.length + 1);
-      customColorRange = {
-        ...customColorRange,
-        colors: newColors,
-        colorMap: newColors.map((color, index) => [customColorScale[index] || null, color])
-      };
-    }
-
     // construct new layer config for addLayer() action
     const newLayer = {
-      id: layer.id,
+      id: layerId,
       type: layer.type,
       config: {
         ...layer.config,
         dataId: datasetId,
-        label: `${field.name}-${colorScale}`,
+        label: `${datasetName}-${layerType}`,
         columns: Object.keys(layer.config.columns).reduce((acc, key) => {
           acc[key] = layer.config.columns[key].value;
           return acc;
-        }, {}),
-        colorScale,
-        colorField,
-        strokeColorScale: colorScale,
-        strokeColorField: colorField,
-        visConfig: {
-          ...layer.config.visConfig,
-          colorRange: customColorRange,
-          strokeColorRange: customColorRange,
-          ...(customColorScale
-            ? {colorDomain: customColorScale, strokeColorDomain: customColorScale}
-            : {})
-        }
+        }, {})
       }
     };
+
+    if (colorBy) {
+      const colorField = dataset.fields.find(f => f.name === colorBy);
+      if (!colorField) {
+        throw new Error(`Field ${colorBy} not found.`);
+      }
+      // create kepler.gl's colorMap from uniqueValues and breaks
+      const colorScale = colorType === 'breaks' ? 'custom' : 'customOrdinal';
+      const colors = colorMap?.map(color => color.color);
+      const keplerColorMap = colorMap?.map(color => [color.value, color.color]);
+
+      newLayer.config.visConfig['colorRange'] = {
+        name: 'color.customPalette',
+        type: 'custom',
+        category: 'Custom',
+        colors,
+        colorMap: keplerColorMap
+      };
+      newLayer.config['visualChannels'] = {
+        colorField: {
+          name: colorBy,
+          type: colorField?.type
+        },
+        colorScale
+      };
+    }
 
     return {
       llmResult: {
         success: true,
         layer: JSON.stringify(newLayer),
-        details: `map layer with ${field.name} and ${colorScale} color scale will be added to the map.`
+        details: `map layer ${layerId} will be added to the map.`
       },
       additionalData: {
         layer: newLayer,

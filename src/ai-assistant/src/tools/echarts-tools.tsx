@@ -12,8 +12,15 @@ import {
   PCPTool,
   scatterplot,
   ScatterplotTool
+} from '@openassistant/plots';
+import {
+  BoxplotComponent,
+  BubbleChartComponent,
+  HistogramPlotComponent,
+  ParallelCoordinateComponent,
+  ScatterplotComponent
 } from '@openassistant/echarts';
-import {theme as keplerTheme, textColorLT} from '@kepler.gl/styles';
+
 import {layerSetIsValid} from '@kepler.gl/actions';
 import {Datasets} from '@kepler.gl/table';
 import {Layer} from '@kepler.gl/layers';
@@ -35,20 +42,15 @@ export function getEchartsTools(datasets: Datasets, layers: Layer[], dispatch: D
     highlightRows(datasets, layers, datasetName, selectedIndices, triggerLayerReRender);
   };
 
-  const theme = keplerTheme.textColor === textColorLT ? 'light' : 'dark';
-
   // Create the boxplot tool with the getValues implementation
   const boxplotTool: BoxplotTool = {
     ...boxplot,
     context: {
       ...boxplot.context,
       getValues,
-      onSelected,
-      config: {
-        ...boxplot.context?.config,
-        theme
-      }
-    }
+      onSelected
+    },
+    component: BoxplotComponent
   };
 
   // Create the bubble chart tool with the getValues implementation
@@ -57,12 +59,9 @@ export function getEchartsTools(datasets: Datasets, layers: Layer[], dispatch: D
     context: {
       ...bubbleChart.context,
       getValues,
-      onSelected,
-      config: {
-        ...bubbleChart.context?.config,
-        theme
-      }
-    }
+      onSelected
+    },
+    component: BubbleChartComponent
   };
 
   const histogramTool: HistogramTool = {
@@ -70,12 +69,9 @@ export function getEchartsTools(datasets: Datasets, layers: Layer[], dispatch: D
     context: {
       ...histogram.context,
       getValues,
-      onSelected,
-      config: {
-        ...histogram.context?.config,
-        theme
-      }
-    }
+      onSelected
+    },
+    component: HistogramPlotComponent
   };
 
   const pcpTool: PCPTool = {
@@ -83,12 +79,9 @@ export function getEchartsTools(datasets: Datasets, layers: Layer[], dispatch: D
     context: {
       ...pcp.context,
       getValues,
-      onSelected,
-      config: {
-        ...pcp.context?.config,
-        theme
-      }
-    }
+      onSelected
+    },
+    component: ParallelCoordinateComponent
   };
 
   const scatterplotTool: ScatterplotTool = {
@@ -96,12 +89,9 @@ export function getEchartsTools(datasets: Datasets, layers: Layer[], dispatch: D
     context: {
       ...scatterplot.context,
       getValues,
-      onSelected,
-      config: {
-        ...scatterplot.context?.config,
-        theme
-      }
-    }
+      onSelected
+    },
+    component: ScatterplotComponent
   };
 
   return {

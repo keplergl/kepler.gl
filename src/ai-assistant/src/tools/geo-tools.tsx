@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import React, {useEffect} from 'react';
-import {useDispatch} from 'react-redux';
+import {useDispatch, useSelector} from 'react-redux';
 import {
   dataClassify,
   DataClassifyTool,
@@ -17,7 +17,6 @@ import {
   spatialJoin,
   SpatialJoinTool,
   spatialFilter,
-  SpatialJoinToolComponent,
   buffer,
   centroid,
   dissolve,
@@ -26,7 +25,15 @@ import {
   perimeter,
   BufferTool,
   CentroidTool,
-  DissolveTool
+  DissolveTool,
+  grid,
+  GridTool,
+  standardizeVariable,
+  StandardizeVariableTool,
+  thiessenPolygons,
+  ThiessenPolygonsTool,
+  minimumSpanningTree,
+  MinimumSpanningTreeTool
 } from '@openassistant/geoda';
 import {
   getUsStateGeojson,
@@ -36,19 +43,27 @@ import {
   geocoding,
   routing,
   isochrone,
-  getCachedData,
   IsochroneTool,
   RoutingTool,
-  roads
+  roads,
+  GetUsStateGeojsonTool,
+  GetUsCountyGeojsonTool,
+  GetUsZipcodeGeojsonTool
 } from '@openassistant/osm';
+import {
+  SpatialJoinComponent,
+  DataTableComponent,
+  DataTableComponentProps
+} from '@openassistant/tables';
+import {ToolCache} from '@openassistant/utils';
 import {Datasets} from '@kepler.gl/table';
 import {Layer} from '@kepler.gl/layers';
-import {processFileData} from '@kepler.gl/processors';
 import {addDataToMap} from '@kepler.gl/actions';
 
 import {LisaToolComponent} from './lisa-tool';
-import {getGeometriesFromDataset, getValuesFromDataset} from './utils';
+import {appendColumnsToDataset, getGeometriesFromDataset, getValuesFromDataset} from './utils';
 import {AiAssistantState} from '../reducers';
+import {State} from '../components/ai-assistant-manager';
 
 export function getGeoTools(
   aiAssistant: AiAssistantState,
@@ -56,6 +71,9 @@ export function getGeoTools(
   layers: Layer[],
   layerData: any[]
 ) {
+  // tool cache
+  const toolCache = ToolCache.getInstance();
+
   // context for geo tools
   const getValues = async (datasetName: string, variableName: string) => {
     const values = getValuesFromDataset(datasets, layers, datasetName, variableName);
@@ -64,11 +82,14 @@ export function getGeoTools(
 
   const getGeometries = async (datasetName: string) => {
     let geoms = getGeometriesFromDataset(datasets, layers, layerData, datasetName);
+
     if (geoms.length === 0) {
-      // get the geoms from the cache
-      const geojson = getCachedData(datasetName);
-      if (geojson && 'features' in geojson) {
-        geoms = geojson.features;
+      // even though the tool dataset should be saved by 'saveDataToMapTool',
+      // we still try to get the dataset from tool cache, e.g. route, isochrone etc.
+      const dataset = toolCache.getDataset(datasetName);
+      // check if dataset is a GeoJSON object
+      if (dataset && dataset.type === 'geojson') {
+        geoms = dataset.content.features;
       }
     }
     return geoms;
@@ -79,6 +100,11 @@ export function getGeoTools(
       return aiAssistant.config.mapboxToken;
     }
     throw new Error('Mapbox token is not provided');
+  };
+
+  // onToolCompleted
+  const onToolCompleted = (toolName: string, result: unknown) => {
+    toolCache.addDataset(toolName, result);
   };
 
   // geo tools
@@ -130,7 +156,8 @@ export function getGeoTools(
       getValues,
       getGeometries
     },
-    component: CustomSpatialJoinToolComponent
+    onToolCompleted,
+    component: SpatialJoinComponent
   };
 
   const spatialFilterTool = {
@@ -140,7 +167,8 @@ export function getGeoTools(
       getValues,
       getGeometries
     },
-    component: CustomSpatialJoinToolComponent
+    onToolCompleted,
+    component: SpatialJoinComponent
   };
 
   const routingTool: RoutingTool = {
@@ -148,7 +176,8 @@ export function getGeoTools(
     context: {
       ...routing.context,
       getMapboxToken
-    }
+    },
+    onToolCompleted
   };
 
   const isochroneTool: IsochroneTool = {
@@ -156,7 +185,8 @@ export function getGeoTools(
     context: {
       ...isochrone.context,
       getMapboxToken
-    }
+    },
+    onToolCompleted
   };
 
   const bufferTool: BufferTool = {
@@ -164,7 +194,8 @@ export function getGeoTools(
     context: {
       ...buffer.context,
       getGeometries
-    }
+    },
+    onToolCompleted
   };
 
   const centroidTool: CentroidTool = {
@@ -172,7 +203,8 @@ export function getGeoTools(
     context: {
       ...centroid.context,
       getGeometries
-    }
+    },
+    onToolCompleted
   };
 
   const dissolveTool: DissolveTool = {
@@ -180,7 +212,17 @@ export function getGeoTools(
     context: {
       ...dissolve.context,
       getGeometries
-    }
+    },
+    onToolCompleted
+  };
+
+  const roadsTool = {
+    ...roads,
+    context: {
+      ...roads.context,
+      getGeometries
+    },
+    onToolCompleted
   };
 
   const lengthTool = {
@@ -207,12 +249,53 @@ export function getGeoTools(
     }
   };
 
-  const roadsTool = {
-    ...roads,
+  const thiessenPolygonsTool: ThiessenPolygonsTool = {
+    ...thiessenPolygons,
     context: {
-      ...roads.context,
       getGeometries
-    }
+    },
+    onToolCompleted
+  };
+
+  const minimumSpanningTreeTool: MinimumSpanningTreeTool = {
+    ...minimumSpanningTree,
+    context: {
+      getGeometries
+    },
+    onToolCompleted
+  };
+
+  const gridTool: GridTool = {
+    ...grid,
+    context: {
+      ...grid.context,
+      getGeometries
+    },
+    onToolCompleted
+  };
+
+  const getUsStateTool: GetUsStateGeojsonTool = {
+    ...getUsStateGeojson,
+    onToolCompleted
+  };
+
+  const getUsCountyTool: GetUsCountyGeojsonTool = {
+    ...getUsCountyGeojson,
+    onToolCompleted
+  };
+
+  const getUsZipcodeTool: GetUsZipcodeGeojsonTool = {
+    ...getUsZipcodeGeojson,
+    onToolCompleted
+  };
+
+  const standardizeVariableTool: StandardizeVariableTool = {
+    ...standardizeVariable,
+    context: {
+      ...standardizeVariable.context,
+      getValues
+    },
+    component: CustomDataTableComponent
   };
 
   return {
@@ -223,49 +306,74 @@ export function getGeoTools(
     lisaTool,
     spatialJoinTool,
     spatialFilterTool,
+    gridTool,
     bufferTool,
     centroidTool,
     dissolveTool,
     lengthTool,
     areaTool,
     perimeterTool,
-    getUsStateGeojson,
-    getUsCountyGeojson,
-    getUsZipcodeGeojson,
+    getUsStateTool,
+    getUsCountyTool,
+    getUsZipcodeTool,
     queryUSZipcodes,
     geocoding,
     routing: routingTool,
     isochrone: isochroneTool,
-    roads: roadsTool
+    roads: roadsTool,
+    standardizeVariable: standardizeVariableTool,
+    thiessenPolygons: thiessenPolygonsTool,
+    minimumSpanningTree: minimumSpanningTreeTool
   };
 }
 
 /**
- * Use SpatialJoinToolComponent to add the join result to kepler.gl
+ * Customize the DataTableComponent for StandardizeVariableTool
  */
-function CustomSpatialJoinToolComponent(props) {
+function CustomDataTableComponent(props: DataTableComponentProps) {
   const dispatch = useDispatch();
+  const datasets = useSelector((state: State) => state.demo.keplerGl.map.visState.datasets);
+  const layers = useSelector((state: State) => state.demo.keplerGl.map.visState.layers);
+  const {originalDatasetName, datasetName, saveData} = props;
+
+  // get data by datasetName
+  const dataset = props[datasetName] as {
+    type: string;
+    content: Record<string, number[]>;
+  };
+
+  const data = dataset?.content;
 
   useEffect(() => {
-    async function addJoinedDatasetToMap() {
-      if (props.joinedDatasetId && props.joinedDataset) {
-        // add the joined dataset to kepler.gl
-        const parsedData = await processFileData({
-          content: {
-            data: props.joinedDataset,
-            fileName: props.joinedDatasetId
-          },
-          fileCache: []
-        });
-
-        dispatch(
-          addDataToMap({datasets: parsedData, options: {autoCreateLayers: true, centerMap: false}})
-        );
+    async function saveStandardizedData() {
+      // convert column-wise data to a row-wise Record<string, number>[]
+      const dataRecord: Record<string, number>[] = [];
+      const columnNames = Object.keys(data);
+      const numberOfRows = data[columnNames[0]].length;
+      for (let i = 0; i < numberOfRows; i++) {
+        const row: Record<string, number> = {};
+        for (const key of columnNames) {
+          row[key] = data[key][i];
+        }
+        dataRecord.push(row);
       }
+
+      const processedData = await appendColumnsToDataset(
+        datasets,
+        layers,
+        originalDatasetName,
+        dataRecord,
+        datasetName
+      );
+      dispatch(
+        addDataToMap({datasets: processedData, options: {autoCreateLayers: true, centerMap: false}})
+      );
     }
-    addJoinedDatasetToMap();
+    if (saveData) {
+      saveStandardizedData();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return <SpatialJoinToolComponent {...props} />;
+  return <DataTableComponent {...props} />;
 }
