@@ -198,6 +198,8 @@ async function executeAddLayer(args, options): Promise<ExecuteAddLayerResult> {
       throw new Error(`Invalid layer type: ${layerType}.`);
     }
 
+    const columns = layer?.config?.columns || {};
+
     // construct new layer config for addLayer() action
     const newLayer = {
       id: layerId,
@@ -206,8 +208,11 @@ async function executeAddLayer(args, options): Promise<ExecuteAddLayerResult> {
         ...layer.config,
         dataId: datasetId,
         label: `${datasetName}-${layerType}`,
-        columns: Object.keys(layer.config.columns).reduce((acc, key) => {
-          acc[key] = layer.config.columns[key].value;
+        columns: Object.keys(columns).reduce((acc, key) => {
+          const column = columns[key];
+          if (column) {
+            acc[key] = column.value;
+          }
           return acc;
         }, {})
       }
