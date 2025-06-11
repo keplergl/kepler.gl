@@ -106,4 +106,26 @@ Can you create a minimum spanning tree for the point layer?
 
 Spatial data sets often contain identifiers of larger encompassing units, such as states for counties, or census tracts for individual household data. Spatial disolve is a function that allows us to aggregate the smaller units into the larger units.
 
-We illustrate this functionality with the natregimes dataset.
+We illustrate this functionality with the natregimes dataset:
+
+```
+Load the dataset https://geodacenter.github.io/data-and-lab/data/natregimes.geojson
+```
+
+While the observations are for counties, each county also includes a numeric code for the encompassing state in the variable STFIPS. We can use this variable to aggregate the counties into states.
+
+```
+Can you aggregate the counties into states based on the STFIPS variable?
+```
+
+If you want to aggregate the properties values of the counties into the states, you can use the following prompt:
+
+```
+Can you aggregate the counties into the states based on the STFIPS and aggregate the numeric variables by SUM?
+```
+
+<img width="1128" alt="Screenshot 2025-06-11 at 4 06 25 PM" src="https://github.com/user-attachments/assets/194a3888-8932-4177-9c36-ffe59ee1a745" />
+
+## Spatial join
+
+Spatial join is a function that allows us to join two layers based on a spatial relationship.

@@ -110,167 +110,113 @@ export function getGeoTools(
   // geo tools
   const classifyTool: DataClassifyTool = {
     ...dataClassify,
-    context: {
-      ...dataClassify.context,
-      getValues
-    }
+    context: {getValues}
   };
 
   const weightsTool: SpatialWeightsTool = {
     ...spatialWeights,
-    context: {
-      ...spatialWeights.context,
-      getGeometries
-    }
+    context: {getGeometries}
   };
 
   const globalMoranTool: GlobalMoranTool = {
     ...globalMoran,
-    context: {
-      ...globalMoran.context,
-      getValues
-    }
+    context: {getValues}
   };
 
   const regressionTool: SpatialRegressionTool = {
     ...spatialRegression,
-    context: {
-      ...spatialRegression.context,
-      getValues
-    }
+    context: {getValues}
   };
 
   const lisaTool: LisaTool = {
     ...lisa,
-    context: {
-      ...lisa.context,
-      getValues
-    },
+    context: {getValues},
     component: LisaToolComponent
   };
 
   const spatialJoinTool: SpatialJoinTool = {
     ...spatialJoin,
-    context: {
-      ...spatialJoin.context,
-      getValues,
-      getGeometries
-    },
+    context: {getValues, getGeometries},
     onToolCompleted,
     component: SpatialJoinComponent
   };
 
   const spatialFilterTool = {
     ...spatialFilter,
-    context: {
-      ...spatialFilter.context,
-      getValues,
-      getGeometries
-    },
+    context: {getValues, getGeometries},
     onToolCompleted,
     component: SpatialJoinComponent
   };
 
   const routingTool: RoutingTool = {
     ...routing,
-    context: {
-      ...routing.context,
-      getMapboxToken
-    },
+    context: {getMapboxToken},
     onToolCompleted
   };
 
   const isochroneTool: IsochroneTool = {
     ...isochrone,
-    context: {
-      ...isochrone.context,
-      getMapboxToken
-    },
+    context: {getMapboxToken},
     onToolCompleted
   };
 
   const bufferTool: BufferTool = {
     ...buffer,
-    context: {
-      ...buffer.context,
-      getGeometries
-    },
+    context: {getGeometries},
     onToolCompleted
   };
 
   const centroidTool: CentroidTool = {
     ...centroid,
-    context: {
-      ...centroid.context,
-      getGeometries
-    },
+    context: {getGeometries},
     onToolCompleted
   };
 
   const dissolveTool: DissolveTool = {
     ...dissolve,
     context: {
-      ...dissolve.context,
-      getGeometries
+      getGeometries,
+      getValues
     },
     onToolCompleted
   };
 
   const roadsTool = {
     ...roads,
-    context: {
-      ...roads.context,
-      getGeometries
-    },
+    context: {getGeometries},
     onToolCompleted
   };
 
   const lengthTool = {
     ...length,
-    context: {
-      ...length.context,
-      getGeometries
-    }
+    context: {getGeometries}
   };
 
   const areaTool = {
     ...area,
-    context: {
-      ...area.context,
-      getGeometries
-    }
+    context: {getGeometries}
   };
 
   const perimeterTool = {
     ...perimeter,
-    context: {
-      ...perimeter.context,
-      getGeometries
-    }
+    context: {getGeometries}
   };
 
   const thiessenPolygonsTool: ThiessenPolygonsTool = {
     ...thiessenPolygons,
-    context: {
-      getGeometries
-    },
+    context: {getGeometries},
     onToolCompleted
   };
 
   const minimumSpanningTreeTool: MinimumSpanningTreeTool = {
     ...minimumSpanningTree,
-    context: {
-      getGeometries
-    },
+    context: {getGeometries},
     onToolCompleted
   };
 
   const gridTool: GridTool = {
     ...grid,
-    context: {
-      ...grid.context,
-      getGeometries
-    },
+    context: {getGeometries},
     onToolCompleted
   };
 
@@ -291,10 +237,7 @@ export function getGeoTools(
 
   const standardizeVariableTool: StandardizeVariableTool = {
     ...standardizeVariable,
-    context: {
-      ...standardizeVariable.context,
-      getValues
-    },
+    context: {getValues},
     component: CustomDataTableComponent
   };
 
