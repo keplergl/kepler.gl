@@ -1,5 +1,7 @@
 # Spatial Data Wrangling
 
+Original GeoDa lab by Luc Anselin: https://geodacenter.github.io/workbook/01_datawrangling_1/lab1a.html
+
 ## Introduction
 
 In this chapter, we tackle the topic of data wrangling, i.e., the process of getting data from its raw input into a form that is amenable for analysis. This is often considered to be the most time consuming part of a data science project, taking as much as 80% of the effort (Dasu and Johnson 2003). However, with Kepler.gl AI Assistant, we can now achieve the same data manipulation goals with significantly less effort compared to traditional approaches using software like GeoDa.

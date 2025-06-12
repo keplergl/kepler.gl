@@ -1,6 +1,6 @@
 # Spatial Data Wrangling (2) – GIS Operations
 
-Original GeoDa lab: https://geodacenter.github.io/workbook/01_datawrangling_2/lab1b.html
+Original GeoDa lab by Luc Anselin: https://geodacenter.github.io/workbook/01_datawrangling_2/lab1b.html
 
 ## Introduction
 
@@ -39,6 +39,8 @@ Spatial observations need to be georeferenced, i.e., associated with specific ge
 
 The basic building blocks are degrees latitude and longitude that situate each location with respect to the equator and the Greenwich Meridian (near London, England). Longitude is the horizontal dimension (x), and is measured in degrees East (positive) and West (negative) of Greenwich, ranging from 0 to 180 degrees. Since the U.S. is west of Greenwich, the longitude for U.S. locations is negative. Latitude is the vertical dimension (y), and is measured in degrees North (positive) and South (negative) of the equator, ranging from 0 to 90 degrees. Since the U.S. is in the northern hemisphere, its latitude values will be positive.
 
+### Selecting a projection
+
 In Kepler.gl, the WGS84 geographic coordinate system is used by default. All data is visualized using latitude and longitude in this system to represent geographic locations accurately. Note: the GeoJSON format uses the WGS84 geographic coordinate system by default. If you have datasets not in the WGS84 geographic coordinate system, you can convert them to WGS84 using GeoDa software (see [Reprojection](https://geodacenter.github.io/workbook/01_datawrangling_2/lab1b.html#mean-centers-and-centroids)).
 
 However, when computing geometric measurements—such as distance, buffer, area, length, and perimeter—the AI assistant automatically uses GeoDa library to convert geographic coordinates (latitude and longitude) into projected coordinates (easting and northing) using the UTM projection with the WGS84 datum. This ensures accurate calculations in meters.
@@ -69,10 +71,10 @@ Can you create a map layer from https://geodacenter.github.io/data-and-lab/data/
 After the map layer is created, you can add centroids by just prompting:
 
 ```
-Can you get the centroids of the map layer and save it as a new dataset?
+Can you get the centroids from the chicago commpop dataset?
 ```
 
-<img width="1042" alt="Screenshot 2025-06-08 at 5 01 00 PM" src="https://github.com/user-attachments/assets/00000000-0000-0000-0000-000000000000" />
+<img width="991" alt="Screenshot 2025-06-08 at 9 33 26 PM" src="https://github.com/user-attachments/assets/00d01966-ceb4-4c63-ba4f-b107efad73e5" />
 
 ### Thiessen polygons
 
@@ -84,7 +86,7 @@ For example, we can prompt the AI assistant to create Thiessen polygons for the 
 Can you create Thiessen polygons for the point layer?
 ```
 
-<img width="1042" alt="Screenshot 2025-06-08 at 5 01 00 PM" src="https://github.com/user-attachments/assets/00000000-0000-0000-0000-000000000000" />
+<img width="1056" alt="Screenshot 2025-06-09 at 1 57 00 PM" src="https://github.com/user-attachments/assets/dc18c468-4a75-41ea-b724-ffac0d4f82ac" />
 
 ### Minimum spanning tree
 
@@ -102,11 +104,13 @@ To create a minimum spanning tree for the point layer, you can use the following
 Can you create a minimum spanning tree for the point layer?
 ```
 
+<img width="1040" alt="Screenshot 2025-06-09 at 8 39 46 PM" src="https://github.com/user-attachments/assets/acdde378-05d2-4fce-9eba-c9e6eb3db662" />
+
 ## Aggregation
 
 Spatial data sets often contain identifiers of larger encompassing units, such as states for counties, or census tracts for individual household data. Spatial disolve is a function that allows us to aggregate the smaller units into the larger units.
 
-We illustrate this functionality with the natregimes dataset:
+We illustrate this functionality with the natregimes dataset using **spatial dissolve** tool. First, load the dataset:
 
 ```
 Load the dataset https://geodacenter.github.io/data-and-lab/data/natregimes.geojson
@@ -126,6 +130,65 @@ Can you aggregate the counties into the states based on the STFIPS and aggregate
 
 <img width="1128" alt="Screenshot 2025-06-11 at 4 06 25 PM" src="https://github.com/user-attachments/assets/194a3888-8932-4177-9c36-ffe59ee1a745" />
 
-## Spatial join
+## Multi-Layer Support
 
-Spatial join is a function that allows us to join two layers based on a spatial relationship.
+Kepler.gl supports multi-layer visualization by default. When you load more datasets, the map layers will be automatically added to current map. You can drag-n-drop the layers to reorder them. This multi-layer infrastructure allows for the  calculation of variables for one layer, based on the observations in a different layer.
+
+```
+Load the dataset https://geodacenter.github.io/data-and-lab/data/chicago_commpop.geojson
+```
+
+```
+Load the dataset https://geodacenter.github.io/data-and-lab/data/chicago_sup.geojson
+```
+
+<img width="1242" alt="Screenshot 2025-06-11 at 10 39 16 PM" src="https://github.com/user-attachments/assets/19c2d82c-4551-48bb-944f-e23093a0c2eb" />
+
+
+## Spatial Join
+
+This is an example of a point in polygon GIS operation. There are two applications of this process. In one, the ID variable (or any other variable) of a spatial area is assigned to each point that is within the area’s boundary. We refer to this as Spatial Assign. The reverse of this process is to count (or otherwise aggregate) the number of points that are within a given area. We refer to this as Spatial Count.
+
+Even though the default application is simply assigning an ID or counting the number of points, more complex assignments and aggregations are possible as well. For example, rather than just counting the point, an aggregate over the points can be computed for a given variable, such as the mean, median, standard deviation, or sum. This process is called **Spatial Join**.
+
+### Spatial assign
+
+We start the process illustrating the Spatial Assign operation by first loading the Chicago supermarkets point layer, chicago_sup.geojson, followed by the projected community area layer, chicago_commpop.geojson.
+
+The purpose of the Spatial Assign operation is to assign the community area ID to each supermarket. This is done by using the **Spatial Join** tool.
+
+```
+Can you assign the community name to each supermarket in chicago_sup.geojson?
+```
+
+<img width="1240" alt="Screenshot 2025-06-11 at 10 59 37 PM" src="https://github.com/user-attachments/assets/1fd33641-50cf-4eaf-a6bb-366062a7a53c" />
+
+### Spatial count
+
+The Spatial Count process works in the reverse order by counting the number of supermarkets in each community area.
+
+```
+Can you spatial join the points to the community areas and count the number of points in each community area?
+```
+
+<img width="1244" alt="Screenshot 2025-06-11 at 11 09 37 PM" src="https://github.com/user-attachments/assets/95f2a279-0530-4b0a-a463-8bf32f0095c0" />
+
+:::tip
+You can click on the spatialJoin tool to see the details of how spatial join tool has been applied on the datasets.
+:::
+
+
+### Spatial join with aggregation
+
+We can also carry out an aggregation over the points in each area. For example, when joining the points to the community areas, we can aggregate the points by the mean of the variable `NEAR_DIST` to get e.g. the nearest distance of the supermarkets in each community area.
+
+```
+Can you spatial join the points to the community areas and aggregate the mean value of the variable 'NEAR_DIST' of points in each community area?
+```
+
+<img width="1240" alt="Screenshot 2025-06-11 at 11 11 08 PM" src="https://github.com/user-attachments/assets/c28b8627-993c-4408-9592-fd2a3c989893" />
+
+The aggregation options that are supported now include: COUNT, SUM, MEAN, MIN, MAX, UNIQUE.
+
+
+## ~~Linked Multi-Layers~~

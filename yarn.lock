@@ -4845,15 +4845,15 @@ __metadata:
     "@kepler.gl/table": "npm:3.1.8"
     "@kepler.gl/types": "npm:3.1.8"
     "@kepler.gl/utils": "npm:3.1.8"
-    "@openassistant/core": "npm:^0.5.7"
-    "@openassistant/duckdb": "npm:^0.5.7"
-    "@openassistant/echarts": "npm:^0.5.7"
-    "@openassistant/geoda": "npm:^0.5.7"
-    "@openassistant/osm": "npm:^0.5.7"
-    "@openassistant/plots": "npm:^0.5.7"
-    "@openassistant/tables": "npm:^0.5.7"
-    "@openassistant/ui": "npm:^0.5.7"
-    "@openassistant/utils": "npm:^0.5.7"
+    "@openassistant/core": "npm:^0.5.8"
+    "@openassistant/duckdb": "npm:^0.5.8"
+    "@openassistant/echarts": "npm:^0.5.8"
+    "@openassistant/geoda": "npm:^0.5.8"
+    "@openassistant/osm": "npm:^0.5.8"
+    "@openassistant/plots": "npm:^0.5.8"
+    "@openassistant/tables": "npm:^0.5.8"
+    "@openassistant/ui": "npm:^0.5.8"
+    "@openassistant/utils": "npm:^0.5.8"
     color-interpolate: "npm:^1.0.5"
     global: "npm:^4.3.0"
     ollama-ai-provider: "npm:^1.2.0"
@@ -6472,9 +6472,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@openassistant/core@npm:0.5.7, @openassistant/core@npm:^0.5.7":
-  version: 0.5.7
-  resolution: "@openassistant/core@npm:0.5.7"
+"@openassistant/core@npm:0.5.8, @openassistant/core@npm:^0.5.8":
+  version: 0.5.8
+  resolution: "@openassistant/core@npm:0.5.8"
   dependencies:
     "@ai-sdk/openai": "npm:^1.3.21"
     "@ai-sdk/react": "npm:^1.2.11"
@@ -6503,34 +6503,34 @@ __metadata:
       optional: true
     ollama-ai-provider:
       optional: true
-  checksum: 10c0/b40118d4c5f48a3f8742e1033b90c8f639f03efc5b56a8c4b4fc0f48761cdc9024b13e08a9647dceeab8f9981e60563b46de2a4471a6376d06c8779e1a503a22
+  checksum: 10c0/cdf404035293eac5bd14f4c97ec3713afe9dce4f134f7dbec83913ba7fdfba019393c34c16a522a06fe035fa86033c690c2daa9e86262bb9e851e33ba53bbc6d
   languageName: node
   linkType: hard
 
-"@openassistant/duckdb@npm:^0.5.7":
-  version: 0.5.7
-  resolution: "@openassistant/duckdb@npm:0.5.7"
+"@openassistant/duckdb@npm:^0.5.8":
+  version: 0.5.8
+  resolution: "@openassistant/duckdb@npm:0.5.8"
   dependencies:
     "@duckdb/duckdb-wasm": "npm:^1.29.0"
-    "@openassistant/utils": "npm:0.5.7"
+    "@openassistant/utils": "npm:0.5.8"
     apache-arrow: "npm:^17.0.0"
     zod: "npm:^3.24.4"
   peerDependencies:
     react: ">=18.2"
     react-dom: ">=18.2"
-  checksum: 10c0/2ea3dbec6951286e9334aa7de7f7981b71b92f31679833d98bb728b37dc2f3751ddadac08522012ee2f4dac4f33528f23f3409f538b7694a29f0355e2b52d38b
+  checksum: 10c0/e643def4c9c4f84a088dfb84a2ed612ceabb467a9df1b58aa4307370a2b04e958749d1b487b47e930582d9390e6e5fc3445d8c155afb91349197feb804b1ccba
   languageName: node
   linkType: hard
 
-"@openassistant/echarts@npm:^0.5.7":
-  version: 0.5.7
-  resolution: "@openassistant/echarts@npm:0.5.7"
+"@openassistant/echarts@npm:^0.5.8":
+  version: 0.5.8
+  resolution: "@openassistant/echarts@npm:0.5.8"
   dependencies:
     "@heroui/react": "npm:^2.7.8"
     "@iconify/react": "npm:^5.1.0"
-    "@openassistant/hooks": "npm:0.5.7"
-    "@openassistant/plots": "npm:0.5.7"
-    "@openassistant/utils": "npm:0.5.7"
+    "@openassistant/hooks": "npm:0.5.8"
+    "@openassistant/plots": "npm:0.5.8"
+    "@openassistant/utils": "npm:0.5.8"
     echarts: "npm:^5.5.1"
     echarts-for-react: "npm:^3.0.2"
     framer-motion: "npm:^12.12.1"
@@ -6538,13 +6538,13 @@ __metadata:
   peerDependencies:
     react: ">=18.2"
     react-dom: ">=18.2"
-  checksum: 10c0/028fc8279ef1131a5544112a412a289661015337d0bea4e108041478473c97193b892f49e40a59378bd7e98282632a094584cba25affb636c912d4bd1e76e5ff
+  checksum: 10c0/03f66ba7c5a1d788da06acf9bdc7e6e104904c0b4e631517c4d29807627712564282dbbe992719a07a8328a9c7e600555e29763da6d234c45dbe189189795570
   languageName: node
   linkType: hard
 
-"@openassistant/geoda@npm:^0.5.7":
-  version: 0.5.7
-  resolution: "@openassistant/geoda@npm:0.5.7"
+"@openassistant/geoda@npm:^0.5.8":
+  version: 0.5.8
+  resolution: "@openassistant/geoda@npm:0.5.8"
   dependencies:
     "@geoda/core": "npm:^0.0.16"
     "@geoda/lisa": "npm:^0.0.16"
@@ -6552,42 +6552,42 @@ __metadata:
     "@loaders.gl/core": "npm:^4.3.3"
     "@loaders.gl/gis": "npm:^4.3.3"
     "@loaders.gl/schema": "npm:^4.3.3"
-    "@openassistant/plots": "npm:0.5.7"
-    "@openassistant/utils": "npm:0.5.7"
+    "@openassistant/plots": "npm:0.5.8"
+    "@openassistant/utils": "npm:0.5.8"
     "@turf/bbox": "npm:^7.2.0"
   peerDependencies:
     react: ">=18.2"
     react-dom: ">=18.2"
-  checksum: 10c0/7f13e00b987e65f643ec1134d1e59cacf94be9360c7c4c6d0479d5d492462dd98204f3bc29d1a4d5109652223dee631b4d287d6ca2facbd38a714c923dbd2a3f
+  checksum: 10c0/639e02be7be4697ea2213677771095b114e9137195eb8917ce876dd0975e7398471d3a0900c6fe6f8d9b72f44fc289f5de8f50b8d4657f7cc987a3afe5ee81e4
   languageName: node
   linkType: hard
 
-"@openassistant/hooks@npm:0.5.7":
-  version: 0.5.7
-  resolution: "@openassistant/hooks@npm:0.5.7"
+"@openassistant/hooks@npm:0.5.8":
+  version: 0.5.8
+  resolution: "@openassistant/hooks@npm:0.5.8"
   peerDependencies:
     react: ">=18.2"
     react-dom: ">=18.2"
-  checksum: 10c0/678816adaa38f2113a2ef1d6477f66598a56c7ea2f3244f95778ae27ede40d8596d0a03d4ff892fcf57a515fcbc81bafb28d84a0dd282b746354568f872a14a4
+  checksum: 10c0/ee9173f5d5c190fe62631b11b1eabab6b008659b7134f92ed387794467bb392e1a2eca29c188eeb3b40b821257ea9fc5141382c998d3a66cb1ec5c51492d0d54
   languageName: node
   linkType: hard
 
-"@openassistant/osm@npm:^0.5.7":
-  version: 0.5.7
-  resolution: "@openassistant/osm@npm:0.5.7"
+"@openassistant/osm@npm:^0.5.8":
+  version: 0.5.8
+  resolution: "@openassistant/osm@npm:0.5.8"
   dependencies:
-    "@openassistant/utils": "npm:0.5.7"
+    "@openassistant/utils": "npm:0.5.8"
     zip3: "npm:^1.0.4"
     zod: "npm:^3.24.4"
-  checksum: 10c0/ebfbf7e33dc7f1c04d60c6b7e3ac4028b95ecdf1e73c1e0def5484352cfdf070ce1b196415b8097f7c0d65aac61988148e6c12f6ff4ea63086e445c2683b643a
+  checksum: 10c0/04ed56829ceecc2b3423decee32b28f08cdb2c0049819a4ea505ef07701ca538fffec82646ab95c2be5a99b73a9ffdac6af09d3205e37c8889059600fd7824fe
   languageName: node
   linkType: hard
 
-"@openassistant/plots@npm:0.5.7, @openassistant/plots@npm:^0.5.7":
-  version: 0.5.7
-  resolution: "@openassistant/plots@npm:0.5.7"
+"@openassistant/plots@npm:0.5.8, @openassistant/plots@npm:^0.5.8":
+  version: 0.5.8
+  resolution: "@openassistant/plots@npm:0.5.8"
   dependencies:
-    "@openassistant/utils": "npm:0.5.7"
+    "@openassistant/utils": "npm:0.5.8"
     d3-array: "npm:^3.2.4"
     jstat: "npm:^1.9.6"
     simple-statistics: "npm:^7.8.7"
@@ -6595,13 +6595,13 @@ __metadata:
   peerDependencies:
     react: ">=18.2"
     react-dom: ">=18.2"
-  checksum: 10c0/b9281400fec8586afabc6c3e5679db26359609254e3ea41cdb90c812faf86cee474d3cc67cb4ddb0477d04a4d0f095f2ece115dd12ac2d58010fac1a3b11b605
+  checksum: 10c0/fdb03d1cc095225dde76cfa3ba70fc56767d5e3056a441b6d59db73d0b4750c3f149c0e3326d09722f20955d1b762cca07ab6c2728af02f2dcb09c5c31c5eb2e
   languageName: node
   linkType: hard
 
-"@openassistant/tables@npm:^0.5.7":
-  version: 0.5.7
-  resolution: "@openassistant/tables@npm:0.5.7"
+"@openassistant/tables@npm:^0.5.8":
+  version: 0.5.8
+  resolution: "@openassistant/tables@npm:0.5.8"
   dependencies:
     "@duckdb/duckdb-wasm": "npm:1.29.0"
     "@heroui/button": "npm:^2.2.19"
@@ -6618,20 +6618,20 @@ __metadata:
   peerDependencies:
     react: ">=18.2"
     react-dom: ">=18.2"
-  checksum: 10c0/72c7caec91548c8b85f6394f0e1dbcb8d6270f78feddb28edf7bc04e1189ac0aff7e42723da250f18a103a0861815d0e3897ba371f0779eb9700726013e4d095
+  checksum: 10c0/dc84d8b5d30f9f99a9c04d0d87c235123b619685d4d08b5e81bc0279c1641ae8a11d8554b93e7c45870e3d7d4275195abf56316432031c84e7c28f140993eb73
   languageName: node
   linkType: hard
 
-"@openassistant/ui@npm:^0.5.7":
-  version: 0.5.7
-  resolution: "@openassistant/ui@npm:0.5.7"
+"@openassistant/ui@npm:^0.5.8":
+  version: 0.5.8
+  resolution: "@openassistant/ui@npm:0.5.8"
   dependencies:
     "@ai-sdk/ui-utils": "npm:^1.2.11"
     "@heroui/react": "npm:^2.7.8"
     "@heroui/use-clipboard": "npm:^2.1.8"
     "@iconify/react": "npm:^5.1.0"
-    "@openassistant/core": "npm:0.5.7"
-    "@openassistant/utils": "npm:0.5.7"
+    "@openassistant/core": "npm:0.5.8"
+    "@openassistant/utils": "npm:0.5.8"
     ai: "npm:^4.3.16"
     framer-motion: "npm:^11.15.0"
     html2canvas: "npm:^1.4.1"
@@ -6643,16 +6643,16 @@ __metadata:
   peerDependencies:
     react: ">=18.2"
     react-dom: ">=18.2"
-  checksum: 10c0/6699d9cb97913db3202bce288f4775bfdb12e76742abf06ae6cfd62fe143bc75b2c31ac1dfd4e71f7efeb580e88fdf9b1b8645c303c9e53bb19f9e58fd0b0d1c
+  checksum: 10c0/f3ce232be14af7a22c50fe8ba8316046ee3012cc394b3fb14dc7ec06680cd1d88a409d0a463801bbbd5922ef415ce795e97f18b04c4dc458011486641c8a1b3b
   languageName: node
   linkType: hard
 
-"@openassistant/utils@npm:0.5.7, @openassistant/utils@npm:^0.5.7":
-  version: 0.5.7
-  resolution: "@openassistant/utils@npm:0.5.7"
+"@openassistant/utils@npm:0.5.8, @openassistant/utils@npm:^0.5.8":
+  version: 0.5.8
+  resolution: "@openassistant/utils@npm:0.5.8"
   dependencies:
     zod: "npm:^3.24.4"
-  checksum: 10c0/27522f6bbd3390e956bb517db57df7d703e09021ceed61bb973ba820471821815e85a14935c4f32f11a6950bbb5c62f6108afbb2ec21a2fc77a61118bcde5630
+  checksum: 10c0/aa3a399b56f6df3c94fbd506b5f5dcd276ec1331dddaa5186d224db060043a16c4132e3f919dd2ef718ca037233b3f4d0d1a5715a7c601ec4d834aefd2e5dae8
   languageName: node
   linkType: hard
 
