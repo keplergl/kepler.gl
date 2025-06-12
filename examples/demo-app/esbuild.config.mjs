@@ -122,11 +122,23 @@ function addAliases(externals, args) {
   if (useLocalAiAssistant) {
     resolveAlias['@openassistant/core'] = join(LIB_DIR, '../openassistant/packages/core/src');
     resolveAlias['@openassistant/ui'] = join(LIB_DIR, '../openassistant/packages/ui/src');
-    resolveAlias['@openassistant/echarts'] = join(LIB_DIR, '../openassistant/packages/echarts/src');
-    resolveAlias['@openassistant/geoda'] = join(LIB_DIR, '../openassistant/packages/geoda/src');
-    resolveAlias['@openassistant/duckdb'] = join(LIB_DIR, '../openassistant/packages/duckdb/src');
-    resolveAlias['@openassistant/common'] = join(LIB_DIR, '../openassistant/packages/common/src');
-    resolveAlias['@openassistant/osm'] = join(LIB_DIR, '../openassistant/packages/osm/src');
+    resolveAlias['@openassistant/echarts'] = join(
+      LIB_DIR,
+      '../openassistant/packages/components/echarts/src'
+    );
+    resolveAlias['@openassistant/tables'] = join(
+      LIB_DIR,
+      '../openassistant/packages/components/tables/src'
+    );
+    resolveAlias['@openassistant/geoda'] = join(
+      LIB_DIR,
+      '../openassistant/packages/tools/geoda/src'
+    );
+    resolveAlias['@openassistant/duckdb'] = join(
+      LIB_DIR,
+      '../openassistant/packages/tools/duckdb/src'
+    );
+    resolveAlias['@openassistant/osm'] = join(LIB_DIR, '../openassistant/packages/tools/osm/src');
     resolveAlias['@openassistant/utils'] = join(LIB_DIR, '../openassistant/packages/utils/src');
     resolveAlias['@kepler.gl/ai-assistant'] = join(SRC_DIR, 'ai-assistant/src');
   }

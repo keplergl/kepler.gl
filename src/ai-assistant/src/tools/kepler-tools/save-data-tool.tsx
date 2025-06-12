@@ -1,56 +1,107 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {tool} from '@openassistant/utils';
-import {getCachedData, generateId, removeCachedData} from '@openassistant/osm';
-import {z} from 'zod';
 import {useEffect} from 'react';
 import {useDispatch} from 'react-redux';
 import {processFileData} from '@kepler.gl/processors';
 import {addDataToMap} from '@kepler.gl/actions';
+import {ProtoDataset} from '@kepler.gl/types';
 import {FeatureCollection} from 'geojson';
+import {extendedTool, ToolCache, generateId} from '@openassistant/utils';
+import {z} from 'zod';
 
-export const saveDataToMap = tool({
+export const saveToolResults = extendedTool({
   description:
-    'Save data generated from other tools e.g. buffer, zipcode, county, state, isochrone, etc. to kepler.gl. Please avoid using blank space or special characters in the saveDatasetName.',
+    'Save tool results to kepler.gl. The tool includes: buffer, zipcode, county, state, isochrone, thiessenPolygons, etc.',
   parameters: z.object({
-    datasetNames: z.array(z.string()),
-    saveDatasetName: z.string()
+    datasetNames: z.array(z.string()).describe('The names of the datasets created by tools.')
   }),
-  execute: async (args: {datasetNames: string[]; saveDatasetName?: string | null}) => {
+  execute: async (args: {datasetNames: string[]}) => {
     try {
-      const {datasetNames, saveDatasetName} = args;
+      const {datasetNames} = args;
       const loadedDatasetNames: string[] = [];
-      const result: FeatureCollection[] = [];
+      const result: unknown[] = [];
+      const toolCache = ToolCache.getInstance();
+
+      let datasetType;
 
       for (const datasetName of datasetNames) {
-        const geoms = getCachedData(datasetName);
-        if (geoms) {
-          // TODO: the geoms could be BinaryGeometry here
-          result.push(geoms as FeatureCollection);
-          loadedDatasetNames.push(datasetName);
-          // remove the dataset from the cache
-          removeCachedData(datasetName);
+        const dataset = toolCache.getDataset(datasetName);
+        if (dataset && dataset.type === 'geojson') {
+          datasetType = 'geojson';
+        } else if (dataset && dataset.type === 'columnData') {
+          datasetType = 'columnData';
+        } else if (dataset && dataset.type === 'rowObjects') {
+          datasetType = 'rowObjects';
+        } else {
+          throw new Error(
+            `Can not save tool cache dataset ${datasetName}, the dataset type ${datasetType} is not supported`
+          );
         }
+        result.push(dataset.content);
+        loadedDatasetNames.push(datasetName);
       }
 
       if (result.length === 0) {
         throw new Error(`Can not save dataset, No datasets found from ${datasetNames.join(', ')}`);
       }
 
-      // create a unique id for the combined datasets
-      const datasetId = saveDatasetName ? `${saveDatasetName}_${generateId()}` : generateId();
+      // merge the result based on the dataset type
+      let mergedResult;
+
+      if (datasetType === 'geojson') {
+        mergedResult = (result as FeatureCollection[]).reduce(
+          (acc, geom) => {
+            return {
+              ...acc,
+              features: [...acc.features, ...geom.features]
+            };
+          },
+          {type: 'FeatureCollection', features: []}
+        );
+      } else if (datasetType === 'columnData') {
+        const mergedColumnData = (result as Record<string, unknown>[]).reduce((acc, row) => {
+          return {
+            ...acc,
+            ...row
+          };
+        }, {}) as Record<string, unknown[]>;
+        // convert the merged result to a rowObjects array
+        const columnNames = Object.keys(mergedColumnData);
+        const numberOfRows = mergedColumnData[columnNames[0]].length;
+        for (let i = 0; i < numberOfRows; i++) {
+          const rowObject: Record<string, unknown> = {};
+          for (const columnName of columnNames) {
+            rowObject[columnName] = mergedColumnData[columnName][i];
+          }
+          mergedResult.push(rowObject);
+        }
+      } else if (datasetType === 'rowObjects') {
+        mergedResult = (result as unknown[][]).reduce((acc, row) => {
+          return [...acc, ...row];
+        }, []);
+      }
+
+      const datasetName =
+        datasetNames.length > 1 ? `${datasetNames.join('_')}_${generateId()}` : datasetNames[0];
+
+      // try to process the merged result using kepler.gl processor
+      const parsedData = await processFileData({
+        content: {
+          data: mergedResult,
+          fileName: `${datasetName}`
+        },
+        fileCache: []
+      });
 
       return {
         llmResult: {
           success: true,
-          savedDatasetName: datasetId,
-          details: `Successfully save dataset: ${datasetId} in kepler.gl`
+          savedDatasetName: datasetName,
+          details: `Successfully save dataset: ${datasetName} in kepler.gl`
         },
         additionalData: {
-          result,
-          loadedDatasetNames,
-          datasetId
+          parsedData
         }
       };
     } catch (error) {
@@ -65,45 +116,16 @@ export const saveDataToMap = tool({
   component: SaveDataToMapToolComponent
 });
 
-export function SaveDataToMapToolComponent({
-  result,
-  datasetId
-}: {
-  result: FeatureCollection[];
-  datasetId: string;
-}) {
+export function SaveDataToMapToolComponent({parsedData}: {parsedData: ProtoDataset[]}) {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    async function addDatasetsToMap() {
-      // combine the datasets (FeatureCollection[]) into one FeatureCollection
-      const combinedGeojson = result.reduce(
-        (acc, geom) => {
-          return {
-            ...acc,
-            features: [...acc.features, ...geom.features]
-          };
-        },
-        {type: 'FeatureCollection', features: []}
-      );
-
-      // add the geojson to kepler.gl
-      const parsedData = await processFileData({
-        content: {
-          data: combinedGeojson,
-          fileName: `${datasetId}`
-        },
-        fileCache: []
-      });
-
-      // update the id of parsedData
-      // parsedData[0].info.id = datasetId;
-
-      dispatch(
-        addDataToMap({datasets: parsedData, options: {autoCreateLayers: true, centerMap: false}})
-      );
-    }
-    addDatasetsToMap();
+    dispatch(
+      addDataToMap({
+        datasets: parsedData,
+        options: {autoCreateLayers: true, centerMap: true}
+      })
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

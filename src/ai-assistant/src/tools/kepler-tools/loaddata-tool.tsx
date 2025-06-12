@@ -3,14 +3,14 @@
 
 import {useEffect} from 'react';
 import {useDispatch} from 'react-redux';
-import {tool} from '@openassistant/utils';
+import {extendedTool} from '@openassistant/utils';
 import {z} from 'zod';
 import {addDataToMap} from '@kepler.gl/actions';
 import {Loader} from '@loaders.gl/loader-utils';
 import {ProtoDataset} from '@kepler.gl/types';
 import {readFileInBatches, processFileData, ProcessFileDataContent} from '@kepler.gl/processors';
 
-export const loadData = tool<
+export const loadData = extendedTool<
   // parameters of the tool
   z.ZodObject<{
     url: z.ZodString;
@@ -22,7 +22,7 @@ export const loadData = tool<
   // context of the tool
   LoadDataToolContext
 >({
-  description: 'load data from a URL or file',
+  description: `Load dataset from a URL in kepler.gl.`,
   parameters: z.object({
     url: z.string().describe('The URL or file path to load data from')
   }),
