@@ -227,14 +227,20 @@ async function executeAddLayer(args, options): Promise<ExecuteAddLayerResult> {
       const colorScale = colorType === 'breaks' ? 'custom' : 'customOrdinal';
       const colors = colorMap?.map(color => color.color);
       const keplerColorMap = colorMap?.map(color => [color.value, color.color]);
-
-      newLayer.config.visConfig['colorRange'] = {
+      const colorRange = {
         name: 'color.customPalette',
         type: 'custom',
         category: 'Custom',
         colors,
         colorMap: keplerColorMap
       };
+
+      newLayer.config['colorScale'] = colorScale;
+      newLayer.config['colorField'] = colorField;
+      newLayer.config['strokeColorScale'] = colorScale;
+      newLayer.config['strokeColorField'] = colorField;
+      newLayer.config.visConfig['colorRange'] = colorRange;
+      newLayer.config.visConfig['strokeColorRange'] = colorRange;
       newLayer.config['visualChannels'] = {
         colorField: {
           name: colorBy,
