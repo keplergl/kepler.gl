@@ -138,6 +138,10 @@ function addAliases(externals, args) {
       LIB_DIR,
       '../openassistant/packages/tools/duckdb/src'
     );
+    resolveAlias['@openassistant/plots'] = join(
+      LIB_DIR,
+      '../openassistant/packages/tools/plots/src'
+    );
     resolveAlias['@openassistant/osm'] = join(LIB_DIR, '../openassistant/packages/tools/osm/src');
     resolveAlias['@openassistant/utils'] = join(LIB_DIR, '../openassistant/packages/utils/src');
     resolveAlias['@kepler.gl/ai-assistant'] = join(SRC_DIR, 'ai-assistant/src');

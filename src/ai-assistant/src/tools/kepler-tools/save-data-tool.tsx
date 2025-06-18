@@ -12,7 +12,7 @@ import {z} from 'zod';
 
 export const saveToolResults = extendedTool({
   description:
-    'Save tool results to kepler.gl. The tool includes: buffer, zipcode, county, state, isochrone, thiessenPolygons, etc.',
+    'Save tool results to kepler.gl. The tool includes: buffer, zipcode, county, state, isochrone, thiessenPolygons, mst, cartogram, etc.',
   parameters: z.object({
     datasetNames: z.array(z.string()).describe('The names of the datasets created by tools.')
   }),

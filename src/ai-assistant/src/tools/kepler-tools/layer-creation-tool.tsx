@@ -38,7 +38,6 @@ export const addLayer = extendedTool<
         z.ZodObject<{
           value: z.ZodUnion<[z.ZodString, z.ZodNumber, z.ZodNull]>;
           color: z.ZodString;
-          label: z.ZodOptional<z.ZodString>;
         }>
       >
     >;
@@ -60,9 +59,12 @@ For basic maps:
 For colored maps:
 - If user requests color visualization, use available columns in the dataset
 - Use dataClassify tool to classify data into bins or unique values when needed
+- If dataClassify tool returns a list of k breaks
+  a. For a list of k break values, you must create k+1 entries in the colorMap, with the last value being null.
+  b. For example: for breaks = [0, 3, 10], the colorMap could be [{value: 0, color: '##fff7bc', label: '< 0'}, {value: 3, color: '#fec44f', label: '[0-3)'}, {value: null, color: '#d95f0e', label: '>= 3'}]
+- If dataClassify tool returns a list of k unique values
+  a. There should be k colors in the colorMap. For example: for uniqueValues = ['a', 'b', 'c'], the colorMap could be [{value: 'a', color: '#1b9e77'}, {value: 'b', color: '#d95f02'}, {value: 'c', color: '#7570b3'}]
 - Generate colorBrewer colors automatically if user doesn't specify colors
-- For colorType 'breaks': [{value: 3, color: '#f7fcb9'}, {value: 10, color: '#addd8e'}, {value: null, color: '#31a354'}]
-- For colorType 'unique': [{value: 'a', color: '#f7fcb9'}, {value: 'b', color: '#addd8e'}, {value: 'c', color: '#31a354'}]
 
 For geojson datasets:
 - Use geometryColumn: '_geojson' and mapType: 'geojson' even for point collections
@@ -73,6 +75,10 @@ For geojson datasets:
       .describe('The name of the dataset. Note: please do NOT use the datasetId.'),
     latitudeColumn: z.string().optional(),
     longitudeColumn: z.string().optional(),
+    layerName: z
+      .string()
+      .optional()
+      .describe('If possible, generate a name for the layer based on the context.'),
     layerType: z.enum([
       'point',
       'arc',
@@ -92,8 +98,7 @@ For geojson datasets:
       .array(
         z.object({
           value: z.union([z.string(), z.number(), z.null()]),
-          color: z.string(),
-          label: z.string().optional()
+          color: z.string()
         })
       )
       .optional()
@@ -106,6 +111,7 @@ export type AddLayerTool = typeof addLayer;
 
 type AddLayerArgs = {
   datasetName: string;
+  layerName?: string;
   layerType: string;
   latitudeColumn?: string;
   longitudeColumn?: string;
@@ -150,8 +156,16 @@ async function executeAddLayer(args, options): Promise<ExecuteAddLayerResult> {
       throw new Error('Invalid addLayer context');
     }
 
-    const {datasetName, latitudeColumn, longitudeColumn, layerType, colorBy, colorType, colorMap} =
-      args;
+    const {
+      datasetName,
+      layerName,
+      latitudeColumn,
+      longitudeColumn,
+      layerType,
+      colorBy,
+      colorType,
+      colorMap
+    } = args;
 
     const datasets = options.context.getDatasets();
 
@@ -177,7 +191,7 @@ async function executeAddLayer(args, options): Promise<ExecuteAddLayerResult> {
           type: 'point',
           config: {
             dataId: datasetId,
-            label: `${datasetName}-${layerType}`,
+            label: layerName || `${datasetName}-${layerType}`,
             columns: {
               lat: {value: latitudeColumn, fieldIdx: dataset.getColumnFieldIdx(latitudeColumn)},
               lng: {value: longitudeColumn, fieldIdx: dataset.getColumnFieldIdx(longitudeColumn)}
@@ -207,7 +221,7 @@ async function executeAddLayer(args, options): Promise<ExecuteAddLayerResult> {
       config: {
         ...layer.config,
         dataId: datasetId,
-        label: `${datasetName}-${layerType}`,
+        label: layerName || `${datasetName}-${layerType}`,
         columns: Object.keys(columns).reduce((acc, key) => {
           const column = columns[key];
           if (column) {

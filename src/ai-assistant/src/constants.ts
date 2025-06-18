@@ -28,6 +28,26 @@ Note:
   1. IMPORTANT: only use statements, query syntax, data types, expressions, functions, constraints and operators that are supported by DuckDB
   2. Only include columns that already exist in the dataset in variableNames. New columns created via SQL expressions should only be referenced in the SQL query.
   3. Please use dbTableName in the SQL query to reference the table in the database.
+  4. Please note that for data security, only first 2 rows of the result will be returned to LLM for reference, and the full result will be returned to the user.
+
+- For dataClassify tool: when classify data into bins using break values, please use the following rules:
+    a. The lower bound is inclusive, and the upper bound is exclusive for all bins except the last bin, which is inclusive of both bounds.
+    b. For example, for breaks at [1000, 1100], the classifcation or bins should be:
+      - b1: values < 1000
+      - b2: 1000 ≤ values < 1100
+      - b3: values ≥ 1100
+
+- Colocation is a map that shows the co-location of two variables V1 and V2 from a dataset A
+  1. create a categorical variable for the first variable by other tools, e.g.
+    a. breaks in quantile/box map/equal interval/natural breaks/percentile/standard deviation/custom breaks
+    b. clusters in lisa
+  2. create a categorical variable for the second varaible using the same tool
+  3. use tableTool to save the two categorical variables in a new dataset B e.g.
+    a. SELECT ..., CASE WHEN V1 < 0 THEN 1 WHEN V1 >= 5 AND V1 < 10 THEN 2 WHEN V1 >= 10 THEN 3 END AS C1, CASE WHEN V2 < 4 THEN 1 WHEN V2 >= 8 AND V2 < 9 THEN 2 WHEN V2 >= 9 THEN 3 END AS C2;
+  4. use tableTool to compare the two categorical values from dataset B and save the result in a new dataset C
+    a. keep the value if they are the same
+    b. assign -1 if they are different
+  5. create a unique values for the comparison result with Paired color scheme and assign gray color to value -1
 
 - When a user requests to standardize (or apply a similar transformation to) multiple variables in a dataset, follow this strategy:
   1. If the tool only allows standardizing one variable at a time and creates a new dataset for each operation, always use the most recently created dataset (which contains the previously standardized variables) as the input for the next standardization.

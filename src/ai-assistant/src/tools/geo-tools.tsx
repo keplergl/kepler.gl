@@ -33,7 +33,9 @@ import {
   thiessenPolygons,
   ThiessenPolygonsTool,
   minimumSpanningTree,
-  MinimumSpanningTreeTool
+  MinimumSpanningTreeTool,
+  cartogram,
+  CartogramTool
 } from '@openassistant/geoda';
 import {
   getUsStateGeojson,
@@ -214,6 +216,12 @@ export function getGeoTools(
     onToolCompleted
   };
 
+  const cartogramTool: CartogramTool = {
+    ...cartogram,
+    context: {getGeometries, getValues},
+    onToolCompleted
+  };
+
   const gridTool: GridTool = {
     ...grid,
     context: {getGeometries},
@@ -266,7 +274,8 @@ export function getGeoTools(
     roads: roadsTool,
     standardizeVariable: standardizeVariableTool,
     thiessenPolygons: thiessenPolygonsTool,
-    minimumSpanningTree: minimumSpanningTreeTool
+    minimumSpanningTree: minimumSpanningTreeTool,
+    cartogram: cartogramTool
   };
 }
 
