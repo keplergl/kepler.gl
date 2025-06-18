@@ -4,7 +4,7 @@
 // This file is used to call the LAYER_VISUAL_CHANNEL_CHANGE to update the layer style
 
 import {useEffect} from 'react';
-import {tool} from '@openassistant/utils';
+import {extendedTool} from '@openassistant/utils';
 import {layerVisualChannelConfigChange} from '@kepler.gl/actions';
 import {Layer, LayerBaseConfig} from '@kepler.gl/layers';
 import {LayerVisConfig} from '@kepler.gl/types';
@@ -26,7 +26,7 @@ function UpdateLayerColorToolComponent({layer, newConfig, channel, newVisConfig}
  * Update the color of a layer
  * NOTE: this tool should be updated to updateLayerStyle including color, size, opacity, etc.
  */
-export const updateLayerColor = tool({
+export const updateLayerColor = extendedTool({
   description: 'Update the color of a layer',
   parameters: z.object({
     layerId: z.string(),

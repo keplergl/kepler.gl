@@ -8,6 +8,7 @@ import {Datasets, KeplerTable} from '@kepler.gl/table';
 import {SpatialJoinGeometries} from '@openassistant/geoda';
 import {ALL_FIELD_TYPES, LAYER_TYPES} from '@kepler.gl/constants';
 import {Field, ProtoDataset, ProtoDatasetField} from '@kepler.gl/types';
+import {processFileData} from '@kepler.gl/processors';
 
 /**
  * Interpolate the colors from the original colors with the given number of colors
@@ -128,7 +129,8 @@ export function highlightRows(
  */
 export function getDatasetContext(datasets?: Datasets, layers?: Layer[]) {
   if (!datasets || !layers) return '';
-  const context = 'Please ONLY use the following datasets and layers to answer the user question:';
+  const context =
+    'Please remember the following datasets and layers for answering the user question:';
   const dataMeta = Object.values(datasets).map((dataset: KeplerTable) => ({
     datasetName: dataset.label,
     datasetId: dataset.id,
@@ -224,7 +226,7 @@ export function saveAsDataset(
   layers: Layer[],
   datasetName: string,
   newDatasetName: string,
-  data: Record<string, number[]>
+  data: Record<string, unknown[]>
 ) {
   // find datasetId from datasets
   const datasetId = Object.keys(datasets).find(dataId => datasets[dataId].label === datasetName);
@@ -358,4 +360,71 @@ function getFeaturesFromVectorTile(leftDataset: KeplerTable, layers: Layer[]) {
   }
 
   return features;
+}
+
+export async function appendColumnsToDataset(
+  datasets: Datasets,
+  layers: Layer[],
+  datasetName: string,
+  result: Record<string, number>[],
+  newDatasetName: string
+) {
+  // find datasetId from datasets
+  const datasetId = Object.keys(datasets).find(dataId => datasets[dataId].label === datasetName);
+  if (!datasetId) {
+    throw new Error(`Dataset ${datasetName} not found`);
+  }
+
+  const originalDataset = datasets[datasetId];
+
+  const fields = originalDataset.fields;
+
+  const numRows = originalDataset.length || result.length;
+
+  // create a rowObjects array to store the original dataset values + query result values
+  const rowObjects: Record<string, unknown>[] = [];
+
+  if (originalDataset.type === 'vector-tile') {
+    const columnData = {};
+    for (const field of fields) {
+      // get the values from the vector tile layer
+      columnData[field.name] = getValuesFromVectorTileLayer(datasetId, layers, field);
+    }
+    // convert columnData to rowObjects
+    for (let i = 0; i < numRows; i++) {
+      const rowObject: Record<string, unknown> = {};
+      for (const field of fields) {
+        rowObject[field.name] = columnData[field.name][i];
+      }
+      rowObjects.push(rowObject);
+    }
+  } else {
+    for (let i = 0; i < numRows; i++) {
+      const rowObject: Record<string, unknown> = {};
+      for (const field of fields) {
+        const value = originalDataset.getValue(field.name, i);
+        rowObject[field.name] = value;
+      }
+      rowObjects.push(rowObject);
+    }
+  }
+
+  // add the query result to the original dataset or update the field values from query result
+  for (let i = 0; i < numRows; i++) {
+    const queryRow = result[i];
+    const rowObject = rowObjects[i];
+    // iterate over the keys of queryRow
+    Object.keys(queryRow).forEach(key => {
+      const value = queryRow[key];
+      rowObject[key] = value;
+    });
+  }
+
+  // use processFileData to process the rowObject
+  const processedData = await processFileData({
+    content: {fileName: newDatasetName, data: rowObjects},
+    fileCache: []
+  });
+
+  return processedData;
 }

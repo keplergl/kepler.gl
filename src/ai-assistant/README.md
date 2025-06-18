@@ -4,73 +4,116 @@ The AI Assistant is a module that adds an AI chatbot to Kepler.gl. This module a
 
 ## Overview
 
-The AI Assistant Module facilitates communication, processes prompts, and optionally calls back into the main application to deliver results. This setup supports advanced functionalities like tool-based function calling for enhanced interactivity.
+The system is designed to enable Kepler.gl, a React-based single-page application, to integrate an AI Assistant Module for performing tasks with large language models (LLMs) like OpenAI GPT models, Google Gemini models, Ollama models, etc.
 
 ![image](https://github.com/user-attachments/assets/77a240f1-037f-488e-8261-b7e82c42606d)
 
-The system is designed to enable Kepler.gl, a React-based single-page application, to integrate an AI Assistant Module for performing tasks with large language models (LLMs) like OpenAI GPT models, Google Gemini models, and Ollama models.
-
-An example of how the AI Assistant Module can be used to update a basemap in Kepler.gl:
+Below is a flow map that shows how a user can update a basemap in Kepler.gl through a simple AI-driven prompt, showcasing the integration of LLMs with application actions and rendering.
 
 ![image](https://github.com/user-attachments/assets/17992157-3393-4fcb-8e72-7edf46268c6c)
 
-This flow enables a seamless interaction where a user can update a basemap in Kepler.gl through a simple AI-driven prompt, showcasing the integration of LLMs with application actions and rendering.
+The AI Assistant Module also provides a set of tools to support data analysis and visualization. These AI Tools are designed to be used in conjunction with the Kepler.gl application and transform kepler.gl into a powerful spatial data analysis and visualization tool. For more details about the AI Assistant Module, please to https://github.com/geodacenter/openassistant.
 
-The AI Assistant Module `OpenAssistant` (Github: https://github.com/geodacenter/openassistant) is a open-source project that helps adding AI capabilities to your React SPA applications while keeping your data secure and private.
+## AI Tools
 
-Key features:
+LLMs use these AI Tools to perform spatial data analysis and visualization tasks to help users explore and understand their data.
 
-- Built-in chat UI.
-- Built-in "Screenshot to Ask" feature.
-- Built-in "Talk to Ask" feature.
-- Support OpenAI, Google Gemini, Ollama models.
-- Support function calling with type hint.
-- Support custom message UI for function calling.
-- Addons:
-  - query your dataset using duckdb
-  - map your data
-  - analyze and visualize your data
-    ...
+For example, a user can ask the AI Assistant to simply change the basemap to a `voyager` basemap, and the AI Assistant will call the `basemap` tool to change the basemap.
 
-## Proposal
+<img width="741" alt="Screenshot 2025-05-30 at 11 54 21 AM" src="https://github.com/user-attachments/assets/6e7a1e45-17b1-48c9-9ce6-5ead3430d703" />
 
-From the previous PRs, we have a working prototype of the AI Assistant Module with the following features:
+For complex tasks, the AI Assistant can use multiple tools to perform the task. For example, a user can ask the AI Assistant if the points dataset loaded in kepler.gl is clustering in zipcode areas. The AI Assistant could call the following tools to perform the task:
 
-1. Show dataset/layer/variable info.
-2. Change the basemap style.
-3. Load data from url.
-4. Create a map layer using variable.
-5. Create a histogram.
-6. Create a scatter plot with regression line.
-7. Classify the data of a variable.
-8. Spatial join two datasets.
+1. `mapBoundary` to get the boundary of current map view
+2. `queryUSZipcode` to get a list of zipcodes using the map boundary
+3. `usZipcode` to fetch the geometries of the zipcodes from Github site
+4. `saveData` to save the zipcode areas as a new GeoJSON dataset in kepler.gl
+5. `spatialJoin` to count the number of points in each zipcode area
+6. `saveData` to save the spatialJoin result as a new dataset in kepler.gl
+7. `weightsCreation` to create a e.g. queen contiguity weights using the spatialJoin result
+8. `local Moran's I` to apply local Moran's I using the counts and the queen contiguity weights
+9. `saveData` to save the local Moran's I result as a new dataset in kepler.gl
+10. `addLayer` to add the local Moran's I result as a new layer in kepler.gl
 
-The next step is to integrate more kepler.gl features into the AI Assistant Module.
+![kepler-vectortile-ai-3](https://github.com/user-attachments/assets/406afbfe-4671-42a6-8f38-90cdf171c363)
 
-### P0
+These fine grained spatial tools are designed to transform the LLMs, which are fundarmentally statistical language models, into powerful spatial data analysis and visualization AI Agent.
 
-Support more kepler.gl map layers
+As of May 2025, the AI Assistant Module supports the following AI Tools:
 
-- [x] create map layer based on the dataset metadata (variable names and types)
-- [ ] edit layer properties based on the [layer attributes](https://docs.kepler.gl/docs/user-guides/d-layer-attributes)
-- [ ] blend and rearrange layers
+- Kepler.gl Tools
 
-Support color palette
+  - [basemap](https://github.com/keplergl/kepler.gl/blob/main/src/ai-assistant/src/tools/kepler-tools/basemap-tool.tsx)
+  - [mapBoundary](https://github.com/keplergl/kepler.gl/blob/main/src/ai-assistant/src/tools/kepler-tools/boundary-tool.tsx)
+  - [addLayer](https://github.com/keplergl/kepler.gl/blob/main/src/ai-assistant/src/tools/kepler-tools/layer-creation-tool.tsx)
+  - [updateLayerColor](https://github.com/keplergl/kepler.gl/blob/main/src/ai-assistant/src/tools/kepler-tools/layer-style-tool.tsx)
+  - [loadData](https://github.com/keplergl/kepler.gl/blob/main/src/ai-assistant/src/tools/kepler-tools/loaddata-tool.tsx)
+  - [saveData](https://github.com/keplergl/kepler.gl/blob/main/src/ai-assistant/src/tools/kepler-tools/savedata-tool.tsx)
 
-- [ ] choose color palette for the layer
-- [x] create custom color palette
+- Plot Tools
 
-Support custom map styles
+  - eCharts Plots
+    - [boxplot](https://github.com/GeoDaCenter/openassistant/blob/main/packages/tools/plots/src/echarts/boxplot/tool.ts)
+    - [bubbleChart](https://github.com/GeoDaCenter/openassistant/blob/main/packages/tools/plots/src/echarts/bubble-chart/tool.ts)
+    - [histogram](https://github.com/GeoDaCenter/openassistant/blob/main/packages/tools/plots/src/echarts/histogram/tool.ts)
+    - [parallel coordinate](https://github.com/GeoDaCenter/openassistant/blob/main/packages/tools/plots/src/echarts/pcp/tool.ts)
+    - [scatterplot](https://github.com/GeoDaCenter/openassistant/blob/main/packages/tools/plots/src/echarts/scatterplot/tool.ts)
+  - [Vega-Lite Plots](https://github.com/GeoDaCenter/openassistant/blob/main/packages/tools/plots/src/vegalite/tool.ts) (coming soon)
 
-- [ ] choose map layers (water, buildings, roads, etc.)
-- [ ] create custom map style from url
+- Query Tools
 
-Support map settings
+  - [genericQuery](https://github.com/GeoDaCenter/openassistant/blob/main/packages/tools/duckdb/src/tool.ts)
+  - [filterDataset](https://github.com/keplergl/kepler.gl/blob/main/src/ai-assistant/src/tools/query-tool.tsx)
 
-- [ ] update map legend for the layer
-- [ ] set split map (guide user to choose maps to split on left and right)
+- OSM Tools
 
-Support time playback
+  - [geocoding](https://github.com/GeoDaCenter/openassistant/blob/main/packages/tools/osm/src/geocoding.ts)
+  - [isochrone](https://github.com/GeoDaCenter/openassistant/blob/main/packages/tools/osm/src/isochrone.ts)
+  - [routing](https://github.com/GeoDaCenter/openassistant/blob/main/packages/tools/osm/src/routing.ts)
+  - [roads](https://github.com/GeoDaCenter/openassistant/blob/main/packages/tools/osm/src/roads.ts)
+  - [US County](https://github.com/GeoDaCenter/openassistant/blob/main/packages/tools/osm/src/us/county.ts)
+  - [US State](https://github.com/GeoDaCenter/openassistant/blob/main/packages/tools/osm/src/us/state.ts)
+  - [US Zipcode](https://github.com/GeoDaCenter/openassistant/blob/main/packages/tools/osm/src/us/zipcode.ts)
+  - [Query US Zipcodes](https://github.com/GeoDaCenter/openassistant/blob/main/packages/tools/osm/src/us/queryZipcode.ts)
 
-- [ ] identify the time variable from the dataset metadata
-- [ ] set time playback for the layer
+- Spatial Analysis Tools (powered by [Geoda](https://geodacenter.github.io/geoda-lib/))
+  - Geo Tools
+    - [area](https://github.com/GeoDaCenter/openassistant/blob/main/packages/tools/geoda/src/spatial_ops/area.ts)
+    - [buffer](https://github.com/GeoDaCenter/openassistant/blob/main/packages/tools/geoda/src/spatial_ops/buffer.ts)
+    - [centroid](https://github.com/GeoDaCenter/openassistant/blob/main/packages/tools/geoda/src/spatial_ops/centroid.ts)
+    - [dissolve](https://github.com/GeoDaCenter/openassistant/blob/main/packages/tools/geoda/src/spatial_ops/dissolve.ts)
+    - [length](https://github.com/GeoDaCenter/openassistant/blob/main/packages/tools/geoda/src/spatial_ops/length.ts)
+    - [perimeter](https://github.com/GeoDaCenter/openassistant/blob/main/packages/tools/geoda/src/spatial_ops/perimeter.ts)
+  - Data Tools
+    - [data classification](https://github.com/GeoDaCenter/openassistant/blob/main/packages/tools/geoda/src/data-classify/tool.ts)
+      - quantile
+      - natural Jenks breaks
+      - equal interval
+      - percentile
+      - box
+      - standard deviation
+      - unique values
+    - data by rates (comming soon)
+  - Spatial Join
+    - [spatialJoin](https://github.com/GeoDaCenter/openassistant/blob/main/packages/tools/geoda/src/spatial_join/tool.ts)
+    - [spatialFilter](https://github.com/GeoDaCenter/openassistant/blob/main/packages/tools/geoda/src/spatial_join/spatial-filter.ts)
+  - Spatial Weights
+    - [weightsCreation](https://github.com/GeoDaCenter/openassistant/blob/main/packages/tools/geoda/src/weights/tool.ts)
+      - queen/rook
+      - k-nearest neighbors
+      - distance band
+  - Spatial Autocorrelation
+    - [global Moran's I](https://github.com/GeoDaCenter/openassistant/blob/main/packages/tools/geoda/src/spatial_autocorrelation/global-moran.ts)
+    - [local spatial autocorrelation](https://github.com/GeoDaCenter/openassistant/blob/main/packages/tools/geoda/src/lisa/tool.ts)
+      - local Moran's I
+      - local Geary's C
+      - local Getis-Ord Gi\*
+      - quantile LISA
+    - [spatial regression](https://github.com/GeoDaCenter/openassistant/blob/main/packages/tools/geoda/src/regression/tool.ts)
+      - OLS with spatial diagnostics
+      - Spatial Lag Model
+      - Spatial Error Model
+
+## Tutorials
+
+Next: [Spatial Data Analysis using Kepler.gl AI Assistant](https://github.com/keplergl/kepler.gl/blob/main/docs/spatial-analysis-tutorial/README.md)

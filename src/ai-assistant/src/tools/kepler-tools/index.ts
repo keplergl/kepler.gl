@@ -6,9 +6,9 @@ import {VisState} from '@kepler.gl/schemas';
 import {basemap} from './basemap-tool';
 import {addLayer, AddLayerTool} from './layer-creation-tool';
 import {updateLayerColor} from './layer-style-tool';
-import {loadData, LoadDataTool} from './loaddata-tool';
+import {loadData, LoadDataTool, LoadDataToolComponent} from './loaddata-tool';
 import {mapBoundary} from './boundary-tool';
-import {saveDataToMap} from './save-data-tool';
+import {saveToolResults} from './save-data-tool';
 import {AiAssistantState} from '../../reducers';
 
 export function getKeplerTools(visState: VisState, aiAssistant: AiAssistantState) {
@@ -49,7 +49,8 @@ export function getKeplerTools(visState: VisState, aiAssistant: AiAssistantState
     ...loadData,
     context: {
       getLoaders
-    }
+    },
+    component: LoadDataToolComponent
   };
 
   // tool: mapBoundary
@@ -68,6 +69,6 @@ export function getKeplerTools(visState: VisState, aiAssistant: AiAssistantState
     updateLayerColor: updateLayerColorTool,
     loadData: loadDataTool,
     mapBoundary: mapBoundaryTool,
-    saveDataToMap
+    saveDataToMap: saveToolResults
   };
 }
