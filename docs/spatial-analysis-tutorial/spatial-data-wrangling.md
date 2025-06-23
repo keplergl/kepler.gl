@@ -4,9 +4,9 @@ Original GeoDa lab by Luc Anselin: https://geodacenter.github.io/workbook/01_dat
 
 ## Introduction
 
-In this chapter, we tackle the topic of data wrangling, i.e., the process of getting data from its raw input into a form that is amenable for analysis. This is often considered to be the most time consuming part of a data science project, taking as much as 80% of the effort (Dasu and Johnson 2003). However, with Kepler.gl AI Assistant, we can now achieve the same data manipulation goals with significantly less effort compared to traditional approaches using software like GeoDa.
+In this chapter, we tackle the topic of data wrangling, i.e., the process of getting data from its raw input into a form that is amenable for analysis. This is often considered to be the most time consuming part of a data science project, taking as much as 80% of the effort ([Dasu and Johnson 2003](https://onlinelibrary.wiley.com/doi/book/10.1002/0471448354)). However, with Kepler.gl AI Assistant, we can now achieve the same data manipulation goals with significantly less effort compared to traditional approaches using software like GeoDa.
 
-While data wrangling has increasingly evolved into a field of its own, with a growing number of operations turning into automatic procedures embedded into software (Rattenbury et al. 2017), the integration of AI assistance represents the next evolution in making these processes even more intuitive and efficient. A detailed discussion of the underlying technical implementations is beyond our scope, but we'll provide practical examples of how to harness this technology for your spatial analysis needs.
+While data wrangling has increasingly evolved into a field of its own, with a growing number of operations turning into automatic procedures embedded into software ([Rattenbury et al. 2017](https://www.oreilly.com/library/view/principles-of-data/9781491938911/)), the integration of AI assistance represents the next evolution in making these processes even more intuitive and efficient. A detailed discussion of the underlying technical implementations is beyond our scope, but we'll provide practical examples of how to harness this technology for your spatial analysis needs.
 
 ### Objectives
 
@@ -155,7 +155,7 @@ The other variable operations, like add a variable, delete a variable or rename 
 
 ## Calculator
 
-The `Calculator` functionality is to create a new variable with:
+The calculator functionality is to create a new variable with:
 - special functions
 - univariate and bivariate operations
 - spatial lag
@@ -164,7 +164,7 @@ The `Calculator` functionality is to create a new variable with:
 
 Spatial Lag and Rates are advanced functions that are discussed separately in later chapters.
 
-To illustrate the Calculator functionality, we return to the Chicago community area sample data and load the commpopulation.csv file. This file only contains the population totals.
+To illustrate the calculator functionality, we return to the Chicago community area sample data and load the commpopulation.csv file. This file only contains the population totals.
 
 ```
 Can you load a dataset from https://geodacenter.github.io/data-and-lab/data/commpopulation.csv?
@@ -195,7 +195,7 @@ AI Assistant can make mistakes by trying to generate complex SQL query to add va
 
 ##### Univariate
 
-In GeoDa lab, there are six straightforward univariate transformations:
+In Kepler.gl AI Assistant, there are six straightforward univariate transformations:
 - **NEGATIVE**: changing the sign
 - **INVERSE**: taking the inverse
 - **SQUARE ROOT**: taking the square root
@@ -262,7 +262,7 @@ $$
 r_s = \frac{x_i - x_{min}}{x_{max} - x_{min}}
 $$
 
-In GeoDa lab, the standardization is limited to one variable at a time, which is not very efficient. However, with the AI Assistant, you can apply the standardization to multiple variables at once.
+In original GeoDa lab, the standardization is limited to one variable at a time, which is not very efficient. However, with the AI Assistant, you can apply the standardization to multiple variables at once in Kepler.gl.
 
 ```
 Can you apply standardization (Z-score) to the variables POP2010 and POP2000?
@@ -288,7 +288,7 @@ Since the AI Assistant can use SQL query to manipulate the data, you can also us
 
 To illustrate these operations, we will use the SanFran Crime data set from the sample collection, which is one of the few sample data sets that contains a date stamp.
 
-We load the sf_cartheft.shp shape file from the Crime Events subdirectory of the sample data set. This data set contains the locations of 3384 car thefts in San Francisco between July and December 2012.
+We load the sf_cartheft dataset from the Crime Events subdirectory of the sample data set. This data set contains the locations of 3384 car thefts in San Francisco between July and December 2012.
 
 ```
 Can you create a map layer from https://geodacenter.github.io/data-and-lab/data/SFcartheft_july12.geojson?

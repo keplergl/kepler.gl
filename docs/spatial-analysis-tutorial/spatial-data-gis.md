@@ -4,7 +4,7 @@ Original GeoDa lab by Luc Anselin: https://geodacenter.github.io/workbook/01_dat
 
 ## Introduction
 
-Even though Kepler.gl and GeoDa are not GIS by design, a range of spatial data manipulation functions are available that perform some specialized GIS operations. This includes ~~an efficient treatment of projections~~, conversion between points and polygons, the computation of a minimum spanning tree, and spatial aggregation and spatial join through multi-layer support.
+Even though Kepler.gl is not GIS by design, a range of spatial data manipulation functions are available that perform some specialized GIS operations using the AI assistant. This includes ~~an efficient treatment of projections~~, conversion between points and polygons, the computation of a minimum spanning tree, and spatial aggregation and spatial join through multi-layer support.
 
 ## Objectives
 
@@ -21,7 +21,7 @@ Even though Kepler.gl and GeoDa are not GIS by design, a range of spatial data m
 
 ## Preliminaries
 
-We will continue to illustrate the various operations by means of a series of example data sets, all contained in the GeoDa Center data set collection.
+We will continue to illustrate the various operations by means of a series of example data sets, all contained in the [GeoDa Center data set collection](https://geodacenter.github.io/data-and-lab/).
 
 Some of these are the same files used in the previous chapter. For the sake of completeness, we list all the sample data sets used:
 
@@ -41,7 +41,7 @@ The basic building blocks are degrees latitude and longitude that situate each l
 
 ### Selecting a projection
 
-In Kepler.gl, the WGS84 geographic coordinate system is used by default. All data is visualized using latitude and longitude in this system to represent geographic locations accurately. Note: the GeoJSON format uses the WGS84 geographic coordinate system by default. If you have datasets not in the WGS84 geographic coordinate system, you can convert them to WGS84 using GeoDa software (see [Reprojection](https://geodacenter.github.io/workbook/01_datawrangling_2/lab1b.html#mean-centers-and-centroids)).
+In Kepler.gl, the WGS84 geographic coordinate system is used by default. All data is visualized using latitude and longitude in this system to represent geographic locations accurately. Note: the GeoJSON format uses the WGS84 geographic coordinate system by default. If you have datasets not in the WGS84 geographic coordinate system, you can convert them to WGS84 using other software like GDAL or GeoDa (see [Reprojection](https://geodacenter.github.io/workbook/01_datawrangling_2/lab1b.html)).
 
 However, when computing geometric measurements—such as distance, buffer, area, length, and perimeter—the AI assistant automatically uses GeoDa library to convert geographic coordinates (latitude and longitude) into projected coordinates (easting and northing) using the UTM projection with the WGS84 datum. This ensures accurate calculations in meters.
 

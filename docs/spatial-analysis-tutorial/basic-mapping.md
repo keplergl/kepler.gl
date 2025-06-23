@@ -67,11 +67,11 @@ How many areas are in each category?
 
 Upon closer examination from the screenshot, something doesn’t seem to be quite right. With 55 total observations, we should expect roughly 14 (55/4 = 13.75) observations in each group. But the first group only has 7, and the third group has 19! If we open up the Table and sort on the variable `RENT2008`, we can see where the problem lies.
 
-Ignoring the zero entries for now (those are a potential problem in their own right), we see that observations starting in row 8 up to row 21 all have a value of 1000. The cut-off for the first quartile is at 14, highlighted in yellow in the graph. In a non-spatial analysis, this is not an issue, the first quartile value is given as 1000. But in a map, the observations are locations that need to be assigned to a group (with a separate color). Other than an arbitrary assignment, there is no way to classify observations with a rent of 1000 in either category 1 or category 2. To deal with these ties, then quantile algorithm (implemented in [geoda-lib](https://github.com/geodacenter/geoda-lib)) moves all the observations with a value of 1000 to the second category. As a result, even though the value of the first quartile is given as 1000 in the map legend, only those observations with rents less than 1000 are included in the first quartile category. As we see from the table, there are seven such observations.
+Ignoring the zero entries for now (those are a potential problem in their own right), we see that observations starting in row 8 up to row 21 all have a value of 1000. The cut-off for the first quartile is at 14-th row. In a non-spatial analysis, this is not an issue, the first quartile value is given as 1000. But in a map, the observations are locations that need to be assigned to a group (with a separate color). Other than an arbitrary assignment, there is no way to classify observations with a rent of 1000 in either category 1 or category 2. To deal with these ties, then quantile algorithm (implemented in [geoda-lib](https://github.com/geodacenter/geoda-lib)) moves all the observations with a value of 1000 to the second category. As a result, even though the value of the first quartile is given as 1000 in the map legend, only those observations with rents less than 1000 are included in the first quartile category. As we see from the table, there are seven such observations.
 
 Any time there are ties in the ranking of observations that align with the values for the breakpoints, the classification in a quantile map will be problematic and result in categories with an unequal number of observations.
 
-A natural breaks map uses a nonlinear algorithm to group observations such that the within-group homogeneity is maximized, following the pathbreaking work of Fisher ([1958](https://www.jstor.org/stable/2281952)) and Jenks ([1977](https://books.google.com/books/about/Optimal_Data_Classification_for_Chorople.html?id=HvAENQAACAAJ)). In essence, this is a clustering algorithm in one dimension to determine the break points that yield groups with the largest internal similarity.
+A natural (Jenks) breaks map uses a nonlinear algorithm to group observations such that the within-group homogeneity is maximized, following the pathbreaking work of Fisher ([1958](https://www.jstor.org/stable/2281952)) and Jenks ([1977](https://books.google.com/books/about/Optimal_Data_Classification_for_Chorople.html?id=HvAENQAACAAJ)). In essence, this is a clustering algorithm in one dimension to determine the break points that yield groups with the largest internal similarity.
 
 To create such a map with four categories, you can use the following prompt:
 
@@ -81,7 +81,9 @@ Can you create a natural breaks map for the variable 'rent2008' with 4 categorie
 
 <img width="1067" alt="Screenshot 2025-06-12 at 3 03 58 PM" src="https://github.com/user-attachments/assets/8ce1b2e1-8e23-487a-9239-65e22644275d" />
 
+:::tip
 You will see there is a new map layer been created. But it has the same name as the previous one. You can click on the label of the map layer in the Layers panel to edit the name of the layer.
+:::
 
 If you want to compare the results of natural breaks map with the quartile map, you can click 'Switch to dual map view' button on the top right corner of the map to compare the two layers side by side.
 
@@ -91,7 +93,7 @@ In comparison to the quartile map, the natural breaks criterion is better at gro
 
 #### Equal Intervals Map
 
-An equal intervals map uses the same principle as a histogram to organize the observations into categories that divide the range of the variable into equal interval bins. This contrasts with the quantile map, where the number of observations in each bin is equal, but the range for each bin is not. For the equal interval classification, the value range between the lower and upper bound in each bin is constant across bins, but the number of observations in each bin is typically not equal.
+An equal intervals (quantize) map uses the same principle as a histogram to organize the observations into categories that divide the range of the variable into equal interval bins. This contrasts with the quantile map, where the number of observations in each bin is equal, but the range for each bin is not. For the equal interval classification, the value range between the lower and upper bound in each bin is constant across bins, but the number of observations in each bin is typically not equal.
 
 :::tip
 In Kepler.gl, the equal intervals method is also callled 'quantize'. See documentation for more details: https://docs.kepler.gl/docs/user-guides/d-layer-attributes
@@ -122,7 +124,7 @@ Finally, we illustrate the equivalence between the two graphs by selecting a cat
 ![equal-map-histogram-link](https://github.com/user-attachments/assets/e60c9d4b-4c56-4993-8b65-6c9ca5325ce0)
 
 :::note
-The linking is now way one: from plot to map. The two-way linking is not supported yet.
+The linking is now way one for now: from plot to map. The two-way linking is not supported yet.
 :::
 
 
@@ -131,7 +133,7 @@ The linking is now way one: from plot to map. The two-way linking is not support
 In Kepler.gl, there are several options to customize the map.
 
 - change base map [doc](https://docs.kepler.gl/docs/user-guides/f-map-styles)
-- chang layer order [doc](https://docs.kepler.gl/docs/user-guides/f-map-styles#layer-order)
+- chang layer order [doc](https://docs.kepler.gl/docs/user-guides/b-kepler-gl-workflow/add-data-to-layers/d-blend-and-rearrange-layers)
 - configure layer [doc](https://docs.kepler.gl/docs/user-guides/d-layer-attributes)
 - configure color palettes [doc](https://docs.kepler.gl/docs/user-guides/l-color-attributes)
 
@@ -141,7 +143,7 @@ For saving and exporting the map, please refer to the following documentation:
 
 ### Extreme Value Maps
 
-Extreme value maps are variations of common choropleth maps where the classification is designed to highlight extreme values at the lower and upper end of the scale, with the goal of identifying outliers. These maps were developed in the spirit of spatializing EDA, i.e., adding spatial features to commonly used approaches in non-spatial EDA (Anselin 1994).
+Extreme value maps are variations of common choropleth maps where the classification is designed to highlight extreme values at the lower and upper end of the scale, with the goal of identifying outliers. These maps were developed in the spirit of spatializing EDA, i.e., adding spatial features to commonly used approaches in non-spatial EDA ([Anselin 1994](https://scholar.google.com/scholar?hl=en&as_sdt=0%2C3&q=Exploratory+Spatial+Data+Analysis+and+Geographic+Information+Systems&btnG=)).
 
 There are three types of extreme value maps:
 
@@ -169,11 +171,11 @@ The percentile has been defined as 6 categories mentioned above, so there is no 
 
 Note how the extreme values are much better highlighted, especially at the upper end of the distribution. The classification also illustrates some common problems with this type of map. First of all, since there are fewer than 100 observations, in a strict sense there is no 1% of the distribution. This is handled (arbitrarily) by rounding, so that the highest category has one observation, but the lowest does not have any.
 
-In addition, since the values are sorted from low to high to determine the cut points, there can be an issue with ties. As we have seen, this is a generic problem for all quantile maps. As pointed out, the [algorithm](https://github.com/geodacenter/geoda-lib) handles ties by moving observations to the next highest category. For example, when there are a lot of observations with zero values (e.g., in the crime rate map for the U.S. counties), the lowest percentile can easily end up without observations, since all the zeros will be moved to the next category.
+In addition, since the values are sorted from low to high to determine the cut points, there can be an issue with ties. As we have seen, this is a generic problem for all quantile maps. As pointed out, the [algorithm](https://github.com/GeoDaCenter/geoda-lib/blob/main/cpp/src/mapping/percentile-breaks.cpp) handles ties by moving observations to the next highest category. For example, when there are a lot of observations with zero values (e.g., in the crime rate map for the U.S. counties), the lowest percentile can easily end up without observations, since all the zeros will be moved to the next category.
 
 #### Box Map
 
-A box map (Anselin 1994) is the mapping counterpart of the idea behind a box plot. The point of departure is again a quantile map, more specifically, a quartile map. But the four categories are extended to six bins, to separately identify the lower and upper outliers. The definition of outliers is a function of a multiple of the inter-quartile range (IQR), the difference between the values for the 75 and 25 percentile. As we will see in a later chapter in our discussion of the box plot, we use two options for these cut-off values, or hinges, 1.5 and 3.0. The box map uses the same convention.
+A box map ([Anselin 1994](https://scholar.google.com/scholar?hl=en&as_sdt=0%2C3&q=Exploratory+Spatial+Data+Analysis+and+Geographic+Information+Systems&btnG=)) is the mapping counterpart of the idea behind a box plot. The point of departure is again a quantile map, more specifically, a quartile map. But the four categories are extended to six bins, to separately identify the lower and upper outliers. The definition of outliers is a function of a multiple of the inter-quartile range (IQR), the difference between the values for the 75 and 25 percentile. As we will see in a later chapter in our discussion of the box plot, we use two options for these cut-off values, or hinges, 1.5 and 3.0. The box map uses the same convention.
 
 To create a box map for the variable `rent2008`, you can use the following prompt:
 
@@ -229,7 +231,7 @@ In the screenshot above, there are five neighborhoods with median rent more than
 
 ## Mapping Categorical Variables
 
-So far, our maps have pertained to continuous variables, with a clear order from low to high. GeoDa also contains some functionality to map categorical variables, for which the numerical values are distinct, but not necessarily meaningful in and of themselves. Most importantly, the numerical values typically do not imply any ordering of the categories. The two relevant functions are the unique value map, for a single variable, and the co-location map, where the categories for multiple variables are compared.
+So far, our maps have pertained to continuous variables, with a clear order from low to high. The AI assistant in Kepler.gl also contains some functionality to map categorical variables, for which the numerical values are distinct, but not necessarily meaningful in and of themselves. Most importantly, the numerical values typically do not imply any ordering of the categories. The two relevant functions are the unique value map, for a single variable, and the co-location map, where the categories for multiple variables are compared.
 
 ### Unique Value Map
 
@@ -266,7 +268,7 @@ SELECT ..., CASE
 END AS kidscat FROM nyctable;
 :::
 
-To replicate the same result in the original GeoDa lab, you can use the following prompt:
+To replicate the same result in the original [GeoDa lab](https://geodacenter.github.io/workbook/3a_mapping/lab3a.html), you can use the following prompt:
 
 ```
 Can you create a unique values map using 'kidscat' in the new dataset with Paired color scheme?
@@ -315,7 +317,7 @@ The above steps show how to create a co-location map of two variables step by st
 - compare the two categorical variables and save the result into a new column 'co_location' to a new dataset
 - create a unique values map using 'co_location' in the new dataset with Paired color scheme
 
-In Kepler.gl, we create a specific 'colocation' tool, so you can create a co-location map just with the following prompt:
+In Kepler.gl AI Assistant, we create a specific 'colocation' tool, so you can create a co-location map just with the following prompt:
 
 ```
 Can you create a co-location map for the variables 'kids2000' and 'pubast00' using quantile breaks (k=5)?
@@ -323,7 +325,7 @@ Can you create a co-location map for the variables 'kids2000' and 'pubast00' usi
 
 <img width="1156" alt="Screenshot 2025-06-16 at 12 42 22 PM" src="https://github.com/user-attachments/assets/b72ac213-ffc0-4cba-97ac-b41d49db71d8" />
 
-From the screenshot, you can see how AI Assistant plans the steps to create the co-location map:
+From the screenshot, you can see how AI Assistant plans the similar steps to create the co-location map:
 
 - Classify 'kids2000' into 5 quantile bins.
 - Classify 'pubast00' into 5 quantile bins.
@@ -353,15 +355,15 @@ Tip: to create a custom classification, what you need to prompt includes:
 - the custom break values
 - the color scheme (optional)
 
-The FSQ Studio (which is based on kepler.gl) has a custom classification tool that allows you to adjust the break points by simply dragging the break points. See [Custom Breaks Editor](https://docs.foursquare.com/analytics-products/docs/layers-color-scale-and-palettes#custom-breaks-editor). We hope this feature will be upstream back to kepler.gl in the future.
+Kepler.gl has a custom classification tool that allows you to adjust the break points by simply dragging the break points. See [Custom Breaks Editor](https://docs.foursquare.com/analytics-products/docs/layers-color-scale-and-palettes#custom-breaks-editor).
 
 ## ~~Conditional Map~~
 
 ## Cartogram
 
-A cartogram is a map type where the original layout of the areal unit is replaced by a geometric form (usually a circle, rectangle, or hexagon) that is proportional to the value of the variable for the location. This is in contrast to a standard choropleth map, where the size of the polygon corresponds to the area of the location in question. The cartogram has a long history and many variants have been suggested, some quite creative. In essence, the construction of a cartogram is an example of a nonlinear optimization problem, where the geometric forms have to be located such that they reflect the topology (spatial arrangement) of the locations as closely as possible (see Tobler 2004, for an extensive discussion of various aspects of the cartogram).
+A cartogram is a map type where the original layout of the areal unit is replaced by a geometric form (usually a circle, rectangle, or hexagon) that is proportional to the value of the variable for the location. This is in contrast to a standard choropleth map, where the size of the polygon corresponds to the area of the location in question. The cartogram has a long history and many variants have been suggested, some quite creative. In essence, the construction of a cartogram is an example of a nonlinear optimization problem, where the geometric forms have to be located such that they reflect the topology (spatial arrangement) of the locations as closely as possible (see [Tobler 2004](https://www.jstor.org/stable/3694068), for an extensive discussion of various aspects of the cartogram).
 
-The GeoDa library implements a circular cartogram, in which the areal units are represented as circles, whose size (and color) is proportional to the value observed at that location. The changed shapes remove the misleading effect that the area of the unit might have on perception of magnitude. This circular cartogram is implemented as the `cartogram` tool in the AI assistant.
+The AI assistant in Kepler.gl implements a circular cartogram [algorithm](https://github.com/GeoDaCenter/geoda-lib/blob/main/cpp/src/geometry/cartogram.h), in which the areal units are represented as circles, whose size (and color) is proportional to the value observed at that location. The changed shapes remove the misleading effect that the area of the unit might have on perception of magnitude. This circular cartogram is implemented as the `cartogram` tool in the AI assistant.
 
 To create a cartogram for the variable `rent2008`, you can use the following prompt:
 

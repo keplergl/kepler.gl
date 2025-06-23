@@ -40,7 +40,7 @@ Choose the specific language model that supports tools to use for AI interaction
 | **Deepseek**  | deepseek-chat                                                                                                    |
 | **Ollama**    | Custom models (check "Input Model Name" to manually enter a custom model name)                                   |
 
-For more details, please visit the documentation https://ai-sdk.dev/providers/ai-sdk-providers#provider-support
+For more details, please visit the documentation [here](https://github.com/geodacenter/openassistant).
 
 ### Authentication
 

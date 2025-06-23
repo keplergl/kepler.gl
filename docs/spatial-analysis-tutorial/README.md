@@ -8,7 +8,9 @@ The spatial data analysis tools are powered by [Geoda](https://geodacenter.githu
 
 #### [Get Started](./get-started.md)
 
-#### [Spatial Data Wrangling](./spatial-data-wragling.md)
+#### [Spatial Data Wrangling - Basic Operations](./spatial-data-wragling.md)
+
+#### [Spatial Data Wrangling - GIS Operations](./spatial-data-gis.md)
 
 #### [Basic Mapping](./basic-mapping.md)
 
