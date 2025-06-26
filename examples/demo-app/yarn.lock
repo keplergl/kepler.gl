@@ -6290,9 +6290,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@openassistant/core@npm:0.5.11, @openassistant/core@npm:^0.5.11":
-  version: 0.5.11
-  resolution: "@openassistant/core@npm:0.5.11"
+"@openassistant/core@npm:0.5.13, @openassistant/core@npm:^0.5.13":
+  version: 0.5.13
+  resolution: "@openassistant/core@npm:0.5.13"
   dependencies:
     "@ai-sdk/openai": "npm:^1.3.21"
     "@ai-sdk/react": "npm:^1.2.11"
@@ -6308,7 +6308,7 @@ __metadata:
     "@ai-sdk/deepseek": ^0.1.8
     "@ai-sdk/google": ^1.1.8
     "@ai-sdk/xai": ^1.1.8
-    ollama-ai-provider: ^1.2.0
+    ollama-ai-provider-v2: ^0.0.5
     react: ">=18.2"
   peerDependenciesMeta:
     "@ai-sdk/anthropic":
@@ -6319,9 +6319,9 @@ __metadata:
       optional: true
     "@ai-sdk/xai":
       optional: true
-    ollama-ai-provider:
+    ollama-ai-provider-v2:
       optional: true
-  checksum: 10c0/851c729d11c253e20f0635af32500627912295a41642237256cce75386363f12d193852af9a8cd0757cf30254b0ad830fa928fe21885fe055a5f533a384428ae
+  checksum: 10c0/46cf0831dd170b125b5ac1754b7ebbcff84f11158574dc51602f1b6ddf02953411d9a500440775f07f2e7fca8707d3295eb5d69676ac561d6d893c35d5b665f0
   languageName: node
   linkType: hard
 
@@ -6402,16 +6402,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@openassistant/ui@npm:^0.5.11":
-  version: 0.5.11
-  resolution: "@openassistant/ui@npm:0.5.11"
+"@openassistant/ui@npm:^0.5.13":
+  version: 0.5.13
+  resolution: "@openassistant/ui@npm:0.5.13"
   dependencies:
     "@ai-sdk/ui-utils": "npm:^1.2.11"
     "@heroui/react": "npm:^2.7.8"
     "@heroui/use-clipboard": "npm:^2.1.8"
     "@iconify/react": "npm:^5.1.0"
-    "@openassistant/core": "npm:0.5.11"
-    "@openassistant/utils": "npm:0.5.11"
+    "@openassistant/core": "npm:0.5.13"
+    "@openassistant/utils": "npm:0.5.13"
     ai: "npm:^4.3.16"
     framer-motion: "npm:^11.15.0"
     html2canvas: "npm:^1.4.1"
@@ -6423,16 +6423,16 @@ __metadata:
   peerDependencies:
     react: ">=18.2"
     react-dom: ">=18.2"
-  checksum: 10c0/c1eb97bba1ce8c30aa9643c7511be87d82fb9aedb1a9c95c1fdada41af347b7b93c7458d76b719f90588bc98046f0b48ac22cd0850bd0f1de296da33ad337ed9
+  checksum: 10c0/06aea41b8e1e026728f9b51518c67fea7bd5fcacbe800b8df69bd7449ef66fd929dc234cba884f9f9249acd509a213375caad1a0c94a132fa0f6473f6c42e04d
   languageName: node
   linkType: hard
 
-"@openassistant/utils@npm:0.5.11":
-  version: 0.5.11
-  resolution: "@openassistant/utils@npm:0.5.11"
+"@openassistant/utils@npm:0.5.13":
+  version: 0.5.13
+  resolution: "@openassistant/utils@npm:0.5.13"
   dependencies:
     zod: "npm:^3.24.4"
-  checksum: 10c0/2f8590cde745694d067beb5df4c2b66fff6c928fc2c05a1720f532de2da5791ca0878563cc6d200752f0b3e316c9cc5584c7df441b25875b95f7596f6ded6348
+  checksum: 10c0/3f28b04cc9d75ada1721cb4292ce4fb97acd500710db4c54b84ab74367182b31674489fa6f22c22d6d0e97649d28a73076b9c163485c80e1c29f711fea18319c
   languageName: node
   linkType: hard
 
@@ -18562,8 +18562,8 @@ __metadata:
     "@loaders.gl/csv": "npm:^4.3.2"
     "@loaders.gl/json": "npm:^4.3.2"
     "@loaders.gl/parquet": "npm:^4.3.2"
-    "@openassistant/core": "npm:^0.5.11"
-    "@openassistant/ui": "npm:^0.5.11"
+    "@openassistant/core": "npm:^0.5.13"
+    "@openassistant/ui": "npm:^0.5.13"
     "@types/classnames": "npm:^2.3.1"
     "@types/keymirror": "npm:^0.1.1"
     apache-arrow: "npm:>=15.0.0"

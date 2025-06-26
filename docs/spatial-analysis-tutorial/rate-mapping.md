@@ -196,13 +196,13 @@ While easy to calculate, the estimate for the variance can yield negative values
 
 ### EB rate map
 
-You can use the following prompt to create an EB smoothed rate map:
+You can use the following prompt to create an EB smoothed rate map by using the dataset with raw rates, which we will compare to the EB rates in the next step:
 
 ```
-Can you calculate the empirical bayes smoothed rates using event variable LFW68 and base variable POPFW68, and create a box map using the empirical bayes smoothed rates?
+Can you calculate the empirical bayes smoothed rates using event variable LFW68 and base variable POPFW68 from dataset with raw rates, and create a box map using the empirical bayes smoothed rates?
 ```
 
-<img>
+<img width="1324" alt="Screenshot 2025-06-23 at 7 24 53 PM" src="https://github.com/user-attachments/assets/471c6e4a-aac5-4df0-b9d5-50cf481de7b9" />
 
 In comparison to the box map for the crude rates and the excess rate map, none of the original outliers remain identified as such in the smoothed map. Instead, a new outlier is shown in the very southwestern corner of the state (Hamilton county).
 
@@ -210,3 +210,23 @@ Since many of the original outlier counties have small populations at risk (chec
 
 To illustrate this phenomenon, we can systematically select observations in the box plot for the raw rates and compare their position in the box plot for the smoothed rates. This will reveal which observations are affected most.
 
+We create the box plots in the usual way using the raw rates and the empirical bayes smoothed rates by prompting:
+
+```
+Can you create a box plot for the raw rates and the empirical bayes smoothed rates?
+```
+
+<img width="1222" alt="Screenshot 2025-06-23 at 8 11 51 PM" src="https://github.com/user-attachments/assets/7a8f0a1c-9d5e-418d-a089-88af81ad7351" />
+
+Now, the AI assistant will create two box plots for the raw rates and the empirical bayes smoothed rates. We select the three outliers in the raw rates box plot. The corresponding observations are within the upper quartile for the EB smoothed rates, but well within the fence, and thus no longer outliers after smoothing. We can of course also locate these observations on the map, or any other open views.
+
+<img width="1123" alt="Screenshot 2025-06-23 at 8 15 36 PM" src="https://github.com/user-attachments/assets/ff24346c-c804-42e3-9430-b2d2b40097a5" />
+
+Next, we can carry out the reverse and select the outlier in the box plot for the EB smoothed rate. Its position is around the 75 percentile in the box plot for the crude rate. Also note how the range of the rates has shrunk. Many of the higher crude rates are well below 0.00012 for the EB rate, whereas the value for the EB outlier has barely changed.
+
+<img width="1129" alt="Screenshot 2025-06-23 at 8 15 19 PM" src="https://github.com/user-attachments/assets/c38531b0-bc50-4a46-aed8-0681f2535606" />
+
+
+Here is a screen captured video of the above steps:
+
+![rates_box_plots-1](https://github.com/user-attachments/assets/62a416e8-d54b-4a74-a81a-777cf0cea103)

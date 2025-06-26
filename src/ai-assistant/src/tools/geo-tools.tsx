@@ -18,14 +18,14 @@ import {
   SpatialJoinTool,
   spatialFilter,
   buffer,
+  BufferTool,
   centroid,
+  CentroidTool,
   dissolve,
+  DissolveTool,
   length,
   area,
   perimeter,
-  BufferTool,
-  CentroidTool,
-  DissolveTool,
   grid,
   GridTool,
   standardizeVariable,
@@ -35,7 +35,9 @@ import {
   minimumSpanningTree,
   MinimumSpanningTreeTool,
   cartogram,
-  CartogramTool
+  CartogramTool,
+  rate,
+  RateTool
 } from '@openassistant/geoda';
 import {
   getUsStateGeojson,
@@ -249,6 +251,12 @@ export function getGeoTools(
     component: CustomDataTableComponent
   };
 
+  const rateTool: RateTool = {
+    ...rate,
+    context: {getValues},
+    component: CustomDataTableComponent
+  };
+
   return {
     classifyTool,
     weightsTool,
@@ -275,12 +283,13 @@ export function getGeoTools(
     standardizeVariable: standardizeVariableTool,
     thiessenPolygons: thiessenPolygonsTool,
     minimumSpanningTree: minimumSpanningTreeTool,
-    cartogram: cartogramTool
+    cartogram: cartogramTool,
+    rate: rateTool
   };
 }
 
 /**
- * Customize the DataTableComponent for StandardizeVariableTool
+ * Customize the DataTableComponent for StandardizeVariableTool and RateTool
  */
 function CustomDataTableComponent(props: DataTableComponentProps) {
   const dispatch = useDispatch();
