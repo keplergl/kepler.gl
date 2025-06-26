@@ -3,12 +3,12 @@
 
 import {DEFAULT_MAP_STYLES} from '@kepler.gl/constants';
 import {mapStyleChange} from '@kepler.gl/actions';
-import {tool} from '@openassistant/utils';
+import {extendedTool} from '@openassistant/utils';
 import {z} from 'zod';
 import {useEffect} from 'react';
 import {useDispatch} from 'react-redux';
 
-export const basemap = tool({
+export const basemap = extendedTool({
   description: 'change basemap',
   parameters: z.object({
     styleType: z.enum([
