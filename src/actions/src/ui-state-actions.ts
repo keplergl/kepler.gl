@@ -3,8 +3,7 @@
 
 import {createAction} from '@reduxjs/toolkit';
 import {default as ActionTypes} from './action-types';
-import {Merge} from '@kepler.gl/types';
-import {ExportImage} from '@kepler.gl/constants';
+import {Merge, ExportImage} from '@kepler.gl/types';
 
 /** TOGGLE_SIDE_PANEL */
 export type ToggleSidePanelUpdaterAction = {
@@ -495,25 +494,3 @@ export const togglePanelListView: (
 // @ts-ignore
 const uiStateActions = null;
 /* eslint-enable @typescript-eslint/no-unused-vars */
-
-/** SET_LOADING_INDICATOR */
-export type SetLoadingIndicatorAction = {
-  payload: {
-    change: number;
-  };
-};
-
-/**
- * Change of number of active loading actions.
- * @memberof uiStateActions
- * @param payload
- * @param payload.change Change of number of active loading actions.
- * @public
- */
-export const setLoadingIndicator: (
-  payload: SetLoadingIndicatorAction['payload']
-) => Merge<SetLoadingIndicatorAction, {type: typeof ActionTypes.SET_LOADING_INDICATOR}> =
-  createAction(
-    ActionTypes.SET_LOADING_INDICATOR,
-    (payload: SetLoadingIndicatorAction['payload']) => ({payload})
-  );

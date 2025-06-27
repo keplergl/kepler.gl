@@ -40,7 +40,7 @@ Cloud-providers providers can implement the following properties
 An instance of the provider is added to array of cloud providers in the file `src/cloud-providers/providers.js` then passed to kepler.gl demo app. An example provider: [Dropbox Provider](https://github.com/keplergl/kepler.gl/blob/master/examples/demo-app/src/cloud-providers/dropbox-provider.js)
 
 ```js
-import {Provider} from 'kepler.gl/cloud-providers';
+import {Provider} from '@kepler.gl/cloud-providers';
 
 class MyProvider extends Provider {
     constructor() {

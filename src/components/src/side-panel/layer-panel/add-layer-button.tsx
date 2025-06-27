@@ -16,7 +16,6 @@ function AddLayerButtonFactory() {
       <AddByDatasetButton
         datasets={datasets}
         className="add-layer-button"
-        width="110px"
         onAdd={onAdd}
         buttonIntlId="layerManager.addLayer"
       />

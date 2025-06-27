@@ -28,7 +28,7 @@ const initialConfig: AiAssistantConfig = {
   provider: 'openai',
   model: 'gpt-4o',
   apiKey: '',
-  baseUrl: 'http://localhost:11434',
+  baseUrl: 'http://localhost:11434/api',
   temperature: 0.0,
   topP: 1.0
 };

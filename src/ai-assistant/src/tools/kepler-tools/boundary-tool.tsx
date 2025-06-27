@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {tool} from '@openassistant/utils';
+import {extendedTool} from '@openassistant/utils';
 import {z} from 'zod';
 
 type MapBoundaryContext = {
@@ -15,7 +15,7 @@ function isMapBoundaryContext(context: unknown): context is MapBoundaryContext {
   return typeof context === 'object' && context !== null && 'getMapBoundary' in context;
 }
 
-export const mapBoundary = tool({
+export const mapBoundary = extendedTool({
   description:
     'Get the boundary of the map. Northwest and Southeast coordinates in [longitude, latitude] format.',
   parameters: z.object({}),

@@ -44,6 +44,9 @@ export const rgbaImage: ShaderModule = {
   inject: {
     'fs:DECKGL_CREATE_COLOR': `
     image = vec4(texture2D(bitmapTextureRgba, coord));
+    if (image.a < 0.5) {
+      discard;
+    }
     `
   }
 };

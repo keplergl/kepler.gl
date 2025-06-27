@@ -93,7 +93,7 @@ export const PARSE_FIELD_VALUE_FROM_STRING = {
  * @returns data object `{fields: [], rows: []}` can be passed to addDataToMaps
  * @public
  * @example
- * import {processCsvData} from 'kepler.gl/processors';
+ * import {processCsvData} from '@kepler.gl/processors';
  *
  * const testData = `gps_data.utc_timestamp,gps_data.lat,gps_data.lng,gps_data.types,epoch,has_result,id,time,begintrip_ts_utc,begintrip_ts_local,date
  * 2016-09-17 00:09:55,29.9900937,31.2590542,driver_analytics,1472688000000,False,1,2016-09-23T00:00:00.000Z,2016-10-01 09:41:39+00:00,2016-10-01 09:41:39+00:00,2016-09-23
@@ -236,8 +236,8 @@ export function parseCsvRowsByFieldType(
  * @returns dataset containing `fields` and `rows`
  * @public
  * @example
- * import {addDataToMap} from 'kepler.gl/actions';
- * import {processRowObject} from 'kepler.gl/processors';
+ * import {addDataToMap} from '@kepler.gl/actions';
+ * import {processRowObject} from '@kepler.gl/processors';
  *
  * const data = [
  *  {lat: 31.27, lng: 127.56, value: 3},
@@ -282,8 +282,8 @@ export function processRowObject(rawData: unknown[]): ProcessorResult {
  * @returns dataset containing `fields` and `rows`
  * @public
  * @example
- * import {addDataToMap} from 'kepler.gl/actions';
- * import {processGeojson} from 'kepler.gl/processors';
+ * import {addDataToMap} from '@kepler.gl/actions';
+ * import {processGeojson} from '@kepler.gl/processors';
  *
  * const geojson = {
  * 	"type" : "FeatureCollection",
@@ -364,8 +364,8 @@ export function processGeojson(rawData: unknown): ProcessorResult {
  * @returns datasets and config `{datasets: {}, config: {}}`
  * @public
  * @example
- * import {addDataToMap} from 'kepler.gl/actions';
- * import {processKeplerglJSON} from 'kepler.gl/processors';
+ * import {addDataToMap} from '@kepler.gl/actions';
+ * import {processKeplerglJSON} from '@kepler.gl/processors';
  *
  * dispatch(addDataToMap(processKeplerglJSON(keplerGlJson)));
  */

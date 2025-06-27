@@ -11,8 +11,7 @@ import {
   EXPORT_IMG_RATIOS,
   EXPORT_MAP_FORMATS,
   RESOLUTIONS,
-  MAP_CONTROLS,
-  ExportImage
+  MAP_CONTROLS
 } from '@kepler.gl/constants';
 import {LOCALE_CODES} from '@kepler.gl/localization';
 import {createNotification, errorNotification, calculateExportImageSize} from '@kepler.gl/utils';
@@ -29,6 +28,7 @@ import {
   ExportHtml,
   ExportJson,
   ExportMap,
+  ExportImage,
   MapControlItem,
   MapControls,
   UiState
@@ -44,7 +44,7 @@ export const DEFAULT_MODAL = ADD_DATA_ID;
  * @public
  * @example
  *
- * import keplerGlReducer, {uiStateUpdaters} from 'kepler.gl/reducers';
+ * import keplerGlReducer, {uiStateUpdaters} from '@kepler.gl/reducers';
  * // Root Reducer
  * const reducers = combineReducers({
  *  keplerGl: keplerGlReducer,
@@ -541,14 +541,19 @@ export const setExportImageSettingUpdater = (
 export const setExportImageDataUriUpdater = (
   state: UiState,
   {payload: dataUri}: UIStateActions.SetExportImageDataUriUpdaterAction
-): UiState => ({
-  ...state,
-  exportImage: {
-    ...state.exportImage,
-    processing: false,
-    imageDataUri: dataUri
+): UiState => {
+  if (dataUri === state.exportImage.imageDataUri) {
+    return state;
   }
-});
+  return {
+    ...state,
+    exportImage: {
+      ...state.exportImage,
+      processing: false,
+      imageDataUri: dataUri
+    }
+  };
+};
 
 /**
  * @memberof uiStateUpdaters
@@ -923,29 +928,5 @@ export const togglePanelListViewUpdater = (
   return {
     ...state,
     [stateProp]: listView
-  };
-};
-
-/**
- * Update state of the loading indicator.
- * @memberof uiStateUpdaters
- * @param state uiState
- * @param action
- * @param action.payload Payload with change of number of active loading actions.
- * @returns nextState
- * @public
- */
-export const setLoadingIndicatorUpdater = (
-  state: UiState,
-  {payload: {change}}: UIStateActions.SetLoadingIndicatorAction
-): UiState => {
-  let {loadingIndicatorValue} = state;
-  if (!loadingIndicatorValue) {
-    loadingIndicatorValue = 0;
-  }
-
-  return {
-    ...state,
-    loadingIndicatorValue: Math.max(loadingIndicatorValue + change, 0)
   };
 };

@@ -59,7 +59,7 @@ export type KeplerGlState = {
  * @public
  * @example
  *
- * import keplerGlReducer, {combinedUpdaters} from 'kepler.gl/reducers';
+ * import keplerGlReducer, {combinedUpdaters} from '@kepler.gl/reducers';
  * // Root Reducer
  * const reducers = combineReducers({
  *  keplerGl: keplerGlReducer,
@@ -183,6 +183,7 @@ export const addDataToMapUpdater = (
 
   return compose_<KeplerGlState>([
     pick_('visState')(
+      // this part can be async
       apply_<VisState, any>(visStateUpdateVisDataUpdater, {
         datasets,
         options,
