@@ -163,7 +163,11 @@ async function refreshVectorTileMetadata(
     (datasetInfo.opts.metadata as VectorTileDatasetMetadata) || {};
 
   if (
-    !(remoteTileFormat === RemoteTileFormat.PMTILES || remoteTileFormat === RemoteTileFormat.MVT) ||
+    !(
+      remoteTileFormat === RemoteTileFormat.PMTILES ||
+      remoteTileFormat === RemoteTileFormat.MVT ||
+      remoteTileFormat === RemoteTileFormat.WMS
+    ) ||
     typeof tilesetMetadataUrl !== 'string' ||
     typeof tilesetDataUrl !== 'string'
   ) {

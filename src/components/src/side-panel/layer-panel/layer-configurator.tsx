@@ -1024,6 +1024,53 @@ export default function LayerConfiguratorFactory(
       );
     }
 
+    _renderWmsLayerConfig({
+      layer,
+      visConfiguratorProps,
+      layerChannelConfigProps,
+      layerConfiguratorProps
+    }) {
+      return (
+        <StyledLayerVisualConfigurator>
+          <LayerConfigGroup label={'layer.wms'} collapsible>
+            <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
+            <VisConfigSwitch
+              label={'layerVisConfigs.transparentBackground'}
+              {...layer.visConfigSettings.transparent}
+              {...visConfiguratorProps}
+              property="transparent"
+            />
+            <ItemSelector
+              selectedItems={layer.config.visConfig.wmsLayer}
+              options={layerChannelConfigProps.dataset.metadata.layers}
+              displayOption="title"
+              getOptionValue="name"
+              multiSelect={false}
+              searchable={false}
+              onChange={value => {
+                if (!value) {
+                  return;
+                }
+                const selectedLayer = layerChannelConfigProps.dataset.metadata.layers.find(
+                  l => l.name === value
+                );
+                if (!selectedLayer) {
+                  return;
+                }
+
+                layerConfiguratorProps.onChange({
+                  visConfig: {
+                    ...layer.config.visConfig,
+                    wmsLayer: selectedLayer
+                  }
+                });
+              }}
+            />
+          </LayerConfigGroup>
+        </StyledLayerVisualConfigurator>
+      );
+    }
+
     handleSelectColumnMode = (key: string) => {
       const {updateLayerConfig} = this.props;
       updateLayerConfig({columnMode: key});
