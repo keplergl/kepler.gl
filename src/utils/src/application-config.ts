@@ -119,7 +119,7 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
 
   // WMS layer config
   // TODO: enabled for development purposes only, remove in production
-  enableWMSLayer: true,
+  enableWMSLayer: false,
 
   // TODO: provide a default free server or leave blank
   rasterServerUrls: [],
