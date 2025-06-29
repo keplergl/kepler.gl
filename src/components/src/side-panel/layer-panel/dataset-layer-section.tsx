@@ -58,13 +58,21 @@ function DatasetLayerSectionFactory(
       return {[dataset.id]: dataset};
     }, [dataset]);
 
+    // temp patch to hide layers that are in development
     const enableRasterTileLayer = getApplicationConfig().enableRasterTileLayer;
+    const enableWMSLayer = getApplicationConfig().enableWMSLayer;
     const filteredLayerClasses = useMemo(() => {
-      if (enableRasterTileLayer) return layerClasses;
-      /* eslint-disable @typescript-eslint/no-unused-vars */
-      const {rasterTile, ...restClasses} = layerClasses;
-      return restClasses as LayerClassesType;
-    }, [enableRasterTileLayer, layerClasses]);
+      let filteredClasses = layerClasses;
+      if (!enableRasterTileLayer) {
+        const {rasterTile: _rasterTile, ...rest} = filteredClasses;
+        filteredClasses = rest as LayerClassesType;
+      }
+      if (!enableWMSLayer) {
+        const {wms: _wms, ...rest} = filteredClasses;
+        filteredClasses = rest as LayerClassesType;
+      }
+      return filteredClasses as LayerClassesType;
+    }, [enableRasterTileLayer, enableWMSLayer, layerClasses]);
 
     return (
       <DatasetLayerSectionWrapper>
