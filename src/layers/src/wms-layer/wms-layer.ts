@@ -36,6 +36,7 @@ export type WMSLayerVisConfig = {
   wmsLayer: {
     name: string;
     title: string;
+    boundingBox: number[][];
   };
 };
 
@@ -146,6 +147,25 @@ export default class WMSLayer extends AbstractTileLayer<WMSTile, any[]> {
       tilesetDataUrl: metadata?.tilesetDataUrl || null, // URL for WMS tiles
       metadata: dataset?.metadata
     };
+  }
+
+  _getCurrentServiceLayer(dataset: KeplerDataset) {
+    const {visConfig} = this.config;
+    return visConfig.wmsLayer ?? dataset.metadata?.layers?.[0] ?? null;
+  }
+
+  updateLayerMeta(dataset: KeplerDataset): void {
+    if (dataset.type !== DatasetType.WMS_TILE) {
+      return;
+    }
+
+    const currentLayer = this._getCurrentServiceLayer(dataset);
+    if (currentLayer && currentLayer.boundingBox) {
+      const bb = currentLayer.boundingBox;
+      this.updateMeta({
+        bounds: [bb[0][0], bb[0][1], bb[1][0], bb[1][1]]
+      });
+    }
   }
 
   renderLayer(opts) {

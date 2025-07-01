@@ -75,7 +75,8 @@ const TilesetWMSForm: React.FC<WMSTileFormProps> = ({setResponse}) => {
         if (Array.isArray(layers)) {
           const layerOptions = layers.map((layer: any) => ({
             name: layer.name,
-            title: layer.title || layer.name
+            title: layer.title || layer.name,
+            boundingBox: layer.geographicBoundingBox
           }));
           setAvailableLayers(layerOptions);
         } else {
