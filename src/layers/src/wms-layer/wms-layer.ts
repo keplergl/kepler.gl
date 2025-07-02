@@ -1,6 +1,6 @@
-// Imports
-// @ts-expect-error
-import {_WMSLayer as DeckWMSLayer} from '@deck.gl/geo-layers';
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 import {
   Field,
   LayerBaseConfig,
@@ -11,13 +11,16 @@ import {
 import TileDataset from '../vector-tile/common-tile/tile-dataset';
 import WMSLayerIcon from './wms-layer-icon';
 import {FindDefaultLayerPropsReturnValue} from '../layer-utils';
-import {DatasetType, LAYER_TYPES} from '@kepler.gl/constants';
-import {KeplerTable as KeplerDataset} from '@kepler.gl/table';
+
 import AbstractTileLayer, {
   AbstractTileLayerVisConfigSettings,
   LayerData
 } from '../vector-tile/abstract-tile-layer';
+
+import {DatasetType, LAYER_TYPES} from '@kepler.gl/constants';
 import {notNullorUndefined} from '@kepler.gl/common-utils';
+import {WMSLayer as DeckWMSLayer} from '@kepler.gl/deckgl-layers';
+import {KeplerTable as KeplerDataset} from '@kepler.gl/table';
 
 // Types
 export type WMSTile = {
@@ -79,7 +82,7 @@ export default class WMSLayer extends AbstractTileLayer<WMSTile, any[]> {
     this.updateLayerVisConfig({
       opacity: 0.8, // Default opacity
       wmsLayer: defaultWmsLayer,
-      transparent: false
+      transparent: true
     });
   }
 

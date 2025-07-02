@@ -59,7 +59,7 @@ const TilesetWMSForm: React.FC<WMSTileFormProps> = ({setResponse}) => {
         )) as WMSCapabilities;
 
         // Extract name or title from GetCapabilities response
-        const serviceTitle = data?.title;
+        const serviceTitle = data?.title || data?.name;
         if (serviceTitle && !layerName) {
           setLayerName(serviceTitle);
         }
