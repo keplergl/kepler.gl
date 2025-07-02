@@ -62,6 +62,8 @@ export {getCategoricalColormapDataUrl} from './raster-tile/image';
 export * from './raster-tile/types';
 export * from './raster-tile/raster-tile-utils';
 
+export {default as WMSLayerIcon} from './wms-layer/wms-layer-icon';
+
 import {LAYER_TYPES} from '@kepler.gl/constants';
 export {parseGeoJsonRawFeature} from './geojson-layer/geojson-utils';
 // base layer
