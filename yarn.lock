@@ -4938,6 +4938,7 @@ __metadata:
     "@kepler.gl/utils": "npm:3.1.8"
     "@loaders.gl/mvt": "npm:^4.3.2"
     "@loaders.gl/pmtiles": "npm:^4.3.2"
+    "@loaders.gl/wms": "npm:4.3.2"
     "@mapbox/mapbox-sdk": "npm:^0.15.3"
     "@nebula.gl/edit-modes": "npm:1.0.2-alpha.1"
     "@tippyjs/react": "npm:^4.2.0"
