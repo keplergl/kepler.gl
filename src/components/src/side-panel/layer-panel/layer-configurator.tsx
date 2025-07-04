@@ -1032,14 +1032,10 @@ export default function LayerConfiguratorFactory(
     }) {
       return (
         <StyledLayerVisualConfigurator>
-          <LayerConfigGroup label={'layer.wms'} collapsible>
-            <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
-            <VisConfigSwitch
-              label={'layerVisConfigs.transparentBackground'}
-              {...layer.visConfigSettings.transparent}
-              {...visConfiguratorProps}
-              property="transparent"
-            />
+          <LayerConfigGroup label={'layer.service'}>
+            <PanelLabel>
+              <FormattedMessage id={'layer.layer'} />
+            </PanelLabel>
             <ItemSelector
               selectedItems={layer.config.visConfig.wmsLayer}
               options={layerChannelConfigProps.dataset.metadata.layers}
@@ -1065,6 +1061,15 @@ export default function LayerConfiguratorFactory(
                   }
                 });
               }}
+            />
+          </LayerConfigGroup>
+          <LayerConfigGroup label={'layer.appearance'}>
+            <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
+            <VisConfigSwitch
+              label={'layerVisConfigs.transparentBackground'}
+              {...layer.visConfigSettings.transparent}
+              {...visConfiguratorProps}
+              property="transparent"
             />
           </LayerConfigGroup>
         </StyledLayerVisualConfigurator>

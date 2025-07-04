@@ -66,3 +66,12 @@ export type RasterTileMetadataSourceType = {
  */
 export type RasterTileDatasetMetadata = (RasterTileLocalMetadata | RasterTileRemoteMetadata) &
   RasterTileMetadataSourceType;
+
+export type WMSDatasetMetadata = {
+  type: typeof REMOTE_TILE;
+  remoteTileFormat: RemoteTileFormat.WMS;
+  tilesetDataUrl: string;
+  tilesetMetadataUrl: string;
+  version: string;
+  layers: {name: string; title: string; boundingBox: number[] | null}[];
+};

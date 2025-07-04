@@ -54,6 +54,7 @@
     "@kepler.gl/utils": "3.1.8",
     "@loaders.gl/mvt": "^4.3.2",
     "@loaders.gl/pmtiles": "^4.3.2",
+    "@loaders.gl/wms": "4.3.2",
     "@mapbox/mapbox-sdk": "^0.15.3",
     "@nebula.gl/edit-modes": "1.0.2-alpha.1",
     "@tippyjs/react": "^4.2.0",

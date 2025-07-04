@@ -164,7 +164,6 @@ function LoadTilesetTabFactory() {
             </TilesetTypeContainer>
             <div>
               <CurrentForm setResponse={setResponse} />
-              {error && <div>{getError(error)}</div>}
             </div>
           </div>
           <MetaContainer>
