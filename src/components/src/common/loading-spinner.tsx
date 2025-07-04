@@ -17,7 +17,6 @@ const animationName = keyframes`
 
 const Loader = styled.span`
     border-left-color: ${props => props.color || props.theme.primaryBtnBgd};
-    animation: _preloader_spin_ 500ms linear infinite;
     border-radius: 50%;
     border-top-color: transparent;
     border-bottom-color: transparent;
@@ -25,7 +24,7 @@ const Loader = styled.span`
     cursor: wait;
     border-style: solid;
     display: block;
-    animation-name: ${animationName};
+    animation: ${animationName} 500ms linear infinite;
 }`;
 
 export type LoadingWrapperProps = BaseComponentProps & {
