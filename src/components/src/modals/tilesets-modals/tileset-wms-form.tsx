@@ -3,16 +3,18 @@
 
 import React, {useCallback, useEffect, useState} from 'react';
 import styled from 'styled-components';
-import {WMSCapabilities, WMSCapabilitiesLoader} from '@loaders.gl/wms';
-import {load} from '@loaders.gl/core';
+import {WMSCapabilities} from '@loaders.gl/wms';
 
-import {DatasetType, REMOTE_TILE, RemoteTileFormat} from '@kepler.gl/constants';
+import {validateUrl} from '@kepler.gl/common-utils';
+import {DatasetType, REMOTE_TILE, RemoteTileFormat, WMSDatasetMetadata} from '@kepler.gl/constants';
+import {getWMSCapabilities, wmsCapabilitiesToDatasetMetadata} from '@kepler.gl/table';
+
 import {MetaResponse} from './common';
 import {InputLight} from '../../common';
 
 const TilesetInputContainer = styled.div`
   display: grid;
-  grid-template-rows: repeat(2, 1fr);
+  grid-template-rows: repeat(3, auto);
   row-gap: 18px;
   font-size: 12px;
 `;
@@ -22,18 +24,34 @@ const TilesetInputDescription = styled.div`
   color: ${props => props.theme.AZURE200};
   font-size: 11px;
 `;
+
+const ExampleUrlsContainer = styled.div`
+  text-align: left;
+  color: ${props => props.theme.AZURE200};
+  font-size: 11px;
+
+  .example-url {
+    margin-top: 8px;
+    display: block;
+  }
+`;
+
 type WMSTileFormProps = {
   setResponse: (response: MetaResponse) => void;
+};
+
+type WMSData = {
+  metadata: WMSCapabilities | null;
+  layers: WMSDatasetMetadata['layers'];
+  version: string;
 };
 
 const TilesetWMSForm: React.FC<WMSTileFormProps> = ({setResponse}) => {
   const [layerName, setLayerName] = useState<string>('');
   const [wmsUrl, setWmsUrl] = useState<string>('');
-  const [metadata, setMetadata] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<Error | null>(null);
-  const [availableLayers, setAvailableLayers] = useState<{name: string; title: string}[]>([]);
-  const [wmsVersion, setWmsVersion] = useState<string>('1.3.0');
+  const [wmsData, setWMSData] = useState<WMSData | null>(null);
 
   const onLayerNameChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -49,47 +67,34 @@ const TilesetWMSForm: React.FC<WMSTileFormProps> = ({setResponse}) => {
       const newWmsUrl = event.target.value;
       setWmsUrl(newWmsUrl);
 
+      if (!validateUrl(newWmsUrl)) {
+        setWMSData(null);
+        return;
+      }
+
       // Fetch WMS GetCapabilities
       try {
         setLoading(true);
         setError(null);
-        const data = (await load(
-          `${newWmsUrl}?service=WMS&request=GetCapabilities`,
-          WMSCapabilitiesLoader
-        )) as WMSCapabilities;
+
+        const data = await getWMSCapabilities(newWmsUrl);
+
+        const datasetMetadata = wmsCapabilitiesToDatasetMetadata(data);
 
         // Extract name or title from GetCapabilities response
-        const serviceTitle = data?.title;
+        const serviceTitle = data?.title || data?.name;
         if (serviceTitle && !layerName) {
           setLayerName(serviceTitle);
         }
 
-        // Flatten layers if they are nested
-        const layers = data.layers.flatMap(layer => {
-          if (layer.layers && layer.layers.length > 0) {
-            return layer.layers;
-          }
-          return layer;
+        setWMSData({
+          metadata: data,
+          layers: datasetMetadata.layers,
+          version: datasetMetadata.version
         });
-
-        if (Array.isArray(layers)) {
-          const layerOptions = layers.map((layer: any) => ({
-            name: layer.name,
-            title: layer.title || layer.name
-          }));
-          setAvailableLayers(layerOptions);
-        } else {
-          setAvailableLayers([]);
-        }
-
-        // Set WMS version
-        const version = data.version || '1.3.0';
-        setWmsVersion(version);
-
-        setMetadata(data);
       } catch (err) {
         setError(err instanceof Error ? err : new Error('Unknown error'));
-        setMetadata(null);
+        setWMSData(null);
       } finally {
         setLoading(false);
       }
@@ -107,12 +112,12 @@ const TilesetWMSForm: React.FC<WMSTileFormProps> = ({setResponse}) => {
           remoteTileFormat: RemoteTileFormat.WMS,
           tilesetDataUrl: wmsUrl,
           tilesetMetadataUrl: `${wmsUrl}?service=WMS&request=GetCapabilities`,
-          layers: availableLayers,
-          wmsVersion: wmsVersion
+          layers: wmsData?.layers || [],
+          wmsVersion: wmsData?.version || '1.3.0'
         }
       };
       setResponse({
-        metadata,
+        metadata: wmsData?.metadata ?? null,
         dataset,
         loading,
         error
@@ -125,7 +130,7 @@ const TilesetWMSForm: React.FC<WMSTileFormProps> = ({setResponse}) => {
         error
       });
     }
-  }, [setResponse, layerName, wmsUrl, metadata, loading, error, availableLayers, wmsVersion]);
+  }, [setResponse, layerName, wmsUrl, wmsData, loading, error]);
 
   return (
     <TilesetInputContainer>
@@ -147,6 +152,18 @@ const TilesetWMSForm: React.FC<WMSTileFormProps> = ({setResponse}) => {
           onChange={onWmsUrlChange}
         />
         <TilesetInputDescription>Provide a valid WMS service URL.</TilesetInputDescription>
+      </div>
+      <div>
+        <TilesetInputDescription>For example, try a public WMS URL:</TilesetInputDescription>
+        <ExampleUrlsContainer>
+          <div className="example-url">• https://ows.terrestris.de/osm/service</div>
+          <div className="example-url">
+            • https://opengeo.ncep.noaa.gov/geoserver/conus/conus_cref_qcd/ows
+          </div>
+          <div className="example-url">
+            • https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi
+          </div>
+        </ExampleUrlsContainer>
       </div>
     </TilesetInputContainer>
   );

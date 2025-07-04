@@ -11,7 +11,8 @@ import {
   RasterTileDatasetMetadata,
   PMTilesType,
   RemoteTileFormat,
-  VectorTileDatasetMetadata
+  VectorTileDatasetMetadata,
+  WMSDatasetMetadata
 } from '@kepler.gl/constants';
 import {
   hexToRgb,
@@ -19,8 +20,11 @@ import {
   datasetColorMaker,
   getApplicationConfig
 } from '@kepler.gl/utils';
-import {PMTilesSource, PMTilesMetadata} from '@loaders.gl/pmtiles';
+
+import {load} from '@loaders.gl/core';
 import {/* MVTSource,*/ TileJSON} from '@loaders.gl/mvt';
+import {PMTilesSource, PMTilesMetadata} from '@loaders.gl/pmtiles';
+import {WMSCapabilities, WMSCapabilitiesLoader} from '@loaders.gl/wms';
 
 import {getMVTMetadata} from './tileset/tileset-utils';
 import {parseRasterMetadata} from './tileset/raster-tile-utils';
@@ -151,6 +155,8 @@ async function refreshRemoteData(datasetInfo: CreateTableProps): Promise<object 
       return await refreshVectorTileMetadata(datasetInfo);
     case DatasetType.RASTER_TILE:
       return await refreshRasterTileMetadata(datasetInfo);
+    case DatasetType.WMS_TILE:
+      return await refreshWMSMetadata(datasetInfo);
     default:
       return null;
   }
@@ -163,11 +169,7 @@ async function refreshVectorTileMetadata(
     (datasetInfo.opts.metadata as VectorTileDatasetMetadata) || {};
 
   if (
-    !(
-      remoteTileFormat === RemoteTileFormat.PMTILES ||
-      remoteTileFormat === RemoteTileFormat.MVT ||
-      remoteTileFormat === RemoteTileFormat.WMS
-    ) ||
+    !(remoteTileFormat === RemoteTileFormat.PMTILES || remoteTileFormat === RemoteTileFormat.MVT) ||
     typeof tilesetMetadataUrl !== 'string' ||
     typeof tilesetDataUrl !== 'string'
   ) {
@@ -235,4 +237,61 @@ async function refreshRasterTileMetadata(datasetInfo: CreateTableProps): Promise
     // ignore for now, and use old metadata
   }
   return null;
+}
+
+async function refreshWMSMetadata(datasetInfo: CreateTableProps): Promise<any | null> {
+  const {remoteTileFormat, tilesetDataUrl} =
+    (datasetInfo.opts.metadata as WMSDatasetMetadata) || {};
+
+  if (remoteTileFormat !== RemoteTileFormat.WMS || typeof tilesetDataUrl !== 'string') {
+    return null;
+  }
+
+  try {
+    const data = await getWMSCapabilities(tilesetDataUrl);
+    return wmsCapabilitiesToDatasetMetadata(data);
+  } catch (err) {
+    // ignore for now, and use old metadata
+  }
+  return null;
+}
+
+export async function getWMSCapabilities(wsmUrl: string): Promise<WMSCapabilities> {
+  return (await load(
+    `${wsmUrl}?service=WMS&request=GetCapabilities`,
+    WMSCapabilitiesLoader
+  )) as WMSCapabilities;
+}
+
+export function wmsCapabilitiesToDatasetMetadata(capabilities: WMSCapabilities): any | null {
+  // Flatten layers if they are nested
+  const layers = capabilities.layers.flatMap(layer => {
+    if (layer.layers && layer.layers.length > 0) {
+      return layer.layers;
+    }
+    return layer;
+  });
+
+  let availableLayers: WMSDatasetMetadata['layers'] = [];
+  if (Array.isArray(layers)) {
+    availableLayers = layers.map((layer: any) => {
+      const bb = layer.geographicBoundingBox;
+
+      let boundingBox: number[] | null = null;
+      if (Array.isArray(bb) && Array.isArray(bb[0]) && Array.isArray(bb[1])) {
+        boundingBox = [bb[0][0], bb[0][1], bb[1][0], bb[1][1]];
+      }
+
+      return {
+        name: layer.name,
+        title: layer.title || layer.name,
+        boundingBox
+      };
+    });
+  }
+
+  return {
+    layers: availableLayers,
+    version: capabilities.version || '1.3.0'
+  };
 }

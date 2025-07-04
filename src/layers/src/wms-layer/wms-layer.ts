@@ -1,6 +1,6 @@
-// Imports
-// @ts-expect-error
-import {_WMSLayer as DeckWMSLayer} from '@deck.gl/geo-layers';
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 import {
   Field,
   LayerBaseConfig,
@@ -11,13 +11,16 @@ import {
 import TileDataset from '../vector-tile/common-tile/tile-dataset';
 import WMSLayerIcon from './wms-layer-icon';
 import {FindDefaultLayerPropsReturnValue} from '../layer-utils';
-import {DatasetType, LAYER_TYPES} from '@kepler.gl/constants';
-import {KeplerTable as KeplerDataset} from '@kepler.gl/table';
+
 import AbstractTileLayer, {
   AbstractTileLayerVisConfigSettings,
   LayerData
 } from '../vector-tile/abstract-tile-layer';
+
+import {DatasetType, WMSDatasetMetadata, LAYER_TYPES} from '@kepler.gl/constants';
 import {notNullorUndefined} from '@kepler.gl/common-utils';
+import {WMSLayer as DeckWMSLayer} from '@kepler.gl/deckgl-layers';
+import {KeplerTable as KeplerDataset} from '@kepler.gl/table';
 
 // Types
 export type WMSTile = {
@@ -36,7 +39,8 @@ export type WMSLayerVisConfig = {
   wmsLayer: {
     name: string;
     title: string;
-  };
+    boundingBox: number[][];
+  } | null;
 };
 
 export type WMSLayerConfig = LayerBaseConfig & {
@@ -64,21 +68,18 @@ export default class WMSLayer extends AbstractTileLayer<WMSTile, any[]> {
   // Constructor
   constructor(
     props: ConstructorParameters<typeof AbstractTileLayer>[0] & {
-      layers?: {name: string; title: string}[];
+      layers?: WMSDatasetMetadata['layers'];
     }
   ) {
     super(props);
 
-    const defaultWmsLayer = props.layers?.[0] || {
-      name: 'defaultLayer',
-      title: 'Default Layer'
-    };
+    const defaultWmsLayer = props.layers?.[0] ?? null;
 
     this.registerVisConfig(wmsTileVisConfigs);
     this.updateLayerVisConfig({
       opacity: 0.8, // Default opacity
       wmsLayer: defaultWmsLayer,
-      transparent: false
+      transparent: true
     });
   }
 
@@ -148,34 +149,41 @@ export default class WMSLayer extends AbstractTileLayer<WMSTile, any[]> {
     };
   }
 
+  _getCurrentServiceLayer(dataset: KeplerDataset) {
+    const {visConfig} = this.config;
+    return visConfig.wmsLayer ?? dataset.metadata?.layers?.[0] ?? null;
+  }
+
+  updateLayerMeta(dataset: KeplerDataset): void {
+    if (dataset.type !== DatasetType.WMS_TILE) {
+      return;
+    }
+
+    const currentLayer = this._getCurrentServiceLayer(dataset);
+    if (currentLayer && currentLayer.boundingBox) {
+      this.updateMeta({
+        bounds: currentLayer.boundingBox
+      });
+    }
+  }
+
   renderLayer(opts) {
     const {visConfig} = this.config;
     const {data} = opts;
-    const wmsLayer = visConfig.wmsLayer.name ?? data.metadata?.layers?.[0]?.name ?? null;
-    const template = {
-      LAYERS: '{layers}',
-      BBOX: '{east},{north},{west},{south}',
-      TRANSPARENT: visConfig.transparent ? 'TRUE' : 'FALSE',
-      FORMAT: 'image/png',
-      REQUEST: 'GetMap',
-      SERVICE: 'WMS',
-      WIDTH: '{width}',
-      HEIGHT: '{height}',
-      VERSION: data.metadata?.version || '1.3.0',
-      CRS: 'EPSG:3857'
-    };
-
-    const qs = Object.entries(template)
-      .map(([key, value]) => `${key}=${value}`)
-      .join('&');
+    const wmsLayer = visConfig.wmsLayer?.name;
+    if (!wmsLayer) {
+      return [];
+    }
 
     return [
       new DeckWMSLayer({
-        data: `${data.tilesetDataUrl}?${qs}`,
-        serviceType: 'template',
+        id: `${this.id}-WMSLayer` as string,
+        serviceType: 'wms',
+        data: data.tilesetDataUrl,
         layers: [wmsLayer],
         opacity: visConfig.opacity,
-        id: this.id
+        transparent: visConfig.transparent,
+        pickable: false
       })
     ];
   }

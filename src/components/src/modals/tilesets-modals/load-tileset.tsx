@@ -7,7 +7,7 @@ import JSONPretty from 'react-json-pretty';
 import {AutoSizer} from 'react-virtualized';
 import styled from 'styled-components';
 
-import {VectorTileIcon, RasterTileIcon} from '@kepler.gl/layers';
+import {VectorTileIcon, RasterTileIcon, WMSLayerIcon} from '@kepler.gl/layers';
 import {getError, getApplicationConfig} from '@kepler.gl/utils';
 
 import {MetaResponse} from './common';
@@ -16,7 +16,6 @@ import TilesetIcon from './tileset-icon';
 import TilesetVectorForm from './tileset-vector-form';
 import TilesetRasterForm from './tileset-raster-form';
 
-import WMSLayerIcon from 'src/layers/src/wms-layer/wms-layer-icon';
 import TilesetWMSForm from './tileset-wms-form';
 
 const WIDTH_ICON = '70px';
@@ -165,7 +164,6 @@ function LoadTilesetTabFactory() {
             </TilesetTypeContainer>
             <div>
               <CurrentForm setResponse={setResponse} />
-              {error && <div>{getError(error)}</div>}
             </div>
           </div>
           <MetaContainer>
