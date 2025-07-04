@@ -94,7 +94,8 @@ const ExportDataModalFactory = () => {
       const showTiledDatasetWarning = Object.keys(datasets).some(datasetId => {
         return (
           (datasets[datasetId].type === DatasetType.VECTOR_TILE ||
-            datasets[datasetId].type === DatasetType.RASTER_TILE) &&
+            datasets[datasetId].type === DatasetType.RASTER_TILE ||
+            datasets[datasetId].type === DatasetType.WMS_TILE) &&
           (selectedDataset === datasetId || exportAllDatasets)
         );
       });
