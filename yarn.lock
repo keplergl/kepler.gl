@@ -5081,6 +5081,7 @@ __metadata:
     "@luma.gl/core": "npm:^8.5.20"
     "@mapbox/geo-viewport": "npm:^0.4.1"
     "@mapbox/vector-tile": "npm:^1.3.1"
+    "@math.gl/web-mercator": "npm:^3.6.2"
     "@types/d3-array": "npm:^2.8.0"
     "@types/geojson": "npm:^7946.0.8"
     "@types/lodash": "npm:4.17.5"
