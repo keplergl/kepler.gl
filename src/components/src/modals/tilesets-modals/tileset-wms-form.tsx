@@ -14,7 +14,7 @@ import {InputLight} from '../../common';
 
 const TilesetInputContainer = styled.div`
   display: grid;
-  grid-template-rows: repeat(2, 1fr);
+  grid-template-rows: repeat(3, auto);
   row-gap: 18px;
   font-size: 12px;
 `;
@@ -24,6 +24,18 @@ const TilesetInputDescription = styled.div`
   color: ${props => props.theme.AZURE200};
   font-size: 11px;
 `;
+
+const ExampleUrlsContainer = styled.div`
+  text-align: left;
+  color: ${props => props.theme.AZURE200};
+  font-size: 11px;
+
+  .example-url {
+    margin-top: 8px;
+    display: block;
+  }
+`;
+
 type WMSTileFormProps = {
   setResponse: (response: MetaResponse) => void;
 };
@@ -140,6 +152,18 @@ const TilesetWMSForm: React.FC<WMSTileFormProps> = ({setResponse}) => {
           onChange={onWmsUrlChange}
         />
         <TilesetInputDescription>Provide a valid WMS service URL.</TilesetInputDescription>
+      </div>
+      <div>
+        <TilesetInputDescription>For example, try a public WMS URL:</TilesetInputDescription>
+        <ExampleUrlsContainer>
+          <div className="example-url">• https://ows.terrestris.de/osm/service</div>
+          <div className="example-url">
+            • https://opengeo.ncep.noaa.gov/geoserver/conus/conus_cref_qcd/ows
+          </div>
+          <div className="example-url">
+            • https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi
+          </div>
+        </ExampleUrlsContainer>
       </div>
     </TilesetInputContainer>
   );
