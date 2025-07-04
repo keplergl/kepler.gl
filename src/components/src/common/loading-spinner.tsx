@@ -6,7 +6,7 @@ import styled, {keyframes, IStyledComponent} from 'styled-components';
 
 import {BaseComponentProps} from '../types';
 
-const spin = keyframes`
+const animationName = keyframes`
   0% {
     transform: rotate(0deg);
   }
@@ -15,15 +15,18 @@ const spin = keyframes`
   }
 `;
 
-const Loader = styled.div`
-  border: 2px solid ${props => props.theme.borderColorLT || '#e0e0e0'};
-  border-top: 2px solid ${props => props.color || props.theme.primaryBtnBgd};
-  border-radius: 50%;
-  width: 100%;
-  height: 100%;
-  animation: ${spin} 1s linear infinite;
-  display: block;
-`;
+const Loader = styled.span`
+    border-left-color: ${props => props.color || props.theme.primaryBtnBgd};
+    animation: _preloader_spin_ 500ms linear infinite;
+    border-radius: 50%;
+    border-top-color: transparent;
+    border-bottom-color: transparent;
+    border-right-color: transparent;
+    cursor: wait;
+    border-style: solid;
+    display: block;
+    animation-name: ${animationName};
+}`;
 
 export type LoadingWrapperProps = BaseComponentProps & {
   borderColor?: CSSProperties['borderColor'];
@@ -33,8 +36,9 @@ const LoadingWrapper: IStyledComponent<
   'web',
   LoadingWrapperProps
 > = styled.div<LoadingWrapperProps>`
-  display: inline-block;
-  position: relative;
+  border-radius: 50%;
+  border: 3px solid ${props => props.borderColor || props.theme.borderColorLT};
+  padding: 2px;
 `;
 
 export type LoadingSpinnerProps = {
@@ -49,13 +53,17 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
   size = 32,
   color = '',
   borderColor = '',
-  strokeWidth = 2,
-  gap = 0
+  strokeWidth = 3,
+  gap = 2
 }) => (
-  <LoadingWrapper style={{width: `${size}px`, height: `${size}px`}}>
+  <LoadingWrapper
+    style={{width: `${size}px`, height: `${size}px`, padding: `${gap}px`, borderColor}}
+  >
     <Loader
       color={color}
       style={{
+        width: `${size - strokeWidth * 2 - gap * 2}px`,
+        height: `${size - strokeWidth * 2 - gap * 2}px`,
         borderWidth: strokeWidth
       }}
     />
