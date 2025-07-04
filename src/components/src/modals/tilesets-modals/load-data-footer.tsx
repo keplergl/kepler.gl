@@ -3,7 +3,7 @@
 
 import React from 'react';
 import {injectIntl, WrappedComponentProps} from 'react-intl';
-import styled from 'styled-components';
+import styled, {withTheme} from 'styled-components';
 
 import {Button} from '../../common';
 import LoadingSpinner from '../../common/loading-spinner';
@@ -51,15 +51,20 @@ type LoadDataFooterProps = {
   errorText?: string | null;
 };
 
-const LoadDataFooter: React.FC<LoadDataFooterProps & WrappedComponentProps> = ({
+type ThemeProps = {
+  theme: any;
+};
+
+const LoadDataFooter = ({
   disabled,
   intl,
   isLoading,
   onConfirm,
   confirmText,
   prependText = '',
-  errorText = ''
-}: LoadDataFooterProps & WrappedComponentProps) => {
+  errorText = '',
+  theme
+}: LoadDataFooterProps & WrappedComponentProps & ThemeProps) => {
   return (
     <LoadDataFooterContainer>
       <div>
@@ -71,7 +76,9 @@ const LoadDataFooter: React.FC<LoadDataFooterProps & WrappedComponentProps> = ({
           width="130px"
           cta
         >
-          {isLoading && <LoadingSpinner size={12} />}
+          {isLoading && (
+            <LoadingSpinner color={theme.borderColorLT} borderColor="transparent" size={24} />
+          )}
           {isLoading
             ? null
             : intl.formatMessage({
@@ -84,4 +91,6 @@ const LoadDataFooter: React.FC<LoadDataFooterProps & WrappedComponentProps> = ({
   );
 };
 
-export default injectIntl(LoadDataFooter) as React.FC<LoadDataFooterProps>;
+export default withTheme(injectIntl(LoadDataFooter)) as React.FC<
+  Omit<LoadDataFooterProps, 'theme'>
+>;
