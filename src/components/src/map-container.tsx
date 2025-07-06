@@ -526,6 +526,14 @@ export default function MapContainerFactory(
       this.props.visStateActions.layerFilteredItemsChange(this.props.visState.layers[idx], event);
     };
 
+    _onWMSFeatureInfo = (idx, {featureInfo, coordinate}) => {
+      this.props.visStateActions.wmsFeatureInfo(
+        this.props.visState.layers[idx],
+        featureInfo,
+        coordinate
+      );
+    };
+
     _handleMapToggleLayer = layerId => {
       const {index: mapIndex = 0, visStateActions} = this.props;
       visStateActions.toggleLayerForMap(mapIndex, layerId);
@@ -823,7 +831,8 @@ export default function MapContainerFactory(
         {
           onLayerHover: this._onLayerHover,
           onSetLayerDomain: this._onLayerSetDomain,
-          onFilteredItemsChange: this._onLayerFilteredItemsChange
+          onFilteredItemsChange: this._onLayerFilteredItemsChange,
+          onWMSFeatureInfo: this._onWMSFeatureInfo
         },
         deckGlProps
       );
