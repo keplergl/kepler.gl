@@ -1632,7 +1632,7 @@ export function layerFilteredItemsChange(
 export type WMSFeatureInfoAction = {
   layer: Layer;
   featureInfo: Array<{name: string; value: string}> | string | null;
-  coordinate?: [number, number];
+  coordinate?: [number, number] | null;
 };
 
 /**

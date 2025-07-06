@@ -121,7 +121,7 @@ test('WMSLayer -> hover functionality', t => {
       t.ok(featureInfo.includes('test_layer'), 'should include layer name in feature info');
       t.end();
     })
-    .catch(error => {
+    .catch(_error => {
       t.fail('getWMSFeatureInfo should not throw error');
       t.end();
     });

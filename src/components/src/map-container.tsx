@@ -526,11 +526,17 @@ export default function MapContainerFactory(
       this.props.visStateActions.layerFilteredItemsChange(this.props.visState.layers[idx], event);
     };
 
-    _onWMSFeatureInfo = (idx, {featureInfo, coordinate}) => {
+    _onWMSFeatureInfo = (
+      idx: number,
+      data: {
+        featureInfo: Array<{name: string; value: string}> | string | null;
+        coordinate?: [number, number] | null;
+      }
+    ) => {
       this.props.visStateActions.wmsFeatureInfo(
         this.props.visState.layers[idx],
-        featureInfo,
-        coordinate
+        data.featureInfo,
+        data.coordinate
       );
     };
 

@@ -141,7 +141,7 @@ const EntryInfoRow: React.FC<EntryInfoRowProps> = ({
 
   // Handle WMS layer data in comparison mode - WMS layers don't have comparable field data
   let primaryValue = null;
-  let displayDeltaValue = null;
+  let displayDeltaValue: string | null = null;
 
   if (primaryData) {
     try {
