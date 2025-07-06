@@ -130,7 +130,8 @@ export default class WMSLayer extends CompositeLayer<Required<_WMSLayerProps>> {
             ? COORDINATE_SYSTEM.LNGLAT
             : COORDINATE_SYSTEM.CARTESIAN,
         bounds,
-        image
+        image,
+        pickable: this.props.pickable
       })
     );
   }

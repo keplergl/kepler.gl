@@ -21,6 +21,8 @@ import {DatasetType, WMSDatasetMetadata, LAYER_TYPES} from '@kepler.gl/constants
 import {notNullorUndefined} from '@kepler.gl/common-utils';
 import {WMSLayer as DeckWMSLayer} from '@kepler.gl/deckgl-layers';
 import {KeplerTable as KeplerDataset} from '@kepler.gl/table';
+import {DataContainerInterface} from '@kepler.gl/utils';
+import {AnimationConfig} from '@kepler.gl/types';
 
 // Types
 export type WMSTile = {
@@ -64,6 +66,9 @@ export type WMSLayerData = LayerData & {
 export default class WMSLayer extends AbstractTileLayer<WMSTile, any[]> {
   declare config: WMSLayerConfig;
   declare visConfigSettings: WMSLayerVisConfigSettings;
+
+  // Store reference to the deck layer for feature info access
+  private deckLayerRef: any = null;
 
   // Constructor
   constructor(
@@ -167,24 +172,176 @@ export default class WMSLayer extends AbstractTileLayer<WMSTile, any[]> {
     }
   }
 
+  // Override hasHoveredObject to handle WMS hover
+  hasHoveredObject(objectInfo: any) {
+    // For WMS layers, we consider it hovered if the layer is picked
+    // The actual feature info will be retrieved via getHoverData
+    if (this.isLayerHovered(objectInfo)) {
+      return {
+        index: 0, // WMS layers don't have discrete data points, so we use index 0
+        ...objectInfo
+      };
+    }
+    return null;
+  }
+
+  // Override getHoverData to retrieve WMS feature info
+  getHoverData(
+    object: any,
+    dataContainer: DataContainerInterface,
+    fields: Field[],
+    animationConfig: AnimationConfig,
+    hoverInfo: {index: number; x?: number; y?: number}
+  ): any {
+    // Check if this is a WMS feature info object from clicked state
+    if (object && object.wmsFeatureInfo) {
+      // If wmsFeatureInfo is an array of parsed attributes, format them for display
+      if (Array.isArray(object.wmsFeatureInfo)) {
+        // Return WMS feature data in a special format that bypasses translation
+        return {
+          wmsFeatureData: object.wmsFeatureInfo
+        };
+      }
+
+      // Fallback for string format - use a special format that bypasses translation
+      return {
+        wmsFeatureData: [
+          {
+            name: 'WMS Feature Info',
+            value: object.wmsFeatureInfo
+          }
+        ]
+      };
+    }
+
+    // For regular hover events, return basic info
+    if (hoverInfo.x !== undefined && hoverInfo.y !== undefined) {
+      return {
+        fieldValues: [
+          {
+            labelMessage: 'interactions.coordinate',
+            value: `(${hoverInfo.x}, ${hoverInfo.y})`
+          }
+        ]
+      };
+    }
+
+    return null;
+  }
+
   renderLayer(opts) {
     const {visConfig} = this.config;
-    const {data} = opts;
+    const {data, layerCallbacks} = opts;
     const wmsLayer = visConfig.wmsLayer?.name;
     if (!wmsLayer) {
       return [];
     }
 
-    return [
-      new DeckWMSLayer({
-        id: `${this.id}-WMSLayer` as string,
-        serviceType: 'wms',
-        data: data.tilesetDataUrl,
-        layers: [wmsLayer],
-        opacity: visConfig.opacity,
-        transparent: visConfig.transparent,
-        pickable: false
-      })
-    ];
+    const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
+
+    const pickable = true; // interactionConfig?.tooltip?.enabled || false;
+
+    const deckLayer = new DeckWMSLayer({
+      id: `${this.id}-WMSLayer` as string,
+      idx: defaultLayerProps.idx,
+      serviceType: 'wms',
+      data: data.tilesetDataUrl,
+      layers: [wmsLayer],
+      opacity: visConfig.opacity,
+      transparent: visConfig.transparent,
+      pickable,
+      // @ts-ignore
+      onClick: this._onClick.bind(this, layerCallbacks)
+    });
+
+    // Store reference to the deck layer for feature info access
+    this.deckLayerRef = deckLayer;
+
+    return [deckLayer];
+  }
+
+  protected async _onClick(layerCallbacks, {bitmap, coordinate}) {
+    if (!bitmap) return null;
+
+    const x = bitmap.pixel[0];
+    const y = bitmap.pixel[1];
+    const featureInfo = await this.getWMSFeatureInfo(x, y);
+
+    // Call the callback to update state with coordinate
+    if (layerCallbacks?.onWMSFeatureInfo) {
+      layerCallbacks.onWMSFeatureInfo({featureInfo, coordinate});
+    }
+
+    return featureInfo;
+  }
+
+  // Helper method to parse WMS XML response
+  protected parseWMSFeatureInfo(xmlString: string): Array<{name: string; value: string}> {
+    try {
+      // Simple XML parsing to extract feature attributes
+      const parser = new DOMParser();
+      const xmlDoc = parser.parseFromString(xmlString, 'text/xml');
+
+      const attributes: Array<{name: string; value: string}> = [];
+
+      // Look for feature members
+      const featureMembers = xmlDoc.getElementsByTagName('gml:featureMember');
+
+      for (let i = 0; i < featureMembers.length; i++) {
+        const featureMember = featureMembers[i];
+
+        // Get all child elements that contain attribute data
+        const children = featureMember.children;
+
+        for (let j = 0; j < children.length; j++) {
+          const feature = children[j];
+          const featureChildren = feature.children;
+
+          // Extract attribute name-value pairs
+          for (let k = 0; k < featureChildren.length; k++) {
+            const attr = featureChildren[k];
+            const tagName = attr.tagName;
+            const value = attr.textContent || '';
+
+            // Clean up the tag name (remove namespace prefix)
+            const cleanName = tagName.includes(':') ? tagName.split(':')[1] : tagName;
+
+            // Skip empty values and geometry elements
+            if (value.trim() && !cleanName.toLowerCase().includes('geom')) {
+              attributes.push({
+                name: cleanName.replace(/_/g, ' ').toUpperCase(),
+                value: value.trim()
+              });
+            }
+          }
+        }
+      }
+
+      return attributes;
+    } catch (error) {
+      console.warn('Error parsing WMS feature info XML:', error);
+      return [];
+    }
+  }
+
+  // Method to retrieve WMS feature info asynchronously
+  async getWMSFeatureInfo(
+    x: number,
+    y: number
+  ): Promise<Array<{name: string; value: string}> | null> {
+    try {
+      if (this.deckLayerRef && typeof this.deckLayerRef.getFeatureInfoText === 'function') {
+        const featureInfoXml = await this.deckLayerRef.getFeatureInfoText(x, y);
+        if (featureInfoXml) {
+          // Parse the XML response to extract attributes
+          const parsedAttributes = this.parseWMSFeatureInfo(featureInfoXml);
+          return parsedAttributes.length > 0 ? parsedAttributes : null;
+        }
+      }
+      return null;
+    } catch (error) {
+      console.warn('Failed to get WMS feature info:', error);
+      return null;
+    }
   }
 }

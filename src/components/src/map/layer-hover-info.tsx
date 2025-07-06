@@ -138,22 +138,42 @@ const EntryInfoRow: React.FC<EntryInfoRowProps> = ({
   const field = fields[fieldIdx];
   const fieldValueAccessor = layer.accessVSFieldValue(field, currentTime);
   const value = fieldValueAccessor(field, data instanceof DataRow ? {index: data._rowIndex} : data);
-  const primaryValue = primaryData
-    ? fieldValueAccessor(
-        field,
-        primaryData instanceof DataRow ? {index: primaryData._rowIndex} : primaryData
-      )
-    : null;
-  const displayValue = getTooltipDisplayValue({item, field, value});
 
-  const displayDeltaValue = primaryData
-    ? getTooltipDisplayDeltaValue({
-        field,
-        value,
-        primaryValue,
-        compareType
-      })
-    : null;
+  // Handle WMS layer data in comparison mode - WMS layers don't have comparable field data
+  let primaryValue = null;
+  let displayDeltaValue = null;
+
+  if (primaryData) {
+    try {
+      // Only calculate primary value if primaryData has a compatible structure
+      if (
+        primaryData instanceof DataRow ||
+        (primaryData && typeof primaryData === 'object' && 'index' in primaryData)
+      ) {
+        primaryValue = fieldValueAccessor(
+          field,
+          primaryData instanceof DataRow ? {index: primaryData._rowIndex} : primaryData
+        );
+
+        displayDeltaValue = getTooltipDisplayDeltaValue({
+          field,
+          value,
+          primaryValue,
+          compareType
+        });
+      }
+    } catch (error) {
+      // If there's an error accessing primaryData (e.g., WMS layer data), skip comparison
+      console.warn(
+        'Unable to access primaryData for comparison, skipping delta calculation:',
+        error
+      );
+      primaryValue = null;
+      displayDeltaValue = null;
+    }
+  }
+
+  const displayValue = getTooltipDisplayValue({item, field, value});
 
   return (
     <Row
@@ -236,6 +256,7 @@ const LayerHoverInfoFactory = () => {
 
     const hasFieldsToShow =
       (data.fieldValues && Object.keys(data.fieldValues).length > 0) ||
+      (data.wmsFeatureData && data.wmsFeatureData.length > 0) ||
       (props.fieldsToShow && props.fieldsToShow.length > 0);
 
     return (
@@ -246,7 +267,13 @@ const LayerHoverInfoFactory = () => {
         </StyledLayerName>
         {hasFieldsToShow && <StyledDivider />}
         <StyledTable>
-          {data.fieldValues ? (
+          {data.wmsFeatureData ? (
+            <tbody>
+              {data.wmsFeatureData.map(({name, value}, i) => (
+                <Row key={i} name={name} value={value} />
+              ))}
+            </tbody>
+          ) : data.fieldValues ? (
             <tbody>
               {data.fieldValues.map(({labelMessage, value}, i) => (
                 <Row key={i} name={intl.formatMessage({id: labelMessage})} value={value} />

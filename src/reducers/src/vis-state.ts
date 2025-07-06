@@ -148,6 +148,8 @@ const actionHandler = {
 
   [ActionTypes.LAYER_FILTERED_ITEMS_CHANGE]: visStateUpdaters.layerFilteredItemsChangeUpdater,
 
+  [ActionTypes.WMS_FEATURE_INFO]: visStateUpdaters.wmsFeatureInfoUpdater,
+
   [ActionTypes.SYNC_TIME_FILTER_WITH_LAYER_TIMELINE]:
     visStateUpdaters.syncTimeFilterWithLayerTimelineUpdater,
 

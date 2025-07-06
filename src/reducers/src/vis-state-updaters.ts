@@ -3523,6 +3523,42 @@ export function layerFilteredItemsChangeUpdater<S extends VisState>(
   };
 }
 
+/**
+ * Update WMS feature info and pin tooltip
+ */
+export function wmsFeatureInfoUpdater<S extends VisState>(
+  state: S,
+  action: VisStateActions.WMSFeatureInfoAction
+): S {
+  const {layer, featureInfo, coordinate} = action;
+  if (!layer) {
+    Console.warn(`WMS feature info layer doesn't exist`);
+    return state;
+  }
+
+  // Create a clicked object similar to layerClickUpdater to pin the tooltip
+  const clicked = featureInfo
+    ? {
+        picked: true,
+        object: {
+          wmsFeatureInfo: featureInfo
+        },
+        coordinate: coordinate || [0, 0],
+        layer: {
+          props: {
+            idx: state.layers.findIndex(l => l.id === layer.id),
+            id: layer.id
+          }
+        }
+      }
+    : null;
+
+  return {
+    ...state,
+    clicked
+  };
+}
+
 // eslint-disable-next-line max-statements
 export function syncTimeFilterWithLayerTimelineUpdater<S extends VisState>(
   state: S,

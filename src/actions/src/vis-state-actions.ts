@@ -1629,6 +1629,33 @@ export function layerFilteredItemsChange(
   };
 }
 
+export type WMSFeatureInfoAction = {
+  layer: Layer;
+  featureInfo: Array<{name: string; value: string}> | string | null;
+  coordinate?: [number, number];
+};
+
+/**
+ * WMS layer feature info callback
+ * @memberof visStateActions
+ * @param layer
+ * @param featureInfo
+ * @param coordinate
+ * @return action
+ */
+export function wmsFeatureInfo(
+  layer: WMSFeatureInfoAction['layer'],
+  featureInfo: WMSFeatureInfoAction['featureInfo'],
+  coordinate?: WMSFeatureInfoAction['coordinate']
+): Merge<WMSFeatureInfoAction, {type: typeof ActionTypes.WMS_FEATURE_INFO}> {
+  return {
+    type: ActionTypes.WMS_FEATURE_INFO,
+    layer,
+    featureInfo,
+    coordinate
+  };
+}
+
 export type SyncTimeFilterWithLayerTimelineAction = {
   idx: number;
   enable: boolean;
