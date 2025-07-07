@@ -173,7 +173,6 @@ export default class WMSLayer extends AbstractTileLayer<WMSTile, any[]> {
     }
   }
 
-  // Override hasHoveredObject to handle WMS hover
   hasHoveredObject(objectInfo: any) {
     // For WMS layers, we consider it hovered if the layer is picked
     // The actual feature info will be retrieved via getHoverData
@@ -186,14 +185,13 @@ export default class WMSLayer extends AbstractTileLayer<WMSTile, any[]> {
     return null;
   }
 
-  // Override getHoverData to retrieve WMS feature info
   getHoverData(
     object: any,
     dataContainer: DataContainerInterface,
     fields: Field[],
     animationConfig: AnimationConfig,
     hoverInfo: {index: number; x?: number; y?: number}
-  ): any {
+  ) {
     // Check if this is a WMS feature info object from clicked state
     if (object?.wmsFeatureInfo) {
       // If wmsFeatureInfo is an array of parsed attributes, format them for display
@@ -204,7 +202,6 @@ export default class WMSLayer extends AbstractTileLayer<WMSTile, any[]> {
         };
       }
 
-      // Fallback for string format - use a special format that bypasses translation
       return {
         wmsFeatureData: [
           {
