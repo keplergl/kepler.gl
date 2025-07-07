@@ -164,12 +164,7 @@ const EntryInfoRow: React.FC<EntryInfoRowProps> = ({
       }
     } catch (error) {
       // If there's an error accessing primaryData (e.g., WMS layer data), skip comparison
-      console.warn(
-        'Unable to access primaryData for comparison, skipping delta calculation:',
-        error
-      );
       primaryValue = null;
-      displayDeltaValue = null;
     }
   }
 

@@ -42,6 +42,7 @@ export type WMSLayerVisConfig = {
     name: string;
     title: string;
     boundingBox: number[][];
+    queryable: boolean;
   } | null;
 };
 
@@ -154,9 +155,9 @@ export default class WMSLayer extends AbstractTileLayer<WMSTile, any[]> {
     };
   }
 
-  _getCurrentServiceLayer(dataset: KeplerDataset) {
+  _getCurrentServiceLayer() {
     const {visConfig} = this.config;
-    return visConfig.wmsLayer ?? dataset.metadata?.layers?.[0] ?? null;
+    return visConfig.wmsLayer ?? null;
   }
 
   updateLayerMeta(dataset: KeplerDataset): void {
@@ -164,7 +165,7 @@ export default class WMSLayer extends AbstractTileLayer<WMSTile, any[]> {
       return;
     }
 
-    const currentLayer = this._getCurrentServiceLayer(dataset);
+    const currentLayer = this._getCurrentServiceLayer();
     if (currentLayer && currentLayer.boundingBox) {
       this.updateMeta({
         bounds: currentLayer.boundingBox
@@ -194,7 +195,7 @@ export default class WMSLayer extends AbstractTileLayer<WMSTile, any[]> {
     hoverInfo: {index: number; x?: number; y?: number}
   ): any {
     // Check if this is a WMS feature info object from clicked state
-    if (object && object.wmsFeatureInfo) {
+    if (object?.wmsFeatureInfo) {
       // If wmsFeatureInfo is an array of parsed attributes, format them for display
       if (Array.isArray(object.wmsFeatureInfo)) {
         // Return WMS feature data in a special format that bypasses translation
@@ -231,22 +232,23 @@ export default class WMSLayer extends AbstractTileLayer<WMSTile, any[]> {
 
   renderLayer(opts) {
     const {visConfig} = this.config;
-    const {data, layerCallbacks} = opts;
-    const wmsLayer = visConfig.wmsLayer?.name;
+    const {data, interactionConfig, layerCallbacks} = opts;
+    const wmsLayer = this._getCurrentServiceLayer();
     if (!wmsLayer) {
       return [];
     }
+    const {name: wmsLayerName, queryable} = wmsLayer;
 
     const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
 
-    const pickable = true; // interactionConfig?.tooltip?.enabled || false;
+    const pickable = interactionConfig?.tooltip?.enabled && queryable;
 
     const deckLayer = new DeckWMSLayer({
       id: `${this.id}-WMSLayer` as string,
       idx: defaultLayerProps.idx,
       serviceType: 'wms',
       data: data.tilesetDataUrl,
-      layers: [wmsLayer],
+      layers: [wmsLayerName],
       opacity: visConfig.opacity,
       transparent: visConfig.transparent,
       pickable,
