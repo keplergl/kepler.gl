@@ -69,7 +69,7 @@ export default class WMSLayer extends AbstractTileLayer<WMSTile, any[]> {
   declare visConfigSettings: WMSLayerVisConfigSettings;
 
   // Store reference to the deck layer for feature info access
-  private deckLayerRef: any = null;
+  private deckLayerRef: DeckWMSLayer | null = null;
 
   // Constructor
   constructor(
