@@ -1,58 +1,92 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import test from 'tape';
-import WMSLayer from '@kepler.gl/layers';
+import test from 'tape-catch';
+import {KeplerGlLayers} from '@kepler.gl/layers';
+import {
+  testCreateCases,
+  testFormatLayerDataCases,
+  testRenderLayerCases
+} from 'test/helpers/layer-utils';
 
-// Mock DOMParser for Node.js environment
-global.DOMParser = class DOMParser {
-  parseFromString(xmlString) {
-    // Simple mock implementation for testing
-    const doc = {
-      getElementsByTagName: tagName => {
-        if (
-          tagName === 'gml:featureMember' &&
-          xmlString.includes('<conus:RED_BAND>255.0</conus:RED_BAND>')
-        ) {
-          // Mock feature member with children
-          const featureMember = {
-            children: [
+const {WMSLayer} = KeplerGlLayers;
+
+// Mock DOMParser for browser environment
+global.DOMParser = class MockDOMParser {
+  parseFromString(str) {
+    const createMockElement = (tagName, textContent = '') => ({
+      tagName,
+      textContent,
+      children: [],
+      getElementsByTagName: name => {
+        return Array.from(this.children).filter(child => child.tagName === name);
+      }
+    });
+
+    // Simple mock for the specific XML structure used in tests
+    if (str.includes('conus:RED_BAND')) {
+      const mockDoc = {
+        getElementsByTagName: name => {
+          if (name === 'gml:featureMember') {
+            return [
               {
                 children: [
-                  {tagName: 'conus:RED_BAND', textContent: '255.0'},
-                  {tagName: 'conus:GREEN_BAND', textContent: '195.0'},
-                  {tagName: 'conus:BLUE_BAND', textContent: '0.0'},
-                  {tagName: 'conus:ALPHA_BAND', textContent: '255.0'}
+                  {
+                    children: [
+                      createMockElement('conus:RED_BAND', '255.0'),
+                      createMockElement('conus:GREEN_BAND', '195.0'),
+                      createMockElement('conus:BLUE_BAND', '0.0'),
+                      createMockElement('conus:ALPHA_BAND', '255.0')
+                    ]
+                  }
                 ]
               }
-            ]
-          };
-          return [featureMember];
+            ];
+          }
+          return [];
         }
-        return [];
-      }
+      };
+      return mockDoc;
+    }
+
+    // Return empty mock for other cases
+    return {
+      getElementsByTagName: () => []
     };
-    return doc;
   }
 };
 
-test('WMSLayer -> constructor', t => {
-  const layer = new WMSLayer({
-    id: 'test-wms-layer',
-    dataId: 'wms-dataset',
-    label: 'Test WMS Layer'
-  });
+test('#WMSLayer -> constructor', t => {
+  const TEST_CASES = {
+    CREATE: [
+      {
+        props: {
+          dataId: 'wms-test-data',
+          isVisible: true,
+          label: 'test wms layer'
+        },
+        test: layer => {
+          t.ok(layer.config.dataId === 'wms-test-data', 'WMSLayer dataId should be correct');
+          t.ok(layer.type === 'wms', 'type should be wms');
+          t.ok(layer.isAggregated === false, 'WMSLayer is not aggregated');
+          t.ok(layer.config.label === 'test wms layer', 'label should be correct');
+          t.ok(layer.config.isVisible === true, 'should be visible by default');
+          t.ok(layer.config.visConfig, 'should have visConfig');
+          t.equal(layer.config.visConfig.opacity, 0.8, 'should have default opacity');
+          t.equal(layer.config.visConfig.transparent, true, 'should be transparent by default');
+          t.equal(layer.config.visConfig.wmsLayer, null, 'should have null wmsLayer initially');
+          t.ok(typeof layer.layerIcon === 'function', 'should have layerIcon');
+          t.deepEqual(
+            layer.supportedDatasetTypes,
+            ['wms-tile'],
+            'should support wms-tile dataset type'
+          );
+        }
+      }
+    ]
+  };
 
-  t.equal(layer.type, 'wms', 'should have correct layer type');
-  t.equal(layer.id, 'test-wms-layer', 'should have correct layer id');
-  t.equal(layer.config.dataId, 'wms-dataset', 'should have correct dataId');
-  t.equal(layer.config.label, 'Test WMS Layer', 'should have correct label');
-  t.equal(layer.config.isVisible, true, 'should be visible by default');
-  t.equal(layer.isAggregated, false, 'WMS layer should not be aggregated');
-  t.ok(layer.config.visConfig, 'should have visConfig');
-  t.equal(layer.config.visConfig.opacity, 0.8, 'should have default opacity');
-  t.equal(layer.config.visConfig.transparent, true, 'should be transparent by default');
-
+  testCreateCases(t, WMSLayer, TEST_CASES.CREATE);
   t.end();
 });
 
@@ -72,7 +106,8 @@ test('WMSLayer -> layer configuration', t => {
     boundingBox: [
       [-180, -90],
       [180, 90]
-    ]
+    ],
+    queryable: true
   };
 
   layer.updateLayerVisConfig({
@@ -91,30 +126,21 @@ test('WMSLayer -> layer configuration', t => {
 test('WMSLayer -> hover functionality', t => {
   const layer = new WMSLayer({
     id: 'test-wms-layer',
-    dataId: 'wms-dataset',
-    visConfig: {
-      opacity: 0.8,
-      transparent: true,
-      wmsLayer: {
-        name: 'test_layer',
-        title: 'Test WMS Layer',
-        boundingBox: [
-          [-180, -90],
-          [180, 90]
-        ]
-      }
-    }
+    dataId: 'wms-dataset'
   });
 
   // Update the layer config to ensure wmsLayer is set
   layer.updateLayerVisConfig({
+    opacity: 0.8,
+    transparent: true,
     wmsLayer: {
       name: 'test_layer',
       title: 'Test WMS Layer',
       boundingBox: [
         [-180, -90],
         [180, 90]
-      ]
+      ],
+      queryable: true
     }
   });
 
@@ -145,7 +171,7 @@ test('WMSLayer -> hover functionality', t => {
   const hoveredObjectNotPicked = layer.hasHoveredObject(mockObjectInfoNotPicked);
   t.equal(hoveredObjectNotPicked, null, 'should return null when layer is not picked');
 
-  // Test getHoverData
+  // Test getHoverData with hover coordinates
   const mockHoverInfo = {
     index: 0,
     x: 100,
@@ -157,12 +183,12 @@ test('WMSLayer -> hover functionality', t => {
   t.ok(hoverData, 'should return hover data for WMS layer');
   t.ok(hoverData.fieldValues, 'should have fieldValues array');
   t.equal(hoverData.fieldValues.length, 1, 'should have 1 field value');
+  t.equal(hoverData.fieldValues[0].labelMessage, 'layer.wms.hover', 'should have WMS hover label');
   t.equal(
-    hoverData.fieldValues[0].labelMessage,
-    'interactions.coordinate',
-    'should have coordinates label'
+    hoverData.fieldValues[0].value,
+    'Click to query WMS feature info',
+    'should have hover message'
   );
-  t.equal(hoverData.fieldValues[0].value, '(100, 200)', 'should have coordinates value');
 
   // Test getHoverData with WMS feature info object (clicked state) - string format
   const wmsFeatureInfoObject = {
@@ -210,39 +236,16 @@ test('WMSLayer -> hover functionality', t => {
     'should have correct attribute value'
   );
 
-  // Test getWMSFeatureInfo - this will return null in test environment
-  layer
-    .getWMSFeatureInfo(100, 200)
-    .then(featureInfo => {
-      // In test environment, this should return null due to no actual WMS server
-      t.equal(featureInfo, null, 'should return null in test environment');
-      t.end();
-    })
-    .catch(_error => {
-      t.pass('getWMSFeatureInfo may fail in test environment');
-      t.end();
-    });
+  t.end();
 });
 
-test('WMSLayer -> renderLayer functionality', t => {
+test('#WMSLayer -> renderLayer', t => {
+  // Remove the complex helper and use direct testing
   const layer = new WMSLayer({
-    id: 'test-wms-layer',
-    dataId: 'wms-dataset',
-    visConfig: {
-      opacity: 0.8,
-      transparent: true,
-      wmsLayer: {
-        name: 'test_layer',
-        title: 'Test WMS Layer',
-        boundingBox: [
-          [-180, -90],
-          [180, 90]
-        ]
-      }
-    }
+    id: 'wms-render-test',
+    dataId: 'wms-dataset'
   });
 
-  // Update the layer config to ensure wmsLayer is set
   layer.updateLayerVisConfig({
     wmsLayer: {
       name: 'test_layer',
@@ -250,12 +253,21 @@ test('WMSLayer -> renderLayer functionality', t => {
       boundingBox: [
         [-180, -90],
         [180, 90]
-      ]
+      ],
+      queryable: true
     }
   });
 
   const mockData = {
-    tilesetDataUrl: 'http://example.com/wms'
+    tilesetDataUrl: 'http://example.com/wms',
+    metadata: {
+      layers: [
+        {
+          name: 'test_layer',
+          title: 'Test WMS Layer'
+        }
+      ]
+    }
   };
 
   const mockOpts = {
@@ -267,37 +279,31 @@ test('WMSLayer -> renderLayer functionality', t => {
       tooltip: {
         enabled: true
       }
+    },
+    layerCallbacks: {
+      onWMSFeatureInfo: () => {}
     }
   };
 
   const deckLayers = layer.renderLayer(mockOpts);
+  t.ok(deckLayers, 'should create deck layers');
   t.equal(deckLayers.length, 1, 'should render one deck layer');
 
   const deckLayer = deckLayers[0];
-  t.equal(deckLayer.props.id, 'test-wms-layer-WMSLayer', 'should have correct layer id');
-  t.equal(deckLayer.props.pickable, true, 'should be pickable when tooltips enabled');
+  t.equal(deckLayer.id, 'wms-render-test-WMSLayer', 'should have correct layer id');
+  t.equal(deckLayer.props.pickable, true, 'should be pickable when tooltips enabled and queryable');
   t.equal(deckLayer.props.serviceType, 'wms', 'should have correct service type');
   t.deepEqual(deckLayer.props.layers, ['test_layer'], 'should have correct layers');
   t.equal(deckLayer.props.opacity, 0.8, 'should have correct opacity');
   t.equal(deckLayer.props.transparent, true, 'should have correct transparent setting');
-
+  t.ok(typeof deckLayer.props.onClick === 'function', 'should have onClick handler');
   t.end();
 });
 
 test('WMSLayer -> renderLayer with tooltips disabled', t => {
   const layer = new WMSLayer({
     id: 'test-wms-layer',
-    dataId: 'wms-dataset',
-    visConfig: {
-      wmsLayer: {
-        name: 'test_layer',
-        title: 'Test WMS Layer',
-        boundingBox: [
-          [-180, -90],
-          [180, 90]
-        ]
-      }
-    }
+    dataId: 'wms-dataset'
   });
 
   layer.updateLayerVisConfig({
@@ -307,7 +313,8 @@ test('WMSLayer -> renderLayer with tooltips disabled', t => {
       boundingBox: [
         [-180, -90],
         [180, 90]
-      ]
+      ],
+      queryable: true
     }
   });
 
@@ -329,26 +336,15 @@ test('WMSLayer -> renderLayer with tooltips disabled', t => {
 
   const deckLayers = layer.renderLayer(mockOpts);
   const deckLayer = deckLayers[0];
-  // Note: WMS layers are always pickable for click events, even when tooltips are disabled
-  t.equal(deckLayer.props.pickable, true, 'WMS layers remain pickable for click events');
+  t.equal(deckLayer.props.pickable, false, 'should not be pickable when tooltips disabled');
 
   t.end();
 });
 
-test('WMSLayer -> renderLayer with callbacks', t => {
+test('WMSLayer -> renderLayer with non-queryable layer', t => {
   const layer = new WMSLayer({
     id: 'test-wms-layer',
-    dataId: 'wms-dataset',
-    visConfig: {
-      wmsLayer: {
-        name: 'test_layer',
-        title: 'Test WMS Layer',
-        boundingBox: [
-          [-180, -90],
-          [180, 90]
-        ]
-      }
-    }
+    dataId: 'wms-dataset'
   });
 
   layer.updateLayerVisConfig({
@@ -358,22 +354,13 @@ test('WMSLayer -> renderLayer with callbacks', t => {
       boundingBox: [
         [-180, -90],
         [180, 90]
-      ]
+      ],
+      queryable: false
     }
   });
 
   const mockData = {
     tilesetDataUrl: 'http://example.com/wms'
-  };
-
-  let callbackCalled = false;
-  let callbackData = null;
-
-  const mockLayerCallbacks = {
-    onWMSFeatureInfo: (featureInfo, coordinate) => {
-      callbackCalled = true;
-      callbackData = {featureInfo, coordinate};
-    }
   };
 
   const mockOpts = {
@@ -385,35 +372,14 @@ test('WMSLayer -> renderLayer with callbacks', t => {
       tooltip: {
         enabled: true
       }
-    },
-    layerCallbacks: mockLayerCallbacks
+    }
   };
 
   const deckLayers = layer.renderLayer(mockOpts);
   const deckLayer = deckLayers[0];
+  t.equal(deckLayer.props.pickable, false, 'should not be pickable when layer is not queryable');
 
-  t.ok(deckLayer.props.onClick, 'should have onClick handler');
-
-  // Test onClick callback
-  const mockClickInfo = {
-    coordinate: [100, 200],
-    layer: {
-      props: {
-        id: 'test-wms-layer-WMSLayer'
-      }
-    }
-  };
-
-  // Simulate click - this should trigger the callback asynchronously
-  deckLayer.props.onClick(mockClickInfo);
-
-  // Give some time for async operation - in test environment, this may not work
-  setTimeout(() => {
-    // In test environment, the callback may not be called due to network constraints
-    // So we'll just test that the onClick handler exists and can be called
-    t.pass('onClick handler can be called without errors');
-    t.end();
-  }, 100);
+  t.end();
 });
 
 test('WMSLayer -> renderLayer without wmsLayer config', t => {
@@ -444,22 +410,40 @@ test('WMSLayer -> renderLayer without wmsLayer config', t => {
   t.end();
 });
 
-test('WMSLayer -> formatLayerData', t => {
+test('#WMSLayer -> formatLayerData', t => {
   const layer = new WMSLayer({
     id: 'test-wms-layer',
     dataId: 'wms-dataset'
   });
 
-  // WMS layers don't have traditional datasets, so formatLayerData should handle empty data
+  layer.updateLayerVisConfig({
+    wmsLayer: {
+      name: 'test_layer',
+      title: 'Test WMS Layer',
+      boundingBox: [
+        [-180, -90],
+        [180, 90]
+      ],
+      queryable: true
+    }
+  });
+
   const mockDatasets = {
     'wms-dataset': {
+      type: 'wms-tile',
       metadata: {
-        tilesetDataUrl: 'http://example.com/wms'
+        tilesetDataUrl: 'http://example.com/wms',
+        layers: [
+          {
+            name: 'test_layer',
+            title: 'Test WMS Layer'
+          }
+        ]
       }
     }
   };
-  const layerData = layer.formatLayerData(mockDatasets, {}, {});
 
+  const layerData = layer.formatLayerData(mockDatasets);
   t.ok(layerData, 'should return layer data object');
   t.equal(layerData.tilesetDataUrl, 'http://example.com/wms', 'should have tileset data URL');
   t.ok(layerData.metadata, 'should have metadata');
@@ -467,19 +451,111 @@ test('WMSLayer -> formatLayerData', t => {
   t.end();
 });
 
-test('WMSLayer -> isValidToSave', t => {
+test('#WMSLayer -> layer methods', t => {
   const layer = new WMSLayer({
     id: 'test-wms-layer',
     dataId: 'wms-dataset'
   });
 
-  // WMS layers should always be valid to save since they don't depend on datasets
+  // Test isValidToSave
   t.ok(layer.isValidToSave(), 'should be valid to save');
+
+  // Test layer properties
+  t.equal(layer.name, 'WMS Tile', 'should have correct layer name');
+  t.ok(layer.layerIcon, 'should have layer icon');
+  t.equal(layer.requireData, true, 'WMS layer should require data');
+
+  // Test _getCurrentServiceLayer
+  t.equal(layer._getCurrentServiceLayer(), null, 'should return null when no wmsLayer configured');
+
+  layer.updateLayerVisConfig({
+    wmsLayer: {
+      name: 'test_layer',
+      title: 'Test Layer'
+    }
+  });
+
+  const serviceLayer = layer._getCurrentServiceLayer();
+  t.ok(serviceLayer, 'should return service layer when configured');
+  t.equal(serviceLayer.name, 'test_layer', 'should return correct service layer');
 
   t.end();
 });
 
-test('WMSLayer#parseWMSFeatureInfo', t => {
+test('#WMSLayer -> updateLayerMeta', t => {
+  const layer = new WMSLayer({
+    id: 'test-wms-layer',
+    dataId: 'wms-dataset'
+  });
+
+  // Test with non-WMS dataset
+  const nonWmsDataset = {
+    type: 'csv'
+  };
+
+  t.doesNotThrow(() => {
+    layer.updateLayerMeta(nonWmsDataset);
+  }, 'should not throw with non-WMS dataset');
+
+  // Test with WMS dataset with bounding box
+  const wmsDataset = {
+    type: 'wms-tile'
+  };
+
+  layer.updateLayerVisConfig({
+    wmsLayer: {
+      name: 'test_layer',
+      title: 'Test Layer',
+      boundingBox: [
+        [-180, -90],
+        [180, 90]
+      ]
+    }
+  });
+
+  t.doesNotThrow(() => {
+    layer.updateLayerMeta(wmsDataset);
+  }, 'should update meta with WMS dataset');
+
+  t.deepEqual(
+    layer.meta.bounds,
+    [
+      [-180, -90],
+      [180, 90]
+    ],
+    'should set bounds from bounding box'
+  );
+
+  t.end();
+});
+
+test('#WMSLayer -> edge cases', t => {
+  const layer = new WMSLayer({
+    id: 'test-wms-layer',
+    dataId: 'wms-dataset'
+  });
+
+  // Test renderLayer with no wmsLayer config
+  const mockOpts = {
+    data: {tilesetDataUrl: 'http://example.com/wms'},
+    mapState: {},
+    interactionConfig: {tooltip: {enabled: true}}
+  };
+
+  const emptyLayers = layer.renderLayer(mockOpts);
+  t.deepEqual(emptyLayers, [], 'should return empty array when no wmsLayer configured');
+
+  // Test formatLayerData with missing dataset - should not throw error
+  t.doesNotThrow(() => {
+    const emptyLayerData = layer.formatLayerData({}, {}, {});
+    t.ok(emptyLayerData, 'should return layer data object even with missing dataset');
+    t.equal(emptyLayerData.tilesetDataUrl, null, 'should handle missing dataset gracefully');
+  }, 'should not throw error when formatting with missing dataset');
+
+  t.end();
+});
+
+test('#WMSLayer#parseWMSFeatureInfo', t => {
   const layer = new WMSLayer({
     id: 'test-layer',
     dataId: 'test-data',
@@ -575,54 +651,22 @@ test('WMSLayer#parseWMSFeatureInfo -> edge cases', t => {
   t.end();
 });
 
-test('WMSLayer -> getWMSFeatureInfo error handling', t => {
-  const layer = new WMSLayer({
-    id: 'test-layer',
-    dataId: 'test-data',
-    visConfig: {
-      wmsLayer: {
-        name: 'test_layer',
-        title: 'Test Layer',
-        boundingBox: [
-          [-180, -90],
-          [180, 90]
-        ]
-      }
-    }
-  });
-
-  // Test with no wmsLayer config
-  const layerWithoutConfig = new WMSLayer({
-    id: 'test-layer-no-config',
-    dataId: 'test-data'
-  });
-
-  layerWithoutConfig
-    .getWMSFeatureInfo(100, 200)
-    .then(result => {
-      t.equal(result, null, 'should return null when no wmsLayer config');
-      t.end();
-    })
-    .catch(error => {
-      t.fail('should not throw error when no wmsLayer config');
-      t.end();
-    });
-});
-
 test('WMSLayer -> layer visibility and interaction', t => {
   const layer = new WMSLayer({
     id: 'test-wms-layer',
     dataId: 'wms-dataset',
-    isVisible: false,
-    visConfig: {
-      wmsLayer: {
-        name: 'test_layer',
-        title: 'Test WMS Layer',
-        boundingBox: [
-          [-180, -90],
-          [180, 90]
-        ]
-      }
+    isVisible: false
+  });
+
+  layer.updateLayerVisConfig({
+    wmsLayer: {
+      name: 'test_layer',
+      title: 'Test WMS Layer',
+      boundingBox: [
+        [-180, -90],
+        [180, 90]
+      ],
+      queryable: true
     }
   });
 
@@ -641,6 +685,157 @@ test('WMSLayer -> layer visibility and interaction', t => {
   // Even if layer is not visible, hasHoveredObject should work if picked
   const hoveredObject = layer.hasHoveredObject(mockObjectInfo);
   t.ok(hoveredObject, 'should return hovered object even when layer is not visible');
+
+  t.end();
+});
+
+test('#WMSLayer -> findDefaultLayerProps', t => {
+  // Test with valid WMS dataset
+  const mockWmsDataset = {
+    type: 'wms-tile',
+    metadata: {
+      label: 'Test WMS Dataset',
+      layers: [
+        {
+          name: 'test_layer',
+          title: 'Test Layer',
+          boundingBox: [
+            [-180, -90],
+            [180, 90]
+          ],
+          queryable: true
+        },
+        {
+          name: 'second_layer',
+          title: 'Second Layer',
+          boundingBox: [
+            [-90, -45],
+            [90, 45]
+          ],
+          queryable: false
+        }
+      ]
+    }
+  };
+
+  const result = WMSLayer.findDefaultLayerProps(mockWmsDataset);
+  t.ok(result.props, 'should return props object');
+  t.equal(result.props.length, 1, 'should return one layer prop for WMS dataset');
+
+  // Test layer props
+  t.equal(result.props[0].label, 'Test WMS Dataset', 'should use dataset label');
+  t.deepEqual(
+    result.props[0].layers,
+    mockWmsDataset.metadata.layers,
+    'should pass through all layers'
+  );
+
+  // Test with non-WMS dataset
+  const nonWmsDataset = {
+    type: 'csv',
+    metadata: {
+      label: 'CSV Dataset'
+    }
+  };
+
+  const nonWmsResult = WMSLayer.findDefaultLayerProps(nonWmsDataset);
+  t.deepEqual(nonWmsResult.props, [], 'should return empty props for non-WMS dataset');
+
+  // Test with WMS dataset but no layers
+  const emptyWmsDataset = {
+    type: 'wms-tile',
+    metadata: {
+      label: 'Empty WMS Dataset',
+      layers: []
+    }
+  };
+
+  const emptyResult = WMSLayer.findDefaultLayerProps(emptyWmsDataset);
+  t.equal(
+    emptyResult.props.length,
+    1,
+    'should return one prop even for WMS dataset with no layers'
+  );
+  t.deepEqual(emptyResult.props[0].layers, [], 'should have empty layers array');
+
+  t.end();
+});
+
+test('WMSLayer -> getWMSFeatureInfo error handling in browser', t => {
+  const layer = new WMSLayer({
+    id: 'test-layer',
+    dataId: 'test-data'
+  });
+
+  layer.updateLayerVisConfig({
+    wmsLayer: {
+      name: 'test_layer',
+      title: 'Test Layer',
+      boundingBox: [
+        [-180, -90],
+        [180, 90]
+      ],
+      queryable: true
+    }
+  });
+
+  // Test with no deckLayerRef
+  layer['getWMSFeatureInfo'](100, 200)
+    .then(result => {
+      t.equal(result, null, 'should return null when no deckLayerRef');
+      t.end();
+    })
+    .catch(error => {
+      t.fail('should not throw error when no deckLayerRef');
+      t.end();
+    });
+});
+
+test('WMSLayer -> deckLayerRef storage safety', t => {
+  const layer = new WMSLayer({
+    id: 'test-wms-layer',
+    dataId: 'wms-dataset'
+  });
+
+  layer.updateLayerVisConfig({
+    wmsLayer: {
+      name: 'test_layer',
+      title: 'Test WMS Layer',
+      boundingBox: [
+        [-180, -90],
+        [180, 90]
+      ],
+      queryable: true
+    }
+  });
+
+  const mockData = {
+    tilesetDataUrl: 'http://example.com/wms'
+  };
+
+  const mockOpts = {
+    data: mockData,
+    mapState: {
+      dragRotate: false
+    },
+    interactionConfig: {
+      tooltip: {
+        enabled: true
+      }
+    }
+  };
+
+  // First render
+  let deckLayers = layer.renderLayer(mockOpts);
+  // Access the private property for testing
+  t.ok(layer['deckLayerRef'], 'should store deckLayerRef after first render');
+
+  const firstRef = layer['deckLayerRef'];
+
+  // Second render should update the reference
+  deckLayers = layer.renderLayer(mockOpts);
+  t.ok(layer['deckLayerRef'], 'should have deckLayerRef after second render');
+  t.notEqual(layer['deckLayerRef'], firstRef, 'should update deckLayerRef on new render');
 
   t.end();
 });

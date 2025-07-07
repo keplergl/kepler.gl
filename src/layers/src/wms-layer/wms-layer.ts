@@ -138,15 +138,14 @@ export default class WMSLayer extends AbstractTileLayer<WMSTile, any[]> {
 
   formatLayerData(datasets, oldLayerData, animationConfig): WMSLayerData {
     const {dataId} = this.config;
-    if (!notNullorUndefined(dataId)) {
+    if (!notNullorUndefined(dataId) || !datasets[dataId]) {
       return {
-        ...super.formatLayerData(datasets, oldLayerData, animationConfig),
         tilesetDataUrl: null,
         metadata: null
       };
     }
     const dataset = datasets[dataId];
-    const metadata = dataset.metadata;
+    const metadata = dataset?.metadata;
 
     return {
       ...super.formatLayerData(datasets, oldLayerData, animationConfig),
