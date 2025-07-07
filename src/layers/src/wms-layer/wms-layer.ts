@@ -194,9 +194,7 @@ export default class WMSLayer extends AbstractTileLayer<WMSTile, any[]> {
   ) {
     // Check if this is a WMS feature info object from clicked state
     if (object?.wmsFeatureInfo) {
-      // If wmsFeatureInfo is an array of parsed attributes, format them for display
       if (Array.isArray(object.wmsFeatureInfo)) {
-        // Return WMS feature data in a special format that bypasses translation
         return {
           wmsFeatureData: object.wmsFeatureInfo
         };
@@ -213,13 +211,11 @@ export default class WMSLayer extends AbstractTileLayer<WMSTile, any[]> {
     }
 
     if (hoverInfo.x !== undefined && hoverInfo.y !== undefined) {
-      const message = 'Click to query WMS feature info';
-
       return {
         fieldValues: [
           {
             labelMessage: 'layer.wms.hover',
-            value: message
+            value: 'Click to query WMS feature info'
           }
         ]
       };
@@ -236,9 +232,7 @@ export default class WMSLayer extends AbstractTileLayer<WMSTile, any[]> {
       return [];
     }
     const {name: wmsLayerName, queryable} = wmsLayer;
-
     const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
-
     const pickable = interactionConfig?.tooltip?.enabled && queryable;
 
     const deckLayer = new DeckWMSLayer({
@@ -273,6 +267,27 @@ export default class WMSLayer extends AbstractTileLayer<WMSTile, any[]> {
     }
 
     return featureInfo;
+  }
+
+  // Method to retrieve WMS feature info asynchronously
+  protected async getWMSFeatureInfo(
+    x: number,
+    y: number
+  ): Promise<Array<{name: string; value: string}> | null> {
+    try {
+      if (this.deckLayerRef && typeof this.deckLayerRef.getFeatureInfoText === 'function') {
+        const featureInfoXml = await this.deckLayerRef.getFeatureInfoText(x, y);
+        if (featureInfoXml) {
+          // Parse the XML response to extract attributes
+          const parsedAttributes = this.parseWMSFeatureInfo(featureInfoXml);
+          return parsedAttributes.length > 0 ? parsedAttributes : null;
+        }
+      }
+      return null;
+    } catch (error) {
+      console.warn('Failed to get WMS feature info:', error);
+      return null;
+    }
   }
 
   // Helper method to parse WMS XML response
@@ -321,27 +336,6 @@ export default class WMSLayer extends AbstractTileLayer<WMSTile, any[]> {
     } catch (error) {
       console.warn('Error parsing WMS feature info XML:', error);
       return [];
-    }
-  }
-
-  // Method to retrieve WMS feature info asynchronously
-  async getWMSFeatureInfo(
-    x: number,
-    y: number
-  ): Promise<Array<{name: string; value: string}> | null> {
-    try {
-      if (this.deckLayerRef && typeof this.deckLayerRef.getFeatureInfoText === 'function') {
-        const featureInfoXml = await this.deckLayerRef.getFeatureInfoText(x, y);
-        if (featureInfoXml) {
-          // Parse the XML response to extract attributes
-          const parsedAttributes = this.parseWMSFeatureInfo(featureInfoXml);
-          return parsedAttributes.length > 0 ? parsedAttributes : null;
-        }
-      }
-      return null;
-    } catch (error) {
-      console.warn('Failed to get WMS feature info:', error);
-      return null;
     }
   }
 }
