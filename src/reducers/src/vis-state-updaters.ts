@@ -3532,7 +3532,7 @@ export function wmsFeatureInfoUpdater<S extends VisState>(
 ): S {
   const {layer, featureInfo, coordinate} = action;
   if (!layer) {
-    Console.warn(`WMS feature info layer doesn't exist`);
+    console.warn(`WMS feature info layer doesn't exist`);
     return state;
   }
 
