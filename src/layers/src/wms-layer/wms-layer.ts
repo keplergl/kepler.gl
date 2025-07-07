@@ -215,13 +215,14 @@ export default class WMSLayer extends AbstractTileLayer<WMSTile, any[]> {
       };
     }
 
-    // For regular hover events, return basic info
     if (hoverInfo.x !== undefined && hoverInfo.y !== undefined) {
+      const message = 'Click to query WMS feature info';
+
       return {
         fieldValues: [
           {
-            labelMessage: 'interactions.coordinate',
-            value: `(${hoverInfo.x}, ${hoverInfo.y})`
+            labelMessage: 'layer.wms.hover',
+            value: message
           }
         ]
       };
@@ -253,7 +254,7 @@ export default class WMSLayer extends AbstractTileLayer<WMSTile, any[]> {
       transparent: visConfig.transparent,
       pickable,
       // @ts-ignore
-      onClick: this._onClick.bind(this, layerCallbacks)
+      onClick: pickable ? this._onClick.bind(this, layerCallbacks) : null
     });
 
     // Store reference to the deck layer for feature info access
