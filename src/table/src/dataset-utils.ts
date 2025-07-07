@@ -285,7 +285,8 @@ export function wmsCapabilitiesToDatasetMetadata(capabilities: WMSCapabilities):
       return {
         name: layer.name,
         title: layer.title || layer.name,
-        boundingBox
+        boundingBox,
+        queryable: layer.queryable
       };
     });
   }

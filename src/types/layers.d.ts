@@ -419,12 +419,23 @@ export type LayerCallbacks = {
       count: number;
     }
   ) => void;
+  onWMSFeatureInfo?: (
+    idx: number,
+    props: {
+      featureInfo: Array<{name: string; value: string}> | string | null;
+      coordinate?: [number, number] | null;
+    }
+  ) => void;
 };
 
 export type BindedLayerCallbacks = {
   onLayerHover?: (value: any) => void;
   onSetLayerDomain?: (value: any) => void;
   onFilteredItemsChange?: (event: {id: string; count: number}) => void;
+  onWMSFeatureInfo?: (
+    featureInfo: Array<{name: string; value: string}> | string | null,
+    coordinate?: [number, number]
+  ) => void;
 };
 
 export type VisualChannelAggregation = 'colorAggregation' | 'sizeAggregation';

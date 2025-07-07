@@ -21,6 +21,8 @@ import {DatasetType, WMSDatasetMetadata, LAYER_TYPES} from '@kepler.gl/constants
 import {notNullorUndefined} from '@kepler.gl/common-utils';
 import {WMSLayer as DeckWMSLayer} from '@kepler.gl/deckgl-layers';
 import {KeplerTable as KeplerDataset} from '@kepler.gl/table';
+import {DataContainerInterface} from '@kepler.gl/utils';
+import {AnimationConfig} from '@kepler.gl/types';
 
 // Types
 export type WMSTile = {
@@ -40,6 +42,7 @@ export type WMSLayerVisConfig = {
     name: string;
     title: string;
     boundingBox: number[][];
+    queryable: boolean;
   } | null;
 };
 
@@ -64,6 +67,9 @@ export type WMSLayerData = LayerData & {
 export default class WMSLayer extends AbstractTileLayer<WMSTile, any[]> {
   declare config: WMSLayerConfig;
   declare visConfigSettings: WMSLayerVisConfigSettings;
+
+  // Store reference to the deck layer for feature info access
+  private deckLayerRef: DeckWMSLayer | null = null;
 
   // Constructor
   constructor(
@@ -132,15 +138,14 @@ export default class WMSLayer extends AbstractTileLayer<WMSTile, any[]> {
 
   formatLayerData(datasets, oldLayerData, animationConfig): WMSLayerData {
     const {dataId} = this.config;
-    if (!notNullorUndefined(dataId)) {
+    if (!notNullorUndefined(dataId) || !datasets[dataId]) {
       return {
-        ...super.formatLayerData(datasets, oldLayerData, animationConfig),
         tilesetDataUrl: null,
         metadata: null
       };
     }
     const dataset = datasets[dataId];
-    const metadata = dataset.metadata;
+    const metadata = dataset?.metadata;
 
     return {
       ...super.formatLayerData(datasets, oldLayerData, animationConfig),
@@ -149,9 +154,9 @@ export default class WMSLayer extends AbstractTileLayer<WMSTile, any[]> {
     };
   }
 
-  _getCurrentServiceLayer(dataset: KeplerDataset) {
+  _getCurrentServiceLayer() {
     const {visConfig} = this.config;
-    return visConfig.wmsLayer ?? dataset.metadata?.layers?.[0] ?? null;
+    return visConfig.wmsLayer ?? null;
   }
 
   updateLayerMeta(dataset: KeplerDataset): void {
@@ -159,7 +164,7 @@ export default class WMSLayer extends AbstractTileLayer<WMSTile, any[]> {
       return;
     }
 
-    const currentLayer = this._getCurrentServiceLayer(dataset);
+    const currentLayer = this._getCurrentServiceLayer();
     if (currentLayer && currentLayer.boundingBox) {
       this.updateMeta({
         bounds: currentLayer.boundingBox
@@ -167,24 +172,169 @@ export default class WMSLayer extends AbstractTileLayer<WMSTile, any[]> {
     }
   }
 
+  hasHoveredObject(objectInfo: any) {
+    // For WMS layers, we consider it hovered if the layer is picked
+    // The actual feature info will be retrieved via getHoverData
+    if (this.isLayerHovered(objectInfo)) {
+      return {
+        index: 0, // WMS layers don't have discrete data points, so we use index 0
+        ...objectInfo
+      };
+    }
+    return null;
+  }
+
+  getHoverData(
+    object: any,
+    dataContainer: DataContainerInterface,
+    fields: Field[],
+    animationConfig: AnimationConfig,
+    hoverInfo: {index: number; x?: number; y?: number}
+  ) {
+    // Check if this is a WMS feature info object from clicked state
+    if (object?.wmsFeatureInfo) {
+      if (Array.isArray(object.wmsFeatureInfo)) {
+        return {
+          wmsFeatureData: object.wmsFeatureInfo
+        };
+      }
+
+      return {
+        wmsFeatureData: [
+          {
+            name: 'WMS Feature Info',
+            value: object.wmsFeatureInfo
+          }
+        ]
+      };
+    }
+
+    if (hoverInfo.x !== undefined && hoverInfo.y !== undefined) {
+      return {
+        fieldValues: [
+          {
+            labelMessage: 'layer.wms.hover',
+            value: 'Click to query WMS feature info'
+          }
+        ]
+      };
+    }
+
+    return null;
+  }
+
   renderLayer(opts) {
     const {visConfig} = this.config;
-    const {data} = opts;
-    const wmsLayer = visConfig.wmsLayer?.name;
+    const {data, interactionConfig, layerCallbacks} = opts;
+    const wmsLayer = this._getCurrentServiceLayer();
     if (!wmsLayer) {
       return [];
     }
+    const {name: wmsLayerName, queryable} = wmsLayer;
+    const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
+    const pickable = interactionConfig?.tooltip?.enabled && queryable;
 
-    return [
-      new DeckWMSLayer({
-        id: `${this.id}-WMSLayer` as string,
-        serviceType: 'wms',
-        data: data.tilesetDataUrl,
-        layers: [wmsLayer],
-        opacity: visConfig.opacity,
-        transparent: visConfig.transparent,
-        pickable: false
-      })
-    ];
+    const deckLayer = new DeckWMSLayer({
+      id: `${this.id}-WMSLayer` as string,
+      idx: defaultLayerProps.idx,
+      serviceType: 'wms',
+      data: data.tilesetDataUrl,
+      layers: [wmsLayerName],
+      opacity: visConfig.opacity,
+      transparent: visConfig.transparent,
+      pickable,
+      // @ts-ignore
+      onClick: pickable ? this._onClick.bind(this, layerCallbacks) : null
+    });
+
+    // Store reference to the deck layer for feature info access
+    this.deckLayerRef = deckLayer;
+
+    return [deckLayer];
+  }
+
+  protected async _onClick(layerCallbacks, {bitmap, coordinate}) {
+    if (!bitmap) return null;
+
+    const x = bitmap.pixel[0];
+    const y = bitmap.pixel[1];
+    const featureInfo = await this.getWMSFeatureInfo(x, y);
+
+    // Call the callback to update state with coordinate
+    if (layerCallbacks?.onWMSFeatureInfo) {
+      layerCallbacks.onWMSFeatureInfo({featureInfo, coordinate});
+    }
+
+    return featureInfo;
+  }
+
+  // Method to retrieve WMS feature info asynchronously
+  protected async getWMSFeatureInfo(
+    x: number,
+    y: number
+  ): Promise<Array<{name: string; value: string}> | null> {
+    try {
+      if (this.deckLayerRef && typeof this.deckLayerRef.getFeatureInfoText === 'function') {
+        const featureInfoXml = await this.deckLayerRef.getFeatureInfoText(x, y);
+        if (featureInfoXml) {
+          // Parse the XML response to extract attributes
+          const parsedAttributes = this.parseWMSFeatureInfo(featureInfoXml);
+          return parsedAttributes.length > 0 ? parsedAttributes : null;
+        }
+      }
+      return null;
+    } catch (error) {
+      console.warn('Failed to get WMS feature info:', error);
+      return null;
+    }
+  }
+
+  // Helper method to parse WMS XML response
+  protected parseWMSFeatureInfo(xmlString: string): Array<{name: string; value: string}> {
+    try {
+      // Simple XML parsing to extract feature attributes
+      const parser = new DOMParser();
+      const xmlDoc = parser.parseFromString(xmlString, 'text/xml');
+
+      const attributes: Array<{name: string; value: string}> = [];
+
+      // Look for feature members
+      const featureMembers = xmlDoc.getElementsByTagName('gml:featureMember');
+
+      for (let i = 0; i < featureMembers.length; i++) {
+        const featureMember = featureMembers[i];
+
+        // Get all child elements that contain attribute data
+        const children = featureMember.children;
+
+        for (let j = 0; j < children.length; j++) {
+          const feature = children[j];
+          const featureChildren = feature.children;
+
+          // Extract attribute name-value pairs
+          for (let k = 0; k < featureChildren.length; k++) {
+            const attr = featureChildren[k];
+            const tagName = attr.tagName;
+            const value = attr.textContent || '';
+
+            // Clean up the tag name (remove namespace prefix)
+            const cleanName = tagName.includes(':') ? tagName.split(':')[1] : tagName;
+
+            // Skip empty values and geometry elements
+            if (value.trim() && !cleanName.toLowerCase().includes('geom')) {
+              attributes.push({
+                name: cleanName.replace(/_/g, ' ').toUpperCase(),
+                value: value.trim()
+              });
+            }
+          }
+        }
+      }
+
+      return attributes;
+    } catch (error) {
+      console.warn('Error parsing WMS feature info XML:', error);
+      return [];
+    }
   }
 }

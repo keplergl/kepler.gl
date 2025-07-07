@@ -119,6 +119,9 @@ export default {
       rastertile: 'raster tile',
       wms: 'WMS'
     },
+    wms: {
+      hover: 'Value:'
+    },
     layerUpdateError:
       'An error occurred during layer update: {errorMessage}. Make sure the format of the input data is valid.',
     interaction: 'Interaction'
