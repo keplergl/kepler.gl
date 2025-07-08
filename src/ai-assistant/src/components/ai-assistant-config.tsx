@@ -16,7 +16,7 @@ import {
 } from '@kepler.gl/components';
 import {State} from '../index';
 import ApiKey from '../icons/api-key';
-import PROVIDER_MODELS from '../config/models.json';
+import {PROVIDER_MODELS} from '../config/models';
 import {useLocalStorage} from 'usehooks-ts';
 import {GetAssistantModelByProvider} from '@openassistant/core';
 import {updateAiAssistantConfig} from '../actions';

@@ -1,4 +1,4 @@
-{
+export const PROVIDER_MODELS = {
   "openai": [
     "gpt-4.1",
     "gpt-4o",
@@ -27,4 +27,4 @@
   ],
   "xai": ["grok-3", "grok-3-fast", "grok-3-mini", "grok-3-mini-fast"],
   "ollama": ["deepseek-r1", "gemma3", "llama4", "llama3.3", "mistral", "phi4", "qwen3", "qwen2.5"]
-}
+};
