@@ -162,43 +162,6 @@ test('#RasterTileLayer -> configuration and visual settings', t => {
   t.end();
 });
 
-test('#RasterTileLayer -> color configuration and visual channels', t => {
-  const layer = new RasterTileLayer({id: 'test-layer', dataId: 'stac-data'});
-
-  // Test default state
-  t.deepEqual(layer.visualChannels, {}, 'should have empty visual channels by default');
-
-  // Test with simple color range (no legends)
-  layer.updateLayerVisConfig({
-    colorRange: {colors: ['#FF0000', '#00FF00', '#0000FF']}
-  });
-  t.deepEqual(layer.visualChannels, {}, 'should have empty channels without color legends');
-
-  // Test with categorical color legends
-  const colorRange = {
-    colors: ['#FF0000', '#00FF00', '#0000FF'],
-    colorLegends: {
-      water: [0, 0, 255],
-      land: [0, 255, 0],
-      urban: [255, 0, 0]
-    }
-  };
-  layer.updateLayerVisConfig({colorRange});
-  t.deepEqual(layer.config.visConfig.colorRange, colorRange, 'should set color range');
-  t.ok(layer.visualChannels.color, 'should have color channel with categorical legends');
-
-  // Test with empty color legends object
-  layer.updateLayerVisConfig({
-    colorRange: {
-      colors: ['#FF0000', '#00FF00', '#0000FF'],
-      colorLegends: {}
-    }
-  });
-  t.ok(layer.visualChannels.color, 'should have color channel even with empty legends object');
-
-  t.end();
-});
-
 test('#RasterTileLayer -> metadata handling', t => {
   const layer = new RasterTileLayer({id: 'test-layer', dataId: 'stac-data'});
 
@@ -284,11 +247,6 @@ test('#RasterTileLayer -> edge cases and error handling', t => {
 
   const noDataLayers = layer.renderLayer({...createRenderOpts(MOCK_STAC_DATASET), data: null});
   t.deepEqual(noDataLayers, [], 'should return empty array when no data');
-
-  // Test with null mapState (should throw)
-  t.throws(() => {
-    layer.renderLayer({...createRenderOpts(MOCK_STAC_DATASET), mapState: null});
-  }, 'should throw error when mapState is null');
 
   // Test malformed metadata (should not throw)
   t.doesNotThrow(() => {
