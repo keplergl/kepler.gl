@@ -61,6 +61,16 @@ export function getDuckDBColumnTypesMap(columns: DuckDBColumnDesc[]) {
 }
 
 /**
+ * Quotes a column name for safe SQL usage.
+ * Always quotes to handle all edge cases (spaces, special characters, reserved words).
+ * @param columnName The column name to quote.
+ * @returns The column name, properly quoted.
+ */
+function quoteColumnName(columnName: string): string {
+  return `"${columnName.replace(/"/g, '""')}"`;
+}
+
+/**
  * Constructs an SQL query to select all columns from a given table,
  * converting specified columns to Well-Known Binary (WKB) format using ST_AsWKB,
  * and casting BIGINT columns to DOUBLE if specified.
@@ -76,12 +86,13 @@ export function castDuckDBTypesForKepler(
 ): string {
   const modifiedColumns = columns.map(column => {
     const {name, type} = column;
+    const quotedName = quoteColumnName(name);
     if (type === 'GEOMETRY' && options.geometryToWKB) {
-      return `ST_AsWKB(${name}) as ${name}`;
+      return `ST_AsWKB(${quotedName}) as ${quotedName}`;
     } else if (type === 'BIGINT' && options.bigIntToDouble) {
-      return `CAST(${name} AS DOUBLE) as ${name}`;
+      return `CAST(${quotedName} AS DOUBLE) as ${quotedName}`;
     }
-    return name;
+    return quotedName;
   });
 
   return `SELECT ${modifiedColumns.join(', ')} FROM '${tableName}'`;
