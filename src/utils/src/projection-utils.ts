@@ -41,17 +41,26 @@ export function getCenterAndZoomFromBounds(bounds, {width, height}) {
   }
 
   // viewport(bounds, dimensions, minzoom, maxzoom, tileSize, allowFloat)
-  const {zoom} = geoViewport.viewport(
+  let {zoom} = geoViewport.viewport(
     bounds,
     [width, height],
     undefined,
     undefined,
-    MAPBOX_TILE_SIZE
+    MAPBOX_TILE_SIZE,
+    true
   );
   // center being calculated by geo-vieweport.viewport has a complex logic that
   // projects and then unprojects the coordinates to determine the center
   // Calculating a simple average instead as that is the expected behavior in most of cases
   const center = [(bounds[0] + bounds[2]) / 2, (bounds[1] + bounds[3]) / 2];
+
+  // NOTE: this logic is used in deck.gl normalizeViewportProps
+  // This is required in order to prevent projection matrix mismatch between basemap and layers
+  const minZoom = Math.log2(height / MAPBOX_TILE_SIZE);
+  if (zoom <= minZoom) {
+    zoom = minZoom;
+    center[1] = 0;
+  }
 
   return {zoom, center};
 }
