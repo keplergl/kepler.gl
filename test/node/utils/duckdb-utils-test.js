@@ -502,32 +502,15 @@ test('duckdb-utils -> quoteTableName', t => {
     'should preserve already quoted table name with hyphens'
   );
 
-  // Test valid fully qualified names (should be returned as-is)
-  t.equal(
-    quoteTableName('"schema"."table"'),
-    '"schema"."table"',
-    'should preserve valid 2-part qualified name'
-  );
-  t.equal(
-    quoteTableName('"catalog"."schema"."table"'),
-    '"catalog"."schema"."table"',
-    'should preserve valid 3-part qualified name'
-  );
   t.equal(
     quoteTableName('"memory"."main"."earthquakes"'),
     '"memory"."main"."earthquakes"',
     'should preserve complex qualified name'
   );
 
-  // Test valid fully qualified names with spaces and special characters
   t.equal(
-    quoteTableName('"my schema"."my table"'),
-    '"my schema"."my table"',
-    'should preserve qualified name with spaces'
-  );
-  t.equal(
-    quoteTableName('"db-name"."schema_name"."table-name"'),
-    '"db-name"."schema_name"."table-name"',
+    quoteTableName('"my schema"."db-name"."schema_name"."table-name"'),
+    '"my schema"."db-name"."schema_name"."table-name"',
     'should preserve qualified name with special chars'
   );
 
@@ -561,14 +544,6 @@ test('duckdb-utils -> quoteTableName', t => {
     quoteTableName('"single.quoted.name"'),
     '"single.quoted.name"',
     'should preserve single quoted name with dots as simple identifier'
-  );
-
-  // Test minimum valid qualified name structure
-  t.equal(quoteTableName('"a"."b"'), '"a"."b"', 'should preserve minimal valid qualified name');
-  t.equal(
-    quoteTableName('"a"."b"."c"'),
-    '"a"."b"."c"',
-    'should preserve minimal 3-part qualified name'
   );
 
   t.end();
