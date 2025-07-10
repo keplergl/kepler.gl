@@ -108,13 +108,13 @@ export function castDuckDBTypesForKepler(
 ): string {
   const modifiedColumns = columns.map(column => {
     const {name, type} = column;
-    const quotedName = quoteColumnName(name);
+    const quotedColumnName = quoteColumnName(name);
     if (type === 'GEOMETRY' && options.geometryToWKB) {
-      return `ST_AsWKB(${quotedName}) as ${quotedName}`;
+      return `ST_AsWKB(${quotedColumnName}) as ${quotedColumnName}`;
     } else if (type === 'BIGINT' && options.bigIntToDouble) {
-      return `CAST(${quotedName} AS DOUBLE) as ${quotedName}`;
+      return `CAST(${quotedColumnName} AS DOUBLE) as ${quotedColumnName}`;
     }
-    return quotedName;
+    return quotedColumnName;
   });
 
   const quotedTableName = quoteTableName(tableName);
