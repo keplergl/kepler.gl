@@ -18,6 +18,8 @@ export {default as RasterLayer} from './raster/raster-layer/raster-layer';
 export {default as RasterMeshLayer} from './raster/raster-mesh-layer/raster-mesh-layer';
 export * as RasterWebGL from './raster/webgl';
 
+export {default as WMSLayer} from './wms/wms-layer';
+
 export * from './layer-utils/shader-utils';
 
 export * from './3d-building-layer/types';

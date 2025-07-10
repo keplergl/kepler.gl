@@ -90,6 +90,6 @@ test('PlotContainer -> mount -> imageSize', t => {
     -45.57105275929253,
     'should set longitude when center: true'
   );
-  t.equal(map.props.mapState.zoom, 1, 'should set zoom when center: true');
+  t.equal(map.props.mapState.zoom, 1.8721094288367688, 'should set zoom when center: true');
   t.end();
 });

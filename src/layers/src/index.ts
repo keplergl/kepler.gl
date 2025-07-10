@@ -62,6 +62,8 @@ export {getCategoricalColormapDataUrl} from './raster-tile/image';
 export * from './raster-tile/types';
 export * from './raster-tile/raster-tile-utils';
 
+export {default as WMSLayerIcon} from './wms-layer/wms-layer-icon';
+
 import {LAYER_TYPES} from '@kepler.gl/constants';
 export {parseGeoJsonRawFeature} from './geojson-layer/geojson-utils';
 // base layer
@@ -90,7 +92,8 @@ export const KeplerGlLayers = {
   TripLayer,
   S2GeometryLayer,
   VectorTileLayer,
-  RasterTileLayer
+  RasterTileLayer,
+  WMSLayer
 };
 
 export type LayerClassesType = typeof LayerClasses;
@@ -109,7 +112,8 @@ export const LayerClasses = {
   [LAYER_TYPES.trip]: TripLayer,
   [LAYER_TYPES.s2]: S2GeometryLayer,
   [LAYER_TYPES['vectorTile']]: VectorTileLayer,
-  [LAYER_TYPES['rasterTile']]: RasterTileLayer
+  [LAYER_TYPES['rasterTile']]: RasterTileLayer,
+  [LAYER_TYPES.wms]: WMSLayer
 };
 
 export * from './mapbox-utils';
@@ -131,6 +135,7 @@ import {
   getTooltip,
   getCursor
 } from './editor-layer/editor-layer-utils';
+import WMSLayer from './wms-layer/wms-layer';
 export const EditorLayerUtils = {
   isDrawingActive,
   onClick,

@@ -4,12 +4,14 @@
 export enum DatasetType {
   LOCAL = 'local',
   VECTOR_TILE = 'vector-tile',
-  RASTER_TILE = 'raster-tile'
+  RASTER_TILE = 'raster-tile',
+  WMS_TILE = 'wms-tile'
 }
 
 export enum RemoteTileFormat {
   MVT = 'mvt',
-  PMTILES = 'pmtiles'
+  PMTILES = 'pmtiles',
+  WMS = 'wms'
 }
 
 export enum PMTilesType {
@@ -64,3 +66,12 @@ export type RasterTileMetadataSourceType = {
  */
 export type RasterTileDatasetMetadata = (RasterTileLocalMetadata | RasterTileRemoteMetadata) &
   RasterTileMetadataSourceType;
+
+export type WMSDatasetMetadata = {
+  type: typeof REMOTE_TILE;
+  remoteTileFormat: RemoteTileFormat.WMS;
+  tilesetDataUrl: string;
+  tilesetMetadataUrl: string;
+  version: string;
+  layers: {name: string; title: string; boundingBox: number[] | null}[];
+};
