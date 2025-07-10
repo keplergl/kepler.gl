@@ -31,7 +31,8 @@ export async function getDuckDBColumnTypes(
   connection: DatabaseConnection,
   tableName: string
 ): Promise<DuckDBColumnDesc[]> {
-  const resDescribe = await connection.query(`DESCRIBE "${tableName}"`);
+  const quotedTableName = quoteTableName(tableName);
+  const resDescribe = await connection.query(`DESCRIBE ${quotedTableName}`);
 
   const duckDbTypes: DuckDBColumnDesc[] = [];
   const numRows = resDescribe.numRows;
@@ -61,6 +62,37 @@ export function getDuckDBColumnTypesMap(columns: DuckDBColumnDesc[]) {
 }
 
 /**
+ * Quotes a table name for safe SQL usage.
+ * Always quotes to handle all edge cases (spaces, special characters, reserved words).
+ * For fully qualified names (containing dots), preserves the existing structure.
+ * @param tableName The table name to quote.
+ * @returns The table name, properly quoted.
+ */
+export function quoteTableName(tableName: string): string {
+  // Return as-is if:
+  // 1. It's already a properly quoted simple identifier (starts and ends with quotes)
+  // 2. It contains both dots and quotes (assume it's a qualified name)
+  if (
+    (tableName.startsWith('"') && tableName.endsWith('"')) ||
+    (tableName.includes('.') && tableName.includes('"'))
+  ) {
+    return tableName;
+  }
+
+  return `"${tableName.replace(/"/g, '""')}"`;
+}
+
+/**
+ * Quotes a column name for safe SQL usage.
+ * Always quotes to handle all edge cases (spaces, special characters, reserved words).
+ * @param columnName The column name to quote.
+ * @returns The column name, properly quoted.
+ */
+function quoteColumnName(columnName: string): string {
+  return `"${columnName.replace(/"/g, '""')}"`;
+}
+
+/**
  * Constructs an SQL query to select all columns from a given table,
  * converting specified columns to Well-Known Binary (WKB) format using ST_AsWKB,
  * and casting BIGINT columns to DOUBLE if specified.
@@ -76,15 +108,17 @@ export function castDuckDBTypesForKepler(
 ): string {
   const modifiedColumns = columns.map(column => {
     const {name, type} = column;
+    const quotedColumnName = quoteColumnName(name);
     if (type === 'GEOMETRY' && options.geometryToWKB) {
-      return `ST_AsWKB(${name}) as ${name}`;
+      return `ST_AsWKB(${quotedColumnName}) as ${quotedColumnName}`;
     } else if (type === 'BIGINT' && options.bigIntToDouble) {
-      return `CAST(${name} AS DOUBLE) as ${name}`;
+      return `CAST(${quotedColumnName} AS DOUBLE) as ${quotedColumnName}`;
     }
-    return name;
+    return quotedColumnName;
   });
 
-  return `SELECT ${modifiedColumns.join(', ')} FROM '${tableName}'`;
+  const quotedTableName = quoteTableName(tableName);
+  return `SELECT ${modifiedColumns.join(', ')} FROM ${quotedTableName}`;
 }
 
 /**
