@@ -65,21 +65,21 @@ export function getDuckDBColumnTypesMap(columns: DuckDBColumnDesc[]) {
  * Quotes a table name for safe SQL usage.
  * Always quotes to handle all edge cases (spaces, special characters, reserved words).
  * For fully qualified names (containing dots), preserves the existing structure.
- * @param columnName The column name to quote.
- * @returns The column name, properly quoted.
+ * @param tableName The table name to quote.
+ * @returns The table name, properly quoted.
  */
-export function quoteTableName(columnName: string): string {
+export function quoteTableName(tableName: string): string {
   // Return as-is if:
   // 1. It's already a properly quoted simple identifier (starts and ends with quotes)
   // 2. It contains both dots and quotes (assume it's a qualified name)
   if (
-    (columnName.startsWith('"') && columnName.endsWith('"')) ||
-    (columnName.includes('.') && columnName.includes('"'))
+    (tableName.startsWith('"') && tableName.endsWith('"')) ||
+    (tableName.includes('.') && tableName.includes('"'))
   ) {
-    return columnName;
+    return tableName;
   }
 
-  return `"${columnName.replace(/"/g, '""')}"`;
+  return `"${tableName.replace(/"/g, '""')}"`;
 }
 
 /**
