@@ -31,7 +31,8 @@ export async function getDuckDBColumnTypes(
   connection: DatabaseConnection,
   tableName: string
 ): Promise<DuckDBColumnDesc[]> {
-  const resDescribe = await connection.query(`DESCRIBE "${tableName}"`);
+  const quotedTableName = quoteTableName(tableName);
+  const resDescribe = await connection.query(`DESCRIBE ${quotedTableName}`);
 
   const duckDbTypes: DuckDBColumnDesc[] = [];
   const numRows = resDescribe.numRows;
@@ -58,6 +59,36 @@ export function getDuckDBColumnTypesMap(columns: DuckDBColumnDesc[]) {
     acc[value.name] = value.type;
     return acc;
   }, {} as Record<string, string>);
+}
+
+/**
+ * Quotes a table name for safe SQL usage.
+ * Always quotes to handle all edge cases (spaces, special characters, reserved words).
+ * For fully qualified names (containing dots), preserves the existing structure.
+ * @param columnName The column name to quote.
+ * @returns The column name, properly quoted.
+ */
+export function quoteTableName(columnName: string): string {
+  // If it's already a properly quoted simple identifier (starts and ends with quotes), return as-is
+  // This handles cases like "table", "table with spaces", and "table.with.dots"
+  if (columnName.startsWith('"') && columnName.endsWith('"')) {
+    return columnName;
+  }
+
+  // If it contains dots and quotes, it might be a fully qualified name
+  if (columnName.includes('.') && columnName.includes('"')) {
+    // Simple heuristic: if it looks like "part1"."part2" or "part1"."part2"."part3"
+    // Split on dots and check if each part is quoted
+    const parts = columnName.split('.');
+    const allPartsQuoted = parts.every(
+      part => part.trim().startsWith('"') && part.trim().endsWith('"') && part.trim().length > 2
+    );
+
+    if (allPartsQuoted && parts.length >= 2) {
+      return columnName;
+    }
+  }
+  return `"${columnName.replace(/"/g, '""')}"`;
 }
 
 /**
@@ -95,7 +126,8 @@ export function castDuckDBTypesForKepler(
     return quotedName;
   });
 
-  return `SELECT ${modifiedColumns.join(', ')} FROM '${tableName}'`;
+  const quotedTableName = quoteTableName(tableName);
+  return `SELECT ${modifiedColumns.join(', ')} FROM ${quotedTableName}`;
 }
 
 /**

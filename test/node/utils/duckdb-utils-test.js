@@ -19,7 +19,8 @@ import {
   isGeoArrowMultiPolygon,
   splitSqlStatements,
   removeSQLComments,
-  sanitizeDuckDBTableName
+  sanitizeDuckDBTableName,
+  quoteTableName
 } from '../../../src/duckdb/src/table/duckdb-table-utils';
 
 import {GEOARROW_EXTENSIONS, GEOARROW_METADATA_KEY} from '@kepler.gl/constants';
@@ -63,7 +64,7 @@ test('duckdb-utils -> castDuckDBTypesForKepler', t => {
 
   const result = castDuckDBTypesForKepler(tableName, columns);
 
-  const resultMock = `SELECT "id", "name", ST_AsWKB("location") as "location", CAST("big_number" AS DOUBLE) as "big_number" FROM 'test_table'`;
+  const resultMock = `SELECT "id", "name", ST_AsWKB("location") as "location", CAST("big_number" AS DOUBLE) as "big_number" FROM "test_table"`;
   t.equal(result, resultMock, 'should return correct SQL');
 
   t.end();
@@ -81,15 +82,28 @@ test('duckdb-utils -> castDuckDBTypesForKepler options', t => {
     geometryToWKB: false,
     bigIntToDouble: true
   });
-  const resultNoGeometryMock = `SELECT "location", CAST("big_number" AS DOUBLE) as "big_number" FROM 'test_table'`;
+  const resultNoGeometryMock = `SELECT "location", CAST("big_number" AS DOUBLE) as "big_number" FROM "test_table"`;
   t.equal(resultNoGeometry, resultNoGeometryMock, 'should return correct SQL');
 
   const resultNoBigInt = castDuckDBTypesForKepler(tableName, columns, {
     geometryToWKB: true,
     bigIntToDouble: false
   });
-  const resultNoBigIntMock = `SELECT ST_AsWKB("location") as "location", "big_number" FROM 'test_table'`;
+  const resultNoBigIntMock = `SELECT ST_AsWKB("location") as "location", "big_number" FROM "test_table"`;
   t.equal(resultNoBigInt, resultNoBigIntMock, 'should return correct SQL');
+
+  t.end();
+});
+
+// Test castDuckDBTypesForKepler
+test('duckdb-utils -> castDuckDBTypesForKepler with complex table name', t => {
+  const tableName = '"memory"."main"."earthquakes"';
+  const columns = [{name: 'id', type: 'INTEGER'}];
+
+  const result = castDuckDBTypesForKepler(tableName, columns);
+
+  const resultMock = `SELECT "id" FROM "memory"."main"."earthquakes"`;
+  t.equal(result, resultMock, 'should return correct SQL');
 
   t.end();
 });
@@ -450,6 +464,111 @@ test('duckdb-utils -> sanitizeDuckDBTableName', t => {
     sanitizeDuckDBTableName(complexName),
     't_123_data_file_csv',
     'should handle complex cases'
+  );
+
+  t.end();
+});
+
+// Test quoteTableName
+test('duckdb-utils -> quoteTableName', t => {
+  // Test simple table names (should get quoted)
+  t.equal(quoteTableName('simple_table'), '"simple_table"', 'should quote simple table name');
+  t.equal(quoteTableName('table'), '"table"', 'should quote single word table name');
+
+  // Test table names with special characters (should get quoted)
+  t.equal(quoteTableName('table name'), '"table name"', 'should quote table name with spaces');
+  t.equal(quoteTableName('table-name'), '"table-name"', 'should quote table name with hyphens');
+  t.equal(
+    quoteTableName('table@name'),
+    '"table@name"',
+    'should quote table name with special chars'
+  );
+
+  // Test already quoted simple names (should get quoted again with proper escaping)
+  t.equal(
+    quoteTableName('already"quoted'),
+    '"already""quoted"',
+    'should escape quotes in table name'
+  );
+  t.equal(quoteTableName('"quoted"'), '"quoted"', 'should preserve already quoted table name');
+  t.equal(
+    quoteTableName('"table with spaces"'),
+    '"table with spaces"',
+    'should preserve already quoted table name with spaces'
+  );
+  t.equal(
+    quoteTableName('"table-with-hyphens"'),
+    '"table-with-hyphens"',
+    'should preserve already quoted table name with hyphens'
+  );
+
+  // Test valid fully qualified names (should be returned as-is)
+  t.equal(
+    quoteTableName('"schema"."table"'),
+    '"schema"."table"',
+    'should preserve valid 2-part qualified name'
+  );
+  t.equal(
+    quoteTableName('"catalog"."schema"."table"'),
+    '"catalog"."schema"."table"',
+    'should preserve valid 3-part qualified name'
+  );
+  t.equal(
+    quoteTableName('"memory"."main"."earthquakes"'),
+    '"memory"."main"."earthquakes"',
+    'should preserve complex qualified name'
+  );
+
+  // Test valid fully qualified names with spaces and special characters
+  t.equal(
+    quoteTableName('"my schema"."my table"'),
+    '"my schema"."my table"',
+    'should preserve qualified name with spaces'
+  );
+  t.equal(
+    quoteTableName('"db-name"."schema_name"."table-name"'),
+    '"db-name"."schema_name"."table-name"',
+    'should preserve qualified name with special chars'
+  );
+
+  // Test invalid fully qualified names (should get quoted)
+  t.equal(quoteTableName('schema.table'), '"schema.table"', 'should quote unquoted qualified name');
+  t.equal(
+    quoteTableName('"schema".table'),
+    '"""schema"".table"',
+    'should quote partially quoted name'
+  );
+  t.equal(
+    quoteTableName('schema."table"'),
+    '"schema.""table"""',
+    'should quote partially quoted name'
+  );
+  t.equal(quoteTableName('bad."format'), '"bad.""format"', 'should quote malformed qualified name');
+
+  // Test edge cases
+  t.equal(quoteTableName(''), '""', 'should handle empty string');
+  t.equal(quoteTableName('123table'), '"123table"', 'should quote name starting with number');
+  t.equal(quoteTableName('table.'), '"table."', 'should quote name ending with dot');
+  t.equal(quoteTableName('.table'), '".table"', 'should quote name starting with dot');
+
+  // Test cases that should NOT be treated as qualified names
+  t.equal(
+    quoteTableName('table.with.dots'),
+    '"table.with.dots"',
+    'should quote name with dots but no quotes'
+  );
+  t.equal(
+    quoteTableName('"single.quoted.name"'),
+    '"single.quoted.name"',
+    'should preserve single quoted name with dots as simple identifier'
+  );
+
+  // Test minimum valid qualified name structure
+  t.equal(quoteTableName('"a"."b"'), '"a"."b"', 'should preserve minimal valid qualified name');
+  t.equal(
+    quoteTableName('"a"."b"."c"'),
+    '"a"."b"."c"',
+    'should preserve minimal 3-part qualified name'
   );
 
   t.end();
