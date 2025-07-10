@@ -69,15 +69,13 @@ export function getDuckDBColumnTypesMap(columns: DuckDBColumnDesc[]) {
  * @returns The column name, properly quoted.
  */
 export function quoteTableName(columnName: string): string {
-  // If it's already a properly quoted simple identifier (starts and ends with quotes), return as-is
-  // This handles cases like "table", "table with spaces", and "table.with.dots"
-  if (columnName.startsWith('"') && columnName.endsWith('"')) {
-    return columnName;
-  }
-
-  // If it contains both dots and quotes, assume it's a qualified name and return as-is
-  // This avoids complex parsing that breaks with dots inside quotes like "my.schema"."table"
-  if (columnName.includes('.') && columnName.includes('"')) {
+  // Return as-is if:
+  // 1. It's already a properly quoted simple identifier (starts and ends with quotes)
+  // 2. It contains both dots and quotes (assume it's a qualified name)
+  if (
+    (columnName.startsWith('"') && columnName.endsWith('"')) ||
+    (columnName.includes('.') && columnName.includes('"'))
+  ) {
     return columnName;
   }
 
