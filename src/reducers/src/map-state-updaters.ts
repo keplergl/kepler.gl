@@ -422,7 +422,7 @@ function updateViewportBasedOnBounds(state: MapState, newMapState: MapState) {
     if (!booleanWithin(viewportBoundsPolygon, maxBoundsPolygon)) {
       const {latitude, longitude, zoom} = fitBounds({
         width: newMapState.width,
-        height: newMapState.width,
+        height: newMapState.height,
         bounds: [
           [newStateMaxBounds[0], newStateMaxBounds[1]],
           [newStateMaxBounds[2], newStateMaxBounds[3]]
