@@ -75,19 +75,12 @@ export function quoteTableName(columnName: string): string {
     return columnName;
   }
 
-  // If it contains dots and quotes, it might be a fully qualified name
+  // If it contains both dots and quotes, assume it's a qualified name and return as-is
+  // This avoids complex parsing that breaks with dots inside quotes like "my.schema"."table"
   if (columnName.includes('.') && columnName.includes('"')) {
-    // Simple heuristic: if it looks like "part1"."part2" or "part1"."part2"."part3"
-    // Split on dots and check if each part is quoted
-    const parts = columnName.split('.');
-    const allPartsQuoted = parts.every(
-      part => part.trim().startsWith('"') && part.trim().endsWith('"') && part.trim().length > 2
-    );
-
-    if (allPartsQuoted && parts.length >= 2) {
-      return columnName;
-    }
+    return columnName;
   }
+
   return `"${columnName.replace(/"/g, '""')}"`;
 }
 

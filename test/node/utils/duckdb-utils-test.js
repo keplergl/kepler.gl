@@ -514,19 +514,30 @@ test('duckdb-utils -> quoteTableName', t => {
     'should preserve qualified name with special chars'
   );
 
+  // Test qualified names with dots inside quotes (would break old parsing logic)
+  t.equal(
+    quoteTableName('"my.schema"."table.name"'),
+    '"my.schema"."table.name"',
+    'should preserve qualified name with dots inside quotes'
+  );
+
   // Test invalid fully qualified names (should get quoted)
   t.equal(quoteTableName('schema.table'), '"schema.table"', 'should quote unquoted qualified name');
   t.equal(
     quoteTableName('"schema".table'),
-    '"""schema"".table"',
-    'should quote partially quoted name'
+    '"schema".table',
+    'should preserve partially quoted name (trust user intent)'
   );
   t.equal(
     quoteTableName('schema."table"'),
-    '"schema.""table"""',
-    'should quote partially quoted name'
+    'schema."table"',
+    'should preserve partially quoted name (trust user intent)'
   );
-  t.equal(quoteTableName('bad."format'), '"bad.""format"', 'should quote malformed qualified name');
+  t.equal(
+    quoteTableName('bad."format'),
+    'bad."format',
+    'should preserve name with dots and quotes (trust user intent)'
+  );
 
   // Test edge cases
   t.equal(quoteTableName(''), '""', 'should handle empty string');
