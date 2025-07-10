@@ -15,6 +15,10 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+## [3.1.9] - June 11 2025
+
+TDB
+
 ## [3.1.8] - May 26 2025
 
 - 4fd570c3e [example] Kepler.gl getting started example with Vite (#3123)
