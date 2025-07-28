@@ -187,6 +187,8 @@ const RasterTileForm: React.FC<RasterTileFormProps> = ({setResponse}) => {
     setResponse
   ]);
 
+  const showServerInput = getApplicationConfig().rasterServerShowServerInput;
+
   return (
     <TilesetInputContainer>
       <div>
@@ -210,18 +212,20 @@ const RasterTileForm: React.FC<RasterTileFormProps> = ({setResponse}) => {
           Supports raster .pmtiles. Limited support for STAC Items and Collections.
         </TilesetInputDescription>
       </div>
-      <div>
-        <label htmlFor="tileset-raster-servers">Raster tile servers</label>
-        <InputLight
-          id="tileset-raster-servers"
-          placeholder="Raster tile servers (separated by commas)"
-          value={rasterTileServerUrls}
-          onChange={onRasterTileServerUrlsChange}
-        />
-        <TilesetInputDescription>
-          Raster tile server URLs for Cloud Optimized GeoTIFF tilesets and elevation.
-        </TilesetInputDescription>
-      </div>
+      {showServerInput && (
+        <div>
+          <label htmlFor="tileset-raster-servers">Raster tile servers</label>
+          <InputLight
+            id="tileset-raster-servers"
+            placeholder="Raster tile servers (separated by commas)"
+            value={rasterTileServerUrls}
+            onChange={onRasterTileServerUrlsChange}
+          />
+          <TilesetInputDescription>
+            Raster tile server URLs for Cloud Optimized GeoTIFF tilesets and elevation.
+          </TilesetInputDescription>
+        </div>
+      )}
     </TilesetInputContainer>
   );
 };
