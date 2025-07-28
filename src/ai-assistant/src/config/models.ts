@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 export const PROVIDER_MODELS = {
   "openai": [
     "gpt-4.1",
