@@ -17,6 +17,7 @@ Ref: http://keepachangelog.com/en/0.3.0/
 
 ## [3.1.9] - June 11 2025
 
+0d6d5fd1a [chore] raster tile - hide server settings by default (#3163)
 7551f5d7d [fix] DuckDB mode: space in column name breaks file import (#3153) (#3156)
 047334712 [fix] fit to bounds - fix initial basemap and deck projections mismatch (#3155)
 d43e8bbff [chore] replace ai-assistant model config file with ts for npm availability (#3154)
