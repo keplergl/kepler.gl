@@ -468,6 +468,11 @@ export {
   VisConfigSwitchFactory,
   appInjector
 };
+export {
+  SORTABLE_LAYER_TYPE,
+  SORTABLE_EFFECT_TYPE,
+  SORTABLE_SIDE_PANEL_TYPE
+} from './common/dnd-layer-items';
 
 // Individual Component from Dependency Tree
 export const TimeRangeSlider = appInjector.get(TimeRangeSliderFactory);
