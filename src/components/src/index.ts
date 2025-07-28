@@ -469,9 +469,12 @@ export {
   appInjector
 };
 export {
+  DROPPABLE_MAP_CONTAINER_TYPE,
   SORTABLE_LAYER_TYPE,
   SORTABLE_EFFECT_TYPE,
-  SORTABLE_SIDE_PANEL_TYPE
+  SORTABLE_SIDE_PANEL_TYPE,
+  DND_MODIFIERS,
+  DND_EMPTY_MODIFIERS
 } from './common/dnd-layer-items';
 
 // Individual Component from Dependency Tree
