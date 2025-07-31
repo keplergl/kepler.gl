@@ -54,6 +54,7 @@ type LayerManagerProps = {
   updateTableColor: ActionHandler<typeof VisStateActions.updateTableColor>;
   panelListView: PanelListView;
   panelMetadata: SidePanelItem;
+  showDeleteDataset?: boolean;
 } & WrappedComponentProps;
 
 export const LayerBlendingSelector = React.memo(
@@ -165,6 +166,7 @@ function LayerManagerFactory(
     layerBlending,
     overlayBlending,
     showAddDataModal,
+    showDeleteDataset = true,
     updateTableColor,
     showDatasetTable,
     removeDataset,
@@ -216,7 +218,7 @@ function LayerManagerFactory(
           showDatasetTable={showDatasetTable}
           updateTableColor={updateTableColor}
           removeDataset={removeDataset}
-          showDeleteDataset
+          showDeleteDataset={showDeleteDataset}
           showDatasetList={!isSortByDatasetMode}
           showAddDataModal={showAddDataModal}
         />
@@ -242,7 +244,7 @@ function LayerManagerFactory(
               uiStateActions={uiStateActions}
               visStateActions={visStateActions}
               mapStateActions={mapStateActions}
-              showDeleteDataset
+              showDeleteDataset={showDeleteDataset}
             />
           ) : (
             <LayerList
