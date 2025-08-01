@@ -13309,7 +13309,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"chokidar@npm:^3.4.0, chokidar@npm:^3.4.1, chokidar@npm:^3.6.0":
+"chokidar@npm:^3.4.0, chokidar@npm:^3.4.1, chokidar@npm:^3.5.3, chokidar@npm:^3.6.0":
   version: 3.6.0
   resolution: "chokidar@npm:3.6.0"
   dependencies:
@@ -16098,6 +16098,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"esbuild-plugin-copy@npm:^2.1.1":
+  version: 2.1.1
+  resolution: "esbuild-plugin-copy@npm:2.1.1"
+  dependencies:
+    chalk: "npm:^4.1.2"
+    chokidar: "npm:^3.5.3"
+    fs-extra: "npm:^10.0.1"
+    globby: "npm:^11.0.3"
+  peerDependencies:
+    esbuild: ">= 0.14.0"
+  checksum: 10c0/ae0cb7cbac7328de54cbdfbfc9d47a600a16ee7fff20d8b77afaa8c2999921fff21506db3be2c20e05fd76448f098ae76d1aaae4ccfa73293247a07931c9c3e2
+  languageName: node
+  linkType: hard
+
 "esbuild-plugin-replace@npm:^1.4.0":
   version: 1.4.0
   resolution: "esbuild-plugin-replace@npm:1.4.0"
@@ -17522,6 +17536,17 @@ __metadata:
   version: 1.0.0
   resolution: "fs-constants@npm:1.0.0"
   checksum: 10c0/a0cde99085f0872f4d244e83e03a46aa387b74f5a5af750896c6b05e9077fac00e9932fdf5aef84f2f16634cd473c63037d7a512576da7d5c2b9163d1909f3a8
+  languageName: node
+  linkType: hard
+
+"fs-extra@npm:^10.0.1":
+  version: 10.1.0
+  resolution: "fs-extra@npm:10.1.0"
+  dependencies:
+    graceful-fs: "npm:^4.2.0"
+    jsonfile: "npm:^6.0.1"
+    universalify: "npm:^2.0.0"
+  checksum: 10c0/5f579466e7109719d162a9249abbeffe7f426eb133ea486e020b89bc6d67a741134076bf439983f2eb79276ceaf6bd7b7c1e43c3fd67fe889863e69072fb0a5e
   languageName: node
   linkType: hard
 
@@ -21183,6 +21208,7 @@ __metadata:
     dts-bundle-webpack: "npm:^1.0.2"
     enzyme: "npm:^3.11.0"
     esbuild: "npm:^0.23.1"
+    esbuild-plugin-copy: "npm:^2.1.1"
     esbuild-plugin-replace: "npm:^1.4.0"
     esbuild-plugin-umd-wrapper: "npm:3.0.0"
     eslint: "npm:~8.53.0"
