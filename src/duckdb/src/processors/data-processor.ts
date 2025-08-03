@@ -262,7 +262,7 @@ export function processGeojson(rawData: unknown): ProcessorResult {
  * @param typeOverrides An optional mapping of DuckDB column types to override.
  * @returns An array of fields with the DuckDB column type extended.
  */
-export async function extendFieldsWithDuckDBColumnType(
+export function extendFieldsWithDuckDBColumnType(
   fields: ProtoDatasetField[],
   typeOverrides: Record<string, string>
 ): Promise<ProtoDatasetField[]> {
