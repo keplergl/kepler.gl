@@ -7,3 +7,8 @@ import {keplerGlDuckDBPlugin} from './plugin';
 export {restoreGeoarrowMetadata, KeplerGlDuckDbTable} from './table/duckdb-table';
 export * from './table/duckdb-table-utils';
 export default keplerGlDuckDBPlugin;
+export {
+  consolidateFieldTypes,
+  extendFieldsWithDuckDBColumnType,
+  fieldTypeToColumnType
+} from './processors/data-processor';
