@@ -84,8 +84,7 @@ const Checkbox: FC<CheckboxProps> = ({
   onChange = noop,
   onFocus = noop
 }) => {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [focused, setFocused] = useState(false);
+  const [, setFocused] = useState(false);
 
   const handleFocus: FocusEventHandler<HTMLInputElement> = args => {
     setFocused(true);
