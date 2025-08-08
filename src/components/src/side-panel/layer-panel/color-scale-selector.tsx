@@ -13,6 +13,7 @@ import {
   getLegendOfScale,
   initCustomPaletteByCustomScale,
   histogramFromValues,
+  histogramFromOrdinal,
   histogramFromThreshold,
   getHistogramDomain,
   hasColorMap
@@ -176,8 +177,17 @@ function ColorScaleSelectorFactory(
         : idx => dataset.dataContainer.rowAsArray(idx);
     }, [dataset, field]);
 
+    const ordinalDomain = useMemo(() => {
+      return layer.config[layer.visualChannels[channelKey].domain] || [];
+    }, [channelKey, layer.config, layer.visualChannels]);
+
     // aggregatedBins should be the raw data
     const allBins = useMemo(() => {
+      if (field?.type === ALL_FIELD_TYPES.string) {
+        // Use ordinal bins for string columns, as d3 could potentially generate invalid numeric bins, and crash
+        return histogramFromOrdinal(ordinalDomain, dataset.allIndexes, fieldValueAccessor);
+      }
+
       if (aggregatedBins) {
         return histogramFromValues(
           Object.values(aggregatedBins).map(bin => bin.i),
@@ -188,15 +198,11 @@ function ColorScaleSelectorFactory(
       return columnStats?.bins
         ? columnStats?.bins
         : histogramFromValues(dataset.allIndexes, HISTOGRAM_BINS, fieldValueAccessor);
-    }, [aggregatedBins, columnStats, dataset, fieldValueAccessor]);
+    }, [aggregatedBins, columnStats, dataset, fieldValueAccessor, field?.type, ordinalDomain]);
 
     const histogramDomain = useMemo(() => {
       return getHistogramDomain({aggregatedBins, columnStats, dataset, fieldValueAccessor});
     }, [dataset, fieldValueAccessor, aggregatedBins, columnStats]);
-
-    const ordinalDomain = useMemo(() => {
-      return layer.config[layer.visualChannels[channelKey].domain] || [];
-    }, [channelKey, layer.config, layer.visualChannels]);
 
     const isFiltered = aggregatedBins
       ? false
@@ -207,16 +213,23 @@ function ColorScaleSelectorFactory(
       if (!isFiltered) {
         return allBins;
       }
-      // get threholds
+      if (field?.type === ALL_FIELD_TYPES.string) {
+        return histogramFromOrdinal(
+          ordinalDomain as any,
+          dataset.filteredIndexForDomain,
+          fieldValueAccessor
+        );
+      }
+      // numeric thresholds
       const filterEmptyBins = false;
-      const threholds = allBins.map(b => b.x0);
+      const thresholds = allBins.map(b => b.x0);
       return histogramFromThreshold(
-        threholds,
+        thresholds,
         dataset.filteredIndexForDomain,
         fieldValueAccessor,
         filterEmptyBins
       );
-    }, [dataset, fieldValueAccessor, allBins, isFiltered]);
+    }, [dataset, fieldValueAccessor, allBins, isFiltered, field?.type, ordinalDomain]);
 
     const onSelectScale = useCallback(
       val => {
