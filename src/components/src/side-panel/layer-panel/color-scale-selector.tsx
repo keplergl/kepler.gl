@@ -184,8 +184,8 @@ function ColorScaleSelectorFactory(
     // aggregatedBins should be the raw data
     const allBins = useMemo(() => {
       if (field?.type === ALL_FIELD_TYPES.string) {
-        // Use ordinal bins for string columns, avoid numeric histogram
-        return histogramFromOrdinal(ordinalDomain as any, dataset.allIndexes, fieldValueAccessor);
+        // Use ordinal bins for string columns, as d3 could potentially generate invalid numeric bins, and crash
+        return histogramFromOrdinal(ordinalDomain, dataset.allIndexes, fieldValueAccessor);
       }
 
       if (aggregatedBins) {
@@ -222,7 +222,7 @@ function ColorScaleSelectorFactory(
       }
       // numeric thresholds
       const filterEmptyBins = false;
-      const thresholds = allBins.map(b => b.x0 as number);
+      const thresholds = allBins.map(b => b.x0);
       return histogramFromThreshold(
         thresholds,
         dataset.filteredIndexForDomain,
