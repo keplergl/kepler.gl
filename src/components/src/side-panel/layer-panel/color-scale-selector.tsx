@@ -222,9 +222,9 @@ function ColorScaleSelectorFactory(
       }
       // numeric thresholds
       const filterEmptyBins = false;
-      const threholds = allBins.map(b => b.x0 as number);
+      const thresholds = allBins.map(b => b.x0 as number);
       return histogramFromThreshold(
-        threholds,
+        thresholds,
         dataset.filteredIndexForDomain,
         fieldValueAccessor,
         filterEmptyBins
