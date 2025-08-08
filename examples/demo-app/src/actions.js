@@ -303,6 +303,15 @@ export function loadSampleConfigurations(sampleMapId = null) {
         }
       })
       .then(samples => {
+        if (samples.length > 10) {
+          // For DuckDB preview:  move tiled examples to the top
+          let removed = samples.splice(4, 2);
+          samples.splice(1, 0, ...removed);
+
+          // For DuckDB preview: filter out the example with trips as 4th timecoordinate is dropped in GEOMETRY
+          samples = samples.filter(s => s.id !== 'world_flights');
+        }
+
         dispatch(loadMapSampleFile(samples));
         // Load the specified map
         const map = sampleMapId && samples.find(s => s.id === sampleMapId);
