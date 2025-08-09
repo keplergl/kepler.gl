@@ -1,9 +1,14 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React from 'react';
+import React, {FC} from 'react';
 
-const LinkRenderer = props => {
+interface LinkRendererProps {
+  href: string;
+  children: React.ReactNode;
+}
+
+const LinkRenderer: FC<LinkRendererProps> = props => {
   return (
     <a href={props.href} target="_blank" rel="noopener noreferrer">
       {props.children}
