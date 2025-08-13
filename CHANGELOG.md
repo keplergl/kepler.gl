@@ -17,8 +17,7 @@ Ref: http://keepachangelog.com/en/0.3.0/
 
 ## [3.1.10] - Aug 14 2025
 
-TBD
-
+- 09297acc0 [improvement] optimize speed of getCategoricalColorMap (#3178)
 - 1545fafe5 [chore] Update react-modal types version (#3173)
 - fc1b91fa9 [chore] Create props interface for LinkRenderer Component (#3172)
 - 5f664c3a5 [chore] pass through logoComponent to PlotContainer (#3176)
