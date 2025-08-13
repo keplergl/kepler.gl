@@ -76,6 +76,7 @@ export function validateCoordinate(value: number, minValue: number, maxValue: nu
 
 /**
  * simple getting unique values of an array
+ * Note: filters out null and undefined values
  *
  * @param values
  * @returns unique values
