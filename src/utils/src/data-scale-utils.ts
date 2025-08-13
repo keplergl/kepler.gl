@@ -382,31 +382,44 @@ export function getCategoricalColorMap(
   colors: string[],
   domain: (string | number | string[] | number[] | null)[]
 ): any {
-  // colorMap: [string | string[], hexstring]
-  const colorToUniqueValues = {};
-  const uniqueValues = unique(domain).filter(notNullorUndefined).sort();
-  // each unique value assign to a color, the rest unique values assign to last color
-  const lastColor = colors[colors.length - 1];
-  for (let i = 0; i < uniqueValues.length; ++i) {
-    if (i < colors.length) {
-      colorToUniqueValues[colors[i]] = uniqueValues[i];
-    } else {
-      colorToUniqueValues[lastColor] = [
-        ...(Array.isArray(colorToUniqueValues[lastColor])
-          ? colorToUniqueValues[lastColor]
-          : [colorToUniqueValues[lastColor]]),
-        uniqueValues[i]
-      ];
-    }
+  const uniqueValues = unique(domain).sort();
+  const colorMap = colors.map(color => [null, color]);
+
+  if (colors.length === 0 || uniqueValues.length === 0) {
+    return colorMap;
   }
 
-  const colorMap = colors.map(color => {
-    if (color in colorToUniqueValues) {
-      return [colorToUniqueValues[color], color];
-    }
-    return [null, color];
-  });
+  const lastIndex = colors.length - 1;
+  const assignCount = Math.min(lastIndex, uniqueValues.length);
 
+  // Assign first values one-to-one up to the penultimate color (if any)
+  for (let i = 0; i < assignCount; i++) {
+    // @ts-ignore tuple
+    colorMap[i][0] = uniqueValues[i];
+  }
+
+  if (uniqueValues.length > colors.length) {
+    // Aggregate the rest (including the value that would have gone to last color)
+    // Build aggregated array incrementally to match legacy behavior
+    const aggregatedValues: any[] = [];
+    for (let i = lastIndex; i < uniqueValues.length; i++) {
+      const value = uniqueValues[i];
+      if (Array.isArray(value)) {
+        // Spread array elements to match legacy flattening behavior
+        aggregatedValues.push(...(value as any[]));
+      } else {
+        aggregatedValues.push(value);
+      }
+    }
+    // @ts-ignore tuple
+    colorMap[lastIndex][0] = aggregatedValues;
+  } else if (uniqueValues.length === colors.length) {
+    // Exactly one per color
+    // @ts-ignore tuple
+    colorMap[lastIndex][0] = uniqueValues[lastIndex];
+  }
+
+  // @ts-ignore tuple
   return colorMap;
 }
 
