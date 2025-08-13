@@ -171,7 +171,7 @@ function cleanUpFalsyCsvValue(rows: RowData): void {
 }
 
 // align type analyzer types with DuckDB csv auto detected column types
-function consolidateFieldTypes(fields, schema) {
+export function consolidateFieldTypes(fields, schema) {
   return fields.map(field => {
     const columnName = field.name;
 
@@ -254,4 +254,28 @@ export function processGeojson(rawData: unknown): ProcessorResult {
     // TODO get fields to preserve field names?
     // fields: []
   };
+}
+
+/**
+ * A utility function to extend existing fields with native DuckDB column type.
+ * @param fields Array of fields to extend.
+ * @param typeOverrides An optional mapping of DuckDB column types to override.
+ * @returns An array of fields with the DuckDB column type extended.
+ */
+export function extendFieldsWithDuckDBColumnType(
+  fields: ProtoDatasetField[],
+  typeOverrides: Record<string, string>
+): Promise<ProtoDatasetField[]> {
+  const schema = fields.reduce((acc, field) => {
+    acc[field.name] = fieldTypeToColumnType(field.type);
+    return acc;
+  }, {});
+
+  const updatedFields = consolidateFieldTypes(fields, schema);
+  updatedFields.forEach(field => {
+    if (typeOverrides[field.duckDBColumnType]) {
+      field.duckDBColumnType = typeOverrides[field.duckDBColumnType];
+    }
+  });
+  return updatedFields;
 }

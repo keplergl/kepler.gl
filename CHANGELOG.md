@@ -15,6 +15,38 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+## [3.1.10] - Aug 14 2025
+
+- 09297acc0 [improvement] optimize speed of getCategoricalColorMap (#3178)
+- 1545fafe5 [chore] Update react-modal types version (#3173)
+- fc1b91fa9 [chore] Create props interface for LinkRenderer Component (#3172)
+- 5f664c3a5 [chore] pass through logoComponent to PlotContainer (#3176)
+- 46cc44109 [fix] fix for a crash in getBins when numeric strings are treated as numbers (#3175)
+- 0850ef2eb [chore] Update the Screenshot Image in Readme (#3171)
+- f2001983a [feat] export duckdb column logic (#3170)
+- 3df1c4ddf [chore] expose showDeleteDataset prop (#3166)
+- 2a666ae0c [chore] export dnd constants
+
+## [3.1.9] - July 28 2025
+
+- 0d6d5fd1a [chore] raster tile - hide server settings by default (#3163)
+- 7551f5d7d [fix] DuckDB mode: space in column name breaks file import (#3153) (#3156)
+- 047334712 [fix] fit to bounds - fix initial basemap and deck projections mismatch (#3155)
+- d43e8bbff [chore] replace ai-assistant model config file with ts for npm availability (#3154)
+- 1a93a2b99 [chore] raster tile layer tests (#3152)
+- 343b554db [feat] WMS layer improvements (#3151)
+- c1d2b8616 [fix] button spinner fix (#3150)
+- a05b3cf6d [fix] WMS layer fixes 2 (#3149)
+- 1a47e08a5 [fix] WMS layer fixes 1 (#3148)
+- 272fd1ae7 [Feat] WMS Layer - development (#3092)
+- 9f656e06c [Docs] Add tutorial Spatial Data Analysis with Kepler.gl AI Assistant (part1) (#3126)
+- ca628b523 [Chore] rewrite plot container for perf improvement (#3133)
+- 49f4c3de2 [chore] Update old imports (#3131)
+- 3b6e9049a [fix] improvements for raster tile layer (#3124)
+- 4237b0a0e [chore] migrate custom-palette from react-sortable-hoc to dnd-kit (#3128)
+- 49fbf8faa [fix] aggregation layers fixes for custom color scale (#3129)
+- edf1f1ddd [fix] spatial join ai instruction (#3127)
+
 ## [3.1.8] - May 26 2025
 
 - 4fd570c3e [example] Kepler.gl getting started example with Vite (#3123)

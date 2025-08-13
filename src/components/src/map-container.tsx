@@ -359,6 +359,9 @@ export interface MapContainerProps {
     onDeckRender?: (deckProps: Record<string, unknown>) => Record<string, unknown> | null;
     onDeckAfterRender?: (deckProps: Record<string, unknown>) => any;
   };
+
+  // Optional: override legend header logo in map controls (used by image export)
+  logoComponent?: React.FC | React.ReactNode;
 }
 
 export default function MapContainerFactory(
@@ -1126,6 +1129,7 @@ export default function MapContainerFactory(
             mapControls={mapControls}
             readOnly={this.props.readOnly}
             scale={mapState.scale || 1}
+            logoComponent={this.props.logoComponent}
             top={
               interactionConfig.geocoder && interactionConfig.geocoder.enabled
                 ? theme.mapControlTop

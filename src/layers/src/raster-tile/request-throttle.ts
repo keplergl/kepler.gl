@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 import {getApplicationConfig} from '@kepler.gl/utils';
 
 interface RequestQueue {

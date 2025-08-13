@@ -68,6 +68,8 @@ export type KeplerApplicationConfig = {
   rasterServerServerErrorsToRetry?: number[];
   /** Maximum number of simultaneous requests per raster server. 0 - no limit */
   rasterServerMaxPerServerRequests?: number;
+  /** Whether to show the server input field in the raster tile layer setup form */
+  rasterServerShowServerInput?: boolean;
 
   // WMS layer config -- Experimental
   // WMS layer is under development and not ready for production use. Disabled by default.
@@ -123,6 +125,7 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
   rasterServerRetryDelay: 10000,
   rasterServerServerErrorsToRetry: [503],
   rasterServerMaxPerServerRequests: 0,
+  rasterServerShowServerInput: false,
 
   // WMS layer config
   enableWMSLayer: false

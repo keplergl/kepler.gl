@@ -391,11 +391,11 @@ test('#WMSLayer -> edge cases and error handling', t => {
     });
 
   // Test deckLayerRef storage
-  const firstRender = layer.renderLayer(MOCK_RENDER_OPTS);
+  layer.renderLayer(MOCK_RENDER_OPTS);
   t.ok(layer['deckLayerRef'], 'should store deckLayerRef after first render');
 
   const firstRef = layer['deckLayerRef'];
-  const secondRender = layer.renderLayer(MOCK_RENDER_OPTS);
+  layer.renderLayer(MOCK_RENDER_OPTS);
   t.ok(layer['deckLayerRef'], 'should have deckLayerRef after second render');
   t.notEqual(layer['deckLayerRef'], firstRef, 'should update deckLayerRef on new render');
 

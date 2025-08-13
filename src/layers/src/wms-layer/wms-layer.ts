@@ -1,13 +1,20 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import {notNullorUndefined} from '@kepler.gl/common-utils';
+import {DatasetType, WMSDatasetMetadata, LAYER_TYPES} from '@kepler.gl/constants';
+import {WMSLayer as DeckWMSLayer} from '@kepler.gl/deckgl-layers';
+import {KeplerTable as KeplerDataset} from '@kepler.gl/table';
 import {
+  AnimationConfig,
   Field,
   LayerBaseConfig,
   VisConfigBoolean,
   VisConfigNumber,
   VisConfigSelection
-} from 'src/types';
+} from '@kepler.gl/types';
+import {DataContainerInterface} from '@kepler.gl/utils';
+
 import TileDataset from '../vector-tile/common-tile/tile-dataset';
 import WMSLayerIcon from './wms-layer-icon';
 import {FindDefaultLayerPropsReturnValue} from '../layer-utils';
@@ -16,13 +23,6 @@ import AbstractTileLayer, {
   AbstractTileLayerVisConfigSettings,
   LayerData
 } from '../vector-tile/abstract-tile-layer';
-
-import {DatasetType, WMSDatasetMetadata, LAYER_TYPES} from '@kepler.gl/constants';
-import {notNullorUndefined} from '@kepler.gl/common-utils';
-import {WMSLayer as DeckWMSLayer} from '@kepler.gl/deckgl-layers';
-import {KeplerTable as KeplerDataset} from '@kepler.gl/table';
-import {DataContainerInterface} from '@kepler.gl/utils';
-import {AnimationConfig} from '@kepler.gl/types';
 
 // Types
 export type WMSTile = {
