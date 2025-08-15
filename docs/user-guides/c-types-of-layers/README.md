@@ -105,8 +105,6 @@ Supported URL templates:
 - MVT (https://api.mapbox.com/v4/mapbox.mapbox-streets-v8/{z}/{x}/{y}.mvt?access_token=your-mapbox-acceess-token)
 - pmtiles (https://your-cdn/filename.pmtiles)
 
-[Back to table of contents](../README.md)
-
 ## Raster Tile Layer (experimental)
 
 ![Raster Tile layer](https://4sq-studio-public.s3.us-west-2.amazonaws.com/statics/keplergl/documentation/layer-types/raster-tile.png 'Raster Tile Layer')
@@ -150,3 +148,5 @@ Examples of supported WMS Tiles:
 - https://opengeo.ncep.noaa.gov/geoserver/conus/conus_cref_qcd/ows
 - https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi
 - https://geo.stadt-muenster.de/mapserv/starkregen_serv
+
+[Back to table of contents](../README.md)
