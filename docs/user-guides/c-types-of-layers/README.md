@@ -126,15 +126,15 @@ Supported URL templates:
 
   Examples of supported STAC Items:
 
-  - Bangladesh rivers — [planet-skysat-opendata.json](https://4sq-studio-public.s3.us-west-2.amazonaws.com/sdk/examples/sample-data/raster/planet-skysat-opendata.json)
-  - Antarctica ice — [sentinel-2-l2a.json](https://4sq-studio-public.s3.us-west-2.amazonaws.com/sdk/examples/sample-data/raster/sentinel-2-l2a.json)
-  - Kiribati island — [stac-example.json](https://4sq-studio-public.s3.us-west-2.amazonaws.com/sdk/examples/sample-data/raster/stac-example.json)
+  - Bangladesh rivers — https://4sq-studio-public.s3.us-west-2.amazonaws.com/sdk/examples/sample-data/raster/planet-skysat-opendata.json
+  - Antarctica ice — https://4sq-studio-public.s3.us-west-2.amazonaws.com/sdk/examples/sample-data/raster/sentinel-2-l2a.json
+  - Kiribati island — https://4sq-studio-public.s3.us-west-2.amazonaws.com/sdk/examples/sample-data/raster/stac-example.json
 
   Examples of supported STAC Collections:
 
-  - sentinel-2-l1c — [collection](https://earth-search.aws.element84.com/v1/collections/sentinel-2-l1c)
-  - modis-09A1-061 — [collection](https://planetarycomputer.microsoft.com/api/stac/v1/collections/modis-09A1-061)
-  - landsat-c2-l1 — [collection](https://planetarycomputer.microsoft.com/api/stac/v1/collections/landsat-c2-l1)
+  - sentinel-2-l1c — https://earth-search.aws.element84.com/v1/collections/sentinel-2-l1c
+  - modis-09A1-061 — https://planetarycomputer.microsoft.com/api/stac/v1/collections/modis-09A1-061
+  - landsat-c2-l1 — https://planetarycomputer.microsoft.com/api/stac/v1/collections/landsat-c2-l1
 
 For step-by-step instructions, see [Raster Tile Layer — How to add](./n-raster-tile-layer.md).
 
