@@ -105,6 +105,8 @@ Supported URL templates:
 - MVT (https://api.mapbox.com/v4/mapbox.mapbox-streets-v8/{z}/{x}/{y}.mvt?access_token=your-mapbox-acceess-token)
 - pmtiles (https://your-cdn/filename.pmtiles)
 
+For step-by-step instructions, see [Vector Tile Layer — How to add](./m-vector-tile-layer.md).
+
 ## Raster Tile Layer (experimental)
 
 ![Raster Tile layer](https://4sq-studio-public.s3.us-west-2.amazonaws.com/statics/keplergl/documentation/layer-types/raster-tile.png 'Raster Tile Layer')
@@ -134,6 +136,8 @@ Supported URL templates:
   - modis-09A1-061 — [collection](https://planetarycomputer.microsoft.com/api/stac/v1/collections/modis-09A1-061)
   - landsat-c2-l1 — [collection](https://planetarycomputer.microsoft.com/api/stac/v1/collections/landsat-c2-l1)
 
+For step-by-step instructions, see [Raster Tile Layer — How to add](./n-raster-tile-layer.md).
+
 ### WMS Layer (experimental)
 
 ![WMS layer](https://4sq-studio-public.s3.us-west-2.amazonaws.com/statics/keplergl/documentation/layer-types/wms.png 'WMS Layer')
@@ -148,5 +152,7 @@ Examples of supported WMS Tiles:
 - https://opengeo.ncep.noaa.gov/geoserver/conus/conus_cref_qcd/ows
 - https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi
 - https://geo.stadt-muenster.de/mapserv/starkregen_serv
+
+For step-by-step instructions, see [WMS Layer — How to add](./o-wms-layer.md).
 
 [Back to table of contents](../README.md)
