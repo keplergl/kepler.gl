@@ -2,7 +2,7 @@
 
 ## Single Feature Layers
 
-Single feature layers renders 1 feature
+Single feature layers render 1 feature
 
 ## Point
 
@@ -118,10 +118,23 @@ Supported URL templates:
 - Users can reference remote **.pmtiles files in raster format** for raster layers by supplying a direct link to the file.
 
 - **Cloud-Optimized GeoTIFFs (COG)** can also be used in raster layers by providing standardized Spatio-Temporal Asset Catalog (STAC) metadata.
+
   - The metadata file must be a valid _STAC Item_ or _STAC Collection_, version 1.0.0 or higher.
   - Raster data referenced in STAC assets should be Cloud-Optimized GeoTIFFs and need to be publicly accessible via HTTPS.
   - STAC item and collections _must have Electro-Optical and Raster extensions_, and at least one asset must have both eo:bands and raster:bands information. common_name must be provided in eo:bands and data_type must be provided in raster:bands.
-  - Users must use their own instances of raster tile servers, such as Titiler. [TODO: add instructions]
+  - To use COGs with STAC metadata, you must run your own raster tile server (e.g., TiTiler). Example implementation: [kepler-raster-server](https://github.com/igorDykhta/kepler-raster-server).
+
+  Examples of supported STAC Items:
+
+  - Bangladesh rivers — [planet-skysat-opendata.json](https://4sq-studio-public.s3.us-west-2.amazonaws.com/sdk/examples/sample-data/raster/planet-skysat-opendata.json)
+  - Antarctica ice — [sentinel-2-l2a.json](https://4sq-studio-public.s3.us-west-2.amazonaws.com/sdk/examples/sample-data/raster/sentinel-2-l2a.json)
+  - Kiribati island — [stac-example.json](https://4sq-studio-public.s3.us-west-2.amazonaws.com/sdk/examples/sample-data/raster/stac-example.json)
+
+  Examples of supported STAC Collections:
+
+  - sentinel-2-l1c — [collection](https://earth-search.aws.element84.com/v1/collections/sentinel-2-l1c)
+  - modis-09A1-061 — [collection](https://planetarycomputer.microsoft.com/api/stac/v1/collections/modis-09A1-061)
+  - landsat-c2-l1 — [collection](https://planetarycomputer.microsoft.com/api/stac/v1/collections/landsat-c2-l1)
 
 ### WMS Layer (experimental)
 
