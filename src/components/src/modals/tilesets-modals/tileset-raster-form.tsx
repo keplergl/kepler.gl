@@ -15,11 +15,12 @@ import {getApplicationConfig} from '@kepler.gl/utils';
 import {default as useFetchJson} from '../../hooks/use-fetch-raster-tile-metadata';
 import {DatasetCreationAttributes, MetaResponse} from './common';
 import {InputLight} from '../../common';
+import {Help} from '../../common/icons';
 
 const TilesetInputContainer = styled.div`
   display: grid;
   grid-template-rows: repeat(3, 1fr);
-  row-gap: 18px;
+  row-gap: 0px;
   font-size: 12px;
 `;
 
@@ -27,6 +28,11 @@ const TilesetInputDescription = styled.div`
   text-align: center;
   color: ${props => props.theme.AZURE200};
   font-size: 11px;
+`;
+
+const LabelRow = styled.div`
+  display: flex;
+  align-items: center;
 `;
 
 export type RasterTilesetMeta = {
@@ -53,6 +59,28 @@ export function getDatasetAttributesFromRasterTile({
 type RasterTileFormProps = {
   setResponse: (response: MetaResponse) => void;
 };
+
+const InfoIconLink = styled.a`
+  margin-left: 4px;
+  color: ${props => props.theme.labelColor};
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  line-height: 0;
+  vertical-align: middle;
+  opacity: 0.7;
+
+  &:hover {
+    opacity: 1;
+  }
+
+  svg {
+    display: block;
+  }
+`;
+
+const RASTER_DOC_URL =
+  'https://docs.kepler.gl/docs/user-guides/c-types-of-layers/n-raster-tile-layer';
 
 const parseMetadataAllowCollections = (
   metadata: JsonObjectOrArray | PMTilesMetadata,
@@ -201,7 +229,17 @@ const RasterTileForm: React.FC<RasterTileFormProps> = ({setResponse}) => {
         />
       </div>
       <div>
-        <label htmlFor="tile-metadata">Tileset metadata URL</label>
+        <LabelRow>
+          <label htmlFor="tile-metadata">Tileset metadata URL</label>
+          <InfoIconLink
+            href={RASTER_DOC_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Open Raster Tile Layer documentation"
+          >
+            <Help height="16px" />
+          </InfoIconLink>
+        </LabelRow>
         <InputLight
           id="tile-metadata"
           placeholder="Tileset metadata URL"
@@ -214,7 +252,17 @@ const RasterTileForm: React.FC<RasterTileFormProps> = ({setResponse}) => {
       </div>
       {showServerInput && (
         <div>
-          <label htmlFor="tileset-raster-servers">Raster tile servers</label>
+          <LabelRow>
+            <label htmlFor="tileset-raster-servers">Raster tile servers</label>
+            <InfoIconLink
+              href={RASTER_DOC_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Open Raster Tile Layer documentation"
+            >
+              <Help height="16px" />
+            </InfoIconLink>
+          </LabelRow>
           <InputLight
             id="tileset-raster-servers"
             placeholder="Raster tile servers (separated by commas)"
