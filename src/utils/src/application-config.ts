@@ -115,20 +115,18 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
   useOnFilteredItemsChange: false,
 
   // Raster Tile layer config
-  enableRasterTileLayer: false,
+  enableRasterTileLayer: true,
   rasterServerUseLatestTitiler: true,
-
-  // TODO: provide a default free server or leave blank
-  rasterServerUrls: [],
+  rasterServerShowServerInput: true,
+  rasterServerUrls: [], // TODO: provide a default free server or leave blank
   rasterServerSupportsElevation: true,
   rasterServerMaxRetries: 1,
   rasterServerRetryDelay: 10000,
   rasterServerServerErrorsToRetry: [503],
   rasterServerMaxPerServerRequests: 0,
-  rasterServerShowServerInput: false,
 
   // WMS layer config
-  enableWMSLayer: false
+  enableWMSLayer: true
 };
 
 const applicationConfig: Required<KeplerApplicationConfig> = DEFAULT_APPLICATION_CONFIG;
