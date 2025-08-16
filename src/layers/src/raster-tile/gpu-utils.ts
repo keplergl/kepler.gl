@@ -263,21 +263,43 @@ type LoadingOptions = {
  * @return image object to pass to Texture2D constructor
  */
 export async function loadNpyArray(
-  request: {url: string; rasterServerUrl: string; options: RequestInit},
+  request: {
+    url: string;
+    rasterServerUrl: string;
+    options: RequestInit;
+    rasterServerMaxRetries?: number;
+    rasterServerRetryDelay?: number;
+    rasterServerServerErrorsToRetry?: number[];
+  },
   split: true,
   options?: LoadingOptions
 ): Promise<Texture2DProps[] | null>;
 export async function loadNpyArray(
-  request: {url: string; rasterServerUrl: string; options: RequestInit},
+  request: {
+    url: string;
+    rasterServerUrl: string;
+    options: RequestInit;
+    rasterServerMaxRetries?: number;
+    rasterServerRetryDelay?: number;
+    rasterServerServerErrorsToRetry?: number[];
+  },
   split: false,
   options?: LoadingOptions
 ): Promise<Texture2DProps | null>;
 export async function loadNpyArray(
-  request: {url: string; rasterServerUrl: string; options: RequestInit},
+  request: {
+    url: string;
+    rasterServerUrl: string;
+    options: RequestInit;
+    rasterServerMaxRetries?: number;
+    rasterServerRetryDelay?: number;
+    rasterServerServerErrorsToRetry?: number[];
+  },
   split: boolean,
   options?: LoadingOptions
 ): Promise<Texture2DProps | Texture2DProps[] | null> {
-  const numAttempts = 1 + getApplicationConfig().rasterServerMaxRetries;
+  const numAttempts =
+    1 + (request.rasterServerMaxRetries ?? getApplicationConfig().rasterServerMaxRetries);
 
   const asset = await getRequestThrottle().throttleRequest(request.rasterServerUrl, async () => {
     for (let attempt = 0; attempt < numAttempts; attempt++) {
@@ -344,11 +366,14 @@ export async function loadNpyArray(
         if (
           attempt < numAttempts &&
           error instanceof FetchError &&
-          getApplicationConfig().rasterServerServerErrorsToRetry?.includes(
-            error.response?.status as number
-          )
+          (
+            request.rasterServerServerErrorsToRetry ??
+            getApplicationConfig().rasterServerServerErrorsToRetry
+          )?.includes(error.response?.status as number)
         ) {
-          await sleep(getApplicationConfig().rasterServerRetryDelay);
+          await sleep(
+            request.rasterServerRetryDelay ?? getApplicationConfig().rasterServerRetryDelay
+          );
           continue;
         }
       }

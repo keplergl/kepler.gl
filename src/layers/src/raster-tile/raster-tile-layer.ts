@@ -83,7 +83,7 @@ const getShouldLoadTerrain = (stac, mapState, visConfig) => {
       visConfig.enableTerrain &&
       // disabled in Top view by default
       (mapState.dragRotate || visConfig.enableTerrainTopView) &&
-      getApplicationConfig().rasterServerSupportsElevation
+      (stac.rasterServerSupportsElevation ?? getApplicationConfig().rasterServerSupportsElevation)
   );
 };
 
@@ -633,7 +633,10 @@ export default class RasterTileLayer extends KeplerLayer {
           boundsForGeometry: [west, north, east, south],
           index: props.index,
           signal: props.signal,
-          rasterTileServerUrls: props.stac.rasterTileServerUrls || []
+          rasterTileServerUrls: props.stac.rasterTileServerUrls || [],
+          rasterServerMaxRetries: props.stac.rasterServerMaxRetries,
+          rasterServerRetryDelay: props.stac.rasterServerRetryDelay,
+          rasterServerServerErrorsToRetry: props.stac.rasterServerServerErrorsToRetry
         }));
       return {images: null, ...(terrain ? {terrain} : {})};
     }
@@ -655,7 +658,10 @@ export default class RasterTileLayer extends KeplerLayer {
               boundsForGeometry: [west, north, east, south],
               index: props.index,
               signal: props.signal,
-              rasterTileServerUrls: props.stac.rasterTileServerUrls || []
+              rasterTileServerUrls: props.stac.rasterTileServerUrls || [],
+              rasterServerMaxRetries: props.stac.rasterServerMaxRetries,
+              rasterServerRetryDelay: props.stac.rasterServerRetryDelay,
+              rasterServerServerErrorsToRetry: props.stac.rasterServerServerErrorsToRetry
             })
           : null
       ]);
@@ -685,7 +691,12 @@ export default class RasterTileLayer extends KeplerLayer {
   async getTileDataPMTiles(
     props: GetTileDataDefaultProps & {
       shouldLoadTerrain: boolean;
-      metadata: {rasterTileServerUrls: string[]};
+      metadata: {
+        rasterTileServerUrls: string[];
+        rasterServerMaxRetries?: number;
+        rasterServerRetryDelay?: number;
+        rasterServerServerErrorsToRetry?: number[];
+      };
       globalBounds: DataSourceParams['globalBounds'];
     },
     tileSource
@@ -714,7 +725,10 @@ export default class RasterTileLayer extends KeplerLayer {
               boundsForGeometry: [west, north, east, south],
               index: props.index,
               signal: props.signal,
-              rasterTileServerUrls: metadata.rasterTileServerUrls
+              rasterTileServerUrls: metadata.rasterTileServerUrls,
+              rasterServerMaxRetries: metadata.rasterServerMaxRetries,
+              rasterServerRetryDelay: metadata.rasterServerRetryDelay,
+              rasterServerServerErrorsToRetry: metadata.rasterServerServerErrorsToRetry
             })
           : null;
 
