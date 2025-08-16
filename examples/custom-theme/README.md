@@ -7,12 +7,6 @@ This example show how to customize Kepler.gl theme
 #### 1. Install
 
 ```sh
-npm install
-```
-
-or
-
-```sh
 yarn
 ```
 
@@ -27,5 +21,5 @@ export MapboxAccessToken=<your_mapbox_token>
 #### 3. Start the app
 
 ```sh
-npm start
+yarn start
 ```
