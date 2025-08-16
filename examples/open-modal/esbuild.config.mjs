@@ -52,7 +52,7 @@ const config = {
       root: '../../.env'
     }),
     replace({
-      __PACKAGE_VERSION__: '3.1.9',
+      __PACKAGE_VERSION__: '3.1.10',
       include: /constants\/src\/default-settings\.ts/
     }),
     copyPlugin({
