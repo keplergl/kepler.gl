@@ -15,6 +15,10 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+## [3.2.0] - TBD 2025
+
+TBD
+
 ## [3.1.10] - Aug 14 2025
 
 - 09297acc0 [improvement] optimize speed of getCategoricalColorMap (#3178)
