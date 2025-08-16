@@ -78,29 +78,6 @@ function openURL(url) {
 }
 
 (async () => {
-  if (args.includes('--build')) {
-    const result = await esbuild
-      .build({
-        ...config,
-        alias: thirdPartyAliases,
-        minify: true,
-        sourcemap: false,
-        metafile: true,
-        // production optimizations
-        define: {
-          ...config.define,
-          'process.env.NODE_ENV': '"production"'
-        },
-        drop: ['console', 'debugger'],
-        treeShaking: true
-      })
-      .catch(e => {
-        console.error(e);
-        process.exit(1);
-      });
-    fs.writeFileSync('dist/esbuild-metadata.json', JSON.stringify(result.metafile));
-  }
-
   if (args.includes('--start')) {
     await esbuild
       .context({
