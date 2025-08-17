@@ -251,6 +251,15 @@ type LoadingOptions = {
   fetch?: typeof fetch | FetchLike;
 };
 
+type NpyRequest = {
+  url: string;
+  rasterServerUrl: string;
+  options: RequestInit;
+  rasterServerMaxRetries?: number;
+  rasterServerRetryDelay?: number;
+  rasterServerServerErrorsToRetry?: number[];
+};
+
 /**
  * Load NPY Array
  *
@@ -263,38 +272,17 @@ type LoadingOptions = {
  * @return image object to pass to Texture2D constructor
  */
 export async function loadNpyArray(
-  request: {
-    url: string;
-    rasterServerUrl: string;
-    options: RequestInit;
-    rasterServerMaxRetries?: number;
-    rasterServerRetryDelay?: number;
-    rasterServerServerErrorsToRetry?: number[];
-  },
+  request: NpyRequest,
   split: true,
   options?: LoadingOptions
 ): Promise<Texture2DProps[] | null>;
 export async function loadNpyArray(
-  request: {
-    url: string;
-    rasterServerUrl: string;
-    options: RequestInit;
-    rasterServerMaxRetries?: number;
-    rasterServerRetryDelay?: number;
-    rasterServerServerErrorsToRetry?: number[];
-  },
+  request: NpyRequest,
   split: false,
   options?: LoadingOptions
 ): Promise<Texture2DProps | null>;
 export async function loadNpyArray(
-  request: {
-    url: string;
-    rasterServerUrl: string;
-    options: RequestInit;
-    rasterServerMaxRetries?: number;
-    rasterServerRetryDelay?: number;
-    rasterServerServerErrorsToRetry?: number[];
-  },
+  request: NpyRequest,
   split: boolean,
   options?: LoadingOptions
 ): Promise<Texture2DProps | Texture2DProps[] | null> {
