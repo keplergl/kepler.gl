@@ -381,7 +381,7 @@ to match the `info.id` of your dataset to the `dataId` in each `layer`, `filter`
     - `data.options.readOnly` **[boolean][165]** `default: false` if `readOnly` is set to `true`
       the left setting panel will be hidden
     - `data.options.keepExistingConfig` **[boolean][165]** whether to keep exiting map data and associated layer filter interaction config `default: false`.
-  - `data.config` **[Object][164]** this object will contain the full kepler.gl instance configuration {mapState, mapStyle, visState}
+  - `data.config` **[Object][164]** this object will contain the full kepler.gl instance configuration `{mapState, mapStyle, visState}`
 
 **Examples**
 
@@ -957,7 +957,7 @@ Add new dataset to `visState`, with option to load a map config along with the d
     place the map view within the data points boundaries
   - `options.readOnly` **[boolean][165]** `default: false` if `readOnly` is set to `true`
     the left setting panel will be hidden
-- `config` **[Object][164]** this object will contain the full kepler.gl instance configuration {mapState, mapStyle, visState}
+- `config` **[Object][164]** this object will contain the full kepler.gl instance configuration `{mapState, mapStyle, visState}`
   <!-- TODO: update this indranildeveloper -->
   Returns **`{type: ActionTypes.UPDATE_VIS_DATA, datasets: datasets, options: options, config: config}`**
 
