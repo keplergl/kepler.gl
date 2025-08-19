@@ -1,6 +1,7 @@
 import {themes as prismThemes} from 'prism-react-renderer';
 import type {Config} from '@docusaurus/types';
-import type * as Preset from '@docusaurus/preset-classic';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
 
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 
@@ -31,9 +32,9 @@ const config: Config = {
         docs: {
           path: '../docs',
           sidebarPath: './sidebars.ts',
-          // Please change this to your repo.
-          // Remove this to remove the "edit this page" links.
-          editUrl: 'https://github.com/keplergl/kepler.gl/tree/master/website-docusaurus/'
+          editUrl: 'https://github.com/keplergl/kepler.gl/tree/master/website-docusaurus/',
+          remarkPlugins: [remarkMath],
+          rehypePlugins: [rehypeKatex]
         },
         blog: {
           showReadingTime: true,
@@ -41,8 +42,6 @@ const config: Config = {
             type: ['rss', 'atom'],
             xslt: true
           },
-          // Please change this to your repo.
-          // Remove this to remove the "edit this page" links.
           editUrl: 'https://github.com/keplergl/kepler.gl/tree/master/website-docusaurus/',
           onInlineTags: 'warn',
           onInlineAuthors: 'warn',
@@ -56,7 +55,6 @@ const config: Config = {
   ],
 
   themeConfig: {
-    // Replace with your project's social card
     image: 'img/docusaurus-social-card.jpg',
     navbar: {
       title: 'Kepler.GL',

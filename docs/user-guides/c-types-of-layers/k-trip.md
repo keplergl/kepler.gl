@@ -9,7 +9,7 @@ Trip layer can display animated path.
 **Data format**
 Currently trip layer support a special `geoJSON` format where the coordinate `linestring` has a 4th element denoting timestamp.
 
-In order to animate the path, the `geoJSON` data needs to contain `LineString` in its features' geometry, and the coordinates in the `LineString` need to have 4 elements in the format of  `[longitude, latitude, altitude, timestamp]`, with the last element being a timestamp. Valid timestamp formats include unix in seconds such as `1564184363` or in milliseconds such as `1564184363000`.
+In order to animate the path, the `geoJSON` data needs to contain `LineString` in its features' geometry, and the coordinates in the `LineString` need to have 4 elements in the format of `[longitude, latitude, altitude, timestamp]`, with the last element being a timestamp. Valid timestamp formats include unix in seconds such as `1564184363` or in milliseconds such as `1564184363000`.
 
 **Sample data**
 
@@ -43,7 +43,7 @@ In order to animate the path, the `geoJSON` data needs to contain `LineString` i
 
   The path can be colored by an attribute from the properties.
 
-  <img src="https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/k-trip-attribute-colors.png" width="256" title="Color Attribute">
+  <img src="https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/k-trip-attribute-colors.png" width="256" title="Color Attribute"/>
 
 - Stroke Width
 
