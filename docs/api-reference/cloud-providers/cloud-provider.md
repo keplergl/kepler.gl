@@ -2,20 +2,22 @@
 
 ### Table of Contents
 
--   [Provider][1]
-    -   [downloadMap][4]
-    -   [getAccessToken][7]
-    -   [getMapUrl][8]
-    -   [getShareUrl][10]
-    -   [getUserName][12]
-    -   [hasPrivateStorage][13]
-    -   [hasSharingUrl][14]
-    -   [listMaps][15]
-    -   [login][17]
-    -   [logout][19]
-    -   [uploadMap][21]
--   [MapResponse][23]
--   [Viz][25]
+- [Provider](#provider)
+  - [downloadMap](#downloadmap)
+  - [getAccessToken](#getaccesstoken)
+  - [getMapUrl](#getmapurl)
+  - [getShareUrl](#getshareurl)
+  - [getUserName](#getusername)
+  - [hasPrivateStorage](#hasprivatestorage)
+  - [hasSharingUrl](#hassharingurl)
+  - [listMaps](#listmaps)
+  - [login](#login)
+  - [logout](#logout)
+  - [uploadMap](#uploadmap)
+- [MapResponse](#mapresponse)
+  - [Properties](#properties)
+- [Viz](#viz)
+  - [Properties](#properties-1)
 
 ## Provider
 
@@ -23,13 +25,13 @@ The default provider class
 
 **Parameters**
 
--   `props` **[object][27]**
-    -   `props.name` **[string][28]**
-    -   `props.displayName` **[string][28]**
-    -   `props.icon` **ReactElement** React element
-    -   `props.thumbnail` **[object][27]** thumbnail size object
-        -   `props.thumbnail.width` **[number][29]** thumbnail width in pixels
-        -   `props.thumbnail.height` **[number][29]** thumbnail height in pixels
+- `props` **[object][27]**
+  - `props.name` **[string][28]**
+  - `props.displayName` **[string][28]**
+  - `props.icon` **ReactElement** React element
+  - `props.thumbnail` **[object][27]** thumbnail size object
+    - `props.thumbnail.width` **[number][29]** thumbnail width in pixels
+    - `props.thumbnail.height` **[number][29]** thumbnail height in pixels
 
 **Examples**
 
@@ -48,7 +50,7 @@ This method will be called when user select a map to load from the storage map v
 
 **Parameters**
 
--   `loadParams` **any** the loadParams property of each visualization object
+- `loadParams` **any** the loadParams property of each visualization object
 
 **Examples**
 
@@ -87,7 +89,7 @@ This method is called by kepler.gl demo app to pushes a new location to history,
 
 **Parameters**
 
--   `fullURL` **[boolean][31]** Whether to return the full url with domain, or just the location (optional, default `true`)
+- `fullURL` **[boolean][31]** Whether to return the full url with domain, or just the location (optional, default `true`)
 
 Returns **[string][28]** mapUrl
 
@@ -97,7 +99,7 @@ This method is called after user share a map, to display the share url.
 
 **Parameters**
 
--   `fullUrl` **[boolean][31]** Whether to return the full url with domain, or just the location (optional, default `false`)
+- `fullUrl` **[boolean][31]** Whether to return the full url with domain, or just the location (optional, default `false`)
 
 Returns **[string][28]** shareUrl
 
@@ -150,7 +152,7 @@ Upon login success, `onCloudLoginSuccess` has to be called to notify kepler.gl U
 
 **Parameters**
 
--   `onCloudLoginSuccess` **[function][34]** callbacks to be called after login success
+- `onCloudLoginSuccess` **[function][34]** callbacks to be called after login success
 
 ### logout
 
@@ -159,7 +161,7 @@ Upon login success, `onCloudLoginSuccess` has to be called to notify kepler.gl U
 
 **Parameters**
 
--   `onCloudLogoutSuccess` **[function][34]** callbacks to be called after logout success
+- `onCloudLogoutSuccess` **[function][34]** callbacks to be called after logout success
 
 ### uploadMap
 
@@ -168,29 +170,33 @@ With the option to overwrite already saved map, and upload as private or public 
 
 **Parameters**
 
--   `param` **[Object][27]**
-    -   `param.mapData` **[Object][27]** the map object
-        -   `param.mapData.map` **[Object][27]** {datasets. config, info: {title, description}}
-        -   `param.mapData.thumbnail` **[Blob][35]** A thumbnail of current map. thumbnail size can be defined by provider by this.thumbnail
-    -   `param.options` **[Object][27]**  (optional, default `{}`)
-        -   `param.options.overwrite` **[boolean][31]** whether user choose to overwrite already saved map under the same name
-        -   `param.options.isPublic` **[boolean][31]** whether user wish to share the map with others. if isPublic is truthy, kepler will call this.getShareUrl() to display an URL they can share with others
+- `param` **[Object][27]**
+  - `param.mapData` **[Object][27]** the map object
+    <!-- TODO: update this indranildeveloper -->
+    - `param.mapData.map` **[Object][27]** `{datasets. config, info: {title, description}}`
+    - `param.mapData.thumbnail` **[Blob][35]** A thumbnail of current map. thumbnail size can be defined by provider by this.thumbnail
+  - `param.options` **[Object][27]** (optional, default `{}`)
+    - `param.options.overwrite` **[boolean][31]** whether user choose to overwrite already saved map under the same name
+    - `param.options.isPublic` **[boolean][31]** whether user wish to share the map with others. if isPublic is truthy, kepler will call this.getShareUrl() to display an URL they can share with others
 
 ## MapResponse
 
 The returned object of `downloadMap`. The response object should contain: datasets: \[], config: {}, and info: {}
-each dataset object should be {info: {id, label}, data: {...}}
+
+<!-- TODO: update this indranildeveloper -->
+
+each dataset object should be `{info: {id, label}, data: {...}}`
 to inform how kepler should process your data object, pass in `format`
 
 Type: [Object][27]
 
 ### Properties
 
--   `map` **[Object][27]**
-    -   `map.datasets` **[Array][32]&lt;[Object][27]>**
-    -   `map.config` **[Object][27]**
-    -   `map.info` **[Object][27]**
--   `format` **[string][28]** one of 'csv': csv file string, 'geojson': geojson object, 'row': row object, 'keplergl': datasets array saved using KeplerGlSchema.save
+- `map` **[Object][27]**
+  - `map.datasets` **[Array][32]&lt;[Object][27]>**
+  - `map.config` **[Object][27]**
+  - `map.info` **[Object][27]**
+- `format` **[string][28]** one of 'csv': csv file string, 'geojson': geojson object, 'row': row object, 'keplergl': datasets array saved using KeplerGlSchema.save
 
 ## Viz
 
@@ -198,80 +204,46 @@ Type: [Object][27]
 
 ### Properties
 
--   `id` **[string][28]** An unique id
--   `title` **[string][28]** The title of the map
--   `description` **[string][28]** The description of the map
--   `imageUrl` **[string][28]** The imageUrl of the map
--   `lastModification` **[number][29]** An epoch timestamp in milliseconds
--   `privateMap` **[boolean][31]** Optional, whether if this map is private to the user, or can be accessed by others via URL
--   `loadParams` **any** A property to be passed to `downloadMap`
+- `id` **[string][28]** An unique id
+- `title` **[string][28]** The title of the map
+- `description` **[string][28]** The description of the map
+- `imageUrl` **[string][28]** The imageUrl of the map
+- `lastModification` **[number][29]** An epoch timestamp in milliseconds
+- `privateMap` **[boolean][31]** Optional, whether if this map is private to the user, or can be accessed by others via URL
+- `loadParams` **any** A property to be passed to `downloadMap`
 
 [1]: #provider
-
 [2]: #parameters
-
 [3]: #examples
-
 [4]: #downloadmap
-
 [5]: #parameters-1
-
 [6]: #examples-1
-
 [7]: #getaccesstoken
-
 [8]: #getmapurl
-
 [9]: #parameters-2
-
 [10]: #getshareurl
-
 [11]: #parameters-3
-
 [12]: #getusername
-
 [13]: #hasprivatestorage
-
 [14]: #hassharingurl
-
 [15]: #listmaps
-
 [16]: #examples-2
-
 [17]: #login
-
 [18]: #parameters-4
-
 [19]: #logout
-
 [20]: #parameters-5
-
 [21]: #uploadmap
-
 [22]: #parameters-6
-
 [23]: #mapresponse
-
 [24]: #properties
-
 [25]: #viz
-
 [26]: #properties-1
-
 [27]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object
-
 [28]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String
-
 [29]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number
-
 [30]: #mapresponse
-
 [31]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean
-
 [32]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array
-
 [33]: #viz
-
 [34]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function
-
 [35]: https://developer.mozilla.org/docs/Web/API/Blob
