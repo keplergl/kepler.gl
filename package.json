@@ -72,6 +72,7 @@
     "start:custom-map-style": "yarn install-and-start examples/custom-map-style start-local",
     "start:node-app": "yarn install-and-start examples/node-app start-local",
     "start:web": "yarn install-and-start website start",
+    "start:website-docusaurus": "cd website-docusaurus && yarn start",
     "start:https": "yarn install-and-start examples/demo-app start-local-https",
     "start:e2e": "yarn install-and-start examples/demo-app start-local-e2e",
     "build": "NODE_OPTIONS=--openssl-legacy-provider rm -fr dist && babel src/{actions,components,reducers,cloud-providers,localization,tasks,ai-assistant} --out-dir dist --source-maps inline --extensions '.ts,.tsx,.js,.jsx' --ignore '**/*.d.ts'",
