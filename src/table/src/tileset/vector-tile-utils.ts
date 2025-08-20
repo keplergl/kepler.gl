@@ -31,7 +31,6 @@ import {clamp, formatNumberByStep, getNumericStepSize, timeToUnixMilli} from '@k
 import {
   FilterProps,
   NumericFieldFilterProps,
-  BooleanFieldFilterProps,
   StringFieldFilterProps,
   default as KeplerDataset
 } from '../kepler-table';
@@ -530,11 +529,15 @@ export function getFilterProps(
     }
 
     case ALL_FIELD_TYPES.boolean: {
-      const filterProps: BooleanFieldFilterProps = {
-        domain: [true, false],
-        value: true,
-        type: FILTER_TYPES.select,
-        gpu: true
+      // Represent boolean as numeric range [0,1] to enable GPU filtering for vector tiles
+      const domain: [number, number] = [0, 1];
+      const filterProps: NumericFieldFilterProps = {
+        domain,
+        value: domain,
+        type: FILTER_TYPES.range,
+        typeOptions: [FILTER_TYPES.range],
+        gpu: true,
+        step: 1
       };
       return filterProps;
     }
