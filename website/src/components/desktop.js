@@ -62,7 +62,7 @@ const CAROUSEL_GROUPS = [
       icon: fsqStudioUrl('logos/Charts.png'),
       title: 'Spatial joins and aggregations',
       description:
-        'Run buffers, intersections, distance joins and group-bys with SQL for advanced spatial analysis—no external engine needed.',
+        'Create buffers, perform spatial joins (intersects, within, distance), and aggregate with SQL group-bys—no external engine needed.',
       link: DESKTOP_PRODUCT_URL
     }
   ]
