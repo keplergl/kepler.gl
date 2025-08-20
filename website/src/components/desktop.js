@@ -90,6 +90,8 @@ const Section = styled(Flex)`
 const CardImage = styled.img`
   height: 230px;
   width: 386px;
+  max-width: none;
+  object-fit: cover;
   box-shadow: 0 12px 24px 0 rgba(0, 0, 0, 0.5);
   transition: transform 350ms;
 `;
@@ -101,6 +103,7 @@ const Card = styled.a`
   align-items: center;
   cursor: pointer;
   color: white;
+  flex: 0 0 auto;
 
   :visited {
     color: white;
