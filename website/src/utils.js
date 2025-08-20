@@ -23,7 +23,3 @@ export function fsqStudioUrl(path) {
 export function fsqCdnDesktopUrl(path) {
   return `${KEPLER_FSQ_DESKTOP_BUCKET}/${path}`;
 }
-
-export function fsqDesktopUrl(path) {
-  return fsqCdnDesktopUrl(`${path}`);
-}

@@ -4,7 +4,7 @@
 import React, {useCallback, useState} from 'react';
 import styled from 'styled-components';
 import Swipeable from './common/swipeable';
-import {fsqStudioUrl, fsqDesktopUrl} from '../utils';
+import {fsqStudioUrl, fsqCdnDesktopUrl} from '../utils';
 import {LinkButton} from './common/styled-components';
 
 const DESKTOP_PRODUCT_URL = 'https://foursquare.com/products/spatial-desktop/';
@@ -14,7 +14,7 @@ const DESKTOP_PRODUCT_URL = 'https://foursquare.com/products/spatial-desktop/';
 const CAROUSEL_GROUPS = [
   [
     {
-      imageUrl: fsqDesktopUrl('screenshots/img-1.png'),
+      imageUrl: fsqCdnDesktopUrl('screenshots/img-1.png'),
       icon: fsqStudioUrl('logos/Dataset_Operation.png'),
       title: 'Browser-free with native DuckDB',
       description:
@@ -22,7 +22,7 @@ const CAROUSEL_GROUPS = [
       link: DESKTOP_PRODUCT_URL
     },
     {
-      imageUrl: fsqDesktopUrl('screenshots/img-2.png'),
+      imageUrl: fsqCdnDesktopUrl('screenshots/img-2.png'),
       icon: fsqStudioUrl('logos/Administrative_boundaries.png'),
       title: 'Built on SQLRooms',
       description:
@@ -30,8 +30,7 @@ const CAROUSEL_GROUPS = [
       link: DESKTOP_PRODUCT_URL
     },
     {
-      imageUrl: fsqDesktopUrl('screenshots/img-3.png'),
-
+      imageUrl: fsqCdnDesktopUrl('screenshots/img-3.png'),
       icon: fsqStudioUrl('logos/Flow_layer.png'),
       title: 'Cloud-native spatial formats',
       description:
@@ -41,16 +40,15 @@ const CAROUSEL_GROUPS = [
   ],
   [
     {
-      imageUrl: fsqDesktopUrl('screenshots/img-4.png'),
+      imageUrl: fsqCdnDesktopUrl('screenshots/img-4.png'),
       icon: fsqStudioUrl('logos/Tile_Layers.png'),
-
       title: 'Real-time rendering',
       description:
         'Harnessing Kepler.gl’s visualization excellence, you can easily render millions of points with interactive filtering and smooth animations – without browser memory limitations.',
       link: DESKTOP_PRODUCT_URL
     },
     {
-      imageUrl: fsqDesktopUrl('screenshots/img-5.png'),
+      imageUrl: fsqCdnDesktopUrl('screenshots/img-5.png'),
       icon: fsqStudioUrl('logos/Analytics_modules.png'),
       title: 'Flexible access & save',
       description:
@@ -58,7 +56,7 @@ const CAROUSEL_GROUPS = [
       link: DESKTOP_PRODUCT_URL
     },
     {
-      imageUrl: fsqDesktopUrl('screenshots/img-6.png'),
+      imageUrl: fsqCdnDesktopUrl('screenshots/img-6.png'),
       icon: fsqStudioUrl('logos/Charts.png'),
       title: 'Spatial joins and aggregations',
       description:
