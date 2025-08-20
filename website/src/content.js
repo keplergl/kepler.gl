@@ -23,11 +23,20 @@ export const SECTIONS = [
     description: 'A customizable geospatial toolbox to help make data-driven decisions.',
     icon: cdnUrl('icons/features.png')
   },
+  /*
   {
     id: 'studio',
     title: 'Take The Next Step',
     description: `Built on top of kepler.gl’s framework, Foursquare Studio is a free,
 powerful geospatial analytics and visualization tool, with new features and updates released every few weeks.`,
+    icon: fsqCdnUrl('fsqlogo.png'),
+    isDark: true
+  },*/
+  {
+    id: 'desktop',
+    title: 'Foursquare Spatial Desktop',
+    description:
+      'A native desktop app built on kepler.gl, DuckDB and SQLRooms for more power and fewer browser limitations.',
     icon: fsqCdnUrl('fsqlogo.png'),
     isDark: true
   },
