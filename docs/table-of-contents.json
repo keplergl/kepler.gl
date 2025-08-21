@@ -6,6 +6,21 @@
   },
   {
     "type": "category",
+    "label": "Examples",
+    "items": [
+      "examples/node-app",
+      "examples/demo-app",
+      "examples/with-vite",
+      "examples/open-modal",
+      "examples/replace-components",
+      "examples/umd-client",
+      "examples/custom-theme",
+      "examples/custom-reducer",
+      "examples/custom-map-style"
+    ]
+  },
+  {
+    "type": "category",
     "label": "Contributing",
     "items": ["contributing/README", "contributing/DEVELOPERS", "contributing/CODE_OF_CONDUCT"]
   },
