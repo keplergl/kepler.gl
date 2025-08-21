@@ -8,5 +8,7 @@
     "type": "category",
     "label": "Contributing",
     "items": ["contributing/README", "contributing/DEVELOPERS", "contributing/CODE_OF_CONDUCT"]
-  }
+  },
+  "UPGRADE-GUIDE",
+  "CHANGELOG"
 ]
