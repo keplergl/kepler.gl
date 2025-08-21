@@ -80,7 +80,7 @@ Layer Attributes: Color, Radius, Height, High Precision Rendering
 
 GeoJSON layers can display either paths, polygons or points. For example, a path GeoJSON layer can display data like trip routes. A polygon GeoJSON layer is essentially a [choropleth](https://en.wikipedia.org/wiki/Choropleth_map) layer and works best for rendering geofences. To add a GeoJSON layer, your dataset must contain geometry data.
 
-# H3
+## H3
 
 ![H3 layer - contour](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/c-h3-layer.png 'H3 layer')
 
@@ -88,7 +88,7 @@ H3 layers visualize spatial data using [H3 Hexagonal Hierarchical Spatial Index]
 
 To use H3 layer, you need a `hex_id` in your dataset, which can be generated using [h3-js](https://github.com/uber/h3-js) from latitude, longitude and resolution.
 
-# S2 Layer
+## S2 Layer
 
 ![S2 Layer](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/l-s2.png 'S2 layer')
 
@@ -124,6 +124,11 @@ Supported URL templates:
   - STAC item and collections _must have Electro-Optical and Raster extensions_, and at least one asset must have both eo:bands and raster:bands information. common_name must be provided in eo:bands and data_type must be provided in raster:bands.
   - To use COGs with STAC metadata, you must run your own raster tile server (e.g., TiTiler). Example implementation: [kepler-raster-server](https://github.com/igorDykhta/kepler-raster-server).
 
+  Examples of raster .pmtiles:
+
+  - Mount Whitney - https://pmtiles.io/usgs-mt-whitney-8-15-webp-512.pmtiles
+  - Swiss historical - https://public-bucket-for-tests.s3.us-east-1.amazonaws.com/historic-swis-18xx.pmtiles
+
   Examples of supported STAC Items:
 
   - Bangladesh rivers — https://4sq-studio-public.s3.us-west-2.amazonaws.com/sdk/examples/sample-data/raster/planet-skysat-opendata.json
@@ -138,7 +143,7 @@ Supported URL templates:
 
 For step-by-step instructions, see [Raster Tile Layer — How to add](./n-raster-tile-layer.md).
 
-### WMS Layer (experimental)
+## WMS Layer (experimental)
 
 ![WMS layer](https://4sq-studio-public.s3.us-west-2.amazonaws.com/statics/keplergl/documentation/layer-types/wms.png 'WMS Layer')
 
