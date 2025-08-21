@@ -636,7 +636,8 @@ export default class RasterTileLayer extends KeplerLayer {
           rasterTileServerUrls: props.stac.rasterTileServerUrls || [],
           rasterServerMaxRetries: props.stac.rasterServerMaxRetries,
           rasterServerRetryDelay: props.stac.rasterServerRetryDelay,
-          rasterServerServerErrorsToRetry: props.stac.rasterServerServerErrorsToRetry
+          rasterServerServerErrorsToRetry: props.stac.rasterServerServerErrorsToRetry,
+          rasterServerMaxPerServerRequests: props.stac.rasterServerMaxPerServerRequests
         }));
       return {images: null, ...(terrain ? {terrain} : {})};
     }
@@ -661,7 +662,8 @@ export default class RasterTileLayer extends KeplerLayer {
               rasterTileServerUrls: props.stac.rasterTileServerUrls || [],
               rasterServerMaxRetries: props.stac.rasterServerMaxRetries,
               rasterServerRetryDelay: props.stac.rasterServerRetryDelay,
-              rasterServerServerErrorsToRetry: props.stac.rasterServerServerErrorsToRetry
+              rasterServerServerErrorsToRetry: props.stac.rasterServerServerErrorsToRetry,
+              rasterServerMaxPerServerRequests: props.stac.rasterServerMaxPerServerRequests
             })
           : null
       ]);
@@ -696,6 +698,7 @@ export default class RasterTileLayer extends KeplerLayer {
         rasterServerMaxRetries?: number;
         rasterServerRetryDelay?: number;
         rasterServerServerErrorsToRetry?: number[];
+        rasterServerMaxPerServerRequests?: number;
       };
       globalBounds: DataSourceParams['globalBounds'];
     },
@@ -728,7 +731,8 @@ export default class RasterTileLayer extends KeplerLayer {
               rasterTileServerUrls: metadata.rasterTileServerUrls,
               rasterServerMaxRetries: metadata.rasterServerMaxRetries,
               rasterServerRetryDelay: metadata.rasterServerRetryDelay,
-              rasterServerServerErrorsToRetry: metadata.rasterServerServerErrorsToRetry
+              rasterServerServerErrorsToRetry: metadata.rasterServerServerErrorsToRetry,
+              rasterServerMaxPerServerRequests: metadata.rasterServerMaxPerServerRequests
             })
           : null;
 

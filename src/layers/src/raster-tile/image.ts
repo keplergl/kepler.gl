@@ -443,13 +443,15 @@ export async function loadTerrain(props: {
   rasterServerMaxRetries: number | undefined;
   rasterServerRetryDelay: number | undefined;
   rasterServerServerErrorsToRetry?: number[];
+  rasterServerMaxPerServerRequests?: number;
 }): Promise<TerrainData | null> {
   const {
     index: {x, y, z},
     boundsForGeometry,
     signal,
     rasterTileServerUrls,
-    rasterServerMaxRetries
+    rasterServerMaxRetries,
+    rasterServerMaxPerServerRequests
   } = props;
 
   const meshMaxError = getMeshMaxError(z, MESH_MULTIPLIER);
@@ -488,7 +490,8 @@ export async function loadTerrain(props: {
         }
       }
       return null;
-    }
+    },
+    rasterServerMaxPerServerRequests
   );
 
   return mesh;

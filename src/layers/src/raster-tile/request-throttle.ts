@@ -42,15 +42,15 @@ class RequestThrottle {
   async throttleRequest<T>(
     serverKey: string,
     requestFunction: () => Promise<T>,
-    maxConcurrentOverride?: number
+    maxConcurrentRequestsOverride?: number
   ): Promise<T> {
     const serverQueue = this.getServerQueue(serverKey);
-    const localLimit =
-      typeof maxConcurrentOverride === 'number'
-        ? maxConcurrentOverride
+    const maxConcurrentRequests =
+      typeof maxConcurrentRequestsOverride === 'number'
+        ? maxConcurrentRequestsOverride
         : this.maxConcurrentRequests;
 
-    if (serverQueue.activeRequests >= localLimit && Boolean(localLimit)) {
+    if (serverQueue.activeRequests >= maxConcurrentRequests && Boolean(maxConcurrentRequests)) {
       // Wait for a slot to become available
       await new Promise<void>(resolve => {
         serverQueue.queue.push(async () => {
