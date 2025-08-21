@@ -40,12 +40,20 @@ export function getDatasetAttributesFromRasterTile({
   metadataUrl,
   rasterTileServerUrls
 }: RasterTilesetMeta): DatasetCreationAttributes {
+  const appConfig = getApplicationConfig();
   return {
     name,
     type: DatasetType.RASTER_TILE,
     metadata: {
       metadataUrl,
-      ...(rasterTileServerUrls ? {rasterTileServerUrls} : {})
+      ...(rasterTileServerUrls ? {rasterTileServerUrls} : {}),
+      // Persist raster server-related application config with the layer
+      rasterServerUseLatestTitiler: appConfig.rasterServerUseLatestTitiler,
+      rasterServerSupportsElevation: appConfig.rasterServerSupportsElevation,
+      rasterServerMaxRetries: appConfig.rasterServerMaxRetries,
+      rasterServerRetryDelay: appConfig.rasterServerRetryDelay,
+      rasterServerServerErrorsToRetry: appConfig.rasterServerServerErrorsToRetry,
+      rasterServerMaxPerServerRequests: appConfig.rasterServerMaxPerServerRequests
     }
   };
 }

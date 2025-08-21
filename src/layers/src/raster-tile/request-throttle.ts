@@ -39,13 +39,18 @@ class RequestThrottle {
       : 'No active server queues';
   }
 
-  async throttleRequest<T>(serverKey: string, requestFunction: () => Promise<T>): Promise<T> {
+  async throttleRequest<T>(
+    serverKey: string,
+    requestFunction: () => Promise<T>,
+    maxConcurrentRequestsOverride?: number
+  ): Promise<T> {
     const serverQueue = this.getServerQueue(serverKey);
+    const maxConcurrentRequests =
+      typeof maxConcurrentRequestsOverride === 'number'
+        ? maxConcurrentRequestsOverride
+        : this.maxConcurrentRequests;
 
-    if (
-      serverQueue.activeRequests >= this.maxConcurrentRequests &&
-      Boolean(this.maxConcurrentRequests)
-    ) {
+    if (serverQueue.activeRequests >= maxConcurrentRequests && Boolean(maxConcurrentRequests)) {
       // Wait for a slot to become available
       await new Promise<void>(resolve => {
         serverQueue.queue.push(async () => {

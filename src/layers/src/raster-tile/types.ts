@@ -99,7 +99,17 @@ export type CategoricalColormapOptions = {
   maxValue?: number;
 };
 
-export type ExtendedKeplerSTAC = {rasterTileServerUrls?: []};
+export type ExtendedKeplerSTAC = {
+  rasterTileServerUrls?: [];
+  /** Optional per-layer override for max retries when fetching raster data */
+  rasterServerMaxRetries?: number;
+  /** Optional per-layer override for retry delay between attempts (ms) */
+  rasterServerRetryDelay?: number;
+  /** Optional per-layer override for which server errors are retried */
+  rasterServerServerErrorsToRetry?: number[];
+  /** Optional per-layer override for max concurrent requests per server */
+  rasterServerMaxPerServerRequests?: number;
+};
 
 /**
  * Custom fields we pass on to the getTileData callback
@@ -207,6 +217,14 @@ export type AssetRequestData = {
   useMask: boolean;
   /** Pass this property through the request to pick specific bands from the response */
   responseRequiredBandIndices?: number[] | null;
+  /** Optional per-request override for max retries when fetching NPY arrays */
+  rasterServerMaxRetries?: number;
+  /** Optional per-request override for retry delay between attempts (ms) */
+  rasterServerRetryDelay?: number;
+  /** Optional per-request override for which server errors are retried */
+  rasterServerServerErrorsToRetry?: number[];
+  /** Optional per-request override for max concurrent requests per server */
+  rasterServerMaxPerServerRequests?: number;
 };
 
 export type NPYLoaderDataTypes =

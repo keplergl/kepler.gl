@@ -263,13 +263,21 @@ async function getSingleAssetSTACRequest(
     return null;
   }
 
-  return await getAssetRequest({
+  const asset = await getAssetRequest({
     ...urlInfo,
     params: urlParams,
     options: {signal},
     useMask,
     responseRequiredBandIndices
   });
+  // Pass per-layer override for retries if present on STAC metadata
+  return {
+    ...asset,
+    rasterServerMaxRetries: stac.rasterServerMaxRetries,
+    rasterServerRetryDelay: stac.rasterServerRetryDelay,
+    rasterServerServerErrorsToRetry: stac.rasterServerServerErrorsToRetry,
+    rasterServerMaxPerServerRequests: stac.rasterServerMaxPerServerRequests
+  };
 }
 
 /**
@@ -335,11 +343,19 @@ async function getMultiAssetSTACRequest(
   }
 
   if (isValidRequestData(requestData)) {
-    return await Promise.all(
+    const assets = await Promise.all(
       requestData.map(request =>
         getAssetRequest({...request, options: request.options ?? {signal}})
       )
     );
+    // Propagate per-layer retry override
+    return assets.map(asset => ({
+      ...asset,
+      rasterServerMaxRetries: options.stac.rasterServerMaxRetries,
+      rasterServerRetryDelay: options.stac.rasterServerRetryDelay,
+      rasterServerServerErrorsToRetry: options.stac.rasterServerServerErrorsToRetry,
+      rasterServerMaxPerServerRequests: options.stac.rasterServerMaxPerServerRequests
+    }));
   }
 
   return null;
@@ -424,18 +440,24 @@ export async function loadTerrain(props: {
   signal: AbortSignal;
   rasterTileServerUrls: string[];
   boundsForGeometry?: [number, number, number, number];
+  rasterServerMaxRetries: number | undefined;
+  rasterServerRetryDelay: number | undefined;
+  rasterServerServerErrorsToRetry?: number[];
+  rasterServerMaxPerServerRequests?: number;
 }): Promise<TerrainData | null> {
   const {
     index: {x, y, z},
     boundsForGeometry,
     signal,
-    rasterTileServerUrls
+    rasterTileServerUrls,
+    rasterServerMaxRetries,
+    rasterServerMaxPerServerRequests
   } = props;
 
   const meshMaxError = getMeshMaxError(z, MESH_MULTIPLIER);
   const terrainUrlInfo = getTerrainUrl(rasterTileServerUrls, x, y, z, meshMaxError);
   const loaderOptions = getLoaderOptions();
-  const numAttempts = 1 + getApplicationConfig().rasterServerMaxRetries;
+  const numAttempts = 1 + (rasterServerMaxRetries ?? getApplicationConfig().rasterServerMaxRetries);
 
   const mesh = await getRequestThrottle().throttleRequest(
     terrainUrlInfo.rasterServerUrl,
@@ -455,17 +477,21 @@ export async function loadTerrain(props: {
           if (
             attempt < numAttempts &&
             error instanceof FetchError &&
-            getApplicationConfig().rasterServerServerErrorsToRetry?.includes(
-              error.response?.status as number
-            )
+            (
+              props.rasterServerServerErrorsToRetry ??
+              getApplicationConfig().rasterServerServerErrorsToRetry
+            )?.includes(error.response?.status as number)
           ) {
-            await sleep(getApplicationConfig().rasterServerRetryDelay);
+            await sleep(
+              props.rasterServerRetryDelay ?? getApplicationConfig().rasterServerRetryDelay
+            );
             continue;
           }
         }
       }
       return null;
-    }
+    },
+    rasterServerMaxPerServerRequests
   );
 
   return mesh;
