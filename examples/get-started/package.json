@@ -8,8 +8,8 @@
     "start": "node esbuild.config.mjs --start"
   },
   "dependencies": {
-    "@kepler.gl/components": "3.1.1",
-    "@kepler.gl/reducers": "3.1.1",
+    "@kepler.gl/components": "^3.1.10",
+    "@kepler.gl/reducers": "^3.1.10",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-redux": "^8.0.5",

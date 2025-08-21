@@ -189,8 +189,12 @@ export default function ModalContainerFactory(
             ...processedMetadata,
             ...tileset.metadata
           },
-          // vector tile layer only supports gpu filtering for now
-          supportedFilterTypes: [ALL_FIELD_TYPES.real, ALL_FIELD_TYPES.integer],
+          // Vector tile layer supports GPU filtering for numeric and boolean fields
+          supportedFilterTypes: [
+            ALL_FIELD_TYPES.real,
+            ALL_FIELD_TYPES.integer,
+            ALL_FIELD_TYPES.boolean
+          ],
           disableDataOperation: true
         },
         {
