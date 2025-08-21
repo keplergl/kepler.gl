@@ -2,7 +2,7 @@
 
 Trip layer can display animated path.
 
-![Trip layer](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/k-trip.gif 'Grid layer')
+![Trip layer](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/k-trip.gif 'Trip layer')
 
 ### How to use trip layer to animate path
 

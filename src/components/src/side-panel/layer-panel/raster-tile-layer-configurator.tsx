@@ -336,7 +336,8 @@ function RasterTileLayerConfiguratorFactory(
 
     const elevationUI = (
       <>
-        {getApplicationConfig().rasterServerSupportsElevation &&
+        {(stac.rasterServerSupportsElevation ??
+          getApplicationConfig().rasterServerSupportsElevation) &&
           stac.rasterTileServerUrls?.length && (
             <LayerConfigGroup
               {...(layer.visConfigSettings.enableTerrain || {label: 'layer.color'})}
