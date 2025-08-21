@@ -6,6 +6,30 @@
   },
   {
     "type": "category",
+    "label": "User Guides",
+    "items": ["user-guides/README"]
+  },
+  {
+    "type": "category",
+    "label": "API Reference",
+    "items": [
+      {
+        "type": "category",
+        "label": "Kepler.gl Actions",
+        "items": ["api-reference/actions/README", "api-reference/actions/actions-doc"]
+      },
+      {
+        "type": "category",
+        "label": "Cloud Providers",
+        "items": [
+          "api-reference/cloud-providers/README",
+          "api-reference/cloud-providers/cloud-provider"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "category",
     "label": "Examples",
     "items": [
       "examples/node-app",
