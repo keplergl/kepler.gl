@@ -79,7 +79,7 @@ const InfoIconLink = styled.a`
   }
 `;
 
-const RASTER_DOC_URL =
+const RASTER_TILE_DOCUMENTATION_URL =
   'https://docs.kepler.gl/docs/user-guides/c-types-of-layers/n-raster-tile-layer';
 
 const parseMetadataAllowCollections = (
@@ -232,7 +232,7 @@ const RasterTileForm: React.FC<RasterTileFormProps> = ({setResponse}) => {
         <LabelRow>
           <label htmlFor="tile-metadata">Tileset metadata URL</label>
           <InfoIconLink
-            href={RASTER_DOC_URL}
+            href={RASTER_TILE_DOCUMENTATION_URL}
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Open Raster Tile Layer documentation"
@@ -255,7 +255,7 @@ const RasterTileForm: React.FC<RasterTileFormProps> = ({setResponse}) => {
           <LabelRow>
             <label htmlFor="tileset-raster-servers">Raster tile servers</label>
             <InfoIconLink
-              href={RASTER_DOC_URL}
+              href={RASTER_TILE_DOCUMENTATION_URL}
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Open Raster Tile Layer documentation"
