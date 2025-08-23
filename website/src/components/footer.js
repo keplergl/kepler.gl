@@ -3,7 +3,6 @@
 
 import React, {PureComponent} from 'react';
 import styled from 'styled-components';
-import {FacebookIcon, FacebookShareButton, TwitterIcon, TwitterShareButton} from 'react-share';
 
 import {cdnUrl} from '../utils';
 import {LinkButton} from './common/styled-components';
@@ -18,19 +17,20 @@ const Container = styled.div`
   padding: ${props => props.theme.margins.huge};
 `;
 
-const LogosContainer = styled.div`
+const BrandingSection = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
 
-  ${media.palm`
+  ${media.portable`
     flex-direction: column;
+    gap: 32px;
   `};
 `;
 
 const BrandingContainer = styled.div`
-  ${media.palm`
-    margin-top: ${props => props.theme.margins.small};
+  ${media.portable`
+    flex-direction: column;
   `};
 
   display: flex;
@@ -76,7 +76,25 @@ const StyledLogo = styled.span`
   }
 `;
 
-const ButtonSection = styled.div`
+const ButtonContainer = styled.div`
+  display: flex;
+  height: 48px;
+  a {
+    width: 160px;
+  }
+
+  ${media.portable`
+    display: flex;
+    justify-content: center;
+    width: 100%;
+
+    a {
+      width: 50%;
+    }
+  `};
+`;
+
+const CopyrightSection = styled.div`
   display: flex;
   margin-top: 32px;
 
@@ -88,30 +106,20 @@ const ButtonSection = styled.div`
   `};
 `;
 
-const ButtonContainer = styled.div`
-  display: flex;
-  a {
-    width: 160px;
-  }
-
-  ${media.palm`
-    display: flex;
-    justify-content: center;
-    width: 100%;
-
-    a {
-      width: 50%;
-    }
-  `};
-`;
-
-const SocialContainer = styled.div`
+const CopyrightContainer = styled.div`
   display: flex;
   flex: 1;
-  justify-content: flex-end;
+  flex-direction: column;
+  color: ${props => props.theme.footerColor};
+  text-align: center;
 
-  .SocialMediaShareButton {
-    margin-right: 5px;
+  a {
+    color: ${props => props.theme.linkColor};
+    text-decoration: underline;
+  }
+
+  p:first-child {
+    margin-bottom: ${props => props.theme.margins.small};
   }
 
   ${media.palm`
@@ -128,8 +136,30 @@ export default class Footer extends PureComponent {
   render() {
     return (
       <Container>
-        <LogosContainer>
-          <img style={{width: '120px'}} src={cdnUrl('icons/kepler.gl-logo.png')} />
+        <BrandingSection>
+          <BrandingContainer>
+            <img style={{width: '120px'}} src={cdnUrl('icons/kepler.gl-logo.png')} />
+            <ButtonContainer>
+              <LinkButton large href={DEMO_LINK}>
+                Get Started
+              </LinkButton>
+              <LinkButton
+                large
+                href={DEMO_DUCKDB_LINK}
+                style={{marginLeft: '5px', backgroundColor: '#20469c'}}
+              >
+                Try with DuckDB
+              </LinkButton>
+              <LinkButton
+                large
+                outlineDark
+                href="https://github.com/keplergl/kepler.gl"
+                style={GITHUB_BUTTON_STYLE}
+              >
+                <img src={cdnUrl('icons/github.svg')} /> Github
+              </LinkButton>
+            </ButtonContainer>
+          </BrandingContainer>
           <BrandingContainer>
             <img src={cdnUrl('icons/uber.svg')} />
             <MapboxLogo />
@@ -144,37 +174,13 @@ export default class Footer extends PureComponent {
               </StyledLogo>
             </CreatedBy>
           </BrandingContainer>
-        </LogosContainer>
-        <ButtonSection>
-          <ButtonContainer>
-            <LinkButton large href={DEMO_LINK}>
-              Get Started
-            </LinkButton>
-            <LinkButton
-              large
-              href={DEMO_DUCKDB_LINK}
-              style={{marginLeft: '5px', backgroundColor: '#20469c'}}
-            >
-              Try with DuckDB
-            </LinkButton>
-            <LinkButton
-              large
-              outlineDark
-              href="https://github.com/keplergl/kepler.gl"
-              style={GITHUB_BUTTON_STYLE}
-            >
-              <img src={cdnUrl('icons/github.svg')} /> Github
-            </LinkButton>
-          </ButtonContainer>
-          <SocialContainer>
-            <FacebookShareButton url="https://kepler.gl/">
-              <FacebookIcon size={32} />
-            </FacebookShareButton>{' '}
-            <TwitterShareButton url="https://kepler.gl/" hashtags={['keplergl']}>
-              <TwitterIcon size={32} />
-            </TwitterShareButton>
-          </SocialContainer>
-        </ButtonSection>
+        </BrandingSection>
+        <CopyrightSection>
+          <CopyrightContainer>
+            <p>Copyright <a href="https://openjsf.org">OpenJS Foundation</a> and kepler.gl contributors. All rights reserved. The <a href="https://openjsf.org">OpenJS Foundation</a> has registered trademarks and uses trademarks. For a list of trademarks of the <a href="https://openjsf.org">OpenJS Foundation</a>, please see our <a href="https://trademark-policy.openjsf.org">Trademark Policy</a> and <a href="https://trademark-list.openjsf.org">Trademark List</a>. Trademarks and logos not indicated on the <a href="https://trademark-list.openjsf.org">list of OpenJS Foundation trademarks</a> are trademarks&trade; or registered&reg; trademarks of their respective holders. Use of them does not imply any affiliation with or endorsement by them.</p>
+            <p><a href="https://openjsf.org">The OpenJS Foundation</a> | <a href="https://terms-of-use.openjsf.org">Terms of Use</a> | <a href="https://privacy-policy.openjsf.org">Privacy Policy</a> | <a href="https://bylaws.openjsf.org">Bylaws</a> | <a href="https://code-of-conduct.openjsf.org">Code of Conduct</a> | <a href="https://trademark-policy.openjsf.org">Trademark Policy</a> | <a href="https://trademark-list.openjsf.org">Trademark List</a> | <a href="https://www.linuxfoundation.org/cookies">Cookie Policy</a></p>
+          </CopyrightContainer>
+        </CopyrightSection>
       </Container>
     );
   }

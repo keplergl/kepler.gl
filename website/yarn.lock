@@ -2429,16 +2429,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"babel-runtime@npm:^6.6.1":
-  version: 6.26.0
-  resolution: "babel-runtime@npm:6.26.0"
-  dependencies:
-    core-js: "npm:^2.4.0"
-    regenerator-runtime: "npm:^0.11.0"
-  checksum: 10c0/caa752004936b1463765ed3199c52f6a55d0613b9bed108743d6f13ca532b821d4ea9decc4be1b583193164462b1e3e7eefdfa36b15c72e7daac58dd72c1772f
-  languageName: node
-  linkType: hard
-
 "balanced-match@npm:^1.0.0":
   version: 1.0.2
   resolution: "balanced-match@npm:1.0.2"
@@ -2869,13 +2859,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"core-js@npm:^2.4.0":
-  version: 2.6.12
-  resolution: "core-js@npm:2.6.12"
-  checksum: 10c0/00128efe427789120a06b819adc94cc72b96955acb331cb71d09287baf9bd37bebd191d91f1ee4939c893a050307ead4faea08876f09115112612b6a05684b63
-  languageName: node
-  linkType: hard
-
 "core-util-is@npm:~1.0.0":
   version: 1.0.3
   resolution: "core-util-is@npm:1.0.3"
@@ -3015,7 +2998,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"debug@npm:2.6.9, debug@npm:^2.1.3":
+"debug@npm:2.6.9":
   version: 2.6.9
   resolution: "debug@npm:2.6.9"
   dependencies:
@@ -5207,15 +5190,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jsonp@npm:^0.2.1":
-  version: 0.2.1
-  resolution: "jsonp@npm:0.2.1"
-  dependencies:
-    debug: "npm:^2.1.3"
-  checksum: 10c0/744b828f50062cd691d70936c0ee796dc8cb1c78c96327c25c173ae8e2183b82295ec26a99fe3b092cc9b22e08c14a491bf8af639d576615798edbb50ab99f9b
-  languageName: node
-  linkType: hard
-
 "jsx-ast-utils@npm:^1.3.4":
   version: 1.4.1
   resolution: "jsx-ast-utils@npm:1.4.1"
@@ -5274,7 +5248,6 @@ __metadata:
     react-redux: "npm:^8.0.5"
     react-router: "npm:3.2.6"
     react-router-redux: "npm:^4.0.8"
-    react-share: "npm:^2.1.1"
     react-swipeable-views: "npm:^0.12.13"
     react-waypoint: "npm:^9.0.1"
     redux: "npm:^4.2.1"
@@ -6370,7 +6343,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"prop-types@npm:^15.0.0, prop-types@npm:^15.5.4, prop-types@npm:^15.5.8, prop-types@npm:^15.6.0, prop-types@npm:^15.6.1, prop-types@npm:^15.6.2, prop-types@npm:^15.7.2, prop-types@npm:^15.8.1":
+"prop-types@npm:^15.0.0, prop-types@npm:^15.5.4, prop-types@npm:^15.6.0, prop-types@npm:^15.6.1, prop-types@npm:^15.6.2, prop-types@npm:^15.7.2, prop-types@npm:^15.8.1":
   version: 15.8.1
   resolution: "prop-types@npm:15.8.1"
   dependencies:
@@ -6586,20 +6559,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-share@npm:^2.1.1":
-  version: 2.4.0
-  resolution: "react-share@npm:2.4.0"
-  dependencies:
-    babel-runtime: "npm:^6.6.1"
-    classnames: "npm:^2.2.5"
-    jsonp: "npm:^0.2.1"
-    prop-types: "npm:^15.5.8"
-  peerDependencies:
-    react: ^0.13.0 || ^0.14.0 || ^15.0.0 || ^16.0.0-0
-  checksum: 10c0/89dd5d873830e4c63b71778415d949c954ecc4b979fdcca29958dd455a7d11424b6ea0b6b41e0ecbd0e973cb723830ab8cba664ba8cfb381ec0fa9abf2c4e9c4
-  languageName: node
-  linkType: hard
-
 "react-swipeable-views-core@npm:^0.12.17":
   version: 0.12.17
   resolution: "react-swipeable-views-core@npm:0.12.17"
@@ -6783,13 +6742,6 @@ __metadata:
   version: 1.4.2
   resolution: "regenerate@npm:1.4.2"
   checksum: 10c0/f73c9eba5d398c818edc71d1c6979eaa05af7a808682749dd079f8df2a6d91a9b913db216c2c9b03e0a8ba2bba8701244a93f45211afbff691c32c7b275db1b8
-  languageName: node
-  linkType: hard
-
-"regenerator-runtime@npm:^0.11.0":
-  version: 0.11.1
-  resolution: "regenerator-runtime@npm:0.11.1"
-  checksum: 10c0/69cfa839efcf2d627fe358bf302ab8b24e5f182cb69f13e66f0612d3640d7838aad1e55662135e3ef2c1cc4322315b757626094fab13a48f9a64ab4bdeb8795b
   languageName: node
   linkType: hard
 
