@@ -5,19 +5,37 @@ import React, {Component} from 'react';
 import styled from 'styled-components';
 
 import {HEADER_NAVS} from '../content';
+import {media} from '../styles';
 
 const StyledLink = styled.a`
-  line-height: 58px;
-  color: #8d9ba3;
+  color: ${props => props.theme.navLinkColor};
   text-transform: uppercase;
-  margin-left: 40px;
   transition: color 500ms;
-  display: inline-block;
 
   &:hover {
     color: white;
     cursor: pointer;
   }
+
+  ${media.palm`
+    font-size: 12px;
+    line-height: 16px;
+  `};
+`;
+
+const StyledLogo = styled.a`
+  height: 24px;
+  width: 84px;
+  background-image: url('/openjs-foundation.svg');
+  background-repeat: no-repeat;
+  background-size: 84px 24px;
+  display: flex;
+
+  ${media.palm`
+    height: 18px;
+    width: 76px;
+    background-size: 76px 18px;
+  `};
 `;
 
 const StyledHeader = styled.div`
@@ -33,12 +51,33 @@ const StyledHeader = styled.div`
   justify-content: flex-end;
 
   .links {
-    margin-top: 20px;
+    margin-top: ${props => props.theme.margins.huge};
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    text-align: center;
   }
 
   .icon-github:before {
     content: '\\e904';
   }
+
+  ${media.portable`
+    position: sticky;
+    flex-direction: column;
+    padding: 16px 36px;
+    background: ${props => props.theme.darkBackgroundColor};
+
+    .links {
+      margin-top: 0;
+      gap: 8px;
+      justify-content: space-between;
+    }
+  `};
+
+  ${media.palm`
+    padding: 16px 24px;
+  `};
 `;
 
 export default class Header extends Component {
@@ -53,6 +92,7 @@ export default class Header extends Component {
               {item.text}
             </StyledLink>
           ))}
+          <StyledLogo href="https://openvisualization.org" target="_blank"/>
         </div>
       </StyledHeader>
     );
