@@ -75,6 +75,7 @@ const DesktopContainer = styled(Flex)`
   align-items: center;
   flex-direction: column;
   gap: 72px;
+  overflow-x: hidden;
 `;
 
 const Section = styled(Flex)`

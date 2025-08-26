@@ -63,7 +63,7 @@ const StyledHeader = styled.div`
   }
 
   ${media.portable`
-    position: sticky;
+    position: fixed;
     flex-direction: column;
     padding: 16px 36px;
     background: ${props => props.theme.darkBackgroundColor};

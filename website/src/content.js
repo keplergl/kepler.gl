@@ -80,7 +80,7 @@ export const HEADER_NAVS = [
     link: 'https://docs.kepler.gl/docs/user-guides'
   },
   {
-    text: 'Documentation',
+    text: 'Docs',
     link: 'https://docs.kepler.gl/docs/api-reference'
   },
   {
