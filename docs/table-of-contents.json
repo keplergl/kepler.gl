@@ -13,10 +13,12 @@
     "type": "category",
     "label": "API Reference",
     "items": [
+      "api-reference/get-started",
+      "api-reference/ecosystem",
       {
         "type": "category",
-        "label": "Kepler.gl Actions",
-        "items": ["api-reference/actions/README", "api-reference/actions/actions-doc"]
+        "label": "Actions",
+        "items": ["api-reference/actions/actions"]
       },
       {
         "type": "category",
@@ -25,7 +27,33 @@
           "api-reference/cloud-providers/README",
           "api-reference/cloud-providers/cloud-provider"
         ]
-      }
+      },
+      {
+        "type": "category",
+        "label": "Components",
+        "items": ["api-reference/components/README"]
+      },
+      {
+        "type": "category",
+        "label": "Reducers",
+        "items": [
+          "api-reference/reducers/README",
+          "api-reference/reducers/combine",
+          "api-reference/reducers/map-state",
+          "api-reference/reducers/map-style",
+          "api-reference/reducers/reducers",
+          "api-reference/reducers/ui-state",
+          "api-reference/reducers/vis-state"
+        ]
+      },
+      {
+        "type": "category",
+        "label": "Processors",
+        "items": ["api-reference/processors/processors"]
+      },
+      "api-reference/schemas/README",
+      "api-reference/custom-theme/README",
+      "api-reference/localization/README"
     ]
   },
   {
