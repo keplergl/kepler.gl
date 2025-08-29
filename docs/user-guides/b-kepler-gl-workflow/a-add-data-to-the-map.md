@@ -10,11 +10,11 @@
 
 - Choose one of three ways to add data to your map
 
-|                 |                                                                                                                                                                                                                                                                                                         |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---- | ---------------------------------------------------------------------------------------------------------------------------- |
-| **Local files** | <span style="font-weight:normal">Upload CSV / GeoJSON files. Because data is only stored in your browser, there is a **250mb** limit on how much data Chrome allows you to upload into a browser. For datasets larger than **250mb** you should directly load them from a remote URL. See below.</span> |
-| **From URL**    | Directly load data or map json by pasting a remote URL. You can link it to CSV                                                                                                                                                                                                                          | JSON | Kepler.gl config json. Make sure the url contains the file extension. CORS policy must be defined on your custom url domain. |
-| **Sample data** | Load one of kepler.gl’s sample datasets. The sample map data and config are directly loaded from [kepler.gl-data github][kepler.gl-data-github] repo                                                                                                                                                    |
+| Method          | Description                                                                                                                                                                                                                                                     |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Local files** | Upload CSV / GeoJSON files. Because data is only stored in your browser, there is a **250mb** limit on how much data Chrome allows you to upload into a browser. For datasets larger than **250mb** you should directly load them from a remote URL. See below. |
+| **From URL**    | Directly load data or map json by pasting a remote URL. You can link it to CSV or JSON or Kepler.gl config json. Make sure the url contains the file extension. CORS policy must be defined on your custom url domain.                                          |
+| **Sample data** | Load one of kepler.gl’s sample datasets. The sample map data and config are directly loaded from [kepler.gl-data github][kepler.gl-data-github] repo.                                                                                                           |
 
 ## Supported Projection Coordinate System
 
