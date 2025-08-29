@@ -53,7 +53,20 @@
       },
       "api-reference/schemas/README",
       "api-reference/custom-theme/README",
-      "api-reference/localization/README"
+      "api-reference/localization/README",
+      {
+        "type": "category",
+        "label": "Advanced Usage",
+        "items": [
+          "api-reference/advanced-usages/custom-initial-state",
+          "api-reference/advanced-usages/custom-mapbox-host",
+          "api-reference/advanced-usages/forward-actions",
+          "api-reference/advanced-usages/reducer-plugin",
+          "api-reference/advanced-usages/replace-ui-component",
+          "api-reference/advanced-usages/saving-loading-w-schema",
+          "api-reference/advanced-usages/using-updaters"
+        ]
+      }
     ]
   },
   "keplergl-jupyter/README",
