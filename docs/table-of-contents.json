@@ -26,6 +26,29 @@
           },
           "user-guides/b-kepler-gl-workflow/a-add-data-to-the-map"
         ]
+      },
+      {
+        "type": "category",
+        "label": "Layers",
+        "items": [
+          "user-guides/c-types-of-layers/README",
+          "user-guides/c-types-of-layers/a-point",
+          "user-guides/c-types-of-layers/b-arc",
+          "user-guides/c-types-of-layers/c-line",
+          "user-guides/c-types-of-layers/d-grid",
+          "user-guides/c-types-of-layers/e-polygon",
+          "user-guides/c-types-of-layers/f-cluster",
+          "user-guides/c-types-of-layers/g-icon",
+          "user-guides/c-types-of-layers/h-hexbin",
+          "user-guides/c-types-of-layers/i-heatmap",
+          "user-guides/c-types-of-layers/j-h3",
+          "user-guides/c-types-of-layers/k-trip",
+          "user-guides/c-types-of-layers/l-s2",
+          "user-guides/c-types-of-layers/vector",
+          "user-guides/c-types-of-layers/m-vector-tile-layer",
+          "user-guides/c-types-of-layers/n-raster-tile-layer",
+          "user-guides/c-types-of-layers/o-wms-layer"
+        ]
       }
     ]
   },
