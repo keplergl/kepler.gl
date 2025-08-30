@@ -33,7 +33,7 @@ For the complete list of commits, see the [full change log](../CHANGELOG.md).
 
 ## 3.1.1
 
-_Released march 10th, 2025_
+_Released March 10th, 2025_
 
 ### DuckDB
 
