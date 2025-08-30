@@ -73,7 +73,21 @@ export const DEFAULT_HIGHLIGHT_FILL_COLOR = [252, 242, 26, 150];
 export const DEFAULT_HIGHLIGHT_STROKE_COLOR = [252, 242, 26, 255];
 export const MAX_CACHE_SIZE_MOBILE = 1; // Minimize caching, visible tiles will always be loaded
 export const DEFAULT_STROKE_WIDTH = 1;
-
+export const UUID_CANDIDATES = [
+  'ufid',
+  'UFID',
+  'id',
+  'ID',
+  'fid',
+  'FID',
+  'objectid',
+  'OBJECTID',
+  'gid',
+  'GID',
+  'feature_id',
+  'FEATURE_ID',
+  '_id'
+];
 /**
  * Type for transformRequest returned parameters.
  */
@@ -538,6 +552,20 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
     if (data.tileSource) {
       const hoveredObject = this.hasHoveredObject(objectHovered);
 
+      // Try to infer a stable unique id property from the hovered feature so we can
+      // highlight the same feature across adjacent tiles. If none is found, rely on
+      // feature.id when available.
+      let uniqueIdProperty: string | undefined;
+      let highlightedFeatureId: string | number | undefined;
+      if (hoveredObject && hoveredObject.properties) {
+        uniqueIdProperty = UUID_CANDIDATES.find(
+          k => hoveredObject.properties && k in hoveredObject.properties
+        );
+        highlightedFeatureId = uniqueIdProperty
+          ? hoveredObject.properties[uniqueIdProperty]
+          : (hoveredObject as any).id;
+      }
+
       const layers = [
         new CustomMVTLayer({
           ...defaultLayerProps,
@@ -556,7 +584,8 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
           stroked: visConfig.stroked,
 
           // TODO: this is hard coded, design a UI to allow user assigned unique property id
-          // uniqueIdProperty: 'ufid',
+          uniqueIdProperty,
+          highlightedFeatureId,
           renderSubLayers: this.renderSubLayers,
           // when radiusUnits is meter
           getPointRadiusScaleByZoom: getPropertyByZoom(visConfig.radiusByZoom, visConfig.radius),
@@ -634,26 +663,7 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
           loadOptions: {
             mvt: getLoaderOptions().mvt
           }
-        }),
-        // hover layer
-        ...(hoveredObject
-          ? [
-              new GeoJsonLayer({
-                // @ts-expect-error props not typed?
-                ...objectHovered.sourceLayer?.props,
-                ...(this.getDefaultHoverLayerProps() as any),
-                visible: true,
-                wrapLongitude: false,
-                data: [hoveredObject],
-                getLineColor: DEFAULT_HIGHLIGHT_STROKE_COLOR,
-                getFillColor: DEFAULT_HIGHLIGHT_FILL_COLOR,
-                getLineWidth: visConfig.strokeWidth + 1,
-                lineWidthUnits: 'pixels',
-                stroked: true,
-                filled: true
-              })
-            ]
-          : [])
+        })
         // ...tileLayerBoundsLayer(defaultLayerProps.id, data),
       ];
 
