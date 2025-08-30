@@ -9,6 +9,7 @@ import {GeoJsonLayer, PathLayer} from '@deck.gl/layers/typed';
 import {MVTSource, MVTTileSource} from '@loaders.gl/mvt';
 import {PMTilesSource, PMTilesTileSource} from '@loaders.gl/pmtiles';
 import GL from '@luma.gl/constants';
+import {ClipExtension} from '@deck.gl/extensions/typed';
 
 import {notNullorUndefined} from '@kepler.gl/common-utils';
 import {
@@ -566,6 +567,12 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
           : (hoveredObject as any).id;
       }
 
+      // Build per-tile clipped overlay to draw only the outer stroke of highlighted feature per tile
+      const perTileOverlays = this._getPerTileOverlays(hoveredObject, {
+        defaultLayerProps,
+        visConfig
+      });
+
       const layers = [
         new CustomMVTLayer({
           ...defaultLayerProps,
@@ -663,12 +670,98 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
           loadOptions: {
             mvt: getLoaderOptions().mvt
           }
-        })
+        }),
+        // render hover layer for features with no unique id property and no highlighted feature id
+        ...(hoveredObject && !uniqueIdProperty && !highlightedFeatureId
+          ? [
+              new GeoJsonLayer({
+                // @ts-expect-error props not typed?
+                ...objectHovered.sourceLayer?.props,
+                ...(this.getDefaultHoverLayerProps() as any),
+                visible: true,
+                wrapLongitude: false,
+                data: [hoveredObject],
+                getLineColor: DEFAULT_HIGHLIGHT_STROKE_COLOR,
+                getFillColor: DEFAULT_HIGHLIGHT_FILL_COLOR,
+                getLineWidth: visConfig.strokeWidth + 1,
+                lineWidthUnits: 'pixels',
+                stroked: true,
+                filled: true
+              })
+            ]
+          : []),
+        ...perTileOverlays
         // ...tileLayerBoundsLayer(defaultLayerProps.id, data),
       ];
 
       return layers;
     }
     return [];
+  }
+
+  /**
+   * Build per-tile clipped overlay to draw only the outer stroke of highlighted feature per tile
+   * @param hoveredObject
+   */
+  _getPerTileOverlays(
+    hoveredObject: Feature,
+    options: {defaultLayerProps: any; visConfig: any}
+  ): DeckLayer[] {
+    let perTileOverlays: DeckLayer[] = [];
+    if (hoveredObject) {
+      try {
+        const tiles = this.tileDataset?.getTiles?.() || [];
+        // Derive hovered id from hoveredObject
+        const hoveredPid = UUID_CANDIDATES.find(
+          k => hoveredObject?.properties && k in hoveredObject.properties
+        );
+        const hoveredId = hoveredPid
+          ? String(hoveredObject?.properties?.[hoveredPid])
+          : String((hoveredObject as any)?.id);
+
+        // Group matched fragments by tile id
+        const byTile: Record<string, Feature[]> = {};
+        for (const tile of tiles) {
+          const content = (tile as any)?.content;
+          const features = content?.shape === 'geojson-table' ? content.features : content;
+          if (!Array.isArray(features)) continue;
+          const tileId = (tile as any).id;
+          for (const f of features) {
+            const pid = UUID_CANDIDATES.find(k => f.properties && k in f.properties);
+            const fid = pid ? f.properties?.[pid] : (f as any).id;
+            if (fid !== undefined && String(fid) === hoveredId) {
+              (byTile[tileId] = byTile[tileId] || []).push(f as Feature);
+            }
+          }
+        }
+
+        perTileOverlays = Object.entries(byTile).map(([tileId, feats]) => {
+          const tile = tiles.find((t: any) => String(t.id) === String(tileId));
+          const bounds = tile?.boundingBox
+            ? [...tile.boundingBox[0], ...tile.boundingBox[1]]
+            : undefined;
+          return new GeoJsonLayer({
+            ...(this.getDefaultHoverLayerProps() as any),
+            id: `${options.defaultLayerProps.id}-hover-outline-${tileId}`,
+            visible: true,
+            wrapLongitude: false,
+            data: feats,
+            getLineColor: DEFAULT_HIGHLIGHT_STROKE_COLOR,
+            getFillColor: [0, 0, 0, 0],
+            getLineWidth: options.visConfig.strokeWidth + 1,
+            lineWidthUnits: 'pixels',
+            lineJointRounded: true,
+            lineCapRounded: true,
+            stroked: true,
+            filled: false,
+            clipBounds: bounds,
+            extensions: bounds ? [new ClipExtension()] : []
+          });
+        });
+      } catch {
+        perTileOverlays = [];
+      }
+    }
+    return perTileOverlays;
   }
 }
