@@ -32,7 +32,8 @@ const inputCss = css`
 const StyledLegend = styled.div<{disableEdit: boolean; isExpanded?: boolean}>`
   ${props => props.theme.sidePanelScrollBar};
   ${props => (props.isExpanded ? '' : `max-height: 156px;`)};
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
   margin-bottom: ${GAP}px;
   display: grid;
   grid-row-gap: ${GAP}px;
@@ -45,12 +46,15 @@ const StyledLegendRow = styled.div`
   display: flex;
   align-items: center;
   height: 20px;
+  min-width: 0;
 `;
 
 export function ResetColorLabelFactory() {
   return styled(Reset)`
     color: ${props => props.theme.labelColorLT};
     cursor: pointer;
+    flex-shrink: 0;
+    margin-left: ${GAP}px;
 
     &:hover {
       color: ${props => props.theme.panelHeaderIconHover};
@@ -66,6 +70,10 @@ const StyleInlineInput = styled(InlineInput)`
   width: unset;
   padding: 2px;
   flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   margin: 0 ${GAP}px;
   :hover {
     height: ${ROW_H}px;
@@ -125,6 +133,11 @@ const StyledLabel = styled.div`
   font-size: 10px;
   color: ${props => props.theme.textColor};
   padding-left: 2px;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 `;
 
 export type LegendRowProps = {

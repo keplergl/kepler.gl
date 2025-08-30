@@ -276,7 +276,8 @@ export default function PlotContainerFactory(
         mapControls: {
           mapLegend: {
             show: Boolean(legend),
-            active: true
+            active: true,
+            settings: mapFields.mapControls?.mapLegend?.settings
           }
         },
         MapComponent: Map,

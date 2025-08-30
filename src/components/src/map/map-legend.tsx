@@ -202,7 +202,7 @@ export function LayerColorLegendFactory(
                   fieldType={(colorField && colorField.type) || 'real'}
                   range={colorRange}
                   onUpdateColorLegend={onUpdateColorLegend}
-                  disableEdit={disableEdit}
+                  disableEdit={disableEdit || Boolean(isExport)}
                   isFixed={isFixed}
                   mapState={mapState}
                   labelFormat={
