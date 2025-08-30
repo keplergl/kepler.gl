@@ -3,6 +3,7 @@
 
 import esbuild from 'esbuild';
 import {replace} from 'esbuild-plugin-replace';
+import copy from 'esbuild-plugin-copy';
 import {dotenvRun} from '@dotenv-run/esbuild';
 
 import process from 'node:process';
@@ -106,6 +107,14 @@ const config = {
     replace({
       __PACKAGE_VERSION__: KeplerPackage.version,
       include: /constants\/src\/default-settings\.ts/
+    }),
+    // copy files to dist
+    copy({
+      resolveFrom: 'cwd',
+      assets: {
+        from: ['./src/static/_redirects'],
+        to: ['./dist/']
+      }
     })
   ]
 };

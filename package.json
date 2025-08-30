@@ -165,6 +165,7 @@
     "dts-bundle-webpack": "^1.0.2",
     "enzyme": "^3.11.0",
     "esbuild": "^0.23.1",
+    "esbuild-plugin-copy": "^2.1.1",
     "esbuild-plugin-replace": "^1.4.0",
     "esbuild-plugin-umd-wrapper": "3.0.0",
     "eslint": "~8.53.0",
