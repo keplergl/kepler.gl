@@ -77,6 +77,13 @@ export default class TileDataset<T, I extends Iterable<any> = T extends Iterable
   }
 
   /**
+   * Return current tiles
+   */
+  getTiles(): readonly T[] {
+    return this.tiles;
+  }
+
+  /**
    * Get the min/max domain of a field
    */
   getExtent(field: KeplerField): [number, number] {
