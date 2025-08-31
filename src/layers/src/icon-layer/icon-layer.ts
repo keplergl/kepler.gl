@@ -218,7 +218,8 @@ export default class IconLayer extends Layer {
         .then((parsed: {svgIcons?: any[]} = {}) => {
           this.setSvgIcons(parsed.svgIcons);
         })
-        .catch(() => {
+        .catch(err => {
+          console.error('Error fetching or parsing svg-icons.json:', err);
           // Fallback to empty geometry to allow default icon rendering
           this.iconGeometry = {};
         });
