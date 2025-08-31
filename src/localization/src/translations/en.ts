@@ -99,6 +99,7 @@ export default {
     service: 'Service',
     layer: 'Layer',
     appearance: 'Appearance',
+    uniqueIdField: 'Unique ID Field',
     type: {
       point: 'point',
       arc: 'arc',
