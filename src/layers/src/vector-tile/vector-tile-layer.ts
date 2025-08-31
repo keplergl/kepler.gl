@@ -179,6 +179,8 @@ export type VectorTileLayerConfig = Merge<
     radiusScale?: string;
     radiusDomain?: VisualChannelDomain;
     radiusRange?: any;
+
+    uniqueIdField?: string | null;
   }
 >;
 
@@ -335,7 +337,9 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
 
       radiusField: null,
       radiusDomain: [0, 1],
-      radiusScale: SCALE_TYPES.linear
+      radiusScale: SCALE_TYPES.linear,
+
+      uniqueIdField: null
     };
   }
 
@@ -553,15 +557,13 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
     if (data.tileSource) {
       const hoveredObject = this.hasHoveredObject(objectHovered);
 
-      // Try to infer a stable unique id property from the hovered feature so we can
-      // highlight the same feature across adjacent tiles. If none is found, rely on
-      // feature.id when available.
+      // Resolve unique id property: use configured uniqueIdField if set, otherwise infer
       let uniqueIdProperty: string | undefined;
       let highlightedFeatureId: string | number | undefined;
       if (hoveredObject && hoveredObject.properties) {
-        uniqueIdProperty = UUID_CANDIDATES.find(
-          k => hoveredObject.properties && k in hoveredObject.properties
-        );
+        uniqueIdProperty =
+          this.config.uniqueIdField ??
+          UUID_CANDIDATES.find(k => hoveredObject.properties && k in hoveredObject.properties);
         highlightedFeatureId = uniqueIdProperty
           ? hoveredObject.properties[uniqueIdProperty]
           : (hoveredObject as any).id;
@@ -570,7 +572,8 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
       // Build per-tile clipped overlay to draw only the outer stroke of highlighted feature per tile
       const perTileOverlays = this._getPerTileOverlays(hoveredObject, {
         defaultLayerProps,
-        visConfig
+        visConfig,
+        uniqueIdProperty
       });
 
       const layers = [
@@ -705,18 +708,15 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
    */
   _getPerTileOverlays(
     hoveredObject: Feature,
-    options: {defaultLayerProps: any; visConfig: any}
+    options: {defaultLayerProps: any; visConfig: any; uniqueIdProperty?: string}
   ): DeckLayer[] {
     let perTileOverlays: DeckLayer[] = [];
     if (hoveredObject) {
       try {
         const tiles = this.tileDataset?.getTiles?.() || [];
         // Derive hovered id from hoveredObject
-        const hoveredPid = UUID_CANDIDATES.find(
-          k => hoveredObject?.properties && k in hoveredObject.properties
-        );
-        const hoveredId = hoveredPid
-          ? String(hoveredObject?.properties?.[hoveredPid])
+        const hoveredId = options.uniqueIdProperty
+          ? String(hoveredObject?.properties?.[options.uniqueIdProperty])
           : String((hoveredObject as any)?.id);
 
         // Group matched fragments by tile id
@@ -727,8 +727,9 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
           if (!Array.isArray(features)) continue;
           const tileId = (tile as any).id;
           for (const f of features) {
-            const pid = UUID_CANDIDATES.find(k => f.properties && k in f.properties);
-            const fid = pid ? f.properties?.[pid] : (f as any).id;
+            const fid = options.uniqueIdProperty
+              ? f.properties?.[options.uniqueIdProperty]
+              : (f as any).id;
             if (fid !== undefined && String(fid) === hoveredId) {
               (byTile[tileId] = byTile[tileId] || []).push(f as Feature);
             }
