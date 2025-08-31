@@ -270,8 +270,8 @@ test('#IconLayer -> renderLayer', t => {
         t.equal(layer.type, 'icon', 'should create 1 icon layer');
         t.equal(
           deckLayers.length,
-          0,
-          'Should create 0 deck.gl layer when icon geometry is not provided'
+          3,
+          'Should create 3 deck.gl layer when default icon geometry is not provided or missing'
         );
       }
     },
