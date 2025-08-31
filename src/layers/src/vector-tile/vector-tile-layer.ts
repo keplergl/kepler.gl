@@ -561,9 +561,9 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
       let uniqueIdProperty: string | undefined;
       let highlightedFeatureId: string | number | undefined;
       if (hoveredObject && hoveredObject.properties) {
-        uniqueIdProperty = this.config.uniqueIdField
-          ? this.config.uniqueIdField
-          : UUID_CANDIDATES.find(k => hoveredObject.properties && k in hoveredObject.properties);
+        uniqueIdProperty =
+          this.config.uniqueIdField ??
+          UUID_CANDIDATES.find(k => hoveredObject.properties && k in hoveredObject.properties);
         highlightedFeatureId = uniqueIdProperty
           ? hoveredObject.properties[uniqueIdProperty]
           : (hoveredObject as any).id;
