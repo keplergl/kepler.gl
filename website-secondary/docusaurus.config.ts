@@ -153,6 +153,18 @@ const config: Config = {
       ],
       copyright: `Copyright © ${new Date().getFullYear()} OpenJS Foundation`
     },
+    // TODO: update the keys as it is using deck.gl algolia
+    algolia: {
+      // The application ID provided by Algolia
+      appId: '8EVYAVB4KT',
+      // Public API key: it is safe to commit it
+      apiKey: 'a3fe1388353d733272ffdf148c53eeaa',
+      indexName: 'deck',
+      // Optional: see doc section below
+      contextualSearch: true,
+      // Optional: path for search page that enabled by default (`false` to disable it)
+      searchPagePath: false
+    },
     prism: {
       theme: prismThemes.oneLight,
       darkTheme: prismThemes.oneDark
