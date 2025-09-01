@@ -66,7 +66,6 @@ const config: Config = {
       },
       items: [
         {to: 'https://medium.com/vis-gl', label: 'Blog', position: 'left'},
-        {to: '/docs/user-guides', label: 'User Guide', position: 'left'},
         {
           type: 'docSidebar',
           sidebarId: 'docsSidebar',
