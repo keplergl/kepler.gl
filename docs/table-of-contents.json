@@ -49,7 +49,18 @@
           "user-guides/c-types-of-layers/n-raster-tile-layer",
           "user-guides/c-types-of-layers/o-wms-layer"
         ]
-      }
+      },
+      "user-guides/ai-assistant",
+      "user-guides/d-layer-attributes",
+      "user-guides/l-color-attributes",
+      "user-guides/e-filters",
+      "user-guides/f-map-styles",
+      "user-guides/g-interactions",
+      "user-guides/m-map-settings",
+      "user-guides/h-playback",
+      "user-guides/k-save-and-export",
+      "user-guides/sql-data-explorer",
+      "user-guides/i-FAQ"
     ]
   },
   {
