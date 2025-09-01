@@ -123,6 +123,18 @@
       }
     ]
   },
+  {
+    "type": "category",
+    "label": "Spatial Analysis",
+    "items": [
+      "spatial-analysis-tutorial/README",
+      "spatial-analysis-tutorial/get-started",
+      "spatial-analysis-tutorial/spatial-data-wrangling",
+      "spatial-analysis-tutorial/spatial-data-gis",
+      "spatial-analysis-tutorial/basic-mapping",
+      "spatial-analysis-tutorial/rate-mapping"
+    ]
+  },
   "keplergl-jupyter/README",
   {
     "type": "category",
