@@ -209,10 +209,23 @@ export default class IconLayer extends Layer {
 
     if (Window.fetch && this.svgIconUrl) {
       Window.fetch(this.svgIconUrl, fetchConfig)
-        .then(response => response.json())
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`Failed to load svg-icons.json: ${response.status}`);
+          }
+          return response.json();
+        })
         .then((parsed: {svgIcons?: any[]} = {}) => {
           this.setSvgIcons(parsed.svgIcons);
+        })
+        .catch(err => {
+          console.error('Error fetching or parsing svg-icons.json:', err);
+          // Fallback to empty geometry to allow default icon rendering
+          this.iconGeometry = {};
         });
+    } else {
+      // No fetch available; set empty geometry so layer can render default icons
+      this.iconGeometry = {};
     }
   }
 
@@ -389,42 +402,40 @@ export default class IconLayer extends Layer {
       cullFace: GL.FRONT
     };
 
-    return !this.iconGeometry
-      ? []
-      : [
-          new SvgIconLayer({
-            ...defaultLayerProps,
-            ...brushingProps,
-            ...layerProps,
-            ...data,
-            parameters,
-            getIconGeometry: id => this.iconGeometry?.[id],
+    return [
+      new SvgIconLayer({
+        ...defaultLayerProps,
+        ...brushingProps,
+        ...layerProps,
+        ...data,
+        parameters,
+        getIconGeometry: id => this.iconGeometry?.[id],
 
-            // update triggers
-            updateTriggers,
-            extensions
-          }),
+        // update triggers
+        updateTriggers,
+        extensions
+      }),
 
-          // hover layer
-          ...(hoveredObject
-            ? [
-                // @ts-expect-error SvgIconLayerProps needs getIcon Field
-                new SvgIconLayer({
-                  ...this.getDefaultHoverLayerProps(),
-                  ...layerProps,
-                  visible: defaultLayerProps.visible,
-                  data: [hoveredObject],
-                  parameters,
-                  getPosition: data.getPosition,
-                  getRadius: data.getRadius,
-                  getFillColor: this.config.highlightColor,
-                  getIconGeometry: id => this.iconGeometry?.[id]
-                })
-              ]
-            : []),
+      // hover layer
+      ...(hoveredObject
+        ? [
+            // @ts-expect-error SvgIconLayerProps needs getIcon Field
+            new SvgIconLayer({
+              ...this.getDefaultHoverLayerProps(),
+              ...layerProps,
+              visible: defaultLayerProps.visible,
+              data: [hoveredObject],
+              parameters,
+              getPosition: data.getPosition,
+              getRadius: data.getRadius,
+              getFillColor: this.config.highlightColor,
+              getIconGeometry: id => this.iconGeometry?.[id]
+            })
+          ]
+        : []),
 
-          // text label layer
-          ...labelLayers
-        ];
+      // text label layer
+      ...labelLayers
+    ];
   }
 }
