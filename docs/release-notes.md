@@ -2,9 +2,38 @@
 
 This page shows features that have landed to kepler.gl in major versions. For a complete list of changes to kepler.gl including each minor version, please [visit the full change log](../CHANGELOG.md).
 
+## 3.2
+
+_Released August 21st, 2025_
+
+### Raster Tile Layer
+
+The new [Raster Tile layer](/docs/user-guides/c-types-of-layers/n-raster-tile-layer.md) enables visualization of satellite and aerial imagery from raster PMTiles and Cloud-Optimized GeoTIFFs (via STAC). Use it to bring large imagery datasets into kepler.gl without dedicated tile infrastructure for raster PMTiles, or connect through a compatible raster tile server for COGs and elevation.
+
+### WMS Layer
+
+The new WMS layer adds support for rendering imagery and map tiles from OGC Web Map Service endpoints, allowing you to integrate enterprise or public WMS sources directly in kepler.gl.
+
+### AI Assistant
+
+- Generate idea buttons from the LLM to speed up workflows.
+- More reliable local model connectivity (fix for Ollama connection issues).
+- Configuration migrated to TypeScript for better npm consumption.
+
+### More Bug Fixes and Improvements
+
+- Fit-to-bounds: fix initial basemap and deck projections mismatch.
+- Aggregation layers: fixes for custom color scales.
+- Vector tiles: regression fixes for field extraction and setup flow.
+- Image export: fixes when effects are enabled.
+- Loading indicator: behavior and visibility improvements.
+- DuckDB: fix importing files with spaces in column names.
+
+For the complete list of commits, see the [full change log](../CHANGELOG.md).
+
 ## 3.1.1
 
-_Released march 10th, 2025_
+_Released March 10th, 2025_
 
 ### DuckDB
 
