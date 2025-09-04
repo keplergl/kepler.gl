@@ -364,7 +364,7 @@ export const TableSection = ({
                 height={dataGridHeight - headerGridProps.height}
                 onScroll={onScroll}
                 scrollLeft={scrollLeft}
-               scrollTop={scrollTop}
+                scrollTop={scrollTop}
                 setGridRef={setGridRef}
               />
             </div>
