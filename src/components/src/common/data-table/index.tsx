@@ -349,7 +349,7 @@ export const TableSection = ({
                 height={headerGridProps.height + browserScrollBarWidth}
                 width={headerGridWidth}
                 scrollLeft={scrollLeft}
-                onScroll={onScroll}
+                onScroll={args => onScroll?.({...args, scrollTop:scrollTop ?? 0 })}
               />
             </div>
             <div
@@ -364,7 +364,7 @@ export const TableSection = ({
                 height={dataGridHeight - headerGridProps.height}
                 onScroll={onScroll}
                 scrollLeft={scrollLeft}
-                scrollTop={scrollTop}
+               scrollTop={scrollTop}
                 setGridRef={setGridRef}
               />
             </div>
