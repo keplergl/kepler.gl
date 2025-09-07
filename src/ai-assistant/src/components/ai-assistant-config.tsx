@@ -225,12 +225,16 @@ export function AiAssistantConfig() {
         setTimeout(() => reject(new Error('Connection timeout after 15 seconds')), 15000);
       });
 
-      const AssistantModel = GetAssistantModelByProvider({
+      const AssistantModel = await GetAssistantModelByProvider({
         provider: provider
       });
 
+      if (!AssistantModel || !AssistantModel.configure || !AssistantModel.testConnection) {
+        throw new Error('Failed to initialize AI model');
+      }
+
       // configure model
-      AssistantModel?.configure({
+      AssistantModel.configure({
         model: model,
         baseURL: baseUrl || PROVIDER_DEFAULT_BASE_URLS[provider],
         apiKey: apiKey,
@@ -239,7 +243,7 @@ export function AiAssistantConfig() {
       });
 
       const success = (await Promise.race([
-        AssistantModel?.testConnection(apiKey, model),
+        AssistantModel.testConnection(apiKey, model),
         timeoutPromise
       ])) as boolean;
 
