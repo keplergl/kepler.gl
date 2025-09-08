@@ -490,7 +490,7 @@ export function arrowSchemaToFields(
       (keplerField.analyzerType === AnalyzerDATA_TYPES.GEOMETRY ||
         keplerField.analyzerType === AnalyzerDATA_TYPES.GEOMETRY_FROM_STRING)
     ) {
-      // When wbk/wkt was saved as varchar
+      // When wkb/wkt was saved as varchar in DuckDB
       type = keplerField.type;
       analyzerType = keplerField.analyzerType;
       format = keplerField.format;
