@@ -493,10 +493,11 @@ export default class RasterTileLayer extends KeplerLayer {
     };
 
     const tileLayer = new TileLayer<any, RenderSubLayersProps>({
-      id,
+      id, // : id + '_' + visConfig.zoomOffset,
       minZoom,
       maxZoom,
       tileSize: 512 / devicePixelRatio,
+      zoomOffset: visConfig.zoomOffset,
       getTileData: (args: any) => this.getTileData({...args, ...getTileDataCustomProps}),
       onViewportLoad: this.onViewportLoad.bind(this),
       // @ts-expect-error - TS doesn't know we'll pass appropriate props here
@@ -507,6 +508,7 @@ export default class RasterTileLayer extends KeplerLayer {
       updateTriggers: {
         getTileData: [
           shouldLoadTerrain,
+          // visConfig.zoomOffset,
           // Colormap has changed
           colormapId,
           // assets to be loaded has changed
@@ -570,7 +572,7 @@ export default class RasterTileLayer extends KeplerLayer {
 
     return [
       new TileLayer<any, RasterTileLayerVisConfigCommonSettings>({
-        id,
+        id, // : id + '_' + visConfig.zoomOffset,
         getTileData: (args: any) =>
           this.getTileDataPMTiles({...args, shouldLoadTerrain, metadata}, tileSource),
 
@@ -585,7 +587,7 @@ export default class RasterTileLayer extends KeplerLayer {
         minZoom,
         maxZoom,
         tileSize: 512 / devicePixelRatio,
-        zoomOffset: devicePixelRatio === 1 ? -1 : 0,
+        zoomOffset: devicePixelRatio === 1 ? -1 : 0, // + (visConfig.zoomOffset as unknown as number),
         // @ts-expect-error - TS doesn't know we'll pass appropriate props here
         renderSubLayers: renderSubLayersPMTiles,
 
@@ -596,7 +598,7 @@ export default class RasterTileLayer extends KeplerLayer {
         opacity,
 
         updateTriggers: {
-          getTileData: [shouldLoadTerrain]
+          getTileData: [shouldLoadTerrain /*, visConfig.zoomOffset*/]
         },
         // Props for 3D mode
         ...(shouldLoadTerrain
