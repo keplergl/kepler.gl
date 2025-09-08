@@ -16,7 +16,7 @@ import {
 } from '@kepler.gl/components';
 import {State} from '../index';
 import ApiKey from '../icons/api-key';
-import {PROVIDER_MODELS} from '../config/models';
+import {PROVIDER_MODELS, PROVIDER_DEFAULT_BASE_URLS} from '../config/models';
 import {useLocalStorage} from 'usehooks-ts';
 import {GetAssistantModelByProvider} from '@openassistant/core';
 import {updateAiAssistantConfig} from '../actions';
@@ -152,7 +152,7 @@ export function AiAssistantConfig() {
   const [topP, setTopP] = useLocalStorage('ai-assistant-top-p', aiAssistantConfig.topP || 1.0);
   const [baseUrl, setBaseUrl] = useLocalStorage(
     'ai-assistant-base-url',
-    aiAssistantConfig.baseUrl || 'http://localhost:11434/api'
+    aiAssistantConfig.baseUrl || PROVIDER_DEFAULT_BASE_URLS[provider]
   );
   const [mapboxToken, setMapboxToken] = useLocalStorage(
     'ai-assistant-mapbox-token',
@@ -168,6 +168,7 @@ export function AiAssistantConfig() {
     if (typeof value === 'string') {
       setProvider(value);
       setModel(PROVIDER_MODELS[value][0]);
+      setBaseUrl(PROVIDER_DEFAULT_BASE_URLS[value]);
       setConnectionError(false);
       setErrorMessage('');
     }
@@ -224,19 +225,32 @@ export function AiAssistantConfig() {
         setTimeout(() => reject(new Error('Connection timeout after 15 seconds')), 15000);
       });
 
-      const AssistantModel = GetAssistantModelByProvider({
+      const AssistantModel = await GetAssistantModelByProvider({
         provider: provider
       });
 
+      if (!AssistantModel || !AssistantModel.configure || !AssistantModel.testConnection) {
+        throw new Error('Failed to initialize AI model');
+      }
+
+      // configure model
+      AssistantModel.configure({
+        model: model,
+        baseURL: baseUrl || PROVIDER_DEFAULT_BASE_URLS[provider],
+        apiKey: apiKey,
+        temperature: Number(temperature),
+        topP: Number(topP)
+      });
+
       const success = (await Promise.race([
-        AssistantModel?.testConnection(apiKey, model),
+        AssistantModel.testConnection(apiKey, model),
         timeoutPromise
       ])) as boolean;
 
       const errorMessage = !success
         ? provider === 'ollama'
-          ? 'Connection failed: maybe invalid Ollama Base URL'
-          : 'Connection failed: maybe invalid API Key'
+          ? 'Connection failed: maybe invalid Base URL'
+          : 'Connection failed: maybe invalid API Key or Base URL'
         : '';
       setConnectionError(!success);
       setErrorMessage(errorMessage);
@@ -245,7 +259,7 @@ export function AiAssistantConfig() {
           provider: provider,
           model: model,
           apiKey: apiKey,
-          baseUrl: baseUrl,
+          baseUrl: baseUrl || PROVIDER_DEFAULT_BASE_URLS[provider],
           isReady: success,
           temperature: temperature,
           topP: topP,
@@ -322,11 +336,11 @@ export function AiAssistantConfig() {
           />
         </OllamaModelInputWrapper>
       )}
-      {provider !== 'ollama' ? (
+      {provider !== 'ollama' && (
         <>
           <PanelLabelWrapper>
             <SectionTitle>
-              <FormattedMessage id="aiAssistantManager.apiKey.placeholder" />
+              <FormattedMessage id="aiAssistantManager.apiKey.title" />
             </SectionTitle>
           </PanelLabelWrapper>
           <div className="api-key-input">
@@ -341,26 +355,23 @@ export function AiAssistantConfig() {
             />
           </div>
         </>
-      ) : (
-        <>
-          <PanelLabelWrapper>
-            <SectionTitle>
-              <FormattedMessage id="aiAssistantManager.baseUrl.placeholder" />
-            </SectionTitle>
-          </PanelLabelWrapper>
-          <div className="api-key-input">
-            <div className="api-key-input__icon">
-              <ApiKey height="20px" />
-            </div>
-            <Input
-              type="text"
-              onChange={onBaseUrlChange}
-              placeholder={intl.formatMessage({id: 'aiAssistantManager.baseUrl.placeholder'})}
-              value={baseUrl}
-            />
-          </div>
-        </>
       )}
+      <PanelLabelWrapper>
+        <SectionTitle>
+          <FormattedMessage id="aiAssistantManager.baseUrl.title" />
+        </SectionTitle>
+      </PanelLabelWrapper>
+      <div className="api-key-input">
+        <div className="api-key-input__icon">
+          <ApiKey height="20px" />
+        </div>
+        <Input
+          type="text"
+          onChange={onBaseUrlChange}
+          placeholder={PROVIDER_DEFAULT_BASE_URLS[provider]}
+          value={baseUrl}
+        />
+      </div>
       {connectionError && (
         <StyleErrorMessage className="error-message">{errorMessage}</StyleErrorMessage>
       )}

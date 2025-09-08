@@ -5049,6 +5049,44 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@openassistant/core@npm:0.5.18, @openassistant/core@npm:^0.5.17":
+  version: 0.5.18
+  resolution: "@openassistant/core@npm:0.5.18"
+  dependencies:
+    "@ai-sdk/openai": "npm:^1.3.21"
+    "@ai-sdk/react": "npm:^1.2.11"
+    "@ai-sdk/ui-utils": "npm:^1.2.10"
+    "@langchain/core": "npm:^0.3.38"
+    ai: "npm:^4.3.19"
+    openai: "npm:^4.93.0"
+    openai-zod-functions: "npm:^0.1.2"
+    zod: "npm:^3.24.4"
+    zod-to-json-schema: "npm:^3.24.1"
+  peerDependencies:
+    "@ai-sdk/amazon-bedrock": ^1.1.6
+    "@ai-sdk/anthropic": ^1.1.14
+    "@ai-sdk/deepseek": ^0.1.8
+    "@ai-sdk/google": ^1.1.8
+    "@ai-sdk/xai": ^1.1.8
+    ollama-ai-provider-v2: ^0.0.6
+    react: ">=18.2"
+  peerDependenciesMeta:
+    "@ai-sdk/amazon-bedrock":
+      optional: true
+    "@ai-sdk/anthropic":
+      optional: true
+    "@ai-sdk/deepseek":
+      optional: true
+    "@ai-sdk/google":
+      optional: true
+    "@ai-sdk/xai":
+      optional: true
+    ollama-ai-provider-v2:
+      optional: true
+  checksum: 10c0/3e370d3f574ae3eaa0cdbf0658812f2d5b9bacb92ee8645fc18cd29c9d0b6e0dd5d66c2377eb2d0b26382d8b9fe42ed320ad43f8b2610c068fdf1a3907098aa6
+  languageName: node
+  linkType: hard
+
 "@openassistant/duckdb@npm:^0.5.13":
   version: 0.5.18
   resolution: "@openassistant/duckdb@npm:0.5.18"
@@ -5186,6 +5224,31 @@ __metadata:
     react: ">=18.2"
     react-dom: ">=18.2"
   checksum: 10c0/06aea41b8e1e026728f9b51518c67fea7bd5fcacbe800b8df69bd7449ef66fd929dc234cba884f9f9249acd509a213375caad1a0c94a132fa0f6473f6c42e04d
+  languageName: node
+  linkType: hard
+
+"@openassistant/ui@npm:^0.5.17":
+  version: 0.5.18
+  resolution: "@openassistant/ui@npm:0.5.18"
+  dependencies:
+    "@ai-sdk/ui-utils": "npm:^1.2.11"
+    "@heroui/react": "npm:^2.7.8"
+    "@heroui/use-clipboard": "npm:^2.1.8"
+    "@iconify/react": "npm:^5.1.0"
+    "@openassistant/core": "npm:0.5.18"
+    "@openassistant/utils": "npm:0.5.18"
+    ai: "npm:^4.3.19"
+    framer-motion: "npm:^11.15.0"
+    html2canvas: "npm:^1.4.1"
+    next-themes: "npm:^0.4.4"
+    react-audio-voice-recorder: "npm:^2.2.0"
+    react-markdown: "npm:^10.0.0"
+    remark-gfm: "npm:^4.0.1"
+    tailwindcss: "npm:^3.4.17"
+  peerDependencies:
+    react: ">=18.2"
+    react-dom: ">=18.2"
+  checksum: 10c0/d0ddada031f21e24396d0f060b629495506207b6fc875e72fd389be5a2fb6a61fc7424a924eb0709453e35e830ae5b063bb420a4edab721d303a6e0b01794b7e
   languageName: node
   linkType: hard
 
@@ -9732,6 +9795,26 @@ __metadata:
     react:
       optional: true
   checksum: 10c0/befe761c9386cda6de33370a2590900352b444d81959255c624e2bfd40765f126d29269f0ef3e00bde07daf237004aa0b66d0b253664aa478c148e923ce78c41
+  languageName: node
+  linkType: hard
+
+"ai@npm:^4.3.19":
+  version: 4.3.19
+  resolution: "ai@npm:4.3.19"
+  dependencies:
+    "@ai-sdk/provider": "npm:1.1.3"
+    "@ai-sdk/provider-utils": "npm:2.2.8"
+    "@ai-sdk/react": "npm:1.2.12"
+    "@ai-sdk/ui-utils": "npm:1.2.11"
+    "@opentelemetry/api": "npm:1.9.0"
+    jsondiffpatch: "npm:0.6.0"
+  peerDependencies:
+    react: ^18 || ^19 || ^19.0.0-rc
+    zod: ^3.23.8
+  peerDependenciesMeta:
+    react:
+      optional: true
+  checksum: 10c0/738ac453b3e61b2f2282941fe8af946c42696fbdcffa5ac213823377bcddf475f26923cf2ca5656d5655e5c351e355e1af62dcb04a6df6139b67bac650b01af2
   languageName: node
   linkType: hard
 
@@ -16002,8 +16085,8 @@ __metadata:
     "@loaders.gl/csv": "npm:^4.3.2"
     "@loaders.gl/json": "npm:^4.3.2"
     "@loaders.gl/parquet": "npm:^4.3.2"
-    "@openassistant/core": "npm:^0.5.13"
-    "@openassistant/ui": "npm:^0.5.13"
+    "@openassistant/core": "npm:^0.5.17"
+    "@openassistant/ui": "npm:^0.5.17"
     "@types/classnames": "npm:^2.3.1"
     "@types/keymirror": "npm:^0.1.1"
     apache-arrow: "npm:>=15.0.0"
