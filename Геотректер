@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Heatmap поездок</title>
+    <meta charset="utf-8" />
+    <style>
+        #map {
+            height: 100vh;
+            width: 100%;
+        }
+    </style>
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+
+    <!-- Heatmap Plugin -->
+    <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
+</head>
+<body>
+
+    <div id="map"></div>
+
+    <script>
+        // Создаем карту и задаем начальное положение
+        var map = L.map('map').setView([55.75, 37.61], 12); // Пример: Москва
+
+        // Добавляем OpenStreetMap слой
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        // Пример точек [lat, lon, intensity]
+        var heatData = [
+            [55.751244, 37.618423, 0.6],
+            [55.750244, 37.617423, 0.8],
+            [55.752244, 37.619423, 0.7],
+            [55.753244, 37.615423, 0.9],
+            [55.749244, 37.614423, 0.5]
+            // Добавь больше координат сюда (можно из Python через экспорт)
+        ];
+
+        // Добавляем слой тепловой карты
+        var heat = L.heatLayer(heatData, {
+            radius: 25,
+            blur: 15,
+            maxZoom: 17,
+        }).addTo(map);
+    </script>
+</body>
+</html>
