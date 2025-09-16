@@ -453,12 +453,15 @@ export function arrowSchemaToFields(
     let analyzerType = arrowDataTypeToAnalyzerDataType(field.type);
     let format = '';
 
+    const fieldTypeSuggestion = fieldTypeSuggestions[field.name];
+    const keplerField = keplerFields[fieldIndex];
+
     // geometry fields produced by DuckDB's st_asgeojson()
-    if (fieldTypeSuggestions[field.name] === 'JSON') {
+    if (fieldTypeSuggestion === 'JSON') {
       type = ALL_FIELD_TYPES.geojson;
       analyzerType = AnalyzerDATA_TYPES.GEOMETRY_FROM_STRING;
     } else if (
-      fieldTypeSuggestions[field.name] === 'GEOMETRY' ||
+      fieldTypeSuggestion === 'GEOMETRY' ||
       field.metadata.get(GEOARROW_METADATA_KEY)?.startsWith('geoarrow')
     ) {
       type = ALL_FIELD_TYPES.geoarrow;
@@ -467,7 +470,7 @@ export function arrowSchemaToFields(
       type = ALL_FIELD_TYPES.geoarrow;
       analyzerType = AnalyzerDATA_TYPES.GEOMETRY;
       field.metadata?.set(GEOARROW_METADATA_KEY, geoArrowMetadata[field.name]);
-    } else if (fieldTypeSuggestions[field.name] === 'BLOB') {
+    } else if (fieldTypeSuggestion === 'BLOB') {
       // When arrow wkb column saved to DuckDB as BLOB without any metadata, then queried back
       try {
         const data = table.getChildAt(fieldIndex)?.get(0);
@@ -482,10 +485,18 @@ export function arrowSchemaToFields(
       } catch (error) {
         // ignore, not WKB
       }
+    } else if (
+      fieldTypeSuggestion === 'VARCHAR' &&
+      (keplerField.analyzerType === AnalyzerDATA_TYPES.GEOMETRY ||
+        keplerField.analyzerType === AnalyzerDATA_TYPES.GEOMETRY_FROM_STRING)
+    ) {
+      // When wkb/wkt was saved as varchar in DuckDB
+      type = keplerField.type;
+      analyzerType = keplerField.analyzerType;
+      format = keplerField.format;
     } else {
       // TODO should we use Kepler getFieldsFromData instead
       // of arrowDataTypeToFieldType for all fields?
-      const keplerField = keplerFields[fieldIndex];
       if (keplerField.type === ALL_FIELD_TYPES.timestamp) {
         type = keplerField.type;
         analyzerType = keplerField.analyzerType;
