@@ -9,6 +9,7 @@ import {GeoJsonLayer, PathLayer} from '@deck.gl/layers/typed';
 import {MVTSource, MVTTileSource} from '@loaders.gl/mvt';
 import {PMTilesSource, PMTilesTileSource} from '@loaders.gl/pmtiles';
 import GL from '@luma.gl/constants';
+import {ClipExtension} from '@deck.gl/extensions/typed';
 
 import {notNullorUndefined} from '@kepler.gl/common-utils';
 import {
@@ -73,7 +74,21 @@ export const DEFAULT_HIGHLIGHT_FILL_COLOR = [252, 242, 26, 150];
 export const DEFAULT_HIGHLIGHT_STROKE_COLOR = [252, 242, 26, 255];
 export const MAX_CACHE_SIZE_MOBILE = 1; // Minimize caching, visible tiles will always be loaded
 export const DEFAULT_STROKE_WIDTH = 1;
-
+export const UUID_CANDIDATES = [
+  'ufid',
+  'UFID',
+  'id',
+  'ID',
+  'fid',
+  'FID',
+  'objectid',
+  'OBJECTID',
+  'gid',
+  'GID',
+  'feature_id',
+  'FEATURE_ID',
+  '_id'
+];
 /**
  * Type for transformRequest returned parameters.
  */
@@ -164,6 +179,8 @@ export type VectorTileLayerConfig = Merge<
     radiusScale?: string;
     radiusDomain?: VisualChannelDomain;
     radiusRange?: any;
+
+    uniqueIdField?: string | null;
   }
 >;
 
@@ -320,7 +337,9 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
 
       radiusField: null,
       radiusDomain: [0, 1],
-      radiusScale: SCALE_TYPES.linear
+      radiusScale: SCALE_TYPES.linear,
+
+      uniqueIdField: null
     };
   }
 
@@ -538,6 +557,25 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
     if (data.tileSource) {
       const hoveredObject = this.hasHoveredObject(objectHovered);
 
+      // Resolve unique id property: use configured uniqueIdField if set, otherwise infer
+      let uniqueIdProperty: string | undefined;
+      let highlightedFeatureId: string | number | undefined;
+      if (hoveredObject && hoveredObject.properties) {
+        uniqueIdProperty =
+          this.config.uniqueIdField ??
+          UUID_CANDIDATES.find(k => hoveredObject.properties && k in hoveredObject.properties);
+        highlightedFeatureId = uniqueIdProperty
+          ? hoveredObject.properties[uniqueIdProperty]
+          : (hoveredObject as any).id;
+      }
+
+      // Build per-tile clipped overlay to draw only the outer stroke of highlighted feature per tile
+      const perTileOverlays = this._getPerTileOverlays(hoveredObject, {
+        defaultLayerProps,
+        visConfig,
+        uniqueIdProperty
+      });
+
       const layers = [
         new CustomMVTLayer({
           ...defaultLayerProps,
@@ -556,7 +594,8 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
           stroked: visConfig.stroked,
 
           // TODO: this is hard coded, design a UI to allow user assigned unique property id
-          // uniqueIdProperty: 'ufid',
+          uniqueIdProperty,
+          highlightedFeatureId,
           renderSubLayers: this.renderSubLayers,
           // when radiusUnits is meter
           getPointRadiusScaleByZoom: getPropertyByZoom(visConfig.radiusByZoom, visConfig.radius),
@@ -635,8 +674,8 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
             mvt: getLoaderOptions().mvt
           }
         }),
-        // hover layer
-        ...(hoveredObject
+        // render hover layer for features with no unique id property and no highlighted feature id
+        ...(hoveredObject && !uniqueIdProperty && !highlightedFeatureId
           ? [
               new GeoJsonLayer({
                 // @ts-expect-error props not typed?
@@ -653,12 +692,77 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
                 filled: true
               })
             ]
-          : [])
+          : []),
+        ...perTileOverlays
         // ...tileLayerBoundsLayer(defaultLayerProps.id, data),
       ];
 
       return layers;
     }
     return [];
+  }
+
+  /**
+   * Build per-tile clipped overlay to draw only the outer stroke of highlighted feature per tile
+   * @param hoveredObject
+   */
+  _getPerTileOverlays(
+    hoveredObject: Feature,
+    options: {defaultLayerProps: any; visConfig: any; uniqueIdProperty?: string}
+  ): DeckLayer[] {
+    let perTileOverlays: DeckLayer[] = [];
+    if (hoveredObject) {
+      try {
+        const tiles = this.tileDataset?.getTiles?.() || [];
+        // Derive hovered id from hoveredObject
+        const hoveredId = options.uniqueIdProperty
+          ? String(hoveredObject?.properties?.[options.uniqueIdProperty])
+          : String((hoveredObject as any)?.id);
+
+        // Group matched fragments by tile id
+        const byTile: Record<string, Feature[]> = {};
+        for (const tile of tiles) {
+          const content = (tile as any)?.content;
+          const features = content?.shape === 'geojson-table' ? content.features : content;
+          if (!Array.isArray(features)) continue;
+          const tileId = (tile as any).id;
+          for (const f of features) {
+            const fid = options.uniqueIdProperty
+              ? f.properties?.[options.uniqueIdProperty]
+              : (f as any).id;
+            if (fid !== undefined && String(fid) === hoveredId) {
+              (byTile[tileId] = byTile[tileId] || []).push(f as Feature);
+            }
+          }
+        }
+
+        perTileOverlays = Object.entries(byTile).map(([tileId, feats]) => {
+          const tile = tiles.find((t: any) => String(t.id) === String(tileId));
+          const bounds = tile?.boundingBox
+            ? [...tile.boundingBox[0], ...tile.boundingBox[1]]
+            : undefined;
+          return new GeoJsonLayer({
+            ...(this.getDefaultHoverLayerProps() as any),
+            id: `${options.defaultLayerProps.id}-hover-outline-${tileId}`,
+            visible: true,
+            wrapLongitude: false,
+            data: feats,
+            getLineColor: DEFAULT_HIGHLIGHT_STROKE_COLOR,
+            getFillColor: [0, 0, 0, 0],
+            getLineWidth: options.visConfig.strokeWidth + 1,
+            lineWidthUnits: 'pixels',
+            lineJointRounded: true,
+            lineCapRounded: true,
+            stroked: true,
+            filled: false,
+            clipBounds: bounds,
+            extensions: bounds ? [new ClipExtension()] : []
+          });
+        });
+      } catch {
+        perTileOverlays = [];
+      }
+    }
+    return perTileOverlays;
   }
 }

@@ -9,6 +9,7 @@ import {VectorTileLayer} from '@kepler.gl/layers';
 import {KeplerTable as KeplerDataset} from '@kepler.gl/table';
 
 import SourceDataSelectorFactory from '../common/source-data-selector';
+import FieldSelectorFactory from '../../common/field-selector';
 import ChannelByValueSelectorFactory from './channel-by-value-selector';
 import LayerConfigGroupFactory, {ConfigGroupCollapsibleContent} from './layer-config-group';
 import {LayerColorRangeSelectorFactory, LayerColorSelectorFactory} from './layer-color-selector';
@@ -37,7 +38,8 @@ VectorTileLayerConfiguratorFactory.deps = [
   LayerConfigGroupFactory,
   VisConfigSliderFactory,
   VisConfigSwitchFactory,
-  SourceDataSelectorFactory
+  SourceDataSelectorFactory,
+  FieldSelectorFactory
 ];
 
 function VectorTileLayerConfiguratorFactory(
@@ -46,7 +48,9 @@ function VectorTileLayerConfiguratorFactory(
   LayerColorSelector: ReturnType<typeof LayerColorSelectorFactory>,
   LayerConfigGroup: ReturnType<typeof LayerConfigGroupFactory>,
   VisConfigSlider: ReturnType<typeof VisConfigSliderFactory>,
-  VisConfigSwitch: ReturnType<typeof VisConfigSwitchFactory>
+  VisConfigSwitch: ReturnType<typeof VisConfigSwitchFactory>,
+  _SourceDataSelector: ReturnType<typeof SourceDataSelectorFactory>,
+  FieldSelector: ReturnType<typeof FieldSelectorFactory>
 ): React.FC<Props> {
   const VectorTileLayerConfigurator = ({
     layer,
@@ -189,6 +193,19 @@ function VectorTileLayerConfiguratorFactory(
             ) : null}
             <VisConfigSwitch {...layer.visConfigSettings.radiusUnits} {...visConfiguratorProps} />
           </ConfigGroupCollapsibleContent>
+        </LayerConfigGroup>
+
+        {/* Unique ID Field */}
+        <LayerConfigGroup {...visConfiguratorProps} label="layer.uniqueIdField">
+          <FieldSelector
+            fields={layerChannelConfigProps.fields || []}
+            value={layer.config.uniqueIdField || null}
+            onSelect={(val: any) =>
+              layerConfiguratorProps.onChange?.({uniqueIdField: val?.name || null})
+            }
+            placeholder={'placeholder.selectField'}
+            erasable
+          />
         </LayerConfigGroup>
       </StyledLayerConfigurator>
     );

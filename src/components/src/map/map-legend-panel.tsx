@@ -116,6 +116,23 @@ const StyledResizeHandle = styled.div`
   cursor: ns-resize;
 `;
 
+const StyledFixedLegendContent = styled.div<{contentHeight?: number}>`
+  .map-control__panel-content {
+    max-height: calc(100vh - 100px);
+    ${props => (props.contentHeight ? `height: ${props.contentHeight}px;` : '')};
+  }
+
+  /* Hide scrollbars in export to avoid OS default styling differences */
+  .styled-color-legend {
+    -ms-overflow-style: none; /* IE and old Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+  .styled-color-legend::-webkit-scrollbar {
+    width: 0 !important; /* Chrome, Safari, new Edge */
+    height: 0 !important;
+  }
+`;
+
 export type MapLegendPanelFactoryDeps = [
   typeof MapControlTooltipFactory,
   typeof MapControlPanelFactory,
@@ -240,7 +257,7 @@ const ImageExportLegend = withTheme(({settings, isSidePanelShown, theme, childre
   const containerRef: React.MutableRefObject<HTMLDivElement | null> = useRef(null);
   const legendContentRef: React.MutableRefObject<HTMLDivElement | null> = useRef(null);
 
-  const {positionStyles} = useLegendPosition({
+  const {positionStyles, contentHeight} = useLegendPosition({
     legendContentRef,
     isSidePanelShown,
     theme,
@@ -263,7 +280,9 @@ const ImageExportLegend = withTheme(({settings, isSidePanelShown, theme, childre
               ref={legendContentRef}
               style={{...positionStyles, position: 'absolute'}}
             >
-              {children}
+              <StyledFixedLegendContent contentHeight={contentHeight}>
+                {children}
+              </StyledFixedLegendContent>
             </div>,
             portalRoot
           )

@@ -35,6 +35,7 @@ export const theme = {
   labelColor: '#D0D0D0',
   mapBackground: '#0D1823',
   mapBlocker: '#0B151F',
+  navLinkColor: '#8d9ba3',
   footerColor: '#C0C0C0',
   // button:
   primaryBtnBgd: '#005CD2',
