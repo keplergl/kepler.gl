@@ -273,7 +273,9 @@ function ColorScaleSelectorFactory(
             customPalette
           });
           // store previous selection for cancel, then preview custom on the map
-          prevSelectionRef.current = {scale: scaleType, range};
+          if (!prevSelectionRef.current) {
+            prevSelectionRef.current = {scale: scaleType, range};
+          }
           onSelect(selectedScale, customPalette);
         } else if (hasColorMap(range)) {
           // not custom
