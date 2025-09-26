@@ -148,6 +148,26 @@ function ColorScaleSelectorFactory(
     );
     const [tippyInstance, setTippyInstance] = useState<TippyInstance>();
     const isEditingColorBreaks = colorUIConfig?.colorRangeConfig?.customBreaks;
+
+    // Previous selection for live preview: when choosing Custom/Custom Ordinal we apply a temporary palette.
+    // Cancel restores {scale, range} from this ref; Confirm keeps the change and clears the ref.
+    const prevSelectionRef = React.useRef<{scale: string; range: ColorRange} | null>(null);
+
+    // when custom color scale - but Confirm is not clicked yet
+    const pendingOption = useMemo(
+      () =>
+        isEditingColorBreaks
+          ? (dropdownSelectProps.options || []).find(
+              o => getOptionValue(o) === colorUIConfig?.customPalette?.type
+            ) || null
+          : null,
+      [
+        isEditingColorBreaks,
+        dropdownSelectProps.options,
+        getOptionValue,
+        colorUIConfig?.customPalette?.type
+      ]
+    );
     const colorScale = useMemo(
       () =>
         getLayerColorScale({
@@ -234,14 +254,16 @@ function ColorScaleSelectorFactory(
     const onSelectScale = useCallback(
       val => {
         // highlight selected option
-        if (!val || isEditingColorBreaks) return;
+        if (!val) return;
+
         const selectedScale = getOptionValue(val);
-        if (selectedScale === SCALE_TYPES.custom) {
+        if (selectedScale === SCALE_TYPES.custom || selectedScale === SCALE_TYPES.customOrdinal) {
           const customPalette = initCustomPaletteByCustomScale({
             scale: selectedScale,
             field,
             range,
-            colorBreaks
+            colorBreaks,
+            ...(selectedScale === SCALE_TYPES.customOrdinal ? {ordinalDomain} : {})
           });
           setColorUI({
             showColorChart: true,
@@ -250,28 +272,53 @@ function ColorScaleSelectorFactory(
             },
             customPalette
           });
+          // store previous selection for cancel, then preview custom on the map
+          prevSelectionRef.current = {scale: scaleType, range};
           onSelect(selectedScale, customPalette);
-        } else if (hasColorMap(range) && selectedScale !== SCALE_TYPES.customOrdinal) {
+        } else if (hasColorMap(range)) {
           // not custom
           // remove colorMap
           // eslint-disable-next-line no-unused-vars
           const {colorMap: _, ...newRange} = range;
+          // reset colorUI before changing the scale
+          setColorUI({
+            showColorChart: false,
+            colorRangeConfig: {
+              customBreaks: false
+            }
+          });
           onSelect(selectedScale, newRange);
         } else {
+          // reset colorUI before changing the scale
+          setColorUI({
+            showColorChart: false,
+            colorRangeConfig: {
+              customBreaks: false
+            }
+          });
           onSelect(selectedScale);
         }
       },
-      [isEditingColorBreaks, field, setColorUI, onSelect, range, getOptionValue, colorBreaks]
+      [field, setColorUI, onSelect, range, getOptionValue, colorBreaks, ordinalDomain, scaleType]
     );
 
     const onApply = useCallback(() => {
-      onSelect(scaleType, colorUIConfig.customPalette);
+      // change scale type only if confirmed
+      const nextScaleType = colorUIConfig?.customPalette?.type || scaleType;
+      onSelect(nextScaleType, colorUIConfig.customPalette);
       hideTippy(tippyInstance);
+      prevSelectionRef.current = null;
     }, [onSelect, colorUIConfig.customPalette, tippyInstance, scaleType]);
 
     const onCancel = useCallback(() => {
+      // restore previous selection if any
+      if (prevSelectionRef.current) {
+        const {scale: prevScale, range: prevRange} = prevSelectionRef.current;
+        onSelect(prevScale, prevRange);
+      }
       hideTippy(tippyInstance);
-    }, [tippyInstance]);
+      prevSelectionRef.current = null;
+    }, [tippyInstance, onSelect]);
 
     const isCustomBreaks =
       scaleType === SCALE_TYPES.custom || scaleType === SCALE_TYPES.customOrdinal;
@@ -317,6 +364,9 @@ function ColorScaleSelectorFactory(
                     customListComponent={ColorScaleSelectDropdown}
                     searchable={false}
                     showOptionsWhenEmpty
+                    selectedItems={
+                      pendingOption ? [pendingOption] : dropdownSelectProps.selectedItems
+                    }
                   />
                 )}
               </DropdownWrapper>
@@ -327,7 +377,7 @@ function ColorScaleSelectorFactory(
               <DropdownSelect
                 {...dropdownSelectProps}
                 displayOption={displayOption}
-                value={dropdownSelectProps.selectedItems[0]}
+                value={pendingOption || dropdownSelectProps.selectedItems[0]}
               />
             </div>
           </LazyTippy>
