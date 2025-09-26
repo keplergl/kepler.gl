@@ -149,8 +149,10 @@ function ColorScaleSelectorFactory(
     const [tippyInstance, setTippyInstance] = useState<TippyInstance>();
     const isEditingColorBreaks = colorUIConfig?.colorRangeConfig?.customBreaks;
 
-    // Previous selection for live preview: when choosing Custom/Custom Ordinal we apply a temporary palette.
+    // Stores the previous selection for live preview: when choosing Custom/Custom Ordinal, we apply a temporary palette.
     // Cancel restores {scale, range} from this ref; Confirm keeps the change and clears the ref.
+    // If the user switches between different custom scale types (e.g., from "Custom" to "Custom Ordinal") or is already in a custom scale state,
+    // this ref is updated to always store the most recent non-custom selection. Only the latest non-custom selection is restorable on cancel.
     const prevSelectionRef = React.useRef<{scale: string; range: ColorRange} | null>(null);
 
     // when custom color scale - but Confirm is not clicked yet

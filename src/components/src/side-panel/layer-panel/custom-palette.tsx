@@ -724,9 +724,7 @@ export const CategoricalSelector: React.FC<CategoricalSelectorProps> = ({
                   options={allValues}
                   // add safe string casting for the Typeahead, so fuzzy search never receives non-strings, preventing the toLowerCase crash
                   displayOption={o => String(o ?? '')}
-                  filterOption={(input, o) =>
-                    String(o ?? '').includes(String(input ?? '').toLowerCase())
-                  }
+                  filterOption={(input, o) => String(o ?? '').includes(String(input ?? ''))}
                   placeholder={'Search'}
                   onOptionSelected={onOptionSelected}
                   customListComponent={ModifiedDropdownList}
