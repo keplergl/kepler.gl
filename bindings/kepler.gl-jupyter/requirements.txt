@@ -7,5 +7,5 @@ jupyter-contrib-nbextensions==0.7.0
 notebook==6.0.1
 setuptools==70.0.0
 jupyter==1.0.0
-jupyterlab==4.1.6
+jupyterlab==4.4.8
 pyarrow==16.0.0
