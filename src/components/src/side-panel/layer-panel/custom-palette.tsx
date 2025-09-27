@@ -471,7 +471,7 @@ export const CustomPaletteInput: React.FC<CustomPaletteInputProps> = ({
                 />
               </StyledColorHexInput>
             ) : null}
-            {isNumericColorBreaks(colorBreaks) && colorBreaks && index < colorBreaks.length ? (
+            {colorBreaks && index < colorBreaks.length && isNumericColorBreaks(colorBreaks) ? (
               <EditableColorRange
                 item={colorBreaks[index]}
                 isLast={index === colorBreaks.length - 1}
