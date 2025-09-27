@@ -158,10 +158,11 @@ function ColorBreaksPanelFactory(
     // Update layers on editing custom breaks
     useEffect(() => {
       const {type} = customPalette || {};
-      if (isEditingCustomBreaks) {
-        if (type === SCALE_TYPES.customOrdinal || type === SCALE_TYPES.custom) {
-          onScaleChange(type, customPalette);
-        }
+      if (
+        isEditingCustomBreaks &&
+        (type === SCALE_TYPES.customOrdinal || type === SCALE_TYPES.custom)
+      ) {
+        onScaleChange(type, customPalette);
       }
     }, [isEditingCustomBreaks, customPalette, onScaleChange]);
 
