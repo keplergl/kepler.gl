@@ -168,7 +168,7 @@ export function LegendRowFactory(
       [color, onUpdateLabel]
     );
     const onReset = useCallback(() => onResetLabel && onResetLabel(color), [color, onResetLabel]);
-    const value = displayLabel ? label.toString() : '';
+    const value = displayLabel ? String(label ?? '') : '';
     return (
       <StyledLegendRow>
         <LegendColorDisplay color={color} />
