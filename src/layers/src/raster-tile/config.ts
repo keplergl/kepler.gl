@@ -727,6 +727,16 @@ export const rasterVisConfigs = {
     step: 0.05,
     type: 'number'
   } as VisConfigNumber,
+  zoomOffset: {
+    defaultValue: 0,
+    // group: "tiles"
+    isRanged: false,
+    label: 'Zoom Offset',
+    property: 'zoomOffset',
+    range: [-2, 2],
+    step: 1,
+    type: 'number'
+  } as VisConfigNumber,
   _stacQuery: {
     defaultValue: null,
     type: 'input'
