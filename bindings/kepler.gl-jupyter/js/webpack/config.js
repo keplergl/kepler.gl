@@ -11,14 +11,18 @@ const rules = [
     test: /\.(js|jsx|ts|tsx)$/,
     loader: 'babel-loader',
     include: path.join(__dirname, '../lib', 'keplergl'),
-    exclude: [/node_modules/]
+    exclude: [/node_modules\/(?!(@monaco-editor|@radix-ui))/]
   },
   // fix for arrow-related errors
   {
     test: /\.mjs$/,
-    // include: /node_modules[\\/]apache-arrow/,
-    include: /node_modules/,
+    include: /node_modules[\\/]apache-arrow/,
     type: 'javascript/auto'
+  },
+  {
+    test: /\.js$/,
+    loader: require.resolve('@open-wc/webpack-import-meta-loader'),
+    include: [/node_modules\/parquet-wasm/]
   },
   // for compiling @probe.gl, website build started to fail (March, 2024)
   {
@@ -27,13 +31,43 @@ const rules = [
     include: [
       /node_modules[\\/]@probe.gl/,
       /node_modules[\\/]@loaders.gl/,
-      /node_modules[\\/]@math.gl/
+      /node_modules[\\/]@math.gl/,
+      /node_modules[\\/]@geoarrow/
     ]
+  },
+  {
+    test: /\.m?js$/,
+    include: [
+      /node_modules\/@duckdb\/duckdb-wasm/,
+      /node_modules\/@radix-ui/,
+      /node_modules\/@monaco-editor\/react/
+    ],
+    type: 'javascript/auto'
+  },
+  // Handle @loaders.gl ESM modules for webpack 5
+  {
+    test: /\.m?js$/,
+    resolve: {
+      fullySpecified: false
+    },
+    include: [
+      /node_modules\/@loaders\.gl/,
+      /node_modules\/@math\.gl/,
+      /node_modules\/@probe\.gl/,
+      /node_modules\/@geoarrow/
+    ],
+    type: 'javascript/auto'
   }
 ];
 
 const plugins = [
-  new webpack.EnvironmentPlugin(['MapboxAccessTokenJupyter'])
+  new webpack.EnvironmentPlugin({
+    MapboxAccessTokenJupyter: null
+  }),
+  new webpack.ProvidePlugin({
+    process: 'process/browser'
+  })
+
 ];
 
 module.exports = {
@@ -50,13 +84,14 @@ module.exports = {
     output: {
       filename: 'extension.js',
       path: path.resolve(__dirname, '../..', 'keplergl', 'static'),
-      libraryTarget: 'amd'
-    },
-    node: {
-      fs: 'empty'
+      library: {
+        name: 'amd',
+        type: 'amd'
+      }
     },
     plugins
   },
+
 
   widget: {
     // Bundle for the notebook containing the custom widget views and models
@@ -72,8 +107,12 @@ module.exports = {
     },
     output: {
       filename: 'index.js',
+      chunkFormat: false,
       path: path.resolve(__dirname, '../..', 'keplergl', 'static'),
-      libraryTarget: 'amd'
+      library: {
+        name: 'amd',
+        type: 'amd'
+      }
     },
     // adding source map significantly slows down the
     // devtool: 'source-map',
@@ -81,9 +120,7 @@ module.exports = {
       rules
     },
     externals: ['@jupyter-widgets/base'],
-    node: {
-      fs: 'empty'
-    },
+    resolve: buildHtml.resolve,
     plugins
   },
 
@@ -107,18 +144,21 @@ module.exports = {
     entry: path.resolve(__dirname, '../lib/embed.js'),
     output: {
       filename: 'index.js',
+      chunkFormat: false,
       path: path.resolve(__dirname, '../dist'),
-      libraryTarget: 'amd',
+      library: {
+        type: 'amd',
+        name: 'amd'
+      },
       publicPath: `https://unpkg.com/keplergl-jupyter@${version}/dist/`
     },
     mode: 'production',
     module: {
       rules
     },
+
     externals: ['@jupyter-widgets/base'],
-    node: {
-      fs: 'empty'
-    },
+    resolve: buildHtml.resolve,
     plugins
   }
 };
