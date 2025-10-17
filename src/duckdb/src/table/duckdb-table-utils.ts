@@ -111,7 +111,11 @@ export function castDuckDBTypesForKepler(
     const quotedColumnName = quoteColumnName(name);
     if (type === 'GEOMETRY' && options.geometryToWKB) {
       return `ST_AsWKB(${quotedColumnName}) as ${quotedColumnName}`;
-    } else if (type === 'BIGINT' && options.bigIntToDouble) {
+    } else if (
+      options.bigIntToDouble &&
+      (type === 'BIGINT' || type === 'UBIGINT' || type === 'HUGEINT' || type === 'UHUGEINT')
+    ) {
+      // Cast 64-bit and larger integer types to DOUBLE to avoid BigInt in JS
       return `CAST(${quotedColumnName} AS DOUBLE) as ${quotedColumnName}`;
     }
     return quotedColumnName;
