@@ -29,7 +29,6 @@ Can you load the dataset: https://geodacenter.github.io/data-and-lab/data/ohlung
 
 <img width="1168" alt="Screenshot 2025-06-19 at 4 04 17 PM" src="https://github.com/user-attachments/assets/c215e865-59cb-443c-9d7a-5ff9975a8801" />
 
-
 ## Choropleth Map for Rates
 
 ### Spatially extensive and spatially intensive variables
@@ -62,11 +61,13 @@ The flip side of this result is that for areas with sparse populations (small $P
 
 The AI assistant in kepler.gl provides a tool to calculate the different types of rates:
 
-- [Raw Rate]()
-- [Excess Risk]()
-- [Empirical Bayes Rate]()
-- [Spatial Rate]()
-- [Spatial Empirical Bayes Rate]()
+<!-- TODO: update this indranildeveloper -->
+
+- [Raw Rate]("")
+- [Excess Risk]("")
+- [Empirical Bayes Rate]("")
+- [Spatial Rate]("")
+- [Spatial Empirical Bayes Rate]("")
 
 ### Raw rate map
 
@@ -81,7 +82,6 @@ We immediately notice that the counties identified as upper outliers in this scr
 If we use split map to compare the two maps, we can see that none of the original count outliers remain as extreme values in the rate map. In fact, some counties are in the lower quartiles (blue color) for the rates.
 
 <img width="1167" alt="Screenshot 2025-06-19 at 4 18 20 PM" src="https://github.com/user-attachments/assets/5541865c-b5aa-4baf-92d5-f9b60c6e388f" />
-
 
 #### Raw rate values in table
 
@@ -132,7 +132,7 @@ The formal logic behind the idea of smoothing is situated in a Bayesian framewor
 $$P[AB] = P[A|B] \times P[B] = P[B|A] \times P[A],$$
 
 where $A$ and $B$ are random events, and |
- stands for the conditional probability of one event, given a value for the other. The second equality yields the formal expression of Bayes law as:
+stands for the conditional probability of one event, given a value for the other. The second equality yields the formal expression of Bayes law as:
 
 $$P[A|B] = \frac{P[B|A] \times P[A]}{P[B]}.$$
 
@@ -225,7 +225,6 @@ Now, the AI assistant will create two box plots for the raw rates and the empiri
 Next, we can carry out the reverse and select the outlier in the box plot for the EB smoothed rate. Its position is around the 75 percentile in the box plot for the crude rate. Also note how the range of the rates has shrunk. Many of the higher crude rates are well below 0.00012 for the EB rate, whereas the value for the EB outlier has barely changed.
 
 <img width="1129" alt="Screenshot 2025-06-23 at 8 15 19 PM" src="https://github.com/user-attachments/assets/c38531b0-bc50-4a46-aed8-0681f2535606" />
-
 
 Here is a screen captured video of the above steps:
 
