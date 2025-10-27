@@ -494,6 +494,10 @@ export function arrowSchemaToFields(
       type = keplerField.type;
       analyzerType = keplerField.analyzerType;
       format = keplerField.format;
+    } else if (fieldTypeSuggestion === 'VARCHAR' && keplerField.type === ALL_FIELD_TYPES.h3) {
+      // when kepler detected h3 column using getFieldsFromData(), set type to h3 and analyzerType to H3
+      type = ALL_FIELD_TYPES.h3;
+      analyzerType = keplerField.analyzerType;
     } else {
       // TODO should we use Kepler getFieldsFromData instead
       // of arrowDataTypeToFieldType for all fields?
