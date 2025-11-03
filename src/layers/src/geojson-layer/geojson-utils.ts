@@ -55,6 +55,28 @@ export function fieldIsGeoArrow(geoField?: ProtoDatasetField | null): boolean {
 
 export function parseGeoJsonRawFeature(rawFeature: unknown): Feature | null {
   const properties = null; // help ensure that properties is present on the returned geojson feature
+  // Support WKB geometry provided as binary (e.g., from Parquet/GeoParquet)
+  if (rawFeature instanceof Uint8Array || rawFeature instanceof ArrayBuffer) {
+    try {
+      const binaryInput =
+        rawFeature instanceof ArrayBuffer
+          ? rawFeature
+          : (rawFeature as Uint8Array).buffer.slice(
+              (rawFeature as Uint8Array).byteOffset,
+              (rawFeature as Uint8Array).byteOffset + (rawFeature as Uint8Array).byteLength
+            );
+      const binaryGeo = parseSync(binaryInput as ArrayBuffer, WKBLoader);
+      // @ts-expect-error loaders.gl binary type to GeoJSON geometry
+      const parsedGeo = binaryToGeometry(binaryGeo);
+      const normalized = normalize(parsedGeo);
+      if (!normalized || !Array.isArray(normalized.features)) {
+        return null;
+      }
+      return {properties, ...normalized.features[0]};
+    } catch (e) {
+      return null;
+    }
+  }
   if (typeof rawFeature === 'object') {
     // Support GeoJson feature as object
     // probably need to normalize it as well
