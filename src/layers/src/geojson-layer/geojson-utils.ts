@@ -69,7 +69,7 @@ export function parseGeoJsonRawFeature(rawFeature: unknown): Feature | null {
       // @ts-expect-error loaders.gl binary type to GeoJSON geometry
       const parsedGeo = binaryToGeometry(binaryGeo);
       const normalized = normalize(parsedGeo);
-      if (!normalized || !Array.isArray(normalized.features)) {
+      if (!normalized || !Array.isArray(normalized.features) || !normalized.features.length) {
         return null;
       }
       return {properties, ...normalized.features[0]};
