@@ -17,16 +17,18 @@ const map = (function initKeplerGl() {
   document.body.appendChild(divElmt);
 
   return {
-    render: () => {
-      renderRoot({id, store, ele: divElmt});
+    render: (onMounted) => {
+      renderRoot({ id, store, ele: divElmt, onMounted });
     },
     store
   };
 })();
 
-map.render();
+function loadDataConfig(keplerGlMap) {
+  const { data, config, options } = Window.__keplerglDataConfig || {};
+  addDataConfigToKeplerGl({ data, config, options, store: keplerGlMap.store });
+}
 
-(function loadDataConfig(keplerGlMap) {
-  const {data, config, options} = Window.__keplerglDataConfig || {};
-  addDataConfigToKeplerGl({data, config, options, store: keplerGlMap.store});
-})(map);
+map.render(() => {
+  loadDataConfig(map);
+});
