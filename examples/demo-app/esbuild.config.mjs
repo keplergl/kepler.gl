@@ -8,8 +8,12 @@ import {dotenvRun} from '@dotenv-run/esbuild';
 import process from 'node:process';
 import fs from 'node:fs';
 import {spawn} from 'node:child_process';
-import {join} from 'node:path';
-import KeplerPackage from '../../package.json' assert {type: 'json'};
+import {join, dirname} from 'node:path';
+import {fileURLToPath} from 'node:url';
+import KeplerPackage from '../../package.json' with {type: 'json'};
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const args = process.argv;
 
@@ -66,6 +70,29 @@ const requiredEnvVariables = [
 ];
 
 /**
+ * Filter environment variables to only include valid JavaScript identifiers
+ * This prevents errors when esbuild tries to define variables with spaces or special characters
+ */
+const getValidEnvVars = (env) => {
+  const validIdentifierPattern = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/;
+  return Object.fromEntries(
+    Object.entries(env).filter(([key]) => validIdentifierPattern.test(key))
+  );
+};
+
+// Clean up invalid environment variables immediately on startup
+const invalidKeys = Object.keys(process.env).filter(
+  key => !/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(key)
+);
+invalidKeys.forEach(key => {
+  delete process.env[key];
+});
+
+if (invalidKeys.length > 0) {
+  console.log(`ℹ️  Filtered out ${invalidKeys.length} invalid environment variable names`);
+}
+
+/**
  * Check for all required env variables to be present
  */
 const checkEnvVariables = () => {
@@ -79,6 +106,20 @@ const checkEnvVariables = () => {
 };
 
 const NODE_ENV = JSON.stringify(process.env.NODE_ENV || 'production');
+
+// Create define object for environment variables
+const defineVars = {
+  NODE_ENV,
+  'process.env.MapboxAccessToken': JSON.stringify(process.env.MapboxAccessToken || ''),
+  'process.env.DropboxClientId': JSON.stringify(process.env.DropboxClientId || ''),
+  'process.env.MapboxExportToken': JSON.stringify(process.env.MapboxExportToken || ''),
+  'process.env.CartoClientId': JSON.stringify(process.env.CartoClientId || ''),
+  'process.env.FoursquareClientId': JSON.stringify(process.env.FoursquareClientId || ''),
+  'process.env.FoursquareDomain': JSON.stringify(process.env.FoursquareDomain || ''),
+  'process.env.FoursquareAPIURL': JSON.stringify(process.env.FoursquareAPIURL || ''),
+  'process.env.FoursquareUserMapsURL': JSON.stringify(process.env.FoursquareUserMapsURL || '')
+};
+
 const config = {
   platform: 'browser',
   format: 'iife',
@@ -93,10 +134,32 @@ const config = {
   entryPoints: ['src/main.js'],
   outfile: 'dist/bundle.js',
   bundle: true,
-  define: {
-    NODE_ENV
-  },
+  define: defineVars,
   plugins: [
+    // Force react-virtualized to use CommonJS build by redirecting base import
+    {
+      name: 'react-virtualized-commonjs',
+      setup(build) {
+        build.onResolve({filter: /^react-virtualized$/}, () => {
+          return {
+            path: join(__dirname, '../../node_modules/react-virtualized/dist/commonjs/index.js')
+          };
+        });
+      }
+    },
+    // Provide a process object polyfill for browser
+    {
+      name: 'process-polyfill',
+      setup(build) {
+        build.onResolve({filter: /^process$/}, () => ({
+          path: 'process-polyfill',
+          namespace: 'polyfill'
+        }));
+        build.onLoad({filter: /.*/, namespace: 'polyfill'}, () => ({
+          contents: 'export default {env: {}}'
+        }));
+      }
+    },
     dotenvRun({
       verbose: true,
       environment: NODE_ENV,
