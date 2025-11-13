@@ -48,7 +48,9 @@ js_command = combine_commands(
     install_npm(js_dir, npm=["yarn"], build_cmd='build'), ensure_targets(jstargets),
 )
 
-is_repo = os.path.exists(os.path.join(here, '.git'))
+# This is a sub-sub-folder in a git repository, hence we check for the existence
+# of `../../.git` to find out, whether we are in a cloned git repository.
+is_repo = os.path.exists(os.path.join(here, os.path.pardir, os.path.pardir, '.git'))
 if is_repo:
     cmdclass['jsdeps'] = js_command
 else:
