@@ -10,7 +10,7 @@ import fs from 'node:fs';
 import {spawn} from 'node:child_process';
 import {join, dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
-import KeplerPackage from '../../package.json' with {type: 'json'};
+import KeplerPackage from '../../package.json' assert {type: 'json'};
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -40,20 +40,20 @@ const getThirdPartyLibraryAliases = useKeplerNodeModules => {
   const localSources = useKeplerNodeModules
     ? {
         // Suppress useless warnings from react-date-picker's dep
-        'tiny-warning': `${SRC_DIR}/utils/src/noop.ts`
+        'tiny-warning': `${SRC_DIR}/utils/src/noop.ts`.replace(/\\/g, '/')
       }
     : {};
 
   return {
     ...localSources,
-    react: `${nodeModulesDir}/react`,
-    'react-dom': `${nodeModulesDir}/react-dom`,
-    'react-redux': `${nodeModulesDir}/react-redux/lib`,
-    'styled-components': `${nodeModulesDir}/styled-components`,
-    'react-intl': `${nodeModulesDir}/react-intl`,
-    'react-palm': `${nodeModulesDir}/react-palm`,
+    react: `${nodeModulesDir}/react`.replace(/\\/g, '/'),
+    'react-dom': `${nodeModulesDir}/react-dom`.replace(/\\/g, '/'),
+    'react-redux': `${nodeModulesDir}/react-redux/lib`.replace(/\\/g, '/'),
+    'styled-components': `${nodeModulesDir}/styled-components`.replace(/\\/g, '/'),
+    'react-intl': `${nodeModulesDir}/react-intl`.replace(/\\/g, '/'),
+    'react-palm': `${nodeModulesDir}/react-palm`.replace(/\\/g, '/'),
     // kepler.gl and loaders.gl need to use same apache-arrow
-    'apache-arrow': `${nodeModulesDir}/apache-arrow`
+    'apache-arrow': `${nodeModulesDir}/apache-arrow`.replace(/\\/g, '/')
   };
 };
 
