@@ -98,7 +98,7 @@ export function createNewDataEntry(
     info,
     color,
     opts,
-    data: validatedData
+    data: {...validatedData, arrowTable: data.arrowTable}
   });
 }
 
@@ -136,7 +136,12 @@ async function createTable(datasetInfo: CreateTableProps) {
     ...opts,
     metadata
   });
-  await table.importData({data});
+  try {
+    await table.importData({data});
+  } catch (error) {
+    console.error('Failed to create table', error);
+    throw error;
+  }
 
   return table;
 }
