@@ -98,7 +98,7 @@ export function createNewDataEntry(
     info,
     color,
     opts,
-    data: {...validatedData, arrowTable: data.arrowTable}
+    data: data.arrowTable ? {...validatedData, arrowTable: data.arrowTable} : validatedData
   });
 }
 
