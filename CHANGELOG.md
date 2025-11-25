@@ -15,6 +15,11 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+## [3.2.2] - Nov 25 2025
+
+- f66ab3c61 fix: Allow passing arrow tables to ArrowDataContainer (#3242)
+- e2efa50dd fix: copy geometry when geometry is of binary format (#3236)
+
 ## [3.2.1] - Nov 3 2025
 
 - d2b130f95 fix: detect h3 column in arrow (#3230)
