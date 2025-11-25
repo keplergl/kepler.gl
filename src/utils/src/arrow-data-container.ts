@@ -1,19 +1,21 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import { ALL_FIELD_TYPES } from '@kepler.gl/constants';
+import { ProtoDatasetField } from '@kepler.gl/types';
 import * as arrow from 'apache-arrow';
-import {console as globalConsole} from 'global/window';
-import {DATA_TYPES as AnalyzerDATA_TYPES} from 'type-analyzer';
-import {ProtoDatasetField} from '@kepler.gl/types';
-import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
+import { console as globalConsole } from 'global/window';
+import { DATA_TYPES as AnalyzerDATA_TYPES } from 'type-analyzer';
 
-import {DataRow, SharedRowOptions} from './data-row';
-import {DataContainerInterface, RangeOptions} from './data-container-interface';
+import { DataContainerInterface, RangeOptions } from './data-container-interface';
+import { DataRow, SharedRowOptions } from './data-row';
 
 type ArrowDataContainerInput = {
   cols: arrow.Vector[];
   fields?: ProtoDatasetField[];
+  arrowTable?: arrow.Table;
 };
+
 
 /**
  * @param dataContainer
@@ -68,7 +70,7 @@ export class ArrowDataContainer implements DataContainerInterface {
     this._numChunks = data.cols[0].data.length;
     // this._colData = data.cols.map(c => c.toArray());
 
-    this._arrowTable = this._createTable();
+    this._arrowTable = data.arrowTable || this._createTable();
   }
 
   /**

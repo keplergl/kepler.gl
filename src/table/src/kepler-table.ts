@@ -211,6 +211,7 @@ class KeplerTable<F extends Field = Field> {
 
     const dataContainer = createDataContainer(dataContainerData, {
       fields: data.fields,
+      arrowTable: data.arrowTable,
       inputDataFormat
     });
 
