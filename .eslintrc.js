@@ -12,7 +12,7 @@ module.exports = {
     jestPuppeteer: true
   },
   parser: '@typescript-eslint/parser',
-  extends: ['eslint:recommended', 'plugin:prettier/recommended', 'plugin:react-hooks/recommended'],
+  extends: ['eslint:recommended', 'plugin:prettier/recommended', 'plugin:react-hooks/recommended', 'plugin:storybook/recommended'],
   plugins: ['babel', 'prettier', 'react', 'enzyme-deprecation'],
   rules: {
     'valid-jsdoc': 0,

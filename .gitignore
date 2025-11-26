@@ -43,3 +43,6 @@ npm-debug.log
 .netlify
 meta.json
 .env
+
+*storybook.log
+storybook-static

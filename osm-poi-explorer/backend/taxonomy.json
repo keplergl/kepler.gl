@@ -1,0 +1,144 @@
+{
+    "Food": {
+        "color": [
+            255,
+            153,
+            31
+        ],
+        "tags": {
+            "amenity": [
+                "restaurant",
+                "cafe",
+                "fast_food",
+                "bar",
+                "pub",
+                "ice_cream",
+                "food_court"
+            ],
+            "shop": [
+                "bakery",
+                "supermarket",
+                "convenience",
+                "alcohol",
+                "beverages"
+            ]
+        }
+    },
+    "Health": {
+        "color": [
+            255,
+            80,
+            80
+        ],
+        "tags": {
+            "amenity": [
+                "hospital",
+                "clinic",
+                "pharmacy",
+                "doctors",
+                "dentist"
+            ],
+            "healthcare": [
+                "hospital",
+                "clinic",
+                "pharmacy"
+            ]
+        }
+    },
+    "Transport": {
+        "color": [
+            50,
+            100,
+            255
+        ],
+        "tags": {
+            "amenity": [
+                "fuel",
+                "parking",
+                "bicycle_parking",
+                "bus_station",
+                "taxi"
+            ],
+            "railway": [
+                "station",
+                "subway_entrance"
+            ],
+            "public_transport": [
+                "station",
+                "stop_position"
+            ]
+        }
+    },
+    "Education": {
+        "color": [
+            100,
+            200,
+            100
+        ],
+        "tags": {
+            "amenity": [
+                "school",
+                "university",
+                "college",
+                "kindergarten",
+                "library"
+            ]
+        }
+    },
+    "Entertainment": {
+        "color": [
+            200,
+            100,
+            200
+        ],
+        "tags": {
+            "amenity": [
+                "cinema",
+                "theatre",
+                "arts_centre",
+                "nightclub",
+                "casino"
+            ],
+            "leisure": [
+                "park",
+                "playground",
+                "sports_centre",
+                "stadium"
+            ]
+        }
+    },
+    "Shopping": {
+        "color": [
+            255,
+            200,
+            100
+        ],
+        "tags": {
+            "shop": [
+                "mall",
+                "department_store",
+                "clothes",
+                "electronics",
+                "books",
+                "gift"
+            ]
+        }
+    },
+    "Tourism": {
+        "color": [
+            100,
+            200,
+            255
+        ],
+        "tags": {
+            "tourism": [
+                "hotel",
+                "motel",
+                "hostel",
+                "museum",
+                "attraction",
+                "viewpoint"
+            ]
+        }
+    }
+}

@@ -1,135 +1,154 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="UTF-8" />
-    <title>Kepler.gl embedded map</title>
 
-    <!--Uber Font-->
-    <link
-      rel="stylesheet"
-      href="https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/uber-fonts/4.0.0/superfine.css"
-    />
+<head>
+  <meta charset="UTF-8" />
+  <title>Kepler.gl embedded map</title>
 
-    <!--MapBox css-->
-    <link href="https://api.tiles.mapbox.com/mapbox-gl-js/v1.1.1/mapbox-gl.css" rel="stylesheet" />
-    <link href="https://unpkg.com/maplibre-gl@^3/dist/maplibre-gl.css" rel="stylesheet" />
+  <!--Uber Font-->
+  <link rel="stylesheet" href="https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/uber-fonts/4.0.0/superfine.css" />
 
-    <!-- Load React/Redux -->
-    <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin></script>
-    <script
-      src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"
-      crossorigin
-    ></script>
-    <script src="https://unpkg.com/redux@4.2.1/dist/redux.js" crossorigin></script>
-    <script src="https://unpkg.com/react-redux@8.1.2/dist/react-redux.min.js" crossorigin></script>
-    <script
-      src="https://unpkg.com/styled-components@6.1.8/dist/styled-components.min.js"
-      crossorigin
-    ></script>
+  <!--MapBox css-->
+  <link href="https://api.tiles.mapbox.com/mapbox-gl-js/v1.1.1/mapbox-gl.css" rel="stylesheet" />
+  <link href="https://unpkg.com/maplibre-gl@^3/dist/maplibre-gl.css" rel="stylesheet" />
 
-    <!-- Load Kepler.gl-->
-    <script src="https://unpkg.com/kepler.gl@3.1.10/umd/keplergl.min.js"></script>
-    <!--If you want to load the build from filepath -->
-    <!--<script src="../../umd/keplergl.min.js"></script>-->
+  <!-- Load React/Redux -->
+  <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/redux@4.2.1/dist/redux.js" crossorigin></script>
+  <script src="https://unpkg.com/react-redux@8.1.2/dist/react-redux.min.js" crossorigin></script>
+  <script src="https://unpkg.com/styled-components@6.1.8/dist/styled-components.min.js" crossorigin></script>
 
-    <style type="text/css">
-      body {
-        margin: 0;
-        padding: 0;
-        overflow: hidden;
-      }
-    </style>
+  <!-- Load Kepler.gl-->
+  <script src="https://unpkg.com/kepler.gl@3.1.10/umd/keplergl.min.js"></script>
+  <!--If you want to load the build from filepath -->
+  <!--<script src="../../umd/keplergl.min.js"></script>-->
 
-    <!--MapBox token-->
-    <script>
-      /**
-       * Provide your MapBox Token (Used in pre 3.x kepler.gl)
-       **/
-      const MAPBOX_TOKEN = 'PROVIDE_MAPBOX_TOKEN';
-      const WARNING_MESSAGE =
-        'Please Provide a Mapbox Token in order to use Kepler.gl. Edit this file and fill out MAPBOX_TOKEN with your access key';
-    </script>
-  </head>
-  <body>
-    <!-- We will put our React component inside this div. -->
-    <div id="app">
-      <!-- Kepler.gl map will be placed here-->
-    </div>
+  <style type="text/css">
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+  </style>
 
-    <!-- Load our React component. -->
-    <script>
-      /* Validate Mapbox Token */
-      if ((MAPBOX_TOKEN || '') === '' || MAPBOX_TOKEN === 'PROVIDE_MAPBOX_TOKEN') {
-        alert(WARNING_MESSAGE);
-      }
+  <!--MapBox token-->
+  <script>
+    /**
+     * Provide your MapBox Token (Used in pre 3.x kepler.gl)
+     **/
+    const MAPBOX_TOKEN = 'pk.eyJ1Ijoib3JiaWNhZXUiLCJhIjoiY21pZGp2YXA3MDZkdzJpc2MyZXNwamVzbiJ9.7xBLpiQx2Fp1NH71JPgT6Q';
+    const WARNING_MESSAGE =
+      'Please Provide a Mapbox Token in order to use Kepler.gl. Edit this file and fill out MAPBOX_TOKEN with your access key';
+  </script>
+</head>
 
-      /** STORE **/
-      const reducers = (function createReducers(redux, keplerGl) {
-        return redux.combineReducers({
-          // mount keplerGl reducer
-          keplerGl: keplerGl.keplerGlReducer
-        });
-      })(Redux, KeplerGl);
+<body>
+  <!-- We will put our React component inside this div. -->
+  <div id="app">
+    <!-- Kepler.gl map will be placed here-->
+  </div>
 
-      const middleWares = (function createMiddlewares(keplerGl) {
-        return keplerGl.enhanceReduxMiddleware([
-          // Add other middlewares here
-        ]);
-      })(KeplerGl);
+  <!-- Load our React component. -->
+  <script>
+    /* Validate Mapbox Token */
+    if ((MAPBOX_TOKEN || '') === '' || MAPBOX_TOKEN === 'PROVIDE_MAPBOX_TOKEN') {
+      alert(WARNING_MESSAGE);
+    }
 
-      const enhancers = (function craeteEnhancers(redux, middles) {
-        return redux.applyMiddleware(...middles);
-      })(Redux, middleWares);
+    /** STORE **/
+    const reducers = (function createReducers(redux, keplerGl) {
+      return redux.combineReducers({
+        // mount keplerGl reducer
+        keplerGl: keplerGl.keplerGlReducer
+      });
+    })(Redux, KeplerGl);
 
-      const store = (function createStore(redux, enhancers) {
-        const initialState = {};
+    const middleWares = (function createMiddlewares(keplerGl) {
+      return keplerGl.enhanceReduxMiddleware([
+        // Add other middlewares here
+      ]);
+    })(KeplerGl);
 
-        return redux.createStore(reducers, initialState, redux.compose(enhancers));
-      })(Redux, enhancers);
-      /** END STORE **/
+    const enhancers = (function craeteEnhancers(redux, middles) {
+      return redux.applyMiddleware(...middles);
+    })(Redux, middleWares);
 
-      /** COMPONENTS **/
-      const KeplerElement = (function (react, keplerGl, mapboxToken) {
-        return function (props) {
-          return react.createElement(
-            'div',
-            {style: {position: 'absolute', left: 0, width: '100vw', height: '100vh'}},
-            react.createElement(keplerGl.KeplerGl, {
-              mapboxApiAccessToken: mapboxToken,
-              id: 'map',
-              width: props.width || 1200,
-              height: props.height || 800
+    const store = (function createStore(redux, enhancers) {
+      const initialState = {};
+
+      return redux.createStore(reducers, initialState, redux.compose(enhancers));
+    })(Redux, enhancers);
+    /** END STORE **/
+
+    /** COMPONENTS **/
+    const KeplerElement = (function (react, keplerGl, mapboxToken) {
+      return function (props) {
+        return react.createElement(
+          'div',
+          { style: { position: 'absolute', left: 0, width: '100vw', height: '100vh' } },
+          react.createElement(keplerGl.KeplerGl, {
+            mapboxApiAccessToken: mapboxToken,
+            id: 'map',
+            width: props.width || 1200,
+            height: props.height || 800
+          })
+        );
+      };
+    })(React, KeplerGl, MAPBOX_TOKEN);
+
+    const app = (function createReactReduxProvider(react, reactRedux, KeplerElement) {
+      return react.createElement(
+        reactRedux.Provider,
+        { store },
+        react.createElement(KeplerElement, null)
+      );
+    })(React, ReactRedux, KeplerElement);
+    /** END COMPONENTS **/
+
+    /** Render **/
+    (function render(react, reactDOM, app) {
+      const container = document.getElementById('app');
+      const root = reactDOM.createRoot(container);
+      root.render(app);
+    })(React, ReactDOM, app);
+  </script>
+
+  <!-- The next script will show how to interact directly with Kepler map store -->
+  <script>
+    /**
+     * Customize map.
+     * Interact with map store to customize data and behavior
+     */
+    /**
+     * Customize map.
+     * Interact with map store to customize data and behavior
+     */
+    (function customize(keplerGl, store) {
+      // Fetch data from our custom backend
+      fetch('/api/data')
+        .then(response => response.json())
+        .then(data => {
+          store.dispatch(
+            keplerGl.addDataToMap({
+              datasets: {
+                info: {
+                  label: 'Backend Data',
+                  id: 'backend_data'
+                },
+                data: data
+              },
+              options: {
+                centerMap: true,
+                readOnly: false
+              },
+              config: {}
             })
           );
-        };
-      })(React, KeplerGl, MAPBOX_TOKEN);
+        })
+        .catch(err => console.error('Error fetching data:', err));
+    })(KeplerGl, store);
+  </script>
+</body>
 
-      const app = (function createReactReduxProvider(react, reactRedux, KeplerElement) {
-        return react.createElement(
-          reactRedux.Provider,
-          {store},
-          react.createElement(KeplerElement, null)
-        );
-      })(React, ReactRedux, KeplerElement);
-      /** END COMPONENTS **/
-
-      /** Render **/
-      (function render(react, reactDOM, app) {
-        const container = document.getElementById('app');
-        const root = reactDOM.createRoot(container);
-        root.render(app);
-      })(React, ReactDOM, app);
-    </script>
-
-    <!-- The next script will show how to interact directly with Kepler map store -->
-    <script>
-      /**
-       * Customize map.
-       * Interact with map store to customize data and behavior
-       */
-      (function customize(keplerGl, store) {
-        // store.dispatch(keplerGl.toggleSplitMap());
-      })(KeplerGl, store);
-    </script>
-  </body>
 </html>
