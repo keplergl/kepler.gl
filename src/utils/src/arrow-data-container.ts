@@ -17,9 +17,9 @@ type ArrowDataContainerInput = {
 };
 
 /**
- * check if table is an ArrowTable object
- * @param table - object to check
- * @returns {boolean} - true if table is an ArrowTable object type guarded
+ * Checks if the provided object is an Arrow Table.
+ * @param data - The object to check.
+ * @returns {boolean} - Returns true if the object is an Arrow Table; acts as a type guard for arrow.Table.
  */
 export function isArrowTable(data: any): data is arrow.Table {
   return (

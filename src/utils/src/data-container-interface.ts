@@ -15,7 +15,7 @@ export type RangeOptions = {
 export interface DataContainerInterface {
   /**
    * Updates the data container with new data.
-   * @param updateData updated data, e.g. for arrow data container, it's an array of arrow columns; for row data container, it's an array of rows.
+   * @param updateData updated data, e.g. for arrow data container, it's an array of arrow columns or an arrow.Table; for row data container, it's an array of rows.
    */
   update?(updateData: any[] | arrow.Table): void;
 
