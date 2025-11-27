@@ -17,9 +17,16 @@ type ArrowDataContainerInput = {
 };
 
 /**
- * Checks if the provided object is an Arrow Table.
- * @param data - The object to check.
- * @returns {boolean} - Returns true if the object is an Arrow Table; acts as a type guard for arrow.Table.
+ * Check if table is an ArrowTable object.
+ *
+ * We use duck-typing instead of `instanceof arrow.Table` because DuckDB loads its own
+ * bundled version of Apache Arrow. When DuckDB creates Arrow tables, they are instances
+ * of DuckDB's Arrow.Table class, not the Arrow.Table class from our application's
+ * apache-arrow package. This causes `instanceof` checks to fail even though the objects
+ * are functionally equivalent Arrow tables.
+ *
+ * @param data - object to check
+ * @returns true if data is an ArrowTable object (type guarded)
  */
 export function isArrowTable(data: any): data is arrow.Table {
   return (
@@ -115,14 +122,10 @@ export class ArrowDataContainer implements DataContainerInterface {
     } else {
       this._cols = updateData;
     }
-    this._numColumns = this._cols.length;
-    this._numRows = this._cols[0].length;
-    this._numChunks = this._cols[0].data.length;
-    if (isArrow) {
-      this._arrowTable = updateData;
-    } else {
-      this._arrowTable = this._createTable();
-    }
+    this._numColumns = this._cols?.length ?? 0;
+    this._numRows = this._cols?.[0]?.length ?? 0;
+    this._numChunks = this._cols?.[0]?.data?.length ?? 0;
+    this._arrowTable = isArrow ? updateData : this._createTable();
 
     // cache column data to make valueAt() faster
     // this._colData = this._cols.map(c => c.toArray());
