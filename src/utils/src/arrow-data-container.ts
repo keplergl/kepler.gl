@@ -17,9 +17,16 @@ type ArrowDataContainerInput = {
 };
 
 /**
- * check if table is an ArrowTable object
- * @param table - object to check
- * @returns {boolean} - true if table is an ArrowTable object type guarded
+ * Check if table is an ArrowTable object.
+ *
+ * We use duck-typing instead of `instanceof arrow.Table` because DuckDB loads its own
+ * bundled version of Apache Arrow. When DuckDB creates Arrow tables, they are instances
+ * of DuckDB's Arrow.Table class, not the Arrow.Table class from our application's
+ * apache-arrow package. This causes `instanceof` checks to fail even though the objects
+ * are functionally equivalent Arrow tables.
+ *
+ * @param data - object to check
+ * @returns true if data is an ArrowTable object (type guarded)
  */
 export function isArrowTable(data: any): data is arrow.Table {
   return (
