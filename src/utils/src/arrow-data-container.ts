@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import { ALL_FIELD_TYPES } from '@kepler.gl/constants';
-import { ProtoDatasetField } from '@kepler.gl/types';
+import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
+import {ProtoDatasetField} from '@kepler.gl/types';
 import * as arrow from 'apache-arrow';
-import { console as globalConsole } from 'global/window';
-import { DATA_TYPES as AnalyzerDATA_TYPES } from 'type-analyzer';
+import {console as globalConsole} from 'global/window';
+import {DATA_TYPES as AnalyzerDATA_TYPES} from 'type-analyzer';
 
-import { DataContainerInterface, RangeOptions } from './data-container-interface';
-import { DataRow, SharedRowOptions } from './data-row';
+import {DataContainerInterface, RangeOptions} from './data-container-interface';
+import {DataRow, SharedRowOptions} from './data-row';
 
 type ArrowDataContainerInput = {
   cols: arrow.Vector[];
@@ -16,6 +16,22 @@ type ArrowDataContainerInput = {
   arrowTable?: arrow.Table;
 };
 
+/**
+ * check if table is an ArrowTable object
+ * @param table - object to check
+ * @returns {boolean} - true if table is an ArrowTable object type guarded
+ */
+export function isArrowTable(data: any): data is arrow.Table {
+  return (
+    typeof data === 'object' &&
+    data !== null &&
+    'schema' in data &&
+    'getChildAt' in data &&
+    typeof data.getChildAt === 'function' &&
+    'batches' in data &&
+    Array.isArray(data.batches)
+  );
+}
 
 /**
  * @param dataContainer
@@ -89,13 +105,24 @@ export class ArrowDataContainer implements DataContainerInterface {
     return this._arrowTable;
   }
 
-  update(updateData: arrow.Vector<any>[]) {
-    this._cols = updateData;
+  update(updateData: arrow.Vector<any>[] | arrow.Table) {
+    const isArrow = isArrowTable(updateData);
+    if (isArrow) {
+      this._cols = Array.from(
+        {length: updateData.numCols},
+        (_, i) => updateData.getChildAt(i) as arrow.Vector
+      ).filter(col => col);
+    } else {
+      this._cols = updateData;
+    }
     this._numColumns = this._cols.length;
     this._numRows = this._cols[0].length;
     this._numChunks = this._cols[0].data.length;
-
-    this._arrowTable = this._createTable();
+    if (isArrow) {
+      this._arrowTable = updateData;
+    } else {
+      this._arrowTable = this._createTable();
+    }
 
     // cache column data to make valueAt() faster
     // this._colData = this._cols.map(c => c.toArray());
