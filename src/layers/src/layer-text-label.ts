@@ -3,7 +3,7 @@
 
 import * as arrow from 'apache-arrow';
 import {getDistanceScales} from 'viewport-mercator-project';
-import {DataContainerInterface, ArrowDataContainer} from '@kepler.gl/utils';
+import {DataContainerInterface, ArrowDataContainer, isArrowTable} from '@kepler.gl/utils';
 import {notNullorUndefined} from '@kepler.gl/common-utils';
 import uniq from 'lodash/uniq';
 
@@ -82,7 +82,7 @@ export const formatTextLabelData = ({
       getText = oldLayerData.textLabels[i].getText;
       rebuildArrowTextVector = false;
     } else {
-      if (data instanceof arrow.Table) {
+      if (isArrowTable(data)) {
         // we don't filter out arrow tables,
         // so we use filteredIndex array instead
         const allLabels: string[] = [];
@@ -108,7 +108,7 @@ export const formatTextLabelData = ({
     // For now check here for ArrowTable, not ArrowDataContainer.
     if (
       rebuildArrowTextVector &&
-      data instanceof arrow.Table &&
+      isArrowTable(data) &&
       dataContainer instanceof ArrowDataContainer
     ) {
       getText = dataContainer.getColumn(tl.field.fieldIdx);

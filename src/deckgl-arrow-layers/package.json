@@ -32,6 +32,7 @@
   "dependencies": {
     "@geoarrow/geoarrow-js": "^0.3.0",
     "@kepler.gl/constants": "^3.2.2",
+    "@kepler.gl/utils": "^3.2.2",
     "@math.gl/core": "^4.0.0",
     "@math.gl/polygon": "^4.0.0",
     "@math.gl/types": "^4.0.0",

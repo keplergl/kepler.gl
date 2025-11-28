@@ -128,7 +128,10 @@ export {
   ArrowDataContainer,
   arrowDataTypeToAnalyzerDataType,
   arrowDataTypeToFieldType,
-  isArrowTable
+  isArrowTable,
+  isArrowFixedSizeList,
+  isArrowStruct,
+  isArrowVector
 } from './arrow-data-container';
 export type {DataContainerInterface} from './data-container-interface';
 export {

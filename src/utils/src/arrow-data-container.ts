@@ -41,6 +41,64 @@ export function isArrowTable(data: any): data is arrow.Table {
 }
 
 /**
+ * Check if data is an ArrowVector object.
+ * Uses duck-typing instead of `instanceof` to handle DuckDB's bundled Arrow version.
+ *
+ * @param data - object to check
+ * @returns true if data is an ArrowVector object (type guarded)
+ */
+export function isArrowVector(data: any): data is arrow.Vector {
+  return (
+    typeof data === 'object' &&
+    data !== null &&
+    'type' in data &&
+    'length' in data &&
+    typeof data.length === 'number' &&
+    'get' in data &&
+    typeof data.get === 'function' &&
+    'data' in data &&
+    Array.isArray(data.data)
+  );
+}
+
+/**
+ * Check if data is an Arrow FixedSizeList DataType.
+ * Uses duck-typing instead of `instanceof` to handle DuckDB's bundled Arrow version.
+ *
+ * @param data - object to check
+ * @returns true if data is an Arrow FixedSizeList DataType (type guarded)
+ */
+export function isArrowFixedSizeList(data: any): data is arrow.FixedSizeList {
+  return (
+    typeof data === 'object' &&
+    data !== null &&
+    'typeId' in data &&
+    'listSize' in data &&
+    typeof data.listSize === 'number' &&
+    'children' in data &&
+    Array.isArray(data.children)
+  );
+}
+
+/**
+ * Check if data is an Arrow Struct DataType.
+ * Uses duck-typing instead of `instanceof` to handle DuckDB's bundled Arrow version.
+ *
+ * @param data - object to check
+ * @returns true if data is an Arrow Struct DataType (type guarded)
+ */
+export function isArrowStruct(data: any): data is arrow.Struct {
+  return (
+    typeof data === 'object' &&
+    data !== null &&
+    'typeId' in data &&
+    'children' in data &&
+    Array.isArray(data.children) &&
+    !('listSize' in data)
+  );
+}
+
+/**
  * @param dataContainer
  * @param sharedRow
  */

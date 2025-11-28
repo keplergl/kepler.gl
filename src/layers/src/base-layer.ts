@@ -41,7 +41,8 @@ import {
   hexToRgb,
   isPlainObject,
   isDomainStops,
-  updateColorRangeByMatchingPalette
+  updateColorRangeByMatchingPalette,
+  isArrowTable
 } from '@kepler.gl/utils';
 import {generateHashId, toArray, notNullorUndefined} from '@kepler.gl/common-utils';
 import {Datasets, GpuFilter, KeplerTable} from '@kepler.gl/table';
@@ -1585,7 +1586,7 @@ class Layer implements KeplerLayer {
     const {data, mapState} = renderOpts;
     const {textLabel} = this.config;
 
-    const TextLayerClass = data.data instanceof arrow.Table ? GeoArrowTextLayer : TextLayer;
+    const TextLayerClass = isArrowTable(data.data) ? GeoArrowTextLayer : TextLayer;
 
     return data.textLabels.reduce((accu, d, i) => {
       if (d.getText) {
