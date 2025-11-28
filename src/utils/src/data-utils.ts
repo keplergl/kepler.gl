@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import * as arrow from 'apache-arrow';
 import assert from 'assert';
 import {format as d3Format} from 'd3-format';
 import moment from 'moment-timezone';
