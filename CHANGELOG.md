@@ -17,6 +17,9 @@ Ref: http://keepachangelog.com/en/0.3.0/
 
 ## [3.2.3] - Nov 28 2025
 
+- 2288bc324 fix: Allow passing arrow tables to ArrowDataContainer (#3247)
+- a0a4eefc1 fix: Yarn start failed (#3249)
+
 ## [3.2.2] - Nov 25 2025
 
 - f66ab3c61 fix: Allow passing arrow tables to ArrowDataContainer (#3242)
