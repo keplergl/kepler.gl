@@ -20,6 +20,7 @@ import {Field, Millisecond, ProtoDatasetField} from '@kepler.gl/types';
 
 import {snapToMarks} from './plot';
 import {isPlainObject} from './utils';
+import {isArrowVector} from './arrow-data-container';
 
 export type FieldFormatter = (value: any, field?: ProtoDatasetField) => string;
 
@@ -317,7 +318,7 @@ export const FIELD_DISPLAY_FORMAT: {
       ? `[${String(d)}]`
       : '',
   [ALL_FIELD_TYPES.geoarrow]: (data, field) => {
-    if (data instanceof arrow.Vector) {
+    if (isArrowVector(data)) {
       try {
         const encoding = field?.metadata?.get('ARROW:extension:name');
         if (encoding) {

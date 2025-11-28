@@ -9,6 +9,7 @@ import {assert} from '@deck.gl/core/typed';
 import * as arrow from 'apache-arrow';
 import * as ga from '@geoarrow/geoarrow-js';
 import {AccessorContext, AccessorFunction, _InternalAccessorContext} from '../types';
+import {isArrowFixedSizeList, isArrowStruct, isArrowVector} from '@kepler.gl/utils';
 
 export type TypedArray =
   | Uint8Array
@@ -45,14 +46,14 @@ function isDataInterleavedCoords(
   data: arrow.Data
 ): data is arrow.Data<arrow.FixedSizeList<arrow.Float64>> {
   // TODO: also check 2 or 3d? Float64?
-  return data.type instanceof arrow.FixedSizeList;
+  return isArrowFixedSizeList(data.type);
 }
 
 function isDataSeparatedCoords(
   data: arrow.Data
 ): data is arrow.Data<arrow.Struct<{x: arrow.Float64; y: arrow.Float64}>> {
   // TODO: also check child names? Float64?
-  return data.type instanceof arrow.Struct;
+  return isArrowStruct(data.type);
 }
 
 /**
@@ -162,7 +163,7 @@ export function assignAccessor(args: AssignAccessorProps) {
     return;
   }
 
-  if (propInput instanceof arrow.Vector) {
+  if (isArrowVector(propInput)) {
     const columnData = propInput.data[chunkIdx];
 
     if (arrow.DataType.isFixedSizeList(columnData)) {

@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import { ALL_FIELD_TYPES } from '@kepler.gl/constants';
-import { ProtoDatasetField } from '@kepler.gl/types';
+import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
+import {ProtoDatasetField} from '@kepler.gl/types';
 import * as arrow from 'apache-arrow';
-import { console as globalConsole } from 'global/window';
-import { DATA_TYPES as AnalyzerDATA_TYPES } from 'type-analyzer';
+import {console as globalConsole} from 'global/window';
+import {DATA_TYPES as AnalyzerDATA_TYPES} from 'type-analyzer';
 
-import { DataContainerInterface, RangeOptions } from './data-container-interface';
-import { DataRow, SharedRowOptions } from './data-row';
+import {DataContainerInterface, RangeOptions} from './data-container-interface';
+import {DataRow, SharedRowOptions} from './data-row';
 
 type ArrowDataContainerInput = {
   cols: arrow.Vector[];
@@ -16,6 +16,87 @@ type ArrowDataContainerInput = {
   arrowTable?: arrow.Table;
 };
 
+/**
+ * Check if table is an ArrowTable object.
+ *
+ * We use duck-typing instead of `instanceof arrow.Table` because DuckDB loads its own
+ * bundled version of Apache Arrow. When DuckDB creates Arrow tables, they are instances
+ * of DuckDB's Arrow.Table class, not the Arrow.Table class from our application's
+ * apache-arrow package. This causes `instanceof` checks to fail even though the objects
+ * are functionally equivalent Arrow tables.
+ *
+ * @param data - object to check
+ * @returns true if data is an ArrowTable object (type guarded)
+ */
+export function isArrowTable(data: any): data is arrow.Table {
+  return (
+    typeof data === 'object' &&
+    data !== null &&
+    'schema' in data &&
+    'getChildAt' in data &&
+    typeof data.getChildAt === 'function' &&
+    'batches' in data &&
+    Array.isArray(data.batches)
+  );
+}
+
+/**
+ * Check if data is an ArrowVector object.
+ * Uses duck-typing instead of `instanceof` to handle DuckDB's bundled Arrow version.
+ *
+ * @param data - object to check
+ * @returns true if data is an ArrowVector object (type guarded)
+ */
+export function isArrowVector(data: any): data is arrow.Vector {
+  return (
+    typeof data === 'object' &&
+    data !== null &&
+    'type' in data &&
+    'length' in data &&
+    typeof data.length === 'number' &&
+    'get' in data &&
+    typeof data.get === 'function' &&
+    'data' in data &&
+    Array.isArray(data.data)
+  );
+}
+
+/**
+ * Check if data is an Arrow FixedSizeList DataType.
+ * Uses duck-typing instead of `instanceof` to handle DuckDB's bundled Arrow version.
+ *
+ * @param data - object to check
+ * @returns true if data is an Arrow FixedSizeList DataType (type guarded)
+ */
+export function isArrowFixedSizeList(data: any): data is arrow.FixedSizeList {
+  return (
+    typeof data === 'object' &&
+    data !== null &&
+    'typeId' in data &&
+    'listSize' in data &&
+    typeof data.listSize === 'number' &&
+    'children' in data &&
+    Array.isArray(data.children)
+  );
+}
+
+/**
+ * Check if data is an Arrow Struct DataType.
+ * Uses duck-typing instead of `instanceof` to handle DuckDB's bundled Arrow version.
+ *
+ * @param data - object to check
+ * @returns true if data is an Arrow Struct DataType (type guarded)
+ */
+export function isArrowStruct(data: any): data is arrow.Struct {
+  return (
+    typeof data === 'object' &&
+    data !== null &&
+    'typeId' in data &&
+    'children' in data &&
+    Array.isArray(data.children) &&
+    !('listSize' in data)
+  );
+}
 
 /**
  * @param dataContainer
@@ -89,13 +170,20 @@ export class ArrowDataContainer implements DataContainerInterface {
     return this._arrowTable;
   }
 
-  update(updateData: arrow.Vector<any>[]) {
-    this._cols = updateData;
-    this._numColumns = this._cols.length;
-    this._numRows = this._cols[0].length;
-    this._numChunks = this._cols[0].data.length;
-
-    this._arrowTable = this._createTable();
+  update(updateData: arrow.Vector<any>[] | arrow.Table) {
+    const isArrow = isArrowTable(updateData);
+    if (isArrow) {
+      this._cols = Array.from(
+        {length: updateData.numCols},
+        (_, i) => updateData.getChildAt(i) as arrow.Vector
+      ).filter(col => col);
+    } else {
+      this._cols = updateData;
+    }
+    this._numColumns = this._cols?.length ?? 0;
+    this._numRows = this._cols?.[0]?.length ?? 0;
+    this._numChunks = this._cols?.[0]?.data?.length ?? 0;
+    this._arrowTable = isArrow ? updateData : this._createTable();
 
     // cache column data to make valueAt() faster
     // this._colData = this._cols.map(c => c.toArray());

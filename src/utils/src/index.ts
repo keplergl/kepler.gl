@@ -127,7 +127,11 @@ export * from './map-utils';
 export {
   ArrowDataContainer,
   arrowDataTypeToAnalyzerDataType,
-  arrowDataTypeToFieldType
+  arrowDataTypeToFieldType,
+  isArrowTable,
+  isArrowFixedSizeList,
+  isArrowStruct,
+  isArrowVector
 } from './arrow-data-container';
 export type {DataContainerInterface} from './data-container-interface';
 export {
