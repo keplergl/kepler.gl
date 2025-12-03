@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import React from 'react';
-import ReactDOM from 'react-dom';
+import {createRoot} from 'react-dom/client';
 import {Provider} from 'react-redux';
 import App from './app';
 
@@ -13,7 +13,9 @@ function renderRoot({id, store, ele}) {
     </Provider>
   );
 
-  ReactDOM.render(<Root />, ele);
+  // Use React 18 createRoot API
+  const root = createRoot(ele);
+  root.render(<Root />);
 }
 
 export default renderRoot;

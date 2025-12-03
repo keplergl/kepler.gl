@@ -71,6 +71,8 @@ function App() {
   const resizeDelay = () => window.setTimeout(handleResize, 500);
 
   useEffect(() => {
+    // Call handleResize on mount to set initial dimensions
+    handleResize();
     window.addEventListener('resize', resizeDelay);
     return () => window.removeEventListener('resize', resizeDelay);
   }, []);
