@@ -1,12 +1,15 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useEffect, useRef} from 'react';
+import {useEffect, useRef} from 'react';
 import {createRoot} from 'react-dom/client';
 import {Provider} from 'react-redux';
 import App from './app';
 import Window from 'global/window';
 import {addDataConfigToKeplerGl} from '../kepler.gl';
+
+// Store root instances to avoid creating multiple roots for the same element
+const rootInstances = new WeakMap();
 
 // Separate component to handle data loading after mount
 function DataLoader({store, onRenderComplete}) {
@@ -30,8 +33,13 @@ function DataLoader({store, onRenderComplete}) {
 }
 
 function renderRoot({id, store, ele, onRenderComplete}) {
-  // Use React 18 createRoot API
-  const root = createRoot(ele);
+  // Use React 18 createRoot API - reuse existing root if available
+  let root = rootInstances.get(ele);
+  if (!root) {
+    root = createRoot(ele);
+    rootInstances.set(ele, root);
+  }
+
   root.render(
     <Provider store={store}>
       <DataLoader store={store} onRenderComplete={onRenderComplete} />
