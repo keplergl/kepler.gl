@@ -15,5 +15,13 @@ Follow these steps to create a playback video of an event:
 
 ![custom y axis](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/h-playback-3.png "select filters")
 
+## Zoom & precision controls
+
+The enlarged timeline now lets you stay focused on the portion that matters:
+
+- Use the mouse wheel to resize the window under the cursor, and pinch (or hold <kbd>Ctrl</kbd> on Windows/Linux or <kbd>⌘</kbd> on macOS while scrolling) to zoom the full timeline.
+- A lightweight "Showing" bar appears whenever the full range is narrowed—click **Reset** to return to the original domain.
+- Hold <kbd>Ctrl</kbd> (Windows/Linux) or <kbd>⌘</kbd> (macOS) and press the arrow keys to pan left/right, with <kbd>Shift</kbd> for bigger steps.
+
 
 [Back to table of contents](README.md)
