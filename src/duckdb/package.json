@@ -6,6 +6,23 @@
   "license": "MIT",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./components": {
+      "import": "./dist/components/index.js",
+      "require": "./dist/components/index.js",
+      "types": "./dist/components/index.d.ts"
+    },
+    "./table": {
+      "import": "./dist/table/duckdb-table-utils.js",
+      "require": "./dist/table/duckdb-table-utils.js",
+      "types": "./dist/table/duckdb-table-utils.d.ts"
+    }
+  },
   "keywords": [
     "duckdb"
   ],
