@@ -15,6 +15,10 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+## [3.2.4] - Dec 9 2025
+
+- ...
+
 ## [3.2.3] - Nov 28 2025
 
 - 2288bc324 fix: Allow passing arrow tables to ArrowDataContainer (#3247)
