@@ -8495,6 +8495,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@remix-run/router@npm:1.23.0":
+  version: 1.23.0
+  resolution: "@remix-run/router@npm:1.23.0"
+  checksum: 10c0/eaef5cb46a1e413f7d1019a75990808307e08e53a39d4cf69c339432ddc03143d725decef3d6b9b5071b898da07f72a4a57c4e73f787005fcf10162973d8d7d7
+  languageName: node
+  linkType: hard
+
 "@salte-auth/popup@npm:1.0.0-rc.2":
   version: 1.0.0-rc.2
   resolution: "@salte-auth/popup@npm:1.0.0-rc.2"
@@ -10635,16 +10642,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"create-react-class@npm:^15.5.1":
-  version: 15.7.0
-  resolution: "create-react-class@npm:15.7.0"
-  dependencies:
-    loose-envify: "npm:^1.3.1"
-    object-assign: "npm:^4.1.1"
-  checksum: 10c0/bce4b46e6d85b424cb50ca8089266c7664fcecfd81abaafb829680fae2e2e60dc6999cac88f5a16a38473ed284859f2328935a42fc5cd1b7cc48888fdd8363c9
-  languageName: node
-  linkType: hard
-
 "cross-env@npm:^6.0.3":
   version: 6.0.3
   resolution: "cross-env@npm:6.0.3"
@@ -12342,29 +12339,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"history@npm:^3.0.0":
-  version: 3.3.0
-  resolution: "history@npm:3.3.0"
-  dependencies:
-    invariant: "npm:^2.2.1"
-    loose-envify: "npm:^1.2.0"
-    query-string: "npm:^4.2.2"
-    warning: "npm:^3.0.0"
-  checksum: 10c0/30de5218421dd698718b93e6aeade58cacbfc9403ea336060ef3861f5b3478269785df9df7e0642e10832eedf33d770a08ccfab4407440535f2030e3e31b33be
-  languageName: node
-  linkType: hard
-
 "hoek@npm:4.2.1":
   version: 4.2.1
   resolution: "hoek@npm:4.2.1"
   checksum: 10c0/f799216a59cd059ffdb60a0ab6aae87f190606503951ba9cea53185dceae005a5ba3d935a4a356949cd4bb131b93aedcbf330d84d9aec45a5c6a9d03fe727130
-  languageName: node
-  linkType: hard
-
-"hoist-non-react-statics@npm:^2.3.1":
-  version: 2.5.5
-  resolution: "hoist-non-react-statics@npm:2.5.5"
-  checksum: 10c0/79c204446a61ad490cc9342b2deeedea5a17f03a5fc091f367b6c08f29387c8d5578634ebfb8733043422a5e1182b372893d63f8737ac4b75da3a2ec4a316162
   languageName: node
   linkType: hard
 
@@ -12617,7 +12595,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"invariant@npm:^2.2.1, invariant@npm:^2.2.4":
+"invariant@npm:^2.2.4":
   version: 2.2.4
   resolution: "invariant@npm:2.2.4"
   dependencies:
@@ -13302,7 +13280,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"loose-envify@npm:^1.0.0, loose-envify@npm:^1.1.0, loose-envify@npm:^1.2.0, loose-envify@npm:^1.3.1, loose-envify@npm:^1.4.0":
+"loose-envify@npm:^1.0.0, loose-envify@npm:^1.1.0, loose-envify@npm:^1.4.0":
   version: 1.4.0
   resolution: "loose-envify@npm:1.4.0"
   dependencies:
@@ -15152,16 +15130,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"query-string@npm:^4.2.2":
-  version: 4.3.4
-  resolution: "query-string@npm:4.3.4"
-  dependencies:
-    object-assign: "npm:^4.1.0"
-    strict-uri-encode: "npm:^1.0.0"
-  checksum: 10c0/6181c343074c2049fbbcde63f87c1da5d3a49c6e34c8d94a61d692e886e0b8cd1ae4a4be00b598112bb9c4cb819e423ed503a5d246e4d24ecb0990d8bb21570b
-  languageName: node
-  linkType: hard
-
 "queue-microtask@npm:^1.2.2":
   version: 1.2.3
   resolution: "queue-microtask@npm:1.2.3"
@@ -15560,28 +15528,27 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-router-redux@npm:^4.0.8":
-  version: 4.0.8
-  resolution: "react-router-redux@npm:4.0.8"
-  checksum: 10c0/01b1b2f6b350cd428424f3bdccf0e7ff4a37f8426074a941690e7fce2ef391cae95401d1903eb297e7ba58c2c8fc12e2e71c87b494e5983e16297d99211647fb
+"react-router-dom@npm:^6.22.1":
+  version: 6.30.1
+  resolution: "react-router-dom@npm:6.30.1"
+  dependencies:
+    "@remix-run/router": "npm:1.23.0"
+    react-router: "npm:6.30.1"
+  peerDependencies:
+    react: ">=16.8"
+    react-dom: ">=16.8"
+  checksum: 10c0/e9e1297236b0faa864424ad7d51c392fc6e118595d4dad4cd542fd217c479a81601a81c6266d5801f04f9e154de02d3b094fc22ccb544e755c2eb448fab4ec6b
   languageName: node
   linkType: hard
 
-"react-router@npm:3.2.5":
-  version: 3.2.5
-  resolution: "react-router@npm:3.2.5"
+"react-router@npm:6.30.1":
+  version: 6.30.1
+  resolution: "react-router@npm:6.30.1"
   dependencies:
-    create-react-class: "npm:^15.5.1"
-    history: "npm:^3.0.0"
-    hoist-non-react-statics: "npm:^2.3.1"
-    invariant: "npm:^2.2.1"
-    loose-envify: "npm:^1.2.0"
-    prop-types: "npm:^15.7.2"
-    react-is: "npm:^16.8.6"
-    warning: "npm:^3.0.0"
+    "@remix-run/router": "npm:1.23.0"
   peerDependencies:
-    react: ^0.14.0 || ^15.0.0 || ^16.0.0
-  checksum: 10c0/87687ac4ad414a93811ddfe1ac0c31207a79a297a8146def4de77c465f21162af9884c9a3aa874318fb4a68fc2f80f81fd0e85083da5f11f15497721528d6693
+    react: ">=16.8"
+  checksum: 10c0/0414326f2d8e0c107fb4603cf4066dacba6a1f6f025c6e273f003e177b2f18888aca3de06d9b5522908f0e41de93be1754c37e82aa97b3a269c4742c08e82539
   languageName: node
   linkType: hard
 
@@ -16104,8 +16071,7 @@ __metadata:
     react-intl: "npm:^6.3.0"
     react-redux: "npm:^8.0.5"
     react-resizable-panels: "npm:^2.1.7"
-    react-router: "npm:3.2.5"
-    react-router-redux: "npm:^4.0.8"
+    react-router-dom: "npm:^6.22.1"
     react-virtualized: "npm:^9.21.0"
     redux: "npm:^4.2.1"
     redux-actions: "npm:^2.2.1"
@@ -16502,13 +16468,6 @@ __metadata:
   version: 1.0.7
   resolution: "state-local@npm:1.0.7"
   checksum: 10c0/8dc7daeac71844452fafb514a6d6b6f40d7e2b33df398309ea1c7b3948d6110c57f112b7196500a10c54fdde40291488c52c875575670fb5c819602deca48bd9
-  languageName: node
-  linkType: hard
-
-"strict-uri-encode@npm:^1.0.0":
-  version: 1.1.0
-  resolution: "strict-uri-encode@npm:1.1.0"
-  checksum: 10c0/eb8a4109ba2588239787389313ba58ec49e043d4c64a1d44716defe5821a68ae49abe0cdefed9946ca9fc2a4af7ecf321da92422b0a67258ec0a3638b053ae62
   languageName: node
   linkType: hard
 
@@ -17508,15 +17467,6 @@ __metadata:
     "@mapbox/vector-tile": "npm:^1.3.1"
     pbf: "npm:^3.2.1"
   checksum: 10c0/a568801ae25f0ffe65ef697bf520c996c8a4067f73f355c0d5815238de90322c8ca207c61220206141cfe6f5b525de875b7eb26e22979a1b768b96d03b93dca7
-  languageName: node
-  linkType: hard
-
-"warning@npm:^3.0.0":
-  version: 3.0.0
-  resolution: "warning@npm:3.0.0"
-  dependencies:
-    loose-envify: "npm:^1.0.0"
-  checksum: 10c0/6a2a56ab3139d3927193d926a027e74e1449fa47cc692feea95f8a81a4bb5b7f10c312def94cce03f3b58cb26ba3247858e75d17d596451d2c483a62e8204705
   languageName: node
   linkType: hard
 
