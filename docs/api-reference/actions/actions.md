@@ -2,89 +2,89 @@
 
 ### Table of Contents
 
-- [forwardActions][1]
-  - [forwardTo][2]
-  - [isForwardAction][5]
-  - [unwrap][7]
-  - [wrapTo][9]
-- [ActionTypes][12]
-- [mapStyleActions][14]
-  - [addCustomMapStyle][15]
-  - [inputMapStyle][16]
-  - [loadCustomMapStyle][18]
-  - [loadMapStyleErr][20]
-  - [loadMapStyles][22]
-  - [mapConfigChange][24]
-  - [mapStyleChange][26]
-  - [requestMapStyles][28]
-  - [set3dBuildingColor][30]
-- [main][32]
-  - [addDataToMap][33]
-  - [keplerGlInit][36]
-  - [receiveMapConfig][38]
-  - [resetMapConfig][41]
-- [visStateActions][42]
-  - [addFilter][43]
-  - [addLayer][45]
-  - [applyCPUFilter][47]
-  - [enlargeFilter][49]
-  - [interactionConfigChange][51]
-  - [layerConfigChange][53]
-  - [layerTextLabelChange][55]
-  - [layerTypeChange][57]
-  - [layerVisConfigChange][59]
-  - [layerVisualChannelConfigChange][61]
-  - [loadFiles][63]
-  - [loadFilesErr][65]
-  - [onLayerClick][67]
-  - [onLayerHover][69]
-  - [onMapClick][71]
-  - [onMouseMove][72]
-  - [removeDataset][74]
-  - [removeFilter][76]
-  - [removeLayer][78]
-  - [reorderLayer][80]
-  - [setEditorMode][83]
-  - [setFilter][86]
-  - [setFilterPlot][88]
-  - [setMapInfo][90]
-  - [showDatasetTable][92]
-  - [toggleFilterAnimation][94]
-  - [toggleLayerForMap][96]
-  - [updateAnimationTime][98]
-  - [updateFilterAnimationSpeed][100]
-  - [updateLayerAnimationSpeed][102]
-  - [updateLayerBlending][104]
-  - [updateVisData][106]
-- [uiStateActions][108]
-  - [addNotification][109]
-  - [cleanupExportImage][111]
-  - [hideExportDropdown][112]
-  - [openDeleteModal][113]
-  - [removeNotification][115]
-  - [setExportData][117]
-  - [setExportDataType][118]
-  - [setExportFiltered][120]
-  - [setExportImageDataUri][122]
-  - [setExportImageSetting][124]
-  - [setExportSelectedDataset][126]
-  - [setUserMapboxAccessToken][128]
-  - [showExportDropdown][130]
-  - [startExportingImage][132]
-  - [toggleMapControl][133]
-  - [toggleModal][135]
-  - [toggleSidePanel][137]
-- [rootActions][139]
-  - [deleteEntry][140]
-  - [registerEntry][142]
-  - [renameEntry][144]
-- [mapStateActions][146]
-  - [fitBounds][147]
-  - [togglePerspective][150]
-  - [toggleSplitMap][152]
-  - [updateMap][155]
-- [layerColorUIChange][158]
-- [setExportMapFormat][160]
+- [forwardActions](#forwardactions)
+  - [forwardTo](#forwardto)
+  - [isForwardAction](#isforwardaction)
+  - [unwrap](#unwrap)
+  - [wrapTo](#wrapto)
+- [ActionTypes](#actiontypes)
+- [mapStyleActions](#mapstyleactions)
+  - [addCustomMapStyle](#addcustommapstyle)
+  - [inputMapStyle](#inputmapstyle)
+  - [loadCustomMapStyle](#loadcustommapstyle)
+  - [loadMapStyleErr](#loadmapstyleerr)
+  - [loadMapStyles](#loadmapstyles)
+  - [mapConfigChange](#mapconfigchange)
+  - [mapStyleChange](#mapstylechange)
+  - [requestMapStyles](#requestmapstyles)
+  - [set3dBuildingColor](#set3dbuildingcolor)
+- [main](#main)
+  - [addDataToMap](#adddatatomap)
+  - [keplerGlInit](#keplerglinit)
+  - [receiveMapConfig](#receivemapconfig)
+  - [resetMapConfig](#resetmapconfig)
+- [visStateActions](#visstateactions)
+  - [addFilter](#addfilter)
+  - [addLayer](#addlayer)
+  - [applyCPUFilter](#applycpufilter)
+  - [enlargeFilter](#enlargefilter)
+  - [interactionConfigChange](#interactionconfigchange)
+  - [layerConfigChange](#layerconfigchange)
+  - [layerTextLabelChange](#layertextlabelchange)
+  - [layerTypeChange](#layertypechange)
+  - [layerVisConfigChange](#layervisconfigchange)
+  - [layerVisualChannelConfigChange](#layervisualchannelconfigchange)
+  - [loadFiles](#loadfiles)
+  - [loadFilesErr](#loadfileserr)
+  - [onLayerClick](#onlayerclick)
+  - [onLayerHover](#onlayerhover)
+  - [onMapClick](#onmapclick)
+  - [onMouseMove](#onmousemove)
+  - [removeDataset](#removedataset)
+  - [removeFilter](#removefilter)
+  - [removeLayer](#removelayer)
+  - [reorderLayer](#reorderlayer)
+  - [setEditorMode](#seteditormode)
+  - [setFilter](#setfilter)
+  - [setFilterPlot](#setfilterplot)
+  - [setMapInfo](#setmapinfo)
+  - [showDatasetTable](#showdatasettable)
+  - [toggleFilterAnimation](#togglefilteranimation)
+  - [toggleLayerForMap](#togglelayerformap)
+  - [updateAnimationTime](#updateanimationtime)
+  - [updateFilterAnimationSpeed](#updatefilteranimationspeed)
+  - [updateLayerAnimationSpeed](#updatelayeranimationspeed)
+  - [updateLayerBlending](#updatelayerblending)
+  - [updateVisData](#updatevisdata)
+- [uiStateActions](#uistateactions)
+  - [addNotification](#addnotification)
+  - [cleanupExportImage](#cleanupexportimage)
+  - [hideExportDropdown](#hideexportdropdown)
+  - [openDeleteModal](#opendeletemodal)
+  - [removeNotification](#removenotification)
+  - [setExportData](#setexportdata)
+  - [setExportDataType](#setexportdatatype)
+  - [setExportFiltered](#setexportfiltered)
+  - [setExportImageDataUri](#setexportimagedatauri)
+  - [setExportImageSetting](#setexportimagesetting)
+  - [setExportSelectedDataset](#setexportselecteddataset)
+  - [setUserMapboxAccessToken](#setusermapboxaccesstoken)
+  - [showExportDropdown](#showexportdropdown)
+  - [startExportingImage](#startexportingimage)
+  - [toggleMapControl](#togglemapcontrol)
+  - [toggleModal](#togglemodal)
+  - [toggleSidePanel](#togglesidepanel)
+- [rootActions](#rootactions)
+  - [deleteEntry](#deleteentry)
+  - [registerEntry](#registerentry)
+  - [renameEntry](#renameentry)
+- [mapStateActions](#mapstateactions)
+  - [fitBounds](#fitbounds)
+  - [togglePerspective](#toggleperspective)
+  - [toggleSplitMap](#togglesplitmap)
+  - [updateMap](#updatemap)
+- [layerColorUIChange](#layercoloruichange)
+- [setExportMapFormat](#setexportmapformat)
 
 ## forwardActions
 
@@ -175,7 +175,8 @@ A forward action looks like this
 **Parameters**
 
 - `id` **[string][162]** The id to forward to
-- `action` **[Object][164]** the action object {type: string, payload: \*}
+<!-- TODO: update this indranildeveloper -->
+- `action` **[Object][164]** the action object `{type: string, payload: \*}`
 
 **Examples**
 
@@ -237,7 +238,10 @@ hiding and showing map layers, user input of custom map style url.
 Add map style from user input to reducer and set it to current style
 This action is called when user click confirm after putting in a valid style url in the custom map style dialog.
 It should not be called from outside kepler.gl without a valid `inputStyle` in the `mapStyle` reducer.
-param {void}
+
+<!-- TODO: update this indranildeveloper -->
+
+param `{void}`
 
 - **ActionTypes**: [`ActionTypes.ADD_CUSTOM_MAP_STYLE`][12]
 - **Updaters**: [`mapStyleUpdaters.addCustomMapStyleUpdater`][166]
@@ -377,7 +381,7 @@ to match the `info.id` of your dataset to the `dataId` in each `layer`, `filter`
     - `data.options.readOnly` **[boolean][165]** `default: false` if `readOnly` is set to `true`
       the left setting panel will be hidden
     - `data.options.keepExistingConfig` **[boolean][165]** whether to keep exiting map data and associated layer filter interaction config `default: false`.
-  - `data.config` **[Object][164]** this object will contain the full kepler.gl instance configuration {mapState, mapStyle, visState}
+  - `data.config` **[Object][164]** this object will contain the full kepler.gl instance configuration `{mapState, mapStyle, visState}`
 
 **Examples**
 
@@ -508,8 +512,8 @@ Add a new filter
 **Parameters**
 
 - `dataId` **[string][162]** dataset `id` this new filter is associated with
-
-Returns **{type: ActionTypes.ADD_FILTER, dataId: dataId}**
+  <!-- TODO: update this indranildeveloper -->
+  Returns **`{type: ActionTypes.ADD_FILTER, dataId: dataId}`**
 
 ### addLayer
 
@@ -521,8 +525,8 @@ Add a new layer
 **Parameters**
 
 - `props` **[Object][164]** new layer props
-
-Returns **{type: ActionTypes.ADD_LAYER, props: props}**
+    <!-- TODO: update this indranildeveloper -->
+  Returns **`{type: ActionTypes.ADD_LAYER, props: props}`**
 
 ### applyCPUFilter
 
@@ -534,8 +538,8 @@ Trigger CPU filter of selected dataset
 **Parameters**
 
 - `dataId` **([string][162] | Arrary&lt;[string][162]>)** single dataId or an array of dataIds
-
-Returns **{type: ActionTypes.APPLY_CPU_FILTER, dataId: [string][162]}**
+    <!-- TODO: update this indranildeveloper -->
+  Returns **`{type: ActionTypes.APPLY_CPU_FILTER, dataId: [string][162]}`**
 
 ### enlargeFilter
 
@@ -547,8 +551,8 @@ Show larger time filter at bottom for time playback (apply to time filter only)
 **Parameters**
 
 - `idx` **[Number][188]** index of filter to enlarge
-
-Returns **{type: ActionTypes.ENLARGE_FILTER, idx: idx}**
+    <!-- TODO: update this indranildeveloper -->
+  Returns **`{type: ActionTypes.ENLARGE_FILTER, idx: idx}`**
 
 ### interactionConfigChange
 
@@ -560,8 +564,8 @@ Update `interactionConfig`
 **Parameters**
 
 - `config` **[Object][164]** new config as key value map: `{tooltip: {enabled: true}}`
-
-Returns **{type: ActionTypes.INTERACTION_CONFIG_CHANGE, config: config}**
+    <!-- TODO: update this indranildeveloper -->
+  Returns **`{type: ActionTypes.INTERACTION_CONFIG_CHANGE, config: config}`**
 
 ### layerConfigChange
 
@@ -574,8 +578,8 @@ Update layer base config: dataId, label, column, isVisible
 
 - `oldLayer` **[Object][164]** layer to be updated
 - `newConfig` **[Object][164]** new config
-
-Returns **{type: ActionTypes.LAYER_CONFIG_CHANGE, oldLayer: oldLayer, newConfig: newConfig}**
+    <!-- TODO: update this indranildeveloper -->
+  Returns **`{type: ActionTypes.LAYER_CONFIG_CHANGE, oldLayer: oldLayer, newConfig: newConfig}`**
 
 ### layerTextLabelChange
 
@@ -602,8 +606,8 @@ Update layer type. Previews layer config will be copied if applicable.
 
 - `oldLayer` **[Object][164]** layer to be updated
 - `newType` **[string][162]** new type
-
-Returns **{type: ActionTypes.LAYER_TYPE_CHANGE, oldLayer: oldLayer, newType: newType}**
+  <!-- TODO: update this indranildeveloper -->
+  Returns **`{type: ActionTypes.LAYER_TYPE_CHANGE, oldLayer: oldLayer, newType: newType}`**
 
 ### layerVisConfigChange
 
@@ -616,8 +620,8 @@ Update layer `visConfig`
 
 - `oldLayer` **[Object][164]** layer to be updated
 - `newVisConfig` **[Object][164]** new visConfig as a key value map: e.g. `{opacity: 0.8}`
-
-Returns **{type: ActionTypes.LAYER_VIS_CONFIG_CHANGE, oldLayer: oldLayer, newVisConfig: newVisConfig}**
+  <!-- TODO: update this indranildeveloper -->
+  Returns **`{type: ActionTypes.LAYER_VIS_CONFIG_CHANGE, oldLayer: oldLayer, newVisConfig: newVisConfig}`**
 
 ### layerVisualChannelConfigChange
 
@@ -631,8 +635,8 @@ Update layer visual channel
 - `oldLayer` **[Object][164]** layer to be updated
 - `newConfig` **[Object][164]** new visual channel config
 - `channel` **[string][162]** channel to be updated
-
-Returns **{type: ActionTypes.LAYER_VISUAL_CHANNEL_CHANGE, oldLayer: oldLayer, newConfig: newConfig, channel: channel}**
+  <!-- TODO: update this indranildeveloper -->
+  Returns **`{type: ActionTypes.LAYER_VISUAL_CHANNEL_CHANGE, oldLayer: oldLayer, newConfig: newConfig, channel: channel}`**
 
 ### loadFiles
 
@@ -644,8 +648,8 @@ Trigger file loading dispatch `addDataToMap` if succeed, or `loadFilesErr` if fa
 **Parameters**
 
 - `files` **[Array][174]&lt;[Object][164]>** array of fileblob
-
-Returns **{type: ActionTypes.LOAD_FILES, files: any}**
+  <!-- TODO: update this indranildeveloper -->
+  Returns **`{type: ActionTypes.LOAD_FILES, files: any}`**
 
 ### loadFilesErr
 
@@ -657,8 +661,8 @@ Trigger loading file error
 **Parameters**
 
 - `error` **any**
-
-Returns **{type: ActionTypes.LOAD_FILES_ERR, error: [Object][164]}**
+  <!-- TODO: update this indranildeveloper -->
+  Returns **`{type: ActionTypes.LOAD_FILES_ERR, error: [Object][164]}`**
 
 ### onLayerClick
 
@@ -670,8 +674,8 @@ Trigger layer click event with clicked object
 **Parameters**
 
 - `info` **[Object][164]** Object clicked, returned by deck.gl
-
-Returns **{type: ActionTypes.LAYER_CLICK, info: info}**
+  <!-- TODO: update this indranildeveloper -->
+  Returns **`{type: ActionTypes.LAYER_CLICK, info: info}`**
 
 ### onLayerHover
 
@@ -683,8 +687,8 @@ Trigger layer hover event with hovered object
 **Parameters**
 
 - `info` **[Object][164]** Object hovered, returned by deck.gl
-
-Returns **{type: ActionTypes.LAYER_HOVER, info: info}**
+  <!-- TODO: update this indranildeveloper -->
+  Returns **`{type: ActionTypes.LAYER_HOVER, info: info}`**
 
 ### onMapClick
 
@@ -692,8 +696,8 @@ Trigger map click event, unselect clicked object
 
 - **ActionTypes**: [`ActionTypes.MAP_CLICK`][12]
 - **Updaters**: [`visStateUpdaters.mapClickUpdater`][201]
-
-Returns **{type: ActionTypes.MAP_CLICK}**
+  <!-- TODO: update this indranildeveloper -->
+  Returns **`{type: ActionTypes.MAP_CLICK}`**
 
 ### onMouseMove
 
@@ -707,8 +711,8 @@ React-map-gl MapLayerMouseEvent
 **Parameters**
 
 - `evt` **[Object][164]** MapLayerMouseEvent
-
-Returns **{type: ActionTypes.MAP_CLICK}**
+  <!-- TODO: update this indranildeveloper -->
+  Returns **`{type: ActionTypes.MAP_CLICK}`**
 
 ### removeDataset
 
@@ -721,7 +725,7 @@ Remove a dataset and all layers, filters, tooltip configs that based on it
 
 - `key` **[string][162]** dataset id
 
-Returns **{type: ActionTypes.REMOVE_DATASET, key: key}**
+Returns **`{type: ActionTypes.REMOVE_DATASET, key: key}`**
 
 ### removeFilter
 
@@ -733,8 +737,8 @@ Remove a filter from `visState.filters`, once a filter is removed, data will be 
 **Parameters**
 
 - `idx` **[Number][188]** idx of filter to be removed
-
-Returns **{type: ActionTypes.REMOVE_FILTER, idx: idx}**
+  <!-- TODO: update this indranildeveloper -->
+  Returns **`{type: ActionTypes.REMOVE_FILTER, idx: idx}`**
 
 ### removeLayer
 
@@ -746,8 +750,8 @@ Remove a layer
 **Parameters**
 
 - `idx` **[Number][188]** idx of layer to be removed
-
-Returns **{type: ActionTypes.REMOVE_LAYER, idx: idx}**
+  <!-- TODO: update this indranildeveloper -->
+  Returns **`{type: ActionTypes.REMOVE_LAYER, idx: idx}`**
 
 ### reorderLayer
 
@@ -768,7 +772,9 @@ Reorder layer, order is an array of layer indexes, index 0 will be the one at th
 this.props.dispatch(reorderLayer([1, 0, 2, 3]));
 ```
 
-Returns **{type: ActionTypes.REORDER_LAYER, order: order}**
+<!-- TODO: update this indranildeveloper -->
+
+Returns **`{type: ActionTypes.REORDER_LAYER, order: order}`**
 
 ### setEditorMode
 
@@ -803,8 +809,8 @@ Update filter property
 - `prop` **[string][162]** `prop` of filter, e,g, `dataId`, `name`, `value`
 - `value` **any** new value
 - `valueIndex` **[Number][188]** array properties like dataset require index in order to improve performance
-
-Returns **{type: ActionTypes.SET_FILTER, idx: idx, prop: prop, value: value}**
+  <!-- TODO: update this indranildeveloper -->
+  Returns **`{type: ActionTypes.SET_FILTER, idx: idx, prop: prop, value: value}`**
 
 ### setFilterPlot
 
@@ -817,8 +823,8 @@ Set the property of a filter plot
 
 - `idx` **[Number][188]**
 - `newProp` **[Object][164]** key value mapping of new prop `{yAxis: 'histogram'}`
-
-Returns **{type: ActionTypes.SET_FILTER_PLOT, idx: any, newProp: any}**
+  <!-- TODO: update this indranildeveloper -->
+  Returns **`{type: ActionTypes.SET_FILTER_PLOT, idx: any, newProp: any}`**
 
 ### setMapInfo
 
@@ -832,8 +838,8 @@ Set the property of a filter plot
 - `info`
 - `idx` **[Number][188]**
 - `newProp` **[Object][164]** key value mapping of new prop `{yAxis: 'histogram'}`
-
-Returns **{type: ActionTypes.SET_FILTER_PLOT, idx: any, newProp: any}**
+  <!-- TODO: update this indranildeveloper -->
+  Returns **`{type: ActionTypes.SET_FILTER_PLOT, idx: any, newProp: any}`**
 
 ### showDatasetTable
 
@@ -845,8 +851,8 @@ Display dataset table in a modal
 **Parameters**
 
 - `dataId` **[string][162]** dataset id to show in table
-
-Returns **{type: ActionTypes.SHOW_DATASET_TABLE, dataId: dataId}**
+  <!-- TODO: update this indranildeveloper -->
+  Returns **`{type: ActionTypes.SHOW_DATASET_TABLE, dataId: dataId}`**
 
 ### toggleFilterAnimation
 
@@ -858,8 +864,8 @@ Start and end filter animation
 **Parameters**
 
 - `idx` **[Number][188]** idx of filter
-
-Returns **{type: ActionTypes.TOGGLE_FILTER_ANIMATION, idx: idx}**
+  <!-- TODO: update this indranildeveloper -->
+  Returns **`{type: ActionTypes.TOGGLE_FILTER_ANIMATION, idx: idx}`**
 
 ### toggleLayerForMap
 
@@ -872,8 +878,8 @@ Toggle visibility of a layer in a split map
 
 - `mapIndex` **[Number][188]** index of the split map
 - `layerId` **[string][162]** id of the layer
-
-Returns **{type: ActionTypes.TOGGLE_LAYER_FOR_MAP, mapIndex: any, layerId: any}**
+  <!-- TODO: update this indranildeveloper -->
+  Returns **`{type: ActionTypes.TOGGLE_LAYER_FOR_MAP, mapIndex: any, layerId: any}`**
 
 ### updateAnimationTime
 
@@ -885,8 +891,8 @@ Reset animation
 **Parameters**
 
 - `value` **[Number][188]** Current value of the slider
-
-Returns **{type: ActionTypes.UPDATE_ANIMATION_TIME, value: value}**
+  <!-- TODO: update this indranildeveloper -->
+  Returns **`{type: ActionTypes.UPDATE_ANIMATION_TIME, value: value}`**
 
 ### updateFilterAnimationSpeed
 
@@ -899,8 +905,8 @@ Change filter animation speed
 
 - `idx` **[Number][188]** `idx` of filter
 - `speed` **[Number][188]** `speed` to change it to. `speed` is a multiplier
-
-Returns **{type: ActionTypes.UPDATE_FILTER_ANIMATION_SPEED, idx: idx, speed: speed}**
+  <!-- TODO: update this indranildeveloper -->
+  Returns **`{type: ActionTypes.UPDATE_FILTER_ANIMATION_SPEED, idx: idx, speed: speed}`**
 
 ### updateLayerAnimationSpeed
 
@@ -912,8 +918,8 @@ update trip layer animation speed
 **Parameters**
 
 - `speed` **[Number][188]** `speed` to change it to. `speed` is a multiplier
-
-Returns **{type: ActionTypes.UPDATE_LAYER_ANIMATION_SPEED, speed: speed}**
+  <!-- TODO: update this indranildeveloper -->
+  Returns **`{type: ActionTypes.UPDATE_LAYER_ANIMATION_SPEED, speed: speed}`**
 
 ### updateLayerBlending
 
@@ -925,8 +931,8 @@ Update layer blending mode
 **Parameters**
 
 - `mode` **[string][162]** one of `additive`, `normal` and `subtractive`
-
-Returns **{type: ActionTypes.UPDATE_LAYER_BLENDING, mode: mode}**
+  <!-- TODO: update this indranildeveloper -->
+  Returns **`{type: ActionTypes.UPDATE_LAYER_BLENDING, mode: mode}`**
 
 ### updateVisData
 
@@ -951,9 +957,9 @@ Add new dataset to `visState`, with option to load a map config along with the d
     place the map view within the data points boundaries
   - `options.readOnly` **[boolean][165]** `default: false` if `readOnly` is set to `true`
     the left setting panel will be hidden
-- `config` **[Object][164]** this object will contain the full kepler.gl instance configuration {mapState, mapStyle, visState}
-
-Returns **{type: ActionTypes.UPDATE_VIS_DATA, datasets: datasets, options: options, config: config}**
+- `config` **[Object][164]** this object will contain the full kepler.gl instance configuration `{mapState, mapStyle, visState}`
+  <!-- TODO: update this indranildeveloper -->
+  Returns **`{type: ActionTypes.UPDATE_VIS_DATA, datasets: datasets, options: options, config: config}`**
 
 ## uiStateActions
 
@@ -1059,7 +1065,9 @@ Set `exportImage` settings: ratio, resolution, legend
 
 **Parameters**
 
-- `newSetting` **[Object][164]** {ratio: '1x'}
+<!-- TODO: update this indranildeveloper -->
+
+- `newSetting` **[Object][164]** `{ratio: '1x'}`
 
 ### setExportSelectedDataset
 

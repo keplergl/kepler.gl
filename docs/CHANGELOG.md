@@ -444,7 +444,8 @@ Ref: http://keepachangelog.com/en/0.3.0/
 - e5111dad [Bug] Fixes a number of issues preventing Kepler from building on fresh checkout (#2596)
 - 9341911e [Bug] Fix custom map style input (#2564)
 - 89180277 [chore] update deps; update doc; update version (#2568)
-- ff52dda6 [fix] jupyter widget: don't take over <title> (#1723)
+<!-- TODO: fix this indranildeveloper -->
+- ff52dda6 [fix] jupyter widget: don't take over `<title>` (#1723)
 - 739aed86 [deps] Bump ip from 1.1.5 to 1.1.9 (#2527)
 - 44526ebc [Feat] Kepler-Jupyter 0.3.4 with kepler v3 (#2565)
 - 6667a966 [Docs] Update node.js version in docs to v18 (#2558)
@@ -564,7 +565,7 @@ Ref: http://keepachangelog.com/en/0.3.0/
 - 357f77a8 [fix] text outlines are barely visible after upgrade to deck 8.9 (#2353)
 - 9d99f0b6 [chore] Upgrade deck.gl to 8.9 (#2352)
 - 032ad763 [fix] Layer column config: sometimes a suggested field pair will hard crash (#2351)
-- 56afb092 [fix] remove <img> from field name when show in tooltip (#2350)
+- 56afb092 [fix] remove <img /> from field name when show in tooltip (#2350)
 - a9181f69 [feat] Table widged: pass getRowCell as prop (#2349)
 - 1f169df1 [fix] Improve data table horizontal overflow and dataset tabs overflow (#2348)
 - f2559445 [chore] Bump react-virtualized (#2347)
