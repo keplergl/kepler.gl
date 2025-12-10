@@ -6,6 +6,23 @@
   "license": "MIT",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js"
+    },
+    "./components": {
+      "types": "./dist/components/index.d.ts",
+      "import": "./dist/components/index.js",
+      "require": "./dist/components/index.js"
+    },
+    "./table": {
+      "types": "./dist/table/index.d.ts",
+      "import": "./dist/table/index.js",
+      "require": "./dist/table/index.js"
+    }
+  },
   "keywords": [
     "duckdb"
   ],
@@ -18,7 +35,7 @@
     "build:umd": "NODE_OPTIONS=--openssl-legacy-provider webpack --config ./webpack/umd.js --progress --env.prod",
     "build:types": "tsc --project ./tsconfig.production.json",
     "prepublishOnly": "babel-node ../../scripts/license-header/bin --license ../../FILE-HEADER && yarn build && yarn build:types",
-    "stab": "mkdir -p dist && touch dist/index.js"
+    "stab": "mkdir -p dist/components dist/table && echo \"export * from '../src';\" > dist/index.js && echo \"export * from '../../src/components';\" > dist/components/index.js && echo \"export * from '../../src/table';\" > dist/table/index.js"
   },
   "files": [
     "dist",
