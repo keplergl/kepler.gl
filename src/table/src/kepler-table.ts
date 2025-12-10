@@ -211,6 +211,7 @@ class KeplerTable<F extends Field = Field> {
 
     const dataContainer = createDataContainer(dataContainerData, {
       fields: data.fields,
+      arrowTable: data.arrowTable,
       inputDataFormat
     });
 
@@ -240,7 +241,7 @@ class KeplerTable<F extends Field = Field> {
    * @param data - new data e.g. the arrow data with new batches loaded
    */
   async update(data: ProtoDataset['data']) {
-    const dataContainerData = data.cols ? data.cols : data.rows;
+    const dataContainerData = data.arrowTable ?? data.cols ?? data.rows;
     this.dataContainer.update?.(dataContainerData);
     this.allIndexes = this.dataContainer.getPlainIndex();
     this.filteredIndex = this.allIndexes;

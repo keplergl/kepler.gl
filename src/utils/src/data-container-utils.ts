@@ -7,10 +7,12 @@ import {IndexedDataContainer} from './indexed-data-container';
 
 import {DataContainerInterface} from './data-container-interface';
 import {ProtoDatasetField} from '@kepler.gl/types';
+import * as arrow from 'apache-arrow';
 
 export type DataContainerOptions = {
   inputDataFormat?: string; // one of DataForm
   fields?: ProtoDatasetField[];
+  arrowTable?: arrow.Table;
 };
 
 export const DataForm = {
@@ -37,7 +39,7 @@ export function createDataContainer(
   if (options.inputDataFormat === DataForm.ROWS_ARRAY) {
     return new RowDataContainer({rows: data, fields: options.fields});
   } else if (options.inputDataFormat === DataForm.COLS_ARRAY) {
-    return new ArrowDataContainer({cols: data, fields: options.fields});
+    return new ArrowDataContainer({cols: data, fields: options.fields, arrowTable: options.arrowTable});
   }
 
   throw Error('Failed to create a data container: not implemented format');

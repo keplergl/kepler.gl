@@ -19,7 +19,13 @@ import {
 } from '@kepler.gl/processors';
 import {KeplerTable} from '@kepler.gl/table';
 import {Field} from '@kepler.gl/types';
-import {getApplicationConfig, DatabaseAdapter, DatabaseConnection} from '@kepler.gl/utils';
+import {
+  getApplicationConfig,
+  DatabaseAdapter,
+  DatabaseConnection,
+  isArrowTable,
+  isArrowVector
+} from '@kepler.gl/utils';
 
 import {
   processCsvRowObject,
@@ -161,10 +167,9 @@ export class KeplerGlDuckDbTable extends KeplerTable {
     try {
       // 1) data.rows contains an arrow table created by Add to Map data from DuckDb query.
       // 2) arrow table is in cols & fields when a file is dragged & dropped into Add Data To Map dialog.
-      const arrowTable =
-        data.rows instanceof arrow.Table
-          ? data.rows
-          : restoreArrowTable(data.cols || [], data.fields, data.arrowSchema);
+      const arrowTable = isArrowTable(data.rows)
+        ? data.rows
+        : restoreArrowTable(data.cols || [], data.fields, data.arrowSchema);
 
       // remove unsupported extensions from an arrow table that throw exceptions in DuckDB.
       adjustedMetadata = removeUnsupportedExtensions(arrowTable);
@@ -215,7 +220,7 @@ export class KeplerGlDuckDbTable extends KeplerTable {
         format = DATASET_FORMATS.row;
       } else if (data.rows?.type === 'FeatureCollection') {
         format = DATASET_FORMATS.geojson;
-      } else if (data.cols?.[0] instanceof arrow.Vector) {
+      } else if (isArrowVector(data.cols?.[0])) {
         format = DATASET_FORMATS.arrow;
       }
     }

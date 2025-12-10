@@ -377,8 +377,11 @@ export const EditableColorRange: React.FC<EditableColorRangeProps> = ({
   editColorMap,
   editable
 }) => {
-  const noMinBound = !Number.isFinite(item.inputs[0]) && index === 0;
-  const noMaxBound = !Number.isFinite(item.inputs[1]) && isLast;
+  const hasInputs = Array.isArray(item?.inputs);
+  const leftInput = hasInputs ? item.inputs[0] : undefined;
+  const rightInput = hasInputs ? item.inputs[1] : undefined;
+  const noMinBound = !Number.isFinite(leftInput) && index === 0;
+  const noMaxBound = !Number.isFinite(rightInput) && isLast;
   const onChangeLeft = useCallback(
     val => {
       if (editable && editColorMap) editColorMap(parseFloat(val), index - 1);
@@ -395,7 +398,7 @@ export const EditableColorRange: React.FC<EditableColorRangeProps> = ({
   return (
     <StyledRangeInput>
       <ColorPaletteInput
-        value={noMinBound ? 'Less' : item.inputs[0].toString()}
+        value={noMinBound ? 'Less' : String(leftInput ?? '')}
         id={`color-palette-input-${index}-left`}
         width="50px"
         textAlign="end"
@@ -404,7 +407,7 @@ export const EditableColorRange: React.FC<EditableColorRangeProps> = ({
       />
       <Dash />
       <ColorPaletteInput
-        value={noMaxBound ? 'More' : item.inputs[1].toString()}
+        value={noMaxBound ? 'More' : String(rightInput ?? '')}
         id={`color-palette-input-${index}-right`}
         width="50px"
         textAlign="end"
@@ -468,7 +471,7 @@ export const CustomPaletteInput: React.FC<CustomPaletteInputProps> = ({
                 />
               </StyledColorHexInput>
             ) : null}
-            {isNumericColorBreaks(colorBreaks) ? (
+            {colorBreaks && index < colorBreaks.length && isNumericColorBreaks(colorBreaks) ? (
               <EditableColorRange
                 item={colorBreaks[index]}
                 isLast={index === colorBreaks.length - 1}
@@ -719,6 +722,9 @@ export const CategoricalSelector: React.FC<CategoricalSelectorProps> = ({
                     listAnchor: 'list__item__anchor'
                   }}
                   options={allValues}
+                  // add safe string casting for the Typeahead, so fuzzy search never receives non-strings, preventing the toLowerCase crash
+                  displayOption={o => String(o ?? '')}
+                  filterOption={(input, o) => String(o ?? '').includes(String(input ?? ''))}
                   placeholder={'Search'}
                   onOptionSelected={onOptionSelected}
                   customListComponent={ModifiedDropdownList}

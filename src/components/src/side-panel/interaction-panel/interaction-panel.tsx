@@ -35,6 +35,7 @@ interface InteractionPanelProps {
 
 const StyledInteractionPanel = styled.div`
   padding-bottom: 6px;
+  contain: layout paint;
 `;
 
 InteractionPanelFactory.deps = [TooltipConfigFactory, BrushConfigFactory];

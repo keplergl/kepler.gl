@@ -54,6 +54,7 @@ export type ProtoDataset = {
     fields: ProtoDatasetField[];
     rows: any[][];
     cols?: any[];
+    arrowTable?: arrow.Table;
   };
 
   // table-injected metadata

@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import * as arrow from 'apache-arrow';
 import {parseInBatches} from '@loaders.gl/core';
 import {JSONLoader, _JSONPath} from '@loaders.gl/json';
 import {CSVLoader} from '@loaders.gl/csv';
@@ -12,7 +11,8 @@ import {
   isPlainObject,
   generateHashIdFromString,
   getApplicationConfig,
-  getError
+  getError,
+  isArrowTable
 } from '@kepler.gl/utils';
 import {generateHashId} from '@kepler.gl/common-utils';
 import {DATASET_FORMATS} from '@kepler.gl/constants';
@@ -68,14 +68,7 @@ export type ProcessFileDataContent = {
   metadata?: Map<string, string>;
 };
 
-/**
- * check if table is an ArrowTable object
- * @param table - object to check
- * @returns {boolean} - true if table is an ArrowTable object type guarded
- */
-export function isArrowTable(table: any): table is arrow.Table {
-  return Boolean(table instanceof arrow.Table);
-}
+export {isArrowTable};
 
 /**
  * check if data is an ArrowData object, which is an array of RecordBatch

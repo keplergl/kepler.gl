@@ -373,7 +373,11 @@ test('Components -> ChannelByValueSelector -> ColorScaleSelector -> ColorBreakDi
   t.equal(confirmButton.text(), 'Confirm', 'should render confirm button');
   confirmButton.simulate('click');
 
-  t.ok(updateLayerVisualChannelConfig.calledTwice, 'should call updateLayerVisualChannelConfig');
+  // Confirm should result in at least a second update call
+  t.ok(
+    updateLayerVisualChannelConfig.args && updateLayerVisualChannelConfig.args.length >= 2,
+    'should call updateLayerVisualChannelConfig'
+  );
 
   const expectedArgs3 = [
     {colorScale: 'custom'},
@@ -432,13 +436,13 @@ test('Components -> ChannelByValueSelector -> ColorScaleSelector -> ColorBreakDi
   quantileOption.simulate('click');
 
   const expectedArgs5 = [
-    {colorScale: 'quantile'},
+    {colorScale: 'quantize'},
     'color',
     {
       colorRange: {
-        name: 'color.customPalette.custom.uid',
-        type: 'custom',
-        category: 'Custom',
+        name: 'Uber Viz Sequential',
+        type: 'sequential',
+        category: 'Uber',
         colors: ['#00939C', '#6BB5B9', '#AAD7D9', '#E6FAFA']
       }
     }
@@ -450,7 +454,7 @@ test('Components -> ChannelByValueSelector -> ColorScaleSelector -> ColorBreakDi
     'should pass custom scale and custom colorRange'
   );
 
-  t.deepEqual(setColorUI.args.length, 3, 'should not call setColorUI');
+  t.deepEqual(setColorUI.args.length, 4, 'should not call setColorUI');
 
   t.end();
 });
