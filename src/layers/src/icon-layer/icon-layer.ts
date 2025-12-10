@@ -111,6 +111,7 @@ export default class IconLayer extends Layer {
   getIconAccessor: (dataContainer: DataContainerInterface) => (d: any) => any;
   _layerInfoModal: () => JSX.Element;
   iconGeometry: IconGeometry;
+  iconGeometryVersion: number;
 
   declare visConfigSettings: IconLayerVisConfigSettings;
   declare config: IconLayerConfig;
@@ -131,6 +132,7 @@ export default class IconLayer extends Layer {
 
     this._layerInfoModal = IconInfoModalFactory(props.svgIcons);
     this.iconGeometry = props.iconGeometry || null;
+    this.iconGeometryVersion = 0;
 
     if (isTest()) {
       return;
@@ -222,10 +224,12 @@ export default class IconLayer extends Layer {
           console.error('Error fetching or parsing svg-icons.json:', err);
           // Fallback to empty geometry to allow default icon rendering
           this.iconGeometry = {};
+          this.iconGeometryVersion += 1;
         });
     } else {
       // No fetch available; set empty geometry so layer can render default icons
       this.iconGeometry = {};
+      this.iconGeometryVersion += 1;
     }
   }
 
@@ -237,6 +241,9 @@ export default class IconLayer extends Layer {
       }),
       {}
     );
+
+    // Increment version when SVG icons are loaded to trigger layer re-render
+    this.iconGeometryVersion += 1;
 
     this._layerInfoModal = IconInfoModalFactory(svgIcons);
   }
@@ -402,9 +409,14 @@ export default class IconLayer extends Layer {
       cullFace: GL.FRONT
     };
 
+    // Append geometry version to layer id so deck.gl treats it as new layer when geometry changes
+    const baseLayerId = defaultLayerProps.id || this.id;
+    const layerIdWithVersion = `${baseLayerId}_${this.iconGeometryVersion}`;
+
     return [
       new SvgIconLayer({
         ...defaultLayerProps,
+        id: layerIdWithVersion,
         ...brushingProps,
         ...layerProps,
         ...data,
@@ -422,6 +434,7 @@ export default class IconLayer extends Layer {
             // @ts-expect-error SvgIconLayerProps needs getIcon Field
             new SvgIconLayer({
               ...this.getDefaultHoverLayerProps(),
+              id: `${layerIdWithVersion}-hover`,
               ...layerProps,
               visible: defaultLayerProps.visible,
               data: [hoveredObject],
