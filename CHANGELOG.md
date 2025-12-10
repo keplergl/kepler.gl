@@ -17,7 +17,8 @@ Ref: http://keepachangelog.com/en/0.3.0/
 
 ## [3.2.4] - Dec 9 2025
 
-- ...
+- 82630dee3 fix: ensure icon layer render with the latest geometry (#3259)
+- 422c1b347 fix: Avoid Monaco AMD bundle when importing `@kepler.gl/duckdb` (#3255)
 
 ## [3.2.3] - Nov 28 2025
 
