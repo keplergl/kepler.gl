@@ -300,7 +300,11 @@ test('#IconLayer -> renderLayer', t => {
           3,
           'Should create 3 deck.gl layer when icon geometry is provided'
         );
-        const expectedLayerIds = ['test_layer_1', 'test_layer_1-accel', 'test_layer_1-attach'];
+        const expectedLayerIds = [
+          'test_layer_1_0',
+          'test_layer_1_0-accel',
+          'test_layer_1_0-attach'
+        ];
 
         t.deepEqual(
           deckLayers.map(l => l.id),
@@ -357,7 +361,11 @@ test('#IconLayer -> renderLayer', t => {
           3,
           'Should create 3 deck.gl layer when icon geometry is provided'
         );
-        const expectedLayerIds = ['test_layer_1', 'test_layer_1-accel', 'test_layer_1-attach'];
+        const expectedLayerIds = [
+          'test_layer_1_0',
+          'test_layer_1_0-accel',
+          'test_layer_1_0-attach'
+        ];
 
         t.deepEqual(
           deckLayers.map(l => l.id),
@@ -417,9 +425,9 @@ test('#IconLayer -> renderLayer', t => {
         t.deepEqual(
           deckLayers.map(l => l.id),
           [
-            'test_layer_1',
-            'test_layer_1-accel',
-            'test_layer_1-attach',
+            'test_layer_1_0',
+            'test_layer_1_0-accel',
+            'test_layer_1_0-attach',
             'test_layer_1-label-types',
             'test_layer_1-label-types-characters',
             'test_layer_1-label-has_result',
