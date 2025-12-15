@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useMemo} from 'react';
+import React, {useEffect, useMemo} from 'react';
 import throttle from 'lodash/throttle';
 import styled, {IStyledComponent} from 'styled-components';
 
@@ -121,6 +121,8 @@ export default function TimeRangeSliderFactory(
     } = props;
 
     const throttledOnchange = useMemo(() => throttle(onChange, 20), [onChange]);
+    useEffect(() => () => throttledOnchange.cancel(), [throttledOnchange]);
+
     const binsForInterval = useMemo(
       () => getTimeBinsForInterval(timeBins, plotType?.interval),
       [timeBins, plotType?.interval]
