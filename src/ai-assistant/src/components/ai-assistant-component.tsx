@@ -75,9 +75,7 @@ export function AiAssistantComponent() {
   const {temporaryPrompt, restartChat: libraryRestartChat} = useAssistant({...assistantProps, instructions});
   
   const restartChatRef = useRef(libraryRestartChat);
-  useEffect(() => {
-    restartChatRef.current = libraryRestartChat;
-  }, [libraryRestartChat]);
+  restartChatRef.current = libraryRestartChat;
 
   const generateIdeas = async () => {
     try {
