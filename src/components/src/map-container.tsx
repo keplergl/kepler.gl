@@ -525,6 +525,12 @@ export default function MapContainerFactory(
       } as Partial<LayerBaseConfig>);
     };
 
+    _onForceUpdate = () => {
+      // Force a map re-render by triggering a minimal map state update
+      const {mapStateActions, mapState, index} = this.props;
+      mapStateActions.updateMap({width: mapState.width, height: mapState.height}, index);
+    };
+
     _onLayerFilteredItemsChange = (idx, event) => {
       this.props.visStateActions.layerFilteredItemsChange(this.props.visState.layers[idx], event);
     };
@@ -841,7 +847,8 @@ export default function MapContainerFactory(
           onLayerHover: this._onLayerHover,
           onSetLayerDomain: this._onLayerSetDomain,
           onFilteredItemsChange: this._onLayerFilteredItemsChange,
-          onWMSFeatureInfo: this._onWMSFeatureInfo
+          onWMSFeatureInfo: this._onWMSFeatureInfo,
+          onForceUpdate: this._onForceUpdate
         },
         deckGlProps
       );

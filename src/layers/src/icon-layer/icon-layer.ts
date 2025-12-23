@@ -22,7 +22,8 @@ import {
   VisConfigNumber,
   VisConfigRange,
   Merge,
-  LayerColumn
+  LayerColumn,
+  BindedLayerCallbacks
 } from '@kepler.gl/types';
 
 export type IconLayerColumnsConfig = {
@@ -112,6 +113,7 @@ export default class IconLayer extends Layer {
   _layerInfoModal: () => JSX.Element;
   iconGeometry: IconGeometry;
   iconGeometryVersion: number;
+  protected forceUpdate: BindedLayerCallbacks['onForceUpdate'] = undefined;
 
   declare visConfigSettings: IconLayerVisConfigSettings;
   declare config: IconLayerConfig;
@@ -246,6 +248,9 @@ export default class IconLayer extends Layer {
     this.iconGeometryVersion += 1;
 
     this._layerInfoModal = IconInfoModalFactory(svgIcons);
+
+    // Trigger a map redraw so deck.gl picks up the new geometry
+    this.forceUpdate?.();
   }
 
   static findDefaultLayerProps({
@@ -361,7 +366,10 @@ export default class IconLayer extends Layer {
   }
 
   renderLayer(opts) {
-    const {data, gpuFilter, objectHovered, mapState, interactionConfig} = opts;
+    const {data, gpuFilter, objectHovered, mapState, interactionConfig, layerCallbacks} = opts;
+
+    // Store callback to trigger map redraw when icon geometry loads asynchronously
+    this.forceUpdate = layerCallbacks?.onForceUpdate;
 
     const radiusScale = this.getRadiusScaleByZoom(mapState);
 
