@@ -8,6 +8,19 @@ import type {BaseMapLibraryType} from '@kepler.gl/constants';
 
 import type {DatabaseAdapter} from './application-config-types';
 
+/**
+ * Detect if running with webpack build tool
+ * Webpack exposes __webpack_require__ global function
+ */
+function isWebpackBuild(): boolean {
+  try {
+    // @ts-ignore - __webpack_require__ is injected by webpack at runtime
+    return typeof __webpack_require__ !== 'undefined';
+  } catch {
+    return false;
+  }
+}
+
 export type MapLibInstance = MapLib<any>;
 export type GetMapRef = ReturnType<MapRef['getMap']>;
 
@@ -74,6 +87,10 @@ export type KeplerApplicationConfig = {
   // WMS layer config -- Experimental
   // WMS layer is under development and not ready for production use. Disabled by default.
   enableWMSLayer?: boolean;
+
+  // Image export config
+  /** Whether to apply fix for uglify error in dom-to-image (should be true for webpack builds, false for Vite) */
+  escapeXhtmlForWebpack?: boolean;
 };
 
 const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
@@ -126,7 +143,11 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
   rasterServerMaxPerServerRequests: 0,
 
   // WMS layer config
-  enableWMSLayer: true
+  enableWMSLayer: true,
+
+  // Image export config
+  // Default to true for webpack builds, false for other build tools (e.g., Vite)
+  escapeXhtmlForWebpack: isWebpackBuild()
 };
 
 const applicationConfig: Required<KeplerApplicationConfig> = DEFAULT_APPLICATION_CONFIG;
