@@ -9,7 +9,6 @@
 import Window from 'global/window';
 import document from 'global/document';
 import Console from 'global/console';
-import svgToMiniDataURI from 'mini-svg-data-uri';
 import {IMAGE_EXPORT_ERRORS} from '@kepler.gl/constants';
 
 import {
@@ -246,7 +245,7 @@ function makeSvgDataUri(node, width, height, escapeXhtmlForWebpack = true) {
     const foreignObject = `<foreignObject x="0" y="0" width="100%" height="100%">${xhtml}</foreignObject>`;
     const svgStr = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">${foreignObject}</svg>`;
 
-    // Use base64 encoding instead of svgToMiniDataURI
+    // Use base64 encoding
     // This avoids issues with URL encoding and works better with Electron's security restrictions
     const base64Svg =
       typeof Buffer !== 'undefined' && Buffer.from

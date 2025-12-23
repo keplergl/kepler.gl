@@ -56,7 +56,6 @@
     "mapbox-gl": "^1.13.1",
     "maplibre-gl": "^3.6.2",
     "maplibregl-mapbox-request-transformer": "^0.0.2",
-    "mini-svg-data-uri": "^1.0.3",
     "moment": "^2.10.6",
     "moment-timezone": "^0.5.35",
     "react": "^18.2.0",
