@@ -246,11 +246,15 @@ function makeSvgDataUri(node, width, height, escapeXhtmlForWebpack = true) {
     const foreignObject = `<foreignObject x="0" y="0" width="100%" height="100%">${xhtml}</foreignObject>`;
     const svgStr = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">${foreignObject}</svg>`;
 
-    // Optimizing SVGs in data URIs
-    // see https://codepen.io/tigt/post/optimizing-svgs-in-data-uris
-    // the best way of encoding SVG in a data: URI is data:image/svg+xml,[actual data].
-    // We don’t need the ;charset=utf-8 parameter because the given SVG is ASCII.
-    return svgToMiniDataURI(svgStr);
+    // Use base64 encoding instead of svgToMiniDataURI
+    // This avoids issues with URL encoding and works better with Electron's security restrictions
+    const base64Svg =
+      typeof Buffer !== 'undefined' && Buffer.from
+        ? Buffer.from(svgStr).toString('base64')
+        : Window.btoa(unescape(encodeURIComponent(svgStr)));
+    const dataUrl = `data:image/svg+xml;base64,${base64Svg}`;
+
+    return dataUrl;
   });
 }
 
