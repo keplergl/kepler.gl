@@ -10,7 +10,6 @@ import type {DatabaseAdapter} from './application-config-types';
 
 /**
  * Detect if running with webpack build tool
- * Webpack exposes __webpack_require__ global function
  */
 function isWebpackBuild(): boolean {
   try {
