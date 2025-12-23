@@ -12,12 +12,8 @@ import type {DatabaseAdapter} from './application-config-types';
  * Detect if running with webpack build tool
  */
 function isWebpackBuild(): boolean {
-  try {
-    // @ts-ignore - __webpack_require__ is injected by webpack at runtime
-    return typeof __webpack_require__ !== 'undefined';
-  } catch {
-    return false;
-  }
+  // @ts-ignore - __webpack_require__ is injected by webpack at runtime
+  return typeof __webpack_require__ !== 'undefined';
 }
 
 export type MapLibInstance = MapLib<any>;

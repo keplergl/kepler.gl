@@ -246,14 +246,23 @@ function makeSvgDataUri(node, width, height, escapeXhtmlForWebpack = true) {
     const svgStr = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">${foreignObject}</svg>`;
 
     // Use base64 encoding
-    // This avoids issues with URL encoding and works better with Electron's security restrictions
-    const base64Svg =
-      typeof Buffer !== 'undefined' && Buffer.from
-        ? Buffer.from(svgStr).toString('base64')
-        : Window.btoa(unescape(encodeURIComponent(svgStr)));
-    const dataUrl = `data:image/svg+xml;base64,${base64Svg}`;
-
-    return dataUrl;
+    let base64Svg: string;
+    if (typeof Buffer !== 'undefined' && Buffer.from) {
+      base64Svg = Buffer.from(svgStr, 'utf8').toString('base64');
+    } else if (typeof TextEncoder !== 'undefined') {
+      // Modern browsers: TextEncoder handles Unicode → UTF-8 bytes
+      // Must chunk to avoid call stack limits with large arrays
+      const bytes = new TextEncoder().encode(svgStr);
+      const CHUNK_SIZE = 8192;
+      let binary = '';
+      for (let i = 0; i < bytes.length; i += CHUNK_SIZE) {
+        binary += String.fromCharCode.apply(null, Array.from(bytes.slice(i, i + CHUNK_SIZE)));
+      }
+      base64Svg = Window.btoa(binary);
+    } else {
+      throw new Error('No base64 encoder found');
+    }
+    return `data:image/svg+xml;base64,${base64Svg}`;
   });
 }
 

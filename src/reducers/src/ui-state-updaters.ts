@@ -159,7 +159,9 @@ export const DEFAULT_EXPORT_IMAGE: ExportImage = {
   processing: false,
   error: false,
   // whether to apply fix for uglify error in dom-to-image (from application config, auto-detects build tool)
-  escapeXhtmlForWebpack: getApplicationConfig().escapeXhtmlForWebpack
+  get escapeXhtmlForWebpack() {
+    return getApplicationConfig().escapeXhtmlForWebpack;
+  }
 };
 
 export const DEFAULT_LOAD_FILES = {
