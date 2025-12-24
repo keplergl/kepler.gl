@@ -14,7 +14,12 @@ import {
   MAP_CONTROLS
 } from '@kepler.gl/constants';
 import {LOCALE_CODES} from '@kepler.gl/localization';
-import {createNotification, errorNotification, calculateExportImageSize} from '@kepler.gl/utils';
+import {
+  createNotification,
+  errorNotification,
+  calculateExportImageSize,
+  getApplicationConfig
+} from '@kepler.gl/utils';
 import {payload_, apply_, compose_} from './composer-helpers';
 
 import {
@@ -128,7 +133,7 @@ export const DEFAULT_MAP_CONTROLS: MapControls = (
  * @property imageDataUri Default: `''`,
  * @property exporting Default: `false`
  * @property error Default: `false`
- * @property escapeXhtmlForWebpack Default: `true`
+ * @property escapeXhtmlForWebpack Default: from application config (auto-detected: `true` for webpack)
  * @public
  */
 export const DEFAULT_EXPORT_IMAGE: ExportImage = {
@@ -153,8 +158,8 @@ export const DEFAULT_EXPORT_IMAGE: ExportImage = {
   // processing: used as loading indicator when export image is being produced
   processing: false,
   error: false,
-  // whether to apply fix for uglify error in dom-to-image (should be true for webpack builds)
-  escapeXhtmlForWebpack: true
+  // whether to apply fix for uglify error in dom-to-image (from application config, auto-detects build tool)
+  escapeXhtmlForWebpack: getApplicationConfig().escapeXhtmlForWebpack
 };
 
 export const DEFAULT_LOAD_FILES = {
