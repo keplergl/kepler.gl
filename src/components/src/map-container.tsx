@@ -525,6 +525,12 @@ export default function MapContainerFactory(
       } as Partial<LayerBaseConfig>);
     };
 
+    _onRedrawNeeded = (_idx: number) => {
+      // updateMapUpdater always returns a new state object reference, which triggers re-render
+      const {mapStateActions, index} = this.props;
+      mapStateActions.updateMap({}, index);
+    };
+
     _onLayerFilteredItemsChange = (idx, event) => {
       this.props.visStateActions.layerFilteredItemsChange(this.props.visState.layers[idx], event);
     };
@@ -841,7 +847,8 @@ export default function MapContainerFactory(
           onLayerHover: this._onLayerHover,
           onSetLayerDomain: this._onLayerSetDomain,
           onFilteredItemsChange: this._onLayerFilteredItemsChange,
-          onWMSFeatureInfo: this._onWMSFeatureInfo
+          onWMSFeatureInfo: this._onWMSFeatureInfo,
+          onRedrawNeeded: this._onRedrawNeeded
         },
         deckGlProps
       );
