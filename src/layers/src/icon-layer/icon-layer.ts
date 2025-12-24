@@ -113,7 +113,8 @@ export default class IconLayer extends Layer {
   _layerInfoModal: () => JSX.Element;
   iconGeometry: IconGeometry;
   iconGeometryVersion: number;
-  protected redrawNeeded: BindedLayerCallbacks['onRedrawNeeded'] = undefined;
+
+  redrawNeeded: BindedLayerCallbacks['onRedrawNeeded'] = undefined;
 
   declare visConfigSettings: IconLayerVisConfigSettings;
   declare config: IconLayerConfig;
