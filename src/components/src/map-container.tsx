@@ -525,7 +525,7 @@ export default function MapContainerFactory(
       } as Partial<LayerBaseConfig>);
     };
 
-    _onForceUpdate = () => {
+    _onRedrawNeeded = (_idx: number) => {
       // Force a map re-render by triggering a minimal map state update
       const {mapStateActions, mapState, index} = this.props;
       mapStateActions.updateMap({width: mapState.width, height: mapState.height}, index);
@@ -848,7 +848,7 @@ export default function MapContainerFactory(
           onSetLayerDomain: this._onLayerSetDomain,
           onFilteredItemsChange: this._onLayerFilteredItemsChange,
           onWMSFeatureInfo: this._onWMSFeatureInfo,
-          onForceUpdate: this._onForceUpdate
+          onRedrawNeeded: this._onRedrawNeeded
         },
         deckGlProps
       );

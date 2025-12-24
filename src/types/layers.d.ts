@@ -426,7 +426,7 @@ export type LayerCallbacks = {
       coordinate?: [number, number] | null;
     }
   ) => void;
-  onForceUpdate?: (idx: number) => void;
+  onRedrawNeeded?: (idx: number) => void;
 };
 
 export type BindedLayerCallbacks = {
@@ -437,7 +437,7 @@ export type BindedLayerCallbacks = {
     featureInfo: Array<{name: string; value: string}> | string | null,
     coordinate?: [number, number]
   ) => void;
-  onForceUpdate?: () => void;
+  onRedrawNeeded?: () => void;
 };
 
 export type VisualChannelAggregation = 'colorAggregation' | 'sizeAggregation';
