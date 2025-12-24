@@ -15,6 +15,8 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+## [3.2.5] - Dec 24 2025
+
 ## [3.2.4] - Dec 9 2025
 
 - 82630dee3 fix: ensure icon layer render with the latest geometry (#3259)
