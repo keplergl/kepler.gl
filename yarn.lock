@@ -5372,7 +5372,6 @@ __metadata:
     mapbox-gl: "npm:^1.13.1"
     maplibre-gl: "npm:^3.6.2"
     maplibregl-mapbox-request-transformer: "npm:^0.0.2"
-    mini-svg-data-uri: "npm:^1.0.3"
     moment: "npm:^2.10.6"
     moment-timezone: "npm:^0.5.35"
     react: "npm:^18.2.0"
@@ -22935,15 +22934,6 @@ __metadata:
   version: 1.0.1
   resolution: "min-indent@npm:1.0.1"
   checksum: 10c0/7e207bd5c20401b292de291f02913230cb1163abca162044f7db1d951fa245b174dc00869d40dd9a9f32a885ad6a5f3e767ee104cf278f399cb4e92d3f582d5c
-  languageName: node
-  linkType: hard
-
-"mini-svg-data-uri@npm:^1.0.3":
-  version: 1.4.4
-  resolution: "mini-svg-data-uri@npm:1.4.4"
-  bin:
-    mini-svg-data-uri: cli.js
-  checksum: 10c0/24545fa30b5a45449241bf19c25b8bc37594b63ec06401b3d563bd1c2e8a6abb7c18741f8b354e0064baa63c291be214154bf3a66f201ae71dfab3cc1a5e3191
   languageName: node
   linkType: hard
 

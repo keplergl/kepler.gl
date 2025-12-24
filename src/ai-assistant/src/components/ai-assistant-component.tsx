@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {useDispatch, useSelector} from 'react-redux';
 import styled from 'styled-components';
 import {textColorLT, theme} from '@kepler.gl/styles';
@@ -59,6 +59,8 @@ export function AiAssistantComponent() {
 
   const [ideas, setIdeas] = useState<{title: string; description: string}[]>([]);
 
+  const [restartKey, setRestartKey] = useState<number>(0);
+
   // get dataset meta data and re-initialize assistant when datasets or layers change
   useEffect(() => {
     const metaData = getDatasetContext(visState?.datasets, visState?.layers || []);
@@ -70,7 +72,10 @@ export function AiAssistantComponent() {
   const instructions = `${INSTRUCTIONS}\n\n${datasetMetaData}`;
 
   // generate ideas from LLM
-  const {temporaryPrompt} = useAssistant({...assistantProps, instructions});
+  const {temporaryPrompt, restartChat: libraryRestartChat} = useAssistant({...assistantProps, instructions});
+  
+  const restartChatRef = useRef(libraryRestartChat);
+  restartChatRef.current = libraryRestartChat;
 
   const generateIdeas = async () => {
     try {
@@ -97,9 +102,16 @@ export function AiAssistantComponent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [datasetMetaData]);
 
-  const onRestartAssistant = () => {
-    // clean up aiAssistant state
+  const onRestartAssistant = async () => {
     dispatch(updateAiAssistantMessages([]));
+    
+    try {
+      await restartChatRef.current();
+    } catch (e) {
+      console.error('Error restarting chat:', e);
+    }
+    
+    setRestartKey(prev => prev + 1);
   };
 
   const onMessagesUpdated = (messages: MessageModel[]) => {
@@ -117,6 +129,7 @@ export function AiAssistantComponent() {
   return (
     <StyledAiAssistantComponent className="ai-assistant-component">
       <AiAssistant
+        key={restartKey}
         {...assistantProps}
         instructions={instructions}
         theme={theme.textColor === textColorLT ? 'light' : 'dark'}
