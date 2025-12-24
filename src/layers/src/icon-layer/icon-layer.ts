@@ -114,7 +114,7 @@ export default class IconLayer extends Layer {
   iconGeometry: IconGeometry;
   iconGeometryVersion: number;
 
-  redrawNeeded: BindedLayerCallbacks['onRedrawNeeded'];
+  onRedrawNeeded: BindedLayerCallbacks['onRedrawNeeded'];
 
   declare visConfigSettings: IconLayerVisConfigSettings;
   declare config: IconLayerConfig;
@@ -251,7 +251,7 @@ export default class IconLayer extends Layer {
     this._layerInfoModal = IconInfoModalFactory(svgIcons);
 
     // Trigger a map redraw so deck.gl picks up the new geometry
-    this.redrawNeeded?.();
+    this.onRedrawNeeded?.();
   }
 
   static findDefaultLayerProps({
@@ -370,7 +370,7 @@ export default class IconLayer extends Layer {
     const {data, gpuFilter, objectHovered, mapState, interactionConfig, layerCallbacks} = opts;
 
     // Store callback to trigger map redraw when icon geometry loads asynchronously
-    this.redrawNeeded = layerCallbacks?.onRedrawNeeded;
+    this.onRedrawNeeded = layerCallbacks?.onRedrawNeeded;
 
     const radiusScale = this.getRadiusScaleByZoom(mapState);
 
