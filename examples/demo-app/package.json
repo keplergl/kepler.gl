@@ -64,7 +64,10 @@
     "@luma.gl/webgl": "8.5.21",
     "@deck.gl/core": "8.9.27",
     "@deck.gl/extensions": "8.9.27",
-    "react-vis": "1.11.7"
+    "react-vis": "1.11.7",
+    "mdast-util-to-hast": "13.2.1",
+    "form-data": "3.0.4",
+    "brace-expansion": "^2.0.2"
   },
   "engines": {
     "node": ">=18"

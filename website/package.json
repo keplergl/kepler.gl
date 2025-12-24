@@ -69,6 +69,11 @@
     "webpack-dev-server": "^4.15.1",
     "webpack-hot-middleware": "^2.25.4"
   },
+  "resolutions": {
+    "js-yaml": "3.14.2",
+    "node-forge": "1.3.3",
+    "brace-expansion": "1.1.12"
+  },
   "peerDependencies": {
     "react": "18.x",
     "react-dom": "18.x"
