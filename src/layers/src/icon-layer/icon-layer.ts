@@ -114,7 +114,7 @@ export default class IconLayer extends Layer {
   iconGeometry: IconGeometry;
   iconGeometryVersion: number;
 
-  redrawNeeded: BindedLayerCallbacks['onRedrawNeeded'] = undefined;
+  redrawNeeded: BindedLayerCallbacks['onRedrawNeeded'];
 
   declare visConfigSettings: IconLayerVisConfigSettings;
   declare config: IconLayerConfig;
