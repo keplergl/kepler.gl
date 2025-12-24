@@ -15,6 +15,12 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+## [3.2.5] - Dec 24 2025
+
+- 81f490d94 fix: trigger a redraw from icon layer once the icons are loaded. (#3269)
+- 26e4a17d4 fix(ai-assistant): clear LLM history on restart chat (#3262)
+- 2d985982a fix: image export for non-webpack bundlers (#3266)
+
 ## [3.2.4] - Dec 9 2025
 
 - 82630dee3 fix: ensure icon layer render with the latest geometry (#3259)
