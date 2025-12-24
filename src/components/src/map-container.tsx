@@ -526,9 +526,9 @@ export default function MapContainerFactory(
     };
 
     _onRedrawNeeded = (_idx: number) => {
-      // Force a map re-render by triggering a minimal map state update
-      const {mapStateActions, mapState, index} = this.props;
-      mapStateActions.updateMap({width: mapState.width, height: mapState.height}, index);
+      // updateMapUpdater always returns a new state object reference, which triggers re-render
+      const {mapStateActions, index} = this.props;
+      mapStateActions.updateMap({}, index);
     };
 
     _onLayerFilteredItemsChange = (idx, event) => {
