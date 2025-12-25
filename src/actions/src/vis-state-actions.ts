@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 // vis-state-reducer
-import {PickInfo} from '@deck.gl/core/lib/deck';
+import type {PickingInfo} from '@deck.gl/core';
 import {default as ActionTypes} from './action-types';
 import {FileCacheItem} from '@kepler.gl/processors';
 import {Layer, LayerBaseConfig} from '@kepler.gl/layers';
@@ -1112,7 +1112,7 @@ export function toggleFilterFeature(
 }
 
 export type OnLayerHoverUpdaterAction = {
-  info: PickInfo<any> | null;
+  info: PickingInfo<any> | null;
   mapIndex?: number;
 };
 /**
@@ -1124,7 +1124,7 @@ export type OnLayerHoverUpdaterAction = {
  * @public
  */
 export function onLayerHover(
-  info: PickInfo<any> | null,
+  info: PickingInfo<any> | null,
   mapIndex?: number
 ): Merge<OnLayerHoverUpdaterAction, {type: typeof ActionTypes.LAYER_HOVER}> {
   return {
@@ -1135,7 +1135,7 @@ export function onLayerHover(
 }
 
 export type OnLayerClickUpdaterAction = {
-  info: PickInfo<any> | null;
+  info: PickingInfo<any> | null;
 };
 /**
  * Trigger layer click event with clicked object
@@ -1145,7 +1145,7 @@ export type OnLayerClickUpdaterAction = {
  * @public
  */
 export function onLayerClick(
-  info: PickInfo<any> | null
+  info: PickingInfo<any> | null
 ): Merge<OnLayerClickUpdaterAction, {type: typeof ActionTypes.LAYER_CLICK}> {
   return {
     type: ActionTypes.LAYER_CLICK,

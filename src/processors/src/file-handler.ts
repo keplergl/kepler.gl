@@ -41,8 +41,8 @@ const CSV_LOADER_OPTIONS = {
 };
 
 const ARROW_LOADER_OPTIONS = {
-  shape: 'arrow-table',
-  batchDebounceMs: 10 // time to delay between batches, for incremental loading
+  shape: 'arrow-table'
+  // batchDebounceMs: 10 not recognized by loaders.gl 9.x // time to delay between batches, for incremental loading
 };
 
 const PARQUET_LOADER_OPTIONS = {

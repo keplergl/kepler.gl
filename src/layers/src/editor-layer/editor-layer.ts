@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {EditableGeoJsonLayer} from '@nebula.gl/layers';
-import {Layer as DeckLayer, LayerProps as DeckLayerProps} from '@deck.gl/core/typed';
+import {Layer as DeckLayer, LayerProps as DeckLayerProps} from '@deck.gl/core';
 import {
   DrawPolygonMode,
   TranslateMode,

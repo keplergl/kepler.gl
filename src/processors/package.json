@@ -30,7 +30,6 @@
     "umd"
   ],
   "dependencies": {
-    "@danmarshall/deckgl-typings": "4.9.22",
     "@kepler.gl/common-utils": "3.2.5",
     "@kepler.gl/constants": "3.2.5",
     "@kepler.gl/schemas": "3.2.5",
