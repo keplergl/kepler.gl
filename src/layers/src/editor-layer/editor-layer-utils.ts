@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {PickInfo} from '@deck.gl/core/lib/deck';
+import {PickingInfo} from '@deck.gl/core';
 import {Editor, Feature, FeatureSelectionContext} from '@kepler.gl/types';
 import {EDITOR_LAYER_ID, EDITOR_MODES} from '@kepler.gl/constants';
 
@@ -31,7 +31,7 @@ export function isDrawingActive(editorMenuActive: boolean, mode: string): boolea
  */
 // eslint-disable-next-line complexity
 export function onClick(
-  info: PickInfo<any>,
+  info: PickingInfo<any>,
   event: any,
   {
     editorMenuActive,
@@ -110,7 +110,7 @@ export function onClick(
  * @returns Returns true is hover is handled.
  */
 export function onHover(
-  info: PickInfo<any>,
+  info: PickingInfo<any>,
   {hoverInfo, editor, editorMenuActive}: {editorMenuActive: boolean; editor: Editor; hoverInfo}
 ): boolean {
   if (isDrawingActive(editorMenuActive, editor.mode)) {
@@ -140,8 +140,8 @@ const MIN_DISTANCE_TO_BOTTOM_EDGE = 100;
  */
 // eslint-disable-next-line complexity
 export function getTooltip(
-  // TODO PickInfo type in deck typings doesn't include viewport and pixel
-  info: PickInfo<any> & {viewport: any; pixel: any[]},
+  // TODO PickingInfo type in deck typings doesn't include viewport and pixel
+  info: PickingInfo<any> & {viewport: any; pixel: any[]},
   {editor, theme, editorMenuActive}: {editorMenuActive: boolean; editor: Editor; theme: any}
 ): object | null {
   const {object, layer, viewport = {}, pixel = []} = info;

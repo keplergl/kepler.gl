@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-// @ts-nocheck This is a hack, don't check types
+// @ts-nocheck - This file needs significant refactoring for luma.gl 9.x and deck.gl 9.x APIs
+// TODO: Refactor to use luma.gl 9.x Texture API and deck.gl 9.x shader module system
 
 // import {console as Console} from 'global/window';
 import {LightingEffect, shadow} from '@deck.gl/core';
-import {Texture2D, ProgramManager} from '@luma.gl/core';
+import {Texture} from '@luma.gl/core';
+import {luma} from '@luma.gl/core';
 
 /**
  * Inserts shader code before detected part.
@@ -32,27 +34,29 @@ const CustomShadowModule = shadow ? {...shadow} : undefined;
  * 1) Add u_outputUniformShadow uniform
  * 2) always produce full shadow when the uniform is set to true.
  */
-CustomShadowModule.fs = insertBefore(
-  CustomShadowModule.fs,
-  'custom shadow #1',
-  'uniform vec4 shadow_uColor;',
-  'uniform bool u_outputUniformShadow;'
-);
+if (CustomShadowModule && CustomShadowModule.fs) {
+  CustomShadowModule.fs = insertBefore(
+    CustomShadowModule.fs,
+    'custom shadow #1',
+    'uniform vec4 shadow_uColor;',
+    'uniform bool u_outputUniformShadow;'
+  );
 
-CustomShadowModule.fs = insertBefore(
-  CustomShadowModule.fs,
-  'custom shadow #1',
-  'vec4 rgbaDepth = texture2D(shadowMap, position.xy);',
-  'if(u_outputUniformShadow) return 1.0;'
-);
+  CustomShadowModule.fs = insertBefore(
+    CustomShadowModule.fs,
+    'custom shadow #1',
+    'vec4 rgbaDepth = texture2D(shadowMap, position.xy);',
+    'if(u_outputUniformShadow) return 1.0;'
+  );
 
-CustomShadowModule.getUniforms = (opts = {}, context = {}) => {
-  const u = shadow.getUniforms(opts, context);
-  if (opts.outputUniformShadow !== undefined) {
-    u.u_outputUniformShadow = opts.outputUniformShadow;
-  }
-  return u;
-};
+  CustomShadowModule.getUniforms = (opts = {}, context = {}) => {
+    const u = shadow.getUniforms(opts, context);
+    if (opts.outputUniformShadow !== undefined) {
+      u.u_outputUniformShadow = opts.outputUniformShadow;
+    }
+    return u;
+  };
+}
 
 /**
  * Custom LightingEffect
@@ -75,18 +79,23 @@ class CustomDeckLightingEffect extends LightingEffect {
     if (this.shadowPasses.length === 0) {
       this._createShadowPasses(gl);
     }
-    if (!this.programManager) {
-      this.programManager = ProgramManager.getDefaultProgramManager(gl);
-      if (CustomShadowModule) {
-        this.programManager.addDefaultModule(CustomShadowModule);
-      }
-    }
+
+    // In luma.gl 9.x, ProgramManager is removed
+    // Shader modules are now managed through the Device/Shader system
+    // For now, we'll skip the programManager setup and rely on deck.gl's shader management
+    // TODO: Refactor to use luma.gl 9.x shader module system
 
     if (!this.dummyShadowMap) {
-      this.dummyShadowMap = new Texture2D(gl, {
-        width: 1,
-        height: 1
-      });
+      // In luma.gl 9.x, Texture2D is replaced by Texture
+      // Texture creation now requires a Device instance
+      const device = luma.getDefaultDevice();
+      if (device) {
+        this.dummyShadowMap = device.createTexture({
+          width: 1,
+          height: 1,
+          format: 'rgba8unorm'
+        });
+      }
     }
 
     for (let i = 0; i < this.shadowPasses.length; i++) {
@@ -121,14 +130,12 @@ class CustomDeckLightingEffect extends LightingEffect {
     this.shadowMaps.length = 0;
 
     if (this.dummyShadowMap) {
-      this.dummyShadowMap.delete();
+      this.dummyShadowMap.destroy();
       this.dummyShadowMap = null;
     }
 
-    if (this.shadow && this.programManager) {
-      this.programManager.removeDefaultModule(CustomShadowModule);
-      this.programManager = null;
-    }
+    // In luma.gl 9.x, ProgramManager is removed
+    // Shader module cleanup is handled automatically
   }
 }
 

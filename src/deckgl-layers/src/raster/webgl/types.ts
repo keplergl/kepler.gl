@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {Texture2D} from '@luma.gl/webgl';
+import {Texture} from '@luma.gl/core';
 
 export interface ShaderModule {
   /** A unique name for this shader module */
@@ -28,6 +28,6 @@ export interface ShaderModule {
   deprecations?: any[];
 }
 
-export type UniformType = number | number[] | Texture2D | undefined;
+export type UniformType = number | number[] | Texture | undefined;
 
 export type GetUniformsOutput = Record<string, UniformType> | null;

@@ -5,7 +5,9 @@
  * Utility functions and constants for processing STAC metadata and other raster tile data
  */
 
-import {TypedArray} from '@loaders.gl/loader-utils/src/types';
+// TypedArray from loaders.gl
+type TypedArray = Float32Array | Float64Array | Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray;
+
 import {isArray} from '@math.gl/core';
 
 import {StacTypes} from '@kepler.gl/types';

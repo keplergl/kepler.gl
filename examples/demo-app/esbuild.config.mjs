@@ -8,8 +8,12 @@ import {dotenvRun} from '@dotenv-run/esbuild';
 import process from 'node:process';
 import fs from 'node:fs';
 import {spawn} from 'node:child_process';
-import {join} from 'node:path';
+import {join, resolve, dirname} from 'node:path';
+import {fileURLToPath} from 'node:url';
 import KeplerPackage from '../../package.json' assert {type: 'json'};
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const args = process.argv;
 
@@ -119,6 +123,36 @@ const config = {
     })
   ]
 };
+
+// Create compatibility plugin function
+const createLumaGlCompatPlugin = useKeplerNodeModules => ({
+  name: 'luma-gl-compat',
+  setup(build) {
+    // Intercept imports from @nebula.gl/layers that import from @luma.gl/core
+    build.onResolve({filter: /^@luma\.gl\/core$/}, args => {
+      // Only redirect if the import is coming from @nebula.gl/layers
+      if (args.importer && args.importer.includes('@nebula.gl/layers')) {
+        // Always use our compatibility shim when importing from @nebula.gl/layers
+        // The shim re-exports everything from @luma.gl/core plus Geometry from @luma.gl/engine
+        if (useKeplerNodeModules) {
+          return {
+            path: resolve(__dirname, SRC_DIR, 'compat/luma-gl-compat.ts'),
+            namespace: 'file'
+          };
+        } else {
+          // When not using kepler node modules, we need to resolve to the shim in the root
+          // LIB_DIR is relative to examples/demo-app, so resolve from config file directory
+          return {
+            path: resolve(__dirname, LIB_DIR, 'src/compat/luma-gl-compat.ts'),
+            namespace: 'file'
+          };
+        }
+      }
+      // Return undefined to let esbuild handle the import normally for other cases
+      return undefined;
+    });
+  }
+});
 
 function addAliases(externals, args) {
   const resolveAlias = getThirdPartyLibraryAliases(true);
@@ -278,6 +312,7 @@ function openURL(url) {
         // Optionally generate a bundle analysis
         plugins: [
           ...config.plugins,
+          createLumaGlCompatPlugin(true),
           {
             name: 'bundle-analyzer',
             setup(build) {
@@ -301,15 +336,15 @@ function openURL(url) {
   }
 
   if (args.includes('--start')) {
+    const useKeplerModules = process.env.NODE_ENV === 'local';
     await esbuild
       .context({
         ...config,
         minify: false,
         sourcemap: true,
         // add alias to resolve libraries so there is only one copy of them
-        ...(process.env.NODE_ENV === 'local'
-          ? {alias: localAliases}
-          : {alias: getThirdPartyLibraryAliases(false)}),
+        ...(useKeplerModules ? {alias: localAliases} : {alias: getThirdPartyLibraryAliases(false)}),
+        plugins: [...config.plugins, createLumaGlCompatPlugin(useKeplerModules)],
         banner: {
           js: `new EventSource('/esbuild').addEventListener('change', () => location.reload());`
         }

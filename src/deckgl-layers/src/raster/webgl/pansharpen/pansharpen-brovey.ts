@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {Texture2D} from '@luma.gl/webgl';
+import {Texture} from '@luma.gl/core';
 
 import {GetUniformsOutput, ShaderModule} from '../types';
 
@@ -46,7 +46,7 @@ vec4 pansharpen_brovey_calc(vec4 rgb, float pan, float weight) {
 }
 `;
 
-function getUniforms(opts: {imagePan?: Texture2D; panWeight?: number} = {}): GetUniformsOutput {
+function getUniforms(opts: {imagePan?: Texture; panWeight?: number} = {}): GetUniformsOutput {
   const {imagePan, panWeight = 0.2} = opts;
 
   if (!imagePan) {

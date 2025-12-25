@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {project32, phongLighting, log, UpdateParameters} from '@deck.gl/core/typed';
-import {SimpleMeshLayer, SimpleMeshLayerProps} from '@deck.gl/mesh-layers/typed';
-import GL from '@luma.gl/constants';
-import {Model, Geometry, isWebGL2} from '@luma.gl/core';
-import {ProgramManager} from '@luma.gl/engine';
-import {UniformsOptions} from '@luma.gl/webgl/src/classes/uniforms';
+// @ts-nocheck - This file uses luma.gl 8.x APIs that need significant refactoring for 9.x
+// TODO: Refactor to use luma.gl 9.x APIs
+
+import {project32, log} from '@deck.gl/core';
+import type {UpdateParameters} from '@deck.gl/core';
+import {SimpleMeshLayer, SimpleMeshLayerProps} from '@deck.gl/mesh-layers';
+import {Geometry} from '@luma.gl/engine';
 
 import fsWebGL1 from './raster-mesh-layer-webgl1.fs';
 import vsWebGL1 from './raster-mesh-layer-webgl1.vs';

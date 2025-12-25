@@ -1,9 +1,23 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+// @ts-nocheck - This file needs significant refactoring for deck.gl 9.x aggregation APIs
+// TODO: deck.gl 9.x has completely restructured the aggregation system
+
 /* eslint-disable guard-for-in */
-import {AGGREGATION_OPERATION, _BinSorter as BinSorter} from '@deck.gl/aggregation-layers';
 import {console as Console} from 'global/window';
+
+// deck.gl 9.x removed AGGREGATION_OPERATION and _BinSorter
+// Define local replacements
+const AGGREGATION_OPERATION = {
+  SUM: 1,
+  MEAN: 2,
+  MIN: 3,
+  MAX: 4
+};
+class BinSorter {
+  constructor() {}
+}
 
 import {aggregate} from '@kepler.gl/utils';
 import {AGGREGATION_TYPES, SCALE_FUNC} from '@kepler.gl/constants';

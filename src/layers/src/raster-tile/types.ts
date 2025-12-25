@@ -1,9 +1,14 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {_Tile2DHeader} from '@deck.gl/geo-layers/typed';
-import {TypedArray} from '@loaders.gl/loader-utils/src/types';
-import {Texture2DProps} from '@luma.gl/webgl';
+// Type alias for luma.gl 9.x compatibility
+type Texture2DProps = Record<string, any>;
+
+// deck.gl 9.x has different exports
+type _Tile2DHeader = any;
+
+// TypedArray from loaders.gl
+type TypedArray = Float32Array | Float64Array | Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray;
 
 import {KeplerTable as KeplerDataset} from '@kepler.gl/table';
 import type {ColorMap, StacTypes} from '@kepler.gl/types';

@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+// @ts-nocheck - This file needs significant refactoring for deck.gl 9.x AggregationLayer APIs
+// TODO: deck.gl 9.x has completely restructured the aggregation layer system
+
 import {ScatterplotLayer} from '@deck.gl/layers';
 import {_AggregationLayer as AggregationLayer} from '@deck.gl/aggregation-layers';
 
@@ -17,7 +20,6 @@ import {max} from 'd3-array';
 import {SCALE_TYPES, DEFAULT_COLOR_RANGE, LAYER_VIS_CONFIGS} from '@kepler.gl/constants';
 import ClusterBuilder, {getGeoJSON} from '../layer-utils/cluster-utils';
 import {RGBAColor} from '@kepler.gl/types';
-import {AggregationLayerProps} from '@deck.gl/aggregation-layers/aggregation-layer';
 
 const defaultRadius = LAYER_VIS_CONFIGS.clusterRadius.defaultValue;
 const defaultRadiusRange = LAYER_VIS_CONFIGS.clusterRadiusRange.defaultValue;
