@@ -53,7 +53,7 @@ def _df_to_dict(df):
     # Convert all columns that aren't JSON serializable to strings
     for col in df_copy.columns:
         try:
-            # just check the first item in the colum
+            # just check the first item in the column
             json.dumps(df_copy[col].iloc[0] if len(df_copy) > 0 else None)
         except (TypeError, OverflowError):
             df_copy[col] = df_copy[col].astype(str)
@@ -237,7 +237,7 @@ class KeplerGl(widgets.DOMWidget):
         - data: a data dictionary {"name": data}, if not provided, will use current map data
         - config: map config dictionary, if not provided, will use current map config
         - read_only: if read_only is True, hide side panel to disable map customization
-        - center_map: if center_map is True, the bound of the map will be updated acoording to the current map data
+        - center_map: if center_map is True, the bound of the map will be updated according to the current map data
 
         Example of use:
             # this will display map in Google Colab
@@ -275,7 +275,7 @@ class KeplerGl(widgets.DOMWidget):
         - data: a data dictionary {"name": data}, if not provided, will use current map data
         - config: map config dictionary, if not provided, will use current map config
         - read_only: if read_only is True, hide side panel to disable map customization
-        - center_map: if center_map is True, the bound of the map will be updated acoording to the current map data
+        - center_map: if center_map is True, the bound of the map will be updated according to the current map data
 
         Returns:
         - a html encoded string

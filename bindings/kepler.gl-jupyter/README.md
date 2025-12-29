@@ -88,7 +88,7 @@ There is no need to use `jupyter labextension install` for `keplergl` > 0.3.0 wi
 
 #### JupyterLab 1
 
-For JupyterLab1, you need to install `keplergl-jupyter` labextension from NPM registery. There is no need to install `keplergl` python package.
+For JupyterLab1, you need to install `keplergl-jupyter` labextension from NPM registry. There is no need to install `keplergl` python package.
 
 First, install `jupyterlab-manager` for JupyterLab1:
 ```shell
@@ -106,7 +106,7 @@ jupyter labextension install keplergl-jupyter
 
 #### JupyterLab 2
 
-For JupyterLab2, you need to install `keplergl-jupyter` labextension from NPM registery. There is no need to install `keplergl` python package.
+For JupyterLab2, you need to install `keplergl-jupyter` labextension from NPM registry. There is no need to install `keplergl` python package.
 
 First, install `jupyterlab-manager` for JupyterLab2:
 ```shell
@@ -187,7 +187,7 @@ with input parameters:
 - data: a data dictionary {"name": data}, if not provided, will use current map data
 - config: map config dictionary, if not provided, will use current map config
 - read_only: if read_only is True, hide side panel to disable map customization
-- center_map: if center_map is True, the bound of the map will be updated acoording to the current map data
+- center_map: if center_map is True, the bound of the map will be updated according to the current map data
 
 Please note that the map is not interactive due to the limitation of Google Colab. For example, when applying config to the map in Colab, the map won't be updated and one needs to call `show()` again to render a new map in a new cell.
 
@@ -302,7 +302,7 @@ jupyter nbextension install --py --symlink --sys-prefix keplergl
 jupyter nbextension enable --py --sys-prefix keplergl
 ```
 
-NOTE: The above command `jupyter nbextension install -py --symlink --sys-prefix keplergl` is trying to create a symoblic link of the folder `bindings/kepler.gl-jupyter/keplergl/static` under the jupyter's folder `nbextensions`. Please check if there is already a folder "nbextensions/kepler-jupyter" existed, and you might need to remove it first.
+NOTE: The above command `jupyter nbextension install -py --symlink --sys-prefix keplergl` is trying to create a symbolic link of the folder `bindings/kepler.gl-jupyter/keplergl/static` under the jupyter's folder `nbextensions`. Please check if there is already a folder "nbextensions/kepler-jupyter" existed, and you might need to remove it first.
 
 To find the location of `nbextensions` folder, you can use the following command:
 ```shell
