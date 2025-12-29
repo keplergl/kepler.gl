@@ -18,7 +18,7 @@ import log from './log';
 //
 //  when different from the base class.
 
-// When serialiazing the entire widget state for embedding, only values that
+// When serializing the entire widget state for embedding, only values that
 // differ from the defaults will be specified.
 // Note: in JavaScript, class.extend does not inherently inherit static functions.
 export class KeplerGlModal extends widgets.DOMWidgetModel {
