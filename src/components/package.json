@@ -30,6 +30,8 @@
     "umd"
   ],
   "dependencies": {
+    "@deck.gl-community/editable-layers": "9.1.1",
+    "@deck.gl-community/layers": "9.1.1",
     "@deck.gl/core": "^9.2.0",
     "@deck.gl/react": "^9.2.0",
     "@deck.gl/widgets": "^9.2.0",
@@ -57,7 +59,6 @@
     "@loaders.gl/pmtiles": "^4.3.2",
     "@loaders.gl/wms": "4.3.2",
     "@mapbox/mapbox-sdk": "^0.15.3",
-    "@nebula.gl/edit-modes": "1.0.2-alpha.1",
     "@tippyjs/react": "^4.2.0",
     "@types/classnames": "^2.3.1",
     "@types/d3-array": "^2.8.0",

@@ -30,6 +30,8 @@
     "umd"
   ],
   "dependencies": {
+    "@deck.gl-community/editable-layers": "9.1.1",
+    "@deck.gl-community/layers": "9.1.1",
     "@deck.gl/core": "^9.2.0",
     "@deck.gl/extensions": "^9.2.0",
     "@deck.gl/geo-layers": "^9.2.0",
@@ -54,8 +56,6 @@
     "@loaders.gl/wkt": "^4.3.2",
     "@luma.gl/constants": "^9.2.0",
     "@mapbox/geojson-normalize": "0.0.1",
-    "@nebula.gl/edit-modes": "1.0.2-alpha.1",
-    "@nebula.gl/layers": "1.0.2-alpha.1",
     "@turf/bbox": "^6.0.1",
     "@turf/boolean-within": "^6.0.1",
     "@turf/center": "^6.0.1",

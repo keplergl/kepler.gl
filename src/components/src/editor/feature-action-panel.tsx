@@ -10,7 +10,7 @@ import styled from 'styled-components';
 
 import {Layer} from '@kepler.gl/layers';
 import {Filter} from '@kepler.gl/types';
-import {Feature} from '@nebula.gl/edit-modes';
+import {Feature} from '@deck.gl-community/editable-layers';
 import {Datasets} from '@kepler.gl/table';
 import {canApplyFeatureFilter} from '@kepler.gl/utils';
 
