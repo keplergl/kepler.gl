@@ -20,7 +20,8 @@ import {
   SCALE_TYPES,
   CHANNEL_SCALES,
   DEFAULT_COLOR_UI,
-  LAYER_VIS_CONFIGS
+  LAYER_VIS_CONFIGS,
+  GL
 } from '@kepler.gl/constants';
 import {
   getTileUrl,
