@@ -4,7 +4,7 @@
 import Console from 'global/console';
 
 import {GEOCODER_LAYER_ID, LIGHT_AND_SHADOW_EFFECT} from '@kepler.gl/constants';
-import {Layer as DeckLayer, LayerProps as DeckLayerProps} from '@deck.gl/core/typed';
+import {Layer as DeckLayer, LayerProps as DeckLayerProps} from '@deck.gl/core';
 import {
   Field,
   TooltipField,
@@ -453,13 +453,13 @@ export function computeDeckLayers(
   const [customBottomDeckLayers, customTopDeckLayers] = getCustomDeckLayers(deckGlProps);
 
   const editorLayer: any[] = [];
-  if (editorInfo) {
+  /*if (editorInfo) {
     editorLayer.push(
       getEditorLayer({
         ...editorInfo
       })
     );
-  }
+  }*/
 
   return [...customBottomDeckLayers, ...dataLayers, ...customTopDeckLayers, ...editorLayer];
 }

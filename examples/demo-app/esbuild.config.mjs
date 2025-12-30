@@ -8,8 +8,12 @@ import {dotenvRun} from '@dotenv-run/esbuild';
 import process from 'node:process';
 import fs from 'node:fs';
 import {spawn} from 'node:child_process';
-import {join} from 'node:path';
+import {join, resolve, dirname} from 'node:path';
+import {fileURLToPath} from 'node:url';
 import KeplerPackage from '../../package.json' assert {type: 'json'};
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const args = process.argv;
 
@@ -119,6 +123,7 @@ const config = {
     })
   ]
 };
+
 
 function addAliases(externals, args) {
   const resolveAlias = getThirdPartyLibraryAliases(true);
@@ -301,15 +306,15 @@ function openURL(url) {
   }
 
   if (args.includes('--start')) {
+    const useKeplerModules = process.env.NODE_ENV === 'local';
     await esbuild
       .context({
         ...config,
         minify: false,
         sourcemap: true,
         // add alias to resolve libraries so there is only one copy of them
-        ...(process.env.NODE_ENV === 'local'
-          ? {alias: localAliases}
-          : {alias: getThirdPartyLibraryAliases(false)}),
+        ...(useKeplerModules ? {alias: localAliases} : {alias: getThirdPartyLibraryAliases(false)}),
+        plugins: [...config.plugins],
         banner: {
           js: `new EventSource('/esbuild').addEventListener('change', () => location.reload());`
         }

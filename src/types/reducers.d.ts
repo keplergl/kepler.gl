@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {Field, Millisecond} from './types';
-import type {MapViewState} from '@deck.gl/core/typed';
+import type {MapViewState} from '@deck.gl/core';
 
 export type MapState = {
   pitch: number;

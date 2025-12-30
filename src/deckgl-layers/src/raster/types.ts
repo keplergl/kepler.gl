@@ -1,12 +1,18 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import type {Texture2DProps, Texture2D} from '@luma.gl/webgl';
+// In luma.gl 9.x, Texture2D is replaced by Texture from @luma.gl/core
+// Using generic types as placeholders until full migration
+import type {Texture, TextureProps} from '@luma.gl/core';
 
 import type {ShaderModule} from './webgl';
 
+// Type aliases for luma.gl 9.x compatibility
+type Texture2DProps = TextureProps;
+type Texture2D = Texture;
+
 /** Allowed input for images prop
- * Texture2D is already on the GPU, while Texture2DProps can be data on the CPU that is not yet copied to the GPU.
+ * Texture is already on the GPU, while TextureProps can be data on the CPU that is not yet copied to the GPU.
  */
 export type ImageInput = Record<
   string,
@@ -14,7 +20,7 @@ export type ImageInput = Record<
 >;
 
 /** Internal storage of images
- * The Texture2D object references data on the GPU
+ * The Texture object references data on the GPU
  */
 export type ImageState = Record<string, Texture2D | Texture2D[]>;
 

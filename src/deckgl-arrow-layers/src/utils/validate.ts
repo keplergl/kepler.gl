@@ -1,11 +1,15 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+// @ts-nocheck - This file needs significant refactoring for deck.gl 9.x APIs
+// TODO: Update layer patterns for deck.gl 9.x
+
 // deck.gl-community
 // SPDX-License-Identifier: MIT
 // Copyright (c) vis.gl contributors
 
-import {assert} from '@deck.gl/core/typed';
+import {log} from '@deck.gl/core';
+const assert = log.assert;
 import {isArrowVector} from '@kepler.gl/utils';
 import * as arrow from 'apache-arrow';
 

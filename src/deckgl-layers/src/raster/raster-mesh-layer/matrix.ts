@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {COORDINATE_SYSTEM, Viewport, CoordinateSystem} from '@deck.gl/core/typed';
+import {COORDINATE_SYSTEM, Viewport, CoordinateSystem} from '@deck.gl/core';
 
 // only apply composeModelMatrix when in cartesian or meter_offsets coordinate system
 // with `composeModelMatrix` enabled, the rotation part of the layer's modelMatrix will be composed to instance's transformations

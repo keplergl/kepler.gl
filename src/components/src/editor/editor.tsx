@@ -18,7 +18,7 @@ import {
 } from '@kepler.gl/constants';
 import {Layer, EditorLayerUtils} from '@kepler.gl/layers';
 import {Filter, FeatureSelectionContext, Feature} from '@kepler.gl/types';
-import {FeatureOf, Polygon} from '@nebula.gl/edit-modes';
+import {FeatureOf, Polygon} from '@deck.gl-community/editable-layers';
 import {Datasets} from '@kepler.gl/table';
 
 import {RootContext} from '../context';

@@ -5,9 +5,8 @@ import {
   ModifyMode,
   FeatureOf,
   LineString,
-  Point,
-  Viewport as NebulaViewport
-} from '@nebula.gl/edit-modes';
+  Point
+} from '@deck.gl-community/editable-layers';
 import {Viewport} from '@deck.gl/core';
 
 import {EDITOR_LAYER_PICKING_RADIUS} from '@kepler.gl/constants';
@@ -24,7 +23,7 @@ export class ModifyModeExtended extends ModifyMode {
     inPoint: FeatureOf<Point>,
     viewport: Viewport | null | undefined
   ) {
-    const p = super.getNearestPoint(line, inPoint, viewport as NebulaViewport | null | undefined);
+    const p = super.getNearestPoint(line, inPoint, viewport);
     if (p && viewport) {
       const p1 = viewport.project(p.geometry.coordinates);
       const p2 = viewport.project(inPoint.geometry.coordinates);
