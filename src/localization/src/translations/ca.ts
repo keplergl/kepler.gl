@@ -52,6 +52,7 @@ export default {
       label: 'etiqueta',
       labelWithId: 'Etiqueta {labelId}',
       fontSize: 'Mida de la font',
+      fontWeight: 'Pes de la font',
       fontColor: 'Color de la font',
       textAnchor: 'Àncora del text',
       alignment: 'Alineació',
