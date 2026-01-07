@@ -37,7 +37,10 @@ import {restrictToWindowEdges} from '@dnd-kit/modifiers';
 const DRAG_RESIZE_ID = 'map-legend-resize';
 const DRAG_MOVE_ID = 'map-legend-move';
 
-const StyledDraggableLegendContent = styled.div<{contentHeight?: number}>`
+const StyledDraggableLegendContent = styled.div<{
+  contentHeight?: number;
+  maxContentHeight?: number;
+}>`
   position: absolute;
   outline: none;
   transition: border-color 0.2s ease-in-out;
@@ -67,7 +70,8 @@ const StyledDraggableLegendContent = styled.div<{contentHeight?: number}>`
     border-color: ${props => props.theme.activeColor};
   }
   .map-control__panel-content {
-    max-height: calc(100vh - 100px);
+    max-height: ${props =>
+      props.maxContentHeight ? `${props.maxContentHeight}px` : 'calc(100vh - 100px)'};
     ${props => (props.contentHeight ? `height: ${props.contentHeight}px;` : '')};
   }
   border-radius: 4px;
@@ -141,12 +145,13 @@ export type MapLegendPanelFactoryDeps = [
 
 type DraggableLegendContentProps = {
   contentHeight?: number;
+  maxContentHeight?: number;
   positionStyles: Record<string, unknown>;
   children: React.ReactNode;
 };
 
 const DraggableLegendContent = forwardRef((props: DraggableLegendContentProps, ref) => {
-  const {positionStyles, children} = props;
+  const {positionStyles, children, contentHeight, maxContentHeight} = props;
   const draggableMove = useDraggable({id: DRAG_MOVE_ID});
   const draggableResize = useDraggable({id: DRAG_RESIZE_ID});
   const refs = useMergeRefs([draggableMove.setNodeRef, ref]);
@@ -156,7 +161,8 @@ const DraggableLegendContent = forwardRef((props: DraggableLegendContentProps, r
       ref={refs}
       className={classnames('draggable-legend', {'is-dragging': isDragging})}
       style={{...positionStyles, transform: CSS.Translate.toString(draggableMove.transform)}}
-      contentHeight={props.contentHeight}
+      contentHeight={contentHeight}
+      maxContentHeight={maxContentHeight}
       {...draggableMove.attributes}
     >
       {children}
@@ -179,6 +185,7 @@ type DraggableLegendProps = PropsWithChildren<{
   isSidePanelShown: boolean;
   mapControls: MapControls;
   setMapControlSettings: typeof setMapControlSettings;
+  mapState?: MapState;
 }>;
 
 const DraggableLegend = withTheme(
@@ -187,6 +194,7 @@ const DraggableLegend = withTheme(
     children,
     mapControls,
     setMapControlSettings,
+    mapState,
     theme
   }: DraggableLegendProps & {theme: any}) => {
     const settings = mapControls?.mapLegend?.settings;
@@ -196,13 +204,16 @@ const DraggableLegend = withTheme(
       newSettings => setMapControlSettings('mapLegend', newSettings),
       [setMapControlSettings]
     );
-    const {positionStyles, updatePosition, startResize, resize, contentHeight} = useLegendPosition({
-      legendContentRef,
-      isSidePanelShown,
-      theme,
-      settings,
-      onChangeSettings
-    });
+    const {positionStyles, updatePosition, startResize, resize, contentHeight, maxContentHeight} =
+      useLegendPosition({
+        legendContentRef,
+        isSidePanelShown,
+        theme,
+        settings,
+        onChangeSettings,
+        mapHeight: mapState?.height,
+        mapWidth: mapState?.width
+      });
 
     const handleDragStart = useCallback(
       event => {
@@ -239,6 +250,7 @@ const DraggableLegend = withTheme(
           ref={legendContentRef}
           positionStyles={positionStyles}
           contentHeight={contentHeight}
+          maxContentHeight={maxContentHeight}
         >
           {children}
         </DraggableLegendContent>
@@ -413,6 +425,7 @@ const MapLegendPanelComponent = ({
               isSidePanelShown={isSidePanelShown}
               mapControls={mapControls}
               setMapControlSettings={setMapControlSettings}
+              mapState={mapState}
             >
               {legendPanel}
             </DraggableLegend>,

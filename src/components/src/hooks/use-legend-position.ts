@@ -11,12 +11,15 @@ type Params = {
   settings?: MapLegendControlSettings;
   onChangeSettings: (settings: Partial<MapLegendControlSettings>) => void;
   theme: Record<string, any>;
+  mapHeight?: number;
+  mapWidth?: number;
 };
 
 type ReturnType = {
   positionStyles: Record<string, unknown>;
   updatePosition: () => void;
   contentHeight: number;
+  maxContentHeight?: number;
   startResize: () => void;
   resize: (deltaY: number) => void;
 };
@@ -87,13 +90,22 @@ export default function useLegendPosition({
   isSidePanelShown,
   settings,
   onChangeSettings,
-  theme
+  theme,
+  mapHeight,
+  mapWidth
 }: Params): ReturnType {
   const pos = settings?.position ?? DEFAULT_POSITION;
   const contentHeight = settings?.contentHeight ?? -1;
   const positionStyles = useMemo(() => ({[pos.anchorX]: pos.x, [pos.anchorY]: pos.y}), [pos]);
   const startHeightRef = useRef(0);
   const sidePanelWidth = theme.sidePanel?.width || 0;
+
+  // Calculate dynamic max content height based on map root dimensions
+  const maxContentHeight = useMemo(() => {
+    if (!mapHeight) return undefined;
+    // Available height minus margins and header
+    return mapHeight - MARGIN.top - MARGIN.bottom - MAP_CONTROL_HEADER_FULL_HEIGHT;
+  }, [mapHeight]);
 
   const calcPosition = useCalcLegendPosition({
     legendContentRef,
@@ -119,8 +131,17 @@ export default function useLegendPosition({
       if (root instanceof HTMLElement && legendContent) {
         const mapRootBounds = root.getBoundingClientRect();
         const legendRect = legendContent.getBoundingClientRect();
+        // Use maxContentHeight if available, otherwise fall back to viewport-based calculation
+        const maxHeight = maxContentHeight
+          ? Math.min(
+              maxContentHeight,
+              mapRootBounds.bottom -
+                (legendRect.top + MAP_CONTROL_HEADER_FULL_HEIGHT + MARGIN.bottom)
+            )
+          : mapRootBounds.bottom -
+            (legendRect.top + MAP_CONTROL_HEADER_FULL_HEIGHT + MARGIN.bottom);
         const nextHeight = Math.min(
-          mapRootBounds.bottom - (legendRect.top + MAP_CONTROL_HEADER_FULL_HEIGHT + MARGIN.bottom),
+          maxHeight,
           Math.max(MIN_CONTENT_HEIGHT, startHeightRef.current + deltaY)
         );
         onChangeSettings({contentHeight: nextHeight});
@@ -130,7 +151,7 @@ export default function useLegendPosition({
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [contentHeight, pos, onChangeSettings]
+    [contentHeight, pos, onChangeSettings, maxContentHeight]
   );
 
   // Shift when side panel is shown/hidden
@@ -151,5 +172,61 @@ export default function useLegendPosition({
     }
   }, [isSidePanelShown, onChangeSettings, sidePanelWidth]);
 
-  return {positionStyles, updatePosition, contentHeight, startResize, resize};
+  // Clamp position when map resizes to ensure legend stays within viewport
+  useEffect(() => {
+    if (!mapWidth || !mapHeight || !legendContentRef.current) return;
+
+    const legendContent = legendContentRef.current;
+    const legendRect = legendContent.getBoundingClientRect();
+    const currentPos = posRef.current;
+    const leftSidebarOffset = isSidePanelShown ? sidePanelWidth : 0;
+
+    let needsUpdate = false;
+    const newPos = {...currentPos};
+
+    // Clamp horizontal position
+    if (currentPos.anchorX === 'left') {
+      const maxX = mapWidth - legendRect.width - MARGIN.right;
+      const minX = leftSidebarOffset + MARGIN.left;
+      if (currentPos.x < minX) {
+        newPos.x = minX;
+        needsUpdate = true;
+      } else if (currentPos.x > maxX) {
+        newPos.x = maxX;
+        needsUpdate = true;
+      }
+    } else {
+      // anchorX === 'right'
+      const maxX = mapWidth - MARGIN.right;
+      const minX = legendRect.width + MARGIN.left;
+      if (currentPos.x < minX) {
+        newPos.x = minX;
+        needsUpdate = true;
+      } else if (currentPos.x > maxX) {
+        newPos.x = maxX;
+        needsUpdate = true;
+      }
+    }
+
+    // Clamp contentHeight if it exceeds available space
+    if (maxContentHeight && contentHeight > 0 && contentHeight > maxContentHeight) {
+      onChangeSettings({contentHeight: maxContentHeight});
+      needsUpdate = true;
+    }
+
+    if (needsUpdate) {
+      onChangeSettings({position: newPos});
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    mapWidth,
+    mapHeight,
+    contentHeight,
+    isSidePanelShown,
+    sidePanelWidth,
+    onChangeSettings,
+    maxContentHeight
+  ]);
+
+  return {positionStyles, updatePosition, contentHeight, maxContentHeight, startResize, resize};
 }
