@@ -57,7 +57,7 @@ describe('useLegendPosition', () => {
     expect(positionStyles).toEqual({left: 100, top: 200});
   });
 
-  test('should calculate maxContentHeight from mapRootDimensions', () => {
+  test('should calculate maxContentHeight from mapWidth and mapHeight', () => {
     const {
       result: {
         current: {maxContentHeight}
@@ -69,7 +69,8 @@ describe('useLegendPosition', () => {
         settings: {},
         onChangeSettings: jest.fn(),
         theme: THEME,
-        mapRootDimensions: {width: 800, height: 600}
+        mapHeight: 600,
+        mapWidth: 800
       })
     );
     // maxContentHeight = height - MARGIN.top - MARGIN.bottom - MAP_CONTROL_HEADER_FULL_HEIGHT
@@ -77,7 +78,7 @@ describe('useLegendPosition', () => {
     expect(maxContentHeight).toBe(526);
   });
 
-  test('should return undefined maxContentHeight when mapRootDimensions not provided', () => {
+  test('should return undefined maxContentHeight when mapWidth and mapHeight not provided', () => {
     const {
       result: {
         current: {maxContentHeight}
@@ -116,7 +117,8 @@ describe('useLegendPosition', () => {
         },
         onChangeSettings,
         theme: THEME,
-        mapRootDimensions: {width: 800, height: 600}
+        mapHeight: 600,
+        mapWidth: 800
       })
     );
 

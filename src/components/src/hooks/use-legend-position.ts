@@ -172,22 +172,11 @@ export default function useLegendPosition({
     }
   }, [isSidePanelShown, onChangeSettings, sidePanelWidth]);
 
-  // Clamp position when map resizes to ensure legend stays within viewport
+  // Clamp contentHeight when map resizes to ensure legend stays within available space
   useEffect(() => {
     if (!mapWidth || !mapHeight || !legendContentRef.current) return;
-
-    const currentPos = posRef.current;
-
-    let needsUpdate = false;
-    const newPos = {...currentPos};
-    // Clamp contentHeight if it exceeds available space
     if (maxContentHeight && contentHeight > 0 && contentHeight > maxContentHeight) {
       onChangeSettings({contentHeight: maxContentHeight});
-      needsUpdate = true;
-    }
-
-    if (needsUpdate) {
-      onChangeSettings({position: newPos});
     }
   }, [mapWidth, mapHeight, contentHeight, onChangeSettings, maxContentHeight]);
 
