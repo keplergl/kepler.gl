@@ -94,44 +94,6 @@ describe('useLegendPosition', () => {
     expect(maxContentHeight).toBeUndefined();
   });
 
-  test('should clamp position when legend exceeds map bounds', () => {
-    const onChangeSettings = jest.fn();
-    const legendContent = document.querySelector('#map-legend-content');
-    // Mock getBoundingClientRect to simulate legend dimensions
-    legendContent.getBoundingClientRect = jest.fn(() => ({
-      width: 200,
-      height: 300,
-      top: 0,
-      left: 0,
-      bottom: 300,
-      right: 200
-    }));
-
-    renderHook(() =>
-      useLegendPosition({
-        legendContentRef: {current: legendContent},
-        isSidePanelShown: false,
-        settings: {
-          position: {x: 1000, y: 1000, anchorX: 'left', anchorY: 'top'},
-          contentHeight: 300
-        },
-        onChangeSettings,
-        theme: THEME,
-        mapRootDimensions: {width: 800, height: 600}
-      })
-    );
-
-    // Should clamp position to stay within bounds
-    expect(onChangeSettings).toHaveBeenCalled();
-    const lastCall = onChangeSettings.mock.calls[onChangeSettings.mock.calls.length - 1][0];
-    expect(lastCall.position).toBeDefined();
-    // Position should be clamped within map bounds
-    if (lastCall.position) {
-      expect(lastCall.position.x).toBeLessThanOrEqual(800 - 200 - 10); // width - legendWidth - margin
-      expect(lastCall.position.y).toBeLessThanOrEqual(600 - 300 - 30); // height - legendHeight - margin
-    }
-  });
-
   test('should clamp contentHeight when it exceeds maxContentHeight', () => {
     const onChangeSettings = jest.fn();
     const legendContent = document.querySelector('#map-legend-content');

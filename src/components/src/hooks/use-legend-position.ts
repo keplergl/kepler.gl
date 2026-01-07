@@ -176,38 +176,10 @@ export default function useLegendPosition({
   useEffect(() => {
     if (!mapWidth || !mapHeight || !legendContentRef.current) return;
 
-    const legendContent = legendContentRef.current;
-    const legendRect = legendContent.getBoundingClientRect();
     const currentPos = posRef.current;
-    const leftSidebarOffset = isSidePanelShown ? sidePanelWidth : 0;
 
     let needsUpdate = false;
     const newPos = {...currentPos};
-
-    // Clamp horizontal position
-    if (currentPos.anchorX === 'left') {
-      const maxX = mapWidth - legendRect.width - MARGIN.right;
-      const minX = leftSidebarOffset + MARGIN.left;
-      if (currentPos.x < minX) {
-        newPos.x = minX;
-        needsUpdate = true;
-      } else if (currentPos.x > maxX) {
-        newPos.x = maxX;
-        needsUpdate = true;
-      }
-    } else {
-      // anchorX === 'right'
-      const maxX = mapWidth - MARGIN.right;
-      const minX = legendRect.width + MARGIN.left;
-      if (currentPos.x < minX) {
-        newPos.x = minX;
-        needsUpdate = true;
-      } else if (currentPos.x > maxX) {
-        newPos.x = maxX;
-        needsUpdate = true;
-      }
-    }
-
     // Clamp contentHeight if it exceeds available space
     if (maxContentHeight && contentHeight > 0 && contentHeight > maxContentHeight) {
       onChangeSettings({contentHeight: maxContentHeight});
@@ -217,16 +189,7 @@ export default function useLegendPosition({
     if (needsUpdate) {
       onChangeSettings({position: newPos});
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    mapWidth,
-    mapHeight,
-    contentHeight,
-    isSidePanelShown,
-    sidePanelWidth,
-    onChangeSettings,
-    maxContentHeight
-  ]);
+  }, [mapWidth, mapHeight, contentHeight, onChangeSettings, maxContentHeight]);
 
   return {positionStyles, updatePosition, contentHeight, maxContentHeight, startResize, resize};
 }
