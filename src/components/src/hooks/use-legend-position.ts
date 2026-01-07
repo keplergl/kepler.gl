@@ -131,15 +131,12 @@ export default function useLegendPosition({
       if (root instanceof HTMLElement && legendContent) {
         const mapRootBounds = root.getBoundingClientRect();
         const legendRect = legendContent.getBoundingClientRect();
+        const remainingHeight =
+          mapRootBounds.bottom - (legendRect.top + MAP_CONTROL_HEADER_FULL_HEIGHT + MARGIN.bottom);
         // Use maxContentHeight if available, otherwise fall back to viewport-based calculation
         const maxHeight = maxContentHeight
-          ? Math.min(
-              maxContentHeight,
-              mapRootBounds.bottom -
-                (legendRect.top + MAP_CONTROL_HEADER_FULL_HEIGHT + MARGIN.bottom)
-            )
-          : mapRootBounds.bottom -
-            (legendRect.top + MAP_CONTROL_HEADER_FULL_HEIGHT + MARGIN.bottom);
+          ? Math.min(maxContentHeight, remainingHeight)
+          : remainingHeight;
         const nextHeight = Math.min(
           maxHeight,
           Math.max(MIN_CONTENT_HEIGHT, startHeightRef.current + deltaY)
@@ -178,7 +175,7 @@ export default function useLegendPosition({
     if (maxContentHeight && contentHeight > 0 && contentHeight > maxContentHeight) {
       onChangeSettings({contentHeight: maxContentHeight});
     }
-  }, [mapWidth, mapHeight, contentHeight, onChangeSettings, maxContentHeight]);
+  }, [mapWidth, mapHeight, contentHeight, onChangeSettings, maxContentHeight, legendContentRef]);
 
   return {positionStyles, updatePosition, contentHeight, maxContentHeight, startResize, resize};
 }
