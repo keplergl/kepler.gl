@@ -5286,6 +5286,7 @@ __metadata:
     global: "npm:^4.3.0"
     keymirror: "npm:^0.1.1"
     lodash: "npm:4.17.21"
+    zod: "npm:^3.24.2"
   languageName: unknown
   linkType: soft
 
@@ -32156,6 +32157,13 @@ __metadata:
   version: 3.23.8
   resolution: "zod@npm:3.23.8"
   checksum: 10c0/8f14c87d6b1b53c944c25ce7a28616896319d95bc46a9660fe441adc0ed0a81253b02b5abdaeffedbeb23bdd25a0bf1c29d2c12dd919aef6447652dd295e3e69
+  languageName: node
+  linkType: hard
+
+"zod@npm:^3.24.2":
+  version: 3.25.50
+  resolution: "zod@npm:3.25.50"
+  checksum: 10c0/88f8e73198ebe986b1640610e8abf9b3fde1db5de1d1dcfe21138b4712e6d9e875521a15538c70b5eb4c52712f8d6261794e0716ad57b213c3b328e1bc423986
   languageName: node
   linkType: hard
 
