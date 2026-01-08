@@ -2,12 +2,12 @@
 // Copyright contributors to the kepler.gl project
 
 export const PROVIDER_DEFAULT_BASE_URLS = {
-  "openai": "https://api.openai.com/v1",
-  "anthropic": "https://api.anthropic.com/v1",
-  "google": "https://generativelanguage.googleapis.com/v1beta",
-  "deepseek": "https://api.deepseek.com/v1",
-  "xai": "https://api.x.ai/v1",
-  "ollama": "http://localhost:11434/api"
+  openai: 'https://api.openai.com/v1',
+  anthropic: 'https://api.anthropic.com/v1',
+  google: 'https://generativelanguage.googleapis.com/v1beta',
+  deepseek: 'https://api.deepseek.com/v1',
+  xai: 'https://api.x.ai/v1',
+  ollama: 'http://localhost:11434/api'
 };
 
 export const PROVIDER_MODELS = {
