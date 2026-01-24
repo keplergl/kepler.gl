@@ -30,12 +30,7 @@ import {replacePanelHeader} from './factories/panel-header';
 import {CLOUD_PROVIDERS_CONFIGURATION, DEFAULT_FEATURE_FLAGS} from './constants/default-settings';
 import {messages} from './constants/localization';
 
-import {
-  loadRemoteMap,
-  loadSampleConfigurations,
-  onExportFileSuccess,
-  onLoadCloudMapSuccess
-} from './actions';
+import {onExportFileSuccess, onLoadCloudMapSuccess} from './actions';
 
 import {
   loadCloudMap,
@@ -46,6 +41,8 @@ import {
 } from '@kepler.gl/actions';
 import {CLOUD_PROVIDERS} from './cloud-providers';
 import {Panel, PanelGroup, PanelResizeHandle} from 'react-resizable-panels';
+import {useParams, useLocation, useNavigate} from 'react-router-dom';
+import {useLoadSampleMap} from './hooks/use-load-sample-map';
 
 const KeplerGl = require('@kepler.gl/components').injectComponents([
   replaceLoadDataModal(),
@@ -72,6 +69,7 @@ import sampleIconCsv from './data/sample-icon-csv';
 import sampleGpsData from './data/sample-gps-data';
 import sampleRowData, {config as rowDataConfig} from './data/sample-row-data';
 import {processCsvData, processGeojson, processRowObject} from '@kepler.gl/processors';
+import {useLoadRemoteMap} from './hooks/use-load-remote-map';
 
 /* eslint-enable no-unused-vars */
 
@@ -153,9 +151,19 @@ const StyledVerticalResizeHandle = styled(PanelResizeHandle)`
 
 const App = props => {
   const [showBanner, toggleShowBanner] = useState(false);
-  const {params: {id, provider} = {}, location: {query = {}} = {}} = props;
-  const dispatch = useDispatch();
+  const params = useParams();
+  const location = useLocation();
+  const navigate = useNavigate();
 
+  const {id, provider} = params;
+  console.log('id', id);
+  console.log('provider', provider);
+  const query = Object.fromEntries(new URLSearchParams(location.search));
+  console.log('query', query);
+
+  const dispatch = useDispatch();
+  const {loadSampleConfigurations} = useLoadSampleMap();
+  const {loadRemoteMap} = useLoadRemoteMap();
   // TODO find another way to check for existence of duckDb plugin
   const duckDbPluginEnabled = (getApplicationConfig().plugins || []).some(p => p.name === 'duckdb');
 
@@ -167,11 +175,33 @@ const App = props => {
     state => state?.demo?.keplerGl?.map?.uiState.mapControls.aiAssistant?.active
   );
 
-  const prevQueryRef = useRef<number>(null);
+  const prevQueryRef = useRef(null);
+
+  useEffect(() => {
+    // Load sample map using its id
+    // url kepler.gl/demo/:sample-map-id
+    if (id) {
+      loadSampleConfigurations(id);
+    }
+  }, [id, loadSampleConfigurations]);
+
+  useEffect(() => {
+    // Load map using map url from query params
+    if (query.mapUrl) {
+      // TODO?: validate map url
+      // demo?mapUrl=https://raw.githubusercontent.com/keplergl/kepler.gl-data/master/usdot/keplergl.json
+      loadRemoteMap(query.mapUrl);
+      // Reset mapUrl query param after loading
+      const searchParams = new URLSearchParams(location.search);
+      searchParams.delete('mapUrl');
+      navigate({search: searchParams.toString()}, {replace: true});
+    }
+  }, [query.mapUrl, loadRemoteMap, navigate, location.search]);
 
   useEffect(() => {
     // if we pass an id as part of the url
     // we try to fetch along map configurations
+    // https://kepler.gl/demo/map/dropbox?path=/kepler%20earthquake%20map.json
     const cloudProvider = CLOUD_PROVIDERS.find(c => c.name === provider);
     if (cloudProvider) {
       // Prevent constant reloading after change of the location
@@ -183,22 +213,16 @@ const App = props => {
         loadCloudMap({
           loadParams: query,
           provider: cloudProvider,
-          onSuccess: onLoadCloudMapSuccess
+          onSuccess: ({provider, loadParams}) => {
+            const mapUrl = provider?.getMapUrl(loadParams);
+            if (mapUrl) {
+              navigate(`/demo/map/${provider.name}?path=${mapUrl}`);
+            }
+          }
         })
       );
       prevQueryRef.current = {provider, id, query};
       return;
-    }
-
-    // Load sample using its id
-    if (id) {
-      dispatch(loadSampleConfigurations(id));
-    }
-
-    // Load map using a custom
-    if (query.mapUrl) {
-      // TODO?: validate map url
-      dispatch(loadRemoteMap({dataUrl: query.mapUrl}));
     }
 
     if (duckDbPluginEnabled && query.sql) {
@@ -212,12 +236,7 @@ const App = props => {
     // }
     // load sample data
     _loadSampleData();
-
-    // Notifications
-
-    // no dependencies, as this was part of componentDidMount
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [dispatch, id, provider, query, navigate, loadRemoteMap]);
 
   /**
    * Update map boundary when view state changes, used by ai-assistant to
@@ -627,6 +646,26 @@ const App = props => {
     _loadSyncedFilterWTripLayer,
     _replaceSyncedFilterWTripLayer
   ]);
+
+  const onExportToCloudSuccess = useCallback(
+    ({provider, options}) => {
+      let newUrl = null;
+      // if isPublic is true, use share Url
+      if (options.isPublic && provider.getShareUrl) {
+        newUrl = provider.getShareUrl(false);
+      }
+
+      // if save private map to storage, use map url
+      if (!options.isPublic && provider.getMapUrl) {
+        newUrl = provider.getMapUrl(false);
+      }
+
+      if (newUrl) {
+        navigate(`/demo/map/${provider.name}?path=${newUrl}`);
+      }
+    },
+    [navigate]
+  );
 
   return (
     <StyleSheetManager shouldForwardProp={shouldForwardProp}>
