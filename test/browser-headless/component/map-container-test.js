@@ -116,6 +116,13 @@ test('MapContainerFactory - _renderDeckOverlay', t => {
   const divWrapper = instance._renderDeckOverlay(...args);
   const DeckGl = divWrapper.props.children;
 
+  t.ok(typeof DeckGl.props.getTooltip === 'function', 'DeckGl should receive getTooltip prop');
+  t.equal(
+    DeckGl.props.getTooltip({x: -1, y: -1, pixel: [-1, -1]}),
+    null,
+    'getTooltip should return null for invalid hover coordinates'
+  );
+
   const clickEvents = [];
   const hoverEvents = [];
 
