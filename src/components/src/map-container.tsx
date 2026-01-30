@@ -864,7 +864,7 @@ export default function MapContainerFactory(
           extraDeckParams.getTooltip = info => {
             const x = Number(info?.x);
             const y = Number(info?.y);
-            if (!(x > 0 && y > 0)) return null;
+            if (Number.isNaN(x) || Number.isNaN(y) || x < 0 || y < 0) return null;
 
             return EditorLayerUtils.getTooltip(info, {
               editorMenuActive,
