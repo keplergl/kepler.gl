@@ -858,12 +858,30 @@ export default function MapContainerFactory(
         getCursor?: ({isDragging}: {isDragging: boolean}) => string;
       } = {};
       if (primaryMap) {
-        extraDeckParams.getTooltip = info =>
-          EditorLayerUtils.getTooltip(info, {
+        // In some edge cases Deck reports invalid hover coords (e.g. -1/-1),
+        // which makes the tooltip appear stuck in the top-left corner.
+        extraDeckParams.getTooltip = info => {
+          const x = Number(info?.x);
+          const y = Number(info?.y);
+          const pixel = Array.isArray(info?.pixel) ? info.pixel : null;
+          const px = pixel ? Number(pixel[0]) : NaN;
+          const py = pixel ? Number(pixel[1]) : NaN;
+
+          console.log(x, y);
+
+          const invalidXY =
+            (Number.isFinite(x) && Number.isFinite(y) && (x < 0 || y < 0))
+          const invalidPixel =
+            (Number.isFinite(px) && Number.isFinite(py) && (px < 0 || py < 0))
+
+          if (invalidXY || invalidPixel) return null;
+
+          return EditorLayerUtils.getTooltip(info, {
             editorMenuActive,
             editor,
             theme
           });
+        };
 
         extraDeckParams.getCursor = ({isDragging}: {isDragging: boolean}) => {
           const editorCursor = EditorLayerUtils.getCursor({
