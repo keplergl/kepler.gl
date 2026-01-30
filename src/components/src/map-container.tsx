@@ -858,19 +858,19 @@ export default function MapContainerFactory(
         getCursor?: ({isDragging}: {isDragging: boolean}) => string;
       } = {};
       if (primaryMap) {
-          // Omit hover updates when the pointer position is invalid, ie. over UI overlays or
-          // outside the map container. In those cases x/y may be < 0
-          extraDeckParams.getTooltip = info => {
-            const x = Number(info?.x);
-            const y = Number(info?.y);
-            if (Number.isNaN(x) || Number.isNaN(y) || x < 0 || y < 0) return null;
+        // Omit hover updates when the pointer position is invalid, ie. over UI overlays or
+        // outside the map container. In those cases x/y may be < 0
+        extraDeckParams.getTooltip = info => {
+          const x = Number(info?.x);
+          const y = Number(info?.y);
+          if (Number.isNaN(x) || Number.isNaN(y) || x < 0 || y < 0) return null;
 
-            return EditorLayerUtils.getTooltip(info, {
-              editorMenuActive,
-              editor,
-              theme
-            });
-          };
+          return EditorLayerUtils.getTooltip(info, {
+            editorMenuActive,
+            editor,
+            theme
+          });
+        };
 
         extraDeckParams.getCursor = ({isDragging}: {isDragging: boolean}) => {
           const editorCursor = EditorLayerUtils.getCursor({
