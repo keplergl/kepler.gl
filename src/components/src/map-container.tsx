@@ -859,7 +859,7 @@ export default function MapContainerFactory(
       } = {};
       if (primaryMap) {
         extraDeckParams.getTooltip = info => {
-          // Omit hover updates even when the pointer position is invalid, ie. over UI overlays or
+          // Omit hover updates when the pointer position is invalid, ie. over UI overlays or
           // outside the map container. In those cases x/y may be < 0
           extraDeckParams.getTooltip = info => {
             const x = Number(info?.x);
