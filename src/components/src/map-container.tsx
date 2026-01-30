@@ -858,9 +858,6 @@ export default function MapContainerFactory(
         getCursor?: ({isDragging}: {isDragging: boolean}) => string;
       } = {};
       if (primaryMap) {
-        extraDeckParams.getTooltip = info => {
-          // Omit hover updates when the pointer position is invalid, ie. over UI overlays or
-          // outside the map container. In those cases x/y may be < 0
           // Omit hover updates when the pointer position is invalid, ie. over UI overlays or
           // outside the map container. In those cases x/y may be < 0
           extraDeckParams.getTooltip = info => {
