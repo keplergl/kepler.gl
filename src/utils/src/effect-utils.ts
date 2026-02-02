@@ -4,7 +4,7 @@
 import SunCalc from 'suncalc';
 import cloneDeep from 'lodash/cloneDeep';
 
-import {PostProcessEffect} from '@deck.gl/core/typed';
+import {PostProcessEffect} from '@deck.gl/core';
 
 import {
   LIGHT_AND_SHADOW_EFFECT,

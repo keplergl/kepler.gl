@@ -5,7 +5,7 @@
 import React, {Component, createRef, useMemo} from 'react';
 import styled, {withTheme} from 'styled-components';
 import {Map, MapRef} from 'react-map-gl';
-import {PickInfo} from '@deck.gl/core/lib/deck';
+import {PickingInfo} from '@deck.gl/core';
 import DeckGL from '@deck.gl/react';
 import {createSelector, Selector} from 'reselect';
 import {useDroppable} from '@dnd-kit/core';
@@ -511,7 +511,7 @@ export default function MapContainerFactory(
       this.props.visStateActions.onLayerClick(null);
     };
 
-    _onLayerHover = (_idx: number, info: PickInfo<any> | null) => {
+    _onLayerHover = (_idx: number, info: PickingInfo<any> | null) => {
       this.props.visStateActions.onLayerHover(info, this.props.index);
     };
 

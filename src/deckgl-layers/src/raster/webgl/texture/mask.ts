@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {Texture2D} from '@luma.gl/webgl';
+import {Texture} from '@luma.gl/core';
 
 import {GetUniformsOutput, ShaderModule} from '../types';
 
 const inf = Math.pow(2, 62);
 
 function getUniforms(
-  opts: {imageMask?: Texture2D; maskKeepMin?: number; maskKeepMax?: number} = {}
+  opts: {imageMask?: Texture; maskKeepMin?: number; maskKeepMax?: number} = {}
 ): GetUniformsOutput {
   const {imageMask, maskKeepMin, maskKeepMax} = opts;
   if (!imageMask) {

@@ -60,10 +60,10 @@
     "usehooks-ts": "^3.1.0"
   },
   "resolutions": {
-    "@luma.gl/core": "8.5.21",
-    "@luma.gl/webgl": "8.5.21",
-    "@deck.gl/core": "8.9.27",
-    "@deck.gl/extensions": "8.9.27",
+    "@luma.gl/core": "9.2.4",
+    "@luma.gl/webgl": "9.2.4",
+    "@deck.gl/core": "9.2.5",
+    "@deck.gl/extensions": "9.2.5",
     "react-vis": "1.11.7"
   },
   "engines": {

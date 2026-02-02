@@ -13,3 +13,5 @@ export * from './tooltip';
 export * from './user-feedbacks';
 export * from './user-guides';
 export * from './time';
+export {default as GL} from './gl-constants';
+export * from './gl-constants';

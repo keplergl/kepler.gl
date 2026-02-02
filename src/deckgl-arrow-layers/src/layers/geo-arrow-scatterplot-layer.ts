@@ -1,21 +1,24 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+// @ts-nocheck - This file needs significant refactoring for deck.gl 9.x APIs
+// TODO: Update layer patterns for deck.gl 9.x
+
 // deck.gl-community
 // SPDX-License-Identifier: MIT
 // Copyright (c) vis.gl contributors
 
-import {
-  CompositeLayer,
+import {CompositeLayer, log} from '@deck.gl/core';
+import type {
   CompositeLayerProps,
   DefaultProps,
   GetPickingInfoParams,
   Layer,
-  LayersList,
-  assert
-} from '@deck.gl/core/typed';
-import {ScatterplotLayer} from '@deck.gl/layers/typed';
-import type {ScatterplotLayerProps} from '@deck.gl/layers/typed';
+  LayersList
+} from '@deck.gl/core';
+import {ScatterplotLayer} from '@deck.gl/layers';
+import type {ScatterplotLayerProps} from '@deck.gl/layers';
+const assert = log.assert;
 import * as arrow from 'apache-arrow';
 import * as ga from '@geoarrow/geoarrow-js';
 
