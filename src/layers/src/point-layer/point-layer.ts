@@ -347,7 +347,7 @@ export default class PointLayer extends Layer {
         columns?: PointLayerColumnsConfig;
       } = {
         label:
-          pair.defaultName && pair.defaultName !== 'Point'
+          pair.defaultName && pair.defaultName !== 'point'
             ? pair.defaultName
             : (typeof label === 'string' && label.replace(/\.[^/.]+$/, '')) || 'Point'
       };
