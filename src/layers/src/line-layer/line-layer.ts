@@ -260,7 +260,7 @@ export default class LineLayer extends ArcLayer {
         geoarrow0: {...defaultAltColumn},
         geoarrow1: {...defaultAltColumn}
       },
-      label: `${fieldPairs[0].defaultName || 'point'} -> ${fieldPairs[1].defaultName || 'point'} line`,
+      label: `${fieldPairs[0].defaultName} -> ${fieldPairs[1].defaultName} line`,
       isVisible: false
     };
 

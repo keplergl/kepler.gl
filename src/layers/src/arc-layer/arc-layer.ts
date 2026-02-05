@@ -314,7 +314,7 @@ export default class ArcLayer extends Layer {
         lat1: fieldPairs[1].pair.lat,
         lng1: fieldPairs[1].pair.lng
       },
-      label: `${fieldPairs[0].defaultName || 'point'} -> ${fieldPairs[1].defaultName || 'point'} arc`
+      label: `${fieldPairs[0].defaultName} -> ${fieldPairs[1].defaultName} arc`
     };
 
     return {props: [props]};

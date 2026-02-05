@@ -347,9 +347,9 @@ export default class PointLayer extends Layer {
         columns?: PointLayerColumnsConfig;
       } = {
         label:
-          pair.defaultName ||
-          (typeof label === 'string' && label.replace(/\.[^/.]+$/, '')) ||
-          'Point'
+          pair.defaultName && pair.defaultName !== 'Point'
+            ? pair.defaultName
+            : (typeof label === 'string' && label.replace(/\.[^/.]+$/, '')) || 'Point'
       };
 
       // default layer color for begintrip and dropoff point
