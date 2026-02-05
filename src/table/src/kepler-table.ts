@@ -580,7 +580,7 @@ export function findPointFieldPairs(fields: Field[]): FieldPair[] {
           const trimName = fieldName.replace(re, '').trim();
 
           carry.push({
-            defaultName: trimName || 'point',
+            defaultName: trimName,
             pair: {
               lat: {
                 fieldIdx: idx,
