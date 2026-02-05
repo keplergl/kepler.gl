@@ -15,7 +15,7 @@ const H3_ANALYZER_TYPE = 'H3';
 const WKT_PREFIX_RE =
   /^(?:SRID=\d+\s*;\s*)?(?:POINT|LINESTRING|POLYGON|MULTIPOINT|MULTILINESTRING|MULTIPOLYGON|GEOMETRYCOLLECTION)(?:\s+(?:Z|M|ZM))?\s*\(/i;
 
-function isWkt(value: unknown): boolean {
+export function isWkt(value: unknown): boolean {
   if (typeof value !== 'string') {
     return false;
   }

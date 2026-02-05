@@ -3,6 +3,7 @@
 
 import test from 'tape';
 import {findDefaultColorField, createNewDataEntry} from '@kepler.gl/utils';
+import {isHexWkb, isWkt} from '@kepler.gl/common-utils';
 
 import {processCsvData} from '@kepler.gl/processors';
 
@@ -88,4 +89,42 @@ test('datasetUtils.isHexWkb', t => {
 
   const validEWktNDR = '0020000001000013ff0000000000400000000000000040';
   t.ok(isHexWkb(validEWktNDR), 'A valid hex ewkb in NDR should be valid');
+  t.end();
+});
+
+test('datasetUtils.isWkt', t => {
+  // non-strings
+  t.notOk(isWkt(null), 'null is not a valid WKT');
+  t.notOk(isWkt(undefined), 'undefined is not a valid WKT');
+  t.notOk(isWkt(123), 'number is not a valid WKT');
+  t.notOk(isWkt({}), 'object is not a valid WKT');
+
+  // regular strings / known non-WKT identifiers
+  t.notOk(isWkt(''), 'empty string is not a valid WKT');
+  t.notOk(isWkt('hello world'), 'regular string is not a valid WKT');
+  t.notOk(isWkt('06075'), 'FIPS code should not be a valid WKT');
+  t.notOk(isWkt('8a2a1072b59ffff'), 'H3 code should not be a valid WKT');
+
+  // edge cases (missing coordinates / parentheses)
+  t.notOk(isWkt('POINT'), 'POINT without coordinates should not be a valid WKT');
+  t.notOk(isWkt('POINT 1 2'), 'POINT without parentheses should not be a valid WKT');
+  t.notOk(isWkt('SRID=4326;POINT'), 'SRID prefix without geometry should not be a valid WKT');
+  t.notOk(isWkt('POINT (1 2'), 'missing closing parenthesis should not be a valid WKT');
+  t.notOk(isWkt('POINT ( )'), 'empty coordinates should not be a valid WKT');
+
+  // valid WKT examples (heuristic)
+  t.ok(isWkt('POINT (1 2)'), 'POINT should be recognized as WKT');
+  t.ok(isWkt('POINT(1 2)'), 'POINT without space before parentheses should be recognized as WKT');
+  t.ok(isWkt('LINESTRING (0 0, 1 1)'), 'LINESTRING should be recognized as WKT');
+  t.ok(isWkt('POLYGON ((0 0, 1 0, 1 1, 0 0))'), 'POLYGON should be recognized as WKT');
+  t.ok(
+    isWkt('SRID=4326;POINT(1 2)'),
+    'WKT with SRID prefix should be recognized as WKT'
+  );
+  t.ok(isWkt('POINT Z (1 2 3)'), 'WKT with Z dimension should be recognized as WKT');
+
+  // not WKT but contains parentheses
+  t.notOk(isWkt('HELLO (1 2)'), 'non-WKT string with parentheses should not be valid WKT');
+
+  t.end();
 });
