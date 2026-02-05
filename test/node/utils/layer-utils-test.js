@@ -164,7 +164,7 @@ test('layerUtils -> findDefaultLayer.1', t => {
       }
     }),
     new PointLayer({
-      label: 'point',
+      label: 'Point',
       dataId,
       columns: {
         lat: {
