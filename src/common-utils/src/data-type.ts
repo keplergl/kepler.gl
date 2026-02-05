@@ -11,9 +11,7 @@ import {h3IsValid} from './h3-utils';
 
 const H3_ANALYZER_TYPE = 'H3';
 
-// WKT (Well-Known Text) geometry prefixes.
-// Keep this intentionally lightweight: we only use it to prevent geometry strings
-// from being treated as generic text (e.g. for tooltip field auto-picking).
+// Returns true if the value is likely a WKT geometry string (heuristic check).
 const WKT_PREFIX_RE =
   /^(?:SRID=\d+\s*;\s*)?(?:POINT|LINESTRING|POLYGON|MULTIPOINT|MULTILINESTRING|MULTIPOLYGON|GEOMETRYCOLLECTION)(?:\s+(?:Z|M|ZM))?\s*\(/i;
 
