@@ -347,9 +347,10 @@ export default class PointLayer extends Layer {
         columns?: PointLayerColumnsConfig;
       } = {
         label:
-          pair.defaultName ||
-          (typeof label === 'string' && label.replace(/\.[^/.]+$/, '')) ||
-          'Point'
+          // Skip the generic 'point' fallback from findPointFieldPairs and use the dataset label instead
+          pair.defaultName && pair.defaultName !== 'point'
+            ? pair.defaultName
+            : (typeof label === 'string' && label.replace(/\.[^/.]+$/, '')) || 'Point'
       };
 
       // default layer color for begintrip and dropoff point
