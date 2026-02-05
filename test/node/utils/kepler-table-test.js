@@ -278,7 +278,7 @@ test('KeplerTable -> findPointFieldPairs', t => {
           suffix: ['lat', 'lng']
         },
         {
-          defaultName: 'point',
+          defaultName: '',
           pair: {
             lat: {
               fieldIdx: 3,
@@ -343,7 +343,7 @@ test('KeplerTable -> findPointFieldPairs', t => {
           suffix: ['lat', 'long']
         },
         {
-          defaultName: 'point',
+          defaultName: '',
           pair: {
             lat: {
               fieldIdx: 3,
