@@ -25,7 +25,6 @@ function isWkt(value: unknown): boolean {
     return false;
   }
 
-  // Quick structural checks to avoid regex work for typical strings.
   if (!s.includes('(') || !s.includes(')')) {
     return false;
   }
