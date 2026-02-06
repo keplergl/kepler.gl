@@ -44,6 +44,7 @@ import {
   FindDefaultLayerProps
 } from '../layer-utils';
 import {getGeojsonPointDataMaps, GeojsonPointDataMaps} from '../geojson-layer/geojson-utils';
+import {getGeojsonPointPositionFromRaw} from '../geojson-layer/geojson-position-utils';
 import {
   ColorRange,
   Merge,
@@ -243,7 +244,42 @@ export default class PointLayer extends Layer {
         case COLUMN_MODE_GEOARROW:
           return geoarrowPosAccessor(this.config.columns)(dataContainer);
         case COLUMN_MODE_GEOJSON:
-          return geojsonPosAccessor(this.config.columns);
+          return d => {
+            // When hovering rendered points, deck.gl passes the expanded object that already
+            // contains a numeric position.
+            if (d && Array.isArray(d.position)) {
+              return d.position;
+            }
+
+            // When filtering (and other CPU utilities), we typically get {index}.
+            const index = d?.index;
+            if (typeof index === 'number') {
+              const mapped = this.dataToFeature?.[index];
+              // dataToFeature can contain [] (empty GeometryCollection); treat as null.
+              if (Array.isArray(mapped) && mapped.length) {
+                return mapped;
+              }
+
+              const {geojson} = this.config.columns;
+              if (geojson?.fieldIdx > -1) {
+                const raw = dataContainer.valueAt(index, geojson.fieldIdx);
+                const coords = getGeojsonPointPositionFromRaw(raw);
+                if (coords) {
+                  // cache parsed coordinates to avoid re-parsing during filtering/hover
+                  this.dataToFeature[index] = coords;
+                }
+                return coords;
+              }
+            }
+
+            // Fallback: sometimes utilities pass the whole row as an array.
+            if (Array.isArray(d)) {
+              const {geojson} = this.config.columns;
+              return getGeojsonPointPositionFromRaw(d[geojson.fieldIdx]);
+            }
+
+            return null;
+          };
         default:
           // COLUMN_MODE_POINTS
           return pointPosAccessor(this.config.columns)(dataContainer);
@@ -497,7 +533,10 @@ export default class PointLayer extends Layer {
     this.dataContainer = dataContainer;
 
     if (this.config.columnMode === COLUMN_MODE_GEOJSON) {
-      const getFeature = this.getPositionAccessor();
+      // In geojson column mode, PointLayer renders positions from parsed point coordinates.
+      // Keep feature extraction separate from getPositionAccessor, which should always return
+      // numeric positions for filtering and interactions.
+      const getFeature = geojsonPosAccessor(this.config.columns);
       this.dataToFeature = getGeojsonPointDataMaps(dataContainer, getFeature);
     } else if (this.config.columnMode === COLUMN_MODE_GEOARROW) {
       const boundsFromMetadata = getBoundsFromArrowMetadata(
