@@ -67,7 +67,7 @@ interface RowProps {
   url?: string;
 }
 
-const TOOLTIP_VALUE_MAX_LENGTH = 1024;
+const TOOLTIP_VALUE_MAX_LENGTH = 256;
 
 const Row: React.FC<RowProps> = ({name, value, deltaValue, url}) => {
   // Set 'url' to 'value' if it looks like a url
