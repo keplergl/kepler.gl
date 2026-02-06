@@ -3,7 +3,7 @@
 
 import test from 'tape';
 import {findDefaultColorField, createNewDataEntry} from '@kepler.gl/utils';
-
+import {isHexWkb} from '@kepler.gl/common-utils';
 import {processCsvData} from '@kepler.gl/processors';
 
 import csvData from 'test/fixtures/test-layer-data';
