@@ -3,6 +3,7 @@
 
 import React, {useMemo} from 'react';
 import styled from 'styled-components';
+import truncate from 'lodash/truncate';
 import {CompareType, Field, Merge, TooltipField} from '@kepler.gl/types';
 import {CenterFlexbox} from '../common/styled-components';
 import {Layers} from '../common/icons';
@@ -66,11 +67,21 @@ interface RowProps {
   url?: string;
 }
 
+/** Max length before truncation is applied */
+const TOOLTIP_VALUE_MAX_LENGTH = 60;
+/** Length to truncate to (including ellipsis) */
+const TOOLTIP_VALUE_TRUNCATE_LENGTH = 30;
+
 const Row: React.FC<RowProps> = ({name, value, deltaValue, url}) => {
   // Set 'url' to 'value' if it looks like a url
   if (!url && value && typeof value === 'string' && value.match(/^http/)) {
     url = value;
   }
+
+  const displayValue =
+    typeof value === 'string' && value.length > TOOLTIP_VALUE_MAX_LENGTH
+      ? truncate(value, {length: TOOLTIP_VALUE_TRUNCATE_LENGTH})
+      : value;
 
   const asImg = /<img>/.test(name);
   return (
@@ -81,11 +92,11 @@ const Row: React.FC<RowProps> = ({name, value, deltaValue, url}) => {
           <img src={value} />
         ) : url ? (
           <a target="_blank" rel="noopener noreferrer" href={url}>
-            {value}
+            {displayValue}
           </a>
         ) : (
           <>
-            <span>{value}</span>
+            <span>{displayValue}</span>
             {notNullorUndefined(deltaValue) ? (
               <span
                 className={`row__delta-value ${
