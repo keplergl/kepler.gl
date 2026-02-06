@@ -67,10 +67,7 @@ interface RowProps {
   url?: string;
 }
 
-/** Max length before truncation is applied */
-const TOOLTIP_VALUE_MAX_LENGTH = 60;
-/** Length to truncate to (including ellipsis) */
-const TOOLTIP_VALUE_TRUNCATE_LENGTH = 30;
+const TOOLTIP_VALUE_MAX_LENGTH = 1024;
 
 const Row: React.FC<RowProps> = ({name, value, deltaValue, url}) => {
   // Set 'url' to 'value' if it looks like a url
@@ -80,7 +77,7 @@ const Row: React.FC<RowProps> = ({name, value, deltaValue, url}) => {
 
   const displayValue =
     typeof value === 'string' && value.length > TOOLTIP_VALUE_MAX_LENGTH
-      ? truncate(value, {length: TOOLTIP_VALUE_TRUNCATE_LENGTH})
+      ? truncate(value, {length: TOOLTIP_VALUE_MAX_LENGTH})
       : value;
 
   const asImg = /<img>/.test(name);
