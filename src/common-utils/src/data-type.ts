@@ -11,27 +11,6 @@ import {h3IsValid} from './h3-utils';
 
 const H3_ANALYZER_TYPE = 'H3';
 
-// Returns true if the value is likely a WKT geometry string (heuristic check).
-const WKT_PREFIX_RE =
-  /^(?:SRID=\d+\s*;\s*)?(?:POINT|LINESTRING|POLYGON|MULTIPOINT|MULTILINESTRING|MULTIPOLYGON|GEOMETRYCOLLECTION)(?:\s+(?:Z|M|ZM))?\s*\(/i;
-
-export function isWkt(value: unknown): boolean {
-  if (typeof value !== 'string') {
-    return false;
-  }
-
-  const s = value.trim();
-  if (s.length < 10) {
-    return false;
-  }
-
-  if (!s.includes('(') || !s.includes(')')) {
-    return false;
-  }
-
-  return WKT_PREFIX_RE.test(s);
-}
-
 export const ACCEPTED_ANALYZER_TYPES = [
   AnalyzerDATA_TYPES.DATE,
   AnalyzerDATA_TYPES.TIME,
@@ -286,11 +265,6 @@ export function getFieldsFromData(data: RowData, fieldOrder: string[]): Field[] 
     // quick check if string is hex wkb
     if (type === AnalyzerDATA_TYPES.STRING) {
       type = data.some(d => isHexWkb(d[name])) ? AnalyzerDATA_TYPES.GEOMETRY : type;
-    }
-
-    // quick check if string is wkt
-    if (type === AnalyzerDATA_TYPES.STRING) {
-      type = data.some(d => isWkt(d[name])) ? AnalyzerDATA_TYPES.GEOMETRY_FROM_STRING : type;
     }
 
     return {
