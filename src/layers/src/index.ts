@@ -44,6 +44,7 @@ import {default as VectorTileLayer} from './vector-tile/vector-tile-layer';
 
 export {default as VectorTileIcon} from './vector-tile/vector-tile-icon';
 export {default as VectorTileLayer} from './vector-tile/vector-tile-layer';
+export {getNumVectorTilesBeingLoaded} from './vector-tile/loading-counter';
 
 import {default as RasterTileLayer} from './raster-tile/raster-tile-layer';
 export {default as RasterTileIcon} from './raster-tile/raster-tile-icon';

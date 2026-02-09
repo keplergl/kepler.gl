@@ -10,6 +10,7 @@ import {
   _TileLoadProps,
   _Tile2DHeader
 } from '@deck.gl/geo-layers/typed';
+import {incrementVectorTileLoading, decrementVectorTileLoading} from './loading-counter';
 
 /*
   Custom MVT layer that works with MVTSource and PMTileSource.
@@ -22,14 +23,19 @@ import {
 
 // @ts-expect-error need to patch private methods because of newer loaders.gl
 export class MVTLayer<ExtraProps> extends _MVTLayer<ExtraProps> {
-  getTileData(tile: _TileLoadProps): any {
+  async getTileData(tile: _TileLoadProps): Promise<any> {
     const {getTileData} = this.props;
     const {data} = this.state;
 
     tile.url =
       typeof data === 'string' || Array.isArray(data) ? _getURLFromTemplate(data, tile) : null;
     if (getTileData) {
-      return getTileData(tile);
+      incrementVectorTileLoading();
+      try {
+        return await getTileData(tile);
+      } finally {
+        decrementVectorTileLoading();
+      }
     }
     return null;
   }
