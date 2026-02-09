@@ -117,3 +117,4 @@ export {default as VignetteEffectIcon} from './effects/vignette';
 export {default as MagnifyEffectIcon} from './effects/magnify';
 export {default as HexagonalPixelateEffectIcon} from './effects/hexagonal-pixelate';
 export {default as ZoomIn} from './zoom-in';
+export {default as ZoomOut} from './zoom-out';
