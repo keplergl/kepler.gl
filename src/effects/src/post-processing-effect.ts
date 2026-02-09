@@ -18,7 +18,7 @@ import {
   zoomBlur,
   magnify,
   hexagonalPixelate
-} from '@luma.gl/shadertools';
+} from '@luma.gl/effects';
 
 import {POSTPROCESSING_EFFECTS, DEFAULT_POST_PROCESSING_EFFECT_TYPE} from '@kepler.gl/constants';
 import {EffectPropsPartial, EffectParameterDescription} from '@kepler.gl/types';
@@ -114,20 +114,28 @@ class PostProcessingEffect extends Effect {
 
   _initializeEffect() {
     const effectDesc = POSTPROCESSING_EFFECTS_DESCS.find(desc => desc.type === this.type);
-    if (effectDesc) {
-      this.deckEffect = new DeckPostProcessEffect(effectDesc.class, this.parameters);
+    if (effectDesc && effectDesc.class) {
+      try {
+        this.deckEffect = new DeckPostProcessEffect(effectDesc.class, this.parameters);
 
-      const uniforms = this.deckEffect?.module?.uniforms;
-      if (uniforms) {
-        // get default parameters
-        const keys = Object.keys(uniforms);
-        const defaultParameters = {};
-        keys.forEach(key => {
-          defaultParameters[key] = getDefaultValueForParameter(key, this._uiConfig, uniforms);
-        });
-        this.parameters = {...defaultParameters, ...this.parameters};
-        this.deckEffect?.setProps(this.parameters);
+        const uniforms = this.deckEffect?.module?.uniforms;
+        if (uniforms) {
+          // get default parameters
+          const keys = Object.keys(uniforms);
+          const defaultParameters = {};
+          keys.forEach(key => {
+            defaultParameters[key] = getDefaultValueForParameter(key, this._uiConfig, uniforms);
+          });
+          this.parameters = {...defaultParameters, ...this.parameters};
+          this.deckEffect?.setProps(this.parameters);
+        }
+      } catch (error) {
+        console.warn(`Failed to initialize post-processing effect "${this.type}":`, error);
+        this.deckEffect = null;
       }
+    } else {
+      console.warn(`Post-processing effect "${this.type}" is not properly configured`);
+      this.deckEffect = null;
     }
   }
 
@@ -139,8 +147,8 @@ class PostProcessingEffect extends Effect {
     super.setProps(props);
 
     // any uniform updated?
-    if (props.parameters) {
-      this.deckEffect?.setProps(this.parameters);
+    if (props.parameters && this.deckEffect) {
+      this.deckEffect.setProps(this.parameters);
     }
   }
 }

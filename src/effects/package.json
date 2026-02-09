@@ -30,13 +30,14 @@
     "umd"
   ],
   "dependencies": {
-    "@deck.gl/core": "^8.9.27",
+    "@deck.gl/core": "^9.2.0",
     "@kepler.gl/common-utils": "3.2.5",
     "@kepler.gl/constants": "3.2.5",
     "@kepler.gl/types": "3.2.5",
     "@kepler.gl/utils": "3.2.5",
-    "@luma.gl/core": "^8.5.20",
-    "@luma.gl/shadertools": "^8.5.20",
+    "@luma.gl/core": "^9.2.0",
+    "@luma.gl/effects": "^9.2.5",
+    "@luma.gl/shadertools": "^9.2.0",
     "moment-timezone": "^0.5.35",
     "suncalc": "^1.9.0"
   },

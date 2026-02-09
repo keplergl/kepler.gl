@@ -6,7 +6,7 @@
     "jsx": "react",
     "noEmit": true,
     "module": "esnext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "noImplicitAny": false,
     "noImplicitReturns": true,
     "noImplicitThis": true,

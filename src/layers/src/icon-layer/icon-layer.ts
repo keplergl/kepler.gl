@@ -3,7 +3,7 @@
 
 import Window from 'global/window';
 import {BrushingExtension} from '@deck.gl/extensions';
-import GL from '@luma.gl/constants';
+import {GL} from '@kepler.gl/constants';
 
 import {SvgIconLayer} from '@kepler.gl/deckgl-layers';
 import IconLayerIcon from './icon-layer-icon';
