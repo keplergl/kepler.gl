@@ -48,7 +48,7 @@ export async function getDuckDBColumnTypes(
         type: columnTypes?.get(i)
       });
     }
-  } catch (error) {
+  } catch (primaryError) {
     try {
       const resDescribe = await connection.query(`DESCRIBE ${quotedTableName}`);
       const numRows = resDescribe.numRows;
@@ -62,11 +62,14 @@ export async function getDuckDBColumnTypes(
         });
       }
     } catch (fallbackError) {
-      console.warn(
-        '[DuckDB] Failed to load column types for',
-        tableName,
-        fallbackError
+      const error = new Error(
+        `[DuckDB] Failed to load column types for ${tableName} (PRAGMA + DESCRIBE).`
       );
+      (error as Error & {cause?: unknown}).cause = {
+        primaryError,
+        fallbackError
+      };
+      throw error;
     }
   }
 
