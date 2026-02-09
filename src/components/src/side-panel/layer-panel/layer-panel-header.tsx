@@ -71,6 +71,7 @@ export type LayerPanelHeaderProps = {
     visible: ComponentType<Partial<BaseProps>>;
     hidden: ComponentType<Partial<BaseProps>>;
     enableConfig: ComponentType<Partial<BaseProps>>;
+    disableConfig: ComponentType<Partial<BaseProps>>;
     resetIsValid: ComponentType<Partial<BaseProps>>;
     duplicate: ComponentType<Partial<BaseProps>>;
     crosshairs: ComponentType<Partial<BaseProps>>;
@@ -338,7 +339,7 @@ export function LayerPanelHeaderActionSectionFactory(
           id={layerId}
           tooltip={'tooltip.layerSettings'}
           onClick={onToggleEnableConfig}
-          IconComponent={actionIcons.enableConfig}
+          IconComponent={isConfigActive ? actionIcons.disableConfig : actionIcons.enableConfig}
         />
       </HeaderActionSection>
     );
@@ -363,11 +364,21 @@ export const HeaderWarning = ({warning, id}) => (
   </StyledHeaderWaring>
 );
 
+const RotatedIcon = styled.div`
+  display: inline-flex;
+  transform: rotate(180deg);
+`;
+
 const defaultActionIcons = {
   remove: props => <Trash {...props} height="16px" />,
   visible: props => <EyeSeen {...props} height="16px" />,
   hidden: props => <EyeUnseen {...props} height="16px" />,
   enableConfig: props => <ArrowDown {...props} height="18px" />,
+  disableConfig: props => (
+    <RotatedIcon>
+      <ArrowDown {...props} height="18px" />
+    </RotatedIcon>
+  ),
   duplicate: props => <Copy {...props} height="14px" />,
   resetIsValid: Reset,
   crosshairs: props => <ZoomIn {...props} height="14px" />
