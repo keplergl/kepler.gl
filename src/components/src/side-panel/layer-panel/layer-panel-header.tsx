@@ -71,7 +71,7 @@ export type LayerPanelHeaderProps = {
     visible: ComponentType<Partial<BaseProps>>;
     hidden: ComponentType<Partial<BaseProps>>;
     enableConfig: ComponentType<Partial<BaseProps>>;
-    disableConfig: ComponentType<Partial<BaseProps>>;
+    disableConfig?: ComponentType<Partial<BaseProps>>;
     resetIsValid: ComponentType<Partial<BaseProps>>;
     duplicate: ComponentType<Partial<BaseProps>>;
     crosshairs: ComponentType<Partial<BaseProps>>;
@@ -281,9 +281,10 @@ export function LayerPanelHeaderActionSectionFactory(
       onZoomToLayer,
       showRemoveLayer = true,
       isEditingLabel,
-      // TODO: may not contain all necessary icons for all actions, e.g. actionIcons.duplicate. Need to to merge rather than replace
-      actionIcons = defaultActionIcons
+      actionIcons: customActionIcons
     } = props;
+    // Merge custom actionIcons with defaults to avoid breaking changes
+    const actionIcons = {...defaultActionIcons, ...customActionIcons};
     return (
       <HeaderActionSection className="layer-panel__header__actions" isEditingLabel={isEditingLabel}>
         <StyledPanelHeaderHiddenActions isConfigActive={isConfigActive}>
