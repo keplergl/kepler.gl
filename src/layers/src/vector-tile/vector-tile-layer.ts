@@ -70,6 +70,22 @@ import {
   getPropertyByZoom
 } from './common-tile/tile-utils';
 
+// Global counter that represents the number of tiles currently being loaded across all the vector tile layers
+let vectorTilesBeingLoaded = 0;
+
+// This is a temp solution to track loading
+export const getNumVectorTilesBeingLoaded = () => {
+  return vectorTilesBeingLoaded;
+};
+
+export const incrementVectorTileLoading = () => {
+  vectorTilesBeingLoaded++;
+};
+
+export const decrementVectorTileLoading = () => {
+  vectorTilesBeingLoaded--;
+};
+
 export const DEFAULT_HIGHLIGHT_FILL_COLOR = [252, 242, 26, 150];
 export const DEFAULT_HIGHLIGHT_STROKE_COLOR = [252, 242, 26, 255];
 export const MAX_CACHE_SIZE_MOBILE = 1; // Minimize caching, visible tiles will always be loaded
