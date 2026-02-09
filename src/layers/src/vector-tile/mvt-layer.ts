@@ -32,12 +32,9 @@ export class MVTLayer<ExtraProps> extends _MVTLayer<ExtraProps> {
     if (getTileData) {
       incrementVectorTileLoading();
       try {
-        const result = await getTileData(tile);
+        return await getTileData(tile);
+      } finally {
         decrementVectorTileLoading();
-        return result;
-      } catch (error) {
-        decrementVectorTileLoading();
-        throw error;
       }
     }
     return null;

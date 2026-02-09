@@ -69,33 +69,31 @@ const LoadingIndicator: React.FC<LoadingIndicatorProps & {theme: any}> = ({
   const numRasterTilesInProgress = getNumRasterTilesBeingLoaded();
   const numVectorTilesInProgress = getNumVectorTilesBeingLoaded();
 
-  const rasterMessage =
-    numRasterTilesInProgress < 1
-      ? ''
-      : `${numRasterTilesInProgress} raster tile${
-          numRasterTilesInProgress === 1 ? ' is' : 's are'
-        } being loaded`;
-
-  const vectorMessage =
-    numVectorTilesInProgress < 1
-      ? ''
-      : `${numVectorTilesInProgress} vector tile${
-          numVectorTilesInProgress === 1 ? ' is' : 's are'
-        } being loaded`;
-
   let extraMessage = '';
-  if (rasterMessage && vectorMessage) {
-    extraMessage = `${rasterMessage.replace(' being loaded', '')} and ${vectorMessage}`;
-  } else if (rasterMessage) {
-    extraMessage = rasterMessage;
-  } else if (vectorMessage) {
-    extraMessage = vectorMessage;
+  if (numRasterTilesInProgress > 0 && numVectorTilesInProgress > 0) {
+    // Both types loading: show combined count
+    const totalTiles = numRasterTilesInProgress + numVectorTilesInProgress;
+    extraMessage = `${totalTiles} tile${totalTiles === 1 ? ' is' : 's are'} being loaded`;
+  } else if (numRasterTilesInProgress > 0) {
+    // Only raster tiles loading
+    extraMessage = `${numRasterTilesInProgress} raster tile${
+      numRasterTilesInProgress === 1 ? ' is' : 's are'
+    } being loaded`;
+  } else if (numVectorTilesInProgress > 0) {
+    // Only vector tiles loading
+    extraMessage = `${numVectorTilesInProgress} vector tile${
+      numVectorTilesInProgress === 1 ? ' is' : 's are'
+    } being loaded`;
   }
 
   return (
     <StyledContainer $isVisible={isVisible} $left={left}>
-      <Spinner />
-      <span>{`Loading... ${extraMessage}`}</span>
+      {isVisible && (
+        <>
+          <Spinner />
+          <span>{`Loading... ${extraMessage}`}</span>
+        </>
+      )}
     </StyledContainer>
   );
 };
