@@ -340,7 +340,11 @@ export function LayerPanelHeaderActionSectionFactory(
           id={layerId}
           tooltip={'tooltip.layerSettings'}
           onClick={onToggleEnableConfig}
-          IconComponent={isConfigActive ? actionIcons.disableConfig : actionIcons.enableConfig}
+          IconComponent={
+            isConfigActive
+              ? actionIcons.disableConfig || actionIcons.enableConfig
+              : actionIcons.enableConfig
+          }
         />
       </HeaderActionSection>
     );
