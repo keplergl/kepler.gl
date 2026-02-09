@@ -36,6 +36,7 @@
     "@kepler.gl/types": "3.2.5",
     "@kepler.gl/utils": "3.2.5",
     "@luma.gl/core": "^9.2.0",
+    "@luma.gl/effects": "^9.2.5",
     "@luma.gl/shadertools": "^9.2.0",
     "moment-timezone": "^0.5.35",
     "suncalc": "^1.9.0"

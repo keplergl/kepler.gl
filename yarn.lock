@@ -5202,6 +5202,7 @@ __metadata:
     "@kepler.gl/types": "npm:3.2.5"
     "@kepler.gl/utils": "npm:3.2.5"
     "@luma.gl/core": "npm:^9.2.0"
+    "@luma.gl/effects": "npm:^9.2.5"
     "@luma.gl/shadertools": "npm:^9.2.0"
     moment-timezone: "npm:^0.5.35"
     suncalc: "npm:^1.9.0"
@@ -6099,6 +6100,19 @@ __metadata:
     "@probe.gl/stats": "npm:^4.0.8"
     "@types/offscreencanvas": "npm:^2019.6.4"
   checksum: 10c0/44b4f606d16aabfbe09ccd6777df134eabaaa7c5d75871bff8b80caba4ea10164800b573a9f00f6dc3a6b41e795502d8cf91304b0cbc7f5c5e40a0f4ad66cfe4
+  languageName: node
+  linkType: hard
+
+"@luma.gl/effects@npm:^9.2.5":
+  version: 9.2.5
+  resolution: "@luma.gl/effects@npm:9.2.5"
+  dependencies:
+    "@math.gl/core": "npm:^4.1.0"
+    "@math.gl/types": "npm:^4.1.0"
+    wgsl_reflect: "npm:^1.0.1"
+  peerDependencies:
+    "@luma.gl/shadertools": ~9.2.0
+  checksum: 10c0/0c62eda62ea1242ae273ef85abfe508a75e2b30e81174d5c567e80ee965972d323428a7469b74c6c38a852fd86c9497ada08d4b981a820fb8ba30d140984506e
   languageName: node
   linkType: hard
 
@@ -31680,7 +31694,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"wgsl_reflect@npm:^1.2.0":
+"wgsl_reflect@npm:^1.0.1, wgsl_reflect@npm:^1.2.0":
   version: 1.2.3
   resolution: "wgsl_reflect@npm:1.2.3"
   checksum: 10c0/0ac66a98607a606ea0d9c419de9be63137ab0cbe05a9024f65fe3d606de1ab40d5b6a50a8fc30b8ad5b06dc7d676e7e5f6c4218ce0061f2b4a17d3722ca363b4
