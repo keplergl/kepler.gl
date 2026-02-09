@@ -10,7 +10,7 @@ import {
   _TileLoadProps,
   _Tile2DHeader
 } from '@deck.gl/geo-layers/typed';
-import {incrementVectorTileLoading, decrementVectorTileLoading} from './vector-tile-layer';
+import {incrementVectorTileLoading, decrementVectorTileLoading} from './loading-counter';
 
 /*
   Custom MVT layer that works with MVTSource and PMTileSource.
