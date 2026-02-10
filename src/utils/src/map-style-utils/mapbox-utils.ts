@@ -32,8 +32,8 @@ export function isStyleUsingOpenStreetMapTiles(mapStyle: any) {
   const sources = mapStyle?.stylesheet?.sources || {};
   return Object.keys(sources).some(sourceId => {
     const {attribution} = sources[sourceId] || {};
-    if (typeof attribution?.attribution === 'string') {
-      return attribution.attribution.includes('openstreetmap.org');
+    if (typeof attribution === 'string') {
+      return attribution.includes('openstreetmap.org');
     }
     return false;
   });

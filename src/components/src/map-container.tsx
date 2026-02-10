@@ -560,10 +560,10 @@ export default function MapContainerFactory(
       this._updateMapboxLayers();
 
       if (update && update.style) {
-        // No attributions are needed if the style doesn't reference Mapbox sources
+        // Show attributions if the style uses Mapbox or OpenStreetMap sources
         this.setState({
           showBaseMapAttribution:
-            isStyleUsingMapboxTiles(update.style) || !isStyleUsingOpenStreetMapTiles(update.style)
+            isStyleUsingMapboxTiles(update.style) || isStyleUsingOpenStreetMapTiles(update.style)
         });
       }
 
