@@ -121,10 +121,34 @@ export const pointPosAccessor =
       altitude && altitude.fieldIdx > -1 ? dc.valueAt(d.index, altitude.fieldIdx) : 0
     ];
 
+/**
+ * Parse a WKT POINT string (e.g. "POINT (7.63 45.04)") into [lng, lat] coordinates.
+ * Returns null if the string cannot be parsed.
+ */
+export function parseWktPoint(wkt: string): [number, number] | null {
+  if (typeof wkt !== 'string') return null;
+  const match = wkt.match(/POINT\s*\(\s*([-\d.eE+]+)\s+([-\d.eE+]+)\s*\)/i);
+  if (!match) return null;
+  return [parseFloat(match[1]), parseFloat(match[2])];
+}
+
 export const geojsonPosAccessor =
   ({geojson}: {geojson: LayerColumn}) =>
-  d =>
-    d[geojson.fieldIdx];
+  (dataContainer: DataContainerInterface) =>
+  (d: {index: number}): number[] => {
+    const value = dataContainer.valueAt(d.index, geojson.fieldIdx);
+    if (value == null) return [NaN, NaN, 0];
+    // Handle WKT point strings (e.g. "POINT (7.63 45.04)")
+    if (typeof value === 'string') {
+      const parsed = parseWktPoint(value);
+      return parsed ? [parsed[0], parsed[1], 0] : [NaN, NaN, 0];
+    }
+    // Handle GeoJSON objects with coordinates
+    if (value.coordinates) {
+      return [value.coordinates[0], value.coordinates[1], 0];
+    }
+    return [NaN, NaN, 0];
+  };
 
 export const geoarrowPosAccessor =
   ({geoarrow}: PointLayerColumnsConfig) =>
@@ -243,7 +267,7 @@ export default class PointLayer extends Layer {
         case COLUMN_MODE_GEOARROW:
           return geoarrowPosAccessor(this.config.columns)(dataContainer);
         case COLUMN_MODE_GEOJSON:
-          return geojsonPosAccessor(this.config.columns);
+          return geojsonPosAccessor(this.config.columns)(dataContainer);
         default:
           // COLUMN_MODE_POINTS
           return pointPosAccessor(this.config.columns)(dataContainer);
@@ -497,7 +521,8 @@ export default class PointLayer extends Layer {
     this.dataContainer = dataContainer;
 
     if (this.config.columnMode === COLUMN_MODE_GEOJSON) {
-      const getFeature = this.getPositionAccessor();
+      const {geojson} = this.config.columns;
+      const getFeature = d => d[geojson.fieldIdx];
       this.dataToFeature = getGeojsonPointDataMaps(dataContainer, getFeature);
     } else if (this.config.columnMode === COLUMN_MODE_GEOARROW) {
       const boundsFromMetadata = getBoundsFromArrowMetadata(
