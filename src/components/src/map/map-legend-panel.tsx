@@ -320,6 +320,7 @@ export type MapLegendPanelProps = {
   mapControls: MapControls;
   mapState?: MapState;
   onLayerVisConfigChange?: (oldLayer: Layer, newVisConfig: Partial<LayerVisConfig>) => void;
+  onToggleLayerVisibility?: (layer: Layer) => void;
   onToggleSplitMapViewport?: ActionHandler<typeof toggleSplitMapViewport>;
   isViewportUnsyncAllowed?: boolean;
   onClickControlBtn?: (e?: MouseEvent) => void;
@@ -352,6 +353,7 @@ const MapLegendPanelComponent = ({
   actionIcons = defaultActionIcons,
   mapState,
   onLayerVisConfigChange,
+  onToggleLayerVisibility,
   onToggleSplitMapViewport,
   onClickControlBtn,
   activeSidePanel,
@@ -406,6 +408,7 @@ const MapLegendPanelComponent = ({
         disableEdit={disableEdit}
         isExport={isExport}
         onLayerVisConfigChange={onLayerVisConfigChange}
+        onToggleLayerVisibility={onToggleLayerVisibility}
       />
     </MapControlPanel>
   ) : null;
