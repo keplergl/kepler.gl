@@ -116,8 +116,7 @@ function App() {
                 }
                 `}
           </style>
-          <script async src="https://www.googletagmanager.com/gtag/js?id=UA-64694404-19" />
-          <script>{`window.dataLayer=window.dataLayer || [];function gtag(){dataLayer.push(arguments);}gtag('js', new Date());gtag('config', 'UA-64694404-19', {page_path: '/keplergl-jupyter-widget'});`}</script>
+          {/* Analytics removed to respect user privacy */}
         </Helmet>
       ) : null}
       <KeplerGl
