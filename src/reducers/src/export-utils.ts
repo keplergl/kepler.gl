@@ -26,7 +26,7 @@ export function exportData(state: StateType, options) {
   const {datasets} = visState;
   const {selectedDataset, dataType, filtered} = options;
   // get the selected data
-  const filename = appName ? appName : getApplicationConfig().defaultDataName;
+  const prefix = appName ? appName : getApplicationConfig().defaultDataName;
   const selectedDatasets = datasets[selectedDataset]
     ? [datasets[selectedDataset]]
     : Object.values(datasets);
@@ -34,6 +34,10 @@ export function exportData(state: StateType, options) {
     // error: selected dataset not found.
     return;
   }
+
+  // When exporting a single dataset, use its label as the filename directly.
+  // When exporting multiple datasets, prepend the app name to disambiguate.
+  const usePrefix = selectedDatasets.length > 1;
 
   selectedDatasets.forEach(selectedData => {
     const {dataContainer, fields, label, filteredIdxCPU = []} = selectedData as KeplerTable;
@@ -45,9 +49,9 @@ export function exportData(state: StateType, options) {
     switch (dataType) {
       case EXPORT_DATA_TYPE.CSV: {
         const csv = formatCsv(toExport, fields);
-
+        const fileName = usePrefix ? `${prefix}_${label}.csv` : `${label}.csv`;
         const fileBlob = new Blob([csv], {type: 'text/csv'});
-        downloadFile(fileBlob, `${filename}_${label}.csv`);
+        downloadFile(fileBlob, fileName);
         break;
       }
       // TODO: support more file types.
