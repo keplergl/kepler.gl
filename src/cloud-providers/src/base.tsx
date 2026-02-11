@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {Component, CSSProperties} from 'react';
+import React, {CSSProperties} from 'react';
 
 const getStyleClassFromColor = (totalColor: number, colors: string[]) =>
   new Array(totalColor)
@@ -10,6 +10,10 @@ const getStyleClassFromColor = (totalColor: number, colors: string[]) =>
 
 const nop = () => {
   return;
+};
+
+const DEFAULT_STYLE: CSSProperties = {
+  fill: 'currentColor'
 };
 
 export type BaseProps = {
@@ -29,52 +33,38 @@ export type BaseProps = {
 } & React.SVGAttributes<SVGSVGElement> &
   React.DOMAttributes<SVGSVGElement>;
 
-export class Base extends Component<BaseProps> {
-  static displayName = 'Base Icon';
+export const Base: React.FC<BaseProps> = ({
+  height = undefined,
+  width = undefined,
+  viewBox = '0 0 64 64',
+  style = DEFAULT_STYLE,
+  children,
+  predefinedClassName = '',
+  className = '',
+  colors,
+  totalColor,
+  ...props
+}) => {
+  const svgHeight = height;
+  const svgWidth = width || svgHeight;
 
-  static defaultProps = {
-    height: null,
-    width: null,
-    viewBox: '0 0 64 64',
-    predefinedClassName: '',
-    className: '',
-    style: {
-      fill: 'currentColor'
-    }
-  };
+  const fillStyle =
+    Array.isArray(colors) && totalColor && getStyleClassFromColor(totalColor, colors);
 
-  render() {
-    const {
-      height,
-      width,
-      viewBox,
-      style,
-      children,
-      predefinedClassName,
-      className,
-      colors,
-      totalColor,
-      ...props
-    } = this.props;
-    const svgHeight = height;
-    const svgWidth = width || svgHeight;
+  return (
+    <svg
+      viewBox={viewBox}
+      width={svgWidth}
+      height={svgHeight}
+      style={style}
+      className={`${predefinedClassName} ${className}`}
+      onClick={nop}
+      {...props}
+    >
+      {fillStyle ? <style type="text/css">{fillStyle}</style> : null}
+      {children}
+    </svg>
+  );
+};
 
-    const fillStyle =
-      Array.isArray(colors) && totalColor && getStyleClassFromColor(totalColor, colors);
-
-    return (
-      <svg
-        viewBox={viewBox}
-        width={svgWidth}
-        height={svgHeight}
-        style={style}
-        className={`${predefinedClassName} ${className}`}
-        onClick={nop}
-        {...props}
-      >
-        {fillStyle ? <style type="text/css">{fillStyle}</style> : null}
-        {children}
-      </svg>
-    );
-  }
-}
+Base.displayName = 'Base Icon';
