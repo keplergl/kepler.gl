@@ -32,7 +32,7 @@ export const StyledContainer = styled.div<StyledContainerProps>`
   position: absolute;
   left: ${props => props.$left}px;
   bottom: ${props => props.theme.sidePanel.margin.left}px;
-  z-index: 1000;
+  z-index: 1;
   color: ${props => props.theme.textColor};
   opacity: ${props => (props.$isVisible ? 1 : 0)};
   transition: opacity 0.5s ease-in-out;
