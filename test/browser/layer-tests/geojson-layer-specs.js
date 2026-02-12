@@ -546,7 +546,7 @@ test('#GeojsonLayer -> renderLayer', t => {
           parameters: {depthTest: false},
           visible: true,
           autoHighlight: false,
-          wrapLongitude: false,
+          wrapLongitude: true,
           id: 'test_layer_1-polygons-fill',
           filterRange: [
             [0, 8],
@@ -563,7 +563,7 @@ test('#GeojsonLayer -> renderLayer', t => {
           miterLimit: 2,
           opacity: 0.1,
           visible: true,
-          wrapLongitude: false,
+          wrapLongitude: true,
           id: 'test_layer_1-polygons-stroke'
         };
 
