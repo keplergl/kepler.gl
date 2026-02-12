@@ -346,6 +346,10 @@ export interface MapContainerProps {
   bottomMapContainerProps: any;
   transformRequest?: (url: string, resourceType?: string) => {url: string};
 
+  /** Set to false to disable loading the RTL text plugin from a remote URL.
+   *  Useful in strict CSP environments. Defaults to undefined (react-map-gl default behaviour). */
+  RTLTextPlugin?: string | false;
+
   datasetAttributions?: DatasetAttribution[];
 
   generateMapboxLayers?: typeof generateMapboxLayers;
@@ -1103,7 +1107,8 @@ export default function MapContainerFactory(
         mapLib: baseMapLibraryConfig.getMapLib(),
         transformRequest:
           this.props.transformRequest ||
-          transformRequest(currentStyle?.accessToken || mapboxApiAccessToken)
+          transformRequest(currentStyle?.accessToken || mapboxApiAccessToken),
+        ...(this.props.RTLTextPlugin !== undefined ? {RTLTextPlugin: this.props.RTLTextPlugin} : {})
       };
 
       const hasGeocoderLayer = Boolean(layers.find(l => l.id === GEOCODER_LAYER_ID));

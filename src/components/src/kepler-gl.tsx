@@ -193,7 +193,10 @@ export const mapFieldsSelector = (props: KeplerGLProps, index = 0) => ({
   bottomMapContainerProps: props.bottomMapContainerProps,
 
   // transformRequest for Mapbox basemaps
-  transformRequest: props.transformRequest
+  transformRequest: props.transformRequest,
+
+  // RTL text plugin
+  RTLTextPlugin: props.RTLTextPlugin
 });
 
 export function getVisibleDatasets(datasets) {
@@ -413,6 +416,10 @@ type KeplerGLBasicProps = {
   bottomMapContainerProps?: object;
 
   transformRequest?: (url: string) => {url: string};
+
+  /** Set to false to disable loading the mapbox-gl RTL text plugin from a remote URL.
+   *  Useful in strict Content Security Policy (CSP) environments. */
+  RTLTextPlugin?: string | false;
 };
 
 type KeplerGLProps = KeplerGlState & KeplerGlActions & KeplerGLBasicProps;
