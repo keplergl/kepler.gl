@@ -16,7 +16,7 @@ const spin = keyframes`
   100% { transform: rotate(360deg); }
 `;
 
-const Spinner = styled.div<{$isVisible?: boolean}>`
+const Spinner = styled.div`
   display: inline-block;
   width: 14px;
   height: 14px;
@@ -32,7 +32,7 @@ export const StyledContainer = styled.div<StyledContainerProps>`
   position: absolute;
   left: ${props => props.$left}px;
   bottom: ${props => props.theme.sidePanel.margin.left}px;
-  z-index: 10;
+  z-index: 1;
   color: ${props => props.theme.textColor};
   opacity: ${props => (props.$isVisible ? 1 : 0)};
   transition: opacity 0.5s ease-in-out;
@@ -99,7 +99,7 @@ const LoadingIndicator: React.FC<LoadingIndicatorProps & {theme: any}> = ({
 
   return (
     <StyledContainer $isVisible={isVisible} $left={left}>
-      <Spinner $isVisible={isVisible} />
+      <Spinner />
       <span>{`Loading... ${displayMessage}`}</span>
     </StyledContainer>
   );
