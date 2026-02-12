@@ -55,7 +55,7 @@ test('exportUtils -> calculateExportImageSize', t => {
       ratio: EXPORT_IMG_RATIOS.SCREEN,
       resolution: RESOLUTIONS.ONE_X
     }),
-    {scale: 1, imageW: 1400, imageH: 990},
+    {zoomOffset: 0, scale: 1, imageW: 1400, imageH: 990},
     'Should calculate the correct export image size'
   );
 
@@ -88,8 +88,8 @@ test('exportUtils -> calculateExportImageSize', t => {
       ratio: EXPORT_IMG_RATIOS.CUSTOM,
       resolution: RESOLUTIONS.ONE_X
     }),
-    {scale: undefined, imageW: 1440, imageH: 990},
-    'Should return scale null because of custom ratio'
+    {zoomOffset: 0, scale: 1, imageW: 1440, imageH: 990},
+    'Should return scale 1 for custom ratio (defaults to 1)'
   );
 
   t.deepEqual(
@@ -99,7 +99,7 @@ test('exportUtils -> calculateExportImageSize', t => {
       ratio: 'not-valid',
       resolution: RESOLUTIONS.ONE_X
     }),
-    {scale: 1, imageW: 1440, imageH: 1080},
+    {zoomOffset: 0, scale: 1, imageW: 1440, imageH: 1080},
     'Should return a correct valid with a non valid ratio param'
   );
 
@@ -110,7 +110,7 @@ test('exportUtils -> calculateExportImageSize', t => {
       ratio: EXPORT_IMG_RATIOS.SCREEN,
       resolution: 'not-valid'
     }),
-    {scale: 1, imageW: 1440, imageH: 990},
+    {zoomOffset: 0, scale: 1, imageW: 1440, imageH: 990},
     'Should return a correct valid with a non valid resolution param'
   );
 
