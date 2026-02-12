@@ -388,6 +388,8 @@ export default {
         tokenPlaceholder: 'Paste your Mapbox access token',
         tokenMisuseWarning:
           '* If you do not provide your own token, the map may fail to display at any time when we replace ours to avoid misuse. ',
+        tokenSecurityWarning:
+          '* Warning: your Mapbox token will be embedded in the exported HTML file. Anyone with access to this file can see and use your token. Use a scoped token with URL restrictions when possible. ',
         tokenDisclaimer: 'You can change the Mapbox token later using the following instructions: ',
         tokenUpdate: 'How to update an existing map token.',
         modeTitle: 'Map Mode',
