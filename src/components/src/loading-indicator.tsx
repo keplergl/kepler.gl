@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {PropsWithChildren} from 'react';
+import React, {PropsWithChildren, useRef, useEffect} from 'react';
 import styled, {withTheme, keyframes} from 'styled-components';
 
 import {getNumRasterTilesBeingLoaded, getNumVectorTilesBeingLoaded} from '@kepler.gl/layers';
@@ -16,7 +16,7 @@ const spin = keyframes`
   100% { transform: rotate(360deg); }
 `;
 
-const Spinner = styled.div`
+const Spinner = styled.div<{$isVisible?: boolean}>`
   display: inline-block;
   width: 14px;
   height: 14px;
@@ -32,7 +32,7 @@ export const StyledContainer = styled.div<StyledContainerProps>`
   position: absolute;
   left: ${props => props.$left}px;
   bottom: ${props => props.theme.sidePanel.margin.left}px;
-  z-index: 1;
+  z-index: 10;
   color: ${props => props.theme.textColor};
   opacity: ${props => (props.$isVisible ? 1 : 0)};
   transition: opacity 0.5s ease-in-out;
@@ -44,6 +44,7 @@ export const StyledContainer = styled.div<StyledContainerProps>`
   backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
+  pointer-events: none;
 `;
 
 type LoadingIndicatorProps = {
@@ -86,14 +87,20 @@ const LoadingIndicator: React.FC<LoadingIndicatorProps & {theme: any}> = ({
     } being loaded`;
   }
 
+  // Preserve the last message during fade-out
+  const lastMessageRef = useRef(extraMessage);
+  useEffect(() => {
+    if (isVisible && extraMessage) {
+      lastMessageRef.current = extraMessage;
+    }
+  }, [isVisible, extraMessage]);
+
+  const displayMessage = isVisible ? extraMessage : lastMessageRef.current;
+
   return (
     <StyledContainer $isVisible={isVisible} $left={left}>
-      {isVisible && (
-        <>
-          <Spinner />
-          <span>{`Loading... ${extraMessage}`}</span>
-        </>
-      )}
+      <Spinner $isVisible={isVisible} />
+      <span>{`Loading... ${displayMessage}`}</span>
     </StyledContainer>
   );
 };
