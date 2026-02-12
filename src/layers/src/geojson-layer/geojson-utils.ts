@@ -81,7 +81,7 @@ export function parseGeoJsonRawFeature(rawFeature: unknown): Feature | null {
     // Support GeoJson feature as object
     // probably need to normalize it as well
     const normalized = normalize(rawFeature);
-    if (!normalized || !Array.isArray(normalized.features)) {
+    if (!normalized || !Array.isArray(normalized.features) || !normalized.features.length) {
       // fail to normalize GeoJson
       return null;
     }
@@ -140,7 +140,7 @@ export function getGeojsonLayerMeta({
       try {
         // TODO: use line interpolate to get center of line for LineString
         const cent = center(feature as AllGeoJSON);
-        meanCenters.push(cent.geometry.coordinates);
+        meanCenters.push(cent?.geometry?.coordinates ?? null);
       } catch (e) {
         meanCenters.push(null);
       }
@@ -469,11 +469,15 @@ export function applyFiltersToTableColumns(
   const filteredIndexSet = new Set(filteredIndex);
   const filteredFeatures: GeojsonDataMaps = [];
   for (const feature of dataToFeature) {
+    // @ts-expect-error geometry.coordinates not available for BinaryFeatureCollection
+    if (!feature || !feature.geometry || !feature.geometry.coordinates) {
+      continue;
+    }
     // @ts-expect-error geometry.coordinates not available for GeometryCollection
     const filteredCoords = feature.geometry.coordinates.filter(c =>
       filteredIndexSet.has(c.datumIndex)
     );
-    if (filteredCoords.length > 0 && feature) {
+    if (filteredCoords.length > 0) {
       filteredFeatures.push({
         ...feature,
         geometry: {
