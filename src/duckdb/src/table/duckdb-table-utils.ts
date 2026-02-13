@@ -140,9 +140,13 @@ export function castDuckDBTypesForKepler(
       return `ST_AsWKB(${quotedColumnName}) as ${quotedColumnName}`;
     } else if (
       options.bigIntToDouble &&
-      (type === 'BIGINT' || type === 'UBIGINT' || type === 'HUGEINT' || type === 'UHUGEINT')
+      (type === 'BIGINT' ||
+        type === 'UBIGINT' ||
+        type === 'HUGEINT' ||
+        type === 'UHUGEINT' ||
+        type.startsWith('DECIMAL'))
     ) {
-      // Cast 64-bit and larger integer types to DOUBLE to avoid BigInt in JS
+      // Cast 64-bit and larger integer types and DECIMAL to DOUBLE to avoid BigInt in JS
       return `CAST(${quotedColumnName} AS DOUBLE) as ${quotedColumnName}`;
     }
     return quotedColumnName;

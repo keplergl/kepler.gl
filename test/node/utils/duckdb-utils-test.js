@@ -95,6 +95,24 @@ test('duckdb-utils -> castDuckDBTypesForKepler options', t => {
   t.end();
 });
 
+// Test castDuckDBTypesForKepler with DECIMAL types
+test('duckdb-utils -> castDuckDBTypesForKepler with DECIMAL', t => {
+  const tableName = 'test_table';
+  const columns = [
+    {name: 'id', type: 'INTEGER'},
+    {name: 'price', type: 'DECIMAL(18,2)'},
+    {name: 'amount', type: 'DECIMAL'},
+    {name: 'rate', type: 'DECIMAL(10,5)'}
+  ];
+
+  const result = castDuckDBTypesForKepler(tableName, columns);
+
+  const resultMock = `SELECT "id", CAST("price" AS DOUBLE) as "price", CAST("amount" AS DOUBLE) as "amount", CAST("rate" AS DOUBLE) as "rate" FROM "test_table"`;
+  t.equal(result, resultMock, 'should cast DECIMAL types to DOUBLE');
+
+  t.end();
+});
+
 // Test castDuckDBTypesForKepler
 test('duckdb-utils -> castDuckDBTypesForKepler with complex table name', t => {
   const tableName = '"memory"."main"."earthquakes"';
