@@ -4,7 +4,7 @@
 // libraries
 import React, {Component, createRef, useMemo} from 'react';
 import styled, {withTheme} from 'styled-components';
-import {Map, MapRef} from 'react-map-gl';
+import {Map, MapRef, NavigationControl, ScaleControl} from 'react-map-gl';
 import {PickInfo} from '@deck.gl/core/lib/deck';
 import DeckGL from '@deck.gl/react';
 import {createSelector, Selector} from 'reselect';
@@ -1119,7 +1119,10 @@ export default function MapContainerFactory(
             mapStyle={mapStyle.bottomMapStyle ?? EMPTY_MAPBOX_STYLE}
             {...bottomMapContainerProps}
             ref={this._setMapRef}
-          />
+          >
+            <NavigationControl position="bottom-right" showCompass visualizePitch />
+            <ScaleControl position="bottom-left" />
+          </MapComponent>
         )
       });
       if (!deck) {
