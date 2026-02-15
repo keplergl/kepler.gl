@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useEffect, useState, useRef} from 'react';
+import {useEffect, useState, useRef} from 'react';
 import styled from 'styled-components';
 const ReactHelmet = require('react-helmet');
 const Helmet = ReactHelmet ? ReactHelmet.Helmet : null;
@@ -58,19 +58,18 @@ function App() {
 
     const width = rootElm.current.offsetWidth;
     const height = rootElm.current.offsetHeight;
-    const dimensionToSet = {
-      ...(width && width !== windowDimension.width ? {width} : {}),
-      ...(height && height !== windowDimension.height ? {height} : {})
-    };
-
-    setDimension(dimensionToSet);
+    if (width && height) {
+      setDimension({width, height});
+    }
   };
 
-  // in Jupyter Lab,  parent component has transition when window resize.
+  // in Jupyter Lab, parent component has transition when window resize.
   // need to delay call to get the final parent width,
   const resizeDelay = () => window.setTimeout(handleResize, 500);
 
   useEffect(() => {
+    // Call handleResize on mount to set initial dimensions
+    handleResize();
     window.addEventListener('resize', resizeDelay);
     return () => window.removeEventListener('resize', resizeDelay);
   }, []);
