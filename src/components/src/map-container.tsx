@@ -28,6 +28,7 @@ import EditorFactory from './editor/editor';
 import {
   generateMapboxLayers,
   updateMapboxLayers,
+  Layer,
   LayerBaseConfig,
   VisualChannelDomain,
   EditorLayerUtils,
@@ -1050,6 +1051,11 @@ export default function MapContainerFactory(
       this.props.visStateActions.setLoadingIndicator({change: 0});
     }, DEBOUNCE_LOADING_STATE_PROPAGATE);
 
+    _handleToggleLayerVisibility = (layer: Layer) => {
+      const {visStateActions} = this.props;
+      visStateActions.layerConfigChange(layer, {isVisible: !layer.config.isVisible});
+    };
+
     _toggleMapControl = panelId => {
       const {index, uiStateActions} = this.props;
 
@@ -1160,6 +1166,7 @@ export default function MapContainerFactory(
             onSetLocale={uiStateActions.setLocale}
             onToggleEditorVisibility={visStateActions.toggleEditorVisibility}
             onLayerVisConfigChange={visStateActions.layerVisConfigChange}
+            onToggleLayerVisibility={this._handleToggleLayerVisibility}
             mapHeight={mapState.height}
             setMapControlSettings={uiStateActions.setMapControlSettings}
             activeSidePanel={activeSidePanel}
