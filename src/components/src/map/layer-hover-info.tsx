@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useMemo} from 'react';
+import React, {useEffect, useRef, useMemo} from 'react';
 import styled from 'styled-components';
 import truncate from 'lodash/truncate';
 import {CompareType, Field, Merge, TooltipField} from '@kepler.gl/types';
@@ -69,6 +69,33 @@ interface RowProps {
 
 const TOOLTIP_VALUE_MAX_LENGTH = 256;
 
+/**
+ * Image component that cleans up resources on unmount to prevent memory leaks.
+ * Revokes blob/object URLs and clears the image src to release memory.
+ */
+const TooltipImage: React.FC<{src: string}> = ({src}) => {
+  const imgRef = useRef<HTMLImageElement>(null);
+
+  useEffect(() => {
+    return () => {
+      // Revoke blob URLs to free memory
+      if (src && (src.startsWith('blob:') || src.startsWith('data:'))) {
+        try {
+          URL.revokeObjectURL(src);
+        } catch (e) {
+          // ignore errors from non-object URLs
+        }
+      }
+      // Clear the image src to release the decoded image from memory
+      if (imgRef.current) {
+        imgRef.current.src = '';
+      }
+    };
+  }, [src]);
+
+  return <img ref={imgRef} src={src} />;
+};
+
 const Row: React.FC<RowProps> = ({name, value, deltaValue, url}) => {
   // Set 'url' to 'value' if it looks like a url
   if (!url && value && typeof value === 'string' && value.match(/^http/)) {
@@ -86,7 +113,7 @@ const Row: React.FC<RowProps> = ({name, value, deltaValue, url}) => {
       <td className="row__name">{asImg ? name.replace('<img>', '') : name}</td>
       <td className="row__value">
         {asImg ? (
-          <img src={value} />
+          <TooltipImage src={value} />
         ) : url ? (
           <a target="_blank" rel="noopener noreferrer" href={url}>
             {displayValue}
