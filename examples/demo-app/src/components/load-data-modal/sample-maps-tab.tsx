@@ -5,9 +5,14 @@ import React from 'react';
 import styled from 'styled-components';
 import {Icons} from '@kepler.gl/components';
 import {media} from '@kepler.gl/styles';
-import {FormattedMessage} from 'react-intl';
+import {FormattedMessage, IntlShape} from 'react-intl';
 
 import {ASSETS_URL} from '../../constants/default-settings';
+
+interface SampleMapsTabProps {
+  onClick: React.MouseEventHandler<Element>;
+  intl: IntlShape;
+}
 
 const StyledMapIcon = styled.div`
   background-image: url('${ASSETS_URL}icon-demo-map.jpg');
@@ -70,7 +75,7 @@ const StyledTrySampleData = styled.div`
   }
 `;
 
-const SampleMapsTab = ({onClick}) => {
+const SampleMapsTab: React.FC<SampleMapsTabProps> = ({onClick, intl}) => {
   return (
     <StyledTrySampleData className="try-sample-data">
       <StyledMapIcon className="demo-map-icon" />

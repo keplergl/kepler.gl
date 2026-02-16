@@ -144,9 +144,11 @@ const CloudTile: React.FC<CloudTileProps> = ({provider, actionName}) => {
     setIsLoading(true);
     try {
       const user = await provider.login();
+      console.log('user', user);
       setUser(user);
       setProvider(provider);
     } catch (error) {
+      console.log('error', error);
       setError(error as Error);
     }
     setIsLoading(false);
