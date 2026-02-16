@@ -382,6 +382,16 @@ export const getPolygonFilterFunctor = (layer, filter, dataContainer) => {
   switch (layer.type) {
     case LAYER_TYPES.point:
     case LAYER_TYPES.icon:
+      // For geojson column mode, coordinates are pre-parsed in dataToFeature
+      if (layer.dataToFeature && layer.config?.columnMode === 'geojson') {
+        return data => {
+          const pos = layer.dataToFeature[data.index];
+          // pos can be [lng, lat] for Point, or [[lng, lat], ...] for MultiPoint
+          if (!pos) return false;
+          const coords = Array.isArray(pos[0]) ? pos[0] : pos;
+          return coords.every(Number.isFinite) && isInPolygon(coords, filter.value);
+        };
+      }
       return data => {
         const pos = getPosition(data);
         return pos.every(Number.isFinite) && isInPolygon(pos, filter.value);
