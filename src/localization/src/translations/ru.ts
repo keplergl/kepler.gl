@@ -51,6 +51,7 @@ export default {
       label: 'Ярлык',
       labelWithId: 'Ярлык {labelId}',
       fontSize: 'Размер шрифта',
+      fontWeight: 'Tолщина шрифта',
       fontColor: 'Цвет шрифта',
       textAnchor: 'Анкор текста',
       alignment: 'Положение',
