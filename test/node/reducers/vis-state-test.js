@@ -2938,7 +2938,7 @@ test('#visStateReducer -> setFilter.fixedDomain & DynamicDomain & gpu & cpu', as
     plotType: {
       type: 'histogram',
       interval: '15-second',
-      aggregation: 'sum',
+      aggregation: 'average',
       defaultTimeFormat: 'L  LTS'
     },
     yAxis: null,
@@ -3384,14 +3384,14 @@ test('#visStateReducer -> SET_FILTER_PLOT.yAxis', t => {
       interval: '15-second',
       defaultTimeFormat: 'L  LTS',
       type: 'lineChart',
-      aggregation: 'sum'
+      aggregation: 'average'
     },
     yAxis: yAxisField,
     lineChart: {
-      yDomain: [0, 12124],
+      yDomain: [1, 12124],
       xDomain: [1474070985000, 1474072215000],
       interval: '15-second',
-      aggregation: 'sum',
+      aggregation: 'average',
       series: {
         lines: [
           [
@@ -3402,29 +3402,40 @@ test('#visStateReducer -> SET_FILTER_PLOT.yAxis', t => {
             {x: 1474071240000, y: 5, delta: 'last', pct: 0.25},
             {x: 1474071300000, y: 12124, delta: 'last', pct: 2423.8},
             {x: 1474071360000, y: 222, delta: 'last', pct: -0.9816892114813592},
-            {x: 1474071420000, y: 345, delta: 'last', pct: 0.5540540540540541},
-            {x: 1474071480000, y: 0, delta: 'last', pct: -1},
-            {x: 1474071540000, y: 0, delta: 'last', pct: null},
-            {x: 1474071555000, y: 0, delta: 'last', pct: null},
-            {x: 1474071600000, y: 0, delta: 'last', pct: null},
-            {x: 1474071675000, y: 0, delta: 'last', pct: null},
-            {x: 1474071735000, y: 0, delta: 'last', pct: null},
-            {x: 1474071795000, y: 0, delta: 'last', pct: null},
-            {x: 1474071855000, y: 1, delta: 'last', pct: null},
-            {x: 1474071915000, y: 0, delta: 'last', pct: -1},
+            {x: 1474071420000, y: 345, delta: 'last', pct: 0.5540540540540541}
+          ],
+          [
+            {x: 1474071855000, y: 1, delta: 'last', pct: null}
+          ],
+          [
             {x: 1474071975000, y: 43, delta: 'last', pct: null},
             {x: 1474072050000, y: 4, delta: 'last', pct: -0.9069767441860465},
-            {x: 1474072110000, y: 5, delta: 'last', pct: 0.25},
-            {x: 1474072170000, y: 0, delta: 'last', pct: -1},
-            {x: 1474072200000, y: 13, delta: 'last', pct: null}
+            {x: 1474072110000, y: 5, delta: 'last', pct: 0.25}
+          ],
+          [
+            {x: 1474072200000, y: 6.5, delta: 'last', pct: null}
           ]
         ],
-        markers: []
+        markers: [
+          {x: 1474070985000, y: 1, delta: 'last', pct: null},
+          {x: 1474071045000, y: 2, delta: 'last', pct: 1},
+          {x: 1474071105000, y: 3, delta: 'last', pct: 0.5},
+          {x: 1474071165000, y: 4, delta: 'last', pct: 0.3333333333333333},
+          {x: 1474071240000, y: 5, delta: 'last', pct: 0.25},
+          {x: 1474071300000, y: 12124, delta: 'last', pct: 2423.8},
+          {x: 1474071360000, y: 222, delta: 'last', pct: -0.9816892114813592},
+          {x: 1474071420000, y: 345, delta: 'last', pct: 0.5540540540540541},
+          {x: 1474071855000, y: 1, delta: 'last', pct: null},
+          {x: 1474071975000, y: 43, delta: 'last', pct: null},
+          {x: 1474072050000, y: 4, delta: 'last', pct: -0.9069767441860465},
+          {x: 1474072110000, y: 5, delta: 'last', pct: 0.25},
+          {x: 1474072200000, y: 6.5, delta: 'last', pct: null}
+        ]
       },
       yAxis: 'uid',
-      title: 'Total of uid',
+      title: 'Average of uid',
       fieldType: 'integer',
-      allTime: {title: 'All Time Average', value: 580.5454545454545},
+      allTime: {title: 'All Time Average', value: 981.9615384615385},
       bins
     },
     speed: 1,
