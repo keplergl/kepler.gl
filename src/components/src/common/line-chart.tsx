@@ -83,6 +83,7 @@ interface LineChartProps {
   lineChart?: LineChart;
   margin: {top?: number; bottom?: number; left?: number; right?: number};
   onMouseMove: (datapoint: LineSeriesPoint | null, data?: RVNearestXData<LineSeriesPoint>) => void;
+  value?: number[];
   width: number;
   timezone?: string | null;
   timeFormat?: string;
@@ -101,6 +102,7 @@ function LineChartFactory() {
     lineChart,
     margin,
     onMouseMove,
+    value,
     width,
     timezone,
     timeFormat
@@ -109,12 +111,28 @@ function LineChartFactory() {
     // @ts-expect-error seems lineChart.series has ambiguous types. Requires refactoring.
     const series: {lines: any[]; markers: any[]} = lineChart?.series;
 
+    // Compute y-domain from only the visible (filtered) data points
+    const filteredYDomain = useMemo(() => {
+      if (!series?.lines || !value || value.length < 2) return yDomain;
+      let min: number | undefined;
+      let max: number | undefined;
+      for (const line of series.lines) {
+        for (const point of line) {
+          if (point.x >= value[0] && point.x <= value[1] && point.y != null) {
+            if (min === undefined || point.y < min) min = point.y;
+            if (max === undefined || point.y > max) max = point.y;
+          }
+        }
+      }
+      return min !== undefined && max !== undefined ? [min, max] : yDomain;
+    }, [series, value, yDomain]);
+
     const paddedYDomain = useMemo(
       () =>
-        yDomain && yDomain[0] && yDomain[1]
-          ? [yDomain[0], yDomain[1] + (yDomain[1] - yDomain[0]) * 0.2]
+        filteredYDomain && filteredYDomain[0] != null && filteredYDomain[1] != null
+          ? [filteredYDomain[0], filteredYDomain[1] + (filteredYDomain[1] - filteredYDomain[0]) * 0.2]
           : [],
-      [yDomain]
+      [filteredYDomain]
     );
     const brushData = useMemo(() => {
       return xDomain && paddedYDomain
