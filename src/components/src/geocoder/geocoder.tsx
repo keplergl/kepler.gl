@@ -164,7 +164,11 @@ const GeoCoder: React.FC<GeocoderProps & IntlProps> = ({
       setInputValue(queryString);
       const resultCoordinates = testForCoordinates(queryString);
       if (resultCoordinates[0]) {
+        if (debounceTimeout) {
+          clearTimeout(debounceTimeout);
+        }
         const [_isValid, longitude, latitude] = resultCoordinates;
+        setShowResults(true);
         setResults([{center: [longitude, latitude], place_name: queryString}]);
       } else {
         if (debounceTimeout) {
