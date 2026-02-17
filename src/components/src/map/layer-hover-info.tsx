@@ -65,11 +65,12 @@ interface RowProps {
   value: string;
   deltaValue?: string | null;
   url?: string;
+  isComparing?: boolean;
 }
 
 const TOOLTIP_VALUE_MAX_LENGTH = 256;
 
-const Row: React.FC<RowProps> = ({name, value, deltaValue, url}) => {
+const Row: React.FC<RowProps> = ({name, value, deltaValue, url, isComparing}) => {
   // Set 'url' to 'value' if it looks like a url
   if (!url && value && typeof value === 'string' && value.match(/^http/)) {
     url = value;
@@ -92,20 +93,22 @@ const Row: React.FC<RowProps> = ({name, value, deltaValue, url}) => {
             {displayValue}
           </a>
         ) : (
-          <>
-            <span>{displayValue}</span>
-            {notNullorUndefined(deltaValue) ? (
-              <span
-                className={`row__delta-value ${
-                  deltaValue?.toString().charAt(0) === '+' ? 'positive' : 'negative'
-                }`}
-              >
-                {deltaValue}
-              </span>
-            ) : null}
-          </>
+          <span>{displayValue}</span>
         )}
       </td>
+      {isComparing ? (
+        <td
+          className={`row__delta-value ${
+            notNullorUndefined(deltaValue)
+              ? deltaValue?.toString().charAt(0) === '+'
+                ? 'positive'
+                : 'negative'
+              : ''
+          }`}
+        >
+          {deltaValue ?? ''}
+        </td>
+      ) : null}
     </tr>
   );
 };
@@ -183,6 +186,7 @@ const EntryInfoRow: React.FC<EntryInfoRowProps> = ({
       name={field.displayName || field.name}
       value={displayValue}
       deltaValue={displayDeltaValue}
+      isComparing={Boolean(primaryData)}
     />
   );
 };
