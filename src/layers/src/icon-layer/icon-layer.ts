@@ -96,9 +96,12 @@ export const pointVisConfigs: {
   billboard: 'billboard'
 };
 
+// Icons whose bottom tip should be anchored at the geographic position
+const BOTTOM_ANCHOR_ICONS = ['place', 'pin'];
+
 function flatterIconPositions(icon) {
   // had to flip y, since @luma modal has changed
-  return icon.mesh.cells.reduce((prev, cell) => {
+  const positions = icon.mesh.cells.reduce((prev, cell) => {
     cell.forEach(p => {
       prev.push(
         ...[icon.mesh.positions[p][0], -icon.mesh.positions[p][1], icon.mesh.positions[p][2]]
@@ -106,6 +109,20 @@ function flatterIconPositions(icon) {
     });
     return prev;
   }, []);
+
+  // For pin-like icons, shift geometry so the bottom tip is at origin (y=0)
+  // This ensures the pin tip points at the actual geographic location
+  if (BOTTOM_ANCHOR_ICONS.includes(icon.id)) {
+    let minY = Infinity;
+    for (let i = 1; i < positions.length; i += 3) {
+      if (positions[i] < minY) minY = positions[i];
+    }
+    for (let i = 1; i < positions.length; i += 3) {
+      positions[i] -= minY;
+    }
+  }
+
+  return positions;
 }
 
 export default class IconLayer extends Layer {
