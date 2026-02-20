@@ -69,6 +69,45 @@ const DUCKDB_WKB_COLUMN = 'wkb_geometry';
 const KEPLER_GEOM_FROM_GEOJSON_COLUMN = '_geojson';
 
 /**
+ * Check if a GeoJSON FeatureCollection contains XYZM (4D) coordinates.
+ * This is used to detect trip data where the 4th coordinate is a timestamp.
+ * @param geojson The GeoJSON FeatureCollection to check
+ * @returns true if the GeoJSON contains 4D coordinates
+ */
+function hasXYZMCoordinates(geojson: any): boolean {
+  if (!geojson || geojson.type !== 'FeatureCollection' || !Array.isArray(geojson.features)) {
+    return false;
+  }
+
+  for (const feature of geojson.features) {
+    const coords = feature?.geometry?.coordinates;
+    if (!coords) continue;
+
+    const geomType = feature?.geometry?.type;
+
+    if (geomType === 'LineString' && Array.isArray(coords)) {
+      // LineString: [[x,y,z,m], [x,y,z,m], ...]
+      if (coords.length > 0 && Array.isArray(coords[0]) && coords[0].length >= 4) {
+        return true;
+      }
+    } else if (geomType === 'MultiLineString' && Array.isArray(coords)) {
+      // MultiLineString: [[[x,y,z,m], [x,y,z,m], ...], ...]
+      if (
+        coords.length > 0 &&
+        Array.isArray(coords[0]) &&
+        coords[0].length > 0 &&
+        Array.isArray(coords[0][0]) &&
+        coords[0][0].length >= 4
+      ) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+/**
  * Names of columns that most likely contain binary wkb geometry
  */
 const SUGGESTED_GEOM_COLUMNS = {
@@ -139,7 +178,18 @@ export class KeplerGlDuckDbTable extends KeplerTable {
   async importGeoJsonData({data, db, c}: ImportDataToDuckProps): Promise<ImportDataToDuckResult> {
     try {
       const {rows} = data;
-      await db.registerFileText(this.id, JSON.stringify(rows));
+      const geojsonStr = JSON.stringify(rows);
+
+      // Check if the GeoJSON has XYZM (4D) coordinates (e.g., trip data with timestamps)
+      const has4DCoords = hasXYZMCoordinates(rows);
+
+      if (has4DCoords) {
+        console.log('[importGeoJsonData] Detected XYZM coordinates, using custom read_json parsing');
+        return await this.importGeoJsonWithXYZM({data, db, c, geojsonStr});
+      }
+
+      // Standard ST_READ path for non-XYZM GeoJSON
+      await db.registerFileText(this.id, geojsonStr);
 
       const createTableSql = `
         install spatial;
@@ -157,7 +207,99 @@ export class KeplerGlDuckDbTable extends KeplerTable {
     }
 
     return {
-      // _geojson column is created from geometry with keep_wkb flag and contains valid WKB data.
+      geoarrowMetadata: {[KEPLER_GEOM_FROM_GEOJSON_COLUMN]: GEOARROW_EXTENSIONS.WKB}
+    };
+  }
+
+  /**
+   * Import GeoJSON with XYZM (4D) coordinates using custom read_json parsing.
+   * This preserves the M coordinate (typically timestamps for trip data) which ST_READ drops.
+   * The M values are stored in the 4th position of each coordinate array in the _geojson column.
+   */
+  private async importGeoJsonWithXYZM({
+    data,
+    db,
+    c,
+    geojsonStr
+  }: ImportDataToDuckProps & {geojsonStr: string}): Promise<ImportDataToDuckResult> {
+    try {
+      await db.registerFileText(this.id, geojsonStr);
+
+      await c.query(`install spatial; load spatial;`);
+
+      // Step 1: Parse GeoJSON and create initial table with properties and geometry JSON
+      // We store the geometry as a JSON string to preserve 4D coordinates
+      const createTableSql = `
+        CREATE TABLE '${this.label}' AS
+        WITH raw_features AS (
+          SELECT unnest(features) as feature
+          FROM read_json_auto('${this.id}')
+        )
+        SELECT
+          feature->'properties' as __props__,
+          -- Store geometry as JSON string to preserve 4D coordinates
+          (feature->'geometry')::VARCHAR as "${KEPLER_GEOM_FROM_GEOJSON_COLUMN}"
+        FROM raw_features;
+      `;
+
+      await c.query(createTableSql);
+
+      // Step 2: Get property keys from the first row to expand them into columns
+      const propsResult = await c.query(`
+        SELECT __props__ FROM '${this.label}' WHERE __props__ IS NOT NULL LIMIT 1
+      `);
+
+      if (propsResult.numRows > 0) {
+        const propsJson = propsResult.getChildAt(0)?.get(0);
+        if (propsJson) {
+          let propKeys: string[] = [];
+          try {
+            const propsObj = typeof propsJson === 'string' ? JSON.parse(propsJson) : propsJson;
+            if (propsObj && typeof propsObj === 'object') {
+              propKeys = Object.keys(propsObj);
+            }
+          } catch (e) {
+            console.warn('[importGeoJsonWithXYZM] Could not parse properties:', e);
+          }
+
+          // Add columns for each property
+          for (const key of propKeys) {
+            // Skip if key would conflict with our geometry column
+            if (key === KEPLER_GEOM_FROM_GEOJSON_COLUMN) continue;
+
+            const safeKey = key.replace(/"/g, '""');
+            try {
+              await c.query(`
+                ALTER TABLE '${this.label}' 
+                ADD COLUMN "${safeKey}" VARCHAR;
+              `);
+              await c.query(`
+                UPDATE '${this.label}' 
+                SET "${safeKey}" = json_extract_string(__props__, '$."${safeKey}"');
+              `);
+            } catch (e) {
+              console.warn(`[importGeoJsonWithXYZM] Could not add property column ${key}:`, e);
+            }
+          }
+        }
+      }
+
+      // Step 3: Drop the intermediate __props__ column
+      try {
+        await c.query(`ALTER TABLE '${this.label}' DROP COLUMN __props__;`);
+      } catch (e) {
+        console.warn('[importGeoJsonWithXYZM] Could not drop __props__ column:', e);
+      }
+
+      console.log('[importGeoJsonWithXYZM] Successfully imported GeoJSON with XYZM coordinates preserved');
+    } catch (error) {
+      console.error('importGeoJsonWithXYZM', error);
+      throw error;
+    }
+
+    return {
+      // The _geojson column contains geometry JSON with 4D coordinates
+      // It will be parsed by parseGeometryFromString which handles JSON strings
       geoarrowMetadata: {[KEPLER_GEOM_FROM_GEOJSON_COLUMN]: GEOARROW_EXTENSIONS.WKB}
     };
   }

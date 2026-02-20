@@ -246,7 +246,7 @@ export default class TripLayer extends Layer {
     {label, fields = [], dataContainer, id}: KeplerTable,
     foundLayers?: any[]
   ) {
-    const geojsonColumns = fields.filter(f => f.type === 'geojson').map(f => f.name);
+    const geojsonColumns = fields.filter(f => f.type === 'geojson' || f.type === 'geoarrow' || f.type === 'geoarrow-wkb').map(f => f.name);
 
     const defaultColumns = {
       geojson: uniq([...GEOJSON_FIELDS.geojson, ...geojsonColumns])
