@@ -22,7 +22,7 @@ function renderRoot({id, store, ele, onMounted}) {
     );
   };
 
-    ReactDOM.render(<Root />, ele);
-  }
+  ReactDOM.render(<Root />, ele);
+}
 
 export default renderRoot;
