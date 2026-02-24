@@ -360,7 +360,9 @@ export function groupColumnsAsGeoJson(
   for (let index = 0; index < dataContainer.numRows(); index++) {
     // note: can materialize the row
     const datum = dataContainer.rowAsArray(index);
-    const id = datum[columns.id.fieldIdx];
+    // Convert id to string to ensure consistent object key behavior
+    // (numeric keys are sorted differently than string keys in Object.entries)
+    const id = `${datum[columns.id.fieldIdx]}`;
     const lat = datum[columns.lat.fieldIdx];
     const lon = datum[columns.lng.fieldIdx];
     const altitude = columns.altitude ? datum[columns.altitude.fieldIdx] : 0;
@@ -420,7 +422,7 @@ export function detectTableColumns(
   // find sort by field
   const sortByFieldIdx = fields.findIndex(f => f.type === ALL_FIELD_TYPES.timestamp);
   // find id column
-  const idFieldIdx = fields.findIndex(f => f.name?.toLowerCase().match(/^(id|uuid)$/g));
+  const idFieldIdx = fields.findIndex(f => f.name?.toLowerCase().match(/(id|uuid)/g));
 
   if (sortByFieldIdx > -1 && idFieldIdx > -1) {
     const pointColumns = assignPointPairToLayerColumn(fieldPairs[0], true);
