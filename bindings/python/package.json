@@ -1,0 +1,36 @@
+{
+  "name": "keplergl-jupyter",
+  "version": "0.4.0",
+  "scripts": {
+    "build": "node esbuild.config.mjs",
+    "dev": "node esbuild.config.mjs --watch",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src/",
+    "prettier": "prettier --write 'src/**/*.{ts,tsx}'"
+  },
+  "devDependencies": {
+    "@anywidget/types": "^0.2.0",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "esbuild": "^0.20.0",
+    "typescript": "^5.4.0",
+    "eslint": "^8.57.0",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "prettier": "^3.2.0"
+  },
+  "dependencies": {
+    "@kepler.gl/actions": "^3.2.0",
+    "@kepler.gl/components": "^3.2.0",
+    "@kepler.gl/processors": "^3.2.0",
+    "@kepler.gl/reducers": "^3.2.0",
+    "@kepler.gl/schemas": "^3.2.0",
+    "@kepler.gl/styles": "^3.2.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "redux": "^4.2.1",
+    "react-redux": "^8.0.5",
+    "styled-components": "^6.1.8",
+    "apache-arrow": "^21.0.0"
+  }
+}
