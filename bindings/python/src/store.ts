@@ -18,5 +18,6 @@ export function createStore() {
   const middlewares = enhanceReduxMiddleware([]);
   const enhancers = [applyMiddleware(...middlewares)];
 
+  // @ts-expect-error Redux types are not compatible with TypeScript
   return createReduxStore(reducers, {}, compose(...enhancers));
 }
