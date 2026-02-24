@@ -69,45 +69,6 @@ const DUCKDB_WKB_COLUMN = 'wkb_geometry';
 const KEPLER_GEOM_FROM_GEOJSON_COLUMN = '_geojson';
 
 /**
- * Check if a GeoJSON FeatureCollection contains XYZM (4D) coordinates.
- * This is used to detect trip data where the 4th coordinate is a timestamp.
- * @param geojson The GeoJSON FeatureCollection to check
- * @returns true if the GeoJSON contains 4D coordinates
- */
-function hasXYZMCoordinates(geojson: any): boolean {
-  if (!geojson || geojson.type !== 'FeatureCollection' || !Array.isArray(geojson.features)) {
-    return false;
-  }
-
-  for (const feature of geojson.features) {
-    const coords = feature?.geometry?.coordinates;
-    if (!coords) continue;
-
-    const geomType = feature?.geometry?.type;
-
-    if (geomType === 'LineString' && Array.isArray(coords)) {
-      // LineString: [[x,y,z,m], [x,y,z,m], ...]
-      if (coords.length > 0 && Array.isArray(coords[0]) && coords[0].length >= 4) {
-        return true;
-      }
-    } else if (geomType === 'MultiLineString' && Array.isArray(coords)) {
-      // MultiLineString: [[[x,y,z,m], [x,y,z,m], ...], ...]
-      if (
-        coords.length > 0 &&
-        Array.isArray(coords[0]) &&
-        coords[0].length > 0 &&
-        Array.isArray(coords[0][0]) &&
-        coords[0][0].length >= 4
-      ) {
-        return true;
-      }
-    }
-  }
-
-  return false;
-}
-
-/**
  * Names of columns that most likely contain binary wkb geometry
  */
 const SUGGESTED_GEOM_COLUMNS = {

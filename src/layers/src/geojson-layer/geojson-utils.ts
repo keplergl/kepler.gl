@@ -362,7 +362,12 @@ export function groupColumnsAsGeoJson(
     const datum = dataContainer.rowAsArray(index);
     // Convert id to string to ensure consistent object key behavior
     // (numeric keys are sorted differently than string keys in Object.entries)
-    const id = `${datum[columns.id.fieldIdx]}`;
+    const rawId = datum[columns.id.fieldIdx];
+    if (rawId == null) {
+      // Skip rows with missing IDs to avoid grouping them under "null"/"undefined"
+      continue;
+    }
+    const id = String(rawId);
     const lat = datum[columns.lat.fieldIdx];
     const lon = datum[columns.lng.fieldIdx];
     const altitude = columns.altitude ? datum[columns.altitude.fieldIdx] : 0;
