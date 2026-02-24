@@ -31,6 +31,8 @@
     "redux": "^4.2.1",
     "react-redux": "^8.0.5",
     "styled-components": "^6.1.8",
-    "apache-arrow": "^21.0.0"
+    "apache-arrow": "^21.0.0",
+    "assert": "^2.1.0",
+    "events": "^3.3.0"
   }
 }

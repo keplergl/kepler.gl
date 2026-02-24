@@ -1,7 +1,7 @@
 """Data serialization for Python <-> JavaScript communication."""
 
 import base64
-from typing import Any
+from typing import Any, Optional
 
 import pandas as pd
 import geopandas as gpd
@@ -14,7 +14,7 @@ def _debug(msg):
         print(f"[keplergl-serializer] {msg}")
 
 
-def _try_parse_geojson(data: str) -> dict | None:
+def _try_parse_geojson(data: str) -> Optional[dict]:
     """Try to parse a string as GeoJSON. Returns parsed dict if valid GeoJSON, None otherwise."""
     import json
     try:

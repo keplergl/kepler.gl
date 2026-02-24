@@ -11,12 +11,15 @@ const isWatch = process.argv.includes('--watch');
 // Resolve apache-arrow to a single location
 const arrowPath = path.dirname(require.resolve('apache-arrow'));
 
+// Resolve browser polyfills for Node.js built-ins (point to actual entry files)
+const assertPath = require.resolve('assert/');
+const eventsPath = require.resolve('events/');
+
 const buildOptions = {
-  entryPoints: ['src/index.ts'],
+  entryPoints: {widget: 'src/index.ts'},
   bundle: true,
   format: 'esm',
   outdir: 'keplergl/static',
-  outExtension: {'.js': '.js'},
   loader: {
     '.ts': 'ts',
     '.tsx': 'tsx',
@@ -27,11 +30,15 @@ const buildOptions = {
   sourcemap: isWatch,
   target: ['es2020'],
   define: {
-    'process.env.NODE_ENV': isWatch ? '"development"' : '"production"'
+    'process.env.NODE_ENV': isWatch ? '"development"' : '"production"',
+    'global': 'globalThis'
   },
-  // Use alias to ensure single instance of apache-arrow
+  inject: ['./src/process-shim.js'],
+  // Use alias to ensure single instance of apache-arrow and provide browser polyfills
   alias: {
-    'apache-arrow': arrowPath
+    'apache-arrow': arrowPath,
+    'assert': assertPath,
+    'events': eventsPath
   }
 };
 

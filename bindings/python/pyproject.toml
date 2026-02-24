@@ -40,7 +40,7 @@ packages = ["keplergl"]
 [tool.hatch.build.hooks.jupyter-builder]
 dependencies = ["hatch-jupyter-builder>=0.9.0"]
 build-function = "hatch_jupyter_builder.npm_builder"
-ensured-targets = ["keplergl/static/widget.js"]
+ensured-targets = ["keplergl/static/widget.js", "keplergl/static/widget.css"]
 
 [tool.hatch.build.hooks.jupyter-builder.build-kwargs]
 npm = ["npm"]

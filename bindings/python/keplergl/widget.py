@@ -13,8 +13,8 @@ _STATIC_DIR = pathlib.Path(__file__).parent / "static"
 class KeplerGl(anywidget.AnyWidget):
     """Kepler.gl Jupyter Widget using anywidget."""
 
-    _esm = _STATIC_DIR / "index.js"
-    _css = _STATIC_DIR / "index.css"
+    _esm = _STATIC_DIR / "widget.js"
+    _css = _STATIC_DIR / "widget.css"
 
     data = traitlets.Dict({}).tag(sync=True, to_json=data_to_json, from_json=data_from_json)
     config = traitlets.Dict({}).tag(sync=True)
