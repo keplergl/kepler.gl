@@ -422,7 +422,7 @@ export function detectTableColumns(
   // find sort by field
   const sortByFieldIdx = fields.findIndex(f => f.type === ALL_FIELD_TYPES.timestamp);
   // find id column
-  const idFieldIdx = fields.findIndex(f => f.name?.toLowerCase().match(/(id|uuid)/g));
+  const idFieldIdx = fields.findIndex(f => f.name?.toLowerCase().match(/^(id|uuid|._id|._uuid)$/g));
 
   if (sortByFieldIdx > -1 && idFieldIdx > -1) {
     const pointColumns = assignPointPairToLayerColumn(fieldPairs[0], true);
