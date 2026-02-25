@@ -157,6 +157,7 @@ export class KeplerGlDuckDbTable extends KeplerTable {
     }
 
     return {
+      // _geojson column is created from geometry with keep_wkb flag and contains valid WKB data.
       geoarrowMetadata: {[KEPLER_GEOM_FROM_GEOJSON_COLUMN]: GEOARROW_EXTENSIONS.WKB}
     };
   }

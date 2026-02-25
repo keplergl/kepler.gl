@@ -426,7 +426,7 @@ export function detectTableColumns(
   }
   // find sort by field
   const sortByFieldIdx = fields.findIndex(f => f.type === ALL_FIELD_TYPES.timestamp);
-  // find id column
+  // find id column: support id, uuid, xxx_id and xxx_uuid columns
   const idFieldIdx = fields.findIndex(f => f.name?.toLowerCase().match(/^(id|uuid|._id|._uuid)$/g));
 
   if (sortByFieldIdx > -1 && idFieldIdx > -1) {
