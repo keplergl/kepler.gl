@@ -243,10 +243,10 @@ export default class TripLayer extends Layer {
   }
 
   static findDefaultLayerProps(
-    {label, fields = [], dataContainer, id}: KeplerTable,
+    {label, fields = [], dataContainer, id, fieldPairs = []}: KeplerTable,
     foundLayers?: any[]
   ) {
-    const geojsonColumns = fields.filter(f => f.type === 'geojson').map(f => f.name);
+    const geojsonColumns = fields.filter(f => f.type === 'geojson' || f.type === 'geoarrow').map(f => f.name);
 
     const defaultColumns = {
       geojson: uniq([...GEOJSON_FIELDS.geojson, ...geojsonColumns])
@@ -275,6 +275,39 @@ export default class TripLayer extends Layer {
             !tripGeojsonColumns.find(c => prop.columns.geojson.name === c.geojson.name)
         )
       };
+    }
+
+    // Try to detect table columns (id/lat/lng/timestamp) for table column mode
+    // This allows creating trip layers from tabular data without GeoJSON
+    if (fieldPairs.length && fields.length) {
+      // Default layer columns for table mode
+      const defaultTableColumns = {
+        id: {value: null, fieldIdx: -1},
+        lat: {value: null, fieldIdx: -1},
+        lng: {value: null, fieldIdx: -1},
+        timestamp: {value: null, fieldIdx: -1},
+        altitude: {value: null, fieldIdx: -1, optional: true},
+        geojson: {value: null, fieldIdx: -1}
+      };
+
+      const tableColumns = detectTableColumns(
+        {fields, fieldPairs} as KeplerTable,
+        defaultTableColumns,
+        'timestamp'
+      );
+
+      if (tableColumns) {
+        // Found required columns for table mode
+        return {
+          props: [{
+            label: tableColumns.label || (typeof label === 'string' && label.replace(/\.[^/.]+$/, '')) || this.type,
+            columns: tableColumns.columns,
+            isVisible: true,
+            columnMode: COLUMN_MODE_TABLE
+          }],
+          foundLayers
+        };
+      }
     }
 
     return {props: []};
