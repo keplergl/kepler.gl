@@ -10,7 +10,14 @@ import base64
 import sys
 import json
 import ipywidgets as widgets
-from pkg_resources import resource_string
+try:
+    # Python 3.9+
+    from importlib.resources import files
+    def resource_string(package, resource):
+        return files(package).joinpath(resource).read_bytes()
+except ImportError:
+    # Python < 3.9 fallback
+    from pkg_resources import resource_string
 from traitlets import Unicode, Dict, Int, validate, TraitError
 import pandas as pd
 import geopandas
