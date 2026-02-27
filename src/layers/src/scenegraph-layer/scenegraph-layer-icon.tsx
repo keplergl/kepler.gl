@@ -1,26 +1,16 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {Component} from 'react';
-import PropTypes from 'prop-types';
-import {Base} from '../base';
+import React from 'react';
+import {Base, BaseProps} from '../base';
 
-export default class ScenegraphLayerIcon extends Component {
-  static propTypes = {
-    /** Set the height of the icon, ex. '16px' */
-    height: PropTypes.string,
-    colors: PropTypes.arrayOf(PropTypes.string)
-  };
-
-  static defaultProps = {
-    height: '16px',
-    predefinedClassName: 'scenegraph-layer-icon',
-    totalColor: 3
-  };
-
-  render() {
-    return (
-      <Base {...this.props}>
+const ScenegraphLayerIcon: React.FC<Partial<BaseProps>> = ({
+  height = '16px',
+  predefinedClassName = 'scenegraph-layer-icon',
+  totalColor = 3,
+  ...props
+}) => (
+  <Base height={height} predefinedClassName={predefinedClassName} totalColor={totalColor} {...props}>
         <g transform="translate(-20, -99)" id="layer1">
           <g transform="matrix(0.26458333,0,0,0.26458333,-191.59545,42.388813)" id="g3042">
             <ellipse
@@ -122,6 +112,6 @@ export default class ScenegraphLayerIcon extends Component {
           </g>
         </g>
       </Base>
-    );
-  }
-}
+);
+
+export default ScenegraphLayerIcon;
