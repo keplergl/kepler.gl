@@ -58,7 +58,7 @@
     "d3-dsv": "^2.0.0",
     "deepmerge": "^4.2.2",
     "global": "^4.3.0",
-    "lodash": "4.17.21",
+    "lodash": "4.17.23",
     "react-palm": "^3.3.8",
     "redux": "^4.2.1",
     "redux-actions": "^2.2.1",
