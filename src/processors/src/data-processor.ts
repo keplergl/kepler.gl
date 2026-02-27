@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import * as arrow from 'apache-arrow';
-import {csvParseRows} from 'd3-dsv';
+import {csvParseRows, tsvParseRows, dsvFormat} from 'd3-dsv';
 import {DATA_TYPES as AnalyzerDATA_TYPES} from 'type-analyzer';
 import normalize from '@mapbox/geojson-normalize';
 import {parseSync} from '@loaders.gl/core';
@@ -39,6 +39,35 @@ import {Feature} from '@nebula.gl/edit-modes';
 // const CSV_NULLS = ['', 'null', 'NULL', 'Null', 'NaN', '/N'];
 // matches empty string
 export const CSV_NULLS = /^(null|NULL|Null|NaN|\/N||)$/;
+
+// Supported delimiters for auto-detection, ordered by priority
+const DELIMITERS = [',', '\t', ';', '|'] as const;
+
+/**
+ * Detect the delimiter used in a DSV string by checking the first line.
+ * Returns the delimiter that produces the most columns (minimum 2).
+ * Falls back to comma if no delimiter produces multiple columns.
+ */
+export function detectDelimiter(rawData: string): string {
+  const firstLine = rawData.slice(0, rawData.indexOf('\n'));
+  if (!firstLine) return ',';
+
+  let bestDelimiter = ',';
+  let bestCount = 1;
+
+  for (const delimiter of DELIMITERS) {
+    // Use d3-dsv to properly parse the first line (handles quoted fields)
+    const parseRows = delimiter === ',' ? csvParseRows : delimiter === '\t' ? tsvParseRows : dsvFormat(delimiter).parseRows;
+    const parsed = parseRows(firstLine);
+    const count = parsed[0]?.length || 0;
+    if (count > bestCount) {
+      bestCount = count;
+      bestDelimiter = delimiter;
+    }
+  }
+
+  return bestDelimiter;
+}
 
 function tryParseJsonString(str) {
   try {
@@ -116,7 +145,9 @@ export function processCsvData(rawData: unknown[][] | string, header?: string[])
   let headerRow: string[] | undefined;
 
   if (typeof rawData === 'string') {
-    const parsedRows: string[][] = csvParseRows(rawData);
+    const delimiter = detectDelimiter(rawData);
+    const parseRows = delimiter === ',' ? csvParseRows : delimiter === '\t' ? tsvParseRows : dsvFormat(delimiter).parseRows;
+    const parsedRows: string[][] = parseRows(rawData);
 
     if (!Array.isArray(parsedRows) || parsedRows.length < 2) {
       // looks like an empty file, throw error to be catch
