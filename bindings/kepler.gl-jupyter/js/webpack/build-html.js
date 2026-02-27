@@ -56,7 +56,11 @@ module.exports = (rules, plugins) => ({
 
   output: {
     path: path.resolve(__dirname, '../..', 'keplergl', 'static'),
-    libraryTarget: 'umd'
+    chunkFormat: false,
+    library: {
+      name: 'umd',
+      type: 'umd'
+    }
   },
 
   externals,
@@ -64,6 +68,13 @@ module.exports = (rules, plugins) => ({
   module: {
     rules
   },
+  resolve: {
+    fallback: {
+      fs: false,
+      process: require.resolve('process/browser')
+    }
+  },
+
   plugins: [
     // ...webpackConfig.plugins,
     // new webpack.optimize.UglifyJsPlugin({sourceMap: true, compressor: {comparisons: false, warnings: false}}),
@@ -95,9 +106,5 @@ module.exports = (rules, plugins) => ({
       title: 'Kepler.gl'
     }),
     new InlineChunkHtmlPlugin(HtmlWebpackPlugin, [/main/])
-  ],
-
-  node: {
-    fs: 'empty'
-  }
+  ]
 });
