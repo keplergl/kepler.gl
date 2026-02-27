@@ -45,11 +45,16 @@ const StyledTable = styled.table`
       color: ${props => props.theme.negativeBtnActBgd};
     }
   }
-  & .row__value,
   & .row__name {
     overflow: hidden;
     text-overflow: ellipsis;
-    white-space: no-wrap;
+    white-space: nowrap;
+  }
+  & .row__value {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: pre-line;
+    max-width: 250px;
   }
 `;
 
