@@ -796,6 +796,44 @@ function validateExistingLayerWithData(dataset, layerClasses, layer, schema) {
     : null;
 }
 
+const validateAndReplaceFields = (state, layer, dataId) => {
+  const newSizeField = state.datasets[dataId].fields.find(
+    field => field.name === layer.config.sizeField?.name
+  );
+  const newHeightField = state.datasets[dataId].fields.find(
+    field => field.name === layer.config.heightField?.name
+  );
+
+  const newStrokeColorField = state.datasets[dataId].fields.find(
+    field => field.name === layer.config.strokeColorField?.name
+  );
+
+  const newWeightField = state.datasets[dataId].fields.find(
+    field => field.name === layer.config.weightField?.name
+  );
+
+  const newRadiusField = state.datasets[dataId].fields.find(
+    field => field.name === layer.config.radiusField?.name
+  );
+
+  const newCoverageField = state.datasets[dataId].fields.find(
+    field => field.name === layer.config.coverageField?.name
+  );
+
+  const newColorfield = state.datasets[dataId].fields.find(
+    field => field.name === layer.config.colorField?.name
+  );
+  return {
+    sizeField: newSizeField,
+    heightField: newHeightField,
+    strokeColorField: newStrokeColorField,
+    weightField: newWeightField,
+    radiusField: newRadiusField,
+    coverageField: newCoverageField,
+    colorField: newColorfield
+  };
+};
+
 /**
  * Update layer config dataId
  * @memberof visStateUpdaters
@@ -837,6 +875,11 @@ export function layerDataIdChangeUpdater(
     } else {
       newLayer = validated;
     }
+  } else {
+    const newFields = validateAndReplaceFields(state, newLayer, dataId);
+    newLayer = newLayer.updateLayerConfig({
+      ...newFields
+    });
   }
 
   newLayer = newLayer.updateLayerConfig({
