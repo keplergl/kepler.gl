@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import * as arrow from 'apache-arrow';
-import {csvParseRows} from 'd3-dsv';
+import {csvParseRows, tsvParseRows} from 'd3-dsv';
 import {DATA_TYPES as AnalyzerDATA_TYPES} from 'type-analyzer';
 import normalize from '@mapbox/geojson-normalize';
 import {parseSync} from '@loaders.gl/core';
@@ -116,7 +116,10 @@ export function processCsvData(rawData: unknown[][] | string, header?: string[])
   let headerRow: string[] | undefined;
 
   if (typeof rawData === 'string') {
-    const parsedRows: string[][] = csvParseRows(rawData);
+    // Auto-detect delimiter: if the first line contains tabs, parse as TSV
+    const firstLine = rawData.slice(0, rawData.indexOf('\n'));
+    const parseRows = firstLine.includes('\t') ? tsvParseRows : csvParseRows;
+    const parsedRows: string[][] = parseRows(rawData);
 
     if (!Array.isArray(parsedRows) || parsedRows.length < 2) {
       // looks like an empty file, throw error to be catch
