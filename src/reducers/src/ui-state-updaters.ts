@@ -526,9 +526,6 @@ export const setExportImageSettingUpdater = (
     ...state,
     exportImage: {
       ...updated,
-      // @ts-expect-error
-      // TODO: calculateExportImageSize does not return imageSize.zoomOffset,
-      // do we need take this value from current state, or return defaul value = 0
       imageSize
     }
   };
