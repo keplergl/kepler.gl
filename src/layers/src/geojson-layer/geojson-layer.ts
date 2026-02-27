@@ -515,10 +515,13 @@ export default class GeoJsonLayer extends Layer {
     let dataAccessor;
     if (this.config.columnMode === COLUMN_MODE_GEOJSON) {
       filterValueAccessor = (dc, d, fieldIndex) => dc.valueAt(d.properties.index, fieldIndex);
+      // For GEOJSON mode, properties.index is the row index in the data container
       dataAccessor = () => d => ({index: d.properties.index});
     } else {
       filterValueAccessor = getTableModeValueAccessor;
-      dataAccessor = () => d => ({index: d.properties.index});
+      // For TABLE mode, properties.index is the feature index (not row index).
+      // Use the first row from properties.values to get field values for color/size.
+      dataAccessor = () => d => d.properties.values[0];
     }
 
     const indexAccessor = f => f.properties.index;
