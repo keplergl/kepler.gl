@@ -103,15 +103,21 @@ export function AiAssistantComponent() {
   }, [datasetMetaData]);
 
   const onRestartAssistant = async () => {
+    // Clear Redux state first
     dispatch(updateAiAssistantMessages([]));
     
+    // Clear library's internal state
     try {
       await restartChatRef.current();
     } catch (e) {
       console.error('Error restarting chat:', e);
     }
     
-    setRestartKey(prev => prev + 1);
+    // Force remount after state has been cleared
+    // Use setTimeout to ensure Redux state update has propagated
+    setTimeout(() => {
+      setRestartKey(prev => prev + 1);
+    }, 0);
   };
 
   const onMessagesUpdated = (messages: MessageModel[]) => {
