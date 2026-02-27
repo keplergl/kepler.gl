@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import React, {FC, ReactNode, useState, FocusEventHandler, ChangeEventHandler} from 'react';
 import classnames from 'classnames';
 import pick from 'lodash/pick';
-import React, {ChangeEventHandler, Component, FocusEventHandler, ReactNode} from 'react';
 import styled from 'styled-components';
 import {shouldForwardProp} from './styled-components';
 
@@ -23,8 +23,9 @@ const StyledCheckboxInput = styled.label`
   ${props => props.theme.inputCheckbox};
 `;
 
-const StyledRadiuInput = styled.label.withConfig({shouldForwardProp})<StyledSwitchInputProps>`
+const StyledRadioInput = styled.label.withConfig({shouldForwardProp})<StyledSwitchInputProps>`
   ${props => (props.secondary ? props.theme.secondaryRadio : props.theme.inputRadio)};
+  background-color: 'red';
 `;
 
 const HiddenInput = styled.input.withConfig({shouldForwardProp})`
@@ -65,66 +66,74 @@ interface CheckboxProps {
   switch?: boolean;
   activeColor?: string;
   secondary?: boolean;
-  onBlur: FocusEventHandler<HTMLInputElement>;
+  onBlur?: FocusEventHandler<HTMLInputElement>;
   onChange?: ChangeEventHandler<HTMLInputElement>;
-  onFocus: FocusEventHandler<HTMLInputElement>;
+  onFocus?: FocusEventHandler<HTMLInputElement>;
 }
 
-export default class Checkbox extends Component<CheckboxProps> {
-  static defaultProps = {
-    disabled: false,
-    checked: false,
-    onBlur: noop,
-    onChange: noop,
-    onFocus: noop,
-    label: ''
+const Checkbox: FC<CheckboxProps> = ({
+  id,
+  type,
+  label = '',
+  className,
+  value,
+  checked = false,
+  disabled = false,
+  secondary,
+  onBlur = noop,
+  onChange = noop,
+  onFocus = noop
+}) => {
+  const [, setFocused] = useState(false);
+
+  const handleFocus: FocusEventHandler<HTMLInputElement> = args => {
+    setFocused(true);
+    onFocus(args);
   };
 
-  state = {
-    focused: false
+  const handleBlur: FocusEventHandler<HTMLInputElement> = args => {
+    setFocused(false);
+    onBlur(args);
   };
 
-  handleFocus: FocusEventHandler<HTMLInputElement> = args => {
-    this.setState({focused: true});
-    this.props.onFocus(args);
+  const inputProps = {
+    ...pick({checked, disabled, id, onChange, value, secondary}, [
+      'checked',
+      'disabled',
+      'id',
+      'onChange',
+      'value',
+      'secondary'
+    ]),
+    type: 'checkbox',
+    onFocus: handleFocus,
+    onBlur: handleBlur
   };
 
-  handleBlur: FocusEventHandler<HTMLInputElement> = args => {
-    this.setState({focused: false});
-    this.props.onBlur(args);
+  const labelProps = {
+    ...pick({checked, disabled, secondary}, ['checked', 'disabled', 'secondary']),
+    htmlFor: id
   };
 
-  render() {
-    const inputProps = {
-      ...pick(this.props, ['checked', 'disabled', 'id', 'onChange', 'value', 'secondary']),
-      type: 'checkbox',
-      onFocus: this.handleFocus,
-      onBlur: this.handleBlur
-    };
+  const LabelElement =
+    type === 'checkbox'
+      ? StyledCheckboxInput
+      : type === 'radio'
+      ? StyledRadioInput
+      : StyledSwitchInput;
 
-    const labelProps = {
-      ...pick(this.props, ['checked', 'disabled', 'secondary']),
-      htmlFor: this.props.id
-    };
+  return (
+    <StyledCheckbox
+      type={type}
+      className={classnames('kg-checkbox', className)}
+      disabled={disabled}
+    >
+      <HiddenInput {...inputProps} />
+      <LabelElement className="kg-checkbox__label" {...labelProps}>
+        {label}
+      </LabelElement>
+    </StyledCheckbox>
+  );
+};
 
-    const LabelElement =
-      this.props.type === 'checkbox'
-        ? StyledCheckboxInput
-        : this.props.type === 'radio'
-        ? StyledRadiuInput
-        : StyledSwitchInput;
-
-    return (
-      <StyledCheckbox
-        type={this.props.type}
-        className={classnames('kg-checkbox', this.props.className)}
-        disabled={this.props.disabled}
-      >
-        <HiddenInput {...inputProps} />
-        <LabelElement className="kg-checkbox__label" {...labelProps}>
-          {this.props.label}
-        </LabelElement>
-      </StyledCheckbox>
-    );
-  }
-}
+export default Checkbox;
