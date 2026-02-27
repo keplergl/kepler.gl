@@ -5,7 +5,6 @@ import {parseInBatches} from '@loaders.gl/core';
 import {JSONLoader, _JSONPath} from '@loaders.gl/json';
 import {CSVLoader} from '@loaders.gl/csv';
 import {GeoArrowLoader} from '@loaders.gl/arrow';
-import {ParquetWasmLoader} from '@loaders.gl/parquet';
 import {Loader} from '@loaders.gl/loader-utils';
 import {
   isPlainObject,
@@ -183,6 +182,7 @@ export async function readFileInBatches({
   loaders: Loader[];
   loadOptions: any;
 }): Promise<AsyncGenerator> {
+  const {ParquetWasmLoader} = await import('@loaders.gl/parquet');
   loaders = [JSONLoader, CSVLoader, GeoArrowLoader, ParquetWasmLoader, ...loaders];
   loadOptions = {
     csv: CSV_LOADER_OPTIONS,
