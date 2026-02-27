@@ -362,15 +362,20 @@ export default class TripLayer extends Layer {
     const {data} = this.updateData(datasets, oldLayerData);
 
     let valueAccessor;
+    let dataAccessor;
     if (this.config.columnMode === COLUMN_MODE_GEOJSON) {
       valueAccessor = (dc: DataContainerInterface, f, fieldIndex: number) => {
         return dc.valueAt(f.properties.index, fieldIndex);
       };
+      // For GEOJSON mode, properties.index is the row index in the data container
+      dataAccessor = () => d => ({index: d.properties.index});
     } else {
       valueAccessor = getTableModeValueAccessor;
+      // For TABLE mode, properties.index is the feature index (not row index).
+      // Use the first row from properties.values to get field values for color/size.
+      dataAccessor = () => d => d.properties.values[0];
     }
     const indexAccessor = f => f.properties.index;
-    const dataAccessor = () => d => ({index: d.properties.index});
     const accessors = this.getAttributeAccessors({dataAccessor, dataContainer});
     const getFilterValue = gpuFilter.filterValueAccessor(dataContainer)(
       indexAccessor,
