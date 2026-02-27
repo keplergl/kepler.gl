@@ -3795,22 +3795,22 @@ __metadata:
   linkType: hard
 
 "@langchain/core@npm:^0.3.38":
-  version: 0.3.53
-  resolution: "@langchain/core@npm:0.3.53"
+  version: 0.3.80
+  resolution: "@langchain/core@npm:0.3.80"
   dependencies:
     "@cfworker/json-schema": "npm:^4.0.2"
     ansi-styles: "npm:^5.0.0"
     camelcase: "npm:6"
     decamelize: "npm:1.2.0"
     js-tiktoken: "npm:^1.0.12"
-    langsmith: "npm:^0.3.16"
+    langsmith: "npm:^0.3.67"
     mustache: "npm:^4.2.0"
     p-queue: "npm:^6.6.2"
     p-retry: "npm:4"
     uuid: "npm:^10.0.0"
-    zod: "npm:^3.22.4"
+    zod: "npm:^3.25.32"
     zod-to-json-schema: "npm:^3.22.3"
-  checksum: 10c0/006e2ef11354d85dc9cd3529f8ec747bbe8e7e8bdf57bff8a0949155e04186563848f0047469f406702d3c69d1d9acb776a95303ee94183227dbebcd75383fbd
+  checksum: 10c0/c24a4641c11ddda77f89109800e59bdcd68b48f3dc0c485e6594e79ec494fc4b28e7c7b4013937e40e4edf12435dc09f7d5c0b3de5e63c8641fe81f6b17d7698
   languageName: node
   linkType: hard
 
@@ -13173,23 +13173,31 @@ __metadata:
   languageName: node
   linkType: hard
 
-"langsmith@npm:^0.3.16":
-  version: 0.3.25
-  resolution: "langsmith@npm:0.3.25"
+"langsmith@npm:^0.3.67":
+  version: 0.3.87
+  resolution: "langsmith@npm:0.3.87"
   dependencies:
     "@types/uuid": "npm:^10.0.0"
     chalk: "npm:^4.1.2"
     console-table-printer: "npm:^2.12.1"
     p-queue: "npm:^6.6.2"
-    p-retry: "npm:4"
     semver: "npm:^7.6.3"
     uuid: "npm:^10.0.0"
   peerDependencies:
+    "@opentelemetry/api": "*"
+    "@opentelemetry/exporter-trace-otlp-proto": "*"
+    "@opentelemetry/sdk-trace-base": "*"
     openai: "*"
   peerDependenciesMeta:
+    "@opentelemetry/api":
+      optional: true
+    "@opentelemetry/exporter-trace-otlp-proto":
+      optional: true
+    "@opentelemetry/sdk-trace-base":
+      optional: true
     openai:
       optional: true
-  checksum: 10c0/09f912c9bae7f55376dbf96b971a667355ed2449383295bf7c18516202b238bbfeda84bfccdd6216f8626bcea28a8e3c4fb51956fc66fae576be7825f338de90
+  checksum: 10c0/eb1ac6baea51063b881a9dc9a61d2d699bfc9b7aa3443865e575775abe084d94704344275958c94f4e1f03154103e9dd896cde7285797e4afb6af570da6db3b8
   languageName: node
   linkType: hard
 
@@ -17760,6 +17768,13 @@ __metadata:
   version: 3.24.4
   resolution: "zod@npm:3.24.4"
   checksum: 10c0/ab3112f017562180a41a0f83d870b333677f7d6b77f106696c56894567051b91154714a088149d8387a4f50806a2520efcb666f108cd384a35c236a191186d91
+  languageName: node
+  linkType: hard
+
+"zod@npm:^3.25.32":
+  version: 3.25.76
+  resolution: "zod@npm:3.25.76"
+  checksum: 10c0/5718ec35e3c40b600316c5b4c5e4976f7fee68151bc8f8d90ec18a469be9571f072e1bbaace10f1e85cf8892ea12d90821b200e980ab46916a6166a4260a983c
   languageName: node
   linkType: hard
 
