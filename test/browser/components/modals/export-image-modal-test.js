@@ -72,7 +72,7 @@ test('Components -> ExportImageModal.mount', t => {
     .find(SelectionButton)
     .map(c => c.text());
 
-  t.deepEqual(resolutionOpts, ['1x', '2x'], 'should render correct ratio options');
+  t.deepEqual(resolutionOpts, ['1x', '2x', '3x', '4x', '5x'], 'should render correct resolution options');
 
   t.ok(
     wrapper
