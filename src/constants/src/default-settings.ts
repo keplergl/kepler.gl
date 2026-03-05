@@ -973,7 +973,10 @@ export const MAX_DEFAULT_TOOLTIPS = 5;
 
 export const RESOLUTIONS = keyMirror({
   ONE_X: null,
-  TWO_X: null
+  TWO_X: null,
+  THREE_X: null,
+  FOUR_X: null,
+  FIVE_X: null
 });
 
 export const EXPORT_IMG_RATIOS = keyMirror({
@@ -1055,9 +1058,45 @@ export const TwoXResolutionOption: ImageResolutionOption = {
   })
 };
 
+export const ThreeXResolutionOption: ImageResolutionOption = {
+  id: RESOLUTIONS.THREE_X,
+  label: '3x',
+  available: true,
+  scale: 3,
+  getSize: (screenW, screenH) => ({
+    width: screenW * 3,
+    height: screenH * 3
+  })
+};
+
+export const FourXResolutionOption: ImageResolutionOption = {
+  id: RESOLUTIONS.FOUR_X,
+  label: '4x',
+  available: true,
+  scale: 4,
+  getSize: (screenW, screenH) => ({
+    width: screenW * 4,
+    height: screenH * 4
+  })
+};
+
+export const FiveXResolutionOption: ImageResolutionOption = {
+  id: RESOLUTIONS.FIVE_X,
+  label: '5x',
+  available: true,
+  scale: 5,
+  getSize: (screenW, screenH) => ({
+    width: screenW * 5,
+    height: screenH * 5
+  })
+};
+
 export const EXPORT_IMG_RESOLUTION_OPTIONS: ReadonlyArray<ImageResolutionOption> = [
   OneXResolutionOption,
-  TwoXResolutionOption
+  TwoXResolutionOption,
+  ThreeXResolutionOption,
+  FourXResolutionOption,
+  FiveXResolutionOption
 ];
 
 export const EXPORT_DATA_TYPE = keyMirror({
