@@ -42,10 +42,10 @@ const OUT_OF_SCREEN_POSITION = -9999;
 /**
  * Linearly remaps the export scale range [1..5] to a reduced legend scale [1..3].
  * Prevents the legend from scaling as aggressively as the exported image.
- * @param linearScale - scale factor (e.g., 1, 2, 3, 4, 5)
+ * @param scale - scale factor (e.g., 1, 2, 3, 4, 5)
  * @returns remapped scale factor
  */
-function calculateLogarithmicLegendScale(scale: number): number {
+function remapLegendScale(scale: number): number {
   const max = 5;
   const t = (scale - 1) / (max - 1);
   return 1 + t * 2;
@@ -332,7 +332,7 @@ export default function PlotContainerFactory(
       <StyledPlotContainer 
         className="export-map-instance"
         style={{
-          '--legend-scale': calculateLogarithmicLegendScale(scale)
+          '--legend-scale': remapLegendScale(scale)
         } as React.CSSProperties}
       >
         <StyledMapContainer ref={plottingAreaRef} width={size.width} height={size.height}>
