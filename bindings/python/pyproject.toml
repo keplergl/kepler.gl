@@ -1,0 +1,55 @@
+[project]
+name = "keplergl"
+version = "0.4.0rc1"
+description = "Kepler.gl Jupyter Widget"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+authors = [{name = "Uber Technologies, Inc."}]
+classifiers = [
+    "Framework :: Jupyter",
+    "Programming Language :: Python :: 3",
+]
+dependencies = [
+    "anywidget>=0.9.0",
+    "traitlets>=5.0",
+    "geopandas>=0.14.3",
+    "pyarrow>=16.0.0",
+    "geoarrow-pyarrow>=0.1.2",
+    "geoarrow-pandas>=0.1.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=4.0",
+    "jupyterlab>=4.0",
+    "notebook>=7.0",
+]
+
+[build-system]
+requires = ["hatchling", "hatch-jupyter-builder>=0.9.0"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["keplergl"]
+
+[tool.hatch.build.targets.wheel.shared-data]
+"keplergl/static" = "share/jupyter/nbextensions/keplergl-jupyter"
+
+[tool.hatch.build.hooks.jupyter-builder]
+dependencies = ["hatch-jupyter-builder>=0.9.0"]
+build-function = "hatch_jupyter_builder.npm_builder"
+ensured-targets = ["keplergl/static/widget.js", "keplergl/static/widget.css"]
+
+[tool.hatch.build.hooks.jupyter-builder.build-kwargs]
+npm = ["npm"]
+build_cmd = "build"
+
+[tool.uv]
+dev-dependencies = [
+    "pytest>=8.0",
+    "pytest-cov>=4.0",
+    "jupyterlab>=4.0",
+    "notebook>=7.0",
+]
