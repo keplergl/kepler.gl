@@ -238,11 +238,13 @@ export default function PlotContainerFactory(
 
     // Memoize map state
     const newMapState = useMemo(() => {
+      const zoomOffset = Math.log2(scale) || 0;
       const baseMapState = {
         ...mapState,
         width,
         height,
-        zoom: mapState.zoom + (Math.log2(scale) || 0)
+        zoom: mapState.zoom + zoomOffset,
+        zoomOffset
       };
 
       if (center) {
