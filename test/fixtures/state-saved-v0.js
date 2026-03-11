@@ -901,7 +901,7 @@ export const mergedFilters = [
       interval: '5-second',
       defaultTimeFormat: 'L  LTS',
       type: 'histogram',
-      aggregation: 'sum'
+      aggregation: 'average'
     },
     yAxis: null,
     domain: [1453770124000, 1453770810000],
