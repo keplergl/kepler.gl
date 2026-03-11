@@ -972,11 +972,14 @@ export const LAYER_BLENDINGS = {
 export const MAX_DEFAULT_TOOLTIPS = 5;
 
 export const RESOLUTIONS = keyMirror({
-  ONE_X: null,
-  TWO_X: null,
-  THREE_X: null,
-  FOUR_X: null,
-  FIVE_X: null
+  SIZE_1024_768: null,
+  SIZE_1280_960: null,
+  SIZE_1600_1200: null,
+  SIZE_1920_1440: null,
+  SIZE_1280_720: null,
+  SIZE_1600_900: null,
+  SIZE_1920_1080: null,
+  SIZE_2560_1440: null
 });
 
 export const EXPORT_IMG_RATIOS = keyMirror({
@@ -1032,71 +1035,98 @@ export type ImageResolutionOption = {
   id: keyof typeof RESOLUTIONS;
   label: string;
   available: boolean;
-  scale: number;
   getSize: (screenW: number, screenH: number) => {width: number; height: number};
 };
 
-export const OneXResolutionOption: ImageResolutionOption = {
-  id: RESOLUTIONS.ONE_X,
-  label: '1x',
+export const Size1024x768ResolutionOption: ImageResolutionOption = {
+  id: RESOLUTIONS.SIZE_1024_768,
+  label: '1024x768 (4:3)',
   available: true,
-  scale: 1,
-  getSize: (screenW, screenH) => ({
-    width: screenW,
-    height: screenH
+  getSize: () => ({
+    width: 1024,
+    height: 768
   })
 };
 
-export const TwoXResolutionOption: ImageResolutionOption = {
-  id: RESOLUTIONS.TWO_X,
-  label: '2x',
+export const Size1280x960ResolutionOption: ImageResolutionOption = {
+  id: RESOLUTIONS.SIZE_1280_960,
+  label: '1280x960 (4:3)',
   available: true,
-  scale: 2,
-  getSize: (screenW, screenH) => ({
-    width: screenW * 2,
-    height: screenH * 2
+  getSize: () => ({
+    width: 1280,
+    height: 960
   })
 };
 
-export const ThreeXResolutionOption: ImageResolutionOption = {
-  id: RESOLUTIONS.THREE_X,
-  label: '3x',
+export const Size1600x1200ResolutionOption: ImageResolutionOption = {
+  id: RESOLUTIONS.SIZE_1600_1200,
+  label: '1600x1200 (4:3)',
   available: true,
-  scale: 3,
-  getSize: (screenW, screenH) => ({
-    width: screenW * 3,
-    height: screenH * 3
+  getSize: () => ({
+    width: 1600,
+    height: 1200
   })
 };
 
-export const FourXResolutionOption: ImageResolutionOption = {
-  id: RESOLUTIONS.FOUR_X,
-  label: '4x',
+export const Size1920x1440ResolutionOption: ImageResolutionOption = {
+  id: RESOLUTIONS.SIZE_1920_1440,
+  label: '1920x1440 (4:3)',
   available: true,
-  scale: 4,
-  getSize: (screenW, screenH) => ({
-    width: screenW * 4,
-    height: screenH * 4
+  getSize: () => ({
+    width: 1920,
+    height: 1440
   })
 };
 
-export const FiveXResolutionOption: ImageResolutionOption = {
-  id: RESOLUTIONS.FIVE_X,
-  label: '5x',
+export const Size1280x720ResolutionOption: ImageResolutionOption = {
+  id: RESOLUTIONS.SIZE_1280_720,
+  label: '1280x720 (16:9)',
   available: true,
-  scale: 5,
-  getSize: (screenW, screenH) => ({
-    width: screenW * 5,
-    height: screenH * 5
+  getSize: () => ({
+    width: 1280,
+    height: 720
+  })
+};
+
+export const Size1600x900ResolutionOption: ImageResolutionOption = {
+  id: RESOLUTIONS.SIZE_1600_900,
+  label: '1600x900 (16:9)',
+  available: true,
+  getSize: () => ({
+    width: 1600,
+    height: 900
+  })
+};
+
+export const Size1920x1080ResolutionOption: ImageResolutionOption = {
+  id: RESOLUTIONS.SIZE_1920_1080,
+  label: '1920x1080 (16:9)',
+  available: true,
+  getSize: () => ({
+    width: 1920,
+    height: 1080
+  })
+};
+
+export const Size2560x1440ResolutionOption: ImageResolutionOption = {
+  id: RESOLUTIONS.SIZE_2560_1440,
+  label: '2560x1440 (16:9)',
+  available: true,
+  getSize: () => ({
+    width: 2560,
+    height: 1440
   })
 };
 
 export const EXPORT_IMG_RESOLUTION_OPTIONS: ReadonlyArray<ImageResolutionOption> = [
-  OneXResolutionOption,
-  TwoXResolutionOption,
-  ThreeXResolutionOption,
-  FourXResolutionOption,
-  FiveXResolutionOption
+  Size1024x768ResolutionOption,
+  Size1280x960ResolutionOption,
+  Size1600x1200ResolutionOption,
+  Size1920x1440ResolutionOption,
+  Size1280x720ResolutionOption,
+  Size1600x900ResolutionOption,
+  Size1920x1080ResolutionOption,
+  Size2560x1440ResolutionOption
 ];
 
 export const EXPORT_DATA_TYPE = keyMirror({

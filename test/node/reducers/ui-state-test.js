@@ -140,18 +140,18 @@ test('#uiStateReducer -> OPEN_DELETE_MODAL', t => {
 test('#uiStateReducer -> SET_EXPORT_IMAGE_SETTING', t => {
   const newReducer = reducer(
     INITIAL_UI_STATE,
-    setExportImageSetting({resolution: RESOLUTIONS.TWO_X})
+    setExportImageSetting({legend: true})
   );
 
   const expectedState = {
     ...INITIAL_UI_STATE,
     exportImage: {
       ...INITIAL_UI_STATE.exportImage,
-      resolution: RESOLUTIONS.TWO_X
+      legend: true
     }
   };
 
-  t.deepEqual(newReducer, expectedState, 'should set the resolution to TWO_X');
+  t.deepEqual(newReducer, expectedState, 'should set the legend to true');
 
   t.end();
 });

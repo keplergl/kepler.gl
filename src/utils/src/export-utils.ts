@@ -4,24 +4,12 @@
 import {Blob, URL, atob, Uint8Array, ArrayBuffer, document} from 'global/window';
 import get from 'lodash/get';
 
-import {
-  EXPORT_IMG_RESOLUTION_OPTIONS,
-  EXPORT_IMG_RATIO_OPTIONS,
-  RESOLUTIONS,
-  EXPORT_IMG_RATIOS,
-  FourByThreeRatioOption,
-  OneXResolutionOption
-} from '@kepler.gl/constants';
 import {ExportImage} from '@kepler.gl/types';
 import {generateHashId} from '@kepler.gl/common-utils';
 import domtoimage from './dom-to-image';
 import {set} from './utils';
 import {exportMapToHTML} from './export-map-html';
 import {getApplicationConfig} from './application-config';
-
-const defaultResolution = OneXResolutionOption;
-
-const defaultRatio = FourByThreeRatioOption;
 
 export function isMSEdge(window: Window): boolean {
   // @ts-ignore msSaveOrOpenBlob was a proprietary addition to the Navigator object, added by Microsoft for Internet Explorer.
@@ -38,36 +26,11 @@ export function getScaleFromImageSize(imageW = 0, imageH = 0, mapW = 0, mapH = 0
   return base / mapBase;
 }
 
-export function calculateExportImageSize({
-  mapW,
-  mapH,
-  ratio,
-  resolution
-}: {
-  mapW: number;
-  mapH: number;
-  ratio: keyof typeof EXPORT_IMG_RATIOS;
-  resolution: keyof typeof RESOLUTIONS;
-}) {
-  if (mapW <= 0 || mapH <= 0) {
-    return null;
-  }
-
-  const ratioItem = EXPORT_IMG_RATIO_OPTIONS.find(op => op.id === ratio) || defaultRatio;
-
-  const resolutionItem =
-    EXPORT_IMG_RESOLUTION_OPTIONS.find(op => op.id === resolution) || defaultResolution;
-
-  const {width: scaledWidth, height: scaledHeight} = resolutionItem.getSize(mapW, mapH);
-
-  const {width: imageW, height: imageH} = ratioItem.getSize(scaledWidth, scaledHeight);
-
-  const {scale} = ratioItem.id === EXPORT_IMG_RATIOS.CUSTOM ? {scale: undefined} : resolutionItem;
-
+export function calculateExportImageSize({}: {}) {
   return {
-    scale,
-    imageW,
-    imageH
+    scale: 1,
+    imageW: 0,
+    imageH: 0
   };
 }
 

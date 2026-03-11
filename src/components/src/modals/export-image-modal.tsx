@@ -6,7 +6,6 @@ import styled from 'styled-components';
 import ImagePreview from '../common/image-preview';
 import {SetExportImageSettingUpdaterAction} from '@kepler.gl/actions';
 
-import {EXPORT_IMG_RATIO_OPTIONS, EXPORT_IMG_RESOLUTION_OPTIONS} from '@kepler.gl/constants';
 import {ExportImage} from '@kepler.gl/types';
 import {StyledModalContent, SelectionButton, CheckMark} from '../common/styled-components';
 import Switch from '../common/switch';
@@ -55,7 +54,7 @@ const ExportImageModalFactory = () => {
     cleanupExportImage,
     intl
   }) => {
-    const {legend, ratio, resolution} = exportImage;
+    const {legend} = exportImage;
 
     useEffect(() => {
       onUpdateImageSetting({
@@ -76,42 +75,6 @@ const ExportImageModalFactory = () => {
     return (
       <StyledModalContent className="export-image-modal">
         <ImageOptionList>
-          <div className="image-option-section">
-            <div className="image-option-section-title">
-              <FormattedMessage id={'modal.exportImage.ratioTitle'} />
-            </div>
-            <FormattedMessage id={'modal.exportImage.ratioDescription'} />
-            <div className="button-list" id="export-image-modal__option_ratio">
-              {EXPORT_IMG_RATIO_OPTIONS.filter(op => !op.hidden).map(op => (
-                <SelectionButton
-                  key={op.id}
-                  selected={ratio === op.id}
-                  onClick={() => onUpdateImageSetting({ratio: op.id})}
-                >
-                  <FormattedMessage id={op.label} />
-                  {ratio === op.id && <CheckMark />}
-                </SelectionButton>
-              ))}
-            </div>
-          </div>
-          <div className="image-option-section">
-            <div className="image-option-section-title">
-              <FormattedMessage id={'modal.exportImage.resolutionTitle'} />
-            </div>
-            <FormattedMessage id={'modal.exportImage.resolutionDescription'} />
-            <div className="button-list" id="export-image-modal__option_resolution">
-              {EXPORT_IMG_RESOLUTION_OPTIONS.map(op => (
-                <SelectionButton
-                  key={op.id}
-                  selected={resolution === op.id}
-                  onClick={() => op.available && onUpdateImageSetting({resolution: op.id})}
-                >
-                  {op.label}
-                  {resolution === op.id && <CheckMark />}
-                </SelectionButton>
-              ))}
-            </div>
-          </div>
           <div className="image-option-section">
             <div className="image-option-section-title">
               <FormattedMessage id={'modal.exportImage.mapLegendTitle'} />

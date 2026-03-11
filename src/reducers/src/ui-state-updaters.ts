@@ -124,8 +124,6 @@ export const DEFAULT_MAP_CONTROLS: MapControls = (
  * Default image export config
  * @memberof uiStateUpdaters
  * @constant
- * @property ratio Default: `'SCREEN'`,
- * @property resolution Default: `'ONE_X'`,
  * @property legend Default: `false`,
  * @property mapH Default: 0,
  * @property mapW Default: 0,
@@ -138,8 +136,6 @@ export const DEFAULT_MAP_CONTROLS: MapControls = (
  */
 export const DEFAULT_EXPORT_IMAGE: ExportImage = {
   // user options
-  ratio: EXPORT_IMG_RATIOS.SCREEN,
-  resolution: RESOLUTIONS.ONE_X,
   legend: false,
   mapH: 0,
   mapW: 0,

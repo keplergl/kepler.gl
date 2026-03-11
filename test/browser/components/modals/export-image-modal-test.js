@@ -40,59 +40,6 @@ test('Components -> ExportImageModal.mount', t => {
 
   t.equal(wrapper.find(ImagePreview).length, 1, 'should render ImagePreview');
 
-  const ratioOpts = wrapper
-    .find('#export-image-modal__option_ratio')
-    .at(0)
-    .find(SelectionButton)
-    .map(c => c.text());
-
-  t.deepEqual(ratioOpts, ['Original Screen', '4:3', '16:9'], 'should render correct ratio options');
-
-  t.ok(
-    wrapper
-      .find('#export-image-modal__option_ratio')
-      .at(0)
-      .find(SelectionButton)
-      .at(0)
-      .props('selected'),
-    'first option should be selected'
-  );
-
-  wrapper
-    .find('#export-image-modal__option_ratio')
-    .at(0)
-    .find(SelectionButton)
-    .at(0)
-    .simulate('click');
-  t.ok(onUpdateImageSetting.calledWith({ratio: 'SCREEN'}), 'should call update ratio');
-
-  const resolutionOpts = wrapper
-    .find('#export-image-modal__option_resolution')
-    .at(0)
-    .find(SelectionButton)
-    .map(c => c.text());
-
-  t.deepEqual(resolutionOpts, ['1x', '2x', '3x', '4x', '5x'], 'should render correct resolution options');
-
-  t.ok(
-    wrapper
-      .find('#export-image-modal__option_resolution')
-      .at(0)
-      .find(SelectionButton)
-      .at(0)
-      .props('selected'),
-    'first option should be selected'
-  );
-
-  wrapper
-    .find('#export-image-modal__option_resolution')
-    .at(0)
-    .find(SelectionButton)
-    .at(1)
-    .simulate('click');
-
-  t.ok(onUpdateImageSetting.calledWith({resolution: 'TWO_X'}), 'should call update resolution');
-
   t.end();
 });
 

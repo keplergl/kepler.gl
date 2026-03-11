@@ -121,8 +121,7 @@ Type: [Object][55]
 
 #### Properties
 
--   `ratio` **[string][57]** Default: `'SCREEN'`,
--   `resolution` **[string][57]** Default: `'ONE_X'`,
+-   `resolution` **[string][57]** Default: `'SIZE_1024_768'`,
 -   `legend` **[boolean][58]** Default: `false`,
 -   `imageDataUri` **[string][57]** Default: `''`,
 -   `exporting` **[boolean][58]** Default: `false`

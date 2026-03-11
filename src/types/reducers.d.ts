@@ -371,8 +371,6 @@ export type BaseMapStyle = {
 };
 
 export declare type ExportImage = {
-  ratio: 'SCREEN' | 'FOUR_BY_THREE' | 'SIXTEEN_BY_NINE' | 'CUSTOM';
-  resolution: 'ONE_X' | 'TWO_X' | 'THREE_X' | 'FOUR_X' | 'FIVE_X';
   legend: boolean;
   mapH: number;
   mapW: number;

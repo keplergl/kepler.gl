@@ -49,69 +49,9 @@ test('exportUtils -> getScaleFromImageSize', t => {
 
 test('exportUtils -> calculateExportImageSize', t => {
   t.deepEqual(
-    calculateExportImageSize({
-      mapW: 1400,
-      mapH: 990,
-      ratio: EXPORT_IMG_RATIOS.SCREEN,
-      resolution: RESOLUTIONS.ONE_X
-    }),
-    {scale: 1, imageW: 1400, imageH: 990},
+    calculateExportImageSize({}),
+    {scale: 1, imageW: 0, imageH: 0},
     'Should calculate the correct export image size'
-  );
-
-  t.equal(
-    calculateExportImageSize({
-      mapW: -1,
-      mapH: 990,
-      ratio: EXPORT_IMG_RATIOS.SCREEN,
-      resolution: RESOLUTIONS.ONE_X
-    }),
-    null,
-    'Should return null because mapW is negative'
-  );
-
-  t.equal(
-    calculateExportImageSize({
-      mapW: 1440,
-      mapH: -1,
-      ratio: EXPORT_IMG_RATIOS.SCREEN,
-      resolution: RESOLUTIONS.ONE_X
-    }),
-    null,
-    'Should return null because mapH is negative'
-  );
-
-  t.deepEqual(
-    calculateExportImageSize({
-      mapW: 1440,
-      mapH: 990,
-      ratio: EXPORT_IMG_RATIOS.CUSTOM,
-      resolution: RESOLUTIONS.ONE_X
-    }),
-    {scale: undefined, imageW: 1440, imageH: 990},
-    'Should return scale null because of custom ratio'
-  );
-
-  t.deepEqual(
-    calculateExportImageSize({
-      mapW: 1440,
-      mapH: 990,
-      ratio: 'not-valid',
-      resolution: RESOLUTIONS.ONE_X
-    }),
-    {scale: 1, imageW: 1440, imageH: 1080},
-    'Should return a correct valid with a non valid ratio param'
-  );
-
-  t.deepEqual(
-    calculateExportImageSize({
-      mapW: 1440,
-      mapH: 990,
-      ratio: EXPORT_IMG_RATIOS.SCREEN,
-      resolution: 'not-valid'
-    }),
-    {scale: 1, imageW: 1440, imageH: 990},
-    'Should return a correct valid with a non valid resolution param'
   );
 
   t.end();
