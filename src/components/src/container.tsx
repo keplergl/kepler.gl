@@ -20,7 +20,19 @@ export const ERROR_MSG = {
 
 const mapStateToProps = (state: any, props: ContainerProps) => ({state, ...props});
 const dispatchToProps = (dispatch: Dispatch<any>) => ({dispatch});
-const connector = connect(mapStateToProps, dispatchToProps);
+
+// Only re-render when the kepler.gl instance state for this component's id changes,
+// not on every Redux state change. This fixes #2626.
+const areStatesEqual = (next: any, prev: any, nextOwnProps: any) => {
+  const getState = nextOwnProps.getState || ((s: any) => s.keplerGl);
+  const id = nextOwnProps.id || 'map';
+  const nextKeplerState = getState(next);
+  const prevKeplerState = getState(prev);
+  if (!nextKeplerState || !prevKeplerState) return next === prev;
+  return nextKeplerState[id] === prevKeplerState[id];
+};
+
+const connector = connect(mapStateToProps, dispatchToProps, null, {areStatesEqual});
 
 type ContainerProps = {
   id: string;
@@ -148,8 +160,6 @@ export function ContainerFactory(
       [id, getState]
     );
     const forwardDispatch = useMemo(() => forwardTo(id, dispatch), [id, dispatch]);
-
-    // const selector = getSelector(id, getState);
 
     if (!stateSelector || !stateSelector(state)) {
       // instance state hasn't been mounted yet
