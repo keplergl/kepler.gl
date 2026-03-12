@@ -49,10 +49,14 @@ function calculateLegendZoom(height: number): number {
   const baseHeight = 1080; // 1x zoom reference height
   const minZoom = 0.5;
   const maxZoom = 3;
-  
+
+  // For initial/invalid heights, avoid shrinking the legend; use no scaling.
+  if (!Number.isFinite(height) || height <= 0) {
+    return 1;
+  }
+
   // Linear mapping: height / baseHeight gives us the scale
   const zoomFactor = height / baseHeight;
-  
   // Clamp between min and max
   return Math.max(minZoom, Math.min(maxZoom, zoomFactor));
 }
