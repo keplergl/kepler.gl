@@ -1025,11 +1025,24 @@ export const EXPORT_IMG_RATIO_OPTIONS: ReadonlyArray<ImageRatioOption> = [
   SixteenByNineRatioOption
 ];
 
+export type ExportResolutionOption = 
+  | keyof typeof RESOLUTIONS
+  | '1280x720'
+  | '1920x1080'
+  | '2560x1440'
+  | '3840x2160'
+  | '1600x900'
+  | '1024x768'
+  | '1280x960'
+  | '1600x1200'
+  | '1920x1440'
+  | '2048x1536';
+
 export type ImageResolutionOption = {
-  id: keyof typeof RESOLUTIONS;
+  id: ExportResolutionOption;
   label: string;
   available: boolean;
-  scale: number;
+  scale?: number;
   getSize: (screenW: number, screenH: number) => {width: number; height: number};
 };
 
@@ -1055,9 +1068,90 @@ export const TwoXResolutionOption: ImageResolutionOption = {
   })
 };
 
+// Fixed dimension options
+export const Resolution1920x1080Option: ImageResolutionOption = {
+  id: '1920x1080',
+  label: '1920 × 1080 (16:9)',
+  available: true,
+  getSize: () => ({width: 1920, height: 1080})
+};
+
+export const Resolution1280x720Option: ImageResolutionOption = {
+  id: '1280x720',
+  label: '1280 × 720 (16:9)',
+  available: true,
+  getSize: () => ({width: 1280, height: 720})
+};
+
+export const Resolution2560x1440Option: ImageResolutionOption = {
+  id: '2560x1440',
+  label: '2560 × 1440 (16:9)',
+  available: true,
+  getSize: () => ({width: 2560, height: 1440})
+};
+
+export const Resolution3840x2160Option: ImageResolutionOption = {
+  id: '3840x2160',
+  label: '3840 × 2160 (16:9)',
+  available: true,
+  getSize: () => ({width: 3840, height: 2160})
+};
+
+export const Resolution1600x900Option: ImageResolutionOption = {
+  id: '1600x900',
+  label: '1600 × 900 (16:9)',
+  available: true,
+  getSize: () => ({width: 1600, height: 900})
+};
+
+export const Resolution1024x768Option: ImageResolutionOption = {
+  id: '1024x768',
+  label: '1024 × 768 (4:3)',
+  available: true,
+  getSize: () => ({width: 1024, height: 768})
+};
+
+export const Resolution1280x960Option: ImageResolutionOption = {
+  id: '1280x960',
+  label: '1280 × 960 (4:3)',
+  available: true,
+  getSize: () => ({width: 1280, height: 960})
+};
+
+export const Resolution1600x1200Option: ImageResolutionOption = {
+  id: '1600x1200',
+  label: '1600 × 1200 (4:3)',
+  available: true,
+  getSize: () => ({width: 1600, height: 1200})
+};
+
+export const Resolution1920x1440Option: ImageResolutionOption = {
+  id: '1920x1440',
+  label: '1920 × 1440 (4:3)',
+  available: true,
+  getSize: () => ({width: 1920, height: 1440})
+};
+
+export const Resolution2048x1536Option: ImageResolutionOption = {
+  id: '2048x1536',
+  label: '2048 × 1536 (4:3)',
+  available: true,
+  getSize: () => ({width: 2048, height: 1536})
+};
+
 export const EXPORT_IMG_RESOLUTION_OPTIONS: ReadonlyArray<ImageResolutionOption> = [
   OneXResolutionOption,
-  TwoXResolutionOption
+  TwoXResolutionOption,
+  Resolution1280x720Option,
+  Resolution1920x1080Option,
+  Resolution2560x1440Option,
+  Resolution3840x2160Option,
+  Resolution1600x900Option,
+  Resolution1024x768Option,
+  Resolution1280x960Option,
+  Resolution1600x1200Option,
+  Resolution1920x1440Option,
+  Resolution2048x1536Option
 ];
 
 export const EXPORT_DATA_TYPE = keyMirror({
