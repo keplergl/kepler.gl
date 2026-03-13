@@ -355,12 +355,13 @@ function RasterTileLayerConfiguratorFactory(
       </>
     );
 
-    // For PMTiles in raster format, only show opacity and terrain options for now
+    // For PMTiles in raster format, only show opacity, zoom offset and terrain options for now
     if (stac.pmtilesType === PMTilesType.RASTER) {
       return (
         <StyledLayerConfigurator>
           <LayerConfigGroup {...visConfiguratorProps} label="Visual Settings" collapsible={false}>
             <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
+            <VisConfigSlider {...layer.visConfigSettings.zoomOffset} {...visConfiguratorProps} />
           </LayerConfigGroup>
           {elevationUI}
         </StyledLayerConfigurator>
@@ -487,6 +488,7 @@ function RasterTileLayerConfiguratorFactory(
 
         <LayerConfigGroup {...visConfiguratorProps} label="Visual Settings" collapsible={false}>
           <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
+          <VisConfigSlider {...layer.visConfigSettings.zoomOffset} {...visConfiguratorProps} />
           {colormapAllowed && (
             <SidePanelSection>
               <PanelLabel>Colormap</PanelLabel>
