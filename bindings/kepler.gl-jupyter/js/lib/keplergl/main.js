@@ -5,8 +5,6 @@
 import createAppStore from './store';
 import renderRoot from './components/root';
 import document from 'global/document';
-import Window from 'global/window';
-import {addDataConfigToKeplerGl} from './kepler.gl';
 
 const map = (function initKeplerGl() {
   const id = 'keplergl-0';
@@ -18,6 +16,8 @@ const map = (function initKeplerGl() {
 
   return {
     render: () => {
+      // Data loading is now handled inside renderRoot via useEffect
+      // This ensures Redux Provider subscriptions are active before dispatching
       renderRoot({id, store, ele: divElmt});
     },
     store
@@ -25,8 +25,3 @@ const map = (function initKeplerGl() {
 })();
 
 map.render();
-
-(function loadDataConfig(keplerGlMap) {
-  const {data, config, options} = Window.__keplerglDataConfig || {};
-  addDataConfigToKeplerGl({data, config, options, store: keplerGlMap.store});
-})(map);
