@@ -1020,9 +1020,9 @@ export const SixteenByNineRatioOption: ImageRatioOption = {
 
 export const EXPORT_IMG_RATIO_OPTIONS: ReadonlyArray<ImageRatioOption> = [
   ScreenRatioOption,
-  CustomRatioOption,
   FourByThreeRatioOption,
-  SixteenByNineRatioOption
+  SixteenByNineRatioOption,
+  CustomRatioOption
 ];
 
 export type ExportResolutionOption = 
