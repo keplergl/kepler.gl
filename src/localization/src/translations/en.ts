@@ -53,6 +53,7 @@ export default {
       label: 'label',
       labelWithId: 'Label {labelId}',
       fontSize: 'Font size',
+      fontWeight: 'Font weight',
       fontColor: 'Font color',
       backgroundColor: 'Background color',
       textAnchor: 'Text anchor',
