@@ -46,7 +46,7 @@ export function calculateExportImageSize({
 }: {
   mapW: number;
   mapH: number;
-  ratio: keyof typeof EXPORT_IMG_RATIOS;
+  ratio: 'SCREEN' | 'FOUR_BY_THREE' | 'SIXTEEN_BY_NINE' | 'CUSTOM';
   resolution: ExportResolutionOption;
 }) {
   if (mapW <= 0 || mapH <= 0) {

@@ -1025,7 +1025,7 @@ export const EXPORT_IMG_RATIO_OPTIONS: ReadonlyArray<ImageRatioOption> = [
   CustomRatioOption
 ];
 
-export type ExportResolutionOption = 
+export type ExportResolutionOption =
   | keyof typeof RESOLUTIONS
   | '1280x720'
   | '1920x1080'
