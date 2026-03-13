@@ -16,7 +16,7 @@ import {FormattedMessage} from '@kepler.gl/localization';
 const ImageOptionList = styled.div`
   display: flex;
   flex-direction: column;
-  justify-content: space-around;
+  gap: 16px;
   width: 250px;
 
   .image-option-section {
@@ -35,30 +35,33 @@ const ImageOptionList = styled.div`
   }
 
   .resolution-dropdown {
-    padding: 8px 0px;
-    
+    padding: 0px;
+    margin-top: 8px;
+    margin-bottom: 8px;
+
     select {
       width: 100%;
-      padding: 8px 12px;
+      padding: 6px 12px;
       border: 1px solid #d3d3d3;
-      border-radius: 4px;
+      border-radius: 2px;
       font-size: 14px;
       cursor: pointer;
       background-color: white;
       font-family: inherit;
       appearance: none;
-      
+      height: 32px;
+
       &:hover {
         border-color: #999;
         background-color: #f9f9f9;
       }
-      
+
       &:focus {
         outline: none;
         border-color: #0066cc;
         box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
       }
-      
+
       &:disabled {
         background-color: #f5f5f5;
         color: #999;
@@ -96,17 +99,17 @@ const ExportImageModalFactory = () => {
     const filteredResolutions = useMemo(() => {
       if (ratio === 'SCREEN') {
         // Show scale options (1x, 2x) for original screen
-        return EXPORT_IMG_RESOLUTION_OPTIONS.filter(op => 
+        return EXPORT_IMG_RESOLUTION_OPTIONS.filter(op =>
           ['ONE_X', 'TWO_X'].includes(String(op.id))
         );
       } else if (ratio === 'FOUR_BY_THREE') {
         // Show only 4:3 resolutions
-        return EXPORT_IMG_RESOLUTION_OPTIONS.filter(op => 
+        return EXPORT_IMG_RESOLUTION_OPTIONS.filter(op =>
           ['1024x768', '1280x960', '1600x1200', '1920x1440'].includes(String(op.id))
         );
       } else if (ratio === 'SIXTEEN_BY_NINE') {
         // Show only 16:9 resolutions
-        return EXPORT_IMG_RESOLUTION_OPTIONS.filter(op => 
+        return EXPORT_IMG_RESOLUTION_OPTIONS.filter(op =>
           ['1280x720', '1600x900', '1920x1080', '2560x1440'].includes(String(op.id))
         );
       }
@@ -172,9 +175,9 @@ const ExportImageModalFactory = () => {
                 </div>
               ) : (
                 <div className="resolution-dropdown" id="export-image-modal__option_resolution">
-                  <select 
-                    value={resolution || ''} 
-                    onChange={(e) => onUpdateImageSetting({resolution: e.target.value as any})}
+                  <select
+                    value={resolution || ''}
+                    onChange={e => onUpdateImageSetting({resolution: e.target.value as any})}
                   >
                     <option value="">Select a resolution...</option>
                     {filteredResolutions.map(op => (
