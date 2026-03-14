@@ -179,7 +179,9 @@ const ExportImageModalFactory = () => {
                     value={resolution || ''}
                     onChange={e => onUpdateImageSetting({resolution: e.target.value as any})}
                   >
-                    <option value="">Select a resolution...</option>
+                    <option value="">
+                      {intl.formatMessage({id: 'modal.exportImage.resolutionPlaceholder'})}
+                    </option>
                     {filteredResolutions.map(op => (
                       <option key={op.id} value={op.id}>
                         {op.label}
