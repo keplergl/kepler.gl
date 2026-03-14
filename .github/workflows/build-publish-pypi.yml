@@ -1,6 +1,14 @@
-name: Build KeplerGL Python and NPM Packages
+name: Build and Publish KeplerGL Python Package
 
-on: push
+on:
+  push:
+  workflow_dispatch:
+    inputs:
+      prerelease:
+        description: 'Publish as prerelease (uncheck for official release)'
+        required: false
+        type: boolean
+        default: true
 
 jobs:
   build_and_publish:
@@ -11,76 +19,81 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # use Volta to manage yarn/node versions
-      - uses: volta-cli/action@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
 
-      - name: Set up Python 3.9
-        uses: actions/setup-python@v2
+      - name: Set up Python 3.11
+        run: uv python install 3.11
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          python-version: 3.9
+          node-version: '20'
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install twine virtualenv
+      - name: Install Python dependencies
+        working-directory: bindings/python
+        run: uv sync --dev
 
-      - name: Build KeplerGL
+      - name: Install npm dependencies
+        working-directory: bindings/python
+        run: npm ci
+
+      - name: Build TypeScript
+        working-directory: bindings/python
         env:
           MapboxAccessTokenJupyter: ${{ secrets.mapbox_jupyter_token }}
-          NODE_OPTIONS: --openssl-legacy-provider
-        run: |
-          python -m virtualenv venv
-          source venv/bin/activate
-          pip install jupyter jupyterlab jupyter-packaging
-          cd bindings/kepler.gl-jupyter
-          python setup.py sdist
+        run: npm run build
+
+      - name: Type check
+        working-directory: bindings/python
+        run: npm run typecheck
+
+      - name: Build Python package
+        working-directory: bindings/python
+        run: uv build
 
       - name: Test KeplerGL
+        working-directory: bindings/python
         run: |
-          source venv/bin/activate
-          pip install bindings/kepler.gl-jupyter/dist/*.tar.gz
-          if [ ! -f "venv/share/jupyter/nbextensions/keplergl-jupyter/index.js" ]; then
-            venv/bin/jupyter nbextension install --py --sys-prefix keplergl
-            venv/bin/jupyter nbextension enable --py --sys-prefix keplergl
-          fi
-          venv/bin/jupyter nbconvert --execute bindings/kepler.gl-jupyter/notebooks/DataFrame.ipynb --to python
-          python bindings/kepler.gl-jupyter/notebooks/DataFrame.py
+          uv pip install dist/*.whl
+          uv run pytest
 
       - name: Create artifact
         uses: actions/upload-artifact@v4
         with:
           name: keplergl-pypi
-          path: bindings/kepler.gl-jupyter/dist/
+          path: bindings/python/dist/
 
-      - name: Check Release Tag
-        id: check-tag
+      - name: Check version format
+        if: github.event_name == 'workflow_dispatch'
+        working-directory: bindings/python
         run: |
-          if [[ ${{ github.event.ref }} =~ ^refs/tags/v[0-9]+\.[0-9]+\.[0-9]+([a|b][0-9])?-jupyter$ ]]; then
-              echo ::set-output name=publish::true
+          VERSION=$(grep -Po '(?<=^version = ")[^"]+' pyproject.toml)
+          echo "Package version: $VERSION"
+          
+          # Check if version contains prerelease indicators (a, b, rc, dev)
+          if [[ "$VERSION" =~ (a|b|rc|dev)[0-9]+ ]]; then
+            IS_PRERELEASE_VERSION=true
+          else
+            IS_PRERELEASE_VERSION=false
+          fi
+          
+          echo "Is prerelease version: $IS_PRERELEASE_VERSION"
+          echo "Publishing as prerelease: ${{ inputs.prerelease }}"
+          
+          # Fail if mismatch between version format and publish type
+          if [[ "${{ inputs.prerelease }}" == "true" && "$IS_PRERELEASE_VERSION" == "false" ]]; then
+            echo "::error::Publishing as prerelease but version '$VERSION' does not have a prerelease suffix (e.g., 0.4.0a1, 0.4.0b1, 0.4.0rc1)"
+            exit 1
+          fi
+          
+          if [[ "${{ inputs.prerelease }}" == "false" && "$IS_PRERELEASE_VERSION" == "true" ]]; then
+            echo "::error::Cannot publish official release with prerelease version '$VERSION'. Please update the version in pyproject.toml."
+            exit 1
           fi
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-          registry-url: 'https://registry.npmjs.org'
-
-      - name: Publish kepler-jupyter to NPM
-        if: steps.check-tag.outputs.publish == 'true'
-        env:
-          NODE_AUTH_TOKEN: ${{secrets.npm_token}}
-          MapboxAccessTokenJupyter: ${{ secrets.mapbox_jupyter_token }}
-        run: |
-          source venv/bin/activate
-          cd bindings/kepler.gl-jupyter/js
-          echo "//registry.npmjs.org/:_authToken=${{ secrets.npm_token }}" > .npmrc
-          npm config set registry https://registry.npmjs.org/
-          npm whoami
-          npm config ls
-          npm publish --verbose --access public
-
-      - name: Publish KeplerGL to Pypi
-        if: steps.check-tag.outputs.publish == 'true'
+      - name: Publish to PyPI
+        if: github.event_name == 'workflow_dispatch'
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          packages-dir: bindings/kepler.gl-jupyter/dist/
+          packages-dir: bindings/python/dist/
