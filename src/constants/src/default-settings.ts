@@ -1088,13 +1088,6 @@ export const Resolution2560x1440Option: ImageResolutionOption = {
   getSize: () => ({width: 2560, height: 1440})
 };
 
-export const Resolution3840x2160Option: ImageResolutionOption = {
-  id: '3840x2160',
-  label: '3840 × 2160 (16:9)',
-  available: true,
-  getSize: () => ({width: 3840, height: 2160})
-};
-
 export const Resolution1600x900Option: ImageResolutionOption = {
   id: '1600x900',
   label: '1600 × 900 (16:9)',
@@ -1128,13 +1121,6 @@ export const Resolution1920x1440Option: ImageResolutionOption = {
   label: '1920 × 1440 (4:3)',
   available: true,
   getSize: () => ({width: 1920, height: 1440})
-};
-
-export const Resolution2048x1536Option: ImageResolutionOption = {
-  id: '2048x1536',
-  label: '2048 × 1536 (4:3)',
-  available: true,
-  getSize: () => ({width: 2048, height: 1536})
 };
 
 export const EXPORT_IMG_RESOLUTION_OPTIONS: ReadonlyArray<ImageResolutionOption> = [
