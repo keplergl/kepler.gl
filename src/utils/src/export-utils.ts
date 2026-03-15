@@ -7,10 +7,10 @@ import get from 'lodash/get';
 import {
   EXPORT_IMG_RESOLUTION_OPTIONS,
   EXPORT_IMG_RATIO_OPTIONS,
-  RESOLUTIONS,
   EXPORT_IMG_RATIOS,
   FourByThreeRatioOption,
-  OneXResolutionOption
+  OneXResolutionOption,
+  type ExportResolutionOption
 } from '@kepler.gl/constants';
 import {ExportImage} from '@kepler.gl/types';
 import {generateHashId} from '@kepler.gl/common-utils';
@@ -47,7 +47,7 @@ export function calculateExportImageSize({
   mapW: number;
   mapH: number;
   ratio: keyof typeof EXPORT_IMG_RATIOS;
-  resolution: keyof typeof RESOLUTIONS;
+  resolution: ExportResolutionOption;
 }) {
   if (mapW <= 0 || mapH <= 0) {
     return null;
