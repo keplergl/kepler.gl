@@ -133,6 +133,21 @@ const ExportImageModalFactory = () => {
       }
     }, [mapH, mapW, exportImage, onUpdateImageSetting]);
 
+    useEffect(() => {
+      // Keep resolution in sync with the selected ratio and available options.
+      // If the current resolution is not available for this ratio, reset it to the first option.
+      if (!filteredResolutions || !filteredResolutions.length) {
+        return;
+      }
+
+      const isValidResolution =
+        Boolean(resolution) && filteredResolutions.some(op => op.id === resolution);
+
+      if (!isValidResolution) {
+        onUpdateImageSetting({resolution: filteredResolutions[0].id});
+      }
+    }, [ratio, filteredResolutions, resolution, onUpdateImageSetting]);
+
     return (
       <StyledModalContent className="export-image-modal">
         <ImageOptionList>
