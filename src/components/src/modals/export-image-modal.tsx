@@ -6,7 +6,7 @@ import styled from 'styled-components';
 import ImagePreview from '../common/image-preview';
 import {SetExportImageSettingUpdaterAction} from '@kepler.gl/actions';
 
-import {EXPORT_IMG_RATIO_OPTIONS, EXPORT_IMG_RESOLUTION_OPTIONS, EXPORT_IMG_RATIOS} from '@kepler.gl/constants';
+import {EXPORT_IMG_RATIO_OPTIONS, EXPORT_IMG_RESOLUTION_OPTIONS, EXPORT_IMG_RATIOS, ExportResolutionOption} from '@kepler.gl/constants';
 import {ExportImage} from '@kepler.gl/types';
 import {StyledModalContent, SelectionButton, CheckMark} from '../common/styled-components';
 import Switch from '../common/switch';
@@ -154,13 +154,13 @@ const ExportImageModalFactory = () => {
               ))}
             </div>
           </div>
-          {ratio !== 'CUSTOM' && (
+          {ratio !== EXPORT_IMG_RATIOS.CUSTOM && (
             <div className="image-option-section">
               <div className="image-option-section-title">
                 <FormattedMessage id={'modal.exportImage.resolutionTitle'} />
               </div>
               <FormattedMessage id={'modal.exportImage.resolutionDescription'} />
-              {ratio === 'SCREEN' ? (
+              {ratio === EXPORT_IMG_RATIOS.SCREEN ? (
                 <div className="button-list" id="export-image-modal__option_resolution">
                   {filteredResolutions.map(op => (
                     <SelectionButton
@@ -177,13 +177,24 @@ const ExportImageModalFactory = () => {
                 <div className="resolution-dropdown" id="export-image-modal__option_resolution">
                   <select
                     value={resolution || ''}
-                    onChange={e => onUpdateImageSetting({resolution: e.target.value as any})}
+                    onChange={e => {
+                      const value = e.target.value;
+                      // Only update if a valid resolution is selected
+                      if (value && filteredResolutions.some(op => op.id === value)) {
+                        // Type-safe: we've verified the value exists in filteredResolutions
+                        onUpdateImageSetting({resolution: value as ExportResolutionOption});
+                      }
+                      // If empty string selected, optionally reset to first available resolution
+                      else if (!value && filteredResolutions.length > 0) {
+                        onUpdateImageSetting({resolution: filteredResolutions[0].id});
+                      }
+                    }}
                   >
                     <option value="">
                       {intl.formatMessage({id: 'modal.exportImage.resolutionPlaceholder'})}
                     </option>
                     {filteredResolutions.map(op => (
-                      <option key={op.id} value={op.id}>
+                      <option key={op.id} value={op.id} disabled={!op.available}>
                         {op.label}
                       </option>
                     ))}
