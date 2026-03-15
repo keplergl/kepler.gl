@@ -6,7 +6,7 @@ import styled from 'styled-components';
 import ImagePreview from '../common/image-preview';
 import {SetExportImageSettingUpdaterAction} from '@kepler.gl/actions';
 
-import {EXPORT_IMG_RATIO_OPTIONS, EXPORT_IMG_RESOLUTION_OPTIONS} from '@kepler.gl/constants';
+import {EXPORT_IMG_RATIO_OPTIONS, EXPORT_IMG_RESOLUTION_OPTIONS, EXPORT_IMG_RATIOS} from '@kepler.gl/constants';
 import {ExportImage} from '@kepler.gl/types';
 import {StyledModalContent, SelectionButton, CheckMark} from '../common/styled-components';
 import Switch from '../common/switch';
@@ -97,17 +97,17 @@ const ExportImageModalFactory = () => {
 
     // Filter resolutions based on selected ratio
     const filteredResolutions = useMemo(() => {
-      if (ratio === 'SCREEN') {
+      if (ratio === EXPORT_IMG_RATIOS.SCREEN) {
         // Show scale options (1x, 2x) for original screen
         return EXPORT_IMG_RESOLUTION_OPTIONS.filter(op =>
           ['ONE_X', 'TWO_X'].includes(String(op.id))
         );
-      } else if (ratio === 'FOUR_BY_THREE') {
+      } else if (ratio === EXPORT_IMG_RATIOS.FOUR_BY_THREE) {
         // Show only 4:3 resolutions
         return EXPORT_IMG_RESOLUTION_OPTIONS.filter(op =>
           ['1024x768', '1280x960', '1600x1200', '1920x1440'].includes(String(op.id))
         );
-      } else if (ratio === 'SIXTEEN_BY_NINE') {
+      } else if (ratio === EXPORT_IMG_RATIOS.SIXTEEN_BY_NINE) {
         // Show only 16:9 resolutions
         return EXPORT_IMG_RESOLUTION_OPTIONS.filter(op =>
           ['1280x720', '1600x900', '1920x1080', '2560x1440'].includes(String(op.id))

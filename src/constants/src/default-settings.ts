@@ -1030,13 +1030,11 @@ export type ExportResolutionOption =
   | '1280x720'
   | '1920x1080'
   | '2560x1440'
-  | '3840x2160'
   | '1600x900'
   | '1024x768'
   | '1280x960'
   | '1600x1200'
-  | '1920x1440'
-  | '2048x1536';
+  | '1920x1440';
 
 export type ImageResolutionOption = {
   id: ExportResolutionOption;
@@ -1145,13 +1143,11 @@ export const EXPORT_IMG_RESOLUTION_OPTIONS: ReadonlyArray<ImageResolutionOption>
   Resolution1280x720Option,
   Resolution1920x1080Option,
   Resolution2560x1440Option,
-  Resolution3840x2160Option,
   Resolution1600x900Option,
   Resolution1024x768Option,
   Resolution1280x960Option,
   Resolution1600x1200Option,
-  Resolution1920x1440Option,
-  Resolution2048x1536Option
+  Resolution1920x1440Option
 ];
 
 export const EXPORT_DATA_TYPE = keyMirror({
