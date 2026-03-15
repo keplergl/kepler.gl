@@ -254,6 +254,7 @@ export default {
       ratio16_9: '16:9',
       resolutionTitle: 'Resolució',
       resolutionDescription: 'Alta resolució és millor per a les impressions.',
+      resolutionPlaceholder: 'Selecciona resolució...',
       mapLegendTitle: 'Llegenda del mapa',
       mapLegendAdd: 'Afegir llegenda al mapa'
     },
