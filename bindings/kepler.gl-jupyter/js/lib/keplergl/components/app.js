@@ -72,6 +72,7 @@ function App() {
 
   useEffect(() => {
     window.addEventListener('resize', resizeDelay);
+    handleResize();
     return () => window.removeEventListener('resize', resizeDelay);
   }, []);
 
