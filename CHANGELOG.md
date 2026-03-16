@@ -15,6 +15,29 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+## [3.2.6] - Mar 16 2026
+
+- b5ffed55b feat: add extra map export resolutions (#3357)
+- faa000c6c feat(kepler-jupyter): version 0.4.0rc1 (#3345)
+- efb072eb5 fix: colors not working in trip layer of TABLE mode (#3347)
+- ca30df0e1 fix: create trip layer from duckdb table (#3344)
+- cc33b0c8f feat: add support to DECIMAL column type (#3341)
+- 40ce323a8 docs(localization): add translation guide for contributors (#3335)
+- 35ab765d4 fix: tileset loading indicator improvements (#3331)
+- cec11f3cb fix: add security warning about Mapbox token in HTML exports (#3139) (#3330)
+- e2f672cdc fix: replace broken vis.academy link with docs.kepler.gl (#3309)
+- 8c5030c3e fix: export zoom icon (#3308)
+- 8cf4274bf fix: layer configurator icon update (#3306)
+- 192f0fd2b feat: getDuckDBColumnTypes improvements (#3304)
+- 3762a2b36 feat: make tile loading indicator more explicit (#3305)
+- e5b7df170 rollback change, and truncate tooltip (#3300)
+- cbb3204cf feat: Implement WKT validation in data-type.ts (#3298)
+- e705fc8aa fix: name new point layer using label if provided (follow-up) (#3297)
+- 4bdf8f4ff fix: name new point layer using label if provided
+- cf76bba68 fix: hide Kepler editor tooltip “top-left jump” on invalid hover coords (#3294)
+- 2ba9f6e22 fix: Clamp legend height if it exceeds available space (#3276)
+- 562cb1ba8 kepler.gl-jupyter: codespell (#3273)
+
 ## [3.2.5] - Dec 24 2025
 
 - 81f490d94 fix: trigger a redraw from icon layer once the icons are loaded. (#3269)

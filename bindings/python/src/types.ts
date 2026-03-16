@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 import type {AnyModel} from '@anywidget/types';
 
 export interface KeplerGlWidgetModel {

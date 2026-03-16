@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 import React, {useEffect, useState, useRef} from 'react';
 import {injectComponents} from '@kepler.gl/components';
 import {KEPLER_ID} from '../store';

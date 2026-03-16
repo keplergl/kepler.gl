@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 import * as esbuild from 'esbuild';
 import path from 'path';
 import {fileURLToPath} from 'url';

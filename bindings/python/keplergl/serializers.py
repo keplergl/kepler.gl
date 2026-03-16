@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright contributors to the kepler.gl project
+
 """Data serialization for Python <-> JavaScript communication."""
 
 import base64

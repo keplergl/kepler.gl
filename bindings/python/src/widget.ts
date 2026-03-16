@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 import {createRoot, Root} from 'react-dom/client';
 import React from 'react';
 import {Provider} from 'react-redux';
