@@ -15,6 +15,8 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+## [3.2.7] - Mar 16 2026 (Fix for broken v3.2.6)
+
 ## [3.2.6] - Mar 16 2026
 
 - b5ffed55b feat: add extra map export resolutions (#3357)
