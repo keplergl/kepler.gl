@@ -6,7 +6,20 @@ import styled from 'styled-components';
 import ImagePreview from '../common/image-preview';
 import {SetExportImageSettingUpdaterAction} from '@kepler.gl/actions';
 
-import {EXPORT_IMG_RATIO_OPTIONS, EXPORT_IMG_RESOLUTION_OPTIONS, EXPORT_IMG_RATIOS} from '@kepler.gl/constants';
+import {
+  EXPORT_IMG_RATIO_OPTIONS,
+  EXPORT_IMG_RATIOS,
+  OneXResolutionOption,
+  TwoXResolutionOption,
+  Resolution1024x768Option,
+  Resolution1280x960Option,
+  Resolution1600x1200Option,
+  Resolution1920x1440Option,
+  Resolution1280x720Option,
+  Resolution1600x900Option,
+  Resolution1920x1080Option,
+  Resolution2560x1440Option
+} from '@kepler.gl/constants';
 import type {ExportResolutionOption} from '@kepler.gl/constants';
 import type {ExportImage} from '@kepler.gl/types';
 import {StyledModalContent, SelectionButton, CheckMark} from '../common/styled-components';
@@ -76,6 +89,23 @@ const ImageOptionList = styled.div`
   }
 `;
 
+// Define resolution options for each ratio as constants
+const SCREEN_RESOLUTION_OPTIONS = [OneXResolutionOption, TwoXResolutionOption];
+
+const FOUR_BY_THREE_RESOLUTION_OPTIONS = [
+  Resolution1024x768Option,
+  Resolution1280x960Option,
+  Resolution1600x1200Option,
+  Resolution1920x1440Option
+];
+
+const SIXTEEN_BY_NINE_RESOLUTION_OPTIONS = [
+  Resolution1280x720Option,
+  Resolution1600x900Option,
+  Resolution1920x1080Option,
+  Resolution2560x1440Option
+];
+
 export interface ExportImageModalProps {
   exportImage: ExportImage;
   mapW: number;
@@ -99,20 +129,11 @@ const ExportImageModalFactory = () => {
     // Filter resolutions based on selected ratio
     const filteredResolutions = useMemo(() => {
       if (ratio === EXPORT_IMG_RATIOS.SCREEN) {
-        // Show scale options (1x, 2x) for original screen
-        return EXPORT_IMG_RESOLUTION_OPTIONS.filter(op =>
-          ['ONE_X', 'TWO_X'].includes(String(op.id))
-        );
+        return SCREEN_RESOLUTION_OPTIONS;
       } else if (ratio === EXPORT_IMG_RATIOS.FOUR_BY_THREE) {
-        // Show only 4:3 resolutions
-        return EXPORT_IMG_RESOLUTION_OPTIONS.filter(op =>
-          ['1024x768', '1280x960', '1600x1200', '1920x1440'].includes(String(op.id))
-        );
+        return FOUR_BY_THREE_RESOLUTION_OPTIONS;
       } else if (ratio === EXPORT_IMG_RATIOS.SIXTEEN_BY_NINE) {
-        // Show only 16:9 resolutions
-        return EXPORT_IMG_RESOLUTION_OPTIONS.filter(op =>
-          ['1280x720', '1600x900', '1920x1080', '2560x1440'].includes(String(op.id))
-        );
+        return SIXTEEN_BY_NINE_RESOLUTION_OPTIONS;
       }
       // For CUSTOM, don't show resolution options
       return [];
