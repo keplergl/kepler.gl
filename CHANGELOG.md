@@ -17,6 +17,7 @@ Ref: http://keepachangelog.com/en/0.3.0/
 
 ## [3.2.6] - Mar 16 2026
 
+- b5ffed55b feat: add extra map export resolutions (#3357)
 - faa000c6c feat(kepler-jupyter): version 0.4.0rc1 (#3345)
 - efb072eb5 fix: colors not working in trip layer of TABLE mode (#3347)
 - ca30df0e1 fix: create trip layer from duckdb table (#3344)
