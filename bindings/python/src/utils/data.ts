@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 import {tableFromIPC} from 'apache-arrow';
 import {processCsvData, processGeojson} from '@kepler.gl/processors';
 import type {ProcessorResult} from '@kepler.gl/types';

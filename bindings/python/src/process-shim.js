@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 export const process = {
   env: {
     NODE_ENV: typeof window !== 'undefined' ? 'production' : 'development'

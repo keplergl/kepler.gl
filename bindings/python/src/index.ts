@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 import type {WidgetModel} from './types';
 import {KeplerGlWidget} from './widget';
 import './styles.css';

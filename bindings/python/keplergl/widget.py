@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright contributors to the kepler.gl project
+
 """Kepler.gl Jupyter Widget using anywidget."""
 
 import pathlib
