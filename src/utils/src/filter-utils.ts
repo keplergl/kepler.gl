@@ -384,7 +384,20 @@ export const getPolygonFilterFunctor = (layer, filter, dataContainer) => {
     case LAYER_TYPES.icon:
       return data => {
         const pos = getPosition(data);
-        return pos.every(Number.isFinite) && isInPolygon(pos, filter.value);
+
+        // PointLayer in geojson column mode can yield MultiPoint coordinates (number[][]).
+        if (!Array.isArray(pos)) {
+          return false;
+        }
+
+        const positions = Array.isArray(pos[0]) ? pos : [pos];
+        return positions.some(
+          p =>
+            Array.isArray(p) &&
+            p.length >= 2 &&
+            p.every(Number.isFinite) &&
+            isInPolygon(p, filter.value)
+        );
       };
     case LAYER_TYPES.arc:
     case LAYER_TYPES.line:
