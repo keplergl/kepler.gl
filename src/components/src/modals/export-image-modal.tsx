@@ -172,7 +172,10 @@ const ExportImageModalFactory = () => {
           </div>
           {ratio !== EXPORT_IMG_RATIOS.CUSTOM && (
             <div className="image-option-section">
-              <div className="image-option-section-title">
+               <div
+                 className="image-option-section-title"
+                 id="export-image-modal__resolution-title"
+               >
                 <FormattedMessage id={'modal.exportImage.resolutionTitle'} />
               </div>
               <FormattedMessage id={'modal.exportImage.resolutionDescription'} />
@@ -193,6 +196,7 @@ const ExportImageModalFactory = () => {
                 <div className="resolution-dropdown" id="export-image-modal__option_resolution">
                   <select
                     value={resolution || ''}
+                    aria-labelledby="export-image-modal__resolution-title"
                     onChange={e => {
                       const value = e.target.value;
                       // Only update if a valid resolution is selected
