@@ -251,6 +251,7 @@ export default {
       ratio16_9: '16:9',
       resolutionTitle: '解像度',
       resolutionDescription: '印刷には高解像度が適しています。',
+      resolutionPlaceholder: '解像度を選択...',
       mapLegendTitle: '地図の凡例',
       mapLegendAdd: '地図に判例を追加'
     },

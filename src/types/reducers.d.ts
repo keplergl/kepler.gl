@@ -3,6 +3,7 @@
 
 import {Field, Millisecond} from './types';
 import type {MapViewState} from '@deck.gl/core/typed';
+import type {ExportResolutionOption} from '@kepler.gl/constants';
 
 export type MapState = {
   pitch: number;
@@ -371,8 +372,8 @@ export type BaseMapStyle = {
 };
 
 export declare type ExportImage = {
-  ratio: 'SCREEN' | 'FOUR_BY_THREE' | 'SIXTEEN_BY_NINE' | 'CUSTOM';
-  resolution: 'ONE_X' | 'TWO_X';
+  ratio: EXPORT_IMG_RATIOS;
+  resolution: ExportResolutionOption;
   legend: boolean;
   mapH: number;
   mapW: number;

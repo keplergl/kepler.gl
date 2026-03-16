@@ -246,6 +246,7 @@ export default {
       ratio16_9: '16:9',
       resolutionTitle: 'Resoluutio',
       resolutionDescription: 'Korkea resoluutio on parempi tulostamista varten.',
+      resolutionPlaceholder: 'Valitse resoluutio...',
       mapLegendTitle: 'Kartan selite',
       mapLegendAdd: 'Lisää selite karttaan'
     },
