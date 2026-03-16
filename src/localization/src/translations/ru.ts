@@ -251,6 +251,7 @@ export default {
       ratio16_9: '16:9',
       resolutionTitle: 'Разрешение',
       resolutionDescription: 'Для печати лучше использовать высокое разрешение',
+      resolutionPlaceholder: 'Выберите разрешение...',
       mapLegendTitle: 'Легенда карты',
       mapLegendAdd: 'Добавить легенду на карту'
     },

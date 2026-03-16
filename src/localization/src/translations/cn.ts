@@ -247,6 +247,7 @@ export default {
       ratio16_9: '16:9',
       resolutionTitle: '分辨率',
       resolutionDescription: '高分辨率更适合打印。',
+      resolutionPlaceholder: '选择分辨率...',
       mapLegendTitle: '地图图例',
       mapLegendAdd: '在地图上添加图例'
     },

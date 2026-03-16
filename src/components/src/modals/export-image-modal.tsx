@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useEffect} from 'react';
+import React, {useEffect, useMemo} from 'react';
 import styled from 'styled-components';
 import ImagePreview from '../common/image-preview';
 import {SetExportImageSettingUpdaterAction} from '@kepler.gl/actions';
 
-import {EXPORT_IMG_RATIO_OPTIONS, EXPORT_IMG_RESOLUTION_OPTIONS} from '@kepler.gl/constants';
-import {ExportImage} from '@kepler.gl/types';
+import {EXPORT_IMG_RATIO_OPTIONS, EXPORT_IMG_RESOLUTION_OPTIONS, EXPORT_IMG_RATIOS} from '@kepler.gl/constants';
+import type {ExportResolutionOption} from '@kepler.gl/constants';
+import type {ExportImage} from '@kepler.gl/types';
 import {StyledModalContent, SelectionButton, CheckMark} from '../common/styled-components';
 import Switch from '../common/switch';
 import {injectIntl, IntlShape} from 'react-intl';
@@ -16,7 +17,7 @@ import {FormattedMessage} from '@kepler.gl/localization';
 const ImageOptionList = styled.div`
   display: flex;
   flex-direction: column;
-  justify-content: space-around;
+  gap: 16px;
   width: 250px;
 
   .image-option-section {
@@ -30,6 +31,44 @@ const ImageOptionList = styled.div`
     display: flex;
     flex-direction: row;
     padding: 8px 0px;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .resolution-dropdown {
+    padding: 0px;
+    margin-top: 8px;
+    margin-bottom: 8px;
+
+    select {
+      width: 100%;
+      padding: 6px 12px;
+      border: 1px solid #d3d3d3;
+      border-radius: 2px;
+      font-size: 14px;
+      cursor: pointer;
+      background-color: white;
+      font-family: inherit;
+      appearance: none;
+      height: 32px;
+
+      &:hover {
+        border-color: #999;
+        background-color: #f9f9f9;
+      }
+
+      &:focus {
+        outline: none;
+        border-color: #0066cc;
+        box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+      }
+
+      &:disabled {
+        background-color: #f5f5f5;
+        color: #999;
+        cursor: not-allowed;
+      }
+    }
   }
 
   input {
@@ -57,6 +96,28 @@ const ExportImageModalFactory = () => {
   }) => {
     const {legend, ratio, resolution} = exportImage;
 
+    // Filter resolutions based on selected ratio
+    const filteredResolutions = useMemo(() => {
+      if (ratio === EXPORT_IMG_RATIOS.SCREEN) {
+        // Show scale options (1x, 2x) for original screen
+        return EXPORT_IMG_RESOLUTION_OPTIONS.filter(op =>
+          ['ONE_X', 'TWO_X'].includes(String(op.id))
+        );
+      } else if (ratio === EXPORT_IMG_RATIOS.FOUR_BY_THREE) {
+        // Show only 4:3 resolutions
+        return EXPORT_IMG_RESOLUTION_OPTIONS.filter(op =>
+          ['1024x768', '1280x960', '1600x1200', '1920x1440'].includes(String(op.id))
+        );
+      } else if (ratio === EXPORT_IMG_RATIOS.SIXTEEN_BY_NINE) {
+        // Show only 16:9 resolutions
+        return EXPORT_IMG_RESOLUTION_OPTIONS.filter(op =>
+          ['1280x720', '1600x900', '1920x1080', '2560x1440'].includes(String(op.id))
+        );
+      }
+      // For CUSTOM, don't show resolution options
+      return [];
+    }, [ratio]);
+
     useEffect(() => {
       onUpdateImageSetting({
         exporting: true
@@ -72,6 +133,21 @@ const ExportImageModalFactory = () => {
         });
       }
     }, [mapH, mapW, exportImage, onUpdateImageSetting]);
+
+    useEffect(() => {
+      // Keep resolution in sync with the selected ratio and available options.
+      // If the current resolution is not available for this ratio, reset it to the first option.
+      if (!filteredResolutions || !filteredResolutions.length) {
+        return;
+      }
+
+      const isValidResolution =
+        Boolean(resolution) && filteredResolutions.some(op => op.id === resolution);
+
+      if (!isValidResolution) {
+        onUpdateImageSetting({resolution: filteredResolutions[0].id});
+      }
+    }, [ratio, filteredResolutions, resolution, onUpdateImageSetting]);
 
     return (
       <StyledModalContent className="export-image-modal">
@@ -94,24 +170,59 @@ const ExportImageModalFactory = () => {
               ))}
             </div>
           </div>
-          <div className="image-option-section">
-            <div className="image-option-section-title">
-              <FormattedMessage id={'modal.exportImage.resolutionTitle'} />
+          {ratio !== EXPORT_IMG_RATIOS.CUSTOM && (
+            <div className="image-option-section">
+               <div
+                 className="image-option-section-title"
+                 id="export-image-modal__resolution-title"
+               >
+                <FormattedMessage id={'modal.exportImage.resolutionTitle'} />
+              </div>
+              <FormattedMessage id={'modal.exportImage.resolutionDescription'} />
+              {ratio === EXPORT_IMG_RATIOS.SCREEN ? (
+                <div className="button-list" id="export-image-modal__option_resolution">
+                  {filteredResolutions.map(op => (
+                    <SelectionButton
+                      key={op.id}
+                      selected={resolution === op.id}
+                      onClick={() => op.available && onUpdateImageSetting({resolution: op.id})}
+                    >
+                      {op.label}
+                      {resolution === op.id && <CheckMark />}
+                    </SelectionButton>
+                  ))}
+                </div>
+              ) : (
+                <div className="resolution-dropdown" id="export-image-modal__option_resolution">
+                  <select
+                    value={resolution || ''}
+                    aria-labelledby="export-image-modal__resolution-title"
+                    onChange={e => {
+                      const value = e.target.value;
+                      // Only update if a valid resolution is selected
+                      if (value && filteredResolutions.some(op => op.id === value)) {
+                        // Type-safe: we've verified the value exists in filteredResolutions
+                        onUpdateImageSetting({resolution: value as ExportResolutionOption});
+                      }
+                      // If empty string selected, optionally reset to first available resolution
+                      else if (!value && filteredResolutions.length > 0) {
+                        onUpdateImageSetting({resolution: filteredResolutions[0].id});
+                      }
+                    }}
+                  >
+                    <option value="">
+                      {intl.formatMessage({id: 'modal.exportImage.resolutionPlaceholder'})}
+                    </option>
+                    {filteredResolutions.map(op => (
+                      <option key={op.id} value={op.id} disabled={!op.available}>
+                        {op.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </div>
-            <FormattedMessage id={'modal.exportImage.resolutionDescription'} />
-            <div className="button-list" id="export-image-modal__option_resolution">
-              {EXPORT_IMG_RESOLUTION_OPTIONS.map(op => (
-                <SelectionButton
-                  key={op.id}
-                  selected={resolution === op.id}
-                  onClick={() => op.available && onUpdateImageSetting({resolution: op.id})}
-                >
-                  {op.label}
-                  {resolution === op.id && <CheckMark />}
-                </SelectionButton>
-              ))}
-            </div>
-          </div>
+          )}
           <div className="image-option-section">
             <div className="image-option-section-title">
               <FormattedMessage id={'modal.exportImage.mapLegendTitle'} />

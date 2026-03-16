@@ -317,8 +317,10 @@ export default {
       ratioCustom: 'Custom',
       ratio4_3: '4:3',
       ratio16_9: '16:9',
+      ratioPreset: 'Preset',
       resolutionTitle: 'Resolution',
       resolutionDescription: 'High resolution is better for prints.',
+      resolutionPlaceholder: 'Select resolution...',
       mapLegendTitle: 'Map Legend',
       mapLegendAdd: 'Add legend on map'
     },
