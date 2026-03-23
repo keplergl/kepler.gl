@@ -3,8 +3,8 @@
 // Copyright contributors to the kepler.gl project
 
 import {Layer, LayersList} from '@deck.gl/core';
+import {ClipExtension} from '@deck.gl/extensions';
 import {
-  ClipExtension,
   MVTLayer as _MVTLayer,
   TileLayer,
   _getURLFromTemplate,

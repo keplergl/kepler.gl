@@ -4,7 +4,7 @@
 // @ts-nocheck - Raster mesh layer uses luma.gl internal APIs that changed significantly in 9.x
 // TODO: Refactor to use luma.gl 9.x shader module system when raster layer is actively maintained.
 
-import {project32, phongLighting, log, UpdateParameters} from '@deck.gl/core';
+import {project32, phongMaterial, log, UpdateParameters} from '@deck.gl/core';
 import {SimpleMeshLayer, SimpleMeshLayerProps} from '@deck.gl/mesh-layers';
 import {GL} from '@luma.gl/constants';
 import {Geometry} from '@luma.gl/engine';
@@ -77,7 +77,7 @@ export default class RasterMeshLayer extends SimpleMeshLayer<any, RasterLayerAdd
       ...super.getShaders(),
       vs: vsWebGL2,
       fs: fsWebGL2,
-      modules: [project32, phongLighting, ...modules]
+      modules: [project32, phongMaterial, ...modules]
     };
   }
 
