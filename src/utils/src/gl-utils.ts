@@ -31,7 +31,9 @@ export function getLayerBlendingParameters(layerBlending: string): Record<string
   const {blendFunc, blendEquation} = blending;
   if (!blendFunc) return {};
 
-  const params: Record<string, any> = {};
+  const params: Record<string, any> = {
+    blend: true
+  };
 
   if (blendFunc.length >= 2) {
     params.blendColorSrcFactor = GL_BLEND_FUNC_TO_WEBGPU[blendFunc[0]] || 'one';

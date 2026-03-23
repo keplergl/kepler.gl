@@ -58,7 +58,8 @@ import {
   rgbToHex,
   computeDeckEffects,
   getApplicationConfig,
-  GetMapRef
+  GetMapRef,
+  getLayerBlendingParameters
 } from '@kepler.gl/utils';
 import {breakPointValues} from '@kepler.gl/styles';
 
@@ -899,7 +900,8 @@ export default function MapContainerFactory(
         pickingRadius: DEFAULT_PICKING_RADIUS,
         views,
         layers: deckGlLayers,
-        effects
+        effects,
+        parameters: getLayerBlendingParameters(visState.layerBlending)
       };
 
       if (typeof deckRenderCallbacks?.onDeckRender === 'function') {
