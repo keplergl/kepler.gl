@@ -67,7 +67,11 @@ class BinSorter {
       bin.filteredPoints = hasFilter ? filteredPoints : null;
       const value = filteredPoints.length ? getValue(filteredPoints) : null;
       if (value !== null && value !== undefined) {
-        aggregatedBins[index] = {i: Number.isFinite(i) ? i : binIndex, value, counts: filteredPoints.length};
+        aggregatedBins[index] = {
+          i: Number.isFinite(i) ? i : binIndex,
+          value,
+          counts: filteredPoints.length
+        };
         index++;
       }
     }

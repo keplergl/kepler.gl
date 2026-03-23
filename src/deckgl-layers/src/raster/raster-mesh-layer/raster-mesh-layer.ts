@@ -6,7 +6,6 @@
 
 import {project32, phongMaterial, log, UpdateParameters} from '@deck.gl/core';
 import {SimpleMeshLayer, SimpleMeshLayerProps} from '@deck.gl/mesh-layers';
-import {GL} from '@luma.gl/constants';
 import {Geometry} from '@luma.gl/engine';
 import {Model} from '@luma.gl/engine';
 

@@ -14,9 +14,7 @@ export default class ScatterplotIconLayer extends ScatterplotLayer<any, Scatterp
   _getModel() {
     const {iconGeometry} = this.props;
 
-    const positions = iconGeometry
-      ? new Float32Array(iconGeometry)
-      : new Float32Array(DEFAULT_POS);
+    const positions = iconGeometry ? new Float32Array(iconGeometry) : new Float32Array(DEFAULT_POS);
 
     const geometry = new Geometry({
       topology: iconGeometry ? 'triangle-list' : 'triangle-strip',

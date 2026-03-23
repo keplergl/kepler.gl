@@ -3,7 +3,7 @@
 // because deck.gl 9.x uses .js extensions in its type declarations.
 
 declare module '@deck.gl/core' {
-  export type PickingInfo<DataT = any, ExtraInfo = {}> = ExtraInfo & {
+  export type PickingInfo<DataT = any, ExtraInfo = Record<string, unknown>> = ExtraInfo & {
     color: Uint8Array | null;
     layer: any;
     sourceLayer?: any;

@@ -36,9 +36,7 @@ export async function getDuckDBColumnTypes(
   try {
     // PRAGMA table_info is less likely to bind/execute view SQL than DESCRIBE,
     // so it avoids triggering remote access (e.g., S3) for view-backed schemas.
-    const resInfo = await connection.query(
-      `PRAGMA table_info(${quotedTableName})`
-    );
+    const resInfo = await connection.query(`PRAGMA table_info(${quotedTableName})`);
     const numRows = resInfo.numRows;
     const columnNames = resInfo.getChild('name');
     const columnTypes = resInfo.getChild('type');

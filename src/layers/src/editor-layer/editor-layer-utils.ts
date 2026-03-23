@@ -146,7 +146,8 @@ export function getTooltip(
 ): object | null {
   const {object, layer, viewport = {}, pixel = []} = info;
   const closeToLeftEdge = (viewport?.width ?? 0) - (pixel?.[0] ?? 0) < MIN_DISTANCE_TO_LEFT_EDGE;
-  const closeToBottomEdge = (viewport?.height ?? 0) - (pixel?.[1] ?? 0) < MIN_DISTANCE_TO_BOTTOM_EDGE;
+  const closeToBottomEdge =
+    (viewport?.height ?? 0) - (pixel?.[1] ?? 0) < MIN_DISTANCE_TO_BOTTOM_EDGE;
 
   // don't show the tooltip when the menu is visible
   if (editor.selectionContext?.rightClick) {

@@ -92,7 +92,7 @@ export default class Header extends Component {
               {item.text}
             </StyledLink>
           ))}
-          <StyledLogo href="https://openvisualization.org" target="_blank"/>
+          <StyledLogo href="https://openvisualization.org" target="_blank" />
         </div>
       </StyledHeader>
     );

@@ -154,10 +154,7 @@ const defaultProps = {
   getRadiusValue: {type: 'accessor', value: defaultGetRadiusValue}
 };
 
-export default class ClusterLayer extends AggregationLayer<
-  any,
-  any
-> {
+export default class ClusterLayer extends AggregationLayer<any, any> {
   initializeState() {
     const cpuAggregator = new CPUAggregator({
       aggregation: clusterAggregation,

@@ -71,8 +71,8 @@ export default class Home extends PureComponent {
                     Please review the applicable{' '}
                     <a href={CONTRIBUTING_URL}>contributing guidelines</a> and procedures in
                     connection with your submissions. Please note that the Kepler.gl project and
-                    OpenJS Foundation do not otherwise provide support for users of
-                    Kepler.gl software.
+                    OpenJS Foundation do not otherwise provide support for users of Kepler.gl
+                    software.
                   </span>
                 </div>
               </StyledCaption>

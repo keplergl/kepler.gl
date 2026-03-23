@@ -246,7 +246,9 @@ export default class TripLayer extends Layer {
     {label, fields = [], dataContainer, id, fieldPairs = []}: KeplerTable,
     foundLayers?: any[]
   ) {
-    const geojsonColumns = fields.filter(f => f.type === 'geojson' || f.type === 'geoarrow').map(f => f.name);
+    const geojsonColumns = fields
+      .filter(f => f.type === 'geojson' || f.type === 'geoarrow')
+      .map(f => f.name);
 
     const defaultColumns = {
       geojson: uniq([...GEOJSON_FIELDS.geojson, ...geojsonColumns])
@@ -299,12 +301,17 @@ export default class TripLayer extends Layer {
       if (tableColumns) {
         // Found required columns for table mode
         return {
-          props: [{
-            label: tableColumns.label || (typeof label === 'string' && label.replace(/\.[^/.]+$/, '')) || this.type,
-            columns: tableColumns.columns,
-            isVisible: true,
-            columnMode: COLUMN_MODE_TABLE
-          }],
+          props: [
+            {
+              label:
+                tableColumns.label ||
+                (typeof label === 'string' && label.replace(/\.[^/.]+$/, '')) ||
+                this.type,
+              columns: tableColumns.columns,
+              isVisible: true,
+              columnMode: COLUMN_MODE_TABLE
+            }
+          ],
           foundLayers
         };
       }
