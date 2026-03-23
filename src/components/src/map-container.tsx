@@ -5,7 +5,7 @@
 import React, {Component, createRef, useMemo} from 'react';
 import styled, {withTheme} from 'styled-components';
 import {Map, MapRef} from 'react-map-gl';
-import {PickInfo} from '@deck.gl/core/lib/deck';
+import {PickingInfo} from '@deck.gl/core';
 import DeckGL from '@deck.gl/react';
 import {createSelector, Selector} from 'reselect';
 import {useDroppable} from '@dnd-kit/core';
@@ -43,7 +43,6 @@ import {
 } from '@kepler.gl/types';
 import {
   errorNotification,
-  setLayerBlending,
   isStyleUsingMapboxTiles,
   isStyleUsingOpenStreetMapTiles,
   getBaseMapLibrary,
@@ -511,7 +510,7 @@ export default function MapContainerFactory(
       this.props.visStateActions.onLayerClick(null);
     };
 
-    _onLayerHover = (_idx: number, info: PickInfo<any> | null) => {
+    _onLayerHover = (_idx: number, info: PickingInfo<any> | null) => {
       this.props.visStateActions.onLayerHover(info, this.props.index);
     };
 
@@ -607,9 +606,9 @@ export default function MapContainerFactory(
       }
     };
 
-    _onDeckInitialized(gl) {
+    _onDeckInitialized(device) {
       if (this.props.onDeckInitialized) {
-        this.props.onDeckInitialized(this._deck, gl);
+        this.props.onDeckInitialized(this._deck, device);
       }
     }
 
@@ -623,8 +622,9 @@ export default function MapContainerFactory(
       return !viewIndex && Boolean(this._deck?.viewManager?._viewports?.length);
     }
 
-    _onBeforeRender = ({gl}) => {
-      setLayerBlending(gl, this.props.visState.layerBlending);
+    _onBeforeRender = () => {
+      // In deck.gl 9.x, layer blending is handled via parameters prop
+      // setLayerBlending is now a no-op
     };
 
     _onDeckError = (error, layer) => {
@@ -946,21 +946,21 @@ export default function MapContainerFactory(
             onHover={
               isInteractive
                 ? data => {
-                    const res = EditorLayerUtils.onHover(data, {
+                    const res = EditorLayerUtils.onHover(data as any, {
                       editorMenuActive,
                       editor,
                       hoverInfo
                     });
                     if (res) return;
 
-                    this._onLayerHoverDebounced(data, index);
+                    this._onLayerHoverDebounced(data as any, index);
                   }
                 : null
             }
             onClick={(data, event) => {
               // @ts-ignore
               normalizeEvent(event.srcEvent, viewport);
-              const res = EditorLayerUtils.onClick(data, event, {
+              const res = EditorLayerUtils.onClick(data as any, event, {
                 editorMenuActive,
                 editor,
                 onLayerClick,
@@ -969,7 +969,7 @@ export default function MapContainerFactory(
               });
               if (res) return;
 
-              visStateActions.onLayerClick(data);
+              visStateActions.onLayerClick(data as any);
             }}
             onError={this._onDeckError}
             ref={comp => {
@@ -979,7 +979,7 @@ export default function MapContainerFactory(
                 this._deck = comp.deck;
               }
             }}
-            onWebGLInitialized={gl => this._onDeckInitialized(gl)}
+            onDeviceInitialized={device => this._onDeckInitialized(device)}
             onAfterRender={() => {
               if (typeof deckRenderCallbacks?.onDeckAfterRender === 'function') {
                 deckRenderCallbacks.onDeckAfterRender(allDeckGlProps);

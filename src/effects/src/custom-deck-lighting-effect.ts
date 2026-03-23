@@ -3,9 +3,7 @@
 
 // @ts-nocheck This is a hack, don't check types
 
-// import {console as Console} from 'global/window';
 import {LightingEffect, shadow} from '@deck.gl/core';
-import {Texture2D, ProgramManager} from '@luma.gl/core';
 
 /**
  * Inserts shader code before detected part.
@@ -18,7 +16,6 @@ import {Texture2D, ProgramManager} from '@luma.gl/core';
 export function insertBefore(vs, type, insertBeforeText, textToInsert) {
   const at = vs.indexOf(insertBeforeText);
   if (at < 0) {
-    // Console.error(`Cannot edit ${type} layer shader`);
     return vs;
   }
 
@@ -32,27 +29,31 @@ const CustomShadowModule = shadow ? {...shadow} : undefined;
  * 1) Add u_outputUniformShadow uniform
  * 2) always produce full shadow when the uniform is set to true.
  */
-CustomShadowModule.fs = insertBefore(
-  CustomShadowModule.fs,
-  'custom shadow #1',
-  'uniform vec4 shadow_uColor;',
-  'uniform bool u_outputUniformShadow;'
-);
+if (CustomShadowModule?.fs) {
+  CustomShadowModule.fs = insertBefore(
+    CustomShadowModule.fs,
+    'custom shadow #1',
+    'uniform vec4 shadow_uColor;',
+    'uniform bool u_outputUniformShadow;'
+  );
 
-CustomShadowModule.fs = insertBefore(
-  CustomShadowModule.fs,
-  'custom shadow #1',
-  'vec4 rgbaDepth = texture2D(shadowMap, position.xy);',
-  'if(u_outputUniformShadow) return 1.0;'
-);
+  CustomShadowModule.fs = insertBefore(
+    CustomShadowModule.fs,
+    'custom shadow #1',
+    'vec4 rgbaDepth = texture2D(shadowMap, position.xy);',
+    'if(u_outputUniformShadow) return 1.0;'
+  );
+}
 
-CustomShadowModule.getUniforms = (opts = {}, context = {}) => {
-  const u = shadow.getUniforms(opts, context);
-  if (opts.outputUniformShadow !== undefined) {
-    u.u_outputUniformShadow = opts.outputUniformShadow;
-  }
-  return u;
-};
+if (CustomShadowModule) {
+  CustomShadowModule.getUniforms = (opts = {}, context = {}) => {
+    const u = shadow.getUniforms(opts, context);
+    if (opts.outputUniformShadow !== undefined) {
+      u.u_outputUniformShadow = opts.outputUniformShadow;
+    }
+    return u;
+  };
+}
 
 /**
  * Custom LightingEffect
@@ -66,24 +67,20 @@ class CustomDeckLightingEffect extends LightingEffect {
     this.useOutputUniformShadow = false;
   }
 
-  preRender(gl, {layers, layerFilter, viewports, onViewportActive, views}) {
+  preRender(context) {
     if (!this.shadow) return;
 
-    // create light matrix every frame to make sure always updated from light source
+    // In deck.gl 9.x, preRender receives a context object instead of positional args
+    const device = context?.device;
+
     this.shadowMatrices = this._calculateMatrices();
 
     if (this.shadowPasses.length === 0) {
-      this._createShadowPasses(gl);
-    }
-    if (!this.programManager) {
-      this.programManager = ProgramManager.getDefaultProgramManager(gl);
-      if (CustomShadowModule) {
-        this.programManager.addDefaultModule(CustomShadowModule);
-      }
+      this._createShadowPasses(device);
     }
 
-    if (!this.dummyShadowMap) {
-      this.dummyShadowMap = new Texture2D(gl, {
+    if (!this.dummyShadowMap && device) {
+      this.dummyShadowMap = device.createTexture({
         width: 1,
         height: 1
       });
@@ -92,11 +89,11 @@ class CustomDeckLightingEffect extends LightingEffect {
     for (let i = 0; i < this.shadowPasses.length; i++) {
       const shadowPass = this.shadowPasses[i];
       shadowPass.render({
-        layers,
-        layerFilter,
-        viewports,
-        onViewportActive,
-        views,
+        layers: context.layers,
+        layerFilter: context.layerFilter,
+        viewports: context.viewports,
+        onViewportActive: context.onViewportActive,
+        views: context.views,
         moduleParameters: {
           shadowLightId: i,
           dummyShadowMap: this.dummyShadowMap,
@@ -115,18 +112,18 @@ class CustomDeckLightingEffect extends LightingEffect {
 
   cleanup() {
     for (const shadowPass of this.shadowPasses) {
-      shadowPass.delete();
+      shadowPass.delete?.() || shadowPass.destroy?.();
     }
     this.shadowPasses.length = 0;
     this.shadowMaps.length = 0;
 
     if (this.dummyShadowMap) {
-      this.dummyShadowMap.delete();
+      this.dummyShadowMap.delete?.() || this.dummyShadowMap.destroy?.();
       this.dummyShadowMap = null;
     }
 
     if (this.shadow && this.programManager) {
-      this.programManager.removeDefaultModule(CustomShadowModule);
+      this.programManager.removeDefaultModule?.(CustomShadowModule);
       this.programManager = null;
     }
   }

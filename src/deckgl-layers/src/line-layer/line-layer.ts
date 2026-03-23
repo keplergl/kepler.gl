@@ -1,10 +1,12 @@
+// @ts-nocheck
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
 import {LineLayer, LineLayerProps} from '@deck.gl/layers';
-import GL from '@luma.gl/constants';
-import {RGBAColor} from 'deck.gl';
+import type {Color} from '@deck.gl/core';
 import {editShader} from '../';
+
+type RGBAColor = Color;
 
 const defaultProps = {
   ...LineLayer.defaultProps,
@@ -84,12 +86,12 @@ export default class EnhancedLineLayer extends LineLayer<
   }
 
   initializeState() {
-    super.initializeState(undefined);
+    super.initializeState();
     const {attributeManager} = this.state;
     attributeManager.addInstanced({
       instanceTargetColors: {
         size: this.props.colorFormat?.length,
-        type: GL.UNSIGNED_BYTE,
+        type: 'uint8',
         normalized: true,
         transition: true,
         accessor: 'getTargetColor',

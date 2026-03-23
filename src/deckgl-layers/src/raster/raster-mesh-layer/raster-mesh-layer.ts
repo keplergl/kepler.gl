@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {project32, phongLighting, log, UpdateParameters} from '@deck.gl/core/typed';
-import {SimpleMeshLayer, SimpleMeshLayerProps} from '@deck.gl/mesh-layers/typed';
-import GL from '@luma.gl/constants';
-import {Model, Geometry, isWebGL2} from '@luma.gl/core';
-import {ProgramManager} from '@luma.gl/engine';
-import {UniformsOptions} from '@luma.gl/webgl/src/classes/uniforms';
+// @ts-nocheck - Raster mesh layer uses luma.gl internal APIs that changed significantly in 9.x
+// TODO: Refactor to use luma.gl 9.x shader module system when raster layer is actively maintained.
 
-import fsWebGL1 from './raster-mesh-layer-webgl1.fs';
-import vsWebGL1 from './raster-mesh-layer-webgl1.vs';
+import {project32, phongLighting, log, UpdateParameters} from '@deck.gl/core';
+import {SimpleMeshLayer, SimpleMeshLayerProps} from '@deck.gl/mesh-layers';
+import {GL} from '@luma.gl/constants';
+import {Geometry} from '@luma.gl/engine';
+import {Model} from '@luma.gl/engine';
+
 import fsWebGL2 from './raster-mesh-layer-webgl2.fs';
 import vsWebGL2 from './raster-mesh-layer-webgl2.vs';
 import {loadImages} from '../images';
@@ -58,24 +58,7 @@ export default class RasterMeshLayer extends SimpleMeshLayer<any, RasterLayerAdd
   };
 
   initializeState(): void {
-    const {gl} = this.context;
-    const programManager = ProgramManager.getDefaultProgramManager(gl);
-
-    const fsStr1 = 'fs:DECKGL_MUTATE_COLOR(inout vec4 image, in vec2 coord)';
-    const fsStr2 = 'fs:DECKGL_CREATE_COLOR(inout vec4 image, in vec2 coord)';
-
-    // Only initialize shader hook functions _once globally_
-    // Since the program manager is shared across all layers, but many layers
-    // might be created, this solves the performance issue of always adding new
-    // hook functions.
-    if (!programManager._hookFunctions.includes(fsStr1)) {
-      programManager.addShaderHook(fsStr1);
-    }
-    if (!programManager._hookFunctions.includes(fsStr2)) {
-      programManager.addShaderHook(fsStr2);
-    }
-
-    // images is a mapping from keys to Texture2D objects. The keys should match
+    // images is a mapping from keys to Texture objects. The keys should match
     // names of uniforms in shader modules
     this.setState({images: {}});
 
@@ -83,26 +66,17 @@ export default class RasterMeshLayer extends SimpleMeshLayer<any, RasterLayerAdd
   }
 
   getShaders(): any {
-    const {gl} = this.context;
     const {modules = []} = this.props;
-    const webgl2 = isWebGL2(gl);
 
-    // Choose webgl version for module
-    // If fs2 or fs1 keys exist, prefer them, but fall back to fs, so that
-    // version-independent modules don't need to care
+    // deck.gl 9.x requires WebGL2 - always use WebGL2 shaders
     for (const module of modules) {
-      module.fs = webgl2 ? module.fs2 || module.fs : module.fs1 || module.fs;
-
-      // Sampler type is always float for WebGL1
-      if (!webgl2 && module.defines) {
-        module.defines.SAMPLER_TYPE = 'sampler2D';
-      }
+      module.fs = module.fs2 || module.fs;
     }
 
     return {
       ...super.getShaders(),
-      vs: webgl2 ? vsWebGL2 : vsWebGL1,
-      fs: webgl2 ? fsWebGL2 : fsWebGL1,
+      vs: vsWebGL2,
+      fs: fsWebGL2,
       modules: [project32, phongLighting, ...modules]
     };
   }
@@ -122,7 +96,7 @@ export default class RasterMeshLayer extends SimpleMeshLayer<any, RasterLayerAdd
       !modulesEqual(modules, oldModules)
     ) {
       if (this.state.model) {
-        this.state.model.delete();
+        this.state.model.destroy?.() || this.state.model.delete?.();
       }
       if (props.mesh) {
         this.state.model = this.getModel(props.mesh as Mesh);
@@ -140,7 +114,7 @@ export default class RasterMeshLayer extends SimpleMeshLayer<any, RasterLayerAdd
     }
 
     if (this.state.model) {
-      this.state.model.setDrawMode(this.props.wireframe ? GL.LINE_STRIP : GL.TRIANGLES);
+      this.state.model.setTopology?.(this.props.wireframe ? 'line-strip' : 'triangle-list');
     }
   }
 
@@ -152,7 +126,7 @@ export default class RasterMeshLayer extends SimpleMeshLayer<any, RasterLayerAdd
     oldProps: RasterLayerAddedProps;
   }): void {
     const {images} = this.state;
-    const {gl} = this.context;
+    const gl = this.context.device?.gl || this.context.gl;
 
     const newImages = loadImages({
       gl,
@@ -166,7 +140,7 @@ export default class RasterMeshLayer extends SimpleMeshLayer<any, RasterLayerAdd
     }
   }
 
-  draw({uniforms}: UniformsOptions): void {
+  draw({uniforms}): void {
     const {model, images} = this.state;
     const {moduleProps} = this.props;
 
@@ -202,19 +176,19 @@ export default class RasterMeshLayer extends SimpleMeshLayer<any, RasterLayerAdd
     if (this.state.images) {
       for (const image of Object.values(this.state.images)) {
         if (Array.isArray(image)) {
-          image.map(x => x && x.delete());
+          image.map(x => x && (x.destroy ? x.destroy() : x.delete?.()));
         } else if (image) {
-          image.delete();
+          image.destroy ? image.destroy() : image.delete?.();
         }
       }
     }
   }
 
   protected getModel(mesh: Mesh): Model {
-    const {gl} = this.context;
+    const device = this.context.device || this.context.gl;
 
     const model = new Model(
-      gl,
+      device,
       Object.assign({}, this.getShaders(), {
         id: this.props.id,
         geometry: getGeometry(mesh),

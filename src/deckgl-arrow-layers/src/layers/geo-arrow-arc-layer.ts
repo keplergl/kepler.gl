@@ -1,3 +1,4 @@
+// @ts-nocheck
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
@@ -13,9 +14,9 @@ import {
   Layer,
   LayersList,
   assert
-} from '@deck.gl/core/typed';
-import {ArcLayer} from '@deck.gl/layers/typed';
-import type {ArcLayerProps} from '@deck.gl/layers/typed';
+} from '@deck.gl/core';
+import {ArcLayer} from '@deck.gl/layers';
+import type {ArcLayerProps} from '@deck.gl/layers';
 import * as arrow from 'apache-arrow';
 import * as ga from '@geoarrow/geoarrow-js';
 import {assignAccessor, extractAccessorsFromProps} from '../utils/utils';

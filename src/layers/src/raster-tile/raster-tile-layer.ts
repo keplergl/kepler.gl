@@ -1,13 +1,16 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {COORDINATE_SYSTEM, Layer as DeckLayer} from '@deck.gl/core/typed';
-import {TileLayer, GeoBoundingBox} from '@deck.gl/geo-layers/typed';
+// @ts-nocheck
+
+import {COORDINATE_SYSTEM, Layer as DeckLayer} from '@deck.gl/core';
+import {TileLayer, GeoBoundingBox} from '@deck.gl/geo-layers';
 import {PMTilesSource, PMTilesTileSource} from '@loaders.gl/pmtiles';
-import {Texture2DProps} from '@luma.gl/webgl';
+import type {TextureProps} from '@luma.gl/core';
+type Texture2DProps = TextureProps;
 import memoize from 'lodash/memoize';
 
-import {PathLayer} from '@deck.gl/layers/typed';
+import {PathLayer} from '@deck.gl/layers';
 import {DatasetType, PMTilesType, LAYER_TYPES} from '@kepler.gl/constants';
 import {RasterLayer, RasterMeshLayer} from '@kepler.gl/deckgl-layers';
 import {

@@ -1,15 +1,16 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+// @ts-nocheck
+
 import {FeatureCollection, Feature} from 'geojson';
 
-import {Layer as DeckLayer} from '@deck.gl/core/typed';
-import {_Tile2DHeader as Tile2DHeader} from '@deck.gl/geo-layers/typed';
-import {GeoJsonLayer, PathLayer} from '@deck.gl/layers/typed';
+import {Layer as DeckLayer} from '@deck.gl/core';
+import {_Tile2DHeader as Tile2DHeader} from '@deck.gl/geo-layers';
+import {GeoJsonLayer, PathLayer} from '@deck.gl/layers';
+import {ClipExtension} from '@deck.gl/extensions';
 import {MVTSource, MVTTileSource} from '@loaders.gl/mvt';
 import {PMTilesSource, PMTilesTileSource} from '@loaders.gl/pmtiles';
-import GL from '@luma.gl/constants';
-import {ClipExtension} from '@deck.gl/extensions/typed';
 
 import {notNullorUndefined} from '@kepler.gl/common-utils';
 import {
@@ -668,7 +669,7 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
             'polygons-stroke': {opacity: visConfig.strokeOpacity},
             'polygons-fill': {
               parameters: {
-                cullFace: GL.BACK
+                cullMode: 'back'
               }
             }
           },

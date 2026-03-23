@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {Texture2D} from '@luma.gl/webgl';
+type Texture2D = any;
 
 import {GetUniformsOutput, ShaderModule} from '../types';
 

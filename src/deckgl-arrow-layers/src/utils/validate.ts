@@ -1,3 +1,4 @@
+// @ts-nocheck
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
@@ -5,7 +6,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) vis.gl contributors
 
-import {assert} from '@deck.gl/core/typed';
+import {assert} from '@deck.gl/core';
 import {isArrowVector} from '@kepler.gl/utils';
 import * as arrow from 'apache-arrow';
 

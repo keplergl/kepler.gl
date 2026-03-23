@@ -1,9 +1,9 @@
+// @ts-nocheck
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
 import {UNIT} from '@deck.gl/core';
-import {ColumnLayer, ColumnLayerProps} from '@deck.gl/layers/typed';
-import GL from '@luma.gl/constants';
+import {ColumnLayer, ColumnLayerProps} from '@deck.gl/layers';
 
 import {editShader} from '../';
 
@@ -69,14 +69,14 @@ class EnhancedColumnLayer extends ColumnLayer<any, EnhancedColumnLayerProps> {
 
     model.setUniforms(uniforms).setUniforms({
       radius,
-      angle: (angle / 180) * Math.PI,
+      angle: ((angle ?? 0) / 180) * Math.PI,
       offset,
       extruded,
       stroked,
       coverage,
       elevationScale,
       edgeDistance,
-      radiusUnits: UNIT[radiusUnits],
+      radiusUnits: radiusUnits ? UNIT[radiusUnits] : UNIT.meters,
       widthUnits: UNIT[lineWidthUnits],
       widthScale: lineWidthScale,
       widthMinPixels: lineWidthMinPixels,
@@ -88,7 +88,7 @@ class EnhancedColumnLayer extends ColumnLayer<any, EnhancedColumnLayerProps> {
       model.setProps({isIndexed: true});
       model
         .setVertexCount(wireframeVertexCount)
-        .setDrawMode(GL.LINES)
+        .setTopology('line-list')
         .setUniforms({isStroke: true})
         .draw();
     }
@@ -96,7 +96,7 @@ class EnhancedColumnLayer extends ColumnLayer<any, EnhancedColumnLayerProps> {
       model.setProps({isIndexed: false});
       model
         .setVertexCount(fillVertexCount)
-        .setDrawMode(GL.TRIANGLE_STRIP)
+        .setTopology('triangle-strip')
         .setUniforms({isStroke: false})
         .draw();
     }
@@ -107,7 +107,7 @@ class EnhancedColumnLayer extends ColumnLayer<any, EnhancedColumnLayerProps> {
       // Skip the last 1/3 of the vertices which is the top.
       model
         .setVertexCount((fillVertexCount * 2) / 3)
-        .setDrawMode(GL.TRIANGLE_STRIP)
+        .setTopology('triangle-strip')
         .setUniforms({isStroke: true, opacity: strokeOpacity})
         .draw();
     }

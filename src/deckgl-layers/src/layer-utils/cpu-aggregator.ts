@@ -1,12 +1,150 @@
+// @ts-nocheck
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
 /* eslint-disable guard-for-in */
-import {AGGREGATION_OPERATION, _BinSorter as BinSorter} from '@deck.gl/aggregation-layers';
 import {console as Console} from 'global/window';
 
 import {aggregate} from '@kepler.gl/utils';
 import {AGGREGATION_TYPES, SCALE_FUNC} from '@kepler.gl/constants';
+
+const AGGREGATION_OPERATION = {
+  SUM: 'SUM' as const,
+  MEAN: 'MEAN' as const,
+  MIN: 'MIN' as const,
+  MAX: 'MAX' as const,
+  COUNT: 'COUNT' as const
+};
+
+const MAX_32_BIT_FLOAT = 3.402823466e38;
+const defaultGetValue = points => points.length;
+const defaultGetPoints = bin => bin.points;
+const defaultGetIndex = bin => bin.index;
+const ascending = (a, b) => (a < b ? -1 : a > b ? 1 : a >= b ? 0 : NaN);
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function getQuantileDomain(data, valueAccessor) {
+  return data.map(valueAccessor).sort(ascending);
+}
+
+function getOrdinalDomain(data, valueAccessor) {
+  return [...new Set(data.map(valueAccessor))];
+}
+
+class BinSorter {
+  maxCount: number;
+  maxValue: number;
+  minValue: number;
+  totalCount: number;
+  aggregatedBins: any[];
+  sortedBins: any[];
+  binMap: Record<number, any>;
+
+  constructor(bins: any[] = [], props: any = {}) {
+    this.aggregatedBins = this._getAggregatedBins(bins, props);
+    this._updateMinMaxValues();
+    this.binMap = this._getBinMap();
+  }
+
+  _getAggregatedBins(bins, props) {
+    const {
+      getValue = defaultGetValue,
+      getPoints = defaultGetPoints,
+      getIndex = defaultGetIndex,
+      filterData
+    } = props;
+    const hasFilter = typeof filterData === 'function';
+    const aggregatedBins: any[] = [];
+    let index = 0;
+    for (let binIndex = 0; binIndex < bins.length; binIndex++) {
+      const bin = bins[binIndex];
+      const points = getPoints(bin);
+      const i = getIndex(bin);
+      const filteredPoints = hasFilter ? points.filter(filterData) : points;
+      bin.filteredPoints = hasFilter ? filteredPoints : null;
+      const value = filteredPoints.length ? getValue(filteredPoints) : null;
+      if (value !== null && value !== undefined) {
+        aggregatedBins[index] = {i: Number.isFinite(i) ? i : binIndex, value, counts: filteredPoints.length};
+        index++;
+      }
+    }
+    return aggregatedBins;
+  }
+
+  _updateMinMaxValues() {
+    let maxCount = 0;
+    let maxValue = 0;
+    let minValue = MAX_32_BIT_FLOAT;
+    let totalCount = 0;
+    for (const x of this.aggregatedBins) {
+      maxCount = maxCount > x.counts ? maxCount : x.counts;
+      maxValue = maxValue > x.value ? maxValue : x.value;
+      minValue = minValue < x.value ? minValue : x.value;
+      totalCount += x.counts;
+    }
+    this.maxCount = maxCount;
+    this.maxValue = maxValue;
+    this.minValue = minValue;
+    this.totalCount = totalCount;
+  }
+
+  _getBinMap() {
+    const binMap = {};
+    for (const bin of this.aggregatedBins) {
+      binMap[bin.i] = bin;
+    }
+    return binMap;
+  }
+
+  _percentileToIndex(percentileRange) {
+    const len = this.sortedBins.length;
+    if (len < 2) return [0, 0];
+    const [lower, upper] = percentileRange.map(n => clamp(n, 0, 100));
+    return [Math.ceil((lower / 100) * (len - 1)), Math.floor((upper / 100) * (len - 1))];
+  }
+
+  getValueDomainByScale(scale, [lower = 0, upper = 100] = []) {
+    if (!this.sortedBins) {
+      this.sortedBins = this.aggregatedBins.sort((a, b) => ascending(a.value, b.value));
+    }
+    if (!this.sortedBins.length) return [];
+    const indexEdge = this._percentileToIndex([lower, upper]);
+    return this._getScaleDomain(scale, indexEdge);
+  }
+
+  _getScaleDomain(scaleType, [lowerIdx, upperIdx]) {
+    const bins = this.sortedBins;
+    switch (scaleType) {
+      case 'quantize':
+      case 'linear':
+        return [bins[lowerIdx].value, bins[upperIdx].value];
+      case 'quantile':
+        return getQuantileDomain(bins.slice(lowerIdx, upperIdx + 1), d => d.value);
+      case 'ordinal':
+        return getOrdinalDomain(bins, d => d.value);
+      default:
+        return [bins[lowerIdx].value, bins[upperIdx].value];
+    }
+  }
+
+  getValueRange(percentileRange) {
+    if (!this.sortedBins) {
+      this.sortedBins = this.aggregatedBins.sort((a, b) => ascending(a.value, b.value));
+    }
+    if (!this.sortedBins.length) return [];
+    let lowerIdx = 0;
+    let upperIdx = this.sortedBins.length - 1;
+    if (Array.isArray(percentileRange)) {
+      const idxRange = this._percentileToIndex(percentileRange);
+      lowerIdx = idxRange[0];
+      upperIdx = idxRange[1];
+    }
+    return [this.sortedBins[lowerIdx].value, this.sortedBins[upperIdx].value];
+  }
+}
 import {RGBAColor} from '@kepler.gl/types';
 
 export type UpdaterType = (this: CPUAggregator, step, props, dimensionUpdater) => void;

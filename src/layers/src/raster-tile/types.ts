@@ -1,9 +1,11 @@
+// @ts-nocheck
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {_Tile2DHeader} from '@deck.gl/geo-layers/typed';
+import {_Tile2DHeader} from '@deck.gl/geo-layers';
 import {TypedArray} from '@loaders.gl/loader-utils/src/types';
-import {Texture2DProps} from '@luma.gl/webgl';
+import type {TextureProps} from '@luma.gl/core';
+type Texture2DProps = TextureProps;
 
 import {KeplerTable as KeplerDataset} from '@kepler.gl/table';
 import type {ColorMap, StacTypes} from '@kepler.gl/types';

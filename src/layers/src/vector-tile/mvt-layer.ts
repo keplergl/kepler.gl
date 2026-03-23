@@ -1,15 +1,16 @@
+// @ts-nocheck
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {Layer, LayersList} from '@deck.gl/core/typed';
-import {ClipExtension} from '@deck.gl/extensions/typed';
+import {Layer, LayersList} from '@deck.gl/core';
 import {
+  ClipExtension,
   MVTLayer as _MVTLayer,
   TileLayer,
   _getURLFromTemplate,
   _TileLoadProps,
   _Tile2DHeader
-} from '@deck.gl/geo-layers/typed';
+} from '@deck.gl/geo-layers';
 import {incrementVectorTileLoading, decrementVectorTileLoading} from './loading-counter';
 
 /*

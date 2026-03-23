@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {CPUGridLayer} from '@deck.gl/aggregation-layers';
+import {GridLayer} from '@deck.gl/aggregation-layers';
 import CPUAggregator, {AggregationType, getAggregatedData} from '../layer-utils/cpu-aggregator';
 
 export const gridAggregation: AggregationType = {
@@ -26,7 +26,12 @@ export const gridAggregation: AggregationType = {
   ]
 };
 
-export default class ScaleEnhancedGridLayer extends CPUGridLayer<any> {
+export default class ScaleEnhancedGridLayer extends GridLayer<any> {
+  static defaultProps = {
+    ...GridLayer.defaultProps,
+    gpuAggregation: false
+  };
+
   initializeState() {
     const cpuAggregator = new CPUAggregator({
       aggregation: gridAggregation

@@ -111,10 +111,6 @@ function addAliases(externals, args) {
       resolveAlias[`@deck.gl/${mdl}`] = useLocalDeck
         ? `${NODE_MODULES_DIR}/@deck.gl/${mdl}/src`
         : `${EXTERNAL_DECK_SRC}/modules/${mdl}/src`;
-      // types are stored in different directory
-      resolveAlias[`@deck.gl/${mdl}/typed`] = useLocalDeck
-        ? `${NODE_MODULES_DIR}/@deck.gl/${mdl}/typed`
-        : `${EXTERNAL_DECK_SRC}/modules/${mdl}/src/types`;
     });
 
     ['luma.gl', 'probe.gl', 'loaders.gl'].forEach(name => {

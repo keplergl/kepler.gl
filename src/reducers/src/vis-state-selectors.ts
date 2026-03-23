@@ -8,11 +8,11 @@ const DEFAULT_FILE_EXTENSIONS = ['csv', 'json', 'geojson', 'arrow', 'parquet'];
 const DEFAULT_FILE_FORMATS = ['CSV', 'Json', 'GeoJSON', 'Arrow', 'Parquet'];
 
 export const getFileFormatNames = createSelector(
-  state => state.loaders,
+  (state: {loaders: any[]}) => state.loaders,
   loaders => [...DEFAULT_FILE_FORMATS, ...loaders.map(loader => loader.name)]
 );
 
 export const getFileExtensions = createSelector(
-  state => state.loaders,
+  (state: {loaders: any[]}) => state.loaders,
   loaders => [...DEFAULT_FILE_EXTENSIONS, ...loaders.flatMap(loader => loader.extensions)]
 );

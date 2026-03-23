@@ -321,9 +321,11 @@ export default function PlotContainerFactory(
         isExport: true,
         deckGlProps: {
           ...mapFields.deckGlProps,
-          glOptions: {
-            preserveDrawingBuffer: true,
-            useDevicePixels: false
+          deviceProps: {
+            webgl: {
+              preserveDrawingBuffer: true,
+              useDevicePixels: false
+            }
           }
         },
         visState: {

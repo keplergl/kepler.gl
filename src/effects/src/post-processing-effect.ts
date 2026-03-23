@@ -18,7 +18,7 @@ import {
   zoomBlur,
   magnify,
   hexagonalPixelate
-} from '@luma.gl/shadertools';
+} from '@luma.gl/effects';
 
 import {POSTPROCESSING_EFFECTS, DEFAULT_POST_PROCESSING_EFFECT_TYPE} from '@kepler.gl/constants';
 import {EffectPropsPartial, EffectParameterDescription} from '@kepler.gl/types';

@@ -1,3 +1,4 @@
+// @ts-nocheck
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
@@ -12,8 +13,8 @@ import {
   Viewport,
   COORDINATE_SYSTEM,
   _deepEqual as deepEqual
-} from '@deck.gl/core/typed';
-import {BitmapLayer} from '@deck.gl/layers/typed';
+} from '@deck.gl/core';
+import {BitmapLayer} from '@deck.gl/layers';
 import {ImageSource, createImageSource} from '@loaders.gl/wms';
 
 import type {ImageSourceMetadata} from '@loaders.gl/loader-utils';

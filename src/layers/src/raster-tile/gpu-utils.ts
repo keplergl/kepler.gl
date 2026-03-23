@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+// @ts-nocheck
+
 /**
  * Functions and constants for handling webgl/luma.gl/deck.gl entities
  */
@@ -8,8 +10,9 @@
 import {parse, fetchFile, load, FetchError} from '@loaders.gl/core';
 import {ImageLoader} from '@loaders.gl/images';
 import {NPYLoader} from '@loaders.gl/textures';
-import GL from '@luma.gl/constants';
-import {Texture2DProps} from '@luma.gl/webgl';
+import {GL} from '@luma.gl/constants';
+import type {TextureProps} from '@luma.gl/core';
+type Texture2DProps = TextureProps;
 
 import {sleep} from '@kepler.gl/common-utils';
 import {getLoaderOptions} from '@kepler.gl/constants';

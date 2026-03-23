@@ -26,11 +26,11 @@
     "@kepler.gl/schemas": "^3.2.0",
     "@kepler.gl/styles": "^3.2.0",
     "@kepler.gl/utils": "^3.2.0",
-    "@loaders.gl/arrow": "^4.3.2",
-    "@loaders.gl/core": "^4.3.2",
-    "@loaders.gl/csv": "^4.3.2",
-    "@loaders.gl/json": "^4.3.2",
-    "@loaders.gl/parquet": "^4.3.2",
+    "@loaders.gl/arrow": "^4.3.4",
+    "@loaders.gl/core": "^4.3.4",
+    "@loaders.gl/csv": "^4.3.4",
+    "@loaders.gl/json": "^4.3.4",
+    "@loaders.gl/parquet": "^4.3.4",
     "@openassistant/core": "^0.5.17",
     "@openassistant/ui": "^0.5.17",
     "@types/classnames": "^2.3.1",
@@ -60,10 +60,10 @@
     "usehooks-ts": "^3.1.0"
   },
   "resolutions": {
-    "@luma.gl/core": "8.5.21",
-    "@luma.gl/webgl": "8.5.21",
-    "@deck.gl/core": "8.9.27",
-    "@deck.gl/extensions": "8.9.27",
+    "@luma.gl/core": "9.2.6",
+    "@luma.gl/webgl": "9.2.6",
+    "@deck.gl/core": "9.2.11",
+    "@deck.gl/extensions": "9.2.11",
     "react-vis": "1.11.7"
   },
   "engines": {

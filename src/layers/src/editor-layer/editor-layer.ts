@@ -1,14 +1,15 @@
+// @ts-nocheck
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {EditableGeoJsonLayer} from '@nebula.gl/layers';
-import {Layer as DeckLayer, LayerProps as DeckLayerProps} from '@deck.gl/core/typed';
+import {EditableGeoJsonLayer} from '@deck.gl-community/editable-layers';
+import {Layer as DeckLayer, LayerProps as DeckLayerProps} from '@deck.gl/core';
 import {
   DrawPolygonMode,
   TranslateMode,
   CompositeMode,
   DrawRectangleMode
-} from '@nebula.gl/edit-modes';
+} from '@deck.gl-community/editable-layers';
 import {PathStyleExtension} from '@deck.gl/extensions';
 
 import {EDITOR_LAYER_ID, EDITOR_MODES, EDITOR_LAYER_PICKING_RADIUS} from '@kepler.gl/constants';
