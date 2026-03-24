@@ -42,15 +42,8 @@ export default class FilterArrowExtension extends LayerExtension {
         filtered: {
           size: 1,
           type: 'float32',
-          accessor: 'getFiltered',
-          shaderAttributes: {
-            filtered: {
-              divisor: 0
-            },
-            instanceFiltered: {
-              divisor: 1
-            }
-          }
+          stepMode: 'dynamic',
+          accessor: 'getFiltered'
         }
       });
     }
