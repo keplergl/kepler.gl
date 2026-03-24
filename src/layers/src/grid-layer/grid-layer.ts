@@ -1,10 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {GeoJsonLayer} from '@deck.gl/layers';
 import {EnhancedGridLayer} from '@kepler.gl/deckgl-layers';
 import AggregationLayer, {AggregationLayerConfig} from '../aggregation-layer';
-import {pointToPolygonGeo} from './grid-utils';
 import GridLayerIcon from './grid-layer-icon';
 import {
   ColorRange,
@@ -99,13 +97,11 @@ export default class GridLayer extends AggregationLayer {
   }
 
   renderLayer(opts) {
-    const {data, objectHovered, mapState} = opts;
+    const {data} = opts;
 
     const defaultAggregationLayerProps = this.getDefaultAggregationLayerProp(opts);
-    const zoomFactor = this.getZoomFactor(mapState);
     const {visConfig} = this.config;
     const cellSize = visConfig.worldUnitSize * 1000;
-    const hoveredObject = this.hasHoveredObject(objectHovered);
 
     return [
       new EnhancedGridLayer({
@@ -113,28 +109,7 @@ export default class GridLayer extends AggregationLayer {
         ...data,
         wrapLongitude: false,
         cellSize
-      }),
-
-      // render an outline of each cell if not extruded
-      ...(hoveredObject && !visConfig.enable3d
-        ? [
-            new GeoJsonLayer({
-              ...this.getDefaultHoverLayerProps(),
-              visible: defaultAggregationLayerProps.visible,
-              wrapLongitude: false,
-              data: [
-                pointToPolygonGeo({
-                  object: hoveredObject,
-                  cellSize,
-                  coverage: visConfig.coverage,
-                  mapState
-                })
-              ],
-              getLineColor: this.config.highlightColor,
-              lineWidthScale: 8 * zoomFactor
-            })
-          ]
-        : [])
+      })
     ];
   }
 }

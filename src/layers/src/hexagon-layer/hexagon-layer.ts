@@ -1,10 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {GeoJsonLayer} from '@deck.gl/layers';
 import AggregationLayer, {AggregationLayerConfig} from '../aggregation-layer';
 import {EnhancedHexagonLayer} from '@kepler.gl/deckgl-layers';
-import {hexagonToPolygonGeo} from './hexagon-utils';
 import HexagonLayerIcon from './hexagon-layer-icon';
 import {
   ColorRange,
@@ -107,13 +105,11 @@ export default class HexagonLayer extends AggregationLayer {
   }
 
   renderLayer(opts) {
-    const {data, objectHovered, mapState} = opts;
+    const {data} = opts;
 
     const defaultAggregationLayerProps = this.getDefaultAggregationLayerProp(opts);
-    const zoomFactor = this.getZoomFactor(mapState);
     const {visConfig} = this.config;
     const radius = visConfig.worldUnitSize * 1000;
-    const hoveredObject = this.hasHoveredObject(objectHovered);
 
     return [
       new EnhancedHexagonLayer({
@@ -121,23 +117,7 @@ export default class HexagonLayer extends AggregationLayer {
         ...data,
         wrapLongitude: false,
         radius
-      }),
-
-      // render an outline of each hexagon if not extruded
-      ...(hoveredObject && !visConfig.enable3d
-        ? [
-            new GeoJsonLayer({
-              ...this.getDefaultHoverLayerProps(),
-              visible: defaultAggregationLayerProps.visible,
-              wrapLongitude: false,
-              data: [
-                hexagonToPolygonGeo(hoveredObject, {}, radius * visConfig.coverage, mapState)
-              ].filter(d => d),
-              getLineColor: this.config.highlightColor,
-              lineWidthScale: 8 * zoomFactor
-            })
-          ]
-        : [])
+      })
     ];
   }
 }

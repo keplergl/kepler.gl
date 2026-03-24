@@ -5,14 +5,15 @@ import {WebMercatorViewport} from '@deck.gl/core';
 import Console from 'global/console';
 import type {Centroid} from '@kepler.gl/common-utils';
 
-export function hexagonToPolygonGeo(object, properties, radius, mapState) {
+export function hexagonToPolygonGeo(object, properties, radius, mapState, coordinate?) {
   const viewport = new WebMercatorViewport(mapState);
-  if (!Array.isArray(object.position)) {
+  const position = object.position || coordinate;
+  if (!Array.isArray(position)) {
     return null;
   }
 
-  const screenCenter = viewport.projectFlat(object.position);
-  const {unitsPerMeter} = viewport.getDistanceScales(object.position);
+  const screenCenter = viewport.projectFlat(position);
+  const {unitsPerMeter} = viewport.getDistanceScales(position);
 
   if (!Array.isArray(unitsPerMeter)) {
     Console.warn(`unitsPerMeter is undefined`);

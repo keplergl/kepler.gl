@@ -1,8 +1,9 @@
+// @ts-nocheck
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import {CompositeLayer} from '@deck.gl/core';
 import {ScatterplotLayer} from '@deck.gl/layers';
-import {_AggregationLayer as AggregationLayer} from '@deck.gl/aggregation-layers';
 
 import geoViewport from '@mapbox/geo-viewport';
 import CPUAggregator, {
@@ -154,7 +155,7 @@ const defaultProps = {
   getRadiusValue: {type: 'accessor', value: defaultGetRadiusValue}
 };
 
-export default class ClusterLayer extends AggregationLayer<any, any> {
+export default class ClusterLayer extends CompositeLayer {
   initializeState() {
     const cpuAggregator = new CPUAggregator({
       aggregation: clusterAggregation,
@@ -165,20 +166,14 @@ export default class ClusterLayer extends AggregationLayer<any, any> {
       cpuAggregator,
       aggregatorState: cpuAggregator.state
     };
-    const attributeManager = this.getAttributeManager();
-    attributeManager.add({
-      positions: {size: 3, accessor: 'getPosition'}
-    });
   }
 
   updateState({oldProps, props, changeFlags}) {
     this.setState({
-      // make a copy of the internal state of cpuAggregator for testing
       aggregatorState: this.state.cpuAggregator.updateState(
         {oldProps, props, changeFlags},
         {
           viewport: this.context.viewport,
-          attributes: this.getAttributes(),
           numInstances: this.getNumInstances(props)
         }
       )

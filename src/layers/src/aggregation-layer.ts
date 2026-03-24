@@ -82,9 +82,9 @@ export default class AggregationLayer extends Layer {
       pointPosAccessor(this.config.columns)(dataContainer);
     this.getColorRange = memoize(getLayerColorRange);
 
-    // Access data of a point from aggregated bins, depends on how BinSorter works
-    // Deck.gl's BinSorter puts data in point.source
-    this.getPointData = pt => pt.source;
+    // Access data of a point from aggregated bins
+    // In deck.gl 9, aggregation layers pass original data items directly to getColorValue/getElevationValue
+    this.getPointData = pt => pt;
 
     this.gpuFilterGetIndex = pt => this.getPointData(pt).index;
     this.gpuFilterGetData = (dataContainer, data, fieldIndex) =>
@@ -308,7 +308,7 @@ export default class AggregationLayer extends Layer {
     if (this.config.dataId === null) {
       return {};
     }
-    const {gpuFilter, dataContainer} = datasets[this.config.dataId];
+    const {dataContainer} = datasets[this.config.dataId];
     const getPosition = this.getPositionAccessor(dataContainer);
 
     const aggregatePoints = getValueAggrFunc(this.getPointData);
@@ -321,24 +321,12 @@ export default class AggregationLayer extends Layer {
       this.config.sizeField,
       this.config.visConfig.sizeAggregation
     );
-    const hasFilter = Object.values(gpuFilter.filterRange).some((arr: any) =>
-      arr.some(v => v !== 0)
-    );
-
-    const getFilterValue = gpuFilter.filterValueAccessor(dataContainer)(
-      this.gpuFilterGetIndex,
-      this.gpuFilterGetData
-    );
-    const filterData = hasFilter
-      ? getFilterDataFunc(gpuFilter.filterRange, getFilterValue)
-      : undefined;
 
     const {data} = this.updateData(datasets, oldLayerData);
 
     return {
       data,
       getPosition,
-      _filterData: filterData,
       // @ts-expect-error
       ...(getColorValue ? {getColorValue} : {}),
       // @ts-expect-error
@@ -353,12 +341,12 @@ export default class AggregationLayer extends Layer {
       highlightColor: HIGHLIGH_COLOR_3D,
       // gpu data filtering is not supported in aggregation layer
       extensions: [],
-      autoHighlight: this.config.visConfig.enable3d
+      autoHighlight: true
     };
   }
 
   getDefaultAggregationLayerProp(opts) {
-    const {gpuFilter, mapState, layerCallbacks = {}} = opts;
+    const {mapState, layerCallbacks = {}} = opts;
     const {visConfig} = this.config;
     const eleZoomFactor = this.getElevationZoomFactor(mapState);
 
@@ -372,10 +360,6 @@ export default class AggregationLayer extends Layer {
       getElevationValue: {
         sizeField: this.config.sizeField,
         sizeAggregation: this.config.visConfig.sizeAggregation
-      },
-      _filterData: {
-        filterRange: gpuFilter.filterRange,
-        ...gpuFilter.filterValueUpdateTriggers
       }
     };
 

@@ -2,45 +2,17 @@
 // Copyright contributors to the kepler.gl project
 
 import {HexagonLayer} from '@deck.gl/aggregation-layers';
-import CPUAggregator, {AggregationType, getAggregatedData} from '../layer-utils/cpu-aggregator';
 
-export const hexagonAggregation: AggregationType = {
-  key: 'position',
-  updateSteps: [
-    {
-      key: 'aggregate',
-      triggers: {
-        cellSize: {
-          prop: 'radius'
-        },
-        position: {
-          prop: 'getPosition',
-          updateTrigger: 'getPosition'
-        },
-        aggregator: {
-          prop: 'hexagonAggregator'
-        }
-      },
-      updater: getAggregatedData
-    }
-  ]
-};
-
+/**
+ * In deck.gl 9, HexagonLayer natively supports CPU aggregation via gpuAggregation: false,
+ * custom getColorValue/getElevationValue accessors, percentile filtering, and scale types.
+ * The custom CPUAggregator override from deck.gl 8 is no longer needed.
+ */
 export default class ScaleEnhancedHexagonLayer extends HexagonLayer<any> {
-  initializeState() {
-    const cpuAggregator = new CPUAggregator({
-      aggregation: hexagonAggregation
-    });
-
-    this.state = {
-      cpuAggregator,
-      aggregatorState: cpuAggregator.state
-    };
-    const attributeManager = this.getAttributeManager();
-    attributeManager.add({
-      positions: {size: 3, accessor: 'getPosition'}
-    });
-  }
+  static defaultProps = {
+    ...HexagonLayer.defaultProps,
+    gpuAggregation: false
+  };
 }
 
 ScaleEnhancedHexagonLayer.layerName = 'ScaleEnhancedHexagonLayer';

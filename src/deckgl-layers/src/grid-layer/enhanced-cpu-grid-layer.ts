@@ -2,50 +2,17 @@
 // Copyright contributors to the kepler.gl project
 
 import {GridLayer} from '@deck.gl/aggregation-layers';
-import CPUAggregator, {AggregationType, getAggregatedData} from '../layer-utils/cpu-aggregator';
 
-export const gridAggregation: AggregationType = {
-  key: 'position',
-  updateSteps: [
-    {
-      key: 'aggregate',
-      triggers: {
-        cellSize: {
-          prop: 'cellSize'
-        },
-        position: {
-          prop: 'getPosition',
-          updateTrigger: 'getPosition'
-        },
-        aggregator: {
-          prop: 'gridAggregator'
-        }
-      },
-      updater: getAggregatedData
-    }
-  ]
-};
-
+/**
+ * In deck.gl 9, GridLayer natively supports CPU aggregation via gpuAggregation: false,
+ * custom getColorValue/getElevationValue accessors, percentile filtering, and scale types.
+ * The custom CPUAggregator override from deck.gl 8 is no longer needed.
+ */
 export default class ScaleEnhancedGridLayer extends GridLayer<any> {
   static defaultProps = {
     ...GridLayer.defaultProps,
     gpuAggregation: false
   };
-
-  initializeState() {
-    const cpuAggregator = new CPUAggregator({
-      aggregation: gridAggregation
-    });
-
-    this.state = {
-      cpuAggregator,
-      aggregatorState: cpuAggregator.state
-    };
-    const attributeManager = this.getAttributeManager();
-    attributeManager.add({
-      positions: {size: 3, accessor: 'getPosition'}
-    });
-  }
 }
 
 ScaleEnhancedGridLayer.layerName = 'ScaleEnhancedGridLayer';
