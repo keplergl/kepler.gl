@@ -31,9 +31,20 @@ export function computeDeckEffects({
   return visState.effectOrder
     .map(effectId => {
       const effect = findById(effectId)(visState.effects) as Effect | undefined;
-      if (effect?.isEnabled && effect.deckEffect) {
-        updateEffect({visState, mapState, effect});
-        return effect.deckEffect;
+      if (effect?.deckEffect) {
+        if (effect.isEnabled) {
+          updateEffect({visState, mapState, effect});
+        } else if (effect.type === LIGHT_AND_SHADOW_EFFECT.type) {
+          // Keep lighting effects in the array even when disabled to avoid
+          // removing the shadow shader module. Composite layer sublayers
+          // don't regenerate models when default shader modules change,
+          // leaving stale pipelines with shadow_uShadowMap bindings.
+          // Disabling shadow on the lights avoids visual effects.
+          disableLightingEffect(effect);
+        }
+        if (effect.isEnabled || effect.type === LIGHT_AND_SHADOW_EFFECT.type) {
+          return effect.deckEffect;
+        }
       }
       return null;
     })
@@ -79,10 +90,32 @@ function isDaytime(lat, lon, timestamp) {
 }
 
 /**
+ * Disable shadow rendering on a lighting effect without removing it.
+ * This keeps the shadow shader module registered and prevents stale
+ * texture binding errors in composite layer sublayers.
+ */
+function disableLightingEffect(effect: Effect) {
+  const deckEffect = effect.deckEffect;
+  if (!deckEffect) return;
+  deckEffect.shadow = false;
+  for (const light of deckEffect.directionalLights || []) {
+    light.shadow = false;
+  }
+}
+
+/**
  * Update effect to match latest vis and map states
  */
 function updateEffect({visState, mapState, effect}) {
   if (effect.type === LIGHT_AND_SHADOW_EFFECT.type) {
+    // Re-enable shadow rendering in case it was previously disabled
+    const deckEffect = effect.deckEffect;
+    for (const light of deckEffect.directionalLights || []) {
+      light._shadow = true;
+      light.shadow = true;
+    }
+    deckEffect.shadow = deckEffect.directionalLights?.some(l => l.shadow) ?? false;
+
     let {timestamp} = effect.parameters;
     const {timeMode} = effect.parameters;
     const sunLight = effect.deckEffect.directionalLights[0];
