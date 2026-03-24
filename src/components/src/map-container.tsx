@@ -59,7 +59,8 @@ import {
   computeDeckEffects,
   getApplicationConfig,
   GetMapRef,
-  getLayerBlendingParameters
+  getLayerBlendingParameters,
+  patchDeckRendererForPostProcessing
 } from '@kepler.gl/utils';
 import {breakPointValues} from '@kepler.gl/styles';
 
@@ -93,6 +94,8 @@ import {
 import {VisState} from '@kepler.gl/schemas';
 
 import LoadingIndicator from './loading-indicator';
+
+patchDeckRendererForPostProcessing();
 
 // Debounce the propagation of viewport change and mouse moves to redux store.
 // This is to avoid too many renders of other components when the map is

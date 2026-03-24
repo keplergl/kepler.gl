@@ -283,7 +283,7 @@ export default function EffectConfiguratorFactory(
     effect,
     updateEffectConfig
   }) => {
-    const uniforms = effect.deckEffect?.module.uniforms || defaultUniforms;
+    const uniforms = effect.deckEffect?.module.propTypes || defaultUniforms;
     const parameterDescriptions = effect.getParameterDescriptions();
     const {parameters, id} = effect;
     const flatParameterDescriptions = useMemo(() => {

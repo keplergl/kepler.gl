@@ -44,6 +44,16 @@ declare module '@deck.gl/core' {
   export type Color = [number, number, number] | [number, number, number, number];
   export type RGBAColor = [number, number, number, number];
   export type RGBColor = [number, number, number];
+
+  export class DeckRenderer {
+    device: any;
+    renderBuffers: any[];
+    lastPostProcessEffect: string | null;
+    constructor(device: any);
+    renderLayers(opts: any): void;
+    needsRedraw(opts?: any): string | false;
+    finalize(): void;
+  }
 }
 
 declare module '@deck.gl/geo-layers' {

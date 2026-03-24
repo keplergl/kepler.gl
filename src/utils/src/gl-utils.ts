@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {LAYER_BLENDINGS} from '@kepler.gl/constants';
+import {DeckRenderer} from '@deck.gl/core';
 
 const GL_BLEND_FUNC_TO_WEBGPU: Record<string, string> = {
   SRC_ALPHA: 'src-alpha',
@@ -65,4 +66,43 @@ export function getLayerBlendingParameters(layerBlending: string): Record<string
  */
 export function setLayerBlending(_gl: unknown, _layerBlending: string): void {
   // no-op in deck.gl 9.x - blending is handled via parameters prop
+}
+
+/**
+ * Patch DeckRenderer to include depth-stencil attachments on post-processing
+ * framebuffers. In deck.gl 9, _resizeRenderBuffers creates FBOs with only color
+ * attachments, which breaks depth testing when post-processing effects are active.
+ * This was not an issue in deck.gl 8 where Framebuffer() auto-created a depth buffer.
+ */
+let _deckRendererPatched = false;
+export function patchDeckRendererForPostProcessing(): void {
+  if (_deckRendererPatched) return;
+  _deckRendererPatched = true;
+
+  const proto = DeckRenderer.prototype as any;
+
+  proto._resizeRenderBuffers = function _resizeRenderBufferPatched() {
+    const {renderBuffers} = this;
+    const size = this.device.canvasContext!.getDrawingBufferSize();
+    const [width, height] = size;
+    if (renderBuffers.length === 0) {
+      [0, 1].map((i: number) => {
+        const texture = this.device.createTexture({
+          sampler: {minFilter: 'linear', magFilter: 'linear'},
+          width,
+          height
+        });
+        renderBuffers.push(
+          this.device.createFramebuffer({
+            id: `deck-renderbuffer-${i}`,
+            colorAttachments: [texture],
+            depthStencilAttachment: 'depth24plus'
+          })
+        );
+      });
+    }
+    for (const buffer of renderBuffers) {
+      buffer.resize(size);
+    }
+  };
 }

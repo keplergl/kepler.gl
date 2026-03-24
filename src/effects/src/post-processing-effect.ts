@@ -117,13 +117,12 @@ class PostProcessingEffect extends Effect {
     if (effectDesc) {
       this.deckEffect = new DeckPostProcessEffect(effectDesc.class, this.parameters);
 
-      const uniforms = this.deckEffect?.module?.uniforms;
-      if (uniforms) {
-        // get default parameters
-        const keys = Object.keys(uniforms);
+      const propTypes = this.deckEffect?.module?.propTypes;
+      if (propTypes) {
+        const keys = Object.keys(propTypes);
         const defaultParameters = {};
         keys.forEach(key => {
-          defaultParameters[key] = getDefaultValueForParameter(key, this._uiConfig, uniforms);
+          defaultParameters[key] = getDefaultValueForParameter(key, this._uiConfig, propTypes);
         });
         this.parameters = {...defaultParameters, ...this.parameters};
         this.deckEffect?.setProps(this.parameters);
