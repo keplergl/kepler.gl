@@ -45,6 +45,8 @@ declare module '@deck.gl/core' {
   export type RGBAColor = [number, number, number, number];
   export type RGBColor = [number, number, number];
 
+  export const shadow: any;
+
   export class DeckRenderer {
     device: any;
     renderBuffers: any[];

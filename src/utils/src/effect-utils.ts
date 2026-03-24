@@ -98,6 +98,7 @@ function disableLightingEffect(effect: Effect) {
   const deckEffect = effect.deckEffect;
   if (!deckEffect) return;
   deckEffect.shadow = false;
+  deckEffect.outputUniformShadow = false;
   for (const light of deckEffect.directionalLights || []) {
     light.shadow = false;
   }
