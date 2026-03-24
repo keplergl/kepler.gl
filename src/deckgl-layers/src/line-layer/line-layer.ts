@@ -17,8 +17,8 @@ function addInstanceColorShader(vs) {
   const targetColorVs = editShader(
     vs,
     'line target color vs',
-    'attribute vec4 instanceColors;',
-    'attribute vec4 instanceColors; attribute vec4 instanceTargetColors;'
+    'in vec4 instanceColors;',
+    'in vec4 instanceColors; in vec4 instanceTargetColors;'
   );
 
   return editShader(

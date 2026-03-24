@@ -9,7 +9,7 @@ const vs = `
   #else
     #define FILTER_ARROW_ATTRIB instanceFiltered
   #endif
-  attribute float FILTER_ARROW_ATTRIB;
+  in float FILTER_ARROW_ATTRIB;
 `;
 
 const fs = ``;
