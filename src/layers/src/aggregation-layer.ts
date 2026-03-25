@@ -308,8 +308,20 @@ export default class AggregationLayer extends Layer {
     if (this.config.dataId === null) {
       return {};
     }
-    const {dataContainer} = datasets[this.config.dataId];
+    const {gpuFilter, dataContainer} = datasets[this.config.dataId];
     const getPosition = this.getPositionAccessor(dataContainer);
+
+    const hasFilter = Object.values(gpuFilter.filterRange).some((arr: any) =>
+      arr.some(v => v !== 0)
+    );
+
+    const getFilterValue = gpuFilter.filterValueAccessor(dataContainer)(
+      this.gpuFilterGetIndex,
+      this.gpuFilterGetData
+    );
+    const filterData = hasFilter
+      ? getFilterDataFunc(gpuFilter.filterRange, getFilterValue)
+      : undefined;
 
     const aggregatePoints = getValueAggrFunc(this.getPointData);
     const getColorValue = aggregatePoints(
@@ -322,15 +334,27 @@ export default class AggregationLayer extends Layer {
       this.config.visConfig.sizeAggregation
     );
 
+    // Wrap accessors to filter points within each bin before aggregating.
+    // deck.gl 9's native aggregation doesn't support per-bin filtering, so we
+    // apply gpuFilter at the accessor level to keep bin values in sync with
+    // active cross-filters / time-filters.
+    const getFilteredColorValue =
+      filterData && getColorValue
+        ? points => getColorValue(points.filter(filterData))
+        : getColorValue;
+    const getFilteredElevationValue =
+      filterData && getElevationValue
+        ? points => getElevationValue(points.filter(filterData))
+        : getElevationValue;
+
     const {data} = this.updateData(datasets, oldLayerData);
 
     return {
       data,
       getPosition,
-      // @ts-expect-error
-      ...(getColorValue ? {getColorValue} : {}),
-      // @ts-expect-error
-      ...(getElevationValue ? {getElevationValue} : {})
+      _filterData: filterData,
+      ...(getFilteredColorValue ? {getColorValue: getFilteredColorValue} : {}),
+      ...(getFilteredElevationValue ? {getElevationValue: getFilteredElevationValue} : {})
     };
   }
 
@@ -346,7 +370,7 @@ export default class AggregationLayer extends Layer {
   }
 
   getDefaultAggregationLayerProp(opts) {
-    const {mapState, layerCallbacks = {}} = opts;
+    const {gpuFilter, mapState, layerCallbacks = {}} = opts;
     const {visConfig} = this.config;
     const eleZoomFactor = this.getElevationZoomFactor(mapState);
 
@@ -355,11 +379,19 @@ export default class AggregationLayer extends Layer {
         colorField: this.config.colorField,
         colorAggregation: this.config.visConfig.colorAggregation,
         colorRange: visConfig.colorRange,
-        colorMap: visConfig.colorRange.colorMap
+        colorMap: visConfig.colorRange.colorMap,
+        _filterData: {
+          filterRange: gpuFilter.filterRange,
+          ...gpuFilter.filterValueUpdateTriggers
+        }
       },
       getElevationValue: {
         sizeField: this.config.sizeField,
-        sizeAggregation: this.config.visConfig.sizeAggregation
+        sizeAggregation: this.config.visConfig.sizeAggregation,
+        _filterData: {
+          filterRange: gpuFilter.filterRange,
+          ...gpuFilter.filterValueUpdateTriggers
+        }
       }
     };
 
