@@ -879,7 +879,8 @@ export function setInitialLayerConfig(layer, datasets, layerClasses): Layer {
       ...props[0],
       label: newLayer.config.label,
       dataId: newLayer.config.dataId,
-      isConfigActive: newLayer.config.isConfigActive
+      isConfigActive: newLayer.config.isConfigActive,
+      isVisible: newLayer.config.isVisible
     });
   }
   return typeof newLayer.setInitialLayerConfig === 'function'
