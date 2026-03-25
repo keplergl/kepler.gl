@@ -1,26 +1,29 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-// @ts-nocheck - Raster images module uses luma.gl Texture APIs that changed in 9.x
-// TODO: Refactor to use luma.gl 9.x Texture API
+// @ts-nocheck
 
 import {GL} from '@luma.gl/constants';
 import isEqual from 'lodash/isEqual';
 
-import type {ImageInput, ImageState, Texture2D, Texture2DProps} from './types';
+import type {ImageInput, ImageState} from './types';
+
+type Texture2D = any;
+type Texture2DProps = any;
 
 /**
- * Texture parameters for WebGL2 textures
+ * Texture sampler parameters for luma.gl 9 textures
  */
-const DEFAULT_UNIVERSAL_TEXTURE_PARAMETERS = {
-  [GL.TEXTURE_MIN_FILTER]: GL.NEAREST,
-  [GL.TEXTURE_MAG_FILTER]: GL.NEAREST,
-  [GL.TEXTURE_WRAP_S]: GL.CLAMP_TO_EDGE,
-  [GL.TEXTURE_WRAP_T]: GL.CLAMP_TO_EDGE
+const DEFAULT_SAMPLER_PARAMETERS = {
+  minFilter: 'nearest',
+  magFilter: 'nearest',
+  addressModeU: 'clamp-to-edge',
+  addressModeV: 'clamp-to-edge'
 };
 
 type LoadImagesOptions = {
   gl: WebGL2RenderingContext;
+  device?: any;
   images: ImageState;
   imagesData: ImageInput;
   oldImagesData: ImageInput;
@@ -28,17 +31,15 @@ type LoadImagesOptions = {
 
 /**
  * Load image items to webgl context
- * @param gl webgl rendering context
- * @param imageItem image item, might be single texture or array of textures
- * @returns loaded single webgl texture or array of webgl texture or null
  */
 function loadImageItem(
   gl: WebGL2RenderingContext,
+  device: any,
   imageItem: Texture2DProps | Texture2D | (Texture2DProps | Texture2D)[]
 ): null | Texture2D | Texture2D[] {
   let result: null | Texture2D | Texture2D[];
   if (Array.isArray(imageItem)) {
-    const dirtyResult = imageItem.map(x => loadTexture(gl, x));
+    const dirtyResult = imageItem.map(x => loadTexture(gl, device, x));
     result = [];
     for (const texture of dirtyResult) {
       if (texture) {
@@ -49,7 +50,7 @@ function loadImageItem(
       result = null;
     }
   } else {
-    result = loadTexture(gl, imageItem);
+    result = loadTexture(gl, device, imageItem);
   }
   return result;
 }
@@ -57,6 +58,7 @@ function loadImageItem(
 // eslint-disable-next-line complexity
 export function loadImages({
   gl,
+  device,
   images,
   imagesData,
   oldImagesData
@@ -90,7 +92,7 @@ export function loadImages({
       continue;
     }
 
-    const loadedItem = loadImageItem(gl, imageData);
+    const loadedItem = loadImageItem(gl, device, imageData);
     if (loadedItem) {
       images[key] = loadedItem;
     }
@@ -105,33 +107,117 @@ export function loadImages({
 }
 
 /**
- * Create texture object from image data
+ * Map old GL texture parameter constants to luma.gl 9 sampler parameters
+ */
+function mapSamplerParameters(oldParams: Record<number, number>): Record<string, string> {
+  const result: Record<string, string> = {...DEFAULT_SAMPLER_PARAMETERS};
+
+  const filterMap = {
+    [GL.NEAREST]: 'nearest',
+    [GL.LINEAR]: 'linear',
+    [GL.LINEAR_MIPMAP_LINEAR]: 'linear',
+    [GL.NEAREST_MIPMAP_NEAREST]: 'nearest'
+  };
+
+  const wrapMap = {
+    [GL.CLAMP_TO_EDGE]: 'clamp-to-edge',
+    [GL.REPEAT]: 'repeat',
+    [GL.MIRRORED_REPEAT]: 'mirror-repeat'
+  };
+
+  if (oldParams) {
+    if (oldParams[GL.TEXTURE_MIN_FILTER] !== undefined) {
+      result.minFilter = filterMap[oldParams[GL.TEXTURE_MIN_FILTER]] || 'nearest';
+    }
+    if (oldParams[GL.TEXTURE_MAG_FILTER] !== undefined) {
+      result.magFilter = filterMap[oldParams[GL.TEXTURE_MAG_FILTER]] || 'nearest';
+    }
+    if (oldParams[GL.TEXTURE_WRAP_S] !== undefined) {
+      result.addressModeU = wrapMap[oldParams[GL.TEXTURE_WRAP_S]] || 'clamp-to-edge';
+    }
+    if (oldParams[GL.TEXTURE_WRAP_T] !== undefined) {
+      result.addressModeV = wrapMap[oldParams[GL.TEXTURE_WRAP_T]] || 'clamp-to-edge';
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Map old GL format/type to luma.gl 9 texture format string
+ */
+function mapTextureFormat(glFormat: number, glType?: number): string {
+  switch (glFormat) {
+    case GL.R8UI: return 'r8uint';
+    case GL.R16UI: return 'r16uint';
+    case GL.R32UI: return 'r32uint';
+    case GL.R8I: return 'r8sint';
+    case GL.R16I: return 'r16sint';
+    case GL.R32I: return 'r32sint';
+    case GL.R32F: return 'r32float';
+    case GL.RGBA:
+      if (glType === GL.UNSIGNED_BYTE) return 'rgba8unorm';
+      return 'rgba8unorm';
+    case GL.RGB:
+      return 'rgba8unorm';
+    default:
+      return 'rgba8unorm';
+  }
+}
+
+/**
+ * Create texture object from image data using luma.gl 9 device API.
+ * Returns a proper luma.gl Texture object that works with the binding system.
  */
 function loadTexture(
   gl: WebGL2RenderingContext,
+  device: any,
   imageData: Texture2D | Texture2DProps
 ): Texture2D | null {
   if (!imageData) {
     return null;
   }
 
-  // If already a Texture instance, return as-is
-  if (imageData.handle || imageData.gl || imageData.device) {
+  // If already a luma.gl Texture instance, return as-is
+  if (imageData.handle || imageData.id?.startsWith?.('luma') || imageData.device) {
     return imageData as Texture2D;
   }
 
-  const textureParams: Texture2DProps = {
-    parameters: DEFAULT_UNIVERSAL_TEXTURE_PARAMETERS,
-    ...imageData
-  };
+  const lumaDevice = device || gl.luma?.device || gl.__luma_device;
 
-  // In luma.gl 9.x this would be device.createTexture(textureParams)
-  // For now, maintain backward compatibility
-  const Texture2DClass = gl.__luma_Texture2D;
-  if (Texture2DClass) {
-    return new Texture2DClass(gl, textureParams);
+  if (!lumaDevice?.createTexture) {
+    console.warn('RasterLayer: No luma.gl device available for texture creation');
+    return null;
   }
 
-  // Fallback: try creating texture through the WebGL context
-  return textureParams as any;
+  try {
+    const samplerParams = mapSamplerParameters(imageData.parameters || {});
+    const textureFormat = imageData.format
+      ? mapTextureFormat(imageData.format, imageData.type)
+      : 'rgba8unorm';
+
+    const textureProps: any = {
+      width: imageData.width || (imageData.data?.width) || 1,
+      height: imageData.height || (imageData.data?.height) || 1,
+      format: textureFormat,
+      sampler: samplerParams,
+      ...(imageData.mipmaps === false ? {mipmaps: false} : {})
+    };
+
+    if (imageData.data) {
+      if (imageData.data instanceof HTMLImageElement ||
+          imageData.data instanceof HTMLCanvasElement ||
+          imageData.data instanceof ImageBitmap ||
+          imageData.data instanceof ImageData) {
+        textureProps.data = imageData.data;
+      } else if (ArrayBuffer.isView(imageData.data)) {
+        textureProps.data = imageData.data;
+      }
+    }
+
+    return lumaDevice.createTexture(textureProps);
+  } catch (e) {
+    console.warn('RasterLayer: Failed to create texture via device.createTexture:', e);
+    return null;
+  }
 }

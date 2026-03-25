@@ -1,16 +1,18 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-// @ts-nocheck - Raster mesh layer uses luma.gl internal APIs that changed significantly in 9.x
-// TODO: Refactor to use luma.gl 9.x shader module system when raster layer is actively maintained.
+// @ts-nocheck
 
-import {project32, phongMaterial, log, UpdateParameters} from '@deck.gl/core';
+import {log, UpdateParameters} from '@deck.gl/core';
 import {SimpleMeshLayer, SimpleMeshLayerProps} from '@deck.gl/mesh-layers';
 import {Geometry} from '@luma.gl/engine';
 import {Model} from '@luma.gl/engine';
 
-import fsWebGL2 from './raster-mesh-layer-webgl2.fs';
-import vsWebGL2 from './raster-mesh-layer-webgl2.vs';
+import {buildRasterMeshFragmentShader, buildRasterMeshVertexShader} from './raster-mesh-layer-shaders';
+import {
+  ensureRasterHooksRegistered,
+  prepareLumaModules
+} from '../raster-layer/raster-layer-shaders';
 import {loadImages} from '../images';
 import type {RasterLayerAddedProps, ImageState} from '../types';
 import {modulesEqual} from '../util';
@@ -57,26 +59,22 @@ export default class RasterMeshLayer extends SimpleMeshLayer<any, RasterLayerAdd
   };
 
   initializeState(): void {
-    // images is a mapping from keys to Texture objects. The keys should match
-    // names of uniforms in shader modules
+    ensureRasterHooksRegistered();
     this.setState({images: {}});
-
     super.initializeState();
   }
 
   getShaders(): any {
     const {modules = []} = this.props;
 
-    // deck.gl 9.x requires WebGL2 - always use WebGL2 shaders
-    for (const module of modules) {
-      module.fs = module.fs2 || module.fs;
-    }
+    const lumaModules = prepareLumaModules(modules);
+    const parentShaders = super.getShaders();
 
     return {
-      ...super.getShaders(),
-      vs: vsWebGL2,
-      fs: fsWebGL2,
-      modules: [project32, phongMaterial, ...modules]
+      ...parentShaders,
+      vs: buildRasterMeshVertexShader(),
+      fs: buildRasterMeshFragmentShader(),
+      modules: [...(parentShaders.modules || []), ...lumaModules]
     };
   }
 
@@ -88,7 +86,6 @@ export default class RasterMeshLayer extends SimpleMeshLayer<any, RasterLayerAdd
     const modules = props && props.modules;
     const oldModules = oldProps && oldProps.modules;
 
-    // If the list of modules changed, need to recompile the shaders
     if (
       props.mesh !== oldProps.mesh ||
       changeFlags.extensionsChanged ||
@@ -125,10 +122,12 @@ export default class RasterMeshLayer extends SimpleMeshLayer<any, RasterLayerAdd
     oldProps: RasterLayerAddedProps;
   }): void {
     const {images} = this.state;
-    const gl = this.context.device?.gl || this.context.gl;
+    const device = this.context.device;
+    const gl = device?.gl || this.context.gl;
 
     const newImages = loadImages({
       gl,
+      device,
       images,
       imagesData: props.images,
       oldImagesData: oldProps.images
@@ -139,11 +138,10 @@ export default class RasterMeshLayer extends SimpleMeshLayer<any, RasterLayerAdd
     }
   }
 
-  draw({uniforms}): void {
+  draw(opts): void {
     const {model, images} = this.state;
     const {moduleProps} = this.props;
 
-    // Render the image
     if (
       !model ||
       !images ||
@@ -153,20 +151,77 @@ export default class RasterMeshLayer extends SimpleMeshLayer<any, RasterLayerAdd
       return;
     }
 
-    const {sizeScale} = this.props;
+    // Set props for each custom module
+    const allModuleProps = {...moduleProps, ...images};
+    const modules = this.props.modules || [];
+    for (const mod of modules) {
+      if (mod.getUniforms) {
+        const uniforms = mod.getUniforms(allModuleProps);
+        if (uniforms) {
+          const textureBindings: Record<string, any> = {};
+          const scalarUniforms: Record<string, any> = {};
+          for (const [key, value] of Object.entries(uniforms)) {
+            if (value && typeof value === 'object' && !Array.isArray(value)) {
+              textureBindings[key] = value;
+            } else {
+              scalarUniforms[key] = value;
+            }
+          }
 
-    model
-      .setUniforms(
-        Object.assign({}, uniforms, {
-          sizeScale,
-          flatShading: !this.state.hasNormals
-        })
-      )
-      .updateModuleSettings({
-        ...moduleProps,
-        ...images
-      })
-      .draw();
+          if (Object.keys(textureBindings).length > 0) {
+            model.setBindings(textureBindings);
+          }
+
+          if (Object.keys(scalarUniforms).length > 0) {
+            const gl = model.device?.gl;
+            const program = model.pipeline?.handle;
+            if (gl && program) {
+              gl.useProgram(program);
+              for (const [name, value] of Object.entries(scalarUniforms)) {
+                const loc = gl.getUniformLocation(program, name);
+                if (loc !== null) {
+                  if (typeof value === 'number') {
+                    if (Number.isInteger(value) && this._isIntUniform(mod, name)) {
+                      gl.uniform1i(loc, value);
+                    } else {
+                      gl.uniform1f(loc, value);
+                    }
+                  } else if (Array.isArray(value)) {
+                    if (value.length === 2) gl.uniform2fv(loc, value);
+                    else if (value.length === 3) gl.uniform3fv(loc, value);
+                    else if (value.length === 4) gl.uniform4fv(loc, value);
+                    else if (value.length === 16) gl.uniformMatrix4fv(loc, false, value);
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // Set mesh-specific uniforms via raw WebGL
+    const gl = model.device?.gl;
+    const program = model.pipeline?.handle;
+    if (gl && program) {
+      gl.useProgram(program);
+      const opacityLoc = gl.getUniformLocation(program, 'meshOpacity');
+      if (opacityLoc !== null) {
+        gl.uniform1f(opacityLoc, this.props.opacity ?? 1);
+      }
+      const flatLoc = gl.getUniformLocation(program, 'meshFlatShading');
+      if (flatLoc !== null) {
+        gl.uniform1i(flatLoc, !this.state.hasNormals ? 1 : 0);
+      }
+    }
+
+    model.draw(this.context.renderPass);
+  }
+
+  _isIntUniform(mod: any, name: string): boolean {
+    const fs = mod.fs2 || mod.fs || '';
+    const regex = new RegExp(`uniform\\s+int\\s+${name}\\b`);
+    return regex.test(fs);
   }
 
   finalizeState(): void {
