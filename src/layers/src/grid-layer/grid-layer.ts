@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import {GeoJsonLayer} from '@deck.gl/layers';
 import {EnhancedGridLayer} from '@kepler.gl/deckgl-layers';
 import AggregationLayer, {AggregationLayerConfig} from '../aggregation-layer';
 import GridLayerIcon from './grid-layer-icon';
@@ -97,11 +98,17 @@ export default class GridLayer extends AggregationLayer {
   }
 
   renderLayer(opts) {
-    const {data} = opts;
+    const {data, objectHovered, mapState} = opts;
 
     const defaultAggregationLayerProps = this.getDefaultAggregationLayerProp(opts);
+    const zoomFactor = this.getZoomFactor(mapState);
     const {visConfig} = this.config;
     const cellSize = visConfig.worldUnitSize * 1000;
+    const hoveredObject = this.hasHoveredObject(objectHovered);
+
+    // Use cellOutline computed in common space by ScaleEnhancedGridLayer.getPickingInfo
+    // so the outline aligns with rendered cells at all latitudes.
+    const outlineCoords = hoveredObject?.cellOutline;
 
     return [
       new EnhancedGridLayer({
@@ -109,7 +116,28 @@ export default class GridLayer extends AggregationLayer {
         ...data,
         wrapLongitude: false,
         cellSize
-      })
+      }),
+
+      // render an outline of each cell if not extruded
+      ...(outlineCoords && !visConfig.enable3d
+        ? [
+            new GeoJsonLayer({
+              ...this.getDefaultHoverLayerProps(),
+              visible: defaultAggregationLayerProps.visible,
+              wrapLongitude: false,
+              data: [
+                {
+                  geometry: {
+                    coordinates: outlineCoords,
+                    type: 'LineString'
+                  }
+                }
+              ],
+              getLineColor: this.config.highlightColor,
+              lineWidthScale: 8 * zoomFactor
+            })
+          ]
+        : [])
     ];
   }
 }

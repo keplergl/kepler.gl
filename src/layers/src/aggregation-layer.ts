@@ -365,7 +365,7 @@ export default class AggregationLayer extends Layer {
       highlightColor: HIGHLIGH_COLOR_3D,
       // gpu data filtering is not supported in aggregation layer
       extensions: [],
-      autoHighlight: true
+      autoHighlight: this.config.visConfig.enable3d
     };
   }
 

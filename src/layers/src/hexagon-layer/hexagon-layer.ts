@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import {GeoJsonLayer} from '@deck.gl/layers';
 import AggregationLayer, {AggregationLayerConfig} from '../aggregation-layer';
 import {EnhancedHexagonLayer} from '@kepler.gl/deckgl-layers';
 import HexagonLayerIcon from './hexagon-layer-icon';
@@ -105,11 +106,17 @@ export default class HexagonLayer extends AggregationLayer {
   }
 
   renderLayer(opts) {
-    const {data} = opts;
+    const {data, objectHovered, mapState} = opts;
 
     const defaultAggregationLayerProps = this.getDefaultAggregationLayerProp(opts);
+    const zoomFactor = this.getZoomFactor(mapState);
     const {visConfig} = this.config;
     const radius = visConfig.worldUnitSize * 1000;
+    const hoveredObject = this.hasHoveredObject(objectHovered);
+
+    // Use cellOutline computed in common space by ScaleEnhancedHexagonLayer.getPickingInfo
+    // so the outline aligns with rendered cells at all latitudes.
+    const outlineCoords = hoveredObject?.cellOutline;
 
     return [
       new EnhancedHexagonLayer({
@@ -117,7 +124,28 @@ export default class HexagonLayer extends AggregationLayer {
         ...data,
         wrapLongitude: false,
         radius
-      })
+      }),
+
+      // render an outline of each hexagon if not extruded
+      ...(outlineCoords && !visConfig.enable3d
+        ? [
+            new GeoJsonLayer({
+              ...this.getDefaultHoverLayerProps(),
+              visible: defaultAggregationLayerProps.visible,
+              wrapLongitude: false,
+              data: [
+                {
+                  geometry: {
+                    coordinates: outlineCoords,
+                    type: 'LineString'
+                  }
+                }
+              ],
+              getLineColor: this.config.highlightColor,
+              lineWidthScale: 8 * zoomFactor
+            })
+          ]
+        : [])
     ];
   }
 }

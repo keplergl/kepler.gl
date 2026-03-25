@@ -7,8 +7,9 @@ import type {Centroid} from '@kepler.gl/common-utils';
 
 export function hexagonToPolygonGeo(object, properties, radius, mapState, coordinate?) {
   const viewport = new WebMercatorViewport(mapState);
-  const position = object.position || coordinate;
-  if (!Array.isArray(position)) {
+  const pos = object.position || coordinate;
+  const position = pos ? Array.from(pos) : null;
+  if (!position || position.length < 2) {
     return null;
   }
 
