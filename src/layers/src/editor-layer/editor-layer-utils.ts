@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {PickingInfo} from '@deck.gl/core';
+import type {PickingInfo} from '@deck.gl/core';
 import {Editor, Feature, FeatureSelectionContext} from '@kepler.gl/types';
 import {EDITOR_LAYER_ID, EDITOR_MODES} from '@kepler.gl/constants';
 

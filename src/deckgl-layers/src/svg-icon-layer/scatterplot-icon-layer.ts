@@ -13,7 +13,6 @@ export interface ScatterplotIconLayerProps extends ScatterplotLayerProps<any> {
 export default class ScatterplotIconLayer extends ScatterplotLayer<any, ScatterplotIconLayerProps> {
   _getModel() {
     const {iconGeometry} = this.props;
-
     const positions = iconGeometry ? new Float32Array(iconGeometry) : new Float32Array(DEFAULT_POS);
 
     const geometry = new Geometry({
@@ -23,8 +22,7 @@ export default class ScatterplotIconLayer extends ScatterplotLayer<any, Scatterp
       }
     });
 
-    // @ts-expect-error accessing protected parent method
-    const model = super._getModel();
+    const model = super._getModel(null);
     if (model) {
       model.setGeometry(geometry);
     }
