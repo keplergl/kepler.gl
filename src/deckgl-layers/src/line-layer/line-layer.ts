@@ -74,17 +74,21 @@ export default class EnhancedLineLayer extends LineLayer<
 
   draw(opts) {
     const {elevationScale} = this.props;
-    super.draw(opts);
     const model = this.state.model;
     if (model && elevationScale !== undefined) {
       const gl = this.context.device?.gl || this.context.gl;
       if (gl) {
-        const loc = gl.getUniformLocation(model.pipeline?.handle || model.handle, 'elevationScale');
-        if (loc) {
-          gl.uniform1f(loc, elevationScale);
+        const program = model.pipeline?.handle || model.handle;
+        if (program) {
+          gl.useProgram(program);
+          const loc = gl.getUniformLocation(program, 'elevationScale');
+          if (loc) {
+            gl.uniform1f(loc, elevationScale);
+          }
         }
       }
     }
+    super.draw(opts);
   }
 
   initializeState() {
@@ -93,8 +97,7 @@ export default class EnhancedLineLayer extends LineLayer<
     attributeManager.addInstanced({
       instanceTargetColors: {
         size: this.props.colorFormat?.length,
-        type: 'uint8',
-        normalized: true,
+        type: 'unorm8',
         transition: true,
         accessor: 'getTargetColor',
         defaultValue: [0, 0, 0, 255]
