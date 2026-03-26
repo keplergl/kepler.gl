@@ -131,6 +131,11 @@ export default class RasterTileLayer extends KeplerLayer {
   maxViewportPixelValue = -Infinity;
   /** Memoized method that calculates data source params */
 
+  /** Callback to trigger a map redraw (stored from layerCallbacks) */
+  onRedrawNeeded: (() => void) | undefined;
+  /** Track the last rendered preset to detect changes */
+  _lastRenderedPreset: string | undefined;
+
   getDataSourceParams: (
     stac: CompleteSTACObject,
     preset: string,
@@ -393,7 +398,18 @@ export default class RasterTileLayer extends KeplerLayer {
 
   // generate a deck layer
   renderLayer(opts): TileLayer<any>[] {
-    const {data} = opts;
+    const {data, layerCallbacks} = opts;
+
+    // Store callback to trigger map redraw when sublayers need async re-render
+    this.onRedrawNeeded = layerCallbacks?.onRedrawNeeded;
+
+    // Detect preset changes and schedule a deferred redraw so that
+    // deck.gl re-renders sublayers after the new pipeline compiles
+    const currentPreset = this.config.visConfig?.preset;
+    if (this._lastRenderedPreset !== undefined && this._lastRenderedPreset !== currentPreset) {
+      setTimeout(() => this.onRedrawNeeded?.(), 100);
+    }
+    this._lastRenderedPreset = currentPreset;
 
     if (data?.dataset?.metadata?.pmtilesType === PMTilesType.RASTER) {
       return this.renderPMTilesLayer(opts);
@@ -402,7 +418,7 @@ export default class RasterTileLayer extends KeplerLayer {
   }
 
   private renderStacLayer(opts): TileLayer<any>[] {
-    const {data, mapState, experimentalContext} = opts;
+    const {data, mapState, experimentalContext, layerCallbacks} = opts;
     const stac = data?.dataset?.metadata as GetTileDataCustomProps['stac'];
 
     // If a tabular dataset is loaded, and then the layer type is switched from Point to Raster Tile
@@ -551,7 +567,8 @@ export default class RasterTileLayer extends KeplerLayer {
       minCategoricalBandValue,
       maxCategoricalBandValue,
       hasCategoricalColorMap: Boolean(categoricalColorMap),
-      hasShadowEffect
+      hasShadowEffect,
+      onRedrawNeeded: layerCallbacks?.onRedrawNeeded
     });
 
     return [tileLayer];
@@ -560,7 +577,7 @@ export default class RasterTileLayer extends KeplerLayer {
   private renderPMTilesLayer(opts): TileLayer<any>[] {
     const {id, opacity, visible} = this.getDefaultDeckLayerProps(opts);
 
-    const {data, mapState} = opts;
+    const {data, mapState, layerCallbacks} = opts;
     const metadata = data?.dataset?.metadata as VectorTileMetadata;
     const {visConfig} = this.config;
 
@@ -607,7 +624,8 @@ export default class RasterTileLayer extends KeplerLayer {
               zRange: this.meta.zRange || null,
               refinementStrategy: 'no-overlap'
             }
-          : {})
+          : {}),
+        onRedrawNeeded: layerCallbacks?.onRedrawNeeded
       })
     ];
   }

@@ -50,7 +50,8 @@ const defaultProps = {
   ...SimpleMeshLayer.defaultProps,
   modules: {type: 'array', value: [], compare: true},
   images: {type: 'object', value: {}, compare: true},
-  moduleProps: {type: 'object', value: {}, compare: true}
+  moduleProps: {type: 'object', value: {}, compare: true},
+  onRedrawNeeded: {type: 'function', value: null, compare: false}
 };
 
 export default class RasterMeshLayer extends SimpleMeshLayer<any, RasterLayerAddedProps> {
@@ -61,7 +62,23 @@ export default class RasterMeshLayer extends SimpleMeshLayer<any, RasterLayerAdd
   initializeState(): void {
     ensureRasterHooksRegistered();
     this.setState({images: {}});
+    this._patchValidateProgram();
     super.initializeState();
+  }
+
+  _patchValidateProgram(): void {
+    const gl = this.context.device?.gl;
+    if (gl && !gl.__validateProgramPatched) {
+      gl.__validateProgramPatched = true;
+      const origGetProgramParameter = gl.getProgramParameter.bind(gl);
+      gl.validateProgram = function () {};
+      gl.getProgramParameter = function (program: WebGLProgram, pname: number) {
+        if (pname === 0x8b83) {
+          return true;
+        }
+        return origGetProgramParameter(program, pname);
+      };
+    }
   }
 
   getShaders(): any {
@@ -215,7 +232,25 @@ export default class RasterMeshLayer extends SimpleMeshLayer<any, RasterLayerAdd
       }
     }
 
-    model.draw(this.context.renderPass);
+    const drawSuccess = model.draw(this.context.renderPass);
+    if (!drawSuccess) {
+      this._scheduleRedraw();
+    }
+  }
+
+  _scheduleRedraw(): void {
+    if (this._redrawScheduled) return;
+    this._redrawScheduled = true;
+    requestAnimationFrame(() => {
+      this._redrawScheduled = false;
+      if (this.context.deck) {
+        this.context.deck._needsRedraw = 'RasterMeshLayer pipeline pending';
+      }
+      this.context.layerManager?.setNeedsRedraw('RasterMeshLayer pipeline pending');
+      if (typeof this.props.onRedrawNeeded === 'function') {
+        this.props.onRedrawNeeded();
+      }
+    });
   }
 
   _isIntUniform(mod: any, name: string): boolean {

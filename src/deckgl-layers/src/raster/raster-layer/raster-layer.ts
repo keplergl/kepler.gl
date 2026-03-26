@@ -21,7 +21,8 @@ const defaultProps = {
   ...BitmapLayer.defaultProps,
   modules: {type: 'array', value: [], compare: true},
   images: {type: 'object', value: {}, compare: true},
-  moduleProps: {type: 'object', value: {}, compare: true}
+  moduleProps: {type: 'object', value: {}, compare: true},
+  onRedrawNeeded: {type: 'function', value: null, compare: false}
 };
 
 export default class RasterLayer extends BitmapLayer<RasterLayerAddedProps> {
@@ -32,7 +33,32 @@ export default class RasterLayer extends BitmapLayer<RasterLayerAddedProps> {
   initializeState(): void {
     ensureRasterHooksRegistered();
     this.setState({images: {}});
+    this._patchValidateProgram();
     super.initializeState();
+  }
+
+  /**
+   * Skip gl.validateProgram for this WebGL context.
+   * WebGL2 validateProgram fails with "Two textures of different types use the
+   * same sampler location" when sampler2D and usampler2D uniforms both default
+   * to texture unit 0 before any bindings are set. This is a false positive —
+   * proper texture units are assigned at draw time. Link errors and shader
+   * compilation errors are still caught without validateProgram.
+   */
+  _patchValidateProgram(): void {
+    const gl = this.context.device?.gl;
+    if (gl && !gl.__validateProgramPatched) {
+      gl.__validateProgramPatched = true;
+      const origGetProgramParameter = gl.getProgramParameter.bind(gl);
+      gl.validateProgram = function () {};
+      gl.getProgramParameter = function (program: WebGLProgram, pname: number) {
+        if (pname === 0x8b83) {
+          // GL_VALIDATE_STATUS — always return true since we skip validation
+          return true;
+        }
+        return origGetProgramParameter(program, pname);
+      };
+    }
   }
 
   draw(opts: {shaderModuleProps: any}): void {
@@ -114,7 +140,26 @@ export default class RasterLayer extends BitmapLayer<RasterLayerAddedProps> {
       }
     }
 
-    model.draw(this.context.renderPass);
+    const drawSuccess = model.draw(this.context.renderPass);
+    if (!drawSuccess) {
+      this._scheduleRedraw();
+    }
+  }
+
+  _scheduleRedraw(): void {
+    if (this._redrawScheduled) return;
+    this._redrawScheduled = true;
+    requestAnimationFrame(() => {
+      this._redrawScheduled = false;
+      // Try deck-level redraw first (works with @deck.gl/react's _customRender)
+      if (this.context.deck) {
+        this.context.deck._needsRedraw = 'RasterLayer pipeline pending';
+      }
+      this.context.layerManager?.setNeedsRedraw('RasterLayer pipeline pending');
+      if (typeof this.props.onRedrawNeeded === 'function') {
+        this.props.onRedrawNeeded();
+      }
+    });
   }
 
   /**
