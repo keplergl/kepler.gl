@@ -128,9 +128,11 @@ global.fetch = window.fetch;
 
 // Create a dummy canvas for the headless gl context
 const canvas = global.document.createElement('canvas');
-canvas.width = gl.drawingBufferWidth;
-canvas.height = gl.drawingBufferHeight;
-gl.canvas = canvas;
+if (gl && typeof gl === 'object') {
+  canvas.width = gl.drawingBufferWidth;
+  canvas.height = gl.drawingBufferHeight;
+  gl.canvas = canvas;
+}
 
 Object.keys(global.window).forEach(property => {
   if (typeof global[property] === 'undefined') {

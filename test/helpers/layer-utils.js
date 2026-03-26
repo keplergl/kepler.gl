@@ -4,7 +4,7 @@
 /* eslint-disable enzyme-deprecation/no-mount */
 import {LayerManager, MapView} from '@deck.gl/core';
 import React from 'react';
-import {gl} from '@deck.gl/test-utils';
+import {gl, device} from '@deck.gl/test-utils';
 import sinon from 'sinon';
 import {mount} from 'enzyme';
 import {console as Console} from 'global/window';
@@ -209,7 +209,7 @@ export function testRenderDeckLayer(t, layerType, deckLayers, {viewport, layerMa
       height: viewport.height,
       viewState: viewport
     });
-    deckLayerManager = new LayerManager(gl, {viewport: testViewport});
+    deckLayerManager = new LayerManager(device, {viewport: testViewport});
   }
 
   const spy = sinon.spy(Console, 'error');
@@ -322,7 +322,7 @@ export function testUpdateLayer(t, {layerConfig, shouldUpdate}) {
     viewState: mapState
   });
 
-  const layerManager = new LayerManager(gl, {viewport: testViewport});
+  const layerManager = new LayerManager(device, {viewport: testViewport});
 
   let rendered = renderLayerByState(t, stateWithLayer, layerManager);
   const attributeValues = Object.keys(
