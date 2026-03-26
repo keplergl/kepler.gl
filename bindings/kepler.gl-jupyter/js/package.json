@@ -78,10 +78,10 @@
     "@kepler.gl/reducers": "^3.2.0",
     "@kepler.gl/schemas": "^3.2.0",
     "@kepler.gl/styles": "^3.2.0",
-    "@loaders.gl/arrow": "^4.3.4",
-    "@loaders.gl/core": "^4.3.4",
-    "@loaders.gl/csv": "^4.3.4",
-    "@loaders.gl/json": "^4.3.4",
+    "@loaders.gl/arrow": "^4.1.0",
+    "@loaders.gl/core": "^4.1.0",
+    "@loaders.gl/csv": "^4.1.0",
+    "@loaders.gl/json": "^4.1.0",
     "global": "^4.3.0",
     "node-polyfill-webpack-plugin": "^1.1.2",
     "querystring": "0.2.1",
@@ -96,11 +96,11 @@
     "styled-components": "6.1.8"
   },
   "resolutions": {
-    "@deck.gl/core": "^9.2.11",
-    "@deck.gl/react": "^9.2.11",
-    "@deck.gl/aggregation-layers": "^9.2.11",
-    "@deck.gl/geo-layers": "^9.2.11",
-    "@deck.gl/layers": "^9.2.11"
+    "@deck.gl/core": "^8.9.27",
+    "@deck.gl/react": "^8.9.27",
+    "@deck.gl/aggregation-layers": "^8.9.27",
+    "@deck.gl/geo-layers": "^8.9.27",
+    "@deck.gl/layers": "^8.9.27"
   },
   "jupyterlab": {
     "extension": "babel/labplugin",
