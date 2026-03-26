@@ -311,17 +311,23 @@ export default function EffectConfiguratorFactory(
       return flatParameterDescriptions.map(desc => {
         const paramName = desc.name;
 
-        const uniform = uniforms[desc.name];
-        if ((!uniform && uniform !== 0) || uniform.private) {
+        const rawUniform = uniforms[desc.name];
+        if ((!rawUniform && rawUniform !== 0) || rawUniform.private) {
           return null;
         }
+
+        // luma.gl 9 wraps array propTypes as {value: [...]}
+        const uniform =
+          rawUniform && typeof rawUniform === 'object' && Array.isArray(rawUniform.value)
+            ? rawUniform.value
+            : rawUniform;
 
         const prevValue = parameters[paramName];
 
         const label = desc.label === false ? false : desc.label || desc.name;
 
         // the uniform is [number, number] array
-        if (uniform.length === 2) {
+        if (Array.isArray(uniform) && uniform.length === 2) {
           return {
             label,
             value1: prevValue[desc.index || 0] || 0,

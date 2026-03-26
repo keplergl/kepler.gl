@@ -101,16 +101,16 @@ test('#ClusterLayer -> formatLayerData', t => {
         // 5: 2016-09-17 00:15:01 1474071301000 - 1
         // 7: 2016-09-17 00:17:05 1474071425000 - 1
         t.equal(
-          // assume all points fall into one bin
+          // getColorValue now counts only filtered points within the bin
           layerData.getColorValue(expectedLayerData.data),
-          5,
-          'should return unfiltered point count'
+          3,
+          'should return filtered point count'
         );
         t.equal(
-          // assume all points fall into one bin
+          // getElevationValue now counts only filtered points within the bin
           layerData.getElevationValue(expectedLayerData.data),
-          5,
-          'should return unfiltered point count'
+          3,
+          'should return filtered point count'
         );
         t.deepEqual(
           layerData.data.map(layerData._filterData),

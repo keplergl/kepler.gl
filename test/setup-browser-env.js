@@ -17,55 +17,6 @@ const dom = new JSDOM('<!doctype html><html><body></body></html>', {
   virtualConsole
 });
 const {window} = dom;
-
-// Mock canvas with headless-gl for WebGL contexts
-const createGLContext = require('gl');
-
-function mockCanvas(globalWindow) {
-  globalWindow.HTMLCanvasElement.prototype.getContext = function mockGetContext(
-    contextType,
-    attrs
-  ) {
-    if (contextType === 'webgl' || contextType === 'webgl2') {
-      try {
-        return createGLContext(this.width || 1, this.height || 1, attrs);
-      } catch (e) {
-        return null;
-      }
-    }
-    return {
-      fillRect: nop,
-      clearRect: nop,
-      getImageData: (x, y, w, h) => ({
-        data: new Array(w * h * 4)
-      }),
-      putImageData: nop,
-      createImageData: () => [],
-      setTransform: nop,
-      drawImage: nop,
-      save: nop,
-      fillText: nop,
-      restore: nop,
-      beginPath: nop,
-      moveTo: nop,
-      lineTo: nop,
-      closePath: nop,
-      stroke: nop,
-      translate: nop,
-      scale: nop,
-      rotate: nop,
-      arc: nop,
-      fill: nop,
-      measureText: () => ({width: 0}),
-      transform: nop,
-      rect: nop,
-      clip: nop
-    };
-  };
-
-  globalWindow.HTMLCanvasElement.prototype.toDataURL = () => '';
-}
-
 mockCanvas(window);
 
 // // issue: https://github.com/chromaui/chromatic-cli/issues/14
@@ -121,25 +72,50 @@ Object.defineProperty(window, 'clipboardData', {
   window[prop] = () => {};
 });
 
+function mockCanvas(globalWindow) {
+  globalWindow.HTMLCanvasElement.prototype.getContext = function mockGetContext() {
+    return {
+      fillRect: nop,
+      clearRect: nop,
+      getImageData: (x, y, w, h) => ({
+        data: new Array(w * h * 4)
+      }),
+      putImageData: nop,
+      createImageData: () => [],
+      setTransform: nop,
+      drawImage: nop,
+      save: nop,
+      fillText: nop,
+      restore: nop,
+      beginPath: nop,
+      moveTo: nop,
+      lineTo: nop,
+      closePath: nop,
+      stroke: nop,
+      translate: nop,
+      scale: nop,
+      rotate: nop,
+      arc: nop,
+      fill: nop,
+      measureText: () => ({width: 0}),
+      transform: nop,
+      rect: nop,
+      clip: nop
+    };
+  };
+
+  globalWindow.HTMLCanvasElement.prototype.toDataURL = () => '';
+}
+
 window.URL.createObjectURL = () => {};
 
-// Set globals BEFORE importing deck.gl test utils
 global.window = window;
 global.document = window.document;
 global.HTMLElement = window.HTMLElement;
 global.Element = window.Element;
 global.fetch = window.fetch;
-global.navigator = {
-  userAgent: 'node.js',
-  platform: 'mac',
-  appName: 'kepler.gl'
-};
 
-// Tell @probe.gl/env isBrowser() to return true so luma.gl uses document.createElement
-// instead of creating a fake canvas object without getContext
-process.browser = true;
-
-// Now import deck.gl test-utils — luma.gl will use our JSDOM canvas mock with headless-gl
+// deck.gl 9 test-utils: gl may be 1 (number) when no WebGL is available, device will be NullDevice
 const {gl} = require('@deck.gl/test-utils');
 
 // Create a dummy canvas for the headless gl context
@@ -155,6 +131,12 @@ Object.keys(global.window).forEach(property => {
     global[property] = global.window[property];
   }
 });
+
+global.navigator = {
+  userAgent: 'node.js',
+  platform: 'mac',
+  appName: 'kepler.gl'
+};
 
 global.IntersectionObserver = class IntersectionObserver {
   constructor() {}

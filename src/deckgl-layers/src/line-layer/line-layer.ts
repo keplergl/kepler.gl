@@ -24,9 +24,9 @@ function addInstanceColorShader(vs) {
   return editShader(
     targetColorVs,
     'line color vs',
-    'vColor = vec4(instanceColors.rgb, instanceColors.a * opacity);',
+    'vColor = vec4(instanceColors.rgb, instanceColors.a * layer.opacity);',
     `vec4 color = mix(instanceColors, instanceTargetColors, positions.x);` +
-      `vColor = vec4(color.rgb, color.a * opacity);`
+      `vColor = vec4(color.rgb, color.a * layer.opacity);`
   );
 }
 
@@ -34,31 +34,23 @@ function addElevationScale(vs) {
   let elevationVs = editShader(
     vs,
     'line elevation scale 1 vs - inject elevation scale',
-    'uniform float widthMaxPixels;',
-    `uniform float widthMaxPixels;
-     uniform float elevationScale;`
+    'out vec2 uv;',
+    `out vec2 uv;\nuniform float elevationScale;`
   );
 
   elevationVs = editShader(
     elevationVs,
     'line elevation scale 2 vs - multiply by elevation scale',
     `geometry.worldPosition = instanceSourcePositions;
-  geometry.worldPositionAlt = instanceTargetPositions;`,
+geometry.worldPositionAlt = instanceTargetPositions;
+vec3 source_world = instanceSourcePositions;
+vec3 target_world = instanceTargetPositions;`,
     `vec3 source_world = instanceSourcePositions;
-     vec3 target_world = instanceTargetPositions;
-     source_world.z *= elevationScale;
-     target_world.z *= elevationScale;
-     
-     geometry.worldPosition = source_world;
-     geometry.worldPositionAlt = target_world;`
-  );
-
-  elevationVs = editShader(
-    elevationVs,
-    'line elevation scale 3 vs',
-    `vec3 source_world = instanceSourcePositions;
-  vec3 target_world = instanceTargetPositions;`,
-    ''
+vec3 target_world = instanceTargetPositions;
+source_world.z *= elevationScale;
+target_world.z *= elevationScale;
+geometry.worldPosition = source_world;
+geometry.worldPositionAlt = target_world;`
   );
 
   return elevationVs;
@@ -80,9 +72,19 @@ export default class EnhancedLineLayer extends LineLayer<
     };
   }
 
-  draw({uniforms}) {
+  draw(opts) {
     const {elevationScale} = this.props;
-    super.draw({uniforms: {...uniforms, elevationScale}});
+    super.draw(opts);
+    const model = this.state.model;
+    if (model && elevationScale !== undefined) {
+      const gl = this.context.device?.gl || this.context.gl;
+      if (gl) {
+        const loc = gl.getUniformLocation(model.pipeline?.handle || model.handle, 'elevationScale');
+        if (loc) {
+          gl.uniform1f(loc, elevationScale);
+        }
+      }
+    }
   }
 
   initializeState() {
