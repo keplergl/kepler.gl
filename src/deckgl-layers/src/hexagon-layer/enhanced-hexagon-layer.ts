@@ -34,10 +34,7 @@ export default class ScaleEnhancedHexagonLayer extends HexagonLayer<any> {
       const {radiusCommon, hexOriginCommon, aggregatorViewport} = this.state as any;
       const coverage = this.props.coverage ?? 1;
       if (radiusCommon && aggregatorViewport) {
-        const centroid = getHexbinCentroid(
-          [info.object.col, info.object.row],
-          radiusCommon
-        );
+        const centroid = getHexbinCentroid([info.object.col, info.object.row], radiusCommon);
         const ox = hexOriginCommon?.[0] ?? 0;
         const oy = hexOriginCommon?.[1] ?? 0;
         const r = radiusCommon * coverage;

@@ -148,13 +148,20 @@ function mapSamplerParameters(oldParams: Record<number, number>): Record<string,
  */
 function mapTextureFormat(glFormat: number, glType?: number): string {
   switch (glFormat) {
-    case GL.R8UI: return 'r8uint';
-    case GL.R16UI: return 'r16uint';
-    case GL.R32UI: return 'r32uint';
-    case GL.R8I: return 'r8sint';
-    case GL.R16I: return 'r16sint';
-    case GL.R32I: return 'r32sint';
-    case GL.R32F: return 'r32float';
+    case GL.R8UI:
+      return 'r8uint';
+    case GL.R16UI:
+      return 'r16uint';
+    case GL.R32UI:
+      return 'r32uint';
+    case GL.R8I:
+      return 'r8sint';
+    case GL.R16I:
+      return 'r16sint';
+    case GL.R32I:
+      return 'r32sint';
+    case GL.R32F:
+      return 'r32float';
     case GL.RGBA:
       if (glType === GL.UNSIGNED_BYTE) return 'rgba8unorm';
       return 'rgba8unorm';
@@ -197,18 +204,20 @@ function loadTexture(
       : 'rgba8unorm';
 
     const textureProps: any = {
-      width: imageData.width || (imageData.data?.width) || 1,
-      height: imageData.height || (imageData.data?.height) || 1,
+      width: imageData.width || imageData.data?.width || 1,
+      height: imageData.height || imageData.data?.height || 1,
       format: textureFormat,
       sampler: samplerParams,
       ...(imageData.mipmaps === false ? {mipmaps: false} : {})
     };
 
     if (imageData.data) {
-      if (imageData.data instanceof HTMLImageElement ||
-          imageData.data instanceof HTMLCanvasElement ||
-          imageData.data instanceof ImageBitmap ||
-          imageData.data instanceof ImageData) {
+      if (
+        imageData.data instanceof HTMLImageElement ||
+        imageData.data instanceof HTMLCanvasElement ||
+        imageData.data instanceof ImageBitmap ||
+        imageData.data instanceof ImageData
+      ) {
         textureProps.data = imageData.data;
       } else if (ArrayBuffer.isView(imageData.data)) {
         textureProps.data = imageData.data;

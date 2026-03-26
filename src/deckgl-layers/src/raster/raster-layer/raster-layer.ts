@@ -50,7 +50,9 @@ export default class RasterLayer extends BitmapLayer<RasterLayerAddedProps> {
     if (gl && !gl.__validateProgramPatched) {
       gl.__validateProgramPatched = true;
       const origGetProgramParameter = gl.getProgramParameter.bind(gl);
-      gl.validateProgram = function () {};
+      gl.validateProgram = function () {
+        // no op
+      };
       gl.getProgramParameter = function (program: WebGLProgram, pname: number) {
         if (pname === 0x8b83) {
           // GL_VALIDATE_STATUS — always return true since we skip validation
@@ -61,7 +63,7 @@ export default class RasterLayer extends BitmapLayer<RasterLayerAddedProps> {
     }
   }
 
-  draw(opts: {shaderModuleProps: any}): void {
+  draw(_opts: {shaderModuleProps: any}): void {
     const {model, images, coordinateConversion, bounds} = this.state;
     const {desaturate, transparentColor, tintColor, moduleProps} = this.props;
 

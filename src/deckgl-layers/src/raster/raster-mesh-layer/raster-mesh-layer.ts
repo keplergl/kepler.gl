@@ -8,7 +8,10 @@ import {SimpleMeshLayer, SimpleMeshLayerProps} from '@deck.gl/mesh-layers';
 import {Geometry} from '@luma.gl/engine';
 import {Model} from '@luma.gl/engine';
 
-import {buildRasterMeshFragmentShader, buildRasterMeshVertexShader} from './raster-mesh-layer-shaders';
+import {
+  buildRasterMeshFragmentShader,
+  buildRasterMeshVertexShader
+} from './raster-mesh-layer-shaders';
 import {
   ensureRasterHooksRegistered,
   prepareLumaModules
@@ -71,7 +74,9 @@ export default class RasterMeshLayer extends SimpleMeshLayer<any, RasterLayerAdd
     if (gl && !gl.__validateProgramPatched) {
       gl.__validateProgramPatched = true;
       const origGetProgramParameter = gl.getProgramParameter.bind(gl);
-      gl.validateProgram = function () {};
+      gl.validateProgram = function () {
+        // no op
+      };
       gl.getProgramParameter = function (program: WebGLProgram, pname: number) {
         if (pname === 0x8b83) {
           return true;
@@ -155,7 +160,7 @@ export default class RasterMeshLayer extends SimpleMeshLayer<any, RasterLayerAdd
     }
   }
 
-  draw(opts): void {
+  draw(_opts): void {
     const {model, images} = this.state;
     const {moduleProps} = this.props;
 

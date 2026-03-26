@@ -52,17 +52,13 @@ export function ensureRasterHooksRegistered(): void {
   const assembler = ShaderAssembler.getDefaultShaderAssembler();
   // Check if hooks already exist to avoid duplicates
   const existingHooks = assembler._hookFunctions || [];
-  const hookNames = existingHooks.map(h => typeof h === 'string' ? h : h.hook);
+  const hookNames = existingHooks.map(h => (typeof h === 'string' ? h : h.hook));
 
   if (!hookNames.some(h => h?.includes('DECKGL_CREATE_COLOR'))) {
-    assembler.addShaderHook(
-      'fs:DECKGL_CREATE_COLOR(inout vec4 image, vec2 coord)'
-    );
+    assembler.addShaderHook('fs:DECKGL_CREATE_COLOR(inout vec4 image, vec2 coord)');
   }
   if (!hookNames.some(h => h?.includes('DECKGL_MUTATE_COLOR'))) {
-    assembler.addShaderHook(
-      'fs:DECKGL_MUTATE_COLOR(inout vec4 image, vec2 coord)'
-    );
+    assembler.addShaderHook('fs:DECKGL_MUTATE_COLOR(inout vec4 image, vec2 coord)');
   }
 }
 
