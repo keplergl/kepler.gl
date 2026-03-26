@@ -6057,6 +6057,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@luma.gl/webgpu@npm:9.2.6":
+  version: 9.2.6
+  resolution: "@luma.gl/webgpu@npm:9.2.6"
+  dependencies:
+    "@probe.gl/env": "npm:^4.0.8"
+    "@webgpu/types": "npm:^0.1.34"
+  peerDependencies:
+    "@luma.gl/core": ~9.2.0
+  checksum: 10c0/da5ed48bc04fa60459439fbd89fc3639e28839a2228e7eeb14f4fc1a611953006066e56b0bd982f680079e8f74af4ceb4f51159f606b0c524e47f50d7616ce60
+  languageName: node
+  linkType: hard
+
 "@mapbox/fusspot@npm:^0.4.0":
   version: 0.4.0
   resolution: "@mapbox/fusspot@npm:0.4.0"
@@ -11134,6 +11146,13 @@ __metadata:
     "@webassemblyjs/wast-parser": "npm:1.9.0"
     "@xtuc/long": "npm:4.2.2"
   checksum: 10c0/f3d106aa884cbb7687307db7adeb3b98abff9de81b9ba8c1065267340b5e9de64ffc533044ab916b1f4ce8a67fb03efa54b29b61c8e908abe4c07edf82f614cd
+  languageName: node
+  linkType: hard
+
+"@webgpu/types@npm:^0.1.34":
+  version: 0.1.69
+  resolution: "@webgpu/types@npm:0.1.69"
+  checksum: 10c0/52b95a176de5ee918fd1d7132103c35029006a0b4eb321767479a9e430560d272926c0994c3795a5bbaa22cebcc7dce71e66ba8b6496e01c90c0d179a02bd968
   languageName: node
   linkType: hard
 
@@ -21249,6 +21268,7 @@ __metadata:
     "@kepler.gl/components": "npm:3.2.6"
     "@loaders.gl/polyfills": "npm:^4.3.4"
     "@luma.gl/test-utils": "npm:^9.2.6"
+    "@luma.gl/webgpu": "npm:^9.2.6"
     "@open-wc/webpack-import-meta-loader": "npm:0.4.7"
     "@probe.gl/env": "npm:^3.5.0"
     "@probe.gl/test-utils": "npm:^3.5.0"
