@@ -743,7 +743,7 @@ export default class GeoJsonLayer extends Layer {
               ...layerProps,
               visible: defaultLayerProps.visible,
               wrapLongitude: false,
-              data: [hoveredObject],
+              data: [hoveredObject] as any,
               getLineWidth: props.getLineWidth,
               getPointRadius: props.getPointRadius,
               getElevation: props.getElevation,
@@ -752,7 +752,7 @@ export default class GeoJsonLayer extends Layer {
               // always draw outline
               stroked: true,
               filled: false
-            })
+            } as any)
           ]
         : [])
     ];

@@ -108,7 +108,6 @@ export default class ClusterLayer extends AggregationLayer {
     const hoveredObject = this.hasHoveredObject(objectHovered);
 
     return [
-      // @ts-expect-error DeckGLClusterLayer extends untyped CompositeLayer
       new DeckGLClusterLayer({
         ...defaultLayerProps,
         ...clusterData,

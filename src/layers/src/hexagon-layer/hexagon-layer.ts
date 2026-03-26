@@ -140,7 +140,7 @@ export default class HexagonLayer extends AggregationLayer {
                     type: 'LineString'
                   }
                 }
-              ],
+              ] as any,
               getLineColor: this.config.highlightColor,
               lineWidthScale: 8 * zoomFactor
             })

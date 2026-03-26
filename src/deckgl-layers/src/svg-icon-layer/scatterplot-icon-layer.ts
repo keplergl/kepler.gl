@@ -22,7 +22,7 @@ export default class ScatterplotIconLayer extends ScatterplotLayer<any, Scatterp
       }
     });
 
-    const model = super._getModel(null);
+    const model = super._getModel();
     if (model) {
       model.setGeometry(geometry);
     }

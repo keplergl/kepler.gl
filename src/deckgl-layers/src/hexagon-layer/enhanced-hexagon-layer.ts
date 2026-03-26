@@ -46,7 +46,7 @@ export default class ScaleEnhancedHexagonLayer extends HexagonLayer<any> {
           outline.push(aggregatorViewport.unprojectFlat([vx, vy]));
         }
         outline.push(outline[0]);
-        info.object.cellOutline = outline;
+        (info.object as any).cellOutline = outline;
       }
     }
     return info;

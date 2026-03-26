@@ -26,7 +26,7 @@ export function computeDeckEffects({
 }: {
   visState: VisState;
   mapState: MapState;
-}): PostProcessEffect[] {
+}): PostProcessEffect<any>[] {
   // TODO: 1) deck effects per deck context 2) preserved between draws
   return visState.effectOrder
     .map(effectId => {

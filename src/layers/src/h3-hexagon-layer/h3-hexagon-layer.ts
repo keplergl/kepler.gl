@@ -467,7 +467,7 @@ export default class HexagonIdLayer extends Layer {
             new GeoJsonLayer({
               ...this.getDefaultHoverLayerProps(),
               visible: defaultLayerProps.visible,
-              data: [idToPolygonGeo(hoveredObject)],
+              data: [idToPolygonGeo(hoveredObject)] as any,
               getLineColor: config.highlightColor,
               lineWidthScale: DEFAULT_LINE_SCALE_VALUE * zoomFactor,
               wrapLongitude: false

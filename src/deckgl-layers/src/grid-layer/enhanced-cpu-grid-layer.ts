@@ -30,7 +30,7 @@ export default class ScaleEnhancedGridLayer extends GridLayer<any> {
         const hw = 0.5 * coverage * cellSizeCommon[0]; // half-width
         const hh = 0.5 * coverage * cellSizeCommon[1]; // half-height
 
-        info.object.cellOutline = [
+        (info.object as any).cellOutline = [
           aggregatorViewport.unprojectFlat([cx - hw, cy - hh]),
           aggregatorViewport.unprojectFlat([cx + hw, cy - hh]),
           aggregatorViewport.unprojectFlat([cx + hw, cy + hh]),
