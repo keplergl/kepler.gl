@@ -11,8 +11,12 @@ import {parse, fetchFile, load, FetchError} from '@loaders.gl/core';
 import {ImageLoader} from '@loaders.gl/images';
 import {NPYLoader} from '@loaders.gl/textures';
 import {GL} from '@luma.gl/constants';
-import type {TextureProps} from '@luma.gl/core';
-type Texture2DProps = TextureProps;
+
+/**
+ * Loose texture data descriptor passed around before actual luma.gl Texture creation.
+ * Not the same as luma.gl's strict TextureProps (which requires width/height).
+ */
+type Texture2DProps = Record<string, any>;
 
 import {sleep} from '@kepler.gl/common-utils';
 import {getLoaderOptions} from '@kepler.gl/constants';

@@ -156,7 +156,7 @@ export function getTooltip(
 
   if (isDrawingActive(editorMenuActive, editor.mode)) {
     // TODO save interaction state in editor object
-    if (layer?.state?.mode?._clickSequence?.length) {
+    if ((layer?.state as any)?.mode?._clickSequence?.length) {
       return null;
     }
 
