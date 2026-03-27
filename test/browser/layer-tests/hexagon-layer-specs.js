@@ -296,22 +296,46 @@ test('#HexagonLayer -> renderLayer', t => {
           lowerPercentile: layer.config.visConfig.percentile[0]
         };
 
-        // In deck.gl 9, sublayer data is {length, attributes} not an array
-        const hexCellLayerProp = hexCellLayer.props;
-        t.ok(
-          hexCellLayerProp.data && typeof hexCellLayerProp.data.length === 'number',
-          'should pass data to hexagon cell layer'
-        );
-        t.equal(
-          hexCellLayerProp.data.length,
-          expectedHexCellData.length,
-          'should have correct number of hex cells'
-        );
+        // deck.gl 9: sublayer data is {length, attributes} with typed arrays
+        const cellData = hexCellLayer.props.data;
+        t.ok(cellData && typeof cellData.length === 'number', 'cell data should have length');
+        t.equal(cellData.length, expectedHexCellData.length, 'should have correct number of hex cells');
+
+        // Verify attributes exist on the cell sublayer
+        if (cellData.attributes) {
+          const attrKeys = Object.keys(cellData.attributes);
+          t.ok(attrKeys.length > 0, 'cell data should have binary attributes');
+        }
+
         Object.keys(expectedProps).forEach(key => {
           t.deepEqual(props[key], expectedProps[key], `should have correct props.${key}`);
         });
-        // In deck.gl 9, onSetLayerDomain receives [min, max] array instead of {domain, aggregatedBins}
+
+        // deck.gl 9: onSetColorDomain receives [min, max] tuple
         t.ok(spyLayerCallbacks.called, 'should call onSetLayerDomain');
+        const domainArg = spyLayerCallbacks.args[0][0];
+        t.ok(Array.isArray(domainArg), 'onSetLayerDomain arg should be an array');
+        t.equal(domainArg.length, 2, 'domain should be [min, max]');
+        t.ok(
+          typeof domainArg[0] === 'number' && typeof domainArg[1] === 'number',
+          'domain values should be numbers'
+        );
+        t.ok(domainArg[0] <= domainArg[1], 'domain min should be <= max');
+
+        // Verify aggregator state
+        const aggregator = deckHexLayer.state?.aggregator;
+        if (aggregator) {
+          t.ok(aggregator.binCount > 0, 'aggregator should have bins');
+          t.equal(aggregator.binCount, expectedHexCellData.length, 'bin count should match expected cells');
+
+          const colorDomain = aggregator.getResultDomain(0);
+          t.ok(Array.isArray(colorDomain), 'color domain should be an array');
+          t.equal(colorDomain.length, 2, 'color domain should be [min, max]');
+
+          const elevationDomain = aggregator.getResultDomain(1);
+          t.ok(Array.isArray(elevationDomain), 'elevation domain should be an array');
+          t.equal(elevationDomain.length, 2, 'elevation domain should be [min, max]');
+        }
       }
     },
     {
@@ -360,12 +384,27 @@ test('#HexagonLayer -> renderLayer', t => {
         const {props} = deckHexLayer;
         t.equal(props.colorScaleType, 'quantize', 'should pass colorScaleType');
 
-        const hexCellLayerProp = hexCellLayer.props;
-        t.equal(
-          hexCellLayerProp.data.length,
-          expectedHexCellData.length,
-          'should pass correct data to hexagon cell layer'
-        );
+        const cellData = hexCellLayer.props.data;
+        t.equal(cellData.length, expectedHexCellData.length, 'should have correct number of hex cells');
+
+        // deck.gl 9: onSetColorDomain receives [min, max] tuple
+        t.ok(spyLayerCallbacks.called, 'should call onSetLayerDomain');
+        const lastCallIdx = spyLayerCallbacks.args.length - 1;
+        const domainArg = spyLayerCallbacks.args[lastCallIdx][0];
+        t.ok(Array.isArray(domainArg), 'onSetLayerDomain arg should be an array');
+        t.equal(domainArg.length, 2, 'domain should be [min, max]');
+        t.ok(domainArg[0] <= domainArg[1], 'domain min should be <= max');
+
+        // Verify aggregator state
+        const aggregator = deckHexLayer.state?.aggregator;
+        if (aggregator) {
+          t.ok(aggregator.binCount > 0, 'aggregator should have bins');
+          t.equal(aggregator.binCount, expectedHexCellData.length, 'bin count should match expected cells');
+
+          const colorDomain = aggregator.getResultDomain(0);
+          t.ok(Array.isArray(colorDomain), 'color domain should be an array');
+          t.equal(colorDomain.length, 2, 'color domain should be [min, max]');
+        }
       }
     }
   ];
@@ -404,7 +443,16 @@ test('#HexagonLayer -> renderHover', t => {
       elevationValue: 1,
       position: [-122.56068191457787, 37.71853775731428],
       index: 0,
-      points: [{}, {}]
+      points: [{}, {}],
+      cellOutline: [
+        [-122.36376320555154, 37.80841570626016],
+        [-122.56068191457787, 37.898184393157855],
+        [-122.75760062360423, 37.80841570626016],
+        [-122.75760062360423, 37.628550634764665],
+        [-122.56068191457787, 37.538454428239675],
+        [-122.36376320555154, 37.628550634764665],
+        [-122.36376320555154, 37.80841570626016]
+      ]
     }
   });
 
@@ -439,16 +487,29 @@ test('#HexagonLayer -> renderHover', t => {
       assert: deckLayers => {
         const layerIds = deckLayers.map(l => l.id);
         t.ok(layerIds.includes('test_layer_1'), 'Should create main hexagon layer');
-        // In deck.gl 9 headless tests, sublayers may not fully initialize without WebGL
-        if (layerIds.includes('test_layer_1-cells')) {
-          t.pass('cells sublayer created');
-        } else {
-          t.pass('cells sublayer not created in headless environment');
-        }
-        if (layerIds.length >= 3) {
-          t.ok(layerIds.includes('test_layer_1-hovered'), 'Should include hovered layer');
-        } else {
-          t.pass('hover layers not rendered without WebGL picking state');
+        t.ok(
+          layerIds.includes('test_layer_1-hovered'),
+          'Should create hovered layer when objectHovered has cellOutline'
+        );
+        t.ok(
+          layerIds.includes('test_layer_1-hovered-linestrings'),
+          'Should create hovered-linestrings sublayer'
+        );
+
+        const hoverLayer = deckLayers.find(l => l.id === 'test_layer_1-hovered');
+        if (hoverLayer) {
+          t.ok(hoverLayer.props.data.length > 0, 'hover layer should have data');
+          const hoverGeom = hoverLayer.props.data[0];
+          t.equal(
+            hoverGeom.geometry.type,
+            'LineString',
+            'hover data should be a LineString geometry'
+          );
+          t.equal(
+            hoverGeom.geometry.coordinates.length,
+            7,
+            'hover outline should have 7 coordinates (closed hexagon)'
+          );
         }
       }
     }

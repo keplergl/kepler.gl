@@ -300,17 +300,42 @@ test('#GridLayer -> renderLayer', t => {
           t.deepEqual(props[key], expectedProps[key], `should have correct props.${key}`);
         });
 
-        // In deck.gl 9, sublayer data is {length, attributes} not an array
-        const gridCellLayerProp = gridCellLayer.props;
+        // deck.gl 9: sublayer data is {length, attributes} with typed arrays
+        const cellData = gridCellLayer.props.data;
+        t.ok(cellData && typeof cellData.length === 'number', 'cell data should have length');
+        t.equal(cellData.length, expectedGridCellData.length, 'should have correct number of grid cells');
+
+        // Verify attributes exist on the cell sublayer
+        if (cellData.attributes) {
+          const attrKeys = Object.keys(cellData.attributes);
+          t.ok(attrKeys.length > 0, 'cell data should have binary attributes');
+        }
+
+        // deck.gl 9: onSetColorDomain receives [min, max] tuple
+        t.ok(spyLayerCallbacks.called, 'should call onSetLayerDomain');
+        const domainArg = spyLayerCallbacks.args[0][0];
+        t.ok(Array.isArray(domainArg), 'onSetLayerDomain arg should be an array');
+        t.equal(domainArg.length, 2, 'domain should be [min, max]');
         t.ok(
-          gridCellLayerProp.data && typeof gridCellLayerProp.data.length === 'number',
-          'should pass correct data to grid cell layer'
+          typeof domainArg[0] === 'number' && typeof domainArg[1] === 'number',
+          'domain values should be numbers'
         );
-        t.equal(
-          gridCellLayerProp.data.length,
-          expectedGridCellData.length,
-          'should have correct number of grid cells'
-        );
+        t.ok(domainArg[0] <= domainArg[1], 'domain min should be <= max');
+
+        // Verify aggregator state
+        const aggregator = cpuGridLayer.state?.aggregator;
+        if (aggregator) {
+          t.ok(aggregator.binCount > 0, 'aggregator should have bins');
+          t.equal(aggregator.binCount, expectedGridCellData.length, 'bin count should match expected cells');
+
+          const colorDomain = aggregator.getResultDomain(0);
+          t.ok(Array.isArray(colorDomain), 'color domain should be an array');
+          t.equal(colorDomain.length, 2, 'color domain should be [min, max]');
+
+          const elevationDomain = aggregator.getResultDomain(1);
+          t.ok(Array.isArray(elevationDomain), 'elevation domain should be an array');
+          t.equal(elevationDomain.length, 2, 'elevation domain should be [min, max]');
+        }
       }
     },
     {
@@ -359,12 +384,27 @@ test('#GridLayer -> renderLayer', t => {
 
         t.equal(props.colorScaleType, 'quantize', 'should pass colorScaleType');
 
-        const gridCellLayerProp = gridCellLayer.props;
-        t.equal(
-          gridCellLayerProp.data.length,
-          expectedGridCellData.length,
-          'should pass correct data to grid cell layer'
-        );
+        const cellData = gridCellLayer.props.data;
+        t.equal(cellData.length, expectedGridCellData.length, 'should have correct number of grid cells');
+
+        // deck.gl 9: onSetColorDomain receives [min, max] tuple
+        t.ok(spyLayerCallbacks.called, 'should call onSetLayerDomain');
+        const lastCallIdx = spyLayerCallbacks.args.length - 1;
+        const domainArg = spyLayerCallbacks.args[lastCallIdx][0];
+        t.ok(Array.isArray(domainArg), 'onSetLayerDomain arg should be an array');
+        t.equal(domainArg.length, 2, 'domain should be [min, max]');
+        t.ok(domainArg[0] <= domainArg[1], 'domain min should be <= max');
+
+        // Verify aggregator state
+        const aggregator = cpuGridLayer.state?.aggregator;
+        if (aggregator) {
+          t.ok(aggregator.binCount > 0, 'aggregator should have bins');
+          t.equal(aggregator.binCount, expectedGridCellData.length, 'bin count should match expected cells');
+
+          const colorDomain = aggregator.getResultDomain(0);
+          t.ok(Array.isArray(colorDomain), 'color domain should be an array');
+          t.equal(colorDomain.length, 2, 'color domain should be [min, max]');
+        }
       }
     }
   ];
