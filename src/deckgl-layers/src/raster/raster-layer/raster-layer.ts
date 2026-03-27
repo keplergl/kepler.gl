@@ -16,6 +16,9 @@ import {
 import {loadImages} from '../images';
 import type {RasterLayerAddedProps, ImageState} from '../types';
 import {modulesEqual} from '../util';
+import {patchPipelineValidation} from '../pipeline-validation-patch';
+
+patchPipelineValidation();
 
 const defaultProps = {
   ...BitmapLayer.defaultProps,
@@ -33,34 +36,7 @@ export default class RasterLayer extends BitmapLayer<RasterLayerAddedProps> {
   initializeState(): void {
     ensureRasterHooksRegistered();
     this.setState({images: {}});
-    this._patchValidateProgram();
     super.initializeState();
-  }
-
-  /**
-   * Skip gl.validateProgram for this WebGL context.
-   * WebGL2 validateProgram fails with "Two textures of different types use the
-   * same sampler location" when sampler2D and usampler2D uniforms both default
-   * to texture unit 0 before any bindings are set. This is a false positive —
-   * proper texture units are assigned at draw time. Link errors and shader
-   * compilation errors are still caught without validateProgram.
-   */
-  _patchValidateProgram(): void {
-    const gl = this.context.device?.gl;
-    if (gl && !gl.__validateProgramPatched) {
-      gl.__validateProgramPatched = true;
-      const origGetProgramParameter = gl.getProgramParameter.bind(gl);
-      gl.validateProgram = function () {
-        // no op
-      };
-      gl.getProgramParameter = function (program: WebGLProgram, pname: number) {
-        if (pname === 0x8b83) {
-          // GL_VALIDATE_STATUS — always return true since we skip validation
-          return true;
-        }
-        return origGetProgramParameter(program, pname);
-      };
-    }
   }
 
   draw(_opts: {shaderModuleProps: any}): void {

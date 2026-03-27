@@ -19,6 +19,9 @@ import {
 import {loadImages} from '../images';
 import type {RasterLayerAddedProps, ImageState} from '../types';
 import {modulesEqual} from '../util';
+import {patchPipelineValidation} from '../pipeline-validation-patch';
+
+patchPipelineValidation();
 
 type Mesh = SimpleMeshLayerProps['mesh'];
 
@@ -65,25 +68,7 @@ export default class RasterMeshLayer extends SimpleMeshLayer<any, RasterLayerAdd
   initializeState(): void {
     ensureRasterHooksRegistered();
     this.setState({images: {}});
-    this._patchValidateProgram();
     super.initializeState();
-  }
-
-  _patchValidateProgram(): void {
-    const gl = this.context.device?.gl;
-    if (gl && !gl.__validateProgramPatched) {
-      gl.__validateProgramPatched = true;
-      const origGetProgramParameter = gl.getProgramParameter.bind(gl);
-      gl.validateProgram = function () {
-        // no op
-      };
-      gl.getProgramParameter = function (program: WebGLProgram, pname: number) {
-        if (pname === 0x8b83) {
-          return true;
-        }
-        return origGetProgramParameter(program, pname);
-      };
-    }
   }
 
   getShaders(): any {
