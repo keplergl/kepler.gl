@@ -217,7 +217,6 @@ vec2 getUV(vec2 pos) {
 
 void main(void) {
   vec2 uv = vTexCoord;
-  vec2 coord = vTexCoord;
   if (raster.coordinateConversion < -0.5) {
     vec2 lnglat = mercator_to_lnglat(vTexPos);
     uv = getUV(lnglat);
@@ -227,9 +226,9 @@ void main(void) {
   }
 
   vec4 image = vec4(0.0);
-  DECKGL_CREATE_COLOR(image, coord);
+  DECKGL_CREATE_COLOR(image, uv);
 
-  DECKGL_MUTATE_COLOR(image, coord);
+  DECKGL_MUTATE_COLOR(image, uv);
 
   fragColor = apply_opacity(color_tint(color_desaturate(image.rgb)), raster.opacity);
 
