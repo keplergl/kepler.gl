@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-// @ts-expect-error GL not in luma.gl 9 public types
+// @ts-ignore GL resolution depends on moduleResolution setting
 import {GL} from '@luma.gl/constants';
 import isEqual from 'lodash/isEqual';
 

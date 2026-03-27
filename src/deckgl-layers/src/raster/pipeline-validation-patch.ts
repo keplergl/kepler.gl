@@ -19,7 +19,7 @@
  * mixed sampler types. All other validation errors are still reported.
  */
 
-// @ts-expect-error moduleResolution mismatch with luma.gl 9 .js specifiers
+// @ts-ignore WEBGLRenderPipeline resolution depends on moduleResolution setting
 import {WEBGLRenderPipeline} from '@luma.gl/webgl';
 
 const MIXED_SAMPLER_RE = /different type[s]? use the same sampler location/i;
@@ -34,7 +34,9 @@ export function patchPipelineValidation(): void {
     return;
   }
 
-  WEBGLRenderPipeline.prototype._getLinkStatus = function () {
+  WEBGLRenderPipeline.prototype._getLinkStatus = function (
+    this: WEBGLRenderPipeline & {linkStatus: string}
+  ) {
     const {gl} = this.device;
     const linked = gl.getProgramParameter(this.handle, 0x8b82 /* LINK_STATUS */);
     if (!linked) {
@@ -47,12 +49,9 @@ export function patchPipelineValidation(): void {
     if (!validated) {
       const infoLog = gl.getProgramInfoLog(this.handle) || '';
       if (!MIXED_SAMPLER_RE.test(infoLog)) {
-        // Real validation error — report it
         this.linkStatus = 'error';
         return 'validation-error';
       }
-      // Mixed sampler types sharing default texture unit 0 before draw-time
-      // binding — this is a false positive, ignore it.
     }
 
     this.linkStatus = 'success';

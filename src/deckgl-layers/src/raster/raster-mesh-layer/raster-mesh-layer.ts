@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {log, UpdateParameters} from '@deck.gl/core';
+import {UpdateParameters} from '@deck.gl/core';
 import {SimpleMeshLayer, SimpleMeshLayerProps} from '@deck.gl/mesh-layers';
 import {Geometry} from '@luma.gl/engine';
 import {Model} from '@luma.gl/engine';
@@ -34,10 +34,11 @@ interface MeshData {
 }
 
 function validateGeometryAttributes(attributes: Record<string, unknown>) {
-  log.assert(
-    attributes.positions || attributes.POSITION,
-    'RasterMeshLayer requires "postions" or "POSITION" attribute in mesh property.'
-  );
+  if (!(attributes.positions || attributes.POSITION)) {
+    throw new Error(
+      'RasterMeshLayer requires "positions" or "POSITION" attribute in mesh property.'
+    );
+  }
 }
 
 /*
@@ -53,10 +54,9 @@ function getGeometry(data: MeshData | Geometry): Geometry {
     return new Geometry(data as ConstructorParameters<typeof Geometry>[0]);
   } else if ('positions' in data || 'POSITION' in data) {
     validateGeometryAttributes(data as Record<string, unknown>);
-    // @ts-expect-error topology is required in luma.gl 9 GeometryProps
     return new Geometry({
-      attributes: data
-    });
+      attributes: data as Record<string, unknown>
+    } as ConstructorParameters<typeof Geometry>[0]);
   }
   throw Error('Invalid mesh');
 }

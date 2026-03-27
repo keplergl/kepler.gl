@@ -8,7 +8,7 @@
 import {parse, fetchFile, load, FetchError} from '@loaders.gl/core';
 import {ImageLoader} from '@loaders.gl/images';
 import {NPYLoader} from '@loaders.gl/textures';
-// @ts-expect-error moduleResolution mismatch with luma.gl 9 .js specifiers
+// @ts-ignore GL resolution depends on moduleResolution setting
 import {GL} from '@luma.gl/constants';
 
 /**
