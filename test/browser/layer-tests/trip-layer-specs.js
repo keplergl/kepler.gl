@@ -314,8 +314,6 @@ test('#TripLayer -> renderLayer', t => {
         // test attributes
         const {attributes} = deckTripLayer.state.attributeManager;
 
-        // In deck.gl 9, PathLayer's tesselator may call getFilterValue differently,
-        // so we just verify the filterValues attribute was created with correct structure
         t.ok(attributes.filterValues, 'Should have filterValues attribute');
         t.ok(
           attributes.filterValues.value instanceof Float32Array,
@@ -323,23 +321,51 @@ test('#TripLayer -> renderLayer', t => {
         );
         t.ok(attributes.filterValues.value.length > 0, 'filterValues should have data');
 
-        // In deck.gl 9, PathLayer uses Uint8ClampedArray for colors and may produce
-        // different vertex counts. Verify attributes exist and start with correct values.
         t.ok(attributes.instanceColors, 'Should have instanceColors attribute');
         t.ok(attributes.instanceStrokeWidths, 'Should have instanceStrokeWidths attribute');
 
+        // deck.gl 9's PathLayer pre-allocates attribute arrays beyond the actual data.
+        // Use numInstances to know the real data extent.
+        const numInstances = deckTripLayer.state.numInstances ?? 0;
+        t.ok(numInstances > 0, `should have instances (got ${numInstances})`);
+
+        // Verify instanceColors for all real instances: should be [1, 2, 3, 255]
         const colorsArr = attributes.instanceColors.value;
-        if (colorsArr.length >= 4) {
-          t.equal(colorsArr[0], 1, 'instanceColors R should be 1');
-          t.equal(colorsArr[1], 2, 'instanceColors G should be 2');
-          t.equal(colorsArr[2], 3, 'instanceColors B should be 3');
-          t.equal(colorsArr[3], 255, 'instanceColors A should be 255');
+        for (let v = 0; v < numInstances; v++) {
+          const base = v * 4;
+          t.equal(colorsArr[base], 1, `instanceColors[${v}] R should be 1`);
+          t.equal(colorsArr[base + 1], 2, `instanceColors[${v}] G should be 2`);
+          t.equal(colorsArr[base + 2], 3, `instanceColors[${v}] B should be 3`);
+          t.equal(colorsArr[base + 3], 255, `instanceColors[${v}] A should be 255`);
         }
 
+        // Verify instanceStrokeWidths for all real instances: should be 1 (defaultLineWidth)
         const strokeArr = attributes.instanceStrokeWidths.value;
-        if (strokeArr.length >= 1) {
-          t.equal(strokeArr[0], 1, 'instanceStrokeWidths[0] should be 1');
+        for (let v = 0; v < numInstances; v++) {
+          t.equal(strokeArr[v], 1, `instanceStrokeWidths[${v}] should be 1`);
         }
+
+        // Verify filterValues: channels 1-3 should be 0 for all instances.
+        // Channel 0 should contain the per-feature filter values.
+        const expectedFV = [
+          Number.MIN_SAFE_INTEGER,
+          7 - valueFilterDomain0,
+          6 - valueFilterDomain0
+        ];
+        const fv = attributes.filterValues.value;
+        const seenFV = new Set();
+        for (let v = 0; v < numInstances; v++) {
+          const base = v * 4;
+          seenFV.add(fv[base]);
+          t.equal(fv[base + 1], 0, `filterValues[${v}][1] should be 0`);
+          t.equal(fv[base + 2], 0, `filterValues[${v}][2] should be 0`);
+          t.equal(fv[base + 3], 0, `filterValues[${v}][3] should be 0`);
+        }
+        expectedFV.forEach(val => {
+          // Float32 precision may round MIN_SAFE_INTEGER, so check with tolerance
+          const found = [...seenFV].some(v => Math.abs(v - val) < 2);
+          t.ok(found, `filterValues should contain feature value ~${val}`);
+        });
         // TODO: test UpdateTriggers
       }
     }
