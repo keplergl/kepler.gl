@@ -10,6 +10,7 @@
 
 declare module '@deck.gl/core' {
   export {default as Deck} from '@deck.gl/core/dist/lib/deck';
+  export {default as DeckRenderer} from '@deck.gl/core/dist/lib/deck-renderer';
   export {default as LayerManager} from '@deck.gl/core/dist/lib/layer-manager';
   export {default as Layer} from '@deck.gl/core/dist/lib/layer';
   export {default as CompositeLayer} from '@deck.gl/core/dist/lib/composite-layer';
@@ -116,6 +117,7 @@ declare module '@deck.gl/geo-layers' {
   export type {TripsLayerProps} from '@deck.gl/geo-layers/dist/trips-layer/trips-layer';
   export type {MVTLayerProps} from '@deck.gl/geo-layers/dist/mvt-layer/mvt-layer';
   export type {GeoBoundingBox, NonGeoBoundingBox} from '@deck.gl/geo-layers/dist/tileset-2d/index';
+  export {Tile2DHeader as _Tile2DHeader} from '@deck.gl/geo-layers/dist/tileset-2d/index';
 }
 
 declare module '@deck.gl/aggregation-layers' {
@@ -163,4 +165,8 @@ declare module '@deck.gl/extensions' {
   export type {FillStyleExtensionProps} from '@deck.gl/extensions/dist/fill-style/fill-style-extension';
   export type {CollisionFilterExtensionProps} from '@deck.gl/extensions/dist/collision-filter/collision-filter-extension';
   export type {MaskExtensionProps} from '@deck.gl/extensions/dist/mask/mask-extension';
+}
+
+declare module '@luma.gl/core' {
+  export {Texture, type TextureProps} from '@luma.gl/core/dist/adapter/resources/texture';
 }
