@@ -250,6 +250,7 @@
     "@loaders.gl/wms": "4.3.4",
     "@luma.gl/constants": "9.2.6",
     "@luma.gl/core": "9.2.6",
+    "@luma.gl/effects": "9.2.6",
     "@luma.gl/engine": "9.2.6",
     "@luma.gl/shadertools": "9.2.6",
     "@luma.gl/test-utils": "9.2.6",

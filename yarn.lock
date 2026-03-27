@@ -5971,7 +5971,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@luma.gl/effects@npm:^9.2.6":
+"@luma.gl/effects@npm:9.2.6":
   version: 9.2.6
   resolution: "@luma.gl/effects@npm:9.2.6"
   dependencies:
