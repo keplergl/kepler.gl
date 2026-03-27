@@ -5,7 +5,7 @@
 import React, {Component, createRef, useMemo} from 'react';
 import styled, {withTheme} from 'styled-components';
 import {Map, MapRef} from 'react-map-gl';
-import {PickingInfo} from '@deck.gl/core';
+import {PickingInfo, MapView} from '@deck.gl/core';
 import DeckGL from '@deck.gl/react';
 import {createSelector, Selector} from 'reselect';
 import {useDroppable} from '@dnd-kit/core';
@@ -80,7 +80,6 @@ import {MapViewStateContext} from './map-view-state-context';
 
 import ErrorBoundary from './common/error-boundary';
 import {LOCALE_CODES} from '@kepler.gl/localization';
-import {MapView} from '@deck.gl/core';
 import {
   MapStyle,
   areAnyDeckLayersLoading,
@@ -896,7 +895,9 @@ export default function MapContainerFactory(
 
       const views = deckGlProps?.views
         ? deckGlProps?.views()
-        : new MapView({legacyMeterSizes: true} as any);
+        : new MapView({legacyMeterSizes: true} as ConstructorParameters<typeof MapView>[0] & {
+            legacyMeterSizes: boolean;
+          });
 
       let allDeckGlProps = {
         ...deckGlProps,
@@ -951,21 +952,21 @@ export default function MapContainerFactory(
             onHover={
               isInteractive
                 ? data => {
-                    const res = EditorLayerUtils.onHover(data as any, {
+                    const res = EditorLayerUtils.onHover(data, {
                       editorMenuActive,
                       editor,
                       hoverInfo
                     });
                     if (res) return;
 
-                    this._onLayerHoverDebounced(data as any, index);
+                    this._onLayerHoverDebounced(data, index);
                   }
                 : null
             }
             onClick={(data, event) => {
               // @ts-ignore
               normalizeEvent(event.srcEvent, viewport);
-              const res = EditorLayerUtils.onClick(data as any, event, {
+              const res = EditorLayerUtils.onClick(data, event, {
                 editorMenuActive,
                 editor,
                 onLayerClick,
@@ -974,7 +975,7 @@ export default function MapContainerFactory(
               });
               if (res) return;
 
-              visStateActions.onLayerClick(data as any);
+              visStateActions.onLayerClick(data);
             }}
             onError={this._onDeckError}
             ref={comp => {

@@ -303,7 +303,11 @@ test('#GridLayer -> renderLayer', t => {
         // deck.gl 9: sublayer data is {length, attributes} with typed arrays
         const cellData = gridCellLayer.props.data;
         t.ok(cellData && typeof cellData.length === 'number', 'cell data should have length');
-        t.equal(cellData.length, expectedGridCellData.length, 'should have correct number of grid cells');
+        t.equal(
+          cellData.length,
+          expectedGridCellData.length,
+          'should have correct number of grid cells'
+        );
 
         // Verify attributes exist on the cell sublayer
         if (cellData.attributes) {
@@ -326,7 +330,11 @@ test('#GridLayer -> renderLayer', t => {
         const aggregator = cpuGridLayer.state?.aggregator;
         if (aggregator) {
           t.ok(aggregator.binCount > 0, 'aggregator should have bins');
-          t.equal(aggregator.binCount, expectedGridCellData.length, 'bin count should match expected cells');
+          t.equal(
+            aggregator.binCount,
+            expectedGridCellData.length,
+            'bin count should match expected cells'
+          );
 
           const colorDomain = aggregator.getResultDomain(0);
           t.ok(Array.isArray(colorDomain), 'color domain should be an array');
@@ -385,7 +393,11 @@ test('#GridLayer -> renderLayer', t => {
         t.equal(props.colorScaleType, 'quantize', 'should pass colorScaleType');
 
         const cellData = gridCellLayer.props.data;
-        t.equal(cellData.length, expectedGridCellData.length, 'should have correct number of grid cells');
+        t.equal(
+          cellData.length,
+          expectedGridCellData.length,
+          'should have correct number of grid cells'
+        );
 
         // deck.gl 9: onSetColorDomain receives [min, max] tuple
         t.ok(spyLayerCallbacks.called, 'should call onSetLayerDomain');
@@ -399,7 +411,11 @@ test('#GridLayer -> renderLayer', t => {
         const aggregator = cpuGridLayer.state?.aggregator;
         if (aggregator) {
           t.ok(aggregator.binCount > 0, 'aggregator should have bins');
-          t.equal(aggregator.binCount, expectedGridCellData.length, 'bin count should match expected cells');
+          t.equal(
+            aggregator.binCount,
+            expectedGridCellData.length,
+            'bin count should match expected cells'
+          );
 
           const colorDomain = aggregator.getResultDomain(0);
           t.ok(Array.isArray(colorDomain), 'color domain should be an array');
