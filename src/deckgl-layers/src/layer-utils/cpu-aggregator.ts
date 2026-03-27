@@ -80,7 +80,7 @@ class BinSorter {
 
   _updateMinMaxValues() {
     let maxCount = 0;
-    let maxValue = 0;
+    let maxValue = -MAX_32_BIT_FLOAT;
     let minValue = MAX_32_BIT_FLOAT;
     let totalCount = 0;
     for (const x of this.aggregatedBins) {
