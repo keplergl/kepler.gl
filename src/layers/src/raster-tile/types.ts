@@ -3,7 +3,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {_Tile2DHeader} from '@deck.gl/geo-layers';
-import {TypedArray} from '@loaders.gl/loader-utils/src/types';
+import type {TypedArray} from '@loaders.gl/loader-utils';
 import type {TextureProps} from '@luma.gl/core';
 
 /**
