@@ -8,6 +8,17 @@ import {editShader} from '../';
 
 type RGBAColor = Color;
 
+const elevationScaleUniforms = {
+  name: 'elevationScale',
+  vs: `uniform elevationScaleUniforms {
+  float elevationScale;
+} elevationScaleProps;
+`,
+  uniformTypes: {
+    elevationScale: 'f32'
+  }
+};
+
 const defaultProps = {
   ...LineLayer.defaultProps,
   getTargetColor: x => x.color || [0, 0, 0, 255]
@@ -31,29 +42,20 @@ function addInstanceColorShader(vs) {
 }
 
 function addElevationScale(vs) {
-  let elevationVs = editShader(
+  return editShader(
     vs,
-    'line elevation scale 1 vs - inject elevation scale',
-    'out vec2 uv;',
-    `out vec2 uv;\nuniform float elevationScale;`
-  );
-
-  elevationVs = editShader(
-    elevationVs,
-    'line elevation scale 2 vs - multiply by elevation scale',
+    'line elevation scale vs - multiply by elevation scale',
     `geometry.worldPosition = instanceSourcePositions;
 geometry.worldPositionAlt = instanceTargetPositions;
 vec3 source_world = instanceSourcePositions;
 vec3 target_world = instanceTargetPositions;`,
     `vec3 source_world = instanceSourcePositions;
 vec3 target_world = instanceTargetPositions;
-source_world.z *= elevationScale;
-target_world.z *= elevationScale;
+source_world.z *= elevationScaleProps.elevationScale;
+target_world.z *= elevationScaleProps.elevationScale;
 geometry.worldPosition = source_world;
 geometry.worldPositionAlt = target_world;`
   );
-
-  return elevationVs;
 }
 
 export default class EnhancedLineLayer extends LineLayer<
@@ -68,25 +70,19 @@ export default class EnhancedLineLayer extends LineLayer<
 
     return {
       ...shaders,
-      vs
+      vs,
+      modules: [...(shaders.modules || []), elevationScaleUniforms]
     };
   }
 
   draw(opts) {
-    const {elevationScale} = this.props;
     const model = this.state.model;
-    if (model && elevationScale !== undefined) {
-      const gl = this.context.device?.gl || this.context.gl;
-      if (gl) {
-        const program = model.pipeline?.handle || model.handle;
-        if (program) {
-          gl.useProgram(program);
-          const loc = gl.getUniformLocation(program, 'elevationScale');
-          if (loc) {
-            gl.uniform1f(loc, elevationScale);
-          }
+    if (model) {
+      model.shaderInputs.setProps({
+        elevationScale: {
+          elevationScale: this.props.elevationScale ?? 1
         }
-      }
+      });
     }
     super.draw(opts);
   }

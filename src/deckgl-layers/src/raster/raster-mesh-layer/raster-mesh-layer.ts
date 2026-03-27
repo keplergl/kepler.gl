@@ -20,6 +20,7 @@ import {loadImages} from '../images';
 import type {RasterLayerAddedProps, ImageState} from '../types';
 import {modulesEqual} from '../util';
 import {patchPipelineValidation} from '../pipeline-validation-patch';
+import {setStandaloneUniforms, collectIntUniforms} from '../standalone-uniforms';
 
 patchPipelineValidation();
 
@@ -180,47 +181,21 @@ export default class RasterMeshLayer extends SimpleMeshLayer<any, RasterLayerAdd
           }
 
           if (Object.keys(scalarUniforms).length > 0) {
-            const gl = model.device?.gl;
-            const program = model.pipeline?.handle;
-            if (gl && program) {
-              gl.useProgram(program);
-              for (const [name, value] of Object.entries(scalarUniforms)) {
-                const loc = gl.getUniformLocation(program, name);
-                if (loc !== null) {
-                  if (typeof value === 'number') {
-                    if (Number.isInteger(value) && this._isIntUniform(mod, name)) {
-                      gl.uniform1i(loc, value);
-                    } else {
-                      gl.uniform1f(loc, value);
-                    }
-                  } else if (Array.isArray(value)) {
-                    if (value.length === 2) gl.uniform2fv(loc, value);
-                    else if (value.length === 3) gl.uniform3fv(loc, value);
-                    else if (value.length === 4) gl.uniform4fv(loc, value);
-                    else if (value.length === 16) gl.uniformMatrix4fv(loc, false, value);
-                  }
-                }
-              }
-            }
+            setStandaloneUniforms(model, scalarUniforms, collectIntUniforms(mod));
           }
         }
       }
     }
 
-    // Set mesh-specific uniforms via raw WebGL
-    const gl = model.device?.gl;
-    const program = model.pipeline?.handle;
-    if (gl && program) {
-      gl.useProgram(program);
-      const opacityLoc = gl.getUniformLocation(program, 'meshOpacity');
-      if (opacityLoc !== null) {
-        gl.uniform1f(opacityLoc, this.props.opacity ?? 1);
-      }
-      const flatLoc = gl.getUniformLocation(program, 'meshFlatShading');
-      if (flatLoc !== null) {
-        gl.uniform1i(flatLoc, !this.state.hasNormals ? 1 : 0);
-      }
-    }
+    // Set mesh-specific standalone uniforms
+    setStandaloneUniforms(
+      model,
+      {
+        meshOpacity: this.props.opacity ?? 1,
+        meshFlatShading: !this.state.hasNormals ? 1 : 0
+      },
+      new Set(['meshFlatShading'])
+    );
 
     const drawSuccess = model.draw(this.context.renderPass);
     if (!drawSuccess) {
@@ -241,12 +216,6 @@ export default class RasterMeshLayer extends SimpleMeshLayer<any, RasterLayerAdd
         this.props.onRedrawNeeded();
       }
     });
-  }
-
-  _isIntUniform(mod: any, name: string): boolean {
-    const fs = mod.fs2 || mod.fs || '';
-    const regex = new RegExp(`uniform\\s+int\\s+${name}\\b`);
-    return regex.test(fs);
   }
 
   finalizeState(): void {
