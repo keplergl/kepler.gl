@@ -134,6 +134,8 @@ export default class RasterTileLayer extends KeplerLayer {
   onRedrawNeeded: (() => void) | undefined;
   /** Track the last rendered preset to detect changes */
   _lastRenderedPreset: string | undefined;
+  /** Timeout ID for deferred redraws */
+  _redrawTimeout: ReturnType<typeof setTimeout> | undefined;
 
   getDataSourceParams: (
     stac: CompleteSTACObject,
@@ -406,7 +408,11 @@ export default class RasterTileLayer extends KeplerLayer {
     // deck.gl re-renders sublayers after the new pipeline compiles
     const currentPreset = this.config.visConfig?.preset;
     if (this._lastRenderedPreset !== undefined && this._lastRenderedPreset !== currentPreset) {
-      setTimeout(() => this.onRedrawNeeded?.(), 100);
+      if (this._redrawTimeout) clearTimeout(this._redrawTimeout);
+      this._redrawTimeout = setTimeout(() => {
+        this._redrawTimeout = undefined;
+        this.onRedrawNeeded?.();
+      }, 100);
     }
     this._lastRenderedPreset = currentPreset;
 

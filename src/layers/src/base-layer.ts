@@ -158,7 +158,6 @@ const MAX_SAMPLE_SIZE = 5000;
 const defaultDomain: [number, number] = [0, 1];
 const dataFilterExtension = new DataFilterExtension({
   filterSize: MAX_GPU_FILTERS,
-  // @ts-ignore countItems is a valid DataFilterExtension option in deck.gl 9
   countItems: getApplicationConfig().useOnFilteredItemsChange ?? false
 });
 

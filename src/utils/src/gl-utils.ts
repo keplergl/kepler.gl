@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import {console as Console} from 'global/window';
 import {LAYER_BLENDINGS} from '@kepler.gl/constants';
 import {DeckRenderer} from '@deck.gl/core';
 
@@ -37,10 +38,18 @@ export function getLayerBlendingParameters(layerBlending: string): Record<string
   };
 
   if (blendFunc.length >= 2) {
+    if (!GL_BLEND_FUNC_TO_WEBGPU[blendFunc[0]])
+      Console.warn(`Unmapped blend function: ${blendFunc[0]}, falling back to 'one'`);
+    if (!GL_BLEND_FUNC_TO_WEBGPU[blendFunc[1]])
+      Console.warn(`Unmapped blend function: ${blendFunc[1]}, falling back to 'zero'`);
     params.blendColorSrcFactor = GL_BLEND_FUNC_TO_WEBGPU[blendFunc[0]] || 'one';
     params.blendColorDstFactor = GL_BLEND_FUNC_TO_WEBGPU[blendFunc[1]] || 'zero';
   }
   if (blendFunc.length >= 4) {
+    if (!GL_BLEND_FUNC_TO_WEBGPU[blendFunc[2]])
+      Console.warn(`Unmapped blend function: ${blendFunc[2]}, falling back to 'one'`);
+    if (!GL_BLEND_FUNC_TO_WEBGPU[blendFunc[3]])
+      Console.warn(`Unmapped blend function: ${blendFunc[3]}, falling back to 'zero'`);
     params.blendAlphaSrcFactor = GL_BLEND_FUNC_TO_WEBGPU[blendFunc[2]] || 'one';
     params.blendAlphaDstFactor = GL_BLEND_FUNC_TO_WEBGPU[blendFunc[3]] || 'zero';
   } else {
@@ -65,7 +74,9 @@ export function getLayerBlendingParameters(layerBlending: string): Record<string
  * This function is kept for backward compatibility but is a no-op.
  */
 export function setLayerBlending(_gl: unknown, _layerBlending: string): void {
-  // no-op in deck.gl 9.x - blending is handled via parameters prop
+  Console.warn(
+    'setLayerBlending is deprecated. In deck.gl 9.x, blending is set via the `parameters` prop. Use getLayerBlendingParameters() instead.'
+  );
 }
 
 /**

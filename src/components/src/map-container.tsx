@@ -625,8 +625,7 @@ export default function MapContainerFactory(
     }
 
     _onBeforeRender = () => {
-      // In deck.gl 9.x, layer blending is handled via parameters prop
-      // setLayerBlending is now a no-op
+      // no-op
     };
 
     _onDeckError = (error, layer) => {

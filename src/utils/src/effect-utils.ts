@@ -112,7 +112,6 @@ function updateEffect({visState, mapState, effect}) {
     // Re-enable shadow rendering in case it was previously disabled
     const deckEffect = effect.deckEffect;
     for (const light of deckEffect.directionalLights || []) {
-      light._shadow = true;
       light.shadow = true;
     }
     deckEffect.shadow = deckEffect.directionalLights?.some(l => l.shadow) ?? false;

@@ -135,7 +135,6 @@
     "@babel/traverse": "^7.12.1",
     "@cfaester/enzyme-adapter-react-18": "^0.7.0",
     "@deck.gl-community/editable-layers": "9.2.8",
-    "@deck.gl-community/layers": "9.2.8",
     "@deck.gl/test-utils": "^9.2.11",
     "@loaders.gl/polyfills": "^4.3.4",
     "@luma.gl/test-utils": "^9.2.6",
