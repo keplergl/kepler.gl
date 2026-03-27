@@ -4,7 +4,7 @@
 /* eslint-disable enzyme-deprecation/no-mount */
 import {LayerManager, MapView} from '@deck.gl/core';
 import React from 'react';
-import {gl, device} from '@deck.gl/test-utils';
+import {device} from '@deck.gl/test-utils';
 import sinon from 'sinon';
 import {mount} from 'enzyme';
 import {console as Console} from 'global/window';

@@ -560,7 +560,12 @@ export type CPUAggregatorState = {
   layerData: {data?: Record<string, unknown>[]};
   dimensions: Record<
     string,
-    {getValue?: Function; sortedBins?: BinSorter; valueDomain?: number[]; scaleFunc?: Function}
+    {
+      getValue?: (...args: unknown[]) => number;
+      sortedBins?: BinSorter;
+      valueDomain?: number[];
+      scaleFunc?: ((...args: unknown[]) => unknown) & {domain: () => number[]; scaleType?: string};
+    }
   >;
   geoJSON?: any;
   clusterBuilder?: any;

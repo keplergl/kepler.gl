@@ -97,7 +97,7 @@ export function getEditorLayer({
           const {features: _features} = updatedData;
           if (_features.length) {
             const lastFeature = _features[_features.length - 1];
-            lastFeature.properties!.isClosed = true;
+            if (lastFeature.properties) lastFeature.properties.isClosed = true;
             lastFeature.id = generateHashId(6);
             onSetFeatures(updatedData.features as unknown as Feature[]);
             setSelectedFeature(lastFeature as unknown as Feature);
