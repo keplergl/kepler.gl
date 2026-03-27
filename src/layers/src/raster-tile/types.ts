@@ -5,7 +5,12 @@
 import {_Tile2DHeader} from '@deck.gl/geo-layers';
 import {TypedArray} from '@loaders.gl/loader-utils/src/types';
 import type {TextureProps} from '@luma.gl/core';
-type Texture2DProps = TextureProps;
+
+/**
+ * Loose texture data descriptor assembled before actual luma.gl Texture creation.
+ * Intentionally broader than luma.gl's strict TextureProps (which requires width/height).
+ */
+type Texture2DProps = Partial<TextureProps> & Record<string, any>;
 
 import {KeplerTable as KeplerDataset} from '@kepler.gl/table';
 import type {ColorMap, StacTypes} from '@kepler.gl/types';

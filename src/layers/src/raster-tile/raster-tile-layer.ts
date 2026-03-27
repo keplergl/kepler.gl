@@ -7,7 +7,7 @@ import {COORDINATE_SYSTEM, Layer as DeckLayer} from '@deck.gl/core';
 import {TileLayer, GeoBoundingBox} from '@deck.gl/geo-layers';
 import {PMTilesSource, PMTilesTileSource} from '@loaders.gl/pmtiles';
 import type {TextureProps} from '@luma.gl/core';
-type Texture2DProps = TextureProps;
+type Texture2DProps = Partial<TextureProps> & Record<string, any>;
 import memoize from 'lodash/memoize';
 
 import {PathLayer} from '@deck.gl/layers';

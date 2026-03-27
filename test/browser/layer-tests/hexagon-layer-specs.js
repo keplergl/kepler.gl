@@ -311,10 +311,7 @@ test('#HexagonLayer -> renderLayer', t => {
           t.deepEqual(props[key], expectedProps[key], `should have correct props.${key}`);
         });
         // In deck.gl 9, onSetLayerDomain receives [min, max] array instead of {domain, aggregatedBins}
-        t.ok(
-          spyLayerCallbacks.called,
-          'should call onSetLayerDomain'
-        );
+        t.ok(spyLayerCallbacks.called, 'should call onSetLayerDomain');
       }
     },
     {
@@ -441,10 +438,7 @@ test('#HexagonLayer -> renderHover', t => {
       },
       assert: deckLayers => {
         const layerIds = deckLayers.map(l => l.id);
-        t.ok(
-          layerIds.includes('test_layer_1'),
-          'Should create main hexagon layer'
-        );
+        t.ok(layerIds.includes('test_layer_1'), 'Should create main hexagon layer');
         // In deck.gl 9 headless tests, sublayers may not fully initialize without WebGL
         if (layerIds.includes('test_layer_1-cells')) {
           t.pass('cells sublayer created');
@@ -452,10 +446,7 @@ test('#HexagonLayer -> renderHover', t => {
           t.pass('cells sublayer not created in headless environment');
         }
         if (layerIds.length >= 3) {
-          t.ok(
-            layerIds.includes('test_layer_1-hovered'),
-            'Should include hovered layer'
-          );
+          t.ok(layerIds.includes('test_layer_1-hovered'), 'Should include hovered layer');
         } else {
           t.pass('hover layers not rendered without WebGL picking state');
         }

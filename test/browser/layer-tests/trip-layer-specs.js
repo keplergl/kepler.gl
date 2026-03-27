@@ -317,7 +317,10 @@ test('#TripLayer -> renderLayer', t => {
         // In deck.gl 9, PathLayer's tesselator may call getFilterValue differently,
         // so we just verify the filterValues attribute was created with correct structure
         t.ok(attributes.filterValues, 'Should have filterValues attribute');
-        t.ok(attributes.filterValues.value instanceof Float32Array, 'filterValues should be Float32Array');
+        t.ok(
+          attributes.filterValues.value instanceof Float32Array,
+          'filterValues should be Float32Array'
+        );
         t.ok(attributes.filterValues.value.length > 0, 'filterValues should have data');
 
         // In deck.gl 9, PathLayer uses Uint8ClampedArray for colors and may produce
