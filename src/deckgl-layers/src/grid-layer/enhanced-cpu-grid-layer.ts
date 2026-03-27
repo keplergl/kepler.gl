@@ -22,22 +22,27 @@ export default class ScaleEnhancedGridLayer extends GridLayer<any> {
     if (info.object) {
       const {cellOriginCommon, cellSizeCommon, aggregatorViewport} = this.state as any;
       const coverage = this.props.coverage ?? 1;
-      if (cellOriginCommon && cellSizeCommon && aggregatorViewport) {
-        const {col, row} = info.object;
-        // Cell center in common space
-        const cx = (col + 0.5) * cellSizeCommon[0] + cellOriginCommon[0];
-        const cy = (row + 0.5) * cellSizeCommon[1] + cellOriginCommon[1];
-        const hw = 0.5 * coverage * cellSizeCommon[0]; // half-width
-        const hh = 0.5 * coverage * cellSizeCommon[1]; // half-height
-
-        (info.object as any).cellOutline = [
-          aggregatorViewport.unprojectFlat([cx - hw, cy - hh]),
-          aggregatorViewport.unprojectFlat([cx + hw, cy - hh]),
-          aggregatorViewport.unprojectFlat([cx + hw, cy + hh]),
-          aggregatorViewport.unprojectFlat([cx - hw, cy + hh]),
-          aggregatorViewport.unprojectFlat([cx - hw, cy - hh])
-        ];
+      if (!cellOriginCommon || !cellSizeCommon || !aggregatorViewport) {
+        console.error(
+          'ScaleEnhancedGridLayer: expected internal state properties ' +
+            '(cellOriginCommon, cellSizeCommon, aggregatorViewport) are missing. ' +
+            'Hover outline will not be shown. This may indicate a deck.gl version change.'
+        );
+        return info;
       }
+      const {col, row} = info.object;
+      const cx = (col + 0.5) * cellSizeCommon[0] + cellOriginCommon[0];
+      const cy = (row + 0.5) * cellSizeCommon[1] + cellOriginCommon[1];
+      const hw = 0.5 * coverage * cellSizeCommon[0];
+      const hh = 0.5 * coverage * cellSizeCommon[1];
+
+      (info.object as any).cellOutline = [
+        aggregatorViewport.unprojectFlat([cx - hw, cy - hh]),
+        aggregatorViewport.unprojectFlat([cx + hw, cy - hh]),
+        aggregatorViewport.unprojectFlat([cx + hw, cy + hh]),
+        aggregatorViewport.unprojectFlat([cx - hw, cy + hh]),
+        aggregatorViewport.unprojectFlat([cx - hw, cy - hh])
+      ];
     }
     return info;
   }

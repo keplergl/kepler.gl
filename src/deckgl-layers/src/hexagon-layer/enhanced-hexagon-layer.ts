@@ -33,21 +33,27 @@ export default class ScaleEnhancedHexagonLayer extends HexagonLayer<any> {
     if (info.object) {
       const {radiusCommon, hexOriginCommon, aggregatorViewport} = this.state as any;
       const coverage = this.props.coverage ?? 1;
-      if (radiusCommon && aggregatorViewport) {
-        const centroid = getHexbinCentroid([info.object.col, info.object.row], radiusCommon);
-        const ox = hexOriginCommon?.[0] ?? 0;
-        const oy = hexOriginCommon?.[1] ?? 0;
-        const r = radiusCommon * coverage;
-
-        const outline: number[][] = [];
-        for (let i = 0; i < 6; i++) {
-          const vx = centroid[0] + r * HexbinVertices[i][0] + ox;
-          const vy = centroid[1] + r * HexbinVertices[i][1] + oy;
-          outline.push(aggregatorViewport.unprojectFlat([vx, vy]));
-        }
-        outline.push(outline[0]);
-        (info.object as any).cellOutline = outline;
+      if (!radiusCommon || !aggregatorViewport) {
+        console.error(
+          'ScaleEnhancedHexagonLayer: expected internal state properties ' +
+            '(radiusCommon, aggregatorViewport) are missing. ' +
+            'Hover outline will not be shown. This may indicate a deck.gl version change.'
+        );
+        return info;
       }
+      const centroid = getHexbinCentroid([info.object.col, info.object.row], radiusCommon);
+      const ox = hexOriginCommon?.[0] ?? 0;
+      const oy = hexOriginCommon?.[1] ?? 0;
+      const r = radiusCommon * coverage;
+
+      const outline: number[][] = [];
+      for (let i = 0; i < 6; i++) {
+        const vx = centroid[0] + r * HexbinVertices[i][0] + ox;
+        const vy = centroid[1] + r * HexbinVertices[i][1] + oy;
+        outline.push(aggregatorViewport.unprojectFlat([vx, vy]));
+      }
+      outline.push(outline[0]);
+      (info.object as any).cellOutline = outline;
     }
     return info;
   }
