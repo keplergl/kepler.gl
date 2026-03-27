@@ -80,10 +80,16 @@ export function patchDeckRendererForPostProcessing(): void {
   _deckRendererPatched = true;
 
   const proto = DeckRenderer.prototype as any;
+  const original =
+    typeof proto._resizeRenderBuffers === 'function' ? proto._resizeRenderBuffers : null;
 
   proto._resizeRenderBuffers = function _resizeRenderBufferPatched() {
+    if (!this.device?.canvasContext) {
+      return original?.call(this);
+    }
+
     const {renderBuffers} = this;
-    const size = this.device.canvasContext!.getDrawingBufferSize();
+    const size = this.device.canvasContext.getDrawingBufferSize();
     const [width, height] = size;
     if (renderBuffers.length === 0) {
       [0, 1].map((i: number) => {
