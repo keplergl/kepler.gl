@@ -3,6 +3,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {ColumnLayer, ColumnLayerProps} from '@deck.gl/layers';
+import {UNIT} from '@deck.gl/core';
 
 import {editShader} from '../';
 
@@ -24,7 +25,7 @@ function addInstanceCoverage(vs) {
 }
 
 type EnhancedColumnLayerProps = ColumnLayerProps<any> & {
-  strokeOpacity: any;
+  strokeOpacity: number;
 };
 
 class EnhancedColumnLayer extends ColumnLayer<any, EnhancedColumnLayerProps> {
@@ -43,6 +44,71 @@ class EnhancedColumnLayer extends ColumnLayer<any, EnhancedColumnLayerProps> {
     this.getAttributeManager()?.addInstanced({
       instanceCoverage: {size: 1, accessor: 'getCoverage'}
     });
+  }
+
+  draw({uniforms: _uniforms}) {
+    const {
+      lineWidthUnits,
+      lineWidthScale,
+      lineWidthMinPixels,
+      lineWidthMaxPixels,
+      radiusUnits,
+      elevationScale,
+      extruded,
+      filled,
+      stroked,
+      strokeOpacity,
+      wireframe,
+      offset,
+      coverage,
+      radius,
+      angle
+    } = this.props;
+    const fillModel = this.state.fillModel;
+    const wireframeModel = this.state.wireframeModel;
+    const {fillVertexCount, edgeDistance} = this.state;
+
+    const columnProps = {
+      radius,
+      angle: (angle / 180) * Math.PI,
+      offset,
+      extruded,
+      stroked,
+      coverage,
+      elevationScale,
+      edgeDistance,
+      radiusUnits: UNIT[radiusUnits],
+      widthUnits: UNIT[lineWidthUnits],
+      widthScale: lineWidthScale,
+      widthMinPixels: lineWidthMinPixels,
+      widthMaxPixels: lineWidthMaxPixels
+    };
+
+    if (extruded && wireframe && wireframeModel) {
+      wireframeModel.shaderInputs.setProps({
+        column: {...columnProps, isStroke: true}
+      });
+      wireframeModel.draw(this.context.renderPass);
+    }
+    if (filled) {
+      fillModel.setVertexCount(fillVertexCount);
+      fillModel.shaderInputs.setProps({
+        column: {...columnProps, isStroke: false}
+      });
+      fillModel.draw(this.context.renderPass);
+    }
+    if (!extruded && stroked) {
+      fillModel.setVertexCount((fillVertexCount * 2) / 3);
+      fillModel.shaderInputs.setProps({
+        column: {...columnProps, isStroke: true},
+        layer: {opacity: strokeOpacity ?? this.props.opacity}
+      });
+      fillModel.draw(this.context.renderPass);
+      // Restore original opacity so subsequent passes are unaffected
+      fillModel.shaderInputs.setProps({
+        layer: {opacity: this.props.opacity}
+      });
+    }
   }
 }
 
