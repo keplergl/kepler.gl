@@ -94,8 +94,6 @@ import {VisState} from '@kepler.gl/schemas';
 
 import LoadingIndicator from './loading-indicator';
 
-patchDeckRendererForPostProcessing();
-
 // Debounce the propagation of viewport change and mouse moves to redux store.
 // This is to avoid too many renders of other components when the map is
 // being panned/zoomed (leading to laggy basemap/deck syncing).
@@ -389,6 +387,7 @@ export default function MapContainerFactory(
 
     constructor(props) {
       super(props);
+      patchDeckRendererForPostProcessing();
     }
 
     state = {
