@@ -1,14 +1,19 @@
-// @ts-nocheck
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {CompositeLayer, CompositeLayerProps, Position} from '@deck.gl/core';
+import {CompositeLayer, CompositeLayerProps, Layer, Position} from '@deck.gl/core';
 
 import {RGBColor, RGBAColor} from '@kepler.gl/types';
 import ScatterplotIconLayer from './scatterplot-icon-layer';
 
 // default icon geometry is a square
 const DEFAULT_ICON_GEOMETRY = [1, 1, 0, 1, -1, 0, -1, -1, 0, -1, -1, 0, -1, 1, 0, 1, 1, 0];
+
+interface SvgIconData {
+  id: string;
+  data: unknown[];
+  geometry: number[];
+}
 
 const defaultProps = {
   getIconGeometry: () => DEFAULT_ICON_GEOMETRY,
@@ -38,9 +43,10 @@ export default class SvgIconLayer extends CompositeLayer<SvgIconLayerProps> {
   }
 
   _extractSublayers() {
-    const {data, getIconGeometry, getIcon} = this.props;
+    const {data: rawData, getIconGeometry, getIcon} = this.props;
+    const data = rawData as {icon: string}[];
 
-    const iconLayers = {};
+    const iconLayers: Record<string, SvgIconData> = {};
     for (let i = 0; i < data.length; i++) {
       const iconId = getIcon(data[i]);
       iconLayers[iconId] = iconLayers[iconId] || {
@@ -59,13 +65,14 @@ export default class SvgIconLayer extends CompositeLayer<SvgIconLayerProps> {
     info?.sourceLayer?.updateAutoHighlight(info);
   }
 
-  renderLayers() {
+  renderLayers(): Layer[] | null {
     const layerId = this.props.id;
+    const data = this.state.data as SvgIconData[];
 
     const layers =
-      this.state.data &&
-      this.state.data.length &&
-      this.state.data.map(
+      data &&
+      data.length &&
+      data.map(
         ({id, data, geometry}) =>
           new ScatterplotIconLayer({
             ...this.props,

@@ -1,4 +1,3 @@
-// @ts-nocheck
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
@@ -6,11 +5,14 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) vis.gl contributors
 
-import {assert} from '@deck.gl/core';
 import * as arrow from 'apache-arrow';
 import * as ga from '@geoarrow/geoarrow-js';
 import {AccessorContext, AccessorFunction, _InternalAccessorContext} from '../types';
 import {isArrowFixedSizeList, isArrowStruct, isArrowVector} from '@kepler.gl/utils';
+
+export function assert(condition: any, message?: string): asserts condition {
+  if (!condition) throw new Error(message || 'assert');
+}
 
 export type TypedArray =
   | Uint8Array

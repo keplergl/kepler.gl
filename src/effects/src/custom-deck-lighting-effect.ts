@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-// @ts-nocheck
-
 import {LightingEffect, shadow} from '@deck.gl/core';
 
 /**
@@ -27,10 +25,13 @@ function createCustomShadowModule() {
 
   // Add outputUniformShadow to the UBO block (present in both vs and fs)
   const uboField = '  bool outputUniformShadow;\n';
+  // @ts-expect-error shader source is typed as string literal
   mod.vs = insertBefore(mod.vs, '} shadow;', uboField);
+  // @ts-expect-error shader source is typed as string literal
   mod.fs = insertBefore(mod.fs, '} shadow;', uboField);
 
   // Early return in shadow_getShadowWeight when outputUniformShadow is set
+  // @ts-expect-error shader source is typed as string literal
   mod.fs = insertBefore(
     mod.fs,
     'vec4 rgbaDepth = texture(shadowMap, position.xy);',
@@ -40,15 +41,19 @@ function createCustomShadowModule() {
   mod.uniformTypes = {
     ...shadow.uniformTypes,
     outputUniformShadow: 'f32'
-  };
+  } as typeof shadow.uniformTypes;
 
   // Wrap getUniforms to include outputUniformShadow in the UBO
   const originalGetUniforms = shadow.getUniforms;
   mod.getUniforms = (opts = {}, context = {}) => {
+    // @ts-expect-error originalGetUniforms expects specific args
     const u = originalGetUniforms(opts, context);
+    // @ts-expect-error outputUniformShadow is a custom property
     if (opts.outputUniformShadow !== undefined) {
+      // @ts-expect-error outputUniformShadow is a custom property
       u.outputUniformShadow = opts.outputUniformShadow;
     } else {
+      // @ts-expect-error outputUniformShadow is a custom property
       u.outputUniformShadow = false;
     }
     return u;
@@ -79,20 +84,28 @@ class CustomDeckLightingEffect extends LightingEffect {
   setup(context) {
     this.context = context;
     const {device, deck} = context;
+    // @ts-expect-error accessing private property shadow
     if (this.shadow && !this.dummyShadowMap) {
+      // @ts-expect-error accessing private method _createShadowPasses
       this._createShadowPasses(device);
       deck._addDefaultShaderModule(CustomShadowModule || shadow);
+      // @ts-expect-error accessing private property dummyShadowMap
       this.dummyShadowMap = device.createTexture({width: 1, height: 1});
     }
   }
 
   cleanup(context) {
+    // @ts-expect-error accessing private property shadowPasses
     for (const shadowPass of this.shadowPasses) {
       shadowPass.delete();
     }
+    // @ts-expect-error accessing private property shadowPasses
     this.shadowPasses.length = 0;
+    // @ts-expect-error accessing private property dummyShadowMap
     if (this.dummyShadowMap) {
+      // @ts-expect-error accessing private property dummyShadowMap
       this.dummyShadowMap.destroy();
+      // @ts-expect-error accessing private property dummyShadowMap
       this.dummyShadowMap = null;
       context.deck._removeDefaultShaderModule(CustomShadowModule || shadow);
     }
@@ -104,12 +117,15 @@ class CustomDeckLightingEffect extends LightingEffect {
     // Always provide dummyShadowMap so texture bindings are never undefined.
     // Prevents "Bad texture binding" errors in composite layer sublayers
     // when shadows are disabled.
+    // @ts-expect-error accessing private property dummyShadowMap
     if (props.shadow && !props.shadow.dummyShadowMap && this.dummyShadowMap) {
+      // @ts-expect-error accessing private property dummyShadowMap
       props.shadow.dummyShadowMap = this.dummyShadowMap;
     }
 
     // Pass outputUniformShadow through to the custom shadow module
     if (props.shadow) {
+      // @ts-expect-error outputUniformShadow is a custom property
       props.shadow.outputUniformShadow = this.outputUniformShadow;
     }
 

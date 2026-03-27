@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-// @ts-nocheck
-
 /**
  * Build the vertex shader for the raster mesh layer.
  */

@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-// @ts-nocheck
-
 import {UpdateParameters} from '@deck.gl/core';
 import {BitmapLayer} from '@deck.gl/layers';
 
@@ -40,7 +38,7 @@ export default class RasterLayer extends BitmapLayer<RasterLayerAddedProps> {
     super.initializeState();
   }
 
-  draw(_opts: {shaderModuleProps: any}): void {
+  draw(_opts: {shaderModuleProps: Record<string, unknown>}): void {
     const {model, images, coordinateConversion, bounds} = this.state;
     const {desaturate, transparentColor, tintColor, moduleProps} = this.props;
 
@@ -73,13 +71,13 @@ export default class RasterLayer extends BitmapLayer<RasterLayerAddedProps> {
       if (mod.getUniforms) {
         const uniforms = mod.getUniforms(allModuleProps);
         if (uniforms) {
-          const textureBindings: Record<string, any> = {};
-          const scalarUniforms: Record<string, any> = {};
+          const textureBindings: Record<string, object> = {};
+          const scalarUniforms: Record<string, number | number[]> = {};
           for (const [key, value] of Object.entries(uniforms)) {
             if (value && typeof value === 'object' && !Array.isArray(value)) {
               textureBindings[key] = value;
             } else {
-              scalarUniforms[key] = value;
+              scalarUniforms[key] = value as number | number[];
             }
           }
 
@@ -101,16 +99,21 @@ export default class RasterLayer extends BitmapLayer<RasterLayerAddedProps> {
   }
 
   _scheduleRedraw(): void {
+    // @ts-expect-error custom property not in deck.gl types
     if (this._redrawScheduled) return;
+    // @ts-expect-error custom property not in deck.gl types
     this._redrawScheduled = true;
     requestAnimationFrame(() => {
+      // @ts-expect-error custom property not in deck.gl types
       this._redrawScheduled = false;
-      // Try deck-level redraw first (works with @deck.gl/react's _customRender)
       if (this.context.deck) {
+        // @ts-expect-error accessing private deck.gl property
         this.context.deck._needsRedraw = 'RasterLayer pipeline pending';
       }
       this.context.layerManager?.setNeedsRedraw('RasterLayer pipeline pending');
+      // @ts-expect-error onRedrawNeeded not in standard props type
       if (typeof this.props.onRedrawNeeded === 'function') {
+        // @ts-expect-error onRedrawNeeded not in standard props type
         this.props.onRedrawNeeded();
       }
     });
@@ -137,7 +140,8 @@ export default class RasterLayer extends BitmapLayer<RasterLayerAddedProps> {
     const oldModules = oldProps && oldProps.modules;
 
     if (changeFlags.extensionsChanged || !modulesEqual(modules, oldModules)) {
-      this.state.model?.delete?.() || this.state.model?.destroy?.();
+      this.state.model?.destroy?.();
+      // @ts-expect-error _getModel is internal to BitmapLayer
       this.state.model = this._getModel(this.context.device || this.context.gl);
       this.getAttributeManager()?.invalidateAll();
     }

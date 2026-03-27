@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-// @ts-nocheck
-
 import {FeatureCollection, Feature} from 'geojson';
 
 import {Layer as DeckLayer} from '@deck.gl/core';

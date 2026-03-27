@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-// @ts-nocheck
-
+// @ts-expect-error GL not in luma.gl 9 public types
 import {GL} from '@luma.gl/constants';
 import isEqual from 'lodash/isEqual';
 
@@ -190,6 +189,7 @@ function loadTexture(
     return imageData as Texture2D;
   }
 
+  // @ts-expect-error luma internal properties not in WebGL2RenderingContext type
   const lumaDevice = device || gl.luma?.device || gl.__luma_device;
 
   if (!lumaDevice?.createTexture) {

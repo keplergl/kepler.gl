@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-// @ts-nocheck
-
 /**
  * Functions and constants for handling webgl/luma.gl/deck.gl entities
  */
@@ -10,6 +8,7 @@
 import {parse, fetchFile, load, FetchError} from '@loaders.gl/core';
 import {ImageLoader} from '@loaders.gl/images';
 import {NPYLoader} from '@loaders.gl/textures';
+// @ts-expect-error moduleResolution mismatch with luma.gl 9 .js specifiers
 import {GL} from '@luma.gl/constants';
 
 /**
@@ -303,10 +302,10 @@ export async function loadNpyArray(
       for (let attempt = 0; attempt < numAttempts; attempt++) {
         try {
           const {npy: npyOptions} = getLoaderOptions();
-          const response: NPYLoaderResponse = await load(request.url, NPYLoader, {
+          const response = (await load(request.url, NPYLoader as any, {
             npy: npyOptions,
             fetch: options?.fetch
-          });
+          })) as NPYLoaderResponse;
 
           if (!response || !response.data || request.options.signal?.aborted) {
             return null;

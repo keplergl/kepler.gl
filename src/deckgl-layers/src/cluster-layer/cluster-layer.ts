@@ -1,8 +1,7 @@
-// @ts-nocheck
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {CompositeLayer} from '@deck.gl/core';
+import {CompositeLayer, GetPickingInfoParams, PickingInfo} from '@deck.gl/core';
 import {ScatterplotLayer} from '@deck.gl/layers';
 
 import geoViewport from '@mapbox/geo-viewport';
@@ -22,8 +21,8 @@ import {RGBAColor} from '@kepler.gl/types';
 const defaultRadius = LAYER_VIS_CONFIGS.clusterRadius.defaultValue;
 const defaultRadiusRange = LAYER_VIS_CONFIGS.clusterRadiusRange.defaultValue;
 
-const defaultGetColorValue = points => points.length;
-const defaultGetRadiusValue = cell =>
+const defaultGetColorValue = (points: Record<string, unknown>[]) => points.length;
+const defaultGetRadiusValue = (cell: {filteredPoints?: unknown[]; points: unknown[]}) =>
   cell.filteredPoints ? cell.filteredPoints.length : cell.points.length;
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -50,8 +49,12 @@ function getClusters(this: CPUAggregator, step, props, aggregation, {viewport}) 
   });
 }
 
-function getSubLayerRadius(dimensionState, dimension, layerProps) {
-  return cell => {
+function getSubLayerRadius(
+  dimensionState: {scaleFunc: (v: number) => number},
+  dimension: DimensionType,
+  layerProps: Record<string, any>
+) {
+  return (cell: Record<string, unknown>): number => {
     const {getRadiusValue} = layerProps;
     const {scaleFunc} = dimensionState;
     return scaleFunc(getRadiusValue(cell));
@@ -101,7 +104,7 @@ function getRadiusValueDomain(this: CPUAggregator, step, props, dimensionUpdater
   const {getRadiusValue} = props;
   const {layerData} = this.state;
 
-  const valueDomain = [0, max(layerData.data, getRadiusValue)];
+  const valueDomain = [0, max(layerData.data as unknown as number[], getRadiusValue)];
   this._setDimensionState(key, {valueDomain});
 }
 
@@ -155,6 +158,11 @@ const defaultProps = {
   getRadiusValue: {type: 'accessor', value: defaultGetRadiusValue}
 };
 
+interface ClusterLayerState {
+  cpuAggregator: CPUAggregator;
+  aggregatorState: CPUAggregator['state'];
+}
+
 export default class ClusterLayer extends CompositeLayer {
   initializeState() {
     const cpuAggregator = new CPUAggregator({
@@ -168,20 +176,32 @@ export default class ClusterLayer extends CompositeLayer {
     };
   }
 
-  updateState({oldProps, props, changeFlags}) {
+  updateState({
+    oldProps,
+    props,
+    changeFlags
+  }: {
+    oldProps: Record<string, any>;
+    props: Record<string, any>;
+    changeFlags: Record<string, any>;
+  }) {
     this.setState({
-      aggregatorState: this.state.cpuAggregator.updateState(
+      aggregatorState: (this.state as unknown as ClusterLayerState).cpuAggregator.updateState(
         {oldProps, props, changeFlags},
         {
           viewport: this.context.viewport,
+          // @ts-expect-error props passed for internal calculation
           numInstances: this.getNumInstances(props)
         }
       )
     });
   }
 
-  getPickingInfo({info}) {
-    const obj = this.state.cpuAggregator.getPickingInfo({info}, this.props);
+  getPickingInfo({info}: GetPickingInfoParams): PickingInfo {
+    const obj = (this.state as unknown as ClusterLayerState).cpuAggregator.getPickingInfo(
+      {info},
+      this.props
+    );
     if (obj?.object) {
       // @ts-expect-error
       const distanceScale = getDistanceScales(this.context.viewport);
@@ -189,28 +209,30 @@ export default class ClusterLayer extends CompositeLayer {
       obj.object.scaledRadiusValue = obj.object.scaledRadiusValue * metersPerPixel;
     }
 
-    return obj;
+    return obj as PickingInfo;
   }
 
   _getSublayerUpdateTriggers() {
-    return this.state.cpuAggregator.getUpdateTriggers(this.props);
+    return (this.state as unknown as ClusterLayerState).cpuAggregator.getUpdateTriggers(this.props);
   }
 
   _getSubLayerAccessors() {
     return {
-      getRadius: this.state.cpuAggregator.getAccessor('radius', this.props),
-      getFillColor: this.state.cpuAggregator.getAccessor('fillColor', this.props)
+      getRadius: (this.state as unknown as ClusterLayerState).cpuAggregator.getAccessor(
+        'radius',
+        this.props
+      ),
+      getFillColor: (this.state as unknown as ClusterLayerState).cpuAggregator.getAccessor(
+        'fillColor',
+        this.props
+      )
     };
   }
 
   renderLayers() {
-    // for subclassing, override this method to return
-    // customized sub layer props
-    const {id, radiusScale} = this.props;
-    const {cpuAggregator} = this.state;
-
-    // base layer props
-    const {visible, opacity, pickable, autoHighlight, highlightColor} = this.props;
+    const {id, radiusScale, visible, opacity, pickable, autoHighlight, highlightColor} = this
+      .props as Record<string, any>;
+    const {cpuAggregator} = this.state as unknown as ClusterLayerState;
     const updateTriggers = this._getSublayerUpdateTriggers();
     const accessors = this._getSubLayerAccessors();
 

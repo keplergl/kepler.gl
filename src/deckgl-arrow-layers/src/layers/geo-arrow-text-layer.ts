@@ -1,4 +1,3 @@
-// @ts-nocheck
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
@@ -12,8 +11,7 @@ import {
   DefaultProps,
   GetPickingInfoParams,
   Layer,
-  LayersList,
-  assert
+  LayersList
 } from '@deck.gl/core';
 import {TextLayer} from '@deck.gl/layers';
 import type {TextLayerProps} from '@deck.gl/layers';
@@ -29,7 +27,8 @@ import {
   getGeometryVector
 } from '../utils/utils';
 import {GeoArrowExtraPickingProps, computeChunkOffsets, getPickingInfo} from '../utils/picking';
-import {ColorAccessor, FloatAccessor, GeoArrowPickingInfo, ExtensionProps} from '../types';
+import {ColorAccessor, FloatAccessor, GeoArrowPickingInfo} from '../types';
+import {assert} from '../utils/utils';
 import {validateAccessors} from '../utils/validate';
 
 /** All properties supported by GeoArrowTextLayer */
@@ -208,14 +207,13 @@ export class GeoArrowTextLayer<ExtraProps extends object = object> extends Compo
       // @ts-expect-error how to properly retrieve batch offset?
       const batchOffset = geometryColumn._offsets[recordBatchIdx];
 
-      const props: TextLayerProps<any> & ExtensionProps = {
+      const props: Record<string, any> = {
         // Note: because this is a composite layer and not doing the rendering
         // itself, we still have to pass in our defaultProps
         ...ourDefaultProps,
         ...otherProps,
 
         // used for picking purposes
-        // @ts-expect-error
         recordBatchIdx,
         tableOffsets,
 
@@ -241,14 +239,14 @@ export class GeoArrowTextLayer<ExtraProps extends object = object> extends Compo
               // size: 1,
             }
           }
-        },
+        } as any,
         // TODO privide more robust data comparators
-        dataComparator: (d1, d2) => {
+        dataComparator: (d1: {data: unknown}, d2: {data: unknown}) => {
           return d1.data === d2.data;
         },
         _subLayerProps: {
           characters: {
-            dataComparator: (d1, d2) => {
+            dataComparator: (d1: {data: unknown}, d2: {data: unknown}) => {
               return d1.data === d2.data;
             }
           }

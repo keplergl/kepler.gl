@@ -1,4 +1,3 @@
-// @ts-nocheck
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
@@ -89,7 +88,7 @@ export default class EnhancedLineLayer extends LineLayer<
 
   initializeState() {
     super.initializeState();
-    const {attributeManager} = this.state;
+    const {attributeManager} = this.state as {attributeManager: any};
     attributeManager.addInstanced({
       instanceTargetColors: {
         size: this.props.colorFormat?.length,

@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-// @ts-nocheck
-
 /**
  * Patch luma.gl 9's WEBGLRenderPipeline to tolerate mixed-sampler-type
  * validation errors in _getLinkStatus().
@@ -21,6 +19,7 @@
  * mixed sampler types. All other validation errors are still reported.
  */
 
+// @ts-expect-error moduleResolution mismatch with luma.gl 9 .js specifiers
 import {WEBGLRenderPipeline} from '@luma.gl/webgl';
 
 const MIXED_SAMPLER_RE = /different type[s]? use the same sampler location/i;

@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-// @ts-nocheck
-
 /**
  * Set standalone (non-UBO) uniforms on a luma.gl 9 Model's pipeline.
  *

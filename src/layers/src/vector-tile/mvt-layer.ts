@@ -1,4 +1,3 @@
-// @ts-nocheck
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
@@ -7,7 +6,9 @@ import {ClipExtension} from '@deck.gl/extensions';
 import {
   MVTLayer as _MVTLayer,
   TileLayer,
+  // @ts-expect-error deck.gl 9 internal
   _getURLFromTemplate,
+  // @ts-expect-error deck.gl 9 internal
   _TileLoadProps,
   _Tile2DHeader
 } from '@deck.gl/geo-layers';

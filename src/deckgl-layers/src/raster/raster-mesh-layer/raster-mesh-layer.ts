@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-// @ts-nocheck
-
 import {log, UpdateParameters} from '@deck.gl/core';
 import {SimpleMeshLayer, SimpleMeshLayerProps} from '@deck.gl/mesh-layers';
 import {Geometry} from '@luma.gl/engine';
@@ -26,7 +24,16 @@ patchPipelineValidation();
 
 type Mesh = SimpleMeshLayerProps['mesh'];
 
-function validateGeometryAttributes(attributes) {
+interface MeshData {
+  attributes?: Record<string, unknown>;
+  positions?: unknown;
+  POSITION?: unknown;
+  NORMAL?: unknown;
+  normals?: unknown;
+  [key: string]: unknown;
+}
+
+function validateGeometryAttributes(attributes: Record<string, unknown>) {
   log.assert(
     attributes.positions || attributes.POSITION,
     'RasterMeshLayer requires "postions" or "POSITION" attribute in mesh property.'
@@ -37,15 +44,16 @@ function validateGeometryAttributes(attributes) {
  * Convert mesh data into geometry
  * @returns geometry
  */
-function getGeometry(data): Geometry {
-  if (data.attributes) {
+function getGeometry(data: MeshData | Geometry): Geometry {
+  if ('attributes' in data && data.attributes) {
     validateGeometryAttributes(data.attributes);
     if (data instanceof Geometry) {
       return data;
     }
-    return new Geometry(data);
-  } else if (data.positions || data.POSITION) {
-    validateGeometryAttributes(data);
+    return new Geometry(data as ConstructorParameters<typeof Geometry>[0]);
+  } else if ('positions' in data || 'POSITION' in data) {
+    validateGeometryAttributes(data as Record<string, unknown>);
+    // @ts-expect-error topology is required in luma.gl 9 GeometryProps
     return new Geometry({
       attributes: data
     });
@@ -100,12 +108,12 @@ export default class RasterMeshLayer extends SimpleMeshLayer<any, RasterLayerAdd
       !modulesEqual(modules, oldModules)
     ) {
       if (this.state.model) {
-        this.state.model.destroy?.() || this.state.model.delete?.();
+        this.state.model.destroy?.();
       }
       if (props.mesh) {
         this.state.model = this.getModel(props.mesh as Mesh);
 
-        const attributes = (props.mesh as any).attributes || props.mesh;
+        const attributes = ((props.mesh as MeshData).attributes || props.mesh) as MeshData;
         this.setState({
           hasNormals: Boolean(attributes.NORMAL || attributes.normals)
         });
@@ -146,7 +154,7 @@ export default class RasterMeshLayer extends SimpleMeshLayer<any, RasterLayerAdd
     }
   }
 
-  draw(_opts): void {
+  draw(_opts: Record<string, unknown>): void {
     const {model, images} = this.state;
     const {moduleProps} = this.props;
 
@@ -204,15 +212,21 @@ export default class RasterMeshLayer extends SimpleMeshLayer<any, RasterLayerAdd
   }
 
   _scheduleRedraw(): void {
+    // @ts-expect-error custom property not in deck.gl types
     if (this._redrawScheduled) return;
+    // @ts-expect-error custom property not in deck.gl types
     this._redrawScheduled = true;
     requestAnimationFrame(() => {
+      // @ts-expect-error custom property not in deck.gl types
       this._redrawScheduled = false;
       if (this.context.deck) {
+        // @ts-expect-error accessing private deck.gl property
         this.context.deck._needsRedraw = 'RasterMeshLayer pipeline pending';
       }
       this.context.layerManager?.setNeedsRedraw('RasterMeshLayer pipeline pending');
+      // @ts-expect-error onRedrawNeeded not in standard props type
       if (typeof this.props.onRedrawNeeded === 'function') {
+        // @ts-expect-error onRedrawNeeded not in standard props type
         this.props.onRedrawNeeded();
       }
     });
@@ -239,7 +253,7 @@ export default class RasterMeshLayer extends SimpleMeshLayer<any, RasterLayerAdd
       device,
       Object.assign({}, this.getShaders(), {
         id: this.props.id,
-        geometry: getGeometry(mesh),
+        geometry: getGeometry(mesh as MeshData | Geometry),
         isInstanced: false
       })
     );

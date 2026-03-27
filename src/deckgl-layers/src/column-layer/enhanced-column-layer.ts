@@ -1,4 +1,3 @@
-// @ts-nocheck
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
@@ -7,7 +6,7 @@ import {UNIT} from '@deck.gl/core';
 
 import {editShader} from '../';
 
-function addInstanceCoverage(vs) {
+function addInstanceCoverage(vs: string) {
   const addDecl = editShader(
     vs,
     'hexagon cell vs add instance 1',
@@ -90,14 +89,14 @@ class EnhancedColumnLayer extends ColumnLayer<any, EnhancedColumnLayerProps> {
       });
       wireframeModel.draw(this.context.renderPass);
     }
-    if (filled) {
+    if (filled && fillModel) {
       fillModel.setVertexCount(fillVertexCount);
       fillModel.shaderInputs.setProps({
         column: {...columnProps, isStroke: false}
       });
       fillModel.draw(this.context.renderPass);
     }
-    if (!extruded && stroked) {
+    if (!extruded && stroked && fillModel) {
       fillModel.setVertexCount((fillVertexCount * 2) / 3);
       fillModel.shaderInputs.setProps({
         column: {...columnProps, isStroke: true},

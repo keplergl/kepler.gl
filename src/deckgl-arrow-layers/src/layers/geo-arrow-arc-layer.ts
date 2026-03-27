@@ -1,4 +1,3 @@
-// @ts-nocheck
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
@@ -12,8 +11,7 @@ import {
   DefaultProps,
   GetPickingInfoParams,
   Layer,
-  LayersList,
-  assert
+  LayersList
 } from '@deck.gl/core';
 import {ArcLayer} from '@deck.gl/layers';
 import type {ArcLayerProps} from '@deck.gl/layers';
@@ -23,6 +21,7 @@ import {assignAccessor, extractAccessorsFromProps} from '../utils/utils';
 import {child} from '@geoarrow/geoarrow-js';
 import {GeoArrowExtraPickingProps, computeChunkOffsets, getPickingInfo} from '../utils/picking';
 import {ColorAccessor, FloatAccessor, GeoArrowPickingInfo, ExtensionProps} from '../types';
+import {assert} from '../utils/utils';
 import {validateAccessors} from '../utils/validate';
 
 /** All properties supported by GeoArrowArcLayer */

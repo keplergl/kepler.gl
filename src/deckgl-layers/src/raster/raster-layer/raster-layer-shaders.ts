@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-// @ts-nocheck
-
 import {ShaderAssembler} from '@luma.gl/shadertools';
 import type {ShaderModule as LumaShaderModule} from '../webgl/types';
 
@@ -50,7 +48,7 @@ export function ensureRasterHooksRegistered(): void {
   _hooksRegistered = true;
 
   const assembler = ShaderAssembler.getDefaultShaderAssembler();
-  // Check if hooks already exist to avoid duplicates
+  // @ts-expect-error _hookFunctions is private in ShaderAssembler
   const existingHooks = assembler._hookFunctions || [];
   const hookNames = existingHooks.map(h => (typeof h === 'string' ? h : h.hook));
 

@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-// @ts-nocheck
-
 import {COORDINATE_SYSTEM, Layer as DeckLayer} from '@deck.gl/core';
 import {TileLayer, GeoBoundingBox} from '@deck.gl/geo-layers';
 import {PMTilesSource, PMTilesTileSource} from '@loaders.gl/pmtiles';
+import type {TypedArray} from '@loaders.gl/loader-utils';
 import type {TextureProps} from '@luma.gl/core';
 type Texture2DProps = Partial<TextureProps> & Record<string, any>;
 import memoize from 'lodash/memoize';
@@ -384,7 +383,7 @@ export default class RasterTileLayer extends KeplerLayer {
     let maxPixelValue = -Infinity;
     if (images) {
       for (const image of images) {
-        const [min, max] = getImageMinMax(image.data);
+        const [min, max] = getImageMinMax(image.data as TypedArray);
         if (typeof min === 'number') {
           minPixelValue = Math.min(min, minPixelValue);
         }

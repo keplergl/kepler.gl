@@ -1,4 +1,3 @@
-// @ts-nocheck
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
@@ -8,7 +7,8 @@ import {
   DrawPolygonMode,
   TranslateMode,
   CompositeMode,
-  DrawRectangleMode
+  DrawRectangleMode,
+  GeoJsonEditMode
 } from '@deck.gl-community/editable-layers';
 import {PathStyleExtension} from '@deck.gl/extensions';
 
@@ -21,7 +21,10 @@ import {LINE_STYLE, FEATURE_STYLE, EDIT_HANDLE_STYLE} from './feature-styles';
 import {ModifyModeExtended} from './modify-mode-extended';
 import {isDrawingActive} from './editor-layer-utils';
 
-const DEFAULT_COMPOSITE_MODE = new CompositeMode([new TranslateMode(), new ModifyModeExtended()]);
+const DEFAULT_COMPOSITE_MODE = new CompositeMode([
+  new TranslateMode() as unknown as GeoJsonEditMode,
+  new ModifyModeExtended() as unknown as GeoJsonEditMode
+]);
 
 export type GetEditorLayerProps = {
   editorMenuActive: boolean;
@@ -94,17 +97,17 @@ export function getEditorLayer({
           const {features: _features} = updatedData;
           if (_features.length) {
             const lastFeature = _features[_features.length - 1];
-            lastFeature.properties.isClosed = true;
+            lastFeature.properties!.isClosed = true;
             lastFeature.id = generateHashId(6);
-            onSetFeatures(updatedData.features);
-            setSelectedFeature(lastFeature);
+            onSetFeatures(updatedData.features as unknown as Feature[]);
+            setSelectedFeature(lastFeature as unknown as Feature);
           }
           break;
         }
         case EDIT_TYPES.ADD_POSITION:
         case EDIT_TYPES.MOVE_POSITION:
         case EDIT_TYPES.TRANSLATING:
-          onSetFeatures(updatedData.features);
+          onSetFeatures(updatedData.features as unknown as Feature[]);
           break;
         default:
           break;
