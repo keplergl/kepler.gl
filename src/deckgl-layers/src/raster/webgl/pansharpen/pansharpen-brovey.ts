@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-type Texture2D = any;
-
+import type {Texture} from '@luma.gl/core';
 import {GetUniformsOutput, ShaderModule} from '../types';
 
 // Brovey Method: Each resampled, multispectral pixel is
@@ -46,7 +45,7 @@ vec4 pansharpen_brovey_calc(vec4 rgb, float pan, float weight) {
 }
 `;
 
-function getUniforms(opts: {imagePan?: Texture2D; panWeight?: number} = {}): GetUniformsOutput {
+function getUniforms(opts: {imagePan?: Texture; panWeight?: number} = {}): GetUniformsOutput {
   const {imagePan, panWeight = 0.2} = opts;
 
   if (!imagePan) {

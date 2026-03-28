@@ -306,6 +306,7 @@ test('#HexagonLayer -> renderLayer', t => {
         );
 
         // Verify attributes exist on the cell sublayer
+        t.ok(cellData.attributes, 'cell data should have attributes');
         if (cellData.attributes) {
           const attrKeys = Object.keys(cellData.attributes);
           t.ok(attrKeys.length > 0, 'cell data should have binary attributes');
@@ -328,6 +329,7 @@ test('#HexagonLayer -> renderLayer', t => {
 
         // Verify aggregator state
         const aggregator = deckHexLayer.state?.aggregator;
+        t.ok(aggregator, 'deckHexLayer should have aggregator state');
         if (aggregator) {
           t.ok(aggregator.binCount > 0, 'aggregator should have bins');
           t.equal(
@@ -339,10 +341,12 @@ test('#HexagonLayer -> renderLayer', t => {
           const colorDomain = aggregator.getResultDomain(0);
           t.ok(Array.isArray(colorDomain), 'color domain should be an array');
           t.equal(colorDomain.length, 2, 'color domain should be [min, max]');
+          t.ok(colorDomain[0] <= colorDomain[1], 'color domain min should be <= max');
 
           const elevationDomain = aggregator.getResultDomain(1);
           t.ok(Array.isArray(elevationDomain), 'elevation domain should be an array');
           t.equal(elevationDomain.length, 2, 'elevation domain should be [min, max]');
+          t.ok(elevationDomain[0] <= elevationDomain[1], 'elevation domain min should be <= max');
         }
       }
     },
@@ -409,6 +413,7 @@ test('#HexagonLayer -> renderLayer', t => {
 
         // Verify aggregator state
         const aggregator = deckHexLayer.state?.aggregator;
+        t.ok(aggregator, 'deckHexLayer should have aggregator state');
         if (aggregator) {
           t.ok(aggregator.binCount > 0, 'aggregator should have bins');
           t.equal(
@@ -420,6 +425,7 @@ test('#HexagonLayer -> renderLayer', t => {
           const colorDomain = aggregator.getResultDomain(0);
           t.ok(Array.isArray(colorDomain), 'color domain should be an array');
           t.equal(colorDomain.length, 2, 'color domain should be [min, max]');
+          t.ok(colorDomain[0] <= colorDomain[1], 'color domain min should be <= max');
         }
       }
     }
@@ -513,6 +519,7 @@ test('#HexagonLayer -> renderHover', t => {
         );
 
         const hoverLayer = deckLayers.find(l => l.id === 'test_layer_1-hovered');
+        t.ok(hoverLayer, 'Should find the hovered layer');
         if (hoverLayer) {
           t.ok(hoverLayer.props.data.length > 0, 'hover layer should have data');
           const hoverGeom = hoverLayer.props.data[0];

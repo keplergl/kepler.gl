@@ -5,10 +5,26 @@
 import {GL} from '@luma.gl/constants';
 import isEqual from 'lodash/isEqual';
 
+import type {Texture} from '@luma.gl/core';
 import type {ImageInput, ImageState} from './types';
 
-type Texture2D = any;
-type Texture2DProps = any;
+/**
+ * Legacy texture creation descriptor used by raster shader modules.
+ * Contains CPU-side data + old GL-enum-based parameters that get
+ * translated to luma.gl 9's device.createTexture() props.
+ */
+type RasterTextureData = {
+  handle?: unknown;
+  id?: string;
+  device?: unknown;
+  width?: number;
+  height?: number;
+  format?: number;
+  type?: number;
+  parameters?: Record<number, number>;
+  mipmaps?: boolean;
+  data?: any;
+};
 
 /**
  * Texture sampler parameters for luma.gl 9 textures
@@ -34,9 +50,9 @@ type LoadImagesOptions = {
 function loadImageItem(
   gl: WebGL2RenderingContext,
   device: any,
-  imageItem: Texture2DProps | Texture2D | (Texture2DProps | Texture2D)[]
-): null | Texture2D | Texture2D[] {
-  let result: null | Texture2D | Texture2D[];
+  imageItem: any
+): null | Texture | Texture[] {
+  let result: null | Texture | Texture[];
   if (Array.isArray(imageItem)) {
     const dirtyResult = imageItem.map(x => loadTexture(gl, device, x));
     result = [];
@@ -178,16 +194,22 @@ function mapTextureFormat(glFormat: number, glType?: number): string {
 function loadTexture(
   gl: WebGL2RenderingContext,
   device: any,
-  imageData: Texture2D | Texture2DProps
-): Texture2D | null {
+  imageData: Texture | RasterTextureData
+): Texture | null {
   if (!imageData) {
     return null;
   }
 
   // If already a luma.gl Texture instance, return as-is
-  if (imageData.handle || imageData.id?.startsWith?.('luma') || imageData.device) {
-    return imageData as Texture2D;
+  if (
+    (imageData as any).handle ||
+    (imageData as any).id?.startsWith?.('luma') ||
+    (imageData as any).device
+  ) {
+    return imageData as Texture;
   }
+
+  const rawData = imageData as RasterTextureData;
 
   // @ts-expect-error luma internal properties not in WebGL2RenderingContext type
   const lumaDevice = device || gl.luma?.device || gl.__luma_device;
@@ -198,29 +220,29 @@ function loadTexture(
   }
 
   try {
-    const samplerParams = mapSamplerParameters(imageData.parameters || {});
-    const textureFormat = imageData.format
-      ? mapTextureFormat(imageData.format, imageData.type)
+    const samplerParams = mapSamplerParameters(rawData.parameters || {});
+    const textureFormat = rawData.format
+      ? mapTextureFormat(rawData.format, rawData.type)
       : 'rgba8unorm';
 
     const textureProps: any = {
-      width: imageData.width || imageData.data?.width || 1,
-      height: imageData.height || imageData.data?.height || 1,
+      width: rawData.width || rawData.data?.width || 1,
+      height: rawData.height || rawData.data?.height || 1,
       format: textureFormat,
       sampler: samplerParams,
-      ...(imageData.mipmaps === false ? {mipmaps: false} : {})
+      ...(rawData.mipmaps === false ? {mipmaps: false} : {})
     };
 
-    if (imageData.data) {
+    if (rawData.data) {
       if (
-        imageData.data instanceof HTMLImageElement ||
-        imageData.data instanceof HTMLCanvasElement ||
-        imageData.data instanceof ImageBitmap ||
-        imageData.data instanceof ImageData
+        rawData.data instanceof HTMLImageElement ||
+        rawData.data instanceof HTMLCanvasElement ||
+        rawData.data instanceof ImageBitmap ||
+        rawData.data instanceof ImageData
       ) {
-        textureProps.data = imageData.data;
-      } else if (ArrayBuffer.isView(imageData.data)) {
-        textureProps.data = imageData.data;
+        textureProps.data = rawData.data;
+      } else if (ArrayBuffer.isView(rawData.data)) {
+        textureProps.data = rawData.data;
       }
     }
 

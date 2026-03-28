@@ -310,6 +310,7 @@ test('#GridLayer -> renderLayer', t => {
         );
 
         // Verify attributes exist on the cell sublayer
+        t.ok(cellData.attributes, 'cell data should have attributes');
         if (cellData.attributes) {
           const attrKeys = Object.keys(cellData.attributes);
           t.ok(attrKeys.length > 0, 'cell data should have binary attributes');
@@ -328,6 +329,8 @@ test('#GridLayer -> renderLayer', t => {
 
         // Verify aggregator state
         const aggregator = cpuGridLayer.state?.aggregator;
+        t.ok(aggregator, 'cpuGridLayer should have aggregator state');
+        t.ok(aggregator, 'cpuGridLayer should have aggregator state');
         if (aggregator) {
           t.ok(aggregator.binCount > 0, 'aggregator should have bins');
           t.equal(
@@ -339,10 +342,12 @@ test('#GridLayer -> renderLayer', t => {
           const colorDomain = aggregator.getResultDomain(0);
           t.ok(Array.isArray(colorDomain), 'color domain should be an array');
           t.equal(colorDomain.length, 2, 'color domain should be [min, max]');
+          t.ok(colorDomain[0] <= colorDomain[1], 'color domain min should be <= max');
 
           const elevationDomain = aggregator.getResultDomain(1);
           t.ok(Array.isArray(elevationDomain), 'elevation domain should be an array');
           t.equal(elevationDomain.length, 2, 'elevation domain should be [min, max]');
+          t.ok(elevationDomain[0] <= elevationDomain[1], 'elevation domain min should be <= max');
         }
       }
     },
@@ -409,6 +414,7 @@ test('#GridLayer -> renderLayer', t => {
 
         // Verify aggregator state
         const aggregator = cpuGridLayer.state?.aggregator;
+        t.ok(aggregator, 'cpuGridLayer should have aggregator state');
         if (aggregator) {
           t.ok(aggregator.binCount > 0, 'aggregator should have bins');
           t.equal(
@@ -420,6 +426,7 @@ test('#GridLayer -> renderLayer', t => {
           const colorDomain = aggregator.getResultDomain(0);
           t.ok(Array.isArray(colorDomain), 'color domain should be an array');
           t.equal(colorDomain.length, 2, 'color domain should be [min, max]');
+          t.ok(colorDomain[0] <= colorDomain[1], 'color domain min should be <= max');
         }
       }
     }

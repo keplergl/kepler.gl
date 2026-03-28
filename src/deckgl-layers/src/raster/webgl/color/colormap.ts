@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-type Texture2D = any;
-
+import type {Texture} from '@luma.gl/core';
 import {GetUniformsOutput, ShaderModule} from '../types';
 
 const fs = `\
@@ -32,7 +31,7 @@ vec4 colormap(sampler2D cmap, vec4 image) {
 
 function getUniforms(
   opts: {
-    imageColormap?: Texture2D;
+    imageColormap?: Texture;
     minCategoricalBandValue?: number;
     maxCategoricalBandValue?: number;
     dataTypeMaxValue?: number;
