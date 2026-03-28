@@ -2176,6 +2176,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@deck.gl-community/layers@npm:9.2.8":
+  version: 9.2.8
+  resolution: "@deck.gl-community/layers@npm:9.2.8"
+  dependencies:
+    "@deck.gl/core": "npm:~9.2.8"
+    "@deck.gl/layers": "npm:~9.2.8"
+    "@deck.gl/mesh-layers": "npm:~9.2.8"
+    "@luma.gl/constants": "npm:~9.2.6"
+    "@luma.gl/core": "npm:~9.2.6"
+    "@luma.gl/engine": "npm:~9.2.6"
+    "@luma.gl/shadertools": "npm:~9.2.6"
+    "@math.gl/core": "npm:^4.0.0"
+  checksum: 10c0/43a2a3be7905c49aab4820470fd78a85a416ef05abad532e7be5492048b89f0445733f6b3f59f3cb2c73a9ec169c5334826d348d63d238247bb3aae250288cc7
+  languageName: node
+  linkType: hard
+
 "@deck.gl/aggregation-layers@npm:9.2.11":
   version: 9.2.11
   resolution: "@deck.gl/aggregation-layers@npm:9.2.11"
@@ -21245,6 +21261,7 @@ __metadata:
     "@babel/traverse": "npm:^7.12.1"
     "@cfaester/enzyme-adapter-react-18": "npm:^0.7.0"
     "@deck.gl-community/editable-layers": "npm:9.2.8"
+    "@deck.gl-community/layers": "npm:9.2.8"
     "@deck.gl/mapbox": "npm:^9.2.11"
     "@deck.gl/test-utils": "npm:^9.2.11"
     "@hubble.gl/core": "npm:1.4.0"
