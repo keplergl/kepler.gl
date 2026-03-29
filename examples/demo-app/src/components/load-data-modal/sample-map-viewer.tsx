@@ -2,11 +2,21 @@
 // Copyright contributors to the kepler.gl project
 
 import React, {useEffect} from 'react';
-import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import {format} from 'd3-format';
 import {LoadingDialog} from '@kepler.gl/components';
 import {FormattedMessage} from 'react-intl';
+import {useLoadSampleMap, SampleMap} from '../../hooks/use-load-sample-map';
+
+interface SampleMapProps {
+  id: string;
+  sample: SampleMap;
+  onClick: () => void;
+}
+
+interface SampleMapViewerProps {
+  locale?: string;
+}
 
 const numFormat = format(',');
 
@@ -72,7 +82,7 @@ const StyledError = styled.div`
   margin-bottom: 16px;
 `;
 
-const SampleMap = ({id, sample, onClick}) => (
+const SampleMap: React.FC<SampleMapProps> = ({id, sample, onClick}) => (
   <StyledSampleMap id={id} className="sample-map-gallery__item">
     <div className="sample-map">
       <div className="sample-map__image" onClick={onClick}>
@@ -92,14 +102,10 @@ const SampleMap = ({id, sample, onClick}) => (
   </StyledSampleMap>
 );
 
-const SampleMapGallery = ({
-  sampleMaps,
-  onLoadSample,
-  error,
-  isMapLoading,
-  locale,
-  loadSampleConfigurations
-}) => {
+const SampleMapViewer: React.FC<SampleMapViewerProps> = () => {
+  const {sampleMaps, isMapLoading, error, loadSampleMap, loadSampleConfigurations} =
+    useLoadSampleMap();
+
   useEffect(() => {
     if (!sampleMaps.length) {
       loadSampleConfigurations();
@@ -117,13 +123,7 @@ const SampleMapGallery = ({
           {sampleMaps
             .filter(sp => sp.visible)
             .map(sp => (
-              <SampleMap
-                id={sp.id}
-                sample={sp}
-                key={sp.id}
-                onClick={() => onLoadSample(sp)}
-                locale={locale}
-              />
+              <SampleMap id={sp.id} sample={sp} key={sp.id} onClick={() => loadSampleMap(sp)} />
             ))}
         </StyledSampleGallery>
       )}
@@ -131,11 +131,4 @@ const SampleMapGallery = ({
   );
 };
 
-SampleMapGallery.propTypes = {
-  sampleMaps: PropTypes.arrayOf(PropTypes.object),
-  onLoadSample: PropTypes.func.isRequired,
-  loadSampleConfigurations: PropTypes.func.isRequired,
-  error: PropTypes.object
-};
-
-export default SampleMapGallery;
+export default SampleMapViewer;
