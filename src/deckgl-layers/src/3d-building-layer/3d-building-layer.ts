@@ -4,6 +4,7 @@
 import {CompositeLayer} from '@deck.gl/core';
 import {TileLayer as DeckGLTileLayer} from '@deck.gl/geo-layers';
 import {SolidPolygonLayer, SolidPolygonLayerProps} from '@deck.gl/layers';
+import {BLEND_PARAMS_ALPHA} from '@kepler.gl/constants';
 
 import {getTileData} from './3d-building-utils';
 import {ThreeDBuildingLayerProps, TileDataItem, TileLoadProps} from './types';
@@ -14,15 +15,7 @@ export default class ThreeDBuildingLayer extends CompositeLayer<ThreeDBuildingLa
   renderSubLayers(props: SolidPolygonLayerProps<any>) {
     return new SolidPolygonLayer<TileDataItem>({
       ...props,
-      parameters: {
-        blend: true,
-        blendColorSrcFactor: 'src-alpha',
-        blendColorDstFactor: 'one-minus-src-alpha',
-        blendAlphaSrcFactor: 'one',
-        blendAlphaDstFactor: 'one-minus-src-alpha',
-        blendColorOperation: 'add',
-        blendAlphaOperation: 'add'
-      },
+      parameters: BLEND_PARAMS_ALPHA,
       extruded: true,
       opacity: 1,
       filled: true,

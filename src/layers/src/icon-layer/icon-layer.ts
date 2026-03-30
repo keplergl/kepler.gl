@@ -6,7 +6,7 @@ import {BrushingExtension} from '@deck.gl/extensions';
 
 import {SvgIconLayer} from '@kepler.gl/deckgl-layers';
 import IconLayerIcon from './icon-layer-icon';
-import {ICON_FIELDS} from '@kepler.gl/constants';
+import {ICON_FIELDS, CULL_MODE} from '@kepler.gl/constants';
 import IconInfoModalFactory from './icon-info-modal';
 import Layer, {LayerBaseConfig, LayerBaseConfigPartial} from '../base-layer';
 import {assignPointPairToLayerColumn, FindDefaultLayerPropsReturnValue} from '../layer-utils';
@@ -414,7 +414,7 @@ export default class IconLayer extends Layer {
     const parameters = {
       // icons will be flat on the map when the altitude column is not used
       depthTest: this.config.columns.altitude?.fieldIdx > -1,
-      cullMode: 'front' as const
+      cullMode: CULL_MODE.FRONT as const
     };
 
     // Append geometry version to layer id so deck.gl treats it as new layer when geometry changes

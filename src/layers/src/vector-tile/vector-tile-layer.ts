@@ -20,7 +20,8 @@ import {
   SCALE_TYPES,
   CHANNEL_SCALES,
   DEFAULT_COLOR_UI,
-  LAYER_VIS_CONFIGS
+  LAYER_VIS_CONFIGS,
+  CULL_MODE
 } from '@kepler.gl/constants';
 import {
   getTileUrl,
@@ -667,7 +668,7 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
             'polygons-stroke': {opacity: visConfig.strokeOpacity},
             'polygons-fill': {
               parameters: {
-                cullMode: 'back'
+                cullMode: CULL_MODE.BACK
               }
             }
           },

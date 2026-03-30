@@ -2,25 +2,16 @@
 // Copyright contributors to the kepler.gl project
 
 import {console as Console} from 'global/window';
-import {LAYER_BLENDINGS} from '@kepler.gl/constants';
+import {
+  LAYER_BLENDINGS,
+  GL_BLEND_FUNC_TO_WEBGPU,
+  GL_BLEND_EQ_TO_WEBGPU,
+  BLEND_OPERATION,
+  BLEND_FACTOR,
+  FILTER_MODE,
+  DEPTH_STENCIL_FORMAT
+} from '@kepler.gl/constants';
 import {DeckRenderer} from '@deck.gl/core';
-
-const GL_BLEND_FUNC_TO_WEBGPU: Record<string, string> = {
-  SRC_ALPHA: 'src-alpha',
-  ONE_MINUS_SRC_ALPHA: 'one-minus-src-alpha',
-  DST_ALPHA: 'dst-alpha',
-  ONE: 'one',
-  ONE_MINUS_DST_COLOR: 'one-minus-dst',
-  DST_COLOR: 'dst',
-  ZERO: 'zero',
-  SRC_COLOR: 'src'
-};
-
-const GL_BLEND_EQ_TO_WEBGPU: Record<string, string> = {
-  FUNC_ADD: 'add',
-  FUNC_SUBTRACT: 'subtract',
-  FUNC_REVERSE_SUBTRACT: 'reverse-subtract'
-};
 
 /**
  * Convert layer blending config to deck.gl 9.x parameters format.
@@ -42,26 +33,26 @@ export function getLayerBlendingParameters(layerBlending: string): Record<string
       Console.warn(`Unmapped blend function: ${blendFunc[0]}, falling back to 'one'`);
     if (!GL_BLEND_FUNC_TO_WEBGPU[blendFunc[1]])
       Console.warn(`Unmapped blend function: ${blendFunc[1]}, falling back to 'zero'`);
-    params.blendColorSrcFactor = GL_BLEND_FUNC_TO_WEBGPU[blendFunc[0]] || 'one';
-    params.blendColorDstFactor = GL_BLEND_FUNC_TO_WEBGPU[blendFunc[1]] || 'zero';
+    params.blendColorSrcFactor = GL_BLEND_FUNC_TO_WEBGPU[blendFunc[0]] || BLEND_FACTOR.ONE;
+    params.blendColorDstFactor = GL_BLEND_FUNC_TO_WEBGPU[blendFunc[1]] || BLEND_FACTOR.ZERO;
   }
   if (blendFunc.length >= 4) {
     if (!GL_BLEND_FUNC_TO_WEBGPU[blendFunc[2]])
       Console.warn(`Unmapped blend function: ${blendFunc[2]}, falling back to 'one'`);
     if (!GL_BLEND_FUNC_TO_WEBGPU[blendFunc[3]])
       Console.warn(`Unmapped blend function: ${blendFunc[3]}, falling back to 'zero'`);
-    params.blendAlphaSrcFactor = GL_BLEND_FUNC_TO_WEBGPU[blendFunc[2]] || 'one';
-    params.blendAlphaDstFactor = GL_BLEND_FUNC_TO_WEBGPU[blendFunc[3]] || 'zero';
+    params.blendAlphaSrcFactor = GL_BLEND_FUNC_TO_WEBGPU[blendFunc[2]] || BLEND_FACTOR.ONE;
+    params.blendAlphaDstFactor = GL_BLEND_FUNC_TO_WEBGPU[blendFunc[3]] || BLEND_FACTOR.ZERO;
   } else {
     params.blendAlphaSrcFactor = params.blendColorSrcFactor;
     params.blendAlphaDstFactor = params.blendColorDstFactor;
   }
 
   if (Array.isArray(blendEquation)) {
-    params.blendColorOperation = GL_BLEND_EQ_TO_WEBGPU[blendEquation[0]] || 'add';
-    params.blendAlphaOperation = GL_BLEND_EQ_TO_WEBGPU[blendEquation[1]] || 'add';
+    params.blendColorOperation = GL_BLEND_EQ_TO_WEBGPU[blendEquation[0]] || BLEND_OPERATION.ADD;
+    params.blendAlphaOperation = GL_BLEND_EQ_TO_WEBGPU[blendEquation[1]] || BLEND_OPERATION.ADD;
   } else if (blendEquation) {
-    params.blendColorOperation = GL_BLEND_EQ_TO_WEBGPU[blendEquation] || 'add';
+    params.blendColorOperation = GL_BLEND_EQ_TO_WEBGPU[blendEquation] || BLEND_OPERATION.ADD;
     params.blendAlphaOperation = params.blendColorOperation;
   }
 
@@ -105,7 +96,7 @@ export function patchDeckRendererForPostProcessing(): void {
     if (renderBuffers.length === 0) {
       [0, 1].map((i: number) => {
         const texture = this.device.createTexture({
-          sampler: {minFilter: 'linear', magFilter: 'linear'},
+          sampler: {minFilter: FILTER_MODE.LINEAR, magFilter: FILTER_MODE.LINEAR},
           width,
           height
         });
@@ -113,7 +104,7 @@ export function patchDeckRendererForPostProcessing(): void {
           this.device.createFramebuffer({
             id: `deck-renderbuffer-${i}`,
             colorAttachments: [texture],
-            depthStencilAttachment: 'depth24plus'
+            depthStencilAttachment: DEPTH_STENCIL_FORMAT.DEPTH24_PLUS
           })
         );
       });

@@ -5,6 +5,7 @@
 import {GL} from '@luma.gl/constants';
 import isEqual from 'lodash/isEqual';
 
+import {FILTER_MODE, ADDRESS_MODE, TEXTURE_FORMAT} from '@kepler.gl/constants';
 import type {Texture} from '@luma.gl/core';
 import type {ImageInput, ImageState} from './types';
 
@@ -30,10 +31,10 @@ type RasterTextureData = {
  * Texture sampler parameters for luma.gl 9 textures
  */
 const DEFAULT_SAMPLER_PARAMETERS = {
-  minFilter: 'nearest',
-  magFilter: 'nearest',
-  addressModeU: 'clamp-to-edge',
-  addressModeV: 'clamp-to-edge'
+  minFilter: FILTER_MODE.NEAREST,
+  magFilter: FILTER_MODE.NEAREST,
+  addressModeU: ADDRESS_MODE.CLAMP_TO_EDGE,
+  addressModeV: ADDRESS_MODE.CLAMP_TO_EDGE
 };
 
 type LoadImagesOptions = {
@@ -128,23 +129,26 @@ function mapSamplerParameters(oldParams: Record<number, number>): Record<string,
   const result: Record<string, string> = {...DEFAULT_SAMPLER_PARAMETERS};
 
   const magFilterMap = {
-    [GL.NEAREST]: 'nearest',
-    [GL.LINEAR]: 'linear'
+    [GL.NEAREST]: FILTER_MODE.NEAREST,
+    [GL.LINEAR]: FILTER_MODE.LINEAR
   };
 
   const minFilterMap: Record<number, {minFilter: string; mipmapFilter?: string}> = {
-    [GL.NEAREST]: {minFilter: 'nearest'},
-    [GL.LINEAR]: {minFilter: 'linear'},
-    [GL.NEAREST_MIPMAP_NEAREST]: {minFilter: 'nearest', mipmapFilter: 'nearest'},
-    [GL.NEAREST_MIPMAP_LINEAR]: {minFilter: 'nearest', mipmapFilter: 'linear'},
-    [GL.LINEAR_MIPMAP_NEAREST]: {minFilter: 'linear', mipmapFilter: 'nearest'},
-    [GL.LINEAR_MIPMAP_LINEAR]: {minFilter: 'linear', mipmapFilter: 'linear'}
+    [GL.NEAREST]: {minFilter: FILTER_MODE.NEAREST},
+    [GL.LINEAR]: {minFilter: FILTER_MODE.LINEAR},
+    [GL.NEAREST_MIPMAP_NEAREST]: {
+      minFilter: FILTER_MODE.NEAREST,
+      mipmapFilter: FILTER_MODE.NEAREST
+    },
+    [GL.NEAREST_MIPMAP_LINEAR]: {minFilter: FILTER_MODE.NEAREST, mipmapFilter: FILTER_MODE.LINEAR},
+    [GL.LINEAR_MIPMAP_NEAREST]: {minFilter: FILTER_MODE.LINEAR, mipmapFilter: FILTER_MODE.NEAREST},
+    [GL.LINEAR_MIPMAP_LINEAR]: {minFilter: FILTER_MODE.LINEAR, mipmapFilter: FILTER_MODE.LINEAR}
   };
 
   const wrapMap = {
-    [GL.CLAMP_TO_EDGE]: 'clamp-to-edge',
-    [GL.REPEAT]: 'repeat',
-    [GL.MIRRORED_REPEAT]: 'mirror-repeat'
+    [GL.CLAMP_TO_EDGE]: ADDRESS_MODE.CLAMP_TO_EDGE,
+    [GL.REPEAT]: ADDRESS_MODE.REPEAT,
+    [GL.MIRRORED_REPEAT]: ADDRESS_MODE.MIRROR_REPEAT
   };
 
   if (oldParams) {
@@ -158,13 +162,13 @@ function mapSamplerParameters(oldParams: Record<number, number>): Record<string,
       }
     }
     if (oldParams[GL.TEXTURE_MAG_FILTER] !== undefined) {
-      result.magFilter = magFilterMap[oldParams[GL.TEXTURE_MAG_FILTER]] || 'nearest';
+      result.magFilter = magFilterMap[oldParams[GL.TEXTURE_MAG_FILTER]] || FILTER_MODE.NEAREST;
     }
     if (oldParams[GL.TEXTURE_WRAP_S] !== undefined) {
-      result.addressModeU = wrapMap[oldParams[GL.TEXTURE_WRAP_S]] || 'clamp-to-edge';
+      result.addressModeU = wrapMap[oldParams[GL.TEXTURE_WRAP_S]] || ADDRESS_MODE.CLAMP_TO_EDGE;
     }
     if (oldParams[GL.TEXTURE_WRAP_T] !== undefined) {
-      result.addressModeV = wrapMap[oldParams[GL.TEXTURE_WRAP_T]] || 'clamp-to-edge';
+      result.addressModeV = wrapMap[oldParams[GL.TEXTURE_WRAP_T]] || ADDRESS_MODE.CLAMP_TO_EDGE;
     }
   }
 
@@ -174,29 +178,28 @@ function mapSamplerParameters(oldParams: Record<number, number>): Record<string,
 /**
  * Map old GL format/type to luma.gl 9 texture format string
  */
-function mapTextureFormat(glFormat: number, glType?: number): string {
+function mapTextureFormat(glFormat: number, _glType?: number): string {
   switch (glFormat) {
     case GL.R8UI:
-      return 'r8uint';
+      return TEXTURE_FORMAT.R8_UINT;
     case GL.R16UI:
-      return 'r16uint';
+      return TEXTURE_FORMAT.R16_UINT;
     case GL.R32UI:
-      return 'r32uint';
+      return TEXTURE_FORMAT.R32_UINT;
     case GL.R8I:
-      return 'r8sint';
+      return TEXTURE_FORMAT.R8_SINT;
     case GL.R16I:
-      return 'r16sint';
+      return TEXTURE_FORMAT.R16_SINT;
     case GL.R32I:
-      return 'r32sint';
+      return TEXTURE_FORMAT.R32_SINT;
     case GL.R32F:
-      return 'r32float';
+      return TEXTURE_FORMAT.R32_FLOAT;
     case GL.RGBA:
-      if (glType === GL.UNSIGNED_BYTE) return 'rgba8unorm';
-      return 'rgba8unorm';
+      return TEXTURE_FORMAT.RGBA8_UNORM;
     case GL.RGB:
-      return 'rgba8unorm';
+      return TEXTURE_FORMAT.RGBA8_UNORM;
     default:
-      return 'rgba8unorm';
+      return TEXTURE_FORMAT.RGBA8_UNORM;
   }
 }
 
@@ -256,7 +259,7 @@ function loadTexture(
     const samplerParams = mapSamplerParameters(rawData.parameters || {});
     const textureFormat = rawData.format
       ? mapTextureFormat(rawData.format, rawData.type)
-      : 'rgba8unorm';
+      : TEXTURE_FORMAT.RGBA8_UNORM;
 
     const textureProps: any = {
       width: rawData.width || rawData.data?.width || 1,
