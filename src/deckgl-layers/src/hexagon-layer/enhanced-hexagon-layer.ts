@@ -41,7 +41,9 @@ export default class ScaleEnhancedHexagonLayer extends HexagonLayer<any> {
         );
         return info;
       }
-      const centroid = getHexbinCentroid([info.object.col, info.object.row], radiusCommon);
+      const {col, row} = info.object;
+      if (typeof col !== 'number' || typeof row !== 'number') return info;
+      const centroid = getHexbinCentroid([col, row], radiusCommon);
       const ox = hexOriginCommon?.[0] ?? 0;
       const oy = hexOriginCommon?.[1] ?? 0;
       const r = radiusCommon * coverage;

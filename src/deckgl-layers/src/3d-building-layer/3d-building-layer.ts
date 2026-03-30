@@ -15,6 +15,7 @@ export default class ThreeDBuildingLayer extends CompositeLayer<ThreeDBuildingLa
     return new SolidPolygonLayer<TileDataItem>({
       ...props,
       parameters: {
+        blend: true,
         blendColorSrcFactor: 'src-alpha',
         blendColorDstFactor: 'one-minus-src-alpha',
         blendAlphaSrcFactor: 'one',

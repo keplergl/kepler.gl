@@ -31,6 +31,7 @@ export default class ScaleEnhancedGridLayer extends GridLayer<any> {
         return info;
       }
       const {col, row} = info.object;
+      if (typeof col !== 'number' || typeof row !== 'number') return info;
       const cx = (col + 0.5) * cellSizeCommon[0] + cellOriginCommon[0];
       const cy = (row + 0.5) * cellSizeCommon[1] + cellOriginCommon[1];
       const hw = 0.5 * coverage * cellSizeCommon[0];

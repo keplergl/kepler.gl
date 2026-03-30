@@ -24,7 +24,7 @@ function createCustomShadowModule() {
   const mod = {...shadow};
 
   // Add outputUniformShadow to the UBO block (present in both vs and fs)
-  const uboField = '  bool outputUniformShadow;\n';
+  const uboField = '  float outputUniformShadow;\n';
   // @ts-expect-error shader source is typed as string literal
   mod.vs = insertBefore(mod.vs, '} shadow;', uboField);
   // @ts-expect-error shader source is typed as string literal
@@ -35,7 +35,7 @@ function createCustomShadowModule() {
   mod.fs = insertBefore(
     mod.fs,
     'vec4 rgbaDepth = texture(shadowMap, position.xy);',
-    'if (shadow.outputUniformShadow) return 1.0;\n  '
+    'if (shadow.outputUniformShadow > 0.5) return 1.0;\n  '
   );
 
   mod.uniformTypes = {
@@ -51,10 +51,10 @@ function createCustomShadowModule() {
     // @ts-expect-error outputUniformShadow is a custom property
     if (opts.outputUniformShadow !== undefined) {
       // @ts-expect-error outputUniformShadow is a custom property
-      u.outputUniformShadow = opts.outputUniformShadow;
+      u.outputUniformShadow = opts.outputUniformShadow ? 1.0 : 0.0;
     } else {
       // @ts-expect-error outputUniformShadow is a custom property
-      u.outputUniformShadow = false;
+      u.outputUniformShadow = 0.0;
     }
     return u;
   };

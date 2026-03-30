@@ -6,6 +6,7 @@ import {console as Console} from 'global/window';
 
 import {aggregate} from '@kepler.gl/utils';
 import {AGGREGATION_TYPES, SCALE_FUNC} from '@kepler.gl/constants';
+import {RGBAColor} from '@kepler.gl/types';
 
 const AGGREGATION_OPERATION = {
   SUM: 'SUM' as const,
@@ -101,6 +102,10 @@ class BinSorter {
       minValue = minValue < x.value ? minValue : x.value;
       totalCount += x.counts;
     }
+    if (this.aggregatedBins.length === 0) {
+      maxValue = 0;
+      minValue = 0;
+    }
     this.maxCount = maxCount;
     this.maxValue = maxValue;
     this.minValue = minValue;
@@ -161,7 +166,6 @@ class BinSorter {
     return [this.sortedBins[lowerIdx].value, this.sortedBins[upperIdx].value];
   }
 }
-import {RGBAColor} from '@kepler.gl/types';
 
 export type UpdaterType = (this: CPUAggregator, step, props, dimensionUpdater) => void;
 export type BindedUpdaterType = () => void;

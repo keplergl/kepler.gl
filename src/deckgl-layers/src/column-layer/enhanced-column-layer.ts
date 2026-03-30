@@ -103,7 +103,8 @@ class EnhancedColumnLayer extends ColumnLayer<any, EnhancedColumnLayerProps> {
         layer: {opacity: strokeOpacity ?? this.props.opacity}
       });
       fillModel.draw(this.context.renderPass);
-      // Restore original opacity so subsequent passes are unaffected
+      // Restore original vertex count and opacity so subsequent passes are unaffected
+      fillModel.setVertexCount(fillVertexCount);
       fillModel.shaderInputs.setProps({
         layer: {opacity: this.props.opacity}
       });

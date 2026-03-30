@@ -127,11 +127,18 @@ export function loadImages({
 function mapSamplerParameters(oldParams: Record<number, number>): Record<string, string> {
   const result: Record<string, string> = {...DEFAULT_SAMPLER_PARAMETERS};
 
-  const filterMap = {
+  const magFilterMap = {
     [GL.NEAREST]: 'nearest',
-    [GL.LINEAR]: 'linear',
-    [GL.LINEAR_MIPMAP_LINEAR]: 'linear',
-    [GL.NEAREST_MIPMAP_NEAREST]: 'nearest'
+    [GL.LINEAR]: 'linear'
+  };
+
+  const minFilterMap: Record<number, {minFilter: string; mipmapFilter?: string}> = {
+    [GL.NEAREST]: {minFilter: 'nearest'},
+    [GL.LINEAR]: {minFilter: 'linear'},
+    [GL.NEAREST_MIPMAP_NEAREST]: {minFilter: 'nearest', mipmapFilter: 'nearest'},
+    [GL.NEAREST_MIPMAP_LINEAR]: {minFilter: 'nearest', mipmapFilter: 'linear'},
+    [GL.LINEAR_MIPMAP_NEAREST]: {minFilter: 'linear', mipmapFilter: 'nearest'},
+    [GL.LINEAR_MIPMAP_LINEAR]: {minFilter: 'linear', mipmapFilter: 'linear'}
   };
 
   const wrapMap = {
@@ -142,10 +149,16 @@ function mapSamplerParameters(oldParams: Record<number, number>): Record<string,
 
   if (oldParams) {
     if (oldParams[GL.TEXTURE_MIN_FILTER] !== undefined) {
-      result.minFilter = filterMap[oldParams[GL.TEXTURE_MIN_FILTER]] || 'nearest';
+      const mapped = minFilterMap[oldParams[GL.TEXTURE_MIN_FILTER]];
+      if (mapped) {
+        result.minFilter = mapped.minFilter;
+        if (mapped.mipmapFilter) {
+          result.mipmapFilter = mapped.mipmapFilter;
+        }
+      }
     }
     if (oldParams[GL.TEXTURE_MAG_FILTER] !== undefined) {
-      result.magFilter = filterMap[oldParams[GL.TEXTURE_MAG_FILTER]] || 'nearest';
+      result.magFilter = magFilterMap[oldParams[GL.TEXTURE_MAG_FILTER]] || 'nearest';
     }
     if (oldParams[GL.TEXTURE_WRAP_S] !== undefined) {
       result.addressModeU = wrapMap[oldParams[GL.TEXTURE_WRAP_S]] || 'clamp-to-edge';
@@ -185,6 +198,26 @@ function mapTextureFormat(glFormat: number, glType?: number): string {
     default:
       return 'rgba8unorm';
   }
+}
+
+/**
+ * Expand 3-byte-per-pixel RGB data to 4-byte-per-pixel RGBA.
+ * Needed because WebGPU/luma.gl 9 has no 3-channel texture format.
+ */
+function expandRGBtoRGBA(
+  data: Uint8Array | Uint8ClampedArray,
+  width: number,
+  height: number
+): Uint8Array {
+  const pixelCount = width * height;
+  const rgba = new Uint8Array(pixelCount * 4);
+  for (let i = 0; i < pixelCount; i++) {
+    rgba[i * 4] = data[i * 3];
+    rgba[i * 4 + 1] = data[i * 3 + 1];
+    rgba[i * 4 + 2] = data[i * 3 + 2];
+    rgba[i * 4 + 3] = 255;
+  }
+  return rgba;
 }
 
 /**
@@ -242,7 +275,18 @@ function loadTexture(
       ) {
         textureProps.data = rawData.data;
       } else if (ArrayBuffer.isView(rawData.data)) {
-        textureProps.data = rawData.data;
+        if (
+          rawData.format === GL.RGB &&
+          (rawData.data instanceof Uint8Array || rawData.data instanceof Uint8ClampedArray)
+        ) {
+          textureProps.data = expandRGBtoRGBA(
+            rawData.data,
+            textureProps.width,
+            textureProps.height
+          );
+        } else {
+          textureProps.data = rawData.data;
+        }
       }
     }
 
