@@ -32,6 +32,8 @@ export default class RasterLayer extends BitmapLayer<RasterLayerAddedProps> {
     images: ImageState;
   };
 
+  _redrawScheduled = false;
+
   initializeState(): void {
     ensureRasterHooksRegistered();
     this.setState({images: {}});
@@ -99,21 +101,16 @@ export default class RasterLayer extends BitmapLayer<RasterLayerAddedProps> {
   }
 
   _scheduleRedraw(): void {
-    // @ts-expect-error custom property not in deck.gl types
     if (this._redrawScheduled) return;
-    // @ts-expect-error custom property not in deck.gl types
     this._redrawScheduled = true;
     requestAnimationFrame(() => {
-      // @ts-expect-error custom property not in deck.gl types
       this._redrawScheduled = false;
       if (this.context.deck) {
         // @ts-expect-error accessing private deck.gl property
         this.context.deck._needsRedraw = 'RasterLayer pipeline pending';
       }
       this.context.layerManager?.setNeedsRedraw('RasterLayer pipeline pending');
-      // @ts-expect-error onRedrawNeeded not in standard props type
       if (typeof this.props.onRedrawNeeded === 'function') {
-        // @ts-expect-error onRedrawNeeded not in standard props type
         this.props.onRedrawNeeded();
       }
     });

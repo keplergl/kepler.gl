@@ -74,6 +74,8 @@ export default class RasterMeshLayer extends SimpleMeshLayer<any, RasterLayerAdd
     images: ImageState;
   };
 
+  _redrawScheduled = false;
+
   initializeState(): void {
     ensureRasterHooksRegistered();
     this.setState({images: {}});
@@ -212,21 +214,16 @@ export default class RasterMeshLayer extends SimpleMeshLayer<any, RasterLayerAdd
   }
 
   _scheduleRedraw(): void {
-    // @ts-expect-error custom property not in deck.gl types
     if (this._redrawScheduled) return;
-    // @ts-expect-error custom property not in deck.gl types
     this._redrawScheduled = true;
     requestAnimationFrame(() => {
-      // @ts-expect-error custom property not in deck.gl types
       this._redrawScheduled = false;
       if (this.context.deck) {
         // @ts-expect-error accessing private deck.gl property
         this.context.deck._needsRedraw = 'RasterMeshLayer pipeline pending';
       }
       this.context.layerManager?.setNeedsRedraw('RasterMeshLayer pipeline pending');
-      // @ts-expect-error onRedrawNeeded not in standard props type
       if (typeof this.props.onRedrawNeeded === 'function') {
-        // @ts-expect-error onRedrawNeeded not in standard props type
         this.props.onRedrawNeeded();
       }
     });

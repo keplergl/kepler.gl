@@ -19,4 +19,5 @@ export type RasterLayerAddedProps = {
   modules: ShaderModule[];
   images: ImageInput;
   moduleProps: Record<string, number>;
+  onRedrawNeeded?: (() => void) | null;
 };
