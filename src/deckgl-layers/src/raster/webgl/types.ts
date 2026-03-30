@@ -21,6 +21,9 @@ export interface ShaderModule {
   uniforms?: Record<string, any>;
   getUniforms?: (opts: object) => GetUniformsOutput;
 
+  /** luma.gl 9 UBO uniform type declarations (e.g. { opacity: 'f32' }) */
+  uniformTypes?: Record<string, string>;
+
   /** Optional constants to define when injecting */
   defines?: Record<string, string>;
   inject?: Record<string, string>;

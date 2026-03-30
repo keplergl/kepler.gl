@@ -12,7 +12,10 @@ import {GetUniformsOutput, ShaderModule} from '../types';
 //
 const fs1 = `\
 uniform sampler2D bitmapTexturePan;
-uniform float panWeight;
+
+uniform pansharpen_broveyUniforms {
+  float panWeight;
+} pansharpen_brovey;
 
 float pansharpen_brovey_ratio(vec4 rgb, float pan, float weight) {
   return pan / ((rgb.r + rgb.g + rgb.b * weight) / (2. + weight));
@@ -33,7 +36,9 @@ precision mediump usampler2D;
   uniform sampler2D bitmapTexturePan;
 #endif
 
-uniform float panWeight;
+uniform pansharpen_broveyUniforms {
+  float panWeight;
+} pansharpen_brovey;
 
 float pansharpen_brovey_ratio(vec4 rgb, float pan, float weight) {
   return pan / ((rgb.r + rgb.g + rgb.b * weight) / (2. + weight));
@@ -62,14 +67,17 @@ export const pansharpenBrovey: ShaderModule = {
   name: 'pansharpen_brovey',
   fs1,
   fs2,
+  uniformTypes: {
+    panWeight: 'f32'
+  },
   defines: {
     SAMPLER_TYPE: 'sampler2D'
   },
   getUniforms,
   inject: {
     'fs:DECKGL_MUTATE_COLOR': `
-    float pan_band = float(texture2D(bitmapTexturePan, coord).r);
-    image = pansharpen_brovey_calc(image, pan_band, panWeight);
+    float pan_band = float(texture(bitmapTexturePan, coord).r);
+    image = pansharpen_brovey_calc(image, pan_band, pansharpen_brovey.panWeight);
     `
   }
 };

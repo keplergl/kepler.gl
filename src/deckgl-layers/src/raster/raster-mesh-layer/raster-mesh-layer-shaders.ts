@@ -1,6 +1,23 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+const rasterMeshUniformBlock = `\
+uniform rasterMeshUniforms {
+  float meshOpacity;
+  float meshFlatShading;
+} rasterMesh;
+`;
+
+export const rasterMeshUniforms = {
+  name: 'rasterMesh',
+  vs: rasterMeshUniformBlock,
+  fs: rasterMeshUniformBlock,
+  uniformTypes: {
+    meshOpacity: 'f32',
+    meshFlatShading: 'f32'
+  }
+};
+
 /**
  * Build the vertex shader for the raster mesh layer.
  */
@@ -59,9 +76,6 @@ precision highp float;
 precision mediump int;
 precision mediump usampler2D;
 
-uniform float meshOpacity;
-uniform bool meshFlatShading;
-
 in vec2 vTexCoord;
 in vec3 cameraPosition;
 in vec3 normals_commonspace;
@@ -80,14 +94,14 @@ void main(void) {
   DECKGL_MUTATE_COLOR(image, coord);
 
   vec3 normal;
-  if (meshFlatShading) {
+  if (rasterMesh.meshFlatShading > 0.5) {
     normal = normalize(cross(dFdx(position_commonspace.xyz), dFdy(position_commonspace.xyz)));
   } else {
     normal = normals_commonspace;
   }
 
   vec3 lightColor = lighting_getLightColor(image.rgb, cameraPosition, position_commonspace.xyz, normal);
-  fragColor = vec4(lightColor, meshOpacity);
+  fragColor = vec4(lightColor, rasterMesh.meshOpacity);
 
   DECKGL_FILTER_COLOR(fragColor, geometry);
 }

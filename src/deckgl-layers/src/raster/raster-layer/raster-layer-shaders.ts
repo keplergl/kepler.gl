@@ -91,6 +91,10 @@ export function prepareLumaModules(modules: LumaShaderModule[]): any[] {
       result.uniforms = mod.uniforms;
     }
 
+    if (mod.uniformTypes) {
+      result.uniformTypes = mod.uniformTypes;
+    }
+
     // Convert inject code, replacing texture2D -> texture
     if (mod.inject) {
       result.inject = {};

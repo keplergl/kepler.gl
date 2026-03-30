@@ -6,24 +6,27 @@ import {GetUniformsOutput, ShaderModule} from '../types';
 
 const fs = `\
 uniform sampler2D uColormapTexture;
-uniform int uHasCategoricalColors;
-uniform int uCategoricalMinValue;
-uniform int uCategoricalMaxValue;
-uniform int uMaxPixelValue;
+
+uniform colormapUniforms {
+  int hasCategoricalColors;
+  int categoricalMinValue;
+  int categoricalMaxValue;
+  int maxPixelValue;
+} colormap;
 
 // Apply colormap texture given value
 // Since the texture only varies in the x direction, setting v to 0.5 as a
 // constant is fine
 // Assumes the input range of value is -1 to 1
-vec4 colormap(sampler2D cmap, vec4 image) {
+vec4 colormapApply(sampler2D cmap, vec4 image) {
   vec2 uv;
-  if (uHasCategoricalColors == 1) {
-    float step = float(uMaxPixelValue) / float(uCategoricalMaxValue - uCategoricalMinValue);
+  if (colormap.hasCategoricalColors == 1) {
+    float step = float(colormap.maxPixelValue) / float(colormap.categoricalMaxValue - colormap.categoricalMinValue);
     uv = vec2(image.r * step, 0.5);
   } else {
     uv = vec2(0.5 * image.r + 0.5, 0.5);
   }
-  vec4 color = texture2D(cmap, uv);
+  vec4 color = texture(cmap, uv);
   if(color.a <= 0.0) discard;
   return color;
 }
@@ -58,20 +61,26 @@ function getUniforms(
     Number.isFinite(maxCategoricalBandValue);
   return {
     uColormapTexture: imageColormap,
-    uHasCategoricalColors: isCategorical ? 1 : 0,
-    uCategoricalMinValue: Number.isFinite(minCategoricalBandValue) ? minCategoricalBandValue : 0,
-    uCategoricalMaxValue: Number.isFinite(maxCategoricalBandValue) ? maxCategoricalBandValue : 0,
-    uMaxPixelValue: Number.isFinite(maxPixelValue) ? maxPixelValue : 0
+    hasCategoricalColors: isCategorical ? 1 : 0,
+    categoricalMinValue: Number.isFinite(minCategoricalBandValue) ? minCategoricalBandValue : 0,
+    categoricalMaxValue: Number.isFinite(maxCategoricalBandValue) ? maxCategoricalBandValue : 0,
+    maxPixelValue: Number.isFinite(maxPixelValue) ? maxPixelValue : 0
   };
 }
 
 export const colormap: ShaderModule = {
   name: 'colormap',
   fs,
+  uniformTypes: {
+    hasCategoricalColors: 'i32',
+    categoricalMinValue: 'i32',
+    categoricalMaxValue: 'i32',
+    maxPixelValue: 'i32'
+  },
   getUniforms,
   inject: {
     'fs:DECKGL_MUTATE_COLOR': `
-    image = colormap(uColormapTexture, image);
+    image = colormapApply(uColormapTexture, image);
     `
   }
 };

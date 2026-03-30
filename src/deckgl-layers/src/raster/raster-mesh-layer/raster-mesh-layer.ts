@@ -8,7 +8,8 @@ import {Model} from '@luma.gl/engine';
 
 import {
   buildRasterMeshFragmentShader,
-  buildRasterMeshVertexShader
+  buildRasterMeshVertexShader,
+  rasterMeshUniforms
 } from './raster-mesh-layer-shaders';
 import {
   ensureRasterHooksRegistered,
@@ -18,7 +19,6 @@ import {loadImages} from '../images';
 import type {RasterLayerAddedProps, ImageState} from '../types';
 import {modulesEqual} from '../util';
 import {patchPipelineValidation} from '../pipeline-validation-patch';
-import {setStandaloneUniforms, collectIntUniforms} from '../standalone-uniforms';
 
 patchPipelineValidation();
 
@@ -92,7 +92,7 @@ export default class RasterMeshLayer extends SimpleMeshLayer<any, RasterLayerAdd
       ...parentShaders,
       vs: buildRasterMeshVertexShader(),
       fs: buildRasterMeshFragmentShader(),
-      modules: [...(parentShaders.modules || []), ...lumaModules]
+      modules: [...(parentShaders.modules || []), rasterMeshUniforms, ...lumaModules]
     };
   }
 
@@ -169,43 +169,28 @@ export default class RasterMeshLayer extends SimpleMeshLayer<any, RasterLayerAdd
       return;
     }
 
-    // Set props for each custom module
+    // Set mesh-specific UBO uniforms
+    model.shaderInputs.setProps({
+      rasterMesh: {
+        meshOpacity: this.props.opacity ?? 1,
+        meshFlatShading: !this.state.hasNormals ? 1.0 : 0.0
+      }
+    });
+
+    // Set props for each custom module through shaderInputs.
+    // Call getUniforms ourselves to skip inactive modules (null return),
+    // avoiding the ShaderInputs null-fallback that would dump all textures
+    // into bindings every frame.
     const allModuleProps = {...moduleProps, ...images};
     const modules = this.props.modules || [];
     for (const mod of modules) {
       if (mod.getUniforms) {
-        const uniforms = mod.getUniforms(allModuleProps);
-        if (uniforms) {
-          const textureBindings: Record<string, any> = {};
-          const scalarUniforms: Record<string, any> = {};
-          for (const [key, value] of Object.entries(uniforms)) {
-            if (value && typeof value === 'object' && !Array.isArray(value)) {
-              textureBindings[key] = value;
-            } else {
-              scalarUniforms[key] = value;
-            }
-          }
-
-          if (Object.keys(textureBindings).length > 0) {
-            model.setBindings(textureBindings);
-          }
-
-          if (Object.keys(scalarUniforms).length > 0) {
-            setStandaloneUniforms(model, scalarUniforms, collectIntUniforms(mod));
-          }
+        const result = mod.getUniforms(allModuleProps);
+        if (result) {
+          model.shaderInputs.setProps({[mod.name]: result});
         }
       }
     }
-
-    // Set mesh-specific standalone uniforms
-    setStandaloneUniforms(
-      model,
-      {
-        meshOpacity: this.props.opacity ?? 1,
-        meshFlatShading: !this.state.hasNormals ? 1 : 0
-      },
-      new Set(['meshFlatShading'])
-    );
 
     const drawSuccess = model.draw(this.context.renderPass);
     if (!drawSuccess) {

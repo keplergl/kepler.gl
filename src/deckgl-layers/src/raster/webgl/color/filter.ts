@@ -4,14 +4,16 @@
 import {GetUniformsOutput, ShaderModule} from '../types';
 
 const fs = `\
-uniform float filterMin1;
-uniform float filterMax1;
-uniform float filterMin2;
-uniform float filterMax2;
-uniform float filterMin3;
-uniform float filterMax3;
-uniform float filterMin4;
-uniform float filterMax4;
+uniform bandFilterUniforms {
+  float min1;
+  float max1;
+  float min2;
+  float max2;
+  float min3;
+  float max3;
+  float min4;
+  float max4;
+} bandFilter;
 `;
 
 // You can't pass JS' -Infinity or Infinity to a shader as a uniform
@@ -52,14 +54,14 @@ function getUniforms(
     Number.isFinite(filterMax4)
   ) {
     return {
-      filterMin1: Number.isFinite(filterMin1) ? filterMin1 : -inf,
-      filterMin2: Number.isFinite(filterMin2) ? filterMin2 : -inf,
-      filterMin3: Number.isFinite(filterMin3) ? filterMin3 : -inf,
-      filterMin4: Number.isFinite(filterMin4) ? filterMin4 : -inf,
-      filterMax1: Number.isFinite(filterMax1) ? filterMax1 : inf,
-      filterMax2: Number.isFinite(filterMax2) ? filterMax2 : inf,
-      filterMax3: Number.isFinite(filterMax3) ? filterMax3 : inf,
-      filterMax4: Number.isFinite(filterMax4) ? filterMax4 : inf
+      min1: Number.isFinite(filterMin1) ? filterMin1 : -inf,
+      min2: Number.isFinite(filterMin2) ? filterMin2 : -inf,
+      min3: Number.isFinite(filterMin3) ? filterMin3 : -inf,
+      min4: Number.isFinite(filterMin4) ? filterMin4 : -inf,
+      max1: Number.isFinite(filterMax1) ? filterMax1 : inf,
+      max2: Number.isFinite(filterMax2) ? filterMax2 : inf,
+      max3: Number.isFinite(filterMax3) ? filterMax3 : inf,
+      max4: Number.isFinite(filterMax4) ? filterMax4 : inf
     };
   }
 
@@ -67,19 +69,29 @@ function getUniforms(
 }
 
 export const filter: ShaderModule = {
-  name: 'filter',
+  name: 'bandFilter',
   fs,
+  uniformTypes: {
+    min1: 'f32',
+    max1: 'f32',
+    min2: 'f32',
+    max2: 'f32',
+    min3: 'f32',
+    max3: 'f32',
+    min4: 'f32',
+    max4: 'f32'
+  },
   getUniforms,
   inject: {
     'fs:DECKGL_MUTATE_COLOR': `
-    if (image.r < filterMin1) discard;
-    if (image.g < filterMin2) discard;
-    if (image.b < filterMin3) discard;
-    if (image.a < filterMin4) discard;
-    if (image.r > filterMax1) discard;
-    if (image.g > filterMax2) discard;
-    if (image.b > filterMax3) discard;
-    if (image.a > filterMax4) discard;
+    if (image.r < bandFilter.min1) discard;
+    if (image.g < bandFilter.min2) discard;
+    if (image.b < bandFilter.min3) discard;
+    if (image.a < bandFilter.min4) discard;
+    if (image.r > bandFilter.max1) discard;
+    if (image.g > bandFilter.max2) discard;
+    if (image.b > bandFilter.max3) discard;
+    if (image.a > bandFilter.max4) discard;
     `
   }
 };

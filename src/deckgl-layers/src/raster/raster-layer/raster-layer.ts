@@ -15,7 +15,6 @@ import {loadImages} from '../images';
 import type {RasterLayerAddedProps, ImageState} from '../types';
 import {modulesEqual} from '../util';
 import {patchPipelineValidation} from '../pipeline-validation-patch';
-import {setStandaloneUniforms, collectIntUniforms} from '../standalone-uniforms';
 
 patchPipelineValidation();
 
@@ -66,30 +65,17 @@ export default class RasterLayer extends BitmapLayer<RasterLayerAddedProps> {
     });
 
     // Set props for each custom module through shaderInputs.
-    // This routes textures to bindings and scalar values to standalone uniforms.
+    // We call getUniforms ourselves to skip modules that return null (inactive).
+    // Passing allModuleProps directly to setProps would cause the null-fallback
+    // in ShaderInputs to treat the entire props bag as uniforms/bindings,
+    // triggering expensive texture rebinding every frame.
     const allModuleProps = {...moduleProps, ...images};
     const modules = this.props.modules || [];
     for (const mod of modules) {
       if (mod.getUniforms) {
-        const uniforms = mod.getUniforms(allModuleProps);
-        if (uniforms) {
-          const textureBindings: Record<string, object> = {};
-          const scalarUniforms: Record<string, number | number[]> = {};
-          for (const [key, value] of Object.entries(uniforms)) {
-            if (value && typeof value === 'object' && !Array.isArray(value)) {
-              textureBindings[key] = value;
-            } else {
-              scalarUniforms[key] = value as number | number[];
-            }
-          }
-
-          if (Object.keys(textureBindings).length > 0) {
-            model.setBindings(textureBindings);
-          }
-
-          if (Object.keys(scalarUniforms).length > 0) {
-            setStandaloneUniforms(model, scalarUniforms, collectIntUniforms(mod));
-          }
+        const result = mod.getUniforms(allModuleProps);
+        if (result) {
+          model.shaderInputs.setProps({[mod.name]: result});
         }
       }
     }
