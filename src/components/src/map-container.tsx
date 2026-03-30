@@ -518,12 +518,18 @@ export default function MapContainerFactory(
 
     _onLayerSetDomain = (
       idx: number,
-      value: {domain: VisualChannelDomain; aggregatedBins: AggregatedBin[]}
+      value: number[] | {domain: VisualChannelDomain; aggregatedBins: AggregatedBin[]}
     ) => {
-      this.props.visStateActions.layerConfigChange(this.props.visState.layers[idx], {
-        colorDomain: value.domain,
-        aggregatedBins: value.aggregatedBins
-      } as Partial<LayerBaseConfig>);
+      // deck.gl 9 native aggregation layers (Grid, Hexagon) pass [min, max],
+      // while ClusterLayer's CPUAggregator still passes {domain, aggregatedBins}.
+      const config = Array.isArray(value)
+        ? {colorDomain: value as VisualChannelDomain}
+        : {colorDomain: value.domain, aggregatedBins: value.aggregatedBins};
+
+      this.props.visStateActions.layerConfigChange(
+        this.props.visState.layers[idx],
+        config as Partial<LayerBaseConfig>
+      );
     };
 
     _onRedrawNeeded = (_idx: number) => {

@@ -330,7 +330,6 @@ test('#GridLayer -> renderLayer', t => {
         // Verify aggregator state
         const aggregator = cpuGridLayer.state?.aggregator;
         t.ok(aggregator, 'cpuGridLayer should have aggregator state');
-        t.ok(aggregator, 'cpuGridLayer should have aggregator state');
         if (aggregator) {
           t.ok(aggregator.binCount > 0, 'aggregator should have bins');
           t.equal(
