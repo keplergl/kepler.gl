@@ -264,6 +264,18 @@ export default class AggregationLayer extends Layer {
       // current aggregation type is not supported by this field
       // set aggregation to the first supported option
       this.updateLayerVisConfig({[aggregation]: aggregationOptions[0]});
+    } else if (
+      this.config[field] &&
+      this.config.visConfig[aggregation] === AGGREGATION_TYPES.count
+    ) {
+      // When a field is selected but aggregation is still 'count' (carried over
+      // from the no-field / "Count Points" state), switch to a meaningful default.
+      // 'count' ignores the field values entirely, so keeping it would make the
+      // field selection appear to have no effect.
+      const meaningful = aggregationOptions.find(opt => opt !== AGGREGATION_TYPES.count);
+      if (meaningful) {
+        this.updateLayerVisConfig({[aggregation]: meaningful});
+      }
     }
   }
 
@@ -398,13 +410,15 @@ export default class AggregationLayer extends Layer {
 
     const {data} = this.updateData(datasets, oldLayerData);
 
-    return {
+    const result = {
       data,
       getPosition,
       _filterData: filterData,
       ...(getFilteredColorValue ? {getColorValue: getFilteredColorValue} : {}),
       ...(getFilteredElevationValue ? {getElevationValue: getFilteredElevationValue} : {})
     };
+
+    return result;
   }
 
   getDefaultDeckLayerProps(opts): any {
