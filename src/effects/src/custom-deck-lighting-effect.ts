@@ -2,6 +2,25 @@
 // Copyright contributors to the kepler.gl project
 
 import {LightingEffect, shadow} from '@deck.gl/core';
+import type {Texture} from '@luma.gl/core';
+import type {ShaderModule} from '@luma.gl/shadertools';
+
+/**
+ * Exposes private members of LightingEffect that we need to access.
+ * These are runtime-accessible but TypeScript marks them as private.
+ */
+interface LightingEffectPrivate {
+  shadow: boolean;
+  shadowPasses: {delete(): void}[];
+  dummyShadowMap: Texture | null;
+  _createShadowPasses(device: unknown): void;
+}
+
+/** Extended shadow module props with our custom field. */
+interface CustomShadowProps {
+  outputUniformShadow?: boolean;
+  [key: string]: unknown;
+}
 
 /**
  * Insert text before a target string in shader source.
@@ -18,20 +37,15 @@ function insertBefore(source: string, target: string, textToInsert: string): str
  * uniform shadow) instead of sampling the shadow map. Used for nighttime
  * rendering to avoid partial shadows from below.
  */
-function createCustomShadowModule() {
+function createCustomShadowModule(): ShaderModule | null {
   if (!shadow) return null;
 
-  const mod = {...shadow};
+  const mod = {...shadow} as Record<string, any>;
 
-  // Add outputUniformShadow to the UBO block (present in both vs and fs)
   const uboField = '  float outputUniformShadow;\n';
-  // @ts-expect-error shader source is typed as string literal
   mod.vs = insertBefore(mod.vs, '} shadow;', uboField);
-  // @ts-expect-error shader source is typed as string literal
   mod.fs = insertBefore(mod.fs, '} shadow;', uboField);
 
-  // Early return in shadow_getShadowWeight when outputUniformShadow is set
-  // @ts-expect-error shader source is typed as string literal
   mod.fs = insertBefore(
     mod.fs,
     'vec4 rgbaDepth = texture(shadowMap, position.xy);',
@@ -41,25 +55,19 @@ function createCustomShadowModule() {
   mod.uniformTypes = {
     ...shadow.uniformTypes,
     outputUniformShadow: 'f32'
-  } as typeof shadow.uniformTypes;
+  };
 
-  // Wrap getUniforms to include outputUniformShadow in the UBO
-  const originalGetUniforms = shadow.getUniforms;
-  mod.getUniforms = (opts = {}, context = {}) => {
-    // @ts-expect-error originalGetUniforms expects specific args
+  const originalGetUniforms = shadow.getUniforms as (
+    opts: Record<string, unknown>,
+    prevUniforms: Record<string, unknown>
+  ) => Record<string, unknown>;
+  mod.getUniforms = (opts: CustomShadowProps = {}, context = {}) => {
     const u = originalGetUniforms(opts, context);
-    // @ts-expect-error outputUniformShadow is a custom property
-    if (opts.outputUniformShadow !== undefined) {
-      // @ts-expect-error outputUniformShadow is a custom property
-      u.outputUniformShadow = opts.outputUniformShadow ? 1.0 : 0.0;
-    } else {
-      // @ts-expect-error outputUniformShadow is a custom property
-      u.outputUniformShadow = 0.0;
-    }
+    u.outputUniformShadow = opts.outputUniformShadow ? 1.0 : 0.0;
     return u;
   };
 
-  return mod;
+  return mod as unknown as ShaderModule;
 }
 
 const CustomShadowModule = createCustomShadowModule();
@@ -76,6 +84,10 @@ const CustomShadowModule = createCustomShadowModule();
 class CustomDeckLightingEffect extends LightingEffect {
   outputUniformShadow: boolean;
 
+  private get _private(): LightingEffectPrivate {
+    return this as unknown as LightingEffectPrivate;
+  }
+
   constructor(props) {
     super(props);
     this.outputUniformShadow = false;
@@ -84,29 +96,21 @@ class CustomDeckLightingEffect extends LightingEffect {
   setup(context) {
     this.context = context;
     const {device, deck} = context;
-    // @ts-expect-error accessing private property shadow
-    if (this.shadow && !this.dummyShadowMap) {
-      // @ts-expect-error accessing private method _createShadowPasses
-      this._createShadowPasses(device);
+    if (this._private.shadow && !this._private.dummyShadowMap) {
+      this._private._createShadowPasses(device);
       deck._addDefaultShaderModule(CustomShadowModule || shadow);
-      // @ts-expect-error accessing private property dummyShadowMap
-      this.dummyShadowMap = device.createTexture({width: 1, height: 1});
+      this._private.dummyShadowMap = device.createTexture({width: 1, height: 1});
     }
   }
 
   cleanup(context) {
-    // @ts-expect-error accessing private property shadowPasses
-    for (const shadowPass of this.shadowPasses) {
+    for (const shadowPass of this._private.shadowPasses) {
       shadowPass.delete();
     }
-    // @ts-expect-error accessing private property shadowPasses
-    this.shadowPasses.length = 0;
-    // @ts-expect-error accessing private property dummyShadowMap
-    if (this.dummyShadowMap) {
-      // @ts-expect-error accessing private property dummyShadowMap
-      this.dummyShadowMap.destroy();
-      // @ts-expect-error accessing private property dummyShadowMap
-      this.dummyShadowMap = null;
+    this._private.shadowPasses.length = 0;
+    if (this._private.dummyShadowMap) {
+      this._private.dummyShadowMap.destroy();
+      this._private.dummyShadowMap = null;
       context.deck._removeDefaultShaderModule(CustomShadowModule || shadow);
     }
   }
@@ -114,19 +118,12 @@ class CustomDeckLightingEffect extends LightingEffect {
   getShaderModuleProps(layer, otherShaderModuleProps) {
     const props = super.getShaderModuleProps(layer, otherShaderModuleProps);
 
-    // Always provide dummyShadowMap so texture bindings are never undefined.
-    // Prevents "Bad texture binding" errors in composite layer sublayers
-    // when shadows are disabled.
-    // @ts-expect-error accessing private property dummyShadowMap
-    if (props.shadow && !props.shadow.dummyShadowMap && this.dummyShadowMap) {
-      // @ts-expect-error accessing private property dummyShadowMap
-      props.shadow.dummyShadowMap = this.dummyShadowMap;
+    if (props.shadow && !(props.shadow as any).dummyShadowMap && this._private.dummyShadowMap) {
+      (props.shadow as any).dummyShadowMap = this._private.dummyShadowMap;
     }
 
-    // Pass outputUniformShadow through to the custom shadow module
     if (props.shadow) {
-      // @ts-expect-error outputUniformShadow is a custom property
-      props.shadow.outputUniformShadow = this.outputUniformShadow;
+      (props.shadow as CustomShadowProps).outputUniformShadow = this.outputUniformShadow;
     }
 
     return props;

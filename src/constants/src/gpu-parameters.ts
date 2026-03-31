@@ -66,6 +66,15 @@ export const DEPTH_STENCIL_FORMAT = {
   DEPTH24_PLUS: 'depth24plus'
 } as const;
 
+// --- Primitive topologies ---
+export const TOPOLOGY = {
+  TRIANGLE_LIST: 'triangle-list',
+  TRIANGLE_STRIP: 'triangle-strip',
+  LINE_LIST: 'line-list',
+  LINE_STRIP: 'line-strip',
+  POINT_LIST: 'point-list'
+} as const;
+
 // --- Precomposed parameter sets ---
 
 /**

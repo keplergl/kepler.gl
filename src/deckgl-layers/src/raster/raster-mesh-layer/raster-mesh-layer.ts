@@ -19,6 +19,7 @@ import {loadImages} from '../images';
 import type {RasterLayerAddedProps, ImageState} from '../types';
 import {modulesEqual} from '../util';
 import {patchPipelineValidation} from '../pipeline-validation-patch';
+import {TOPOLOGY} from '@kepler.gl/constants';
 
 patchPipelineValidation();
 
@@ -128,7 +129,9 @@ export default class RasterMeshLayer extends SimpleMeshLayer<any, RasterLayerAdd
     }
 
     if (this.state.model) {
-      this.state.model.setTopology?.(this.props.wireframe ? 'line-strip' : 'triangle-list');
+      this.state.model.setTopology?.(
+        this.props.wireframe ? TOPOLOGY.LINE_STRIP : TOPOLOGY.TRIANGLE_LIST
+      );
     }
   }
 

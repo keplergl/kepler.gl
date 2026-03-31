@@ -3,6 +3,7 @@
 
 import {ScatterplotLayer, ScatterplotLayerProps} from '@deck.gl/layers';
 import {Geometry} from '@luma.gl/engine';
+import {TOPOLOGY} from '@kepler.gl/constants';
 
 const DEFAULT_POS = [-1, -1, 0, -1, 1, 0, 1, 1, 0, 1, -1, 0];
 
@@ -16,7 +17,7 @@ export default class ScatterplotIconLayer extends ScatterplotLayer<any, Scatterp
     const positions = iconGeometry ? new Float32Array(iconGeometry) : new Float32Array(DEFAULT_POS);
 
     const geometry = new Geometry({
-      topology: iconGeometry ? 'triangle-list' : 'triangle-strip',
+      topology: iconGeometry ? TOPOLOGY.TRIANGLE_LIST : TOPOLOGY.TRIANGLE_STRIP,
       attributes: {
         positions: {size: 3, value: positions}
       }
