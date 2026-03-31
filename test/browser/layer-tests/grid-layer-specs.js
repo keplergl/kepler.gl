@@ -309,29 +309,59 @@ test('#GridLayer -> renderLayer', t => {
           'should have correct number of grid cells'
         );
 
-        // Verify attributes exist on the cell sublayer
+        // Verify typed-array attributes on the cell sublayer
         t.ok(cellData.attributes, 'cell data should have attributes');
-        if (cellData.attributes) {
-          const attrKeys = Object.keys(cellData.attributes);
-          t.ok(attrKeys.length > 0, 'cell data should have binary attributes');
-        }
+        t.ok(
+          cellData.attributes.getColorValue?.value instanceof Float32Array,
+          'getColorValue should be a Float32Array'
+        );
+        t.ok(
+          cellData.attributes.getElevationValue?.value instanceof Float32Array,
+          'getElevationValue should be a Float32Array'
+        );
+        t.equal(
+          cellData.attributes.getColorValue.value.length,
+          expectedGridCellData.length,
+          'getColorValue array length should match bin count'
+        );
+
+        // Verify actual attribute array values (deck.gl 9 equivalent of instanceFillColors/instanceElevations)
+        // cellData.attributes contain SCALED values (processed through AttributeWithScale),
+        // not raw aggregated weights. For quantize scale with 3 bins [0, 1, 2],
+        // values are mapped to percentile-like range [0, 50, 99].
+        const colorValues = Array.from(cellData.attributes.getColorValue.value);
+        const elevationValues = Array.from(cellData.attributes.getElevationValue.value);
+        t.deepEqual(
+          colorValues.slice().sort((a, b) => a - b),
+          [0, 50, 99],
+          'getColorValue typed array should contain scaled values [0, 50, 99] (sorted)'
+        );
+        // Elevation uses linear scale (default), so raw values pass through
+        t.deepEqual(
+          elevationValues.slice().sort((a, b) => a - b),
+          [0, 1, 2],
+          'getElevationValue typed array should contain raw counts [0, 1, 2] (sorted)'
+        );
+
+        // getBin contains [col, row] integer IDs per bin (size=2)
+        const binAttr = cellData.attributes.getBin;
+        t.ok(binAttr?.value instanceof Float32Array, 'getBin should be a Float32Array');
+        t.equal(
+          binAttr.value.length,
+          expectedGridCellData.length * 2,
+          'getBin array length should be binCount * 2 (col, row pairs)'
+        );
 
         // deck.gl 9: onSetColorDomain receives [min, max] tuple
+        // count aggregation: bins have 0, 2, and 1 filtered points
         t.ok(spyLayerCallbacks.called, 'should call onSetLayerDomain');
         const domainArg = spyLayerCallbacks.args[0][0];
-        t.ok(Array.isArray(domainArg), 'onSetLayerDomain arg should be an array');
-        t.equal(domainArg.length, 2, 'domain should be [min, max]');
-        t.ok(
-          typeof domainArg[0] === 'number' && typeof domainArg[1] === 'number',
-          'domain values should be numbers'
-        );
-        t.ok(domainArg[0] <= domainArg[1], 'domain min should be <= max');
+        t.deepEqual(domainArg, [0, 2], 'onSetLayerDomain should receive exact domain [0, 2]');
 
-        // Verify aggregator state
+        // Verify aggregator state and per-bin values
         const aggregator = cpuGridLayer.state?.aggregator;
         t.ok(aggregator, 'cpuGridLayer should have aggregator state');
         if (aggregator) {
-          t.ok(aggregator.binCount > 0, 'aggregator should have bins');
           t.equal(
             aggregator.binCount,
             expectedGridCellData.length,
@@ -339,14 +369,43 @@ test('#GridLayer -> renderLayer', t => {
           );
 
           const colorDomain = aggregator.getResultDomain(0);
-          t.ok(Array.isArray(colorDomain), 'color domain should be an array');
-          t.equal(colorDomain.length, 2, 'color domain should be [min, max]');
-          t.ok(colorDomain[0] <= colorDomain[1], 'color domain min should be <= max');
+          t.deepEqual(colorDomain, [0, 2], 'color domain should be [0, 2]');
 
           const elevationDomain = aggregator.getResultDomain(1);
-          t.ok(Array.isArray(elevationDomain), 'elevation domain should be an array');
-          t.equal(elevationDomain.length, 2, 'elevation domain should be [min, max]');
-          t.ok(elevationDomain[0] <= elevationDomain[1], 'elevation domain min should be <= max');
+          t.deepEqual(elevationDomain, [0, 2], 'elevation domain should be [0, 2]');
+
+          // Verify per-bin data: collect bins and match by count
+          const binCounts = [];
+          const binColorValues = [];
+          const binElevationValues = [];
+          for (let i = 0; i < aggregator.binCount; i++) {
+            const bin = aggregator.getBin(i);
+            t.ok(bin, `bin ${i} should exist`);
+            binCounts.push(bin.count);
+            binColorValues.push(bin.value[0]);
+            binElevationValues.push(bin.value[1]);
+          }
+          t.deepEqual(
+            binCounts.slice().sort(),
+            [1, 2, 2],
+            'bin counts (total points per bin) should be [1, 2, 2] (sorted)'
+          );
+          t.deepEqual(
+            binColorValues.slice().sort(),
+            [0, 1, 2],
+            'bin color values (filtered count agg) should be [0, 1, 2] (sorted)'
+          );
+          t.deepEqual(
+            binElevationValues.slice().sort(),
+            [0, 1, 2],
+            'bin elevation values (filtered count agg) should be [0, 1, 2] (sorted)'
+          );
+
+          // Verify raw result arrays
+          const colorResult = aggregator.getResult(0);
+          t.ok(colorResult?.value instanceof Float32Array, 'color result should be Float32Array');
+          const sortedColorResult = Array.from(colorResult.value.slice(0, aggregator.binCount)).sort();
+          t.deepEqual(sortedColorResult, [0, 1, 2], 'color result values should be [0, 1, 2]');
         }
       }
     },
@@ -403,19 +462,45 @@ test('#GridLayer -> renderLayer', t => {
           'should have correct number of grid cells'
         );
 
+        // Verify typed-array attributes
+        t.ok(
+          cellData.attributes?.getColorValue?.value instanceof Float32Array,
+          'getColorValue should be a Float32Array'
+        );
+
+        // Verify actual attribute array values for "color by" max trip_distance
+        // bins with filtered points have max trip_distance 7.13 and 11; empty bin has NaN
+        const colorValues = Array.from(cellData.attributes.getColorValue.value);
+        const realColorValues = colorValues.filter(v => !isNaN(v)).sort((a, b) => a - b);
+        t.equal(realColorValues.length, 2, 'should have 2 non-NaN color attribute values');
+        t.ok(
+          Math.abs(realColorValues[0] - 7.13) < 0.001,
+          `first color value should be ~7.13 (got ${realColorValues[0]})`
+        );
+        t.equal(realColorValues[1], 11, 'second color value should be 11');
+        t.equal(
+          colorValues.filter(v => isNaN(v)).length,
+          1,
+          'should have exactly 1 NaN color value (empty bin)'
+        );
+
         // deck.gl 9: onSetColorDomain receives [min, max] tuple
+        // max aggregation of trip_distance: bins with filtered points have max 7.13 and 11
+        // Float32 precision: 7.13 may become 7.130000114440918
         t.ok(spyLayerCallbacks.called, 'should call onSetLayerDomain');
         const lastCallIdx = spyLayerCallbacks.args.length - 1;
         const domainArg = spyLayerCallbacks.args[lastCallIdx][0];
-        t.ok(Array.isArray(domainArg), 'onSetLayerDomain arg should be an array');
-        t.equal(domainArg.length, 2, 'domain should be [min, max]');
-        t.ok(domainArg[0] <= domainArg[1], 'domain min should be <= max');
+        t.equal(domainArg.length, 2, 'domain should have 2 elements');
+        t.ok(
+          Math.abs(domainArg[0] - 7.13) < 0.001,
+          `domain[0] should be ~7.13 (got ${domainArg[0]})`
+        );
+        t.equal(domainArg[1], 11, 'domain[1] should be 11');
 
-        // Verify aggregator state
+        // Verify aggregator state and per-bin values
         const aggregator = cpuGridLayer.state?.aggregator;
         t.ok(aggregator, 'cpuGridLayer should have aggregator state');
         if (aggregator) {
-          t.ok(aggregator.binCount > 0, 'aggregator should have bins');
           t.equal(
             aggregator.binCount,
             expectedGridCellData.length,
@@ -423,9 +508,41 @@ test('#GridLayer -> renderLayer', t => {
           );
 
           const colorDomain = aggregator.getResultDomain(0);
-          t.ok(Array.isArray(colorDomain), 'color domain should be an array');
-          t.equal(colorDomain.length, 2, 'color domain should be [min, max]');
-          t.ok(colorDomain[0] <= colorDomain[1], 'color domain min should be <= max');
+          t.equal(colorDomain.length, 2, 'color domain should have 2 elements');
+          t.ok(
+            Math.abs(colorDomain[0] - 7.13) < 0.001,
+            `color domain[0] should be ~7.13 (got ${colorDomain[0]})`
+          );
+          t.equal(colorDomain[1], 11, 'color domain[1] should be 11');
+
+          // Verify per-bin color values (max trip_distance per cell)
+          // One bin is empty (NaN), two bins have real values
+          const binColorValues = [];
+          for (let i = 0; i < aggregator.binCount; i++) {
+            const bin = aggregator.getBin(i);
+            t.ok(bin, `bin ${i} should exist`);
+            binColorValues.push(bin.value[0]);
+          }
+          const realValues = binColorValues.filter(v => !isNaN(v)).sort((a, b) => a - b);
+          t.equal(realValues.length, 2, 'should have 2 non-NaN bin color values');
+          t.ok(
+            Math.abs(realValues[0] - 7.13) < 0.001,
+            `first real bin value should be ~7.13 (got ${realValues[0]})`
+          );
+          t.equal(realValues[1], 11, 'second real bin value should be 11');
+
+          // Verify raw result array
+          const colorResult = aggregator.getResult(0);
+          t.ok(colorResult?.value instanceof Float32Array, 'color result should be Float32Array');
+          const resultValues = Array.from(colorResult.value.slice(0, aggregator.binCount))
+            .filter(v => !isNaN(v))
+            .sort((a, b) => a - b);
+          t.equal(resultValues.length, 2, 'should have 2 non-NaN result values');
+          t.ok(
+            Math.abs(resultValues[0] - 7.13) < 0.001,
+            `first result value should be ~7.13 (got ${resultValues[0]})`
+          );
+          t.equal(resultValues[1], 11, 'second result value should be 11');
         }
       }
     }

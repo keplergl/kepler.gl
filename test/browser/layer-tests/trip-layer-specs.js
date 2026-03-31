@@ -319,53 +319,86 @@ test('#TripLayer -> renderLayer', t => {
           attributes.filterValues.value instanceof Float32Array,
           'filterValues should be Float32Array'
         );
-        t.ok(attributes.filterValues.value.length > 0, 'filterValues should have data');
-
         t.ok(attributes.instanceColors, 'Should have instanceColors attribute');
         t.ok(attributes.instanceStrokeWidths, 'Should have instanceStrokeWidths attribute');
 
-        // deck.gl 9's PathLayer pre-allocates attribute arrays beyond the actual data.
-        // Use numInstances to know the real data extent.
+        // Trip features 0, 2, 4 have 10, 8, 7 coordinates respectively
+        const expectedVerticesPerPath = [10, 8, 7];
+        const expectedNumInstances = expectedVerticesPerPath.reduce((a, b) => a + b, 0); // 25
         const numInstances = deckTripLayer.state.numInstances ?? 0;
-        t.ok(numInstances > 0, `should have instances (got ${numInstances})`);
+        t.equal(
+          numInstances,
+          expectedNumInstances,
+          `should have exactly ${expectedNumInstances} instances`
+        );
 
-        // Verify instanceColors for all real instances: should be [1, 2, 3, 255]
-        const colorsArr = attributes.instanceColors.value;
+        // Verify startIndices from PathLayer tesselator
+        const startIndices = deckTripLayer.state.startIndices;
+        t.ok(startIndices, 'should have startIndices');
+        const expectedStartIndices = [0, 10, 18, 25];
+        t.deepEqual(
+          Array.from(startIndices),
+          expectedStartIndices,
+          'startIndices should be [0, 10, 18, 25]'
+        );
+
+        // Build expected instanceColors: all vertices should be [1, 2, 3, 255]
+        const expectedColors = new Uint8ClampedArray(numInstances * 4);
         for (let v = 0; v < numInstances; v++) {
-          const base = v * 4;
-          t.equal(colorsArr[base], 1, `instanceColors[${v}] R should be 1`);
-          t.equal(colorsArr[base + 1], 2, `instanceColors[${v}] G should be 2`);
-          t.equal(colorsArr[base + 2], 3, `instanceColors[${v}] B should be 3`);
-          t.equal(colorsArr[base + 3], 255, `instanceColors[${v}] A should be 255`);
+          expectedColors[v * 4] = 1;
+          expectedColors[v * 4 + 1] = 2;
+          expectedColors[v * 4 + 2] = 3;
+          expectedColors[v * 4 + 3] = 255;
         }
+        t.deepEqual(
+          attributes.instanceColors.value.slice(0, numInstances * 4),
+          expectedColors,
+          'Should have correct instanceColors for all instances'
+        );
 
-        // Verify instanceStrokeWidths for all real instances: should be 1 (defaultLineWidth)
-        const strokeArr = attributes.instanceStrokeWidths.value;
-        for (let v = 0; v < numInstances; v++) {
-          t.equal(strokeArr[v], 1, `instanceStrokeWidths[${v}] should be 1`);
-        }
+        // Build expected instanceStrokeWidths: all should be 1 (defaultLineWidth)
+        const expectedStroke = new Float32Array(numInstances).fill(1);
+        t.deepEqual(
+          attributes.instanceStrokeWidths.value.slice(0, numInstances),
+          expectedStroke,
+          'Should have correct instanceStrokeWidths for all instances'
+        );
 
-        // Verify filterValues: channels 1-3 should be 0 for all instances.
-        // Channel 0 should contain the per-feature filter values.
-        const expectedFV = [
+        // Build expected filterValues using startIndices for per-path grouping
+        // Feature 0: MIN_SAFE_INTEGER, Feature 2: 7 - valueFilterDomain0, Feature 4: 6 - valueFilterDomain0
+        const perPathFilterValue = [
           Number.MIN_SAFE_INTEGER,
           7 - valueFilterDomain0,
           6 - valueFilterDomain0
         ];
-        const fv = attributes.filterValues.value;
-        const seenFV = new Set();
-        for (let v = 0; v < numInstances; v++) {
-          const base = v * 4;
-          seenFV.add(fv[base]);
-          t.equal(fv[base + 1], 0, `filterValues[${v}][1] should be 0`);
-          t.equal(fv[base + 2], 0, `filterValues[${v}][2] should be 0`);
-          t.equal(fv[base + 3], 0, `filterValues[${v}][3] should be 0`);
+        const expectedFilterValues = new Float32Array(numInstances * 4);
+        for (let pathIdx = 0; pathIdx < expectedVerticesPerPath.length; pathIdx++) {
+          const start = expectedStartIndices[pathIdx];
+          const end = expectedStartIndices[pathIdx + 1];
+          for (let v = start; v < end; v++) {
+            expectedFilterValues[v * 4] = perPathFilterValue[pathIdx];
+            expectedFilterValues[v * 4 + 1] = 0;
+            expectedFilterValues[v * 4 + 2] = 0;
+            expectedFilterValues[v * 4 + 3] = 0;
+          }
         }
-        expectedFV.forEach(val => {
-          // Float32 precision may round MIN_SAFE_INTEGER, so check with tolerance
-          const found = [...seenFV].some(v => Math.abs(v - val) < 2);
-          t.ok(found, `filterValues should contain feature value ~${val}`);
-        });
+
+        // Verify per-path filter values using startIndices
+        const fv = attributes.filterValues.value;
+        for (let pathIdx = 0; pathIdx < expectedVerticesPerPath.length; pathIdx++) {
+          const start = expectedStartIndices[pathIdx];
+          const end = expectedStartIndices[pathIdx + 1];
+          for (let v = start; v < end; v++) {
+            const base = v * 4;
+            t.ok(
+              Math.abs(fv[base] - perPathFilterValue[pathIdx]) < 2,
+              `filterValues[${v}][0] should be ~${perPathFilterValue[pathIdx]} for path ${pathIdx}`
+            );
+            t.equal(fv[base + 1], 0, `filterValues[${v}][1] should be 0`);
+            t.equal(fv[base + 2], 0, `filterValues[${v}][2] should be 0`);
+            t.equal(fv[base + 3], 0, `filterValues[${v}][3] should be 0`);
+          }
+        }
         // TODO: test UpdateTriggers
       }
     }
