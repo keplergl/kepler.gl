@@ -64,10 +64,23 @@ export function ensureRasterHooksRegistered(): void {
  * Convert kepler.gl's custom raster shader modules into luma.gl 9 compatible
  * format. Ensures fs2 (WebGL2) shaders are used and texture2D -> texture.
  */
-export function prepareLumaModules(modules: LumaShaderModule[]): any[] {
+interface LumaModuleOutput {
+  name: string;
+  fs: string;
+  vs?: string;
+  defines?: Record<string, string>;
+  getUniforms?: (opts: object) => Record<string, unknown> | null;
+  uniforms?: Record<string, unknown>;
+  uniformTypes?: Record<string, string>;
+  inject?: Record<string, string>;
+  dependencies?: unknown[];
+  deprecations?: unknown[];
+}
+
+export function prepareLumaModules(modules: LumaShaderModule[]): LumaModuleOutput[] {
   return modules.map(mod => {
     const fs = mod.fs2 || mod.fs || '';
-    const result: any = {
+    const result: LumaModuleOutput = {
       name: mod.name,
       // Replace texture2D with texture for GLSL 300 es
       fs: fs.replace(/texture2D\(/g, 'texture('),
@@ -99,7 +112,8 @@ export function prepareLumaModules(modules: LumaShaderModule[]): any[] {
     if (mod.inject) {
       result.inject = {};
       for (const [hook, code] of Object.entries(mod.inject)) {
-        const codeStr = typeof code === 'string' ? code : (code as any).injection || '';
+        const codeStr =
+          typeof code === 'string' ? code : (code as {injection?: string}).injection || '';
         result.inject[hook] = codeStr.replace(/texture2D\(/g, 'texture(');
       }
     }

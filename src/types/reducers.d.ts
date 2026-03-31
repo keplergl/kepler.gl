@@ -9,7 +9,7 @@ type MapViewState = {
   bearing?: number;
   pitch?: number;
   transitionDuration?: number;
-  transitionInterpolator?: any;
+  transitionInterpolator?: object;
 };
 import type {ExportResolutionOption} from '@kepler.gl/constants';
 

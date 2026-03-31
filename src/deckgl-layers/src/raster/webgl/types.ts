@@ -18,7 +18,7 @@ export interface ShaderModule {
 
   /** A vertex shader to inject */
   vs?: string;
-  uniforms?: Record<string, any>;
+  uniforms?: Record<string, UniformType>;
   getUniforms?: (opts: object) => GetUniformsOutput;
 
   /** luma.gl 9 UBO uniform type declarations (e.g. { opacity: 'f32' }) */
@@ -28,7 +28,7 @@ export interface ShaderModule {
   defines?: Record<string, string>;
   inject?: Record<string, string>;
   dependencies?: ShaderModule[];
-  deprecations?: any[];
+  deprecations?: {type: string; old: string; new: string}[];
 }
 
 export type UniformType = number | number[] | Texture | undefined;

@@ -127,12 +127,14 @@ export default class GridLayer extends AggregationLayer {
               wrapLongitude: false,
               data: [
                 {
+                  type: 'Feature' as const,
+                  properties: {},
                   geometry: {
                     coordinates: outlineCoords,
-                    type: 'LineString'
+                    type: 'LineString' as const
                   }
                 }
-              ] as any,
+              ],
               getLineColor: this.config.highlightColor,
               lineWidthScale: 8 * zoomFactor
             })

@@ -239,7 +239,7 @@ export class GeoArrowTextLayer<ExtraProps extends object = object> extends Compo
               // size: 1,
             }
           }
-        } as any,
+        },
         // TODO privide more robust data comparators
         dataComparator: (d1: {data: unknown}, d2: {data: unknown}) => {
           return d1.data === d2.data;

@@ -7,7 +7,10 @@ import type {ShaderModule} from './webgl';
 /** Allowed input for images prop — either GPU-resident Texture objects or
  * legacy raster texture descriptors with CPU data that will be uploaded.
  */
-export type ImageInput = Record<string, any>;
+export type ImageInput = Record<
+  string,
+  Texture | Texture[] | Record<string, unknown> | Record<string, unknown>[]
+>;
 
 /** Internal storage of images
  * The Texture object references data on the GPU

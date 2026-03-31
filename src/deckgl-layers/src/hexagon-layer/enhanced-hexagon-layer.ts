@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {HexagonLayer} from '@deck.gl/aggregation-layers';
+import {HexagonLayer, HexagonLayerPickingInfo} from '@deck.gl/aggregation-layers';
+import {GetPickingInfoParams, PickingInfo, Viewport} from '@deck.gl/core';
 
 const THIRD_PI = Math.PI / 3;
 const HexbinVertices = Array.from({length: 6}, (_, i) => {
@@ -13,6 +14,19 @@ function getHexbinCentroid(id: [number, number], radius: number): [number, numbe
   const DIST_X = 2 * Math.sin(THIRD_PI);
   const DIST_Y = 1.5;
   return [(id[0] + (id[1] & 1) / 2) * radius * DIST_X, id[1] * radius * DIST_Y];
+}
+
+interface HexInternalState {
+  radiusCommon?: number;
+  hexOriginCommon?: [number, number];
+  aggregatorViewport?: Viewport & {unprojectFlat(xy: number[]): number[]};
+}
+
+interface HexPickingObject {
+  col: number;
+  row: number;
+  cellOutline?: number[][];
+  [key: string]: unknown;
 }
 
 /**
@@ -28,10 +42,11 @@ export default class ScaleEnhancedHexagonLayer extends HexagonLayer<any> {
     gpuAggregation: false
   };
 
-  getPickingInfo(params: any) {
-    const info = super.getPickingInfo(params);
+  getPickingInfo(params: GetPickingInfoParams): PickingInfo {
+    const info = super.getPickingInfo(params) as HexagonLayerPickingInfo<Record<string, unknown>>;
     if (info.object) {
-      const {radiusCommon, hexOriginCommon, aggregatorViewport} = this.state as any;
+      const {radiusCommon, hexOriginCommon, aggregatorViewport} = this
+        .state as unknown as HexInternalState;
       const coverage = this.props.coverage ?? 1;
       if (!radiusCommon || !aggregatorViewport) {
         console.error(
@@ -41,7 +56,7 @@ export default class ScaleEnhancedHexagonLayer extends HexagonLayer<any> {
         );
         return info;
       }
-      const {col, row} = info.object;
+      const {col, row} = info.object as HexPickingObject;
       if (typeof col !== 'number' || typeof row !== 'number') return info;
       const centroid = getHexbinCentroid([col, row], radiusCommon);
       const ox = hexOriginCommon?.[0] ?? 0;
@@ -55,7 +70,7 @@ export default class ScaleEnhancedHexagonLayer extends HexagonLayer<any> {
         outline.push(aggregatorViewport.unprojectFlat([vx, vy]));
       }
       outline.push(outline[0]);
-      (info.object as any).cellOutline = outline;
+      (info.object as HexPickingObject).cellOutline = outline;
     }
     return info;
   }

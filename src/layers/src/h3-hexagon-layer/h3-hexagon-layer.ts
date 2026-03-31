@@ -11,6 +11,7 @@ import Layer, {
 import {BrushingExtension} from '@deck.gl/extensions';
 import {GeoJsonLayer} from '@deck.gl/layers';
 import {H3HexagonLayer} from '@deck.gl/geo-layers';
+import type {Feature} from 'geojson';
 import {EnhancedColumnLayer} from '@kepler.gl/deckgl-layers';
 import {
   getCentroid,
@@ -467,7 +468,7 @@ export default class HexagonIdLayer extends Layer {
             new GeoJsonLayer({
               ...this.getDefaultHoverLayerProps(),
               visible: defaultLayerProps.visible,
-              data: [idToPolygonGeo(hoveredObject)] as any,
+              data: [idToPolygonGeo(hoveredObject)].filter(Boolean) as Feature[],
               getLineColor: config.highlightColor,
               lineWidthScale: DEFAULT_LINE_SCALE_VALUE * zoomFactor,
               wrapLongitude: false

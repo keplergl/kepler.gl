@@ -404,7 +404,9 @@ test('#GridLayer -> renderLayer', t => {
           // Verify raw result arrays
           const colorResult = aggregator.getResult(0);
           t.ok(colorResult?.value instanceof Float32Array, 'color result should be Float32Array');
-          const sortedColorResult = Array.from(colorResult.value.slice(0, aggregator.binCount)).sort();
+          const sortedColorResult = Array.from(
+            colorResult.value.slice(0, aggregator.binCount)
+          ).sort();
           t.deepEqual(sortedColorResult, [0, 1, 2], 'color result values should be [0, 1, 2]');
         }
       }

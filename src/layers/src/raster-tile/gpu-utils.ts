@@ -5,7 +5,7 @@
  * Functions and constants for handling webgl/luma.gl/deck.gl entities
  */
 
-import {parse, fetchFile, load, FetchError} from '@loaders.gl/core';
+import {parse, fetchFile, load, FetchError, Loader} from '@loaders.gl/core';
 import {ImageLoader} from '@loaders.gl/images';
 import {NPYLoader} from '@loaders.gl/textures';
 // @ts-ignore GL resolution depends on moduleResolution setting
@@ -302,7 +302,8 @@ export async function loadNpyArray(
       for (let attempt = 0; attempt < numAttempts; attempt++) {
         try {
           const {npy: npyOptions} = getLoaderOptions();
-          const response = (await load(request.url, NPYLoader as any, {
+
+          const response = (await load(request.url, NPYLoader as Loader<NPYLoaderResponse>, {
             npy: npyOptions,
             fetch: options?.fetch
           })) as NPYLoaderResponse;

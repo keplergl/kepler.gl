@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {LineLayer, LineLayerProps} from '@deck.gl/layers';
-import type {Color} from '@deck.gl/core';
+import type {Color, AttributeManager} from '@deck.gl/core';
 import {editShader} from '../';
 
 type RGBAColor = Color;
@@ -88,7 +88,7 @@ export default class EnhancedLineLayer extends LineLayer<
 
   initializeState() {
     super.initializeState();
-    const {attributeManager} = this.state as {attributeManager: any};
+    const {attributeManager} = this.state as {attributeManager: AttributeManager};
     attributeManager.addInstanced({
       instanceTargetColors: {
         size: this.props.colorFormat?.length,

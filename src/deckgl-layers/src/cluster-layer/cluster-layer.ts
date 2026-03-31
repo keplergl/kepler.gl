@@ -42,7 +42,7 @@ function getClusters(this: CPUAggregator, step, props, aggregation, {viewport}) 
 
   // zoom needs to be an integer for the different map utils. Also helps with cache key.
   const bbox = geoViewport.bounds([longitude, latitude], zoom, [width, height]);
-  const clusters = clusterBuilder.clustersAtZoom({bbox, clusterRadius, geoJSON, zoom});
+  const clusters = clusterBuilder?.clustersAtZoom({bbox, clusterRadius, geoJSON, zoom}) ?? [];
 
   this.setState({
     layerData: {data: clusters}

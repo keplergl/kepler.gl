@@ -18,13 +18,15 @@ import {DeckRenderer} from '@deck.gl/core';
  * In deck.gl 9.x, blending is set via `parameters` prop using WebGPU-style string constants
  * instead of calling setParameters with GL constants.
  */
-export function getLayerBlendingParameters(layerBlending: string): Record<string, any> {
+export function getLayerBlendingParameters(
+  layerBlending: string
+): Record<string, string | boolean> {
   const blending = LAYER_BLENDINGS[layerBlending];
   if (!blending) return {};
   const {blendFunc, blendEquation} = blending;
   if (!blendFunc) return {};
 
-  const params: Record<string, any> = {
+  const params: Record<string, string | boolean> = {
     blend: true
   };
 
@@ -65,16 +67,26 @@ export function getLayerBlendingParameters(layerBlending: string): Record<string
  * attachments, which breaks depth testing when post-processing effects are active.
  * This was not an issue in deck.gl 8 where Framebuffer() auto-created a depth buffer.
  */
+interface DeckRendererInternals {
+  _resizeRenderBuffers?: () => void;
+  device: {
+    canvasContext: {getDrawingBufferSize(): [number, number]};
+    createTexture(props: Record<string, unknown>): unknown;
+    createFramebuffer(props: Record<string, unknown>): {resize(size: [number, number]): void};
+  };
+  renderBuffers: {resize(size: [number, number]): void}[];
+}
+
 let _deckRendererPatched = false;
 export function patchDeckRendererForPostProcessing(): void {
   if (_deckRendererPatched) return;
   _deckRendererPatched = true;
 
-  const proto = DeckRenderer.prototype as any;
+  const proto = DeckRenderer.prototype as unknown as DeckRendererInternals;
   const original =
     typeof proto._resizeRenderBuffers === 'function' ? proto._resizeRenderBuffers : null;
 
-  proto._resizeRenderBuffers = function _resizeRenderBufferPatched() {
+  proto._resizeRenderBuffers = function _resizeRenderBufferPatched(this: DeckRendererInternals) {
     if (!this.device?.canvasContext) {
       return original?.call(this);
     }

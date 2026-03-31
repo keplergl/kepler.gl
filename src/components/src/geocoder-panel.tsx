@@ -25,7 +25,7 @@ type MapViewState = {
   bearing?: number;
   pitch?: number;
   transitionDuration?: number;
-  transitionInterpolator?: any;
+  transitionInterpolator?: object;
 };
 
 import {BaseComponentProps} from './types';

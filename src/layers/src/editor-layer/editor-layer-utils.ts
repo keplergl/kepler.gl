@@ -140,7 +140,7 @@ const MIN_DISTANCE_TO_BOTTOM_EDGE = 100;
 // eslint-disable-next-line complexity
 export function getTooltip(
   // TODO PickingInfo type in deck typings doesn't include viewport and pixel
-  info: PickInfo & {viewport: any; pixel: any[]},
+  info: PickInfo & {viewport: {width?: number; height?: number}; pixel: number[]},
   {editor, theme, editorMenuActive}: {editorMenuActive: boolean; editor: Editor; theme: any}
 ): object | null {
   const {object, layer, viewport = {}, pixel = []} = info;
@@ -155,7 +155,10 @@ export function getTooltip(
 
   if (isDrawingActive(editorMenuActive, editor.mode)) {
     // TODO save interaction state in editor object
-    if ((layer?.state as any)?.mode?._clickSequence?.length) {
+    if (
+      (layer?.state as {mode?: {_clickSequence?: unknown[]}} | undefined)?.mode?._clickSequence
+        ?.length
+    ) {
       return null;
     }
 

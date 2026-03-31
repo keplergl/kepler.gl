@@ -10,7 +10,7 @@ import * as ga from '@geoarrow/geoarrow-js';
 import {AccessorContext, AccessorFunction, _InternalAccessorContext} from '../types';
 import {isArrowFixedSizeList, isArrowStruct, isArrowVector} from '@kepler.gl/utils';
 
-export function assert(condition: any, message?: string): asserts condition {
+export function assert(condition: unknown, message?: string): asserts condition {
   if (!condition) throw new Error(message || 'assert');
 }
 

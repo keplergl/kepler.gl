@@ -19,6 +19,7 @@ interface LightingEffectPrivate {
 /** Extended shadow module props with our custom field. */
 interface CustomShadowProps {
   outputUniformShadow?: boolean;
+  dummyShadowMap?: Texture | null;
   [key: string]: unknown;
 }
 
@@ -118,8 +119,12 @@ class CustomDeckLightingEffect extends LightingEffect {
   getShaderModuleProps(layer, otherShaderModuleProps) {
     const props = super.getShaderModuleProps(layer, otherShaderModuleProps);
 
-    if (props.shadow && !(props.shadow as any).dummyShadowMap && this._private.dummyShadowMap) {
-      (props.shadow as any).dummyShadowMap = this._private.dummyShadowMap;
+    if (
+      props.shadow &&
+      !(props.shadow as CustomShadowProps).dummyShadowMap &&
+      this._private.dummyShadowMap
+    ) {
+      (props.shadow as CustomShadowProps).dummyShadowMap = this._private.dummyShadowMap;
     }
 
     if (props.shadow) {

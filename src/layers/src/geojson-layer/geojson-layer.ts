@@ -18,7 +18,7 @@ import Layer, {
   LayerSizeConfig,
   LayerStrokeColorConfig
 } from '../base-layer';
-import {GeoJsonLayer as DeckGLGeoJsonLayer} from '@deck.gl/layers';
+import {GeoJsonLayer as DeckGLGeoJsonLayer, GeoJsonLayerProps} from '@deck.gl/layers';
 import {
   getGeojsonLayerMeta,
   GeojsonDataMaps,
@@ -743,7 +743,7 @@ export default class GeoJsonLayer extends Layer {
               ...layerProps,
               visible: defaultLayerProps.visible,
               wrapLongitude: false,
-              data: [hoveredObject] as any,
+              data: [hoveredObject] as Feature[],
               getLineWidth: props.getLineWidth,
               getPointRadius: props.getPointRadius,
               getElevation: props.getElevation,
@@ -752,7 +752,7 @@ export default class GeoJsonLayer extends Layer {
               // always draw outline
               stroked: true,
               filled: false
-            } as any)
+            } as unknown as GeoJsonLayerProps)
           ]
         : [])
     ];

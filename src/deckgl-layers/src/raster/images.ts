@@ -14,6 +14,13 @@ import type {ImageInput, ImageState} from './types';
  * Contains CPU-side data + old GL-enum-based parameters that get
  * translated to luma.gl 9's device.createTexture() props.
  */
+type TextureDataSource =
+  | HTMLImageElement
+  | HTMLCanvasElement
+  | ImageBitmap
+  | ImageData
+  | ArrayBufferView;
+
 type RasterTextureData = {
   handle?: unknown;
   id?: string;
@@ -24,7 +31,7 @@ type RasterTextureData = {
   type?: number;
   parameters?: Record<number, number>;
   mipmaps?: boolean;
-  data?: any;
+  data?: TextureDataSource & {width?: number; height?: number};
 };
 
 /**
@@ -37,9 +44,15 @@ const DEFAULT_SAMPLER_PARAMETERS = {
   addressModeV: ADDRESS_MODE.CLAMP_TO_EDGE
 };
 
+/** luma.gl device interface for texture creation */
+interface LumaDevice {
+  createTexture(props: Record<string, unknown>): Texture;
+  gl?: WebGL2RenderingContext;
+}
+
 type LoadImagesOptions = {
   gl: WebGL2RenderingContext;
-  device?: any;
+  device?: LumaDevice;
   images: ImageState;
   imagesData: ImageInput;
   oldImagesData: ImageInput;
@@ -50,8 +63,8 @@ type LoadImagesOptions = {
  */
 function loadImageItem(
   gl: WebGL2RenderingContext,
-  device: any,
-  imageItem: any
+  device: LumaDevice | undefined,
+  imageItem: RasterTextureData | Texture | (RasterTextureData | Texture)[]
 ): null | Texture | Texture[] {
   let result: null | Texture | Texture[];
   if (Array.isArray(imageItem)) {
@@ -229,7 +242,7 @@ function expandRGBtoRGBA(
  */
 function loadTexture(
   gl: WebGL2RenderingContext,
-  device: any,
+  device: LumaDevice | undefined,
   imageData: Texture | RasterTextureData
 ): Texture | null {
   if (!imageData) {
@@ -237,10 +250,11 @@ function loadTexture(
   }
 
   // If already a luma.gl Texture instance, return as-is
+  const rasterTextureData = imageData as RasterTextureData;
   if (
-    (imageData as any).handle ||
-    (imageData as any).id?.startsWith?.('luma') ||
-    (imageData as any).device
+    rasterTextureData.handle ||
+    rasterTextureData.id?.startsWith?.('luma') ||
+    rasterTextureData.device
   ) {
     return imageData as Texture;
   }
@@ -261,9 +275,12 @@ function loadTexture(
       ? mapTextureFormat(rawData.format, rawData.type)
       : TEXTURE_FORMAT.RGBA8_UNORM;
 
-    const textureProps: any = {
-      width: rawData.width || rawData.data?.width || 1,
-      height: rawData.height || rawData.data?.height || 1,
+    const width = rawData.width || rawData.data?.width || 1;
+    const height = rawData.height || rawData.data?.height || 1;
+
+    const textureProps: Record<string, unknown> = {
+      width,
+      height,
       format: textureFormat,
       sampler: samplerParams,
       ...(rawData.mipmaps === false ? {mipmaps: false} : {})
@@ -282,11 +299,7 @@ function loadTexture(
           rawData.format === GL.RGB &&
           (rawData.data instanceof Uint8Array || rawData.data instanceof Uint8ClampedArray)
         ) {
-          textureProps.data = expandRGBtoRGBA(
-            rawData.data,
-            textureProps.width,
-            textureProps.height
-          );
+          textureProps.data = expandRGBtoRGBA(rawData.data, width, height);
         } else {
           textureProps.data = rawData.data;
         }

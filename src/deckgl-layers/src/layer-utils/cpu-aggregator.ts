@@ -7,6 +7,7 @@ import {console as Console} from 'global/window';
 import {aggregate} from '@kepler.gl/utils';
 import {AGGREGATION_TYPES, SCALE_FUNC} from '@kepler.gl/constants';
 import {RGBAColor} from '@kepler.gl/types';
+import type ClusterBuilder from './cluster-utils';
 
 const AGGREGATION_OPERATION = {
   SUM: 'SUM' as const,
@@ -394,7 +395,7 @@ export const defaultAggregation: AggregationType = {
 };
 
 function getSubLayerAccessor(
-  dimensionState: {sortedBins: BinSorter; scaleFunc: any},
+  dimensionState: {sortedBins: BinSorter; scaleFunc: ReturnType<typeof getScaleFunctor>},
   dimension: DimensionType
 ) {
   return (cell: {index: number}) => {
@@ -571,8 +572,8 @@ export type CPUAggregatorState = {
       scaleFunc?: ((...args: unknown[]) => unknown) & {domain: () => number[]; scaleType?: string};
     }
   >;
-  geoJSON?: any;
-  clusterBuilder?: any;
+  geoJSON?: GeoJSON.FeatureCollection;
+  clusterBuilder?: ClusterBuilder;
 };
 
 export default class CPUAggregator {
@@ -729,7 +730,7 @@ export default class CPUAggregator {
       const updater = dimension.updateSteps[i].updater;
       if (typeof updater === 'function') {
         updaters.push(
-          (updater as (...args: any[]) => any).bind(
+          (updater as UpdaterType).bind(
             this,
             dimension.updateSteps[i],
             props,
