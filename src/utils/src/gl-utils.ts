@@ -60,17 +60,6 @@ export function getLayerBlendingParameters(layerBlending: string): Record<string
 }
 
 /**
- * @deprecated Use getLayerBlendingParameters() instead. In deck.gl 9.x,
- * blending is set via the `parameters` prop, not via direct GL calls.
- * This function is kept for backward compatibility but is a no-op.
- */
-export function setLayerBlending(_gl: unknown, _layerBlending: string): void {
-  Console.warn(
-    'setLayerBlending is deprecated. In deck.gl 9.x, blending is set via the `parameters` prop. Use getLayerBlendingParameters() instead.'
-  );
-}
-
-/**
  * Patch DeckRenderer to include depth-stencil attachments on post-processing
  * framebuffers. In deck.gl 9, _resizeRenderBuffers creates FBOs with only color
  * attachments, which breaks depth testing when post-processing effects are active.
