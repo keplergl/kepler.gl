@@ -16,7 +16,8 @@ import {
   CHANNEL_SCALES,
   FIELD_OPTS,
   DEFAULT_AGGREGATION,
-  AGGREGATION_TYPES
+  AGGREGATION_TYPES,
+  ALL_FIELD_TYPES
 } from '@kepler.gl/constants';
 import {ColorRange, Field, LayerColumn, Merge} from '@kepler.gl/types';
 import {KeplerTable, Datasets} from '@kepler.gl/table';
@@ -56,6 +57,35 @@ export const getFilterDataFunc =
     getFilterValue(pt).every((val, i) => {
       return typeof val === 'number' ? val >= filterRange[i][0] && val <= filterRange[i][1] : false;
     });
+
+const NON_NUMERIC_FIELD_TYPES: Set<string> = new Set([
+  ALL_FIELD_TYPES.string,
+  ALL_FIELD_TYPES.boolean,
+  ALL_FIELD_TYPES.date
+]);
+
+/**
+ * Wrap a per-bin accessor that may return a non-numeric value (e.g. a string
+ * from "mode" aggregation) so that it returns a stable numeric index instead.
+ * deck.gl 9's native CPU aggregation stores results in a Float32Array which
+ * silently converts strings to NaN — this wrapper prevents that.
+ */
+function wrapOrdinalAccessor(
+  accessor: (points: unknown[]) => unknown
+): (points: unknown[]) => number {
+  const valueToIndex = new Map<string, number>();
+  return (points: unknown[]) => {
+    const value = accessor(points);
+    if (value == null) return NaN;
+    const key = String(value);
+    let idx = valueToIndex.get(key);
+    if (idx === undefined) {
+      idx = valueToIndex.size;
+      valueToIndex.set(key, idx);
+    }
+    return idx;
+  };
+}
 
 const getLayerColorRange = (colorRange: ColorRange) => colorRange.colors.map(hexToRgb);
 
@@ -324,15 +354,34 @@ export default class AggregationLayer extends Layer {
       : undefined;
 
     const aggregatePoints = getValueAggrFunc(this.getPointData);
-    const getColorValue = aggregatePoints(
+    let getColorValue = aggregatePoints(
       this.config.colorField,
       this.config.visConfig.colorAggregation
     );
 
-    const getElevationValue = aggregatePoints(
+    let getElevationValue = aggregatePoints(
       this.config.sizeField,
       this.config.visConfig.sizeAggregation
     );
+
+    // deck.gl 9's native CPU aggregation stores getColorValue/getElevationValue
+    // results in a Float32Array. "mode" aggregation on non-numeric fields returns
+    // a string, which becomes NaN in Float32Array. Wrap with ordinal mapping to
+    // convert strings to stable numeric indices.
+    if (
+      this.config.colorField &&
+      this.config.visConfig.colorAggregation === AGGREGATION_TYPES.mode &&
+      NON_NUMERIC_FIELD_TYPES.has(this.config.colorField.type)
+    ) {
+      getColorValue = wrapOrdinalAccessor(getColorValue);
+    }
+    if (
+      this.config.sizeField &&
+      this.config.visConfig.sizeAggregation === AGGREGATION_TYPES.mode &&
+      NON_NUMERIC_FIELD_TYPES.has(this.config.sizeField.type)
+    ) {
+      getElevationValue = wrapOrdinalAccessor(getElevationValue);
+    }
 
     // Wrap accessors to filter points within each bin before aggregating.
     // deck.gl 9's native aggregation doesn't support per-bin filtering, so we

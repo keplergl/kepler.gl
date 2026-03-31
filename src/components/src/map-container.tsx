@@ -526,10 +526,24 @@ export default function MapContainerFactory(
         ? {colorDomain: value as VisualChannelDomain}
         : {colorDomain: value.domain, aggregatedBins: value.aggregatedBins};
 
-      this.props.visStateActions.layerConfigChange(
-        this.props.visState.layers[idx],
-        config as Partial<LayerBaseConfig>
-      );
+      const layer = this.props.visState.layers[idx];
+      if (!layer) return;
+
+      // Skip dispatch when the domain hasn't changed to avoid an infinite
+      // render loop: onSetColorDomain → layerConfigChange → re-render →
+      // deck.gl re-aggregates → onSetColorDomain → …
+      const prev = layer.config.colorDomain;
+      const next = config.colorDomain;
+      if (
+        Array.isArray(prev) &&
+        Array.isArray(next) &&
+        prev.length === next.length &&
+        prev.every((v, i) => v === next[i])
+      ) {
+        return;
+      }
+
+      this.props.visStateActions.layerConfigChange(layer, config as Partial<LayerBaseConfig>);
     };
 
     _onRedrawNeeded = (_idx: number) => {
