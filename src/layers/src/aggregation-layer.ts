@@ -429,18 +429,14 @@ export default class AggregationLayer extends Layer {
         colorAggregation: this.config.visConfig.colorAggregation,
         colorRange: visConfig.colorRange,
         colorMap: visConfig.colorRange.colorMap,
-        _filterData: {
-          filterRange: gpuFilter.filterRange,
-          ...gpuFilter.filterValueUpdateTriggers
-        }
+        filterRange: gpuFilter.filterRange,
+        ...gpuFilter.filterValueUpdateTriggers
       },
       getElevationValue: {
         sizeField: this.config.sizeField,
         sizeAggregation: this.config.visConfig.sizeAggregation,
-        _filterData: {
-          filterRange: gpuFilter.filterRange,
-          ...gpuFilter.filterValueUpdateTriggers
-        }
+        filterRange: gpuFilter.filterRange,
+        ...gpuFilter.filterValueUpdateTriggers
       }
     };
 

@@ -529,20 +529,6 @@ export default function MapContainerFactory(
       const layer = this.props.visState.layers[idx];
       if (!layer) return;
 
-      // Skip dispatch when the domain hasn't changed to avoid an infinite
-      // render loop: onSetColorDomain → layerConfigChange → re-render →
-      // deck.gl re-aggregates → onSetColorDomain → …
-      const prev = layer.config.colorDomain;
-      const next = config.colorDomain;
-      if (
-        Array.isArray(prev) &&
-        Array.isArray(next) &&
-        prev.length === next.length &&
-        prev.every((v, i) => v === next[i])
-      ) {
-        return;
-      }
-
       this.props.visStateActions.layerConfigChange(layer, config as Partial<LayerBaseConfig>);
     };
 
