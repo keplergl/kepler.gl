@@ -21,8 +21,6 @@ import {modulesEqual} from '../util';
 import {patchPipelineValidation} from '../pipeline-validation-patch';
 import {TOPOLOGY} from '@kepler.gl/constants';
 
-patchPipelineValidation();
-
 type Mesh = SimpleMeshLayerProps['mesh'];
 
 interface MeshData {
@@ -78,6 +76,7 @@ export default class RasterMeshLayer extends SimpleMeshLayer<any, RasterLayerAdd
   _redrawScheduled = false;
 
   initializeState(): void {
+    patchPipelineValidation();
     ensureRasterHooksRegistered();
     this.setState({images: {}});
     super.initializeState();

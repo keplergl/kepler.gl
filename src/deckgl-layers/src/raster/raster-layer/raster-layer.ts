@@ -16,8 +16,6 @@ import type {RasterLayerAddedProps, ImageState} from '../types';
 import {modulesEqual} from '../util';
 import {patchPipelineValidation} from '../pipeline-validation-patch';
 
-patchPipelineValidation();
-
 const defaultProps = {
   ...BitmapLayer.defaultProps,
   modules: {type: 'array', value: [], compare: true},
@@ -34,6 +32,7 @@ export default class RasterLayer extends BitmapLayer<RasterLayerAddedProps> {
   _redrawScheduled = false;
 
   initializeState(): void {
+    patchPipelineValidation();
     ensureRasterHooksRegistered();
     this.setState({images: {}});
     super.initializeState();
