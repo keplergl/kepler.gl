@@ -172,10 +172,12 @@ test('#ClusterLayer -> formatLayerData', t => {
         // 4: driver_analytics - 1
         // 5: driver_analytics - 1
         // 7: driver_analytics - 1
+        // wrapOrdinalAccessor converts the string mode result to a stable
+        // numeric index (required by deck.gl 9's Float32Array aggregation).
+        // 'driver_analytics' is the first unique value → index 0.
         t.equal(
-          // assume all points fall into one bin
           layerData.getColorValue(expectedLayerData.data),
-          'driver_analytics',
+          0,
           'should return filtered mode of (types)'
         );
         t.deepEqual(
