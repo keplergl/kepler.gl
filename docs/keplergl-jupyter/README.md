@@ -30,7 +30,7 @@
 
 ### Prerequisites
 
-- Python >= 2
+- Python >= 3
 - ipywidgets >= 7.0.0
 
 To install use pip:

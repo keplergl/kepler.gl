@@ -38,7 +38,7 @@ and In render:
   <KeplerGl
       id="foo"
       mapboxApiAccessToken={this.token}
-      mapboxApiUrl={}
+      mapboxApiUrl={this.apiHost}
       mapStyles={this.mapStyles}
       width={width}
       height={height}/>

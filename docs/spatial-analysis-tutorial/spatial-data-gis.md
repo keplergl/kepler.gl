@@ -58,7 +58,7 @@ The center point and Thiessen polygon functionality is brought up through the op
 
 ### Mean centers and centroids
 
-The **mean centers** is obtained as the simple average of the the X and Y coordinates that define the vertices of the polygon. The **centroid** is more complex, and is the actual center of mass of the polygon (image a cardboard cutout of the polygon, the centroid is the central point where a pin would hold up the cutout in a stable equilibrium).
+The **mean center** is obtained as the simple average of the the X and Y coordinates that define the vertices of the polygon. The **centroid** is more complex, and is the actual center of mass of the polygon (image a cardboard cutout of the polygon, the centroid is the central point where a pin would hold up the cutout in a stable equilibrium).
 
 Both methods can yield strange results when the polygons are highly irregular or in a so-called multi-polygon situation (different polygons associated with the same ID, such as a mainland area and an island belonging to the same county). In those instances the centers can end up being located outside the polygon. Nevertheless, the shape centers are a handy way to convert a polygon layer to a corresponding point layer with the same underlying geography. For example, as we will see in a later chapter, they are used under the hood to calculate distance-based spatial weights for polygons.
 
@@ -96,7 +96,7 @@ An important graph is the so-called max-min connectivity graph, which shows the 
 
 A minimum spanning tree (MST) associated with a graph is a path through the graph that ensures that each node is visited once and which achieves a minimum cost objective. A typical application is to minimize the total distance traveled through the path. The MST is employed in a range of methods, particularly clustering algorithms.
 
-The Ai assistant uses GeoDa library to construct an MST based on the max-min connectivity graph for any point layer. The construction of the MST employs Prim’s algorithm, which is illustrated in more detail in the [Appendix](https://geodacenter.github.io/workbook/01_datawrangling_2/lab1b.html#appendix).
+The AI assistant uses GeoDa library to construct an MST based on the max-min connectivity graph for any point layer. The construction of the MST employs Prim’s algorithm, which is illustrated in more detail in the [Appendix](https://geodacenter.github.io/workbook/01_datawrangling_2/lab1b.html#appendix).
 
 To create a minimum spanning tree for the point layer, you can use the following prompt:
 
@@ -108,7 +108,7 @@ Can you create a minimum spanning tree for the point layer?
 
 ## Aggregation
 
-Spatial data sets often contain identifiers of larger encompassing units, such as states for counties, or census tracts for individual household data. Spatial disolve is a function that allows us to aggregate the smaller units into the larger units.
+Spatial data sets often contain identifiers of larger encompassing units, such as states for counties, or census tracts for individual household data. Spatial dissolve is a function that allows us to aggregate the smaller units into the larger units.
 
 We illustrate this functionality with the natregimes dataset using **spatial dissolve** tool. First, load the dataset:
 

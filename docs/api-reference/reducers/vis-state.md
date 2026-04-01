@@ -202,7 +202,7 @@ Returns **[Object][69]** nextState
 
 ### layerTypeChangeUpdater
 
-Update layer type. Previews layer config will be copied if applicable.
+Update layer type. Previous layer config will be copied if applicable.
 
 -   **Action**: [`layerTypeChange`][79]
 
@@ -328,7 +328,7 @@ Remove a filter
 
 -   `state` **[Object][69]** `visState`
 -   `action` **[Object][69]** action
-    -   `action.idx` **[Number][74]** index of filter to b e removed
+    -   `action.idx` **[Number][74]** index of filter to be removed
 
 Returns **[Object][69]** nextState
 
@@ -342,7 +342,7 @@ remove layer
 
 -   `state` **[Object][69]** `visState`
 -   `action` **[Object][69]** action
-    -   `action.idx` **[Number][74]** index of layer to b e removed
+    -   `action.idx` **[Number][74]** index of layer to be removed
 
 Returns **[Object][69]** nextState
 
@@ -688,7 +688,7 @@ Returns **[Object][69]** nextState
 
 [66]: #parameters-30
 
-[67]: ../advanced-usage/using-updaters.md
+[67]: ../advanced-usages/using-updaters.md
 
 [68]: ../actions/actions.md#addfilter
 

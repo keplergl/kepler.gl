@@ -60,8 +60,8 @@ async downloadMap(loadParams) {
      config: {},
      info: {
        app: 'kepler.gl',
-       created_at: ''
-       title: 'test map',
+      created_at: '',
+      title: 'test map',
        description: 'Hello this is my test dropbox map'
      }
    },
@@ -69,7 +69,7 @@ async downloadMap(loadParams) {
    format: 'keplergl'
  };
 
- return downloadMap;
+ return mockResponse;
 }
 ```
 
@@ -105,7 +105,7 @@ Returns **[string][28]** shareUrl
 
 This method is called to get the user name of the current user. It will be displayed in the cloud provider tile.
 
-Returns **[string][28]** true if a user already logged in
+Returns **[string][28]** the user name of the logged in user
 
 ### hasPrivateStorage
 
@@ -133,7 +133,7 @@ async listMaps() {
        title: 'My map',
        description: 'My first kepler map',
        imageUrl: 'http://',
-       udpatedAt: 1582677787000,
+       updatedAt: 1582677787000,
        privateMap: false,
        loadParams: {}
      }

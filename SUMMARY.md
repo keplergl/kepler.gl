@@ -70,7 +70,7 @@
 * [Examples](examples/README.md)
   * [Node/Express](examples/node-app/README.md)
   * [Demo App](examples/demo-app/README.md)
-  * [Open modal](examples/replace-component/README.md)
+  * [Replace Component](examples/replace-component/README.md)
   * [Open modal](examples/open-modal/README.md)
   * [UMD client](examples/umd-client/README.md)
   * [Customize kepler.gl Theme](examples/custom-theme/README.md)

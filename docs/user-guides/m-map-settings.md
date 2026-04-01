@@ -40,7 +40,7 @@ View your map in 3D by clicking the 3D icon in the top right corner of your map
 
 
 ## Display Legend
-View your map in 3D by clicking the 3D icon in the top right corner of your map:
+Display a legend for visible layers on the map.
 
 ![Display Legend](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/m-map-settings-legend.png "Display Legend")
 

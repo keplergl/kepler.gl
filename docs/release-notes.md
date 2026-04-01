@@ -87,7 +87,7 @@ By leveraging the efficiency of vector tiles, users can visualize complex, large
 
 ### DuckDB Support & SQL Explorer
 
-Leverage DuckDB directly within kepler.gl your geospatial projects with big data. Write and execute SQL queries to perform custom analyses, visualizing the results on your map.
+Leverage DuckDB directly within kepler.gl for your geospatial projects with big data. Write and execute SQL queries to perform custom analyses, visualizing the results on your map.
 
 DuckDB enables in-browser data processing, allowing you to work with large datasets without the need for external infrastructure.
 
@@ -105,7 +105,7 @@ Mapbox and MapLibre base maps are now simultaneously supported.
 
 ### Color Scale Improvements
 
-Custom color scale is now supported in categorial/ordinal fields, aggregate layers, and other layer components. In addition, custom breaks are now supported within the color scales.
+Custom color scale is now supported in categorical/ordinal fields, aggregate layers, and other layer components. In addition, custom breaks are now supported within the color scales.
 
 ### Value Formatting
 
