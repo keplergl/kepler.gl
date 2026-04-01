@@ -7,6 +7,7 @@ import classNames from 'classnames';
 
 import {FormattedMessage} from '@kepler.gl/localization';
 import {getApplicationConfig} from '@kepler.gl/utils';
+import {DISTANCE_FOG_TYPE, SURFACE_FOG_TYPE} from '@kepler.gl/constants';
 
 import {Add} from '../common/icons';
 

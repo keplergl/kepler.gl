@@ -10,7 +10,9 @@ import {
   LIGHT_AND_SHADOW_EFFECT,
   LIGHT_AND_SHADOW_EFFECT_TIME_MODES,
   FILTER_TYPES,
-  FILTER_VIEW_TYPES
+  FILTER_VIEW_TYPES,
+  DISTANCE_FOG_TYPE,
+  SURFACE_FOG_TYPE
 } from '@kepler.gl/constants';
 import {arrayMove} from '@kepler.gl/common-utils';
 import {MapState, Effect, EffectProps, EffectDescription} from '@kepler.gl/types';
@@ -52,7 +54,11 @@ export function computeDeckEffects({
 }
 
 /**
- * Always keep light & shadow effect at the top
+ * Always keep light & shadow effect at the top, then distance fog and
+ * surface fog right after it (before other post-processing effects).
+ * Both fog effects read the depth buffer from renderBuffers[0];
+ * subsequent effects clear depth during their render passes, so fog
+ * must run before that happens.
  */
 export const fixEffectOrder = (effects: Effect[], effectOrder: string[]): string[] => {
   const lightShadowEffect = effects.find(effect => effect.type === LIGHT_AND_SHADOW_EFFECT.type);
@@ -63,6 +69,29 @@ export const fixEffectOrder = (effects: Effect[], effectOrder: string[]): string
       effectOrder.unshift(lightShadowEffect.id);
     }
   }
+
+  const distanceFogEffect = effects.find(effect => effect.type === DISTANCE_FOG_TYPE);
+  if (distanceFogEffect) {
+    const ind = effectOrder.indexOf(distanceFogEffect.id);
+    const targetPos = lightShadowEffect ? 1 : 0;
+    if (ind > targetPos) {
+      effectOrder.splice(ind, 1);
+      effectOrder.splice(targetPos, 0, distanceFogEffect.id);
+    }
+  }
+
+  const surfaceFogEffect = effects.find(effect => effect.type === SURFACE_FOG_TYPE);
+  if (surfaceFogEffect) {
+    const ind = effectOrder.indexOf(surfaceFogEffect.id);
+    let targetPos = 0;
+    if (lightShadowEffect) targetPos++;
+    if (distanceFogEffect) targetPos++;
+    if (ind > targetPos) {
+      effectOrder.splice(ind, 1);
+      effectOrder.splice(targetPos, 0, surfaceFogEffect.id);
+    }
+  }
+
   return effectOrder;
 };
 

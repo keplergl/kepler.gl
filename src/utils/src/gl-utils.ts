@@ -9,7 +9,8 @@ import {
   BLEND_OPERATION,
   BLEND_FACTOR,
   FILTER_MODE,
-  DEPTH_STENCIL_FORMAT
+  DEPTH_STENCIL_FORMAT,
+  TEXTURE_USAGE
 } from '@kepler.gl/constants';
 import {DeckRenderer} from '@deck.gl/core';
 
@@ -96,16 +97,23 @@ export function patchDeckRendererForPostProcessing(): void {
     const [width, height] = size;
     if (renderBuffers.length === 0) {
       [0, 1].map((i: number) => {
-        const texture = this.device.createTexture({
+        const colorTexture = this.device.createTexture({
           sampler: {minFilter: FILTER_MODE.LINEAR, magFilter: FILTER_MODE.LINEAR},
+          width,
+          height
+        });
+        const depthTexture = this.device.createTexture({
+          id: `deck-renderbuffer-${i}-depth`,
+          format: DEPTH_STENCIL_FORMAT.DEPTH24_PLUS,
+          usage: TEXTURE_USAGE.RENDER_ATTACHMENT | TEXTURE_USAGE.SAMPLE,
           width,
           height
         });
         renderBuffers.push(
           this.device.createFramebuffer({
             id: `deck-renderbuffer-${i}`,
-            colorAttachments: [texture],
-            depthStencilAttachment: DEPTH_STENCIL_FORMAT.DEPTH24_PLUS
+            colorAttachments: [colorTexture],
+            depthStencilAttachment: depthTexture
           })
         );
       });

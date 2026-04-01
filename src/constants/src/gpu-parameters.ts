@@ -66,6 +66,14 @@ export const DEPTH_STENCIL_FORMAT = {
   DEPTH24_PLUS: 'depth24plus'
 } as const;
 
+// --- Texture usage flags (mirroring luma.gl Texture static fields) ---
+export const TEXTURE_USAGE = {
+  COPY_SRC: 0x01,
+  COPY_DST: 0x02,
+  SAMPLE: 0x04,
+  RENDER_ATTACHMENT: 0x10
+} as const;
+
 // --- Primitive topologies ---
 export const TOPOLOGY = {
   TRIANGLE_LIST: 'triangle-list',

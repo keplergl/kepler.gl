@@ -8,7 +8,9 @@ import styled from 'styled-components';
 import {
   EFFECT_DESCRIPTIONS,
   LIGHT_AND_SHADOW_EFFECT,
-  POSTPROCESSING_EFFECTS
+  POSTPROCESSING_EFFECTS,
+  DISTANCE_FOG_TYPE,
+  SURFACE_FOG_TYPE
 } from '@kepler.gl/constants';
 
 import PanelHeaderActionFactory, {PanelHeaderActionIcon} from '../side-panel/panel-header-action';
@@ -35,6 +37,8 @@ import {
   VignetteEffectIcon,
   MagnifyEffectIcon,
   HexagonalPixelateEffectIcon,
+  DistanceFogEffectIcon,
+  SurfaceFogEffectIcon,
   BaseProps
 } from '../common/icons';
 import {StyledPanelHeader} from '../common/styled-components';
@@ -99,7 +103,9 @@ const defaultEffectIcons = {
   [POSTPROCESSING_EFFECTS.edgeWork.type]: EdgeWorkEffectIcon,
   [POSTPROCESSING_EFFECTS.vignette.type]: VignetteEffectIcon,
   [POSTPROCESSING_EFFECTS.magnify.type]: MagnifyEffectIcon,
-  [POSTPROCESSING_EFFECTS.hexagonalPixelate.type]: HexagonalPixelateEffectIcon
+  [POSTPROCESSING_EFFECTS.hexagonalPixelate.type]: HexagonalPixelateEffectIcon,
+  [DISTANCE_FOG_TYPE]: DistanceFogEffectIcon,
+  [SURFACE_FOG_TYPE]: SurfaceFogEffectIcon
 };
 
 const StyledEffectPanelHeader = styled(StyledPanelHeader)`
