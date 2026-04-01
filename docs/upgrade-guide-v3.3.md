@@ -20,6 +20,7 @@ kepler.gl 3.3 upgrades the rendering stack from **deck.gl 8 / luma.gl 8** to **d
 | `@deck.gl-community/layers`          | 9.2.8   | Community layers package                      |
 | `@deck.gl/widgets`                   | 9.2.11  | New deck.gl 9 module                          |
 | `@luma.gl/effects`                   | 9.2.6   | New luma.gl 9 module                          |
+| `@luma.gl/webgpu`                    | 9.2.6   | Dev dependency for test environment           |
 
 ### Removed dependencies
 
@@ -166,3 +167,18 @@ kepler.gl 3.3 applies two patches to work around deck.gl 9 / luma.gl 9 issues. T
 1. **`patchDeckRendererForPostProcessing()`** — Patches `DeckRenderer._resizeRenderBuffers` to add depth-stencil attachments to post-processing framebuffers. In deck.gl 9, FBOs are created without depth buffers by default, which breaks depth testing when post-processing effects are active.
 
 2. **`patchPipelineValidation()`** — Patches `WEBGLRenderPipeline._getLinkStatus` to suppress false-positive "mixed sampler type" validation errors in luma.gl 9. This patch is applied lazily only when a raster tile layer is instantiated.
+
+---
+
+## New Features
+
+### Fog post-processing effects
+
+Two new post-processing effects are available:
+
+- **Distance Fog** (`distanceFog`) — depth-buffer-based fog that increases with camera distance. Parameters: `density`, `fogStart`, `fogRange`, `fogColor`.
+- **Surface Fog** (`surfaceFog`) — elevation-based ground fog applied below a configurable height in meters. Parameters: `density`, `height`, `thickness`, `fogColor`.
+
+Both effects are registered in `POSTPROCESSING_EFFECTS` and can be created via `createEffect()`. Only one fog effect can be active at a time (enforced by the effect manager UI). Fog effects are ordered early in the post-processing chain to read the depth buffer before subsequent effects clear it.
+
+---

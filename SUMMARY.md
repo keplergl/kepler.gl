@@ -80,3 +80,4 @@
   * [Contributor Covenant Code of Conduct](contributing/CODE_OF_CONDUCT.md)
 * [Change Log](CHANGELOG.md)
 * [Upgrade Guide](UPGRADE-GUIDE.md)
+* [Upgrade Guide v3.3](docs/upgrade-guide-v3.3.md)

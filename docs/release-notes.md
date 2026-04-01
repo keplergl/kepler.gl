@@ -2,6 +2,35 @@
 
 This page shows features that have landed to kepler.gl in major versions. For a complete list of changes to kepler.gl including each minor version, please [visit the full change log](../CHANGELOG.md).
 
+## 3.3
+
+### deck.gl 9 / luma.gl 9 Rendering Stack
+
+kepler.gl 3.3 upgrades the entire rendering stack from **deck.gl 8 / luma.gl 8** to **deck.gl 9.2 / luma.gl 9.2**. This is a major internal change that modernizes how WebGL resources, shaders, and rendering parameters are handled. Blending is now declarative via WebGPU-style string constants, all custom shaders target GLSL 300 es with Uniform Buffer Objects (UBOs), and the GPU initialization callback uses luma.gl's device-agnostic `Device` abstraction instead of a raw `WebGLRenderingContext`.
+
+Most users will not need to change application code, but library consumers who extend layers or interact with the WebGL context directly should review the [Upgrade Guide](upgrade-guide-v3.3.md).
+
+### Editor Layer Migration
+
+The editor layer (`EditableGeoJsonLayer` for draw/edit modes) has been migrated from the deprecated `@nebula.gl/layers` package to `@deck.gl-community/editable-layers`. The API remains the same.
+
+### TypeScript 5.6
+
+TypeScript has been upgraded from 4.7.2 to 5.6.3.
+
+### More Bug Fixes and Improvements
+
+- Fix blending for subtractive mode.
+- Restore shadow effect uniform shadow during nighttime.
+- Fix raster tile layer shaders (UBO migration, pipeline validation patch).
+- Fix aggregation layer highlight outlines and infinite config changes.
+- Fix H3, GeoJSON, line, and arc layer issues after the deck.gl 9 upgrade.
+- Disable mouse-move and hover console logging by default.
+- Fog effects.
+- Internal improvements to aggregation layers.
+
+For the complete list of commits, see the [full change log](../CHANGELOG.md).
+
 ## 3.2
 
 _Released August 21st, 2025_
