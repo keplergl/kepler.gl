@@ -23,6 +23,8 @@ uniform surfaceFogUniforms {
   vec4 invCol1;
   vec4 invCol2;
   vec4 invCol3;
+  float viewportWidth;
+  float viewportHeight;
 } surfaceFog;
 `;
 
@@ -49,13 +51,14 @@ void main() {
   }
 
   // pixelUnprojectionMatrix maps (pixelX, pixelY, clipZ) → common space.
-  // coordinate is 0..1 UV; convert to pixel coords matching deck.gl convention
+  // coordinate is 0..1 UV; convert to CSS pixel coords matching deck.gl convention
   // (origin top-left, y-down).
   // Depth buffer stores [0,1]; convert to clip-space Z [-1,1] (WebGL NDC).
-  vec2 texSize = vec2(textureSize(texSrc, 0));
+  // Must use viewport CSS dimensions (not texture device-pixel size) because
+  // pixelUnprojectionMatrix is built from CSS-pixel width/height.
   vec3 pixelPos = vec3(
-    coordinate.x * texSize.x,
-    (1.0 - coordinate.y) * texSize.y,
+    coordinate.x * surfaceFog.viewportWidth,
+    (1.0 - coordinate.y) * surfaceFog.viewportHeight,
     depth * 2.0 - 1.0
   );
 
@@ -105,7 +108,9 @@ const surfaceFogModule = {
     invCol0: 'vec4<f32>',
     invCol1: 'vec4<f32>',
     invCol2: 'vec4<f32>',
-    invCol3: 'vec4<f32>'
+    invCol3: 'vec4<f32>',
+    viewportWidth: 'f32',
+    viewportHeight: 'f32'
   },
   defaultUniforms: {
     density: 0.6,
@@ -115,7 +120,9 @@ const surfaceFogModule = {
     invCol0: [1, 0, 0, 0],
     invCol1: [0, 1, 0, 0],
     invCol2: [0, 0, 1, 0],
-    invCol3: [0, 0, 0, 1]
+    invCol3: [0, 0, 0, 1],
+    viewportWidth: 1,
+    viewportHeight: 1
   },
   propTypes: {
     density: {value: 0.6, min: 0, max: 1},
@@ -127,7 +134,9 @@ const surfaceFogModule = {
     invCol0: {value: [1, 0, 0, 0], private: true},
     invCol1: {value: [0, 1, 0, 0], private: true},
     invCol2: {value: [0, 0, 1, 0], private: true},
-    invCol3: {value: [0, 0, 0, 1], private: true}
+    invCol3: {value: [0, 0, 0, 1], private: true},
+    viewportWidth: {value: 1, private: true},
+    viewportHeight: {value: 1, private: true}
   }
 } as const satisfies ShaderModule;
 
@@ -197,9 +206,14 @@ export class DeckSurfaceFogEffect {
     let invCol2 = [0, 0, 1, 0];
     let invCol3 = [0, 0, 0, 1];
     let unitsPerMeterZ = 1;
+    let viewportWidth = 1;
+    let viewportHeight = 1;
 
     if (params.viewports?.length > 0) {
       const viewport = params.viewports[0];
+
+      viewportWidth = viewport.width;
+      viewportHeight = viewport.height;
 
       // pixelUnprojectionMatrix maps (pixelX, pixelY, depth) → common space
       const pum = viewport.pixelUnprojectionMatrix;
@@ -239,7 +253,9 @@ export class DeckSurfaceFogEffect {
         invCol0,
         invCol1,
         invCol2,
-        invCol3
+        invCol3,
+        viewportWidth,
+        viewportHeight
       }
     });
 
