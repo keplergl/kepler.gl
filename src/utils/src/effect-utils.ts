@@ -22,6 +22,13 @@ import {clamp} from './data-utils';
 // TODO isolate types - depends on @kepler.gl/schemas
 type VisState = any;
 
+// Retains the last LightingEffect deckEffect so we can keep it in the
+// effects array (with shadows disabled) after the user removes the
+// Light & Shadow effect from the UI. Without this, deck.gl calls
+// cleanup() which removes the shadow shader module, but existing layer
+// models still have shadow_uShadowMap bindings → texture errors.
+let _lastLightingDeckEffect: any = null;
+
 export function computeDeckEffects({
   visState,
   mapState
@@ -30,7 +37,9 @@ export function computeDeckEffects({
   mapState: MapState;
 }): PostProcessEffect<any>[] {
   // TODO: 1) deck effects per deck context 2) preserved between draws
-  return visState.effectOrder
+  let hasLightingShadow = false;
+
+  const deckEffects = visState.effectOrder
     .map(effectId => {
       const effect = findById(effectId)(visState.effects) as Effect | undefined;
       if (effect?.deckEffect) {
@@ -45,12 +54,23 @@ export function computeDeckEffects({
           disableLightingEffect(effect);
         }
         if (effect.isEnabled || effect.type === LIGHT_AND_SHADOW_EFFECT.type) {
+          if (effect.type === LIGHT_AND_SHADOW_EFFECT.type) {
+            hasLightingShadow = true;
+            _lastLightingDeckEffect = effect.deckEffect;
+          }
           return effect.deckEffect;
         }
       }
       return null;
     })
     .filter(effect => effect);
+
+  if (!hasLightingShadow && _lastLightingDeckEffect) {
+    disableDeckLightingEffect(_lastLightingDeckEffect);
+    deckEffects.unshift(_lastLightingDeckEffect);
+  }
+
+  return deckEffects;
 }
 
 /**
@@ -126,6 +146,13 @@ function isDaytime(lat, lon, timestamp) {
 function disableLightingEffect(effect: Effect) {
   const deckEffect = effect.deckEffect;
   if (!deckEffect) return;
+  disableDeckLightingEffect(deckEffect);
+}
+
+/**
+ * Disable shadow rendering directly on a deck.gl LightingEffect instance.
+ */
+function disableDeckLightingEffect(deckEffect: any) {
   deckEffect.shadow = false;
   deckEffect.outputUniformShadow = false;
   for (const light of deckEffect.directionalLights || []) {
