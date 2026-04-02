@@ -33,8 +33,6 @@ export const rasterUniforms = {
   }
 };
 
-let _hooksRegistered = false;
-
 /**
  * Register custom DECKGL_CREATE_COLOR and DECKGL_MUTATE_COLOR shader hooks
  * with the default ShaderAssembler. These hooks are used by the raster layer's
@@ -42,11 +40,12 @@ let _hooksRegistered = false;
  *
  * In luma.gl 8.x these were registered via ProgramManager; in luma.gl 9.x
  * we register them with the ShaderAssembler singleton.
+ *
+ * NOTE: We must check the assembler's hook list every time rather than using
+ * a module-level boolean guard, because deck.gl's getShaderAssembler() clears
+ * _hookFunctions when a new Deck instance is created (e.g. during image export).
  */
 export function ensureRasterHooksRegistered(): void {
-  if (_hooksRegistered) return;
-  _hooksRegistered = true;
-
   const assembler = ShaderAssembler.getDefaultShaderAssembler();
   // @ts-expect-error _hookFunctions is private in ShaderAssembler
   const existingHooks = assembler._hookFunctions || [];

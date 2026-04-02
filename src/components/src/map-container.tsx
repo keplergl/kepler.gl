@@ -1215,7 +1215,7 @@ export default function MapContainerFactory(
               )
             : null}
           {this._renderMapPopover()}
-          {primary !== isSplit ? (
+          {!isExport && primary !== isSplit ? (
             <LoadingIndicator
               isVisible={Boolean(isLoadingIndicatorVisible || this.anyActiveLayerLoading)}
               activeSidePanel={Boolean(activeSidePanel)}
