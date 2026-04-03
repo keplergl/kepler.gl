@@ -1621,7 +1621,7 @@ export const POSTPROCESSING_EFFECTS: {[key: string]: EffectDescription} = {
     name: 'Surface Fog',
     parameters: [
       {name: 'density', defaultValue: 0.6, min: 0, max: 1},
-      {name: 'height', label: 'Elevation (m)', defaultValue: 100, min: 0, max: 3000},
+      {name: 'height', label: 'Elevation (m)', defaultValue: 100, min: -200, max: 3000},
       {name: 'thickness', label: 'Transition (m)', defaultValue: 200, min: 0, max: 1000},
       {name: 'fogColor', type: 'color', min: 0, max: 255, defaultValue: [230, 235, 242]}
     ]

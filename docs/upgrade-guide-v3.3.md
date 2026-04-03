@@ -182,3 +182,9 @@ Two new post-processing effects are available:
 Both effects are registered in `POSTPROCESSING_EFFECTS` and can be created via `createEffect()`. Only one fog effect can be active at a time (enforced by the effect manager UI). Fog effects are ordered early in the post-processing chain to read the depth buffer before subsequent effects clear it.
 
 ---
+
+## Known Issues
+
+### Performance with tiled layers on older hardware
+
+The deck.gl 9 upgrade introduces additional per-frame overhead in the layer management and GPU state pipelines compared to deck.gl 8. This may cause noticeable slowness when interacting with tiled layers (`Tile3DLayer`, raster tile layers) — especially when changing visual properties like opacity or when moving the camera over a scene with many visible tiles. The issue is more pronounced on older or lower-end GPUs and is currently under investigation.
