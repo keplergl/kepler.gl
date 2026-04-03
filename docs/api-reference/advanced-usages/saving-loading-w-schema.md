@@ -2,7 +2,7 @@
 
 ![Processor and Schema][processor-schema]
 
-Kelper.gl provides a schema manager to save and load maps. It converts current map data and configuration into a smaller JSON blob. You can then load that JSON blob into an empty map by passing it to `addDataToMap`.
+Kepler.gl provides a schema manager to save and load maps. It converts current map data and configuration into a smaller JSON blob. You can then load that JSON blob into an empty map by passing it to `addDataToMap`.
 
 The reason kepler.gl provides a Schema manager is to make it easy for users to connect the kepler.gl client app to any database, saving map data / config and later load it back. With the schema manager, a map saved in an older version can still be parsed and loaded with the latest kepler.gl library.
 
@@ -16,7 +16,7 @@ Under the hood, `SchemaManager.save()` calls `SchemaManager.getDatasetToSave()` 
 - `SchemaManager.getDatasetToSave()` will output an array of dataset.
 - `SchemaManager.getConfigToSave()` will output a JSON blob of the current config.
 
-In the example blow, `foo` is the id of the KeplerGl instance to be save.
+In the example below, `foo` is the id of the KeplerGl instance to be save.
 
 ```js
 import KeplerGlSchema from '@kepler.gl/schemas';

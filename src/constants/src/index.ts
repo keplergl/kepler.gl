@@ -6,6 +6,7 @@
 export * from './colors-by-theme';
 export * from './color-palettes';
 export * from './default-settings';
+export * from './gpu-parameters';
 export * from './layers';
 export * from './dataset';
 export {default as KeyEvent} from './keyevent';

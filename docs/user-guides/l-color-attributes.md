@@ -1,6 +1,6 @@
 # Color Palettes
 
-Color palettes pride both predefined and customized options and can be applied to either fill or stroke. Predefined palettes comes in diverging, sequential and qualitative types.
+Color palettes provide both predefined and customized options and can be applied to either fill or stroke. Predefined palettes comes in diverging, sequential and qualitative types.
 
 To choose a palette:
 

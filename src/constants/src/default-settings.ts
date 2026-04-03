@@ -1409,6 +1409,9 @@ export const LIGHT_AND_SHADOW_EFFECT: EffectDescription = {
   ]
 };
 
+export const DISTANCE_FOG_TYPE = 'distanceFog';
+export const SURFACE_FOG_TYPE = 'surfaceFog';
+
 export const POSTPROCESSING_EFFECTS: {[key: string]: EffectDescription} = {
   ink: {
     type: 'ink',
@@ -1602,6 +1605,26 @@ export const POSTPROCESSING_EFFECTS: {[key: string]: EffectDescription} = {
     type: 'hexagonalPixelate',
     name: 'Hexagonal Pixelate',
     parameters: [{name: 'scale', defaultValue: 20, min: 1, max: 50}]
+  },
+  distanceFog: {
+    type: DISTANCE_FOG_TYPE,
+    name: 'Distance Fog',
+    parameters: [
+      {name: 'density', defaultValue: 0.5, min: 0, max: 1},
+      {name: 'fogStart', label: 'Start', defaultValue: 0.3, min: 0, max: 1},
+      {name: 'fogRange', label: 'Range', defaultValue: 0.5, min: 0.01, max: 1},
+      {name: 'fogColor', type: 'color', min: 0, max: 255, defaultValue: [217, 222, 230]}
+    ]
+  },
+  surfaceFog: {
+    type: SURFACE_FOG_TYPE,
+    name: 'Surface Fog',
+    parameters: [
+      {name: 'density', defaultValue: 0.6, min: 0, max: 1},
+      {name: 'height', label: 'Elevation (m)', defaultValue: 100, min: -200, max: 3000},
+      {name: 'thickness', label: 'Transition (m)', defaultValue: 200, min: 0, max: 1000},
+      {name: 'fogColor', type: 'color', min: 0, max: 255, defaultValue: [230, 235, 242]}
+    ]
   }
 };
 
@@ -1626,6 +1649,8 @@ export type EffectType =
   | 'vignette'
   | 'magnify'
   | 'hexagonalPixelate'
+  | 'distanceFog'
+  | 'surfaceFog'
   | 'lightAndShadow';
 
 export const SYNC_TIMELINE_MODES: Record<string, SyncTimelineMode> = {

@@ -239,7 +239,7 @@ export default class LineLayer extends ArcLayer {
     }
 
     const defaultAltColumn = {value: null, fieldIdx: -1, optional: true};
-    const props: {columns: LineLayerColumnsConfig; label: string; isVisible: boolean} = {
+    const props: {columns: LineLayerColumnsConfig; label: string} = {
       // connect the first two point layer with line
       // TODO: fill default columns by parsing supported_column_modes
       columns: {
@@ -260,8 +260,7 @@ export default class LineLayer extends ArcLayer {
         geoarrow0: {...defaultAltColumn},
         geoarrow1: {...defaultAltColumn}
       },
-      label: `${fieldPairs[0].defaultName} -> ${fieldPairs[1].defaultName} line`,
-      isVisible: false
+      label: `${fieldPairs[0].defaultName} -> ${fieldPairs[1].defaultName} line`
     };
 
     return {props: [props]};

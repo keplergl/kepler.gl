@@ -12,7 +12,7 @@
 
 ![map styles](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/f-map-styles-0.png "Map panel")
 
-kepler.gl provide a set of [Mapbox](https://www.mapbox.com) basemap styles as background map, including 3D buildings! You can also add your own custom map sytle using the Mapbox style link.
+kepler.gl provide a set of [Mapbox](https://www.mapbox.com) basemap styles as background map, including 3D buildings! You can also add your own custom map style using the Mapbox style link.
 
 ## Base Map Styles
 
@@ -36,9 +36,9 @@ Hide and show water, buildings, roads, and more. Options include:
 - __Buildings__: shows building footprints.
 - __Water__: displays bodies of water.
 - __Land__: Shows parks, mountains, and other landscape features.
-- __3d Building__: Shows 3D buildings on the map. 3D buildings are only visible in the 3D map view. Resolution automatically updates based on current map zoom level. Use the input below to edit 3D bulding color.
+- __3d Building__: Shows 3D buildings on the map. 3D buildings are only visible in the 3D map view. Resolution automatically updates based on current map zoom level. Use the input below to edit 3D building color.
 
-![3d building](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/f-map-styles-3.png "3d buldings")
+![3d building](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/f-map-styles-3.png "3d buildings")
 
 
 #### Layer Order
@@ -48,7 +48,7 @@ To control the order in which map imagery layers are displayed, toggle the move 
 
 __TIP__: Move labels to the top on maps with colored layers to keep the labels from being concealed.
 
-![Examales of ordered layers](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/f-map-styles-5.png "examples of ordered layers")
+![Examples of ordered layers](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/f-map-styles-5.png "examples of ordered layers")
 
 
 ## Custom Map Styles

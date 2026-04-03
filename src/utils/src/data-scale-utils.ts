@@ -246,7 +246,7 @@ export function getQuantLegends(scale: D3ScaleFunction, labelFormat: LabelFormat
   const data = scale.range();
 
   return labels.map((label, index) => ({
-    data: Array.isArray(data[index]) ? rgbToHex(data[index]) : data[index],
+    data: Array.isArray(data[index]) ? rgbToHex(data[index] as RGBColor) : data[index],
     ...label
   }));
 }

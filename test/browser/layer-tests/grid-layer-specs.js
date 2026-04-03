@@ -275,14 +275,11 @@ test('#GridLayer -> renderLayer', t => {
       assert: (deckLayers, layer) => {
         t.deepEqual(
           deckLayers.map(l => l.id),
-          ['test_layer_1', 'test_layer_1-grid-cell'],
+          ['test_layer_1', 'test_layer_1-cells'],
           'Should create 2 deck.gl layers'
         );
         const [cpuGridLayer, gridCellLayer] = deckLayers;
         const {props} = cpuGridLayer;
-        const gridCellLayerProp = gridCellLayer.props;
-        const {attributes} = gridCellLayer.state.attributeManager;
-        const {instanceFillColors, instancePositions, instanceElevations} = attributes;
 
         const expectedProps = {
           coverage: layer.config.visConfig.coverage,
@@ -303,78 +300,115 @@ test('#GridLayer -> renderLayer', t => {
           t.deepEqual(props[key], expectedProps[key], `should have correct props.${key}`);
         });
 
-        // filterRange [39000, 552000]
-        // filter.domain [1474071056000, 1474071489000]
-        const expectedColorBins = [
-          // i = 0 is filtered out because empty
-          {i: 2, value: 1, counts: 1},
-          {i: 1, value: 2, counts: 2}
-        ];
-
-        const expectedElevationBins = [
-          {i: 2, value: 1, counts: 1},
-          {i: 1, value: 2, counts: 2}
-        ];
-
-        t.deepEqual(
-          gridCellLayerProp.data.length,
+        // deck.gl 9: sublayer data is {length, attributes} with typed arrays
+        const cellData = gridCellLayer.props.data;
+        t.ok(cellData && typeof cellData.length === 'number', 'cell data should have length');
+        t.equal(
+          cellData.length,
           expectedGridCellData.length,
-          'should pass correct data to grid cell layer'
+          'should have correct number of grid cells'
         );
-        gridCellLayerProp.data.forEach((ac, i) => {
-          t.deepEqual(
-            gridCellLayerProp.data[i],
-            expectedGridCellData[i],
-            `should pass correct data:${i} to grid cell layer`
+
+        // Verify typed-array attributes on the cell sublayer
+        t.ok(cellData.attributes, 'cell data should have attributes');
+        t.ok(
+          cellData.attributes.getColorValue?.value instanceof Float32Array,
+          'getColorValue should be a Float32Array'
+        );
+        t.ok(
+          cellData.attributes.getElevationValue?.value instanceof Float32Array,
+          'getElevationValue should be a Float32Array'
+        );
+        t.equal(
+          cellData.attributes.getColorValue.value.length,
+          expectedGridCellData.length,
+          'getColorValue array length should match bin count'
+        );
+
+        // Verify actual attribute array values (deck.gl 9 equivalent of instanceFillColors/instanceElevations)
+        // cellData.attributes contain SCALED values (processed through AttributeWithScale),
+        // not raw aggregated weights. For quantize scale with 3 bins [0, 1, 2],
+        // values are mapped to percentile-like range [0, 50, 99].
+        const colorValues = Array.from(cellData.attributes.getColorValue.value);
+        const elevationValues = Array.from(cellData.attributes.getElevationValue.value);
+        t.deepEqual(
+          colorValues.slice().sort((a, b) => a - b),
+          [0, 50, 99],
+          'getColorValue typed array should contain scaled values [0, 50, 99] (sorted)'
+        );
+        // Elevation uses linear scale (default), so raw values pass through
+        t.deepEqual(
+          elevationValues.slice().sort((a, b) => a - b),
+          [0, 1, 2],
+          'getElevationValue typed array should contain raw counts [0, 1, 2] (sorted)'
+        );
+
+        // getBin contains [col, row] integer IDs per bin (size=2)
+        const binAttr = cellData.attributes.getBin;
+        t.ok(binAttr?.value instanceof Float32Array, 'getBin should be a Float32Array');
+        t.equal(
+          binAttr.value.length,
+          expectedGridCellData.length * 2,
+          'getBin array length should be binCount * 2 (col, row pairs)'
+        );
+
+        // deck.gl 9: onSetColorDomain receives [min, max] tuple
+        // count aggregation: bins have 0, 2, and 1 filtered points
+        t.ok(spyLayerCallbacks.called, 'should call onSetLayerDomain');
+        const domainArg = spyLayerCallbacks.args[0][0];
+        t.deepEqual(domainArg, [0, 2], 'onSetLayerDomain should receive exact domain [0, 2]');
+
+        // Verify aggregator state and per-bin values
+        const aggregator = cpuGridLayer.state?.aggregator;
+        t.ok(aggregator, 'cpuGridLayer should have aggregator state');
+        if (aggregator) {
+          t.equal(
+            aggregator.binCount,
+            expectedGridCellData.length,
+            'bin count should match expected cells'
           );
-        });
 
-        const expectedLayerDomain = {
-          domain: [1, 2],
-          aggregatedBins: {1: {i: 1, value: 2, counts: 2}, 2: {i: 2, value: 1, counts: 1}}
-        };
-        t.deepEqual(
-          spyLayerCallbacks.args[0][0],
-          expectedLayerDomain,
-          'should call onSetLayerDomain with correct domain'
-        );
+          const colorDomain = aggregator.getResultDomain(0);
+          t.deepEqual(colorDomain, [0, 2], 'color domain should be [0, 2]');
 
-        t.deepEqual(
-          cpuGridLayer.state.aggregatorState.dimensions.fillColor.sortedBins.sortedBins,
-          expectedColorBins,
-          'should create correct color bins'
-        );
+          const elevationDomain = aggregator.getResultDomain(1);
+          t.deepEqual(elevationDomain, [0, 2], 'elevation domain should be [0, 2]');
 
-        t.deepEqual(
-          cpuGridLayer.state.aggregatorState.dimensions.elevation.sortedBins.sortedBins,
-          expectedElevationBins,
-          'should create correct elevation bins'
-        );
+          // Verify per-bin data: collect bins and match by count
+          const binCounts = [];
+          const binColorValues = [];
+          const binElevationValues = [];
+          for (let i = 0; i < aggregator.binCount; i++) {
+            const bin = aggregator.getBin(i);
+            t.ok(bin, `bin ${i} should exist`);
+            binCounts.push(bin.count);
+            binColorValues.push(bin.value[0]);
+            binElevationValues.push(bin.value[1]);
+          }
+          t.deepEqual(
+            binCounts.slice().sort(),
+            [1, 2, 2],
+            'bin counts (total points per bin) should be [1, 2, 2] (sorted)'
+          );
+          t.deepEqual(
+            binColorValues.slice().sort(),
+            [0, 1, 2],
+            'bin color values (filtered count agg) should be [0, 1, 2] (sorted)'
+          );
+          t.deepEqual(
+            binElevationValues.slice().sort(),
+            [0, 1, 2],
+            'bin elevation values (filtered count agg) should be [0, 1, 2] (sorted)'
+          );
 
-        // instancePositions
-        t.deepEqual(
-          instancePositions.value.slice(0, 12),
-          // position of each bin
-          [
-            -122.59661271087748, 37.743177277521255, 0, -122.14283099317691, 37.38384344551697, 0,
-            -122.3697218520272, 37.743177277521255, 0, 0, 0, 0
-          ],
-          'should create correct attribute.instanceFillColors'
-        );
-        // instanceFillColors
-        t.deepEqual(
-          instanceFillColors.value.slice(0, 16),
-          // color by filtered points count: [0, 2, 1]
-          [0, 0, 0, 0, 3, 3, 3, 255, 1, 1, 1, 255, 0, 0, 0, 0],
-          'should create correct attribute.instanceFillColors'
-        );
-        // instanceElevations
-        t.deepEqual(
-          instanceElevations.value.slice(0, 4),
-          // elevation by filtered points count: [0, 2, 1], range: [0, 500]
-          [-1, 500, 0, 0],
-          'should create correct attribute.instanceFillColors'
-        );
+          // Verify raw result arrays
+          const colorResult = aggregator.getResult(0);
+          t.ok(colorResult?.value instanceof Float32Array, 'color result should be Float32Array');
+          const sortedColorResult = Array.from(
+            colorResult.value.slice(0, aggregator.binCount)
+          ).sort();
+          t.deepEqual(sortedColorResult, [0, 1, 2], 'color result values should be [0, 1, 2]');
+        }
       }
     },
     {
@@ -415,67 +449,103 @@ test('#GridLayer -> renderLayer', t => {
       assert: deckLayers => {
         t.deepEqual(
           deckLayers.map(l => l.id),
-          ['test_layer_2', 'test_layer_2-grid-cell'],
+          ['test_layer_2', 'test_layer_2-cells'],
           'Should create 2 deck.gl layers'
         );
         const [cpuGridLayer, gridCellLayer] = deckLayers;
         const {props} = cpuGridLayer;
-        const gridCellLayerProp = gridCellLayer.props;
-        const {attributes} = gridCellLayer.state.attributeManager;
-        const {instanceFillColors} = attributes;
 
         t.equal(props.colorScaleType, 'quantize', 'should pass colorScaleType');
 
-        t.deepEqual(
-          gridCellLayerProp.data.length,
+        const cellData = gridCellLayer.props.data;
+        t.equal(
+          cellData.length,
           expectedGridCellData.length,
-          'should pass correct data to grid cell layer'
+          'should have correct number of grid cells'
         );
-        gridCellLayerProp.data.forEach((ac, i) => {
-          t.deepEqual(
-            gridCellLayerProp.data[i],
-            expectedGridCellData[i],
-            `should pass correct data:${i} to grid cell layer`
+
+        // Verify typed-array attributes
+        t.ok(
+          cellData.attributes?.getColorValue?.value instanceof Float32Array,
+          'getColorValue should be a Float32Array'
+        );
+
+        // Verify actual attribute array values for "color by" max trip_distance
+        // bins with filtered points have max trip_distance 7.13 and 11; empty bin has NaN
+        const colorValues = Array.from(cellData.attributes.getColorValue.value);
+        const realColorValues = colorValues.filter(v => !isNaN(v)).sort((a, b) => a - b);
+        t.equal(realColorValues.length, 2, 'should have 2 non-NaN color attribute values');
+        t.ok(
+          Math.abs(realColorValues[0] - 7.13) < 0.001,
+          `first color value should be ~7.13 (got ${realColorValues[0]})`
+        );
+        t.equal(realColorValues[1], 11, 'second color value should be 11');
+        t.equal(
+          colorValues.filter(v => isNaN(v)).length,
+          1,
+          'should have exactly 1 NaN color value (empty bin)'
+        );
+
+        // deck.gl 9: onSetColorDomain receives [min, max] tuple
+        // max aggregation of trip_distance: bins with filtered points have max 7.13 and 11
+        // Float32 precision: 7.13 may become 7.130000114440918
+        t.ok(spyLayerCallbacks.called, 'should call onSetLayerDomain');
+        const lastCallIdx = spyLayerCallbacks.args.length - 1;
+        const domainArg = spyLayerCallbacks.args[lastCallIdx][0];
+        t.equal(domainArg.length, 2, 'domain should have 2 elements');
+        t.ok(
+          Math.abs(domainArg[0] - 7.13) < 0.001,
+          `domain[0] should be ~7.13 (got ${domainArg[0]})`
+        );
+        t.equal(domainArg[1], 11, 'domain[1] should be 11');
+
+        // Verify aggregator state and per-bin values
+        const aggregator = cpuGridLayer.state?.aggregator;
+        t.ok(aggregator, 'cpuGridLayer should have aggregator state');
+        if (aggregator) {
+          t.equal(
+            aggregator.binCount,
+            expectedGridCellData.length,
+            'bin count should match expected cells'
           );
-        });
-        const expectedColorBins = [
-          // i = 0 is filtered out because empty
-          // bins are sorted
-          {i: 1, value: 7.13, counts: 2},
-          {i: 2, value: 11, counts: 1}
-        ];
-        const expectedElevationBins = [
-          {i: 2, value: 1, counts: 1},
-          {i: 1, value: 2, counts: 2}
-        ];
-        const expectedLayerDomain = {
-          domain: [7.13, 11],
-          aggregatedBins: {1: {i: 1, value: 7.13, counts: 2}, 2: {i: 2, value: 11, counts: 1}}
-        };
-        t.deepEqual(
-          spyLayerCallbacks.args[1][0],
-          expectedLayerDomain,
-          'should call onSetLayerDomain with correct domain'
-        );
-        t.deepEqual(
-          cpuGridLayer.state.aggregatorState.dimensions.fillColor.sortedBins.sortedBins,
-          expectedColorBins,
-          'should create correct color bins'
-        );
 
-        t.deepEqual(
-          cpuGridLayer.state.aggregatorState.dimensions.elevation.sortedBins.sortedBins,
-          expectedElevationBins,
-          'should create correct elevation bins'
-        );
+          const colorDomain = aggregator.getResultDomain(0);
+          t.equal(colorDomain.length, 2, 'color domain should have 2 elements');
+          t.ok(
+            Math.abs(colorDomain[0] - 7.13) < 0.001,
+            `color domain[0] should be ~7.13 (got ${colorDomain[0]})`
+          );
+          t.equal(colorDomain[1], 11, 'color domain[1] should be 11');
 
-        // instanceFillColors
-        t.deepEqual(
-          instanceFillColors.value.slice(0, 16),
-          // color by filtered points color value: [0, 7.13, 11]
-          [0, 0, 0, 0, 1, 1, 1, 255, 3, 3, 3, 255, 0, 0, 0, 0],
-          'should create correct attribute.instanceFillColors'
-        );
+          // Verify per-bin color values (max trip_distance per cell)
+          // One bin is empty (NaN), two bins have real values
+          const binColorValues = [];
+          for (let i = 0; i < aggregator.binCount; i++) {
+            const bin = aggregator.getBin(i);
+            t.ok(bin, `bin ${i} should exist`);
+            binColorValues.push(bin.value[0]);
+          }
+          const realValues = binColorValues.filter(v => !isNaN(v)).sort((a, b) => a - b);
+          t.equal(realValues.length, 2, 'should have 2 non-NaN bin color values');
+          t.ok(
+            Math.abs(realValues[0] - 7.13) < 0.001,
+            `first real bin value should be ~7.13 (got ${realValues[0]})`
+          );
+          t.equal(realValues[1], 11, 'second real bin value should be 11');
+
+          // Verify raw result array
+          const colorResult = aggregator.getResult(0);
+          t.ok(colorResult?.value instanceof Float32Array, 'color result should be Float32Array');
+          const resultValues = Array.from(colorResult.value.slice(0, aggregator.binCount))
+            .filter(v => !isNaN(v))
+            .sort((a, b) => a - b);
+          t.equal(resultValues.length, 2, 'should have 2 non-NaN result values');
+          t.ok(
+            Math.abs(resultValues[0] - 7.13) < 0.001,
+            `first result value should be ~7.13 (got ${resultValues[0]})`
+          );
+          t.equal(resultValues[1], 11, 'second result value should be 11');
+        }
       }
     }
   ];

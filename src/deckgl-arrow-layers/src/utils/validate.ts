@@ -5,9 +5,9 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) vis.gl contributors
 
-import {assert} from '@deck.gl/core/typed';
 import {isArrowVector} from '@kepler.gl/utils';
 import * as arrow from 'apache-arrow';
+import {assert} from './utils';
 
 export function validateAccessors(props: Record<string, any>, table: arrow.Table): void {
   const vectorAccessors: arrow.Vector[] = [];

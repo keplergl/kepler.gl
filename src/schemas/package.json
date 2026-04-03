@@ -36,7 +36,7 @@
     "@kepler.gl/table": "3.2.6",
     "@kepler.gl/types": "3.2.6",
     "@kepler.gl/utils": "3.2.6",
-    "@loaders.gl/loader-utils": "^4.3.2",
+    "@loaders.gl/loader-utils": "^4.3.4",
     "@types/keymirror": "^0.1.1",
     "@types/lodash": "4.17.5",
     "apache-arrow": ">=15.0.0",

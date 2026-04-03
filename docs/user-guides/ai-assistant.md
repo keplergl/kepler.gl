@@ -23,7 +23,7 @@ The following providers and models are currently supported.
 
 ## Parameters
 
-Before initating the AI assistant, the following parameters are required. A temperature and Top P are selected for you; however, you will need to provide an API key for a remote model, and a base URL for local models.
+Before initiating the AI assistant, the following parameters are required. A temperature and Top P are selected for you; however, you will need to provide an API key for a remote model, and a base URL for local models.
 
 | **Parameter**   | **Description**                                                                                                                        |
 | --------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
@@ -68,7 +68,7 @@ After granting access, users can start talking to the AI assistant.
 
 ## Map and Data Analysis Assistant
 
-Using LLM function tools, kepler.gl's AI assistant can help transform users's prompt into actions that executed inside kepler.gl. This allows users to interact with kepler.gl in a more natural and creative way.
+Using LLM function tools, kepler.gl's AI assistant can help transform users' prompt into actions that executed inside kepler.gl. This allows users to interact with kepler.gl in a more natural and creative way.
 
 ### Why use LLM function tools?
 
@@ -121,7 +121,7 @@ One can click the **Box Select** button first. Then, start selecting the data in
 
 For scatter plot, the AI assistant will create a scatter plot with a regression line by default. If users select points in the plot, there will be 3 different regression lines created: one for all points, one for the selected points, and one for the unselected points.
 
-If users click the 'expand' button on the top right corner of the plot, the plot will be expanded to a floating modal dialog with more details of the regressions shown in a tablt.
+If users click the 'expand' button on the top right corner of the plot, the plot will be expanded to a floating modal dialog with more details of the regressions shown in a table.
 
 The regression details include:
 

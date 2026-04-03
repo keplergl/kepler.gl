@@ -5,7 +5,7 @@
  * Utility functions and constants for processing STAC metadata and other raster tile data
  */
 
-import {TypedArray} from '@loaders.gl/loader-utils/src/types';
+import type {TypedArray} from '@loaders.gl/loader-utils';
 import {isArray} from '@math.gl/core';
 
 import {StacTypes} from '@kepler.gl/types';

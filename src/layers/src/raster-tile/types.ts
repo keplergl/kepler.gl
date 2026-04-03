@@ -1,9 +1,15 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {_Tile2DHeader} from '@deck.gl/geo-layers/typed';
-import {TypedArray} from '@loaders.gl/loader-utils/src/types';
-import {Texture2DProps} from '@luma.gl/webgl';
+import {_Tile2DHeader} from '@deck.gl/geo-layers';
+import type {TypedArray} from '@loaders.gl/loader-utils';
+import type {TextureProps} from '@luma.gl/core';
+
+/**
+ * Loose texture data descriptor assembled before actual luma.gl Texture creation.
+ * Intentionally broader than luma.gl's strict TextureProps (which requires width/height).
+ */
+type Texture2DProps = Partial<TextureProps> & Record<string, any>;
 
 import {KeplerTable as KeplerDataset} from '@kepler.gl/table';
 import type {ColorMap, StacTypes} from '@kepler.gl/types';

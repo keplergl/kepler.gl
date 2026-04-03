@@ -2,7 +2,15 @@
 // Copyright contributors to the kepler.gl project
 
 import {Field, Millisecond} from './types';
-import type {MapViewState} from '@deck.gl/core/typed';
+type MapViewState = {
+  latitude: number;
+  longitude: number;
+  zoom: number;
+  bearing?: number;
+  pitch?: number;
+  transitionDuration?: number;
+  transitionInterpolator?: object;
+};
 import type {ExportResolutionOption} from '@kepler.gl/constants';
 
 export type MapState = {

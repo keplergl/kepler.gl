@@ -72,8 +72,11 @@ export function AiAssistantComponent() {
   const instructions = `${INSTRUCTIONS}\n\n${datasetMetaData}`;
 
   // generate ideas from LLM
-  const {temporaryPrompt, restartChat: libraryRestartChat} = useAssistant({...assistantProps, instructions});
-  
+  const {temporaryPrompt, restartChat: libraryRestartChat} = useAssistant({
+    ...assistantProps,
+    instructions
+  });
+
   const restartChatRef = useRef(libraryRestartChat);
   restartChatRef.current = libraryRestartChat;
 
@@ -104,13 +107,13 @@ export function AiAssistantComponent() {
 
   const onRestartAssistant = async () => {
     dispatch(updateAiAssistantMessages([]));
-    
+
     try {
       await restartChatRef.current();
     } catch (e) {
       console.error('Error restarting chat:', e);
     }
-    
+
     setRestartKey(prev => prev + 1);
   };
 

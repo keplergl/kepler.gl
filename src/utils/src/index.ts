@@ -82,7 +82,7 @@ export {
   isMSEdge
 } from './export-utils';
 export {getFormatValue, getDefaultTimeFormat} from './format';
-export {setLayerBlending} from './gl-utils';
+export {getLayerBlendingParameters, patchDeckRendererForPostProcessing} from './gl-utils';
 export {flattenMessages, mergeMessages} from './locale-utils';
 export {isValidMapInfo} from './map-info-utils';
 export {

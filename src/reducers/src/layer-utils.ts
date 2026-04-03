@@ -4,7 +4,8 @@
 import Console from 'global/console';
 
 import {GEOCODER_LAYER_ID, LIGHT_AND_SHADOW_EFFECT} from '@kepler.gl/constants';
-import {Layer as DeckLayer, LayerProps as DeckLayerProps} from '@deck.gl/core/typed';
+import {Layer as DeckLayer} from '@deck.gl/core';
+type DeckLayerProps = any;
 import {
   Field,
   TooltipField,

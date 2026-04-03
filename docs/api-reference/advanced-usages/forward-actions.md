@@ -53,7 +53,7 @@ import {toggleFullScreen, wrapTo} from '@kepler.gl/actions';
 const wrapToMap = wrapTo('foo');
 const MapContainer = ({dispatch}) => (
   <div>
-    <button onClick={() => dispatch(wrapToMap(toggleFullScreen())} />
+    <button onClick={() => dispatch(wrapToMap(toggleFullScreen()))} />
     <KeplerGl id="foo"/>
   </div>
 );

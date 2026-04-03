@@ -3,6 +3,7 @@
 ## Table of contents
 
 - [Development Setup](./#development-setup)
+- [Troubleshooting: gl package install](./#troubleshooting-gl-package-install)
 - [Running Tests](./#running-tests)
 - [Coding Rules](./#coding-rules)
 - [Commit Message Guidelines](./#git-commit-guidelines)
@@ -68,6 +69,7 @@ On Unix, MacOS
 # install Volta on Unix
 curl https://get.volta.sh | bash
 ```
+
 On Windows
 
 ```bash
@@ -116,6 +118,29 @@ yarn start
 An demo app will be served at `http://localhost:8080/`
 
 This is the demo app we hosted on [http://kepler.gl/#/demo][demo-app]. By default, it serves non-minified source code inside the src directory.
+
+### Troubleshooting: gl package install
+
+Yarn may report that the `gl` package (a dev dependency used for headless WebGL in tests) **could not be built**. That usually happens for one of two reasons:
+
+1. **No prebuilt binary for your Node version and platform**  
+   `prebuild-install` only ships binaries for certain Node releases and OS/arch pairs (for example, very new Node versions on Apple Silicon often have none). Yarn then falls back to compiling `gl` from source with `node-gyp`.
+
+2. **Source build needs a `python` command**  
+   The ANGLE sources invoked during that compile run `python` (not `python3`). macOS Command Line Tools typically install `python3` only, so the log shows `python: command not found` and `gyp ERR! configure error` even though `node-gyp` found Python 3.
+
+**What to do**
+
+- **Prefer the Node version pinned for this repo** (see `.nvmrc`, currently 18.18.2). After `nvm install` and `nvm use` (or Volta, as above), run `yarn install` / `yarn bootstrap` again. A matching prebuild is often available, so the native compile step never runs.
+
+- **If you must use a newer Node** and the install compiles from source, ensure `python` is on your `PATH` and points to Python 3, for example on macOS:
+
+  ```bash
+  sudo mkdir -p /usr/local/bin
+  sudo ln -sf /usr/bin/python3 /usr/local/bin/python
+  ```
+
+  Use another location if `/usr/local/bin` is not early in your `PATH`.
 
 #### Develop with deck.gl
 

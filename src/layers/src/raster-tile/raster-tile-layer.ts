@@ -1,13 +1,15 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {COORDINATE_SYSTEM, Layer as DeckLayer} from '@deck.gl/core/typed';
-import {TileLayer, GeoBoundingBox} from '@deck.gl/geo-layers/typed';
+import {COORDINATE_SYSTEM, Layer as DeckLayer} from '@deck.gl/core';
+import {TileLayer, GeoBoundingBox} from '@deck.gl/geo-layers';
 import {PMTilesSource, PMTilesTileSource} from '@loaders.gl/pmtiles';
-import {Texture2DProps} from '@luma.gl/webgl';
+import type {TypedArray} from '@loaders.gl/loader-utils';
+import type {TextureProps} from '@luma.gl/core';
+type Texture2DProps = Partial<TextureProps> & Record<string, any>;
 import memoize from 'lodash/memoize';
 
-import {PathLayer} from '@deck.gl/layers/typed';
+import {PathLayer} from '@deck.gl/layers';
 import {DatasetType, PMTilesType, LAYER_TYPES} from '@kepler.gl/constants';
 import {RasterLayer, RasterMeshLayer} from '@kepler.gl/deckgl-layers';
 import {
@@ -127,6 +129,13 @@ export default class RasterTileLayer extends KeplerLayer {
   /** Max bands image data value, based on the current viewport */
   maxViewportPixelValue = -Infinity;
   /** Memoized method that calculates data source params */
+
+  /** Callback to trigger a map redraw (stored from layerCallbacks) */
+  onRedrawNeeded: (() => void) | undefined;
+  /** Track the last rendered preset to detect changes */
+  _lastRenderedPreset: string | undefined;
+  /** Timeout ID for deferred redraws */
+  _redrawTimeout: ReturnType<typeof setTimeout> | undefined;
 
   getDataSourceParams: (
     stac: CompleteSTACObject,
@@ -376,7 +385,7 @@ export default class RasterTileLayer extends KeplerLayer {
     let maxPixelValue = -Infinity;
     if (images) {
       for (const image of images) {
-        const [min, max] = getImageMinMax(image.data);
+        const [min, max] = getImageMinMax(image.data as TypedArray);
         if (typeof min === 'number') {
           minPixelValue = Math.min(min, minPixelValue);
         }
@@ -390,7 +399,22 @@ export default class RasterTileLayer extends KeplerLayer {
 
   // generate a deck layer
   renderLayer(opts): TileLayer<any>[] {
-    const {data} = opts;
+    const {data, layerCallbacks} = opts;
+
+    // Store callback to trigger map redraw when sublayers need async re-render
+    this.onRedrawNeeded = layerCallbacks?.onRedrawNeeded;
+
+    // Detect preset changes and schedule a deferred redraw so that
+    // deck.gl re-renders sublayers after the new pipeline compiles
+    const currentPreset = this.config.visConfig?.preset;
+    if (this._lastRenderedPreset !== undefined && this._lastRenderedPreset !== currentPreset) {
+      if (this._redrawTimeout) clearTimeout(this._redrawTimeout);
+      this._redrawTimeout = setTimeout(() => {
+        this._redrawTimeout = undefined;
+        this.onRedrawNeeded?.();
+      }, 100);
+    }
+    this._lastRenderedPreset = currentPreset;
 
     if (data?.dataset?.metadata?.pmtilesType === PMTilesType.RASTER) {
       return this.renderPMTilesLayer(opts);
@@ -399,7 +423,7 @@ export default class RasterTileLayer extends KeplerLayer {
   }
 
   private renderStacLayer(opts): TileLayer<any>[] {
-    const {data, mapState, experimentalContext} = opts;
+    const {data, mapState, experimentalContext, layerCallbacks} = opts;
     const stac = data?.dataset?.metadata as GetTileDataCustomProps['stac'];
 
     // If a tabular dataset is loaded, and then the layer type is switched from Point to Raster Tile
@@ -548,7 +572,8 @@ export default class RasterTileLayer extends KeplerLayer {
       minCategoricalBandValue,
       maxCategoricalBandValue,
       hasCategoricalColorMap: Boolean(categoricalColorMap),
-      hasShadowEffect
+      hasShadowEffect,
+      onRedrawNeeded: layerCallbacks?.onRedrawNeeded
     });
 
     return [tileLayer];
@@ -557,7 +582,7 @@ export default class RasterTileLayer extends KeplerLayer {
   private renderPMTilesLayer(opts): TileLayer<any>[] {
     const {id, opacity, visible} = this.getDefaultDeckLayerProps(opts);
 
-    const {data, mapState} = opts;
+    const {data, mapState, layerCallbacks} = opts;
     const metadata = data?.dataset?.metadata as VectorTileMetadata;
     const {visConfig} = this.config;
 
@@ -604,7 +629,8 @@ export default class RasterTileLayer extends KeplerLayer {
               zRange: this.meta.zRange || null,
               refinementStrategy: 'no-overlap'
             }
-          : {})
+          : {}),
+        onRedrawNeeded: layerCallbacks?.onRedrawNeeded
       })
     ];
   }

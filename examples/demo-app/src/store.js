@@ -21,10 +21,14 @@ const reducers = combineReducers({
 
 export const middlewares = enhanceReduxMiddleware([thunk, routerMiddleware(browserHistory)]);
 
+const NOISY_ACTIONS = new Set(['@@kepler.gl/MOUSE_MOVE', '@@kepler.gl/LAYER_HOVER']);
+
+// Set window.__KEPLER_LOG_FULL__ = true in the console to include
+// high-frequency actions (MOUSE_MOVE, LAYER_HOVER, UPDATE_MAP).
 if (NODE_ENV === 'local') {
-  // Redux logger
   const logger = createLogger({
-    collapsed: () => true // Collapse all actions for more compact log
+    collapsed: () => true,
+    predicate: (_getState, action) => Window.__KEPLER_LOG_FULL__ || !NOISY_ACTIONS.has(action.type)
   });
   middlewares.push(logger);
 }
@@ -42,11 +46,7 @@ let composeEnhancers = compose;
 
 if (Window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__) {
   composeEnhancers = Window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__({
-    actionsBlacklist: [
-      '@@kepler.gl/MOUSE_MOVE',
-      '@@kepler.gl/UPDATE_MAP',
-      '@@kepler.gl/LAYER_HOVER'
-    ]
+    actionsBlacklist: [...NOISY_ACTIONS]
   });
 }
 

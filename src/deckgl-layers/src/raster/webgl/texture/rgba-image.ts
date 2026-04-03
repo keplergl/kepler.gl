@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {Texture2D} from '@luma.gl/webgl';
-
+import type {Texture} from '@luma.gl/core';
 import {GetUniformsOutput, ShaderModule} from '../types';
 
-function getUniforms(opts: {imageRgba?: Texture2D} = {}): GetUniformsOutput {
+function getUniforms(opts: {imageRgba?: Texture} = {}): GetUniformsOutput {
   const {imageRgba} = opts;
 
   if (!imageRgba) {

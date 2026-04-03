@@ -2,7 +2,7 @@
 
 The kepler.gl application does not have a backend, however it offers integration point for optional commercial backends. Each backend can integrate with kepler by adding a "cloud provider" object to kepler's global list of cloud providers.
 
-These objects must implement certain minimal set of methods, and can optionally immplement others, depending on the capability of the backend.
+These objects must implement certain minimal set of methods, and can optionally implement others, depending on the capability of the backend.
 
 The set of methods available for cloud providers to implement is subject to change as new features are added to the front-end.
 
@@ -32,7 +32,7 @@ Cloud-providers providers can implement the following properties
 | `logout` | Method called to logout an user | required |
 | `uploadMap` | Method called to upload map to storage | required |
 | `listMaps` | Method called to load a catalog of maps saved by the current user | required |
-| `downloadMap` | MEthod called to download a specific map | required |
+| `downloadMap` | Method called to download a specific map | required |
 
 
 ## Adding a new Cloud Provider

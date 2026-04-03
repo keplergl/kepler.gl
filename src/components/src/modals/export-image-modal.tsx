@@ -193,10 +193,7 @@ const ExportImageModalFactory = () => {
           </div>
           {ratio !== EXPORT_IMG_RATIOS.CUSTOM && (
             <div className="image-option-section">
-               <div
-                 className="image-option-section-title"
-                 id="export-image-modal__resolution-title"
-               >
+              <div className="image-option-section-title" id="export-image-modal__resolution-title">
                 <FormattedMessage id={'modal.exportImage.resolutionTitle'} />
               </div>
               <FormattedMessage id={'modal.exportImage.resolutionDescription'} />

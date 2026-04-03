@@ -1,134 +1,137 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-// @ts-nocheck This is a hack, don't check types
-
-// import {console as Console} from 'global/window';
 import {LightingEffect, shadow} from '@deck.gl/core';
-import {Texture2D, ProgramManager} from '@luma.gl/core';
+import type {Texture} from '@luma.gl/core';
+import type {ShaderModule} from '@luma.gl/shadertools';
 
 /**
- * Inserts shader code before detected part.
- * @param {string} vs Original shader code.
- * @param {string} type Debug string.
- * @param {string} insertBeforeText Text chunk to insert before.
- * @param {string} textToInsert Text to insert.
- * @returns Modified shader code.
+ * Exposes private members of LightingEffect that we need to access.
+ * These are runtime-accessible but TypeScript marks them as private.
  */
-export function insertBefore(vs, type, insertBeforeText, textToInsert) {
-  const at = vs.indexOf(insertBeforeText);
-  if (at < 0) {
-    // Console.error(`Cannot edit ${type} layer shader`);
-    return vs;
-  }
-
-  return vs.slice(0, at) + textToInsert + vs.slice(at);
+interface LightingEffectPrivate {
+  shadow: boolean;
+  shadowPasses: {delete(): void}[];
+  dummyShadowMap: Texture | null;
+  _createShadowPasses(device: unknown): void;
 }
 
-const CustomShadowModule = shadow ? {...shadow} : undefined;
+/** Extended shadow module props with our custom field. */
+interface CustomShadowProps {
+  outputUniformShadow?: boolean;
+  dummyShadowMap?: Texture | null;
+  [key: string]: unknown;
+}
 
 /**
- * Custom shadow module
- * 1) Add u_outputUniformShadow uniform
- * 2) always produce full shadow when the uniform is set to true.
+ * Insert text before a target string in shader source.
  */
-CustomShadowModule.fs = insertBefore(
-  CustomShadowModule.fs,
-  'custom shadow #1',
-  'uniform vec4 shadow_uColor;',
-  'uniform bool u_outputUniformShadow;'
-);
-
-CustomShadowModule.fs = insertBefore(
-  CustomShadowModule.fs,
-  'custom shadow #1',
-  'vec4 rgbaDepth = texture2D(shadowMap, position.xy);',
-  'if(u_outputUniformShadow) return 1.0;'
-);
-
-CustomShadowModule.getUniforms = (opts = {}, context = {}) => {
-  const u = shadow.getUniforms(opts, context);
-  if (opts.outputUniformShadow !== undefined) {
-    u.u_outputUniformShadow = opts.outputUniformShadow;
-  }
-  return u;
-};
+function insertBefore(source: string, target: string, textToInsert: string): string {
+  const at = source.indexOf(target);
+  if (at < 0) return source;
+  return source.slice(0, at) + textToInsert + source.slice(at);
+}
 
 /**
- * Custom LightingEffect
- * 1) adds CustomShadowModule
- * 2) pass outputUniformShadow as module parameters
- * 3) properly removes CustomShadowModule
+ * Create a patched shadow module that adds `outputUniformShadow` to the
+ * shadow UBO. When true, `shadow_getShadowWeight` returns 1.0 (full
+ * uniform shadow) instead of sampling the shadow map. Used for nighttime
+ * rendering to avoid partial shadows from below.
+ */
+function createCustomShadowModule(): ShaderModule | null {
+  if (!shadow) return null;
+
+  const mod = {...shadow} as Record<string, any>;
+
+  const uboField = '  float outputUniformShadow;\n';
+  mod.vs = insertBefore(mod.vs, '} shadow;', uboField);
+  mod.fs = insertBefore(mod.fs, '} shadow;', uboField);
+
+  mod.fs = insertBefore(
+    mod.fs,
+    'vec4 rgbaDepth = texture(shadowMap, position.xy);',
+    'if (shadow.outputUniformShadow > 0.5) return 1.0;\n  '
+  );
+
+  mod.uniformTypes = {
+    ...shadow.uniformTypes,
+    outputUniformShadow: 'f32'
+  };
+
+  const originalGetUniforms = shadow.getUniforms as (
+    opts: Record<string, unknown>,
+    prevUniforms: Record<string, unknown>
+  ) => Record<string, unknown>;
+  mod.getUniforms = (opts: CustomShadowProps = {}, context = {}) => {
+    const u = originalGetUniforms(opts, context);
+    u.outputUniformShadow = opts.outputUniformShadow ? 1.0 : 0.0;
+    return u;
+  };
+
+  return mod as unknown as ShaderModule;
+}
+
+const CustomShadowModule = createCustomShadowModule();
+
+/**
+ * Custom LightingEffect for kepler.gl.
+ *
+ * Extends deck.gl's LightingEffect with:
+ * - A patched shadow module with `outputUniformShadow` for uniform shadow
+ *   during nighttime (avoids partial shadows from below).
+ * - getShaderModuleProps override that always provides dummyShadowMap
+ *   to prevent "Bad texture binding" errors when shadows are disabled.
  */
 class CustomDeckLightingEffect extends LightingEffect {
+  outputUniformShadow: boolean;
+
+  private get _private(): LightingEffectPrivate {
+    return this as unknown as LightingEffectPrivate;
+  }
+
   constructor(props) {
     super(props);
-    this.useOutputUniformShadow = false;
+    this.outputUniformShadow = false;
   }
 
-  preRender(gl, {layers, layerFilter, viewports, onViewportActive, views}) {
-    if (!this.shadow) return;
-
-    // create light matrix every frame to make sure always updated from light source
-    this.shadowMatrices = this._calculateMatrices();
-
-    if (this.shadowPasses.length === 0) {
-      this._createShadowPasses(gl);
-    }
-    if (!this.programManager) {
-      this.programManager = ProgramManager.getDefaultProgramManager(gl);
-      if (CustomShadowModule) {
-        this.programManager.addDefaultModule(CustomShadowModule);
-      }
-    }
-
-    if (!this.dummyShadowMap) {
-      this.dummyShadowMap = new Texture2D(gl, {
-        width: 1,
-        height: 1
-      });
-    }
-
-    for (let i = 0; i < this.shadowPasses.length; i++) {
-      const shadowPass = this.shadowPasses[i];
-      shadowPass.render({
-        layers,
-        layerFilter,
-        viewports,
-        onViewportActive,
-        views,
-        moduleParameters: {
-          shadowLightId: i,
-          dummyShadowMap: this.dummyShadowMap,
-          shadowMatrices: this.shadowMatrices,
-          useOutputUniformShadow: false
-        }
-      });
+  setup(context) {
+    this.context = context;
+    const {device, deck} = context;
+    if (this._private.shadow && !this._private.dummyShadowMap) {
+      this._private._createShadowPasses(device);
+      deck._addDefaultShaderModule(CustomShadowModule || shadow);
+      this._private.dummyShadowMap = device.createTexture({width: 1, height: 1});
     }
   }
 
-  getModuleParameters(layer) {
-    const parameters = super.getModuleParameters(layer);
-    parameters.outputUniformShadow = this.outputUniformShadow;
-    return parameters;
-  }
-
-  cleanup() {
-    for (const shadowPass of this.shadowPasses) {
+  cleanup(context) {
+    for (const shadowPass of this._private.shadowPasses) {
       shadowPass.delete();
     }
-    this.shadowPasses.length = 0;
-    this.shadowMaps.length = 0;
+    this._private.shadowPasses.length = 0;
+    if (this._private.dummyShadowMap) {
+      this._private.dummyShadowMap.destroy();
+      this._private.dummyShadowMap = null;
+      context.deck._removeDefaultShaderModule(CustomShadowModule || shadow);
+    }
+  }
 
-    if (this.dummyShadowMap) {
-      this.dummyShadowMap.delete();
-      this.dummyShadowMap = null;
+  getShaderModuleProps(layer, otherShaderModuleProps) {
+    const props = super.getShaderModuleProps(layer, otherShaderModuleProps);
+
+    if (
+      props.shadow &&
+      !(props.shadow as CustomShadowProps).dummyShadowMap &&
+      this._private.dummyShadowMap
+    ) {
+      (props.shadow as CustomShadowProps).dummyShadowMap = this._private.dummyShadowMap;
     }
 
-    if (this.shadow && this.programManager) {
-      this.programManager.removeDefaultModule(CustomShadowModule);
-      this.programManager = null;
+    if (props.shadow) {
+      (props.shadow as CustomShadowProps).outputUniformShadow = this.outputUniformShadow;
     }
+
+    return props;
   }
 }
 

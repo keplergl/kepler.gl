@@ -11,17 +11,17 @@ import {
   DefaultProps,
   GetPickingInfoParams,
   Layer,
-  LayersList,
-  assert
-} from '@deck.gl/core/typed';
-import {ArcLayer} from '@deck.gl/layers/typed';
-import type {ArcLayerProps} from '@deck.gl/layers/typed';
+  LayersList
+} from '@deck.gl/core';
+import {ArcLayer} from '@deck.gl/layers';
+import type {ArcLayerProps} from '@deck.gl/layers';
 import * as arrow from 'apache-arrow';
 import * as ga from '@geoarrow/geoarrow-js';
 import {assignAccessor, extractAccessorsFromProps} from '../utils/utils';
 import {child} from '@geoarrow/geoarrow-js';
 import {GeoArrowExtraPickingProps, computeChunkOffsets, getPickingInfo} from '../utils/picking';
 import {ColorAccessor, FloatAccessor, GeoArrowPickingInfo, ExtensionProps} from '../types';
+import {assert} from '../utils/utils';
 import {validateAccessors} from '../utils/validate';
 
 /** All properties supported by GeoArrowArcLayer */

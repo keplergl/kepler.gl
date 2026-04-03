@@ -555,7 +555,8 @@ export const LAYER_TYPES = keyMirror({
   s2: null,
   vectorTile: null,
   rasterTile: null,
-  wms: null
+  wms: null,
+  tile3d: null
 });
 
 export const EDITOR_AVAILABLE_LAYERS: string[] = [

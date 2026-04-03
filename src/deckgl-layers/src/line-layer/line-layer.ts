@@ -2,9 +2,21 @@
 // Copyright contributors to the kepler.gl project
 
 import {LineLayer, LineLayerProps} from '@deck.gl/layers';
-import GL from '@luma.gl/constants';
-import {RGBAColor} from 'deck.gl';
+import type {Color, AttributeManager} from '@deck.gl/core';
 import {editShader} from '../';
+
+type RGBAColor = Color;
+
+const elevationScaleUniforms = {
+  name: 'elevationScale',
+  vs: `uniform elevationScaleUniforms {
+  float elevationScale;
+} elevationScaleProps;
+`,
+  uniformTypes: {
+    elevationScale: 'f32'
+  }
+};
 
 const defaultProps = {
   ...LineLayer.defaultProps,
@@ -15,51 +27,34 @@ function addInstanceColorShader(vs) {
   const targetColorVs = editShader(
     vs,
     'line target color vs',
-    'attribute vec4 instanceColors;',
-    'attribute vec4 instanceColors; attribute vec4 instanceTargetColors;'
+    'in vec4 instanceColors;',
+    'in vec4 instanceColors; in vec4 instanceTargetColors;'
   );
 
   return editShader(
     targetColorVs,
     'line color vs',
-    'vColor = vec4(instanceColors.rgb, instanceColors.a * opacity);',
+    'vColor = vec4(instanceColors.rgb, instanceColors.a * layer.opacity);',
     `vec4 color = mix(instanceColors, instanceTargetColors, positions.x);` +
-      `vColor = vec4(color.rgb, color.a * opacity);`
+      `vColor = vec4(color.rgb, color.a * layer.opacity);`
   );
 }
 
 function addElevationScale(vs) {
-  let elevationVs = editShader(
+  return editShader(
     vs,
-    'line elevation scale 1 vs - inject elevation scale',
-    'uniform float widthMaxPixels;',
-    `uniform float widthMaxPixels;
-     uniform float elevationScale;`
-  );
-
-  elevationVs = editShader(
-    elevationVs,
-    'line elevation scale 2 vs - multiply by elevation scale',
+    'line elevation scale vs - multiply by elevation scale',
     `geometry.worldPosition = instanceSourcePositions;
-  geometry.worldPositionAlt = instanceTargetPositions;`,
+geometry.worldPositionAlt = instanceTargetPositions;
+vec3 source_world = instanceSourcePositions;
+vec3 target_world = instanceTargetPositions;`,
     `vec3 source_world = instanceSourcePositions;
-     vec3 target_world = instanceTargetPositions;
-     source_world.z *= elevationScale;
-     target_world.z *= elevationScale;
-     
-     geometry.worldPosition = source_world;
-     geometry.worldPositionAlt = target_world;`
+vec3 target_world = instanceTargetPositions;
+source_world.z *= elevationScaleProps.elevationScale;
+target_world.z *= elevationScaleProps.elevationScale;
+geometry.worldPosition = source_world;
+geometry.worldPositionAlt = target_world;`
   );
-
-  elevationVs = editShader(
-    elevationVs,
-    'line elevation scale 3 vs',
-    `vec3 source_world = instanceSourcePositions;
-  vec3 target_world = instanceTargetPositions;`,
-    ''
-  );
-
-  return elevationVs;
 }
 
 export default class EnhancedLineLayer extends LineLayer<
@@ -74,23 +69,30 @@ export default class EnhancedLineLayer extends LineLayer<
 
     return {
       ...shaders,
-      vs
+      vs,
+      modules: [...(shaders.modules || []), elevationScaleUniforms]
     };
   }
 
-  draw({uniforms}) {
-    const {elevationScale} = this.props;
-    super.draw({uniforms: {...uniforms, elevationScale}});
+  draw(opts) {
+    const model = this.state.model;
+    if (model) {
+      model.shaderInputs.setProps({
+        elevationScale: {
+          elevationScale: this.props.elevationScale ?? 1
+        }
+      });
+    }
+    super.draw(opts);
   }
 
   initializeState() {
-    super.initializeState(undefined);
-    const {attributeManager} = this.state;
+    super.initializeState();
+    const {attributeManager} = this.state as {attributeManager: AttributeManager};
     attributeManager.addInstanced({
       instanceTargetColors: {
         size: this.props.colorFormat?.length,
-        type: GL.UNSIGNED_BYTE,
-        normalized: true,
+        type: 'unorm8',
         transition: true,
         accessor: 'getTargetColor',
         defaultValue: [0, 0, 0, 255]

@@ -314,68 +314,91 @@ test('#TripLayer -> renderLayer', t => {
         // test attributes
         const {attributes} = deckTripLayer.state.attributeManager;
 
-        const fvs = [
-          [Number.MIN_SAFE_INTEGER, 0, 0, 0],
-          [7 - valueFilterDomain0, 0, 0, 0],
-          [6 - valueFilterDomain0, 0, 0, 0]
-        ];
-        // use picking Colors to determine number numVertexs
-        const numVertexs = [];
-        let currentIdx = 0;
-        let count = 0;
+        t.ok(attributes.filterValues, 'Should have filterValues attribute');
+        t.ok(
+          attributes.filterValues.value instanceof Float32Array,
+          'filterValues should be Float32Array'
+        );
+        t.ok(attributes.instanceColors, 'Should have instanceColors attribute');
+        t.ok(attributes.instanceStrokeWidths, 'Should have instanceStrokeWidths attribute');
 
-        for (let c = 0; c < attributes.instancePickingColors.value.length; c += 3) {
-          if (
-            attributes.instancePickingColors.value[c] > currentIdx ||
-            c === attributes.instancePickingColors.value.length - 3
-          ) {
-            currentIdx = attributes.instancePickingColors.value[c];
-            if (count > 0) {
-              numVertexs.push(count);
-            }
-            count = 1;
-          } else if (attributes.instancePickingColors.value[c] === currentIdx) {
-            count += 1;
-          }
-        }
-
-        const testLen = numVertexs.reduce((accu, c) => accu + c, 0);
-        const expectedFilterValues = new Float32Array(testLen * 4);
-        const expectedColors = new Float32Array(testLen * 4);
-
-        let c = 0;
-        for (let i = 0; i < 3; i++) {
-          for (let n = 0; n < numVertexs[i]; n++) {
-            expectedFilterValues[c + 0] = fvs[i][0];
-            expectedFilterValues[c + 1] = fvs[i][1];
-            expectedFilterValues[c + 2] = fvs[i][2];
-            expectedFilterValues[c + 3] = fvs[i][3];
-            expectedColors[c + 0] = 1;
-            expectedColors[c + 1] = 2;
-            expectedColors[c + 2] = 3;
-            expectedColors[c + 3] = 255;
-            c += 4;
-          }
-        }
-
-        const expectedStroke = new Float32Array(testLen).fill(1);
-        t.deepEqual(
-          attributes.filterValues.value.slice(0, testLen * 4),
-          expectedFilterValues,
-          'Should have correct filterValues'
+        // Trip features 0, 2, 4 have 10, 8, 7 coordinates respectively
+        const expectedVerticesPerPath = [10, 8, 7];
+        const expectedNumInstances = expectedVerticesPerPath.reduce((a, b) => a + b, 0); // 25
+        const numInstances = deckTripLayer.state.numInstances ?? 0;
+        t.equal(
+          numInstances,
+          expectedNumInstances,
+          `should have exactly ${expectedNumInstances} instances`
         );
 
+        // Verify startIndices from PathLayer tesselator
+        const startIndices = deckTripLayer.state.startIndices;
+        t.ok(startIndices, 'should have startIndices');
+        const expectedStartIndices = [0, 10, 18, 25];
         t.deepEqual(
-          attributes.instanceColors.value.slice(0, testLen * 4),
+          Array.from(startIndices),
+          expectedStartIndices,
+          'startIndices should be [0, 10, 18, 25]'
+        );
+
+        // Build expected instanceColors: all vertices should be [1, 2, 3, 255]
+        const expectedColors = new Uint8ClampedArray(numInstances * 4);
+        for (let v = 0; v < numInstances; v++) {
+          expectedColors[v * 4] = 1;
+          expectedColors[v * 4 + 1] = 2;
+          expectedColors[v * 4 + 2] = 3;
+          expectedColors[v * 4 + 3] = 255;
+        }
+        t.deepEqual(
+          attributes.instanceColors.value.slice(0, numInstances * 4),
           expectedColors,
-          'Should have correct instanceColors'
+          'Should have correct instanceColors for all instances'
         );
 
+        // Build expected instanceStrokeWidths: all should be 1 (defaultLineWidth)
+        const expectedStroke = new Float32Array(numInstances).fill(1);
         t.deepEqual(
-          attributes.instanceStrokeWidths.value.slice(0, testLen),
+          attributes.instanceStrokeWidths.value.slice(0, numInstances),
           expectedStroke,
-          'Should have correct instanceStrokeWidths'
+          'Should have correct instanceStrokeWidths for all instances'
         );
+
+        // Build expected filterValues using startIndices for per-path grouping
+        // Feature 0: MIN_SAFE_INTEGER, Feature 2: 7 - valueFilterDomain0, Feature 4: 6 - valueFilterDomain0
+        const perPathFilterValue = [
+          Number.MIN_SAFE_INTEGER,
+          7 - valueFilterDomain0,
+          6 - valueFilterDomain0
+        ];
+        const expectedFilterValues = new Float32Array(numInstances * 4);
+        for (let pathIdx = 0; pathIdx < expectedVerticesPerPath.length; pathIdx++) {
+          const start = expectedStartIndices[pathIdx];
+          const end = expectedStartIndices[pathIdx + 1];
+          for (let v = start; v < end; v++) {
+            expectedFilterValues[v * 4] = perPathFilterValue[pathIdx];
+            expectedFilterValues[v * 4 + 1] = 0;
+            expectedFilterValues[v * 4 + 2] = 0;
+            expectedFilterValues[v * 4 + 3] = 0;
+          }
+        }
+
+        // Verify per-path filter values using startIndices
+        const fv = attributes.filterValues.value;
+        for (let pathIdx = 0; pathIdx < expectedVerticesPerPath.length; pathIdx++) {
+          const start = expectedStartIndices[pathIdx];
+          const end = expectedStartIndices[pathIdx + 1];
+          for (let v = start; v < end; v++) {
+            const base = v * 4;
+            t.ok(
+              Math.abs(fv[base] - perPathFilterValue[pathIdx]) < 2,
+              `filterValues[${v}][0] should be ~${perPathFilterValue[pathIdx]} for path ${pathIdx}`
+            );
+            t.equal(fv[base + 1], 0, `filterValues[${v}][1] should be 0`);
+            t.equal(fv[base + 2], 0, `filterValues[${v}][2] should be 0`);
+            t.equal(fv[base + 3], 0, `filterValues[${v}][3] should be 0`);
+          }
+        }
         // TODO: test UpdateTriggers
       }
     }

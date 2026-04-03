@@ -13,7 +13,12 @@ export type DatasetCreationAttributes = {
 };
 
 export type MetaResponse = {
-  metadata?: VectorTileMetadata | StacTypes.CompleteSTACObject | WMSCapabilities | null;
+  metadata?:
+    | VectorTileMetadata
+    | StacTypes.CompleteSTACObject
+    | WMSCapabilities
+    | Record<string, unknown>
+    | null;
   dataset?: DatasetCreationAttributes | null;
   loading?: boolean;
   error?: Error | null;
