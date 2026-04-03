@@ -31,10 +31,12 @@ let _lastLightingDeckEffect: any = null;
 
 export function computeDeckEffects({
   visState,
-  mapState
+  mapState,
+  isExport
 }: {
   visState: VisState;
   mapState: MapState;
+  isExport?: boolean;
 }): PostProcessEffect<any>[] {
   // TODO: 1) deck effects per deck context 2) preserved between draws
   let hasLightingShadow = false;
@@ -56,7 +58,9 @@ export function computeDeckEffects({
         if (effect.isEnabled || effect.type === LIGHT_AND_SHADOW_EFFECT.type) {
           if (effect.type === LIGHT_AND_SHADOW_EFFECT.type) {
             hasLightingShadow = true;
-            _lastLightingDeckEffect = effect.deckEffect;
+            if (!isExport) {
+              _lastLightingDeckEffect = effect.deckEffect;
+            }
           }
           return effect.deckEffect;
         }

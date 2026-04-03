@@ -118,7 +118,8 @@ export default {
       '3d': '3D',
       vectortile: 'vector tile',
       rastertile: 'raster tile',
-      wms: 'WMS'
+      wms: 'WMS',
+      tile3d: '3D tile'
     },
     wms: {
       hover: 'Value:'
@@ -141,6 +142,7 @@ export default {
     billboardDescription: 'Orient geometry towards the camera',
     fadeTrail: 'Fade trail',
     opacity: 'Opacity',
+    pointSize: 'Point Size',
     coverage: 'Coverage',
     outline: 'Outline',
     colorRange: 'Color range',
@@ -221,7 +223,8 @@ export default {
     rowCount: '{rowCount} rows',
     vectorTile: 'Vector tile',
     rasterTile: 'Raster tile',
-    wmsTile: 'WMS tile'
+    wmsTile: 'WMS tile',
+    tile3d: '3D tile'
   },
   tooltip: {
     hideLayer: 'Hide layer',

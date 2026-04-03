@@ -5147,10 +5147,12 @@ __metadata:
     "@kepler.gl/table": "npm:3.2.6"
     "@kepler.gl/types": "npm:3.2.6"
     "@kepler.gl/utils": "npm:3.2.6"
+    "@loaders.gl/3d-tiles": "npm:4.3.4"
     "@loaders.gl/arrow": "npm:^4.3.4"
     "@loaders.gl/core": "npm:^4.3.4"
     "@loaders.gl/gis": "npm:^4.3.4"
     "@loaders.gl/gltf": "npm:^4.3.4"
+    "@loaders.gl/i3s": "npm:4.3.4"
     "@loaders.gl/mvt": "npm:^4.3.4"
     "@loaders.gl/parquet": "npm:^4.3.4"
     "@loaders.gl/pmtiles": "npm:^4.3.4"
@@ -5410,7 +5412,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@loaders.gl/3d-tiles@npm:~4.3.4":
+"@loaders.gl/3d-tiles@npm:4.3.4, @loaders.gl/3d-tiles@npm:~4.3.4":
   version: 4.3.4
   resolution: "@loaders.gl/3d-tiles@npm:4.3.4"
   dependencies:
@@ -5574,6 +5576,29 @@ __metadata:
   peerDependencies:
     "@loaders.gl/core": ^4.3.0
   checksum: 10c0/78537dc8e83731563a3aae4679a4544728ce822656a0e2bb520cc1c97efdd2ac36d914e41e8eb3232c3728b58d7e809031538e03c5f4946e3516b5a6708a1ea7
+  languageName: node
+  linkType: hard
+
+"@loaders.gl/i3s@npm:4.3.4":
+  version: 4.3.4
+  resolution: "@loaders.gl/i3s@npm:4.3.4"
+  dependencies:
+    "@loaders.gl/compression": "npm:4.3.4"
+    "@loaders.gl/crypto": "npm:4.3.4"
+    "@loaders.gl/draco": "npm:4.3.4"
+    "@loaders.gl/images": "npm:4.3.4"
+    "@loaders.gl/loader-utils": "npm:4.3.4"
+    "@loaders.gl/math": "npm:4.3.4"
+    "@loaders.gl/schema": "npm:4.3.4"
+    "@loaders.gl/textures": "npm:4.3.4"
+    "@loaders.gl/tiles": "npm:4.3.4"
+    "@loaders.gl/zip": "npm:4.3.4"
+    "@math.gl/core": "npm:^4.1.0"
+    "@math.gl/culling": "npm:^4.1.0"
+    "@math.gl/geospatial": "npm:^4.1.0"
+  peerDependencies:
+    "@loaders.gl/core": ^4.3.0
+  checksum: 10c0/bfed6209eecf89833f43106cd88f7c93b262700e587466e58e4f66a056c4d4986edbeea9dfb8352d7db5e6e66a7d2f69119b827b2d897f2910a698e632e04c50
   languageName: node
   linkType: hard
 

@@ -894,7 +894,7 @@ export default function MapContainerFactory(
       }
 
       const effects = this._isOKToRenderEffects(index)
-        ? computeDeckEffects({visState, mapState})
+        ? computeDeckEffects({visState, mapState, isExport: this.props.isExport})
         : [];
 
       const views = deckGlProps?.views
