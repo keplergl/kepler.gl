@@ -28,18 +28,38 @@ const ExampleUrlsContainer = styled.div`
   text-align: left;
   color: ${props => props.theme.AZURE200};
   font-size: 11px;
+`;
 
-  .example-label {
-    margin-top: 8px;
+const ExampleTabs = styled.div`
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+  margin-bottom: 6px;
+`;
+
+const ExampleTab = styled.div<{active: boolean}>`
+  padding: 3px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 11px;
+  white-space: nowrap;
+  background: ${props => (props.active ? props.theme.AZURE400 : 'transparent')};
+  color: ${props => (props.active ? props.theme.WHITE : props.theme.AZURE200)};
+  border: 1px solid ${props => (props.active ? props.theme.AZURE400 : props.theme.AZURE400)};
+
+  &:hover {
+    background: ${props => (props.active ? props.theme.AZURE400 : props.theme.AZURE500)};
   }
+`;
 
-  .example-url {
-    word-break: break-all;
-    cursor: pointer;
+const ExampleUrl = styled.div`
+  word-break: break-all;
+  cursor: pointer;
+  color: ${props => props.theme.AZURE200};
+  font-size: 11px;
 
-    &:hover {
-      color: ${props => props.theme.AZURE100};
-    }
+  &:hover {
+    color: ${props => props.theme.AZURE100};
   }
 `;
 
@@ -69,6 +89,29 @@ const InfoIconLink = styled.a`
 
 const TILE3D_DOCUMENTATION_URL =
   'https://docs.kepler.gl/docs/user-guides/c-types-of-layers/p-3d-tile-layer';
+
+const TILE3D_EXAMPLES = [
+  {
+    label: 'ArcGIS I3S',
+    name: 'San Francisco Buildings',
+    url: 'https://tiles.arcgis.com/tiles/z2tnIkrLQ2BRzr6P/arcgis/rest/services/SanFrancisco_Bldgs/SceneServer/layers/0'
+  },
+  {
+    label: 'OGC 3D Tiles',
+    name: 'Royal Exhibition Building',
+    url: 'https://raw.githubusercontent.com/visgl/deck.gl-data/master/3d-tiles/RoyalExhibitionBuilding/tileset.json'
+  },
+  {
+    label: 'Google 3D Tiles',
+    name: 'Google 3D Tiles',
+    url: 'https://tile.googleapis.com/v1/3dtiles/root.json'
+  },
+  {
+    label: 'Cesium Ion',
+    name: 'Washington DC mesh',
+    url: 'https://assets.ion.cesium.com/57588/tileset.json'
+  }
+];
 
 type Tile3DFormProps = {
   setResponse: (response: MetaResponse) => void;
@@ -173,6 +216,7 @@ const TilesetTile3DForm: React.FC<Tile3DFormProps> = ({setResponse}) => {
   const [tilesetMeta, setTilesetMeta] = useState<Record<string, unknown> | null>(null);
   const [metaLoading, setMetaLoading] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const [exampleTab, setExampleTab] = useState(0);
   const fetchIdRef = useRef(0);
 
   const onLayerNameChange = useCallback(
@@ -324,42 +368,27 @@ const TilesetTile3DForm: React.FC<Tile3DFormProps> = ({setResponse}) => {
       <div>
         <TilesetInputDescription>For example, try a public 3D tileset:</TilesetInputDescription>
         <ExampleUrlsContainer>
-          <div className="example-label">• ArcGIS I3S — San Francisco Buildings</div>
-          <div
-            className="example-url"
+          <ExampleTabs>
+            {TILE3D_EXAMPLES.map((ex, i) => (
+              <ExampleTab
+                key={ex.label}
+                active={exampleTab === i}
+                onClick={() => {
+                  setExampleTab(i);
+                  onExampleClick(ex.url, ex.name);
+                }}
+              >
+                {ex.label}
+              </ExampleTab>
+            ))}
+          </ExampleTabs>
+          <ExampleUrl
             onClick={() =>
-              onExampleClick(
-                'https://tiles.arcgis.com/tiles/z2tnIkrLQ2BRzr6P/arcgis/rest/services/SanFrancisco_Bldgs/SceneServer/layers/0',
-                'San Francisco Buildings'
-              )
+              onExampleClick(TILE3D_EXAMPLES[exampleTab].url, TILE3D_EXAMPLES[exampleTab].name)
             }
           >
-            https://tiles.arcgis.com/tiles/z2tnIkrLQ2BRzr6P/arcgis/rest/services/SanFrancisco_Bldgs/SceneServer/layers/0
-          </div>
-          <div className="example-label">• OGC 3D Tiles — Royal Exhibition Building</div>
-          <div
-            className="example-url"
-            onClick={() =>
-              onExampleClick(
-                'https://raw.githubusercontent.com/visgl/deck.gl-data/master/3d-tiles/RoyalExhibitionBuilding/tileset.json',
-                'Royal Exhibition Building'
-              )
-            }
-          >
-            https://raw.githubusercontent.com/visgl/deck.gl-data/master/3d-tiles/RoyalExhibitionBuilding/tileset.json
-          </div>
-          <div className="example-label">• Cesium Ion — Washington DC mesh (requires token)</div>
-          <div
-            className="example-url"
-            onClick={() =>
-              onExampleClick(
-                'https://assets.ion.cesium.com/57588/tileset.json',
-                'Washington DC mesh'
-              )
-            }
-          >
-            https://assets.ion.cesium.com/57588/tileset.json
-          </div>
+            {TILE3D_EXAMPLES[exampleTab].url}
+          </ExampleUrl>
         </ExampleUrlsContainer>
       </div>
     </TilesetInputContainer>

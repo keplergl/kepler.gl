@@ -278,17 +278,15 @@ export default class Tile3DLayer extends Layer {
   _onTilesetLoad = (tileset3d: Tileset3D): void => {
     this._extractBoundsFromTileset(tileset3d);
 
-    const isGoogle = this.meta?.provider === TILE3D_PROVIDERS.google;
+    const tileUrl = tileset3d.url || '';
+    const isGoogle = getTile3DProviderFromUrl(tileUrl) === TILE3D_PROVIDERS.google;
 
     if (!this._hasFittedBounds && this.meta?.bounds && !isGoogle) {
       this._hasFittedBounds = true;
       this._layerCallbacks?.onFitBounds?.(this.meta.bounds);
     }
 
-    const {tile3dUrl} = (this.config.dataId &&
-      (this as any)._lastDatasets?.[this.config.dataId]?.metadata) || {tile3dUrl: ''};
-
-    if (tile3dUrl && getTile3DProviderFromUrl(tile3dUrl) === TILE3D_PROVIDERS.google) {
+    if (isGoogle) {
       tileset3d.options.onTraversalComplete = selectedTiles => {
         const credits = new Set<string>();
         selectedTiles.forEach((tile: Tile3D) => {
