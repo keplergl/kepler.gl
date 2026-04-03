@@ -164,6 +164,17 @@ export function getEditorLayer({
     getTentativeLineWidth: LINE_STYLE.getTentativeLineWidth,
     getTentativeFillColor: LINE_STYLE.getTentativeFillColor,
 
-    parameters: {}
+    parameters: {},
+    shadowEnabled: false,
+    _subLayerProps: {
+      geojson: {shadowEnabled: false},
+      guides: {shadowEnabled: false},
+      tooltips: {
+        shadowEnabled: false,
+        _subLayerProps: {
+          characters: {shadowEnabled: false}
+        }
+      }
+    }
   });
 }
