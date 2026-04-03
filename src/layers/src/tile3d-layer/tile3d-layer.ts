@@ -5,7 +5,7 @@ import {Tile3DLayer as DeckTile3DLayer} from '@deck.gl/geo-layers';
 import {UpdateParameters} from '@deck.gl/core';
 import {Tiles3DLoader, CesiumIonLoader} from '@loaders.gl/3d-tiles';
 import {I3SLoader} from '@loaders.gl/i3s';
-import {Tileset3D, Tile3D} from '@loaders.gl/tiles';
+import {Tileset3D, Tile3D, TILE_TYPE} from '@loaders.gl/tiles';
 
 import Layer from '../base-layer';
 import Tile3DLayerIcon from './tile3d-layer-icon';
@@ -73,16 +73,19 @@ class KeplerTile3DLayer extends DeckTile3DLayer {
   // defaultShaderModules change (extensionsChanged flag).  This means
   // adding/removing the Light & Shadow effect after tiles are loaded
   // leaves ScenegraphLayer sublayers without the shadow shader module.
-  // Work around this by clearing the sublayer cache when shader modules
-  // change, forcing sublayers to be recreated with the correct modules.
+  // SimpleMeshLayer (ArcGIS/I3S) already handles extensionsChanged
+  // correctly, so only invalidate SCENEGRAPH sublayers (Google 3D Tiles).
   updateState(params: UpdateParameters<this>): void {
     super.updateState(params);
     if (params.changeFlags.extensionsChanged) {
       const {layerMap} = this.state as any;
       if (layerMap) {
         for (const key of Object.keys(layerMap)) {
-          layerMap[key].layer = null;
-          layerMap[key].needsUpdate = true;
+          const entry = layerMap[key];
+          if (entry.tile?.type === TILE_TYPE.SCENEGRAPH) {
+            entry.layer = null;
+            entry.needsUpdate = true;
+          }
         }
       }
     }
@@ -161,7 +164,8 @@ export default class Tile3DLayer extends Layer {
       props: [
         {
           label: dataset.label,
-          isVisible: true
+          isVisible: true,
+          color: [255, 255, 255] as [number, number, number]
         }
       ]
     };
@@ -370,6 +374,11 @@ export default class Tile3DLayer extends Layer {
       loader
     } = this._getDataAndLoaderOptions(tile3dUrl, tile3dAccessToken);
 
+    const {color} = this.config;
+    const pointColor: [number, number, number, number] = color
+      ? [color[0], color[1], color[2], 255]
+      : [255, 255, 255, 255];
+
     return [
       new KeplerTile3DLayer({
         id: defaultLayerProps.id,
@@ -382,6 +391,7 @@ export default class Tile3DLayer extends Layer {
         onTilesetLoad: this._onTilesetLoad,
         onTileLoad: this._onTileLoad,
         onTileUnload: this._onTileUnload,
+        getPointColor: pointColor,
         pointSize: visConfig.pointSize ?? 2,
         pickable: false,
         opacity: visConfig.opacity ?? 1,
