@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {Tile3DLayer as DeckTile3DLayer} from '@deck.gl/geo-layers';
+import {UpdateParameters} from '@deck.gl/core';
 import {Tiles3DLoader, CesiumIonLoader} from '@loaders.gl/3d-tiles';
 import {I3SLoader} from '@loaders.gl/i3s';
 import {Tileset3D, Tile3D} from '@loaders.gl/tiles';
@@ -17,7 +18,7 @@ import {
   Tile3DDatasetMetadata
 } from '@kepler.gl/constants';
 import {KeplerTable as KeplerDataset, Datasets as KeplerDatasets} from '@kepler.gl/table';
-import {VisConfigNumber} from '@kepler.gl/types';
+import {VisConfigNumber, BindedLayerCallbacks} from '@kepler.gl/types';
 
 /**
  * Custom DeckTile3DLayer that catches exceptions in _loadTileset and
@@ -66,6 +67,25 @@ class KeplerTile3DLayer extends DeckTile3DLayer {
       .catch((error: any) => {
         console.error('Tile3DLayer: selectTiles error', error);
       });
+  }
+
+  // deck.gl's ScenegraphLayer does not recreate its models when
+  // defaultShaderModules change (extensionsChanged flag).  This means
+  // adding/removing the Light & Shadow effect after tiles are loaded
+  // leaves ScenegraphLayer sublayers without the shadow shader module.
+  // Work around this by clearing the sublayer cache when shader modules
+  // change, forcing sublayers to be recreated with the correct modules.
+  updateState(params: UpdateParameters<this>): void {
+    super.updateState(params);
+    if (params.changeFlags.extensionsChanged) {
+      const {layerMap} = this.state as any;
+      if (layerMap) {
+        for (const key of Object.keys(layerMap)) {
+          layerMap[key].layer = null;
+          layerMap[key].needsUpdate = true;
+        }
+      }
+    }
   }
 }
 (KeplerTile3DLayer as any).layerName = 'KeplerTile3DLayer';
@@ -122,6 +142,9 @@ export default class Tile3DLayer extends Layer {
     loader?: any;
     _cacheKey?: string;
   } | null = null;
+
+  private _layerCallbacks: BindedLayerCallbacks | null = null;
+  private _hasFittedBounds = false;
 
   constructor(props: {dataId: string} & Record<string, any>) {
     super(props);
@@ -255,6 +278,13 @@ export default class Tile3DLayer extends Layer {
   _onTilesetLoad = (tileset3d: Tileset3D): void => {
     this._extractBoundsFromTileset(tileset3d);
 
+    const isGoogle = this.meta?.provider === TILE3D_PROVIDERS.google;
+
+    if (!this._hasFittedBounds && this.meta?.bounds && !isGoogle) {
+      this._hasFittedBounds = true;
+      this._layerCallbacks?.onFitBounds?.(this.meta.bounds);
+    }
+
     const {tile3dUrl} = (this.config.dataId &&
       (this as any)._lastDatasets?.[this.config.dataId]?.metadata) || {tile3dUrl: ''};
 
@@ -326,11 +356,13 @@ export default class Tile3DLayer extends Layer {
   };
 
   renderLayer(opts: any): KeplerTile3DLayer[] {
-    const {data} = opts;
+    const {data, layerCallbacks} = opts;
     const {tile3dUrl, tile3dAccessToken} = data || {};
     if (!tile3dUrl) {
       return [];
     }
+
+    this._layerCallbacks = layerCallbacks || null;
 
     const {visConfig} = this.config;
     const defaultLayerProps = this.getDefaultDeckLayerProps(opts);

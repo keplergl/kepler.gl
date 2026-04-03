@@ -172,6 +172,17 @@ kepler.gl 3.3 applies two patches to work around deck.gl 9 / luma.gl 9 issues. T
 
 ## New Features
 
+### 3D Tile Layer (experimental)
+
+A new **3D Tile Layer** enables rendering of photogrammetry meshes, buildings, terrain and other 3D content from OGC 3D Tiles and I3S tilesets. Supported providers:
+
+- **OGC 3D Tiles 1.0 / 1.1** — any standard `tileset.json` endpoint.
+- **Google Photorealistic 3D Tiles** — requires a Google Maps API key.
+- **Cesium Ion** — requires a Cesium Ion access token.
+- **ArcGIS I3S** — scene service endpoints.
+
+Add a 3D tileset via the **Add Data → Tilesets** modal by selecting the "3D Tile" type. The layer supports opacity, point size configuration, zoom-to-layer, and the Light and Shadow effect. See the [3D Tile Layer user guide](./user-guides/c-types-of-layers/p-3d-tile-layer.md) for details.
+
 ### Fog post-processing effects
 
 Two new post-processing effects are available:

@@ -538,6 +538,10 @@ export default function MapContainerFactory(
       mapStateActions.updateMap({}, index);
     };
 
+    _onFitBounds = (_idx: number, bounds: [number, number, number, number]) => {
+      this.props.mapStateActions.fitBounds(bounds);
+    };
+
     _onLayerFilteredItemsChange = (idx, event) => {
       this.props.visStateActions.layerFilteredItemsChange(this.props.visState.layers[idx], event);
     };
@@ -855,7 +859,8 @@ export default function MapContainerFactory(
           onSetLayerDomain: this._onLayerSetDomain,
           onFilteredItemsChange: this._onLayerFilteredItemsChange,
           onWMSFeatureInfo: this._onWMSFeatureInfo,
-          onRedrawNeeded: this._onRedrawNeeded
+          onRedrawNeeded: this._onRedrawNeeded,
+          onFitBounds: this._onFitBounds
         },
         deckGlProps
       );

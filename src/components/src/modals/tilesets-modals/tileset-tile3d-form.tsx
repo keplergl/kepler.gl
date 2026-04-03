@@ -9,6 +9,7 @@ import {DatasetType, TILE3D_PROVIDERS, Tile3DDatasetMetadata} from '@kepler.gl/c
 
 import {MetaResponse, DatasetCreationAttributes} from './common';
 import {InputLight} from '../../common';
+import {Help} from '../../common/icons';
 
 const TilesetInputContainer = styled.div`
   display: grid;
@@ -28,11 +29,46 @@ const ExampleUrlsContainer = styled.div`
   color: ${props => props.theme.AZURE200};
   font-size: 11px;
 
-  .example-url {
+  .example-label {
     margin-top: 8px;
+  }
+
+  .example-url {
+    word-break: break-all;
+    cursor: pointer;
+
+    &:hover {
+      color: ${props => props.theme.AZURE100};
+    }
+  }
+`;
+
+const LabelRow = styled.div`
+  display: flex;
+  align-items: center;
+`;
+
+const InfoIconLink = styled.a`
+  margin-left: 4px;
+  color: ${props => props.theme.labelColor};
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  line-height: 0;
+  vertical-align: middle;
+  opacity: 0.7;
+
+  &:hover {
+    opacity: 1;
+  }
+
+  svg {
     display: block;
   }
 `;
+
+const TILE3D_DOCUMENTATION_URL =
+  'https://docs.kepler.gl/docs/user-guides/c-types-of-layers/p-3d-tile-layer';
 
 type Tile3DFormProps = {
   setResponse: (response: MetaResponse) => void;
@@ -45,10 +81,6 @@ function detectProvider(url: string): string | undefined {
     }
   }
   return undefined;
-}
-
-function providerNeedsToken(provider?: string): boolean {
-  return provider === 'google' || provider === 'cesium';
 }
 
 export function getDatasetAttributesFromTile3D({
@@ -71,11 +103,13 @@ export function getDatasetAttributesFromTile3D({
   };
 }
 
+type FetchResult = {ok: true; data: Record<string, unknown>} | {ok: false; error: string};
+
 async function fetchTilesetMetadata(
   url: string,
   provider?: string,
   accessToken?: string
-): Promise<Record<string, unknown> | null> {
+): Promise<FetchResult> {
   try {
     const headers: Record<string, string> = {};
     let fetchUrl = url;
@@ -88,27 +122,47 @@ async function fetchTilesetMetadata(
         const endpointRes = await fetch(`https://api.cesium.com/v1/assets/${assetId}/endpoint`, {
           headers: {Authorization: `Bearer ${accessToken}`}
         });
-        if (endpointRes.ok) {
-          const endpoint = await endpointRes.json();
-          fetchUrl = endpoint.url;
-          if (endpoint.accessToken) {
-            headers['Authorization'] = `Bearer ${endpoint.accessToken}`;
+        if (!endpointRes.ok) {
+          if (endpointRes.status === 401 || endpointRes.status === 403) {
+            return {ok: false, error: 'Invalid or expired Cesium Ion access token.'};
           }
+          if (endpointRes.status === 404) {
+            return {ok: false, error: 'Cesium Ion asset not found. Check the asset ID.'};
+          }
+          return {ok: false, error: `Cesium Ion API error (${endpointRes.status}).`};
+        }
+        const endpoint = await endpointRes.json();
+        fetchUrl = endpoint.url;
+        if (endpoint.accessToken) {
+          headers['Authorization'] = `Bearer ${endpoint.accessToken}`;
         }
       }
     }
 
     const response = await fetch(fetchUrl, {headers});
-    if (!response.ok) return null;
+    if (!response.ok) {
+      if (response.status === 401 || response.status === 403) {
+        return {
+          ok: false,
+          error: `Access denied (HTTP ${response.status}). Check your access token.`
+        };
+      }
+      if (response.status === 404) {
+        return {ok: false, error: 'Tileset not found (HTTP 404). Check the URL.'};
+      }
+      return {ok: false, error: `Failed to load tileset (HTTP ${response.status}).`};
+    }
 
     const contentType = response.headers.get('content-type') || '';
     if (!contentType.includes('json') && !url.endsWith('.json')) {
-      return null;
+      return {ok: false, error: 'Response is not a valid tileset (unexpected content type).'};
     }
 
-    return await response.json();
-  } catch {
-    return null;
+    const data = await response.json();
+    return {ok: true, data};
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    return {ok: false, error: `Network error: ${message}`};
   }
 }
 
@@ -118,10 +172,8 @@ const TilesetTile3DForm: React.FC<Tile3DFormProps> = ({setResponse}) => {
   const [accessToken, setAccessToken] = useState<string>('');
   const [tilesetMeta, setTilesetMeta] = useState<Record<string, unknown> | null>(null);
   const [metaLoading, setMetaLoading] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const fetchIdRef = useRef(0);
-
-  const provider = detectProvider(tileUrl);
-  const showTokenField = providerNeedsToken(provider);
 
   const onLayerNameChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -157,44 +209,55 @@ const TilesetTile3DForm: React.FC<Tile3DFormProps> = ({setResponse}) => {
     [setAccessToken]
   );
 
+  const onExampleClick = useCallback(
+    (url: string, name: string) => {
+      setTileUrl(url);
+      setLayerName(name);
+    },
+    [setTileUrl, setLayerName]
+  );
+
   // Fetch tileset metadata when URL and (if needed) token are available
   useEffect(() => {
     if (!tileUrl || !validateUrl(tileUrl)) {
       setTilesetMeta(null);
-      return;
-    }
-
-    const needsToken = providerNeedsToken(detectProvider(tileUrl));
-    if (needsToken && !accessToken) {
-      setTilesetMeta(null);
+      setFetchError(null);
       return;
     }
 
     const currentFetchId = ++fetchIdRef.current;
     setMetaLoading(true);
+    setFetchError(null);
 
-    fetchTilesetMetadata(tileUrl, detectProvider(tileUrl), accessToken || undefined).then(meta => {
-      if (currentFetchId === fetchIdRef.current) {
-        setTilesetMeta(meta);
-        setMetaLoading(false);
+    fetchTilesetMetadata(tileUrl, detectProvider(tileUrl), accessToken || undefined).then(
+      result => {
+        if (currentFetchId === fetchIdRef.current) {
+          if (result.ok) {
+            setTilesetMeta(result.data);
+            setFetchError(null);
+          } else {
+            setTilesetMeta(null);
+            setFetchError(result.error);
+          }
+          setMetaLoading(false);
+        }
       }
-    });
+    );
   }, [tileUrl, accessToken]);
 
   // Update response whenever form state or metadata changes
   useEffect(() => {
-    if (layerName && tileUrl && validateUrl(tileUrl)) {
-      const needsToken = providerNeedsToken(detectProvider(tileUrl));
-      if (needsToken && !accessToken) {
-        setResponse({
-          metadata: null,
-          dataset: null,
-          loading: metaLoading,
-          error: new Error('An access token is required for this tileset provider.')
-        });
-        return;
-      }
+    if (fetchError) {
+      setResponse({
+        metadata: null,
+        dataset: null,
+        loading: false,
+        error: new Error(fetchError)
+      });
+      return;
+    }
 
+    if (layerName && tileUrl && validateUrl(tileUrl)) {
       const dataset = getDatasetAttributesFromTile3D({
         name: layerName,
         tileUrl,
@@ -214,7 +277,7 @@ const TilesetTile3DForm: React.FC<Tile3DFormProps> = ({setResponse}) => {
         error: null
       });
     }
-  }, [setResponse, layerName, tileUrl, accessToken, tilesetMeta, metaLoading]);
+  }, [setResponse, layerName, tileUrl, accessToken, tilesetMeta, metaLoading, fetchError]);
 
   return (
     <TilesetInputContainer>
@@ -228,7 +291,17 @@ const TilesetTile3DForm: React.FC<Tile3DFormProps> = ({setResponse}) => {
         />
       </div>
       <div>
-        <label htmlFor="tile3d-url">Tileset URL</label>
+        <LabelRow>
+          <label htmlFor="tile3d-url">Tileset URL</label>
+          <InfoIconLink
+            href={TILE3D_DOCUMENTATION_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Open 3D Tile Layer documentation"
+          >
+            <Help height="16px" />
+          </InfoIconLink>
+        </LabelRow>
         <InputLight
           id="tile3d-url"
           placeholder="Enter 3D Tiles URL (tileset.json)"
@@ -239,25 +312,54 @@ const TilesetTile3DForm: React.FC<Tile3DFormProps> = ({setResponse}) => {
           URL to a 3D Tiles tileset.json, Google 3D Tiles, or Cesium Ion asset.
         </TilesetInputDescription>
       </div>
-      {showTokenField && (
-        <div>
-          <label htmlFor="tile3d-token">
-            Access Token {provider === 'google' ? '(Google API Key)' : '(Cesium Ion Token)'}
-          </label>
-          <InputLight
-            id="tile3d-token"
-            placeholder="Enter access token"
-            value={accessToken}
-            onChange={onAccessTokenChange}
-          />
-        </div>
-      )}
       <div>
-        <TilesetInputDescription>Supported 3D tile providers:</TilesetInputDescription>
+        <label htmlFor="tile3d-token">Access Token (if needed)</label>
+        <InputLight
+          id="tile3d-token"
+          placeholder="Enter access token"
+          value={accessToken}
+          onChange={onAccessTokenChange}
+        />
+      </div>
+      <div>
+        <TilesetInputDescription>For example, try a public 3D tileset:</TilesetInputDescription>
         <ExampleUrlsContainer>
-          <div className="example-url">• Google Photorealistic 3D Tiles (requires API key)</div>
-          <div className="example-url">• Cesium Ion (requires access token)</div>
-          <div className="example-url">• Any OGC 3D Tiles 1.0/1.1 tileset</div>
+          <div className="example-label">• ArcGIS I3S — San Francisco Buildings</div>
+          <div
+            className="example-url"
+            onClick={() =>
+              onExampleClick(
+                'https://tiles.arcgis.com/tiles/z2tnIkrLQ2BRzr6P/arcgis/rest/services/SanFrancisco_Bldgs/SceneServer/layers/0',
+                'San Francisco Buildings'
+              )
+            }
+          >
+            https://tiles.arcgis.com/tiles/z2tnIkrLQ2BRzr6P/arcgis/rest/services/SanFrancisco_Bldgs/SceneServer/layers/0
+          </div>
+          <div className="example-label">• OGC 3D Tiles — Royal Exhibition Building</div>
+          <div
+            className="example-url"
+            onClick={() =>
+              onExampleClick(
+                'https://raw.githubusercontent.com/visgl/deck.gl-data/master/3d-tiles/RoyalExhibitionBuilding/tileset.json',
+                'Royal Exhibition Building'
+              )
+            }
+          >
+            https://raw.githubusercontent.com/visgl/deck.gl-data/master/3d-tiles/RoyalExhibitionBuilding/tileset.json
+          </div>
+          <div className="example-label">• Cesium Ion — Washington DC mesh (requires token)</div>
+          <div
+            className="example-url"
+            onClick={() =>
+              onExampleClick(
+                'https://assets.ion.cesium.com/57588/tileset.json',
+                'Washington DC mesh'
+              )
+            }
+          >
+            https://assets.ion.cesium.com/57588/tileset.json
+          </div>
         </ExampleUrlsContainer>
       </div>
     </TilesetInputContainer>
