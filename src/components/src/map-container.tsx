@@ -1112,7 +1112,7 @@ export default function MapContainerFactory(
       const internalViewState = this.context?.getInternalViewState(index);
       const mapProps = {
         ...internalViewState,
-        preserveDrawingBuffer: true,
+        preserveDrawingBuffer: this.props.isExport ?? false,
         mapboxAccessToken: currentStyle?.accessToken || mapboxApiAccessToken,
         // baseApiUrl: mapboxApiUrl,
         mapLib: baseMapLibraryConfig.getMapLib(),
