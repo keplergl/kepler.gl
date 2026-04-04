@@ -15,6 +15,17 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+## [3.3.0-alpha.0] - Apr 5 2026
+
+- 44d1e47f fix: preserve line breaks in tooltip field values (#3311)
+- e2cc341b fix: geocoder coordinate search results not showing (#2245) (#3322)
+- 1c2db0fd feat: add layer visibility toggle to map legend (#3303) (#3324)
+- 385ed909 fix(components): disable preserveDrawingBuffer by default for better performance (#3326)
+- f182d6cc fix(geojson-layer): initialize strokeColor for LineString features (#2305) (#3338)
+- f25f1286 fix: boolean parsing for yes/no string values (#3346) (#3365)
+- be6ba648d chore: deck.gl 9.2 upgrade & loaders.gl, luma.gl upgrades (#3271)
+- bc59e880b chore: Update kepler-jupyter to use kepler.gl v3.2.0 (#3219)
+
 ## [3.2.6] - Mar 16 2026
 
 - b5ffed55b feat: add extra map export resolutions (#3357)

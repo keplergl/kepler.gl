@@ -24,5 +24,5 @@
     "isolatedModules": true,
     "baseUrl": "./src"
   },
-  "include": ["src"]
+  "include": ["src", "../deckgl-types.d.ts"]
 }
