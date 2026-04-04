@@ -15,6 +15,11 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+## [3.3.0-alpha.0] - Apr 4 2026
+
+- be6ba648d chore: deck.gl 9.2 upgrade & loaders.gl, luma.gl upgrades (#3271)
+- bc59e880b chore: Update kepler-jupyter to use kepler.gl v3.2.0 (#3219)
+
 ## [3.2.6] - Mar 16 2026
 
 - b5ffed55b feat: add extra map export resolutions (#3357)

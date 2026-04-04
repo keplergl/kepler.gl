@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 /**
  * Type augmentation for deck.gl 9.x packages.
  *
