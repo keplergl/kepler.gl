@@ -5020,7 +5020,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@kepler.gl/constants@npm:3.3.0-alpha.0, @kepler.gl/constants@npm:^3.3.0-alpha.0, @kepler.gl/constants@workspace:src/constants":
+"@kepler.gl/constants@npm:3.3.0-alpha.0, @kepler.gl/constants@workspace:src/constants":
   version: 0.0.0-use.local
   resolution: "@kepler.gl/constants@workspace:src/constants"
   dependencies:
@@ -5045,8 +5045,8 @@ __metadata:
   resolution: "@kepler.gl/deckgl-arrow-layers@workspace:src/deckgl-arrow-layers"
   dependencies:
     "@geoarrow/geoarrow-js": "npm:^0.3.0"
-    "@kepler.gl/constants": "npm:^3.3.0-alpha.0"
-    "@kepler.gl/utils": "npm:^3.3.0-alpha.0"
+    "@kepler.gl/constants": "npm:3.3.0-alpha.0"
+    "@kepler.gl/utils": "npm:3.3.0-alpha.0"
     "@math.gl/core": "npm:^4.0.0"
     "@math.gl/polygon": "npm:^4.0.0"
     "@math.gl/types": "npm:^4.0.0"
@@ -5333,7 +5333,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@kepler.gl/utils@npm:3.3.0-alpha.0, @kepler.gl/utils@npm:^3.3.0-alpha.0, @kepler.gl/utils@workspace:src/utils":
+"@kepler.gl/utils@npm:3.3.0-alpha.0, @kepler.gl/utils@workspace:src/utils":
   version: 0.0.0-use.local
   resolution: "@kepler.gl/utils@workspace:src/utils"
   dependencies:
