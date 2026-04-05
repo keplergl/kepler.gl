@@ -754,5 +754,13 @@ export const rasterVisConfigs = {
     label: 'Enable in Top view',
     group: '',
     property: 'enableTerrainTopView'
+  } as VisConfigBoolean,
+  showTileBorders: {
+    type: 'boolean',
+    defaultValue: false,
+    label: 'Show Tile Borders',
+    group: '',
+    property: 'showTileBorders',
+    description: 'Debug: render wireframe boundaries of raster tiles'
   } as VisConfigBoolean
 };

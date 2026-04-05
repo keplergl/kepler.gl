@@ -49,6 +49,7 @@ export type FullWidthHalfMaxFWHM = number;
 export interface Fields {
   'eo:cloud_cover'?: CloudCover;
   'eo:bands'?: Bands;
+  bands?: CoreBand[];
   /**
    * This interface was referenced by `Fields`'s JSON-Schema definition
    * via the `patternProperty` "^(?!eo:)".
@@ -57,6 +58,7 @@ export interface Fields {
 }
 export interface Band {
   name?: NameOfTheBand;
+  description?: string;
   common_name?: CommonNameOfTheBand;
   center_wavelength?: CenterWavelength;
   full_width_half_max?: FullWidthHalfMaxFWHM;
@@ -111,7 +113,7 @@ export type GeoJSONGeometry =
   | GeoJSONMultiPoint2
   | GeoJSONMultiLineString2
   | GeoJSONMultiPolygon2;
-export type STACVersion = '1.0.0';
+export type STACVersion = '1.0.0' | '1.1.0' | string;
 export type ReferenceToAJSONSchema = string;
 export type STACExtensions = ReferenceToAJSONSchema[];
 /**
@@ -429,7 +431,7 @@ export interface ProviderFields {
  * This object represents Collections in a SpatioTemporal Asset Catalog.
  */
 export type STACCollectionSpecification = STACCollection;
-export type STACVersion = '1.0.0';
+export type STACVersion = '1.0.0' | '1.1.0' | string;
 export type ReferenceToAJSONSchema = string;
 export type STACExtensions = ReferenceToAJSONSchema[];
 export type TypeOfSTACEntity = 'Collection';
@@ -770,6 +772,7 @@ export type NumberOfPixelsInTheBucket = number;
 
 export interface Assetfields {
   'raster:bands'?: Bands;
+  bands?: CoreBand[];
   /**
    * This interface was referenced by `Assetfields`'s JSON-Schema definition
    * via the `patternProperty` "^(?!raster:)".
@@ -810,17 +813,49 @@ export interface StacExtensions {
 }
 
 /**
+ * STAC 1.1.0 Core Band Object.
+ * Merges spectral (formerly eo:bands) and data-value (formerly raster:bands) fields
+ * into a single band object in common metadata.
+ */
+export interface CoreBand {
+  name?: string;
+  description?: string;
+  'eo:common_name'?: CommonNameOfTheBand;
+  'eo:center_wavelength'?: number;
+  'eo:full_width_half_max'?: number;
+  data_type?: DataTypeOfTheBand;
+  nodata?: NoDataPixelValue;
+  unit?: string;
+  bits_per_sample?: number;
+  sampling?: PixelSamplingInTheBand;
+  scale?: number;
+  offset?: number;
+  spatial_resolution?: number;
+  statistics?: Statistics;
+  histogram?: Histogram;
+  [k: string]: unknown;
+}
+
+/**
+ * Asset fields that support STAC 1.1.0 core bands
+ */
+export interface CoreBandsAssetfields {
+  bands?: CoreBand[];
+  [k: string]: unknown;
+}
+
+/**
  * STAC Item or Collection
  */
 export type STACObject = STACItem | STACCollection;
 
 /**
- * STAC Item including our required extensions: EO and Raster
+ * STAC Item including required extensions: EO and Raster (1.0.x) or core bands (1.1.0+)
  */
 export type CompleteSTACItem = STACItem & EOExtension & RasterExtension;
 
 /**
- * STAC Collection including our required extensions: Item Assets, EO, and Raster
+ * STAC Collection including required extensions (1.0.x) or core bands (1.1.0+)
  */
 export type CompleteSTACCollection = STACCollection &
   ItemAssetsDefinitionExtension &

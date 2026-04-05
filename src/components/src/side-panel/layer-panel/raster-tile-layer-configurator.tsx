@@ -363,6 +363,14 @@ function RasterTileLayerConfiguratorFactory(
             <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
           </LayerConfigGroup>
           {elevationUI}
+          <LayerConfigGroup {...visConfiguratorProps} label="Debug" collapsible>
+            <ConfigGroupCollapsibleContent>
+              <VisConfigSwitch
+                {...visConfiguratorProps}
+                {...layer.visConfigSettings.showTileBorders}
+              />
+            </ConfigGroupCollapsibleContent>
+          </LayerConfigGroup>
         </StyledLayerConfigurator>
       );
     }
@@ -562,6 +570,15 @@ function RasterTileLayerConfiguratorFactory(
         )}
 
         {elevationUI}
+
+        <LayerConfigGroup {...visConfiguratorProps} label="Debug" collapsible>
+          <ConfigGroupCollapsibleContent>
+            <VisConfigSwitch
+              {...visConfiguratorProps}
+              {...layer.visConfigSettings.showTileBorders}
+            />
+          </ConfigGroupCollapsibleContent>
+        </LayerConfigGroup>
       </StyledLayerConfigurator>
     );
   };

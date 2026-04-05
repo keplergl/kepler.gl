@@ -54,37 +54,41 @@ function validateSTAC(stac: JsonObjectOrArray, options: {allowCollections: boole
 
   const isCollection = stac?.type === 'Collection';
 
-  const required_extensions = [EO_EXT_ID, RASTER_EXT_ID];
-  if (isCollection) {
-    required_extensions.push(ITEM_ASSETS_EXT_ID);
-  }
-
-  if (
-    !Array.isArray(stac.stac_extensions) ||
-    !stac.stac_extensions.some(ext => typeof ext === 'string' && EO_EXT_ID.exec(ext)) ||
-    !stac.stac_extensions.some(ext => typeof ext === 'string' && RASTER_EXT_ID.exec(ext))
-  ) {
-    return Error('EO and Raster STAC extensions are required.');
-  }
-
-  if (
-    isCollection &&
-    !stac.stac_extensions.some(ext => typeof ext === 'string' && EO_EXT_ID.exec(ext))
-  ) {
-    return Error('item-assets STAC extension is required.');
-  }
-
   const assets = isCollection ? stac?.item_assets : stac?.assets;
   if (!assets || typeof assets !== 'object') {
     return Error('STAC object is missing asset information.');
   }
 
+  const hasCoreBands = Object.values(assets).some(
+    asset => Array.isArray((asset as any)?.bands) && (asset as any).bands.length > 0
+  );
+
+  const hasLegacyExtensions =
+    Array.isArray(stac.stac_extensions) &&
+    stac.stac_extensions.some(ext => typeof ext === 'string' && EO_EXT_ID.exec(ext)) &&
+    stac.stac_extensions.some(ext => typeof ext === 'string' && RASTER_EXT_ID.exec(ext));
+
+  if (!hasCoreBands && !hasLegacyExtensions) {
+    return Error('EO and Raster STAC extensions are required (or STAC 1.1.0+ core bands).');
+  }
+
   if (
-    !Object.values(assets).some(
-      asset => Array.isArray(asset?.['eo:bands']) && Array.isArray(asset?.['raster:bands'])
-    )
+    isCollection &&
+    !hasCoreBands &&
+    (!Array.isArray(stac.stac_extensions) ||
+      !stac.stac_extensions.some(ext => typeof ext === 'string' && ITEM_ASSETS_EXT_ID.exec(ext)))
   ) {
-    return Error('At least one STAC asset must have both eo:bands and raster:bands data.');
+    return Error('item-assets STAC extension is required.');
+  }
+
+  const hasLegacyBandAssets = Object.values(assets).some(
+    asset => Array.isArray(asset?.['eo:bands']) && Array.isArray(asset?.['raster:bands'])
+  );
+
+  if (!hasLegacyBandAssets && !hasCoreBands) {
+    return Error(
+      'At least one STAC asset must have both eo:bands and raster:bands data, or core bands.'
+    );
   }
 
   return null;

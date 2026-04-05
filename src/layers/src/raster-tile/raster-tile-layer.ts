@@ -93,6 +93,7 @@ export type RasterTileLayerVisConfigCommonSettings = {
   opacity: VisConfigNumber;
   enableTerrain: VisConfigBoolean;
   enableTerrainTopView: VisConfigBoolean;
+  showTileBorders: VisConfigBoolean;
 };
 
 export type RasterTileLayerVisConfigSettings = RasterTileLayerVisConfigCommonSettings & {
@@ -573,7 +574,8 @@ export default class RasterTileLayer extends KeplerLayer {
       maxCategoricalBandValue,
       hasCategoricalColorMap: Boolean(categoricalColorMap),
       hasShadowEffect,
-      onRedrawNeeded: layerCallbacks?.onRedrawNeeded
+      onRedrawNeeded: layerCallbacks?.onRedrawNeeded,
+      showTileBorders: visConfig.showTileBorders
     });
 
     return [tileLayer];
@@ -587,7 +589,7 @@ export default class RasterTileLayer extends KeplerLayer {
     const {visConfig} = this.config;
 
     const tileSource = data.tileSource;
-    const showTileBorders = false;
+    const showTileBorders = visConfig.showTileBorders;
     const minZoom = metadata.minZoom || 0;
     const maxZoom = metadata.maxZoom || 30;
 
@@ -828,10 +830,9 @@ function renderSubLayersStac(props: RenderSubLayersProps): DeckLayer<any> | Deck
 
   const idSuffix = props.hasShadowEffect ? 'shadow' : '';
 
-  return terrain
+  const rasterLayer = terrain
     ? new RasterMeshLayer(props, {
         id: `raster-3d-layer-${props.id}-${idSuffix}`,
-        // Dummy data
         data: [1],
         mesh: terrain,
         images,
@@ -840,9 +841,7 @@ function renderSubLayersStac(props: RenderSubLayersProps): DeckLayer<any> | Deck
 
         getPolygonOffset: null,
         coordinateSystem: COORDINATE_SYSTEM.LNGLAT,
-        // Color to use if surfaceImage is unavailable
         getColor: [255, 255, 255]
-        // material: false
       })
     : new RasterLayer(props, {
         id: `raster-2d-layer-${props.id}-${idSuffix}`,
@@ -852,6 +851,30 @@ function renderSubLayersStac(props: RenderSubLayersProps): DeckLayer<any> | Deck
         bounds: [west, south, east, north],
         _imageCoordinateSystem: COORDINATE_SYSTEM.CARTESIAN
       });
+
+  if ((props as any).showTileBorders) {
+    const borderColor = [0, 255, 0, 200];
+    return [
+      rasterLayer,
+      new PathLayer({
+        id: `${props.id}-border`,
+        data: [
+          [
+            [west, north],
+            [west, south],
+            [east, south],
+            [east, north],
+            [west, north]
+          ]
+        ],
+        getPath: d => d,
+        getColor: borderColor as any,
+        widthMinPixels: 2
+      })
+    ];
+  }
+
+  return rasterLayer;
 }
 
 function renderSubLayersPMTiles(props: {
