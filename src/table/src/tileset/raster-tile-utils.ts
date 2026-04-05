@@ -59,9 +59,10 @@ function validateSTAC(stac: JsonObjectOrArray, options: {allowCollections: boole
     return Error('STAC object is missing asset information.');
   }
 
-  const hasCoreBands = Object.values(assets).some(
-    asset => Array.isArray((asset as any)?.bands) && (asset as any).bands.length > 0
-  );
+  const hasCoreBands = Object.values(assets).some(asset => {
+    const bands = (asset as Record<string, unknown>)?.bands;
+    return Array.isArray(bands) && bands.length > 0;
+  });
 
   const hasLegacyExtensions =
     Array.isArray(stac.stac_extensions) &&

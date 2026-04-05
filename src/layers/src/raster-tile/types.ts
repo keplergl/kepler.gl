@@ -174,6 +174,7 @@ export type RenderSubLayersCustomProps = ColorRescaling &
     maxCategoricalBandValue?: number;
     hasCategoricalColorMap: boolean;
     hasShadowEffect?: boolean;
+    showTileBorders?: boolean;
   };
 
 export interface RenderSubLayersDefaultProps {

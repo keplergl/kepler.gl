@@ -852,8 +852,8 @@ function renderSubLayersStac(props: RenderSubLayersProps): DeckLayer<any> | Deck
         _imageCoordinateSystem: COORDINATE_SYSTEM.CARTESIAN
       });
 
-  if ((props as any).showTileBorders) {
-    const borderColor = [0, 255, 0, 200];
+  if (props.showTileBorders) {
+    const borderColor: [number, number, number, number] = [0, 255, 0, 200];
     return [
       rasterLayer,
       new PathLayer({
@@ -868,7 +868,7 @@ function renderSubLayersStac(props: RenderSubLayersProps): DeckLayer<any> | Deck
           ]
         ],
         getPath: d => d,
-        getColor: borderColor as any,
+        getColor: borderColor,
         widthMinPixels: 2
       })
     ];
@@ -881,9 +881,9 @@ function renderSubLayersPMTiles(props: {
   id: string;
   data: any;
   tileSource: any;
-  showTileBorders: any;
-  minZoom: any;
-  maxZoom: any;
+  showTileBorders: boolean;
+  minZoom: number;
+  maxZoom: number;
   tile: any;
 }) {
   const {
@@ -913,8 +913,8 @@ function renderSubLayersPMTiles(props: {
     }
   }
 
-  // Debug tile borders
-  const borderColor = zoom <= minZoom || zoom >= maxZoom ? [255, 0, 0, 255] : [0, 0, 255, 255];
+  const borderColor: [number, number, number, number] =
+    zoom <= minZoom || zoom >= maxZoom ? [255, 0, 0, 255] : [0, 0, 255, 255];
   if (showTileBorders) {
     layers.push(
       new PathLayer({
@@ -929,7 +929,7 @@ function renderSubLayersPMTiles(props: {
           ]
         ],
         getPath: d => d,
-        getColor: borderColor as any,
+        getColor: borderColor,
         widthMinPixels: 4
       })
     );

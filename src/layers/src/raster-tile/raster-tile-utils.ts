@@ -119,9 +119,11 @@ function getDataType(
       continue;
     }
 
+    // Legacy: raster:bands
     asset['raster:bands']?.forEach(band => band.data_type && dataTypes.add(band.data_type));
 
-    if (dataTypes.size === 0) {
+    // Fallback: STAC 1.1.0+ core bands (only if no raster:bands on this asset)
+    if (!asset['raster:bands']?.length) {
       const coreBands: CoreBand[] = asset.bands || [];
       coreBands.forEach(band => band.data_type && dataTypes.add(band.data_type));
     }
@@ -260,8 +262,8 @@ function consolidateBandIndexes(
     // (because of larger download sizes). In the future may want separate loading paths if we
     // encounter single asset objects with > 4 bands.
 
-    // TODO: eo:bands can be _either_ on each asset _or_ on the STAC's properties, which is not currently handled
-    const assetBands = (asset['eo:bands'] as EOBand[]) || asset?.bands;
+    const assetBands: EOBand[] | CoreBand[] | undefined =
+      (asset['eo:bands'] as EOBand[]) || asset?.bands;
     loadBandIndexes = assetBands?.map((_: unknown, idx: number) => idx);
     renderBandIndexes = bandIndexes;
   } else {
@@ -366,12 +368,10 @@ export function getRasterStatisticsMinMax(
   }
 
   if (bandMetadata) {
-    minCategoricalBandValue =
-      bandMetadata['raster:bands']?.[0].statistics?.minimum ??
-      (bandMetadata?.bands as CoreBand[] | undefined)?.[0]?.statistics?.minimum;
-    maxCategoricalBandValue =
-      bandMetadata['raster:bands']?.[0].statistics?.maximum ??
-      (bandMetadata?.bands as CoreBand[] | undefined)?.[0]?.statistics?.maximum;
+    const coreBands = bandMetadata.bands as CoreBand[] | undefined;
+    const statistics = bandMetadata['raster:bands']?.[0].statistics ?? coreBands?.[0]?.statistics;
+    minCategoricalBandValue = statistics?.minimum;
+    maxCategoricalBandValue = statistics?.maximum;
   }
 
   return [minCategoricalBandValue, maxCategoricalBandValue];
@@ -520,7 +520,7 @@ export function getEOBands(stac: CompleteSTACObject): EOBand[] | null {
         }))
       );
     } else {
-      const coreBands = data?.bands as CoreBand[] | undefined;
+      const coreBands: CoreBand[] | undefined = data?.bands as CoreBand[] | undefined;
       if (Array.isArray(coreBands) && coreBands.length > 0) {
         eoBands.push(...coreBands.map(coreBandToEOBand));
       }
@@ -663,7 +663,7 @@ export function getUsableAssets(stac: CompleteSTACObject): CompleteSTACAssetLink
   return usableAssets;
 }
 
-function hasCoreBandsWithDataType(assetData: any): boolean {
+function hasCoreBandsWithDataType(assetData: Record<string, unknown>): boolean {
   const bands = assetData?.bands;
   return Array.isArray(bands) && bands.some((band: CoreBand) => band.data_type);
 }

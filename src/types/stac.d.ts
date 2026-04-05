@@ -837,14 +837,6 @@ export interface CoreBand {
 }
 
 /**
- * Asset fields that support STAC 1.1.0 core bands
- */
-export interface CoreBandsAssetfields {
-  bands?: CoreBand[];
-  [k: string]: unknown;
-}
-
-/**
  * STAC Item or Collection
  */
 export type STACObject = STACItem | STACCollection;

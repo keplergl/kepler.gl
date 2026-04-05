@@ -585,3 +585,157 @@ test('#STAC 1.1.0 -> RasterTileLayer with core bands metadata handling', t => {
 
   t.end();
 });
+
+// ---- Description fallback tests ----
+
+const MOCK_STAC_DESCRIPTION_FALLBACK = {
+  type: 'Feature',
+  stac_version: '1.0.0',
+  stac_extensions: [
+    'https://stac-extensions.github.io/eo/v1.0.0/schema.json',
+    'https://stac-extensions.github.io/raster/v1.0.0/schema.json'
+  ],
+  id: 'description-fallback-test',
+  geometry: {type: 'Point', coordinates: [0, 0]},
+  bbox: [-1, -1, 1, 1],
+  links: [],
+  properties: {datetime: '2023-01-01T00:00:00Z'},
+  assets: {
+    data: {
+      href: 'https://example.com/cog.tif',
+      type: 'image/tiff; application=geotiff',
+      'eo:bands': [
+        {name: 'b1', description: 'red'},
+        {name: 'b2', description: 'green'},
+        {name: 'b3', description: 'blue'}
+      ],
+      'raster:bands': [
+        {data_type: 'uint8', statistics: {minimum: 0, maximum: 255}},
+        {data_type: 'uint8', statistics: {minimum: 0, maximum: 255}},
+        {data_type: 'uint8', statistics: {minimum: 0, maximum: 255}}
+      ]
+    }
+  }
+};
+
+const MOCK_STAC_110_DESCRIPTION_FALLBACK = {
+  type: 'Feature',
+  stac_version: '1.1.0',
+  stac_extensions: [],
+  id: 'description-fallback-110',
+  geometry: {type: 'Point', coordinates: [0, 0]},
+  bbox: [-1, -1, 1, 1],
+  links: [],
+  properties: {datetime: '2023-01-01T00:00:00Z'},
+  assets: {
+    data: {
+      href: 'https://example.com/cog.tif',
+      type: 'image/tiff; application=geotiff',
+      bands: [
+        {name: 'b1', description: 'red', data_type: 'uint8'},
+        {name: 'b2', description: 'green', data_type: 'uint8'},
+        {name: 'b3', description: 'blue', data_type: 'uint8'}
+      ]
+    }
+  }
+};
+
+test('#Description fallback -> getEOBands infers common_name from description (legacy eo:bands)', t => {
+  const bands = getEOBands(MOCK_STAC_DESCRIPTION_FALLBACK);
+  t.ok(bands, 'should return bands');
+  t.equal(bands.length, 3, 'should return 3 bands');
+  t.equal(bands[0].common_name, 'red', 'should infer red from description');
+  t.equal(bands[1].common_name, 'green', 'should infer green from description');
+  t.equal(bands[2].common_name, 'blue', 'should infer blue from description');
+  t.end();
+});
+
+test('#Description fallback -> getEOBands infers common_name from description (core bands)', t => {
+  const bands = getEOBands(MOCK_STAC_110_DESCRIPTION_FALLBACK);
+  t.ok(bands, 'should return bands');
+  t.equal(bands.length, 3, 'should return 3 bands');
+  t.equal(bands[0].common_name, 'red', 'should infer red from core band description');
+  t.equal(bands[1].common_name, 'green', 'should infer green from core band description');
+  t.equal(bands[2].common_name, 'blue', 'should infer blue from core band description');
+  t.end();
+});
+
+test('#Description fallback -> findAssetWithName uses description fallback', t => {
+  const usable = getUsableAssets(MOCK_STAC_DESCRIPTION_FALLBACK);
+  const result = findAssetWithName(usable, 'red', 'common_name');
+  t.ok(result, 'should find asset with common_name=red via description');
+  t.equal(result[0], 'data', 'should return correct asset name');
+  t.equal(result[1], 0, 'should return correct band index');
+
+  const blueResult = findAssetWithName(usable, 'blue', 'common_name');
+  t.ok(blueResult, 'should find asset with common_name=blue via description');
+  t.equal(blueResult[1], 2, 'should return band index 2 for blue');
+  t.end();
+});
+
+test('#Description fallback -> filterAvailablePresets works with description fallback', t => {
+  const presetData = {
+    trueColor: {
+      id: 'trueColor',
+      commonNames: ['red', 'green', 'blue'],
+      bandCombination: 'rgb'
+    },
+    singleBand: {
+      id: 'singleBand',
+      commonNames: null,
+      bandCombination: 'single'
+    }
+  };
+
+  const available = filterAvailablePresets(MOCK_STAC_DESCRIPTION_FALLBACK, presetData);
+  t.ok(available, 'should return available presets');
+  t.ok(available.includes('trueColor'), 'should include trueColor via description fallback');
+  t.ok(available.includes('singleBand'), 'should include singleBand');
+  t.end();
+});
+
+test('#Description fallback -> ignores non-matching descriptions', t => {
+  const stac = {
+    type: 'Feature',
+    stac_version: '1.0.0',
+    stac_extensions: [
+      'https://stac-extensions.github.io/eo/v1.0.0/schema.json',
+      'https://stac-extensions.github.io/raster/v1.0.0/schema.json'
+    ],
+    id: 'unknown-desc-test',
+    geometry: {type: 'Point', coordinates: [0, 0]},
+    bbox: [-1, -1, 1, 1],
+    links: [],
+    properties: {datetime: '2023-01-01T00:00:00Z'},
+    assets: {
+      data: {
+        href: 'https://example.com/cog.tif',
+        'eo:bands': [
+          {name: 'b1', description: 'custom band'},
+          {name: 'b2', description: 'another band'}
+        ],
+        'raster:bands': [{data_type: 'uint8'}, {data_type: 'uint8'}]
+      }
+    }
+  };
+  const bands = getEOBands(stac);
+  t.ok(bands, 'should return bands');
+  t.notOk(bands[0].common_name, 'should not infer common_name from non-standard description');
+  t.notOk(bands[1].common_name, 'should not infer common_name from non-standard description');
+  t.end();
+});
+
+// ---- Debug mode tests ----
+
+test('#RasterTileLayer -> showTileBorders default config', t => {
+  const layer = new RasterTileLayer({id: 'test-debug', dataId: 'test'});
+  t.equal(layer.config.visConfig.showTileBorders, false, 'showTileBorders should default to false');
+
+  layer.updateLayerVisConfig({showTileBorders: true});
+  t.equal(
+    layer.config.visConfig.showTileBorders,
+    true,
+    'showTileBorders should be updatable to true'
+  );
+  t.end();
+});
