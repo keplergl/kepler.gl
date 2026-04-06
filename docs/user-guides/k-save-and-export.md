@@ -34,7 +34,7 @@ You can export the current map using two different formats. The __Export Map__ w
 
 To save and export your current map as HTML file, click on __Export Map__ and subsequently on __Export__.
 When prompted provide your own mapbox token to be used in the newly generated file. If you don't provide a Mapbox Token,
-Kepler.gl will use a default one which can expire at anytime without any communication and therefore break your your existing map.
+Kepler.gl will use a default one which can expire at anytime without any communication and therefore break your existing map.
 
 #### How to update an exported map token
 In order to edit the mapbox token in your html file you simply need to perform the following steps:
@@ -47,7 +47,7 @@ In order to edit the mapbox token in your html file you simply need to perform t
    **/
   const MAPBOX_TOKEN = 'CURRENT_TOKEN';
 ```
-4. Replace the current value a new valid token. The code should now look like the following:
+4. Replace the current value with a new valid token. The code should now look like the following:
 ```javascript
   /**
    * Provide your MapBox Token
@@ -58,9 +58,9 @@ In order to edit the mapbox token in your html file you simply need to perform t
 ### <a href="#export-json-map">Export Map as JSON</a>
 ![Export Map as JSON](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/k-save-and-export-5.png "activate interactions")
 
-You can export the current map as a `json` file. This is useful when you are running your own kepler.gl application and want to load your map programmatticaly.
+You can export the current map as a `json` file. This is useful when you are running your own kepler.gl application and want to load your map programmatically.
 The JSON file includes:
-- dataset: processed data to create used to render your map
+- dataset: processed data used to render your map
 - config: layer, filter, map style and interaction settings.
 The map config includes the current layer, filter, map style and interaction settings.
 

@@ -162,6 +162,8 @@ async function refreshRemoteData(datasetInfo: CreateTableProps): Promise<object 
       return await refreshRasterTileMetadata(datasetInfo);
     case DatasetType.WMS_TILE:
       return await refreshWMSMetadata(datasetInfo);
+    case DatasetType.TILE_3D:
+      return null;
     default:
       return null;
   }

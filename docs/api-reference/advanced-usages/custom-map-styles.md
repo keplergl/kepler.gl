@@ -7,7 +7,7 @@ By default, kepler.gl uses mapbox-gl.js to render its base maps, displayed in [m
 You can custom kepler.gl to use other base map services, by passing in style.json written in [Mapbox GL Style Spec](https://docs.mapbox.com/mapbox-gl-js/style-spec/). With custom style.json kepler.gl can render base map independent of mapbox vector tile service.
 
 
-For instance. there is a example [style.json](https://raw.githubusercontent.com/heshan0131/kepler.gl-data/master/style/basic.json).  It points to the tile server described in the `sources` field.
+For instance. there is an example [style.json](https://raw.githubusercontent.com/heshan0131/kepler.gl-data/master/style/basic.json).  It points to the tile server described in the `sources` field.
 
 ```json
   "sources": {
@@ -129,7 +129,7 @@ If your map styles are not using Mapbox services, and you replaced all kepler.gl
 
 #### 4. `DEFAULT_LAYER_GROUPS`
 
-If `layerGroups` is not suppied, kepler.gl uses the default layer groups below. 
+If `layerGroups` is not supplied, kepler.gl uses the default layer groups below. 
 
 
 ```js

@@ -47,10 +47,10 @@ This guide will teach you how to perform data analysis in Kepler.gl by adding da
 
 #### [Filters](./e-filters.md)
 
-#### [Map styles](./f-map-styles.md#map-styles.md)
-* [Base map styles](./f-map-styles.md#base-map-styles.md)
-* [Map layers](./f-map-styles.md#map-layers.md)
-* [Custom styles](./f-map-styles.md#custom-styles.md)
+#### [Map styles](./f-map-styles.md#map-styles)
+* [Base map styles](./f-map-styles.md#base-map-styles)
+* [Map layers](./f-map-styles.md#toggle-map-layers)
+* [Custom styles](./f-map-styles.md#custom-map-styles)
 
 #### [Interactions](./g-interactions.md)
 * [Tooltips](./g-interactions.md#tooltips)

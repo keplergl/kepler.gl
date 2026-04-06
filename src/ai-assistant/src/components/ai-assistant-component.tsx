@@ -72,8 +72,11 @@ export function AiAssistantComponent() {
   const instructions = `${INSTRUCTIONS}\n\n${datasetMetaData}`;
 
   // generate ideas from LLM
-  const {temporaryPrompt, restartChat: libraryRestartChat} = useAssistant({...assistantProps, instructions});
-  
+  const {temporaryPrompt, restartChat: libraryRestartChat} = useAssistant({
+    ...assistantProps,
+    instructions
+  });
+
   const restartChatRef = useRef(libraryRestartChat);
   restartChatRef.current = libraryRestartChat;
 

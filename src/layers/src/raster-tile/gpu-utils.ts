@@ -5,11 +5,17 @@
  * Functions and constants for handling webgl/luma.gl/deck.gl entities
  */
 
-import {parse, fetchFile, load, FetchError} from '@loaders.gl/core';
+import {parse, fetchFile, load, FetchError, Loader} from '@loaders.gl/core';
 import {ImageLoader} from '@loaders.gl/images';
 import {NPYLoader} from '@loaders.gl/textures';
-import GL from '@luma.gl/constants';
-import {Texture2DProps} from '@luma.gl/webgl';
+// @ts-ignore GL resolution depends on moduleResolution setting
+import {GL} from '@luma.gl/constants';
+
+/**
+ * Loose texture data descriptor passed around before actual luma.gl Texture creation.
+ * Not the same as luma.gl's strict TextureProps (which requires width/height).
+ */
+type Texture2DProps = Record<string, any>;
 
 import {sleep} from '@kepler.gl/common-utils';
 import {getLoaderOptions} from '@kepler.gl/constants';
@@ -296,10 +302,11 @@ export async function loadNpyArray(
       for (let attempt = 0; attempt < numAttempts; attempt++) {
         try {
           const {npy: npyOptions} = getLoaderOptions();
-          const response: NPYLoaderResponse = await load(request.url, NPYLoader, {
+
+          const response = (await load(request.url, NPYLoader as Loader<NPYLoaderResponse>, {
             npy: npyOptions,
             fetch: options?.fetch
-          });
+          })) as NPYLoaderResponse;
 
           if (!response || !response.data || request.options.signal?.aborted) {
             return null;

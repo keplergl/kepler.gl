@@ -33,7 +33,7 @@ import {
   toArray
 } from '@kepler.gl/common-utils';
 import {KeplerGlSchema, ParsedDataset, SavedMap, LoadedMap} from '@kepler.gl/schemas';
-import {Feature} from '@nebula.gl/edit-modes';
+import {Feature} from '@deck.gl-community/editable-layers';
 
 // if any of these value occurs in csv, parse it to null;
 // const CSV_NULLS = ['', 'null', 'NULL', 'Null', 'NaN', '/N'];
@@ -51,7 +51,10 @@ function tryParseJsonString(str) {
 export const PARSE_FIELD_VALUE_FROM_STRING = {
   [ALL_FIELD_TYPES.boolean]: {
     valid: (d: unknown): boolean => typeof d === 'boolean',
-    parse: (d: unknown): boolean => d === 'true' || d === 'True' || d === 'TRUE' || d === '1'
+    parse: (d: unknown): boolean => {
+      const s = String(d).toLowerCase();
+      return s === 'true' || s === 'yes' || s === '1';
+    }
   },
   [ALL_FIELD_TYPES.integer]: {
     // @ts-ignore

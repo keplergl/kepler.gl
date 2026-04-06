@@ -66,12 +66,12 @@ Missing features
 
 #### Current kepler.gl methods:
 
-1. `initalize`
+1. `initialize`
 
 to replace utils/dataset-utils `createNewDataEntry` This table method takes a `ProtoTable` and returns a `Table` to be saved in kepler state.
 
 ```js
-table.initalize(protoTable);
+table.initialize(protoTable);
 
 // following meta data should be initialized
 table.allIndexes,
@@ -102,7 +102,7 @@ table.allIndexes,
    Value the field value, type the field type
 
 7. `sortDatasetByColumn`
-   Sort a column, return an sorted index, assign to `sortColumn`, `sortOrder`
+   Sort a column, return a sorted index, assign to `sortColumn`, `sortOrder`
 
 8. `filterDataset(filters, layers, opt)`
   to replace `filter-utils.js` `filterDataset`

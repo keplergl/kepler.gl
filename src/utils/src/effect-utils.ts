@@ -4,13 +4,15 @@
 import SunCalc from 'suncalc';
 import cloneDeep from 'lodash/cloneDeep';
 
-import {PostProcessEffect} from '@deck.gl/core/typed';
+import type {Effect as DeckEffect} from '@deck.gl/core';
 
 import {
   LIGHT_AND_SHADOW_EFFECT,
   LIGHT_AND_SHADOW_EFFECT_TIME_MODES,
   FILTER_TYPES,
-  FILTER_VIEW_TYPES
+  FILTER_VIEW_TYPES,
+  DISTANCE_FOG_TYPE,
+  SURFACE_FOG_TYPE
 } from '@kepler.gl/constants';
 import {arrayMove} from '@kepler.gl/common-utils';
 import {MapState, Effect, EffectProps, EffectDescription} from '@kepler.gl/types';
@@ -20,28 +22,67 @@ import {clamp} from './data-utils';
 // TODO isolate types - depends on @kepler.gl/schemas
 type VisState = any;
 
+// Retains the last LightingEffect deckEffect so we can keep it in the
+// effects array (with shadows disabled) after the user removes the
+// Light & Shadow effect from the UI. Without this, deck.gl calls
+// cleanup() which removes the shadow shader module, but existing layer
+// models still have shadow_uShadowMap bindings → texture errors.
+let _lastLightingDeckEffect: any = null;
+
 export function computeDeckEffects({
   visState,
-  mapState
+  mapState,
+  isExport
 }: {
   visState: VisState;
   mapState: MapState;
-}): PostProcessEffect[] {
+  isExport?: boolean;
+}): DeckEffect[] {
   // TODO: 1) deck effects per deck context 2) preserved between draws
-  return visState.effectOrder
+  let hasLightingShadow = false;
+
+  const deckEffects = visState.effectOrder
     .map(effectId => {
       const effect = findById(effectId)(visState.effects) as Effect | undefined;
-      if (effect?.isEnabled && effect.deckEffect) {
-        updateEffect({visState, mapState, effect});
-        return effect.deckEffect;
+      if (effect?.deckEffect) {
+        if (effect.isEnabled) {
+          updateEffect({visState, mapState, effect});
+        } else if (effect.type === LIGHT_AND_SHADOW_EFFECT.type) {
+          // Keep lighting effects in the array even when disabled to avoid
+          // removing the shadow shader module. Composite layer sublayers
+          // don't regenerate models when default shader modules change,
+          // leaving stale pipelines with shadow_uShadowMap bindings.
+          // Disabling shadow on the lights avoids visual effects.
+          disableLightingEffect(effect);
+        }
+        if (effect.isEnabled || effect.type === LIGHT_AND_SHADOW_EFFECT.type) {
+          if (effect.type === LIGHT_AND_SHADOW_EFFECT.type) {
+            hasLightingShadow = true;
+            if (!isExport) {
+              _lastLightingDeckEffect = effect.deckEffect;
+            }
+          }
+          return effect.deckEffect;
+        }
       }
       return null;
     })
     .filter(effect => effect);
+
+  if (!hasLightingShadow && _lastLightingDeckEffect) {
+    disableDeckLightingEffect(_lastLightingDeckEffect);
+    deckEffects.unshift(_lastLightingDeckEffect);
+  }
+
+  return deckEffects;
 }
 
 /**
- * Always keep light & shadow effect at the top
+ * Always keep light & shadow effect at the top, then distance fog and
+ * surface fog right after it (before other post-processing effects).
+ * Both fog effects read the depth buffer from renderBuffers[0];
+ * subsequent effects clear depth during their render passes, so fog
+ * must run before that happens.
  */
 export const fixEffectOrder = (effects: Effect[], effectOrder: string[]): string[] => {
   const lightShadowEffect = effects.find(effect => effect.type === LIGHT_AND_SHADOW_EFFECT.type);
@@ -52,6 +93,29 @@ export const fixEffectOrder = (effects: Effect[], effectOrder: string[]): string
       effectOrder.unshift(lightShadowEffect.id);
     }
   }
+
+  const distanceFogEffect = effects.find(effect => effect.type === DISTANCE_FOG_TYPE);
+  if (distanceFogEffect) {
+    const ind = effectOrder.indexOf(distanceFogEffect.id);
+    const targetPos = lightShadowEffect ? 1 : 0;
+    if (ind > targetPos) {
+      effectOrder.splice(ind, 1);
+      effectOrder.splice(targetPos, 0, distanceFogEffect.id);
+    }
+  }
+
+  const surfaceFogEffect = effects.find(effect => effect.type === SURFACE_FOG_TYPE);
+  if (surfaceFogEffect) {
+    const ind = effectOrder.indexOf(surfaceFogEffect.id);
+    let targetPos = 0;
+    if (lightShadowEffect) targetPos++;
+    if (distanceFogEffect) targetPos++;
+    if (ind > targetPos) {
+      effectOrder.splice(ind, 1);
+      effectOrder.splice(targetPos, 0, surfaceFogEffect.id);
+    }
+  }
+
   return effectOrder;
 };
 
@@ -79,10 +143,39 @@ function isDaytime(lat, lon, timestamp) {
 }
 
 /**
+ * Disable shadow rendering on a lighting effect without removing it.
+ * This keeps the shadow shader module registered and prevents stale
+ * texture binding errors in composite layer sublayers.
+ */
+function disableLightingEffect(effect: Effect) {
+  const deckEffect = effect.deckEffect;
+  if (!deckEffect) return;
+  disableDeckLightingEffect(deckEffect);
+}
+
+/**
+ * Disable shadow rendering directly on a deck.gl LightingEffect instance.
+ */
+function disableDeckLightingEffect(deckEffect: any) {
+  deckEffect.shadow = false;
+  deckEffect.outputUniformShadow = false;
+  for (const light of deckEffect.directionalLights || []) {
+    light.shadow = false;
+  }
+}
+
+/**
  * Update effect to match latest vis and map states
  */
 function updateEffect({visState, mapState, effect}) {
   if (effect.type === LIGHT_AND_SHADOW_EFFECT.type) {
+    // Re-enable shadow rendering in case it was previously disabled
+    const deckEffect = effect.deckEffect;
+    for (const light of deckEffect.directionalLights || []) {
+      light.shadow = true;
+    }
+    deckEffect.shadow = deckEffect.directionalLights?.some(l => l.shadow) ?? false;
+
     let {timestamp} = effect.parameters;
     const {timeMode} = effect.parameters;
     const sunLight = effect.deckEffect.directionalLights[0];

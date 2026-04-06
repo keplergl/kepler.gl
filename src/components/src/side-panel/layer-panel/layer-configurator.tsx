@@ -1024,6 +1024,18 @@ export default function LayerConfiguratorFactory(
       );
     }
 
+    _renderTile3dLayerConfig({layer, visConfiguratorProps, layerConfiguratorProps}) {
+      return (
+        <StyledLayerVisualConfigurator>
+          <LayerConfigGroup label={'layer.appearance'}>
+            <LayerColorSelector {...layerConfiguratorProps} />
+            <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
+            <VisConfigSlider {...layer.visConfigSettings.pointSize} {...visConfiguratorProps} />
+          </LayerConfigGroup>
+        </StyledLayerVisualConfigurator>
+      );
+    }
+
     _renderWmsLayerConfig({
       layer,
       visConfiguratorProps,

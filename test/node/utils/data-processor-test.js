@@ -447,10 +447,45 @@ test('Processor -> parseCsvRowsByFieldType -> boolean', t => {
     type: ALL_FIELD_TYPES.boolean
   };
 
-  const rows = [[null], ['0'], ['1'], ['True'], ['False'], ['0'], ['1'], ['true']];
+  const rows = [
+    [null],
+    ['0'],
+    ['1'],
+    ['True'],
+    ['False'],
+    ['0'],
+    ['1'],
+    ['true'],
+    ['yes'],
+    ['Yes'],
+    ['YES'],
+    ['no'],
+    ['No'],
+    ['NO'],
+    ['TRUE'],
+    ['false'],
+    ['FALSE']
+  ];
 
-  // is parsing '' meaningful, why not false
-  const expected = [[null], [false], [true], [true], [false], [false], [true], [true]];
+  const expected = [
+    [null],
+    [false],
+    [true],
+    [true],
+    [false],
+    [false],
+    [true],
+    [true],
+    [true],
+    [true],
+    [true],
+    [false],
+    [false],
+    [false],
+    [true],
+    [false],
+    [false]
+  ];
 
   parseCsvRowsByFieldType(rows, -1, field, 0);
   t.same(rows, expected, 'should parsed boolean properly');

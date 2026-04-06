@@ -1020,16 +1020,27 @@ export const SixteenByNineRatioOption: ImageRatioOption = {
 
 export const EXPORT_IMG_RATIO_OPTIONS: ReadonlyArray<ImageRatioOption> = [
   ScreenRatioOption,
-  CustomRatioOption,
   FourByThreeRatioOption,
-  SixteenByNineRatioOption
+  SixteenByNineRatioOption,
+  CustomRatioOption
 ];
 
+export type ExportResolutionOption =
+  | keyof typeof RESOLUTIONS
+  | '1280x720'
+  | '1920x1080'
+  | '2560x1440'
+  | '1600x900'
+  | '1024x768'
+  | '1280x960'
+  | '1600x1200'
+  | '1920x1440';
+
 export type ImageResolutionOption = {
-  id: keyof typeof RESOLUTIONS;
+  id: ExportResolutionOption;
   label: string;
   available: boolean;
-  scale: number;
+  scale?: number;
   getSize: (screenW: number, screenH: number) => {width: number; height: number};
 };
 
@@ -1055,9 +1066,74 @@ export const TwoXResolutionOption: ImageResolutionOption = {
   })
 };
 
+// Fixed dimension options
+export const Resolution1920x1080Option: ImageResolutionOption = {
+  id: '1920x1080',
+  label: '1920 × 1080 (16:9)',
+  available: true,
+  getSize: () => ({width: 1920, height: 1080})
+};
+
+export const Resolution1280x720Option: ImageResolutionOption = {
+  id: '1280x720',
+  label: '1280 × 720 (16:9)',
+  available: true,
+  getSize: () => ({width: 1280, height: 720})
+};
+
+export const Resolution2560x1440Option: ImageResolutionOption = {
+  id: '2560x1440',
+  label: '2560 × 1440 (16:9)',
+  available: true,
+  getSize: () => ({width: 2560, height: 1440})
+};
+
+export const Resolution1600x900Option: ImageResolutionOption = {
+  id: '1600x900',
+  label: '1600 × 900 (16:9)',
+  available: true,
+  getSize: () => ({width: 1600, height: 900})
+};
+
+export const Resolution1024x768Option: ImageResolutionOption = {
+  id: '1024x768',
+  label: '1024 × 768 (4:3)',
+  available: true,
+  getSize: () => ({width: 1024, height: 768})
+};
+
+export const Resolution1280x960Option: ImageResolutionOption = {
+  id: '1280x960',
+  label: '1280 × 960 (4:3)',
+  available: true,
+  getSize: () => ({width: 1280, height: 960})
+};
+
+export const Resolution1600x1200Option: ImageResolutionOption = {
+  id: '1600x1200',
+  label: '1600 × 1200 (4:3)',
+  available: true,
+  getSize: () => ({width: 1600, height: 1200})
+};
+
+export const Resolution1920x1440Option: ImageResolutionOption = {
+  id: '1920x1440',
+  label: '1920 × 1440 (4:3)',
+  available: true,
+  getSize: () => ({width: 1920, height: 1440})
+};
+
 export const EXPORT_IMG_RESOLUTION_OPTIONS: ReadonlyArray<ImageResolutionOption> = [
   OneXResolutionOption,
-  TwoXResolutionOption
+  TwoXResolutionOption,
+  Resolution1280x720Option,
+  Resolution1920x1080Option,
+  Resolution2560x1440Option,
+  Resolution1600x900Option,
+  Resolution1024x768Option,
+  Resolution1280x960Option,
+  Resolution1600x1200Option,
+  Resolution1920x1440Option
 ];
 
 export const EXPORT_DATA_TYPE = keyMirror({
@@ -1333,6 +1409,9 @@ export const LIGHT_AND_SHADOW_EFFECT: EffectDescription = {
   ]
 };
 
+export const DISTANCE_FOG_TYPE = 'distanceFog';
+export const SURFACE_FOG_TYPE = 'surfaceFog';
+
 export const POSTPROCESSING_EFFECTS: {[key: string]: EffectDescription} = {
   ink: {
     type: 'ink',
@@ -1526,6 +1605,26 @@ export const POSTPROCESSING_EFFECTS: {[key: string]: EffectDescription} = {
     type: 'hexagonalPixelate',
     name: 'Hexagonal Pixelate',
     parameters: [{name: 'scale', defaultValue: 20, min: 1, max: 50}]
+  },
+  distanceFog: {
+    type: DISTANCE_FOG_TYPE,
+    name: 'Distance Fog',
+    parameters: [
+      {name: 'density', defaultValue: 0.5, min: 0, max: 1},
+      {name: 'fogStart', label: 'Start', defaultValue: 0.3, min: 0, max: 1},
+      {name: 'fogRange', label: 'Range', defaultValue: 0.5, min: 0.01, max: 1},
+      {name: 'fogColor', type: 'color', min: 0, max: 255, defaultValue: [217, 222, 230]}
+    ]
+  },
+  surfaceFog: {
+    type: SURFACE_FOG_TYPE,
+    name: 'Surface Fog',
+    parameters: [
+      {name: 'density', defaultValue: 0.6, min: 0, max: 1},
+      {name: 'height', label: 'Elevation (m)', defaultValue: 100, min: -200, max: 3000},
+      {name: 'thickness', label: 'Transition (m)', defaultValue: 200, min: 0, max: 1000},
+      {name: 'fogColor', type: 'color', min: 0, max: 255, defaultValue: [230, 235, 242]}
+    ]
   }
 };
 
@@ -1550,6 +1649,8 @@ export type EffectType =
   | 'vignette'
   | 'magnify'
   | 'hexagonalPixelate'
+  | 'distanceFog'
+  | 'surfaceFog'
   | 'lightAndShadow';
 
 export const SYNC_TIMELINE_MODES: Record<string, SyncTimelineMode> = {

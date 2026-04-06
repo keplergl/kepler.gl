@@ -18,7 +18,7 @@ import Layer, {
   LayerSizeConfig,
   LayerStrokeColorConfig
 } from '../base-layer';
-import {GeoJsonLayer as DeckGLGeoJsonLayer} from '@deck.gl/layers';
+import {GeoJsonLayer as DeckGLGeoJsonLayer, GeoJsonLayerProps} from '@deck.gl/layers';
 import {
   getGeojsonLayerMeta,
   GeojsonDataMaps,
@@ -515,10 +515,13 @@ export default class GeoJsonLayer extends Layer {
     let dataAccessor;
     if (this.config.columnMode === COLUMN_MODE_GEOJSON) {
       filterValueAccessor = (dc, d, fieldIndex) => dc.valueAt(d.properties.index, fieldIndex);
+      // For GEOJSON mode, properties.index is the row index in the data container
       dataAccessor = () => d => ({index: d.properties.index});
     } else {
       filterValueAccessor = getTableModeValueAccessor;
-      dataAccessor = () => d => ({index: d.properties.index});
+      // For TABLE mode, properties.index is the feature index (not row index).
+      // Use the first row from properties.values to get field values for color/size.
+      dataAccessor = () => d => d.properties.values[0];
     }
 
     const indexAccessor = f => f.properties.index;
@@ -634,6 +637,13 @@ export default class GeoJsonLayer extends Layer {
     } else if (featureTypes && featureTypes.point) {
       // set fill to true if detect point
       return this.updateLayerVisConfig({filled: true, stroked: false});
+    } else if (featureTypes && featureTypes.line) {
+      // for line features, set strokeColor so the color picker reflects the actual rendered color
+      return this.updateLayerVisConfig({
+        stroked: true,
+        filled: false,
+        strokeColor: colorMaker.next().value
+      });
     }
 
     return this;
@@ -740,7 +750,7 @@ export default class GeoJsonLayer extends Layer {
               ...layerProps,
               visible: defaultLayerProps.visible,
               wrapLongitude: false,
-              data: [hoveredObject],
+              data: [hoveredObject] as Feature[],
               getLineWidth: props.getLineWidth,
               getPointRadius: props.getPointRadius,
               getElevation: props.getElevation,
@@ -749,7 +759,7 @@ export default class GeoJsonLayer extends Layer {
               // always draw outline
               stroked: true,
               filled: false
-            })
+            } as unknown as GeoJsonLayerProps)
           ]
         : [])
     ];

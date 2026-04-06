@@ -105,6 +105,9 @@ function ExportHtmlMapFactory(): React.ComponentType<ExportHtmlMapProps> {
             <StyledWarning>
               <FormattedMessage id={'modal.exportMap.html.tokenMisuseWarning'} />
             </StyledWarning>
+            <StyledWarning>
+              <FormattedMessage id={'modal.exportMap.html.tokenSecurityWarning'} />
+            </StyledWarning>
             <FormattedMessage id={'modal.exportMap.html.tokenDisclaimer'} />
             <ExportMapLink href={EXPORT_HTML_MAP_DOC}>
               <FormattedMessage id={'modal.exportMap.html.tokenUpdate'} />

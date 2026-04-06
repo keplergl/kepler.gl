@@ -114,6 +114,40 @@ test('exportUtils -> calculateExportImageSize', t => {
     'Should return a correct valid with a non valid resolution param'
   );
 
+  // Test fixed resolution options
+  t.deepEqual(
+    calculateExportImageSize({
+      mapW: 1440,
+      mapH: 990,
+      ratio: EXPORT_IMG_RATIOS.SCREEN,
+      resolution: '1920x1080'
+    }),
+    {scale: undefined, imageW: 1920, imageH: 1080},
+    'Should return fixed resolution 1920x1080'
+  );
+
+  t.deepEqual(
+    calculateExportImageSize({
+      mapW: 1440,
+      mapH: 990,
+      ratio: EXPORT_IMG_RATIOS.SCREEN,
+      resolution: '1280x720'
+    }),
+    {scale: undefined, imageW: 1280, imageH: 720},
+    'Should return fixed resolution 1280x720'
+  );
+
+  t.deepEqual(
+    calculateExportImageSize({
+      mapW: 1440,
+      mapH: 990,
+      ratio: EXPORT_IMG_RATIOS.SCREEN,
+      resolution: '2560x1440'
+    }),
+    {scale: undefined, imageW: 2560, imageH: 1440},
+    'Should return fixed resolution 2560x1440'
+  );
+
   t.end();
 });
 

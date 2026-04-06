@@ -118,7 +118,8 @@ export default {
       '3d': '3D',
       vectortile: 'vector tile',
       rastertile: 'raster tile',
-      wms: 'WMS'
+      wms: 'WMS',
+      tile3d: '3D tile'
     },
     wms: {
       hover: 'Value:'
@@ -141,6 +142,7 @@ export default {
     billboardDescription: 'Orient geometry towards the camera',
     fadeTrail: 'Fade trail',
     opacity: 'Opacity',
+    pointSize: 'Point Size',
     coverage: 'Coverage',
     outline: 'Outline',
     colorRange: 'Color range',
@@ -221,7 +223,8 @@ export default {
     rowCount: '{rowCount} rows',
     vectorTile: 'Vector tile',
     rasterTile: 'Raster tile',
-    wmsTile: 'WMS tile'
+    wmsTile: 'WMS tile',
+    tile3d: '3D tile'
   },
   tooltip: {
     hideLayer: 'Hide layer',
@@ -319,6 +322,7 @@ export default {
       ratio16_9: '16:9',
       resolutionTitle: 'Resolution',
       resolutionDescription: 'High resolution is better for prints.',
+      resolutionPlaceholder: 'Select resolution...',
       mapLegendTitle: 'Map Legend',
       mapLegendAdd: 'Add legend on map'
     },
@@ -388,6 +392,8 @@ export default {
         tokenPlaceholder: 'Paste your Mapbox access token',
         tokenMisuseWarning:
           '* If you do not provide your own token, the map may fail to display at any time when we replace ours to avoid misuse. ',
+        tokenSecurityWarning:
+          '* Warning: your Mapbox token will be embedded in the exported HTML file. Anyone with access to this file can see and use your token. Use a scoped token with URL restrictions when possible. ',
         tokenDisclaimer: 'You can change the Mapbox token later using the following instructions: ',
         tokenUpdate: 'How to update an existing map token.',
         modeTitle: 'Map Mode',

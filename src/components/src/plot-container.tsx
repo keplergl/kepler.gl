@@ -13,7 +13,7 @@ import {
   convertToPng,
   getScaleFromImageSize
 } from '@kepler.gl/utils';
-import {findMapBounds} from '@kepler.gl/reducers';
+import {findMapBounds, areAnyDeckLayersLoading} from '@kepler.gl/reducers';
 import MapContainerFactory from './map-container';
 import MapsLayoutFactory from './maps-layout';
 import {MapViewStateContextProvider} from './map-view-state-context';
@@ -39,11 +39,37 @@ const CLASS_FILTER = [
 const DOM_FILTER_FUNC = node => !CLASS_FILTER.includes(node.className);
 const OUT_OF_SCREEN_POSITION = -9999;
 
+/**
+ * Calculates legend zoom based on export height
+ * Maps export height to a zoom factor between 0.5 and 3
+ * @param height - export height in pixels
+ * @returns zoom factor for legend panel
+ */
+function calculateLegendZoom(height: number): number {
+  const baseHeight = 1080; // 1x zoom reference height
+  const minZoom = 0.5;
+  const maxZoom = 3;
+
+  // For initial/invalid heights, avoid shrinking the legend; use no scaling.
+  if (!Number.isFinite(height) || height <= 0) {
+    return 1;
+  }
+
+  // Linear mapping: height / baseHeight gives us the scale
+  const zoomFactor = height / baseHeight;
+  // Clamp between min and max
+  return Math.max(minZoom, Math.min(maxZoom, zoomFactor));
+}
+
 PlotContainerFactory.deps = [MapContainerFactory, MapsLayoutFactory];
 
 // Remove mapbox logo in exported map, because it contains non-ascii characters
 // Remove split viewport UI controls from exported images when the legend is shown
-const StyledPlotContainer = styled.div`
+interface StyledPlotContainerProps {
+  legendZoom?: number;
+}
+
+const StyledPlotContainer = styled.div<StyledPlotContainerProps>`
   .maplibregl-ctrl-bottom-left,
   .maplibregl-ctrl-bottom-right,
   .maplibre-attribution-container,
@@ -57,6 +83,11 @@ const StyledPlotContainer = styled.div`
   position: absolute;
   top: ${OUT_OF_SCREEN_POSITION}px;
   left: ${OUT_OF_SCREEN_POSITION}px;
+
+  /* Apply zoom to legend panel based on export height */
+  .map-control-panel {
+    zoom: ${props => props.legendZoom || 1} !important;
+  }
 `;
 
 interface StyledMapContainerProps {
@@ -130,6 +161,10 @@ export default function PlotContainerFactory(
 
     const {mapState} = mapFields;
 
+    const deckLayersLoadingRef = useRef(true);
+    const mapStyleLoadedRef = useRef(false);
+    const screenshotTakenRef = useRef(false);
+
     // Memoize the scale calculation
     const scale = useMemo(() => {
       if (imageSize.scale) {
@@ -152,6 +187,11 @@ export default function PlotContainerFactory(
       mapState.height,
       mapState.isSplit
     ]);
+
+    // Memoize the legend zoom calculation based on export height
+    const legendZoom = useMemo(() => {
+      return calculateLegendZoom(imageSize.imageH);
+    }, [imageSize.imageH]);
 
     // Memoize the map style
     const scaledMapStyle = useMemo(() => {
@@ -196,18 +236,53 @@ export default function PlotContainerFactory(
 
     const retrieveNewScreenshot = useCallback(debouncedScreenshot, [debouncedScreenshot]);
 
+    const tryScreenshot = useCallback(() => {
+      if (mapStyleLoadedRef.current && !deckLayersLoadingRef.current) {
+        screenshotTakenRef.current = true;
+        retrieveNewScreenshot();
+      }
+    }, [retrieveNewScreenshot]);
+
+    // Fallback: if layers never finish loading, capture after timeout
+    useEffect(() => {
+      const timer = setTimeout(() => {
+        if (!screenshotTakenRef.current) {
+          deckLayersLoadingRef.current = false;
+          tryScreenshot();
+        }
+      }, 30000);
+      return () => clearTimeout(timer);
+    }, [tryScreenshot]);
+
     // Memoize the onMapRender callback
     const debouncedMapRender = useMemo(
       () =>
         debounce(map => {
           if (map.isStyleLoaded()) {
-            retrieveNewScreenshot();
+            mapStyleLoadedRef.current = true;
+            tryScreenshot();
           }
         }, 500),
-      [retrieveNewScreenshot]
+      [tryScreenshot]
     );
 
     const onMapRender = useCallback(debouncedMapRender, [debouncedMapRender]);
+
+    const deckRenderCallbacks = useMemo(
+      () => ({
+        onDeckAfterRender: (deckProps: Record<string, unknown>) => {
+          const layers = deckProps.layers as any[];
+          if (!layers) return;
+          const stillLoading = areAnyDeckLayersLoading(layers);
+          if (deckLayersLoadingRef.current && !stillLoading) {
+            deckLayersLoadingRef.current = false;
+            tryScreenshot();
+          }
+          deckLayersLoadingRef.current = stillLoading;
+        }
+      }),
+      [tryScreenshot]
+    );
 
     // Initial setup effect
     useEffect(() => {
@@ -218,9 +293,9 @@ export default function PlotContainerFactory(
     useEffect(() => {
       if (ratio !== undefined || resolution !== undefined || legend !== undefined) {
         setExportImageSetting({processing: true});
-        retrieveNewScreenshot();
+        tryScreenshot();
       }
-    }, [ratio, resolution, legend, setExportImageSetting, retrieveNewScreenshot]);
+    }, [ratio, resolution, legend, setExportImageSetting, tryScreenshot]);
 
     // Memoize size calculations
     const {size, width, height} = useMemo(() => {
@@ -285,11 +360,14 @@ export default function PlotContainerFactory(
         isExport: true,
         deckGlProps: {
           ...mapFields.deckGlProps,
-          glOptions: {
-            preserveDrawingBuffer: true,
-            useDevicePixels: false
+          useDevicePixels: false,
+          deviceProps: {
+            webgl: {
+              preserveDrawingBuffer: true
+            }
           }
         },
+        deckRenderCallbacks,
         visState: {
           ...mapFields.visState,
           effects: plotEffects
@@ -297,7 +375,16 @@ export default function PlotContainerFactory(
         // allow overriding the legend panel logo in export
         logoComponent
       }),
-      [mapFields, scaledMapStyle, newMapState, legend, onMapRender, plotEffects, logoComponent]
+      [
+        mapFields,
+        scaledMapStyle,
+        newMapState,
+        legend,
+        onMapRender,
+        deckRenderCallbacks,
+        plotEffects,
+        logoComponent
+      ]
     );
 
     const isSplit = splitMaps.length > 1;
@@ -312,7 +399,7 @@ export default function PlotContainerFactory(
     );
 
     return (
-      <StyledPlotContainer className="export-map-instance">
+      <StyledPlotContainer className="export-map-instance" legendZoom={legendZoom}>
         <StyledMapContainer ref={plottingAreaRef} width={size.width} height={size.height}>
           <MapViewStateContextProvider mapState={newMapState}>
             {mapContainers}

@@ -160,4 +160,31 @@ Examples of supported WMS Tiles:
 
 For step-by-step instructions, see [WMS Layer — How to add](./o-wms-layer.md).
 
+## 3D Tile Layer (experimental)
+
+3D Tile layers render photogrammetry meshes, buildings, terrain and other 3D content served as OGC 3D Tiles or I3S tilesets. The layer streams and renders tiles based on the current viewport and camera position, loading detail on demand.
+
+Supported providers:
+
+- OGC 3D Tiles 1.0 / 1.1 (any `tileset.json` endpoint)
+- Google Photorealistic 3D Tiles (requires a Google Maps API key)
+- Cesium Ion (requires a Cesium Ion access token)
+- ArcGIS I3S scene services
+
+Example ArcGIS I3S tileset:
+
+- San Francisco Buildings — https://tiles.arcgis.com/tiles/z2tnIkrLQ2BRzr6P/arcgis/rest/services/SanFrancisco_Bldgs/SceneServer/layers/0
+
+Example Cesium Ion tilesets (require access token):
+
+- Washington DC mesh — https://assets.ion.cesium.com/57588/tileset.json
+- Melbourne point cloud — https://assets.ion.cesium.com/43978/tileset.json
+- Mount St. Helens — https://assets.cesium.com/33301/tileset.json
+
+Example generic OGC 3D Tiles:
+
+- Royal Exhibition Building (point cloud) — https://raw.githubusercontent.com/visgl/deck.gl-data/master/3d-tiles/RoyalExhibitionBuilding/tileset.json
+
+For step-by-step instructions, see [3D Tile Layer — How to add](./p-3d-tile-layer.md).
+
 [Back to table of contents](../README.md)

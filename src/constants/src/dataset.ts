@@ -5,7 +5,8 @@ export enum DatasetType {
   LOCAL = 'local',
   VECTOR_TILE = 'vector-tile',
   RASTER_TILE = 'raster-tile',
-  WMS_TILE = 'wms-tile'
+  WMS_TILE = 'wms-tile',
+  TILE_3D = 'tile-3d'
 }
 
 export enum RemoteTileFormat {
@@ -74,4 +75,30 @@ export type WMSDatasetMetadata = {
   tilesetMetadataUrl: string;
   version: string;
   layers: {name: string; title: string; boundingBox: number[] | null}[];
+};
+
+export type Tile3DProvider = {
+  name: string;
+  urlKey: string;
+};
+
+export const TILE3D_PROVIDERS: Record<string, Tile3DProvider> = {
+  google: {
+    name: 'Google 3D Tiles',
+    urlKey: 'google'
+  },
+  cesium: {
+    name: 'Cesium ion',
+    urlKey: 'ion.cesium'
+  },
+  arcgis: {
+    name: 'ArcGIS',
+    urlKey: 'arcgis'
+  }
+};
+
+export type Tile3DDatasetMetadata = {
+  tile3dUrl: string;
+  tile3dAccessToken?: string;
+  tile3dProvider?: string;
 };

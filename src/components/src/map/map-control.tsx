@@ -62,6 +62,7 @@ export type MapControlProps = {
   onSetEditorMode: (mode: string) => void;
   onToggleEditorVisibility: () => void;
   onLayerVisConfigChange: (oldLayer: Layer, newVisConfig: Partial<LayerVisConfig>) => void;
+  onToggleLayerVisibility?: (layer: Layer) => void;
   top: number;
   onSetLocale: typeof UIStateActions.setLocale;
   availableLocales: string[];

@@ -5,7 +5,7 @@
 import React, {Component, createRef, useMemo} from 'react';
 import styled, {withTheme} from 'styled-components';
 import {Map, MapRef} from 'react-map-gl';
-import {PickInfo} from '@deck.gl/core/lib/deck';
+import {PickingInfo, MapView} from '@deck.gl/core';
 import DeckGL from '@deck.gl/react';
 import {createSelector, Selector} from 'reselect';
 import {useDroppable} from '@dnd-kit/core';
@@ -28,6 +28,7 @@ import EditorFactory from './editor/editor';
 import {
   generateMapboxLayers,
   updateMapboxLayers,
+  Layer,
   LayerBaseConfig,
   VisualChannelDomain,
   EditorLayerUtils,
@@ -43,7 +44,6 @@ import {
 } from '@kepler.gl/types';
 import {
   errorNotification,
-  setLayerBlending,
   isStyleUsingMapboxTiles,
   isStyleUsingOpenStreetMapTiles,
   getBaseMapLibrary,
@@ -59,7 +59,9 @@ import {
   rgbToHex,
   computeDeckEffects,
   getApplicationConfig,
-  GetMapRef
+  GetMapRef,
+  getLayerBlendingParameters,
+  patchDeckRendererForPostProcessing
 } from '@kepler.gl/utils';
 import {breakPointValues} from '@kepler.gl/styles';
 
@@ -79,7 +81,6 @@ import {MapViewStateContext} from './map-view-state-context';
 
 import ErrorBoundary from './common/error-boundary';
 import {LOCALE_CODES} from '@kepler.gl/localization';
-import {MapView} from '@deck.gl/core';
 import {
   MapStyle,
   areAnyDeckLayersLoading,
@@ -387,6 +388,7 @@ export default function MapContainerFactory(
 
     constructor(props) {
       super(props);
+      patchDeckRendererForPostProcessing();
     }
 
     state = {
@@ -511,24 +513,34 @@ export default function MapContainerFactory(
       this.props.visStateActions.onLayerClick(null);
     };
 
-    _onLayerHover = (_idx: number, info: PickInfo<any> | null) => {
+    _onLayerHover = (_idx: number, info: PickingInfo<any> | null) => {
       this.props.visStateActions.onLayerHover(info, this.props.index);
     };
 
     _onLayerSetDomain = (
       idx: number,
-      value: {domain: VisualChannelDomain; aggregatedBins: AggregatedBin[]}
+      value: number[] | {domain: VisualChannelDomain; aggregatedBins: AggregatedBin[]}
     ) => {
-      this.props.visStateActions.layerConfigChange(this.props.visState.layers[idx], {
-        colorDomain: value.domain,
-        aggregatedBins: value.aggregatedBins
-      } as Partial<LayerBaseConfig>);
+      // deck.gl 9 native aggregation layers (Grid, Hexagon) pass [min, max],
+      // while ClusterLayer's CPUAggregator still passes {domain, aggregatedBins}.
+      const config = Array.isArray(value)
+        ? {colorDomain: value as VisualChannelDomain}
+        : {colorDomain: value.domain, aggregatedBins: value.aggregatedBins};
+
+      const layer = this.props.visState.layers[idx];
+      if (!layer) return;
+
+      this.props.visStateActions.layerConfigChange(layer, config as Partial<LayerBaseConfig>);
     };
 
     _onRedrawNeeded = (_idx: number) => {
       // updateMapUpdater always returns a new state object reference, which triggers re-render
       const {mapStateActions, index} = this.props;
       mapStateActions.updateMap({}, index);
+    };
+
+    _onFitBounds = (_idx: number, bounds: [number, number, number, number]) => {
+      this.props.mapStateActions.fitBounds(bounds);
     };
 
     _onLayerFilteredItemsChange = (idx, event) => {
@@ -607,9 +619,9 @@ export default function MapContainerFactory(
       }
     };
 
-    _onDeckInitialized(gl) {
+    _onDeckInitialized(device) {
       if (this.props.onDeckInitialized) {
-        this.props.onDeckInitialized(this._deck, gl);
+        this.props.onDeckInitialized(this._deck, device);
       }
     }
 
@@ -623,8 +635,8 @@ export default function MapContainerFactory(
       return !viewIndex && Boolean(this._deck?.viewManager?._viewports?.length);
     }
 
-    _onBeforeRender = ({gl}) => {
-      setLayerBlending(gl, this.props.visState.layerBlending);
+    _onBeforeRender = () => {
+      // no-op
     };
 
     _onDeckError = (error, layer) => {
@@ -848,7 +860,8 @@ export default function MapContainerFactory(
           onSetLayerDomain: this._onLayerSetDomain,
           onFilteredItemsChange: this._onLayerFilteredItemsChange,
           onWMSFeatureInfo: this._onWMSFeatureInfo,
-          onRedrawNeeded: this._onRedrawNeeded
+          onRedrawNeeded: this._onRedrawNeeded,
+          onFitBounds: this._onFitBounds
         },
         deckGlProps
       );
@@ -887,19 +900,22 @@ export default function MapContainerFactory(
       }
 
       const effects = this._isOKToRenderEffects(index)
-        ? computeDeckEffects({visState, mapState})
+        ? computeDeckEffects({visState, mapState, isExport: this.props.isExport})
         : [];
 
       const views = deckGlProps?.views
         ? deckGlProps?.views()
-        : new MapView({legacyMeterSizes: true});
+        : new MapView({legacyMeterSizes: true} as ConstructorParameters<typeof MapView>[0] & {
+            legacyMeterSizes: boolean;
+          });
 
       let allDeckGlProps = {
         ...deckGlProps,
         pickingRadius: DEFAULT_PICKING_RADIUS,
         views,
         layers: deckGlLayers,
-        effects
+        effects,
+        parameters: getLayerBlendingParameters(visState.layerBlending)
       };
 
       if (typeof deckRenderCallbacks?.onDeckRender === 'function') {
@@ -979,7 +995,7 @@ export default function MapContainerFactory(
                 this._deck = comp.deck;
               }
             }}
-            onWebGLInitialized={gl => this._onDeckInitialized(gl)}
+            onDeviceInitialized={device => this._onDeckInitialized(device)}
             onAfterRender={() => {
               if (typeof deckRenderCallbacks?.onDeckAfterRender === 'function') {
                 deckRenderCallbacks.onDeckAfterRender(allDeckGlProps);
@@ -1050,6 +1066,11 @@ export default function MapContainerFactory(
       this.props.visStateActions.setLoadingIndicator({change: 0});
     }, DEBOUNCE_LOADING_STATE_PROPAGATE);
 
+    _handleToggleLayerVisibility = (layer: Layer) => {
+      const {visStateActions} = this.props;
+      visStateActions.layerConfigChange(layer, {isVisible: !layer.config.isVisible});
+    };
+
     _toggleMapControl = panelId => {
       const {index, uiStateActions} = this.props;
 
@@ -1097,7 +1118,7 @@ export default function MapContainerFactory(
       const internalViewState = this.context?.getInternalViewState(index);
       const mapProps = {
         ...internalViewState,
-        preserveDrawingBuffer: true,
+        preserveDrawingBuffer: this.props.isExport ?? false,
         mapboxAccessToken: currentStyle?.accessToken || mapboxApiAccessToken,
         // baseApiUrl: mapboxApiUrl,
         mapLib: baseMapLibraryConfig.getMapLib(),
@@ -1160,6 +1181,7 @@ export default function MapContainerFactory(
             onSetLocale={uiStateActions.setLocale}
             onToggleEditorVisibility={visStateActions.toggleEditorVisibility}
             onLayerVisConfigChange={visStateActions.layerVisConfigChange}
+            onToggleLayerVisibility={this._handleToggleLayerVisibility}
             mapHeight={mapState.height}
             setMapControlSettings={uiStateActions.setMapControlSettings}
             activeSidePanel={activeSidePanel}
@@ -1205,7 +1227,7 @@ export default function MapContainerFactory(
               )
             : null}
           {this._renderMapPopover()}
-          {primary !== isSplit ? (
+          {!isExport && primary !== isSplit ? (
             <LoadingIndicator
               isVisible={Boolean(isLoadingIndicatorVisible || this.anyActiveLayerLoading)}
               activeSidePanel={Boolean(activeSidePanel)}

@@ -89,6 +89,8 @@ import {
   FILTER_VIEW_TYPES,
   FPS,
   LIGHT_AND_SHADOW_EFFECT,
+  DISTANCE_FOG_TYPE,
+  SURFACE_FOG_TYPE,
   MAX_DEFAULT_TOOLTIPS,
   PLOT_TYPES,
   SORT_ORDER,
@@ -879,7 +881,8 @@ export function setInitialLayerConfig(layer, datasets, layerClasses): Layer {
       ...props[0],
       label: newLayer.config.label,
       dataId: newLayer.config.dataId,
-      isConfigActive: newLayer.config.isConfigActive
+      isConfigActive: newLayer.config.isConfigActive,
+      isVisible: newLayer.config.isVisible
     });
   }
   return typeof newLayer.setInitialLayerConfig === 'function'
@@ -1910,6 +1913,26 @@ export const addEffectUpdater = (
     state.effects.some(effect => effect.type === LIGHT_AND_SHADOW_EFFECT.type)
   ) {
     Console.warn(`Can't add more than one ${LIGHT_AND_SHADOW_EFFECT.name} effect`);
+    return state;
+  }
+
+  if (
+    action.config?.type === DISTANCE_FOG_TYPE &&
+    state.effects.some(
+      effect => effect.type === DISTANCE_FOG_TYPE || effect.type === SURFACE_FOG_TYPE
+    )
+  ) {
+    Console.warn("Can't add more than one fog effect");
+    return state;
+  }
+
+  if (
+    action.config?.type === SURFACE_FOG_TYPE &&
+    state.effects.some(
+      effect => effect.type === SURFACE_FOG_TYPE || effect.type === DISTANCE_FOG_TYPE
+    )
+  ) {
+    Console.warn("Can't add more than one fog effect");
     return state;
   }
 

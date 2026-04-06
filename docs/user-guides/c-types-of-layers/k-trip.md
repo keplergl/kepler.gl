@@ -7,7 +7,7 @@ Trip layer can display animated path.
 ### How to use trip layer to animate path
 
 **Data format**
-Currently trip layer support a special `geoJSON` format where the coordinate `linestring` has a 4th element denoting timestamp.
+Currently trip layer supports a special `geoJSON` format where the coordinate `linestring` has a 4th element denoting timestamp.
 
 In order to animate the path, the `geoJSON` data needs to contain `LineString` in its features' geometry, and the coordinates in the `LineString` need to have 4 elements in the format of `[longitude, latitude, altitude, timestamp]`, with the last element being a timestamp. Valid timestamp formats include unix in seconds such as `1564184363` or in milliseconds such as `1564184363000`.
 

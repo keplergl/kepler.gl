@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import test from 'tape';
-import {EditableGeoJsonLayer} from '@nebula.gl/layers';
+import {EditableGeoJsonLayer} from '@deck.gl-community/editable-layers';
 
 import {INITIAL_VIS_STATE} from '@kepler.gl/reducers';
 import {VisStateActions} from '@kepler.gl/actions';

@@ -148,9 +148,11 @@ const COMMON_SLIDER_PROPS = {
 
 type EffectParameterDescriptionFlattened = {
   name: string;
+  type?: 'number' | 'array' | 'color';
   label?: string | false | (string | false)[];
   min: number;
   max: number;
+  defaultValue?: number | number[];
   index?: number;
 };
 
@@ -283,12 +285,15 @@ export default function EffectConfiguratorFactory(
     effect,
     updateEffectConfig
   }) => {
-    const uniforms = effect.deckEffect?.module.uniforms || defaultUniforms;
+    const uniforms = effect.deckEffect?.module.propTypes || defaultUniforms;
     const parameterDescriptions = effect.getParameterDescriptions();
     const {parameters, id} = effect;
     const flatParameterDescriptions = useMemo(() => {
       return parameterDescriptions.reduce((acc, description) => {
-        if (description.type === 'array') {
+        if (description.type === 'color') {
+          // color parameters are rendered separately via CompactColorPicker
+          acc.push(description);
+        } else if (description.type === 'array') {
           // split arrays of controls into a separate controls for each component
           if (Array.isArray(description.defaultValue)) {
             description.defaultValue.forEach((_, index) => {
@@ -309,19 +314,36 @@ export default function EffectConfiguratorFactory(
 
     const controls = useMemo(() => {
       return flatParameterDescriptions.map(desc => {
+        if (desc.type === 'color') {
+          return {
+            isColor: true as const,
+            label: desc.label || desc.name,
+            paramName: desc.name,
+            color: parameters[desc.name] || desc.defaultValue || [255, 255, 255],
+            onSetColor: (v: [number, number, number]) =>
+              updateEffectConfig(null, id, {parameters: {[desc.name]: v}})
+          };
+        }
+
         const paramName = desc.name;
 
-        const uniform = uniforms[desc.name];
-        if ((!uniform && uniform !== 0) || uniform.private) {
+        const rawUniform = uniforms[desc.name];
+        if ((!rawUniform && rawUniform !== 0) || rawUniform.private) {
           return null;
         }
+
+        // luma.gl 9 wraps array propTypes as {value: [...]}
+        const uniform =
+          rawUniform && typeof rawUniform === 'object' && Array.isArray(rawUniform.value)
+            ? rawUniform.value
+            : rawUniform;
 
         const prevValue = parameters[paramName];
 
         const label = desc.label === false ? false : desc.label || desc.name;
 
         // the uniform is [number, number] array
-        if (uniform.length === 2) {
+        if (Array.isArray(uniform) && uniform.length === 2) {
           return {
             label,
             value1: prevValue[desc.index || 0] || 0,
@@ -351,14 +373,16 @@ export default function EffectConfiguratorFactory(
         }
         // the uniform description is {value: 0, min: 0, max: 1, ...}
         else if (isNumber(uniform.value)) {
+          const rangeMin = desc.min ?? uniform.min ?? uniform.softMin ?? 0;
+          const rangeMax = desc.max ?? uniform.max ?? uniform.softMax ?? 1;
+          const rangeSpan = rangeMax - rangeMin;
+          const step = rangeSpan > 10 ? 1 : 0.001;
           return {
             label,
             value1: prevValue || 0,
-            range: [
-              desc.min ?? uniform.min ?? uniform.softMin ?? 0,
-              desc.max ?? uniform.max ?? uniform.softMax ?? 1
-            ],
-            value0: desc.min ?? uniform.min ?? uniform.softMin ?? 0,
+            range: [rangeMin, rangeMax],
+            value0: rangeMin,
+            step,
             onChange: (newValue: number[], event) => {
               updateEffectConfig(event, id, {parameters: {[paramName]: newValue[1]}});
             }
@@ -376,6 +400,24 @@ export default function EffectConfiguratorFactory(
           const control = controls[parameterIndex];
           if (!control) {
             return null;
+          }
+
+          if ('isColor' in control) {
+            return (
+              <RegularOuterWrapper key={`${effect.id}-${parameterIndex}`}>
+                <CompactColorPicker
+                  label={typeof control.label === 'string' ? control.label : 'Color'}
+                  color={control.color}
+                  onSetColor={
+                    control.onSetColor ??
+                    (() => {
+                      /* noop */
+                    })
+                  }
+                  Icon={ArrowDownSmall}
+                />
+              </RegularOuterWrapper>
+            );
           }
 
           return (

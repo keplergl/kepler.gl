@@ -36,9 +36,7 @@ export async function getDuckDBColumnTypes(
   try {
     // PRAGMA table_info is less likely to bind/execute view SQL than DESCRIBE,
     // so it avoids triggering remote access (e.g., S3) for view-backed schemas.
-    const resInfo = await connection.query(
-      `PRAGMA table_info(${quotedTableName})`
-    );
+    const resInfo = await connection.query(`PRAGMA table_info(${quotedTableName})`);
     const numRows = resInfo.numRows;
     const columnNames = resInfo.getChild('name');
     const columnTypes = resInfo.getChild('type');
@@ -140,9 +138,13 @@ export function castDuckDBTypesForKepler(
       return `ST_AsWKB(${quotedColumnName}) as ${quotedColumnName}`;
     } else if (
       options.bigIntToDouble &&
-      (type === 'BIGINT' || type === 'UBIGINT' || type === 'HUGEINT' || type === 'UHUGEINT')
+      (type === 'BIGINT' ||
+        type === 'UBIGINT' ||
+        type === 'HUGEINT' ||
+        type === 'UHUGEINT' ||
+        type.startsWith('DECIMAL'))
     ) {
-      // Cast 64-bit and larger integer types to DOUBLE to avoid BigInt in JS
+      // Cast 64-bit and larger integer types and DECIMAL to DOUBLE to avoid BigInt in JS
       return `CAST(${quotedColumnName} AS DOUBLE) as ${quotedColumnName}`;
     }
     return quotedColumnName;

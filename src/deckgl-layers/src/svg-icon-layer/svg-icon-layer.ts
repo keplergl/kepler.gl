@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {CompositeLayer, Position} from '@deck.gl/core';
-import {CompositeLayerProps} from '@deck.gl/core/lib/composite-layer';
+import {CompositeLayer, CompositeLayerProps, Layer, Position} from '@deck.gl/core';
 
 import {RGBColor, RGBAColor} from '@kepler.gl/types';
 import ScatterplotIconLayer from './scatterplot-icon-layer';
@@ -10,12 +9,18 @@ import ScatterplotIconLayer from './scatterplot-icon-layer';
 // default icon geometry is a square
 const DEFAULT_ICON_GEOMETRY = [1, 1, 0, 1, -1, 0, -1, -1, 0, -1, -1, 0, -1, 1, 0, 1, 1, 0];
 
+interface SvgIconData {
+  id: string;
+  data: unknown[];
+  geometry: number[];
+}
+
 const defaultProps = {
   getIconGeometry: () => DEFAULT_ICON_GEOMETRY,
   getIcon: (d: {icon: string}) => d.icon
 };
 
-export interface SvgIconLayerProps extends CompositeLayerProps<any> {
+export interface SvgIconLayerProps extends CompositeLayerProps {
   getIconGeometry: (i: string) => number[];
   getIcon: (d: {icon: string}) => string;
   getPosition: (d: any) => Position;
@@ -23,7 +28,7 @@ export interface SvgIconLayerProps extends CompositeLayerProps<any> {
   getFillColor: RGBColor | RGBAColor;
 }
 
-export default class SvgIconLayer extends CompositeLayer<any, SvgIconLayerProps> {
+export default class SvgIconLayer extends CompositeLayer<SvgIconLayerProps> {
   // Must be defined
   initializeState() {
     this.state = {
@@ -38,9 +43,10 @@ export default class SvgIconLayer extends CompositeLayer<any, SvgIconLayerProps>
   }
 
   _extractSublayers() {
-    const {data, getIconGeometry, getIcon} = this.props;
+    const {data: rawData, getIconGeometry, getIcon} = this.props;
+    const data = rawData as {icon: string}[];
 
-    const iconLayers = {};
+    const iconLayers: Record<string, SvgIconData> = {};
     for (let i = 0; i < data.length; i++) {
       const iconId = getIcon(data[i]);
       iconLayers[iconId] = iconLayers[iconId] || {
@@ -59,13 +65,14 @@ export default class SvgIconLayer extends CompositeLayer<any, SvgIconLayerProps>
     info?.sourceLayer?.updateAutoHighlight(info);
   }
 
-  renderLayers() {
+  renderLayers(): Layer[] | null {
     const layerId = this.props.id;
+    const data = this.state.data as SvgIconData[];
 
     const layers =
-      this.state.data &&
-      this.state.data.length &&
-      this.state.data.map(
+      data &&
+      data.length &&
+      data.map(
         ({id, data, geometry}) =>
           new ScatterplotIconLayer({
             ...this.props,

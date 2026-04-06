@@ -11,11 +11,10 @@ import {
   DefaultProps,
   GetPickingInfoParams,
   Layer,
-  LayersList,
-  assert
-} from '@deck.gl/core/typed';
-import {ScatterplotLayer} from '@deck.gl/layers/typed';
-import type {ScatterplotLayerProps} from '@deck.gl/layers/typed';
+  LayersList
+} from '@deck.gl/core';
+import {ScatterplotLayer} from '@deck.gl/layers';
+import type {ScatterplotLayerProps} from '@deck.gl/layers';
 import * as arrow from 'apache-arrow';
 import * as ga from '@geoarrow/geoarrow-js';
 
@@ -29,6 +28,7 @@ import {
 } from '../utils/utils';
 import {GeoArrowExtraPickingProps, computeChunkOffsets, getPickingInfo} from '../utils/picking';
 import {ColorAccessor, FloatAccessor, GeoArrowPickingInfo, ExtensionProps} from '../types';
+import {assert} from '../utils/utils';
 import {validateAccessors} from '../utils/validate';
 
 /** All properties supported by GeoArrowScatterplotLayer */

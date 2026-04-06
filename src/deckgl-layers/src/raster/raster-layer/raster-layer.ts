@@ -1,24 +1,27 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {project32, UpdateParameters} from '@deck.gl/core/typed';
-import {BitmapLayer} from '@deck.gl/layers/typed';
-import {isWebGL2} from '@luma.gl/core';
-import {ProgramManager} from '@luma.gl/engine';
+import {UpdateParameters} from '@deck.gl/core';
+import {BitmapLayer} from '@deck.gl/layers';
 
-import fsWebGL1 from './raster-layer-webgl1.fs';
-import vsWebGL1 from './raster-layer-webgl1.vs';
-import fsWebGL2 from './raster-layer-webgl2.fs';
-import vsWebGL2 from './raster-layer-webgl2.vs';
+import {
+  buildRasterFragmentShader,
+  buildRasterVertexShader,
+  rasterUniforms,
+  ensureRasterHooksRegistered,
+  prepareLumaModules
+} from './raster-layer-shaders';
 import {loadImages} from '../images';
 import type {RasterLayerAddedProps, ImageState} from '../types';
 import {modulesEqual} from '../util';
+import {patchPipelineValidation} from '../pipeline-validation-patch';
 
 const defaultProps = {
   ...BitmapLayer.defaultProps,
   modules: {type: 'array', value: [], compare: true},
   images: {type: 'object', value: {}, compare: true},
-  moduleProps: {type: 'object', value: {}, compare: true}
+  moduleProps: {type: 'object', value: {}, compare: true},
+  onRedrawNeeded: {type: 'function', value: null, compare: false}
 };
 
 export default class RasterLayer extends BitmapLayer<RasterLayerAddedProps> {
@@ -26,36 +29,19 @@ export default class RasterLayer extends BitmapLayer<RasterLayerAddedProps> {
     images: ImageState;
   };
 
+  _redrawScheduled = false;
+
   initializeState(): void {
-    const {gl} = this.context;
-    const programManager = ProgramManager.getDefaultProgramManager(gl);
-
-    const fsStr1 = 'fs:DECKGL_MUTATE_COLOR(inout vec4 image, in vec2 coord)';
-    const fsStr2 = 'fs:DECKGL_CREATE_COLOR(inout vec4 image, in vec2 coord)';
-
-    // Only initialize shader hook functions _once globally_
-    // Since the program manager is shared across all layers, but many layers
-    // might be created, this solves the performance issue of always adding new
-    // hook functions.
-    if (!programManager._hookFunctions.includes(fsStr1)) {
-      programManager.addShaderHook(fsStr1);
-    }
-    if (!programManager._hookFunctions.includes(fsStr2)) {
-      programManager.addShaderHook(fsStr2);
-    }
-
-    // images is a mapping from keys to Texture2D objects. The keys should match
-    // names of uniforms in shader modules
+    patchPipelineValidation();
+    ensureRasterHooksRegistered();
     this.setState({images: {}});
-
     super.initializeState();
   }
 
-  draw({uniforms}: {uniforms: {[key: string]: any}}): void {
+  draw(_opts: {shaderModuleProps: Record<string, unknown>}): void {
     const {model, images, coordinateConversion, bounds} = this.state;
     const {desaturate, transparentColor, tintColor, moduleProps} = this.props;
 
-    // Render the image
     if (
       !model ||
       !images ||
@@ -65,44 +51,67 @@ export default class RasterLayer extends BitmapLayer<RasterLayerAddedProps> {
       return;
     }
 
-    model
-      .setUniforms({
-        ...uniforms,
-        desaturate,
-        transparentColor: transparentColor?.map(x => (x ? x / 255 : 0)),
-        tintColor: tintColor?.slice(0, 3).map(x => x / 255),
-        coordinateConversion,
-        bounds
-      })
-      .updateModuleSettings({
-        ...moduleProps,
-        ...images
-      })
-      .draw();
-  }
+    // Set UBO uniforms for the raster module
+    model.shaderInputs.setProps({
+      raster: {
+        desaturate: desaturate || 0,
+        transparentColor: (transparentColor || [0, 0, 0, 0]).map(x => (x ? x / 255 : 0)),
+        tintColor: (tintColor || [255, 255, 255]).slice(0, 3).map(x => x / 255),
+        coordinateConversion: coordinateConversion || 0,
+        bounds: bounds || [0, 0, 0, 0],
+        opacity: this.props.opacity ?? 1
+      }
+    });
 
-  getShaders(): any {
-    const {gl} = this.context;
-    const {modules = []} = this.props;
-    const webgl2 = isWebGL2(gl);
-
-    // Choose webgl version for module
-    // If fs2 or fs1 keys exist, prefer them, but fall back to fs, so that
-    // version-independent modules don't need to care
-    for (const module of modules) {
-      module.fs = webgl2 ? module.fs2 || module.fs : module.fs1 || module.fs;
-
-      // Sampler type is always float for WebGL1
-      if (!webgl2 && module.defines) {
-        module.defines.SAMPLER_TYPE = 'sampler2D';
+    // Set props for each custom module through shaderInputs.
+    // We call getUniforms ourselves to skip modules that return null (inactive).
+    // Passing allModuleProps directly to setProps would cause the null-fallback
+    // in ShaderInputs to treat the entire props bag as uniforms/bindings,
+    // triggering expensive texture rebinding every frame.
+    const allModuleProps = {...moduleProps, ...images};
+    const modules = this.props.modules || [];
+    for (const mod of modules) {
+      if (mod.getUniforms) {
+        const result = mod.getUniforms(allModuleProps);
+        if (result) {
+          model.shaderInputs.setProps({[mod.name]: result});
+        }
       }
     }
 
+    const drawSuccess = model.draw(this.context.renderPass);
+    if (!drawSuccess) {
+      this._scheduleRedraw();
+    }
+  }
+
+  _scheduleRedraw(): void {
+    if (this._redrawScheduled) return;
+    this._redrawScheduled = true;
+    requestAnimationFrame(() => {
+      this._redrawScheduled = false;
+      if (this.context.deck) {
+        // @ts-expect-error accessing private deck.gl property
+        this.context.deck._needsRedraw = 'RasterLayer pipeline pending';
+      }
+      this.context.layerManager?.setNeedsRedraw('RasterLayer pipeline pending');
+      if (typeof this.props.onRedrawNeeded === 'function') {
+        this.props.onRedrawNeeded();
+      }
+    });
+  }
+
+  getShaders(): any {
+    const {modules = []} = this.props;
+
+    const lumaModules = prepareLumaModules(modules);
+    const parentShaders = super.getShaders();
+
     return {
-      ...super.getShaders(),
-      vs: webgl2 ? vsWebGL2 : vsWebGL1,
-      fs: webgl2 ? fsWebGL2 : fsWebGL1,
-      modules: [project32, ...modules]
+      ...parentShaders,
+      vs: buildRasterVertexShader(),
+      fs: buildRasterFragmentShader(),
+      modules: [...(parentShaders.modules || []), rasterUniforms, ...lumaModules]
     };
   }
 
@@ -112,12 +121,10 @@ export default class RasterLayer extends BitmapLayer<RasterLayerAddedProps> {
     const modules = props && props.modules;
     const oldModules = oldProps && oldProps.modules;
 
-    // setup model first
-    // If the list of modules changed, need to recompile the shaders
     if (changeFlags.extensionsChanged || !modulesEqual(modules, oldModules)) {
-      const {gl} = this.context;
-      this.state.model?.delete();
-      this.state.model = this._getModel(gl);
+      this.state.model?.destroy?.();
+      // @ts-expect-error _getModel is internal to BitmapLayer
+      this.state.model = this._getModel(this.context.device || this.context.gl);
       this.getAttributeManager()?.invalidateAll();
     }
 
@@ -150,10 +157,12 @@ export default class RasterLayer extends BitmapLayer<RasterLayerAddedProps> {
     oldProps: RasterLayerAddedProps;
   }): void {
     const {images} = this.state;
-    const {gl} = this.context;
+    const device = this.context.device;
+    const gl = device?.gl || this.context.gl;
 
     const newImages = loadImages({
       gl,
+      device,
       images,
       imagesData: props.images,
       oldImagesData: oldProps.images
@@ -169,9 +178,9 @@ export default class RasterLayer extends BitmapLayer<RasterLayerAddedProps> {
     if (this.state.images) {
       for (const image of Object.values(this.state.images)) {
         if (Array.isArray(image)) {
-          image.map(x => x && x.delete());
+          image.map(x => x && (x.destroy ? x.destroy() : x.delete?.()));
         } else if (image) {
-          image.delete();
+          image.destroy ? image.destroy() : image.delete?.();
         }
       }
     }

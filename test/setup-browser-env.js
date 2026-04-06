@@ -4,7 +4,8 @@
 /* setup.js */
 import {JSDOM, VirtualConsole} from 'jsdom';
 import global from 'global';
-const {gl} = require('@deck.gl/test-utils');
+
+const nop = () => {};
 
 const virtualConsole = new VirtualConsole();
 virtualConsole.sendTo(console);
@@ -32,16 +33,6 @@ Object.defineProperty(window, 'prompt', {
   writable: true
 });
 
-// TODO: This should be the right wat to mock matchMedia but matchMedia was still undefined so I moved to another way to mock it
-
-// Object.defineProperty(window, 'matchMedia', {
-//   value: () => ({
-//       matches: false,
-//       addListener: function() {},
-//       removeListener: function() {}
-//   }),
-//   writable: true
-// });
 window.matchMedia = () => {
   return {
     matches: false,
@@ -80,8 +71,6 @@ Object.defineProperty(window, 'clipboardData', {
 ].forEach(prop => {
   window[prop] = () => {};
 });
-
-const nop = () => {};
 
 function mockCanvas(globalWindow) {
   globalWindow.HTMLCanvasElement.prototype.getContext = function mockGetContext() {
@@ -126,11 +115,16 @@ global.HTMLElement = window.HTMLElement;
 global.Element = window.Element;
 global.fetch = window.fetch;
 
+// deck.gl 9 test-utils: gl may be 1 (number) when no WebGL is available, device will be NullDevice
+const {gl} = require('@deck.gl/test-utils');
+
 // Create a dummy canvas for the headless gl context
 const canvas = global.document.createElement('canvas');
-canvas.width = gl.drawingBufferWidth;
-canvas.height = gl.drawingBufferHeight;
-gl.canvas = canvas;
+if (gl && typeof gl === 'object') {
+  canvas.width = gl.drawingBufferWidth;
+  canvas.height = gl.drawingBufferHeight;
+  gl.canvas = canvas;
+}
 
 Object.keys(global.window).forEach(property => {
   if (typeof global[property] === 'undefined') {

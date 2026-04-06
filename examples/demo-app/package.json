@@ -8,8 +8,7 @@
     "start:local-ai": "NODE_ENV=local node esbuild.config.mjs --start --env.ai",
     "start:local-deck": "NODE_ENV=local node esbuild.config.mjs --start --env.deck",
     "start:local-deck-src": "NODE_ENV=local node esbuild.config.mjs --start --env.deck_src",
-    "start:local-loaders-src": "NODE_ENV=local node esbuild.config.mjs --start --env.loaders_src",
-    "start:local-hubble-src": "NODE_ENV=local node esbuild.config.mjs --start --env.hubble_src"
+    "start:local-loaders-src": "NODE_ENV=local node esbuild.config.mjs --start --env.loaders_src"
   },
   "dependencies": {
     "@auth0/auth0-spa-js": "^2.1.2",

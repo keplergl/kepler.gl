@@ -2,12 +2,171 @@
 // Copyright contributors to the kepler.gl project
 
 /* eslint-disable guard-for-in */
-import {AGGREGATION_OPERATION, _BinSorter as BinSorter} from '@deck.gl/aggregation-layers';
 import {console as Console} from 'global/window';
 
 import {aggregate} from '@kepler.gl/utils';
 import {AGGREGATION_TYPES, SCALE_FUNC} from '@kepler.gl/constants';
 import {RGBAColor} from '@kepler.gl/types';
+import type ClusterBuilder from './cluster-utils';
+
+const AGGREGATION_OPERATION = {
+  SUM: 'SUM' as const,
+  MEAN: 'MEAN' as const,
+  MIN: 'MIN' as const,
+  MAX: 'MAX' as const,
+  COUNT: 'COUNT' as const
+};
+
+const MAX_32_BIT_FLOAT = 3.402823466e38;
+
+interface Bin {
+  points: Record<string, unknown>[];
+  filteredPoints?: Record<string, unknown>[] | null;
+  index?: number;
+}
+
+interface AggregatedBin {
+  i: number;
+  value: number;
+  counts: number;
+}
+
+const defaultGetValue = (points: Record<string, unknown>[]) => points.length;
+const defaultGetPoints = (bin: Bin) => bin.points;
+const defaultGetIndex = (bin: Bin) => bin.index;
+const ascending = (a: number, b: number) => (a < b ? -1 : a > b ? 1 : a >= b ? 0 : NaN);
+
+function clamp(value: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function getQuantileDomain(data: AggregatedBin[], valueAccessor: (d: AggregatedBin) => number) {
+  return data.map(valueAccessor).sort(ascending);
+}
+
+function getOrdinalDomain(data: AggregatedBin[], valueAccessor: (d: AggregatedBin) => number) {
+  return [...new Set(data.map(valueAccessor))];
+}
+
+class BinSorter {
+  maxCount!: number;
+  maxValue!: number;
+  minValue!: number;
+  totalCount!: number;
+  aggregatedBins: AggregatedBin[];
+  sortedBins!: AggregatedBin[];
+  binMap: Record<number, AggregatedBin>;
+
+  constructor(bins: Bin[] = [], props: Record<string, any> = {}) {
+    this.aggregatedBins = this._getAggregatedBins(bins, props);
+    this._updateMinMaxValues();
+    this.binMap = this._getBinMap();
+  }
+
+  _getAggregatedBins(bins: Bin[], props: Record<string, any>): AggregatedBin[] {
+    const {
+      getValue = defaultGetValue,
+      getPoints = defaultGetPoints,
+      getIndex = defaultGetIndex,
+      filterData
+    } = props;
+    const hasFilter = typeof filterData === 'function';
+    const aggregatedBins: AggregatedBin[] = [];
+    let index = 0;
+    for (let binIndex = 0; binIndex < bins.length; binIndex++) {
+      const bin = bins[binIndex];
+      const points = getPoints(bin);
+      const i = getIndex(bin);
+      const filteredPoints = hasFilter ? points.filter(filterData) : points;
+      bin.filteredPoints = hasFilter ? filteredPoints : null;
+      const value = filteredPoints.length ? getValue(filteredPoints) : null;
+      if (value !== null && value !== undefined) {
+        aggregatedBins[index] = {
+          i: Number.isFinite(i) ? i : binIndex,
+          value,
+          counts: filteredPoints.length
+        };
+        index++;
+      }
+    }
+    return aggregatedBins;
+  }
+
+  _updateMinMaxValues() {
+    let maxCount = 0;
+    let maxValue = -MAX_32_BIT_FLOAT;
+    let minValue = MAX_32_BIT_FLOAT;
+    let totalCount = 0;
+    for (const x of this.aggregatedBins) {
+      maxCount = maxCount > x.counts ? maxCount : x.counts;
+      maxValue = maxValue > x.value ? maxValue : x.value;
+      minValue = minValue < x.value ? minValue : x.value;
+      totalCount += x.counts;
+    }
+    if (this.aggregatedBins.length === 0) {
+      maxValue = 0;
+      minValue = 0;
+    }
+    this.maxCount = maxCount;
+    this.maxValue = maxValue;
+    this.minValue = minValue;
+    this.totalCount = totalCount;
+  }
+
+  _getBinMap() {
+    const binMap = {};
+    for (const bin of this.aggregatedBins) {
+      binMap[bin.i] = bin;
+    }
+    return binMap;
+  }
+
+  _percentileToIndex(percentileRange: number[]) {
+    const len = this.sortedBins.length;
+    if (len < 2) return [0, 0];
+    const [lower, upper] = percentileRange.map(n => clamp(n, 0, 100));
+    return [Math.ceil((lower / 100) * (len - 1)), Math.floor((upper / 100) * (len - 1))];
+  }
+
+  getValueDomainByScale(scale: string, [lower = 0, upper = 100]: number[] = []) {
+    if (!this.sortedBins) {
+      this.sortedBins = this.aggregatedBins.sort((a, b) => ascending(a.value, b.value));
+    }
+    if (!this.sortedBins.length) return [];
+    const indexEdge = this._percentileToIndex([lower, upper]);
+    return this._getScaleDomain(scale, indexEdge);
+  }
+
+  _getScaleDomain(scaleType: string, [lowerIdx, upperIdx]: number[]) {
+    const bins = this.sortedBins;
+    switch (scaleType) {
+      case 'quantize':
+      case 'linear':
+        return [bins[lowerIdx].value, bins[upperIdx].value];
+      case 'quantile':
+        return getQuantileDomain(bins.slice(lowerIdx, upperIdx + 1), d => d.value);
+      case 'ordinal':
+        return getOrdinalDomain(bins, d => d.value);
+      default:
+        return [bins[lowerIdx].value, bins[upperIdx].value];
+    }
+  }
+
+  getValueRange(percentileRange?: number[]) {
+    if (!this.sortedBins) {
+      this.sortedBins = this.aggregatedBins.sort((a, b) => ascending(a.value, b.value));
+    }
+    if (!this.sortedBins.length) return [];
+    let lowerIdx = 0;
+    let upperIdx = this.sortedBins.length - 1;
+    if (Array.isArray(percentileRange)) {
+      const idxRange = this._percentileToIndex(percentileRange);
+      lowerIdx = idxRange[0];
+      upperIdx = idxRange[1];
+    }
+    return [this.sortedBins[lowerIdx].value, this.sortedBins[upperIdx].value];
+  }
+}
 
 export type UpdaterType = (this: CPUAggregator, step, props, dimensionUpdater) => void;
 export type BindedUpdaterType = () => void;
@@ -66,7 +225,10 @@ export const DECK_AGGREGATION_MAP = {
   [AGGREGATION_OPERATION.MAX]: AGGREGATION_TYPES.maximum
 };
 
-export function getValueFunc(aggregation, accessor) {
+export function getValueFunc(
+  aggregation: string,
+  accessor: (d: Record<string, unknown>) => number
+) {
   if (!aggregation || !AGGREGATION_OPERATION[aggregation.toUpperCase()]) {
     Console.warn(`Aggregation ${aggregation} is not supported`);
   }
@@ -77,7 +239,7 @@ export function getValueFunc(aggregation, accessor) {
   return pts => aggregate(pts.map(accessor), keplerOp);
 }
 
-export function getScaleFunctor(scaleType) {
+export function getScaleFunctor(scaleType: string) {
   if (!scaleType || !SCALE_FUNC[scaleType]) {
     Console.warn(`Scale ${scaleType} is not supported`);
   }
@@ -107,8 +269,7 @@ export function getGetValue(this: CPUAggregator, step, props, dimensionUpdater) 
 export function getDimensionSortedBins(this: CPUAggregator, step, props, dimensionUpdater) {
   const {key} = dimensionUpdater;
   const {getValue} = this.state.dimensions[key];
-  // @ts-expect-error
-  const sortedBins = new BinSorter(this.state.layerData.data || [], {
+  const sortedBins = new BinSorter((this.state.layerData.data || []) as unknown as Bin[], {
     getValue,
     filterData: props._filterData
   });
@@ -167,12 +328,20 @@ export function getDimensionScale(this: CPUAggregator, step, props, dimensionUpd
 
   if (typeof onSet === 'object' && typeof props[onSet.props] === 'function') {
     const sortedBins = this.state.dimensions[key].sortedBins;
-    props[onSet.props]({domain: scaleFunc.domain(), aggregatedBins: sortedBins.binMap});
+    if (sortedBins) {
+      props[onSet.props]({domain: scaleFunc.domain(), aggregatedBins: sortedBins.binMap});
+    }
   }
   this._setDimensionState(key, {scaleFunc});
 }
 
-function normalizeResult(result: {hexagons?; layerData?} = {}) {
+function normalizeResult(
+  result: {
+    hexagons?: Record<string, unknown>[];
+    layerData?: Record<string, unknown>[];
+    data?: Record<string, unknown>[];
+  } = {}
+) {
   // support previous hexagonAggregator API
   if (result.hexagons) {
     return Object.assign({data: result.hexagons}, result);
@@ -225,8 +394,11 @@ export const defaultAggregation: AggregationType = {
   ]
 };
 
-function getSubLayerAccessor(dimensionState, dimension) {
-  return cell => {
+function getSubLayerAccessor(
+  dimensionState: {sortedBins: BinSorter; scaleFunc: ReturnType<typeof getScaleFunctor>},
+  dimension: DimensionType
+) {
+  return (cell: {index: number}) => {
     const {sortedBins, scaleFunc} = dimensionState;
     const bin = sortedBins.binMap[cell.index];
 
@@ -390,10 +562,18 @@ export const defaultElevationDimension: DimensionType<number> = {
 export const defaultDimensions = [defaultColorDimension, defaultElevationDimension];
 
 export type CPUAggregatorState = {
-  layerData: {data?};
-  dimensions: object;
-  geoJSON?;
-  clusterBuilder?;
+  layerData: {data?: Record<string, unknown>[]};
+  dimensions: Record<
+    string,
+    {
+      getValue?: (...args: unknown[]) => number;
+      sortedBins?: BinSorter;
+      valueDomain?: number[];
+      scaleFunc?: ((...args: unknown[]) => unknown) & {domain: () => number[]; scaleType?: string};
+    }
+  >;
+  geoJSON?: GeoJSON.FeatureCollection;
+  clusterBuilder?: ClusterBuilder;
 };
 
 export default class CPUAggregator {
@@ -438,7 +618,7 @@ export default class CPUAggregator {
     return defaultDimensions;
   }
 
-  updateAllDimensions(props) {
+  updateAllDimensions(props: Record<string, any>) {
     let dimensionChanges: BindedUpdaterType[] = [];
     // update all dimensions
     for (const dim in this.dimensionUpdaters) {
@@ -449,12 +629,19 @@ export default class CPUAggregator {
     dimensionChanges.forEach(f => typeof f === 'function' && f());
   }
 
-  updateAggregation(props, aggregationParams) {
+  updateAggregation(props: Record<string, any>, aggregationParams: Record<string, any>) {
     const updaters = this._accumulateUpdaters(0, props, this.aggregationUpdater);
     updaters.forEach(f => typeof f === 'function' && f(aggregationParams));
   }
 
-  updateState(opts, aggregationParams) {
+  updateState(
+    opts: {
+      oldProps: Record<string, any>;
+      props: Record<string, any>;
+      changeFlags: Record<string, any>;
+    },
+    aggregationParams: Record<string, any>
+  ) {
     const {oldProps, props, changeFlags} = opts;
     let dimensionChanges: BindedUpdaterType[] = [];
 
@@ -482,12 +669,12 @@ export default class CPUAggregator {
   }
 
   // Update private state
-  setState(updateObject) {
+  setState(updateObject: Partial<CPUAggregatorState>) {
     this.state = Object.assign({}, this.state, updateObject);
   }
 
   // Update private state.dimensions
-  _setDimensionState(key, updateObject) {
+  _setDimensionState(key: string, updateObject: Record<string, any>) {
     this.setState({
       dimensions: Object.assign({}, this.state.dimensions, {
         [key]: Object.assign({}, this.state.dimensions[key], updateObject)
@@ -543,7 +730,12 @@ export default class CPUAggregator {
       const updater = dimension.updateSteps[i].updater;
       if (typeof updater === 'function') {
         updaters.push(
-          updater.bind(this, dimension.updateSteps[i], props, dimension) as LocalUpdaterType
+          (updater as UpdaterType).bind(
+            this,
+            dimension.updateSteps[i],
+            props,
+            dimension
+          ) as LocalUpdaterType
         );
       }
     }
@@ -572,12 +764,20 @@ export default class CPUAggregator {
     return updaters;
   }
 
-  _getAggregationChanges(oldProps, props, changeFlags) {
+  _getAggregationChanges(
+    oldProps: Record<string, any>,
+    props: Record<string, any>,
+    changeFlags: Record<string, any>
+  ) {
     const updaters = this._getAllUpdaters(this.aggregationUpdater, oldProps, props, changeFlags);
     return updaters.length ? updaters : null;
   }
 
-  _getDimensionChanges(oldProps, props, changeFlags) {
+  _getDimensionChanges(
+    oldProps: Record<string, any>,
+    props: Record<string, any>,
+    changeFlags: Record<string, any>
+  ) {
     let updaters: BindedUpdaterType[] = [];
 
     // get dimension to be updated
@@ -591,12 +791,12 @@ export default class CPUAggregator {
     return updaters.length ? updaters : null;
   }
 
-  getUpdateTriggers(props) {
+  getUpdateTriggers(props: Record<string, any>) {
     const _updateTriggers = props.updateTriggers || {};
     const updateTriggers = {};
 
     for (const key in this.dimensionUpdaters) {
-      const {accessor, updateSteps}: {accessor; updateSteps: UpdateStepsType[]} =
+      const {accessor, updateSteps}: {accessor: string; updateSteps: UpdateStepsType[]} =
         this.dimensionUpdaters[key];
       // fold dimension triggers into each accessor
       updateTriggers[accessor] = {};
@@ -625,10 +825,10 @@ export default class CPUAggregator {
     return updateTriggers;
   }
 
-  getPickingInfo({info}, layerProps) {
+  getPickingInfo({info}: {info: Record<string, any>}, layerProps: Record<string, any>) {
     const isPicked = info.picked && info.index > -1;
-    let object = null;
-    const cell = isPicked ? this.state.layerData.data[info.index] : null;
+    let object: Record<string, any> | null = null;
+    const cell = isPicked ? this.state.layerData.data?.[info.index] : null;
     if (cell) {
       let binInfo = {};
       for (const key in this.dimensionUpdaters) {
@@ -655,7 +855,7 @@ export default class CPUAggregator {
     });
   }
 
-  getAccessor(dimensionKey, layerProps) {
+  getAccessor(dimensionKey: string, layerProps: Record<string, any>) {
     if (!Object.prototype.hasOwnProperty.call(this.dimensionUpdaters, dimensionKey)) {
       return nop;
     }

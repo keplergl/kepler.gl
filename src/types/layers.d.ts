@@ -427,6 +427,7 @@ export type LayerCallbacks = {
     }
   ) => void;
   onRedrawNeeded?: (idx: number) => void;
+  onFitBounds?: (idx: number, bounds: [number, number, number, number]) => void;
 };
 
 export type BindedLayerCallbacks = {
@@ -438,6 +439,7 @@ export type BindedLayerCallbacks = {
     coordinate?: [number, number]
   ) => void;
   onRedrawNeeded?: () => void;
+  onFitBounds?: (bounds: [number, number, number, number]) => void;
 };
 
 export type VisualChannelAggregation = 'colorAggregation' | 'sizeAggregation';

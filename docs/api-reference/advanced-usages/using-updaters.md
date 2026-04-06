@@ -39,7 +39,7 @@ const composedReducer = (state, action) => {
          foo: {
             ...state.keplerGl.foo,
             mapState: mapStateUpdaters.togglePerspectiveUpdater(
-            t  state.keplerGl.foo.mapState
+              state.keplerGl.foo.mapState
             )
          }
        }

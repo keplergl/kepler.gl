@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {PickInfo} from '@deck.gl/core/lib/deck';
-import {Editor, Feature, FeatureSelectionContext} from '@kepler.gl/types';
+import {Editor, Feature, FeatureSelectionContext, PickInfo} from '@kepler.gl/types';
 import {EDITOR_LAYER_ID, EDITOR_MODES} from '@kepler.gl/constants';
 
 /**
@@ -31,7 +30,7 @@ export function isDrawingActive(editorMenuActive: boolean, mode: string): boolea
  */
 // eslint-disable-next-line complexity
 export function onClick(
-  info: PickInfo<any>,
+  info: PickInfo,
   event: any,
   {
     editorMenuActive,
@@ -110,7 +109,7 @@ export function onClick(
  * @returns Returns true is hover is handled.
  */
 export function onHover(
-  info: PickInfo<any>,
+  info: PickInfo,
   {hoverInfo, editor, editorMenuActive}: {editorMenuActive: boolean; editor: Editor; hoverInfo}
 ): boolean {
   if (isDrawingActive(editorMenuActive, editor.mode)) {
@@ -140,13 +139,14 @@ const MIN_DISTANCE_TO_BOTTOM_EDGE = 100;
  */
 // eslint-disable-next-line complexity
 export function getTooltip(
-  // TODO PickInfo type in deck typings doesn't include viewport and pixel
-  info: PickInfo<any> & {viewport: any; pixel: any[]},
+  // TODO PickingInfo type in deck typings doesn't include viewport and pixel
+  info: PickInfo & {viewport: {width?: number; height?: number}; pixel: number[]},
   {editor, theme, editorMenuActive}: {editorMenuActive: boolean; editor: Editor; theme: any}
 ): object | null {
   const {object, layer, viewport = {}, pixel = []} = info;
-  const closeToLeftEdge = viewport?.width - pixel[0] < MIN_DISTANCE_TO_LEFT_EDGE;
-  const closeToBottomEdge = viewport?.height - pixel[1] < MIN_DISTANCE_TO_BOTTOM_EDGE;
+  const closeToLeftEdge = (viewport?.width ?? 0) - (pixel?.[0] ?? 0) < MIN_DISTANCE_TO_LEFT_EDGE;
+  const closeToBottomEdge =
+    (viewport?.height ?? 0) - (pixel?.[1] ?? 0) < MIN_DISTANCE_TO_BOTTOM_EDGE;
 
   // don't show the tooltip when the menu is visible
   if (editor.selectionContext?.rightClick) {
@@ -155,7 +155,10 @@ export function getTooltip(
 
   if (isDrawingActive(editorMenuActive, editor.mode)) {
     // TODO save interaction state in editor object
-    if (layer?.state?.mode?._clickSequence?.length) {
+    if (
+      (layer?.state as {mode?: {_clickSequence?: unknown[]}} | undefined)?.mode?._clickSequence
+        ?.length
+    ) {
       return null;
     }
 

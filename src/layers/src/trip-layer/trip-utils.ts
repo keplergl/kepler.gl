@@ -59,9 +59,11 @@ export function isTripGeoJsonField(dataContainer: DataContainerInterface, field)
     return false;
   }
 
-  // condition 3:the 4th coordinate of the first feature line strings is valid time
-  // @ts-expect-error
-  const tsHolder = features[0].geometry.coordinates.map(coord => coord[3]);
+  const geom = features[0].geometry;
+  if (!geom || geom.type === 'GeometryCollection' || !('coordinates' in geom)) {
+    return false;
+  }
+  const tsHolder = (geom.coordinates as number[][]).map(coord => String(coord[3]));
 
   return Boolean(containValidTime(tsHolder));
 }

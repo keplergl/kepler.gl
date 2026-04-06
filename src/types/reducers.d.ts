@@ -2,7 +2,16 @@
 // Copyright contributors to the kepler.gl project
 
 import {Field, Millisecond} from './types';
-import type {MapViewState} from '@deck.gl/core/typed';
+type MapViewState = {
+  latitude: number;
+  longitude: number;
+  zoom: number;
+  bearing?: number;
+  pitch?: number;
+  transitionDuration?: number;
+  transitionInterpolator?: object;
+};
+import type {ExportResolutionOption} from '@kepler.gl/constants';
 
 export type MapState = {
   pitch: number;
@@ -371,8 +380,8 @@ export type BaseMapStyle = {
 };
 
 export declare type ExportImage = {
-  ratio: 'SCREEN' | 'FOUR_BY_THREE' | 'SIXTEEN_BY_NINE' | 'CUSTOM';
-  resolution: 'ONE_X' | 'TWO_X';
+  ratio: EXPORT_IMG_RATIOS;
+  resolution: ExportResolutionOption;
   legend: boolean;
   mapH: number;
   mapW: number;

@@ -243,10 +243,12 @@ export default class TripLayer extends Layer {
   }
 
   static findDefaultLayerProps(
-    {label, fields = [], dataContainer, id}: KeplerTable,
+    {label, fields = [], dataContainer, id, fieldPairs = []}: KeplerTable,
     foundLayers?: any[]
   ) {
-    const geojsonColumns = fields.filter(f => f.type === 'geojson').map(f => f.name);
+    const geojsonColumns = fields
+      .filter(f => f.type === 'geojson' || f.type === 'geoarrow')
+      .map(f => f.name);
 
     const defaultColumns = {
       geojson: uniq([...GEOJSON_FIELDS.geojson, ...geojsonColumns])
@@ -275,6 +277,44 @@ export default class TripLayer extends Layer {
             !tripGeojsonColumns.find(c => prop.columns.geojson.name === c.geojson.name)
         )
       };
+    }
+
+    // Try to detect table columns (id/lat/lng/timestamp) for table column mode
+    // This allows creating trip layers from tabular data without GeoJSON
+    if (fieldPairs.length && fields.length) {
+      // Default layer columns for table mode
+      const defaultTableColumns = {
+        id: {value: null, fieldIdx: -1},
+        lat: {value: null, fieldIdx: -1},
+        lng: {value: null, fieldIdx: -1},
+        timestamp: {value: null, fieldIdx: -1},
+        altitude: {value: null, fieldIdx: -1, optional: true},
+        geojson: {value: null, fieldIdx: -1}
+      };
+
+      const tableColumns = detectTableColumns(
+        {fields, fieldPairs} as KeplerTable,
+        defaultTableColumns,
+        'timestamp'
+      );
+
+      if (tableColumns) {
+        // Found required columns for table mode
+        return {
+          props: [
+            {
+              label:
+                tableColumns.label ||
+                (typeof label === 'string' && label.replace(/\.[^/.]+$/, '')) ||
+                this.type,
+              columns: tableColumns.columns,
+              isVisible: true,
+              columnMode: COLUMN_MODE_TABLE
+            }
+          ],
+          foundLayers
+        };
+      }
     }
 
     return {props: []};
@@ -329,15 +369,20 @@ export default class TripLayer extends Layer {
     const {data} = this.updateData(datasets, oldLayerData);
 
     let valueAccessor;
+    let dataAccessor;
     if (this.config.columnMode === COLUMN_MODE_GEOJSON) {
       valueAccessor = (dc: DataContainerInterface, f, fieldIndex: number) => {
         return dc.valueAt(f.properties.index, fieldIndex);
       };
+      // For GEOJSON mode, properties.index is the row index in the data container
+      dataAccessor = () => d => ({index: d.properties.index});
     } else {
       valueAccessor = getTableModeValueAccessor;
+      // For TABLE mode, properties.index is the feature index (not row index).
+      // Use the first row from properties.values to get field values for color/size.
+      dataAccessor = () => d => d.properties.values[0];
     }
     const indexAccessor = f => f.properties.index;
-    const dataAccessor = () => d => ({index: d.properties.index});
     const accessors = this.getAttributeAccessors({dataAccessor, dataContainer});
     const getFilterValue = gpuFilter.filterValueAccessor(dataContainer)(
       indexAccessor,
