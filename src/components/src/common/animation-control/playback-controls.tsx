@@ -13,6 +13,7 @@ import AnimationWindowControlFactory, {AnimationItem} from './animation-window-c
 import ResetControlFactory from './reset-control';
 import PlayControlFactory from './play-control';
 import SpeedControlFactory from './speed-control';
+import ExportVideoControlFactory from './export-video-control';
 import {BaseComponentProps} from '../../types';
 
 const DEFAULT_BUTTON_HEIGHT = '20px';
@@ -74,6 +75,7 @@ export interface PlaybackControlsProps {
   pauseAnimation?: () => void;
   resetAnimation?: () => void;
   startAnimation: () => void;
+  exportAnimation?: () => void;
   playbackIcons?: Record<string, React.FC<{height: number}>>;
   animationItems?: {[key: string]: AnimationItem};
   buttonStyle?: string;
@@ -88,7 +90,8 @@ PlaybackControlsFactory.deps = [
   WindowActionControlFactory,
   AnimationWindowControlFactory,
   ResetControlFactory,
-  PlayControlFactory
+  PlayControlFactory,
+  ExportVideoControlFactory
 ];
 
 function PlaybackControlsFactory(
@@ -96,14 +99,16 @@ function PlaybackControlsFactory(
   WindowActionControl,
   AnimationWindowControl,
   ResetControl,
-  PlayControl
+  PlayControl,
+  ExportVideoControl
 ) {
   const PLAYBACK_CONTROLS_DEFAULT_ACTION_COMPONENTS = [
     PlayControl,
     SpeedControlFactory(AnimationSpeedSlider),
     ResetControl,
     WindowActionControl,
-    AnimationWindowControl
+    AnimationWindowControl,
+    ExportVideoControl
   ];
 
   // eslint-disable-next-line complexity
@@ -119,6 +124,7 @@ function PlaybackControlsFactory(
     pauseAnimation = nop,
     resetAnimation = nop,
     startAnimation = nop,
+    exportAnimation,
     playbackIcons = DEFAULT_ICONS,
     animationItems = DEFAULT_ANIMATE_ITEMS,
     buttonStyle = 'secondary',
@@ -168,6 +174,7 @@ function PlaybackControlsFactory(
             pauseAnimation={pauseAnimation}
             resetAnimation={resetAnimation}
             startAnimation={startAnimation}
+            exportAnimation={exportAnimation}
             playbackIcons={playbackIcons}
             isSpeedControlVisible={isSpeedControlVisible}
             speed={speed}

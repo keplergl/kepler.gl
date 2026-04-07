@@ -48,6 +48,7 @@ export type TimeRangeFilterProps = {
   setFilter: (v: number[]) => void;
   setFilterPlot: ActionHandler<typeof setFilterPlot>;
   toggleAnimation: () => void;
+  exportAnimation?: () => void;
   timeline: Timeline;
   datasets: Datasets;
   layers: readonly Layer[];
@@ -85,6 +86,7 @@ export type TimeWidgetProps = {
   showTimeDisplay: boolean;
   isAnimatable: boolean;
   resetAnimation: () => void;
+  exportAnimation?: () => void;
   onClose: () => void;
   onToggleMinify: () => void;
   setFilterAnimationTime: ActionHandler<typeof setFilterAnimationTime>;

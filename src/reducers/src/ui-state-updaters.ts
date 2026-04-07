@@ -34,6 +34,7 @@ import {
   ExportJson,
   ExportMap,
   ExportImage,
+  ExportVideo,
   MapControlItem,
   MapControls,
   UiState
@@ -223,6 +224,25 @@ export const DEFAULT_EXPORT_MAP: ExportMap = {
 };
 
 /**
+ * Default initial `exportVideo` settings
+ * @memberof uiStateUpdaters
+ * @constant
+ * @property mediaType Default: `'gif'`
+ * @property cameraPreset Default: `'None'`
+ * @property fileName Default: `'kepler.gl'`
+ * @property resolution Default: `''`
+ * @property durationMs Default: `1000`
+ * @public
+ */
+export const DEFAULT_EXPORT_VIDEO: ExportVideo = {
+  mediaType: 'gif',
+  cameraPreset: 'None',
+  fileName: 'kepler.gl',
+  resolution: '',
+  durationMs: 1000
+};
+
+/**
  * Default initial `uiState`
  * @memberof uiStateUpdaters
  * @constant
@@ -253,6 +273,8 @@ export const INITIAL_UI_STATE: UiState = {
   exportData: DEFAULT_EXPORT_DATA,
   // html export
   exportMap: DEFAULT_EXPORT_MAP,
+  // export video modal ui
+  exportVideo: DEFAULT_EXPORT_VIDEO,
   // map control panels
   mapControls: DEFAULT_MAP_CONTROLS,
   // ui notifications
@@ -590,6 +612,26 @@ export const cleanupExportImageUpdater = (state: UiState): UiState => ({
     error: false,
     processing: false,
     center: false
+  }
+});
+
+/**
+ * Set `exportVideo` settings: mediaType, cameraPreset, fileName, resolution, durationMs
+ * @memberof uiStateUpdaters
+ * @param state `uiState`
+ * @param action
+ * @param action.payload new video export settings
+ * @returns nextState
+ * @public
+ */
+export const setExportVideoSettingUpdater = (
+  state: UiState,
+  {payload: newSetting}: UIStateActions.SetExportVideoSettingUpdaterAction
+): UiState => ({
+  ...state,
+  exportVideo: {
+    ...state.exportVideo,
+    ...newSetting
   }
 });
 

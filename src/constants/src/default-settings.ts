@@ -80,6 +80,13 @@ export const ADD_MAP_STYLE_ID = 'addMapStyle';
  */
 export const EXPORT_MAP_ID = 'exportMap';
 /**
+ * Modal id: export video modal
+ * @constant
+ * @type {string}
+ * @public
+ */
+export const EXPORT_VIDEO_ID = 'exportVideo';
+/**
  * Modal id: save map modal
  * @constant
  * @type {string}

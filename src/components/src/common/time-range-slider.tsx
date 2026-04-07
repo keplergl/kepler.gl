@@ -15,6 +15,7 @@ import AnimationControlFactory from './animation-control/animation-control';
 import {BaseComponentProps} from '../types';
 
 const animationControlWidth = 176;
+const animationControlExportWidth = 19;
 
 type TimeRangeSliderProps = {
   domain?: [number, number];
@@ -36,6 +37,7 @@ type TimeRangeSliderProps = {
   animationWindow: string;
   resetAnimation?: () => void;
   toggleAnimation: () => void;
+  exportAnimation?: () => void;
   updateAnimationSpeed?: (val: number) => void;
   setFilterAnimationWindow?: (id: string) => void;
   setFilterPlot?: ActionHandler<typeof setFilterPlot>;
@@ -115,6 +117,7 @@ export default function TimeRangeSliderFactory(
       updateAnimationSpeed,
       setFilterAnimationWindow,
       toggleAnimation,
+      exportAnimation,
       onChange,
       setFilterPlot,
       timeline
@@ -125,12 +128,13 @@ export default function TimeRangeSliderFactory(
       () => getTimeBinsForInterval(timeBins, plotType?.interval),
       [timeBins, plotType?.interval]
     );
+    const width = animationControlWidth + (exportAnimation ? animationControlExportWidth : 0);
 
     const style = useMemo(
       () => ({
-        width: isEnlarged ? `calc(100% - ${animationControlWidth}px)` : '100%'
+        width: isEnlarged ? `calc(100% - ${width}px)` : '100%'
       }),
-      [isEnlarged]
+      [isEnlarged, width]
     );
 
     return (
@@ -176,6 +180,7 @@ export default function TimeRangeSliderFactory(
               updateAnimationSpeed={updateAnimationSpeed}
               setTimelineValue={throttledOnchange}
               setAnimationWindow={setFilterAnimationWindow}
+              exportAnimation={exportAnimation}
               showTimeDisplay={false}
               timeline={timeline}
             />
@@ -183,13 +188,14 @@ export default function TimeRangeSliderFactory(
           {isEnlarged && !isMinified ? (
             <PlaybackControls
               isAnimatable={isAnimatable}
-              width={animationControlWidth}
+              width={width}
               speed={speed}
               animationWindow={animationWindow}
               updateAnimationSpeed={updateAnimationSpeed}
               setFilterAnimationWindow={setFilterAnimationWindow}
               pauseAnimation={toggleAnimation}
               resetAnimation={resetAnimation}
+              exportAnimation={exportAnimation}
               isAnimating={isAnimating}
               startAnimation={toggleAnimation}
             />

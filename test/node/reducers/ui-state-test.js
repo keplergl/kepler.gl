@@ -9,6 +9,7 @@ import {
   toggleSidePanelCloseButton,
   openDeleteModal,
   setExportImageSetting,
+  setExportVideoSetting,
   toggleMapControl,
   setMapControlVisibility,
   setExportSelectedDataset,
@@ -381,6 +382,46 @@ test('#uiStateReducer -> LOAD_FILES_ERR', t => {
       }
     ],
     'should add an error notification'
+  );
+
+  t.end();
+});
+
+test('#uiStateReducer -> SET_EXPORT_VIDEO_SETTING', t => {
+  const newState = reducer(INITIAL_UI_STATE, setExportVideoSetting({mediaType: 'webm'}));
+
+  const expectedState = {
+    ...INITIAL_UI_STATE,
+    exportVideo: {
+      ...INITIAL_UI_STATE.exportVideo,
+      mediaType: 'webm'
+    }
+  };
+
+  t.deepEqual(newState, expectedState, 'should update mediaType in exportVideo');
+
+  const nextState = reducer(
+    newState,
+    setExportVideoSetting({fileName: 'my-video', durationMs: 5000})
+  );
+
+  t.deepEqual(
+    nextState.exportVideo,
+    {
+      ...INITIAL_UI_STATE.exportVideo,
+      mediaType: 'webm',
+      fileName: 'my-video',
+      durationMs: 5000
+    },
+    'should merge multiple settings into exportVideo'
+  );
+
+  const emptyUpdateState = reducer(nextState, setExportVideoSetting({}));
+
+  t.deepEqual(
+    emptyUpdateState.exportVideo,
+    nextState.exportVideo,
+    'should keep existing values when updating with empty object'
   );
 
   t.end();

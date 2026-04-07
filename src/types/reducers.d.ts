@@ -419,6 +419,14 @@ export type ExportMap = {
   format: 'HTML' | 'JSON';
 };
 
+export type ExportVideo = {
+  mediaType: string;
+  cameraPreset: string;
+  fileName: string;
+  resolution: string;
+  durationMs: number;
+};
+
 export type MapControlItem = {
   show: boolean;
   active: boolean;
@@ -480,6 +488,8 @@ export type UiState = {
   exportData: ExportData;
   // html export
   exportMap: ExportMap;
+  // export video modal ui
+  exportVideo: ExportVideo;
   // map control panels
   mapControls: MapControls;
   // ui notifications
