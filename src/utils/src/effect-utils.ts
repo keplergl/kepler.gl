@@ -4,7 +4,7 @@
 import SunCalc from 'suncalc';
 import cloneDeep from 'lodash/cloneDeep';
 
-import {PostProcessEffect} from '@deck.gl/core';
+import type {Effect as DeckEffect} from '@deck.gl/core';
 
 import {
   LIGHT_AND_SHADOW_EFFECT,
@@ -37,7 +37,7 @@ export function computeDeckEffects({
   visState: VisState;
   mapState: MapState;
   isExport?: boolean;
-}): PostProcessEffect<any>[] {
+}): DeckEffect[] {
   // TODO: 1) deck effects per deck context 2) preserved between draws
   let hasLightingShadow = false;
 
