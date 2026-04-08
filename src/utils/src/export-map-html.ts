@@ -167,7 +167,7 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
                   {style: {
                     position: 'absolute',
                     display: 'flex',
-                    top: 0,
+                    top: (props.top || 0) + 'px',
                     right: 0,
                     zIndex: 1,
                     maxHeight: '100%',
@@ -185,7 +185,8 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
                           overflow: 'hidden',
                           display: 'flex',
                           flexDirection: 'column',
-                          pointerEvents: 'all'
+                          pointerEvents: 'all',
+                          marginTop: '10px'
                         }
                       }, react.createElement(EffectManager, null))
                     : null
