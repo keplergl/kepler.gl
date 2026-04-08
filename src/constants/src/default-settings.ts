@@ -1623,8 +1623,22 @@ export const POSTPROCESSING_EFFECTS: {[key: string]: EffectDescription} = {
       {name: 'density', defaultValue: 0.6, min: 0, max: 1},
       {name: 'height', label: 'Elevation (m)', defaultValue: 50, min: -200, max: 3000},
       {name: 'thickness', label: 'Transition (m)', defaultValue: 50, min: 0, max: 1000},
-      {name: 'fogColor', type: 'color', label: 'Fog Color', min: 0, max: 255, defaultValue: [230, 235, 242]},
-      {name: 'pattern', type: 'checkbox', label: 'Show Pattern', defaultValue: false, min: 0, max: 1}
+      {
+        name: 'fogColor',
+        type: 'color',
+        label: 'Fog Color',
+        min: 0,
+        max: 255,
+        defaultValue: [230, 235, 242]
+      },
+      {
+        name: 'pattern',
+        type: 'checkbox',
+        label: 'Show Pattern',
+        defaultValue: false,
+        min: 0,
+        max: 1
+      }
     ]
   }
 };

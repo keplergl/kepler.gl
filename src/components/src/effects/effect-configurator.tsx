@@ -461,11 +461,13 @@ export default function EffectConfiguratorFactory(
                       }
                       Icon={ArrowDownSmall}
                     />
-                    <StyledCheckboxWrapper onClick={nextControl.onChange}>
+                    <StyledCheckboxWrapper
+                      onClick={() => (nextControl as {onChange: () => void}).onChange()}
+                    >
                       <StyledCheckbox
                         type="checkbox"
                         checked={nextControl.checked}
-                        onChange={nextControl.onChange}
+                        onChange={() => (nextControl as {onChange: () => void}).onChange()}
                         onClick={e => e.stopPropagation()}
                       />
                       <StyledCheckboxLabel>{nextControl.label}</StyledCheckboxLabel>
@@ -498,11 +500,13 @@ export default function EffectConfiguratorFactory(
             if ('isCheckbox' in control) {
               elements.push(
                 <RegularOuterWrapper key={`${effect.id}-${i}`}>
-                  <StyledCheckboxWrapper onClick={control.onChange}>
+                  <StyledCheckboxWrapper
+                    onClick={() => (control as {onChange: () => void}).onChange()}
+                  >
                     <StyledCheckbox
                       type="checkbox"
                       checked={control.checked}
-                      onChange={control.onChange}
+                      onChange={() => (control as {onChange: () => void}).onChange()}
                       onClick={e => e.stopPropagation()}
                     />
                     <StyledCheckboxLabel>{control.label}</StyledCheckboxLabel>
