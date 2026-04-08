@@ -245,6 +245,11 @@ export function validateEffectParameters(
       return;
     }
 
+    if (type === 'checkbox') {
+      result[name] = Boolean(property);
+      return;
+    }
+
     const value = Number.isFinite(property) ? clamp([min, max], property) : defaultValue ?? min;
 
     if (value !== undefined) {

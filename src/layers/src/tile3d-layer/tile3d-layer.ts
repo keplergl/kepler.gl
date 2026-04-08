@@ -2,10 +2,9 @@
 // Copyright contributors to the kepler.gl project
 
 import {Tile3DLayer as DeckTile3DLayer} from '@deck.gl/geo-layers';
-import {UpdateParameters} from '@deck.gl/core';
 import {Tiles3DLoader, CesiumIonLoader} from '@loaders.gl/3d-tiles';
 import {I3SLoader} from '@loaders.gl/i3s';
-import {Tileset3D, Tile3D, TILE_TYPE} from '@loaders.gl/tiles';
+import {Tileset3D, Tile3D} from '@loaders.gl/tiles';
 
 import Layer from '../base-layer';
 import Tile3DLayerIcon from './tile3d-layer-icon';
@@ -19,6 +18,10 @@ import {
 } from '@kepler.gl/constants';
 import {KeplerTable as KeplerDataset, Datasets as KeplerDatasets} from '@kepler.gl/table';
 import {VisConfigNumber, BindedLayerCallbacks} from '@kepler.gl/types';
+
+// Lazily created patched sublayer classes (see getSubLayerClass below).
+let _PatchedMeshLayer: any = null;
+let _PatchedScenegraphLayer: any = null;
 
 /**
  * Custom DeckTile3DLayer that catches exceptions in _loadTileset and
@@ -69,26 +72,56 @@ class KeplerTile3DLayer extends DeckTile3DLayer {
       });
   }
 
-  // deck.gl's ScenegraphLayer does not recreate its models when
-  // defaultShaderModules change (extensionsChanged flag).  This means
-  // adding/removing the Light & Shadow effect after tiles are loaded
-  // leaves ScenegraphLayer sublayers without the shadow shader module.
-  // SimpleMeshLayer (ArcGIS/I3S) already handles extensionsChanged
-  // correctly, so only invalidate SCENEGRAPH sublayers (Google 3D Tiles).
-  updateState(params: UpdateParameters<this>): void {
-    super.updateState(params);
-    if (params.changeFlags.extensionsChanged) {
-      const {layerMap} = this.state as any;
-      if (layerMap) {
-        for (const key of Object.keys(layerMap)) {
-          const entry = layerMap[key];
-          if (entry.tile?.type === TILE_TYPE.SCENEGRAPH) {
-            entry.layer = null;
-            entry.needsUpdate = true;
+  // deck.gl's ScenegraphLayer and MeshLayer do not correctly handle
+  // defaultShaderModule changes (extensionsChanged flag):
+  //
+  // ScenegraphLayer (Google/Cesium 3D tiles): models are created by
+  // luma.gl's GLTF pipeline with shader modules baked in.
+  // updateState only recreates models when the scenegraph *prop*
+  // changes, completely ignoring extensionsChanged. When the shadow
+  // module is added/removed, existing models keep their old shaders.
+  //
+  // MeshLayer (ArcGIS/I3S): getModel() creates the GPU model with PBR
+  // shader defines (HAS_BASECOLORMAP etc.) but does not set the
+  // corresponding texture bindings (pbr_baseColorSampler etc.).
+  // updateState only calls updatePbrMaterialUniforms when pbrMaterial
+  // *prop* changes, not when the model is recreated via
+  // extensionsChanged. luma.gl skips rendering ("Binding … not found").
+  //
+  // Fix: override getSubLayerClass to return patched sublayer classes.
+  // @ts-ignore protected override
+  protected getSubLayerClass(id: string, DefaultClass: any): any {
+    if (id === 'mesh') {
+      if (!_PatchedMeshLayer) {
+        _PatchedMeshLayer = class extends DefaultClass {
+          updateState(params) {
+            super.updateState(params);
+            if (params.changeFlags.extensionsChanged && this.state?.model) {
+              this.updatePbrMaterialUniforms(this.props.pbrMaterial);
+            }
           }
-        }
+        };
+        (_PatchedMeshLayer as any).layerName = DefaultClass.layerName || 'MeshLayer';
+        (_PatchedMeshLayer as any).defaultProps = DefaultClass.defaultProps;
       }
+      return _PatchedMeshLayer;
     }
+    if (id === 'scenegraph') {
+      if (!_PatchedScenegraphLayer) {
+        _PatchedScenegraphLayer = class extends DefaultClass {
+          updateState(params) {
+            super.updateState(params);
+            if (params.changeFlags.extensionsChanged && this.state?.scenegraph) {
+              this._updateScenegraph();
+            }
+          }
+        };
+        (_PatchedScenegraphLayer as any).layerName = DefaultClass.layerName || 'ScenegraphLayer';
+        (_PatchedScenegraphLayer as any).defaultProps = DefaultClass.defaultProps;
+      }
+      return _PatchedScenegraphLayer;
+    }
+    return super.getSubLayerClass(id, DefaultClass);
   }
 }
 (KeplerTile3DLayer as any).layerName = 'KeplerTile3DLayer';

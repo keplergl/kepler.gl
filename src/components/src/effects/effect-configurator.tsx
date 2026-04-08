@@ -139,6 +139,34 @@ const RegularSliderWrapper = styled.div.attrs({
   }
 `;
 
+const StyledCheckboxWrapper = styled.div.attrs({
+  className: 'effect-configurator__pp-section-checkbox'
+})`
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+`;
+
+const StyledCheckbox = styled.input`
+  margin-right: 6px;
+  cursor: pointer;
+  accent-color: ${props => props.theme.activeColor};
+`;
+
+const StyledCheckboxLabel = styled.label`
+  font-size: ${props => props.theme.inputFontSize};
+  color: ${props => props.theme.effectPanelTextSecondary1};
+  cursor: pointer;
+  white-space: nowrap;
+`;
+
+const StyledColorCheckboxRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+`;
+
 const COMMON_SLIDER_PROPS = {
   showInput: true,
   isRanged: false,
@@ -148,11 +176,11 @@ const COMMON_SLIDER_PROPS = {
 
 type EffectParameterDescriptionFlattened = {
   name: string;
-  type?: 'number' | 'array' | 'color';
+  type?: 'number' | 'array' | 'color' | 'checkbox';
   label?: string | false | (string | false)[];
   min: number;
   max: number;
-  defaultValue?: number | number[];
+  defaultValue?: number | number[] | boolean;
   index?: number;
 };
 
@@ -325,6 +353,17 @@ export default function EffectConfiguratorFactory(
           };
         }
 
+        if (desc.type === 'checkbox') {
+          return {
+            isCheckbox: true as const,
+            label: typeof desc.label === 'string' ? desc.label : desc.name,
+            paramName: desc.name,
+            checked: Boolean(parameters[desc.name]),
+            onChange: () =>
+              updateEffectConfig(null, id, {parameters: {[desc.name]: !parameters[desc.name]}})
+          };
+        }
+
         const paramName = desc.name;
 
         const rawUniform = uniforms[desc.name];
@@ -396,41 +435,98 @@ export default function EffectConfiguratorFactory(
 
     return (
       <StyledEffectConfigurator key={effect.id}>
-        {flatParameterDescriptions.map((desc, parameterIndex) => {
-          const control = controls[parameterIndex];
-          if (!control) {
-            return null;
-          }
+        {(() => {
+          const elements: React.ReactNode[] = [];
+          let i = 0;
+          while (i < flatParameterDescriptions.length) {
+            const control = controls[i];
+            if (!control) {
+              i++;
+              continue;
+            }
 
-          if ('isColor' in control) {
-            return (
-              <RegularOuterWrapper key={`${effect.id}-${parameterIndex}`}>
-                <CompactColorPicker
-                  label={typeof control.label === 'string' ? control.label : 'Color'}
-                  color={control.color}
-                  onSetColor={
-                    control.onSetColor ??
-                    (() => {
-                      /* noop */
-                    })
-                  }
-                  Icon={ArrowDownSmall}
-                />
+            if ('isColor' in control) {
+              const nextControl = i + 1 < controls.length ? controls[i + 1] : null;
+              if (nextControl && 'isCheckbox' in nextControl) {
+                elements.push(
+                  <StyledColorCheckboxRow key={`${effect.id}-${i}`}>
+                    <CompactColorPicker
+                      label={typeof control.label === 'string' ? control.label : 'Color'}
+                      color={control.color}
+                      onSetColor={
+                        control.onSetColor ??
+                        (() => {
+                          /* noop */
+                        })
+                      }
+                      Icon={ArrowDownSmall}
+                    />
+                    <StyledCheckboxWrapper onClick={nextControl.onChange}>
+                      <StyledCheckbox
+                        type="checkbox"
+                        checked={nextControl.checked}
+                        onChange={nextControl.onChange}
+                        onClick={e => e.stopPropagation()}
+                      />
+                      <StyledCheckboxLabel>{nextControl.label}</StyledCheckboxLabel>
+                    </StyledCheckboxWrapper>
+                  </StyledColorCheckboxRow>
+                );
+                i += 2;
+                continue;
+              }
+
+              elements.push(
+                <RegularOuterWrapper key={`${effect.id}-${i}`}>
+                  <CompactColorPicker
+                    label={typeof control.label === 'string' ? control.label : 'Color'}
+                    color={control.color}
+                    onSetColor={
+                      control.onSetColor ??
+                      (() => {
+                        /* noop */
+                      })
+                    }
+                    Icon={ArrowDownSmall}
+                  />
+                </RegularOuterWrapper>
+              );
+              i++;
+              continue;
+            }
+
+            if ('isCheckbox' in control) {
+              elements.push(
+                <RegularOuterWrapper key={`${effect.id}-${i}`}>
+                  <StyledCheckboxWrapper onClick={control.onChange}>
+                    <StyledCheckbox
+                      type="checkbox"
+                      checked={control.checked}
+                      onChange={control.onChange}
+                      onClick={e => e.stopPropagation()}
+                    />
+                    <StyledCheckboxLabel>{control.label}</StyledCheckboxLabel>
+                  </StyledCheckboxWrapper>
+                </RegularOuterWrapper>
+              );
+              i++;
+              continue;
+            }
+
+            elements.push(
+              <RegularOuterWrapper key={`${effect.id}-${i}`}>
+                {control.label ? (
+                  <RegularSectionTitleWrapper>{control.label}</RegularSectionTitleWrapper>
+                ) : null}
+                <RegularSliderWrapper>
+                  <RangeSlider key={i} {...COMMON_SLIDER_PROPS} {...control} />
+                </RegularSliderWrapper>
               </RegularOuterWrapper>
             );
+            i++;
           }
-
-          return (
-            <RegularOuterWrapper key={`${effect.id}-${parameterIndex}`}>
-              {control.label ? (
-                <RegularSectionTitleWrapper>{control.label}</RegularSectionTitleWrapper>
-              ) : null}
-              <RegularSliderWrapper>
-                <RangeSlider key={parameterIndex} {...COMMON_SLIDER_PROPS} {...control} />
-              </RegularSliderWrapper>
-            </RegularOuterWrapper>
-          );
-        })}
+          return elements;
+        })()}
       </StyledEffectConfigurator>
     );
   };
