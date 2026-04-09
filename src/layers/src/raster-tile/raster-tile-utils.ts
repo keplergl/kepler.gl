@@ -105,7 +105,7 @@ function getZoomRange(stac: CompleteSTACObject): [number, number] {
  * @param stac stac object
  * @return Data type of the band
  */
-function getDataType(
+export function getDataType(
   usableAssets: CompleteSTACAssetLinks,
   typesToCheck?: string[]
 ): DataTypeOfTheBand | null {
@@ -504,8 +504,8 @@ export function getSTACBounds(stac: Item | Collection): number[] | null {
  * @return array of eo:band objects or null
  */
 export function getEOBands(stac: CompleteSTACObject): EOBand[] | null {
-  const assets = getAssets(stac);
-  if (!assets) {
+  const assets = getUsableAssets(stac);
+  if (!assets || Object.keys(assets).length === 0) {
     return null;
   }
 
@@ -627,9 +627,9 @@ export function getAssets(stac: CompleteSTACObject): CompleteSTACAssetLinks {
 /**
  * Find usable assets in main assets object
  * The `assets` object can point to many different objects, including original XML or JSON metadata,
- * thumbnails, etc. These aren't usable as image data in Studio.
+ * thumbnails, etc. These aren't usable as image data in Raster Tile Layer.
  * @param stac  STAC object
- * @return asset mapping including only assets usable in Studio
+ * @return asset mapping including only assets usable in Raster Tile Layer
  */
 export function getUsableAssets(stac: CompleteSTACObject): CompleteSTACAssetLinks {
   const allAssets = getAssets(stac);

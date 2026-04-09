@@ -132,6 +132,17 @@ export const DATA_SOURCE_COLOR_DEFAULTS: Record<DATA_SOURCE_IDS, ColorRescaling>
 };
 
 /**
+ * Fallback color rescaling for unknown STAC items with high-bit (>8bit) data.
+ * Without contrast enhancement, uint16 imagery appears nearly black.
+ */
+export const HIGH_BIT_COLOR_DEFAULTS: ColorRescaling = {
+  gammaContrastFactor: 2.0,
+  sigmoidalContrastFactor: 15,
+  sigmoidalBiasFactor: 0.15,
+  saturationValue: 1.5
+};
+
+/**
  * Available "presets"
  *
  * I define a "preset" as one specific manner of loading bands and combining them on the frontend.

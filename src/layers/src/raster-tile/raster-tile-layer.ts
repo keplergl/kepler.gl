@@ -29,13 +29,20 @@ import {notNullorUndefined} from '@kepler.gl/common-utils';
 import {Datasets, KeplerTable as KeplerDataset, VectorTileMetadata} from '@kepler.gl/table';
 import {getApplicationConfig} from '@kepler.gl/utils';
 
-import {rasterVisConfigs, PRESET_OPTIONS, DATA_SOURCE_COLOR_DEFAULTS} from './config';
+import {
+  rasterVisConfigs,
+  PRESET_OPTIONS,
+  DATA_SOURCE_COLOR_DEFAULTS,
+  HIGH_BIT_COLOR_DEFAULTS
+} from './config';
 import {getModules} from './gpu-utils';
 import {getSTACImageRequests, loadImages, loadTerrain} from './image';
 import RasterIcon from './raster-tile-icon';
 import {
   getDataSourceParams,
+  getDataType,
   getMaxRequests,
+  getUsableAssets,
   bboxIntersects,
   computeZRange,
   getSTACBounds,
@@ -328,8 +335,16 @@ export default class RasterTileLayer extends KeplerLayer {
     // Apply improved image processing props only for non single band modes
     const preset = this.config.visConfig.preset;
     const colorDefaults = DATA_SOURCE_COLOR_DEFAULTS[stac.id];
-    if (colorDefaults && preset !== 'singleBand') {
-      this.updateLayerVisConfig(colorDefaults);
+    if (preset !== 'singleBand') {
+      if (colorDefaults) {
+        this.updateLayerVisConfig(colorDefaults);
+      } else {
+        const usableAssets = getUsableAssets(stac);
+        const dtype = getDataType(usableAssets);
+        if (dtype && dtype !== 'uint8') {
+          this.updateLayerVisConfig(HIGH_BIT_COLOR_DEFAULTS);
+        }
+      }
     }
 
     /*
