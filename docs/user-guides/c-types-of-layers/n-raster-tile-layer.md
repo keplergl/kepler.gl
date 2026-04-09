@@ -6,6 +6,7 @@ Use Raster Tile layer to visualize satellite/aerial imagery from raster pmtiles 
 2. Select Raster Tile tileset type.
 3. Paste URL to the tileset:
    - pmtiles (raster format): provide a direct HTTPS URL to a .pmtiles file containing raster imagery. Raster pmtiles don't require dedicated raster tile servers, unless you want to use elevation meshes.
+   - COG (.tif): provide a direct HTTPS URL to a Cloud Optimized GeoTIFF. The public [TiTiler](https://titiler.xyz) service is used automatically for metadata and tile serving. Elevation is not supported in this mode.
    - STAC Item/Collection (COGs): provide a HTTPS URL to a STAC Item or Collection. Both STAC 1.0.x (with EO + Raster extensions) and STAC 1.1.0+ (with core `bands`) are supported. For this option you need to provide a [compatible raster tile server](https://github.com/igorDykhta/kepler-raster-server).
 4. Click Add.
 5. Style band selection and opacity as needed in Layers panel.
@@ -17,6 +18,15 @@ Important notes for COGs via STAC:
 - Both formats can coexist within a single STAC item (some assets using legacy extensions, others using core `bands`).
 - COG assets must be publicly accessible over HTTPS.
 - You must run your own raster tile server (e.g., TiTiler). Example implementation that supports collections and elevations: [kepler-raster-server](https://github.com/igorDykhta/kepler-raster-server).
+
+# Loading standalone COG (.tif) files
+
+You can load a Cloud Optimized GeoTIFF directly by pasting its URL (ending in `.tif` or `.tiff`) into the "Tileset metadata URL" field. When a COG URL is detected, kepler.gl automatically fetches STAC metadata from the public [TiTiler](https://titiler.xyz) service (`/cog/stac` endpoint) and sets `https://titiler.xyz` as the raster tile server.
+
+- **No self-hosted server required** — the public TiTiler instance handles both metadata and tile serving.
+- **Elevation is not available** when using the public TiTiler service.
+- The COG file must be publicly accessible over HTTPS.
+- If the "Raster tile servers" field is empty when you paste a `.tif` URL, it will be auto-filled with `https://titiler.xyz`.
 
 # Elevation
 
