@@ -151,7 +151,7 @@ export default {
     heightMultiplier: 'Korkeuskerroin',
     fixedHeight: 'Kiinteä korkeus',
     fixedHeightDescription: 'Käytä korkeutta ilman muutoksia',
-    showTooltip: 'Näytä työkaluvihje'
+    allowHover: 'Näytä työkaluvihje'
   },
   layerManager: {
     addData: 'Lisää aineisto',

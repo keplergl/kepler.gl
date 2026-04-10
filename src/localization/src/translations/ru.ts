@@ -146,7 +146,7 @@ export default {
     zoomScale: 'Масштаб увеличения',
     heightRange: 'Диапазон высоты',
     heightMultiplier: 'Множитель высоты',
-    showTooltip: 'Показать подсказку'
+    allowHover: 'Показать подсказку'
   },
   layerManager: {
     addData: 'Добавить данные',

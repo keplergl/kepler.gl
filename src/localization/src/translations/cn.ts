@@ -142,7 +142,7 @@ export default {
     weightIntensity: '加权强度',
     zoomScale: '缩放比例',
     heightRange: '高度范围',
-    showTooltip: '显示工具提示'
+    allowHover: '显示工具提示'
   },
   layerManager: {
     addData: '添加数据',

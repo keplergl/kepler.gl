@@ -154,7 +154,7 @@ export default {
     heightMultiplier: 'Multiplicador de altura',
     fixedHeight: 'Altura fija',
     fixedHeightDescription: 'Usar altura sin modificaciones',
-    showTooltip: 'Mostrar descripción emergente'
+    allowHover: 'Mostrar descripción emergente'
   },
   layerManager: {
     addData: 'Añadir datos',

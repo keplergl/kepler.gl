@@ -487,7 +487,7 @@ export const LAYER_VIS_CONFIGS: LayerVisConfigSettings = {
   allowHover: {
     type: 'boolean',
     defaultValue: true,
-    label: 'layerVisConfigs.showTooltip',
+    label: 'layerVisConfigs.allowHover',
     group: PROPERTY_GROUPS.interaction,
     property: 'allowHover'
   },

@@ -153,7 +153,7 @@ export default {
     heightMultiplier: "Multiplicador d'alçada",
     fixedHeight: 'Alçada fixa',
     fixedHeightDescription: "Utilitzeu l'alçada sense modificacions",
-    showTooltip: "Mostra informació d'eina"
+    allowHover: "Mostra informació d'eina"
   },
   layerManager: {
     addData: 'Afegeix Dades',
