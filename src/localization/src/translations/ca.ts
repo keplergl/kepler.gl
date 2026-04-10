@@ -188,8 +188,6 @@ export default {
     hide: 'amaga',
     show: 'mostra',
     removeLayer: 'Elimina capa',
-    enableTooltip: 'Habilita el suggeriment de capa',
-    disableTooltip: 'Deshabilita el suggeriment de capa',
     resetAfterError: 'Intenteu habilitar la capa després dun error',
     layerSettings: 'Configuració de capa',
     closePanel: 'Tanca panel actual',

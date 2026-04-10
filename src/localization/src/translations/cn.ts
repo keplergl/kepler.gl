@@ -178,8 +178,6 @@ export default {
     removeLayer: '删除图层',
     zoomToLayer: '缩放☞图层',
     duplicateLayer: '复制图层',
-    enableTooltip: '启用图层工具提示',
-    disableTooltip: '禁用图层工具提示',
     layerSettings: '图层设置',
     closePanel: '关闭当前面板',
     switchToDualView: '切换到双地图视图',

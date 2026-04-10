@@ -186,8 +186,6 @@ export default {
     hide: 'piilota',
     show: 'näytä',
     removeLayer: 'Poista taso',
-    enableTooltip: 'Ota käyttöön tason vihje',
-    disableTooltip: 'Poista käytöstä tason vihje',
     resetAfterError: 'Yritä ottaa taso käyttöön virheen jälkeen',
     layerSettings: 'Tason asetukset',
     closePanel: 'Sulje paneeli',

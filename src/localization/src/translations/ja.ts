@@ -186,8 +186,6 @@ export default {
     show: '表示する',
     removeLayer: 'レイヤを削除',
     duplicateLayer: 'レイヤを複製',
-    enableTooltip: 'レイヤーツールチップを有効にする',
-    disableTooltip: 'レイヤーツールチップを無効にする',
     layerSettings: 'レイヤ設定',
     closePanel: 'このパネルを閉じる',
     switchToDualView: 'デュアルビューに切り替え',

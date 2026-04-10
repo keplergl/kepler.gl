@@ -189,8 +189,6 @@ export default {
     hide: 'Ocultar',
     show: 'Mostrar',
     removeLayer: 'Eliminar capa',
-    enableTooltip: 'Habilitar información sobre herramientas de capa',
-    disableTooltip: 'Deshabilitar información sobre herramientas de capa',
     resetAfterError: 'Intente habilitar la capa después de un error',
     layerSettings: 'Configuración de capa',
     closePanel: 'Cerrar el panel actual',

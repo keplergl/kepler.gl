@@ -236,8 +236,6 @@ export default {
     removeLayer: 'Remove layer',
     duplicateLayer: 'Duplicate layer',
     zoomToLayer: 'Zoom to layer',
-    enableTooltip: 'Enable layer tooltip',
-    disableTooltip: 'Disable layer tooltip',
     resetAfterError: 'Try to enable the layer after an error',
     layerSettings: 'Layer settings',
     closePanel: 'Close current panel',

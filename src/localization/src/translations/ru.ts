@@ -181,8 +181,6 @@ export default {
     show: 'показать',
     removeLayer: 'Удалить слой',
     duplicateLayer: 'Дублировать слой',
-    enableTooltip: 'Включить всплывающие подсказки слоя',
-    disableTooltip: 'Отключить всплывающие подсказки слоя',
     layerSettings: 'Настройки слоя',
     closePanel: 'Закрыть текущую панель',
     switchToDualView: 'Перейти в режим двойной карты',

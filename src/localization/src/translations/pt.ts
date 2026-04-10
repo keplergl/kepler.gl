@@ -187,8 +187,6 @@ export default {
     hide: 'esconder',
     show: 'mostrar',
     removeLayer: 'Remover Camada',
-    enableTooltip: 'Ativar dica de contexto da camada',
-    disableTooltip: 'Desativar dica de contexto da camada',
     resetAfterError: 'Tente habilitar a camada após um erro',
     layerSettings: 'Configurações de Camada',
     closePanel: 'Fechar painel atual',
