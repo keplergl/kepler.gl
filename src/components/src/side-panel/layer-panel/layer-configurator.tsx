@@ -871,6 +871,16 @@ export default function LayerConfiguratorFactory(
               </ConfigGroupCollapsibleContent>
             </LayerConfigGroup>
           ) : null}
+
+          {/* Interaction */}
+          {'allowHover' in layer.visConfigSettings ? (
+            <LayerConfigGroup label={'layer.interaction'} collapsible>
+              <VisConfigSwitch
+                {...layer.visConfigSettings.allowHover}
+                {...visConfiguratorProps}
+              />
+            </LayerConfigGroup>
+          ) : null}
         </StyledLayerVisualConfigurator>
       );
     }

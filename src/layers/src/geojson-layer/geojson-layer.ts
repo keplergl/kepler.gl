@@ -703,7 +703,7 @@ export default class GeoJsonLayer extends Layer {
       opacity: visConfig.strokeOpacity
     };
 
-    const pickable = visConfig.allowHover;
+    const pickable = interactionConfig.tooltip.enabled && visConfig.allowHover;
     const hoveredObject = this.hasHoveredObject(objectHovered);
 
     const {data, ...props} = dataProps;
