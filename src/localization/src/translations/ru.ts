@@ -145,7 +145,8 @@ export default {
     weightIntensity: 'Вес Интенсивность',
     zoomScale: 'Масштаб увеличения',
     heightRange: 'Диапазон высоты',
-    heightMultiplier: 'Множитель высоты'
+    heightMultiplier: 'Множитель высоты',
+    showTooltip: 'Показать подсказку'
   },
   layerManager: {
     addData: 'Добавить данные',
@@ -180,6 +181,8 @@ export default {
     show: 'показать',
     removeLayer: 'Удалить слой',
     duplicateLayer: 'Дублировать слой',
+    enableTooltip: 'Включить всплывающие подсказки слоя',
+    disableTooltip: 'Отключить всплывающие подсказки слоя',
     layerSettings: 'Настройки слоя',
     closePanel: 'Закрыть текущую панель',
     switchToDualView: 'Перейти в режим двойной карты',

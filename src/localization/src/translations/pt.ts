@@ -151,7 +151,8 @@ export default {
     heightRange: 'Alcance da Altura',
     heightMultiplier: 'Multiplicador de altura',
     fixedHeight: 'Altura fixa',
-    fixedHeightDescription: 'Use a altura sem modificações'
+    fixedHeightDescription: 'Use a altura sem modificações',
+    showTooltip: 'Mostrar dica de ferramenta'
   },
   layerManager: {
     addData: 'Adicionar Dados',
@@ -186,6 +187,8 @@ export default {
     hide: 'esconder',
     show: 'mostrar',
     removeLayer: 'Remover Camada',
+    enableTooltip: 'Ativar dica de contexto da camada',
+    disableTooltip: 'Desativar dica de contexto da camada',
     resetAfterError: 'Tente habilitar a camada após um erro',
     layerSettings: 'Configurações de Camada',
     closePanel: 'Fechar painel atual',

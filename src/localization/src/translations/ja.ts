@@ -149,7 +149,8 @@ export default {
     heightRange: '高さの範囲',
     heightMultiplier: '高さ乗数',
     fixedHeight: '固定高さ',
-    fixedHeightDescription: '高さを変更せずに使用する'
+    fixedHeightDescription: '高さを変更せずに使用する',
+    showTooltip: 'ツールチップを表示'
   },
   layerManager: {
     addData: 'データ追加',
@@ -185,6 +186,8 @@ export default {
     show: '表示する',
     removeLayer: 'レイヤを削除',
     duplicateLayer: 'レイヤを複製',
+    enableTooltip: 'レイヤーツールチップを有効にする',
+    disableTooltip: 'レイヤーツールチップを無効にする',
     layerSettings: 'レイヤ設定',
     closePanel: 'このパネルを閉じる',
     switchToDualView: 'デュアルビューに切り替え',

@@ -152,7 +152,8 @@ export default {
     heightRange: 'Rang alçada',
     heightMultiplier: "Multiplicador d'alçada",
     fixedHeight: 'Alçada fixa',
-    fixedHeightDescription: "Utilitzeu l'alçada sense modificacions"
+    fixedHeightDescription: "Utilitzeu l'alçada sense modificacions",
+    showTooltip: "Mostra informació d'eina"
   },
   layerManager: {
     addData: 'Afegeix Dades',
@@ -187,6 +188,8 @@ export default {
     hide: 'amaga',
     show: 'mostra',
     removeLayer: 'Elimina capa',
+    enableTooltip: 'Habilita el suggeriment de capa',
+    disableTooltip: 'Deshabilita el suggeriment de capa',
     resetAfterError: 'Intenteu habilitar la capa després dun error',
     layerSettings: 'Configuració de capa',
     closePanel: 'Tanca panel actual',

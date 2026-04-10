@@ -153,7 +153,8 @@ export default {
     heightRange: 'Rango de alturas',
     heightMultiplier: 'Multiplicador de altura',
     fixedHeight: 'Altura fija',
-    fixedHeightDescription: 'Usar altura sin modificaciones'
+    fixedHeightDescription: 'Usar altura sin modificaciones',
+    showTooltip: 'Mostrar descripción emergente'
   },
   layerManager: {
     addData: 'Añadir datos',
@@ -188,6 +189,8 @@ export default {
     hide: 'Ocultar',
     show: 'Mostrar',
     removeLayer: 'Eliminar capa',
+    enableTooltip: 'Habilitar información sobre herramientas de capa',
+    disableTooltip: 'Deshabilitar información sobre herramientas de capa',
     resetAfterError: 'Intente habilitar la capa después de un error',
     layerSettings: 'Configuración de capa',
     closePanel: 'Cerrar el panel actual',
