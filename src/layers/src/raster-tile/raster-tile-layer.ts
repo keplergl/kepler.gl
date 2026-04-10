@@ -101,6 +101,7 @@ export type RasterTileLayerVisConfigCommonSettings = {
   enableTerrain: VisConfigBoolean;
   enableTerrainTopView: VisConfigBoolean;
   showTileBorders: VisConfigBoolean;
+  zoomOffset: VisConfigNumber;
 };
 
 export type RasterTileLayerVisConfigSettings = RasterTileLayerVisConfigCommonSettings & {
@@ -552,6 +553,7 @@ export default class RasterTileLayer extends KeplerLayer {
       minZoom,
       maxZoom,
       tileSize: 512 / devicePixelRatio,
+      zoomOffset: visConfig.zoomOffset || 0,
       getTileData: (args: any) => this.getTileData({...args, ...getTileDataCustomProps}),
       onViewportLoad: this.onViewportLoad.bind(this),
       // @ts-expect-error - TS doesn't know we'll pass appropriate props here
@@ -642,7 +644,7 @@ export default class RasterTileLayer extends KeplerLayer {
         minZoom,
         maxZoom,
         tileSize: 512 / devicePixelRatio,
-        zoomOffset: devicePixelRatio === 1 ? -1 : 0,
+        zoomOffset: (devicePixelRatio === 1 ? -1 : 0) + (visConfig.zoomOffset || 0),
         // @ts-expect-error - TS doesn't know we'll pass appropriate props here
         renderSubLayers: renderSubLayersPMTiles,
 

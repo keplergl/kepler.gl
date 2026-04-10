@@ -774,6 +774,17 @@ export const rasterVisConfigs = {
     property: 'showTileBorders',
     description: 'Debug: render wireframe boundaries of raster tiles'
   } as VisConfigBoolean,
+  zoomOffset: {
+    type: 'number',
+    defaultValue: 0,
+    label: 'Zoom Offset',
+    isRanged: false,
+    range: [-5, 3],
+    step: 1,
+    group: '',
+    property: 'zoomOffset',
+    description: 'Force loading higher (+) or lower (-) zoom level tiles'
+  } as VisConfigNumber,
   bandOverrides: {
     type: 'input',
     defaultValue: null,
