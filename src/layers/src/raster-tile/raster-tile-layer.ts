@@ -122,6 +122,7 @@ export type RasterTileLayerVisConfigSettings = RasterTileLayerVisConfigCommonSet
   filterRange: VisConfigRange;
   _stacQuery: VisConfigInput;
   singleBandName: VisConfigSelection;
+  bandOverrides: VisConfigInput;
 };
 
 type RasterTileLayerMeta = {
@@ -161,7 +162,9 @@ export default class RasterTileLayer extends KeplerLayer {
     // objects don't have a `collection` key; STAC Item objects have a `collection` key (which
     // matches the collection's `id`).
     const resolver = (stac: CompleteSTACObject, preset: string, presetOptions: PresetOption) =>
-      `${stac.id}-${stac.collection}-${preset}-${presetOptions.singleBand?.assetId}-${presetOptions.singleBand?.bandIndex}`;
+      `${stac.id}-${stac.collection}-${preset}-${presetOptions.singleBand?.assetId}-${
+        presetOptions.singleBand?.bandIndex
+      }-${JSON.stringify(presetOptions.bandOverrides || null)}`;
     this.getDataSourceParams = memoize(
       (stac, preset, presetOptions) => getDataSourceParams(stac, preset, presetOptions),
       resolver
@@ -472,7 +475,8 @@ export default class RasterTileLayer extends KeplerLayer {
       _stacQuery,
       singleBandName,
       colorRange: {colorMap: categoricalColorMap},
-      dynamicColor
+      dynamicColor,
+      bandOverrides
     } = visConfig;
 
     const shouldLoadTerrain = getShouldLoadTerrain(stac, mapState, visConfig);
@@ -484,8 +488,13 @@ export default class RasterTileLayer extends KeplerLayer {
     const {bandCombination} = PRESET_OPTIONS[preset];
 
     const singleBand = getSingleBandPresetOptions(stac, singleBandName);
+    const parsedOverrides =
+      bandOverrides && typeof bandOverrides === 'string'
+        ? JSON.parse(bandOverrides)
+        : bandOverrides;
     const dataSourceParams: DataSourceParams | null = this.getDataSourceParams(stac, preset, {
-      singleBand
+      singleBand,
+      bandOverrides: parsedOverrides
     });
 
     if (!dataSourceParams) {

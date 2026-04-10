@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useEffect, useMemo} from 'react';
+import React, {useCallback, useEffect, useMemo} from 'react';
 import styled from 'styled-components';
 
 import {PMTilesType} from '@kepler.gl/constants';
@@ -135,6 +135,90 @@ function getBandSelectorOptions(stac: CompleteSTACObject): {id?: string; label?:
   }));
 }
 
+const COMMON_NAME_LABELS: Record<string, string> = {
+  red: 'Red Channel',
+  green: 'Green Channel',
+  blue: 'Blue Channel',
+  nir: 'NIR Band',
+  swir16: 'SWIR 1.6 Band',
+  swir22: 'SWIR 2.2 Band'
+};
+
+function getSlotLabel(commonName: string): string {
+  return COMMON_NAME_LABELS[commonName] || `${commonName} Band`;
+}
+
+const BandAssignmentRow = styled.div`
+  margin-bottom: 4px;
+`;
+
+/**
+ * Resolve the default band option for a preset slot from auto-detected eo:bands
+ */
+function getDefaultBandForSlot(
+  stac: CompleteSTACObject,
+  commonName: string,
+  bandOptions: {id?: string; label?: string}[]
+): {id?: string; label?: string} | undefined {
+  const eoBands = getEOBands(stac) || [];
+  const match = eoBands.find(b => b.common_name === commonName);
+  if (match) {
+    const bandId = match.name || match.common_name;
+    return bandOptions.find(o => o.id === bandId);
+  }
+  return undefined;
+}
+
+type BandAssignmentProps = {
+  stac: CompleteSTACObject;
+  commonNames: string[];
+  bandOptions: {id?: string; label?: string}[];
+  bandOverrides: Record<string, string> | null;
+  onChange: (value: any) => void;
+};
+
+const BandAssignment: React.FC<BandAssignmentProps> = ({
+  stac,
+  commonNames,
+  bandOptions,
+  bandOverrides,
+  onChange
+}) => {
+  const handleSlotChange = useCallback(
+    (slotName: string, bandId: string) => {
+      const current = bandOverrides || {};
+      const updated = {...current, [slotName]: bandId};
+      onChange({bandOverrides: JSON.stringify(updated)});
+    },
+    [bandOverrides, onChange]
+  );
+
+  return (
+    <>
+      {commonNames.map(commonName => {
+        const overrideId = bandOverrides?.[commonName];
+        const selectedItem = overrideId
+          ? bandOptions.find(o => o.id === overrideId)
+          : getDefaultBandForSlot(stac, commonName, bandOptions);
+        return (
+          <BandAssignmentRow key={commonName}>
+            <PanelLabel>{getSlotLabel(commonName)}</PanelLabel>
+            <ItemSelector
+              selectedItems={selectedItem}
+              options={bandOptions}
+              multiSelect={false}
+              searchable={false}
+              displayOption="label"
+              getOptionValue="id"
+              onChange={val => handleSlotChange(commonName, val as string)}
+            />
+          </BandAssignmentRow>
+        );
+      })}
+    </>
+  );
+};
+
 function getCategoricalColormapListItem(categoricalColorMap) {
   let categoricalItem: {label: string; id: string} | undefined;
   if (categoricalColorMap) {
@@ -258,10 +342,23 @@ function RasterTileLayerConfiguratorFactory(
       useSTACSearching,
       colorRange: {colorMap: categoricalColorMap},
       dynamicColor,
-      singleBandName
+      singleBandName,
+      bandOverrides: rawBandOverrides
     } = layer.config.visConfig;
 
     const stac = dataset?.metadata as GetTileDataCustomProps['stac'];
+
+    const bandOverrides: Record<string, string> | null = useMemo(() => {
+      if (!rawBandOverrides) return null;
+      if (typeof rawBandOverrides === 'string') {
+        try {
+          return JSON.parse(rawBandOverrides);
+        } catch {
+          return null;
+        }
+      }
+      return rawBandOverrides as unknown as Record<string, string>;
+    }, [rawBandOverrides]);
 
     const availablePresets = useMemo(() => filterAvailablePresets(stac, PRESET_OPTIONS), [stac]);
 
@@ -291,6 +388,7 @@ function RasterTileLayerConfiguratorFactory(
     }, [layer.visConfigSettings.colormapId.options, categoricalColorMap]);
 
     const {bandCombination} = PRESET_OPTIONS[preset] || {};
+    const currentPresetCommonNames = PRESET_OPTIONS[preset]?.commonNames;
     const colormapAllowed = isColormapAllowed(bandCombination);
     const rescalingAllowed = !categoricalColorMap && isRescalingAllowed(bandCombination);
     const filterAllowed = isFilterAllowed(bandCombination);
@@ -333,6 +431,12 @@ function RasterTileLayerConfiguratorFactory(
         visConfiguratorProps.onChange({dynamicColor: true});
       }
     }, [visConfiguratorProps, dynamicColor, isDynamicColorsOnly]);
+
+    useEffect(() => {
+      if (preset === 'singleBand' && !singleBandName && singleBandOptions.length > 0) {
+        visConfiguratorProps.onChange({singleBandName: singleBandOptions[0].id});
+      }
+    }, [visConfiguratorProps, preset, singleBandName, singleBandOptions]);
 
     const elevationUI = (
       <>
@@ -400,7 +504,11 @@ function RasterTileLayerConfiguratorFactory(
                     visConfiguratorProps.layer.config.visConfig.preset,
                     newPreset as string
                   );
-                  visConfiguratorProps.onChange({...overrides, preset: newPreset});
+                  visConfiguratorProps.onChange({
+                    ...overrides,
+                    preset: newPreset,
+                    bandOverrides: null
+                  });
                 }}
               />
               {selectedPreset?.description ? (
@@ -492,6 +600,27 @@ function RasterTileLayerConfiguratorFactory(
             )}
           </LayerConfigGroup>
         )}
+
+        {selectedPreset?.id !== 'singleBand' &&
+          currentPresetCommonNames &&
+          singleBandOptions.length > 0 && (
+            <LayerConfigGroup
+              {...visConfiguratorProps}
+              label="Band Assignment"
+              description="Override which physical band fills each channel. Useful when band metadata is incorrect or missing."
+              collapsible
+            >
+              <ConfigGroupCollapsibleContent>
+                <BandAssignment
+                  stac={stac}
+                  commonNames={currentPresetCommonNames}
+                  bandOptions={singleBandOptions}
+                  bandOverrides={bandOverrides}
+                  onChange={visConfiguratorProps.onChange}
+                />
+              </ConfigGroupCollapsibleContent>
+            </LayerConfigGroup>
+          )}
 
         <LayerConfigGroup {...visConfiguratorProps} label="Visual Settings" collapsible={false}>
           <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />

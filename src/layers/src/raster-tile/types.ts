@@ -86,6 +86,7 @@ export type PresetOption = {
     assetId: string;
     bandIndex?: number;
   };
+  bandOverrides?: Record<string, string> | null;
 };
 
 export type DataSourceParams = AssetRequestInfo & {

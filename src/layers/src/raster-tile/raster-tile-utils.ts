@@ -203,7 +203,8 @@ export function getImageMinMax(imageData: TypedArray): [number | null, number | 
 export function getBandIdsForCommonNames(
   stac: CompleteSTACObject,
   usableAssets: CompleteSTACAssetLinks,
-  commonNames: string[]
+  commonNames: string[],
+  bandOverrides?: Record<string, string> | null
 ): AssetRequestInfo | null {
   // An array of strings describing asset identifiers, e.g. the "key" in the assets object
   const assetIds: AssetIds = [];
@@ -212,8 +213,20 @@ export function getBandIdsForCommonNames(
   const bandIndexes: BandIndexes = [];
 
   for (const commonName of commonNames) {
-    // Find asset that includes a band with this common name
-    const result = findAssetWithName(usableAssets, commonName, 'common_name');
+    const overrideName = bandOverrides?.[commonName];
+    let result: [string, number] | null = null;
+
+    if (overrideName) {
+      result = findAssetWithName(usableAssets, overrideName, 'name');
+      if (!result) {
+        result = findAssetWithName(usableAssets, overrideName, 'common_name');
+      }
+    }
+
+    if (!result) {
+      result = findAssetWithName(usableAssets, commonName, 'common_name');
+    }
+
     if (result) {
       const [assetName, bandIndex] = result;
       assetIds.push(assetName);
@@ -442,7 +455,12 @@ export function getDataSourceParams(
   if (bandCombination === 'single') {
     bandInfo = getSingleBandInfo(usableAssets, presetOptions?.singleBand);
   } else if (commonNames) {
-    bandInfo = getBandIdsForCommonNames(stac, usableAssets, commonNames);
+    bandInfo = getBandIdsForCommonNames(
+      stac,
+      usableAssets,
+      commonNames,
+      presetOptions?.bandOverrides
+    );
   } else {
     return null;
   }

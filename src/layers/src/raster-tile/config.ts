@@ -773,5 +773,11 @@ export const rasterVisConfigs = {
     group: '',
     property: 'showTileBorders',
     description: 'Debug: render wireframe boundaries of raster tiles'
-  } as VisConfigBoolean
+  } as VisConfigBoolean,
+  bandOverrides: {
+    type: 'input',
+    defaultValue: null,
+    label: 'Band Overrides',
+    property: 'bandOverrides'
+  } as VisConfigInput
 };
