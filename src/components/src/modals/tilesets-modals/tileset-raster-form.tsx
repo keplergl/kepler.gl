@@ -133,11 +133,13 @@ const RASTER_TILE_DOCUMENTATION_URL =
 const TITILER_BASE_URL = 'https://titiler.xyz';
 
 function isCOGUrl(url: string): boolean {
+  if (!url) return false;
   try {
-    const path = new URL(url).pathname.toLowerCase();
-    return path.endsWith('.tif') || path.endsWith('.tiff');
+    const pathname = new URL(url).pathname.toLowerCase().replace(/\/+$/, '');
+    return pathname.endsWith('.tif') || pathname.endsWith('.tiff');
   } catch {
-    return false;
+    const cleaned = url.trim().toLowerCase().split(/[?#]/)[0].replace(/\/+$/, '');
+    return cleaned.endsWith('.tif') || cleaned.endsWith('.tiff');
   }
 }
 
@@ -204,14 +206,12 @@ const RasterTileForm: React.FC<RasterTileFormProps> = ({setResponse}) => {
       setTileNameWasModified(false);
 
       if (isCOGUrl(url)) {
-        if (!rasterTileServerUrls.trim()) {
-          setRasterTileServerUrls(TITILER_BASE_URL);
-        }
+        setRasterTileServerUrls(TITILER_BASE_URL);
       } else {
         setRasterTileServerUrls(defaultServerUrls);
       }
     },
-    [rasterTileServerUrls, defaultServerUrls]
+    [defaultServerUrls]
   );
 
   const onTileNameChange = useCallback(

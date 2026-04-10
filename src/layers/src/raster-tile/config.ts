@@ -132,14 +132,14 @@ export const DATA_SOURCE_COLOR_DEFAULTS: Record<DATA_SOURCE_IDS, ColorRescaling>
 };
 
 /**
- * Fallback color rescaling for unknown STAC items with high-bit (>8bit) data.
+ * Fallback color rescaling for unknown STAC items with high-bit (>8bit) integer data.
  * Without contrast enhancement, uint16 imagery appears nearly black.
  */
 export const HIGH_BIT_COLOR_DEFAULTS: ColorRescaling = {
-  gammaContrastFactor: 2.0,
-  sigmoidalContrastFactor: 15,
-  sigmoidalBiasFactor: 0.15,
-  saturationValue: 1.5
+  gammaContrastFactor: 1.5,
+  sigmoidalContrastFactor: 10,
+  sigmoidalBiasFactor: 0.2,
+  saturationValue: 1.2
 };
 
 /**

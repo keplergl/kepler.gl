@@ -44,6 +44,7 @@ export function applyModuleUniforms(
   shaderInputs: {
     moduleUniforms: Record<string, Record<string, unknown>>;
     moduleBindings: Record<string, Record<string, unknown>>;
+    setProps?: (props: Record<string, unknown>) => void;
   },
   modules: ShaderModule[],
   allModuleProps: Record<string, unknown>
@@ -61,14 +62,19 @@ export function applyModuleUniforms(
             bindings[key] = value;
           }
         }
-        shaderInputs.moduleUniforms[mod.name] = {
-          ...shaderInputs.moduleUniforms[mod.name],
-          ...uniforms
-        };
-        shaderInputs.moduleBindings[mod.name] = {
-          ...shaderInputs.moduleBindings[mod.name],
-          ...bindings
-        };
+        try {
+          if (!shaderInputs.moduleUniforms[mod.name]) {
+            shaderInputs.moduleUniforms[mod.name] = {};
+          }
+          if (!shaderInputs.moduleBindings[mod.name]) {
+            shaderInputs.moduleBindings[mod.name] = {};
+          }
+          Object.assign(shaderInputs.moduleUniforms[mod.name], uniforms);
+          Object.assign(shaderInputs.moduleBindings[mod.name], bindings);
+        } catch {
+          // Fallback: use the public setProps API if direct mutation is blocked
+          shaderInputs.setProps?.({[mod.name]: result});
+        }
       }
     }
   }

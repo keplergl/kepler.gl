@@ -426,17 +426,18 @@ function RasterTileLayerConfiguratorFactory(
 
     // Default of `dynamicColor` is false. Set it true if it is not possible to get data source
     // wide color range
+    const onVisConfigChange = visConfiguratorProps.onChange;
     useEffect(() => {
       if (isDynamicColorsOnly && !dynamicColor) {
-        visConfiguratorProps.onChange({dynamicColor: true});
+        onVisConfigChange({dynamicColor: true});
       }
-    }, [visConfiguratorProps, dynamicColor, isDynamicColorsOnly]);
+    }, [onVisConfigChange, dynamicColor, isDynamicColorsOnly]);
 
     useEffect(() => {
       if (preset === 'singleBand' && !singleBandName && singleBandOptions.length > 0) {
-        visConfiguratorProps.onChange({singleBandName: singleBandOptions[0].id});
+        onVisConfigChange({singleBandName: singleBandOptions[0].id});
       }
-    }, [visConfiguratorProps, preset, singleBandName, singleBandOptions]);
+    }, [onVisConfigChange, preset, singleBandName, singleBandOptions]);
 
     const elevationUI = (
       <>
@@ -499,11 +500,12 @@ function RasterTileLayerConfiguratorFactory(
                 displayOption="label"
                 getOptionValue="id"
                 onChange={newPreset => {
-                  const overrides = updateColorParamsOnPresetChange(
-                    stac,
-                    visConfiguratorProps.layer.config.visConfig.preset,
-                    newPreset as string
-                  );
+                  const overrides =
+                    updateColorParamsOnPresetChange(
+                      stac,
+                      visConfiguratorProps.layer.config.visConfig.preset,
+                      newPreset as string
+                    ) || {};
                   visConfiguratorProps.onChange({
                     ...overrides,
                     preset: newPreset,

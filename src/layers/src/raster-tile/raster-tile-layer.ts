@@ -344,7 +344,7 @@ export default class RasterTileLayer extends KeplerLayer {
       } else {
         const usableAssets = getUsableAssets(stac);
         const dtype = getDataType(usableAssets);
-        if (dtype && dtype !== 'uint8') {
+        if (dtype && dtype !== 'uint8' && dtype !== 'float32' && dtype !== 'float64') {
           this.updateLayerVisConfig(HIGH_BIT_COLOR_DEFAULTS);
         }
       }
@@ -488,10 +488,16 @@ export default class RasterTileLayer extends KeplerLayer {
     const {bandCombination} = PRESET_OPTIONS[preset];
 
     const singleBand = getSingleBandPresetOptions(stac, singleBandName);
-    const parsedOverrides =
-      bandOverrides && typeof bandOverrides === 'string'
-        ? JSON.parse(bandOverrides)
-        : bandOverrides;
+    let parsedOverrides: Record<string, string> | null = null;
+    if (bandOverrides && typeof bandOverrides === 'string') {
+      try {
+        parsedOverrides = JSON.parse(bandOverrides);
+      } catch {
+        parsedOverrides = null;
+      }
+    } else if (bandOverrides) {
+      parsedOverrides = bandOverrides as unknown as Record<string, string>;
+    }
     const dataSourceParams: DataSourceParams | null = this.getDataSourceParams(stac, preset, {
       singleBand,
       bandOverrides: parsedOverrides

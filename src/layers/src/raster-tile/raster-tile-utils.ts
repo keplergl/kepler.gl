@@ -275,9 +275,11 @@ function consolidateBandIndexes(
     // (because of larger download sizes). In the future may want separate loading paths if we
     // encounter single asset objects with > 4 bands.
 
-    const assetBands: EOBand[] | CoreBand[] | undefined =
-      (asset['eo:bands'] as EOBand[]) || asset?.bands;
-    loadBandIndexes = assetBands?.map((_: unknown, idx: number) => idx);
+    const eoBands = asset['eo:bands'] as EOBand[] | undefined;
+    const assetBands: EOBand[] | CoreBand[] | undefined = eoBands?.length
+      ? eoBands
+      : (asset?.bands as CoreBand[] | undefined);
+    loadBandIndexes = assetBands?.map((_: unknown, idx: number) => idx) ?? [];
     renderBandIndexes = bandIndexes;
   } else {
     loadAssetIds = assetIds;
@@ -381,8 +383,10 @@ export function getRasterStatisticsMinMax(
   }
 
   if (bandMetadata) {
+    const bandIdx = singleBandInfo?.bandIndex ?? 0;
     const coreBands = bandMetadata.bands as CoreBand[] | undefined;
-    const statistics = bandMetadata['raster:bands']?.[0].statistics ?? coreBands?.[0]?.statistics;
+    const statistics =
+      bandMetadata['raster:bands']?.[bandIdx]?.statistics ?? coreBands?.[bandIdx]?.statistics;
     minCategoricalBandValue = statistics?.minimum;
     maxCategoricalBandValue = statistics?.maximum;
   }
@@ -672,6 +676,8 @@ export function getUsableAssets(stac: CompleteSTACObject): CompleteSTACAssetLink
       usableAssets[assetName] = assetData;
     } else if (hasCoreBandsWithDataType(assetData)) {
       // STAC 1.1.0+ core bands with data_type
+      usableAssets[assetName] = assetData;
+    } else if (Array.isArray(assetData['eo:bands']) && assetData['eo:bands'].length > 0) {
       usableAssets[assetName] = assetData;
     }
 
