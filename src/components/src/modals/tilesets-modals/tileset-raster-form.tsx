@@ -148,8 +148,8 @@ function getCOGMetadataUrl(cogUrl: string): string {
 const RASTER_TILE_EXAMPLES = [
   {
     label: 'COG',
-    name: 'Kiribati COG',
-    url: 'https://storage.googleapis.com/open-cogs/stac-examples/20201211_223832_CS2_analytic.tif'
+    name: 'Africa Farms',
+    url: 'https://sentinel-cogs.s3.us-west-2.amazonaws.com/sentinel-s2-l2a-cogs/36/Q/WD/2020/7/S2A_36QWD_20200701_0_L2A/TCI.tif'
   },
   {
     label: 'PMTiles',
