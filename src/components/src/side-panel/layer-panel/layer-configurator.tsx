@@ -1167,13 +1167,6 @@ export default function LayerConfiguratorFactory(
             </ConfigGroupCollapsibleContent>
             {layer.errorMessage ? <LayerErrorMessage errorMessage={layer.errorMessage} /> : null}
           </LayerConfigGroup>
-          {/* Tooltip */}
-          {'allowHover' in layer.visConfigSettings ? (
-            <LayerConfigGroup
-              {...layer.visConfigSettings.allowHover}
-              {...visConfiguratorProps}
-            />
-          ) : null}
           {renderTemplate &&
             this[renderTemplate] &&
             this[renderTemplate]({
