@@ -44,7 +44,7 @@ export function applyModuleUniforms(
   shaderInputs: {
     moduleUniforms: Record<string, Record<string, unknown>>;
     moduleBindings: Record<string, Record<string, unknown>>;
-    setProps?: (props: Record<string, unknown>) => void;
+    setProps?: (props: any) => void;
   },
   modules: ShaderModule[],
   allModuleProps: Record<string, unknown>
