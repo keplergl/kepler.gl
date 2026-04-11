@@ -132,6 +132,17 @@ export const DATA_SOURCE_COLOR_DEFAULTS: Record<DATA_SOURCE_IDS, ColorRescaling>
 };
 
 /**
+ * Fallback color rescaling for unknown STAC items with high-bit (>8bit) integer data.
+ * Without contrast enhancement, uint16 imagery appears nearly black.
+ */
+export const HIGH_BIT_COLOR_DEFAULTS: ColorRescaling = {
+  gammaContrastFactor: 1.5,
+  sigmoidalContrastFactor: 10,
+  sigmoidalBiasFactor: 0.2,
+  saturationValue: 1.2
+};
+
+/**
  * Available "presets"
  *
  * I define a "preset" as one specific manner of loading bands and combining them on the frontend.
@@ -754,5 +765,30 @@ export const rasterVisConfigs = {
     label: 'Enable in Top view',
     group: '',
     property: 'enableTerrainTopView'
-  } as VisConfigBoolean
+  } as VisConfigBoolean,
+  showTileBorders: {
+    type: 'boolean',
+    defaultValue: false,
+    label: 'Show Tile Borders',
+    group: '',
+    property: 'showTileBorders',
+    description: 'Debug: render wireframe boundaries of raster tiles'
+  } as VisConfigBoolean,
+  zoomOffset: {
+    type: 'number',
+    defaultValue: 0,
+    label: 'Zoom Offset',
+    isRanged: false,
+    range: [-5, 3],
+    step: 1,
+    group: '',
+    property: 'zoomOffset',
+    description: 'Force loading higher (+) or lower (-) zoom level tiles'
+  } as VisConfigNumber,
+  bandOverrides: {
+    type: 'input',
+    defaultValue: null,
+    label: 'Band Overrides',
+    property: 'bandOverrides'
+  } as VisConfigInput
 };

@@ -17,7 +17,7 @@ import {
 } from '../raster-layer/raster-layer-shaders';
 import {loadImages} from '../images';
 import type {RasterLayerAddedProps, ImageState} from '../types';
-import {modulesEqual} from '../util';
+import {modulesEqual, applyModuleUniforms} from '../util';
 import {patchPipelineValidation} from '../pipeline-validation-patch';
 import {TOPOLOGY} from '@kepler.gl/constants';
 
@@ -179,20 +179,13 @@ export default class RasterMeshLayer extends SimpleMeshLayer<any, RasterLayerAdd
       }
     });
 
-    // Set props for each custom module through shaderInputs.
-    // Call getUniforms ourselves to skip inactive modules (null return),
-    // avoiding the ShaderInputs null-fallback that would dump all textures
-    // into bindings every frame.
+    // Apply each custom module's uniforms/bindings to shaderInputs directly.
+    // We call getUniforms once per module and write the results into
+    // shaderInputs.moduleUniforms/moduleBindings, bypassing setProps() which
+    // would call getUniforms a second time on already-transformed values.
     const allModuleProps = {...moduleProps, ...images};
     const modules = this.props.modules || [];
-    for (const mod of modules) {
-      if (mod.getUniforms) {
-        const result = mod.getUniforms(allModuleProps);
-        if (result) {
-          model.shaderInputs.setProps({[mod.name]: result});
-        }
-      }
-    }
+    applyModuleUniforms(model.shaderInputs, modules, allModuleProps);
 
     const drawSuccess = model.draw(this.context.renderPass);
     if (!drawSuccess) {

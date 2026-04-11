@@ -30,7 +30,9 @@ import {
 type Item = StacTypes.STACItem;
 type Collection = StacTypes.STACCollection;
 type EOBand = StacTypes.Band;
+type CoreBand = StacTypes.CoreBand;
 type DataTypeOfTheBand = StacTypes.DataTypeOfTheBand;
+type CommonNameOfTheBand = StacTypes.CommonNameOfTheBand;
 
 export const CATEGORICAL_TEXTURE_WIDTH = 256;
 
@@ -103,7 +105,7 @@ function getZoomRange(stac: CompleteSTACObject): [number, number] {
  * @param stac stac object
  * @return Data type of the band
  */
-function getDataType(
+export function getDataType(
   usableAssets: CompleteSTACAssetLinks,
   typesToCheck?: string[]
 ): DataTypeOfTheBand | null {
@@ -117,7 +119,14 @@ function getDataType(
       continue;
     }
 
+    // Legacy: raster:bands
     asset['raster:bands']?.forEach(band => band.data_type && dataTypes.add(band.data_type));
+
+    // Fallback: STAC 1.1.0+ core bands (only if no raster:bands on this asset)
+    if (!asset['raster:bands']?.length) {
+      const coreBands: CoreBand[] = asset.bands || [];
+      coreBands.forEach(band => band.data_type && dataTypes.add(band.data_type));
+    }
   }
 
   // TODO: support multiple data types across assets
@@ -194,7 +203,8 @@ export function getImageMinMax(imageData: TypedArray): [number | null, number | 
 export function getBandIdsForCommonNames(
   stac: CompleteSTACObject,
   usableAssets: CompleteSTACAssetLinks,
-  commonNames: string[]
+  commonNames: string[],
+  bandOverrides?: Record<string, string> | null
 ): AssetRequestInfo | null {
   // An array of strings describing asset identifiers, e.g. the "key" in the assets object
   const assetIds: AssetIds = [];
@@ -203,8 +213,20 @@ export function getBandIdsForCommonNames(
   const bandIndexes: BandIndexes = [];
 
   for (const commonName of commonNames) {
-    // Find asset that includes a band with this common name
-    const result = findAssetWithName(usableAssets, commonName, 'common_name');
+    const overrideName = bandOverrides?.[commonName];
+    let result: [string, number] | null = null;
+
+    if (overrideName) {
+      result = findAssetWithName(usableAssets, overrideName, 'name');
+      if (!result) {
+        result = findAssetWithName(usableAssets, overrideName, 'common_name');
+      }
+    }
+
+    if (!result) {
+      result = findAssetWithName(usableAssets, commonName, 'common_name');
+    }
+
     if (result) {
       const [assetName, bandIndex] = result;
       assetIds.push(assetName);
@@ -253,8 +275,11 @@ function consolidateBandIndexes(
     // (because of larger download sizes). In the future may want separate loading paths if we
     // encounter single asset objects with > 4 bands.
 
-    // TODO: eo:bands can be _either_ on each asset _or_ on the STAC's properties, which is not currently handled
-    loadBandIndexes = (asset['eo:bands'] as EOBand[])?.map((_, idx) => idx);
+    const eoBands = asset['eo:bands'] as EOBand[] | undefined;
+    const assetBands: EOBand[] | CoreBand[] | undefined = eoBands?.length
+      ? eoBands
+      : (asset?.bands as CoreBand[] | undefined);
+    loadBandIndexes = assetBands?.map((_: unknown, idx: number) => idx) ?? [];
     renderBandIndexes = bandIndexes;
   } else {
     loadAssetIds = assetIds;
@@ -280,11 +305,32 @@ export function findAssetWithName(
   for (const [assetName, assetData] of Object.entries(assets)) {
     const eoBands = assetData['eo:bands'] || [];
 
-    // Search bands array of this asset
+    // Search eo:bands array of this asset
     for (let i = 0; i < eoBands.length; i++) {
       const eoBand = eoBands[i];
       if (name === eoBand[property]) {
         return [assetName, i];
+      }
+      if (property === 'common_name' && !eoBand.common_name) {
+        if (name === inferCommonNameFromDescription(eoBand.description)) {
+          return [assetName, i];
+        }
+      }
+    }
+
+    // Fall back to STAC 1.1.0+ core bands
+    if (eoBands.length === 0) {
+      const coreBands: CoreBand[] = assetData?.bands || [];
+      const coreProp = property === 'common_name' ? 'eo:common_name' : 'name';
+      for (let i = 0; i < coreBands.length; i++) {
+        if (name === coreBands[i][coreProp]) {
+          return [assetName, i];
+        }
+        if (property === 'common_name' && !coreBands[i]['eo:common_name']) {
+          if (name === inferCommonNameFromDescription(coreBands[i].description)) {
+            return [assetName, i];
+          }
+        }
       }
     }
   }
@@ -337,8 +383,12 @@ export function getRasterStatisticsMinMax(
   }
 
   if (bandMetadata) {
-    minCategoricalBandValue = bandMetadata['raster:bands']?.[0].statistics?.minimum;
-    maxCategoricalBandValue = bandMetadata['raster:bands']?.[0].statistics?.maximum;
+    const bandIdx = singleBandInfo?.bandIndex ?? 0;
+    const coreBands = bandMetadata.bands as CoreBand[] | undefined;
+    const statistics =
+      bandMetadata['raster:bands']?.[bandIdx]?.statistics ?? coreBands?.[bandIdx]?.statistics;
+    minCategoricalBandValue = statistics?.minimum;
+    maxCategoricalBandValue = statistics?.maximum;
   }
 
   return [minCategoricalBandValue, maxCategoricalBandValue];
@@ -409,7 +459,12 @@ export function getDataSourceParams(
   if (bandCombination === 'single') {
     bandInfo = getSingleBandInfo(usableAssets, presetOptions?.singleBand);
   } else if (commonNames) {
-    bandInfo = getBandIdsForCommonNames(stac, usableAssets, commonNames);
+    bandInfo = getBandIdsForCommonNames(
+      stac,
+      usableAssets,
+      commonNames,
+      presetOptions?.bandOverrides
+    );
   } else {
     return null;
   }
@@ -466,12 +521,13 @@ export function getSTACBounds(stac: Item | Collection): number[] | null {
 
 /**
  * Get all eo:band objects from STAC object
+ * Falls back to STAC 1.1.0+ core `bands`, normalizing them to the legacy EOBand shape.
  * @param stac  STAC object
  * @return array of eo:band objects or null
  */
 export function getEOBands(stac: CompleteSTACObject): EOBand[] | null {
-  const assets = getAssets(stac);
-  if (!assets) {
+  const assets = getUsableAssets(stac);
+  if (!assets || Object.keys(assets).length === 0) {
     return null;
   }
 
@@ -479,11 +535,62 @@ export function getEOBands(stac: CompleteSTACObject): EOBand[] | null {
   for (const data of Object.values(assets)) {
     const assetBands = data['eo:bands'];
     if (Array.isArray(assetBands) && assetBands.length > 0) {
-      eoBands.push(...assetBands);
+      eoBands.push(
+        ...assetBands.map(band => ({
+          ...band,
+          common_name: band.common_name || inferCommonNameFromDescription(band.description)
+        }))
+      );
+    } else {
+      const coreBands: CoreBand[] | undefined = data?.bands as CoreBand[] | undefined;
+      if (Array.isArray(coreBands) && coreBands.length > 0) {
+        eoBands.push(...coreBands.map(coreBandToEOBand));
+      }
     }
   }
 
   return eoBands;
+}
+
+function coreBandToEOBand(band: CoreBand): EOBand {
+  return {
+    name: band.name,
+    common_name: band['eo:common_name'] || inferCommonNameFromDescription(band.description),
+    center_wavelength: band['eo:center_wavelength'],
+    full_width_half_max: band['eo:full_width_half_max']
+  };
+}
+
+const KNOWN_COMMON_NAMES: ReadonlySet<string> = new Set([
+  'coastal',
+  'blue',
+  'green',
+  'red',
+  'rededge',
+  'yellow',
+  'pan',
+  'nir',
+  'nir08',
+  'nir09',
+  'cirrus',
+  'swir16',
+  'swir22',
+  'lwir',
+  'lwir11',
+  'lwir12'
+]);
+
+/**
+ * If `description` matches a known eo common_name value, return it.
+ * This covers STAC items (e.g. from TiTiler) that store the common name
+ * in `description` instead of `common_name` / `eo:common_name`.
+ */
+function inferCommonNameFromDescription(
+  description: string | undefined
+): CommonNameOfTheBand | undefined {
+  if (!description) return undefined;
+  const normalized = description.trim().toLowerCase();
+  return KNOWN_COMMON_NAMES.has(normalized) ? (normalized as CommonNameOfTheBand) : undefined;
 }
 
 /**
@@ -542,9 +649,9 @@ export function getAssets(stac: CompleteSTACObject): CompleteSTACAssetLinks {
 /**
  * Find usable assets in main assets object
  * The `assets` object can point to many different objects, including original XML or JSON metadata,
- * thumbnails, etc. These aren't usable as image data in Studio.
+ * thumbnails, etc. These aren't usable as image data in Raster Tile Layer.
  * @param stac  STAC object
- * @return asset mapping including only assets usable in Studio
+ * @return asset mapping including only assets usable in Raster Tile Layer
  */
 export function getUsableAssets(stac: CompleteSTACObject): CompleteSTACAssetLinks {
   const allAssets = getAssets(stac);
@@ -564,8 +671,13 @@ export function getUsableAssets(stac: CompleteSTACObject): CompleteSTACAssetLink
       continue;
     }
 
-    // raster:bands array exists
+    // raster:bands array exists (legacy STAC 1.0.x)
     if (assetData['raster:bands']) {
+      usableAssets[assetName] = assetData;
+    } else if (hasCoreBandsWithDataType(assetData)) {
+      // STAC 1.1.0+ core bands with data_type
+      usableAssets[assetName] = assetData;
+    } else if (Array.isArray(assetData['eo:bands']) && assetData['eo:bands'].length > 0) {
       usableAssets[assetName] = assetData;
     }
 
@@ -573,6 +685,11 @@ export function getUsableAssets(stac: CompleteSTACObject): CompleteSTACAssetLink
   }
 
   return usableAssets;
+}
+
+function hasCoreBandsWithDataType(assetData: Record<string, unknown>): boolean {
+  const bands = assetData?.bands;
+  return Array.isArray(bands) && bands.some((band: CoreBand) => band.data_type);
 }
 
 /**

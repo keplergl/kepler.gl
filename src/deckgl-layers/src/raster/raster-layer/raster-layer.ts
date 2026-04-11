@@ -13,7 +13,7 @@ import {
 } from './raster-layer-shaders';
 import {loadImages} from '../images';
 import type {RasterLayerAddedProps, ImageState} from '../types';
-import {modulesEqual} from '../util';
+import {modulesEqual, applyModuleUniforms} from '../util';
 import {patchPipelineValidation} from '../pipeline-validation-patch';
 
 const defaultProps = {
@@ -63,21 +63,13 @@ export default class RasterLayer extends BitmapLayer<RasterLayerAddedProps> {
       }
     });
 
-    // Set props for each custom module through shaderInputs.
-    // We call getUniforms ourselves to skip modules that return null (inactive).
-    // Passing allModuleProps directly to setProps would cause the null-fallback
-    // in ShaderInputs to treat the entire props bag as uniforms/bindings,
-    // triggering expensive texture rebinding every frame.
+    // Apply each custom module's uniforms/bindings to shaderInputs directly.
+    // We call getUniforms once per module and write the results into
+    // shaderInputs.moduleUniforms/moduleBindings, bypassing setProps() which
+    // would call getUniforms a second time on already-transformed values.
     const allModuleProps = {...moduleProps, ...images};
     const modules = this.props.modules || [];
-    for (const mod of modules) {
-      if (mod.getUniforms) {
-        const result = mod.getUniforms(allModuleProps);
-        if (result) {
-          model.shaderInputs.setProps({[mod.name]: result});
-        }
-      }
-    }
+    applyModuleUniforms(model.shaderInputs, modules, allModuleProps);
 
     const drawSuccess = model.draw(this.context.renderPass);
     if (!drawSuccess) {

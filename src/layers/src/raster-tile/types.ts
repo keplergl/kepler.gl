@@ -86,6 +86,7 @@ export type PresetOption = {
     assetId: string;
     bandIndex?: number;
   };
+  bandOverrides?: Record<string, string> | null;
 };
 
 export type DataSourceParams = AssetRequestInfo & {
@@ -174,6 +175,7 @@ export type RenderSubLayersCustomProps = ColorRescaling &
     maxCategoricalBandValue?: number;
     hasCategoricalColorMap: boolean;
     hasShadowEffect?: boolean;
+    showTileBorders?: boolean;
   };
 
 export interface RenderSubLayersDefaultProps {
