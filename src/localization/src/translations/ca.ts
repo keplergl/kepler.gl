@@ -210,7 +210,8 @@ export default {
     speed: 'velocitat',
     play: 'iniciar',
     pause: 'pausar',
-    reset: 'reiniciar'
+    reset: 'reiniciar',
+    export: 'exportar'
   },
   toolbar: {
     exportImage: 'Exporta imatge',

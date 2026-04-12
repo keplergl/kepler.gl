@@ -199,7 +199,8 @@ export default {
     speed: '速度',
     play: '播放',
     pause: '暂停',
-    reset: '重置'
+    reset: '重置',
+    export: '导出'
   },
   toolbar: {
     exportImage: '导出图片',
