@@ -140,7 +140,7 @@ const StyledExportVideoModalContent = styled(StyledModalContent)`
   }
   .data-ex-icons-play > path:last-child,
   .data-ex-icons-stop > path:last-child {
-    fill: rgb(255, 255, 255, 0) !important;
+    fill: rgba(255, 255, 255, 0) !important;
     stroke: ${props => props.theme.primaryBtnActBgd};
     stroke-width: 3px;
   }

@@ -44,7 +44,7 @@ export function getTimeRangeFilterKeyframes({
   filter: TimeRangeFilter;
   timings: number[];
 }): TimeRangeFilterKeyframes {
-  if (filter.type !== 'timeRange') {
+  if (filter.type !== FILTER_TYPES.timeRange) {
     throw new Error("filter type must be 'timeRange'.");
   }
 
@@ -93,11 +93,11 @@ export function getTimeRangeFilterKeyframes({
 
 export function getBeforeLayerId(topMapStyle: any, bottomMapStyle: any): MapboxLayerRef | null {
   if (topMapStyle?.layers?.length && bottomMapStyle?.layers?.length) {
-    const lastTopLayer = topMapStyle.layers[0];
-    const lastTopLayerIdx = bottomMapStyle.layers.findIndex(
-      (layer: MapboxLayerRef) => layer.id === lastTopLayer.id
+    const firstTopLayer = topMapStyle.layers[0];
+    const firstTopLayerIdx = bottomMapStyle.layers.findIndex(
+      (layer: MapboxLayerRef) => layer.id === firstTopLayer.id
     );
-    const beforeIdx = lastTopLayerIdx - 1;
+    const beforeIdx = firstTopLayerIdx - 1;
     return beforeIdx > -1 ? bottomMapStyle.layers[beforeIdx] : null;
   }
   return null;
