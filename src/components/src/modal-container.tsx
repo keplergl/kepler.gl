@@ -26,6 +26,7 @@ import LoadDataModalFactory from './modals/load-data-modal';
 import ExportImageModalFactory from './modals/export-image-modal';
 import ExportDataModalFactory from './modals/export-data-modal';
 import ExportMapModalFactory from './modals/export-map-modal/export-map-modal';
+import ExportVideoModalFactory from './modals/export-video-modal';
 import AddMapStyleModalFactory from './modals/add-map-style-modal';
 import SaveMapModalFactory from './modals/save-map-modal';
 import ShareMapModalFactory from './modals/share-map-modal';
@@ -44,6 +45,7 @@ import {
   EXPORT_DATA_ID,
   EXPORT_IMAGE_ID,
   EXPORT_MAP_ID,
+  EXPORT_VIDEO_ID,
   ADD_MAP_STYLE_ID,
   SAVE_MAP_ID,
   SHARE_MAP_ID,
@@ -84,6 +86,10 @@ const LoadDataModalStyle = css`
   top: 60px;
 `;
 
+const ExportVideoModalStyle = css`
+  max-width: 960px;
+`;
+
 const DefaultStyle = css`
   max-width: 960px;
 `;
@@ -120,6 +126,7 @@ ModalContainerFactory.deps = [
   ExportImageModalFactory,
   ExportDataModalFactory,
   ExportMapModalFactory,
+  ExportVideoModalFactory,
   AddMapStyleModalFactory,
   ModalDialogFactory,
   SaveMapModalFactory,
@@ -134,6 +141,7 @@ export default function ModalContainerFactory(
   ExportImageModal: ReturnType<typeof ExportImageModalFactory>,
   ExportDataModal: ReturnType<typeof ExportDataModalFactory>,
   ExportMapModal: ReturnType<typeof ExportMapModalFactory>,
+  ExportVideoModal: ReturnType<typeof ExportVideoModalFactory>,
   AddMapStyleModal: ReturnType<typeof AddMapStyleModalFactory>,
   ModalDialog: ReturnType<typeof ModalDialogFactory>,
   SaveMapModal: ReturnType<typeof SaveMapModalFactory>,
@@ -451,6 +459,28 @@ export default function ModalContainerFactory(
             };
             break;
           }
+          case EXPORT_VIDEO_ID:
+            template = (
+              <ExportVideoModal
+                mapboxApiAccessToken={this.props.mapboxApiAccessToken}
+                mapboxApiUrl={this.props.mapboxApiUrl}
+                mapState={mapState}
+                mapStyle={mapStyle}
+                visState={visState}
+                exportVideo={uiState.exportVideo}
+                containerW={containerW}
+                visStateActions={visStateActions}
+                uiStateActions={uiStateActions}
+                onClose={this._closeModal}
+              />
+            );
+            modalProps = {
+              title: 'modal.title.exportVideo',
+              cssStyle: ExportVideoModalStyle,
+              footer: false,
+              onCancel: this._closeModal
+            };
+            break;
           case ADD_MAP_STYLE_ID:
             template = (
               <AddMapStyleModal

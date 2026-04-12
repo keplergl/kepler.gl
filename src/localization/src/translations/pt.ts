@@ -203,7 +203,8 @@ export default {
     delete: 'Deletar',
     timePlayback: 'Tempo de reprodução',
     cloudStorage: 'Armazenamento Cloud',
-    '3DMap': ' Mapa 3D'
+    '3DMap': ' Mapa 3D',
+    export: 'exportar'
   },
   toolbar: {
     exportImage: 'Exportar Imagem',

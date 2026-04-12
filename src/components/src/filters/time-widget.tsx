@@ -36,6 +36,7 @@ function TimeWidgetFactory(
     isAnimatable,
     updateAnimationSpeed,
     toggleAnimation,
+    exportAnimation,
     setFilterPlot,
     setFilterAnimationWindow,
     animationConfig,
@@ -47,6 +48,7 @@ function TimeWidgetFactory(
     );
 
     const _toggleAnimation = useCallback(() => toggleAnimation(index), [toggleAnimation, index]);
+    const _exportAnimation = useCallback(() => exportAnimation?.(), [exportAnimation]);
 
     const isMinified = useMemo(() => filter.view === FILTER_VIEW_TYPES.minified, [filter]);
 
@@ -88,6 +90,7 @@ function TimeWidgetFactory(
           {...timeRangeSlideProps}
           onChange={timeSliderOnChange}
           toggleAnimation={_toggleAnimation}
+          exportAnimation={_exportAnimation}
           updateAnimationSpeed={_updateAnimationSpeed}
           setFilterAnimationWindow={_setFilterAnimationWindow}
           hideTimeTitle={showTimeDisplay}

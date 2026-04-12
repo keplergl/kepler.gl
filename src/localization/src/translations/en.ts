@@ -277,6 +277,7 @@ export default {
     exportImage: 'Export Image',
     exportData: 'Export Data',
     exportMap: 'Export Map',
+    exportVideo: 'Export Video',
     shareMapURL: 'Share Map URL',
     saveMap: 'Save Map',
     select: 'Select',
@@ -293,6 +294,11 @@ export default {
     noLayersToFilter: 'No layers to filter'
   },
 
+  exportVideoModal: {
+    animation: 'Animation',
+    settings: 'Settings'
+  },
+
   modal: {
     title: {
       deleteDataset: 'Delete Dataset',
@@ -300,6 +306,7 @@ export default {
       exportImage: 'Export Image',
       exportData: 'Export Data',
       exportMap: 'Export Map',
+      exportVideo: 'Export Video',
       addCustomMapboxStyle: 'Add Custom Map Style',
       saveMap: 'Save Map',
       shareURL: 'Share URL'
@@ -325,6 +332,10 @@ export default {
       resolutionPlaceholder: 'Select resolution...',
       mapLegendTitle: 'Map Legend',
       mapLegendAdd: 'Add legend on map'
+    },
+    exportVideo: {
+      animation: 'Animation',
+      settings: 'Settings'
     },
     exportData: {
       datasetTitle: 'Dataset',

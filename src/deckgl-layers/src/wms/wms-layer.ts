@@ -82,6 +82,7 @@ export default class WMSLayer extends CompositeLayer<Required<_WMSLayerProps>> {
     /** TODO: Change any => setTimeout return type. Different between Node and browser... */
     _timeoutId: any;
     loadCounter: number;
+    _lastRequestZoom: number;
   };
 
   /** Returns true if all async resources are loaded */
@@ -100,6 +101,7 @@ export default class WMSLayer extends CompositeLayer<Required<_WMSLayerProps>> {
     this.state._nextRequestId = 0;
     this.state.lastRequestId = -1;
     this.state.loadCounter = 0;
+    this.state._lastRequestZoom = -1;
   }
 
   override updateState({changeFlags, props, oldProps}: UpdateParameters<this>): void {
@@ -114,7 +116,14 @@ export default class WMSLayer extends CompositeLayer<Required<_WMSLayerProps>> {
     } else if (!deepEqual(props.layers, oldProps.layers, 1)) {
       this.debounce(() => this.loadImage(viewport, 'layers changed'), 0);
     } else if (changeFlags.viewportChanged) {
-      this.debounce(() => this.loadImage(viewport, 'viewport changed'));
+      // Check if preserveDrawingBuffer is enabled (indicates video recording or image export)
+      // Use minimal debounce (10ms) during export for responsive frame capture
+      // Request deduplication in loadImage prevents spam from redundant viewport updates
+      const gl = this.context.gl;
+      const isPreservingBuffer = gl?.getContextAttributes?.()?.preserveDrawingBuffer;
+
+      const debounceDelay = isPreservingBuffer ? 10 : undefined;
+      this.debounce(() => this.loadImage(viewport, 'viewport changed'), debounceDelay);
     }
   }
 
@@ -197,7 +206,6 @@ export default class WMSLayer extends CompositeLayer<Required<_WMSLayerProps>> {
 
     const bounds = viewport.getBounds();
     const {width, height} = viewport;
-    const requestId = this.getRequestId();
     let {srs} = this.props;
     if (srs === 'auto') {
       // BitmapLayer only supports LNGLAT or CARTESIAN (Web-Mercator)
@@ -227,6 +235,33 @@ export default class WMSLayer extends CompositeLayer<Required<_WMSLayerProps>> {
       requestParams.bbox = [minX, minY, maxX, maxY];
     }
 
+    // Skip request if parameters haven't meaningfully changed
+    if (
+      this.state.lastRequestParameters &&
+      this._areRequestParamsEqual(this.state.lastRequestParameters, requestParams)
+    ) {
+      return;
+    }
+
+    // During video export, throttle zoom-in requests to only fire on zoom level crossings.
+    // The existing image is stretched by the BitmapLayer until the next level is reached.
+    const gl = this.context.gl;
+    const isExporting = gl?.getContextAttributes?.()?.preserveDrawingBuffer;
+    if (isExporting && this.state._lastRequestZoom >= 0) {
+      const currentZoom = viewport.zoom;
+      const lastZoom = this.state._lastRequestZoom;
+      const isZoomingIn = currentZoom > lastZoom;
+      if (isZoomingIn && Math.floor(currentZoom) === Math.floor(lastZoom)) {
+        return;
+      }
+    }
+
+    // Update lastRequestParameters BEFORE making the request to prevent race conditions
+    // where multiple debounced calls see the same old parameters and all proceed
+    this.state.lastRequestParameters = requestParams;
+    this.state._lastRequestZoom = viewport.zoom;
+
+    const requestId = this.getRequestId();
     try {
       this.state.loadCounter++;
       this.props.onImageLoadStart(requestId);
@@ -240,7 +275,6 @@ export default class WMSLayer extends CompositeLayer<Required<_WMSLayerProps>> {
         this.setState({
           image,
           bounds,
-          lastRequestParameters: requestParams,
           lastRequestId: requestId
         });
       }
@@ -263,6 +297,44 @@ export default class WMSLayer extends CompositeLayer<Required<_WMSLayerProps>> {
   private debounce(fn: () => void, ms = 500): void {
     clearTimeout(this.state._timeoutId);
     this.state._timeoutId = setTimeout(() => fn(), ms);
+  }
+
+  /** Compare request parameters to determine if a new request is needed */
+  private _areRequestParamsEqual(prev: any, next: any): boolean {
+    // Compare dimensions
+    if (prev.width !== next.width || prev.height !== next.height) {
+      return false;
+    }
+
+    // Compare SRS
+    if (prev.srs !== next.srs) {
+      return false;
+    }
+
+    // Compare layers
+    if (!deepEqual(prev.layers, next.layers)) {
+      return false;
+    }
+
+    // Compare transparent
+    if (prev.transparent !== next.transparent) {
+      return false;
+    }
+
+    // Compare bounds with tolerance for floating point precision
+    const tolerance = 1e-10;
+    const prevBbox = prev.bbox;
+    const nextBbox = next.bbox;
+
+    if (prevBbox && nextBbox) {
+      for (let i = 0; i < 4; i++) {
+        if (Math.abs(prevBbox[i] - nextBbox[i]) > tolerance) {
+          return false;
+        }
+      }
+    }
+
+    return true;
   }
 }
 

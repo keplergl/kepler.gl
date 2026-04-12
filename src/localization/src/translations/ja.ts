@@ -207,7 +207,8 @@ export default {
     speed: '速度',
     play: '再生',
     pause: '一時停止',
-    reset: 'リセット'
+    reset: 'リセット',
+    export: 'エクスポート'
   },
   toolbar: {
     exportImage: '画像を出力',

@@ -3,7 +3,7 @@
 
 import {createAction} from '@reduxjs/toolkit';
 import {default as ActionTypes} from './action-types';
-import {Merge, ExportImage} from '@kepler.gl/types';
+import {Merge, ExportImage, ExportVideo} from '@kepler.gl/types';
 
 /** TOGGLE_SIDE_PANEL */
 export type ToggleSidePanelUpdaterAction = {
@@ -313,6 +313,26 @@ export const setExportImageError: (
 export const cleanupExportImage: () => {
   type: typeof ActionTypes.CLEANUP_EXPORT_IMAGE;
 } = createAction(ActionTypes.CLEANUP_EXPORT_IMAGE);
+
+/** SET_EXPORT_VIDEO_SETTING */
+export type SetExportVideoSettingUpdaterAction = {
+  payload: Partial<ExportVideo>;
+};
+/**
+ * Set `exportVideo` settings: mediaType, cameraPreset, fileName, resolution, durationMs
+ * @memberof uiStateActions
+ * @param newSetting - {mediaType: 'webm'}
+ * @public
+ */
+export const setExportVideoSetting: (
+  newSetting: SetExportVideoSettingUpdaterAction['payload']
+) => Merge<
+  SetExportVideoSettingUpdaterAction,
+  {type: typeof ActionTypes.SET_EXPORT_VIDEO_SETTING}
+> = createAction(
+  ActionTypes.SET_EXPORT_VIDEO_SETTING,
+  (newSetting: SetExportVideoSettingUpdaterAction['payload']) => ({payload: newSetting})
+);
 
 /** SET_EXPORT_SELECTED_DATASET */
 export type SetExportSelectedDatasetUpdaterAction = {

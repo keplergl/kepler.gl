@@ -45,7 +45,12 @@ const SaveExportDropdown = appInjector.get(SaveExportDropdownFactory);
 import {InitialState} from 'test/helpers/mock-state';
 
 // Constants
-import {EXPORT_DATA_ID, EXPORT_MAP_ID, EXPORT_IMAGE_ID} from '@kepler.gl/constants';
+import {
+  EXPORT_DATA_ID,
+  EXPORT_MAP_ID,
+  EXPORT_IMAGE_ID,
+  EXPORT_VIDEO_ID
+} from '@kepler.gl/constants';
 
 // default props from initial state
 const defaultProps = {
@@ -364,7 +369,7 @@ test('Components -> SidePanel -> PanelHeader -> ExportDropDown', t => {
   }, 'SidePanel should not fail');
 
   t.ok(wrapper.find(SaveExportDropdown).length === 1, 'should render SaveExportDropdown');
-  t.equal(wrapper.find(ToolbarItem).length, 3, 'should render 3 ToolbarItem');
+  t.equal(wrapper.find(ToolbarItem).length, 4, 'should render 4 ToolbarItem');
 
   // export image
   t.equal(
@@ -393,6 +398,15 @@ test('Components -> SidePanel -> PanelHeader -> ExportDropDown', t => {
   );
   wrapper.find(ToolbarItem).at(2).find('.toolbar-item').simulate('click');
   t.ok(toggleModal.calledWith(EXPORT_MAP_ID), 'Should call toggleModal with EXPORT_MAP_ID');
+
+  // export video
+  t.equal(
+    wrapper.find(ToolbarItem).at(3).find('.toolbar-item__title').text(),
+    'Export Video',
+    'Should render Export Video'
+  );
+  wrapper.find(ToolbarItem).at(3).find('.toolbar-item').simulate('click');
+  t.ok(toggleModal.calledWith(EXPORT_VIDEO_ID), 'Should call toggleModal with EXPORT_VIDEO_ID');
 
   t.end();
 });

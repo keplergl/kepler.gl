@@ -7,7 +7,7 @@ import classnames from 'classnames';
 import {createSelector} from 'reselect';
 import {StyledPanelDropdown, Tooltip} from '../common/styled-components';
 import KeplerGlLogo from '../common/logo';
-import {Save, DataTable, Save2, Picture, Db, BaseMap, Share} from '../common/icons';
+import {Save, DataTable, Save2, Picture, Db, BaseMap, Share, Play} from '../common/icons';
 import Toolbar, {ToolbarProps} from '../common/toolbar';
 import ToolbarItem, {ToolbarItemProps} from '../common/toolbar-item';
 import {FormattedMessage} from '@kepler.gl/localization';
@@ -55,6 +55,7 @@ type DropdownCallbacks = {
   onExportData: () => void;
   onExportConfig?: () => void;
   onExportMap: () => void;
+  onExportVideo?: () => void;
   onSaveToStorage: (() => void) | null;
   onSaveAsToStorage: (() => void) | null;
   onSaveMap?: () => void;
@@ -232,6 +233,12 @@ export const SaveExportDropdownFactory = (
       icon: BaseMap,
       key: 'map',
       onClick: props => props.onExportMap
+    },
+    {
+      label: 'toolbar.exportVideo',
+      icon: Play,
+      key: 'video',
+      onClick: props => props.onExportVideo
     },
     {
       label: 'toolbar.saveMap',

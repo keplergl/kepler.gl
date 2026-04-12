@@ -202,7 +202,8 @@ export default {
     delete: 'Poista',
     timePlayback: 'Ajan animointi',
     cloudStorage: 'Pilvitallennus',
-    '3DMap': '3D-näkymä'
+    '3DMap': '3D-näkymä',
+    export: 'vie'
   },
   toolbar: {
     exportImage: 'Vie kuva',

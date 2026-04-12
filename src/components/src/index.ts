@@ -186,6 +186,7 @@ export {default as ExportImageModalFactory} from './modals/export-image-modal';
 export {default as ExportHtmlMapFactory} from './modals/export-map-modal/export-html-map';
 export {default as ExportJsonMapFactory} from './modals/export-map-modal/export-json-map';
 export {default as ExportMapModalFactory} from './modals/export-map-modal/export-map-modal';
+export {default as ExportVideoModalFactory} from './modals/export-video-modal';
 export {default as LoadDataModalFactory} from './modals/load-data-modal';
 export {default as LoadTileSetFactory} from './modals/tilesets-modals/load-tileset';
 export {default as LoadStorageMapFactory} from './modals/load-storage-map';
@@ -208,6 +209,7 @@ export {default as PlayControlFactory} from './common/animation-control/play-con
 export {default as PlaybackControlsFactory} from './common/animation-control/playback-controls';
 export {default as ResetControlFactory} from './common/animation-control/reset-control';
 export {default as SpeedControlFactory} from './common/animation-control/speed-control';
+export {default as ExportVideoControlFactory} from './common/animation-control/export-video-control';
 export {default as WindowActionControlFactory} from './common/animation-control/window-action-control';
 
 export {default as HistogramPlotFactory, HISTOGRAM_MASK_MODE} from './common/histogram-plot';
