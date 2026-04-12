@@ -90,6 +90,43 @@ class KeplerTile3DLayer extends DeckTile3DLayer {
       }
     }
   }
+
+  /**
+   * During video export (preserveDrawingBuffer), report the layer as not loaded
+   * until every selected tile has a renderable sublayer.  Hubble.gl's
+   * DeckAdapter.onAfterRender checks layer.isLoaded on every top-level layer
+   * before capturing a frame, so returning false here makes it wait until the
+   * LOD transition is complete — no frame is captured with missing tiles.
+   */
+  get isLoaded(): boolean {
+    const baseLoaded = super.isLoaded;
+    if (!baseLoaded) {
+      return false;
+    }
+
+    const gl = this.context?.gl;
+    const isExporting = gl?.getContextAttributes?.()?.preserveDrawingBuffer;
+    if (!isExporting) {
+      return true;
+    }
+
+    const {tileset3d, layerMap} = this.state as any;
+    if (!tileset3d) {
+      return true;
+    }
+
+    for (const tile of tileset3d.tiles as Tile3D[]) {
+      if (!tile.selected) {
+        continue;
+      }
+      const cache = layerMap[tile.id];
+      if (!cache?.layer) {
+        return false;
+      }
+    }
+
+    return true;
+  }
 }
 (KeplerTile3DLayer as any).layerName = 'KeplerTile3DLayer';
 
