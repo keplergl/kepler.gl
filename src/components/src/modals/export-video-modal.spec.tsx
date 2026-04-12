@@ -69,7 +69,7 @@ const DEFAULT_PROPS = {
     layerOrder: []
   },
   exportVideo: {
-    mediaType: 'gif',
+    mediaType: 'webm',
     cameraPreset: 'None',
     fileName: 'kepler.gl',
     resolution: '',

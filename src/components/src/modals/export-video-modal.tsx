@@ -92,9 +92,7 @@ const StyledTabItem = styled.div`
   }
 `;
 
-const LightItemSelector: React.FC<any> = props => (
-  <ItemSelector {...props} inputTheme="light" />
-);
+const LightItemSelector: React.FC<any> = props => <ItemSelector {...props} inputTheme="light" />;
 
 const SLIDER_LIGHT_OVERRIDES = {
   sliderBarColor: '#A0A7B4',
@@ -149,6 +147,22 @@ const StyledExportVideoModalContent = styled(StyledModalContent)`
   .data-ex-icons-play > path:last-child:hover,
   .data-ex-icons-stop > path:last-child:hover {
     fill: ${props => props.theme.primaryBtnActBgd} !important;
+  }
+  #deck-canvas::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    z-index: 1;
+    background: linear-gradient(to right, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.8))
+        no-repeat center / 1px 100%,
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.8)) no-repeat
+        center / 100% 1px;
+    filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.6));
   }
 `;
 

@@ -321,7 +321,7 @@ export type SetExportVideoSettingUpdaterAction = {
 /**
  * Set `exportVideo` settings: mediaType, cameraPreset, fileName, resolution, durationMs
  * @memberof uiStateActions
- * @param newSetting - {mediaType: 'gif'}
+ * @param newSetting - {mediaType: 'webm'}
  * @public
  */
 export const setExportVideoSetting: (
