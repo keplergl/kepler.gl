@@ -5164,6 +5164,7 @@ __metadata:
     "@luma.gl/constants": "npm:^9.2.6"
     "@luma.gl/core": "npm:^9.2.6"
     "@luma.gl/engine": "npm:^9.2.6"
+    "@luma.gl/shadertools": "npm:^9.2.6"
     "@luma.gl/webgl": "npm:^9.2.6"
     "@mapbox/geo-viewport": "npm:^0.4.1"
     "@mapbox/vector-tile": "npm:^1.3.1"
