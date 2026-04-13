@@ -370,6 +370,7 @@ class HeatmapLayer extends Layer {
     visible: boolean;
   }): KeplerHeatmapLayer[] {
     const {data, mapState} = opts;
+    const {_unfiltered, ...deckData} = data;
 
     const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
     const {visConfig} = this.config;
@@ -394,7 +395,7 @@ class HeatmapLayer extends Layer {
     return [
       new KeplerHeatmapLayer({
         ...defaultLayerProps,
-        ...data,
+        ...deckData,
         aggregation: (visConfig.aggregation || 'SUM') as 'SUM' | 'MEAN',
         radiusPixels,
         intensity,
