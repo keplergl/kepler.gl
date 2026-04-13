@@ -6,8 +6,8 @@ import styled, {ThemeProvider, useTheme} from 'styled-components';
 
 import {DEFAULT_MAPBOX_API_URL} from '@kepler.gl/constants';
 import {FormattedMessage} from '@kepler.gl/localization';
-import {Viewport, ExportVideo} from '@kepler.gl/types';
-import {onViewPortChange} from '@kepler.gl/utils';
+import {Viewport, ExportVideo, Effect} from '@kepler.gl/types';
+import {onViewPortChange, computeDeckEffects} from '@kepler.gl/utils';
 import {MapStyle} from '@kepler.gl/reducers';
 import {UIStateActions, VisStateActions} from '@kepler.gl/actions';
 
@@ -236,6 +236,25 @@ const ExportVideoModalFactory = () => {
       [keplerState, mapboxApiAccessToken, mapboxApiUrl]
     );
 
+    const [videoEffects] = useState<Effect[]>(() =>
+      visState.effects.map((effect: Effect) => effect.clone())
+    );
+
+    const deckEffects = useMemo(
+      () =>
+        computeDeckEffects({
+          visState: {...visState, effects: videoEffects},
+          mapState,
+          isExport: true
+        }),
+      [visState, videoEffects, mapState]
+    );
+
+    const deckPropsWithEffects = useMemo(
+      () => ({...hubbleDeckGlProps, effects: deckEffects}),
+      [hubbleDeckGlProps, deckEffects]
+    );
+
     const onViewChange = useCallback(
       (viewState: Record<string, any>) =>
         onViewPortChange(viewState as Viewport, onUpdateMap as any),
@@ -320,7 +339,7 @@ const ExportVideoModalFactory = () => {
             exportVideoWidth={exportVideoWidth}
             onFilterFrameUpdate={onFilterFrameUpdate}
             onTripFrameUpdate={onTripFrameUpdate}
-            deckProps={hubbleDeckGlProps}
+            deckProps={deckPropsWithEffects}
             mapProps={staticMapProps}
             disableBaseMap={false}
             mapboxLayerBeforeId={topLayer?.id}
