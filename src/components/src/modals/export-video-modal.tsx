@@ -237,18 +237,18 @@ const ExportVideoModalFactory = () => {
     );
 
     const [videoEffects] = useState<Effect[]>(() =>
-      visState.effects.map((effect: Effect) => effect.clone())
+      (visState.effects || []).map((effect: Effect) => effect.clone())
     );
 
-    const deckEffects = useMemo(
-      () =>
-        computeDeckEffects({
-          visState: {...visState, effects: videoEffects},
-          mapState,
-          isExport: true
-        }),
-      [visState, videoEffects, mapState]
-    );
+    const deckEffects = useMemo(() => {
+      if (videoEffects.length === 0) return [];
+      const effectOrder = visState.effectOrder || videoEffects.map((e: Effect) => e.id);
+      return computeDeckEffects({
+        visState: {...visState, effects: videoEffects, effectOrder},
+        mapState,
+        isExport: true
+      });
+    }, [visState, videoEffects, mapState]);
 
     const deckPropsWithEffects = useMemo(
       () => ({...hubbleDeckGlProps, effects: deckEffects}),

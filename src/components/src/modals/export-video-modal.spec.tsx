@@ -136,7 +136,8 @@ describe('ExportVideoModal', () => {
     expect(panelProps.deckProps).toEqual({
       parameters: {blend: true},
       controller: true,
-      views: {}
+      views: {},
+      effects: []
     });
   });
 
