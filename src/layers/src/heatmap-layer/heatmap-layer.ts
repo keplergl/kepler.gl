@@ -196,7 +196,14 @@ class HeatmapLayer extends Layer {
   }
 
   get noneLayerDataAffectingProps() {
-    return [...super.noneLayerDataAffectingProps, 'colorRange'];
+    return [
+      ...super.noneLayerDataAffectingProps,
+      'colorRange',
+      'radius',
+      'intensity',
+      'threshold',
+      'aggregation'
+    ];
   }
 
   hasAllColumns() {
