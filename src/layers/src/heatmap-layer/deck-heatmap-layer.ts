@@ -27,7 +27,7 @@ export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
   getShaders(shaders: any) {
     const result = super.getShaders(shaders);
 
-    if (shaders.fs?.includes('gaussianKDE')) {
+    if (result.fs?.includes('gaussianKDE')) {
       // Weights fragment shader: adjust kernel to match Mapbox heatmap layer
       let fs = editShader(
         result.fs,
@@ -38,7 +38,7 @@ export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
       );
       fs = editShader(fs, 'fs', '2. * dist', 'dist');
       result.fs = fs;
-    } else if (shaders.fs?.includes('outTexture.r / max(1.0, outTexture.a)')) {
+    } else if (result.fs?.includes('outTexture.r / max(1.0, outTexture.a)')) {
       // Max-weights fragment shader: force max value to 1.0
       result.fs = insertBefore(
         result.fs,
