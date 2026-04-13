@@ -271,8 +271,8 @@ export class DeckDistanceFogEffect {
     const renderPass = this.model.device.beginRenderPass({
       framebuffer: outputBuffer,
       parameters: {viewport: [0, 0, ...texSize]},
-      clearColor: [0, 0, 0, 0],
-      clearDepth: 1
+      clearColor: params.clearCanvas !== false ? [0, 0, 0, 0] : false,
+      clearDepth: params.clearCanvas !== false ? 1 : false
     });
     this.model.draw(renderPass);
     renderPass.end();

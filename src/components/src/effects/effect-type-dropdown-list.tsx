@@ -10,6 +10,7 @@ import {classList} from '../common/item-selector/dropdown-list';
 export type EffectTypeDropdownListItem = {
   type: string;
   name: string;
+  description?: string;
   disabled: boolean;
 };
 

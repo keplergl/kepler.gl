@@ -62,6 +62,12 @@ This guide will teach you how to perform data analysis in Kepler.gl by adding da
 * [Display legend](./m-map-settings.md#display-legend)
 * [Split maps](./m-map-settings.md#split-maps)
 
+#### [Effects](./effects.md)
+* [Light & Shadow](./effects.md#light--shadow)
+* [Post-processing (Ink, Blur, Sepia, …)](./effects.md#ink)
+* [Distance Fog](./effects.md#distance-fog)
+* [Surface Fog](./effects.md#surface-fog)
+
 #### [SQL Data Explorer](./sql-data-explorer.md)
 
 #### [AI Assistant](./ai-assistant.md)
@@ -69,5 +75,9 @@ This guide will teach you how to perform data analysis in Kepler.gl by adding da
 #### [Time playback](./h-playback.md)
 
 #### [Save and export](./k-save-and-export.md)
+* [Export Image](./k-save-and-export.md#export-image)
+* [Export Data](./k-save-and-export.md#export-data)
+* [Export Map](./k-save-and-export.md#export-map)
+* [Export Video](./k-save-and-export.md#export-video)
 
 #### [FAQ](./i-FAQ.md)

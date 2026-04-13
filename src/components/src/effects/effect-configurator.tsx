@@ -367,7 +367,7 @@ export default function EffectConfiguratorFactory(
         const paramName = desc.name;
 
         const rawUniform = uniforms[desc.name];
-        if ((!rawUniform && rawUniform !== 0) || rawUniform.private) {
+        if (rawUniform && rawUniform.private) {
           return null;
         }
 
@@ -411,7 +411,7 @@ export default function EffectConfiguratorFactory(
           };
         }
         // the uniform description is {value: 0, min: 0, max: 1, ...}
-        else if (isNumber(uniform.value)) {
+        else if (uniform && isNumber(uniform.value)) {
           const rangeMin = desc.min ?? uniform.min ?? uniform.softMin ?? 0;
           const rangeMax = desc.max ?? uniform.max ?? uniform.softMax ?? 1;
           const rangeSpan = rangeMax - rangeMin;
@@ -421,6 +421,22 @@ export default function EffectConfiguratorFactory(
             value1: prevValue || 0,
             range: [rangeMin, rangeMax],
             value0: rangeMin,
+            step,
+            onChange: (newValue: number[], event) => {
+              updateEffectConfig(event, id, {parameters: {[paramName]: newValue[1]}});
+            }
+          };
+        }
+        // Parameter defined in effect description but not in shader propTypes
+        // (e.g. user-facing props that the effect maps to different GLSL uniforms)
+        else if (desc.min !== undefined && desc.max !== undefined) {
+          const rangeSpan = desc.max - desc.min;
+          const step = rangeSpan > 10 ? 1 : 0.001;
+          return {
+            label,
+            value1: prevValue ?? desc.defaultValue ?? 0,
+            range: [desc.min, desc.max],
+            value0: desc.min,
             step,
             onChange: (newValue: number[], event) => {
               updateEffectConfig(event, id, {parameters: {[paramName]: newValue[1]}});

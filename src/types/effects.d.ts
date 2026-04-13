@@ -13,6 +13,7 @@ type EffectParameterDescription = {
 export type EffectDescription = {
   type: string;
   name: string;
+  description?: string;
   parameters: EffectParameterDescription[];
 };
 

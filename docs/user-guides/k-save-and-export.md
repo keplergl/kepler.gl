@@ -9,6 +9,7 @@ However, in the demo app, you can:
 - [Export map as an image](#export-image).
 - [Export filtered or unfiltered data as a csv](#export-data).
 - [Export Map](#export-map)
+- [Export Video](#export-video)
 - [Share Public URL (Dropbox)](#export-dropbox)
 
 ## <a href="#export-image">Export Image</a>
@@ -65,6 +66,51 @@ The JSON file includes:
 The map config includes the current layer, filter, map style and interaction settings.
 
 **Note:** kepler.gl map config is coupled with loaded datasets. The __`dataId`__ key is used to bind layers, filters and tooltip settings to a specific dataset. If you try to upload a configuration with a dataset in your own kepler.gl app, you also need to make sure your dataset __`id`__ matches the __`dataId`__ in the config.
+
+
+## <a href="#export-video">Export Video</a>
+
+You can record an animated video of your map and download it directly from the browser. Open the export video dialog from the toolbar by clicking **Export Video**. The dialog has two tabs — **Animation** and **Settings** — along with a live map preview.
+
+### Animation tab
+
+The Animation tab controls the motion and timing of the recording.
+
+| Setting | Description |
+| --- | --- |
+| **Duration** | Length of the video, from 0.1 s up to 10 s. Drag the slider or type a value. Longer recordings produce larger files. |
+| **Camera** | An optional camera animation applied during the recording. Available presets: **None** (static camera), **Orbit (90°)**, **Orbit (180°)**, **Orbit (360°)**, **Zoom Out**, and **Zoom In**. When set to *None*, the camera stays exactly where you position it in the preview. |
+
+### Settings tab
+
+The Settings tab controls the output file format and quality.
+
+| Setting | Description |
+| --- | --- |
+| **File Name** | Base name for the downloaded file. Defaults to `kepler.gl`. |
+| **Media Type** | Output format: **WebM Video** (default, small file size, supported by most browsers), **GIF** (widely compatible but larger), **PNG Sequence** (lossless frame-by-frame images), or **JPEG Sequence** (compressed frame-by-frame images). |
+| **Ratio** | Aspect ratio of the output: **16:9** (widescreen) or **4:3** (standard). |
+| **Quality** | Resolution of the output. Options depend on the selected aspect ratio. For 16:9: Good (540p), High (720p), Highest (1080p). For 4:3: Good (480p), High (960p), Highest (1440p). Higher resolutions produce sharper video but larger files. |
+| **File Size** | An estimated file size based on the current duration, resolution, and media type. |
+
+### Preview and recording
+
+The live preview in the dialog shows exactly what will be recorded, including all visible layers, active effects (brightness, fog, light & shadow, etc.), and the base map. You can pan, zoom, and tilt the map in the preview to set the starting camera position.
+
+- **Play (▶)** — Preview the animation (camera movement, filter playback) without recording.
+- **Stop (■)** — Stop a running preview or recording.
+- **Render** — Start recording. The map plays through the configured animation and duration, then the browser downloads the resulting file automatically.
+
+### Animated filters and trips
+
+If your map has time-range filters in the *enlarged* (time-slider) view or filters synced with the layer timeline, the video recorder will animate them over the recording duration. Trip layers similarly animate their paths. The animation window mode of each filter (free, incremental, point, or interval) is respected during recording.
+
+### Tips
+
+- Use **WebM** format for the smallest file sizes and fastest rendering. Switch to **GIF** only when you need universal compatibility (e.g. embedding in documents that don't support video).
+- For the sharpest results, choose the **Highest** quality setting, but be aware that 1080p or 1440p recordings take longer and produce larger files.
+- Position your camera in the preview *before* clicking Render. If you selected a camera preset like *Orbit (360°)*, the orbit starts from whatever position you set.
+- All active [effects](./effects.md) (post-processing filters, fog, lighting) are included in the recording.
 
 
 ## <a href="#export-dropbox">Share Public URL (Dropbox) </a>

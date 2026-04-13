@@ -269,8 +269,6 @@ const surfaceFogModule = {
   },
   propTypes: {
     density: {value: 0.6, min: 0, max: 1},
-    height: {value: 50, min: -200, max: 3000},
-    thickness: {value: 50, min: 0, max: 1000},
     fogColor: {value: [230, 235, 242]},
     pattern: {value: 0, min: 0, max: 1},
     fogHeight: {value: 0, private: true},
@@ -407,8 +405,8 @@ export class DeckSurfaceFogEffect {
     const renderPass = this.model.device.beginRenderPass({
       framebuffer: outputBuffer,
       parameters: {viewport: [0, 0, ...texSize]},
-      clearColor: [0, 0, 0, 0],
-      clearDepth: 1
+      clearColor: params.clearCanvas !== false ? [0, 0, 0, 0] : false,
+      clearDepth: params.clearCanvas !== false ? 1 : false
     });
     this.model.draw(renderPass);
     renderPass.end();
