@@ -105,7 +105,9 @@ export default {
       '3d': '3D'
     },
     layerUpdateError:
-      'Se produjo un error durante la actualización de la capa: {errorMessage}. Asegúrese de que el formato de los datos de entrada sea válido.'
+      'Se produjo un error durante la actualización de la capa: {errorMessage}. Asegúrese de que el formato de los datos de entrada sea válido.',
+    heatmap: 'Heatmap',
+    aggregation: 'Aggregation'
   },
   layerVisConfigs: {
     angle: 'Ángulo',
@@ -130,6 +132,7 @@ export default {
     targetColor: 'Color destino',
     colorAggregation: 'Agregación de color',
     heightAggregation: 'Agregación de la altura',
+    weightAggregation: 'Weight Aggregation',
     resolutionRange: 'Rango de resolución',
     sizeScale: 'Medida de escala',
     worldUnitSize: 'Medida de la unidad mundial',
@@ -149,6 +152,8 @@ export default {
     enablePolygonHeight: 'Activar la altura del polígono',
     showWireframe: 'Muestra esquemàtico',
     weightIntensity: 'Intensidad de peso',
+    intensity: 'Intensity',
+    threshold: 'Threshold',
     zoomScale: 'Escala de zoom',
     heightRange: 'Rango de alturas',
     heightMultiplier: 'Multiplicador de altura',

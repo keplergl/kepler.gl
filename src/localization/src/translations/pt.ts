@@ -104,7 +104,9 @@ export default {
       '3d': '3D'
     },
     layerUpdateError:
-      'Ocorreu um erro ao atualizar a camada: {errorMessage}. Certifique-se de que o formato dos dados de entrada seja válido.'
+      'Ocorreu um erro ao atualizar a camada: {errorMessage}. Certifique-se de que o formato dos dados de entrada seja válido.',
+    heatmap: 'Heatmap',
+    aggregation: 'Aggregation'
   },
   layerVisConfigs: {
     strokeWidth: 'Largura do Traço',
@@ -128,6 +130,7 @@ export default {
     targetColor: 'Cor de destino',
     colorAggregation: 'Agregação da Cor',
     heightAggregation: 'Agregação da Altura',
+    weightAggregation: 'Weight Aggregation',
     resolutionRange: 'Alcance da Resolução',
     sizeScale: 'Escala de tamanho',
     worldUnitSize: 'Tamanho unitário do mundo',
@@ -147,6 +150,8 @@ export default {
     enablePolygonHeight: 'Habilitar Altura de Polígono',
     showWireframe: 'Mostrar Wireframe',
     weightIntensity: 'Intensidade da Espessura',
+    intensity: 'Intensity',
+    threshold: 'Threshold',
     zoomScale: 'Escala do Zoom',
     heightRange: 'Alcance da Altura',
     heightMultiplier: 'Multiplicador de altura',

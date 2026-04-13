@@ -102,7 +102,9 @@ export default {
       trip: 'trip',
       s2: 'S2',
       '3d': '3D'
-    }
+    },
+    heatmap: 'Heatmap',
+    aggregation: 'Aggregation'
   },
   layerVisConfigs: {
     angle: '角度',
@@ -124,6 +126,7 @@ export default {
     targetColor: '目标颜色',
     colorAggregation: '颜色聚合',
     heightAggregation: '高度聚合',
+    weightAggregation: 'Weight Aggregation',
     resolutionRange: '分辨率范围',
     sizeScale: '大小比例',
     worldUnitSize: '世界单位大小',
@@ -140,6 +143,8 @@ export default {
     enablePolygonHeight: '启用多边形高度',
     showWireframe: '显示线框',
     weightIntensity: '加权强度',
+    intensity: 'Intensity',
+    threshold: 'Threshold',
     zoomScale: '缩放比例',
     heightRange: '高度范围',
     allowHover: '显示工具提示'

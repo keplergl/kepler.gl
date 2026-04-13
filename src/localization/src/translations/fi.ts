@@ -104,7 +104,9 @@ export default {
       '3d': '3D'
     },
     layerUpdateError:
-      'Tason päivityksen aikana tapahtui virhe: {errorMessage}. Varmista, että syötetietojen muoto on kelvollinen.'
+      'Tason päivityksen aikana tapahtui virhe: {errorMessage}. Varmista, että syötetietojen muoto on kelvollinen.',
+    heatmap: 'Heatmap',
+    aggregation: 'Aggregation'
   },
   layerVisConfigs: {
     strokeWidth: 'Viivan paksuus',
@@ -128,6 +130,7 @@ export default {
     targetColor: 'Kohteen väri',
     colorAggregation: 'Värien aggregointi',
     heightAggregation: 'Korkeuden aggregointi',
+    weightAggregation: 'Weight Aggregation',
     resolutionRange: 'Resoluution rajat',
     sizeScale: 'Koon skaala',
     worldUnitSize: 'Yksikkö',
@@ -146,6 +149,8 @@ export default {
     enablePolygonHeight: 'Salli polygonien korkeus',
     showWireframe: 'Näytä rautalankamalli',
     weightIntensity: 'Painotuksen intensiteetti',
+    intensity: 'Intensity',
+    threshold: 'Threshold',
     zoomScale: 'Zoomausskaala',
     heightRange: 'Korkeuden rajat',
     heightMultiplier: 'Korkeuskerroin',

@@ -5224,6 +5224,7 @@ __metadata:
   resolution: "@kepler.gl/layers@workspace:src/layers"
   dependencies:
     "@deck.gl-community/editable-layers": "npm:9.2.8"
+    "@deck.gl/aggregation-layers": "npm:^9.2.11"
     "@deck.gl/core": "npm:^9.2.11"
     "@deck.gl/extensions": "npm:^9.2.11"
     "@deck.gl/geo-layers": "npm:^9.2.11"

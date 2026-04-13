@@ -1,28 +1,36 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {createSelector} from 'reselect';
+import KeplerHeatmapLayer from './deck-heatmap-layer';
 import {CHANNEL_SCALES, ALL_FIELD_TYPES} from '@kepler.gl/constants';
-import MapboxGLLayer, {MapboxLayerGLConfig} from '../mapboxgl-layer';
+import Layer, {LayerBaseConfigPartial, LayerWeightConfig, VisualChannels} from '../base-layer';
 import HeatmapLayerIcon from './heatmap-layer-icon';
-import {LayerBaseConfigPartial, LayerWeightConfig, VisualChannels} from '../base-layer';
 import {
   ColorRange,
   VisConfigColorRange,
   VisConfigNumber,
+  VisConfigSelection,
   HexColor,
+  RGBColor,
   Merge,
-  LayerColumn
+  LayerColumn,
+  LayerBaseConfig,
+  MapState
 } from '@kepler.gl/types';
 import {hexToRgb, DataContainerInterface} from '@kepler.gl/utils';
-import {KeplerTable} from '@kepler.gl/table';
+import {notNullorUndefined} from '@kepler.gl/common-utils';
+import {Datasets, KeplerTable} from '@kepler.gl/table';
 
 import {getGeoArrowPointLayerProps, FindDefaultLayerPropsReturnValue} from '../layer-utils';
+import {getFilterDataFunc} from '../aggregation-layer';
 
 export type HeatmapLayerVisConfigSettings = {
   opacity: VisConfigNumber;
   colorRange: VisConfigColorRange;
   radius: VisConfigNumber;
+  intensity: VisConfigNumber;
+  threshold: VisConfigNumber;
+  aggregation: VisConfigSelection;
 };
 
 export type HeatmapLayerColumnsConfig = {
@@ -38,11 +46,14 @@ export type HeatmapLayerVisConfig = {
   opacity: number;
   colorRange: ColorRange;
   radius: number;
+  intensity: number;
+  threshold: number;
+  aggregation: string;
 };
 
 export type HeatmapLayerVisualChannelConfig = LayerWeightConfig;
 export type HeatmapLayerConfig = Merge<
-  MapboxLayerGLConfig,
+  LayerBaseConfig,
   {columns: HeatmapLayerColumnsConfig; visConfig: HeatmapLayerVisConfig}
 > &
   HeatmapLayerVisualChannelConfig;
@@ -70,14 +81,47 @@ export const pointColResolver = ({lat, lng, geoarrow}: HeatmapLayerColumnsConfig
   return `geoarrow-${geoarrow.fieldIdx}`;
 };
 
+export const HEATMAP_AGGREGATION_TYPES = {
+  SUM: 'SUM',
+  MEAN: 'MEAN'
+} as const;
+
 export const heatmapVisConfigs: {
   opacity: 'opacity';
   colorRange: 'colorRange';
   radius: 'heatmapRadius';
+  intensity: VisConfigNumber;
+  threshold: VisConfigNumber;
+  aggregation: VisConfigSelection;
 } = {
   opacity: 'opacity',
   colorRange: 'colorRange',
-  radius: 'heatmapRadius'
+  radius: 'heatmapRadius',
+  intensity: {
+    type: 'number',
+    label: 'layerVisConfigs.intensity',
+    defaultValue: 1,
+    isRanged: false,
+    range: [0.001, 20],
+    step: 0.001,
+    property: 'intensity'
+  } as VisConfigNumber,
+  threshold: {
+    type: 'number',
+    label: 'layerVisConfigs.threshold',
+    defaultValue: 0.18,
+    isRanged: false,
+    range: [0.01, 1],
+    step: 0.001,
+    property: 'threshold'
+  } as VisConfigNumber,
+  aggregation: {
+    type: 'select',
+    defaultValue: HEATMAP_AGGREGATION_TYPES.SUM,
+    label: 'layerVisConfigs.weightAggregation',
+    options: Object.keys(HEATMAP_AGGREGATION_TYPES),
+    property: 'aggregation'
+  } as VisConfigSelection
 };
 
 export const pointRequiredColumns = ['lat', 'lng'];
@@ -99,32 +143,25 @@ const SUPPORTED_COLUMN_MODES = [
 ];
 const DEFAULT_COLUMN_MODE = COLUMN_MODE_POINTS;
 
-/**
- *
- * @param colorRange
- * @return [
- *  0, "rgba(33,102,172,0)",
- *  0.2, "rgb(103,169,207)",
- *  0.4, "rgb(209,229,240)",
- *  0.6, "rgb(253,219,199)",
- *  0.8, "rgb(239,138,98)",
- *  1, "rgb(178,24,43)"
- * ]
- */
-const heatmapDensity = (colorRange: ColorRange): (string | number)[] => {
-  const colors: HexColor[] = ['#000000', ...colorRange.colors];
+function toColorRamp(colors: HexColor[]): RGBColor[] {
+  if (!colors.length) return [];
+  return [colors[0], ...colors, colors[colors.length - 1]].map(hexToRgb);
+}
 
-  const colorDensity: (string | number)[] = [];
-  colors.forEach((color, index) => {
-    colorDensity.push(index / colors.length);
-    colorDensity.push(`rgb(${hexToRgb(color).join(',')})`);
-  });
+function interpolateByZoom(
+  currentZoom: number,
+  minZoom: number,
+  valueAtMinZoom: number,
+  maxZoom: number,
+  valueAtMaxZoom: number
+): number {
+  const value =
+    valueAtMinZoom +
+    ((currentZoom - minZoom) / (maxZoom - minZoom)) * (valueAtMaxZoom - valueAtMinZoom);
+  return Math.min(Math.max(value, valueAtMinZoom), valueAtMaxZoom);
+}
 
-  colorDensity[1] = 'rgba(0,0,0,0)';
-  return colorDensity;
-};
-
-class HeatmapLayer extends MapboxGLLayer {
+class HeatmapLayer extends Layer {
   declare visConfigSettings: HeatmapLayerVisConfigSettings;
   declare config: HeatmapLayerConfig;
 
@@ -137,7 +174,6 @@ class HeatmapLayer extends MapboxGLLayer {
         case COLUMN_MODE_GEOARROW:
           return geoarrowPosAccessor(this.config.columns)(dataContainer);
         default:
-          // COLUMN_MODE_POINTS
           return pointPosAccessor(this.config.columns)(dataContainer);
       }
     };
@@ -147,8 +183,27 @@ class HeatmapLayer extends MapboxGLLayer {
     return 'heatmap';
   }
 
+  get isAggregated(): true {
+    return true;
+  }
+
   get supportedColumnModes() {
     return SUPPORTED_COLUMN_MODES;
+  }
+
+  get columnPairs() {
+    return this.defaultPointColumnPairs;
+  }
+
+  get noneLayerDataAffectingProps() {
+    return [
+      ...super.noneLayerDataAffectingProps,
+      'colorRange',
+      'radius',
+      'intensity',
+      'threshold',
+      'aggregation'
+    ];
   }
 
   hasAllColumns() {
@@ -177,8 +232,6 @@ class HeatmapLayer extends MapboxGLLayer {
         scale: 'weightScale',
         domain: 'weightDomain',
         key: 'weight',
-        // supportedFieldTypes can be determined by channelScaleType
-        // or specified here
         defaultMeasure: 'property.density',
         supportedFieldTypes: [ALL_FIELD_TYPES.real, ALL_FIELD_TYPES.integer],
         channelScaleType: CHANNEL_SCALES.size
@@ -188,6 +241,10 @@ class HeatmapLayer extends MapboxGLLayer {
 
   get layerIcon() {
     return HeatmapLayerIcon;
+  }
+
+  getHoverData(): null {
+    return null;
   }
 
   getVisualChannelDescription(channel) {
@@ -203,9 +260,6 @@ class HeatmapLayer extends MapboxGLLayer {
   }
 
   getDefaultLayerConfig(props: LayerBaseConfigPartial): HeatmapLayerConfig {
-    // mapbox heatmap layer color is always based on density
-    // no need to set colorField, colorDomain and colorScale
-
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const {colorField, colorDomain, colorScale, ...layerConfig} = {
       ...super.getDefaultLayerConfig(props),
@@ -222,83 +276,136 @@ class HeatmapLayer extends MapboxGLLayer {
 
   updateLayerMeta(dataset: KeplerTable) {
     const {dataContainer} = dataset;
-
     const getPosition = this.getPositionAccessor(dataContainer);
     const bounds = this.getPointsBounds(dataContainer, getPosition);
     this.updateMeta({bounds});
   }
 
-  columnsSelector = config => pointColResolver(config.columns, config.columnMode);
-  visConfigSelector = config => config.visConfig;
-  weightFieldSelector = config => (config.weightField ? config.weightField.name : null);
-  weightDomainSelector = config => config.weightDomain;
+  calculateDataAttribute({filteredIndex}: KeplerTable, getPosition) {
+    const data: {index: number}[] = [];
 
-  paintSelector = createSelector(
-    this.visConfigSelector,
-    this.weightFieldSelector,
-    this.weightDomainSelector,
-    (visConfig, weightField, weightDomain) => ({
-      'heatmap-weight': weightField
-        ? ['interpolate', ['linear'], ['get', weightField], weightDomain[0], 0, weightDomain[1], 1]
-        : 1,
-      'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 0, 1, MAX_ZOOM_LEVEL, 3],
-      'heatmap-color': [
-        'interpolate',
-        ['linear'],
-        ['heatmap-density'],
-        ...heatmapDensity(visConfig.colorRange)
-      ],
-      'heatmap-radius': [
-        'interpolate',
-        ['linear'],
-        ['zoom'],
-        0,
-        2,
-        MAX_ZOOM_LEVEL,
-        visConfig.radius // radius
-      ],
-      'heatmap-opacity': visConfig.opacity
-    })
-  );
+    for (let i = 0; i < filteredIndex.length; i++) {
+      const index = filteredIndex[i];
+      const pos = getPosition({index});
 
-  computeHeatmapConfiguration = createSelector(
-    this.sourceSelector,
-    this.filterSelector,
-    this.paintSelector,
-    (source, filter, paint) => {
-      return {
-        type: 'heatmap',
-        id: this.id,
-        source,
-        layout: {
-          visibility: 'visible'
-        },
-        paint,
-        ...(this.isValidFilter(filter) ? {filter} : {})
-      };
+      if (pos.every(Number.isFinite)) {
+        data.push({index});
+      }
     }
-  );
 
-  formatLayerData(datasets, oldLayerData) {
-    if (this.config.dataId === null) {
+    return data;
+  }
+
+  formatLayerData(datasets: Datasets, oldLayerData: unknown): Record<string, unknown> {
+    const {dataId} = this.config;
+    if (!notNullorUndefined(dataId)) {
       return {};
     }
-    const {weightField} = this.config;
-    const {dataContainer} = datasets[this.config.dataId];
-    const getPosition = this.getPositionAccessor(dataContainer);
-    const {data} = this.updateData(datasets, oldLayerData);
+    const dataset = datasets[dataId];
+    const {weightField, weightScale, weightDomain} = this.config as HeatmapLayerConfig & {
+      weightScale: string;
+      weightDomain: number[];
+    };
+    const {gpuFilter, dataContainer} = dataset;
 
-    // @ts-ignore
-    const newConfig = this.computeHeatmapConfiguration(this.config, datasets);
-    newConfig.id = this.id;
+    // Pass oldLayerData with the unfiltered base data so updateData's caching works correctly.
+    // formatLayerData returns GPU-filtered `data`, so oldLayerData.data would be the filtered
+    // subset. We stash the unfiltered array in `_unfiltered` to feed back to updateData.
+    const oldData = oldLayerData as any;
+    const baseOldLayerData = oldData?._unfiltered
+      ? {...oldData, data: oldData._unfiltered}
+      : oldLayerData;
+
+    const {data = []} = this.updateData(datasets, baseOldLayerData);
+    const getPosition = this.getPositionAccessor(dataContainer);
+
+    const hasFilter = Object.values(gpuFilter.filterRange).some((arr: any) =>
+      arr.some(v => v !== 0)
+    );
+
+    let filteredData = data;
+    if (hasFilter) {
+      const getFilterValue = gpuFilter.filterValueAccessor(dataContainer)(
+        (d: {index: number}) => d.index,
+        (dc, d, fieldIndex) => dc.valueAt(d.index, fieldIndex)
+      );
+      const filterFunc = getFilterDataFunc(gpuFilter.filterRange, getFilterValue);
+      filteredData = data.filter(filterFunc);
+    }
+
+    let getWeight: ((d: {index: number}) => number) | number = 1;
+    if (weightField) {
+      const weightRange = [0, 1];
+      const scaleFunc = this.getVisChannelScale(weightScale, weightDomain, weightRange);
+      getWeight = (d: {index: number}) =>
+        this.getEncodedChannelValue(scaleFunc || (x => x), d as any, weightField, 0 as any);
+    }
 
     return {
-      columns: this.config.columns,
-      config: newConfig,
-      data,
-      weightField,
+      _unfiltered: data,
+      data: filteredData,
+      getWeight,
       getPosition
     };
+  }
+
+  getDefaultDeckLayerProps(opts) {
+    const baseProp = super.getDefaultDeckLayerProps(opts);
+    return {
+      ...baseProp,
+      // gpu data filtering via DataFilterExtension is not supported in aggregation layers
+      extensions: [],
+      // heatmap is not pickable
+      pickable: false
+    };
+  }
+
+  renderLayer(opts: {
+    data: any;
+    gpuFilter: any;
+    objectHovered: any;
+    mapState: MapState;
+    layerCallbacks: any;
+    idx: number;
+    visible: boolean;
+  }): KeplerHeatmapLayer[] {
+    const {data, mapState} = opts;
+    const {_unfiltered, ...deckData} = data;
+
+    const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
+    const {visConfig} = this.config;
+    const colorRange = toColorRamp(visConfig.colorRange.colors);
+
+    const intensity = interpolateByZoom(
+      mapState.zoom,
+      0,
+      visConfig.intensity,
+      MAX_ZOOM_LEVEL,
+      3 * visConfig.intensity
+    );
+    const radiusPixels = interpolateByZoom(mapState.zoom, 0, 2, MAX_ZOOM_LEVEL, visConfig.radius);
+
+    const updateTriggers = {
+      getPosition: this.config.columns,
+      getWeight: {
+        weightField: this.config.weightField
+      }
+    };
+
+    return [
+      new KeplerHeatmapLayer({
+        ...defaultLayerProps,
+        ...deckData,
+        aggregation: (visConfig.aggregation || 'SUM') as 'SUM' | 'MEAN',
+        radiusPixels,
+        intensity,
+        threshold: visConfig.threshold,
+        updateTriggers,
+        colorRange,
+        weightsTextureSize: 512,
+        debounceTimeout: 0
+      })
+    ];
   }
 }
 
