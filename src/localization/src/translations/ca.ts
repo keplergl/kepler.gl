@@ -152,7 +152,8 @@ export default {
     heightRange: 'Rang alçada',
     heightMultiplier: "Multiplicador d'alçada",
     fixedHeight: 'Alçada fixa',
-    fixedHeightDescription: "Utilitzeu l'alçada sense modificacions"
+    fixedHeightDescription: "Utilitzeu l'alçada sense modificacions",
+    allowHover: "Mostra informació d'eina"
   },
   layerManager: {
     addData: 'Afegeix Dades',

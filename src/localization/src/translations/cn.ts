@@ -141,7 +141,8 @@ export default {
     showWireframe: '显示线框',
     weightIntensity: '加权强度',
     zoomScale: '缩放比例',
-    heightRange: '高度范围'
+    heightRange: '高度范围',
+    allowHover: '显示工具提示'
   },
   layerManager: {
     addData: '添加数据',

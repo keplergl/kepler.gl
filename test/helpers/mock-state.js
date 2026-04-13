@@ -1020,7 +1020,8 @@ export const expectedSavedLayer2 = {
       filled: true,
       enable3d: false,
       wireframe: false,
-      strokeOpacity: 0.8
+      strokeOpacity: 0.8,
+      allowHover: true
     },
     textLabel: [DEFAULT_TEXT_LABEL]
   },
@@ -1068,7 +1069,8 @@ export const expectedLoadedLayer2 = {
       stroked: true,
       filled: true,
       enable3d: false,
-      wireframe: false
+      wireframe: false,
+      allowHover: true
     },
     colorField: null,
     colorScale: 'quantile',

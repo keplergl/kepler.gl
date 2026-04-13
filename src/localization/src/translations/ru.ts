@@ -145,7 +145,8 @@ export default {
     weightIntensity: 'Вес Интенсивность',
     zoomScale: 'Масштаб увеличения',
     heightRange: 'Диапазон высоты',
-    heightMultiplier: 'Множитель высоты'
+    heightMultiplier: 'Множитель высоты',
+    allowHover: 'Показать подсказку'
   },
   layerManager: {
     addData: 'Добавить данные',

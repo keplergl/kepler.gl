@@ -151,7 +151,8 @@ export default {
     heightRange: 'Alcance da Altura',
     heightMultiplier: 'Multiplicador de altura',
     fixedHeight: 'Altura fixa',
-    fixedHeightDescription: 'Use a altura sem modificações'
+    fixedHeightDescription: 'Use a altura sem modificações',
+    allowHover: 'Mostrar dica de ferramenta'
   },
   layerManager: {
     addData: 'Adicionar Dados',

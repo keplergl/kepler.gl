@@ -153,7 +153,8 @@ export default {
     heightRange: 'Rango de alturas',
     heightMultiplier: 'Multiplicador de altura',
     fixedHeight: 'Altura fija',
-    fixedHeightDescription: 'Usar altura sin modificaciones'
+    fixedHeightDescription: 'Usar altura sin modificaciones',
+    allowHover: 'Mostrar descripción emergente'
   },
   layerManager: {
     addData: 'Añadir datos',

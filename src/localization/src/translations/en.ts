@@ -174,7 +174,7 @@ export default {
     heightMultiplier: 'Height Multiplier',
     fixedHeight: 'Fixed height',
     fixedHeightDescription: 'Use height without modifications',
-    allowHover: 'Allow Hover',
+    allowHover: 'Allow hover',
     showNeighborOnHover: 'Highlight Neighbors On Hover',
     showHighlightColor: 'Show highlight Color',
     darkModeEnabled: 'Dark base map',

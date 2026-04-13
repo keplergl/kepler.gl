@@ -403,7 +403,8 @@ export const savedStateV0 = {
               filled: true,
               extruded: false,
               wireframe: false,
-              'hi-precision': false
+              'hi-precision': false,
+              allowHover: true
             }
           }
         ],
@@ -1414,7 +1415,8 @@ mergedLayer4.config = {
     filled: true,
     enable3d: false,
     wireframe: false,
-    strokeOpacity: 0.8
+    strokeOpacity: 0.8,
+    allowHover: true
   },
   animation: {enabled: false}
 };

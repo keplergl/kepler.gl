@@ -150,7 +150,8 @@ export default {
     heightRange: 'Korkeuden rajat',
     heightMultiplier: 'Korkeuskerroin',
     fixedHeight: 'Kiinteä korkeus',
-    fixedHeightDescription: 'Käytä korkeutta ilman muutoksia'
+    fixedHeightDescription: 'Käytä korkeutta ilman muutoksia',
+    allowHover: 'Näytä työkaluvihje'
   },
   layerManager: {
     addData: 'Lisää aineisto',

@@ -149,7 +149,8 @@ export default {
     heightRange: '高さの範囲',
     heightMultiplier: '高さ乗数',
     fixedHeight: '固定高さ',
-    fixedHeightDescription: '高さを変更せずに使用する'
+    fixedHeightDescription: '高さを変更せずに使用する',
+    allowHover: 'ツールチップを表示'
   },
   layerManager: {
     addData: 'データ追加',

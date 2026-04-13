@@ -82,6 +82,7 @@ export const geojsonVisConfigs: {
   enable3d: 'enable3d';
   wireframe: 'wireframe';
   fixedHeight: 'fixedHeight';
+  allowHover: 'allowHover';
 } = {
   opacity: 'opacity',
   strokeOpacity: {
@@ -105,7 +106,8 @@ export const geojsonVisConfigs: {
   filled: 'filled',
   enable3d: 'enable3d',
   wireframe: 'wireframe',
-  fixedHeight: 'fixedHeight'
+  fixedHeight: 'fixedHeight',
+  allowHover: 'allowHover'
 };
 
 export type GeoJsonVisConfigSettings = {
@@ -126,6 +128,7 @@ export type GeoJsonVisConfigSettings = {
   filled: VisConfigBoolean;
   enable3d: VisConfigBoolean;
   wireframe: VisConfigBoolean;
+  allowHover: VisConfigBoolean;
 };
 
 export type GeoJsonLayerColumnsConfig = {
@@ -150,6 +153,7 @@ export type GeoJsonLayerVisConfig = {
   enable3d: boolean;
   wireframe: boolean;
   fixedHeight: boolean;
+  allowHover: boolean;
 };
 
 type GeoJsonLayerVisualChannelConfig = LayerColorConfig &
@@ -699,7 +703,7 @@ export default class GeoJsonLayer extends Layer {
       opacity: visConfig.strokeOpacity
     };
 
-    const pickable = interactionConfig.tooltip.enabled;
+    const pickable = interactionConfig.tooltip.enabled && visConfig.allowHover;
     const hoveredObject = this.hasHoveredObject(objectHovered);
 
     const {data, ...props} = dataProps;
