@@ -1405,6 +1405,7 @@ export const DEFAULT_LIGHT_AND_SHADOW_PROPS: {
 export const LIGHT_AND_SHADOW_EFFECT: EffectDescription = {
   type: 'lightAndShadow',
   name: 'Light & Shadow',
+  description: 'effectDescription.lightAndShadow',
   parameters: [
     {name: 'timestamp', min: 0, max: Number.MAX_SAFE_INTEGER},
     {name: 'shadowIntensity', min: 0, max: 1, defaultValue: DEFAULT_SHADOW_INTENSITY},
@@ -1423,11 +1424,13 @@ export const POSTPROCESSING_EFFECTS: {[key: string]: EffectDescription} = {
   ink: {
     type: 'ink',
     name: 'Ink',
+    description: 'effectDescription.ink',
     parameters: [{name: 'strength', min: 0, max: 1}]
   },
   brightnessContrast: {
     type: 'brightnessContrast',
     name: 'Brightness & Contrast',
+    description: 'effectDescription.brightnessContrast',
     parameters: [
       {name: 'brightness', min: -1, max: 1},
       {name: 'contrast', min: -1, max: 1}
@@ -1436,6 +1439,7 @@ export const POSTPROCESSING_EFFECTS: {[key: string]: EffectDescription} = {
   hueSaturation: {
     type: 'hueSaturation',
     name: 'Hue & Saturation',
+    description: 'effectDescription.hueSaturation',
     parameters: [
       {name: 'hue', min: -1, max: 1},
       {name: 'saturation', defaultValue: 0.25, min: -1, max: 1}
@@ -1444,16 +1448,19 @@ export const POSTPROCESSING_EFFECTS: {[key: string]: EffectDescription} = {
   vibrance: {
     type: 'vibrance',
     name: 'Vibrance',
+    description: 'effectDescription.vibrance',
     parameters: [{name: 'amount', defaultValue: 0.5, min: -1, max: 1}]
   },
   sepia: {
     type: 'sepia',
     name: 'Sepia',
+    description: 'effectDescription.sepia',
     parameters: [{name: 'amount', min: 0, max: 1}]
   },
   dotScreen: {
     type: 'dotScreen',
     name: 'Dot Screen',
+    description: 'effectDescription.dotScreen',
     parameters: [
       {
         name: 'angle',
@@ -1478,6 +1485,7 @@ export const POSTPROCESSING_EFFECTS: {[key: string]: EffectDescription} = {
   colorHalftone: {
     type: 'colorHalftone',
     name: 'Color Halftone',
+    description: 'effectDescription.colorHalftone',
     parameters: [
       {
         name: 'angle',
@@ -1502,16 +1510,19 @@ export const POSTPROCESSING_EFFECTS: {[key: string]: EffectDescription} = {
   noise: {
     type: 'noise',
     name: 'Noise',
+    description: 'effectDescription.noise',
     parameters: [{name: 'amount', min: 0, max: 1}]
   },
   triangleBlur: {
     type: 'triangleBlur',
     name: 'Blur (Triangle)',
+    description: 'effectDescription.triangleBlur',
     parameters: [{name: 'radius', min: 0, max: 100}]
   },
   zoomBlur: {
     type: 'zoomBlur',
     name: 'Blur (Zoom)',
+    description: 'effectDescription.zoomBlur',
     parameters: [
       {
         name: 'strength',
@@ -1532,6 +1543,7 @@ export const POSTPROCESSING_EFFECTS: {[key: string]: EffectDescription} = {
   tiltShift: {
     type: 'tiltShift',
     name: 'Blur (Tilt Shift)',
+    description: 'effectDescription.tiltShift',
     parameters: [
       {
         name: 'blurRadius',
@@ -1566,11 +1578,13 @@ export const POSTPROCESSING_EFFECTS: {[key: string]: EffectDescription} = {
   edgeWork: {
     type: 'edgeWork',
     name: 'Edge work',
+    description: 'effectDescription.edgeWork',
     parameters: [{name: 'radius', min: 1, max: 50}]
   },
   vignette: {
     type: 'vignette',
     name: 'Vignette',
+    description: 'effectDescription.vignette',
     parameters: [
       {name: 'amount', min: 0, max: 1},
       {name: 'radius', min: 0, max: 1}
@@ -1579,6 +1593,7 @@ export const POSTPROCESSING_EFFECTS: {[key: string]: EffectDescription} = {
   magnify: {
     type: 'magnify',
     name: 'Magnify',
+    description: 'effectDescription.magnify',
     parameters: [
       {
         name: 'screenXY',
@@ -1611,11 +1626,13 @@ export const POSTPROCESSING_EFFECTS: {[key: string]: EffectDescription} = {
   hexagonalPixelate: {
     type: 'hexagonalPixelate',
     name: 'Hexagonal Pixelate',
+    description: 'effectDescription.hexagonalPixelate',
     parameters: [{name: 'scale', defaultValue: 20, min: 1, max: 50}]
   },
   distanceFog: {
     type: DISTANCE_FOG_TYPE,
     name: 'Distance Fog',
+    description: 'effectDescription.distanceFog',
     parameters: [
       {name: 'density', defaultValue: 0.5, min: 0, max: 1},
       {name: 'fogStart', label: 'Start', defaultValue: 0.3, min: 0, max: 1},
@@ -1626,6 +1643,7 @@ export const POSTPROCESSING_EFFECTS: {[key: string]: EffectDescription} = {
   surfaceFog: {
     type: SURFACE_FOG_TYPE,
     name: 'Surface Fog',
+    description: 'effectDescription.surfaceFog',
     parameters: [
       {name: 'density', defaultValue: 0.6, min: 0, max: 1},
       {name: 'height', label: 'Elevation (m)', defaultValue: 50, min: -200, max: 3000},

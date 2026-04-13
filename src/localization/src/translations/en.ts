@@ -202,6 +202,43 @@ export default {
     time: 'Time',
     timezone: 'Timezone'
   },
+  effectDescription: {
+    lightAndShadow:
+      'Simulates realistic sun lighting and shadow casting based on time of day and geographic location. Adjustable shadow intensity, sun and ambient light colors.',
+    ink: 'Applies an ink-wash artistic style that darkens edges and creates a hand-drawn appearance. Adjust strength to control the intensity of the effect.',
+    brightnessContrast:
+      'Adjusts the overall brightness and contrast of the map. Use positive values to brighten or increase contrast, negative values to darken or flatten the image.',
+    hueSaturation:
+      'Shifts the color hue and adjusts saturation across the entire map. Useful for creating color themes or desaturating the view.',
+    vibrance:
+      'Selectively boosts the intensity of muted colors without oversaturating already vivid ones. Produces a more natural-looking color enhancement than saturation.',
+    sepia:
+      'Applies a warm brownish tone reminiscent of aged photographs. Control the amount to blend between the original colors and the sepia look.',
+    dotScreen:
+      'Converts the image into a pattern of monochrome dots, resembling newspaper halftone printing. Adjust angle, dot size, and center position.',
+    colorHalftone:
+      'Simulates CMYK color halftone printing with separate dot patterns for each color channel. Control angle, dot size, and center position.',
+    noise:
+      'Adds random film-grain style noise across the map. Useful for a textured, analog aesthetic or to reduce color banding.',
+    triangleBlur:
+      'Applies a smooth Gaussian-like blur uniformly across the map. Control the blur radius to adjust the level of softness.',
+    zoomBlur:
+      'Creates a radial motion blur that emanates from a center point, simulating a camera zoom. Adjust strength and center position.',
+    tiltShift:
+      'Simulates a tilt-shift lens effect that blurs areas outside a focal band, creating a miniature model look. Set the focal band with start/end positions.',
+    edgeWork:
+      'Highlights structural edges in the image using an artistic charcoal-sketch style. Adjust the detection radius to control line thickness.',
+    vignette:
+      'Darkens the corners and edges of the map, drawing focus toward the center. Control the darkening amount and the radius of the clear area.',
+    magnify:
+      'Creates a circular magnifying glass overlay at a configurable position. Adjust size, zoom level, and border width.',
+    hexagonalPixelate:
+      'Replaces the image with a grid of hexagonal tiles, each filled with the average color of the area it covers. Adjust the tile scale.',
+    distanceFog:
+      'Fades distant objects into a fog color based on their depth from the camera, enhancing the sense of depth. Control density, start distance, range, and fog color.',
+    surfaceFog:
+      'Renders a fog layer at a specific elevation above the terrain surface. Adjust elevation, transition thickness, density, color, and an optional noise pattern.'
+  },
   layerConfiguration: {
     defaultDescription: 'Calculate {property} based on selected field',
     howTo: 'How to',

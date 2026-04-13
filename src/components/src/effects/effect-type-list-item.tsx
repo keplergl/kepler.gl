@@ -6,14 +6,16 @@ import styled, {withTheme} from 'styled-components';
 import classNames from 'classnames';
 
 import {FormattedMessage} from '@kepler.gl/localization';
+import {useIntl} from 'react-intl';
 import {getApplicationConfig} from '@kepler.gl/utils';
 
 import {Add} from '../common/icons';
+import {Tooltip} from '../common/styled-components';
 
 export const DUMMY_ITEM_ID = 'dummy';
 
 export type EffectTypeListItemProps = {
-  value: {type: string; name: string};
+  value: {type: string; name: string; description?: string};
   className?: string;
   isTile?: boolean;
   theme: any;
@@ -82,6 +84,8 @@ const getImageUrl = type => {
 
 export function EffectTypeListItemFactory() {
   const EffectTypeListItem: React.FC<EffectTypeListItemProps> = ({value, isTile, className}) => {
+    const intl = useIntl();
+
     if (value?.type === DUMMY_ITEM_ID) {
       return (
         <StyledPlaceholderButton>
@@ -91,11 +95,18 @@ export function EffectTypeListItemFactory() {
       );
     }
 
+    const tooltipId = `effect-type-${value.type}`;
+    const description = value.description
+      ? intl.formatMessage({id: value.description, defaultMessage: ''})
+      : '';
+
     return (
       <StyledListItem
         className={classNames('effect-type-selector__item__inner', className, {
           list: !isTile
         })}
+        data-tip={description || undefined}
+        data-for={description ? tooltipId : undefined}
       >
         <div className="effect-type-selector__item__icon">
           <img className="effect-preview" src={getImageUrl(value.type)} />
@@ -103,6 +114,11 @@ export function EffectTypeListItemFactory() {
         <div className="effect-type-selector__item__label">
           <FormattedMessage id={`effect.type.${value.type}`} defaultMessage={value.name} />
         </div>
+        {description ? (
+          <Tooltip id={tooltipId} effect="solid" place="bottom" delayShow={300}>
+            {description}
+          </Tooltip>
+        ) : null}
       </StyledListItem>
     );
   };

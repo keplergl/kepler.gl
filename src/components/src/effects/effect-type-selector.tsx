@@ -9,7 +9,7 @@ import EffectTypeDropdownListFactory from './effect-type-dropdown-list';
 import EffectTypeListItemFactory, {DUMMY_ITEM_ID} from './effect-type-list-item';
 
 export type EffectTypeSelectorProps = {
-  options: {type: string; name: string; disabled: boolean}[];
+  options: {type: string; name: string; description?: string; disabled: boolean}[];
   onSelect: (type: any) => void;
   theme: any;
   onBlur?: () => void;
