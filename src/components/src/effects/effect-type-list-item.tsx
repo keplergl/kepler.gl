@@ -12,6 +12,15 @@ import {getApplicationConfig} from '@kepler.gl/utils';
 import {Add} from '../common/icons';
 import {Tooltip} from '../common/styled-components';
 
+const MultilineTooltip = styled(Tooltip)`
+  &.__react_component_tooltip {
+    max-width: 280px;
+    white-space: normal;
+    line-height: 1.4;
+    text-align: left;
+  }
+`;
+
 export const DUMMY_ITEM_ID = 'dummy';
 
 export type EffectTypeListItemProps = {
@@ -115,9 +124,9 @@ export function EffectTypeListItemFactory() {
           <FormattedMessage id={`effect.type.${value.type}`} defaultMessage={value.name} />
         </div>
         {description ? (
-          <Tooltip id={tooltipId} effect="solid" place="bottom" delayShow={300}>
+          <MultilineTooltip id={tooltipId} effect="solid" place="bottom" delayShow={300}>
             {description}
-          </Tooltip>
+          </MultilineTooltip>
         ) : null}
       </StyledListItem>
     );

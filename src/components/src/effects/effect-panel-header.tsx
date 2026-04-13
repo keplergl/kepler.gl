@@ -44,6 +44,15 @@ import {
 } from '../common/icons';
 import {StyledPanelHeader, Tooltip} from '../common/styled-components';
 
+const MultilineTooltip = styled(Tooltip)`
+  &.__react_component_tooltip {
+    max-width: 280px;
+    white-space: normal;
+    line-height: 1.4;
+    text-align: left;
+  }
+`;
+
 export type ActionItem = {
   key: string;
   isHidden?: boolean;
@@ -350,9 +359,9 @@ function EffectPanelHeaderFactory(
         >
           {label}
           {descriptionText ? (
-            <Tooltip id={tooltipId} effect="solid" place="bottom" delayShow={500}>
+            <MultilineTooltip id={tooltipId} effect="solid" place="bottom" delayShow={500}>
               {descriptionText}
-            </Tooltip>
+            </MultilineTooltip>
           ) : null}
         </StyledEffectTitleSection>
 
