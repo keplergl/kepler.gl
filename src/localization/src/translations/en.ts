@@ -126,7 +126,9 @@ export default {
     },
     layerUpdateError:
       'An error occurred during layer update: {errorMessage}. Make sure the format of the input data is valid.',
-    interaction: 'Interaction'
+    interaction: 'Interaction',
+    heatmap: 'Heatmap',
+    aggregation: 'Aggregation'
   },
   layerVisConfigs: {
     angle: 'Angle',
@@ -152,6 +154,7 @@ export default {
     targetColor: 'Target Color',
     colorAggregation: 'Color Aggregation',
     heightAggregation: 'Height Aggregation',
+    weightAggregation: 'Weight Aggregation',
     resolutionRange: 'Resolution range',
     sizeScale: 'Size Scale',
     worldUnitSize: 'World Unit Size',
@@ -169,6 +172,8 @@ export default {
     enablePolygonHeight: 'Enable Polygon Height',
     showWireframe: 'Show Wireframe',
     weightIntensity: 'Weight Intensity',
+    intensity: 'Intensity',
+    threshold: 'Threshold',
     zoomScale: 'Zoom Scale',
     heightRange: 'Height Range',
     heightMultiplier: 'Height Multiplier',

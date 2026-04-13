@@ -22,3 +22,18 @@ export function editShader(vs: string, type: string, originalText: string, testT
 
   return vs.replace(originalText, testToReplace);
 }
+
+export function insertBefore(
+  vs: string,
+  type: string,
+  insertBeforeText: string,
+  textToInsert: string
+) {
+  const at = vs.indexOf(insertBeforeText);
+  if (at < 0) {
+    Console.error(`Cannot edit ${type} layer shader`);
+    return vs;
+  }
+
+  return vs.slice(0, at) + textToInsert + vs.slice(at);
+}

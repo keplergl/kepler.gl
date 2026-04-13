@@ -102,10 +102,11 @@ export default {
       trip: 'пути',
       s2: 'S2',
       '3d': '3D'
-    }
+    },
+    heatmap: 'Heatmap',
+    aggregation: 'Aggregation'
   },
   layerVisConfigs: {
-    angle: 'Угол',
     strokeWidth: 'Ширина штриха (в пикселях)',
     strokeWidthRange: 'Диапазон ширины штриха',
     radius: 'Радиус',
@@ -125,6 +126,7 @@ export default {
     targetColor: 'Целевой цвет',
     colorAggregation: 'Цветовая агрегация',
     heightAggregation: 'Агрегация по высоте',
+    weightAggregation: 'Weight Aggregation',
     resolutionRange: 'Диапазон разрешения',
     sizeScale: 'Шкала размеров',
     worldUnitSize: 'Мировые ед.изм.',
@@ -143,6 +145,8 @@ export default {
     enablePolygonHeight: 'Включить высоту многоугольника',
     showWireframe: 'Показать каркас',
     weightIntensity: 'Вес Интенсивность',
+    intensity: 'Intensity',
+    threshold: 'Threshold',
     zoomScale: 'Масштаб увеличения',
     heightRange: 'Диапазон высоты',
     heightMultiplier: 'Множитель высоты'

@@ -319,6 +319,13 @@ export default function LayerConfiguratorFactory(
     }
 
     _renderHeatmapLayerConfig({layer, visConfiguratorProps, layerChannelConfigProps}) {
+      const {visConfig} = layer.config;
+      const aggregationOptions = (layer.visConfigSettings.aggregation?.options || []).map(key => ({
+        id: key,
+        label: key.charAt(0) + key.slice(1).toLowerCase()
+      }));
+      const selectedAggregation = aggregationOptions.find(({id}) => id === visConfig.aggregation);
+
       return (
         <StyledLayerVisualConfigurator>
           {/* Color */}
@@ -336,12 +343,34 @@ export default function LayerConfiguratorFactory(
               label={false}
             />
           </LayerConfigGroup>
+          {/* Intensity & Threshold */}
+          <LayerConfigGroup label={'layer.heatmap'}>
+            <VisConfigSlider {...layer.visConfigSettings.intensity} {...visConfiguratorProps} />
+            <VisConfigSlider {...layer.visConfigSettings.threshold} {...visConfiguratorProps} />
+          </LayerConfigGroup>
           {/* Weight */}
           <LayerConfigGroup label={'layer.weight'}>
             <ChannelByValueSelector
               channel={layer.visualChannels.weight}
               {...layerChannelConfigProps}
             />
+          </LayerConfigGroup>
+          {/* Aggregation */}
+          <LayerConfigGroup label={'layer.aggregation'}>
+            <SidePanelSection>
+              <PanelLabel>
+                <FormattedMessage id={'layerVisConfigs.weightAggregation'} />
+              </PanelLabel>
+              <ItemSelector
+                selectedItems={selectedAggregation}
+                options={aggregationOptions}
+                displayOption="label"
+                getOptionValue="id"
+                multiSelect={false}
+                searchable={false}
+                onChange={value => visConfiguratorProps.onChange({aggregation: value})}
+              />
+            </SidePanelSection>
           </LayerConfigGroup>
         </StyledLayerVisualConfigurator>
       );

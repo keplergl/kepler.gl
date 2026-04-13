@@ -103,7 +103,9 @@ export default {
       trip: 'trip',
       s2: 'S2',
       '3d': '3D'
-    }
+    },
+    heatmap: 'Heatmap',
+    aggregation: 'Aggregation'
   },
   layerVisConfigs: {
     angle: '角度',
@@ -128,6 +130,7 @@ export default {
     targetColor: 'Targetの色',
     colorAggregation: '色の集計',
     heightAggregation: '高さの集計',
+    weightAggregation: 'Weight Aggregation',
     resolutionRange: '解像度の範囲',
     sizeScale: 'サイズのスケール',
     worldUnitSize: 'World Unit Size',
@@ -145,6 +148,8 @@ export default {
     enablePolygonHeight: 'ポリゴンの高さを有効にする',
     showWireframe: 'ワイヤーフレームを表示',
     weightIntensity: '重みづけの強さ',
+    intensity: 'Intensity',
+    threshold: 'Threshold',
     zoomScale: 'ズームのスケール',
     heightRange: '高さの範囲',
     heightMultiplier: '高さ乗数',
