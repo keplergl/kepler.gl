@@ -403,7 +403,8 @@ export const savedStateV0 = {
               filled: true,
               extruded: false,
               wireframe: false,
-              'hi-precision': false
+              'hi-precision': false,
+              allowHover: true
             }
           }
         ],
