@@ -18,6 +18,7 @@ import {arrayMove} from '@kepler.gl/common-utils';
 import {MapState, Effect, EffectProps, EffectDescription} from '@kepler.gl/types';
 import {findById} from './utils';
 import {clamp} from './data-utils';
+import {normalizeColor} from './color-utils';
 
 // TODO isolate types - depends on @kepler.gl/schemas
 type VisState = any;
@@ -45,14 +46,20 @@ export function computeDeckEffects({
     .map(effectId => {
       const effect = findById(effectId)(visState.effects) as Effect | undefined;
       if (effect?.deckEffect) {
+        if (effect.type === LIGHT_AND_SHADOW_EFFECT.type) {
+          // When a retained deck effect exists, reuse it so that
+          // deck.gl's EffectManager sees the same object reference and
+          // avoids the setup→cleanup ordering problem (cleanup of the
+          // old instance would remove the shadow module the new one
+          // just added).  All parameters will be synced by updateEffect.
+          if (_lastLightingDeckEffect && effect.deckEffect !== _lastLightingDeckEffect) {
+            effect.deckEffect = _lastLightingDeckEffect;
+          }
+        }
+
         if (effect.isEnabled) {
           updateEffect({visState, mapState, effect});
         } else if (effect.type === LIGHT_AND_SHADOW_EFFECT.type) {
-          // Keep lighting effects in the array even when disabled to avoid
-          // removing the shadow shader module. Composite layer sublayers
-          // don't regenerate models when default shader modules change,
-          // leaving stale pipelines with shadow_uShadowMap bindings.
-          // Disabling shadow on the lights avoids visual effects.
           disableLightingEffect(effect);
         }
         if (effect.isEnabled || effect.type === LIGHT_AND_SHADOW_EFFECT.type) {
@@ -74,7 +81,14 @@ export function computeDeckEffects({
     deckEffects.unshift(_lastLightingDeckEffect);
   }
 
-  return deckEffects;
+  // deck.gl's EffectManager uses deepEqual(effects, prev, 1) to detect
+  // changes. Since we mutate the existing deckEffect instances in place
+  // (via updateEffect / setProps), the object references stay the same
+  // and deepEqual considers them unchanged — so no redraw is triggered.
+  // Wrapping each deckEffect in a prototypal proxy (Object.create) gives
+  // each element a fresh identity while preserving full access to the
+  // underlying instance's properties and methods.
+  return deckEffects; // .map(de => Object.create(de));
 }
 
 /**
@@ -154,13 +168,23 @@ function disableLightingEffect(effect: Effect) {
 }
 
 /**
- * Disable shadow rendering directly on a deck.gl LightingEffect instance.
+ * Disable shadow rendering directly on a deck.gl LightingEffect instance
+ * and neutralise its lights so that PBR materials still using lit shaders
+ * render with an appearance that closely matches unlit (full white ambient,
+ * zero directional intensity).  This avoids the need to force-regenerate
+ * every cached 3D-tile sub-layer when the effect is merely retained for
+ * its shadow shader module.
  */
 function disableDeckLightingEffect(deckEffect: any) {
   deckEffect.shadow = false;
   deckEffect.outputUniformShadow = false;
   for (const light of deckEffect.directionalLights || []) {
     light.shadow = false;
+    light.intensity = 0;
+  }
+  if (deckEffect.ambientLight) {
+    deckEffect.ambientLight.color = [255, 255, 255];
+    deckEffect.ambientLight.intensity = 1;
   }
 }
 
@@ -169,16 +193,34 @@ function disableDeckLightingEffect(deckEffect: any) {
  */
 function updateEffect({visState, mapState, effect}) {
   if (effect.type === LIGHT_AND_SHADOW_EFFECT.type) {
-    // Re-enable shadow rendering in case it was previously disabled
     const deckEffect = effect.deckEffect;
+
+    // Re-enable shadow rendering in case it was previously disabled
     for (const light of deckEffect.directionalLights || []) {
       light.shadow = true;
     }
     deckEffect.shadow = deckEffect.directionalLights?.some(l => l.shadow) ?? false;
 
+    // Sync all light parameters from the kepler Effect to the deck
+    // effect. This is essential when the deck effect instance is reused
+    // across remove→re-add cycles (see computeDeckEffects).
+    deckEffect.shadowColor = [
+      ...normalizeColor(effect.parameters.shadowColor),
+      effect.parameters.shadowIntensity
+    ];
+    if (deckEffect.ambientLight) {
+      deckEffect.ambientLight.color = (
+        effect.parameters.ambientLightColor || [255, 255, 255]
+      ).slice();
+      deckEffect.ambientLight.intensity = effect.parameters.ambientLightIntensity;
+    }
+
     let {timestamp} = effect.parameters;
     const {timeMode} = effect.parameters;
     const sunLight = effect.deckEffect.directionalLights[0];
+    if (sunLight) {
+      sunLight.color = (effect.parameters.sunLightColor || [255, 255, 255]).slice();
+    }
 
     // set timestamp for shadow
     if (timeMode === LIGHT_AND_SHADOW_EFFECT_TIME_MODES.current) {

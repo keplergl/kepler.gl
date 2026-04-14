@@ -2,9 +2,11 @@
 // Copyright contributors to the kepler.gl project
 
 import {Tile3DLayer as DeckTile3DLayer} from '@deck.gl/geo-layers';
+import {LightingEffect as DeckLightingEffect} from '@deck.gl/core';
 import {Tiles3DLoader, CesiumIonLoader} from '@loaders.gl/3d-tiles';
 import {I3SLoader} from '@loaders.gl/i3s';
 import {Tileset3D, Tile3D} from '@loaders.gl/tiles';
+import {parsePBRMaterial} from '@luma.gl/gltf';
 
 import Layer from '../base-layer';
 import Tile3DLayerIcon from './tile3d-layer-icon';
@@ -24,6 +26,18 @@ let _PatchedMeshLayer: any = null;
 let _PatchedScenegraphLayer: any = null;
 
 /**
+ * Returns true when the deck.gl instance has an active LightingEffect with
+ * shadow rendering enabled (i.e. the kepler Light & Shadow effect is on).
+ * Used by patched sub-layers to decide whether to override the material's
+ * unlit flag: when no lighting effect is active, meshes stay unlit.
+ */
+function hasActiveLightingEffect(layer: any): boolean {
+  const effects: any[] | undefined = layer.context?.deck?.props?.effects;
+  if (!effects) return false;
+  return effects.some(e => e instanceof DeckLightingEffect && (e as any).shadow);
+}
+
+/**
  * Custom DeckTile3DLayer that catches exceptions in _loadTileset and
  * _updateTileset (which calls selectTiles – an unhandled-promise path
  * where errors like "boundingVolume must contain …" escape).
@@ -31,6 +45,25 @@ let _PatchedScenegraphLayer: any = null;
  */
 // @ts-expect-error Types have separate declarations of a private property '_loadTileset'.
 class KeplerTile3DLayer extends DeckTile3DLayer {
+  // deck.gl Tile3DLayer.updateState only sets `needsUpdate` on cached tile
+  // sub-layers when `propsChanged` fires, but NOT when `extensionsChanged`
+  // fires (e.g. the shadow module being added/removed). The LayerManager sets
+  // `extensionsChanged` only on top-level layers, and it never reaches the
+  // MeshLayer / ScenegraphLayer sub-layers inside the tile cache. Override
+  // updateState to propagate the flag so every cached tile gets re-rendered
+  // with the correct material (lit vs. unlit).
+  updateState(params: any): void {
+    super.updateState(params);
+    if (params.changeFlags.extensionsChanged) {
+      const {layerMap} = this.state as any;
+      if (layerMap) {
+        for (const key in layerMap) {
+          layerMap[key].needsUpdate = true;
+        }
+      }
+    }
+  }
+
   // @ts-ignore override of private method called by deck.gl internals
   private async _loadTileset(tilesetUrl: string) {
     try {
@@ -100,6 +133,24 @@ class KeplerTile3DLayer extends DeckTile3DLayer {
               this.updatePbrMaterialUniforms(this.props.pbrMaterial);
             }
           }
+
+          // deck.gl MeshLayer.parseMaterial forces `unlit = true` whenever
+          // the material has a baseColorTexture. This incorrectly disables
+          // all lighting for textured I3S (ArcGIS) tiles. When the Light &
+          // Shadow effect is active, respect the material's own `unlit`
+          // property instead; otherwise fall back to the default (unlit) behavior.
+          parseMaterial(material, mesh) {
+            if (!hasActiveLightingEffect(this)) {
+              return super.parseMaterial(material, mesh);
+            }
+            const unlit = Boolean(material.unlit);
+            return parsePBRMaterial(
+              this.context.device,
+              {unlit, ...material},
+              {NORMAL: mesh.attributes.normals, TEXCOORD_0: mesh.attributes.texCoords},
+              {pbrDebug: false, lights: true, useTangents: false}
+            );
+          }
         };
         (_PatchedMeshLayer as any).layerName = DefaultClass.layerName || 'MeshLayer';
         (_PatchedMeshLayer as any).defaultProps = DefaultClass.defaultProps;
@@ -114,6 +165,24 @@ class KeplerTile3DLayer extends DeckTile3DLayer {
             if (params.changeFlags.extensionsChanged && this.state?.scenegraph) {
               this._updateScenegraph();
             }
+          }
+
+          // Google Photorealistic 3D Tiles (and some other glTF sources)
+          // mark materials with KHR_materials_unlit, which causes the PBR
+          // shader to skip all lighting. When the Light & Shadow effect is
+          // active, override model options to force unlit=0 so that the
+          // effect can influence the scene. Without the effect, keep the
+          // default unlit behavior.
+          _getModelOptions() {
+            const opts = super._getModelOptions();
+            if (!hasActiveLightingEffect(this)) {
+              return opts;
+            }
+            opts.modelOptions = {
+              ...opts.modelOptions,
+              uniforms: {...(opts.modelOptions?.uniforms || {}), unlit: 0}
+            };
+            return opts;
           }
         };
         (_PatchedScenegraphLayer as any).layerName = DefaultClass.layerName || 'ScenegraphLayer';

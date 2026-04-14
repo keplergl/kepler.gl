@@ -198,17 +198,21 @@ export default function EffectConfiguratorFactory(
 
     const sliderProps = useMemo(() => {
       const propNames = ['shadowIntensity', 'ambientLightIntensity', 'sunLightIntensity'];
+      const descriptions = effect.getParameterDescriptions();
       return propNames.map(propName => {
+        const desc = descriptions.find(d => d.name === propName);
+        const min = desc?.min ?? 0;
+        const max = desc?.max ?? 1;
         return {
           value1: parameters[propName],
-          range: [0, 1],
-          value0: 0,
+          range: [min, max],
+          value0: min,
           onChange: (value: number[], event?: Event | null) => {
             updateEffectConfig(event, id, {parameters: {[propName]: value[1]}});
           }
         };
       });
-    }, [id, parameters, updateEffectConfig]);
+    }, [id, effect, parameters, updateEffectConfig]);
 
     const onTimeParametersChanged = useCallback(
       parameters => {
