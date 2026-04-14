@@ -39,6 +39,14 @@ export function computeDeckEffects({
   mapState: MapState;
   isExport?: boolean;
 }): DeckEffect[] {
+  // The export has its own WebGL context and its own cloned Effect
+  // instances.  It must never touch _lastLightingDeckEffect or wrap
+  // with Object.create (which would make EffectManager re-setup every
+  // frame, destroying shadow passes and causing flicker).
+  if (isExport) {
+    return computeDeckEffectsForExport({visState, mapState});
+  }
+
   // TODO: 1) deck effects per deck context 2) preserved between draws
   let hasLightingShadow = false;
 
@@ -65,9 +73,7 @@ export function computeDeckEffects({
         if (effect.isEnabled || effect.type === LIGHT_AND_SHADOW_EFFECT.type) {
           if (effect.type === LIGHT_AND_SHADOW_EFFECT.type) {
             hasLightingShadow = true;
-            if (!isExport) {
-              _lastLightingDeckEffect = effect.deckEffect;
-            }
+            _lastLightingDeckEffect = effect.deckEffect;
           }
           return effect.deckEffect;
         }
@@ -88,7 +94,40 @@ export function computeDeckEffects({
   // Wrapping each deckEffect in a prototypal proxy (Object.create) gives
   // each element a fresh identity while preserving full access to the
   // underlying instance's properties and methods.
-  return deckEffects; // .map(de => Object.create(de));
+  return deckEffects.map(de => Object.create(de));
+}
+
+/**
+ * Separate code path for the export context. The export creates its own
+ * cloned Effect instances with independent deckEffect objects and its own
+ * WebGL context. We must not touch the module-level _lastLightingDeckEffect,
+ * must not wrap with Object.create (which causes EffectManager to
+ * setup/cleanup every frame), and must keep the logic minimal to avoid
+ * cross-context interference.
+ */
+function computeDeckEffectsForExport({
+  visState,
+  mapState
+}: {
+  visState: VisState;
+  mapState: MapState;
+}): DeckEffect[] {
+  const deckEffects = visState.effectOrder
+    .map(effectId => {
+      const effect = findById(effectId)(visState.effects) as Effect | undefined;
+      if (effect?.deckEffect) {
+        if (effect.isEnabled) {
+          updateEffectForExport({visState, mapState, effect});
+        }
+        if (effect.isEnabled) {
+          return effect.deckEffect;
+        }
+      }
+      return null;
+    })
+    .filter(effect => effect);
+
+  return deckEffects;
 }
 
 /**
@@ -189,7 +228,9 @@ function disableDeckLightingEffect(deckEffect: any) {
 }
 
 /**
- * Update effect to match latest vis and map states
+ * Update effect to match latest vis and map states.
+ * Syncs all light parameters to the deck effect — essential when the
+ * deck effect instance is reused across remove→re-add cycles.
  */
 function updateEffect({visState, mapState, effect}) {
   if (effect.type === LIGHT_AND_SHADOW_EFFECT.type) {
@@ -201,9 +242,6 @@ function updateEffect({visState, mapState, effect}) {
     }
     deckEffect.shadow = deckEffect.directionalLights?.some(l => l.shadow) ?? false;
 
-    // Sync all light parameters from the kepler Effect to the deck
-    // effect. This is essential when the deck effect instance is reused
-    // across remove→re-add cycles (see computeDeckEffects).
     deckEffect.shadowColor = [
       ...normalizeColor(effect.parameters.shadowColor),
       effect.parameters.shadowIntensity
@@ -221,6 +259,53 @@ function updateEffect({visState, mapState, effect}) {
     if (sunLight) {
       sunLight.color = (effect.parameters.sunLightColor || [255, 255, 255]).slice();
     }
+
+    // set timestamp for shadow
+    if (timeMode === LIGHT_AND_SHADOW_EFFECT_TIME_MODES.current) {
+      timestamp = Date.now();
+      sunLight.timestamp = timestamp;
+    } else if (timeMode === LIGHT_AND_SHADOW_EFFECT_TIME_MODES.animation) {
+      timestamp = visState.animationConfig.currentTime ?? 0;
+      if (!timestamp) {
+        const filter = visState.filters.find(
+          filter =>
+            filter.type === FILTER_TYPES.timeRange &&
+            (filter.view === FILTER_VIEW_TYPES.enlarged || filter.syncedWithLayerTimeline)
+        );
+        if (filter) {
+          timestamp = filter.value?.[0] ?? 0;
+        }
+      }
+      sunLight.timestamp = timestamp;
+    }
+
+    // output uniform shadow during nighttime
+    if (isDaytime(mapState.latitude, mapState.longitude, timestamp)) {
+      effect.deckEffect.outputUniformShadow = false;
+      sunLight.intensity = effect.parameters.sunLightIntensity;
+    } else {
+      effect.deckEffect.outputUniformShadow = true;
+      sunLight.intensity = 0;
+    }
+  }
+}
+
+/**
+ * Minimal update for the export context. The export uses fresh cloned
+ * effects with correctly initialized deckEffect instances, so it only
+ * needs timestamp and intensity updates — not full parameter syncing.
+ */
+function updateEffectForExport({visState, mapState, effect}) {
+  if (effect.type === LIGHT_AND_SHADOW_EFFECT.type) {
+    const deckEffect = effect.deckEffect;
+    for (const light of deckEffect.directionalLights || []) {
+      light.shadow = true;
+    }
+    deckEffect.shadow = deckEffect.directionalLights?.some(l => l.shadow) ?? false;
+
+    let {timestamp} = effect.parameters;
+    const {timeMode} = effect.parameters;
+    const sunLight = effect.deckEffect.directionalLights[0];
 
     // set timestamp for shadow
     if (timeMode === LIGHT_AND_SHADOW_EFFECT_TIME_MODES.current) {
