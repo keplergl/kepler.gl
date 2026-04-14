@@ -8,6 +8,7 @@ import {WMSCapabilities} from '@loaders.gl/wms';
 import {validateUrl} from '@kepler.gl/common-utils';
 import {DatasetType, REMOTE_TILE, RemoteTileFormat, WMSDatasetMetadata} from '@kepler.gl/constants';
 import {getWMSCapabilities, wmsCapabilitiesToDatasetMetadata} from '@kepler.gl/table';
+import {getApplicationConfig} from '@kepler.gl/utils';
 
 import {MetaResponse} from './common';
 import {InputLight} from '../../common';
@@ -208,32 +209,34 @@ const TilesetWMSForm: React.FC<WMSTileFormProps> = ({setResponse}) => {
         />
         <TilesetInputDescription>Provide a valid WMS service URL.</TilesetInputDescription>
       </div>
-      <div>
-        <TilesetInputDescription>For example, try a public WMS URL:</TilesetInputDescription>
-        <ExampleUrlsContainer>
-          <ExampleTabs>
-            {WMS_EXAMPLES.map((ex, i) => (
-              <ExampleTab
-                key={ex.label}
-                active={exampleTab === i}
-                onClick={() => {
-                  setExampleTab(i);
-                  onExampleClick(ex.url, ex.name);
-                }}
-              >
-                {ex.label}
-              </ExampleTab>
-            ))}
-          </ExampleTabs>
-          <ExampleUrl
-            onClick={() =>
-              onExampleClick(WMS_EXAMPLES[exampleTab].url, WMS_EXAMPLES[exampleTab].name)
-            }
-          >
-            {WMS_EXAMPLES[exampleTab].url}
-          </ExampleUrl>
-        </ExampleUrlsContainer>
-      </div>
+      {getApplicationConfig().showInlineTilesetExamples && (
+        <div>
+          <TilesetInputDescription>For example, try a public WMS URL:</TilesetInputDescription>
+          <ExampleUrlsContainer>
+            <ExampleTabs>
+              {WMS_EXAMPLES.map((ex, i) => (
+                <ExampleTab
+                  key={ex.label}
+                  active={exampleTab === i}
+                  onClick={() => {
+                    setExampleTab(i);
+                    onExampleClick(ex.url, ex.name);
+                  }}
+                >
+                  {ex.label}
+                </ExampleTab>
+              ))}
+            </ExampleTabs>
+            <ExampleUrl
+              onClick={() =>
+                onExampleClick(WMS_EXAMPLES[exampleTab].url, WMS_EXAMPLES[exampleTab].name)
+              }
+            >
+              {WMS_EXAMPLES[exampleTab].url}
+            </ExampleUrl>
+          </ExampleUrlsContainer>
+        </div>
+      )}
     </TilesetInputContainer>
   );
 };

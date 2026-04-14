@@ -156,8 +156,6 @@ function LoadTilesetTabFactory() {
       <LoadTilesetTabContainer>
         <Container>
           <div>
-            <StyledHeaderMessage>Tileset Type</StyledHeaderMessage>
-
             <TilesetTypeContainer className="tileset-type">
               {tileTypes.map((tileType, index) => (
                 <TilesetIcon

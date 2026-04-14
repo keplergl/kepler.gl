@@ -162,39 +162,43 @@ export const mapStateSelector = createSelector(
   }
 );
 
-export const mapFieldsSelector = (props: KeplerGLProps, index = 0) => ({
-  getMapboxRef: props.getMapboxRef,
-  mapboxApiAccessToken: props.mapboxApiAccessToken,
-  mapboxApiUrl: props.mapboxApiUrl ? props.mapboxApiUrl : DEFAULT_KEPLER_GL_PROPS.mapboxApiUrl,
-  mapState: mapStateSelector(props, index),
-  datasetAttributions: attributionSelector(props).sources,
-  mapStyle: props.mapStyle,
-  onDeckInitialized: props.onDeckInitialized,
-  onViewStateChange: props.onViewStateChange,
-  onMouseMove: props.onMouseMove,
-  deckGlProps: props.deckGlProps,
-  uiStateActions: props.uiStateActions,
-  visStateActions: props.visStateActions,
-  mapStateActions: props.mapStateActions,
+export const mapFieldsSelector = (props: KeplerGLProps, index = 0) => {
+  const attribution = attributionSelector(props);
+  return {
+    getMapboxRef: props.getMapboxRef,
+    mapboxApiAccessToken: props.mapboxApiAccessToken,
+    mapboxApiUrl: props.mapboxApiUrl ? props.mapboxApiUrl : DEFAULT_KEPLER_GL_PROPS.mapboxApiUrl,
+    mapState: mapStateSelector(props, index),
+    datasetAttributions: attribution.sources,
+    attributionLogos: attribution.logos,
+    mapStyle: props.mapStyle,
+    onDeckInitialized: props.onDeckInitialized,
+    onViewStateChange: props.onViewStateChange,
+    onMouseMove: props.onMouseMove,
+    deckGlProps: props.deckGlProps,
+    uiStateActions: props.uiStateActions,
+    visStateActions: props.visStateActions,
+    mapStateActions: props.mapStateActions,
 
-  // visState
-  visState: props.visState,
+    // visState
+    visState: props.visState,
 
-  // uiState
-  activeSidePanel: props.uiState.activeSidePanel,
-  mapControls: props.uiState.mapControls,
-  readOnly: props.uiState.readOnly,
-  locale: props.uiState.locale,
-  isLoadingIndicatorVisible: Number(props.visState.loadingIndicatorValue) > 0,
-  sidePanelWidth: props.sidePanelWidth ? props.sidePanelWidth : DEFAULT_KEPLER_GL_PROPS.width,
+    // uiState
+    activeSidePanel: props.uiState.activeSidePanel,
+    mapControls: props.uiState.mapControls,
+    readOnly: props.uiState.readOnly,
+    locale: props.uiState.locale,
+    isLoadingIndicatorVisible: Number(props.visState.loadingIndicatorValue) > 0,
+    sidePanelWidth: props.sidePanelWidth ? props.sidePanelWidth : DEFAULT_KEPLER_GL_PROPS.width,
 
-  // mapStyle
-  topMapContainerProps: props.topMapContainerProps,
-  bottomMapContainerProps: props.bottomMapContainerProps,
+    // mapStyle
+    topMapContainerProps: props.topMapContainerProps,
+    bottomMapContainerProps: props.bottomMapContainerProps,
 
-  // transformRequest for Mapbox basemaps
-  transformRequest: props.transformRequest
-});
+    // transformRequest for Mapbox basemaps
+    transformRequest: props.transformRequest
+  };
+};
 
 export function getVisibleDatasets(datasets) {
   // We don't want Geocoder dataset to be present in SidePanel dataset list
@@ -343,19 +347,50 @@ export const datasetAttributionSelector = createSelector(
 );
 
 /**
- * Deduplicated dataset and layer text attributions and logos.
- * Returns text attributions and logos to display.
+ * Collect unique layer-level attributions from visible layers.
+ * Not memoized because layer.meta is mutated in-place during render
+ * (outside Redux), so the layers array reference doesn't change.
  */
-export const attributionSelector = createSelector(
-  [datasetAttributionSelector],
-  datasetAttributions => {
-    // TODO collect attributions from layers, and merge with dataset attributions here
-    const uniqueTextAttributions = datasetAttributions;
-    const logos: AttributionWithStyle[] = [];
-
-    return {sources: uniqueTextAttributions, logos};
+export function layerAttributionSelector(state: any): AttributionWithStyle[] {
+  const layers: any[] = state.visState.layers;
+  const attributions: AttributionWithStyle[] = [];
+  if (!layers) return attributions;
+  for (const layer of layers) {
+    if (layer.config?.isVisible && layer.meta?.attribution) {
+      const attr = layer.meta.attribution;
+      if (attr.title && !attributions.find(a => a.title === attr.title && a.url === attr.url)) {
+        attributions.push(attr);
+      }
+    }
   }
-);
+  return attributions;
+}
+
+export function attributionSelector(props: any): {
+  sources: DatasetAttribution[];
+  logos: AttributionWithStyle[];
+} {
+  const datasetAttributions = datasetAttributionSelector(props);
+  const layerAttributions = layerAttributionSelector(props);
+
+  const uniqueTextAttributions: DatasetAttribution[] = [...datasetAttributions];
+  const logos: AttributionWithStyle[] = [];
+
+  layerAttributions.forEach(layerAttribution => {
+    if (
+      !uniqueTextAttributions.find(
+        a => a.title === layerAttribution.title && a.url === layerAttribution.url
+      )
+    ) {
+      uniqueTextAttributions.push({title: layerAttribution.title, url: layerAttribution.url});
+    }
+    if (layerAttribution.logoUrl && !logos.find(a => a.logoUrl === layerAttribution.logoUrl)) {
+      logos.push(layerAttribution);
+    }
+  });
+
+  return {sources: uniqueTextAttributions, logos};
+}
 
 export const notificationPanelSelector = (props: KeplerGLProps) => ({
   removeNotification: props.uiStateActions.removeNotification,
