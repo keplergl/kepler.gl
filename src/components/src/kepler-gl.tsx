@@ -348,49 +348,67 @@ export const datasetAttributionSelector = createSelector(
 
 /**
  * Collect unique layer-level attributions from visible layers.
- * Not memoized because layer.meta is mutated in-place during render
- * (outside Redux), so the layers array reference doesn't change.
+ * Builds a serialized cache key from attribution values so createSelector
+ * can detect in-place mutations to layer.meta.
  */
-export function layerAttributionSelector(state: any): AttributionWithStyle[] {
-  const layers: any[] = state.visState.layers;
-  const attributions: AttributionWithStyle[] = [];
-  if (!layers) return attributions;
+const layerAttributionKeySelector = (state: any): string => {
+  const layers: any[] = state.visState?.layers;
+  if (!layers) return '';
+  let key = '';
   for (const layer of layers) {
     if (layer.config?.isVisible && layer.meta?.attribution) {
-      const attr = layer.meta.attribution;
-      if (attr.title && !attributions.find(a => a.title === attr.title && a.url === attr.url)) {
-        attributions.push(attr);
-      }
+      const a = layer.meta.attribution;
+      key += `${a.title}\0${a.url}\0${a.logoUrl ?? ''}\0`;
     }
   }
-  return attributions;
-}
+  return key;
+};
 
-export function attributionSelector(props: any): {
-  sources: DatasetAttribution[];
-  logos: AttributionWithStyle[];
-} {
-  const datasetAttributions = datasetAttributionSelector(props);
-  const layerAttributions = layerAttributionSelector(props);
-
-  const uniqueTextAttributions: DatasetAttribution[] = [...datasetAttributions];
-  const logos: AttributionWithStyle[] = [];
-
-  layerAttributions.forEach(layerAttribution => {
-    if (
-      !uniqueTextAttributions.find(
-        a => a.title === layerAttribution.title && a.url === layerAttribution.url
-      )
-    ) {
-      uniqueTextAttributions.push({title: layerAttribution.title, url: layerAttribution.url});
+export const layerAttributionSelector = createSelector(
+  [(state: any) => state.visState?.layers, layerAttributionKeySelector],
+  (layers: any[]): AttributionWithStyle[] => {
+    const attributions: AttributionWithStyle[] = [];
+    if (!layers) return attributions;
+    for (const layer of layers) {
+      if (layer.config?.isVisible && layer.meta?.attribution) {
+        const attr = layer.meta.attribution;
+        if (attr.title && !attributions.find(a => a.title === attr.title && a.url === attr.url)) {
+          attributions.push(attr);
+        }
+      }
     }
-    if (layerAttribution.logoUrl && !logos.find(a => a.logoUrl === layerAttribution.logoUrl)) {
-      logos.push(layerAttribution);
-    }
-  });
+    return attributions;
+  }
+);
 
-  return {sources: uniqueTextAttributions, logos};
-}
+export const attributionSelector = createSelector(
+  [datasetAttributionSelector, layerAttributionSelector],
+  (
+    datasetAttributions: DatasetAttribution[],
+    layerAttributions: AttributionWithStyle[]
+  ): {
+    sources: DatasetAttribution[];
+    logos: AttributionWithStyle[];
+  } => {
+    const uniqueTextAttributions: DatasetAttribution[] = [...datasetAttributions];
+    const logos: AttributionWithStyle[] = [];
+
+    layerAttributions.forEach(layerAttribution => {
+      if (
+        !uniqueTextAttributions.find(
+          a => a.title === layerAttribution.title && a.url === layerAttribution.url
+        )
+      ) {
+        uniqueTextAttributions.push({title: layerAttribution.title, url: layerAttribution.url});
+      }
+      if (layerAttribution.logoUrl && !logos.find(a => a.logoUrl === layerAttribution.logoUrl)) {
+        logos.push(layerAttribution);
+      }
+    });
+
+    return {sources: uniqueTextAttributions, logos};
+  }
+);
 
 export const notificationPanelSelector = (props: KeplerGLProps) => ({
   removeNotification: props.uiStateActions.removeNotification,
