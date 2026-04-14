@@ -315,8 +315,8 @@ const StyledAttributionLogoContainer = styled.div`
   pointer-events: auto;
 `;
 
-const StyledLogoLink = styled.a<{enabled: boolean}>`
-  cursor: ${props => (props.enabled ? 'pointer' : 'default')};
+const StyledLogoLink = styled.a<{$enabled: boolean}>`
+  cursor: ${props => (props.$enabled ? 'pointer' : 'default')};
   display: flex;
   align-items: flex-end;
 `;
@@ -333,10 +333,9 @@ export const AttributionLogos: React.FC<AttributionLogosProps> = ({logos}) => {
         <StyledLogoLink
           key={logo.logoUrl || idx}
           href={logo.url || undefined}
-          target="_blank"
-          rel="noopener noreferrer"
-          enabled={Boolean(logo.url)}
-          style={{bottom: logo.bottom ?? 0}}
+          {...(logo.url ? {target: '_blank', rel: 'noopener noreferrer'} : {})}
+          $enabled={Boolean(logo.url)}
+          style={logo.bottom ? {marginBottom: logo.bottom} : undefined}
         >
           <img src={logo.logoUrl} style={{height: logo.height || 12}} alt={logo.title} />
         </StyledLogoLink>
