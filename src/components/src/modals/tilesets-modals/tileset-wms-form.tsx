@@ -169,7 +169,7 @@ const TilesetWMSForm: React.FC<WMSTileFormProps> = ({setResponse}) => {
           tilesetDataUrl: wmsUrl,
           tilesetMetadataUrl: `${wmsUrl}?service=WMS&request=GetCapabilities`,
           layers: wmsData?.layers || [],
-          wmsVersion: wmsData?.version || '1.3.0'
+          version: wmsData?.version || '1.3.0'
         }
       };
       setResponse({
