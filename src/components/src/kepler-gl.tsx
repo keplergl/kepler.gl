@@ -162,39 +162,43 @@ export const mapStateSelector = createSelector(
   }
 );
 
-export const mapFieldsSelector = (props: KeplerGLProps, index = 0) => ({
-  getMapboxRef: props.getMapboxRef,
-  mapboxApiAccessToken: props.mapboxApiAccessToken,
-  mapboxApiUrl: props.mapboxApiUrl ? props.mapboxApiUrl : DEFAULT_KEPLER_GL_PROPS.mapboxApiUrl,
-  mapState: mapStateSelector(props, index),
-  datasetAttributions: attributionSelector(props).sources,
-  mapStyle: props.mapStyle,
-  onDeckInitialized: props.onDeckInitialized,
-  onViewStateChange: props.onViewStateChange,
-  onMouseMove: props.onMouseMove,
-  deckGlProps: props.deckGlProps,
-  uiStateActions: props.uiStateActions,
-  visStateActions: props.visStateActions,
-  mapStateActions: props.mapStateActions,
+export const mapFieldsSelector = (props: KeplerGLProps, index = 0) => {
+  const attribution = attributionSelector(props);
+  return {
+    getMapboxRef: props.getMapboxRef,
+    mapboxApiAccessToken: props.mapboxApiAccessToken,
+    mapboxApiUrl: props.mapboxApiUrl ? props.mapboxApiUrl : DEFAULT_KEPLER_GL_PROPS.mapboxApiUrl,
+    mapState: mapStateSelector(props, index),
+    datasetAttributions: attribution.sources,
+    attributionLogos: attribution.logos,
+    mapStyle: props.mapStyle,
+    onDeckInitialized: props.onDeckInitialized,
+    onViewStateChange: props.onViewStateChange,
+    onMouseMove: props.onMouseMove,
+    deckGlProps: props.deckGlProps,
+    uiStateActions: props.uiStateActions,
+    visStateActions: props.visStateActions,
+    mapStateActions: props.mapStateActions,
 
-  // visState
-  visState: props.visState,
+    // visState
+    visState: props.visState,
 
-  // uiState
-  activeSidePanel: props.uiState.activeSidePanel,
-  mapControls: props.uiState.mapControls,
-  readOnly: props.uiState.readOnly,
-  locale: props.uiState.locale,
-  isLoadingIndicatorVisible: Number(props.visState.loadingIndicatorValue) > 0,
-  sidePanelWidth: props.sidePanelWidth ? props.sidePanelWidth : DEFAULT_KEPLER_GL_PROPS.width,
+    // uiState
+    activeSidePanel: props.uiState.activeSidePanel,
+    mapControls: props.uiState.mapControls,
+    readOnly: props.uiState.readOnly,
+    locale: props.uiState.locale,
+    isLoadingIndicatorVisible: Number(props.visState.loadingIndicatorValue) > 0,
+    sidePanelWidth: props.sidePanelWidth ? props.sidePanelWidth : DEFAULT_KEPLER_GL_PROPS.width,
 
-  // mapStyle
-  topMapContainerProps: props.topMapContainerProps,
-  bottomMapContainerProps: props.bottomMapContainerProps,
+    // mapStyle
+    topMapContainerProps: props.topMapContainerProps,
+    bottomMapContainerProps: props.bottomMapContainerProps,
 
-  // transformRequest for Mapbox basemaps
-  transformRequest: props.transformRequest
-});
+    // transformRequest for Mapbox basemaps
+    transformRequest: props.transformRequest
+  };
+};
 
 export function getVisibleDatasets(datasets) {
   // We don't want Geocoder dataset to be present in SidePanel dataset list
@@ -343,15 +347,64 @@ export const datasetAttributionSelector = createSelector(
 );
 
 /**
- * Deduplicated dataset and layer text attributions and logos.
- * Returns text attributions and logos to display.
+ * Collect unique layer-level attributions from visible layers.
+ * Builds a serialized cache key from attribution values so createSelector
+ * can detect in-place mutations to layer.meta.
  */
+const layerAttributionKeySelector = (state: any): string => {
+  const layers: any[] = state.visState?.layers;
+  if (!layers) return '';
+  let key = '';
+  for (const layer of layers) {
+    if (layer.config?.isVisible && layer.meta?.attribution) {
+      const a = layer.meta.attribution;
+      key += `${a.title}\0${a.url}\0${a.logoUrl ?? ''}\0`;
+    }
+  }
+  return key;
+};
+
+export const layerAttributionSelector = createSelector(
+  [(state: any) => state.visState?.layers, layerAttributionKeySelector],
+  (layers: any[]): AttributionWithStyle[] => {
+    const attributions: AttributionWithStyle[] = [];
+    if (!layers) return attributions;
+    for (const layer of layers) {
+      if (layer.config?.isVisible && layer.meta?.attribution) {
+        const attr = layer.meta.attribution;
+        if (attr.title && !attributions.find(a => a.title === attr.title && a.url === attr.url)) {
+          attributions.push(attr);
+        }
+      }
+    }
+    return attributions;
+  }
+);
+
 export const attributionSelector = createSelector(
-  [datasetAttributionSelector],
-  datasetAttributions => {
-    // TODO collect attributions from layers, and merge with dataset attributions here
-    const uniqueTextAttributions = datasetAttributions;
+  [datasetAttributionSelector, layerAttributionSelector],
+  (
+    datasetAttributions: DatasetAttribution[],
+    layerAttributions: AttributionWithStyle[]
+  ): {
+    sources: DatasetAttribution[];
+    logos: AttributionWithStyle[];
+  } => {
+    const uniqueTextAttributions: DatasetAttribution[] = [...datasetAttributions];
     const logos: AttributionWithStyle[] = [];
+
+    layerAttributions.forEach(layerAttribution => {
+      if (
+        !uniqueTextAttributions.find(
+          a => a.title === layerAttribution.title && a.url === layerAttribution.url
+        )
+      ) {
+        uniqueTextAttributions.push({title: layerAttribution.title, url: layerAttribution.url});
+      }
+      if (layerAttribution.logoUrl && !logos.find(a => a.logoUrl === layerAttribution.logoUrl)) {
+        logos.push(layerAttribution);
+      }
+    });
 
     return {sources: uniqueTextAttributions, logos};
   }

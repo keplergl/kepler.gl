@@ -6,6 +6,7 @@ import styled from 'styled-components';
 
 import {validateUrl} from '@kepler.gl/common-utils';
 import {DatasetType, TILE3D_PROVIDERS, Tile3DDatasetMetadata} from '@kepler.gl/constants';
+import {getApplicationConfig} from '@kepler.gl/utils';
 
 import {MetaResponse, DatasetCreationAttributes} from './common';
 import {InputLight} from '../../common';
@@ -365,32 +366,34 @@ const TilesetTile3DForm: React.FC<Tile3DFormProps> = ({setResponse}) => {
           onChange={onAccessTokenChange}
         />
       </div>
-      <div>
-        <TilesetInputDescription>For example, try a public 3D tileset:</TilesetInputDescription>
-        <ExampleUrlsContainer>
-          <ExampleTabs>
-            {TILE3D_EXAMPLES.map((ex, i) => (
-              <ExampleTab
-                key={ex.label}
-                active={exampleTab === i}
-                onClick={() => {
-                  setExampleTab(i);
-                  onExampleClick(ex.url, ex.name);
-                }}
-              >
-                {ex.label}
-              </ExampleTab>
-            ))}
-          </ExampleTabs>
-          <ExampleUrl
-            onClick={() =>
-              onExampleClick(TILE3D_EXAMPLES[exampleTab].url, TILE3D_EXAMPLES[exampleTab].name)
-            }
-          >
-            {TILE3D_EXAMPLES[exampleTab].url}
-          </ExampleUrl>
-        </ExampleUrlsContainer>
-      </div>
+      {getApplicationConfig().showInlineTilesetExamples && (
+        <div>
+          <TilesetInputDescription>For example, try a public 3D tileset:</TilesetInputDescription>
+          <ExampleUrlsContainer>
+            <ExampleTabs>
+              {TILE3D_EXAMPLES.map((ex, i) => (
+                <ExampleTab
+                  key={ex.label}
+                  active={exampleTab === i}
+                  onClick={() => {
+                    setExampleTab(i);
+                    onExampleClick(ex.url, ex.name);
+                  }}
+                >
+                  {ex.label}
+                </ExampleTab>
+              ))}
+            </ExampleTabs>
+            <ExampleUrl
+              onClick={() =>
+                onExampleClick(TILE3D_EXAMPLES[exampleTab].url, TILE3D_EXAMPLES[exampleTab].name)
+              }
+            >
+              {TILE3D_EXAMPLES[exampleTab].url}
+            </ExampleUrl>
+          </ExampleUrlsContainer>
+        </div>
+      )}
     </TilesetInputContainer>
   );
 };

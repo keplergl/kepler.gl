@@ -170,6 +170,17 @@ export default class WMSLayer extends AbstractTileLayer<WMSTile, any[]> {
         bounds: currentLayer.boundingBox
       });
     }
+
+    const metadata = dataset.metadata as WMSDatasetMetadata | undefined;
+    if (metadata?.attribution) {
+      this.updateMeta({
+        attribution: {title: metadata.attribution, url: metadata.tilesetDataUrl || ''}
+      });
+    } else if (metadata?.label) {
+      this.updateMeta({
+        attribution: {title: metadata.label, url: metadata.tilesetDataUrl || ''}
+      });
+    }
   }
 
   hasHoveredObject(objectInfo: any) {

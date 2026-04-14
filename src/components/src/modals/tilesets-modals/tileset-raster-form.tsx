@@ -389,35 +389,39 @@ const RasterTileForm: React.FC<RasterTileFormProps> = ({setResponse}) => {
           </TilesetInputDescription>
         </div>
       )}
-      <div>
-        <TilesetInputDescription>For example, try a public raster tileset:</TilesetInputDescription>
-        <ExampleUrlsContainer>
-          <ExampleTabs>
-            {RASTER_TILE_EXAMPLES.map((ex, i) => (
-              <ExampleTab
-                key={`${ex.label}-${ex.name}`}
-                active={exampleTab === i}
-                onClick={() => {
-                  setExampleTab(i);
-                  onExampleClick(ex.url, ex.name);
-                }}
-              >
-                {ex.name}
-              </ExampleTab>
-            ))}
-          </ExampleTabs>
-          <ExampleUrl
-            onClick={() =>
-              onExampleClick(
-                RASTER_TILE_EXAMPLES[exampleTab].url,
-                RASTER_TILE_EXAMPLES[exampleTab].name
-              )
-            }
-          >
-            {RASTER_TILE_EXAMPLES[exampleTab].url}
-          </ExampleUrl>
-        </ExampleUrlsContainer>
-      </div>
+      {getApplicationConfig().showInlineTilesetExamples && (
+        <div>
+          <TilesetInputDescription>
+            For example, try a public raster tileset:
+          </TilesetInputDescription>
+          <ExampleUrlsContainer>
+            <ExampleTabs>
+              {RASTER_TILE_EXAMPLES.map((ex, i) => (
+                <ExampleTab
+                  key={`${ex.label}-${ex.name}`}
+                  active={exampleTab === i}
+                  onClick={() => {
+                    setExampleTab(i);
+                    onExampleClick(ex.url, ex.name);
+                  }}
+                >
+                  {ex.name}
+                </ExampleTab>
+              ))}
+            </ExampleTabs>
+            <ExampleUrl
+              onClick={() =>
+                onExampleClick(
+                  RASTER_TILE_EXAMPLES[exampleTab].url,
+                  RASTER_TILE_EXAMPLES[exampleTab].name
+                )
+              }
+            >
+              {RASTER_TILE_EXAMPLES[exampleTab].url}
+            </ExampleUrl>
+          </ExampleUrlsContainer>
+        </div>
+      )}
     </TilesetInputContainer>
   );
 };

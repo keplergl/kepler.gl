@@ -72,11 +72,6 @@ const MetaInnerContainer = styled.div<MetaInnerContainerProps>`
   max-width: 600px;
 `;
 
-const StyledHeaderMessage = styled.div`
-  color: ${props => props.theme.textColorLT};
-  font-size: 14px;
-`;
-
 type LoadTilesetTabProps = {
   meta: {[key: string]: any};
   isAddingDatasets: boolean;
@@ -156,8 +151,6 @@ function LoadTilesetTabFactory() {
       <LoadTilesetTabContainer>
         <Container>
           <div>
-            <StyledHeaderMessage>Tileset Type</StyledHeaderMessage>
-
             <TilesetTypeContainer className="tileset-type">
               {tileTypes.map((tileType, index) => (
                 <TilesetIcon

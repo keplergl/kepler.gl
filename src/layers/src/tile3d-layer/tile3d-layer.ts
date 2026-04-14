@@ -284,6 +284,7 @@ export default class Tile3DLayer extends Layer {
     }
 
     const dataset = datasets[dataId];
+    this.updateLayerMeta(dataset);
     const metadata = (dataset.metadata || {}) as Tile3DDatasetMetadata;
 
     return {
@@ -298,7 +299,10 @@ export default class Tile3DLayer extends Layer {
     }
     const metadata = (dataset.metadata || {}) as Tile3DDatasetMetadata;
     const provider = getTile3DProviderFromUrl(metadata.tile3dUrl);
-    this.updateMeta({provider});
+    this.updateMeta({
+      provider,
+      attribution: provider?.attribution ?? null
+    });
   }
 
   _getDataAndLoaderOptions(
@@ -353,7 +357,8 @@ export default class Tile3DLayer extends Layer {
     this._extractBoundsFromTileset(tileset3d);
 
     const tileUrl = tileset3d.url || '';
-    const isGoogle = getTile3DProviderFromUrl(tileUrl) === TILE3D_PROVIDERS.google;
+    const provider = getTile3DProviderFromUrl(tileUrl);
+    const isGoogle = provider === TILE3D_PROVIDERS.google;
 
     if (!this._hasFittedBounds && this.meta?.bounds && !isGoogle) {
       this._hasFittedBounds = true;
@@ -368,9 +373,14 @@ export default class Tile3DLayer extends Layer {
           if (copyright) copyright.split(';').forEach(c => credits.add(c));
         });
         const title = Array.from(credits).join('; ');
-        this.updateMeta({
-          googleAttribution: title
-        });
+        if (this.meta?.attribution?.title !== title) {
+          this.updateMeta({
+            attribution: {
+              ...TILE3D_PROVIDERS.google.attribution,
+              title
+            }
+          });
+        }
         return selectedTiles;
       };
     }

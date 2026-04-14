@@ -68,6 +68,38 @@ import {
 import {FindDefaultLayerPropsReturnValue} from '../layer-utils';
 import {default as KeplerLayer, LayerBaseConfigPartial} from '../base-layer';
 
+/**
+ * Extract attribution from STAC metadata providers array.
+ * STAC Items carry providers in properties.providers, Collections at top-level.
+ * Falls back to collection name or title when providers are absent.
+ * Returns null when no meaningful attribution can be determined.
+ */
+function extractSTACAttribution(
+  stac: CompleteSTACObject
+): {title: string; url: string} | null {
+  const providers =
+    (stac as any).providers || (stac as any).properties?.providers;
+  if (Array.isArray(providers) && providers.length > 0) {
+    const producer = providers.find(p => p.roles?.includes('producer'));
+    const host = providers.find(p => p.roles?.includes('host'));
+    const provider = producer || host || providers[0];
+    if (provider?.name) {
+      return {title: provider.name, url: provider.url || ''};
+    }
+  }
+
+  const title =
+    (stac as any).title ||
+    (stac as any).properties?.title ||
+    (stac as any).collection;
+  if (title && typeof title === 'string') {
+    const selfLink = ((stac as any).links || []).find(l => l.rel === 'self');
+    return {title, url: selfLink?.href || ''};
+  }
+
+  return null;
+}
+
 // Adjust tileSize to devicePixelRatio, but not higher than 2 to reduce requests to server
 const devicePixelRatio: number = Math.min(
   2,
@@ -286,9 +318,15 @@ export default class RasterTileLayer extends KeplerLayer {
 
     const stac = dataset.metadata;
     if (stac.pmtilesType === PMTilesType.RASTER) {
-      return this.updateMeta({
-        bounds: stac.bounds
-      });
+      const meta: Record<string, any> = {bounds: stac.bounds};
+      const firstAttribution =
+        Array.isArray(stac.attributions) && stac.attributions.length > 0
+          ? stac.attributions[0]
+          : null;
+      if (typeof firstAttribution === 'string' && firstAttribution) {
+        meta.attribution = {title: firstAttribution, url: ''};
+      }
+      return this.updateMeta(meta);
     }
 
     const bounds = getSTACBounds(stac);
@@ -299,6 +337,11 @@ export default class RasterTileLayer extends KeplerLayer {
       if (stac.type === 'Feature') {
         this.updateMeta({bounds});
       }
+    }
+
+    const attribution = extractSTACAttribution(stac);
+    if (attribution) {
+      this.updateMeta({attribution});
     }
   }
 

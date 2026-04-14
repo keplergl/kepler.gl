@@ -35,6 +35,7 @@ import {
   AggregatedBin
 } from '@kepler.gl/layers';
 import {
+  AttributionWithStyle,
   DatasetAttribution,
   MapState,
   MapControls,
@@ -303,6 +304,46 @@ export const Attribution: React.FC<AttributionProps> = ({
   return memoizedComponents;
 };
 
+const StyledAttributionLogoContainer = styled.div`
+  position: absolute;
+  bottom: 4px;
+  left: 4px;
+  z-index: 1;
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  pointer-events: auto;
+`;
+
+const StyledLogoLink = styled.a<{$enabled: boolean}>`
+  cursor: ${props => (props.$enabled ? 'pointer' : 'default')};
+  display: flex;
+  align-items: flex-end;
+`;
+
+type AttributionLogosProps = {
+  logos: AttributionWithStyle[];
+};
+
+export const AttributionLogos: React.FC<AttributionLogosProps> = ({logos}) => {
+  if (!logos?.length) return null;
+  return (
+    <StyledAttributionLogoContainer>
+      {logos.map((logo, idx) => (
+        <StyledLogoLink
+          key={logo.logoUrl || idx}
+          href={logo.url || undefined}
+          {...(logo.url ? {target: '_blank', rel: 'noopener noreferrer'} : {})}
+          $enabled={Boolean(logo.url)}
+          style={logo.bottom ? {marginBottom: logo.bottom} : undefined}
+        >
+          <img src={logo.logoUrl} style={{height: logo.height || 12}} alt={logo.title} />
+        </StyledLogoLink>
+      ))}
+    </StyledAttributionLogoContainer>
+  );
+};
+
 MapContainerFactory.deps = [MapPopoverFactory, MapControlFactory, EditorFactory];
 
 type MapboxStyle = string | object | undefined;
@@ -348,6 +389,7 @@ export interface MapContainerProps {
   transformRequest?: (url: string, resourceType?: string) => {url: string};
 
   datasetAttributions?: DatasetAttribution[];
+  attributionLogos?: AttributionWithStyle[];
 
   generateMapboxLayers?: typeof generateMapboxLayers;
   generateDeckGLLayers?: typeof computeDeckLayers;
@@ -1098,6 +1140,7 @@ export default function MapContainerFactory(
         topMapContainerProps,
         theme,
         datasetAttributions = [],
+        attributionLogos = [],
         containerId = 0,
         isLoadingIndicatorVisible,
         activeSidePanel,
@@ -1241,6 +1284,9 @@ export default function MapContainerFactory(
               datasetAttributions={datasetAttributions}
               baseMapLibraryConfig={baseMapLibraryConfig}
             />
+          ) : null}
+          {this.props.primary ? (
+            <AttributionLogos logos={attributionLogos} />
           ) : null}
         </>
       );
