@@ -159,7 +159,8 @@ export default {
     heightMultiplier: 'Multiplicador de altura',
     fixedHeight: 'Altura fija',
     fixedHeightDescription: 'Usar altura sin modificaciones',
-    allowHover: 'Mostrar descripción emergente'
+    allowHover: 'Mostrar descripción emergente',
+    tooltipDescription: 'Mostrar u ocultar información emergente al pasar el cursor sobre las características de la capa'
   },
   layerManager: {
     addData: 'Añadir datos',

@@ -150,7 +150,8 @@ export default {
     zoomScale: 'Масштаб увеличения',
     heightRange: 'Диапазон высоты',
     heightMultiplier: 'Множитель высоты',
-    allowHover: 'Показать подсказку'
+    allowHover: 'Показать подсказку',
+    tooltipDescription: 'Показать или скрыть подсказку при наведении на элементы слоя'
   },
   layerManager: {
     addData: 'Добавить данные',

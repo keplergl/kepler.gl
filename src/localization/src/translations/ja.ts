@@ -155,7 +155,8 @@ export default {
     heightMultiplier: '高さ乗数',
     fixedHeight: '固定高さ',
     fixedHeightDescription: '高さを変更せずに使用する',
-    allowHover: 'ツールチップを表示'
+    allowHover: 'ツールチップを表示',
+    tooltipDescription: 'レイヤー要素にホバーしたときにツールチップを表示または非表示にする'
   },
   layerManager: {
     addData: 'データ追加',
