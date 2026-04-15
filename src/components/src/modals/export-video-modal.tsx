@@ -7,7 +7,11 @@ import styled, {ThemeProvider, useTheme} from 'styled-components';
 import {DEFAULT_MAPBOX_API_URL, NO_MAP_ID, EMPTY_MAPBOX_STYLE} from '@kepler.gl/constants';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {Viewport, ExportVideo, Effect} from '@kepler.gl/types';
-import {onViewPortChange, computeDeckEffects, patchDeckRendererForPostProcessing} from '@kepler.gl/utils';
+import {
+  onViewPortChange,
+  computeDeckEffects,
+  patchDeckRendererForPostProcessing
+} from '@kepler.gl/utils';
 import {DeckShadowCompositingEffect} from '@kepler.gl/effects';
 import {MapStyle} from '@kepler.gl/reducers';
 import {UIStateActions, VisStateActions} from '@kepler.gl/actions';
@@ -195,7 +199,6 @@ const MODAL_HORIZONTAL_PADDING = 144;
 let _shadowCompositingEffect: InstanceType<typeof DeckShadowCompositingEffect> | null = null;
 
 const ExportVideoModalFactory = () => {
-  patchDeckRendererForPostProcessing();
   const ExportVideoModal: React.FC<ExportVideoModalProps> = ({
     mapboxApiAccessToken,
     mapboxApiUrl = DEFAULT_MAPBOX_API_URL,
@@ -211,10 +214,23 @@ const ExportVideoModalFactory = () => {
     const [hubble, setHubble] = useState<HubbleModule | null>(_hubbleModule);
 
     useEffect(() => {
+      patchDeckRendererForPostProcessing();
+    }, []);
+
+    useEffect(() => {
       if (!hubble) {
         loadHubble().then(setHubble);
       }
     }, [hubble]);
+
+    useEffect(() => {
+      return () => {
+        if (_shadowCompositingEffect) {
+          _shadowCompositingEffect.cleanup();
+          _shadowCompositingEffect = null;
+        }
+      };
+    }, []);
 
     const exportVideoWidth = useMemo(() => {
       const modalInnerW =
