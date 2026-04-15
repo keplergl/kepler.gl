@@ -19,6 +19,25 @@ jest.mock('@hubble.gl/react', () => ({
   KeplerUIContext: MockKeplerUIContext
 }));
 
+const mockComputeDeckEffects = jest.fn(() => []);
+
+jest.mock('@kepler.gl/utils', () => {
+  const actual = jest.requireActual('@kepler.gl/utils');
+  return {
+    ...actual,
+    computeDeckEffects: (...args) => mockComputeDeckEffects(...args),
+    patchDeckRendererForPostProcessing: jest.fn()
+  };
+});
+
+jest.mock('@kepler.gl/effects', () => ({
+  DeckShadowCompositingEffect: jest.fn().mockImplementation(() => ({
+    id: 'shadow-compositing-effect',
+    postRender: jest.fn(),
+    cleanup: jest.fn()
+  }))
+}));
+
 jest.mock('./hubble-utils', () => ({
   getStaticMapProps: jest.fn((_state, _onChange, _token) => ({
     latitude: 37.7,
@@ -39,6 +58,7 @@ jest.mock('./hubble-utils', () => ({
 }));
 
 import ExportVideoModalFactory from './export-video-modal';
+import {DeckShadowCompositingEffect} from '@kepler.gl/effects';
 
 function renderWithThemeLocal(component) {
   return render(
@@ -97,6 +117,7 @@ async function renderAndWaitForPanel(props = DEFAULT_PROPS) {
 describe('ExportVideoModal', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockComputeDeckEffects.mockReturnValue([]);
   });
 
   test('renders without crashing', async () => {
@@ -185,5 +206,132 @@ describe('ExportVideoModal', () => {
     const panelProps = mockExportVideoPanelContainer.mock.calls[0][0];
     panelProps.onTripFrameUpdate(42);
     expect(DEFAULT_PROPS.visStateActions.setLayerAnimationTime).toHaveBeenCalledWith(42);
+  });
+
+  describe('NO_MAP_ID handling', () => {
+    const NO_MAP_PROPS = {
+      ...DEFAULT_PROPS,
+      mapStyle: {
+        styleType: 'no_map',
+        mapStyles: {
+          no_map: {
+            id: 'no_map',
+            label: 'No Basemap',
+            // url is intentionally missing to exercise the data-URI patch
+            icon: '',
+            layerGroups: [],
+            colorMode: 'NONE',
+            style: {version: 8, sources: {}, layers: []}
+          }
+        },
+        bottomMapStyle: null,
+        topMapStyle: null
+      }
+    };
+
+    test('renders without crashing when styleType is NO_MAP_ID', async () => {
+      const {container} = await renderAndWaitForPanel(NO_MAP_PROPS);
+      expect(container.querySelector('.export-video-modal')).toBeInTheDocument();
+    });
+
+    test('injects data-URI empty style URL into mapData when NO_MAP_ID entry has no url', async () => {
+      await renderAndWaitForPanel(NO_MAP_PROPS);
+
+      const panelProps = mockExportVideoPanelContainer.mock.calls[0][0];
+      const noMapEntry = panelProps.mapData.mapStyle.mapStyles.no_map;
+
+      expect(noMapEntry.url).toBeDefined();
+      expect(noMapEntry.url).toMatch(/^data:application\/json,/);
+
+      const encoded = noMapEntry.url.replace('data:application/json,', '');
+      const decoded = JSON.parse(decodeURIComponent(encoded));
+      expect(decoded).toEqual({version: 8, sources: {}, layers: []});
+    });
+
+    test('preserves original mapStyle when NO_MAP_ID entry already has a url', async () => {
+      const propsWithUrl = {
+        ...DEFAULT_PROPS,
+        mapStyle: {
+          styleType: 'no_map',
+          mapStyles: {
+            no_map: {
+              id: 'no_map',
+              url: 'https://existing-style.json'
+            }
+          },
+          bottomMapStyle: null,
+          topMapStyle: null
+        }
+      };
+
+      await renderAndWaitForPanel(propsWithUrl);
+
+      const panelProps = mockExportVideoPanelContainer.mock.calls[0][0];
+      expect(panelProps.mapData.mapStyle).toBe(propsWithUrl.mapStyle);
+    });
+  });
+
+  describe('shadow compositing fallback', () => {
+    const mockEffect = {
+      id: 'light-shadow-1',
+      type: 'light-and-shadow',
+      isEnabled: true,
+      clone: jest.fn(() => ({...mockEffect, clone: mockEffect.clone}))
+    };
+
+    function propsWithEffects(effects) {
+      return {
+        ...DEFAULT_PROPS,
+        visState: {
+          ...DEFAULT_PROPS.visState,
+          effects,
+          effectOrder: effects.map(e => e.id)
+        }
+      };
+    }
+
+    test('adds DeckShadowCompositingEffect when shadows exist but no postRender effect', async () => {
+      const shadowDeckEffect = {id: 'lighting', shadow: true};
+      mockComputeDeckEffects.mockReturnValue([shadowDeckEffect]);
+
+      await renderAndWaitForPanel(propsWithEffects([mockEffect]));
+
+      const panelProps = mockExportVideoPanelContainer.mock.calls[0][0];
+      const effects = panelProps.deckProps.effects;
+
+      expect(effects.length).toBe(2);
+      expect(effects[0]).toBe(shadowDeckEffect);
+      expect(effects[1].id).toBe('shadow-compositing-effect');
+      expect(DeckShadowCompositingEffect).toHaveBeenCalled();
+    });
+
+    test('does not add DeckShadowCompositingEffect when a postRender effect already exists', async () => {
+      const shadowDeckEffect = {id: 'lighting', shadow: true};
+      const postProcessEffect = {id: 'fog', postRender: jest.fn()};
+      mockComputeDeckEffects.mockReturnValue([shadowDeckEffect, postProcessEffect]);
+
+      await renderAndWaitForPanel(propsWithEffects([mockEffect]));
+
+      const panelProps = mockExportVideoPanelContainer.mock.calls[0][0];
+      const effects = panelProps.deckProps.effects;
+
+      expect(effects.length).toBe(2);
+      expect(effects[0]).toBe(shadowDeckEffect);
+      expect(effects[1]).toBe(postProcessEffect);
+      expect(effects.every(e => e.id !== 'shadow-compositing-effect')).toBe(true);
+    });
+
+    test('does not add DeckShadowCompositingEffect when no shadow effect exists', async () => {
+      const nonShadowEffect = {id: 'lighting', shadow: false};
+      mockComputeDeckEffects.mockReturnValue([nonShadowEffect]);
+
+      await renderAndWaitForPanel(propsWithEffects([mockEffect]));
+
+      const panelProps = mockExportVideoPanelContainer.mock.calls[0][0];
+      const effects = panelProps.deckProps.effects;
+
+      expect(effects.length).toBe(1);
+      expect(effects[0]).toBe(nonShadowEffect);
+    });
   });
 });

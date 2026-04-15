@@ -4,10 +4,15 @@
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import styled, {ThemeProvider, useTheme} from 'styled-components';
 
-import {DEFAULT_MAPBOX_API_URL} from '@kepler.gl/constants';
+import {DEFAULT_MAPBOX_API_URL, NO_MAP_ID, EMPTY_MAPBOX_STYLE} from '@kepler.gl/constants';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {Viewport, ExportVideo, Effect} from '@kepler.gl/types';
-import {onViewPortChange, computeDeckEffects} from '@kepler.gl/utils';
+import {
+  onViewPortChange,
+  computeDeckEffects,
+  patchDeckRendererForPostProcessing
+} from '@kepler.gl/utils';
+import {DeckShadowCompositingEffect} from '@kepler.gl/effects';
 import {MapStyle} from '@kepler.gl/reducers';
 import {UIStateActions, VisStateActions} from '@kepler.gl/actions';
 
@@ -191,6 +196,8 @@ const HUBBLE_PANEL_OVERHEAD = 2 * 32 + 24 + 280;
 const EXPORT_VIDEO_MODAL_MAX_WIDTH = 1080;
 const MODAL_HORIZONTAL_PADDING = 144;
 
+let _shadowCompositingEffect: InstanceType<typeof DeckShadowCompositingEffect> | null = null;
+
 const ExportVideoModalFactory = () => {
   const ExportVideoModal: React.FC<ExportVideoModalProps> = ({
     mapboxApiAccessToken,
@@ -207,10 +214,23 @@ const ExportVideoModalFactory = () => {
     const [hubble, setHubble] = useState<HubbleModule | null>(_hubbleModule);
 
     useEffect(() => {
+      patchDeckRendererForPostProcessing();
+    }, []);
+
+    useEffect(() => {
       if (!hubble) {
         loadHubble().then(setHubble);
       }
     }, [hubble]);
+
+    useEffect(() => {
+      return () => {
+        if (_shadowCompositingEffect) {
+          _shadowCompositingEffect.cleanup();
+          _shadowCompositingEffect = null;
+        }
+      };
+    }, []);
 
     const exportVideoWidth = useMemo(() => {
       const modalInnerW =
@@ -219,10 +239,27 @@ const ExportVideoModalFactory = () => {
       return Math.max(320, Math.min(540, modalInnerW - HUBBLE_PANEL_OVERHEAD));
     }, [containerW]);
 
-    const keplerState = useMemo(
-      () => ({visState, mapState, mapStyle}),
-      [visState, mapState, mapStyle]
-    );
+    const keplerState = useMemo(() => {
+      if (mapStyle?.styleType === NO_MAP_ID) {
+        const noMapEntry = mapStyle.mapStyles?.[NO_MAP_ID];
+        if (noMapEntry && !noMapEntry.url) {
+          const emptyStyleUrl =
+            'data:application/json,' + encodeURIComponent(JSON.stringify(EMPTY_MAPBOX_STYLE));
+          return {
+            visState,
+            mapState,
+            mapStyle: {
+              ...mapStyle,
+              mapStyles: {
+                ...mapStyle.mapStyles,
+                [NO_MAP_ID]: {...noMapEntry, url: emptyStyleUrl}
+              }
+            }
+          };
+        }
+      }
+      return {visState, mapState, mapStyle};
+    }, [visState, mapState, mapStyle]);
 
     const onUpdateMap = useCallback(
       (viewPort: Viewport) => {
@@ -243,15 +280,29 @@ const ExportVideoModalFactory = () => {
     const deckEffects = useMemo(() => {
       if (videoEffects.length === 0) return [];
       const effectOrder = visState.effectOrder || videoEffects.map((e: Effect) => e.id);
-      return computeDeckEffects({
+      const effects = computeDeckEffects({
         visState: {...visState, effects: videoEffects, effectOrder},
         mapState,
         isExport: true
       });
+
+      const hasShadow = effects.some((e: any) => e.shadow === true);
+      const hasPostProcess = effects.some((e: any) => typeof e.postRender === 'function');
+      if (hasShadow && !hasPostProcess) {
+        if (!_shadowCompositingEffect) {
+          _shadowCompositingEffect = new DeckShadowCompositingEffect();
+        }
+        effects.push(_shadowCompositingEffect as any);
+      }
+
+      return effects;
     }, [visState, videoEffects, mapState]);
 
     const deckPropsWithEffects = useMemo(
-      () => ({...hubbleDeckGlProps, effects: deckEffects}),
+      () => ({
+        ...hubbleDeckGlProps,
+        effects: deckEffects
+      }),
       [hubbleDeckGlProps, deckEffects]
     );
 
