@@ -147,7 +147,8 @@ export default {
     threshold: 'Threshold',
     zoomScale: '缩放比例',
     heightRange: '高度范围',
-    allowHover: '显示工具提示'
+    allowHover: '显示工具提示',
+    allowHoverDescription: '悬停在图层要素上时显示或隐藏工具提示'
   },
   layerManager: {
     addData: '添加数据',
