@@ -157,7 +157,7 @@ export default {
     fixedHeight: 'Kiinteä korkeus',
     fixedHeightDescription: 'Käytä korkeutta ilman muutoksia',
     allowHover: 'Näytä työkaluvihje',
-    tooltipDescription: 'Näytä tai piilota työkaluvihje, kun osoitin on tason ominaisuuksien päällä'
+    allowHoverDescription: 'Näytä tai piilota työkaluvihje, kun osoitin on tason ominaisuuksien päällä'
   },
   layerManager: {
     addData: 'Lisää aineisto',

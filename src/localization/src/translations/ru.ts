@@ -151,7 +151,7 @@ export default {
     heightRange: 'Диапазон высоты',
     heightMultiplier: 'Множитель высоты',
     allowHover: 'Показать подсказку',
-    tooltipDescription: 'Показать или скрыть подсказку при наведении на элементы слоя'
+    allowHoverDescription: 'Показать или скрыть подсказку при наведении на элементы слоя'
   },
   layerManager: {
     addData: 'Добавить данные',

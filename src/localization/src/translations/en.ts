@@ -180,7 +180,7 @@ export default {
     fixedHeight: 'Fixed height',
     fixedHeightDescription: 'Use height without modifications',
     allowHover: 'Allow hover',
-    tooltipDescription: 'Show or hide tooltip when hovering over layer features',
+    allowHoverDescription: 'Show or hide tooltip when hovering over layer features',
     showNeighborOnHover: 'Highlight Neighbors On Hover',
     showHighlightColor: 'Show highlight Color',
     darkModeEnabled: 'Dark base map',

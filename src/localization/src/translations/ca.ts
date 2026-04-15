@@ -159,7 +159,7 @@ export default {
     fixedHeight: 'Alçada fixa',
     fixedHeightDescription: "Utilitzeu l'alçada sense modificacions",
     allowHover: "Mostra informació d'eina",
-    tooltipDescription: "Mostra o oculta la informació d'eina en passar el cursor per sobre de les característiques de la capa"
+    allowHoverDescription: "Mostra o oculta la informació d'eina en passar el cursor per sobre de les característiques de la capa"
   },
   layerManager: {
     addData: 'Afegeix Dades',

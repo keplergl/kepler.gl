@@ -158,7 +158,7 @@ export default {
     fixedHeight: 'Altura fixa',
     fixedHeightDescription: 'Use a altura sem modificações',
     allowHover: 'Mostrar dica de ferramenta',
-    tooltipDescription: 'Mostrar ou ocultar dica de ferramenta ao passar o cursor sobre os recursos da camada'
+    allowHoverDescription: 'Mostrar ou ocultar dica de ferramenta ao passar o cursor sobre os recursos da camada'
   },
   layerManager: {
     addData: 'Adicionar Dados',
