@@ -129,8 +129,8 @@ export function mergeLayerVisConfigForNewDatasets(
       if (!settings) {
         return layer;
       }
-      const allowedKeys = (Object.keys(patch) as Array<keyof LayerVisConfig>).filter(
-        key => key in settings
+      const allowedKeys = (Object.keys(patch) as Array<keyof LayerVisConfig>).filter(key =>
+        Object.prototype.hasOwnProperty.call(settings, key)
       );
       if (!allowedKeys.length) {
         return layer;
