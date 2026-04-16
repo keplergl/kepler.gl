@@ -18,7 +18,6 @@ import {arrayMove} from '@kepler.gl/common-utils';
 import {MapState, Effect, EffectProps, EffectDescription} from '@kepler.gl/types';
 import {findById} from './utils';
 import {clamp} from './data-utils';
-import {normalizeColor} from './color-utils';
 
 // TODO isolate types - depends on @kepler.gl/schemas
 type VisState = any;
@@ -39,14 +38,6 @@ export function computeDeckEffects({
   mapState: MapState;
   isExport?: boolean;
 }): DeckEffect[] {
-  // The export has its own WebGL context and its own cloned Effect
-  // instances.  It must never touch _lastLightingDeckEffect or wrap
-  // with Object.create (which would make EffectManager re-setup every
-  // frame, destroying shadow passes and causing flicker).
-  if (isExport) {
-    return computeDeckEffectsForExport({visState, mapState});
-  }
-
   // TODO: 1) deck effects per deck context 2) preserved between draws
   let hasLightingShadow = false;
 
@@ -54,26 +45,22 @@ export function computeDeckEffects({
     .map(effectId => {
       const effect = findById(effectId)(visState.effects) as Effect | undefined;
       if (effect?.deckEffect) {
-        if (effect.type === LIGHT_AND_SHADOW_EFFECT.type) {
-          // When a retained deck effect exists, reuse it so that
-          // deck.gl's EffectManager sees the same object reference and
-          // avoids the setup→cleanup ordering problem (cleanup of the
-          // old instance would remove the shadow module the new one
-          // just added).  All parameters will be synced by updateEffect.
-          if (_lastLightingDeckEffect && effect.deckEffect !== _lastLightingDeckEffect) {
-            effect.deckEffect = _lastLightingDeckEffect;
-          }
-        }
-
         if (effect.isEnabled) {
           updateEffect({visState, mapState, effect});
         } else if (effect.type === LIGHT_AND_SHADOW_EFFECT.type) {
+          // Keep lighting effects in the array even when disabled to avoid
+          // removing the shadow shader module. Composite layer sublayers
+          // don't regenerate models when default shader modules change,
+          // leaving stale pipelines with shadow_uShadowMap bindings.
+          // Disabling shadow on the lights avoids visual effects.
           disableLightingEffect(effect);
         }
         if (effect.isEnabled || effect.type === LIGHT_AND_SHADOW_EFFECT.type) {
           if (effect.type === LIGHT_AND_SHADOW_EFFECT.type) {
             hasLightingShadow = true;
-            _lastLightingDeckEffect = effect.deckEffect;
+            if (!isExport) {
+              _lastLightingDeckEffect = effect.deckEffect;
+            }
           }
           return effect.deckEffect;
         }
@@ -86,46 +73,6 @@ export function computeDeckEffects({
     disableDeckLightingEffect(_lastLightingDeckEffect);
     deckEffects.unshift(_lastLightingDeckEffect);
   }
-
-  // deck.gl's EffectManager uses deepEqual(effects, prev, 1) to detect
-  // changes. Since we mutate the existing deckEffect instances in place
-  // (via updateEffect / setProps), the object references stay the same
-  // and deepEqual considers them unchanged — so no redraw is triggered.
-  // Wrapping each deckEffect in a prototypal proxy (Object.create) gives
-  // each element a fresh identity while preserving full access to the
-  // underlying instance's properties and methods.
-  return deckEffects.map(de => Object.create(de));
-}
-
-/**
- * Separate code path for the export context. The export creates its own
- * cloned Effect instances with independent deckEffect objects and its own
- * WebGL context. We must not touch the module-level _lastLightingDeckEffect,
- * must not wrap with Object.create (which causes EffectManager to
- * setup/cleanup every frame), and must keep the logic minimal to avoid
- * cross-context interference.
- */
-function computeDeckEffectsForExport({
-  visState,
-  mapState
-}: {
-  visState: VisState;
-  mapState: MapState;
-}): DeckEffect[] {
-  const deckEffects = visState.effectOrder
-    .map(effectId => {
-      const effect = findById(effectId)(visState.effects) as Effect | undefined;
-      if (effect?.deckEffect) {
-        if (effect.isEnabled) {
-          updateEffectForExport({visState, mapState, effect});
-        }
-        if (effect.isEnabled) {
-          return effect.deckEffect;
-        }
-      }
-      return null;
-    })
-    .filter(effect => effect);
 
   return deckEffects;
 }
@@ -207,96 +154,22 @@ function disableLightingEffect(effect: Effect) {
 }
 
 /**
- * Disable shadow rendering directly on a deck.gl LightingEffect instance
- * and neutralise its lights so that PBR materials still using lit shaders
- * render with an appearance that closely matches unlit (full white ambient,
- * zero directional intensity).  This avoids the need to force-regenerate
- * every cached 3D-tile sub-layer when the effect is merely retained for
- * its shadow shader module.
+ * Disable shadow rendering directly on a deck.gl LightingEffect instance.
  */
 function disableDeckLightingEffect(deckEffect: any) {
   deckEffect.shadow = false;
   deckEffect.outputUniformShadow = false;
   for (const light of deckEffect.directionalLights || []) {
     light.shadow = false;
-    light.intensity = 0;
-  }
-  if (deckEffect.ambientLight) {
-    deckEffect.ambientLight.color = [255, 255, 255];
-    deckEffect.ambientLight.intensity = 1;
   }
 }
 
 /**
- * Update effect to match latest vis and map states.
- * Syncs all light parameters to the deck effect — essential when the
- * deck effect instance is reused across remove→re-add cycles.
+ * Update effect to match latest vis and map states
  */
 function updateEffect({visState, mapState, effect}) {
   if (effect.type === LIGHT_AND_SHADOW_EFFECT.type) {
-    const deckEffect = effect.deckEffect;
-
     // Re-enable shadow rendering in case it was previously disabled
-    for (const light of deckEffect.directionalLights || []) {
-      light.shadow = true;
-    }
-    deckEffect.shadow = deckEffect.directionalLights?.some(l => l.shadow) ?? false;
-
-    deckEffect.shadowColor = [
-      ...normalizeColor(effect.parameters.shadowColor),
-      effect.parameters.shadowIntensity
-    ];
-    if (deckEffect.ambientLight) {
-      deckEffect.ambientLight.color = (
-        effect.parameters.ambientLightColor || [255, 255, 255]
-      ).slice();
-      deckEffect.ambientLight.intensity = effect.parameters.ambientLightIntensity;
-    }
-
-    let {timestamp} = effect.parameters;
-    const {timeMode} = effect.parameters;
-    const sunLight = effect.deckEffect.directionalLights[0];
-    if (sunLight) {
-      sunLight.color = (effect.parameters.sunLightColor || [255, 255, 255]).slice();
-    }
-
-    // set timestamp for shadow
-    if (timeMode === LIGHT_AND_SHADOW_EFFECT_TIME_MODES.current) {
-      timestamp = Date.now();
-      sunLight.timestamp = timestamp;
-    } else if (timeMode === LIGHT_AND_SHADOW_EFFECT_TIME_MODES.animation) {
-      timestamp = visState.animationConfig.currentTime ?? 0;
-      if (!timestamp) {
-        const filter = visState.filters.find(
-          filter =>
-            filter.type === FILTER_TYPES.timeRange &&
-            (filter.view === FILTER_VIEW_TYPES.enlarged || filter.syncedWithLayerTimeline)
-        );
-        if (filter) {
-          timestamp = filter.value?.[0] ?? 0;
-        }
-      }
-      sunLight.timestamp = timestamp;
-    }
-
-    // output uniform shadow during nighttime
-    if (isDaytime(mapState.latitude, mapState.longitude, timestamp)) {
-      effect.deckEffect.outputUniformShadow = false;
-      sunLight.intensity = effect.parameters.sunLightIntensity;
-    } else {
-      effect.deckEffect.outputUniformShadow = true;
-      sunLight.intensity = 0;
-    }
-  }
-}
-
-/**
- * Minimal update for the export context. The export uses fresh cloned
- * effects with correctly initialized deckEffect instances, so it only
- * needs timestamp and intensity updates — not full parameter syncing.
- */
-function updateEffectForExport({visState, mapState, effect}) {
-  if (effect.type === LIGHT_AND_SHADOW_EFFECT.type) {
     const deckEffect = effect.deckEffect;
     for (const light of deckEffect.directionalLights || []) {
       light.shadow = true;
