@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {SavedMap, ParsedConfig, SavedConfigV1, MinSavedConfigV1} from './schemas';
+import type {LayerVisConfig} from './layers';
 
 /** EXPORT_FILE_TO_CLOUD */
 export type MapData = {
@@ -69,6 +70,8 @@ export type AddDataToMapOptions = {
   keepExistingConfig?: boolean;
   autoCreateLayers?: boolean;
   autoCreateTooltips?: boolean;
+  /** Shallow merge into each new layer's `config.visConfig` (keys must exist on `visConfigSettings`). */
+  layerVisConfig?: Partial<LayerVisConfig>;
 };
 
 export type AddDataToMapPayload = {
