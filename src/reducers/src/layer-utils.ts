@@ -117,10 +117,12 @@ export function mergeLayerVisConfigForNewDatasets(
     return state;
   }
 
+  const datasetIdSet = new Set(datasetIdsToPatch);
+
   return {
     ...state,
     layers: state.layers.map(layer => {
-      if (!layer.config.dataId || !datasetIdsToPatch.includes(layer.config.dataId)) {
+      if (!layer.config.dataId || !datasetIdSet.has(layer.config.dataId)) {
         return layer;
       }
       const settings = layer.visConfigSettings;

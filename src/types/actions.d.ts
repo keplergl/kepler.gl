@@ -70,7 +70,6 @@ export type AddDataToMapOptions = {
   keepExistingConfig?: boolean;
   autoCreateLayers?: boolean;
   autoCreateTooltips?: boolean;
-  /** Shallow merge into each new layer's `config.visConfig` (keys must exist on `visConfigSettings`). */
   layerVisConfig?: Partial<LayerVisConfig>;
 };
 
