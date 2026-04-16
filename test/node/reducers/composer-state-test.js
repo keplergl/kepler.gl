@@ -431,6 +431,7 @@ test('#composerStateReducer - addDataToMapUpdater: layerVisConfig only affects n
         keepExistingConfig: true,
         layerVisConfig: {
           allowHover: false,
+          opacity: undefined,
           totallyUnknownVisKey999: 'strip-me'
         }
       }
@@ -465,6 +466,10 @@ test('#composerStateReducer - addDataToMapUpdater: layerVisConfig only affects n
     layerSecond.config.visConfig.totallyUnknownVisKey999,
     undefined,
     'unknown keys must not be merged into visConfig when absent from visConfigSettings'
+  );
+  t.ok(
+    typeof layerSecond.config.visConfig.opacity === 'number',
+    'undefined patch values must not overwrite visConfig (e.g. opacity)'
   );
 
   t.end();

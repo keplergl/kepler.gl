@@ -105,8 +105,7 @@ export function findDefaultLayer(dataset: KeplerTable, layerClasses: LayerClasse
 /**
  * Applies `patch` to `config.visConfig` only for layers whose `dataId` is in `datasetIdsToPatch`.
  * Layers for datasets that were already on the map are left unchanged — `addDataToMap`
- * appends datasets and may auto-create layers, so we must not alter unrelated layers.
- * Only keys present on each layer's `visConfigSettings` are applied (others skipped).
+ * Keys whose patch value is `undefined` are skipped so existing visConfig is not cleared.
  */
 export function mergeLayerVisConfigForNewDatasets(
   state: VisState,
@@ -114,6 +113,13 @@ export function mergeLayerVisConfigForNewDatasets(
   datasetIdsToPatch: string[]
 ): VisState {
   if (!patch || !Object.keys(patch).length) {
+    return state;
+  }
+
+  const hasDefinedPatchValue = (Object.keys(patch) as Array<keyof LayerVisConfig>).some(
+    key => patch[key] !== undefined
+  );
+  if (!hasDefinedPatchValue) {
     return state;
   }
 
@@ -129,8 +135,9 @@ export function mergeLayerVisConfigForNewDatasets(
       if (!settings) {
         return layer;
       }
-      const allowedKeys = (Object.keys(patch) as Array<keyof LayerVisConfig>).filter(key =>
-        Object.prototype.hasOwnProperty.call(settings, key)
+      const allowedKeys = (Object.keys(patch) as Array<keyof LayerVisConfig>).filter(
+        key =>
+          Object.prototype.hasOwnProperty.call(settings, key) && patch[key] !== undefined
       );
       if (!allowedKeys.length) {
         return layer;
