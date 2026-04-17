@@ -18,6 +18,7 @@ import {arrayMove} from '@kepler.gl/common-utils';
 import {MapState, Effect, EffectProps, EffectDescription} from '@kepler.gl/types';
 import {findById} from './utils';
 import {clamp} from './data-utils';
+import {normalizeColor} from './color-utils';
 
 // TODO isolate types - depends on @kepler.gl/schemas
 type VisState = any;
@@ -46,6 +47,20 @@ export function computeDeckEffects({
       const effect = findById(effectId)(visState.effects) as Effect | undefined;
       if (effect?.deckEffect) {
         if (effect.isEnabled) {
+          // deck.gl's EffectManager matches effects by id and reuses old
+          // instances (calling oldEffect.setProps(newEffect.props)) instead
+          // of replacing them. When a lighting effect is removed and
+          // re-added, the cached _lastLightingDeckEffect is the instance
+          // that deck.gl will actually render with. Adopt it so that
+          // parameter syncing in updateEffect targets the right object.
+          if (
+            !isExport &&
+            effect.type === LIGHT_AND_SHADOW_EFFECT.type &&
+            _lastLightingDeckEffect &&
+            _lastLightingDeckEffect !== effect.deckEffect
+          ) {
+            effect.deckEffect = _lastLightingDeckEffect;
+          }
           updateEffect({visState, mapState, effect});
         } else if (effect.type === LIGHT_AND_SHADOW_EFFECT.type) {
           // Keep lighting effects in the array even when disabled to avoid
@@ -165,25 +180,51 @@ function disableDeckLightingEffect(deckEffect: any) {
 }
 
 /**
- * Update effect to match latest vis and map states
+ * Update effect to match latest vis and map states.
+ *
+ * deck.gl's EffectManager compares effects by `id` and reuses the
+ * existing (old) instance when a new one with the same id is supplied
+ * (calling `oldEffect.setProps(newEffect.props)` instead of replacing).
+ * LightingEffect.setProps only updates light sources, not shadowColor.
+ * So we must sync ALL parameters here every frame to ensure the deck
+ * effect always reflects the kepler-side state — even if deck.gl
+ * silently swapped the instance under us.
  */
 function updateEffect({visState, mapState, effect}) {
   if (effect.type === LIGHT_AND_SHADOW_EFFECT.type) {
-    // Re-enable shadow rendering in case it was previously disabled
     const deckEffect = effect.deckEffect;
+    const {parameters} = effect;
+
+    // Re-enable shadow rendering in case it was previously disabled
     for (const light of deckEffect.directionalLights || []) {
       light.shadow = true;
     }
     deckEffect.shadow = deckEffect.directionalLights?.some(l => l.shadow) ?? false;
 
-    let {timestamp} = effect.parameters;
-    const {timeMode} = effect.parameters;
-    const sunLight = effect.deckEffect.directionalLights[0];
+    // Sync shadow color & intensity (not handled by deck.gl setProps)
+    deckEffect.shadowColor = [
+      ...normalizeColor(parameters.shadowColor),
+      parameters.shadowIntensity
+    ];
+
+    // Sync ambient light
+    if (deckEffect.ambientLight) {
+      deckEffect.ambientLight.intensity = parameters.ambientLightIntensity;
+      deckEffect.ambientLight.color = parameters.ambientLightColor.slice();
+    }
+
+    let {timestamp} = parameters;
+    const {timeMode} = parameters;
+    const sunLight = deckEffect.directionalLights[0];
+
+    if (sunLight) {
+      sunLight.color = parameters.sunLightColor.slice();
+    }
 
     // set timestamp for shadow
     if (timeMode === LIGHT_AND_SHADOW_EFFECT_TIME_MODES.current) {
       timestamp = Date.now();
-      sunLight.timestamp = timestamp;
+      if (sunLight) sunLight.timestamp = timestamp;
     } else if (timeMode === LIGHT_AND_SHADOW_EFFECT_TIME_MODES.animation) {
       timestamp = visState.animationConfig.currentTime ?? 0;
       if (!timestamp) {
@@ -196,16 +237,16 @@ function updateEffect({visState, mapState, effect}) {
           timestamp = filter.value?.[0] ?? 0;
         }
       }
-      sunLight.timestamp = timestamp;
+      if (sunLight) sunLight.timestamp = timestamp;
     }
 
     // output uniform shadow during nighttime
     if (isDaytime(mapState.latitude, mapState.longitude, timestamp)) {
-      effect.deckEffect.outputUniformShadow = false;
-      sunLight.intensity = effect.parameters.sunLightIntensity;
+      deckEffect.outputUniformShadow = false;
+      if (sunLight) sunLight.intensity = parameters.sunLightIntensity;
     } else {
-      effect.deckEffect.outputUniformShadow = true;
-      sunLight.intensity = 0;
+      deckEffect.outputUniformShadow = true;
+      if (sunLight) sunLight.intensity = 0;
     }
   }
 }

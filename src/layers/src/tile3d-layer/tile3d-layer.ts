@@ -38,6 +38,16 @@ function hasActiveLightingEffect(layer: any): boolean {
 }
 
 /**
+ * Same check but from the top-level KeplerTile3DLayer's own context.
+ * Used in updateState to detect lighting on/off transitions.
+ */
+function _checkLightingActive(context: any): boolean {
+  const effects: any[] | undefined = context?.deck?.props?.effects;
+  if (!effects) return false;
+  return effects.some(e => e instanceof DeckLightingEffect && (e as any).shadow);
+}
+
+/**
  * Custom DeckTile3DLayer that catches exceptions in _loadTileset and
  * _updateTileset (which calls selectTiles – an unhandled-promise path
  * where errors like "boundingVolume must contain …" escape).
@@ -52,9 +62,24 @@ class KeplerTile3DLayer extends DeckTile3DLayer {
   // MeshLayer / ScenegraphLayer sub-layers inside the tile cache. Override
   // updateState to propagate the flag so every cached tile gets re-rendered
   // with the correct material (lit vs. unlit).
+  //
+  // Additionally, when the Light & Shadow effect is disabled (but kept in
+  // the effects array to avoid cleanup/shader-module removal), no
+  // extensionsChanged fires. Detect the lighting active→inactive transition
+  // and force sublayer re-creation so models revert to their default (unlit)
+  // materials.
   updateState(params: any): void {
     super.updateState(params);
-    if (params.changeFlags.extensionsChanged) {
+
+    const lightingActive = _checkLightingActive(this.context);
+    const prevLightingActive = (this.state as any)?._lightingWasActive ?? false;
+
+    const lightingChanged = lightingActive !== prevLightingActive;
+    if (lightingChanged) {
+      this.setState({_lightingWasActive: lightingActive});
+    }
+
+    if (params.changeFlags.extensionsChanged || lightingChanged) {
       const {layerMap} = this.state as any;
       if (layerMap) {
         for (const key in layerMap) {
@@ -127,8 +152,27 @@ class KeplerTile3DLayer extends DeckTile3DLayer {
     if (id === 'mesh') {
       if (!_PatchedMeshLayer) {
         _PatchedMeshLayer = class extends DefaultClass {
+          shouldUpdateState(params) {
+            if (super.shouldUpdateState(params)) return true;
+            return hasActiveLightingEffect(this) !== (this.state?._lightingWasActive ?? false);
+          }
+
           updateState(params) {
             super.updateState(params);
+
+            const lightingActive = hasActiveLightingEffect(this);
+            const prevLighting = this.state?._lightingWasActive ?? false;
+            if (lightingActive !== prevLighting) {
+              this.setState({_lightingWasActive: lightingActive});
+              // Re-parse the PBR material so that parseMaterial's
+              // lit/unlit decision is re-evaluated with the new
+              // lighting state. This updates shader inputs and
+              // textures without rebuilding the entire GPU model.
+              if (this.state?.model) {
+                this.updatePbrMaterialUniforms(this.props.pbrMaterial);
+              }
+            }
+
             if (params.changeFlags.extensionsChanged && this.state?.model) {
               this.updatePbrMaterialUniforms(this.props.pbrMaterial);
             }
@@ -160,8 +204,39 @@ class KeplerTile3DLayer extends DeckTile3DLayer {
     if (id === 'scenegraph') {
       if (!_PatchedScenegraphLayer) {
         _PatchedScenegraphLayer = class extends DefaultClass {
+          shouldUpdateState(params) {
+            if (super.shouldUpdateState(params)) return true;
+            return hasActiveLightingEffect(this) !== (this.state?._lightingWasActive ?? false);
+          }
+
+          _setUnlitOnModels(unlit: number) {
+            const models = this.state?.models;
+            if (!models) return;
+            for (const model of models) {
+              try {
+                model.shaderInputs.setProps({pbrMaterial: {unlit}});
+              } catch {
+                // model may lack pbrMaterial binding
+              }
+            }
+          }
+
           updateState(params) {
             super.updateState(params);
+
+            const lightingActive = hasActiveLightingEffect(this);
+            const prevLighting = this.state?._lightingWasActive ?? false;
+            if (lightingActive !== prevLighting) {
+              this.setState({_lightingWasActive: lightingActive});
+              // When lighting is turned off, reset models to their
+              // default unlit state (1); when turned on, enable
+              // lighting (0). Avoids rebuilding the scenegraph.
+              this._setUnlitOnModels(lightingActive ? 0 : 1);
+            }
+
+            // extensionsChanged fires when the shadow shader module is
+            // added/removed from defaultShaderModules. Models must be
+            // rebuilt so the new module is compiled into their shaders.
             if (params.changeFlags.extensionsChanged && this.state?.scenegraph) {
               this._updateScenegraph();
             }
