@@ -11,7 +11,7 @@ import type {ShaderModule} from '@luma.gl/shadertools';
  */
 interface LightingEffectPrivate {
   shadow: boolean;
-  shadowPasses: {delete(): void}[];
+  shadowPasses: {delete(): void; render(params: Record<string, unknown>): void}[];
   dummyShadowMap: Texture | null;
   _createShadowPasses(device: unknown): void;
 }
@@ -84,6 +84,7 @@ const CustomShadowModule = createCustomShadowModule();
  */
 class CustomDeckLightingEffect extends LightingEffect {
   outputUniformShadow: boolean;
+  isExportMode: boolean;
 
   private get _private(): LightingEffectPrivate {
     return this as unknown as LightingEffectPrivate;
@@ -92,6 +93,7 @@ class CustomDeckLightingEffect extends LightingEffect {
   constructor(props) {
     super(props);
     this.outputUniformShadow = false;
+    this.isExportMode = false;
   }
 
   setup(context) {
@@ -102,6 +104,39 @@ class CustomDeckLightingEffect extends LightingEffect {
       deck._addDefaultShaderModule(CustomShadowModule || shadow);
       this._private.dummyShadowMap = device.createTexture({width: 1, height: 1});
     }
+  }
+
+  preRender(opts) {
+    if (!this._private.shadow) return;
+
+    // In interleaved (MapboxOverlay) mode during video export, deck.gl creates
+    // two viewports per frame: 'MapView' and 'mapbox'. loaders.gl's Tileset3D
+    // creates separate Tile3D trees per viewport, then merges selected tiles by
+    // ID — the last viewport overwrites. Tile3D.updateVisibility sets viewportIds
+    // to only the traversing viewport's ID (overwrite, not append) and guards
+    // against re-entry within the same frame. The result: some tiles end up with
+    // viewportIds=['MapView'] only. Tile3DLayer.filterSubLayer then rejects them
+    // when the shadow pass uses viewport 'mapbox'.
+    //
+    // Fix: before the shadow pass, ensure every tile sub-layer's tile has the
+    // shadow pass viewport ID in its viewportIds array.
+    if (this.isExportMode) {
+      const shadowViewportId = opts.viewports?.[0]?.id;
+      if (shadowViewportId && opts.layers) {
+        for (const layer of opts.layers) {
+          const tile = (layer as any).props?.tile;
+          if (
+            tile?.viewportIds &&
+            tile.selected &&
+            !tile.viewportIds.includes(shadowViewportId)
+          ) {
+            tile.viewportIds.push(shadowViewportId);
+          }
+        }
+      }
+    }
+
+    super.preRender(opts);
   }
 
   cleanup(context) {

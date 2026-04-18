@@ -76,6 +76,9 @@ export function computeDeckEffects({
             if (!isExport) {
               _lastLightingDeckEffect = effect.deckEffect;
             }
+            if (effect.deckEffect) {
+              effect.deckEffect.isExportMode = Boolean(isExport);
+            }
           }
           return effect.deckEffect;
         }
