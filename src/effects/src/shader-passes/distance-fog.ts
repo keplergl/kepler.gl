@@ -3,6 +3,7 @@
 
 import {ClipSpace} from '@luma.gl/engine';
 import type {ShaderModule} from '@luma.gl/shadertools';
+import {patchTileViewportIds} from '../tile-viewport-fix';
 
 export type DistanceFogProps = {
   density: number;
@@ -163,6 +164,7 @@ export class DeckDistanceFogEffect {
   id = 'distance-fog-effect';
   props: DistanceFogProps;
   module = distanceFogModule;
+  isExportMode = false;
   private model: InstanceType<typeof ClipSpace> | null = null;
 
   constructor(props: Partial<DistanceFogProps> = {}) {
@@ -198,8 +200,11 @@ export class DeckDistanceFogEffect {
     Object.assign(this.props, props);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
-  preRender(): void {}
+  preRender(opts?: any): void {
+    if (this.isExportMode && opts) {
+      patchTileViewportIds(opts);
+    }
+  }
 
   postRender(params: any): any {
     const {inputBuffer, swapBuffer, target} = params;

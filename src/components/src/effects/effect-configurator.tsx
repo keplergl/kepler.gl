@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useCallback, useMemo} from 'react';
+import React, {useCallback, useMemo, useState} from 'react';
 import styled from 'styled-components';
 import {injectIntl, IntlShape} from 'react-intl';
 
@@ -10,7 +10,8 @@ import {isNumber} from '@kepler.gl/utils';
 import {Effect, EffectUpdateProps} from '@kepler.gl/types';
 
 import RangeSliderFactory from '../common/range-slider';
-import {ArrowDownSmall} from '../common/icons';
+import {ArrowDownSmall, VertThreeDots} from '../common/icons';
+import {Tooltip} from '../common/styled-components';
 import EffectTimeConfiguratorFactory from './effect-time-configurator';
 import CompactColorPicker from './compact-color-picker';
 
@@ -158,6 +159,85 @@ const StyledCheckboxLabel = styled.label`
   color: ${props => props.theme.effectPanelTextSecondary1};
   cursor: pointer;
   white-space: nowrap;
+`;
+
+const StyledHintTooltip = styled(Tooltip)`
+  &.__react_component_tooltip {
+    max-width: 220px;
+    white-space: normal;
+    line-height: 1.4;
+    text-align: left;
+  }
+`;
+
+const StyledHintIcon = styled.span`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  margin-left: 6px;
+  border-radius: 50%;
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 1;
+  color: ${props => props.theme.labelColor};
+  border: 1px solid ${props => props.theme.labelColor};
+  cursor: help;
+  &:hover {
+    color: ${props => props.theme.textColorHl};
+    border-color: ${props => props.theme.textColorHl};
+  }
+`;
+
+const StyledCollapsibleSectionHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  margin-bottom: 4px;
+  &:hover {
+    .effect-section__title {
+      color: ${props => props.theme.textColorHl};
+    }
+    .effect-section__dots {
+      color: ${props => props.theme.textColorHl};
+    }
+  }
+`;
+
+const StyledElevationSectionTitle = styled.div`
+  border-left: ${props => props.theme.layerConfigGroupLabelBorderLeft} solid
+    ${props => props.theme.labelColor};
+  line-height: 12px;
+  padding-left: ${props => props.theme.layerConfigGroupLabelPadding};
+  font-size: ${props => props.theme.layerConfigGroupLabelLabelFontSize};
+  color: ${props => props.theme.textColor};
+  font-weight: 500;
+  letter-spacing: 0.2px;
+  text-transform: capitalize;
+`;
+
+const StyledDotsWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  color: ${props => props.theme.textColor};
+`;
+
+const StyledCollapsibleContent = styled.div<{$collapsed: boolean}>`
+  overflow: hidden;
+  max-height: ${props => (props.$collapsed ? '0' : '200px')};
+  transition: max-height 0.3s ease-out;
+`;
+
+const StyledDisabledSlider = styled.div<{$disabled: boolean}>`
+  ${props =>
+    props.$disabled
+      ? `
+    opacity: 0.3;
+    pointer-events: none;
+  `
+      : ''}
 `;
 
 const StyledColorCheckboxRow = styled.div`
@@ -325,7 +405,7 @@ export default function EffectConfiguratorFactory(
 
     const flatParameterDescriptions = useMemo(() => {
       return parameterDescriptions.reduce((acc, description) => {
-        if (description.name === 'heightEnd') return acc;
+        if (description.name === 'heightEnd' || description.name === 'animateHeight' || description.name === 'linearEasing') return acc;
 
         if (description.type === 'color') {
           acc.push(description);
@@ -347,6 +427,10 @@ export default function EffectConfiguratorFactory(
       }, [] as EffectParameterDescriptionFlattened[]);
     }, [parameterDescriptions]);
 
+    const heightEndDesc = parameterDescriptions.find(d => d.name === 'heightEnd');
+    const hasAnimateHeight = parameterDescriptions.some(d => d.name === 'animateHeight');
+    const hasLinearEasing = parameterDescriptions.some(d => d.name === 'linearEasing');
+
     const controls = useMemo(() => {
       return flatParameterDescriptions.map(desc => {
         if (desc.type === 'color') {
@@ -361,11 +445,18 @@ export default function EffectConfiguratorFactory(
         }
 
         if (desc.type === 'checkbox') {
+          const label =
+            desc.name === 'pattern' ? 'Pattern' : typeof desc.label === 'string' ? desc.label : desc.name;
+          const tooltip =
+            desc.name === 'pattern'
+              ? 'Adds a noise pattern to the fog for a more natural, volumetric look.'
+              : undefined;
           return {
             isCheckbox: true as const,
-            label: typeof desc.label === 'string' ? desc.label : desc.name,
+            label,
             paramName: desc.name,
             checked: Boolean(parameters[desc.name]),
+            tooltip,
             onChange: () =>
               updateEffectConfig(null, id, {parameters: {[desc.name]: !parameters[desc.name]}})
           };
@@ -373,25 +464,50 @@ export default function EffectConfiguratorFactory(
 
         const paramName = desc.name;
 
-        // When animateHeight is on, render height as a ranged slider
-        if (paramName === 'height' && isAnimateHeight) {
-          const heightStart = parameters.height ?? desc.defaultValue ?? 0;
-          const heightEnd = parameters.heightEnd ?? desc.max;
+        // Elevation section: main slider + collapsible animate checkbox + end slider
+        if (paramName === 'height' && hasAnimateHeight && heightEndDesc) {
           const rangeMin = desc.min ?? -200;
           const rangeMax = desc.max ?? 3000;
           const rangeSpan = rangeMax - rangeMin;
           const step = rangeSpan > 10 ? 1 : 0.001;
+
+          const endMin = heightEndDesc.min ?? rangeMin;
+          const endMax = heightEndDesc.max ?? rangeMax;
+          const endSpan = endMax - endMin;
+          const endStep = endSpan > 10 ? 1 : 0.001;
+
           return {
-            isRangedHeight: true as const,
+            isElevationSection: true as const,
             label: desc.label || desc.name,
-            value0: heightStart,
-            value1: heightEnd,
+            value1: parameters.height ?? desc.defaultValue ?? 0,
+            value0: rangeMin,
             range: [rangeMin, rangeMax] as [number, number],
             step,
-            onChange: (newRange: [number, number]) => {
-              updateEffectConfig(null, id, {
-                parameters: {height: newRange[0], heightEnd: newRange[1]}
-              });
+            onChange: (newValue: number[], event?: Event | null) => {
+              updateEffectConfig(event, id, {parameters: {height: newValue[1]}});
+            },
+            animateChecked: isAnimateHeight,
+            onAnimateChange: () => {
+              const enabling = !parameters.animateHeight;
+              const currentEnd = parameters.heightEnd ?? heightEndDesc.max ?? rangeMax;
+              const currentHeight = parameters.height ?? desc.defaultValue ?? 0;
+              const updatedParams: Record<string, any> = {animateHeight: enabling};
+              if (enabling && Math.abs(currentEnd - currentHeight) < 10) {
+                updatedParams.heightEnd = rangeMax;
+              }
+              updateEffectConfig(null, id, {parameters: updatedParams});
+            },
+            endValue1: parameters.heightEnd ?? heightEndDesc.defaultValue ?? endMax,
+            endValue0: endMin,
+            endRange: [endMin, endMax] as [number, number],
+            endStep,
+            onEndChange: (newValue: number[], event?: Event | null) => {
+              updateEffectConfig(event, id, {parameters: {heightEnd: newValue[1]}});
+            },
+            linearEasingChecked: Boolean(parameters.linearEasing),
+            hasLinearEasing,
+            onLinearEasingChange: () => {
+              updateEffectConfig(null, id, {parameters: {linearEasing: !parameters.linearEasing}});
             }
           };
         }
@@ -477,7 +593,12 @@ export default function EffectConfiguratorFactory(
         // ignore everything else for now
         return null;
       });
-    }, [flatParameterDescriptions, id, parameters, updateEffectConfig, uniforms, isAnimateHeight]);
+    }, [flatParameterDescriptions, id, parameters, updateEffectConfig, uniforms, isAnimateHeight, hasAnimateHeight, heightEndDesc, hasLinearEasing]);
+
+    const [elevationExpanded, setElevationExpanded] = useState(false);
+    const onToggleElevationExpanded = useCallback(() => {
+      setElevationExpanded(prev => !prev);
+    }, []);
 
     return (
       <StyledEffectConfigurator key={effect.id}>
@@ -494,6 +615,9 @@ export default function EffectConfiguratorFactory(
             if ('isColor' in control) {
               const nextControl = i + 1 < controls.length ? controls[i + 1] : null;
               if (nextControl && 'isCheckbox' in nextControl) {
+                const cbTooltipId = nextControl.tooltip
+                  ? `effect-cb-hint-${effect.id}-${i}`
+                  : undefined;
                 elements.push(
                   <StyledColorCheckboxRow key={`${effect.id}-${i}`}>
                     <CompactColorPicker
@@ -517,6 +641,20 @@ export default function EffectConfiguratorFactory(
                         onClick={e => e.stopPropagation()}
                       />
                       <StyledCheckboxLabel>{nextControl.label}</StyledCheckboxLabel>
+                      {nextControl.tooltip ? (
+                        <>
+                          <StyledHintIcon
+                            data-tip
+                            data-for={cbTooltipId}
+                            onClick={e => e.stopPropagation()}
+                          >
+                            ?
+                          </StyledHintIcon>
+                          <StyledHintTooltip id={cbTooltipId} effect="solid" delayShow={200}>
+                            {nextControl.tooltip}
+                          </StyledHintTooltip>
+                        </>
+                      ) : null}
                     </StyledCheckboxWrapper>
                   </StyledColorCheckboxRow>
                 );
@@ -543,25 +681,95 @@ export default function EffectConfiguratorFactory(
               continue;
             }
 
-            if ('isRangedHeight' in control) {
+            if ('isElevationSection' in control) {
+              const tooltipId = `effect-elevation-hint-${effect.id}`;
               elements.push(
                 <RegularOuterWrapper key={`${effect.id}-${i}`}>
-                  {control.label ? (
-                    <RegularSectionTitleWrapper>{control.label}</RegularSectionTitleWrapper>
-                  ) : null}
+                  <StyledCollapsibleSectionHeader onClick={onToggleElevationExpanded}>
+                    <StyledElevationSectionTitle className="effect-section__title">
+                      Elevation
+                    </StyledElevationSectionTitle>
+                    <StyledDotsWrapper className="effect-section__dots">
+                      <VertThreeDots height="18px" />
+                    </StyledDotsWrapper>
+                  </StyledCollapsibleSectionHeader>
                   <RegularSliderWrapper>
                     <RangeSlider
                       {...COMMON_SLIDER_PROPS}
-                      isRanged={true}
-                      value0={control.value0}
                       value1={control.value1}
+                      value0={control.value0}
                       range={control.range}
                       step={control.step}
-                      onChange={(newValue: number[]) => {
-                        control.onChange([newValue[0], newValue[1]]);
-                      }}
+                      onChange={control.onChange}
                     />
                   </RegularSliderWrapper>
+                  <StyledCollapsibleContent $collapsed={!elevationExpanded}>
+                    <RegularOuterWrapper style={{marginTop: 8}}>
+                      <StyledCheckboxWrapper onClick={control.onAnimateChange}>
+                        <StyledCheckbox
+                          type="checkbox"
+                          checked={control.animateChecked}
+                          onChange={control.onAnimateChange}
+                          onClick={e => e.stopPropagation()}
+                        />
+                        <StyledCheckboxLabel>Animate elevation</StyledCheckboxLabel>
+                        <StyledHintIcon
+                          data-tip
+                          data-for={tooltipId}
+                          onClick={e => e.stopPropagation()}
+                        >
+                          ?
+                        </StyledHintIcon>
+                        <StyledHintTooltip id={tooltipId} effect="solid" delayShow={200}>
+                          Animates elevation from start to end value during video export preview and
+                          recording.
+                        </StyledHintTooltip>
+                      </StyledCheckboxWrapper>
+                    </RegularOuterWrapper>
+                    <StyledDisabledSlider $disabled={!control.animateChecked}>
+                      <RegularSectionTitleWrapper>End elevation</RegularSectionTitleWrapper>
+                      <RegularSliderWrapper>
+                        <RangeSlider
+                          {...COMMON_SLIDER_PROPS}
+                          value1={control.endValue1}
+                          value0={control.endValue0}
+                          range={control.endRange}
+                          step={control.endStep}
+                          onChange={control.onEndChange}
+                        />
+                      </RegularSliderWrapper>
+                    </StyledDisabledSlider>
+                    {control.hasLinearEasing ? (
+                      <StyledDisabledSlider $disabled={!control.animateChecked}>
+                        <RegularOuterWrapper style={{marginTop: 4}}>
+                          <StyledCheckboxWrapper onClick={control.onLinearEasingChange}>
+                            <StyledCheckbox
+                              type="checkbox"
+                              checked={control.linearEasingChecked}
+                              onChange={control.onLinearEasingChange}
+                              onClick={e => e.stopPropagation()}
+                            />
+                            <StyledCheckboxLabel>Linear easing</StyledCheckboxLabel>
+                            <StyledHintIcon
+                              data-tip
+                              data-for={`effect-linear-hint-${effect.id}`}
+                              onClick={e => e.stopPropagation()}
+                            >
+                              ?
+                            </StyledHintIcon>
+                            <StyledHintTooltip
+                              id={`effect-linear-hint-${effect.id}`}
+                              effect="solid"
+                              delayShow={200}
+                            >
+                              Uses constant speed instead of smooth ease-in / ease-out during
+                              elevation animation.
+                            </StyledHintTooltip>
+                          </StyledCheckboxWrapper>
+                        </RegularOuterWrapper>
+                      </StyledDisabledSlider>
+                    ) : null}
+                  </StyledCollapsibleContent>
                 </RegularOuterWrapper>
               );
               i++;

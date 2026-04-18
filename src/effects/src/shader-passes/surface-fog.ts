@@ -3,6 +3,7 @@
 
 import {ClipSpace} from '@luma.gl/engine';
 import type {ShaderModule} from '@luma.gl/shadertools';
+import {patchTileViewportIds} from '../tile-viewport-fix';
 
 export type SurfaceFogProps = {
   density: number;
@@ -295,6 +296,7 @@ export class DeckSurfaceFogEffect {
   id = 'surface-fog-effect';
   props: SurfaceFogProps;
   module = surfaceFogModule;
+  isExportMode = false;
   private model: InstanceType<typeof ClipSpace> | null = null;
 
   constructor(props: Partial<SurfaceFogProps> = {}) {
@@ -331,8 +333,10 @@ export class DeckSurfaceFogEffect {
     Object.assign(this.props, props);
   }
 
-  preRender(): void {
-    // no-op
+  preRender(opts?: any): void {
+    if (this.isExportMode && opts) {
+      patchTileViewportIds(opts);
+    }
   }
 
   postRender(params: any): any {

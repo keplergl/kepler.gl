@@ -292,7 +292,8 @@ const ExportVideoModalFactory = () => {
       const params = surfaceFogEffect.parameters;
       return {
         start: params.height as number,
-        end: params.heightEnd as number
+        end: params.heightEnd as number,
+        linear: Boolean(params.linearEasing)
       };
     }, [surfaceFogEffect]);
 
@@ -306,11 +307,10 @@ const ExportVideoModalFactory = () => {
 
     const fogAnimRef = useRef<{
       active: boolean;
-      startTime: number | null;
-      durationMs: number;
       range: [number, number];
       originalHeight: number;
-    }>({active: false, startTime: null, durationMs: 1000, range: [0, 100], originalHeight: 50});
+      linear: boolean;
+    }>({active: false, range: [0, 100], originalHeight: 50, linear: false});
 
     const hubbleContainerRef = useRef<any>(null);
 
@@ -320,21 +320,18 @@ const ExportVideoModalFactory = () => {
         fogAnimRef.current.active = true;
         fogAnimRef.current.range = [fogHeightAnim.start, fogHeightAnim.end];
         fogAnimRef.current.originalHeight = fogHeightAnim.start;
-        fogAnimRef.current.durationMs = videoConfiguration.durationMs || 1000;
-        fogAnimRef.current.startTime = null;
+        fogAnimRef.current.linear = fogHeightAnim.linear;
       } else {
         if (fogAnimRef.current.active && surfaceFogEffect?.deckEffect) {
           surfaceFogEffect.deckEffect.setProps?.({height: fogAnimRef.current.originalHeight});
         }
         fogAnimRef.current.active = false;
-        fogAnimRef.current.startTime = null;
       }
-    }, [fogHeightAnim, surfaceFogEffect, videoConfiguration.durationMs]);
+    }, [fogHeightAnim, surfaceFogEffect]);
 
     // Patch DeckSurfaceFogEffect.postRender to drive height animation per-frame.
-    // Reads hubble container's state.previewing / state.rendering to know
-    // when playback is active, so the animation works with or without
-    // time-filters / trip layers.
+    // Reads the Hubble adapter's videoCapture.timeMs to derive progress,
+    // so our animation stays perfectly in sync with Hubble's own timeline.
     useEffect(() => {
       const de = surfaceFogEffect?.deckEffect;
       if (!de) return;
@@ -346,20 +343,20 @@ const ExportVideoModalFactory = () => {
           const isPlaying = hubbleState?.previewing || hubbleState?.rendering;
 
           if (isPlaying) {
-            if (!ref.startTime) {
-              ref.startTime = performance.now();
-            }
-            const elapsed = performance.now() - ref.startTime;
-            const progress = elapsed / ref.durationMs;
-            if (progress >= 1) {
-              this.props.height = ref.range[1];
-            } else {
+            const adapter = hubbleState?.adapter;
+            const vc = adapter?.videoCapture;
+            const tc = vc?.timecode;
+            if (vc && tc && tc.duration > 0) {
+              const progress = Math.min(
+                Math.max((vc.timeMs - tc.start) / tc.duration, 0),
+                1
+              );
+              const t = ref.linear ? progress : progress * progress * (3 - 2 * progress);
               const [s, e] = ref.range;
-              this.props.height = s + (e - s) * progress;
+              this.props.height = s + (e - s) * t;
             }
-          } else if (ref.startTime) {
+          } else {
             this.props.height = ref.originalHeight;
-            ref.startTime = null;
           }
         }
         return originalPostRender(params);

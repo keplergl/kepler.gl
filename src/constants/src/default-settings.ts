@@ -1655,7 +1655,15 @@ export const POSTPROCESSING_EFFECTS: {[key: string]: EffectDescription} = {
         min: 0,
         max: 1
       },
-      {name: 'heightEnd', label: 'End Elevation (m)', defaultValue: 3000, min: -200, max: 3000},
+      {name: 'heightEnd', label: 'End Elevation (m)', defaultValue: 100, min: -200, max: 3000},
+      {
+        name: 'linearEasing',
+        type: 'checkbox',
+        label: 'Linear Easing',
+        defaultValue: false,
+        min: 0,
+        max: 1
+      },
       {name: 'thickness', label: 'Transition (m)', defaultValue: 50, min: 0, max: 1000},
       {
         name: 'fogColor',

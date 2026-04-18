@@ -80,6 +80,12 @@ export function computeDeckEffects({
               effect.deckEffect.isExportMode = Boolean(isExport);
             }
           }
+          if (
+            (effect.type === SURFACE_FOG_TYPE || effect.type === DISTANCE_FOG_TYPE) &&
+            effect.deckEffect
+          ) {
+            effect.deckEffect.isExportMode = Boolean(isExport);
+          }
           return effect.deckEffect;
         }
       }
