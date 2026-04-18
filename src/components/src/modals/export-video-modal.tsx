@@ -4,7 +4,12 @@
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import styled, {ThemeProvider, useTheme} from 'styled-components';
 
-import {DEFAULT_MAPBOX_API_URL, NO_MAP_ID, EMPTY_MAPBOX_STYLE} from '@kepler.gl/constants';
+import {
+  DEFAULT_MAPBOX_API_URL,
+  NO_MAP_ID,
+  EMPTY_MAPBOX_STYLE,
+  SURFACE_FOG_TYPE
+} from '@kepler.gl/constants';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {Viewport, ExportVideo, Effect} from '@kepler.gl/types';
 import {
@@ -277,6 +282,93 @@ const ExportVideoModalFactory = () => {
       (visState.effects || []).map((effect: Effect) => effect.clone())
     );
 
+    const surfaceFogEffect = useMemo(
+      () => videoEffects.find((e: Effect) => e.type === SURFACE_FOG_TYPE && e.isEnabled),
+      [videoEffects]
+    );
+
+    const fogHeightAnim = useMemo(() => {
+      if (!surfaceFogEffect?.parameters?.animateHeight) return null;
+      const params = surfaceFogEffect.parameters;
+      return {
+        start: params.height as number,
+        end: params.heightEnd as number
+      };
+    }, [surfaceFogEffect]);
+
+    const [videoConfiguration, setVideoConfiguration] = useState<VideoConfiguration>({
+      ...exportVideo
+    });
+    const onUpdateVideoConfiguration = useCallback(
+      (values: VideoConfiguration) => setVideoConfiguration(prev => ({...prev, ...values})),
+      []
+    );
+
+    const fogAnimRef = useRef<{
+      active: boolean;
+      startTime: number | null;
+      durationMs: number;
+      range: [number, number];
+      originalHeight: number;
+    }>({active: false, startTime: null, durationMs: 1000, range: [0, 100], originalHeight: 50});
+
+    const hubbleContainerRef = useRef<any>(null);
+
+    // Sync fogAnimRef config with effect parameters (don't start playing yet)
+    useEffect(() => {
+      if (fogHeightAnim) {
+        fogAnimRef.current.active = true;
+        fogAnimRef.current.range = [fogHeightAnim.start, fogHeightAnim.end];
+        fogAnimRef.current.originalHeight = fogHeightAnim.start;
+        fogAnimRef.current.durationMs = videoConfiguration.durationMs || 1000;
+        fogAnimRef.current.startTime = null;
+      } else {
+        if (fogAnimRef.current.active && surfaceFogEffect?.deckEffect) {
+          surfaceFogEffect.deckEffect.setProps?.({height: fogAnimRef.current.originalHeight});
+        }
+        fogAnimRef.current.active = false;
+        fogAnimRef.current.startTime = null;
+      }
+    }, [fogHeightAnim, surfaceFogEffect, videoConfiguration.durationMs]);
+
+    // Patch DeckSurfaceFogEffect.postRender to drive height animation per-frame.
+    // Reads hubble container's state.previewing / state.rendering to know
+    // when playback is active, so the animation works with or without
+    // time-filters / trip layers.
+    useEffect(() => {
+      const de = surfaceFogEffect?.deckEffect;
+      if (!de) return;
+      const originalPostRender = de.postRender.bind(de);
+      de.postRender = function (this: any, params: any) {
+        const ref = fogAnimRef.current;
+        if (ref.active) {
+          const hubbleState = hubbleContainerRef.current?.state;
+          const isPlaying = hubbleState?.previewing || hubbleState?.rendering;
+
+          if (isPlaying) {
+            if (!ref.startTime) {
+              ref.startTime = performance.now();
+            }
+            const elapsed = performance.now() - ref.startTime;
+            const progress = elapsed / ref.durationMs;
+            if (progress >= 1) {
+              this.props.height = ref.range[1];
+            } else {
+              const [s, e] = ref.range;
+              this.props.height = s + (e - s) * progress;
+            }
+          } else if (ref.startTime) {
+            this.props.height = ref.originalHeight;
+            ref.startTime = null;
+          }
+        }
+        return originalPostRender(params);
+      };
+      return () => {
+        de.postRender = originalPostRender;
+      };
+    }, [surfaceFogEffect]);
+
     const deckEffects = useMemo(() => {
       if (videoEffects.length === 0) return [];
       const effectOrder = visState.effectOrder || videoEffects.map((e: Effect) => e.id);
@@ -317,14 +409,6 @@ const ExportVideoModalFactory = () => {
       [keplerState, onViewChange, mapboxApiAccessToken, mapboxApiUrl]
     );
 
-    const [videoConfiguration, setVideoConfiguration] = useState<VideoConfiguration>({
-      ...exportVideo
-    });
-    const onUpdateVideoConfiguration = useCallback(
-      (values: VideoConfiguration) => setVideoConfiguration(prev => ({...prev, ...values})),
-      []
-    );
-
     const trueDevicePixelRatio = useRef(
       typeof window !== 'undefined' ? window.devicePixelRatio : 1
     );
@@ -351,13 +435,16 @@ const ExportVideoModalFactory = () => {
     }, []);
 
     const onFilterFrameUpdate = useCallback(
-      (filterIdx: number, name: string, value: any) =>
-        visStateActions.setFilterAnimationTime(filterIdx, name, value),
+      (filterIdx: number, name: string, value: any) => {
+        visStateActions.setFilterAnimationTime(filterIdx, name, value);
+      },
       [visStateActions]
     );
 
     const onTripFrameUpdate = useCallback(
-      (value: any) => visStateActions.setLayerAnimationTime(value),
+      (value: any) => {
+        visStateActions.setLayerAnimationTime(value);
+      },
       [visStateActions]
     );
 
@@ -382,6 +469,7 @@ const ExportVideoModalFactory = () => {
       <KeplerUIContext.Provider value={KEPLER_UI}>
         <StyledExportVideoModalContent className="export-video-modal">
           <ExportVideoPanelContainer
+            ref={hubbleContainerRef}
             initialState={videoConfiguration}
             mapData={keplerState}
             onSettingsChange={onUpdateVideoConfiguration}

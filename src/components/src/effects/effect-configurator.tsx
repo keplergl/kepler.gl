@@ -320,13 +320,16 @@ export default function EffectConfiguratorFactory(
     const uniforms = effect.deckEffect?.module.propTypes || defaultUniforms;
     const parameterDescriptions = effect.getParameterDescriptions();
     const {parameters, id} = effect;
+
+    const isAnimateHeight = Boolean(parameters.animateHeight);
+
     const flatParameterDescriptions = useMemo(() => {
       return parameterDescriptions.reduce((acc, description) => {
+        if (description.name === 'heightEnd') return acc;
+
         if (description.type === 'color') {
-          // color parameters are rendered separately via CompactColorPicker
           acc.push(description);
         } else if (description.type === 'array') {
-          // split arrays of controls into a separate controls for each component
           if (Array.isArray(description.defaultValue)) {
             description.defaultValue.forEach((_, index) => {
               acc.push({
@@ -369,6 +372,29 @@ export default function EffectConfiguratorFactory(
         }
 
         const paramName = desc.name;
+
+        // When animateHeight is on, render height as a ranged slider
+        if (paramName === 'height' && isAnimateHeight) {
+          const heightStart = parameters.height ?? desc.defaultValue ?? 0;
+          const heightEnd = parameters.heightEnd ?? desc.max;
+          const rangeMin = desc.min ?? -200;
+          const rangeMax = desc.max ?? 3000;
+          const rangeSpan = rangeMax - rangeMin;
+          const step = rangeSpan > 10 ? 1 : 0.001;
+          return {
+            isRangedHeight: true as const,
+            label: desc.label || desc.name,
+            value0: heightStart,
+            value1: heightEnd,
+            range: [rangeMin, rangeMax] as [number, number],
+            step,
+            onChange: (newRange: [number, number]) => {
+              updateEffectConfig(null, id, {
+                parameters: {height: newRange[0], heightEnd: newRange[1]}
+              });
+            }
+          };
+        }
 
         const rawUniform = uniforms[desc.name];
         if (rawUniform && rawUniform.private) {
@@ -451,7 +477,7 @@ export default function EffectConfiguratorFactory(
         // ignore everything else for now
         return null;
       });
-    }, [flatParameterDescriptions, id, parameters, updateEffectConfig, uniforms]);
+    }, [flatParameterDescriptions, id, parameters, updateEffectConfig, uniforms, isAnimateHeight]);
 
     return (
       <StyledEffectConfigurator key={effect.id}>
@@ -511,6 +537,31 @@ export default function EffectConfiguratorFactory(
                     }
                     Icon={ArrowDownSmall}
                   />
+                </RegularOuterWrapper>
+              );
+              i++;
+              continue;
+            }
+
+            if ('isRangedHeight' in control) {
+              elements.push(
+                <RegularOuterWrapper key={`${effect.id}-${i}`}>
+                  {control.label ? (
+                    <RegularSectionTitleWrapper>{control.label}</RegularSectionTitleWrapper>
+                  ) : null}
+                  <RegularSliderWrapper>
+                    <RangeSlider
+                      {...COMMON_SLIDER_PROPS}
+                      isRanged={true}
+                      value0={control.value0}
+                      value1={control.value1}
+                      range={control.range}
+                      step={control.step}
+                      onChange={(newValue: number[]) => {
+                        control.onChange([newValue[0], newValue[1]]);
+                      }}
+                    />
+                  </RegularSliderWrapper>
                 </RegularOuterWrapper>
               );
               i++;

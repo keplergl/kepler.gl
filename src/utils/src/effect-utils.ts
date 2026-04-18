@@ -193,7 +193,7 @@ function disableDeckLightingEffect(deckEffect: any) {
  * effect always reflects the kepler-side state — even if deck.gl
  * silently swapped the instance under us.
  */
-function updateEffect({visState, mapState, effect}) {
+function updateEffect({visState, mapState, effect}: {visState: any; mapState: any; effect: any}) {
   if (effect.type === LIGHT_AND_SHADOW_EFFECT.type) {
     const deckEffect = effect.deckEffect;
     const {parameters} = effect;
