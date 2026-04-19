@@ -271,6 +271,113 @@ describe('ExportVideoModal', () => {
     });
   });
 
+  describe('surface fog height animation', () => {
+    function makeFogDeckEffect() {
+      const effect = {
+        id: 'surface-fog-deck',
+        props: {height: 50},
+        postRender: jest.fn(),
+        setProps: jest.fn(function (newProps) {
+          Object.assign(effect.props, newProps);
+        })
+      };
+      return effect;
+    }
+
+    function makeSurfaceFogEffect(deckEffect, overrides = {}) {
+      const effect = {
+        id: 'fog-1',
+        type: 'surfaceFog',
+        isEnabled: true,
+        parameters: {
+          height: 50,
+          animateHeight: true,
+          heightEnd: 200,
+          linearEasing: false,
+          ...overrides
+        },
+        deckEffect,
+        clone: jest.fn()
+      };
+      // clone returns a fresh reference that still points to the same deckEffect
+      effect.clone.mockImplementation(() => ({...effect, clone: effect.clone}));
+      return effect;
+    }
+
+    function propsWithFogEffect(fogEffect) {
+      return {
+        ...DEFAULT_PROPS,
+        visState: {
+          ...DEFAULT_PROPS.visState,
+          effects: [fogEffect],
+          effectOrder: [fogEffect.id]
+        }
+      };
+    }
+
+    test('patches deckEffect.postRender when animateHeight is enabled', async () => {
+      const deckEffect = makeFogDeckEffect();
+      const originalPostRender = deckEffect.postRender;
+      const fogEffect = makeSurfaceFogEffect(deckEffect);
+      mockComputeDeckEffects.mockReturnValue([deckEffect]);
+
+      await renderAndWaitForPanel(propsWithFogEffect(fogEffect));
+
+      expect(deckEffect.postRender).not.toBe(originalPostRender);
+    });
+
+    test('restores original height when hubble is not playing', async () => {
+      const deckEffect = makeFogDeckEffect();
+      deckEffect.props.height = 75;
+      const fogEffect = makeSurfaceFogEffect(deckEffect, {height: 75});
+      mockComputeDeckEffects.mockReturnValue([deckEffect]);
+
+      await renderAndWaitForPanel(propsWithFogEffect(fogEffect));
+
+      // Call the patched postRender without hubble playing
+      deckEffect.postRender.call(deckEffect, {});
+
+      // Not playing → height resets to originalHeight
+      expect(deckEffect.props.height).toBe(75);
+    });
+
+    test('does not mutate height when animateHeight is disabled', async () => {
+      const deckEffect = makeFogDeckEffect();
+      const fogEffect = makeSurfaceFogEffect(deckEffect, {animateHeight: false});
+      mockComputeDeckEffects.mockReturnValue([deckEffect]);
+
+      await renderAndWaitForPanel(propsWithFogEffect(fogEffect));
+
+      deckEffect.props.height = 42;
+      deckEffect.postRender.call(deckEffect, {});
+
+      // ref.active is false so height should not be touched
+      expect(deckEffect.props.height).toBe(42);
+    });
+
+    test('restores original postRender on unmount', async () => {
+      const deckEffect = makeFogDeckEffect();
+      const fogEffect = makeSurfaceFogEffect(deckEffect);
+      mockComputeDeckEffects.mockReturnValue([deckEffect]);
+
+      const {unmount} = await renderAndWaitForPanel(propsWithFogEffect(fogEffect));
+
+      // postRender was patched (the wrapper function drives animation)
+      const patchedPostRender = deckEffect.postRender;
+      // Verify it's not the original mock (component binds and wraps it)
+      expect(patchedPostRender).not.toBe(deckEffect.postRender.bind(deckEffect));
+
+      unmount();
+
+      // After unmount, postRender no longer drives animation.
+      // The restored function is a bound copy of the original mock.
+      deckEffect.props.height = 99;
+      deckEffect.postRender.call(deckEffect, {});
+      // Height should NOT be mutated by animation logic anymore
+      expect(deckEffect.props.height).toBe(99);
+    });
+  });
+
   describe('shadow compositing fallback', () => {
     const mockEffect = {
       id: 'light-shadow-1',

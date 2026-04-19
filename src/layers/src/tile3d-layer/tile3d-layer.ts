@@ -83,7 +83,10 @@ class KeplerTile3DLayer extends DeckTile3DLayer {
       const {layerMap} = this.state as any;
       if (layerMap) {
         for (const key in layerMap) {
-          layerMap[key].needsUpdate = true;
+          const entry = layerMap[key];
+          if (entry?.layer) {
+            entry.layer.needsUpdate = true;
+          }
         }
       }
     }

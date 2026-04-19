@@ -22,7 +22,7 @@ class SurfaceFogEffect extends Effect {
     }
     this.parameters = {...defaultParameters, ...this.parameters};
 
-    const {animateHeight, heightEnd, ...deckParams} = this.parameters;
+    const {animateHeight: _a, heightEnd: _h, linearEasing: _l, ...deckParams} = this.parameters;
     this.deckEffect = new DeckSurfaceFogEffect(deckParams as SurfaceFogProps);
   }
 
@@ -34,7 +34,7 @@ class SurfaceFogEffect extends Effect {
     super.setProps(props);
 
     if (props.parameters) {
-      const {animateHeight, heightEnd, ...deckParams} = this.parameters;
+      const {animateHeight: _animateHeight, heightEnd: _heightEnd, linearEasing: _linearEasing, ...deckParams} = this.parameters;
       this.deckEffect?.setProps(deckParams);
     }
   }
