@@ -9,6 +9,7 @@ import {getNumRasterTilesBeingLoaded, getNumVectorTilesBeingLoaded} from '@keple
 type StyledContainerProps = {
   $isVisible?: boolean;
   $left: number;
+  $bottomOffset: number;
 };
 
 const spin = keyframes`
@@ -31,7 +32,7 @@ const Spinner = styled.div`
 export const StyledContainer = styled.div<StyledContainerProps>`
   position: absolute;
   left: ${props => props.$left}px;
-  bottom: ${props => props.theme.sidePanel.margin.left}px;
+  bottom: ${props => props.theme.sidePanel.margin.left + props.$bottomOffset}px;
   z-index: 1;
   color: ${props => props.theme.textColor};
   opacity: ${props => (props.$isVisible ? 1 : 0)};
@@ -51,6 +52,7 @@ type LoadingIndicatorProps = {
   isVisible?: boolean;
   activeSidePanel?: boolean;
   sidePanelWidth?: number;
+  hasAttributionLogos?: boolean;
 };
 
 /** Extra adjustment for the loading indicator when side panel is visible */
@@ -60,11 +62,13 @@ const LoadingIndicator: React.FC<LoadingIndicatorProps & {theme: any}> = ({
   isVisible,
   activeSidePanel,
   sidePanelWidth,
+  hasAttributionLogos,
   theme
 }) => {
   const left =
     (activeSidePanel ? (sidePanelWidth || 0) + LEFT_POSITION_ADJUSTMENT : 0) +
     theme.sidePanel.margin.left;
+  const bottomOffset = hasAttributionLogos ? 24 : 0;
 
   // Helper message to track number of tiles that are being loaded
   const numRasterTilesInProgress = getNumRasterTilesBeingLoaded();
@@ -98,7 +102,7 @@ const LoadingIndicator: React.FC<LoadingIndicatorProps & {theme: any}> = ({
   const displayMessage = isVisible ? extraMessage : lastMessageRef.current;
 
   return (
-    <StyledContainer $isVisible={isVisible} $left={left}>
+    <StyledContainer $isVisible={isVisible} $left={left} $bottomOffset={bottomOffset}>
       <Spinner />
       <span>{`Loading... ${displayMessage}`}</span>
     </StyledContainer>

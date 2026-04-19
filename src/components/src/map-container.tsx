@@ -3,7 +3,7 @@
 
 // libraries
 import React, {Component, createRef, useMemo} from 'react';
-import styled, {withTheme} from 'styled-components';
+import styled, {withTheme, useTheme} from 'styled-components';
 import {Map, MapRef} from 'react-map-gl';
 import {PickingInfo, MapView} from '@deck.gl/core';
 import DeckGL from '@deck.gl/react';
@@ -304,15 +304,16 @@ export const Attribution: React.FC<AttributionProps> = ({
   return memoizedComponents;
 };
 
-const StyledAttributionLogoContainer = styled.div`
+const StyledAttributionLogoContainer = styled.div<{$left: number}>`
   position: absolute;
-  bottom: 4px;
-  left: 4px;
+  bottom: ${props => props.theme.sidePanel.margin.left}px;
+  left: ${props => props.$left}px;
   z-index: 1;
   display: flex;
   align-items: flex-end;
   gap: 4px;
   pointer-events: auto;
+  transition: left 250ms ease-in-out;
 `;
 
 const StyledLogoLink = styled.a<{$enabled: boolean}>`
@@ -323,12 +324,25 @@ const StyledLogoLink = styled.a<{$enabled: boolean}>`
 
 type AttributionLogosProps = {
   logos: AttributionWithStyle[];
+  activeSidePanel?: boolean;
+  sidePanelWidth?: number;
 };
 
-export const AttributionLogos: React.FC<AttributionLogosProps> = ({logos}) => {
+const LOGO_LEFT_ADJUSTMENT = 3;
+
+export const AttributionLogos: React.FC<AttributionLogosProps> = ({
+  logos,
+  activeSidePanel,
+  sidePanelWidth
+}) => {
+  const theme = useTheme() as any;
+  const left =
+    (activeSidePanel ? (sidePanelWidth || 0) + LOGO_LEFT_ADJUSTMENT : 0) +
+    theme.sidePanel.margin.left;
+
   if (!logos?.length) return null;
   return (
-    <StyledAttributionLogoContainer>
+    <StyledAttributionLogoContainer $left={left}>
       {logos.map((logo, idx) => (
         <StyledLogoLink
           key={logo.logoUrl || idx}
@@ -1277,6 +1291,7 @@ export default function MapContainerFactory(
               isVisible={Boolean(isLoadingIndicatorVisible || this.anyActiveLayerLoading)}
               activeSidePanel={Boolean(activeSidePanel)}
               sidePanelWidth={sidePanelWidth}
+              hasAttributionLogos={attributionLogos.length > 0}
             />
           ) : null}
           {this.props.primary ? (
@@ -1287,7 +1302,13 @@ export default function MapContainerFactory(
               baseMapLibraryConfig={baseMapLibraryConfig}
             />
           ) : null}
-          {this.props.primary ? <AttributionLogos logos={attributionLogos} /> : null}
+          {this.props.primary ? (
+            <AttributionLogos
+              logos={attributionLogos}
+              activeSidePanel={Boolean(activeSidePanel)}
+              sidePanelWidth={sidePanelWidth}
+            />
+          ) : null}
         </>
       );
     }
