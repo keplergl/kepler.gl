@@ -248,8 +248,9 @@ const ExportVideoModalFactory = () => {
       if (mapStyle?.styleType === NO_MAP_ID) {
         const noMapEntry = mapStyle.mapStyles?.[NO_MAP_ID];
         if (noMapEntry && !noMapEntry.url) {
-          const emptyStyleUrl =
-            'data:application/json,' + encodeURIComponent(JSON.stringify(EMPTY_MAPBOX_STYLE));
+          const emptyStyleUrl = `data:application/json,${encodeURIComponent(
+            JSON.stringify(EMPTY_MAPBOX_STYLE)
+          )}`;
           return {
             visState,
             mapState,
@@ -347,10 +348,7 @@ const ExportVideoModalFactory = () => {
             const vc = adapter?.videoCapture;
             const tc = vc?.timecode;
             if (vc && tc && tc.duration > 0) {
-              const progress = Math.min(
-                Math.max((vc.timeMs - tc.start) / tc.duration, 0),
-                1
-              );
+              const progress = Math.min(Math.max((vc.timeMs - tc.start) / tc.duration, 0), 1);
               const t = ref.linear ? progress : progress * progress * (3 - 2 * progress);
               const [s, e] = ref.range;
               this.props.height = s + (e - s) * t;

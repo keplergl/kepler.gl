@@ -15,10 +15,7 @@
  * ensure every tile sub-layer's tile has the pass viewport ID in its
  * viewportIds array.
  */
-export function patchTileViewportIds(opts: {
-  viewports?: {id: string}[];
-  layers?: any[];
-}): void {
+export function patchTileViewportIds(opts: {viewports?: {id: string}[]; layers?: any[]}): void {
   const viewportId = opts.viewports?.[0]?.id;
   if (!viewportId || !opts.layers) return;
 

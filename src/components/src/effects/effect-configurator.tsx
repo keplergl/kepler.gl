@@ -405,7 +405,12 @@ export default function EffectConfiguratorFactory(
 
     const flatParameterDescriptions = useMemo(() => {
       return parameterDescriptions.reduce((acc, description) => {
-        if (description.name === 'heightEnd' || description.name === 'animateHeight' || description.name === 'linearEasing') return acc;
+        if (
+          description.name === 'heightEnd' ||
+          description.name === 'animateHeight' ||
+          description.name === 'linearEasing'
+        )
+          return acc;
 
         if (description.type === 'color') {
           acc.push(description);
@@ -446,7 +451,11 @@ export default function EffectConfiguratorFactory(
 
         if (desc.type === 'checkbox') {
           const label =
-            desc.name === 'pattern' ? 'Pattern' : typeof desc.label === 'string' ? desc.label : desc.name;
+            desc.name === 'pattern'
+              ? 'Pattern'
+              : typeof desc.label === 'string'
+              ? desc.label
+              : desc.name;
           const tooltip =
             desc.name === 'pattern'
               ? 'Adds a noise pattern to the fog for a more natural, volumetric look.'
@@ -593,7 +602,17 @@ export default function EffectConfiguratorFactory(
         // ignore everything else for now
         return null;
       });
-    }, [flatParameterDescriptions, id, parameters, updateEffectConfig, uniforms, isAnimateHeight, hasAnimateHeight, heightEndDesc, hasLinearEasing]);
+    }, [
+      flatParameterDescriptions,
+      id,
+      parameters,
+      updateEffectConfig,
+      uniforms,
+      isAnimateHeight,
+      hasAnimateHeight,
+      heightEndDesc,
+      hasLinearEasing
+    ]);
 
     const [elevationExpanded, setElevationExpanded] = useState(false);
     const onToggleElevationExpanded = useCallback(() => {
@@ -696,8 +715,8 @@ export default function EffectConfiguratorFactory(
                   <RegularSliderWrapper>
                     <RangeSlider
                       {...COMMON_SLIDER_PROPS}
-                      value1={control.value1}
-                      value0={control.value0}
+                      value1={control.value1 as number}
+                      value0={control.value0 as number}
                       range={control.range}
                       step={control.step}
                       onChange={control.onChange}
@@ -731,8 +750,8 @@ export default function EffectConfiguratorFactory(
                       <RegularSliderWrapper>
                         <RangeSlider
                           {...COMMON_SLIDER_PROPS}
-                          value1={control.endValue1}
-                          value0={control.endValue0}
+                          value1={control.endValue1 as number}
+                          value0={control.endValue0 as number}
                           range={control.endRange}
                           step={control.endStep}
                           onChange={control.onEndChange}

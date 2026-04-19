@@ -947,7 +947,9 @@ export default function MapContainerFactory(
 
       const views = deckGlProps?.views
         ? deckGlProps?.views()
-        : new MapView({legacyMeterSizes: true, farZMultiplier: 1.2} as ConstructorParameters<typeof MapView>[0] & {
+        : new MapView({legacyMeterSizes: true, farZMultiplier: 1.2} as ConstructorParameters<
+            typeof MapView
+          >[0] & {
             legacyMeterSizes: boolean;
           });
 
@@ -1285,9 +1287,7 @@ export default function MapContainerFactory(
               baseMapLibraryConfig={baseMapLibraryConfig}
             />
           ) : null}
-          {this.props.primary ? (
-            <AttributionLogos logos={attributionLogos} />
-          ) : null}
+          {this.props.primary ? <AttributionLogos logos={attributionLogos} /> : null}
         </>
       );
     }
