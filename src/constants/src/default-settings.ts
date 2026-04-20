@@ -1651,6 +1651,8 @@ export const POSTPROCESSING_EFFECTS: {[key: string]: EffectDescription} = {
         name: 'animateHeight',
         type: 'checkbox',
         label: 'Animate Elevation',
+        tooltip:
+          'Animates elevation from start to end value during video export preview and recording.',
         defaultValue: false,
         min: 0,
         max: 1
@@ -1660,6 +1662,8 @@ export const POSTPROCESSING_EFFECTS: {[key: string]: EffectDescription} = {
         name: 'linearEasing',
         type: 'checkbox',
         label: 'Linear Easing',
+        tooltip:
+          'Uses constant speed instead of smooth ease-in / ease-out during elevation animation.',
         defaultValue: false,
         min: 0,
         max: 1
@@ -1676,7 +1680,8 @@ export const POSTPROCESSING_EFFECTS: {[key: string]: EffectDescription} = {
       {
         name: 'pattern',
         type: 'checkbox',
-        label: 'Show Pattern',
+        label: 'Pattern',
+        tooltip: 'Adds a noise pattern to the fog for a more natural, volumetric look.',
         defaultValue: false,
         min: 0,
         max: 1
