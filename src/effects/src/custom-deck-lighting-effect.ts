@@ -4,6 +4,7 @@
 import {LightingEffect, shadow} from '@deck.gl/core';
 import type {Texture} from '@luma.gl/core';
 import type {ShaderModule} from '@luma.gl/shadertools';
+import {EDITOR_LAYER_ID} from '@kepler.gl/constants';
 
 /**
  * Exposes private members of LightingEffect that we need to access.
@@ -37,6 +38,9 @@ function insertBefore(source: string, target: string, textToInsert: string): str
  * shadow UBO. When true, `shadow_getShadowWeight` returns 1.0 (full
  * uniform shadow) instead of sampling the shadow map. Used for nighttime
  * rendering to avoid partial shadows from below.
+ *
+ * Also fixes the vertex injection to be a no-op when shadows are disabled,
+ * preventing position corruption in billboard layers (e.g. the editor layer).
  */
 function createCustomShadowModule(): ShaderModule | null {
   if (!shadow) return null;
@@ -52,6 +56,19 @@ function createCustomShadowModule(): ShaderModule | null {
     'vec4 rgbaDepth = texture(shadowMap, position.xy);',
     'if (shadow.outputUniformShadow > 0.5) return 1.0;\n  '
   );
+
+  // Fix: guard the vertex injection so it's a no-op when shadows are disabled.
+  // The original `return gl_Position` in shadow_setVertexPosition is incorrect
+  // for billboard layers where gl_Position isn't yet assigned when the
+  // DECKGL_FILTER_GL_POSITION hook fires.
+  if (mod.inject) {
+    mod.inject = {...mod.inject};
+    mod.inject['vs:DECKGL_FILTER_GL_POSITION'] = `
+    if (shadow.drawShadowMap || shadow.useShadowMap) {
+      position = shadow_setVertexPosition(geometry.position);
+    }
+    `;
+  }
 
   mod.uniformTypes = {
     ...shadow.uniformTypes,
@@ -117,6 +134,20 @@ class CustomDeckLightingEffect extends LightingEffect {
   }
 
   getShaderModuleProps(layer, otherShaderModuleProps) {
+    // Skip lighting/shadow for the editor layer and its sublayers.
+    // These are 2D overlays that should not be affected by lighting effects.
+    if (layer.id.startsWith(EDITOR_LAYER_ID)) {
+      return {
+        shadow: {
+          shadowEnabled: false,
+          dummyShadowMap: this._private.dummyShadowMap
+        },
+        lighting: {enabled: false},
+        phongMaterial: null,
+        gouraudMaterial: null
+      } as unknown as ReturnType<LightingEffect['getShaderModuleProps']>;
+    }
+
     const props = super.getShaderModuleProps(layer, otherShaderModuleProps);
 
     if (
