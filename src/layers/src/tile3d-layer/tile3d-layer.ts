@@ -187,7 +187,12 @@ class KeplerTile3DLayer extends DeckTile3DLayer {
           // Shadow effect is active, respect the material's own `unlit`
           // property instead; otherwise fall back to the default (unlit) behavior.
           parseMaterial(material, mesh) {
-            if (!hasActiveLightingEffect(this) || !material || !mesh?.attributes) {
+            if (
+              !hasActiveLightingEffect(this) ||
+              !material ||
+              !mesh?.attributes ||
+              !mesh.attributes.normals
+            ) {
               return super.parseMaterial(material, mesh);
             }
             const unlit = Boolean(material.unlit);
@@ -215,14 +220,10 @@ class KeplerTile3DLayer extends DeckTile3DLayer {
           _setUnlitOnModels(unlit: number) {
             const models = this.state?.models;
             if (!models) return;
-            try {
             for (const model of models) {
-                if (model.shaderInputs?.props?.pbrMaterial !== undefined) {
-                  model.shaderInputs.setProps({pbrMaterial: {unlit}});
-                }
+              if (model.shaderInputs?.props?.pbrMaterial !== undefined) {
+                model.shaderInputs.setProps({pbrMaterial: {unlit}});
               }
-            } catch {
-              // model may lack pbrMaterial binding
             }
           }
 

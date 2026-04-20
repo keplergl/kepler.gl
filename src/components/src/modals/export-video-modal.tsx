@@ -229,11 +229,17 @@ const ExportVideoModalFactory = () => {
       patchDeckRendererForPostProcessing();
     }, []);
 
+    const [hubbleError, setHubbleError] = useState<string | null>(null);
+
     useEffect(() => {
-      if (!hubble) {
-        loadHubble().then(setHubble);
+      if (!hubble && !hubbleError) {
+        loadHubble()
+          .then(setHubble)
+          .catch(err => {
+            setHubbleError(err?.message || 'Failed to load video export module');
+          });
       }
-    }, [hubble]);
+    }, [hubble, hubbleError]);
 
     useEffect(() => {
       return () => {
@@ -466,7 +472,20 @@ const ExportVideoModalFactory = () => {
     if (!hubble) {
       return (
         <StyledExportVideoModalContent className="export-video-modal">
-          <LoadingSpinner />
+          {hubbleError ? (
+            <div style={{padding: '20px', textAlign: 'center', color: '#d9534f'}}>
+              <p>{hubbleError}</p>
+              <Button
+                onClick={() => {
+                  setHubbleError(null);
+                }}
+              >
+                Retry
+              </Button>
+            </div>
+          ) : (
+            <LoadingSpinner />
+          )}
         </StyledExportVideoModalContent>
       );
     }
