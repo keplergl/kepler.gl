@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+const noop = (): void => {
+  /* no tiles patched */
+};
+
 /**
  * In interleaved (MapboxOverlay) mode during video export, deck.gl creates
  * two viewports per frame: 'MapView' and 'mapbox'. loaders.gl's Tileset3D
@@ -13,16 +17,31 @@
  *
  * Fix: before any render pass that needs all tiles (shadow, fog, etc.),
  * ensure every tile sub-layer's tile has the pass viewport ID in its
- * viewportIds array.
+ * viewportIds array. Returns a cleanup function that removes the added IDs
+ * so they don't accumulate across frames.
  */
-export function patchTileViewportIds(opts: {viewports?: {id: string}[]; layers?: any[]}): void {
+export function patchTileViewportIds(opts: {
+  viewports?: {id: string}[];
+  layers?: any[];
+}): () => void {
   const viewportId = opts.viewports?.[0]?.id;
-  if (!viewportId || !opts.layers) return;
+  if (!viewportId || !opts.layers) return noop;
 
+  const patched: any[] = [];
   for (const layer of opts.layers) {
     const tile = (layer as any).props?.tile;
     if (tile?.viewportIds && tile.selected && !tile.viewportIds.includes(viewportId)) {
       tile.viewportIds.push(viewportId);
+      patched.push(tile);
     }
   }
+
+  return () => {
+    for (const tile of patched) {
+      const idx = tile.viewportIds.indexOf(viewportId);
+      if (idx !== -1) {
+        tile.viewportIds.splice(idx, 1);
+      }
+    }
+  };
 }

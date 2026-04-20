@@ -45,12 +45,18 @@ let _hubblePromise: Promise<HubbleModule> | null = null;
 
 function loadHubble(): Promise<HubbleModule> {
   if (_hubbleModule) return Promise.resolve(_hubbleModule);
-  if (!_hubblePromise) {
-    _hubblePromise = import('@hubble.gl/react').then(mod => {
+  if (_hubblePromise) return _hubblePromise;
+  _hubblePromise = import('@hubble.gl/react').then(
+    mod => {
       _hubbleModule = mod as unknown as HubbleModule;
       return _hubbleModule;
-    });
-  }
+    },
+    err => {
+      // Allow retry on next call
+      _hubblePromise = null;
+      throw err;
+    }
+  );
   return _hubblePromise;
 }
 
@@ -201,8 +207,6 @@ const HUBBLE_PANEL_OVERHEAD = 2 * 32 + 24 + 280;
 const EXPORT_VIDEO_MODAL_MAX_WIDTH = 1080;
 const MODAL_HORIZONTAL_PADDING = 144;
 
-let _shadowCompositingEffect: InstanceType<typeof DeckShadowCompositingEffect> | null = null;
-
 const ExportVideoModalFactory = () => {
   const ExportVideoModal: React.FC<ExportVideoModalProps> = ({
     mapboxApiAccessToken,
@@ -217,6 +221,9 @@ const ExportVideoModalFactory = () => {
     onClose
   }) => {
     const [hubble, setHubble] = useState<HubbleModule | null>(_hubbleModule);
+    const shadowCompositingRef = useRef<InstanceType<typeof DeckShadowCompositingEffect> | null>(
+      null
+    );
 
     useEffect(() => {
       patchDeckRendererForPostProcessing();
@@ -230,9 +237,9 @@ const ExportVideoModalFactory = () => {
 
     useEffect(() => {
       return () => {
-        if (_shadowCompositingEffect) {
-          _shadowCompositingEffect.cleanup();
-          _shadowCompositingEffect = null;
+        if (shadowCompositingRef.current) {
+          shadowCompositingRef.current.cleanup();
+          shadowCompositingRef.current = null;
         }
       };
     }, []);
@@ -347,7 +354,13 @@ const ExportVideoModalFactory = () => {
             const adapter = hubbleState?.adapter;
             const vc = adapter?.videoCapture;
             const tc = vc?.timecode;
-            if (vc && tc && tc.duration > 0) {
+            if (
+              vc &&
+              tc &&
+              tc.duration > 0 &&
+              Number.isFinite(vc.timeMs) &&
+              Number.isFinite(tc.start)
+            ) {
               const progress = Math.min(Math.max((vc.timeMs - tc.start) / tc.duration, 0), 1);
               const t = ref.linear ? progress : progress * progress * (3 - 2 * progress);
               const [s, e] = ref.range;
@@ -376,10 +389,10 @@ const ExportVideoModalFactory = () => {
       const hasShadow = effects.some((e: any) => e.shadow === true);
       const hasPostProcess = effects.some((e: any) => typeof e.postRender === 'function');
       if (hasShadow && !hasPostProcess) {
-        if (!_shadowCompositingEffect) {
-          _shadowCompositingEffect = new DeckShadowCompositingEffect();
+        if (!shadowCompositingRef.current) {
+          shadowCompositingRef.current = new DeckShadowCompositingEffect();
         }
-        effects.push(_shadowCompositingEffect as any);
+        effects.push(shadowCompositingRef.current as any);
       }
 
       return effects;

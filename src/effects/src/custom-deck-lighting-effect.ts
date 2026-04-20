@@ -110,11 +110,14 @@ class CustomDeckLightingEffect extends LightingEffect {
   preRender(opts) {
     if (!this._private.shadow) return;
 
+    let unpatch: (() => void) | undefined;
     if (this.isExportMode) {
-      patchTileViewportIds(opts);
+      unpatch = patchTileViewportIds(opts);
     }
 
     super.preRender(opts);
+
+    unpatch?.();
   }
 
   cleanup(context) {

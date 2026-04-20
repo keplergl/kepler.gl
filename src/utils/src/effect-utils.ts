@@ -46,6 +46,16 @@ export function computeDeckEffects({
     .map(effectId => {
       const effect = findById(effectId)(visState.effects) as Effect | undefined;
       if (effect?.deckEffect) {
+        // Always reset isExportMode so the flag doesn't persist from a
+        // previous export session on reused effect instances.
+        if (
+          effect.type === LIGHT_AND_SHADOW_EFFECT.type ||
+          effect.type === SURFACE_FOG_TYPE ||
+          effect.type === DISTANCE_FOG_TYPE
+        ) {
+          effect.deckEffect.isExportMode = Boolean(isExport);
+        }
+
         if (effect.isEnabled) {
           // deck.gl's EffectManager matches effects by id and reuses old
           // instances (calling oldEffect.setProps(newEffect.props)) instead
@@ -59,7 +69,11 @@ export function computeDeckEffects({
             _lastLightingDeckEffect &&
             _lastLightingDeckEffect !== effect.deckEffect
           ) {
+            const orphaned = effect.deckEffect;
             effect.deckEffect = _lastLightingDeckEffect;
+            if (orphaned && typeof orphaned.cleanup === 'function') {
+              orphaned.cleanup();
+            }
           }
           updateEffect({visState, mapState, effect});
         } else if (effect.type === LIGHT_AND_SHADOW_EFFECT.type) {
@@ -76,15 +90,6 @@ export function computeDeckEffects({
             if (!isExport) {
               _lastLightingDeckEffect = effect.deckEffect;
             }
-            if (effect.deckEffect) {
-              effect.deckEffect.isExportMode = Boolean(isExport);
-            }
-          }
-          if (
-            (effect.type === SURFACE_FOG_TYPE || effect.type === DISTANCE_FOG_TYPE) &&
-            effect.deckEffect
-          ) {
-            effect.deckEffect.isExportMode = Boolean(isExport);
           }
           return effect.deckEffect;
         }
@@ -224,8 +229,7 @@ function updateEffect({visState, mapState, effect}: {visState: any; mapState: an
 
     let {timestamp} = parameters;
     const {timeMode} = parameters;
-    const sunLight = deckEffect.directionalLights[0];
-
+    const sunLight = deckEffect.directionalLights?.[0];
     if (sunLight) {
       sunLight.color = parameters.sunLightColor.slice();
     }

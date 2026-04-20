@@ -333,13 +333,19 @@ export class DeckSurfaceFogEffect {
     Object.assign(this.props, props);
   }
 
+  private _unpatchViewports: (() => void) | null = null;
+
   preRender(opts?: any): void {
     if (this.isExportMode && opts) {
-      patchTileViewportIds(opts);
+      this._unpatchViewports = patchTileViewportIds(opts);
     }
   }
 
   postRender(params: any): any {
+    if (this._unpatchViewports) {
+      this._unpatchViewports();
+      this._unpatchViewports = null;
+    }
     const {inputBuffer, swapBuffer, target} = params;
     const outputBuffer = target !== undefined ? target : swapBuffer;
 
