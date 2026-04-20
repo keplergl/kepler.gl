@@ -3,6 +3,7 @@
 
 import {ClipSpace} from '@luma.gl/engine';
 import type {ShaderModule} from '@luma.gl/shadertools';
+import {patchTileViewportIds} from '../tile-viewport-fix';
 
 export type SurfaceFogProps = {
   density: number;
@@ -48,10 +49,9 @@ out vec4 fragColor;
 // --- Gradient noise for pattern detail ---
 
 vec2 hashGrad(vec2 p) {
-  vec2 k = vec2(0.3183099, 0.3678794);
-  p = p * k + k.yx;
-  vec2 h = fract(p.x * p.y * (p.x + p.y) * vec2(127.1, 311.7));
-  return normalize(h * 2.0 - 1.0);
+  float h = dot(p, vec2(127.1, 311.7));
+  float a = fract(sin(h) * 43758.5453) * 6.2831853;
+  return vec2(cos(a), sin(a));
 }
 
 float noise2d(vec2 p) {
@@ -69,10 +69,11 @@ float noise2d(vec2 p) {
 float fbm(vec2 p) {
   float v = 0.0;
   float a = 0.5;
-  mat2 rot = mat2(0.8, 0.6, -0.6, 0.8);
+  // ~47.6° rotation per octave — avoids 45°/90° multiples that reinforce grid lines
+  mat2 rot = mat2(0.6731, 0.7395, -0.7395, 0.6731);
   for (int i = 0; i < 3; i++) {
     v += a * noise2d(p);
-    p = rot * p * 2.0;
+    p = rot * p * 2.03;
     a *= 0.5;
   }
   return v;
@@ -295,6 +296,7 @@ export class DeckSurfaceFogEffect {
   id = 'surface-fog-effect';
   props: SurfaceFogProps;
   module = surfaceFogModule;
+  isExportMode = false;
   private model: InstanceType<typeof ClipSpace> | null = null;
 
   constructor(props: Partial<SurfaceFogProps> = {}) {
@@ -331,11 +333,19 @@ export class DeckSurfaceFogEffect {
     Object.assign(this.props, props);
   }
 
-  preRender(): void {
-    // no-op
+  private _unpatchViewports: (() => void) | null = null;
+
+  preRender(opts?: any): void {
+    if (this.isExportMode && opts) {
+      this._unpatchViewports = patchTileViewportIds(opts);
+    }
   }
 
   postRender(params: any): any {
+    if (this._unpatchViewports) {
+      this._unpatchViewports();
+      this._unpatchViewports = null;
+    }
     const {inputBuffer, swapBuffer, target} = params;
     const outputBuffer = target !== undefined ? target : swapBuffer;
 

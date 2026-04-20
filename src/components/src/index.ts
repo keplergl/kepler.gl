@@ -347,6 +347,7 @@ export {default as LayerTypeDropdownListFactory} from './side-panel/layer-panel/
 export {default as LayerTypeSelectorFactory} from './side-panel/layer-panel/layer-type-selector';
 
 export {default as EffectConfiguratorFactory} from './effects/effect-configurator';
+export {default as SurfaceFogElevationSectionFactory} from './effects/surface-fog-section';
 export {default as EffectListFactory} from './effects/effect-list';
 export {default as EffectManagerFactory} from './effects/effect-manager';
 export {default as EffectTimeConfiguratorFactory} from './effects/effect-time-configurator';

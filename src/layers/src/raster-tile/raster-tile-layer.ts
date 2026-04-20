@@ -74,11 +74,8 @@ import {default as KeplerLayer, LayerBaseConfigPartial} from '../base-layer';
  * Falls back to collection name or title when providers are absent.
  * Returns null when no meaningful attribution can be determined.
  */
-function extractSTACAttribution(
-  stac: CompleteSTACObject
-): {title: string; url: string} | null {
-  const providers =
-    (stac as any).providers || (stac as any).properties?.providers;
+function extractSTACAttribution(stac: CompleteSTACObject): {title: string; url: string} | null {
+  const providers = (stac as any).providers || (stac as any).properties?.providers;
   if (Array.isArray(providers) && providers.length > 0) {
     const producer = providers.find(p => p.roles?.includes('producer'));
     const host = providers.find(p => p.roles?.includes('host'));
@@ -88,10 +85,7 @@ function extractSTACAttribution(
     }
   }
 
-  const title =
-    (stac as any).title ||
-    (stac as any).properties?.title ||
-    (stac as any).collection;
+  const title = (stac as any).title || (stac as any).properties?.title || (stac as any).collection;
   if (title && typeof title === 'string') {
     const selfLink = ((stac as any).links || []).find(l => l.rel === 'self');
     return {title, url: selfLink?.href || ''};
