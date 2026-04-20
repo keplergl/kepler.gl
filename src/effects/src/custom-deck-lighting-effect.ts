@@ -4,6 +4,7 @@
 import {LightingEffect, shadow} from '@deck.gl/core';
 import type {Texture} from '@luma.gl/core';
 import type {ShaderModule} from '@luma.gl/shadertools';
+import {patchTileViewportIds} from './tile-viewport-fix';
 
 /**
  * Exposes private members of LightingEffect that we need to access.
@@ -11,7 +12,7 @@ import type {ShaderModule} from '@luma.gl/shadertools';
  */
 interface LightingEffectPrivate {
   shadow: boolean;
-  shadowPasses: {delete(): void}[];
+  shadowPasses: {delete(): void; render(params: Record<string, unknown>): void}[];
   dummyShadowMap: Texture | null;
   _createShadowPasses(device: unknown): void;
 }
@@ -84,6 +85,7 @@ const CustomShadowModule = createCustomShadowModule();
  */
 class CustomDeckLightingEffect extends LightingEffect {
   outputUniformShadow: boolean;
+  isExportMode: boolean;
 
   private get _private(): LightingEffectPrivate {
     return this as unknown as LightingEffectPrivate;
@@ -92,6 +94,7 @@ class CustomDeckLightingEffect extends LightingEffect {
   constructor(props) {
     super(props);
     this.outputUniformShadow = false;
+    this.isExportMode = false;
   }
 
   setup(context) {
@@ -102,6 +105,19 @@ class CustomDeckLightingEffect extends LightingEffect {
       deck._addDefaultShaderModule(CustomShadowModule || shadow);
       this._private.dummyShadowMap = device.createTexture({width: 1, height: 1});
     }
+  }
+
+  preRender(opts) {
+    if (!this._private.shadow) return;
+
+    let unpatch: (() => void) | undefined;
+    if (this.isExportMode) {
+      unpatch = patchTileViewportIds(opts);
+    }
+
+    super.preRender(opts);
+
+    unpatch?.();
   }
 
   cleanup(context) {
