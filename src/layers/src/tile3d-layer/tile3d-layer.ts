@@ -123,6 +123,12 @@ class KeplerTile3DLayer extends DeckTile3DLayer {
     const viewportsNumber = Object.keys(viewports).length;
     if (!timeline || !viewportsNumber || !tileset3d) return;
 
+    const isExporting = (this.context as any)?.deck?.props?._isExport;
+    if (isExporting) {
+      const baseSSE: number = tileset3d.options?.maximumScreenSpaceError ?? 8;
+      tileset3d.memoryAdjustedScreenSpaceError = baseSSE / 2;
+    }
+
     tileset3d
       .selectTiles(Object.values(viewports))
       .then((frameNumber: number) => {
@@ -278,11 +284,11 @@ class KeplerTile3DLayer extends DeckTile3DLayer {
   }
 
   /**
-   * During video export (preserveDrawingBuffer), report the layer as not loaded
-   * until every selected tile has a renderable sublayer.  Hubble.gl's
-   * DeckAdapter.onAfterRender checks layer.isLoaded on every top-level layer
-   * before capturing a frame, so returning false here makes it wait until the
-   * LOD transition is complete — no frame is captured with missing tiles.
+   * During video/image export, report the layer as not loaded until every
+   * selected tile has a renderable sublayer.  Hubble.gl's DeckAdapter and
+   * PlotContainer check layer.isLoaded before capturing a frame, so
+   * returning false here makes them wait until the LOD transition is
+   * complete — no frame is captured with missing tiles.
    */
   get isLoaded(): boolean {
     const baseLoaded = super.isLoaded;
@@ -290,8 +296,7 @@ class KeplerTile3DLayer extends DeckTile3DLayer {
       return false;
     }
 
-    const gl = this.context?.gl;
-    const isExporting = gl?.getContextAttributes?.()?.preserveDrawingBuffer;
+    const isExporting = (this.context as any)?.deck?.props?._isExport;
     if (!isExporting) {
       return true;
     }

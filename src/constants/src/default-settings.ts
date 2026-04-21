@@ -1409,8 +1409,8 @@ export const LIGHT_AND_SHADOW_EFFECT: EffectDescription = {
   parameters: [
     {name: 'timestamp', min: 0, max: Number.MAX_SAFE_INTEGER},
     {name: 'shadowIntensity', min: 0, max: 1, defaultValue: DEFAULT_SHADOW_INTENSITY},
-    {name: 'sunLightIntensity', min: 0, max: 10, defaultValue: DEFAULT_LIGHT_INTENSITY},
-    {name: 'ambientLightIntensity', min: 0, max: 10, defaultValue: DEFAULT_LIGHT_INTENSITY},
+    {name: 'sunLightIntensity', min: 0, max: 5, defaultValue: DEFAULT_LIGHT_INTENSITY},
+    {name: 'ambientLightIntensity', min: 0, max: 5, defaultValue: DEFAULT_LIGHT_INTENSITY},
     {name: 'shadowColor', type: 'color', min: 0, max: 255, defaultValue: DEFAULT_SHADOW_COLOR},
     {name: 'sunLightColor', type: 'color', min: 0, max: 255, defaultValue: DEFAULT_LIGHT_COLOR},
     {name: 'ambientLightColor', type: 'color', min: 0, max: 255, defaultValue: DEFAULT_LIGHT_COLOR}
