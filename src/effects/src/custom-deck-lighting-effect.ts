@@ -7,6 +7,12 @@ import type {ShaderModule} from '@luma.gl/shadertools';
 import {EDITOR_LAYER_ID} from '@kepler.gl/constants';
 import {patchTileViewportIds} from './tile-viewport-fix';
 
+// A plain LightingEffect() — its constructor calls _applyDefaultLights()
+// which populates the same default lights that deck.gl's EffectManager
+// uses internally. We delegate to this when the ghost is disabled so
+// phong/gouraud layers get their original shading back.
+const DEFAULT_LIGHTING_EFFECT = new LightingEffect();
+
 /**
  * Exposes private members of LightingEffect that we need to access.
  * These are runtime-accessible but TypeScript marks them as private.
@@ -58,6 +64,26 @@ function createCustomShadowModule(): ShaderModule | null {
     'if (shadow.outputUniformShadow > 0.5) return 1.0;\n  '
   );
 
+  // Patch the VS so the fallback returns the caller's position instead of
+  // gl_Position (which is uninitialised when the hook fires in billboard
+  // layers like PathLayer / the editor polygon tool).
+  mod.vs = mod.vs
+    .replace(
+      'vec4 shadow_setVertexPosition(vec4 position_commonspace)',
+      'vec4 shadow_setVertexPosition(vec4 position_commonspace, vec4 currentPosition)'
+    )
+    .replace(
+      /return gl_Position;\s*\}/,
+      'return currentPosition;\n}'
+    );
+
+  // Update the inject hook to pass the current position into the patched fn.
+  mod.inject = {
+    ...shadow.inject,
+    'vs:DECKGL_FILTER_GL_POSITION': `
+    position = shadow_setVertexPosition(geometry.position, position);
+    `
+  };
 
   mod.uniformTypes = {
     ...shadow.uniformTypes,
@@ -159,17 +185,19 @@ class CustomDeckLightingEffect extends LightingEffect {
     }
 
     // When the effect is disabled (ghost kept alive to preserve the shadow
-    // shader module), return neutral lighting props. Without this, the
-    // base LightingEffect.getShaderModuleProps returns the stale custom
-    // light sources (ambient color/intensity, directional lights) from
-    // when the effect was last active, causing tiles to be tinted/dimmed.
+    // shader module), delegate to a default LightingEffect so phong/gouraud
+    // layers get the same shading they had before the effect was ever added.
+    // Our ghost is an instanceof LightingEffect, which prevents EffectManager
+    // from appending its own built-in default — so we replicate it here.
+    // For PBR tiles we also force unlit=1 so they render with base color.
     if (!this._private.shadow) {
+      const defaults = DEFAULT_LIGHTING_EFFECT.getShaderModuleProps(layer, otherShaderModuleProps);
       return {
+        ...defaults,
         shadow: {
           shadowEnabled: false,
           dummyShadowMap: this._private.dummyShadowMap
         },
-        lighting: {enabled: false},
         pbrMaterial: {unlit: 1}
       } as unknown as ReturnType<LightingEffect['getShaderModuleProps']>;
     }
