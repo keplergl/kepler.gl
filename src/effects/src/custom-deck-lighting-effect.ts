@@ -58,18 +58,6 @@ function createCustomShadowModule(): ShaderModule | null {
     'if (shadow.outputUniformShadow > 0.5) return 1.0;\n  '
   );
 
-  // Fix: guard the vertex injection so it's a no-op when shadows are disabled.
-  // The original `return gl_Position` in shadow_setVertexPosition is incorrect
-  // for billboard layers where gl_Position isn't yet assigned when the
-  // DECKGL_FILTER_GL_POSITION hook fires.
-  if (mod.inject) {
-    mod.inject = {...mod.inject};
-    mod.inject['vs:DECKGL_FILTER_GL_POSITION'] = `
-    if (shadow.drawShadowMap || shadow.useShadowMap) {
-      position = shadow_setVertexPosition(geometry.position);
-    }
-    `;
-  }
 
   mod.uniformTypes = {
     ...shadow.uniformTypes,
