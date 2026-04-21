@@ -158,6 +158,22 @@ class CustomDeckLightingEffect extends LightingEffect {
       } as unknown as ReturnType<LightingEffect['getShaderModuleProps']>;
     }
 
+    // When the effect is disabled (ghost kept alive to preserve the shadow
+    // shader module), return neutral lighting props. Without this, the
+    // base LightingEffect.getShaderModuleProps returns the stale custom
+    // light sources (ambient color/intensity, directional lights) from
+    // when the effect was last active, causing tiles to be tinted/dimmed.
+    if (!this._private.shadow) {
+      return {
+        shadow: {
+          shadowEnabled: false,
+          dummyShadowMap: this._private.dummyShadowMap
+        },
+        lighting: {enabled: false},
+        pbrMaterial: {unlit: 1}
+      } as unknown as ReturnType<LightingEffect['getShaderModuleProps']>;
+    }
+
     const props = super.getShaderModuleProps(layer, otherShaderModuleProps);
 
     if (
@@ -171,6 +187,11 @@ class CustomDeckLightingEffect extends LightingEffect {
     if (props.shadow) {
       (props.shadow as CustomShadowProps).outputUniformShadow = this.outputUniformShadow;
     }
+
+    // Reset unlit to 0 so PBR models respond to lighting. Without this,
+    // models that had unlit=1 set by the ghost effect (disabled phase)
+    // would permanently ignore lighting uniform changes.
+    (props as any).pbrMaterial = {unlit: 0};
 
     return props;
   }

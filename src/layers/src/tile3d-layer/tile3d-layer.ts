@@ -55,6 +55,12 @@ function _checkLightingActive(context: any): boolean {
  */
 // @ts-expect-error Types have separate declarations of a private property '_loadTileset'.
 class KeplerTile3DLayer extends DeckTile3DLayer {
+  shouldUpdateState(params: any): boolean {
+    if (super.shouldUpdateState(params)) return true;
+    const lightingActive = _checkLightingActive(this.context);
+    return lightingActive !== ((this.state as any)?._lightingWasActive ?? false);
+  }
+
   // deck.gl Tile3DLayer.updateState only sets `needsUpdate` on cached tile
   // sub-layers when `propsChanged` fires, but NOT when `extensionsChanged`
   // fires (e.g. the shadow module being added/removed). The LayerManager sets
