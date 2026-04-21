@@ -127,6 +127,10 @@ class CustomDeckLightingEffect extends LightingEffect {
   preRender(opts) {
     if (!this._private.shadow) return;
 
+    // Filter editor layers out of the shadow pass so they don't cast shadows.
+    const originalLayers = opts.layers;
+    opts.layers = originalLayers.filter(l => !l.id.startsWith(EDITOR_LAYER_ID));
+
     let unpatch: (() => void) | undefined;
     if (this.isExportMode) {
       unpatch = patchTileViewportIds(opts);
@@ -135,6 +139,8 @@ class CustomDeckLightingEffect extends LightingEffect {
     super.preRender(opts);
 
     unpatch?.();
+
+    opts.layers = originalLayers;
   }
 
   cleanup(context) {
