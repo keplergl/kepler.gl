@@ -3,18 +3,21 @@
 
 """Generate standalone HTML export using the kepler.gl UMD bundle from CDN."""
 
+from __future__ import annotations
+
 import json
+from typing import Optional
 
 import pandas as pd
 import geopandas as gpd
 
 
-def _dataset_to_csv(data) -> str:
+def _dataset_to_csv(data) -> Optional[str]:
     """Convert a dataset value to CSV string for kepler.gl processCsvData."""
     if isinstance(data, gpd.GeoDataFrame):
         import shapely.wkt
 
-        if data.crs and not data.crs == 4326:
+        if data.crs and data.crs.to_epsg() != 4326:
             data = data.to_crs(4326)
         df = pd.DataFrame(data)
         geom_col = data.geometry.name
@@ -28,10 +31,10 @@ def _dataset_to_csv(data) -> str:
         return None
 
 
-def _dataset_to_geojson(data) -> dict | None:
+def _dataset_to_geojson(data) -> Optional[dict]:
     """Try to convert dataset to GeoJSON dict."""
     if isinstance(data, gpd.GeoDataFrame):
-        if data.crs and not data.crs == 4326:
+        if data.crs and data.crs.to_epsg() != 4326:
             data = data.to_crs(4326)
         return json.loads(data.to_json())
     elif isinstance(data, dict):
@@ -92,6 +95,7 @@ def export_map_html(
     """
     dataset_js = _serialize_datasets_for_html(data)
     config_json = json.dumps(config, ensure_ascii=False) if config else "{}"
+    mapbox_token_json = json.dumps(mapbox_token)
     read_only_js = "true" if read_only else "false"
     center_map_js = "true" if center_map else "false"
 
@@ -127,7 +131,7 @@ def export_map_html(
     </style>
 
     <script>
-      const MAPBOX_TOKEN = '{mapbox_token}';
+      const MAPBOX_TOKEN = {mapbox_token_json};
     </script>
   </head>
   <body>

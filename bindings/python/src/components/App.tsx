@@ -16,12 +16,19 @@ interface AppProps {
 export function App({model}: AppProps) {
   const [height, setHeight] = useState(model.get('height'));
   const [width, setWidth] = useState(800);
+  const [mapboxToken, setMapboxToken] = useState(model.get('mapbox_token') || '');
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleHeightChange = () => setHeight(model.get('height'));
     model.on('change:height', handleHeightChange);
     return () => model.off('change:height', handleHeightChange);
+  }, [model]);
+
+  useEffect(() => {
+    const handleTokenChange = () => setMapboxToken(model.get('mapbox_token') || '');
+    model.on('change:mapbox_token', handleTokenChange);
+    return () => model.off('change:mapbox_token', handleTokenChange);
   }, [model]);
 
   // Observe container width changes
@@ -42,7 +49,7 @@ export function App({model}: AppProps) {
 
   return (
     <div ref={containerRef} style={{width: '100%', height}}>
-      <KeplerGl id={KEPLER_ID} width={width} height={height} mapboxApiAccessToken="" />
+      <KeplerGl id={KEPLER_ID} width={width} height={height} mapboxApiAccessToken={mapboxToken} />
     </div>
   );
 }

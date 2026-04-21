@@ -5,12 +5,10 @@
 
 import json
 import os
-import tempfile
-
 import pandas as pd
 import geopandas as gpd
 import pytest
-from shapely.geometry import Point, Polygon
+from shapely.geometry import Point
 
 from keplergl import KeplerGl
 from keplergl._html_export import (
@@ -45,6 +43,23 @@ class TestDatasetToCsv:
         assert "POINT" in result
         assert "name" in result
 
+    def test_geodataframe_already_4326_no_reproject(self, sample_gdf):
+        """Ensure CRS EPSG:4326 data is not needlessly reprojected."""
+        result = _dataset_to_csv(sample_gdf)
+        assert "POINT" in result
+        assert "-122.41" in result
+        assert "37.77" in result
+
+    def test_geodataframe_no_crs_skips_reproject(self):
+        """GeoDataFrame with no CRS should not trigger reprojection."""
+        gdf = gpd.GeoDataFrame(
+            {"name": ["A"]},
+            geometry=[Point(-122.4, 37.8)],
+        )
+        assert gdf.crs is None
+        result = _dataset_to_csv(gdf)
+        assert "POINT" in result
+
     def test_csv_string_passthrough(self):
         csv = "lat,lng\n37.7749,-122.4194"
         assert _dataset_to_csv(csv) == csv
@@ -67,6 +82,38 @@ class TestDatasetToGeojson:
         assert result is not None
         assert result["type"] == "FeatureCollection"
         assert len(result["features"]) == 2
+
+    def test_geodataframe_reprojects_non_4326(self):
+        """GeoDataFrame in non-4326 CRS should be reprojected."""
+        gdf = gpd.GeoDataFrame(
+            {"name": ["A"]},
+            geometry=[Point(500000, 4649776)],
+            crs="EPSG:32610",
+        )
+        result = _dataset_to_geojson(gdf)
+        assert result is not None
+        coords = result["features"][0]["geometry"]["coordinates"]
+        assert -125 < coords[0] < -119
+        assert 37 < coords[1] < 43
+
+    def test_geodataframe_already_4326_no_reproject(self, sample_gdf):
+        """Ensure CRS EPSG:4326 data is not needlessly reprojected."""
+        result = _dataset_to_geojson(sample_gdf)
+        coords = result["features"][0]["geometry"]["coordinates"]
+        assert abs(coords[0] - (-122.4194)) < 1e-4
+        assert abs(coords[1] - 37.7749) < 1e-4
+
+    def test_geodataframe_no_crs_skips_reproject(self):
+        """GeoDataFrame with no CRS should not trigger reprojection."""
+        gdf = gpd.GeoDataFrame(
+            {"name": ["A"]},
+            geometry=[Point(-122.4, 37.8)],
+        )
+        assert gdf.crs is None
+        result = _dataset_to_geojson(gdf)
+        assert result is not None
+        coords = result["features"][0]["geometry"]["coordinates"]
+        assert abs(coords[0] - (-122.4)) < 1e-4
 
     def test_geojson_dict(self):
         geojson = {"type": "FeatureCollection", "features": []}
