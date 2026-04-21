@@ -9,8 +9,11 @@ import anywidget
 import traitlets
 
 from .serializers import data_to_json, data_from_json
+from ._html_export import export_map_html
 
 _STATIC_DIR = pathlib.Path(__file__).parent / "static"
+
+KEPLER_GL_CDN_VERSION = "3.2.6"
 
 
 class KeplerGl(anywidget.AnyWidget):
@@ -61,14 +64,32 @@ class KeplerGl(anywidget.AnyWidget):
         data=None,
         config=None,
         read_only=False,
-        center_map=False,
+        center_map=True,
     ):
         """Export the map to a standalone HTML file.
 
-        Note: This method is no longer supported in the new anywidget-based implementation.
-        Please use the "Share" button in the map config panel to export your map.
+        The exported HTML loads kepler.gl from the unpkg CDN (no local build needed)
+        and embeds the current data and configuration.
+
+        Args:
+            file_name: Output HTML file path (default: 'keplergl_map.html')
+            data: Dict of dataset name to data. If None, uses current widget data.
+            config: Map config dict. If None, uses current widget config.
+            read_only: If True, hide side panel to disable map customization.
+            center_map: If True, fit map bounds to the data (default: True).
         """
-        print(
-            "save_to_html() is no longer supported in this version.\n"
-            "Please use the 'Share' button in the map config panel to export your map to HTML."
+        data_to_save = data if data is not None else self.data
+        config_to_save = config if config is not None else self.config
+
+        html = export_map_html(
+            data=data_to_save,
+            config=config_to_save,
+            read_only=read_only,
+            center_map=center_map,
+            kepler_gl_version=KEPLER_GL_CDN_VERSION,
         )
+
+        with open(file_name, "w", encoding="utf-8") as f:
+            f.write(html)
+
+        print(f"Map saved to {file_name}!")
