@@ -3,6 +3,7 @@
 
 import {HexagonLayer, HexagonLayerPickingInfo} from '@deck.gl/aggregation-layers';
 import {GetPickingInfoParams, PickingInfo, Viewport} from '@deck.gl/core';
+import {buildAggregatedBinMap} from '../layer-utils/aggregation-utils';
 
 const THIRD_PI = Math.PI / 3;
 const HexbinVertices = Array.from({length: 6}, (_, i) => {
@@ -35,12 +36,45 @@ interface HexPickingObject {
  *
  * We override getPickingInfo to add `cellOutline` — an array of [lng, lat] coordinates
  * computed in common space so the outline aligns with rendered cells at all latitudes.
+ *
+ * We also override _onAggregationUpdate to send per-bin aggregated values through
+ * onSetColorDomain so the legend can compute proper quantile/custom breaks.
  */
 export default class ScaleEnhancedHexagonLayer extends HexagonLayer<any> {
   static defaultProps = {
     ...HexagonLayer.defaultProps,
     gpuAggregation: false
   };
+
+  _onAggregationUpdate({channel}: {channel: number}) {
+    // Delegate to the parent which handles internal state (AttributeWithScale)
+    // and fires onSetColorDomain with [min, max].
+    (HexagonLayer.prototype as any)._onAggregationUpdate.call(this, {channel});
+
+    if (channel === 0) {
+      // The parent already called onSetColorDomain([min, max]).
+      // Now fire it again with the enriched format {domain, aggregatedBins}
+      // so the legend can compute proper quantile breaks from the full bin data.
+      const props = (this as any).getCurrentLayer().props;
+      const {aggregator} = this.state as any;
+      const result = aggregator.getResult(0);
+      const binValues = result?.value;
+      if (binValues && aggregator.binCount > 0) {
+        const domain = aggregator.getResultDomain(0);
+        const aggregatedBins = buildAggregatedBinMap(binValues, aggregator.binCount);
+        // For quantile scale, pass the full sorted array of bin values as domain
+        // so d3.scaleQuantile can compute proper quantile breaks.
+        let enrichedDomain = domain;
+        if (props.colorScaleType === 'quantile') {
+          enrichedDomain = Array.from(binValues as Float32Array)
+            .slice(0, aggregator.binCount)
+            .filter(Number.isFinite)
+            .sort((a: number, b: number) => a - b);
+        }
+        props.onSetColorDomain({domain: enrichedDomain, aggregatedBins});
+      }
+    }
+  }
 
   getPickingInfo(params: GetPickingInfoParams): PickingInfo {
     const info = super.getPickingInfo(params) as HexagonLayerPickingInfo<Record<string, unknown>>;

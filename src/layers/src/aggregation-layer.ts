@@ -232,6 +232,36 @@ export default class AggregationLayer extends Layer {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   updateLayerVisualChannel({dataContainer}, channel) {
     this.validateVisualChannel(channel);
+
+    // When scale type changes, recompute colorDomain from stored aggregatedBins.
+    // quantile scale needs the full sorted array of bin values; other scales need [min, max].
+    const visualChannel = this.visualChannels[channel];
+    if (visualChannel && this.config.aggregatedBins) {
+      const scaleType = this.config[visualChannel.scale];
+      const domainKey = visualChannel.domain;
+      const bins = Object.values(this.config.aggregatedBins) as {value: number}[];
+      if (bins.length > 0) {
+        if (scaleType === 'quantile') {
+          const sorted = bins
+            .map(b => b.value)
+            .filter(Number.isFinite)
+            .sort((a, b) => a - b);
+          this.updateLayerConfig({[domainKey]: sorted});
+        } else {
+          let min = Infinity;
+          let max = -Infinity;
+          for (const b of bins) {
+            if (Number.isFinite(b.value)) {
+              if (b.value < min) min = b.value;
+              if (b.value > max) max = b.value;
+            }
+          }
+          if (Number.isFinite(min) && Number.isFinite(max)) {
+            this.updateLayerConfig({[domainKey]: [min, max]});
+          }
+        }
+      }
+    }
   }
 
   /**
