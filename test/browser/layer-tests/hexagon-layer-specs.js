@@ -362,7 +362,9 @@ test('#HexagonLayer -> renderLayer', t => {
           !Array.isArray(enrichedArg),
           'callback should receive enriched object, not plain array'
         );
-        t.deepEqual(enrichedArg.domain, [0, 2], 'enriched domain should be [0, 2]');
+        // Default colorScale is 'quantile', so the enriched domain is the full
+        // sorted array of per-bin values (not just [min, max]).
+        t.deepEqual(enrichedArg.domain, [0, 1, 2], 'enriched domain should be full sorted bin values for quantile scale');
         t.ok(enrichedArg.aggregatedBins, 'enriched call should include aggregatedBins');
 
         // Verify aggregator state and per-bin values
