@@ -3450,6 +3450,7 @@ __metadata:
     "@kepler.gl/actions": "npm:3.3.0-alpha.0"
     "@kepler.gl/components": "npm:3.3.0-alpha.0"
     "@kepler.gl/constants": "npm:3.3.0-alpha.0"
+    "@kepler.gl/duckdb": "npm:3.3.0-alpha.0"
     "@kepler.gl/layers": "npm:3.3.0-alpha.0"
     "@kepler.gl/localization": "npm:3.3.0-alpha.0"
     "@kepler.gl/processors": "npm:3.3.0-alpha.0"
@@ -3464,7 +3465,10 @@ __metadata:
     "@sqlrooms/room-store": "npm:*"
     "@sqlrooms/ui": "npm:*"
     ai: "npm:^6.0.154"
+    apache-arrow: "npm:>=15.0.0"
     color-interpolate: "npm:^1.0.5"
+    echarts: "npm:^5.6.0"
+    echarts-for-react: "npm:^3.0.2"
     ollama-ai-provider-v2: "npm:^0.0.5"
     react-intl: "npm:^6.3.0"
     zod: "npm:^4.1.8"
@@ -3685,7 +3689,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@kepler.gl/duckdb@workspace:src/duckdb":
+"@kepler.gl/duckdb@npm:3.3.0-alpha.0, @kepler.gl/duckdb@workspace:src/duckdb":
   version: 0.0.0-use.local
   resolution: "@kepler.gl/duckdb@workspace:src/duckdb"
   dependencies:
@@ -13515,6 +13519,29 @@ __metadata:
     jsbn: "npm:~0.1.0"
     safer-buffer: "npm:^2.1.0"
   checksum: 10c0/6cf168bae1e2dad2e46561d9af9cbabfbf5ff592176ad4e9f0f41eaaf5fe5e10bb58147fe0a804de62b1ee9dad42c28810c88d652b21b6013c47ba8efa274ca1
+  languageName: node
+  linkType: hard
+
+"echarts-for-react@npm:^3.0.2":
+  version: 3.0.6
+  resolution: "echarts-for-react@npm:3.0.6"
+  dependencies:
+    fast-deep-equal: "npm:^3.1.3"
+    size-sensor: "npm:^1.0.1"
+  peerDependencies:
+    echarts: ^3.0.0 || ^4.0.0 || ^5.0.0 || ^6.0.0
+    react: ^15.0.0 || >=16.0.0
+  checksum: 10c0/c39db42f66bd94cab99cf64c2f21988903057632d904eb812ade93c3394e11c6c3cdd04569220719865793964bb3b8977cffc3d637d47d681a9ab3c91fdb2e98
+  languageName: node
+  linkType: hard
+
+"echarts@npm:^5.6.0":
+  version: 5.6.0
+  resolution: "echarts@npm:5.6.0"
+  dependencies:
+    tslib: "npm:2.3.0"
+    zrender: "npm:5.6.1"
+  checksum: 10c0/6d6a2ee88534d1ff0433e935c542237b9896de1c94959f47ebc7e0e9da26f59bf11c91ed6fc135b62ad2786c779ee12bc536fa481e60532dad5b6a2f5167e9ea
   languageName: node
   linkType: hard
 
@@ -25640,6 +25667,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"size-sensor@npm:^1.0.1":
+  version: 1.0.3
+  resolution: "size-sensor@npm:1.0.3"
+  checksum: 10c0/3975d7d432b35b24d1df41ad8acb216fffed43798e05976bc820fee6702362f60a5987e131e4e2c35073777c46002cd880601e71919947f0d7513610fa144b5f
+  languageName: node
+  linkType: hard
+
 "slash@npm:^2.0.0":
   version: 2.0.0
   resolution: "slash@npm:2.0.0"
@@ -27518,6 +27552,13 @@ __metadata:
     minimist: "npm:^1.2.6"
     strip-bom: "npm:^3.0.0"
   checksum: 10c0/5b4f301a2b7a3766a986baf8fc0e177eb80bdba6e396792ff92dc23b5bca8bb279fc96517dcaaef63a3b49bebc6c4c833653ec58155780bc906bdbcf7dda0ef5
+  languageName: node
+  linkType: hard
+
+"tslib@npm:2.3.0":
+  version: 2.3.0
+  resolution: "tslib@npm:2.3.0"
+  checksum: 10c0/a845aed84e7e7dbb4c774582da60d7030ea39d67307250442d35c4c5dd77e4b44007098c37dd079e100029c76055f2a362734b8442ba828f8cc934f15ed9be61
   languageName: node
   linkType: hard
 
@@ -29735,6 +29776,15 @@ __metadata:
   version: 4.3.6
   resolution: "zod@npm:4.3.6"
   checksum: 10c0/860d25a81ab41d33aa25f8d0d07b091a04acb426e605f396227a796e9e800c44723ed96d0f53a512b57be3d1520f45bf69c0cb3b378a232a00787a2609625307
+  languageName: node
+  linkType: hard
+
+"zrender@npm:5.6.1":
+  version: 5.6.1
+  resolution: "zrender@npm:5.6.1"
+  dependencies:
+    tslib: "npm:2.3.0"
+  checksum: 10c0/dc1cc570054640cbd8fbb7b92e6252f225319522bfe3e8dc8bf02cc02d414e00a4c8d0a6f89bfc9d96e5e9511fdca94dd3d06bf53690df2b2f12b0fc560ac307
   languageName: node
   linkType: hard
 

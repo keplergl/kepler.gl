@@ -14,16 +14,25 @@ import {
   persistSliceConfigs
 } from '@sqlrooms/room-store';
 import {VisState} from '@kepler.gl/schemas';
+import {layerSetIsValid} from '@kepler.gl/actions';
 import {Dispatch} from 'redux';
 
 import {AI_SETTINGS} from './config/models';
 import {INSTRUCTIONS} from './constants';
-import {getDatasetContext} from './tools/utils';
+import {getDatasetContext, highlightRows} from './tools/utils';
 import {KeplerContext} from './types';
 import {keplerAgentTool} from './agents/KeplerAgent';
 import {echartsAgentTool} from './agents/EchartsAgent';
 import {geoAgentTool} from './agents/GeoAgent';
 import {lisaAgentTool} from './agents/LisaAgent';
+import {
+  HistogramRenderer,
+  BoxplotRenderer,
+  ScatterplotRenderer,
+  BubbleChartRenderer,
+  PCPRenderer,
+  BrushLinkCallback
+} from './components/echarts-renderers';
 
 export type AiAssistantStoreState = BaseRoomStoreState & AiSliceState & AiSettingsSliceState;
 
@@ -52,6 +61,14 @@ export function createAiAssistantStore(keplerBridge: KeplerBridge) {
     dispatch: keplerBridge.dispatch
   };
 
+  const onSelected: BrushLinkCallback = (datasetName, selectedIndices) => {
+    const visState = ctx.getVisState();
+    const triggerLayerReRender = (layer: any, isValid: boolean) => {
+      ctx.dispatch(layerSetIsValid(layer, isValid));
+    };
+    highlightRows(visState.datasets, visState.layers, datasetName, selectedIndices, triggerLayerReRender);
+  };
+
   const {roomStore, useRoomStore} = createRoomStore<AiAssistantStoreState>(
     persistSliceConfigs(
       {
@@ -76,11 +93,17 @@ export function createAiAssistantStore(keplerBridge: KeplerBridge) {
             'agent-geo': geoAgentTool(store, ctx),
             'agent-lisa': lisaAgentTool(store, ctx)
           },
-          toolRenderers: {}
+          toolRenderers: {
+            histogramTool: HistogramRenderer,
+            boxplotTool: BoxplotRenderer,
+            scatterplotTool: ScatterplotRenderer,
+            bubbleChartTool: BubbleChartRenderer,
+            pcpTool: PCPRenderer
+          }
         })(set, get, store)
       })
     )
   );
 
-  return {roomStore, useRoomStore};
+  return {roomStore, useRoomStore, onSelected};
 }

@@ -7,6 +7,14 @@ import {AiSettingsPanel, useStoreWithAiSettings} from '@sqlrooms/ai-settings';
 import {Button, useDisclosure} from '@sqlrooms/ui';
 import {Settings} from 'lucide-react';
 
+const HOISTED_RENDERERS = [
+  'histogramTool',
+  'boxplotTool',
+  'scatterplotTool',
+  'bubbleChartTool',
+  'pcpTool'
+];
+
 /**
  * The main AI Assistant chat component using sqlrooms Chat compound component.
  * Replaces the old AiAssistant from @openassistant/ui.
@@ -47,7 +55,7 @@ export function AiAssistantComponent() {
         ) : (
           <>
             <div className="grow overflow-auto">
-              <Chat.Messages key={currentSessionId} />
+              <Chat.Messages key={currentSessionId} hoistedRenderers={HOISTED_RENDERERS} />
             </div>
             <Chat.Composer>
               <Chat.InlineApiKeyInput

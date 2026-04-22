@@ -154,7 +154,7 @@ const App = props => {
 
   const mapBoundaryRef = useRef<{nw: number[]; se: number[]} | undefined>();
 
-  const {roomStore} = useMemo(() => {
+  const {roomStore, onSelected} = useMemo(() => {
     return createAiAssistantStore({
       getVisState: () => reduxStore.getState()?.demo?.keplerGl?.map?.visState,
       getMapBoundary: () => mapBoundaryRef.current as any,
@@ -691,7 +691,7 @@ const App = props => {
                   <>
                     <StyledVerticalResizeHandle />
                     <Panel defaultSize={30} minSize={20}>
-                      <AiAssistantPanel roomStore={roomStore} />
+                      <AiAssistantPanel roomStore={roomStore} onSelected={onSelected} />
                     </Panel>
                   </>
                 )}

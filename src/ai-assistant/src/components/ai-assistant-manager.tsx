@@ -12,6 +12,7 @@ import {TooltipProvider} from '@sqlrooms/ui';
 import {SidePanelTitleFactory} from '@kepler.gl/components';
 
 import {AiAssistantComponent} from './ai-assistant-component';
+import {BrushLinkProvider, BrushLinkCallback} from './echarts-renderers';
 import {messages} from '../localization';
 
 import styled from 'styled-components';
@@ -69,13 +70,14 @@ export type KeplerReduxState = {
 
 export type AiAssistantPanelProps = {
   roomStore: any;
+  onSelected?: BrushLinkCallback;
 };
 
 /**
  * Top-level AI Assistant panel that wraps the chat in kepler.gl's side panel chrome.
  * Accepts a roomStore created by createAiAssistantStore() and provides it via RoomStateProvider.
  */
-export function AiAssistantPanel({roomStore}: AiAssistantPanelProps) {
+export function AiAssistantPanel({roomStore, onSelected}: AiAssistantPanelProps) {
   const locale = useSelector(
     (state: KeplerReduxState) => state.demo?.keplerGl?.map?.uiState?.locale || 'en'
   );
@@ -97,17 +99,19 @@ export function AiAssistantPanel({roomStore}: AiAssistantPanelProps) {
     <IntlProvider locale={locale} messages={flattenMessages(combinedMessages[locale])}>
       <RoomStateProvider roomStore={roomStore}>
         <TooltipProvider>
-          <StyledAiAssistantPanelContainer className="ai-assistant-manager">
-            <StyledAiAssistantPanel>
-              <StyledAiAssistantPanelHeader>
-                <SidePanelTitle className="ai-assistant-manager-title" title="AI Assistant" />
-              </StyledAiAssistantPanelHeader>
+          <BrushLinkProvider value={onSelected}>
+            <StyledAiAssistantPanelContainer className="ai-assistant-manager">
+              <StyledAiAssistantPanel>
+                <StyledAiAssistantPanelHeader>
+                  <SidePanelTitle className="ai-assistant-manager-title" title="AI Assistant" />
+                </StyledAiAssistantPanelHeader>
 
-              <StyledAiAssistantPanelContent>
-                <AiAssistantComponent />
-              </StyledAiAssistantPanelContent>
-            </StyledAiAssistantPanel>
-          </StyledAiAssistantPanelContainer>
+                <StyledAiAssistantPanelContent>
+                  <AiAssistantComponent />
+                </StyledAiAssistantPanelContent>
+              </StyledAiAssistantPanel>
+            </StyledAiAssistantPanelContainer>
+          </BrushLinkProvider>
         </TooltipProvider>
       </RoomStateProvider>
     </IntlProvider>

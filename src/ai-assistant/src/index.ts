@@ -5,6 +5,8 @@
 export {AiAssistantPanel} from './components/ai-assistant-manager';
 export type {AiAssistantPanelProps, KeplerReduxState} from './components/ai-assistant-manager';
 export {AiAssistantComponent} from './components/ai-assistant-component';
+export {BrushLinkProvider} from './components/echarts-renderers';
+export type {BrushLinkCallback} from './components/echarts-renderers';
 export {default as AiAssistantControlFactory} from './map/ai-assistant-control';
 
 // Store
