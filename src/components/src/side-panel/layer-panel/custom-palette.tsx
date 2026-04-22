@@ -208,6 +208,9 @@ const StyledInput = styled(Input).withConfig({shouldForwardProp})<{
   width: ${props => props.width ?? '100%'};
   text-align: ${props => props.textAlign ?? 'end'};
   pointer-events: ${props => (props.disabled ? 'none' : 'all')};
+  font-size: 10px;
+  padding-left: 4px;
+  padding-right: 4px;
 `;
 
 const InputText = styled.div.withConfig({shouldForwardProp})<{width: string; textAlign: string}>`
@@ -216,6 +219,9 @@ const InputText = styled.div.withConfig({shouldForwardProp})<{width: string; tex
   border-color: transparent;
   width: ${props => props.width ?? '100%'};
   text-align: ${props => props.textAlign ?? 'end'};
+  font-size: 10px;
+  padding-left: 4px;
+  padding-right: 4px;
 
   &:hover {
     cursor: auto;
@@ -400,7 +406,7 @@ export const EditableColorRange: React.FC<EditableColorRangeProps> = ({
       <ColorPaletteInput
         value={noMinBound ? 'Less' : String(leftInput ?? '')}
         id={`color-palette-input-${index}-left`}
-        width="50px"
+        width="54px"
         textAlign="end"
         editable={noMinBound ? false : editable}
         onChange={onChangeLeft}
@@ -409,7 +415,7 @@ export const EditableColorRange: React.FC<EditableColorRangeProps> = ({
       <ColorPaletteInput
         value={noMaxBound ? 'More' : String(rightInput ?? '')}
         id={`color-palette-input-${index}-right`}
-        width="50px"
+        width="54px"
         textAlign="end"
         onChange={onChangeRight}
         editable={noMaxBound ? false : editable}

@@ -3,7 +3,7 @@
 
 import {HexagonLayer, HexagonLayerPickingInfo} from '@deck.gl/aggregation-layers';
 import {GetPickingInfoParams, PickingInfo, Viewport} from '@deck.gl/core';
-import {buildAggregatedBinMap} from '../layer-utils/aggregation-utils';
+import {buildAggregatedBinMap, classifyBinsByCustomBreaks} from '../layer-utils/aggregation-utils';
 
 const THIRD_PI = Math.PI / 3;
 const HexbinVertices = Array.from({length: 6}, (_, i) => {
@@ -69,13 +69,23 @@ export default class ScaleEnhancedHexagonLayer extends HexagonLayer<any> {
       const props = (this as any).getCurrentLayer().props;
       const {aggregator} = this.state as any;
       const result = aggregator.getResult(0);
-      const binValues = result?.value;
+      const binValues = result?.value as Float32Array | undefined;
       if (binValues && aggregator.binCount > 0) {
+        // Snapshot raw values so renderLayers() can re-classify when colorMap changes.
+        this.setState({rawColorBinValues: Float32Array.from(binValues.subarray(0, aggregator.binCount))});
+
         const domain = aggregator.getResultDomain(0);
         const aggregatedBins = buildAggregatedBinMap(binValues, aggregator.binCount);
+
+        if (props.colorMap) {
+          classifyBinsByCustomBreaks(
+            (this.state as any).colors, aggregator.binCount, props.colorMap, binValues
+          );
+        }
+
         let enrichedDomain = domain;
         if (props.colorScaleType === 'quantile') {
-          enrichedDomain = Array.from(binValues as Float32Array)
+          enrichedDomain = Array.from(binValues)
             .slice(0, aggregator.binCount)
             .filter(Number.isFinite)
             .sort((a: number, b: number) => a - b);
@@ -83,6 +93,21 @@ export default class ScaleEnhancedHexagonLayer extends HexagonLayer<any> {
         props.onSetColorDomain({domain: enrichedDomain, aggregatedBins});
       }
     }
+  }
+
+  renderLayers() {
+    // Re-classify when custom colorMap changes between renders without re-aggregation.
+    const props = (this as any).getCurrentLayer().props;
+    const {colors, rawColorBinValues, aggregator} = this.state as any;
+    if (
+      props.colorMap &&
+      colors &&
+      rawColorBinValues &&
+      aggregator?.binCount > 0
+    ) {
+      classifyBinsByCustomBreaks(colors, aggregator.binCount, props.colorMap, rawColorBinValues);
+    }
+    return (HexagonLayer.prototype as any).renderLayers.call(this);
   }
 
   getPickingInfo(params: GetPickingInfoParams): PickingInfo {
