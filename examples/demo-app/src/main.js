@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import '../../../src/ai-assistant/node_modules/@sqlrooms/ui/dist/styles.css';
+
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import document from 'global/document';

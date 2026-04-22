@@ -224,6 +224,16 @@
     "webpack-stats-plugin": "^0.2.1"
   },
   "resolutions": {
+    "@sqlrooms/ai-config": "portal:/Users/xun/github/sqlrooms/packages/ai-config",
+    "@sqlrooms/ai-core": "portal:/Users/xun/github/sqlrooms/packages/ai-core",
+    "@sqlrooms/ai-settings": "portal:/Users/xun/github/sqlrooms/packages/ai-settings",
+    "@sqlrooms/room-store": "portal:/Users/xun/github/sqlrooms/packages/room-store",
+    "@sqlrooms/room-config": "portal:/Users/xun/github/sqlrooms/packages/room-config",
+    "@sqlrooms/ui": "portal:/Users/xun/github/sqlrooms/packages/ui",
+    "@sqlrooms/utils": "portal:/Users/xun/github/sqlrooms/packages/utils",
+    "@sqlrooms/codemirror": "portal:/Users/xun/github/sqlrooms/packages/codemirror",
+    "@sqlrooms/recharts": "portal:/Users/xun/github/sqlrooms/packages/recharts",
+    "@sqlrooms/layout-config": "portal:/Users/xun/github/sqlrooms/packages/layout-config",
     "@deck.gl/aggregation-layers": "9.2.11",
     "@deck.gl/core": "9.2.11",
     "@deck.gl/extensions": "9.2.11",

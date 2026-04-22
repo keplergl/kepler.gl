@@ -1,34 +1,31 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useCallback, useMemo} from 'react';
-import styled from 'styled-components';
-import {useSelector, useDispatch} from 'react-redux';
+import React, {useMemo} from 'react';
+import {useSelector} from 'react-redux';
 import {IntlProvider} from 'react-intl';
 import {flattenMessages} from '@kepler.gl/utils';
 import {messages as keplerGlMessages} from '@kepler.gl/localization';
+import {RoomStateProvider} from '@sqlrooms/room-store';
+import {TooltipProvider} from '@sqlrooms/ui';
 
-import {MapStyle} from '@kepler.gl/reducers';
-import {SidePanelTitleFactory, Icons} from '@kepler.gl/components';
-import {VisState} from '@kepler.gl/schemas';
+import {SidePanelTitleFactory} from '@kepler.gl/components';
 
-import {AiAssistantState} from '../index';
-import {updateAiAssistantConfig} from '../actions';
-import {AiAssistantConfig} from './ai-assistant-config';
 import {AiAssistantComponent} from './ai-assistant-component';
 import {messages} from '../localization';
+
+import styled from 'styled-components';
 
 const StyledAiAssistantPanelContainer = styled.div`
   display: flex;
   flex-direction: column;
-  pointer-events: none !important; /* prevent padding from blocking input */
+  pointer-events: none !important;
   flex-grow: 1;
   justify-content: space-between;
   overflow: hidden;
   height: 100%;
   width: 100%;
   & > * {
-    /* all children should allow input */
     pointer-events: all;
   }
 `;
@@ -60,32 +57,29 @@ const StyledAiAssistantPanelContent = styled.div`
 
 const SidePanelTitle = SidePanelTitleFactory();
 
-export type State = {
+export type KeplerReduxState = {
   demo: {
     keplerGl: {
       map: {
         uiState: {locale: string};
-        visState: VisState;
-        mapStyle: MapStyle;
       };
     };
-    aiAssistant: AiAssistantState;
   };
 };
 
-export function AiAssistantPanel() {
-  const dispatch = useDispatch();
-  const aiAssistant = useSelector((state: State) => state.demo.aiAssistant);
-  const locale = useSelector((state: State) => state.demo.keplerGl.map.uiState.locale);
+export type AiAssistantPanelProps = {
+  roomStore: any;
+};
 
-  const onConfigButtonClick = useCallback(() => {
-    if (aiAssistant) {
-      // set aiAssistant.config.isReady to false so we can render the config component
-      dispatch(updateAiAssistantConfig({...aiAssistant.config, isReady: false}));
-    }
-  }, [aiAssistant, dispatch]);
+/**
+ * Top-level AI Assistant panel that wraps the chat in kepler.gl's side panel chrome.
+ * Accepts a roomStore created by createAiAssistantStore() and provides it via RoomStateProvider.
+ */
+export function AiAssistantPanel({roomStore}: AiAssistantPanelProps) {
+  const locale = useSelector(
+    (state: KeplerReduxState) => state.demo?.keplerGl?.map?.uiState?.locale || 'en'
+  );
 
-  // combine keplerGlMessages and messages
   const combinedMessages = useMemo(() => {
     return Object.keys(messages).reduce(
       (acc, language) => ({
@@ -95,25 +89,27 @@ export function AiAssistantPanel() {
           ...(keplerGlMessages[language] || {})
         }
       }),
-      {}
+      {} as Record<string, any>
     );
   }, []);
 
   return (
     <IntlProvider locale={locale} messages={flattenMessages(combinedMessages[locale])}>
-      <StyledAiAssistantPanelContainer className="ai-assistant-manager">
-        <StyledAiAssistantPanel>
-          <StyledAiAssistantPanelHeader>
-            <SidePanelTitle className="ai-assistant-manager-title" title="AI Assistant">
-              <Icons.Settings onClick={onConfigButtonClick} />
-            </SidePanelTitle>
-          </StyledAiAssistantPanelHeader>
+      <RoomStateProvider roomStore={roomStore}>
+        <TooltipProvider>
+          <StyledAiAssistantPanelContainer className="ai-assistant-manager">
+            <StyledAiAssistantPanel>
+              <StyledAiAssistantPanelHeader>
+                <SidePanelTitle className="ai-assistant-manager-title" title="AI Assistant" />
+              </StyledAiAssistantPanelHeader>
 
-          <StyledAiAssistantPanelContent>
-            {!aiAssistant?.config.isReady ? <AiAssistantConfig /> : <AiAssistantComponent />}
-          </StyledAiAssistantPanelContent>
-        </StyledAiAssistantPanel>
-      </StyledAiAssistantPanelContainer>
+              <StyledAiAssistantPanelContent>
+                <AiAssistantComponent />
+              </StyledAiAssistantPanelContent>
+            </StyledAiAssistantPanel>
+          </StyledAiAssistantPanelContainer>
+        </TooltipProvider>
+      </RoomStateProvider>
     </IntlProvider>
   );
 }

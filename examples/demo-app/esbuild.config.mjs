@@ -46,7 +46,10 @@ const getThirdPartyLibraryAliases = useKeplerNodeModules => {
     'react-intl': `${nodeModulesDir}/react-intl`,
     'react-palm': `${nodeModulesDir}/react-palm`,
     // kepler.gl and loaders.gl need to use same apache-arrow
-    'apache-arrow': `${nodeModulesDir}/apache-arrow`
+    'apache-arrow': `${nodeModulesDir}/apache-arrow`,
+    // portal-linked @sqlrooms packages bundle their own copies of zustand/react;
+    // force a single instance so React contexts (e.g. RoomStateProvider) are shared.
+    zustand: `${nodeModulesDir}/zustand`
   };
 };
 
@@ -104,6 +107,19 @@ const config = {
     'process.env.NODE_ENV': NODE_ENV
   },
   plugins: [
+    {
+      name: 'resolve-monaco-esm',
+      setup(build) {
+        build.onResolve({filter: /^monaco-editor\/esm\//}, async args => {
+          if (args.path.endsWith('.js')) return undefined;
+          const result = await build.resolve(args.path + '.js', {
+            resolveDir: args.resolveDir,
+            kind: args.kind
+          });
+          return result;
+        });
+      }
+    },
     dotenvRun({
       verbose: true,
       environment: NODE_ENV,

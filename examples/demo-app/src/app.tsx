@@ -1,23 +1,18 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useCallback, useEffect, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import AutoSizer from 'react-virtualized/dist/commonjs/AutoSizer';
 import styled, {ThemeProvider, StyleSheetManager} from 'styled-components';
 import Window from 'global/window';
-import {connect, useDispatch} from 'react-redux';
+import {connect, useDispatch, useStore} from 'react-redux';
 import cloneDeep from 'lodash/cloneDeep';
 import isEqual from 'lodash/isEqual';
 import {useSelector} from 'react-redux';
 import isPropValid from '@emotion/is-prop-valid';
 import {WebMercatorViewport} from '@deck.gl/core';
 import {ScreenshotWrapper} from '@openassistant/ui';
-import {
-  setStartScreenCapture,
-  setScreenCaptured,
-  AiAssistantPanel,
-  setMapBoundary
-} from '@kepler.gl/ai-assistant';
+import {AiAssistantPanel, createAiAssistantStore} from '@kepler.gl/ai-assistant';
 import {panelBorderColor, theme} from '@kepler.gl/styles';
 import {ParsedConfig} from '@kepler.gl/types';
 import {getApplicationConfig} from '@kepler.gl/utils';
@@ -155,6 +150,19 @@ const App = props => {
   const [showBanner, toggleShowBanner] = useState(false);
   const {params: {id, provider} = {}, location: {query = {}} = {}} = props;
   const dispatch = useDispatch();
+  const reduxStore = useStore();
+
+  const mapBoundaryRef = useRef<{nw: number[]; se: number[]} | undefined>();
+
+  const {roomStore} = useMemo(() => {
+    return createAiAssistantStore({
+      getVisState: () => reduxStore.getState()?.demo?.keplerGl?.map?.visState,
+      getMapBoundary: () => mapBoundaryRef.current as any,
+      getMapboxToken: () => CLOUD_PROVIDERS_CONFIGURATION.MAPBOX_TOKEN,
+      dispatch
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // TODO find another way to check for existence of duckDb plugin
   const duckDbPluginEnabled = (getApplicationConfig().plugins || []).some(p => p.name === 'duckdb');
@@ -219,33 +227,30 @@ const App = props => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const [startScreenCapture, setStartScreenCapture] = useState(false);
+  const [, setScreenCaptured] = useState('');
+  const [mapBoundary, setMapBoundary] = useState<{nw: number[]; se: number[]} | undefined>();
+
   /**
    * Update map boundary when view state changes, used by ai-assistant to
    * get data from vector tiles when map boundary changes
    */
-  const onViewStateChange = useCallback(
-    viewState => {
-      const viewport = new WebMercatorViewport(viewState);
-      const nw = viewport.unproject([0, 0]);
-      const se = viewport.unproject([viewport.width, viewport.height]);
-      dispatch(setMapBoundary(nw, se));
-    },
-    [dispatch]
-  );
+  const onViewStateChange = useCallback(viewState => {
+    const viewport = new WebMercatorViewport(viewState);
+    const nw = viewport.unproject([0, 0]);
+    const se = viewport.unproject([viewport.width, viewport.height]);
+    const boundary = {nw, se};
+    setMapBoundary(boundary);
+    mapBoundaryRef.current = boundary;
+  }, []);
 
-  const _setStartScreenCapture = useCallback(
-    flag => {
-      dispatch(setStartScreenCapture(flag));
-    },
-    [dispatch]
-  );
+  const _setStartScreenCapture = useCallback(flag => {
+    setStartScreenCapture(flag);
+  }, []);
 
-  const _setScreenCaptured = useCallback(
-    screenshot => {
-      dispatch(setScreenCaptured(screenshot));
-    },
-    [dispatch]
-  );
+  const _setScreenCaptured = useCallback(screenshot => {
+    setScreenCaptured(screenshot);
+  }, []);
 
   /*
   const _showBanner = useCallback(() => {
@@ -640,7 +645,7 @@ const App = props => {
         // }}
         >
           <ScreenshotWrapper
-            startScreenCapture={props.demo.aiAssistant.screenshotToAsk.startScreenCapture}
+            startScreenCapture={startScreenCapture}
             setScreenCaptured={_setScreenCaptured}
             setStartScreenCapture={_setStartScreenCapture}
             className="h-screen"
@@ -686,7 +691,7 @@ const App = props => {
                   <>
                     <StyledVerticalResizeHandle />
                     <Panel defaultSize={30} minSize={20}>
-                      <AiAssistantPanel />
+                      <AiAssistantPanel roomStore={roomStore} />
                     </Panel>
                   </>
                 )}
