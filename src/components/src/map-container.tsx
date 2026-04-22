@@ -575,7 +575,7 @@ export default function MapContainerFactory(
 
     _onLayerSetDomain = (
       idx: number,
-      value: number[] | {domain: VisualChannelDomain; aggregatedBins: AggregatedBin[]}
+      value: number[] | {domain: VisualChannelDomain; aggregatedBins: Record<number, AggregatedBin>}
     ) => {
       // deck.gl 9 native aggregation layers (Grid, Hexagon) pass
       // {domain, aggregatedBins} via our ScaleEnhanced* overrides,

@@ -352,18 +352,17 @@ test('#GridLayer -> renderLayer', t => {
           'getBin array length should be binCount * 2 (col, row pairs)'
         );
 
-        // deck.gl 9: onSetColorDomain now sends {domain, aggregatedBins} via
-        // ScaleEnhancedGridLayer override.
+        // onSetColorDomain now sends a single enriched {domain, aggregatedBins}
+        // call (the degenerate [min,max] from the parent is suppressed).
         // count aggregation: bins have 0, 2, and 1 filtered points
         t.ok(spyLayerCallbacks.called, 'should call onSetLayerDomain');
-        const domainArg = spyLayerCallbacks.args[0][0];
-        t.deepEqual(domainArg, [0, 2], 'first onSetLayerDomain call should receive exact domain [0, 2]');
-        const lastCallIdx0 = spyLayerCallbacks.args.length - 1;
-        const enrichedArg0 = spyLayerCallbacks.args[lastCallIdx0][0];
-        if (!Array.isArray(enrichedArg0)) {
-          t.ok(enrichedArg0.aggregatedBins, 'enriched call should include aggregatedBins');
-          t.deepEqual(enrichedArg0.domain, [0, 2], 'enriched domain should be [0, 2]');
-        }
+        const enrichedArg0 = spyLayerCallbacks.args[0][0];
+        t.ok(
+          !Array.isArray(enrichedArg0),
+          'callback should receive enriched object, not plain array'
+        );
+        t.deepEqual(enrichedArg0.domain, [0, 2], 'enriched domain should be [0, 2]');
+        t.ok(enrichedArg0.aggregatedBins, 'enriched call should include aggregatedBins');
 
         // Verify aggregator state and per-bin values
         const aggregator = cpuGridLayer.state?.aggregator;
@@ -493,23 +492,22 @@ test('#GridLayer -> renderLayer', t => {
           'should have exactly 1 NaN color value (empty bin)'
         );
 
-        // deck.gl 9: onSetColorDomain now sends {domain, aggregatedBins} via
-        // ScaleEnhancedGridLayer override. The last call is the enriched one.
+        // onSetColorDomain now sends a single enriched {domain, aggregatedBins}
+        // call (the degenerate [min,max] from the parent is suppressed).
         // max aggregation of trip_distance: bins with filtered points have max 7.13 and 11
         // Float32 precision: 7.13 may become 7.130000114440918
         t.ok(spyLayerCallbacks.called, 'should call onSetLayerDomain');
         const lastCallIdx = spyLayerCallbacks.args.length - 1;
         const domainCallArg = spyLayerCallbacks.args[lastCallIdx][0];
-        const domainArg = Array.isArray(domainCallArg) ? domainCallArg : domainCallArg.domain;
+        t.ok(!Array.isArray(domainCallArg), 'callback should receive enriched object');
+        const domainArg = domainCallArg.domain;
         t.equal(domainArg.length, 2, 'domain should have 2 elements');
         t.ok(
           Math.abs(domainArg[0] - 7.13) < 0.001,
           `domain[0] should be ~7.13 (got ${domainArg[0]})`
         );
         t.equal(domainArg[1], 11, 'domain[1] should be 11');
-        if (!Array.isArray(domainCallArg)) {
-          t.ok(domainCallArg.aggregatedBins, 'enriched call should include aggregatedBins');
-        }
+        t.ok(domainCallArg.aggregatedBins, 'enriched call should include aggregatedBins');
 
         // Verify aggregator state and per-bin values
         const aggregator = cpuGridLayer.state?.aggregator;

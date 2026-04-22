@@ -29,17 +29,44 @@ interface GridPickingObject {
  * We also override _onAggregationUpdate to send per-bin aggregated values through
  * onSetColorDomain so the legend can compute proper quantile/custom breaks.
  */
+// @ts-expect-error -- overriding private _onAggregationUpdate to enrich the onSetColorDomain callback
 export default class ScaleEnhancedGridLayer extends GridLayer<any> {
   static defaultProps = {
     ...GridLayer.defaultProps,
     gpuAggregation: false
   };
 
+  // HACK: deck.gl 9's _onAggregationUpdate is private and its onSetColorDomain
+  // callback only provides [min, max].  That is sufficient for quantize/linear
+  // scales but d3.scaleQuantile needs the *full sorted array* of bin values to
+  // compute correct break points — without it the legend labels are wrong
+  // (see https://github.com/keplergl/kepler.gl/issues/3381).
+  //
+  // deck.gl does not expose a public hook for post-aggregation data, so we:
+  //   1. Temporarily replace onSetColorDomain with a no-op to suppress the
+  //      parent's [min, max]-only callback.
+  //   2. Delegate to the parent so it still creates the internal
+  //      AttributeWithScale state that renderLayers() depends on.
+  //   3. Fire onSetColorDomain ourselves with an enriched payload that includes
+  //      per-bin values (aggregatedBins) and, for quantile scale, the full
+  //      sorted domain.
+  //
+  // This can be removed once deck.gl exposes a richer post-aggregation callback
+  // or makes _onAggregationUpdate / AttributeWithScale part of the public API.
   _onAggregationUpdate({channel}: {channel: number}) {
-    (GridLayer.prototype as any)._onAggregationUpdate.call(this, {channel});
+    const props = (this as any).getCurrentLayer().props;
 
     if (channel === 0) {
-      const props = (this as any).getCurrentLayer().props;
+      const origCallback = props.onSetColorDomain;
+      props.onSetColorDomain = () => {
+        // no-op
+      };
+      try {
+        (GridLayer.prototype as any)._onAggregationUpdate.call(this, {channel});
+      } finally {
+        props.onSetColorDomain = origCallback;
+      }
+
       const {aggregator} = this.state as any;
       const result = aggregator.getResult(0);
       const binValues = result?.value;
@@ -53,8 +80,12 @@ export default class ScaleEnhancedGridLayer extends GridLayer<any> {
             .filter(Number.isFinite)
             .sort((a: number, b: number) => a - b);
         }
-        props.onSetColorDomain({domain: enrichedDomain, aggregatedBins});
+        origCallback({domain: enrichedDomain, aggregatedBins});
+      } else {
+        origCallback(props.colorDomain ?? [0, 1]);
       }
+    } else {
+      (GridLayer.prototype as any)._onAggregationUpdate.call(this, {channel});
     }
   }
 

@@ -27,7 +27,7 @@ export type LayerBaseConfig = {
   };
 
   // for aggregate layer, aggregatedBins is returned for custom color scale
-  aggregatedBins?: AggregatedBin[];
+  aggregatedBins?: Record<number, AggregatedBin>;
 
   columnMode?: string;
   heightField?: VisualChannelField;

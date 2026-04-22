@@ -40,30 +40,50 @@ interface HexPickingObject {
  * We also override _onAggregationUpdate to send per-bin aggregated values through
  * onSetColorDomain so the legend can compute proper quantile/custom breaks.
  */
+// @ts-expect-error -- overriding private _onAggregationUpdate to enrich the onSetColorDomain callback
 export default class ScaleEnhancedHexagonLayer extends HexagonLayer<any> {
   static defaultProps = {
     ...HexagonLayer.defaultProps,
     gpuAggregation: false
   };
 
+  // HACK: deck.gl 9's _onAggregationUpdate is private and its onSetColorDomain
+  // callback only provides [min, max].  That is sufficient for quantize/linear
+  // scales but d3.scaleQuantile needs the *full sorted array* of bin values to
+  // compute correct break points — without it the legend labels are wrong
+  // (see https://github.com/keplergl/kepler.gl/issues/3381).
+  //
+  // deck.gl does not expose a public hook for post-aggregation data, so we:
+  //   1. Temporarily replace onSetColorDomain with a no-op to suppress the
+  //      parent's [min, max]-only callback.
+  //   2. Delegate to the parent so it still creates the internal
+  //      AttributeWithScale state that renderLayers() depends on.
+  //   3. Fire onSetColorDomain ourselves with an enriched payload that includes
+  //      per-bin values (aggregatedBins) and, for quantile scale, the full
+  //      sorted domain.
+  //
+  // This can be removed once deck.gl exposes a richer post-aggregation callback
+  // or makes _onAggregationUpdate / AttributeWithScale part of the public API.
   _onAggregationUpdate({channel}: {channel: number}) {
-    // Delegate to the parent which handles internal state (AttributeWithScale)
-    // and fires onSetColorDomain with [min, max].
-    (HexagonLayer.prototype as any)._onAggregationUpdate.call(this, {channel});
+    const props = (this as any).getCurrentLayer().props;
 
     if (channel === 0) {
-      // The parent already called onSetColorDomain([min, max]).
-      // Now fire it again with the enriched format {domain, aggregatedBins}
-      // so the legend can compute proper quantile breaks from the full bin data.
-      const props = (this as any).getCurrentLayer().props;
+      const origCallback = props.onSetColorDomain;
+      props.onSetColorDomain = () => {
+        // no-op
+      };
+      try {
+        (HexagonLayer.prototype as any)._onAggregationUpdate.call(this, {channel});
+      } finally {
+        props.onSetColorDomain = origCallback;
+      }
+
       const {aggregator} = this.state as any;
       const result = aggregator.getResult(0);
       const binValues = result?.value;
       if (binValues && aggregator.binCount > 0) {
         const domain = aggregator.getResultDomain(0);
         const aggregatedBins = buildAggregatedBinMap(binValues, aggregator.binCount);
-        // For quantile scale, pass the full sorted array of bin values as domain
-        // so d3.scaleQuantile can compute proper quantile breaks.
         let enrichedDomain = domain;
         if (props.colorScaleType === 'quantile') {
           enrichedDomain = Array.from(binValues as Float32Array)
@@ -71,8 +91,12 @@ export default class ScaleEnhancedHexagonLayer extends HexagonLayer<any> {
             .filter(Number.isFinite)
             .sort((a: number, b: number) => a - b);
         }
-        props.onSetColorDomain({domain: enrichedDomain, aggregatedBins});
+        origCallback({domain: enrichedDomain, aggregatedBins});
+      } else {
+        origCallback(props.colorDomain ?? [0, 1]);
       }
+    } else {
+      (HexagonLayer.prototype as any)._onAggregationUpdate.call(this, {channel});
     }
   }
 
