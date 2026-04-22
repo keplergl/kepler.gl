@@ -352,11 +352,12 @@ test('#GridLayer -> renderLayer', t => {
           'getBin array length should be binCount * 2 (col, row pairs)'
         );
 
-        // onSetColorDomain now sends a single enriched {domain, aggregatedBins}
-        // call (the degenerate [min,max] from the parent is suppressed).
+        // onSetColorDomain fires twice: first the parent's [min, max], then our
+        // enriched {domain, aggregatedBins}.  The last call is the one that sticks.
         // count aggregation: bins have 0, 2, and 1 filtered points
         t.ok(spyLayerCallbacks.called, 'should call onSetLayerDomain');
-        const enrichedArg0 = spyLayerCallbacks.args[0][0];
+        const lastIdx0 = spyLayerCallbacks.args.length - 1;
+        const enrichedArg0 = spyLayerCallbacks.args[lastIdx0][0];
         t.ok(
           !Array.isArray(enrichedArg0),
           'callback should receive enriched object, not plain array'
@@ -492,8 +493,8 @@ test('#GridLayer -> renderLayer', t => {
           'should have exactly 1 NaN color value (empty bin)'
         );
 
-        // onSetColorDomain now sends a single enriched {domain, aggregatedBins}
-        // call (the degenerate [min,max] from the parent is suppressed).
+        // onSetColorDomain fires twice: first the parent's [min, max], then our
+        // enriched {domain, aggregatedBins}.  The last call is the one that sticks.
         // max aggregation of trip_distance: bins with filtered points have max 7.13 and 11
         // Float32 precision: 7.13 may become 7.130000114440918
         t.ok(spyLayerCallbacks.called, 'should call onSetLayerDomain');

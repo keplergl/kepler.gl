@@ -53,31 +53,20 @@ export default class ScaleEnhancedHexagonLayer extends HexagonLayer<any> {
   // compute correct break points — without it the legend labels are wrong
   // (see https://github.com/keplergl/kepler.gl/issues/3381).
   //
-  // deck.gl does not expose a public hook for post-aggregation data, so we:
-  //   1. Temporarily replace onSetColorDomain with a no-op to suppress the
-  //      parent's [min, max]-only callback.
-  //   2. Delegate to the parent so it still creates the internal
-  //      AttributeWithScale state that renderLayers() depends on.
-  //   3. Fire onSetColorDomain ourselves with an enriched payload that includes
-  //      per-bin values (aggregatedBins) and, for quantile scale, the full
-  //      sorted domain.
+  // deck.gl does not expose a public hook for post-aggregation data, and props
+  // are Object.freeze()'d so we cannot suppress the parent's callback.  Instead
+  // we let the parent fire its [min, max] call, then immediately fire a second
+  // enriched call with per-bin values (aggregatedBins) and, for quantile scale,
+  // the full sorted domain.  The second call overwrites the first downstream in
+  // _onLayerSetDomain.
   //
   // This can be removed once deck.gl exposes a richer post-aggregation callback
   // or makes _onAggregationUpdate / AttributeWithScale part of the public API.
   _onAggregationUpdate({channel}: {channel: number}) {
-    const props = (this as any).getCurrentLayer().props;
+    (HexagonLayer.prototype as any)._onAggregationUpdate.call(this, {channel});
 
     if (channel === 0) {
-      const origCallback = props.onSetColorDomain;
-      props.onSetColorDomain = () => {
-        // no-op
-      };
-      try {
-        (HexagonLayer.prototype as any)._onAggregationUpdate.call(this, {channel});
-      } finally {
-        props.onSetColorDomain = origCallback;
-      }
-
+      const props = (this as any).getCurrentLayer().props;
       const {aggregator} = this.state as any;
       const result = aggregator.getResult(0);
       const binValues = result?.value;
@@ -91,12 +80,8 @@ export default class ScaleEnhancedHexagonLayer extends HexagonLayer<any> {
             .filter(Number.isFinite)
             .sort((a: number, b: number) => a - b);
         }
-        origCallback({domain: enrichedDomain, aggregatedBins});
-      } else {
-        origCallback(props.colorDomain ?? [0, 1]);
+        props.onSetColorDomain({domain: enrichedDomain, aggregatedBins});
       }
-    } else {
-      (HexagonLayer.prototype as any)._onAggregationUpdate.call(this, {channel});
     }
   }
 
