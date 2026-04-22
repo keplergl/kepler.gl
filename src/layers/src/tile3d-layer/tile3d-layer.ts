@@ -123,6 +123,7 @@ class KeplerTile3DLayer extends DeckTile3DLayer {
     const viewportsNumber = Object.keys(viewports).length;
     if (!timeline || !viewportsNumber || !tileset3d) return;
 
+    // We want higher detail for video/image export.
     const isExporting = (this.context as any)?.deck?.props?._isExport;
     if (isExporting) {
       const baseSSE: number = tileset3d.options?.maximumScreenSpaceError ?? 8;

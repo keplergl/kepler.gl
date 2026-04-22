@@ -9,8 +9,7 @@ import {patchTileViewportIds} from './tile-viewport-fix';
 
 // A plain LightingEffect() — its constructor calls _applyDefaultLights()
 // which populates the same default lights that deck.gl's EffectManager
-// uses internally. We delegate to this when the ghost is disabled so
-// phong/gouraud layers get their original shading back.
+// uses internally. This is used to restore the original shading.
 const DEFAULT_LIGHTING_EFFECT = new LightingEffect();
 
 /**
