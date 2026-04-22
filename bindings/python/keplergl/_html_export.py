@@ -11,7 +11,7 @@ from typing import Optional
 import pandas as pd
 import geopandas as gpd
 
-DEFAULT_KEPLER_GL_CDN_VERSION = "latest"
+DEFAULT_KEPLER_GL_CDN_VERSION = "3"
 
 
 def _dataset_to_csv(data) -> Optional[str]:
