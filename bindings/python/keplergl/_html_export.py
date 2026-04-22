@@ -11,6 +11,8 @@ from typing import Optional
 import pandas as pd
 import geopandas as gpd
 
+DEFAULT_KEPLER_GL_CDN_VERSION = "latest"
+
 
 def _dataset_to_csv(data) -> Optional[str]:
     """Convert a dataset value to CSV string for kepler.gl processCsvData."""
@@ -87,7 +89,7 @@ def export_map_html(
     read_only: bool = False,
     center_map: bool = False,
     mapbox_token: str = "",
-    kepler_gl_version: str = "3.2.6",
+    kepler_gl_version: str = DEFAULT_KEPLER_GL_CDN_VERSION,
 ) -> str:
     """Generate a standalone HTML string that renders a kepler.gl map.
 

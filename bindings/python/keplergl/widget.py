@@ -9,12 +9,9 @@ import anywidget
 import traitlets
 
 from .serializers import data_to_json, data_from_json
-from ._html_export import export_map_html
+from ._html_export import export_map_html, DEFAULT_KEPLER_GL_CDN_VERSION
 
 _STATIC_DIR = pathlib.Path(__file__).parent / "static"
-
-KEPLER_GL_CDN_VERSION = "3.2.6"
-
 
 class KeplerGl(anywidget.AnyWidget):
     """Kepler.gl Jupyter Widget using anywidget."""
@@ -105,7 +102,7 @@ class KeplerGl(anywidget.AnyWidget):
             read_only=read_only,
             center_map=center_map,
             mapbox_token=token,
-            kepler_gl_version=KEPLER_GL_CDN_VERSION,
+            kepler_gl_version=DEFAULT_KEPLER_GL_CDN_VERSION,
         )
 
         with open(file_name, "w", encoding="utf-8") as f:

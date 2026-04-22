@@ -202,6 +202,11 @@ class TestExportMapHtml:
         assert "unpkg.com/kepler.gl@3.2.6/umd/keplergl.min.js" in html
         assert "unpkg.com/kepler.gl@3.2.6/umd/keplergl.min.css" in html
 
+    def test_default_uses_latest_stable_cdn_tag(self, sample_df):
+        html = export_map_html(data={"test": sample_df}, config={})
+        assert "unpkg.com/kepler.gl@latest/umd/keplergl.min.js" in html
+        assert "unpkg.com/kepler.gl@latest/umd/keplergl.min.css" in html
+
     def test_contains_react_redux_deps(self, sample_df):
         html = export_map_html(data={"test": sample_df}, config={})
         assert "react.production.min.js" in html
@@ -280,6 +285,7 @@ class TestSaveToHtml:
             content = f.read()
         assert "<!DOCTYPE html>" in content
         assert "cities" in content
+        assert "unpkg.com/kepler.gl@latest/umd/keplergl.min.js" in content
 
     def test_saves_with_config(self, sample_df, tmp_path):
         config = {"version": "v1", "config": {"mapState": {"zoom": 5}}}
