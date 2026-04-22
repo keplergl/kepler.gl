@@ -226,6 +226,98 @@ class TestCSVSerialization:
         assert result["data"] == csv_data
 
 
+class TestArrowSerialization:
+    """Tests for Arrow IPC serialization of DataFrames."""
+
+    def test_serialize_dataframe_arrow(self, sample_df):
+        """Test basic DataFrame Arrow serialization."""
+        result = serialize_dataset(sample_df, "test", use_arrow=True)
+        assert result["id"] == "test"
+        assert result["format"] == "arrow"
+        assert isinstance(result["data"], str)
+
+    def test_serialize_dataframe_arrow_roundtrip(self, sample_df):
+        """Test that Arrow-serialized data can be deserialized back."""
+        import base64
+        import pyarrow as pa
+
+        result = serialize_dataset(sample_df, "test", use_arrow=True)
+        arrow_bytes = base64.b64decode(result["data"])
+        reader = pa.ipc.open_stream(arrow_bytes)
+        table = reader.read_all()
+        assert table.num_rows == len(sample_df)
+        assert table.num_columns == len(sample_df.columns)
+        assert set(table.column_names) == set(sample_df.columns)
+
+    def test_serialize_dataframe_arrow_preserves_types(self):
+        """Test that Arrow serialization preserves numeric types accurately."""
+        import base64
+        import pyarrow as pa
+
+        df = pd.DataFrame({
+            'int_col': [1, 2, 3],
+            'float_col': [1.1, 2.2, 3.3],
+            'str_col': ['a', 'b', 'c'],
+            'bool_col': [True, False, True],
+        })
+        result = serialize_dataset(df, "typed", use_arrow=True)
+        assert result["format"] == "arrow"
+
+        arrow_bytes = base64.b64decode(result["data"])
+        table = pa.ipc.open_stream(arrow_bytes).read_all()
+        assert table.column('int_col').to_pylist() == [1, 2, 3]
+        assert table.column('float_col').to_pylist() == pytest.approx([1.1, 2.2, 3.3])
+        assert table.column('str_col').to_pylist() == ['a', 'b', 'c']
+        assert table.column('bool_col').to_pylist() == [True, False, True]
+
+    def test_serialize_dataframe_arrow_with_cities(self):
+        """Test Arrow serialization with city data (parallel to JSON test)."""
+        import base64
+        import pyarrow as pa
+
+        df = pd.DataFrame({
+            'City': ['Buenos Aires', 'Brasilia', 'Santiago', 'Bogota', 'Caracas'],
+            'Country': ['Argentina', 'Brazil', 'Chile', 'Colombia', 'Venezuela'],
+            'Latitude': [-34.58, -15.78, -33.45, 4.60, 10.48],
+            'Longitude': [-58.66, -47.91, -70.66, -74.08, -66.86],
+        })
+        result = serialize_dataset(df, "cities", use_arrow=True)
+        assert result["format"] == "arrow"
+
+        arrow_bytes = base64.b64decode(result["data"])
+        table = pa.ipc.open_stream(arrow_bytes).read_all()
+        assert table.num_rows == 5
+        assert 'City' in table.column_names
+        assert 'Latitude' in table.column_names
+        assert table.column('City').to_pylist()[0] == 'Buenos Aires'
+
+    def test_serialize_dataframe_arrow_empty(self):
+        """Test Arrow serialization of empty DataFrame."""
+        import base64
+        import pyarrow as pa
+
+        df = pd.DataFrame({'col1': pd.Series([], dtype='float64'), 'col2': pd.Series([], dtype='str')})
+        result = serialize_dataset(df, "empty", use_arrow=True)
+        assert result["format"] == "arrow"
+
+        arrow_bytes = base64.b64decode(result["data"])
+        table = pa.ipc.open_stream(arrow_bytes).read_all()
+        assert table.num_rows == 0
+        assert set(table.column_names) == {'col1', 'col2'}
+
+    def test_serialize_dataframe_arrow_default_off(self, sample_df):
+        """Test that use_arrow=False (default) still produces JSON format."""
+        result = serialize_dataset(sample_df, "test", use_arrow=False)
+        assert result["format"] == "df"
+        assert "columns" in result["data"]
+        assert "data" in result["data"]
+
+    def test_serialize_geodataframe_ignores_use_arrow(self, sample_gdf):
+        """Test that GeoDataFrame always uses geoarrow regardless of use_arrow flag."""
+        result = serialize_dataset(sample_gdf, "test", use_arrow=True)
+        assert result["format"] == "geoarrow"
+
+
 class TestEdgeCases:
     """Tests for edge cases and error handling."""
 
