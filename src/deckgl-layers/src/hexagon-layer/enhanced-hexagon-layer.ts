@@ -51,17 +51,6 @@ export default class ScaleEnhancedHexagonLayer extends HexagonLayer<any> {
   // callback only provides [min, max].  That is sufficient for quantize/linear
   // scales but d3.scaleQuantile needs the *full sorted array* of bin values to
   // compute correct break points — without it the legend labels are wrong
-  // (see https://github.com/keplergl/kepler.gl/issues/3381).
-  //
-  // deck.gl does not expose a public hook for post-aggregation data, and props
-  // are Object.freeze()'d so we cannot suppress the parent's callback.  Instead
-  // we let the parent fire its [min, max] call, then immediately fire a second
-  // enriched call with per-bin values (aggregatedBins) and, for quantile scale,
-  // the full sorted domain.  The second call overwrites the first downstream in
-  // _onLayerSetDomain.
-  //
-  // This can be removed once deck.gl exposes a richer post-aggregation callback
-  // or makes _onAggregationUpdate / AttributeWithScale part of the public API.
   _onAggregationUpdate({channel}: {channel: number}) {
     (HexagonLayer.prototype as any)._onAggregationUpdate.call(this, {channel});
 
