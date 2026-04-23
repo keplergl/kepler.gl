@@ -328,6 +328,7 @@ const ExportVideoModalFactory = () => {
     const deckPropsWithEffects = useMemo(
       () => ({
         ...hubbleDeckGlProps,
+        _isExport: true,
         effects: deckEffects
       }),
       [hubbleDeckGlProps, deckEffects]

@@ -55,6 +55,12 @@ function _checkLightingActive(context: any): boolean {
  */
 // @ts-expect-error Types have separate declarations of a private property '_loadTileset'.
 class KeplerTile3DLayer extends DeckTile3DLayer {
+  shouldUpdateState(params: any): boolean {
+    if (super.shouldUpdateState(params)) return true;
+    const lightingActive = _checkLightingActive(this.context);
+    return lightingActive !== ((this.state as any)?._lightingWasActive ?? false);
+  }
+
   // deck.gl Tile3DLayer.updateState only sets `needsUpdate` on cached tile
   // sub-layers when `propsChanged` fires, but NOT when `extensionsChanged`
   // fires (e.g. the shadow module being added/removed). The LayerManager sets
@@ -83,10 +89,7 @@ class KeplerTile3DLayer extends DeckTile3DLayer {
       const {layerMap} = this.state as any;
       if (layerMap) {
         for (const key in layerMap) {
-          const entry = layerMap[key];
-          if (entry?.layer) {
-            entry.layer.needsUpdate = true;
-          }
+          layerMap[key].needsUpdate = true;
         }
       }
     }
@@ -119,6 +122,13 @@ class KeplerTile3DLayer extends DeckTile3DLayer {
     const {timeline} = this.context;
     const viewportsNumber = Object.keys(viewports).length;
     if (!timeline || !viewportsNumber || !tileset3d) return;
+
+    // We want higher detail for video/image export.
+    const isExporting = (this.context as any)?.deck?.props?._isExport;
+    if (isExporting) {
+      const baseSSE: number = tileset3d.options?.maximumScreenSpaceError ?? 8;
+      tileset3d.memoryAdjustedScreenSpaceError = baseSSE / 2;
+    }
 
     tileset3d
       .selectTiles(Object.values(viewports))
@@ -275,11 +285,11 @@ class KeplerTile3DLayer extends DeckTile3DLayer {
   }
 
   /**
-   * During video export (preserveDrawingBuffer), report the layer as not loaded
-   * until every selected tile has a renderable sublayer.  Hubble.gl's
-   * DeckAdapter.onAfterRender checks layer.isLoaded on every top-level layer
-   * before capturing a frame, so returning false here makes it wait until the
-   * LOD transition is complete — no frame is captured with missing tiles.
+   * During video/image export, report the layer as not loaded until every
+   * selected tile has a renderable sublayer.  Hubble.gl's DeckAdapter and
+   * PlotContainer check layer.isLoaded before capturing a frame, so
+   * returning false here makes them wait until the LOD transition is
+   * complete — no frame is captured with missing tiles.
    */
   get isLoaded(): boolean {
     const baseLoaded = super.isLoaded;
@@ -287,8 +297,7 @@ class KeplerTile3DLayer extends DeckTile3DLayer {
       return false;
     }
 
-    const gl = this.context?.gl;
-    const isExporting = gl?.getContextAttributes?.()?.preserveDrawingBuffer;
+    const isExporting = (this.context as any)?.deck?.props?._isExport;
     if (!isExporting) {
       return true;
     }

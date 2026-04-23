@@ -360,6 +360,7 @@ export default function PlotContainerFactory(
         isExport: true,
         deckGlProps: {
           ...mapFields.deckGlProps,
+          _isExport: true,
           useDevicePixels: false,
           deviceProps: {
             webgl: {
