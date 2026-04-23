@@ -81,3 +81,84 @@ export function classifyBinsByCustomBreaks(
   stateColors.input = classifiedAttr;
   stateColors.attribute = classifiedAttr;
 }
+
+// ---------------------------------------------------------------------------
+// Shared _onAggregationUpdate / renderLayers logic for ScaleEnhanced* layers
+// ---------------------------------------------------------------------------
+//
+// deck.gl 9's _onAggregationUpdate is private and its onSetColorDomain
+// callback only provides [min, max].  That is sufficient for quantize/linear
+// scales but d3.scaleQuantile needs the *full sorted array* of bin values to
+// compute correct break points — without it the legend labels are wrong
+// (see https://github.com/keplergl/kepler.gl/issues/3381).
+//
+// deck.gl does not expose a public hook for post-aggregation data, and props
+// are Object.freeze()'d so we cannot suppress the parent's callback.  Instead
+// we let the parent fire its [min, max] call, then immediately fire a second
+// enriched call with per-bin values (aggregatedBins) and, for quantile scale,
+// the full sorted domain.  The second call overwrites the first downstream in
+// _onLayerSetDomain.
+//
+// This can be removed once deck.gl exposes a richer post-aggregation callback
+// or makes _onAggregationUpdate / AttributeWithScale part of the public API.
+
+/**
+ * Enriched _onAggregationUpdate implementation shared by ScaleEnhancedHexagonLayer
+ * and ScaleEnhancedGridLayer.
+ *
+ * @param layer       The enhanced layer instance (`this`)
+ * @param ParentClass The deck.gl parent class (HexagonLayer or GridLayer)
+ * @param channel     The aggregation channel index passed by deck.gl
+ */
+export function enrichedAggregationUpdate(
+  layer: any,
+  ParentClass: any,
+  channel: number
+): void {
+  (ParentClass.prototype as any)._onAggregationUpdate.call(layer, {channel});
+
+  if (channel !== 0) return;
+
+  const props = layer.getCurrentLayer().props;
+  const {aggregator} = layer.state;
+  const result = aggregator.getResult(0);
+  const binValues = result?.value as Float32Array | undefined;
+  if (!binValues || aggregator.binCount <= 0) return;
+
+  layer.setState({
+    rawColorBinValues: Float32Array.from(binValues.subarray(0, aggregator.binCount))
+  });
+
+  const domain = aggregator.getResultDomain(0);
+  const aggregatedBins = buildAggregatedBinMap(binValues, aggregator.binCount);
+
+  if (props.colorMap) {
+    classifyBinsByCustomBreaks(layer.state.colors, aggregator.binCount, props.colorMap, binValues);
+  }
+
+  let enrichedDomain = domain;
+  if (props.colorScaleType === 'quantile') {
+    enrichedDomain = Array.from(binValues)
+      .slice(0, aggregator.binCount)
+      .filter(Number.isFinite)
+      .sort((a: number, b: number) => a - b);
+  }
+  props.onSetColorDomain({domain: enrichedDomain, aggregatedBins});
+}
+
+/**
+ * Shared renderLayers() wrapper that re-classifies bins when custom colorMap
+ * changes between renders without triggering a full re-aggregation.
+ *
+ * @param layer       The enhanced layer instance (`this`)
+ * @param ParentClass The deck.gl parent class (HexagonLayer or GridLayer)
+ * @returns The sublayers returned by the parent's renderLayers()
+ */
+export function enrichedRenderLayers(layer: any, ParentClass: any): any {
+  const props = layer.getCurrentLayer().props;
+  const {colors, rawColorBinValues, aggregator} = layer.state;
+  if (props.colorMap && colors && rawColorBinValues && aggregator?.binCount > 0) {
+    classifyBinsByCustomBreaks(colors, aggregator.binCount, props.colorMap, rawColorBinValues);
+  }
+  return (ParentClass.prototype as any).renderLayers.call(layer);
+}

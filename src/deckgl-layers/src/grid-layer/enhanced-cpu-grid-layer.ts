@@ -3,7 +3,7 @@
 
 import {GridLayer, GridLayerPickingInfo} from '@deck.gl/aggregation-layers';
 import {GetPickingInfoParams, PickingInfo, Viewport} from '@deck.gl/core';
-import {buildAggregatedBinMap, classifyBinsByCustomBreaks} from '../layer-utils/aggregation-utils';
+import {enrichedAggregationUpdate, enrichedRenderLayers} from '../layer-utils/aggregation-utils';
 
 interface GridInternalState {
   cellOriginCommon?: [number, number];
@@ -41,49 +41,11 @@ export default class ScaleEnhancedGridLayer extends GridLayer<any> {
   // scales but d3.scaleQuantile needs the *full sorted array* of bin values to
   // compute correct break points — without it the legend labels are wrong
   _onAggregationUpdate({channel}: {channel: number}) {
-    (GridLayer.prototype as any)._onAggregationUpdate.call(this, {channel});
-
-    if (channel === 0) {
-      const props = (this as any).getCurrentLayer().props;
-      const {aggregator} = this.state as any;
-      const result = aggregator.getResult(0);
-      const binValues = result?.value as Float32Array | undefined;
-      if (binValues && aggregator.binCount > 0) {
-        this.setState({rawColorBinValues: Float32Array.from(binValues.subarray(0, aggregator.binCount))});
-
-        const domain = aggregator.getResultDomain(0);
-        const aggregatedBins = buildAggregatedBinMap(binValues, aggregator.binCount);
-
-        if (props.colorMap) {
-          classifyBinsByCustomBreaks(
-            (this.state as any).colors, aggregator.binCount, props.colorMap, binValues
-          );
-        }
-
-        let enrichedDomain = domain;
-        if (props.colorScaleType === 'quantile') {
-          enrichedDomain = Array.from(binValues)
-            .slice(0, aggregator.binCount)
-            .filter(Number.isFinite)
-            .sort((a: number, b: number) => a - b);
-        }
-        props.onSetColorDomain({domain: enrichedDomain, aggregatedBins});
-      }
-    }
+    enrichedAggregationUpdate(this, GridLayer, channel);
   }
 
   renderLayers() {
-    const props = (this as any).getCurrentLayer().props;
-    const {colors, rawColorBinValues, aggregator} = this.state as any;
-    if (
-      props.colorMap &&
-      colors &&
-      rawColorBinValues &&
-      aggregator?.binCount > 0
-    ) {
-      classifyBinsByCustomBreaks(colors, aggregator.binCount, props.colorMap, rawColorBinValues);
-    }
-    return (GridLayer.prototype as any).renderLayers.call(this);
+    return enrichedRenderLayers(this, GridLayer);
   }
 
   getPickingInfo(params: GetPickingInfoParams): PickingInfo {
