@@ -73,7 +73,9 @@ import {
   THROTTLE_NOTIFICATION_TIME,
   DEFAULT_PICKING_RADIUS,
   NO_MAP_ID,
-  EMPTY_MAPBOX_STYLE
+  EMPTY_MAPBOX_STYLE,
+  MAPBOX_MAX_PITCH,
+  MAP_LIB_OPTIONS
 } from '@kepler.gl/constants';
 
 import {DROPPABLE_MAP_CONTAINER_TYPE} from './common/dnd-layer-items';
@@ -1010,7 +1012,8 @@ export default function MapContainerFactory(
                 ? {
                     doubleClickZoom: !isEditorDrawingMode,
                     dragRotate: this.props.mapState.dragRotate,
-                    maxPitch: this.props.mapState.maxPitch ?? getApplicationConfig().maxPitch
+                    maxPitch:
+                      this.props.mapState.maxPitch ?? getApplicationConfig().maxPitch
                   }
                 : false
             }
@@ -1176,8 +1179,13 @@ export default function MapContainerFactory(
         getApplicationConfig().baseMapLibraryConfig?.[baseMapLibraryName];
 
       const internalViewState = this.context?.getInternalViewState(index);
+      const configMaxPitch = mapState.maxPitch ?? getApplicationConfig().maxPitch;
+      const effectiveMaxPitch = baseMapLibraryName === MAP_LIB_OPTIONS.MAPBOX
+        ? Math.min(configMaxPitch, MAPBOX_MAX_PITCH)
+        : configMaxPitch;
       const mapProps = {
         ...internalViewState,
+        maxPitch: effectiveMaxPitch,
         preserveDrawingBuffer: this.props.isExport ?? false,
         mapboxAccessToken: currentStyle?.accessToken || mapboxApiAccessToken,
         // baseApiUrl: mapboxApiUrl,
@@ -1271,6 +1279,7 @@ export default function MapContainerFactory(
             <MapComponent
               key={`top-${baseMapLibraryName}`}
               viewState={internalViewState}
+              maxPitch={effectiveMaxPitch}
               mapStyle={mapStyle.topMapStyle}
               style={MAP_STYLE.top}
               mapboxAccessToken={mapProps.mapboxAccessToken}

@@ -294,6 +294,9 @@ export const MAP_LIB_OPTIONS = {
   MAPLIBRE: 'maplibre' as const
 };
 
+/** Mapbox GL JS does not support pitch above 60 degrees */
+export const MAPBOX_MAX_PITCH = 60;
+
 export type BaseMapLibraryType = 'mapbox' | 'maplibre';
 
 export const NO_BASEMAP_ICON = `${BASEMAP_ICON_PREFIX}/NO_BASEMAP.png`;
