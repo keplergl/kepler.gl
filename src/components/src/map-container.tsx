@@ -1009,7 +1009,8 @@ export default function MapContainerFactory(
               isInteractive
                 ? {
                     doubleClickZoom: !isEditorDrawingMode,
-                    dragRotate: this.props.mapState.dragRotate
+                    dragRotate: this.props.mapState.dragRotate,
+                    maxPitch: this.props.mapState.maxPitch ?? getApplicationConfig().maxPitch
                   }
                 : false
             }

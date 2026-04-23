@@ -89,6 +89,10 @@ export type KeplerApplicationConfig = {
   // Image export config
   /** Whether to apply fix for uglify error in dom-to-image (should be true for webpack builds, false for Vite) */
   escapeXhtmlForWebpack?: boolean;
+
+  /** Maximum pitch angle in degrees. deck.gl defaults to 60; set higher (up to 85) for elevated perspectives.
+   *  Note: values above 60 may cause rendering artifacts with some basemap tile providers. */
+  maxPitch?: number;
 };
 
 const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
@@ -147,7 +151,9 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
 
   // Image export config
   // Default to true for webpack builds, false for other build tools (e.g., Vite)
-  escapeXhtmlForWebpack: isWebpackBuild()
+  escapeXhtmlForWebpack: isWebpackBuild(),
+
+  maxPitch: 60
 };
 
 const applicationConfig: Required<KeplerApplicationConfig> = DEFAULT_APPLICATION_CONFIG;

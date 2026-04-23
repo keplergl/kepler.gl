@@ -24,6 +24,7 @@ export type MapState = {
   height: number;
   minZoom?: number;
   maxZoom?: number;
+  maxPitch?: number;
   maxBounds?: Bounds;
   initialState?: any;
   scale?: number;
@@ -530,6 +531,8 @@ export type Viewport = {
   minZoom?: number;
   /**  Maximum allowed viewport zoom */
   maxZoom?: number;
+  /**  Maximum pitch angle in degrees */
+  maxPitch?: number;
   /**  Maximum geographical bounds, pan/zoom operations are constrained within those bounds */
   maxBounds?: Bounds;
   /** viewport transition duration use by geocoder panel **/
