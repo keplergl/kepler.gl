@@ -232,6 +232,37 @@ export default class AggregationLayer extends Layer {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   updateLayerVisualChannel({dataContainer}, channel) {
     this.validateVisualChannel(channel);
+
+    // When the color scale type changes, recompute colorDomain from stored aggregatedBins.
+    // quantile scale needs the full sorted array of bin values; other scales need [min, max].
+    // aggregatedBins is only populated from onSetColorDomain, so restrict to the color channel.
+    const visualChannel = this.visualChannels[channel];
+    if (channel === 'color' && visualChannel && this.config.aggregatedBins) {
+      const scaleType = this.config[visualChannel.scale];
+      const domainKey = visualChannel.domain;
+      const bins = Object.values(this.config.aggregatedBins) as {value: number}[];
+      if (bins.length > 0) {
+        if (scaleType === 'quantile') {
+          const sorted = bins
+            .map(b => b.value)
+            .filter(Number.isFinite)
+            .sort((a, b) => a - b);
+          this.updateLayerConfig({[domainKey]: sorted});
+        } else {
+          let min = Infinity;
+          let max = -Infinity;
+          for (const b of bins) {
+            if (Number.isFinite(b.value)) {
+              if (b.value < min) min = b.value;
+              if (b.value > max) max = b.value;
+            }
+          }
+          if (Number.isFinite(min) && Number.isFinite(max)) {
+            this.updateLayerConfig({[domainKey]: [min, max]});
+          }
+        }
+      }
+    }
   }
 
   /**
@@ -454,14 +485,32 @@ export default class AggregationLayer extends Layer {
       }
     };
 
+    // deck.gl's aggregation shader maps bin values to a color texture using a
+    // simple linear interpolation: (value - domain[0]) / (domain[1] - domain[0]).
+    // It only understands 'quantize', 'quantile', 'ordinal', and 'linear'.
+    // kepler.gl's 'custom' scale (d3.scaleThreshold with user-defined break
+    // points) cannot be represented in the shader directly.  Instead, our
+    // ScaleEnhanced*Layer._onAggregationUpdate reclassifies each bin's raw
+    // value into a break index [0 … N-1].  We then tell deck.gl to use
+    // 'quantize' over [0, N-1] so each index maps to the correct color pixel.
+    let colorScaleType = this.config.colorScale as string;
+    let customColorDomain: [number, number] | undefined;
+    const isCustomScale = colorScaleType === 'custom';
+    const colorMap = isCustomScale ? visConfig.colorRange.colorMap : undefined;
+    if (isCustomScale && colorMap) {
+      colorScaleType = 'quantize';
+      customColorDomain = [0, colorMap.length - 1];
+    }
+
     return {
       ...this.getDefaultDeckLayerProps(opts),
       coverage: visConfig.coverage,
 
       // color
       colorRange: this.getColorRange(visConfig.colorRange),
-      colorMap: visConfig.colorRange.colorMap,
-      colorScaleType: this.config.colorScale,
+      colorMap,
+      colorScaleType,
+      ...(customColorDomain ? {colorDomain: customColorDomain} : {}),
       upperPercentile: visConfig.percentile[1],
       lowerPercentile: visConfig.percentile[0],
       colorAggregation: visConfig.colorAggregation,

@@ -3,6 +3,7 @@
 
 import {HexagonLayer, HexagonLayerPickingInfo} from '@deck.gl/aggregation-layers';
 import {GetPickingInfoParams, PickingInfo, Viewport} from '@deck.gl/core';
+import {enrichedAggregationUpdate, enrichedRenderLayers} from '../layer-utils/aggregation-utils';
 
 const THIRD_PI = Math.PI / 3;
 const HexbinVertices = Array.from({length: 6}, (_, i) => {
@@ -35,12 +36,28 @@ interface HexPickingObject {
  *
  * We override getPickingInfo to add `cellOutline` — an array of [lng, lat] coordinates
  * computed in common space so the outline aligns with rendered cells at all latitudes.
+ *
+ * We also override _onAggregationUpdate to send per-bin aggregated values through
+ * onSetColorDomain so the legend can compute proper quantile/custom breaks.
  */
+// @ts-expect-error -- overriding private _onAggregationUpdate to enrich the onSetColorDomain callback
 export default class ScaleEnhancedHexagonLayer extends HexagonLayer<any> {
   static defaultProps = {
     ...HexagonLayer.defaultProps,
     gpuAggregation: false
   };
+
+  // HACK: deck.gl 9's _onAggregationUpdate is private and its onSetColorDomain
+  // callback only provides [min, max].  That is sufficient for quantize/linear
+  // scales but d3.scaleQuantile needs the *full sorted array* of bin values to
+  // compute correct break points — without it the legend labels are wrong
+  _onAggregationUpdate({channel}: {channel: number}) {
+    enrichedAggregationUpdate(this, HexagonLayer, channel);
+  }
+
+  renderLayers() {
+    return enrichedRenderLayers(this, HexagonLayer);
+  }
 
   getPickingInfo(params: GetPickingInfoParams): PickingInfo {
     const info = super.getPickingInfo(params) as HexagonLayerPickingInfo<Record<string, unknown>>;

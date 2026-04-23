@@ -575,10 +575,12 @@ export default function MapContainerFactory(
 
     _onLayerSetDomain = (
       idx: number,
-      value: number[] | {domain: VisualChannelDomain; aggregatedBins: AggregatedBin[]}
+      value: number[] | {domain: VisualChannelDomain; aggregatedBins: Record<number, AggregatedBin>}
     ) => {
-      // deck.gl 9 native aggregation layers (Grid, Hexagon) pass [min, max],
-      // while ClusterLayer's CPUAggregator still passes {domain, aggregatedBins}.
+      // deck.gl 9 native aggregation layers (Grid, Hexagon) pass
+      // {domain, aggregatedBins} via our ScaleEnhanced* overrides,
+      // while ClusterLayer's CPUAggregator also passes {domain, aggregatedBins}.
+      // Plain [min, max] is a fallback if the override is bypassed.
       const config = Array.isArray(value)
         ? {colorDomain: value as VisualChannelDomain}
         : {colorDomain: value.domain, aggregatedBins: value.aggregatedBins};
