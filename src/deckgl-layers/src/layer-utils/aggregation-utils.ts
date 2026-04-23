@@ -11,14 +11,14 @@ import type {AggregatedBin, ColorMap} from '@kepler.gl/types';
  */
 export function buildAggregatedBinMap(
   binValues: ArrayLike<number>,
-  binCount: number
+  binCount: number,
+  aggregator?: any
 ): Record<number, AggregatedBin> {
   const bins: Record<number, AggregatedBin> = {};
   for (let i = 0; i < binCount; i++) {
     const val = binValues[i];
-    if (Number.isFinite(val)) {
-      bins[i] = {i, value: val, counts: 1};
-    }
+    const count = aggregator?.getBin?.(i)?.count ?? 0;
+    bins[i] = {i, value: val, counts: count};
   }
   return bins;
 }
@@ -130,7 +130,7 @@ export function enrichedAggregationUpdate(
   });
 
   const domain = aggregator.getResultDomain(0);
-  const aggregatedBins = buildAggregatedBinMap(binValues, aggregator.binCount);
+  const aggregatedBins = buildAggregatedBinMap(binValues, aggregator.binCount, aggregator);
 
   if (props.colorMap) {
     classifyBinsByCustomBreaks(layer.state.colors, aggregator.binCount, props.colorMap, binValues);
@@ -143,7 +143,7 @@ export function enrichedAggregationUpdate(
       .filter(Number.isFinite)
       .sort((a: number, b: number) => a - b);
   }
-  props.onSetColorDomain({domain: enrichedDomain, aggregatedBins});
+  props.onSetColorDomain?.({domain: enrichedDomain, aggregatedBins});
 }
 
 /**
