@@ -71,6 +71,7 @@ const mapStateUpdaters = null;
  * @property height Default: `800`
  * @property minZoom: `undefined`,
  * @property maxZoom: `undefined`,
+ * @property maxPitch: `undefined` (defaults to application config value, deck.gl default is 60)
  * @property maxBounds: `undefined`,
  * @property isSplit: `false`,
  * @property isViewportSynced: `true`,
@@ -89,6 +90,7 @@ export const INITIAL_MAP_STATE: MapState = {
   height: 800,
   minZoom: undefined,
   maxZoom: undefined,
+  maxPitch: undefined,
   maxBounds: undefined,
   isSplit: false,
   isViewportSynced: true,
@@ -466,6 +468,7 @@ export function pickViewportPropsFromMapState(state: MapState): Viewport {
     'dragRotate',
     'minZoom',
     'maxZoom',
+    'maxPitch',
     'maxBounds'
   ]);
 }
