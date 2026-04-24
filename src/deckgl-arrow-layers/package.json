@@ -50,7 +50,9 @@
     "instrument": false
   },
   "maintainers": [
-    "Shan He <heshan0131@gmail.com>"
+    "Shan He <heshan0131@gmail.com>",
+    "Igor Dykhta <dikhta.igor@gmail.com>",
+    "Xun Li <lixun910@gmail.com>"
   ],
   "engines": {
     "node": ">=20"

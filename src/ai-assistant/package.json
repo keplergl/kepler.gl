@@ -60,7 +60,8 @@
     "instrument": false
   },
   "maintainers": [
-    "Xun Li <lixun910@gmail.com>"
+    "Xun Li <lixun910@gmail.com>",
+    "Igor Dykhta <dikhta.igor@gmail.com>"
   ],
   "engines": {
     "node": ">=20"
