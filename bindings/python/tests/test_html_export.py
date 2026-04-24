@@ -146,6 +146,36 @@ class TestDatasetToGeojson:
     def test_int_returns_none(self):
         assert _dataset_to_geojson(42) is None
 
+    def test_geodataframe_with_datetime(self):
+        """GeoDataFrame with datetime column should serialize without error."""
+        gdf = gpd.GeoDataFrame(
+            {
+                "name": ["A", "B"],
+                "timestamp": pd.to_datetime(["2024-01-01", "2024-06-15"]),
+            },
+            geometry=[Point(-122.4, 37.8), Point(-118.2, 34.0)],
+            crs="EPSG:4326",
+        )
+        result = _dataset_to_geojson(gdf)
+        assert result is not None
+        assert result["type"] == "FeatureCollection"
+        assert len(result["features"]) == 2
+        ts_val = result["features"][0]["properties"]["timestamp"]
+        assert "2024" in str(ts_val)
+
+    def test_geodataframe_with_datetime_custom_encoder(self):
+        """json_encoder=None should raise on datetime columns."""
+        gdf = gpd.GeoDataFrame(
+            {
+                "name": ["A"],
+                "timestamp": pd.to_datetime(["2024-01-01"]),
+            },
+            geometry=[Point(-122.4, 37.8)],
+            crs="EPSG:4326",
+        )
+        with pytest.raises(TypeError):
+            _dataset_to_geojson(gdf, json_encoder=None)
+
 
 class TestSerializeDatasetsForHtml:
     """Tests for _serialize_datasets_for_html JS snippet generation."""
@@ -183,6 +213,20 @@ class TestSerializeDatasetsForHtml:
     def test_empty_data(self):
         js = _serialize_datasets_for_html({})
         assert js == ""
+
+    def test_geodataframe_with_datetime(self):
+        """Datetime columns in GeoDataFrame should not break JS snippet generation."""
+        gdf = gpd.GeoDataFrame(
+            {
+                "name": ["A"],
+                "ts": pd.to_datetime(["2024-03-01"]),
+            },
+            geometry=[Point(-122.4, 37.8)],
+            crs="EPSG:4326",
+        )
+        js = _serialize_datasets_for_html({"events": gdf})
+        assert "processGeojson" in js
+        assert "2024" in js
 
 
 class TestExportMapHtml:
@@ -349,3 +393,28 @@ class TestSaveToHtml:
             content = f.read()
         assert "São Paulo" in content
         assert "Zürich" in content
+
+    def test_saves_geodataframe_with_datetime(self, tmp_path):
+        """Regression: GeoDataFrame with datetime column should export to HTML."""
+        gdf = gpd.GeoDataFrame(
+            {
+                "name": ["SF"],
+                "timestamp": pd.to_datetime(["2024-01-15 10:30:00"]),
+            },
+            geometry=[Point(-122.4, 37.8)],
+            crs="EPSG:4326",
+        )
+        widget = KeplerGl(data={"events": gdf})
+        out = str(tmp_path / "map.html")
+        widget.save_to_html(file_name=out)
+        with open(out, encoding="utf-8") as f:
+            content = f.read()
+        assert "processGeojson" in content
+        assert "2024" in content
+
+    def test_saves_with_custom_json_encoder(self, sample_gdf, tmp_path):
+        """json_encoder parameter is forwarded through save_to_html."""
+        widget = KeplerGl(data={"geo": sample_gdf})
+        out = str(tmp_path / "map.html")
+        widget.save_to_html(file_name=out, json_encoder=repr)
+        assert os.path.exists(out)

@@ -33,12 +33,21 @@ def _dataset_to_csv(data) -> Optional[str]:
         return None
 
 
-def _dataset_to_geojson(data) -> Optional[dict]:
-    """Try to convert dataset to GeoJSON dict."""
+def _dataset_to_geojson(data, json_encoder=str) -> Optional[dict]:
+    """Try to convert dataset to GeoJSON dict.
+
+    Args:
+        data: Dataset value (GeoDataFrame, dict, or string).
+        json_encoder: Fallback function passed as ``default`` to
+            ``GeoDataFrame.to_json()`` so that non-serializable types
+            (e.g. ``datetime``) are converted instead of raising.
+            Defaults to ``str``.  Pass ``None`` to disable (will raise
+            on non-serializable types).
+    """
     if isinstance(data, gpd.GeoDataFrame):
         if data.crs and data.crs.to_epsg() != 4326:
             data = data.to_crs(4326)
-        return json.loads(data.to_json())
+        return json.loads(data.to_json(default=json_encoder))
     elif isinstance(data, dict):
         geojson_types = {
             "FeatureCollection", "Feature", "Point", "MultiPoint",
@@ -59,15 +68,19 @@ def _dataset_to_geojson(data) -> Optional[dict]:
     return None
 
 
-def _serialize_datasets_for_html(data: dict) -> str:
+def _serialize_datasets_for_html(data: dict, json_encoder=str) -> str:
     """Serialize datasets dict into JS code that calls addDataToMap.
 
     Generates a JS snippet that processes each dataset using kepler.gl's
     processCsvData or processGeojson, then dispatches addDataToMap.
+
+    Args:
+        data: Dict mapping dataset names to data objects.
+        json_encoder: Fallback encoder passed to ``_dataset_to_geojson``.
     """
     snippets = []
     for name, dataset in data.items():
-        geojson = _dataset_to_geojson(dataset)
+        geojson = _dataset_to_geojson(dataset, json_encoder=json_encoder)
         if geojson is not None:
             snippets.append(
                 f"  datasets.push({{info: {{id: {json.dumps(name, ensure_ascii=False)}, label: {json.dumps(name, ensure_ascii=False)}}}, "
@@ -90,12 +103,25 @@ def export_map_html(
     center_map: bool = False,
     mapbox_token: str = "",
     kepler_gl_version: str = DEFAULT_KEPLER_GL_CDN_VERSION,
+    json_encoder=str,
 ) -> str:
     """Generate a standalone HTML string that renders a kepler.gl map.
 
     Loads all dependencies from CDN (unpkg). No local JS build required.
+
+    Args:
+        data: Dict of dataset name to data.
+        config: Map config dict.
+        read_only: If True, hide side panel to disable map customization.
+        center_map: If True, fit map bounds to the data.
+        mapbox_token: Mapbox API access token.
+        kepler_gl_version: kepler.gl UMD bundle version tag for unpkg.
+        json_encoder: Fallback function passed as ``default`` when
+            JSON-serializing GeoDataFrame data.  Defaults to ``str`` so
+            that ``datetime`` and other non-native JSON types are
+            converted automatically.  Pass ``None`` to disable.
     """
-    dataset_js = _serialize_datasets_for_html(data)
+    dataset_js = _serialize_datasets_for_html(data, json_encoder=json_encoder)
     config_json = json.dumps(config, ensure_ascii=False) if config else "{}"
     mapbox_token_json = json.dumps(mapbox_token)
     read_only_js = "true" if read_only else "false"

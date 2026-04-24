@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8"/>
+    <title>Kepler.gl embedded map</title>
+
+    <!--Uber Font-->
+    <link rel="stylesheet" href="https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/uber-fonts/4.0.0/superfine.css">
+
+    <!--Kepler css-->
+    <link href="https://unpkg.com/kepler.gl@3/umd/keplergl.min.css" rel="stylesheet">
+
+    <!--MapBox css-->
+    <link href="https://api.tiles.mapbox.com/mapbox-gl-js/v1.1.1/mapbox-gl.css" rel="stylesheet">
+    <link href="https://unpkg.com/maplibre-gl@^3/dist/maplibre-gl.css" rel="stylesheet">
+
+    <!-- Load React/Redux -->
+    <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/redux@4.2.1/dist/redux.js" crossorigin></script>
+    <script src="https://unpkg.com/react-redux@8.1.2/dist/react-redux.min.js" crossorigin></script>
+    <script src="https://unpkg.com/styled-components@6.1.8/dist/styled-components.min.js" crossorigin></script>
+
+    <!-- Load Kepler.gl -->
+    <script src="https://unpkg.com/kepler.gl@3/umd/keplergl.min.js" crossorigin></script>
+
+    <style type="text/css">
+      body {margin: 0; padding: 0; overflow: hidden;}
+    </style>
+
+    <script>
+      const MAPBOX_TOKEN = "";
+    </script>
+  </head>
+  <body>
+    <div id="app"></div>
+
+    <script>
+      /** STORE **/
+      const reducers = (function createReducers(redux, keplerGl) {
+        return redux.combineReducers({
+          keplerGl: keplerGl.keplerGlReducer.initialState({
+            uiState: {
+              readOnly: true,
+              currentModal: null
+            }
+          })
+        });
+      }(Redux, KeplerGl));
+
+      const middleWares = (function createMiddlewares(keplerGl) {
+        return keplerGl.enhanceReduxMiddleware([]);
+      }(KeplerGl));
+
+      const enhancers = (function createEnhancers(redux, middles) {
+        return redux.applyMiddleware(...middles);
+      }(Redux, middleWares));
+
+      const store = (function createStore(redux, enhancers) {
+        return redux.createStore(reducers, {}, redux.compose(enhancers));
+      }(Redux, enhancers));
+      /** END STORE **/
+
+      /** COMPONENTS **/
+      var KeplerElement = (function makeKeplerElement(react, keplerGl, mapboxToken) {
+        return function App() {
+          var rootElm = react.useRef(null);
+          var _useState = react.useState({
+            width: window.innerWidth,
+            height: window.innerHeight
+          });
+          var windowDimension = _useState[0];
+          var setDimension = _useState[1];
+          react.useEffect(function sideEffect() {
+            function handleResize() {
+              setDimension({width: window.innerWidth, height: window.innerHeight});
+            }
+            window.addEventListener('resize', handleResize);
+            return function() { window.removeEventListener('resize', handleResize); };
+          }, []);
+          return react.createElement(
+            'div',
+            {style: {position: 'absolute', left: 0, width: '100vw', height: '100vh'}},
+            react.createElement(keplerGl.KeplerGl, {
+              mapboxApiAccessToken: mapboxToken,
+              id: "map",
+              width: windowDimension.width,
+              height: windowDimension.height
+            })
+          );
+        };
+      }(React, KeplerGl, MAPBOX_TOKEN));
+
+      const app = (function createReactReduxProvider(react, reactRedux, KeplerElement) {
+        return react.createElement(
+          reactRedux.Provider,
+          {store},
+          react.createElement(KeplerElement, null)
+        );
+      }(React, ReactRedux, KeplerElement));
+      /** END COMPONENTS **/
+
+      /** Render **/
+      (function render(react, reactDOM, app) {
+        const container = document.getElementById('app');
+        const root = reactDOM.createRoot(container);
+        root.render(app);
+      }(React, ReactDOM, app));
+    </script>
+
+    <script>
+      (function customize(keplerGl, store) {
+        var datasets = [];
+  datasets.push({info: {id: "cities", label: "cities"}, data: keplerGl.processGeojson({"type": "FeatureCollection", "features": [{"id": "0", "type": "Feature", "properties": {"City": "Buenos Aires", "Country": "Argentina", "Latitude": -34.58, "Longitude": -58.66, "Timestamp": "2024-01-15 08:00:00"}, "geometry": {"type": "Point", "coordinates": [-58.66, -34.58]}}, {"id": "1", "type": "Feature", "properties": {"City": "Brasilia", "Country": "Brazil", "Latitude": -15.78, "Longitude": -47.91, "Timestamp": "2024-02-20 09:30:00"}, "geometry": {"type": "Point", "coordinates": [-47.91, -15.78]}}, {"id": "2", "type": "Feature", "properties": {"City": "Santiago", "Country": "Chile", "Latitude": -33.45, "Longitude": -70.66, "Timestamp": "2024-03-10 11:00:00"}, "geometry": {"type": "Point", "coordinates": [-70.66, -33.45]}}, {"id": "3", "type": "Feature", "properties": {"City": "Bogota", "Country": "Colombia", "Latitude": 4.6, "Longitude": -74.08, "Timestamp": "2024-04-05 14:15:00"}, "geometry": {"type": "Point", "coordinates": [-74.08, 4.6]}}, {"id": "4", "type": "Feature", "properties": {"City": "Caracas", "Country": "Venezuela", "Latitude": 10.48, "Longitude": -66.86, "Timestamp": "2024-05-22 16:45:00"}, "geometry": {"type": "Point", "coordinates": [-66.86, 10.48]}}]})});
+
+        var config = {"version": "v1", "config": {"visState": {"filters": [], "layers": [{"id": "yjnzayl", "type": "point", "config": {"dataId": "cities", "columnMode": "points", "label": "point", "color": [18, 147, 154], "highlightColor": [252, 242, 26, 255], "columns": {"lat": "Latitude", "lng": "Longitude"}, "isVisible": true, "visConfig": {"radius": 10, "fixedRadius": false, "opacity": 0.8, "outline": false, "thickness": 2, "strokeColor": null, "colorRange": {"name": "Global Warming", "type": "sequential", "category": "Uber", "colors": ["#4C0035", "#880030", "#B72F15", "#D6610A", "#EF9100", "#FFC300"]}, "strokeColorRange": {"name": "Global Warming", "type": "sequential", "category": "Uber", "colors": ["#4C0035", "#880030", "#B72F15", "#D6610A", "#EF9100", "#FFC300"]}, "radiusRange": [0, 50], "filled": true, "billboard": false, "allowHover": true, "showNeighborOnHover": false, "showHighlightColor": true}, "hidden": false, "textLabel": [{"field": null, "color": [255, 255, 255], "size": 18, "offset": [0, 0], "anchor": "start", "alignment": "center", "outlineWidth": 0, "outlineColor": [255, 0, 0, 255], "background": false, "backgroundColor": [0, 0, 200, 255]}]}, "visualChannels": {"colorField": null, "colorScale": "quantile", "strokeColorField": null, "strokeColorScale": "quantile", "sizeField": null, "sizeScale": "linear"}}, {"id": "dmz7ia9", "type": "geojson", "config": {"dataId": "cities", "columnMode": "geojson", "label": "cities", "color": [221, 178, 124], "highlightColor": [252, 242, 26, 255], "columns": {"geojson": "geometry"}, "isVisible": true, "visConfig": {"opacity": 0.8, "strokeOpacity": 0.8, "thickness": 0.5, "strokeColor": null, "colorRange": {"name": "Global Warming", "type": "sequential", "category": "Uber", "colors": ["#4C0035", "#880030", "#B72F15", "#D6610A", "#EF9100", "#FFC300"]}, "strokeColorRange": {"name": "Global Warming", "type": "sequential", "category": "Uber", "colors": ["#4C0035", "#880030", "#B72F15", "#D6610A", "#EF9100", "#FFC300"]}, "radius": 10, "sizeRange": [0, 10], "radiusRange": [0, 50], "heightRange": [0, 500], "elevationScale": 5, "stroked": false, "filled": true, "enable3d": false, "wireframe": false, "fixedHeight": false}, "hidden": false, "textLabel": [{"field": null, "color": [255, 255, 255], "size": 18, "offset": [0, 0], "anchor": "start", "alignment": "center", "outlineWidth": 0, "outlineColor": [255, 0, 0, 255], "background": false, "backgroundColor": [0, 0, 200, 255]}]}, "visualChannels": {"colorField": null, "colorScale": "quantile", "strokeColorField": null, "strokeColorScale": "quantile", "sizeField": null, "sizeScale": "linear", "heightField": null, "heightScale": "linear", "radiusField": null, "radiusScale": "linear"}}], "effects": [], "interactionConfig": {"tooltip": {"fieldsToShow": {"cities": [{"name": "City", "format": null}, {"name": "Country", "format": null}, {"name": "Latitude", "format": null}, {"name": "Longitude", "format": null}, {"name": "Timestamp", "format": null}]}, "compareMode": false, "compareType": "absolute", "enabled": true}, "brush": {"size": 0.5, "enabled": false}, "geocoder": {"enabled": false}, "coordinate": {"enabled": false}}, "layerBlending": "normal", "overlayBlending": "normal", "splitMaps": [], "animationConfig": {"currentTime": null, "speed": 1}, "editor": {"features": [], "visible": true}}, "mapState": {"bearing": 0, "dragRotate": false, "latitude": 6.804611256931948, "longitude": -65.95675832727079, "pitch": 0, "zoom": 1.9489108111315279, "isSplit": false, "isViewportSynced": true, "isZoomLocked": false, "splitMapViewports": []}, "mapStyle": {"styleType": "dark-matter", "topLayerGroups": {}, "visibleLayerGroups": {"label": true, "road": true, "border": false, "building": true, "water": true, "land": true, "3d building": false}, "threeDBuildingColor": [15.035172933000911, 15.035172933000911, 15.035172933000911], "backgroundColor": [0, 0, 0], "mapStyles": {}}, "uiState": {"mapControls": {"mapLegend": {"active": false}}}}};
+
+        window.setTimeout(function() {
+          store.dispatch(keplerGl.addDataToMap({
+            datasets: datasets,
+            config: config,
+            options: {
+              centerMap: true
+            }
+          }));
+        }, 500);
+      }(KeplerGl, store));
+    </script>
+  </body>
+</html>

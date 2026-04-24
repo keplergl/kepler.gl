@@ -77,6 +77,7 @@ class KeplerGl(anywidget.AnyWidget):
         read_only=False,
         center_map=True,
         mapbox_token="",
+        json_encoder=str,
     ):
         """Export the map to a standalone HTML file.
 
@@ -91,6 +92,10 @@ class KeplerGl(anywidget.AnyWidget):
             center_map: If True, fit map bounds to the data (default: True).
             mapbox_token: Mapbox access token. Required for Mapbox basemap styles
                 (e.g. "Dark", "Muted Light"). Leave empty for free MapLibre styles.
+            json_encoder: Fallback function passed as ``default`` when
+                JSON-serializing GeoDataFrame data.  Defaults to ``str`` so
+                that ``datetime`` and similar types are converted automatically.
+                Pass ``None`` to disable (will raise on non-serializable types).
         """
         data_to_save = data if data is not None else self.data
         config_to_save = config if config is not None else self.config
@@ -103,6 +108,7 @@ class KeplerGl(anywidget.AnyWidget):
             center_map=center_map,
             mapbox_token=token,
             kepler_gl_version=DEFAULT_KEPLER_GL_CDN_VERSION,
+            json_encoder=json_encoder,
         )
 
         with open(file_name, "w", encoding="utf-8") as f:
