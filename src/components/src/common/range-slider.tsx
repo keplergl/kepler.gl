@@ -153,6 +153,18 @@ export default function RangeSliderFactory(
       (value0, value1) => [value0, value1]
     );
 
+    _getDisplayRange = () => {
+      const {range, bins, isRanged} = this.props;
+      if (!range) return range;
+      if (!bins || !isRanged) return range;
+      const groupKeys = Object.keys(bins).filter(k => bins[k]?.length > 0);
+      if (groupKeys.length === 0) return range;
+      const group = bins[groupKeys[0]];
+      const idx = group.length > 1 ? 1 : 0;
+      const binStep = group[idx].x1 - group[idx].x0;
+      return binStep > 0 ? [range[0] - binStep, range[1] + binStep] : range;
+    };
+
     _roundValToStep = val => {
       const {range, step} = this.props;
       if (!range || !step) return;
@@ -160,18 +172,20 @@ export default function RangeSliderFactory(
     };
 
     _setRangeVal1 = val => {
-      const {value0, range, onChange = noop} = this.props;
-      if (!range) return;
+      const {value0, onChange = noop} = this.props;
+      const dr = this._getDisplayRange();
+      if (!dr) return;
       const val1 = Number(val);
-      onChange([value0, clamp([value0, range[1]], this._roundValToStep(val1))]);
+      onChange([value0, clamp([value0, dr[1]], this._roundValToStep(val1))]);
       return true;
     };
 
     _setRangeVal0 = val => {
-      const {value1, range, onChange = noop} = this.props;
-      if (!range) return;
+      const {value1, onChange = noop} = this.props;
+      const dr = this._getDisplayRange();
+      if (!dr) return;
       const val0 = Number(val);
-      onChange([clamp([range[0], value1], this._roundValToStep(val0)), value1]);
+      onChange([clamp([dr[0], value1], this._roundValToStep(val0)), value1]);
       return true;
     };
 
@@ -249,6 +263,19 @@ export default function RangeSliderFactory(
       const plotWidth = Math.max(width - Number(sliderHandleWidth), 0);
       const hasPlot = plotType?.type;
 
+      const binStep =
+        bins && isRanged
+          ? (() => {
+              const groupKeys = Object.keys(bins).filter(k => bins[k]?.length > 0);
+              if (groupKeys.length === 0) return 0;
+              const group = bins[groupKeys[0]];
+              const idx = group.length > 1 ? 1 : 0;
+              return group[idx].x1 - group[idx].x0;
+            })()
+          : 0;
+      const displayRange: number[] | undefined =
+        range && binStep > 0 ? [range[0] - binStep, range[1] + binStep] : range;
+
       const value = this.props.plotValue || this.filterValueSelector(this.props);
       const scaledValue =
         subAnimations?.length && range
@@ -275,7 +302,7 @@ export default function RangeSliderFactory(
                   animationWindow={animationWindow}
                   filter={filter}
                   datasets={datasets}
-                  range={range}
+                  range={displayRange!}
                   value={value}
                   width={plotWidth}
                   isRanged={isRanged}
@@ -304,7 +331,7 @@ export default function RangeSliderFactory(
                     <this.props.xAxis
                       width={plotWidth}
                       timezone={timezone}
-                      domain={range}
+                      domain={displayRange}
                       isEnlarged={this.props.isEnlarged}
                     />
                   </div>
@@ -312,8 +339,8 @@ export default function RangeSliderFactory(
                 <Slider
                   marks={this.props.marks}
                   isRanged={isRanged}
-                  minValue={range[0]}
-                  maxValue={range[1]}
+                  minValue={displayRange![0]}
+                  maxValue={displayRange![1]}
                   value0={this.props.value0}
                   value1={this.props.value1}
                   step={step}

@@ -20,7 +20,7 @@ const HISTOGRAM_MASK_FGCOLOR = '#000000';
 
 const histogramStyle = {
   highlightW: 0.7,
-  unHighlightedW: 0.4
+  unHighlightedW: 0.7
 };
 
 const HistogramWrapper = styled.svg`
@@ -73,7 +73,8 @@ const isBarInRange = (
     index === list.length - 1
       ? bar.x1 >= filterDomain[1] && filterDomain[1] === filterValue[1]
       : false;
-  return (x0Condition || bar.x0 >= filterValue[0]) && (x1Condition || bar.x1 <= filterValue[1]);
+  // Check if the bar overlaps with the filter value range (not fully contained)
+  return (x0Condition || bar.x1 > filterValue[0]) && (x1Condition || bar.x0 < filterValue[1]);
 };
 
 export type HistogramMaskModeType = {
@@ -130,27 +131,25 @@ function HistogramPlotFactory() {
       [range, histogramsByGroup, groupKeys]
     );
 
-    const barWidth = useMemo(() => {
+    const numBins = useMemo(() => {
       if (groupKeys.length === 0) return 0;
-      // find histogramsByGroup with max number of bins
       const maxGroup = groupKeys.reduce((accu, key, _idx) => {
         if (histogramsByGroup[key].length > accu.length) {
           return histogramsByGroup[key];
         }
         return accu;
       }, histogramsByGroup[groupKeys[0]]);
+      return maxGroup.length;
+    }, [histogramsByGroup, groupKeys]);
 
-      // find the bin for measuring step
-      const stdBinIdx = maxGroup.length > 1 ? 1 : 0;
-      const xStep = maxGroup[stdBinIdx].x1 - maxGroup[stdBinIdx].x0;
-      const maxBins = (domain[1] - domain[0]) / xStep;
-      if (!maxBins) return 0;
-      return width / maxBins / (isMasked ? 1 : groupKeys.length);
-    }, [histogramsByGroup, domain, groupKeys, width, isMasked]);
+    const barWidth = useMemo(() => {
+      if (numBins === 0) return 0;
+      return width / numBins / (isMasked ? 1 : groupKeys.length);
+    }, [numBins, groupKeys, width, isMasked]);
 
     const x = useMemo(
-      () => scaleLinear().domain(domain).range([barWidth, width]),
-      [domain, width, barWidth]
+      () => scaleLinear().domain(domain).range([0, width]),
+      [domain, width]
     );
 
     const y = useMemo(
@@ -201,7 +200,7 @@ function HistogramPlotFactory() {
                       key={`mask-${idx}`}
                       height={y(bar[countProp])}
                       width={barWidth * wRatio}
-                      x={x(bar.x0) + (barWidth * (1 - wRatio)) / 2}
+                      x={x(bar.x0) - (barWidth * wRatio) / 2}
                       y={height - y(bar[countProp])}
                     />
                   );
@@ -234,7 +233,7 @@ function HistogramPlotFactory() {
                     key={`bar-${idx}`}
                     height={maskHeight}
                     width={barWidth * wRatio}
-                    x={x(bar.x0) + (barWidth * (1 - wRatio)) / 2}
+                    x={x(bar.x0) - (barWidth * wRatio) / 2}
                     y={height - y(bar[countProp])}
                   />
                 );
@@ -268,25 +267,29 @@ function HistogramPlotFactory() {
                 const inRange = isBarInRange(bar, idx, list, domain, value);
 
                 const wRatio = inRange ? histogramStyle.highlightW : histogramStyle.unHighlightedW;
-                const startX =
-                  x(undefinedToZero(bar.x0)) + barWidth * i + (barWidth * (1 - wRatio)) / 2;
-                if (startX > 0 && startX + barWidth * histogramStyle.unHighlightedW <= width) {
-                  return (
-                    <Bar
-                      $isOverlay={false}
-                      $inRange={inRange}
-                      $color={colorsByGroup?.[key]}
-                      key={`bar-${idx}`}
-                      height={y(bar[countProp])}
-                      width={barWidth * wRatio}
-                      x={startX}
-                      rx={1}
-                      ry={1}
-                      y={height - y(bar[countProp])}
-                    />
-                  );
-                }
-                return null;
+                const drawnWidth = barWidth * wRatio;
+                const tickX = x(undefinedToZero(bar.x0));
+                const groupOffset =
+                  groupKeys.length > 1
+                    ? -((barWidth * groupKeys.length) / 2) +
+                      barWidth * i +
+                      (barWidth - drawnWidth) / 2
+                    : -(drawnWidth / 2);
+                const startX = tickX + groupOffset;
+                return (
+                  <Bar
+                    $isOverlay={false}
+                    $inRange={inRange}
+                    $color={colorsByGroup?.[key]}
+                    key={`bar-${idx}`}
+                    height={y(bar[countProp])}
+                    width={drawnWidth}
+                    x={startX}
+                    rx={1}
+                    ry={1}
+                    y={height - y(bar[countProp])}
+                  />
+                );
               })}
             </g>
           ))}
