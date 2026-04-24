@@ -26,10 +26,10 @@
     "esbuild-plugin-replace": "^1.4.0"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   },
   "volta": {
-    "node": "18.18.2",
+    "node": "20.19.3",
     "yarn": "4.4.0"
   },
   "packageManager": "yarn@4.4.0"

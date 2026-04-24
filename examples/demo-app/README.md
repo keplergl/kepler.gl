@@ -17,7 +17,7 @@ Go to the root directory and install the dependencies using yarn:
 yarn bootstrap
 ```
 
-If install fails while building the `gl` package, use Node 18.18.2 from the repo root `.nvmrc` (`nvm install` / `nvm use`), or see [Troubleshooting: gl package install](../../contributing/DEVELOPERS.md#troubleshooting-gl-package-install).
+If install fails while building the `gl` package, use Node 20.19.3 from the repo root `.nvmrc` (`nvm install` / `nvm use`), or see [Troubleshooting: gl package install](../../contributing/DEVELOPERS.md#troubleshooting-gl-package-install).
 
 If `yarn start` errors with missing `@kepler.gl/duckdb/components` (or other workspace `dist/` files), from the repo root run `yarn workspaces foreach -At run stab` or run full `yarn bootstrap` (not only `yarn install`).
 
