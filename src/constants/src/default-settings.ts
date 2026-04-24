@@ -294,6 +294,9 @@ export const MAP_LIB_OPTIONS = {
   MAPLIBRE: 'maplibre' as const
 };
 
+/** Mapbox GL JS does not support pitch above 60 degrees */
+export const MAPBOX_MAX_PITCH = 60;
+
 export type BaseMapLibraryType = 'mapbox' | 'maplibre';
 
 export const NO_BASEMAP_ICON = `${BASEMAP_ICON_PREFIX}/NO_BASEMAP.png`;
@@ -1409,8 +1412,8 @@ export const LIGHT_AND_SHADOW_EFFECT: EffectDescription = {
   parameters: [
     {name: 'timestamp', min: 0, max: Number.MAX_SAFE_INTEGER},
     {name: 'shadowIntensity', min: 0, max: 1, defaultValue: DEFAULT_SHADOW_INTENSITY},
-    {name: 'sunLightIntensity', min: 0, max: 1, defaultValue: DEFAULT_LIGHT_INTENSITY},
-    {name: 'ambientLightIntensity', min: 0, max: 1, defaultValue: DEFAULT_LIGHT_INTENSITY},
+    {name: 'sunLightIntensity', min: 0, max: 5, defaultValue: DEFAULT_LIGHT_INTENSITY},
+    {name: 'ambientLightIntensity', min: 0, max: 5, defaultValue: DEFAULT_LIGHT_INTENSITY},
     {name: 'shadowColor', type: 'color', min: 0, max: 255, defaultValue: DEFAULT_SHADOW_COLOR},
     {name: 'sunLightColor', type: 'color', min: 0, max: 255, defaultValue: DEFAULT_LIGHT_COLOR},
     {name: 'ambientLightColor', type: 'color', min: 0, max: 255, defaultValue: DEFAULT_LIGHT_COLOR}
@@ -1647,6 +1650,27 @@ export const POSTPROCESSING_EFFECTS: {[key: string]: EffectDescription} = {
     parameters: [
       {name: 'density', defaultValue: 0.6, min: 0, max: 1},
       {name: 'height', label: 'Elevation (m)', defaultValue: 50, min: -200, max: 3000},
+      {
+        name: 'animateHeight',
+        type: 'checkbox',
+        label: 'Animate Elevation',
+        tooltip:
+          'Animates elevation from start to end value during video export preview and recording.',
+        defaultValue: false,
+        min: 0,
+        max: 1
+      },
+      {name: 'heightEnd', label: 'End Elevation (m)', defaultValue: 100, min: -200, max: 3000},
+      {
+        name: 'linearEasing',
+        type: 'checkbox',
+        label: 'Linear Easing',
+        tooltip:
+          'Uses constant speed instead of smooth ease-in / ease-out during elevation animation.',
+        defaultValue: false,
+        min: 0,
+        max: 1
+      },
       {name: 'thickness', label: 'Transition (m)', defaultValue: 50, min: 0, max: 1000},
       {
         name: 'fogColor',
@@ -1659,7 +1683,8 @@ export const POSTPROCESSING_EFFECTS: {[key: string]: EffectDescription} = {
       {
         name: 'pattern',
         type: 'checkbox',
-        label: 'Show Pattern',
+        label: 'Pattern',
+        tooltip: 'Adds a noise pattern to the fog for a more natural, volumetric look.',
         defaultValue: false,
         min: 0,
         max: 1

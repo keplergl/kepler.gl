@@ -19,6 +19,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Verify CDN version matches package.json
+        run: |
+          MAJOR=$(node -p "require('./package.json').version.split('.')[0]")
+          CDN=$(grep -Po '(?<=DEFAULT_KEPLER_GL_CDN_VERSION = ")[^"]+' bindings/python/keplergl/_html_export.py)
+          echo "package.json major: $MAJOR"
+          echo "Python CDN version: $CDN"
+          if [ "$MAJOR" != "$CDN" ]; then
+            echo "::error::DEFAULT_KEPLER_GL_CDN_VERSION ($CDN) in _html_export.py does not match major version ($MAJOR) from package.json. Please update it."
+            exit 1
+          fi
+
       - name: Install uv
         uses: astral-sh/setup-uv@v4
 

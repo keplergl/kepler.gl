@@ -26,7 +26,8 @@ test('#mapStateSchema -> v1 -> save load mapState', t => {
       'isSplit',
       'isViewportSynced',
       'isZoomLocked',
-      'splitMapViewports'
+      'splitMapViewports',
+      'maxPitch'
     ],
     'mapState should have all 6 entries'
   );
@@ -41,7 +42,8 @@ test('#mapStateSchema -> v1 -> save load mapState', t => {
     isSplit: false,
     isViewportSynced: true,
     isZoomLocked: false,
-    splitMapViewports: []
+    splitMapViewports: [],
+    maxPitch: undefined
   };
 
   t.deepEqual(msToSave, expected, 'save mapState should be current');

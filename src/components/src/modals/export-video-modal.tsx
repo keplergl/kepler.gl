@@ -29,6 +29,7 @@ import {
   getTimeRangeFilterKeyframes,
   getAnimatableFilters
 } from './hubble-utils';
+import {useFogHeightAnimation} from './fog-height-animation';
 
 type HubbleModule = {
   ExportVideoPanelContainer: React.ComponentType<any>;
@@ -40,12 +41,18 @@ let _hubblePromise: Promise<HubbleModule> | null = null;
 
 function loadHubble(): Promise<HubbleModule> {
   if (_hubbleModule) return Promise.resolve(_hubbleModule);
-  if (!_hubblePromise) {
-    _hubblePromise = import('@hubble.gl/react').then(mod => {
+  if (_hubblePromise) return _hubblePromise;
+  _hubblePromise = import('@hubble.gl/react').then(
+    mod => {
       _hubbleModule = mod as unknown as HubbleModule;
       return _hubbleModule;
-    });
-  }
+    },
+    err => {
+      // Allow retry on next call
+      _hubblePromise = null;
+      throw err;
+    }
+  );
   return _hubblePromise;
 }
 
@@ -196,8 +203,6 @@ const HUBBLE_PANEL_OVERHEAD = 2 * 32 + 24 + 280;
 const EXPORT_VIDEO_MODAL_MAX_WIDTH = 1080;
 const MODAL_HORIZONTAL_PADDING = 144;
 
-let _shadowCompositingEffect: InstanceType<typeof DeckShadowCompositingEffect> | null = null;
-
 const ExportVideoModalFactory = () => {
   const ExportVideoModal: React.FC<ExportVideoModalProps> = ({
     mapboxApiAccessToken,
@@ -212,22 +217,31 @@ const ExportVideoModalFactory = () => {
     onClose
   }) => {
     const [hubble, setHubble] = useState<HubbleModule | null>(_hubbleModule);
+    const shadowCompositingRef = useRef<InstanceType<typeof DeckShadowCompositingEffect> | null>(
+      null
+    );
 
     useEffect(() => {
       patchDeckRendererForPostProcessing();
     }, []);
 
+    const [hubbleError, setHubbleError] = useState<string | null>(null);
+
     useEffect(() => {
-      if (!hubble) {
-        loadHubble().then(setHubble);
+      if (!hubble && !hubbleError) {
+        loadHubble()
+          .then(setHubble)
+          .catch(err => {
+            setHubbleError(err?.message || 'Failed to load video export module');
+          });
       }
-    }, [hubble]);
+    }, [hubble, hubbleError]);
 
     useEffect(() => {
       return () => {
-        if (_shadowCompositingEffect) {
-          _shadowCompositingEffect.cleanup();
-          _shadowCompositingEffect = null;
+        if (shadowCompositingRef.current) {
+          shadowCompositingRef.current.cleanup();
+          shadowCompositingRef.current = null;
         }
       };
     }, []);
@@ -278,6 +292,18 @@ const ExportVideoModalFactory = () => {
       (visState.effects || []).map((effect: Effect) => effect.clone())
     );
 
+    const [videoConfiguration, setVideoConfiguration] = useState<VideoConfiguration>({
+      ...exportVideo
+    });
+    const onUpdateVideoConfiguration = useCallback(
+      (values: VideoConfiguration) => setVideoConfiguration(prev => ({...prev, ...values})),
+      []
+    );
+
+    const hubbleContainerRef = useRef<any>(null);
+
+    useFogHeightAnimation(videoEffects, hubbleContainerRef);
+
     const deckEffects = useMemo(() => {
       if (videoEffects.length === 0) return [];
       const effectOrder = visState.effectOrder || videoEffects.map((e: Effect) => e.id);
@@ -290,10 +316,10 @@ const ExportVideoModalFactory = () => {
       const hasShadow = effects.some((e: any) => e.shadow === true);
       const hasPostProcess = effects.some((e: any) => typeof e.postRender === 'function');
       if (hasShadow && !hasPostProcess) {
-        if (!_shadowCompositingEffect) {
-          _shadowCompositingEffect = new DeckShadowCompositingEffect();
+        if (!shadowCompositingRef.current) {
+          shadowCompositingRef.current = new DeckShadowCompositingEffect();
         }
-        effects.push(_shadowCompositingEffect as any);
+        effects.push(shadowCompositingRef.current as any);
       }
 
       return effects;
@@ -302,6 +328,7 @@ const ExportVideoModalFactory = () => {
     const deckPropsWithEffects = useMemo(
       () => ({
         ...hubbleDeckGlProps,
+        _isExport: true,
         effects: deckEffects
       }),
       [hubbleDeckGlProps, deckEffects]
@@ -316,14 +343,6 @@ const ExportVideoModalFactory = () => {
     const staticMapProps = useMemo(
       () => getStaticMapProps(keplerState, onViewChange, mapboxApiAccessToken, mapboxApiUrl),
       [keplerState, onViewChange, mapboxApiAccessToken, mapboxApiUrl]
-    );
-
-    const [videoConfiguration, setVideoConfiguration] = useState<VideoConfiguration>({
-      ...exportVideo
-    });
-    const onUpdateVideoConfiguration = useCallback(
-      (values: VideoConfiguration) => setVideoConfiguration(prev => ({...prev, ...values})),
-      []
     );
 
     const trueDevicePixelRatio = useRef(
@@ -352,13 +371,16 @@ const ExportVideoModalFactory = () => {
     }, []);
 
     const onFilterFrameUpdate = useCallback(
-      (filterIdx: number, name: string, value: any) =>
-        visStateActions.setFilterAnimationTime(filterIdx, name, value),
+      (filterIdx: number, name: string, value: any) => {
+        visStateActions.setFilterAnimationTime(filterIdx, name, value);
+      },
       [visStateActions]
     );
 
     const onTripFrameUpdate = useCallback(
-      (value: any) => visStateActions.setLayerAnimationTime(value),
+      (value: any) => {
+        visStateActions.setLayerAnimationTime(value);
+      },
       [visStateActions]
     );
 
@@ -372,7 +394,20 @@ const ExportVideoModalFactory = () => {
     if (!hubble) {
       return (
         <StyledExportVideoModalContent className="export-video-modal">
-          <LoadingSpinner />
+          {hubbleError ? (
+            <div style={{padding: '20px', textAlign: 'center', color: '#d9534f'}}>
+              <p>{hubbleError}</p>
+              <Button
+                onClick={() => {
+                  setHubbleError(null);
+                }}
+              >
+                Retry
+              </Button>
+            </div>
+          ) : (
+            <LoadingSpinner />
+          )}
         </StyledExportVideoModalContent>
       );
     }
@@ -383,6 +418,7 @@ const ExportVideoModalFactory = () => {
       <KeplerUIContext.Provider value={KEPLER_UI}>
         <StyledExportVideoModalContent className="export-video-modal">
           <ExportVideoPanelContainer
+            ref={hubbleContainerRef}
             initialState={videoConfiguration}
             mapData={keplerState}
             onSettingsChange={onUpdateVideoConfiguration}

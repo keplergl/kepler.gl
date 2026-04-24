@@ -11,8 +11,10 @@ import {Effect, EffectUpdateProps} from '@kepler.gl/types';
 
 import RangeSliderFactory from '../common/range-slider';
 import {ArrowDownSmall} from '../common/icons';
+import {Tooltip} from '../common/styled-components';
 import EffectTimeConfiguratorFactory from './effect-time-configurator';
 import CompactColorPicker from './compact-color-picker';
+import SurfaceFogElevationSectionFactory, {ELEVATION_SECTION_TYPE} from './surface-fog-section';
 
 export type EffectConfiguratorProps = {
   effect: Effect;
@@ -160,6 +162,35 @@ const StyledCheckboxLabel = styled.label`
   white-space: nowrap;
 `;
 
+const StyledHintTooltip = styled(Tooltip)`
+  &.__react_component_tooltip {
+    max-width: 220px;
+    white-space: normal;
+    line-height: 1.4;
+    text-align: left;
+  }
+`;
+
+const StyledHintIcon = styled.span`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  margin-left: 6px;
+  border-radius: 50%;
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 1;
+  color: ${props => props.theme.labelColor};
+  border: 1px solid ${props => props.theme.labelColor};
+  cursor: help;
+  &:hover {
+    color: ${props => props.theme.textColorHl};
+    border-color: ${props => props.theme.textColorHl};
+  }
+`;
+
 const StyledColorCheckboxRow = styled.div`
   display: flex;
   align-items: center;
@@ -178,17 +209,23 @@ type EffectParameterDescriptionFlattened = {
   name: string;
   type?: 'number' | 'array' | 'color' | 'checkbox';
   label?: string | false | (string | false)[];
+  tooltip?: string;
   min: number;
   max: number;
   defaultValue?: number | number[] | boolean;
   index?: number;
 };
 
-EffectConfiguratorFactory.deps = [RangeSliderFactory, EffectTimeConfiguratorFactory];
+EffectConfiguratorFactory.deps = [
+  RangeSliderFactory,
+  EffectTimeConfiguratorFactory,
+  SurfaceFogElevationSectionFactory
+];
 
 export default function EffectConfiguratorFactory(
   RangeSlider: ReturnType<typeof RangeSliderFactory>,
-  EffectTimeConfigurator: ReturnType<typeof EffectTimeConfiguratorFactory>
+  EffectTimeConfigurator: ReturnType<typeof EffectTimeConfiguratorFactory>,
+  SurfaceFogElevationSection: ReturnType<typeof SurfaceFogElevationSectionFactory>
 ): React.FC<EffectConfiguratorProps> {
   const ShadowEffectConfigurator: React.FC<EffectConfiguratorProps> = ({
     effect,
@@ -198,17 +235,21 @@ export default function EffectConfiguratorFactory(
 
     const sliderProps = useMemo(() => {
       const propNames = ['shadowIntensity', 'ambientLightIntensity', 'sunLightIntensity'];
+      const descriptions = effect.getParameterDescriptions();
       return propNames.map(propName => {
+        const desc = descriptions.find(d => d.name === propName);
+        const min = desc?.min ?? 0;
+        const max = desc?.max ?? 1;
         return {
           value1: parameters[propName],
-          range: [0, 1],
-          value0: 0,
+          range: [min, max],
+          value0: min,
           onChange: (value: number[], event?: Event | null) => {
             updateEffectConfig(event, id, {parameters: {[propName]: value[1]}});
           }
         };
       });
-    }, [id, parameters, updateEffectConfig]);
+    }, [id, effect, parameters, updateEffectConfig]);
 
     const onTimeParametersChanged = useCallback(
       parameters => {
@@ -309,6 +350,8 @@ export default function EffectConfiguratorFactory(
   };
   const defaultUniforms = {};
 
+  const ELEVATION_EXTRA_PARAMS = new Set(['heightEnd', 'animateHeight', 'linearEasing']);
+
   const PostProcessingEffectConfigurator: React.FC<EffectConfiguratorProps> = ({
     effect,
     updateEffectConfig
@@ -316,13 +359,21 @@ export default function EffectConfiguratorFactory(
     const uniforms = effect.deckEffect?.module.propTypes || defaultUniforms;
     const parameterDescriptions = effect.getParameterDescriptions();
     const {parameters, id} = effect;
+
+    const hasElevationSection = parameterDescriptions.some(d => d.name === 'animateHeight');
+
     const flatParameterDescriptions = useMemo(() => {
       return parameterDescriptions.reduce((acc, description) => {
+        if (hasElevationSection && ELEVATION_EXTRA_PARAMS.has(description.name)) return acc;
+
+        if (hasElevationSection && description.name === 'height') {
+          acc.push({...description, type: ELEVATION_SECTION_TYPE as any});
+          return acc;
+        }
+
         if (description.type === 'color') {
-          // color parameters are rendered separately via CompactColorPicker
           acc.push(description);
         } else if (description.type === 'array') {
-          // split arrays of controls into a separate controls for each component
           if (Array.isArray(description.defaultValue)) {
             description.defaultValue.forEach((_, index) => {
               acc.push({
@@ -338,10 +389,14 @@ export default function EffectConfiguratorFactory(
 
         return acc;
       }, [] as EffectParameterDescriptionFlattened[]);
-    }, [parameterDescriptions]);
+    }, [parameterDescriptions, hasElevationSection]);
 
     const controls = useMemo(() => {
       return flatParameterDescriptions.map(desc => {
+        if ((desc.type as string) === ELEVATION_SECTION_TYPE) {
+          return {isElevationSection: true as const};
+        }
+
         if (desc.type === 'color') {
           return {
             isColor: true as const,
@@ -354,11 +409,13 @@ export default function EffectConfiguratorFactory(
         }
 
         if (desc.type === 'checkbox') {
+          const label = typeof desc.label === 'string' ? desc.label : desc.name;
           return {
             isCheckbox: true as const,
-            label: typeof desc.label === 'string' ? desc.label : desc.name,
+            label,
             paramName: desc.name,
             checked: Boolean(parameters[desc.name]),
+            tooltip: desc.tooltip,
             onChange: () =>
               updateEffectConfig(null, id, {parameters: {[desc.name]: !parameters[desc.name]}})
           };
@@ -428,7 +485,6 @@ export default function EffectConfiguratorFactory(
           };
         }
         // Parameter defined in effect description but not in shader propTypes
-        // (e.g. user-facing props that the effect maps to different GLSL uniforms)
         else if (desc.min !== undefined && desc.max !== undefined) {
           const rangeSpan = desc.max - desc.min;
           const step = rangeSpan > 10 ? 1 : 0.001;
@@ -464,6 +520,9 @@ export default function EffectConfiguratorFactory(
             if ('isColor' in control) {
               const nextControl = i + 1 < controls.length ? controls[i + 1] : null;
               if (nextControl && 'isCheckbox' in nextControl) {
+                const cbTooltipId = nextControl.tooltip
+                  ? `effect-cb-hint-${effect.id}-${i}`
+                  : undefined;
                 elements.push(
                   <StyledColorCheckboxRow key={`${effect.id}-${i}`}>
                     <CompactColorPicker
@@ -487,6 +546,20 @@ export default function EffectConfiguratorFactory(
                         onClick={e => e.stopPropagation()}
                       />
                       <StyledCheckboxLabel>{nextControl.label}</StyledCheckboxLabel>
+                      {nextControl.tooltip ? (
+                        <>
+                          <StyledHintIcon
+                            data-tip
+                            data-for={cbTooltipId}
+                            onClick={e => e.stopPropagation()}
+                          >
+                            ?
+                          </StyledHintIcon>
+                          <StyledHintTooltip id={cbTooltipId} effect="solid" delayShow={200}>
+                            {nextControl.tooltip}
+                          </StyledHintTooltip>
+                        </>
+                      ) : null}
                     </StyledCheckboxWrapper>
                   </StyledColorCheckboxRow>
                 );
@@ -533,6 +606,18 @@ export default function EffectConfiguratorFactory(
               continue;
             }
 
+            if ('isElevationSection' in control) {
+              elements.push(
+                <SurfaceFogElevationSection
+                  key={`${effect.id}-elevation`}
+                  effect={effect}
+                  updateEffectConfig={updateEffectConfig}
+                />
+              );
+              i++;
+              continue;
+            }
+
             elements.push(
               <RegularOuterWrapper key={`${effect.id}-${i}`}>
                 {control.label ? (
@@ -545,6 +630,7 @@ export default function EffectConfiguratorFactory(
             );
             i++;
           }
+
           return elements;
         })()}
       </StyledEffectConfigurator>

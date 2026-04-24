@@ -112,7 +112,6 @@ export {
   reorderEffectOrder,
   validateEffectParameters
 } from './effect-utils';
-
 // Mapbox
 export {
   isStyleUsingMapboxTiles,

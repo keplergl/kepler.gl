@@ -62,13 +62,14 @@
   "maintainers": [
     "Shan He <heshan0131@gmail.com>",
     "Igor Dykhta <dikhta.igor@gmail.com>",
-    "Ilya Boyandin <ilya@boyandin.me>"
+    "Ilya Boyandin <ilya@boyandin.me>",
+    "Xun Li <lixun910@gmail.com>"
   ],
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   },
   "volta": {
-    "node": "18.18.2",
+    "node": "20.19.3",
     "yarn": "4.4.0"
   },
   "packageManager": "yarn@4.4.0"

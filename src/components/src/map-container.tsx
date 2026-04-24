@@ -3,7 +3,7 @@
 
 // libraries
 import React, {Component, createRef, useMemo} from 'react';
-import styled, {withTheme} from 'styled-components';
+import styled, {withTheme, useTheme} from 'styled-components';
 import {Map, MapRef} from 'react-map-gl';
 import {PickingInfo, MapView} from '@deck.gl/core';
 import DeckGL from '@deck.gl/react';
@@ -73,7 +73,9 @@ import {
   THROTTLE_NOTIFICATION_TIME,
   DEFAULT_PICKING_RADIUS,
   NO_MAP_ID,
-  EMPTY_MAPBOX_STYLE
+  EMPTY_MAPBOX_STYLE,
+  MAPBOX_MAX_PITCH,
+  MAP_LIB_OPTIONS
 } from '@kepler.gl/constants';
 
 import {DROPPABLE_MAP_CONTAINER_TYPE} from './common/dnd-layer-items';
@@ -304,15 +306,16 @@ export const Attribution: React.FC<AttributionProps> = ({
   return memoizedComponents;
 };
 
-const StyledAttributionLogoContainer = styled.div`
+const StyledAttributionLogoContainer = styled.div<{$left: number}>`
   position: absolute;
-  bottom: 4px;
-  left: 4px;
+  bottom: ${props => props.theme.sidePanel.margin.left}px;
+  left: ${props => props.$left}px;
   z-index: 1;
   display: flex;
   align-items: flex-end;
   gap: 4px;
   pointer-events: auto;
+  transition: left 250ms ease-in-out;
 `;
 
 const StyledLogoLink = styled.a<{$enabled: boolean}>`
@@ -323,12 +326,25 @@ const StyledLogoLink = styled.a<{$enabled: boolean}>`
 
 type AttributionLogosProps = {
   logos: AttributionWithStyle[];
+  activeSidePanel?: boolean;
+  sidePanelWidth?: number;
 };
 
-export const AttributionLogos: React.FC<AttributionLogosProps> = ({logos}) => {
+const LOGO_LEFT_ADJUSTMENT = 3;
+
+export const AttributionLogos: React.FC<AttributionLogosProps> = ({
+  logos,
+  activeSidePanel,
+  sidePanelWidth
+}) => {
+  const theme = useTheme() as any;
+  const left =
+    (activeSidePanel ? (sidePanelWidth || 0) + LOGO_LEFT_ADJUSTMENT : 0) +
+    theme.sidePanel.margin.left;
+
   if (!logos?.length) return null;
   return (
-    <StyledAttributionLogoContainer>
+    <StyledAttributionLogoContainer $left={left}>
       {logos.map((logo, idx) => (
         <StyledLogoLink
           key={logo.logoUrl || idx}
@@ -561,10 +577,12 @@ export default function MapContainerFactory(
 
     _onLayerSetDomain = (
       idx: number,
-      value: number[] | {domain: VisualChannelDomain; aggregatedBins: AggregatedBin[]}
+      value: number[] | {domain: VisualChannelDomain; aggregatedBins: Record<number, AggregatedBin>}
     ) => {
-      // deck.gl 9 native aggregation layers (Grid, Hexagon) pass [min, max],
-      // while ClusterLayer's CPUAggregator still passes {domain, aggregatedBins}.
+      // deck.gl 9 native aggregation layers (Grid, Hexagon) pass
+      // {domain, aggregatedBins} via our ScaleEnhanced* overrides,
+      // while ClusterLayer's CPUAggregator also passes {domain, aggregatedBins}.
+      // Plain [min, max] is a fallback if the override is bypassed.
       const config = Array.isArray(value)
         ? {colorDomain: value as VisualChannelDomain}
         : {colorDomain: value.domain, aggregatedBins: value.aggregatedBins};
@@ -947,7 +965,9 @@ export default function MapContainerFactory(
 
       const views = deckGlProps?.views
         ? deckGlProps?.views()
-        : new MapView({legacyMeterSizes: true} as ConstructorParameters<typeof MapView>[0] & {
+        : new MapView({legacyMeterSizes: true, farZMultiplier: 1.2} as ConstructorParameters<
+            typeof MapView
+          >[0] & {
             legacyMeterSizes: boolean;
           });
 
@@ -993,7 +1013,9 @@ export default function MapContainerFactory(
               isInteractive
                 ? {
                     doubleClickZoom: !isEditorDrawingMode,
-                    dragRotate: this.props.mapState.dragRotate
+                    dragRotate: this.props.mapState.dragRotate,
+                    maxPitch:
+                      this.props.mapState.maxPitch ?? getApplicationConfig().maxPitch
                   }
                 : false
             }
@@ -1159,8 +1181,13 @@ export default function MapContainerFactory(
         getApplicationConfig().baseMapLibraryConfig?.[baseMapLibraryName];
 
       const internalViewState = this.context?.getInternalViewState(index);
+      const configMaxPitch = mapState.maxPitch ?? getApplicationConfig().maxPitch;
+      const effectiveMaxPitch = baseMapLibraryName === MAP_LIB_OPTIONS.MAPBOX
+        ? Math.min(configMaxPitch, MAPBOX_MAX_PITCH)
+        : configMaxPitch;
       const mapProps = {
         ...internalViewState,
+        maxPitch: effectiveMaxPitch,
         preserveDrawingBuffer: this.props.isExport ?? false,
         mapboxAccessToken: currentStyle?.accessToken || mapboxApiAccessToken,
         // baseApiUrl: mapboxApiUrl,
@@ -1254,6 +1281,7 @@ export default function MapContainerFactory(
             <MapComponent
               key={`top-${baseMapLibraryName}`}
               viewState={internalViewState}
+              maxPitch={effectiveMaxPitch}
               mapStyle={mapStyle.topMapStyle}
               style={MAP_STYLE.top}
               mapboxAccessToken={mapProps.mapboxAccessToken}
@@ -1275,6 +1303,7 @@ export default function MapContainerFactory(
               isVisible={Boolean(isLoadingIndicatorVisible || this.anyActiveLayerLoading)}
               activeSidePanel={Boolean(activeSidePanel)}
               sidePanelWidth={sidePanelWidth}
+              hasAttributionLogos={attributionLogos.length > 0}
             />
           ) : null}
           {this.props.primary ? (
@@ -1285,7 +1314,13 @@ export default function MapContainerFactory(
               baseMapLibraryConfig={baseMapLibraryConfig}
             />
           ) : null}
-          {this.props.primary ? <AttributionLogos logos={attributionLogos} /> : null}
+          {this.props.primary ? (
+            <AttributionLogos
+              logos={attributionLogos}
+              activeSidePanel={Boolean(activeSidePanel)}
+              sidePanelWidth={sidePanelWidth}
+            />
+          ) : null}
         </>
       );
     }

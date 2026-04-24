@@ -10,6 +10,7 @@ import {processDataset} from './utils/data';
 import type {WidgetModel, DatasetPayload} from './types';
 import type {ParsedConfig} from '@kepler.gl/types';
 import {addDataToMap, receiveMapConfig, wrapTo} from '@kepler.gl/actions';
+import KeplerGlSchema from '@kepler.gl/schemas';
 
 const DEBUG = false;
 function debug(...args: unknown[]) {
@@ -23,6 +24,9 @@ export class KeplerGlWidget {
   private el: HTMLElement;
   private root: Root | null = null;
   private store: ReturnType<typeof createStore>;
+  private previousConfigHash: string = '';
+  private mapUpdateCounter: number = 0;
+  private isSyncingConfig: boolean = false;
 
   constructor(model: WidgetModel, el: HTMLElement) {
     debug('KeplerGlWidget constructor');
@@ -60,6 +64,13 @@ export class KeplerGlWidget {
 
   onConfigChange() {
     debug('onConfigChange() called');
+    const config = this.model.get('config');
+    const hash = JSON.stringify(config);
+    // Avoid re-applying config that was just synced from the store
+    if (hash === this.previousConfigHash) {
+      debug('onConfigChange: config matches store, skipping');
+      return;
+    }
     this.loadConfig();
   }
 
@@ -143,11 +154,38 @@ export class KeplerGlWidget {
     const config = this.model.get('config');
     debug('loadConfig() called, config:', config);
     if (config && Object.keys(config).length > 0) {
+      this.isSyncingConfig = true;
       this.store.dispatch(wrapTo(KEPLER_ID, receiveMapConfig(config as ParsedConfig, {})));
+      this.previousConfigHash = JSON.stringify(config);
+      this.isSyncingConfig = false;
     }
   }
 
   private syncConfigToPython() {
-    // TODO: Extract config from store and sync back
+    if (this.isSyncingConfig) {
+      return;
+    }
+
+    const state = this.store.getState() as {keplerGl?: Record<string, unknown>};
+    const instanceState = state.keplerGl?.[KEPLER_ID];
+    if (!instanceState) {
+      return;
+    }
+
+    this.mapUpdateCounter++;
+    // Skip early store updates during component initialization
+    if (this.mapUpdateCounter <= 2) {
+      return;
+    }
+
+    const configToSave = KeplerGlSchema.getConfigToSave(instanceState);
+    const hash = JSON.stringify(configToSave);
+
+    if (hash !== this.previousConfigHash) {
+      debug('Config changed, syncing to Python');
+      this.previousConfigHash = hash;
+      this.model.set('config', configToSave);
+      this.model.save_changes();
+    }
   }
 }

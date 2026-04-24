@@ -1,6 +1,6 @@
 [project]
 name = "keplergl"
-version = "0.4.0rc1"
+version = "0.4.0rc2"
 description = "Kepler.gl Jupyter Widget"
 readme = "README.md"
 requires-python = ">=3.9"

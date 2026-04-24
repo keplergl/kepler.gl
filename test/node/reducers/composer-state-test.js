@@ -399,6 +399,82 @@ test('#composerStateReducer - addDataToMapUpdater: autoCreateLayers', t => {
   t.end();
 });
 
+test('#composerStateReducer - addDataToMapUpdater: layerVisConfig only affects new datasets; unknown keys ignored', t => {
+  const data = processCsvData(testCsvData);
+  const state = keplerGlReducer({}, registerEntry({id: 'test'})).test;
+
+  let oldState = addDataToMapUpdater(state, {
+    payload: {
+      datasets: {
+        data,
+        info: {id: 'first-csv-dataset'}
+      }
+    }
+  });
+  oldState = {
+    ...oldState,
+    visState: applyExistingDatasetTasks(visStateReducer, oldState.visState)
+  };
+  drainTasksForTesting();
+
+  const firstLayer = oldState.visState.layers.find(l => l.config.dataId === 'first-csv-dataset');
+  t.ok(firstLayer, 'first dataset should have a layer');
+  const allowHoverFirstBefore = firstLayer.config.visConfig.allowHover;
+
+  let nextState = addDataToMapUpdater(oldState, {
+    payload: {
+      datasets: {
+        data,
+        info: {id: 'second-csv-dataset'}
+      },
+      options: {
+        keepExistingConfig: true,
+        layerVisConfig: {
+          allowHover: false,
+          opacity: undefined,
+          totallyUnknownVisKey999: 'strip-me'
+        }
+      }
+    }
+  });
+  nextState = {
+    ...nextState,
+    visState: applyExistingDatasetTasks(visStateReducer, nextState.visState)
+  };
+  drainTasksForTesting();
+
+  const layerFirst = nextState.visState.layers.find(l => l.config.dataId === 'first-csv-dataset');
+  const layerSecond = nextState.visState.layers.find(l => l.config.dataId === 'second-csv-dataset');
+
+  t.ok(layerSecond, 'second dataset should have a layer');
+  t.equal(
+    layerFirst.config.visConfig.allowHover,
+    allowHoverFirstBefore,
+    'layerVisConfig must not change visConfig for layers tied to prior datasets'
+  );
+  t.equal(
+    layerSecond.config.visConfig.allowHover,
+    false,
+    'layerVisConfig should merge allowHover onto layers for datasets added in this action'
+  );
+  t.equal(
+    layerFirst.config.visConfig.totallyUnknownVisKey999,
+    undefined,
+    'unknown keys must not be applied to existing layers'
+  );
+  t.equal(
+    layerSecond.config.visConfig.totallyUnknownVisKey999,
+    undefined,
+    'unknown keys must not be merged into visConfig when absent from visConfigSettings'
+  );
+  t.ok(
+    typeof layerSecond.config.visConfig.opacity === 'number',
+    'undefined patch values must not overwrite visConfig (e.g. opacity)'
+  );
+
+  t.end();
+});
+
 test('#composerStateReducer - replaceDataInMapUpdater', t => {
   const dataIdToReplace = 'dataset_to_replace';
   const datasets = {

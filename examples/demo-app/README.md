@@ -3,7 +3,7 @@
 This is the src code of kepler.gl demo app. You can copy this folder out and run it locally.
 
 #### Pre requirement
-- [Node.js ^18.x](http://nodejs.org): We use Node to generate the documentation, run a
+- [Node.js ^20.x](http://nodejs.org): We use Node to generate the documentation, run a
   development web server, run tests, and generate distributable files. Depending on your system,
   you can install Node either from source or as a pre-packaged bundle.
 - [Yarn 4.4.0](https://yarnpkg.com): We use Yarn to install our Node.js module dependencies
@@ -17,7 +17,7 @@ Go to the root directory and install the dependencies using yarn:
 yarn bootstrap
 ```
 
-If install fails while building the `gl` package, use Node 18.18.2 from the repo root `.nvmrc` (`nvm install` / `nvm use`), or see [Troubleshooting: gl package install](../../contributing/DEVELOPERS.md#troubleshooting-gl-package-install).
+If install fails while building the `gl` package, use Node 20.19.3 from the repo root `.nvmrc` (`nvm install` / `nvm use`), or see [Troubleshooting: gl package install](../../contributing/DEVELOPERS.md#troubleshooting-gl-package-install).
 
 If `yarn start` errors with missing `@kepler.gl/duckdb/components` (or other workspace `dist/` files), from the repo root run `yarn workspaces foreach -At run stab` or run full `yarn bootstrap` (not only `yarn install`).
 

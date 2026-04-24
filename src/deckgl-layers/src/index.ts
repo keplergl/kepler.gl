@@ -21,6 +21,7 @@ export * as RasterWebGL from './raster/webgl';
 export {default as WMSLayer} from './wms/wms-layer';
 
 export * from './layer-utils/shader-utils';
+export * from './layer-utils/aggregation-utils';
 
 export * from './3d-building-layer/types';
 export * from './3d-building-layer/3d-building-utils';

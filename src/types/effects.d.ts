@@ -5,6 +5,7 @@ type EffectParameterDescription = {
   name: string;
   type?: 'number' | 'array' | 'color' | 'checkbox';
   label?: string | false | (string | false)[];
+  tooltip?: string;
   min: number;
   max: number;
   defaultValue?: number | number[] | boolean;

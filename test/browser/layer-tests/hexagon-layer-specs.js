@@ -352,11 +352,20 @@ test('#HexagonLayer -> renderLayer', t => {
           t.deepEqual(props[key], expectedProps[key], `should have correct props.${key}`);
         });
 
-        // deck.gl 9: onSetColorDomain receives [min, max] tuple
+        // onSetColorDomain fires twice: first the parent's [min, max], then our
+        // enriched {domain, aggregatedBins}.  The last call is the one that sticks.
         // count aggregation: bins have 0, 2, and 1 filtered points
         t.ok(spyLayerCallbacks.called, 'should call onSetLayerDomain');
-        const domainArg = spyLayerCallbacks.args[0][0];
-        t.deepEqual(domainArg, [0, 2], 'onSetLayerDomain should receive exact domain [0, 2]');
+        const lastIdx = spyLayerCallbacks.args.length - 1;
+        const enrichedArg = spyLayerCallbacks.args[lastIdx][0];
+        t.ok(
+          !Array.isArray(enrichedArg),
+          'callback should receive enriched object, not plain array'
+        );
+        // Default colorScale is 'quantile', so the enriched domain is the full
+        // sorted array of per-bin values (not just [min, max]).
+        t.deepEqual(enrichedArg.domain, [0, 1, 2], 'enriched domain should be full sorted bin values for quantile scale');
+        t.ok(enrichedArg.aggregatedBins, 'enriched call should include aggregatedBins');
 
         // Verify aggregator state and per-bin values
         const aggregator = deckHexLayer.state?.aggregator;
@@ -486,18 +495,22 @@ test('#HexagonLayer -> renderLayer', t => {
           'should have exactly 1 NaN color value (empty bin)'
         );
 
-        // deck.gl 9: onSetColorDomain receives [min, max] tuple
+        // onSetColorDomain fires twice: first the parent's [min, max], then our
+        // enriched {domain, aggregatedBins}.  The last call is the one that sticks.
         // max aggregation of trip_distance: bins with filtered points have max 7.13 and 11
         // Float32 precision: 7.13 may become 7.130000114440918
         t.ok(spyLayerCallbacks.called, 'should call onSetLayerDomain');
         const lastCallIdx = spyLayerCallbacks.args.length - 1;
-        const domainArg = spyLayerCallbacks.args[lastCallIdx][0];
+        const domainCallArg = spyLayerCallbacks.args[lastCallIdx][0];
+        t.ok(!Array.isArray(domainCallArg), 'callback should receive enriched object');
+        const domainArg = domainCallArg.domain;
         t.equal(domainArg.length, 2, 'domain should have 2 elements');
         t.ok(
           Math.abs(domainArg[0] - 7.13) < 0.001,
           `domain[0] should be ~7.13 (got ${domainArg[0]})`
         );
         t.equal(domainArg[1], 11, 'domain[1] should be 11');
+        t.ok(domainCallArg.aggregatedBins, 'enriched call should include aggregatedBins');
 
         // Verify aggregator state and per-bin values
         const aggregator = deckHexLayer.state?.aggregator;
