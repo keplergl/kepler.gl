@@ -157,16 +157,42 @@ export default function RangeSliderFactory(
       return typeof this.props.timeFormat === 'string';
     };
 
-    _getDisplayRange = () => {
+    _getDisplayRangeInfo = () => {
       const {range, bins, isRanged} = this.props;
-      if (!range) return range;
-      if (!this._isTimeFilter() || !bins || !isRanged) return range;
+      if (!range) {
+        return {displayRange: range, binStep: 0};
+      }
+
+      if (!bins || !isRanged) {
+        return {displayRange: range, binStep: 0};
+      }
+
       const groupKeys = Object.keys(bins).filter(k => bins[k]?.length > 0);
-      if (groupKeys.length === 0) return range;
+      if (groupKeys.length === 0) {
+        return {displayRange: range, binStep: 0};
+      }
+
       const group = bins[groupKeys[0]];
       const idx = group.length > 1 ? 1 : 0;
       const binStep = group[idx].x1 - group[idx].x0;
-      return binStep > 0 ? [range[0] - binStep, range[1] + binStep] : range;
+
+      if (binStep <= 0) {
+        return {displayRange: range, binStep: 0};
+      }
+
+      if (this._isTimeFilter()) {
+        const displayRange = [range[0] - binStep, range[1] + binStep];
+        return {displayRange, binStep};
+      }
+
+      // Non-time range filters: pad by half a bin so edge bars aren't clipped
+      const pad = binStep / 2;
+      const displayRange = [range[0] - pad, range[1] + pad];
+      return {displayRange, binStep: pad};
+    };
+
+    _getDisplayRange = () => {
+      return this._getDisplayRangeInfo().displayRange;
     };
 
     _roundValToStep = val => {
@@ -267,21 +293,13 @@ export default function RangeSliderFactory(
       const plotWidth = Math.max(width - Number(sliderHandleWidth), 0);
       const hasPlot = plotType?.type;
 
-      const isTimeFilter = this._isTimeFilter();
-      const binStep =
-        isTimeFilter && bins && isRanged
-          ? (() => {
-              const groupKeys = Object.keys(bins).filter(k => bins[k]?.length > 0);
-              if (groupKeys.length === 0) return 0;
-              const group = bins[groupKeys[0]];
-              const idx = group.length > 1 ? 1 : 0;
-              return group[idx].x1 - group[idx].x0;
-            })()
-          : 0;
-      const displayRange: number[] | undefined =
-        range && binStep > 0 ? [range[0] - binStep, range[1] + binStep] : range;
+      const {displayRange} = this._getDisplayRangeInfo();
 
-      const value = this.props.plotValue || this.filterValueSelector(this.props);
+      const rawValue = this.props.plotValue || this.filterValueSelector(this.props);
+      const value =
+        displayRange && Array.isArray(rawValue)
+          ? (rawValue.map(v => clamp([displayRange[0], displayRange[1]], v)) as typeof rawValue)
+          : rawValue;
       const scaledValue =
         subAnimations?.length && range
           ? scaleSourceDomainToDestination(value as [number, number], range as [number, number])

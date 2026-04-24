@@ -83,6 +83,8 @@ export type HistogramMaskModeType = {
   MaskWithOverlay: number;
 };
 
+const undefinedToZero = (v: number | undefined) => (v ? v : 0);
+
 interface HistogramPlotProps {
   width: number;
   height: number;
@@ -113,7 +115,6 @@ function HistogramPlotFactory() {
     brushComponent,
     breakLines
   }: HistogramPlotProps) => {
-    const undefinedToZero = (x: number | undefined) => (x ? x : 0);
     const groupKeys = useMemo(
       () =>
         Object.keys(histogramsByGroup)
@@ -142,15 +143,12 @@ function HistogramPlotFactory() {
       return maxGroup.length;
     }, [histogramsByGroup, groupKeys]);
 
-    const barWidth = useMemo(() => {
-      if (numBins === 0) return 0;
-      return width / numBins / (isMasked ? 1 : groupKeys.length);
-    }, [numBins, groupKeys, width, isMasked]);
+    const x = useMemo(() => scaleLinear().domain(domain).range([0, width]), [domain, width]);
 
-    const x = useMemo(
-      () => scaleLinear().domain(domain).range([0, width]),
-      [domain, width]
-    );
+    const fallbackBarWidth = useMemo(() => {
+      if (numBins === 0) return 0;
+      return width / numBins;
+    }, [numBins, width]);
 
     const y = useMemo(
       () =>
@@ -192,6 +190,10 @@ function HistogramPlotFactory() {
                   const wRatio = inRange
                     ? histogramStyle.highlightW
                     : histogramStyle.unHighlightedW;
+                  const bx0 = x(undefinedToZero(bar.x0));
+                  const bx1 = x(undefinedToZero(bar.x1));
+                  const binW = Math.max(bx1 - bx0, 1);
+                  const drawnW = binW * wRatio;
                   return (
                     <Bar
                       $isOverlay={false}
@@ -199,8 +201,8 @@ function HistogramPlotFactory() {
                       $color={HISTOGRAM_MASK_FGCOLOR}
                       key={`mask-${idx}`}
                       height={y(bar[countProp])}
-                      width={barWidth * wRatio}
-                      x={x(bar.x0) - (barWidth * wRatio) / 2}
+                      width={drawnW}
+                      x={bx0 + (binW - drawnW) / 2}
                       y={height - y(bar[countProp])}
                     />
                   );
@@ -226,14 +228,18 @@ function HistogramPlotFactory() {
                   : y(bar[countProp]);
                 const inRange = isBarInRange(bar, idx, list, domain, value);
                 const wRatio = inRange ? histogramStyle.highlightW : histogramStyle.unHighlightedW;
+                const bx0 = x(undefinedToZero(bar.x0));
+                const bx1 = x(undefinedToZero(bar.x1));
+                const binW = Math.max(bx1 - bx0, 1);
+                const drawnW = binW * wRatio;
                 return (
                   <Bar
                     $inRange={inRange}
                     $isOverlay={true}
                     key={`bar-${idx}`}
                     height={maskHeight}
-                    width={barWidth * wRatio}
-                    x={x(bar.x0) - (barWidth * wRatio) / 2}
+                    width={drawnW}
+                    x={bx0 + (binW - drawnW) / 2}
                     y={height - y(bar[countProp])}
                   />
                 );
@@ -247,7 +253,7 @@ function HistogramPlotFactory() {
               );
             })}
           </HistogramBreakLine>
-          <g transform={`translate(${isRanged ? 0 : barWidth / 2}, 0)`}>{brushComponent}</g>
+          <g transform={`translate(${isRanged ? 0 : fallbackBarWidth / 2}, 0)`}>{brushComponent}</g>
         </HistogramWrapper>
       );
     };
@@ -267,15 +273,16 @@ function HistogramPlotFactory() {
                 const inRange = isBarInRange(bar, idx, list, domain, value);
 
                 const wRatio = inRange ? histogramStyle.highlightW : histogramStyle.unHighlightedW;
-                const drawnWidth = barWidth * wRatio;
-                const tickX = x(undefinedToZero(bar.x0));
+                const bx0 = x(undefinedToZero(bar.x0));
+                const bx1 = x(undefinedToZero(bar.x1));
+                const binW = Math.max(bx1 - bx0, 1);
+                const perGroupW = isMasked ? binW : binW / groupKeys.length;
+                const drawnWidth = perGroupW * wRatio;
                 const groupOffset =
                   groupKeys.length > 1
-                    ? -((barWidth * groupKeys.length) / 2) +
-                      barWidth * i +
-                      (barWidth - drawnWidth) / 2
-                    : -(drawnWidth / 2);
-                const startX = tickX + groupOffset;
+                    ? perGroupW * i + (perGroupW - drawnWidth) / 2
+                    : (binW - drawnWidth) / 2;
+                const startX = bx0 + groupOffset;
                 return (
                   <Bar
                     $isOverlay={false}
@@ -294,7 +301,7 @@ function HistogramPlotFactory() {
             </g>
           ))}
         </g>
-        <g transform={`translate(${isRanged ? 0 : barWidth / 2}, 0)`}>{brushComponent}</g>
+        <g transform={`translate(${isRanged ? 0 : fallbackBarWidth / 2}, 0)`}>{brushComponent}</g>
       </HistogramWrapper>
     );
   };
