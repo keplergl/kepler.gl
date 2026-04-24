@@ -153,10 +153,14 @@ export default function RangeSliderFactory(
       (value0, value1) => [value0, value1]
     );
 
+    _isTimeFilter = () => {
+      return typeof this.props.timeFormat === 'string';
+    };
+
     _getDisplayRange = () => {
       const {range, bins, isRanged} = this.props;
       if (!range) return range;
-      if (!bins || !isRanged) return range;
+      if (!this._isTimeFilter() || !bins || !isRanged) return range;
       const groupKeys = Object.keys(bins).filter(k => bins[k]?.length > 0);
       if (groupKeys.length === 0) return range;
       const group = bins[groupKeys[0]];
@@ -263,8 +267,9 @@ export default function RangeSliderFactory(
       const plotWidth = Math.max(width - Number(sliderHandleWidth), 0);
       const hasPlot = plotType?.type;
 
+      const isTimeFilter = this._isTimeFilter();
       const binStep =
-        bins && isRanged
+        isTimeFilter && bins && isRanged
           ? (() => {
               const groupKeys = Object.keys(bins).filter(k => bins[k]?.length > 0);
               if (groupKeys.length === 0) return 0;
