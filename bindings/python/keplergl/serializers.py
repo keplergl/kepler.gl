@@ -120,7 +120,12 @@ def serialize_geodataframe(gdf: gpd.GeoDataFrame, name: str) -> dict:
 
     # Convert geometry column to geoarrow format
     geom_col = gdf.geometry.name
-    geom_array = ga.as_geoarrow(gdf.geometry)
+    geom_series = gdf.geometry
+    if geom_series.notna().any():
+        geom_array = ga.as_geoarrow(geom_series)
+    else:
+        # GeoArrow cannot infer a concrete geometry type from an empty/all-null series.
+        geom_array = ga.as_geoarrow(geom_series, type=ga.wkb())
 
     # Build table with non-geometry columns as regular Arrow arrays
     non_geom_cols = [c for c in gdf.columns if c != geom_col]
