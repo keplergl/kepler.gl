@@ -3,13 +3,6 @@
 
 import '@testing-library/jest-dom';
 
-// TextEncoder/TextDecoder are not provided by the jsdom test environment
-const {TextDecoder, TextEncoder} = require('node:util');
-Object.defineProperties(globalThis, {
-  TextDecoder: {value: TextDecoder},
-  TextEncoder: {value: TextEncoder}
-});
-
 jest.mock('mapbox-gl/dist/mapbox-gl', () => ({
   Map: () => ({})
 }));
