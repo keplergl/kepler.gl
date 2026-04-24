@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import json
+import html
 from typing import Optional
 
 import pandas as pd
@@ -98,7 +99,7 @@ def _serialize_datasets_for_html(data: dict, json_encoder=str) -> str:
 
 def export_map_html(
     data: dict,
-    config: dict,
+    config: Optional[dict],
     read_only: bool = False,
     center_map: bool = False,
     mapbox_token: str = "",
@@ -135,7 +136,7 @@ def export_map_html(
     center_map_js = "true" if center_map else "false"
     app_name_json = json.dumps(app_name)
     theme_js = json.dumps(theme) if theme else "undefined"
-    title_html = app_name if app_name else "kepler.gl"
+    title_html = html.escape(app_name) if app_name else "kepler.gl"
 
     return f"""\
 <!DOCTYPE html>

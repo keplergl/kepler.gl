@@ -27,7 +27,7 @@ export class KeplerGlWidget {
   private previousConfigHash = '';
   private mapUpdateCounter = 0;
   private isSyncingConfig = false;
-  private loadedDatasetIds: Set<string> = new Set();
+  private loadedDatasetHashes: Map<string, string> = new Map();
 
   constructor(model: WidgetModel, el: HTMLElement) {
     debug('KeplerGlWidget constructor');
@@ -93,7 +93,7 @@ export class KeplerGlWidget {
     const datasets = await this.processAllDatasets(data);
 
     if (datasets.length > 0 || (config && Object.keys(config).length > 0)) {
-      const hasMapState = !!(config as any)?.config?.mapState;
+      const hasMapState = !!config?.config?.mapState;
       const payload: Record<string, unknown> = {
         datasets,
         options: {centerMap: !hasMapState, readOnly: false}
@@ -104,8 +104,8 @@ export class KeplerGlWidget {
       }
       const action = addDataToMap(payload as AddDataToMapPayload);
       this.store.dispatch(wrapTo(KEPLER_ID, action));
-      for (const ds of datasets) {
-        this.loadedDatasetIds.add(ds.info.id);
+      for (const [name, dataPayload] of Object.entries(data)) {
+        this.loadedDatasetHashes.set(name, JSON.stringify(dataPayload));
       }
       debug('loadInitial: dispatched addDataToMap with datasets + config');
     }
@@ -117,11 +117,21 @@ export class KeplerGlWidget {
 
     await this.waitForInstance();
 
+    const currentNames = new Set(Object.keys(data));
+
+    for (const prevName of this.loadedDatasetHashes.keys()) {
+      if (!currentNames.has(prevName)) {
+        this.loadedDatasetHashes.delete(prevName);
+        debug(`Dataset '${prevName}' removed`);
+      }
+    }
+
     for (const [name, payload] of Object.entries(data)) {
-      if (this.loadedDatasetIds.has(name)) {
+      const hash = JSON.stringify(payload);
+      if (this.loadedDatasetHashes.get(name) === hash) {
         continue;
       }
-      debug(`Processing new dataset '${name}'...`);
+      debug(`Processing dataset '${name}'...`);
       try {
         const processed = await processDataset(payload as DatasetPayload);
         if (!processed) {
@@ -136,7 +146,7 @@ export class KeplerGlWidget {
           options: {centerMap: true, readOnly: false, keepExistingConfig: true}
         } as AddDataToMapPayload);
         this.store.dispatch(wrapTo(KEPLER_ID, action));
-        this.loadedDatasetIds.add(name);
+        this.loadedDatasetHashes.set(name, hash);
         debug(`Dataset '${name}' dispatched`);
       } catch (error) {
         console.error(`[keplergl-widget] Error processing dataset '${name}':`, error);
