@@ -3,7 +3,7 @@
 This is the src code of kepler.gl demo app. You can copy this folder out and run it locally.
 
 #### Pre requirement
-- [Node.js ^18.x](http://nodejs.org): We use Node to generate the documentation, run a
+- [Node.js ^20.x](http://nodejs.org): We use Node to generate the documentation, run a
   development web server, run tests, and generate distributable files. Depending on your system,
   you can install Node either from source or as a pre-packaged bundle.
 - [Yarn 4.4.0](https://yarnpkg.com): We use Yarn to install our Node.js module dependencies
