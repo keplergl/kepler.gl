@@ -17,3 +17,4 @@ import './scenegraph-layer-specs';
 import './trip-layer-specs';
 import './s2-geometry-layer-specs';
 import './wms-layer-specs';
+import './flow-layer-specs';
