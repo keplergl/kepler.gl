@@ -101,7 +101,8 @@ export default {
       hexagonid: 'H3',
       trip: 'viagem',
       s2: 'S2',
-      '3d': '3D'
+      '3d': '3D',
+      flow: 'flow'
     },
     layerUpdateError:
       'Ocorreu um erro ao atualizar a camada: {errorMessage}. Certifique-se de que o formato dos dados de entrada seja válido.',
@@ -158,7 +159,20 @@ export default {
     fixedHeight: 'Altura fixa',
     fixedHeightDescription: 'Use a altura sem modificações',
     allowHover: 'Mostrar dica de ferramenta',
-    allowHoverDescription: 'Mostrar ou ocultar dica de ferramenta ao passar o cursor sobre os recursos da camada'
+    allowHoverDescription:
+      'Mostrar ou ocultar dica de ferramenta ao passar o cursor sobre os recursos da camada',
+    flow: {
+      fade: 'Esmaecimento',
+      fadeEnabled: 'Esmaecimento',
+      fadeAmount: 'Quantidade de esmaecimento',
+      display: 'Exibição',
+      animationEnabled: 'Animação',
+      curvedLinesEnabled: 'Linhas curvas',
+      adaptiveScalesEnabled: 'Escalas adaptativas',
+      clusteringEnabled: 'Agrupamento',
+      locationTotalsEnabled: 'Totais de localização',
+      maxTopFlowsDisplayNum: 'Máx. fluxos principais'
+    }
   },
   layerManager: {
     addData: 'Adicionar Dados',
@@ -417,6 +431,21 @@ export default {
     },
     hexagon: {
       worldUnitSize: 'Raio do Hexágono (km)'
+    },
+    flow: {
+      source: {
+        lat: 'origem lat',
+        lng: 'origem lng',
+        name: 'nome origem',
+        h3: 'H3 origem'
+      },
+      target: {
+        lat: 'destino lat',
+        lng: 'destino lng',
+        name: 'nome destino',
+        h3: 'H3 destino'
+      },
+      count: 'contagem'
     }
   },
   color: {
@@ -449,5 +478,20 @@ export default {
   'Bug Report': 'Reportar Bug',
   'User Guide': 'Guia do Usuário',
   Save: 'Salvar',
-  Share: 'Compartilhar'
+  Share: 'Compartilhar',
+  flow: {
+    tooltip: {
+      location: {
+        name: 'Nome',
+        incomingCount: 'Entrada',
+        outgoingCount: 'Saída',
+        internalCount: 'Interno'
+      },
+      flow: {
+        sourceName: 'Origem',
+        targetName: 'Destino',
+        count: 'Contagem'
+      }
+    }
+  }
 };

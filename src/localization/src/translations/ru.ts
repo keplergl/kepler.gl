@@ -101,7 +101,8 @@ export default {
       hexagonid: 'H3',
       trip: 'пути',
       s2: 'S2',
-      '3d': '3D'
+      '3d': '3D',
+      flow: 'поток'
     },
     heatmap: 'Heatmap',
     aggregation: 'Aggregation'
@@ -151,7 +152,19 @@ export default {
     heightRange: 'Диапазон высоты',
     heightMultiplier: 'Множитель высоты',
     allowHover: 'Показать подсказку',
-    allowHoverDescription: 'Показать или скрыть подсказку при наведении на элементы слоя'
+    allowHoverDescription: 'Показать или скрыть подсказку при наведении на элементы слоя',
+    flow: {
+      fade: 'Затухание',
+      fadeEnabled: 'Затухание',
+      fadeAmount: 'Степень затухания',
+      display: 'Отображение',
+      animationEnabled: 'Анимация',
+      curvedLinesEnabled: 'Изогнутые линии',
+      adaptiveScalesEnabled: 'Адаптивные масштабы',
+      clusteringEnabled: 'Кластеризация',
+      locationTotalsEnabled: 'Итоги по локациям',
+      maxTopFlowsDisplayNum: 'Макс. число потоков'
+    }
   },
   layerManager: {
     addData: 'Добавить данные',
@@ -427,7 +440,22 @@ export default {
     hexagon: {
       worldUnitSize: 'Hexagon радиус (km)'
     },
-    hex_id: 'hex id'
+    hex_id: 'hex id',
+    flow: {
+      source: {
+        lat: 'lat источника',
+        lng: 'lng источника',
+        name: 'имя источника',
+        h3: 'H3 источника'
+      },
+      target: {
+        lat: 'lat цели',
+        lng: 'lng цели',
+        name: 'имя цели',
+        h3: 'H3 цели'
+      },
+      count: 'количество'
+    }
   },
   color: {
     customPalette: 'Ваша палитра',
@@ -477,5 +505,20 @@ export default {
   'Bug Report': 'Отчет об ошибках',
   'User Guide': 'Инструкции',
   Save: 'Сохранить',
-  Share: 'Поделиться'
+  Share: 'Поделиться',
+  flow: {
+    tooltip: {
+      location: {
+        name: 'Название',
+        incomingCount: 'Входящие',
+        outgoingCount: 'Исходящие',
+        internalCount: 'Внутренние'
+      },
+      flow: {
+        sourceName: 'Источник',
+        targetName: 'Назначение',
+        count: 'Количество'
+      }
+    }
+  }
 };

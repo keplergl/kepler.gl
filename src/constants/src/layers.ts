@@ -554,6 +554,7 @@ export const LAYER_TYPES = keyMirror({
   '3D': null,
   trip: null,
   s2: null,
+  flow: null,
   vectorTile: null,
   rasterTile: null,
   wms: null,

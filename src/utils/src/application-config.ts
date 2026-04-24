@@ -83,6 +83,9 @@ export type KeplerApplicationConfig = {
   // WMS layer is under development and not ready for production use. Disabled by default.
   enableWMSLayer?: boolean;
 
+  // Flow layer config
+  enableFlowLayer?: boolean;
+
   /** Whether to show example URLs in tileset setup forms (vector tile, raster tile, WMS, 3D tile) */
   showInlineTilesetExamples?: boolean;
 
@@ -142,6 +145,9 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
 
   // WMS layer config
   enableWMSLayer: true,
+
+  // Flow layer config
+  enableFlowLayer: true,
 
   showInlineTilesetExamples: true,
 

@@ -101,7 +101,8 @@ export default {
       hexagonid: 'H3',
       trip: 'matka',
       s2: 'S2',
-      '3d': '3D'
+      '3d': '3D',
+      flow: 'virtaus'
     },
     layerUpdateError:
       'Tason päivityksen aikana tapahtui virhe: {errorMessage}. Varmista, että syötetietojen muoto on kelvollinen.',
@@ -157,7 +158,20 @@ export default {
     fixedHeight: 'Kiinteä korkeus',
     fixedHeightDescription: 'Käytä korkeutta ilman muutoksia',
     allowHover: 'Näytä työkaluvihje',
-    allowHoverDescription: 'Näytä tai piilota työkaluvihje, kun osoitin on tason ominaisuuksien päällä'
+    allowHoverDescription:
+      'Näytä tai piilota työkaluvihje, kun osoitin on tason ominaisuuksien päällä',
+    flow: {
+      fade: 'Häivytys',
+      fadeEnabled: 'Häivytys',
+      fadeAmount: 'Häivytyksen määrä',
+      display: 'Näyttö',
+      animationEnabled: 'Animaatio',
+      curvedLinesEnabled: 'Kaarevia viivoja',
+      adaptiveScalesEnabled: 'Mukautuvat skaalat',
+      clusteringEnabled: 'Klusterointi',
+      locationTotalsEnabled: 'Sijaintien kokonaismäärät',
+      maxTopFlowsDisplayNum: 'Suurin virtausten lukumäärä'
+    }
   },
   layerManager: {
     addData: 'Lisää aineisto',
@@ -416,6 +430,21 @@ export default {
     },
     hexagon: {
       worldUnitSize: 'Hexagonien säde (km)'
+    },
+    flow: {
+      source: {
+        lat: 'lähteen lat',
+        lng: 'lähteen lng',
+        name: 'lähteen nimi',
+        h3: 'lähteen H3'
+      },
+      target: {
+        lat: 'kohteen lat',
+        lng: 'kohteen lng',
+        name: 'kohteen nimi',
+        h3: 'kohteen H3'
+      },
+      count: 'lukumäärä'
     }
   },
   color: {
@@ -448,5 +477,20 @@ export default {
   'Bug Report': 'Bugiraportointi',
   'User Guide': 'Opas',
   Save: 'Tallenna',
-  Share: 'Jaa'
+  Share: 'Jaa',
+  flow: {
+    tooltip: {
+      location: {
+        name: 'Nimi',
+        incomingCount: 'Saapuvat',
+        outgoingCount: 'Lähtevät',
+        internalCount: 'Sisäiset'
+      },
+      flow: {
+        sourceName: 'Lähtöpaikka',
+        targetName: 'Määränpää',
+        count: 'Lukumäärä'
+      }
+    }
+  }
 };

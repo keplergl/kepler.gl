@@ -904,10 +904,7 @@ export default function LayerConfiguratorFactory(
           {/* Interaction */}
           {'allowHover' in layer.visConfigSettings ? (
             <LayerConfigGroup label={'layer.interaction'} collapsible>
-              <VisConfigSwitch
-                {...layer.visConfigSettings.allowHover}
-                {...visConfiguratorProps}
-              />
+              <VisConfigSwitch {...layer.visConfigSettings.allowHover} {...visConfiguratorProps} />
             </LayerConfigGroup>
           ) : null}
         </StyledLayerVisualConfigurator>
@@ -1122,6 +1119,67 @@ export default function LayerConfiguratorFactory(
               {...visConfiguratorProps}
               property="transparent"
             />
+          </LayerConfigGroup>
+        </StyledLayerVisualConfigurator>
+      );
+    }
+
+    _renderFlowLayerConfig({layer, visConfiguratorProps}) {
+      return (
+        <StyledLayerVisualConfigurator>
+          <LayerConfigGroup label={'layer.color'} collapsible>
+            <LayerColorRangeSelector {...visConfiguratorProps} property="colorRange" />
+            <VisConfigSwitch
+              {...layer.visConfigSettings.darkBaseMapEnabled}
+              {...visConfiguratorProps}
+            />
+            <ConfigGroupCollapsibleContent>
+              <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
+            </ConfigGroupCollapsibleContent>
+          </LayerConfigGroup>
+          <LayerConfigGroup
+            {...visConfiguratorProps}
+            label={'layerVisConfigs.flow.fade'}
+            collapsible={false}
+            property="flowFadeEnabled"
+          >
+            <VisConfigSlider
+              {...layer.visConfigSettings.flowFadeAmount}
+              {...visConfiguratorProps}
+              disabled={!layer.config.visConfig.flowFadeEnabled}
+              label={false}
+            />
+          </LayerConfigGroup>
+          <LayerConfigGroup label={'layerVisConfigs.flow.display'} collapsible>
+            <VisConfigSwitch
+              {...layer.visConfigSettings.flowAnimationEnabled}
+              {...visConfiguratorProps}
+              disabled={layer.config.visConfig.flowCurvedLinesEnabled}
+            />
+            <VisConfigSwitch
+              {...layer.visConfigSettings.flowCurvedLinesEnabled}
+              {...visConfiguratorProps}
+              disabled={layer.config.visConfig.flowAnimationEnabled}
+            />
+            <VisConfigSwitch
+              {...layer.visConfigSettings.flowClusteringEnabled}
+              {...visConfiguratorProps}
+            />
+            <ConfigGroupCollapsibleContent>
+              <VisConfigSwitch
+                {...layer.visConfigSettings.flowLocationTotalsEnabled}
+                {...visConfiguratorProps}
+              />
+              <VisConfigSwitch
+                {...layer.visConfigSettings.flowAdaptiveScalesEnabled}
+                {...visConfiguratorProps}
+              />
+              <VisConfigSlider
+                {...layer.visConfigSettings.maxTopFlowsDisplayNum}
+                {...visConfiguratorProps}
+                label={'layerVisConfigs.flow.maxTopFlowsDisplayNum'}
+              />
+            </ConfigGroupCollapsibleContent>
           </LayerConfigGroup>
         </StyledLayerVisualConfigurator>
       );

@@ -102,7 +102,8 @@ export default {
       hexagonid: 'H3',
       trip: 'trip',
       s2: 'S2',
-      '3d': '3D'
+      '3d': '3D',
+      flow: 'flow'
     },
     heatmap: 'Heatmap',
     aggregation: 'Aggregation'
@@ -156,7 +157,19 @@ export default {
     fixedHeight: '固定高さ',
     fixedHeightDescription: '高さを変更せずに使用する',
     allowHover: 'ツールチップを表示',
-    allowHoverDescription: 'レイヤー要素にホバーしたときにツールチップを表示または非表示にする'
+    allowHoverDescription: 'レイヤー要素にホバーしたときにツールチップを表示または非表示にする',
+    flow: {
+      fade: 'フェード',
+      fadeEnabled: 'フェード',
+      fadeAmount: 'フェード量',
+      display: '表示',
+      animationEnabled: 'アニメーション',
+      curvedLinesEnabled: '曲線矢印',
+      adaptiveScalesEnabled: 'アダプティブスケール',
+      clusteringEnabled: 'クラスタリング',
+      locationTotalsEnabled: 'ロケーション合計',
+      maxTopFlowsDisplayNum: '最大表示フロー数'
+    }
   },
   layerManager: {
     addData: 'データ追加',
@@ -424,7 +437,22 @@ export default {
     hexagon: {
       worldUnitSize: '六角形の半径 (km)'
     },
-    hex_id: 'hex id'
+    hex_id: 'hex id',
+    flow: {
+      source: {
+        lat: '出発 緯度',
+        lng: '出発 経度',
+        name: '出発名',
+        h3: '出発 H3'
+      },
+      target: {
+        lat: '到着 緯度',
+        lng: '到着 経度',
+        name: '到着名',
+        h3: '到着 H3'
+      },
+      count: '件数'
+    }
   },
   color: {
     customPalette: 'カスタムパレット',
@@ -474,5 +502,20 @@ export default {
   'Bug Report': 'バグを報告',
   'User Guide': 'ユーザーガイド',
   Save: '保存',
-  Share: '共有'
+  Share: '共有',
+  flow: {
+    tooltip: {
+      location: {
+        name: '名称',
+        incomingCount: '流入',
+        outgoingCount: '流出',
+        internalCount: '内部'
+      },
+      flow: {
+        sourceName: '出発地',
+        targetName: '目的地',
+        count: '件数'
+      }
+    }
+  }
 };

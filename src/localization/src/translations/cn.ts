@@ -101,7 +101,8 @@ export default {
       hexagonid: 'H3',
       trip: 'trip',
       s2: 'S2',
-      '3d': '3D'
+      '3d': '3D',
+      flow: 'flow'
     },
     heatmap: 'Heatmap',
     aggregation: 'Aggregation'
@@ -148,7 +149,19 @@ export default {
     zoomScale: '缩放比例',
     heightRange: '高度范围',
     allowHover: '显示工具提示',
-    allowHoverDescription: '悬停在图层要素上时显示或隐藏工具提示'
+    allowHoverDescription: '悬停在图层要素上时显示或隐藏工具提示',
+    flow: {
+      fade: '渐隐',
+      fadeEnabled: '渐隐',
+      fadeAmount: '渐隐量',
+      display: '显示',
+      animationEnabled: '动画',
+      curvedLinesEnabled: '曲线箭头',
+      adaptiveScalesEnabled: '自适应比例',
+      clusteringEnabled: '聚类',
+      locationTotalsEnabled: '位置总量',
+      maxTopFlowsDisplayNum: '最大显示流量数'
+    }
   },
   layerManager: {
     addData: '添加数据',
@@ -418,7 +431,22 @@ export default {
     hexagon: {
       worldUnitSize: '六边形半径 (km)'
     },
-    hex_id: 'hex id'
+    hex_id: 'hex id',
+    flow: {
+      source: {
+        lat: '起点纬度',
+        lng: '起点经度',
+        name: '起点名称',
+        h3: '起点 H3'
+      },
+      target: {
+        lat: '终点纬度',
+        lng: '终点经度',
+        name: '终点名称',
+        h3: '终点 H3'
+      },
+      count: '数量'
+    }
   },
   color: {
     customPalette: '自定义调色板',
@@ -468,5 +496,20 @@ export default {
   'Bug Report': '错误报告',
   'User Guide': '用户指南',
   Save: '保存',
-  Share: '分享'
+  Share: '分享',
+  flow: {
+    tooltip: {
+      location: {
+        name: '名称',
+        incomingCount: '流入',
+        outgoingCount: '流出',
+        internalCount: '内部'
+      },
+      flow: {
+        sourceName: '起点',
+        targetName: '终点',
+        count: '数量'
+      }
+    }
+  }
 };

@@ -102,7 +102,8 @@ export default {
       hexagonid: 'H3',
       trip: 'viaje',
       s2: 'S2',
-      '3d': '3D'
+      '3d': '3D',
+      flow: 'flow'
     },
     layerUpdateError:
       'Se produjo un error durante la actualización de la capa: {errorMessage}. Asegúrese de que el formato de los datos de entrada sea válido.',
@@ -160,7 +161,20 @@ export default {
     fixedHeight: 'Altura fija',
     fixedHeightDescription: 'Usar altura sin modificaciones',
     allowHover: 'Mostrar descripción emergente',
-    allowHoverDescription: 'Mostrar u ocultar información emergente al pasar el cursor sobre las características de la capa'
+    allowHoverDescription:
+      'Mostrar u ocultar información emergente al pasar el cursor sobre las características de la capa',
+    flow: {
+      fade: 'Desvanecimiento',
+      fadeEnabled: 'Desvanecimiento',
+      fadeAmount: 'Cantidad de desvanecimiento',
+      display: 'Visualización',
+      animationEnabled: 'Animación',
+      curvedLinesEnabled: 'Líneas curvas',
+      adaptiveScalesEnabled: 'Escalas adaptativas',
+      clusteringEnabled: 'Agrupación',
+      locationTotalsEnabled: 'Totales de ubicación',
+      maxTopFlowsDisplayNum: 'Máx. flujos principales'
+    }
   },
   layerManager: {
     addData: 'Añadir datos',
@@ -427,7 +441,22 @@ export default {
     hexagon: {
       worldUnitSize: 'Radio de hexágono (km)'
     },
-    hex_id: 'id hex'
+    hex_id: 'id hex',
+    flow: {
+      source: {
+        lat: 'lat origen',
+        lng: 'lng origen',
+        name: 'nombre origen',
+        h3: 'H3 origen'
+      },
+      target: {
+        lat: 'lat destino',
+        lng: 'lng destino',
+        name: 'nombre destino',
+        h3: 'H3 destino'
+      },
+      count: 'cantidad'
+    }
   },
   color: {
     customPalette: 'Paleta personalizada',
@@ -477,5 +506,20 @@ export default {
   'Bug Report': 'Informe de errores',
   'User Guide': 'Guía de usuario',
   Save: 'Guadar',
-  Share: 'Compartir'
+  Share: 'Compartir',
+  flow: {
+    tooltip: {
+      location: {
+        name: 'Nombre',
+        incomingCount: 'Entrantes',
+        outgoingCount: 'Salientes',
+        internalCount: 'Internos'
+      },
+      flow: {
+        sourceName: 'Origen',
+        targetName: 'Destino',
+        count: 'Cantidad'
+      }
+    }
+  }
 };

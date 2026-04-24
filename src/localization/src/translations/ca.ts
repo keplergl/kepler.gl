@@ -102,7 +102,8 @@ export default {
       hexagonid: 'H3',
       trip: 'viatge',
       s2: 'S2',
-      '3d': '3D'
+      '3d': '3D',
+      flow: 'flow'
     },
     layerUpdateError:
       "S'ha produït un error durant l'actualització de la capa: {errorMessage}. Assegureu-vos que el format de les dades d’entrada sigui vàlid.",
@@ -159,7 +160,20 @@ export default {
     fixedHeight: 'Alçada fixa',
     fixedHeightDescription: "Utilitzeu l'alçada sense modificacions",
     allowHover: "Mostra informació d'eina",
-    allowHoverDescription: "Mostra o oculta la informació d'eina en passar el cursor per sobre de les característiques de la capa"
+    allowHoverDescription:
+      "Mostra o oculta la informació d'eina en passar el cursor per sobre de les característiques de la capa",
+    flow: {
+      fade: 'Esvaïment',
+      fadeEnabled: 'Esvaïment',
+      fadeAmount: "Quantitat d'esvaïment",
+      display: 'Visualització',
+      animationEnabled: 'Animació',
+      curvedLinesEnabled: 'Línies corbes',
+      adaptiveScalesEnabled: 'Escales adaptatives',
+      clusteringEnabled: 'Agrupació',
+      locationTotalsEnabled: 'Totals de localització',
+      maxTopFlowsDisplayNum: 'Màxim de fluxos principals'
+    }
   },
   layerManager: {
     addData: 'Afegeix Dades',
@@ -426,7 +440,22 @@ export default {
     hexagon: {
       worldUnitSize: "Radi d'hexàgon (km)"
     },
-    hex_id: 'id hex'
+    hex_id: 'id hex',
+    flow: {
+      source: {
+        lat: 'lat origen',
+        lng: 'lng origen',
+        name: 'nom origen',
+        h3: 'H3 origen'
+      },
+      target: {
+        lat: 'lat destinació',
+        lng: 'lng destinació',
+        name: 'nom destinació',
+        h3: 'H3 destinació'
+      },
+      count: 'recompte'
+    }
   },
   color: {
     customPalette: 'Paleta personalitzada',
@@ -476,5 +505,20 @@ export default {
   'Bug Report': "Informe d'errors",
   'User Guide': "Guia d'usuari",
   Save: 'Desa',
-  Share: 'Comparteix'
+  Share: 'Comparteix',
+  flow: {
+    tooltip: {
+      location: {
+        name: 'Nom',
+        incomingCount: 'Entrants',
+        outgoingCount: 'Sortints',
+        internalCount: 'Interns'
+      },
+      flow: {
+        sourceName: 'Origen',
+        targetName: 'Destinació',
+        count: 'Recompte'
+      }
+    }
+  }
 };

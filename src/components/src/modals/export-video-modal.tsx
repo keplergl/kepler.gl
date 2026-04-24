@@ -243,8 +243,9 @@ const ExportVideoModalFactory = () => {
       if (mapStyle?.styleType === NO_MAP_ID) {
         const noMapEntry = mapStyle.mapStyles?.[NO_MAP_ID];
         if (noMapEntry && !noMapEntry.url) {
-          const emptyStyleUrl =
-            'data:application/json,' + encodeURIComponent(JSON.stringify(EMPTY_MAPBOX_STYLE));
+          const emptyStyleUrl = `data:application/json,${encodeURIComponent(
+            JSON.stringify(EMPTY_MAPBOX_STYLE)
+          )}`;
           return {
             visState,
             mapState,

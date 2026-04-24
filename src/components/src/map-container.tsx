@@ -1285,9 +1285,7 @@ export default function MapContainerFactory(
               baseMapLibraryConfig={baseMapLibraryConfig}
             />
           ) : null}
-          {this.props.primary ? (
-            <AttributionLogos logos={attributionLogos} />
-          ) : null}
+          {this.props.primary ? <AttributionLogos logos={attributionLogos} /> : null}
         </>
       );
     }
