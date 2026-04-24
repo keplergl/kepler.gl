@@ -3,7 +3,7 @@
 
 import '@testing-library/jest-dom';
 
-// TextEncoder/TextDecoder are not provided by the jsdom test environment
+// jsdom does not provide TextEncoder/TextDecoder even though Node 20+ has them as globals
 const {TextDecoder, TextEncoder} = require('node:util');
 Object.defineProperties(globalThis, {
   TextDecoder: {value: TextDecoder},
