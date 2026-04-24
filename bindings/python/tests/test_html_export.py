@@ -316,6 +316,30 @@ class TestExportMapHtml:
         assert "processGeojson" in html
         assert "FeatureCollection" in html
 
+    def test_light_theme(self, sample_df):
+        html = export_map_html(data={"d": sample_df}, config={}, theme="light")
+        assert '"light"' in html
+
+    def test_dark_theme(self, sample_df):
+        html = export_map_html(data={"d": sample_df}, config={}, theme="dark")
+        assert '"dark"' in html
+
+    def test_no_theme_omits_prop(self, sample_df):
+        html = export_map_html(data={"d": sample_df}, config={}, theme="")
+        assert "theme:" not in html or "undefined" in html
+
+    def test_custom_app_name_in_title(self, sample_df):
+        html = export_map_html(data={"d": sample_df}, config={}, app_name="My Dashboard")
+        assert "<title>My Dashboard embedded map</title>" in html
+
+    def test_custom_app_name_in_component(self, sample_df):
+        html = export_map_html(data={"d": sample_df}, config={}, app_name="My Dashboard")
+        assert '"My Dashboard"' in html
+
+    def test_default_app_name(self, sample_df):
+        html = export_map_html(data={"d": sample_df}, config={})
+        assert "<title>kepler.gl embedded map</title>" in html
+
 
 class TestSaveToHtml:
     """Tests for the KeplerGl.save_to_html widget method."""
@@ -418,3 +442,37 @@ class TestSaveToHtml:
         out = str(tmp_path / "map.html")
         widget.save_to_html(file_name=out, json_encoder=repr)
         assert os.path.exists(out)
+
+    def test_saves_with_light_theme(self, sample_df, tmp_path):
+        widget = KeplerGl(data={"d": sample_df}, theme="light")
+        out = str(tmp_path / "map.html")
+        widget.save_to_html(file_name=out)
+        with open(out) as f:
+            content = f.read()
+        assert '"light"' in content
+
+    def test_saves_with_theme_override(self, sample_df, tmp_path):
+        widget = KeplerGl(data={"d": sample_df}, theme="dark")
+        out = str(tmp_path / "map.html")
+        widget.save_to_html(file_name=out, theme="light")
+        with open(out) as f:
+            content = f.read()
+        assert '"light"' in content
+
+    def test_saves_with_custom_app_name(self, sample_df, tmp_path):
+        widget = KeplerGl(data={"d": sample_df}, app_name="My Map")
+        out = str(tmp_path / "map.html")
+        widget.save_to_html(file_name=out)
+        with open(out) as f:
+            content = f.read()
+        assert "<title>My Map embedded map</title>" in content
+        assert '"My Map"' in content
+
+    def test_saves_with_app_name_override(self, sample_df, tmp_path):
+        widget = KeplerGl(data={"d": sample_df}, app_name="Original")
+        out = str(tmp_path / "map.html")
+        widget.save_to_html(file_name=out, app_name="Override")
+        with open(out) as f:
+            content = f.read()
+        assert "<title>Override embedded map</title>" in content
+        assert '"Override"' in content

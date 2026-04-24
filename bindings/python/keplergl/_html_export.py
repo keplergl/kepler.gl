@@ -104,6 +104,8 @@ def export_map_html(
     mapbox_token: str = "",
     kepler_gl_version: str = DEFAULT_KEPLER_GL_CDN_VERSION,
     json_encoder=str,
+    app_name: str = "kepler.gl",
+    theme: str = "",
 ) -> str:
     """Generate a standalone HTML string that renders a kepler.gl map.
 
@@ -120,19 +122,27 @@ def export_map_html(
             JSON-serializing GeoDataFrame data.  Defaults to ``str`` so
             that ``datetime`` and other non-native JSON types are
             converted automatically.  Pass ``None`` to disable.
+        app_name: Application name displayed in the side panel header
+            and used as the HTML ``<title>``.  Defaults to ``"kepler.gl"``.
+        theme: UI theme for the kepler.gl component.  Accepted values
+            are ``"light"``, ``"dark"``, ``"base"``, or an empty string
+            (default) which uses the built-in dark theme.
     """
     dataset_js = _serialize_datasets_for_html(data, json_encoder=json_encoder)
     config_json = json.dumps(config, ensure_ascii=False) if config else "{}"
     mapbox_token_json = json.dumps(mapbox_token)
     read_only_js = "true" if read_only else "false"
     center_map_js = "true" if center_map else "false"
+    app_name_json = json.dumps(app_name)
+    theme_js = json.dumps(theme) if theme else "undefined"
+    title_html = app_name if app_name else "kepler.gl"
 
     return f"""\
 <!DOCTYPE html>
 <html>
   <head>
     <meta charset="UTF-8"/>
-    <title>Kepler.gl embedded map</title>
+    <title>{title_html} embedded map</title>
 
     <!--Uber Font-->
     <link rel="stylesheet" href="https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/uber-fonts/4.0.0/superfine.css">
@@ -211,12 +221,13 @@ def export_map_html(
           return react.createElement(
             'div',
             {{style: {{position: 'absolute', left: 0, width: '100vw', height: '100vh'}}}},
-            react.createElement(keplerGl.KeplerGl, {{
+            react.createElement(keplerGl.KeplerGl, Object.assign({{
               mapboxApiAccessToken: mapboxToken,
               id: "map",
               width: windowDimension.width,
-              height: windowDimension.height
-            }})
+              height: windowDimension.height,
+              appName: {app_name_json}
+            }}, {theme_js} !== undefined ? {{theme: {theme_js}}} : {{}}))
           );
         }};
       }}(React, KeplerGl, MAPBOX_TOKEN));

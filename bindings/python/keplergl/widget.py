@@ -23,8 +23,10 @@ class KeplerGl(anywidget.AnyWidget):
     config = traitlets.Dict({}).tag(sync=True)
     height = traitlets.Int(400).tag(sync=True)
     mapbox_token = traitlets.Unicode("").tag(sync=True)
+    theme = traitlets.Unicode("").tag(sync=True)
+    app_name = traitlets.Unicode("kepler.gl").tag(sync=True)
 
-    def __init__(self, data=None, config=None, height=400, mapbox_token="", use_arrow=False, show_docs=False, **kwargs):
+    def __init__(self, data=None, config=None, height=400, mapbox_token="", use_arrow=False, show_docs=False, theme="", app_name="kepler.gl", **kwargs):
         """
         Initialize KeplerGl widget.
 
@@ -35,9 +37,16 @@ class KeplerGl(anywidget.AnyWidget):
             mapbox_token: Mapbox API access token for Mapbox basemap styles
             use_arrow: If True, serialize DataFrames as Arrow IPC (more compact, preserves types)
             show_docs: Deprecated, kept for compatibility
+            theme: UI theme for exported maps. Accepted values are
+                "light", "dark", "base", or "" (default dark theme).
+            app_name: Application name shown in the side panel header
+                and used as HTML ``<title>`` when exporting. Defaults to
+                ``"kepler.gl"``.
         """
         super().__init__(**kwargs)
         self._use_arrow = use_arrow
+        self.theme = theme
+        self.app_name = app_name
         self.height = height
         self.mapbox_token = mapbox_token
 
@@ -78,6 +87,8 @@ class KeplerGl(anywidget.AnyWidget):
         center_map=True,
         mapbox_token="",
         json_encoder=str,
+        app_name=None,
+        theme=None,
     ):
         """Export the map to a standalone HTML file.
 
@@ -96,10 +107,18 @@ class KeplerGl(anywidget.AnyWidget):
                 JSON-serializing GeoDataFrame data.  Defaults to ``str`` so
                 that ``datetime`` and similar types are converted automatically.
                 Pass ``None`` to disable (will raise on non-serializable types).
+            app_name: Application name shown in the side panel header and used
+                as HTML ``<title>``.  If None, uses the value set at widget
+                creation (default ``"kepler.gl"``).
+            theme: UI theme for the kepler.gl component (``"light"``,
+                ``"dark"``, ``"base"``, or ``""``).  If None, uses the value
+                set at widget creation.
         """
         data_to_save = data if data is not None else self.data
         config_to_save = config if config is not None else self.config
         token = mapbox_token if mapbox_token else self.mapbox_token
+        resolved_theme = theme if theme is not None else self.theme
+        resolved_app_name = app_name if app_name is not None else self.app_name
 
         html = export_map_html(
             data=data_to_save,
@@ -109,6 +128,8 @@ class KeplerGl(anywidget.AnyWidget):
             mapbox_token=token,
             kepler_gl_version=DEFAULT_KEPLER_GL_CDN_VERSION,
             json_encoder=json_encoder,
+            app_name=resolved_app_name,
+            theme=resolved_theme,
         )
 
         with open(file_name, "w", encoding="utf-8") as f:
