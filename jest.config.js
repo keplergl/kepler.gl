@@ -22,7 +22,7 @@ const config = {
   // Some libraries (even if transitive) are transitioning to ESM and need additional transpilation. Relevant issues:
   // - tiny-sdf: https://github.com/visgl/deck.gl/issues/7735
   transformIgnorePatterns: [
-    '/node_modules\\/(?!(.*@mapbox\\/tiny-sdf\\.*|@loaders\\.gl|@deck\\.gl|@deck\\.gl-community|@luma\\.gl|@hubble\\.gl|preact|maplibregl-mapbox-request-transformer))',
+    '/node_modules\\/(?!(.*@mapbox\\/tiny-sdf\\.*|@loaders\\.gl|@deck\\.gl|@deck\\.gl-community|@luma\\.gl|@hubble\\.gl|@flowmap\\.gl|preact|maplibregl-mapbox-request-transformer))',
     '\\.pnp\\.[^\\/]+$'
   ]
 };
