@@ -42,7 +42,7 @@
     "@types/lodash": "4.17.5",
     "@types/react-redux": "^7.1.23",
     "@types/redux-actions": "^2.6.2",
-    "lodash": "4.17.21",
+    "lodash": "4.17.23",
     "react-palm": "^3.3.8",
     "react-redux": "^8.0.5",
     "redux": "^4.2.1",

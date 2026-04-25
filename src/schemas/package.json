@@ -42,7 +42,7 @@
     "apache-arrow": ">=15.0.0",
     "global": "^4.3.0",
     "keymirror": "^0.1.1",
-    "lodash": "4.17.21"
+    "lodash": "4.17.23"
   },
   "nyc": {
     "sourceMap": false,
