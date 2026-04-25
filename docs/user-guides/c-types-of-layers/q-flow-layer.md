@@ -8,13 +8,13 @@ Flow layers are powered by [flowmap.gl](https://github.com/FlowmapBlue/flowmap.g
 
 ## Enabling the layer
 
-The flow layer is experimental and disabled by default. To enable it, set `enableFlowLayer: true` in the application configuration:
+The flow layer is experimental and enabled by default. You can explicitly keep it enabled by setting `enableFlowLayer: true` in the application configuration:
 
 ```js
 import KeplerGl from '@kepler.gl/components';
-import {setApplicationConfig} from '@kepler.gl/utils';
+import {initApplicationConfig} from '@kepler.gl/utils';
 
-setApplicationConfig({enableFlowLayer: true});
+initApplicationConfig({enableFlowLayer: true});
 ```
 
 ## Data format

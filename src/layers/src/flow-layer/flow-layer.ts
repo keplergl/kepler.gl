@@ -75,7 +75,14 @@ const flowPosAccessor =
       return (d: {index: number}): number[] => {
         const startPos = getPositionFromHexValue(dataContainer.valueAt(d.index, sourceH3.fieldIdx));
         const endPos = getPositionFromHexValue(dataContainer.valueAt(d.index, targetH3.fieldIdx));
-        return [startPos?.[0] ?? 0, startPos?.[1] ?? 0, 0, endPos?.[0] ?? 0, endPos?.[1] ?? 0, 0];
+        return [
+          startPos?.[0] ?? Number.NaN,
+          startPos?.[1] ?? Number.NaN,
+          0,
+          endPos?.[0] ?? Number.NaN,
+          endPos?.[1] ?? Number.NaN,
+          0
+        ];
       };
     }
     return (d: {index: number}): number[] => {
@@ -375,7 +382,10 @@ export default class FlowLayer extends Layer {
     const dataset = datasets[dataId];
     const {gpuFilter, dataContainer} = dataset;
 
-    const {data}: {data?: FlowDatum[]} = this.updateData(datasets, oldLayerData);
+    const {data, triggerChanged} = this.updateData(datasets, oldLayerData) as {
+      data?: FlowDatum[];
+      triggerChanged?: boolean | Record<string, any>;
+    };
     const accessors = this.getAttributeAccessors({dataContainer});
     const {filterRange} = gpuFilter;
     const hasFilter = Object.values(filterRange).some(arr => (arr as number[]).some(v => v !== 0));
@@ -385,10 +395,12 @@ export default class FlowLayer extends Layer {
         filterRange: gpuFilter.filterRange,
         ...gpuFilter.filterValueUpdateTriggers
       };
+      const dataChanged =
+        triggerChanged && typeof triggerChanged === 'object' && triggerChanged.getData;
       const filterChanged =
         this._oldFilterUpdateTriggers === null ||
         diffUpdateTriggers(filterUpdateTriggers, this._oldFilterUpdateTriggers);
-      if (filterChanged) {
+      if (filterChanged || dataChanged) {
         const indexAccessor = (d: FlowDatum) => d.index;
         const valueAccessor = (
           dc: DataContainerInterface,

@@ -166,7 +166,7 @@ Flow layers visualize movement between locations as aggregated origin-destinatio
 
 The layer automatically clusters nearby locations at different zoom levels, draws flow lines proportional to magnitude, and renders location totals as circles. It supports two column modes: **Lat/Lng** (source/target coordinates) and **H3** (source/target H3 hexagonal indices). An optional count column controls flow magnitude.
 
-- This feature is experimental and disabled by default. To try it, enable `enableFlowLayer: true` in the application configuration.
+- This feature is experimental and currently enabled by default via `enableFlowLayer: true` in the application configuration.
 
 Layer Attributes: Color Range, Opacity, Animation, Curved Lines, Adaptive Scales, Fade, Fade Amount, Clustering, Location Totals, Max Top Flows, Dark Base Map
 
