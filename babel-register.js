@@ -5,6 +5,7 @@ const forceTranspile = [
   // ESM libraries that require transpilation
   /@deck.gl\/layers/,
   /@loaders.gl\/polyfills/,
+  /@flowmap\.gl\//,
   // For some reason babel crashes even before trying to transpile this library
   // Instead we force transpile @deck.gl/layers which includes it, and alias to a transpiled version in babel.config.js
   /@mapbox\/tiny-sdf/
