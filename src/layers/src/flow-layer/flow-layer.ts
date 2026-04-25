@@ -293,6 +293,7 @@ export default class FlowLayer extends Layer {
     let nextId = 1;
     const maybeAddLocation = ([lon, lat]: number[], name: string | null) => {
       if (!this._locationsByLatLon) return;
+      if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
       const latLon = `${lat}:${lon}`;
       const loc = this._locationsByLatLon[latLon];
       if (!loc) {
