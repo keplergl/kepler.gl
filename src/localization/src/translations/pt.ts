@@ -122,7 +122,7 @@ export default {
       tile3d: 'mosaico 3D'
     },
     wms: {
-      hover: 'Value:'
+      hover: 'Valor:'
     },
     layerUpdateError:
       'Ocorreu um erro ao atualizar a camada: {errorMessage}. Certifique-se de que o formato dos dados de entrada seja válido.',
@@ -299,11 +299,11 @@ export default {
     removeBaseMapStyle: 'Remover estilo de mapa base',
     delete: 'Deletar',
     timePlayback: 'Tempo de reprodução',
-    timeFilterSync: 'Sync with a column from another dataset',
+    timeFilterSync: 'Sincronizar com uma coluna de outro conjunto de dados',
     cloudStorage: 'Armazenamento Cloud',
     '3DMap': ' Mapa 3D',
-    animationByWindow: 'Moving Time Window',
-    animationByIncremental: 'Incremental Time Window',
+    animationByWindow: 'Janela de tempo móvel',
+    animationByIncremental: 'Janela de tempo incremental',
     speed: 'velocidade',
     play: 'reproduzir',
     pause: 'pausar',
@@ -410,11 +410,11 @@ export default {
         'aqui. *kepler.gl é uma aplicação client-side, os dados permanecem no seu browser..',
       exampleToken: 'e.g. pk.abcdefg.xxxxxx',
       pasteTitle: '2. Cole a url do seu estilo',
-      pasteSubtitle0: 'Style url can be a mapbox',
+      pasteSubtitle0: 'A URL do estilo pode ser um estilo do Mapbox',
       pasteSubtitle1: 'O que é uma',
       pasteSubtitle2: 'URL de estilo',
-      pasteSubtitle3: 'or a style.json using the',
-      pasteSubtitle4: 'Mapbox GL Style Spec',
+      pasteSubtitle3: 'ou um style.json usando a',
+      pasteSubtitle4: 'especificação Mapbox GL Style Spec',
       namingTitle: '3. Nomeie o seu estilo'
     },
     shareMap: {
@@ -650,20 +650,20 @@ export default {
     layers: {
       line: {
         singleColor: {
-          sourceColor: 'Source',
-          targetColor: 'Target'
+          sourceColor: 'Origem',
+          targetColor: 'Destino'
         }
       },
       arc: {
         singleColor: {
-          sourceColor: 'Source',
-          targetColor: 'Target'
+          sourceColor: 'Origem',
+          targetColor: 'Destino'
         }
       },
       default: {
         singleColor: {
-          color: 'Fill color',
-          strokeColor: 'Outline'
+          color: 'Cor do preenchimento',
+          strokeColor: 'Contorno'
         }
       }
     }

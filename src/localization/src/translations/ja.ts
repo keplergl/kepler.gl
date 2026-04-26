@@ -646,20 +646,20 @@ export default {
     layers: {
       line: {
         singleColor: {
-          sourceColor: 'Source',
-          targetColor: 'Target'
+          sourceColor: '始点',
+          targetColor: '終点'
         }
       },
       arc: {
         singleColor: {
-          sourceColor: 'Source',
-          targetColor: 'Target'
+          sourceColor: '始点',
+          targetColor: '終点'
         }
       },
       default: {
         singleColor: {
-          color: 'Fill color',
-          strokeColor: 'Outline'
+          color: '塗りつぶしの色',
+          strokeColor: '輪郭線'
         }
       }
     }

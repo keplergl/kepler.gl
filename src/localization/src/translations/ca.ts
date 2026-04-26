@@ -122,7 +122,7 @@ export default {
       tile3d: 'mosaic 3D'
     },
     wms: {
-      hover: 'Value:'
+      hover: 'Valor:'
     },
     layerUpdateError:
       "S'ha produït un error durant l'actualització de la capa: {errorMessage}. Assegureu-vos que el format de les dades d’entrada sigui vàlid.",
@@ -298,7 +298,7 @@ export default {
     removeBaseMapStyle: 'Elimina estil de mapa base',
     delete: 'Esborra',
     timePlayback: 'Reproducció de temps',
-    timeFilterSync: 'Sync with a column from another dataset',
+    timeFilterSync: "Sincronitza amb una columna d'un altre conjunt de dades",
     cloudStorage: 'Emmagatzematge al núvol',
     '3DMap': 'Mapa 3D',
     animationByWindow: 'Finestra Temporal Mòbil',
@@ -391,7 +391,7 @@ export default {
       filteredData: 'Dades filtrades',
       unfilteredData: 'Dades sense filtrar',
       fileCount: '{fileCount} Arxius',
-      rowCount: '{rowCount} Files',
+      rowCount: '{rowCount} files',
       tiledDatasetWarning: "* L'exportació de dades per a conjunts de dades en mosaic no és compatible"
     },
     deleteData: {
@@ -409,11 +409,11 @@ export default {
         'aquí. *kepler.gl és una aplicació client, les dades romanen al teu navegador..',
       exampleToken: 'p.ex. pk.abcdefg.xxxxxx',
       pasteTitle: "1. Enganxa la URL de l'estil",
-      pasteSubtitle0: 'Style url can be a mapbox',
+      pasteSubtitle0: "La URL de l'estil pot ser una URL de Mapbox",
       pasteSubtitle1: 'Què és un',
       pasteSubtitle2: "URL de l'estil",
-      pasteSubtitle3: 'or a style.json using the',
-      pasteSubtitle4: 'Mapbox GL Style Spec',
+      pasteSubtitle3: "o un style.json que utilitzi l'",
+      pasteSubtitle4: "especificació d'estil de Mapbox GL",
       namingTitle: '3. Posa nom al teu estil'
     },
     shareMap: {
@@ -648,20 +648,20 @@ export default {
     layers: {
       line: {
         singleColor: {
-          sourceColor: 'Source',
-          targetColor: 'Target'
+          sourceColor: 'Origen',
+          targetColor: 'Destinació'
         }
       },
       arc: {
         singleColor: {
-          sourceColor: 'Source',
-          targetColor: 'Target'
+          sourceColor: 'Origen',
+          targetColor: 'Destinació'
         }
       },
       default: {
         singleColor: {
-          color: 'Fill color',
-          strokeColor: 'Outline'
+          color: 'Color de farciment',
+          strokeColor: 'Contorn'
         }
       }
     }

@@ -122,7 +122,7 @@ export default {
       tile3d: 'mosaico 3D'
     },
     wms: {
-      hover: 'Value:'
+      hover: 'Valor:'
     },
     layerUpdateError:
       'Se produjo un error durante la actualización de la capa: {errorMessage}. Asegúrese de que el formato de los datos de entrada sea válido.',
@@ -266,7 +266,7 @@ export default {
     removeDataset: 'Eliminar conjunto de datos'
   },
   datasetInfo: {
-    rowCount: '{rowCount} files',
+    rowCount: '{rowCount} filas',
     vectorTile: 'Mosaico vectorial',
     rasterTile: 'Mosaico ráster',
     wmsTile: 'Mosaico WMS',
@@ -299,7 +299,7 @@ export default {
     removeBaseMapStyle: 'Eliminar estilo de mapa base',
     delete: 'Borrar',
     timePlayback: 'Reproducción de tiempo',
-    timeFilterSync: 'Sync with a column from another dataset',
+    timeFilterSync: 'Sincronizar con una columna de otro conjunto de datos',
     cloudStorage: 'Almacenaje en la nube',
     '3DMap': 'Mapa 3D',
     animationByWindow: 'Ventana Temporal Móvil',
@@ -392,7 +392,7 @@ export default {
       filteredData: 'Datos filtrados',
       unfilteredData: 'Datos sin filtrar',
       fileCount: '{fileCount} Archivos',
-      rowCount: '{rowCount} Files',
+      rowCount: '{rowCount} Filas',
       tiledDatasetWarning: "* La exportación de datos para conjuntos de datos en mosaico no es compatible"
     },
     deleteData: {
@@ -410,11 +410,11 @@ export default {
         'aquí. *kepler.gl es una aplicación cliente, los datos quedan en tu navegador..',
       exampleToken: 'p.e. pk.abcdefg.xxxxxx',
       pasteTitle: '2. Engancha el enlace del estilo',
-      pasteSubtitle0: 'Style url can be a mapbox',
+      pasteSubtitle0: 'La URL del estilo puede ser de Mapbox',
       pasteSubtitle1: 'Qué es un',
       pasteSubtitle2: 'enlace del estilo',
-      pasteSubtitle3: 'or a style.json using the',
-      pasteSubtitle4: 'Mapbox GL Style Spec',
+      pasteSubtitle3: 'o un style.json que use la',
+      pasteSubtitle4: 'especificación de estilos de Mapbox GL',
       namingTitle: '3. Poner nombre a tu estilo'
     },
     shareMap: {
@@ -649,20 +649,20 @@ export default {
     layers: {
       line: {
         singleColor: {
-          sourceColor: 'Source',
-          targetColor: 'Target'
+          sourceColor: 'Origen',
+          targetColor: 'Destino'
         }
       },
       arc: {
         singleColor: {
-          sourceColor: 'Source',
-          targetColor: 'Target'
+          sourceColor: 'Origen',
+          targetColor: 'Destino'
         }
       },
       default: {
         singleColor: {
-          color: 'Fill color',
-          strokeColor: 'Outline'
+          color: 'Color de relleno',
+          strokeColor: 'Contorno'
         }
       }
     }

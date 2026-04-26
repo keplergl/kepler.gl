@@ -121,7 +121,7 @@ export default {
       tile3d: '3D-tiili'
     },
     wms: {
-      hover: 'Value:'
+      hover: 'Arvo:'
     },
     layerUpdateError:
       'Tason päivityksen aikana tapahtui virhe: {errorMessage}. Varmista, että syötetietojen muoto on kelvollinen.',
@@ -299,8 +299,8 @@ export default {
     timePlayback: 'Ajan animointi',
     cloudStorage: 'Pilvitallennus',
     '3DMap': '3D-näkymä',
-    animationByWindow: 'Moving Time Window',
-    animationByIncremental: 'Incremental Time Window',
+    animationByWindow: 'Liukuva aikaikkuna',
+    animationByIncremental: 'Kasvava aikaikkuna',
     speed: 'nopeus',
     play: 'toista',
     pause: 'tauko',
@@ -408,11 +408,11 @@ export default {
         'tänne. *kepler.gl on client-side sovellus, data pysyy vain selaimessasi...',
       exampleToken: 'esim. pk.abcdefg.xxxxxx',
       pasteTitle: '2. Liitä tyyli-URL',
-      pasteSubtitle0: 'Style url can be a mapbox',
+      pasteSubtitle0: 'Tyyli-URL voi olla Mapboxin',
       pasteSubtitle1: 'Mikä on',
       pasteSubtitle2: 'tyyli-URL?',
-      pasteSubtitle3: 'or a style.json using the',
-      pasteSubtitle4: 'Mapbox GL Style Spec',
+      pasteSubtitle3: 'tai style.json, joka käyttää',
+      pasteSubtitle4: 'Mapbox GL Style Spec -määritystä',
       namingTitle: '3. Nimeä tyylisi'
     },
     shareMap: {
@@ -647,20 +647,20 @@ export default {
     layers: {
       line: {
         singleColor: {
-          sourceColor: 'Source',
-          targetColor: 'Target'
+          sourceColor: 'Lähde',
+          targetColor: 'Kohde'
         }
       },
       arc: {
         singleColor: {
-          sourceColor: 'Source',
-          targetColor: 'Target'
+          sourceColor: 'Lähde',
+          targetColor: 'Kohde'
         }
       },
       default: {
         singleColor: {
-          color: 'Fill color',
-          strokeColor: 'Outline'
+          color: 'Täyttöväri',
+          strokeColor: 'Ääriviiva'
         }
       }
     }

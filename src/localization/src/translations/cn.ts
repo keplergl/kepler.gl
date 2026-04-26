@@ -122,7 +122,7 @@ export default {
       tile3d: '3D tile'
     },
     wms: {
-      hover: 'Value:'
+      hover: '值:'
     },
     layerUpdateError:
       '图层更新时发生错误：{errorMessage}。请确保输入数据的格式有效。',
@@ -296,7 +296,7 @@ export default {
     removeBaseMapStyle: '移除底图样式',
     delete: '删除',
     timePlayback: '时空回放',
-    timeFilterSync: 'Sync with a column from another dataset',
+    timeFilterSync: '与另一个数据集中的列同步',
     cloudStorage: '云存储',
     '3DMap': '3D 地图',
     animationByWindow: '移动时间窗口',
@@ -646,20 +646,20 @@ export default {
     layers: {
       line: {
         singleColor: {
-          sourceColor: 'Source',
-          targetColor: 'Target'
+          sourceColor: '源',
+          targetColor: '目标'
         }
       },
       arc: {
         singleColor: {
-          sourceColor: 'Source',
-          targetColor: 'Target'
+          sourceColor: '源',
+          targetColor: '目标'
         }
       },
       default: {
         singleColor: {
-          color: 'Fill color',
-          strokeColor: 'Outline'
+          color: '填充色',
+          strokeColor: '轮廓线'
         }
       }
     }

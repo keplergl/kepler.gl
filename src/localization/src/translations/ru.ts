@@ -446,7 +446,7 @@ export default {
         tokenSubtitle: 'Используйте свой токен доступа Mapbox в html(необязательно)',
         tokenPlaceholder: 'Вставьте токен доступа Mapbox',
         tokenMisuseWarning:
-          '* If you do not provide your own token, the map may fail to display at any time when we replace ours to avoid misuse. ',
+          '* Если вы не предоставите свой собственный токен, карта может перестать отображаться в любой момент, когда мы заменим наш токен во избежание неправильного использования. ',
         tokenSecurityWarning:
           '* Предупреждение: ваш токен Mapbox будет встроен в экспортированный HTML-файл. Любой, кто имеет доступ к этому файлу, сможет увидеть и использовать ваш токен. По возможности используйте токен с ограничением по URL. ',
         tokenDisclaimer:
@@ -651,20 +651,20 @@ export default {
     layers: {
       line: {
         singleColor: {
-          sourceColor: 'Source',
-          targetColor: 'Target'
+          sourceColor: 'Источник',
+          targetColor: 'Цель'
         }
       },
       arc: {
         singleColor: {
-          sourceColor: 'Source',
-          targetColor: 'Target'
+          sourceColor: 'Источник',
+          targetColor: 'Цель'
         }
       },
       default: {
         singleColor: {
-          color: 'Fill color',
-          strokeColor: 'Outline'
+          color: 'Цвет заливки',
+          strokeColor: 'Контур'
         }
       }
     }
