@@ -69,6 +69,44 @@ def _dataset_to_geojson(data, json_encoder=str) -> Optional[dict]:
     return None
 
 
+def _geojson_dataset_names(data: dict, json_encoder=str) -> set:
+    """Return the set of dataset names that will be serialized as GeoJSON."""
+    names: set = set()
+    for name, dataset in data.items():
+        if _dataset_to_geojson(dataset, json_encoder=json_encoder) is not None:
+            names.add(name)
+    return names
+
+
+def _fixup_geojson_columns(config: Optional[dict], geojson_names: set) -> Optional[dict]:
+    """Rewrite layer column references for GeoJSON datasets.
+
+    ``processGeojson`` stores the geometry as ``_geojson`` regardless of the
+    original column name.  Configs produced by the Jupyter widget use the
+    source GeoDataFrame column name (commonly ``geometry``), so the layer
+    merger cannot match them.  This helper patches those references so the
+    exported HTML applies the full config.
+    """
+    if not config or not geojson_names:
+        return config
+
+    import copy
+    config = copy.deepcopy(config)
+    layers = (config
+              .get("config", {})
+              .get("visState", {})
+              .get("layers", []))
+    for layer in layers:
+        layer_cfg = layer.get("config", {})
+        data_id = layer_cfg.get("dataId")
+        if data_id not in geojson_names:
+            continue
+        columns = layer_cfg.get("columns", {})
+        if "geojson" in columns and columns["geojson"] != "_geojson":
+            columns["geojson"] = "_geojson"
+    return config
+
+
 def _serialize_datasets_for_html(data: dict, json_encoder=str) -> str:
     """Serialize datasets dict into JS code that calls addDataToMap.
 
@@ -130,7 +168,9 @@ def export_map_html(
             (default) which uses the built-in dark theme.
     """
     dataset_js = _serialize_datasets_for_html(data, json_encoder=json_encoder)
-    config_json = json.dumps(config, ensure_ascii=False) if config else "{}"
+    geojson_names = _geojson_dataset_names(data, json_encoder=json_encoder)
+    fixed_config = _fixup_geojson_columns(config, geojson_names)
+    config_json = json.dumps(fixed_config, ensure_ascii=False) if fixed_config else "{}"
     mapbox_token_json = json.dumps(mapbox_token)
     read_only_js = "true" if read_only else "false"
     center_map_js = "true" if center_map else "false"
