@@ -26,7 +26,8 @@ export default {
     selectType: 'Выберите A тип',
     selectValue: 'Выберите A значение',
     enterValue: 'Введите значение',
-    empty: 'пустой'
+    empty: 'пустой',
+    selectLayer: 'Выберите слой'
   },
   misc: {
     by: '',
@@ -44,7 +45,8 @@ export default {
     building: 'Здания',
     water: 'Вода',
     land: 'Земля',
-    '3dBuilding': '3d здания'
+    '3dBuilding': '3d здания',
+    background: 'Фон'
   },
   panel: {
     text: {
@@ -52,9 +54,12 @@ export default {
       labelWithId: 'Ярлык {labelId}',
       fontSize: 'Размер шрифта',
       fontColor: 'Цвет шрифта',
+      backgroundColor: 'Цвет фона',
       textAnchor: 'Анкор текста',
       alignment: 'Положение',
-      addMoreLabel: 'Добавить еще ярлык'
+      addMoreLabel: 'Добавить еще ярлык',
+      outlineWidth: 'Ширина контура',
+      outlineColor: 'Цвет контура'
     }
   },
   sidebar: {
@@ -63,10 +68,15 @@ export default {
       filter: 'Фильтры',
       interaction: 'Взаимодействия',
       basemap: 'Базовая карта'
+    },
+    panelViewToggle: {
+      list: 'Просмотр списком',
+      byDataset: 'Просмотр по набору данных'
     }
   },
   layer: {
     required: 'Требования*',
+    columnModesSeparator: 'Или',
     radius: 'Радиус',
     color: 'Цвет',
     fillColor: 'Цвет заливки',
@@ -77,15 +87,19 @@ export default {
     stroke: 'Обводка',
     strokeWidth: 'Ширина обводки',
     strokeColor: 'Цвет обводки',
-    basic: 'Basic',
-    trailLength: 'Trail Length',
-    trailLengthDescription: 'Number of seconds for a path to completely fade out',
-    newLayer: 'new layer',
-    elevationByDescription: 'When off, height is based on count of points',
-    colorByDescription: 'When off, color is based on count of points',
-    aggregateBy: 'Aggregate {field} by',
-    '3DModel': '3D Model',
-    '3DModelOptions': '3D Model Options',
+    basic: 'Базовый',
+    trailLength: 'Длина следа',
+    trailLengthDescription: 'Количество секунд для полного затухания пути',
+    newLayer: 'новый слой',
+    elevationByDescription: 'При выключении высота основана на количестве точек',
+    colorByDescription: 'При выключении цвет основан на количестве точек',
+    aggregateBy: 'Агрегировать {field} по',
+    '3DModel': '3D Модель',
+    '3DModelOptions': 'Настройки 3D модели',
+    service: 'Сервис',
+    layer: 'Слой',
+    appearance: 'Внешний вид',
+    uniqueIdField: 'Поле уникального ID',
     type: {
       point: 'точки',
       arc: 'дуги',
@@ -101,12 +115,23 @@ export default {
       hexagonid: 'H3',
       trip: 'пути',
       s2: 'S2',
-      '3d': '3D'
+      '3d': '3D',
+      vectortile: 'векторный тайл',
+      rastertile: 'растровый тайл',
+      wms: 'WMS',
+      tile3d: '3D тайл'
     },
+    wms: {
+      hover: 'Значение:'
+    },
+    layerUpdateError:
+      'Произошла ошибка при обновлении слоя: {errorMessage}. Убедитесь, что формат входных данных корректен.',
+    interaction: 'Взаимодействие',
     heatmap: 'Heatmap',
     aggregation: 'Aggregation'
   },
   layerVisConfigs: {
+    angle: 'Угол',
     strokeWidth: 'Ширина штриха (в пикселях)',
     strokeWidthRange: 'Диапазон ширины штриха',
     radius: 'Радиус',
@@ -116,7 +141,11 @@ export default {
     radiusRange: 'Диапазон радиуса',
     clusterRadius: 'Радиус кластера в пикселях',
     radiusRangePixels: 'Диапазон радиуса в пикселях',
+    billboard: 'Режим билборда',
+    billboardDescription: 'Ориентировать геометрию на камеру',
+    fadeTrail: 'Затухающий след',
     opacity: 'Непрозрачность',
+    pointSize: 'Размер точки',
     coverage: 'Покрытие',
     outline: 'Контур',
     colorRange: 'Цветовая гамма',
@@ -134,7 +163,7 @@ export default {
     enableElevationZoomFactor: 'Использовать коэффициент увеличения по высоте',
     enableElevationZoomFactorDescription:
       'Отрегулируйте высоту / возвышение на основе текущего коэффициента масштабирования',
-    enableHeightZoomFactor: 'вкл. коэффициент масштабирования по высоте',
+    enableHeightZoomFactor: 'Использовать коэффициент масштабирования по высоте',
     heightScale: 'Масштаб высоты',
     coverageRange: 'Диапазон покрытия',
     highPrecisionRendering: 'Высокая точность рендеринга',
@@ -150,32 +179,97 @@ export default {
     zoomScale: 'Масштаб увеличения',
     heightRange: 'Диапазон высоты',
     heightMultiplier: 'Множитель высоты',
+    fixedHeight: 'Фиксированная высота',
+    fixedHeightDescription: 'Использовать высоту без изменений',
     allowHover: 'Показать подсказку',
-    allowHoverDescription: 'Показать или скрыть подсказку при наведении на элементы слоя'
+    allowHoverDescription: 'Показать или скрыть подсказку при наведении на элементы слоя',
+    showNeighborOnHover: 'Выделять соседей при наведении',
+    showHighlightColor: 'Показать цвет выделения',
+    darkModeEnabled: 'Темная базовая карта',
+    transparentBackground: 'Прозрачный фон'
   },
   layerManager: {
     addData: 'Добавить данные',
     addLayer: 'Добавить слой',
-    layerBlending: 'Смешивание слоев'
+    layerBlending: 'Смешивание слоев',
+    overlayBlending: 'Наложение слоев'
   },
   mapManager: {
     mapStyle: 'Стиль карты',
     addMapStyle: 'Добавить стиль карты',
-    '3dBuildingColor': '3D Цвет здания'
+    '3dBuildingColor': '3D Цвет здания',
+    backgroundColor: 'Цвет фона'
+  },
+  effectManager: {
+    effects: 'Эффекты',
+    addEffect: 'Добавить эффект',
+    pickDateTime: 'Выбрать дату/время',
+    currentTime: 'Текущее время',
+    pickCurrrentTime: 'Выбрать текущее время',
+    date: 'Дата',
+    time: 'Время',
+    timezone: 'Часовой пояс'
+  },
+  effectDescription: {
+    lightAndShadow:
+      'Имитирует реалистичное солнечное освещение и отбрасывание теней на основе времени суток и географического положения. Регулируемая интенсивность теней, цвета солнечного и рассеянного света.',
+    ink: 'Применяет художественный стиль тушевой заливки, затемняющий края и создающий рукописный вид. Регулируйте силу для управления интенсивностью эффекта.',
+    brightnessContrast:
+      'Регулирует общую яркость и контрастность карты. Используйте положительные значения для увеличения яркости или контраста, отрицательные — для затемнения или выравнивания изображения.',
+    hueSaturation:
+      'Сдвигает цветовой тон и регулирует насыщенность по всей карте. Полезно для создания цветовых тем или обесцвечивания вида.',
+    vibrance:
+      'Избирательно усиливает интенсивность приглушённых цветов, не перенасыщая уже яркие. Создаёт более естественное улучшение цвета, чем насыщенность.',
+    sepia:
+      'Применяет тёплый коричневатый тон, напоминающий старые фотографии. Регулируйте степень смешивания между исходными цветами и эффектом сепии.',
+    dotScreen:
+      'Преобразует изображение в узор из монохромных точек, напоминающий газетную полутоновую печать. Регулируйте угол, размер точек и положение центра.',
+    colorHalftone:
+      'Имитирует цветную полутоновую печать CMYK с отдельными точечными узорами для каждого цветового канала. Управляйте углом, размером точек и положением центра.',
+    noise:
+      'Добавляет случайный шум в стиле плёночного зерна по всей карте. Полезно для текстурированной аналоговой эстетики или уменьшения цветовых полос.',
+    triangleBlur:
+      'Равномерно применяет плавное размытие по Гауссу по всей карте. Управляйте радиусом размытия для настройки уровня мягкости.',
+    zoomBlur:
+      'Создаёт радиальное размытие движения из центральной точки, имитируя зум камеры. Регулируйте силу и положение центра.',
+    tiltShift:
+      'Имитирует эффект объектива тилт-шифт, размывающий области за пределами фокусной полосы и создающий вид миниатюрной модели. Задайте фокусную полосу начальной и конечной позициями.',
+    edgeWork:
+      'Выделяет структурные края изображения в художественном стиле угольного эскиза. Регулируйте радиус обнаружения для управления толщиной линий.',
+    vignette:
+      'Затемняет углы и края карты, направляя внимание к центру. Управляйте степенью затемнения и радиусом чистой области.',
+    magnify:
+      'Создаёт круглое наложение увеличительного стекла в настраиваемом положении. Регулируйте размер, уровень масштабирования и ширину рамки.',
+    hexagonalPixelate:
+      'Заменяет изображение сеткой шестиугольных плиток, каждая из которых заполнена средним цветом покрываемой области. Регулируйте масштаб плиток.',
+    distanceFog:
+      'Затуманивает удалённые объекты на основе их глубины от камеры, усиливая ощущение глубины. Управляйте плотностью, начальным расстоянием, диапазоном и цветом тумана.',
+    surfaceFog:
+      'Отрисовывает слой тумана на определённой высоте над поверхностью рельефа. Настройте высоту, толщину перехода, плотность, цвет и необязательный шумовой паттерн.'
   },
   layerConfiguration: {
     defaultDescription: 'Рассчитать {property} на основе выбранного поля',
-    howTo: 'How to'
+    howTo: 'Как использовать',
+    showColorChart: 'Показать цветовую диаграмму',
+    hideColorChart: 'Скрыть цветовую диаграмму'
   },
   filterManager: {
-    addFilter: 'Добавить фильтр'
+    addFilter: 'Добавить фильтр',
+    timeFilterSync: 'Синхронизированные наборы данных',
+    timeLayerSync: 'Привязать к временной шкале слоя',
+    timeLayerUnsync: 'Отвязать от временной шкалы слоя',
+    column: 'Столбец'
   },
   datasetTitle: {
     showDataTable: 'Показать таблицу данных ',
     removeDataset: 'Удалить набор данных'
   },
   datasetInfo: {
-    rowCount: '{rowCount} строк'
+    rowCount: '{rowCount} строк',
+    vectorTile: 'Векторный тайл',
+    rasterTile: 'Растровый тайл',
+    wmsTile: 'WMS тайл',
+    tile3d: '3D тайл'
   },
   tooltip: {
     hideLayer: 'скрыть слой',
@@ -209,13 +303,27 @@ export default {
     play: 'проиграть',
     pause: 'пауза',
     reset: 'перезапустить',
-    export: 'экспорт'
+    export: 'экспорт',
+    resetAfterError: 'Попытаться включить слой после ошибки',
+    zoomToLayer: 'Приблизить к слою',
+    removeBaseMapStyle: 'Удалить стиль базовой карты',
+    timeFilterSync: 'Синхронизировать со столбцом из другого набора данных',
+    syncTimelineStart: 'Начало текущего периода фильтра',
+    syncTimelineEnd: 'Конец текущего периода фильтра',
+    showEffectPanel: 'Показать панель эффектов',
+    hideEffectPanel: 'Скрыть панель эффектов',
+    removeEffect: 'Удалить эффект',
+    disableEffect: 'Отключить эффект',
+    effectSettings: 'Настройки эффекта',
+    timeLayerSync: 'Привязать к временной шкале слоя',
+    timeLayerUnsync: 'Отвязать от временной шкалы слоя'
   },
   toolbar: {
     exportImage: 'Экспорт изображения',
     exportData: 'Экспорт данных',
     exportMap: 'Экспорт карты',
-    shareMapURL: 'Share Map URL',
+    shareMapURL: 'Поделиться URL карты',
+    exportVideo: 'Экспорт видео',
     saveMap: 'Сохарнить Карту',
     select: 'Выбрать',
     polygon: 'Многоугольник',
@@ -226,7 +334,13 @@ export default {
   },
   editor: {
     filterLayer: 'Слои фильтров',
-    copyGeometry: 'Копировать геометрию'
+    filterLayerDisabled: 'Неполигональные геометрии нельзя использовать для фильтрации',
+    copyGeometry: 'Копировать геометрию',
+    noLayersToFilter: 'Нет слоев для фильтрации'
+  },
+  exportVideoModal: {
+    animation: 'Анимация',
+    settings: 'Настройки'
   },
 
   modal: {
@@ -236,6 +350,7 @@ export default {
       exportImage: 'Экспорт изображения',
       exportData: 'Экспорт данных',
       exportMap: 'Экспорт карты',
+      exportVideo: 'Экспорт видео',
       addCustomMapboxStyle: 'Добавить собственный стиль карты',
       saveMap: 'Поделиться Картой',
       shareURL: 'Поделиться URL'
@@ -262,6 +377,10 @@ export default {
       mapLegendTitle: 'Легенда карты',
       mapLegendAdd: 'Добавить легенду на карту'
     },
+    exportVideo: {
+      animation: 'Анимация',
+      settings: 'Настройки'
+    },
     exportData: {
       datasetTitle: 'Набор данных',
       datasetSubtitle: 'Выберите наборы данных, которые хотите экспортировать',
@@ -273,7 +392,8 @@ export default {
       filteredData: 'Отфильтрованные данные',
       unfilteredData: 'Нефильтрованные данные',
       fileCount: '{fileCount} Файлов',
-      rowCount: '{rowCount} Строк'
+      rowCount: '{rowCount} Строк',
+      tiledDatasetWarning: "* Экспорт данных для тайловых наборов данных не поддерживается"
     },
     deleteData: {
       warning: 'вы собираетесь удалить этот набор данных. Это повлияет на {length} слой'
@@ -299,6 +419,7 @@ export default {
       namingTitle: '3. Назови свой стиль'
     },
     shareMap: {
+      title: 'Поделиться картой',
       shareUriTitle: 'Поделиться URL карты',
       shareUriSubtitle: 'Создать URL карты, чтобы поделиться с другими',
       cloudTitle: 'Облачное хранилище',
@@ -326,6 +447,8 @@ export default {
         tokenPlaceholder: 'Вставьте токен доступа Mapbox',
         tokenMisuseWarning:
           '* If you do not provide your own token, the map may fail to display at any time when we replace ours to avoid misuse. ',
+        tokenSecurityWarning:
+          '* Предупреждение: ваш токен Mapbox будет встроен в экспортированный HTML-файл. Любой, кто имеет доступ к этому файлу, сможет увидеть и использовать ваш токен. По возможности используйте токен с ограничением по URL. ',
         tokenDisclaimer:
           'Если вы не предоставите свой собственный токен, карта может не отображаться в любое время, когда мы заменяем наш, чтобы избежать неправильного использования.',
         tokenUpdate: 'Как обновить существующий токен карты.',
@@ -352,16 +475,35 @@ export default {
     },
     loadData: {
       upload: 'Загрузить файлы',
+      tileset: 'Набор тайлов',
       storage: 'Загрузить из хранилища'
     },
     tripInfo: {
       title: 'Как включить анимацию поездки',
+      titleTable: 'Создать поездки из списка точек',
       description1:
         'Чтобы анимировать путь, данные geoJSON должны содержать LineString в своей геометрии объекта, а координаты в LineString должны иметь 4 элемента в форматах',
       code: ' [longitude, latitude, altitude, timestamp] ',
       description2:
         'с последним элементом, являющимся отметкой времени. Допустимые форматы меток времени включают unix в секундах, например 1564184363, или в миллисекундах, например 1564184363000',
-      example: ',Пример:'
+      descriptionTable1:
+        'Поездки можно создать, соединив список точек по широте и долготе, отсортировав по временным меткам и сгруппировав по уникальным идентификаторам.',
+      example: ',Пример:',
+      exampleTable: 'Example Csv'
+    },
+    polygonInfo: {
+      title: 'Создать слой полигонов из объекта GeoJSON',
+      titleTable: 'Создать путь из точек',
+      descriptionTable: `Пути можно создать, соединив список точек по широте и долготе, отсортировав по индексному полю (например, временная метка) и сгруппировав по уникальным идентификаторам.
+
+  ### Столбцы слоя:
+  - **id**: - *обязательный*&nbsp;- Столбец \`id\` используется для группировки точек. Точки с одинаковым id будут объединены в один путь.
+  - **lat**: - *обязательный*&nbsp;- Широта точки
+  - **lon**: - *обязательный*&nbsp;- Долгота точки
+  - **alt**: - *необязательный*&nbsp;- Высота точки
+  - **sort by**: - *необязательный*&nbsp;- Столбец \`sort by\` используется для сортировки точек; если не указан, точки будут отсортированы по индексу строки.
+`,
+      exampleTable: 'Example CSV'
     },
     iconInfo: {
       title: 'Как рисовать значки',
@@ -384,7 +526,9 @@ export default {
       back: 'Назад',
       goToPage: 'Перейти на страницу Kepler.gl {displayName}',
       storageMaps: 'Хранилище / Карты',
-      noSavedMaps: 'Нет сохраненных карт'
+      noSavedMaps: 'Нет сохраненных карт',
+      foursquareStorageMessage:
+        'Здесь отображаются только карты, сохраненные с помощью опции Kepler.gl > Сохранить > Хранилище Foursquare'
     }
   },
   header: {
@@ -403,14 +547,29 @@ export default {
     normal: 'нормальное',
     subtractive: 'вычитание'
   },
+  overlayBlending: {
+    title: 'Наложение слоев карты',
+    description: 'Смешивание слоев с базовой картой, чтобы оба были видны.',
+    screen: 'темная базовая карта',
+    normal: 'обычный',
+    darken: 'светлая базовая карта'
+  },
   columns: {
     title: 'Столбцы',
     lat: 'lat',
     lng: 'lon',
     altitude: 'высота',
+    alt: 'высота',
+    id: 'id',
+    timestamp: 'время',
     icon: 'значек',
     geojson: 'geojson',
+    geoarrow: 'geoarrow',
+    geoarrow0: 'geoarrow источник',
+    geoarrow1: 'geoarrow назначение',
     token: 'token',
+    sortBy: 'сортировать по',
+    neighbors: 'соседи',
     arc: {
       lat0: 'lat источника',
       lng0: 'lng источника',
@@ -433,12 +592,17 @@ export default {
     customPalette: 'Ваша палитра',
     steps: 'шагов',
     type: 'тип',
-    reversed: 'перевернуть'
+    colorBlindSafe: 'Для дальтоников',
+    reversed: 'перевернуть',
+    disableStepReason: "Невозможно изменить количество шагов с пользовательскими цветовыми переходами, используйте пользовательскую палитру для редактирования шагов",
+    preset: 'Предустановленные цвета',
+    picker: 'Выбор цвета'
   },
   scale: {
     colorScale: 'Цветовая шкала',
     sizeScale: 'Масштаб размера',
     strokeScale: 'Масштаб штриха',
+    strokeColorScale: 'Шкала цвета обводки',
     scale: 'Масштаб'
   },
   fileUploader: {
@@ -452,8 +616,13 @@ export default {
       'Загрузите {fileFormatNames} или сохраненную карту **Json**. Подробнее [**supported file formats**]',
     browseFiles: 'Просматреть файлы',
     uploading: 'Загрузка',
-    fileNotSupported: 'File {errorFiles} is not supported.',
-    or: 'or'
+    fileNotSupported: 'Файл {errorFiles} не поддерживается.',
+    or: 'или'
+  },
+  tilesetSetup: {
+    header: 'Настройка векторных тайлов',
+    rasterTileHeader: 'Настройка растровых тайлов',
+    addTilesetText: 'Добавить набор тайлов'
   },
   geocoder: {
     title: 'Введите адрес или координаты, например 37.79, -122.40'
@@ -473,9 +642,31 @@ export default {
   mapPopover: {
     primary: 'Первичный'
   },
-  density: 'density',
+  density: 'плотность',
   'Bug Report': 'Отчет об ошибках',
   'User Guide': 'Инструкции',
   Save: 'Сохранить',
-  Share: 'Поделиться'
+  Share: 'Поделиться',
+  mapLegend: {
+    layers: {
+      line: {
+        singleColor: {
+          sourceColor: 'Source',
+          targetColor: 'Target'
+        }
+      },
+      arc: {
+        singleColor: {
+          sourceColor: 'Source',
+          targetColor: 'Target'
+        }
+      },
+      default: {
+        singleColor: {
+          color: 'Fill color',
+          strokeColor: 'Outline'
+        }
+      }
+    }
+  }
 };
