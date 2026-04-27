@@ -19,8 +19,6 @@ jobs:
 
       - run: yarn install
       - run: yarn bootstrap
-      - run: npm i -g npm@8.19.2
-
       - name: Login to NPM
         run: npm config set "//registry.npmjs.org/:_authToken=${NPM_AUTH_TOKEN}"
 

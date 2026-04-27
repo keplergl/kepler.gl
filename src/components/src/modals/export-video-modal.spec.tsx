@@ -158,6 +158,7 @@ describe('ExportVideoModal', () => {
       parameters: {blend: true},
       controller: true,
       views: {},
+      _isExport: true,
       effects: []
     });
   });

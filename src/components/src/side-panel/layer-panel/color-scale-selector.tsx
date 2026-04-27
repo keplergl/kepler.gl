@@ -56,7 +56,7 @@ export type ColorScaleSelectorProps = {
   searchable: boolean;
   displayOption: string;
   getOptionValue: string;
-  aggregatedBins?: AggregatedBin[];
+  aggregatedBins?: Record<number, AggregatedBin>;
   channelKey: string;
 };
 

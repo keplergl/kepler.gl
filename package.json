@@ -179,7 +179,7 @@
     "eslint-plugin-prettier": "4.2.1",
     "eslint-plugin-react": "^7.35.0",
     "eslint-plugin-react-hooks": "^4.6.2",
-    "gl": "^6.0.2",
+    "gl": "^8.0.2",
     "global": "^4.4.0",
     "istanbul-merge": "^2.0.0",
     "jest": "^29.5.0",
@@ -298,7 +298,9 @@
   },
   "maintainers": [
     "Shan He <heshan0131@gmail.com>",
-    "Giuseppe Macri <gmacri@uber.com>"
+    "Giuseppe Macri <gmacri@uber.com>",
+    "Igor Dykhta <dikhta.igor@gmail.com>",
+    "Xun Li <lixun910@gmail.com>"
   ],
   "nx": {
     "tags": [
@@ -307,10 +309,10 @@
     ]
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   },
   "volta": {
-    "node": "18.18.2",
+    "node": "20.19.3",
     "yarn": "4.4.0"
   },
   "packageManager": "yarn@4.4.0"

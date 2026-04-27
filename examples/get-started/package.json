@@ -17,7 +17,7 @@
   },
   "devDependencies": {
     "@types/mapbox-gl": "^2.7.10",
-    "@types/node": "^18.15.3",
+    "@types/node": "^20",
     "@types/react": "^18.0.28",
     "@types/react-dom": "^18.0.11",
     "assert": "^2.1.0",

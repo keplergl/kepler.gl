@@ -523,7 +523,7 @@ export function getHistogramDomain({
   dataset,
   fieldValueAccessor
 }: {
-  aggregatedBins?: AggregatedBin[];
+  aggregatedBins?: Record<number, AggregatedBin>;
   columnStats?: FilterProps['columnStats'];
   dataset?: KeplerTable;
   fieldValueAccessor: (idx: unknown) => number;

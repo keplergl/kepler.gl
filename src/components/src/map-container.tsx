@@ -73,7 +73,9 @@ import {
   THROTTLE_NOTIFICATION_TIME,
   DEFAULT_PICKING_RADIUS,
   NO_MAP_ID,
-  EMPTY_MAPBOX_STYLE
+  EMPTY_MAPBOX_STYLE,
+  MAPBOX_MAX_PITCH,
+  MAP_LIB_OPTIONS
 } from '@kepler.gl/constants';
 
 import {DROPPABLE_MAP_CONTAINER_TYPE} from './common/dnd-layer-items';
@@ -575,10 +577,12 @@ export default function MapContainerFactory(
 
     _onLayerSetDomain = (
       idx: number,
-      value: number[] | {domain: VisualChannelDomain; aggregatedBins: AggregatedBin[]}
+      value: number[] | {domain: VisualChannelDomain; aggregatedBins: Record<number, AggregatedBin>}
     ) => {
-      // deck.gl 9 native aggregation layers (Grid, Hexagon) pass [min, max],
-      // while ClusterLayer's CPUAggregator still passes {domain, aggregatedBins}.
+      // deck.gl 9 native aggregation layers (Grid, Hexagon) pass
+      // {domain, aggregatedBins} via our ScaleEnhanced* overrides,
+      // while ClusterLayer's CPUAggregator also passes {domain, aggregatedBins}.
+      // Plain [min, max] is a fallback if the override is bypassed.
       const config = Array.isArray(value)
         ? {colorDomain: value as VisualChannelDomain}
         : {colorDomain: value.domain, aggregatedBins: value.aggregatedBins};
@@ -1009,7 +1013,9 @@ export default function MapContainerFactory(
               isInteractive
                 ? {
                     doubleClickZoom: !isEditorDrawingMode,
-                    dragRotate: this.props.mapState.dragRotate
+                    dragRotate: this.props.mapState.dragRotate,
+                    maxPitch:
+                      this.props.mapState.maxPitch ?? getApplicationConfig().maxPitch
                   }
                 : false
             }
@@ -1175,8 +1181,13 @@ export default function MapContainerFactory(
         getApplicationConfig().baseMapLibraryConfig?.[baseMapLibraryName];
 
       const internalViewState = this.context?.getInternalViewState(index);
+      const configMaxPitch = mapState.maxPitch ?? getApplicationConfig().maxPitch;
+      const effectiveMaxPitch = baseMapLibraryName === MAP_LIB_OPTIONS.MAPBOX
+        ? Math.min(configMaxPitch, MAPBOX_MAX_PITCH)
+        : configMaxPitch;
       const mapProps = {
         ...internalViewState,
+        maxPitch: effectiveMaxPitch,
         preserveDrawingBuffer: this.props.isExport ?? false,
         mapboxAccessToken: currentStyle?.accessToken || mapboxApiAccessToken,
         // baseApiUrl: mapboxApiUrl,
@@ -1270,6 +1281,7 @@ export default function MapContainerFactory(
             <MapComponent
               key={`top-${baseMapLibraryName}`}
               viewState={internalViewState}
+              maxPitch={effectiveMaxPitch}
               mapStyle={mapStyle.topMapStyle}
               style={MAP_STYLE.top}
               mapboxAccessToken={mapProps.mapboxAccessToken}
