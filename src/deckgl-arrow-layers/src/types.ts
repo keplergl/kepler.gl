@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-// deck.gl-community
+// Adapted from @geoarrow/deck.gl-geoarrow (https://github.com/geoarrow/deck.gl-geoarrow)
 // SPDX-License-Identifier: MIT
 // Copyright (c) vis.gl contributors
 

@@ -19,17 +19,40 @@ import {
   AGGREGATION_TYPES,
   ALL_FIELD_TYPES
 } from '@kepler.gl/constants';
-import {ColorRange, Field, LayerColumn, Merge} from '@kepler.gl/types';
+import {ColorRange, Field, LayerColumn, Merge, SupportedColumnMode} from '@kepler.gl/types';
 import {KeplerTable, Datasets} from '@kepler.gl/table';
+import {
+  getGeoArrowPointLayerProps,
+  FindDefaultLayerPropsReturnValue
+} from './layer-utils';
 
 type AggregationLayerColumns = {
   lat: LayerColumn;
   lng: LayerColumn;
+
+  // COLUMN_MODE_GEOARROW
+  geoarrow: LayerColumn;
 };
 
 export type AggregationLayerData = {
   index: number;
 };
+
+export const COLUMN_MODE_POINTS = 'points';
+export const COLUMN_MODE_GEOARROW = 'geoarrow';
+
+const SUPPORTED_COLUMN_MODES: SupportedColumnMode[] = [
+  {
+    key: COLUMN_MODE_POINTS,
+    label: 'Points',
+    requiredColumns: ['lat', 'lng']
+  },
+  {
+    key: COLUMN_MODE_GEOARROW,
+    label: 'Geoarrow Points',
+    requiredColumns: ['geoarrow']
+  }
+];
 
 export const pointPosAccessor =
   ({lat, lng}: AggregationLayerColumns) =>
@@ -37,8 +60,20 @@ export const pointPosAccessor =
   d =>
     [dc.valueAt(d.index, lng.fieldIdx), dc.valueAt(d.index, lat.fieldIdx)];
 
-export const pointPosResolver = ({lat, lng}: AggregationLayerColumns) =>
-  `${lat.fieldIdx}-${lng.fieldIdx}`;
+export const geoarrowPosAccessor =
+  ({geoarrow}: AggregationLayerColumns) =>
+  (dc: DataContainerInterface) =>
+  (d: {index: number}): number[] => {
+    const row = dc.valueAt(d.index, geoarrow.fieldIdx);
+    return [row.get(0), row.get(1)];
+  };
+
+export const pointPosResolver = ({lat, lng, geoarrow}: AggregationLayerColumns, columnMode?) => {
+  if (columnMode === COLUMN_MODE_GEOARROW) {
+    return `geoarrow-${geoarrow.fieldIdx}`;
+  }
+  return `${lat.fieldIdx}-${lng.fieldIdx}`;
+};
 
 export const getValueAggrFunc = getPointData => (field, aggregation) => points =>
   field
@@ -108,12 +143,14 @@ export default class AggregationLayer extends Layer {
   ) {
     super(props);
 
-    this.getPositionAccessor = dataContainer =>
-      pointPosAccessor(this.config.columns)(dataContainer);
+    this.getPositionAccessor = (dataContainer: DataContainerInterface) => {
+      if (this.config.columnMode === COLUMN_MODE_GEOARROW) {
+        return geoarrowPosAccessor(this.config.columns)(dataContainer);
+      }
+      return pointPosAccessor(this.config.columns)(dataContainer);
+    };
     this.getColorRange = memoize(getLayerColorRange);
 
-    // Access data of a point from aggregated bins
-    // In deck.gl 9, aggregation layers pass original data items directly to getColorValue/getElevationValue
     this.getPointData = pt => pt;
 
     this.gpuFilterGetIndex = pt => this.getPointData(pt).index;
@@ -131,6 +168,26 @@ export default class AggregationLayer extends Layer {
 
   get columnPairs() {
     return this.defaultPointColumnPairs;
+  }
+
+  get supportedColumnModes() {
+    return SUPPORTED_COLUMN_MODES;
+  }
+
+  hasAllColumns() {
+    const {columns, columnMode} = this.config;
+    if (columnMode === COLUMN_MODE_GEOARROW) {
+      return this.hasColumnValue(columns.geoarrow);
+    }
+    return super.hasAllColumns();
+  }
+
+  static findDefaultLayerProps(dataset: KeplerTable): FindDefaultLayerPropsReturnValue {
+    const altProps = getGeoArrowPointLayerProps(dataset);
+    return {
+      props: [],
+      altProps
+    };
   }
 
   get noneLayerDataAffectingProps() {

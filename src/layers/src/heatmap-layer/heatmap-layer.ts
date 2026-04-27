@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import * as arrow from 'apache-arrow';
+
 import KeplerHeatmapLayer from './deck-heatmap-layer';
+import {GeoArrowHeatmapLayer} from '@kepler.gl/deckgl-arrow-layers';
 import {CHANNEL_SCALES, ALL_FIELD_TYPES} from '@kepler.gl/constants';
 import Layer, {LayerBaseConfigPartial, LayerWeightConfig, VisualChannels} from '../base-layer';
 import HeatmapLayerIcon from './heatmap-layer-icon';
@@ -17,11 +20,16 @@ import {
   LayerBaseConfig,
   MapState
 } from '@kepler.gl/types';
-import {hexToRgb, DataContainerInterface} from '@kepler.gl/utils';
+import {hexToRgb, DataContainerInterface, ArrowDataContainer} from '@kepler.gl/utils';
 import {notNullorUndefined} from '@kepler.gl/common-utils';
 import {Datasets, KeplerTable} from '@kepler.gl/table';
 
-import {getGeoArrowPointLayerProps, FindDefaultLayerPropsReturnValue} from '../layer-utils';
+import {
+  getGeoArrowPointLayerProps,
+  createGeoArrowPointVector,
+  getFilteredIndex,
+  FindDefaultLayerPropsReturnValue
+} from '../layer-utils';
 import {getFilterDataFunc} from '../aggregation-layer';
 
 export type HeatmapLayerVisConfigSettings = {
@@ -165,6 +173,11 @@ class HeatmapLayer extends Layer {
   declare visConfigSettings: HeatmapLayerVisConfigSettings;
   declare config: HeatmapLayerConfig;
 
+  dataContainer: DataContainerInterface | null = null;
+  geoArrowVector: arrow.Vector | undefined = undefined;
+  filteredIndex: Uint8ClampedArray | null = null;
+  filteredIndexTrigger: number[] | null = null;
+
   constructor(props) {
     super(props);
     this.registerVisConfig(heatmapVisConfigs);
@@ -281,7 +294,32 @@ class HeatmapLayer extends Layer {
     this.updateMeta({bounds});
   }
 
-  calculateDataAttribute({filteredIndex}: KeplerTable, getPosition) {
+  calculateDataAttribute({filteredIndex, dataContainer}: KeplerTable, getPosition) {
+    const {columnMode} = this.config;
+
+    if (
+      dataContainer instanceof ArrowDataContainer &&
+      (columnMode === COLUMN_MODE_GEOARROW || columnMode === COLUMN_MODE_POINTS)
+    ) {
+      this.filteredIndex = getFilteredIndex(
+        dataContainer.numRows(),
+        filteredIndex,
+        this.filteredIndex
+      );
+      this.filteredIndexTrigger = filteredIndex;
+
+      if (columnMode === COLUMN_MODE_GEOARROW) {
+        this.geoArrowVector = dataContainer.getColumn(this.config.columns.geoarrow.fieldIdx);
+      } else {
+        this.geoArrowVector = createGeoArrowPointVector(dataContainer, getPosition);
+      }
+
+      return dataContainer.getTable();
+    }
+
+    this.geoArrowVector = undefined;
+    this.filteredIndex = null;
+
     const data: {index: number}[] = [];
 
     for (let i = 0; i < filteredIndex.length; i++) {
@@ -341,11 +379,16 @@ class HeatmapLayer extends Layer {
         this.getEncodedChannelValue(scaleFunc || (x => x), d as any, weightField, 0 as any);
     }
 
+    const isFilteredAccessor = (data: {index: number}) => {
+      return this.filteredIndex ? this.filteredIndex[data.index] : 1;
+    };
+
     return {
       _unfiltered: data,
       data: filteredData,
       getWeight,
-      getPosition
+      getPosition,
+      getFiltered: isFilteredAccessor
     };
   }
 
@@ -368,8 +411,9 @@ class HeatmapLayer extends Layer {
     layerCallbacks: any;
     idx: number;
     visible: boolean;
-  }): KeplerHeatmapLayer[] {
-    const {data, mapState} = opts;
+    dataset: any;
+  }): (KeplerHeatmapLayer | GeoArrowHeatmapLayer)[] {
+    const {data, mapState, dataset} = opts;
     const {_unfiltered, ...deckData} = data;
 
     const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
@@ -389,8 +433,30 @@ class HeatmapLayer extends Layer {
       getPosition: this.config.columns,
       getWeight: {
         weightField: this.config.weightField
-      }
+      },
+      getFiltered: this.filteredIndexTrigger
     };
+
+    const useArrowLayer = Boolean(this.geoArrowVector);
+
+    if (useArrowLayer) {
+      return [
+        new GeoArrowHeatmapLayer({
+          ...defaultLayerProps,
+          ...deckData,
+          data: dataset.dataContainer.getTable(),
+          getPosition: this.geoArrowVector,
+          aggregation: (visConfig.aggregation || 'SUM') as 'SUM' | 'MEAN',
+          radiusPixels,
+          intensity,
+          threshold: visConfig.threshold,
+          updateTriggers,
+          colorRange,
+          weightsTextureSize: 512,
+          debounceTimeout: 0
+        })
+      ];
+    }
 
     return [
       new KeplerHeatmapLayer({

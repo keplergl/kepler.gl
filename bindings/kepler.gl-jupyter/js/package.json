@@ -46,7 +46,7 @@
     "@babel/preset-react": "^7.0.0",
     "@babel/preset-typescript": "^7.16.7",
     "@jupyterlab/builder": "^4.0.0",
-    "apache-arrow": "^13.0.0",
+    "apache-arrow": "^21.0.0",
     "babel-eslint": "^9.0.0",
     "babel-loader": "^8.0.0",
     "babel-plugin-search-and-replace": "^1.0.0",

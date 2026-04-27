@@ -224,6 +224,7 @@
     "webpack-stats-plugin": "^0.2.1"
   },
   "resolutions": {
+    "apache-arrow": "21.1.0",
     "@deck.gl/aggregation-layers": "9.2.11",
     "@deck.gl/core": "9.2.11",
     "@deck.gl/extensions": "9.2.11",

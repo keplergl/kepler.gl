@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import * as arrow from 'apache-arrow';
+
 import Layer, {
   LayerBaseConfig,
   LayerBaseConfigPartial,
@@ -12,7 +14,8 @@ import {BrushingExtension} from '@deck.gl/extensions';
 import {GeoJsonLayer} from '@deck.gl/layers';
 import {H3HexagonLayer} from '@deck.gl/geo-layers';
 import type {Feature} from 'geojson';
-import {EnhancedColumnLayer} from '@kepler.gl/deckgl-layers';
+import {EnhancedColumnLayer, FilterArrowExtension} from '@kepler.gl/deckgl-layers';
+import {GeoArrowH3HexagonLayer} from '@kepler.gl/deckgl-arrow-layers';
 import {
   getCentroid,
   idToPolygonGeo,
@@ -20,7 +23,7 @@ import {
   getHexFields,
   Centroid
 } from '@kepler.gl/common-utils';
-import {findDefaultColorField, DataContainerInterface, createDataContainer} from '@kepler.gl/utils';
+import {findDefaultColorField, DataContainerInterface, ArrowDataContainer, createDataContainer} from '@kepler.gl/utils';
 import H3HexagonLayerIcon from './h3-hexagon-layer-icon';
 import {
   ALL_FIELD_TYPES,
@@ -43,6 +46,7 @@ import {
 import {Datasets, KeplerTable} from '@kepler.gl/table';
 
 import {getTextOffsetByRadius, formatTextLabelData} from '../layer-text-label';
+import {getFilteredIndex, isLayerHoveredFromArrow} from '../layer-utils';
 
 export type HexagonIdLayerColumnsConfig = {
   hex_id: LayerColumn;
@@ -165,11 +169,18 @@ export const HexagonIdVisConfigs: {
 };
 
 const brushingExtension = new BrushingExtension();
+const arrowCPUFilterExtension = new FilterArrowExtension();
+
 export default class HexagonIdLayer extends Layer {
   dataToFeature: {centroids: Centroid[]};
 
   declare config: HexagonIdLayerConfig;
   declare visConfigSettings: HexagonIdLayerVisConfigSettings;
+
+  dataContainer: DataContainerInterface | null = null;
+  geoArrowHexVector: arrow.Vector | undefined = undefined;
+  filteredIndex: Uint8ClampedArray | null = null;
+  filteredIndexTrigger: number[] | null = null;
   constructor(props) {
     super(props);
     this.dataToFeature = {centroids: []};
@@ -309,7 +320,22 @@ export default class HexagonIdLayer extends Layer {
     };
   }
 
-  calculateDataAttribute({filteredIndex}: KeplerTable, getHexId) {
+  calculateDataAttribute({filteredIndex, dataContainer}: KeplerTable, getHexId) {
+    if (dataContainer instanceof ArrowDataContainer) {
+      this.filteredIndex = getFilteredIndex(
+        dataContainer.numRows(),
+        filteredIndex,
+        this.filteredIndex
+      );
+      this.filteredIndexTrigger = filteredIndex;
+      this.geoArrowHexVector = dataContainer.getColumn(this.config.columns.hex_id.fieldIdx);
+
+      return dataContainer.getTable();
+    }
+
+    this.geoArrowHexVector = undefined;
+    this.filteredIndex = null;
+
     const data: HexagonIdLayerData[] = [];
 
     for (let i = 0; i < filteredIndex.length; i++) {
@@ -351,10 +377,15 @@ export default class HexagonIdLayer extends Layer {
       dataContainer
     });
 
+    const isFilteredAccessor = (data: {index: number}) => {
+      return this.filteredIndex ? this.filteredIndex[data.index] : 1;
+    };
+
     return {
       data,
       getHexId,
       getFilterValue: gpuFilter.filterValueAccessor(dataContainer)(),
+      getFiltered: isFilteredAccessor,
       textLabels,
       getPosition: d => d.centroid,
       ...accessors
@@ -388,7 +419,7 @@ export default class HexagonIdLayer extends Layer {
   }
 
   renderLayer(opts) {
-    const {data, gpuFilter, objectHovered, mapState, interactionConfig} = opts;
+    const {data, gpuFilter, objectHovered, mapState, interactionConfig, dataset} = opts;
 
     const zoomFactor = this.getZoomFactor(mapState);
     const eleZoomFactor = this.getElevationZoomFactor(mapState);
@@ -401,7 +432,8 @@ export default class HexagonIdLayer extends Layer {
       getFillColor: updateTriggers.getFillColor,
       getLineColor: updateTriggers.getLineColor,
       getElevation: updateTriggers.getElevation,
-      getFilterValue: gpuFilter.filterValueUpdateTriggers
+      getFilterValue: gpuFilter.filterValueUpdateTriggers,
+      getFiltered: this.filteredIndexTrigger
     };
 
     const columnLayerTriggers = {
@@ -411,13 +443,18 @@ export default class HexagonIdLayer extends Layer {
     const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
     const hoveredObject = this.hasHoveredObject(objectHovered);
 
-    // getPixelOffset with no radius
     const radiusScale = 1.0;
     const getRaidus = null;
     const getPixelOffset = getTextOffsetByRadius(radiusScale, getRaidus, mapState);
 
+    const useArrowLayer = Boolean(this.geoArrowHexVector);
+
     const brushingProps = this.getBrushingExtensionProps(interactionConfig);
-    const extensions = [...defaultLayerProps.extensions, brushingExtension];
+    const extensions = [
+      ...defaultLayerProps.extensions,
+      brushingExtension,
+      ...(useArrowLayer ? [arrowCPUFilterExtension] : [])
+    ];
     const sharedProps = {
       getFilterValue: data.getFilterValue,
       extensions,
@@ -425,6 +462,63 @@ export default class HexagonIdLayer extends Layer {
       visible: defaultLayerProps.visible,
       ...brushingProps
     };
+
+    if (useArrowLayer) {
+      return [
+        new GeoArrowH3HexagonLayer({
+          ...defaultLayerProps,
+          ...data,
+          ...brushingProps,
+          extensions,
+          data: dataset.dataContainer.getTable(),
+          getHexagon: this.geoArrowHexVector,
+          wrapLongitude: false,
+
+          filled: visConfig.filled,
+          stroked: visConfig.outline,
+          lineWidthScale: visConfig.thickness,
+
+          coverage: config.coverageField ? 1 : visConfig.coverage,
+
+          autoHighlight: visConfig.enable3d,
+          highlightColor: HIGHLIGH_COLOR_3D,
+
+          extruded: visConfig.enable3d,
+          elevationScale: visConfig.elevationScale * eleZoomFactor,
+
+          updateTriggers: h3HexagonLayerTriggers,
+          _subLayerProps: {
+            'hexagon-cell': {
+              type: EnhancedColumnLayer,
+              getCoverage: data.getCoverage,
+              updateTriggers: columnLayerTriggers,
+              strokeOpacity: visConfig.strokeOpacity
+            }
+          }
+        }),
+        ...(hoveredObject && !config.sizeField
+          ? [
+              new GeoJsonLayer({
+                ...this.getDefaultHoverLayerProps(),
+                visible: defaultLayerProps.visible,
+                data: [idToPolygonGeo(hoveredObject)].filter(Boolean) as Feature[],
+                getLineColor: config.highlightColor,
+                lineWidthScale: DEFAULT_LINE_SCALE_VALUE * zoomFactor,
+                wrapLongitude: false
+              })
+            ]
+          : []),
+        ...this.renderTextLabelLayer(
+          {
+            getPosition: data.getPosition,
+            sharedProps,
+            getPixelOffset,
+            updateTriggers
+          },
+          opts
+        )
+      ];
+    }
 
     return [
       new H3HexagonLayer({
@@ -440,18 +534,14 @@ export default class HexagonIdLayer extends Layer {
 
         getHexagon: (x: any) => x.id,
 
-        // coverage
         coverage: config.coverageField ? 1 : visConfig.coverage,
 
-        // highlight
         autoHighlight: visConfig.enable3d,
         highlightColor: HIGHLIGH_COLOR_3D,
 
-        // elevation
         extruded: visConfig.enable3d,
         elevationScale: visConfig.elevationScale * eleZoomFactor,
 
-        // render
         updateTriggers: h3HexagonLayerTriggers,
         _subLayerProps: {
           'hexagon-cell': {
@@ -462,7 +552,6 @@ export default class HexagonIdLayer extends Layer {
           }
         }
       }),
-      // hover layer
       ...(hoveredObject && !config.sizeField
         ? [
             new GeoJsonLayer({
@@ -475,7 +564,6 @@ export default class HexagonIdLayer extends Layer {
             })
           ]
         : []),
-      // text label layer
       ...this.renderTextLabelLayer(
         {
           getPosition: data.getPosition,
@@ -486,5 +574,30 @@ export default class HexagonIdLayer extends Layer {
         opts
       )
     ];
+  }
+
+  hasHoveredObject(objectInfo: {index: number}) {
+    if (
+      isLayerHoveredFromArrow(objectInfo, this.id) &&
+      objectInfo.index >= 0 &&
+      this.dataContainer
+    ) {
+      return super.hasHoveredObject(objectInfo);
+    }
+    return super.hasHoveredObject(objectInfo);
+  }
+
+  getHoverData(
+    object: {index: number} | arrow.StructRow | undefined,
+    dataContainer: DataContainerInterface,
+    fields,
+    animationConfig,
+    hoverInfo: {index: number}
+  ) {
+    const index = this.geoArrowHexVector ? hoverInfo?.index : (object as {index: number})?.index;
+    if (index >= 0) {
+      return dataContainer.row(index);
+    }
+    return null;
   }
 }

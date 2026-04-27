@@ -9,7 +9,10 @@ import IconLayerIcon from './icon-layer-icon';
 import {ICON_FIELDS, CULL_MODE} from '@kepler.gl/constants';
 import IconInfoModalFactory from './icon-info-modal';
 import Layer, {LayerBaseConfig, LayerBaseConfigPartial} from '../base-layer';
-import {assignPointPairToLayerColumn, FindDefaultLayerPropsReturnValue} from '../layer-utils';
+import {
+  assignPointPairToLayerColumn,
+  FindDefaultLayerPropsReturnValue
+} from '../layer-utils';
 import {isTest} from '@kepler.gl/utils';
 import {getTextOffsetByRadius, formatTextLabelData} from '../layer-text-label';
 import {default as KeplerTable} from '@kepler.gl/table';
@@ -30,6 +33,9 @@ export type IconLayerColumnsConfig = {
   lng: LayerColumn;
   altitude: LayerColumn;
   icon: LayerColumn;
+
+  // COLUMN_MODE_GEOARROW
+  geoarrow: LayerColumn;
 };
 
 type IconGeometry = object | null;
@@ -70,6 +76,14 @@ export const iconPosAccessor =
       altitude?.fieldIdx > -1 ? dc.valueAt(d.index, altitude.fieldIdx) : 0
     ];
 
+export const geoarrowPosAccessor =
+  ({geoarrow}: IconLayerColumnsConfig) =>
+  (dc: DataContainerInterface) =>
+  (d: {index: number}): number[] => {
+    const row = dc.valueAt(d.index, geoarrow.fieldIdx);
+    return [row.get(0), row.get(1), row.get(2) ?? 0];
+  };
+
 export const iconAccessor =
   ({icon}: IconLayerColumnsConfig) =>
   (dc: DataContainerInterface) =>
@@ -78,6 +92,23 @@ export const iconAccessor =
 
 export const iconRequiredColumns: ['lat', 'lng', 'icon'] = ['lat', 'lng', 'icon'];
 export const iconOptionalColumns: ['altitude'] = ['altitude'];
+export const geoarrowRequiredColumns: ['geoarrow', 'icon'] = ['geoarrow', 'icon'];
+
+export const COLUMN_MODE_POINTS = 'points';
+export const COLUMN_MODE_GEOARROW = 'geoarrow';
+const SUPPORTED_COLUMN_MODES = [
+  {
+    key: COLUMN_MODE_POINTS,
+    label: 'Points',
+    requiredColumns: iconRequiredColumns,
+    optionalColumns: iconOptionalColumns
+  },
+  {
+    key: COLUMN_MODE_GEOARROW,
+    label: 'Geoarrow Points',
+    requiredColumns: geoarrowRequiredColumns
+  }
+];
 
 export const pointVisConfigs: {
   radius: 'radius';
@@ -128,8 +159,12 @@ export default class IconLayer extends Layer {
     super(props);
 
     this.registerVisConfig(pointVisConfigs);
-    this.getPositionAccessor = (dataContainer: DataContainerInterface) =>
-      iconPosAccessor(this.config.columns)(dataContainer);
+    this.getPositionAccessor = (dataContainer: DataContainerInterface) => {
+      if (this.config.columnMode === COLUMN_MODE_GEOARROW) {
+        return geoarrowPosAccessor(this.config.columns)(dataContainer);
+      }
+      return iconPosAccessor(this.config.columns)(dataContainer);
+    };
     this.getIconAccessor = dataContainer => iconAccessor(this.config.columns)(dataContainer);
 
     this._layerInfoModal = IconInfoModalFactory(props.svgIcons);
@@ -166,6 +201,18 @@ export default class IconLayer extends Layer {
 
   get columnPairs() {
     return this.defaultPointColumnPairs;
+  }
+
+  get supportedColumnModes() {
+    return SUPPORTED_COLUMN_MODES;
+  }
+
+  hasAllColumns() {
+    const {columns, columnMode} = this.config;
+    if (columnMode === COLUMN_MODE_GEOARROW) {
+      return this.hasColumnValue(columns.geoarrow) && this.hasColumnValue(columns.icon);
+    }
+    return super.hasAllColumns();
   }
 
   get layerIcon() {
