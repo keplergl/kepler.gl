@@ -153,6 +153,48 @@ export default function RangeSliderFactory(
       (value0, value1) => [value0, value1]
     );
 
+    _isTimeFilter = () => {
+      return typeof this.props.timeFormat === 'string';
+    };
+
+    _getDisplayRangeInfo = () => {
+      const {range, bins, isRanged} = this.props;
+      if (!range) {
+        return {displayRange: range, binStep: 0};
+      }
+
+      if (!bins || !isRanged) {
+        return {displayRange: range, binStep: 0};
+      }
+
+      const groupKeys = Object.keys(bins).filter(k => bins[k]?.length > 0);
+      if (groupKeys.length === 0) {
+        return {displayRange: range, binStep: 0};
+      }
+
+      const group = bins[groupKeys[0]];
+      const idx = group.length > 1 ? 1 : 0;
+      const binStep = group[idx].x1 - group[idx].x0;
+
+      if (binStep <= 0) {
+        return {displayRange: range, binStep: 0};
+      }
+
+      if (this._isTimeFilter()) {
+        const displayRange = [range[0] - binStep, range[1] + binStep];
+        return {displayRange, binStep};
+      }
+
+      // Non-time range filters: pad by half a bin so edge bars aren't clipped
+      const pad = binStep / 2;
+      const displayRange = [range[0] - pad, range[1] + pad];
+      return {displayRange, binStep: pad};
+    };
+
+    _getDisplayRange = () => {
+      return this._getDisplayRangeInfo().displayRange;
+    };
+
     _roundValToStep = val => {
       const {range, step} = this.props;
       if (!range || !step) return;
@@ -160,18 +202,20 @@ export default function RangeSliderFactory(
     };
 
     _setRangeVal1 = val => {
-      const {value0, range, onChange = noop} = this.props;
-      if (!range) return;
+      const {value0, onChange = noop} = this.props;
+      const dr = this._getDisplayRange();
+      if (!dr) return;
       const val1 = Number(val);
-      onChange([value0, clamp([value0, range[1]], this._roundValToStep(val1))]);
+      onChange([value0, clamp([value0, dr[1]], this._roundValToStep(val1))]);
       return true;
     };
 
     _setRangeVal0 = val => {
-      const {value1, range, onChange = noop} = this.props;
-      if (!range) return;
+      const {value1, onChange = noop} = this.props;
+      const dr = this._getDisplayRange();
+      if (!dr) return;
       const val0 = Number(val);
-      onChange([clamp([range[0], value1], this._roundValToStep(val0)), value1]);
+      onChange([clamp([dr[0], value1], this._roundValToStep(val0)), value1]);
       return true;
     };
 
@@ -249,7 +293,13 @@ export default function RangeSliderFactory(
       const plotWidth = Math.max(width - Number(sliderHandleWidth), 0);
       const hasPlot = plotType?.type;
 
-      const value = this.props.plotValue || this.filterValueSelector(this.props);
+      const {displayRange} = this._getDisplayRangeInfo();
+
+      const rawValue = this.props.plotValue || this.filterValueSelector(this.props);
+      const value =
+        displayRange && Array.isArray(rawValue)
+          ? (rawValue.map(v => clamp([displayRange[0], displayRange[1]], v)) as typeof rawValue)
+          : rawValue;
       const scaledValue =
         subAnimations?.length && range
           ? scaleSourceDomainToDestination(value as [number, number], range as [number, number])
@@ -275,7 +325,7 @@ export default function RangeSliderFactory(
                   animationWindow={animationWindow}
                   filter={filter}
                   datasets={datasets}
-                  range={range}
+                  range={displayRange!}
                   value={value}
                   width={plotWidth}
                   isRanged={isRanged}
@@ -304,7 +354,7 @@ export default function RangeSliderFactory(
                     <this.props.xAxis
                       width={plotWidth}
                       timezone={timezone}
-                      domain={range}
+                      domain={displayRange}
                       isEnlarged={this.props.isEnlarged}
                     />
                   </div>
@@ -312,8 +362,8 @@ export default function RangeSliderFactory(
                 <Slider
                   marks={this.props.marks}
                   isRanged={isRanged}
-                  minValue={range[0]}
-                  maxValue={range[1]}
+                  minValue={displayRange![0]}
+                  maxValue={displayRange![1]}
                   value0={this.props.value0}
                   value1={this.props.value1}
                   step={step}

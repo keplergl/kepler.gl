@@ -119,14 +119,15 @@ function AnimationControllerFactory(): typeof AnimationControllerType {
       if (!domain) {
         return;
       }
-      // interim solution while we fully migrate filter and layer controllers
       const setTimelineValue = updateAnimation || this.props.setTimelineValue;
 
       if (Array.isArray(value)) {
+        const windowSize = value[1] - value[0];
         if (animationWindow === ANIMATION_WINDOW.incremental) {
           setTimelineValue([value[0], value[0] + 1] as T);
         } else {
-          setTimelineValue([domain[0], domain[0] + value[1] - value[0]] as T);
+          const startValue = domain[0] - windowSize;
+          setTimelineValue([startValue, startValue + windowSize] as T);
         }
       } else {
         setTimelineValue(domain[0] as T);
@@ -210,15 +211,16 @@ function AnimationControllerFactory(): typeof AnimationControllerType {
       if (Array.isArray(value)) {
         let value0: number;
         let value1: number;
+        const windowSize = value[1] - value[0];
         if (animationWindow === ANIMATION_WINDOW.incremental) {
           const lastFrame = value[1] + delta > domain[1];
           value0 = value[0];
           value1 = lastFrame ? value[0] + 1 : value[1] + delta;
         } else {
-          // use value[0] to display the last item  duration as the first item
           const lastFrame = value[0] + delta > domain[1];
-          value0 = lastFrame ? domain[0] : value[0] + delta;
-          value1 = value0 + value[1] - value[0];
+          const startValue = domain[0] - windowSize;
+          value0 = lastFrame ? startValue : value[0] + delta;
+          value1 = value0 + windowSize;
         }
         return [value0, value1];
       }

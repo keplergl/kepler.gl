@@ -86,6 +86,7 @@ interface LineChartProps {
   width: number;
   timezone?: string | null;
   timeFormat?: string;
+  range?: number[];
 }
 
 const MARGIN = {top: 0, bottom: 0, left: 0, right: 0};
@@ -103,11 +104,17 @@ function LineChartFactory() {
     onMouseMove,
     width,
     timezone,
-    timeFormat
+    timeFormat,
+    range
   }: LineChartProps) => {
     const {yDomain, xDomain} = lineChart || {};
     // @ts-expect-error seems lineChart.series has ambiguous types. Requires refactoring.
     const series: {lines: any[]; markers: any[]} = lineChart?.series;
+
+    const effectiveXDomain = useMemo(
+      () => (range && range.length === 2 ? range : xDomain),
+      [range, xDomain]
+    );
 
     const paddedYDomain = useMemo(
       () =>
@@ -117,16 +124,16 @@ function LineChartFactory() {
       [yDomain]
     );
     const brushData = useMemo(() => {
-      return xDomain && paddedYDomain
+      return effectiveXDomain && paddedYDomain
         ? [
             {
-              x: xDomain[0],
+              x: effectiveXDomain[0],
               y: paddedYDomain[1],
               customComponent: () => brushComponent
             }
           ]
         : [];
-    }, [xDomain, paddedYDomain, brushComponent]);
+    }, [effectiveXDomain, paddedYDomain, brushComponent]);
 
     const hintFormatter = useMemo(
       () => datetimeFormatter(timezone)(timeFormat),
@@ -144,7 +151,7 @@ function LineChartFactory() {
             onMouseMove(null);
           }}
           yDomain={paddedYDomain}
-          xDomain={xDomain}
+          xDomain={effectiveXDomain}
         >
           <HorizontalGridLines tickTotal={3} />
           {series.lines.map((d, i) => (
