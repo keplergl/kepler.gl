@@ -52,7 +52,7 @@
     "global": "^4.3.0",
     "h3-js": "^3.1.0",
     "keymirror": "^0.1.1",
-    "lodash": "4.17.21",
+    "lodash": "4.17.23",
     "mapbox-gl": "^1.13.1",
     "maplibre-gl": "^3.6.2",
     "maplibregl-mapbox-request-transformer": "^0.0.2",
