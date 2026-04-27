@@ -26,7 +26,8 @@ export default {
     selectType: 'Selecciona un Tipus',
     selectValue: 'Selecciona un Valor',
     enterValue: 'Entra un valor',
-    empty: 'buit'
+    empty: 'buit',
+    selectLayer: 'Selecciona una capa'
   },
   misc: {
     by: '',
@@ -53,9 +54,12 @@ export default {
       labelWithId: 'Etiqueta {labelId}',
       fontSize: 'Mida de la font',
       fontColor: 'Color de la font',
+      backgroundColor: 'Color de fons',
       textAnchor: 'Àncora del text',
       alignment: 'Alineació',
-      addMoreLabel: 'Afegeix més etiquetes'
+      addMoreLabel: 'Afegeix més etiquetes',
+      outlineWidth: 'Amplada del contorn',
+      outlineColor: 'Color del contorn'
     }
   },
   sidebar: {
@@ -64,10 +68,15 @@ export default {
       filter: 'Filtres',
       interaction: 'Interaccions',
       basemap: 'Mapa base'
+    },
+    panelViewToggle: {
+      list: 'Visualitza Llista',
+      byDataset: 'Visualitza per Conjunt de dades'
     }
   },
   layer: {
     required: 'Requerit*',
+    columnModesSeparator: 'O',
     radius: 'Radi',
     color: 'Color',
     fillColor: 'Color fons',
@@ -87,6 +96,10 @@ export default {
     aggregateBy: '{field} agregat per',
     '3DModel': 'Model 3D',
     '3DModelOptions': 'Opcions del model 3D',
+    service: 'Servei',
+    layer: 'Capa',
+    appearance: 'Aparença',
+    uniqueIdField: 'Camp ID únic',
     type: {
       point: 'punt',
       arc: 'arc',
@@ -102,10 +115,18 @@ export default {
       hexagonid: 'H3',
       trip: 'viatge',
       s2: 'S2',
-      '3d': '3D'
+      '3d': '3D',
+      vectortile: 'mosaic vectorial',
+      rastertile: 'mosaic ràster',
+      wms: 'WMS',
+      tile3d: 'mosaic 3D'
+    },
+    wms: {
+      hover: 'Valor:'
     },
     layerUpdateError:
       "S'ha produït un error durant l'actualització de la capa: {errorMessage}. Assegureu-vos que el format de les dades d’entrada sigui vàlid.",
+    interaction: 'Interacció',
     heatmap: 'Heatmap',
     aggregation: 'Aggregation'
   },
@@ -123,6 +144,7 @@ export default {
     billboardDescription: 'Orientar la geometria cap a la càmera',
     fadeTrail: 'Rastre de desvaniment',
     opacity: 'Opacitat',
+    pointSize: 'Mida del punt',
     coverage: 'Cobertura',
     outline: 'Outline',
     colorRange: 'Rang de color',
@@ -160,12 +182,17 @@ export default {
     fixedHeightDescription: "Utilitzeu l'alçada sense modificacions",
     allowHover: "Mostra informació d'eina",
     allowHoverDescription:
-      "Mostra o oculta la informació d'eina en passar el cursor per sobre de les característiques de la capa"
+      "Mostra o oculta la informació d'eina en passar el cursor per sobre de les característiques de la capa",
+    showNeighborOnHover: 'Ressalta veïns en passar el cursor',
+    showHighlightColor: 'Mostra color de ressaltat',
+    darkModeEnabled: 'Mapa base fosc',
+    transparentBackground: 'Fons transparent'
   },
   layerManager: {
     addData: 'Afegeix Dades',
     addLayer: 'Afegeix Capes',
-    layerBlending: 'Combinar capes'
+    layerBlending: 'Combinar capes',
+    overlayBlending: 'Combinació de superposició'
   },
   mapManager: {
     mapStyle: 'Estil de mapa',
@@ -173,19 +200,76 @@ export default {
     '3dBuildingColor': 'Color edifici 3D',
     backgroundColor: 'Color de fons'
   },
+  effectManager: {
+    effects: 'Efectes',
+    addEffect: 'Afegeix efecte',
+    pickDateTime: 'Selecciona data/hora',
+    currentTime: 'Hora actual',
+    pickCurrrentTime: 'Selecciona hora actual',
+    date: 'Data',
+    time: 'Hora',
+    timezone: 'Zona horària'
+  },
+  effectDescription: {
+    lightAndShadow:
+      "Simula il·luminació solar realista i ombres basades en l'hora del dia i la ubicació geogràfica. Intensitat d'ombra, colors de llum solar i ambiental ajustables.",
+    ink: "Aplica un estil artístic de tinta que enfosqueix les vores i crea una aparença dibuixada a mà. Ajusta la intensitat per controlar l'efecte.",
+    brightnessContrast:
+      "Ajusta la brillantor i el contrast generals del mapa. Utilitza valors positius per augmentar la brillantor o el contrast, valors negatius per enfosquir o aplanar la imatge.",
+    hueSaturation:
+      "Canvia el to de color i ajusta la saturació de tot el mapa. Útil per crear temes de color o desaturar la vista.",
+    vibrance:
+      "Augmenta selectivament la intensitat dels colors apagats sense sobresaturar els ja vius. Produeix una millora de color més natural que la saturació.",
+    sepia:
+      "Aplica un to marró càlid reminiscent de fotografies antigues. Controla la quantitat per barrejar entre els colors originals i l'aspecte sèpia.",
+    dotScreen:
+      "Converteix la imatge en un patró de punts monocroms, semblant a la impressió de mitjos tons de diari. Ajusta l'angle, la mida dels punts i la posició central.",
+    colorHalftone:
+      "Simula la impressió de mitjos tons de color CMYK amb patrons de punts separats per a cada canal de color. Controla l'angle, la mida dels punts i la posició central.",
+    noise:
+      "Afegeix soroll aleatori estil gra de pel·lícula al mapa. Útil per a una estètica texturitzada i analògica o per reduir el banding de color.",
+    triangleBlur:
+      "Aplica un desenfocament suau de tipus gaussià uniformement al mapa. Controla el radi de desenfocament per ajustar el nivell de suavitat.",
+    zoomBlur:
+      "Crea un desenfocament de moviment radial que emana d'un punt central, simulant un zoom de càmera. Ajusta la intensitat i la posició central.",
+    tiltShift:
+      "Simula un efecte de lent tilt-shift que desenfoca les àrees fora d'una banda focal, creant un aspecte de maqueta en miniatura. Estableix la banda focal amb posicions d'inici/fi.",
+    edgeWork:
+      "Ressalta les vores estructurals de la imatge utilitzant un estil artístic de dibuix al carbó. Ajusta el radi de detecció per controlar el gruix de la línia.",
+    vignette:
+      "Enfosqueix les cantonades i vores del mapa, dirigint l'atenció cap al centre. Controla la quantitat d'enfosquiment i el radi de l'àrea clara.",
+    magnify:
+      "Crea una superposició de lupa circular en una posició configurable. Ajusta la mida, el nivell de zoom i l'amplada de la vora.",
+    hexagonalPixelate:
+      "Substitueix la imatge per una quadrícula de mosaic hexagonal, cadascun omplert amb el color mitjà de l'àrea que cobreix. Ajusta l'escala del mosaic.",
+    distanceFog:
+      "Desvaneix els objectes llunyans en un color de boira basat en la seva profunditat respecte a la càmera, millorant la sensació de profunditat. Controla la densitat, la distància d'inici, l'abast i el color de la boira.",
+    surfaceFog:
+      "Renderitza una capa de boira a una elevació específica sobre la superfície del terreny. Ajusta l'elevació, el gruix de transició, la densitat, el color i un patró de soroll opcional."
+  },
   layerConfiguration: {
     defaultDescription: 'Calcula {property} segons el camp seleccionat',
-    howTo: 'How to'
+    howTo: 'Com funciona',
+    showColorChart: 'Mostra gràfic de colors',
+    hideColorChart: 'Amaga gràfic de colors'
   },
   filterManager: {
-    addFilter: 'Afegeix Filtre'
+    addFilter: 'Afegeix Filtre',
+    timeFilterSync: 'Conjunts sincronitzats',
+    timeLayerSync: 'Vincula amb la línia de temps de la capa',
+    timeLayerUnsync: 'Desvincula de la línia de temps de la capa',
+    column: 'Columna'
   },
   datasetTitle: {
     showDataTable: 'Mostra taula de dades',
     removeDataset: 'Elimina conjunt de dades'
   },
   datasetInfo: {
-    rowCount: '{rowCount} files'
+    rowCount: '{rowCount} files',
+    vectorTile: 'Mosaic vectorial',
+    rasterTile: 'Mosaic ràster',
+    wmsTile: 'Mosaic WMS',
+    tile3d: 'Mosaic 3D'
   },
   tooltip: {
     hideLayer: 'oculta la capa',
@@ -195,6 +279,8 @@ export default {
     hide: 'amaga',
     show: 'mostra',
     removeLayer: 'Elimina capa',
+    duplicateLayer: 'Duplica capa',
+    zoomToLayer: 'Zoom a la capa',
     resetAfterError: 'Intenteu habilitar la capa després dun error',
     layerSettings: 'Configuració de capa',
     closePanel: 'Tanca panel actual',
@@ -209,8 +295,10 @@ export default {
     showLayerPanel: 'Mostra el tauler de capes',
     moveToTop: 'Desplaça a dalt de tot de les capes de dades',
     selectBaseMapStyle: 'Selecciona estil de mapa base',
+    removeBaseMapStyle: 'Elimina estil de mapa base',
     delete: 'Esborra',
     timePlayback: 'Reproducció de temps',
+    timeFilterSync: "Sincronitza amb una columna d'un altre conjunt de dades",
     cloudStorage: 'Emmagatzematge al núvol',
     '3DMap': 'Mapa 3D',
     animationByWindow: 'Finestra Temporal Mòbil',
@@ -219,12 +307,22 @@ export default {
     play: 'iniciar',
     pause: 'pausar',
     reset: 'reiniciar',
-    export: 'exportar'
+    export: 'exportar',
+    timeLayerSync: 'Vincula amb la línia de temps de la capa',
+    timeLayerUnsync: 'Desvincula de la línia de temps de la capa',
+    syncTimelineStart: "Inici del període de temps del filtre actual",
+    syncTimelineEnd: "Fi del període de temps del filtre actual",
+    showEffectPanel: "Mostra el panell d'efectes",
+    hideEffectPanel: "Amaga el panell d'efectes",
+    removeEffect: "Elimina l'efecte",
+    disableEffect: "Desactiva l'efecte",
+    effectSettings: "Configuració de l'efecte"
   },
   toolbar: {
     exportImage: 'Exporta imatge',
     exportData: 'Exporta dades',
     exportMap: 'Exporta mapa',
+    exportVideo: 'Exporta Vídeo',
     shareMapURL: 'Comparteix URL del mapa',
     saveMap: 'Desa mapa',
     select: 'selecciona',
@@ -233,6 +331,16 @@ export default {
     hide: 'amaga',
     show: 'mostra',
     ...LOCALES
+  },
+  editor: {
+    filterLayer: 'Filtra capes',
+    filterLayerDisabled: 'Les geometries no poligonals no es poden utilitzar per filtrar',
+    copyGeometry: 'Copia geometria',
+    noLayersToFilter: 'No hi ha capes per filtrar'
+  },
+  exportVideoModal: {
+    animation: 'Animació',
+    settings: 'Configuració'
   },
   modal: {
     title: {
@@ -243,7 +351,8 @@ export default {
       exportMap: 'Exporta mapa',
       addCustomMapboxStyle: 'Afegeix estil Mapbox propi',
       saveMap: 'Desa mapa',
-      shareURL: 'Comparteix URL'
+      shareURL: 'Comparteix URL',
+      exportVideo: 'Exporta Vídeo'
     },
     button: {
       delete: 'Esborra',
@@ -267,6 +376,10 @@ export default {
       mapLegendTitle: 'Llegenda del mapa',
       mapLegendAdd: 'Afegir llegenda al mapa'
     },
+    exportVideo: {
+      animation: 'Animació',
+      settings: 'Configuració'
+    },
     exportData: {
       datasetTitle: 'Conjunt de dades',
       datasetSubtitle: 'Escull els conjunts de dades que vols exportar',
@@ -278,7 +391,8 @@ export default {
       filteredData: 'Dades filtrades',
       unfilteredData: 'Dades sense filtrar',
       fileCount: '{fileCount} Arxius',
-      rowCount: '{rowCount} Files'
+      rowCount: '{rowCount} files',
+      tiledDatasetWarning: "* L'exportació de dades per a conjunts de dades en mosaic no és compatible"
     },
     deleteData: {
       warning: "estàs a punt d'esborrar aquest conjunt de dades. Afectarà {length} capes"
@@ -295,11 +409,15 @@ export default {
         'aquí. *kepler.gl és una aplicació client, les dades romanen al teu navegador..',
       exampleToken: 'p.ex. pk.abcdefg.xxxxxx',
       pasteTitle: "1. Enganxa la URL de l'estil",
+      pasteSubtitle0: "La URL de l'estil pot ser una URL de Mapbox",
       pasteSubtitle1: 'Què és un',
       pasteSubtitle2: "URL de l'estil",
+      pasteSubtitle3: "o un style.json que utilitzi l'",
+      pasteSubtitle4: "especificació d'estil de Mapbox GL",
       namingTitle: '3. Posa nom al teu estil'
     },
     shareMap: {
+      title: 'Comparteix mapa',
       shareUriTitle: 'Comparteix URL del mapa',
       shareUriSubtitle: 'Genera una URL del mapa per compartir amb altri',
       cloudTitle: 'Emmagatzematge al núvol',
@@ -327,6 +445,8 @@ export default {
         tokenPlaceholder: "Enganxa el teu token d'accés a Mapbox",
         tokenMisuseWarning:
           '* Si no proporciones el teu propi token, el mapa podria fallar en qualsevol moment quan reemplacem el nostre token per evitar abusos. ',
+        tokenSecurityWarning:
+          "* Avís: el vostre token de Mapbox s'incrustarà al fitxer HTML exportat. Qualsevol persona amb accés a aquest fitxer podrà veure i utilitzar el vostre token. Utilitzeu un token amb restriccions d'URL quan sigui possible. ",
         tokenDisclaimer:
           'Pots canviar el toke de Mapbox més endavant fent servir aquestes instruccions: ',
         tokenUpdate: 'Com actualitzar un token preexistent.',
@@ -353,6 +473,7 @@ export default {
     },
     loadData: {
       upload: 'Carregar arxius',
+      tileset: 'Conjunt de mosaic',
       storage: "Carregar des d'emmagatzematge"
     },
     tripInfo: {
@@ -362,7 +483,10 @@ export default {
       code: ' [longitude, latitude, altitude, timestamp] ',
       description2:
         'i el darrer element ha de ser la marca de temps. Els formats vàlids per a la marca de temps inclouen Unix en segons com `1564184363` o en milisegons com `1564184363000`.',
-      example: 'Exemple:'
+      example: 'Exemple:',
+      titleTable: 'Crear viatges a partir d\'una llista de punts',
+      descriptionTable1:
+        'Els viatges es poden crear unint una llista de punts de latitud i longitud, ordenant per marques de temps i agrupant per identificadors únics.'
     },
     iconInfo: {
       title: 'Com dibuixar icones',
@@ -372,6 +496,20 @@ export default {
       description2: " kepler.gl automàticament crearà una capa d'icona.",
       example: 'Exemple:',
       icons: 'Icones'
+    },
+    polygonInfo: {
+      title: 'Crear capa de polígons a partir de funcions GeoJSON',
+      titleTable: 'Crear camí a partir de punts',
+      descriptionTable: `Els camins es poden crear unint una llista de punts de latitud i longitud, ordenant per un camp d'índex (p.ex. marca de temps) i agrupant per identificadors únics.
+
+  ### Columnes de la capa:
+  - **id**: - *obligatori*&nbsp;- Una columna \`id\` s'utilitza per agrupar punts. Els punts amb el mateix id s'uniran en un únic camí.
+  - **lat**: - *obligatori*&nbsp;- La latitud del punt
+  - **lon**: - *obligatori*&nbsp;- La longitud del punt
+  - **alt**: - *opcional*&nbsp;- L'altitud del punt
+  - **sort by**: - *opcional*&nbsp;- Una columna \`sort by\` s'utilitza per ordenar els punts; si no s'especifica, els punts s'ordenaran per índex de fila.
+`,
+      exampleTable: 'Example CSV'
     },
     storageMapViewer: {
       lastModified: 'Darrera modificació fa {lastUpdated}',
@@ -385,7 +523,9 @@ export default {
       back: 'Enrere',
       goToPage: 'Ves a la pàgina {displayName} de Kepler.gl',
       storageMaps: 'Emmagatzematge / Mapes',
-      noSavedMaps: 'Cap mapa desat encara'
+      noSavedMaps: 'Cap mapa desat encara',
+      foursquareStorageMessage:
+        "Només es mostren aquí els mapes desats amb l'opció Kepler.gl > Desar > Emmagatzematge de Foursquare"
     }
   },
   header: {
@@ -404,13 +544,29 @@ export default {
     normal: 'normal',
     subtractive: 'substractiva'
   },
+  overlayBlending: {
+    title: 'Combinació de superposició del mapa',
+    description: 'Combina les capes amb el mapa base perquè ambdós siguin visibles.',
+    screen: 'mapa base fosc',
+    normal: 'normal',
+    darken: 'mapa base clar'
+  },
   columns: {
     title: 'Columnes',
     lat: 'lat',
     lng: 'lon',
     altitude: 'alçada',
+    alt: 'altitud',
+    id: 'id',
+    timestamp: 'temps',
     icon: 'icona',
     geojson: 'geojson',
+    geoarrow: 'geoarrow',
+    geoarrow0: 'geoarrow origen',
+    geoarrow1: 'geoarrow destinació',
+    token: 'token',
+    sortBy: 'ordenar per',
+    neighbors: 'veïns',
     arc: {
       lat0: 'lat origen',
       lng0: 'lng origen ',
@@ -433,12 +589,17 @@ export default {
     customPalette: 'Paleta personalitzada',
     steps: 'intervals',
     type: 'tipus',
-    reversed: 'invertida'
+    colorBlindSafe: 'Segur per a daltònics',
+    reversed: 'invertida',
+    disableStepReason: "No es pot canviar el nombre de passos amb talls de color personalitzats, utilitza la paleta personalitzada per editar els passos",
+    preset: 'Colors predefinits',
+    picker: 'Selector de color'
   },
   scale: {
     colorScale: 'Escala de color',
     sizeScale: 'Escala de mides',
     strokeScale: 'Escala de traç',
+    strokeColorScale: 'Escala de color de traç',
     scale: 'Escala'
   },
   fileUploader: {
@@ -454,6 +615,11 @@ export default {
     uploading: 'Carregant',
     fileNotSupported: "L'arxiu {errorFiles} no és compatible.",
     or: 'o'
+  },
+  tilesetSetup: {
+    header: 'Configurar mosaics vectorials',
+    rasterTileHeader: 'Configurar mosaics ràster',
+    addTilesetText: 'Afegir conjunt de mosaic'
   },
   geocoder: {
     title: 'Introdueix una adreça'
@@ -477,5 +643,27 @@ export default {
   'Bug Report': "Informe d'errors",
   'User Guide': "Guia d'usuari",
   Save: 'Desa',
-  Share: 'Comparteix'
+  Share: 'Comparteix',
+  mapLegend: {
+    layers: {
+      line: {
+        singleColor: {
+          sourceColor: 'Origen',
+          targetColor: 'Destinació'
+        }
+      },
+      arc: {
+        singleColor: {
+          sourceColor: 'Origen',
+          targetColor: 'Destinació'
+        }
+      },
+      default: {
+        singleColor: {
+          color: 'Color de farciment',
+          strokeColor: 'Contorn'
+        }
+      }
+    }
+  }
 };
