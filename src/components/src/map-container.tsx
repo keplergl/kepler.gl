@@ -1014,8 +1014,7 @@ export default function MapContainerFactory(
                 ? {
                     doubleClickZoom: !isEditorDrawingMode,
                     dragRotate: this.props.mapState.dragRotate,
-                    maxPitch:
-                      this.props.mapState.maxPitch ?? getApplicationConfig().maxPitch
+                    maxPitch: this.props.mapState.maxPitch ?? getApplicationConfig().maxPitch
                   }
                 : false
             }
@@ -1182,9 +1181,10 @@ export default function MapContainerFactory(
 
       const internalViewState = this.context?.getInternalViewState(index);
       const configMaxPitch = mapState.maxPitch ?? getApplicationConfig().maxPitch;
-      const effectiveMaxPitch = baseMapLibraryName === MAP_LIB_OPTIONS.MAPBOX
-        ? Math.min(configMaxPitch, MAPBOX_MAX_PITCH)
-        : configMaxPitch;
+      const effectiveMaxPitch =
+        baseMapLibraryName === MAP_LIB_OPTIONS.MAPBOX
+          ? Math.min(configMaxPitch, MAPBOX_MAX_PITCH)
+          : configMaxPitch;
       const mapProps = {
         ...internalViewState,
         maxPitch: effectiveMaxPitch,

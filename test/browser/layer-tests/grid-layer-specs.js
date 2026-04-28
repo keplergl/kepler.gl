@@ -364,7 +364,11 @@ test('#GridLayer -> renderLayer', t => {
         );
         // Default colorScale is 'quantile', so the enriched domain is the full
         // sorted array of per-bin values (not just [min, max]).
-        t.deepEqual(enrichedArg0.domain, [0, 1, 2], 'enriched domain should be full sorted bin values for quantile scale');
+        t.deepEqual(
+          enrichedArg0.domain,
+          [0, 1, 2],
+          'enriched domain should be full sorted bin values for quantile scale'
+        );
         t.ok(enrichedArg0.aggregatedBins, 'enriched call should include aggregatedBins');
 
         // Verify aggregator state and per-bin values

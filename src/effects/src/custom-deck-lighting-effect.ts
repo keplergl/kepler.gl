@@ -61,8 +61,8 @@ function createCustomShadowModule(): ShaderModule | null {
   mod.fs = insertBefore(mod.fs, '} shadow;', uboField);
 
   // Add a varying to carry the common-space position for simple phong normals.
-  mod.vs = 'out vec3 custom_vWorldPos;\n' + mod.vs;
-  mod.fs = 'in vec3 custom_vWorldPos;\n' + mod.fs;
+  mod.vs = `out vec3 custom_vWorldPos;\n${mod.vs}`;
+  mod.fs = `in vec3 custom_vWorldPos;\n${mod.fs}`;
 
   mod.fs = insertBefore(
     mod.fs,
@@ -78,10 +78,7 @@ function createCustomShadowModule(): ShaderModule | null {
       'vec4 shadow_setVertexPosition(vec4 position_commonspace)',
       'vec4 shadow_setVertexPosition(vec4 position_commonspace, vec4 currentPosition)'
     )
-    .replace(
-      /return gl_Position;\s*\}/,
-      'return currentPosition;\n}'
-    );
+    .replace(/return gl_Position;\s*\}/, 'return currentPosition;\n}');
 
   mod.inject = {
     ...shadow.inject,
