@@ -528,6 +528,43 @@ export function arrowSchemaToFields(
   });
 }
 
+const CAST_BIGINTS = false;
+
+/**
+ * Cast 64-bit integer Arrow columns (Int64, Uint64) to Float64 to avoid BigInt values
+ * that are incompatible with d3 scales, sorting, and other numeric operations.
+ * Mirrors the DuckDB approach of casting BIGINT/UBIGINT to DOUBLE.
+ */
+function castBigIntColumnsToFloat64(arrowTable: arrow.Table): arrow.Table {
+  if (!CAST_BIGINTS) {
+    return arrowTable;
+  }
+  
+  const needsCast = arrowTable.schema.fields.some(
+    f => arrow.DataType.isInt(f.type) && f.type.bitWidth === 64
+  );
+  if (!needsCast) {
+    return arrowTable;
+  }
+
+  const newColumns: Record<string, arrow.Vector> = {};
+  for (let i = 0; i < arrowTable.numCols; i++) {
+    const field = arrowTable.schema.fields[i];
+    const col = arrowTable.getChildAt(i)!;
+    if (arrow.DataType.isInt(field.type) && field.type.bitWidth === 64) {
+      const float64Array = new Float64Array(col.length);
+      for (let j = 0; j < col.length; j++) {
+        const val = col.get(j);
+        float64Array[j] = val === null ? NaN : Number(val);
+      }
+      newColumns[field.name] = arrow.makeVector(float64Array);
+    } else {
+      newColumns[field.name] = col;
+    }
+  }
+  return new arrow.Table(newColumns);
+}
+
 /**
  * Parse arrow batches returned from parseInBatches()
  *
@@ -538,7 +575,7 @@ export function processArrowBatches(arrowBatches: arrow.RecordBatch[]): Processo
   if (arrowBatches.length === 0) {
     return null;
   }
-  const arrowTable = new arrow.Table(arrowBatches);
+  const arrowTable = castBigIntColumnsToFloat64(new arrow.Table(arrowBatches));
   const fields = arrowSchemaToFields(arrowTable);
 
   const cols = [...Array(arrowTable.numCols).keys()].map(i => arrowTable.getChildAt(i));
