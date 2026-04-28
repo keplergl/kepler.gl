@@ -36,7 +36,7 @@
     "@math.gl/web-mercator": "^3.6.2",
     "apache-arrow": "17.0.0",
     "gl-matrix": "^3.4.3",
-    "lodash": "4.17.21",
+    "lodash": "4.17.23",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-redux": "^8.0.5",

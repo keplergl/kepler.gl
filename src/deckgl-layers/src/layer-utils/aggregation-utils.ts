@@ -110,11 +110,7 @@ export function classifyBinsByCustomBreaks(
  * @param ParentClass The deck.gl parent class (HexagonLayer or GridLayer)
  * @param channel     The aggregation channel index passed by deck.gl
  */
-export function enrichedAggregationUpdate(
-  layer: any,
-  ParentClass: any,
-  channel: number
-): void {
+export function enrichedAggregationUpdate(layer: any, ParentClass: any, channel: number): void {
   (ParentClass.prototype as any)._onAggregationUpdate.call(layer, {channel});
 
   if (channel !== 0) return;

@@ -3,7 +3,7 @@
 
 import * as arrow from 'apache-arrow';
 import {Feature, BBox} from 'geojson';
-import {getGeoMetadata} from '@loaders.gl/gis';
+import {getGeoMetadata} from '@loaders.gl/geoarrow';
 
 import {GEOARROW_EXTENSIONS, GEOARROW_METADATA_KEY} from '@kepler.gl/constants';
 import {KeplerTable} from '@kepler.gl/table';
@@ -17,12 +17,9 @@ import {
   RGBColor
 } from '@kepler.gl/types';
 import {DataContainerInterface, ArrowDataContainer} from '@kepler.gl/utils';
-import {
-  getBinaryGeometriesFromArrow,
-  parseGeometryFromArrow,
-  BinaryGeometriesFromArrowOptions,
-  updateBoundsFromGeoArrowSamples
-} from '@loaders.gl/arrow';
+import {getBinaryGeometriesFromArrow, BinaryGeometriesFromArrowOptions} from '@loaders.gl/gis';
+import {updateBoundsFromGeoArrowSamples} from '@loaders.gl/geoarrow';
+import {convertGeoArrowGeometryToGeoJSON} from '@loaders.gl/gis';
 
 import {WKBLoader} from '@loaders.gl/wkt';
 import {geojsonToBinary} from '@loaders.gl/gis';
@@ -243,7 +240,7 @@ export function getHoveredObjectFromArrow(
     const field = fieldAccessor(dataContainer);
     const encoding = field?.metadata?.get(GEOARROW_METADATA_KEY);
 
-    const hoveredFeature = parseGeometryFromArrow(rawGeometry, encoding);
+    const hoveredFeature = convertGeoArrowGeometryToGeoJSON(rawGeometry, encoding);
 
     const properties = dataContainer.rowAsArray(objectInfo.index).reduce((prev, cur, i) => {
       const fieldName = dataContainer?.getField?.(i).name;
@@ -410,12 +407,7 @@ export function getBoundsFromArrowMetadata(
     const field = dataContainer.getField(layerColumn.fieldIdx);
     const table = dataContainer.getTable();
 
-    const geoMetadata = getGeoMetadata({
-      metadata: {
-        // @ts-expect-error
-        geo: table.schema.metadata.get('geo')
-      }
-    });
+    const geoMetadata = getGeoMetadata(table.schema.metadata as Map<string, string>);
 
     if (geoMetadata) {
       const fieldMetadata = geoMetadata.columns[field.name];

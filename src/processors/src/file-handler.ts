@@ -5,7 +5,7 @@ import {parseInBatches} from '@loaders.gl/core';
 import {JSONLoader, _JSONPath} from '@loaders.gl/json';
 import {CSVLoader} from '@loaders.gl/csv';
 import {GeoArrowLoader} from '@loaders.gl/arrow';
-import {ParquetWasmLoader} from '@loaders.gl/parquet';
+import {ParquetArrowLoader} from '@loaders.gl/parquet';
 import {Loader} from '@loaders.gl/loader-utils';
 import {
   isPlainObject,
@@ -165,7 +165,13 @@ export async function* readBatch(
 
     yield {
       ...batch,
-      ...(batch.schema ? {headers: Object.keys(batch.schema)} : {}),
+      ...(batch.schema
+        ? {
+            headers: batch.schema.fields
+              ? batch.schema.fields.map((f: {name: string}) => f.name)
+              : Object.keys(batch.schema)
+          }
+        : {}),
       fileName,
       // if dataset is CSV, data is set to the raw batches
       data: result ? result : batches
@@ -183,7 +189,7 @@ export async function readFileInBatches({
   loaders: Loader[];
   loadOptions: any;
 }): Promise<AsyncGenerator> {
-  loaders = [JSONLoader, CSVLoader, GeoArrowLoader, ParquetWasmLoader, ...loaders];
+  loaders = [JSONLoader, CSVLoader, GeoArrowLoader, ParquetArrowLoader, ...loaders];
   loadOptions = {
     csv: CSV_LOADER_OPTIONS,
     arrow: ARROW_LOADER_OPTIONS,

@@ -255,7 +255,7 @@ test('Components -> TimeWidget.mount -> test setFilterAnimationTime', t => {
   // test updateAnimationSpeed
   t.deepEqual(
     setFilterAnimationTime.args[0],
-    [0, 'value', [1474594560000, 1474617600000]],
+    [0, 'value', [1474592400000, 1474617600000]],
     'should call setFilterAnimationTime with new value'
   );
 

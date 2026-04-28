@@ -156,7 +156,7 @@ export default function RangePlotFactory(
     };
 
     return isLineChart(plotType) && lineChart ? (
-      <LineChartPlot lineChart={lineChart} {...commonProps} />
+      <LineChartPlot lineChart={lineChart} range={range} {...commonProps} />
     ) : (
       <HistogramPlot
         histogramsByGroup={bins}

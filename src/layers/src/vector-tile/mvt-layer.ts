@@ -25,6 +25,8 @@ import {incrementVectorTileLoading, decrementVectorTileLoading} from './loading-
 
 // @ts-expect-error need to patch private methods because of newer loaders.gl
 export class MVTLayer<ExtraProps> extends _MVTLayer<ExtraProps> {
+  static layerName = 'MVTLayer';
+
   async getTileData(tile: _TileLoadProps): Promise<any> {
     const {getTileData} = this.props;
     const {data} = this.state;
