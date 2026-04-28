@@ -243,6 +243,7 @@
     "@loaders.gl/polyfills": "4.4.1",
     "@loaders.gl/arrow": "4.4.1",
     "@loaders.gl/parquet": "4.4.1",
+    "@loaders.gl/geoarrow": "4.4.1",
     "@loaders.gl/gis": "4.4.1",
     "@loaders.gl/schema": "4.4.1",
     "@loaders.gl/video": "4.4.1",

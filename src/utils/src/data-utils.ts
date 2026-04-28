@@ -5,7 +5,7 @@ import assert from 'assert';
 import {format as d3Format} from 'd3-format';
 import moment from 'moment-timezone';
 
-import {parseGeometryFromArrow} from '@loaders.gl/arrow';
+import {convertGeoArrowGeometryToGeoJSON} from '@loaders.gl/gis';
 
 import {
   ALL_FIELD_TYPES,
@@ -321,7 +321,7 @@ export const FIELD_DISPLAY_FORMAT: {
       try {
         const encoding = field?.metadata?.get('ARROW:extension:name');
         if (encoding) {
-          const geometry = parseGeometryFromArrow(data, encoding);
+          const geometry = convertGeoArrowGeometryToGeoJSON(data, encoding);
           return JSON.stringify(geometry);
         }
       } catch (error) {

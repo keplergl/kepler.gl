@@ -34,7 +34,7 @@
     "@kepler.gl/common-utils": "3.3.0-alpha.0",
     "@kepler.gl/constants": "3.3.0-alpha.0",
     "@kepler.gl/types": "3.3.0-alpha.0",
-    "@loaders.gl/arrow": "^4.4.1",
+    "@loaders.gl/gis": "^4.4.1",
     "@luma.gl/constants": "^9.3.2",
     "@luma.gl/core": "^9.3.2",
     "@mapbox/geo-viewport": "^0.4.1",

@@ -10,7 +10,7 @@ import center from '@turf/center';
 import {AllGeoJSON} from '@turf/helpers';
 import {parseSync} from '@loaders.gl/core';
 import {WKBLoader, WKTLoader} from '@loaders.gl/wkt';
-import {binaryToGeometry} from '@loaders.gl/gis';
+import {convertBinaryGeometryToGeometry} from '@loaders.gl/gis';
 import {BinaryFeatureCollection} from '@loaders.gl/schema';
 import {DataContainerInterface, getSampleData} from '@kepler.gl/utils';
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
@@ -67,7 +67,7 @@ export function parseGeoJsonRawFeature(rawFeature: unknown): Feature | null {
             );
       const binaryGeo = parseSync(binaryInput as ArrayBuffer, WKBLoader);
       // @ts-expect-error loaders.gl binary type to GeoJSON geometry
-      const parsedGeo = binaryToGeometry(binaryGeo);
+      const parsedGeo = convertBinaryGeometryToGeometry(binaryGeo);
       const normalized = normalize(parsedGeo);
       if (!normalized || !Array.isArray(normalized.features) || !normalized.features.length) {
         return null;
@@ -264,7 +264,7 @@ function parseGeometryFromString(geoString: string): Feature | null {
       const buffer = Buffer.from(geoString, 'hex');
       const binaryGeo = parseSync(buffer, WKBLoader);
       // @ts-expect-error
-      parsedGeo = binaryToGeometry(binaryGeo);
+      parsedGeo = convertBinaryGeometryToGeometry(binaryGeo);
     } catch (e) {
       return null;
     }
