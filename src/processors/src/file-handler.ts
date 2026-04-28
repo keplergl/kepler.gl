@@ -165,7 +165,13 @@ export async function* readBatch(
 
     yield {
       ...batch,
-      ...(batch.schema ? {headers: Object.keys(batch.schema)} : {}),
+      ...(batch.schema
+        ? {
+            headers: batch.schema.fields
+              ? batch.schema.fields.map((f: {name: string}) => f.name)
+              : Object.keys(batch.schema)
+          }
+        : {}),
       fileName,
       // if dataset is CSV, data is set to the raw batches
       data: result ? result : batches
