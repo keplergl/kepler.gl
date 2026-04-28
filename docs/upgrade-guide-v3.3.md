@@ -6,7 +6,7 @@ kepler.gl 3.3 upgrades the rendering stack from **deck.gl 8 / luma.gl 8** to **d
 
 | Package group   | Old version | New version |
 | --------------- | ----------- | ----------- |
-| `@deck.gl/*`    | 8.9.x       | **9.3.1**  |
+| `@deck.gl/*`    | 8.9.x       | **9.2.11**  |
 | `@luma.gl/*`    | 8.x         | **9.2.6**   |
 | `@loaders.gl/*` | 3.x / 4.3.2 | **4.3.4**   |
 | `math.gl`       | —           | **^4.1.0**  |
