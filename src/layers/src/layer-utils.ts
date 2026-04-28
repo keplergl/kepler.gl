@@ -17,10 +17,7 @@ import {
   RGBColor
 } from '@kepler.gl/types';
 import {DataContainerInterface, ArrowDataContainer} from '@kepler.gl/utils';
-import {
-  getBinaryGeometriesFromArrow,
-  BinaryGeometriesFromArrowOptions
-} from '@loaders.gl/gis';
+import {getBinaryGeometriesFromArrow, BinaryGeometriesFromArrowOptions} from '@loaders.gl/gis';
 import {updateBoundsFromGeoArrowSamples} from '@loaders.gl/geoarrow';
 import {convertGeoArrowGeometryToGeoJSON} from '@loaders.gl/gis';
 
@@ -410,12 +407,7 @@ export function getBoundsFromArrowMetadata(
     const field = dataContainer.getField(layerColumn.fieldIdx);
     const table = dataContainer.getTable();
 
-    const geoMetadata = getGeoMetadata({
-      metadata: {
-        // @ts-expect-error
-        geo: table.schema.metadata.get('geo')
-      }
-    });
+    const geoMetadata = getGeoMetadata(table.schema.metadata as Map<string, string>);
 
     if (geoMetadata) {
       const fieldMetadata = geoMetadata.columns[field.name];
