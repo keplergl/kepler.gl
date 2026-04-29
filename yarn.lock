@@ -5095,6 +5095,7 @@ __metadata:
     "@types/react-virtualized": "npm:^9.21.30"
     "@types/react-vis": "npm:1.11.7"
     "@types/styled-components": "npm:^5.1.32"
+    "@vis.gl/react-maplibre": "npm:8.1.1"
     classnames: "npm:^2.2.1"
     copy-to-clipboard: "npm:^3.3.1"
     d3-array: "npm:^2.8.0"
