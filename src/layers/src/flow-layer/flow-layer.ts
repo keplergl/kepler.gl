@@ -312,7 +312,7 @@ export default class FlowLayer extends Layer {
 
   private getMagnitude = (dataContainer: DataContainerInterface) => (rowIndex: number) => {
     const fieldIdx = this.config.columns.count?.fieldIdx;
-    return fieldIdx >= 0 ? dataContainer.valueAt(rowIndex, fieldIdx) : 1;
+    return fieldIdx != null && fieldIdx >= 0 ? dataContainer.valueAt(rowIndex, fieldIdx) : 1;
   };
 
   private getSourceName = (dataContainer: DataContainerInterface, d: {index: number}) => {
@@ -359,11 +359,14 @@ export default class FlowLayer extends Layer {
       }
     };
 
+    const getSource = this.getSourcePosition(dataContainer);
+    const getTarget = this.getTargetPosition(dataContainer);
+
     const numRows = dataContainer.numRows();
     for (let i = 0; i < numRows; ++i) {
       const datum = {index: i};
-      const sourcePos = this.getSourcePosition(dataContainer)(datum);
-      const targetPos = this.getTargetPosition(dataContainer)(datum);
+      const sourcePos = getSource(datum);
+      const targetPos = getTarget(datum);
       maybeAddLocation(sourcePos, this.getSourceName(dataContainer, datum));
       maybeAddLocation(targetPos, this.getTargetName(dataContainer, datum));
     }
@@ -371,9 +374,9 @@ export default class FlowLayer extends Layer {
     const locations = Object.values(this._locationsByLatLon);
 
     const getFlowOriginId = (index: number) =>
-      this.getLocationFromPosition(this.getSourcePosition(dataContainer)({index}))?.id || 0;
+      this.getLocationFromPosition(getSource({index}))?.id || 0;
     const getFlowDestId = (index: number) =>
-      this.getLocationFromPosition(this.getTargetPosition(dataContainer)({index}))?.id || 0;
+      this.getLocationFromPosition(getTarget({index}))?.id || 0;
 
     const flowIndices = dataContainer.getPlainIndex();
     const getLocationWeight = makeLocationWeightGetter(flowIndices, {
@@ -395,20 +398,23 @@ export default class FlowLayer extends Layer {
   ): FlowDatum[] {
     const data: FlowDatum[] = [];
     const datum = {index: 0};
+    const getSource = this.getSourcePosition(dataContainer);
+    const getTarget = this.getTargetPosition(dataContainer);
+    const getMag = this.getMagnitude(dataContainer);
     for (let i = 0; i < filteredIndex.length; i++) {
       const index = filteredIndex[i];
       datum.index = index;
       const pos = getPosition(datum);
 
       if (pos.every(Number.isFinite)) {
-        const source = this.getLocationFromPosition(this.getSourcePosition(dataContainer)(datum));
-        const target = this.getLocationFromPosition(this.getTargetPosition(dataContainer)(datum));
+        const source = this.getLocationFromPosition(getSource(datum));
+        const target = this.getLocationFromPosition(getTarget(datum));
         if (source && target) {
           data.push({
             index,
             sourceId: source.id,
             targetId: target.id,
-            count: this.getMagnitude(dataContainer)(datum.index)
+            count: getMag(datum.index)
           });
         }
       }
