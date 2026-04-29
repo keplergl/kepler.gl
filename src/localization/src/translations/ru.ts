@@ -116,6 +116,7 @@ export default {
       trip: 'пути',
       s2: 'S2',
       '3d': '3D',
+      flow: 'поток',
       vectortile: 'векторный тайл',
       rastertile: 'растровый тайл',
       wms: 'WMS',
@@ -183,6 +184,24 @@ export default {
     fixedHeightDescription: 'Использовать высоту без изменений',
     allowHover: 'Показать подсказку',
     allowHoverDescription: 'Показать или скрыть подсказку при наведении на элементы слоя',
+    flow: {
+      fade: 'Затухание',
+      fadeEnabled: 'Затухание',
+      fadeAmount: 'Степень затухания',
+      display: 'Отображение',
+      renderingMode: 'Стиль линий',
+      renderingModes: {
+        straight: 'Прямые',
+        curved: 'Изогнутые',
+        'animated-straight': 'Анимированные'
+      },
+      adaptiveScalesEnabled: 'Адаптивные масштабы',
+      clusteringEnabled: 'Кластеризация',
+      lineThicknessScale: 'Толщина линий',
+      lineCurviness: 'Кривизна',
+      locationTotalsEnabled: 'Итоги по локациям',
+      maxTopFlowsDisplayNum: 'Макс. число потоков'
+    },
     showNeighborOnHover: 'Выделять соседей при наведении',
     showHighlightColor: 'Показать цвет выделения',
     darkModeEnabled: 'Темная базовая карта',
@@ -586,7 +605,22 @@ export default {
     hexagon: {
       worldUnitSize: 'Hexagon радиус (km)'
     },
-    hex_id: 'hex id'
+    hex_id: 'hex id',
+    flow: {
+      source: {
+        lat: 'lat источника',
+        lng: 'lng источника',
+        name: 'имя источника',
+        h3: 'H3 источника'
+      },
+      target: {
+        lat: 'lat цели',
+        lng: 'lng цели',
+        name: 'имя цели',
+        h3: 'H3 цели'
+      },
+      count: 'количество'
+    }
   },
   color: {
     customPalette: 'Ваша палитра',
@@ -647,6 +681,21 @@ export default {
   'User Guide': 'Инструкции',
   Save: 'Сохранить',
   Share: 'Поделиться',
+  flow: {
+    tooltip: {
+      location: {
+        name: 'Название',
+        incomingCount: 'Входящие',
+        outgoingCount: 'Исходящие',
+        internalCount: 'Внутренние'
+      },
+      flow: {
+        sourceName: 'Источник',
+        targetName: 'Назначение',
+        count: 'Количество'
+      }
+    }
+  },
   mapLegend: {
     layers: {
       line: {

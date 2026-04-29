@@ -116,6 +116,7 @@ export default {
       trip: 'viagem',
       s2: 'S2',
       '3d': '3D',
+      flow: 'flow',
       vectortile: 'mosaico vetorial',
       rastertile: 'mosaico raster',
       wms: 'WMS',
@@ -184,6 +185,24 @@ export default {
     allowHover: 'Mostrar dica de ferramenta',
     allowHoverDescription:
       'Mostrar ou ocultar dica de ferramenta ao passar o cursor sobre os recursos da camada',
+    flow: {
+      fade: 'Esmaecimento',
+      fadeEnabled: 'Esmaecimento',
+      fadeAmount: 'Quantidade de esmaecimento',
+      display: 'Exibição',
+      renderingMode: 'Estilo de linha',
+      renderingModes: {
+        straight: 'Reta',
+        curved: 'Curva',
+        'animated-straight': 'Animada'
+      },
+      adaptiveScalesEnabled: 'Escalas adaptativas',
+      clusteringEnabled: 'Agrupamento',
+      lineThicknessScale: 'Espessura da linha',
+      lineCurviness: 'Curvatura',
+      locationTotalsEnabled: 'Totais de localização',
+      maxTopFlowsDisplayNum: 'Máx. fluxos principais'
+    },
     showNeighborOnHover: 'Destacar vizinhos ao passar o cursor',
     showHighlightColor: 'Mostrar cor de destaque',
     darkModeEnabled: 'Mapa base escuro',
@@ -585,6 +604,21 @@ export default {
     hexagon: {
       worldUnitSize: 'Raio do Hexágono (km)'
     },
+    flow: {
+      source: {
+        lat: 'origem lat',
+        lng: 'origem lng',
+        name: 'nome origem',
+        h3: 'H3 origem'
+      },
+      target: {
+        lat: 'destino lat',
+        lng: 'destino lng',
+        name: 'nome destino',
+        h3: 'H3 destino'
+      },
+      count: 'contagem'
+    },
     hex_id: 'hex id'
   },
   color: {
@@ -646,6 +680,21 @@ export default {
   'User Guide': 'Guia do Usuário',
   Save: 'Salvar',
   Share: 'Compartilhar',
+  flow: {
+    tooltip: {
+      location: {
+        name: 'Nome',
+        incomingCount: 'Entrada',
+        outgoingCount: 'Saída',
+        internalCount: 'Interno'
+      },
+      flow: {
+        sourceName: 'Origem',
+        targetName: 'Destino',
+        count: 'Contagem'
+      }
+    }
+  },
   mapLegend: {
     layers: {
       line: {

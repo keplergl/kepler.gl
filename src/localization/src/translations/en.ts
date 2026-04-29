@@ -116,6 +116,7 @@ export default {
       trip: 'trip',
       s2: 'S2',
       '3d': '3D',
+      flow: 'flow',
       vectortile: 'vector tile',
       rastertile: 'raster tile',
       wms: 'WMS',
@@ -184,7 +185,25 @@ export default {
     showNeighborOnHover: 'Highlight Neighbors On Hover',
     showHighlightColor: 'Show highlight Color',
     darkModeEnabled: 'Dark base map',
-    transparentBackground: 'Transparent Background'
+    transparentBackground: 'Transparent Background',
+    flow: {
+      fade: 'Fade',
+      fadeEnabled: 'Fade',
+      fadeAmount: 'Fade Amount',
+      display: 'Display',
+      renderingMode: 'Line Style',
+      renderingModes: {
+        straight: 'Straight',
+        curved: 'Curved',
+        'animated-straight': 'Animated'
+      },
+      adaptiveScalesEnabled: 'Adaptive Scales',
+      clusteringEnabled: 'Clustering',
+      lineThicknessScale: 'Line Thickness',
+      lineCurviness: 'Curviness',
+      locationTotalsEnabled: 'Location Totals',
+      maxTopFlowsDisplayNum: 'Max Top Flows'
+    }
   },
   layerManager: {
     addData: 'Add Data',
@@ -643,7 +662,22 @@ ${'```'}
     hexagon: {
       worldUnitSize: 'Hexagon Radius (km)'
     },
-    hex_id: 'hex id'
+    hex_id: 'hex id',
+    flow: {
+      source: {
+        lat: 'source lat',
+        lng: 'source lng',
+        name: 'source name',
+        h3: 'source H3'
+      },
+      target: {
+        lat: 'target lat',
+        lng: 'target lng',
+        name: 'target name',
+        h3: 'target H3'
+      },
+      count: 'count'
+    }
   },
   color: {
     customPalette: 'Custom Palette',
@@ -723,6 +757,21 @@ ${'```'}
           color: 'Fill color',
           strokeColor: 'Outline'
         }
+      }
+    }
+  },
+  flow: {
+    tooltip: {
+      location: {
+        name: 'Name',
+        incomingCount: 'Incoming',
+        outgoingCount: 'Outgoing',
+        internalCount: 'Internal'
+      },
+      flow: {
+        sourceName: 'Origin',
+        targetName: 'Destination',
+        count: 'Count'
       }
     }
   }

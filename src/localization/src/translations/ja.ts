@@ -116,6 +116,7 @@ export default {
       trip: 'trip',
       s2: 'S2',
       '3d': '3D',
+      flow: 'flow',
       vectortile: 'vector tile',
       rastertile: 'raster tile',
       wms: 'WMS',
@@ -180,6 +181,24 @@ export default {
     fixedHeightDescription: '高さを変更せずに使用する',
     allowHover: 'ツールチップを表示',
     allowHoverDescription: 'レイヤー要素にホバーしたときにツールチップを表示または非表示にする',
+    flow: {
+      fade: 'フェード',
+      fadeEnabled: 'フェード',
+      fadeAmount: 'フェード量',
+      display: '表示',
+      renderingMode: 'ラインスタイル',
+      renderingModes: {
+        straight: 'ストレート',
+        curved: 'カーブ',
+        'animated-straight': 'アニメーション'
+      },
+      adaptiveScalesEnabled: 'アダプティブスケール',
+      clusteringEnabled: 'クラスタリング',
+      lineThicknessScale: '線の太さ',
+      lineCurviness: '曲がり具合',
+      locationTotalsEnabled: 'ロケーション合計',
+      maxTopFlowsDisplayNum: '最大表示フロー数'
+    },
     showNeighborOnHover: 'ホバー時に隣接要素をハイライト',
     showHighlightColor: 'ハイライトカラーを表示',
     darkModeEnabled: 'ダークベースマップ',
@@ -581,7 +600,22 @@ export default {
     hexagon: {
       worldUnitSize: '六角形の半径 (km)'
     },
-    hex_id: 'hex id'
+    hex_id: 'hex id',
+    flow: {
+      source: {
+        lat: '出発 緯度',
+        lng: '出発 経度',
+        name: '出発名',
+        h3: '出発 H3'
+      },
+      target: {
+        lat: '到着 緯度',
+        lng: '到着 経度',
+        name: '到着名',
+        h3: '到着 H3'
+      },
+      count: '件数'
+    }
   },
   color: {
     customPalette: 'カスタムパレット',
@@ -637,6 +671,21 @@ export default {
   'User Guide': 'ユーザーガイド',
   Save: '保存',
   Share: '共有',
+  flow: {
+    tooltip: {
+      location: {
+        name: '名称',
+        incomingCount: '流入',
+        outgoingCount: '流出',
+        internalCount: '内部'
+      },
+      flow: {
+        sourceName: '出発地',
+        targetName: '目的地',
+        count: '件数'
+      }
+    }
+  },
   tilesetSetup: {
     header: 'ベクタータイルの設定',
     rasterTileHeader: 'ラスタータイルの設定',

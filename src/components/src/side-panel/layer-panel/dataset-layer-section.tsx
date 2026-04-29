@@ -61,6 +61,8 @@ function DatasetLayerSectionFactory(
     // temp patch to hide layers that are in development
     const enableRasterTileLayer = getApplicationConfig().enableRasterTileLayer;
     const enableWMSLayer = getApplicationConfig().enableWMSLayer;
+    const enableFlowLayer = getApplicationConfig().enableFlowLayer;
+
     const filteredLayerClasses = useMemo(() => {
       let filteredClasses = layerClasses;
       if (!enableRasterTileLayer) {
@@ -71,8 +73,12 @@ function DatasetLayerSectionFactory(
         const {wms: _wms, ...rest} = filteredClasses;
         filteredClasses = rest as LayerClassesType;
       }
+      if (!enableFlowLayer) {
+        const {flow: _flow, ...rest} = filteredClasses;
+        filteredClasses = rest as LayerClassesType;
+      }
       return filteredClasses as LayerClassesType;
-    }, [enableRasterTileLayer, enableWMSLayer, layerClasses]);
+    }, [enableRasterTileLayer, enableWMSLayer, enableFlowLayer, layerClasses]);
 
     return (
       <DatasetLayerSectionWrapper>

@@ -115,6 +115,7 @@ export default {
       trip: 'matka',
       s2: 'S2',
       '3d': '3D',
+      flow: 'virtaus',
       vectortile: 'vektoritiili',
       rastertile: 'rasteritiili',
       wms: 'WMS',
@@ -182,6 +183,24 @@ export default {
     allowHover: 'Näytä työkaluvihje',
     allowHoverDescription:
       'Näytä tai piilota työkaluvihje, kun osoitin on tason ominaisuuksien päällä',
+    flow: {
+      fade: 'Häivytys',
+      fadeEnabled: 'Häivytys',
+      fadeAmount: 'Häivytyksen määrä',
+      display: 'Näyttö',
+      renderingMode: 'Viivatyyli',
+      renderingModes: {
+        straight: 'Suora',
+        curved: 'Kaareva',
+        'animated-straight': 'Animoitu'
+      },
+      adaptiveScalesEnabled: 'Mukautuvat skaalat',
+      clusteringEnabled: 'Klusterointi',
+      lineThicknessScale: 'Viivan paksuus',
+      lineCurviness: 'Kaarevuus',
+      locationTotalsEnabled: 'Sijaintien kokonaismäärät',
+      maxTopFlowsDisplayNum: 'Suurin virtausten lukumäärä'
+    },
     showNeighborOnHover: 'Korosta naapurit osoittaessa',
     showHighlightColor: 'Näytä korostusväri',
     darkModeEnabled: 'Tumma taustakartta',
@@ -582,6 +601,21 @@ export default {
     hexagon: {
       worldUnitSize: 'Hexagonien säde (km)'
     },
+    flow: {
+      source: {
+        lat: 'lähteen lat',
+        lng: 'lähteen lng',
+        name: 'lähteen nimi',
+        h3: 'lähteen H3'
+      },
+      target: {
+        lat: 'kohteen lat',
+        lng: 'kohteen lng',
+        name: 'kohteen nimi',
+        h3: 'kohteen H3'
+      },
+      count: 'lukumäärä'
+    },
     hex_id: 'hex id'
   },
   color: {
@@ -620,6 +654,21 @@ export default {
   'User Guide': 'Opas',
   Save: 'Tallenna',
   Share: 'Jaa',
+  flow: {
+    tooltip: {
+      location: {
+        name: 'Nimi',
+        incomingCount: 'Saapuvat',
+        outgoingCount: 'Lähtevät',
+        internalCount: 'Sisäiset'
+      },
+      flow: {
+        sourceName: 'Lähtöpaikka',
+        targetName: 'Määränpää',
+        count: 'Lukumäärä'
+      }
+    }
+  },
   tilesetSetup: {
     header: 'Vektoritiilien asetukset',
     rasterTileHeader: 'Rasteritiilien asetukset',

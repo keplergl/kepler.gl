@@ -116,6 +116,7 @@ export default {
       trip: 'viatge',
       s2: 'S2',
       '3d': '3D',
+      flow: 'flow',
       vectortile: 'mosaic vectorial',
       rastertile: 'mosaic ràster',
       wms: 'WMS',
@@ -183,6 +184,24 @@ export default {
     allowHover: "Mostra informació d'eina",
     allowHoverDescription:
       "Mostra o oculta la informació d'eina en passar el cursor per sobre de les característiques de la capa",
+    flow: {
+      fade: 'Esvaïment',
+      fadeEnabled: 'Esvaïment',
+      fadeAmount: "Quantitat d'esvaïment",
+      display: 'Visualització',
+      renderingMode: 'Estil de línia',
+      renderingModes: {
+        straight: 'Recta',
+        curved: 'Corba',
+        'animated-straight': 'Animada'
+      },
+      adaptiveScalesEnabled: 'Escales adaptatives',
+      clusteringEnabled: 'Agrupació',
+      lineThicknessScale: 'Gruix de línia',
+      lineCurviness: 'Curvatura',
+      locationTotalsEnabled: 'Totals de localització',
+      maxTopFlowsDisplayNum: 'Màxim de fluxos principals'
+    },
     showNeighborOnHover: 'Ressalta veïns en passar el cursor',
     showHighlightColor: 'Mostra color de ressaltat',
     darkModeEnabled: 'Mapa base fosc',
@@ -583,7 +602,22 @@ export default {
     hexagon: {
       worldUnitSize: "Radi d'hexàgon (km)"
     },
-    hex_id: 'id hex'
+    hex_id: 'id hex',
+    flow: {
+      source: {
+        lat: 'lat origen',
+        lng: 'lng origen',
+        name: 'nom origen',
+        h3: 'H3 origen'
+      },
+      target: {
+        lat: 'lat destinació',
+        lng: 'lng destinació',
+        name: 'nom destinació',
+        h3: 'H3 destinació'
+      },
+      count: 'recompte'
+    }
   },
   color: {
     customPalette: 'Paleta personalitzada',
@@ -644,6 +678,21 @@ export default {
   'User Guide': "Guia d'usuari",
   Save: 'Desa',
   Share: 'Comparteix',
+  flow: {
+    tooltip: {
+      location: {
+        name: 'Nom',
+        incomingCount: 'Entrants',
+        outgoingCount: 'Sortints',
+        internalCount: 'Interns'
+      },
+      flow: {
+        sourceName: 'Origen',
+        targetName: 'Destinació',
+        count: 'Recompte'
+      }
+    }
+  },
   mapLegend: {
     layers: {
       line: {

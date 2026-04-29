@@ -116,6 +116,7 @@ export default {
       trip: 'viaje',
       s2: 'S2',
       '3d': '3D',
+      flow: 'flow',
       vectortile: 'mosaico vectorial',
       rastertile: 'mosaico ráster',
       wms: 'WMS',
@@ -184,6 +185,24 @@ export default {
     allowHover: 'Mostrar descripción emergente',
     allowHoverDescription:
       'Mostrar u ocultar información emergente al pasar el cursor sobre las características de la capa',
+    flow: {
+      fade: 'Desvanecimiento',
+      fadeEnabled: 'Desvanecimiento',
+      fadeAmount: 'Cantidad de desvanecimiento',
+      display: 'Visualización',
+      renderingMode: 'Estilo de línea',
+      renderingModes: {
+        straight: 'Recta',
+        curved: 'Curva',
+        'animated-straight': 'Animada'
+      },
+      adaptiveScalesEnabled: 'Escalas adaptativas',
+      clusteringEnabled: 'Agrupación',
+      lineThicknessScale: 'Grosor de línea',
+      lineCurviness: 'Curvatura',
+      locationTotalsEnabled: 'Totales de ubicación',
+      maxTopFlowsDisplayNum: 'Máx. flujos principales'
+    },
     showNeighborOnHover: 'Resaltar vecinos al pasar el cursor',
     showHighlightColor: 'Mostrar color de resaltado',
     darkModeEnabled: 'Mapa base oscuro',
@@ -584,7 +603,22 @@ export default {
     hexagon: {
       worldUnitSize: 'Radio de hexágono (km)'
     },
-    hex_id: 'id hex'
+    hex_id: 'id hex',
+    flow: {
+      source: {
+        lat: 'lat origen',
+        lng: 'lng origen',
+        name: 'nombre origen',
+        h3: 'H3 origen'
+      },
+      target: {
+        lat: 'lat destino',
+        lng: 'lng destino',
+        name: 'nombre destino',
+        h3: 'H3 destino'
+      },
+      count: 'cantidad'
+    }
   },
   color: {
     customPalette: 'Paleta personalizada',
@@ -645,6 +679,21 @@ export default {
   'User Guide': 'Guía de usuario',
   Save: 'Guadar',
   Share: 'Compartir',
+  flow: {
+    tooltip: {
+      location: {
+        name: 'Nombre',
+        incomingCount: 'Entrantes',
+        outgoingCount: 'Salientes',
+        internalCount: 'Internos'
+      },
+      flow: {
+        sourceName: 'Origen',
+        targetName: 'Destino',
+        count: 'Cantidad'
+      }
+    }
+  },
   mapLegend: {
     layers: {
       line: {
