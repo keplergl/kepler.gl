@@ -259,7 +259,6 @@
     "@luma.gl/test-utils": "9.3.2",
     "@luma.gl/webgl": "9.3.2",
     "@luma.gl/webgpu": "9.3.2",
-    "react-map-gl@npm:^7.1.8": "npm:8.1.1",
     "@types/lodash": "4.17.5",
     "browserslist": "^4.17.0",
     "caniuse-lite": "^1.0.30001636",

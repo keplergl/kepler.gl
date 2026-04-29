@@ -10392,6 +10392,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/mapbox-gl@npm:>=1.0.0":
+  version: 3.4.1
+  resolution: "@types/mapbox-gl@npm:3.4.1"
+  dependencies:
+    "@types/geojson": "npm:*"
+  checksum: 10c0/475f48063a39cc791a0efa099f4a62b84df56a52e1d111e32d11930fcee8e281f20b157f4069ff0ff4d5e13889ce9b452ca4a57e5c27c6d70a32fb3f5a184e72
+  languageName: node
+  linkType: hard
+
 "@types/mapbox__geo-viewport@npm:^0.4.1":
   version: 0.4.1
   resolution: "@types/mapbox__geo-viewport@npm:0.4.1"
@@ -26463,7 +26472,27 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-map-gl@npm:8.1.1, react-map-gl@npm:^8.1.1":
+"react-map-gl@npm:^7.1.8":
+  version: 7.1.9
+  resolution: "react-map-gl@npm:7.1.9"
+  dependencies:
+    "@maplibre/maplibre-gl-style-spec": "npm:^19.2.1"
+    "@types/mapbox-gl": "npm:>=1.0.0"
+  peerDependencies:
+    mapbox-gl: ">=1.13.0"
+    maplibre-gl: ">=1.13.0 <5.0.0"
+    react: ">=16.3.0"
+    react-dom: ">=16.3.0"
+  peerDependenciesMeta:
+    mapbox-gl:
+      optional: true
+    maplibre-gl:
+      optional: true
+  checksum: 10c0/3861debf4f898447837570b90af6bf2a16d571f6466ddd04c57d4ac3fc5c379024b73d0517bbd9e1e6f8b7bab9d3708b9c7c9f57643356cff60824101035d285
+  languageName: node
+  linkType: hard
+
+"react-map-gl@npm:^8.1.1":
   version: 8.1.1
   resolution: "react-map-gl@npm:8.1.1"
   dependencies:

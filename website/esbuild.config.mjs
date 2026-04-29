@@ -24,7 +24,6 @@ const RESOLVE_LOCAL_ALIASES = {
   'react-palm': `${NODE_MODULES_DIR}/react-palm`,
   'tiny-warning': `${SRC_DIR}/utils/src/noop.ts`,
   'apache-arrow': `${NODE_MODULES_DIR}/apache-arrow`,
-  'react-map-gl': `${NODE_MODULES_DIR}/react-map-gl/dist/mapbox.js`,
 };
 
 // Add kepler.gl submodule aliases
