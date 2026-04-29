@@ -234,11 +234,11 @@ export default {
       "Simula il·luminació solar realista i ombres basades en l'hora del dia i la ubicació geogràfica. Intensitat d'ombra, colors de llum solar i ambiental ajustables.",
     ink: "Aplica un estil artístic de tinta que enfosqueix les vores i crea una aparença dibuixada a mà. Ajusta la intensitat per controlar l'efecte.",
     brightnessContrast:
-      "Ajusta la brillantor i el contrast generals del mapa. Utilitza valors positius per augmentar la brillantor o el contrast, valors negatius per enfosquir o aplanar la imatge.",
+      'Ajusta la brillantor i el contrast generals del mapa. Utilitza valors positius per augmentar la brillantor o el contrast, valors negatius per enfosquir o aplanar la imatge.',
     hueSaturation:
-      "Canvia el to de color i ajusta la saturació de tot el mapa. Útil per crear temes de color o desaturar la vista.",
+      'Canvia el to de color i ajusta la saturació de tot el mapa. Útil per crear temes de color o desaturar la vista.',
     vibrance:
-      "Augmenta selectivament la intensitat dels colors apagats sense sobresaturar els ja vius. Produeix una millora de color més natural que la saturació.",
+      'Augmenta selectivament la intensitat dels colors apagats sense sobresaturar els ja vius. Produeix una millora de color més natural que la saturació.',
     sepia:
       "Aplica un to marró càlid reminiscent de fotografies antigues. Controla la quantitat per barrejar entre els colors originals i l'aspecte sèpia.",
     dotScreen:
@@ -246,15 +246,15 @@ export default {
     colorHalftone:
       "Simula la impressió de mitjos tons de color CMYK amb patrons de punts separats per a cada canal de color. Controla l'angle, la mida dels punts i la posició central.",
     noise:
-      "Afegeix soroll aleatori estil gra de pel·lícula al mapa. Útil per a una estètica texturitzada i analògica o per reduir el banding de color.",
+      'Afegeix soroll aleatori estil gra de pel·lícula al mapa. Útil per a una estètica texturitzada i analògica o per reduir el banding de color.',
     triangleBlur:
-      "Aplica un desenfocament suau de tipus gaussià uniformement al mapa. Controla el radi de desenfocament per ajustar el nivell de suavitat.",
+      'Aplica un desenfocament suau de tipus gaussià uniformement al mapa. Controla el radi de desenfocament per ajustar el nivell de suavitat.',
     zoomBlur:
       "Crea un desenfocament de moviment radial que emana d'un punt central, simulant un zoom de càmera. Ajusta la intensitat i la posició central.",
     tiltShift:
       "Simula un efecte de lent tilt-shift que desenfoca les àrees fora d'una banda focal, creant un aspecte de maqueta en miniatura. Estableix la banda focal amb posicions d'inici/fi.",
     edgeWork:
-      "Ressalta les vores estructurals de la imatge utilitzant un estil artístic de dibuix al carbó. Ajusta el radi de detecció per controlar el gruix de la línia.",
+      'Ressalta les vores estructurals de la imatge utilitzant un estil artístic de dibuix al carbó. Ajusta el radi de detecció per controlar el gruix de la línia.',
     vignette:
       "Enfosqueix les cantonades i vores del mapa, dirigint l'atenció cap al centre. Controla la quantitat d'enfosquiment i el radi de l'àrea clara.",
     magnify:
@@ -329,8 +329,8 @@ export default {
     export: 'exportar',
     timeLayerSync: 'Vincula amb la línia de temps de la capa',
     timeLayerUnsync: 'Desvincula de la línia de temps de la capa',
-    syncTimelineStart: "Inici del període de temps del filtre actual",
-    syncTimelineEnd: "Fi del període de temps del filtre actual",
+    syncTimelineStart: 'Inici del període de temps del filtre actual',
+    syncTimelineEnd: 'Fi del període de temps del filtre actual',
     showEffectPanel: "Mostra el panell d'efectes",
     hideEffectPanel: "Amaga el panell d'efectes",
     removeEffect: "Elimina l'efecte",
@@ -411,7 +411,8 @@ export default {
       unfilteredData: 'Dades sense filtrar',
       fileCount: '{fileCount} Arxius',
       rowCount: '{rowCount} files',
-      tiledDatasetWarning: "* L'exportació de dades per a conjunts de dades en mosaic no és compatible"
+      tiledDatasetWarning:
+        "* L'exportació de dades per a conjunts de dades en mosaic no és compatible"
     },
     deleteData: {
       warning: "estàs a punt d'esborrar aquest conjunt de dades. Afectarà {length} capes"
@@ -503,7 +504,7 @@ export default {
       description2:
         'i el darrer element ha de ser la marca de temps. Els formats vàlids per a la marca de temps inclouen Unix en segons com `1564184363` o en milisegons com `1564184363000`.',
       example: 'Exemple:',
-      titleTable: 'Crear viatges a partir d\'una llista de punts',
+      titleTable: "Crear viatges a partir d'una llista de punts",
       descriptionTable1:
         'Els viatges es poden crear unint una llista de punts de latitud i longitud, ordenant per marques de temps i agrupant per identificadors únics.'
     },
@@ -625,7 +626,8 @@ export default {
     type: 'tipus',
     colorBlindSafe: 'Segur per a daltònics',
     reversed: 'invertida',
-    disableStepReason: "No es pot canviar el nombre de passos amb talls de color personalitzats, utilitza la paleta personalitzada per editar els passos",
+    disableStepReason:
+      'No es pot canviar el nombre de passos amb talls de color personalitzats, utilitza la paleta personalitzada per editar els passos',
     preset: 'Colors predefinits',
     picker: 'Selector de color'
   },

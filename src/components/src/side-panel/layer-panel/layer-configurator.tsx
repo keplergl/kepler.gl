@@ -1132,12 +1132,12 @@ export default function LayerConfiguratorFactory(
 
     _renderFlowLayerConfig({layer, visConfiguratorProps}) {
       const {visConfig} = layer.config;
-      const renderingModeOptions = (layer.visConfigSettings.flowLinesRenderingMode?.options || []).map(
-        mode => ({
-          id: mode,
-          label: FLOW_RENDERING_MODE_LABELS[mode] || mode
-        })
-      );
+      const renderingModeOptions = (
+        layer.visConfigSettings.flowLinesRenderingMode?.options || []
+      ).map(mode => ({
+        id: mode,
+        label: FLOW_RENDERING_MODE_LABELS[mode] || mode
+      }));
       const selectedRenderingMode = renderingModeOptions.find(
         ({id}) => id === visConfig.flowLinesRenderingMode
       );

@@ -539,7 +539,7 @@ function castBigIntColumnsToFloat64(arrowTable: arrow.Table): arrow.Table {
   if (!CAST_BIGINTS) {
     return arrowTable;
   }
-  
+
   const needsCast = arrowTable.schema.fields.some(
     f => arrow.DataType.isInt(f.type) && f.type.bitWidth === 64
   );

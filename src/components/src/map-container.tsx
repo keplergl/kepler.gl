@@ -4,7 +4,7 @@
 // libraries
 import React, {Component, createRef, useMemo} from 'react';
 import styled, {withTheme, useTheme} from 'styled-components';
-import {Map, MapRef} from 'react-map-gl';
+import {Map, MapRef} from 'react-map-gl/mapbox-legacy';
 import {PickingInfo, MapView} from '@deck.gl/core';
 import DeckGL from '@deck.gl/react';
 import {createSelector, Selector} from 'reselect';

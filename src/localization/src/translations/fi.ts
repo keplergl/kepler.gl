@@ -410,7 +410,7 @@ export default {
       unfilteredData: 'Suodattamattomat aineistot',
       fileCount: '{fileCount} tiedostoa',
       rowCount: '{rowCount} riviä',
-      tiledDatasetWarning: "* Tietojen vienti tiiliaineistoille ei ole tuettu"
+      tiledDatasetWarning: '* Tietojen vienti tiiliaineistoille ei ole tuettu'
     },
     deleteData: {
       warning: 'aiot poistaa tämän aineiston. Aineostoa käyttävien tasojen lukumäärä: {length}'
@@ -624,7 +624,8 @@ export default {
     type: 'tyyppi',
     colorBlindSafe: 'Värisokeusturvallinen',
     reversed: 'käänteinen',
-    disableStepReason: "Askeleiden määrää ei voi muuttaa mukautetuilla värikatkaisuilla, käytä mukautettua palettia muokataksesi askeleita",
+    disableStepReason:
+      'Askeleiden määrää ei voi muuttaa mukautetuilla värikatkaisuilla, käytä mukautettua palettia muokataksesi askeleita',
     preset: 'Esimääritetyt värit',
     picker: 'Värivalitsin'
   },
