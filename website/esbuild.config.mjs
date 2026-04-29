@@ -6,7 +6,7 @@ import { replace } from 'esbuild-plugin-replace';
 import process from 'node:process';
 import { join } from 'node:path';
 import { spawn } from 'node:child_process';
-import WebsitePackage from '../package.json' assert {type: 'json'};
+import WebsitePackage from '../package.json' with {type: 'json'};
 
 const args = process.argv;
 const LIB_DIR = '../';
@@ -24,6 +24,7 @@ const RESOLVE_LOCAL_ALIASES = {
   'react-palm': `${NODE_MODULES_DIR}/react-palm`,
   'tiny-warning': `${SRC_DIR}/utils/src/noop.ts`,
   'apache-arrow': `${NODE_MODULES_DIR}/apache-arrow`,
+  'react-map-gl': `${NODE_MODULES_DIR}/react-map-gl/dist/mapbox.js`,
 };
 
 // Add kepler.gl submodule aliases
