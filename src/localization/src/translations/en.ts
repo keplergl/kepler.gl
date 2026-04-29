@@ -191,10 +191,16 @@ export default {
       fadeEnabled: 'Fade',
       fadeAmount: 'Fade Amount',
       display: 'Display',
-      animationEnabled: 'Animation',
-      curvedLinesEnabled: 'Curved Lines',
+      renderingMode: 'Line Style',
+      renderingModes: {
+        straight: 'Straight',
+        curved: 'Curved',
+        'animated-straight': 'Animated'
+      },
       adaptiveScalesEnabled: 'Adaptive Scales',
       clusteringEnabled: 'Clustering',
+      lineThicknessScale: 'Line Thickness',
+      lineCurviness: 'Curviness',
       locationTotalsEnabled: 'Location Totals',
       maxTopFlowsDisplayNum: 'Max Top Flows'
     }

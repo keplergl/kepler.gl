@@ -19,6 +19,7 @@ import {
   SupportedColumnMode,
   VisConfigBoolean,
   VisConfigNumber,
+  VisConfigSelection,
   MapState
 } from '@kepler.gl/types';
 
@@ -128,18 +129,22 @@ const SUPPORTED_COLUMN_MODES: SupportedColumnMode[] = [
 
 const DEFAULT_COLUMN_MODE = FlowLayerColumnMode.LAT_LNG;
 
+export const FLOW_LINES_RENDERING_MODES = ['straight', 'curved', 'animated-straight'] as const;
+export type FlowLinesRenderingMode = (typeof FLOW_LINES_RENDERING_MODES)[number];
+
 export const flowVisConfigs = {
   colorRange: 'colorRange' as const,
   opacity: {
     ...LAYER_VIS_CONFIGS.opacity,
     defaultValue: 1.0
   },
-  flowAnimationEnabled: {
-    defaultValue: false,
-    type: 'boolean',
-    label: 'layerVisConfigs.flow.animationEnabled',
-    property: 'flowAnimationEnabled'
-  } as VisConfigBoolean,
+  flowLinesRenderingMode: {
+    defaultValue: 'straight',
+    type: 'select',
+    label: 'layerVisConfigs.flow.renderingMode',
+    property: 'flowLinesRenderingMode',
+    options: FLOW_LINES_RENDERING_MODES as unknown as string[]
+  } as VisConfigSelection,
   flowAdaptiveScalesEnabled: {
     defaultValue: true,
     type: 'boolean',
@@ -182,12 +187,24 @@ export const flowVisConfigs = {
     label: 'layerVisConfigs.flow.clusteringEnabled',
     property: 'flowClusteringEnabled'
   } as VisConfigBoolean,
-  flowCurvedLinesEnabled: {
-    defaultValue: false,
-    type: 'boolean',
-    label: 'layerVisConfigs.flow.curvedLinesEnabled',
-    property: 'flowCurvedLinesEnabled'
-  } as VisConfigBoolean,
+  flowLineThicknessScale: {
+    defaultValue: 1,
+    type: 'number',
+    label: 'layerVisConfigs.flow.lineThicknessScale',
+    property: 'flowLineThicknessScale',
+    isRanged: false,
+    range: [0.1, 5],
+    step: 0.1
+  } as VisConfigNumber,
+  flowLineCurviness: {
+    defaultValue: 1,
+    type: 'number',
+    label: 'layerVisConfigs.flow.lineCurviness',
+    property: 'flowLineCurviness',
+    isRanged: false,
+    range: [0, 2],
+    step: 0.1
+  } as VisConfigNumber,
   darkBaseMapEnabled: 'darkBaseMapEnabled' as const
 };
 
@@ -196,6 +213,8 @@ type Props = ConstructorParameters<typeof Layer>[0];
 export default class FlowLayer extends Layer {
   _locationsByLatLon: Record<string, LocationDatum> | null = null;
   _dataProvider: LocalFlowmapDataProvider<LocationDatum, FlowDatum>;
+  _lastLayerData: FlowLayerData | null = null;
+  _dataVersion = 0;
 
   constructor(props: Props) {
     super(props);
@@ -240,6 +259,32 @@ export default class FlowLayer extends Layer {
       ...defaultLayerConfig,
       columnMode: config?.columnMode ?? DEFAULT_COLUMN_MODE
     };
+  }
+
+  /**
+   * Migrate legacy flowAnimationEnabled/flowCurvedLinesEnabled booleans
+   * to the new flowLinesRenderingMode select.
+   */
+  updateLayerConfig(newConfig: any): FlowLayer {
+    if (newConfig?.visConfig) {
+      const {flowAnimationEnabled, flowCurvedLinesEnabled, flowLinesRenderingMode, ...rest} =
+        newConfig.visConfig;
+      if (flowLinesRenderingMode === undefined && (flowAnimationEnabled || flowCurvedLinesEnabled)) {
+        newConfig = {
+          ...newConfig,
+          visConfig: {
+            ...rest,
+            flowLinesRenderingMode: flowCurvedLinesEnabled
+              ? 'curved'
+              : flowAnimationEnabled
+                ? 'animated-straight'
+                : 'straight'
+          }
+        };
+      }
+    }
+    super.updateLayerConfig(newConfig);
+    return this;
   }
 
   getDataProvider(): LocalFlowmapDataProvider<LocationDatum, FlowDatum> {
@@ -447,7 +492,16 @@ export default class FlowLayer extends Layer {
       return [];
     }
 
-    this._dataProvider.setFlowmapData(layerData);
+    const dataContentChanged =
+      !this._lastLayerData ||
+      layerData.locations !== this._lastLayerData.locations ||
+      layerData.flows !== this._lastLayerData.flows ||
+      layerData.clusterLevels !== this._lastLayerData.clusterLevels;
+    if (dataContentChanged) {
+      this._dataProvider.setFlowmapData(layerData);
+      this._lastLayerData = layerData;
+      this._dataVersion++;
+    }
     const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
 
     // FlowmapLayer doesn't support GPU filtering
@@ -455,16 +509,12 @@ export default class FlowLayer extends Layer {
       defaultLayerProps as any;
 
     const {visConfig} = this.config;
-    const flowLinesRenderingMode = visConfig.flowCurvedLinesEnabled
-      ? 'curved'
-      : visConfig.flowAnimationEnabled
-        ? 'animated-straight'
-        : 'straight';
+    const flowLinesRenderingMode = visConfig.flowLinesRenderingMode || 'straight';
     return [
       new FlowmapLayer<LocationDatum, FlowDatum>({
         ...cleanProps,
-        data: layerData,
         dataProvider: this._dataProvider,
+        data: this._dataVersion as any,
         ...flowmapDataAccessors,
         pickable: true,
         darkMode: visConfig.darkBaseMapEnabled,
@@ -475,6 +525,8 @@ export default class FlowLayer extends Layer {
         opacity: visConfig.opacity,
         locationTotalsEnabled: visConfig.flowLocationTotalsEnabled,
         flowLinesRenderingMode,
+        flowLineThicknessScale: visConfig.flowLineThicknessScale,
+        flowLineCurviness: visConfig.flowLineCurviness,
         clusteringEnabled: visConfig.flowClusteringEnabled,
         maxTopFlowsDisplayNum: visConfig.maxTopFlowsDisplayNum,
         clusteringAuto: true,

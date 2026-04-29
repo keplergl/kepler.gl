@@ -186,10 +186,16 @@ export default {
       fadeEnabled: 'フェード',
       fadeAmount: 'フェード量',
       display: '表示',
-      animationEnabled: 'アニメーション',
-      curvedLinesEnabled: '曲線矢印',
+      renderingMode: 'ラインスタイル',
+      renderingModes: {
+        straight: 'ストレート',
+        curved: 'カーブ',
+        'animated-straight': 'アニメーション'
+      },
       adaptiveScalesEnabled: 'アダプティブスケール',
       clusteringEnabled: 'クラスタリング',
+      lineThicknessScale: '線の太さ',
+      lineCurviness: '曲がり具合',
       locationTotalsEnabled: 'ロケーション合計',
       maxTopFlowsDisplayNum: '最大表示フロー数'
     },

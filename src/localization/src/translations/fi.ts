@@ -188,10 +188,16 @@ export default {
       fadeEnabled: 'Häivytys',
       fadeAmount: 'Häivytyksen määrä',
       display: 'Näyttö',
-      animationEnabled: 'Animaatio',
-      curvedLinesEnabled: 'Kaarevia viivoja',
+      renderingMode: 'Viivatyyli',
+      renderingModes: {
+        straight: 'Suora',
+        curved: 'Kaareva',
+        'animated-straight': 'Animoitu'
+      },
       adaptiveScalesEnabled: 'Mukautuvat skaalat',
       clusteringEnabled: 'Klusterointi',
+      lineThicknessScale: 'Viivan paksuus',
+      lineCurviness: 'Kaarevuus',
       locationTotalsEnabled: 'Sijaintien kokonaismäärät',
       maxTopFlowsDisplayNum: 'Suurin virtausten lukumäärä'
     },

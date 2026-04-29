@@ -189,10 +189,16 @@ export default {
       fadeEnabled: 'Затухание',
       fadeAmount: 'Степень затухания',
       display: 'Отображение',
-      animationEnabled: 'Анимация',
-      curvedLinesEnabled: 'Изогнутые линии',
+      renderingMode: 'Стиль линий',
+      renderingModes: {
+        straight: 'Прямые',
+        curved: 'Изогнутые',
+        'animated-straight': 'Анимированные'
+      },
       adaptiveScalesEnabled: 'Адаптивные масштабы',
       clusteringEnabled: 'Кластеризация',
+      lineThicknessScale: 'Толщина линий',
+      lineCurviness: 'Кривизна',
       locationTotalsEnabled: 'Итоги по локациям',
       maxTopFlowsDisplayNum: 'Макс. число потоков'
     },

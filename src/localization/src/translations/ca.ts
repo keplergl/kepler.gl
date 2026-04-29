@@ -189,10 +189,16 @@ export default {
       fadeEnabled: 'Esvaïment',
       fadeAmount: "Quantitat d'esvaïment",
       display: 'Visualització',
-      animationEnabled: 'Animació',
-      curvedLinesEnabled: 'Línies corbes',
+      renderingMode: 'Estil de línia',
+      renderingModes: {
+        straight: 'Recta',
+        curved: 'Corba',
+        'animated-straight': 'Animada'
+      },
       adaptiveScalesEnabled: 'Escales adaptatives',
       clusteringEnabled: 'Agrupació',
+      lineThicknessScale: 'Gruix de línia',
+      lineCurviness: 'Curvatura',
       locationTotalsEnabled: 'Totals de localització',
       maxTopFlowsDisplayNum: 'Màxim de fluxos principals'
     },

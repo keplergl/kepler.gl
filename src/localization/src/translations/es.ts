@@ -190,10 +190,16 @@ export default {
       fadeEnabled: 'Desvanecimiento',
       fadeAmount: 'Cantidad de desvanecimiento',
       display: 'Visualización',
-      animationEnabled: 'Animación',
-      curvedLinesEnabled: 'Líneas curvas',
+      renderingMode: 'Estilo de línea',
+      renderingModes: {
+        straight: 'Recta',
+        curved: 'Curva',
+        'animated-straight': 'Animada'
+      },
       adaptiveScalesEnabled: 'Escalas adaptativas',
       clusteringEnabled: 'Agrupación',
+      lineThicknessScale: 'Grosor de línea',
+      lineCurviness: 'Curvatura',
       locationTotalsEnabled: 'Totales de ubicación',
       maxTopFlowsDisplayNum: 'Máx. flujos principales'
     },

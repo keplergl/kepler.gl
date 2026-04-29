@@ -63,9 +63,14 @@ source_lat,source_lng,target_lat,target_lng,count,source_name,target_name
 
 - **Opacity** — overall layer opacity.
 
-- **Animation** — animates flow lines to show direction of movement. Cannot be combined with curved lines.
+- **Line Style** — controls how flow lines are rendered. Options:
+  - *Straight* (default) — simple straight lines between origin and destination.
+  - *Curved* — renders flows as curved arcs.
+  - *Animated* — animates flow lines to show direction of movement.
 
-- **Curved Lines** — renders flows as curved arcs instead of straight lines. Cannot be combined with animation.
+- **Line Thickness** — scales the width of all flow lines (0.1–5×).
+
+- **Curviness** — controls the arc curvature of curved flow lines (0–2). Only visible when Line Style is set to Curved.
 
 - **Adaptive Scales** — automatically adjusts flow line widths relative to the current zoom level and visible data range.
 

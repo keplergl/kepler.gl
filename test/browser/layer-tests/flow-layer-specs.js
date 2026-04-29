@@ -47,14 +47,15 @@ test('#FlowLayer -> constructor defaults', t => {
     [
       'colorRange',
       'opacity',
-      'flowAnimationEnabled',
+      'flowLinesRenderingMode',
       'flowAdaptiveScalesEnabled',
       'flowFadeEnabled',
       'flowFadeAmount',
       'maxTopFlowsDisplayNum',
       'flowLocationTotalsEnabled',
       'flowClusteringEnabled',
-      'flowCurvedLinesEnabled',
+      'flowLineThicknessScale',
+      'flowLineCurviness',
       'darkBaseMapEnabled'
     ],
     'should provide the correct visConfigSettings properties'
@@ -62,14 +63,15 @@ test('#FlowLayer -> constructor defaults', t => {
 
   const {visConfig} = layer.config;
   t.equal(visConfig.opacity, 1.0, 'default opacity should be 1.0');
-  t.equal(visConfig.flowAnimationEnabled, false, 'animation should be off by default');
+  t.equal(visConfig.flowLinesRenderingMode, 'straight', 'rendering mode should default to straight');
   t.equal(visConfig.flowAdaptiveScalesEnabled, true, 'adaptive scales should be on by default');
   t.equal(visConfig.flowFadeEnabled, true, 'fade should be on by default');
   t.equal(visConfig.flowFadeAmount, 50, 'fade amount should default to 50');
   t.equal(visConfig.maxTopFlowsDisplayNum, 5000, 'max top flows should default to 5000');
   t.equal(visConfig.flowLocationTotalsEnabled, true, 'location totals should be on by default');
   t.equal(visConfig.flowClusteringEnabled, true, 'clustering should be on by default');
-  t.equal(visConfig.flowCurvedLinesEnabled, false, 'curved lines should be off by default');
+  t.equal(visConfig.flowLineThicknessScale, 1, 'line thickness scale should default to 1');
+  t.equal(visConfig.flowLineCurviness, 1, 'line curviness should default to 1');
 
   t.end();
 });

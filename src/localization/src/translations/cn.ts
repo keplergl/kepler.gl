@@ -187,10 +187,16 @@ export default {
       fadeEnabled: '渐隐',
       fadeAmount: '渐隐量',
       display: '显示',
-      animationEnabled: '动画',
-      curvedLinesEnabled: '曲线箭头',
+      renderingMode: '线条样式',
+      renderingModes: {
+        straight: '直线',
+        curved: '曲线',
+        'animated-straight': '动画'
+      },
       adaptiveScalesEnabled: '自适应比例',
       clusteringEnabled: '聚类',
+      lineThicknessScale: '线条粗细',
+      lineCurviness: '弯曲度',
       locationTotalsEnabled: '位置总量',
       maxTopFlowsDisplayNum: '最大显示流量数'
     },

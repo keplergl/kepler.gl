@@ -190,10 +190,16 @@ export default {
       fadeEnabled: 'Esmaecimento',
       fadeAmount: 'Quantidade de esmaecimento',
       display: 'Exibição',
-      animationEnabled: 'Animação',
-      curvedLinesEnabled: 'Linhas curvas',
+      renderingMode: 'Estilo de linha',
+      renderingModes: {
+        straight: 'Reta',
+        curved: 'Curva',
+        'animated-straight': 'Animada'
+      },
       adaptiveScalesEnabled: 'Escalas adaptativas',
       clusteringEnabled: 'Agrupamento',
+      lineThicknessScale: 'Espessura da linha',
+      lineCurviness: 'Curvatura',
       locationTotalsEnabled: 'Totais de localização',
       maxTopFlowsDisplayNum: 'Máx. fluxos principais'
     },
