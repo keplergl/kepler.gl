@@ -143,31 +143,7 @@ function addAliases(externals, args) {
 
   // resolve ai-assistant from local dir
   if (useLocalAiAssistant) {
-    resolveAlias['@openassistant/core'] = join(LIB_DIR, '../openassistant/packages/core/src');
-    resolveAlias['@openassistant/ui'] = join(LIB_DIR, '../openassistant/packages/ui/src');
-    resolveAlias['@openassistant/echarts'] = join(
-      LIB_DIR,
-      '../openassistant/packages/components/echarts/src'
-    );
-    resolveAlias['@openassistant/tables'] = join(
-      LIB_DIR,
-      '../openassistant/packages/components/tables/src'
-    );
-    resolveAlias['@openassistant/geoda'] = join(
-      LIB_DIR,
-      '../openassistant/packages/tools/geoda/src'
-    );
-    resolveAlias['@openassistant/duckdb'] = join(
-      LIB_DIR,
-      '../openassistant/packages/tools/duckdb/src'
-    );
-    resolveAlias['@openassistant/plots'] = join(
-      LIB_DIR,
-      '../openassistant/packages/tools/plots/src'
-    );
-    resolveAlias['@openassistant/osm'] = join(LIB_DIR, '../openassistant/packages/tools/osm/src');
-    resolveAlias['@openassistant/utils'] = join(LIB_DIR, '../openassistant/packages/utils/src');
-    resolveAlias['@kepler.gl/ai-assistant'] = join(SRC_DIR, 'ai-assistant/src');
+    resolveAlias['openassistant2'] = join(LIB_DIR, '../github/openassistant2/src');
   }
 
   // resolve deck.gl from local dir

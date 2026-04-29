@@ -15,7 +15,6 @@
     "@carto/toolkit": "0.0.1-rc.18",
     "@emotion/is-prop-valid": "^1.2.1",
     "@kepler.gl/actions": "^3.2.0",
-    "@kepler.gl/ai-assistant": "^3.2.0",
     "@kepler.gl/cloud-providers": "^3.2.0",
     "@kepler.gl/components": "^3.2.0",
     "@kepler.gl/constants": "^3.2.0",
@@ -32,6 +31,7 @@
     "@loaders.gl/parquet": "^4.3.2",
     "@openassistant/core": "^0.5.17",
     "@openassistant/ui": "^0.5.17",
+    "openassistant2": "portal:/Users/xun/github/openassistant2",
     "@types/classnames": "^2.3.1",
     "@types/keymirror": "^0.1.1",
     "apache-arrow": ">=15.0.0",
@@ -63,7 +63,9 @@
     "@luma.gl/webgl": "8.5.21",
     "@deck.gl/core": "8.9.27",
     "@deck.gl/extensions": "8.9.27",
-    "react-vis": "1.11.7"
+    "react-vis": "1.11.7",
+    "apache-arrow": ">=15.0.0",
+    "zustand": "^5.0.8"
   },
   "engines": {
     "node": ">=20"

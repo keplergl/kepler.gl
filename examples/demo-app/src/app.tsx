@@ -12,7 +12,7 @@ import {useSelector} from 'react-redux';
 import isPropValid from '@emotion/is-prop-valid';
 import {WebMercatorViewport} from '@deck.gl/core';
 import {ScreenshotWrapper} from '@openassistant/ui';
-import {AiAssistantPanel, createAiAssistantStore} from '@kepler.gl/ai-assistant';
+import {AiAssistantPanel, createAiAssistantStore} from 'openassistant2';
 import {panelBorderColor, theme} from '@kepler.gl/styles';
 import {ParsedConfig} from '@kepler.gl/types';
 import {getApplicationConfig} from '@kepler.gl/utils';

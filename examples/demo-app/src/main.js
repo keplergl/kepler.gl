@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import '../../../src/ai-assistant/node_modules/@sqlrooms/ui/dist/styles.css';
+// Import openassistant2 Tailwind CSS (pre-built for non-Tailwind projects)
+import 'openassistant2/styles.css';
 
 import React from 'react';
 import ReactDOM from 'react-dom/client';
