@@ -5,7 +5,7 @@ import React, {Component} from 'react';
 import {polyfill} from 'react-lifecycles-compat';
 import classnames from 'classnames';
 import styled from 'styled-components';
-import {Map, MapboxMap, MapRef} from 'react-map-gl';
+import {Map, MapInstance, MapRef} from 'react-map-gl/mapbox-legacy';
 import {
   StyledModalContent,
   InputLight,
@@ -136,7 +136,7 @@ function AddMapStyleModalFactory() {
       return null;
     }
 
-    _map: MapboxMap | undefined | null;
+    _map: MapInstance | undefined | null;
 
     _setMapRef = (mapRef: MapRef) => {
       // Handle change of the basemap library
