@@ -309,7 +309,7 @@ function AddMapStyleModalFactory() {
                   <StyledMapContainer>
                     <ResolvedMapComponent
                       {...mapProps}
-                      ref={this._setMapRef}
+                      ref={this._setMapRef as any}
                       key={`${baseMapLibraryName}-${this.state.reRenderKey}-${inputStyle.url}-${mapboxApiAccessToken}`}
                       style={{
                         width: MapW,
