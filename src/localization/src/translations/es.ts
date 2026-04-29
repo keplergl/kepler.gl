@@ -412,7 +412,8 @@ export default {
       unfilteredData: 'Datos sin filtrar',
       fileCount: '{fileCount} Archivos',
       rowCount: '{rowCount} Filas',
-      tiledDatasetWarning: "* La exportación de datos para conjuntos de datos en mosaico no es compatible"
+      tiledDatasetWarning:
+        '* La exportación de datos para conjuntos de datos en mosaico no es compatible'
     },
     deleteData: {
       warning: 'estás a punto de borrar este conjunto de datos. Afectará a {length} capas'
@@ -626,7 +627,8 @@ export default {
     type: 'tipo',
     colorBlindSafe: 'Seguro para daltónicos',
     reversed: 'invertida',
-    disableStepReason: "No se puede cambiar el número de pasos con cortes de color personalizados, use la paleta personalizada para editar los pasos",
+    disableStepReason:
+      'No se puede cambiar el número de pasos con cortes de color personalizados, use la paleta personalizada para editar los pasos',
     preset: 'Colores predefinidos',
     picker: 'Selector de color'
   },

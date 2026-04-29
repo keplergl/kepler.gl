@@ -409,7 +409,7 @@ export default {
       unfilteredData: '元データ',
       fileCount: '{fileCount}個のファイル',
       rowCount: '{rowCount}行',
-      tiledDatasetWarning: "* タイルデータセットのデータエクスポートはサポートされていません"
+      tiledDatasetWarning: '* タイルデータセットのデータエクスポートはサポートされていません'
     },
     deleteData: {
       warning: 'このデータセットを削除します。{length}個のレイヤに影響します。'
@@ -623,7 +623,8 @@ export default {
     type: 'タイプ',
     reversed: '反転',
     colorBlindSafe: '色覚安全',
-    disableStepReason: "カスタムカラーブレークでは段階数を変更できません。段階を編集するにはカスタムパレットを使用してください",
+    disableStepReason:
+      'カスタムカラーブレークでは段階数を変更できません。段階を編集するにはカスタムパレットを使用してください',
     preset: 'プリセットカラー',
     picker: 'カラーピッカー'
   },

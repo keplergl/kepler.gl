@@ -125,8 +125,7 @@ export default {
     wms: {
       hover: '值:'
     },
-    layerUpdateError:
-      '图层更新时发生错误：{errorMessage}。请确保输入数据的格式有效。',
+    layerUpdateError: '图层更新时发生错误：{errorMessage}。请确保输入数据的格式有效。',
     interaction: '交互',
     heatmap: 'Heatmap',
     aggregation: 'Aggregation'
@@ -233,36 +232,26 @@ export default {
     ink: '应用水墨艺术风格，使边缘变暗并创建手绘外观。调整强度以控制效果的程度。',
     brightnessContrast:
       '调整地图的整体亮度和对比度。使用正值来增加亮度或对比度，负值来变暗或平坦化图像。',
-    hueSaturation:
-      '改变色调并调整整个地图的饱和度。适用于创建颜色主题或降低视图饱和度。',
+    hueSaturation: '改变色调并调整整个地图的饱和度。适用于创建颜色主题或降低视图饱和度。',
     vibrance:
       '选择性地增强暗淡颜色的强度，而不会使已经鲜艳的颜色过度饱和。比饱和度产生更自然的颜色增强效果。',
-    sepia:
-      '应用一种温暖的棕色调，让人联想到老照片。控制混合量以在原始颜色和怀旧色调之间切换。',
-    dotScreen:
-      '将图像转换为单色点图案，类似于报纸半色调印刷。调整角度、点大小和中心位置。',
+    sepia: '应用一种温暖的棕色调，让人联想到老照片。控制混合量以在原始颜色和怀旧色调之间切换。',
+    dotScreen: '将图像转换为单色点图案，类似于报纸半色调印刷。调整角度、点大小和中心位置。',
     colorHalftone:
       '模拟CMYK彩色半色调印刷，每个颜色通道使用单独的点图案。控制角度、点大小和中心位置。',
-    noise:
-      '在地图上添加随机的胶片颗粒风格噪点。适用于创建纹理化、模拟美学效果或减少颜色条带。',
-    triangleBlur:
-      '在地图上均匀应用平滑的高斯模糊。控制模糊半径以调整柔化程度。',
-    zoomBlur:
-      '创建从中心点向外辐射的径向运动模糊，模拟相机变焦效果。调整强度和中心位置。',
+    noise: '在地图上添加随机的胶片颗粒风格噪点。适用于创建纹理化、模拟美学效果或减少颜色条带。',
+    triangleBlur: '在地图上均匀应用平滑的高斯模糊。控制模糊半径以调整柔化程度。',
+    zoomBlur: '创建从中心点向外辐射的径向运动模糊，模拟相机变焦效果。调整强度和中心位置。',
     tiltShift:
       '模拟移轴镜头效果，模糊焦点带之外的区域，创造微缩模型的外观。通过起始/结束位置设置焦点带。',
-    edgeWork:
-      '使用艺术炭笔素描风格突出图像中的结构边缘。调整检测半径以控制线条粗细。',
-    vignette:
-      '使地图的角落和边缘变暗，将注意力引导向中心。控制变暗程度和清晰区域的半径。',
-    magnify:
-      '在可配置位置创建圆形放大镜叠加层。调整大小、缩放级别和边框宽度。',
+    edgeWork: '使用艺术炭笔素描风格突出图像中的结构边缘。调整检测半径以控制线条粗细。',
+    vignette: '使地图的角落和边缘变暗，将注意力引导向中心。控制变暗程度和清晰区域的半径。',
+    magnify: '在可配置位置创建圆形放大镜叠加层。调整大小、缩放级别和边框宽度。',
     hexagonalPixelate:
       '将图像替换为六边形瓦片网格，每个瓦片填充其覆盖区域的平均颜色。调整瓦片缩放比例。',
     distanceFog:
       '根据物体到相机的深度将远处物体淡入雾色，增强纵深感。控制密度、起始距离、范围和雾色。',
-    surfaceFog:
-      '在地形表面上方的特定高度渲染雾层。调整高度、过渡厚度、密度、颜色和可选的噪声图案。'
+    surfaceFog: '在地形表面上方的特定高度渲染雾层。调整高度、过渡厚度、密度、颜色和可选的噪声图案。'
   },
   layerConfiguration: {
     defaultDescription: '根据所选字段计算 {property}',
@@ -409,7 +398,7 @@ export default {
       unfilteredData: '元数据',
       fileCount: '{fileCount} 个文件',
       rowCount: '{rowCount} 行',
-      tiledDatasetWarning: "* 不支持导出瓦片数据集的数据"
+      tiledDatasetWarning: '* 不支持导出瓦片数据集的数据'
     },
     deleteData: {
       warning: '确认要删除这个数据集。它会影响 {length} 个层'
@@ -497,8 +486,7 @@ export default {
       titleTable: '从点列表创建行程',
       description1:
         '要路径设置动画，geoJSON 数据必须包含 `LineString` 作为要素几何。此外，LineString 的坐标有四个元素',
-      descriptionTable1:
-        '行程可以通过连接经纬度点列表、按时间戳排序并按唯一标识符分组来创建。',
+      descriptionTable1: '行程可以通过连接经纬度点列表、按时间戳排序并按唯一标识符分组来创建。',
       code: ' [经度，纬度，高程，时间戳] ',
       description2:
         '最后一个元素是时间戳。有效的时间戳格式包括以秒为单位的 unix，例如`1564184363`或以毫秒为单位的`1564184363000`。',
@@ -541,8 +529,7 @@ export default {
       goToPage: '跳转到 Kepler.gl 的 {displayName} 页面',
       storageMaps: '存储 / 地図',
       noSavedMaps: '还没有保存的地图',
-      foursquareStorageMessage:
-        '仅显示使用 Kepler.gl > 保存 > Foursquare存储 选项保存的地图'
+      foursquareStorageMessage: '仅显示使用 Kepler.gl > 保存 > Foursquare存储 选项保存的地图'
     }
   },
   header: {
@@ -623,7 +610,7 @@ export default {
     type: '类型',
     colorBlindSafe: '色盲安全',
     reversed: '反转',
-    disableStepReason: "使用自定义颜色断点时无法更改步数，请使用自定义调色板编辑步数",
+    disableStepReason: '使用自定义颜色断点时无法更改步数，请使用自定义调色板编辑步数',
     preset: '预设颜色',
     picker: '颜色选择器'
   },

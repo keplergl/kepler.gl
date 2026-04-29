@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {MapLib, MapRef} from 'react-map-gl/mapbox-legacy';
+import type {MapLib, MapRef} from 'react-map-gl/mapbox-legacy';
 
 import {KEPLER_UNFOLDED_BUCKET} from '@kepler.gl/constants';
 import type {BaseMapLibraryType} from '@kepler.gl/constants';
@@ -109,7 +109,7 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
 
   baseMapLibraryConfig: {
     maplibre: {
-      getMapLib: () => import('maplibre-gl'),
+      getMapLib: () => import('maplibre-gl') as unknown as Promise<MapLibInstance>,
       mapLibCssClass: 'maplibregl',
       mapLibAttributionCssClass: 'maplibre-attribution-container',
       mapLibName: 'MapLibre',

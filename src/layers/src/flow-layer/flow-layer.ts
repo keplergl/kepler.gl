@@ -269,7 +269,10 @@ export default class FlowLayer extends Layer {
     if (newConfig?.visConfig) {
       const {flowAnimationEnabled, flowCurvedLinesEnabled, flowLinesRenderingMode, ...rest} =
         newConfig.visConfig;
-      if (flowLinesRenderingMode === undefined && (flowAnimationEnabled || flowCurvedLinesEnabled)) {
+      if (
+        flowLinesRenderingMode === undefined &&
+        (flowAnimationEnabled || flowCurvedLinesEnabled)
+      ) {
         newConfig = {
           ...newConfig,
           visConfig: {
@@ -277,8 +280,8 @@ export default class FlowLayer extends Layer {
             flowLinesRenderingMode: flowCurvedLinesEnabled
               ? 'curved'
               : flowAnimationEnabled
-                ? 'animated-straight'
-                : 'straight'
+              ? 'animated-straight'
+              : 'straight'
           }
         };
       }
@@ -511,8 +514,12 @@ export default class FlowLayer extends Layer {
     const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
 
     // FlowmapLayer doesn't support GPU filtering
-    const {extensions: _extensions, filterRange: _filterRange, onFilteredItemsChange: _onFilteredItemsChange, ...cleanProps} =
-      defaultLayerProps as any;
+    const {
+      extensions: _extensions,
+      filterRange: _filterRange,
+      onFilteredItemsChange: _onFilteredItemsChange,
+      ...cleanProps
+    } = defaultLayerProps as any;
 
     const {visConfig} = this.config;
     const flowLinesRenderingMode = visConfig.flowLinesRenderingMode || 'straight';

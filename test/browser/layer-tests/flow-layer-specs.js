@@ -63,7 +63,11 @@ test('#FlowLayer -> constructor defaults', t => {
 
   const {visConfig} = layer.config;
   t.equal(visConfig.opacity, 1.0, 'default opacity should be 1.0');
-  t.equal(visConfig.flowLinesRenderingMode, 'straight', 'rendering mode should default to straight');
+  t.equal(
+    visConfig.flowLinesRenderingMode,
+    'straight',
+    'rendering mode should default to straight'
+  );
   t.equal(visConfig.flowAdaptiveScalesEnabled, true, 'adaptive scales should be on by default');
   t.equal(visConfig.flowFadeEnabled, true, 'fade should be on by default');
   t.equal(visConfig.flowFadeAmount, 50, 'fade amount should default to 50');
@@ -242,11 +246,7 @@ test('#FlowLayer -> getHoverData flow', t => {
     'should have target name label'
   );
   t.equal(result.fieldValues[1].value, 'Los Angeles', 'target name value should be correct');
-  t.equal(
-    result.fieldValues[2].labelMessage,
-    'flow.tooltip.flow.count',
-    'should have count label'
-  );
+  t.equal(result.fieldValues[2].labelMessage, 'flow.tooltip.flow.count', 'should have count label');
 
   t.end();
 });
