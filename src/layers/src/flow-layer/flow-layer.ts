@@ -463,6 +463,7 @@ export default class FlowLayer extends Layer {
     return [
       new FlowmapLayer<LocationDatum, FlowDatum>({
         ...cleanProps,
+        data: layerData,
         dataProvider: this._dataProvider,
         ...flowmapDataAccessors,
         pickable: true,
