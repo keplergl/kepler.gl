@@ -5,7 +5,8 @@ import React, {Component} from 'react';
 import {polyfill} from 'react-lifecycles-compat';
 import classnames from 'classnames';
 import styled from 'styled-components';
-import {Map, MapInstance, MapRef} from 'react-map-gl/mapbox-legacy';
+import {Map as MapboxLegacyMap, MapInstance, MapRef} from 'react-map-gl/mapbox-legacy';
+import {Map as MaplibreMap} from '@vis.gl/react-maplibre';
 import {
   StyledModalContent,
   InputLight,
@@ -19,7 +20,7 @@ import {media} from '@kepler.gl/styles';
 import {getApplicationConfig, getBaseMapLibrary, transformRequest} from '@kepler.gl/utils';
 import {injectIntl, IntlShape} from 'react-intl';
 import {FormattedMessage} from '@kepler.gl/localization';
-import {NO_BASEMAP_ICON} from '@kepler.gl/constants';
+import {NO_BASEMAP_ICON, MAP_LIB_OPTIONS} from '@kepler.gl/constants';
 import {InputStyle, MapState} from '@kepler.gl/types';
 import {ActionHandler, inputMapStyle, loadCustomMapStyle} from '@kepler.gl/actions';
 
@@ -179,17 +180,24 @@ function AddMapStyleModalFactory() {
       const baseMapLibraryConfig = getApplicationConfig().baseMapLibraryConfig[baseMapLibraryName];
 
       const mapboxApiAccessToken = inputStyle.accessToken || this.props.mapboxApiAccessToken;
-      const mapProps = {
+      const mapProps: Record<string, any> = {
         ...mapState,
         // TODO baseApiUrl should be taken into account in transformRequest as we use dynamic mapLib import
         // baseApiUrl: mapboxApiUrl,
         mapboxAccessToken: mapboxApiAccessToken,
-        mapLib: baseMapLibraryConfig.getMapLib(),
         preserveDrawingBuffer: true,
         transformRequest:
           this.props.transformRequest?.(mapboxApiAccessToken) ||
           transformRequest(mapboxApiAccessToken)
       };
+
+      // Only pass mapLib for the mapbox-legacy adapter
+      if (baseMapLibraryName === MAP_LIB_OPTIONS.MAPBOX) {
+        mapProps.mapLib = baseMapLibraryConfig.getMapLib();
+      }
+
+      const ResolvedMapComponent =
+        baseMapLibraryName === MAP_LIB_OPTIONS.MAPBOX ? MapboxLegacyMap : MaplibreMap;
 
       return (
         <div className="add-map-style-modal">
@@ -299,7 +307,7 @@ function AddMapStyleModalFactory() {
                   <div className="preview-image-spinner" />
                 ) : (
                   <StyledMapContainer>
-                    <Map
+                    <ResolvedMapComponent
                       {...mapProps}
                       ref={this._setMapRef}
                       key={`${baseMapLibraryName}-${this.state.reRenderKey}-${inputStyle.url}-${mapboxApiAccessToken}`}

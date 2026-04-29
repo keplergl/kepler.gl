@@ -4,7 +4,6 @@
 // libraries
 import React, {useRef, useEffect, useState, useCallback, useMemo} from 'react';
 import styled from 'styled-components';
-import {Map} from 'react-map-gl/mapbox-legacy';
 import debounce from 'lodash/debounce';
 import {
   exportImageError,
@@ -355,7 +354,6 @@ export default function PlotContainerFactory(
             settings: mapFields.mapControls?.mapLegend?.settings
           }
         },
-        MapComponent: Map,
         onMapRender,
         isExport: true,
         deckGlProps: {

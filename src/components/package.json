@@ -61,6 +61,7 @@
     "@loaders.gl/wms": "4.4.1",
     "@mapbox/mapbox-sdk": "^0.15.3",
     "@tippyjs/react": "^4.2.0",
+    "@vis.gl/react-maplibre": "8.1.1",
     "@types/classnames": "^2.3.1",
     "@types/d3-array": "^2.8.0",
     "@types/d3-brush": "^3.0.1",

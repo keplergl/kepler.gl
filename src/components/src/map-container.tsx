@@ -4,7 +4,8 @@
 // libraries
 import React, {Component, createRef, useMemo} from 'react';
 import styled, {withTheme, useTheme} from 'styled-components';
-import {Map, MapRef} from 'react-map-gl/mapbox-legacy';
+import {Map as MapboxLegacyMap, MapRef} from 'react-map-gl/mapbox-legacy';
+import {Map as MaplibreMap} from '@vis.gl/react-maplibre';
 import {PickingInfo, MapView} from '@deck.gl/core';
 import DeckGL from '@deck.gl/react';
 import {createSelector, Selector} from 'reselect';
@@ -395,7 +396,7 @@ export interface MapContainerProps {
   locale?: any;
   theme?: any;
   editor?: any;
-  MapComponent?: typeof Map;
+  MapComponent?: typeof MapboxLegacyMap | typeof MaplibreMap;
   deckGlProps?: any;
   onDeckInitialized?: (a: any, b: any) => void;
   onViewStateChange?: (viewport: Viewport) => void;
@@ -438,7 +439,6 @@ export default function MapContainerFactory(
     declare context: React.ContextType<typeof MapViewStateContext>;
 
     static defaultProps = {
-      MapComponent: Map,
       deckGlProps: {},
       index: 0,
       primary: true
@@ -1147,7 +1147,6 @@ export default function MapContainerFactory(
         mapState,
         mapStyle,
         mapStateActions,
-        MapComponent = Map,
         mapboxApiAccessToken,
         // mapboxApiUrl,
         mapControls,
@@ -1179,23 +1178,35 @@ export default function MapContainerFactory(
       const baseMapLibraryConfig =
         getApplicationConfig().baseMapLibraryConfig?.[baseMapLibraryName];
 
+      // Select the correct Map adapter based on the active base map library.
+      // Using the native adapter for each library avoids Transform API
+      // incompatibilities (e.g. mapbox-legacy's cloneTransform with MapLibre v5).
+      const ResolvedMapComponent =
+        this.props.MapComponent ??
+        (baseMapLibraryName === MAP_LIB_OPTIONS.MAPBOX ? MapboxLegacyMap : MaplibreMap);
+
       const internalViewState = this.context?.getInternalViewState(index);
       const configMaxPitch = mapState.maxPitch ?? getApplicationConfig().maxPitch;
       const effectiveMaxPitch =
         baseMapLibraryName === MAP_LIB_OPTIONS.MAPBOX
           ? Math.min(configMaxPitch, MAPBOX_MAX_PITCH)
           : configMaxPitch;
-      const mapProps = {
+      const mapProps: Record<string, any> = {
         ...internalViewState,
         maxPitch: effectiveMaxPitch,
         preserveDrawingBuffer: this.props.isExport ?? false,
         mapboxAccessToken: currentStyle?.accessToken || mapboxApiAccessToken,
         // baseApiUrl: mapboxApiUrl,
-        mapLib: baseMapLibraryConfig.getMapLib(),
         transformRequest:
           this.props.transformRequest ||
           transformRequest(currentStyle?.accessToken || mapboxApiAccessToken)
       };
+
+      // mapbox-legacy adapter requires the mapLib prop to load the GL library;
+      // the native maplibre adapter does not use it.
+      if (baseMapLibraryName === MAP_LIB_OPTIONS.MAPBOX) {
+        mapProps.mapLib = baseMapLibraryConfig.getMapLib();
+      }
 
       const hasGeocoderLayer = Boolean(layers.find(l => l.id === GEOCODER_LAYER_ID));
       const isSplit = Boolean(mapState.isSplit);
@@ -1204,7 +1215,7 @@ export default function MapContainerFactory(
         primaryMap: true,
         isInteractive: true,
         children: (
-          <MapComponent
+          <ResolvedMapComponent
             key={`bottom-${baseMapLibraryName}`}
             {...mapProps}
             mapStyle={mapStyle.bottomMapStyle ?? EMPTY_MAPBOX_STYLE}
@@ -1278,7 +1289,7 @@ export default function MapContainerFactory(
           />
           {this.props.children}
           {mapStyle.topMapStyle ? (
-            <MapComponent
+            <ResolvedMapComponent
               key={`top-${baseMapLibraryName}`}
               viewState={internalViewState}
               maxPitch={effectiveMaxPitch}
@@ -1286,7 +1297,9 @@ export default function MapContainerFactory(
               style={MAP_STYLE.top}
               mapboxAccessToken={mapProps.mapboxAccessToken}
               transformRequest={mapProps.transformRequest}
-              mapLib={baseMapLibraryConfig.getMapLib()}
+              {...(baseMapLibraryName === MAP_LIB_OPTIONS.MAPBOX
+                ? {mapLib: baseMapLibraryConfig.getMapLib()}
+                : {})}
               {...topMapContainerProps}
             />
           ) : null}
