@@ -1175,8 +1175,7 @@ export default function MapContainerFactory(
       // Current style can be a custom style, from which we pull the mapbox API acccess token
       const currentStyle = mapStyle.mapStyles?.[mapStyle.styleType];
       const baseMapLibraryName = getBaseMapLibrary(currentStyle);
-      const baseMapLibraryConfig =
-        getApplicationConfig().baseMapLibraryConfig?.[baseMapLibraryName];
+      const baseMapLibraryConfig = getApplicationConfig().baseMapLibraryConfig[baseMapLibraryName];
 
       // Select the correct Map adapter based on the active base map library.
       // Using the native adapter for each library avoids Transform API
@@ -1185,12 +1184,13 @@ export default function MapContainerFactory(
         this.props.MapComponent ??
         (baseMapLibraryName === MAP_LIB_OPTIONS.MAPBOX ? MapboxLegacyMap : MaplibreMap);
 
+      const useMapboxAdapter = ResolvedMapComponent === MapboxLegacyMap;
+
       const internalViewState = this.context?.getInternalViewState(index);
       const configMaxPitch = mapState.maxPitch ?? getApplicationConfig().maxPitch;
-      const effectiveMaxPitch =
-        baseMapLibraryName === MAP_LIB_OPTIONS.MAPBOX
-          ? Math.min(configMaxPitch, MAPBOX_MAX_PITCH)
-          : configMaxPitch;
+      const effectiveMaxPitch = useMapboxAdapter
+        ? Math.min(configMaxPitch, MAPBOX_MAX_PITCH)
+        : configMaxPitch;
       const mapProps: Record<string, any> = {
         ...internalViewState,
         maxPitch: effectiveMaxPitch,
@@ -1202,10 +1202,9 @@ export default function MapContainerFactory(
           transformRequest(currentStyle?.accessToken || mapboxApiAccessToken)
       };
 
-      // mapbox-legacy adapter requires the mapLib prop to load the GL library;
-      // the native maplibre adapter does not use it.
-      if (baseMapLibraryName === MAP_LIB_OPTIONS.MAPBOX) {
-        mapProps.mapLib = baseMapLibraryConfig.getMapLib();
+      if (useMapboxAdapter) {
+        const mapboxConfig = getApplicationConfig().baseMapLibraryConfig[MAP_LIB_OPTIONS.MAPBOX];
+        mapProps.mapLib = mapboxConfig.getMapLib();
       }
 
       const hasGeocoderLayer = Boolean(layers.find(l => l.id === GEOCODER_LAYER_ID));
@@ -1297,8 +1296,13 @@ export default function MapContainerFactory(
               style={MAP_STYLE.top}
               mapboxAccessToken={mapProps.mapboxAccessToken}
               transformRequest={mapProps.transformRequest}
-              {...(baseMapLibraryName === MAP_LIB_OPTIONS.MAPBOX
-                ? {mapLib: baseMapLibraryConfig.getMapLib()}
+              {...(useMapboxAdapter
+                ? {
+                    mapLib:
+                      getApplicationConfig().baseMapLibraryConfig[
+                        MAP_LIB_OPTIONS.MAPBOX
+                      ].getMapLib()
+                  }
                 : {})}
               {...topMapContainerProps}
             />
@@ -1349,8 +1353,7 @@ export default function MapContainerFactory(
 
       const currentStyle = mapStyle.mapStyles?.[mapStyle.styleType];
       const baseMapLibraryName = getBaseMapLibrary(currentStyle);
-      const baseMapLibraryConfig =
-        getApplicationConfig().baseMapLibraryConfig?.[baseMapLibraryName];
+      const baseMapLibraryConfig = getApplicationConfig().baseMapLibraryConfig[baseMapLibraryName];
 
       return (
         <StyledMap

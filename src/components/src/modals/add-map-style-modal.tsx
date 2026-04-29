@@ -139,7 +139,7 @@ function AddMapStyleModalFactory() {
 
     _map: MapInstance | undefined | null;
 
-    _setMapRef = (mapRef: MapRef) => {
+    _setMapRef = (mapRef: MapRef | null) => {
       // Handle change of the basemap library
       if (this._map && mapRef) {
         const map = mapRef.getMap();
