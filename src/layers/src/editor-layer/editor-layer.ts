@@ -7,7 +7,6 @@ import {
   DrawPolygonMode,
   TranslateMode,
   CompositeMode,
-  DrawRectangleMode,
   GeoJsonEditMode
 } from '@deck.gl-community/editable-layers';
 import {PathStyleExtension} from '@deck.gl/extensions';
@@ -19,6 +18,7 @@ import {generateHashId} from '@kepler.gl/common-utils';
 import {EDIT_TYPES} from './constants';
 import {LINE_STYLE, FEATURE_STYLE, EDIT_HANDLE_STYLE} from './feature-styles';
 import {ModifyModeExtended} from './modify-mode-extended';
+import {DrawRectangleModeExtended} from './draw-rectangle-mode-extended';
 import {isDrawingActive} from './editor-layer-utils';
 
 const DEFAULT_COMPOSITE_MODE = new CompositeMode([
@@ -68,7 +68,7 @@ export function getEditorLayer({
     // @ts-ignore
     if (editorMode === EDITOR_MODES.DRAW_POLYGON) mode = DrawPolygonMode;
     // @ts-ignore
-    else if (editorMode === EDITOR_MODES.DRAW_RECTANGLE) mode = DrawRectangleMode;
+    else if (editorMode === EDITOR_MODES.DRAW_RECTANGLE) mode = DrawRectangleModeExtended;
   }
 
   // @ts-ignore
@@ -84,8 +84,7 @@ export function getEditorLayer({
     modeConfig: {
       viewport,
       screenSpace: true,
-      lockRectangles: true,
-      ...(editorMode === EDITOR_MODES.DRAW_RECTANGLE ? {dragToDraw: true} : {})
+      lockRectangles: true
     },
 
     pickingLineWidthExtraPixels: 5,

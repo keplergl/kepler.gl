@@ -164,7 +164,7 @@ export function getTooltip(
 
     const tooltipText =
       editor.mode === EDITOR_MODES.DRAW_RECTANGLE
-        ? 'Click and drag to draw rectangle'
+        ? 'Click or drag to draw rectangle'
         : 'Click to start new feature';
 
     return getTooltipObject(tooltipText, theme, {
