@@ -23,7 +23,7 @@ dependencies = [
 dev = [
     "pytest>=8.0",
     "pytest-cov>=4.0",
-    "jupyterlab>=4.0",
+    "jupyterlab>=4.5.7",
     "notebook>=7.0",
 ]
 
@@ -50,6 +50,6 @@ build_cmd = "build"
 dev-dependencies = [
     "pytest>=8.0",
     "pytest-cov>=4.0",
-    "jupyterlab>=4.0",
+    "jupyterlab>=4.5.7",
     "notebook>=7.0",
 ]
