@@ -24,7 +24,7 @@ dev = [
     "pytest>=8.0",
     "pytest-cov>=4.0",
     "jupyterlab>=4.0",
-    "notebook>=7.0",
+    "notebook>=7.5.6",
 ]
 
 [build-system]
@@ -51,5 +51,5 @@ dev-dependencies = [
     "pytest>=8.0",
     "pytest-cov>=4.0",
     "jupyterlab>=4.0",
-    "notebook>=7.0",
+    "notebook>=7.5.6",
 ]
