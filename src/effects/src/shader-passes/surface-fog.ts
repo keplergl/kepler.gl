@@ -286,7 +286,7 @@ const surfaceFogModule = {
  * When `pattern` is false the effect behaves as a classic flat-colour fog layer.
  * When `pattern` is true a static wave pattern (layered sine trains + FBM noise,
  * lit with diffuse+specular sun shading) replaces the flat tint and the
- * effect also renders over basemap areas via Porter-Duff compositing.
+ * effect also renders over basemap areas via straight-alpha compositing.
  */
 export class DeckSurfaceFogEffect {
   id = 'surface-fog-effect';

@@ -84,7 +84,9 @@ void main() {
     return;
   }
 
-  // Porter-Duff source-over for correct compositing over transparent basemap pixels.
+  // Composite fog over the scene. Transparent pixels (basemap gaps) are treated
+  // as if they already contain the fog color, so we un-premultiply, blend in
+  // straight RGB space, then re-premultiply for the framebuffer.
   vec3 baseRgb = color.a > 0.001 ? color.rgb / color.a : fogColor;
   vec3 straightRgb = mix(baseRgb, fogColor, fogFactor);
   float outAlpha = fogFactor + color.a * (1.0 - fogFactor);
