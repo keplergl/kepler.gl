@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import KeplerHeatmapLayer from './deck-heatmap-layer';
-import {CHANNEL_SCALES, ALL_FIELD_TYPES} from '@kepler.gl/constants';
+import {CHANNEL_SCALES, ALL_FIELD_TYPES, GEOJSON_FIELDS} from '@kepler.gl/constants';
 import Layer, {LayerBaseConfigPartial, LayerWeightConfig, VisualChannels} from '../base-layer';
 import HeatmapLayerIcon from './heatmap-layer-icon';
 import {
@@ -20,9 +20,11 @@ import {
 import {hexToRgb, DataContainerInterface} from '@kepler.gl/utils';
 import {notNullorUndefined} from '@kepler.gl/common-utils';
 import {Datasets, KeplerTable} from '@kepler.gl/table';
+import {DATA_TYPES} from 'type-analyzer';
 
 import {getGeoArrowPointLayerProps, FindDefaultLayerPropsReturnValue} from '../layer-utils';
 import {getFilterDataFunc} from '../aggregation-layer';
+import {parseGeoJsonRawFeature} from '../geojson-layer/geojson-utils';
 
 export type HeatmapLayerVisConfigSettings = {
   opacity: VisConfigNumber;
@@ -40,6 +42,9 @@ export type HeatmapLayerColumnsConfig = {
 
   // COLUMN_MODE_GEOARROW
   geoarrow: LayerColumn;
+
+  // COLUMN_MODE_GEOJSON
+  geojson: LayerColumn;
 };
 
 export type HeatmapLayerVisConfig = {
@@ -74,9 +79,43 @@ export const geoarrowPosAccessor =
     return [row.get(0), row.get(1)];
   };
 
-export const pointColResolver = ({lat, lng, geoarrow}: HeatmapLayerColumnsConfig, columnMode) => {
+export const geojsonAccessor =
+  ({geojson}: HeatmapLayerColumnsConfig) =>
+  (dc: DataContainerInterface) =>
+  (d: {index: number}) =>
+    dc.valueAt(d.index, geojson.fieldIdx);
+
+/**
+ * Extract all vertex [lng, lat] coordinates from a GeoJSON geometry.
+ * Works for Point, MultiPoint, LineString, MultiLineString, Polygon,
+ * MultiPolygon, and GeometryCollection.
+ */
+function extractPositionsFromGeometry(geometry: any): number[][] {
+  if (!geometry) return [];
+  switch (geometry.type) {
+    case 'Point':
+      return [geometry.coordinates];
+    case 'MultiPoint':
+    case 'LineString':
+      return geometry.coordinates;
+    case 'MultiLineString':
+    case 'Polygon':
+      return geometry.coordinates.flat();
+    case 'MultiPolygon':
+      return geometry.coordinates.flat(2);
+    case 'GeometryCollection':
+      return (geometry.geometries || []).flatMap(extractPositionsFromGeometry);
+    default:
+      return [];
+  }
+}
+
+export const pointColResolver = ({lat, lng, geoarrow, geojson}: HeatmapLayerColumnsConfig, columnMode) => {
   if (columnMode === COLUMN_MODE_POINTS) {
     return `${lat.fieldIdx}-${lng.fieldIdx}`;
+  }
+  if (columnMode === COLUMN_MODE_GEOJSON) {
+    return `geojson-${geojson.fieldIdx}`;
   }
   return `geoarrow-${geoarrow.fieldIdx}`;
 };
@@ -126,14 +165,28 @@ export const heatmapVisConfigs: {
 
 export const pointRequiredColumns = ['lat', 'lng'];
 export const geoarrowRequiredColumns = ['geoarrow'];
+export const geojsonRequiredColumns = ['geojson'];
 
 export const COLUMN_MODE_POINTS = 'points';
 export const COLUMN_MODE_GEOARROW = 'geoarrow';
+export const COLUMN_MODE_GEOJSON = 'geojson';
+
+const SUPPORTED_ANALYZER_TYPES = {
+  [DATA_TYPES.GEOMETRY]: true,
+  [DATA_TYPES.GEOMETRY_FROM_STRING]: true,
+  [DATA_TYPES.PAIR_GEOMETRY_FROM_STRING]: true
+};
+
 const SUPPORTED_COLUMN_MODES = [
   {
     key: COLUMN_MODE_POINTS,
     label: 'Points',
     requiredColumns: pointRequiredColumns
+  },
+  {
+    key: COLUMN_MODE_GEOJSON,
+    label: 'GeoJSON',
+    requiredColumns: geojsonRequiredColumns
   },
   {
     key: COLUMN_MODE_GEOARROW,
@@ -165,6 +218,8 @@ class HeatmapLayer extends Layer {
   declare visConfigSettings: HeatmapLayerVisConfigSettings;
   declare config: HeatmapLayerConfig;
 
+  dataToFeature: any[] = [];
+
   constructor(props) {
     super(props);
     this.registerVisConfig(heatmapVisConfigs);
@@ -173,6 +228,8 @@ class HeatmapLayer extends Layer {
       switch (this.config.columnMode) {
         case COLUMN_MODE_GEOARROW:
           return geoarrowPosAccessor(this.config.columns)(dataContainer);
+        case COLUMN_MODE_GEOJSON:
+          return geojsonAccessor(this.config.columns)(dataContainer);
         default:
           return pointPosAccessor(this.config.columns)(dataContainer);
       }
@@ -211,11 +268,39 @@ class HeatmapLayer extends Layer {
     if (columnMode === COLUMN_MODE_GEOARROW) {
       return this.hasColumnValue(columns.geoarrow);
     }
+    if (columnMode === COLUMN_MODE_GEOJSON) {
+      return this.hasColumnValue(columns.geojson);
+    }
     return super.hasAllColumns();
   }
 
   static findDefaultLayerProps(dataset: KeplerTable): FindDefaultLayerPropsReturnValue {
     const altProps = getGeoArrowPointLayerProps(dataset);
+
+    const geojsonColumns = dataset.fields
+      .filter(
+        f =>
+          (f.type === 'geojson' || f.type === 'geoarrow') &&
+          f.analyzerType &&
+          SUPPORTED_ANALYZER_TYPES[f.analyzerType]
+      )
+      .map(f => f.name);
+
+    const defaultColumns = {
+      geojson: [...(GEOJSON_FIELDS.geojson || []), ...geojsonColumns]
+    };
+    const foundColumns = this.findDefaultColumnField(defaultColumns, dataset.fields);
+
+    if (foundColumns?.length) {
+      const {label} = dataset;
+      altProps.push(
+        ...foundColumns.map(columns => ({
+          label: (typeof label === 'string' && label.replace(/\.[^/.]+$/, '')) || 'heatmap',
+          columns,
+          columnMode: COLUMN_MODE_GEOJSON
+        }))
+      );
+    }
 
     return {
       props: [],
@@ -276,12 +361,65 @@ class HeatmapLayer extends Layer {
 
   updateLayerMeta(dataset: KeplerTable) {
     const {dataContainer} = dataset;
-    const getPosition = this.getPositionAccessor(dataContainer);
-    const bounds = this.getPointsBounds(dataContainer, getPosition);
-    this.updateMeta({bounds});
+
+    if (this.config.columnMode === COLUMN_MODE_GEOJSON) {
+      const getFeature = this.getPositionAccessor(dataContainer);
+      this._buildGeojsonDataToFeature(dataContainer, getFeature);
+      const bounds = this._getBoundsFromGeojsonData();
+      this.updateMeta({bounds});
+    } else {
+      this.dataToFeature = [];
+      const getPosition = this.getPositionAccessor(dataContainer);
+      const bounds = this.getPointsBounds(dataContainer, getPosition);
+      this.updateMeta({bounds});
+    }
+  }
+
+  /**
+   * Parse raw GeoJSON values into Feature objects and store them.
+   * Re-parses when the data container size changes (new data load or column switch).
+   */
+  private _buildGeojsonDataToFeature(dataContainer: DataContainerInterface, getFeature: any) {
+    if (this.dataToFeature.length === dataContainer.numRows()) return;
+    this.dataToFeature = [];
+    for (let i = 0; i < dataContainer.numRows(); i++) {
+      const rawFeature = getFeature({index: i});
+      const feature = parseGeoJsonRawFeature(rawFeature);
+      this.dataToFeature[i] = feature;
+    }
+  }
+
+  private _getBoundsFromGeojsonData(): [number, number, number, number] | null {
+    let minLng = Infinity;
+    let maxLng = -Infinity;
+    let minLat = Infinity;
+    let maxLat = -Infinity;
+    let hasValid = false;
+
+    for (const feature of this.dataToFeature) {
+      if (!feature?.geometry) continue;
+      const positions = extractPositionsFromGeometry(feature.geometry);
+      for (const pos of positions) {
+        const lng = pos[0];
+        const lat = pos[1];
+        if (Number.isFinite(lng) && Number.isFinite(lat)) {
+          hasValid = true;
+          if (lng < minLng) minLng = lng;
+          if (lng > maxLng) maxLng = lng;
+          if (lat < minLat) minLat = lat;
+          if (lat > maxLat) maxLat = lat;
+        }
+      }
+    }
+
+    return hasValid ? [minLng, minLat, maxLng, maxLat] : null;
   }
 
   calculateDataAttribute({filteredIndex}: KeplerTable, getPosition) {
+    if (this.config.columnMode === COLUMN_MODE_GEOJSON) {
+      return this._calculateGeojsonDataAttribute(filteredIndex);
+    }
+
     const data: {index: number}[] = [];
 
     for (let i = 0; i < filteredIndex.length; i++) {
@@ -290,6 +428,30 @@ class HeatmapLayer extends Layer {
 
       if (pos.every(Number.isFinite)) {
         data.push({index});
+      }
+    }
+
+    return data;
+  }
+
+  /**
+   * For GeoJSON mode, expand each feature's geometry vertices into
+   * individual heatmap data entries. Each entry stores a pre-computed
+   * position and the original row index (for weight lookups).
+   */
+  private _calculateGeojsonDataAttribute(filteredIndex: number[]) {
+    const data: {index: number; position: number[]}[] = [];
+
+    for (let i = 0; i < filteredIndex.length; i++) {
+      const index = filteredIndex[i];
+      const feature = this.dataToFeature[index];
+      if (!feature?.geometry) continue;
+
+      const positions = extractPositionsFromGeometry(feature.geometry);
+      for (const pos of positions) {
+        if (Number.isFinite(pos[0]) && Number.isFinite(pos[1])) {
+          data.push({index, position: [pos[0], pos[1]]});
+        }
       }
     }
 
@@ -308,16 +470,18 @@ class HeatmapLayer extends Layer {
     };
     const {gpuFilter, dataContainer} = dataset;
 
-    // Pass oldLayerData with the unfiltered base data so updateData's caching works correctly.
-    // formatLayerData returns GPU-filtered `data`, so oldLayerData.data would be the filtered
-    // subset. We stash the unfiltered array in `_unfiltered` to feed back to updateData.
     const oldData = oldLayerData as any;
     const baseOldLayerData = oldData?._unfiltered
       ? {...oldData, data: oldData._unfiltered}
       : oldLayerData;
 
     const {data = []} = this.updateData(datasets, baseOldLayerData);
-    const getPosition = this.getPositionAccessor(dataContainer);
+
+    const isGeojsonMode = this.config.columnMode === COLUMN_MODE_GEOJSON;
+
+    const getPosition = isGeojsonMode
+      ? (d: {position: number[]}) => d.position
+      : this.getPositionAccessor(dataContainer);
 
     const hasFilter = Object.values(gpuFilter.filterRange).some((arr: any) =>
       arr.some(v => v !== 0)
@@ -386,7 +550,7 @@ class HeatmapLayer extends Layer {
     const radiusPixels = interpolateByZoom(mapState.zoom, 0, 2, MAX_ZOOM_LEVEL, visConfig.radius);
 
     const updateTriggers = {
-      getPosition: this.config.columns,
+      getPosition: {columns: this.config.columns, columnMode: this.config.columnMode},
       getWeight: {
         weightField: this.config.weightField
       }

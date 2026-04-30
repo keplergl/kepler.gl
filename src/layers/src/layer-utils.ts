@@ -38,6 +38,7 @@ export type FindDefaultLayerProps = {
   color?: RGBColor;
   isVisible?: boolean;
   columns?: Record<string, LayerColumn>;
+  columnMode?: string;
 };
 
 export type FindDefaultLayerPropsReturnValue = {
