@@ -965,11 +965,7 @@ export default function MapContainerFactory(
 
       const views = deckGlProps?.views
         ? deckGlProps?.views()
-        : new MapView({legacyMeterSizes: true, farZMultiplier: 1.2} as ConstructorParameters<
-            typeof MapView
-          >[0] & {
-            legacyMeterSizes: boolean;
-          });
+        : new MapView({farZMultiplier: 1.2});
 
       let allDeckGlProps = {
         ...deckGlProps,

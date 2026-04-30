@@ -3,7 +3,7 @@
 
 import {ClipSpace} from '@luma.gl/engine';
 import type {ShaderModule} from '@luma.gl/shadertools';
-import {patchTileViewportIds} from '../tile-viewport-fix';
+import {patchTileViewportIds, resetDepthRange} from '../tile-viewport-fix';
 
 export type SurfaceFogProps = {
   density: number;
@@ -194,13 +194,11 @@ void main() {
   vec3 fogColorNorm = surfaceFog.fogColor / 255.0;
 
   if (!usePattern) {
-    // Plain fog — Porter-Duff source-over for basemap coverage.
     float ff = clamp(fogFactor, 0.0, 1.0);
     vec3 baseRgb = color.a > 0.001 ? color.rgb / color.a : fogColorNorm;
-    vec3 blended = mix(baseRgb, fogColorNorm, ff);
-    vec3 outRgb = blended * ff + color.rgb * (1.0 - ff);
+    vec3 straightRgb = mix(baseRgb, fogColorNorm, ff);
     float outAlpha = ff + color.a * (1.0 - ff);
-    fragColor = vec4(outRgb, outAlpha);
+    fragColor = vec4(straightRgb * outAlpha, outAlpha);
     return;
   }
 
@@ -216,12 +214,10 @@ void main() {
   vec3 tinted = mix(baseRgb, fogColorNorm, submersion);
   vec3 waterSurface = clamp(tinted * (diffuse + vec3(0.1)) + specular, 0.0, 1.0);
 
-  // Porter-Duff source-over so the effect is visible on transparent basemap areas.
   float wf = clamp(fogFactor, 0.0, 1.0);
-  vec3 outRgb = waterSurface * wf + color.rgb * (1.0 - wf);
+  vec3 straightRgb = mix(baseRgb, waterSurface, wf);
   float outAlpha = wf + color.a * (1.0 - wf);
-
-  fragColor = vec4(outRgb, outAlpha);
+  fragColor = vec4(straightRgb * outAlpha, outAlpha);
 }
 `;
 
@@ -290,7 +286,7 @@ const surfaceFogModule = {
  * When `pattern` is false the effect behaves as a classic flat-colour fog layer.
  * When `pattern` is true a static wave pattern (layered sine trains + FBM noise,
  * lit with diffuse+specular sun shading) replaces the flat tint and the
- * effect also renders over basemap areas via Porter-Duff compositing.
+ * effect also renders over basemap areas via straight-alpha compositing.
  */
 export class DeckSurfaceFogEffect {
   id = 'surface-fog-effect';
@@ -339,6 +335,7 @@ export class DeckSurfaceFogEffect {
     if (this.isExportMode && opts) {
       this._unpatchViewports = patchTileViewportIds(opts);
     }
+    resetDepthRange(this.model);
   }
 
   postRender(params: any): any {

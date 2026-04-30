@@ -45,3 +45,19 @@ export function patchTileViewportIds(opts: {
     }
   };
 }
+
+/**
+ * Reset WebGL depthRange to [0, 1].
+ *
+ * Maplibre/Mapbox basemap rendering compresses the depth range (e.g. [0, 0.979])
+ * and doesn't restore it. When deck.gl layers subsequently render to the offscreen
+ * FBO, their depth values inherit that compressed range, causing the fog shader's
+ * depth reconstruction (depth * 2 − 1) to produce incorrect z values.
+ */
+export function resetDepthRange(model: {device: any} | null): void {
+  if (!model) return;
+  const gl = (model.device as any).gl as WebGL2RenderingContext | undefined;
+  if (gl) {
+    gl.depthRange(0, 1);
+  }
+}
