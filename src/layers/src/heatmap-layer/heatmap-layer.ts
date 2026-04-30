@@ -250,6 +250,7 @@ class HeatmapLayer extends Layer {
   dataToFeature: any[] = [];
   centroids: Array<number[] | null> = [];
   private _geojsonFieldIdx = -1;
+  private _geojsonBounds: [number, number, number, number] | null = null;
 
   constructor(props) {
     super(props);
@@ -389,6 +390,16 @@ class HeatmapLayer extends Layer {
         };
   }
 
+  getDataUpdateTriggers(dataset: KeplerTable): any {
+    const triggers = super.getDataUpdateTriggers(dataset);
+    const {columnMode} = this.config;
+    return {
+      ...triggers,
+      getData: {...triggers.getData, columnMode},
+      getMeta: {...triggers.getMeta, columnMode}
+    };
+  }
+
   getDefaultLayerConfig(props: LayerBaseConfigPartial): HeatmapLayerConfig {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const {colorField, colorDomain, colorScale, ...layerConfig} = {
@@ -410,8 +421,7 @@ class HeatmapLayer extends Layer {
     if (this.config.columnMode === COLUMN_MODE_GEOJSON) {
       const getFeature = this.getPositionAccessor(dataContainer);
       this._buildGeojsonDataToFeature(dataContainer, getFeature);
-      const bounds = this._getBoundsFromGeojsonData();
-      this.updateMeta({bounds});
+      this.updateMeta({bounds: this._geojsonBounds});
     } else {
       this.dataToFeature = [];
       this.centroids = [];
@@ -436,38 +446,36 @@ class HeatmapLayer extends Layer {
     this._geojsonFieldIdx = fieldIdx;
     this.dataToFeature = [];
     this.centroids = [];
-    for (let i = 0; i < dataContainer.numRows(); i++) {
-      const rawFeature = getFeature({index: i});
-      const feature = parseGeoJsonRawFeature(rawFeature);
-      this.dataToFeature[i] = feature;
-      this.centroids[i] = feature?.geometry ? getCentroidFromGeometry(feature.geometry) : null;
-    }
-  }
 
-  private _getBoundsFromGeojsonData(): [number, number, number, number] | null {
     let minLng = Infinity;
     let maxLng = -Infinity;
     let minLat = Infinity;
     let maxLat = -Infinity;
     let hasValid = false;
 
-    for (const feature of this.dataToFeature) {
-      if (!feature?.geometry) continue;
-      const positions = getAllPositions(feature.geometry);
-      for (const pos of positions) {
-        const lng = pos[0];
-        const lat = pos[1];
-        if (Number.isFinite(lng) && Number.isFinite(lat)) {
-          hasValid = true;
-          if (lng < minLng) minLng = lng;
-          if (lng > maxLng) maxLng = lng;
-          if (lat < minLat) minLat = lat;
-          if (lat > maxLat) maxLat = lat;
+    for (let i = 0; i < dataContainer.numRows(); i++) {
+      const rawFeature = getFeature({index: i});
+      const feature = parseGeoJsonRawFeature(rawFeature);
+      this.dataToFeature[i] = feature;
+      this.centroids[i] = feature?.geometry ? getCentroidFromGeometry(feature.geometry) : null;
+
+      if (feature?.geometry) {
+        const positions = getAllPositions(feature.geometry);
+        for (const pos of positions) {
+          const lng = pos[0];
+          const lat = pos[1];
+          if (Number.isFinite(lng) && Number.isFinite(lat)) {
+            hasValid = true;
+            if (lng < minLng) minLng = lng;
+            if (lng > maxLng) maxLng = lng;
+            if (lat < minLat) minLat = lat;
+            if (lat > maxLat) maxLat = lat;
+          }
         }
       }
     }
 
-    return hasValid ? [minLng, minLat, maxLng, maxLat] : null;
+    this._geojsonBounds = hasValid ? [minLng, minLat, maxLng, maxLat] : null;
   }
 
   calculateDataAttribute({filteredIndex}: KeplerTable, getPosition) {
