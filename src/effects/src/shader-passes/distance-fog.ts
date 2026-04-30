@@ -3,7 +3,7 @@
 
 import {ClipSpace} from '@luma.gl/engine';
 import type {ShaderModule} from '@luma.gl/shadertools';
-import {patchTileViewportIds} from '../tile-viewport-fix';
+import {patchTileViewportIds, resetDepthRange} from '../tile-viewport-fix';
 
 export type DistanceFogProps = {
   density: number;
@@ -207,12 +207,7 @@ export class DeckDistanceFogEffect {
     if (this.isExportMode && opts) {
       this._unpatchViewports = patchTileViewportIds(opts);
     }
-    if (this.model) {
-      const gl = (this.model.device as any).gl as WebGL2RenderingContext | undefined;
-      if (gl) {
-        gl.depthRange(0, 1);
-      }
-    }
+    resetDepthRange(this.model);
   }
 
   postRender(params: any): any {

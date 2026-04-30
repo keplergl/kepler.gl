@@ -3,7 +3,7 @@
 
 import {ClipSpace} from '@luma.gl/engine';
 import type {ShaderModule} from '@luma.gl/shadertools';
-import {patchTileViewportIds} from '../tile-viewport-fix';
+import {patchTileViewportIds, resetDepthRange} from '../tile-viewport-fix';
 
 export type SurfaceFogProps = {
   density: number;
@@ -335,17 +335,7 @@ export class DeckSurfaceFogEffect {
     if (this.isExportMode && opts) {
       this._unpatchViewports = patchTileViewportIds(opts);
     }
-    // Reset depthRange to [0,1]. Maplibre/mapbox basemap rendering sets a
-    // compressed depthRange (e.g. [0, 0.979]) and doesn't restore it.  When
-    // deck.gl layers render to the offscreen FBO their depth values get
-    // compressed into that range, causing the fog shader's depth
-    // reconstruction (depth * 2 − 1) to return incorrect z values.
-    if (this.model) {
-      const gl = (this.model.device as any).gl as WebGL2RenderingContext | undefined;
-      if (gl) {
-        gl.depthRange(0, 1);
-      }
-    }
+    resetDepthRange(this.model);
   }
 
   postRender(params: any): any {
