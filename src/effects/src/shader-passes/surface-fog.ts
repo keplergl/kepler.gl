@@ -194,13 +194,11 @@ void main() {
   vec3 fogColorNorm = surfaceFog.fogColor / 255.0;
 
   if (!usePattern) {
-    // Plain fog — Porter-Duff source-over for basemap coverage.
     float ff = clamp(fogFactor, 0.0, 1.0);
     vec3 baseRgb = color.a > 0.001 ? color.rgb / color.a : fogColorNorm;
-    vec3 blended = mix(baseRgb, fogColorNorm, ff);
-    vec3 outRgb = blended * ff + color.rgb * (1.0 - ff);
+    vec3 straightRgb = mix(baseRgb, fogColorNorm, ff);
     float outAlpha = ff + color.a * (1.0 - ff);
-    fragColor = vec4(outRgb, outAlpha);
+    fragColor = vec4(straightRgb * outAlpha, outAlpha);
     return;
   }
 
@@ -216,12 +214,10 @@ void main() {
   vec3 tinted = mix(baseRgb, fogColorNorm, submersion);
   vec3 waterSurface = clamp(tinted * (diffuse + vec3(0.1)) + specular, 0.0, 1.0);
 
-  // Porter-Duff source-over so the effect is visible on transparent basemap areas.
   float wf = clamp(fogFactor, 0.0, 1.0);
-  vec3 outRgb = waterSurface * wf + color.rgb * (1.0 - wf);
+  vec3 straightRgb = mix(baseRgb, waterSurface, wf);
   float outAlpha = wf + color.a * (1.0 - wf);
-
-  fragColor = vec4(outRgb, outAlpha);
+  fragColor = vec4(straightRgb * outAlpha, outAlpha);
 }
 `;
 
@@ -338,6 +334,17 @@ export class DeckSurfaceFogEffect {
   preRender(opts?: any): void {
     if (this.isExportMode && opts) {
       this._unpatchViewports = patchTileViewportIds(opts);
+    }
+    // Reset depthRange to [0,1]. Maplibre/mapbox basemap rendering sets a
+    // compressed depthRange (e.g. [0, 0.979]) and doesn't restore it.  When
+    // deck.gl layers render to the offscreen FBO their depth values get
+    // compressed into that range, causing the fog shader's depth
+    // reconstruction (depth * 2 − 1) to return incorrect z values.
+    if (this.model) {
+      const gl = (this.model.device as any).gl as WebGL2RenderingContext | undefined;
+      if (gl) {
+        gl.depthRange(0, 1);
+      }
     }
   }
 

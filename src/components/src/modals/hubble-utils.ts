@@ -181,7 +181,10 @@ export function getHubbleDeckGlProps(
   return {
     parameters: getHubbleParameters(keplerState),
     controller: true,
-    views: new MapView({farZMultiplier: 1.2})
+    views: new MapView({
+      id: 'mapbox',
+      farZMultiplier: 1.2
+    })
   };
 }
 

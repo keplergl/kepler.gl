@@ -86,10 +86,9 @@ void main() {
 
   // Porter-Duff source-over for correct compositing over transparent basemap pixels.
   vec3 baseRgb = color.a > 0.001 ? color.rgb / color.a : fogColor;
-  vec3 blended = mix(baseRgb, fogColor, fogFactor);
-  vec3 outRgb = blended * fogFactor + color.rgb * (1.0 - fogFactor);
+  vec3 straightRgb = mix(baseRgb, fogColor, fogFactor);
   float outAlpha = fogFactor + color.a * (1.0 - fogFactor);
-  fragColor = vec4(outRgb, outAlpha);
+  fragColor = vec4(straightRgb * outAlpha, outAlpha);
 }
 `;
 
@@ -205,6 +204,12 @@ export class DeckDistanceFogEffect {
   preRender(opts?: any): void {
     if (this.isExportMode && opts) {
       this._unpatchViewports = patchTileViewportIds(opts);
+    }
+    if (this.model) {
+      const gl = (this.model.device as any).gl as WebGL2RenderingContext | undefined;
+      if (gl) {
+        gl.depthRange(0, 1);
+      }
     }
   }
 
