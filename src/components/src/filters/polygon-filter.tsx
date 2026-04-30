@@ -8,7 +8,8 @@ import {LAYER_TYPES} from '@kepler.gl/constants';
 import {PolygonFilterProps} from './types';
 import {StyledFilterPanel} from './components';
 
-const layerFilter = (layer: Layer) => layer.type === LAYER_TYPES.point;
+const layerFilter = (layer: Layer) =>
+  layer.type === LAYER_TYPES.point || layer.type === LAYER_TYPES.heatmap;
 const isAlreadySelected = (selectedLayers: Layer[], layerId: string) =>
   selectedLayers.findIndex(l => l.id === layerId) === -1;
 

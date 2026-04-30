@@ -21,6 +21,9 @@ import {hexToRgb, DataContainerInterface} from '@kepler.gl/utils';
 import {notNullorUndefined} from '@kepler.gl/common-utils';
 import {Datasets, KeplerTable} from '@kepler.gl/table';
 import {DATA_TYPES} from 'type-analyzer';
+import booleanWithin from '@turf/boolean-within';
+import {point as turfPoint} from '@turf/helpers';
+import {Feature, Polygon} from 'geojson';
 
 import {getGeoArrowPointLayerProps, FindDefaultLayerPropsReturnValue} from '../layer-utils';
 import {getFilterDataFunc} from '../aggregation-layer';
@@ -86,11 +89,34 @@ export const geojsonAccessor =
     dc.valueAt(d.index, geojson.fieldIdx);
 
 /**
- * Extract all vertex [lng, lat] coordinates from a GeoJSON geometry.
- * Works for Point, MultiPoint, LineString, MultiLineString, Polygon,
- * MultiPolygon, and GeometryCollection.
+ * Compute the centroid [lng, lat] of a GeoJSON geometry.
+ * For Point returns the coordinate directly; for complex geometries
+ * averages all vertex positions into a single representative point.
  */
-function extractPositionsFromGeometry(geometry: any): number[][] {
+function getCentroidFromGeometry(geometry: any): number[] | null {
+  if (!geometry) return null;
+  const positions = getAllPositions(geometry);
+  if (positions.length === 0) return null;
+  if (positions.length === 1) return positions[0];
+
+  let sumLng = 0;
+  let sumLat = 0;
+  let count = 0;
+  for (const pos of positions) {
+    if (Number.isFinite(pos[0]) && Number.isFinite(pos[1])) {
+      sumLng += pos[0];
+      sumLat += pos[1];
+      count++;
+    }
+  }
+  return count > 0 ? [sumLng / count, sumLat / count] : null;
+}
+
+/**
+ * Extract all vertex [lng, lat] coordinates from a GeoJSON geometry.
+ * Used internally for bounds computation and centroid calculation.
+ */
+function getAllPositions(geometry: any): number[][] {
   if (!geometry) return [];
   switch (geometry.type) {
     case 'Point':
@@ -104,13 +130,16 @@ function extractPositionsFromGeometry(geometry: any): number[][] {
     case 'MultiPolygon':
       return geometry.coordinates.flat(2);
     case 'GeometryCollection':
-      return (geometry.geometries || []).flatMap(extractPositionsFromGeometry);
+      return (geometry.geometries || []).flatMap(getAllPositions);
     default:
       return [];
   }
 }
 
-export const pointColResolver = ({lat, lng, geoarrow, geojson}: HeatmapLayerColumnsConfig, columnMode) => {
+export const pointColResolver = (
+  {lat, lng, geoarrow, geojson}: HeatmapLayerColumnsConfig,
+  columnMode
+) => {
   if (columnMode === COLUMN_MODE_POINTS) {
     return `${lat.fieldIdx}-${lng.fieldIdx}`;
   }
@@ -219,6 +248,8 @@ class HeatmapLayer extends Layer {
   declare config: HeatmapLayerConfig;
 
   dataToFeature: any[] = [];
+  centroids: Array<number[] | null> = [];
+  private _geojsonFieldIdx = -1;
 
   constructor(props) {
     super(props);
@@ -332,6 +363,20 @@ class HeatmapLayer extends Layer {
     return null;
   }
 
+  isInPolygon(data: DataContainerInterface, index: number, polygon: Feature<Polygon>): boolean {
+    if (this.centroids.length === 0 || !this.centroids[index]) {
+      return false;
+    }
+    const point = this.centroids[index];
+    if (!point) return false;
+    const isRectangleSearchBox = polygon.properties?.shape === 'Rectangle';
+    if (isRectangleSearchBox && polygon.properties?.bbox) {
+      const [minX, minY, maxX, maxY] = polygon.properties.bbox;
+      return point[0] >= minX && point[0] <= maxX && point[1] >= minY && point[1] <= maxY;
+    }
+    return booleanWithin(turfPoint(point), polygon);
+  }
+
   getVisualChannelDescription(channel) {
     return channel === 'color'
       ? {
@@ -369,6 +414,7 @@ class HeatmapLayer extends Layer {
       this.updateMeta({bounds});
     } else {
       this.dataToFeature = [];
+      this.centroids = [];
       const getPosition = this.getPositionAccessor(dataContainer);
       const bounds = this.getPointsBounds(dataContainer, getPosition);
       this.updateMeta({bounds});
@@ -380,12 +426,21 @@ class HeatmapLayer extends Layer {
    * Re-parses when the data container size changes (new data load or column switch).
    */
   private _buildGeojsonDataToFeature(dataContainer: DataContainerInterface, getFeature: any) {
-    if (this.dataToFeature.length === dataContainer.numRows()) return;
+    const fieldIdx = this.config.columns.geojson.fieldIdx;
+    if (
+      this.dataToFeature.length === dataContainer.numRows() &&
+      this._geojsonFieldIdx === fieldIdx
+    ) {
+      return;
+    }
+    this._geojsonFieldIdx = fieldIdx;
     this.dataToFeature = [];
+    this.centroids = [];
     for (let i = 0; i < dataContainer.numRows(); i++) {
       const rawFeature = getFeature({index: i});
       const feature = parseGeoJsonRawFeature(rawFeature);
       this.dataToFeature[i] = feature;
+      this.centroids[i] = feature?.geometry ? getCentroidFromGeometry(feature.geometry) : null;
     }
   }
 
@@ -398,7 +453,7 @@ class HeatmapLayer extends Layer {
 
     for (const feature of this.dataToFeature) {
       if (!feature?.geometry) continue;
-      const positions = extractPositionsFromGeometry(feature.geometry);
+      const positions = getAllPositions(feature.geometry);
       for (const pos of positions) {
         const lng = pos[0];
         const lat = pos[1];
@@ -435,9 +490,8 @@ class HeatmapLayer extends Layer {
   }
 
   /**
-   * For GeoJSON mode, expand each feature's geometry vertices into
-   * individual heatmap data entries. Each entry stores a pre-computed
-   * position and the original row index (for weight lookups).
+   * For GeoJSON mode, compute the centroid of each feature's geometry
+   * and emit a single heatmap data entry per feature.
    */
   private _calculateGeojsonDataAttribute(filteredIndex: number[]) {
     const data: {index: number; position: number[]}[] = [];
@@ -447,11 +501,9 @@ class HeatmapLayer extends Layer {
       const feature = this.dataToFeature[index];
       if (!feature?.geometry) continue;
 
-      const positions = extractPositionsFromGeometry(feature.geometry);
-      for (const pos of positions) {
-        if (Number.isFinite(pos[0]) && Number.isFinite(pos[1])) {
-          data.push({index, position: [pos[0], pos[1]]});
-        }
+      const centroid = getCentroidFromGeometry(feature.geometry);
+      if (centroid) {
+        data.push({index, position: centroid});
       }
     }
 
