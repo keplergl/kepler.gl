@@ -418,6 +418,17 @@ export const getPolygonFilterFunctor = (layer, filter, dataContainer) => {
       return data => {
         return layer.isInPolygon(data, data.index, filter.value);
       };
+    case LAYER_TYPES.heatmap:
+      if (layer.centroids?.length) {
+        return data => {
+          const centroid = layer.centroids[data.index];
+          return centroid && isInPolygon(centroid, filter.value);
+        };
+      }
+      return data => {
+        const pos = getPosition(data);
+        return pos.every(Number.isFinite) && isInPolygon(pos, filter.value);
+      };
     default:
       return () => true;
   }
