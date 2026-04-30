@@ -1401,6 +1401,27 @@ export function setPolygonFilterLayer(
   };
 }
 
+export type SetPolygonFilterAllLayersUpdaterAction = {
+  feature: Feature;
+};
+/**
+ * Apply the provided feature as a polygon filter to all layers.
+ * @memberof visStateActions
+ * @param feature
+ * @returns action
+ */
+export function setPolygonFilterAllLayers(
+  feature: Feature
+): Merge<
+  SetPolygonFilterAllLayersUpdaterAction,
+  {type: typeof ActionTypes.SET_POLYGON_FILTER_ALL_LAYERS}
+> {
+  return {
+    type: ActionTypes.SET_POLYGON_FILTER_ALL_LAYERS,
+    feature
+  };
+}
+
 export type SetSelectedFeatureUpdaterAction = {
   feature: Feature | null;
   selectionContext?: FeatureSelectionContext;

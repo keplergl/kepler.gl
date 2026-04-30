@@ -162,7 +162,12 @@ export function getTooltip(
       return null;
     }
 
-    return getTooltipObject('Click to start new feature', theme, {
+    const tooltipText =
+      editor.mode === EDITOR_MODES.DRAW_RECTANGLE
+        ? 'Click and drag to draw rectangle'
+        : 'Click to start new feature';
+
+    return getTooltipObject(tooltipText, theme, {
       leftOfCursor: closeToLeftEdge,
       aboveCursor: closeToBottomEdge
     });

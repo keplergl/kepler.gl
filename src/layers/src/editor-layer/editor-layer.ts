@@ -31,6 +31,7 @@ export type GetEditorLayerProps = {
   editor: Editor;
   onSetFeatures: (features: Feature[]) => any;
   setSelectedFeature: (feature: Feature | null, selectionContext?: FeatureSelectionContext) => any;
+  onApplyPolygonFilterAll?: (feature: Feature) => any;
   viewport: Viewport;
   featureCollection: {
     type: string;
@@ -55,6 +56,7 @@ export function getEditorLayer({
   editor,
   onSetFeatures,
   setSelectedFeature,
+  onApplyPolygonFilterAll,
   featureCollection,
   selectedFeatureIndexes,
   viewport
@@ -82,7 +84,8 @@ export function getEditorLayer({
     modeConfig: {
       viewport,
       screenSpace: true,
-      lockRectangles: true
+      lockRectangles: true,
+      ...(editorMode === EDITOR_MODES.DRAW_RECTANGLE ? {dragToDraw: true} : {})
     },
 
     pickingLineWidthExtraPixels: 5,
@@ -100,7 +103,13 @@ export function getEditorLayer({
             if (lastFeature.properties) lastFeature.properties.isClosed = true;
             lastFeature.id = generateHashId(6);
             onSetFeatures(updatedData.features as unknown as Feature[]);
-            setSelectedFeature(lastFeature as unknown as Feature);
+
+            const isRectangle = lastFeature.properties?.shape === 'Rectangle';
+            if (isRectangle && onApplyPolygonFilterAll) {
+              onApplyPolygonFilterAll(lastFeature as unknown as Feature);
+            } else {
+              setSelectedFeature(lastFeature as unknown as Feature);
+            }
           }
           break;
         }
