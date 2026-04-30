@@ -5095,6 +5095,7 @@ __metadata:
     "@types/react-virtualized": "npm:^9.21.30"
     "@types/react-vis": "npm:1.11.7"
     "@types/styled-components": "npm:^5.1.32"
+    "@vis.gl/react-maplibre": "npm:8.1.1"
     classnames: "npm:^2.2.1"
     copy-to-clipboard: "npm:^3.3.1"
     d3-array: "npm:^2.8.0"
@@ -10392,11 +10393,11 @@ __metadata:
   linkType: hard
 
 "@types/mapbox-gl@npm:>=1.0.0":
-  version: 3.1.0
-  resolution: "@types/mapbox-gl@npm:3.1.0"
+  version: 3.4.1
+  resolution: "@types/mapbox-gl@npm:3.4.1"
   dependencies:
     "@types/geojson": "npm:*"
-  checksum: 10c0/952ff4cef4053d986c1b35b7137c84f3f86faaa6bfbb050fd919004114a78ff3a95d28a5325a2a34d24753d3e84c019a55f873891cb2b8d0467efede2f095a7d
+  checksum: 10c0/475f48063a39cc791a0efa099f4a62b84df56a52e1d111e32d11930fcee8e281f20b157f4069ff0ff4d5e13889ce9b452ca4a57e5c27c6d70a32fb3f5a184e72
   languageName: node
   linkType: hard
 
