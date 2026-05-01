@@ -122,7 +122,7 @@ test('exportUtils -> calculateExportImageSize', t => {
       ratio: EXPORT_IMG_RATIOS.SCREEN,
       resolution: '1920x1080'
     }),
-    {scale: undefined, imageW: 1920, imageH: 1080},
+    {zoomOffset: 0, scale: 1, imageW: 1920, imageH: 1080},
     'Should return fixed resolution 1920x1080'
   );
 
@@ -133,7 +133,7 @@ test('exportUtils -> calculateExportImageSize', t => {
       ratio: EXPORT_IMG_RATIOS.SCREEN,
       resolution: '1280x720'
     }),
-    {scale: undefined, imageW: 1280, imageH: 720},
+    {zoomOffset: 0, scale: 1, imageW: 1280, imageH: 720},
     'Should return fixed resolution 1280x720'
   );
 
@@ -144,7 +144,7 @@ test('exportUtils -> calculateExportImageSize', t => {
       ratio: EXPORT_IMG_RATIOS.SCREEN,
       resolution: '2560x1440'
     }),
-    {scale: undefined, imageW: 2560, imageH: 1440},
+    {zoomOffset: 0, scale: 1, imageW: 2560, imageH: 1440},
     'Should return fixed resolution 2560x1440'
   );
 
