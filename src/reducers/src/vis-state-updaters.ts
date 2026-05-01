@@ -3379,7 +3379,7 @@ export function setPolygonFilterAllLayersUpdater(
   const newFilter = generatePolygonFilter([], feature);
   const filterIdx = state.filters.length;
 
-  let newState: VisState = {
+  const newState: VisState = {
     ...state,
     filters: [...state.filters, newFilter],
     editor: {
@@ -3390,9 +3390,10 @@ export function setPolygonFilterAllLayersUpdater(
     }
   };
 
-  const allLayerIds = state.layers
-    .filter(l => l.config.isVisible)
-    .map(l => l.id);
+  const visibleLayerIds = get(payload, 'visibleLayerIds');
+  const allLayerIds = Array.isArray(visibleLayerIds)
+    ? visibleLayerIds
+    : state.layers.filter(l => l.config.isVisible).map(l => l.id);
 
   return setFilterUpdater(newState, {
     idx: filterIdx,
