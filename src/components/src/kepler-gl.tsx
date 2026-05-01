@@ -196,7 +196,9 @@ export const mapFieldsSelector = (props: KeplerGLProps, index = 0) => {
     bottomMapContainerProps: props.bottomMapContainerProps,
 
     // transformRequest for Mapbox basemaps
-    transformRequest: props.transformRequest
+    transformRequest: props.transformRequest,
+
+    RTLTextPlugin: props.RTLTextPlugin
   };
 };
 
@@ -466,6 +468,9 @@ type KeplerGLBasicProps = {
   bottomMapContainerProps?: object;
 
   transformRequest?: (url: string) => {url: string};
+
+  /** Pass `false` to disable the remote RTL text plugin, or a URL string to self-host it. */
+  RTLTextPlugin?: string | false;
 };
 
 type KeplerGLProps = KeplerGlState & KeplerGlActions & KeplerGLBasicProps;
