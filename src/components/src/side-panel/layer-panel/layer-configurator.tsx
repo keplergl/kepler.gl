@@ -37,6 +37,12 @@ import {matchDatasetType, Datasets} from '@kepler.gl/table';
 import {ColorUI, LayerVisConfig, NestedPartial} from '@kepler.gl/types';
 import {capitalizeFirstLetter} from '@kepler.gl/utils';
 
+const FLOW_RENDERING_MODE_LABELS: Record<string, string> = {
+  straight: 'Straight',
+  curved: 'Curved',
+  'animated-straight': 'Animated'
+};
+
 type LayerConfiguratorProps = {
   layer: Layer;
   datasets: Datasets;
@@ -1119,6 +1125,92 @@ export default function LayerConfiguratorFactory(
               {...visConfiguratorProps}
               property="transparent"
             />
+          </LayerConfigGroup>
+        </StyledLayerVisualConfigurator>
+      );
+    }
+
+    _renderFlowLayerConfig({layer, visConfiguratorProps}) {
+      const {visConfig} = layer.config;
+      const renderingModeOptions = (
+        layer.visConfigSettings.flowLinesRenderingMode?.options || []
+      ).map(mode => ({
+        id: mode,
+        label: FLOW_RENDERING_MODE_LABELS[mode] || mode
+      }));
+      const selectedRenderingMode = renderingModeOptions.find(
+        ({id}) => id === visConfig.flowLinesRenderingMode
+      );
+
+      return (
+        <StyledLayerVisualConfigurator>
+          <LayerConfigGroup label={'layer.color'} collapsible>
+            <LayerColorRangeSelector {...visConfiguratorProps} property="colorRange" />
+            <VisConfigSwitch
+              {...layer.visConfigSettings.darkBaseMapEnabled}
+              {...visConfiguratorProps}
+            />
+            <ConfigGroupCollapsibleContent>
+              <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
+            </ConfigGroupCollapsibleContent>
+          </LayerConfigGroup>
+          <LayerConfigGroup
+            {...visConfiguratorProps}
+            label={'layerVisConfigs.flow.fade'}
+            collapsible={false}
+            property="flowFadeEnabled"
+          >
+            <VisConfigSlider
+              {...layer.visConfigSettings.flowFadeAmount}
+              {...visConfiguratorProps}
+              disabled={!layer.config.visConfig.flowFadeEnabled}
+              label={false}
+            />
+          </LayerConfigGroup>
+          <LayerConfigGroup label={'layerVisConfigs.flow.display'} collapsible>
+            <SidePanelSection>
+              <PanelLabel>
+                <FormattedMessage id={'layerVisConfigs.flow.renderingMode'} />
+              </PanelLabel>
+              <ItemSelector
+                selectedItems={selectedRenderingMode}
+                options={renderingModeOptions}
+                displayOption="label"
+                getOptionValue="id"
+                multiSelect={false}
+                searchable={false}
+                onChange={value => visConfiguratorProps.onChange({flowLinesRenderingMode: value})}
+              />
+            </SidePanelSection>
+            <VisConfigSlider
+              {...layer.visConfigSettings.flowLineThicknessScale}
+              {...visConfiguratorProps}
+            />
+            {visConfig.flowLinesRenderingMode === 'curved' ? (
+              <VisConfigSlider
+                {...layer.visConfigSettings.flowLineCurviness}
+                {...visConfiguratorProps}
+              />
+            ) : null}
+            <VisConfigSwitch
+              {...layer.visConfigSettings.flowClusteringEnabled}
+              {...visConfiguratorProps}
+            />
+            <ConfigGroupCollapsibleContent>
+              <VisConfigSwitch
+                {...layer.visConfigSettings.flowLocationTotalsEnabled}
+                {...visConfiguratorProps}
+              />
+              <VisConfigSwitch
+                {...layer.visConfigSettings.flowAdaptiveScalesEnabled}
+                {...visConfiguratorProps}
+              />
+              <VisConfigSlider
+                {...layer.visConfigSettings.maxTopFlowsDisplayNum}
+                {...visConfiguratorProps}
+                label={'layerVisConfigs.flow.maxTopFlowsDisplayNum'}
+              />
+            </ConfigGroupCollapsibleContent>
           </LayerConfigGroup>
         </StyledLayerVisualConfigurator>
       );

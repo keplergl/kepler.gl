@@ -66,6 +66,7 @@ import sampleAnimateTrip, {
 import sampleIconCsv from './data/sample-icon-csv';
 import sampleGpsData from './data/sample-gps-data';
 import sampleRowData, {config as rowDataConfig} from './data/sample-row-data';
+import {sampleFlowData, config as flowDataConfig} from './data/sample-flow-data';
 import {processCsvData, processGeojson, processRowObject} from '@kepler.gl/processors';
 
 /* eslint-enable no-unused-vars */
@@ -603,6 +604,26 @@ const App = props => {
     );
   }, [dispatch]);
 
+  const _loadFlowData = useCallback(() => {
+    dispatch(
+      addDataToMap({
+        datasets: [
+          {
+            info: {
+              label: 'NYC Flow Data',
+              id: 'flow_data'
+            },
+            data: processCsvData(sampleFlowData)
+          }
+        ],
+        config: flowDataConfig,
+        options: {
+          keepExistingConfig: true
+        }
+      })
+    );
+  }, [dispatch]);
+
   const _loadSampleData = useCallback(() => {
     // _loadPointData();
     // _loadGeojsonData();
@@ -614,6 +635,7 @@ const App = props => {
     // _loadGpsData();
     // _loadRowData();
     // _loadVectorTileData();
+    // _loadFlowData();
     // _loadSyncedFilterWTripLayer();
     // _replaceSyncedFilterWTripLayer();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -629,6 +651,7 @@ const App = props => {
     _loadRowData,
     _replaceData,
     _loadVectorTileData,
+    _loadFlowData,
     _loadSyncedFilterWTripLayer,
     _replaceSyncedFilterWTripLayer
   ]);

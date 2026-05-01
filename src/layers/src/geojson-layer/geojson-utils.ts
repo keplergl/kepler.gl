@@ -10,7 +10,7 @@ import center from '@turf/center';
 import {AllGeoJSON} from '@turf/helpers';
 import {parseSync} from '@loaders.gl/core';
 import {WKBLoader, WKTLoader} from '@loaders.gl/wkt';
-import {binaryToGeometry} from '@loaders.gl/gis';
+import {convertBinaryGeometryToGeometry} from '@loaders.gl/gis';
 import {BinaryFeatureCollection} from '@loaders.gl/schema';
 import {DataContainerInterface, getSampleData} from '@kepler.gl/utils';
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
@@ -67,7 +67,7 @@ export function parseGeoJsonRawFeature(rawFeature: unknown): Feature | null {
             );
       const binaryGeo = parseSync(binaryInput as ArrayBuffer, WKBLoader);
       // @ts-expect-error loaders.gl binary type to GeoJSON geometry
-      const parsedGeo = binaryToGeometry(binaryGeo);
+      const parsedGeo = convertBinaryGeometryToGeometry(binaryGeo);
       const normalized = normalize(parsedGeo);
       if (!normalized || !Array.isArray(normalized.features) || !normalized.features.length) {
         return null;
@@ -81,7 +81,7 @@ export function parseGeoJsonRawFeature(rawFeature: unknown): Feature | null {
     // Support GeoJson feature as object
     // probably need to normalize it as well
     const normalized = normalize(rawFeature);
-    if (!normalized || !Array.isArray(normalized.features)) {
+    if (!normalized || !Array.isArray(normalized.features) || !normalized.features.length) {
       // fail to normalize GeoJson
       return null;
     }
@@ -140,7 +140,7 @@ export function getGeojsonLayerMeta({
       try {
         // TODO: use line interpolate to get center of line for LineString
         const cent = center(feature as AllGeoJSON);
-        meanCenters.push(cent.geometry.coordinates);
+        meanCenters.push(cent?.geometry?.coordinates ?? null);
       } catch (e) {
         meanCenters.push(null);
       }
@@ -264,7 +264,7 @@ function parseGeometryFromString(geoString: string): Feature | null {
       const buffer = Buffer.from(geoString, 'hex');
       const binaryGeo = parseSync(buffer, WKBLoader);
       // @ts-expect-error
-      parsedGeo = binaryToGeometry(binaryGeo);
+      parsedGeo = convertBinaryGeometryToGeometry(binaryGeo);
     } catch (e) {
       return null;
     }
@@ -476,11 +476,15 @@ export function applyFiltersToTableColumns(
   const filteredIndexSet = new Set(filteredIndex);
   const filteredFeatures: GeojsonDataMaps = [];
   for (const feature of dataToFeature) {
+    // @ts-expect-error geometry.coordinates not available for BinaryFeatureCollection
+    if (!feature || !feature.geometry || !feature.geometry.coordinates) {
+      continue;
+    }
     // @ts-expect-error geometry.coordinates not available for GeometryCollection
     const filteredCoords = feature.geometry.coordinates.filter(c =>
       filteredIndexSet.has(c.datumIndex)
     );
-    if (filteredCoords.length > 0 && feature) {
+    if (filteredCoords.length > 0) {
       filteredFeatures.push({
         ...feature,
         geometry: {

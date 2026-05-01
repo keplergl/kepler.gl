@@ -14,10 +14,10 @@ import {
   _deepEqual as deepEqual
 } from '@deck.gl/core';
 import {BitmapLayer} from '@deck.gl/layers';
-import {ImageSource, createImageSource} from '@loaders.gl/wms';
+import {ImageSource, WMSImageSource} from '@loaders.gl/wms';
 
 import type {ImageSourceMetadata} from '@loaders.gl/loader-utils';
-import type {ImageType, ImageServiceType} from '@loaders.gl/wms';
+import type {ImageType} from '@loaders.gl/wms';
 
 // TODO: This is a modified copy of WMSLayer from deck.gl. Remove this once we upgrade deck.gl and loaders.gl.
 
@@ -27,7 +27,7 @@ export type WMSLayerProps = CompositeLayerProps & _WMSLayerProps;
 /** Props added by the TileLayer */
 type _WMSLayerProps = {
   data: string | ImageSource;
-  serviceType?: ImageServiceType | 'auto';
+  serviceType?: string | 'auto';
   layers?: string[];
   srs?: 'EPSG:4326' | 'EPSG:3857' | 'auto';
   transparent?: boolean;
@@ -167,10 +167,8 @@ export default class WMSLayer extends CompositeLayer<Required<_WMSLayerProps>> {
     }
 
     if (typeof props.data === 'string') {
-      return createImageSource({
-        url: props.data,
-        loadOptions: props.loadOptions,
-        type: props.serviceType
+      return new WMSImageSource(props.data, {
+        loadOptions: props.loadOptions
       });
     }
 

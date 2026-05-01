@@ -30,10 +30,12 @@ export function patchPipelineValidation(): void {
   if (_patched) return;
   _patched = true;
 
+  // @ts-ignore _getLinkStatus is an internal luma.gl API that may change between versions
   if (!WEBGLRenderPipeline?.prototype?._getLinkStatus) {
     return;
   }
 
+  // @ts-ignore patching internal luma.gl method
   WEBGLRenderPipeline.prototype._getLinkStatus = function (
     this: WEBGLRenderPipeline & {linkStatus: string}
   ) {

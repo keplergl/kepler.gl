@@ -1649,7 +1649,7 @@ export const POSTPROCESSING_EFFECTS: {[key: string]: EffectDescription} = {
     description: 'effectDescription.surfaceFog',
     parameters: [
       {name: 'density', defaultValue: 0.6, min: 0, max: 1},
-      {name: 'height', label: 'Elevation (m)', defaultValue: 50, min: -200, max: 3000},
+      {name: 'height', label: 'Elevation (m)', defaultValue: 50, min: -200, max: 6000},
       {
         name: 'animateHeight',
         type: 'checkbox',
@@ -1660,7 +1660,7 @@ export const POSTPROCESSING_EFFECTS: {[key: string]: EffectDescription} = {
         min: 0,
         max: 1
       },
-      {name: 'heightEnd', label: 'End Elevation (m)', defaultValue: 100, min: -200, max: 3000},
+      {name: 'heightEnd', label: 'End Elevation (m)', defaultValue: 100, min: -200, max: 6000},
       {
         name: 'linearEasing',
         type: 'checkbox',

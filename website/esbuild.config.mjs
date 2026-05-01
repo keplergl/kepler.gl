@@ -6,7 +6,7 @@ import { replace } from 'esbuild-plugin-replace';
 import process from 'node:process';
 import { join } from 'node:path';
 import { spawn } from 'node:child_process';
-import WebsitePackage from '../package.json' assert {type: 'json'};
+import WebsitePackage from '../package.json' with {type: 'json'};
 
 const args = process.argv;
 const LIB_DIR = '../';

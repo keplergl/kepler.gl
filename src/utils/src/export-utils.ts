@@ -63,9 +63,11 @@ export function calculateExportImageSize({
   const {width: imageW, height: imageH} = ratioItem.getSize(scaledWidth, scaledHeight);
 
   const {scale} = ratioItem.id === EXPORT_IMG_RATIOS.CUSTOM ? {scale: undefined} : resolutionItem;
+  const resolvedScale = scale ?? 1;
 
   return {
-    scale,
+    zoomOffset: Math.log2(resolvedScale) || 0,
+    scale: resolvedScale,
     imageW,
     imageH
   };

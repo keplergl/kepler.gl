@@ -160,6 +160,18 @@ Examples of supported WMS Tiles:
 
 For step-by-step instructions, see [WMS Layer — How to add](./o-wms-layer.md).
 
+## Flow Layer (experimental)
+
+Flow layers visualize movement between locations as aggregated origin-destination flows. They are useful for displaying migration patterns, commute data, trade routes, and any dataset that represents movement between geographic points.
+
+The layer automatically clusters nearby locations at different zoom levels, draws flow lines proportional to magnitude, and renders location totals as circles. It supports two column modes: **Lat/Lng** (source/target coordinates) and **H3** (source/target H3 hexagonal indices). An optional count column controls flow magnitude.
+
+- This feature is experimental and currently enabled by default via `enableFlowLayer: true` in the application configuration.
+
+Layer Attributes: Color Range, Opacity, Animation, Curved Lines, Adaptive Scales, Fade, Fade Amount, Clustering, Location Totals, Max Top Flows, Dark Base Map
+
+For detailed instructions, see [Flow Layer](./q-flow-layer.md).
+
 ## 3D Tile Layer (experimental)
 
 3D Tile layers render photogrammetry meshes, buildings, terrain and other 3D content served as OGC 3D Tiles or I3S tilesets. The layer streams and renders tiles based on the current viewport and camera position, loading detail on demand.

@@ -196,7 +196,7 @@ export default function SurfaceFogElevationSectionFactory(
       if (!heightDesc || !heightEndDesc) return null;
 
       const rangeMin = heightDesc.min ?? -200;
-      const rangeMax = heightDesc.max ?? 3000;
+      const rangeMax = heightDesc.max ?? 6000;
       const rangeSpan = rangeMax - rangeMin;
       const step = rangeSpan > 10 ? 1 : 0.001;
 

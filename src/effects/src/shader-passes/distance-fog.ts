@@ -3,7 +3,7 @@
 
 import {ClipSpace} from '@luma.gl/engine';
 import type {ShaderModule} from '@luma.gl/shadertools';
-import {patchTileViewportIds} from '../tile-viewport-fix';
+import {patchTileViewportIds, resetDepthRange} from '../tile-viewport-fix';
 
 export type DistanceFogProps = {
   density: number;
@@ -84,12 +84,13 @@ void main() {
     return;
   }
 
-  // Porter-Duff source-over for correct compositing over transparent basemap pixels.
+  // Composite fog over the scene. Transparent pixels (basemap gaps) are treated
+  // as if they already contain the fog color, so we un-premultiply, blend in
+  // straight RGB space, then re-premultiply for the framebuffer.
   vec3 baseRgb = color.a > 0.001 ? color.rgb / color.a : fogColor;
-  vec3 blended = mix(baseRgb, fogColor, fogFactor);
-  vec3 outRgb = blended * fogFactor + color.rgb * (1.0 - fogFactor);
+  vec3 straightRgb = mix(baseRgb, fogColor, fogFactor);
   float outAlpha = fogFactor + color.a * (1.0 - fogFactor);
-  fragColor = vec4(outRgb, outAlpha);
+  fragColor = vec4(straightRgb * outAlpha, outAlpha);
 }
 `;
 
@@ -206,6 +207,7 @@ export class DeckDistanceFogEffect {
     if (this.isExportMode && opts) {
       this._unpatchViewports = patchTileViewportIds(opts);
     }
+    resetDepthRange(this.model);
   }
 
   postRender(params: any): any {

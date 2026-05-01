@@ -473,7 +473,7 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
               mvt: {
                 metadataUrl: datasetMetadata?.tilesetMetadataUrl ?? null,
                 loadOptions: {
-                  fetch: transformFetch
+                  core: {fetch: transformFetch}
                 }
               }
             })

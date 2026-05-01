@@ -26,7 +26,8 @@ export default {
     selectType: 'Selecciona un Tipo',
     selectValue: 'Selecciona un Valor',
     enterValue: 'Entra un valor',
-    empty: 'vacio'
+    empty: 'vacio',
+    selectLayer: 'Selecciona una capa'
   },
   misc: {
     by: '',
@@ -53,9 +54,12 @@ export default {
       labelWithId: 'Etiqueta {labelId}',
       fontSize: 'Tamaño de fuente',
       fontColor: 'Color de fuente',
+      backgroundColor: 'Color de fondo',
       textAnchor: 'Anclaje del texto',
       alignment: 'Alineación',
-      addMoreLabel: 'Añadir más etiquetas'
+      addMoreLabel: 'Añadir más etiquetas',
+      outlineWidth: 'Ancho del contorno',
+      outlineColor: 'Color del contorno'
     }
   },
   sidebar: {
@@ -64,10 +68,15 @@ export default {
       filter: 'Filtros',
       interaction: 'Interacciones',
       basemap: 'Mapa base'
+    },
+    panelViewToggle: {
+      list: 'Ver Lista',
+      byDataset: 'Ver por Conjunto de datos'
     }
   },
   layer: {
     required: 'Requerido*',
+    columnModesSeparator: 'O',
     radius: 'Radio',
     color: 'Color',
     fillColor: 'Color de relleno',
@@ -87,6 +96,10 @@ export default {
     aggregateBy: '{field} agregado por',
     '3DModel': 'Modelo 3D',
     '3DModelOptions': 'Opciones del modelo 3D',
+    service: 'Servicio',
+    layer: 'Capa',
+    appearance: 'Apariencia',
+    uniqueIdField: 'Campo ID único',
     type: {
       point: 'punto',
       arc: 'arco',
@@ -102,10 +115,19 @@ export default {
       hexagonid: 'H3',
       trip: 'viaje',
       s2: 'S2',
-      '3d': '3D'
+      '3d': '3D',
+      flow: 'flow',
+      vectortile: 'mosaico vectorial',
+      rastertile: 'mosaico ráster',
+      wms: 'WMS',
+      tile3d: 'mosaico 3D'
+    },
+    wms: {
+      hover: 'Valor:'
     },
     layerUpdateError:
       'Se produjo un error durante la actualización de la capa: {errorMessage}. Asegúrese de que el formato de los datos de entrada sea válido.',
+    interaction: 'Interacción',
     heatmap: 'Heatmap',
     aggregation: 'Aggregation'
   },
@@ -123,6 +145,7 @@ export default {
     billboardDescription: 'Oriente la geometría hacia la cámara',
     fadeTrail: 'Sendero de desvanecimiento',
     opacity: 'Opacidad',
+    pointSize: 'Tamaño del punto',
     coverage: 'Cobertura',
     outline: 'Contorno',
     colorRange: 'Rango de color',
@@ -161,12 +184,35 @@ export default {
     fixedHeightDescription: 'Usar altura sin modificaciones',
     allowHover: 'Mostrar descripción emergente',
     allowHoverDescription:
-      'Mostrar u ocultar información emergente al pasar el cursor sobre las características de la capa'
+      'Mostrar u ocultar información emergente al pasar el cursor sobre las características de la capa',
+    flow: {
+      fade: 'Desvanecimiento',
+      fadeEnabled: 'Desvanecimiento',
+      fadeAmount: 'Cantidad de desvanecimiento',
+      display: 'Visualización',
+      renderingMode: 'Estilo de línea',
+      renderingModes: {
+        straight: 'Recta',
+        curved: 'Curva',
+        'animated-straight': 'Animada'
+      },
+      adaptiveScalesEnabled: 'Escalas adaptativas',
+      clusteringEnabled: 'Agrupación',
+      lineThicknessScale: 'Grosor de línea',
+      lineCurviness: 'Curvatura',
+      locationTotalsEnabled: 'Totales de ubicación',
+      maxTopFlowsDisplayNum: 'Máx. flujos principales'
+    },
+    showNeighborOnHover: 'Resaltar vecinos al pasar el cursor',
+    showHighlightColor: 'Mostrar color de resaltado',
+    darkModeEnabled: 'Mapa base oscuro',
+    transparentBackground: 'Fondo transparente'
   },
   layerManager: {
     addData: 'Añadir datos',
     addLayer: 'Añadir capa',
-    layerBlending: 'Combinar capas'
+    layerBlending: 'Combinar capas',
+    overlayBlending: 'Combinación de superposición'
   },
   mapManager: {
     mapStyle: 'Estilo de mapa',
@@ -174,19 +220,76 @@ export default {
     '3dBuildingColor': 'Color edificios 3D',
     backgroundColor: 'Color de fondo'
   },
+  effectManager: {
+    effects: 'Efectos',
+    addEffect: 'Añadir efecto',
+    pickDateTime: 'Seleccionar fecha/hora',
+    currentTime: 'Hora actual',
+    pickCurrrentTime: 'Seleccionar hora actual',
+    date: 'Fecha',
+    time: 'Hora',
+    timezone: 'Zona horaria'
+  },
+  effectDescription: {
+    lightAndShadow:
+      'Simula iluminación solar realista y proyección de sombras basada en la hora del día y la ubicación geográfica. Intensidad de sombra, colores de luz solar y ambiental ajustables.',
+    ink: 'Aplica un estilo artístico de tinta que oscurece los bordes y crea una apariencia dibujada a mano. Ajusta la intensidad para controlar el efecto.',
+    brightnessContrast:
+      'Ajusta el brillo y contraste generales del mapa. Usa valores positivos para aumentar el brillo o el contraste, valores negativos para oscurecer o aplanar la imagen.',
+    hueSaturation:
+      'Cambia el tono de color y ajusta la saturación en todo el mapa. Útil para crear temas de color o desaturar la vista.',
+    vibrance:
+      'Aumenta selectivamente la intensidad de los colores apagados sin sobresaturar los ya vivos. Produce una mejora de color más natural que la saturación.',
+    sepia:
+      'Aplica un tono marrón cálido reminiscente de fotografías antiguas. Controla la cantidad para mezclar entre los colores originales y el aspecto sepia.',
+    dotScreen:
+      'Convierte la imagen en un patrón de puntos monocromos, similar a la impresión de semitonos de periódico. Ajusta el ángulo, el tamaño de los puntos y la posición central.',
+    colorHalftone:
+      'Simula la impresión de semitonos de color CMYK con patrones de puntos separados para cada canal de color. Controla el ángulo, el tamaño de los puntos y la posición central.',
+    noise:
+      'Añade ruido aleatorio estilo grano de película al mapa. Útil para una estética texturizada y analógica o para reducir el banding de color.',
+    triangleBlur:
+      'Aplica un desenfoque suave de tipo gaussiano uniformemente en el mapa. Controla el radio de desenfoque para ajustar el nivel de suavidad.',
+    zoomBlur:
+      'Crea un desenfoque de movimiento radial que emana de un punto central, simulando un zoom de cámara. Ajusta la intensidad y la posición central.',
+    tiltShift:
+      'Simula un efecto de lente tilt-shift que desenfoca las áreas fuera de una banda focal, creando un aspecto de maqueta en miniatura. Establece la banda focal con posiciones de inicio/fin.',
+    edgeWork:
+      'Resalta los bordes estructurales de la imagen usando un estilo artístico de dibujo al carbón. Ajusta el radio de detección para controlar el grosor de la línea.',
+    vignette:
+      'Oscurece las esquinas y bordes del mapa, dirigiendo la atención hacia el centro. Controla la cantidad de oscurecimiento y el radio del área clara.',
+    magnify:
+      'Crea una superposición de lupa circular en una posición configurable. Ajusta el tamaño, el nivel de zoom y el ancho del borde.',
+    hexagonalPixelate:
+      'Reemplaza la imagen con una cuadrícula de mosaicos hexagonales, cada uno relleno con el color promedio del área que cubre. Ajusta la escala del mosaico.',
+    distanceFog:
+      'Desvanece los objetos distantes en un color de niebla basado en su profundidad desde la cámara, mejorando la sensación de profundidad. Controla la densidad, la distancia de inicio, el rango y el color de la niebla.',
+    surfaceFog:
+      'Renderiza una capa de niebla a una elevación específica sobre la superficie del terreno. Ajusta la elevación, el grosor de transición, la densidad, el color y un patrón de ruido opcional.'
+  },
   layerConfiguration: {
     defaultDescription: 'Calcular {property} según el campo seleccionado',
-    howTo: 'How to'
+    howTo: 'Cómo funciona',
+    showColorChart: 'Mostrar gráfico de colores',
+    hideColorChart: 'Ocultar gráfico de colores'
   },
   filterManager: {
-    addFilter: 'Añadir filtro'
+    addFilter: 'Añadir filtro',
+    timeFilterSync: 'Conjuntos sincronizados',
+    timeLayerSync: 'Vincular con la línea de tiempo de la capa',
+    timeLayerUnsync: 'Desvincular de la línea de tiempo de la capa',
+    column: 'Columna'
   },
   datasetTitle: {
     showDataTable: 'Mostar la tabla de datos',
     removeDataset: 'Eliminar conjunto de datos'
   },
   datasetInfo: {
-    rowCount: '{rowCount} files'
+    rowCount: '{rowCount} filas',
+    vectorTile: 'Mosaico vectorial',
+    rasterTile: 'Mosaico ráster',
+    wmsTile: 'Mosaico WMS',
+    tile3d: 'Mosaico 3D'
   },
   tooltip: {
     hideLayer: 'Ocultar la capa',
@@ -196,6 +299,8 @@ export default {
     hide: 'Ocultar',
     show: 'Mostrar',
     removeLayer: 'Eliminar capa',
+    duplicateLayer: 'Duplicar capa',
+    zoomToLayer: 'Zoom a la capa',
     resetAfterError: 'Intente habilitar la capa después de un error',
     layerSettings: 'Configuración de capa',
     closePanel: 'Cerrar el panel actual',
@@ -210,8 +315,10 @@ export default {
     showLayerPanel: 'Mostrar la tabla  de capas',
     moveToTop: 'Desplazar arriba de las capas de datos',
     selectBaseMapStyle: 'Seleccionar estilo de mapa base',
+    removeBaseMapStyle: 'Eliminar estilo de mapa base',
     delete: 'Borrar',
     timePlayback: 'Reproducción de tiempo',
+    timeFilterSync: 'Sincronizar con una columna de otro conjunto de datos',
     cloudStorage: 'Almacenaje en la nube',
     '3DMap': 'Mapa 3D',
     animationByWindow: 'Ventana Temporal Móvil',
@@ -220,12 +327,22 @@ export default {
     play: 'iniciar',
     pause: 'pausar',
     reset: 'reiniciar',
-    export: 'exportar'
+    export: 'exportar',
+    timeLayerSync: 'Vincular con la línea de tiempo de la capa',
+    timeLayerUnsync: 'Desvincular de la línea de tiempo de la capa',
+    syncTimelineStart: 'Inicio del período de tiempo del filtro actual',
+    syncTimelineEnd: 'Fin del período de tiempo del filtro actual',
+    showEffectPanel: 'Mostrar panel de efectos',
+    hideEffectPanel: 'Ocultar panel de efectos',
+    removeEffect: 'Eliminar efecto',
+    disableEffect: 'Desactivar efecto',
+    effectSettings: 'Configuración de efecto'
   },
   toolbar: {
     exportImage: 'Exportar imagen',
     exportData: 'Exportar datos',
     exportMap: 'Exportar mapa',
+    exportVideo: 'Exportar Vídeo',
     shareMapURL: 'Compartir el enlace del mapa',
     saveMap: 'Guardar mapa',
     select: 'selecciona',
@@ -235,6 +352,16 @@ export default {
     show: 'mostrar',
     ...LOCALES
   },
+  editor: {
+    filterLayer: 'Filtrar capas',
+    filterLayerDisabled: 'Las geometrías no poligonales no se pueden usar para filtrar',
+    copyGeometry: 'Copiar geometría',
+    noLayersToFilter: 'No hay capas para filtrar'
+  },
+  exportVideoModal: {
+    animation: 'Animación',
+    settings: 'Configuración'
+  },
   modal: {
     title: {
       deleteDataset: 'Borrar conjunto de datos',
@@ -242,6 +369,7 @@ export default {
       exportImage: 'Exportar imagen',
       exportData: 'Exportar datos',
       exportMap: 'Exportar mapa',
+      exportVideo: 'Exportar Vídeo',
       addCustomMapboxStyle: 'Añadir estilo de Mapbox propio',
       saveMap: 'Guardar mapa',
       shareURL: 'Compartir enlace'
@@ -268,6 +396,10 @@ export default {
       mapLegendTitle: 'Leyenda del mapa',
       mapLegendAdd: 'Añadir leyenda al mapa'
     },
+    exportVideo: {
+      animation: 'Animación',
+      settings: 'Configuración'
+    },
     exportData: {
       datasetTitle: 'Conjunto de datos',
       datasetSubtitle: 'Escoger los conjuntos de datos a exportar',
@@ -279,7 +411,9 @@ export default {
       filteredData: 'Datos filtrados',
       unfilteredData: 'Datos sin filtrar',
       fileCount: '{fileCount} Archivos',
-      rowCount: '{rowCount} Files'
+      rowCount: '{rowCount} Filas',
+      tiledDatasetWarning:
+        '* La exportación de datos para conjuntos de datos en mosaico no es compatible'
     },
     deleteData: {
       warning: 'estás a punto de borrar este conjunto de datos. Afectará a {length} capas'
@@ -296,11 +430,15 @@ export default {
         'aquí. *kepler.gl es una aplicación cliente, los datos quedan en tu navegador..',
       exampleToken: 'p.e. pk.abcdefg.xxxxxx',
       pasteTitle: '2. Engancha el enlace del estilo',
+      pasteSubtitle0: 'La URL del estilo puede ser de Mapbox',
       pasteSubtitle1: 'Qué es un',
       pasteSubtitle2: 'enlace del estilo',
+      pasteSubtitle3: 'o un style.json que use la',
+      pasteSubtitle4: 'especificación de estilos de Mapbox GL',
       namingTitle: '3. Poner nombre a tu estilo'
     },
     shareMap: {
+      title: 'Compartir mapa',
       shareUriTitle: 'Compartir el enlace del mapa',
       shareUriSubtitle: 'Generar un enlace del mapa para compartir con otros',
       cloudTitle: 'Almacenage en la nube',
@@ -328,6 +466,8 @@ export default {
         tokenPlaceholder: 'Enganchar tu token de acceso a Mapbox',
         tokenMisuseWarning:
           '* Si no proporcionas tu propio token, el mapa podría fallar en cualquier momento cuando reemplacemos nuestro token para evitar abusos. ',
+        tokenSecurityWarning:
+          '* Advertencia: su token de Mapbox se incrustará en el archivo HTML exportado. Cualquier persona con acceso a este archivo podrá ver y usar su token. Utilice un token con restricciones de URL cuando sea posible. ',
         tokenDisclaimer:
           'Puedes cambiar el token de Mapbox posteriormente utilizando estas instrucciones: ',
         tokenUpdate: 'Como actualitzar un token preexistente.',
@@ -354,15 +494,19 @@ export default {
     },
     loadData: {
       upload: 'Cargar archivos',
+      tileset: 'Conjunto de mosaico',
       storage: 'Cargar desde almacenage'
     },
     tripInfo: {
       title: 'Como habilitar la animación de viaje',
+      titleTable: 'Crear viajes a partir de una lista de puntos',
       description1:
         'Para animar la ruta, los datos geoJSON han de contener `LineString` en su geometría y las coordenadas de LineString deben tener 4 elementos en los formats de ',
       code: ' [longitude, latitude, altitude, timestamp] ',
       description2:
         'y el último elemento debe ser la marca del tiempo. Los formatos válidos para la marca de tiempo incluyen Unix en segundos como `1564184363` o en milisegundos como `1564184363000`.',
+      descriptionTable1:
+        'Los viajes se pueden crear uniendo una lista de puntos de latitud y longitud, ordenando por marcas de tiempo y agrupando por identificadores únicos.',
       example: 'Ejemplo:'
     },
     iconInfo: {
@@ -373,6 +517,20 @@ export default {
       description2: ' kepler.gl automáticamente creará una capa de ícono.',
       example: 'Ejemplo:',
       icons: 'Iconos'
+    },
+    polygonInfo: {
+      title: 'Crear capa de polígonos a partir de características GeoJSON',
+      titleTable: 'Crear ruta a partir de puntos',
+      descriptionTable: `Las rutas se pueden crear uniendo una lista de puntos de latitud y longitud, ordenando por un campo de índice (p.ej. marca de tiempo) y agrupando por identificadores únicos.
+
+  ### Columnas de la capa:
+  - **id**: - *obligatorio*&nbsp;- Una columna \`id\` se usa para agrupar puntos. Los puntos con el mismo id se unirán en una sola ruta.
+  - **lat**: - *obligatorio*&nbsp;- La latitud del punto
+  - **lon**: - *obligatorio*&nbsp;- La longitud del punto
+  - **alt**: - *opcional*&nbsp;- La altitud del punto
+  - **sort by**: - *opcional*&nbsp;- Una columna \`sort by\` se usa para ordenar los puntos; si no se especifica, los puntos se ordenarán por índice de fila.
+`,
+      exampleTable: 'Example CSV'
     },
     storageMapViewer: {
       lastModified: 'Última modificación hace {lastUpdated}',
@@ -386,7 +544,9 @@ export default {
       back: 'Atrás',
       goToPage: 'Ves a la página {displayName} de Kepler.gl',
       storageMaps: 'Almancenage / Mapas',
-      noSavedMaps: 'No hay ningún mapa guardado todavía'
+      noSavedMaps: 'No hay ningún mapa guardado todavía',
+      foursquareStorageMessage:
+        'Solo se muestran aquí los mapas guardados con la opción Kepler.gl > Guardar > Almacenamiento de Foursquare'
     }
   },
   header: {
@@ -405,13 +565,29 @@ export default {
     normal: 'normal',
     subtractive: 'substractiva'
   },
+  overlayBlending: {
+    title: 'Combinación de superposición del mapa',
+    description: 'Combinar capas con el mapa base para que ambos sean visibles.',
+    screen: 'mapa base oscuro',
+    normal: 'normal',
+    darken: 'mapa base claro'
+  },
   columns: {
     title: 'Columnas',
     lat: 'lat',
     lng: 'lon',
     altitude: 'altura',
+    alt: 'altitud',
+    id: 'id',
+    timestamp: 'tiempo',
     icon: 'ícono',
     geojson: 'geojson',
+    geoarrow: 'geoarrow',
+    geoarrow0: 'geoarrow origen',
+    geoarrow1: 'geoarrow destino',
+    token: 'token',
+    sortBy: 'ordenar por',
+    neighbors: 'vecinos',
     arc: {
       lat0: 'lat origen',
       lng0: 'lng origen ',
@@ -428,18 +604,39 @@ export default {
     hexagon: {
       worldUnitSize: 'Radio de hexágono (km)'
     },
-    hex_id: 'id hex'
+    hex_id: 'id hex',
+    flow: {
+      source: {
+        lat: 'lat origen',
+        lng: 'lng origen',
+        name: 'nombre origen',
+        h3: 'H3 origen'
+      },
+      target: {
+        lat: 'lat destino',
+        lng: 'lng destino',
+        name: 'nombre destino',
+        h3: 'H3 destino'
+      },
+      count: 'cantidad'
+    }
   },
   color: {
     customPalette: 'Paleta personalizada',
     steps: 'pasos',
     type: 'tipo',
-    reversed: 'invertida'
+    colorBlindSafe: 'Seguro para daltónicos',
+    reversed: 'invertida',
+    disableStepReason:
+      'No se puede cambiar el número de pasos con cortes de color personalizados, use la paleta personalizada para editar los pasos',
+    preset: 'Colores predefinidos',
+    picker: 'Selector de color'
   },
   scale: {
     colorScale: 'Escala de color',
     sizeScale: 'Escala de medidas',
     strokeScale: 'Escala de trazo',
+    strokeColorScale: 'Escala de color de trazo',
     scale: 'Escala'
   },
   fileUploader: {
@@ -455,6 +652,11 @@ export default {
     uploading: 'Cargando',
     fileNotSupported: 'El archivo {errorFiles} no es compatible.',
     or: 'o'
+  },
+  tilesetSetup: {
+    header: 'Configurar mosaicos vectoriales',
+    rasterTileHeader: 'Configurar mosaicos ráster',
+    addTilesetText: 'Añadir conjunto de mosaico'
   },
   geocoder: {
     title: 'Introduce una dirección'
@@ -478,5 +680,42 @@ export default {
   'Bug Report': 'Informe de errores',
   'User Guide': 'Guía de usuario',
   Save: 'Guadar',
-  Share: 'Compartir'
+  Share: 'Compartir',
+  flow: {
+    tooltip: {
+      location: {
+        name: 'Nombre',
+        incomingCount: 'Entrantes',
+        outgoingCount: 'Salientes',
+        internalCount: 'Internos'
+      },
+      flow: {
+        sourceName: 'Origen',
+        targetName: 'Destino',
+        count: 'Cantidad'
+      }
+    }
+  },
+  mapLegend: {
+    layers: {
+      line: {
+        singleColor: {
+          sourceColor: 'Origen',
+          targetColor: 'Destino'
+        }
+      },
+      arc: {
+        singleColor: {
+          sourceColor: 'Origen',
+          targetColor: 'Destino'
+        }
+      },
+      default: {
+        singleColor: {
+          color: 'Color de relleno',
+          strokeColor: 'Contorno'
+        }
+      }
+    }
+  }
 };

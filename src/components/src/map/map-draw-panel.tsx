@@ -46,10 +46,12 @@ function MapDrawPanelFactory(
       actionIcons = defaultActionIcons
     }) => {
       const isActive = mapControls?.mapDraw?.active;
-      const onToggleMenuPanel = useCallback(
-        () => onToggleMapControl('mapDraw'),
-        [onToggleMapControl]
-      );
+      const onToggleMenuPanel = useCallback(() => {
+        if (!isActive) {
+          onSetEditorMode(EDITOR_MODES.DRAW_RECTANGLE);
+        }
+        onToggleMapControl('mapDraw');
+      }, [isActive, onToggleMapControl, onSetEditorMode]);
       if (!mapControls?.mapDraw?.show) {
         return null;
       }

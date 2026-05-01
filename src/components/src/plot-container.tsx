@@ -4,7 +4,6 @@
 // libraries
 import React, {useRef, useEffect, useState, useCallback, useMemo} from 'react';
 import styled from 'styled-components';
-import {Map} from 'react-map-gl';
 import debounce from 'lodash/debounce';
 import {
   exportImageError,
@@ -313,11 +312,13 @@ export default function PlotContainerFactory(
 
     // Memoize map state
     const newMapState = useMemo(() => {
+      const zoomOffset = Math.log2(scale) || 0;
       const baseMapState = {
         ...mapState,
         width,
         height,
-        zoom: mapState.zoom + (Math.log2(scale) || 0)
+        zoom: mapState.zoom + zoomOffset,
+        zoomOffset
       };
 
       if (center) {
@@ -355,7 +356,6 @@ export default function PlotContainerFactory(
             settings: mapFields.mapControls?.mapLegend?.settings
           }
         },
-        MapComponent: Map,
         onMapRender,
         isExport: true,
         deckGlProps: {

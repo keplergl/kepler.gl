@@ -203,7 +203,6 @@ export default class ClusterLayer extends CompositeLayer {
       this.props
     );
     if (obj?.object) {
-      // @ts-expect-error
       const distanceScale = getDistanceScales(this.context.viewport);
       const metersPerPixel = distanceScale.metersPerPixel[0];
       obj.object.scaledRadiusValue = obj.object.scaledRadiusValue * metersPerPixel;
@@ -236,7 +235,6 @@ export default class ClusterLayer extends CompositeLayer {
     const updateTriggers = this._getSublayerUpdateTriggers();
     const accessors = this._getSubLayerAccessors();
 
-    // @ts-expect-error
     const distanceScale = getDistanceScales(this.context.viewport);
     const metersPerPixel = distanceScale.metersPerPixel[0];
 

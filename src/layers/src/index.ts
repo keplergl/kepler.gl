@@ -38,6 +38,7 @@ export {
 } from './trip-layer/trip-utils';
 import {default as S2GeometryLayer} from './s2-geometry-layer/s2-geometry-layer';
 export {defaultElevation as s2DefaultElevation} from './s2-geometry-layer/s2-geometry-layer';
+import {default as FlowLayer} from './flow-layer/flow-layer';
 export {getS2Center} from './s2-geometry-layer/s2-utils';
 export {default as AggregationLayer} from './aggregation-layer';
 import {default as VectorTileLayer} from './vector-tile/vector-tile-layer';
@@ -96,6 +97,7 @@ export const KeplerGlLayers = {
   ScenegraphLayer,
   TripLayer,
   S2GeometryLayer,
+  FlowLayer,
   VectorTileLayer,
   RasterTileLayer,
   WMSLayer,
@@ -117,6 +119,7 @@ export const LayerClasses = {
   [LAYER_TYPES['3D']]: ScenegraphLayer,
   [LAYER_TYPES.trip]: TripLayer,
   [LAYER_TYPES.s2]: S2GeometryLayer,
+  [LAYER_TYPES.flow]: FlowLayer,
   [LAYER_TYPES['vectorTile']]: VectorTileLayer,
   [LAYER_TYPES['rasterTile']]: RasterTileLayer,
   [LAYER_TYPES.wms]: WMSLayer,

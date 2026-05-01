@@ -14,7 +14,7 @@ import {
   mapFieldsSelector,
   MapViewStateContextProvider
 } from '@kepler.gl/components';
-// import {Map} from 'react-map-gl'; // see other TODO below
+// import {Map} from 'react-map-gl/mapbox-legacy'; // see other TODO below
 import {gl, InteractionTestRunner} from '@deck.gl/test-utils';
 
 import {Provider} from 'react-redux';
