@@ -509,7 +509,7 @@ export function mergeSplitMaps<S extends VisState>(
   splitMaps: NonNullable<ParsedConfig['visState']>['splitMaps'] = []
 ): S {
   const merged = [...state.splitMaps];
-  const unmerged = [];
+  const unmerged: typeof merged = [];
   splitMaps.forEach((sm, i) => {
     const entries = Object.entries(sm.layers);
     if (entries.length > 0) {
@@ -529,15 +529,29 @@ export function mergeSplitMaps<S extends VisState>(
         };
       });
     } else {
-      // We are merging if there are no layers in both split map
-      merged.push(sm);
+      // Preserve the original index so split map panes stay in the correct
+      // position even when the entry has no layer visibility settings.
+      // The old `merged.push(sm)` collapsed empty panes to index 0 and
+      // caused the second pane to be lost after a config round-trip.
+      merged[i] = merged[i] || sm;
     }
   });
+
+  // Fill any holes created by sparse index assignments so consumers never
+  // encounter undefined entries when iterating over splitMaps.
+  for (let i = 0; i < merged.length; i++) {
+    if (!merged[i]) {
+      merged[i] = {layers: {}};
+    }
+  }
 
   return {
     ...state,
     splitMaps: merged,
-    splitMapsToBeMerged: [...state.splitMapsToBeMerged, ...unmerged]
+    splitMapsToBeMerged: [
+      ...state.splitMapsToBeMerged,
+      ...unmerged.filter(Boolean)
+    ]
   };
 }
 
