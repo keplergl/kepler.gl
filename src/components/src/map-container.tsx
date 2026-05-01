@@ -405,6 +405,9 @@ export interface MapContainerProps {
   bottomMapContainerProps: any;
   transformRequest?: (url: string, resourceType?: string) => {url: string};
 
+  /** Pass `false` to disable the remote RTL text plugin, or a URL string to self-host it. */
+  RTLTextPlugin?: string | false;
+
   datasetAttributions?: DatasetAttribution[];
   attributionLogos?: AttributionWithStyle[];
 
@@ -1198,6 +1201,10 @@ export default function MapContainerFactory(
           transformRequest(currentStyle?.accessToken || mapboxApiAccessToken)
       };
 
+      if (this.props.RTLTextPlugin !== undefined) {
+        mapProps.RTLTextPlugin = this.props.RTLTextPlugin;
+      }
+
       if (useMapboxAdapter) {
         const mapboxConfig = getApplicationConfig().baseMapLibraryConfig[MAP_LIB_OPTIONS.MAPBOX];
         mapProps.mapLib = mapboxConfig.getMapLib();
@@ -1292,6 +1299,9 @@ export default function MapContainerFactory(
               style={MAP_STYLE.top}
               mapboxAccessToken={mapProps.mapboxAccessToken}
               transformRequest={mapProps.transformRequest}
+              {...(mapProps.RTLTextPlugin !== undefined
+                ? {RTLTextPlugin: mapProps.RTLTextPlugin}
+                : {})}
               {...(useMapboxAdapter
                 ? {
                     mapLib:
