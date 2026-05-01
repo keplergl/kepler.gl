@@ -3188,7 +3188,12 @@ export function setFeaturesUpdater(
       ...state.editor,
       // only save none filter features to editor
       features: features.filter(f => !getFilterIdInFeature(f)),
-      mode: lastFeature && lastFeature.properties?.isClosed ? EDITOR_MODES.EDIT : state.editor.mode
+      mode:
+        lastFeature && lastFeature.properties?.isClosed
+          ? lastFeature.properties?.shape === 'Rectangle'
+            ? state.editor.mode
+            : EDITOR_MODES.EDIT
+          : state.editor.mode
     }
   };
 
@@ -3358,6 +3363,42 @@ export function setPolygonFilterLayerUpdater(
     idx: filterIdx,
     prop: 'layerId',
     value: newLayerId
+  });
+}
+
+/**
+ * Apply polygon filter to all visible layers
+ * @memberof visStateUpdaters
+ */
+export function setPolygonFilterAllLayersUpdater(
+  state: VisState,
+  payload: VisStateActions.SetPolygonFilterAllLayersUpdaterAction
+): VisState {
+  const {feature} = payload;
+
+  const newFilter = generatePolygonFilter([], feature);
+  const filterIdx = state.filters.length;
+
+  const newState: VisState = {
+    ...state,
+    filters: [...state.filters, newFilter],
+    editor: {
+      ...state.editor,
+      features: state.editor.features.filter(f => f.id !== feature.id),
+      selectedFeature: newFilter.value,
+      mode: EDITOR_MODES.EDIT
+    }
+  };
+
+  const visibleLayerIds = get(payload, 'visibleLayerIds');
+  const allLayerIds = Array.isArray(visibleLayerIds)
+    ? visibleLayerIds
+    : state.layers.filter(l => l.config.isVisible).map(l => l.id);
+
+  return setFilterUpdater(newState, {
+    idx: filterIdx,
+    prop: 'layerId',
+    value: allLayerIds
   });
 }
 

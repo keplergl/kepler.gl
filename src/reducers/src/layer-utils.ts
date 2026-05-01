@@ -388,6 +388,7 @@ export type ComputeDeckLayersProps = {
       feature: Feature | null,
       selectionContext?: FeatureSelectionContext
     ) => any;
+    onApplyPolygonFilterAll?: (feature: Feature) => any;
     featureCollection: {
       type: string;
       features: Feature[];
