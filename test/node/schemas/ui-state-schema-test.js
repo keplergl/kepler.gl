@@ -22,8 +22,8 @@ test('#uiStateSchema -> v1 -> save load uiState', t => {
   t.equal(uiToSave.locale, 'en', 'default locale should be en');
   t.deepEqual(
     uiToSave.mapControls,
-    {mapLegend: {active: false, settings: {}}},
-    'default mapLegend should be inactive with empty settings'
+    {mapLegend: {active: false}},
+    'default mapLegend should be inactive with no settings'
   );
 
   t.deepEqual(uiLoaded, uiToSave, 'loaded uiState should match saved uiState');
