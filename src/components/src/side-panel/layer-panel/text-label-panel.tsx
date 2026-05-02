@@ -22,7 +22,7 @@ import LayerConfigGroupFactory, {
   ConfigGroupCollapsibleHeader
 } from './layer-config-group';
 
-import {LAYER_TEXT_CONFIGS} from '@kepler.gl/constants';
+import {LAYER_TEXT_CONFIGS, DEFAULT_TEXT_LABEL} from '@kepler.gl/constants';
 import {Field, LayerTextLabel, RGBAColor, RGBColor} from '@kepler.gl/types';
 import FieldSelectorFactory from '../../common/field-selector';
 import ColorSelectorFactory from './color-selector';
@@ -101,7 +101,7 @@ function TextLabelPanelFactory(
                   </PanelLabel>
                   <RangeSlider
                     {...LAYER_TEXT_CONFIGS.fontWeight}
-                    value1={tl.weight}
+                    value1={tl.weight ?? DEFAULT_TEXT_LABEL.weight}
                     isRanged={false}
                     onChange={v => updateLayerTextLabel(idx, 'weight', v[1])}
                   />
