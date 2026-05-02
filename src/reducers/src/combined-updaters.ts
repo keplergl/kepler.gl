@@ -206,7 +206,9 @@ export const addDataToMapUpdater = (
       )
     ),
     pick_('mapStyle')(apply_(styleMapConfigUpdater, payload_({config: parsedConfig, options}))),
-    pick_('uiState')(apply_(uiStateReceiveMapConfigUpdater, payload_({config: parsedConfig, options}))),
+    pick_('uiState')(
+      apply_(uiStateReceiveMapConfigUpdater, payload_({config: parsedConfig, options}))
+    ),
     pick_('uiState')(apply_(uiStateLoadFilesSuccessUpdater, payload_(null))),
 
     pick_('uiState')(apply_(toggleModalUpdater, payload_(null))),

@@ -190,7 +190,10 @@ test('#composerStateReducer - addDataToMapUpdater: mapLegend', t => {
           mapControls: {
             mapLegend: {
               active: true,
-              settings: {position: {x: 20, y: 40, anchorX: 'left', anchorY: 'top'}, contentHeight: 150}
+              settings: {
+                position: {x: 20, y: 40, anchorX: 'left', anchorY: 'top'},
+                contentHeight: 150
+              }
             }
           }
         }

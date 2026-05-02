@@ -1002,12 +1002,14 @@ export const receiveMapConfigUpdater = (
   let newState = state;
 
   if (uiState.mapControls?.mapLegend?.active) {
+    const currentLegend = newState.mapControls.mapLegend;
     newState = {
       ...newState,
       mapControls: {
         ...newState.mapControls,
         mapLegend: {
-          ...newState.mapControls.mapLegend,
+          show: true,
+          ...currentLegend,
           active: true,
           activeMapIndex: 0
         }

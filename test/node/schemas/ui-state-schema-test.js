@@ -42,7 +42,10 @@ test('#uiStateSchema -> v1 -> save load uiState with mapLegend active and locale
       mapLegend: {
         ...initialState.uiState.mapControls.mapLegend,
         active: true,
-        settings: {position: {x: 10, y: 30, anchorX: 'right', anchorY: 'bottom'}, contentHeight: 200}
+        settings: {
+          position: {x: 10, y: 30, anchorX: 'right', anchorY: 'bottom'},
+          contentHeight: 200
+        }
       }
     }
   };
