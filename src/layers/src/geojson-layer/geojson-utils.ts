@@ -179,14 +179,9 @@ export function getGeojsonDataMaps(
     const feature = parseGeoJsonRawFeature(getFeature({index}));
 
     if (feature && feature.geometry && acceptableTypes.includes(feature.geometry.type)) {
-      const cleaned = {
-        ...feature,
-        // store index of the data in feature properties
-        properties: {
-          ...feature.properties,
-          index
-        }
-      };
+      const cleaned = Object.assign({}, feature);
+      // store index of the data in feature properties
+      cleaned.properties = Object.assign({}, feature.properties, {index});
 
       dataToFeature[index] = cleaned;
     } else {
@@ -241,25 +236,27 @@ export function getGeojsonPointDataMaps(
 function parseGeometryFromString(geoString: string): Feature | null {
   let parsedGeo;
 
-  // try parse as geojson string
-  // {"type":"Polygon","coordinates":[[[-74.158491,40.83594]]]}
-  try {
-    parsedGeo = JSON.parse(geoString);
-  } catch (e) {
-    // keep trying to parse
-  }
+  const trimmed = geoString.trimStart();
+  if (!trimmed.length) return null;
 
-  // try parse as wkt using loaders.gl WKTLoader
-  if (!parsedGeo) {
+  const firstChar = trimmed[0];
+
+  if (/[A-Z]/.test(firstChar)) {
+    // WKT strings start with an uppercase geometry type (e.g. POINT, POLYGON)
     try {
-      parsedGeo = parseSync(geoString, WKTLoader);
+      parsedGeo = parseSync(trimmed, WKTLoader);
     } catch (e) {
       return null;
     }
-  }
-
-  // try parse as wkb using loaders.gl WKBLoader
-  if (!parsedGeo) {
+  } else if (firstChar === '{' || firstChar === '[') {
+    // GeoJSON as a JSON string
+    try {
+      parsedGeo = JSON.parse(geoString);
+    } catch (e) {
+      return null;
+    }
+  } else {
+    // try parse as WKB hex string
     try {
       const buffer = Buffer.from(geoString, 'hex');
       const binaryGeo = parseSync(buffer, WKBLoader);
