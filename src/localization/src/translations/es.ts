@@ -53,6 +53,7 @@ export default {
       label: 'etiqueta',
       labelWithId: 'Etiqueta {labelId}',
       fontSize: 'Tamaño de fuente',
+      fontWeight: 'Peso de fuente',
       fontColor: 'Color de fuente',
       backgroundColor: 'Color de fondo',
       textAnchor: 'Anclaje del texto',

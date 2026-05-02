@@ -53,6 +53,7 @@ export default {
       label: 'Rótulo',
       labelWithId: 'Rótulo {labelId}',
       fontSize: 'Tamanho da fonte',
+      fontWeight: 'Peso da fonte',
       fontColor: 'Cor da fonte',
       textAnchor: 'Âncora do texto',
       alignment: 'Alinhamento',

@@ -97,6 +97,17 @@ function TextLabelPanelFactory(
                 </SidePanelSection>
                 <SidePanelSection>
                   <PanelLabel>
+                    <FormattedMessage id="panel.text.fontWeight" />
+                  </PanelLabel>
+                  <RangeSlider
+                    {...LAYER_TEXT_CONFIGS.fontWeight}
+                    value1={tl.weight}
+                    isRanged={false}
+                    onChange={v => updateLayerTextLabel(idx, 'weight', v[1])}
+                  />
+                </SidePanelSection>
+                <SidePanelSection>
+                  <PanelLabel>
                     <FormattedMessage id="panel.text.fontColor" />
                   </PanelLabel>
                   <ColorSelector
