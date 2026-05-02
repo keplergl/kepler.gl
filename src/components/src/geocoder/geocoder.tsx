@@ -58,17 +58,26 @@ export function getViewportBbox(
     height: mapState.height,
     longitude: mapState.longitude,
     latitude: mapState.latitude,
-    zoom: mapState.zoom
+    zoom: mapState.zoom,
+    bearing: mapState.bearing ?? 0,
+    pitch: mapState.pitch ?? 0
   });
 
-  const topLeft = vp.unproject([0, 0]);
-  const bottomRight = vp.unproject([mapState.width, mapState.height]);
+  const corners = [
+    vp.unproject([0, 0]),
+    vp.unproject([mapState.width, 0]),
+    vp.unproject([mapState.width, mapState.height]),
+    vp.unproject([0, mapState.height])
+  ];
+
+  const lngs = corners.map(c => c[0]);
+  const lats = corners.map(c => c[1]);
 
   return [
-    Math.max(topLeft[0], -EDGE_MERIDIAN),
-    Math.max(bottomRight[1], -90),
-    Math.min(bottomRight[0], EDGE_MERIDIAN),
-    Math.min(topLeft[1], 90)
+    Math.max(Math.min(...lngs), -EDGE_MERIDIAN),
+    Math.max(Math.min(...lats), -90),
+    Math.min(Math.max(...lngs), EDGE_MERIDIAN),
+    Math.min(Math.max(...lats), 90)
   ];
 }
 
