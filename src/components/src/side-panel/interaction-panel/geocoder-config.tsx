@@ -29,12 +29,12 @@ function GeocoderConfigFactory() {
       <LimitSwitchWrapper>
         <FormattedMessage id="geocoder.limitSearch" />
         <Switch
-          checked={config.limitSearch}
+          checked={config?.limitSearch ?? false}
           id="limit-search-toggle"
           onChange={() => {
             onChange({
               ...config,
-              limitSearch: !config.limitSearch
+              limitSearch: !config?.limitSearch
             });
           }}
           secondary
