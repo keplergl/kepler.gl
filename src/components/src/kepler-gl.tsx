@@ -304,7 +304,8 @@ export const geoCoderPanelSelector = (
   updateVisData: props.visStateActions.updateVisData,
   removeDataset: props.visStateActions.removeDataset,
   updateMap: props.mapStateActions.updateMap,
-  appWidth: dimensions.width
+  appWidth: dimensions.width,
+  limitSearch: props.visState.interactionConfig.geocoder.config?.limitSearch ?? false
 });
 
 /**

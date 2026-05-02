@@ -318,6 +318,9 @@ export type TooltipInfo = BaseInteraction & {
 export type Geocoder = BaseInteraction & {
   id: 'geocoder';
   position: number[] | null;
+  config: {
+    limitSearch: boolean;
+  };
 };
 export type Brush = BaseInteraction & {
   id: 'brush';
