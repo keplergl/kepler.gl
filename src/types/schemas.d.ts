@@ -138,7 +138,12 @@ export type ParsedUiState = {
     mapLegend?: {
       active?: boolean;
       settings?: {
-        position?: string;
+        position?: {
+          x: number;
+          y: number;
+          anchorX: 'left' | 'right';
+          anchorY: 'top' | 'bottom';
+        };
         contentHeight?: number;
       };
     };

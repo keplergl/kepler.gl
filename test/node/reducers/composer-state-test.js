@@ -190,7 +190,7 @@ test('#composerStateReducer - addDataToMapUpdater: mapLegend', t => {
           mapControls: {
             mapLegend: {
               active: true,
-              settings: {position: 'top-left', contentHeight: 150}
+              settings: {position: {x: 20, y: 40, anchorX: 'left', anchorY: 'top'}, contentHeight: 150}
             }
           }
         }
@@ -205,9 +205,9 @@ test('#composerStateReducer - addDataToMapUpdater: mapLegend', t => {
     true,
     'mapLegend should be set to active from config'
   );
-  t.equal(
+  t.deepEqual(
     newState.uiState.mapControls.mapLegend.settings.position,
-    'top-left',
+    {x: 20, y: 40, anchorX: 'left', anchorY: 'top'},
     'mapLegend settings position should be set from config'
   );
   t.equal(

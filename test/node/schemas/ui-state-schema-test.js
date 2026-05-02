@@ -42,7 +42,7 @@ test('#uiStateSchema -> v1 -> save load uiState with mapLegend active and locale
       mapLegend: {
         ...initialState.uiState.mapControls.mapLegend,
         active: true,
-        settings: {position: 'top-left', contentHeight: 200}
+        settings: {position: {x: 10, y: 30, anchorX: 'right', anchorY: 'bottom'}, contentHeight: 200}
       }
     }
   };
@@ -54,7 +54,7 @@ test('#uiStateSchema -> v1 -> save load uiState with mapLegend active and locale
   t.equal(uiToSave.mapControls.mapLegend.active, true, 'mapLegend active should be saved as true');
   t.deepEqual(
     uiToSave.mapControls.mapLegend.settings,
-    {position: 'top-left', contentHeight: 200},
+    {position: {x: 10, y: 30, anchorX: 'right', anchorY: 'bottom'}, contentHeight: 200},
     'mapLegend settings should be saved'
   );
 
