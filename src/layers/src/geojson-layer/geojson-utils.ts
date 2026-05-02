@@ -236,15 +236,16 @@ export function getGeojsonPointDataMaps(
 function parseGeometryFromString(geoString: string): Feature | null {
   let parsedGeo;
 
-  const trimmed = geoString.trimStart();
-  if (!trimmed.length) return null;
+  // match the first non-whitespace character without allocating a trimmed copy of the string
+  const m = /^\s*(\S)/.exec(geoString);
+  if (!m) return null;
 
-  const firstChar = trimmed[0];
+  const firstChar = m[1];
 
   if (/[a-zA-Z]/.test(firstChar)) {
     // WKT geometry type names start with a letter (e.g. POINT, polygon, MultiPoint)
     try {
-      parsedGeo = parseSync(trimmed, WKTLoader);
+      parsedGeo = parseSync(m[0].length > 1 ? geoString.slice(m[0].length - 1) : geoString, WKTLoader);
     } catch (e) {
       return null;
     }
