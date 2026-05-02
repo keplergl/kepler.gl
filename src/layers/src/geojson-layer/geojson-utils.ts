@@ -181,7 +181,7 @@ export function getGeojsonDataMaps(
     if (feature && feature.geometry && acceptableTypes.includes(feature.geometry.type)) {
       const cleaned = Object.assign({}, feature);
       // store index of the data in feature properties
-      cleaned.properties = Object.assign({}, feature.properties, {index});
+      cleaned.properties = Object.assign({}, feature.properties ?? {}, {index});
 
       dataToFeature[index] = cleaned;
     } else {
@@ -241,8 +241,8 @@ function parseGeometryFromString(geoString: string): Feature | null {
 
   const firstChar = trimmed[0];
 
-  if (/[A-Z]/.test(firstChar)) {
-    // WKT strings start with an uppercase geometry type (e.g. POINT, POLYGON)
+  if (/[a-zA-Z]/.test(firstChar)) {
+    // WKT geometry type names start with a letter (e.g. POINT, polygon, MultiPoint)
     try {
       parsedGeo = parseSync(trimmed, WKTLoader);
     } catch (e) {
