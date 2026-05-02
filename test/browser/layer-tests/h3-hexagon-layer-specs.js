@@ -316,6 +316,7 @@ test('#H3Layer -> renderLayer', t => {
             },
             color: [255, 255, 255],
             size: 18,
+            weight: 400,
             offset: [0, 0],
             anchor: 'middle',
             alignment: 'center',
