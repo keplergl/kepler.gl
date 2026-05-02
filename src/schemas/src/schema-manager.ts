@@ -68,7 +68,11 @@ export type SavedMap = {
 export type LoadedMap = {datasets?: ParsedDataset[] | null; config?: ParsedConfig | null};
 
 export const reducerSchema: {
-  [key: string]: typeof mapStateSchema | typeof visStateSchema | typeof mapStyleSchema;
+  [key: string]:
+    | typeof mapStateSchema
+    | typeof visStateSchema
+    | typeof mapStyleSchema
+    | typeof uiStateSchema;
 } = {
   visState: visStateSchema,
   mapState: mapStateSchema,
