@@ -8,7 +8,7 @@ import {dotenvRun} from '@dotenv-run/esbuild';
 import process from 'node:process';
 import fs from 'node:fs';
 import {spawn} from 'node:child_process';
-import {join} from 'node:path';
+import {join, resolve} from 'node:path';
 import KeplerPackage from '../../package.json' assert {type: 'json'};
 
 const args = process.argv;
@@ -49,7 +49,7 @@ const getThirdPartyLibraryAliases = useKeplerNodeModules => {
     'apache-arrow': `${nodeModulesDir}/apache-arrow`,
     // portal-linked @sqlrooms packages bundle their own copies of zustand/react;
     // force a single instance so React contexts (e.g. RoomStateProvider) are shared.
-    zustand: `${nodeModulesDir}/zustand`
+    zustand: resolve(`${BASE_NODE_MODULES_DIR}/zustand`)
   };
 };
 
@@ -108,6 +108,43 @@ const config = {
   },
   plugins: [
     {
+      name: 'resolve-portal-imports',
+      setup(build) {
+        const demoNodeModules = resolve('node_modules');
+        const portalDir = resolve('node_modules/openassistant2');
+        const sqlroomsDir = resolve('node_modules/@sqlrooms');
+
+        build.onResolve({filter: /./}, async args => {
+          if (
+            args.resolveDir &&
+            !args.path.startsWith('.') &&
+            !args.path.startsWith('/') &&
+            args.pluginData !== 'portal-retry' &&
+            (args.resolveDir.startsWith(portalDir) ||
+              args.resolveDir.includes('/github/openassistant2'))
+          ) {
+            const result = await build.resolve(args.path, {
+              kind: args.kind,
+              resolveDir: demoNodeModules,
+              pluginData: 'portal-retry'
+            });
+            return result;
+          }
+        });
+      }
+    },
+    {
+      name: 'resolve-deckgl-typed',
+      setup(build) {
+        build.onResolve({filter: /^@deck\.gl\/.*\/typed$/}, args => {
+          return build.resolve(args.path.replace(/\/typed$/, ''), {
+            kind: args.kind,
+            resolveDir: args.resolveDir
+          });
+        });
+      }
+    },
+    {
       name: 'resolve-monaco-esm',
       setup(build) {
         build.onResolve({filter: /^monaco-editor\/esm\//}, async args => {
@@ -139,12 +176,33 @@ function addAliases(externals, args) {
   // Combine flags
   const useLocalDeck = args.includes('--env.deck');
   const useRepoDeck = args.includes('--env.deck_src');
-  const useLocalAiAssistant = args.includes('--env.ai');
 
-  // resolve ai-assistant from local dir
-  if (useLocalAiAssistant) {
-    resolveAlias['openassistant2'] = join(LIB_DIR, '../github/openassistant2/src');
-  }
+  // Resolve @kepler.gl/* from workspace source so the demo app uses the
+  // current repo instead of stale dist builds in node_modules.
+  const keplerWorkspacePackages = {
+    actions: 'actions',
+    'cloud-providers': 'cloud-providers',
+    'common-utils': 'common-utils',
+    components: 'components',
+    constants: 'constants',
+    'deckgl-arrow-layers': 'deckgl-arrow-layers',
+    'deckgl-layers': 'deckgl-layers',
+    duckdb: 'duckdb',
+    effects: 'effects',
+    layers: 'layers',
+    localization: 'localization',
+    processors: 'processors',
+    reducers: 'reducers',
+    schemas: 'schemas',
+    styles: 'styles',
+    table: 'table',
+    tasks: 'tasks',
+    types: 'types',
+    utils: 'utils'
+  };
+  Object.entries(keplerWorkspacePackages).forEach(([pkg, dir]) => {
+    resolveAlias[`@kepler.gl/${pkg}`] = `${SRC_DIR}/${dir}/src`;
+  });
 
   // resolve deck.gl from local dir
   if (useLocalDeck || useRepoDeck) {

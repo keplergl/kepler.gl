@@ -11,7 +11,6 @@ import isEqual from 'lodash/isEqual';
 import {useSelector} from 'react-redux';
 import isPropValid from '@emotion/is-prop-valid';
 import {WebMercatorViewport} from '@deck.gl/core';
-import {ScreenshotWrapper} from '@openassistant/ui';
 import {AiAssistantPanel, createAiAssistantStore} from 'openassistant2';
 import {panelBorderColor, theme} from '@kepler.gl/styles';
 import {ParsedConfig} from '@kepler.gl/types';
@@ -228,8 +227,6 @@ const App = props => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const [startScreenCapture, setStartScreenCapture] = useState(false);
-  const [, setScreenCaptured] = useState('');
   const [mapBoundary, setMapBoundary] = useState<{nw: number[]; se: number[]} | undefined>();
 
   /**
@@ -243,14 +240,6 @@ const App = props => {
     const boundary = {nw, se};
     setMapBoundary(boundary);
     mapBoundaryRef.current = boundary;
-  }, []);
-
-  const _setStartScreenCapture = useCallback(flag => {
-    setStartScreenCapture(flag);
-  }, []);
-
-  const _setScreenCaptured = useCallback(screenshot => {
-    setScreenCaptured(screenshot);
   }, []);
 
   /*
@@ -667,60 +656,53 @@ const App = props => {
         //   node ? (this.root = node) : null;
         // }}
         >
-          <ScreenshotWrapper
-            startScreenCapture={startScreenCapture}
-            setScreenCaptured={_setScreenCaptured}
-            setStartScreenCapture={_setStartScreenCapture}
-            className="h-screen"
-          >
-            <Banner show={showBanner} height={BannerHeight} bgColor="#2E7CF6" onClose={hideBanner}>
-              <Announcement onDisable={_disableBanner} />
-            </Banner>
-            <div style={CONTAINER_STYLE}>
-              <PanelGroup direction="horizontal">
-                <Panel defaultSize={isAiAssistantPanelOpen ? 70 : 100}>
-                  <PanelGroup direction="vertical">
-                    <Panel defaultSize={isSqlPanelOpen ? 60 : 100}>
-                      <AutoSizer>
-                        {({height, width}) => (
-                          <KeplerGl
-                            mapboxApiAccessToken={CLOUD_PROVIDERS_CONFIGURATION.MAPBOX_TOKEN}
-                            id="map"
-                            getState={keplerGlGetState}
-                            width={width}
-                            height={height}
-                            cloudProviders={CLOUD_PROVIDERS}
-                            localeMessages={messages}
-                            onExportToCloudSuccess={onExportFileSuccess}
-                            onLoadCloudMapSuccess={onLoadCloudMapSuccess}
-                            featureFlags={DEFAULT_FEATURE_FLAGS}
-                            onViewStateChange={onViewStateChange}
-                          />
-                        )}
-                      </AutoSizer>
-                    </Panel>
+          <Banner show={showBanner} height={BannerHeight} bgColor="#2E7CF6" onClose={hideBanner}>
+            <Announcement onDisable={_disableBanner} />
+          </Banner>
+          <div style={CONTAINER_STYLE}>
+            <PanelGroup direction="horizontal">
+              <Panel defaultSize={isAiAssistantPanelOpen ? 70 : 100}>
+                <PanelGroup direction="vertical">
+                  <Panel defaultSize={isSqlPanelOpen ? 60 : 100}>
+                    <AutoSizer>
+                      {({height, width}) => (
+                        <KeplerGl
+                          mapboxApiAccessToken={CLOUD_PROVIDERS_CONFIGURATION.MAPBOX_TOKEN}
+                          id="map"
+                          getState={keplerGlGetState}
+                          width={width}
+                          height={height}
+                          cloudProviders={CLOUD_PROVIDERS}
+                          localeMessages={messages}
+                          onExportToCloudSuccess={onExportFileSuccess}
+                          onLoadCloudMapSuccess={onLoadCloudMapSuccess}
+                          featureFlags={DEFAULT_FEATURE_FLAGS}
+                          onViewStateChange={onViewStateChange}
+                        />
+                      )}
+                    </AutoSizer>
+                  </Panel>
 
-                    {isSqlPanelOpen && (
-                      <>
-                        <StyledResizeHandle />
-                        <Panel defaultSize={40} minSize={20}>
-                          <SqlPanel initialSql={query.sql || ''} />
-                        </Panel>
-                      </>
-                    )}
-                  </PanelGroup>
-                </Panel>
-                {isAiAssistantPanelOpen && (
-                  <>
-                    <StyledVerticalResizeHandle />
-                    <Panel defaultSize={30} minSize={20}>
-                      <AiAssistantPanel roomStore={roomStore} onSelected={onSelected} />
-                    </Panel>
-                  </>
-                )}
-              </PanelGroup>
-            </div>
-          </ScreenshotWrapper>
+                  {isSqlPanelOpen && (
+                    <>
+                      <StyledResizeHandle />
+                      <Panel defaultSize={40} minSize={20}>
+                        <SqlPanel initialSql={query.sql || ''} />
+                      </Panel>
+                    </>
+                  )}
+                </PanelGroup>
+              </Panel>
+              {isAiAssistantPanelOpen && (
+                <>
+                  <StyledVerticalResizeHandle />
+                  <Panel defaultSize={30} minSize={20}>
+                    <AiAssistantPanel roomStore={roomStore} onSelected={onSelected} />
+                  </Panel>
+                </>
+              )}
+            </PanelGroup>
+          </div>
         </GlobalStyle>
       </ThemeProvider>
     </StyleSheetManager>
