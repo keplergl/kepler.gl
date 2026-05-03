@@ -179,14 +179,9 @@ export function getGeojsonDataMaps(
     const feature = parseGeoJsonRawFeature(getFeature({index}));
 
     if (feature && feature.geometry && acceptableTypes.includes(feature.geometry.type)) {
-      const cleaned = {
-        ...feature,
-        // store index of the data in feature properties
-        properties: {
-          ...feature.properties,
-          index
-        }
-      };
+      const cleaned = Object.assign({}, feature);
+      // store index of the data in feature properties
+      cleaned.properties = Object.assign({}, feature.properties ?? {}, {index});
 
       dataToFeature[index] = cleaned;
     } else {
@@ -238,34 +233,39 @@ export function getGeojsonPointDataMaps(
  * @param {String} geoString
  * @returns {null | Object} geojson object or null if failed
  */
+const WKT_PREFIX_RE =
+  /^\s*(POINT|LINESTRING|POLYGON|MULTIPOINT|MULTILINESTRING|MULTIPOLYGON|GEOMETRYCOLLECTION)\s*[(ZME]/i;
+
 function parseGeometryFromString(geoString: string): Feature | null {
   let parsedGeo;
 
-  // try parse as geojson string
-  // {"type":"Polygon","coordinates":[[[-74.158491,40.83594]]]}
-  try {
-    parsedGeo = JSON.parse(geoString);
-  } catch (e) {
-    // keep trying to parse
-  }
-
-  // try parse as wkt using loaders.gl WKTLoader
-  if (!parsedGeo) {
+  if (WKT_PREFIX_RE.test(geoString)) {
+    // WKT: starts with a geometry keyword (POINT, POLYGON, …)
     try {
       parsedGeo = parseSync(geoString, WKTLoader);
     } catch (e) {
       return null;
     }
-  }
-
-  // try parse as wkb using loaders.gl WKBLoader
-  if (!parsedGeo) {
-    try {
-      const buffer = Buffer.from(geoString, 'hex');
-      const binaryGeo = parseSync(buffer, WKBLoader);
-      // @ts-expect-error
-      parsedGeo = convertBinaryGeometryToGeometry(binaryGeo);
-    } catch (e) {
+  } else {
+    const firstChar = geoString.charAt(geoString.search(/\S/));
+    if (firstChar === '{' || firstChar === '[') {
+      // GeoJSON as a JSON string
+      try {
+        parsedGeo = JSON.parse(geoString);
+      } catch (e) {
+        return null;
+      }
+    } else if (firstChar) {
+      // try parse as WKB hex string
+      try {
+        const buffer = Buffer.from(geoString, 'hex');
+        const binaryGeo = parseSync(buffer, WKBLoader);
+        // @ts-expect-error
+        parsedGeo = convertBinaryGeometryToGeometry(binaryGeo);
+      } catch (e) {
+        return null;
+      }
+    } else {
       return null;
     }
   }
