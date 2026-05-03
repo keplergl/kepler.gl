@@ -3,7 +3,7 @@
 
 import {Tile3DLayer as DeckTile3DLayer} from '@deck.gl/geo-layers';
 import {COORDINATE_SYSTEM, LightingEffect as DeckLightingEffect} from '@deck.gl/core';
-import type {Layer, LayersList} from '@deck.gl/core';
+import type {Layer as DeckLayer, LayersList} from '@deck.gl/core';
 import {Tiles3DLoader, CesiumIonLoader} from '@loaders.gl/3d-tiles';
 import {I3SLoader} from '@loaders.gl/i3s';
 import {Tileset3D, Tile3D} from '@loaders.gl/tiles';
@@ -305,7 +305,7 @@ class KeplerTile3DLayer extends DeckTile3DLayer {
    * @loaders.gl/i3s sets content.coordinateSystem to numeric enum values
    * (e.g. 2 for METER_OFFSETS), but deck.gl now expects string constants.
    */
-  renderLayers(): Layer | null | LayersList {
+  renderLayers(): DeckLayer | null | LayersList {
     const {tileset3d} = this.state as any;
     if (tileset3d) {
       for (const tile of tileset3d.tiles as Tile3D[]) {
