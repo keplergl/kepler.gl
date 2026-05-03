@@ -48,6 +48,7 @@ import {
   errorNotification,
   isStyleUsingMapboxTiles,
   isStyleUsingOpenStreetMapTiles,
+  mapHasOpenStreetMapAttribution,
   getBaseMapLibrary,
   BaseMapLibraryConfig,
   transformRequest,
@@ -261,18 +262,12 @@ export const Attribution: React.FC<AttributionProps> = ({
         >
           <EndHorizontalFlexbox>
             <DatasetAttributions datasetAttributions={datasetAttributions} isPalm={isPalm} />
-            {showOsmBasemapAttribution ? (
-              <div className="attrition-link">
-                {datasetAttributions?.length ? <span className="pipe-separator">|</span> : null}
-                <a
-                  href="http://www.openstreetmap.org/copyright"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  © OpenStreetMap
-                </a>
-              </div>
-            ) : null}
+            <div className="attrition-link">
+              {datasetAttributions?.length ? <span className="pipe-separator">|</span> : null}
+              <a href="https://kepler.gl/policy/" target="_blank" rel="noopener noreferrer">
+                © kepler.gl
+              </a>
+            </div>
           </EndHorizontalFlexbox>
         </StyledAttribution>
       );
@@ -291,6 +286,15 @@ export const Attribution: React.FC<AttributionProps> = ({
             <a href="https://kepler.gl/policy/" target="_blank" rel="noopener noreferrer">
               © kepler.gl |{' '}
             </a>
+            {showOsmBasemapAttribution ? (
+              <a
+                href="http://www.openstreetmap.org/copyright"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                © OpenStreetMap |{' '}
+              </a>
+            ) : null}
             {!isPalm ? <MapLibLogo baseMapLibraryConfig={baseMapLibraryConfig} /> : null}
           </div>
         </EndHorizontalFlexbox>
@@ -453,8 +457,8 @@ export default function MapContainerFactory(
     }
 
     state = {
-      // Determines whether attribution should be visible based the result of loading the map style
-      showBaseMapAttribution: true
+      showBaseMapAttribution: true,
+      showOsmAttribution: false
     };
 
     componentDidMount() {
@@ -469,6 +473,7 @@ export default function MapContainerFactory(
       if (this._map) {
         this._map?.off(MAPBOXGL_STYLE_UPDATE, nop);
         this._map?.off(MAPBOXGL_RENDER, nop);
+        this._removeOsmSourceDataListener();
       }
       if (!this._ref.current) {
         return;
@@ -476,10 +481,25 @@ export default function MapContainerFactory(
       unobserveDimensions(this._ref.current);
     }
 
+    componentDidUpdate(prevProps) {
+      if (prevProps.mapStyle.styleType !== this.props.mapStyle.styleType) {
+        this._removeOsmSourceDataListener();
+        if (this.props.mapStyle.styleType === NO_MAP_ID) {
+          this.setState({
+            showBaseMapAttribution: false,
+            showOsmAttribution: false
+          });
+        } else {
+          this._updateAttribution();
+        }
+      }
+    }
+
     _deck: any = null;
     _map: GetMapRef | null = null;
     _ref = createRef<HTMLDivElement>();
     _deckGLErrorsElapsed: {[id: string]: number} = {};
+    _osmSourceDataListener: (() => void) | null = null;
 
     previousLayers = {
       // [layers.id]: mapboxLayerConfig
@@ -634,17 +654,65 @@ export default function MapContainerFactory(
       this.previousLayers = {};
       this._updateMapboxLayers();
 
-      if (update && update.style) {
-        // No attributions are needed if the style doesn't reference Mapbox sources
-        this.setState({
-          showBaseMapAttribution:
-            isStyleUsingMapboxTiles(update.style) || !isStyleUsingOpenStreetMapTiles(update.style)
-        });
-      }
+      this._updateAttribution(update);
 
       if (typeof this.props.onMapStyleLoaded === 'function') {
         this.props.onMapStyleLoaded(this._map);
       }
+    };
+
+    _updateAttribution = (update?: any) => {
+      this._removeOsmSourceDataListener();
+
+      let styleObj = update?.style || null;
+      if (!styleObj && this._map) {
+        try {
+          const rawStyle = this._map.isStyleLoaded?.() ? this._map.getStyle?.() : null;
+          if (rawStyle) {
+            styleObj = {stylesheet: rawStyle};
+          }
+        } catch {
+          // map style not ready yet
+        }
+      }
+      const usesMapbox = styleObj ? isStyleUsingMapboxTiles(styleObj) : false;
+      const usesOsm = styleObj ? isStyleUsingOpenStreetMapTiles(styleObj) : false;
+
+      if (usesMapbox || usesOsm) {
+        this.setState({
+          showBaseMapAttribution: true,
+          showOsmAttribution: usesOsm
+        });
+      } else {
+        this.setState({
+          showBaseMapAttribution: false,
+          showOsmAttribution: false
+        });
+        this._checkOsmAttributionOnSourceLoad();
+      }
+    };
+
+    _removeOsmSourceDataListener = () => {
+      if (this._osmSourceDataListener && this._map) {
+        this._map.off('sourcedata', this._osmSourceDataListener);
+        this._osmSourceDataListener = null;
+      }
+    };
+
+    _checkOsmAttributionOnSourceLoad = () => {
+      if (!this._map) return;
+      this._removeOsmSourceDataListener();
+      const onSourceData = () => {
+        if (mapHasOpenStreetMapAttribution(this._map)) {
+          this._removeOsmSourceDataListener();
+          this.setState({
+            showBaseMapAttribution: true,
+            showOsmAttribution: true
+          });
+        }
+      };
+      this._osmSourceDataListener = onSourceData;
+      this._map.on('sourcedata', onSourceData);
     };
 
     _setMapRef = mapRef => {
@@ -1333,7 +1401,7 @@ export default function MapContainerFactory(
           {this.props.primary ? (
             <Attribution
               showBaseMapLibLogo={this.state.showBaseMapAttribution}
-              showOsmBasemapAttribution={true}
+              showOsmBasemapAttribution={this.state.showOsmAttribution}
               datasetAttributions={datasetAttributions}
               baseMapLibraryConfig={baseMapLibraryConfig}
             />
