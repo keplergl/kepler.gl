@@ -2,7 +2,8 @@
 // Copyright contributors to the kepler.gl project
 
 import {Tile3DLayer as DeckTile3DLayer} from '@deck.gl/geo-layers';
-import {LightingEffect as DeckLightingEffect} from '@deck.gl/core';
+import {COORDINATE_SYSTEM, LightingEffect as DeckLightingEffect} from '@deck.gl/core';
+import type {Layer, LayersList} from '@deck.gl/core';
 import {Tiles3DLoader, CesiumIonLoader} from '@loaders.gl/3d-tiles';
 import {I3SLoader} from '@loaders.gl/i3s';
 import {Tileset3D, Tile3D} from '@loaders.gl/tiles';
@@ -20,6 +21,20 @@ import {
 } from '@kepler.gl/constants';
 import {KeplerTable as KeplerDataset, Datasets as KeplerDatasets} from '@kepler.gl/table';
 import {VisConfigNumber, BindedLayerCallbacks} from '@kepler.gl/types';
+
+/**
+ * @loaders.gl/i3s defines its own COORDINATE_SYSTEM enum with legacy numeric
+ * values (e.g. METER_OFFSETS = 2) that newer deck.gl versions no longer accept
+ * (deck.gl now uses string constants like "meter-offsets"). This map converts
+ * those legacy numeric values to the string constants deck.gl expects.
+ */
+const LEGACY_COORDINATE_SYSTEM_MAP: Record<number, string> = {
+  [-1]: COORDINATE_SYSTEM.DEFAULT,
+  [0]: COORDINATE_SYSTEM.CARTESIAN,
+  [1]: COORDINATE_SYSTEM.LNGLAT,
+  [2]: COORDINATE_SYSTEM.METER_OFFSETS,
+  [3]: COORDINATE_SYSTEM.LNGLAT_OFFSETS
+};
 
 // Lazily created patched sublayer classes (see getSubLayerClass below).
 let _PatchedMeshLayer: any = null;
@@ -282,6 +297,26 @@ class KeplerTile3DLayer extends DeckTile3DLayer {
       return _PatchedScenegraphLayer;
     }
     return super.getSubLayerClass(id, DefaultClass);
+  }
+
+  /**
+   * Override renderLayers to normalize legacy numeric coordinateSystem values
+   * on tile content before the base class creates sublayers.
+   * @loaders.gl/i3s sets content.coordinateSystem to numeric enum values
+   * (e.g. 2 for METER_OFFSETS), but deck.gl now expects string constants.
+   */
+  renderLayers(): Layer | null | LayersList {
+    const {tileset3d} = this.state as any;
+    if (tileset3d) {
+      for (const tile of tileset3d.tiles as Tile3D[]) {
+        if (tile.content && typeof tile.content.coordinateSystem === 'number') {
+          tile.content.coordinateSystem =
+            LEGACY_COORDINATE_SYSTEM_MAP[tile.content.coordinateSystem] ??
+            COORDINATE_SYSTEM.METER_OFFSETS;
+        }
+      }
+    }
+    return super.renderLayers();
   }
 
   /**
