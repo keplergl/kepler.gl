@@ -647,6 +647,14 @@ export default class PointLayer extends Layer {
       objectInfo.index >= 0 &&
       this.dataContainer
     ) {
+      if (this.config.columnMode === COLUMN_MODE_GEOJSON) {
+        const coordinates = this.dataToFeature[objectInfo.index];
+        if (!coordinates) return null;
+        const position = Array.isArray(coordinates[0])
+          ? (coordinates as number[][])[0]
+          : coordinates;
+        return {index: objectInfo.index, position};
+      }
       return {
         index: objectInfo.index,
         position: this.getPositionAccessor(this.dataContainer)(objectInfo)
