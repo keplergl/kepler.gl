@@ -233,37 +233,39 @@ export function getGeojsonPointDataMaps(
  * @param {String} geoString
  * @returns {null | Object} geojson object or null if failed
  */
+const WKT_PREFIX_RE =
+  /^\s*(POINT|LINESTRING|POLYGON|MULTIPOINT|MULTILINESTRING|MULTIPOLYGON|GEOMETRYCOLLECTION)\s*[(ZME]/i;
+
 function parseGeometryFromString(geoString: string): Feature | null {
   let parsedGeo;
 
-  // match the first non-whitespace character without allocating a trimmed copy of the string
-  const m = /^\s*(\S)/.exec(geoString);
-  if (!m) return null;
-
-  const firstChar = m[1];
-
-  if (/[a-zA-Z]/.test(firstChar)) {
-    // WKT geometry type names start with a letter (e.g. POINT, polygon, MultiPoint)
+  if (WKT_PREFIX_RE.test(geoString)) {
+    // WKT: starts with a geometry keyword (POINT, POLYGON, …)
     try {
-      parsedGeo = parseSync(m[0].length > 1 ? geoString.slice(m[0].length - 1) : geoString, WKTLoader);
-    } catch (e) {
-      return null;
-    }
-  } else if (firstChar === '{' || firstChar === '[') {
-    // GeoJSON as a JSON string
-    try {
-      parsedGeo = JSON.parse(geoString);
+      parsedGeo = parseSync(geoString, WKTLoader);
     } catch (e) {
       return null;
     }
   } else {
-    // try parse as WKB hex string
-    try {
-      const buffer = Buffer.from(geoString, 'hex');
-      const binaryGeo = parseSync(buffer, WKBLoader);
-      // @ts-expect-error
-      parsedGeo = convertBinaryGeometryToGeometry(binaryGeo);
-    } catch (e) {
+    const firstChar = geoString.charAt(geoString.search(/\S/));
+    if (firstChar === '{' || firstChar === '[') {
+      // GeoJSON as a JSON string
+      try {
+        parsedGeo = JSON.parse(geoString);
+      } catch (e) {
+        return null;
+      }
+    } else if (firstChar) {
+      // try parse as WKB hex string
+      try {
+        const buffer = Buffer.from(geoString, 'hex');
+        const binaryGeo = parseSync(buffer, WKBLoader);
+        // @ts-expect-error
+        parsedGeo = convertBinaryGeometryToGeometry(binaryGeo);
+      } catch (e) {
+        return null;
+      }
+    } else {
       return null;
     }
   }
