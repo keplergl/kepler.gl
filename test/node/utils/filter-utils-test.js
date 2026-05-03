@@ -14,6 +14,7 @@ import {
   validatePolygonFilter,
   generatePolygonFilter,
   isInPolygon,
+  getPolygonFilterFunctor,
   diffFilters,
   getTimestampFieldDomain,
   scaleSourceDomainToDestination,
@@ -659,6 +660,53 @@ test('filterUtils -> mergeFilterWithTimeline', t => {
     newAnimationConfig.domain,
     'New filter and animationConfig should have the same domain'
   );
+
+  t.end();
+});
+
+test('filterUtils -> getPolygonFilterFunctor -> point layer with dataToFeature (GeoJSON column mode)', t => {
+  const squarePolygon = {
+    type: 'Feature',
+    properties: {},
+    geometry: {
+      type: 'Polygon',
+      coordinates: [[[-1, -1], [1, -1], [1, 1], [-1, 1], [-1, -1]]]
+    }
+  };
+
+  const filter = {value: squarePolygon};
+
+  // Point layer with dataToFeature (GeoJSON column mode)
+  const layerWithDataToFeature = {
+    type: 'point',
+    getPositionAccessor: () => () => null,
+    dataToFeature: {
+      length: 4,
+      0: [0.5, 0.5],       // inside
+      1: [10, 10],          // outside
+      2: [[10, 10], [0.2, 0.2]], // MultiPoint: one inside
+      3: [[10, 10], [20, 20]]    // MultiPoint: all outside
+    }
+  };
+
+  const fn = getPolygonFilterFunctor(layerWithDataToFeature, filter, null);
+
+  t.equal(fn({index: 0}), true, 'Single point inside polygon should return true');
+  t.equal(fn({index: 1}), false, 'Single point outside polygon should return false');
+  t.equal(fn({index: 2}), true, 'MultiPoint with at least one point inside should return true');
+  t.equal(fn({index: 3}), false, 'MultiPoint with all points outside should return false');
+
+  // Point layer without dataToFeature (standard column mode)
+  const layerWithoutDataToFeature = {
+    type: 'point',
+    getPositionAccessor: () => d => d.position,
+    dataToFeature: []
+  };
+
+  const fn2 = getPolygonFilterFunctor(layerWithoutDataToFeature, filter, null);
+
+  t.equal(fn2({position: [0.5, 0.5]}), true, 'Standard mode: point inside should return true');
+  t.equal(fn2({position: [10, 10]}), false, 'Standard mode: point outside should return false');
 
   t.end();
 });

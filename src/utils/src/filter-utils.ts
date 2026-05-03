@@ -382,6 +382,18 @@ export const getPolygonFilterFunctor = (layer, filter, dataContainer) => {
   switch (layer.type) {
     case LAYER_TYPES.point:
     case LAYER_TYPES.icon:
+      if (layer.dataToFeature?.length) {
+        return data => {
+          const coordinates = layer.dataToFeature[data.index];
+          if (!coordinates) return false;
+          if (Array.isArray(coordinates[0])) {
+            return (coordinates as number[][]).some(
+              coord => coord.every(Number.isFinite) && isInPolygon(coord, filter.value)
+            );
+          }
+          return coordinates.every(Number.isFinite) && isInPolygon(coordinates, filter.value);
+        };
+      }
       return data => {
         const pos = getPosition(data);
         return pos.every(Number.isFinite) && isInPolygon(pos, filter.value);

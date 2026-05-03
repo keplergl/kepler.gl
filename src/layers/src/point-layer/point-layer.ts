@@ -441,7 +441,7 @@ export default class PointLayer extends Layer {
         pushPointPosition(data, pos, index, neighbors);
       } else {
         // COLUMN_MODE_GEOJSON mode - point from geojson coordinates
-        const coordinates = this.dataToFeature[i];
+        const coordinates = this.dataToFeature[index];
         // if multi points
         if (coordinates && Array.isArray(coordinates[0])) {
           coordinates.forEach(coord => {
