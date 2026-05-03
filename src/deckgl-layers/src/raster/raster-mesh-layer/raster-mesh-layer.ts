@@ -19,6 +19,7 @@ import {loadImages} from '../images';
 import type {RasterLayerAddedProps, ImageState} from '../types';
 import {modulesEqual, applyModuleUniforms} from '../util';
 import {patchPipelineValidation} from '../pipeline-validation-patch';
+import {rasterProcessingUniforms} from '../raster-processing-uniforms';
 import {TOPOLOGY} from '@kepler.gl/constants';
 
 type Mesh = SimpleMeshLayerProps['mesh'];
@@ -88,11 +89,18 @@ export default class RasterMeshLayer extends SimpleMeshLayer<any, RasterLayerAdd
     const lumaModules = prepareLumaModules(modules);
     const parentShaders = super.getShaders();
 
+    // Filter out simpleMeshUniforms from parent — RasterMeshLayer uses its own
+    // shaders that don't reference SimpleMesh uniforms, and every UBO counts
+    // against the WebGL2 GL_MAX_FRAGMENT_UNIFORM_BUFFERS limit (typically 12).
+    const parentModules = (parentShaders.modules || []).filter(
+      (m: {name?: string}) => m.name !== 'simpleMesh'
+    );
+
     return {
       ...parentShaders,
       vs: buildRasterMeshVertexShader(),
       fs: buildRasterMeshFragmentShader(),
-      modules: [...(parentShaders.modules || []), rasterMeshUniforms, ...lumaModules]
+      modules: [...parentModules, rasterMeshUniforms, rasterProcessingUniforms, ...lumaModules]
     };
   }
 
