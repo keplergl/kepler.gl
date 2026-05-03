@@ -10,7 +10,7 @@ import {WebMercatorViewport} from 'viewport-mercator-project';
 import {KeyEvent} from '@kepler.gl/constants';
 import {Input} from '../common/styled-components';
 import {Search, Delete} from '../common/icons';
-import {Viewport} from '@kepler.gl/types';
+import {Viewport, MapState} from '@kepler.gl/types';
 import {isTest} from '@kepler.gl/utils';
 
 type StyledContainerProps = {
@@ -47,6 +47,57 @@ export const testForCoordinates = (query: string): [true, number, number] | [fal
 
   return [isValid, longitude, latitude];
 };
+
+const EDGE_MERIDIAN = 180;
+
+export function getViewportBbox(
+  mapState: MapState
+): [number, number, number, number] | null {
+  if (!mapState.width || !mapState.height) {
+    return null;
+  }
+
+  const vp = new WebMercatorViewport({
+    width: mapState.width,
+    height: mapState.height,
+    longitude: mapState.longitude,
+    latitude: mapState.latitude,
+    zoom: mapState.zoom,
+    bearing: mapState.bearing ?? 0,
+    pitch: mapState.pitch ?? 0
+  });
+
+  const corners = [
+    vp.unproject([0, 0]),
+    vp.unproject([mapState.width, 0]),
+    vp.unproject([mapState.width, mapState.height]),
+    vp.unproject([0, mapState.height])
+  ];
+
+  const lngs = corners.map(c => c[0]);
+  const lats = corners.map(c => c[1]);
+
+  const minLng = Math.min(...lngs);
+  const maxLng = Math.max(...lngs);
+
+  if (maxLng - minLng >= 360) {
+    return null;
+  }
+
+  const clampedMinLng = Math.max(minLng, -EDGE_MERIDIAN);
+  const clampedMaxLng = Math.min(maxLng, EDGE_MERIDIAN);
+
+  if (clampedMinLng >= clampedMaxLng) {
+    return null;
+  }
+
+  return [
+    clampedMinLng,
+    Math.max(Math.min(...lats), -90),
+    clampedMaxLng,
+    Math.min(Math.max(...lats), 90)
+  ];
+}
 
 const StyledContainer = styled.div<StyledContainerProps>`
   position: relative;
@@ -121,6 +172,8 @@ type GeocoderProps = {
   timeout?: number;
   formatItem?: (item: Result) => string;
   viewport?: Viewport;
+  mapState?: MapState;
+  limitSearch?: boolean;
   onSelected: (viewport: Viewport | null, item: Result) => void;
   onDeleteMarker?: () => void;
   transitionDuration?: number;
@@ -139,6 +192,8 @@ const GeoCoder: React.FC<GeocoderProps & IntlProps> = ({
   timeout = 300,
   formatItem = item => item.place_name,
   viewport,
+  mapState,
+  limitSearch = false,
   onSelected,
   onDeleteMarker,
   transitionDuration,
@@ -177,11 +232,18 @@ const GeoCoder: React.FC<GeocoderProps & IntlProps> = ({
         debounceTimeout = setTimeout(async () => {
           if (limit > 0 && Boolean(queryString)) {
             try {
+              const geocodeParams: {query: string; limit: number; bbox?: [number, number, number, number]} = {
+                query: queryString,
+                limit
+              };
+              if (limitSearch && mapState) {
+                const bbox = getViewportBbox(mapState);
+                if (bbox) {
+                  geocodeParams.bbox = bbox;
+                }
+              }
               const response = await client
-                .forwardGeocode({
-                  query: queryString,
-                  limit
-                })
+                .forwardGeocode(geocodeParams)
                 .send();
               if (response.body.features) {
                 setShowResults(true);
@@ -196,7 +258,7 @@ const GeoCoder: React.FC<GeocoderProps & IntlProps> = ({
         }, timeout);
       }
     },
-    [client, limit, timeout, setResults, setShowResults]
+    [client, limit, timeout, setResults, setShowResults, limitSearch, mapState]
   );
 
   const onBlur = useCallback(() => {

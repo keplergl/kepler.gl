@@ -348,7 +348,9 @@ export function mergeInteractions<S extends VisState>(
       }
 
       const currentConfig =
-        key === 'tooltip' || key === 'brush' ? state.interactionConfig[key].config : null;
+        key === 'tooltip' || key === 'brush' || key === 'geocoder'
+          ? state.interactionConfig[key].config
+          : null;
 
       const {enabled, ...configSaved} = interactionToBeMerged[key] || {};
 
@@ -455,6 +457,10 @@ function combineInteractionConfigs(configs: SavedInteractionConfig[]): SavedInte
       // keep the biggest brush size
       combined[key].size =
         aggregate(toBeCombinedProps, AGGREGATION_TYPES.maximum, p => p.size) ?? null;
+    }
+
+    if (key === 'geocoder') {
+      combined[key].limitSearch = toBeCombinedProps.some(p => p?.limitSearch);
     }
   }
 

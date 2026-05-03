@@ -138,6 +138,7 @@ interface GeocoderPanelProps {
   removeDataset: ActionHandler<typeof removeDataset>;
   updateMap: ActionHandler<typeof updateMap>;
   layerOrder: string[];
+  limitSearch?: boolean;
 
   transitionDuration?: MapViewState['transitionDuration'];
   width?: number;
@@ -155,6 +156,7 @@ export default function GeocoderPanelFactory(): React.FC<GeocoderPanelProps> {
     removeDataset,
     updateMap,
     layerOrder,
+    limitSearch = false,
     transitionDuration = 3000,
     width,
     className,
@@ -235,6 +237,8 @@ export default function GeocoderPanelFactory(): React.FC<GeocoderPanelProps> {
             onSelected={onSelected}
             onDeleteMarker={removeGeocoderDataset}
             width={width}
+            mapState={mapState}
+            limitSearch={limitSearch}
           />
         )}
       </StyledGeocoderPanel>

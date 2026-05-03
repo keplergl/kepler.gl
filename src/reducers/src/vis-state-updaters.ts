@@ -230,7 +230,10 @@ export const defaultInteractionConfig: InteractionConfig = {
     id: 'geocoder',
     label: 'interactions.geocoder',
     enabled: false,
-    position: null
+    position: null,
+    config: {
+      limitSearch: false
+    }
   },
   brush: {
     id: 'brush',
