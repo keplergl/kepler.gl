@@ -26,7 +26,7 @@ const MIXED_SAMPLER_RE = /different type[s]? use the same sampler location/i;
 
 let _patched = false;
 
-function createPatchedLinkStatus(original: Function) {
+function createPatchedLinkStatus(_original: (...args: unknown[]) => unknown) {
   return function _patchedGetLinkStatus(this: any) {
     const {gl} = this.device;
     const linked = gl.getProgramParameter(this.handle, 0x8b82 /* LINK_STATUS */);
