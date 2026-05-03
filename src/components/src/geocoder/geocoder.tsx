@@ -52,7 +52,11 @@ const EDGE_MERIDIAN = 180;
 
 export function getViewportBbox(
   mapState: MapState
-): [number, number, number, number] {
+): [number, number, number, number] | null {
+  if (!mapState.width || !mapState.height) {
+    return null;
+  }
+
   const vp = new WebMercatorViewport({
     width: mapState.width,
     height: mapState.height,
@@ -73,10 +77,24 @@ export function getViewportBbox(
   const lngs = corners.map(c => c[0]);
   const lats = corners.map(c => c[1]);
 
+  const minLng = Math.min(...lngs);
+  const maxLng = Math.max(...lngs);
+
+  if (maxLng - minLng >= 360) {
+    return null;
+  }
+
+  const clampedMinLng = Math.max(minLng, -EDGE_MERIDIAN);
+  const clampedMaxLng = Math.min(maxLng, EDGE_MERIDIAN);
+
+  if (clampedMinLng >= clampedMaxLng) {
+    return null;
+  }
+
   return [
-    Math.max(Math.min(...lngs), -EDGE_MERIDIAN),
+    clampedMinLng,
     Math.max(Math.min(...lats), -90),
-    Math.min(Math.max(...lngs), EDGE_MERIDIAN),
+    clampedMaxLng,
     Math.min(Math.max(...lats), 90)
   ];
 }
@@ -219,7 +237,10 @@ const GeoCoder: React.FC<GeocoderProps & IntlProps> = ({
                 limit
               };
               if (limitSearch && mapState) {
-                geocodeParams.bbox = getViewportBbox(mapState);
+                const bbox = getViewportBbox(mapState);
+                if (bbox) {
+                  geocodeParams.bbox = bbox;
+                }
               }
               const response = await client
                 .forwardGeocode(geocodeParams)
