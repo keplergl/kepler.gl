@@ -679,13 +679,16 @@ test('filterUtils -> getPolygonFilterFunctor -> point layer with dataToFeature (
   // Point layer with dataToFeature (GeoJSON column mode)
   const layerWithDataToFeature = {
     type: 'point',
+    config: {columnMode: 'geojson'},
     getPositionAccessor: () => () => null,
     dataToFeature: {
-      length: 4,
+      length: 6,
       0: [0.5, 0.5],       // inside
       1: [10, 10],          // outside
       2: [[10, 10], [0.2, 0.2]], // MultiPoint: one inside
-      3: [[10, 10], [20, 20]]    // MultiPoint: all outside
+      3: [[10, 10], [20, 20]],   // MultiPoint: all outside
+      4: [],                      // empty coordinates (e.g. empty GeometryCollection)
+      5: [[], [0.5, 0.5]]        // MultiPoint with one empty coord pair
     }
   };
 
@@ -695,10 +698,13 @@ test('filterUtils -> getPolygonFilterFunctor -> point layer with dataToFeature (
   t.equal(fn({index: 1}), false, 'Single point outside polygon should return false');
   t.equal(fn({index: 2}), true, 'MultiPoint with at least one point inside should return true');
   t.equal(fn({index: 3}), false, 'MultiPoint with all points outside should return false');
+  t.equal(fn({index: 4}), false, 'Empty coordinates should return false');
+  t.equal(fn({index: 5}), true, 'MultiPoint with one empty and one valid inside should return true');
 
   // Point layer without dataToFeature (standard column mode)
   const layerWithoutDataToFeature = {
     type: 'point',
+    config: {columnMode: 'points'},
     getPositionAccessor: () => d => d.position,
     dataToFeature: []
   };
