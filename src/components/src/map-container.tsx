@@ -145,9 +145,6 @@ const StyledMap = styled(StyledMapContainer)<StyledMapContainerProps>(
 
 const MAPBOXGL_STYLE_UPDATE = 'style.load';
 const MAPBOXGL_RENDER = 'render';
-const nop = () => {
-  return;
-};
 
 type MapLibLogoProps = {
   baseMapLibraryConfig: BaseMapLibraryConfig;
@@ -284,17 +281,21 @@ export const Attribution: React.FC<AttributionProps> = ({
             {datasetAttributions?.length ? <span className="pipe-separator">|</span> : null}
             {isPalm ? <MapLibLogo baseMapLibraryConfig={baseMapLibraryConfig} /> : null}
             <a href="https://kepler.gl/policy/" target="_blank" rel="noopener noreferrer">
-              © kepler.gl |{' '}
+              © kepler.gl
             </a>
             {showOsmBasemapAttribution ? (
-              <a
-                href="http://www.openstreetmap.org/copyright"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                © OpenStreetMap |{' '}
-              </a>
+              <>
+                <span className="pipe-separator">|</span>
+                <a
+                  href="https://www.openstreetmap.org/copyright"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  © OpenStreetMap
+                </a>
+              </>
             ) : null}
+            <span className="pipe-separator">|</span>
             {!isPalm ? <MapLibLogo baseMapLibraryConfig={baseMapLibraryConfig} /> : null}
           </div>
         </EndHorizontalFlexbox>
@@ -469,10 +470,9 @@ export default function MapContainerFactory(
     }
 
     componentWillUnmount() {
-      // unbind mapboxgl event listener
       if (this._map) {
-        this._map?.off(MAPBOXGL_STYLE_UPDATE, nop);
-        this._map?.off(MAPBOXGL_RENDER, nop);
+        this._map.off(MAPBOXGL_STYLE_UPDATE, this._onMapboxStyleUpdate);
+        this._map.off(MAPBOXGL_RENDER, this._onMapRender);
         this._removeOsmSourceDataListener();
       }
       if (!this._ref.current) {
@@ -499,7 +499,13 @@ export default function MapContainerFactory(
     _map: GetMapRef | null = null;
     _ref = createRef<HTMLDivElement>();
     _deckGLErrorsElapsed: {[id: string]: number} = {};
-    _osmSourceDataListener: (() => void) | null = null;
+    _osmSourceDataListener: ((e: any) => void) | null = null;
+
+    _onMapRender = () => {
+      if (typeof this.props.onMapRender === 'function') {
+        this.props.onMapRender(this._map);
+      }
+    };
 
     previousLayers = {
       // [layers.id]: mapboxLayerConfig
@@ -702,13 +708,19 @@ export default function MapContainerFactory(
     _checkOsmAttributionOnSourceLoad = () => {
       if (!this._map) return;
       this._removeOsmSourceDataListener();
-      const onSourceData = () => {
+      let attempts = 0;
+      const MAX_ATTEMPTS = 50;
+      const onSourceData = (e: any) => {
+        if (!e?.isSourceLoaded) return;
+        attempts++;
         if (mapHasOpenStreetMapAttribution(this._map)) {
           this._removeOsmSourceDataListener();
           this.setState({
             showBaseMapAttribution: true,
             showOsmAttribution: true
           });
+        } else if (attempts >= MAX_ATTEMPTS) {
+          this._removeOsmSourceDataListener();
         }
       };
       this._osmSourceDataListener = onSourceData;
@@ -720,8 +732,9 @@ export default function MapContainerFactory(
       if (this._map && mapRef) {
         const map = mapRef.getMap();
         if (map && this._map !== map) {
-          this._map?.off(MAPBOXGL_STYLE_UPDATE, nop);
-          this._map?.off(MAPBOXGL_RENDER, nop);
+          this._map.off(MAPBOXGL_STYLE_UPDATE, this._onMapboxStyleUpdate);
+          this._map.off(MAPBOXGL_RENDER, this._onMapRender);
+          this._removeOsmSourceDataListener();
           this._map = null;
         }
       }
@@ -734,12 +747,7 @@ export default function MapContainerFactory(
         }
         // bind mapboxgl event listener
         this._map.on(MAPBOXGL_STYLE_UPDATE, this._onMapboxStyleUpdate);
-
-        this._map.on(MAPBOXGL_RENDER, () => {
-          if (typeof this.props.onMapRender === 'function') {
-            this.props.onMapRender(this._map);
-          }
-        });
+        this._map.on(MAPBOXGL_RENDER, this._onMapRender);
       }
 
       if (this.props.getMapboxRef) {
