@@ -116,6 +116,7 @@ export {
 export {
   isStyleUsingMapboxTiles,
   isStyleUsingOpenStreetMapTiles,
+  mapHasOpenStreetMapAttribution,
   getBaseMapLibrary,
   transformRequest
 } from './map-style-utils/mapbox-utils';

@@ -32,11 +32,34 @@ export function isStyleUsingOpenStreetMapTiles(mapStyle: any) {
   const sources = mapStyle?.stylesheet?.sources || {};
   return Object.keys(sources).some(sourceId => {
     const {attribution} = sources[sourceId] || {};
-    if (typeof attribution?.attribution === 'string') {
-      return attribution.attribution.includes('openstreetmap.org');
+    if (typeof attribution === 'string') {
+      return attribution.includes('openstreetmap.org');
     }
     return false;
   });
+}
+
+/**
+ * Checks resolved map sources for OpenStreetMap attribution.
+ * CARTO basemaps don't have attribution in the raw style JSON;
+ * it only appears after MapLibre resolves the TileJSON.
+ * Uses map.getSource() to access the resolved source with TileJSON metadata.
+ */
+export function mapHasOpenStreetMapAttribution(map: any): boolean {
+  try {
+    const style = map?.getStyle?.();
+    if (!style?.sources) return false;
+    return Object.keys(style.sources).some(sourceId => {
+      const source = map.getSource?.(sourceId);
+      const attribution = source?.attribution;
+      if (typeof attribution === 'string') {
+        return attribution.toLowerCase().includes('openstreetmap');
+      }
+      return false;
+    });
+  } catch {
+    return false;
+  }
 }
 
 /**

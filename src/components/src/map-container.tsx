@@ -48,6 +48,7 @@ import {
   errorNotification,
   isStyleUsingMapboxTiles,
   isStyleUsingOpenStreetMapTiles,
+  mapHasOpenStreetMapAttribution,
   getBaseMapLibrary,
   BaseMapLibraryConfig,
   transformRequest,
@@ -144,9 +145,6 @@ const StyledMap = styled(StyledMapContainer)<StyledMapContainerProps>(
 
 const MAPBOXGL_STYLE_UPDATE = 'style.load';
 const MAPBOXGL_RENDER = 'render';
-const nop = () => {
-  return;
-};
 
 type MapLibLogoProps = {
   baseMapLibraryConfig: BaseMapLibraryConfig;
@@ -261,18 +259,12 @@ export const Attribution: React.FC<AttributionProps> = ({
         >
           <EndHorizontalFlexbox>
             <DatasetAttributions datasetAttributions={datasetAttributions} isPalm={isPalm} />
-            {showOsmBasemapAttribution ? (
-              <div className="attrition-link">
-                {datasetAttributions?.length ? <span className="pipe-separator">|</span> : null}
-                <a
-                  href="http://www.openstreetmap.org/copyright"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  © OpenStreetMap
-                </a>
-              </div>
-            ) : null}
+            <div className="attrition-link">
+              {datasetAttributions?.length ? <span className="pipe-separator">|</span> : null}
+              <a href="https://kepler.gl/policy/" target="_blank" rel="noopener noreferrer">
+                © kepler.gl
+              </a>
+            </div>
           </EndHorizontalFlexbox>
         </StyledAttribution>
       );
@@ -289,8 +281,21 @@ export const Attribution: React.FC<AttributionProps> = ({
             {datasetAttributions?.length ? <span className="pipe-separator">|</span> : null}
             {isPalm ? <MapLibLogo baseMapLibraryConfig={baseMapLibraryConfig} /> : null}
             <a href="https://kepler.gl/policy/" target="_blank" rel="noopener noreferrer">
-              © kepler.gl |{' '}
+              © kepler.gl
             </a>
+            {showOsmBasemapAttribution ? (
+              <>
+                <span className="pipe-separator">|</span>
+                <a
+                  href="https://www.openstreetmap.org/copyright"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  © OpenStreetMap
+                </a>
+              </>
+            ) : null}
+            <span className="pipe-separator">|</span>
             {!isPalm ? <MapLibLogo baseMapLibraryConfig={baseMapLibraryConfig} /> : null}
           </div>
         </EndHorizontalFlexbox>
@@ -453,8 +458,8 @@ export default function MapContainerFactory(
     }
 
     state = {
-      // Determines whether attribution should be visible based the result of loading the map style
-      showBaseMapAttribution: true
+      showBaseMapAttribution: true,
+      showOsmAttribution: false
     };
 
     componentDidMount() {
@@ -465,10 +470,10 @@ export default function MapContainerFactory(
     }
 
     componentWillUnmount() {
-      // unbind mapboxgl event listener
       if (this._map) {
-        this._map?.off(MAPBOXGL_STYLE_UPDATE, nop);
-        this._map?.off(MAPBOXGL_RENDER, nop);
+        this._map.off(MAPBOXGL_STYLE_UPDATE, this._onMapboxStyleUpdate);
+        this._map.off(MAPBOXGL_RENDER, this._onMapRender);
+        this._removeOsmSourceDataListener();
       }
       if (!this._ref.current) {
         return;
@@ -476,10 +481,31 @@ export default function MapContainerFactory(
       unobserveDimensions(this._ref.current);
     }
 
+    componentDidUpdate(prevProps) {
+      if (prevProps.mapStyle.styleType !== this.props.mapStyle.styleType) {
+        this._removeOsmSourceDataListener();
+        if (this.props.mapStyle.styleType === NO_MAP_ID) {
+          this.setState({
+            showBaseMapAttribution: false,
+            showOsmAttribution: false
+          });
+        } else {
+          this._updateAttribution();
+        }
+      }
+    }
+
     _deck: any = null;
     _map: GetMapRef | null = null;
     _ref = createRef<HTMLDivElement>();
     _deckGLErrorsElapsed: {[id: string]: number} = {};
+    _osmSourceDataListener: ((e: any) => void) | null = null;
+
+    _onMapRender = () => {
+      if (typeof this.props.onMapRender === 'function') {
+        this.props.onMapRender(this._map);
+      }
+    };
 
     previousLayers = {
       // [layers.id]: mapboxLayerConfig
@@ -634,17 +660,71 @@ export default function MapContainerFactory(
       this.previousLayers = {};
       this._updateMapboxLayers();
 
-      if (update && update.style) {
-        // No attributions are needed if the style doesn't reference Mapbox sources
-        this.setState({
-          showBaseMapAttribution:
-            isStyleUsingMapboxTiles(update.style) || !isStyleUsingOpenStreetMapTiles(update.style)
-        });
-      }
+      this._updateAttribution(update);
 
       if (typeof this.props.onMapStyleLoaded === 'function') {
         this.props.onMapStyleLoaded(this._map);
       }
+    };
+
+    _updateAttribution = (update?: any) => {
+      this._removeOsmSourceDataListener();
+
+      let styleObj = update?.style || null;
+      if (!styleObj && this._map) {
+        try {
+          const rawStyle = this._map.isStyleLoaded?.() ? this._map.getStyle?.() : null;
+          if (rawStyle) {
+            styleObj = {stylesheet: rawStyle};
+          }
+        } catch {
+          // map style not ready yet
+        }
+      }
+      const usesMapbox = styleObj ? isStyleUsingMapboxTiles(styleObj) : false;
+      const usesOsm = styleObj ? isStyleUsingOpenStreetMapTiles(styleObj) : false;
+
+      if (usesMapbox || usesOsm) {
+        this.setState({
+          showBaseMapAttribution: true,
+          showOsmAttribution: usesOsm
+        });
+      } else {
+        this.setState({
+          showBaseMapAttribution: false,
+          showOsmAttribution: false
+        });
+        this._checkOsmAttributionOnSourceLoad();
+      }
+    };
+
+    _removeOsmSourceDataListener = () => {
+      if (this._osmSourceDataListener && this._map) {
+        this._map.off('sourcedata', this._osmSourceDataListener);
+        this._osmSourceDataListener = null;
+      }
+    };
+
+    _checkOsmAttributionOnSourceLoad = () => {
+      if (!this._map) return;
+      this._removeOsmSourceDataListener();
+      let attempts = 0;
+      const MAX_ATTEMPTS = 50;
+      const onSourceData = (e: any) => {
+        if (!e?.isSourceLoaded) return;
+        attempts++;
+        if (mapHasOpenStreetMapAttribution(this._map)) {
+          this._removeOsmSourceDataListener();
+          this.setState({
+            showBaseMapAttribution: true,
+            showOsmAttribution: true
+          });
+        } else if (attempts >= MAX_ATTEMPTS) {
+          this._removeOsmSourceDataListener();
+        }
+      };
+      this._osmSourceDataListener = onSourceData;
+      this._map.on('sourcedata', onSourceData);
     };
 
     _setMapRef = mapRef => {
@@ -652,8 +732,9 @@ export default function MapContainerFactory(
       if (this._map && mapRef) {
         const map = mapRef.getMap();
         if (map && this._map !== map) {
-          this._map?.off(MAPBOXGL_STYLE_UPDATE, nop);
-          this._map?.off(MAPBOXGL_RENDER, nop);
+          this._map.off(MAPBOXGL_STYLE_UPDATE, this._onMapboxStyleUpdate);
+          this._map.off(MAPBOXGL_RENDER, this._onMapRender);
+          this._removeOsmSourceDataListener();
           this._map = null;
         }
       }
@@ -666,12 +747,7 @@ export default function MapContainerFactory(
         }
         // bind mapboxgl event listener
         this._map.on(MAPBOXGL_STYLE_UPDATE, this._onMapboxStyleUpdate);
-
-        this._map.on(MAPBOXGL_RENDER, () => {
-          if (typeof this.props.onMapRender === 'function') {
-            this.props.onMapRender(this._map);
-          }
-        });
+        this._map.on(MAPBOXGL_RENDER, this._onMapRender);
       }
 
       if (this.props.getMapboxRef) {
@@ -1331,7 +1407,7 @@ export default function MapContainerFactory(
           {this.props.primary ? (
             <Attribution
               showBaseMapLibLogo={this.state.showBaseMapAttribution}
-              showOsmBasemapAttribution={true}
+              showOsmBasemapAttribution={this.state.showOsmAttribution}
               datasetAttributions={datasetAttributions}
               baseMapLibraryConfig={baseMapLibraryConfig}
             />
