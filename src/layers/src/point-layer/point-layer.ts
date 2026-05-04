@@ -643,6 +643,7 @@ export default class PointLayer extends Layer {
 
   hasHoveredObject(objectInfo: {index: number}) {
     if (
+      this.geoArrowVector &&
       isLayerHoveredFromArrow(objectInfo, this.id) &&
       objectInfo.index >= 0 &&
       this.dataContainer
