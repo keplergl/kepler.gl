@@ -15,6 +15,7 @@ import {loadImages} from '../images';
 import type {RasterLayerAddedProps, ImageState} from '../types';
 import {modulesEqual, applyModuleUniforms} from '../util';
 import {patchPipelineValidation} from '../pipeline-validation-patch';
+import {rasterProcessingUniforms} from '../raster-processing-uniforms';
 
 const defaultProps = {
   ...BitmapLayer.defaultProps,
@@ -103,7 +104,12 @@ export default class RasterLayer extends BitmapLayer<RasterLayerAddedProps> {
       ...parentShaders,
       vs: buildRasterVertexShader(),
       fs: buildRasterFragmentShader(),
-      modules: [...(parentShaders.modules || []), rasterUniforms, ...lumaModules]
+      modules: [
+        ...(parentShaders.modules || []),
+        rasterUniforms,
+        rasterProcessingUniforms,
+        ...lumaModules
+      ]
     };
   }
 

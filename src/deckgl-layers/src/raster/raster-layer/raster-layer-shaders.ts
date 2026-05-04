@@ -3,6 +3,7 @@
 
 import {ShaderAssembler} from '@luma.gl/shadertools';
 import type {ShaderModule as LumaShaderModule} from '../webgl/types';
+import {UNIFORM_NAME_MAP} from '../raster-processing-uniforms';
 
 /**
  * UBO-based shader module for raster layer uniforms.
@@ -78,11 +79,39 @@ interface LumaModuleOutput {
 
 export function prepareLumaModules(modules: LumaShaderModule[]): LumaModuleOutput[] {
   return modules.map(mod => {
-    const fs = mod.fs2 || mod.fs || '';
+    let fs = mod.fs2 || mod.fs || '';
+    // Replace texture2D with texture for GLSL 300 es
+    fs = fs.replace(/texture2D\(/g, 'texture(');
+
+    const nameMap = UNIFORM_NAME_MAP[mod.name];
+    const consolidate = Boolean(nameMap && mod.uniformTypes);
+
+    if (mod.uniformTypes && !nameMap) {
+      console.warn(
+        `[raster] Module "${mod.name}" has uniformTypes but no UNIFORM_NAME_MAP entry. ` +
+          'Its UBO will not be consolidated and may push the fragment uniform block count over the WebGL2 limit.'
+      );
+    }
+
+    if (consolidate) {
+      // Strip only this module's uniform block declaration so it doesn't
+      // create its own UBO.
+      const blockPattern = new RegExp(
+        `uniform\\s+${mod.name}Uniforms\\s*\\{[^}]*\\}\\s*${mod.name}\\s*;`,
+        'gs'
+      );
+      fs = fs.replace(blockPattern, '');
+
+      // Rewrite moduleName.fieldName references to the shared UBO aliases
+      for (const [origField, prefixedField] of Object.entries(nameMap)) {
+        const pattern = new RegExp(`\\b${mod.name}\\.${origField}\\b`, 'g');
+        fs = fs.replace(pattern, `${prefixedField}_ALIAS`);
+      }
+    }
+
     const result: LumaModuleOutput = {
       name: mod.name,
-      // Replace texture2D with texture for GLSL 300 es
-      fs: fs.replace(/texture2D\(/g, 'texture('),
+      fs,
       dependencies: mod.dependencies,
       deprecations: mod.deprecations
     };
@@ -103,17 +132,27 @@ export function prepareLumaModules(modules: LumaShaderModule[]): LumaModuleOutpu
       result.uniforms = mod.uniforms;
     }
 
-    if (mod.uniformTypes) {
+    // Only keep uniformTypes for modules NOT consolidated into the shared UBO
+    if (mod.uniformTypes && !consolidate) {
       result.uniformTypes = mod.uniformTypes;
     }
 
-    // Convert inject code, replacing texture2D -> texture
+    // Convert inject code, replacing texture2D -> texture and UBO references
     if (mod.inject) {
       result.inject = {};
       for (const [hook, code] of Object.entries(mod.inject)) {
-        const codeStr =
+        let codeStr =
           typeof code === 'string' ? code : (code as {injection?: string}).injection || '';
-        result.inject[hook] = codeStr.replace(/texture2D\(/g, 'texture(');
+        codeStr = codeStr.replace(/texture2D\(/g, 'texture(');
+
+        if (consolidate && nameMap) {
+          for (const [origField, prefixedField] of Object.entries(nameMap)) {
+            const pattern = new RegExp(`\\b${mod.name}\\.${origField}\\b`, 'g');
+            codeStr = codeStr.replace(pattern, `${prefixedField}_ALIAS`);
+          }
+        }
+
+        result.inject[hook] = codeStr;
       }
     }
 
