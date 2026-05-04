@@ -99,8 +99,22 @@ export function applyModuleUniforms(
             Object.assign(shaderInputs.moduleBindings[mod.name], bindings);
           }
         } catch {
-          // Fallback: use the public setProps API if direct mutation is blocked
-          shaderInputs.setProps?.({[mod.name]: result});
+          const nameMap = UNIFORM_NAME_MAP[mod.name];
+          if (nameMap && mod.uniformTypes) {
+            const remappedUniforms: Record<string, unknown> = {};
+            for (const [key, val] of Object.entries(uniforms)) {
+              const remapped = nameMap[key];
+              if (remapped) {
+                remappedUniforms[remapped] = val;
+              }
+            }
+            shaderInputs.setProps?.({rasterProcessing: remappedUniforms});
+            if (Object.keys(bindings).length > 0) {
+              shaderInputs.setProps?.({[mod.name]: bindings});
+            }
+          } else {
+            shaderInputs.setProps?.({[mod.name]: result});
+          }
         }
       }
     }

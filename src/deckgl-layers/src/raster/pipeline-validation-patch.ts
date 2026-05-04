@@ -79,34 +79,27 @@ export function patchPipelineValidation(): void {
   const origFactory = deviceProto?._createSharedRenderPipelineWebGL;
   if (typeof origFactory !== 'function') return;
 
-  let sharedClassPatched = false;
-
   deviceProto._createSharedRenderPipelineWebGL = function (this: any, ...args: any[]) {
-    if (!sharedClassPatched) {
-      sharedClassPatched = true;
+    const instance = origFactory.apply(this, args);
+    const SharedCtor = Object.getPrototypeOf(instance).constructor;
 
-      const instance = origFactory.apply(this, args);
-      const SharedCtor = Object.getPrototypeOf(instance).constructor;
+    if (
+      SharedCtor &&
+      SharedCtor !== WEBGLRenderPipeline &&
+      typeof SharedCtor.prototype._getLinkStatus === 'function'
+    ) {
+      const original = SharedCtor.prototype._getLinkStatus;
+      SharedCtor.prototype._getLinkStatus = createPatchedLinkStatus(original);
 
-      if (
-        SharedCtor &&
-        SharedCtor !== WEBGLRenderPipeline &&
-        typeof SharedCtor.prototype._getLinkStatus === 'function'
-      ) {
-        const original = SharedCtor.prototype._getLinkStatus;
-        SharedCtor.prototype._getLinkStatus = createPatchedLinkStatus(original);
-
-        // Re-validate this first instance since its _getLinkStatus already ran
-        // with the unpatched version during construction.
-        if (instance.linkStatus === 'error') {
-          instance._getLinkStatus();
-        }
+      // Re-validate this first instance since its _getLinkStatus already ran
+      // with the unpatched version during construction.
+      if (instance.linkStatus !== 'success') {
+        instance._getLinkStatus();
       }
-
-      // Restore original factory — future instances will use the patched prototype
-      deviceProto._createSharedRenderPipelineWebGL = origFactory;
-      return instance;
     }
-    return origFactory.apply(this, args);
+
+    // Restore original factory — future instances will use the patched prototype
+    deviceProto._createSharedRenderPipelineWebGL = origFactory;
+    return instance;
   };
 }

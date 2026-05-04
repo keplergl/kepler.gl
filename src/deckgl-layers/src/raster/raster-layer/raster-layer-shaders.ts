@@ -86,10 +86,21 @@ export function prepareLumaModules(modules: LumaShaderModule[]): LumaModuleOutpu
     const nameMap = UNIFORM_NAME_MAP[mod.name];
     const consolidate = Boolean(nameMap && mod.uniformTypes);
 
+    if (mod.uniformTypes && !nameMap) {
+      console.warn(
+        `[raster] Module "${mod.name}" has uniformTypes but no UNIFORM_NAME_MAP entry. ` +
+          'Its UBO will not be consolidated and may push the fragment uniform block count over the WebGL2 limit.'
+      );
+    }
+
     if (consolidate) {
-      // Strip the per-module uniform block declaration so it doesn't create
-      // its own UBO.  Matches: uniform <name>Uniforms { ... } <name>;
-      fs = fs.replace(/uniform\s+\w+Uniforms\s*\{[^}]*\}\s*\w+\s*;/gs, '');
+      // Strip only this module's uniform block declaration so it doesn't
+      // create its own UBO.
+      const blockPattern = new RegExp(
+        `uniform\\s+${mod.name}Uniforms\\s*\\{[^}]*\\}\\s*${mod.name}\\s*;`,
+        'gs'
+      );
+      fs = fs.replace(blockPattern, '');
 
       // Rewrite moduleName.fieldName references to the shared UBO aliases
       for (const [origField, prefixedField] of Object.entries(nameMap)) {
