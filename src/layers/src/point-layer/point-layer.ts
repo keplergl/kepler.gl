@@ -500,6 +500,7 @@ export default class PointLayer extends Layer {
       const getFeature = this.getPositionAccessor();
       this.dataToFeature = getGeojsonPointDataMaps(dataContainer, getFeature);
     } else if (this.config.columnMode === COLUMN_MODE_GEOARROW) {
+      this.dataToFeature = [];
       const boundsFromMetadata = getBoundsFromArrowMetadata(
         this.config.columns.geoarrow,
         dataContainer as ArrowDataContainer
@@ -512,6 +513,7 @@ export default class PointLayer extends Layer {
         this.updateMeta({bounds});
       }
     } else {
+      this.dataToFeature = [];
       const getPosition = this.getPositionAccessor(dataContainer);
       const bounds = this.getPointsBounds(dataContainer, getPosition);
       this.updateMeta({bounds});
@@ -649,10 +651,11 @@ export default class PointLayer extends Layer {
     ) {
       if (this.config.columnMode === COLUMN_MODE_GEOJSON) {
         const coordinates = this.dataToFeature[objectInfo.index];
-        if (!coordinates) return null;
+        if (!coordinates || coordinates.length < 2) return null;
         const position = Array.isArray(coordinates[0])
-          ? (coordinates as number[][])[0]
+          ? (coordinates as number[][]).find(c => c.length >= 2) ?? null
           : coordinates;
+        if (!position) return null;
         return {index: objectInfo.index, position};
       }
       return {
