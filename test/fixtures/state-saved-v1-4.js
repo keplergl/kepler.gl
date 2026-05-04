@@ -219,6 +219,7 @@ mergedLayer0.config = {
       },
       color: [184, 15, 135, 255],
       size: 27,
+      weight: 400,
       offset: [-10, 0],
       anchor: 'end',
       alignment: 'center',

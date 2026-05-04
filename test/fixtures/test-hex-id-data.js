@@ -301,6 +301,7 @@ mergedH3Layer.config = {
       field: null,
       color: [255, 255, 255],
       size: 18,
+      weight: 400,
       offset: [0, 0],
       anchor: 'start',
       alignment: 'center',

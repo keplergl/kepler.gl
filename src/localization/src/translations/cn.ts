@@ -53,6 +53,7 @@ export default {
       label: '标签',
       labelWithId: '标签 {labelId}',
       fontSize: '字体大小',
+      fontWeight: '字体粗细',
       fontColor: '字体颜色',
       backgroundColor: '背景色',
       textAnchor: '文本锚',
