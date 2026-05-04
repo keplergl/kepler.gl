@@ -1582,7 +1582,7 @@ wheels = [
 
 [[package]]
 name = "keplergl"
-version = "0.4.0rc2"
+version = "0.4.0rc4"
 source = { editable = "." }
 dependencies = [
     { name = "anywidget" },

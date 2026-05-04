@@ -140,6 +140,28 @@ class TestGeoDataFrameSerialization:
         assert result["format"] == "geoarrow"
         assert "data" in result
 
+    def test_serialize_empty_geodataframe(self):
+        """Test that an empty GeoDataFrame serializes without error."""
+        gdf = gpd.GeoDataFrame(
+            {"name": pd.Series([], dtype="str")},
+            geometry=gpd.GeoSeries([], crs="EPSG:4326"),
+        )
+        result = serialize_dataset(gdf, "empty")
+        assert result["id"] == "empty"
+        assert result["format"] == "geoarrow"
+        assert "data" in result
+
+    def test_serialize_all_null_geometry_geodataframe(self):
+        """Test that a GeoDataFrame with all-null geometries serializes without error."""
+        gdf = gpd.GeoDataFrame(
+            {"name": ["a", "b"]},
+            geometry=[None, None],
+        )
+        result = serialize_dataset(gdf, "nulls")
+        assert result["id"] == "nulls"
+        assert result["format"] == "geoarrow"
+        assert "data" in result
+
 
 class TestGeoJSONSerialization:
     """Tests for GeoJSON serialization (from GeoJSON.ipynb)."""

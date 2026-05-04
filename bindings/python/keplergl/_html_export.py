@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import json
+import html
 from typing import Optional
 
 import pandas as pd
@@ -33,12 +34,21 @@ def _dataset_to_csv(data) -> Optional[str]:
         return None
 
 
-def _dataset_to_geojson(data) -> Optional[dict]:
-    """Try to convert dataset to GeoJSON dict."""
+def _dataset_to_geojson(data, json_encoder=str) -> Optional[dict]:
+    """Try to convert dataset to GeoJSON dict.
+
+    Args:
+        data: Dataset value (GeoDataFrame, dict, or string).
+        json_encoder: Fallback function passed as ``default`` to
+            ``GeoDataFrame.to_json()`` so that non-serializable types
+            (e.g. ``datetime``) are converted instead of raising.
+            Defaults to ``str``.  Pass ``None`` to disable (will raise
+            on non-serializable types).
+    """
     if isinstance(data, gpd.GeoDataFrame):
         if data.crs and data.crs.to_epsg() != 4326:
             data = data.to_crs(4326)
-        return json.loads(data.to_json())
+        return json.loads(data.to_json(default=json_encoder))
     elif isinstance(data, dict):
         geojson_types = {
             "FeatureCollection", "Feature", "Point", "MultiPoint",
@@ -59,15 +69,57 @@ def _dataset_to_geojson(data) -> Optional[dict]:
     return None
 
 
-def _serialize_datasets_for_html(data: dict) -> str:
+def _geojson_dataset_names(data: dict, json_encoder=str) -> set:
+    """Return the set of dataset names that will be serialized as GeoJSON."""
+    names: set = set()
+    for name, dataset in data.items():
+        if _dataset_to_geojson(dataset, json_encoder=json_encoder) is not None:
+            names.add(name)
+    return names
+
+
+def _fixup_geojson_columns(config: Optional[dict], geojson_names: set) -> Optional[dict]:
+    """Rewrite layer column references for GeoJSON datasets.
+
+    ``processGeojson`` stores the geometry as ``_geojson`` regardless of the
+    original column name.  Configs produced by the Jupyter widget use the
+    source GeoDataFrame column name (commonly ``geometry``), so the layer
+    merger cannot match them.  This helper patches those references so the
+    exported HTML applies the full config.
+    """
+    if not config or not geojson_names:
+        return config
+
+    import copy
+    config = copy.deepcopy(config)
+    layers = (config
+              .get("config", {})
+              .get("visState", {})
+              .get("layers", []))
+    for layer in layers:
+        layer_cfg = layer.get("config", {})
+        data_id = layer_cfg.get("dataId")
+        if data_id not in geojson_names:
+            continue
+        columns = layer_cfg.get("columns", {})
+        if "geojson" in columns and columns["geojson"] != "_geojson":
+            columns["geojson"] = "_geojson"
+    return config
+
+
+def _serialize_datasets_for_html(data: dict, json_encoder=str) -> str:
     """Serialize datasets dict into JS code that calls addDataToMap.
 
     Generates a JS snippet that processes each dataset using kepler.gl's
     processCsvData or processGeojson, then dispatches addDataToMap.
+
+    Args:
+        data: Dict mapping dataset names to data objects.
+        json_encoder: Fallback encoder passed to ``_dataset_to_geojson``.
     """
     snippets = []
     for name, dataset in data.items():
-        geojson = _dataset_to_geojson(dataset)
+        geojson = _dataset_to_geojson(dataset, json_encoder=json_encoder)
         if geojson is not None:
             snippets.append(
                 f"  datasets.push({{info: {{id: {json.dumps(name, ensure_ascii=False)}, label: {json.dumps(name, ensure_ascii=False)}}}, "
@@ -85,28 +137,53 @@ def _serialize_datasets_for_html(data: dict) -> str:
 
 def export_map_html(
     data: dict,
-    config: dict,
+    config: Optional[dict],
     read_only: bool = False,
     center_map: bool = False,
     mapbox_token: str = "",
     kepler_gl_version: str = DEFAULT_KEPLER_GL_CDN_VERSION,
+    json_encoder=str,
+    app_name: str = "kepler.gl",
+    theme: str = "",
 ) -> str:
     """Generate a standalone HTML string that renders a kepler.gl map.
 
     Loads all dependencies from CDN (unpkg). No local JS build required.
+
+    Args:
+        data: Dict of dataset name to data.
+        config: Map config dict.
+        read_only: If True, hide side panel to disable map customization.
+        center_map: If True, fit map bounds to the data.
+        mapbox_token: Mapbox API access token.
+        kepler_gl_version: kepler.gl UMD bundle version tag for unpkg.
+        json_encoder: Fallback function passed as ``default`` when
+            JSON-serializing GeoDataFrame data.  Defaults to ``str`` so
+            that ``datetime`` and other non-native JSON types are
+            converted automatically.  Pass ``None`` to disable.
+        app_name: Application name displayed in the side panel header
+            and used as the HTML ``<title>``.  Defaults to ``"kepler.gl"``.
+        theme: UI theme for the kepler.gl component.  Accepted values
+            are ``"light"``, ``"dark"``, ``"base"``, or an empty string
+            (default) which uses the built-in dark theme.
     """
-    dataset_js = _serialize_datasets_for_html(data)
-    config_json = json.dumps(config, ensure_ascii=False) if config else "{}"
+    dataset_js = _serialize_datasets_for_html(data, json_encoder=json_encoder)
+    geojson_names = _geojson_dataset_names(data, json_encoder=json_encoder)
+    fixed_config = _fixup_geojson_columns(config, geojson_names)
+    config_json = json.dumps(fixed_config, ensure_ascii=False) if fixed_config else "{}"
     mapbox_token_json = json.dumps(mapbox_token)
     read_only_js = "true" if read_only else "false"
     center_map_js = "true" if center_map else "false"
+    app_name_json = json.dumps(app_name)
+    theme_js = json.dumps(theme) if theme else "undefined"
+    title_html = html.escape(app_name) if app_name else "kepler.gl"
 
     return f"""\
 <!DOCTYPE html>
 <html>
   <head>
     <meta charset="UTF-8"/>
-    <title>Kepler.gl embedded map</title>
+    <title>{title_html} embedded map</title>
 
     <!--Uber Font-->
     <link rel="stylesheet" href="https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/uber-fonts/4.0.0/superfine.css">
@@ -185,12 +262,13 @@ def export_map_html(
           return react.createElement(
             'div',
             {{style: {{position: 'absolute', left: 0, width: '100vw', height: '100vh'}}}},
-            react.createElement(keplerGl.KeplerGl, {{
+            react.createElement(keplerGl.KeplerGl, Object.assign({{
               mapboxApiAccessToken: mapboxToken,
               id: "map",
               width: windowDimension.width,
-              height: windowDimension.height
-            }})
+              height: windowDimension.height,
+              appName: {app_name_json}
+            }}, {theme_js} !== undefined ? {{theme: {theme_js}}} : {{}}))
           );
         }};
       }}(React, KeplerGl, MAPBOX_TOKEN));

@@ -8,8 +8,8 @@ import {createStore, KEPLER_ID} from './store';
 import {App} from './components/App';
 import {processDataset} from './utils/data';
 import type {WidgetModel, DatasetPayload} from './types';
-import type {ParsedConfig} from '@kepler.gl/types';
-import {addDataToMap, receiveMapConfig, wrapTo} from '@kepler.gl/actions';
+import type {AddDataToMapPayload} from '@kepler.gl/types';
+import {addDataToMap, wrapTo} from '@kepler.gl/actions';
 import KeplerGlSchema from '@kepler.gl/schemas';
 
 const DEBUG = false;
@@ -24,9 +24,10 @@ export class KeplerGlWidget {
   private el: HTMLElement;
   private root: Root | null = null;
   private store: ReturnType<typeof createStore>;
-  private previousConfigHash: string = '';
-  private mapUpdateCounter: number = 0;
-  private isSyncingConfig: boolean = false;
+  private previousConfigHash = '';
+  private mapUpdateCounter = 0;
+  private isSyncingConfig = false;
+  private loadedDatasetHashes: Map<string, string> = new Map();
 
   constructor(model: WidgetModel, el: HTMLElement) {
     debug('KeplerGlWidget constructor');
@@ -46,8 +47,7 @@ export class KeplerGlWidget {
       })
     );
 
-    this.loadData();
-    this.loadConfig();
+    this.loadInitial();
     this.store.subscribe(() => this.syncConfigToPython());
   }
 
@@ -78,45 +78,104 @@ export class KeplerGlWidget {
     this.el.style.height = `${this.model.get('height')}px`;
   }
 
+  private async loadInitial() {
+    const data = this.model.get('data');
+    const config = this.model.get('config');
+    debug(
+      'loadInitial() called, data keys:',
+      Object.keys(data),
+      'has config:',
+      !!(config && Object.keys(config).length)
+    );
+
+    await this.waitForInstance();
+
+    const datasets = await this.processAllDatasets(data);
+
+    if (datasets.length > 0 || (config && Object.keys(config).length > 0)) {
+      const hasMapState = !!config?.config?.mapState;
+      const payload: Record<string, unknown> = {
+        datasets,
+        options: {centerMap: !hasMapState, readOnly: false}
+      };
+      if (config && Object.keys(config).length > 0) {
+        payload.config = config;
+        this.previousConfigHash = JSON.stringify(config);
+      }
+      const action = addDataToMap(payload as AddDataToMapPayload);
+      this.store.dispatch(wrapTo(KEPLER_ID, action));
+      for (const [name, dataPayload] of Object.entries(data)) {
+        this.loadedDatasetHashes.set(name, JSON.stringify(dataPayload));
+      }
+      debug('loadInitial: dispatched addDataToMap with datasets + config');
+    }
+  }
+
   private async loadData() {
     const data = this.model.get('data');
     debug('loadData() called, data keys:', Object.keys(data));
-    debug('loadData() raw data:', JSON.stringify(data, null, 2));
 
-    // Wait for the KeplerGl component to register itself
     await this.waitForInstance();
 
+    const currentNames = new Set(Object.keys(data));
+
+    for (const prevName of this.loadedDatasetHashes.keys()) {
+      if (!currentNames.has(prevName)) {
+        this.loadedDatasetHashes.delete(prevName);
+        debug(`Dataset '${prevName}' removed`);
+      }
+    }
+
     for (const [name, payload] of Object.entries(data)) {
+      const hash = JSON.stringify(payload);
+      if (this.loadedDatasetHashes.get(name) === hash) {
+        continue;
+      }
       debug(`Processing dataset '${name}'...`);
       try {
         const processed = await processDataset(payload as DatasetPayload);
-        debug(
-          `Dataset '${name}' processed:`,
-          processed ? {fields: processed.fields, rowCount: processed.rows?.length} : null
-        );
-
         if (!processed) {
           debug(`Dataset '${name}' returned null, skipping`);
           continue;
         }
-
         const action = addDataToMap({
           datasets: {
             info: {id: name, label: name},
             data: processed
-          }
-        });
-        // Wrap the action to target the specific kepler.gl instance
-        const wrappedAction = wrapTo(KEPLER_ID, action);
-        debug(`Dispatching addDataToMap for '${name}'`, wrappedAction);
-        this.store.dispatch(wrappedAction);
-        debug(`addDataToMap dispatched for '${name}'`);
+          },
+          options: {centerMap: true, readOnly: false, keepExistingConfig: true}
+        } as AddDataToMapPayload);
+        this.store.dispatch(wrapTo(KEPLER_ID, action));
+        this.loadedDatasetHashes.set(name, hash);
+        debug(`Dataset '${name}' dispatched`);
       } catch (error) {
         console.error(`[keplergl-widget] Error processing dataset '${name}':`, error);
       }
     }
+  }
 
-    debug('loadData() complete, store state:', this.store.getState());
+  private async processAllDatasets(
+    data: Record<string, DatasetPayload>
+  ): Promise<Array<{info: {id: string; label: string}; data: unknown}>> {
+    const datasets: Array<{info: {id: string; label: string}; data: unknown}> = [];
+    for (const [name, payload] of Object.entries(data)) {
+      debug(`Processing dataset '${name}'...`);
+      try {
+        const processed = await processDataset(payload as DatasetPayload);
+        if (!processed) {
+          debug(`Dataset '${name}' returned null, skipping`);
+          continue;
+        }
+        datasets.push({
+          info: {id: name, label: name},
+          data: processed
+        });
+        debug(`Dataset '${name}' processed successfully`);
+      } catch (error) {
+        console.error(`[keplergl-widget] Error processing dataset '${name}':`, error);
+      }
+    }
+    return datasets;
   }
 
   private waitForInstance(): Promise<void> {
@@ -155,7 +214,12 @@ export class KeplerGlWidget {
     debug('loadConfig() called, config:', config);
     if (config && Object.keys(config).length > 0) {
       this.isSyncingConfig = true;
-      this.store.dispatch(wrapTo(KEPLER_ID, receiveMapConfig(config as ParsedConfig, {})));
+      const action = addDataToMap({
+        datasets: [],
+        config,
+        options: {centerMap: false, keepExistingConfig: true}
+      } as AddDataToMapPayload);
+      this.store.dispatch(wrapTo(KEPLER_ID, action));
       this.previousConfigHash = JSON.stringify(config);
       this.isSyncingConfig = false;
     }
