@@ -135,15 +135,21 @@ export type ParsedVisState = {
 };
 
 export type ParsedUiState = {
-  mapControls: {
-    mapLegend: {
-      active: boolean;
-      settings: {
-        position: string;
-        contentHeight: number;
+  mapControls?: {
+    mapLegend?: {
+      active?: boolean;
+      settings?: {
+        position?: {
+          x: number;
+          y: number;
+          anchorX: 'left' | 'right';
+          anchorY: 'top' | 'bottom';
+        };
+        contentHeight?: number;
       };
     };
   };
+  locale?: string;
 };
 
 export type SavedMapState = {

@@ -170,6 +170,84 @@ test('#composerStateReducer - addDataToMapUpdater: uiState', t => {
   t.end();
 });
 
+test('#composerStateReducer - addDataToMapUpdater: mapLegend', t => {
+  const state = keplerGlReducer(undefined, registerEntry({id: 'test'})).test;
+
+  t.equal(
+    state.uiState.mapControls.mapLegend.active,
+    false,
+    'mapLegend should be inactive by default'
+  );
+
+  const newState = addDataToMapUpdater(state, {
+    payload: {
+      datasets: {
+        data: mockRawData,
+        info: {id: 'foo'}
+      },
+      config: {
+        uiState: {
+          mapControls: {
+            mapLegend: {
+              active: true,
+              settings: {
+                position: {x: 20, y: 40, anchorX: 'left', anchorY: 'top'},
+                contentHeight: 150
+              }
+            }
+          }
+        }
+      }
+    }
+  });
+
+  drainTasksForTesting();
+
+  t.equal(
+    newState.uiState.mapControls.mapLegend.active,
+    true,
+    'mapLegend should be set to active from config'
+  );
+  t.deepEqual(
+    newState.uiState.mapControls.mapLegend.settings.position,
+    {x: 20, y: 40, anchorX: 'left', anchorY: 'top'},
+    'mapLegend settings position should be set from config'
+  );
+  t.equal(
+    newState.uiState.mapControls.mapLegend.settings.contentHeight,
+    150,
+    'mapLegend settings contentHeight should be set from config'
+  );
+
+  t.end();
+});
+
+test('#composerStateReducer - addDataToMapUpdater: locale', t => {
+  const state = keplerGlReducer(undefined, registerEntry({id: 'test'})).test;
+
+  t.equal(state.uiState.locale, 'en', 'locale should be en by default');
+
+  const newState = addDataToMapUpdater(state, {
+    payload: {
+      datasets: {
+        data: mockRawData,
+        info: {id: 'foo'}
+      },
+      config: {
+        uiState: {
+          locale: 'es'
+        }
+      }
+    }
+  });
+
+  drainTasksForTesting();
+
+  t.equal(newState.uiState.locale, 'es', 'locale should be set to es from config');
+
+  t.end();
+});
+
 test('#composerStateReducer - addDataToMapUpdater: keepExistingConfig', t => {
   const data = processCsvData(testCsvData);
 

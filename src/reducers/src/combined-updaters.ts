@@ -4,10 +4,9 @@
 import {
   toggleModalUpdater,
   loadFilesSuccessUpdater as uiStateLoadFilesSuccessUpdater,
-  setMapControlSettingsUpdater as uiStateSetMapControlSettingsUpdater,
-  toggleMapControlUpdater as uiStateToggleMapControlUpdater,
   toggleMapControlUpdater,
-  toggleSplitMapUpdater as uiStateToggleSplitMapUpdater
+  toggleSplitMapUpdater as uiStateToggleSplitMapUpdater,
+  receiveMapConfigUpdater as uiStateReceiveMapConfigUpdater
 } from './ui-state-updaters';
 import {
   updateVisDataUpdater as visStateUpdateVisDataUpdater,
@@ -207,27 +206,11 @@ export const addDataToMapUpdater = (
       )
     ),
     pick_('mapStyle')(apply_(styleMapConfigUpdater, payload_({config: parsedConfig, options}))),
+    pick_('uiState')(
+      apply_(uiStateReceiveMapConfigUpdater, payload_({config: parsedConfig, options}))
+    ),
     pick_('uiState')(apply_(uiStateLoadFilesSuccessUpdater, payload_(null))),
 
-    if_(
-      Boolean(parsedConfig?.uiState?.mapControls?.mapLegend?.active),
-      pick_('uiState')(
-        apply_(uiStateToggleMapControlUpdater, payload_({panelId: 'mapLegend', index: 0}))
-      )
-    ),
-
-    if_(
-      Boolean(parsedConfig?.uiState?.mapControls?.mapLegend?.settings),
-      pick_('uiState')(
-        apply_(
-          uiStateSetMapControlSettingsUpdater,
-          payload_({
-            panelId: 'mapLegend',
-            settings: parsedConfig?.uiState?.mapControls?.mapLegend?.settings ?? {}
-          })
-        )
-      )
-    ),
     pick_('uiState')(apply_(toggleModalUpdater, payload_(null))),
     pick_('uiState')(
       merge_(

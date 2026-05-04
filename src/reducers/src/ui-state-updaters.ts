@@ -26,6 +26,7 @@ import {
   ActionTypes,
   KeplerGlInitPayload,
   LoadFilesErrUpdaterAction,
+  ReceiveMapConfigPayload,
   UIStateActions
 } from '@kepler.gl/actions';
 import {
@@ -973,4 +974,60 @@ export const togglePanelListViewUpdater = (
     ...state,
     [stateProp]: listView
   };
+};
+
+/**
+ * Merge received ui state config when loading a saved map
+ * @memberof uiStateUpdaters
+ * @param state `uiState`
+ * @param action
+ * @param action.payload saved map config `{mapStyle, visState, mapState, uiState}`
+ * @returns nextState
+ * @public
+ */
+export const receiveMapConfigUpdater = (
+  state: UiState,
+  {
+    payload: {config}
+  }: {
+    type?: (typeof ActionTypes)['RECEIVE_MAP_CONFIG'];
+    payload: ReceiveMapConfigPayload;
+  }
+): UiState => {
+  const {uiState} = config || {};
+  if (!uiState) {
+    return state;
+  }
+
+  let newState = state;
+
+  if (uiState.mapControls?.mapLegend?.active) {
+    const currentLegend = newState.mapControls.mapLegend;
+    newState = {
+      ...newState,
+      mapControls: {
+        ...newState.mapControls,
+        mapLegend: {
+          show: true,
+          ...currentLegend,
+          active: true,
+          activeMapIndex: 0
+        }
+      }
+    };
+  }
+
+  if (uiState.mapControls?.mapLegend?.settings) {
+    newState = setMapControlSettingsUpdater(newState, {
+      payload: {panelId: 'mapLegend', settings: uiState.mapControls.mapLegend.settings}
+    } as UIStateActions.setMapControlSettingsUpdaterAction);
+  }
+
+  if (uiState.locale) {
+    newState = setLocaleUpdater(newState, {
+      payload: {locale: uiState.locale}
+    } as UIStateActions.SetLocaleUpdaterAction);
+  }
+
+  return newState;
 };
