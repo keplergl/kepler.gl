@@ -300,6 +300,8 @@ export default abstract class AbstractTileLayer<
     const next = newConfig.visConfig?.dynamicColor ?? old;
     const scaleTypeChanged =
       newConfig.colorScale && this.config.colorScale !== newConfig.colorScale;
+    const colorFieldChanged =
+      newConfig.colorField !== undefined && newConfig.colorField !== this.config.colorField;
 
     super.updateLayerConfig(newConfig);
     const {colorField} = this.config;
@@ -308,7 +310,7 @@ export default abstract class AbstractTileLayer<
       // When we switch from dynamic to non-dynamic or vice versa, we need to update
       // the color domain. This is downstream from a dispatch call, so we use
       // setTimeout to avoid "reducers may not dispatch actions" errors
-      if (next && (!old || scaleTypeChanged)) {
+      if (next && (!old || scaleTypeChanged || colorFieldChanged)) {
         setTimeout(() => this.setDynamicColorDomain(), 0);
       } else if (old && !next) {
         setTimeout(() => this.resetColorDomain(), 0);
