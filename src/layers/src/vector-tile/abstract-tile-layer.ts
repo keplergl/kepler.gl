@@ -187,6 +187,15 @@ export default abstract class AbstractTileLayer<
     return [];
   }
 
+  get noneLayerDataAffectingProps() {
+    return [
+      ...super.noneLayerDataAffectingProps,
+      'colorDomain',
+      'sizeDomain',
+      'heightDomain'
+    ];
+  }
+
   get visualChannels(): Record<string, VisualChannel> {
     return {
       color: {
