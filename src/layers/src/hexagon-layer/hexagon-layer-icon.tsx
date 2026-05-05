@@ -1,26 +1,16 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {Component} from 'react';
-import PropTypes from 'prop-types';
-import {Base} from '../base';
+import React from 'react';
+import {Base, BaseProps} from '../base';
 
-export default class HexagonLayerIcon extends Component {
-  static propTypes = {
-    /** Set the height of the icon, ex. '16px' */
-    height: PropTypes.string,
-    colors: PropTypes.arrayOf(PropTypes.string)
-  };
-
-  static defaultProps = {
-    height: '16px',
-    predefinedClassName: 'hexagon-layer-icon',
-    totalColor: 6
-  };
-
-  render() {
-    return (
-      <Base {...this.props}>
+const HexagonLayerIcon: React.FC<Partial<BaseProps>> = ({
+  height = '16px',
+  predefinedClassName = 'hexagon-layer-icon',
+  totalColor = 6,
+  ...props
+}) => (
+  <Base height={height} predefinedClassName={predefinedClassName} totalColor={totalColor} {...props}>
         <polygon
           className="cr1"
           points="23.9,10 30.9,14 30.9,22.1 23.9,26.2 16.8,22.1 16.8,14 "
@@ -52,6 +42,6 @@ export default class HexagonLayerIcon extends Component {
           style={{opacity: 0.4}}
         />
       </Base>
-    );
-  }
-}
+);
+
+export default HexagonLayerIcon;
