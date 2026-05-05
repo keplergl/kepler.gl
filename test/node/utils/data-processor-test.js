@@ -30,7 +30,8 @@ import {
   parseCsvRowsByFieldType,
   processCsvData,
   processGeojson,
-  processRowObject
+  processRowObject,
+  detectDelimiter
 } from '@kepler.gl/processors';
 
 import {validateInputData, createDataContainer} from '@kepler.gl/utils';
@@ -148,6 +149,260 @@ test('Processor -> processCsvData', t => {
   rows.forEach((r, i) => {
     t.deepEqual(r, testAllData[i], `should parse row ${i} correctly`);
   });
+
+  t.end();
+});
+
+test('Processor -> detectDelimiter', t => {
+  t.equal(detectDelimiter('a,b,c\n1,2,3'), ',', 'should detect comma delimiter');
+  t.equal(detectDelimiter('a\tb\tc\n1\t2\t3'), '\t', 'should detect tab delimiter');
+  t.equal(detectDelimiter('a;b;c\n1;2;3'), ';', 'should detect semicolon delimiter');
+  t.equal(detectDelimiter('a|b|c\n1|2|3'), '|', 'should detect pipe delimiter');
+
+  t.equal(
+    detectDelimiter('single_column\nvalue'),
+    ',',
+    'should fall back to comma when no delimiter produces multiple columns'
+  );
+  t.equal(detectDelimiter(''), ',', 'should return comma for empty string');
+  t.equal(
+    detectDelimiter('a,b,c'),
+    ',',
+    'should handle input without newline (single line)'
+  );
+
+  t.equal(
+    detectDelimiter('"a\tb"\tc\td\n1\t2\t3'),
+    '\t',
+    'should handle quoted fields containing other delimiters'
+  );
+  t.equal(
+    detectDelimiter('"city, state"\tpopulation\tarea\n"New York, NY"\t8000000\t302'),
+    '\t',
+    'should detect tab even when commas appear inside quoted fields'
+  );
+
+  t.equal(
+    detectDelimiter('name;age;city\nAlice;30;"Berlin, Germany"'),
+    ';',
+    'should detect semicolon with quoted fields containing commas'
+  );
+
+  t.equal(
+    detectDelimiter('a\tb\tc\td\te\n1\t2\t3\t4\t5'),
+    '\t',
+    'should prefer delimiter that produces more columns'
+  );
+
+  t.end();
+});
+
+test('Processor -> processCsvData -> tab-separated', t => {
+  const tsvData = 'name\tage\tcity\nAlice\t30\tBerlin\nBob\t25\tParis';
+  const result = processCsvData(tsvData);
+
+  t.equal(result.fields.length, 3, 'should parse 3 fields from TSV');
+  t.equal(result.fields[0].name, 'name', 'first field should be name');
+  t.equal(result.fields[1].name, 'age', 'second field should be age');
+  t.equal(result.fields[2].name, 'city', 'third field should be city');
+  t.equal(result.rows.length, 2, 'should have 2 data rows');
+  t.deepEqual(result.rows[0], ['Alice', 30, 'Berlin'], 'should parse first row correctly');
+  t.deepEqual(result.rows[1], ['Bob', 25, 'Paris'], 'should parse second row correctly');
+
+  t.end();
+});
+
+test('Processor -> processCsvData -> semicolon-separated', t => {
+  const ssvData = 'name;value;active\nfoo;100;true\nbar;200;false';
+  const result = processCsvData(ssvData);
+
+  t.equal(result.fields.length, 3, 'should parse 3 fields from semicolon-separated data');
+  t.equal(result.fields[0].name, 'name', 'first field should be name');
+  t.equal(result.fields[1].name, 'value', 'second field should be value');
+  t.equal(result.fields[2].name, 'active', 'third field should be active');
+  t.equal(result.rows.length, 2, 'should have 2 data rows');
+  t.deepEqual(result.rows[0], ['foo', 100, true], 'should parse first row correctly');
+  t.deepEqual(result.rows[1], ['bar', 200, false], 'should parse second row correctly');
+
+  t.end();
+});
+
+test('Processor -> processCsvData -> pipe-separated', t => {
+  const psvData = 'id|name|score\n1|Alice|95.5\n2|Bob|87.3';
+  const result = processCsvData(psvData);
+
+  t.equal(result.fields.length, 3, 'should parse 3 fields from pipe-separated data');
+  t.equal(result.fields[0].name, 'id', 'first field should be id');
+  t.equal(result.fields[1].name, 'name', 'second field should be name');
+  t.equal(result.fields[2].name, 'score', 'third field should be score');
+  t.equal(result.rows.length, 2, 'should have 2 data rows');
+
+  t.end();
+});
+
+test('Processor -> processCsvData -> semicolon with quoted commas', t => {
+  const data = '"City, Country";Population;Area\n"Berlin, Germany";3600000;891\n"Paris, France";2100000;105';
+  const result = processCsvData(data);
+
+  t.equal(result.fields.length, 3, 'should parse 3 fields');
+  t.equal(result.fields[0].name, 'City, Country', 'should preserve comma inside quotes');
+  t.equal(result.rows.length, 2, 'should have 2 data rows');
+  t.equal(result.rows[0][0], 'Berlin, Germany', 'should preserve quoted value with comma');
+
+  t.end();
+});
+
+test('Processor -> detectDelimiter -> Windows line endings (CRLF)', t => {
+  t.equal(
+    detectDelimiter('a\tb\tc\r\n1\t2\t3\r\n'),
+    '\t',
+    'should detect tab delimiter with CRLF line endings'
+  );
+  t.equal(
+    detectDelimiter('a;b;c\r\n1;2;3\r\n'),
+    ';',
+    'should detect semicolon delimiter with CRLF line endings'
+  );
+
+  t.end();
+});
+
+test('Processor -> detectDelimiter -> ambiguous cases', t => {
+  t.equal(
+    detectDelimiter('a,b\tc,d\n1,2\t3,4'),
+    ',',
+    'should prefer comma when comma produces more columns than tab'
+  );
+  t.equal(
+    detectDelimiter('a\tb\tc\td,e\n1\t2\t3\t4,5'),
+    '\t',
+    'should prefer tab when tab produces more columns than comma'
+  );
+  t.equal(
+    detectDelimiter('a;b;c;d|e\n1;2;3;4|5'),
+    ';',
+    'should prefer semicolon when it produces more columns than pipe'
+  );
+
+  t.end();
+});
+
+test('Processor -> detectDelimiter -> trailing and leading whitespace', t => {
+  t.equal(
+    detectDelimiter('  a\tb\tc  \n  1\t2\t3  '),
+    '\t',
+    'should detect tab even with surrounding whitespace'
+  );
+  t.equal(
+    detectDelimiter(' a ; b ; c \n 1 ; 2 ; 3 '),
+    ';',
+    'should detect semicolon even with spaces around values'
+  );
+
+  t.end();
+});
+
+test('Processor -> processCsvData -> tab-separated with empty fields', t => {
+  const tsvData = 'name\tage\tcity\nAlice\t\tBerlin\n\t25\t';
+  const result = processCsvData(tsvData);
+
+  t.equal(result.fields.length, 3, 'should parse 3 fields');
+  t.equal(result.rows.length, 2, 'should have 2 data rows');
+  t.equal(result.rows[0][0], 'Alice', 'first row first value should be Alice');
+  t.equal(result.rows[0][1], null, 'first row second value should be null (empty)');
+  t.equal(result.rows[0][2], 'Berlin', 'first row third value should be Berlin');
+  t.equal(result.rows[1][0], null, 'second row first value should be null (empty)');
+
+  t.end();
+});
+
+test('Processor -> processCsvData -> tab-separated with many columns', t => {
+  const headers = Array.from({length: 20}, (_, i) => `col${i}`).join('\t');
+  const row1 = Array.from({length: 20}, (_, i) => `val${i}`).join('\t');
+  const row2 = Array.from({length: 20}, (_, i) => `row2_${i}`).join('\t');
+  const tsvData = `${headers}\n${row1}\n${row2}`;
+  const result = processCsvData(tsvData);
+
+  t.equal(result.fields.length, 20, 'should parse 20 fields from wide TSV');
+  t.equal(result.fields[0].name, 'col0', 'first field should be col0');
+  t.equal(result.fields[19].name, 'col19', 'last field should be col19');
+  t.equal(result.rows.length, 2, 'should have 2 data rows');
+  t.equal(result.rows[0][0], 'val0', 'first cell should be val0');
+  t.equal(result.rows[0][19], 'val19', 'last cell should be val19');
+
+  t.end();
+});
+
+test('Processor -> processCsvData -> semicolon-separated with numeric data', t => {
+  const data = 'lat;lng;value\n52.52;13.405;1000.5\n48.8566;2.3522;2000.7\n40.4168;-3.7038;1500.3';
+  const result = processCsvData(data);
+
+  t.equal(result.fields.length, 3, 'should parse 3 fields');
+  t.equal(result.rows.length, 3, 'should have 3 data rows');
+  t.equal(result.rows[0][0], 52.52, 'should parse lat as number');
+  t.equal(result.rows[0][1], 13.405, 'should parse lng as number');
+  t.equal(result.rows[0][2], 1000.5, 'should parse value as number');
+
+  t.end();
+});
+
+test('Processor -> processCsvData -> pipe-separated with special characters in values', t => {
+  const data = 'id|description|url\n1|"hello, world"|http://example.com\n2|"foo; bar"|http://test.org';
+  const result = processCsvData(data);
+
+  t.equal(result.fields.length, 3, 'should parse 3 fields');
+  t.equal(result.rows[0][1], 'hello, world', 'should handle commas inside quoted pipe-separated fields');
+  t.equal(result.rows[1][1], 'foo; bar', 'should handle semicolons inside quoted pipe-separated fields');
+
+  t.end();
+});
+
+test('Processor -> processCsvData -> tab-separated preserves original comma data', t => {
+  const csvData = 'a,b,c\n1,2,3\n4,5,6';
+  const result = processCsvData(csvData);
+
+  t.equal(result.fields.length, 3, 'regular CSV should still parse correctly');
+  t.equal(result.fields[0].name, 'a', 'field name should be a');
+  t.deepEqual(result.rows[0], [1, 2, 3], 'first row should be [1,2,3]');
+  t.deepEqual(result.rows[1], [4, 5, 6], 'second row should be [4,5,6]');
+
+  t.end();
+});
+
+test('Processor -> processCsvData -> trailing newline does not break parsing', t => {
+  const tsvData = 'name\tage\nAlice\t30\nBob\t25\n';
+  const result = processCsvData(tsvData);
+
+  t.equal(result.fields.length, 2, 'should parse 2 fields');
+  t.equal(result.rows.length, 2, 'should have 2 data rows (trailing newline ignored)');
+
+  const ssvData = 'x;y;z\n1;2;3\n4;5;6\n';
+  const result2 = processCsvData(ssvData);
+
+  t.equal(result2.fields.length, 3, 'semicolon: should parse 3 fields');
+  t.equal(result2.rows.length, 2, 'semicolon: trailing newline should not add empty row');
+
+  t.end();
+});
+
+test('Processor -> processCsvData -> single data row (header + 1 row)', t => {
+  const tsvData = 'x\ty\tz\n10\t20\t30';
+  const result = processCsvData(tsvData);
+
+  t.equal(result.fields.length, 3, 'should parse 3 fields');
+  t.equal(result.rows.length, 1, 'should have 1 data row');
+  t.deepEqual(result.rows[0], [10, 20, 30], 'should parse the single row correctly');
+
+  t.end();
+});
+
+test('Processor -> processCsvData -> timestamps in TSV', t => {
+  const tsvData = 'timestamp\tvalue\n2023-01-15 10:30:00\t100\n2023-02-20 14:45:30\t200';
+  const result = processCsvData(tsvData);
+
+  t.equal(result.fields.length, 2, 'should parse 2 fields');
+  t.equal(result.fields[0].type, 'timestamp', 'should detect timestamp type');
+  t.equal(result.rows.length, 2, 'should have 2 rows');
 
   t.end();
 });

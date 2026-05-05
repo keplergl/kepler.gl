@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import * as arrow from 'apache-arrow';
-import {csvParseRows} from 'd3-dsv';
+import {csvParseRows, tsvParseRows, dsvFormat} from 'd3-dsv';
 import {DATA_TYPES as AnalyzerDATA_TYPES} from 'type-analyzer';
 import normalize from '@mapbox/geojson-normalize';
 import {parseSync} from '@loaders.gl/core';
@@ -39,6 +39,39 @@ import {Feature} from '@deck.gl-community/editable-layers';
 // const CSV_NULLS = ['', 'null', 'NULL', 'Null', 'NaN', '/N'];
 // matches empty string
 export const CSV_NULLS = /^(null|NULL|Null|NaN|\/N||)$/;
+
+const SUPPORTED_DELIMITERS = [',', '\t', ';', '|'] as const;
+
+function getRowParser(delimiter: string): (raw: string) => string[][] {
+  if (delimiter === ',') return csvParseRows;
+  if (delimiter === '\t') return tsvParseRows;
+  return dsvFormat(delimiter).parseRows;
+}
+
+/**
+ * Detect the delimiter used in a DSV string by checking the first line.
+ * Returns the delimiter that produces the most columns (minimum 2).
+ * Falls back to comma if no delimiter produces multiple columns.
+ */
+export function detectDelimiter(rawData: string): string {
+  const newlineIdx = rawData.indexOf('\n');
+  const firstLine = newlineIdx === -1 ? rawData : rawData.slice(0, newlineIdx);
+  if (!firstLine) return ',';
+
+  let bestDelimiter = ',';
+  let bestCount = 1;
+
+  for (const delimiter of SUPPORTED_DELIMITERS) {
+    const parsed = getRowParser(delimiter)(firstLine);
+    const count = parsed[0]?.length || 0;
+    if (count > bestCount) {
+      bestCount = count;
+      bestDelimiter = delimiter;
+    }
+  }
+
+  return bestDelimiter;
+}
 
 function tryParseJsonString(str) {
   try {
@@ -119,11 +152,11 @@ export function processCsvData(rawData: unknown[][] | string, header?: string[])
   let headerRow: string[] | undefined;
 
   if (typeof rawData === 'string') {
-    const parsedRows: string[][] = csvParseRows(rawData);
+    const delimiter = detectDelimiter(rawData);
+    const parsedRows: string[][] = getRowParser(delimiter)(rawData);
 
     if (!Array.isArray(parsedRows) || parsedRows.length < 2) {
-      // looks like an empty file, throw error to be catch
-      throw new Error('process Csv Data Failed: CSV is empty');
+      throw new Error('processCsvData Failed: delimited text is empty or has no data rows');
     }
     headerRow = parsedRows[0];
     rows = parsedRows.slice(1);
