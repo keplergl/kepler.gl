@@ -42,6 +42,12 @@ export const CSV_NULLS = /^(null|NULL|Null|NaN|\/N||)$/;
 
 const SUPPORTED_DELIMITERS = [',', '\t', ';', '|'] as const;
 
+function getRowParser(delimiter: string): (raw: string) => string[][] {
+  if (delimiter === ',') return csvParseRows;
+  if (delimiter === '\t') return tsvParseRows;
+  return dsvFormat(delimiter).parseRows;
+}
+
 /**
  * Detect the delimiter used in a DSV string by checking the first line.
  * Returns the delimiter that produces the most columns (minimum 2).
@@ -56,13 +62,7 @@ export function detectDelimiter(rawData: string): string {
   let bestCount = 1;
 
   for (const delimiter of SUPPORTED_DELIMITERS) {
-    const parseRows =
-      delimiter === ','
-        ? csvParseRows
-        : delimiter === '\t'
-          ? tsvParseRows
-          : dsvFormat(delimiter).parseRows;
-    const parsed = parseRows(firstLine);
+    const parsed = getRowParser(delimiter)(firstLine);
     const count = parsed[0]?.length || 0;
     if (count > bestCount) {
       bestCount = count;
@@ -153,17 +153,10 @@ export function processCsvData(rawData: unknown[][] | string, header?: string[])
 
   if (typeof rawData === 'string') {
     const delimiter = detectDelimiter(rawData);
-    const parseRows =
-      delimiter === ','
-        ? csvParseRows
-        : delimiter === '\t'
-          ? tsvParseRows
-          : dsvFormat(delimiter).parseRows;
-    const parsedRows: string[][] = parseRows(rawData);
+    const parsedRows: string[][] = getRowParser(delimiter)(rawData);
 
     if (!Array.isArray(parsedRows) || parsedRows.length < 2) {
-      // looks like an empty file, throw error to be catch
-      throw new Error('process Csv Data Failed: CSV is empty');
+      throw new Error('processCsvData Failed: delimited text is empty or has no data rows');
     }
     headerRow = parsedRows[0];
     rows = parsedRows.slice(1);
