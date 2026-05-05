@@ -190,6 +190,12 @@ export default abstract class AbstractTileLayer<
   get noneLayerDataAffectingProps() {
     return [
       ...super.noneLayerDataAffectingProps,
+      // For tile layers, domain changes only affect how tile features are colorized/sized
+      // at render time (via deck.gl accessors/uniforms). They do NOT require re-creating
+      // the tile source or re-fetching tiles. Without this, every domain update from
+      // setDynamicColorDomain() would trigger formatLayerData → new tileSource → tile
+      // reload → onViewportLoad → setDynamicColorDomain() in a feedback loop.
+      // Safe for both VectorTileLayer and WMSLayer (which doesn't use these domains).
       'colorDomain',
       'sizeDomain',
       'heightDomain'
