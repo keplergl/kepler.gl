@@ -167,6 +167,21 @@ function LineChartFactory() {
       [timezone, timeFormat]
     );
 
+    const isHoveredDPVisible = hoveredDP
+      ? !yAxisAutoRange ||
+        !paddedYDomain ||
+        paddedYDomain.length < 2 ||
+        (hoveredDP.y >= paddedYDomain[0] && hoveredDP.y <= paddedYDomain[1])
+      : false;
+
+    const clampedHoveredDP = useMemo(() => {
+      if (!hoveredDP || !paddedYDomain || paddedYDomain.length < 2) return hoveredDP;
+      return {
+        ...hoveredDP,
+        y: Math.max(paddedYDomain[0], Math.min(paddedYDomain[1], hoveredDP.y))
+      };
+    }, [hoveredDP, paddedYDomain]);
+
     return (
       <LineChartWrapper style={{marginTop: `${margin.top}px`}}>
         <XYPlot
@@ -190,12 +205,12 @@ function LineChartFactory() {
               onNearestX={series.markers.length || !enableChartHover ? undefined : onMouseMove}
             />
           ))}
-          <MarkSeries data={hoveredDP ? [hoveredDP] : []} color={color} />
+          <MarkSeries data={isHoveredDPVisible && hoveredDP ? [hoveredDP] : []} color={color} />
           <CustomSVGSeries data={brushData} />
           {isEnlarged && <YAxis tickTotal={3} />}
-          {hoveredDP && enableChartHover && !brushing ? (
-            <Hint value={hoveredDP}>
-              <HintContent {...hoveredDP} format={hintFormatter} />
+          {clampedHoveredDP && enableChartHover && !brushing ? (
+            <Hint value={clampedHoveredDP}>
+              <HintContent {...hoveredDP!} format={hintFormatter} />
             </Hint>
           ) : null}
         </XYPlot>
