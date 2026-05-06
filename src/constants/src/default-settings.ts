@@ -1275,7 +1275,7 @@ export const GEOCODER_DATASET_NAME = 'geocoder_dataset';
 export const GEOCODER_LAYER_ID = 'geocoder_layer';
 export const GEOCODER_GEO_OFFSET = 0.05;
 export const GEOCODER_ICON_COLOR: [number, number, number] = [255, 0, 0];
-export const GEOCODER_ICON_SIZE = 80;
+export const GEOCODER_ICON_SIZE = 160;
 
 // Editor
 export const EDITOR_LAYER_ID = 'kepler_editor_layer';

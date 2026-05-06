@@ -6,7 +6,7 @@ import {BrushingExtension} from '@deck.gl/extensions';
 
 import {SvgIconLayer} from '@kepler.gl/deckgl-layers';
 import IconLayerIcon from './icon-layer-icon';
-import {ICON_FIELDS, CULL_MODE} from '@kepler.gl/constants';
+import {ICON_FIELDS, CULL_MODE, GEOCODER_LAYER_ID} from '@kepler.gl/constants';
 import IconInfoModalFactory from './icon-info-modal';
 import Layer, {LayerBaseConfig, LayerBaseConfigPartial} from '../base-layer';
 import {assignPointPairToLayerColumn, FindDefaultLayerPropsReturnValue} from '../layer-utils';
@@ -95,6 +95,8 @@ export const pointVisConfigs: {
   billboard: 'billboard'
 };
 
+const BOTTOM_ANCHOR_ICONS = ['place'];
+
 function flatterIconPositions(icon) {
   // had to flip y, since @luma modal has changed
   return icon.mesh.cells.reduce((prev, cell) => {
@@ -105,6 +107,22 @@ function flatterIconPositions(icon) {
     });
     return prev;
   }, []);
+}
+
+function anchorIconAtBottom(positions: number[]): number[] {
+  const anchored = positions.slice();
+  let minY = Infinity;
+  for (let i = 1; i < anchored.length; i += 3) {
+    if (anchored[i] < minY) minY = anchored[i];
+  }
+  // Shift tip to y=0 and scale everything by 0.5 so the geometry
+  // stays within the unit circle (avoids fragment shader clipping).
+  // The geocoder icon size is doubled to compensate.
+  for (let i = 0; i < anchored.length; i += 3) {
+    anchored[i] *= 0.5;
+    anchored[i + 1] = (anchored[i + 1] - minY) * 0.5;
+  }
+  return anchored;
 }
 
 export default class IconLayer extends Layer {
@@ -421,6 +439,14 @@ export default class IconLayer extends Layer {
     const baseLayerId = defaultLayerProps.id || this.id;
     const layerIdWithVersion = `${baseLayerId}_${this.iconGeometryVersion}`;
 
+    const isGeocoderLayer = this.id === GEOCODER_LAYER_ID;
+    const getIconGeometry = isGeocoderLayer
+      ? (id: string) => {
+          const geo = this.iconGeometry?.[id];
+          return geo && BOTTOM_ANCHOR_ICONS.includes(id) ? anchorIconAtBottom(geo) : geo;
+        }
+      : (id: string) => this.iconGeometry?.[id];
+
     return [
       new SvgIconLayer({
         ...defaultLayerProps,
@@ -429,7 +455,7 @@ export default class IconLayer extends Layer {
         ...layerProps,
         ...data,
         parameters,
-        getIconGeometry: id => this.iconGeometry?.[id],
+        getIconGeometry,
 
         // update triggers
         updateTriggers,
@@ -449,7 +475,7 @@ export default class IconLayer extends Layer {
               getPosition: data.getPosition,
               getRadius: data.getRadius,
               getFillColor: this.config.highlightColor,
-              getIconGeometry: id => this.iconGeometry?.[id]
+              getIconGeometry
             })
           ]
         : []),
