@@ -109,18 +109,37 @@ function flatterIconPositions(icon) {
   }, []);
 }
 
+/**
+ * Anchors icon geometry at its bottom tip and normalizes it to fit within the
+ * ScatterplotLayer unit circle (radius ≤ 1). After shifting the tip to y=0,
+ * computes a uniform scale so the farthest vertex stays within the unit disk.
+ * GEOCODER_ICON_SIZE must compensate for this scale (original_size / scale).
+ */
 function anchorIconAtBottom(positions: number[]): number[] {
   const anchored = positions.slice();
   let minY = Infinity;
   for (let i = 1; i < anchored.length; i += 3) {
     if (anchored[i] < minY) minY = anchored[i];
   }
-  // Shift tip to y=0 and scale everything by 0.5 so the geometry
-  // stays within the unit circle (avoids fragment shader clipping).
-  // The geocoder icon size is doubled to compensate.
+  // Shift tip to y=0
+  for (let i = 1; i < anchored.length; i += 3) {
+    anchored[i] -= minY;
+  }
+  // Compute the maximum distance from origin across all vertices
+  let maxDist = 0;
   for (let i = 0; i < anchored.length; i += 3) {
-    anchored[i] *= 0.5;
-    anchored[i + 1] = (anchored[i + 1] - minY) * 0.5;
+    const x = anchored[i];
+    const y = anchored[i + 1];
+    const dist = Math.sqrt(x * x + y * y);
+    if (dist > maxDist) maxDist = dist;
+  }
+  // Normalize so all vertices fit within the unit circle
+  if (maxDist > 1) {
+    const scale = 1 / maxDist;
+    for (let i = 0; i < anchored.length; i += 3) {
+      anchored[i] *= scale;
+      anchored[i + 1] *= scale;
+    }
   }
   return anchored;
 }
