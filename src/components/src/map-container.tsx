@@ -24,6 +24,7 @@ import {
 } from './common/styled-components';
 
 import EditorFactory from './editor/editor';
+import {AnnotationOverlay} from './annotations';
 
 // utils
 import {
@@ -1363,6 +1364,30 @@ export default function MapContainerFactory(
               position: 'absolute',
               display: editor.visible ? 'block' : 'none'
             }}
+          />
+          <AnnotationOverlay
+            annotations={visState.annotations}
+            selectedAnnotationId={visState.selectedAnnotationId}
+            isEditingAnnotationText={visState.isEditingAnnotationText}
+            isAnnotationMode={Boolean(mapControls?.annotation?.active)}
+            mapIndex={index || 0}
+            viewport={{
+              project: (lngLat) => {
+                const vp = getViewportFromMapState(mapState);
+                return vp.project(lngLat) as [number, number];
+              },
+              unproject: (xy) => {
+                const vp = getViewportFromMapState(mapState);
+                return vp.unproject(xy) as [number, number];
+              },
+              longitude: mapState.longitude,
+              latitude: mapState.latitude,
+              width: mapState.width,
+              height: mapState.height,
+              zoom: mapState.zoom
+            } as any}
+            updateAnnotation={visStateActions.updateAnnotation}
+            setSelectedAnnotation={visStateActions.setSelectedAnnotation}
           />
           {this.props.children}
           {mapStyle.topMapStyle ? (

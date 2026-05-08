@@ -56,6 +56,10 @@ export interface VisState {
   layerOrder: string[];
   effects: Effect[];
   effectOrder: string[];
+  annotations: import('@kepler.gl/types').Annotation[];
+  annotationsToBeMerged: any[];
+  selectedAnnotationId: string | null;
+  isEditingAnnotationText: boolean;
   filters: Filter[];
   filterToBeMerged: any[];
   datasets: Datasets;
@@ -831,6 +835,45 @@ export class EffectsSchema extends Schema {
   }
 }
 
+const annotationPropsV1 = {
+  id: null,
+  kind: null,
+  isVisible: null,
+  autoSize: null,
+  autoSizeY: null,
+  anchorPoint: null,
+  label: null,
+  mapIndex: null,
+  lineColor: null,
+  lineWidth: null,
+  textWidth: null,
+  textHeight: null,
+  textVerticalAlign: null,
+  armLength: null,
+  angle: null,
+  radiusInMeters: null
+};
+
+export class AnnotationsSchema extends Schema {
+  key = 'annotations';
+
+  save(annotations) {
+    return {
+      [this.key]: annotations.map(annotation =>
+        this.savePropertiesOrApplySchema(annotation).annotations
+      )
+    };
+  }
+
+  load(annotations) {
+    return {
+      [this.key]: annotations.map(annotation =>
+        this.loadPropertiesOrApplySchema(annotation, annotations).annotations
+      )
+    };
+  }
+}
+
 export const filterPropsV1 = {
   ...filterPropsV0,
   plotType: new PlotTypeSchema({
@@ -891,6 +934,10 @@ export const propertiesV1 = {
   effects: new EffectsSchema({
     version: VERSIONS.v1,
     properties: effectPropsV1
+  }),
+  annotations: new AnnotationsSchema({
+    version: VERSIONS.v1,
+    properties: annotationPropsV1
   }),
   interactionConfig: new InteractionSchemaV1({
     version: VERSIONS.v1,

@@ -583,6 +583,25 @@ export function mergeEffects<S extends VisState>(
 }
 
 /**
+ * Merge annotations with saved config
+ */
+export function mergeAnnotations<S extends VisState>(
+  state: S,
+  annotations: any[]
+): S {
+  if (!annotations || !annotations.length) {
+    return state;
+  }
+  const validAnnotations = annotations.filter(
+    a => a && a.id && a.kind && Array.isArray(a.anchorPoint)
+  );
+  return {
+    ...state,
+    annotations: [...state.annotations, ...validAnnotations]
+  };
+}
+
+/**
  * Merge interactionConfig.tooltip with saved config,
  * validate fieldsToShow
  *
@@ -1124,6 +1143,11 @@ export const VIS_STATE_MERGERS: VisStateMergers<any> = [
   {
     merge: mergeEffects,
     prop: 'effects'
+  },
+  {
+    merge: mergeAnnotations,
+    prop: 'annotations',
+    toMergeProp: 'annotationsToBeMerged'
   },
   {
     merge: mergeInteractions,

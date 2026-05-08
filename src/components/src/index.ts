@@ -354,6 +354,14 @@ export {default as EffectManagerFactory} from './effects/effect-manager';
 export {default as EffectTimeConfiguratorFactory} from './effects/effect-time-configurator';
 export {default as EffectTypeSelectorFactory} from './effects/effect-type-selector';
 export {default as SidePanelTitleFactory} from './effects/side-panel-title';
+
+// Annotations
+export {default as AnnotationManagerFactory} from './annotations/annotation-panel';
+export {AnnotationOverlay} from './annotations';
+export {AnnotationNode} from './annotations';
+export {AnnotationText} from './annotations';
+export {default as AnnotationControlFactory} from './map/annotations/annotation-control';
+
 export {default as ColorBreaksPanelFactory} from './side-panel/layer-panel/color-breaks-panel';
 export {default as DimensionScaleSelectorFactory} from './side-panel/layer-panel/dimension-scale-selector';
 export {default as HowToButton} from './side-panel/layer-panel/how-to-button';

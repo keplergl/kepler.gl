@@ -14,3 +14,4 @@ export * from './tooltip';
 export * from './user-feedbacks';
 export * from './user-guides';
 export * from './time';
+export * from './annotation';

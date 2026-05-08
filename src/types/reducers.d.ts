@@ -460,6 +460,7 @@ export type MapControls = {
   mapDraw?: MapControlItem;
   mapLocale?: MapControlItem;
   effect?: MapControlItem;
+  annotation?: MapControlItem;
   aiAssistant?: MapControlItem;
 };
 
