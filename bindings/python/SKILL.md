@@ -39,20 +39,19 @@ Requires `kepler.gl-jupyter >= 0.4.0`. Earlier versions use a different widget/s
 | `theme` | str | "" | `"light"`, `"dark"`, `"base"`, or `""` (default dark) |
 | `app_name` | str | "kepler.gl" | App name in header and HTML title |
 
-### `.add_data(data, name="data", use_arrow=None)`
+### `.add_data(data, name)`
 
 - `data`: DataFrame, GeoDataFrame, CSV string, GeoJSON dict, or GeoJSON string
-- `name`: Dataset identifier (default `"data"`) — must match `dataId` in config if using a config
-- `use_arrow`: bool or None — when `True`, serialize DataFrames as Arrow IPC; when `None`, uses the widget-level `use_arrow` setting
+- `name`: Dataset identifier — must match `dataId` in config if using a config
 
-### `.save_to_html(file_name="keplergl_map.html", data=None, config=None, read_only=False, center_map=True, mapbox_token="", json_encoder=str, app_name=None, theme=None)`
+### `.save_to_html(file_name="keplergl_map.html", data=None, config=None, read_only=True, center_map=True, mapbox_token="", json_encoder=str, app_name=None, theme=None)`
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `file_name` | str | `"keplergl_map.html"` | Output file path |
+| `file_name` | str | required | Output file path |
 | `data` | dict | None | Data override for export (uses current widget data when None) |
 | `config` | dict | None | Config override for export (uses current widget config when None) |
-| `read_only` | bool | False | True = hide side panel |
+| `read_only` | bool | True | True = hide side panel |
 | `center_map` | bool | True | True = auto-fit map to data bounds |
 | `mapbox_token` | str | "" | Mapbox token override for export |
 | `json_encoder` | callable | str | Fallback encoder for non-JSON-native values in GeoDataFrames |
@@ -74,6 +73,7 @@ Read or set the map configuration dict. Use `map.config` after customizing in Ju
 - For numeric color encoding, if the user does not specify a color scale, use `visualChannels.colorScale: 'quantile'`.
 - For numeric color encoding, if the user does not specify a palette, use a vibrant sequential/diverging palette (for example, `colorRange.name: 'Global Warming'`).
 - If the user asks for custom class breaks, compute breakpoints in Python first (for example with `pygeoda`), add a derived classified/bin column to the dataset, and map colors using that derived field.
+- **No `SampleMapPanel` in standalone exports.** The `SampleMapPanel` React component lives in the kepler.gl demo app, not in the UMD bundle used by `save_to_html()`. To show a summary/legend overlay, inject an HTML+CSS `<div>` into the exported file (position it at `right: 56px` or `left: 66px` so it doesn't block map controls). See [Summary Panel Overlay](skill-references/summary-panel.md).
 
 ## Supported Data Formats
 
@@ -148,10 +148,15 @@ For detailed per-layer-type examples with full config, see supporting files:
 - [Heatmap](skill-references/heatmap.md) — Density heatmap from points
 - [Hexbin Aggregation Map](skill-references/hexbin-aggregation-map.md) — Spatial binning into hexagons
 - [Trip Animation Map](skill-references/trip-animation-map.md) — Animated trips along paths
+- [Summary Panel Overlay](skill-references/summary-panel.md) — Inject a SampleMapPanel-style info overlay into the exported HTML (for LISA/cluster counts, model summaries, custom legends)
 
 ## Examples
 
-### Point map from DataFrame (quantile + vibrant palette)
+For full config examples per layer type, see:
+- [Point Map](skill-references/point-map.md) — includes quantile color + vibrant palette config
+- [GeoJSON / Polygon Map](skill-references/geojson-polygon-map.md) — includes choropleth config with `visualChannels`
+
+### Quick start (auto-detected layers, no config needed)
 
 ```python
 from keplergl import KeplerGl
@@ -164,38 +169,8 @@ df = pd.DataFrame({
     'value': [15, 42, 27]
 })
 
-config = {
-    'version': 'v1',
-    'config': {
-        'visState': {
-            'layers': [{
-                'type': 'point',
-                'config': {
-                    'dataId': 'cities',
-                    'label': 'Cities',
-                    'isVisible': True,
-                    'columns': {'lat': 'lat', 'lng': 'lng'},
-                    'visConfig': {
-                        'radius': 10,
-                        'colorRange': {
-                            'name': 'Global Warming',
-                            'type': 'sequential',
-                            'category': 'Uber',
-                            'colors': ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
-                        }
-                    }
-                },
-                'visualChannels': {
-                    'colorField': {'name': 'value', 'type': 'integer'},
-                    'colorScale': 'quantile'
-                }
-            }]
-        }
-    }
-}
-
-map_1 = KeplerGl(height=600, data={'cities': df}, config=config)
-map_1.save_to_html(file_name='cities_map.html')
+map_1 = KeplerGl(data={'cities': df})
+map_1.save_to_html(file_name='cities_map.html', center_map=True)
 ```
 
 ### GeoDataFrame from shapefile
@@ -207,70 +182,6 @@ import geopandas as gpd
 gdf = gpd.read_file('shapefile.shp')
 map_1 = KeplerGl(data={'regions': gdf})
 map_1.save_to_html(file_name='regions_map.html', read_only=True, center_map=True)
-```
-
-### GeoJSON from file
-
-```python
-from keplergl import KeplerGl
-import json
-
-with open('boundaries.geojson', 'r') as f:
-    geojson = json.load(f)
-map_1 = KeplerGl(data={'boundaries': geojson})
-map_1.save_to_html(file_name='boundaries_map.html', center_map=True)
-```
-
-### GeoJSON choropleth colored by a numeric attribute
-
-Load with geopandas, then put the field-to-channel mappings under `visualChannels` (not `config`):
-
-```python
-import geopandas as gpd
-from keplergl import KeplerGl
-
-gdf = gpd.read_file('natregimes.geojson')
-
-config = {
-    'version': 'v1',
-    'config': {
-        'visState': {
-            'layers': [{
-                'id': 'hr60_layer',
-                'type': 'geojson',
-                'config': {
-                    'dataId': 'natregimes',
-                    'label': 'HR60',
-                    'columns': {'geojson': '_geojson'},
-                    'isVisible': True,
-                    'visConfig': {
-                        'opacity': 0.8,
-                        'stroked': True,
-                        'filled': True,
-                        'thickness': 0.2,
-                        'strokeColor': [80, 80, 80],
-                        'colorRange': {
-                            'name': 'Global Warming',
-                            'type': 'sequential',
-                            'category': 'Uber',
-                            'colors': ['#5A1846', '#900C3F', '#C70039',
-                                       '#E3611C', '#F1920E', '#FFC300']
-                        }
-                    }
-                },
-                'visualChannels': {
-                    'colorField': {'name': 'HR60', 'type': 'real'},
-                    'colorScale': 'quantile'
-                }
-            }]
-        },
-        'mapState': {'latitude': 39.5, 'longitude': -98.35, 'zoom': 3.5}
-    }
-}
-
-map_1 = KeplerGl(height=600, config=config)
-map_1.add_data(data=gdf, name='natregimes')
-map_1.save_to_html(file_name='natregimes_map.html')
 ```
 
 ### Multiple datasets

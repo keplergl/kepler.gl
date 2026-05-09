@@ -50,6 +50,7 @@ Detailed per-map-type references (supporting files loaded by Claude only when ne
 | [heatmap.md](skill-references/heatmap.md) | Density heatmap from points |
 | [hexbin-aggregation-map.md](skill-references/hexbin-aggregation-map.md) | Spatial binning into hexagons |
 | [trip-animation-map.md](skill-references/trip-animation-map.md) | Animated trips along paths |
+| [summary-panel.md](skill-references/summary-panel.md) | SampleMapPanel-style info overlay in exported HTML |
 
 ### Setting up with Claude Code
 
@@ -69,6 +70,7 @@ curl -o ~/.claude/skills/keplergl-map/skill-references/arc-line-map.md          
 curl -o ~/.claude/skills/keplergl-map/skill-references/heatmap.md                $BASE/skill-references/heatmap.md
 curl -o ~/.claude/skills/keplergl-map/skill-references/hexbin-aggregation-map.md $BASE/skill-references/hexbin-aggregation-map.md
 curl -o ~/.claude/skills/keplergl-map/skill-references/trip-animation-map.md     $BASE/skill-references/trip-animation-map.md
+curl -o ~/.claude/skills/keplergl-map/skill-references/summary-panel.md          $BASE/skill-references/summary-panel.md
 ```
 
 **Option B — Project skill** (shared with your team via git):
@@ -85,6 +87,7 @@ curl -o .claude/skills/keplergl-map/skill-references/arc-line-map.md           $
 curl -o .claude/skills/keplergl-map/skill-references/heatmap.md                $BASE/skill-references/heatmap.md
 curl -o .claude/skills/keplergl-map/skill-references/hexbin-aggregation-map.md $BASE/skill-references/hexbin-aggregation-map.md
 curl -o .claude/skills/keplergl-map/skill-references/trip-animation-map.md     $BASE/skill-references/trip-animation-map.md
+curl -o .claude/skills/keplergl-map/skill-references/summary-panel.md          $BASE/skill-references/summary-panel.md
 
 git add .claude/skills/keplergl-map
 git commit -m "Add keplergl map skill for Claude Code"
@@ -110,6 +113,7 @@ curl -o ~/.agents/skills/keplergl-map/skill-references/arc-line-map.md          
 curl -o ~/.agents/skills/keplergl-map/skill-references/heatmap.md                $BASE/skill-references/heatmap.md
 curl -o ~/.agents/skills/keplergl-map/skill-references/hexbin-aggregation-map.md $BASE/skill-references/hexbin-aggregation-map.md
 curl -o ~/.agents/skills/keplergl-map/skill-references/trip-animation-map.md     $BASE/skill-references/trip-animation-map.md
+curl -o ~/.agents/skills/keplergl-map/skill-references/summary-panel.md          $BASE/skill-references/summary-panel.md
 ```
 
 Then verify `~/.agents/skills/keplergl-map/SKILL.md` frontmatter includes both:
@@ -131,6 +135,7 @@ curl -o .agents/skills/keplergl-map/skill-references/arc-line-map.md           $
 curl -o .agents/skills/keplergl-map/skill-references/heatmap.md                $BASE/skill-references/heatmap.md
 curl -o .agents/skills/keplergl-map/skill-references/hexbin-aggregation-map.md $BASE/skill-references/hexbin-aggregation-map.md
 curl -o .agents/skills/keplergl-map/skill-references/trip-animation-map.md     $BASE/skill-references/trip-animation-map.md
+curl -o .agents/skills/keplergl-map/skill-references/summary-panel.md          $BASE/skill-references/summary-panel.md
 
 git add .agents/skills/keplergl-map
 git commit -m "Add keplergl map skill for Codex"

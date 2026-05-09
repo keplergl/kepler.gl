@@ -1,0 +1,38 @@
+{
+  "name": "keplergl-map",
+  "displayName": "kepler.gl Map",
+  "version": "1.0.0",
+  "description": "Create interactive map visualizations and export to standalone HTML using the keplergl Python package.",
+  "publisher": "keplergl",
+  "icon": "agents/assets/icon-large.svg",
+  "categories": ["Data Science", "Visualization", "Maps"],
+  "keywords": [
+    "maps",
+    "geospatial",
+    "visualization",
+    "kepler.gl",
+    "GeoJSON",
+    "DataFrame",
+    "HTML",
+    "interactive",
+    "choropleth",
+    "heatmap"
+  ],
+  "homepage": "https://kepler.gl",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/keplergl/kepler.gl",
+    "directory": "bindings/python"
+  },
+  "license": "MIT",
+  "skills": [
+    {
+      "path": "SKILL.md",
+      "name": "keplergl-map",
+      "description": "Create interactive map visualizations and export to standalone HTML using the keplergl Python package."
+    }
+  ],
+  "engines": {
+    "cursor": ">=1.0.0"
+  }
+}
