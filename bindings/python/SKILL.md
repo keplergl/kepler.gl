@@ -12,7 +12,7 @@ Use the `keplergl` Python package to create standalone, interactive HTML map fil
 pip install keplergl
 ```
 
-Requirements: Python >= 3.9. Dependencies (`pandas`, `geopandas`, `shapely`) are installed automatically.
+Requires `kepler.gl-jupyter >= 0.4.0`. Earlier versions use a different widget/serialization API and the examples in this skill will not work. Requirements: Python >= 3.9. Dependencies (`pandas`, `geopandas`, `shapely`) are installed automatically.
 
 ## Instructions
 
@@ -65,6 +65,7 @@ Read or set the map configuration dict. Use `map.config` after customizing in Ju
 
 - **`dataId` must match the dataset `name`** — every layer and filter references a dataset by `dataId`; this must match the key in the `data` dict or the `name` passed to `add_data()`.
 - **GeoJSON columns use `_geojson`** — when data is loaded as GeoJSON, the geometry column is internally named `_geojson` in configs.
+- **`colorField` / `colorScale` / `sizeField` / `heightField` etc. belong under `visualChannels`, NOT under `config`.** Putting them under `config` is silently ignored — the layer will render but the "Color Based On (field)" input shows empty. The layer object must have two siblings: `config` (for `dataId`, `columns`, `visConfig`, …) and `visualChannels` (for all field-to-channel mappings).
 - Columns named `latitude`/`lat`/`lng`/`longitude` are auto-detected as coordinates.
 - H3 hex IDs are auto-detected if a column contains valid H3 strings.
 - Use `center_map=True` to auto-fit map bounds. Use `read_only=True` to hide the side panel.
@@ -216,6 +217,58 @@ with open('boundaries.geojson', 'r') as f:
     geojson = json.load(f)
 map_1 = KeplerGl(data={'boundaries': geojson})
 map_1.save_to_html(file_name='boundaries_map.html', center_map=True)
+```
+
+### GeoJSON choropleth colored by a numeric attribute
+
+Load with geopandas, then put the field-to-channel mappings under `visualChannels` (not `config`):
+
+```python
+import geopandas as gpd
+from keplergl import KeplerGl
+
+gdf = gpd.read_file('natregimes.geojson')
+
+config = {
+    'version': 'v1',
+    'config': {
+        'visState': {
+            'layers': [{
+                'id': 'hr60_layer',
+                'type': 'geojson',
+                'config': {
+                    'dataId': 'natregimes',
+                    'label': 'HR60',
+                    'columns': {'geojson': '_geojson'},
+                    'isVisible': True,
+                    'visConfig': {
+                        'opacity': 0.8,
+                        'stroked': True,
+                        'filled': True,
+                        'thickness': 0.2,
+                        'strokeColor': [80, 80, 80],
+                        'colorRange': {
+                            'name': 'Global Warming',
+                            'type': 'sequential',
+                            'category': 'Uber',
+                            'colors': ['#5A1846', '#900C3F', '#C70039',
+                                       '#E3611C', '#F1920E', '#FFC300']
+                        }
+                    }
+                },
+                'visualChannels': {
+                    'colorField': {'name': 'HR60', 'type': 'real'},
+                    'colorScale': 'quantile'
+                }
+            }]
+        },
+        'mapState': {'latitude': 39.5, 'longitude': -98.35, 'zoom': 3.5}
+    }
+}
+
+map_1 = KeplerGl(height=600, config=config)
+map_1.add_data(data=gdf, name='natregimes')
+map_1.save_to_html(file_name='natregimes_map.html')
 ```
 
 ### Multiple datasets
