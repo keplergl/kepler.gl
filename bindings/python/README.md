@@ -34,7 +34,10 @@ map
 
 ## Use with AI Coding Assistants
 
-This package ships with a **[SKILL.md](SKILL.md)** file — a [Claude Code skill](https://code.claude.com/docs/en/skills) that teaches Claude how to create interactive HTML maps using the `keplergl` API. Claude automatically discovers and uses the skill once it is installed in a Claude skills directory.
+This package ships with a **[SKILL.md](SKILL.md)** file for AI assistants to generate `keplergl` map scripts and exports consistently.
+
+- [Claude Code](https://code.claude.com/docs/en/skills): install under `~/.claude/skills` or `.claude/skills`
+- [Codex](https://developers.openai.com/codex/): install under `~/.agents/skills` or `.agents/skills`
 
 Detailed per-map-type references (supporting files loaded by Claude only when needed):
 
@@ -88,6 +91,79 @@ git commit -m "Add keplergl map skill for Claude Code"
 ```
 
 Once installed, Claude Code automatically discovers the skill — no restart needed. Claude will use it whenever you ask about creating maps or visualizing geospatial data, or you can invoke it directly with `/keplergl-map`.
+
+### Setting up with Codex
+
+Codex skills are stored as directories containing a `SKILL.md` file.
+
+**Option A — Personal skill** (available in all your projects):
+
+```bash
+BASE=https://raw.githubusercontent.com/keplergl/kepler.gl/main/bindings/python
+mkdir -p ~/.agents/skills/keplergl-map/skill-references
+
+curl -o ~/.agents/skills/keplergl-map/SKILL.md $BASE/SKILL.md
+curl -o ~/.agents/skills/keplergl-map/skill-references/point-map.md              $BASE/skill-references/point-map.md
+curl -o ~/.agents/skills/keplergl-map/skill-references/geojson-polygon-map.md    $BASE/skill-references/geojson-polygon-map.md
+curl -o ~/.agents/skills/keplergl-map/skill-references/h3-hexagon-map.md         $BASE/skill-references/h3-hexagon-map.md
+curl -o ~/.agents/skills/keplergl-map/skill-references/arc-line-map.md           $BASE/skill-references/arc-line-map.md
+curl -o ~/.agents/skills/keplergl-map/skill-references/heatmap.md                $BASE/skill-references/heatmap.md
+curl -o ~/.agents/skills/keplergl-map/skill-references/hexbin-aggregation-map.md $BASE/skill-references/hexbin-aggregation-map.md
+curl -o ~/.agents/skills/keplergl-map/skill-references/trip-animation-map.md     $BASE/skill-references/trip-animation-map.md
+```
+
+**Option B — Project skill** (shared with your team via git):
+
+```bash
+BASE=https://raw.githubusercontent.com/keplergl/kepler.gl/main/bindings/python
+mkdir -p .agents/skills/keplergl-map/skill-references
+
+curl -o .agents/skills/keplergl-map/SKILL.md $BASE/SKILL.md
+curl -o .agents/skills/keplergl-map/skill-references/point-map.md              $BASE/skill-references/point-map.md
+curl -o .agents/skills/keplergl-map/skill-references/geojson-polygon-map.md    $BASE/skill-references/geojson-polygon-map.md
+curl -o .agents/skills/keplergl-map/skill-references/h3-hexagon-map.md         $BASE/skill-references/h3-hexagon-map.md
+curl -o .agents/skills/keplergl-map/skill-references/arc-line-map.md           $BASE/skill-references/arc-line-map.md
+curl -o .agents/skills/keplergl-map/skill-references/heatmap.md                $BASE/skill-references/heatmap.md
+curl -o .agents/skills/keplergl-map/skill-references/hexbin-aggregation-map.md $BASE/skill-references/hexbin-aggregation-map.md
+curl -o .agents/skills/keplergl-map/skill-references/trip-animation-map.md     $BASE/skill-references/trip-animation-map.md
+
+git add .agents/skills/keplergl-map
+git commit -m "Add keplergl map skill for Codex"
+```
+
+> Codex skill metadata requires both `name` and `description` in the SKILL frontmatter.  
+> If your local copy is missing `name`, add:
+>
+> ```yaml
+> ---
+> name: keplergl-map
+> description: Create interactive map visualizations and export standalone HTML with keplergl.
+> ---
+> ```
+
+#### Optional Codex app metadata and icon assets
+
+You can add Codex app metadata at `agents/openai.yaml` in the skill folder and use the kepler.gl icon as skill assets:
+
+```bash
+mkdir -p .agents/skills/keplergl-map/agents/assets
+curl -o .agents/skills/keplergl-map/agents/assets/kepler-gl-icon.png \
+  https://raw.githubusercontent.com/keplergl/kepler.gl/main/website/src/static/favicon.png
+```
+
+```yaml
+interface:
+  display_name: "keplergl map"
+  short_description: "Create interactive keplergl HTML maps from tabular and geospatial data"
+  icon_small: "./agents/assets/kepler-gl-icon.png"
+  icon_large: "./agents/assets/kepler-gl-icon.png"
+  brand_color: "#2FA7F4"
+```
+
+#### Easiest distribution for Codex users
+
+For easy installation across teams, package this skill as a **Codex plugin** (recommended). Plugins can bundle skills, metadata (`agents/openai.yaml`), assets, and optional integrations in one installable package.  
+For local experimentation only, users can also install curated skills with `$skill-installer`.
 
 ### Example prompt
 
