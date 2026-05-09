@@ -51,9 +51,36 @@ For full documentation, visit [https://docs.kepler.gl/docs/keplergl-jupyter](htt
 If you use AI coding assistants, add your project skill/instructions file in this directory:
 
 - **Claude Code**: `CLAUDE.md`
-- **Codex-compatible tools (AGENTS.md-based setup)**: `AGENTS.md`
+- **Codex-compatible tools**:
+  - `AGENTS.md` for workspace-wide instructions
+  - `.agents/skills/<skill-name>/SKILL.md` for reusable Codex skills
 
-You can keep the content identical in both files so Claude Code and Codex-compatible tools use the same project guidance.
+You can keep `CLAUDE.md` and `AGENTS.md` content aligned so both tools use the same project guidance.
+
+For Codex skills, a minimal structure is:
+
+```text
+.agents/skills/keplergl-python/
+├── SKILL.md
+├── assets/
+│   ├── keplergl-icon-small.svg
+│   └── keplergl-icon-large.png
+└── agents/
+    └── openai.yaml
+```
+
+You can source icon assets from existing repository art, for example:
+
+- `/home/runner/work/kepler.gl/kepler.gl/website-gatsby/static/images/icon-high-precision.svg`
+- `/home/runner/work/kepler.gl/kepler.gl/website/src/static/favicon.png`
+
+And reference them in `.agents/skills/<skill-name>/agents/openai.yaml`:
+
+```yaml
+interface:
+  icon_small: "../assets/keplergl-icon-small.svg"
+  icon_large: "../assets/keplergl-icon-large.png"
+```
 
 ## License
 
