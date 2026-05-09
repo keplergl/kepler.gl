@@ -55,39 +55,34 @@ Claude Code skills are stored as directories containing a `SKILL.md` file. You c
 **Option A — Personal skill** (available in all your projects):
 
 ```bash
-# Create the skill directory
-mkdir -p ~/.claude/skills/keplergl-map
-
-# Download SKILL.md and supporting reference files
-curl -o ~/.claude/skills/keplergl-map/SKILL.md \
-  https://raw.githubusercontent.com/keplergl/kepler.gl/master/bindings/python/SKILL.md
-
-# (Optional) Download detailed map-type references
+BASE=https://raw.githubusercontent.com/keplergl/kepler.gl/master/bindings/python
 mkdir -p ~/.claude/skills/keplergl-map/skill-references
-for ref in point-map geojson-polygon-map h3-hexagon-map arc-line-map heatmap hexbin-aggregation-map trip-animation-map; do
-  curl -o ~/.claude/skills/keplergl-map/skill-references/${ref}.md \
-    https://raw.githubusercontent.com/keplergl/kepler.gl/master/bindings/python/skill-references/${ref}.md
-done
+
+curl -o ~/.claude/skills/keplergl-map/SKILL.md $BASE/SKILL.md
+curl -o ~/.claude/skills/keplergl-map/skill-references/point-map.md              $BASE/skill-references/point-map.md
+curl -o ~/.claude/skills/keplergl-map/skill-references/geojson-polygon-map.md    $BASE/skill-references/geojson-polygon-map.md
+curl -o ~/.claude/skills/keplergl-map/skill-references/h3-hexagon-map.md         $BASE/skill-references/h3-hexagon-map.md
+curl -o ~/.claude/skills/keplergl-map/skill-references/arc-line-map.md           $BASE/skill-references/arc-line-map.md
+curl -o ~/.claude/skills/keplergl-map/skill-references/heatmap.md                $BASE/skill-references/heatmap.md
+curl -o ~/.claude/skills/keplergl-map/skill-references/hexbin-aggregation-map.md $BASE/skill-references/hexbin-aggregation-map.md
+curl -o ~/.claude/skills/keplergl-map/skill-references/trip-animation-map.md     $BASE/skill-references/trip-animation-map.md
 ```
 
 **Option B — Project skill** (shared with your team via git):
 
 ```bash
-# Create the skill directory in your project
-mkdir -p .claude/skills/keplergl-map
-
-# Download SKILL.md and supporting reference files
-curl -o .claude/skills/keplergl-map/SKILL.md \
-  https://raw.githubusercontent.com/keplergl/kepler.gl/master/bindings/python/SKILL.md
-
-# (Optional) Download detailed map-type references
+BASE=https://raw.githubusercontent.com/keplergl/kepler.gl/master/bindings/python
 mkdir -p .claude/skills/keplergl-map/skill-references
-for ref in point-map geojson-polygon-map h3-hexagon-map arc-line-map heatmap hexbin-aggregation-map trip-animation-map; do
-  curl -o .claude/skills/keplergl-map/skill-references/${ref}.md \
-    https://raw.githubusercontent.com/keplergl/kepler.gl/master/bindings/python/skill-references/${ref}.md
-done
 
-# Commit to share with your team
+curl -o .claude/skills/keplergl-map/SKILL.md $BASE/SKILL.md
+curl -o .claude/skills/keplergl-map/skill-references/point-map.md              $BASE/skill-references/point-map.md
+curl -o .claude/skills/keplergl-map/skill-references/geojson-polygon-map.md    $BASE/skill-references/geojson-polygon-map.md
+curl -o .claude/skills/keplergl-map/skill-references/h3-hexagon-map.md         $BASE/skill-references/h3-hexagon-map.md
+curl -o .claude/skills/keplergl-map/skill-references/arc-line-map.md           $BASE/skill-references/arc-line-map.md
+curl -o .claude/skills/keplergl-map/skill-references/heatmap.md                $BASE/skill-references/heatmap.md
+curl -o .claude/skills/keplergl-map/skill-references/hexbin-aggregation-map.md $BASE/skill-references/hexbin-aggregation-map.md
+curl -o .claude/skills/keplergl-map/skill-references/trip-animation-map.md     $BASE/skill-references/trip-animation-map.md
+
 git add .claude/skills/keplergl-map
 git commit -m "Add keplergl map skill for Claude Code"
 ```
