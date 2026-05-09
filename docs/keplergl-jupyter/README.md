@@ -365,7 +365,6 @@ if __name__ == '__main__':
 
 # Demo Notebooks
 - [Load kepler.gl](https://github.com/keplergl/kepler.gl/blob/master/bindings/python/notebooks/Load%20kepler.gl.ipynb): Load kepler.gl widget, add data and config
-- [Geometry as String](https://github.com/keplergl/kepler.gl/blob/master/bindings/python/notebooks/Geometry%20as%20String.ipynb): Embed Polygon geometries as `GeoJson` and `WKT` inside a `CSV`
 - [GeoJSON](https://github.com/keplergl/kepler.gl/blob/master/bindings/python/notebooks/GeoJSON.ipynb): Load GeoJSON to kepler.gl
 - [DataFrame](https://github.com/keplergl/kepler.gl/blob/master/bindings/python/notebooks/DataFrame.ipynb): Load DataFrame to kepler.gl
 - [GeoDataFrame](https://github.com/keplergl/kepler.gl/blob/master/bindings/python/notebooks/GeoDataFrame.ipynb): Load GeoDataFrame to kepler.gl
