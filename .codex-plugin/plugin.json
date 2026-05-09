@@ -1,0 +1,33 @@
+{
+  "name": "keplergl-map",
+  "version": "0.1.0",
+  "description": "Create interactive map visualizations and export to standalone HTML using the keplergl Python package.",
+  "author": {
+    "name": "kepler.gl",
+    "url": "https://kepler.gl"
+  },
+  "homepage": "https://kepler.gl",
+  "repository": "https://github.com/keplergl/kepler.gl",
+  "license": "MIT",
+  "keywords": ["maps", "geospatial", "visualization", "keplergl", "gis"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "kepler.gl Map",
+    "shortDescription": "Interactive geospatial map visualizations with kepler.gl",
+    "longDescription": "Create interactive map visualizations and export to standalone HTML using the keplergl Python package. Supports point maps, arc/line maps, heatmaps, hexbin aggregations, H3 hexagons, GeoJSON polygons, trip animations, and more from DataFrames, GeoDataFrames, GeoJSON, or CSV data.",
+    "developerName": "kepler.gl",
+    "category": "Data & Analytics",
+    "capabilities": ["Read", "Write"],
+    "websiteURL": "https://kepler.gl",
+    "privacyPolicyURL": "https://github.com/keplergl/kepler.gl/blob/master/LICENSE",
+    "termsOfServiceURL": "https://github.com/keplergl/kepler.gl/blob/master/LICENSE",
+    "defaultPrompt": [
+      "Use kepler.gl Map to create an interactive point map from a CSV file.",
+      "Use kepler.gl Map to visualize GeoJSON polygons on a map.",
+      "Use kepler.gl Map to create a heatmap from coordinate data."
+    ],
+    "brandColor": "#29323C",
+    "composerIcon": "./assets/icon.png",
+    "logo": "./assets/logo.png"
+  }
+}
