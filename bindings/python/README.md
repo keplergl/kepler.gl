@@ -51,7 +51,7 @@ For full documentation, visit [https://docs.kepler.gl/docs/keplergl-jupyter](htt
 If you use AI coding assistants, add your project skill/instructions file in this directory:
 
 - **Claude Code**: `CLAUDE.md`
-- **OpenAI Codex CLI**: `AGENTS.md`
+- **Codex (AGENTS.md-based setup)**: `AGENTS.md`
 
 You can keep the content identical in both files so Claude Code and Codex use the same project guidance.
 
