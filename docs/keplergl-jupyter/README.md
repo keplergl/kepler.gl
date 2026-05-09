@@ -22,6 +22,7 @@
 - [7. Save Map](#7-save-map)
   - [`.save_to_html()`](#save_to_html)
   - [`._repr_html_()`](#_repr_html_)
+- [8. Customize Theme and App Name](#8-customize-theme-and-app-name)
 - [Demo Notebooks](#demo-notebooks)
 - [FAQ & Troubleshoot](#faq--troubleshoot)
 
@@ -30,38 +31,13 @@
 
 ### Prerequisites
 
-- Python >= 3
-- ipywidgets >= 7.0.0
+- Python >= 3.9
+- JupyterLab >= 4.0 or Notebook >= 7.0
 
 To install use pip:
 ```bash
 $ pip install keplergl
 ```
-
-If you're on Mac, used `pip install`, and you're running Notebook 5.3 and above, you don't need to run the following:
-
-```bash
-$ jupyter nbextension install --py --sys-prefix keplergl # can be skipped for notebook 5.3 and above
-$ jupyter nbextension enable --py --sys-prefix keplergl # can be skipped for notebook 5.3 and above
-```
-
-If you are using Jupyter Lab, you will also need to install the JupyterLab extension. This require [node](https://nodejs.org/en/download/package-manager/#macos) `> 10.15.0`
-
-If you use [Homebrew](https://brew.sh/) on Mac:
-```bash
-$ brew install node@10
-```
-
-Then install jupyter labextension.
-
-```bash
-$ jupyter labextension install @jupyter-widgets/jupyterlab-manager keplergl-jupyter
-```
-
-### Prerequisites for JupyterLab
-- Node > 10.15.0
-- Python 3
-- JupyterLab>=1.0.0
 
 ## 1. Load keplergl map
 ### `KeplerGl()`
@@ -85,7 +61,15 @@ $ jupyter labextension install @jupyter-widgets/jupyterlab-manager keplergl-jupy
 
   - __`show_docs`__ `bool` _optional_
 
-      By default, the User Guide URL (<https://docs.kepler.gl/docs/keplergl-jupyter>) will be printed when a map is created. To hide the User Guide URL, set `show_docs=False`.
+      Deprecated, kept for backward compatibility.
+
+  - __`theme`__ `str` _optional_ default: `""`
+
+      UI theme for the map. Accepted values are `"light"`, `"dark"`, `"base"`, or `""` (default dark theme).
+
+  - __`app_name`__ `str` _optional_ default: `"kepler.gl"`
+
+      Application name shown in the side panel header and used as the HTML `<title>` when exporting.
 
 The following command will load kepler.gl widget below a cell.
 **The map object created here is `map_1` it will be used throughout the code example in this doc.**
@@ -233,6 +217,37 @@ w1.add_data(data=country_gdf, name="state")
 
 ![US state][geodataframe_map]
 
+#### GeoDataFrame with datetime columns
+
+GeoDataFrames that contain `datetime` columns (or other non-JSON-native types) are supported out of the box. During serialization these values are automatically converted to strings, so no manual pre-processing is needed.
+
+```python
+import geopandas as gpd
+from shapely.geometry import Point
+import pandas as pd
+
+gdf = gpd.GeoDataFrame({
+    'name': ['A', 'B'],
+    'timestamp': pd.to_datetime(['2024-01-01', '2024-06-15']),
+    'geometry': [Point(-73.99, 40.73), Point(-118.24, 34.05)]
+})
+
+map_1.add_data(data=gdf, name='events')
+```
+
+#### Empty or all-null geometries
+
+GeoDataFrames with empty or all-null geometry columns are handled gracefully. The widget will not raise an error when adding such data.
+
+```python
+gdf_empty = gpd.GeoDataFrame({
+    'id': [1, 2],
+    'geometry': [None, None]
+})
+
+map_1.add_data(data=gdf_empty, name='empty_geom')
+```
+
 ### `WKT`
 
 You can embed geometries (Polygon, LineStrings etc) into CSV or DataFrame using [`WKT`][wkt]
@@ -327,6 +342,11 @@ When you click in the map and change settings, config is saved to widget state. 
   - **`config`**: _optional_ map config dictionary, if not provided, will use current map config
   - **`file_name`**: _optional_ the html file name, default is `keplergl_map.html`
   - **`read_only`**: _optional_ if `read_only` is `True`, hide side panel to disable map customization
+  - **`center_map`**: _optional_ if `True`, fit map bounds to the data (default: `True`)
+  - **`mapbox_token`**: _optional_ Mapbox access token. Required for Mapbox basemap styles (e.g. "Dark", "Muted Light"). Leave empty for free MapLibre styles.
+  - **`json_encoder`**: _optional_ Fallback function passed as `default` when JSON-serializing GeoDataFrame data. Defaults to `str` so that `datetime` and other non-native JSON types are converted automatically. Pass `None` to disable (will raise on non-serializable types).
+  - **`app_name`**: _optional_ Application name shown in the side panel header and used as HTML `<title>`. If `None`, uses the value set at widget creation (default `"kepler.gl"`).
+  - **`theme`**: _optional_ UI theme for the kepler.gl component (`"light"`, `"dark"`, `"base"`, or `""`). If `None`, uses the value set at widget creation.
 
 You can export your current map as an interactive html file.
 
@@ -339,6 +359,9 @@ map_1.save_to_html(data={'data_1': df}, config=config, file_name='first_map.html
 
 # this will save map with the interaction panel disabled
 map_1.save_to_html(file_name='first_map.html', read_only=True)
+
+# this will save map with a custom theme and app name
+map_1.save_to_html(file_name='first_map.html', theme='light', app_name='My Map App')
 ```
 
 ### `._repr_html_()`
@@ -363,70 +386,66 @@ if __name__ == '__main__':
     app.run(debug=True)
 ```
 
+## 8. Customize Theme and App Name
+
+You can customize the UI theme and application name both when creating the widget and when exporting to HTML.
+
+### Theme
+
+The `theme` parameter controls the visual appearance of the map UI. Accepted values:
+- `"dark"` – Dark theme
+- `"light"` – Light theme
+- `"base"` – Base theme
+- `""` (empty string) – Uses the default dark theme
+
+```python
+# Create a map with light theme
+map_1 = KeplerGl(height=400, data={'data_1': df}, theme='light')
+map_1
+```
+
+### App Name
+
+The `app_name` parameter sets the application name displayed in the side panel header. It is also used as the HTML `<title>` when exporting.
+
+```python
+# Create a map with a custom app name
+map_1 = KeplerGl(height=400, data={'data_1': df}, app_name='My Geospatial App')
+map_1
+```
+
+Both `theme` and `app_name` can also be passed to `save_to_html()` to override the widget-level settings for the exported file:
+
+```python
+map_1.save_to_html(file_name='my_map.html', theme='light', app_name='My Map Export')
+```
+
 # Demo Notebooks
-- [Load kepler.gl](https://github.com/keplergl/kepler.gl/blob/master/bindings/kepler.gl-jupyter/notebooks/Load%20kepler.gl.ipynb): Load kepler.gl widget, add data and config
-- [Geometry as String](https://github.com/keplergl/kepler.gl/blob/master/bindings/kepler.gl-jupyter/notebooks/Geometry%20as%20String.ipynb): Embed Polygon geometries as `GeoJson` and `WKT` inside a `CSV`
-- [GeoJSON](https://github.com/keplergl/kepler.gl/blob/master/bindings/kepler.gl-jupyter/notebooks/GeoJSON.ipynb): Load GeoJSON to kepler.gl
-- [DataFrame](https://github.com/keplergl/kepler.gl/blob/master/bindings/kepler.gl-jupyter/notebooks/DataFrame.ipynb): Load DataFrame to kepler.gl
-- [GeoDataFrame](https://github.com/keplergl/kepler.gl/blob/master/bindings/kepler.gl-jupyter/notebooks/GeoDataFrame.ipynb): Load GeoDataFrame to kepler.gl
+- [Load kepler.gl](https://github.com/keplergl/kepler.gl/blob/master/bindings/python/notebooks/Load%20kepler.gl.ipynb): Load kepler.gl widget, add data and config
+- [GeoJSON](https://github.com/keplergl/kepler.gl/blob/master/bindings/python/notebooks/GeoJSON.ipynb): Load GeoJSON to kepler.gl
+- [DataFrame](https://github.com/keplergl/kepler.gl/blob/master/bindings/python/notebooks/DataFrame.ipynb): Load DataFrame to kepler.gl
+- [GeoDataFrame](https://github.com/keplergl/kepler.gl/blob/master/bindings/python/notebooks/GeoDataFrame.ipynb): Load GeoDataFrame to kepler.gl
+- [GeoDataFrame with Datetime](https://github.com/keplergl/kepler.gl/blob/master/bindings/python/notebooks/GeoDataFrame%20with%20Datetime.ipynb): Load GeoDataFrame with datetime columns
+- [Empty GeoDataFrame](https://github.com/keplergl/kepler.gl/blob/master/bindings/python/notebooks/Empty%20GeoDataFrame.ipynb): Handle empty or all-null geometries
+- [Theme and App Name](https://github.com/keplergl/kepler.gl/blob/master/bindings/python/notebooks/Theme%20and%20App%20Name.ipynb): Customize theme and app name
 
 # FAQ & Troubleshoot
 
 #### 1. What about Microsoft Windows?
-keplergl is currently only published to PyPI, and unfortunately I use a Mac. If you encounter errors installing it on windows, [this issue](https://github.com/keplergl/kepler.gl/issues/557) might shed some light. Follow this issue for [conda](https://github.com/keplergl/kepler.gl/issues/646) support.
+keplergl is currently only published to PyPI. If you encounter errors installing it on Windows, [this issue](https://github.com/keplergl/kepler.gl/issues/557) might shed some light.
 
-#### 2. Install keplergl-jupyter on Jupyter Lab failed?
+#### 2. Widget not rendering in JupyterLab or Notebook?
 
-Make sure you are using node 8.15.0. and you have installed `@jupyter-widgets/jupyterlab-manager`. Depends on your JupyterLab version. You might need to install the specific version of [jupyterlab-manager](https://github.com/jupyter-widgets/ipywidgets/tree/master/packages/jupyterlab-manager). with `jupyter labextension install @jupyter-widgets/jupyterlab-manager@0.31`. When use it in Jupyter lab, keplergl is only supported in JupyterLab > 1.0 and Python 3.
+Make sure you are using JupyterLab >= 4.0 or Notebook >= 7.0 with Python >= 3.9. The widget is built on [anywidget](https://anywidget.dev/) which is supported out of the box in modern Jupyter environments — no extra `nbextension` or `labextension` install steps are needed.
 
-Run `jupyter labextension install keplergl-jupyter --debug` and copy console output before creating an issue.
+If the widget still does not render, try restarting the kernel and re-running the cell.
 
-If you are running `install` and `uninstall` several times. You should run.
-
-```
-jupyter lab clean
-jupyter lab build
-```
-
-#### 2.1 JavaScript heap out of memory when installing lab extension
-If you see this error during install labextension
-
-```bash
-$ FATAL ERROR: CALL_AND_RETRY_LAST Allocation failed - JavaScript heap out of memory
-```
-
-run
-
-```bash
-$ export NODE_OPTIONS=--max-old-space-size=4096
-```
-
-#### 3. Is my lab extension successfully installed?
-Run `jupyter labextension list` You should see below. (Version may vary)
-
-```bash
-JupyterLab v1.1.4
-Known labextensions:
-   app dir: /Users/xxx/jupyter-python3/ENV3/share/jupyter/lab
-        @jupyter-widgets/jupyterlab-manager v1.0.2  enabled  OK
-        keplergl-jupyter v0.1.0  enabled  OK
-```
-
-#### 4. What's your python and node env
-
-Python
-```text
-python==3.7.4
-notebook==6.0.3
-jupyterlab==2.1.2
-ipywidgets==7.5.1
-```
-
-Node (Only for JupyterLab)
+#### 3. What's your recommended Python environment?
 
 ```text
-node==8.15.0
-yarn==1.7.0
+python>=3.9
+jupyterlab>=4.0
+notebook>=7.0
 ```
 
 [jupyter_widget]: https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/jupyter_widget.png
