@@ -1,6 +1,6 @@
 # Save and Export Map
 
-When you click in the map and change settings, config is saved to widget state. Closing the notebook and reopening it will reload the current map. However, you need to manually select `Widget > Save Notebook Widget State` before shutting down the kernel to make sure it will be reloaded.
+When you click in the map and change settings, config is saved to widget state. Closing the notebook and reopening it will reload the current map. However, you need to manually select `Widgets > Save Notebook Widget State` before shutting down the kernel to make sure it will be reloaded.
 
 ![Save Widget State][save_widget_state]
 

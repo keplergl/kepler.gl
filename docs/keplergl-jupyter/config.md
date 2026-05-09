@@ -28,9 +28,9 @@ config = {
             'longitude': -122.42590232651203,
             'zoom': 12.32053899007826
         }
-        ...
+        # ...other config options
     }
-},
+}
 map_1.add_data(data=df, name='data_1')
 map_1.config = config
 ```

@@ -100,8 +100,8 @@ Print the current data added to the map. Returns a `dict`.
 ```python
 map_1.data
 # {'data_1': 'hex_id,value\n89283082c2fffff,64\n8928308288fffff,73\n89283082c07ffff,65\n89283082817ffff,74\n89283082c3bffff,66\n8...`,
-#  'data_3': 'location, lat, lng, name\n..',
-#  'data_3': '{"type": "FeatureCollecti...'}
+#  'data_2': 'location, lat, lng, name\n..',
+#  'data_3': '{"type": "FeatureCollection...'}
 ```
 
 [empty_map]: https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/jupyter_empty_map.png
