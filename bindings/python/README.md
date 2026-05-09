@@ -34,7 +34,7 @@ map
 
 ## Use with AI Coding Assistants
 
-This package ships with a **[SKILL.md](SKILL.md)** file — an AI-readable reference that teaches coding assistants how to use `keplergl` to create static HTML maps from geospatial data.
+This package ships with a **[CLAUDE.md](CLAUDE.md)** file — a project instructions file following the [Claude Code CLAUDE.md convention](https://docs.anthropic.com/en/docs/claude-code/memory). Claude Code automatically loads this file when operating in the `bindings/python/` directory, giving it full knowledge of the `keplergl` API.
 
 Detailed per-map-type references live in **[skill-references/](skill-references/)**:
 
@@ -50,21 +50,23 @@ Detailed per-map-type references live in **[skill-references/](skill-references/
 
 ### Setting up with Claude Code
 
-1. Open your project in **Claude Code** (terminal-based) or **Claude Desktop with Projects**.
+1. **Clone or download** the `CLAUDE.md` file (and optionally the `skill-references/` folder) into your project directory:
 
-2. Add the skill file to Claude's project knowledge:
-   - **Claude Code (CLI):** run the slash command below to register the skill:
-     ```
-     /add-skill https://raw.githubusercontent.com/keplergl/kepler.gl/master/bindings/python/SKILL.md
-     ```
-   - **Claude Desktop → Projects:** open your Project, click **"Add Content"** in the Project Knowledge section, and paste the raw URL above (or upload the file directly).
-
-3. *(Optional)* For a specific map type, also add the relevant reference file. For example, to give Claude detailed GeoJSON/polygon guidance:
-   ```
-   /add-skill https://raw.githubusercontent.com/keplergl/kepler.gl/master/bindings/python/skill-references/geojson-polygon-map.md
+   ```bash
+   # Copy CLAUDE.md into your project root
+   curl -o CLAUDE.md https://raw.githubusercontent.com/keplergl/kepler.gl/master/bindings/python/CLAUDE.md
    ```
 
-4. Start prompting — Claude now knows the `keplergl` API and can generate working code.
+   Claude Code automatically discovers and loads any `CLAUDE.md` file in the working directory or its parent directories — no manual registration is needed.
+
+2. *(Optional)* For detailed map-type guidance, also copy the reference files:
+
+   ```bash
+   mkdir -p skill-references
+   curl -o skill-references/geojson-polygon-map.md https://raw.githubusercontent.com/keplergl/kepler.gl/master/bindings/python/skill-references/geojson-polygon-map.md
+   ```
+
+3. **Start Claude Code** in your project directory and begin prompting — Claude now knows the `keplergl` API and can generate working map code.
 
 ### Example prompt
 
