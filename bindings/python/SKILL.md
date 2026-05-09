@@ -19,7 +19,7 @@ Requirements: Python >= 3.9. Dependencies (`pandas`, `geopandas`, `shapely`) are
 1. Import `KeplerGl` from `keplergl`
 2. Load data as a DataFrame, GeoDataFrame, GeoJSON dict, or CSV string
 3. Create a map with `KeplerGl(data={'name': data_object})`
-4. Optionally configure layers, colors, and map state via a `config` dict
+4. Optionally configure layers, colors, and map state via a `config` dict (default to quantile color scale and a vibrant palette for quantitative color encoding when the user does not specify)
 5. Export with `map.save_to_html(file_name='output.html', center_map=True)`
 6. The output HTML is fully standalone — open it in any browser
 
@@ -60,6 +60,9 @@ Read or set the map configuration dict. Use `map.config` after customizing in Ju
 - Columns named `latitude`/`lat`/`lng`/`longitude` are auto-detected as coordinates.
 - H3 hex IDs are auto-detected if a column contains valid H3 strings.
 - Use `center_map=True` to auto-fit map bounds. Use `read_only=True` to hide the side panel.
+- For numeric color encoding, if the user does not specify a color scale, use `visualChannels.colorScale: 'quantile'`.
+- For numeric color encoding, if the user does not specify a palette, use a vibrant sequential/diverging palette (for example, `colorRange.name: 'Global Warming'`).
+- If the user asks for custom class breaks, compute breakpoints in Python first (for example with `pygeoda`), add a derived classified/bin column to the dataset, and map colors using that derived field.
 
 ## Supported Data Formats
 
@@ -137,7 +140,7 @@ For detailed per-layer-type examples with full config, see supporting files:
 
 ## Examples
 
-### Point map from DataFrame
+### Point map from DataFrame (quantile + vibrant palette)
 
 ```python
 from keplergl import KeplerGl
@@ -146,9 +149,41 @@ import pandas as pd
 df = pd.DataFrame({
     'lat': [37.7749, 34.0522, 40.7128],
     'lng': [-122.4194, -118.2437, -74.0060],
-    'name': ['San Francisco', 'Los Angeles', 'New York']
+    'name': ['San Francisco', 'Los Angeles', 'New York'],
+    'value': [15, 42, 27]
 })
-map_1 = KeplerGl(height=600, data={'cities': df})
+
+config = {
+    'version': 'v1',
+    'config': {
+        'visState': {
+            'layers': [{
+                'type': 'point',
+                'config': {
+                    'dataId': 'cities',
+                    'label': 'Cities',
+                    'isVisible': True,
+                    'columns': {'lat': 'lat', 'lng': 'lng'},
+                    'visConfig': {
+                        'radius': 10,
+                        'colorRange': {
+                            'name': 'Global Warming',
+                            'type': 'sequential',
+                            'category': 'Uber',
+                            'colors': ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
+                        }
+                    }
+                },
+                'visualChannels': {
+                    'colorField': {'name': 'value', 'type': 'integer'},
+                    'colorScale': 'quantile'
+                }
+            }]
+        }
+    }
+}
+
+map_1 = KeplerGl(height=600, data={'cities': df}, config=config)
 map_1.save_to_html(file_name='cities_map.html')
 ```
 
