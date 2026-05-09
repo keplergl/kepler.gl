@@ -112,6 +112,11 @@ curl -o ~/.agents/skills/keplergl-map/skill-references/hexbin-aggregation-map.md
 curl -o ~/.agents/skills/keplergl-map/skill-references/trip-animation-map.md     $BASE/skill-references/trip-animation-map.md
 ```
 
+Then verify `~/.agents/skills/keplergl-map/SKILL.md` frontmatter includes both:
+
+- `name: keplergl-map`
+- `description: ...`
+
 **Option B — Project skill** (shared with your team via git):
 
 ```bash
@@ -131,23 +136,30 @@ git add .agents/skills/keplergl-map
 git commit -m "Add keplergl map skill for Codex"
 ```
 
-> Codex skill metadata requires both `name` and `description` in the SKILL frontmatter.  
-> If your local copy is missing `name`, add:
->
-> ```yaml
-> ---
-> name: keplergl-map
-> description: Create interactive map visualizations and export standalone HTML with keplergl.
-> ---
-> ```
+Then verify `.agents/skills/keplergl-map/SKILL.md` frontmatter includes both:
+
+- `name: keplergl-map`
+- `description: ...`
 
 #### Optional Codex app metadata and icon assets
 
-You can add Codex app metadata at `agents/openai.yaml` in the skill folder and use the kepler.gl icon as skill assets:
+Inside each Codex skill folder, add metadata at `agents/openai.yaml` and assets under `agents/assets/`.
+That means:
+
+- Personal install: `~/.agents/skills/keplergl-map/agents/openai.yaml`
+- Project install: `.agents/skills/keplergl-map/agents/openai.yaml`
+
+Example asset setup:
 
 ```bash
+# Project-level
 mkdir -p .agents/skills/keplergl-map/agents/assets
 curl -o .agents/skills/keplergl-map/agents/assets/kepler-gl-icon.png \
+  https://raw.githubusercontent.com/keplergl/kepler.gl/main/website/src/static/favicon.png
+
+# Personal-level
+mkdir -p ~/.agents/skills/keplergl-map/agents/assets
+curl -o ~/.agents/skills/keplergl-map/agents/assets/kepler-gl-icon.png \
   https://raw.githubusercontent.com/keplergl/kepler.gl/main/website/src/static/favicon.png
 ```
 
@@ -155,15 +167,15 @@ curl -o .agents/skills/keplergl-map/agents/assets/kepler-gl-icon.png \
 interface:
   display_name: "keplergl map"
   short_description: "Create interactive keplergl HTML maps from tabular and geospatial data"
-  icon_small: "./agents/assets/kepler-gl-icon.png"
-  icon_large: "./agents/assets/kepler-gl-icon.png"
+  icon_small: "./assets/kepler-gl-icon.png"
+  icon_large: "./assets/kepler-gl-icon.png"
   brand_color: "#2FA7F4"
 ```
 
 #### Easiest distribution for Codex users
 
 For easy installation across teams, package this skill as a **Codex plugin** (recommended). Plugins can bundle skills, metadata (`agents/openai.yaml`), assets, and optional integrations in one installable package.  
-For local experimentation only, users can also install curated skills with `$skill-installer`.
+For local experimentation only, Codex users can install curated skills with the built-in `$skill-installer` command (see https://developers.openai.com/codex/skills).
 
 ### Example prompt
 
