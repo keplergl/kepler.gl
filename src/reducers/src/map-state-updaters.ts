@@ -16,6 +16,7 @@ import {
 } from '@kepler.gl/utils';
 import {MapStateActions, ReceiveMapConfigPayload, ActionTypes} from '@kepler.gl/actions';
 import {MapState, Bounds, Viewport} from '@kepler.gl/types';
+import {MapViewMode, INITIAL_GLOBE_STATE} from '@kepler.gl/constants';
 
 /**
  * Updaters for `mapState` reducer. Can be used in your root reducer to directly modify kepler.gl's state.
@@ -92,6 +93,8 @@ export const INITIAL_MAP_STATE: MapState = {
   maxZoom: undefined,
   maxPitch: undefined,
   maxBounds: undefined,
+  mapViewMode: MapViewMode.MODE_2D,
+  globe: INITIAL_GLOBE_STATE,
   isSplit: false,
   isViewportSynced: true,
   isZoomLocked: false,
@@ -208,13 +211,19 @@ export const fitBoundsUpdater = (
  * @public
  */
 export const togglePerspectiveUpdater = (state: MapState): MapState => {
+  const willDragRotate = !state.dragRotate;
   const newState = {
     ...state,
     ...{
       pitch: state.dragRotate ? 0 : 50,
       bearing: state.dragRotate ? 0 : 24
     },
-    dragRotate: !state.dragRotate
+    dragRotate: willDragRotate,
+    mapViewMode: willDragRotate ? MapViewMode.MODE_3D : MapViewMode.MODE_2D,
+    globe: {
+      ...state.globe!,
+      enabled: false
+    }
   };
 
   // if toggling 3d and 2d while split and unsynced
@@ -229,6 +238,106 @@ export const togglePerspectiveUpdater = (state: MapState): MapState => {
   }
 
   return newState;
+};
+
+/**
+ * Set the map view mode (2D, 3D, or Globe).
+ * @memberof mapStateUpdaters
+ * @public
+ */
+export const setMapViewModeUpdater = (
+  state: MapState,
+  action: {payload: {mapViewMode: string}}
+): MapState => {
+  const {mapViewMode} = action.payload;
+  const prevMode = state.mapViewMode;
+  if (prevMode === mapViewMode) {
+    return state;
+  }
+
+  let nextState: MapState;
+
+  switch (mapViewMode) {
+    case MapViewMode.MODE_2D:
+      nextState = {
+        ...state,
+        globe: {
+          ...state.globe!,
+          enabled: false
+        },
+        pitch: 0,
+        bearing: 0,
+        dragRotate: false,
+        mapViewMode
+      };
+      break;
+
+    case MapViewMode.MODE_3D:
+      nextState = {
+        ...state,
+        globe: {
+          ...state.globe!,
+          enabled: false
+        },
+        pitch: 50,
+        bearing: 24,
+        dragRotate: true,
+        mapViewMode
+      };
+      break;
+
+    case MapViewMode.MODE_GLOBE:
+      nextState = {
+        ...state,
+        globe: {
+          ...state.globe!,
+          enabled: true
+        },
+        dragRotate: true,
+        pitch: 0,
+        bearing: 0,
+        zoom: Math.min(state.zoom, 5),
+        mapViewMode
+      };
+      break;
+
+    default:
+      nextState = state;
+      break;
+  }
+
+  if (nextState.splitMapViewports.length) {
+    nextState.splitMapViewports = nextState.splitMapViewports.map(currentViewport => ({
+      ...currentViewport,
+      pitch: nextState.pitch,
+      bearing: nextState.bearing,
+      dragRotate: nextState.dragRotate,
+      ...(mapViewMode === MapViewMode.MODE_GLOBE ? {zoom: nextState.zoom} : {})
+    }));
+  }
+
+  return nextState;
+};
+
+/**
+ * Update globe configuration.
+ * @memberof mapStateUpdaters
+ * @public
+ */
+export const globeConfigChangeUpdater = (
+  state: MapState,
+  action: {payload: Record<string, any>}
+): MapState => {
+  return {
+    ...state,
+    globe: {
+      ...state.globe!,
+      config: {
+        ...state.globe!.config,
+        ...action.payload
+      }
+    }
+  };
 };
 
 /**

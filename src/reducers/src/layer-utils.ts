@@ -486,7 +486,8 @@ export function computeDeckLayers(
     mapStyle?.visibleLayerGroups['3d building'] &&
     primaryMap &&
     mapboxApiAccessToken &&
-    mapboxApiUrl
+    mapboxApiUrl &&
+    !mapState?.globe?.enabled
   ) {
     dataLayers.push(
       new ThreeDBuildingLayer({

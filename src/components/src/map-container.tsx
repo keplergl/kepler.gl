@@ -10,6 +10,9 @@ import {PickingInfo, MapView} from '@deck.gl/core';
 import DeckGL from '@deck.gl/react';
 import {createSelector, Selector} from 'reselect';
 import {useDroppable} from '@dnd-kit/core';
+
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const {_GlobeView: GlobeView} = require('@deck.gl/core') as {_GlobeView: any};
 import debounce from 'lodash/debounce';
 
 import {VisStateActions, MapStateActions, UIStateActions} from '@kepler.gl/actions';
@@ -24,6 +27,7 @@ import {
 } from './common/styled-components';
 
 import EditorFactory from './editor/editor';
+import {getGlobeBackgroundLayers} from './map/globe';
 
 // utils
 import {
@@ -586,12 +590,18 @@ export default function MapContainerFactory(
     // used by <StyledMap> inline style prop
     mapStyleTypeSelector = props => props.mapStyle.styleType;
     mapStyleBackgroundColorSelector = props => props.mapStyle.backgroundColor;
+    mapStateGlobeEnabledSelector = props => props.mapState.globe?.enabled;
     styleSelector = createSelector(
       this.mapStyleTypeSelector,
       this.mapStyleBackgroundColorSelector,
-      (styleType, backgroundColor) => ({
+      this.mapStateGlobeEnabledSelector,
+      (styleType, backgroundColor, globeEnabled) => ({
         ...MAP_STYLE.container,
-        ...(styleType === NO_MAP_ID ? {backgroundColor: rgbToHex(backgroundColor)} : {})
+        ...(globeEnabled
+          ? {backgroundColor: '#040911'}
+          : styleType === NO_MAP_ID
+            ? {backgroundColor: rgbToHex(backgroundColor)}
+            : {})
       })
     );
 
@@ -1006,6 +1016,17 @@ export default function MapContainerFactory(
         deckGlProps
       );
 
+      // Prepend globe background layers when in globe mode
+      const globeLayers =
+        mapState.globe?.enabled
+          ? getGlobeBackgroundLayers({
+              globe: mapState.globe,
+              mapboxApiAccessToken,
+              styleType: mapStyle.styleType
+            })
+          : [];
+      const allLayers = [...globeLayers, ...deckGlLayers];
+
       const extraDeckParams: {
         getTooltip?: (info: any) => object | null;
         getCursor?: ({isDragging}: {isDragging: boolean}) => string;
@@ -1043,15 +1064,39 @@ export default function MapContainerFactory(
         ? computeDeckEffects({visState, mapState, isExport: this.props.isExport})
         : [];
 
-      const views = deckGlProps?.views ? deckGlProps?.views() : new MapView({farZMultiplier: 1.2});
+      const controllerOpts = isInteractive
+        ? {
+            doubleClickZoom: !isEditorDrawingMode,
+            dragRotate: this.props.mapState.dragRotate,
+            ...(this.props.mapState.globe?.enabled
+              ? {}
+              : {maxPitch: this.props.mapState.maxPitch ?? getApplicationConfig().maxPitch})
+          }
+        : false;
+
+      const views = deckGlProps?.views
+        ? deckGlProps?.views()
+        : mapState.globe?.enabled
+          ? new GlobeView({
+              resolution: 5,
+              controller: controllerOpts,
+              clear: true,
+              clearColor: [0, 0, 0, 255]
+            })
+          : new MapView({farZMultiplier: 1.2, controller: controllerOpts});
 
       let allDeckGlProps = {
         ...deckGlProps,
         pickingRadius: DEFAULT_PICKING_RADIUS,
         views,
-        layers: deckGlLayers,
+        layers: allLayers,
         effects,
-        parameters: getLayerBlendingParameters(visState.layerBlending)
+        parameters: {
+          ...getLayerBlendingParameters(visState.layerBlending),
+          ...(mapState.globe?.enabled
+            ? {cullMode: 'back'}
+            : {})
+        }
       };
 
       if (typeof deckRenderCallbacks?.onDeckRender === 'function') {
@@ -1066,6 +1111,7 @@ export default function MapContainerFactory(
         <div
           {...(isInteractive
             ? {
+                style: {width: '100%', height: '100%'},
                 onMouseMove: primaryMap
                   ? event => {
                       onMouseMove?.(event);
@@ -1073,7 +1119,7 @@ export default function MapContainerFactory(
                     }
                   : undefined
               }
-            : {style: {pointerEvents: 'none'}})}
+            : {style: {pointerEvents: 'none', width: '100%', height: '100%'}})}
         >
           <DeckGL
             id="default-deckgl-overlay"
@@ -1083,15 +1129,6 @@ export default function MapContainerFactory(
               }
             }}
             {...allDeckGlProps}
-            controller={
-              isInteractive
-                ? {
-                    doubleClickZoom: !isEditorDrawingMode,
-                    dragRotate: this.props.mapState.dragRotate,
-                    maxPitch: this.props.mapState.maxPitch ?? getApplicationConfig().maxPitch
-                  }
-                : false
-            }
             initialViewState={internalViewState}
             onBeforeRender={this._onBeforeRender}
             onViewStateChange={isInteractive ? this._onViewportChange : undefined}
@@ -1181,13 +1218,17 @@ export default function MapContainerFactory(
     _onViewportChange = viewport => {
       const {viewState} = viewport;
       if (this.props.isExport) {
-        // Image export map shouldn't be interactive (otherwise this callback can
-        // lead to inadvertent changes to the state of the main map)
         return;
       }
       const {setInternalViewState} = this.context;
-      setInternalViewState(viewState, this.props.index);
-      this._onViewportChangePropagateDebounced();
+      // Use setTimeout to defer state update and avoid React warning:
+      // "Cannot update a component while rendering a different component"
+      // This happens because deck.gl may fire onViewStateChange synchronously
+      // during its render when the view type changes (e.g. MapView -> GlobeView)
+      setTimeout(() => {
+        setInternalViewState(viewState, this.props.index);
+        this._onViewportChangePropagateDebounced();
+      }, 0);
     };
 
     _onLayerHoverDebounced = debounce((data, index) => {
@@ -1291,7 +1332,7 @@ export default function MapContainerFactory(
       const deck = this._renderDeckOverlay(layersForDeck, {
         primaryMap: true,
         isInteractive: true,
-        children: (
+        children: mapState.globe?.enabled ? undefined : (
           <ResolvedMapComponent
             key={`bottom-${baseMapLibraryName}`}
             {...mapProps}
@@ -1331,6 +1372,7 @@ export default function MapContainerFactory(
             editor={editor}
             locale={locale}
             onTogglePerspective={mapStateActions.togglePerspective}
+            onSetMapViewMode={mapStateActions.setMapViewMode}
             onToggleSplitMap={mapStateActions.toggleSplitMap}
             onMapToggleLayer={this._handleMapToggleLayer}
             onToggleMapControl={this._toggleMapControl}
@@ -1365,7 +1407,7 @@ export default function MapContainerFactory(
             }}
           />
           {this.props.children}
-          {mapStyle.topMapStyle ? (
+          {mapStyle.topMapStyle && !mapState.globe?.enabled ? (
             <ResolvedMapComponent
               key={`top-${baseMapLibraryName}`}
               viewState={internalViewState}

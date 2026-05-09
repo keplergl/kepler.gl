@@ -594,6 +594,12 @@ class HeatmapLayer extends Layer {
     visible: boolean;
   }): KeplerHeatmapLayer[] {
     const {data, mapState} = opts;
+
+    // HeatmapLayer doesn't work with GlobeView
+    if (mapState.globe?.enabled) {
+      return [];
+    }
+
     const {_unfiltered, ...deckData} = data;
 
     const defaultLayerProps = this.getDefaultDeckLayerProps(opts);

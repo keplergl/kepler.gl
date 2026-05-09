@@ -7,6 +7,7 @@ import {
   BaseMapStyle,
   EffectDescription,
   RGBAColor,
+  RGBColor,
   SyncTimelineMode,
   BaseMapColorModes,
   Merge
@@ -280,6 +281,57 @@ export const BASE_MAP_COLOR_MODES = keyMirror({
 });
 
 export const NO_MAP_ID = 'no_map';
+
+/**
+ * Map view mode constants for 2D, 3D, and Globe projection
+ */
+export enum MapViewMode {
+  MODE_2D = 'MODE_2D',
+  MODE_3D = 'MODE_3D',
+  MODE_GLOBE = 'MODE_GLOBE'
+}
+
+export type GlobeConfig = {
+  atmosphere: boolean;
+  basemap: boolean;
+  surfaceColor: RGBColor;
+  water: boolean;
+  waterColor: RGBAColor;
+  adminLines: boolean;
+  adminLinesColor: RGBAColor;
+  labels: boolean;
+  labelsColor: RGBAColor;
+  terminator: boolean;
+  terminatorOpacity: number;
+  azimuth: boolean;
+  azimuthAngle: number;
+};
+
+export type Globe = {
+  enabled: boolean;
+  config: GlobeConfig;
+};
+
+export const DEFAULT_GLOBE_CONFIG: GlobeConfig = {
+  atmosphere: true,
+  basemap: true,
+  surfaceColor: [9, 16, 29],
+  water: true,
+  waterColor: [17, 35, 48, 255],
+  adminLines: true,
+  adminLinesColor: [40, 63, 93, 255],
+  labels: true,
+  labelsColor: [115, 115, 115, 255],
+  terminator: false,
+  terminatorOpacity: 0.8,
+  azimuth: false,
+  azimuthAngle: 0
+};
+
+export const INITIAL_GLOBE_STATE: Globe = {
+  enabled: false,
+  config: DEFAULT_GLOBE_CONFIG
+};
 
 // Fallback style to use when styles are being fetched, or when
 // a style fails to fetch

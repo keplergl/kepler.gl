@@ -49,7 +49,9 @@ export {getInitialInputStyle, loadMapStylesUpdater, INITIAL_MAP_STYLE} from './m
 export {
   fitBoundsUpdater,
   pickViewportPropsFromMapState,
-  INITIAL_MAP_STATE
+  INITIAL_MAP_STATE,
+  setMapViewModeUpdater,
+  globeConfigChangeUpdater
 } from './map-state-updaters';
 
 // Helpers

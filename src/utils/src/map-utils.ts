@@ -8,6 +8,9 @@ import {SplitMapLayers, SplitMap, Viewport, MapState} from '@kepler.gl/types';
 
 import {validateLatitude, validateLongitude} from './data-utils';
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const {_GlobeViewport: GlobeViewport} = require('@deck.gl/core') as {_GlobeViewport: any};
+
 /**
  * Validates a ViewPort object.
  * It retains all properties of the original ViewPort object,
@@ -66,10 +69,14 @@ export const getViewportFromMapState = (mapState: MapState): Viewport => {
   // e.g. Error message: "Pixel project matrix not invertible"
   let viewPort;
   try {
-    viewPort = new WebMercatorViewport(mapState);
+    viewPort = mapState.globe?.enabled
+      ? new GlobeViewport(mapState)
+      : new WebMercatorViewport(mapState);
   } catch {
     // catch error and fallback to default map state
-    viewPort = new WebMercatorViewport(validateViewPort(mapState));
+    viewPort = mapState.globe?.enabled
+      ? new GlobeViewport(validateViewPort(mapState))
+      : new WebMercatorViewport(validateViewPort(mapState));
   }
 
   return viewPort;

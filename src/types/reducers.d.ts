@@ -29,6 +29,28 @@ export type MapState = {
   initialState?: any;
   scale?: number;
 
+  /** Current map view mode: MODE_2D, MODE_3D, or MODE_GLOBE */
+  mapViewMode?: string;
+  /** Globe state */
+  globe?: {
+    enabled: boolean;
+    config: {
+      atmosphere: boolean;
+      basemap: boolean;
+      surfaceColor: [number, number, number];
+      water: boolean;
+      waterColor: [number, number, number, number];
+      adminLines: boolean;
+      adminLinesColor: [number, number, number, number];
+      labels: boolean;
+      labelsColor: [number, number, number, number];
+      terminator: boolean;
+      terminatorOpacity: number;
+      azimuth: boolean;
+      azimuthAngle: number;
+    };
+  };
+
   // the following 4 properties assist with split viewports that can optionally have (un)synced viewports and zooms
   /**  Is the application split into 2 maps? */
   isSplit: boolean;

@@ -16,7 +16,9 @@ const actionHandler = {
   [ActionTypes.RECEIVE_MAP_CONFIG]: mapStateUpdaters.receiveMapConfigUpdater,
   [ActionTypes.RESET_MAP_CONFIG]: mapStateUpdaters.resetMapConfigUpdater,
   [ActionTypes.TOGGLE_SPLIT_MAP]: mapStateUpdaters.toggleSplitMapUpdater,
-  [ActionTypes.TOGGLE_SPLIT_MAP_VIEWPORT]: mapStateUpdaters.toggleSplitMapViewportUpdater
+  [ActionTypes.TOGGLE_SPLIT_MAP_VIEWPORT]: mapStateUpdaters.toggleSplitMapViewportUpdater,
+  [ActionTypes.SET_MAP_VIEW_MODE]: mapStateUpdaters.setMapViewModeUpdater,
+  [ActionTypes.GLOBE_CONFIG_CHANGE]: mapStateUpdaters.globeConfigChangeUpdater
 };
 
 /* Reducer */
