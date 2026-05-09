@@ -71,8 +71,8 @@ For Codex skills, a minimal structure is:
 
 You can source icon assets from existing repository art, for example:
 
-- `/home/runner/work/kepler.gl/kepler.gl/website-gatsby/static/images/icon-high-precision.svg`
-- `/home/runner/work/kepler.gl/kepler.gl/website/src/static/favicon.png`
+- `website-gatsby/static/images/icon-high-precision.svg`
+- `website/src/static/favicon.png`
 
 And reference them in `.agents/skills/<skill-name>/agents/openai.yaml`:
 
