@@ -25,7 +25,7 @@ Requirements: Python >= 3.9. Dependencies (`pandas`, `geopandas`, `shapely`) are
 
 ## API Reference
 
-### `KeplerGl(height, data, config, theme, app_name)`
+### `KeplerGl(data=None, config=None, height=400, mapbox_token="", use_arrow=False, show_docs=False, theme="", app_name="kepler.gl", **kwargs)`
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
@@ -33,6 +33,8 @@ Requirements: Python >= 3.9. Dependencies (`pandas`, `geopandas`, `shapely`) are
 | `data` | dict | None | `{"dataset_name": data_object}` |
 | `config` | dict | None | Map configuration (layers, filters, map state) |
 | `mapbox_token` | str | "" | Mapbox token (only for Mapbox basemap styles) |
+| `use_arrow` | bool | False | Serialize DataFrames as Arrow IPC (more compact, preserves types) |
+| `show_docs` | bool | False | Deprecated (kept for compatibility) |
 | `theme` | str | "" | `"light"`, `"dark"`, `"base"`, or `""` (default dark) |
 | `app_name` | str | "kepler.gl" | App name in header and HTML title |
 
@@ -41,13 +43,19 @@ Requirements: Python >= 3.9. Dependencies (`pandas`, `geopandas`, `shapely`) are
 - `data`: DataFrame, GeoDataFrame, CSV string, GeoJSON dict, or GeoJSON string
 - `name`: Dataset identifier — must match `dataId` in config if using a config
 
-### `.save_to_html(file_name, read_only, center_map)`
+### `.save_to_html(file_name="keplergl_map.html", data=None, config=None, read_only=False, center_map=True, mapbox_token="", json_encoder=str, app_name=None, theme=None)`
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `file_name` | str | required | Output file path |
+| `data` | dict | None | Data override for export (uses current widget data when None) |
+| `config` | dict | None | Config override for export (uses current widget config when None) |
 | `read_only` | bool | False | True = hide side panel |
 | `center_map` | bool | True | True = auto-fit map to data bounds |
+| `mapbox_token` | str | "" | Mapbox token override for export |
+| `json_encoder` | callable | str | Fallback encoder for non-JSON-native values in GeoDataFrames |
+| `app_name` | str | None | App name override for export title/header |
+| `theme` | str | None | Theme override for export (`"light"`, `"dark"`, `"base"`, or `""`) |
 
 ### `.config`
 
@@ -69,7 +77,7 @@ Read or set the map configuration dict. Use `map.config` after customizing in Ju
 | Format | How to Load |
 |--------|-------------|
 | pandas DataFrame | Columns with `lat`/`lng` (or similar) for point data |
-| geopandas GeoDataFrame | Geometry column auto-detected; re-projected to EPSG:4326 |
+| geopandas GeoDataFrame | Geometry column auto-detected. Interactive widget serialization uses GeoArrow (no CRS reprojection); HTML export path re-projects to EPSG:4326 when needed. |
 | CSV string | Raw CSV text with lat/lng or geometry columns |
 | GeoJSON dict | `Feature` or `FeatureCollection` as Python dict |
 | GeoJSON string | JSON string of GeoJSON |

@@ -34,7 +34,7 @@ map
 
 ## Use with AI Coding Assistants
 
-This package ships with a **[SKILL.md](SKILL.md)** file — a [Claude Code skill](https://code.claude.com/docs/en/skills) that teaches Claude how to create interactive HTML maps using the `keplergl` API. Claude automatically discovers the skill and uses it when you ask about map visualization.
+This package ships with a **[SKILL.md](SKILL.md)** file — a [Claude Code skill](https://code.claude.com/docs/en/skills) that teaches Claude how to create interactive HTML maps using the `keplergl` API. Claude automatically discovers and uses the skill once it is installed in a Claude skills directory.
 
 Detailed per-map-type references (supporting files loaded by Claude only when needed):
 
@@ -55,7 +55,7 @@ Claude Code skills are stored as directories containing a `SKILL.md` file. You c
 **Option A — Personal skill** (available in all your projects):
 
 ```bash
-BASE=https://raw.githubusercontent.com/keplergl/kepler.gl/master/bindings/python
+BASE=https://raw.githubusercontent.com/keplergl/kepler.gl/main/bindings/python
 mkdir -p ~/.claude/skills/keplergl-map/skill-references
 
 curl -o ~/.claude/skills/keplergl-map/SKILL.md $BASE/SKILL.md
@@ -71,7 +71,7 @@ curl -o ~/.claude/skills/keplergl-map/skill-references/trip-animation-map.md    
 **Option B — Project skill** (shared with your team via git):
 
 ```bash
-BASE=https://raw.githubusercontent.com/keplergl/kepler.gl/master/bindings/python
+BASE=https://raw.githubusercontent.com/keplergl/kepler.gl/main/bindings/python
 mkdir -p .claude/skills/keplergl-map/skill-references
 
 curl -o .claude/skills/keplergl-map/SKILL.md $BASE/SKILL.md
@@ -100,7 +100,7 @@ Once installed, Claude Code automatically discovers the skill — no restart nee
 Claude will generate a Python script and run it, producing output like:
 
 ```
-Map saved to sf_neighborhoods.html
+Map saved to sf_neighborhoods.html!
 ```
 
 The generated script will look similar to:
@@ -146,7 +146,7 @@ config = {
 
 map_1 = KeplerGl(data={'neighborhoods': gdf}, config=config, theme='light')
 map_1.save_to_html(file_name='sf_neighborhoods.html', center_map=True, read_only=True)
-print("Map saved to sf_neighborhoods.html")
+print("Map saved to sf_neighborhoods.html!")
 ```
 
 Open `sf_neighborhoods.html` in any browser to see the interactive map — no server required.

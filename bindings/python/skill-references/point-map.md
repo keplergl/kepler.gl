@@ -99,4 +99,4 @@ map_1.save_to_html(file_name='point_map_styled.html')
 | `visConfig.filled` | Whether points are filled |
 | `visualChannels.colorField` | Column to map to color |
 | `visualChannels.sizeField` | Column to map to point size |
-| `visualChannels.colorScale` | `'quantile'`, `'quantize'`, `'ordinal'` |
+| `visualChannels.colorScale` | Common options: `'quantile'`, `'quantize'`, `'ordinal'` (and `'custom'` for color channels in supported contexts) |

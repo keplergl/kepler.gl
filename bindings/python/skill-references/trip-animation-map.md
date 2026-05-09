@@ -4,7 +4,7 @@ Animate movement along paths over time. Trip layers render GeoJSON LineString ge
 
 ## Data
 
-Trip data must be GeoJSON with `LineString` or `MultiLineString` geometry where each coordinate has a timestamp. The timestamp is provided as a fourth value in each coordinate `[lng, lat, altitude, timestamp]` or via a properties field.
+Trip data must be GeoJSON with `LineString` or `MultiLineString` geometry where each coordinate has a timestamp as the fourth value: `[lng, lat, altitude, timestamp]`.
 
 ```python
 trip_geojson = {
