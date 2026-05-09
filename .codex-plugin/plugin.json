@@ -26,8 +26,6 @@
       "Use kepler.gl Map to visualize GeoJSON polygons on a map.",
       "Use kepler.gl Map to create a heatmap from coordinate data."
     ],
-    "brandColor": "#29323C",
-    "composerIcon": "./assets/icon.png",
-    "logo": "./assets/logo.png"
+    "brandColor": "#29323C"
   }
 }
