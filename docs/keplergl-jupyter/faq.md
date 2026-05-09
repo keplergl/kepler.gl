@@ -1,16 +1,12 @@
 # FAQ & Troubleshoot
 
-## 1. What about Microsoft Windows?
-
-keplergl is currently only published to PyPI. If you encounter errors installing it on Windows, [this issue](https://github.com/keplergl/kepler.gl/issues/557) might shed some light.
-
-## 2. Widget not rendering in JupyterLab or Notebook?
+## 1. Widget not rendering in JupyterLab or Notebook?
 
 Make sure you are using JupyterLab >= 4.0 or Notebook >= 7.0 with Python >= 3.9. The widget is built on [anywidget](https://anywidget.dev/) which is supported out of the box in modern Jupyter environments — no extra `nbextension` or `labextension` install steps are needed.
 
 If the widget still does not render, try restarting the kernel and re-running the cell.
 
-## 3. What's your recommended Python environment?
+## 2. What's your recommended Python environment?
 
 ```text
 python>=3.9
