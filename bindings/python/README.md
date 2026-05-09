@@ -34,9 +34,9 @@ map
 
 ## Use with AI Coding Assistants
 
-This package ships with a **[CLAUDE.md](CLAUDE.md)** file — a project instructions file following the [Claude Code CLAUDE.md convention](https://docs.anthropic.com/en/docs/claude-code/memory). Claude Code automatically loads this file when operating in the `bindings/python/` directory, giving it full knowledge of the `keplergl` API.
+This package ships with a **[SKILL.md](SKILL.md)** file — a [Claude Code skill](https://code.claude.com/docs/en/skills) that teaches Claude how to create interactive HTML maps using the `keplergl` API. Claude automatically discovers the skill and uses it when you ask about map visualization.
 
-Detailed per-map-type references live in **[skill-references/](skill-references/)**:
+Detailed per-map-type references (supporting files loaded by Claude only when needed):
 
 | Reference | Description |
 |-----------|-------------|
@@ -50,23 +50,49 @@ Detailed per-map-type references live in **[skill-references/](skill-references/
 
 ### Setting up with Claude Code
 
-1. **Clone or download** the `CLAUDE.md` file (and optionally the `skill-references/` folder) into your project directory:
+Claude Code skills are stored as directories containing a `SKILL.md` file. You can install this skill at the **personal** level (available across all projects) or the **project** level (shared with your team via git).
 
-   ```bash
-   # Copy CLAUDE.md into your project root
-   curl -o CLAUDE.md https://raw.githubusercontent.com/keplergl/kepler.gl/master/bindings/python/CLAUDE.md
-   ```
+**Option A — Personal skill** (available in all your projects):
 
-   Claude Code automatically discovers and loads any `CLAUDE.md` file in the working directory or its parent directories — no manual registration is needed.
+```bash
+# Create the skill directory
+mkdir -p ~/.claude/skills/keplergl-map
 
-2. *(Optional)* For detailed map-type guidance, also copy the reference files:
+# Download SKILL.md and supporting reference files
+curl -o ~/.claude/skills/keplergl-map/SKILL.md \
+  https://raw.githubusercontent.com/keplergl/kepler.gl/master/bindings/python/SKILL.md
 
-   ```bash
-   mkdir -p skill-references
-   curl -o skill-references/geojson-polygon-map.md https://raw.githubusercontent.com/keplergl/kepler.gl/master/bindings/python/skill-references/geojson-polygon-map.md
-   ```
+# (Optional) Download detailed map-type references
+mkdir -p ~/.claude/skills/keplergl-map/skill-references
+for ref in point-map geojson-polygon-map h3-hexagon-map arc-line-map heatmap hexbin-aggregation-map trip-animation-map; do
+  curl -o ~/.claude/skills/keplergl-map/skill-references/${ref}.md \
+    https://raw.githubusercontent.com/keplergl/kepler.gl/master/bindings/python/skill-references/${ref}.md
+done
+```
 
-3. **Start Claude Code** in your project directory and begin prompting — Claude now knows the `keplergl` API and can generate working map code.
+**Option B — Project skill** (shared with your team via git):
+
+```bash
+# Create the skill directory in your project
+mkdir -p .claude/skills/keplergl-map
+
+# Download SKILL.md and supporting reference files
+curl -o .claude/skills/keplergl-map/SKILL.md \
+  https://raw.githubusercontent.com/keplergl/kepler.gl/master/bindings/python/SKILL.md
+
+# (Optional) Download detailed map-type references
+mkdir -p .claude/skills/keplergl-map/skill-references
+for ref in point-map geojson-polygon-map h3-hexagon-map arc-line-map heatmap hexbin-aggregation-map trip-animation-map; do
+  curl -o .claude/skills/keplergl-map/skill-references/${ref}.md \
+    https://raw.githubusercontent.com/keplergl/kepler.gl/master/bindings/python/skill-references/${ref}.md
+done
+
+# Commit to share with your team
+git add .claude/skills/keplergl-map
+git commit -m "Add keplergl map skill for Claude Code"
+```
+
+Once installed, Claude Code automatically discovers the skill — no restart needed. Claude will use it whenever you ask about creating maps or visualizing geospatial data, or you can invoke it directly with `/keplergl-map`.
 
 ### Example prompt
 
@@ -76,7 +102,13 @@ Detailed per-map-type references live in **[skill-references/](skill-references/
 
 ### Example output
 
-Claude will generate a Python script similar to:
+Claude will generate a Python script and run it, producing output like:
+
+```
+Map saved to sf_neighborhoods.html
+```
+
+The generated script will look similar to:
 
 ```python
 from keplergl import KeplerGl

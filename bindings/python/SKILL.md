@@ -1,31 +1,31 @@
-# CLAUDE.md — keplergl Python Package
+---
+description: Create interactive map visualizations and export to standalone HTML using the keplergl Python package. Use when the user wants to create maps, visualize geospatial data, plot locations on a map, or generate HTML map files from DataFrames, GeoDataFrames, GeoJSON, or CSV data with coordinates.
+---
 
-> Project instructions for Claude Code. This file is automatically loaded when Claude Code operates in this directory.
+# Create Maps with keplergl
 
-## Project Overview
+Use the `keplergl` Python package to create standalone, interactive HTML map files from geospatial data. The exported HTML loads kepler.gl from CDN — no JavaScript build or server is needed. The resulting `.html` file can be opened directly in any browser.
 
-`keplergl` is a Python package for creating standalone, interactive HTML map files from geospatial data. The exported HTML loads kepler.gl from CDN — no JavaScript build or server is needed. The resulting `.html` file can be opened directly in any browser.
-
-- **Package:** `keplergl` on PyPI
-- **Python:** >= 3.9
-- **Dependencies:** `pandas`, `geopandas`, `shapely` (installed automatically)
-
-## Install & Build
+## Installation
 
 ```bash
 pip install keplergl
 ```
 
-No build step needed — this is a pure Python package with a bundled Jupyter widget.
+Requirements: Python >= 3.9. Dependencies (`pandas`, `geopandas`, `shapely`) are installed automatically.
 
-## Key API
+## Instructions
 
-- `KeplerGl(height, data, config, theme, app_name)` — create a map widget
-- `.add_data(data, name)` — add a dataset (DataFrame, GeoDataFrame, CSV string, GeoJSON dict/string, WKT)
-- `.save_to_html(file_name, read_only, center_map)` — export to standalone HTML
-- `.config` — read or set the map configuration dict
+1. Import `KeplerGl` from `keplergl`
+2. Load data as a DataFrame, GeoDataFrame, GeoJSON dict, or CSV string
+3. Create a map with `KeplerGl(data={'name': data_object})`
+4. Optionally configure layers, colors, and map state via a `config` dict
+5. Export with `map.save_to_html(file_name='output.html', center_map=True)`
+6. The output HTML is fully standalone — open it in any browser
 
-### Constructor Parameters
+## API Reference
+
+### `KeplerGl(height, data, config, theme, app_name)`
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
@@ -36,7 +36,12 @@ No build step needed — this is a pure Python package with a bundled Jupyter wi
 | `theme` | str | "" | `"light"`, `"dark"`, `"base"`, or `""` (default dark) |
 | `app_name` | str | "kepler.gl" | App name in header and HTML title |
 
-### save_to_html Parameters
+### `.add_data(data, name)`
+
+- `data`: DataFrame, GeoDataFrame, CSV string, GeoJSON dict, or GeoJSON string
+- `name`: Dataset identifier — must match `dataId` in config if using a config
+
+### `.save_to_html(file_name, read_only, center_map)`
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
@@ -44,15 +49,17 @@ No build step needed — this is a pure Python package with a bundled Jupyter wi
 | `read_only` | bool | False | True = hide side panel |
 | `center_map` | bool | True | True = auto-fit map to data bounds |
 
-## Conventions
+### `.config`
+
+Read or set the map configuration dict. Use `map.config` after customizing in Jupyter UI, then save and reuse.
+
+## Key Rules
 
 - **`dataId` must match the dataset `name`** — every layer and filter references a dataset by `dataId`; this must match the key in the `data` dict or the `name` passed to `add_data()`.
 - **GeoJSON columns use `_geojson`** — when data is loaded as GeoJSON, the geometry column is internally named `_geojson` in configs.
-- kepler.gl auto-detects column types: columns named `latitude`/`lat`/`lng`/`longitude` are recognized as coordinates.
+- Columns named `latitude`/`lat`/`lng`/`longitude` are auto-detected as coordinates.
 - H3 hex IDs are auto-detected if a column contains valid H3 strings.
-- Use `center_map=True` in `save_to_html()` to auto-fit map bounds to data.
-- Use `read_only=True` to hide the side panel in exported HTML.
-- The exported HTML is fully standalone — loads all dependencies from CDN.
+- Use `center_map=True` to auto-fit map bounds. Use `read_only=True` to hide the side panel.
 
 ## Supported Data Formats
 
@@ -116,21 +123,21 @@ Free (no token needed): `dark-matter`, `positron`, `voyager`, `dark-matter-nolab
 
 Mapbox (require `mapbox_token`): `dark`, `light`, `muted`, `muted_night`
 
-## Map Type Reference Files
+## Additional Resources
 
-For detailed per-layer-type examples with full config, see files in `skill-references/`:
+For detailed per-layer-type examples with full config, see supporting files:
 
-- [point-map.md](skill-references/point-map.md) — Scatter plot from lat/lng
-- [geojson-polygon-map.md](skill-references/geojson-polygon-map.md) — Polygons, lines from GeoJSON or GeoDataFrame
-- [h3-hexagon-map.md](skill-references/h3-hexagon-map.md) — H3 spatial index hexagons
-- [arc-line-map.md](skill-references/arc-line-map.md) — Origin-destination connections
-- [heatmap.md](skill-references/heatmap.md) — Density heatmap from points
-- [hexbin-aggregation-map.md](skill-references/hexbin-aggregation-map.md) — Spatial binning into hexagons
-- [trip-animation-map.md](skill-references/trip-animation-map.md) — Animated trips along paths
+- [Point Map](skill-references/point-map.md) — Scatter plot from lat/lng
+- [GeoJSON / Polygon Map](skill-references/geojson-polygon-map.md) — Polygons, lines from GeoJSON or GeoDataFrame
+- [H3 Hexagon Map](skill-references/h3-hexagon-map.md) — H3 spatial index hexagons
+- [Arc / Line Map](skill-references/arc-line-map.md) — Origin-destination connections
+- [Heatmap](skill-references/heatmap.md) — Density heatmap from points
+- [Hexbin Aggregation Map](skill-references/hexbin-aggregation-map.md) — Spatial binning into hexagons
+- [Trip Animation Map](skill-references/trip-animation-map.md) — Animated trips along paths
 
-## Common Patterns
+## Examples
 
-### Quick point map from DataFrame
+### Point map from DataFrame
 
 ```python
 from keplergl import KeplerGl
