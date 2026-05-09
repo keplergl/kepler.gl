@@ -46,6 +46,15 @@ map
 
 For full documentation, visit [https://docs.kepler.gl/docs/keplergl-jupyter](https://docs.kepler.gl/docs/keplergl-jupyter).
 
+## AI Assistant Skill Setup
+
+If you use AI coding assistants, add your project skill/instructions file in this directory:
+
+- **Claude Code**: `CLAUDE.md`
+- **Codex**: `AGENTS.md`
+
+You can keep the content identical in both files so Claude Code and Codex use the same project guidance.
+
 ## License
 
 MIT
