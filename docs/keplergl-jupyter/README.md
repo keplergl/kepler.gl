@@ -9,7 +9,7 @@ kepler.gl for Jupyter is an advanced geospatial visualization widget for renderi
 - [Data Formats](data-formats.md) – CSV, GeoJSON, DataFrame, GeoDataFrame, WKT
 - [Map Customization](map-customization.md) – Theme, app name, and interactive customization
 - [Save and Load Config](config.md) – `.config`, match config with data
-- [Save and Export Map](save-and-export.md) – `.save_to_html()`, `._repr_html_()`
+- [Save and Export Map](save-and-export.md) – `.save_to_html()`
 - [FAQ & Troubleshoot](faq.md) – Common issues and demo notebooks
 
 ## Quick Start
@@ -17,11 +17,15 @@ kepler.gl for Jupyter is an advanced geospatial visualization widget for renderi
 ```python
 from keplergl import KeplerGl
 
-# Create a map
-map_1 = KeplerGl(height=400)
+# Create a map with some data
+import pandas as pd
+df = pd.DataFrame({
+    'City': ['Buenos Aires', 'Brasilia', 'Santiago'],
+    'Latitude': [-34.58, -15.78, -33.45],
+    'Longitude': [-58.66, -47.91, -70.66]
+})
 
-# Add data
-map_1.add_data(data=df, name='my_data')
+map_1 = KeplerGl(height=400, data={'cities': df})
 
 # Display the map
 map_1

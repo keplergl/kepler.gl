@@ -64,9 +64,9 @@ Add data to an existing map.
 
 ### Parameters
 
-- __`data`__ _required_ CSV, GeoJSON or DataFrame. Read more on [Accepted data formats](data-formats.md).
-- __`name`__ _required_ Name of the data entry.
-- __`use_arrow`__ _optional_ Allow load and render data faster using GeoArrow.
+- __`data`__ _required_ CSV, GeoJSON, DataFrame or GeoDataFrame. Read more on [Accepted data formats](data-formats.md).
+- __`name`__ _optional_ default: `"data"`. Name of the data entry.
+- __`use_arrow`__ _optional_ If `True`, serialize DataFrame as Arrow IPC. If `None` (default), falls back to the widget-level `use_arrow` setting.
 
 `name` of the dataset will be saved to the `dataId` property of each `layer`, `filter` and `interactionConfig` in the config.
 

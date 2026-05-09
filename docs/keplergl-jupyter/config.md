@@ -6,11 +6,11 @@ You can print your current map configuration at any time in the notebook.
 
 ```python
 map_1.config
-## {u'config': {u'mapState': {u'bearing': 2.6192893401015205,
-#  u'dragRotate': True,
-#   u'isSplit': False,
-#   u'latitude': 37.76209132041332,
-#   u'longitude': -122.42590232651203,
+## {'config': {'mapState': {'bearing': 2.6192893401015205,
+#   'dragRotate': True,
+#   'isSplit': False,
+#   'latitude': 37.76209132041332,
+#   'longitude': -122.42590232651203,
 ```
 
 When the map is final, you can copy this config and load it later to reproduce the same map. Follow the instruction to [match config with data](#match-config-with-data).
@@ -27,7 +27,7 @@ config = {
             'latitude': 37.76209132041332,
             'longitude': -122.42590232651203,
             'zoom': 12.32053899007826
-        }
+        },
         # ...other config options
     }
 }

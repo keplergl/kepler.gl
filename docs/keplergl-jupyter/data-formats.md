@@ -49,9 +49,11 @@ geometryString = {
 }
 
 # create json string
+import json
 json_str = json.dumps(geometryString)
 
 # create data frame
+import pandas as pd
 df_with_geometry = pd.DataFrame({
     'id': [1],
     'geometry_string': [json_str]
@@ -76,11 +78,13 @@ map_1.add_data(data=df, name='cities')
 
 ## GeoDataFrame
 
-kepler.gl accepts [geopandas.GeoDataFrame][geo_data_frame]. It automatically converts the current `geometry` column from shapely to wkt string and re-projects geometries to latitude and longitude (EPSG:4326) if the active `geometry` column is in a different projection.
+kepler.gl accepts [geopandas.GeoDataFrame][geo_data_frame]. In the live Jupyter widget, GeoDataFrames are serialized via [GeoArrow](https://geoarrow.org/) which preserves geometry types and coordinate reference systems as-is (no reprojection). When exporting to HTML with `.save_to_html()`, GeoDataFrames are reprojected to latitude/longitude (EPSG:4326) if the active `geometry` column uses a different CRS.
 
 ```python
+import geopandas as gpd
+
 url = 'http://eric.clst.org/assets/wiki/uploads/Stuff/gz_2010_us_040_00_500k.json'
-country_gdf = geopandas.read_file(url)
+country_gdf = gpd.read_file(url)
 map_1.add_data(data=country_gdf, name="state")
 ```
 
@@ -88,7 +92,7 @@ map_1.add_data(data=country_gdf, name="state")
 
 ### GeoDataFrame with datetime columns
 
-GeoDataFrames that contain `datetime` columns (or other non-JSON-native types) are supported out of the box. During serialization these values are automatically converted to strings, so no manual pre-processing is needed.
+GeoDataFrames that contain `datetime` columns (or other non-JSON-native types) are supported out of the box. In the live widget, GeoArrow serialization preserves Arrow timestamp types natively. During HTML export (`.save_to_html()`), the default `json_encoder=str` fallback converts these values to strings automatically, so no manual pre-processing is needed in either case.
 
 ```python
 import geopandas as gpd

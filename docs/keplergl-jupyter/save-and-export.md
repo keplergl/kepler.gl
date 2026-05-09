@@ -36,29 +36,4 @@ map_1.save_to_html(file_name='first_map.html', read_only=True)
 map_1.save_to_html(file_name='first_map.html', theme='light', app_name='My Map App')
 ```
 
-## `._repr_html_()`
-
-Generate an HTML representation of the map for embedding.
-
-### Parameters
-
-- **`data`**: _optional_ A data dictionary `{"name": data}`. If not provided, will use current map data.
-- **`config`**: _optional_ Map config dictionary. If not provided, will use current map config.
-- **`read_only`**: _optional_ If `True`, hide side panel to disable map customization.
-
-You can directly serve the current map via a Flask app. To do that, return kepler's map HTML representation. Here is an example:
-
-```python
-from flask import Flask
-
-app = Flask(__name__)
-
-@app.route('/')
-def index():
-    return map_1._repr_html_()
-
-if __name__ == '__main__':
-    app.run(debug=True)
-```
-
 [save_widget_state]: https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/jupyter_save_state.png
