@@ -6,7 +6,7 @@ import {BrushingExtension} from '@deck.gl/extensions';
 
 import {SvgIconLayer} from '@kepler.gl/deckgl-layers';
 import IconLayerIcon from './icon-layer-icon';
-import {ICON_FIELDS, CULL_MODE} from '@kepler.gl/constants';
+import {ICON_FIELDS, CULL_MODE, GEOCODER_LAYER_ID} from '@kepler.gl/constants';
 import IconInfoModalFactory from './icon-info-modal';
 import Layer, {LayerBaseConfig, LayerBaseConfigPartial} from '../base-layer';
 import {assignPointPairToLayerColumn, FindDefaultLayerPropsReturnValue} from '../layer-utils';
@@ -95,6 +95,8 @@ export const pointVisConfigs: {
   billboard: 'billboard'
 };
 
+const BOTTOM_ANCHOR_ICONS = ['place'];
+
 function flatterIconPositions(icon) {
   // had to flip y, since @luma modal has changed
   return icon.mesh.cells.reduce((prev, cell) => {
@@ -105,6 +107,41 @@ function flatterIconPositions(icon) {
     });
     return prev;
   }, []);
+}
+
+/**
+ * Anchors icon geometry at its bottom tip and normalizes it to fit within the
+ * ScatterplotLayer unit circle (radius ≤ 1). After shifting the tip to y=0,
+ * computes a uniform scale so the farthest vertex stays within the unit disk.
+ * GEOCODER_ICON_SIZE must compensate for this scale (original_size / scale).
+ */
+function anchorIconAtBottom(positions: number[]): number[] {
+  const anchored = positions.slice();
+  let minY = Infinity;
+  for (let i = 1; i < anchored.length; i += 3) {
+    if (anchored[i] < minY) minY = anchored[i];
+  }
+  // Shift tip to y=0
+  for (let i = 1; i < anchored.length; i += 3) {
+    anchored[i] -= minY;
+  }
+  // Compute the maximum distance from origin across all vertices
+  let maxDist = 0;
+  for (let i = 0; i < anchored.length; i += 3) {
+    const x = anchored[i];
+    const y = anchored[i + 1];
+    const dist = Math.sqrt(x * x + y * y);
+    if (dist > maxDist) maxDist = dist;
+  }
+  // Normalize so all vertices fit within the unit circle
+  if (maxDist > 1) {
+    const scale = 1 / maxDist;
+    for (let i = 0; i < anchored.length; i += 3) {
+      anchored[i] *= scale;
+      anchored[i + 1] *= scale;
+    }
+  }
+  return anchored;
 }
 
 export default class IconLayer extends Layer {
@@ -421,6 +458,14 @@ export default class IconLayer extends Layer {
     const baseLayerId = defaultLayerProps.id || this.id;
     const layerIdWithVersion = `${baseLayerId}_${this.iconGeometryVersion}`;
 
+    const isGeocoderLayer = this.id === GEOCODER_LAYER_ID;
+    const getIconGeometry = isGeocoderLayer
+      ? (id: string) => {
+          const geo = this.iconGeometry?.[id];
+          return geo && BOTTOM_ANCHOR_ICONS.includes(id) ? anchorIconAtBottom(geo) : geo;
+        }
+      : (id: string) => this.iconGeometry?.[id];
+
     return [
       new SvgIconLayer({
         ...defaultLayerProps,
@@ -429,7 +474,7 @@ export default class IconLayer extends Layer {
         ...layerProps,
         ...data,
         parameters,
-        getIconGeometry: id => this.iconGeometry?.[id],
+        getIconGeometry,
 
         // update triggers
         updateTriggers,
@@ -449,7 +494,7 @@ export default class IconLayer extends Layer {
               getPosition: data.getPosition,
               getRadius: data.getRadius,
               getFillColor: this.config.highlightColor,
-              getIconGeometry: id => this.iconGeometry?.[id]
+              getIconGeometry
             })
           ]
         : []),

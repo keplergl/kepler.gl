@@ -117,7 +117,7 @@ test('GeocoderPanel - render', t => {
               isVisible: true,
               hidden: true,
               visConfig: {
-                radius: 80
+                radius: 160
               }
             }
           }
