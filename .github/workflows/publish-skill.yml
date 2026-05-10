@@ -63,6 +63,10 @@ jobs:
           name: kepler.gl-codex-v${{ steps.version.outputs.version }}
           path: kepler.gl-codex.zip
 
+      - name: Build source package
+        run: |
+          zip -r kepler.gl-skill-source.zip skill/
+
       - name: Attach packages to release
         if: startsWith(github.ref, 'refs/tags/skill-v')
         uses: softprops/action-gh-release@v2
@@ -70,3 +74,4 @@ jobs:
           files: |
             kepler.gl-claude.zip
             kepler.gl-codex.zip
+            kepler.gl-skill-source.zip
