@@ -365,6 +365,25 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
       // if colorField or sizeField were set back to null
       return defaultDomain;
     }
+
+    // When dynamicColor is enabled, the domain is managed asynchronously by
+    // setDynamicColorDomain(). Preserve the current domain to avoid overwriting
+    // the async result with metadata-based [min, max] values.
+    if (this.config.visConfig.dynamicColor && visualChannel.key === 'color') {
+      if (scale === SCALE_TYPES.quantile) {
+        const current = this.config.colorDomain;
+        return Array.isArray(current) && current.length > 2
+          ? (current as number[])
+          : defaultDomain;
+      }
+      if (scale === SCALE_TYPES.quantize) {
+        const current = this.config.colorDomain;
+        return Array.isArray(current) && current.length === 2
+          ? (current as number[])
+          : defaultDomain;
+      }
+    }
+
     if (scale === SCALE_TYPES.quantile && isDomainQuantiles(field?.filterProps?.domainQuantiles)) {
       return field.filterProps.domainQuantiles;
     }
