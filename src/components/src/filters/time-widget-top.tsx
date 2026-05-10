@@ -5,6 +5,7 @@ import React, {useCallback, useMemo} from 'react';
 import styled, {IStyledComponent} from 'styled-components';
 import {Clock, Close, LineChart, ArrowDown, ArrowUp} from '../common/icons';
 import FieldSelectorFactory from '../common/field-selector';
+import Switch from '../common/switch';
 import {SelectTextBold, IconRoundSmall, CenterFlexbox} from '../common/styled-components';
 import {TimeWidgetTopProps, TopSectionWrapperProps} from './types';
 import {Field} from '@kepler.gl/types';
@@ -104,6 +105,10 @@ function TimeWidgetTopFactory(FieldSelector: ReturnType<typeof FieldSelectorFact
       value => setFilterPlot({yAxis: value}),
       [setFilterPlot]
     );
+    const _toggleYAxisAutoRange = useCallback(
+      () => setFilterPlot({plotType: {yAxisAutoRange: !filter.plotType?.yAxisAutoRange}}),
+      [setFilterPlot, filter.plotType?.yAxisAutoRange]
+    );
 
     return (
       <TopSectionWrapper>
@@ -130,6 +135,15 @@ function TimeWidgetTopFactory(FieldSelector: ReturnType<typeof FieldSelectorFact
                 showToken={false}
               />
             </div>
+            {filter.yAxis ? (
+              <Switch
+                checked={Boolean(filter.plotType?.yAxisAutoRange)}
+                id={`${filter.id}-y-axis-auto-range`}
+                onChange={_toggleYAxisAutoRange}
+                secondary
+                label="Fit Y"
+              />
+            ) : null}
           </StyledTitle>
         ) : null}
         <StyledCenterBox>
