@@ -1,5 +1,5 @@
 ---
-name: keplergl-map
+name: kepler.gl
 description: Create interactive map visualizations and export to standalone HTML using the keplergl Python package. Use when the user wants to create maps, visualize geospatial data, plot locations on a map, or generate HTML map files from DataFrames, GeoDataFrames, GeoJSON, or CSV data with coordinates.
 ---
 

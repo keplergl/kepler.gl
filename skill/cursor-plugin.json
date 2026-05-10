@@ -1,5 +1,5 @@
 {
-  "name": "keplergl-map",
+  "name": "kepler.gl",
   "displayName": "kepler.gl Map",
   "version": "1.0.0",
   "description": "Create interactive map visualizations and export to standalone HTML using the keplergl Python package.",
@@ -28,7 +28,7 @@
   "skills": [
     {
       "path": "SKILL.md",
-      "name": "keplergl-map",
+      "name": "kepler.gl",
       "description": "Create interactive map visualizations and export to standalone HTML using the keplergl Python package."
     }
   ],
