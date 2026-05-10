@@ -19,7 +19,13 @@ This directory contains the **kepler.gl** agent skill — a set of instructions 
 
 The easiest way to get started is to prompt your AI agent:
 
-> Help me install the kepler.gl skill from the kepler.gl GitHub repo
+> Help me install the kepler.gl skill from 
+
+- claude: https://github.com/keplergl/kepler.gl/releases/download/skill-v0.0.1/kepler.gl-claude.zip
+- codex: https://github.com/keplergl/kepler.gl/releases/download/skill-v0.0.1/kepler.gl-codex.zip
+- source: https://github.com/keplergl/kepler.gl/releases/download/skill-v0.0.1/kepler.gl-skill-source.zip
+
+or just "kepler.gl github repo"
 
 The agent will locate the skill file and set it up for you automatically.
 
