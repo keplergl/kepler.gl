@@ -44,7 +44,7 @@ Requires `kepler.gl-jupyter >= 0.4.0`. Earlier versions use a different widget/s
 - `data`: DataFrame, GeoDataFrame, CSV string, GeoJSON dict, or GeoJSON string
 - `name`: Dataset identifier — must match `dataId` in config if using a config
 
-### `.save_to_html(file_name="keplergl_map.html", data=None, config=None, read_only=True, center_map=True, mapbox_token="", json_encoder=str, app_name=None, theme=None)`
+### `.save_to_html(file_name="keplergl_map.html", data=None, config=None, read_only=False, center_map=True, mapbox_token="", json_encoder=str, app_name=None, theme=None)`
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|

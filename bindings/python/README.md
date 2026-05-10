@@ -52,141 +52,18 @@ Detailed per-map-type references (supporting files loaded by Claude only when ne
 | [trip-animation-map.md](skill-references/trip-animation-map.md) | Animated trips along paths |
 | [summary-panel.md](skill-references/summary-panel.md) | SampleMapPanel-style info overlay in exported HTML |
 
-### Setting up with Claude Code
+### Setting up with Claude Code or Codex
 
-Claude Code skills are stored as directories containing a `SKILL.md` file. You can install this skill at the **personal** level (available across all projects) or the **project** level (shared with your team via git).
+The easiest way to get started is to simply prompt your AI agent:
 
-**Option A — Personal skill** (available in all your projects):
+> Help me installing keplergl-map skill from github kepler.gl repo
 
-```bash
-BASE=https://raw.githubusercontent.com/keplergl/kepler.gl/main/bindings/python
-mkdir -p ~/.claude/skills/keplergl-map/skill-references
-
-curl -o ~/.claude/skills/keplergl-map/SKILL.md $BASE/SKILL.md
-curl -o ~/.claude/skills/keplergl-map/skill-references/point-map.md              $BASE/skill-references/point-map.md
-curl -o ~/.claude/skills/keplergl-map/skill-references/geojson-polygon-map.md    $BASE/skill-references/geojson-polygon-map.md
-curl -o ~/.claude/skills/keplergl-map/skill-references/h3-hexagon-map.md         $BASE/skill-references/h3-hexagon-map.md
-curl -o ~/.claude/skills/keplergl-map/skill-references/arc-line-map.md           $BASE/skill-references/arc-line-map.md
-curl -o ~/.claude/skills/keplergl-map/skill-references/heatmap.md                $BASE/skill-references/heatmap.md
-curl -o ~/.claude/skills/keplergl-map/skill-references/hexbin-aggregation-map.md $BASE/skill-references/hexbin-aggregation-map.md
-curl -o ~/.claude/skills/keplergl-map/skill-references/trip-animation-map.md     $BASE/skill-references/trip-animation-map.md
-curl -o ~/.claude/skills/keplergl-map/skill-references/summary-panel.md          $BASE/skill-references/summary-panel.md
-```
-
-**Option B — Project skill** (shared with your team via git):
-
-```bash
-BASE=https://raw.githubusercontent.com/keplergl/kepler.gl/main/bindings/python
-mkdir -p .claude/skills/keplergl-map/skill-references
-
-curl -o .claude/skills/keplergl-map/SKILL.md $BASE/SKILL.md
-curl -o .claude/skills/keplergl-map/skill-references/point-map.md              $BASE/skill-references/point-map.md
-curl -o .claude/skills/keplergl-map/skill-references/geojson-polygon-map.md    $BASE/skill-references/geojson-polygon-map.md
-curl -o .claude/skills/keplergl-map/skill-references/h3-hexagon-map.md         $BASE/skill-references/h3-hexagon-map.md
-curl -o .claude/skills/keplergl-map/skill-references/arc-line-map.md           $BASE/skill-references/arc-line-map.md
-curl -o .claude/skills/keplergl-map/skill-references/heatmap.md                $BASE/skill-references/heatmap.md
-curl -o .claude/skills/keplergl-map/skill-references/hexbin-aggregation-map.md $BASE/skill-references/hexbin-aggregation-map.md
-curl -o .claude/skills/keplergl-map/skill-references/trip-animation-map.md     $BASE/skill-references/trip-animation-map.md
-curl -o .claude/skills/keplergl-map/skill-references/summary-panel.md          $BASE/skill-references/summary-panel.md
-
-git add .claude/skills/keplergl-map
-git commit -m "Add keplergl map skill for Claude Code"
-```
-
-Once installed, Claude Code automatically discovers the skill — no restart needed. Claude will use it whenever you ask about creating maps or visualizing geospatial data, or you can invoke it directly with `/keplergl-map`.
-
-### Setting up with Codex
-
-Codex skills are stored as directories containing a `SKILL.md` file.
-
-**Option A — Personal skill** (available in all your projects):
-
-```bash
-BASE=https://raw.githubusercontent.com/keplergl/kepler.gl/main/bindings/python
-mkdir -p ~/.agents/skills/keplergl-map/skill-references
-
-curl -o ~/.agents/skills/keplergl-map/SKILL.md $BASE/SKILL.md
-curl -o ~/.agents/skills/keplergl-map/skill-references/point-map.md              $BASE/skill-references/point-map.md
-curl -o ~/.agents/skills/keplergl-map/skill-references/geojson-polygon-map.md    $BASE/skill-references/geojson-polygon-map.md
-curl -o ~/.agents/skills/keplergl-map/skill-references/h3-hexagon-map.md         $BASE/skill-references/h3-hexagon-map.md
-curl -o ~/.agents/skills/keplergl-map/skill-references/arc-line-map.md           $BASE/skill-references/arc-line-map.md
-curl -o ~/.agents/skills/keplergl-map/skill-references/heatmap.md                $BASE/skill-references/heatmap.md
-curl -o ~/.agents/skills/keplergl-map/skill-references/hexbin-aggregation-map.md $BASE/skill-references/hexbin-aggregation-map.md
-curl -o ~/.agents/skills/keplergl-map/skill-references/trip-animation-map.md     $BASE/skill-references/trip-animation-map.md
-curl -o ~/.agents/skills/keplergl-map/skill-references/summary-panel.md          $BASE/skill-references/summary-panel.md
-```
-
-Then verify `~/.agents/skills/keplergl-map/SKILL.md` frontmatter includes both:
-
-- `name: keplergl-map`
-- `description: ...`
-
-**Option B — Project skill** (shared with your team via git):
-
-```bash
-BASE=https://raw.githubusercontent.com/keplergl/kepler.gl/main/bindings/python
-mkdir -p .agents/skills/keplergl-map/skill-references
-
-curl -o .agents/skills/keplergl-map/SKILL.md $BASE/SKILL.md
-curl -o .agents/skills/keplergl-map/skill-references/point-map.md              $BASE/skill-references/point-map.md
-curl -o .agents/skills/keplergl-map/skill-references/geojson-polygon-map.md    $BASE/skill-references/geojson-polygon-map.md
-curl -o .agents/skills/keplergl-map/skill-references/h3-hexagon-map.md         $BASE/skill-references/h3-hexagon-map.md
-curl -o .agents/skills/keplergl-map/skill-references/arc-line-map.md           $BASE/skill-references/arc-line-map.md
-curl -o .agents/skills/keplergl-map/skill-references/heatmap.md                $BASE/skill-references/heatmap.md
-curl -o .agents/skills/keplergl-map/skill-references/hexbin-aggregation-map.md $BASE/skill-references/hexbin-aggregation-map.md
-curl -o .agents/skills/keplergl-map/skill-references/trip-animation-map.md     $BASE/skill-references/trip-animation-map.md
-curl -o .agents/skills/keplergl-map/skill-references/summary-panel.md          $BASE/skill-references/summary-panel.md
-
-git add .agents/skills/keplergl-map
-git commit -m "Add keplergl map skill for Codex"
-```
-
-Then verify `.agents/skills/keplergl-map/SKILL.md` frontmatter includes both:
-
-- `name: keplergl-map`
-- `description: ...`
-
-#### Optional Codex app metadata and icon assets
-
-Inside each Codex skill folder, add metadata at `agents/openai.yaml` and assets under `agents/assets/`.
-That means:
-
-- Personal install: `~/.agents/skills/keplergl-map/agents/openai.yaml`
-- Project install: `.agents/skills/keplergl-map/agents/openai.yaml`
-
-Example asset setup:
-
-```bash
-# Project-level
-mkdir -p .agents/skills/keplergl-map/agents/assets
-curl -o .agents/skills/keplergl-map/agents/assets/kepler-gl-icon.png \
-  https://raw.githubusercontent.com/keplergl/kepler.gl/main/website/src/static/favicon.png
-
-# Personal-level
-mkdir -p ~/.agents/skills/keplergl-map/agents/assets
-curl -o ~/.agents/skills/keplergl-map/agents/assets/kepler-gl-icon.png \
-  https://raw.githubusercontent.com/keplergl/kepler.gl/main/website/src/static/favicon.png
-```
-
-```yaml
-interface:
-  display_name: "keplergl map"
-  short_description: "Create interactive keplergl HTML maps from tabular and geospatial data"
-  icon_small: "./assets/kepler-gl-icon.png"
-  icon_large: "./assets/kepler-gl-icon.png"
-  brand_color: "#2FA7F4"
-```
-
-#### Easiest distribution for Codex users
-
-For easy installation across teams, package this skill as a **Codex plugin** (recommended). Plugins can bundle skills, metadata (`agents/openai.yaml`), assets, and optional integrations in one installable package.  
-For local experimentation only, Codex users can install curated skills with the built-in `$skill-installer` command (see https://developers.openai.com/codex/skills).
+The agent will locate the skill file and set it up for you automatically.
 
 ### Example prompt
 
-> Create a polygon map from a GeoDataFrame. I have a shapefile at `./data/sf_neighborhoods.shp`
+> create a dark theme map showing distribution of  HR60 from the natregimes.geojson . I have a shapefile at `./data/natregimes.shp`
 > with columns `name` and `population`. Color the polygons by population, use a light theme,
-> and save it as a static HTML file I can open in my browser.
 
 ### Example output
 
@@ -196,53 +73,7 @@ Claude will generate a Python script and run it, producing output like:
 Map saved to sf_neighborhoods.html!
 ```
 
-The generated script will look similar to:
-
-```python
-from keplergl import KeplerGl
-import geopandas as gpd
-
-gdf = gpd.read_file('./data/sf_neighborhoods.shp')
-
-config = {
-    'version': 'v1',
-    'config': {
-        'visState': {
-            'layers': [{
-                'type': 'geojson',
-                'config': {
-                    'dataId': 'neighborhoods',
-                    'label': 'SF Neighborhoods',
-                    'isVisible': True,
-                    'columns': {'geojson': '_geojson'},
-                    'visConfig': {
-                        'opacity': 0.8,
-                        'filled': True,
-                        'stroked': True,
-                        'colorRange': {
-                            'name': 'Global Warming',
-                            'type': 'sequential',
-                            'category': 'Uber',
-                            'colors': ['#5A1846','#900C3F','#C70039','#E3611C','#F1920E','#FFC300']
-                        }
-                    }
-                },
-                'visualChannels': {
-                    'colorField': {'name': 'population', 'type': 'integer'},
-                    'colorScale': 'quantile'
-                }
-            }]
-        },
-        'mapStyle': {'styleType': 'positron'}
-    }
-}
-
-map_1 = KeplerGl(data={'neighborhoods': gdf}, config=config, theme='light')
-map_1.save_to_html(file_name='sf_neighborhoods.html', center_map=True, read_only=True)
-print("Map saved to sf_neighborhoods.html!")
-```
-
-Open `sf_neighborhoods.html` in any browser to see the interactive map — no server required.
+You can ask claude or codex to open the html in any browser to see the interactive map — no server required.
 
 ## Documentation
 
