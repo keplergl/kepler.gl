@@ -354,12 +354,24 @@ function getTimeAnimationDomain(mappedValue: number[]): {
   return {domain, timeSteps, duration: clamped, mappedValue};
 }
 
-const pmTileTypeToAttrMap = {
+const pmTileTypeToAttrMap: Record<string, string> = {
   float32: 'number',
+  float64: 'number',
+  float: 'number',
+  number: 'number',
+  numeric: 'number',
   string: 'string',
   utf8: 'string',
   int: 'int',
-  boolean: 'boolean'
+  int32: 'int',
+  int64: 'int',
+  int4: 'int',
+  uint8: 'int',
+  uint16: 'int',
+  uint32: 'int',
+  uint64: 'int',
+  boolean: 'boolean',
+  bool: 'boolean'
 };
 
 /**
@@ -372,9 +384,10 @@ function pmTilesLayerToTippecanoeLayer(layers: TileJSON['layers']): TippecanoeLa
   for (const layer of layers) {
     const {fields = []} = layer || {};
     for (const pmField of fields) {
+      const mappedType = pmTileTypeToAttrMap[pmField.type];
       const attribute = {
         attribute: pmField.name,
-        type: pmTileTypeToAttrMap[pmField.type],
+        type: mappedType || pmField.type || 'string',
         count: pmField.uniqueValueCount,
         values: (pmField.values ?? []) as number[] | string[],
         min: pmField.min,
@@ -738,8 +751,8 @@ export const getFieldsFromTile = async ({
 
       metadata.fields = updatedFields;
     }
-  } catch {
-    // ignore, as this is experimental fallback
+  } catch (err) {
+    // field extraction from tile is best-effort
   }
 };
 
