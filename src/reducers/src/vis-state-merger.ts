@@ -17,7 +17,7 @@ import {
 import {Layer} from '@kepler.gl/layers';
 import {createEffect} from '@kepler.gl/effects';
 import {notNullorUndefined} from '@kepler.gl/common-utils';
-import {AGGREGATION_TYPES, LAYER_BLENDINGS, OVERLAY_BLENDINGS} from '@kepler.gl/constants';
+import {AGGREGATION_TYPES, LAYER_BLENDINGS, OVERLAY_BLENDINGS, isAnnotationKind} from '@kepler.gl/constants';
 import {CURRENT_VERSION, VisState, VisStateMergers, KeplerGLSchemaClass} from '@kepler.gl/schemas';
 
 import {
@@ -592,9 +592,18 @@ export function mergeAnnotations<S extends VisState>(
   if (!annotations || !annotations.length) {
     return state;
   }
+  const existingIds = new Set(state.annotations.map(a => a.id));
   const validAnnotations = annotations.filter(
-    a => a && a.id && a.kind && Array.isArray(a.anchorPoint)
+    a =>
+      a &&
+      a.id &&
+      !existingIds.has(a.id) &&
+      isAnnotationKind(a.kind) &&
+      Array.isArray(a.anchorPoint)
   );
+  if (!validAnnotations.length) {
+    return state;
+  }
   return {
     ...state,
     annotations: [...state.annotations, ...validAnnotations]

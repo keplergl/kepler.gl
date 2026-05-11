@@ -96,6 +96,9 @@ export type KeplerApplicationConfig = {
   /** Maximum pitch angle in degrees. deck.gl defaults to 60; set higher (up to 85) for elevated perspectives.
    *  Note: values above 60 may cause rendering artifacts with some basemap tile providers. */
   maxPitch?: number;
+
+  /** Whether to enable the annotations feature. Disabled by default. */
+  enableAnnotations?: boolean;
 };
 
 const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
@@ -159,7 +162,9 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
   // Default to true for webpack builds, false for other build tools (e.g., Vite)
   escapeXhtmlForWebpack: isWebpackBuild(),
 
-  maxPitch: 60
+  maxPitch: 60,
+
+  enableAnnotations: true
 };
 
 const applicationConfig: Required<KeplerApplicationConfig> = DEFAULT_APPLICATION_CONFIG;

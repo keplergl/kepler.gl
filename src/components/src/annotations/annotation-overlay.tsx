@@ -87,7 +87,7 @@ const AnnotationOverlay: FC<AnnotationOverlayProps> = ({
       onDragCancel() { return ''; }
     },
     screenReaderInstructions: {draggable: ''},
-    container: document.body
+    ...(typeof document !== 'undefined' ? {container: document.body} : {})
   }), []);
 
   const handleDragStart = useCallback(

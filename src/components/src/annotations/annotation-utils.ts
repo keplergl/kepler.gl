@@ -4,10 +4,9 @@
 import {addMetersToLngLat} from '@math.gl/web-mercator';
 import {
   Annotation,
-  AnnotationWithArm,
-  BaseAnnotation
+  AnnotationWithArm
 } from '@kepler.gl/types';
-import {AnnotationKind} from '@kepler.gl/constants';
+import {AnnotationKind, isAnnotationWithArm} from '@kepler.gl/constants';
 
 export type MapViewport = {
   project: (lngLat: [number, number]) => [number, number];
@@ -35,10 +34,6 @@ export type CircleAnnotationMarker = BaseAnnotationMarker & {
 };
 
 export type AnnotationMarker = BaseAnnotationMarker | CircleAnnotationMarker;
-
-function isAnnotationWithArm(anno: BaseAnnotation): anno is AnnotationWithArm {
-  return isFinite((anno as AnnotationWithArm).armLength);
-}
 
 function degreesToRadians(degree: number): number {
   return degree * (Math.PI / 180);

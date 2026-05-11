@@ -12,10 +12,10 @@ export function isAnnotationKind(kind: string): kind is AnnotationKind {
   return Object.values(AnnotationKind).includes(kind as AnnotationKind);
 }
 
-export function isAnnotationWithArm(
-  anno: {armLength?: number}
-): boolean {
-  return isFinite(anno.armLength as number);
+export function isAnnotationWithArm<T extends object>(
+  anno: T
+): anno is T & {armLength: number; angle: number} {
+  return isFinite((anno as any).armLength);
 }
 
 export const INITIAL_ANNOTATION_KIND = AnnotationKind.POINT;

@@ -868,7 +868,7 @@ export class AnnotationsSchema extends Schema {
   load(annotations) {
     return {
       [this.key]: annotations.map(annotation =>
-        this.loadPropertiesOrApplySchema(annotation, annotations).annotations
+        this.loadPropertiesOrApplySchema(annotation).annotations
       )
     };
   }

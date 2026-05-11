@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import React, {useCallback} from 'react';
+import classnames from 'classnames';
 import styled from 'styled-components';
 import {injectIntl, IntlShape} from 'react-intl';
 import {
@@ -19,9 +20,20 @@ import {VisState} from '@kepler.gl/schemas';
 import {MapState} from '@kepler.gl/types';
 
 import {withState} from '../injector';
-import {Add, ArrowDownSmall} from '../common/icons';
-import CompactColorPicker from '../effects/compact-color-picker';
+import {
+  Add,
+  ArrowDown,
+  ArrowDownSmall,
+  Copy,
+  EyeSeen,
+  EyeUnseen,
+  Trash
+} from '../common/icons';
+import {StyledPanelHeader, Tooltip, Button} from '../common/styled-components';
+import Portaled from '../common/portaled';
+import SingleColorPalette from '../side-panel/layer-panel/single-color-palette';
 import {hexToRgb, rgbToHex} from '@kepler.gl/utils';
+import {FormattedMessage} from '@kepler.gl/localization';
 
 // Styled components
 
@@ -102,78 +114,109 @@ const StyledAnnotationPanelContent = styled.div`
   flex-grow: 1;
 `;
 
-const StyledAnnotationItem = styled.div<{$isSelected?: boolean; $lineColor?: string}>`
-  background: ${props => props.theme.panelBackground};
-  margin: 4px 16px;
-  padding: 8px 12px;
-  border-radius: 4px;
-  border-left: 3px solid ${props => props.$lineColor || '#fff'};
-  cursor: pointer;
-  transition: background 0.2s;
-  ${props => props.$isSelected && `background: ${props.theme.panelBackgroundHover};`}
-  &:hover {
-    background: ${props => props.theme.panelBackgroundHover};
-  }
+const StyledAnnotationItemWrapper = styled.div`
+  font-size: 12px;
+  border-radius: 1px;
+  margin: 3px 16px;
 `;
 
-const StyledAnnotationItemHeader = styled.div`
+const StyledAnnotationItemHeader = styled(StyledPanelHeader)`
+  height: ${props => props.theme.effectPanelHeaderHeight}px;
+  position: relative;
+  align-items: stretch;
+
+  &:hover {
+    cursor: pointer;
+    background-color: ${props => props.theme.panelBackgroundHover};
+  }
+
+  border-left: 3px solid ${props => props.theme.panelBackgroundHover};
+`;
+
+const HeaderLabelSection = styled.div`
+  margin-left: 10px;
+  flex-grow: 1;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
 `;
 
 const StyledAnnotationLabel = styled.div`
-  font-size: 13px;
+  font-size: 12px;
   color: ${props => props.theme.textColor};
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 140px;
 `;
 
 const StyledAnnotationKind = styled.div`
-  font-size: 11px;
+  font-size: 10px;
   color: ${props => props.theme.subtextColor};
+  margin-top: 2px;
 `;
 
-const StyledActions = styled.div`
+const HeaderActionSection = styled.div`
   display: flex;
-  gap: 4px;
-  align-items: center;
+  position: absolute;
+  height: 100%;
+  align-items: stretch;
+  right: 10px;
+  &:hover {
+    .annotation-panel__header__actions__hidden {
+      opacity: 1;
+      background-color: ${props => props.theme.panelBackgroundHover};
+    }
+  }
 `;
 
-const StyledActionBtn = styled.button`
-  background: transparent;
-  border: none;
-  color: ${props => props.theme.subtextColor};
-  cursor: pointer;
-  font-size: 11px;
-  padding: 2px 6px;
-  border-radius: 3px;
+type StyledHiddenActionsProps = {$isConfigActive: boolean};
+const StyledPanelHeaderHiddenActions = styled.div.attrs({
+  className: 'annotation-panel__header__actions__hidden'
+})<StyledHiddenActionsProps>`
+  opacity: 0;
+  display: flex;
+  align-items: center;
+  transition: opacity 0.4s ease, background-color 0.4s ease;
+  background-color: ${props =>
+    props.$isConfigActive ? props.theme.panelBackgroundHover : props.theme.panelBackground};
+
   &:hover {
-    background: ${props => props.theme.panelBackground};
-    color: ${props => props.theme.textColor};
+    opacity: 1;
+  }
+`;
+
+const HeaderActionWrapper = styled.div<{$active?: boolean; $hoverColor?: string}>`
+  margin-left: 8px;
+  display: flex;
+  align-items: center;
+  color: ${props =>
+    props.$active ? props.theme.panelHeaderIconActive : props.theme.panelHeaderIcon};
+  cursor: pointer;
+
+  &:hover {
+    color: ${props =>
+      props.$hoverColor ? props.theme[props.$hoverColor] : props.theme.panelHeaderIconHover};
   }
 `;
 
 const StyledConfigSection = styled.div`
-  padding: 8px 16px 12px 32px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  border-bottom: 1px solid ${props => props.theme.borderColor};
+  position: relative;
+  margin: ${props => props.theme.effectConfiguratorMargin};
+  padding: ${props => props.theme.effectConfiguratorPadding};
 `;
 
 const StyledConfigRow = styled.div`
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 12px;
+  margin-bottom: 9px;
 `;
 
 const StyledConfigLabel = styled.div`
-  font-size: 11px;
-  color: ${props => props.theme.subtextColor};
-  min-width: 60px;
+  font-size: ${props => props.theme.inputFontSize};
+  color: ${props => props.theme.effectPanelTextSecondary1};
+  text-transform: capitalize;
 `;
 
 const StyledSelect = styled.select`
@@ -184,7 +227,76 @@ const StyledSelect = styled.select`
   padding: 4px 8px;
   font-size: 12px;
   cursor: pointer;
+  width: 100px;
 `;
+
+const StyledColorButtonWrapper = styled.div`
+  width: 100px;
+  .button {
+    color: ${props => props.theme.effectPanelTextSecondary2};
+    display: flex;
+    gap: 5px;
+    border: none;
+    transition: background 0.2s;
+    background-color: ${props => props.theme.inputBgd};
+    padding: 8px 5px 8px 10px;
+    &:active {
+      color: ${props => props.theme.effectPanelTextMain};
+      background-color: ${props => props.theme.inputBgdHover};
+    }
+    &:hover {
+      color: ${props => props.theme.effectPanelTextMain};
+      background-color: ${props => props.theme.inputBgdHover};
+    }
+    & > svg {
+      margin-right: 0;
+    }
+  }
+`;
+
+const StyledColorDropdown = styled.div`
+  ${props => props.theme.panelDropdownScrollBar}
+  background-color: ${props => props.theme.panelBackground};
+  box-shadow: ${props => props.theme.panelBoxShadow};
+  border-radius: ${props => props.theme.panelBorderRadius};
+  overflow-y: auto;
+  max-height: 500px;
+  position: relative;
+  z-index: 999;
+  width: 220px;
+`;
+
+const InlineColorPicker: React.FC<{
+  color: [number, number, number];
+  onSetColor: (value: [number, number, number]) => void;
+}> = ({color, onSetColor}) => {
+  const [isOpen, setIsOpen] = React.useState(false);
+  const hexColor = React.useMemo(() => rgbToHex(color), [color]);
+  const colorBlockStyle = React.useMemo(
+    () => ({width: 16, height: 16, backgroundColor: hexColor, borderRadius: 2}),
+    [hexColor]
+  );
+  const handleSelectColor = React.useCallback(
+    (v: any) => {
+      onSetColor(v);
+    },
+    [onSetColor]
+  );
+
+  return (
+    <StyledColorButtonWrapper>
+      <Button onClick={() => setIsOpen(!isOpen)}>
+        <div style={colorBlockStyle} />
+        <ArrowDownSmall />
+      </Button>
+      <Portaled top={0} left={0} isOpened={isOpen} onClose={() => setIsOpen(false)}>
+        <StyledColorDropdown>
+          <SingleColorPalette selectedColor={hexColor} onSelectColor={handleSelectColor} />
+        </StyledColorDropdown>
+      </Portaled>
+    </StyledColorButtonWrapper>
+  );
+};
 
 // Types
 export type AnnotationManagerState = {
@@ -281,89 +393,157 @@ export default function AnnotationManagerFactory(): React.FC<any> {
               </StyledPanelTitle>
               <StyledAddButton onClick={handleAddAnnotation}>
                 <StyledAddIcon />
-                {intl.formatMessage({id: 'annotationManager.addAnnotation', defaultMessage: 'Add Annotation'})}
+                {intl.formatMessage({id: 'annotationManager.addAnnotation', defaultMessage: 'Add'})}
               </StyledAddButton>
             </StyledPanelHeaderRow>
           </StyledAnnotationPanelHeader>
           <StyledAnnotationPanelContent>
-            {annotations.map(annotation => (
-              <React.Fragment key={annotation.id}>
-                <StyledAnnotationItem
-                  $isSelected={annotation.id === selectedAnnotationId}
-                  $lineColor={annotation.lineColor}
-                  onClick={() => handleSelectAnnotation(annotation.id)}
-                >
-                  <StyledAnnotationItemHeader>
-                    <div>
+            {annotations.map(annotation => {
+              const isSelected = annotation.id === selectedAnnotationId;
+              return (
+                <StyledAnnotationItemWrapper key={annotation.id}>
+                  <StyledAnnotationItemHeader
+                    active={isSelected}
+                    onClick={() => handleSelectAnnotation(annotation.id)}
+                  >
+                    <HeaderLabelSection>
                       <StyledAnnotationLabel>{annotation.label}</StyledAnnotationLabel>
                       <StyledAnnotationKind>{annotation.kind}</StyledAnnotationKind>
-                    </div>
-                    <StyledActions>
-                      <StyledActionBtn
+                    </HeaderLabelSection>
+
+                    <HeaderActionSection className="annotation-panel__header__actions">
+                      <StyledPanelHeaderHiddenActions $isConfigActive={isSelected}>
+                        <HeaderActionWrapper
+                          $hoverColor="negative"
+                          data-tip
+                          data-for={`remove-annotation_${annotation.id}`}
+                          onClick={e => handleRemoveAnnotation(e, annotation.id)}
+                        >
+                          <Trash height="16px" />
+                        </HeaderActionWrapper>
+                        <Tooltip
+                          id={`remove-annotation_${annotation.id}`}
+                          effect="solid"
+                          delayShow={500}
+                          type="error"
+                        >
+                          <span>
+                            <FormattedMessage id="tooltip.removeAnnotation" />
+                          </span>
+                        </Tooltip>
+
+                        <HeaderActionWrapper
+                          data-tip
+                          data-for={`duplicate-annotation_${annotation.id}`}
+                          onClick={e => handleDuplicateAnnotation(e, annotation.id)}
+                        >
+                          <Copy height="16px" />
+                        </HeaderActionWrapper>
+                        <Tooltip
+                          id={`duplicate-annotation_${annotation.id}`}
+                          effect="solid"
+                          delayShow={500}
+                        >
+                          <span>
+                            <FormattedMessage id="tooltip.duplicateAnnotation" />
+                          </span>
+                        </Tooltip>
+                      </StyledPanelHeaderHiddenActions>
+
+                      <HeaderActionWrapper
+                        data-tip
+                        data-for={`visibility-annotation_${annotation.id}`}
                         onClick={e => handleToggleVisibility(e, annotation)}
-                        title={annotation.isVisible ? 'Hide' : 'Show'}
                       >
-                        {annotation.isVisible ? '●' : '○'}
-                      </StyledActionBtn>
-                      <StyledActionBtn
-                        onClick={e => handleDuplicateAnnotation(e, annotation.id)}
-                        title="Duplicate"
+                        {annotation.isVisible ? (
+                          <EyeSeen height="16px" />
+                        ) : (
+                          <EyeUnseen height="16px" />
+                        )}
+                      </HeaderActionWrapper>
+                      <Tooltip
+                        id={`visibility-annotation_${annotation.id}`}
+                        effect="solid"
+                        delayShow={500}
                       >
-                        ⧉
-                      </StyledActionBtn>
-                      <StyledActionBtn
-                        onClick={e => handleRemoveAnnotation(e, annotation.id)}
-                        title="Remove"
+                        <span>
+                          <FormattedMessage
+                            id={
+                              annotation.isVisible
+                                ? 'tooltip.hideAnnotation'
+                                : 'tooltip.showAnnotation'
+                            }
+                          />
+                        </span>
+                      </Tooltip>
+
+                      <HeaderActionWrapper
+                        $active={isSelected}
+                        className={classnames('annotation__enable-config', {
+                          'is-open': isSelected
+                        })}
+                        data-tip
+                        data-for={`config-annotation_${annotation.id}`}
+                        onClick={() => handleSelectAnnotation(annotation.id)}
                       >
-                        ✕
-                      </StyledActionBtn>
-                    </StyledActions>
+                        <ArrowDown height="16px" />
+                      </HeaderActionWrapper>
+                      <Tooltip
+                        id={`config-annotation_${annotation.id}`}
+                        effect="solid"
+                        delayShow={500}
+                      >
+                        <span>
+                          <FormattedMessage id="tooltip.annotationSettings" />
+                        </span>
+                      </Tooltip>
+                    </HeaderActionSection>
                   </StyledAnnotationItemHeader>
-                </StyledAnnotationItem>
-                {annotation.id === selectedAnnotationId ? (
-                  <StyledConfigSection>
-                    <StyledConfigRow>
-                      <StyledConfigLabel>Type</StyledConfigLabel>
-                      <StyledSelect
-                        value={annotation.kind}
-                        onChange={e =>
-                          handleChangeKind(annotation.id, e.target.value as AnnotationKind)
-                        }
-                      >
-                        {ANNOTATION_KINDS.map(k => (
-                          <option key={k.id} value={k.id}>
-                            {k.label}
-                          </option>
-                        ))}
-                      </StyledSelect>
-                    </StyledConfigRow>
-                    <StyledConfigRow>
-                      <StyledConfigLabel>Line Width</StyledConfigLabel>
-                      <StyledSelect
-                        value={annotation.lineWidth}
-                        onChange={e =>
-                          handleChangeLineWidth(annotation.id, Number(e.target.value))
-                        }
-                      >
-                        {ANNOTATION_LINE_WIDTH_OPTIONS.map(w => (
-                          <option key={w} value={w}>
-                            {w}px
-                          </option>
-                        ))}
-                      </StyledSelect>
-                    </StyledConfigRow>
-                    <StyledConfigRow>
-                      <CompactColorPicker
-                        label="Color"
-                        color={hexToRgb(annotation.lineColor)}
-                        onSetColor={rgb => handleChangeLineColor(annotation.id, rgb)}
-                        Icon={ArrowDownSmall}
-                      />
-                    </StyledConfigRow>
-                  </StyledConfigSection>
-                ) : null}
-              </React.Fragment>
-            ))}
+
+                  {isSelected ? (
+                    <StyledConfigSection>
+                      <StyledConfigRow>
+                        <StyledConfigLabel>Type</StyledConfigLabel>
+                        <StyledSelect
+                          value={annotation.kind}
+                          onChange={e =>
+                            handleChangeKind(annotation.id, e.target.value as AnnotationKind)
+                          }
+                        >
+                          {ANNOTATION_KINDS.map(k => (
+                            <option key={k.id} value={k.id}>
+                              {k.label}
+                            </option>
+                          ))}
+                        </StyledSelect>
+                      </StyledConfigRow>
+                      <StyledConfigRow>
+                        <StyledConfigLabel>Line Width</StyledConfigLabel>
+                        <StyledSelect
+                          value={annotation.lineWidth}
+                          onChange={e =>
+                            handleChangeLineWidth(annotation.id, Number(e.target.value))
+                          }
+                        >
+                          {ANNOTATION_LINE_WIDTH_OPTIONS.map(w => (
+                            <option key={w} value={w}>
+                              {w}px
+                            </option>
+                          ))}
+                        </StyledSelect>
+                      </StyledConfigRow>
+                      <StyledConfigRow>
+                        <StyledConfigLabel>Color</StyledConfigLabel>
+                        <InlineColorPicker
+                          color={hexToRgb(annotation.lineColor)}
+                          onSetColor={rgb => handleChangeLineColor(annotation.id, rgb)}
+                        />
+                      </StyledConfigRow>
+                    </StyledConfigSection>
+                  ) : null}
+                </StyledAnnotationItemWrapper>
+              );
+            })}
           </StyledAnnotationPanelContent>
         </StyledAnnotationPanel>
       </StyledAnnotationPanelContainer>

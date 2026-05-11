@@ -339,6 +339,11 @@ export default {
     hideEffectPanel: 'Hide effect panel',
     showAnnotationPanel: 'Show annotations',
     hideAnnotationPanel: 'Hide annotations',
+    removeAnnotation: 'Remove annotation',
+    duplicateAnnotation: 'Duplicate annotation',
+    hideAnnotation: 'Hide annotation',
+    showAnnotation: 'Show annotation',
+    annotationSettings: 'Annotation settings',
     removeEffect: 'Remove effect',
     disableEffect: 'Disable effect',
     effectSettings: 'Effect settings'

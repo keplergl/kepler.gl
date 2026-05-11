@@ -3,6 +3,7 @@
 
 import React, {useCallback, ComponentType} from 'react';
 import {MapControls} from '@kepler.gl/types';
+import {getApplicationConfig} from '@kepler.gl/utils';
 import {Crosshairs} from '../../common/icons';
 import {MapControlButton} from '../../common/styled-components';
 import MapControlTooltipFactory from '../map-control-tooltip';
@@ -38,6 +39,10 @@ export default function AnnotationControlFactory(
       },
       [onToggleMapControl]
     );
+
+    if (!getApplicationConfig().enableAnnotations) {
+      return null;
+    }
 
     const showControl = mapControls?.annotation?.show;
     if (!showControl) {

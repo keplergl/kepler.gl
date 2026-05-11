@@ -37,8 +37,7 @@ const PanelWrapper = styled.div<PanelWrapperProps>`
   &.dragging {
     cursor: move;
   }
-  margin: 3px auto 3px 25px;
-  max-width: 295px;
+  margin: 3px 16px;
 `;
 
 EffectPanelFactory.deps = [EffectPanelHeaderFactory, EffectConfiguratorFactory];
