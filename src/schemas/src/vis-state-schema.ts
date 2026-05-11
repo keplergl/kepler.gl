@@ -859,16 +859,16 @@ export class AnnotationsSchema extends Schema {
 
   save(annotations) {
     return {
-      [this.key]: annotations.map(annotation =>
-        this.savePropertiesOrApplySchema(annotation).annotations
+      [this.key]: annotations.map(
+        annotation => this.savePropertiesOrApplySchema(annotation).annotations
       )
     };
   }
 
   load(annotations) {
     return {
-      [this.key]: annotations.map(annotation =>
-        this.loadPropertiesOrApplySchema(annotation).annotations
+      [this.key]: annotations.map(
+        annotation => this.loadPropertiesOrApplySchema(annotation).annotations
       )
     };
   }

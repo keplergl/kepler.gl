@@ -12,3 +12,7 @@ import './root-test';
 
 // test mergers
 import './vis-state-merger-test';
+import './annotation-merger-test';
+
+// test annotation updaters
+import './annotation-updater-test';

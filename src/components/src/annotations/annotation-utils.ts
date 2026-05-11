@@ -2,10 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {addMetersToLngLat} from '@math.gl/web-mercator';
-import {
-  Annotation,
-  AnnotationWithArm
-} from '@kepler.gl/types';
+import {Annotation, AnnotationWithArm} from '@kepler.gl/types';
 import {AnnotationKind, isAnnotationWithArm} from '@kepler.gl/constants';
 
 export type MapViewport = {

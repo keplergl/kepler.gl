@@ -1371,21 +1371,23 @@ export default function MapContainerFactory(
             isEditingAnnotationText={visState.isEditingAnnotationText}
             isAnnotationMode={Boolean(mapControls?.annotation?.active)}
             mapIndex={index || 0}
-            viewport={{
-              project: (lngLat) => {
-                const vp = getViewportFromMapState({...mapState, ...internalViewState});
-                return vp.project(lngLat) as [number, number];
-              },
-              unproject: (xy) => {
-                const vp = getViewportFromMapState({...mapState, ...internalViewState});
-                return vp.unproject(xy) as [number, number];
-              },
-              longitude: internalViewState?.longitude ?? mapState.longitude,
-              latitude: internalViewState?.latitude ?? mapState.latitude,
-              width: mapState.width,
-              height: mapState.height,
-              zoom: internalViewState?.zoom ?? mapState.zoom
-            } as any}
+            viewport={
+              {
+                project: lngLat => {
+                  const vp = getViewportFromMapState({...mapState, ...internalViewState}) as any;
+                  return vp.project(lngLat) as [number, number];
+                },
+                unproject: xy => {
+                  const vp = getViewportFromMapState({...mapState, ...internalViewState}) as any;
+                  return vp.unproject(xy) as [number, number];
+                },
+                longitude: internalViewState?.longitude ?? mapState.longitude,
+                latitude: internalViewState?.latitude ?? mapState.latitude,
+                width: mapState.width,
+                height: mapState.height,
+                zoom: internalViewState?.zoom ?? mapState.zoom
+              } as any
+            }
             updateAnnotation={visStateActions.updateAnnotation}
             setSelectedAnnotation={visStateActions.setSelectedAnnotation}
           />

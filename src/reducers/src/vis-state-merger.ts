@@ -17,7 +17,12 @@ import {
 import {Layer} from '@kepler.gl/layers';
 import {createEffect} from '@kepler.gl/effects';
 import {notNullorUndefined} from '@kepler.gl/common-utils';
-import {AGGREGATION_TYPES, LAYER_BLENDINGS, OVERLAY_BLENDINGS, isAnnotationKind} from '@kepler.gl/constants';
+import {
+  AGGREGATION_TYPES,
+  LAYER_BLENDINGS,
+  OVERLAY_BLENDINGS,
+  isAnnotationKind
+} from '@kepler.gl/constants';
 import {CURRENT_VERSION, VisState, VisStateMergers, KeplerGLSchemaClass} from '@kepler.gl/schemas';
 
 import {
@@ -585,10 +590,7 @@ export function mergeEffects<S extends VisState>(
 /**
  * Merge annotations with saved config
  */
-export function mergeAnnotations<S extends VisState>(
-  state: S,
-  annotations: any[]
-): S {
+export function mergeAnnotations<S extends VisState>(state: S, annotations: any[]): S {
   if (!annotations || !annotations.length) {
     return state;
   }

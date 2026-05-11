@@ -91,16 +91,27 @@ const AnnotationText: FC<AnnotationTextProps> = ({
     () => ({
       ...(annotation.autoSize ? {minWidth: 80} : {width: textWidth || 120}),
       bottom: viewport.height - (y + ty),
-      borderBottom: annotation.kind !== AnnotationKind.TEXT
-        ? `${lineWidth}px solid ${lineColor}`
-        : undefined,
+      borderBottom:
+        annotation.kind !== AnnotationKind.TEXT ? `${lineWidth}px solid ${lineColor}` : undefined,
       ...(annotation.kind === AnnotationKind.TEXT
         ? {left: x + tx - (textWidth || 80) / 2}
         : isLeft
-          ? {right: viewport.width - x - tx}
-          : {left: x + tx})
+        ? {right: viewport.width - x - tx}
+        : {left: x + tx})
     }),
-    [annotation, textWidth, tx, ty, viewport.width, viewport.height, x, y, isLeft, lineWidth, lineColor]
+    [
+      annotation,
+      textWidth,
+      tx,
+      ty,
+      viewport.width,
+      viewport.height,
+      x,
+      y,
+      isLeft,
+      lineWidth,
+      lineColor
+    ]
   );
 
   const handleDoubleClick = useCallback(() => {

@@ -103,7 +103,9 @@ const AnnotationNode: FC<AnnotationNodeProps> = ({annotation, viewport, isEditin
           />
           {kind === AnnotationKind.ARROW ? (
             <path
-              transform={isArm ? `rotate(${90 + (annotation as AnnotationWithArm).angle})` : undefined}
+              transform={
+                isArm ? `rotate(${90 + (annotation as AnnotationWithArm).angle})` : undefined
+              }
               d={`M0,${lineWidth} L${-arrW},${-arrW} L${arrW},${-arrW} Z`}
               stroke="none"
               fill={lineColor}
@@ -120,11 +122,7 @@ const AnnotationNode: FC<AnnotationNodeProps> = ({annotation, viewport, isEditin
       body = moveHandle;
   }
 
-  return (
-    <g transform={`translate(${x},${y})`}>
-      {body}
-    </g>
-  );
+  return <g transform={`translate(${x},${y})`}>{body}</g>;
 };
 
 export default AnnotationNode;

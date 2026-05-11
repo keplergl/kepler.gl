@@ -2205,7 +2205,10 @@ export const setSelectedAnnotationUpdater = (
   state: VisState,
   {id, isEditingText}: VisStateActions.SetSelectedAnnotationUpdaterAction
 ): VisState => {
-  if (id === state.selectedAnnotationId && (isEditingText ?? false) === state.isEditingAnnotationText) {
+  if (
+    id === state.selectedAnnotationId &&
+    (isEditingText ?? false) === state.isEditingAnnotationText
+  ) {
     return state;
   }
   return {

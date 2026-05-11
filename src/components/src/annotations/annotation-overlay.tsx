@@ -64,10 +64,7 @@ const AnnotationOverlay: FC<AnnotationOverlayProps> = ({
   setSelectedAnnotation: onSetSelectedAnnotation
 }) => {
   const annotationsToRender = useMemo(
-    () =>
-      annotations
-        .filter(ann => (ann.mapIndex ?? 0) === mapIndex && ann.isVisible)
-        .reverse(),
+    () => annotations.filter(ann => (ann.mapIndex ?? 0) === mapIndex && ann.isVisible).reverse(),
     [annotations, mapIndex]
   );
 
@@ -79,16 +76,27 @@ const AnnotationOverlay: FC<AnnotationOverlayProps> = ({
     })
   );
 
-  const accessibility = useMemo(() => ({
-    announcements: {
-      onDragStart() { return ''; },
-      onDragOver() { return ''; },
-      onDragEnd() { return ''; },
-      onDragCancel() { return ''; }
-    },
-    screenReaderInstructions: {draggable: ''},
-    ...(typeof document !== 'undefined' ? {container: document.body} : {})
-  }), []);
+  const accessibility = useMemo(
+    () => ({
+      announcements: {
+        onDragStart() {
+          return '';
+        },
+        onDragOver() {
+          return '';
+        },
+        onDragEnd() {
+          return '';
+        },
+        onDragCancel() {
+          return '';
+        }
+      },
+      screenReaderInstructions: {draggable: ''},
+      ...(typeof document !== 'undefined' ? {container: document.body} : {})
+    }),
+    []
+  );
 
   const handleDragStart = useCallback(
     (ev: DragStartEvent) => {
@@ -179,9 +187,7 @@ const AnnotationOverlay: FC<AnnotationOverlayProps> = ({
               viewport={viewport}
               isEditing={isAnnotationMode}
               isSelected={annotation.id === selectedAnnotationId}
-              isEditingText={
-                annotation.id === selectedAnnotationId && isEditingAnnotationText
-              }
+              isEditingText={annotation.id === selectedAnnotationId && isEditingAnnotationText}
               onSelect={isEditingText => handleSelectAnnotation(annotation.id, isEditingText)}
               onChangeText={text => handleChangeText(annotation.id, text)}
             />

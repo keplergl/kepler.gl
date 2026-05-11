@@ -15,20 +15,16 @@ import {
 } from '@kepler.gl/actions';
 import {visStateLens, mapStateLens} from '@kepler.gl/reducers';
 import {Annotation} from '@kepler.gl/types';
-import {AnnotationKind, ANNOTATION_KINDS, ANNOTATION_LINE_WIDTH_OPTIONS} from '@kepler.gl/constants';
+import {
+  AnnotationKind,
+  ANNOTATION_KINDS,
+  ANNOTATION_LINE_WIDTH_OPTIONS
+} from '@kepler.gl/constants';
 import {VisState} from '@kepler.gl/schemas';
 import {MapState} from '@kepler.gl/types';
 
 import {withState} from '../injector';
-import {
-  Add,
-  ArrowDown,
-  ArrowDownSmall,
-  Copy,
-  EyeSeen,
-  EyeUnseen,
-  Trash
-} from '../common/icons';
+import {Add, ArrowDown, ArrowDownSmall, Copy, EyeSeen, EyeUnseen, Trash} from '../common/icons';
 import {StyledPanelHeader, Tooltip, Button} from '../common/styled-components';
 import Portaled from '../common/portaled';
 import SingleColorPalette from '../side-panel/layer-panel/single-color-palette';
@@ -61,7 +57,9 @@ const StyledAnnotationPanel = styled.div`
 
 const StyledAnnotationPanelHeader = styled.div`
   padding: ${({theme}) =>
-    `${theme.effectPanelPaddingTop || 8}px ${theme.effectPanelPaddingSide || 16}px 4px ${theme.effectPanelPaddingSide || 16}px`};
+    `${theme.effectPanelPaddingTop || 8}px ${theme.effectPanelPaddingSide || 16}px 4px ${
+      theme.effectPanelPaddingSide || 16
+    }px`};
   border-bottom: 1px solid ${props => props.theme.borderColor};
   min-width: ${({theme}) => theme.effectPanelWidth}px;
 `;
@@ -318,7 +316,12 @@ export type AnnotationManagerProps = {
 AnnotationManagerFactory.deps = [];
 
 export default function AnnotationManagerFactory(): React.FC<any> {
-  const AnnotationManager: React.FC<AnnotationManagerProps> = ({intl, visState, mapState, visStateActions}) => {
+  const AnnotationManager: React.FC<AnnotationManagerProps> = ({
+    intl,
+    visState,
+    mapState,
+    visStateActions
+  }) => {
     const {annotations, selectedAnnotationId} = visState;
 
     const handleAddAnnotation = useCallback(() => {
@@ -329,10 +332,7 @@ export default function AnnotationManagerFactory(): React.FC<any> {
 
     const handleSelectAnnotation = useCallback(
       (id: string) => {
-        visStateActions.setSelectedAnnotation(
-          id === selectedAnnotationId ? null : id,
-          false
-        );
+        visStateActions.setSelectedAnnotation(id === selectedAnnotationId ? null : id, false);
       },
       [visStateActions, selectedAnnotationId]
     );
@@ -551,6 +551,12 @@ export default function AnnotationManagerFactory(): React.FC<any> {
   };
 
   return withState([visStateLens, mapStateLens], state => state, {
-    visStateActions: {addAnnotation, removeAnnotation, updateAnnotation, duplicateAnnotation, setSelectedAnnotation}
+    visStateActions: {
+      addAnnotation,
+      removeAnnotation,
+      updateAnnotation,
+      duplicateAnnotation,
+      setSelectedAnnotation
+    }
   })(injectIntl(AnnotationManager)) as React.FC<any>;
 }

@@ -360,6 +360,8 @@ export {default as AnnotationManagerFactory} from './annotations/annotation-pane
 export {AnnotationOverlay} from './annotations';
 export {AnnotationNode} from './annotations';
 export {AnnotationText} from './annotations';
+export {makeMarker, movePoint, moveText, resizeCircle, isLeftOriented} from './annotations';
+export type {MapViewport, AnnotationMarker} from './annotations';
 export {default as AnnotationControlFactory} from './map/annotations/annotation-control';
 
 export {default as ColorBreaksPanelFactory} from './side-panel/layer-panel/color-breaks-panel';
