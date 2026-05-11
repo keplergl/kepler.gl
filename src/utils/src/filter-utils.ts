@@ -389,7 +389,9 @@ export const getPolygonFilterFunctor = (layer, filter, dataContainer) => {
           if (Array.isArray(coordinates[0])) {
             return (coordinates as number[][]).some(
               coord =>
-                coord.length >= 2 && coord.every(Number.isFinite) && isInPolygon(coord, filter.value)
+                coord.length >= 2 &&
+                coord.every(Number.isFinite) &&
+                isInPolygon(coord, filter.value)
             );
           }
           return (

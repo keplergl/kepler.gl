@@ -165,11 +165,7 @@ test('Processor -> detectDelimiter', t => {
     'should fall back to comma when no delimiter produces multiple columns'
   );
   t.equal(detectDelimiter(''), ',', 'should return comma for empty string');
-  t.equal(
-    detectDelimiter('a,b,c'),
-    ',',
-    'should handle input without newline (single line)'
-  );
+  t.equal(detectDelimiter('a,b,c'), ',', 'should handle input without newline (single line)');
 
   t.equal(
     detectDelimiter('"a\tb"\tc\td\n1\t2\t3'),
@@ -241,7 +237,8 @@ test('Processor -> processCsvData -> pipe-separated', t => {
 });
 
 test('Processor -> processCsvData -> semicolon with quoted commas', t => {
-  const data = '"City, Country";Population;Area\n"Berlin, Germany";3600000;891\n"Paris, France";2100000;105';
+  const data =
+    '"City, Country";Population;Area\n"Berlin, Germany";3600000;891\n"Paris, France";2100000;105';
   const result = processCsvData(data);
 
   t.equal(result.fields.length, 3, 'should parse 3 fields');
@@ -347,12 +344,21 @@ test('Processor -> processCsvData -> semicolon-separated with numeric data', t =
 });
 
 test('Processor -> processCsvData -> pipe-separated with special characters in values', t => {
-  const data = 'id|description|url\n1|"hello, world"|http://example.com\n2|"foo; bar"|http://test.org';
+  const data =
+    'id|description|url\n1|"hello, world"|http://example.com\n2|"foo; bar"|http://test.org';
   const result = processCsvData(data);
 
   t.equal(result.fields.length, 3, 'should parse 3 fields');
-  t.equal(result.rows[0][1], 'hello, world', 'should handle commas inside quoted pipe-separated fields');
-  t.equal(result.rows[1][1], 'foo; bar', 'should handle semicolons inside quoted pipe-separated fields');
+  t.equal(
+    result.rows[0][1],
+    'hello, world',
+    'should handle commas inside quoted pipe-separated fields'
+  );
+  t.equal(
+    result.rows[1][1],
+    'foo; bar',
+    'should handle semicolons inside quoted pipe-separated fields'
+  );
 
   t.end();
 });
