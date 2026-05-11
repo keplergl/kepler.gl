@@ -111,8 +111,11 @@ const config = {
       name: 'resolve-portal-imports',
       setup(build) {
         const demoNodeModules = resolve('node_modules');
-        const portalDir = resolve('node_modules/openassistant2');
-        const sqlroomsDir = resolve('node_modules/@sqlrooms');
+        const portalDir = resolve('node_modules/openassistant');
+
+        build.onResolve({filter: /^openassistant\/styles\.css$/}, () => ({
+          path: '/Users/xun/github/openassistant/dist/styles.css'
+        }));
 
         build.onResolve({filter: /./}, async args => {
           if (
@@ -121,14 +124,16 @@ const config = {
             !args.path.startsWith('/') &&
             args.pluginData !== 'portal-retry' &&
             (args.resolveDir.startsWith(portalDir) ||
-              args.resolveDir.includes('/github/openassistant2'))
+              args.resolveDir.includes('/github/openassistant'))
           ) {
             const result = await build.resolve(args.path, {
               kind: args.kind,
               resolveDir: demoNodeModules,
               pluginData: 'portal-retry'
             });
-            return result;
+            if (result.errors.length === 0) {
+              return result;
+            }
           }
         });
       }
@@ -203,6 +208,9 @@ function addAliases(externals, args) {
   Object.entries(keplerWorkspacePackages).forEach(([pkg, dir]) => {
     resolveAlias[`@kepler.gl/${pkg}`] = `${SRC_DIR}/${dir}/src`;
   });
+
+  // resolve openassistant from local source
+  resolveAlias['openassistant'] = '/Users/xun/github/openassistant/src';
 
   // resolve deck.gl from local dir
   if (useLocalDeck || useRepoDeck) {

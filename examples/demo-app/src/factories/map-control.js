@@ -10,7 +10,7 @@ import {
   EffectControlFactory,
   EffectManagerFactory
 } from '@kepler.gl/components';
-import {AiAssistantControlFactory} from 'openassistant2';
+import {AiAssistantControlFactory} from 'openassistant';
 
 import {BannerMapPanel, SampleMapPanel} from '../components/map-control/map-control';
 import SqlPanelControlFactory from '../components/map-control/sql-panel-control';

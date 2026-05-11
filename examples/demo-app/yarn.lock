@@ -9702,9 +9702,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"openassistant2@portal:/Users/xun/github/openassistant2::locator=root-workspace-0b6124%40workspace%3A.":
+"openassistant@portal:/Users/xun/github/openassistant::locator=root-workspace-0b6124%40workspace%3A.":
   version: 0.0.0-use.local
-  resolution: "openassistant2@portal:/Users/xun/github/openassistant2::locator=root-workspace-0b6124%40workspace%3A."
+  resolution: "openassistant@portal:/Users/xun/github/openassistant::locator=root-workspace-0b6124%40workspace%3A."
   dependencies:
     "@ai-sdk/anthropic": "npm:^1.2.11"
     "@ai-sdk/deepseek": "npm:^0.2.14"
@@ -9729,25 +9729,23 @@ __metadata:
     ollama-ai-provider-v2: "npm:^0.0.5"
     zod: "npm:^4.1.8"
   peerDependencies:
-    "@kepler.gl/actions": ">=3.2.0"
-    "@kepler.gl/components": ">=3.2.0"
-    "@kepler.gl/constants": ">=3.2.0"
-    "@kepler.gl/duckdb": ">=3.2.0"
-    "@kepler.gl/layers": ">=3.2.0"
-    "@kepler.gl/localization": ">=3.2.0"
-    "@kepler.gl/processors": ">=3.2.0"
-    "@kepler.gl/reducers": ">=3.2.0"
-    "@kepler.gl/schemas": ">=3.2.0"
-    "@kepler.gl/table": ">=3.2.0"
-    "@kepler.gl/types": ">=3.2.0"
-    "@kepler.gl/utils": ">=3.2.0"
+    "@kepler.gl/actions": ">=3.3.0-alpha.0"
+    "@kepler.gl/components": ">=3.3.0-alpha.0"
+    "@kepler.gl/constants": ">=3.3.0-alpha.0"
+    "@kepler.gl/duckdb": ">=3.3.0-alpha.0"
+    "@kepler.gl/layers": ">=3.3.0-alpha.0"
+    "@kepler.gl/localization": ">=3.3.0-alpha.0"
+    "@kepler.gl/processors": ">=3.3.0-alpha.0"
+    "@kepler.gl/reducers": ">=3.3.0-alpha.0"
+    "@kepler.gl/schemas": ">=3.3.0-alpha.0"
+    "@kepler.gl/table": ">=3.3.0-alpha.0"
+    "@kepler.gl/types": ">=3.3.0-alpha.0"
+    "@kepler.gl/utils": ">=3.3.0-alpha.0"
     apache-arrow: ">=15.0.0"
     react: ^18.2.0
     react-dom: ^18.2.0
-    react-intl: ^6.3.0
     react-redux: ^8.0.5
     redux: ^4.2.1
-    styled-components: ">=5.0.0"
   languageName: node
   linkType: soft
 
@@ -11032,6 +11030,10 @@ __metadata:
     "@loaders.gl/csv": "npm:^4.3.2"
     "@loaders.gl/json": "npm:^4.3.2"
     "@loaders.gl/parquet": "npm:^4.3.2"
+    "@sqlrooms/ai-core": "npm:0.29.0-rc.2"
+    "@sqlrooms/ai-settings": "npm:0.29.0-rc.2"
+    "@sqlrooms/room-store": "npm:0.29.0-rc.2"
+    "@sqlrooms/ui": "npm:0.29.0-rc.2"
     "@types/classnames": "npm:^2.3.1"
     "@types/keymirror": "npm:^0.1.1"
     apache-arrow: "npm:>=15.0.0"
@@ -11043,7 +11045,7 @@ __metadata:
     global: "npm:^4.3.0"
     keymirror: "npm:^0.1.1"
     markdown-to-jsx: "npm:^7.7.6"
-    openassistant2: "portal:/Users/xun/github/openassistant2"
+    openassistant: "portal:/Users/xun/github/openassistant"
     prop-types: "npm:^15.6.0"
     react: "npm:^18.2.0"
     react-dom: "npm:^18.2.0"
