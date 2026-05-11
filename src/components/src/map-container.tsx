@@ -1373,18 +1373,18 @@ export default function MapContainerFactory(
             mapIndex={index || 0}
             viewport={{
               project: (lngLat) => {
-                const vp = getViewportFromMapState(mapState);
+                const vp = getViewportFromMapState({...mapState, ...internalViewState});
                 return vp.project(lngLat) as [number, number];
               },
               unproject: (xy) => {
-                const vp = getViewportFromMapState(mapState);
+                const vp = getViewportFromMapState({...mapState, ...internalViewState});
                 return vp.unproject(xy) as [number, number];
               },
-              longitude: mapState.longitude,
-              latitude: mapState.latitude,
+              longitude: internalViewState?.longitude ?? mapState.longitude,
+              latitude: internalViewState?.latitude ?? mapState.latitude,
               width: mapState.width,
               height: mapState.height,
-              zoom: mapState.zoom
+              zoom: internalViewState?.zoom ?? mapState.zoom
             } as any}
             updateAnnotation={visStateActions.updateAnnotation}
             setSelectedAnnotation={visStateActions.setSelectedAnnotation}
