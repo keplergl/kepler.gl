@@ -25,6 +25,7 @@ const LineChartWrapper = styled.div`
   .rv-xy-plot__inner {
     /* important to show axis */
     overflow: visible;
+    clip-path: inset(-2px -10px -2px -50px);
   }
 
   .rv-xy-plot__grid-lines__line {
@@ -83,13 +84,16 @@ interface LineChartProps {
   lineChart?: LineChart;
   margin: {top?: number; bottom?: number; left?: number; right?: number};
   onMouseMove: (datapoint: LineSeriesPoint | null, data?: RVNearestXData<LineSeriesPoint>) => void;
+  value?: number[];
   width: number;
   timezone?: string | null;
   timeFormat?: string;
   range?: number[];
+  yAxisAutoRange?: boolean;
 }
 
 const MARGIN = {top: 0, bottom: 0, left: 0, right: 0};
+
 function LineChartFactory() {
   const LineChartComponent = ({
     brushComponent,
@@ -102,10 +106,12 @@ function LineChartFactory() {
     lineChart,
     margin,
     onMouseMove,
+    value,
     width,
     timezone,
     timeFormat,
-    range
+    range,
+    yAxisAutoRange
   }: LineChartProps) => {
     const {yDomain, xDomain} = lineChart || {};
     // @ts-expect-error seems lineChart.series has ambiguous types. Requires refactoring.
@@ -116,12 +122,33 @@ function LineChartFactory() {
       [range, xDomain]
     );
 
+    const filteredYDomain = useMemo(() => {
+      if (!yAxisAutoRange || !series?.lines || !value || value.length < 2) return yDomain;
+      let min: number | undefined;
+      let max: number | undefined;
+      for (const line of series.lines) {
+        for (let i = 0; i < line.length; i++) {
+          const point = line[i];
+          const inRange = point.x >= value[0] && point.x <= value[1];
+          const isAdjacentToRange =
+            (!inRange && line[i + 1] && line[i + 1].x >= value[0] && line[i + 1].x <= value[1]) ||
+            (!inRange && line[i - 1] && line[i - 1].x >= value[0] && line[i - 1].x <= value[1]);
+          if ((inRange || isAdjacentToRange) && point.y != null) {
+            if (min === undefined || point.y < min) min = point.y;
+            if (max === undefined || point.y > max) max = point.y;
+          }
+        }
+      }
+      return min !== undefined && max !== undefined ? [min, max] : yDomain;
+    }, [series, value, yDomain, yAxisAutoRange]);
+
     const paddedYDomain = useMemo(
-      () =>
-        yDomain && yDomain[0] && yDomain[1]
-          ? [yDomain[0], yDomain[1] + (yDomain[1] - yDomain[0]) * 0.2]
-          : [],
-      [yDomain]
+      () => {
+        if (!filteredYDomain || filteredYDomain[0] == null || filteredYDomain[1] == null) return [];
+        const padding = (filteredYDomain[1] - filteredYDomain[0]) * 0.1;
+        return [filteredYDomain[0] - padding, filteredYDomain[1] + padding];
+      },
+      [filteredYDomain]
     );
     const brushData = useMemo(() => {
       return effectiveXDomain && paddedYDomain
@@ -139,6 +166,21 @@ function LineChartFactory() {
       () => datetimeFormatter(timezone)(timeFormat),
       [timezone, timeFormat]
     );
+
+    const isHoveredDPVisible = hoveredDP
+      ? !yAxisAutoRange ||
+        !paddedYDomain ||
+        paddedYDomain.length < 2 ||
+        (hoveredDP.y >= paddedYDomain[0] && hoveredDP.y <= paddedYDomain[1])
+      : false;
+
+    const clampedHoveredDP = useMemo(() => {
+      if (!hoveredDP || !paddedYDomain || paddedYDomain.length < 2) return hoveredDP;
+      return {
+        ...hoveredDP,
+        y: Math.max(paddedYDomain[0], Math.min(paddedYDomain[1], hoveredDP.y))
+      };
+    }, [hoveredDP, paddedYDomain]);
 
     return (
       <LineChartWrapper style={{marginTop: `${margin.top}px`}}>
@@ -163,12 +205,12 @@ function LineChartFactory() {
               onNearestX={series.markers.length || !enableChartHover ? undefined : onMouseMove}
             />
           ))}
-          <MarkSeries data={hoveredDP ? [hoveredDP] : []} color={color} />
+          <MarkSeries data={isHoveredDPVisible && hoveredDP ? [hoveredDP] : []} color={color} />
           <CustomSVGSeries data={brushData} />
           {isEnlarged && <YAxis tickTotal={3} />}
-          {hoveredDP && enableChartHover && !brushing ? (
-            <Hint value={hoveredDP}>
-              <HintContent {...hoveredDP} format={hintFormatter} />
+          {clampedHoveredDP && enableChartHover && !brushing ? (
+            <Hint value={clampedHoveredDP}>
+              <HintContent {...hoveredDP!} format={hintFormatter} />
             </Hint>
           ) : null}
         </XYPlot>
