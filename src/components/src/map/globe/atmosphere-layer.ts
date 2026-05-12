@@ -72,14 +72,7 @@ export class AtmosphereLayerRealistic extends SimpleMeshLayer<any, any> {
     return {
       ...super.getShaders(),
       inject: {
-        'vs:#decl': `
-          varying vec3 v3CameraPos;
-        `,
-        'vs:#main-start': `
-          v3CameraPos = project_uCameraPosition;
-        `,
         'fs:#decl': `
-          varying vec3 v3CameraPos;
           uniform vec3 v3SunPos;
 
           uniform float g;
@@ -100,24 +93,24 @@ export class AtmosphereLayerRealistic extends SimpleMeshLayer<any, any> {
 
           const int nSamples = ${NUM_SAMPLE_RAYS};
 
-          float scale(float fCos) {
+          float scale_atm(float fCos) {
             float x = 1.0 - fCos;
             return fScaleDepth * exp(-0.00287 + x*(0.459 + x*(3.83 + x*(-6.8 + x*5.25))));
           }
         `,
         'fs:#main-end': `
           vec3 v3Pos = position_commonspace.xyz;
+          vec3 v3CameraPos = cameraPosition;
 
           float g2 = g * g;
 
           vec3 v3InvWavelength = vec3(1.0 / pow(0.650, 4.0), 1.0 / pow(0.570, 4.0), 1.0 / pow(0.475, 4.0));
 
-          float fInnerRadius2 = fInnerRadius * fInnerRadius;
           float fOuterRadius2 = fOuterRadius * fOuterRadius;
-          float fScale = 1.0 / (fOuterRadius - fInnerRadius);
+          float fScale_atm = 1.0 / (fOuterRadius - fInnerRadius);
           float fScaleOverScaleDepth = 1.0 / (fOuterRadius - fInnerRadius) / fScaleDepth;
 
-          float cameraHeight2 = length(v3CameraPos) * length(v3CameraPos);
+          float cameraHeight2 = dot(v3CameraPos, v3CameraPos);
 
           vec3 v3Ray = v3Pos - v3CameraPos;
           float fFar = length(v3Ray);
@@ -131,16 +124,16 @@ export class AtmosphereLayerRealistic extends SimpleMeshLayer<any, any> {
           vec3 v3Start = v3CameraPos + v3Ray * fNear;
           fFar -= fNear;
 
-          float fDepth = exp((fInnerRadius - fOuterRadius) / fScaleDepth);
+          float fDepth_atm = exp((fInnerRadius - fOuterRadius) / fScaleDepth);
           float fCameraAngle = dot(-v3Ray, v3Pos) / length(v3Pos);
           float fLightAngle = dot(v3SunPos, v3Pos) / length(v3Pos);
-          float fCameraScale = scale(fCameraAngle);
-          float fLightScale = scale(fLightAngle);
-          float fCameraOffset = fDepth*fCameraScale;
+          float fCameraScale = scale_atm(fCameraAngle);
+          float fLightScale = scale_atm(fLightAngle);
+          float fCameraOffset = fDepth_atm * fCameraScale;
           float fTemp = (fLightScale + fCameraScale);
 
           float fSampleLength = fFar / fSamples;
-          float fScaledLength = fSampleLength * fScale;
+          float fScaledLength = fSampleLength * fScale_atm;
           vec3 v3SampleRay = v3Ray * fSampleLength;
           vec3 v3SamplePoint = v3Start + v3SampleRay * 0.5;
 
@@ -149,10 +142,10 @@ export class AtmosphereLayerRealistic extends SimpleMeshLayer<any, any> {
           for(int i=0; i<nSamples; i++)
           {
               float fHeight = length(v3SamplePoint);
-              float fDepth = exp(fScaleOverScaleDepth * (fInnerRadius - fHeight));
-              float fScatter = fDepth*fTemp - fCameraOffset;
+              float fDepth_s = exp(fScaleOverScaleDepth * (fInnerRadius - fHeight));
+              float fScatter = fDepth_s * fTemp - fCameraOffset;
               v3Attenuate = exp(-fScatter * (v3InvWavelength * fKr4PI + fKm4PI));
-              v3FrontColor += v3Attenuate * (fDepth * fScaledLength);
+              v3FrontColor += v3Attenuate * (fDepth_s * fScaledLength);
               v3SamplePoint += v3SampleRay;
           }
 
@@ -160,7 +153,6 @@ export class AtmosphereLayerRealistic extends SimpleMeshLayer<any, any> {
           vec3 c1 = v3FrontColor * (v3InvWavelength * fKrESun + fKmESun);
 
           fragColor = vec4(c1, 1.0 - c0 * fTerminatorAttenuateFactor);
-
           fragColor.a *= fTerminatorOpacityFactor;
         `,
         'fs:DECKGL_FILTER_COLOR': ``
@@ -186,14 +178,7 @@ export class AtmosphereSkyLayerRealistic extends SimpleMeshLayer<any, any> {
     return {
       ...super.getShaders(),
       inject: {
-        'vs:#decl': `
-          varying vec3 v3CameraPos;
-        `,
-        'vs:#main-start': `
-          v3CameraPos = project_uCameraPosition;
-        `,
         'fs:#decl': `
-          varying vec3 v3CameraPos;
           uniform vec3 v3SunPos;
 
           uniform float g;
@@ -211,13 +196,13 @@ export class AtmosphereSkyLayerRealistic extends SimpleMeshLayer<any, any> {
 
           const int nSamples = ${NUM_SAMPLE_RAYS};
 
-          float scale(float fCos) {
+          float scale_sky(float fCos) {
             float x = 1.0 - fCos;
             return fScaleDepth * exp(-0.00287 + x*(0.459 + x*(3.83 + x*(-6.8 + x*5.25))));
           }
 
-          float getMiePhase(float fCos, float fCos2, float g, float g2) {
-            return 1.5 * ((1.0 - g2) / (2.0 + g2)) * (1.0 + fCos2) / pow(1.0 + g2 - 2.0 * g * fCos, 1.5);
+          float getMiePhase(float fCos, float fCos2, float g_p, float g2_p) {
+            return 1.5 * ((1.0 - g2_p) / (2.0 + g2_p)) * (1.0 + fCos2) / pow(1.0 + g2_p - 2.0 * g_p * fCos, 1.5);
           }
 
           float getRayleighPhase(float fCos2) {
@@ -226,17 +211,17 @@ export class AtmosphereSkyLayerRealistic extends SimpleMeshLayer<any, any> {
         `,
         'fs:#main-end': `
           vec3 v3Pos = position_commonspace.xyz;
+          vec3 v3CameraPos = cameraPosition;
 
           float g2 = g * g;
 
           vec3 v3InvWavelength = vec3(1.0 / pow(0.650, 4.0), 1.0 / pow(0.570, 4.0), 1.0 / pow(0.475, 4.0));
 
-          float fInnerRadius2 = fInnerRadius * fInnerRadius;
           float fOuterRadius2 = fOuterRadius * fOuterRadius;
-          float fScale = 1.0 / (fOuterRadius - fInnerRadius);
+          float fScale_sky = 1.0 / (fOuterRadius - fInnerRadius);
           float fScaleOverScaleDepth = 1.0 / (fOuterRadius - fInnerRadius) / fScaleDepth;
 
-          float cameraHeight2 = length(v3CameraPos) * length(v3CameraPos);
+          float cameraHeight2 = dot(v3CameraPos, v3CameraPos);
 
           vec3 v3Ray = v3Pos - v3CameraPos;
           float fFar = length(v3Ray);
@@ -251,10 +236,10 @@ export class AtmosphereSkyLayerRealistic extends SimpleMeshLayer<any, any> {
           fFar -= fNear;
           float fStartAngle = dot(v3Ray, v3Start) / fOuterRadius;
           float fStartDepth = exp(-1.0 / fScaleDepth);
-          float fStartOffset = fStartDepth * scale(fStartAngle);
+          float fStartOffset = fStartDepth * scale_sky(fStartAngle);
 
           float fSampleLength = fFar / fSamples;
-          float fScaledLength = fSampleLength * fScale;
+          float fScaledLength = fSampleLength * fScale_sky;
           vec3 v3SampleRay = v3Ray * fSampleLength;
           vec3 v3SamplePoint = v3Start + v3SampleRay * 0.5;
 
@@ -262,13 +247,13 @@ export class AtmosphereSkyLayerRealistic extends SimpleMeshLayer<any, any> {
           for(int i=0; i<nSamples; i++)
           {
             float fHeight = length(v3SamplePoint);
-            float fDepth = exp(fScaleOverScaleDepth * (fInnerRadius - fHeight));
+            float fDepth_s = exp(fScaleOverScaleDepth * (fInnerRadius - fHeight));
             float fLightAngle = dot(v3SunPos, v3SamplePoint) / fHeight;
             float fCameraAngle = dot(v3Ray, v3SamplePoint) / fHeight;
-            float fScatter = (fStartOffset + fDepth * (scale(fLightAngle) - scale(fCameraAngle)));
+            float fScatter = (fStartOffset + fDepth_s * (scale_sky(fLightAngle) - scale_sky(fCameraAngle)));
             vec3 v3Attenuate = exp(-fScatter * (v3InvWavelength * fKr4PI + fKm4PI));
 
-            v3FrontColor += v3Attenuate * (fDepth * fScaledLength);
+            v3FrontColor += v3Attenuate * (fDepth_s * fScaledLength);
             v3SamplePoint += v3SampleRay;
           }
 

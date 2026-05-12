@@ -262,14 +262,12 @@ export function getGlobeBackgroundLayers({
   const layers: any[] = [];
 
   // Atmosphere sky layer (rendered first, behind everything)
-  // NOTE: Disabled - requires shader port from GLSL 100 to GLSL 300 ES for luma.gl v9
-  // if (config.atmosphere) {
-  //   layers.push(getGlobeAtmosphereSkyLayer({config}));
-  // }
+  if (config.atmosphere) {
+    layers.push(getGlobeAtmosphereSkyLayer({config}));
+  }
 
   // Depth disk fills the depth buffer to prevent layer leaking
-  // NOTE: Disabled - requires shader port from GLSL 100 to GLSL 300 ES for luma.gl v9
-  // layers.push(getGlobeDepthDiskLayer({fillColor: config.surfaceColor}));
+  layers.push(getGlobeDepthDiskLayer({fillColor: config.surfaceColor}));
 
   layers.push(
     new SolidPolygonLayer({
@@ -351,10 +349,9 @@ export function getGlobeBackgroundLayers({
   }
 
   // Atmosphere overlay (rendered last, on top of everything)
-  // NOTE: Disabled - requires shader port from GLSL 100 to GLSL 300 ES for luma.gl v9
-  // if (config.atmosphere) {
-  //   layers.push(getGlobeAtmosphereLayer({config}));
-  // }
+  if (config.atmosphere) {
+    layers.push(getGlobeAtmosphereLayer({config}));
+  }
 
   return layers;
 }

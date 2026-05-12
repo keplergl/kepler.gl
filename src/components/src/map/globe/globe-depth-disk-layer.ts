@@ -69,7 +69,7 @@ export class GlobeDepthDiskLayer extends SimpleMeshLayer<any, any> {
     const vs = editShader(
       shaders.vs,
       'globe depth disk vs',
-      'vec3 pos = (instanceModelMatrix * positions) * sizeScale + instanceTranslation;',
+      'vec3 pos = (instanceModelMatrix * positions) * simpleMesh.sizeScale + instanceTranslation;',
       `vec3 pos = (u_matDepthDiskOrientation * positions) * u_depthDiskRadius;
        vDepthDiskPos = pos;
        pos = pos + u_directionToCamera * u_depthDiskShift;
@@ -82,11 +82,11 @@ export class GlobeDepthDiskLayer extends SimpleMeshLayer<any, any> {
         uniform float u_depthDiskRadius;
         uniform float u_depthDiskShift;
         uniform vec3 u_directionToCamera;
-        varying vec3 vDepthDiskPos;
+        out vec3 vDepthDiskPos;
       `,
       'fs:#decl': `
         uniform float u_depthDiskRadius;
-        varying vec3 vDepthDiskPos;
+        in vec3 vDepthDiskPos;
       `,
       'fs:#main-start': `
         if(length(vDepthDiskPos) > u_depthDiskRadius){
