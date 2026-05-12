@@ -14,6 +14,7 @@ export type BaseAnnotation = {
   autoSizeY: boolean;
   anchorPoint: [number, number];
   label: string;
+  editorState?: Record<string, any>;
   mapIndex?: number;
   lineColor: string;
   lineWidth: number;

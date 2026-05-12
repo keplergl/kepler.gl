@@ -843,6 +843,7 @@ const annotationPropsV1 = {
   autoSizeY: null,
   anchorPoint: null,
   label: null,
+  editorState: null,
   mapIndex: null,
   lineColor: null,
   lineWidth: null,

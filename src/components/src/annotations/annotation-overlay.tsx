@@ -147,8 +147,8 @@ const AnnotationOverlay: FC<AnnotationOverlayProps> = ({
   );
 
   const handleChangeText = useCallback(
-    (id: string, text: string) => {
-      onUpdateAnnotation(id, {label: text});
+    (id: string, text: string, editorState?: Record<string, any>) => {
+      onUpdateAnnotation(id, {label: text, ...(editorState ? {editorState} : {})});
     },
     [onUpdateAnnotation]
   );
@@ -189,7 +189,10 @@ const AnnotationOverlay: FC<AnnotationOverlayProps> = ({
               isSelected={annotation.id === selectedAnnotationId}
               isEditingText={annotation.id === selectedAnnotationId && isEditingAnnotationText}
               onSelect={isEditingText => handleSelectAnnotation(annotation.id, isEditingText)}
-              onChangeText={text => handleChangeText(annotation.id, text)}
+              onChangeText={(text, editorState) =>
+                handleChangeText(annotation.id, text, editorState)
+              }
+              onUpdateAnnotation={config => onUpdateAnnotation(annotation.id, config)}
             />
           ))}
         </AnnotationTextContainer>
