@@ -76,6 +76,9 @@ const StyledMapPopover = styled.div`
   .map-popover__layer-info > table {
     grid-template-columns: auto auto;
   }
+  .map-popover__layer-info > table:has(td.row__delta-value) {
+    grid-template-columns: auto auto auto;
+  }
 
   tbody,
   tr {
