@@ -305,7 +305,7 @@ const LayerHoverInfoFactory = () => {
           {props.layer.config.label}
         </StyledLayerName>
         {hasFieldsToShow && <StyledDivider />}
-        <StyledTable>
+        <StyledTable className={props.primaryData ? 'comparing' : undefined}>
           {data.wmsFeatureData ? (
             <tbody>
               {data.wmsFeatureData.map(({name, value}, i) => (
