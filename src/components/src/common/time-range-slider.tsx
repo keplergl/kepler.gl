@@ -70,7 +70,7 @@ const StyledSliderContainer: IStyledComponent<
   }
 `;
 
-const ANIMATION_CONTROL_STYLE = {flex: 1};
+const ANIMATION_CONTROL_STYLE = {flex: 1, padding: 0, marginTop: 0};
 
 TimeRangeSliderFactory.deps = [
   PlaybackControlsFactory,
