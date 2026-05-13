@@ -239,14 +239,21 @@ export default function FloatingLinkEditorPlugin(): JSX.Element | null {
   }, []);
 
   useEffect(() => {
-    return editor.registerCommand(
-      SELECTION_CHANGE_COMMAND,
-      (_payload, newEditor) => {
-        updateToolbar();
-        setActiveEditor(newEditor);
-        return false;
-      },
-      COMMAND_PRIORITY_CRITICAL
+    return mergeRegister(
+      editor.registerCommand(
+        SELECTION_CHANGE_COMMAND,
+        (_payload, newEditor) => {
+          updateToolbar();
+          setActiveEditor(newEditor);
+          return false;
+        },
+        COMMAND_PRIORITY_CRITICAL
+      ),
+      editor.registerEditableListener(editable => {
+        if (!editable) {
+          setIsLink(false);
+        }
+      })
     );
   }, [editor, updateToolbar]);
 

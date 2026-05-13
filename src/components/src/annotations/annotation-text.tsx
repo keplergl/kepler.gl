@@ -40,6 +40,10 @@ const StyledAnnotationText = styled.div<StyledAnnotationTextProps>`
       `
       : `
         pointer-events: none;
+        a {
+          pointer-events: all;
+          cursor: pointer;
+        }
       `}
   ${props =>
     props.$isEditingText
@@ -183,7 +187,7 @@ const AnnotationText: FC<AnnotationTextProps> = ({
       <LexicalRichTextEditor
         {...(isEditingText && annotation.autoSize ? {} : {width: textWidth || undefined})}
         {...(isEditingText && annotation.autoSizeY ? {} : {height: textHeight || undefined})}
-        isEditable={isEditingText}
+        isEditable={isEditing && isEditingText}
         editorState={annotation.editorState as SerializedEditorState | undefined}
         initialText={annotation.label}
         onChange={handleEditorChange}

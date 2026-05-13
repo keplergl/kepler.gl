@@ -294,30 +294,26 @@ export const useInsertLexicalLink = ({
     if (!wasEditable) {
       editor.setEditable(true);
     }
-    editor.update(
-      () => {
-        let selection = $getSelection();
-        if (!$isRangeSelection(selection) || selection.isCollapsed()) {
-          const root = $getRoot();
-          const newSelection = $createRangeSelection();
-          newSelection.focus.set(root.getKey(), 0, 'element');
-          newSelection.anchor.set(root.getKey(), root.getChildrenSize(), 'element');
-          $setSelection(newSelection);
-        }
-      },
-      {
-        onUpdate: () => {
-          if (!isLink) {
-            editor.dispatchCommand(TOGGLE_LINK_COMMAND, DEFAULT_LINK_NODE_PROPS);
-          } else {
-            editor.dispatchCommand(TOGGLE_LINK_COMMAND, null);
-          }
-          if (!wasEditable) {
-            editor.setEditable(false);
-          }
-        }
+    editor.update(() => {
+      let selection = $getSelection();
+      if (!$isRangeSelection(selection) || selection.isCollapsed()) {
+        const root = $getRoot();
+        const newSelection = $createRangeSelection();
+        newSelection.focus.set(root.getKey(), 0, 'element');
+        newSelection.anchor.set(root.getKey(), root.getChildrenSize(), 'element');
+        $setSelection(newSelection);
       }
-    );
+    });
+    setTimeout(() => {
+      if (!isLink) {
+        editor.dispatchCommand(TOGGLE_LINK_COMMAND, DEFAULT_LINK_NODE_PROPS);
+      } else {
+        editor.dispatchCommand(TOGGLE_LINK_COMMAND, null);
+      }
+      if (!wasEditable) {
+        editor.setEditable(false);
+      }
+    }, 0);
   }, [editor, isLink]);
 
   return {isLink, insertLink};
