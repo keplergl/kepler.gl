@@ -177,7 +177,11 @@ function patchMapLibreTransformForHubble(transform: any): void {
   if (!Object.getOwnPropertyDescriptor(transform, '_setZoom')) {
     Object.defineProperty(transform, '_setZoom', {
       value(this: any, zoom: number) {
-        this.setZoom(zoom);
+        if (typeof this.setZoom === 'function') {
+          this.setZoom(zoom);
+        } else {
+          this.zoom = zoom;
+        }
       },
       writable: true,
       configurable: true
@@ -223,8 +227,12 @@ function addTransformSetter(
   Object.defineProperty(transform, prop, {
     get: getValue || existing?.get,
     set(this: any, value: any) {
-      if (value !== undefined && typeof this[setterMethod] === 'function') {
-        this[setterMethod](value);
+      if (value !== undefined) {
+        if (typeof this[setterMethod] === 'function') {
+          this[setterMethod](value);
+        } else if (existing?.set) {
+          existing.set.call(this, value);
+        }
       }
     },
     enumerable: existing?.enumerable ?? false,
