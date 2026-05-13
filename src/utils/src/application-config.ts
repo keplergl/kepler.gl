@@ -97,7 +97,7 @@ export type KeplerApplicationConfig = {
    *  Note: values above 60 may cause rendering artifacts with some basemap tile providers. */
   maxPitch?: number;
 
-  /** Whether to enable the annotations feature. Disabled by default. */
+  /** Whether to enable the annotations feature. Enabled by default. */
   enableAnnotations?: boolean;
 };
 

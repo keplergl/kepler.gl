@@ -2134,7 +2134,9 @@ export const removeAnnotationUpdater = (
   return {
     ...state,
     annotations: state.annotations.filter(a => a.id !== id),
-    selectedAnnotationId: state.selectedAnnotationId === id ? null : state.selectedAnnotationId
+    selectedAnnotationId: state.selectedAnnotationId === id ? null : state.selectedAnnotationId,
+    isEditingAnnotationText:
+      state.selectedAnnotationId === id ? false : state.isEditingAnnotationText
   };
 };
 

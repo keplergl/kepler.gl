@@ -97,7 +97,8 @@ const AnnotationText: FC<AnnotationTextProps> = ({
     id: `${annotation.id}:MOVE_TEXT`
   });
 
-  const {textWidth, textHeight, lineColor, lineWidth, textVerticalAlign} = annotation;
+  const {textWidth, textHeight, lineColor, lineWidth, textVerticalAlign, autoSize, kind} =
+    annotation;
   const {x, y, tx, ty} = makeMarker(annotation, viewport);
 
   const isArm = 'armLength' in annotation;
@@ -105,17 +106,17 @@ const AnnotationText: FC<AnnotationTextProps> = ({
 
   const style = useMemo(
     () => ({
-      ...(annotation.autoSize ? {minWidth: 80} : {width: textWidth || 120}),
+      ...(autoSize ? {minWidth: 80} : {width: textWidth || 120}),
       bottom: viewport.height - (y + ty),
       borderBottom:
-        annotation.kind !== AnnotationKind.TEXT ? `${lineWidth}px solid ${lineColor}` : undefined,
-      ...(annotation.kind === AnnotationKind.TEXT
+        kind !== AnnotationKind.TEXT ? `${lineWidth}px solid ${lineColor}` : undefined,
+      ...(kind === AnnotationKind.TEXT
         ? {left: x + tx - (textWidth || 80) / 2}
         : isLeft
         ? {right: viewport.width - x - tx}
         : {left: x + tx})
     }),
-    [annotation, textWidth, tx, ty, viewport.width, viewport.height, x, y, isLeft, lineWidth, lineColor]
+    [autoSize, kind, textWidth, tx, ty, viewport.width, viewport.height, x, y, isLeft, lineWidth, lineColor]
   );
 
   const handleEditorChange = useCallback(

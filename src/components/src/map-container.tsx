@@ -779,6 +779,37 @@ export default function MapContainerFactory(
       // no-op
     };
 
+    _annotationViewportCache: {key: string; viewport: any} | null = null;
+
+    _getAnnotationViewport(mapState: any, internalViewState: any) {
+      const longitude = internalViewState?.longitude ?? mapState.longitude;
+      const latitude = internalViewState?.latitude ?? mapState.latitude;
+      const zoom = internalViewState?.zoom ?? mapState.zoom;
+      const pitch = internalViewState?.pitch ?? mapState.pitch ?? 0;
+      const bearing = internalViewState?.bearing ?? mapState.bearing ?? 0;
+      const width = mapState.width || 0;
+      const height = mapState.height || 0;
+      const key = `${longitude},${latitude},${zoom},${pitch},${bearing},${width},${height}`;
+
+      if (this._annotationViewportCache?.key === key) {
+        return this._annotationViewportCache.viewport;
+      }
+
+      const mergedState = {...mapState, ...internalViewState, width, height};
+      const vp = getViewportFromMapState(mergedState) as any;
+      const viewport = {
+        project: (lngLat: [number, number]) => vp.project(lngLat) as [number, number],
+        unproject: (xy: [number, number]) => vp.unproject(xy) as [number, number],
+        longitude,
+        latitude,
+        width,
+        height,
+        zoom
+      };
+      this._annotationViewportCache = {key, viewport};
+      return viewport;
+    }
+
     _onDeckError = (error, layer) => {
       const errorMessage = error?.message || 'unknown-error';
       const layerMessage = layer?.id ? ` in ${layer.id} layer` : '';
@@ -1371,23 +1402,7 @@ export default function MapContainerFactory(
             isEditingAnnotationText={visState.isEditingAnnotationText}
             isAnnotationMode={Boolean(mapControls?.annotation?.active)}
             mapIndex={index || 0}
-            viewport={
-              {
-                project: lngLat => {
-                  const vp = getViewportFromMapState({...mapState, ...internalViewState}) as any;
-                  return vp.project(lngLat) as [number, number];
-                },
-                unproject: xy => {
-                  const vp = getViewportFromMapState({...mapState, ...internalViewState}) as any;
-                  return vp.unproject(xy) as [number, number];
-                },
-                longitude: internalViewState?.longitude ?? mapState.longitude,
-                latitude: internalViewState?.latitude ?? mapState.latitude,
-                width: mapState.width,
-                height: mapState.height,
-                zoom: internalViewState?.zoom ?? mapState.zoom
-              } as any
-            }
+            viewport={this._getAnnotationViewport(mapState, internalViewState)}
             updateAnnotation={visStateActions.updateAnnotation}
             setSelectedAnnotation={visStateActions.setSelectedAnnotation}
           />

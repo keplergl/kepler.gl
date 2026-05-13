@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {FC, ReactNode, useEffect, useMemo} from 'react';
+import React, {FC, ReactNode, useCallback, useEffect, useMemo} from 'react';
 import styled from 'styled-components';
 import {LexicalComposer} from '@lexical/react/LexicalComposer';
 import {useLexicalComposerContext} from '@lexical/react/LexicalComposerContext';
@@ -114,12 +114,15 @@ const LexicalEditorInner: FC<LexicalRichTextEditorProps> = ({isEditable, onChang
     }
   }, [editor, isEditable]);
 
-  const handleChange = (state: EditorState) => {
-    state.read(() => {
-      const root = $getRoot();
-      onChange({text: root.getTextContent(), editorState: state.toJSON()});
-    });
-  };
+  const handleChange = useCallback(
+    (state: EditorState) => {
+      state.read(() => {
+        const root = $getRoot();
+        onChange({text: root.getTextContent(), editorState: state.toJSON()});
+      });
+    },
+    [onChange]
+  );
 
   return (
     <div className="editor-inner">

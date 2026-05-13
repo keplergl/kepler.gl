@@ -25,7 +25,7 @@ export default function ClickableLinkPlugin({
         return;
       }
       const href = linkDomNode.getAttribute('href');
-      if (linkDomNode.getAttribute('contenteditable') === 'false' || href === undefined) {
+      if (linkDomNode.getAttribute('contenteditable') === 'false' || href == null) {
         return;
       }
       const selection = editor.getEditorState().read($getSelection);
