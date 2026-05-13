@@ -26,6 +26,7 @@ const AnnotationOverlayContainer = styled.div`
   height: 100%;
   pointer-events: none;
   overflow: hidden;
+  z-index: 0;
 `;
 
 const AnnotationSvgContainer = styled.svg`

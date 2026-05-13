@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {FC, useCallback, useMemo} from 'react';
+import React, {FC, useCallback, useEffect, useMemo} from 'react';
 import styled from 'styled-components';
 import {useDraggable} from '@dnd-kit/core';
 import {Annotation, AnnotationWithArm} from '@kepler.gl/types';
@@ -68,7 +68,7 @@ const StyledToolbarWrapper = styled.div`
   width: max-content;
   padding: 2px 5px;
   margin-bottom: 4px;
-  z-index: 10;
+  z-index: 1;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 `;
 
@@ -125,6 +125,12 @@ const AnnotationText: FC<AnnotationTextProps> = ({
     [onChangeText]
   );
 
+  useEffect(() => {
+    if (!isEditingText || !isSelected || !isEditing) {
+      window.getSelection()?.removeAllRanges();
+    }
+  }, [isEditingText, isSelected, isEditing]);
+
   return (
     <StyledAnnotationText
       ref={setNodeRef}
@@ -158,6 +164,10 @@ const AnnotationText: FC<AnnotationTextProps> = ({
         : {})}
       onClick={evt => {
         if (!isEditing) return;
+        const target = evt.target;
+        if (target instanceof Element && target.closest('.lexical-toolbar')) {
+          return;
+        }
         evt.stopPropagation();
         if (!isEditingText) {
           onSelect(true);

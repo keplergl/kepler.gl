@@ -146,7 +146,8 @@ type ColorPickerButtonProps = {
   color: string;
   presets: Array<{color: string; label: string}>;
   title: string;
-  label: string;
+  label?: string;
+  renderIcon?: () => React.ReactNode;
   onSelectColor: (color: string) => void;
 };
 
@@ -154,7 +155,7 @@ const ColorPickerWrapper = styled.div`
   position: relative;
 `;
 
-const ColorPickerButton: FC<ColorPickerButtonProps> = ({color, presets, title, label, onSelectColor}) => {
+const ColorPickerButton: FC<ColorPickerButtonProps> = ({color, presets, title, label, renderIcon, onSelectColor}) => {
   const [isOpen, setIsOpen] = useState(false);
   const [showCustom, setShowCustom] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -174,20 +175,22 @@ const ColorPickerButton: FC<ColorPickerButtonProps> = ({color, presets, title, l
   );
 
   const handleCustomSelect = useCallback(
-    (rgb: [number, number, number]) => {
-      const hex = `#${rgb.map(v => v.toString(16).padStart(2, '0')).join('')}`;
-      onSelectColor(hex);
+    (color: [number, number, number] | {colors: string[]}) => {
+      if (Array.isArray(color)) {
+        const hex = `#${color.map(v => v.toString(16).padStart(2, '0')).join('')}`;
+        onSelectColor(hex);
+      }
       setIsOpen(false);
       setShowCustom(false);
     },
     [onSelectColor]
-  );
+  ) as (color: any, e?: any) => void;
 
   return (
     <ColorPickerWrapper ref={wrapperRef}>
       <ToolbarButton onClick={handleToggle} title={title}>
-        <span style={{fontSize: '10px', marginRight: '2px'}}>{label}</span>
-        <ColorSwatch $color={color === 'transparent' ? 'rgba(255,255,255,0.1)' : color} />
+        {renderIcon ? renderIcon() : <span style={{fontSize: '10px'}}>{label}</span>}
+        <ColorSwatch $color={color === 'transparent' ? 'rgba(255,255,255,0.1)' : color} style={{marginLeft: 4}} />
       </ToolbarButton>
       {isOpen && !showCustom && (
         <ColorPickerPopover onMouseDown={e => e.preventDefault()}>
@@ -241,7 +244,7 @@ export const LexicalToolbar: FC<LexicalToolbarProps> = ({
   onChangeTextVerticalAlign
 }) => {
   const [editor] = useLexicalComposerContext();
-  const {fontSize, fontFamily, fontColor, bgColor, handleChangeStyle, handleAlignHorizontal} =
+  const {fontSize, fontFamily, fontColor, bgColor, handleChangeStyle} =
     useLexicalTextStyle({
       editor,
       isEditingText: Boolean(isEditingText)
@@ -256,11 +259,15 @@ export const LexicalToolbar: FC<LexicalToolbarProps> = ({
   });
 
   return (
-    <ToolbarContainer className="lexical-toolbar" onMouseDown={e => e.preventDefault()}>
+    <ToolbarContainer className="lexical-toolbar" onMouseDown={e => {
+      if (e.target instanceof HTMLSelectElement) return;
+      e.preventDefault();
+    }}>
       <ToolbarRow>
         <ToolbarSelect
           value={fontFamily}
           onChange={e => handleChangeStyle('font-family', e.target.value)}
+          style={{marginRight: 2}}
         >
           {FONT_FAMILY_OPTIONS.map(f => (
             <option key={f} value={f}>
@@ -308,7 +315,15 @@ export const LexicalToolbar: FC<LexicalToolbarProps> = ({
           color={bgColor}
           presets={BG_COLOR_PRESETS}
           title="Background Color"
-          label="⬛"
+          label=""
+          renderIcon={() => (
+            <svg viewBox="0 0 16 16" width="12" height="12" style={{fill: 'none', stroke: 'currentColor', strokeWidth: 1.5}}>
+              <rect x="2" y="2" width="12" height="12" rx="1" strokeDasharray="2 1.5" />
+              <line x1="4" y1="14" x2="14" y2="4" />
+              <line x1="4" y1="10" x2="10" y2="4" />
+              <line x1="4" y1="6" x2="6" y2="4" />
+            </svg>
+          )}
           onSelectColor={c => handleChangeStyle('background-color', c)}
         />
         <ToolbarDivider />

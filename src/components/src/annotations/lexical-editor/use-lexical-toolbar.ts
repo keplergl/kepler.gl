@@ -7,7 +7,6 @@ import {mergeRegister} from '@lexical/utils';
 import {
   $getSelection,
   $isRangeSelection,
-  FORMAT_TEXT_COMMAND,
   FORMAT_ELEMENT_COMMAND,
   SELECTION_CHANGE_COMMAND,
   TextFormatType,
@@ -81,26 +80,23 @@ export const useLexicalTextFormat = ({
       if (!wasEditable) {
         editor.setEditable(true);
       }
-      editor.update(
-        () => {
-          let selection = $getSelection();
-          if (!$isRangeSelection(selection) || selection.isCollapsed()) {
-            const root = $getRoot();
-            const newSelection = $createRangeSelection();
-            newSelection.focus.set(root.getKey(), 0, 'element');
-            newSelection.anchor.set(root.getKey(), root.getChildrenSize(), 'element');
-            $setSelection(newSelection);
-          }
-        },
-        {
-          onUpdate: () => {
-            editor.dispatchCommand(FORMAT_TEXT_COMMAND, format as TextFormatType);
-            if (!wasEditable) {
-              editor.setEditable(false);
-            }
-          }
+      editor.update(() => {
+        let selection = $getSelection();
+        if (!$isRangeSelection(selection) || selection.isCollapsed()) {
+          const root = $getRoot();
+          const newSelection = $createRangeSelection();
+          newSelection.focus.set(root.getKey(), 0, 'element');
+          newSelection.anchor.set(root.getKey(), root.getChildrenSize(), 'element');
+          $setSelection(newSelection);
+          selection = $getSelection();
         }
-      );
+        if ($isRangeSelection(selection)) {
+          selection.formatText(format as TextFormatType);
+        }
+      });
+      if (!wasEditable) {
+        setTimeout(() => editor.setEditable(false), 0);
+      }
     },
     [editor]
   );
