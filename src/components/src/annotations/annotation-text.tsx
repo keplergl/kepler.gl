@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {FC, useCallback, useMemo, useRef} from 'react';
+import React, {FC, useCallback, useMemo} from 'react';
 import styled from 'styled-components';
 import {useDraggable} from '@dnd-kit/core';
 import {Annotation, AnnotationWithArm} from '@kepler.gl/types';
@@ -35,12 +35,20 @@ const StyledAnnotationText = styled.div<StyledAnnotationTextProps>`
         &:hover {
           border-color: rgba(255,255,255,0.6);
         }
-        cursor: ${props.$isEditingText ? 'text' : 'move'};
+        cursor: move;
         pointer-events: all;
       `
       : `
         pointer-events: none;
       `}
+  ${props =>
+    props.$isEditingText
+      ? `
+    .editor-inner {
+      cursor: text;
+    }
+  `
+      : ''}
   .editor-inner {
     justify-content: ${props =>
       props.$textVerticalAlign === 'top'
@@ -63,43 +71,6 @@ const StyledToolbarWrapper = styled.div`
   z-index: 10;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 `;
-
-const DragHandle = styled.div`
-  position: absolute;
-  bottom: -1px;
-  left: -24px;
-  width: 22px;
-  height: 22px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: move;
-  border-radius: 4px;
-  background: rgba(255, 255, 255, 0.2);
-  pointer-events: all;
-  z-index: 5;
-  opacity: 0.85;
-  transition: opacity 0.15s, background 0.15s;
-  &:hover {
-    opacity: 1;
-    background: rgba(255, 255, 255, 0.35);
-  }
-  svg {
-    width: 14px;
-    height: 14px;
-    fill: #fff;
-  }
-`;
-
-function isDoubleClick(clickTime: number, prevClickTime: number): boolean {
-  return clickTime - prevClickTime < 300;
-}
-
-const MoveIcon = () => (
-  <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
-    <path d="M8 0l2 3H9v4h4V6l3 2-3 2V9H9v4h1l-2 3-2-3h1V9H3v1L0 8l3-2v1h4V3H6l2-3z" />
-  </svg>
-);
 
 export type AnnotationTextProps = {
   annotation: Annotation;
@@ -128,7 +99,6 @@ const AnnotationText: FC<AnnotationTextProps> = ({
 
   const {textWidth, textHeight, lineColor, lineWidth, textVerticalAlign} = annotation;
   const {x, y, tx, ty} = makeMarker(annotation, viewport);
-  const prevPointerDownTime = useRef(0);
 
   const isArm = 'armLength' in annotation;
   const isLeft = isArm && isLeftOriented((annotation as AnnotationWithArm).angle);
@@ -155,10 +125,6 @@ const AnnotationText: FC<AnnotationTextProps> = ({
     [onChangeText]
   );
 
-  const handleDoubleClick = useCallback(() => {
-    onSelect(true);
-  }, [onSelect]);
-
   return (
     <StyledAnnotationText
       ref={setNodeRef}
@@ -167,54 +133,42 @@ const AnnotationText: FC<AnnotationTextProps> = ({
       $isSelected={isSelected}
       $textVerticalAlign={textVerticalAlign}
       style={style}
-      {...(isEditing && !isEditingText
+      {...(isEditing
         ? {
             ...attributes,
             ...listeners,
             onPointerDown: (evt: React.PointerEvent) => {
-              const {target, timeStamp} = evt;
+              const {target} = evt;
               if (target instanceof Element && target.closest('.lexical-toolbar')) {
                 return;
               }
-              if (target instanceof Element && target.closest('.drag-handle')) {
+              if (isEditingText) {
+                if (target instanceof Element && target.closest('.editor-inner')) {
+                  return;
+                }
+                listeners?.onPointerDown?.(evt as any);
                 return;
               }
-              if (isSelected && isDoubleClick(timeStamp, prevPointerDownTime.current)) {
-                onSelect(true);
-              } else {
-                listeners?.onPointerDown?.(evt as any);
+              listeners?.onPointerDown?.(evt as any);
+              if (!isSelected) {
                 onSelect(false);
               }
-              prevPointerDownTime.current = timeStamp;
             }
           }
-        : null)}
-      onPointerDown={(evt: React.PointerEvent) => {
-        if (!isEditing) return;
-        if (isEditingText) {
-          const {target, timeStamp} = evt;
-          if (target instanceof Element && target.closest('.drag-handle')) {
-            return;
-          }
-          prevPointerDownTime.current = timeStamp;
-        }
-      }}
+        : {})}
       onClick={evt => {
-        if (isSelected) {
-          evt.stopPropagation();
+        if (!isEditing) return;
+        evt.stopPropagation();
+        if (!isEditingText) {
+          onSelect(true);
         }
       }}
       onDoubleClick={() => {
         if (!isEditing) {
-          handleDoubleClick();
+          onSelect(true);
         }
       }}
     >
-      {isEditing && isSelected && (
-        <DragHandle className="drag-handle" {...attributes} {...listeners}>
-          <MoveIcon />
-        </DragHandle>
-      )}
       <LexicalRichTextEditor
         {...(isEditingText && annotation.autoSize ? {} : {width: textWidth || undefined})}
         {...(isEditingText && annotation.autoSizeY ? {} : {height: textHeight || undefined})}
