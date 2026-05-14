@@ -68,7 +68,8 @@ export default {
       layer: 'Capas',
       filter: 'Filtros',
       interaction: 'Interacciones',
-      basemap: 'Mapa base'
+      basemap: 'Mapa base',
+      annotation: 'Anotaciones'
     },
     panelViewToggle: {
       list: 'Ver Lista',
@@ -231,6 +232,13 @@ export default {
     time: 'Hora',
     timezone: 'Zona horaria'
   },
+  annotationManager: {
+    title: 'Anotaciones',
+    addAnnotation: 'Añadir',
+    type: 'Tipo',
+    lineWidth: 'Ancho de línea',
+    color: 'Color'
+  },
   effectDescription: {
     lightAndShadow:
       'Simula iluminación solar realista y proyección de sombras basada en la hora del día y la ubicación geográfica. Intensidad de sombra, colores de luz solar y ambiental ajustables.',
@@ -335,6 +343,13 @@ export default {
     syncTimelineEnd: 'Fin del período de tiempo del filtro actual',
     showEffectPanel: 'Mostrar panel de efectos',
     hideEffectPanel: 'Ocultar panel de efectos',
+    showAnnotationPanel: 'Mostrar anotaciones',
+    hideAnnotationPanel: 'Ocultar anotaciones',
+    removeAnnotation: 'Eliminar anotación',
+    duplicateAnnotation: 'Duplicar anotación',
+    hideAnnotation: 'Ocultar anotación',
+    showAnnotation: 'Mostrar anotación',
+    annotationSettings: 'Configuración de anotación',
     removeEffect: 'Eliminar efecto',
     disableEffect: 'Desactivar efecto',
     effectSettings: 'Configuración de efecto'
@@ -552,7 +567,8 @@ export default {
   },
   header: {
     visibleLayers: 'Capas visibles',
-    layerLegend: 'Capa de leyenda'
+    layerLegend: 'Capa de leyenda',
+    annotations: 'Anotaciones'
   },
   interactions: {
     tooltip: 'Sugerencias',

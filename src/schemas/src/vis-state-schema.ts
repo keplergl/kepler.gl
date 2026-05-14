@@ -28,7 +28,8 @@ import {
   SavedVisState,
   SplitMap,
   ValueOf,
-  Effect
+  Effect,
+  Annotation
 } from '@kepler.gl/types';
 import {Datasets} from '@kepler.gl/table';
 import {Layer, LayerClassesType} from '@kepler.gl/layers';
@@ -56,7 +57,7 @@ export interface VisState {
   layerOrder: string[];
   effects: Effect[];
   effectOrder: string[];
-  annotations: import('@kepler.gl/types').Annotation[];
+  annotations: Annotation[];
   annotationsToBeMerged: any[];
   selectedAnnotationId: string | null;
   isEditingAnnotationText: boolean;

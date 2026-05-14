@@ -83,7 +83,7 @@ const StyledAddButton = styled.div`
   display: flex;
   align-items: center;
   height: ${props => props.theme.inputBoxHeight};
-  width: 100px;
+  width: fit-content;
   padding: 4px 10px;
   background-color: ${props => props.theme.secondaryBtnBgd};
   border-radius: ${props => props.theme.primaryBtnRadius};

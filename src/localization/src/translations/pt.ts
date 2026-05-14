@@ -68,7 +68,8 @@ export default {
       layer: 'Camadas',
       filter: 'Filtros',
       interaction: 'Interações',
-      basemap: 'Mapa base'
+      basemap: 'Mapa base',
+      annotation: 'Anotações'
     },
     panelViewToggle: {
       list: 'Ver Lista',
@@ -231,6 +232,13 @@ export default {
     time: 'Hora',
     timezone: 'Fuso horário'
   },
+  annotationManager: {
+    title: 'Anotações',
+    addAnnotation: 'Adicionar',
+    type: 'Tipo',
+    lineWidth: 'Largura da linha',
+    color: 'Cor'
+  },
   effectDescription: {
     lightAndShadow:
       'Simula iluminação solar realista e projeção de sombras com base na hora do dia e localização geográfica. Intensidade de sombra, cores de luz solar e ambiente ajustáveis.',
@@ -335,6 +343,13 @@ export default {
     syncTimelineEnd: 'Fim do período de tempo do filtro atual',
     showEffectPanel: 'Mostrar painel de efeitos',
     hideEffectPanel: 'Ocultar painel de efeitos',
+    showAnnotationPanel: 'Mostrar anotações',
+    hideAnnotationPanel: 'Ocultar anotações',
+    removeAnnotation: 'Remover anotação',
+    duplicateAnnotation: 'Duplicar anotação',
+    hideAnnotation: 'Ocultar anotação',
+    showAnnotation: 'Mostrar anotação',
+    annotationSettings: 'Configurações da anotação',
     removeEffect: 'Remover efeito',
     disableEffect: 'Desativar efeito',
     effectSettings: 'Configurações de efeito'
@@ -553,7 +568,8 @@ export default {
   },
   header: {
     visibleLayers: 'Camadas Visíveis',
-    layerLegend: 'Legenda da Camada'
+    layerLegend: 'Legenda da Camada',
+    annotations: 'Anotações'
   },
   interactions: {
     tooltip: 'Dica de contexto',
