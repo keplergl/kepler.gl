@@ -32,6 +32,10 @@ map.add_data(data=df, name='my_data')
 map
 ```
 
+## Use with AI Coding Assistants
+
+This package works with AI coding assistants via the **kepler.gl skill**. See [`skill/`](../../skill/) for installation instructions and reference documentation.
+
 ## Documentation
 
 For full documentation, visit [https://docs.kepler.gl/docs/keplergl-jupyter](https://docs.kepler.gl/docs/keplergl-jupyter).

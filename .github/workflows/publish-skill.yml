@@ -1,0 +1,77 @@
+name: Publish kepler.gl Skill
+
+on:
+  push:
+    paths:
+      - 'skill/SKILL.md'
+      - 'skill/skill-references/**'
+      - 'skill/agents/**'
+      - 'skill/plugin.json'
+    tags:
+      - 'skill-v*'
+  workflow_dispatch:
+
+jobs:
+  build-skills:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read skill version
+        id: version
+        run: |
+          VERSION=$(python3 -c "import json; print(json.load(open('skill/plugin.json'))['version'])")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Build Claude skill package
+        run: |
+          STAGING=$(mktemp -d)
+          SKILL_DIR="$STAGING/kepler.gl"
+          mkdir -p "$SKILL_DIR"
+
+          cp skill/SKILL.md "$SKILL_DIR/SKILL.md"
+          cp -r skill/skill-references "$SKILL_DIR/skill-references"
+
+          (cd "$STAGING" && zip -r "$OLDPWD/kepler.gl-claude.zip" kepler.gl)
+          rm -rf "$STAGING"
+
+      - name: Build Codex skill package
+        run: |
+          STAGING=$(mktemp -d)
+          SKILL_DIR="$STAGING/kepler.gl"
+          mkdir -p "$SKILL_DIR"
+
+          cp skill/SKILL.md "$SKILL_DIR/SKILL.md"
+          cp -r skill/skill-references "$SKILL_DIR/skill-references"
+          cp -r skill/agents "$SKILL_DIR/agents"
+
+          (cd "$STAGING" && zip -r "$OLDPWD/kepler.gl-codex.zip" kepler.gl)
+          rm -rf "$STAGING"
+
+      - name: Upload Claude skill artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: kepler.gl-claude-v${{ steps.version.outputs.version }}
+          path: kepler.gl-claude.zip
+
+      - name: Upload Codex skill artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: kepler.gl-codex-v${{ steps.version.outputs.version }}
+          path: kepler.gl-codex.zip
+
+      - name: Build source package
+        run: |
+          zip -r kepler.gl-skill-source.zip skill/
+
+      - name: Attach packages to release
+        if: startsWith(github.ref, 'refs/tags/skill-v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            kepler.gl-claude.zip
+            kepler.gl-codex.zip
+            kepler.gl-skill-source.zip
