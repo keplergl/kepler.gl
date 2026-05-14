@@ -231,7 +231,10 @@ export default {
   },
   annotationManager: {
     title: 'Annotations',
-    addAnnotation: 'Add'
+    addAnnotation: 'Add',
+    type: 'Type',
+    lineWidth: 'Line Width',
+    color: 'Color'
   },
   effectDescription: {
     lightAndShadow:

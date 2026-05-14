@@ -54,7 +54,7 @@ export type AnnotationNodeProps = {
   isSelected: boolean;
 };
 
-const AnnotationNode: FC<AnnotationNodeProps> = ({annotation, viewport, isEditing}) => {
+const AnnotationNode: FC<AnnotationNodeProps> = ({annotation, viewport, isEditing, isSelected}) => {
   const {lineColor, lineWidth} = annotation;
   const marker = makeMarker(annotation, viewport);
   const {kind, x, y, tx, ty} = marker;
@@ -65,6 +65,11 @@ const AnnotationNode: FC<AnnotationNodeProps> = ({annotation, viewport, isEditin
     <MoveHandle id={`${annotation.id}:MOVE_POINT`} x={0} y={0} />
   ) : null;
 
+  const selectionHighlight =
+    isEditing && isSelected ? (
+      <circle r={HANDLE_RADIUS + 2} fill="none" stroke="rgba(64,169,255,0.6)" strokeWidth={2} />
+    ) : null;
+
   let body: React.ReactNode = null;
 
   switch (kind) {
@@ -72,7 +77,13 @@ const AnnotationNode: FC<AnnotationNodeProps> = ({annotation, viewport, isEditin
       const circleMarker = marker as CircleAnnotationMarker;
       body = (
         <>
-          <circle r={circleMarker.r} fill="none" stroke={lineColor} strokeWidth={lineWidth} />
+          <circle
+            r={circleMarker.r}
+            fill="none"
+            stroke={lineColor}
+            strokeWidth={lineWidth}
+            {...(isSelected && isEditing ? {strokeDasharray: '6 3'} : {})}
+          />
           <path
             d={`M${circleMarker.ax},${circleMarker.ay} L${tx},${ty}`}
             stroke={lineColor}
@@ -83,6 +94,7 @@ const AnnotationNode: FC<AnnotationNodeProps> = ({annotation, viewport, isEditin
           {isEditing ? (
             <>
               {moveHandle}
+              {selectionHighlight}
               <ResizeHandle id={`${annotation.id}:RESIZE`} x={circleMarker.r} y={0} />
             </>
           ) : null}
@@ -115,11 +127,17 @@ const AnnotationNode: FC<AnnotationNodeProps> = ({annotation, viewport, isEditin
             <circle r={lineWidth * 1.5} fill={lineColor} stroke="none" />
           ) : null}
           {moveHandle}
+          {selectionHighlight}
         </>
       );
       break;
     default:
-      body = moveHandle;
+      body = (
+        <>
+          {moveHandle}
+          {selectionHighlight}
+        </>
+      );
   }
 
   return <g transform={`translate(${x},${y})`}>{body}</g>;

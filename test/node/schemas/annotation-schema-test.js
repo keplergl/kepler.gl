@@ -14,6 +14,7 @@ const annotationPropsV1 = {
   autoSizeY: null,
   anchorPoint: null,
   label: null,
+  editorState: null,
   mapIndex: null,
   lineColor: null,
   lineWidth: null,
@@ -38,6 +39,7 @@ const makePointAnnotation = (overrides = {}) => ({
   autoSizeY: true,
   anchorPoint: [10, 20],
   label: 'Point annotation',
+  editorState: {root: {children: [], direction: null, format: '', indent: 0, type: 'root', version: 1}},
   mapIndex: 0,
   lineColor: '#FF0000',
   lineWidth: 3,
@@ -58,7 +60,8 @@ const makeCircleAnnotation = (overrides = {}) => ({
   autoSizeY: true,
   anchorPoint: [-122.4, 37.8],
   label: 'Circle annotation',
-  mapIndex: undefined,
+  editorState: null,
+  mapIndex: null,
   lineColor: '#00FF00',
   lineWidth: 2,
   textWidth: 0,
@@ -78,6 +81,7 @@ const makeTextAnnotation = (overrides = {}) => ({
   autoSizeY: true,
   anchorPoint: [0, 0],
   label: 'Text only',
+  editorState: null,
   mapIndex: null,
   lineColor: '#FFFFFF',
   lineWidth: 2,
@@ -164,6 +168,12 @@ test('#AnnotationsSchema -> save/load round-trip', t => {
   t.equal(loaded.annotations[0].kind, AnnotationKind.POINT, 'point kind round-trips');
   t.deepEqual(loaded.annotations[0].anchorPoint, [10, 20], 'point anchorPoint round-trips');
   t.equal(loaded.annotations[0].armLength, 60, 'point armLength round-trips');
+  t.equal(loaded.annotations[0].textVerticalAlign, 'bottom', 'point textVerticalAlign round-trips');
+  t.deepEqual(
+    loaded.annotations[0].editorState,
+    {root: {children: [], direction: null, format: '', indent: 0, type: 'root', version: 1}},
+    'point editorState round-trips'
+  );
 
   // Check circle
   t.equal(loaded.annotations[1].id, 'ann-circle-1', 'circle id round-trips');
@@ -172,6 +182,7 @@ test('#AnnotationsSchema -> save/load round-trip', t => {
   // Check text
   t.equal(loaded.annotations[2].id, 'ann-text-1', 'text id round-trips');
   t.equal(loaded.annotations[2].kind, AnnotationKind.TEXT, 'text kind round-trips');
+  t.equal(loaded.annotations[2].textVerticalAlign, 'middle', 'text textVerticalAlign round-trips');
 
   t.end();
 });

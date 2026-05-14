@@ -21,7 +21,9 @@ import {
   AGGREGATION_TYPES,
   LAYER_BLENDINGS,
   OVERLAY_BLENDINGS,
-  isAnnotationKind
+  isAnnotationKind,
+  INITIAL_ANNOTATION_LINE_COLOR,
+  INITIAL_ANNOTATION_LINE_WIDTH
 } from '@kepler.gl/constants';
 import {CURRENT_VERSION, VisState, VisStateMergers, KeplerGLSchemaClass} from '@kepler.gl/schemas';
 
@@ -595,14 +597,27 @@ export function mergeAnnotations<S extends VisState>(state: S, annotations: any[
     return state;
   }
   const existingIds = new Set(state.annotations.map(a => a.id));
-  const validAnnotations = annotations.filter(
-    a =>
-      a &&
-      a.id &&
-      !existingIds.has(a.id) &&
-      isAnnotationKind(a.kind) &&
-      Array.isArray(a.anchorPoint)
-  );
+  const validAnnotations = annotations
+    .filter(
+      a =>
+        a &&
+        a.id &&
+        !existingIds.has(a.id) &&
+        isAnnotationKind(a.kind) &&
+        Array.isArray(a.anchorPoint) &&
+        a.anchorPoint.length === 2
+    )
+    .map(a => ({
+      isVisible: true,
+      autoSize: true,
+      autoSizeY: true,
+      label: '',
+      lineColor: INITIAL_ANNOTATION_LINE_COLOR,
+      lineWidth: INITIAL_ANNOTATION_LINE_WIDTH,
+      textWidth: 0,
+      textHeight: 0,
+      ...a
+    }));
   if (!validAnnotations.length) {
     return state;
   }
