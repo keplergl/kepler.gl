@@ -68,7 +68,8 @@ export default {
       layer: 'レイヤ',
       filter: 'フィルター',
       interaction: 'インタラクション',
-      basemap: 'ベースマップ'
+      basemap: 'ベースマップ',
+      annotation: 'アノテーション'
     },
     panelViewToggle: {
       list: 'リスト表示',
@@ -228,6 +229,13 @@ export default {
     time: '時刻',
     timezone: 'タイムゾーン'
   },
+  annotationManager: {
+    title: 'アノテーション',
+    addAnnotation: '追加',
+    type: 'タイプ',
+    lineWidth: '線幅',
+    color: '色'
+  },
   effectDescription: {
     lightAndShadow:
       '時刻と地理的位置に基づいてリアルな太陽光と影の投影をシミュレートします。影の強さ、太陽光と環境光の色を調整できます。',
@@ -329,6 +337,13 @@ export default {
     syncTimelineEnd: '現在のフィルタ期間の終了',
     showEffectPanel: 'エフェクトパネルを表示',
     hideEffectPanel: 'エフェクトパネルを非表示',
+    showAnnotationPanel: 'アノテーションを表示',
+    hideAnnotationPanel: 'アノテーションを非表示',
+    removeAnnotation: 'アノテーションを削除',
+    duplicateAnnotation: 'アノテーションを複製',
+    hideAnnotation: 'アノテーションを隠す',
+    showAnnotation: 'アノテーションを表示',
+    annotationSettings: 'アノテーション設定',
     removeEffect: 'エフェクトを削除',
     disableEffect: 'エフェクトを無効化',
     effectSettings: 'エフェクト設定',
@@ -548,7 +563,8 @@ export default {
   },
   header: {
     visibleLayers: '表示中のレイヤ',
-    layerLegend: 'レイヤ判例'
+    layerLegend: 'レイヤ判例',
+    annotations: 'アノテーション'
   },
   interactions: {
     tooltip: 'ツールチップ',

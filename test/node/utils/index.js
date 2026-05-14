@@ -27,3 +27,4 @@ import './composer-helpers-test';
 import './dom-to-image';
 import './effect-utils-test';
 import './duckdb-utils-test';
+import './annotation-utils-test';

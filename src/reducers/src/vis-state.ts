@@ -165,6 +165,16 @@ const actionHandler = {
 
   [ActionTypes.UPDATE_EFFECT]: visStateUpdaters.updateEffectUpdater,
 
+  [ActionTypes.ADD_ANNOTATION]: visStateUpdaters.addAnnotationUpdater,
+
+  [ActionTypes.REMOVE_ANNOTATION]: visStateUpdaters.removeAnnotationUpdater,
+
+  [ActionTypes.UPDATE_ANNOTATION]: visStateUpdaters.updateAnnotationUpdater,
+
+  [ActionTypes.DUPLICATE_ANNOTATION]: visStateUpdaters.duplicateAnnotationUpdater,
+
+  [ActionTypes.SET_SELECTED_ANNOTATION]: visStateUpdaters.setSelectedAnnotationUpdater,
+
   [ActionTypes.CREATE_NEW_DATASET_SUCCESS]: visStateUpdaters.createNewDatasetSuccessUpdater,
 
   [ActionTypes.SET_LOADING_INDICATOR]: visStateUpdaters.setLoadingIndicatorUpdater

@@ -583,7 +583,8 @@ function castBigIntColumnsToFloat64(arrowTable: arrow.Table): arrow.Table {
   const newColumns: Record<string, arrow.Vector> = {};
   for (let i = 0; i < arrowTable.numCols; i++) {
     const field = arrowTable.schema.fields[i];
-    const col = arrowTable.getChildAt(i)!;
+    const col = arrowTable.getChildAt(i);
+    if (!col) continue;
     if (arrow.DataType.isInt(field.type) && field.type.bitWidth === 64) {
       const float64Array = new Float64Array(col.length);
       for (let j = 0; j < col.length; j++) {

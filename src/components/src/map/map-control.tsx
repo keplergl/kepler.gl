@@ -17,6 +17,8 @@ import {Editor, LayerVisConfig, MapControls, MapState} from '@kepler.gl/types';
 import {Datasets} from '@kepler.gl/table';
 import {MapStateActions, UIStateActions} from '@kepler.gl/actions';
 
+import AnnotationControlFactory from './annotations/annotation-control';
+
 interface StyledMapControlProps {
   $top?: number;
 }
@@ -89,7 +91,8 @@ MapControlFactory.deps = [
   LayerSelectorPanelFactory,
   MapLegendPanelFactory,
   MapDrawPanelFactory,
-  LocalePanelFactory
+  LocalePanelFactory,
+  AnnotationControlFactory
 ];
 
 function MapControlFactory(
@@ -98,13 +101,15 @@ function MapControlFactory(
   LayerSelectorPanel: ReturnType<typeof LayerSelectorPanelFactory>,
   MapLegendPanel: ReturnType<typeof MapLegendPanelFactory>,
   MapDrawPanel: ReturnType<typeof MapDrawPanelFactory>,
-  LocalePanel: ReturnType<typeof LocalePanelFactory>
+  LocalePanel: ReturnType<typeof LocalePanelFactory>,
+  AnnotationControl: ReturnType<typeof AnnotationControlFactory>
 ) {
   const DEFAULT_ACTIONS = [
     SplitMapButton,
     LayerSelectorPanel,
     Toggle3dButton,
     MapDrawPanel,
+    AnnotationControl,
     LocalePanel,
     MapLegendPanel
   ];

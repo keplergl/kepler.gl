@@ -68,7 +68,8 @@ export default {
       layer: 'Слои',
       filter: 'Фильтры',
       interaction: 'Взаимодействия',
-      basemap: 'Базовая карта'
+      basemap: 'Базовая карта',
+      annotation: 'Аннотации'
     },
     panelViewToggle: {
       list: 'Просмотр списком',
@@ -230,6 +231,13 @@ export default {
     time: 'Время',
     timezone: 'Часовой пояс'
   },
+  annotationManager: {
+    title: 'Аннотации',
+    addAnnotation: 'Добавить',
+    type: 'Тип',
+    lineWidth: 'Толщина линии',
+    color: 'Цвет'
+  },
   effectDescription: {
     lightAndShadow:
       'Имитирует реалистичное солнечное освещение и отбрасывание теней на основе времени суток и географического положения. Регулируемая интенсивность теней, цвета солнечного и рассеянного света.',
@@ -332,6 +340,13 @@ export default {
     syncTimelineEnd: 'Конец текущего периода фильтра',
     showEffectPanel: 'Показать панель эффектов',
     hideEffectPanel: 'Скрыть панель эффектов',
+    showAnnotationPanel: 'Показать аннотации',
+    hideAnnotationPanel: 'Скрыть аннотации',
+    removeAnnotation: 'Удалить аннотацию',
+    duplicateAnnotation: 'Дублировать аннотацию',
+    hideAnnotation: 'Скрыть аннотацию',
+    showAnnotation: 'Показать аннотацию',
+    annotationSettings: 'Настройки аннотации',
     removeEffect: 'Удалить эффект',
     disableEffect: 'Отключить эффект',
     effectSettings: 'Настройки эффекта',
@@ -553,7 +568,8 @@ export default {
   },
   header: {
     visibleLayers: 'Видимые слои',
-    layerLegend: 'Легенда слоя'
+    layerLegend: 'Легенда слоя',
+    annotations: 'Аннотации'
   },
   interactions: {
     tooltip: 'Подсказка',

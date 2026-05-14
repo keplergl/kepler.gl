@@ -76,7 +76,7 @@ test('MapControlFactory - display all options', t => {
       onSetLocale={onSetLocale}
     />
   );
-  t.equal($.find('.map-control-action').length, 6, 'Should show 6 action panels');
+  t.equal($.find('.map-control-action').length, 7, 'Should show 7 action panels');
   t.end();
 });
 
@@ -103,7 +103,7 @@ test('MapControlFactory - display options', t => {
   t.equal(wrapper.find(MapControl).length, 1, 'Should render MapControl');
 
   // layer selector is not active
-  t.equal(wrapper.find(MapControlButton).length, 5, 'Should show 5 MapControlButton');
+  t.equal(wrapper.find(MapControlButton).length, 6, 'Should show 6 MapControlButton');
 
   t.equal(wrapper.find(Split).length, 1, 'Should show 1 split map button');
   t.equal(wrapper.find(Cube3d).length, 1, 'Should show 1 toggle 3d button');
@@ -126,8 +126,8 @@ test('MapControlFactory - display options', t => {
     )
   });
 
-  // 6 control buttons as legend is opened automatically in split map mode
-  t.equal(wrapper.find(MapControlButton).length, 6, 'Should show 6 MapControlButton');
+  // 7 control buttons as legend is opened automatically in split map mode
+  t.equal(wrapper.find(MapControlButton).length, 7, 'Should show 7 MapControlButton');
   t.equal(wrapper.find(Split).length, 0, 'Should show 0 split map split button');
   t.equal(wrapper.find(Delete).length, 1, 'Should show 1 split map delete button');
   t.equal(wrapper.find(Layers).length, 1, 'Should show 1 Layer button');
@@ -194,7 +194,7 @@ test('MapControlFactory - click options', t => {
   }, 'MapContainer should not fail without props');
 
   // layer selector is not active
-  t.equal(wrapper.find(MapControlButton).length, 6, 'Should show 6 MapControlButton');
+  t.equal(wrapper.find(MapControlButton).length, 7, 'Should show 7 MapControlButton');
 
   t.equal(wrapper.find(Delete).length, 1, 'Should show 1 delete split map button');
   // click split Map

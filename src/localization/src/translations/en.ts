@@ -68,7 +68,8 @@ export default {
       layer: 'Layers',
       filter: 'Filters',
       interaction: 'Interactions',
-      basemap: 'Base map'
+      basemap: 'Base map',
+      annotation: 'Annotations'
     },
     panelViewToggle: {
       list: 'View List',
@@ -220,13 +221,20 @@ export default {
   },
   effectManager: {
     effects: 'Effects',
-    addEffect: 'Add effect',
+    addEffect: 'Add',
     pickDateTime: 'Pick date/time',
     currentTime: 'Current time',
     pickCurrrentTime: 'Pick current time',
     date: 'Date',
     time: 'Time',
     timezone: 'Timezone'
+  },
+  annotationManager: {
+    title: 'Annotations',
+    addAnnotation: 'Add',
+    type: 'Type',
+    lineWidth: 'Line Width',
+    color: 'Color'
   },
   effectDescription: {
     lightAndShadow:
@@ -332,6 +340,13 @@ export default {
     syncTimelineEnd: 'End of current filter timeframe',
     showEffectPanel: 'Show effect panel',
     hideEffectPanel: 'Hide effect panel',
+    showAnnotationPanel: 'Show annotations',
+    hideAnnotationPanel: 'Hide annotations',
+    removeAnnotation: 'Remove annotation',
+    duplicateAnnotation: 'Duplicate annotation',
+    hideAnnotation: 'Hide annotation',
+    showAnnotation: 'Show annotation',
+    annotationSettings: 'Annotation settings',
     removeEffect: 'Remove effect',
     disableEffect: 'Disable effect',
     effectSettings: 'Effect settings'
@@ -610,7 +625,8 @@ ${'```'}
   },
   header: {
     visibleLayers: 'Visible layers',
-    layerLegend: 'Legend'
+    layerLegend: 'Legend',
+    annotations: 'Annotations'
   },
   interactions: {
     tooltip: 'Tooltip',

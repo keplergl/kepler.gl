@@ -33,6 +33,7 @@ const expectedVisStateEntries = [
   'filters',
   'layers',
   'effects',
+  'annotations',
   'interactionConfig',
   'layerBlending',
   'overlayBlending',

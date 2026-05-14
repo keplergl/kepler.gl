@@ -89,6 +89,7 @@ export {default as OrderByList} from './order-by-list';
 export {default as OrderByDataset} from './order-by-dataset';
 export {default as Messages} from './messages';
 export {default as Crosshairs} from './crosshairs';
+export {default as AnnotationText} from './annotation-text';
 export {default as CursorClick} from './cursor-click';
 export {default as CursorPoint} from './cursor-point';
 export {default as Calendar} from './calendar';

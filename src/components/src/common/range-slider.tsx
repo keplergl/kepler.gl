@@ -325,7 +325,7 @@ export default function RangeSliderFactory(
                   animationWindow={animationWindow}
                   filter={filter}
                   datasets={datasets}
-                  range={displayRange!}
+                  range={displayRange || range}
                   value={value}
                   width={plotWidth}
                   isRanged={isRanged}
@@ -362,8 +362,8 @@ export default function RangeSliderFactory(
                 <Slider
                   marks={this.props.marks}
                   isRanged={isRanged}
-                  minValue={displayRange![0]}
-                  maxValue={displayRange![1]}
+                  minValue={(displayRange || range)[0]}
+                  maxValue={(displayRange || range)[1]}
                   value0={this.props.value0}
                   value1={this.props.value1}
                   step={step}

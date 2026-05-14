@@ -50,9 +50,7 @@ export const testForCoordinates = (query: string): [true, number, number] | [fal
 
 const EDGE_MERIDIAN = 180;
 
-export function getViewportBbox(
-  mapState: MapState
-): [number, number, number, number] | null {
+export function getViewportBbox(mapState: MapState): [number, number, number, number] | null {
   if (!mapState.width || !mapState.height) {
     return null;
   }
@@ -232,7 +230,11 @@ const GeoCoder: React.FC<GeocoderProps & IntlProps> = ({
         debounceTimeout = setTimeout(async () => {
           if (limit > 0 && Boolean(queryString)) {
             try {
-              const geocodeParams: {query: string; limit: number; bbox?: [number, number, number, number]} = {
+              const geocodeParams: {
+                query: string;
+                limit: number;
+                bbox?: [number, number, number, number];
+              } = {
                 query: queryString,
                 limit
               };
@@ -242,9 +244,7 @@ const GeoCoder: React.FC<GeocoderProps & IntlProps> = ({
                   geocodeParams.bbox = bbox;
                 }
               }
-              const response = await client
-                .forwardGeocode(geocodeParams)
-                .send();
+              const response = await client.forwardGeocode(geocodeParams).send();
               if (response.body.features) {
                 setShowResults(true);
                 setResults(response.body.features);
