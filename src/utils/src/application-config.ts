@@ -100,7 +100,7 @@ export type KeplerApplicationConfig = {
   /** Whether to enable the annotations feature. Enabled by default. */
   enableAnnotations?: boolean;
 
-  /** Whether to show the map navigation control (zoom buttons and compass). Disabled by default. */
+  /** Whether to show the map navigation control (zoom buttons and compass). Enabled by default. */
   enableMapNavigationControl?: boolean;
 };
 

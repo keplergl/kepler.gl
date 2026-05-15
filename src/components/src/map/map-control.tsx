@@ -147,7 +147,6 @@ function MapControlFactory(
             mapState={mapState}
             mapIndex={mapIndex}
             mapStateActions={mapStateActions}
-            isSplit={isSplit}
           />
         ) : null}
       </StyledMapControl>
