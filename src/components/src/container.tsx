@@ -20,7 +20,18 @@ export const ERROR_MSG = {
 
 const mapStateToProps = (state: any, props: ContainerProps) => ({state, ...props});
 const dispatchToProps = (dispatch: Dispatch<any>) => ({dispatch});
-const connector = connect(mapStateToProps, dispatchToProps);
+const connector = connect(mapStateToProps, dispatchToProps, null, {
+  areStatesEqual: (next: any, prev: any, nextOwnProps: ContainerProps) => {
+    const getState = nextOwnProps.getState || ((s: any) => s.keplerGl);
+    const id = nextOwnProps.id || 'map';
+    const nextInstance = getState(next)?.[id];
+    const prevInstance = getState(prev)?.[id];
+    if (!prevInstance && !nextInstance) {
+      return next === prev;
+    }
+    return nextInstance === prevInstance;
+  }
+});
 
 type ContainerProps = {
   id: string;
