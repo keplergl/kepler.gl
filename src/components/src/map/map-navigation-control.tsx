@@ -27,14 +27,13 @@ const NavButtonGroup = styled.div`
   display: flex;
   flex-direction: column;
   gap: 0;
-  border-radius: 4px;
+  border-radius: 0;
   overflow: hidden;
   box-shadow: 0 6px 12px 0 rgba(0, 0, 0, 0.16);
 `;
 
 interface NavButtonProps {
   $isFirst?: boolean;
-  $isLast?: boolean;
 }
 
 const NavButton = styled.button<NavButtonProps>`
@@ -49,8 +48,7 @@ const NavButton = styled.button<NavButtonProps>`
   background-color: ${props => props.theme.floatingBtnBgd};
   color: ${props => props.theme.floatingBtnColor};
   border-top: ${props => (props.$isFirst ? 'none' : `1px solid ${props.theme.panelBorderColor}`)};
-  border-radius: ${props =>
-    props.$isFirst ? '4px 4px 0 0' : props.$isLast ? '0 0 4px 4px' : '0'};
+  border-radius: 0;
 
   &:hover {
     background-color: ${props => props.theme.floatingBtnBgdHover};
@@ -77,7 +75,7 @@ const CompassButton = styled.button`
   justify-content: center;
   background-color: ${props => props.theme.floatingBtnBgd};
   color: ${props => props.theme.floatingBtnColor};
-  border-radius: 4px;
+  border-radius: 0;
   box-shadow: 0 6px 12px 0 rgba(0, 0, 0, 0.16);
 
   &:hover {
@@ -166,7 +164,6 @@ export default function MapNavigationControlFactory() {
             </svg>
           </NavButton>
           <NavButton
-            $isLast
             onClick={handleZoomOut}
             title="Zoom out"
             className="map-navigation-control__zoom-out"
