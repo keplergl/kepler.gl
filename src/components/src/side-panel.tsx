@@ -270,6 +270,9 @@ export default function SidePanelFactory(
           if ((pf[i] as any).animationWindow !== (nf[i] as any).animationWindow) return false;
           if (pf[i].speed !== nf[i].speed) return false;
           if (pf[i].gpu !== nf[i].gpu) return false;
+          if ((nf[i] as any).isAnimating && nf[i].view !== 'enlarged') {
+            if (pf[i].value !== nf[i].value) return false;
+          }
         }
         continue;
       }
