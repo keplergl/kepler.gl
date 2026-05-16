@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useRef, useState, useEffect} from 'react';
+import React, {useRef, useState, useEffect, useCallback} from 'react';
 import classnames from 'classnames';
 import styled from 'styled-components';
 import {Map as MapboxLegacyMap, MapInstance, MapRef} from 'react-map-gl/mapbox-legacy';
@@ -124,6 +124,8 @@ function AddMapStyleModalFactory() {
     const [reRenderKey, setReRenderKey] = useState(0);
     const [previousToken, setPreviousToken] = useState<string | null>(null);
     const mapRef = useRef<MapInstance | null>(null);
+    const loadCustomMapStyleRef = useRef(loadCustomMapStyleAction);
+    loadCustomMapStyleRef.current = loadCustomMapStyleAction;
 
     useEffect(() => {
       if (inputStyle?.accessToken && inputStyle.accessToken !== previousToken) {
@@ -132,15 +134,7 @@ function AddMapStyleModalFactory() {
       }
     }, [inputStyle?.accessToken, previousToken]);
 
-    const loadMapStyleJson = (style: any) => {
-      loadCustomMapStyleAction({style, error: false});
-    };
-
-    const loadMapStyleError = () => {
-      loadCustomMapStyleAction({error: true});
-    };
-
-    const setMapRefCallback = (mapRefInstance: MapRef | null) => {
+    const setMapRefCallback = useCallback((mapRefInstance: MapRef | null) => {
       if (mapRef.current && mapRefInstance) {
         const map = mapRefInstance.getMap();
         if (map && mapRef.current !== map) {
@@ -156,14 +150,14 @@ function AddMapStyleModalFactory() {
 
         map.on('style.load', () => {
           const style = map.getStyle();
-          loadMapStyleJson(style);
+          loadCustomMapStyleRef.current({style, error: false});
         });
 
         map.on('error', () => {
-          loadMapStyleError();
+          loadCustomMapStyleRef.current({error: true});
         });
       }
-    };
+    }, []);
 
     const baseMapLibraryName = getBaseMapLibrary(inputStyle);
     const baseMapLibraryConfig = getApplicationConfig().baseMapLibraryConfig[baseMapLibraryName];
