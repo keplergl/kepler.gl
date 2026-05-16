@@ -880,6 +880,11 @@ export function layerDataIdChangeUpdater(
     if (Object.keys(remappedFields).length) {
       newLayer = newLayer.updateLayerConfig(remappedFields);
     }
+    // Validate field type compatibility — clears fields whose type is incompatible
+    // with the channel's supported field types (e.g. string field for a numeric scale)
+    Object.values(newLayer.visualChannels).forEach(({key}) => {
+      newLayer.validateVisualChannel(key);
+    });
   }
 
   newLayer = newLayer.updateLayerConfig({
