@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {useDispatch, useSelector} from 'react-redux';
 import styled from 'styled-components';
 import {textColorLT, theme} from '@kepler.gl/styles';
@@ -60,6 +60,17 @@ export function AiAssistantComponent() {
   const [ideas, setIdeas] = useState<{title: string; description: string}[]>([]);
 
   const [restartKey, setRestartKey] = useState<number>(0);
+  const restartTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Clean up pending restart timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (restartTimeoutRef.current !== null) {
+        clearTimeout(restartTimeoutRef.current);
+        restartTimeoutRef.current = null;
+      }
+    };
+  }, []);
 
   // get dataset meta data and re-initialize assistant when datasets or layers change
   useEffect(() => {
@@ -105,7 +116,7 @@ export function AiAssistantComponent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [datasetMetaData]);
 
-  const onRestartAssistant = async () => {
+  const onRestartAssistant = useCallback(async () => {
     dispatch(updateAiAssistantMessages([]));
 
     try {
@@ -114,8 +125,13 @@ export function AiAssistantComponent() {
       console.error('Error restarting chat:', e);
     }
 
-    setRestartKey(prev => prev + 1);
-  };
+    // Defer remount to next tick so the Redux state update (empty messages)
+    // propagates before the component remounts with fresh initialMessages.
+    restartTimeoutRef.current = setTimeout(() => {
+      restartTimeoutRef.current = null;
+      setRestartKey(prev => prev + 1);
+    }, 0);
+  }, [dispatch]);
 
   const onMessagesUpdated = (messages: MessageModel[]) => {
     dispatch(updateAiAssistantMessages(messages));
