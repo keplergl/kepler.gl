@@ -118,7 +118,14 @@
     {
       "title": "kepler.gl-jupyter",
       "entries": [
-        {"entry": "docs/keplergl-jupyter/user-guide"}
+        {"entry": "docs/keplergl-jupyter"},
+        {"entry": "docs/keplergl-jupyter/install"},
+        {"entry": "docs/keplergl-jupyter/widget-api"},
+        {"entry": "docs/keplergl-jupyter/data-formats"},
+        {"entry": "docs/keplergl-jupyter/map-customization"},
+        {"entry": "docs/keplergl-jupyter/config"},
+        {"entry": "docs/keplergl-jupyter/save-and-export"},
+        {"entry": "docs/keplergl-jupyter/faq"}
       ]
     }
   ]
