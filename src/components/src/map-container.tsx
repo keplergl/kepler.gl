@@ -1342,6 +1342,7 @@ export default function MapContainerFactory(
         <>
           <MapControl
             mapState={mapState}
+            mapStateActions={mapStateActions}
             datasets={datasets}
             availableLocales={LOCALE_CODES_ARRAY}
             dragRotate={mapState.dragRotate}

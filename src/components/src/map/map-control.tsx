@@ -12,6 +12,7 @@ import LayerSelectorPanelFactory from './layer-selector-panel';
 import MapLegendPanelFactory from './map-legend-panel';
 import MapDrawPanelFactory from './map-draw-panel';
 import LocalePanelFactory from './locale-panel';
+import MapNavigationControlFactory from './map-navigation-control';
 import {Layer} from '@kepler.gl/layers';
 import {Editor, LayerVisConfig, MapControls, MapState} from '@kepler.gl/types';
 import {Datasets} from '@kepler.gl/table';
@@ -77,6 +78,7 @@ export type MapControlProps = {
 
   // optional
   mapState?: MapState;
+  mapStateActions?: typeof MapStateActions;
   readOnly?: boolean;
   scale?: number;
   mapLayers?: {[key: string]: boolean};
@@ -92,7 +94,8 @@ MapControlFactory.deps = [
   MapLegendPanelFactory,
   MapDrawPanelFactory,
   LocalePanelFactory,
-  AnnotationControlFactory
+  AnnotationControlFactory,
+  MapNavigationControlFactory
 ];
 
 function MapControlFactory(
@@ -102,7 +105,8 @@ function MapControlFactory(
   MapLegendPanel: ReturnType<typeof MapLegendPanelFactory>,
   MapDrawPanel: ReturnType<typeof MapDrawPanelFactory>,
   LocalePanel: ReturnType<typeof LocalePanelFactory>,
-  AnnotationControl: ReturnType<typeof AnnotationControlFactory>
+  AnnotationControl: ReturnType<typeof AnnotationControlFactory>,
+  MapNavigationControl: ReturnType<typeof MapNavigationControlFactory>
 ) {
   const DEFAULT_ACTIONS = [
     SplitMapButton,
@@ -122,12 +126,15 @@ function MapControlFactory(
     top = 0,
     mapIndex = 0,
     logoComponent = LegendLogo,
+    mapState,
+    mapStateActions,
     ...restProps
   }) => {
     const actionComponentProps = {
       isSplit,
       mapIndex,
       logoComponent,
+      mapState,
       ...restProps
     };
     return (
@@ -135,6 +142,13 @@ function MapControlFactory(
         {actionComponents.map((ActionComponent, index) => (
           <ActionComponent key={index} className="map-control-action" {...actionComponentProps} />
         ))}
+        {mapState && mapStateActions ? (
+          <MapNavigationControl
+            mapState={mapState}
+            mapIndex={mapIndex}
+            mapStateActions={mapStateActions}
+          />
+        ) : null}
       </StyledMapControl>
     );
   };

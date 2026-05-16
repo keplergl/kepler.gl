@@ -99,6 +99,9 @@ export type KeplerApplicationConfig = {
 
   /** Whether to enable the annotations feature. Enabled by default. */
   enableAnnotations?: boolean;
+
+  /** Whether to show the map navigation control (zoom buttons and compass). Enabled by default. */
+  enableMapNavigationControl?: boolean;
 };
 
 const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
@@ -164,7 +167,9 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
 
   maxPitch: 60,
 
-  enableAnnotations: true
+  enableAnnotations: true,
+
+  enableMapNavigationControl: true
 };
 
 const applicationConfig: Required<KeplerApplicationConfig> = DEFAULT_APPLICATION_CONFIG;
