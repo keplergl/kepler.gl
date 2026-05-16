@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React from 'react';
+import React, {memo} from 'react';
 import styled from 'styled-components';
 import KeplerGlLogo from '../common/logo';
 
@@ -143,7 +143,66 @@ function MapControlFactory(
 
   MapControl.displayName = 'MapControl';
 
-  return MapControl;
+  const areMapControlPropsEqual = (prev: MapControlProps, next: MapControlProps): boolean => {
+    const keys = Object.keys(next) as (keyof MapControlProps)[];
+    for (const key of keys) {
+      if (prev[key] === next[key]) continue;
+
+      if (key === 'layers') {
+        const pl = prev.layers;
+        const nl = next.layers;
+        if (!pl || !nl || pl.length !== nl.length) return false;
+        for (let i = 0; i < nl.length; i++) {
+          if (pl[i] === nl[i]) continue;
+          if (pl[i].id !== nl[i].id) return false;
+          if (pl[i].config.isVisible !== nl[i].config.isVisible) return false;
+          if (pl[i].config.label !== nl[i].config.label) return false;
+          if (pl[i].config.isConfigActive !== nl[i].config.isConfigActive) return false;
+        }
+        continue;
+      }
+
+      if (key === 'datasets') {
+        const pd = prev.datasets;
+        const nd = next.datasets;
+        if (!pd || !nd) return false;
+        const pKeys = Object.keys(pd);
+        const nKeys = Object.keys(nd);
+        if (pKeys.length !== nKeys.length) return false;
+        for (const dk of nKeys) {
+          if (!pd[dk]) return false;
+          if (pd[dk] === nd[dk]) continue;
+          if (pd[dk].id !== nd[dk].id) return false;
+          if (pd[dk].label !== nd[dk].label) return false;
+          if (pd[dk].color !== nd[dk].color) return false;
+        }
+        continue;
+      }
+
+      if (key === 'layersToRender') {
+        const pl = prev.layersToRender;
+        const nl = next.layersToRender;
+        if (!pl || !nl) return false;
+        const pKeys = Object.keys(pl);
+        const nKeys = Object.keys(nl);
+        if (pKeys.length !== nKeys.length) return false;
+        for (const lk of nKeys) {
+          if (pl[lk] !== nl[lk]) return false;
+        }
+        continue;
+      }
+
+      return false;
+    }
+    return true;
+  };
+
+  const MemoizedMapControl = memo(MapControl, areMapControlPropsEqual) as React.NamedExoticComponent<MapControlProps> & {
+    defaultActionComponents: MapControlProps['actionComponents'];
+  };
+  (MemoizedMapControl as any).defaultActionComponents = DEFAULT_ACTIONS;
+
+  return MemoizedMapControl;
 }
 
 export default MapControlFactory;

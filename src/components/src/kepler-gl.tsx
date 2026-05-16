@@ -207,32 +207,79 @@ export function getVisibleDatasets(datasets) {
   return filterObjectByPredicate(datasets, key => key !== GEOCODER_DATASET_NAME);
 }
 
-export const sidePanelSelector = (props: KeplerGLProps, availableProviders, filteredDatasets) => ({
-  appName: props.appName ? props.appName : DEFAULT_KEPLER_GL_PROPS.appName,
-  version: props.version ? props.version : DEFAULT_KEPLER_GL_PROPS.version,
-  appWebsite: props.appWebsite,
-  mapStyle: props.mapStyle,
-  onSaveMap: props.onSaveMap,
-  uiState: props.uiState,
-  mapStyleActions: props.mapStyleActions,
-  visStateActions: props.visStateActions,
-  uiStateActions: props.uiStateActions,
-  mapStateActions: props.mapStateActions,
-
-  datasets: filteredDatasets,
-  filters: props.visState.filters,
-  layers: props.visState.layers,
-  layerOrder: props.visState.layerOrder,
-  layerClasses: props.visState.layerClasses,
-  interactionConfig: props.visState.interactionConfig,
-  mapInfo: props.visState.mapInfo,
-  layerBlending: props.visState.layerBlending,
-  overlayBlending: props.visState.overlayBlending,
-
-  width: props.sidePanelWidth ? props.sidePanelWidth : DEFAULT_KEPLER_GL_PROPS.width,
-  availableProviders,
-  mapSaved: props.providerState.mapSaved
-});
+export const sidePanelSelector = createSelector(
+  [
+    (props: KeplerGLProps) => props.appName,
+    (props: KeplerGLProps) => props.version,
+    (props: KeplerGLProps) => props.appWebsite,
+    (props: KeplerGLProps) => props.mapStyle,
+    (props: KeplerGLProps) => props.onSaveMap,
+    (props: KeplerGLProps) => props.uiState,
+    (props: KeplerGLProps) => props.mapStyleActions,
+    (props: KeplerGLProps) => props.visStateActions,
+    (props: KeplerGLProps) => props.uiStateActions,
+    (props: KeplerGLProps) => props.mapStateActions,
+    (props: KeplerGLProps) => props.visState.filters,
+    (props: KeplerGLProps) => props.visState.layers,
+    (props: KeplerGLProps) => props.visState.layerOrder,
+    (props: KeplerGLProps) => props.visState.layerClasses,
+    (props: KeplerGLProps) => props.visState.interactionConfig,
+    (props: KeplerGLProps) => props.visState.mapInfo,
+    (props: KeplerGLProps) => props.visState.layerBlending,
+    (props: KeplerGLProps) => props.visState.overlayBlending,
+    (props: KeplerGLProps) => props.sidePanelWidth,
+    (props: KeplerGLProps) => props.providerState.mapSaved,
+    (_props: KeplerGLProps, availableProviders) => availableProviders,
+    (_props: KeplerGLProps, _availableProviders, filteredDatasets) => filteredDatasets
+  ],
+  (
+    appName,
+    version,
+    appWebsite,
+    mapStyle,
+    onSaveMap,
+    uiState,
+    mapStyleActions,
+    visStateActions,
+    uiStateActions,
+    mapStateActions,
+    filters,
+    layers,
+    layerOrder,
+    layerClasses,
+    interactionConfig,
+    mapInfo,
+    layerBlending,
+    overlayBlending,
+    sidePanelWidth,
+    mapSaved,
+    availableProviders,
+    filteredDatasets
+  ) => ({
+    appName: appName ? appName : DEFAULT_KEPLER_GL_PROPS.appName,
+    version: version ? version : DEFAULT_KEPLER_GL_PROPS.version,
+    appWebsite,
+    mapStyle,
+    onSaveMap,
+    uiState,
+    mapStyleActions,
+    visStateActions,
+    uiStateActions,
+    mapStateActions,
+    datasets: filteredDatasets,
+    filters,
+    layers,
+    layerOrder,
+    layerClasses,
+    interactionConfig,
+    mapInfo,
+    layerBlending,
+    overlayBlending,
+    width: sidePanelWidth ? sidePanelWidth : DEFAULT_KEPLER_GL_PROPS.width,
+    availableProviders,
+    mapSaved
+  })
+);
 
 export const plotContainerSelector = (props: KeplerGLProps) => ({
   width: props.width,
@@ -255,16 +302,41 @@ export const plotContainerSelector = (props: KeplerGLProps) => ({
 export const isSplitSelector = (props: KeplerGLProps) =>
   props.visState.splitMaps && props.visState.splitMaps.length > 1;
 
-export const bottomWidgetSelector = (props: KeplerGLProps, theme) => ({
-  filters: props.visState.filters,
-  datasets: props.visState.datasets,
-  uiState: props.uiState,
-  layers: props.visState.layers,
-  animationConfig: props.visState.animationConfig,
-  visStateActions: props.visStateActions,
-  toggleModal: props.uiStateActions.toggleModal,
-  sidePanelWidth: props.uiState.readOnly ? 0 : props.sidePanelWidth + theme.sidePanel.margin.left
-});
+export const bottomWidgetSelector = createSelector(
+  [
+    (props: KeplerGLProps) => props.visState.filters,
+    (props: KeplerGLProps) => props.visState.datasets,
+    (props: KeplerGLProps) => props.uiState,
+    (props: KeplerGLProps) => props.visState.layers,
+    (props: KeplerGLProps) => props.visState.animationConfig,
+    (props: KeplerGLProps) => props.visStateActions,
+    (props: KeplerGLProps) => props.uiStateActions.toggleModal,
+    (props: KeplerGLProps) => props.uiState.readOnly,
+    (props: KeplerGLProps) => props.sidePanelWidth,
+    (_props: KeplerGLProps, theme) => theme
+  ],
+  (
+    filters,
+    datasets,
+    uiState,
+    layers,
+    animationConfig,
+    visStateActions,
+    toggleModal,
+    readOnly,
+    sidePanelWidth,
+    theme
+  ) => ({
+    filters,
+    datasets,
+    uiState,
+    layers,
+    animationConfig,
+    visStateActions,
+    toggleModal,
+    sidePanelWidth: readOnly ? 0 : sidePanelWidth + theme.sidePanel.margin.left
+  })
+);
 
 export const modalContainerSelector = (props: KeplerGLProps, rootNode) => ({
   appName: props.appName ? props.appName : DEFAULT_KEPLER_GL_PROPS.appName,
@@ -413,10 +485,16 @@ export const attributionSelector = createSelector(
   }
 );
 
-export const notificationPanelSelector = (props: KeplerGLProps) => ({
-  removeNotification: props.uiStateActions.removeNotification,
-  notifications: props.uiState.notifications
-});
+export const notificationPanelSelector = createSelector(
+  [
+    (props: KeplerGLProps) => props.uiStateActions.removeNotification,
+    (props: KeplerGLProps) => props.uiState.notifications
+  ],
+  (removeNotification, notifications) => ({
+    removeNotification,
+    notifications
+  })
+);
 
 export const DEFAULT_KEPLER_GL_PROPS = {
   mapStyles: [],
