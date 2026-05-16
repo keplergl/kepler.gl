@@ -864,6 +864,22 @@ export function layerDataIdChangeUpdater(
     } else {
       newLayer = validated;
     }
+  } else {
+    // Layer is not valid to save (e.g. missing columns), but we still need to
+    // remap visual channel fields to the new dataset to avoid stale field references
+    // that point to rows beyond the new dataset's length
+    const newDatasetFields = state.datasets[dataId].fields;
+    const remappedFields: Record<string, any> = {};
+    Object.values(newLayer.visualChannels).forEach(({field: fieldKey}) => {
+      const currentField = newLayer.config[fieldKey];
+      if (currentField) {
+        const matched = newDatasetFields.find(f => f.name === currentField.name);
+        remappedFields[fieldKey] = matched || null;
+      }
+    });
+    if (Object.keys(remappedFields).length) {
+      newLayer = newLayer.updateLayerConfig(remappedFields);
+    }
   }
 
   newLayer = newLayer.updateLayerConfig({
