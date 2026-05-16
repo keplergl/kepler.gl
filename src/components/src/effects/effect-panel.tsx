@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {Component, ComponentType} from 'react';
+import React, {useCallback, ComponentType} from 'react';
 import styled from 'styled-components';
 import classnames from 'classnames';
-import PropTypes from 'prop-types';
 
 import {dataTestIds, LIGHT_AND_SHADOW_EFFECT} from '@kepler.gl/constants';
-import {removeEffect, updateEffect} from '@kepler.gl/actions';
+import {ActionHandler, removeEffect, updateEffect} from '@kepler.gl/actions';
 import {Effect} from '@kepler.gl/types';
 
 import EffectPanelHeaderFactory from './effect-panel-header';
@@ -18,8 +17,8 @@ export type EffectPanelProps = {
   effect: Effect;
   isDraggable: boolean;
   listeners: any;
-  removeEffect: typeof removeEffect;
-  updateEffect: typeof updateEffect;
+  removeEffect: ActionHandler<typeof removeEffect>;
+  updateEffect: ActionHandler<typeof updateEffect>;
 
   style?: React.CSSProperties;
   onMouseDown: React.MouseEventHandler<HTMLDivElement>;
@@ -46,79 +45,85 @@ function EffectPanelFactory(
   EffectPanelHeader: ReturnType<typeof EffectPanelHeaderFactory>,
   EffectConfigurator: ReturnType<typeof EffectConfiguratorFactory>
 ): ComponentType<EffectPanelProps> {
-  class EffectPanel extends Component<EffectPanelProps> {
-    static propTypes = {
-      effect: PropTypes.object.isRequired,
-      removeEffect: PropTypes.func.isRequired,
-      updateEffect: PropTypes.func.isRequired,
-      isDraggable: PropTypes.bool
-    };
+  const EffectPanel: React.FC<EffectPanelProps> = ({
+    className,
+    effect,
+    isDraggable,
+    listeners,
+    removeEffect: removeEffectAction,
+    updateEffect: updateEffectAction,
+    style,
+    onMouseDown,
+    onTouchStart
+  }) => {
+    const toggleEnabled = useCallback(
+      (event?: Event) => {
+        event?.stopPropagation();
+        updateEffectAction(effect.id, {isEnabled: !effect.isEnabled});
+      },
+      [updateEffectAction, effect.id, effect.isEnabled]
+    );
 
-    _toggleEnabled = (event?: Event) => {
-      event?.stopPropagation();
-      this.props.updateEffect(this.props.effect.id, {
-        isEnabled: !this.props.effect.isEnabled
-      });
-    };
+    const toggleConfigActive = useCallback(
+      (event?: Event) => {
+        event?.stopPropagation();
+        updateEffectAction(effect.id, {isConfigActive: !effect.isConfigActive});
+      },
+      [updateEffectAction, effect.id, effect.isConfigActive]
+    );
 
-    _toggleConfigActive = (event?: Event) => {
-      event?.stopPropagation();
-      this.props.updateEffect(this.props.effect.id, {
-        isConfigActive: !this.props.effect.isConfigActive
-      });
-    };
+    const handleRemoveEffect = useCallback(
+      (event?: Event) => {
+        event?.stopPropagation();
+        removeEffectAction(effect.id);
+      },
+      [removeEffectAction, effect.id]
+    );
 
-    _removeEffect = (event?: Event) => {
-      event?.stopPropagation();
-      this.props.removeEffect(this.props.effect.id);
-    };
+    const handleUpdateEffectConfig = useCallback(
+      (event, id, props) => {
+        event?.stopPropagation();
+        updateEffectAction(id, props);
+      },
+      [updateEffectAction]
+    );
 
-    _updateEffectConfig = (event, id, props) => {
-      event?.stopPropagation();
-      this.props.updateEffect(id, props);
-    };
+    const {id, type, isConfigActive, isJsonEditorActive, isEnabled} = effect;
+    const sortingAllowed = type !== LIGHT_AND_SHADOW_EFFECT.type;
 
-    render() {
-      const {effect, isDraggable, listeners} = this.props;
-      const {id, type, isConfigActive, isJsonEditorActive, isEnabled} = effect;
-
-      const sortingAllowed = type !== LIGHT_AND_SHADOW_EFFECT.type;
-
-      return (
-        <PanelWrapper
-          active={false}
-          className={classnames('effect-panel', this.props.className)}
-          data-testid={dataTestIds.effectPanel}
-          style={this.props.style}
-          onMouseDown={this.props.onMouseDown}
-          onTouchStart={this.props.onTouchStart}
-        >
-          <EffectPanelHeader
-            isConfigActive={isConfigActive}
-            effectId={id}
-            type={type}
-            isEnabled={isEnabled}
-            isJsonEditorActive={isJsonEditorActive}
-            onToggleEnabled={this._toggleEnabled}
-            onRemoveEffect={this._removeEffect}
-            onToggleEnableConfig={this._toggleConfigActive}
-            isDragNDropEnabled={isDraggable && sortingAllowed}
-            listeners={listeners}
-            showSortHandle={type !== LIGHT_AND_SHADOW_EFFECT.type}
+    return (
+      <PanelWrapper
+        active={false}
+        className={classnames('effect-panel', className)}
+        data-testid={dataTestIds.effectPanel}
+        style={style}
+        onMouseDown={onMouseDown}
+        onTouchStart={onTouchStart}
+      >
+        <EffectPanelHeader
+          isConfigActive={isConfigActive}
+          effectId={id}
+          type={type}
+          isEnabled={isEnabled}
+          isJsonEditorActive={isJsonEditorActive}
+          onToggleEnabled={toggleEnabled}
+          onRemoveEffect={handleRemoveEffect}
+          onToggleEnableConfig={toggleConfigActive}
+          isDragNDropEnabled={isDraggable && sortingAllowed}
+          listeners={listeners}
+          showSortHandle={type !== LIGHT_AND_SHADOW_EFFECT.type}
+        />
+        {isConfigActive && (
+          <EffectConfigurator
+            key={`effect-configurator-${id}`}
+            effect={effect}
+            updateEffectConfig={handleUpdateEffectConfig}
           />
-          {isConfigActive && (
-            <EffectConfigurator
-              key={`effect-configurator-${id}`}
-              effect={effect}
-              updateEffectConfig={this._updateEffectConfig}
-            />
-          )}
-        </PanelWrapper>
-      );
-    }
-  }
+        )}
+      </PanelWrapper>
+    );
+  };
 
-  // @ts-expect-error fix The types of 'propTypes.isDraggable[nominalTypeHack]' are incompatible between these types.
   return EffectPanel;
 }
 
