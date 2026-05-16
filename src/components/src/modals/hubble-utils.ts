@@ -17,6 +17,8 @@ type MapboxLayerRef = {
   id: string;
 } & Record<string, any>;
 
+let _hubbleMapLibPromise: Promise<any> | null = null;
+
 const linear: (p: number) => number = p => p;
 const hold: (p: number) => number = p => (p === 1 ? 1 : 0);
 
@@ -130,8 +132,122 @@ export function getStaticMapProps(
       ? convertMapboxStyleUrls(keplerState.mapStyle?.bottomMapStyle, accessToken)
       : keplerState.mapStyle?.bottomMapStyle,
     onViewportChange: onViewChange,
-    mapLib: import('maplibre-gl')
+    mapLib: getHubbleMapLib()
   };
+}
+
+function getHubbleMapLib(): Promise<any> {
+  if (!_hubbleMapLibPromise) {
+    _hubbleMapLibPromise = import('maplibre-gl').then(module => {
+      const maplibre = (module as any).default || module;
+
+      class HubbleMapLibreMap extends maplibre.Map {
+        constructor(options: any) {
+          super(options);
+          patchMapLibreTransformForHubble((this as any).transform);
+        }
+      }
+
+      return {
+        ...maplibre,
+        Map: HubbleMapLibreMap
+      };
+    });
+  }
+
+  return _hubbleMapLibPromise;
+}
+
+function patchMapLibreTransformForHubble(transform: any): void {
+  if (!transform) return;
+
+  if (transform.__hubbleCompatPatched) return;
+
+  addTransformSetter(transform, 'bearing', 'setBearing');
+  addTransformSetter(transform, 'pitch', 'setPitch');
+  addTransformSetter(transform, 'zoom', 'setZoom');
+  addTransformSetter(transform, 'padding', 'setPadding');
+  addTransformSetter(transform, '_center', 'setCenter', function (this: any) {
+    return this.center;
+  });
+  addTransformSetter(transform, '_zoom', 'setZoom', function (this: any) {
+    return this.zoom;
+  });
+
+  if (!Object.getOwnPropertyDescriptor(transform, '_setZoom')) {
+    Object.defineProperty(transform, '_setZoom', {
+      value(this: any, zoom: number) {
+        if (typeof this.setZoom === 'function') {
+          this.setZoom(zoom);
+        } else {
+          this.zoom = zoom;
+        }
+      },
+      writable: true,
+      configurable: true
+    });
+  }
+
+  Object.defineProperty(transform, '_constrain', {
+    value() {},
+    writable: true,
+    configurable: true
+  });
+
+  Object.defineProperty(transform, '_calcMatrices', {
+    value() {},
+    writable: true,
+    configurable: true
+  });
+
+  if (!Object.getOwnPropertyDescriptor(transform, '_unmodified')) {
+    Object.defineProperty(transform, '_unmodified', {
+      get(this: any) {
+        return this.unmodified;
+      },
+      configurable: true
+    });
+  }
+
+  Object.defineProperty(transform, '__hubbleCompatPatched', {
+    value: true,
+    configurable: true
+  });
+}
+
+function addTransformSetter(
+  transform: any,
+  prop: string,
+  setterMethod: string,
+  getValue?: (this: any) => any
+): void {
+  const existing = getPropertyDescriptor(transform, prop);
+  if (existing?.configurable === false) return;
+
+  Object.defineProperty(transform, prop, {
+    get: getValue || existing?.get,
+    set(this: any, value: any) {
+      if (value !== undefined) {
+        if (typeof this[setterMethod] === 'function') {
+          this[setterMethod](value);
+        } else if (existing?.set) {
+          existing.set.call(this, value);
+        }
+      }
+    },
+    enumerable: existing?.enumerable ?? false,
+    configurable: true
+  });
+}
+
+function getPropertyDescriptor(obj: any, prop: string): PropertyDescriptor | undefined {
+  let current = obj;
+  while (current) {
+    const descriptor = Object.getOwnPropertyDescriptor(current, prop);
+    if (descriptor) return descriptor;
+    current = Object.getPrototypeOf(current);
+  }
+  return undefined;
 }
 
 /**
