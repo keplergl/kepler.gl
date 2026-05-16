@@ -18,7 +18,7 @@ const StyledSwitchInput = styled.label.withConfig({shouldForwardProp})<StyledSwi
   ${props => (props.secondary ? props.theme.secondarySwitch : props.theme.inputSwitch)};
 `;
 
-const StyledCheckboxInput = styled.label`
+const StyledCheckboxInput = styled.label.withConfig({shouldForwardProp})`
   ${props => props.theme.inputCheckbox};
 `;
 
@@ -73,6 +73,7 @@ const Checkbox: FC<CheckboxProps> = ({
   id,
   type,
   label = '',
+  name,
   className,
   value,
   checked = false,
@@ -96,14 +97,17 @@ const Checkbox: FC<CheckboxProps> = ({
     [onBlur]
   );
 
+  const inputType = type === 'radio' ? 'radio' : 'checkbox';
+
   const inputProps = {
     checked,
     disabled,
     id,
+    name,
     onChange,
     value,
     secondary,
-    type: 'checkbox' as const,
+    type: inputType,
     onFocus: handleFocus,
     onBlur: handleBlur
   };
