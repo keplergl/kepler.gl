@@ -82,7 +82,8 @@ const ExportDataModalFactory = () => {
     useEffect(() => {
       const toCPUFilter = selectedDataset || Object.keys(datasets);
       applyCPUFilter(toCPUFilter);
-    }, [selectedDataset, datasets, applyCPUFilter]);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const onSelectDataset: React.ChangeEventHandler<HTMLSelectElement> = ({target: {value}}) => {
       applyCPUFilter(value);

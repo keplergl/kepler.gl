@@ -159,7 +159,10 @@ function DataTableModalFactory(
     const [showConfig, setShowConfig] = useState(false);
     const datasetCellSizeCache = useRef<Record<string, any>>({});
 
-    const fields = useMemo(() => (datasets[dataId] || {}).fields, [datasets, dataId]);
+    const fields = useMemo(
+      () => (datasets && dataId ? (datasets[dataId] || {}).fields : undefined),
+      [datasets, dataId]
+    );
 
     const columns = useMemo(() => fields?.map(f => f.name) || [], [fields]);
 
@@ -182,7 +185,7 @@ function DataTableModalFactory(
     );
 
     const cellSizeCache = useMemo(() => {
-      if (!datasets[dataId]) {
+      if (!datasets || !dataId || !datasets[dataId]) {
         return {};
       }
       const {fields, dataContainer} = datasets[dataId];
