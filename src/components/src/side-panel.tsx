@@ -258,6 +258,7 @@ export default function SidePanelFactory(
         const pf = prev.filters;
         const nf = next.filters;
         if (pf?.length !== nf?.length) return false;
+        const isFilterPanelOpen = (next as any).uiState?.activeSidePanel === 'filter';
         for (let i = 0; i < nf.length; i++) {
           if (pf[i] === nf[i]) continue;
           if (pf[i].id !== nf[i].id) return false;
@@ -270,7 +271,7 @@ export default function SidePanelFactory(
           if ((pf[i] as any).animationWindow !== (nf[i] as any).animationWindow) return false;
           if (pf[i].speed !== nf[i].speed) return false;
           if (pf[i].gpu !== nf[i].gpu) return false;
-          if ((nf[i] as any).isAnimating && nf[i].view !== 'enlarged') {
+          if (isFilterPanelOpen && nf[i].view !== 'enlarged') {
             if (pf[i].value !== nf[i].value) return false;
           }
         }
@@ -296,23 +297,17 @@ export default function SidePanelFactory(
       }
 
       if (key === 'layers') {
+        const isLayerPanelOpen = (next as any).uiState?.activeSidePanel === 'layer';
+        if (isLayerPanelOpen) {
+          const filtersAlsoChanged = prev.filters !== next.filters;
+          if (!filtersAlsoChanged) return false;
+        }
         const pl = prev.layers;
         const nl = next.layers;
         if (pl?.length !== nl?.length) return false;
         for (let i = 0; i < nl.length; i++) {
-          if (pl[i] === nl[i]) continue;
           if (pl[i].id !== nl[i].id) return false;
           if (pl[i].type !== nl[i].type) return false;
-          const pc = pl[i].config;
-          const nc = nl[i].config;
-          if (pc === nc) continue;
-          if (pc.label !== nc.label) return false;
-          if (pc.isVisible !== nc.isVisible) return false;
-          if (pc.isConfigActive !== nc.isConfigActive) return false;
-          if (pc.dataId !== nc.dataId) return false;
-          if (pc.color !== nc.color) return false;
-          if (pc.columns !== nc.columns) return false;
-          if (pc.visConfig !== nc.visConfig) return false;
         }
         continue;
       }
