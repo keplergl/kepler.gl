@@ -21,6 +21,7 @@ import {
 } from '@kepler.gl/constants';
 import {TimeRangeFilter, Field} from '@kepler.gl/types';
 import {Datasets} from '@kepler.gl/table';
+import {getDefaultTimeFormat} from '@kepler.gl/utils';
 
 const MAX_BINS = 2048;
 
@@ -262,7 +263,8 @@ function TimeWidgetSettingsFactory(FieldSelector: ReturnType<typeof FieldSelecto
           return;
         }
         const intervalId = `${step}-${unit}`;
-        setFilterPlot({plotType: {interval: intervalId}});
+        const defaultTimeFormat = getDefaultTimeFormat(intervalId);
+        setFilterPlot({plotType: {interval: intervalId, defaultTimeFormat}});
       },
       [setFilterPlot, isIntervalTooSmall]
     );

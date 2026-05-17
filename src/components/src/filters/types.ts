@@ -71,7 +71,7 @@ export type TimeWidgetTopProps = {
   readOnly: boolean;
   onClose: () => void;
   onToggleMinify: () => void;
-  onToggleSettings: () => void;
+  onToggleSettings?: () => void;
   isMinified: boolean;
 };
 
