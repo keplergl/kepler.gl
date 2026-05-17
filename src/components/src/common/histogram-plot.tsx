@@ -37,6 +37,11 @@ const HistogramBreakLine = styled.g`
   transform: translate(0, 0);
 `;
 
+const YAxisTick = styled.text`
+  font-size: 9px;
+  fill: ${props => props.theme.textColor};
+`;
+
 type BarType = {
   $inRange: boolean;
   $isOverlay: boolean;
@@ -90,6 +95,7 @@ interface HistogramPlotProps {
   height: number;
   margin: {top: number; bottom: number; left: number; right: number};
   isRanged?: boolean;
+  isEnlarged?: boolean;
   value: number[];
   isMasked?: number;
   brushComponent?: ReactElement;
@@ -107,6 +113,7 @@ function HistogramPlotFactory() {
     histogramsByGroup,
     colorsByGroup,
     isMasked = HISTOGRAM_MASK_MODE.NoMask,
+    isEnlarged,
     countProp = 'count',
     margin,
     isRanged,
@@ -163,6 +170,17 @@ function HistogramPlotFactory() {
           .range([0, height]),
       [histogramsByGroup, groupKeys, height, countProp]
     );
+
+    const yAxisTicks = useMemo(() => {
+      if (!isEnlarged) return null;
+      const yMax = Math.max(
+        Number(max(groupKeys, key => max(histogramsByGroup[key], d => d[countProp]))),
+        1
+      );
+      const tickCount = 3;
+      const ticks = scaleLinear().domain([0, yMax]).ticks(tickCount);
+      return ticks;
+    }, [isEnlarged, groupKeys, histogramsByGroup, countProp]);
 
     if (groupKeys.length === 0) {
       return null;
@@ -301,6 +319,21 @@ function HistogramPlotFactory() {
             </g>
           ))}
         </g>
+        {yAxisTicks ? (
+          <g className="histogram-y-axis">
+            {yAxisTicks.map(tick => (
+              <YAxisTick
+                key={tick}
+                x={-4}
+                y={height - y(tick)}
+                textAnchor="end"
+                dominantBaseline="middle"
+              >
+                {tick}
+              </YAxisTick>
+            ))}
+          </g>
+        ) : null}
         <g transform={`translate(${isRanged ? 0 : fallbackBarWidth / 2}, 0)`}>{brushComponent}</g>
       </HistogramWrapper>
     );
