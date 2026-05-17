@@ -2938,7 +2938,7 @@ test('#visStateReducer -> setFilter.fixedDomain & DynamicDomain & gpu & cpu', as
     plotType: {
       type: 'histogram',
       interval: '15-second',
-      aggregation: 'sum',
+      aggregation: 'average',
       defaultTimeFormat: 'L  LTS'
     },
     yAxis: null,
@@ -3253,9 +3253,15 @@ test('#visStateReducer -> SET_FILTER_PLOT.yAxis', t => {
   const yAxisField = stateWithFilterName.datasets.smoothie.fields.find(f => f.name === 'uid');
 
   // set filterPlot yAxis
-  const stateWithFilterPlot = reducer(
+  const stateWithFilterPlotYAxis = reducer(
     stateWithFilterName,
     VisStateActions.setFilterPlot(0, {yAxis: yAxisField})
+  );
+
+  // set aggregation to sum
+  const stateWithFilterPlot = reducer(
+    stateWithFilterPlotYAxis,
+    VisStateActions.setFilterPlot(0, {plotType: {aggregation: 'sum'}})
   );
 
   const bins = [

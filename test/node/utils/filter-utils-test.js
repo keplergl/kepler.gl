@@ -568,7 +568,7 @@ test('filterUtils -> mergeFilterWithTimeline', t => {
       interval: '1-minute',
       defaultTimeFormat: 'L  LT',
       type: 'histogram',
-      aggregation: 'sum'
+      aggregation: 'average'
     },
     yAxis: null,
     gpu: true,

@@ -83,8 +83,14 @@ test('Components -> TimeWidget.mount -> with time filter', t => {
   t.equal(wrapper.find(TimeWidget).length, 1, 'should render TimeWidget');
   t.equal(wrapper.find(FloatingTimeDisplay).length, 1, 'should render FloatingTimeDisplay');
   t.equal(wrapper.find(TimeRangeSlider).length, 1, 'should render TimeRangeSlider');
-  t.equal(wrapper.find(FieldSelector).length, 1, 'should render FieldSelector');
   t.equal(wrapper.find(PlaybackControls).length, 1, 'should render PlaybackControls');
+
+  // FieldSelector is now inside the collapsible settings panel
+  // open settings by clicking the Gear icon
+  wrapper.find(Icons.Gear).at(0).simulate('click');
+  wrapper.update();
+
+  t.equal(wrapper.find(FieldSelector).length, 1, 'should render FieldSelector');
 
   // check yAxisFields
   const yAxisFields = wrapper.find(FieldSelector).at(0).props().fields;
@@ -198,8 +204,11 @@ test('Components -> TimeWidget.mount -> test actions', t => {
     'should call setFilterAnimationWindow'
   );
 
-  // click yaxis select
-  wrapper.find('.item-selector__dropdown').at(0).simulate('click');
+  // click yaxis select (open settings first since FieldSelector moved there)
+  wrapper.find(Icons.Gear).at(0).simulate('click');
+  wrapper.update();
+
+  wrapper.find(FieldSelector).find('.item-selector__dropdown').at(0).simulate('click');
   t.equal(wrapper.find(Typeahead).length, 1, 'should render dropdown select');
 
   wrapper.find(Typeahead).find('.field-selector_list-item').at(0).simulate('click');
