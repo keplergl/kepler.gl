@@ -3,9 +3,8 @@
 
 import React, {useCallback, useMemo} from 'react';
 import styled, {IStyledComponent} from 'styled-components';
-import {Clock, Close, LineChart, ArrowDown, ArrowUp} from '../common/icons';
+import {Clock, Close, LineChart, ArrowDown, ArrowUp, Gear} from '../common/icons';
 import FieldSelectorFactory from '../common/field-selector';
-import Switch from '../common/switch';
 import {SelectTextBold, IconRoundSmall, CenterFlexbox} from '../common/styled-components';
 import {TimeWidgetTopProps, TopSectionWrapperProps} from './types';
 import {Field} from '@kepler.gl/types';
@@ -92,7 +91,9 @@ function TimeWidgetTopFactory(FieldSelector: ReturnType<typeof FieldSelectorFact
     setFilterPlot,
     onClose,
     isMinified,
-    onToggleMinify
+    onToggleMinify,
+    onToggleSettings,
+    showSettings
   }) => {
     const yAxisFields = useMemo(
       () =>
@@ -104,10 +105,6 @@ function TimeWidgetTopFactory(FieldSelector: ReturnType<typeof FieldSelectorFact
     const _setFilterPlotYAxis = useCallback(
       value => setFilterPlot({yAxis: value}),
       [setFilterPlot]
-    );
-    const _toggleYAxisAutoRange = useCallback(
-      () => setFilterPlot({plotType: {yAxisAutoRange: !filter.plotType?.yAxisAutoRange}}),
-      [setFilterPlot, filter.plotType?.yAxisAutoRange]
     );
 
     return (
@@ -135,18 +132,14 @@ function TimeWidgetTopFactory(FieldSelector: ReturnType<typeof FieldSelectorFact
                 showToken={false}
               />
             </div>
-            {filter.yAxis ? (
-              <Switch
-                checked={Boolean(filter.plotType?.yAxisAutoRange)}
-                id={`${filter.id}-y-axis-auto-range`}
-                onChange={_toggleYAxisAutoRange}
-                secondary
-                label="Fit Y"
-              />
-            ) : null}
           </StyledTitle>
         ) : null}
         <StyledCenterBox>
+          {!isMinified ? (
+            <IconRoundSmall>
+              <Gear height="12px" onClick={onToggleSettings} />
+            </IconRoundSmall>
+          ) : null}
           <IconRoundSmall>
             {isMinified ? (
               <ArrowUp height="12px" onClick={onToggleMinify} />
