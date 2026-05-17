@@ -74,7 +74,9 @@ export type TimeWidgetTopProps = {
   index: number;
   onClose: () => void;
   onToggleMinify: () => void;
+  onToggleSettings: () => void;
   isMinified: boolean;
+  showSettings: boolean;
 };
 
 export type TimeWidgetProps = {
