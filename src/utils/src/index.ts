@@ -54,7 +54,8 @@ export {
   LayerToFilterTimeInterval,
   TileTimeInterval,
   getTimelineFromAnimationConfig,
-  getTimelineFromFilter
+  getTimelineFromFilter,
+  filterIntervalOptions
 } from './time';
 export {maybeHexToGeo, getPositionFromHexValue} from './position-utils';
 

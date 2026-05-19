@@ -1,14 +1,12 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useCallback, useMemo} from 'react';
+import React, {useMemo} from 'react';
 import styled, {IStyledComponent} from 'styled-components';
-import {Clock, Close, LineChart, ArrowDown, ArrowUp} from '../common/icons';
-import FieldSelectorFactory from '../common/field-selector';
-import Switch from '../common/switch';
+import {Clock, Close, ArrowDown, ArrowUp, Gear} from '../common/icons';
 import {SelectTextBold, IconRoundSmall, CenterFlexbox} from '../common/styled-components';
 import {TimeWidgetTopProps, TopSectionWrapperProps} from './types';
-import {Field} from '@kepler.gl/types';
+import {TIME_AGGREGATION, AGGREGATION_TYPES} from '@kepler.gl/constants';
 
 const TOP_SECTION_HEIGHT = '36px';
 
@@ -20,40 +18,6 @@ const TopSectionWrapper: IStyledComponent<'web', TopSectionWrapperProps> = style
   width: 100%;
   color: ${props => props.theme.labelColor};
   height: ${TOP_SECTION_HEIGHT};
-
-  .bottom-widget__y-axis {
-    flex-grow: 1;
-    margin-left: 20px;
-  }
-
-  .bottom-widget__field-select {
-    width: 160px;
-    display: inline-block;
-
-    .item-selector__dropdown {
-      background: transparent;
-      padding: 4px 10px 4px 4px;
-      border-color: transparent;
-
-      &:active,
-      &:focus,
-      &.focus,
-      &.active {
-        background: transparent;
-        border-color: transparent;
-      }
-    }
-
-    .item-selector__dropdown:hover {
-      background: transparent;
-      border-color: transparent;
-
-      .item-selector__dropdown__value {
-        color: ${props =>
-          props.hoverColor ? props.theme[props.hoverColor] : props.theme.textColorHl};
-      }
-    }
-  }
 
   .animation-control__speed-control {
     margin-right: -12px;
@@ -83,32 +47,33 @@ const StyledCenterBox = styled(CenterFlexbox)`
   }
 `;
 
-TimeWidgetTopFactory.deps = [FieldSelectorFactory];
-function TimeWidgetTopFactory(FieldSelector: ReturnType<typeof FieldSelectorFactory>) {
+TimeWidgetTopFactory.deps = [];
+function TimeWidgetTopFactory() {
   const TimeWidgetTop: React.FC<TimeWidgetTopProps> = ({
     filter,
     readOnly,
-    datasets,
-    setFilterPlot,
     onClose,
     isMinified,
-    onToggleMinify
+    onToggleMinify,
+    onToggleSettings
   }) => {
-    const yAxisFields = useMemo(
-      () =>
-        ((datasets[filter.dataId[0]] || {}).fields || []).filter(
-          (f: Field) => f.type === 'integer' || f.type === 'real'
-        ),
-      [datasets, filter.dataId]
-    );
-    const _setFilterPlotYAxis = useCallback(
-      value => setFilterPlot({yAxis: value}),
-      [setFilterPlot]
-    );
-    const _toggleYAxisAutoRange = useCallback(
-      () => setFilterPlot({plotType: {yAxisAutoRange: !filter.plotType?.yAxisAutoRange}}),
-      [setFilterPlot, filter.plotType?.yAxisAutoRange]
-    );
+    const chartTitle = useMemo(() => {
+      const interval = filter.plotType?.interval;
+      let intervalLabel = 'Time';
+      if (interval) {
+        const parts = interval.split('-');
+        if (parts.length === 2) {
+          intervalLabel = `${parts[0]} ${parts[1]}`;
+        }
+      }
+      if (!filter.yAxis) {
+        return `Count of Rows per ${intervalLabel}`;
+      }
+      const aggregation = filter.plotType?.aggregation || AGGREGATION_TYPES.average;
+      const aggLabel =
+        TIME_AGGREGATION.find(a => a.id === aggregation)?.label || aggregation;
+      return `${aggLabel} ${filter.yAxis.name} per ${intervalLabel}`;
+    }, [filter.yAxis, filter.plotType?.aggregation, filter.plotType?.interval]);
 
     return (
       <TopSectionWrapper>
@@ -116,37 +81,14 @@ function TimeWidgetTopFactory(FieldSelector: ReturnType<typeof FieldSelectorFact
           <CenterFlexbox className="bottom-widget__icon">
             <Clock height="15px" />
           </CenterFlexbox>
-          <SelectTextBold>{filter.name}</SelectTextBold>
+          <SelectTextBold>{chartTitle}</SelectTextBold>
         </StyledTitle>
-        {!isMinified ? (
-          <StyledTitle className="bottom-widget__y-axis">
-            <CenterFlexbox className="bottom-widget__icon">
-              <LineChart height="15px" />
-            </CenterFlexbox>
-            <div className="bottom-widget__field-select">
-              <FieldSelector
-                fields={yAxisFields}
-                placement="top"
-                id="selected-time-widget-field"
-                value={filter.yAxis ? filter.yAxis.name : null}
-                onSelect={_setFilterPlotYAxis}
-                placeholder="placeholder.yAxis"
-                erasable
-                showToken={false}
-              />
-            </div>
-            {filter.yAxis ? (
-              <Switch
-                checked={Boolean(filter.plotType?.yAxisAutoRange)}
-                id={`${filter.id}-y-axis-auto-range`}
-                onChange={_toggleYAxisAutoRange}
-                secondary
-                label="Fit Y"
-              />
-            ) : null}
-          </StyledTitle>
-        ) : null}
         <StyledCenterBox>
+          {!isMinified ? (
+            <IconRoundSmall>
+              <Gear height="12px" onClick={onToggleSettings} />
+            </IconRoundSmall>
+          ) : null}
           <IconRoundSmall>
             {isMinified ? (
               <ArrowUp height="12px" onClick={onToggleMinify} />

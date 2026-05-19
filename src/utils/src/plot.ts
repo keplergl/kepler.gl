@@ -698,6 +698,6 @@ export function getDefaultPlotType(filter, datasets) {
     interval,
     defaultTimeFormat,
     type: PLOT_TYPES.histogram,
-    aggregation: AGGREGATION_TYPES.sum
+    aggregation: AGGREGATION_TYPES.average
   };
 }

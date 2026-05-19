@@ -108,7 +108,7 @@ test('#visStateSchema -> v1 -> save load filters', t => {
         interval: '1-hour',
         defaultTimeFormat: 'L  H A',
         type: 'histogram',
-        aggregation: 'sum'
+        aggregation: 'average'
       },
       yAxis: null,
       animationWindow: 'free',

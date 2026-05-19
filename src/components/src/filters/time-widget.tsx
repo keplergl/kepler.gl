@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useCallback, useMemo} from 'react';
+import React, {useCallback, useMemo, useState} from 'react';
 import styled from 'styled-components';
 import {FILTER_VIEW_TYPES} from '@kepler.gl/constants';
 import {BottomWidgetInner} from '../common/styled-components';
@@ -10,17 +10,24 @@ import FloatingTimeDisplayFactory from '../common/animation-control/floating-tim
 import {timeRangeSliderFieldsSelector} from './time-range-filter';
 import {TimeWidgetProps} from './types';
 import TimeWidgetTopFactory from './time-widget-top';
+import TimeWidgetSettingsFactory from './time-widget-settings';
 
 const TimeBottomWidgetInner = styled(BottomWidgetInner)`
   padding: 6px 32px 24px 32px;
 `;
 
-TimeWidgetFactory.deps = [TimeRangeSliderFactory, FloatingTimeDisplayFactory, TimeWidgetTopFactory];
+TimeWidgetFactory.deps = [
+  TimeRangeSliderFactory,
+  FloatingTimeDisplayFactory,
+  TimeWidgetTopFactory,
+  TimeWidgetSettingsFactory
+];
 
 function TimeWidgetFactory(
   TimeRangeSlider: ReturnType<typeof TimeRangeSliderFactory>,
   FloatingTimeDisplay: ReturnType<typeof FloatingTimeDisplayFactory>,
-  TimeWidgetTop: ReturnType<typeof TimeWidgetTopFactory>
+  TimeWidgetTop: ReturnType<typeof TimeWidgetTopFactory>,
+  TimeWidgetSettings: ReturnType<typeof TimeWidgetSettingsFactory>
 ) {
   const TimeWidget: React.FC<TimeWidgetProps> = ({
     datasets,
@@ -42,6 +49,8 @@ function TimeWidgetFactory(
     animationConfig,
     timeline
   }: TimeWidgetProps) => {
+    const [showSettings, setShowSettings] = useState(false);
+
     const _updateAnimationSpeed = useCallback(
       speed => updateAnimationSpeed(index, speed),
       [updateAnimationSpeed, index]
@@ -67,6 +76,10 @@ function TimeWidgetFactory(
       [index, setFilterPlot]
     );
 
+    const _onToggleSettings = useCallback(() => {
+      setShowSettings(prev => !prev);
+    }, []);
+
     const timeRangeSlideProps = useMemo(
       () => timeRangeSliderFieldsSelector(filter, datasets, layers),
       [filter, datasets, layers]
@@ -77,13 +90,14 @@ function TimeWidgetFactory(
         <TimeWidgetTop
           filter={filter}
           readOnly={readOnly}
-          datasets={datasets}
-          setFilterPlot={_setFilterPlot}
-          index={index}
           onClose={onClose}
           onToggleMinify={onToggleMinify}
+          onToggleSettings={_onToggleSettings}
           isMinified={isMinified}
         />
+        {showSettings && !isMinified ? (
+          <TimeWidgetSettings filter={filter} datasets={datasets} setFilterPlot={_setFilterPlot} />
+        ) : null}
         {/* Once AnimationControl is able to display large timeline*/}
         {/* we can replace TimeRangeSlider with AnimationControl*/}
         <TimeRangeSlider
