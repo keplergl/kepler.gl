@@ -926,6 +926,106 @@ test('visStateReducer -> layerDataIdChangeUpdater -> validation', t => {
   t.end();
 });
 
+test('visStateReducer -> layerDataIdChangeUpdater -> not valid to save layer remaps fields', t => {
+  const initialState = CloneDeep(StateWFilesFiltersLayerColor).visState;
+  const pointLayer = initialState.layers[0];
+
+  // Verify precondition: layer has colorField set
+  t.ok(pointLayer.config.colorField, 'point layer should have colorField set');
+  t.equal(pointLayer.config.colorField.name, 'gps_data.types', 'colorField should be gps_data.types');
+
+  // Add a new dataset with fewer rows but containing the same colorField name
+  const newFields = [
+    {name: 'lat', type: 'real', format: '', analyzerType: 'FLOAT'},
+    {name: 'lng', type: 'real', format: '', analyzerType: 'FLOAT'},
+    {name: 'gps_data.types', type: 'string', format: '', analyzerType: 'STRING'}
+  ];
+  const newRows = [
+    ['30.0', '-80.0', 'type_a'],
+    ['31.0', '-81.0', 'type_b']
+  ];
+
+  const stateWithNewData = applyActions(reducer, initialState, [
+    {
+      action: VisStateActions.updateVisData,
+      payload: [
+        [
+          {info: {id: 'small-dataset', label: 'Small Data'}, data: {fields: newFields, rows: newRows}}
+        ]
+      ]
+    }
+  ]);
+
+  t.ok(stateWithNewData.datasets['small-dataset'], 'should have small-dataset in state');
+
+  // Now make the layer not valid to save by clearing a required column
+  const layer0 = stateWithNewData.layers[0];
+  const invalidLayer = layer0.updateLayerConfig({
+    columns: {
+      ...layer0.config.columns,
+      lat: {value: null, fieldIdx: -1}
+    }
+  });
+
+  t.notOk(invalidLayer.isValidToSave(), 'layer should not be valid to save');
+
+  // Replace the layer in state
+  const stateWithInvalidLayer = {
+    ...stateWithNewData,
+    layers: [invalidLayer, ...stateWithNewData.layers.slice(1)]
+  };
+
+  // Switch dataset on the invalid layer
+  const nextState = reducer(
+    stateWithInvalidLayer,
+    VisStateActions.layerConfigChange(invalidLayer, {
+      dataId: 'small-dataset'
+    })
+  );
+
+  const updatedLayer = nextState.layers[0];
+  t.equal(updatedLayer.config.dataId, 'small-dataset', 'should update layer dataId');
+  // colorField should be remapped to the new dataset's field (same name exists)
+  t.ok(updatedLayer.config.colorField, 'colorField should be remapped');
+  t.equal(updatedLayer.config.colorField.name, 'gps_data.types', 'colorField should match by name in new dataset');
+
+  // Now test clearing: switch to a dataset without the colorField name
+  const noMatchFields = [
+    {name: 'latitude', type: 'real', format: '', analyzerType: 'FLOAT'},
+    {name: 'longitude', type: 'real', format: '', analyzerType: 'FLOAT'}
+  ];
+  const noMatchRows = [['32.0', '-82.0']];
+
+  const stateWithNoMatch = applyActions(reducer, nextState, [
+    {
+      action: VisStateActions.updateVisData,
+      payload: [
+        [
+          {info: {id: 'no-match-dataset', label: 'No Match'}, data: {fields: noMatchFields, rows: noMatchRows}}
+        ]
+      ]
+    }
+  ]);
+
+  // The layer in the state after updateVisData
+  const layer2 = stateWithNoMatch.layers[0];
+  // layer is still not valid to save (columns are not set for the current dataset)
+  t.notOk(layer2.isValidToSave(), 'layer should still not be valid to save');
+
+  const finalState = reducer(
+    stateWithNoMatch,
+    VisStateActions.layerConfigChange(layer2, {
+      dataId: 'no-match-dataset'
+    })
+  );
+
+  const finalLayer = finalState.layers[0];
+  t.equal(finalLayer.config.dataId, 'no-match-dataset', 'should update dataId to no-match-dataset');
+  t.equal(finalLayer.config.colorField, null, 'colorField should be null when no matching field in new dataset');
+
+  t.end();
+});
+
 test('#visStateReducer -> LAYER_VIS_CONFIG_CHANGE -> opacity', t => {
   const initialState = StateWFiles.visState;
   const layer = initialState.layers[0];
