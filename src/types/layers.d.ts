@@ -342,6 +342,12 @@ export type LayerVisConfigSettings = {
   allowHover: VisConfigBoolean;
   showNeighborOnHover: VisConfigBoolean;
   showHighlightColor: VisConfigBoolean;
+  scenegraph: VisConfigInput;
+  scenegraphEnabled: VisConfigBoolean;
+  scenegraphCustomModelUrl: VisConfigInput;
+  scenegraphColorEnabled: VisConfigBoolean;
+  scenegraphUseTrailColor: VisConfigBoolean;
+  scenegraphColor: VisConfigColorSelect;
   [key: string]: LayerVisConfigTypes;
 };
 

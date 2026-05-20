@@ -653,7 +653,8 @@ export const CHANNEL_SCALES = keyMirror({
   radius: null,
   size: null,
   colorAggr: null,
-  sizeAggr: null
+  sizeAggr: null,
+  angle: null
 });
 
 export const AGGREGATION_TYPES: {
@@ -703,7 +704,8 @@ export const AGGREGATION_TYPE_OPTIONS: {id: string; label: string}[] = Object.en
 export const linearFieldScaleFunctions = {
   [CHANNEL_SCALES.color]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile, SCALE_TYPES.custom],
   [CHANNEL_SCALES.radius]: [SCALE_TYPES.sqrt],
-  [CHANNEL_SCALES.size]: [SCALE_TYPES.linear, SCALE_TYPES.sqrt, SCALE_TYPES.log]
+  [CHANNEL_SCALES.size]: [SCALE_TYPES.linear, SCALE_TYPES.sqrt, SCALE_TYPES.log],
+  [CHANNEL_SCALES.angle]: [SCALE_TYPES.linear]
 };
 
 const DEFAULT_AGGREGATION_COLOR_SCALES = [
@@ -1758,3 +1760,113 @@ export const getLoaderOptions = () => {
     }
   };
 };
+
+export const CUSTOM_SCENEGRAPH_MODEL_ID = 'custom';
+const MODELS_BASE_URL =
+  'https://studio-public-data.foursquare.com/statics/keplergl/3d-models.2022-06-13';
+
+export const TRIP_LAYER_SCENEGRAPH_MODELS: {
+  id: string;
+  label: string;
+  icon: any;
+  url: string | null;
+  angles: [number, number, number];
+  scale: number;
+}[] = [
+  {
+    id: 'airplane',
+    label: 'Airplane',
+    icon: null,
+    url: `${MODELS_BASE_URL}/Plane.glb`,
+    angles: [0, 0, 0],
+    scale: 1.0
+  },
+  {
+    id: 'boeing777',
+    label: 'Airliner',
+    icon: null,
+    url: `${MODELS_BASE_URL}/Airliner.glb`,
+    angles: [0, 0, 0],
+    scale: 1.0
+  },
+  {
+    id: 'uber-evtol',
+    label: 'VTOL',
+    icon: null,
+    url: `${MODELS_BASE_URL}/evtol.glb`,
+    angles: [0, 0, 0],
+    scale: 1.0
+  },
+  {
+    id: 'hang-glider',
+    label: 'Glider',
+    icon: null,
+    url: `${MODELS_BASE_URL}/Hangglider.glb`,
+    angles: [0, 0, 0],
+    scale: 1.0
+  },
+  {
+    id: 'helicopter',
+    label: 'Helicopter',
+    icon: null,
+    url: `${MODELS_BASE_URL}/Helicopter.glb`,
+    angles: [0, 0, 0],
+    scale: 1.0
+  },
+  {
+    id: 'bicycle',
+    label: 'Bicycle',
+    icon: null,
+    url: `${MODELS_BASE_URL}/Bicycle.glb`,
+    angles: [0, 0, 0],
+    scale: 1.0
+  },
+  {
+    id: 'scooter',
+    label: 'Scooter',
+    icon: null,
+    url: `${MODELS_BASE_URL}/Scooter.glb`,
+    angles: [0, 0, 0],
+    scale: 1.0
+  },
+  {
+    id: 'car',
+    label: 'Car',
+    icon: null,
+    url: `${MODELS_BASE_URL}/Car.glb`,
+    angles: [0, 0, 0],
+    scale: 1.0
+  },
+  {
+    id: 'truck',
+    label: 'Truck',
+    icon: null,
+    url: `${MODELS_BASE_URL}/Truck.glb`,
+    angles: [0, 0, 0],
+    scale: 1.0
+  },
+  {
+    id: 'semitruck',
+    label: 'Semitruck',
+    icon: null,
+    url: `${MODELS_BASE_URL}/Semitruck.glb`,
+    angles: [0, 0, 0],
+    scale: 1.0
+  },
+  {
+    id: 'cargoship',
+    label: 'Cargoship',
+    icon: null,
+    url: `${MODELS_BASE_URL}/Cargoship.glb`,
+    angles: [0, 0, 0],
+    scale: 1.0
+  },
+  {
+    id: CUSTOM_SCENEGRAPH_MODEL_ID,
+    label: 'Custom',
+    icon: null,
+    url: null,
+    angles: [0, 0, 0],
+    scale: 1.0
+  }
+];
