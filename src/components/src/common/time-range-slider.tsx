@@ -48,7 +48,7 @@ type TimeRangeSliderProps = {
 };
 
 export type StyledSliderContainerProps = BaseComponentProps & {
-  isEnlarged?: boolean;
+  $isEnlarged?: boolean;
 };
 
 const StyledSliderContainer: IStyledComponent<
@@ -59,7 +59,7 @@ const StyledSliderContainer: IStyledComponent<
   display: flex;
   flex-direction: row;
   justify-content: space-between;
-  padding-left: ${props => (props.isEnlarged ? 24 : 0)}px;
+  padding-left: ${props => (props.$isEnlarged ? 24 : 0)}px;
 
   .timeline-container .kg-slider {
     display: none;
@@ -149,7 +149,7 @@ export default function TimeRangeSliderFactory(
             />
           </div>
         ) : null}
-        <StyledSliderContainer className="time-range-slider__container" isEnlarged={isEnlarged}>
+        <StyledSliderContainer className="time-range-slider__container" $isEnlarged={isEnlarged}>
           {!isMinified ? (
             <div className="timeline-container" style={style}>
               <RangeSlider

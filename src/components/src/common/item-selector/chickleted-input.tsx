@@ -16,7 +16,7 @@ import {BaseComponentProps} from '../../types';
 import {shouldForwardProp} from '../styled-components';
 
 export type ChickletButtonProps = BaseComponentProps & {
-  inputTheme?: string;
+  $inputTheme?: string;
   ref?: (node: HTMLElement | null) => void;
 };
 
@@ -25,10 +25,10 @@ export const ChickletButton: IStyledComponent<
   ChickletButtonProps
 > = styled.div<ChickletButtonProps>`
   background: ${props =>
-    props.inputTheme === 'light' ? props.theme.chickletBgdLT : props.theme.chickletBgd};
+    props.$inputTheme === 'light' ? props.theme.chickletBgdLT : props.theme.chickletBgd};
   border-radius: 1px;
   color: ${props =>
-    props.inputTheme === 'light' ? props.theme.textColorLT : props.theme.textColor};
+    props.$inputTheme === 'light' ? props.theme.textColorLT : props.theme.textColor};
   font-size: 11px;
   line-height: 20px;
   margin: 4px 10px 4px 3px;
@@ -39,7 +39,7 @@ export const ChickletButton: IStyledComponent<
 
   &:hover {
     color: ${props =>
-      props.inputTheme === 'light' ? props.theme.textColorHlLT : props.theme.textColorHl};
+      props.$inputTheme === 'light' ? props.theme.textColorHlLT : props.theme.textColorHl};
   }
 `;
 
@@ -63,7 +63,7 @@ interface ChickletProps {
 }
 
 const Chicklet = ({disabled, name, remove, inputTheme}: ChickletProps) => (
-  <ChickletButton inputTheme={inputTheme}>
+  <ChickletButton $inputTheme={inputTheme}>
     <ChickletTag>{name}</ChickletTag>
     <Delete height="16px" onClick={disabled ? undefined : remove} />
   </ChickletButton>

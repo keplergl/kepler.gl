@@ -19,7 +19,7 @@ import {BaseComponentProps} from './types';
 const maxWidth = 1080;
 
 export type BottomWidgetContainerProps = BaseComponentProps & {
-  hasPadding?: boolean;
+  $hasPadding?: boolean;
   width: number;
   ref: React.ForwardedRef<HTMLDivElement>;
 };
@@ -30,10 +30,10 @@ const BottomWidgetContainer: IStyledComponent<
 > = styled.div<BottomWidgetContainerProps>`
   display: flex;
   flex-direction: column;
-  padding-top: ${props => (props.hasPadding ? props.theme.bottomWidgetPaddingTop : 0)}px;
-  padding-right: ${props => (props.hasPadding ? props.theme.bottomWidgetPaddingRight : 0)}px;
-  padding-bottom: ${props => (props.hasPadding ? props.theme.bottomWidgetPaddingBottom : 0)}px;
-  padding-left: ${props => (props.hasPadding ? props.theme.bottomWidgetPaddingLeft : 0)}px;
+  padding-top: ${props => (props.$hasPadding ? props.theme.bottomWidgetPaddingTop : 0)}px;
+  padding-right: ${props => (props.$hasPadding ? props.theme.bottomWidgetPaddingRight : 0)}px;
+  padding-bottom: ${props => (props.$hasPadding ? props.theme.bottomWidgetPaddingBottom : 0)}px;
+  padding-left: ${props => (props.$hasPadding ? props.theme.bottomWidgetPaddingLeft : 0)}px;
   pointer-events: none !important; /* prevent padding from blocking input */
   & > * {
     /* all children should allow input */
@@ -169,7 +169,7 @@ export default function BottomWidgetFactory(
         width={Math.min(maxWidth, enlargedFilterWidth)}
         style={{marginRight: spaceForLegendWidth}}
         className="bottom-widget--container"
-        hasPadding={showAnimationControl || showTimeWidget}
+        $hasPadding={showAnimationControl || showTimeWidget}
         ref={rootRef}
       >
         {!isTimelineLinkedWithFilter ? (

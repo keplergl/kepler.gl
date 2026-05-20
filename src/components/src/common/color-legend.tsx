@@ -29,7 +29,7 @@ const inputCss = css`
     pointer-events: none;
   }
 `;
-const StyledLegend = styled.div<{disableEdit: boolean; isExpanded?: boolean}>`
+const StyledLegend = styled.div<{$disableEdit: boolean; isExpanded?: boolean}>`
   ${props => props.theme.sidePanelScrollBar};
   ${props => (props.isExpanded ? '' : `max-height: 156px;`)};
   overflow-y: auto;
@@ -39,7 +39,7 @@ const StyledLegend = styled.div<{disableEdit: boolean; isExpanded?: boolean}>`
   grid-row-gap: ${GAP}px;
   padding: 2px 0;
 
-  ${props => (props.disableEdit ? inputCss : '')}
+  ${props => (props.$disableEdit ? inputCss : '')}
 `;
 
 const StyledLegendRow = styled.div`
@@ -366,7 +366,7 @@ function ColorLegendFactory(LegendRow: ReturnType<typeof LegendRowFactory>) {
     return (
       <StyledLegend
         className="styled-color-legend"
-        disableEdit={disableEdit}
+        $disableEdit={disableEdit}
         isExpanded={isExpanded}
       >
         {legends.map((legend, i) => (

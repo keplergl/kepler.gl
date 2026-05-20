@@ -4,8 +4,13 @@
 import React from 'react';
 import Base, {BaseProps} from './base';
 
-const AnchorWindow = (props: Partial<BaseProps>) => (
-  <Base {...props}>
+const AnchorWindow = ({
+  height = '16px',
+  viewBox = '0 0 16 16',
+  predefinedClassName = 'data-ex-icons-anchorwindow',
+  ...props
+}: Partial<BaseProps>) => (
+  <Base height={height} viewBox={viewBox} predefinedClassName={predefinedClassName} {...props}>
     <path
       fillRule="evenodd"
       clipRule="evenodd"
@@ -24,9 +29,4 @@ const AnchorWindow = (props: Partial<BaseProps>) => (
   </Base>
 );
 
-AnchorWindow.defaultProps = {
-  height: '16px',
-  viewBox: '0 0 16 16',
-  predefinedClassName: 'data-ex-icons-anchorwindow'
-};
 export default AnchorWindow;

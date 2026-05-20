@@ -45,7 +45,7 @@ const DatasetCatalog = styled.div`
 `;
 
 export type DatasetModalTabProps = BaseComponentProps & {
-  active?: boolean;
+  $active?: boolean;
 };
 
 export const DatasetModalTab: IStyledComponent<
@@ -53,7 +53,7 @@ export const DatasetModalTab: IStyledComponent<
   DatasetModalTabProps
 > = styled.div<DatasetModalTabProps>`
   align-items: center;
-  border-bottom: 3px solid ${props => (props.active ? 'black' : 'transparent')};
+  border-bottom: 3px solid ${props => (props.$active ? 'black' : 'transparent')};
   cursor: pointer;
   display: flex;
   height: 35px;
@@ -93,7 +93,7 @@ const DatasetTabsUnmemoized: React.FC<DatasetTabsUnmemoizedProps> = ({
       {Object.values(datasets).map((dataset: KeplerTable) => (
         <DatasetModalTab
           className="dataset-modal-tab"
-          active={dataset === activeDataset}
+          $active={dataset === activeDataset}
           key={dataset.id}
           onClick={() => showDatasetTable(dataset.id)}
         >
