@@ -33,6 +33,7 @@ import {
   isLayerHoveredFromArrow,
   getHoveredObjectFromArrow
 } from '../layer-utils';
+import {getTextOffsetByRadius, formatTextLabelData} from '../layer-text-label';
 import GeojsonLayerIcon from './geojson-layer-icon';
 import {
   GEOJSON_FIELDS,
@@ -512,36 +513,67 @@ export default class GeoJsonLayer extends Layer {
     if (this.config.dataId === null) {
       return {};
     }
+    const {textLabel} = this.config;
     const {gpuFilter, dataContainer} = datasets[this.config.dataId];
-    const {data} = this.updateData(datasets, oldLayerData);
+    const {data, triggerChanged} = this.updateData(datasets, oldLayerData);
+
+    // Text label accessors expect data items with a top-level `index` property,
+    // but geojson features store it at `properties.index`. Create a mapped array
+    // that both formatTextLabelData and the TextLayer can use.
+    const textLabelData = data.map(d => ({index: d.properties.index}));
+
+    const textLabels = formatTextLabelData({
+      textLabel,
+      triggerChanged,
+      oldLayerData,
+      data: textLabelData,
+      dataContainer,
+      filteredIndex: this.filteredIndex
+    });
 
     let filterValueAccessor;
+    let textLabelFilterValueAccessor;
     let dataAccessor;
     if (this.config.columnMode === COLUMN_MODE_GEOJSON) {
       filterValueAccessor = (dc, d, fieldIndex) => dc.valueAt(d.properties.index, fieldIndex);
+      textLabelFilterValueAccessor = (dc, d, fieldIndex) => dc.valueAt(d.index, fieldIndex);
       // For GEOJSON mode, properties.index is the row index in the data container
       dataAccessor = () => d => ({index: d.properties.index});
     } else {
       filterValueAccessor = getTableModeValueAccessor;
+      textLabelFilterValueAccessor = (dc, d, fieldIndex) => dc.valueAt(d.index, fieldIndex);
       // For TABLE mode, properties.index is the feature index (not row index).
       // Use the first row from properties.values to get field values for color/size.
       dataAccessor = () => d => d.properties.values[0];
     }
 
     const indexAccessor = f => f.properties.index;
+    const textLabelIndexAccessor = f => f.index;
     const accessors = this.getAttributeAccessors({dataAccessor, dataContainer});
 
     const isFilteredAccessor = d => {
       return this.filteredIndex ? this.filteredIndex[d.properties.index] : 1;
     };
 
+    const textLabelFilteredAccessor = d => {
+      return this.filteredIndex ? this.filteredIndex[d.index] : 1;
+    };
+
     return {
       data,
+      textLabelData,
+      getPosition: d => this.centroids[d.index] || [0, 0],
       getFilterValue: gpuFilter.filterValueAccessor(dataContainer)(
         indexAccessor,
         filterValueAccessor
       ),
+      textLabelFilterValue: gpuFilter.filterValueAccessor(dataContainer)(
+        textLabelIndexAccessor,
+        textLabelFilterValueAccessor
+      ),
       getFiltered: isFilteredAccessor,
+      textLabelFiltered: textLabelFilteredAccessor,
+      textLabels,
       ...accessors
     };
   }
@@ -708,6 +740,14 @@ export default class GeoJsonLayer extends Layer {
 
     const {data, ...props} = dataProps;
 
+    const getPixelOffset = getTextOffsetByRadius(radiusScale, dataProps.getRadius, mapState);
+    const sharedProps = {
+      getFilterValue: dataProps.getFilterValue,
+      extensions: [...defaultLayerProps.extensions, new FilterArrowExtension()],
+      filterRange: defaultLayerProps.filterRange,
+      visible: defaultLayerProps.visible
+    };
+
     // arrow table can have multiple chunks, a deck.gl layer is created for each chunk
     const deckLayerData = this.geoArrowMode ? data : [data];
     const deckLayers = deckLayerData.map((d, i) => {
@@ -765,7 +805,25 @@ export default class GeoJsonLayer extends Layer {
               filled: false
             } as unknown as GeoJsonLayerProps)
           ]
-        : [])
+        : []),
+      // text label layer
+      ...this.renderTextLabelLayer(
+        {
+          getPosition: dataProps.getPosition,
+          sharedProps,
+          getPixelOffset,
+          updateTriggers,
+          getFiltered: dataProps.textLabelFiltered
+        },
+        {
+          ...opts,
+          data: {
+            ...dataProps,
+            data: dataProps.textLabelData,
+            getFilterValue: dataProps.textLabelFilterValue
+          }
+        }
+      )
     ];
   }
 }

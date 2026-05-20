@@ -913,6 +913,14 @@ export default function LayerConfiguratorFactory(
               <VisConfigSwitch {...layer.visConfigSettings.allowHover} {...visConfiguratorProps} />
             </LayerConfigGroup>
           ) : null}
+
+          {/* text label */}
+          <TextLabelPanel
+            id={layer.id}
+            fields={visConfiguratorProps.fields}
+            updateLayerTextLabel={this.props.updateLayerTextLabel}
+            textLabel={layer.config.textLabel}
+          />
         </StyledLayerVisualConfigurator>
       );
     }
