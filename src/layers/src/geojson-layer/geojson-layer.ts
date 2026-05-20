@@ -517,12 +517,17 @@ export default class GeoJsonLayer extends Layer {
     const {gpuFilter, dataContainer} = datasets[this.config.dataId];
     const {data, triggerChanged} = this.updateData(datasets, oldLayerData);
 
-    // Text label accessors expect data items with a top-level `index` property,
-    // but geojson features store it at `properties.index`. Create a mapped array
-    // that both formatTextLabelData and the TextLayer can use.
-    const textLabelData = ((data as GeojsonDataMaps) || [])
-      .filter(d => d && 'properties' in d)
-      .map(d => ({index: (d as Feature).properties?.index}));
+    // Text labels are only supported in GEOJSON column mode where properties.index
+    // is the actual row index in the data container. In TABLE mode, properties.index
+    // is a feature index (not a row index), so text label value lookups would be wrong.
+    const supportsTextLabels =
+      this.config.columnMode === COLUMN_MODE_GEOJSON && this.centroids.length > 0;
+
+    const textLabelData = supportsTextLabels
+      ? ((data as GeojsonDataMaps) || [])
+          .filter(d => d && 'properties' in d)
+          .map(d => ({index: (d as Feature).properties?.index}))
+      : [];
 
     const textLabels = formatTextLabelData({
       textLabel,
@@ -534,16 +539,13 @@ export default class GeoJsonLayer extends Layer {
     });
 
     let filterValueAccessor;
-    let textLabelFilterValueAccessor;
     let dataAccessor;
     if (this.config.columnMode === COLUMN_MODE_GEOJSON) {
       filterValueAccessor = (dc, d, fieldIndex) => dc.valueAt(d.properties.index, fieldIndex);
-      textLabelFilterValueAccessor = (dc, d, fieldIndex) => dc.valueAt(d.index, fieldIndex);
       // For GEOJSON mode, properties.index is the row index in the data container
       dataAccessor = () => d => ({index: d.properties.index});
     } else {
       filterValueAccessor = getTableModeValueAccessor;
-      textLabelFilterValueAccessor = (dc, d, fieldIndex) => dc.valueAt(d.index, fieldIndex);
       // For TABLE mode, properties.index is the feature index (not row index).
       // Use the first row from properties.values to get field values for color/size.
       dataAccessor = () => d => d.properties.values[0];
@@ -571,7 +573,7 @@ export default class GeoJsonLayer extends Layer {
       ),
       textLabelFilterValue: gpuFilter.filterValueAccessor(dataContainer)(
         textLabelIndexAccessor,
-        textLabelFilterValueAccessor
+        (dc, d, fieldIndex) => dc.valueAt(d.index, fieldIndex)
       ),
       getFiltered: isFilteredAccessor,
       textLabelFiltered: textLabelFilteredAccessor,
@@ -809,23 +811,25 @@ export default class GeoJsonLayer extends Layer {
           ]
         : []),
       // text label layer
-      ...this.renderTextLabelLayer(
-        {
-          getPosition: dataProps.getPosition,
-          sharedProps,
-          getPixelOffset,
-          updateTriggers,
-          getFiltered: dataProps.textLabelFiltered
-        },
-        {
-          ...opts,
-          data: {
-            ...dataProps,
-            data: dataProps.textLabelData,
-            getFilterValue: dataProps.textLabelFilterValue
-          }
-        }
-      )
+      ...(dataProps.textLabelData.length > 0
+        ? this.renderTextLabelLayer(
+            {
+              getPosition: dataProps.getPosition,
+              sharedProps,
+              getPixelOffset,
+              updateTriggers,
+              getFiltered: dataProps.textLabelFiltered
+            },
+            {
+              ...opts,
+              data: {
+                ...dataProps,
+                data: dataProps.textLabelData,
+                getFilterValue: dataProps.textLabelFilterValue
+              }
+            }
+          )
+        : [])
     ];
   }
 }
