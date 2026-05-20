@@ -29,7 +29,11 @@ import {default as H3Layer} from './h3-hexagon-layer/h3-hexagon-layer';
 export {defaultElevation as h3DefaultElevation} from './h3-hexagon-layer/h3-hexagon-layer';
 import {default as ScenegraphLayer} from './scenegraph-layer/scenegraph-layer';
 import {default as TripLayer} from './trip-layer/trip-layer';
-export {defaultLineWidth as tripDefaultLineWidth} from './trip-layer/trip-layer';
+export {
+  defaultLineWidth as tripDefaultLineWidth,
+  COLUMN_MODE_GEOJSON,
+  DEFAULT_TEXT_LABEL_BG_COLOR
+} from './trip-layer/trip-layer';
 export {
   coordHasLength4,
   isTripGeoJsonField,

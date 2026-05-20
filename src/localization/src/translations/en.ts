@@ -97,6 +97,8 @@ export default {
     colorByDescription: 'When off, color is based on count of points',
     aggregateBy: 'Aggregate {field} by',
     '3DModel': '3D Model',
+    '3DModelURL': 'Custom 3D Model URL',
+    '3DModelURLDescription': 'URL of a .glb or .glTF file with the 3D model.',
     '3DModelOptions': '3D Model Options',
     service: 'Service',
     layer: 'Layer',
@@ -188,6 +190,23 @@ export default {
     showHighlightColor: 'Show highlight Color',
     darkModeEnabled: 'Dark base map',
     transparentBackground: 'Transparent Background',
+    scenegraphColorEnabled: 'Apply color',
+    scenegraphUseTrailColor: 'Use trail color',
+    adjustRoll: 'Adjust Roll',
+    adjustPitch: 'Adjust Pitch',
+    adjustYaw: 'Adjust Yaw',
+    invertRoll: 'Invert Roll',
+    invertPitch: 'Invert Pitch',
+    invertYaw: 'Invert Yaw',
+    fixedRoll: 'Roll based on',
+    fixedPitch: 'Pitch based on',
+    fixedYaw: 'Yaw based on',
+    fixedRollDescription:
+      'Select a column with the values for Roll. Zero is level. Positive is rolled right.',
+    fixedPitchDescription:
+      'Select a column with the values for Pitch. Zero is level. Positive is Pitch up.',
+    fixedYawDescription:
+      'Select a column with the values for Yaw. Zero is north. Positive is clockwise from north.',
     flow: {
       fade: 'Fade',
       fadeEnabled: 'Fade',
