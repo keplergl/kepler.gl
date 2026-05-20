@@ -195,6 +195,9 @@ export default {
     adjustRoll: 'Adjust Roll',
     adjustPitch: 'Adjust Pitch',
     adjustYaw: 'Adjust Yaw',
+    adjustSize: 'Size Scale',
+    adjustSizeDescription:
+      'Size is scaled by factor of 2^x where x is the slider value. Zero means no scaling.',
     invertRoll: 'Invert Roll',
     invertPitch: 'Invert Pitch',
     invertYaw: 'Invert Yaw',

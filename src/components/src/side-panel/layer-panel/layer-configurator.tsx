@@ -23,6 +23,7 @@ import LayerConfigGroupFactory, {ConfigGroupCollapsibleContent} from './layer-co
 import LayerErrorMessage from './layer-error-message';
 import LayerTypeSelectorFactory from './layer-type-selector';
 import TextLabelPanelFactory from './text-label-panel';
+import TextLabelTooltipPanelFactory from './text-label-tooltip-panel';
 import VisConfigSliderFactory from './vis-config-slider';
 import VisConfigSwitchFactory from './vis-config-switch';
 import ScenegraphModelSelectorFactory, {
@@ -113,7 +114,8 @@ export const getLayerConfiguratorProps = (props: LayerConfiguratorProps) => ({
   layer: props.layer,
   fields: getLayerFields(props.datasets, props.layer),
   onChange: props.updateLayerConfig,
-  setColorUI: props.updateLayerColorUI
+  setColorUI: props.updateLayerColorUI,
+  setLayerTextLabel: props.updateLayerTextLabel
 });
 
 export const getVisConfiguratorProps = (props: LayerConfiguratorProps) => ({
@@ -146,7 +148,8 @@ LayerConfiguratorFactory.deps = [
   AggrScaleSelectorFactory,
   VectorTileLayerConfiguratorFactory,
   RasterTileLayerConfiguratorFactory,
-  ScenegraphModelSelectorFactory
+  ScenegraphModelSelectorFactory,
+  TextLabelTooltipPanelFactory
 ];
 
 export default function LayerConfiguratorFactory(
@@ -164,7 +167,8 @@ export default function LayerConfiguratorFactory(
   AggrScaleSelector: ReturnType<typeof AggrScaleSelectorFactory>,
   VectorTileLayerConfigurator: ReturnType<typeof VectorTileLayerConfiguratorFactory>,
   RasterTileLayerConfigurator: ReturnType<typeof RasterTileLayerConfiguratorFactory>,
-  ScenegraphModelSelector: ReturnType<typeof ScenegraphModelSelectorFactory>
+  ScenegraphModelSelector: ReturnType<typeof ScenegraphModelSelectorFactory>,
+  TextLabelTooltipPanel: ReturnType<typeof TextLabelTooltipPanelFactory>
 ): React.ComponentType<LayerConfiguratorProps> {
   class LayerConfigurator extends Component<LayerConfiguratorProps> {
     _renderPointLayerConfig(props) {
@@ -778,6 +782,14 @@ export default function LayerConfiguratorFactory(
               <VisConfigSwitch {...layer.visConfigSettings.fadeTrail} {...visConfiguratorProps} />
             </ConfigGroupCollapsibleContent>
           </LayerConfigGroup>
+
+          {/* Text Label */}
+          <TextLabelTooltipPanel
+            dataId={layer.config.dataId}
+            fields={visConfiguratorProps.fields}
+            updateLayerTextLabel={layerConfiguratorProps.setLayerTextLabel}
+            textLabel={layer.config.textLabel}
+          />
 
           {/* 3D Model */}
           <LayerConfigGroup
