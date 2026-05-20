@@ -520,7 +520,9 @@ export default class GeoJsonLayer extends Layer {
     // Text label accessors expect data items with a top-level `index` property,
     // but geojson features store it at `properties.index`. Create a mapped array
     // that both formatTextLabelData and the TextLayer can use.
-    const textLabelData = data.map(d => ({index: d.properties.index}));
+    const textLabelData = ((data as GeojsonDataMaps) || [])
+      .filter(d => d && 'properties' in d)
+      .map(d => ({index: (d as Feature).properties?.index}));
 
     const textLabels = formatTextLabelData({
       textLabel,
