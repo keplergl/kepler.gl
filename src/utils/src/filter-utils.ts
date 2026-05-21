@@ -586,6 +586,12 @@ export function getFilterRecord(
 
   filters.forEach(f => {
     if (isValidFilterValue(f.type, f.value) && toArray(f.dataId).includes(dataId)) {
+      // Polygon filters are layer-specific and handled per-layer, not at the dataset level
+      if (f.type === FILTER_TYPES.polygon) {
+        filterRecord.fixedDomain.push(f);
+        return;
+      }
+
       (f.fixedDomain || opt.ignoreDomain
         ? filterRecord.fixedDomain
         : filterRecord.dynamicDomain
