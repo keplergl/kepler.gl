@@ -803,6 +803,7 @@ export const expectedSavedLayer0 = {
     label: DEFAULT_LAYER_LABEL,
     highlightColor: DEFAULT_HIGHLIGHT_COLOR,
     color: [2, 2, 2],
+    columnMode: 'points',
     columns: {
       lat: 'gps_data.lat',
       lng: 'gps_data.lng'
@@ -843,6 +844,7 @@ export const expectedLoadedLayer0 = {
     label: DEFAULT_LAYER_LABEL,
     highlightColor: DEFAULT_HIGHLIGHT_COLOR,
     color: [2, 2, 2],
+    columnMode: 'points',
     columns: {
       lat: 'gps_data.lat',
       lng: 'gps_data.lng'

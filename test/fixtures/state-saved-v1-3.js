@@ -416,6 +416,7 @@ mergedLayer1.config = {
   dataId: 'fm8v2jcza',
   label: 'hexagon',
   color: [221, 178, 124],
+  columnMode: 'points',
   columns: {
     lat: {
       value: 'restaurant_lat',
