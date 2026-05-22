@@ -393,9 +393,6 @@ test('#AggregationLayer -> geojson mode handles Point, LineString, Polygon geome
     valueAt: (index, fieldIdx) => JSON.stringify(mockFeatures[index])
   };
 
-  // Call updateLayerMeta-like logic
-  const getFeature = layer.getPositionAccessor(mockDataContainer);
-
   // Manually invoke _buildGeojsonDataToFeature through the public API
   layer.config.columns = {
     lat: {value: null, fieldIdx: -1},

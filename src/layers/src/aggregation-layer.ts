@@ -219,10 +219,6 @@ export default class AggregationLayer extends Layer {
     return true;
   }
 
-  get requiredLayerColumns() {
-    return aggregateRequiredColumns;
-  }
-
   get supportedColumnModes() {
     return SUPPORTED_COLUMN_MODES;
   }
