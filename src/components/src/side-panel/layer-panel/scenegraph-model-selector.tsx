@@ -26,18 +26,24 @@ import ScooterModelIcon from '../../common/icons/3d-models/scooter';
 
 const EmptyIcon = () => <></>;
 
-TRIP_LAYER_SCENEGRAPH_MODELS[0].icon = AirplaneModelIcon;
-TRIP_LAYER_SCENEGRAPH_MODELS[1].icon = BoeingModelIcon;
-TRIP_LAYER_SCENEGRAPH_MODELS[2].icon = EvtolModelIcon;
-TRIP_LAYER_SCENEGRAPH_MODELS[3].icon = GliderModelIcon;
-TRIP_LAYER_SCENEGRAPH_MODELS[4].icon = HelicopterModelIcon;
-TRIP_LAYER_SCENEGRAPH_MODELS[5].icon = BicycleModelIcon;
-TRIP_LAYER_SCENEGRAPH_MODELS[6].icon = ScooterModelIcon;
-TRIP_LAYER_SCENEGRAPH_MODELS[7].icon = CarModelIcon;
-TRIP_LAYER_SCENEGRAPH_MODELS[8].icon = TruckModelIcon;
-TRIP_LAYER_SCENEGRAPH_MODELS[9].icon = SemitruckModelIcon;
-TRIP_LAYER_SCENEGRAPH_MODELS[10].icon = CargoshipModelIcon;
-TRIP_LAYER_SCENEGRAPH_MODELS[11].icon = EmptyIcon;
+const ICON_MAP: Record<string, React.ComponentType<any>> = {
+  airplane: AirplaneModelIcon,
+  boeing777: BoeingModelIcon,
+  'uber-evtol': EvtolModelIcon,
+  'hang-glider': GliderModelIcon,
+  helicopter: HelicopterModelIcon,
+  bicycle: BicycleModelIcon,
+  scooter: ScooterModelIcon,
+  car: CarModelIcon,
+  truck: TruckModelIcon,
+  semitruck: SemitruckModelIcon,
+  cargoship: CargoshipModelIcon
+};
+
+const SCENEGRAPH_MODEL_OPTIONS = TRIP_LAYER_SCENEGRAPH_MODELS.map(m => ({
+  ...m,
+  icon: ICON_MAP[m.id] || EmptyIcon
+}));
 
 const StyledScenegraphModelSelector = styled.div`
   .item-selector .item-selector__dropdown {
@@ -64,7 +70,7 @@ function ScenegraphModelSelectorFactory(
 ) {
   const ScenegraphModelSelector: React.FC<ScenegraphModelSelectorProps> = ({
     selected,
-    options = TRIP_LAYER_SCENEGRAPH_MODELS,
+    options = SCENEGRAPH_MODEL_OPTIONS,
     disabled,
     onSelect
   }) => {
@@ -83,7 +89,7 @@ function ScenegraphModelSelectorFactory(
             multiSelect={false}
             placeholder="placeholder.selectType"
             onChange={id => {
-              const scenegraph = TRIP_LAYER_SCENEGRAPH_MODELS.find(d => d.id === id);
+              const scenegraph = SCENEGRAPH_MODEL_OPTIONS.find(d => d.id === id);
               if (scenegraph) {
                 onSelect(scenegraph);
               }

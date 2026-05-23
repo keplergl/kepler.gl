@@ -37,8 +37,7 @@ import {ActionHandler, toggleModal} from '@kepler.gl/actions';
 import {
   AGGREGATION_TYPE_OPTIONS,
   LAYER_TYPES,
-  CUSTOM_SCENEGRAPH_MODEL_ID,
-  TRIP_LAYER_SCENEGRAPH_MODELS
+  CUSTOM_SCENEGRAPH_MODEL_ID
 } from '@kepler.gl/constants';
 import {AggregationLayer, Layer, LayerBaseConfig, VisualChannel, COLUMN_MODE_GEOJSON} from '@kepler.gl/layers';
 
@@ -713,13 +712,11 @@ export default function LayerConfiguratorFactory(
 
       const handleAngleBasedOnChange = (changes, prop) => {
         layerChannelConfigProps.onChange(changes, prop);
-        const modelId = layer.config.visConfig.scenegraph;
-        const model = TRIP_LAYER_SCENEGRAPH_MODELS.find(d => d.id === modelId);
-        if (model)
-          visConfiguratorProps.onChange({
-            [prop]: 0,
-            [`invert${capitalizeFirstLetter(prop)}`]: false
-          });
+        const angleName = prop.replace('adjust', '');
+        visConfiguratorProps.onChange({
+          [prop]: 0,
+          [`invert${angleName}`]: false
+        });
       };
 
       return (

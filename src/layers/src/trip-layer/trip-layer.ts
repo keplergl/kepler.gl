@@ -896,8 +896,9 @@ export default class TripLayer extends Layer {
     const scenegraph = visConfig.scenegraphEnabled
       ? TRIP_LAYER_SCENEGRAPH_MODELS.find(d => d.id === visConfig.scenegraph)
       : null;
-    if (scenegraph && scenegraph.id === CUSTOM_SCENEGRAPH_MODEL_ID) {
-      scenegraph.url = visConfig.scenegraphCustomModelUrl;
+    if (!scenegraph) return null;
+    if (scenegraph.id === CUSTOM_SCENEGRAPH_MODEL_ID) {
+      return {...scenegraph, url: visConfig.scenegraphCustomModelUrl};
     }
     return scenegraph;
   }
