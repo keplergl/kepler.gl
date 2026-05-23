@@ -634,7 +634,7 @@ export default class TripLayer extends Layer {
     let valueAccessor;
     let textLabels;
     switch (this.config.columnMode) {
-      case COLUMN_MODE_GEOJSON:
+      case COLUMN_MODE_GEOJSON: {
         valueAccessor = (dc: DataContainerInterface, f, fieldIndex: number) => {
           return dc.valueAt(f.properties.index, fieldIndex);
         };
@@ -657,6 +657,7 @@ export default class TripLayer extends Layer {
           textLabelAccessor
         });
         break;
+      }
       case COLUMN_MODE_TABLE:
         valueAccessor = this._getColumnModeValueAccessor;
         textLabels = this._formatTableColumnModeTextLabelData(textLabel, fields);
@@ -1057,7 +1058,10 @@ export default class TripLayer extends Layer {
       const timestamps = this.dataToTimeStamp[featureIndex];
       let idx = bisectRight(timestamps, currentTime);
       // @ts-expect-error type geometry?
-      const {coordinates} = object?.geometry;
+      const coordinates = object?.geometry?.coordinates;
+      if (!coordinates) {
+        return {idx: -1, coords: null, datum: null, prevDatum: null, advancement: 0};
+      }
       if (idx >= coordinates.length) idx = coordinates.length - 1;
       if (
         timestamps[0] <= currentTime &&

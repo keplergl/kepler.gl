@@ -36,7 +36,9 @@ const TooltipConfigWrapper = styled.div`
   }
 `;
 
-const nop = () => {};
+const nop = () => {
+  // no-op
+};
 
 export type TextLabelTooltipPanelProps = {
   dataId: string;
