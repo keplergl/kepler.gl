@@ -3,7 +3,7 @@
 
 import React, {Component} from 'react';
 import {FormattedMessage} from '@kepler.gl/localization';
-import {Field, LayerTextLabel} from '@kepler.gl/types';
+import {Field, LayerTextLabel, RGBColor} from '@kepler.gl/types';
 
 import {
   PanelLabel,
@@ -54,24 +54,27 @@ function TextLabelTooltipPanelFactory(
   class TextLabelTooltipPanel extends Component<TextLabelTooltipPanelProps> {
     handleSelectedFieldsChange = fields => {
       const {textLabel} = this.props;
+      const currentFields = (textLabel[0].field || []) as {field: Field; format: string}[];
       this.props.updateLayerTextLabel(
         0,
         'field',
         fields.map(f => ({
           field: f,
-          format: (textLabel[0].field || []).find(tf => tf.field === f)?.format ?? ''
+          format: currentFields.find(tf => tf.field === f)?.format ?? ''
         }))
       );
     };
 
     getCurrentFields = () => {
       const {textLabel} = this.props;
-      return (textLabel[0].field || []).filter(f => f?.field?.name).map(f => f.field);
+      const fields = (textLabel[0].field || []) as {field: Field; format: string}[];
+      return fields.filter(f => f?.field?.name).map(f => f.field);
     };
 
     getCurrentFieldFormats = () => {
       const {textLabel} = this.props;
-      return (textLabel[0].field || [])
+      const fields = (textLabel[0].field || []) as {field: Field; format: string}[];
+      return fields
         .filter(f => f?.field?.name)
         .map(f => ({
           name: f.field.name,
@@ -149,7 +152,7 @@ function TextLabelTooltipPanelFactory(
                 <ColorSelector
                   colorSets={[
                     {
-                      selectedColor: textLabel[0].backgroundColor ?? DEFAULT_TEXT_LABEL_BG_COLOR,
+                      selectedColor: textLabel[0].backgroundColor ?? (DEFAULT_TEXT_LABEL_BG_COLOR as RGBColor),
                       setColor: v => updateLayerTextLabel(0, 'backgroundColor', v)
                     }
                   ]}

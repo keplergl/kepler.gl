@@ -43,6 +43,7 @@ import TripInfoModalFactory from './trip-info-modal';
 import {bisectRight} from 'd3-array';
 import {
   ColorRange,
+  Field,
   Merge,
   VisConfigColorRange,
   VisConfigNumber,
@@ -99,7 +100,20 @@ export type TripLayerVisConfig = {
 
 export type TripLayerConfig = Merge<
   LayerBaseConfig,
-  {columns: TripLayerColumnsConfig; visConfig: TripLayerVisConfig; colorField?: VisualChannelField}
+  {
+    columns: TripLayerColumnsConfig;
+    visConfig: TripLayerVisConfig;
+    colorField?: VisualChannelField;
+    rollField: VisualChannelField;
+    rollDomain: [number, number];
+    rollScale: string;
+    pitchField: VisualChannelField;
+    pitchDomain: [number, number];
+    pitchScale: string;
+    yawField: VisualChannelField;
+    yawDomain: [number, number];
+    yawScale: string;
+  }
 >;
 
 export type TripLayerMeta = {
@@ -279,7 +293,6 @@ export const DEFAULT_TEXT_LABEL_BG_COLOR = [100, 100, 100];
 const DEFAULT_TEXT_LABEL_BG_OPACITY = 100;
 
 const DEFAULT_COLUMN_MODE = COLUMN_MODE_GEOJSON;
-const LAYER_TYPE = 'trip';
 
 export default class TripLayer extends Layer {
   declare visConfigSettings: TripLayerVisConfigSettings;
@@ -569,7 +582,8 @@ export default class TripLayer extends Layer {
       }
 
       let getText;
-      const fieldNFormat = tl.field.map(f => ({
+      const fieldArr = tl.field as unknown as {field: Field; format: string}[];
+      const fieldNFormat = fieldArr.map(f => ({
         ...f,
         field: fields.find(fld => fld.name === f.field.name)
       }));

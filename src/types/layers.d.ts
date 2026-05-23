@@ -168,7 +168,7 @@ export type LayerTextLabel = {
   alignment: string;
   outlineWidth: number;
   outlineColor: RGBAColor;
-  backgroundColor: RGBAColor;
+  backgroundColor: RGBAColor | null;
 };
 
 export type ColorRangeConfig = {
