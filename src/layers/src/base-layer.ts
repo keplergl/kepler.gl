@@ -1632,7 +1632,10 @@ class Layer implements KeplerLayer {
             getFilterValue: data.getFilterValue,
             updateTriggers: {
               ...updateTriggers,
-              getText: textLabel[i].field?.name,
+              getText: {
+                field: textLabel[i].field?.name,
+                ...(updateTriggers.getText || {})
+              },
               getPixelOffset: {
                 ...updateTriggers.getRadius,
                 mapState,

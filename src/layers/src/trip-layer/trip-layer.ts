@@ -23,7 +23,6 @@ import {
 import TripLayerIcon from './trip-layer-icon';
 import {
   formatTextLabelData,
-  getMultiTextLabelValue,
   getSingleTextLabelValue,
   getTextOffsetByRadius
 } from '../layer-text-label';
@@ -289,9 +288,6 @@ const SUPPORTED_COLUMN_MODES = [
     optionalColumns: ['altitude']
   }
 ];
-export const DEFAULT_TEXT_LABEL_BG_COLOR = [100, 100, 100];
-const DEFAULT_TEXT_LABEL_BG_OPACITY = 100;
-
 const DEFAULT_COLUMN_MODE = COLUMN_MODE_GEOJSON;
 
 export default class TripLayer extends Layer {
@@ -581,32 +577,26 @@ export default class TripLayer extends Layer {
         };
       }
 
-      let getText;
-      const fieldArr = tl.field as unknown as {field: Field; format: string}[];
-      const fieldNFormat = fieldArr.map(f => ({
-        ...f,
-        field: fields.find(fld => fld.name === f.field.name)
-      }));
-
-      if (fieldNFormat.length === 1) {
-        getText = (f, animationConfig) => {
-          const {datum} = this._findDatumForFeatureByTime(f.properties.index, animationConfig);
-          return getSingleTextLabelValue(fieldNFormat[0], datum);
-        };
-      } else {
-        getText = (f, animationConfig) => {
-          const {datum} = this._findDatumForFeatureByTime(f.properties.index, animationConfig);
-          return getMultiTextLabelValue(fieldNFormat, datum);
+      const field = fields.find(fld => fld.name === (tl.field as Field).name);
+      if (!field) {
+        return {
+          getText: null,
+          characterSet: []
         };
       }
+
+      const getText = (f, animationConfig) => {
+        const {datum} = this._findDatumForFeatureByTime(f.properties.index, animationConfig);
+        return getSingleTextLabelValue({field, format: ''}, datum);
+      };
 
       return {
         characterSet: 'auto',
         getText,
         updateTriggers: {
           getText: {
-            field: fieldNFormat.map(f => f.field.name).join(''),
-            fieldDisplayName: fieldNFormat.map(f => f.field.displayName).join('')
+            field: field.name,
+            fieldDisplayName: field.displayName
           }
         }
       };
@@ -643,10 +633,7 @@ export default class TripLayer extends Layer {
           if (!field) {
             return f => '';
           }
-          if (field.length === 1) {
-            return f => getSingleTextLabelValue(field[0], {index: f.properties.index});
-          }
-          return f => getMultiTextLabelValue(field, {index: f.properties.index});
+          return f => getSingleTextLabelValue({field, format: ''}, {index: f.properties.index});
         };
         textLabels = formatTextLabelData({
           textLabel,
@@ -876,25 +863,21 @@ export default class TripLayer extends Layer {
       );
     }
 
-    const label = this.config.textLabel[0];
-    if (label?.field) {
+    const hasTextLabels = this.config.textLabel.some(tl => tl.field);
+    if (hasTextLabels) {
       layers.push(
         ...this.renderTextLabelLayer(
           {
             getPosition,
             getPixelOffset,
             animationConfig,
-            backgroundProps: {
-              background: true,
-              backgroundPadding: [2, 2],
-              getBackgroundColor: [
-                ...(label.backgroundColor ?? DEFAULT_TEXT_LABEL_BG_COLOR),
-                DEFAULT_TEXT_LABEL_BG_OPACITY
-              ]
-            },
             updateTriggers: {
-              getBackgroundColor: {
-                backgroundColor: label.backgroundColor
+              getPosition: {
+                columns: this.config.columns,
+                currentTime: animationConfig.currentTime
+              },
+              getText: {
+                currentTime: animationConfig.currentTime
               }
             },
             sharedProps: null

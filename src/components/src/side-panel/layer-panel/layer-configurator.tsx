@@ -23,7 +23,6 @@ import LayerConfigGroupFactory, {ConfigGroupCollapsibleContent} from './layer-co
 import LayerErrorMessage from './layer-error-message';
 import LayerTypeSelectorFactory from './layer-type-selector';
 import TextLabelPanelFactory from './text-label-panel';
-import TextLabelTooltipPanelFactory from './text-label-tooltip-panel';
 import VisConfigSliderFactory from './vis-config-slider';
 import VisConfigSwitchFactory from './vis-config-switch';
 import ScenegraphModelSelectorFactory, {
@@ -147,8 +146,7 @@ LayerConfiguratorFactory.deps = [
   AggrScaleSelectorFactory,
   VectorTileLayerConfiguratorFactory,
   RasterTileLayerConfiguratorFactory,
-  ScenegraphModelSelectorFactory,
-  TextLabelTooltipPanelFactory
+  ScenegraphModelSelectorFactory
 ];
 
 export default function LayerConfiguratorFactory(
@@ -166,8 +164,7 @@ export default function LayerConfiguratorFactory(
   AggrScaleSelector: ReturnType<typeof AggrScaleSelectorFactory>,
   VectorTileLayerConfigurator: ReturnType<typeof VectorTileLayerConfiguratorFactory>,
   RasterTileLayerConfigurator: ReturnType<typeof RasterTileLayerConfiguratorFactory>,
-  ScenegraphModelSelector: ReturnType<typeof ScenegraphModelSelectorFactory>,
-  TextLabelTooltipPanel: ReturnType<typeof TextLabelTooltipPanelFactory>
+  ScenegraphModelSelector: ReturnType<typeof ScenegraphModelSelectorFactory>
 ): React.ComponentType<LayerConfiguratorProps> {
   class LayerConfigurator extends Component<LayerConfiguratorProps> {
     _renderPointLayerConfig(props) {
@@ -781,10 +778,10 @@ export default function LayerConfiguratorFactory(
           </LayerConfigGroup>
 
           {/* Text Label */}
-          <TextLabelTooltipPanel
-            dataId={layer.config.dataId}
+          <TextLabelPanel
+            id={layer.id}
             fields={visConfiguratorProps.fields}
-            updateLayerTextLabel={layerConfiguratorProps.setLayerTextLabel}
+            updateLayerTextLabel={this.props.updateLayerTextLabel}
             textLabel={layer.config.textLabel}
           />
 

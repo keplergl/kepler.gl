@@ -31,8 +31,7 @@ import {default as ScenegraphLayer} from './scenegraph-layer/scenegraph-layer';
 import {default as TripLayer} from './trip-layer/trip-layer';
 export {
   defaultLineWidth as tripDefaultLineWidth,
-  COLUMN_MODE_GEOJSON,
-  DEFAULT_TEXT_LABEL_BG_COLOR
+  COLUMN_MODE_GEOJSON
 } from './trip-layer/trip-layer';
 export {
   coordHasLength4,
