@@ -26,7 +26,7 @@ export type EffectPanelProps = {
 };
 
 export type PanelWrapperProps = {
-  active: boolean;
+  $active: boolean;
 };
 
 const PanelWrapper = styled.div<PanelWrapperProps>`
@@ -93,7 +93,7 @@ function EffectPanelFactory(
 
     return (
       <PanelWrapper
-        active={false}
+        $active={false}
         className={classnames('effect-panel', className)}
         data-testid={dataTestIds.effectPanel}
         style={style}

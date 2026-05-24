@@ -176,7 +176,7 @@ export const PanelHeaderDropdownFactory = () => {
   const PanelHeaderDropdown: React.FC<PanelHeaderDropdownProps> = ({items, show, onClose, id}) => {
     const ref = useOnClickOutside<HTMLDivElement>(onClose);
     return (
-      <StyledToolbar show={show} className={`${id}-dropdown`}>
+      <StyledToolbar $show={show} className={`${id}-dropdown`}>
         {show ? (
           <StyledPanelDropdown type="dark" ref={ref} className="panel-header-dropdown__inner">
             {items.map(item => (

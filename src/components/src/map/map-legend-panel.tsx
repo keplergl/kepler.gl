@@ -38,8 +38,8 @@ const DRAG_RESIZE_ID = 'map-legend-resize';
 const DRAG_MOVE_ID = 'map-legend-move';
 
 const StyledDraggableLegendContent = styled.div<{
-  contentHeight?: number;
-  maxContentHeight?: number;
+  $contentHeight?: number;
+  $maxContentHeight?: number;
 }>`
   position: absolute;
   outline: none;
@@ -71,8 +71,8 @@ const StyledDraggableLegendContent = styled.div<{
   }
   .map-control__panel-content {
     max-height: ${props =>
-      props.maxContentHeight ? `${props.maxContentHeight}px` : 'calc(100vh - 100px)'};
-    ${props => (props.contentHeight ? `height: ${props.contentHeight}px;` : '')};
+      props.$maxContentHeight ? `${props.$maxContentHeight}px` : 'calc(100vh - 100px)'};
+    ${props => (props.$contentHeight ? `height: ${props.$contentHeight}px;` : '')};
   }
   border-radius: 4px;
   z-index: 2;
@@ -120,10 +120,10 @@ const StyledResizeHandle = styled.div`
   cursor: ns-resize;
 `;
 
-const StyledFixedLegendContent = styled.div<{contentHeight?: number}>`
+const StyledFixedLegendContent = styled.div<{$contentHeight?: number}>`
   .map-control__panel-content {
     max-height: calc(100vh - 100px);
-    ${props => (props.contentHeight ? `height: ${props.contentHeight}px;` : '')};
+    ${props => (props.$contentHeight ? `height: ${props.$contentHeight}px;` : '')};
   }
 
   /* Hide scrollbars in export to avoid OS default styling differences */
@@ -161,8 +161,8 @@ const DraggableLegendContent = forwardRef((props: DraggableLegendContentProps, r
       ref={refs}
       className={classnames('draggable-legend', {'is-dragging': isDragging})}
       style={{...positionStyles, transform: CSS.Translate.toString(draggableMove.transform)}}
-      contentHeight={contentHeight}
-      maxContentHeight={maxContentHeight}
+      $contentHeight={contentHeight}
+      $maxContentHeight={maxContentHeight}
       {...draggableMove.attributes}
     >
       {children}
@@ -292,7 +292,7 @@ const ImageExportLegend = withTheme(({settings, isSidePanelShown, theme, childre
               ref={legendContentRef}
               style={{...positionStyles, position: 'absolute'}}
             >
-              <StyledFixedLegendContent contentHeight={contentHeight}>
+              <StyledFixedLegendContent $contentHeight={contentHeight}>
                 {children}
               </StyledFixedLegendContent>
             </div>,

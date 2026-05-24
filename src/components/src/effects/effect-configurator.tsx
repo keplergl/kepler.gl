@@ -62,13 +62,13 @@ const StyledVerticalSeparator = styled.div`
 `;
 
 type StyledWrapperProps = {
-  marginBottom?: number;
+  $marginBottom?: number;
 };
 const StyledWrapper = styled.div<StyledWrapperProps>`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: ${props => props.marginBottom ?? 9}px;
+  margin-bottom: ${props => props.$marginBottom ?? 9}px;
 `;
 
 const StyledConfigSection = styled.div`
@@ -292,10 +292,10 @@ export default function EffectConfiguratorFactory(
 
         <StyledVerticalSeparator />
 
-        <StyledWrapper marginBottom={0}>
+        <StyledWrapper $marginBottom={0}>
           <SectionTitle>{'Shadow'}</SectionTitle>
         </StyledWrapper>
-        <StyledWrapper marginBottom={16}>
+        <StyledWrapper $marginBottom={16}>
           <CompactColorPicker
             label={'Color'}
             color={colorPickerProps[2].colorSets[0].selectedColor}
@@ -310,10 +310,10 @@ export default function EffectConfiguratorFactory(
           </StyledConfigSection>
         </StyledWrapper>
 
-        <StyledWrapper marginBottom={0}>
+        <StyledWrapper $marginBottom={0}>
           <SectionTitle>{'Ambient light'}</SectionTitle>
         </StyledWrapper>
-        <StyledWrapper marginBottom={16}>
+        <StyledWrapper $marginBottom={16}>
           <CompactColorPicker
             label={'Color'}
             color={colorPickerProps[0].colorSets[0].selectedColor}
@@ -328,10 +328,10 @@ export default function EffectConfiguratorFactory(
           </StyledConfigSection>
         </StyledWrapper>
 
-        <StyledWrapper marginBottom={0}>
+        <StyledWrapper $marginBottom={0}>
           <SectionTitle>{'Sun light'}</SectionTitle>
         </StyledWrapper>
-        <StyledWrapper marginBottom={0}>
+        <StyledWrapper $marginBottom={0}>
           <CompactColorPicker
             label={'Color'}
             color={colorPickerProps[1].colorSets[0].selectedColor}
