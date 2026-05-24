@@ -276,16 +276,16 @@ test('Components -> DataTableModal -> click tab', t => {
   );
 
   t.equal(wrapper.find(DatasetModalTab).length, 2, 'should render 2 DatasetModalTab');
-  t.equal(wrapper.find(DatasetModalTab).at(0).prop('active'), true, 'prop 0 active should be true');
+  t.equal(wrapper.find(DatasetModalTab).at(0).prop('$active'), true, 'prop 0 active should be true');
   t.equal(
     wrapper.find(DatasetModalTab).at(0).find('.dataset-name').text(),
     'hello.csv',
     'dataset name should be correct'
   );
   t.equal(
-    wrapper.find(DatasetModalTab).at(1).prop('active'),
+    wrapper.find(DatasetModalTab).at(1).prop('$active'),
     false,
-    'prop 1 active should be true'
+    'prop 1 active should be false'
   );
   t.equal(
     wrapper.find(DatasetModalTab).at(1).find('.dataset-name').text(),

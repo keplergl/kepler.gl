@@ -160,7 +160,7 @@ const HeaderActionSection = styled.div`
 `;
 
 // Hiden actions only show up on hover
-type StyledPanelHeaderHiddenActionsProps = {isConfigActive: boolean};
+type StyledPanelHeaderHiddenActionsProps = {$isConfigActive: boolean};
 const StyledPanelHeaderHiddenActions = styled.div.attrs({
   className: 'effect-panel__header__actions__hidden'
 })<StyledPanelHeaderHiddenActionsProps>`
@@ -169,7 +169,7 @@ const StyledPanelHeaderHiddenActions = styled.div.attrs({
   align-items: center;
   transition: opacity 0.4s ease, background-color 0.4s ease;
   background-color: ${props =>
-    props.isConfigActive ? props.theme.panelBackgroundHover : props.theme.panelBackground};
+    props.$isConfigActive ? props.theme.panelBackgroundHover : props.theme.panelBackground};
 
   &:hover {
     opacity: 1;
@@ -249,7 +249,7 @@ export function EffectPanelHeaderActionSectionFactory(
 
     return (
       <HeaderActionSection className="effect-panel__header__actions">
-        <StyledPanelHeaderHiddenActions isConfigActive={isConfigActive}>
+        <StyledPanelHeaderHiddenActions $isConfigActive={isConfigActive}>
           {effectActionItems
             .filter((item: ActionItem) => Boolean(item.isHidden))
             .map((item: ActionItem) => (
@@ -340,7 +340,7 @@ function EffectPanelHeaderFactory(
         className={classnames('effect-panel__header', {
           'sort--handle': !isConfigActive
         })}
-        active={isConfigActive}
+        $active={isConfigActive}
         onClick={onToggleEnableConfig}
       >
         {isDragNDropEnabled ? (

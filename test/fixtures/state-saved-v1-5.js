@@ -148,6 +148,7 @@ export const savedStateV1TripGeoJson = {
               columnMode: 'geojson',
               label: 'Trip Data',
               color: [0, 0, 0],
+              highlightColor: [252, 242, 26, 255],
               columns: {
                 geojson: '_geojson'
               },
@@ -161,17 +162,41 @@ export const savedStateV1TripGeoJson = {
                   category: 'Uber',
                   colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
                 },
+                trailLength: 180,
+                fadeTrail: true,
                 billboard: false,
-                sizeRange: [0, 10]
+                sizeRange: [0, 10],
+                sizeScale: 1,
+                scenegraph: null,
+                scenegraphEnabled: false,
+                scenegraphColorEnabled: false,
+                scenegraphUseTrailColor: false,
+                scenegraphColor: null,
+                scenegraphCustomModelUrl: '',
+                adjustRoll: 0,
+                adjustPitch: 0,
+                adjustYaw: 0,
+                invertRoll: false,
+                invertPitch: false,
+                invertYaw: false,
+                fixedRoll: true,
+                fixedPitch: true,
+                fixedYaw: true
               },
+              hidden: false,
               textLabel: [
                 {
                   field: null,
                   color: [255, 255, 255],
                   size: 18,
+                  weight: 400,
                   offset: [0, 0],
                   anchor: 'start',
-                  alignment: 'center'
+                  alignment: 'center',
+                  outlineWidth: 0,
+                  outlineColor: [255, 0, 0, 255],
+                  background: false,
+                  backgroundColor: null
                 }
               ]
             },
@@ -179,7 +204,13 @@ export const savedStateV1TripGeoJson = {
               colorField: null,
               colorScale: 'quantile',
               sizeField: null,
-              sizeScale: 'linear'
+              sizeScale: 'linear',
+              rollField: null,
+              rollScale: 'linear',
+              pitchField: null,
+              pitchScale: 'linear',
+              yawField: null,
+              yawScale: 'linear'
             }
           }
         ],
@@ -252,6 +283,15 @@ mergedLayer0.config = {
   sizeDomain: [0, 1],
   sizeScale: 'linear',
   sizeField: null,
+  rollField: null,
+  rollDomain: [0, 1],
+  rollScale: 'linear',
+  pitchField: null,
+  pitchDomain: [0, 1],
+  pitchScale: 'linear',
+  yawField: null,
+  yawDomain: [0, 1],
+  yawScale: 'linear',
   colorUI: {
     color: DEFAULT_COLOR_UI,
     colorRange: DEFAULT_COLOR_UI
@@ -268,9 +308,25 @@ mergedLayer0.config = {
     trailLength: 180,
     fadeTrail: true,
     billboard: false,
-    sizeRange: [0, 10]
+    sizeRange: [0, 10],
+    sizeScale: 1,
+    scenegraph: null,
+    scenegraphEnabled: false,
+    scenegraphColorEnabled: false,
+    scenegraphUseTrailColor: false,
+    scenegraphColor: null,
+    scenegraphCustomModelUrl: '',
+    adjustRoll: 0,
+    adjustPitch: 0,
+    adjustYaw: 0,
+    invertRoll: false,
+    invertPitch: false,
+    invertYaw: false,
+    fixedRoll: true,
+    fixedPitch: true,
+    fixedYaw: true
   },
-  textLabel: [DEFAULT_TEXT_LABEL],
+  textLabel: [{...DEFAULT_TEXT_LABEL, backgroundColor: null}],
   animation: {enabled: true, domain: timeStampDomain}
 };
 

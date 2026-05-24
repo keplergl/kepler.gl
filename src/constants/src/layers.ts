@@ -26,6 +26,7 @@ export const PROPERTY_GROUPS = keyMirror({
   radius: null,
   height: null,
   angle: null,
+  scenegraph: null,
   // for heatmap aggregation
   cell: null,
   precision: null,
@@ -506,6 +507,48 @@ export const LAYER_VIS_CONFIGS: LayerVisConfigSettings = {
     label: 'layerVisConfigs.showHighlightColor',
     group: PROPERTY_GROUPS.interaction,
     property: 'showHighlightColor'
+  },
+  scenegraph: {
+    defaultValue: null,
+    type: 'input',
+    label: 'layerVisConfigs.scenegraph',
+    group: PROPERTY_GROUPS.scenegraph,
+    property: 'scenegraph'
+  },
+  scenegraphEnabled: {
+    defaultValue: false,
+    type: 'boolean',
+    label: 'layerVisConfigs.scenegraphEnabled',
+    group: PROPERTY_GROUPS.scenegraph,
+    property: 'scenegraphEnabled'
+  },
+  scenegraphCustomModelUrl: {
+    defaultValue: '',
+    type: 'input',
+    label: 'layerVisConfigs.scenegraphCustomModelUrl',
+    group: PROPERTY_GROUPS.scenegraph,
+    property: 'scenegraphCustomModelUrl'
+  },
+  scenegraphColorEnabled: {
+    defaultValue: false,
+    type: 'boolean',
+    label: 'layerVisConfigs.scenegraphColorEnabled',
+    group: PROPERTY_GROUPS.scenegraph,
+    property: 'scenegraphColorEnabled'
+  },
+  scenegraphUseTrailColor: {
+    defaultValue: false,
+    type: 'boolean',
+    label: 'layerVisConfigs.scenegraphUseTrailColor',
+    group: PROPERTY_GROUPS.scenegraph,
+    property: 'scenegraphUseTrailColor'
+  },
+  scenegraphColor: {
+    defaultValue: null,
+    type: 'color-select',
+    label: 'layerVisConfigs.scenegraphColor',
+    group: PROPERTY_GROUPS.scenegraph,
+    property: 'scenegraphColor'
   }
 };
 

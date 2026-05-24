@@ -166,11 +166,11 @@ const MapLibLogo = ({baseMapLibraryConfig}: MapLibLogoProps) => (
 );
 
 interface StyledDroppableProps {
-  isOver: boolean;
+  $isOver: boolean;
 }
 
 const StyledDroppable = styled.div<StyledDroppableProps>`
-  background-color: ${props => (props.isOver ? props.theme.dndOverBackgroundColor : 'none')};
+  background-color: ${props => (props.$isOver ? props.theme.dndOverBackgroundColor : 'none')};
   width: 100%;
   height: 100%;
   position: absolute;
@@ -188,7 +188,7 @@ export const Droppable = ({containerId}) => {
     disabled: !containerId
   });
 
-  return <StyledDroppable ref={setNodeRef} isOver={isOver} />;
+  return <StyledDroppable ref={setNodeRef} $isOver={isOver} />;
 };
 
 interface StyledDatasetAttributionsContainerProps {

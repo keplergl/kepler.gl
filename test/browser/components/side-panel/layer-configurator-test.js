@@ -99,7 +99,8 @@ test('Components -> LayerConfigurator.mount -> default prop 1', t => {
       layer: expectedLayer,
       fields: expectedDataset.fields,
       onChange: updateLayerConfig,
-      setColorUI: updateLayerColorUI
+      setColorUI: updateLayerColorUI,
+      setLayerTextLabel: updateLayerTextLabel
     },
     layerChannelConfigProps: {
       layer: expectedLayer,

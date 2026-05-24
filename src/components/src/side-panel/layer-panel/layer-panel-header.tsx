@@ -417,7 +417,7 @@ function LayerPanelHeaderFactory(
         })}
         isValid={isValid}
         warning={warning}
-        active={isConfigActive}
+        $active={isConfigActive}
         labelRCGColorValues={labelRCGColorValues}
         onClick={onToggleEnableConfig}
       >

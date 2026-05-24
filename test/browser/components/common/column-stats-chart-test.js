@@ -320,7 +320,7 @@ test('Components -> ColorBreaksPanel -> ColorBreaksDisplay', t => {
 
   const InitialProps1 = {
     currentBreaks: [],
-    onEdit: false
+    onEdit: null
   };
 
   t.doesNotThrow(() => {
@@ -334,7 +334,7 @@ test('Components -> ColorBreaksPanel -> ColorBreaksDisplay', t => {
   const {colorBreaks} = ColumnStatsChartProps();
   const InitialProps = {
     currentBreaks: colorBreaks,
-    onEdit: true
+    onEdit: () => {}
   };
 
   t.doesNotThrow(() => {

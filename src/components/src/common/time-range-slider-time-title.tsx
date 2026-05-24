@@ -8,7 +8,7 @@ import {datetimeFormatter} from '@kepler.gl/utils';
 import {BaseComponentProps} from '../types';
 
 export type TimeValueWrapperProps = BaseComponentProps & {
-  isEnlarged?: boolean;
+  $isEnlarged?: boolean;
 };
 
 const TimeValueWrapper: IStyledComponent<
@@ -18,7 +18,7 @@ const TimeValueWrapper: IStyledComponent<
   display: flex;
   align-items: center;
   font-size: ${props => props.theme.timeTitleFontSize};
-  justify-content: ${props => (props.isEnlarged ? 'center' : 'space-between')};
+  justify-content: ${props => (props.$isEnlarged ? 'center' : 'space-between')};
 
   .horizontal-bar {
     padding: 0 12px;
@@ -27,9 +27,9 @@ const TimeValueWrapper: IStyledComponent<
 
   .time-value {
     display: flex;
-    flex-direction: ${props => (props.isEnlarged ? 'row' : 'column')};
+    flex-direction: ${props => (props.$isEnlarged ? 'row' : 'column')};
     align-items: flex-start;
-    max-width: ${props => (!props.isEnlarged ? '40%' : 'auto')};
+    max-width: ${props => (!props.$isEnlarged ? '40%' : 'auto')};
     span {
       color: ${props => props.theme.textColor};
     }
@@ -57,7 +57,7 @@ interface TimeTitleProps {
 
 function TimeRangeSliderTimeTitleFactory() {
   const TimeTitle = ({value, isEnlarged, timezone, timeFormat}: TimeTitleProps) => (
-    <TimeValueWrapper isEnlarged={isEnlarged} className="time-range-slider__time-title">
+    <TimeValueWrapper $isEnlarged={isEnlarged} className="time-range-slider__time-title">
       <TimeValue key={0} value={datetimeFormatter(timezone)(timeFormat)(value[0])} />
       {isEnlarged ? (
         <div className="horizontal-bar">
