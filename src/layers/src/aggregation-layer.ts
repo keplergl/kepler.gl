@@ -17,14 +17,23 @@ import {
   FIELD_OPTS,
   DEFAULT_AGGREGATION,
   AGGREGATION_TYPES,
-  ALL_FIELD_TYPES
+  ALL_FIELD_TYPES,
+  GEOJSON_FIELDS
 } from '@kepler.gl/constants';
 import {ColorRange, Field, LayerColumn, Merge} from '@kepler.gl/types';
 import {KeplerTable, Datasets} from '@kepler.gl/table';
+import {DATA_TYPES} from 'type-analyzer';
+import booleanWithin from '@turf/boolean-within';
+import {point as turfPoint} from '@turf/helpers';
+import {Feature, Polygon} from 'geojson';
+
+import {getGeoArrowPointLayerProps, FindDefaultLayerPropsReturnValue} from './layer-utils';
+import {parseGeoJsonRawFeature} from './geojson-layer/geojson-utils';
 
 type AggregationLayerColumns = {
   lat: LayerColumn;
   lng: LayerColumn;
+  geojson: LayerColumn;
 };
 
 export type AggregationLayerData = {
@@ -39,6 +48,35 @@ export const pointPosAccessor =
 
 export const pointPosResolver = ({lat, lng}: AggregationLayerColumns) =>
   `${lat.fieldIdx}-${lng.fieldIdx}`;
+
+export const geojsonAccessor =
+  ({geojson}: AggregationLayerColumns) =>
+  (dc: DataContainerInterface) =>
+  (d: {index: number}) =>
+    dc.valueAt(d.index, geojson.fieldIdx);
+
+export const COLUMN_MODE_POINTS = 'points';
+export const COLUMN_MODE_GEOJSON = 'geojson';
+
+const SUPPORTED_ANALYZER_TYPES = {
+  [DATA_TYPES.GEOMETRY]: true,
+  [DATA_TYPES.GEOMETRY_FROM_STRING]: true,
+  [DATA_TYPES.PAIR_GEOMETRY_FROM_STRING]: true
+};
+
+const SUPPORTED_COLUMN_MODES = [
+  {
+    key: COLUMN_MODE_POINTS,
+    label: 'Points',
+    requiredColumns: ['lat', 'lng']
+  },
+  {
+    key: COLUMN_MODE_GEOJSON,
+    label: 'GeoJSON',
+    requiredColumns: ['geojson']
+  }
+];
+const DEFAULT_COLUMN_MODE = COLUMN_MODE_POINTS;
 
 export const getValueAggrFunc = getPointData => (field, aggregation) => points =>
   field
@@ -91,6 +129,53 @@ const getLayerColorRange = (colorRange: ColorRange) => colorRange.colors.map(hex
 
 export const aggregateRequiredColumns: ['lat', 'lng'] = ['lat', 'lng'];
 
+/**
+ * Compute the centroid [lng, lat] of a GeoJSON geometry.
+ * For Point returns the coordinate directly; for complex geometries
+ * averages all vertex positions into a single representative point.
+ */
+function getCentroidFromGeometry(geometry: any): number[] | null {
+  if (!geometry) return null;
+  const positions = getAllPositions(geometry);
+  if (positions.length === 0) return null;
+  if (positions.length === 1) return positions[0];
+
+  let sumLng = 0;
+  let sumLat = 0;
+  let count = 0;
+  for (const pos of positions) {
+    if (Number.isFinite(pos[0]) && Number.isFinite(pos[1])) {
+      sumLng += pos[0];
+      sumLat += pos[1];
+      count++;
+    }
+  }
+  return count > 0 ? [sumLng / count, sumLat / count] : null;
+}
+
+/**
+ * Extract all vertex [lng, lat] coordinates from a GeoJSON geometry.
+ */
+function getAllPositions(geometry: any): number[][] {
+  if (!geometry) return [];
+  switch (geometry.type) {
+    case 'Point':
+      return [geometry.coordinates];
+    case 'MultiPoint':
+    case 'LineString':
+      return geometry.coordinates;
+    case 'MultiLineString':
+    case 'Polygon':
+      return geometry.coordinates.flat();
+    case 'MultiPolygon':
+      return geometry.coordinates.flat(2);
+    case 'GeometryCollection':
+      return (geometry.geometries || []).flatMap(getAllPositions);
+    default:
+      return [];
+  }
+}
+
 export type AggregationLayerVisualChannelConfig = LayerColorConfig & LayerSizeConfig;
 export type AggregationLayerConfig = Merge<LayerBaseConfig, {columns: AggregationLayerColumns}> &
   AggregationLayerVisualChannelConfig;
@@ -101,6 +186,11 @@ export default class AggregationLayer extends Layer {
   declare gpuFilterGetIndex: (any) => number;
   declare gpuFilterGetData: (dataContainer, data, fieldIndex) => any;
 
+  dataToFeature: any[] = [];
+  centroids: Array<number[] | null> = [];
+  private _geojsonFieldIdx = -1;
+  private _geojsonBounds: [number, number, number, number] | null = null;
+
   constructor(
     props: {
       id?: string;
@@ -108,8 +198,12 @@ export default class AggregationLayer extends Layer {
   ) {
     super(props);
 
-    this.getPositionAccessor = dataContainer =>
-      pointPosAccessor(this.config.columns)(dataContainer);
+    this.getPositionAccessor = dataContainer => {
+      if (this.config.columnMode === COLUMN_MODE_GEOJSON) {
+        return geojsonAccessor(this.config.columns)(dataContainer as DataContainerInterface);
+      }
+      return pointPosAccessor(this.config.columns)(dataContainer);
+    };
     this.getColorRange = memoize(getLayerColorRange);
 
     // Access data of a point from aggregated bins
@@ -125,8 +219,8 @@ export default class AggregationLayer extends Layer {
     return true;
   }
 
-  get requiredLayerColumns() {
-    return aggregateRequiredColumns;
+  get supportedColumnModes() {
+    return SUPPORTED_COLUMN_MODES;
   }
 
   get columnPairs() {
@@ -149,6 +243,57 @@ export default class AggregationLayer extends Layer {
       'enableElevationZoomFactor',
       'fixedHeight'
     ];
+  }
+
+  static findDefaultLayerProps(dataset: KeplerTable): FindDefaultLayerPropsReturnValue {
+    const altProps = getGeoArrowPointLayerProps(dataset);
+
+    const geojsonColumns = dataset.fields
+      .filter(
+        f =>
+          (f.type === 'geojson' || f.type === 'geoarrow') &&
+          f.analyzerType &&
+          SUPPORTED_ANALYZER_TYPES[f.analyzerType]
+      )
+      .map(f => f.name);
+
+    const defaultColumns = {
+      geojson: [...(GEOJSON_FIELDS.geojson || []), ...geojsonColumns]
+    };
+    const foundColumns = this.findDefaultColumnField(defaultColumns, dataset.fields);
+
+    if (foundColumns?.length) {
+      const {label} = dataset;
+      altProps.push(
+        ...foundColumns.map(columns => ({
+          label: (typeof label === 'string' && label.replace(/\.[^/.]+$/, '')) || 'aggregation',
+          columns,
+          columnMode: COLUMN_MODE_GEOJSON
+        }))
+      );
+    }
+
+    return {
+      props: [],
+      altProps
+    };
+  }
+
+  getDefaultLayerConfig(props: LayerBaseConfigPartial) {
+    return {
+      ...super.getDefaultLayerConfig(props),
+      columnMode: props?.columnMode ?? DEFAULT_COLUMN_MODE
+    };
+  }
+
+  getDataUpdateTriggers(dataset: KeplerTable): any {
+    const triggers = super.getDataUpdateTriggers(dataset);
+    const {columnMode} = this.config;
+    return {
+      ...triggers,
+      getData: {...triggers.getData, columnMode},
+      getMeta: {...triggers.getMeta, columnMode}
+    };
   }
 
   get visualChannels(): VisualChannels {
@@ -350,15 +495,86 @@ export default class AggregationLayer extends Layer {
     return this;
   }
 
-  updateLayerMeta(dataset: KeplerTable, getPosition) {
+  updateLayerMeta(dataset: KeplerTable, getPosition?) {
     const {dataContainer} = dataset;
-    // get bounds from points
-    const bounds = this.getPointsBounds(dataContainer, getPosition);
 
-    this.updateMeta({bounds});
+    if (this.config.columnMode === COLUMN_MODE_GEOJSON) {
+      const getFeature = this.getPositionAccessor(dataContainer);
+      this._buildGeojsonDataToFeature(dataContainer, getFeature);
+      this.updateMeta({bounds: this._geojsonBounds});
+    } else {
+      this.dataToFeature = [];
+      this.centroids = [];
+      if (!getPosition) {
+        getPosition = this.getPositionAccessor(dataContainer);
+      }
+      const bounds = this.getPointsBounds(dataContainer, getPosition);
+      this.updateMeta({bounds});
+    }
+  }
+
+  private _buildGeojsonDataToFeature(dataContainer: DataContainerInterface, getFeature: any) {
+    const fieldIdx = this.config.columns.geojson.fieldIdx;
+    if (
+      this.dataToFeature.length === dataContainer.numRows() &&
+      this._geojsonFieldIdx === fieldIdx
+    ) {
+      return;
+    }
+    this._geojsonFieldIdx = fieldIdx;
+    this.dataToFeature = [];
+    this.centroids = [];
+
+    let minLng = Infinity;
+    let maxLng = -Infinity;
+    let minLat = Infinity;
+    let maxLat = -Infinity;
+    let hasValid = false;
+
+    for (let i = 0; i < dataContainer.numRows(); i++) {
+      const rawFeature = getFeature({index: i});
+      const feature = parseGeoJsonRawFeature(rawFeature);
+      this.dataToFeature[i] = feature;
+      this.centroids[i] = feature?.geometry ? getCentroidFromGeometry(feature.geometry) : null;
+
+      if (feature?.geometry) {
+        const positions = getAllPositions(feature.geometry);
+        for (const pos of positions) {
+          const lng = pos[0];
+          const lat = pos[1];
+          if (Number.isFinite(lng) && Number.isFinite(lat)) {
+            hasValid = true;
+            if (lng < minLng) minLng = lng;
+            if (lng > maxLng) maxLng = lng;
+            if (lat < minLat) minLat = lat;
+            if (lat > maxLat) maxLat = lat;
+          }
+        }
+      }
+    }
+
+    this._geojsonBounds = hasValid ? [minLng, minLat, maxLng, maxLat] : null;
+  }
+
+  isInPolygon(data: DataContainerInterface, index: number, polygon: Feature<Polygon>): boolean {
+    if (this.centroids.length === 0 || !this.centroids[index]) {
+      return false;
+    }
+    const point = this.centroids[index];
+    if (!point) return false;
+    const isRectangleSearchBox = polygon.properties?.shape === 'Rectangle';
+    if (isRectangleSearchBox && polygon.properties?.bbox) {
+      const [minX, minY, maxX, maxY] = polygon.properties.bbox;
+      return point[0] >= minX && point[0] <= maxX && point[1] >= minY && point[1] <= maxY;
+    }
+    return booleanWithin(turfPoint(point), polygon);
   }
 
   calculateDataAttribute({filteredIndex}: KeplerTable, getPosition) {
+    if (this.config.columnMode === COLUMN_MODE_GEOJSON) {
+      return this._calculateGeojsonDataAttribute(filteredIndex);
+    }
+
     const data: AggregationLayerData[] = [];
 
     for (let i = 0; i < filteredIndex.length; i++) {
@@ -377,12 +593,33 @@ export default class AggregationLayer extends Layer {
     return data;
   }
 
+  private _calculateGeojsonDataAttribute(filteredIndex: number[]) {
+    const data: {index: number; position: number[]}[] = [];
+
+    for (let i = 0; i < filteredIndex.length; i++) {
+      const index = filteredIndex[i];
+      const feature = this.dataToFeature[index];
+      if (!feature?.geometry) continue;
+
+      const centroid = getCentroidFromGeometry(feature.geometry);
+      if (centroid) {
+        data.push({index, position: centroid});
+      }
+    }
+
+    return data;
+  }
+
   formatLayerData(datasets: Datasets, oldLayerData) {
     if (this.config.dataId === null) {
       return {};
     }
     const {gpuFilter, dataContainer} = datasets[this.config.dataId];
-    const getPosition = this.getPositionAccessor(dataContainer);
+    const isGeojsonMode = this.config.columnMode === COLUMN_MODE_GEOJSON;
+
+    const getPosition = isGeojsonMode
+      ? (d: {position: number[]}) => d.position
+      : this.getPositionAccessor(dataContainer);
 
     const hasFilter = Object.values(gpuFilter.filterRange).some((arr: any) =>
       arr.some(v => v !== 0)
@@ -427,9 +664,6 @@ export default class AggregationLayer extends Layer {
     }
 
     // Wrap accessors to filter points within each bin before aggregating.
-    // deck.gl 9's native aggregation doesn't support per-bin filtering, so we
-    // apply gpuFilter at the accessor level to keep bin values in sync with
-    // active cross-filters / time-filters.
     const getFilteredColorValue =
       filterData && getColorValue
         ? points => getColorValue(points.filter(filterData))

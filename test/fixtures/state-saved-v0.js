@@ -1238,6 +1238,7 @@ mergedLayer3.config = {
   dataId: '9h10t7fyb',
   label: 'begintrip_hex',
   color: [241, 92, 23],
+  columnMode: 'points',
   columns: {
     lat: {
       value: 'begintrip_lat',
