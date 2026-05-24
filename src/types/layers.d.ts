@@ -168,7 +168,7 @@ export type LayerTextLabel = {
   alignment: string;
   outlineWidth: number;
   outlineColor: RGBAColor;
-  backgroundColor: RGBAColor;
+  backgroundColor: RGBAColor | null;
 };
 
 export type ColorRangeConfig = {
@@ -342,6 +342,12 @@ export type LayerVisConfigSettings = {
   allowHover: VisConfigBoolean;
   showNeighborOnHover: VisConfigBoolean;
   showHighlightColor: VisConfigBoolean;
+  scenegraph: VisConfigInput;
+  scenegraphEnabled: VisConfigBoolean;
+  scenegraphCustomModelUrl: VisConfigInput;
+  scenegraphColorEnabled: VisConfigBoolean;
+  scenegraphUseTrailColor: VisConfigBoolean;
+  scenegraphColor: VisConfigColorSelect;
   [key: string]: LayerVisConfigTypes;
 };
 

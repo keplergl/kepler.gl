@@ -4,6 +4,7 @@
 import {parseGeoJsonRawFeature, getGeojsonFeatureTypes} from '../geojson-layer/geojson-utils';
 import {DataContainerInterface, getSampleContainerData, timeToUnixMilli} from '@kepler.gl/utils';
 import {containValidTime, notNullorUndefined} from '@kepler.gl/common-utils';
+import {Field} from '@kepler.gl/types';
 import {Feature} from '@turf/helpers';
 import {GeoJsonProperties, Geometry} from 'geojson';
 
@@ -32,7 +33,7 @@ export function coordHasLength4(samples): boolean {
  * @param {object} field array of geojson feature objects
  * @returns whether it is trip layer animatable
  */
-export function isTripGeoJsonField(dataContainer: DataContainerInterface, field): boolean {
+export function isTripGeoJsonField(dataContainer: DataContainerInterface, field: Field): boolean {
   if (dataContainer.numRows() < 1) {
     return false;
   }
@@ -73,10 +74,15 @@ export function isTripGeoJsonField(dataContainer: DataContainerInterface, field)
  * @param dataToFeature array of geojson feature objects, can be null
  * @returns
  */
-export function parseTripGeoJsonTimestamp(dataToFeature: any[]) {
+export function parseTripGeoJsonTimestamp(
+  dataToFeature: any[]
+): {dataToTimeStamp: number[][]; animationDomain: [number, number] | null} {
   // Analyze type based on coordinates of the 1st lineString
   // select a sample trip to analyze time format
-  const empty = {dataToTimeStamp: [], animationDomain: null};
+  const empty: {dataToTimeStamp: number[][]; animationDomain: null} = {
+    dataToTimeStamp: [],
+    animationDomain: null
+  };
   const sampleTrip = dataToFeature.find(f => f?.geometry?.coordinates?.[0]?.length > 3);
 
   // if no valid geometry
