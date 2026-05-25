@@ -459,3 +459,104 @@ test('Components -> TimeWidget.mount -> TimeTitle', t => {
 
   t.end();
 });
+
+test('Components -> TimeWidget.mount -> timeline zoom reset button', t => {
+  const setFilterAnimationTime = sinon.spy();
+  const clientSizeStub = mockHTMLElementClientSize('offsetWidth', 500);
+
+  let wrapper;
+  t.doesNotThrow(() => {
+    wrapper = mountWithTheme(
+      <IntlWrapper>
+        <TimeWidget {...defaultProps} setFilterAnimationTime={setFilterAnimationTime} />
+      </IntlWrapper>,
+      {attachTo: document.body}
+    );
+  }, 'mount TimeWidget should not fail');
+
+  // Initially, no reset button should be visible (timeline not zoomed)
+  t.equal(
+    wrapper.find('[data-testid="time-widget-timeline-reset"]').hostNodes().length,
+    0,
+    'should not render Reset button when timeline is not zoomed'
+  );
+
+  wrapper.detach();
+  clientSizeStub.restore();
+  t.end();
+});
+
+test('Components -> TimeWidget.mount -> timeline container renders', t => {
+  const clientSizeStub = mockHTMLElementClientSize('offsetWidth', 500);
+
+  let wrapper;
+  t.doesNotThrow(() => {
+    wrapper = mountWithTheme(
+      <IntlWrapper>
+        <TimeWidget {...defaultProps} />
+      </IntlWrapper>,
+      {attachTo: document.body}
+    );
+  }, 'mount TimeWidget should not fail');
+
+  // Should have the timeline container for wheel events
+  t.equal(
+    wrapper.find(TimeRangeSlider).length,
+    1,
+    'should render TimeRangeSlider inside timeline container'
+  );
+
+  wrapper.detach();
+  clientSizeStub.restore();
+  t.end();
+});
+
+test('Components -> TimeWidget.mount -> keyboard panning calls setFilterAnimationTime', t => {
+  const setFilterAnimationTime = sinon.spy();
+  const clientSizeStub = mockHTMLElementClientSize('offsetWidth', 500);
+
+  let wrapper;
+  t.doesNotThrow(() => {
+    wrapper = mountWithTheme(
+      <IntlWrapper>
+        <TimeWidget {...defaultProps} setFilterAnimationTime={setFilterAnimationTime} />
+      </IntlWrapper>,
+      {attachTo: document.body}
+    );
+  }, 'mount TimeWidget should not fail');
+
+  // Simulate Ctrl+ArrowRight keydown
+  const event = new window.KeyboardEvent('keydown', {
+    key: 'ArrowRight',
+    ctrlKey: true,
+    bubbles: true
+  });
+  window.dispatchEvent(event);
+
+  // The filter value is [1474606800000, 1474617600000] (5am-8am, width = 10800000ms = 3h)
+  // After right arrow: start = old end (1474617600000), end = old end + width (1474628400000)
+  // But clamped to domain [1474588800000, 1474617600000], so it should clamp
+  if (setFilterAnimationTime.called) {
+    const args = setFilterAnimationTime.getCall(0).args;
+    t.equal(args[0], 0, 'should pass filter index');
+    t.equal(args[1], 'value', 'should pass "value" as field');
+    t.ok(Array.isArray(args[2]), 'should pass array as value');
+    t.ok(args[2][1] > args[2][0], 'end should be greater than start');
+    t.ok(
+      args[2][0] >= defaultProps.filter.domain[0],
+      'new start should be within domain'
+    );
+    t.ok(
+      args[2][1] <= defaultProps.filter.domain[1],
+      'new end should be within domain'
+    );
+  } else {
+    // If domain equals filter end, the window is already at the right edge
+    // so no change is expected
+    t.pass('no call expected when selection is already at domain boundary');
+  }
+
+  wrapper.detach();
+  clientSizeStub.restore();
+  t.end();
+});

@@ -389,45 +389,8 @@ function TimeWidgetFactory(
       };
       node.addEventListener('wheel', preventBrowserZoom, {passive: false});
       return () => node.removeEventListener('wheel', preventBrowserZoom);
-    }, [timelineContainerRef]);
-
-    const panTimelineBy = useCallback(
-      (delta: number) => {
-        if (!fullDomain) {
-          return;
-        }
-        const [domainStart, domainEnd] = fullDomain;
-        const currentRange: [number, number] = timelineDomain ?? fullDomain;
-        let nextStart = currentRange[0] + delta;
-        let nextEnd = currentRange[1] + delta;
-        if (nextStart < domainStart) {
-          nextEnd += domainStart - nextStart;
-          nextStart = domainStart;
-        }
-        if (nextEnd > domainEnd) {
-          nextStart -= nextEnd - domainEnd;
-          nextEnd = domainEnd;
-        }
-        const nextRange: [number, number] = clampRange([nextStart, nextEnd], fullDomain);
-        setTimelineDomain(prev => (rangesEqual(prev, nextRange) ? prev : nextRange));
-
-        let windowStart = filterStart + delta;
-        let windowEnd = filterEnd + delta;
-        [windowStart, windowEnd] = clampWindowToDomain(windowStart, windowEnd, fullDomain);
-        if (windowStart !== filterStart || windowEnd !== filterEnd) {
-          setFilterAnimationTime(index, 'value', [windowStart, windowEnd]);
-        }
-      },
-      [
-        clampWindowToDomain,
-        filterEnd,
-        filterStart,
-        fullDomain,
-        index,
-        setFilterAnimationTime,
-        timelineDomain
-      ]
-    );
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     useEffect(() => {
       const handler = (event: KeyboardEvent) => {
