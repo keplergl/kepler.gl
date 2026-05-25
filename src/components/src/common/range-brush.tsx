@@ -15,7 +15,7 @@ const StyledG = styled.g<StyledGProps>`
   .selection {
     stroke: none;
     fill: ${props => (props.$isRanged ? props.theme.rangeBrushBgd : props.theme.BLUE2)};
-    fill-opacity: ${props => (props.$isRanged ? 0.3 : 1)};
+    fill-opacity: ${props => (props.$isRanged ? 0.6 : 1)};
   }
   .handle {
     fill: ${props => props.theme.BLUE2};

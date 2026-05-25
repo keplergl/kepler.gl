@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {ReactElement, useMemo} from 'react';
+import React, {ReactElement, useMemo, useRef} from 'react';
 import {scaleLinear} from 'd3-scale';
 import {hcl} from 'd3-color';
 import {min, max} from 'd3-array';
@@ -63,24 +63,11 @@ Bar.displayName = 'Bar';
 
 const isBarInRange = (
   bar: {x0: number; x1: number},
-  index: number,
-  list: any[],
-  filterDomain: any[],
+  _index: number,
+  _list: any[],
+  _filterDomain: any[],
   filterValue: any[]
-) => {
-  // first
-  // if x0 <= domain[0] and current value[0] wasn't changed from the original domain
-  const x0Condition =
-    index === 0 ? bar.x0 <= filterDomain[0] && filterDomain[0] === filterValue[0] : false;
-  // Last
-  // if x1 >= domain[1] and current value[1] wasn't changed from the original domain
-  const x1Condition =
-    index === list.length - 1
-      ? bar.x1 >= filterDomain[1] && filterDomain[1] === filterValue[1]
-      : false;
-  // Check if the bar overlaps with the filter value range (not fully contained)
-  return (x0Condition || bar.x1 > filterValue[0]) && (x1Condition || bar.x0 < filterValue[1]);
-};
+) => bar.x1 > filterValue[0] && bar.x0 < filterValue[1];
 
 export type HistogramMaskModeType = {
   NoMask: number;
@@ -182,6 +169,9 @@ function HistogramPlotFactory() {
       return ticks;
     }, [isEnlarged, groupKeys, histogramsByGroup, countProp]);
 
+    const clipIdRef = useRef(`histogram-clip-${Math.random().toString(36).slice(2)}`);
+    const clipId = clipIdRef.current;
+
     if (groupKeys.length === 0) {
       return null;
     }
@@ -194,6 +184,9 @@ function HistogramPlotFactory() {
           style={{margin: `${margin.top}px ${margin.right}px ${margin.bottom}px ${margin.left}px`}}
         >
           <defs>
+            <clipPath id={`${clipId}-mask`}>
+              <rect x="0" y="0" width={width} height={height + margin.bottom} />
+            </clipPath>
             <mask id="histogram-mask">
               <rect
                 x="0"
@@ -238,7 +231,12 @@ function HistogramPlotFactory() {
             />
           </g>
           {isMasked === HISTOGRAM_MASK_MODE.MaskWithOverlay && (
-            <g key="bins" transform="translate(0,0)" className="overlay-histogram-bars">
+            <g
+              key="bins"
+              transform="translate(0,0)"
+              className="overlay-histogram-bars"
+              clipPath={`url(#${clipId}-mask)`}
+            >
               {histogramsByGroup.bins.map((bar, idx, list) => {
                 const filterBar = histogramsByGroup.filteredBins[idx];
                 const maskHeight = filterBar
@@ -284,7 +282,13 @@ function HistogramPlotFactory() {
         height={height}
         style={{margin: `${margin.top}px ${margin.right}px ${margin.bottom}px ${margin.left}px`}}
       >
-        <g>
+        <defs>
+          <clipPath id={clipId}>
+            <rect x="0" y="0" width={width} height={height} />
+          </clipPath>
+        </defs>
+        <g transform={`translate(${isRanged ? 0 : fallbackBarWidth / 2}, 0)`}>{brushComponent}</g>
+        <g clipPath={`url(#${clipId})`} style={{pointerEvents: 'none'}}>
           {groupKeys.map((key, i) => (
             <g key={key} className="histogram-bars">
               {histogramsByGroup[key].map((bar, idx, list) => {
@@ -334,7 +338,6 @@ function HistogramPlotFactory() {
             ))}
           </g>
         ) : null}
-        <g transform={`translate(${isRanged ? 0 : fallbackBarWidth / 2}, 0)`}>{brushComponent}</g>
       </HistogramWrapper>
     );
   };
