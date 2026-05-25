@@ -1,0 +1,31 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+RUN apk add --no-cache git python3 make g++ bash sed
+
+# Provide a no-op xdg-open so the dev server doesn't crash trying to open a browser
+RUN printf '#!/bin/sh\nexit 0\n' > /usr/local/bin/xdg-open && chmod +x /usr/local/bin/xdg-open
+
+RUN corepack enable && corepack prepare yarn@4.4.0 --activate
+
+COPY . .
+
+# gl package requires GPU headers only needed for tests; allow its build to fail
+RUN yarn config set enableScripts false && \
+    yarn install && \
+    yarn config set enableScripts true
+
+# Manually run esbuild postinstall (needed for the correct platform binary)
+RUN cd node_modules/esbuild && node install.js
+
+RUN yarn fix-dependencies
+RUN yarn workspaces foreach -At run stab
+
+WORKDIR /app/examples/demo-app
+
+RUN yarn install
+
+EXPOSE 8080
+
+CMD ["yarn", "start:local"]
