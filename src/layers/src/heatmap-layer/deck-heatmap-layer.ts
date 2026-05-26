@@ -22,10 +22,28 @@ import {editShader, insertBefore} from '@kepler.gl/deckgl-layers';
  * 2. Max-weights fragment shader:
  *    - Forces the red channel to 1.0, because Mapbox assumes
  *      a max weight of 1.0 when sampling the color ramp.
+ *
+ * Additionally, the layer removes the `layerUniforms` (layer) shader module
+ * from the weights and max-weights transform shaders. This module injects a
+ * uniform block containing `uniform float opacity;` which violates the GLSL
+ * ES 3.0 spec (storage qualifiers are not allowed inside uniform blocks) and
+ * causes shader compilation failures on strict mobile GPU drivers (e.g. Mali,
+ * Adreno on Samsung Galaxy devices). The opacity uniform is not used in these
+ * transform passes so removing it is safe.
  */
 export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
   getShaders(shaders: any) {
     const result = super.getShaders(shaders);
+
+    const isTransformShader =
+      result.fs?.includes('gaussianKDE') ||
+      result.fs?.includes('outTexture.r / max(1.0, outTexture.a)');
+
+    if (isTransformShader && result.modules) {
+      result.modules = result.modules.filter(
+        (m: any) => (m?.name || m) !== 'layer'
+      );
+    }
 
     if (result.fs?.includes('gaussianKDE')) {
       // Weights fragment shader: adjust kernel to match Mapbox heatmap layer
@@ -37,6 +55,12 @@ export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
           return max(value - 0.00443, 0.0);`
       );
       fs = editShader(fs, 'fs', '2. * dist', 'dist');
+      fs = editShader(
+        fs,
+        'fs',
+        'DECKGL_FILTER_COLOR(fragColor, geometry);',
+        ''
+      );
       result.fs = fs;
     } else if (result.fs?.includes('outTexture.r / max(1.0, outTexture.a)')) {
       // Max-weights fragment shader: force max value to 1.0
