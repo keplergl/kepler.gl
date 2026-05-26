@@ -13,6 +13,7 @@ import {timeRangeSliderFieldsSelector} from './time-range-filter';
 import {TimeWidgetProps} from './types';
 import TimeWidgetTopFactory from './time-widget-top';
 import TimeWidgetSettingsFactory from './time-widget-settings';
+import {rangesEqual, clampRange, clampWindowToDomain} from '../common/timeline-helpers';
 
 const TimeBottomWidgetInner = styled(BottomWidgetInner)`
   padding: 6px 32px 24px 32px;
@@ -52,25 +53,6 @@ const TimelineStatusRange = styled.span`
   font-weight: 500;
   white-space: nowrap;
 `;
-
-function rangesEqual(a: [number, number] | null, b: [number, number] | null, eps = 1): boolean {
-  if (!a || !b) {
-    return false;
-  }
-  return Math.abs(a[0] - b[0]) <= eps && Math.abs(a[1] - b[1]) <= eps;
-}
-
-function clampRange(
-  [start, end]: [number, number],
-  [min, max]: [number, number]
-): [number, number] {
-  const clampedStart = clamp([min, max], start);
-  let clampedEnd = clamp([min, max], end);
-  if (clampedEnd <= clampedStart) {
-    clampedEnd = Math.min(max, clampedStart + 1);
-  }
-  return [clampedStart, clampedEnd];
-}
 
 TimeWidgetFactory.deps = [
   TimeRangeSliderFactory,
@@ -195,29 +177,6 @@ function TimeWidgetFactory(
 
     const [filterStart, filterEnd] = filter.value;
 
-    const clampWindowToDomain = useCallback(
-      (windowStart: number, windowEnd: number, domainRange: [number, number]) => {
-        const [domainStart, domainEnd] = domainRange;
-        let nextStart = clamp(domainRange, windowStart);
-        let nextEnd = clamp(domainRange, windowEnd);
-        if (nextEnd <= nextStart) {
-          const width = Math.max(windowEnd - windowStart, 1);
-          const maxStart = Math.max(domainStart, domainEnd - width);
-          nextStart = clamp([domainStart, maxStart], windowStart);
-          nextEnd = nextStart + width;
-          if (nextEnd > domainEnd) {
-            nextEnd = domainEnd;
-            nextStart = Math.max(domainStart, nextEnd - width);
-          }
-        }
-        if (nextEnd <= nextStart) {
-          nextEnd = Math.min(domainEnd, nextStart + 1);
-        }
-        return [nextStart, nextEnd] as [number, number];
-      },
-      []
-    );
-
     const handleWindowZoom = useCallback(
       (factor: number, center: number) => {
         if (!fullDomain) {
@@ -247,7 +206,6 @@ function TimeWidgetFactory(
         }
       },
       [
-        clampWindowToDomain,
         filterEnd,
         filterStart,
         fullDomain,
@@ -310,7 +268,6 @@ function TimeWidgetFactory(
         }
       },
       [
-        clampWindowToDomain,
         filterEnd,
         filterStart,
         fullDomain,
@@ -333,17 +290,17 @@ function TimeWidgetFactory(
     useEffect(() => () => throttledWindowZoom.cancel(), [throttledWindowZoom]);
     useEffect(() => () => throttledTimelineZoom.cancel(), [throttledTimelineZoom]);
 
-    const handleWheel = useCallback(
-      (event: React.WheelEvent<HTMLDivElement>) => {
+    useEffect(() => {
+      const node = timelineContainerRef.current;
+      if (!node) {
+        return undefined;
+      }
+      const handleNativeWheel = (event: WheelEvent) => {
         if (isMinified || !sliderDomain) {
           return;
         }
-        const nativeEvent = event.nativeEvent as WheelEvent;
         const isPinch =
-          event.ctrlKey ||
-          nativeEvent.ctrlKey ||
-          nativeEvent.metaKey ||
-          Math.abs(nativeEvent.deltaZ || 0) > 0;
+          event.ctrlKey || event.metaKey || Math.abs(event.deltaZ || 0) > 0;
         const zoomFn = isPinch ? throttledTimelineZoom : throttledWindowZoom;
         if (!zoomFn) {
           return;
@@ -358,46 +315,38 @@ function TimeWidgetFactory(
 
         const baseStep = isPinch ? 0.02 : 0.08;
         const factor = event.deltaY < 0 ? 1 + baseStep : 1 / (1 + baseStep);
-        const container = timelineContainerRef.current;
-        if (!container) {
-          return;
-        }
-        const sliderTrack = container.querySelector(
+        const sliderTrack = node.querySelector(
           '.kg-range-slider__slider'
         ) as HTMLElement | null;
-        const rect = sliderTrack?.getBoundingClientRect() ?? container.getBoundingClientRect();
+        const rect = sliderTrack?.getBoundingClientRect() ?? node.getBoundingClientRect();
         if (!rect || rect.width === 0) {
           return;
         }
         const ratio = clamp([0, 1], (event.clientX - rect.left) / rect.width);
         const center = sliderDomain[0] + ratio * (sliderDomain[1] - sliderDomain[0]);
         zoomFn(factor, center);
-      },
-      [isMinified, sliderDomain, throttledTimelineZoom, throttledWindowZoom]
-    );
+      };
+      node.addEventListener('wheel', handleNativeWheel, {passive: false});
+      return () => node.removeEventListener('wheel', handleNativeWheel);
+    }, [isMinified, sliderDomain, throttledTimelineZoom, throttledWindowZoom]);
 
     useEffect(() => {
-      const node = timelineContainerRef.current;
-      if (!node) {
+      if (isMinified) {
         return undefined;
       }
-      const preventBrowserZoom = (event: WheelEvent) => {
-        const isPinch = event.ctrlKey || event.metaKey || Math.abs(event.deltaZ || 0) > 0;
-        if (isPinch) {
-          event.preventDefault();
-        }
-      };
-      node.addEventListener('wheel', preventBrowserZoom, {passive: false});
-      return () => node.removeEventListener('wheel', preventBrowserZoom);
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
-
-    useEffect(() => {
       const handler = (event: KeyboardEvent) => {
         if (!(event.ctrlKey || event.metaKey)) {
           return;
         }
         if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') {
+          return;
+        }
+        const activeEl = document.activeElement;
+        if (
+          activeEl instanceof HTMLInputElement ||
+          activeEl instanceof HTMLTextAreaElement ||
+          (activeEl as HTMLElement)?.isContentEditable
+        ) {
           return;
         }
         const domainRange = timelineDomain ?? fullDomain;
@@ -425,7 +374,7 @@ function TimeWidgetFactory(
       };
       window.addEventListener('keydown', handler);
       return () => window.removeEventListener('keydown', handler);
-    }, [clampWindowToDomain, filterEnd, filterStart, fullDomain, index, setFilterAnimationTime, timelineDomain]);
+    }, [filterEnd, filterStart, fullDomain, index, isMinified, setFilterAnimationTime, timelineDomain]);
 
     const handleResetTimeline = useCallback(() => {
       setTimelineDomain(null);
@@ -461,7 +410,7 @@ function TimeWidgetFactory(
               </Button>
             </TimelineStatusBar>
           ) : null}
-          <TimelineContainer ref={timelineContainerRef} onWheel={handleWheel}>
+          <TimelineContainer ref={timelineContainerRef}>
             <TimeRangeSlider
               {...timeRangeSlideProps}
               domain={sliderDomain}

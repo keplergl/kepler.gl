@@ -3,43 +3,11 @@
 
 import test from 'tape';
 import {clamp} from '@kepler.gl/utils';
-
-// Re-implement the helpers from time-widget to test them in isolation
-function rangesEqual(a, b, eps = 1) {
-  if (!a || !b) {
-    return false;
-  }
-  return Math.abs(a[0] - b[0]) <= eps && Math.abs(a[1] - b[1]) <= eps;
-}
-
-function clampRange([start, end], [min, max]) {
-  const clampedStart = clamp([min, max], start);
-  let clampedEnd = clamp([min, max], end);
-  if (clampedEnd <= clampedStart) {
-    clampedEnd = Math.min(max, clampedStart + 1);
-  }
-  return [clampedStart, clampedEnd];
-}
-
-function clampWindowToDomain(windowStart, windowEnd, domainRange) {
-  const [domainStart, domainEnd] = domainRange;
-  let nextStart = clamp(domainRange, windowStart);
-  let nextEnd = clamp(domainRange, windowEnd);
-  if (nextEnd <= nextStart) {
-    const width = Math.max(windowEnd - windowStart, 1);
-    const maxStart = Math.max(domainStart, domainEnd - width);
-    nextStart = clamp([domainStart, maxStart], windowStart);
-    nextEnd = nextStart + width;
-    if (nextEnd > domainEnd) {
-      nextEnd = domainEnd;
-      nextStart = Math.max(domainStart, nextEnd - width);
-    }
-  }
-  if (nextEnd <= nextStart) {
-    nextEnd = Math.min(domainEnd, nextStart + 1);
-  }
-  return [nextStart, nextEnd];
-}
+import {
+  rangesEqual,
+  clampRange,
+  clampWindowToDomain
+} from '../../../src/components/src/common/timeline-helpers';
 
 test('Timeline Zoom Utils -> rangesEqual', t => {
   t.ok(rangesEqual([0, 100], [0, 100]), 'identical ranges should be equal');
