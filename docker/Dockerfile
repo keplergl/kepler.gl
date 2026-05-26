@@ -6,14 +6,21 @@ RUN apk add --no-cache git python3 make g++ bash sed
 
 RUN corepack enable && corepack prepare yarn@4.4.0 --activate
 
-COPY . .
+# Copy dependency manifests first for better layer caching
+COPY package.json yarn.lock .yarnrc.yml ./
+COPY --parents src/*/package.json ./
+COPY --parents examples/demo-app/package.json examples/demo-app/yarn.lock examples/demo-app/.yarnrc.yml ./
 
-# gl package requires GPU headers only needed for tests; skip build scripts then selectively rebuild esbuild
+# Skip all postinstall scripts to avoid building the gl native package (GPU headers not available)
 RUN yarn config set enableScripts false && \
     yarn install && \
     yarn config set enableScripts true
 
+# Selectively run esbuild postinstall (needed for the correct platform binary)
 RUN cd node_modules/esbuild && node install.js
+
+# Now copy the full source
+COPY . .
 
 RUN yarn fix-dependencies
 RUN yarn workspaces foreach -At run stab

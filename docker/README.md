@@ -3,7 +3,7 @@
 Two Dockerfiles are provided:
 
 - **Dockerfile** — production multi-stage build. Compiles the demo-app to static files and serves with `serve`.
-- **Dockerfile.dev** — development mode with hot-reload via esbuild watch.
+- **Dockerfile.dev** — development build with esbuild watch mode inside the container.
 
 ## Prerequisites
 
@@ -21,7 +21,7 @@ Fill in at least `MapboxAccessToken` for the map to render.
 From the repository root:
 
 ```bash
-# Development mode (hot-reload, esbuild watch)
+# Development mode (esbuild watch inside the container)
 docker compose -f docker/docker-compose.yml up kepler-dev
 
 # Production mode (static build served by serve)
@@ -30,11 +30,13 @@ docker compose -f docker/docker-compose.yml up kepler-prod
 
 Then open http://localhost:8080.
 
-To rebuild after code changes:
+To rebuild after code changes on the host:
 
 ```bash
 docker compose -f docker/docker-compose.yml up --build kepler-dev
 ```
+
+> **Note:** The dev container does not mount the host source tree, so changes you make on the host require a rebuild (`--build`). The esbuild watch mode only picks up changes made inside the container itself (e.g. via `docker exec`).
 
 ## Running with Docker directly
 
@@ -58,6 +60,6 @@ docker run -p 8080:8080 kepler-prod
 
 - The build context must be the repository root (both Dockerfiles reference `src/`, `scripts/`, etc.).
 - The `.dockerignore` at the root excludes `node_modules/`, `.git/`, `website/`, `bindings/`, `test/`, and `docs/` to keep the build context small.
-- The `gl` native package (used only for testing) is skipped during Docker builds by disabling postinstall scripts. The `esbuild` binary is manually installed afterward since it's required for bundling.
-- Environment variables like `MapboxAccessToken` are embedded at build time in production mode. Rebuild the image to change them.
+- All postinstall scripts are disabled during `yarn install` to avoid building the `gl` native package (requires GPU headers, only used for tests). The `esbuild` platform binary is then installed selectively since it's required for bundling.
+- Environment variables like `MapboxAccessToken` are read from the `.env` file copied into the build context. Rebuild the image to change them.
 - The dev image provides a no-op `xdg-open` to prevent the server from crashing when it tries to open a browser.

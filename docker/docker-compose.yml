@@ -14,7 +14,5 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile
-      args:
-        - MAPBOX_ACCESS_TOKEN=${MAPBOX_ACCESS_TOKEN:-}
     ports:
       - "8080:8080"
