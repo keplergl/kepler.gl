@@ -30,39 +30,41 @@ import {editShader, insertBefore} from '@kepler.gl/deckgl-layers';
  * causes shader compilation failures on strict mobile GPU drivers (e.g. Mali,
  * Adreno on Samsung Galaxy devices). The opacity uniform is not used in these
  * transform passes so removing it is safe.
+ *
+ * The patching is applied in _createWeightsTransform rather than only in
+ * getShaders, because the legacy AggregationLayer.updateState() calls
+ * getShaders({}) (with no fs) and then passes the raw shader imports to
+ * updateShaders → _createWeightsTransform, bypassing the getShaders patching.
  */
 export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
-  getShaders(shaders: any) {
-    const result = super.getShaders(shaders);
-
-    const isTransformShader =
-      result.fs?.includes('gaussianKDE') ||
-      result.fs?.includes('outTexture.r / max(1.0, outTexture.a)');
-
-    if (isTransformShader && result.modules) {
-      result.modules = result.modules.filter(
-        (m: any) => (m?.name || m) !== 'layer'
-      );
-    }
-
-    if (result.fs?.includes('gaussianKDE')) {
-      // Weights fragment shader: adjust kernel to match Mapbox heatmap layer
+  _createWeightsTransform(shaders: any) {
+    if (shaders.fs?.includes('gaussianKDE')) {
       let fs = editShader(
-        result.fs,
+        shaders.fs,
         'fs',
         'return pow(2.71828, -u*u/0.05555)/(1.77245385*0.166666);',
         `float value = pow(2.71828, -u*u/0.05555)/(1.77245385*0.166666) / 8.5;
           return max(value - 0.00443, 0.0);`
       );
       fs = editShader(fs, 'fs', '2. * dist', 'dist');
-      fs = editShader(
-        fs,
-        'fs',
-        'DECKGL_FILTER_COLOR(fragColor, geometry);',
-        ''
-      );
-      result.fs = fs;
-    } else if (result.fs?.includes('outTexture.r / max(1.0, outTexture.a)')) {
+      fs = editShader(fs, 'fs', 'DECKGL_FILTER_COLOR(fragColor, geometry);', '');
+      shaders = {...shaders, fs};
+    }
+
+    if (shaders.modules) {
+      shaders = {
+        ...shaders,
+        modules: shaders.modules.filter((m: any) => (m?.name || m) !== 'layer')
+      };
+    }
+
+    super._createWeightsTransform(shaders);
+  }
+
+  getShaders(shaders: any) {
+    const result = super.getShaders(shaders);
+
+    if (result.fs?.includes('outTexture.r / max(1.0, outTexture.a)')) {
       // Max-weights fragment shader: force max value to 1.0
       result.fs = insertBefore(
         result.fs,
@@ -70,6 +72,11 @@ export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
         'fragColor.g = outTexture.r / max(1.0, outTexture.a);',
         'fragColor.r = 1.0;\n  '
       );
+      if (result.modules) {
+        result.modules = result.modules.filter(
+          (m: any) => (m?.name || m) !== 'layer'
+        );
+      }
     }
 
     return result;
