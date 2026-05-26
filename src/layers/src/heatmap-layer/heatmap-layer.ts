@@ -172,7 +172,9 @@ export const heatmapVisConfigs: {
     isRanged: false,
     range: [0.001, 20],
     step: 0.001,
-    property: 'intensity'
+    property: 'intensity',
+    focusRange: [0.001, 1],
+    focusWeight: 0.4
   } as VisConfigNumber,
   threshold: {
     type: 'number',

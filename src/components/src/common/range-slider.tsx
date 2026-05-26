@@ -16,6 +16,7 @@ import {
   clamp,
   scaleSourceDomainToDestination
 } from '@kepler.gl/utils';
+import type {SliderScaleConfig} from '@kepler.gl/utils';
 import {LineChart, Filter, Bins} from '@kepler.gl/types';
 import {Datasets} from '@kepler.gl/table';
 import {ActionHandler, setFilterPlot} from '@kepler.gl/actions';
@@ -84,6 +85,7 @@ interface RangeSliderProps {
   datasets?: Datasets;
 
   invertTrendColor?: boolean;
+  scaleConfig?: SliderScaleConfig | null;
 }
 
 const RANGE_SLIDER_TIMELINE_PANEL_STYLE = {marginLeft: '-32px'};
@@ -286,7 +288,8 @@ export default function RangeSliderFactory(
         animationWindow,
         subAnimations: subAnimations,
         filter,
-        datasets
+        datasets,
+        scaleConfig
       } = this.props;
 
       const {width} = this.state;
@@ -374,6 +377,7 @@ export default function RangeSliderFactory(
                     onChange([val0, val1]);
                   }}
                   enableBarDrag
+                  scaleConfig={scaleConfig}
                 />
                 {!isRanged && showInput ? this._renderInput('value1') : null}
               </SliderWrapper>

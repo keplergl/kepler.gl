@@ -7,7 +7,8 @@ import styled from 'styled-components';
 
 import SliderHandle from './slider-handle';
 import SliderBarHandle from './slider-bar-handle';
-import {normalizeSliderValue, clamp} from '@kepler.gl/utils';
+import {normalizeSliderValue, clamp, valueToPosition, positionToValue} from '@kepler.gl/utils';
+import type {SliderScaleConfig} from '@kepler.gl/utils';
 
 function noop() {
   return;
@@ -55,6 +56,7 @@ type SliderProps = {
   disabled: boolean;
   className?: string;
   style?: object;
+  scaleConfig?: SliderScaleConfig | null;
 };
 
 export default class Slider extends Component<SliderProps> {
@@ -99,6 +101,28 @@ export default class Slider extends Component<SliderProps> {
     return this.props.vertical ? this.ref.current.offsetHeight : this.ref.current.offsetWidth;
   }
 
+  private getValueFromPixelOffset(pixelOffset: number): number {
+    const {minValue, maxValue, scaleConfig} = this.props;
+    const baseDistance = this.getBaseDistance();
+    if (baseDistance === 0) return minValue;
+
+    const position = pixelOffset / baseDistance;
+
+    if (scaleConfig) {
+      return positionToValue(position, minValue, maxValue, scaleConfig);
+    }
+    return minValue + position * (maxValue - minValue);
+  }
+
+  private getPositionFromValue(value: number): number {
+    const {minValue, maxValue, scaleConfig} = this.props;
+    if (scaleConfig) {
+      return valueToPosition(value, minValue, maxValue, scaleConfig);
+    }
+    if (maxValue === minValue) return 0;
+    return (value - minValue) / (maxValue - minValue);
+  }
+
   private getDeltaVal(x: number) {
     const percent = x / this.getBaseDistance();
     const maxDelta = this.props.maxValue - this.props.minValue;
@@ -123,29 +147,55 @@ export default class Slider extends Component<SliderProps> {
   }
 
   slide0Listener = (x: number) => {
-    const {value1, minValue} = this.props;
-    const val = this.getValue(minValue, x);
+    const {value1, minValue, scaleConfig} = this.props;
+    const val = scaleConfig
+      ? this.normalizeValue(this.getValueFromPixelOffset(x))
+      : this.getValue(minValue, x);
     this.props.onSlider0Change(clamp([minValue, value1], val));
   };
 
   slide1Listener = (x: number) => {
-    const {minValue, maxValue, value0} = this.props;
-    const val = this.getValue(minValue, x);
+    const {minValue, maxValue, value0, scaleConfig} = this.props;
+    const val = scaleConfig
+      ? this.normalizeValue(this.getValueFromPixelOffset(x))
+      : this.getValue(minValue, x);
     this.props.onSlider1Change(clamp([value0, maxValue], val));
   };
 
   sliderBarListener = (x: number) => {
-    const {value0, value1, minValue, maxValue} = this.props;
-    // for slider bar, we use distance delta
-    const anchor = this.anchor;
-    const length = value1 - value0; // the length of the selected range shouldn't change when clamping
-    const val0 = clamp([minValue, maxValue - length], this.getValue(value0, x - anchor));
-    const val1 = clamp([val0 + length, maxValue], this.getValue(value1, x - anchor));
+    const {value0, value1, minValue, maxValue, scaleConfig} = this.props;
 
-    const deltaX = this.getDeltaX(val0 - this.props.value0);
-    this.props.onSliderBarChange(val0, val1);
-    // update anchor
-    this.anchor = this.anchor + deltaX;
+    if (scaleConfig) {
+      const anchor = this.anchor;
+      const baseDistance = this.getBaseDistance();
+
+      // Convert current positions to pixel positions, apply delta, convert back
+      const pos0Px = this.getPositionFromValue(value0) * baseDistance;
+      const pos1Px = this.getPositionFromValue(value1) * baseDistance;
+      const deltaPx = x - anchor;
+
+      const newVal0Raw = this.normalizeValue(
+        this.getValueFromPixelOffset(pos0Px + deltaPx)
+      );
+      const newVal1Raw = this.normalizeValue(
+        this.getValueFromPixelOffset(pos1Px + deltaPx)
+      );
+
+      const val0 = clamp([minValue, maxValue - (newVal1Raw - newVal0Raw)], newVal0Raw);
+      const val1 = clamp([val0 + (newVal1Raw - newVal0Raw), maxValue], newVal1Raw);
+
+      this.props.onSliderBarChange(val0, val1);
+      this.anchor = x;
+    } else {
+      const anchor = this.anchor;
+      const length = value1 - value0;
+      const val0 = clamp([minValue, maxValue - length], this.getValue(value0, x - anchor));
+      const val1 = clamp([val0 + length, maxValue], this.getValue(value1, x - anchor));
+
+      const deltaX = this.getDeltaX(val0 - this.props.value0);
+      this.props.onSliderBarChange(val0, val1);
+      this.anchor = this.anchor + deltaX;
+    }
   };
 
   calcHandleLeft0 = (w: number, l: number) => {
@@ -175,11 +225,9 @@ export default class Slider extends Component<SliderProps> {
       style
     } = this.props;
     const value0 = !isRanged && minValue > 0 ? minValue : this.props.value0;
-    const currValDelta = value1 - value0;
-    const maxDelta = maxValue - minValue;
-    const width = (currValDelta / maxDelta) * 100;
-
-    const v0Left = ((value0 - minValue) / maxDelta) * 100;
+    const v0Left = this.getPositionFromValue(value0) * 100;
+    const v1Right = this.getPositionFromValue(value1) * 100;
+    const width = v1Right - v0Left;
 
     return (
       <SliderWrapper
