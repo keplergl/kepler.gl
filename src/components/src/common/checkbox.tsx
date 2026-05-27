@@ -98,7 +98,6 @@ const Checkbox: FC<CheckboxProps> = ({
   );
 
   const inputType = type === 'radio' ? 'radio' : 'checkbox';
-  
   const inputProps = {
     checked,
     disabled,
