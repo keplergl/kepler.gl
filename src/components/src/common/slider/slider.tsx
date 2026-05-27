@@ -216,7 +216,6 @@ export default class Slider extends Component<SliderProps> {
       classSet,
       disabled,
       isRanged,
-      maxValue,
       minValue,
       value1,
       vertical,

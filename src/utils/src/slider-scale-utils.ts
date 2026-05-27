@@ -37,19 +37,17 @@ function getZoneBoundaries(
   const {focusRange, focusWeight} = config;
   const [focusMin, focusMax] = focusRange;
 
-  const totalSpan = max - min;
   const beforeSpan = Math.max(0, focusMin - min);
   const afterSpan = Math.max(0, max - focusMax);
   const nonFocusSpan = beforeSpan + afterSpan;
 
-  const nonFocusWeight = 1 - focusWeight;
-
-  let beforeWeight: number;
+  // When focusRange covers the entire slider span, treat as full-width focus (linear)
   if (nonFocusSpan === 0) {
-    beforeWeight = 0;
-  } else {
-    beforeWeight = (beforeSpan / nonFocusSpan) * nonFocusWeight;
+    return [0, 1];
   }
+
+  const nonFocusWeight = 1 - focusWeight;
+  const beforeWeight = (beforeSpan / nonFocusSpan) * nonFocusWeight;
 
   const beforeEnd = beforeWeight;
   const focusEnd = beforeWeight + focusWeight;
@@ -138,7 +136,15 @@ export function createSliderScale(
   focusRange?: [number, number],
   focusWeight?: number
 ): SliderScaleConfig | null {
-  if (!focusRange || focusWeight == null || focusWeight <= 0 || focusWeight >= 1) {
+  if (
+    !focusRange ||
+    focusWeight == null ||
+    !Number.isFinite(focusWeight) ||
+    !Number.isFinite(focusRange[0]) ||
+    !Number.isFinite(focusRange[1]) ||
+    focusWeight <= 0 ||
+    focusWeight >= 1
+  ) {
     return null;
   }
   return {focusRange, focusWeight};

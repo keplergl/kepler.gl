@@ -215,3 +215,34 @@ test('sliderScaleUtils -> handles edge cases', t => {
 
   t.end();
 });
+
+test('sliderScaleUtils -> focusRange covers entire slider span (degenerates to linear)', t => {
+  // When focusRange === [min, max], there's no before/after zone
+  const config = {focusRange: [0, 100], focusWeight: 0.6};
+
+  // Should behave linearly: position = (value - min) / (max - min)
+  t.equal(valueToPosition(0, 0, 100, config), 0, 'min maps to 0');
+  t.equal(valueToPosition(100, 0, 100, config), 1, 'max maps to 1');
+  t.equal(valueToPosition(50, 0, 100, config), 0.5, 'midpoint maps to 0.5');
+  t.equal(valueToPosition(25, 0, 100, config), 0.25, '25 maps to 0.25');
+
+  t.equal(positionToValue(0, 0, 100, config), 0, 'position 0 maps to min');
+  t.equal(positionToValue(1, 0, 100, config), 100, 'position 1 maps to max');
+  t.equal(positionToValue(0.5, 0, 100, config), 50, 'position 0.5 maps to midpoint');
+
+  t.end();
+});
+
+test('sliderScaleUtils -> createSliderScale rejects non-finite inputs', t => {
+  t.equal(createSliderScale([NaN, 1], 0.5), null, 'rejects NaN in focusRange[0]');
+  t.equal(createSliderScale([0, NaN], 0.5), null, 'rejects NaN in focusRange[1]');
+  t.equal(createSliderScale([0, 1], NaN), null, 'rejects NaN focusWeight');
+  t.equal(createSliderScale([0, Infinity], 0.5), null, 'rejects Infinity in focusRange');
+  t.equal(createSliderScale([0, 1], Infinity), null, 'rejects Infinity focusWeight');
+  t.deepEqual(
+    createSliderScale([0, 1], 0.5),
+    {focusRange: [0, 1], focusWeight: 0.5},
+    'accepts valid finite inputs'
+  );
+  t.end();
+});
