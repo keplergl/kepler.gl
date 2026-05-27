@@ -150,7 +150,7 @@ const AddByDatasetButton: React.FC<AddByDatasetButtonProps> = ({
           arrow={false}
           interactive
           placement="bottom"
-          appendTo={context?.current || 'parent'}
+          appendTo={() => document.body}
           // @ts-ignore
           onCreate={setTippyInstance}
           duration={0}
