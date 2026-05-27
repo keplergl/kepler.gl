@@ -77,7 +77,7 @@ export const geojsonVisConfigs: {
   sizeRange: 'strokeWidthRange';
   radiusRange: 'radiusRange';
   heightRange: 'elevationRange';
-  elevationScale: 'elevationScale';
+  elevationScale: VisConfigNumber;
   stroked: 'stroked';
   filled: 'filled';
   enable3d: 'enable3d';
@@ -92,7 +92,9 @@ export const geojsonVisConfigs: {
   },
   thickness: {
     ...LAYER_VIS_CONFIGS.thickness,
-    defaultValue: 0.5
+    defaultValue: 0.5,
+    focusRange: [0, 1],
+    focusWeight: 0.3
   },
   strokeColor: 'strokeColor',
   colorRange: 'colorRange',
@@ -102,7 +104,11 @@ export const geojsonVisConfigs: {
   sizeRange: 'strokeWidthRange',
   radiusRange: 'radiusRange',
   heightRange: 'elevationRange',
-  elevationScale: 'elevationScale',
+  elevationScale: {
+    ...LAYER_VIS_CONFIGS.elevationScale,
+    focusRange: [0, 1],
+    focusWeight: 0.3
+  },
   stroked: 'stroked',
   filled: 'filled',
   enable3d: 'enable3d',
