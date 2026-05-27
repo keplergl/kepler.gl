@@ -97,6 +97,8 @@ const Checkbox: FC<CheckboxProps> = ({
     [onBlur]
   );
 
+  const inputType = type === 'radio' ? 'radio' : 'checkbox';
+  
   const inputProps = {
     checked,
     disabled,
@@ -105,7 +107,7 @@ const Checkbox: FC<CheckboxProps> = ({
     onChange,
     value,
     secondary,
-    type: 'checkbox' as const,
+    type: inputType,
     onFocus: handleFocus,
     onBlur: handleBlur
   };
