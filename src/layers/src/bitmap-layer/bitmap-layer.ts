@@ -2,6 +2,13 @@
 // Copyright contributors to the kepler.gl project
 
 import {BitmapLayer as DeckBitmapLayer, PathLayer} from '@deck.gl/layers';
+import {
+  EditableGeoJsonLayer,
+  ModifyMode,
+  TranslateMode,
+  CompositeMode,
+  GeoJsonEditMode
+} from '@deck.gl-community/editable-layers';
 
 import Layer from '../base-layer';
 import BitmapLayerIcon from './bitmap-layer-icon';
@@ -16,9 +23,15 @@ import {
 import {KeplerTable as KeplerDataset, Datasets as KeplerDatasets} from '@kepler.gl/table';
 import {VisConfigNumber, VisConfigBoolean} from '@kepler.gl/types';
 
+const EDIT_MODE = new CompositeMode([
+  new TranslateMode() as unknown as GeoJsonEditMode,
+  new ModifyMode() as unknown as GeoJsonEditMode
+]);
+
 export type BitmapLayerVisConfigSettings = {
   opacity: VisConfigNumber;
   showBounds: VisConfigBoolean;
+  editBounds: VisConfigBoolean;
   boundsWest: VisConfigNumber;
   boundsSouth: VisConfigNumber;
   boundsEast: VisConfigNumber;
@@ -38,6 +51,13 @@ export const bitmapVisConfigs = {
     group: 'display',
     property: 'showBounds'
   } as VisConfigBoolean,
+  editBounds: {
+    type: 'boolean',
+    defaultValue: false,
+    label: 'layerVisConfigs.editBounds',
+    group: 'display',
+    property: 'editBounds'
+  } as VisConfigBoolean,
   boundsWest: {
     type: 'number',
     defaultValue: 0,
@@ -46,8 +66,7 @@ export const bitmapVisConfigs = {
     range: [-180, 180],
     step: 0.0001,
     group: 'display',
-    property: 'boundsWest',
-    allowCustomValue: true
+    property: 'boundsWest'
   } as VisConfigNumber,
   boundsSouth: {
     type: 'number',
@@ -57,8 +76,7 @@ export const bitmapVisConfigs = {
     range: [-90, 90],
     step: 0.0001,
     group: 'display',
-    property: 'boundsSouth',
-    allowCustomValue: true
+    property: 'boundsSouth'
   } as VisConfigNumber,
   boundsEast: {
     type: 'number',
@@ -68,8 +86,7 @@ export const bitmapVisConfigs = {
     range: [-180, 180],
     step: 0.0001,
     group: 'display',
-    property: 'boundsEast',
-    allowCustomValue: true
+    property: 'boundsEast'
   } as VisConfigNumber,
   boundsNorth: {
     type: 'number',
@@ -79,17 +96,24 @@ export const bitmapVisConfigs = {
     range: [-90, 90],
     step: 0.0001,
     group: 'display',
-    property: 'boundsNorth',
-    allowCustomValue: true
+    property: 'boundsNorth'
   } as VisConfigNumber
 };
 
 export default class BitmapOverlayLayer extends Layer {
   declare visConfigSettings: BitmapLayerVisConfigSettings;
+  private _editFeatureCollection: any = null;
+  private _prevDataBoundsKey: string = '';
+  private _onRedrawNeeded: (() => void) | undefined;
+  private _rafId: number | undefined;
 
-  constructor(props: {dataId: string} & Record<string, any>) {
+  constructor(props: {dataId: string; visConfig?: Record<string, any>} & Record<string, any>) {
     super(props);
     this.registerVisConfig(bitmapVisConfigs);
+    // Apply visConfig from findDefaultLayerProps (e.g. bounds seeded from metadata)
+    if (props.visConfig) {
+      this.updateLayerVisConfig(props.visConfig);
+    }
     this.meta = {};
   }
 
@@ -98,11 +122,39 @@ export default class BitmapOverlayLayer extends Layer {
       return {props: []};
     }
 
+    const metadata = (dataset.metadata || {}) as BitmapDatasetMetadata;
+    const visConfig: Record<string, any> = {};
+
+    if (metadata.bounds) {
+      const metaBounds = metadata.bounds;
+      if (Array.isArray(metaBounds) && typeof metaBounds[0] === 'number') {
+        const [w, s, e, n] = metaBounds as [number, number, number, number];
+        visConfig.boundsWest = w;
+        visConfig.boundsSouth = s;
+        visConfig.boundsEast = e;
+        visConfig.boundsNorth = n;
+      } else if (Array.isArray(metaBounds) && Array.isArray(metaBounds[0])) {
+        const corners = metaBounds as [
+          [number, number],
+          [number, number],
+          [number, number],
+          [number, number]
+        ];
+        const lngs = corners.map(c => c[0]);
+        const lats = corners.map(c => c[1]);
+        visConfig.boundsWest = Math.min(...lngs);
+        visConfig.boundsSouth = Math.min(...lats);
+        visConfig.boundsEast = Math.max(...lngs);
+        visConfig.boundsNorth = Math.max(...lats);
+      }
+    }
+
     return {
       props: [
         {
           label: dataset.label || 'Bitmap',
-          isVisible: true
+          isVisible: true,
+          visConfig
         }
       ]
     };
@@ -152,37 +204,7 @@ export default class BitmapOverlayLayer extends Layer {
 
     const dataset = datasets[dataId];
     const metadata = (dataset.metadata || {}) as BitmapDatasetMetadata;
-
-    // Seed visConfig bounds from metadata on first load
     const {visConfig} = this.config;
-    if (
-      metadata.bounds &&
-      visConfig.boundsWest === 0 &&
-      visConfig.boundsSouth === 0 &&
-      visConfig.boundsEast === 0 &&
-      visConfig.boundsNorth === 0
-    ) {
-      const metaBounds = metadata.bounds;
-      if (Array.isArray(metaBounds) && typeof metaBounds[0] === 'number') {
-        const [w, s, e, n] = metaBounds as [number, number, number, number];
-        this.updateLayerVisConfig({boundsWest: w, boundsSouth: s, boundsEast: e, boundsNorth: n});
-      } else if (Array.isArray(metaBounds) && Array.isArray(metaBounds[0])) {
-        const corners = metaBounds as [
-          [number, number],
-          [number, number],
-          [number, number],
-          [number, number]
-        ];
-        const lngs = corners.map(c => c[0]);
-        const lats = corners.map(c => c[1]);
-        this.updateLayerVisConfig({
-          boundsWest: Math.min(...lngs),
-          boundsSouth: Math.min(...lats),
-          boundsEast: Math.max(...lngs),
-          boundsNorth: Math.max(...lats)
-        });
-      }
-    }
 
     const bounds: BitmapBounds = [
       visConfig.boundsWest,
@@ -204,71 +226,168 @@ export default class BitmapOverlayLayer extends Layer {
   }
 
   renderLayer(opts: any) {
-    const {data} = opts;
+    const {data, layerCallbacks} = opts;
     const {imageUrl, bounds} = data || {};
     if (!imageUrl || !bounds) {
       return [];
     }
 
+    this._onRedrawNeeded = layerCallbacks?.onRedrawNeeded;
     const {visConfig} = this.config;
+
     const {visible} = this.getDefaultDeckLayerProps(opts);
+
+    const [west, south, east, north] = bounds as [number, number, number, number];
+    const dataBoundsKey = `${west},${south},${east},${north}`;
+
+    // Rebuild the editable feature collection only when data.bounds changes
+    // (i.e., formatLayerData was re-run due to slider change or other external update).
+    // During editing, data.bounds stays stale (cached), so this won't trigger.
+    if (dataBoundsKey !== this._prevDataBoundsKey) {
+      this._prevDataBoundsKey = dataBoundsKey;
+      this._editFeatureCollection = {
+        type: 'FeatureCollection',
+        features: [
+          {
+            type: 'Feature',
+            geometry: {
+              type: 'Polygon',
+              coordinates: [
+                [
+                  [west, north],
+                  [east, north],
+                  [east, south],
+                  [west, south],
+                  [west, north]
+                ]
+              ]
+            },
+            properties: {shape: 'Rectangle'}
+          }
+        ]
+      };
+    }
+
+    // Read current bounds from the edit feature collection (source of truth during editing)
+    const editCoords =
+      this._editFeatureCollection?.features?.[0]?.geometry?.coordinates?.[0];
+    let activeBounds: [number, number, number, number];
+    if (editCoords && editCoords.length >= 4) {
+      // Use all vertices (excluding closing point which duplicates the first)
+      const pts = editCoords.slice(0, -1);
+      const lngs = pts.map((c: number[]) => c[0]);
+      const lats = pts.map((c: number[]) => c[1]);
+      activeBounds = [
+        Math.min(...lngs),
+        Math.min(...lats),
+        Math.max(...lngs),
+        Math.max(...lats)
+      ];
+    } else {
+      activeBounds = [west, south, east, north];
+    }
 
     const layers: any[] = [
       new DeckBitmapLayer({
         id: this.id,
         image: imageUrl,
-        bounds,
+        bounds: activeBounds,
         opacity: visConfig.opacity ?? 1,
         pickable: false,
         visible
       })
     ];
 
-    if (visConfig.showBounds) {
-      const boundaryPath = this._getBoundaryPath(bounds);
-      if (boundaryPath) {
-        layers.push(
-          new PathLayer({
-            id: `${this.id}-bounds`,
-            data: [boundaryPath],
-            getPath: (d: number[][]) => d,
-            getColor: [255, 255, 255, 200],
-            getWidth: 2,
-            widthUnits: 'pixels',
-            pickable: false,
-            visible
-          })
-        );
-      }
+    if (visConfig.showBounds && !visConfig.editBounds) {
+      // Static boundary outline (no interaction)
+      const [aW, aS, aE, aN] = activeBounds;
+      layers.push(
+        new PathLayer({
+          id: `${this.id}-bounds`,
+          data: [
+            [
+              [aW, aN],
+              [aE, aN],
+              [aE, aS],
+              [aW, aS],
+              [aW, aN]
+            ]
+          ],
+          getPath: (d: number[][]) => d,
+          getColor: [255, 255, 255, 200],
+          getWidth: 2,
+          widthUnits: 'pixels',
+          pickable: false,
+          visible
+        })
+      );
+    }
+
+    if (visConfig.editBounds) {
+      // @ts-ignore - EditableGeoJsonLayer types are loose
+      layers.push(
+        new EditableGeoJsonLayer({
+          id: `${this.id}-edit`,
+          // @ts-ignore
+          data: this._editFeatureCollection,
+          mode: EDIT_MODE,
+          selectedFeatureIndexes: [0],
+          pickable: true,
+          pickingRadius: 12,
+          visible,
+          modeConfig: {
+            lockRectangles: true
+          },
+          filled: false,
+          stroked: true,
+          getLineColor: [255, 255, 255, 200],
+          getLineWidth: 2,
+          lineWidthUnits: 'pixels',
+          getEditHandlePointColor: [255, 200, 0, 255],
+          getEditHandlePointRadius: 6,
+          editHandlePointRadiusUnits: 'pixels',
+          onEdit: ({updatedData, editType}) => {
+            this._editFeatureCollection = updatedData;
+
+            const isFinal =
+              editType === 'finishMovePosition' ||
+              editType === 'translated' ||
+              editType === 'addPosition';
+
+            if (isFinal) {
+              // Sync sliders on gesture end
+              const geom = updatedData?.features?.[0]?.geometry;
+              const coords =
+                geom && 'coordinates' in geom ? (geom as any).coordinates[0] : null;
+              if (coords && coords.length >= 5) {
+                const pts = coords.slice(0, -1);
+                const lngs = pts.map((c: number[]) => c[0]);
+                const lats = pts.map((c: number[]) => c[1]);
+                this.updateLayerVisConfig({
+                  boundsWest: Math.min(...lngs),
+                  boundsSouth: Math.min(...lats),
+                  boundsEast: Math.max(...lngs),
+                  boundsNorth: Math.max(...lats)
+                });
+              }
+              if (this._rafId) {
+                cancelAnimationFrame(this._rafId);
+                this._rafId = undefined;
+              }
+              this._onRedrawNeeded?.();
+            } else if (!this._rafId) {
+              // Throttle live redraws to animation frame rate
+              this._rafId = requestAnimationFrame(() => {
+                this._rafId = undefined;
+                this._onRedrawNeeded?.();
+              });
+            }
+          }
+        })
+      );
     }
 
     return layers;
   }
 
-  _getBoundaryPath(bounds: BitmapBounds): number[][] | null {
-    if (!bounds) {
-      return null;
-    }
-
-    if (Array.isArray(bounds[0]) && Array.isArray(bounds[0])) {
-      // 4-corners format: [[x0,y0], [x1,y1], [x2,y2], [x3,y3]]
-      const corners = bounds as [
-        [number, number],
-        [number, number],
-        [number, number],
-        [number, number]
-      ];
-      return [corners[0], corners[1], corners[2], corners[3], corners[0]];
-    }
-
-    // [west, south, east, north] format
-    const [west, south, east, north] = bounds as [number, number, number, number];
-    return [
-      [west, north],
-      [east, north],
-      [east, south],
-      [west, south],
-      [west, north]
-    ];
-  }
 }

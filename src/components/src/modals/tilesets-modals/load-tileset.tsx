@@ -52,6 +52,22 @@ const MetaContainer = styled.div`
   background-color: ${({theme}) => theme.editorBackground};
 `;
 
+const BitmapPreviewContainer = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  padding: 16px;
+
+  img {
+    max-width: 100%;
+    max-height: 360px;
+    border-radius: 4px;
+    object-fit: contain;
+  }
+`;
+
 export interface MetaInnerContainerProps {
   width: number;
   height: number;
@@ -180,7 +196,11 @@ function LoadTilesetTabFactory() {
             </div>
           </div>
           <MetaContainer>
-            {data && (
+            {data && 'imagePreviewUrl' in data ? (
+              <BitmapPreviewContainer>
+                <img src={(data as any).imagePreviewUrl} alt="Bitmap preview" />
+              </BitmapPreviewContainer>
+            ) : data ? (
               <AutoSizer>
                 {({height, width}) => (
                   <MetaInnerContainer height={height} width={width}>
@@ -188,7 +208,7 @@ function LoadTilesetTabFactory() {
                   </MetaInnerContainer>
                 )}
               </AutoSizer>
-            )}
+            ) : null}
           </MetaContainer>
         </Container>
         <LoadDataFooter

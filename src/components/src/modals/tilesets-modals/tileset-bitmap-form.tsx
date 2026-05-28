@@ -13,14 +13,8 @@ import {InputLight} from '../../common';
 const TilesetInputContainer = styled.div`
   display: grid;
   grid-template-rows: repeat(auto, auto);
-  row-gap: 18px;
+  row-gap: 12px;
   font-size: 12px;
-`;
-
-const TilesetInputDescription = styled.div`
-  text-align: center;
-  color: ${props => props.theme.AZURE200};
-  font-size: 11px;
 `;
 
 const BoundsGrid = styled.div`
@@ -36,23 +30,15 @@ const BoundsLabel = styled.label`
   display: block;
 `;
 
-const ImagePreview = styled.div`
-  text-align: center;
-  margin-top: 8px;
-
-  img {
-    max-width: 100%;
-    max-height: 120px;
-    border-radius: 4px;
-    border: 1px solid ${props => props.theme.AZURE400};
-  }
-`;
-
 const DropZone = styled.div<{isDragging: boolean}>`
   border: 2px dashed ${props => (props.isDragging ? props.theme.AZURE200 : props.theme.AZURE400)};
   border-radius: 4px;
-  padding: 16px;
-  text-align: center;
+  padding: 0 10px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
   cursor: pointer;
   color: ${props => props.theme.AZURE200};
   font-size: 11px;
@@ -63,11 +49,39 @@ const DropZone = styled.div<{isDragging: boolean}>`
   }
 `;
 
-const OrDivider = styled.div`
-  text-align: center;
+const ImageSourceRow = styled.div`
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: end;
+`;
+
+const DropZoneWrapper = styled.div`
+  position: relative;
+`;
+
+const ClearButton = styled.button`
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: #ffffff;
+  border: 2px solid ${props => props.theme.AZURE400};
+  border-radius: 50%;
   color: ${props => props.theme.AZURE200};
-  font-size: 11px;
-  margin: 8px 0;
+  cursor: pointer;
+  font-size: 10px;
+  line-height: 1;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  z-index: 1;
+
+  &:hover {
+    border-color: ${props => props.theme.AZURE200};
+  }
 `;
 
 type BitmapFormProps = {
@@ -102,10 +116,10 @@ const TilesetBitmapForm: React.FC<BitmapFormProps> = ({setResponse}) => {
   const [layerName, setLayerName] = useState<string>('');
   const [imageUrl, setImageUrl] = useState<string>('');
   const [imageDataUri, setImageDataUri] = useState<string>('');
-  const [west, setWest] = useState<string>('');
-  const [south, setSouth] = useState<string>('');
-  const [east, setEast] = useState<string>('');
-  const [north, setNorth] = useState<string>('');
+  const [west, setWest] = useState<string>('-122.52');
+  const [south, setSouth] = useState<string>('37.70');
+  const [east, setEast] = useState<string>('-122.35');
+  const [north, setNorth] = useState<string>('37.82');
   const [isDragging, setIsDragging] = useState(false);
   const [fileError, setFileError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -196,6 +210,12 @@ const TilesetBitmapForm: React.FC<BitmapFormProps> = ({setResponse}) => {
     fileInputRef.current?.click();
   }, []);
 
+  const onClearImage = useCallback(() => {
+    setImageDataUri('');
+    setImageUrl('');
+    setFileError(null);
+  }, []);
+
   // Update response whenever form state changes
   useEffect(() => {
     if (fileError) {
@@ -227,14 +247,14 @@ const TilesetBitmapForm: React.FC<BitmapFormProps> = ({setResponse}) => {
         isDataUri
       });
       setResponse({
-        metadata: null,
+        metadata: {imagePreviewUrl: effectiveImageUrl},
         dataset,
         loading: false,
         error: null
       });
     } else {
       setResponse({
-        metadata: null,
+        metadata: effectiveImageUrl ? {imagePreviewUrl: effectiveImageUrl} : null,
         dataset: null,
         loading: false,
         error: null
@@ -255,33 +275,30 @@ const TilesetBitmapForm: React.FC<BitmapFormProps> = ({setResponse}) => {
       </div>
 
       <div>
-        <label htmlFor="bitmap-url">Image URL</label>
-        <InputLight
-          id="bitmap-url"
-          placeholder="Enter image URL (PNG, JPEG, etc.)"
-          value={imageUrl}
-          onChange={onImageUrlChange}
-          disabled={Boolean(imageDataUri)}
-        />
-        <TilesetInputDescription>
-          URL to a publicly accessible image. Must be CORS-enabled.
-        </TilesetInputDescription>
-      </div>
-
-      <OrDivider>— or drop a local image —</OrDivider>
-
-      <div>
-        <DropZone
-          isDragging={isDragging}
-          onDrop={onDrop}
-          onDragOver={onDragOver}
-          onDragLeave={onDragLeave}
-          onClick={onDropZoneClick}
-        >
-          {imageDataUri
-            ? 'Image loaded. Drop another to replace.'
-            : 'Drop an image here or click to select'}
-        </DropZone>
+        <label htmlFor="bitmap-url">Image source</label>
+        <ImageSourceRow>
+          <InputLight
+            id="bitmap-url"
+            placeholder="Image URL"
+            value={imageUrl}
+            onChange={onImageUrlChange}
+            disabled={Boolean(imageDataUri)}
+          />
+          <DropZoneWrapper>
+            {(imageDataUri || imageUrl) && (
+              <ClearButton onClick={onClearImage} title="Clear image">✕</ClearButton>
+            )}
+            <DropZone
+              isDragging={isDragging}
+              onDrop={onDrop}
+              onDragOver={onDragOver}
+              onDragLeave={onDragLeave}
+              onClick={onDropZoneClick}
+            >
+              {imageDataUri ? '✓ Local' : 'Drop / Select'}
+            </DropZone>
+          </DropZoneWrapper>
+        </ImageSourceRow>
         <input
           ref={fileInputRef}
           type="file"
@@ -289,22 +306,16 @@ const TilesetBitmapForm: React.FC<BitmapFormProps> = ({setResponse}) => {
           style={{display: 'none'}}
           onChange={onFileInputChange}
         />
+        {fileError && (
+          <div style={{color: '#ff5a5a', fontSize: '11px', marginTop: '4px'}}>{fileError}</div>
+        )}
       </div>
 
-      {effectiveImageUrl && (
-        <ImagePreview>
-          <img src={effectiveImageUrl} alt="Preview" />
-        </ImagePreview>
-      )}
-
       <div>
-        <label>Bounds (geographic extent)</label>
-        <TilesetInputDescription>
-          Specify the geographic bounding box where the image should be placed.
-        </TilesetInputDescription>
+        <label>Bounds</label>
         <BoundsGrid>
           <div>
-            <BoundsLabel htmlFor="bitmap-west">West (min longitude)</BoundsLabel>
+            <BoundsLabel htmlFor="bitmap-west">West (min lng)</BoundsLabel>
             <InputLight
               id="bitmap-west"
               placeholder="-180"
@@ -313,7 +324,7 @@ const TilesetBitmapForm: React.FC<BitmapFormProps> = ({setResponse}) => {
             />
           </div>
           <div>
-            <BoundsLabel htmlFor="bitmap-east">East (max longitude)</BoundsLabel>
+            <BoundsLabel htmlFor="bitmap-east">East (max lng)</BoundsLabel>
             <InputLight
               id="bitmap-east"
               placeholder="180"
@@ -322,7 +333,7 @@ const TilesetBitmapForm: React.FC<BitmapFormProps> = ({setResponse}) => {
             />
           </div>
           <div>
-            <BoundsLabel htmlFor="bitmap-south">South (min latitude)</BoundsLabel>
+            <BoundsLabel htmlFor="bitmap-south">South (min lat)</BoundsLabel>
             <InputLight
               id="bitmap-south"
               placeholder="-90"
@@ -331,7 +342,7 @@ const TilesetBitmapForm: React.FC<BitmapFormProps> = ({setResponse}) => {
             />
           </div>
           <div>
-            <BoundsLabel htmlFor="bitmap-north">North (max latitude)</BoundsLabel>
+            <BoundsLabel htmlFor="bitmap-north">North (max lat)</BoundsLabel>
             <InputLight
               id="bitmap-north"
               placeholder="90"

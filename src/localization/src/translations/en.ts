@@ -104,6 +104,7 @@ export default {
     layer: 'Layer',
     appearance: 'Appearance',
     bounds: 'Bounds',
+    imageSource: 'Image Source',
     uniqueIdField: 'Unique ID Field',
     type: {
       point: 'point',
@@ -151,7 +152,9 @@ export default {
     billboardDescription: 'Orient geometry towards the camera',
     fadeTrail: 'Fade trail',
     opacity: 'Opacity',
+    imageUrl: 'Image URL',
     showBounds: 'Show Bounds',
+    editBounds: 'Drag corners to resize',
     boundsWest: 'West',
     boundsSouth: 'South',
     boundsEast: 'East',

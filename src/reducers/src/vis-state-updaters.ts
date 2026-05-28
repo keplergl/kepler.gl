@@ -1120,13 +1120,34 @@ export function layerVisConfigChangeUpdater(
 
   const newLayer = oldLayer.updateLayerConfig({visConfig: newVisConfig});
 
-  if (newLayer.shouldCalculateLayerData(props)) {
-    const oldLayerData = state.layerData[idx];
-    const {layerData, layer} = calculateLayerData(newLayer, state, oldLayerData);
-    return updateStateWithLayerAndData(state, {layerData, layer, idx});
+  let nextState = state;
+
+  // Exclusive bitmap editing: when editBounds is turned on for one bitmap layer,
+  // turn it off for all other bitmap layers
+  if (
+    newLayer.type === 'bitmap' &&
+    action.newVisConfig.editBounds === true
+  ) {
+    nextState = {
+      ...nextState,
+      layers: nextState.layers.map((l, i) => {
+        if (i !== idx && l.type === 'bitmap' && l.config.visConfig.editBounds) {
+          return l.updateLayerConfig({
+            visConfig: {...l.config.visConfig, editBounds: false}
+          });
+        }
+        return l;
+      })
+    };
   }
 
-  return updateStateWithLayerAndData(state, {layer: newLayer, idx});
+  if (newLayer.shouldCalculateLayerData(props)) {
+    const oldLayerData = nextState.layerData[idx];
+    const {layerData, layer} = calculateLayerData(newLayer, nextState, oldLayerData);
+    return updateStateWithLayerAndData(nextState, {layerData, layer, idx});
+  }
+
+  return updateStateWithLayerAndData(nextState, {layer: newLayer, idx});
 }
 
 /**
