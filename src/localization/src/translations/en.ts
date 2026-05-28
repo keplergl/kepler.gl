@@ -103,6 +103,7 @@ export default {
     service: 'Service',
     layer: 'Layer',
     appearance: 'Appearance',
+    bounds: 'Bounds',
     uniqueIdField: 'Unique ID Field',
     type: {
       point: 'point',
@@ -124,7 +125,8 @@ export default {
       vectortile: 'vector tile',
       rastertile: 'raster tile',
       wms: 'WMS',
-      tile3d: '3D tile'
+      tile3d: '3D tile',
+      bitmap: 'bitmap'
     },
     wms: {
       hover: 'Value:'
@@ -149,6 +151,11 @@ export default {
     billboardDescription: 'Orient geometry towards the camera',
     fadeTrail: 'Fade trail',
     opacity: 'Opacity',
+    showBounds: 'Show Bounds',
+    boundsWest: 'West',
+    boundsSouth: 'South',
+    boundsEast: 'East',
+    boundsNorth: 'North',
     pointSize: 'Point Size',
     coverage: 'Coverage',
     outline: 'Outline',
@@ -317,7 +324,8 @@ export default {
     vectorTile: 'Vector tile',
     rasterTile: 'Raster tile',
     wmsTile: 'WMS tile',
-    tile3d: '3D tile'
+    tile3d: '3D tile',
+    bitmap: 'Bitmap image'
   },
   tooltip: {
     hideLayer: 'Hide layer',

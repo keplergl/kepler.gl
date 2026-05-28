@@ -6,7 +6,8 @@ export enum DatasetType {
   VECTOR_TILE = 'vector-tile',
   RASTER_TILE = 'raster-tile',
   WMS_TILE = 'wms-tile',
-  TILE_3D = 'tile-3d'
+  TILE_3D = 'tile-3d',
+  BITMAP = 'bitmap'
 }
 
 export enum RemoteTileFormat {
@@ -122,4 +123,14 @@ export type Tile3DDatasetMetadata = {
   tile3dUrl: string;
   tile3dAccessToken?: string;
   tile3dProvider?: string;
+};
+
+export type BitmapBounds =
+  | [number, number, number, number]
+  | [[number, number], [number, number], [number, number], [number, number]];
+
+export type BitmapDatasetMetadata = {
+  imageUrl: string;
+  bounds: BitmapBounds;
+  isDataUri?: boolean;
 };

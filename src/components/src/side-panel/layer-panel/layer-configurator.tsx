@@ -1239,6 +1239,23 @@ export default function LayerConfiguratorFactory(
       );
     }
 
+    _renderBitmapLayerConfig({layer, visConfiguratorProps}) {
+      return (
+        <StyledLayerVisualConfigurator>
+          <LayerConfigGroup label={'layer.appearance'}>
+            <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
+            <VisConfigSwitch {...layer.visConfigSettings.showBounds} {...visConfiguratorProps} />
+          </LayerConfigGroup>
+          <LayerConfigGroup label={'layer.bounds'} collapsible>
+            <VisConfigSlider {...layer.visConfigSettings.boundsWest} {...visConfiguratorProps} />
+            <VisConfigSlider {...layer.visConfigSettings.boundsEast} {...visConfiguratorProps} />
+            <VisConfigSlider {...layer.visConfigSettings.boundsSouth} {...visConfiguratorProps} />
+            <VisConfigSlider {...layer.visConfigSettings.boundsNorth} {...visConfiguratorProps} />
+          </LayerConfigGroup>
+        </StyledLayerVisualConfigurator>
+      );
+    }
+
     _renderWmsLayerConfig({
       layer,
       visConfiguratorProps,

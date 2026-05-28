@@ -7,7 +7,13 @@ import JSONPretty from 'react-json-pretty';
 import {AutoSizer} from 'react-virtualized';
 import styled from 'styled-components';
 
-import {VectorTileIcon, RasterTileIcon, WMSLayerIcon, Tile3DLayerIcon} from '@kepler.gl/layers';
+import {
+  VectorTileIcon,
+  RasterTileIcon,
+  WMSLayerIcon,
+  Tile3DLayerIcon,
+  BitmapLayerIcon
+} from '@kepler.gl/layers';
 import {getError, getApplicationConfig} from '@kepler.gl/utils';
 
 import {MetaResponse} from './common';
@@ -18,6 +24,7 @@ import TilesetRasterForm from './tileset-raster-form';
 
 import TilesetWMSForm from './tileset-wms-form';
 import TilesetTile3DForm from './tileset-tile3d-form';
+import TilesetBitmapForm from './tileset-bitmap-form';
 
 const WIDTH_ICON = '70px';
 
@@ -34,7 +41,7 @@ const Container = styled.div`
 
 const TilesetTypeContainer = styled.div`
   display: grid;
-  grid-template-columns: repeat(5, ${WIDTH_ICON});
+  grid-template-columns: repeat(6, ${WIDTH_ICON});
   column-gap: 10px;
   margin-bottom: 20px;
 `;
@@ -103,6 +110,12 @@ const TILE_TYPES = [
     label: '3D Tile',
     Icon: Tile3DLayerIcon,
     Component: TilesetTile3DForm
+  },
+  {
+    id: 'bitmap',
+    label: 'Bitmap',
+    Icon: BitmapLayerIcon,
+    Component: TilesetBitmapForm
   }
 ];
 
