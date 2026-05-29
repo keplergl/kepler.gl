@@ -62,6 +62,7 @@ function DatasetLayerSectionFactory(
     const enableRasterTileLayer = getApplicationConfig().enableRasterTileLayer;
     const enableWMSLayer = getApplicationConfig().enableWMSLayer;
     const enableFlowLayer = getApplicationConfig().enableFlowLayer;
+    const enableBitmapLayer = getApplicationConfig().enableBitmapLayer;
 
     const filteredLayerClasses = useMemo(() => {
       let filteredClasses = layerClasses;
@@ -77,8 +78,12 @@ function DatasetLayerSectionFactory(
         const {flow: _flow, ...rest} = filteredClasses;
         filteredClasses = rest as LayerClassesType;
       }
+      if (!enableBitmapLayer) {
+        const {bitmap: _bitmap, ...rest} = filteredClasses;
+        filteredClasses = rest as LayerClassesType;
+      }
       return filteredClasses as LayerClassesType;
-    }, [enableRasterTileLayer, enableWMSLayer, enableFlowLayer, layerClasses]);
+    }, [enableRasterTileLayer, enableWMSLayer, enableFlowLayer, enableBitmapLayer, layerClasses]);
 
     return (
       <DatasetLayerSectionWrapper>

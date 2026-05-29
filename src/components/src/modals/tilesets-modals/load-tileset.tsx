@@ -159,6 +159,7 @@ function LoadTilesetTabFactory() {
     // temp patch to hide raster tile layer while in development
     const enableRasterTileLayer = getApplicationConfig().enableRasterTileLayer;
     const enableWMSLayer = getApplicationConfig().enableWMSLayer;
+    const enableBitmapLayer = getApplicationConfig().enableBitmapLayer;
 
     // Filter tile types based on application config
     const tileTypes = useMemo(() => {
@@ -169,10 +170,13 @@ function LoadTilesetTabFactory() {
         if (tileType.id === 'wms') {
           return enableWMSLayer;
         }
+        if (tileType.id === 'bitmap') {
+          return enableBitmapLayer;
+        }
         return true; // Include all other types by default
       });
       return types;
-    }, [enableRasterTileLayer, enableWMSLayer]);
+    }, [enableRasterTileLayer, enableWMSLayer, enableBitmapLayer]);
 
     const CurrentForm = tileTypes[typeIndex].Component;
 

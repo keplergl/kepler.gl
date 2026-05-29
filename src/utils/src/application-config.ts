@@ -86,6 +86,9 @@ export type KeplerApplicationConfig = {
   // Flow layer config
   enableFlowLayer?: boolean;
 
+  // Bitmap layer config
+  enableBitmapLayer?: boolean;
+
   /** Whether to show example URLs in tileset setup forms (vector tile, raster tile, WMS, 3D tile) */
   showInlineTilesetExamples?: boolean;
 
@@ -158,6 +161,9 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
 
   // Flow layer config
   enableFlowLayer: true,
+
+  // Bitmap layer config
+  enableBitmapLayer: true,
 
   showInlineTilesetExamples: true,
 

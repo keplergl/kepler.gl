@@ -320,7 +320,7 @@ export default class BitmapOverlayLayer extends Layer {
               [aW, aN]
             ]
           ],
-          getPath: (d: number[][]) => d,
+          getPath: (d: any) => d,
           getColor: [255, 255, 255, 200],
           getWidth: 2,
           widthUnits: 'pixels',
