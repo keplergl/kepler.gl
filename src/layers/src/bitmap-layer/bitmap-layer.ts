@@ -294,7 +294,14 @@ export default class BitmapOverlayLayer extends Layer {
         bounds: activeBounds,
         opacity: visConfig.opacity ?? 1,
         pickable: false,
-        visible
+        visible,
+        parameters: {
+          blend: true,
+          blendColorSrcFactor: 'one',
+          blendColorDstFactor: 'one-minus-src-alpha',
+          blendAlphaSrcFactor: 'one',
+          blendAlphaDstFactor: 'one-minus-src-alpha'
+        }
       })
     ];
 
