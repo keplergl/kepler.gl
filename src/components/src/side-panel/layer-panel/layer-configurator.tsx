@@ -171,7 +171,7 @@ const BitmapImageSourceSection: React.FC<BitmapImageSourceProps> = ({dataset, on
         (dataset.metadata as BitmapDatasetMetadata).imageUrl = imageUrl;
         (dataset.metadata as BitmapDatasetMetadata).isDataUri = isDataUri;
       }
-      // Force a layer re-render by bumping a timestamp in visConfig
+      // Force a layer re-render by bumping a no-op visConfig change
       onChange({_imageTs: Date.now()});
     },
     [dataset, onChange]
