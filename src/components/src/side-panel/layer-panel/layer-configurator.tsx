@@ -3,11 +3,11 @@
 
 /* eslint-disable complexity */
 import {FormattedMessage} from '@kepler.gl/localization';
-import React, {Component, Fragment} from 'react';
+import React, {Component, Fragment, useCallback, useRef, useState} from 'react';
 import styled from 'styled-components';
 
 import ItemSelector from '../../common/item-selector/item-selector';
-import {Input, PanelLabel, PanelLabelWrapper, SidePanelSection} from '../../common/styled-components';
+import {Input, InputLight, PanelLabel, PanelLabelWrapper, SidePanelSection} from '../../common/styled-components';
 
 import SourceDataSelectorFactory from '../common/source-data-selector';
 import AggrScaleSelectorFactory from './aggr-scale-selector';
@@ -36,7 +36,8 @@ import {ActionHandler, toggleModal} from '@kepler.gl/actions';
 import {
   AGGREGATION_TYPE_OPTIONS,
   LAYER_TYPES,
-  CUSTOM_SCENEGRAPH_MODEL_ID
+  CUSTOM_SCENEGRAPH_MODEL_ID,
+  BitmapDatasetMetadata
 } from '@kepler.gl/constants';
 import {AggregationLayer, Layer, LayerBaseConfig, VisualChannel, COLUMN_MODE_GEOJSON} from '@kepler.gl/layers';
 
@@ -99,7 +100,197 @@ const StyledLayerVisualConfigurator = styled.div.attrs({
   className: 'layer-panel__config__visualC-config'
 })`
   margin-top: 12px;
+
+  .bitmap-bounds-sliders .kg-range-slider__input {
+    width: 80px;
+  }
 `;
+
+const BitmapDropZone = styled.div<{$isDragging: boolean}>`
+  border: 2px dashed ${props => (props.$isDragging ? props.theme.activeColor : props.theme.borderColor)};
+  border-radius: 4px;
+  padding: 12px;
+  text-align: center;
+  cursor: pointer;
+  color: ${props => props.theme.textColorHl};
+  font-size: 11px;
+  transition: border-color 0.2s;
+  margin-top: 8px;
+
+  &:hover {
+    border-color: ${props => props.theme.activeColor};
+  }
+`;
+
+const BitmapDropZoneWrapper = styled.div`
+  position: relative;
+`;
+
+const BitmapClearButton = styled.button`
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  background: ${props => props.theme.panelBackground};
+  border: 2px solid ${props => props.theme.borderColor};
+  border-radius: 50%;
+  color: ${props => props.theme.textColorHl};
+  cursor: pointer;
+  font-size: 10px;
+  line-height: 1;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  z-index: 1;
+
+  &:hover {
+    border-color: ${props => props.theme.activeColor};
+  }
+`;
+
+const ACCEPTED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/tiff'];
+const MAX_IMAGE_SIZE = 10 * 1024 * 1024;
+
+type BitmapImageSourceProps = {
+  dataset: any;
+  onChange: (v: Record<string, any>) => void;
+};
+
+const BitmapImageSourceSection: React.FC<BitmapImageSourceProps> = ({dataset, onChange}) => {
+  const metadata = (dataset?.metadata || {}) as BitmapDatasetMetadata;
+  const [url, setUrl] = useState(metadata.isDataUri ? '' : metadata.imageUrl || '');
+  const [isDragging, setIsDragging] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const updateImage = useCallback(
+    (imageUrl: string, isDataUri: boolean) => {
+      if (dataset?.metadata) {
+        (dataset.metadata as BitmapDatasetMetadata).imageUrl = imageUrl;
+        (dataset.metadata as BitmapDatasetMetadata).isDataUri = isDataUri;
+      }
+      // Force a layer re-render by bumping a timestamp in visConfig
+      onChange({_imageTs: Date.now()});
+    },
+    [dataset, onChange]
+  );
+
+  const onUrlChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setUrl(e.target.value);
+      setError(null);
+    },
+    []
+  );
+
+  const onUrlBlur = useCallback(() => {
+    if (url) {
+      updateImage(url, false);
+    }
+  }, [url, updateImage]);
+
+  const handleFile = useCallback(
+    (file: File) => {
+      if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+        setError('Unsupported format. Use PNG, JPEG, GIF, WebP, or TIFF.');
+        return;
+      }
+      if (file.size > MAX_IMAGE_SIZE) {
+        setError('Image too large (max 10MB).');
+        return;
+      }
+      setError(null);
+      const reader = new FileReader();
+      reader.onload = () => {
+        const dataUri = reader.result as string;
+        setUrl('');
+        updateImage(dataUri, true);
+      };
+      reader.onerror = () => setError('Failed to read file.');
+      reader.readAsDataURL(file);
+    },
+    [updateImage]
+  );
+
+  const onDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      setIsDragging(false);
+      const files = e.dataTransfer?.files;
+      if (files && files.length > 0) handleFile(files[0]);
+    },
+    [handleFile]
+  );
+
+  const onDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  }, []);
+
+  const onDragLeave = useCallback(() => setIsDragging(false), []);
+
+  const onDropZoneClick = useCallback(() => fileInputRef.current?.click(), []);
+
+  const onFileInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const files = e.target.files;
+      if (files && files.length > 0) handleFile(files[0]);
+    },
+    [handleFile]
+  );
+
+  const isCurrentDataUri = metadata.isDataUri;
+
+  const onClearLocal = useCallback(() => {
+    if (dataset?.metadata) {
+      (dataset.metadata as BitmapDatasetMetadata).imageUrl = '';
+      (dataset.metadata as BitmapDatasetMetadata).isDataUri = false;
+    }
+    setUrl('');
+    setError(null);
+    onChange({_imageTs: Date.now()});
+  }, [dataset, onChange]);
+
+  return (
+    <div>
+      <PanelLabel>
+        <FormattedMessage id="layerVisConfigs.imageUrl" />
+      </PanelLabel>
+      <InputLight
+        type="text"
+        placeholder="Image URL (PNG, JPEG, etc.)"
+        value={url}
+        onChange={onUrlChange}
+        onBlur={onUrlBlur}
+        disabled={isCurrentDataUri}
+      />
+      <BitmapDropZoneWrapper>
+        {isCurrentDataUri && (
+          <BitmapClearButton onClick={onClearLocal} title="Clear image">✕</BitmapClearButton>
+        )}
+        <BitmapDropZone
+          $isDragging={isDragging}
+          onDrop={onDrop}
+          onDragOver={onDragOver}
+          onDragLeave={onDragLeave}
+          onClick={onDropZoneClick}
+        >
+          {isCurrentDataUri ? 'Local image loaded. Drop another to replace.' : 'Drop image here or click to select'}
+        </BitmapDropZone>
+      </BitmapDropZoneWrapper>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept={ACCEPTED_IMAGE_TYPES.join(',')}
+        style={{display: 'none'}}
+        onChange={onFileInputChange}
+      />
+      {error && <div style={{color: '#ff5a5a', fontSize: '11px', marginTop: '4px'}}>{error}</div>}
+    </div>
+  );
+};
 
 export const getLayerFields = (datasets: Datasets, layer: Layer) =>
   datasets[layer.config?.dataId || ''] ? datasets[layer.config.dataId].fields : [];
@@ -1234,6 +1425,32 @@ export default function LayerConfiguratorFactory(
             <LayerColorSelector {...layerConfiguratorProps} />
             <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
             <VisConfigSlider {...layer.visConfigSettings.pointSize} {...visConfiguratorProps} />
+          </LayerConfigGroup>
+        </StyledLayerVisualConfigurator>
+      );
+    }
+
+    _renderBitmapLayerConfig({layer, dataset, visConfiguratorProps}) {
+      return (
+        <StyledLayerVisualConfigurator>
+          <LayerConfigGroup label={'layer.imageSource'} collapsible>
+            <BitmapImageSourceSection
+              dataset={dataset}
+              onChange={visConfiguratorProps.onChange}
+            />
+          </LayerConfigGroup>
+          <LayerConfigGroup label={'layer.appearance'}>
+            <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
+          </LayerConfigGroup>
+          <LayerConfigGroup label={'layer.bounds'} collapsible>
+            <VisConfigSwitch {...layer.visConfigSettings.editBounds} {...visConfiguratorProps} />
+            <div className="bitmap-bounds-sliders">
+              <VisConfigSlider {...layer.visConfigSettings.boundsWest} {...visConfiguratorProps} />
+              <VisConfigSlider {...layer.visConfigSettings.boundsEast} {...visConfiguratorProps} />
+              <VisConfigSlider {...layer.visConfigSettings.boundsSouth} {...visConfiguratorProps} />
+              <VisConfigSlider {...layer.visConfigSettings.boundsNorth} {...visConfiguratorProps} />
+            </div>
+            <VisConfigSwitch {...layer.visConfigSettings.showBounds} {...visConfiguratorProps} />
           </LayerConfigGroup>
         </StyledLayerVisualConfigurator>
       );

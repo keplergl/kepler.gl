@@ -60,6 +60,10 @@ export {
 import {default as Tile3DLayer} from './tile3d-layer/tile3d-layer';
 export {default as Tile3DLayer} from './tile3d-layer/tile3d-layer';
 export {default as Tile3DLayerIcon} from './tile3d-layer/tile3d-layer-icon';
+
+import {default as BitmapOverlayLayer} from './bitmap-layer/bitmap-layer';
+export {default as BitmapOverlayLayer} from './bitmap-layer/bitmap-layer';
+export {default as BitmapLayerIcon} from './bitmap-layer/bitmap-layer-icon';
 export {
   CATEGORICAL_COLORMAP_ID,
   DATA_SOURCE_COLOR_DEFAULTS,
@@ -104,7 +108,8 @@ export const KeplerGlLayers = {
   VectorTileLayer,
   RasterTileLayer,
   WMSLayer,
-  Tile3DLayer
+  Tile3DLayer,
+  BitmapOverlayLayer
 };
 
 export type LayerClassesType = typeof LayerClasses;
@@ -126,7 +131,8 @@ export const LayerClasses = {
   [LAYER_TYPES['vectorTile']]: VectorTileLayer,
   [LAYER_TYPES['rasterTile']]: RasterTileLayer,
   [LAYER_TYPES.wms]: WMSLayer,
-  [LAYER_TYPES.tile3d]: Tile3DLayer
+  [LAYER_TYPES.tile3d]: Tile3DLayer,
+  [LAYER_TYPES.bitmap]: BitmapOverlayLayer
 };
 
 export * from './mapbox-utils';

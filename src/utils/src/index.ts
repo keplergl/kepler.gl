@@ -193,3 +193,6 @@ export {isAppleDevice} from './browser-utils';
 export {default as quickInsertionSort} from './quick-insertion-sort';
 
 export type {KeplerTableModel} from './types';
+
+export {valueToPosition, positionToValue, createSliderScale} from './slider-scale-utils';
+export type {SliderScaleConfig} from './slider-scale-utils';
