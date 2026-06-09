@@ -1,0 +1,13 @@
+interface:
+  display_name: "kepler.gl Map"
+  short_description: "Create interactive map visualizations with kepler.gl"
+  icon_small: "./assets/icon-small.svg"
+  icon_large: "./assets/icon-large.svg"
+  brand_color: "#1FBAD6"
+  default_prompt: "Create an interactive map visualization"
+
+policy:
+  allow_implicit_invocation: true
+
+dependencies:
+  tools: []
