@@ -82,8 +82,9 @@ class MapboxLayerGL extends Layer {
     return Array.isArray(filter) && filter.length;
   }
 
-  getDataUpdateTriggers({filteredIndex, gpuFilter, id}: KeplerTable): any {
+  getDataUpdateTriggers({filteredIndex, filteredIndexByLayer, gpuFilter, id}: KeplerTable): any {
     const {columns} = this.config;
+    const layerFilteredIndex = filteredIndexByLayer?.[this.id] ?? filteredIndex;
 
     const visualChannelFields = Object.values(this.visualChannels).reduce(
       (accu, v) => ({
@@ -97,7 +98,7 @@ class MapboxLayerGL extends Layer {
       getData: {
         datasetId: id,
         columns,
-        filteredIndex,
+        filteredIndex: layerFilteredIndex,
         ...visualChannelFields,
         ...gpuFilter.filterValueUpdateTriggers
       },

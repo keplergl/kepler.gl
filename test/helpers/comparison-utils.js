@@ -325,7 +325,20 @@ export function cmpColumns(t, expectedColumns, actualColumns, layerName) {
 
 export function cmpDataset(t, expectedDataset, actualDataset, opt = {}) {
   assertDatasetIsTable(t, actualDataset);
-  cmpObjectKeys(t, expectedDataset, actualDataset, `dataset:${expectedDataset.id}`);
+  // filteredIndexByLayer is an internal optimization property, skip in key comparison if not in expected
+  const actualKeysForComparison = Object.keys(actualDataset).filter(
+    key => key !== 'filteredIndexByLayer' || key in expectedDataset
+  );
+  const expectedKeysForComparison = Object.keys(expectedDataset);
+  t.deepEqual(
+    actualKeysForComparison
+      .filter(key => actualDataset[key] !== undefined)
+      .sort(),
+    expectedKeysForComparison
+      .filter(key => expectedDataset[key] !== undefined)
+      .sort(),
+    `dataset:${expectedDataset.id} should have same keys`
+  );
 
   // test everything except auto generated color
   Object.keys(actualDataset)
@@ -364,6 +377,15 @@ export function cmpDataset(t, expectedDataset, actualDataset, opt = {}) {
               `dataset.${expectedDataset.id}.${key}.${item} should contain correct filter`
             );
           });
+          break;
+        case 'filteredIndexByLayer':
+          if (key in expectedDataset) {
+            t.deepEqual(
+              actualDataset[key],
+              expectedDataset[key],
+              `dataset.${expectedDataset.id}.${key} should be correct`
+            );
+          }
           break;
         default:
           if (key !== 'color' || opt.color) {

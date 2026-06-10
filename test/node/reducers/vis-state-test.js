@@ -5026,7 +5026,7 @@ test('#visStateReducer -> POLYGON: Create polygon filter', t => {
 
   t.equal(newReducer.layerData[0].data.length, 2, 'Layer Point 1 should only show 2 points');
 
-  t.equal(newReducer.layerData[1].data.length, 2, 'Layer Point 2 should only show 2 points');
+  t.equal(newReducer.layerData[1].data.length, 4, 'Layer Point 2 should show all 4 points (not targeted by filter)');
 
   const filterFeature = newReducer.filters[0].value;
 
@@ -5040,9 +5040,9 @@ test('#visStateReducer -> POLYGON: Create polygon filter', t => {
 
   t.equal(newReducer.filters[0].layerId.length, 2, 'Should have two values in filter.layerId');
 
-  t.equal(newReducer.layerData[0].data.length, 0, 'Layer Point 1 should show 0 points');
+  t.equal(newReducer.layerData[0].data.length, 2, 'Layer Point 1 should show 2 points (filtered by its own position)');
 
-  t.equal(newReducer.layerData[1].data.length, 0, 'Layer Point 2 show show 0 points');
+  t.equal(newReducer.layerData[1].data.length, 0, 'Layer Point 2 should show 0 points (end positions are outside polygon)');
 
   // Adding a new dataset - creates extra 4 layers
   newReducer = applyActions(reducer, newReducer, [
@@ -5079,15 +5079,15 @@ test('#visStateReducer -> POLYGON: Create polygon filter', t => {
   t.equal(
     newReducer.layerData[0].data.length,
     2,
-    'Layer Point 1 show 2 points because we removed layer 2'
+    'Layer Point 1 show 2 points because it is still filtered'
   );
 
   t.equal(newReducer.layerData[4].data.length, 2, 'Layer Point 5 should 2 points because filtered');
 
   t.equal(
-    newReducer.layerData[2].data.length,
-    2,
-    'Layer Point 2 should still show 2 filters because layer 1 is still filtered'
+    newReducer.layerData[1].data.length,
+    4,
+    'Layer Point 2 should show full data because it was removed from filter'
   );
 
   t.end();
@@ -5250,8 +5250,12 @@ test('#visStateReducer -> POLYGON: Toggle filter feature', t => {
   );
   t.deepEqual(
     newReducer.datasets.puppy.filteredIndex,
-    [0, 2],
-    'The polygon filter should be applied'
+    [0, 1, 2, 3],
+    'The dataset filteredIndex should not be affected by polygon filters'
+  );
+  t.ok(
+    newReducer.datasets.puppy.filteredIndexByLayer[newReducer.layers[0].id],
+    'Should have per-layer polygon filtered index'
   );
 
   newReducer = reducer(newReducer, VisStateActions.toggleFilterFeature(0));
@@ -5412,9 +5416,9 @@ test('#visStateReducer -> POLYGON: setPolygonFilterLayer: H3', t => {
 
   const expectedFilteredIndex = [1, 3, 5, 8];
   t.deepEqual(
-    newState.datasets['190vdll3di'].filteredIndex,
+    newState.datasets['190vdll3di'].filteredIndexByLayer[newState.layers[0].id],
     expectedFilteredIndex,
-    'should filter data based on h3 layer'
+    'should have per-layer polygon filtered index for h3 layer'
   );
   t.deepEqual(
     newState.layerData[0].data.map(d => d.index),
