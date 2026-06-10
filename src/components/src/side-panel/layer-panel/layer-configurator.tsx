@@ -171,7 +171,7 @@ const BitmapImageSourceSection: React.FC<BitmapImageSourceProps> = ({dataset, on
         (dataset.metadata as BitmapDatasetMetadata).imageUrl = imageUrl;
         (dataset.metadata as BitmapDatasetMetadata).isDataUri = isDataUri;
       }
-      // Force a layer re-render by bumping a timestamp in visConfig
+      // Force a layer re-render by bumping a no-op visConfig change
       onChange({_imageTs: Date.now()});
     },
     [dataset, onChange]
@@ -289,6 +289,75 @@ const BitmapImageSourceSection: React.FC<BitmapImageSourceProps> = ({dataset, on
       />
       {error && <div style={{color: '#ff5a5a', fontSize: '11px', marginTop: '4px'}}>{error}</div>}
     </div>
+  );
+};
+
+const AlignModeContainer = styled.div`
+  padding: 8px 0;
+  font-size: 11px;
+  color: ${props => props.theme.textColor};
+`;
+
+const AlignModeStatus = styled.div<{$highlight?: boolean}>`
+  padding: 6px 8px;
+  border-radius: 4px;
+  background: ${props => props.$highlight ? props.theme.panelBackgroundHover : 'transparent'};
+  margin-bottom: 6px;
+  line-height: 1.4;
+`;
+
+const AlignModeResetButton = styled.button`
+  background: ${props => props.theme.secondaryBtnBgd};
+  color: ${props => props.theme.secondaryBtnColor};
+  border: 1px solid ${props => props.theme.secondaryBtnBgd};
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 11px;
+  cursor: pointer;
+  margin-top: 4px;
+  &:hover {
+    background: ${props => props.theme.secondaryBtnBgdHover};
+  }
+`;
+
+const AlignPointCount = styled.span`
+  font-weight: 600;
+  color: ${props => props.theme.activeColor};
+`;
+
+type BitmapAlignModeUIProps = {
+  layer: any;
+  onChange: (v: Record<string, any>) => void;
+};
+
+const BitmapAlignModeUI: React.FC<BitmapAlignModeUIProps> = ({layer, onChange}) => {
+  const pointCount = layer.alignControlPoints?.length || 0;
+  const waitingForMap = layer.alignWaitingForMap;
+
+  const onReset = useCallback(() => {
+    layer.resetAlignControlPoints();
+    onChange({_alignTs: Date.now()});
+  }, [layer, onChange]);
+
+  return (
+    <AlignModeContainer>
+      {waitingForMap ? (
+        <AlignModeStatus $highlight>
+          Now click the <strong>same point on the map</strong> (where it should be).
+        </AlignModeStatus>
+      ) : (
+        <AlignModeStatus $highlight>
+          Click a <strong>recognizable point on the image</strong>.
+        </AlignModeStatus>
+      )}
+      <div style={{marginTop: '4px'}}>
+        <AlignPointCount>{pointCount}</AlignPointCount> point pair{pointCount !== 1 ? 's' : ''} set
+        {pointCount >= 2 && ' — bounds auto-updated'}
+      </div>
+      {pointCount > 0 && (
+        <AlignModeResetButton onClick={onReset}>Reset Points</AlignModeResetButton>
+      )}
+    </AlignModeContainer>
   );
 };
 
@@ -1451,6 +1520,12 @@ export default function LayerConfiguratorFactory(
               <VisConfigSlider {...layer.visConfigSettings.boundsNorth} {...visConfiguratorProps} />
             </div>
             <VisConfigSwitch {...layer.visConfigSettings.showBounds} {...visConfiguratorProps} />
+          </LayerConfigGroup>
+          <LayerConfigGroup label={'layer.alignment'} collapsible>
+            <VisConfigSwitch {...layer.visConfigSettings.alignMode} {...visConfiguratorProps} />
+            {layer.config.visConfig.alignMode && (
+              <BitmapAlignModeUI layer={layer} onChange={visConfiguratorProps.onChange} />
+            )}
           </LayerConfigGroup>
         </StyledLayerVisualConfigurator>
       );
