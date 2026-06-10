@@ -243,7 +243,7 @@ type AttributionProps = {
   baseMapLibraryConfig: BaseMapLibraryConfig;
 };
 
-export const Attribution: React.FC<AttributionProps> = ({
+export const Attribution: React.FC<AttributionProps> = React.memo(({
   showBaseMapLibLogo = true,
   showOsmBasemapAttribution = false,
   datasetAttributions,
@@ -311,7 +311,7 @@ export const Attribution: React.FC<AttributionProps> = ({
   ]);
 
   return memoizedComponents;
-};
+});
 
 const StyledAttributionLogoContainer = styled.div<{$left: number}>`
   position: absolute;
@@ -339,7 +339,7 @@ type AttributionLogosProps = {
 
 const LOGO_LEFT_ADJUSTMENT = 3;
 
-export const AttributionLogos: React.FC<AttributionLogosProps> = ({
+export const AttributionLogos: React.FC<AttributionLogosProps> = React.memo(({
   logos,
   activeSidePanel,
   sidePanelWidth
@@ -365,7 +365,7 @@ export const AttributionLogos: React.FC<AttributionLogosProps> = ({
       ))}
     </StyledAttributionLogoContainer>
   );
-};
+});
 
 MapContainerFactory.deps = [MapPopoverFactory, MapControlFactory, EditorFactory];
 
