@@ -49,7 +49,7 @@
     "babel-loader": "^8.0.0",
     "babel-plugin-module-resolver": "^3.0.0",
     "css-loader": "^6.8.1",
-    "esbuild": "^0.23.1",
+    "esbuild": "^0.28.1",
     "esbuild-plugin-replace": "^1.4.0",
     "eslint": "^5.16.0",
     "eslint-config-prettier": "^6.3.0",
