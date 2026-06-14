@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import WebMercatorViewport from 'viewport-mercator-project';
+import {_GlobeViewport as GlobeViewport} from '@deck.gl/core';
 
 import {TRANSITION_DURATION} from '@kepler.gl/constants';
 import {SplitMapLayers, SplitMap, Viewport, MapState} from '@kepler.gl/types';
@@ -62,13 +63,14 @@ export const getMapLayersFromSplitMaps = (
  * @returns A viewport.
  */
 export const getViewportFromMapState = (mapState: MapState): Viewport => {
-  // Make sure we capture error
-  // e.g. Error message: "Pixel project matrix not invertible"
   let viewPort;
   try {
-    viewPort = new WebMercatorViewport(mapState);
+    if (mapState.globe?.enabled) {
+      viewPort = new GlobeViewport(mapState);
+    } else {
+      viewPort = new WebMercatorViewport(mapState);
+    }
   } catch {
-    // catch error and fallback to default map state
     viewPort = new WebMercatorViewport(validateViewPort(mapState));
   }
 

@@ -114,6 +114,34 @@ export const toggleSplitMapViewport: (payload: {
   (syncInfo: ToggleSplitMapViewportUpdaterAction['payload']) => ({payload: syncInfo})
 );
 
+export type SetMapViewModeUpdaterAction = {payload: {mapViewMode: string}};
+/**
+ * Set map view mode (2D, 3D, or Globe)
+ * @memberof mapStateActions
+ * @param mapViewMode - One of MapViewMode values
+ * @public
+ */
+export const setMapViewMode: (
+  mapViewMode: string
+) => Merge<SetMapViewModeUpdaterAction, {type: typeof ActionTypes.SET_MAP_VIEW_MODE}> = createAction(
+  ActionTypes.SET_MAP_VIEW_MODE,
+  (mapViewMode: string) => ({payload: {mapViewMode}})
+);
+
+export type GlobeConfigChangeUpdaterAction = {payload: Partial<Record<string, any>>};
+/**
+ * Update globe configuration
+ * @memberof mapStateActions
+ * @param config - Partial globe config to merge
+ * @public
+ */
+export const globeConfigChange: (
+  config: Partial<Record<string, any>>
+) => Merge<GlobeConfigChangeUpdaterAction, {type: typeof ActionTypes.GLOBE_CONFIG_CHANGE}> =
+  createAction(ActionTypes.GLOBE_CONFIG_CHANGE, (config: Partial<Record<string, any>>) => ({
+    payload: config
+  }));
+
 /**
  * This declaration is needed to group actions in docs
  */

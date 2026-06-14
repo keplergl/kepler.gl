@@ -1344,6 +1344,71 @@ export const MAP_CONTROLS = keyMirror({
   aiAssistant: null
 });
 
+export enum MapViewMode {
+  MODE_2D = 'MODE_2D',
+  MODE_3D = 'MODE_3D',
+  MODE_GLOBE = 'MODE_GLOBE'
+}
+
+export type GlobeConfig = {
+  atmosphere: boolean;
+  azimuth: boolean;
+  azimuthAngle: number;
+  terminator: boolean;
+  terminatorOpacity: number;
+  basemap: boolean;
+  labels: boolean;
+  labelsColor: [number, number, number];
+  adminLines: boolean;
+  adminLinesColor: [number, number, number];
+  water: boolean;
+  waterColor: [number, number, number];
+  surfaceColor: [number, number, number];
+  surface: boolean;
+};
+
+export type Globe = {
+  enabled: boolean;
+  config: GlobeConfig;
+};
+
+export const DEFAULT_GLOBE_CONFIG: GlobeConfig = {
+  atmosphere: true,
+  azimuth: false,
+  azimuthAngle: 45,
+  terminator: true,
+  terminatorOpacity: 0.35,
+  basemap: true,
+  labels: false,
+  labelsColor: [114.75, 114.75, 114.75],
+  adminLines: true,
+  adminLinesColor: [40, 63, 93],
+  water: true,
+  waterColor: [17, 35, 48],
+  surface: true,
+  surfaceColor: [9, 16, 29]
+};
+
+export const GLOBE_SUPPORTED_LAYERS: Record<string, boolean> = {
+  point: true,
+  arc: true,
+  grid: true,
+  hexagon: true,
+  geojson: true,
+  cluster: true,
+  icon: true,
+  hexagonId: true,
+  '3D': true,
+  vectorTile: true,
+  hexTile: true,
+  line: true,
+  trip: true,
+  rasterTile: true,
+  heatmap: false,
+  s2: false,
+  tile3d: false
+};
+
 /**
  * A multiplier for screen-space width/scale for Arc, Line, Icon and Text layers.
  * Required in order to maintain the same appearance after upgrading to deck.gl v8.5.

@@ -39,7 +39,8 @@ import {VisState} from '@kepler.gl/schemas';
 import {Layer} from '@kepler.gl/layers';
 import {isPlainObject} from '@kepler.gl/utils';
 import {findMapBounds} from './data-utils';
-import {BASE_MAP_COLOR_MODES, OVERLAY_BLENDINGS} from '@kepler.gl/constants';
+import {BASE_MAP_COLOR_MODES, OVERLAY_BLENDINGS, NO_MAP_ID} from '@kepler.gl/constants';
+import {getBasemapColorsForStyle, DEFAULT_BASEMAP_COLOR} from '@kepler.gl/deckgl-layers';
 
 export type KeplerGlState = {
   visState: VisState;
@@ -300,7 +301,7 @@ export const combinedMapStyleChangeUpdater = (
   const getColorMode = key => mapStyle.mapStyles[key]?.colorMode;
   const prevColorMode = getColorMode(mapStyle.styleType);
   const nextColorMode = getColorMode(payload.styleType);
-  let {visState} = state;
+  let {visState, mapState} = state;
   if (nextColorMode !== prevColorMode) {
     switch (nextColorMode) {
       case BASE_MAP_COLOR_MODES.DARK:
@@ -319,9 +320,58 @@ export const combinedMapStyleChangeUpdater = (
       // do nothing
     }
   }
+
+  // Update globe config colors when style changes and globe is enabled
+  if (mapState.globe?.enabled) {
+    const nextStyleObj = mapStyle.mapStyles[payload.styleType];
+    const nextGlobeConfig = {...mapState.globe.config};
+
+    if (payload.styleType === NO_MAP_ID) {
+      nextGlobeConfig.basemap = false;
+      nextGlobeConfig.labels = false;
+      nextGlobeConfig.adminLines = false;
+      nextGlobeConfig.water = false;
+      nextGlobeConfig.surfaceColor = DEFAULT_BASEMAP_COLOR.backgroundFillColor;
+      nextGlobeConfig.waterColor = DEFAULT_BASEMAP_COLOR.basemapWaterFillColor;
+      nextGlobeConfig.adminLinesColor = DEFAULT_BASEMAP_COLOR.basemapAdminLineColor;
+    } else {
+      if (mapStyle.styleType === NO_MAP_ID) {
+        // Switching from "No Basemap" to a basemap - restore defaults
+        nextGlobeConfig.basemap = true;
+        nextGlobeConfig.labels = true;
+        nextGlobeConfig.adminLines = true;
+        nextGlobeConfig.water = true;
+      }
+      if (nextStyleObj) {
+        const basemapColors = getBasemapColorsForStyle(payload.styleType, {
+          style: nextStyleObj.style,
+          layerGroups: nextStyleObj.layerGroups
+        });
+        nextGlobeConfig.surfaceColor = basemapColors.backgroundFillColor;
+        nextGlobeConfig.waterColor = basemapColors.basemapWaterFillColor;
+        nextGlobeConfig.adminLinesColor = basemapColors.basemapAdminLineColor;
+      } else {
+        // Style object not yet loaded - use known presets by style type
+        const basemapColors = getBasemapColorsForStyle(payload.styleType);
+        nextGlobeConfig.surfaceColor = basemapColors.backgroundFillColor;
+        nextGlobeConfig.waterColor = basemapColors.basemapWaterFillColor;
+        nextGlobeConfig.adminLinesColor = basemapColors.basemapAdminLineColor;
+      }
+    }
+
+    mapState = {
+      ...mapState,
+      globe: {
+        ...mapState.globe,
+        config: nextGlobeConfig
+      }
+    };
+  }
+
   return {
     ...state,
     visState,
+    mapState,
     mapStyle: mapStyleChangeUpdater(mapStyle, {payload: {...payload}})
   };
 };
