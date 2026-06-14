@@ -114,6 +114,46 @@ export const toggleSplitMapViewport: (payload: {
   (syncInfo: ToggleSplitMapViewportUpdaterAction['payload']) => ({payload: syncInfo})
 );
 
+export type SetMapSplitModeUpdaterAction = {
+  payload: {
+    mapSplitMode: string;
+  };
+};
+/**
+ * Set map split mode (single, dual, or swipe)
+ * @memberof mapStateActions
+ * @param {Object} payload
+ * @param {string} payload.mapSplitMode The split mode to set
+ * @public
+ */
+export const setMapSplitMode: (payload: {
+  mapSplitMode: string;
+}) => Merge<SetMapSplitModeUpdaterAction, {type: typeof ActionTypes.SET_MAP_SPLIT_MODE}> =
+  createAction(ActionTypes.SET_MAP_SPLIT_MODE, (payload: {mapSplitMode: string}) => ({payload}));
+
+export type SetSwipeComparePercentageUpdaterAction = {
+  payload: {
+    percentage: number;
+  };
+};
+/**
+ * Set the swipe compare divider position
+ * @memberof mapStateActions
+ * @param {Object} payload
+ * @param {number} payload.percentage The percentage position (0-100)
+ * @public
+ */
+export const setSwipeComparePercentage: (payload: {
+  percentage: number;
+}) => Merge<
+  SetSwipeComparePercentageUpdaterAction,
+  {type: typeof ActionTypes.SET_SWIPE_COMPARE_PERCENTAGE}
+> =
+  createAction(
+    ActionTypes.SET_SWIPE_COMPARE_PERCENTAGE,
+    (payload: {percentage: number}) => ({payload})
+  );
+
 /**
  * This declaration is needed to group actions in docs
  */

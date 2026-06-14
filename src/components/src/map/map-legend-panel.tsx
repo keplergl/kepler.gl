@@ -329,6 +329,10 @@ export type MapLegendPanelProps = {
   isSidePanelShown: boolean;
   activeSidePanel: string | null;
   setMapControlSettings: any;
+  isSplit?: boolean;
+  splitMaps?: {layers: {[key: string]: boolean}}[];
+  onToggleLayerForMap?: (mapIndex: number, layerId: string) => void;
+  mapIndex?: number;
 };
 
 type MapLegendPanelComponents = {
@@ -360,10 +364,15 @@ const MapLegendPanelComponent = ({
   setMapControlSettings,
   isViewportUnsyncAllowed = true,
   className,
+  isSplit,
+  splitMaps,
+  onToggleLayerForMap,
+  mapIndex,
   MapControlTooltip,
   MapControlPanel,
   MapLegend
 }: MapLegendPanelProps & MapLegendPanelComponents) => {
+  const isSwipeMode = mapState?.mapSplitMode === 'SWIPE_COMPARE';
   const isSidePanelShown = Boolean(activeSidePanel);
   const settings = mapControls?.mapLegend?.settings;
 
@@ -385,6 +394,13 @@ const MapLegendPanelComponent = ({
     },
     [onToggleMapControl]
   );
+
+  if (isSplit && !isSwipeMode && mapIndex !== 0) {
+    return null;
+  }
+  if (isSwipeMode && mapIndex !== 1) {
+    return null;
+  }
 
   if (!mapLegend.show) {
     return null;
@@ -409,6 +425,9 @@ const MapLegendPanelComponent = ({
         isExport={isExport}
         onLayerVisConfigChange={onLayerVisConfigChange}
         onToggleLayerVisibility={onToggleLayerVisibility}
+        isSplit={isSplit}
+        splitMaps={splitMaps}
+        onMapToggleLayer={onToggleLayerForMap}
       />
     </MapControlPanel>
   ) : null;

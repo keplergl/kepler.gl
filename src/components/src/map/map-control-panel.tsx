@@ -9,6 +9,7 @@ import {Close, Pin} from '../common/icons';
 import Switch from '../common/switch';
 import {MapState} from '@kepler.gl/types';
 import {ActionHandler, toggleSplitMapViewport} from '@kepler.gl/actions';
+import {MapSplitMode} from '@kepler.gl/constants';
 import classNames from 'classnames';
 
 const StyledMapControlPanel = styled.div`
@@ -150,7 +151,7 @@ function MapControlPanelFactory() {
           }}
           className={classNames('map-control-panel', className)}
         >
-          {mapState?.isSplit && isViewportUnsyncAllowed ? (
+          {mapState?.isSplit && isViewportUnsyncAllowed && mapState?.mapSplitMode !== MapSplitMode.SWIPE_COMPARE ? (
             <StyledMapControlPanelHeaderSplitViewportsTools>
               <StyledSBCenterFlexbox style={{paddingBottom: '6px'}}>
                 <FormattedMessage id="Unlock Viewport" />

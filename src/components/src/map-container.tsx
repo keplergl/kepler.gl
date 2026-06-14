@@ -1376,6 +1376,8 @@ export default function MapContainerFactory(
             mapHeight={mapState.height}
             setMapControlSettings={uiStateActions.setMapControlSettings}
             activeSidePanel={activeSidePanel}
+            splitMaps={this.props.visState.splitMaps}
+            onToggleLayerForMap={visStateActions.toggleLayerForMap}
           />
           {isSplitSelector(this.props) && <Droppable containerId={containerId} />}
 

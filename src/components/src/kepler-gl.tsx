@@ -687,7 +687,11 @@ function KeplerGlFactory(
                       <NotificationPanel {...notificationPanelFields} />
                       <DndContext visState={visState}>
                         {!uiState.readOnly && !readOnly && <SidePanel {...sideFields} />}
-                        <MapsLayout className="maps" mapState={this.props.mapState}>
+                        <MapsLayout
+                          className="maps"
+                          mapState={this.props.mapState}
+                          onSetSwipeComparePercentage={this.props.mapStateActions.setSwipeComparePercentage}
+                        >
                           {mapContainers}
                         </MapsLayout>
                       </DndContext>

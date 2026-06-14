@@ -38,6 +38,10 @@ export type MapState = {
   isZoomLocked: boolean;
   /**  An array of either 0 or 2 Viewport objects (index 0 for left map; index 1 for right map) */
   splitMapViewports: Viewport[];
+  /** The current split map mode (single, dual, swipe) */
+  mapSplitMode: string;
+  /** Swipe compare divider position as a percentage (0-100) */
+  swipeComparePercentage: number;
 };
 
 export type Bounds = [number, number, number, number];

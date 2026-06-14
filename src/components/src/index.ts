@@ -57,6 +57,7 @@ export {
 export {default as LayerAnimationControllerFactory} from './layer-animation-controller';
 export {Attribution, default as MapContainerFactory} from './map-container';
 export {default as MapsLayoutFactory} from './maps-layout';
+export {default as LayoutSplitter, LayoutSplitterMode} from './common/layout-splitter';
 export {default as ModalContainerFactory} from './modal-container';
 export {default as PlotContainerFactory} from './plot-container';
 export {default as SidePanelFactory} from './side-panel';
@@ -151,7 +152,6 @@ export {default as MapStyleSelectorFactory} from './side-panel/map-style-panel/m
 // map factories
 export {default as CoordinateInfoFactory} from './map/coordinate-info';
 export {default as LayerHoverInfoFactory} from './map/layer-hover-info';
-export {default as LayerSelectorPanelFactory} from './map/layer-selector-panel';
 export {default as LazyTippy} from './map/lazy-tippy';
 export {default as LocalePanelFactory} from './map/locale-panel';
 export {default as MapControlFactory} from './map/map-control';
