@@ -10,12 +10,13 @@ import {Layer, LayerClassesType} from '@kepler.gl/layers';
 import {UIStateActions, ActionHandler, VisStateActions, MapStateActions} from '@kepler.gl/actions';
 import {KeplerTable, Datasets} from '@kepler.gl/table';
 import {getApplicationConfig} from '@kepler.gl/utils';
+import {LayerOrder} from '@kepler.gl/types';
 
 type DatasetLayerSectionProps = {
   datasets: Datasets;
   dataset: KeplerTable;
   layers: Layer[];
-  layerOrder: string[];
+  layerOrder: LayerOrder;
   layerClasses: LayerClassesType;
   showDeleteDataset: boolean;
   showDatasetTable: ActionHandler<typeof VisStateActions.showDatasetTable>;

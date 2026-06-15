@@ -9,6 +9,8 @@ export const DND_EMPTY_MODIFIERS: Modifiers = [];
 export const SORTABLE_SIDE_PANEL_TYPE = 'root';
 export const DROPPABLE_MAP_CONTAINER_TYPE = 'map';
 export const SORTABLE_LAYER_TYPE = 'layer';
+export const SORTABLE_LAYER_GROUP_TYPE = 'layerGroup';
+export const SORTABLE_LAYER_GROUP_DROPPABLE_TYPE = 'droppable-layer-group';
 
 export const SORTABLE_EFFECT_PANEL_TYPE = 'root';
 export const SORTABLE_EFFECT_TYPE = 'effect';

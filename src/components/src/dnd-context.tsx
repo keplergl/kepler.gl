@@ -7,8 +7,11 @@ import {DndContext as DndKitContext, DragOverlay} from '@dnd-kit/core';
 
 import Console from 'global/console';
 import {VisState} from '@kepler.gl/schemas';
+import {LayerOrderGroup} from '@kepler.gl/types';
+import {Layer} from '@kepler.gl/layers';
 
 import LayerPanelHeaderFactory from './side-panel/layer-panel/layer-panel-header';
+import LayerGroupHeaderFactory from './side-panel/layer-panel/layer-group-header';
 import useDndLayers from './hooks/use-dnd-layers';
 import useDndEffects from './hooks/use-dnd-effects';
 
@@ -16,6 +19,7 @@ import {
   DND_MODIFIERS,
   DND_EMPTY_MODIFIERS,
   SORTABLE_LAYER_TYPE,
+  SORTABLE_LAYER_GROUP_TYPE,
   SORTABLE_EFFECT_TYPE
 } from './common/dnd-layer-items';
 
@@ -34,10 +38,11 @@ export const DragItem = styled.div`
 
 const nop = () => undefined;
 
-DndContextFactory.deps = [LayerPanelHeaderFactory];
+DndContextFactory.deps = [LayerPanelHeaderFactory, LayerGroupHeaderFactory];
 
 function DndContextFactory(
-  LayerPanelHeader: ReturnType<typeof LayerPanelHeaderFactory>
+  LayerPanelHeader: ReturnType<typeof LayerPanelHeaderFactory>,
+  LayerGroupHeader: ReturnType<typeof LayerGroupHeaderFactory>
 ): React.FC<DndContextProps> {
   const LayerPanelOverlay = ({layer, datasets}) => {
     const color =
@@ -70,7 +75,7 @@ function DndContextFactory(
     const {datasets, layerOrder, layers, effects, effectOrder, splitMaps} = visState;
 
     const {
-      activeLayer,
+      activeElement,
       onDragStart: onLayerDragStart,
       onDragEnd: onLayerDragEnd
     } = useDndLayers(layers, layerOrder);
@@ -82,11 +87,15 @@ function DndContextFactory(
     const isSplit = useMemo(() => splitMaps?.length > 1, [splitMaps]);
     const dndModifiers = useMemo(() => (isSplit ? DND_EMPTY_MODIFIERS : DND_MODIFIERS), [isSplit]);
 
+    const activeElementType = activeElement?.[0];
+    const activeElementObject = activeElement?.[1];
+
     const onDragStart = useCallback(
       event => {
         const activeType = event.active.data?.current?.type;
         switch (activeType) {
           case SORTABLE_LAYER_TYPE:
+          case SORTABLE_LAYER_GROUP_TYPE:
             onLayerDragStart(event);
             break;
           case SORTABLE_EFFECT_TYPE:
@@ -104,6 +113,7 @@ function DndContextFactory(
         const activeType = event.active.data?.current?.type;
         switch (activeType) {
           case SORTABLE_LAYER_TYPE:
+          case SORTABLE_LAYER_GROUP_TYPE:
             onLayerDragEnd(event);
             break;
           case SORTABLE_EFFECT_TYPE:
@@ -119,13 +129,18 @@ function DndContextFactory(
     return (
       <DndKitContext onDragStart={onDragStart} onDragEnd={onDragEnd} modifiers={dndModifiers}>
         {children}
-        {activeLayer ? (
-          <DragOverlay modifiers={dndModifiers} dropAnimation={null}>
+        <DragOverlay modifiers={dndModifiers} dropAnimation={null}>
+          {activeElementType === 'layer' && activeElementObject ? (
             <DragItem>
-              <LayerPanelOverlay layer={activeLayer} datasets={datasets} />
+              <LayerPanelOverlay layer={activeElementObject as Layer} datasets={datasets} />
             </DragItem>
-          </DragOverlay>
-        ) : null}
+          ) : null}
+          {activeElementType === 'layerGroup' && activeElementObject ? (
+            <DragItem>
+              <LayerGroupHeader layerGroup={activeElementObject as LayerOrderGroup} />
+            </DragItem>
+          ) : null}
+        </DragOverlay>
       </DndKitContext>
     );
   };

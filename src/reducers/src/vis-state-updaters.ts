@@ -77,7 +77,7 @@ import {
   isSideFilter,
   getApplicationConfig
 } from '@kepler.gl/utils';
-import {generateHashId, toArray} from '@kepler.gl/common-utils';
+import {generateHashId, toArray, arrayMove} from '@kepler.gl/common-utils';
 // Mergers
 import {
   ANIMATION_WINDOW,
@@ -158,7 +158,16 @@ import {
   calculateLayerData,
   findDefaultLayer,
   getLayerOrderFromLayers,
-  mergeLayerVisConfigForNewDatasets
+  mergeLayerVisConfigForNewDatasets,
+  getNewLayerGroup,
+  addLayerOrGroupToLayerOrder,
+  removeElementFromLayerOrder,
+  getLayerGroupFromLayerOrder,
+  findParentGroupForLayer,
+  getIndexFromLayerEntryId,
+  updateLayerGroupInLayerOrder,
+  getFlatLayerOrder,
+  replaceLayerEntryInLayerOrder
 } from './layer-utils';
 import {getPropValueToMerger, hasPropsToMerge} from './merger-handler';
 import {mergeDatasetsByOrder} from './vis-state-merger';
@@ -1021,9 +1030,7 @@ export function layerTypeChangeUpdater(
   // update layerOrder with new id
   newState = {
     ...newState,
-    layerOrder: newState.layerOrder.map(layerId =>
-      layerId === oldLayer.id ? newLayer.id : layerId
-    )
+    layerOrder: replaceLayerEntryInLayerOrder(newState.layerOrder, oldLayer.id, newLayer.id)
   };
 
   return newState;
@@ -1888,7 +1895,7 @@ export function removeLayerUpdater<T extends VisState>(
     ...state,
     layers: filterOutById(layerToRemove.id)(layers),
     layerData: removeElementAtIndex(idx)(layerData),
-    layerOrder: layerOrder.filter(layerId => layerId !== layerToRemove.id),
+    layerOrder: removeElementFromLayerOrder(layerOrder, layerToRemove.id),
     clicked: layerToRemove.isLayerHovered(clicked) ? undefined : clicked,
     hoverInfo: layerToRemove.isLayerHovered(hoverInfo) ? undefined : hoverInfo,
     splitMaps: removeLayerFromSplitMaps(state.splitMaps, layerToRemove)
@@ -1912,6 +1919,236 @@ export const reorderLayerUpdater = (
 });
 
 /**
+ * Add a new layer group
+ * @memberof visStateUpdaters
+ * @public
+ */
+export const addLayerGroupUpdater = (
+  state: VisState,
+  action: VisStateActions.AddLayerGroupUpdaterAction
+): VisState => {
+  const layerGroup = getNewLayerGroup(action);
+  let newLayerOrder = [...state.layerOrder];
+
+  if (action.layerOrder) {
+    action.layerOrder.forEach(layerId => {
+      newLayerOrder = removeElementFromLayerOrder(newLayerOrder, layerId as string);
+    });
+  }
+
+  return {
+    ...state,
+    layerOrder: addLayerOrGroupToLayerOrder(newLayerOrder, layerGroup)
+  };
+};
+
+/**
+ * Remove a layer group and all layers within it
+ * @memberof visStateUpdaters
+ * @public
+ */
+export const removeLayerGroupUpdater = (
+  state: VisState,
+  action: VisStateActions.RemoveLayerGroupUpdaterAction
+): VisState => {
+  const {id} = action;
+  const layerGroupToRemove = getLayerGroupFromLayerOrder(state.layerOrder, id);
+  if (!layerGroupToRemove) {
+    return state;
+  }
+
+  const layerIdsToRemove = getFlatLayerOrder(layerGroupToRemove.layerOrder);
+  let newState = {...state};
+
+  layerIdsToRemove.forEach(layerId => {
+    const idx = newState.layers.findIndex(l => l.id === layerId);
+    if (idx >= 0) {
+      newState = removeLayerUpdater(newState, {id: layerId});
+    }
+  });
+
+  const newLayerOrder = removeElementFromLayerOrder(newState.layerOrder, layerGroupToRemove);
+  return {
+    ...newState,
+    layerOrder: newLayerOrder
+  };
+};
+
+/**
+ * Update a layer group (label, visibility, layer membership)
+ * @memberof visStateUpdaters
+ * @public
+ */
+export const updateLayerGroupUpdater = (
+  state: VisState,
+  action: VisStateActions.UpdateLayerGroupUpdaterAction
+): VisState => {
+  const {id, options} = action;
+  const layerGroup = getLayerGroupFromLayerOrder(state.layerOrder, id);
+  if (!layerGroup) {
+    return state;
+  }
+
+  let newState = {...state};
+
+  if (options.layerOrder) {
+    newState.layerOrder = [...layerGroup.layerOrder, ...newState.layerOrder];
+    options.layerOrder.forEach(layerId => {
+      newState.layerOrder = removeElementFromLayerOrder(
+        newState.layerOrder,
+        layerId as string
+      );
+    });
+  }
+
+  const newLayerGroup = {
+    ...layerGroup,
+    ...options
+  };
+
+  if (newLayerGroup.isVisible !== layerGroup.isVisible) {
+    const layerIds = getFlatLayerOrder(newLayerGroup.layerOrder);
+    newState = newState.layers.reduce((acc, layer) => {
+      if (layerIds.includes(layer.id)) {
+        return layerConfigChangeUpdater(acc, {
+          oldLayer: layer,
+          newConfig: {isVisible: newLayerGroup.isVisible}
+        });
+      }
+      return acc;
+    }, newState);
+  }
+
+  const newLayerOrder = updateLayerGroupInLayerOrder(newState.layerOrder, newLayerGroup);
+  return {
+    ...newState,
+    layerOrder: newLayerOrder
+  };
+};
+
+/**
+ * Add a layer to a layer group
+ * @memberof visStateUpdaters
+ * @public
+ */
+export const addLayerToLayerGroupUpdater = (
+  state: VisState,
+  action: VisStateActions.AddLayerToLayerGroupUpdaterAction
+): VisState => {
+  const {layerGroupId, layerId} = action;
+  const layerGroup = getLayerGroupFromLayerOrder(state.layerOrder, layerGroupId);
+  const layer = state.layers.find(l => l.id === layerId);
+  if (!layerGroup || !layer) {
+    return state;
+  }
+
+  if (layerGroup.layerOrder.find(entry => entry === layerId)) {
+    return state;
+  }
+
+  const newGroupLayerOrder = addLayerOrGroupToLayerOrder(layerGroup.layerOrder, layerId);
+  return updateLayerGroupUpdater(state, {
+    id: layerGroupId,
+    options: {layerOrder: newGroupLayerOrder}
+  });
+};
+
+/**
+ * Remove a layer from a layer group
+ * @memberof visStateUpdaters
+ * @public
+ */
+export const removeLayerFromLayerGroupUpdater = (
+  state: VisState,
+  action: VisStateActions.RemoveLayerFromLayerGroupUpdaterAction
+): VisState => {
+  const {layerGroupId, layerId} = action;
+  const layerGroup = getLayerGroupFromLayerOrder(state.layerOrder, layerGroupId);
+  if (!layerGroup) {
+    return state;
+  }
+
+  const newLayerGroupOrder = removeElementFromLayerOrder(layerGroup.layerOrder, layerId);
+  return updateLayerGroupUpdater(state, {
+    id: layerGroupId,
+    options: {layerOrder: newLayerGroupOrder}
+  });
+};
+
+/**
+ * Swap layer order entries between root and groups
+ * @memberof visStateUpdaters
+ * @public
+ */
+// eslint-disable-next-line complexity
+export const swapLayerOrderEntriesUpdater = (
+  state: VisState,
+  action: VisStateActions.SwapLayerOrderEntriesUpdaterAction
+): VisState => {
+  const {originLayerId, destinationLayerId, originLayerGroupId, destinationLayerGroupId} = action;
+
+  if (!originLayerGroupId && !destinationLayerGroupId) {
+    const originIndex = state.layerOrder.findIndex(entry =>
+      typeof entry === 'string' ? entry === originLayerId : entry.id === originLayerId
+    );
+    if (destinationLayerId && originIndex !== -1) {
+      const destinationIndex = state.layerOrder.findIndex(entry =>
+        typeof entry === 'string' ? entry === destinationLayerId : entry.id === destinationLayerId
+      );
+      if (destinationIndex !== -1) {
+        const newLayerOrder = arrayMove(state.layerOrder, originIndex, destinationIndex);
+        return {...state, layerOrder: newLayerOrder};
+      }
+    }
+  }
+
+  if (originLayerGroupId && !destinationLayerGroupId) {
+    let newLayerOrder = removeElementFromLayerOrder(state.layerOrder, originLayerId);
+    if (destinationLayerId) {
+      const destinationIndex = newLayerOrder.findIndex(entry =>
+        typeof entry === 'string' ? entry === destinationLayerId : false
+      );
+      newLayerOrder.splice(destinationIndex === -1 ? 0 : destinationIndex, 0, originLayerId);
+    }
+    return {...state, layerOrder: newLayerOrder};
+  }
+
+  if (originLayerGroupId && destinationLayerGroupId) {
+    let newState = addLayerToLayerGroupUpdater(state, {
+      layerId: originLayerId,
+      layerGroupId: destinationLayerGroupId
+    });
+
+    if (destinationLayerId) {
+      const layerGroup = getLayerGroupFromLayerOrder(newState.layerOrder, destinationLayerGroupId);
+      if (!layerGroup) return state;
+      const destIndex = layerGroup.layerOrder.findIndex(entry => entry === destinationLayerId);
+      newState = updateLayerGroupUpdater(newState, {
+        id: layerGroup.id,
+        options: {
+          layerOrder: arrayMove(
+            layerGroup.layerOrder,
+            0,
+            destIndex === -1 ? 0 : destIndex - 1
+          )
+        }
+      });
+    }
+    return newState;
+  }
+
+  if (!originLayerGroupId && destinationLayerGroupId) {
+    const layerOrder = removeElementFromLayerOrder(state.layerOrder, originLayerId);
+    return addLayerToLayerGroupUpdater(
+      {...state, layerOrder},
+      {layerId: originLayerId, layerGroupId: destinationLayerGroupId}
+    );
+  }
+
+  return state;
+};
+
+/**
  * duplicate layer
  * @memberof visStateUpdaters
  * @public
@@ -1932,7 +2169,7 @@ export const duplicateLayerUpdater = (
   const {layers} = state;
   const original = layers[idx];
 
-  const originalLayerOrderIdx = state.layerOrder.findIndex(lid => lid === original.id);
+  const originalLayerOrderIdx = getIndexFromLayerEntryId(state.layerOrder, original.id);
   let newLabel = `Copy of ${original.config.label}`;
   let postfix = 0;
   // eslint-disable-next-line no-loop-func
@@ -1954,14 +2191,30 @@ export const duplicateLayerUpdater = (
   let nextState = addLayerUpdater(state, {config: loadedLayer});
   // retrieve newly created layer
   const newLayer = nextState.layers[nextState.layers.length - 1];
-  // update layer order with newLyaer.id
-  const newLayerOrder = arrayInsert(
-    nextState.layerOrder.slice(1, nextState.layerOrder.length),
-    originalLayerOrderIdx,
-    newLayer.id
-  );
 
-  nextState = reorderLayerUpdater(nextState, {order: newLayerOrder});
+  // Check if the original layer is inside a group
+  const parentGroup = findParentGroupForLayer(state.layerOrder, original.id);
+
+  if (parentGroup) {
+    // Layer is inside a group - remove the prepended id from root and insert into the group
+    const layerOrderWithoutPrepended = nextState.layerOrder.slice(1);
+    const idxInGroup = parentGroup.layerOrder.findIndex(e => e === original.id);
+    const newGroupLayerOrder = arrayInsert(parentGroup.layerOrder, idxInGroup, newLayer.id);
+    const updatedGroup = {...parentGroup, layerOrder: newGroupLayerOrder};
+    const newLayerOrder = updateLayerGroupInLayerOrder(
+      layerOrderWithoutPrepended,
+      updatedGroup
+    );
+    nextState = reorderLayerUpdater(nextState, {order: newLayerOrder});
+  } else {
+    // Layer is at root level - use original index-based insertion
+    const newLayerOrder = arrayInsert(
+      nextState.layerOrder.slice(1, nextState.layerOrder.length),
+      originalLayerOrderIdx,
+      newLayer.id
+    );
+    nextState = reorderLayerUpdater(nextState, {order: newLayerOrder});
+  }
 
   return updateAnimationDomain(nextState);
 };

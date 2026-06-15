@@ -22,7 +22,7 @@ import {LAYER_BLENDINGS, OVERLAY_BLENDINGS, PANEL_VIEW_TOGGLES} from '@kepler.gl
 import {Layer, LayerClassesType} from '@kepler.gl/layers';
 import {UIStateActions, VisStateActions, MapStateActions, ActionHandler} from '@kepler.gl/actions';
 import {SidePanelItem} from '../types';
-import {PanelListView} from '@kepler.gl/types';
+import {PanelListView, LayerOrder} from '@kepler.gl/types';
 import {Datasets} from '@kepler.gl/table';
 import {getApplicationConfig} from '@kepler.gl/utils';
 
@@ -41,7 +41,7 @@ type OverlayBlendingSelectorProps = {
 type LayerManagerProps = {
   datasets: Datasets;
   layers: Layer[];
-  layerOrder: string[];
+  layerOrder: LayerOrder;
   layerClasses: LayerClassesType;
   layerBlending: string;
   overlayBlending: string;

@@ -25,7 +25,9 @@ import {
   AnnotationPropsPartial,
   SyncTimelineMode,
   AnimationConfig,
-  FilterAnimationConfig
+  FilterAnimationConfig,
+  LayerOrder,
+  LayerOrderGroup
 } from '@kepler.gl/types';
 import {createAction} from '@reduxjs/toolkit';
 
@@ -517,7 +519,7 @@ export function addLayer(
 }
 
 export type ReorderLayerUpdaterAction = {
-  order: string[];
+  order: LayerOrder;
 };
 /**
  * Reorder layer, order is an array of layer indexes, index 0 will be the one at the bottom
@@ -532,11 +534,102 @@ export type ReorderLayerUpdaterAction = {
  * this.props.dispatch(reorderLayer([`layers[1].id`, `layers[0].id`, `layers[2].id`, `layers[3].id`]));
  */
 export function reorderLayer(
-  order: string[]
+  order: LayerOrder
 ): Merge<ReorderLayerUpdaterAction, {type: typeof ActionTypes.REORDER_LAYER}> {
   return {
     type: ActionTypes.REORDER_LAYER,
     order
+  };
+}
+
+export type AddLayerGroupUpdaterAction = {
+  id?: string;
+  label?: string;
+  isVisible?: boolean;
+  layerOrder?: LayerOrder;
+  isIncludedInLegend?: boolean;
+};
+
+export function addLayerGroup(
+  payload: AddLayerGroupUpdaterAction
+): Merge<AddLayerGroupUpdaterAction, {type: typeof ActionTypes.ADD_LAYER_GROUP}> {
+  return {
+    type: ActionTypes.ADD_LAYER_GROUP,
+    ...payload
+  };
+}
+
+export type RemoveLayerGroupUpdaterAction = {
+  id: string;
+};
+
+export function removeLayerGroup(
+  payload: RemoveLayerGroupUpdaterAction
+): Merge<RemoveLayerGroupUpdaterAction, {type: typeof ActionTypes.REMOVE_LAYER_GROUP}> {
+  return {
+    type: ActionTypes.REMOVE_LAYER_GROUP,
+    ...payload
+  };
+}
+
+export type UpdateLayerGroupUpdaterAction = {
+  id: string;
+  options: Partial<Omit<LayerOrderGroup, 'id'>>;
+};
+
+export function updateLayerGroup(
+  payload: UpdateLayerGroupUpdaterAction
+): Merge<UpdateLayerGroupUpdaterAction, {type: typeof ActionTypes.UPDATE_LAYER_GROUP}> {
+  return {
+    type: ActionTypes.UPDATE_LAYER_GROUP,
+    ...payload
+  };
+}
+
+export type AddLayerToLayerGroupUpdaterAction = {
+  layerGroupId: string;
+  layerId: string;
+};
+
+export function addLayerToLayerGroup(
+  payload: AddLayerToLayerGroupUpdaterAction
+): Merge<AddLayerToLayerGroupUpdaterAction, {type: typeof ActionTypes.ADD_LAYER_TO_LAYER_GROUP}> {
+  return {
+    type: ActionTypes.ADD_LAYER_TO_LAYER_GROUP,
+    ...payload
+  };
+}
+
+export type RemoveLayerFromLayerGroupUpdaterAction = {
+  layerGroupId: string;
+  layerId: string;
+};
+
+export function removeLayerFromLayerGroup(
+  payload: RemoveLayerFromLayerGroupUpdaterAction
+): Merge<
+  RemoveLayerFromLayerGroupUpdaterAction,
+  {type: typeof ActionTypes.REMOVE_LAYER_FROM_LAYER_GROUP}
+> {
+  return {
+    type: ActionTypes.REMOVE_LAYER_FROM_LAYER_GROUP,
+    ...payload
+  };
+}
+
+export type SwapLayerOrderEntriesUpdaterAction = {
+  originLayerId: string;
+  destinationLayerId?: string;
+  originLayerGroupId?: string;
+  destinationLayerGroupId?: string;
+};
+
+export function swapLayerOrderEntries(
+  payload: SwapLayerOrderEntriesUpdaterAction
+): Merge<SwapLayerOrderEntriesUpdaterAction, {type: typeof ActionTypes.SWAP_LAYER_ORDER_ENTRIES}> {
+  return {
+    type: ActionTypes.SWAP_LAYER_ORDER_ENTRIES,
+    ...payload
   };
 }
 

@@ -250,6 +250,20 @@ export type SplitMap = {
   layers: SplitMapLayers;
 };
 
+export type LayerOrderGroup = {
+  id: string;
+  label: string;
+  isVisible: boolean;
+  layerOrder: LayerOrder;
+  isIncludedInLegend: boolean;
+};
+
+export type LayerOrderEntry = string | LayerOrderGroup;
+export type LayerOrder = LayerOrderEntry[];
+export type FlatLayerOrder = string[];
+export type LayerOrderHierarchyEntry = ['layer', any] | ['layerGroup', LayerOrderGroup];
+export type LayerOrderHierarchy = LayerOrderHierarchyEntry[];
+
 /** See "Locale aware formats" at https://momentjs.com/docs/#/parsing/string-format/ */
 export type AnimationConfigTimeFormat = 'L' | 'L LT' | 'L LTS';
 

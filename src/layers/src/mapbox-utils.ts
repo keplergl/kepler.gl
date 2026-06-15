@@ -4,7 +4,8 @@
 import Layer, {OVERLAY_TYPE_CONST} from './base-layer';
 import {Feature} from 'geojson';
 
-import {findById} from '@kepler.gl/utils';
+import {isPlainObject} from '@kepler.gl/utils';
+import {LayerOrderGroup, LayerOrder} from '@kepler.gl/types';
 
 /**
  * This function will convert layers to mapbox layers
@@ -17,18 +18,23 @@ import {findById} from '@kepler.gl/utils';
 export function generateMapboxLayers(
   layers: Layer[] = [],
   layerData: any[] = [],
-  layerOrder: string[] = [],
+  layerOrder: LayerOrder = [],
   layersToRender: {[key: string]: boolean} = {}
 ): {[key: string]: Layer} {
   if (layerData.length > 0) {
     return layerOrder
       .slice()
       .reverse()
-      .filter(layerId => {
-        const layer = findById(layerId)(layers);
-        return layer?.overlayType === OVERLAY_TYPE_CONST.mapboxgl && layersToRender[layerId];
-      })
-      .reduce((acc, layerId) => {
+      .reduce((acc, element) => {
+        if (isPlainObject(element)) {
+          const layerGroup = element as LayerOrderGroup;
+          return {
+            ...acc,
+            ...generateMapboxLayers(layers, layerData, layerGroup.layerOrder, layersToRender)
+          };
+        }
+
+        const layerId = element as string;
         const layerIndex = layers.findIndex(l => l.id === layerId);
         if (layerIndex === -1) {
           return acc;

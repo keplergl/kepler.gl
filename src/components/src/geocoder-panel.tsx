@@ -14,7 +14,7 @@ import {
   GEOCODER_ICON_COLOR,
   GEOCODER_ICON_SIZE
 } from '@kepler.gl/constants';
-import {AddDataToMapOptions, MapState, ProtoDataset, UiState, Viewport} from '@kepler.gl/types';
+import {AddDataToMapOptions, LayerOrder, MapState, ProtoDataset, UiState, Viewport} from '@kepler.gl/types';
 import {ActionHandler, removeDataset, updateMap, updateVisData} from '@kepler.gl/actions';
 
 import Geocoder, {Result} from './geocoder/geocoder';
@@ -137,7 +137,7 @@ interface GeocoderPanelProps {
   updateVisData: ActionHandler<typeof updateVisData>;
   removeDataset: ActionHandler<typeof removeDataset>;
   updateMap: ActionHandler<typeof updateMap>;
-  layerOrder: string[];
+  layerOrder: LayerOrder;
   limitSearch?: boolean;
 
   transitionDuration?: MapViewState['transitionDuration'];

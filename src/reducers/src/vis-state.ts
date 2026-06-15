@@ -72,6 +72,18 @@ const actionHandler = {
 
   [ActionTypes.REORDER_LAYER]: visStateUpdaters.reorderLayerUpdater,
 
+  [ActionTypes.ADD_LAYER_GROUP]: visStateUpdaters.addLayerGroupUpdater,
+
+  [ActionTypes.REMOVE_LAYER_GROUP]: visStateUpdaters.removeLayerGroupUpdater,
+
+  [ActionTypes.UPDATE_LAYER_GROUP]: visStateUpdaters.updateLayerGroupUpdater,
+
+  [ActionTypes.ADD_LAYER_TO_LAYER_GROUP]: visStateUpdaters.addLayerToLayerGroupUpdater,
+
+  [ActionTypes.REMOVE_LAYER_FROM_LAYER_GROUP]: visStateUpdaters.removeLayerFromLayerGroupUpdater,
+
+  [ActionTypes.SWAP_LAYER_ORDER_ENTRIES]: visStateUpdaters.swapLayerOrderEntriesUpdater,
+
   [ActionTypes.RESET_MAP_CONFIG]: visStateUpdaters.resetMapConfigUpdater,
 
   [ActionTypes.SET_FILTER]: visStateUpdaters.setFilterUpdater,
