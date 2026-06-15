@@ -107,7 +107,7 @@ function MapManagerFactory(
             toggleActive={toggleSelecting}
             customMapStylesActions={customMapStylesActions}
           />
-          {editableLayers.length ? (
+          {editableLayers.length && !mapState?.globe?.enabled ? (
             <LayerGroupSelector
               layers={mapStyle.visibleLayerGroups}
               editableLayers={editableLayers}

@@ -22,7 +22,7 @@ import {LAYER_BLENDINGS, OVERLAY_BLENDINGS, PANEL_VIEW_TOGGLES} from '@kepler.gl
 import {Layer, LayerClassesType} from '@kepler.gl/layers';
 import {UIStateActions, VisStateActions, MapStateActions, ActionHandler} from '@kepler.gl/actions';
 import {SidePanelItem} from '../types';
-import {PanelListView} from '@kepler.gl/types';
+import {MapState, PanelListView} from '@kepler.gl/types';
 import {Datasets} from '@kepler.gl/table';
 import {getApplicationConfig} from '@kepler.gl/utils';
 
@@ -48,6 +48,7 @@ type LayerManagerProps = {
   uiStateActions: typeof UIStateActions;
   visStateActions: typeof VisStateActions;
   mapStateActions: typeof MapStateActions;
+  mapState?: MapState;
   showAddDataModal: () => void;
   removeDataset: ActionHandler<typeof UIStateActions.openDeleteModal>;
   showDatasetTable: ActionHandler<typeof VisStateActions.showDatasetTable>;
@@ -172,7 +173,8 @@ function LayerManagerFactory(
     removeDataset,
     uiStateActions,
     visStateActions,
-    mapStateActions
+    mapStateActions,
+    mapState
   }) => {
     const {addLayer} = visStateActions;
     const {togglePanelListView} = uiStateActions;
@@ -250,6 +252,7 @@ function LayerManagerFactory(
               uiStateActions={uiStateActions}
               visStateActions={visStateActions}
               mapStateActions={mapStateActions}
+              mapState={mapState}
               showDeleteDataset={showDeleteDataset}
             />
           ) : (
@@ -260,6 +263,7 @@ function LayerManagerFactory(
               uiStateActions={uiStateActions}
               visStateActions={visStateActions}
               mapStateActions={mapStateActions}
+              mapState={mapState}
               layerClasses={filteredLayerClasses}
             />
           )}

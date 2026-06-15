@@ -198,11 +198,13 @@ export default class ScenegraphLayer extends Layer {
   }
 
   renderLayer(opts) {
-    const {data, gpuFilter} = opts;
+    const {data, gpuFilter, mapState} = opts;
 
     const {
       visConfig: {sizeScale = 1, angleX = 0, angleY = 0, angleZ = 90}
     } = this.config;
+
+    const adjustedAngleY = angleY + (mapState?.globe?.enabled ? 180 : 0);
 
     return [
       new DeckScenegraphLayer({
@@ -215,13 +217,13 @@ export default class ScenegraphLayer extends Layer {
         sizeScale,
         getTranslation: DEFAULT_TRANSITION,
         getScale: DEFAULT_SCALE,
-        getOrientation: [angleX, angleY, angleZ],
+        getOrientation: [angleX, adjustedAngleY, angleZ],
         getColor: DEFAULT_COLOR,
         // parameters
         parameters: {depthTest: true, blend: false},
         // update triggers
         updateTriggers: {
-          getOrientation: {angleX, angleY, angleZ},
+          getOrientation: {angleX, adjustedAngleY, angleZ},
           getPosition: this.config.columns,
           getFilterValue: gpuFilter.filterValueUpdateTriggers
         }

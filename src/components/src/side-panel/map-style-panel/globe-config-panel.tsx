@@ -2,48 +2,59 @@
 // Copyright contributors to the kepler.gl project
 
 import React, {useCallback} from 'react';
-import styled from 'styled-components';
+import styled, {css} from 'styled-components';
 
-import {MapState} from '@kepler.gl/types';
+import {MapState, RGBColor} from '@kepler.gl/types';
 import {GlobeConfig} from '@kepler.gl/constants';
+import {FormattedMessage} from '@kepler.gl/localization';
+
+import {EyeSeen, EyeUnseen} from '../../common/icons';
+import {
+  PanelLabel,
+  PanelContent,
+  PanelLabelBold,
+  PanelLabelWrapper
+} from '../../common/styled-components';
+import PanelHeaderActionFactory from '../panel-header-action';
+import RangeSliderFactory from '../../common/range-slider';
+import LayerGroupColorPickerFactory from './map-layer-group-color-picker';
 
 const StyledGlobeConfigPanel = styled.div`
-  padding: 12px;
+  padding-bottom: 6px;
 `;
 
 const StyledConfigRow = styled.div`
+  margin-bottom: 10px;
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  margin-bottom: 8px;
+  align-items: center;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  .layer-group__visibility-toggle {
+    margin-right: 12px;
+  }
 `;
 
-const StyledLabel = styled.label`
-  color: ${props => props.theme.textColor};
-  font-size: 11px;
-  font-weight: 500;
+const disableSlider = css`
+  opacity: 0.5;
+  pointer-events: none;
 `;
 
-const StyledToggle = styled.input`
-  cursor: pointer;
+const SliderWrapper = styled.div<{$enabled?: boolean}>`
+  flex-grow: 1;
+  margin-left: 4px;
+  ${props => (props.$enabled ? '' : disableSlider)}
 `;
 
-const StyledSlider = styled.input`
-  width: 100%;
-  margin-top: 4px;
+const LayerLabel = styled(PanelLabelBold)<{$active: boolean}>`
+  color: ${props => (props.$active ? props.theme.textColor : props.theme.labelColor)};
 `;
 
-const StyledSection = styled.div`
-  margin-bottom: 16px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid ${props => props.theme.sidePanelBorderColor};
-`;
-
-const StyledSectionTitle = styled.div`
-  color: ${props => props.theme.textColorHl};
-  font-size: 12px;
-  font-weight: 600;
-  margin-bottom: 8px;
+const ChildRow = styled(StyledConfigRow)`
+  padding-left: 20px;
 `;
 
 export type GlobeConfigPanelProps = {
@@ -51,27 +62,52 @@ export type GlobeConfigPanelProps = {
   onGlobeConfigChange: (config: Partial<GlobeConfig>) => void;
 };
 
-GlobeConfigPanelFactory.deps = [];
+GlobeConfigPanelFactory.deps = [
+  PanelHeaderActionFactory,
+  RangeSliderFactory,
+  LayerGroupColorPickerFactory
+];
 
-function GlobeConfigPanelFactory() {
-  const GlobeConfigPanel: React.FC<GlobeConfigPanelProps> = ({
-    mapState,
-    onGlobeConfigChange
-  }) => {
+function GlobeConfigPanelFactory(
+  PanelHeaderAction: ReturnType<typeof PanelHeaderActionFactory>,
+  RangeSlider: ReturnType<typeof RangeSliderFactory>,
+  LayerGroupColorPicker: ReturnType<typeof LayerGroupColorPickerFactory>
+) {
+  const GlobeConfigPanel: React.FC<GlobeConfigPanelProps> = ({mapState, onGlobeConfigChange}) => {
     const globeConfig = mapState.globe?.config;
 
     const onToggle = useCallback(
-      (key: keyof GlobeConfig) => {
-        if (globeConfig) {
-          onGlobeConfigChange({[key]: !globeConfig[key]});
+      (
+        key: keyof GlobeConfig,
+        childKeys?: (keyof GlobeConfig)[],
+        parentKey?: keyof GlobeConfig
+      ) => {
+        if (!globeConfig) return;
+        const newValue = !globeConfig[key];
+        const update: Partial<GlobeConfig> = {[key]: newValue};
+        if (childKeys) {
+          childKeys.forEach(childKey => {
+            update[childKey] = newValue as any;
+          });
         }
+        if (parentKey && newValue === true) {
+          update[parentKey] = true as any;
+        }
+        onGlobeConfigChange(update);
       },
       [globeConfig, onGlobeConfigChange]
     );
 
     const onSliderChange = useCallback(
-      (key: keyof GlobeConfig, value: number) => {
-        onGlobeConfigChange({[key]: value});
+      (key: keyof GlobeConfig, value: number[]) => {
+        onGlobeConfigChange({[key]: value[1]} as Partial<GlobeConfig>);
+      },
+      [onGlobeConfigChange]
+    );
+
+    const onColorChange = useCallback(
+      (key: keyof GlobeConfig, color: RGBColor) => {
+        onGlobeConfigChange({[key]: color} as Partial<GlobeConfig>);
       },
       [onGlobeConfigChange]
     );
@@ -82,117 +118,197 @@ function GlobeConfigPanelFactory() {
 
     return (
       <StyledGlobeConfigPanel>
-        <StyledSection>
-          <StyledSectionTitle>Atmosphere</StyledSectionTitle>
+        <PanelLabel>
+          <FormattedMessage id="mapManager.globeLayers" />
+        </PanelLabel>
+        <PanelContent>
+          {/* Atmosphere */}
           <StyledConfigRow>
-            <StyledLabel>Show Atmosphere</StyledLabel>
-            <StyledToggle
-              type="checkbox"
-              checked={globeConfig.atmosphere}
-              onChange={() => onToggle('atmosphere')}
-            />
+            <PanelLabelWrapper>
+              <PanelHeaderAction
+                className="layer-group__visibility-toggle"
+                id="globe-atmosphere-toggle"
+                tooltip={globeConfig.atmosphere ? 'tooltip.hide' : 'tooltip.show'}
+                onClick={() => onToggle('atmosphere', ['terminator', 'azimuth'])}
+                IconComponent={globeConfig.atmosphere ? EyeSeen : EyeUnseen}
+                active={globeConfig.atmosphere}
+                flush
+              />
+              <LayerLabel $active={globeConfig.atmosphere}>
+                <FormattedMessage id="mapLayers.atmosphere" />
+              </LayerLabel>
+            </PanelLabelWrapper>
           </StyledConfigRow>
-          {globeConfig.atmosphere && (
-            <>
-              <StyledConfigRow>
-                <StyledLabel>Terminator (Day/Night)</StyledLabel>
-                <StyledToggle
-                  type="checkbox"
-                  checked={globeConfig.terminator}
-                  onChange={() => onToggle('terminator')}
-                />
-              </StyledConfigRow>
-              {globeConfig.terminator && (
-                <StyledConfigRow>
-                  <StyledLabel>
-                    Terminator Opacity: {globeConfig.terminatorOpacity.toFixed(2)}
-                  </StyledLabel>
-                  <StyledSlider
-                    type="range"
-                    min="0"
-                    max="1"
-                    step="0.01"
-                    value={globeConfig.terminatorOpacity}
-                    onChange={e => onSliderChange('terminatorOpacity', parseFloat(e.target.value))}
-                  />
-                </StyledConfigRow>
-              )}
-              <StyledConfigRow>
-                <StyledLabel>Custom Sun Azimuth</StyledLabel>
-                <StyledToggle
-                  type="checkbox"
-                  checked={globeConfig.azimuth}
-                  onChange={() => onToggle('azimuth')}
-                />
-              </StyledConfigRow>
-              {globeConfig.azimuth && (
-                <StyledConfigRow>
-                  <StyledLabel>Sun Angle: {globeConfig.azimuthAngle}°</StyledLabel>
-                  <StyledSlider
-                    type="range"
-                    min="0"
-                    max="360"
-                    step="1"
-                    value={globeConfig.azimuthAngle}
-                    onChange={e => onSliderChange('azimuthAngle', parseInt(e.target.value, 10))}
-                  />
-                </StyledConfigRow>
-              )}
-            </>
-          )}
-        </StyledSection>
 
-        <StyledSection>
-          <StyledSectionTitle>Basemap</StyledSectionTitle>
-          <StyledConfigRow>
-            <StyledLabel>Show Basemap</StyledLabel>
-            <StyledToggle
-              type="checkbox"
-              checked={globeConfig.basemap}
-              onChange={() => onToggle('basemap')}
-            />
-          </StyledConfigRow>
-          {globeConfig.basemap && (
-            <>
-              <StyledConfigRow>
-                <StyledLabel>Admin Lines</StyledLabel>
-                <StyledToggle
-                  type="checkbox"
-                  checked={globeConfig.adminLines}
-                  onChange={() => onToggle('adminLines')}
-                />
-              </StyledConfigRow>
-              <StyledConfigRow>
-                <StyledLabel>Water</StyledLabel>
-                <StyledToggle
-                  type="checkbox"
-                  checked={globeConfig.water}
-                  onChange={() => onToggle('water')}
-                />
-              </StyledConfigRow>
-              <StyledConfigRow>
-                <StyledLabel>Labels</StyledLabel>
-                <StyledToggle
-                  type="checkbox"
-                  checked={globeConfig.labels}
-                  onChange={() => onToggle('labels')}
-                />
-              </StyledConfigRow>
-            </>
-          )}
-        </StyledSection>
+          {/* Terminator (child of atmosphere) */}
+          <ChildRow>
+            <PanelLabelWrapper>
+              <PanelHeaderAction
+                className="layer-group__visibility-toggle"
+                id="globe-terminator-toggle"
+                tooltip={globeConfig.terminator ? 'tooltip.hide' : 'tooltip.show'}
+                onClick={() => onToggle('terminator', undefined, 'atmosphere')}
+                IconComponent={globeConfig.terminator ? EyeSeen : EyeUnseen}
+                active={globeConfig.terminator && globeConfig.atmosphere}
+                flush
+              />
+              <LayerLabel $active={globeConfig.terminator && globeConfig.atmosphere}>
+                <FormattedMessage id="mapLayers.terminator" />
+              </LayerLabel>
+            </PanelLabelWrapper>
+            <SliderWrapper $enabled={globeConfig.terminator && globeConfig.atmosphere}>
+              <RangeSlider
+                range={[0, 1]}
+                value0={0}
+                value1={globeConfig.terminatorOpacity}
+                step={0.01}
+                isRanged={false}
+                onChange={val => onSliderChange('terminatorOpacity', val)}
+                inputTheme="secondary"
+                showInput
+              />
+            </SliderWrapper>
+          </ChildRow>
 
-        <StyledSection>
-          <StyledSectionTitle>Surface</StyledSectionTitle>
+          {/* Sun Azimuth (child of atmosphere) */}
+          <ChildRow>
+            <PanelLabelWrapper>
+              <PanelHeaderAction
+                className="layer-group__visibility-toggle"
+                id="globe-azimuth-toggle"
+                tooltip={globeConfig.azimuth ? 'tooltip.hide' : 'tooltip.show'}
+                onClick={() => onToggle('azimuth', undefined, 'atmosphere')}
+                IconComponent={globeConfig.azimuth ? EyeSeen : EyeUnseen}
+                active={globeConfig.azimuth && globeConfig.atmosphere}
+                flush
+              />
+              <LayerLabel $active={globeConfig.azimuth && globeConfig.atmosphere}>
+                <FormattedMessage id="mapLayers.sunAzimuth" />
+              </LayerLabel>
+            </PanelLabelWrapper>
+            <SliderWrapper $enabled={globeConfig.azimuth && globeConfig.atmosphere}>
+              <RangeSlider
+                range={[0, 360]}
+                value0={0}
+                value1={globeConfig.azimuthAngle}
+                step={1}
+                isRanged={false}
+                onChange={val => onSliderChange('azimuthAngle', val)}
+                inputTheme="secondary"
+                showInput
+              />
+            </SliderWrapper>
+          </ChildRow>
+
+          {/* Basemap */}
           <StyledConfigRow>
-            <StyledLabel>Show Surface</StyledLabel>
-            <StyledToggle
-              type="checkbox"
-              checked={globeConfig.surface}
-              onChange={() => onToggle('surface')}
+            <PanelLabelWrapper>
+              <PanelHeaderAction
+                className="layer-group__visibility-toggle"
+                id="globe-basemap-toggle"
+                tooltip={globeConfig.basemap ? 'tooltip.hide' : 'tooltip.show'}
+                onClick={() => onToggle('basemap', ['labels', 'adminLines', 'water'])}
+                IconComponent={globeConfig.basemap ? EyeSeen : EyeUnseen}
+                active={globeConfig.basemap}
+                flush
+              />
+              <LayerLabel $active={globeConfig.basemap}>
+                <FormattedMessage id="mapLayers.basemap" />
+              </LayerLabel>
+            </PanelLabelWrapper>
+          </StyledConfigRow>
+
+          {/* Labels (child of basemap) */}
+          <ChildRow>
+            <PanelLabelWrapper>
+              <PanelHeaderAction
+                className="layer-group__visibility-toggle"
+                id="globe-labels-toggle"
+                tooltip={globeConfig.labels ? 'tooltip.hide' : 'tooltip.show'}
+                onClick={() => onToggle('labels', undefined, 'basemap')}
+                IconComponent={globeConfig.labels ? EyeSeen : EyeUnseen}
+                active={globeConfig.labels && globeConfig.basemap}
+                flush
+              />
+              <LayerLabel $active={globeConfig.labels && globeConfig.basemap}>
+                <FormattedMessage id="mapLayers.label" />
+              </LayerLabel>
+            </PanelLabelWrapper>
+            <LayerGroupColorPicker
+              slug="globe-labels"
+              color={globeConfig.labelsColor}
+              onColorChange={(color: RGBColor) => onColorChange('labelsColor', color)}
+              extraMarginRight={false}
+              disabled={!(globeConfig.labels && globeConfig.basemap)}
+            />
+          </ChildRow>
+
+          {/* Admin Lines (child of basemap) */}
+          <ChildRow>
+            <PanelLabelWrapper>
+              <PanelHeaderAction
+                className="layer-group__visibility-toggle"
+                id="globe-admin-toggle"
+                tooltip={globeConfig.adminLines ? 'tooltip.hide' : 'tooltip.show'}
+                onClick={() => onToggle('adminLines', undefined, 'basemap')}
+                IconComponent={globeConfig.adminLines ? EyeSeen : EyeUnseen}
+                active={globeConfig.adminLines && globeConfig.basemap}
+                flush
+              />
+              <LayerLabel $active={globeConfig.adminLines && globeConfig.basemap}>
+                <FormattedMessage id="mapLayers.adminBorders" />
+              </LayerLabel>
+            </PanelLabelWrapper>
+            <LayerGroupColorPicker
+              slug="globe-admin"
+              color={globeConfig.adminLinesColor}
+              onColorChange={(color: RGBColor) => onColorChange('adminLinesColor', color)}
+              extraMarginRight={false}
+              disabled={!(globeConfig.adminLines && globeConfig.basemap)}
+            />
+          </ChildRow>
+
+          {/* Water (child of basemap) */}
+          <ChildRow>
+            <PanelLabelWrapper>
+              <PanelHeaderAction
+                className="layer-group__visibility-toggle"
+                id="globe-water-toggle"
+                tooltip={globeConfig.water ? 'tooltip.hide' : 'tooltip.show'}
+                onClick={() => onToggle('water', undefined, 'basemap')}
+                IconComponent={globeConfig.water ? EyeSeen : EyeUnseen}
+                active={globeConfig.water && globeConfig.basemap}
+                flush
+              />
+              <LayerLabel $active={globeConfig.water && globeConfig.basemap}>
+                <FormattedMessage id="mapLayers.water" />
+              </LayerLabel>
+            </PanelLabelWrapper>
+            <LayerGroupColorPicker
+              slug="globe-water"
+              color={globeConfig.waterColor}
+              onColorChange={(color: RGBColor) => onColorChange('waterColor', color)}
+              extraMarginRight={false}
+              disabled={!(globeConfig.water && globeConfig.basemap)}
+            />
+          </ChildRow>
+
+          {/* Globe Surface (always visible, only has color) */}
+          <StyledConfigRow>
+            <PanelLabelWrapper>
+              <LayerLabel $active={true} style={{marginLeft: '28px'}}>
+                <FormattedMessage id="mapLayers.surface" />
+              </LayerLabel>
+            </PanelLabelWrapper>
+            <LayerGroupColorPicker
+              slug="globe-surface"
+              color={globeConfig.surfaceColor}
+              onColorChange={(color: RGBColor) => onColorChange('surfaceColor', color)}
+              extraMarginRight={false}
+              disabled={false}
             />
           </StyledConfigRow>
-        </StyledSection>
+        </PanelContent>
       </StyledGlobeConfigPanel>
     );
   };
