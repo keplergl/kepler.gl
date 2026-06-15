@@ -12,6 +12,24 @@ export interface ScatterplotIconLayerProps extends ScatterplotLayerProps<any> {
 }
 
 export default class ScatterplotIconLayer extends ScatterplotLayer<any, ScatterplotIconLayerProps> {
+  getShaders() {
+    return {
+      ...super.getShaders(),
+      inject: {
+        'vs:#decl': `
+          uniform float u_globeModeMod;`,
+        'vs:DECKGL_FILTER_SIZE': `
+          size.xy *= u_globeModeMod;`
+      }
+    };
+  }
+
+  draw(opts) {
+    opts.uniforms = opts.uniforms || {};
+    opts.uniforms.u_globeModeMod = (this.context.viewport as any).resolution ? -0.5 : 1;
+    super.draw(opts);
+  }
+
   _getModel() {
     const {iconGeometry} = this.props;
     const positions = iconGeometry ? new Float32Array(iconGeometry) : new Float32Array(DEFAULT_POS);

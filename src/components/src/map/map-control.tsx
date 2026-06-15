@@ -52,6 +52,8 @@ export type MapControlProps = {
   mapIndex: number;
   mapControls: MapControls;
   onTogglePerspective: () => void;
+  onSetMapViewMode?: (mode: string) => void;
+  mapViewMode?: string;
   onToggleSplitMap: typeof MapStateActions.toggleSplitMap;
   onToggleSplitMapViewport: ({
     isViewportSynced,

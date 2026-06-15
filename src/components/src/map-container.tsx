@@ -81,6 +81,8 @@ import {
   MAP_LIB_OPTIONS
 } from '@kepler.gl/constants';
 
+import {getGlobeBaseLayers, getGlobeTopLayers, KeplerGlobeView} from '@kepler.gl/deckgl-layers';
+
 import {DROPPABLE_MAP_CONTAINER_TYPE} from './common/dnd-layer-items';
 // Contexts
 import {MapViewStateContext} from './map-view-state-context';
@@ -1075,15 +1077,38 @@ export default function MapContainerFactory(
         ? computeDeckEffects({visState, mapState, isExport: this.props.isExport})
         : [];
 
-      const views = deckGlProps?.views ? deckGlProps?.views() : new MapView({farZMultiplier: 1.2});
+      const isGlobeMode = mapState.globe?.enabled;
+
+      // In globe mode, prepend globe base layers and append top layers
+      const globeBaseLayers = isGlobeMode && mapState.globe
+        ? getGlobeBaseLayers({
+            mapboxApiAccessToken: mapboxApiAccessToken || '',
+            globe: mapState.globe,
+            mapStyleType: mapStyle?.styleType
+          })
+        : [];
+      const globeTopLayers = isGlobeMode && mapState.globe
+        ? getGlobeTopLayers({globe: mapState.globe})
+        : [];
+      const finalDeckGlLayers = isGlobeMode
+        ? [...globeBaseLayers, ...deckGlLayers, ...globeTopLayers]
+        : deckGlLayers;
+
+      const views = deckGlProps?.views
+        ? deckGlProps?.views()
+        : isGlobeMode
+          ? new KeplerGlobeView({resolution: 5})
+          : new MapView({farZMultiplier: 1.2});
 
       let allDeckGlProps = {
         ...deckGlProps,
         pickingRadius: DEFAULT_PICKING_RADIUS,
         views,
-        layers: deckGlLayers,
+        layers: finalDeckGlLayers,
         effects,
-        parameters: getLayerBlendingParameters(visState.layerBlending)
+        parameters: isGlobeMode
+          ? {cull: true, clearColor: [0.015, 0.035, 0.065, 1.0]}
+          : getLayerBlendingParameters(visState.layerBlending)
       };
 
       if (typeof deckRenderCallbacks?.onDeckRender === 'function') {
@@ -1218,7 +1243,11 @@ export default function MapContainerFactory(
         return;
       }
       const {setInternalViewState} = this.context;
-      setInternalViewState(viewState, this.props.index);
+      // Defer state update to avoid React warning when deck.gl fires onViewStateChange
+      // synchronously during its render (e.g. when switching view types like MapView → GlobeView)
+      setTimeout(() => {
+        setInternalViewState(viewState, this.props.index);
+      }, 0);
       this._onViewportChangePropagateDebounced();
     };
 
@@ -1327,7 +1356,7 @@ export default function MapContainerFactory(
           <ResolvedMapComponent
             key={`bottom-${baseMapLibraryName}`}
             {...mapProps}
-            mapStyle={mapStyle.bottomMapStyle ?? EMPTY_MAPBOX_STYLE}
+            mapStyle={mapState.globe?.enabled ? EMPTY_MAPBOX_STYLE : (mapStyle.bottomMapStyle ?? EMPTY_MAPBOX_STYLE)}
             {...bottomMapContainerProps}
             ref={this._setMapRef}
           />
@@ -1364,6 +1393,8 @@ export default function MapContainerFactory(
             editor={editor}
             locale={locale}
             onTogglePerspective={mapStateActions.togglePerspective}
+            onSetMapViewMode={mapStateActions.setMapViewMode}
+            mapViewMode={mapState.mapViewMode}
             onToggleSplitMap={mapStateActions.toggleSplitMap}
             onMapToggleLayer={this._handleMapToggleLayer}
             onToggleMapControl={this._toggleMapControl}
@@ -1408,7 +1439,7 @@ export default function MapContainerFactory(
             setSelectedAnnotation={visStateActions.setSelectedAnnotation}
           />
           {this.props.children}
-          {mapStyle.topMapStyle ? (
+          {mapStyle.topMapStyle && !mapState.globe?.enabled ? (
             <ResolvedMapComponent
               key={`top-${baseMapLibraryName}`}
               viewState={internalViewState}

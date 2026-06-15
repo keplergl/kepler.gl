@@ -596,6 +596,11 @@ class HeatmapLayer extends Layer {
     visible: boolean;
   }): KeplerHeatmapLayer[] {
     const {data, mapState} = opts;
+
+    if (mapState?.globe?.enabled) {
+      return [];
+    }
+
     const {_unfiltered, ...deckData} = data;
 
     const defaultLayerProps = this.getDefaultDeckLayerProps(opts);

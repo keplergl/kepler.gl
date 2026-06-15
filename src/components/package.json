@@ -46,6 +46,7 @@
     "@kepler.gl/cloud-providers": "3.3.0-alpha.1",
     "@kepler.gl/common-utils": "3.3.0-alpha.1",
     "@kepler.gl/constants": "3.3.0-alpha.1",
+    "@kepler.gl/deckgl-layers": "3.3.0-alpha.1",
     "@kepler.gl/effects": "3.3.0-alpha.1",
     "@kepler.gl/layers": "3.3.0-alpha.1",
     "@kepler.gl/localization": "3.3.0-alpha.1",

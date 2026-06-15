@@ -38,6 +38,7 @@ export type GetEditorLayerProps = {
     features: Feature[];
   };
   selectedFeatureIndexes: number[];
+  mapState?: {globe?: {enabled: boolean}};
 };
 
 /**
@@ -59,7 +60,8 @@ export function getEditorLayer({
   onApplyPolygonFilterAll,
   featureCollection,
   selectedFeatureIndexes,
-  viewport
+  viewport,
+  mapState
 }: GetEditorLayerProps): DeckLayer<DeckLayerProps> {
   const {mode: editorMode} = editor;
 
@@ -172,7 +174,7 @@ export function getEditorLayer({
     getTentativeLineWidth: LINE_STYLE.getTentativeLineWidth,
     getTentativeFillColor: LINE_STYLE.getTentativeFillColor,
 
-    parameters: {},
+    parameters: {depthTest: mapState?.globe?.enabled ?? false},
     shadowEnabled: false,
     _subLayerProps: {
       geojson: {shadowEnabled: false},

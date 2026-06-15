@@ -6,6 +6,7 @@ import React, {useState, useMemo, useCallback} from 'react';
 import {Button} from '../common/styled-components';
 import MapStyleSelectorFactory from './map-style-panel/map-style-selector';
 import LayerGroupSelectorFactory from './map-style-panel/map-layer-selector';
+import GlobeConfigPanelFactory from './map-style-panel/globe-config-panel';
 import PanelTitleFactory from '../side-panel/panel-title';
 
 import {Add, Trash} from '../common/icons';
@@ -13,10 +14,12 @@ import {PanelMeta} from './common/types';
 import {injectIntl, WrappedComponentProps} from 'react-intl';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {MapStyle} from '@kepler.gl/reducers';
-import {MapStyleActions} from '@kepler.gl/actions';
+import {MapStyleActions, MapStateActions} from '@kepler.gl/actions';
+import {MapState} from '@kepler.gl/types';
 
 export type MapManagerProps = {
   mapStyle: MapStyle;
+  mapState?: MapState;
   mapStyleActions: {
     mapStyleChange: typeof MapStyleActions.mapStyleChange;
     mapConfigChange: typeof MapStyleActions.mapConfigChange;
@@ -24,21 +27,27 @@ export type MapManagerProps = {
     setBackgroundColor: typeof MapStyleActions.setBackgroundColor;
     removeCustomMapStyle: typeof MapStyleActions.removeCustomMapStyle;
   };
+  mapStateActions?: {
+    globeConfigChange: typeof MapStateActions.globeConfigChange;
+  };
   showAddMapStyleModal: () => void;
   panelMetadata: PanelMeta;
 } & WrappedComponentProps;
 
-MapManagerFactory.deps = [MapStyleSelectorFactory, LayerGroupSelectorFactory, PanelTitleFactory];
+MapManagerFactory.deps = [MapStyleSelectorFactory, LayerGroupSelectorFactory, PanelTitleFactory, GlobeConfigPanelFactory];
 
 function MapManagerFactory(
   MapStyleSelector: ReturnType<typeof MapStyleSelectorFactory>,
   LayerGroupSelector: ReturnType<typeof LayerGroupSelectorFactory>,
-  PanelTitle: ReturnType<typeof PanelTitleFactory>
+  PanelTitle: ReturnType<typeof PanelTitleFactory>,
+  GlobeConfigPanel: ReturnType<typeof GlobeConfigPanelFactory>
 ) {
   const MapManager: React.FC<MapManagerProps> = ({
     mapStyle,
+    mapState,
     intl,
     mapStyleActions,
+    mapStateActions,
     showAddMapStyleModal,
     panelMetadata
   }) => {
@@ -98,7 +107,7 @@ function MapManagerFactory(
             toggleActive={toggleSelecting}
             customMapStylesActions={customMapStylesActions}
           />
-          {editableLayers.length ? (
+          {editableLayers.length && !mapState?.globe?.enabled ? (
             <LayerGroupSelector
               layers={mapStyle.visibleLayerGroups}
               editableLayers={editableLayers}
@@ -110,6 +119,12 @@ function MapManagerFactory(
               onBackgroundColorChange={mapStyleActions.setBackgroundColor}
             />
           ) : null}
+          {mapState?.globe?.enabled && mapStateActions?.globeConfigChange && (
+            <GlobeConfigPanel
+              mapState={mapState}
+              onGlobeConfigChange={mapStateActions.globeConfigChange}
+            />
+          )}
         </div>
       </div>
     );

@@ -38,6 +38,26 @@ export type MapState = {
   isZoomLocked: boolean;
   /**  An array of either 0 or 2 Viewport objects (index 0 for left map; index 1 for right map) */
   splitMapViewports: Viewport[];
+  mapViewMode?: string;
+  globe?: {
+    enabled: boolean;
+    config: {
+      atmosphere: boolean;
+      azimuth: boolean;
+      azimuthAngle: number;
+      terminator: boolean;
+      terminatorOpacity: number;
+      basemap: boolean;
+      labels: boolean;
+      labelsColor: [number, number, number];
+      adminLines: boolean;
+      adminLinesColor: [number, number, number];
+      water: boolean;
+      waterColor: [number, number, number];
+      surfaceColor: [number, number, number];
+      surface: boolean;
+    };
+  };
 };
 
 export type Bounds = [number, number, number, number];

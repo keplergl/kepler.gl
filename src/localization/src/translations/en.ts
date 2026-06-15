@@ -46,7 +46,13 @@ export default {
     water: 'Water',
     land: 'Land',
     '3dBuilding': '3d Building',
-    background: 'Background'
+    background: 'Background',
+    atmosphere: 'Atmosphere',
+    basemap: 'Basemap',
+    adminBorders: 'Admin Borders',
+    terminator: 'Day/Night',
+    sunAzimuth: 'Sun Azimuth',
+    surface: 'Globe Surface'
   },
   panel: {
     text: {
@@ -249,7 +255,8 @@ export default {
     mapStyle: 'Map style',
     addMapStyle: 'Add Map Style',
     '3dBuildingColor': '3D Building Color',
-    backgroundColor: 'Background Color'
+    backgroundColor: 'Background Color',
+    globeLayers: 'Globe Layers'
   },
   effectManager: {
     effects: 'Effects',
@@ -346,6 +353,10 @@ export default {
     switchToDualView: 'Switch to dual map view',
     showLegend: 'Show legend',
     disable3DMap: 'Disable 3D Map',
+    globeMap: 'Globe Map',
+    disableGlobeMap: 'Disable Globe Map',
+    viewMode: 'View Mode',
+    top: 'Top',
     DrawOnMap: 'Draw on map',
     selectLocale: 'Select locale',
     showAiAssistantPanel: 'Show AI Assistant',

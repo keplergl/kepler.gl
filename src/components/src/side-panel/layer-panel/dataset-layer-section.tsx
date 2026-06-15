@@ -10,6 +10,7 @@ import {Layer, LayerClassesType} from '@kepler.gl/layers';
 import {UIStateActions, ActionHandler, VisStateActions, MapStateActions} from '@kepler.gl/actions';
 import {KeplerTable, Datasets} from '@kepler.gl/table';
 import {getApplicationConfig} from '@kepler.gl/utils';
+import {MapState} from '@kepler.gl/types';
 
 type DatasetLayerSectionProps = {
   datasets: Datasets;
@@ -24,6 +25,7 @@ type DatasetLayerSectionProps = {
   uiStateActions: typeof UIStateActions;
   visStateActions: typeof VisStateActions;
   mapStateActions: typeof MapStateActions;
+  mapState?: MapState;
 };
 
 const DatasetLayerSectionWrapper = styled.div.attrs({
@@ -51,7 +53,8 @@ function DatasetLayerSectionFactory(
       layerClasses,
       uiStateActions,
       visStateActions,
-      mapStateActions
+      mapStateActions,
+      mapState
     } = props;
 
     const datasetCatalog = useMemo(() => {
@@ -102,6 +105,7 @@ function DatasetLayerSectionFactory(
           uiStateActions={uiStateActions}
           visStateActions={visStateActions}
           mapStateActions={mapStateActions}
+          mapState={mapState}
           isSortable={false}
         />
       </DatasetLayerSectionWrapper>

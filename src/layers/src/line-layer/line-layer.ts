@@ -4,6 +4,7 @@
 import * as arrow from 'apache-arrow';
 
 import {BrushingExtension} from '@deck.gl/extensions';
+import {ArcLayer as DeckArcLayer} from '@deck.gl/layers';
 
 import {GeoArrowArcLayer} from '@kepler.gl/deckgl-arrow-layers';
 import {FilterArrowExtension} from '@kepler.gl/deckgl-layers';
@@ -267,7 +268,7 @@ export default class LineLayer extends ArcLayer {
   }
 
   renderLayer(opts) {
-    const {data, gpuFilter, objectHovered, interactionConfig, dataset} = opts;
+    const {data, gpuFilter, objectHovered, interactionConfig, dataset, mapState} = opts;
 
     const layerProps = {
       widthScale: this.config.visConfig.thickness * PROJECTED_PIXEL_SIZE_MULTIPLIER,
@@ -282,6 +283,38 @@ export default class LineLayer extends ArcLayer {
     };
     const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
     const hoveredObject = this.hasHoveredObject(objectHovered);
+
+    const globeMode = mapState?.globe?.enabled;
+
+    if (globeMode) {
+      const id = `${defaultLayerProps.id}-globe`;
+      return [
+        new DeckArcLayer({
+          ...defaultLayerProps,
+          ...this.getBrushingExtensionProps(interactionConfig, 'source_target'),
+          ...data,
+          ...layerProps,
+          id,
+          updateTriggers,
+          extensions: [...defaultLayerProps.extensions, brushingExtension],
+          parameters: {depthMask: false},
+          getSourceColor: data.getColor,
+          widthUnits: 'pixels' as const
+        }),
+        ...(hoveredObject
+          ? [
+              new EnhancedLineLayer({
+                ...this.getDefaultHoverLayerProps(),
+                ...layerProps,
+                data: [hoveredObject],
+                getColor: this.config.highlightColor,
+                getTargetColor: this.config.highlightColor,
+                getWidth: data.getWidth
+              })
+            ]
+          : [])
+      ];
+    }
 
     const useArrowLayer = Boolean(this.geoArrowVector0);
 
