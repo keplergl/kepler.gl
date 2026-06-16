@@ -174,7 +174,7 @@ export default class LayoutSplitter extends Component<LayoutSplitterProps> {
     evt.stopPropagation();
     evt.preventDefault();
     this.dragging = true;
-    (evt.target as HTMLElement).setPointerCapture(evt.pointerId);
+    (evt.currentTarget as HTMLElement).setPointerCapture(evt.pointerId);
   };
 
   handlePointerMove = (evt: React.PointerEvent): void => {
@@ -193,7 +193,7 @@ export default class LayoutSplitter extends Component<LayoutSplitterProps> {
     evt.stopPropagation();
     evt.preventDefault();
     this.dragging = false;
-    (evt.target as HTMLElement).releasePointerCapture(evt.pointerId);
+    (evt.currentTarget as HTMLElement).releasePointerCapture(evt.pointerId);
 
     const nextValue = this.getNextValue(evt.clientX, evt.clientY);
     const {percentageSplit, onMove, onRelease} = this.props;
