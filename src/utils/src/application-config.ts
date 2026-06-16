@@ -105,6 +105,9 @@ export type KeplerApplicationConfig = {
 
   /** Whether to show the map navigation control (zoom buttons and compass). Enabled by default. */
   enableMapNavigationControl?: boolean;
+
+  /** Whether to enable the swipe compare mode in split map view. Enabled by default. */
+  enableSwipeMode?: boolean;
 };
 
 const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
@@ -175,7 +178,9 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
 
   enableAnnotations: true,
 
-  enableMapNavigationControl: true
+  enableMapNavigationControl: true,
+
+  enableSwipeMode: true
 };
 
 const applicationConfig: Required<KeplerApplicationConfig> = DEFAULT_APPLICATION_CONFIG;

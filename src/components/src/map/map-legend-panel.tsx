@@ -19,6 +19,7 @@ import {CSS} from '@dnd-kit/utilities';
 import {useMergeRefs} from '@floating-ui/react';
 
 import {ActionHandler, setMapControlSettings, toggleSplitMapViewport} from '@kepler.gl/actions';
+import {MapSplitMode} from '@kepler.gl/constants';
 import {Layer} from '@kepler.gl/layers';
 import {breakPointValues} from '@kepler.gl/styles';
 import {LayerVisConfig, MapControlMapLegend, MapControls, MapState} from '@kepler.gl/types';
@@ -372,7 +373,7 @@ const MapLegendPanelComponent = ({
   MapControlPanel,
   MapLegend
 }: MapLegendPanelProps & MapLegendPanelComponents) => {
-  const isSwipeMode = mapState?.mapSplitMode === 'SWIPE_COMPARE';
+  const isSwipeMode = mapState?.mapSplitMode === MapSplitMode.SWIPE_COMPARE;
   const isSidePanelShown = Boolean(activeSidePanel);
   const settings = mapControls?.mapLegend?.settings;
 

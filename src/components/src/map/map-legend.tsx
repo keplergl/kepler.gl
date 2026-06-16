@@ -366,6 +366,7 @@ export function LayerLegendHeaderFactory() {
   const LayerLegendHeader: React.FC<LayerLegendHeaderProps> = ({
     options,
     layer,
+    isExport,
     onToggleLayerVisibility,
     isSplit,
     splitMaps,
@@ -417,7 +418,7 @@ export function LayerLegendHeaderFactory() {
             {isExpanded ? <ArrowDown height="12px" /> : <ArrowRight height="12px" />}
           </StyledExpandToggle>
         ) : null}
-        {onToggleLayerVisibility && isSplit && splitMaps && splitMaps.length > 1 ? (
+        {!isExport && onMapToggleLayer && isSplit && splitMaps && splitMaps.length > 1 ? (
           <StyledSplitVisibilityControls>
             <StyledVisibilityToggle $isVisible={isLeftVisible} onClick={onToggleLeft}>
               {isLeftVisible ? <EyeSeen height="12px" /> : <EyeUnseen height="12px" />}
@@ -427,7 +428,7 @@ export function LayerLegendHeaderFactory() {
               {isRightVisible ? <EyeSeen height="12px" /> : <EyeUnseen height="12px" />}
             </StyledVisibilityToggle>
           </StyledSplitVisibilityControls>
-        ) : onToggleLayerVisibility ? (
+        ) : !isExport && onToggleLayerVisibility ? (
           <StyledVisibilityToggle $isVisible={isVisible} onClick={onToggle}>
             {isVisible ? <EyeSeen height="12px" /> : <EyeUnseen height="12px" />}
           </StyledVisibilityToggle>

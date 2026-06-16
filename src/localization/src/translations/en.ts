@@ -344,6 +344,7 @@ export default {
     layerSettings: 'Layer settings',
     closePanel: 'Close current panel',
     switchToDualView: 'Switch to dual map view',
+    selectSplitMode: 'Select map view mode',
     showLegend: 'Show legend',
     disable3DMap: 'Disable 3D Map',
     DrawOnMap: 'Draw on map',

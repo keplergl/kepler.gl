@@ -312,6 +312,7 @@ export default {
     layerSettings: 'Tason asetukset',
     closePanel: 'Sulje paneeli',
     switchToDualView: 'Vaihda kaksoiskarrtanäkymään',
+    selectSplitMode: 'Valitse karttanäkymätila',
     showLegend: 'Näytä selite',
     disable3DMap: 'Poistu 3D-näkymästä',
     DrawOnMap: 'Piirrä kartalle',

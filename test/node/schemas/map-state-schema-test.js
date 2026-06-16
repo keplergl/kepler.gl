@@ -31,7 +31,7 @@ test('#mapStateSchema -> v1 -> save load mapState', t => {
       'mapSplitMode',
       'swipeComparePercentage'
     ],
-    'mapState should have all 6 entries'
+    'mapState should have all 12 entries'
   );
 
   const expected = {

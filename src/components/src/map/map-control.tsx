@@ -16,6 +16,7 @@ import {Layer} from '@kepler.gl/layers';
 import {Editor, LayerVisConfig, MapControls, MapState} from '@kepler.gl/types';
 import {Datasets} from '@kepler.gl/table';
 import {MapStateActions, UIStateActions} from '@kepler.gl/actions';
+import {getApplicationConfig} from '@kepler.gl/utils';
 
 import AnnotationControlFactory from './annotations/annotation-control';
 
@@ -134,7 +135,9 @@ function MapControlFactory(
       mapIndex,
       logoComponent,
       mapState,
-      onSetMapSplitMode: mapStateActions?.setMapSplitMode,
+      onSetMapSplitMode: getApplicationConfig().enableSwipeMode
+        ? mapStateActions?.setMapSplitMode
+        : undefined,
       ...restProps
     };
     return (

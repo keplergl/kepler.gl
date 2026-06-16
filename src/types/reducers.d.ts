@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {Field, Millisecond} from './types';
+import {MapSplitMode} from '@kepler.gl/constants';
 type MapViewState = {
   latitude: number;
   longitude: number;
@@ -39,7 +40,7 @@ export type MapState = {
   /**  An array of either 0 or 2 Viewport objects (index 0 for left map; index 1 for right map) */
   splitMapViewports: Viewport[];
   /** The current split map mode (single, dual, swipe) */
-  mapSplitMode: string;
+  mapSplitMode: MapSplitMode;
   /** Swipe compare divider position as a percentage (0-100) */
   swipeComparePercentage: number;
 };

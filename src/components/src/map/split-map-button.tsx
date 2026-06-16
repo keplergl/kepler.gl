@@ -21,7 +21,7 @@ export type SplitMapButtonProps = {
   isSplit: boolean;
   mapIndex: number;
   onToggleSplitMap: (index?: number) => void;
-  onSetMapSplitMode?: (payload: {mapSplitMode: string}) => void;
+  onSetMapSplitMode?: (payload: {mapSplitMode: MapSplitMode}) => void;
   actionIcons: SplitMapButtonIcons;
   readOnly: boolean;
   mapControls: MapControls;
@@ -112,7 +112,7 @@ function SplitMapButtonFactory(MapControlTooltip) {
     const handleModeSelect = useCallback(
       (mode: string) => {
         if (onSetMapSplitMode) {
-          onSetMapSplitMode({mapSplitMode: mode});
+          onSetMapSplitMode({mapSplitMode: mode as MapSplitMode});
         }
         setMenuOpen(false);
       },
@@ -142,7 +142,13 @@ function SplitMapButtonFactory(MapControlTooltip) {
       <div style={{position: 'relative'}} ref={menuRef}>
         <MapControlTooltip
           id="action-toggle"
-          message={isSplit ? 'tooltip.closePanel' : 'tooltip.switchToDualView'}
+          message={
+            onSetMapSplitMode
+              ? 'tooltip.selectSplitMode'
+              : isSplit
+              ? 'tooltip.closePanel'
+              : 'tooltip.switchToDualView'
+          }
         >
           <MapControlButton
             active={isSplit}

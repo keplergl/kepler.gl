@@ -4,6 +4,7 @@
 import {createAction} from '@reduxjs/toolkit';
 import {default as ActionTypes} from './action-types';
 import {Bounds, Merge, Viewport} from '@kepler.gl/types';
+import {MapSplitMode} from '@kepler.gl/constants';
 
 export type TogglePerspectiveUpdaterAction = void;
 /**
@@ -116,20 +117,20 @@ export const toggleSplitMapViewport: (payload: {
 
 export type SetMapSplitModeUpdaterAction = {
   payload: {
-    mapSplitMode: string;
+    mapSplitMode: MapSplitMode;
   };
 };
 /**
  * Set map split mode (single, dual, or swipe)
  * @memberof mapStateActions
  * @param {Object} payload
- * @param {string} payload.mapSplitMode The split mode to set
+ * @param {MapSplitMode} payload.mapSplitMode The split mode to set
  * @public
  */
 export const setMapSplitMode: (payload: {
-  mapSplitMode: string;
+  mapSplitMode: MapSplitMode;
 }) => Merge<SetMapSplitModeUpdaterAction, {type: typeof ActionTypes.SET_MAP_SPLIT_MODE}> =
-  createAction(ActionTypes.SET_MAP_SPLIT_MODE, (payload: {mapSplitMode: string}) => ({payload}));
+  createAction(ActionTypes.SET_MAP_SPLIT_MODE, (payload: {mapSplitMode: MapSplitMode}) => ({payload}));
 
 export type SetSwipeComparePercentageUpdaterAction = {
   payload: {
