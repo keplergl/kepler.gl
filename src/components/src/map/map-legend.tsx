@@ -93,6 +93,37 @@ const StyledVisibilityToggle = styled.div<{$isVisible: boolean}>`
   }
 `;
 
+const StyledSplitVisibilityControls = styled.div`
+  display: flex;
+  align-items: center;
+  margin-left: 8px;
+  gap: 4px;
+
+  ${StyledVisibilityToggle} {
+    margin-left: 0;
+  }
+`;
+
+const StyledSplitSeparator = styled.div<{$isVisible: boolean}>`
+  width: 1px;
+  height: 12px;
+  background: ${props => (props.$isVisible ? props.theme.textColor : props.theme.subtextColor)};
+  opacity: 0.3;
+`;
+
+const StyledExpandToggle = styled.div`
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  margin-left: 6px;
+  color: ${props => props.theme.textColor};
+  opacity: 0.7;
+
+  &:hover {
+    opacity: 1;
+  }
+`;
+
 export const VisualChannelMetric = ({name}) => {
   return (
     <div className="legend--layer__title">
@@ -321,6 +352,11 @@ export type LayerLegendHeaderProps = {
   };
   isExport?: boolean;
   onToggleLayerVisibility?: (layer: Layer) => void;
+  isSplit?: boolean;
+  splitMaps?: {layers: {[key: string]: boolean}}[];
+  onMapToggleLayer?: (mapIndex: number, layerId: string) => void;
+  isExpanded?: boolean;
+  onToggleExpanded?: () => void;
 };
 
 const isRadiusChannel = visualChannel =>
@@ -330,25 +366,69 @@ export function LayerLegendHeaderFactory() {
   const LayerLegendHeader: React.FC<LayerLegendHeaderProps> = ({
     options,
     layer,
-    onToggleLayerVisibility
+    isExport,
+    onToggleLayerVisibility,
+    isSplit,
+    splitMaps,
+    onMapToggleLayer,
+    isExpanded,
+    onToggleExpanded
   }) => {
     const isVisible = layer.config.isVisible;
+
     const onToggle = useCallback(() => {
       if (onToggleLayerVisibility) {
         onToggleLayerVisibility(layer);
       }
     }, [layer, onToggleLayerVisibility]);
 
+    const onToggleLeft = useCallback(() => {
+      if (onMapToggleLayer) {
+        onMapToggleLayer(0, layer.id);
+      }
+    }, [layer, onMapToggleLayer]);
+
+    const onToggleRight = useCallback(() => {
+      if (onMapToggleLayer) {
+        onMapToggleLayer(1, layer.id);
+      }
+    }, [layer, onMapToggleLayer]);
+
     if (options?.showLayerName === false) {
       return null;
     }
 
+    const isLeftVisible =
+      isSplit && splitMaps && splitMaps.length > 1
+        ? isVisible && Boolean(splitMaps[0]?.layers?.[layer.id])
+        : isVisible;
+    const isRightVisible =
+      isSplit && splitMaps && splitMaps.length > 1
+        ? isVisible && Boolean(splitMaps[1]?.layers?.[layer.id])
+        : isVisible;
+    const isAnyVisible = isLeftVisible || isRightVisible;
+
     return (
       <StyledLegendHeaderRow>
-        <div className="legend--layer_name" style={{opacity: isVisible ? 1 : 0.5}}>
+        <div className="legend--layer_name" style={{opacity: isAnyVisible ? 1 : 0.5, flex: 1}}>
           {layer.config.label}
         </div>
-        {onToggleLayerVisibility ? (
+        {onToggleExpanded ? (
+          <StyledExpandToggle onClick={onToggleExpanded}>
+            {isExpanded ? <ArrowDown height="12px" /> : <ArrowRight height="12px" />}
+          </StyledExpandToggle>
+        ) : null}
+        {!isExport && onMapToggleLayer && isSplit && splitMaps && splitMaps.length > 1 ? (
+          <StyledSplitVisibilityControls>
+            <StyledVisibilityToggle $isVisible={isLeftVisible} onClick={onToggleLeft}>
+              {isLeftVisible ? <EyeSeen height="12px" /> : <EyeUnseen height="12px" />}
+            </StyledVisibilityToggle>
+            <StyledSplitSeparator $isVisible={isAnyVisible} />
+            <StyledVisibilityToggle $isVisible={isRightVisible} onClick={onToggleRight}>
+              {isRightVisible ? <EyeSeen height="12px" /> : <EyeUnseen height="12px" />}
+            </StyledVisibilityToggle>
+          </StyledSplitVisibilityControls>
+        ) : !isExport && onToggleLayerVisibility ? (
           <StyledVisibilityToggle $isVisible={isVisible} onClick={onToggle}>
             {isVisible ? <EyeSeen height="12px" /> : <EyeUnseen height="12px" />}
           </StyledVisibilityToggle>
@@ -467,6 +547,9 @@ export type MapLegendProps = {
   isExport?: boolean;
   onLayerVisConfigChange?: (oldLayer: Layer, newVisConfig: Partial<LayerVisConfig>) => void;
   onToggleLayerVisibility?: (layer: Layer) => void;
+  onMapToggleLayer?: (mapIndex: number, layerId: string) => void;
+  isSplit?: boolean;
+  splitMaps?: {layers: {[key: string]: boolean}}[];
   actionIcons?: MapLegendIcons;
 };
 
@@ -476,37 +559,55 @@ function MapLegendFactory(
   LayerLegendHeader: ReturnType<typeof LayerLegendHeaderFactory>,
   LayerLegendContent: ReturnType<typeof LayerLegendContentFactory>
 ) {
-  const MapLegend: React.FC<MapLegendProps> = ({
-    layers = [],
-    width,
-    mapState,
-    options,
-    disableEdit,
+  const LayerLegendItem: React.FC<{
+    layer: Layer;
+    containerW: number;
+    isLast: boolean;
+    isLayerVisible: boolean;
+    isExport?: boolean;
+    options?: {showLayerName?: boolean};
+    mapState?: MapState;
+    disableEdit?: boolean;
+    onLayerVisConfigChange?: (oldLayer: Layer, newVisConfig: Partial<LayerVisConfig>) => void;
+    onToggleLayerVisibility?: (layer: Layer) => void;
+    onMapToggleLayer?: (mapIndex: number, layerId: string) => void;
+    isSplit?: boolean;
+    splitMaps?: {layers: {[key: string]: boolean}}[];
+    actionIcons: MapLegendIcons;
+  }> = ({
+    layer,
+    containerW,
+    isLast,
+    isLayerVisible,
     isExport,
+    options,
+    mapState,
+    disableEdit,
     onLayerVisConfigChange,
     onToggleLayerVisibility,
-    actionIcons = defaultActionIcons
-  }) => (
-    <div className="map-legend">
-      {layers.map((layer, index) => {
-        if (!layer.isValidToSave() || layer.config.hidden) {
-          return null;
-        }
-        const containerW = width || DIMENSIONS.mapControl.width;
+    onMapToggleLayer,
+    isSplit,
+    splitMaps,
+    actionIcons
+  }) => {
+    const [isExpanded, setIsExpanded] = useState(true);
+    const handleToggleExpanded = useCallback(() => setIsExpanded(prev => !prev), []);
 
-        return (
-          <StyledMapControlLegend
-            className="legend--layer"
-            $last={index === layers.length - 1}
-            key={index}
-            width={containerW}
-          >
-            <LayerLegendHeader
-              isExport={isExport}
-              options={options}
-              layer={layer}
-              onToggleLayerVisibility={onToggleLayerVisibility}
-            />
+    return (
+      <StyledMapControlLegend className="legend--layer" $last={isLast} width={containerW}>
+        <LayerLegendHeader
+          isExport={isExport}
+          options={options}
+          layer={layer}
+          onToggleLayerVisibility={onToggleLayerVisibility}
+          isSplit={isSplit}
+          splitMaps={splitMaps}
+          onMapToggleLayer={onMapToggleLayer}
+          isExpanded={isExpanded}
+          onToggleExpanded={isExport ? undefined : handleToggleExpanded}
+        />
+        {isExpanded ? (
+          <div style={{opacity: isLayerVisible ? 1 : 0.5}}>
             <LayerLegendContent
               containerW={containerW}
               layer={layer}
@@ -516,7 +617,58 @@ function MapLegendFactory(
               onLayerVisConfigChange={onLayerVisConfigChange}
               actionIcons={actionIcons}
             />
-          </StyledMapControlLegend>
+          </div>
+        ) : null}
+      </StyledMapControlLegend>
+    );
+  };
+
+  const MapLegend: React.FC<MapLegendProps> = ({
+    layers = [],
+    width,
+    mapState,
+    options,
+    disableEdit,
+    isExport,
+    onLayerVisConfigChange,
+    onToggleLayerVisibility,
+    onMapToggleLayer,
+    isSplit,
+    splitMaps,
+    actionIcons = defaultActionIcons
+  }) => (
+    <div className="map-legend">
+      {layers.map((layer, index) => {
+        if (!layer.isValidToSave() || layer.config.hidden) {
+          return null;
+        }
+        const containerW = width || DIMENSIONS.mapControl.width;
+
+        const isLayerVisible =
+          isSplit && splitMaps && splitMaps.length > 1
+            ? layer.config.isVisible &&
+              (Boolean(splitMaps[0]?.layers?.[layer.id]) ||
+                Boolean(splitMaps[1]?.layers?.[layer.id]))
+            : layer.config.isVisible;
+
+        return (
+          <LayerLegendItem
+            key={layer.id}
+            layer={layer}
+            containerW={containerW}
+            isLast={index === layers.length - 1}
+            isLayerVisible={isLayerVisible}
+            isExport={isExport}
+            options={options}
+            mapState={mapState}
+            disableEdit={disableEdit}
+            onLayerVisConfigChange={onLayerVisConfigChange}
+            onToggleLayerVisibility={onToggleLayerVisibility}
+            onMapToggleLayer={onMapToggleLayer}
+            isSplit={isSplit}
+            splitMaps={splitMaps}
+            actionIcons={actionIcons}
+          />
         );
       })}
     </div>
