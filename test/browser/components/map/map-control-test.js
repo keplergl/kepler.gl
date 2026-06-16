@@ -102,7 +102,7 @@ test('MapControlFactory - display options', t => {
   t.equal(wrapper.find(MapControl).length, 1, 'Should render MapControl');
 
   // layer selector is not active
-  t.equal(wrapper.find(MapControlButton).length, 5, 'Should show 5 MapControlButton');
+  t.equal(wrapper.find(MapControlButton).length, 6, 'Should show 6 MapControlButton');
 
   t.equal(wrapper.find(Split).length, 1, 'Should show 1 split map button');
   t.equal(wrapper.find(Cube3d).length, 1, 'Should show 1 toggle 3d button');
