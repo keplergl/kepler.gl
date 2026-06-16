@@ -96,23 +96,24 @@ const HandleWrapper = styled.div<{mode: LayoutSplitterMode}>(
 
 const Handle = styled.div`
   display: flex;
-  width: 45px;
-  height: 45px;
+  width: 36px;
+  height: 36px;
   align-items: center;
   justify-content: center;
-  padding: 5px;
-  background-color: ${props => (props.theme.activeColor || '#1FBAD6')};
-  color: #FFFFFF;
+  padding: 4px;
+  background-color: ${props => props.theme.panelBackground || '#29323C'};
+  color: ${props => props.theme.textColor || '#FFFFFF'};
   border: 2px solid #FFFFFF;
   border-radius: 50%;
   background-position: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 `;
 
-const ArrowIcon: React.FC<{size?: number; mode: LayoutSplitterMode}> = ({size = 29, mode}) => (
+const ArrowIcon: React.FC<{size?: number; mode: LayoutSplitterMode}> = ({size = 20, mode}) => (
   <svg width={size} height={size} viewBox="-15 -15 30 30">
     <g transform={mode === LayoutSplitterMode.HORIZONTAL ? 'rotate(90)' : ''}>
-      <path d="M-15,0 L-5,-6 L-5,6Z" fill="#FFFFFF" />
-      <path d="M15,0 L5,-6 L5,6Z" fill="#FFFFFF" />
+      <path d="M-15,0 L-5,-6 L-5,6Z" fill="currentColor" />
+      <path d="M15,0 L5,-6 L5,6Z" fill="currentColor" />
     </g>
   </svg>
 );
@@ -120,7 +121,7 @@ const ArrowIcon: React.FC<{size?: number; mode: LayoutSplitterMode}> = ({size = 
 export default class LayoutSplitter extends Component<LayoutSplitterProps> {
   static defaultProps = {
     mode: LayoutSplitterMode.VERTICAL,
-    size: 5,
+    size: 2,
     resizeThrottleDelay: 50
   };
 
