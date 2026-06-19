@@ -2,7 +2,6 @@
 // Copyright contributors to the kepler.gl project
 
 import React, {useCallback, useMemo} from 'react';
-import {useDispatch} from 'react-redux';
 
 import {injectIntl, WrappedComponentProps} from 'react-intl';
 import styled from 'styled-components';
@@ -21,7 +20,7 @@ import InfoHelperFactory from '../common/info-helper';
 
 import {LAYER_BLENDINGS, OVERLAY_BLENDINGS, PANEL_VIEW_TOGGLES} from '@kepler.gl/constants';
 import {Layer, LayerClassesType} from '@kepler.gl/layers';
-import {UIStateActions, VisStateActions, MapStateActions, ActionHandler, addLayerGroup} from '@kepler.gl/actions';
+import {UIStateActions, VisStateActions, MapStateActions, ActionHandler} from '@kepler.gl/actions';
 import {SidePanelItem} from '../types';
 import {PanelListView, LayerOrder} from '@kepler.gl/types';
 import {Datasets} from '@kepler.gl/table';
@@ -181,7 +180,6 @@ function LayerManagerFactory(
   }) => {
     const {addLayer} = visStateActions;
     const {togglePanelListView} = uiStateActions;
-    const dispatch = useDispatch();
     const onAddLayer = useCallback(
       (dataset: string) => {
         addLayer(undefined, dataset);
@@ -190,8 +188,8 @@ function LayerManagerFactory(
     );
 
     const onAddGroup = useCallback(() => {
-      dispatch(addLayerGroup({}));
-    }, [dispatch]);
+      visStateActions.addLayerGroup({});
+    }, [visStateActions]);
 
     const onTogglePanelListView = useCallback(
       (listView: string) => {

@@ -10,7 +10,7 @@ import {Datasets} from '@kepler.gl/table';
 import {UIStateActions, VisStateActions, MapStateActions} from '@kepler.gl/actions';
 import {LayerOrderGroup, LayerOrder, LayerOrderHierarchy} from '@kepler.gl/types';
 
-import {useDroppable, useDndContext} from '@dnd-kit/core';
+import {useDroppable} from '@dnd-kit/core';
 import {
   useSortable,
   SortableContext,
@@ -320,8 +320,6 @@ function LayerListFactory(
       splitMap
     } = props;
     const {toggleModal: openModal} = uiStateActions;
-    const {active} = useDndContext();
-    const isDraggingLayer = active?.data?.current?.type === SORTABLE_LAYER_TYPE;
 
     const layerEntriesToShow: LayerOrderHierarchy = useMemo(
       () => buildLayerOrderHierarchy(layerOrder, layers),
@@ -330,11 +328,9 @@ function LayerListFactory(
 
     const sidePanelDndItems = useMemo(() => {
       const items = layerEntriesToShow.map(entry => entry[1].id ?? entry[1]);
-      if (isDraggingLayer) {
-        items.push(SORTABLE_LAYER_END_PLACEHOLDER);
-      }
+      items.push(SORTABLE_LAYER_END_PLACEHOLDER);
       return items;
-    }, [layerEntriesToShow, isDraggingLayer]);
+    }, [layerEntriesToShow]);
 
     const layerTypeOptions = useMemo(
       () =>
@@ -406,7 +402,7 @@ function LayerListFactory(
               />
             )
           )}
-          {isDraggingLayer ? <SortableEndPlaceholder /> : null}
+          <SortableEndPlaceholder />
         </SortableContext>
       </Container>
     );
