@@ -14,7 +14,24 @@ import {DragHandle} from './layer-panel-header';
 import {VertDots, EyeSeen, EyeUnseen, Trash, ArrowDown, ArrowRight} from '../../common/icons';
 import PanelHeaderActionFactory from '../panel-header-action';
 
-const CORNER_COLOR = '#4BA9C9';
+const GROUP_COLORS = [
+  '#4BA9C9',
+  '#E8A838',
+  '#8BC58B',
+  '#D67AB1',
+  '#7B8FF7',
+  '#F2726F',
+  '#56C4A0',
+  '#C9A84B'
+];
+
+function getGroupColor(id: string): string {
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) {
+    hash = ((hash << 5) - hash + id.charCodeAt(i)) | 0;
+  }
+  return GROUP_COLORS[Math.abs(hash) % GROUP_COLORS.length];
+}
 
 const RemoveAction = styled.div`
   display: flex;
@@ -48,7 +65,7 @@ const Container = styled(StyledPanelHeader)`
   }
 `;
 
-const CornerTriangle = styled.div`
+const CornerTriangle = styled.div<{$color: string}>`
   position: absolute;
   top: 0;
   left: 0;
@@ -57,7 +74,7 @@ const CornerTriangle = styled.div`
   border-style: solid;
   border-width: ${props => Math.round(props.theme.layerPanelHeaderHeight / 3)}px
     ${props => Math.round(props.theme.layerPanelHeaderHeight / 3)}px 0 0;
-  border-color: ${CORNER_COLOR} transparent transparent transparent;
+  border-color: ${props => props.$color} transparent transparent transparent;
 `;
 
 const Actions = styled.div`
@@ -188,7 +205,7 @@ function LayerGroupHeaderFactory(
     return (
       <div>
         <Container className={className} onClick={onToggleLayerGroupContent}>
-          <CornerTriangle />
+          <CornerTriangle $color={getGroupColor(id)} />
           <LeftSection>
             <DragHandle className="layer__drag-handle" listeners={listeners}>
               <VertDots height="20px" />

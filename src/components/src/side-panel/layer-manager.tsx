@@ -206,6 +206,7 @@ function LayerManagerFactory(
     const enableRasterTileLayer = getApplicationConfig().enableRasterTileLayer;
     const enableWMSLayer = getApplicationConfig().enableWMSLayer;
     const enableFlowLayer = getApplicationConfig().enableFlowLayer;
+    const enableLayerGroups = getApplicationConfig().enableLayerGroups;
 
     const filteredLayerClasses = useMemo(() => {
       let filteredClasses = layerClasses;
@@ -244,13 +245,15 @@ function LayerManagerFactory(
             className="layer-manager-title"
             title={intl.formatMessage({id: panelMetadata.label})}
           >
-            <PanelHeaderAction
-              className="layer-group__create"
-              id="new-layer-group"
-              onClick={onAddGroup}
-              IconComponent={Folder}
-              tooltip="Create layer group"
-            />
+            {enableLayerGroups ? (
+              <PanelHeaderAction
+                className="layer-group__create"
+                id="new-layer-group"
+                onClick={onAddGroup}
+                IconComponent={Folder}
+                tooltip="Create layer group"
+              />
+            ) : null}
             <AddLayerButton datasets={datasets} onAdd={onAddLayer} />
           </PanelTitle>
         </SidePanelSection>
