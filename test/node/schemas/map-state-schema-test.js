@@ -27,9 +27,11 @@ test('#mapStateSchema -> v1 -> save load mapState', t => {
       'isViewportSynced',
       'isZoomLocked',
       'splitMapViewports',
-      'maxPitch'
+      'maxPitch',
+      'mapSplitMode',
+      'swipeComparePercentage'
     ],
-    'mapState should have all 6 entries'
+    'mapState should have all 12 entries'
   );
 
   const expected = {
@@ -43,7 +45,9 @@ test('#mapStateSchema -> v1 -> save load mapState', t => {
     isViewportSynced: true,
     isZoomLocked: false,
     splitMapViewports: [],
-    maxPitch: undefined
+    maxPitch: undefined,
+    mapSplitMode: 'SINGLE_MAP',
+    swipeComparePercentage: 50
   };
 
   t.deepEqual(msToSave, expected, 'save mapState should be current');

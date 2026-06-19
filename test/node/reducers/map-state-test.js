@@ -9,7 +9,9 @@ import {
   fitBounds,
   toggleSplitMap,
   toggleSplitMapViewport,
-  receiveMapConfig
+  receiveMapConfig,
+  setMapSplitMode,
+  setSwipeComparePercentage
 } from '@kepler.gl/actions';
 
 import {
@@ -433,7 +435,8 @@ test('#mapStateReducer -> SPLIT_MAP: toggle', t => {
   const expectedState = {
     ...INITIAL_MAP_STATE,
     isSplit: true,
-    width: 400
+    width: 400,
+    mapSplitMode: 'DUAL_MAP'
   };
 
   // validate the first split
@@ -523,7 +526,8 @@ test('#mapStateReducer -> SPLIT_MAP: close map at specific point', t => {
   const expectedState = {
     ...INITIAL_MAP_STATE,
     isSplit: true,
-    width: 400
+    width: 400,
+    mapSplitMode: 'DUAL_MAP'
   };
 
   // validate the first split
@@ -638,6 +642,107 @@ test('#mapStateReducer -> TOGGLE_SPLIT_MAP_VIEWPORT', t => {
     newState.isZoomLocked,
     false,
     'changing isViewportSynced to false should also retain isZoomLocked as false'
+  );
+
+  t.end();
+});
+
+test('#mapStateReducer -> SET_MAP_SPLIT_MODE: single to swipe', t => {
+  const newState = reducer(INITIAL_MAP_STATE, setMapSplitMode({mapSplitMode: 'SWIPE_COMPARE'}));
+
+  t.equal(newState.isSplit, true, 'should set isSplit to true');
+  t.equal(newState.mapSplitMode, 'SWIPE_COMPARE', 'should set mapSplitMode to SWIPE_COMPARE');
+  t.equal(newState.swipeComparePercentage, 50, 'should keep default swipe percentage');
+  t.equal(newState.isViewportSynced, true, 'should force viewport sync in swipe mode');
+  t.equal(newState.width, 800, 'should NOT halve width in swipe mode');
+
+  t.end();
+});
+
+test('#mapStateReducer -> SET_MAP_SPLIT_MODE: single to dual', t => {
+  const newState = reducer(INITIAL_MAP_STATE, setMapSplitMode({mapSplitMode: 'DUAL_MAP'}));
+
+  t.equal(newState.isSplit, true, 'should set isSplit to true');
+  t.equal(newState.mapSplitMode, 'DUAL_MAP', 'should set mapSplitMode to DUAL_MAP');
+  t.equal(newState.width, 400, 'should halve width in dual mode');
+
+  t.end();
+});
+
+test('#mapStateReducer -> SET_MAP_SPLIT_MODE: swipe to single', t => {
+  let state = reducer(INITIAL_MAP_STATE, setMapSplitMode({mapSplitMode: 'SWIPE_COMPARE'}));
+  state = reducer(state, setMapSplitMode({mapSplitMode: 'SINGLE_MAP'}));
+
+  t.equal(state.isSplit, false, 'should set isSplit to false');
+  t.equal(state.mapSplitMode, 'SINGLE_MAP', 'should set mapSplitMode to SINGLE_MAP');
+  t.equal(state.width, 800, 'should restore full width');
+
+  t.end();
+});
+
+test('#mapStateReducer -> SET_MAP_SPLIT_MODE: dual to swipe', t => {
+  let state = reducer(INITIAL_MAP_STATE, setMapSplitMode({mapSplitMode: 'DUAL_MAP'}));
+  t.equal(state.width, 400, 'dual mode should halve width');
+
+  state = reducer(state, setMapSplitMode({mapSplitMode: 'SWIPE_COMPARE'}));
+
+  t.equal(state.isSplit, true, 'should remain split');
+  t.equal(state.mapSplitMode, 'SWIPE_COMPARE', 'should switch to SWIPE_COMPARE');
+  t.equal(state.width, 800, 'should restore full width in swipe mode');
+  t.equal(state.isViewportSynced, true, 'should force viewport sync');
+
+  t.end();
+});
+
+test('#mapStateReducer -> SET_MAP_SPLIT_MODE: swipe to dual', t => {
+  let state = reducer(INITIAL_MAP_STATE, setMapSplitMode({mapSplitMode: 'SWIPE_COMPARE'}));
+  state = reducer(state, setMapSplitMode({mapSplitMode: 'DUAL_MAP'}));
+
+  t.equal(state.isSplit, true, 'should remain split');
+  t.equal(state.mapSplitMode, 'DUAL_MAP', 'should switch to DUAL_MAP');
+  t.equal(state.width, 400, 'should halve width in dual mode');
+
+  t.end();
+});
+
+test('#mapStateReducer -> SET_MAP_SPLIT_MODE: same mode is no-op', t => {
+  const state = reducer(INITIAL_MAP_STATE, setMapSplitMode({mapSplitMode: 'SINGLE_MAP'}));
+
+  t.equal(state, INITIAL_MAP_STATE, 'should return same state reference when mode unchanged');
+
+  t.end();
+});
+
+test('#mapStateReducer -> SET_SWIPE_COMPARE_PERCENTAGE', t => {
+  let state = reducer(INITIAL_MAP_STATE, setSwipeComparePercentage({percentage: 30}));
+
+  t.equal(state.swipeComparePercentage, 30, 'should update swipe percentage');
+
+  // same value is no-op
+  const state2 = reducer(state, setSwipeComparePercentage({percentage: 30}));
+  t.equal(state2, state, 'should return same state reference when percentage unchanged');
+
+  // clamps to 0
+  state = reducer(INITIAL_MAP_STATE, setSwipeComparePercentage({percentage: -10}));
+  t.equal(state.swipeComparePercentage, 0, 'should clamp negative values to 0');
+
+  // clamps to 100
+  state = reducer(INITIAL_MAP_STATE, setSwipeComparePercentage({percentage: 150}));
+  t.equal(state.swipeComparePercentage, 100, 'should clamp values above 100 to 100');
+
+  t.end();
+});
+
+test('#mapStateReducer -> toggleSplitMapViewport in SWIPE_COMPARE mode', t => {
+  let state = reducer(INITIAL_MAP_STATE, setMapSplitMode({mapSplitMode: 'SWIPE_COMPARE'}));
+
+  const stateBeforeToggle = state;
+  state = reducer(state, toggleSplitMapViewport({isViewportSynced: false}));
+
+  t.equal(
+    state,
+    stateBeforeToggle,
+    'should not allow unsyncing viewports in swipe mode'
   );
 
   t.end();

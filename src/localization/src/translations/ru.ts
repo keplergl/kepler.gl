@@ -311,6 +311,7 @@ export default {
     layerSettings: 'Настройки слоя',
     closePanel: 'Закрыть текущую панель',
     switchToDualView: 'Перейти в режим двойной карты',
+    selectSplitMode: 'Выбрать режим отображения карты',
     showLegend: 'Показать легенду',
     disable3DMap: 'Отключить 3D Карту',
     DrawOnMap: 'Рисовать на карте',

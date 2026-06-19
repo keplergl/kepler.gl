@@ -17,7 +17,8 @@ import {
 } from './vis-state-updaters';
 import {
   receiveMapConfigUpdater as stateMapConfigUpdater,
-  toggleSplitMapUpdater as mapStateToggleSplitMapUpdater
+  toggleSplitMapUpdater as mapStateToggleSplitMapUpdater,
+  setMapSplitModeUpdater as mapStateSetMapSplitModeUpdater
 } from './map-state-updaters';
 import {
   mapStyleChangeUpdater,
@@ -33,13 +34,14 @@ import {
   MapStyleChangeUpdaterAction,
   LayerTypeChangeUpdaterAction,
   ToggleSplitMapUpdaterAction,
-  ReplaceDataInMapPayload
+  ReplaceDataInMapPayload,
+  MapStateActions
 } from '@kepler.gl/actions';
 import {VisState} from '@kepler.gl/schemas';
 import {Layer} from '@kepler.gl/layers';
-import {isPlainObject} from '@kepler.gl/utils';
+import {isPlainObject, computeSplitMapLayers} from '@kepler.gl/utils';
 import {findMapBounds} from './data-utils';
-import {BASE_MAP_COLOR_MODES, OVERLAY_BLENDINGS} from '@kepler.gl/constants';
+import {BASE_MAP_COLOR_MODES, OVERLAY_BLENDINGS, MapSplitMode} from '@kepler.gl/constants';
 
 export type KeplerGlState = {
   visState: VisState;
@@ -387,6 +389,64 @@ export const toggleSplitMapUpdater = (
   }
 
   return newState;
+};
+
+/**
+ * Set map split mode updater - coordinates state changes across visState, mapState, and uiState
+ */
+export const setMapSplitModeUpdater = (
+  state: KeplerGlState,
+  action: MapStateActions.SetMapSplitModeUpdaterAction
+): KeplerGlState => {
+  const {mapSplitMode} = action.payload;
+  const prevMode = state.mapState.mapSplitMode;
+
+  if (mapSplitMode === prevMode) {
+    return state;
+  }
+
+  const newMapState = mapStateSetMapSplitModeUpdater(state.mapState, action);
+
+  let newVisState = {...state.visState};
+
+  switch (mapSplitMode) {
+    case MapSplitMode.SINGLE_MAP:
+      newVisState = {
+        ...newVisState,
+        splitMaps: []
+      };
+      break;
+    case MapSplitMode.DUAL_MAP:
+    case MapSplitMode.SWIPE_COMPARE:
+      if (prevMode === MapSplitMode.SINGLE_MAP) {
+        newVisState = {
+          ...newVisState,
+          splitMaps: computeSplitMapLayers(newVisState.layers, {
+            duplicate: mapSplitMode === MapSplitMode.SWIPE_COMPARE
+          })
+        };
+      }
+      break;
+    default:
+      break;
+  }
+
+  let newUiState = uiStateToggleSplitMapUpdater(state.uiState);
+
+  const isSplit = newVisState.splitMaps.length !== 0;
+  const isLegendActive = newUiState.mapControls?.mapLegend?.active;
+  if (isSplit && !isLegendActive) {
+    newUiState = toggleMapControlUpdater(newUiState, {
+      payload: {panelId: 'mapLegend', index: 0}
+    });
+  }
+
+  return {
+    ...state,
+    mapState: newMapState,
+    visState: newVisState,
+    uiState: newUiState
+  };
 };
 
 const defaultReplaceDataToMapOptions = {

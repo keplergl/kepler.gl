@@ -14,7 +14,6 @@ import {
   ToolbarItem,
   mapFieldsSelector,
   appInjector,
-  MapLayerSelector,
   MapContainerFactory,
   MapLegendFactory,
   MapControlFactory,
@@ -34,7 +33,7 @@ import {
   StateWFiles
 } from '../../../helpers/mock-state';
 
-const {Cube3d, Split, Legend, DrawPolygon, Layers, Delete} = Icons;
+const {Cube3d, Split, Legend, DrawPolygon, Delete} = Icons;
 const MapControl = appInjector.get(MapControlFactory);
 const MapContainer = appInjector.get(MapContainerFactory);
 const MapLegend = appInjector.get(MapLegendFactory);
@@ -76,7 +75,7 @@ test('MapControlFactory - display all options', t => {
       onSetLocale={onSetLocale}
     />
   );
-  t.equal($.find('.map-control-action').length, 7, 'Should show 7 action panels');
+  t.equal($.find('.map-control-action').length, 6, 'Should show 6 action panels');
   t.end();
 });
 
@@ -126,11 +125,10 @@ test('MapControlFactory - display options', t => {
     )
   });
 
-  // 7 control buttons as legend is opened automatically in split map mode
-  t.equal(wrapper.find(MapControlButton).length, 7, 'Should show 7 MapControlButton');
+  // 6 control buttons as legend is opened automatically in split map mode
+  t.equal(wrapper.find(MapControlButton).length, 6, 'Should show 6 MapControlButton');
   t.equal(wrapper.find(Split).length, 0, 'Should show 0 split map split button');
   t.equal(wrapper.find(Delete).length, 1, 'Should show 1 split map delete button');
-  t.equal(wrapper.find(Layers).length, 1, 'Should show 1 Layer button');
 
   // with 0 mapcontrols
   wrapper.setProps({
@@ -194,13 +192,13 @@ test('MapControlFactory - click options', t => {
   }, 'MapContainer should not fail without props');
 
   // layer selector is not active
-  t.equal(wrapper.find(MapControlButton).length, 7, 'Should show 7 MapControlButton');
+  t.equal(wrapper.find(MapControlButton).length, 6, 'Should show 6 MapControlButton');
 
   t.equal(wrapper.find(Delete).length, 1, 'Should show 1 delete split map button');
-  // click split Map
+  // click split Map - now opens mode menu since enableSwipeMode is true
   wrapper.find('.map-control-button.split-map').at(0).simulate('click');
-  t.ok(onToggleSplitMap.calledOnce, 'should call onToggleSplitMap');
-  t.deepEqual(onToggleSplitMap.args[0], [0], 'should call onToggleSplitMap with mapindex');
+  // onToggleSplitMap is not called directly when mode menu is available
+  t.notOk(onToggleSplitMap.calledOnce, 'should not call onToggleSplitMap when mode menu is enabled');
 
   // click toggle3d
   wrapper.find('.map-control-button.toggle-3d').at(0).simulate('click');
@@ -271,41 +269,6 @@ test('MapControlFactory - show panels', t => {
   // show legend
   t.equal(wrapper.find(MapLegend).length, 1, 'should render 1 MapLegend');
 
-  // show layer selector
-  const toggleLayerForMap = sinon.spy();
-  const visStateActions = {
-    toggleLayerForMap
-  };
-  updateState = keplerGlReducerCore(StateWSplitMaps, toggleMapControl('visibleLayers', 1));
-  mapContainerProps = mapFieldsSelector(
-    mockKeplerPropsWithState({state: updateState, visStateActions})
-  );
-  wrapper.setProps({
-    children: (
-      <Provider store={store}>
-        <MapViewStateContextProvider mapState={mapContainerProps.mapState}>
-          <MapContainer {...mapContainerProps} index={1} />
-        </MapViewStateContextProvider>
-      </Provider>
-    )
-  });
-
-  // click layer selector
-  t.equal(wrapper.find(MapLayerSelector).length, 1, 'should render 1 MapLayerSelector');
-
-  t.equal(
-    wrapper.find('.map-layer-selector__item').length,
-    Object.keys(updateState.visState.splitMaps[1].layers).length,
-    'MapLayerSelector should render correct number of layers'
-  );
-
-  wrapper.find('input').at(0).simulate('change');
-  t.ok(toggleLayerForMap.calledOnce, 'should call toggleLayerForMap');
-  t.deepEqual(
-    toggleLayerForMap.args[0],
-    [1, 'point-0'],
-    'should call toggleLayerForMap with mapIndex and layerid'
-  );
   // show map draw panel
   updateState = keplerGlReducerCore(StateWSplitMaps, toggleMapControl('mapDraw', 1));
   mapContainerProps = mapFieldsSelector(mockKeplerPropsWithState({state: updateState}));

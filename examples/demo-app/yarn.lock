@@ -11929,15 +11929,15 @@ __metadata:
   linkType: hard
 
 "form-data@npm:^3.0.0":
-  version: 3.0.4
-  resolution: "form-data@npm:3.0.4"
+  version: 3.0.5
+  resolution: "form-data@npm:3.0.5"
   dependencies:
     asynckit: "npm:^0.4.0"
     combined-stream: "npm:^1.0.8"
     es-set-tostringtag: "npm:^2.1.0"
-    hasown: "npm:^2.0.2"
+    hasown: "npm:^2.0.4"
     mime-types: "npm:^2.1.35"
-  checksum: 10c0/2451043b3e931653ce9690ba051b0bf1b5855a63029279bd7bdf8d02e4b5b42f4582b23ed3637df27a0d21bac2013c37d165ec9486e1af2470c13114aee83acc
+  checksum: 10c0/899fdb1ee507f5d44159314a53d05d0c41cbf58f92f99b2dd258dd23a5d2d08d069046523b5f12f38f1870ea4f2338266dc0628ea7c8e9b440a4a31d9b88b4d5
   languageName: node
   linkType: hard
 
@@ -12391,6 +12391,15 @@ __metadata:
   dependencies:
     function-bind: "npm:^1.1.2"
   checksum: 10c0/3769d434703b8ac66b209a4cca0737519925bbdb61dd887f93a16372b14694c63ff4e797686d87c90f08168e81082248b9b028bad60d4da9e0d1148766f56eb9
+  languageName: node
+  linkType: hard
+
+"hasown@npm:^2.0.4":
+  version: 2.0.4
+  resolution: "hasown@npm:2.0.4"
+  dependencies:
+    function-bind: "npm:^1.1.2"
+  checksum: 10c0/2d8de939e270b70618f8cebb69746620db10617dbb495bc66ddad326955ea24d3ca4af133aff3eb7c1853e0218f867bc2b050ec26fe02e3aea58f880ffc5e506
   languageName: node
   linkType: hard
 
@@ -16941,15 +16950,15 @@ __metadata:
   linkType: hard
 
 "tar@npm:^7.4.3":
-  version: 7.5.3
-  resolution: "tar@npm:7.5.3"
+  version: 7.5.16
+  resolution: "tar@npm:7.5.16"
   dependencies:
     "@isaacs/fs-minipass": "npm:^4.0.0"
     chownr: "npm:^3.0.0"
     minipass: "npm:^7.1.2"
     minizlib: "npm:^3.1.0"
     yallist: "npm:^5.0.0"
-  checksum: 10c0/e5e3237bca325fbb33282d92d9807f4c8d81abaf71bf2627efdf93bd5610c146460c78fc7e9767d4ab5ae3c0b18af8197314c964f8cbd23b30b25bf4d42d7cb4
+  checksum: 10c0/4f37f3c4bd2ca2755fd736a5df1d573c1a868ec1b1e893346aeafa95ac510f9e2fd1469420bd866cc7904799e5bd4ac62b5d4f03fe27747d6e1e373b44505c5c
   languageName: node
   linkType: hard
 
