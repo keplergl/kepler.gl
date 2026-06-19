@@ -10,15 +10,19 @@ import {LayerOrderGroup} from '@kepler.gl/types';
 
 import {StyledPanelHeader, InlineInput} from '../../common/styled-components';
 import {DragHandle} from './layer-panel-header';
-import {VertDots, EyeSeen, EyeUnseen, Trash, ArrowDown, ArrowRight, Folder} from '../../common/icons';
+import {VertDots, EyeSeen, EyeUnseen, Trash, ArrowDown, ArrowRight} from '../../common/icons';
 import PanelHeaderActionFactory from '../panel-header-action';
 
+const CORNER_COLOR = '#4BA9C9';
+
 const Container = styled(StyledPanelHeader)`
+  position: relative;
   height: ${props => props.theme.layerPanelHeaderHeight}px;
   justify-content: space-between;
   color: ${props => props.theme.textColor};
   padding-right: 10px;
   align-items: center;
+  overflow: hidden;
 
   border: 1px solid ${props => props.theme.panelBackgroundHover};
 
@@ -29,6 +33,18 @@ const Container = styled(StyledPanelHeader)`
       opacity: 1;
     }
   }
+`;
+
+const CornerTriangle = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: ${props => Math.round(props.theme.layerPanelHeaderHeight / 3)}px
+    ${props => Math.round(props.theme.layerPanelHeaderHeight / 3)}px 0 0;
+  border-color: ${CORNER_COLOR} transparent transparent transparent;
 `;
 
 const Actions = styled.div`
@@ -100,11 +116,11 @@ function LayerGroupHeaderFactory(
 
     return (
       <Container className={className} onClick={onToggleLayerGroupContent}>
+        <CornerTriangle />
         <LeftSection>
           <DragHandle className="layer__drag-handle" listeners={listeners}>
             <VertDots height="20px" />
           </DragHandle>
-          <Folder height="18px" />
           <GroupLabelInput
             type="text"
             value={label}

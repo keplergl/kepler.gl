@@ -22,7 +22,7 @@ import {ActionHandler, setMapControlSettings, toggleSplitMapViewport} from '@kep
 import {MapSplitMode} from '@kepler.gl/constants';
 import {Layer} from '@kepler.gl/layers';
 import {breakPointValues} from '@kepler.gl/styles';
-import {LayerVisConfig, MapControlMapLegend, MapControls, MapState} from '@kepler.gl/types';
+import {LayerVisConfig, LayerOrder, MapControlMapLegend, MapControls, MapState} from '@kepler.gl/types';
 import {hasPortableWidth} from '@kepler.gl/utils';
 import {MapLegendControlSettings} from '@kepler.gl/types';
 
@@ -313,6 +313,7 @@ interface MapLegendPanelIcons {
 export type MapLegendPanelProps = {
   theme: any;
   layers: ReadonlyArray<Layer>;
+  layerOrder?: LayerOrder;
   scale: number;
   onToggleMapControl: (control: string) => void;
   isExport: boolean;
@@ -350,6 +351,7 @@ const defaultActionIcons = {
 
 const MapLegendPanelComponent = ({
   layers,
+  layerOrder,
   mapControls,
   scale,
   onToggleMapControl,
@@ -421,6 +423,7 @@ const MapLegendPanelComponent = ({
     >
       <MapLegend
         layers={layers}
+        layerOrder={layerOrder}
         mapState={mapState}
         disableEdit={disableEdit}
         isExport={isExport}

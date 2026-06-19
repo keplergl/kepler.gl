@@ -11,10 +11,11 @@ import RadiusLegend from '../common/radius-legend';
 import {CHANNEL_SCALES, DIMENSIONS} from '@kepler.gl/constants';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {Layer, LayerBaseConfig, VisualChannel, VisualChannelDescription} from '@kepler.gl/layers';
-import {LayerVisConfig, MapState, RGBColor} from '@kepler.gl/types';
+import {LayerVisConfig, LayerOrder, MapState, RGBColor} from '@kepler.gl/types';
 import {getDistanceScales} from 'viewport-mercator-project';
 import {ArrowDown, ArrowRight, EyeSeen, EyeUnseen} from '../common/icons';
 import PanelHeaderActionFactory from '../side-panel/panel-header-action';
+import {getFlatLayerOrder} from '@kepler.gl/reducers';
 
 interface StyledMapControlLegendProps {
   width?: number;
@@ -538,6 +539,7 @@ export function LayerLegendContentFactory(
 
 export type MapLegendProps = {
   layers?: ReadonlyArray<Layer>;
+  layerOrder?: LayerOrder;
   width?: number;
   mapState?: MapState;
   options?: {
@@ -625,6 +627,7 @@ function MapLegendFactory(
 
   const MapLegend: React.FC<MapLegendProps> = ({
     layers = [],
+    layerOrder,
     width,
     mapState,
     options,
@@ -636,43 +639,53 @@ function MapLegendFactory(
     isSplit,
     splitMaps,
     actionIcons = defaultActionIcons
-  }) => (
-    <div className="map-legend">
-      {layers.map((layer, index) => {
-        if (!layer.isValidToSave() || layer.config.hidden) {
-          return null;
-        }
-        const containerW = width || DIMENSIONS.mapControl.width;
+  }) => {
+    const orderedLayers = layerOrder
+      ? getFlatLayerOrder(layerOrder).reduce<Layer[]>((acc, id) => {
+          const layer = layers.find(l => l.id === id);
+          if (layer) acc.push(layer);
+          return acc;
+        }, [])
+      : layers;
 
-        const isLayerVisible =
-          isSplit && splitMaps && splitMaps.length > 1
-            ? layer.config.isVisible &&
-              (Boolean(splitMaps[0]?.layers?.[layer.id]) ||
-                Boolean(splitMaps[1]?.layers?.[layer.id]))
-            : layer.config.isVisible;
+    return (
+      <div className="map-legend">
+        {orderedLayers.map((layer, index) => {
+          if (!layer.isValidToSave() || layer.config.hidden) {
+            return null;
+          }
+          const containerW = width || DIMENSIONS.mapControl.width;
 
-        return (
-          <LayerLegendItem
-            key={layer.id}
-            layer={layer}
-            containerW={containerW}
-            isLast={index === layers.length - 1}
-            isLayerVisible={isLayerVisible}
-            isExport={isExport}
-            options={options}
-            mapState={mapState}
-            disableEdit={disableEdit}
-            onLayerVisConfigChange={onLayerVisConfigChange}
-            onToggleLayerVisibility={onToggleLayerVisibility}
-            onMapToggleLayer={onMapToggleLayer}
-            isSplit={isSplit}
-            splitMaps={splitMaps}
-            actionIcons={actionIcons}
-          />
-        );
-      })}
-    </div>
-  );
+          const isLayerVisible =
+            isSplit && splitMaps && splitMaps.length > 1
+              ? layer.config.isVisible &&
+                (Boolean(splitMaps[0]?.layers?.[layer.id]) ||
+                  Boolean(splitMaps[1]?.layers?.[layer.id]))
+              : layer.config.isVisible;
+
+          return (
+            <LayerLegendItem
+              key={layer.id}
+              layer={layer}
+              containerW={containerW}
+              isLast={index === orderedLayers.length - 1}
+              isLayerVisible={isLayerVisible}
+              isExport={isExport}
+              options={options}
+              mapState={mapState}
+              disableEdit={disableEdit}
+              onLayerVisConfigChange={onLayerVisConfigChange}
+              onToggleLayerVisibility={onToggleLayerVisibility}
+              onMapToggleLayer={onMapToggleLayer}
+              isSplit={isSplit}
+              splitMaps={splitMaps}
+              actionIcons={actionIcons}
+            />
+          );
+        })}
+      </div>
+    );
+  };
 
   MapLegend.displayName = 'MapLegend';
 

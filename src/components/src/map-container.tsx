@@ -1273,7 +1273,7 @@ export default function MapContainerFactory(
         sidePanelWidth
       } = this.props;
 
-      const {layers, datasets, editor, interactionConfig} = visState;
+      const {layers, datasets, editor, interactionConfig, layerOrder} = visState;
 
       const layersToRender = this.layersToRenderSelector(this.props);
       const layersForDeck = this.layersForDeckSelector(this.props);
@@ -1350,6 +1350,7 @@ export default function MapContainerFactory(
             primary={Boolean(primary)}
             isExport={isExport}
             layers={layers}
+            layerOrder={layerOrder}
             layersToRender={layersToRender}
             mapIndex={index || 0}
             mapControls={mapControls}
