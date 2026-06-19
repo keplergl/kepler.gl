@@ -56,6 +56,7 @@ export interface VisState {
   layerData: any[];
   layerToBeMerged: any[];
   layerOrder: LayerOrder;
+  layerOrderToBeMerged: any[] | null;
   effects: Effect[];
   effectOrder: string[];
   annotations: Annotation[];

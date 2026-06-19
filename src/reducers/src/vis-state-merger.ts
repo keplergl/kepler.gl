@@ -300,13 +300,20 @@ export function mergeLayers<S extends VisState>(
     preserveLayerOrder
   );
 
-  return {
+  let mergedState: S = {
     ...state,
     layers: newLayers,
     layerOrder: newLayerOrder,
     preserveLayerOrder,
     layerToBeMerged: [...state.layerToBeMerged, ...unmerged]
   };
+
+  // Apply pending layerOrder with groups if layers are now available
+  if (mergedState.layerOrderToBeMerged && mergedState.layers.length > 0) {
+    mergedState = mergeLayerOrder(mergedState, mergedState.layerOrderToBeMerged);
+  }
+
+  return mergedState;
 }
 
 export function insertLayerAtRightOrder(
@@ -381,7 +388,11 @@ export function insertLayerAtRightOrder(
  * with groups, this replaces the flat layerOrder with the saved hierarchical one,
  * filtering out any layer IDs that don't exist in the current state.
  */
-export function mergeLayerOrder<S extends VisState>(state: S, savedLayerOrder?: any[]): S {
+export function mergeLayerOrder<S extends VisState>(
+  state: S,
+  savedLayerOrder?: any[],
+  fromConfig?: boolean
+): S {
   if (!savedLayerOrder || !Array.isArray(savedLayerOrder) || savedLayerOrder.length === 0) {
     return state;
   }
@@ -391,6 +402,14 @@ export function mergeLayerOrder<S extends VisState>(state: S, savedLayerOrder?: 
   if (!hasGroups) {
     // No groups - the layer merger already handled ordering via preserveLayerOrder
     return state;
+  }
+
+  // If layers haven't been merged yet, store for later
+  if (state.layers.length === 0) {
+    return {
+      ...state,
+      layerOrderToBeMerged: savedLayerOrder
+    };
   }
 
   // Build a set of valid layer IDs from current state
@@ -438,7 +457,8 @@ export function mergeLayerOrder<S extends VisState>(state: S, savedLayerOrder?: 
 
   return {
     ...state,
-    layerOrder: [...missingLayers, ...restoredLayerOrder]
+    layerOrder: [...missingLayers, ...restoredLayerOrder],
+    layerOrderToBeMerged: null
   };
 }
 

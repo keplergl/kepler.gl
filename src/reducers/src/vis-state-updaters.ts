@@ -308,6 +308,7 @@ export const INITIAL_VIS_STATE: VisState = {
   layerData: [],
   layerToBeMerged: [],
   layerOrder: [],
+  layerOrderToBeMerged: null,
 
   // filters
   filters: [],
