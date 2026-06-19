@@ -26,6 +26,7 @@ import {
   DND_EMPTY_MODIFIERS,
   SORTABLE_LAYER_TYPE,
   SORTABLE_LAYER_GROUP_TYPE,
+  SORTABLE_LAYER_END_TYPE,
   SORTABLE_EFFECT_TYPE,
   SORTABLE_LAYER_GROUP_DROPPABLE_TYPE
 } from './common/dnd-layer-items';
@@ -62,7 +63,8 @@ const layerGroupCollisionDetection: CollisionDetection = args => {
         const type = container.data?.current?.type;
         return (
           type === SORTABLE_LAYER_GROUP_TYPE ||
-          type === SORTABLE_LAYER_TYPE && !container.data?.current?.parent
+          type === SORTABLE_LAYER_END_TYPE ||
+          (type === SORTABLE_LAYER_TYPE && !container.data?.current?.parent)
         );
       })
     };
@@ -84,7 +86,7 @@ const layerGroupCollisionDetection: CollisionDetection = args => {
   if (groupDroppable) {
     const hasNonGroupSortable = closestCenterCollisions.some(c => {
       const type = c.data?.droppableContainer?.data?.current?.type;
-      return type !== SORTABLE_LAYER_GROUP_DROPPABLE_TYPE;
+      return type !== SORTABLE_LAYER_GROUP_DROPPABLE_TYPE && type !== SORTABLE_LAYER_END_TYPE;
     });
     if (!hasNonGroupSortable) {
       return [groupDroppable];

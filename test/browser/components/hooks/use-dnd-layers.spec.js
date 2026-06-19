@@ -155,6 +155,37 @@ describe('useDndLayers', () => {
     expect(reorderLayer).toHaveBeenCalledWith(newLayerOrder);
   });
 
+  test('onDragEnd should reorder within same group even with different parent object instances', () => {
+    const layerGroup = {id: 'group1', label: 'Group 1', isVisible: true, layerOrder: ['2', '3']};
+    const layerOrderWithGroup = ['1', layerGroup];
+
+    const {result} = renderHook(() => useDndLayers(layers, layerOrderWithGroup));
+
+    const newGroupOrder = ['3', '2'];
+    reorderLayerOrder.mockReturnValue(newGroupOrder);
+
+    const event = {
+      active: {id: '2', data: {current: {type: SORTABLE_LAYER_TYPE, parent: {id: 'group1', label: 'Group 1', isVisible: true, layerOrder: ['2', '3']}}}},
+      over: {
+        id: '3',
+        data: {
+          current: {
+            type: SORTABLE_LAYER_TYPE,
+            parent: {id: 'group1', label: 'Group 1', isVisible: true, layerOrder: ['2', '3']}
+          }
+        }
+      }
+    };
+
+    act(() => {
+      result.current.onDragEnd(event);
+    });
+
+    expect(dispatchMock).toHaveBeenCalledTimes(1);
+    expect(reorderLayer).toHaveBeenCalled();
+    expect(reorderLayerOrder).toHaveBeenCalledWith(layerGroup.layerOrder, '2', '3');
+  });
+
   test('onDragEnd should dispatch reorderLayer when moving layer into a group', () => {
     const layerGroup = {id: 'group1', label: 'Group 1', isVisible: true, layerOrder: ['3']};
     const layerOrderWithGroup = ['2', '1', layerGroup];

@@ -2110,6 +2110,8 @@ export const swapLayerOrderEntriesUpdater = (
         typeof entry === 'string' ? entry === destinationLayerId : false
       );
       newLayerOrder.splice(destinationIndex === -1 ? 0 : destinationIndex, 0, originLayerId);
+    } else {
+      newLayerOrder = [...newLayerOrder, originLayerId];
     }
     return {...state, layerOrder: newLayerOrder};
   }

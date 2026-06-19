@@ -310,7 +310,12 @@ export function mergeLayers<S extends VisState>(
 
   // Apply pending layerOrder with groups if layers are now available
   if (mergedState.layerOrderToBeMerged && mergedState.layers.length > 0) {
-    mergedState = mergeLayerOrder(mergedState, mergedState.layerOrderToBeMerged);
+    const savedOrder = mergedState.layerOrderToBeMerged;
+    mergedState = mergeLayerOrder(mergedState, savedOrder);
+    // Keep savedLayerOrder available for future deferred layers
+    if (mergedState.layerToBeMerged.length > 0) {
+      mergedState = {...mergedState, layerOrderToBeMerged: savedOrder};
+    }
   }
 
   return mergedState;

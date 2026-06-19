@@ -646,6 +646,7 @@ export function removeElementFromLayerOrder(
   layerOrder: LayerOrder,
   element: LayerOrderEntry
 ): LayerOrder {
+  if (!layerOrder) return [];
   const elementId = typeof element === 'string' ? element : element.id;
   let newLayerOrder = layerOrder.filter(entry => {
     if (isPlainObject(entry)) {
@@ -656,9 +657,10 @@ export function removeElementFromLayerOrder(
 
   newLayerOrder = newLayerOrder.map(entry => {
     if (isPlainObject(entry)) {
+      const group = entry as LayerOrderGroup;
       return {
-        ...(entry as LayerOrderGroup),
-        layerOrder: removeElementFromLayerOrder((entry as LayerOrderGroup).layerOrder, elementId)
+        ...group,
+        layerOrder: removeElementFromLayerOrder(group.layerOrder, elementId)
       };
     }
     return entry;
