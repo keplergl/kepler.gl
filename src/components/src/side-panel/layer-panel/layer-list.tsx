@@ -7,10 +7,10 @@ import classnames from 'classnames';
 
 import {Layer, LayerClassesType} from '@kepler.gl/layers';
 import {Datasets} from '@kepler.gl/table';
-import {UIStateActions, VisStateActions, MapStateActions, addLayerGroup} from '@kepler.gl/actions';
+import {UIStateActions, VisStateActions, MapStateActions} from '@kepler.gl/actions';
 import {LayerOrderGroup, LayerOrder, LayerOrderHierarchy} from '@kepler.gl/types';
 
-import {useDroppable} from '@dnd-kit/core';
+import {useDroppable, useDndContext} from '@dnd-kit/core';
 import {
   useSortable,
   SortableContext,
@@ -20,7 +20,6 @@ import {
 import {CSS} from '@dnd-kit/utilities';
 import LayerPanelFactory from './layer-panel';
 import LayerGroupHeaderFactory from './layer-group-header';
-import PanelHeaderActionFactory from '../panel-header-action';
 import {buildLayerOrderHierarchy} from '@kepler.gl/reducers';
 import {dataTestIds} from '@kepler.gl/constants';
 import {SplitMap} from '@kepler.gl/types';
@@ -28,10 +27,10 @@ import {
   SORTABLE_LAYER_TYPE,
   SORTABLE_SIDE_PANEL_TYPE,
   SORTABLE_LAYER_GROUP_TYPE,
-  SORTABLE_LAYER_GROUP_DROPPABLE_TYPE
+  SORTABLE_LAYER_GROUP_DROPPABLE_TYPE,
+  SORTABLE_LAYER_END_PLACEHOLDER,
+  SORTABLE_LAYER_END_TYPE
 } from '../../common/dnd-layer-items';
-import {useDispatch} from 'react-redux';
-import {Folder} from '../../common/icons';
 
 export type LayerListProps = {
   datasets: Datasets;
@@ -39,7 +38,6 @@ export type LayerListProps = {
   layerOrder: LayerOrder;
   layerClasses: LayerClassesType;
   isSortable?: boolean;
-  showAddGroupButton?: boolean;
   splitMap?: SplitMap;
   uiStateActions: typeof UIStateActions;
   visStateActions: typeof VisStateActions;
@@ -48,8 +46,7 @@ export type LayerListProps = {
 
 export type LayerListFactoryDeps = [
   typeof LayerPanelFactory,
-  typeof LayerGroupHeaderFactory,
-  typeof PanelHeaderActionFactory
+  typeof LayerGroupHeaderFactory
 ];
 
 const Container = styled.div`
@@ -65,6 +62,10 @@ const animateLayoutChanges = args => {
   }
   return defaultAnimateLayoutChanges(args);
 };
+
+const EndPlaceholder = styled.div`
+  height: 4px;
+`;
 
 interface SortableStyledItemProps {
   $transition?: string;
@@ -149,16 +150,11 @@ const NestedLayerContent = styled.div`
   padding-top: 8px;
 `;
 
-const AddGroupContainer = styled.div`
-  display: flex;
-`;
-
-LayerListFactory.deps = [LayerPanelFactory, LayerGroupHeaderFactory, PanelHeaderActionFactory];
+LayerListFactory.deps = [LayerPanelFactory, LayerGroupHeaderFactory];
 
 function LayerListFactory(
   LayerPanel: ReturnType<typeof LayerPanelFactory>,
-  LayerGroupHeader: ReturnType<typeof LayerGroupHeaderFactory>,
-  PanelHeaderAction: ReturnType<typeof PanelHeaderActionFactory>
+  LayerGroupHeader: ReturnType<typeof LayerGroupHeaderFactory>
 ) {
   const NestedLayer: React.FC<{children: React.ReactNode; isLast?: boolean}> = ({
     children,
@@ -302,25 +298,13 @@ function LayerListFactory(
     );
   };
 
-  const AddGroupButton = () => {
-    const dispatch = useDispatch();
-    const onClick = useCallback(() => {
-      dispatch(addLayerGroup({}));
-    }, [dispatch]);
-
-    return (
-      <AddGroupContainer>
-        <div data-tip data-for="create-new-layer-group">
-          <PanelHeaderAction
-            className="layer-group__create"
-            id="new-layer-group"
-            onClick={onClick}
-            IconComponent={Folder}
-            tooltip="Create layer group"
-          />
-        </div>
-      </AddGroupContainer>
-    );
+  const SortableEndPlaceholder = () => {
+    const {setNodeRef} = useSortable({
+      id: SORTABLE_LAYER_END_PLACEHOLDER,
+      data: {type: SORTABLE_LAYER_END_TYPE},
+      animateLayoutChanges
+    });
+    return <EndPlaceholder ref={setNodeRef} />;
   };
 
   const LayerList: React.FC<LayerListProps> = props => {
@@ -333,10 +317,11 @@ function LayerListFactory(
       mapStateActions,
       layerClasses,
       isSortable = true,
-      showAddGroupButton = true,
       splitMap
     } = props;
     const {toggleModal: openModal} = uiStateActions;
+    const {active} = useDndContext();
+    const isDraggingLayer = active?.data?.current?.type === SORTABLE_LAYER_TYPE;
 
     const layerEntriesToShow: LayerOrderHierarchy = useMemo(
       () => buildLayerOrderHierarchy(layerOrder, layers),
@@ -344,8 +329,12 @@ function LayerListFactory(
     );
 
     const sidePanelDndItems = useMemo(() => {
-      return layerEntriesToShow.map(entry => entry[1].id ?? entry[1]);
-    }, [layerEntriesToShow]);
+      const items = layerEntriesToShow.map(entry => entry[1].id ?? entry[1]);
+      if (isDraggingLayer) {
+        items.push(SORTABLE_LAYER_END_PLACEHOLDER);
+      }
+      return items;
+    }, [layerEntriesToShow, isDraggingLayer]);
 
     const layerTypeOptions = useMemo(
       () =>
@@ -390,7 +379,6 @@ function LayerListFactory(
 
     return (
       <Container>
-        {isSortable && showAddGroupButton ? <AddGroupButton /> : null}
         <SortableContext
           id={SORTABLE_SIDE_PANEL_TYPE}
           items={sidePanelDndItems}
@@ -418,6 +406,7 @@ function LayerListFactory(
               />
             )
           )}
+          {isDraggingLayer ? <SortableEndPlaceholder /> : null}
         </SortableContext>
       </Container>
     );

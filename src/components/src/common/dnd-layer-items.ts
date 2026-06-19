@@ -14,3 +14,6 @@ export const SORTABLE_LAYER_GROUP_DROPPABLE_TYPE = 'droppable-layer-group';
 
 export const SORTABLE_EFFECT_PANEL_TYPE = 'root';
 export const SORTABLE_EFFECT_TYPE = 'effect';
+
+export const SORTABLE_LAYER_END_PLACEHOLDER = '__layer-end-placeholder__';
+export const SORTABLE_LAYER_END_TYPE = 'layer-end-placeholder';

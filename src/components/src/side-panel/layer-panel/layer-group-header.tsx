@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useCallback} from 'react';
+import React, {useCallback, useState, useEffect, useRef} from 'react';
 import {useDispatch} from 'react-redux';
 import styled from 'styled-components';
 
 import {updateLayerGroup, removeLayerGroup} from '@kepler.gl/actions';
 import {LayerOrderGroup} from '@kepler.gl/types';
+import {getFlatLayerOrder} from '@kepler.gl/reducers';
 
 import {StyledPanelHeader, InlineInput} from '../../common/styled-components';
 import {DragHandle} from './layer-panel-header';
@@ -14,6 +15,15 @@ import {VertDots, EyeSeen, EyeUnseen, Trash, ArrowDown, ArrowRight} from '../../
 import PanelHeaderActionFactory from '../panel-header-action';
 
 const CORNER_COLOR = '#4BA9C9';
+
+const RemoveAction = styled.div`
+  display: flex;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  .panel--header__action {
+    height: 16px;
+  }
+`;
 
 const Container = styled(StyledPanelHeader)`
   position: relative;
@@ -30,6 +40,9 @@ const Container = styled(StyledPanelHeader)`
     cursor: pointer;
     background-color: ${props => props.theme.panelBackgroundHover};
     .layer__drag-handle {
+      opacity: 1;
+    }
+    ${RemoveAction} {
       opacity: 1;
     }
   }
@@ -69,6 +82,32 @@ const GroupLabelInput = styled(InlineInput)`
   font-weight: 500;
 `;
 
+const ConfirmationBar = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  background-color: ${props => props.theme.panelBackgroundHover};
+  border: 1px solid ${props => props.theme.panelBackgroundHover};
+  border-top: none;
+  font-size: 11px;
+  color: ${props => props.theme.textColor};
+  gap: 8px;
+`;
+
+const ConfirmButton = styled.button`
+  background: ${props => props.theme.secondaryBtnBgd};
+  color: ${props => props.theme.secondaryBtnColor};
+  border: none;
+  border-radius: 2px;
+  padding: 3px 8px;
+  font-size: 11px;
+  cursor: pointer;
+  &:hover {
+    background: ${props => props.theme.secondaryBtnBgdHover};
+  }
+`;
+
 export type LayerGroupHeaderProps = {
   layerGroup: LayerOrderGroup;
   isLayerGroupContentOpen?: boolean;
@@ -91,6 +130,21 @@ function LayerGroupHeaderFactory(
   }) => {
     const {id, label} = layerGroup;
     const dispatch = useDispatch();
+    const [showConfirmation, setShowConfirmation] = useState(false);
+    const confirmRef = useRef<HTMLDivElement>(null);
+
+    const layerCount = getFlatLayerOrder(layerGroup.layerOrder).length;
+
+    useEffect(() => {
+      if (!showConfirmation) return;
+      const handleClickOutside = (e: MouseEvent) => {
+        if (confirmRef.current && !confirmRef.current.contains(e.target as Node)) {
+          setShowConfirmation(false);
+        }
+      };
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [showConfirmation]);
 
     const onUpdateLabel = useCallback(
       event => {
@@ -103,9 +157,26 @@ function LayerGroupHeaderFactory(
       dispatch(updateLayerGroup({id, options: {isVisible: !layerGroup.isVisible}}));
     }, [dispatch, id, layerGroup.isVisible]);
 
-    const onDelete = useCallback(() => {
-      dispatch(removeLayerGroup({id}));
-    }, [dispatch, id]);
+    const onDelete = useCallback(
+      (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (layerCount > 0) {
+          setShowConfirmation(true);
+        } else {
+          dispatch(removeLayerGroup({id}));
+        }
+      },
+      [dispatch, id, layerCount]
+    );
+
+    const onConfirmDelete = useCallback(
+      (e: React.MouseEvent) => {
+        e.stopPropagation();
+        dispatch(removeLayerGroup({id}));
+        setShowConfirmation(false);
+      },
+      [dispatch, id]
+    );
 
     const VisibilityIcon = layerGroup.isVisible ? EyeSeen : EyeUnseen;
     const CollapseIcon = isLayerGroupContentOpen ? ArrowDown : ArrowRight;
@@ -115,44 +186,54 @@ function LayerGroupHeaderFactory(
     }, []);
 
     return (
-      <Container className={className} onClick={onToggleLayerGroupContent}>
-        <CornerTriangle />
-        <LeftSection>
-          <DragHandle className="layer__drag-handle" listeners={listeners}>
-            <VertDots height="20px" />
-          </DragHandle>
-          <GroupLabelInput
-            type="text"
-            value={label}
-            onClick={stopPropagation}
-            onChange={onUpdateLabel}
-            id={`${id}:input-group-label`}
-          />
-        </LeftSection>
-        <Actions onClick={stopPropagation}>
-          <PanelHeaderAction
-            className="layer-group__delete"
-            id={`${id}-delete`}
-            tooltip="Remove group"
-            onClick={onDelete}
-            IconComponent={Trash}
-          />
-          <PanelHeaderAction
-            className="layer-group__visibility-toggle"
-            id={`${id}-visibility`}
-            tooltip="Toggle group visibility"
-            onClick={onToggleVisibility}
-            IconComponent={VisibilityIcon}
-          />
-          <PanelHeaderAction
-            className="layer-group__section-toggle"
-            id={`${id}-collapse`}
-            tooltip="Toggle group content"
-            onClick={onToggleLayerGroupContent}
-            IconComponent={CollapseIcon}
-          />
-        </Actions>
-      </Container>
+      <div>
+        <Container className={className} onClick={onToggleLayerGroupContent}>
+          <CornerTriangle />
+          <LeftSection>
+            <DragHandle className="layer__drag-handle" listeners={listeners}>
+              <VertDots height="20px" />
+            </DragHandle>
+            <GroupLabelInput
+              type="text"
+              value={label}
+              onClick={stopPropagation}
+              onChange={onUpdateLabel}
+              id={`${id}:input-group-label`}
+            />
+          </LeftSection>
+          <Actions onClick={stopPropagation}>
+            <RemoveAction>
+              <PanelHeaderAction
+                className="layer-group__delete"
+                id={`${id}-delete`}
+                tooltip="Remove group"
+                onClick={onDelete}
+                IconComponent={Trash}
+              />
+            </RemoveAction>
+            <PanelHeaderAction
+              className="layer-group__visibility-toggle"
+              id={`${id}-visibility`}
+              tooltip="Toggle group visibility"
+              onClick={onToggleVisibility}
+              IconComponent={VisibilityIcon}
+            />
+            <PanelHeaderAction
+              className="layer-group__section-toggle"
+              id={`${id}-collapse`}
+              tooltip="Toggle group content"
+              onClick={onToggleLayerGroupContent}
+              IconComponent={CollapseIcon}
+            />
+          </Actions>
+        </Container>
+        {showConfirmation ? (
+          <ConfirmationBar ref={confirmRef} onClick={stopPropagation}>
+            <span>Remove group with layers?</span>
+            <ConfirmButton onClick={onConfirmDelete}>Remove</ConfirmButton>
+          </ConfirmationBar>
+        ) : null}
+      </div>
     );
   };
 

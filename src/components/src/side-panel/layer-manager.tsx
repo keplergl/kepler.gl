@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import React, {useCallback, useMemo} from 'react';
+import {useDispatch} from 'react-redux';
 
 import {injectIntl, WrappedComponentProps} from 'react-intl';
 import styled from 'styled-components';
@@ -20,11 +21,13 @@ import InfoHelperFactory from '../common/info-helper';
 
 import {LAYER_BLENDINGS, OVERLAY_BLENDINGS, PANEL_VIEW_TOGGLES} from '@kepler.gl/constants';
 import {Layer, LayerClassesType} from '@kepler.gl/layers';
-import {UIStateActions, VisStateActions, MapStateActions, ActionHandler} from '@kepler.gl/actions';
+import {UIStateActions, VisStateActions, MapStateActions, ActionHandler, addLayerGroup} from '@kepler.gl/actions';
 import {SidePanelItem} from '../types';
 import {PanelListView, LayerOrder} from '@kepler.gl/types';
 import {Datasets} from '@kepler.gl/table';
 import {getApplicationConfig} from '@kepler.gl/utils';
+import PanelHeaderActionFactory from './panel-header-action';
+import {Folder} from '../common/icons';
 
 type LayerBlendingSelectorProps = {
   layerBlending: string;
@@ -143,7 +146,8 @@ LayerManagerFactory.deps = [
   PanelTitleFactory,
   DatasetSectionFactory,
   AddLayerButtonFactory,
-  InfoHelperFactory
+  InfoHelperFactory,
+  PanelHeaderActionFactory
 ];
 
 function LayerManagerFactory(
@@ -153,7 +157,8 @@ function LayerManagerFactory(
   PanelTitle: ReturnType<typeof PanelTitleFactory>,
   DatasetSection: ReturnType<typeof DatasetSectionFactory>,
   AddLayerButton: ReturnType<typeof AddLayerButtonFactory>,
-  InfoHelper: ReturnType<typeof InfoHelperFactory>
+  InfoHelper: ReturnType<typeof InfoHelperFactory>,
+  PanelHeaderAction: ReturnType<typeof PanelHeaderActionFactory>
 ) {
   const LayerManager: React.FC<LayerManagerProps> = ({
     layers,
@@ -176,12 +181,17 @@ function LayerManagerFactory(
   }) => {
     const {addLayer} = visStateActions;
     const {togglePanelListView} = uiStateActions;
+    const dispatch = useDispatch();
     const onAddLayer = useCallback(
       (dataset: string) => {
         addLayer(undefined, dataset);
       },
       [addLayer]
     );
+
+    const onAddGroup = useCallback(() => {
+      dispatch(addLayerGroup({}));
+    }, [dispatch]);
 
     const onTogglePanelListView = useCallback(
       (listView: string) => {
@@ -234,6 +244,13 @@ function LayerManagerFactory(
             className="layer-manager-title"
             title={intl.formatMessage({id: panelMetadata.label})}
           >
+            <PanelHeaderAction
+              className="layer-group__create"
+              id="new-layer-group"
+              onClick={onAddGroup}
+              IconComponent={Folder}
+              tooltip="Create layer group"
+            />
             <AddLayerButton datasets={datasets} onAdd={onAddLayer} />
           </PanelTitle>
         </SidePanelSection>

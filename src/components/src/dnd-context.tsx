@@ -48,10 +48,27 @@ const nop = () => undefined;
 /**
  * Hybrid collision detection: uses closestCenter for sortable items (stable reordering
  * without flickering) and pointerWithin for group droppable containers (reliable drop
- * detection even when group is the last item). If pointer is within a group droppable
- * and no sortable item is closer, returns the group droppable.
+ * detection even when group is the last item). When dragging a group, only root-level
+ * sortable items are considered to prevent flickering from nested items.
  */
 const layerGroupCollisionDetection: CollisionDetection = args => {
+  const activeType = args.active.data?.current?.type;
+
+  // When dragging a group, only consider root-level sortable items (no parent)
+  if (activeType === SORTABLE_LAYER_GROUP_TYPE) {
+    const filteredArgs = {
+      ...args,
+      droppableContainers: args.droppableContainers.filter(container => {
+        const type = container.data?.current?.type;
+        return (
+          type === SORTABLE_LAYER_GROUP_TYPE ||
+          type === SORTABLE_LAYER_TYPE && !container.data?.current?.parent
+        );
+      })
+    };
+    return closestCenter(filteredArgs);
+  }
+
   const closestCenterCollisions = closestCenter(args);
   const pointerCollisions = pointerWithin(args);
 

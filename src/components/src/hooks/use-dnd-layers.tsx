@@ -9,7 +9,8 @@ import {
   DROPPABLE_MAP_CONTAINER_TYPE,
   SORTABLE_LAYER_TYPE,
   SORTABLE_LAYER_GROUP_TYPE,
-  SORTABLE_LAYER_GROUP_DROPPABLE_TYPE
+  SORTABLE_LAYER_GROUP_DROPPABLE_TYPE,
+  SORTABLE_LAYER_END_TYPE
 } from '../common/dnd-layer-items';
 import {
   reorderLayerOrder,
@@ -91,6 +92,18 @@ const useDndLayers: (layers: Layer[], layerOrder: LayerOrder) => DndLayersHook =
       if (overType === DROPPABLE_MAP_CONTAINER_TYPE) {
         const mapIndex = over?.data.current?.index ?? 0;
         dispatch(toggleLayerForMap(mapIndex, activeId));
+        return;
+      }
+
+      if (overType === SORTABLE_LAYER_END_TYPE) {
+        const groupObj = getLayerGroupFromLayerOrder(layerOrder, activeId);
+        let newLayerOrder = removeElementFromLayerOrder(layerOrder, activeId);
+        newLayerOrder = addLayerOrGroupToLayerOrder(
+          newLayerOrder,
+          groupObj ?? activeId,
+          newLayerOrder.length
+        );
+        dispatch(reorderLayer(newLayerOrder));
         return;
       }
 
