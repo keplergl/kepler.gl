@@ -3,7 +3,13 @@
 
 import React, {useCallback, useMemo, PropsWithChildren} from 'react';
 import styled from 'styled-components';
-import {DndContext as DndKitContext, DragOverlay} from '@dnd-kit/core';
+import {
+  DndContext as DndKitContext,
+  DragOverlay,
+  closestCenter,
+  pointerWithin,
+  CollisionDetection
+} from '@dnd-kit/core';
 
 import Console from 'global/console';
 import {VisState} from '@kepler.gl/schemas';
@@ -20,7 +26,8 @@ import {
   DND_EMPTY_MODIFIERS,
   SORTABLE_LAYER_TYPE,
   SORTABLE_LAYER_GROUP_TYPE,
-  SORTABLE_EFFECT_TYPE
+  SORTABLE_EFFECT_TYPE,
+  SORTABLE_LAYER_GROUP_DROPPABLE_TYPE
 } from './common/dnd-layer-items';
 
 export type DndContextProps = PropsWithChildren<{
@@ -37,6 +44,38 @@ export const DragItem = styled.div`
 `;
 
 const nop = () => undefined;
+
+/**
+ * Hybrid collision detection: uses closestCenter for sortable items (stable reordering
+ * without flickering) and pointerWithin for group droppable containers (reliable drop
+ * detection even when group is the last item). If pointer is within a group droppable
+ * and no sortable item is closer, returns the group droppable.
+ */
+const layerGroupCollisionDetection: CollisionDetection = args => {
+  const closestCenterCollisions = closestCenter(args);
+  const pointerCollisions = pointerWithin(args);
+
+  const groupDroppable = pointerCollisions.find(c => {
+    const type = c.data?.droppableContainer?.data?.current?.type;
+    return type === SORTABLE_LAYER_GROUP_DROPPABLE_TYPE;
+  });
+
+  if (groupDroppable && closestCenterCollisions.length === 0) {
+    return [groupDroppable];
+  }
+
+  if (groupDroppable) {
+    const hasNonGroupSortable = closestCenterCollisions.some(c => {
+      const type = c.data?.droppableContainer?.data?.current?.type;
+      return type !== SORTABLE_LAYER_GROUP_DROPPABLE_TYPE;
+    });
+    if (!hasNonGroupSortable) {
+      return [groupDroppable];
+    }
+  }
+
+  return closestCenterCollisions;
+};
 
 DndContextFactory.deps = [LayerPanelHeaderFactory, LayerGroupHeaderFactory];
 
@@ -127,7 +166,12 @@ function DndContextFactory(
     );
 
     return (
-      <DndKitContext onDragStart={onDragStart} onDragEnd={onDragEnd} modifiers={dndModifiers}>
+      <DndKitContext
+        onDragStart={onDragStart}
+        onDragEnd={onDragEnd}
+        modifiers={dndModifiers}
+        collisionDetection={layerGroupCollisionDetection}
+      >
         {children}
         <DragOverlay modifiers={dndModifiers} dropAnimation={null}>
           {activeElementType === 'layer' && activeElementObject ? (

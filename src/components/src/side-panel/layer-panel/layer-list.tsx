@@ -11,7 +11,12 @@ import {UIStateActions, VisStateActions, MapStateActions, addLayerGroup} from '@
 import {LayerOrderGroup, LayerOrder, LayerOrderHierarchy} from '@kepler.gl/types';
 
 import {useDroppable} from '@dnd-kit/core';
-import {useSortable, SortableContext, verticalListSortingStrategy} from '@dnd-kit/sortable';
+import {
+  useSortable,
+  SortableContext,
+  verticalListSortingStrategy,
+  defaultAnimateLayoutChanges
+} from '@dnd-kit/sortable';
 import {CSS} from '@dnd-kit/utilities';
 import LayerPanelFactory from './layer-panel';
 import LayerGroupHeaderFactory from './layer-group-header';
@@ -53,6 +58,14 @@ const Container = styled.div`
   gap: 8px;
 `;
 
+const animateLayoutChanges = args => {
+  const {isSorting, wasDragging} = args;
+  if (isSorting || wasDragging) {
+    return false;
+  }
+  return defaultAnimateLayoutChanges(args);
+};
+
 interface SortableStyledItemProps {
   $transition?: string;
   $transform?: string;
@@ -87,7 +100,17 @@ const CollapsibleGroupContent = styled.div<{$isOver?: boolean}>`
   display: flex;
   flex-direction: column;
   gap: 0;
+  padding: 4px 0;
+  min-height: 32px;
   background-color: ${props => (props.$isOver ? props.theme.panelBackgroundHover : 'transparent')};
+  transition: background-color 0.15s ease;
+`;
+
+const CollapsedDropZone = styled.div<{$isOver?: boolean}>`
+  min-height: 4px;
+  background-color: ${props => (props.$isOver ? props.theme.activeColor : 'transparent')};
+  transition: background-color 0.15s ease, min-height 0.15s ease;
+  ${props => props.$isOver && 'min-height: 24px;'}
 `;
 
 const EmptyLayerGroup = styled.div`
@@ -95,7 +118,7 @@ const EmptyLayerGroup = styled.div`
   font-size: 11px;
   align-items: center;
   justify-content: center;
-  min-height: 36px;
+  min-height: 28px;
   border: 1px dashed ${props => props.theme.labelColor};
   border-radius: 4px;
   margin-top: 4px;
@@ -163,7 +186,8 @@ function LayerListFactory(
         type: SORTABLE_LAYER_TYPE,
         parent
       },
-      disabled
+      disabled,
+      animateLayoutChanges
     });
 
     return (
@@ -202,7 +226,8 @@ function LayerListFactory(
     const {attributes, isDragging, listeners, setNodeRef, transform, transition} = useSortable({
       id: layerGroup.id,
       data: {type: SORTABLE_LAYER_GROUP_TYPE},
-      disabled
+      disabled,
+      animateLayoutChanges
     });
 
     const layerEntriesToShow = buildLayerOrderHierarchy(layerGroup.layerOrder, layers);
@@ -270,7 +295,9 @@ function LayerListFactory(
               <EmptyLayerGroup>Drag layer here</EmptyLayerGroup>
             )}
           </CollapsibleGroupContent>
-        ) : null}
+        ) : (
+          <CollapsedDropZone ref={droppableSetNodeRef} $isOver={isOver} />
+        )}
       </div>
     );
   };
