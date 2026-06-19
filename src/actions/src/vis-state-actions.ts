@@ -546,7 +546,7 @@ export type AddLayerGroupUpdaterAction = {
   id?: string;
   label?: string;
   isVisible?: boolean;
-  layerOrder?: LayerOrder;
+  layerOrder?: string[];
   isIncludedInLegend?: boolean;
 };
 

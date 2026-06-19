@@ -90,8 +90,10 @@ const useDndLayers: (layers: Layer[], layerOrder: LayerOrder) => DndLayersHook =
       }
 
       if (overType === DROPPABLE_MAP_CONTAINER_TYPE) {
-        const mapIndex = over?.data.current?.index ?? 0;
-        dispatch(toggleLayerForMap(mapIndex, activeId));
+        if (activeType === SORTABLE_LAYER_TYPE) {
+          const mapIndex = over?.data.current?.index ?? 0;
+          dispatch(toggleLayerForMap(mapIndex, activeId));
+        }
         return;
       }
 
