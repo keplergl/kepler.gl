@@ -28,6 +28,9 @@ export function generateMapboxLayers(
       .reduce((acc, element) => {
         if (isPlainObject(element)) {
           const layerGroup = element as LayerOrderGroup;
+          if (!layerGroup.isVisible) {
+            return acc;
+          }
           return {
             ...acc,
             ...generateMapboxLayers(layers, layerData, layerGroup.layerOrder, layersToRender)

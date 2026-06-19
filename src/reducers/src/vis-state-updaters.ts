@@ -2114,6 +2114,28 @@ export const swapLayerOrderEntriesUpdater = (
   }
 
   if (originLayerGroupId && destinationLayerGroupId) {
+    if (originLayerGroupId === destinationLayerGroupId) {
+      const layerGroup = getLayerGroupFromLayerOrder(state.layerOrder, originLayerGroupId);
+      if (!layerGroup) return state;
+      const originIndex = layerGroup.layerOrder.findIndex(entry =>
+        typeof entry === 'string' ? entry === originLayerId : entry.id === originLayerId
+      );
+      if (originIndex === -1) return state;
+      if (destinationLayerId) {
+        const destIndex = layerGroup.layerOrder.findIndex(entry =>
+          typeof entry === 'string' ? entry === destinationLayerId : entry.id === destinationLayerId
+        );
+        if (destIndex === -1) return state;
+        const newGroupLayerOrder = arrayMove(layerGroup.layerOrder, originIndex, destIndex);
+        const newLayerOrder = updateLayerGroupInLayerOrder(state.layerOrder, {
+          ...layerGroup,
+          layerOrder: newGroupLayerOrder
+        });
+        return {...state, layerOrder: newLayerOrder};
+      }
+      return state;
+    }
+
     let newState = addLayerToLayerGroupUpdater(state, {
       layerId: originLayerId,
       layerGroupId: destinationLayerGroupId

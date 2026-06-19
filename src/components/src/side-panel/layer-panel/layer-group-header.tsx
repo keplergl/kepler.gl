@@ -10,7 +10,7 @@ import {LayerOrderGroup} from '@kepler.gl/types';
 
 import {StyledPanelHeader, InlineInput} from '../../common/styled-components';
 import {DragHandle} from './layer-panel-header';
-import {VertDots, EyeSeen, EyeUnseen, Trash, ArrowDown, ArrowRight} from '../../common/icons';
+import {VertDots, EyeSeen, EyeUnseen, Trash, ArrowDown, ArrowRight, Folder} from '../../common/icons';
 import PanelHeaderActionFactory from '../panel-header-action';
 
 const Container = styled(StyledPanelHeader)`
@@ -104,6 +104,7 @@ function LayerGroupHeaderFactory(
           <DragHandle className="layer__drag-handle" listeners={listeners}>
             <VertDots height="20px" />
           </DragHandle>
+          <Folder height="18px" />
           <GroupLabelInput
             type="text"
             value={label}

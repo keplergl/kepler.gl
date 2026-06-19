@@ -440,6 +440,9 @@ function computeDeckLayersFromLayerOrder(
     .reduce((overlays, element) => {
       if (isPlainObject(element)) {
         const layerGroup = element as LayerOrderGroup;
+        if (!layerGroup.isVisible) {
+          return overlays;
+        }
         return overlays.concat(
           computeDeckLayersFromLayerOrder(
             layerGroup.layerOrder,
@@ -456,6 +459,9 @@ function computeDeckLayersFromLayerOrder(
         return overlays;
       }
       const layerIndex = layers.findIndex(({id}) => id === layerId);
+      if (layerIndex === -1) {
+        return overlays;
+      }
       const bindedLayerCallbacks = layerCallbacks
         ? bindLayerCallbacks(layerCallbacks, layerIndex)
         : {};
@@ -523,6 +529,9 @@ export function computeDeckLayers(
       .reduce((overlays, element) => {
         if (isPlainObject(element)) {
           const layerGroup = element as LayerOrderGroup;
+          if (!layerGroup.isVisible) {
+            return overlays;
+          }
           return overlays.concat(
             computeDeckLayersFromLayerOrder(
               layerGroup.layerOrder,
@@ -539,6 +548,9 @@ export function computeDeckLayers(
           return overlays;
         }
         const layerIndex = layers.findIndex(({id}) => id === layerId);
+        if (layerIndex === -1) {
+          return overlays;
+        }
         const bindedLayerCallbacks = layerCallbacks
           ? bindLayerCallbacks(layerCallbacks, layerIndex)
           : {};

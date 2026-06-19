@@ -143,9 +143,10 @@ const useDndLayers: (layers: Layer[], layerOrder: LayerOrder) => DndLayersHook =
 
       // moving layer/group onto root
       if (!overParent) {
+        const groupObj = getLayerGroupFromLayerOrder(layerOrder, activeId as string);
         let newLayerOrder = removeElementFromLayerOrder(layerOrder, activeId);
         const overIndex = over?.data.current?.sortable?.index ?? 0;
-        newLayerOrder = addLayerOrGroupToLayerOrder(newLayerOrder, activeId, overIndex);
+        newLayerOrder = addLayerOrGroupToLayerOrder(newLayerOrder, groupObj ?? activeId, overIndex);
         dispatch(reorderLayer(newLayerOrder));
       }
     },
