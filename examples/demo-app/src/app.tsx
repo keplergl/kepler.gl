@@ -659,7 +659,7 @@ const App = props => {
     // _loadPointData();
     // _loadGeojsonData();
     // _loadTripGeoJson();
-    _loadIconData();
+    // _loadIconData();
     // _loadH3HexagonData();
     // _loadS2Data();
     // _loadScenegraphLayer();
