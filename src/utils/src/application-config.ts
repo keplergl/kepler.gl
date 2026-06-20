@@ -21,9 +21,9 @@ export type SvgIcon = {
   /** Triangulated SVG path geometry */
   mesh: {
     /** Triangle cell indices referencing positions (CCW winding order) */
-    cells: number[][];
+    cells: [number, number, number][];
     /** Vertex positions [x, y, z] in range [-1, 1] */
-    positions: number[][];
+    positions: [number, number, number][];
   };
 };
 
