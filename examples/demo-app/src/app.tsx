@@ -619,6 +619,159 @@ const App = props => {
     );
   }, [dispatch]);
 
+  const _loadWmsLayer = useCallback(() => {
+    dispatch(
+      addDataToMap({
+        datasets: [
+          {
+            info: {
+              label: 'OpenStreetMap WMS',
+              id: 'osm-wms',
+              type: 'wms-tile'
+            },
+            data: {
+              fields: [],
+              rows: []
+            },
+            metadata: {
+              type: 'remote',
+              remoteTileFormat: 'wms',
+              tilesetDataUrl: 'https://ows.terrestris.de/osm/service',
+              tilesetMetadataUrl:
+                'https://ows.terrestris.de/osm/service?service=WMS&request=GetCapabilities',
+              version: '1.1.1',
+              layers: [
+                {
+                  name: 'OSM-WMS',
+                  title: 'OpenStreetMap WMS',
+                  boundingBox: [-180, -88, 180, 88]
+                }
+              ],
+              label: 'OpenStreetMap WMS'
+            },
+            disableDataOperation: true
+          }
+        ],
+        options: {
+          autoCreateLayers: true,
+          centerMap: true
+        }
+      })
+    );
+  }, [dispatch]);
+
+  const _loadRasterTileLayer = useCallback(() => {
+    dispatch(
+      addDataToMap({
+        datasets: [
+          {
+            info: {
+              label: 'Swiss Historical Map',
+              id: 'swiss-historical-raster',
+              type: 'raster-tile'
+            },
+            data: {
+              fields: [],
+              rows: []
+            },
+            metadata: {
+              metadataUrl:
+                'https://public-bucket-for-tests.s3.us-east-1.amazonaws.com/historic-swis-18xx.pmtiles',
+              pmtilesType: 'raster'
+            },
+            disableDataOperation: true
+          }
+        ],
+        options: {
+          autoCreateLayers: true,
+          centerMap: true
+        }
+      })
+    );
+  }, [dispatch]);
+
+  const _loadBitmapLayer = useCallback(() => {
+    dispatch(
+      addDataToMap({
+        datasets: [
+          {
+            info: {
+              label: 'SF Bitmap Overlay',
+              id: 'sf-bitmap',
+              type: 'bitmap'
+            },
+            data: {
+              fields: [],
+              rows: []
+            },
+            metadata: {
+              imageUrl:
+                'https://raw.githubusercontent.com/visgl/deck.gl-data/master/website/sf-districts.png',
+              bounds: [-122.5179, 37.70391916246189, -122.35462834588868, 37.830428246756696]
+            },
+            disableDataOperation: true
+          }
+        ],
+        options: {
+          autoCreateLayers: true,
+          centerMap: true
+        }
+      })
+    );
+  }, [dispatch]);
+
+  const _loadTile3DLayer = useCallback(() => {
+    dispatch(
+      addDataToMap({
+        datasets: [
+          {
+            info: {
+              label: 'Royal Exhibition Building',
+              id: 'royal-exhibition-3d',
+              type: 'tile-3d'
+            },
+            data: {
+              fields: [],
+              rows: []
+            },
+            metadata: {
+              tile3dUrl:
+                'https://raw.githubusercontent.com/visgl/deck.gl-data/master/3d-tiles/RoyalExhibitionBuilding/tileset.json'
+            },
+            disableDataOperation: true
+          }
+        ],
+        config: {
+          version: 'v1',
+          config: {
+            visState: {
+              effects: [
+                {
+                  type: 'surfaceFog',
+                  isEnabled: true,
+                  parameters: {
+                    density: 1,
+                    height: 40,
+                    thickness: 50,
+                    fogColor: [70, 130, 180]
+                  }
+                }
+              ]
+            },
+            mapState: {
+              pitch: 0,
+              dragRotate: false
+            }
+          }
+        },
+        options: {
+          autoCreateLayers: true,
+          centerMap: true
+        }
+      })
+    );
+  }, [dispatch]);
+
   const _loadSampleData = useCallback(() => {
     // _loadPointData();
     // _loadGeojsonData();
@@ -631,6 +784,10 @@ const App = props => {
     // _loadRowData();
     // _loadVectorTileData();
     // _loadFlowData();
+    //_loadWmsLayer();
+    //_loadRasterTileLayer();
+    //_loadBitmapLayer();
+    // _loadTile3DLayer();
     // _loadSyncedFilterWTripLayer();
     // _replaceSyncedFilterWTripLayer();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -647,6 +804,10 @@ const App = props => {
     _replaceData,
     _loadVectorTileData,
     _loadFlowData,
+    _loadWmsLayer,
+    _loadRasterTileLayer,
+    _loadBitmapLayer,
+    _loadTile3DLayer,
     _loadSyncedFilterWTripLayer,
     _replaceSyncedFilterWTripLayer
   ]);
