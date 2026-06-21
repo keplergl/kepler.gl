@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useCallback, useMemo} from 'react';
+import React, {memo, useCallback, useMemo} from 'react';
 
 import {
   EXPORT_DATA_ID,
@@ -248,5 +248,79 @@ export default function SidePanelFactory(
   };
 
   SidePanel.defaultPanels = fullPanels;
-  return SidePanel;
+
+  const areSidePanelPropsEqual = (prev: SidePanelProps, next: SidePanelProps): boolean => {
+    const keys = Object.keys(next) as (keyof SidePanelProps)[];
+    for (const key of keys) {
+      if (prev[key] === next[key]) continue;
+
+      if (key === 'filters') {
+        const pf = prev.filters;
+        const nf = next.filters;
+        if (pf?.length !== nf?.length) return false;
+        const isFilterPanelOpen = (next as any).uiState?.activeSidePanel === 'filter';
+        for (let i = 0; i < nf.length; i++) {
+          if (pf[i] === nf[i]) continue;
+          if (pf[i].id !== nf[i].id) return false;
+          if (pf[i].name !== nf[i].name) return false;
+          if (pf[i].type !== nf[i].type) return false;
+          if (pf[i].dataId !== nf[i].dataId) return false;
+          if (pf[i].view !== nf[i].view) return false;
+          if (pf[i].enabled !== nf[i].enabled) return false;
+          if (pf[i].plotType !== nf[i].plotType) return false;
+          if ((pf[i] as any).animationWindow !== (nf[i] as any).animationWindow) return false;
+          if (pf[i].speed !== nf[i].speed) return false;
+          if (pf[i].gpu !== nf[i].gpu) return false;
+          if (isFilterPanelOpen && nf[i].view !== 'enlarged') {
+            if (pf[i].value !== nf[i].value) return false;
+          }
+        }
+        continue;
+      }
+
+      if (key === 'datasets') {
+        const pd = prev.datasets;
+        const nd = next.datasets;
+        const pKeys = Object.keys(pd || {});
+        const nKeys = Object.keys(nd || {});
+        if (pKeys.length !== nKeys.length) return false;
+        for (const dk of nKeys) {
+          if (!pd?.[dk]) return false;
+          if (pd[dk] === nd[dk]) continue;
+          if (pd[dk].id !== nd[dk].id) return false;
+          if (pd[dk].label !== nd[dk].label) return false;
+          if (pd[dk].color !== nd[dk].color) return false;
+          if (pd[dk].fields !== nd[dk].fields) return false;
+          if (pd[dk].dataContainer !== nd[dk].dataContainer) return false;
+        }
+        continue;
+      }
+
+      if (key === 'layers') {
+        const isLayerPanelOpen = (next as any).uiState?.activeSidePanel === 'layer';
+        if (isLayerPanelOpen) {
+          const filtersAlsoChanged = prev.filters !== next.filters;
+          if (!filtersAlsoChanged) return false;
+        }
+        const pl = prev.layers;
+        const nl = next.layers;
+        if (pl?.length !== nl?.length) return false;
+        for (let i = 0; i < nl.length; i++) {
+          if (pl[i].id !== nl[i].id) return false;
+          if (pl[i].type !== nl[i].type) return false;
+        }
+        continue;
+      }
+
+      return false;
+    }
+    return true;
+  };
+
+  const MemoizedSidePanel = memo(SidePanel, areSidePanelPropsEqual) as React.NamedExoticComponent<SidePanelProps> & {
+    defaultPanels: SidePanelProps['panels'];
+  };
+  MemoizedSidePanel.displayName = 'SidePanel';
+  (MemoizedSidePanel as any).defaultPanels = fullPanels;
+  return MemoizedSidePanel;
 }

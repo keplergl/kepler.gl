@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {forwardRef, useMemo, useCallback} from 'react';
+import React, {forwardRef, memo, useMemo, useCallback} from 'react';
 import styled, {withTheme, IStyledComponent} from 'styled-components';
 
 import {FILTER_VIEW_TYPES, EXPORT_VIDEO_ID} from '@kepler.gl/constants';
@@ -232,10 +232,15 @@ export default function BottomWidgetFactory(
     );
   };
 
-  return withTheme(
-    forwardRef((props: BottomWidgetThemedProps, ref: React.ForwardedRef<HTMLDivElement>) => (
-      <BottomWidget {...props} rootRef={ref} />
-    ))
+  const MemoizedBottomWidget = memo(BottomWidget);
+
+  const ForwardedBottomWidget = forwardRef(
+    (props: BottomWidgetThemedProps, ref: React.ForwardedRef<HTMLDivElement>) => (
+      <MemoizedBottomWidget {...props} rootRef={ref} />
+    )
   );
+  ForwardedBottomWidget.displayName = 'BottomWidget';
+
+  return withTheme(ForwardedBottomWidget);
 }
 /* eslint-enable complexity */
