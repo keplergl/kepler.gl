@@ -68,7 +68,6 @@ import sampleAnimateTrip, {
   replacePointData,
   config as syncedTripConfig
 } from './data/sample-animate-trip-data';
-import sampleIconCsv from './data/sample-icon-csv';
 import sampleGpsData from './data/sample-gps-data';
 import sampleRowData, {config as rowDataConfig} from './data/sample-row-data';
 import {sampleFlowData, config as flowDataConfig} from './data/sample-flow-data';
@@ -422,7 +421,19 @@ const App = props => {
   }, [dispatch]);
 
   const _loadIconData = useCallback(() => {
-    // load icon data and config and process csv file
+    // Demonstrates all 3 icon sources:
+    // 1. CDN icons (e.g. 'accel') - fetched automatically
+    // 2. Inline custom icons (e.g. 'custom-star'') - via initApplicationConfig({ customIcons })
+    // 3. Remote custom icons (e.g. 'remote-triangle', 'remote-cross', 'remote-hexagon') - via customIconUrl
+    const csvData = [
+      'time,lat,lng,icon,annotation-severity,annotation-html',
+      '2016-06-28 20:10:00,37.780,-122.410,accel,5,"Default CDN icon"',
+      '2016-06-28 20:10:10,37.782,-122.415,custom-star,5,"Inline custom star"',
+      '2016-06-28 20:10:30,37.778,-122.405,remote-triangle,3,"Remote triangle icon"',
+      '2016-06-28 20:10:40,37.784,-122.420,remote-cross,2,"Remote cross icon"',
+      '2016-06-28 20:10:50,37.772,-122.412,remote-hexagon,4,"Remote hexagon icon"'
+    ].join('\n');
+
     dispatch(
       addDataToMap({
         datasets: [
@@ -431,9 +442,34 @@ const App = props => {
               label: 'Icon Data',
               id: 'test_icon_data'
             },
-            data: processCsvData(sampleIconCsv)
+            data: processCsvData(csvData)
           }
-        ]
+        ],
+        config: {
+          version: 'v1',
+          config: {
+            visState: {
+              layers: [
+                {
+                  type: 'icon',
+                  config: {
+                    dataId: 'test_icon_data',
+                    label: 'Custom Icons',
+                    columns: {
+                      lat: 'lat',
+                      lng: 'lng',
+                      icon: 'icon'
+                    },
+                    isVisible: true,
+                    visConfig: {
+                      radius: 100
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
       })
     );
   }, [dispatch]);
@@ -619,6 +655,159 @@ const App = props => {
     );
   }, [dispatch]);
 
+  const _loadWmsLayer = useCallback(() => {
+    dispatch(
+      addDataToMap({
+        datasets: [
+          {
+            info: {
+              label: 'OpenStreetMap WMS',
+              id: 'osm-wms',
+              type: 'wms-tile'
+            },
+            data: {
+              fields: [],
+              rows: []
+            },
+            metadata: {
+              type: 'remote',
+              remoteTileFormat: 'wms',
+              tilesetDataUrl: 'https://ows.terrestris.de/osm/service',
+              tilesetMetadataUrl:
+                'https://ows.terrestris.de/osm/service?service=WMS&request=GetCapabilities',
+              version: '1.1.1',
+              layers: [
+                {
+                  name: 'OSM-WMS',
+                  title: 'OpenStreetMap WMS',
+                  boundingBox: [-180, -88, 180, 88]
+                }
+              ],
+              label: 'OpenStreetMap WMS'
+            },
+            disableDataOperation: true
+          }
+        ],
+        options: {
+          autoCreateLayers: true,
+          centerMap: true
+        }
+      })
+    );
+  }, [dispatch]);
+
+  const _loadRasterTileLayer = useCallback(() => {
+    dispatch(
+      addDataToMap({
+        datasets: [
+          {
+            info: {
+              label: 'Swiss Historical Map',
+              id: 'swiss-historical-raster',
+              type: 'raster-tile'
+            },
+            data: {
+              fields: [],
+              rows: []
+            },
+            metadata: {
+              metadataUrl:
+                'https://public-bucket-for-tests.s3.us-east-1.amazonaws.com/historic-swis-18xx.pmtiles',
+              pmtilesType: 'raster'
+            },
+            disableDataOperation: true
+          }
+        ],
+        options: {
+          autoCreateLayers: true,
+          centerMap: true
+        }
+      })
+    );
+  }, [dispatch]);
+
+  const _loadBitmapLayer = useCallback(() => {
+    dispatch(
+      addDataToMap({
+        datasets: [
+          {
+            info: {
+              label: 'SF Bitmap Overlay',
+              id: 'sf-bitmap',
+              type: 'bitmap'
+            },
+            data: {
+              fields: [],
+              rows: []
+            },
+            metadata: {
+              imageUrl:
+                'https://raw.githubusercontent.com/visgl/deck.gl-data/master/website/sf-districts.png',
+              bounds: [-122.5179, 37.70391916246189, -122.35462834588868, 37.830428246756696]
+            },
+            disableDataOperation: true
+          }
+        ],
+        options: {
+          autoCreateLayers: true,
+          centerMap: true
+        }
+      })
+    );
+  }, [dispatch]);
+
+  const _loadTile3DLayer = useCallback(() => {
+    dispatch(
+      addDataToMap({
+        datasets: [
+          {
+            info: {
+              label: 'Royal Exhibition Building',
+              id: 'royal-exhibition-3d',
+              type: 'tile-3d'
+            },
+            data: {
+              fields: [],
+              rows: []
+            },
+            metadata: {
+              tile3dUrl:
+                'https://raw.githubusercontent.com/visgl/deck.gl-data/master/3d-tiles/RoyalExhibitionBuilding/tileset.json'
+            },
+            disableDataOperation: true
+          }
+        ],
+        config: {
+          version: 'v1',
+          config: {
+            visState: {
+              effects: [
+                {
+                  type: 'surfaceFog',
+                  isEnabled: true,
+                  parameters: {
+                    density: 1,
+                    height: 40,
+                    thickness: 50,
+                    fogColor: [70, 130, 180]
+                  }
+                }
+              ]
+            },
+            mapState: {
+              pitch: 0,
+              dragRotate: false
+            }
+          }
+        },
+        options: {
+          autoCreateLayers: true,
+          centerMap: true
+        }
+      })
+    );
+  }, [dispatch]);
+
   const _loadSampleData = useCallback(() => {
     // _loadPointData();
     // _loadGeojsonData();
@@ -631,6 +820,10 @@ const App = props => {
     // _loadRowData();
     // _loadVectorTileData();
     // _loadFlowData();
+    //_loadWmsLayer();
+    //_loadRasterTileLayer();
+    //_loadBitmapLayer();
+    // _loadTile3DLayer();
     // _loadSyncedFilterWTripLayer();
     // _replaceSyncedFilterWTripLayer();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -647,6 +840,10 @@ const App = props => {
     _replaceData,
     _loadVectorTileData,
     _loadFlowData,
+    _loadWmsLayer,
+    _loadRasterTileLayer,
+    _loadBitmapLayer,
+    _loadTile3DLayer,
     _loadSyncedFilterWTripLayer,
     _replaceSyncedFilterWTripLayer
   ]);

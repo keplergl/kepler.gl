@@ -9,6 +9,25 @@ import type {BaseMapLibraryType} from '@kepler.gl/constants';
 import type {DatabaseAdapter} from './application-config-types';
 
 /**
+ * Represents a custom SVG icon that can be used in the icon layer.
+ * The mesh describes the icon's geometry as triangulated SVG paths.
+ *
+ * Important: Triangle cells must use counter-clockwise (CCW) winding order.
+ * Positions should be in the range [-1, 1] on both axes.
+ */
+export type SvgIcon = {
+  /** Unique identifier for the icon, used as the value in the data's icon column */
+  id: string;
+  /** Triangulated SVG path geometry */
+  mesh: {
+    /** Triangle cell indices referencing positions (CCW winding order) */
+    cells: [number, number, number][];
+    /** Vertex positions [x, y, z] in range [-1, 1] */
+    positions: [number, number, number][];
+  };
+};
+
+/**
  * Detect if running with webpack build tool
  */
 function isWebpackBuild(): boolean {
@@ -111,6 +130,42 @@ export type KeplerApplicationConfig = {
 
   /** Whether to enable the layer groups feature. Enabled by default. */
   enableLayerGroups?: boolean;
+  
+  /**
+   * Custom SVG icons to be made available in the icon layer.
+   * These icons will be merged with the default icons fetched from CDN.
+   * Each icon must have a unique `id` and a `mesh` describing its triangulated geometry.
+   *
+   * @example
+   * ```
+   * initApplicationConfig({
+   *   customIcons: [
+   *     {
+   *       id: 'my-custom-marker',
+   *       mesh: {
+   *         cells: [[0, 1, 2], [2, 3, 0]],
+   *         positions: [[0, 1, 0], [1, -1, 0], [-1, -1, 0], [0, 0, 0]]
+   *       }
+   *     }
+   *   ]
+   * });
+   * ```
+   */
+  customIcons?: SvgIcon[];
+
+  /**
+   * URL to a remote JSON file containing custom SVG icons.
+   * The JSON file should have the format: `{ "svgIcons": [{ id, mesh: { cells, positions } }, ...] }`
+   * Icons from this URL will be merged with default CDN icons and inline `customIcons`.
+   *
+   * @example
+   * ```
+   * initApplicationConfig({
+   *   customIconUrl: 'https://my-server.com/my-icons.json'
+   * });
+   * ```
+   */
+  customIconUrl?: string;
 };
 
 const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
@@ -185,7 +240,11 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
 
   enableSwipeMode: true,
 
-  enableLayerGroups: true
+  enableLayerGroups: true,
+
+  customIcons: [],
+
+  customIconUrl: ''
 };
 
 const applicationConfig: Required<KeplerApplicationConfig> = DEFAULT_APPLICATION_CONFIG;
