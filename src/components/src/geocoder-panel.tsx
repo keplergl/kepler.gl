@@ -51,11 +51,11 @@ const ICON_LAYER = {
   }
 };
 
-function generateConfig(layerOrder) {
+function generateConfig() {
   return {
     visState: {
       layers: [ICON_LAYER],
-      layerOrder: [ICON_LAYER.id, ...layerOrder]
+      layerOrder: [ICON_LAYER.id]
     }
   };
 }
@@ -155,7 +155,6 @@ export default function GeocoderPanelFactory(): React.FC<GeocoderPanelProps> {
     updateVisData,
     removeDataset,
     updateMap,
-    layerOrder,
     limitSearch = false,
     transitionDuration = 3000,
     width,
@@ -178,7 +177,7 @@ export default function GeocoderPanelFactory(): React.FC<GeocoderPanelProps> {
         const updateVisDataPayload = getUpdateVisDataPayload(lat, lon, text);
         if (updateVisDataPayload) {
           removeGeocoderDataset();
-          updateVisData(...updateVisDataPayload, generateConfig(layerOrder));
+          updateVisData(...updateVisDataPayload, generateConfig());
         }
 
         const bounds = bbox || [
@@ -214,7 +213,6 @@ export default function GeocoderPanelFactory(): React.FC<GeocoderPanelProps> {
       },
       [
         index,
-        layerOrder,
         mapState,
         removeGeocoderDataset,
         transitionDuration,

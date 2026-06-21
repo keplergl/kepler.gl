@@ -2139,25 +2139,28 @@ export const swapLayerOrderEntriesUpdater = (
       return state;
     }
 
-    let newState = addLayerToLayerGroupUpdater(state, {
-      layerId: originLayerId,
-      layerGroupId: destinationLayerGroupId
-    });
+    // Cross-group move: remove from origin, then add to destination
+    const layerOrder = removeElementFromLayerOrder(state.layerOrder, originLayerId);
+    let newState = addLayerToLayerGroupUpdater(
+      {...state, layerOrder},
+      {layerId: originLayerId, layerGroupId: destinationLayerGroupId}
+    );
 
     if (destinationLayerId) {
       const layerGroup = getLayerGroupFromLayerOrder(newState.layerOrder, destinationLayerGroupId);
       if (!layerGroup) return state;
+      const originIndex = layerGroup.layerOrder.findIndex(entry => entry === originLayerId);
       const destIndex = layerGroup.layerOrder.findIndex(entry => entry === destinationLayerId);
-      newState = updateLayerGroupUpdater(newState, {
-        id: layerGroup.id,
-        options: {
-          layerOrder: arrayMove(
-            layerGroup.layerOrder,
-            0,
-            destIndex === -1 ? 0 : destIndex - 1
-          )
-        }
-      });
+      if (originIndex !== -1 && destIndex !== -1) {
+        const newGroupLayerOrder = arrayMove(layerGroup.layerOrder, originIndex, destIndex);
+        newState = {
+          ...newState,
+          layerOrder: updateLayerGroupInLayerOrder(newState.layerOrder, {
+            ...layerGroup,
+            layerOrder: newGroupLayerOrder
+          })
+        };
+      }
     }
     return newState;
   }
