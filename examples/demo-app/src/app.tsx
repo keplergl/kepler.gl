@@ -68,7 +68,6 @@ import sampleAnimateTrip, {
   replacePointData,
   config as syncedTripConfig
 } from './data/sample-animate-trip-data';
-import sampleIconCsv from './data/sample-icon-csv';
 import sampleGpsData from './data/sample-gps-data';
 import sampleRowData, {config as rowDataConfig} from './data/sample-row-data';
 import {sampleFlowData, config as flowDataConfig} from './data/sample-flow-data';
@@ -422,7 +421,19 @@ const App = props => {
   }, [dispatch]);
 
   const _loadIconData = useCallback(() => {
-    // load icon data and config and process csv file
+    // Demonstrates all 3 icon sources:
+    // 1. CDN icons (e.g. 'accel') - fetched automatically
+    // 2. Inline custom icons (e.g. 'custom-star'') - via initApplicationConfig({ customIcons })
+    // 3. Remote custom icons (e.g. 'remote-triangle', 'remote-cross', 'remote-hexagon') - via customIconUrl
+    const csvData = [
+      'time,lat,lng,icon,annotation-severity,annotation-html',
+      '2016-06-28 20:10:00,37.780,-122.410,accel,5,"Default CDN icon"',
+      '2016-06-28 20:10:10,37.782,-122.415,custom-star,5,"Inline custom star"',
+      '2016-06-28 20:10:30,37.778,-122.405,remote-triangle,3,"Remote triangle icon"',
+      '2016-06-28 20:10:40,37.784,-122.420,remote-cross,2,"Remote cross icon"',
+      '2016-06-28 20:10:50,37.772,-122.412,remote-hexagon,4,"Remote hexagon icon"'
+    ].join('\n');
+
     dispatch(
       addDataToMap({
         datasets: [
@@ -431,9 +442,34 @@ const App = props => {
               label: 'Icon Data',
               id: 'test_icon_data'
             },
-            data: processCsvData(sampleIconCsv)
+            data: processCsvData(csvData)
           }
-        ]
+        ],
+        config: {
+          version: 'v1',
+          config: {
+            visState: {
+              layers: [
+                {
+                  type: 'icon',
+                  config: {
+                    dataId: 'test_icon_data',
+                    label: 'Custom Icons',
+                    columns: {
+                      lat: 'lat',
+                      lng: 'lng',
+                      icon: 'icon'
+                    },
+                    isVisible: true,
+                    visConfig: {
+                      radius: 100
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
       })
     );
   }, [dispatch]);
