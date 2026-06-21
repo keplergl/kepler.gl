@@ -13,7 +13,7 @@ import MapDrawPanelFactory from './map-draw-panel';
 import LocalePanelFactory from './locale-panel';
 import MapNavigationControlFactory from './map-navigation-control';
 import {Layer} from '@kepler.gl/layers';
-import {Editor, LayerVisConfig, MapControls, MapState} from '@kepler.gl/types';
+import {Editor, LayerVisConfig, LayerOrder, MapControls, MapState} from '@kepler.gl/types';
 import {Datasets} from '@kepler.gl/table';
 import {MapStateActions, UIStateActions} from '@kepler.gl/actions';
 import {getApplicationConfig} from '@kepler.gl/utils';
@@ -48,6 +48,7 @@ export type MapControlProps = {
   isSplit: boolean;
   primary: boolean;
   layers: Layer[];
+  layerOrder?: LayerOrder;
   layersToRender: {[key: string]: boolean};
   mapIndex: number;
   mapControls: MapControls;

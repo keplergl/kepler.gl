@@ -128,6 +128,9 @@ export type KeplerApplicationConfig = {
   /** Whether to enable the swipe compare mode in split map view. Enabled by default. */
   enableSwipeMode?: boolean;
 
+  /** Whether to enable the layer groups feature. Enabled by default. */
+  enableLayerGroups?: boolean;
+  
   /**
    * Custom SVG icons to be made available in the icon layer.
    * These icons will be merged with the default icons fetched from CDN.
@@ -236,6 +239,8 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
   enableMapNavigationControl: true,
 
   enableSwipeMode: true,
+
+  enableLayerGroups: true,
 
   customIcons: [],
 

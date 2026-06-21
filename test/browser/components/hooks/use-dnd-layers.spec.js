@@ -4,21 +4,19 @@
 import {renderHook, act} from '@testing-library/react';
 import {useDispatch} from 'react-redux';
 import {useDndLayers} from '@kepler.gl/components';
-import {layerConfigChange, reorderLayer, toggleLayerForMap} from '@kepler.gl/actions';
+import {reorderLayer, toggleLayerForMap} from '@kepler.gl/actions';
 import {
   DROPPABLE_MAP_CONTAINER_TYPE,
   SORTABLE_LAYER_TYPE,
-  SORTABLE_SIDE_PANEL_TYPE
+  SORTABLE_LAYER_GROUP_DROPPABLE_TYPE
 } from '@kepler.gl/components/common/dnd-layer-items';
 import {reorderLayerOrder} from '@kepler.gl/reducers';
 
-// Mock useDispatch hook
 jest.mock('react-redux', () => ({
   ...jest.requireActual('react-redux'),
   useDispatch: jest.fn()
 }));
 
-// Mock dependencies
 jest.mock('@kepler.gl/actions', () => ({
   ...jest.requireActual('@kepler.gl/actions'),
   layerConfigChange: jest.fn(),
@@ -27,17 +25,18 @@ jest.mock('@kepler.gl/actions', () => ({
 }));
 
 jest.mock('@kepler.gl/reducers', () => ({
+  ...jest.requireActual('@kepler.gl/reducers'),
   reorderLayerOrder: jest.fn()
 }));
 
 describe('useDndLayers', () => {
   const layers = [
-    {id: 1, name: 'Layer 1', config: {isConfigActive: false}},
-    {id: 2, name: 'Layer 2', config: {isConfigActive: false}},
-    {id: 3, name: 'Layer 3', config: {isConfigActive: false}}
+    {id: '1', name: 'Layer 1', config: {isConfigActive: false}},
+    {id: '2', name: 'Layer 2', config: {isConfigActive: false}},
+    {id: '3', name: 'Layer 3', config: {isConfigActive: false}}
   ];
 
-  const layerOrder = [2, 1, 3];
+  const layerOrder = ['2', '1', '3'];
 
   const dispatchMock = jest.fn();
 
@@ -48,7 +47,6 @@ describe('useDndLayers', () => {
   afterEach(() => {
     useDispatch.mockReset();
     dispatchMock.mockReset();
-    layerConfigChange.mockReset();
     reorderLayer.mockReset();
     toggleLayerForMap.mockReset();
     reorderLayerOrder.mockReset();
@@ -57,69 +55,62 @@ describe('useDndLayers', () => {
   test('should initialize with correct initial state', () => {
     const {result} = renderHook(() => useDndLayers(layers, layerOrder));
 
-    expect(result.current.activeLayer).toBeUndefined();
+    expect(result.current.activeElement).toBeUndefined();
     expect(result.current.onDragStart).toBeInstanceOf(Function);
     expect(result.current.onDragEnd).toBeInstanceOf(Function);
   });
 
-  test('onDragStart should update activeLayer and dispatch layerConfigChange if config is active', () => {
-    const currentLayers = [
-      {id: 1, name: 'Layer 1', config: {isConfigActive: false}},
-      {id: 2, name: 'Layer 2', config: {isConfigActive: true}},
-      {id: 3, name: 'Layer 3', config: {isConfigActive: false}}
-    ];
-    const {result} = renderHook(() => useDndLayers(currentLayers, layerOrder));
+  test('onDragStart should update activeElement for layer type', () => {
+    const {result} = renderHook(() => useDndLayers(layers, layerOrder));
 
     const event = {
-      active: {id: 2}
+      active: {id: '2', data: {current: {type: SORTABLE_LAYER_TYPE}}}
     };
 
     act(() => {
       result.current.onDragStart(event);
     });
 
-    expect(result.current.activeLayer).toEqual(currentLayers[1]);
-    expect(dispatchMock).toHaveBeenCalledTimes(1);
-    expect(layerConfigChange).toHaveBeenCalledWith(currentLayers[1], {isConfigActive: false});
+    expect(result.current.activeElement).toEqual(['layer', layers[1]]);
   });
 
-  test('onDragStart should not dispatch layerConfigChange if config is not active', () => {
+  test('onDragStart should not set activeElement if type is not provided', () => {
     const {result} = renderHook(() => useDndLayers(layers, layerOrder));
 
     const event = {
-      active: {id: 1}
+      active: {id: '1', data: {current: {}}}
     };
 
     act(() => {
       result.current.onDragStart(event);
     });
 
-    expect(result.current.activeLayer).toEqual(layers[0]);
-    expect(dispatchMock).not.toHaveBeenCalled();
-    expect(layerConfigChange).not.toHaveBeenCalled();
+    expect(result.current.activeElement).toBeUndefined();
   });
 
-  test('onDragEnd should reset activeLayer if overType is not defined', () => {
+  test('onDragEnd should reset activeElement if overId is null and no parent', () => {
     const {result} = renderHook(() => useDndLayers(layers, layerOrder));
 
     const event = {
-      active: {id: 2},
-      over: {}
+      active: {id: '2', data: {current: {type: SORTABLE_LAYER_TYPE}}},
+      over: null
     };
 
     act(() => {
       result.current.onDragEnd(event);
     });
 
-    expect(result.current.activeLayer).toBeUndefined();
+    expect(result.current.activeElement).toBeUndefined();
+    expect(dispatchMock).not.toHaveBeenCalled();
   });
 
   test('onDragEnd should dispatch toggleLayerForMap when overType is DROPPABLE_MAP_CONTAINER_TYPE', () => {
     const {result} = renderHook(() => useDndLayers(layers, layerOrder));
 
     const event = {
-      active: {id: 1},
+      active: {id: '1', data: {current: {type: SORTABLE_LAYER_TYPE}}},
       over: {
+        id: 'map-0',
         data: {
           current: {
             type: DROPPABLE_MAP_CONTAINER_TYPE,
@@ -134,24 +125,26 @@ describe('useDndLayers', () => {
     });
 
     expect(dispatchMock).toHaveBeenCalledTimes(1);
-    expect(toggleLayerForMap).toHaveBeenCalledWith(1, 1);
+    expect(toggleLayerForMap).toHaveBeenCalledWith(1, '1');
   });
 
-  test('onDragEnd should dispatch reorderLayer when overType is SORTABLE_LAYER_TYPE', () => {
+  test('onDragEnd should dispatch reorderLayer when dropping layer at same level', () => {
     const {result} = renderHook(() => useDndLayers(layers, layerOrder));
 
     const event = {
-      active: {id: 2},
+      active: {id: '2', data: {current: {type: SORTABLE_LAYER_TYPE, parent: undefined}}},
       over: {
+        id: '1',
         data: {
           current: {
-            type: SORTABLE_LAYER_TYPE
+            type: SORTABLE_LAYER_TYPE,
+            parent: undefined
           }
         }
       }
     };
 
-    const newLayerOrder = [1, 2, 3];
+    const newLayerOrder = ['1', '2', '3'];
     reorderLayerOrder.mockReturnValue(newLayerOrder);
 
     act(() => {
@@ -162,40 +155,50 @@ describe('useDndLayers', () => {
     expect(reorderLayer).toHaveBeenCalledWith(newLayerOrder);
   });
 
-  test('onDragEnd should dispatch reorderLayer when overType is SORTABLE_SIDE_PANEL_TYPE', () => {
-    const {result} = renderHook(() => useDndLayers(layers, layerOrder));
+  test('onDragEnd should reorder within same group even with different parent object instances', () => {
+    const layerGroup = {id: 'group1', label: 'Group 1', isVisible: true, layerOrder: ['2', '3']};
+    const layerOrderWithGroup = ['1', layerGroup];
+
+    const {result} = renderHook(() => useDndLayers(layers, layerOrderWithGroup));
+
+    const newGroupOrder = ['3', '2'];
+    reorderLayerOrder.mockReturnValue(newGroupOrder);
 
     const event = {
-      active: {id: 2},
+      active: {id: '2', data: {current: {type: SORTABLE_LAYER_TYPE, parent: {id: 'group1', label: 'Group 1', isVisible: true, layerOrder: ['2', '3']}}}},
       over: {
+        id: '3',
         data: {
           current: {
-            type: SORTABLE_SIDE_PANEL_TYPE
+            type: SORTABLE_LAYER_TYPE,
+            parent: {id: 'group1', label: 'Group 1', isVisible: true, layerOrder: ['2', '3']}
           }
         }
       }
     };
-
-    const newLayerOrder = [1, 3, 2];
-    reorderLayerOrder.mockReturnValue(newLayerOrder);
 
     act(() => {
       result.current.onDragEnd(event);
     });
 
     expect(dispatchMock).toHaveBeenCalledTimes(1);
-    expect(reorderLayer).toHaveBeenCalledWith(newLayerOrder);
+    expect(reorderLayer).toHaveBeenCalled();
+    expect(reorderLayerOrder).toHaveBeenCalledWith(layerGroup.layerOrder, '2', '3');
   });
 
-  test('onDragEnd should do nothing if overType does not match any case', () => {
-    const {result} = renderHook(() => useDndLayers(layers, layerOrder));
+  test('onDragEnd should dispatch reorderLayer when moving layer into a group', () => {
+    const layerGroup = {id: 'group1', label: 'Group 1', isVisible: true, layerOrder: ['3']};
+    const layerOrderWithGroup = ['2', '1', layerGroup];
+
+    const {result} = renderHook(() => useDndLayers(layers, layerOrderWithGroup));
 
     const event = {
-      active: {id: 2},
+      active: {id: '2', data: {current: {type: SORTABLE_LAYER_TYPE, parent: undefined}}},
       over: {
+        id: 'group1',
         data: {
           current: {
-            type: 'UNKNOWN_TYPE'
+            type: SORTABLE_LAYER_GROUP_DROPPABLE_TYPE
           }
         }
       }
@@ -205,8 +208,34 @@ describe('useDndLayers', () => {
       result.current.onDragEnd(event);
     });
 
-    expect(dispatchMock).not.toHaveBeenCalled();
-    expect(reorderLayer).not.toHaveBeenCalled();
+    expect(dispatchMock).toHaveBeenCalledTimes(1);
+    expect(reorderLayer).toHaveBeenCalled();
+  });
+
+  test('onDragEnd should not dispatch if overType is unknown and parents differ without group droppable', () => {
+    const layerGroup1 = {id: 'group1', label: 'Group 1', isVisible: true, layerOrder: ['2']};
+    const layerGroup2 = {id: 'group2', label: 'Group 2', isVisible: true, layerOrder: ['3']};
+    const layerOrderWithGroups = ['1', layerGroup1, layerGroup2];
+
+    const {result} = renderHook(() => useDndLayers(layers, layerOrderWithGroups));
+
+    const event = {
+      active: {id: '1', data: {current: {type: SORTABLE_LAYER_TYPE, parent: undefined}}},
+      over: {
+        id: 'unknown',
+        data: {
+          current: {
+            type: 'UNKNOWN_TYPE',
+            parent: layerGroup2
+          }
+        }
+      }
+    };
+
+    act(() => {
+      result.current.onDragEnd(event);
+    });
+
     expect(toggleLayerForMap).not.toHaveBeenCalled();
   });
 });

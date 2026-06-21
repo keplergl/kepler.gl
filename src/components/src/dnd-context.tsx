@@ -3,12 +3,21 @@
 
 import React, {useCallback, useMemo, PropsWithChildren} from 'react';
 import styled from 'styled-components';
-import {DndContext as DndKitContext, DragOverlay} from '@dnd-kit/core';
+import {
+  DndContext as DndKitContext,
+  DragOverlay,
+  closestCenter,
+  pointerWithin,
+  CollisionDetection
+} from '@dnd-kit/core';
 
 import Console from 'global/console';
 import {VisState} from '@kepler.gl/schemas';
+import {LayerOrderGroup} from '@kepler.gl/types';
+import {Layer} from '@kepler.gl/layers';
 
 import LayerPanelHeaderFactory from './side-panel/layer-panel/layer-panel-header';
+import LayerGroupHeaderFactory from './side-panel/layer-panel/layer-group-header';
 import useDndLayers from './hooks/use-dnd-layers';
 import useDndEffects from './hooks/use-dnd-effects';
 
@@ -16,7 +25,10 @@ import {
   DND_MODIFIERS,
   DND_EMPTY_MODIFIERS,
   SORTABLE_LAYER_TYPE,
-  SORTABLE_EFFECT_TYPE
+  SORTABLE_LAYER_GROUP_TYPE,
+  SORTABLE_LAYER_END_TYPE,
+  SORTABLE_EFFECT_TYPE,
+  SORTABLE_LAYER_GROUP_DROPPABLE_TYPE
 } from './common/dnd-layer-items';
 
 export type DndContextProps = PropsWithChildren<{
@@ -34,10 +46,61 @@ export const DragItem = styled.div`
 
 const nop = () => undefined;
 
-DndContextFactory.deps = [LayerPanelHeaderFactory];
+/**
+ * Hybrid collision detection: uses closestCenter for sortable items (stable reordering
+ * without flickering) and pointerWithin for group droppable containers (reliable drop
+ * detection even when group is the last item). When dragging a group, only root-level
+ * sortable items are considered to prevent flickering from nested items.
+ */
+const layerGroupCollisionDetection: CollisionDetection = args => {
+  const activeType = args.active.data?.current?.type;
+
+  // When dragging a group, only consider root-level sortable items (no parent)
+  if (activeType === SORTABLE_LAYER_GROUP_TYPE) {
+    const filteredArgs = {
+      ...args,
+      droppableContainers: args.droppableContainers.filter(container => {
+        const type = container.data?.current?.type;
+        return (
+          type === SORTABLE_LAYER_GROUP_TYPE ||
+          type === SORTABLE_LAYER_END_TYPE ||
+          (type === SORTABLE_LAYER_TYPE && !container.data?.current?.parent)
+        );
+      })
+    };
+    return closestCenter(filteredArgs);
+  }
+
+  const closestCenterCollisions = closestCenter(args);
+  const pointerCollisions = pointerWithin(args);
+
+  const groupDroppable = pointerCollisions.find(c => {
+    const type = c.data?.droppableContainer?.data?.current?.type;
+    return type === SORTABLE_LAYER_GROUP_DROPPABLE_TYPE;
+  });
+
+  if (groupDroppable && closestCenterCollisions.length === 0) {
+    return [groupDroppable];
+  }
+
+  if (groupDroppable) {
+    const hasNonGroupSortable = closestCenterCollisions.some(c => {
+      const type = c.data?.droppableContainer?.data?.current?.type;
+      return type !== SORTABLE_LAYER_GROUP_DROPPABLE_TYPE && type !== SORTABLE_LAYER_END_TYPE;
+    });
+    if (!hasNonGroupSortable) {
+      return [groupDroppable];
+    }
+  }
+
+  return closestCenterCollisions;
+};
+
+DndContextFactory.deps = [LayerPanelHeaderFactory, LayerGroupHeaderFactory];
 
 function DndContextFactory(
-  LayerPanelHeader: ReturnType<typeof LayerPanelHeaderFactory>
+  LayerPanelHeader: ReturnType<typeof LayerPanelHeaderFactory>,
+  LayerGroupHeader: ReturnType<typeof LayerGroupHeaderFactory>
 ): React.FC<DndContextProps> {
   const LayerPanelOverlay = ({layer, datasets}) => {
     const color =
@@ -70,7 +133,7 @@ function DndContextFactory(
     const {datasets, layerOrder, layers, effects, effectOrder, splitMaps} = visState;
 
     const {
-      activeLayer,
+      activeElement,
       onDragStart: onLayerDragStart,
       onDragEnd: onLayerDragEnd
     } = useDndLayers(layers, layerOrder);
@@ -82,11 +145,15 @@ function DndContextFactory(
     const isSplit = useMemo(() => splitMaps?.length > 1, [splitMaps]);
     const dndModifiers = useMemo(() => (isSplit ? DND_EMPTY_MODIFIERS : DND_MODIFIERS), [isSplit]);
 
+    const activeElementType = activeElement?.[0];
+    const activeElementObject = activeElement?.[1];
+
     const onDragStart = useCallback(
       event => {
         const activeType = event.active.data?.current?.type;
         switch (activeType) {
           case SORTABLE_LAYER_TYPE:
+          case SORTABLE_LAYER_GROUP_TYPE:
             onLayerDragStart(event);
             break;
           case SORTABLE_EFFECT_TYPE:
@@ -104,6 +171,7 @@ function DndContextFactory(
         const activeType = event.active.data?.current?.type;
         switch (activeType) {
           case SORTABLE_LAYER_TYPE:
+          case SORTABLE_LAYER_GROUP_TYPE:
             onLayerDragEnd(event);
             break;
           case SORTABLE_EFFECT_TYPE:
@@ -117,15 +185,25 @@ function DndContextFactory(
     );
 
     return (
-      <DndKitContext onDragStart={onDragStart} onDragEnd={onDragEnd} modifiers={dndModifiers}>
+      <DndKitContext
+        onDragStart={onDragStart}
+        onDragEnd={onDragEnd}
+        modifiers={dndModifiers}
+        collisionDetection={layerGroupCollisionDetection}
+      >
         {children}
-        {activeLayer ? (
-          <DragOverlay modifiers={dndModifiers} dropAnimation={null}>
+        <DragOverlay modifiers={dndModifiers} dropAnimation={null}>
+          {activeElementType === 'layer' && activeElementObject ? (
             <DragItem>
-              <LayerPanelOverlay layer={activeLayer} datasets={datasets} />
+              <LayerPanelOverlay layer={activeElementObject as Layer} datasets={datasets} />
             </DragItem>
-          </DragOverlay>
-        ) : null}
+          ) : null}
+          {activeElementType === 'layerGroup' && activeElementObject ? (
+            <DragItem>
+              <LayerGroupHeader layerGroup={activeElementObject as LayerOrderGroup} />
+            </DragItem>
+          ) : null}
+        </DragOverlay>
       </DndKitContext>
     );
   };

@@ -125,6 +125,7 @@ export {
 export * from './side-panel/layer-panel/dimension-scale-selector';
 
 export {default as LayerListFactory} from './side-panel/layer-panel/layer-list';
+export {default as LayerGroupHeaderFactory} from './side-panel/layer-panel/layer-group-header';
 export * from './side-panel/layer-panel/vis-config-by-field-selector';
 export {default as PanelViewListToggleFactory} from './side-panel/panel-view-list-toggle';
 export {default as DatasetInfoFactory} from './side-panel/common/dataset-info';
@@ -491,6 +492,8 @@ export {
   SORTABLE_LAYER_TYPE,
   SORTABLE_EFFECT_TYPE,
   SORTABLE_SIDE_PANEL_TYPE,
+  SORTABLE_LAYER_GROUP_TYPE,
+  SORTABLE_LAYER_GROUP_DROPPABLE_TYPE,
   DND_MODIFIERS,
   DND_EMPTY_MODIFIERS
 } from './common/dnd-layer-items';

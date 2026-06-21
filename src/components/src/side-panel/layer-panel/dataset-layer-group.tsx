@@ -7,11 +7,12 @@ import DatasetLayerSectionFactory from './dataset-layer-section';
 import {Layer, LayerClassesType} from '@kepler.gl/layers';
 import {UIStateActions, VisStateActions, ActionHandler, MapStateActions} from '@kepler.gl/actions';
 import {KeplerTable, Datasets} from '@kepler.gl/table';
+import {LayerOrder} from '@kepler.gl/types';
 
 type DatasetLayerGroupProps = {
   datasets: Datasets;
   layers: Layer[];
-  layerOrder: string[];
+  layerOrder: LayerOrder;
   layerClasses: LayerClassesType;
   showDeleteDataset: boolean;
   removeDataset: ActionHandler<typeof UIStateActions.openDeleteModal>;

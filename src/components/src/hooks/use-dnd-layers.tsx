@@ -4,90 +4,176 @@
 import {useCallback, useState} from 'react';
 import {useDispatch} from 'react-redux';
 import {DragEndEvent, DragStartEvent} from '@dnd-kit/core';
-import {layerConfigChange, reorderLayer, toggleLayerForMap} from '@kepler.gl/actions';
+import {reorderLayer, toggleLayerForMap} from '@kepler.gl/actions';
 import {
   DROPPABLE_MAP_CONTAINER_TYPE,
   SORTABLE_LAYER_TYPE,
-  SORTABLE_SIDE_PANEL_TYPE
+  SORTABLE_LAYER_GROUP_TYPE,
+  SORTABLE_LAYER_GROUP_DROPPABLE_TYPE,
+  SORTABLE_LAYER_END_TYPE
 } from '../common/dnd-layer-items';
-import {reorderLayerOrder} from '@kepler.gl/reducers';
+import {
+  reorderLayerOrder,
+  getLayerGroupFromLayerOrder,
+  getIndexFromLayerEntryId,
+  addLayerOrGroupToLayerOrder,
+  removeElementFromLayerOrder,
+  updateLayerGroupInLayerOrder
+} from '@kepler.gl/reducers';
 import {Layer} from '@kepler.gl/layers';
+import {LayerOrderGroup, LayerOrder, LayerOrderHierarchyEntry} from '@kepler.gl/types';
 
-type DndEffectsHook = {
-  activeLayer: Layer | undefined;
+type DndLayersHook = {
+  activeElement: LayerOrderHierarchyEntry | undefined;
   onDragStart: (event: DragStartEvent) => void;
   onDragEnd: (event: DragEndEvent) => void;
 };
 
-const useDndLayers: (layers: Layer[], layerOrder: string[]) => DndEffectsHook = (
+const useDndLayers: (layers: Layer[], layerOrder: LayerOrder) => DndLayersHook = (
   layers,
   layerOrder
 ) => {
   const dispatch = useDispatch();
 
-  const [activeLayer, setActiveLayer]: [
-    activeEffect: Layer | undefined,
-    setActiveEffect: (effect: Layer | undefined) => void
-  ] = useState();
+  const [activeElement, setActiveElement] = useState<LayerOrderHierarchyEntry | undefined>();
 
   const onDragStart = useCallback(
-    event => {
+    (event: DragStartEvent) => {
       const {active} = event;
-      const newActiveLayer = layers.find(layer => layer.id === active.id);
-      if (newActiveLayer) {
-        setActiveLayer(newActiveLayer);
-        if (newActiveLayer?.config.isConfigActive) {
-          dispatch(layerConfigChange(newActiveLayer, {isConfigActive: false}));
-        }
-      }
-    },
-    [dispatch, layers]
-  );
+      const activeType = event.active.data.current?.type;
 
-  const onDragEnd = useCallback(
-    event => {
-      const {active, over} = event;
-
-      const {id: activeLayerId} = active;
-      const overType = over?.data?.current?.type;
-
-      if (!overType) {
-        setActiveLayer(undefined);
+      if (!activeType) {
         return;
       }
 
-      switch (overType) {
-        // moving layers into maps
-        case DROPPABLE_MAP_CONTAINER_TYPE: {
-          const mapIndex = over.data.current?.index ?? 0;
-          dispatch(toggleLayerForMap(mapIndex, activeLayerId));
-          break;
-        }
-        // swaping layers
+      switch (activeType) {
         case SORTABLE_LAYER_TYPE: {
-          const newLayerOrder = reorderLayerOrder(layerOrder, activeLayerId, over.id);
-          dispatch(reorderLayer(newLayerOrder));
+          const activeLayer = layers.find(l => l.id === active.id);
+          if (activeLayer) {
+            setActiveElement(['layer', activeLayer]);
+          }
           break;
         }
-        //  moving layers within side panel
-        case SORTABLE_SIDE_PANEL_TYPE:
-          // move layer to the end of the list
-          dispatch(
-            reorderLayer(
-              reorderLayerOrder(layerOrder, activeLayerId, layerOrder[layerOrder.length - 1])
-            )
-          );
+        case SORTABLE_LAYER_GROUP_TYPE: {
+          const activeLayerGroup = getLayerGroupFromLayerOrder(layerOrder, active.id as string);
+          if (activeLayerGroup) {
+            setActiveElement(['layerGroup', activeLayerGroup as LayerOrderGroup]);
+          }
           break;
+        }
         default:
           break;
       }
+    },
+    [layerOrder, layers]
+  );
 
-      setActiveLayer(undefined);
+  // eslint-disable-next-line complexity
+  const onDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const {active, over} = event;
+      const activeId = active.id as string;
+      const overId = over?.id as string | null;
+      const activeParent = active.data?.current?.parent;
+      const activeType = active.data?.current?.type;
+      const overParent = over?.data?.current?.parent;
+      const overType = over?.data?.current?.type;
+      setActiveElement(undefined);
+
+      if (!overId) {
+        if (activeParent && activeType === SORTABLE_LAYER_TYPE) {
+          let newLayerOrder = removeElementFromLayerOrder(layerOrder, activeId);
+          newLayerOrder = addLayerOrGroupToLayerOrder(newLayerOrder, activeId, newLayerOrder.length);
+          dispatch(reorderLayer(newLayerOrder));
+        }
+        return;
+      }
+
+      if (overType === DROPPABLE_MAP_CONTAINER_TYPE) {
+        if (activeType === SORTABLE_LAYER_TYPE) {
+          const mapIndex = over?.data.current?.index ?? 0;
+          dispatch(toggleLayerForMap(mapIndex, activeId));
+        }
+        return;
+      }
+
+      if (overType === SORTABLE_LAYER_END_TYPE) {
+        const groupObj = getLayerGroupFromLayerOrder(layerOrder, activeId);
+        let newLayerOrder = removeElementFromLayerOrder(layerOrder, activeId);
+        newLayerOrder = addLayerOrGroupToLayerOrder(
+          newLayerOrder,
+          groupObj ?? activeId,
+          newLayerOrder.length
+        );
+        dispatch(reorderLayer(newLayerOrder));
+        return;
+      }
+
+      // swap layers at same level
+      if (activeParent?.id === overParent?.id) {
+        if (!activeParent) {
+          const newLayerOrder = reorderLayerOrder(layerOrder, activeId, overId);
+          dispatch(reorderLayer(newLayerOrder));
+        } else {
+          const currentLayerGroup = activeParent as LayerOrderGroup;
+          const newGroupLayerOrder = reorderLayerOrder(
+            currentLayerGroup.layerOrder,
+            activeId,
+            overId
+          );
+          const newLayerGroup = {
+            ...currentLayerGroup,
+            layerOrder: newGroupLayerOrder
+          };
+          const newLayerOrder = updateLayerGroupInLayerOrder(layerOrder, newLayerGroup);
+          dispatch(reorderLayer(newLayerOrder));
+        }
+        return;
+      }
+
+      // move into a group (either empty group droppable or onto a layer inside group)
+      if (overType === SORTABLE_LAYER_GROUP_DROPPABLE_TYPE || overParent) {
+        if (activeType === SORTABLE_LAYER_TYPE) {
+          const currentLayerGroup = overParent
+            ? overParent
+            : getLayerGroupFromLayerOrder(layerOrder, overId);
+
+          if (!currentLayerGroup) return;
+
+          const overIndex =
+            overType === SORTABLE_LAYER_GROUP_DROPPABLE_TYPE
+              ? 0
+              : getIndexFromLayerEntryId(currentLayerGroup.layerOrder, overId);
+
+          const newLayerGroup = {
+            ...currentLayerGroup,
+            layerOrder: addLayerOrGroupToLayerOrder(
+              currentLayerGroup.layerOrder,
+              activeId,
+              overIndex
+            )
+          };
+
+          let newLayerOrder = removeElementFromLayerOrder(layerOrder, activeId);
+          newLayerOrder = updateLayerGroupInLayerOrder(newLayerOrder, newLayerGroup);
+          dispatch(reorderLayer(newLayerOrder));
+        }
+        return;
+      }
+
+      // moving layer/group onto root
+      if (!overParent) {
+        const groupObj = getLayerGroupFromLayerOrder(layerOrder, activeId as string);
+        let newLayerOrder = removeElementFromLayerOrder(layerOrder, activeId);
+        const overIndex = over?.data.current?.sortable?.index ?? 0;
+        newLayerOrder = addLayerOrGroupToLayerOrder(newLayerOrder, groupObj ?? activeId, overIndex);
+        dispatch(reorderLayer(newLayerOrder));
+      }
     },
     [dispatch, layerOrder]
   );
 
-  return {activeLayer, onDragStart, onDragEnd};
+  return {activeElement, onDragStart, onDragEnd};
 };
 
 export default useDndLayers;

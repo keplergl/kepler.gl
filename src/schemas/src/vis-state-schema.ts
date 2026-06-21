@@ -4,7 +4,7 @@
 import pick from 'lodash/pick';
 import {VERSIONS} from './versions';
 import {LAYER_VIS_CONFIGS, FILTER_VIEW_TYPES} from '@kepler.gl/constants';
-import {colorRangeBackwardCompatibility, isFilterValidToSave, findById} from '@kepler.gl/utils';
+import {colorRangeBackwardCompatibility, isFilterValidToSave, findById, isPlainObject} from '@kepler.gl/utils';
 import {notNullorUndefined} from '@kepler.gl/common-utils';
 import Schema from './schema';
 import cloneDeep from 'lodash/cloneDeep';
@@ -16,6 +16,7 @@ import {
   FileLoadingProgress,
   Filter,
   InteractionConfig,
+  LayerOrder,
   MapInfo,
   ParsedFilter,
   ParsedLayer,
@@ -54,7 +55,8 @@ export interface VisState {
   layers: Layer[];
   layerData: any[];
   layerToBeMerged: any[];
-  layerOrder: string[];
+  layerOrder: LayerOrder;
+  layerOrderToBeMerged: any[] | null;
   effects: Effect[];
   effectOrder: string[];
   annotations: Annotation[];
@@ -576,9 +578,23 @@ export class LayerSchemaV0 extends Schema {
     const [visState] = parents.slice(-1);
 
     return {
-      [this.key as 'layers']: visState.layerOrder.reduce((saved, layerId) => {
-        // save layers according to their rendering order
-        const layer = findById(layerId)(layers);
+      [this.key as 'layers']: visState.layerOrder.reduce((saved, entry) => {
+        if (isPlainObject(entry)) {
+          const group = entry as Record<string, unknown>;
+          const groupLayerOrder = group.layerOrder as any[];
+          if (groupLayerOrder) {
+            groupLayerOrder.forEach(nestedEntry => {
+              if (typeof nestedEntry === 'string') {
+                const layer = findById(nestedEntry)(layers);
+                if (layer?.isValidToSave()) {
+                  saved.push(this.savePropertiesOrApplySchema(layer).layers);
+                }
+              }
+            });
+          }
+          return saved;
+        }
+        const layer = findById(entry as string)(layers);
         if (layer?.isValidToSave()) {
           saved.push(this.savePropertiesOrApplySchema(layer).layers);
         }
@@ -966,7 +982,8 @@ export const propertiesV1 = {
       visible: null
     },
     key: 'editor'
-  })
+  }),
+  layerOrder: null
 };
 
 export class VisStateSchemaV1 extends Schema {
