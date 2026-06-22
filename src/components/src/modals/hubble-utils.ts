@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {MapView} from '@deck.gl/core';
+import {MapView, WebMercatorViewport, type MapViewState} from '@deck.gl/core';
 import {DEFAULT_MAPBOX_API_URL, FILTER_VIEW_TYPES, FILTER_TYPES} from '@kepler.gl/constants';
 import {getLayerBlendingParameters, getBaseMapLibrary} from '@kepler.gl/utils';
 import {isMapboxURL, transformMapboxUrl} from 'maplibregl-mapbox-request-transformer';
+import {point} from '@turf/helpers';
+import transformTranslate from '@turf/transform-translate';
 import {TimeRangeFilter} from '@kepler.gl/types';
 
 type KeplerState = {
@@ -195,4 +197,75 @@ export function getAnimatableFilters(keplerState: KeplerState): TimeRangeFilter[
       f.type === FILTER_TYPES.timeRange &&
       (f.view === FILTER_VIEW_TYPES.enlarged || f.syncedWithLayerTimeline)
   );
+}
+
+// --- Video export utilities (inlined from @hubble.gl internals) ---
+
+export function scaleToVideoExport(
+  viewState: MapViewState,
+  container: {width: number; height: number}
+): MapViewState & {width: number; height: number} {
+  const viewport = new WebMercatorViewport(viewState);
+  const nw = viewport.unproject([0, 0]) as [number, number];
+  const se = viewport.unproject([viewport.width, viewport.height]) as [number, number];
+  const videoViewport = new WebMercatorViewport({
+    ...viewState,
+    width: container.width,
+    height: container.height
+  }).fitBounds([nw, se]);
+  const {height, width, latitude, longitude, zoom, altitude} = videoViewport;
+  return {
+    height,
+    width,
+    latitude,
+    longitude,
+    pitch: viewState.pitch,
+    zoom,
+    bearing: viewState.bearing,
+    altitude
+  } as any;
+}
+
+export function parseSetCameraType(strCameraType: string, viewState: MapViewState): MapViewState {
+  const modifiedViewState: any = {...viewState};
+  const match = strCameraType.match(/\b(?!to)\b\S+\w/g);
+  if (!match) return modifiedViewState;
+
+  const turfPoint = point([modifiedViewState.longitude, modifiedViewState.latitude]);
+
+  if (match[0] === 'Orbit') {
+    modifiedViewState.bearing = modifiedViewState.bearing + parseInt(match[1], 10);
+  }
+
+  const directions = new Set(['East', 'South', 'West', 'North']);
+  if (directions.has(match[0])) {
+    const directionMap: Record<string, number> = {East: 270, South: 0, West: 90, North: 180};
+    const translatedPoly = transformTranslate(turfPoint, 10, directionMap[match[0]]);
+    if (match[0] === 'East' || match[0] === 'West') {
+      modifiedViewState.longitude = translatedPoly.geometry.coordinates[0];
+    } else {
+      modifiedViewState.latitude = translatedPoly.geometry.coordinates[1];
+    }
+  }
+
+  if (match[0] === 'Zoom') {
+    modifiedViewState.zoom += match[1] === 'In' ? 3 : -3;
+  }
+
+  return modifiedViewState;
+}
+
+type Resolution = {value: string; label: string; width: number; height: number};
+
+const RESOLUTIONS: Resolution[] = [
+  {value: '960x540', label: 'Good (540p)', width: 960, height: 540},
+  {value: '1280x720', label: 'High (720p)', width: 1280, height: 720},
+  {value: '1920x1080', label: 'Highest (1080p)', width: 1920, height: 1080},
+  {value: '640x480', label: 'Good (480p)', width: 640, height: 480},
+  {value: '1280x960', label: 'High (960p)', width: 1280, height: 960},
+  {value: '1920x1440', label: 'Highest (1440p)', width: 1920, height: 1440}
+];
+
+export function getResolutionSetting(value: string): Resolution {
+  return RESOLUTIONS.find(r => r.value === value) || RESOLUTIONS[0];
 }
