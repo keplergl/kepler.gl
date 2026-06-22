@@ -1299,11 +1299,12 @@ class Layer implements KeplerLayer {
     this.meta = {...this.meta, ...meta};
   }
 
-  getDataUpdateTriggers({filteredIndex, id, dataContainer}: KeplerTable): any {
+  getDataUpdateTriggers({filteredIndex, filteredIndexByLayer, id, dataContainer}: KeplerTable): any {
     const {columns} = this.config;
+    const layerFilteredIndex = filteredIndexByLayer?.[this.id] ?? filteredIndex;
 
     return {
-      getData: {datasetId: id, dataContainer, columns, filteredIndex},
+      getData: {datasetId: id, dataContainer, columns, filteredIndex: layerFilteredIndex},
       getMeta: {datasetId: id, dataContainer, columns},
       ...(this.config.textLabel || []).reduce(
         (accu, tl, i) => ({
@@ -1322,12 +1323,18 @@ class Layer implements KeplerLayer {
     const layerDataset = datasets[this.config.dataId];
     const {dataContainer} = layerDataset;
 
-    const getPosition = this.getPositionAccessor(dataContainer, layerDataset);
+    // Use per-layer polygon-filtered index if available
+    const effectiveDataset =
+      layerDataset.filteredIndexByLayer?.[this.id] != null
+        ? {...layerDataset, filteredIndex: layerDataset.filteredIndexByLayer[this.id]}
+        : layerDataset;
+
+    const getPosition = this.getPositionAccessor(dataContainer, effectiveDataset);
     const dataUpdateTriggers = this.getDataUpdateTriggers(layerDataset);
     const triggerChanged = this.getChangedTriggers(dataUpdateTriggers);
 
     if (triggerChanged && (triggerChanged.getMeta || triggerChanged.getData)) {
-      this.updateLayerMeta(layerDataset, getPosition);
+      this.updateLayerMeta(effectiveDataset, getPosition);
 
       // reset filteredItemCount
       this.filteredItemCount = {};
@@ -1339,7 +1346,7 @@ class Layer implements KeplerLayer {
       // same data
       data = oldLayerData.data;
     } else {
-      data = this.calculateDataAttribute(layerDataset, getPosition);
+      data = this.calculateDataAttribute(effectiveDataset, getPosition);
     }
 
     return {data, triggerChanged};
