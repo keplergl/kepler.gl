@@ -1145,6 +1145,18 @@ export default function MapContainerFactory(
             onClick={(data, event) => {
               // @ts-ignore
               normalizeEvent(event.srcEvent, viewport);
+
+              // Handle bitmap layer alignment mode: if a bitmap layer is waiting
+              // for a map click, route the click coordinate to it
+              const aligningLayer = visState.layers.find(
+                (l: any) => l.type === 'bitmap' && l.alignWaitingForMap && l.config.isVisible
+              );
+              if (aligningLayer && data.coordinate) {
+                (aligningLayer as any).onAlignMapClick(data.coordinate as [number, number]);
+                this._onRedrawNeeded(0);
+                return;
+              }
+
               const res = EditorLayerUtils.onClick(data, event, {
                 editorMenuActive,
                 editor,

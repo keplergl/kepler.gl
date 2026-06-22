@@ -105,6 +105,7 @@ export default {
     appearance: 'Appearance',
     bounds: 'Bounds',
     imageSource: 'Image Source',
+    alignment: 'Alignment',
     uniqueIdField: 'Unique ID Field',
     type: {
       point: 'point',
@@ -155,6 +156,7 @@ export default {
     imageUrl: 'Image URL',
     showBounds: 'Show Bounds',
     editBounds: 'Drag corners to resize',
+    alignMode: 'Align to map',
     boundsWest: 'West',
     boundsSouth: 'South',
     boundsEast: 'East',
