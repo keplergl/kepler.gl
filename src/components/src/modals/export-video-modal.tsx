@@ -4,7 +4,7 @@
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import styled, {ThemeProvider, useTheme} from 'styled-components';
 
-import {DEFAULT_MAPBOX_API_URL, NO_MAP_ID, EMPTY_MAPBOX_STYLE} from '@kepler.gl/constants';
+import {DEFAULT_MAPBOX_API_URL, NO_MAP_ID, EMPTY_MAPBOX_STYLE, MapSplitMode} from '@kepler.gl/constants';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {Viewport, ExportVideo, Effect} from '@kepler.gl/types';
 import {
@@ -31,6 +31,8 @@ import {
 } from './hubble-utils';
 import {useFogHeightAnimation} from './fog-height-animation';
 
+type SwipeContainerType = React.ComponentType<any>;
+
 type HubbleModule = {
   ExportVideoPanelContainer: React.ComponentType<any>;
   KeplerUIContext: React.Context<any>;
@@ -38,6 +40,7 @@ type HubbleModule = {
 
 let _hubbleModule: HubbleModule | null = null;
 let _hubblePromise: Promise<HubbleModule> | null = null;
+let _swipeContainer: SwipeContainerType | null = null;
 
 function loadHubble(): Promise<HubbleModule> {
   if (_hubbleModule) return Promise.resolve(_hubbleModule);
@@ -45,10 +48,16 @@ function loadHubble(): Promise<HubbleModule> {
   _hubblePromise = import('@hubble.gl/react').then(
     mod => {
       _hubbleModule = mod as unknown as HubbleModule;
+      import('./swipe-export-video-container')
+        .then(swipeMod => {
+          _swipeContainer = swipeMod.SwipeExportVideoPanelContainer;
+        })
+        .catch(_err => {
+          // swipe export unavailable; regular export still works
+        });
       return _hubbleModule;
     },
     err => {
-      // Allow retry on next call
       _hubblePromise = null;
       throw err;
     }
@@ -184,6 +193,9 @@ export type VideoConfiguration = {
   fileName?: string;
   resolution?: string;
   durationMs?: number;
+  swipeStartPct?: number;
+  swipeEndPct?: number;
+  swipeEasing?: 'linear' | 'ease-in-out';
 };
 
 export interface ExportVideoModalProps {
@@ -311,8 +323,13 @@ const ExportVideoModalFactory = () => {
       ...exportVideo
     });
     const onUpdateVideoConfiguration = useCallback(
-      (values: VideoConfiguration) => setVideoConfiguration(prev => ({...prev, ...values})),
-      []
+      (values: VideoConfiguration) => {
+        setVideoConfiguration(prev => ({...prev, ...values}));
+        if (values.swipeStartPct !== undefined || values.swipeEndPct !== undefined || values.swipeEasing !== undefined) {
+          uiStateActions.setExportVideoSetting(values as any);
+        }
+      },
+      [uiStateActions]
     );
 
     const hubbleContainerRef = useRef<any>(null);
@@ -365,13 +382,16 @@ const ExportVideoModalFactory = () => {
     );
 
     useEffect(() => {
+      // Block DPR changes during preview to keep basemap and deck.gl layers in sync.
+      // hubble.gl sets window.devicePixelRatio to scale render buffers, but this causes
+      // visual misalignment between MapLibre and DeckGL during animated preview.
       const trueDpr = trueDevicePixelRatio.current;
       const descriptor = Object.getOwnPropertyDescriptor(window, 'devicePixelRatio');
 
       Object.defineProperty(window, 'devicePixelRatio', {
         get: () => trueDpr,
         set: () => {
-          // no-op: prevent hubble.gl from changing DPR
+          // no-op: prevent hubble.gl from changing DPR during preview
         },
         configurable: true
       });
@@ -429,27 +449,53 @@ const ExportVideoModalFactory = () => {
 
     const {ExportVideoPanelContainer, KeplerUIContext} = hubble;
 
+    const isSwipeMode = mapState.mapSplitMode === MapSplitMode.SWIPE_COMPARE && mapState.isSplit;
+    const SwipeContainer = _swipeContainer;
+
     return (
       <KeplerUIContext.Provider value={KEPLER_UI}>
         <StyledExportVideoModalContent className="export-video-modal">
-          <ExportVideoPanelContainer
-            ref={hubbleContainerRef}
-            initialState={videoConfiguration}
-            mapData={keplerState}
-            onSettingsChange={onUpdateVideoConfiguration}
-            header={false}
-            handleClose={onClose}
-            exportVideoWidth={exportVideoWidth}
-            onFilterFrameUpdate={onFilterFrameUpdate}
-            onTripFrameUpdate={onTripFrameUpdate}
-            deckProps={deckPropsWithEffects}
-            mapProps={staticMapProps}
-            disableBaseMap={false}
-            mapboxLayerBeforeId={topLayer?.id}
-            defaultFileName={DEFAULT_FILENAME}
-            animatableFilters={animatableFilters}
-            getTimeRangeFilterKeyframes={getTimeRangeFilterKeyframes}
-          />
+          {isSwipeMode && SwipeContainer ? (
+            <SwipeContainer
+              initialState={videoConfiguration}
+              mapData={keplerState}
+              onSettingsChange={onUpdateVideoConfiguration}
+              header={false}
+              handleClose={onClose}
+              exportVideoWidth={exportVideoWidth}
+              onFilterFrameUpdate={onFilterFrameUpdate}
+              onTripFrameUpdate={onTripFrameUpdate}
+              deckProps={deckPropsWithEffects}
+              mapProps={staticMapProps}
+              disableBaseMap={false}
+              mapboxLayerBeforeId={topLayer?.id}
+              defaultFileName={DEFAULT_FILENAME}
+              animatableFilters={animatableFilters}
+              getTimeRangeFilterKeyframes={getTimeRangeFilterKeyframes}
+              swipeStartPct={exportVideo.swipeStartPct}
+              swipeEndPct={exportVideo.swipeEndPct}
+              swipeEasing={exportVideo.swipeEasing}
+            />
+          ) : (
+            <ExportVideoPanelContainer
+              ref={hubbleContainerRef}
+              initialState={videoConfiguration}
+              mapData={keplerState}
+              onSettingsChange={onUpdateVideoConfiguration}
+              header={false}
+              handleClose={onClose}
+              exportVideoWidth={exportVideoWidth}
+              onFilterFrameUpdate={onFilterFrameUpdate}
+              onTripFrameUpdate={onTripFrameUpdate}
+              deckProps={deckPropsWithEffects}
+              mapProps={staticMapProps}
+              disableBaseMap={false}
+              mapboxLayerBeforeId={topLayer?.id}
+              defaultFileName={DEFAULT_FILENAME}
+              animatableFilters={animatableFilters}
+              getTimeRangeFilterKeyframes={getTimeRangeFilterKeyframes}
+            />
+          )}
         </StyledExportVideoModalContent>
       </KeplerUIContext.Provider>
     );

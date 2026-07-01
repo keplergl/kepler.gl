@@ -448,6 +448,9 @@ export type ExportVideo = {
   fileName: string;
   resolution: string;
   durationMs: number;
+  swipeStartPct: number;
+  swipeEndPct: number;
+  swipeEasing: 'linear' | 'ease-in-out';
 };
 
 export type MapControlItem = {

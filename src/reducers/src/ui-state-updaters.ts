@@ -240,7 +240,10 @@ export const DEFAULT_EXPORT_VIDEO: ExportVideo = {
   cameraPreset: 'None',
   fileName: 'kepler.gl',
   resolution: '',
-  durationMs: 1000
+  durationMs: 1000,
+  swipeStartPct: 0,
+  swipeEndPct: 100,
+  swipeEasing: 'ease-in-out'
 };
 
 /**
