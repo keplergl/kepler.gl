@@ -4,7 +4,8 @@
 import React, {Component, RefObject, forwardRef, ForwardedRef} from 'react';
 import DeckGL from '@deck.gl/react';
 import ReactMapGL, {type MapRef, useControl} from 'react-map-gl/maplibre';
-import {MapboxOverlay, MapboxOverlayProps} from '@deck.gl/mapbox';
+// @ts-ignore module resolution mismatch with moduleResolution:"node"
+import {MapboxOverlay} from '@deck.gl/mapbox';
 import type {Deck, DeckProps, MapViewState} from '@deck.gl/core';
 import isEqual from 'lodash.isequal';
 import styled from 'styled-components';
@@ -21,12 +22,11 @@ function setRef<T>(ref: React.Ref<T> | React.MutableRefObject<T>, value: T) {
   }
 }
 
-const DeckGLOverlay = forwardRef<Deck, MapboxOverlayProps>(
-  (props: MapboxOverlayProps, ref: ForwardedRef<Deck>) => {
-    const deck = useControl<MapboxOverlay>(() => new MapboxOverlay({...props, interleaved: true}));
-    deck.setProps(props);
-    // @ts-expect-error private property
-    setRef(ref, deck._deck);
+const DeckGLOverlay = forwardRef<Deck, any>(
+  (props: any, ref: ForwardedRef<Deck>) => {
+    const overlay = useControl<MapboxOverlay>(() => new MapboxOverlay({...props, interleaved: true}));
+    overlay.setProps(props);
+    setRef(ref, (overlay as any)._deck);
     return null;
   }
 );
@@ -36,10 +36,6 @@ const PreviewContainer = styled.div<{$width: number; $height: number}>`
   width: ${props => props.$width}px;
   height: ${props => props.$height}px;
   position: relative;
-`;
-
-const HiddenCanvas = styled.canvas`
-  display: none;
 `;
 
 const VisibleCanvas = styled.canvas<{$width: number; $height: number}>`
@@ -222,7 +218,9 @@ export class SwipeExportVideoPreview extends Component<
     const map = this.leftMapRef.current?.getMap();
     if (map) {
       map.on('render', () => {
-        this.setState({leftReady: true});
+        if (!this.state.leftReady) {
+          this.setState({leftReady: true});
+        }
         this._tryComposite();
       });
     }
@@ -232,7 +230,9 @@ export class SwipeExportVideoPreview extends Component<
     const map = this.rightMapRef.current?.getMap();
     if (map) {
       map.on('render', () => {
-        this.setState({rightReady: true});
+        if (!this.state.rightReady) {
+          this.setState({rightReady: true});
+        }
         this._tryComposite();
       });
     }
@@ -248,7 +248,7 @@ export class SwipeExportVideoPreview extends Component<
     side: 'left' | 'right',
     mapIndex: number
   ) {
-    const {viewState, setViewState, adapter, deckProps, mapProps, disableBaseMap, mapboxLayerBeforeId} = this.props;
+    const {viewState, adapter, deckProps, mapProps, disableBaseMap, mapboxLayerBeforeId} = this.props;
     const {width, height} = this._getContainer();
     const keplerLayers = this._createLayers(mapIndex, mapboxLayerBeforeId);
     const mapRef = side === 'left' ? this.leftMapRef : this.rightMapRef;
@@ -260,24 +260,18 @@ export class SwipeExportVideoPreview extends Component<
       return (
         <MapLayer $width={width} $height={height}>
           <DeckGL
-            ref={ref => setRef(deckRef, ref?.deck)}
-            {...adapter.getProps({deck, extraProps: {...deckProps, layers: keplerLayers}})}
+            ref={ref => setRef(deckRef, ref?.deck as any)}
+            {...(adapter.getProps({deck: deck as any, extraProps: {...deckProps, layers: keplerLayers}}) as any)}
             {...this._getContainer()}
           />
         </MapLayer>
       );
     }
 
-    // Extract relevant props for maplibre from mapProps
     const {
       mapStyle: mapStyleFromProps,
       mapLib,
-      transformRequest,
-      preserveDrawingBuffer: _pdb,
-      mapboxApiAccessToken,
-      mapboxApiUrl,
-      onViewportChange,
-      ...restMapState
+      transformRequest
     } = (mapProps || {}) as any;
 
     return (
@@ -292,13 +286,11 @@ export class SwipeExportVideoPreview extends Component<
           {...viewState}
           mapStyle={mapStyleFromProps}
           onLoad={onMapLoad}
-          onMove={e => setViewState(e.viewState)}
         >
           <DeckGLOverlay
             ref={deckRef}
-            // @ts-expect-error stencil is not recognized
             deviceProps={{type: 'webgl', webgl: {stencil: true}}}
-            {...adapter.getProps({deck, extraProps: {...deckProps, layers: keplerLayers}})}
+            {...adapter.getProps({deck: deck as any, extraProps: {...deckProps, layers: keplerLayers}})}
           />
         </ReactMapGL>
       </MapLayer>
@@ -306,9 +298,8 @@ export class SwipeExportVideoPreview extends Component<
   }
 
   render() {
-    const {rendering, saving, durationMs, adapter, resolution} = this.props;
+    const {resolution} = this.props;
     const {width, height} = this._getContainer();
-    const percentage = this._getCurrentSwipePercentage();
 
     return (
       <PreviewContainer $width={width} $height={height}>

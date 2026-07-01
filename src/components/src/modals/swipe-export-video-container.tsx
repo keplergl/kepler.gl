@@ -12,7 +12,6 @@ import {
   WebMEncoder,
   JPEGSequenceEncoder,
   PNGSequenceEncoder,
-  PreviewEncoder,
   GifEncoder,
   FormatConfigs,
   Timecode
@@ -23,11 +22,7 @@ import {FILTER_VIEW_TYPES} from '@kepler.gl/constants';
 import {parseSetCameraType, scaleToVideoExport, getResolutionSetting} from './hubble-utils';
 import {SwipeExportVideoPreview} from './swipe-export-video-preview';
 import SwipeExportSettings from './swipe-export-settings';
-import {
-  compositeSwipeFrame,
-  getSwipePercentageAtTime,
-  SwipeEasing
-} from './swipe-composite-utils';
+import {SwipeEasing} from './swipe-composite-utils';
 
 const ENCODERS = {
   gif: GifEncoder,
@@ -190,7 +185,7 @@ export class SwipeExportVideoPanelContainer extends Component<
       ...this.getFilterKeyframes(),
       ...this.getTripKeyframes(),
       cameraKeyframe: this.getCameraKeyframes(),
-      onCameraFrameUpdate: this.setViewState,
+      onCameraFrameUpdate: this.setViewState as any,
       onTripFrameUpdate,
       onFilterFrameUpdate,
       getTimeRangeFilterKeyframes
@@ -365,8 +360,7 @@ export class SwipeExportVideoPanelContainer extends Component<
    * to composite, then captures the composite canvas.
    */
   onRenderVideo = () => {
-    const {adapter, durationMs} = this.state;
-    const {swipeStartPct, swipeEndPct, swipeEasing} = this.props;
+    const {adapter} = this.state;
     const filename = this.getFileName();
     const Encoder = this.getEncoder();
     const formatConfigs = this.getFormatConfigs();
@@ -486,13 +480,11 @@ export class SwipeExportVideoPanelContainer extends Component<
   render() {
     const {
       exportVideoWidth,
-      handleClose,
       mapData,
       deckProps,
       mapProps,
       disableBaseMap,
       mapboxLayerBeforeId,
-      defaultFileName,
       swipeStartPct,
       swipeEndPct,
       swipeEasing,
