@@ -242,7 +242,7 @@ const AnimationTab: React.FC<{
             step={100}
             minValue={100}
             maxValue={10000}
-            onSlider1Change={onChangeDuration}
+            onSlider1Change={(v: number) => { if (!disabled) onChangeDuration(v); }}
           />
           <VideoLengthDisplay>{printDuration(durationMs)}</VideoLengthDisplay>
         </SliderWrapper>
@@ -269,7 +269,7 @@ const AnimationTab: React.FC<{
         minValue={0}
         maxValue={100}
         step={1}
-        onSlider1Change={onChangeStartPct}
+        onSlider1Change={(v: number) => { if (!disabled) onChangeStartPct(v); }}
         disabled={disabled}
       />
 
@@ -281,7 +281,7 @@ const AnimationTab: React.FC<{
         minValue={0}
         maxValue={100}
         step={1}
-        onSlider1Change={onChangeEndPct}
+        onSlider1Change={(v: number) => { if (!disabled) onChangeEndPct(v); }}
         disabled={disabled}
       />
 
