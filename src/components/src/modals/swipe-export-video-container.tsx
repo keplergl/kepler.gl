@@ -145,7 +145,6 @@ export class SwipeExportVideoPanelContainer extends Component<
   SwipeExportVideoPanelContainerState
 > {
   previewRef = createRef<SwipeExportVideoPreview>();
-  compositeCanvasRef = createRef<HTMLCanvasElement>();
   animationFrameId: number | null = null;
 
   constructor(props: SwipeExportVideoPanelContainerProps) {
@@ -411,9 +410,13 @@ export class SwipeExportVideoPanelContainer extends Component<
               const ctx = compositeCanvas.getContext('2d');
               if (!ctx) return;
 
-              // Verify canvas has content by checking a pixel
-              const pixel = ctx.getImageData(0, 0, 1, 1).data;
-              const hasContent = pixel[0] !== 0 || pixel[1] !== 0 || pixel[2] !== 0 || pixel[3] !== 0;
+              let hasContent = true;
+              try {
+                const pixel = ctx.getImageData(0, 0, 1, 1).data;
+                hasContent = pixel[0] !== 0 || pixel[1] !== 0 || pixel[2] !== 0 || pixel[3] !== 0;
+              } catch {
+                // Canvas may be tainted by cross-origin resources; assume content exists
+              }
 
               if (!hasContent && retryCount < MAX_RETRIES) {
                 retryCount++;
@@ -469,12 +472,14 @@ export class SwipeExportVideoPanelContainer extends Component<
       cancelAnimationFrame(this.animationFrameId);
       this.animationFrameId = null;
     }
-    this.setState({
-      rendering: false,
-      previewing: false,
-      currentTimeMs: 0,
-      viewState: this.state.memo?.viewState || this.state.viewState
-    });
+    if (!abort) {
+      this.setState({
+        rendering: false,
+        previewing: false,
+        currentTimeMs: 0,
+        viewState: this.state.memo?.viewState || this.state.viewState
+      });
+    }
   };
 
   render() {

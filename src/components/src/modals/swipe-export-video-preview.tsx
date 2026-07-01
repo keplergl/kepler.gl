@@ -115,7 +115,8 @@ export class SwipeExportVideoPreview extends Component<
     if (
       prevProps.currentTimeMs !== this.props.currentTimeMs ||
       prevProps.swipeStartPct !== this.props.swipeStartPct ||
-      prevProps.swipeEndPct !== this.props.swipeEndPct
+      prevProps.swipeEndPct !== this.props.swipeEndPct ||
+      prevProps.swipeEasing !== this.props.swipeEasing
     ) {
       this._compositeFrame();
     }

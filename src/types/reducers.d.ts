@@ -448,7 +448,6 @@ export type ExportVideo = {
   fileName: string;
   resolution: string;
   durationMs: number;
-  swipeAnimation: boolean;
   swipeStartPct: number;
   swipeEndPct: number;
   swipeEasing: 'linear' | 'ease-in-out';

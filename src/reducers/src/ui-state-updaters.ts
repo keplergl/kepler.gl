@@ -241,7 +241,6 @@ export const DEFAULT_EXPORT_VIDEO: ExportVideo = {
   fileName: 'kepler.gl',
   resolution: '',
   durationMs: 1000,
-  swipeAnimation: false,
   swipeStartPct: 0,
   swipeEndPct: 100,
   swipeEasing: 'ease-in-out'
