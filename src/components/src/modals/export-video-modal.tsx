@@ -30,7 +30,8 @@ import {
   getAnimatableFilters
 } from './hubble-utils';
 import {useFogHeightAnimation} from './fog-height-animation';
-import {SwipeExportVideoPanelContainer} from './swipe-export-video-container';
+
+type SwipeContainerType = React.ComponentType<any>;
 
 type HubbleModule = {
   ExportVideoPanelContainer: React.ComponentType<any>;
@@ -39,17 +40,21 @@ type HubbleModule = {
 
 let _hubbleModule: HubbleModule | null = null;
 let _hubblePromise: Promise<HubbleModule> | null = null;
+let _swipeContainer: SwipeContainerType | null = null;
 
 function loadHubble(): Promise<HubbleModule> {
   if (_hubbleModule) return Promise.resolve(_hubbleModule);
   if (_hubblePromise) return _hubblePromise;
-  _hubblePromise = import('@hubble.gl/react').then(
-    mod => {
+  _hubblePromise = Promise.all([
+    import('@hubble.gl/react'),
+    import('./swipe-export-video-container')
+  ]).then(
+    ([mod, swipeMod]) => {
       _hubbleModule = mod as unknown as HubbleModule;
+      _swipeContainer = swipeMod.SwipeExportVideoPanelContainer;
       return _hubbleModule;
     },
     err => {
-      // Allow retry on next call
       _hubblePromise = null;
       throw err;
     }
@@ -442,12 +447,13 @@ const ExportVideoModalFactory = () => {
     const {ExportVideoPanelContainer, KeplerUIContext} = hubble;
 
     const isSwipeMode = mapState.mapSplitMode === MapSplitMode.SWIPE_COMPARE && mapState.isSplit;
+    const SwipeContainer = _swipeContainer;
 
     return (
       <KeplerUIContext.Provider value={KEPLER_UI}>
         <StyledExportVideoModalContent className="export-video-modal">
-          {isSwipeMode ? (
-            <SwipeExportVideoPanelContainer
+          {isSwipeMode && SwipeContainer ? (
+            <SwipeContainer
               initialState={videoConfiguration}
               mapData={keplerState}
               onSettingsChange={onUpdateVideoConfiguration}
