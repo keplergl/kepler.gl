@@ -52,7 +52,9 @@ function loadHubble(): Promise<HubbleModule> {
         .then(swipeMod => {
           _swipeContainer = swipeMod.SwipeExportVideoPanelContainer;
         })
-        .catch(() => {});
+        .catch(_err => {
+          // swipe export unavailable; regular export still works
+        });
       return _hubbleModule;
     },
     err => {
