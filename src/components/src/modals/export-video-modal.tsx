@@ -374,11 +374,26 @@ const ExportVideoModalFactory = () => {
     );
 
     useEffect(() => {
-      // Allow hubble.gl to change DPR for resolution scaling during video export.
-      // On unmount, restore the original DPR value so the rest of the app is unaffected.
+      // Block DPR changes during preview to keep basemap and deck.gl layers in sync.
+      // hubble.gl sets window.devicePixelRatio to scale render buffers, but this causes
+      // visual misalignment between MapLibre and DeckGL during animated preview.
+      const trueDpr = trueDevicePixelRatio.current;
+      const descriptor = Object.getOwnPropertyDescriptor(window, 'devicePixelRatio');
+
+      Object.defineProperty(window, 'devicePixelRatio', {
+        get: () => trueDpr,
+        set: () => {
+          // no-op: prevent hubble.gl from changing DPR during preview
+        },
+        configurable: true
+      });
+
       return () => {
-        // @ts-ignore
-        window.devicePixelRatio = trueDevicePixelRatio.current;
+        if (descriptor) {
+          Object.defineProperty(window, 'devicePixelRatio', descriptor);
+        } else {
+          delete (window as any).devicePixelRatio;
+        }
       };
     }, []);
 

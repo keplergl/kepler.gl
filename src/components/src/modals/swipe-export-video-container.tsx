@@ -5,6 +5,7 @@ import React, {Component, createRef} from 'react';
 import {easeInOut} from 'popmotion';
 import download from 'downloadjs';
 import styled from 'styled-components';
+import {Button} from '../common';
 import {
   DeckAdapter,
   KeplerAnimation,
@@ -85,79 +86,59 @@ type SwipeExportVideoPanelContainerState = {
 
 const PanelBody = styled.div<{$exportVideoWidth: number}>`
   display: grid;
-  grid-template-columns: ${props => props.$exportVideoWidth}px 1fr;
+  grid-template-columns: ${props => props.$exportVideoWidth}px 280px;
+  grid-template-rows: auto;
   grid-column-gap: 24px;
 `;
 
-const SettingsColumn = styled.div`
+const TimelineControls = styled.div`
+  position: relative;
   display: flex;
-  flex-direction: column;
-  overflow-y: auto;
-  max-height: 100%;
+  justify-content: center;
+  padding-top: 16px;
 `;
+
+const timelinePlayButtonStyle = {
+  cursor: 'pointer',
+  height: '32px',
+  width: '32px',
+  fill: '#FFF'
+};
 
 const ButtonGroup = styled.div`
-  grid-column: 1 / -1;
   display: flex;
-  gap: 8px;
-  margin-top: 16px;
-`;
-
-const TimelineControls = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-top: 12px;
-  gap: 12px;
-`;
-
-const PlayButton = styled.button`
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  border: 2px solid ${props => props.theme.primaryBtnActBgd || '#1FBAD6'};
-  background: transparent;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: ${props => props.theme.primaryBtnActBgd || '#1FBAD6'};
-  &:hover {
-    background: ${props => props.theme.primaryBtnActBgd || '#1FBAD6'};
-    color: white;
-  }
-  &:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-  }
-`;
-
-const RenderButton = styled.button`
-  width: 100%;
-  height: 32px;
-  margin-top: 16px;
-  border: none;
-  border-radius: 4px;
-  background: ${props => props.theme.primaryBtnActBgd || '#1FBAD6'};
-  color: white;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  &:hover {
-    background: ${props => props.theme.primaryBtnActHover || '#108B96'};
-  }
-  &:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-  }
 `;
 
 const StatusText = styled.div`
   font-size: 11px;
   color: ${props => props.theme.subtextColorLT || '#6A7485'};
   text-align: center;
-  margin-top: 8px;
+  margin-top: 4px;
 `;
+
+const PlayIcon: React.FC<{style?: React.CSSProperties; onClick?: () => void}> = ({style, onClick}) => (
+  <svg
+    className="data-ex-icons-play"
+    viewBox="0 0 24 24"
+    style={style}
+    onClick={onClick}
+  >
+    <path fill="none" d="M0 0h24v24H0z" />
+    <path d="M19.376 12.416L8.777 19.482A.5.5 0 0 1 8 19.066V4.934a.5.5 0 0 1 .777-.416l10.599 7.066a.5.5 0 0 1 0 .832z" />
+  </svg>
+);
+
+const StopIcon: React.FC<{style?: React.CSSProperties; onClick?: () => void}> = ({style, onClick}) => (
+  <svg
+    className="data-ex-icons-stop"
+    viewBox="0 0 24 24"
+    style={style}
+    onClick={onClick}
+  >
+    <path fill="none" d="M0 0h24v24H0z" />
+    <path d="M6 5h12a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z" />
+  </svg>
+);
 
 /**
  * Orchestrates swipe video export recording.
@@ -541,7 +522,7 @@ export class SwipeExportVideoPanelContainer extends Component<
     const isActive = rendering || previewing;
 
     return (
-      <div className="swipe-export-video-panel">
+      <div className="export-video-panel">
         <PanelBody $exportVideoWidth={exportVideoWidth}>
           <SwipeExportVideoPreview
             ref={this.previewRef}
@@ -563,50 +544,53 @@ export class SwipeExportVideoPanelContainer extends Component<
             swipeEasing={swipeEasing}
             currentTimeMs={currentTimeMs}
           />
-          <SettingsColumn>
-            <SwipeExportSettings
-              durationMs={durationMs}
-              mediaType={mediaType}
-              resolution={resolution}
-              fileName={fileName}
-              cameraPreset={cameraPreset}
-              frameRate={timecode.framerate}
-              onChangeDuration={this.setDuration}
-              onChangeMediaType={this.setMediaType}
-              onChangeResolution={this.setResolution}
-              onChangeFileName={this.setFileName}
-              onChangeCameraPreset={this.setCameraPreset}
-              swipeStartPct={swipeStartPct}
-              swipeEndPct={swipeEndPct}
-              swipeEasing={swipeEasing}
+          <SwipeExportSettings
+            durationMs={durationMs}
+            mediaType={mediaType}
+            resolution={resolution}
+            fileName={fileName}
+            cameraPreset={cameraPreset}
+            frameRate={timecode.framerate}
+            onChangeDuration={this.setDuration}
+            onChangeMediaType={this.setMediaType}
+            onChangeResolution={this.setResolution}
+            onChangeFileName={this.setFileName}
+            onChangeCameraPreset={this.setCameraPreset}
+            swipeStartPct={swipeStartPct}
+            swipeEndPct={swipeEndPct}
+            swipeEasing={swipeEasing}
+            disabled={isActive}
+            onChangeStartPct={(value: number) =>
+              onSettingsChange({swipeStartPct: value})
+            }
+            onChangeEndPct={(value: number) =>
+              onSettingsChange({swipeEndPct: value})
+            }
+            onChangeEasing={(value: SwipeEasing) =>
+              onSettingsChange({swipeEasing: value})
+            }
+          />
+          <TimelineControls className="timeline-controls">
+            {isActive ? (
+              <StopIcon style={timelinePlayButtonStyle} onClick={() => this.onStop({})} />
+            ) : (
+              <PlayIcon style={timelinePlayButtonStyle} onClick={this.onPreviewVideo} />
+            )}
+          </TimelineControls>
+          {saving && <StatusText>Saving...</StatusText>}
+          {rendering && !saving && (
+            <StatusText>Rendering... {Math.round((currentTimeMs / durationMs) * 100)}%</StatusText>
+          )}
+          <ButtonGroup>
+            <Button
+              style={{marginTop: '16px', width: '100%', height: '32px'}}
+              className="export-video-button"
+              onClick={this.onRenderVideo}
               disabled={isActive}
-              onChangeStartPct={(value: number) =>
-                onSettingsChange({swipeStartPct: value})
-              }
-              onChangeEndPct={(value: number) =>
-                onSettingsChange({swipeEndPct: value})
-              }
-              onChangeEasing={(value: SwipeEasing) =>
-                onSettingsChange({swipeEasing: value})
-              }
-            />
-            <TimelineControls>
-              {isActive ? (
-                <PlayButton onClick={() => this.onStop({})}>
-                  &#9632;
-                </PlayButton>
-              ) : (
-                <PlayButton onClick={this.onPreviewVideo}>
-                  &#9654;
-                </PlayButton>
-              )}
-            </TimelineControls>
-            {saving && <StatusText>Saving...</StatusText>}
-            {rendering && !saving && <StatusText>Rendering... {Math.round((currentTimeMs / durationMs) * 100)}%</StatusText>}
-            <RenderButton onClick={this.onRenderVideo} disabled={isActive}>
+            >
               Render
-            </RenderButton>
-          </SettingsColumn>
+            </Button>
+          </ButtonGroup>
         </PanelBody>
       </div>
     );
