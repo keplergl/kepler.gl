@@ -45,13 +45,14 @@ let _swipeContainer: SwipeContainerType | null = null;
 function loadHubble(): Promise<HubbleModule> {
   if (_hubbleModule) return Promise.resolve(_hubbleModule);
   if (_hubblePromise) return _hubblePromise;
-  _hubblePromise = Promise.all([
-    import('@hubble.gl/react'),
-    import('./swipe-export-video-container')
-  ]).then(
-    ([mod, swipeMod]) => {
+  _hubblePromise = import('@hubble.gl/react').then(
+    mod => {
       _hubbleModule = mod as unknown as HubbleModule;
-      _swipeContainer = swipeMod.SwipeExportVideoPanelContainer;
+      import('./swipe-export-video-container')
+        .then(swipeMod => {
+          _swipeContainer = swipeMod.SwipeExportVideoPanelContainer;
+        })
+        .catch(() => {});
       return _hubbleModule;
     },
     err => {
