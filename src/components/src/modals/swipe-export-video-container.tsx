@@ -146,6 +146,7 @@ export class SwipeExportVideoPanelContainer extends Component<
 > {
   previewRef = createRef<SwipeExportVideoPreview>();
   animationFrameId: number | null = null;
+  activeEncoder: any | null = null;
 
   constructor(props: SwipeExportVideoPanelContainerProps) {
     super(props);
@@ -380,6 +381,7 @@ export class SwipeExportVideoPanelContainer extends Component<
     });
 
     const encoder = new Encoder({...formatConfigs, framerate: timecode.framerate});
+    this.activeEncoder = encoder;
     encoder.start();
 
     const frameLengthMs = Math.floor(1000 / timecode.framerate);
@@ -388,7 +390,7 @@ export class SwipeExportVideoPanelContainer extends Component<
     const MAX_RETRIES = 10;
 
     const captureNextFrame = () => {
-      if (!this.state.rendering) return;
+      if (!this.state.rendering || this.activeEncoder !== encoder) return;
 
       adapter!.animationManager.timeline.setTime(timeMs);
       adapter!.animationManager.draw();
@@ -397,8 +399,11 @@ export class SwipeExportVideoPanelContainer extends Component<
       // Allow 3 frames for state update → preview re-render → composite
       const waitAndCapture = () => {
         requestAnimationFrame(() => {
+          if (this.activeEncoder !== encoder) return;
           requestAnimationFrame(() => {
+            if (this.activeEncoder !== encoder) return;
             requestAnimationFrame(() => {
+              if (this.activeEncoder !== encoder) return;
               const preview = this.previewRef.current;
               if (!preview) return;
 
@@ -437,10 +442,12 @@ export class SwipeExportVideoPanelContainer extends Component<
               }
 
               encoder.add(offscreen).then(() => {
+                if (this.activeEncoder !== encoder) return;
                 timeMs += frameLengthMs;
                 if (timeMs > timecode.end) {
                   this.setState({saving: true});
                   encoder.save().then((blob: Blob | null) => {
+                    if (this.activeEncoder !== encoder) return;
                     if (blob) {
                       download(blob, filename + encoder.extension, encoder.mimeType);
                     }
@@ -472,6 +479,7 @@ export class SwipeExportVideoPanelContainer extends Component<
       cancelAnimationFrame(this.animationFrameId);
       this.animationFrameId = null;
     }
+    this.activeEncoder = null;
     if (!abort) {
       this.setState({
         rendering: false,

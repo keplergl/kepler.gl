@@ -46,15 +46,14 @@ function loadHubble(): Promise<HubbleModule> {
   if (_hubbleModule) return Promise.resolve(_hubbleModule);
   if (_hubblePromise) return _hubblePromise;
   _hubblePromise = import('@hubble.gl/react').then(
-    mod => {
+    async mod => {
       _hubbleModule = mod as unknown as HubbleModule;
-      import('./swipe-export-video-container')
-        .then(swipeMod => {
-          _swipeContainer = swipeMod.SwipeExportVideoPanelContainer;
-        })
-        .catch(_err => {
-          // swipe export unavailable; regular export still works
-        });
+      try {
+        const swipeMod = await import('./swipe-export-video-container');
+        _swipeContainer = swipeMod.SwipeExportVideoPanelContainer;
+      } catch (_err) {
+        // swipe export unavailable; regular export still works
+      }
       return _hubbleModule;
     },
     err => {
@@ -381,10 +380,15 @@ const ExportVideoModalFactory = () => {
       typeof window !== 'undefined' ? window.devicePixelRatio : 1
     );
 
+    const isSwipeMode = mapState.mapSplitMode === MapSplitMode.SWIPE_COMPARE && mapState.isSplit;
+
     useEffect(() => {
       // Block DPR changes during preview to keep basemap and deck.gl layers in sync.
       // hubble.gl sets window.devicePixelRatio to scale render buffers, but this causes
       // visual misalignment between MapLibre and DeckGL during animated preview.
+      // Skip in swipe mode — the swipe preview manages its own DPR for canvas compositing.
+      if (isSwipeMode) return;
+
       const trueDpr = trueDevicePixelRatio.current;
       const descriptor = Object.getOwnPropertyDescriptor(window, 'devicePixelRatio');
 
@@ -403,7 +407,7 @@ const ExportVideoModalFactory = () => {
           delete (window as any).devicePixelRatio;
         }
       };
-    }, []);
+    }, [isSwipeMode]);
 
     const onFilterFrameUpdate = useCallback(
       (filterIdx: number, name: string, value: any) => {
@@ -449,7 +453,6 @@ const ExportVideoModalFactory = () => {
 
     const {ExportVideoPanelContainer, KeplerUIContext} = hubble;
 
-    const isSwipeMode = mapState.mapSplitMode === MapSplitMode.SWIPE_COMPARE && mapState.isSplit;
     const SwipeContainer = _swipeContainer;
 
     return (
