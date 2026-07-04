@@ -256,7 +256,7 @@ const CellInfo = ({
   }, [fieldsToShow, sizeField, layer, data.elevationValue]);
 
   const colorDelta = useMemo(() => {
-    if (!primaryData || !colorField) return null;
+    if (!primaryData || !colorField || !('colorValue' in primaryData)) return null;
     return getTooltipDisplayDeltaValue({
       field: colorField,
       value: data.colorValue,
@@ -266,7 +266,7 @@ const CellInfo = ({
   }, [primaryData, colorField, data.colorValue, compareType]);
 
   const elevationDelta = useMemo(() => {
-    if (!primaryData || !sizeField) return null;
+    if (!primaryData || !sizeField || !('elevationValue' in primaryData)) return null;
     return getTooltipDisplayDeltaValue({
       field: sizeField,
       value: data.elevationValue,
@@ -337,7 +337,7 @@ const CellInfo = ({
         <Row
           name={dataForField.name}
           key={`data_${idx}`}
-          value={dataForField.value || 'N/A'}
+          value={dataForField.value != null ? String(dataForField.value) : 'N/A'}
           deltaValue={dataForField.deltaValue}
           isComparing={isComparing}
         />
