@@ -199,7 +199,7 @@
     "sinon-stub-promise": "^4.0.0",
     "source-map-loader": "^1.1.1",
     "style-loader": "2.0.0",
-    "styled-components": "6.1.8",
+    "styled-components": "6.4.3",
     "stylelint": "^13.6.1",
     "stylelint-config-recommended": "^3.0.0",
     "stylelint-config-styled-components": "^0.1.1",

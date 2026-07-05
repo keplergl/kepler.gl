@@ -88,7 +88,7 @@
     "react-intl": "^6.3.0",
     "reselect": "^5.0.0",
     "s2-geometry": "^1.2.10",
-    "styled-components": "6.1.8",
+    "styled-components": "6.4.3",
     "type-analyzer": "0.4.0",
     "viewport-mercator-project": "^6.0.0"
   },

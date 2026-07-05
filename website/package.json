@@ -32,7 +32,7 @@
     "redux": "^4.2.1",
     "redux-actions": "^1.2.0",
     "redux-thunk": "^1.0.0",
-    "styled-components": "6.1.8"
+    "styled-components": "6.4.3"
   },
   "devDependencies": {
     "@babel/core": "^7.12.1",

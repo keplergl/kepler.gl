@@ -117,7 +117,7 @@
     "react-virtualized": "9.22.6",
     "redux": "^5.0.0",
     "reselect": "^5.0.0",
-    "styled-components": "6.1.8",
+    "styled-components": "6.4.3",
     "suncalc": "^1.9.0",
     "viewport-mercator-project": "^6.0.0"
   },
