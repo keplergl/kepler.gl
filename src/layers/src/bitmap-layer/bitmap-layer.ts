@@ -128,9 +128,8 @@ export default class BitmapOverlayLayer extends Layer {
   constructor(props: {dataId: string; visConfig?: Record<string, any>} & Record<string, any>) {
     super(props);
     this.registerVisConfig(bitmapVisConfigs);
-    // Apply visConfig from findDefaultLayerProps (e.g. bounds seeded from metadata)
     if (props.visConfig) {
-      this.updateLayerVisConfig(props.visConfig);
+      super.updateLayerVisConfig(props.visConfig);
     }
     this.meta = {};
   }
@@ -409,21 +408,13 @@ export default class BitmapOverlayLayer extends Layer {
         pickable: isAligning,
         visible,
         onClick: isAligning
-          ? (info: any) => {
-              if (this.alignWaitingForMap) {
-                // Second click: use the geo coordinate under the cursor
-                if (info.coordinate) {
-                  this.onAlignMapClick(info.coordinate as [number, number]);
-                  this._onRedrawNeeded?.();
-                }
-              } else {
-                // First click: capture the UV position on the image
-                if (info.bitmap?.uv) {
-                  this.onAlignImageClick(info.bitmap.uv as [number, number]);
-                  this._onRedrawNeeded?.();
-                }
+          ? (info: any): boolean | undefined => {
+              if (!this.alignWaitingForMap && info.bitmap?.uv) {
+                this.onAlignImageClick(info.bitmap.uv as [number, number]);
+                this._onRedrawNeeded?.();
+                return true;
               }
-              return true;
+              return undefined;
             }
           : undefined
       })
