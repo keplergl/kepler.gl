@@ -58,7 +58,7 @@
     "maplibregl-mapbox-request-transformer": "^0.0.2",
     "moment": "^2.10.6",
     "moment-timezone": "^0.5.35",
-    "react": "^18.2.0",
+    "react": "^19.0.0",
     "react-map-gl": "^8.1.1",
     "resize-observer-polyfill": "^1.5.1",
     "suncalc": "^1.9.0",

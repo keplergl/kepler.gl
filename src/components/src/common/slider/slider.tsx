@@ -80,10 +80,10 @@ export default class Slider extends Component<SliderProps> {
 
   private anchor = 0;
 
-  public ref: RefObject<typeof SliderWrapper & HTMLDivElement> = createRef<
-    typeof SliderWrapper & HTMLDivElement
+  public ref: RefObject<(typeof SliderWrapper & HTMLDivElement) | null> = createRef<
+    (typeof SliderWrapper & HTMLDivElement) | null
   >();
-  public track: RefObject<StyleRangeSliderType> = createRef<StyleRangeSliderType>();
+  public track: RefObject<StyleRangeSliderType | null> = createRef<StyleRangeSliderType | null>();
 
   constructor(public props: SliderProps) {
     super(props);

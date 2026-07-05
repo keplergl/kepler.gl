@@ -11,7 +11,7 @@ import {BaseComponentProps} from '../../types';
 export type StyledSliderHandleProps = StyledSliderTooltipProps & {
   $vertical?: boolean;
   $active?: boolean;
-  ref: RefObject<Element>;
+  ref: RefObject<Element | null>;
 };
 
 const StyledSliderHandle: IStyledComponent<'web', StyledSliderHandleProps> = styled.span.attrs(
@@ -132,7 +132,7 @@ type SliderHandleProps = {
   display: boolean;
   valueListener: (distance: number) => void;
   vertical: boolean;
-  track: RefObject<StyleRangeSliderType>;
+  track: RefObject<StyleRangeSliderType | null>;
   showTooltip: boolean;
   value?: number;
 };
@@ -163,7 +163,7 @@ export default class SliderHandle extends Component {
   }
 
   state = {mouseOver: false};
-  ref = createRef<HTMLSpanElement>();
+  ref = createRef<HTMLSpanElement | null>();
 
   toggleMouseOver = () => {
     this.setState({mouseOver: !this.state.mouseOver});

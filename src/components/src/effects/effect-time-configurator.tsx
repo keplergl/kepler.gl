@@ -327,8 +327,7 @@ export default function EffectTimeConfiguratorFactory(
               <DatePicker
                 value={datePickerDate}
                 onChange={setDate}
-                minDetail={'month'}
-                formatShortWeekday={formatShortWeekday}
+                {...({minDetail: 'month', formatShortWeekday} as any)}
               />
             </StyledDatePicker>
             <StyledExtraIcon>

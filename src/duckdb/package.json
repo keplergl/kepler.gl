@@ -49,7 +49,7 @@
     "@kepler.gl/table": "3.3.0-alpha.1",
     "@kepler.gl/types": "3.3.0-alpha.1",
     "@kepler.gl/utils": "3.3.0-alpha.1",
-    "@monaco-editor/react": "^4.6.0",
+    "@monaco-editor/react": "^4.7.0",
     "@radix-ui/react-collapsible": "^1.1.0",
     "apache-arrow": ">=15.0.0",
     "monaco-editor": "^0.52.0",

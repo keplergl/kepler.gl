@@ -90,11 +90,11 @@ export class SwipeExportVideoPreview extends Component<
   SwipeExportVideoPreviewProps,
   SwipeExportVideoPreviewState
 > {
-  leftMapRef: RefObject<MapRef> = React.createRef<MapRef>();
-  rightMapRef: RefObject<MapRef> = React.createRef<MapRef>();
-  leftDeckRef: RefObject<Deck> = React.createRef<Deck>();
-  rightDeckRef: RefObject<Deck> = React.createRef<Deck>();
-  compositeCanvasRef: RefObject<HTMLCanvasElement> = React.createRef<HTMLCanvasElement>();
+  leftMapRef: RefObject<MapRef | null> = React.createRef<MapRef | null>();
+  rightMapRef: RefObject<MapRef | null> = React.createRef<MapRef | null>();
+  leftDeckRef: RefObject<Deck | null> = React.createRef<Deck | null>();
+  rightDeckRef: RefObject<Deck | null> = React.createRef<Deck | null>();
+  compositeCanvasRef: RefObject<HTMLCanvasElement | null> = React.createRef<HTMLCanvasElement | null>();
 
   constructor(props: SwipeExportVideoPreviewProps) {
     super(props);

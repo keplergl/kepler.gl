@@ -540,7 +540,7 @@ function KeplerGlFactory(
 
     static contextType = RootContext;
 
-    root = createRef<HTMLDivElement>();
+    root = createRef<HTMLDivElement | null>();
     bottomWidgetRef = createRef<HTMLDivElement>();
 
     /* selectors */

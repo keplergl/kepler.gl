@@ -41,7 +41,7 @@ const getThirdPartyLibraryAliases = useKeplerNodeModules => {
     ...localSources,
     react: `${nodeModulesDir}/react`,
     'react-dom': `${nodeModulesDir}/react-dom`,
-    'react-redux': `${nodeModulesDir}/react-redux/lib`,
+    'react-redux': `${nodeModulesDir}/react-redux`,
     'styled-components': `${nodeModulesDir}/styled-components`,
     'react-intl': `${nodeModulesDir}/react-intl`,
     'react-palm': `${nodeModulesDir}/react-palm`,
@@ -80,6 +80,7 @@ const config = {
   platform: 'browser',
   format: 'iife',
   logLevel: 'info',
+  inject: ['src/react19-shim.js'],
   loader: {
     '.js': 'jsx',
     '.css': 'css',

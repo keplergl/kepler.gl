@@ -3,8 +3,24 @@
 
 import classnames from 'classnames';
 import React, {useCallback, useState} from 'react';
-// @ts-expect-error - react-sortable-hoc libdef does not match true exports
-import {sortableContainer, sortableElement, sortableHandle} from 'react-sortable-hoc';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+  DragStartEvent
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable
+} from '@dnd-kit/sortable';
+import {CSS} from '@dnd-kit/utilities';
+import {restrictToVerticalAxis} from '@dnd-kit/modifiers';
 import styled, {css} from 'styled-components';
 
 import {ZoomStops, ZoomStopsConfig} from '@kepler.gl/types';
@@ -86,23 +102,12 @@ const StyledSortableItem = styled.div`
   }
 `;
 
-const SortableContainer = sortableContainer(({children}) => <div>{children}</div>);
-const DragHandle = sortableHandle(({className, children}) => (
-  <StyledDragHandle className={className}>{children}</StyledDragHandle>
-));
-const SortableItem = sortableElement(({children, isSorting}) => (
-  <StyledSortableItem
-    className={classnames('custom-palette__sortable-items', {sorting: isSorting})}
-  >
-    {children}
-  </StyledSortableItem>
-));
-
 function stringToNumber(val) {
   return val === '' ? null : Number(val);
 }
 
-type InputRowProps = {
+type SortableInputRowProps = {
+  id: string;
   idx: number;
   stop: number;
   value: number;
@@ -111,7 +116,9 @@ type InputRowProps = {
   onChange: (value: [number | null, number | null]) => void;
   onRemove: () => void;
 };
-const InputRow: React.FC<InputRowProps> = ({
+
+const SortableInputRow: React.FC<SortableInputRowProps> = ({
+  id,
   idx,
   stop,
   value,
@@ -120,12 +127,22 @@ const InputRow: React.FC<InputRowProps> = ({
   onChange,
   onRemove
 }) => {
+  const {attributes, listeners, setNodeRef, transform, transition} = useSortable({id});
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition
+  };
+
   return (
-    <SortableItem key={idx} index={idx} isSorting={isSorting}>
+    <StyledSortableItem
+      ref={setNodeRef}
+      style={style}
+      className={classnames('custom-palette__sortable-items', {sorting: isSorting})}
+    >
       <StyledInputRow isEditing={isEditing}>
-        <DragHandle className="layer__drag-handle">
+        <StyledDragHandle className="layer__drag-handle" {...attributes} {...listeners}>
           <Icons.VertDots height="20px" />
-        </DragHandle>
+        </StyledDragHandle>
         <PanelLabel>zoom</PanelLabel>
         <SliderInput
           className="vis-config-zoom__input__stop"
@@ -150,7 +167,7 @@ const InputRow: React.FC<InputRowProps> = ({
           <Icons.Trash onClick={onRemove} height="16px" />
         </StyledTrash>
       </StyledInputRow>
-    </SortableItem>
+    </StyledSortableItem>
   );
 };
 
@@ -206,15 +223,22 @@ type Props = {
   onChange: (update: Record<string, ZoomStopsConfig>) => void;
 };
 
-const VisConfigByZoomInput: React.FC<Props> = ({config = {}, property, onChange}) => {
-  const [stopsState, setStops] = useState(config.stops || []);
+const VisConfigByZoomInput: React.FC<Props> = ({config, property, onChange}) => {
+  const [stopsState, setStops] = useState(config?.stops || []);
   const [isSorting, toggleSorting] = useState(false);
   const [isEditing, toggleEditing] = useState(false);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {coordinateGetter: sortableKeyboardCoordinates})
+  );
+
+  const sortableIds = stopsState.map((_, idx) => `stop-${idx}`);
 
   const onConfirm = useCallback(() => {
     onChange({
       [property]: {
-        ...config,
+        ...(config || {}),
         stops: stopsState
       }
     });
@@ -225,41 +249,55 @@ const VisConfigByZoomInput: React.FC<Props> = ({config = {}, property, onChange}
     i => setStops([...stopsState.slice(0, i), ...stopsState.slice(i + 1)]),
     [setStops, stopsState]
   );
-  const onSortEnd = useCallback(
-    ({oldIndex, newIndex}) => {
-      const newStopsState = arrayMove(stopsState, oldIndex, newIndex);
-      setStops(newStopsState);
+
+  const handleDragStart = useCallback(
+    (_event: DragStartEvent) => {
+      toggleSorting(true);
+    },
+    [toggleSorting]
+  );
+
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const {active, over} = event;
+      if (over && active.id !== over.id) {
+        const oldIndex = sortableIds.indexOf(active.id as string);
+        const newIndex = sortableIds.indexOf(over.id as string);
+        const newStopsState = arrayMove(stopsState, oldIndex, newIndex);
+        setStops(newStopsState);
+      }
       toggleSorting(false);
     },
-    [stopsState, setStops, toggleSorting]
+    [stopsState, setStops, toggleSorting, sortableIds]
   );
-  const onSortStart = useCallback(() => {
-    toggleSorting(true);
-  }, [toggleSorting]);
 
   return (
     <VisConfigByZoomInputContainer isEditing={isEditing}>
-      <SortableContainer
-        className="custom-palette-container"
-        onSortEnd={onSortEnd}
-        onSortStart={onSortStart}
-        lockAxis="y"
-        helperClass="sorting-colors"
-        useDragHandle
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+        modifiers={[restrictToVerticalAxis]}
       >
-        {stopsState.map((stop, idx) => (
-          <InputRow
-            isEditing={isEditing}
-            key={`input-${idx}`}
-            idx={idx}
-            stop={stop[0]}
-            value={stop[1]}
-            isSorting={isSorting}
-            onChange={v => setStops(Object.assign([...(stopsState || [])], {[idx]: v}))}
-            onRemove={() => removeStop(idx)}
-          />
-        ))}
-      </SortableContainer>
+        <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
+          <div className="custom-palette-container">
+            {stopsState.map((stop, idx) => (
+              <SortableInputRow
+                isEditing={isEditing}
+                id={`stop-${idx}`}
+                key={`input-${idx}`}
+                idx={idx}
+                stop={stop[0]}
+                value={stop[1]}
+                isSorting={isSorting}
+                onChange={v => setStops(Object.assign([...(stopsState || [])], {[idx]: v}))}
+                onRemove={() => removeStop(idx)}
+              />
+            ))}
+          </div>
+        </SortableContext>
+      </DndContext>
       {isEditing ? (
         <div className="bottom-action editing">
           <Button secondary onClick={addStop} small>
