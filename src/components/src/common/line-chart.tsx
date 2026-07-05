@@ -4,7 +4,7 @@
 import React, {useCallback, useMemo, useRef} from 'react';
 import {scaleTime, scaleLinear} from 'd3-scale';
 import {LineChart} from '@kepler.gl/types';
-import styled from 'styled-components';
+import styled, {withTheme} from 'styled-components';
 import {datetimeFormatter} from '@kepler.gl/utils';
 
 export interface LineSeriesPoint {
@@ -79,6 +79,7 @@ interface LineChartProps {
   timeFormat?: string;
   range?: number[];
   yAxisAutoRange?: boolean;
+  theme?: any;
 }
 
 function LineChartFactory() {
@@ -98,12 +99,31 @@ function LineChartFactory() {
     timezone,
     timeFormat,
     range,
-    yAxisAutoRange
+    yAxisAutoRange,
+    theme
   }: LineChartProps) => {
     const svgRef = useRef<SVGSVGElement>(null);
     const {yDomain, xDomain} = lineChart || {};
     // @ts-expect-error seems lineChart.series has ambiguous types. Requires refactoring.
     const series: {lines: any[]; markers: any[]} = lineChart?.series;
+
+    const lineColor = color || (theme && theme.activeColor) || '#3A414C';
+
+    const computedYDomain = useMemo(() => {
+      if (yDomain && yDomain[0] != null && yDomain[1] != null) return yDomain;
+      if (!series?.lines) return undefined;
+      let min: number | undefined;
+      let max: number | undefined;
+      for (const line of series.lines) {
+        for (const point of line) {
+          if (point.y != null) {
+            if (min === undefined || point.y < min) min = point.y;
+            if (max === undefined || point.y > max) max = point.y;
+          }
+        }
+      }
+      return min !== undefined && max !== undefined ? [min, max] : undefined;
+    }, [yDomain, series]);
 
     const effectiveXDomain = useMemo(
       () => (range && range.length === 2 ? range : xDomain),
@@ -111,7 +131,7 @@ function LineChartFactory() {
     );
 
     const filteredYDomain = useMemo(() => {
-      if (!yAxisAutoRange || !series?.lines || !value || value.length < 2) return yDomain;
+      if (!yAxisAutoRange || !series?.lines || !value || value.length < 2) return computedYDomain;
       let min: number | undefined;
       let max: number | undefined;
       for (const line of series.lines) {
@@ -127,8 +147,8 @@ function LineChartFactory() {
           }
         }
       }
-      return min !== undefined && max !== undefined ? [min, max] : yDomain;
-    }, [series, value, yDomain, yAxisAutoRange]);
+      return min !== undefined && max !== undefined ? [min, max] : computedYDomain;
+    }, [series, value, computedYDomain, yAxisAutoRange]);
 
     const paddedYDomain = useMemo(() => {
       if (!filteredYDomain || filteredYDomain[0] == null || filteredYDomain[1] == null) return [];
@@ -254,14 +274,14 @@ function LineChartFactory() {
             />
           ))}
           {linePaths.map((d, i) => (
-            <path key={i} d={d} fill="none" stroke={color} strokeWidth={1.5} />
+            <path key={i} d={d} fill="none" stroke={lineColor} strokeWidth={1} />
           ))}
           {isHoveredDPVisible && hoveredDP && xScale && yScale && (
             <circle
               cx={xScale(new Date(hoveredDP.x))}
               cy={yScale(hoveredDP.y)}
               r={4}
-              fill={color}
+              fill={lineColor}
             />
           )}
           {isEnlarged &&
@@ -277,11 +297,7 @@ function LineChartFactory() {
                 {tick}
               </text>
             ))}
-          {brushComponent && (
-            <foreignObject x={0} y={0} width={width} height={height}>
-              {brushComponent}
-            </foreignObject>
-          )}
+          {brushComponent}
         </svg>
         {clampedHoveredDP && enableChartHover && !brushing && hintPosition ? (
           <div style={{position: 'absolute', left: hintPosition.left, top: hintPosition.top}}>
@@ -291,7 +307,7 @@ function LineChartFactory() {
       </LineChartWrapper>
     );
   };
-  return LineChartComponent;
+  return withTheme(LineChartComponent) as React.FC<Omit<LineChartProps, 'theme'>>;
 }
 
 export default LineChartFactory;
