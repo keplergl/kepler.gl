@@ -129,9 +129,15 @@ export default class BitmapOverlayLayer extends Layer {
     super(props);
     this.registerVisConfig(bitmapVisConfigs);
     if (props.visConfig) {
-      super.updateLayerVisConfig(props.visConfig);
+      const {alignMode: _, editBounds: __, ...persistedVisConfig} = props.visConfig;
+      super.updateLayerVisConfig(persistedVisConfig);
     }
     this.meta = {};
+  }
+
+  validateVisConfig(_dataset: KeplerDataset, visConfig: Record<string, any>): Record<string, any> {
+    const {alignMode: _, editBounds: __, ...rest} = visConfig;
+    return rest;
   }
 
   // --- Alignment mode methods ---
