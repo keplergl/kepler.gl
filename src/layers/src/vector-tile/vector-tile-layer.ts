@@ -66,8 +66,7 @@ import TileDataset from './common-tile/tile-dataset';
 import {
   isDomainStops,
   isDomainQuantiles,
-  isIndexedField,
-  getPropertyByZoom
+  isIndexedField
 } from './common-tile/tile-utils';
 
 export {getNumVectorTilesBeingLoaded} from './loading-counter';
@@ -536,7 +535,7 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
       getFillColor: props.getFillColorByZoom ? props.getFillColor(zoom) : props.getFillColor,
       getElevation: props.getElevationByZoom ? props.getElevation(zoom) : props.getElevation,
       // radius for points
-      pointRadiusScale: props.pointRadiusScale, // props.getPointRadiusScaleByZoom(zoom),
+      pointRadiusScale: props.pointRadiusScale,
       pointRadiusUnits: props.pointRadiusUnits,
       getPointRadius: props.getPointRadius,
       // For some reason tile Layer reset autoHighlight to false
@@ -618,8 +617,6 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
           uniqueIdProperty,
           highlightedFeatureId,
           renderSubLayers: this.renderSubLayers,
-          // when radiusUnits is meter
-          getPointRadiusScaleByZoom: getPropertyByZoom(visConfig.radiusByZoom, visConfig.radius),
           pointRadiusUnits: visConfig.radiusUnits ? 'pixels' : 'meters',
           pointRadiusScale: radiusField ? visConfig.radius : 1,
 
