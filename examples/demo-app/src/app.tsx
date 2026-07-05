@@ -10,6 +10,7 @@ import cloneDeep from 'lodash/cloneDeep';
 import isEqual from 'lodash/isEqual';
 import {useSelector} from 'react-redux';
 import isPropValid from '@emotion/is-prop-valid';
+import {useParams, useSearchParams, useLocation} from 'react-router-dom';
 import {WebMercatorViewport} from '@deck.gl/core';
 import {ScreenshotWrapper} from '@openassistant/ui';
 import {
@@ -153,7 +154,10 @@ const StyledVerticalResizeHandle = styled(PanelResizeHandle)`
 
 const App = props => {
   const [showBanner, toggleShowBanner] = useState(false);
-  const {params: {id, provider} = {}, location: {query = {}} = {}} = props;
+  const {id, provider} = useParams();
+  const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const query = Object.fromEntries(searchParams.entries());
   const dispatch = useDispatch();
 
   // TODO find another way to check for existence of duckDb plugin
@@ -168,6 +172,16 @@ const App = props => {
   );
 
   const prevQueryRef = useRef<number>(null);
+
+  // Handle OAuth callback on /auth route
+  useEffect(() => {
+    if (location.pathname === '/auth' && window.opener) {
+      const {getCloudProvider, DEFAULT_CLOUD_PROVIDER} = require('./cloud-providers');
+      const authProvider = getCloudProvider(DEFAULT_CLOUD_PROVIDER);
+      const token = authProvider.getAccessTokenFromLocation(location);
+      window.opener.postMessage({token}, window.location.origin);
+    }
+  }, [location]);
 
   useEffect(() => {
     // if we pass an id as part of the url
