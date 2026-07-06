@@ -5,6 +5,7 @@
 // Provides mount/find/simulate/props/instance/state without using act().
 
 import React from 'react';
+import {act} from 'react';
 import ReactDOM from 'react-dom';
 import {createRoot} from 'react-dom/client';
 
@@ -315,9 +316,9 @@ class MountWrapper {
     const newElement = React.cloneElement(this._element, merged);
     this._element = newElement;
     const prev = globalThis.IS_REACT_ACT_ENVIRONMENT;
-    globalThis.IS_REACT_ACT_ENVIRONMENT = false;
+    globalThis.IS_REACT_ACT_ENVIRONMENT = true;
     try {
-      ReactDOM.flushSync(() => {
+      act(() => {
         this._root.render(newElement);
       });
     } catch (e) {
@@ -1128,22 +1129,19 @@ export function mount(element) {
   const container = document.createElement('div');
   document.body.appendChild(container);
 
-  const prev = globalThis.IS_REACT_ACT_ENVIRONMENT;
-  globalThis.IS_REACT_ACT_ENVIRONMENT = false;
-
   const root = createRoot(container);
+  const prev = globalThis.IS_REACT_ACT_ENVIRONMENT;
+  globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+
   try {
-    ReactDOM.flushSync(() => {
+    act(() => {
       root.render(element);
     });
   } catch (e) {
-    // ignore flush errors during initial render
+    // ignore errors during initial render
   }
 
   globalThis.IS_REACT_ACT_ENVIRONMENT = prev;
-
-  // Process pending microtasks for useEffect state initialization
-  flushWork();
 
   const wrapper = new MountWrapper(container, root, element);
 
