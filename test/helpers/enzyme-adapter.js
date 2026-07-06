@@ -26,6 +26,11 @@ function getSelectorName(selector) {
   return selector.displayName || selector.name || '';
 }
 
+function isGenericStyledName(name) {
+  if (!name) return false;
+  return name.startsWith('styled.') || name === 'Styled(Component)';
+}
+
 function fiberMatchesSelector(fiber, selector) {
   if (!fiber || !fiber.type) return false;
 
@@ -48,11 +53,16 @@ function fiberMatchesSelector(fiber, selector) {
       if (fiber.type.type && fiber.type.type.render === selector) return true;
     }
 
-    // Match by displayName for injected/wrapped components
+    // For styled-components, match by styledComponentId (unique per component)
+    if (selector.styledComponentId && fiber.type && fiber.type.styledComponentId) {
+      return fiber.type.styledComponentId === selector.styledComponentId;
+    }
+
+    // Match by displayName for injected/wrapped components, but skip generic styled names
     const selectorName = getSelectorName(selector);
-    if (selectorName) {
+    if (selectorName && !isGenericStyledName(selectorName)) {
       const fiberName = getDisplayName(fiber.type);
-      if (fiberName && fiberName === selectorName) return true;
+      if (fiberName && fiberName === selectorName && !isGenericStyledName(fiberName)) return true;
     }
 
     return false;
@@ -68,6 +78,21 @@ function collectFibers(fiber, selector, results) {
   }
   collectFibers(fiber.child, selector, results);
   collectFibers(fiber.sibling, selector, results);
+}
+
+function collectFibersWithClasses(fiber, classNames, results) {
+  if (!fiber) return;
+  if (fiber.memoizedProps && fiber.memoizedProps.className) {
+    const cn = fiber.memoizedProps.className;
+    if (typeof cn === 'string') {
+      const parts = cn.split(/\s+/);
+      if (classNames.every(cls => parts.includes(cls))) {
+        results.push(fiber);
+      }
+    }
+  }
+  collectFibersWithClasses(fiber.child, classNames, results);
+  collectFibersWithClasses(fiber.sibling, classNames, results);
 }
 
 function collectAllFibers(fiber, results) {
@@ -153,12 +178,16 @@ function isCssSelector(selector) {
     selector.includes('>') ||
     selector.includes(':') ||
     selector.includes('+') ||
-    selector.includes('~')
+    selector.includes('~') ||
+    // tag.class or tag#id patterns (e.g. "td.row__value", "div#main")
+    /^[a-z][a-z0-9]*[.#\[]/i.test(selector)
   );
 }
 
 function isHtmlTag(selector) {
   if (typeof selector !== 'string') return false;
+  // Only match lowercase strings - capitalized names like "Button" are React component names
+  if (selector !== selector.toLowerCase()) return false;
   const tags = new Set([
     'a','abbr','address','area','article','aside','audio','b','base','bdi','bdo',
     'blockquote','body','br','button','canvas','caption','cite','code','col',
@@ -175,7 +204,7 @@ function isHtmlTag(selector) {
     'clipPath','use','symbol','marker','pattern','mask','linearGradient',
     'radialGradient','stop','foreignObject','ellipse'
   ]);
-  return tags.has(selector.toLowerCase());
+  return tags.has(selector);
 }
 
 class MountWrapper {
@@ -194,7 +223,35 @@ class MountWrapper {
     if (!selector) return new ResultSet([], this, this._container);
 
     if (typeof selector === 'string' && (isCssSelector(selector) || isHtmlTag(selector))) {
-      const elements = Array.from(this._container.querySelectorAll(selector));
+      // For class-only selectors (e.g. .foo, .foo.bar), use fiber-based className matching
+      const classOnlyMatch = /^(\.[a-zA-Z_][a-zA-Z0-9_-]*)+$/.exec(selector);
+      if (classOnlyMatch) {
+        const classNames = selector.split('.').filter(Boolean);
+        const fiberRoot = this._getFiberRoot();
+        const results = [];
+        collectFibersWithClasses(fiberRoot, classNames, results);
+        if (results.length > 0) {
+          return ResultSet.fromFibers(results, this, this._container);
+        }
+      }
+
+      let elements = Array.from(this._container.querySelectorAll(selector));
+      // Also search portals: elements rendered outside the container but belonging to this React tree
+      if (elements.length === 0) {
+        const docElements = Array.from(document.querySelectorAll(selector));
+        const fiberRoot = this._getFiberRoot();
+        const rootStateNode = fiberRoot && fiberRoot.stateNode;
+        elements = docElements.filter(el => {
+          const fiber = getFiberFromDom(el);
+          if (!fiber) return false;
+          let current = fiber;
+          while (current) {
+            if (current.tag === 3 && current.stateNode === rootStateNode) return true;
+            current = current.return;
+          }
+          return false;
+        });
+      }
       return ResultSet.fromDomNodes(elements, this, this._container);
     }
 
@@ -210,7 +267,27 @@ class MountWrapper {
   }
 
   setProps(newProps) {
-    const merged = {...(this._element.props || {}), ...newProps};
+    let merged = {...(this._element.props || {}), ...newProps};
+
+    // When setting children, preserve intermediate wrapper components.
+    // Tests often do: mountWithTheme(<IntlWrapper><Comp .../></IntlWrapper>)
+    // then wrapper.setProps({children: <Comp newProps/>})
+    // Intent: keep ThemeProvider > IntlWrapper wrapping, just update the leaf.
+    if ('children' in newProps && React.isValidElement(newProps.children)) {
+      const oldChildren = this._element.props && this._element.props.children;
+      if (React.isValidElement(oldChildren) && oldChildren.type !== newProps.children.type) {
+        // The old children is a wrapper (e.g. IntlWrapper) around the actual component
+        // Try to preserve the wrapper by nesting new children inside it
+        const oldChildChildren = oldChildren.props && oldChildren.props.children;
+        if (React.isValidElement(oldChildChildren) &&
+            oldChildChildren.type === newProps.children.type) {
+          // Wrap the new children in the same wrapper as before
+          const rewrapped = React.cloneElement(oldChildren, {}, newProps.children);
+          merged = {...merged, children: rewrapped};
+        }
+      }
+    }
+
     const newElement = React.cloneElement(this._element, merged);
     this._element = newElement;
     const prev = globalThis.IS_REACT_ACT_ENVIRONMENT;
@@ -286,6 +363,41 @@ class MountWrapper {
   }
 }
 
+function getReactHandlerName(event) {
+  const eventMap = {
+    dragover: 'onDragOver',
+    dragleave: 'onDragLeave',
+    dragenter: 'onDragEnter',
+    dragend: 'onDragEnd',
+    dragstart: 'onDragStart',
+    mousedown: 'onMouseDown',
+    mouseup: 'onMouseUp',
+    mousemove: 'onMouseMove',
+    mouseenter: 'onMouseEnter',
+    mouseleave: 'onMouseLeave',
+    mouseover: 'onMouseOver',
+    mouseout: 'onMouseOut',
+    keydown: 'onKeyDown',
+    keyup: 'onKeyUp',
+    keypress: 'onKeyPress',
+    touchstart: 'onTouchStart',
+    touchend: 'onTouchEnd',
+    touchmove: 'onTouchMove',
+    contextmenu: 'onContextMenu',
+    dblclick: 'onDoubleClick',
+    focusin: 'onFocus',
+    focusout: 'onBlur',
+    animationend: 'onAnimationEnd',
+    animationstart: 'onAnimationStart',
+    transitionend: 'onTransitionEnd',
+    pointerdown: 'onPointerDown',
+    pointerup: 'onPointerUp',
+    pointermove: 'onPointerMove'
+  };
+  if (eventMap[event]) return eventMap[event];
+  return 'on' + event.charAt(0).toUpperCase() + event.slice(1);
+}
+
 function simulateOnDom(dom, event, mockEvent, flushContainer) {
   if (!dom) return;
 
@@ -299,7 +411,7 @@ function simulateOnDom(dom, event, mockEvent, flushContainer) {
     ...(mockEvent || {})
   };
 
-  const handlerName = 'on' + event.charAt(0).toUpperCase() + event.slice(1);
+  const handlerName = getReactHandlerName(event);
 
   // Try to find handler on fiber props first
   let handled = false;
@@ -438,6 +550,20 @@ class ResultSet {
     const item = this._items[0];
 
     if (typeof selector === 'string' && (isCssSelector(selector) || isHtmlTag(selector))) {
+      // For class-only selectors, use fiber-based className matching
+      const classOnlyMatch = /^(\.[a-zA-Z_][a-zA-Z0-9_-]*)+$/.exec(selector);
+      if (classOnlyMatch) {
+        const classNames = selector.split('.').filter(Boolean);
+        const fiber = this._getFiber(item);
+        if (fiber) {
+          const results = [];
+          collectFibersWithClasses(fiber.child, classNames, results);
+          if (results.length > 0) {
+            return ResultSet.fromFibers(results, this._root, this._scopeContainer);
+          }
+        }
+      }
+
       const dom = this._getDom(item);
       if (!dom) return new ResultSet([], this._root, this._scopeContainer);
       const elements = Array.from(dom.querySelectorAll(selector));
@@ -494,34 +620,43 @@ class ResultSet {
     // For fiber items, try props handler first
     const fiber = this._getFiber(item);
     if (fiber) {
-      const handlerName = 'on' + event.charAt(0).toUpperCase() + event.slice(1);
-      const props = fiber.memoizedProps;
-      if (props && typeof props[handlerName] === 'function') {
-        const dom = this._getDom(item) || this._scopeContainer;
-        const syntheticEvent = {
-          preventDefault: () => {},
-          stopPropagation: () => {},
-          persist: () => {},
-          target: dom,
-          currentTarget: dom,
-          nativeEvent: mockEvent || {},
-          ...(mockEvent || {})
-        };
-        const prev = globalThis.IS_REACT_ACT_ENVIRONMENT;
-        globalThis.IS_REACT_ACT_ENVIRONMENT = false;
-        try {
-          ReactDOM.flushSync(() => {
-            props[handlerName](syntheticEvent);
-          });
-        } catch (e) {
-          // ignore
+      const handlerName = getReactHandlerName(event);
+
+      // For host fibers (actual DOM elements), check props directly
+      if (typeof fiber.type === 'string') {
+        const props = fiber.memoizedProps;
+        if (props && typeof props[handlerName] === 'function') {
+          const dom = this._getDom(item) || this._scopeContainer;
+          const syntheticEvent = {
+            preventDefault: () => {},
+            stopPropagation: () => {},
+            persist: () => {},
+            target: dom,
+            currentTarget: dom,
+            nativeEvent: mockEvent || {},
+            ...(mockEvent || {})
+          };
+          const prev = globalThis.IS_REACT_ACT_ENVIRONMENT;
+          globalThis.IS_REACT_ACT_ENVIRONMENT = false;
+          try {
+            ReactDOM.flushSync(() => {
+              props[handlerName](syntheticEvent);
+            });
+          } catch (e) {
+            // ignore
+          }
+          globalThis.IS_REACT_ACT_ENVIRONMENT = prev;
+          flushWork();
+          return this;
         }
-        globalThis.IS_REACT_ACT_ENVIRONMENT = prev;
-        flushWork();
-        return this;
+        // For host fibers, also try simulateOnDom which walks up
+        if (fiber.stateNode) {
+          simulateOnDom(fiber.stateNode, event, mockEvent, this._scopeContainer);
+          return this;
+        }
       }
 
-      // Walk to first host fiber if the handler wasn't on this fiber
+      // For composite (non-host) fibers, delegate to first host child DOM
       const hostFiber = getFirstHostFiber(fiber);
       if (hostFiber && hostFiber.stateNode) {
         simulateOnDom(hostFiber.stateNode, event, mockEvent, this._scopeContainer);
