@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-/* eslint-disable enzyme-deprecation/no-mount,enzyme-deprecation/no-shallow,max-statements */
+/* eslint-disable max-statements */
 import React from 'react';
 import {shallow} from 'enzyme';
 import sinon from 'sinon';

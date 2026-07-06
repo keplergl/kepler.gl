@@ -6,7 +6,7 @@
  Use component-test-utils.js
  */
 
-/* eslint-disable enzyme-deprecation/no-mount */
+/* eslint-disable */
 import React from 'react';
 import sinon from 'sinon';
 import {mount} from 'enzyme';

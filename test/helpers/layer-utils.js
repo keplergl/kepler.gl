@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-/* eslint-disable enzyme-deprecation/no-mount */
 import {LayerManager, MapView} from '@deck.gl/core';
 import React from 'react';
 import {device} from '@deck.gl/test-utils';
