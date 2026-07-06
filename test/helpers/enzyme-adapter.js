@@ -95,7 +95,7 @@ function collectFibersWithClasses(fiber, classNames, results) {
   collectFibersWithClasses(fiber.sibling, classNames, results);
 }
 
-function collectAllFibers(fiber, results) {
+function _collectAllFibers(fiber, results) {
   if (!fiber) return;
   if (fiber.type) results.push(fiber);
   collectAllFibers(fiber.child, results);
@@ -180,7 +180,7 @@ function isCssSelector(selector) {
     selector.includes('+') ||
     selector.includes('~') ||
     // tag.class or tag#id patterns (e.g. "td.row__value", "div#main")
-    /^[a-z][a-z0-9]*[.#\[]/i.test(selector)
+    /^[a-z][a-z0-9]*[.#[]/i.test(selector)
   );
 }
 
@@ -398,7 +398,7 @@ function getReactHandlerName(event) {
   return 'on' + event.charAt(0).toUpperCase() + event.slice(1);
 }
 
-function simulateOnDom(dom, event, mockEvent, flushContainer) {
+function simulateOnDom(dom, event, mockEvent, _flushContainer) {
   if (!dom) return;
 
   const syntheticEvent = {

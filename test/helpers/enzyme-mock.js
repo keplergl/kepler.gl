@@ -3,7 +3,6 @@
 
 // Minimal enzyme stub for legacy tests that haven't been migrated to @testing-library/react.
 // These tests will be skipped at runtime since mount/shallow are no-ops.
-const React = require('react');
 
 function noop() {
   return {

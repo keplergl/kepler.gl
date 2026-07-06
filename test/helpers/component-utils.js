@@ -10,7 +10,7 @@ import {IntlProvider} from 'react-intl';
 import {messages} from '@kepler.gl/localization';
 import {Typeahead} from '@kepler.gl/components';
 
-export function mountWithTheme(node, options) {
+export function mountWithTheme(node, _options) {
   return mount(
     <ThemeProvider theme={theme}>
       {node}
