@@ -42,6 +42,18 @@ function fiberMatchesSelector(fiber, selector) {
   }
 
   if (typeof selector === 'function' || typeof selector === 'object') {
+    // Plain object prop selector: {children: 'text', className: 'foo'}
+    if (typeof selector === 'object' && selector !== null && !selector.$$typeof && !selector.type && !selector.styledComponentId) {
+      const isPlainPropSelector = Object.keys(selector).every(k =>
+        typeof selector[k] === 'string' || typeof selector[k] === 'number' || typeof selector[k] === 'boolean'
+      );
+      if (isPlainPropSelector && Object.keys(selector).length > 0) {
+        const props = fiber.memoizedProps;
+        if (!props) return false;
+        return Object.keys(selector).every(k => props[k] === selector[k]);
+      }
+    }
+
     if (fiber.type === selector) return true;
     if (fiber.elementType === selector) return true;
 
@@ -432,16 +444,30 @@ function simulateOnDom(dom, event, mockEvent, _flushContainer) {
   const fiber = getFiberFromDom(dom);
 
   if (fiber) {
-    // Walk up fibers to find a handler
+    // Walk up fibers to find a handler.
+    // For host fibers, prefer __reactProps$ from DOM (always up-to-date after re-renders)
+    // over fiber.memoizedProps (which can be stale after flushSync).
     let current = fiber;
     while (current) {
-      const props = current.memoizedProps;
-      if (props && typeof props[handlerName] === 'function' && !_isNoopHandler(props[handlerName])) {
+      let handler = null;
+      if (typeof current.type === 'string' && current.stateNode) {
+        const freshProps = getPropsFromDom(current.stateNode);
+        if (freshProps && typeof freshProps[handlerName] === 'function') {
+          handler = freshProps[handlerName];
+        }
+      }
+      if (!handler) {
+        const props = current.memoizedProps;
+        if (props && typeof props[handlerName] === 'function') {
+          handler = props[handlerName];
+        }
+      }
+      if (handler && !_isNoopHandler(handler)) {
         const prev = globalThis.IS_REACT_ACT_ENVIRONMENT;
         globalThis.IS_REACT_ACT_ENVIRONMENT = false;
         try {
           ReactDOM.flushSync(() => {
-            props[handlerName](syntheticEvent);
+            handler(syntheticEvent);
           });
         } catch (e) {
           // ignore flush errors
@@ -663,9 +689,11 @@ class ResultSet {
 
       // For host fibers (actual DOM elements), check props directly
       if (typeof fiber.type === 'string') {
-        const props = fiber.memoizedProps;
+        const dom = this._getDom(item) || this._scopeContainer;
+        // Prefer __reactProps$ from DOM (always up-to-date after re-renders)
+        const freshProps = dom ? getPropsFromDom(dom) : null;
+        const props = freshProps || fiber.memoizedProps;
         if (props && typeof props[handlerName] === 'function') {
-          const dom = this._getDom(item) || this._scopeContainer;
           const syntheticEvent = {
             type: event,
             preventDefault: () => {},
@@ -781,6 +809,42 @@ class ResultSet {
     if (dom) {
       simulateOnDom(dom, event, mockEvent, this._scopeContainer);
     }
+    return this;
+  }
+
+  simulateError(error) {
+    const fiber = this._getFiber(this._items[0]);
+    if (!fiber) return this;
+    let current = fiber.return;
+    while (current) {
+      if (current.type && current.type.getDerivedStateFromError) {
+        const newState = current.type.getDerivedStateFromError(error);
+        if (newState && current.stateNode && current.stateNode.setState) {
+          const prev = globalThis.IS_REACT_ACT_ENVIRONMENT;
+          globalThis.IS_REACT_ACT_ENVIRONMENT = false;
+          try {
+            ReactDOM.flushSync(() => {
+              current.stateNode.setState(newState);
+            });
+          } catch (e) { /* ignore */ }
+          globalThis.IS_REACT_ACT_ENVIRONMENT = prev;
+        }
+        break;
+      }
+      if (current.stateNode && typeof current.stateNode.componentDidCatch === 'function') {
+        const prev = globalThis.IS_REACT_ACT_ENVIRONMENT;
+        globalThis.IS_REACT_ACT_ENVIRONMENT = false;
+        try {
+          ReactDOM.flushSync(() => {
+            current.stateNode.componentDidCatch(error, {componentStack: ''});
+          });
+        } catch (e) { /* ignore */ }
+        globalThis.IS_REACT_ACT_ENVIRONMENT = prev;
+        break;
+      }
+      current = current.return;
+    }
+    flushWork();
     return this;
   }
 
@@ -1098,3 +1162,4 @@ export function mount(element) {
 export function configure() {}
 export const shallow = mount;
 export {mount as render};
+

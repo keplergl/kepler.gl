@@ -3,7 +3,7 @@
 
 /* eslint-disable max-statements */
 import React from 'react';
-import {shallow} from 'enzyme';
+import {mount} from 'enzyme';
 import sinon from 'sinon';
 import test from 'tape';
 import configureStore from 'redux-mock-store';
@@ -50,32 +50,36 @@ test('MapControlFactory - display all options', t => {
   const onSetEditorMode = sinon.spy();
   const onToggleEditorVisibility = sinon.spy();
   const onSetLocale = sinon.spy();
-  const $ = shallow(
-    <MapControl
-      mapControls={{
-        splitMap: {show: true},
-        visibleLayers: {show: true},
-        toggle3d: {show: true},
-        mapLegend: {show: true},
-        mapDraw: {show: true},
-        mapLocale: {show: true},
-        effect: {show: true}
-      }}
-      datasets={{}}
-      layers={[]}
-      locale={'en'}
-      layersToRender={{}}
-      dragRotate={true}
-      mapIndex={0}
-      onToggleSplitMap={onToggleSplitMap}
-      onTogglePerspective={onTogglePerspective}
-      onToggleMapControl={onToggleMapControl}
-      onSetEditorMode={onSetEditorMode}
-      onToggleEditorVisibility={onToggleEditorVisibility}
-      onSetLocale={onSetLocale}
-    />
+  const $ = mountWithTheme(
+    <IntlWrapper>
+      <MapViewStateContextProvider mapState={{latitude: 0, longitude: 0, zoom: 1}}>
+        <MapControl
+          mapControls={{
+            splitMap: {show: true},
+            visibleLayers: {show: true},
+            toggle3d: {show: true},
+            mapLegend: {show: true},
+            mapDraw: {show: true},
+            mapLocale: {show: true},
+            effect: {show: true}
+          }}
+          datasets={{}}
+          layers={[]}
+          locale={'en'}
+          layersToRender={{}}
+          dragRotate={true}
+          mapIndex={0}
+          onToggleSplitMap={onToggleSplitMap}
+          onTogglePerspective={onTogglePerspective}
+          onToggleMapControl={onToggleMapControl}
+          onSetEditorMode={onSetEditorMode}
+          onToggleEditorVisibility={onToggleEditorVisibility}
+          onSetLocale={onSetLocale}
+        />
+      </MapViewStateContextProvider>
+    </IntlWrapper>
   );
-  t.equal($.find('.map-control-action').length, 6, 'Should show 6 action panels');
+  t.equal($.find('.map-control-action').length, 7, 'Should show 7 action panels');
   t.end();
 });
 
