@@ -1,19 +1,13 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React from 'react';
-import {Router, Route, IndexRoute, browserHistory} from 'react-router';
-import {syncHistoryWithStore} from 'react-router-redux';
+import React, {useEffect} from 'react';
+import {BrowserRouter, Routes, Route, useLocation} from 'react-router-dom';
 import Window from 'global/window';
-import store from './reducers';
 import Home from './components/home';
 import App from './components/app';
 import Demo from '../../examples/demo-app/src/app';
 import Policy from './components/policy';
-
-import {buildAppRoutes} from '../../examples/demo-app/src/utils/routes';
-
-const appRoute = buildAppRoutes(Demo);
 
 const trackPageChange = location => {
   const links = location.split('/');
@@ -27,35 +21,29 @@ const trackPageChange = location => {
   }
 };
 
-const history = syncHistoryWithStore(browserHistory, store);
-history.listen(location => {
-  if (location.action === 'POP') {
+function LocationTracker() {
+  const location = useLocation();
+
+  useEffect(() => {
     trackPageChange(location.pathname);
-  }
-});
+  }, [location.pathname]);
 
-function isOldUrl(location) {
-  return Boolean(location.pathname === '/' && location.hash && location.hash.startsWith('#/demo'));
-}
-
-function onEnter(nextState, replace, callback) {
-  /**
-   * For backward compatibility, when we see a url path starting with '#/demo/...'
-   * we redirect to '/demo/.../
-   **/
-  if (isOldUrl(nextState.location)) {
-    replace(location.hash.substring(1));
-  }
-  callback();
+  return null;
 }
 
 // eslint-disable-next-line react/display-name
 export default () => (
-  <Router history={history}>
-    <Route path="/" component={App} onEnter={onEnter}>
-      <IndexRoute component={Home} onEnter={onEnter} />
-      <Route path="/policy" component={Policy} onEnter={onEnter} />
-      {appRoute}
-    </Route>
-  </Router>
+  <BrowserRouter>
+    <LocationTracker />
+    <Routes>
+      <Route path="/" element={<App />}>
+        <Route index element={<Home />} />
+        <Route path="policy" element={<Policy />} />
+        <Route path="demo" element={<Demo />} />
+        <Route path="demo/:id" element={<Demo />} />
+        <Route path="demo/map/:provider" element={<Demo />} />
+        <Route path="auth" element={<Demo />} />
+      </Route>
+    </Routes>
+  </BrowserRouter>
 );
