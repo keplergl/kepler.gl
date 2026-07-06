@@ -5,7 +5,7 @@ import {LayerManager, MapView} from '@deck.gl/core';
 import React from 'react';
 import {device} from '@deck.gl/test-utils';
 import sinon from 'sinon';
-import {mount} from 'enzyme';
+import {render} from '@testing-library/react';
 import {console as Console} from 'global/window';
 import cloneDeep from 'lodash/cloneDeep';
 
@@ -82,13 +82,13 @@ export function testCreateCases(t, LayerClass, testCases) {
       t.ok(typeof layer.type === 'string', 'layer type should be string');
       t.ok(typeof layer.id === 'string', 'layer id should be string');
       t.doesNotThrow(() => {
-        mount(<layer.layerIcon />);
+        render(<layer.layerIcon />);
       }, 'layer icon should be mountable');
 
       if (layer.layerInfoModal) {
         if (layer.layerInfoModal.template) {
           t.doesNotThrow(() => {
-            mount(
+            render(
               <IntlWrapper>
                 <layer.layerInfoModal.template />
               </IntlWrapper>
@@ -99,7 +99,7 @@ export function testCreateCases(t, LayerClass, testCases) {
           Object.keys(layer.layerInfoModal).forEach(mode => {
             const Template = layer.layerInfoModal[mode].template;
             t.doesNotThrow(() => {
-              mount(
+              render(
                 <IntlWrapper>
                   <Template />
                 </IntlWrapper>
