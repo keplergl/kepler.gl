@@ -168,6 +168,18 @@ function flushWork() {
   }
 }
 
+function _isNoopHandler(fn) {
+  if (!fn) return true;
+  const src = fn.toString();
+  // Match common no-op patterns: () => {}, function nop() { return; }, function() {}
+  if (/^\s*(?:function\s*\w*\s*\([^)]*\)\s*\{[\s;]*(?:return;?)?\s*\}|(?:\([^)]*\)|[a-zA-Z_$]\w*)\s*=>\s*\{[\s;]*(?:return;?)?\s*\})\s*$/.test(src)) {
+    return true;
+  }
+  // Also match coverage-instrumented nop: function nop() { cov_... }
+  if (/^function\s+nop\s*\(/.test(src)) return true;
+  return false;
+}
+
 function isCssSelector(selector) {
   if (typeof selector !== 'string') return false;
   return (
@@ -402,12 +414,14 @@ function simulateOnDom(dom, event, mockEvent, _flushContainer) {
   if (!dom) return;
 
   const syntheticEvent = {
+    type: event,
     preventDefault: () => {},
     stopPropagation: () => {},
     persist: () => {},
     target: dom,
     currentTarget: dom,
     nativeEvent: mockEvent || {},
+    bubbles: true,
     ...(mockEvent || {})
   };
 
@@ -422,7 +436,7 @@ function simulateOnDom(dom, event, mockEvent, _flushContainer) {
     let current = fiber;
     while (current) {
       const props = current.memoizedProps;
-      if (props && typeof props[handlerName] === 'function') {
+      if (props && typeof props[handlerName] === 'function' && !_isNoopHandler(props[handlerName])) {
         const prev = globalThis.IS_REACT_ACT_ENVIRONMENT;
         globalThis.IS_REACT_ACT_ENVIRONMENT = false;
         try {
@@ -554,20 +568,45 @@ class ResultSet {
       const classOnlyMatch = /^(\.[a-zA-Z_][a-zA-Z0-9_-]*)+$/.exec(selector);
       if (classOnlyMatch) {
         const classNames = selector.split('.').filter(Boolean);
-        const fiber = this._getFiber(item);
-        if (fiber) {
-          const results = [];
-          collectFibersWithClasses(fiber.child, classNames, results);
-          if (results.length > 0) {
-            return ResultSet.fromFibers(results, this._root, this._scopeContainer);
+        const results = [];
+
+        // Search within ALL items (self + descendants)
+        for (const itm of this._items) {
+          const fiber = this._getFiber(itm);
+          if (fiber) {
+            // Check if this fiber itself matches
+            if (fiber.memoizedProps && fiber.memoizedProps.className) {
+              const cn = fiber.memoizedProps.className;
+              if (typeof cn === 'string') {
+                const parts = cn.split(/\s+/);
+                if (classNames.every(cls => parts.includes(cls))) {
+                  results.push(fiber);
+                }
+              }
+            }
+            collectFibersWithClasses(fiber.child, classNames, results);
           }
+        }
+        if (results.length > 0) {
+          return ResultSet.fromFibers(results, this._root, this._scopeContainer);
         }
       }
 
-      const dom = this._getDom(item);
-      if (!dom) return new ResultSet([], this._root, this._scopeContainer);
-      const elements = Array.from(dom.querySelectorAll(selector));
-      return ResultSet.fromDomNodes(elements, this._root, this._scopeContainer);
+      // DOM-based search: search descendants of first item + filter items matching selector
+      const allElements = [];
+      for (const itm of this._items) {
+        const dom = this._getDom(itm);
+        if (dom) {
+          if (dom.matches && dom.matches(selector)) {
+            allElements.push(dom);
+          }
+          const children = Array.from(dom.querySelectorAll(selector));
+          for (const child of children) {
+            if (!allElements.includes(child)) allElements.push(child);
+          }
+        }
+      }
+      return ResultSet.fromDomNodes(allElements, this._root, this._scopeContainer);
     }
 
     // Fiber-based search from this fiber's subtree
@@ -628,12 +667,14 @@ class ResultSet {
         if (props && typeof props[handlerName] === 'function') {
           const dom = this._getDom(item) || this._scopeContainer;
           const syntheticEvent = {
+            type: event,
             preventDefault: () => {},
             stopPropagation: () => {},
             persist: () => {},
             target: dom,
             currentTarget: dom,
             nativeEvent: mockEvent || {},
+            bubbles: true,
             ...(mockEvent || {})
           };
           const prev = globalThis.IS_REACT_ACT_ENVIRONMENT;
@@ -656,10 +697,82 @@ class ResultSet {
         }
       }
 
-      // For composite (non-host) fibers, delegate to first host child DOM
+      // For composite (non-host) fibers, find the event handler.
       const hostFiber = getFirstHostFiber(fiber);
-      if (hostFiber && hostFiber.stateNode) {
-        simulateOnDom(hostFiber.stateNode, event, mockEvent, this._scopeContainer);
+      const dom = (hostFiber && hostFiber.stateNode) || this._getDom(item);
+      if (dom) {
+        const prev = globalThis.IS_REACT_ACT_ENVIRONMENT;
+        globalThis.IS_REACT_ACT_ENVIRONMENT = false;
+        let handled = false;
+
+        // If the first host fiber has the handler AND it's not a trivial no-op,
+        // use it (handles FileDrop/styled scenarios where the host div has the real handler).
+        if (hostFiber && hostFiber.memoizedProps && typeof hostFiber.memoizedProps[handlerName] === 'function') {
+          const hostHandler = hostFiber.memoizedProps[handlerName];
+          if (!_isNoopHandler(hostHandler)) {
+            const syntheticEvent = {
+              type: event,
+              preventDefault: () => {},
+              stopPropagation: () => {},
+              persist: () => {},
+              target: dom,
+              currentTarget: dom,
+              nativeEvent: mockEvent || {},
+              bubbles: true,
+              ...(mockEvent || {})
+            };
+            try {
+              ReactDOM.flushSync(() => {
+                hostHandler(syntheticEvent);
+              });
+            } catch (e) {
+              // ignore
+            }
+            handled = true;
+          }
+        }
+
+        if (!handled) {
+          // Walk up from this composite fiber (include self) to find handler on ancestors.
+          // This handles cases like <Delete onClick={handler}/> or <IconButton onClick={fn}>.
+          let current = fiber;
+          while (current) {
+            const props = current.memoizedProps;
+            if (props && typeof props[handlerName] === 'function') {
+              if (!_isNoopHandler(props[handlerName])) {
+                const syntheticEvent = {
+                  type: event,
+                  preventDefault: () => {},
+                  stopPropagation: () => {},
+                  persist: () => {},
+                  target: dom,
+                  currentTarget: dom,
+                  nativeEvent: mockEvent || {},
+                  bubbles: true,
+                  ...(mockEvent || {})
+                };
+                try {
+                  ReactDOM.flushSync(() => {
+                    props[handlerName](syntheticEvent);
+                  });
+                } catch (e) {
+                  // ignore
+                }
+                handled = true;
+                break;
+              }
+            }
+            current = current.return;
+          }
+        }
+
+        globalThis.IS_REACT_ACT_ENVIRONMENT = prev;
+        if (handled) {
+          flushWork();
+          return this;
+        }
+        // Fallback: use DOM-based simulate
+        simulateOnDom(dom, event, mockEvent, this._scopeContainer);
         return this;
       }
     }
