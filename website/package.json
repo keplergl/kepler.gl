@@ -26,7 +26,6 @@
     "react-palm": "^3.1.2",
     "react-redux": "^9.1.0",
     "react-router-dom": "^6.30.0",
-    "react-swipeable-views": "^0.12.13",
     "react-waypoint": "^9.0.1",
     "redux": "^5.0.0",
     "redux-actions": "^1.2.0",

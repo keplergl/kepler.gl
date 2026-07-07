@@ -140,19 +140,19 @@ export default class Footer extends PureComponent {
           <BrandingContainer>
             <img style={{width: '120px'}} src={cdnUrl('icons/kepler.gl-logo.png')} />
             <ButtonContainer>
-              <LinkButton large href={DEMO_LINK}>
+              <LinkButton $large href={DEMO_LINK}>
                 Get Started
               </LinkButton>
               <LinkButton
-                large
+                $large
                 href={DEMO_DUCKDB_LINK}
                 style={{marginLeft: '5px', backgroundColor: '#20469c'}}
               >
                 Try with DuckDB
               </LinkButton>
               <LinkButton
-                large
-                outlineDark
+                $large
+                $outlineDark
                 href="https://github.com/keplergl/kepler.gl"
                 style={GITHUB_BUTTON_STYLE}
               >

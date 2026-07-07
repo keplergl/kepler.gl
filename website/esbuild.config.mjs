@@ -41,6 +41,7 @@ const config = {
   platform: 'browser',
   format: 'iife',
   logLevel: 'info',
+  inject: ['../examples/demo-app/src/react19-shim.js'],
   loader: {
     '.js': 'jsx',
     '.css': 'css',
