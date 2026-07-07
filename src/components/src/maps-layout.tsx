@@ -65,6 +65,7 @@ export default function MapsLayoutFactory(): React.ComponentType<MapsLayoutProps
     const percentage = mapState.swipeComparePercentage ?? 50;
     const [internalPercentage, setInternalPercentage] = useState(percentage);
     const [isSwiping, setSwiping] = useState(false);
+    const lastReleasedValue = useRef<number | null>(null);
 
     useEffect(() => {
       if (containerElementRef.current) {
@@ -74,7 +75,12 @@ export default function MapsLayoutFactory(): React.ComponentType<MapsLayoutProps
 
     useEffect(() => {
       if (!isSwiping) {
-        setInternalPercentage(percentage);
+        // Only sync from props if the store has caught up with our last released value,
+        // or if we never released (external prop change).
+        if (lastReleasedValue.current === null || percentage === lastReleasedValue.current) {
+          setInternalPercentage(percentage);
+          lastReleasedValue.current = null;
+        }
       }
     }, [percentage, isSwiping]);
 
@@ -85,6 +91,8 @@ export default function MapsLayoutFactory(): React.ComponentType<MapsLayoutProps
 
     const handleRelease = useCallback(
       (v: number) => {
+        lastReleasedValue.current = v;
+        setInternalPercentage(v);
         setSwiping(false);
         if (v !== percentage && onSetSwipeComparePercentage) {
           onSetSwipeComparePercentage({percentage: v});
