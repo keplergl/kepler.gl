@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {EXPORT_HTML_MAP_MODES, KEPLER_GL_VERSION} from '@kepler.gl/constants';
+import {EXPORT_HTML_MAP_MODES} from '@kepler.gl/constants';
 
 /**
  * This method is used to create an html file which will inlcude kepler and map data
@@ -11,7 +11,8 @@ import {EXPORT_HTML_MAP_MODES, KEPLER_GL_VERSION} from '@kepler.gl/constants';
  * @param {Object} options.config this object will contain the full kepler.gl instance configuration {mapState, mapStyle, visState}
  * @param {string} version which version of Kepler.gl to load.
  */
-export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
+// TODO: revert to KEPLER_GL_VERSION once the React 19 release is published to npm with a UMD bundle
+export const exportMapToHTML = (options, version = '3.3.0-alpha.1') => {
   return `
     <!DOCTYPE html>
     <html>
