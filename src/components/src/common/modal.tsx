@@ -217,7 +217,7 @@ export class ModalDialog extends Component<ModalDialogProps> {
             backgroundColor: (props.theme && props.theme.modalOverlayBgd) || 'rgba(0, 0, 0, 0.5)',
             zIndex: (props.theme && props.theme.modalOverLayZ) || 1000,
             ...props.style
-          } as any
+          } as React.CSSProperties
         }}
       >
         <ModalContentWrapper className="modal--wrapper" cssStyle={props.cssStyle}>

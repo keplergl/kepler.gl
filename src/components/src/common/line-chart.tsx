@@ -3,6 +3,7 @@
 
 import React, {useCallback, useMemo, useRef} from 'react';
 import {scaleTime, scaleLinear} from 'd3-scale';
+import {bisector} from 'd3-array';
 import {LineChart} from '@kepler.gl/types';
 import styled, {withTheme} from 'styled-components';
 import {datetimeFormatter} from '@kepler.gl/utils';
@@ -208,6 +209,8 @@ function LineChartFactory() {
       });
     }, [xScale, yScale, series]);
 
+    const bisectX = useMemo(() => bisector<LineSeriesPoint, number>(d => d.x).left, []);
+
     const findNearestPoint = useCallback(
       (mouseX: number) => {
         if (!xScale || !series?.lines) return null;
@@ -215,17 +218,22 @@ function LineChartFactory() {
         let nearest: LineSeriesPoint | null = null;
         let minDist = Infinity;
         for (const line of series.lines) {
-          for (const point of line) {
-            const dist = Math.abs(point.x - xValue);
-            if (dist < minDist) {
-              minDist = dist;
-              nearest = point;
+          if (line.length === 0) continue;
+          const idx = bisectX(line, xValue);
+          // Check the two candidates around the bisection point
+          for (const i of [idx - 1, idx]) {
+            if (i >= 0 && i < line.length) {
+              const dist = Math.abs(line[i].x - xValue);
+              if (dist < minDist) {
+                minDist = dist;
+                nearest = line[i];
+              }
             }
           }
         }
         return nearest;
       },
-      [xScale, series]
+      [xScale, series, bisectX]
     );
 
     const handleMouseMove = useCallback(

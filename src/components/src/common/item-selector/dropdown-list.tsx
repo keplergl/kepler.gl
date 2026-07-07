@@ -108,7 +108,7 @@ export default class DropdownList extends Component<DropdownListProps, DropdownL
     this.initNumberOfOptions = INIT_FILTER_ITEMS_IN_DROPDOWN;
     this.page = 0;
     this.prevY = 0;
-    this.loadingRef = React.createRef<HTMLDivElement>();
+    this.loadingRef = React.createRef<HTMLDivElement | null>();
   }
 
   componentDidMount() {
