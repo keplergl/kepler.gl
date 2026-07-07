@@ -21,14 +21,14 @@
     "global": "^4.3.2",
     "lodash": "4.17.23",
     "prop-types": "^15.6.1",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
     "react-palm": "^3.1.2",
-    "react-redux": "^8.0.5",
+    "react-redux": "^9.1.0",
     "react-router-dom": "^6.30.0",
     "react-swipeable-views": "^0.12.13",
     "react-waypoint": "^9.0.1",
-    "redux": "^4.2.1",
+    "redux": "^5.0.0",
     "redux-actions": "^1.2.0",
     "redux-thunk": "^1.0.0",
     "styled-components": "6.4.3"
@@ -69,8 +69,8 @@
     "webpack-hot-middleware": "^2.25.4"
   },
   "peerDependencies": {
-    "react": "18.x",
-    "react-dom": "18.x"
+    "react": ">=19",
+    "react-dom": ">=19"
   },
   "engines": {
     "node": ">=20"
