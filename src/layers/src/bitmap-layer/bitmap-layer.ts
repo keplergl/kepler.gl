@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {BitmapLayer as DeckBitmapLayer, PathLayer} from '@deck.gl/layers';
+import {BitmapLayer as DeckBitmapLayer, PathLayer, ScatterplotLayer} from '@deck.gl/layers';
 import {
   EditableGeoJsonLayer,
   ModifyMode,
@@ -32,6 +32,7 @@ export type BitmapLayerVisConfigSettings = {
   opacity: VisConfigNumber;
   showBounds: VisConfigBoolean;
   editBounds: VisConfigBoolean;
+  alignMode: VisConfigBoolean;
   boundsWest: VisConfigNumber;
   boundsSouth: VisConfigNumber;
   boundsEast: VisConfigNumber;
@@ -57,6 +58,13 @@ export const bitmapVisConfigs = {
     label: 'layerVisConfigs.editBounds',
     group: 'display',
     property: 'editBounds'
+  } as VisConfigBoolean,
+  alignMode: {
+    type: 'boolean',
+    defaultValue: false,
+    label: 'layerVisConfigs.alignMode',
+    group: 'display',
+    property: 'alignMode'
   } as VisConfigBoolean,
   boundsWest: {
     type: 'number',
@@ -100,6 +108,11 @@ export const bitmapVisConfigs = {
   } as VisConfigNumber
 };
 
+export type AlignControlPoint = {
+  uv: [number, number]; // normalized image coordinates (0-1)
+  geo: [number, number]; // [lng, lat]
+};
+
 export default class BitmapOverlayLayer extends Layer {
   declare visConfigSettings: BitmapLayerVisConfigSettings;
   private _editFeatureCollection: any = null;
@@ -107,14 +120,112 @@ export default class BitmapOverlayLayer extends Layer {
   private _onRedrawNeeded: (() => void) | undefined;
   private _rafId: number | undefined;
 
+  // Alignment mode state
+  alignControlPoints: AlignControlPoint[] = [];
+  alignWaitingForMap: boolean = false;
+  private _pendingUV: [number, number] | null = null;
+
   constructor(props: {dataId: string; visConfig?: Record<string, any>} & Record<string, any>) {
     super(props);
     this.registerVisConfig(bitmapVisConfigs);
-    // Apply visConfig from findDefaultLayerProps (e.g. bounds seeded from metadata)
     if (props.visConfig) {
-      this.updateLayerVisConfig(props.visConfig);
+      const {alignMode: _, editBounds: __, ...persistedVisConfig} = props.visConfig;
+      super.updateLayerVisConfig(persistedVisConfig);
     }
     this.meta = {};
+  }
+
+  validateVisConfig(_dataset: KeplerDataset, visConfig: Record<string, any>): Record<string, any> {
+    const {alignMode: _, editBounds: __, ...rest} = visConfig;
+    return rest;
+  }
+
+  // --- Alignment mode methods ---
+
+  onAlignImageClick(uv: [number, number]): void {
+    this._pendingUV = uv;
+    this.alignWaitingForMap = true;
+  }
+
+  onAlignMapClick(lngLat: [number, number]): void {
+    if (!this._pendingUV) return;
+    this.alignControlPoints = [
+      ...this.alignControlPoints,
+      {uv: this._pendingUV, geo: lngLat}
+    ];
+    this._pendingUV = null;
+    this.alignWaitingForMap = false;
+
+    if (this.alignControlPoints.length >= 2) {
+      this._computeBoundsFromControlPoints();
+    }
+  }
+
+  resetAlignControlPoints(): void {
+    this.alignControlPoints = [];
+    this.alignWaitingForMap = false;
+    this._pendingUV = null;
+  }
+
+  private _computeBoundsFromControlPoints(): void {
+    const pts = this.alignControlPoints;
+    if (pts.length < 2) return;
+
+    // Solve affine: lng = a * u + b, lat = c * v + d
+    // From 2+ points, use least squares (for 2 points, exact solution)
+    const n = pts.length;
+    let sumU = 0, sumLng = 0, sumUU = 0, sumULng = 0;
+    let sumV = 0, sumLat = 0, sumVV = 0, sumVLat = 0;
+    for (const p of pts) {
+      const [u, v] = p.uv;
+      const [lng, lat] = p.geo;
+      sumU += u; sumLng += lng; sumUU += u * u; sumULng += u * lng;
+      sumV += v; sumLat += lat; sumVV += v * v; sumVLat += v * lat;
+    }
+
+    // lng = a*u + b (solve for a, b)
+    const detU = n * sumUU - sumU * sumU;
+    if (Math.abs(detU) < 1e-12) return;
+    const a = (n * sumULng - sumU * sumLng) / detU;
+    const b = (sumLng - a * sumU) / n;
+
+    // lat = c*v + d (solve for c, d)
+    const detV = n * sumVV - sumV * sumV;
+    if (Math.abs(detV) < 1e-12) return;
+    const c = (n * sumVLat - sumV * sumLat) / detV;
+    const d = (sumLat - c * sumV) / n;
+
+    // Bounds: image corners are (0,0), (1,0), (1,1), (0,1)
+    // UV origin (0,0) = top-left of image, (1,1) = bottom-right
+    const west = b;         // u=0
+    const east = a + b;     // u=1
+    const north = d;        // v=0 (top of image)
+    const south = c + d;    // v=1 (bottom of image)
+
+    this.updateLayerVisConfig({
+      boundsWest: Math.min(west, east),
+      boundsEast: Math.max(west, east),
+      boundsSouth: Math.min(south, north),
+      boundsNorth: Math.max(south, north)
+    });
+
+    this._onRedrawNeeded?.();
+  }
+
+  updateLayerVisConfig(newVisConfig: Record<string, any>): this {
+    if ('alignMode' in newVisConfig && !newVisConfig.alignMode) {
+      this.resetAlignControlPoints();
+    }
+    // Make alignMode and editBounds mutually exclusive
+    if (newVisConfig.alignMode && this.config.visConfig.editBounds) {
+      newVisConfig.editBounds = false;
+    }
+    if (newVisConfig.editBounds && this.config.visConfig.alignMode) {
+      newVisConfig.alignMode = false;
+      this.resetAlignControlPoints();
+    }
+    super.updateLayerVisConfig(newVisConfig);
+    return this;
   }
 
   static findDefaultLayerProps(dataset: KeplerDataset): FindDefaultLayerPropsReturnValue {
@@ -237,7 +348,12 @@ export default class BitmapOverlayLayer extends Layer {
 
     const {visible} = this.getDefaultDeckLayerProps(opts);
 
-    const [west, south, east, north] = bounds as [number, number, number, number];
+    // Use live visConfig bounds (handles direct mutations from alignment mode)
+    // rather than the potentially stale cached data.bounds from formatLayerData
+    const west = visConfig.boundsWest ?? bounds[0];
+    const south = visConfig.boundsSouth ?? bounds[1];
+    const east = visConfig.boundsEast ?? bounds[2];
+    const north = visConfig.boundsNorth ?? bounds[3];
     const dataBoundsKey = `${west},${south},${east},${north}`;
 
     // Rebuild the editable feature collection only when data.bounds changes
@@ -287,23 +403,70 @@ export default class BitmapOverlayLayer extends Layer {
       activeBounds = [west, south, east, north];
     }
 
+    const isAligning = visConfig.alignMode;
+
     const layers: any[] = [
       new DeckBitmapLayer({
         id: this.id,
         image: imageUrl,
         bounds: activeBounds,
         opacity: visConfig.opacity ?? 1,
-        pickable: false,
+        pickable: isAligning,
         visible,
-        parameters: {
-          blend: true,
-          blendColorSrcFactor: 'one',
-          blendColorDstFactor: 'one-minus-src-alpha',
-          blendAlphaSrcFactor: 'one',
-          blendAlphaDstFactor: 'one-minus-src-alpha'
-        }
+        onClick: isAligning
+          ? (info: any): boolean | undefined => {
+              if (!this.alignWaitingForMap && info.bitmap?.uv) {
+                this.onAlignImageClick(info.bitmap.uv as [number, number]);
+                this._onRedrawNeeded?.();
+                return true;
+              }
+              return undefined;
+            }
+          : undefined
       })
     ];
+
+    // Visualize alignment control points
+    if (visConfig.alignMode && this.alignControlPoints.length > 0) {
+      layers.push(
+        new ScatterplotLayer({
+          id: `${this.id}-align-pts`,
+          data: this.alignControlPoints,
+          getPosition: (d: AlignControlPoint) => d.geo,
+          getFillColor: [255, 100, 100, 220],
+          getRadius: 6,
+          radiusUnits: 'pixels',
+          pickable: false,
+          visible,
+          updateTriggers: {
+            getPosition: this.alignControlPoints.length
+          }
+        })
+      );
+    }
+
+    // Visualize pending point (waiting for map click)
+    if (visConfig.alignMode && this._pendingUV) {
+      const [u, v] = this._pendingUV;
+      const [aW, aS, aE, aN] = activeBounds;
+      const pendingLng = aW + u * (aE - aW);
+      const pendingLat = aN + v * (aS - aN);
+      layers.push(
+        new ScatterplotLayer({
+          id: `${this.id}-align-pending`,
+          data: [{position: [pendingLng, pendingLat]}],
+          getPosition: (d: any) => d.position,
+          getFillColor: [100, 200, 255, 220],
+          getLineColor: [255, 255, 255, 255],
+          getRadius: 8,
+          radiusUnits: 'pixels',
+          stroked: true,
+          lineWidthMinPixels: 2,
+          pickable: false,
+          visible
+        })
+      );
+    }
 
     if (visConfig.showBounds && !visConfig.editBounds) {
       // Static boundary outline (no interaction)
