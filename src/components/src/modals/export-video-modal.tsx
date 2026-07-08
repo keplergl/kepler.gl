@@ -376,38 +376,7 @@ const ExportVideoModalFactory = () => {
       [keplerState, onViewChange, mapboxApiAccessToken, mapboxApiUrl]
     );
 
-    const trueDevicePixelRatio = useRef(
-      typeof window !== 'undefined' ? window.devicePixelRatio : 1
-    );
-
     const isSwipeMode = mapState.mapSplitMode === MapSplitMode.SWIPE_COMPARE && mapState.isSplit;
-
-    useEffect(() => {
-      // Block DPR changes during preview to keep basemap and deck.gl layers in sync.
-      // hubble.gl sets window.devicePixelRatio to scale render buffers, but this causes
-      // visual misalignment between MapLibre and DeckGL during animated preview.
-      // Skip in swipe mode — the swipe preview manages its own DPR for canvas compositing.
-      if (isSwipeMode) return;
-
-      const trueDpr = trueDevicePixelRatio.current;
-      const descriptor = Object.getOwnPropertyDescriptor(window, 'devicePixelRatio');
-
-      Object.defineProperty(window, 'devicePixelRatio', {
-        get: () => trueDpr,
-        set: () => {
-          // no-op: prevent hubble.gl from changing DPR during preview
-        },
-        configurable: true
-      });
-
-      return () => {
-        if (descriptor) {
-          Object.defineProperty(window, 'devicePixelRatio', descriptor);
-        } else {
-          delete (window as any).devicePixelRatio;
-        }
-      };
-    }, [isSwipeMode]);
 
     const onFilterFrameUpdate = useCallback(
       (filterIdx: number, name: string, value: any) => {
