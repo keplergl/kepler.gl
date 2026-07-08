@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import React, {useEffect} from 'react';
-import {BrowserRouter, Routes, Route, useLocation} from 'react-router-dom';
+import {BrowserRouter, Routes, Route, useLocation, useNavigate} from 'react-router-dom';
 import Window from 'global/window';
 import Home from './components/home';
 import App from './components/app';
@@ -21,10 +21,36 @@ const trackPageChange = location => {
   }
 };
 
+/**
+ * Handles legacy hash URLs (e.g. /#/demo/earthquakes) by redirecting
+ * to the equivalent path-based URL (/demo/earthquakes).
+ */
+function LegacyHashRedirect() {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (location.pathname === '/' && location.hash && location.hash.startsWith('#/demo')) {
+      navigate(location.hash.substring(1), {replace: true});
+    }
+  }, [location, navigate]);
+
+  return null;
+}
+
+/**
+ * Tracks page views via Google Analytics on route changes.
+ * Replaces the old react-router-redux LOCATION_CHANGE action tracking.
+ */
 function LocationTracker() {
   const location = useLocation();
 
   useEffect(() => {
+    if (Window.gtag) {
+      Window.gtag('event', 'page_view', {
+        page_path: location.pathname
+      });
+    }
     trackPageChange(location.pathname);
   }, [location.pathname]);
 
@@ -34,6 +60,7 @@ function LocationTracker() {
 // eslint-disable-next-line react/display-name
 export default () => (
   <BrowserRouter>
+    <LegacyHashRedirect />
     <LocationTracker />
     <Routes>
       <Route path="/" element={<App />}>
