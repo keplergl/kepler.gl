@@ -837,7 +837,7 @@ export function addLayerToLayerOrder(
 }
 
 export function getLayerHoverPropValue(
-  data: DataRow | AggregationLayerHoverData | null | undefined,
+  data: DataRow | AggregationLayerHoverData | any[] | null | undefined,
   fieldIndex: number
 ) {
   if (!data) return undefined;
