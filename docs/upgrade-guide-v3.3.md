@@ -153,6 +153,24 @@ If your application reads or manipulates `state.keplerGl.*.visState.layerOrder` 
 
 `LayerSelectorPanelFactory` is no longer exported from `@kepler.gl/components`. If you were using dependency injection to replace this factory, the functionality has been reorganized — use the layer list panel and layer group components instead.
 
+### `setLayerBlending` removed
+
+The function `setLayerBlending` (previously exported from `@kepler.gl/utils`) is removed. Use `getLayerBlendingParameters` instead, which returns a `parameters` object for deck.gl 9.
+
+---
+
+## Breaking Changes — Behavior
+
+### `preserveDrawingBuffer` disabled by default
+
+The base map's WebGL context previously set `preserveDrawingBuffer: true` unconditionally. It is now **`false` by default** and only enabled during image/video export (`isExport: true`).
+
+**Impact:** If your application calls `canvas.toDataURL()` or `canvas.toBlob()` on kepler.gl's map canvas outside of the built-in export flow, the canvas will now return blank data. To restore the old behavior, pass `preserveDrawingBuffer: true` via `bottomMapContainerProps` in your `MapContainer` override.
+
+### `GEOCODER_ICON_SIZE` constant changed
+
+`GEOCODER_ICON_SIZE` changed from `80` to `160` to compensate for anchor normalization in the new rendering stack. If you import this constant for custom geocoder styling, the rendered pin size should remain the same visually — but if you used the raw value for calculations, update accordingly.
+
 ---
 
 ## Breaking Changes for Library Consumers
@@ -302,6 +320,40 @@ A new **3D Tile Layer** enables rendering of photogrammetry meshes, buildings, t
 - **ArcGIS I3S** — scene service endpoints.
 
 Add a 3D tileset via the **Add Data → Tilesets** modal by selecting the "3D Tile" type. The layer supports opacity, point size configuration, zoom-to-layer, and the Light and Shadow effect. See the [3D Tile Layer user guide](./user-guides/c-types-of-layers/p-3d-tile-layer.md) for details.
+
+### Flow Layer
+
+A new **Flow Layer** renders origin-destination flows as animated arcs with directional particles.
+
+### Bitmap Overlay Layer
+
+A new **Bitmap Overlay Layer** renders georeferenced raster images (PNG, JPEG) on the map.
+
+### Swipe Compare Mode
+
+A new map split mode (`MapSplitMode.SWIPE_COMPARE`) enables side-by-side comparison of layers using a draggable divider. Use the `setMapSplitMode` action to switch between `SINGLE_MAP`, `DUAL_MAP`, and `SWIPE_COMPARE`.
+
+### Annotations
+
+A new annotation system allows adding text labels, markers, and shapes directly on the map. New actions: `addAnnotation`, `removeAnnotation`, `updateAnnotation`, `duplicateAnnotation`, `setSelectedAnnotation`.
+
+### Layer Groups
+
+Layers can now be organized into named groups with shared visibility and legend controls. New actions: `addLayerGroup`, `removeLayerGroup`, `updateLayerGroup`, `addLayerToLayerGroup`, `removeLayerFromLayerGroup`.
+
+### Other New Features
+
+- **Zoom and compass controls** — on-map navigation buttons
+- **Tooltip toggle** — ability to disable tooltips per-map
+- **Higher pitch option** — configurable maximum pitch beyond the default 60°
+- **GeoJSON mode for aggregation layers** — aggregate by polygon geometry
+- **Labels for GeoJSON layer** — text label support on polygon/line features
+- **Rectangle drag-to-filter** — streamlined rectangular area filter
+- **Layer visibility toggle in map legend**
+- **Locale persistence** — locale is included in exported maps and restored on load
+- **Video export with effects** — post-processing effects are captured in video export
+- **Non-linear piecewise focus range** for VisConfig sliders
+- **CSV/TSV auto-delimiter detection** in data processors
 
 ### Fog post-processing effects
 
