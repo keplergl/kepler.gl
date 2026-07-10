@@ -182,31 +182,24 @@ const EntryInfoRow: React.FC<EntryInfoRowProps> = ({
   const fieldValueAccessor = layer.accessVSFieldValue(field, currentTime);
   const value = fieldValueAccessor(field, data instanceof DataRow ? {index: data._rowIndex} : data);
 
-  // Handle WMS layer data in comparison mode - WMS layers don't have comparable field data
   let primaryValue = null;
   let displayDeltaValue: string | null = null;
 
   if (primaryData) {
     try {
-      // Only calculate primary value if primaryData has a compatible structure
-      if (
-        primaryData instanceof DataRow ||
-        (primaryData && typeof primaryData === 'object' && 'index' in primaryData)
-      ) {
-        primaryValue = fieldValueAccessor(
-          field,
-          primaryData instanceof DataRow ? {index: primaryData._rowIndex} : primaryData
-        );
-
-        displayDeltaValue = getTooltipDisplayDeltaValue({
-          field,
-          value,
-          primaryValue,
-          compareType
-        });
+      if (primaryData instanceof DataRow) {
+        primaryValue = fieldValueAccessor(field, {index: primaryData._rowIndex});
+      } else if (Array.isArray(primaryData) || (typeof primaryData === 'object' && primaryData)) {
+        primaryValue = fieldValueAccessor(field, primaryData);
       }
+
+      displayDeltaValue = getTooltipDisplayDeltaValue({
+        field,
+        value,
+        primaryValue,
+        compareType
+      });
     } catch (error) {
-      // If there's an error accessing primaryData (e.g., WMS layer data), skip comparison
       primaryValue = null;
     }
   }
