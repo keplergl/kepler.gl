@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import bbox from '@turf/bbox';
+import {bbox} from '@turf/bbox';
 import copy from 'copy-to-clipboard';
 import deepmerge from 'deepmerge';
 import {console as Console} from 'global/window';

@@ -6,7 +6,7 @@ import get from 'lodash/get';
 import isEqual from 'lodash/isEqual';
 import {ascending, extent} from 'd3-array';
 
-import booleanWithin from '@turf/boolean-within';
+import {booleanWithin} from '@turf/boolean-within';
 import {point as turfPoint} from '@turf/helpers';
 import {Decimal} from 'decimal.js';
 import {
@@ -19,7 +19,7 @@ import {
 } from '@kepler.gl/constants';
 // import {VisState} from '@kepler.gl/schemas';
 import * as ScaleUtils from './data-scale-utils';
-import {h3IsValid} from 'h3-js';
+import {isValidCell} from 'h3-js';
 
 import {
   Entries,
@@ -427,7 +427,7 @@ export const getPolygonFilterFunctor = (layer, filter, dataContainer) => {
       }
       return data => {
         const id = getPosition(data);
-        if (!h3IsValid(id)) {
+        if (!isValidCell(id)) {
           return false;
         }
         const pos = getCentroid({id});

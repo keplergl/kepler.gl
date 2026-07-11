@@ -6,7 +6,7 @@ import {DEFAULT_MAPBOX_API_URL, FILTER_VIEW_TYPES, FILTER_TYPES} from '@kepler.g
 import {getLayerBlendingParameters, getBaseMapLibrary} from '@kepler.gl/utils';
 import {isMapboxURL, transformMapboxUrl} from 'maplibregl-mapbox-request-transformer';
 import {point} from '@turf/helpers';
-import transformTranslate from '@turf/transform-translate';
+import {transformTranslate} from '@turf/transform-translate';
 import {TimeRangeFilter} from '@kepler.gl/types';
 
 type KeplerState = {

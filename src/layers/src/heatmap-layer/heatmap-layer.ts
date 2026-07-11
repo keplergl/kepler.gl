@@ -21,7 +21,7 @@ import {hexToRgb, DataContainerInterface} from '@kepler.gl/utils';
 import {notNullorUndefined} from '@kepler.gl/common-utils';
 import {Datasets, KeplerTable} from '@kepler.gl/table';
 import {DATA_TYPES} from 'type-analyzer';
-import booleanWithin from '@turf/boolean-within';
+import {booleanWithin} from '@turf/boolean-within';
 import {point as turfPoint} from '@turf/helpers';
 import {Feature, Polygon} from 'geojson';
 
