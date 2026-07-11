@@ -2,13 +2,31 @@
 
 ## Table of Content
 
+- [v3.2 to v3.3](#upgrade-from-v32-to-v33)
+- [v2.4 to v3.0](#upgrade-from-v24-to-v30)
 - [v2.3 to v2.4](#upgrade-from-v23-to-v24)
-
 - [v2.2 to v2.3](#upgrade-from-v22-to-v23)
 - [v2.1 to v2.2](#upgrade-from-v21-to-v22)
 - [v2.0 to v2.1](#upgrade-from-v20-to-v21)
 - [v1.1.12 to v2.0](#upgrade-from-v1112-to-v20)
 - [v1.1.11 to v1.1.12](#upgrade-from-v1111-to-v1112)
+
+## Upgrade from v3.2 to v3.3
+
+See the full upgrade guide: **[Upgrade Guide — kepler.gl 3.3](docs/upgrade-guide-v3.3.md)**
+
+### Highlights
+
+- **React 19** — kepler.gl now requires `react@^19.0.0` and `react-dom@^19.0.0`. React 18 is no longer supported.
+- **react-redux v9** — upgraded from `^8.0.5` to `^9.1.0`
+- **react-intl v7** — upgraded from `^6.3.0` to `^7.0.0`
+- **react-map-gl 8 / maplibre-gl 4** — new `@vis.gl/react-maplibre` peer dependency
+- **deck.gl 9 / luma.gl 9** — major rendering stack upgrade
+- **Node.js 20** — minimum raised from 18.18.2 to 20.19.3
+- **TypeScript 5.6** — upgraded from 4.7.2
+- **HeatmapLayer** — rewritten from Mapbox GL to deck.gl base
+- **`layerOrder`** — type changed from flat `string[]` to `(string | LayerOrderGroup)[]`
+- **`LayerSelectorPanelFactory`** — removed from `@kepler.gl/components`
 
 ## Upgrade from v2.4 to v3.0
 

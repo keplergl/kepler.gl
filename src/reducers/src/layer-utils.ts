@@ -58,11 +58,11 @@ export type AggregationLayerHoverData = {
 };
 
 export type LayerHoverProp = {
-  data: DataRow | AggregationLayerHoverData | null;
+  data: DataRow | AggregationLayerHoverData | any[] | null;
   fields: Field[];
   fieldsToShow: TooltipField[];
   layer: Layer;
-  primaryData?: DataRow | AggregationLayerHoverData | null;
+  primaryData?: DataRow | AggregationLayerHoverData | any[] | null;
   compareType?: CompareType;
   currentTime?: VisState['animationConfig']['currentTime'];
 };
@@ -837,7 +837,7 @@ export function addLayerToLayerOrder(
 }
 
 export function getLayerHoverPropValue(
-  data: DataRow | AggregationLayerHoverData | null | undefined,
+  data: DataRow | AggregationLayerHoverData | any[] | null | undefined,
   fieldIndex: number
 ) {
   if (!data) return undefined;
