@@ -10,9 +10,8 @@ export {getResolution as h3GetResolution, isValidCell as h3IsValid};
 
 export type Centroid = [number, number];
 
-// get vertices should return [lon, lat]
+// get vertices in [lon, lat] order via GeoJSON formatting
 export function getVertices({id}: {id: H3Index}) {
-  // always reverse it
   return cellToBoundary(id, true);
 }
 

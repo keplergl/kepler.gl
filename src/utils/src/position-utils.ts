@@ -1,21 +1,20 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {cellToLatLng} from 'h3-js';
+import {cellToLatLng, isValidCell} from 'h3-js';
 
 import {LayerColumn} from '@kepler.gl/types';
 
 import {DataContainerInterface} from './data-container-interface';
 
 export function getPositionFromHexValue(token) {
-  try {
-    const pos = cellToLatLng(token);
+  if (!isValidCell(token)) {
+    return null;
+  }
+  const pos = cellToLatLng(token);
 
-    if (Array.isArray(pos) && pos.every(Number.isFinite)) {
-      return [pos[1], pos[0]];
-    }
-  } catch {
-    // h3-js v4 throws on invalid input
+  if (Array.isArray(pos) && pos.every(Number.isFinite)) {
+    return [pos[1], pos[0]];
   }
   return null;
 }

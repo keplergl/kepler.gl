@@ -5,7 +5,7 @@ import {parseGeoJsonRawFeature, getGeojsonFeatureTypes} from '../geojson-layer/g
 import {DataContainerInterface, getSampleContainerData, timeToUnixMilli} from '@kepler.gl/utils';
 import {containValidTime, notNullorUndefined} from '@kepler.gl/common-utils';
 import {Field} from '@kepler.gl/types';
-import {Feature, GeoJsonProperties, Geometry} from 'geojson';
+import type {Feature, GeoJsonProperties, Geometry} from 'geojson';
 
 /**
  * Parse geojson from string
