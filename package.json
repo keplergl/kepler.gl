@@ -131,7 +131,7 @@
     "@babel/register": "^7.12.1",
     "@babel/runtime": "^7.12.1",
     "@babel/traverse": "^7.12.1",
-    "@deck.gl-community/editable-layers": "9.2.8",
+    "@deck.gl-community/editable-layers": "9.3.7",
     "@deck.gl-community/layers": "9.2.8",
     "@deck.gl/test-utils": "^9.3.1",
     "@loaders.gl/polyfills": "^4.4.1",

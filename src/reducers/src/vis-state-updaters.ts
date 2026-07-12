@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import bbox from '@turf/bbox';
+import {bbox} from '@turf/bbox';
+import type {AllGeoJSON} from '@turf/helpers';
 import copy from 'copy-to-clipboard';
 import deepmerge from 'deepmerge';
 import {console as Console} from 'global/window';
@@ -3722,7 +3723,7 @@ export function setFeaturesUpdater(
   const filterId = feature && getFilterIdInFeature(feature);
   if (filterId && feature) {
     // add bbox for polygon filter to speed up filtering
-    if (feature.properties) feature.properties.bbox = bbox(feature);
+    if (feature.properties) feature.properties.bbox = bbox(feature as unknown as AllGeoJSON);
     const featureValue = featureToFilterValue(feature, filterId);
     const filterIdx = state.filters.findIndex(fil => fil.id === filterId);
     // @ts-ignore
@@ -3751,7 +3752,7 @@ export const setSelectedFeatureUpdater = (
       ...feature,
       properties: {
         ...feature.properties,
-        bbox: bbox(feature)
+        bbox: bbox(feature as unknown as AllGeoJSON)
       }
     };
   }

@@ -2,8 +2,8 @@
 // Copyright contributors to the kepler.gl project
 
 import geoViewport from '@mapbox/geo-viewport';
-import booleanWithin from '@turf/boolean-within';
-import bboxPolygon from '@turf/bbox-polygon';
+import {booleanWithin} from '@turf/boolean-within';
+import {bboxPolygon} from '@turf/bbox-polygon';
 import {fitBounds} from '@math.gl/web-mercator';
 import deepmerge from 'deepmerge';
 import pick from 'lodash/pick';
