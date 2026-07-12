@@ -15,6 +15,21 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+## [3.3.0-alpha.3] - July 12 2026
+
+- 760a9649 fix: upgrade exportMapToHTML and UMD bundle to support React 19 (#3518)
+- 73af58e9 fix: fix tooltip comparison for vector tile layers (#3519)
+- 3831ee3b chore: update upgrade guide 3.3 (#3521)
+- b4d28105 chore: remove outdated website-gatsby (#3522)
+- 0626914d chore(deps): bump mistune from 3.2.1 to 3.3.0 in /bindings/python (#3523)
+- b2f72775 chore(deps): bump soupsieve from 2.8.3 to 2.8.4 in /bindings/python (#3524)
+- e961626f chore(deps): bump js-yaml in /bindings/kepler.gl-jupyter/js (#3509)
+- 821acf55 chore(deps-dev): bump @babel/core in /bindings/kepler.gl-jupyter/js (#3497)
+- 06436e34 chore(deps-dev): bump webpack-dev-server (#3510)
+- 5bde6fa8 chore(deps): bump http-proxy-middleware (#3507)
+- 0089de1c chore(deps): bump ws from 5.2.4 to 5.2.5 in /examples/demo-app (#3495)
+- 91350af9 chore(deps): bump jupyterlab from 4.5.5 to 4.5.9 in /bindings/python (#3506)
+
 ## [3.3.0-alpha.2] - July 10 2026
 
 - 2884db5b chore(deps): bump js-yaml from 3.14.2 to 3.15.0 (#3517)
