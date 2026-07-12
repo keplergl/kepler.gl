@@ -17,6 +17,7 @@ Ref: http://keepachangelog.com/en/0.3.0/
 
 ## [3.3.0-alpha.3] - July 12 2026
 
+- 9e027002 chore(deps): upgrade editable-layers to 9.3.7, h3-js to v4, turf to v7 (#3526)
 - 760a9649 fix: upgrade exportMapToHTML and UMD bundle to support React 19 (#3518)
 - 73af58e9 fix: fix tooltip comparison for vector tile layers (#3519)
 - 3831ee3b chore: update upgrade guide 3.3 (#3521)
