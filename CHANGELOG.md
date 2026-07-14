@@ -15,6 +15,47 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+## [3.3.0-alpha.3] - July 12 2026
+
+- 9e027002 chore(deps): upgrade editable-layers to 9.3.7, h3-js to v4, turf to v7 (#3526)
+- 760a9649 fix: upgrade exportMapToHTML and UMD bundle to support React 19 (#3518)
+- 73af58e9 fix: fix tooltip comparison for vector tile layers (#3519)
+- 3831ee3b chore: update upgrade guide 3.3 (#3521)
+- b4d28105 chore: remove outdated website-gatsby (#3522)
+- 0626914d chore(deps): bump mistune from 3.2.1 to 3.3.0 in /bindings/python (#3523)
+- b2f72775 chore(deps): bump soupsieve from 2.8.3 to 2.8.4 in /bindings/python (#3524)
+- e961626f chore(deps): bump js-yaml in /bindings/kepler.gl-jupyter/js (#3509)
+- 821acf55 chore(deps-dev): bump @babel/core in /bindings/kepler.gl-jupyter/js (#3497)
+- 06436e34 chore(deps-dev): bump webpack-dev-server (#3510)
+- 5bde6fa8 chore(deps): bump http-proxy-middleware (#3507)
+- 0089de1c chore(deps): bump ws from 5.2.4 to 5.2.5 in /examples/demo-app (#3495)
+- 91350af9 chore(deps): bump jupyterlab from 4.5.5 to 4.5.9 in /bindings/python (#3506)
+
+## [3.3.0-alpha.2] - July 10 2026
+
+- 2884db5b chore(deps): bump js-yaml from 3.14.2 to 3.15.0 (#3517)
+- a380afc2 chore: upgrade to React 19 (#3514)
+- 3c0fe3f5 fix: bitmap layer fixes (#3474)
+- 4e9d3813 fix: video export quality in single view not taken into account (#3516)
+- b5a5ca0b fix: fix tooltip comparisson for aggregation layers (#3513)
+- a9f39d7c chore(deps): bump js-yaml from 3.14.2 to 3.15.0 in /website (#3511)
+- e45c0b05 chore(deps): bump http-proxy-middleware from 2.0.9 to 2.0.10 in /website (#3512)
+- 0a71d674 chore(deps-dev): bump webpack-dev-server from 5.2.4 to 5.2.5 in /website (#3508)
+- 372e53a2 feat: swipe view mode support in video export (#3503)
+- d384cf53 feat: layer groups (#3488)
+- 90ea55c4 feat(layers): Add API for custom icons in icon layer (#3502)
+- 2476b9b4 chore: add examples; update broken links (#3500)
+- e7747a9d chore(deps): bump ws in /bindings/kepler.gl-jupyter/js (#3499)
+- edae08ae chore(deps): bump tornado from 6.5.4 to 6.5.7 in /bindings/python (#3496)
+- d1b7b2d7 chore(deps): bump tar from 7.5.3 to 7.5.16 in /examples/demo-app (#3491)
+- 3b0d6ee3 chore(deps): bump form-data from 3.0.4 to 3.0.5 in /examples/demo-app (#3490)
+- 9712f838 chore(deps): bump launch-editor from 2.13.2 to 2.14.1 in /website (#3492)
+- 7bd0357b chore(deps): bump ws from 5.2.4 to 5.2.5 (#3494)
+- 2c787caa feat: swipe view mode (#3487)
+- d5b9b2f9 chore(deps): bump js-yaml in /bindings/kepler.gl-jupyter/js (#3489)
+- 56fe50f7 chore(deps): bump shell-quote from 1.8.3 to 1.8.4 in /website (#3481)
+- 3a3e83e0 chore(deps): bump shell-quote from 1.8.1 to 1.8.4 (#3480)
+
 ## [3.3.0-alpha.1] - June 1 2026
 
 - cb062106 feat: bitmap layer (#3472)

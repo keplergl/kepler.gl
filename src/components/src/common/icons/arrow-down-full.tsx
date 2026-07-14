@@ -3,9 +3,9 @@
 
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
-import Base from './base';
+import Base, {BaseProps} from './base';
 
-export default class ArrowDown extends Component {
+export default class ArrowDown extends Component<BaseProps> {
   static propTypes = {
     /** Set the height of the icon, ex. '16px' */
     height: PropTypes.string,

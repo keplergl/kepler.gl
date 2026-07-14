@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {Field, Millisecond} from './types';
+import {MapSplitMode} from '@kepler.gl/constants';
 type MapViewState = {
   latitude: number;
   longitude: number;
@@ -58,6 +59,10 @@ export type MapState = {
       surface: boolean;
     };
   };
+  /** The current split map mode (single, dual, swipe) */
+  mapSplitMode: MapSplitMode;
+  /** Swipe compare divider position as a percentage (0-100) */
+  swipeComparePercentage: number;
 };
 
 export type Bounds = [number, number, number, number];
@@ -270,6 +275,20 @@ export type SplitMap = {
   layers: SplitMapLayers;
 };
 
+export type LayerOrderGroup = {
+  id: string;
+  label: string;
+  isVisible: boolean;
+  layerOrder: LayerOrder;
+  isIncludedInLegend: boolean;
+};
+
+export type LayerOrderEntry = string | LayerOrderGroup;
+export type LayerOrder = LayerOrderEntry[];
+export type FlatLayerOrder = string[];
+export type LayerOrderHierarchyEntry = ['layer', any] | ['layerGroup', LayerOrderGroup];
+export type LayerOrderHierarchy = LayerOrderHierarchyEntry[];
+
 /** See "Locale aware formats" at https://momentjs.com/docs/#/parsing/string-format/ */
 export type AnimationConfigTimeFormat = 'L' | 'L LT' | 'L LTS';
 
@@ -449,6 +468,9 @@ export type ExportVideo = {
   fileName: string;
   resolution: string;
   durationMs: number;
+  swipeStartPct: number;
+  swipeEndPct: number;
+  swipeEasing: 'linear' | 'ease-in-out';
 };
 
 export type MapControlItem = {

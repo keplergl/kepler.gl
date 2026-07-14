@@ -183,7 +183,8 @@ export type {
   KeplerApplicationConfig,
   BaseMapLibraryConfig,
   MapLibInstance,
-  GetMapRef
+  GetMapRef,
+  SvgIcon
 } from './application-config';
 export type {DatabaseAdapter, DatabaseConnection} from './application-config-types';
 

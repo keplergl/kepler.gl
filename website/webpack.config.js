@@ -39,7 +39,7 @@ const BABEL_CONFIG = {
 };
 
 const COMMON_CONFIG = {
-  entry: ['./src/main'],
+  entry: ['../examples/demo-app/src/react19-shim.js', './src/main'],
   output: {
     path: resolve(__dirname, 'build'),
     filename: 'bundle.js',
@@ -50,7 +50,9 @@ const COMMON_CONFIG = {
     extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
     modules: ['node_modules', SRC_DIR],
     alias: {
-      ...RESOLVE_ALIASES
+      ...RESOLVE_ALIASES,
+      'react-router-dom': resolve(__dirname, 'node_modules/react-router-dom'),
+      'react-router': resolve(__dirname, 'node_modules/react-router')
     }
   },
 
@@ -115,21 +117,37 @@ const COMMON_CONFIG = {
           /node_modules\/@monaco-editor\/react/
         ],
         type: 'javascript/auto'
+      },
+      {
+        test: /\.js$/,
+        include: [/node_modules[\\/]@loaders\.gl[\\/]parquet/],
+        resolve: {fullySpecified: false},
+        type: 'javascript/auto'
+      },
+      {
+        test: /\.js$/,
+        include: [/node_modules[\\/]react-audio-voice-recorder/],
+        parser: {requireDynamic: false}
       }
     ]
   },
 
   devServer: {
-    historyApiFallback: true
-    // Add new options if needed
+    historyApiFallback: true,
+    client: {
+      overlay: {
+        warnings: false,
+        errors: true
+      }
+    }
   },
 
   // Optional: Enables reading mapbox token from environment variable
   plugins: [
     // Provide default values to suppress warnings
     new webpack.EnvironmentPlugin(WEBPACK_ENV_VARIABLES),
-    new webpack.DefinePlugin({
-      'process.env.NODE_ENV': JSON.stringify('production')
+    new webpack.IgnorePlugin({
+      resourceRegExp: /^@ai-sdk\/amazon-bedrock$/
     })
   ],
 

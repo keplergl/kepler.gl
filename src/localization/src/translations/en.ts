@@ -111,6 +111,7 @@ export default {
     appearance: 'Appearance',
     bounds: 'Bounds',
     imageSource: 'Image Source',
+    alignment: 'Alignment',
     uniqueIdField: 'Unique ID Field',
     type: {
       point: 'point',
@@ -161,6 +162,7 @@ export default {
     imageUrl: 'Image URL',
     showBounds: 'Show Bounds',
     editBounds: 'Drag corners to resize',
+    alignMode: 'Align to map',
     boundsWest: 'West',
     boundsSouth: 'South',
     boundsEast: 'East',
@@ -351,6 +353,7 @@ export default {
     layerSettings: 'Layer settings',
     closePanel: 'Close current panel',
     switchToDualView: 'Switch to dual map view',
+    selectSplitMode: 'Select map view mode',
     showLegend: 'Show legend',
     disable3DMap: 'Disable 3D Map',
     globeMap: 'Globe Map',

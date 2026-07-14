@@ -41,7 +41,8 @@ const getThirdPartyLibraryAliases = useKeplerNodeModules => {
     ...localSources,
     react: `${nodeModulesDir}/react`,
     'react-dom': `${nodeModulesDir}/react-dom`,
-    'react-redux': `${nodeModulesDir}/react-redux/lib`,
+    'react-dom/client': `${nodeModulesDir}/react-dom/client`,
+    'react-redux': `${nodeModulesDir}/react-redux`,
     'styled-components': `${nodeModulesDir}/styled-components`,
     'react-intl': `${nodeModulesDir}/react-intl`,
     'react-palm': `${nodeModulesDir}/react-palm`,
@@ -49,6 +50,13 @@ const getThirdPartyLibraryAliases = useKeplerNodeModules => {
     'apache-arrow': `${nodeModulesDir}/apache-arrow`
   };
 };
+
+const getProductionReactAliases = nodeModulesDir => ({
+  react: `${nodeModulesDir}/react/cjs/react.production.js`,
+  'react/jsx-runtime': `${nodeModulesDir}/react/cjs/react-jsx-runtime.production.js`,
+  'react-dom': `${nodeModulesDir}/react-dom/cjs/react-dom.production.js`,
+  'react-dom/client': `${nodeModulesDir}/react-dom/cjs/react-dom-client.production.js`
+});
 
 // Env variables required for demo app
 const requiredEnvVariables = [
@@ -80,6 +88,7 @@ const config = {
   platform: 'browser',
   format: 'iife',
   logLevel: 'info',
+  inject: ['src/react19-shim.js'],
   loader: {
     '.js': 'jsx',
     '.css': 'css',
@@ -291,15 +300,21 @@ function openURL(url) {
   }
 
   if (args.includes('--start')) {
+    const isLocal = process.env.NODE_ENV === 'local';
+    const baseAliases = isLocal
+      ? localAliases
+      : getThirdPartyLibraryAliases(false);
+    const nodeModulesDir = isLocal ? NODE_MODULES_DIR : BASE_NODE_MODULES_DIR;
+
     await esbuild
       .context({
         ...config,
         minify: false,
         sourcemap: true,
-        // add alias to resolve libraries so there is only one copy of them
-        ...(process.env.NODE_ENV === 'local'
-          ? {alias: localAliases}
-          : {alias: getThirdPartyLibraryAliases(false)}),
+        alias: {
+          ...baseAliases,
+          ...(!isLocal ? getProductionReactAliases(nodeModulesDir) : {})
+        },
         banner: {
           js: `new EventSource('/esbuild').addEventListener('change', () => location.reload());`
         }

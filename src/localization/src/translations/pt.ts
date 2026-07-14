@@ -314,6 +314,7 @@ export default {
     layerSettings: 'Configurações de Camada',
     closePanel: 'Fechar painel atual',
     switchToDualView: 'Trocar para visualização dupla de mapa',
+    selectSplitMode: 'Selecionar modo de visualização do mapa',
     showLegend: 'mostrar legenda',
     disable3DMap: 'Desabilitar Mapa 3D',
     DrawOnMap: 'Desenhar no mapa',

@@ -313,6 +313,7 @@ export default {
     layerSettings: 'Configuració de capa',
     closePanel: 'Tanca panel actual',
     switchToDualView: 'Canvia a la vista de mapa dual',
+    selectSplitMode: "Selecciona el mode de vista del mapa",
     showLegend: 'mostra llegenda',
     disable3DMap: 'Desactiva mapa 3D',
     DrawOnMap: 'Dibuixa al mapa',

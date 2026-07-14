@@ -187,7 +187,7 @@ const Desktop = () => {
           <CardSection key={index} cards={cards} />
         ))}
       </Swipeable>
-      <WhiteLinkButton outline large href={DESKTOP_PRODUCT_URL} target="_blank">
+      <WhiteLinkButton $outline $large href={DESKTOP_PRODUCT_URL} target="_blank">
         Learn More
       </WhiteLinkButton>
     </DesktopContainer>

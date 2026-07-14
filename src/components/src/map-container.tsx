@@ -1170,6 +1170,20 @@ export default function MapContainerFactory(
             onClick={(data, event) => {
               // @ts-ignore
               normalizeEvent(event.srcEvent, viewport);
+
+              // Handle bitmap layer alignment mode: if a bitmap layer is waiting
+              // for a map click, route the click coordinate to it
+              if (data.coordinate) {
+                const aligningLayer = visState.layers.find(
+                  (l: any) => l.type === 'bitmap' && l.alignWaitingForMap && l.config.isVisible
+                );
+                if (aligningLayer) {
+                  (aligningLayer as any).onAlignMapClick(data.coordinate as [number, number]);
+                  this._onRedrawNeeded(0);
+                  return;
+                }
+              }
+
               const res = EditorLayerUtils.onClick(data, event, {
                 editorMenuActive,
                 editor,
@@ -1302,7 +1316,7 @@ export default function MapContainerFactory(
         sidePanelWidth
       } = this.props;
 
-      const {layers, datasets, editor, interactionConfig} = visState;
+      const {layers, datasets, editor, interactionConfig, layerOrder} = visState;
 
       const layersToRender = this.layersToRenderSelector(this.props);
       const layersForDeck = this.layersForDeckSelector(this.props);
@@ -1379,6 +1393,7 @@ export default function MapContainerFactory(
             primary={Boolean(primary)}
             isExport={isExport}
             layers={layers}
+            layerOrder={layerOrder}
             layersToRender={layersToRender}
             mapIndex={index || 0}
             mapControls={mapControls}
@@ -1407,6 +1422,8 @@ export default function MapContainerFactory(
             mapHeight={mapState.height}
             setMapControlSettings={uiStateActions.setMapControlSettings}
             activeSidePanel={activeSidePanel}
+            splitMaps={this.props.visState.splitMaps}
+            onToggleLayerForMap={visStateActions.toggleLayerForMap}
           />
           {isSplitSelector(this.props) && <Droppable containerId={containerId} />}
 

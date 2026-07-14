@@ -1409,6 +1409,12 @@ export const GLOBE_SUPPORTED_LAYERS: Record<string, boolean> = {
   tile3d: false
 };
 
+export enum MapSplitMode {
+  SINGLE_MAP = 'SINGLE_MAP',
+  DUAL_MAP = 'DUAL_MAP',
+  SWIPE_COMPARE = 'SWIPE_COMPARE'
+}
+
 /**
  * A multiplier for screen-space width/scale for Arc, Line, Icon and Text layers.
  * Required in order to maintain the same appearance after upgrading to deck.gl v8.5.

@@ -16,9 +16,9 @@ export const SectionIcon = styled.img`
 `;
 
 export const SectionContainer = styled.div`
-  color: ${props => (props.isDark ? 'white' : 'black')};
+  color: ${props => (props.$isDark ? 'white' : 'black')};
   background: ${props =>
-    props.isDark
+    props.$isDark
       ? props.theme.darkBackgroundColor
       : props.background
       ? `url(${props.background})`
@@ -76,7 +76,7 @@ class Section extends PureComponent {
   render() {
     const {icon, title, description, isDark, background, children} = this.props;
     return (
-      <SectionContainer isDark={isDark} background={background}>
+      <SectionContainer $isDark={isDark} background={background}>
         <StaggeredScrollAnimation Container={SectionHeader}>
           <SectionIcon src={icon} />
           <SectionTitle>{title}</SectionTitle>

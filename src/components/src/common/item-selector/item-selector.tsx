@@ -103,7 +103,7 @@ class ItemSelectorUnmemoized extends Component<ItemSelectorProps<any>> {
     }
   }
 
-  root: RefObject<HTMLDivElement> = createRef();
+  root: RefObject<HTMLDivElement | null> = createRef();
 
   handleClickOutside = () => {
     this._hideTypeahead();

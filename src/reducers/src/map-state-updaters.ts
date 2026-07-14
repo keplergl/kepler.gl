@@ -2,8 +2,8 @@
 // Copyright contributors to the kepler.gl project
 
 import geoViewport from '@mapbox/geo-viewport';
-import booleanWithin from '@turf/boolean-within';
-import bboxPolygon from '@turf/bbox-polygon';
+import {booleanWithin} from '@turf/boolean-within';
+import {bboxPolygon} from '@turf/bbox-polygon';
 import {fitBounds} from '@math.gl/web-mercator';
 import deepmerge from 'deepmerge';
 import pick from 'lodash/pick';
@@ -16,7 +16,7 @@ import {
 } from '@kepler.gl/utils';
 import {MapStateActions, ReceiveMapConfigPayload, ActionTypes} from '@kepler.gl/actions';
 import {MapState, Bounds, Viewport} from '@kepler.gl/types';
-import {MapViewMode, DEFAULT_GLOBE_CONFIG} from '@kepler.gl/constants';
+import {MapSplitMode, MapViewMode, DEFAULT_GLOBE_CONFIG} from '@kepler.gl/constants';
 
 /**
  * Updaters for `mapState` reducer. Can be used in your root reducer to directly modify kepler.gl's state.
@@ -101,7 +101,9 @@ export const INITIAL_MAP_STATE: MapState = {
   globe: {
     enabled: false,
     config: DEFAULT_GLOBE_CONFIG
-  }
+  },
+  mapSplitMode: MapSplitMode.SINGLE_MAP,
+  swipeComparePercentage: 50
 };
 
 /* Updaters */
@@ -388,6 +390,7 @@ export const toggleSplitMapUpdater = (state: MapState): MapState => ({
   ...state,
   ...getMapDimForSplitMap(!state.isSplit, state),
   isSplit: !state.isSplit,
+  mapSplitMode: !state.isSplit ? MapSplitMode.DUAL_MAP : MapSplitMode.SINGLE_MAP,
   ...(!state.isSplit === false
     ? {
         // if toggling to no longer split (single mode) then reset a few properties
@@ -399,6 +402,84 @@ export const toggleSplitMapUpdater = (state: MapState): MapState => ({
 });
 
 /**
+ * Set the map split mode (single, dual, or swipe)
+ * @memberof mapStateUpdaters
+ * @public
+ */
+export const setMapSplitModeUpdater = (
+  state: MapState,
+  action: MapStateActions.SetMapSplitModeUpdaterAction
+): MapState => {
+  const {mapSplitMode} = action.payload;
+  const prevMode = state.mapSplitMode;
+
+  if (mapSplitMode === prevMode) {
+    return state;
+  }
+
+  switch (mapSplitMode) {
+    case MapSplitMode.SINGLE_MAP:
+      return {
+        ...state,
+        mapSplitMode,
+        isSplit: false,
+        ...(prevMode === MapSplitMode.DUAL_MAP && {
+          width: state.width * 2
+        }),
+        isViewportSynced: true,
+        isZoomLocked: false,
+        splitMapViewports: []
+      };
+    case MapSplitMode.DUAL_MAP:
+      return {
+        ...state,
+        mapSplitMode,
+        isSplit: true,
+        ...(prevMode === MapSplitMode.SINGLE_MAP && {
+          width: state.width / 2
+        }),
+        ...(prevMode === MapSplitMode.SWIPE_COMPARE && {
+          width: state.width / 2
+        })
+      };
+    case MapSplitMode.SWIPE_COMPARE:
+      return {
+        ...state,
+        mapSplitMode,
+        isSplit: true,
+        ...(prevMode === MapSplitMode.DUAL_MAP && {
+          width: state.width * 2
+        }),
+        isViewportSynced: true,
+        isZoomLocked: false,
+        splitMapViewports: []
+      };
+    default:
+      return state;
+  }
+};
+
+/**
+ * Set the swipe compare percentage
+ * @memberof mapStateUpdaters
+ * @public
+ */
+export const setSwipeComparePercentageUpdater = (
+  state: MapState,
+  action: MapStateActions.SetSwipeComparePercentageUpdaterAction
+): MapState => {
+  const {percentage} = action.payload;
+  const clamped = Math.min(100, Math.max(0, percentage));
+  if (clamped === state.swipeComparePercentage) {
+    return state;
+  }
+  return {
+    ...state,
+    swipeComparePercentage: clamped
+  };
+};
+
+/**
  * Toggle between locked and unlocked split viewports
  * @memberof mapStateUpdaters
  * @public
@@ -407,6 +488,11 @@ export const toggleSplitMapViewportUpdater = (
   state: MapState,
   action: MapStateActions.ToggleSplitMapViewportUpdaterAction
 ) => {
+  // Swipe mode always uses synced viewports
+  if (state.mapSplitMode === MapSplitMode.SWIPE_COMPARE) {
+    return state;
+  }
+
   // new map state immediately gets the new, optional payload values for isViewportSynced and/or isZoomLocked
   const newMapState = {
     ...state,
@@ -473,6 +559,11 @@ export function getMapDimForSplitMap(isSplit, state) {
   // 2. state split: false - isSplit: false
   // do nothing
   if (state.isSplit === isSplit) {
+    return {};
+  }
+
+  // In swipe mode, both maps use full width (overlapping with clip)
+  if (state.mapSplitMode === MapSplitMode.SWIPE_COMPARE) {
     return {};
   }
 

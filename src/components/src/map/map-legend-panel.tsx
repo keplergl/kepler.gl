@@ -19,9 +19,10 @@ import {CSS} from '@dnd-kit/utilities';
 import {useMergeRefs} from '@floating-ui/react';
 
 import {ActionHandler, setMapControlSettings, toggleSplitMapViewport} from '@kepler.gl/actions';
+import {MapSplitMode} from '@kepler.gl/constants';
 import {Layer} from '@kepler.gl/layers';
 import {breakPointValues} from '@kepler.gl/styles';
-import {LayerVisConfig, MapControlMapLegend, MapControls, MapState} from '@kepler.gl/types';
+import {LayerVisConfig, LayerOrder, MapControlMapLegend, MapControls, MapState} from '@kepler.gl/types';
 import {hasPortableWidth} from '@kepler.gl/utils';
 import {MapLegendControlSettings} from '@kepler.gl/types';
 
@@ -312,6 +313,7 @@ interface MapLegendPanelIcons {
 export type MapLegendPanelProps = {
   theme: any;
   layers: ReadonlyArray<Layer>;
+  layerOrder?: LayerOrder;
   scale: number;
   onToggleMapControl: (control: string) => void;
   isExport: boolean;
@@ -329,6 +331,10 @@ export type MapLegendPanelProps = {
   isSidePanelShown: boolean;
   activeSidePanel: string | null;
   setMapControlSettings: any;
+  isSplit?: boolean;
+  splitMaps?: {layers: {[key: string]: boolean}}[];
+  onToggleLayerForMap?: (mapIndex: number, layerId: string) => void;
+  mapIndex?: number;
 };
 
 type MapLegendPanelComponents = {
@@ -345,6 +351,7 @@ const defaultActionIcons = {
 
 const MapLegendPanelComponent = ({
   layers,
+  layerOrder,
   mapControls,
   scale,
   onToggleMapControl,
@@ -360,10 +367,15 @@ const MapLegendPanelComponent = ({
   setMapControlSettings,
   isViewportUnsyncAllowed = true,
   className,
+  isSplit,
+  splitMaps,
+  onToggleLayerForMap,
+  mapIndex,
   MapControlTooltip,
   MapControlPanel,
   MapLegend
 }: MapLegendPanelProps & MapLegendPanelComponents) => {
+  const isSwipeMode = mapState?.mapSplitMode === MapSplitMode.SWIPE_COMPARE;
   const isSidePanelShown = Boolean(activeSidePanel);
   const settings = mapControls?.mapLegend?.settings;
 
@@ -386,6 +398,13 @@ const MapLegendPanelComponent = ({
     [onToggleMapControl]
   );
 
+  if (isSplit && !isSwipeMode && mapIndex !== 0) {
+    return null;
+  }
+  if (isSwipeMode && mapIndex !== 1) {
+    return null;
+  }
+
   if (!mapLegend.show) {
     return null;
   }
@@ -404,11 +423,15 @@ const MapLegendPanelComponent = ({
     >
       <MapLegend
         layers={layers}
+        layerOrder={layerOrder}
         mapState={mapState}
         disableEdit={disableEdit}
         isExport={isExport}
         onLayerVisConfigChange={onLayerVisConfigChange}
         onToggleLayerVisibility={onToggleLayerVisibility}
+        isSplit={isSplit}
+        splitMaps={splitMaps}
+        onMapToggleLayer={onToggleLayerForMap}
       />
     </MapControlPanel>
   ) : null;

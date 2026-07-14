@@ -43,6 +43,7 @@ export {default as File} from './file';
 export {default as Files} from './files';
 export {default as FileType} from './file-type';
 export {default as FilterFunnel} from './filter-funnel';
+export {default as Folder} from './folder';
 export {default as FreeWindow} from './free-window';
 export {default as Gear} from './gear';
 export {default as Hash} from './hash';

@@ -38,7 +38,6 @@ To enable elevation rendering, you must provide one or more compatible raster ti
 
 Example Raster .pmtiles:
 
-- Mount Whitney - https://pmtiles.io/usgs-mt-whitney-8-15-webp-512.pmtiles
 - Swiss historical - https://public-bucket-for-tests.s3.us-east-1.amazonaws.com/historic-swis-18xx.pmtiles
 
 Example STAC Items:

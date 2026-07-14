@@ -2,7 +2,6 @@
 // Copyright contributors to the kepler.gl project
 
 import React, {Component, ComponentType, createRef, ElementType} from 'react';
-import {polyfill} from 'react-lifecycles-compat';
 import {createSelector} from 'reselect';
 import styled from 'styled-components';
 import RangePlotFactory from './range-plot';
@@ -393,8 +392,6 @@ export default function RangeSliderFactory(
       );
     }
   }
-
-  polyfill(RangeSlider);
 
   return RangeSlider;
 }

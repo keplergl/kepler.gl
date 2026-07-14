@@ -14,6 +14,7 @@ import {isTest} from '@kepler.gl/utils';
 import {getTextOffsetByRadius, formatTextLabelData} from '../layer-text-label';
 import {default as KeplerTable} from '@kepler.gl/table';
 import {getApplicationConfig, DataContainerInterface} from '@kepler.gl/utils';
+import type {SvgIcon} from '@kepler.gl/utils';
 import {
   ColorRange,
   VisConfigBoolean,
@@ -159,7 +160,7 @@ export default class IconLayer extends Layer {
     props: {
       id?: string;
       iconGeometry?: IconGeometry;
-      svgIcons?: any[];
+      svgIcons?: SvgIcon[];
     } & LayerBaseConfigPartial
   ) {
     super(props);
@@ -248,32 +249,54 @@ export default class IconLayer extends Layer {
       cache: 'no-cache'
     };
 
-    if (Window.fetch && this.svgIconUrl) {
-      Window.fetch(this.svgIconUrl, fetchConfig)
-        .then(response => {
-          if (!response.ok) {
-            throw new Error(`Failed to load svg-icons.json: ${response.status}`);
-          }
-          return response.json();
-        })
-        .then((parsed: {svgIcons?: any[]} = {}) => {
-          this.setSvgIcons(parsed.svgIcons);
-        })
-        .catch(err => {
-          console.error('Error fetching or parsing svg-icons.json:', err);
-          // Fallback to empty geometry to allow default icon rendering
-          this.iconGeometry = {};
-          this.iconGeometryVersion += 1;
-        });
-    } else {
-      // No fetch available; set empty geometry so layer can render default icons
-      this.iconGeometry = {};
-      this.iconGeometryVersion += 1;
-    }
+    const appConfig = getApplicationConfig();
+    const customIconUrl = appConfig.customIconUrl;
+
+    const cdnPromise =
+      Window.fetch && this.svgIconUrl
+        ? Window.fetch(this.svgIconUrl, fetchConfig)
+            .then(response => {
+              if (!response.ok) {
+                throw new Error(`Failed to load svg-icons.json: ${response.status}`);
+              }
+              return response.json();
+            })
+            .then((parsed: {svgIcons?: SvgIcon[]} = {}) => parsed.svgIcons || [])
+            .catch(err => {
+              console.error('Error fetching or parsing svg-icons.json:', err);
+              return [] as SvgIcon[];
+            })
+        : Promise.resolve([] as SvgIcon[]);
+
+    const customUrlPromise =
+      Window.fetch && customIconUrl
+        ? Window.fetch(customIconUrl, fetchConfig)
+            .then(response => {
+              if (!response.ok) {
+                throw new Error(`Failed to load custom icons from ${customIconUrl}: ${response.status}`);
+              }
+              return response.json();
+            })
+            .then((parsed: {svgIcons?: SvgIcon[]} = {}) => parsed.svgIcons || [])
+            .catch(err => {
+              console.error(`Error fetching custom icons from ${customIconUrl}:`, err);
+              return [] as SvgIcon[];
+            })
+        : Promise.resolve([] as SvgIcon[]);
+
+    Promise.all([cdnPromise, customUrlPromise]).then(([cdnIcons, remoteCustomIcons]) => {
+      const mergedCdnAndRemote = this.mergeIcons(cdnIcons, remoteCustomIcons);
+      this.setSvgIcons(mergedCdnAndRemote);
+    }).catch(() => {
+      this.setSvgIcons([]);
+    });
   }
 
-  setSvgIcons(svgIcons: any[] = []) {
-    this.iconGeometry = svgIcons.reduce(
+  setSvgIcons(svgIcons: SvgIcon[] = []) {
+    const customIcons = getApplicationConfig().customIcons || [];
+    const allIcons = this.mergeIcons(svgIcons, customIcons);
+
+    this.iconGeometry = allIcons.reduce(
       (accu, curr) => ({
         ...accu,
         [curr.id]: flatterIconPositions(curr)
@@ -284,10 +307,27 @@ export default class IconLayer extends Layer {
     // Increment version when SVG icons are loaded to trigger layer re-render
     this.iconGeometryVersion += 1;
 
-    this._layerInfoModal = IconInfoModalFactory(svgIcons);
+    this._layerInfoModal = IconInfoModalFactory(allIcons);
 
     // Trigger a map redraw so deck.gl picks up the new geometry
     this.onRedrawNeeded?.();
+  }
+
+  /**
+   * Merge default icons with custom icons. Custom icons with the same id
+   * as a default icon will override the default.
+   */
+  mergeIcons(defaultIcons: SvgIcon[], customIcons: SvgIcon[]): SvgIcon[] {
+    if (!customIcons.length) return defaultIcons;
+
+    const iconMap = new Map<string, SvgIcon>();
+    for (const icon of defaultIcons) {
+      iconMap.set(icon.id, icon);
+    }
+    for (const icon of customIcons) {
+      iconMap.set(icon.id, icon);
+    }
+    return Array.from(iconMap.values());
   }
 
   static findDefaultLayerProps({

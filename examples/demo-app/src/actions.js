@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {push} from 'react-router-redux';
 import {fetch} from 'global';
 
 import {loadFiles, toggleModal} from '@kepler.gl/actions';
@@ -84,23 +83,21 @@ export function setLoadingMapStatus(isMapLoading) {
  * @param {*} param0
  */
 export function onExportFileSuccess({provider, options}) {
-  return dispatch => {
-    // if isPublic is true, use share Url
+  return () => {
     if (options.isPublic && provider.getShareUrl) {
-      dispatch(push(provider.getShareUrl(false)));
+      window.history.pushState(null, '', provider.getShareUrl(false));
     } else if (!options.isPublic && provider.getMapUrl) {
-      // if save private map to storage, use map url
-      dispatch(push(provider.getMapUrl(false)));
+      window.history.pushState(null, '', provider.getMapUrl(false));
     }
   };
 }
 
 export function onLoadCloudMapSuccess({provider, loadParams}) {
-  return dispatch => {
+  return () => {
     const mapUrl = provider?.getMapUrl(loadParams);
     if (mapUrl) {
       const url = `/demo/map/${provider.name}?path=${mapUrl}`;
-      dispatch(push(url));
+      window.history.pushState(null, '', url);
     }
   };
 }
@@ -176,10 +173,10 @@ function loadRemoteRawData(url) {
  * @returns {Function}
  */
 export function loadSample(options, pushRoute = true) {
-  return (dispatch, getState) => {
-    const {routing} = getState();
+  return (dispatch) => {
     if (options.id && pushRoute) {
-      dispatch(push(`/demo/${options.id}${routing.locationBeforeTransitions?.search ?? ''}`));
+      const search = window.location.search || '';
+      window.history.pushState(null, '', `/demo/${options.id}${search}`);
     }
     // if the sample has a kepler.gl config file url we load it
     if (options.keplergl) {

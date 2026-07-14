@@ -300,6 +300,7 @@ export default {
     layerSettings: '图层设置',
     closePanel: '关闭当前面板',
     switchToDualView: '切换到双地图视图',
+    selectSplitMode: '选择地图视图模式',
     showLegend: '显示图例',
     disable3DMap: '禁用 3D 地图',
     DrawOnMap: '在地图上绘制',

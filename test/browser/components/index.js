@@ -3,7 +3,6 @@
 
 import './injector-test';
 import './container-test';
-import './kepler-gl-test';
 
 import './modals';
 import './notifications';
@@ -18,3 +17,5 @@ import './tooltip-config-test';
 import './bottom-widget-test';
 import './plot-container-test';
 import './effects';
+
+import './kepler-gl-test';

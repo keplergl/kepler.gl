@@ -4,9 +4,9 @@
 import {Buffer} from 'buffer';
 import {Feature, Position, BBox} from 'geojson';
 import normalize from '@mapbox/geojson-normalize';
-import bbox from '@turf/bbox';
+import {bbox} from '@turf/bbox';
 import {ascending} from 'd3-array';
-import center from '@turf/center';
+import {center} from '@turf/center';
 import {AllGeoJSON} from '@turf/helpers';
 import {parseSync} from '@loaders.gl/core';
 import {WKBLoader, WKTLoader} from '@loaders.gl/wkt';

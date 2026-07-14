@@ -309,6 +309,7 @@ export default {
     layerSettings: 'レイヤ設定',
     closePanel: 'このパネルを閉じる',
     switchToDualView: 'デュアルビューに切り替え',
+    selectSplitMode: 'マップ表示モードを選択',
     showLegend: '凡例を表示',
     disable3DMap: '3D地図を無効化',
     DrawOnMap: '地図上に図形を描画',

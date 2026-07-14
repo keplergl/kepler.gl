@@ -20,7 +20,9 @@ export const propertiesV1 = {
   isViewportSynced: null,
   isZoomLocked: null,
   splitMapViewports: null,
-  maxPitch: null
+  maxPitch: null,
+  mapSplitMode: null,
+  swipeComparePercentage: null
 };
 
 const mapStateSchema = {
