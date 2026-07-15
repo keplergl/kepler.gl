@@ -44,7 +44,7 @@ export default {
     building: 'Rakennukset',
     water: 'Vesi',
     land: 'Maa',
-    '3dBuilding': '3d-rakennukset',
+    '3dBuilding': '3D-rakennukset',
     background: 'Tausta'
   },
   panel: {
