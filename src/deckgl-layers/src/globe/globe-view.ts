@@ -5,6 +5,16 @@ import {
   _GlobeView as DeckGlobeView,
   _GlobeController as GlobeController
 } from '@deck.gl/core';
+import {clamp} from '@math.gl/core';
+
+/**
+ * Latitude-based zoom adjustment used by deck.gl's GlobeViewport, replicated
+ * here so our custom `_constrainZoom` matches deck.gl's coordinate math.
+ * See @deck.gl/core globe-viewport.js `zoomAdjust`.
+ */
+function zoomAdjust(latitude: number): number {
+  return Math.log2(Math.PI * Math.cos((latitude * Math.PI) / 180));
+}
 
 /**
  * Custom GlobeController that restores zoom-to-cursor behavior.
@@ -22,6 +32,24 @@ class ZoomToCursorGlobeController extends GlobeController {
 
     // Create patched GlobeState that supports zoom-to-cursor
     this.ControllerState = class PatchedGlobeState extends OriginalGlobeState {
+      // deck.gl's GlobeState._constrainZoom derives a minimum zoom from `maxBounds`
+      // that forces the globe to fill the viewport. That bounds-based minimum
+      // (~3 for a typical window) overrides any configured `minZoom`, so the user
+      // can never zoom out far enough to see the whole globe small on screen.
+      // Override it to honor only the configured minZoom/maxZoom (plus the same
+      // latitude adjustment deck.gl uses), ignoring the bounds-based floor.
+      _constrainZoom(zoom: number, props?: any) {
+        props = props || (this as any).getViewportProps();
+        const {latitude, maxZoom} = props;
+        let {minZoom} = props;
+        if (minZoom === undefined || minZoom === null) {
+          minZoom = 0;
+        }
+        const ZOOM0 = zoomAdjust(0);
+        const zoomAdjustment = zoomAdjust(latitude) - ZOOM0;
+        return clamp(zoom, minZoom + zoomAdjustment, maxZoom + zoomAdjustment);
+      }
+
       zoom({pos, startPos, scale}: {pos: [number, number]; startPos?: [number, number]; scale: number}) {
         let {startZoom, startZoomLngLat} = (this as any).getState();
 

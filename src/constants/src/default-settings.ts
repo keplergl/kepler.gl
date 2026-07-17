@@ -1350,6 +1350,13 @@ export enum MapViewMode {
   MODE_GLOBE = 'MODE_GLOBE'
 }
 
+/**
+ * Minimum zoom level allowed in globe mode. Negative values let the user zoom
+ * out further than the web-mercator default of 0, so the whole globe can be
+ * pulled back to appear smaller on screen.
+ */
+export const GLOBE_MIN_ZOOM = 2;
+
 export type GlobeConfig = {
   atmosphere: boolean;
   azimuth: boolean;

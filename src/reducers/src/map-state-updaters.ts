@@ -16,7 +16,7 @@ import {
 } from '@kepler.gl/utils';
 import {MapStateActions, ReceiveMapConfigPayload, ActionTypes} from '@kepler.gl/actions';
 import {MapState, Bounds, Viewport} from '@kepler.gl/types';
-import {MapSplitMode, MapViewMode, DEFAULT_GLOBE_CONFIG} from '@kepler.gl/constants';
+import {MapSplitMode, MapViewMode, DEFAULT_GLOBE_CONFIG, GLOBE_MIN_ZOOM} from '@kepler.gl/constants';
 
 /**
  * Updaters for `mapState` reducer. Can be used in your root reducer to directly modify kepler.gl's state.
@@ -261,6 +261,7 @@ export const setMapViewModeUpdater = (
         pitch: 0,
         bearing: 0,
         dragRotate: false,
+        minZoom: undefined,
         mapViewMode
       };
       break;
@@ -271,6 +272,7 @@ export const setMapViewModeUpdater = (
         pitch: 50,
         bearing: 24,
         dragRotate: true,
+        minZoom: undefined,
         mapViewMode
       };
       break;
@@ -281,7 +283,10 @@ export const setMapViewModeUpdater = (
         dragRotate: true,
         pitch: 0,
         bearing: 0,
-        zoom: state.zoom < 1 ? 1 : state.zoom,
+        // Allow zooming out further than the default so the whole globe can be
+        // pulled back on screen.
+        minZoom: GLOBE_MIN_ZOOM,
+        zoom: state.zoom < GLOBE_MIN_ZOOM ? GLOBE_MIN_ZOOM : state.zoom,
         mapViewMode
       };
       break;
@@ -666,13 +671,40 @@ function updateViewport(originalViewport: Viewport, viewportUpdates: Viewport): 
     ...(definedProps(viewportUpdates) || {})
   };
 
-  // Make sure zoom level doesn't go bellow minZoom if defined
-  if (newViewport.minZoom && newViewport.zoom && newViewport.zoom < newViewport.minZoom) {
-    newViewport.zoom = newViewport.minZoom;
-  }
-  // Make sure zoom level doesn't go above maxZoom if defined
-  if (newViewport.maxZoom && newViewport.zoom && newViewport.zoom > newViewport.maxZoom) {
-    newViewport.zoom = newViewport.maxZoom;
+  // deck.gl's globe controller applies a latitude-dependent adjustment to the
+  // zoom range (see KeplerGlobeView._constrainZoom). If we clamp the propagated
+  // zoom here against the raw minZoom/maxZoom (without that adjustment), Redux
+  // ends up disagreeing with the controller: the controller lets the user pull
+  // the globe further out, but this clamp snaps zoom back to `minZoom` when the
+  // interaction's inertia transition ends. Apply the same adjustment in globe
+  // mode so Redux stays consistent with the controller and there's no snap-back.
+  const isGlobe = (newViewport as any).globe?.enabled;
+
+  if (isGlobe) {
+    const zoomAdjustment = Math.log2(Math.cos(((newViewport.latitude ?? 0) * Math.PI) / 180));
+    if (
+      typeof newViewport.minZoom === 'number' &&
+      typeof newViewport.zoom === 'number' &&
+      newViewport.zoom < newViewport.minZoom + zoomAdjustment
+    ) {
+      newViewport.zoom = newViewport.minZoom + zoomAdjustment;
+    }
+    if (
+      typeof newViewport.maxZoom === 'number' &&
+      typeof newViewport.zoom === 'number' &&
+      newViewport.zoom > newViewport.maxZoom + zoomAdjustment
+    ) {
+      newViewport.zoom = newViewport.maxZoom + zoomAdjustment;
+    }
+  } else {
+    // Make sure zoom level doesn't go bellow minZoom if defined
+    if (newViewport.minZoom && newViewport.zoom && newViewport.zoom < newViewport.minZoom) {
+      newViewport.zoom = newViewport.minZoom;
+    }
+    // Make sure zoom level doesn't go above maxZoom if defined
+    if (newViewport.maxZoom && newViewport.zoom && newViewport.zoom > newViewport.maxZoom) {
+      newViewport.zoom = newViewport.maxZoom;
+    }
   }
   // Limit viewport update based on maxBounds
   if (newViewport.maxBounds && validateBounds(newViewport.maxBounds)) {

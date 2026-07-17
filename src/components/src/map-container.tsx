@@ -78,7 +78,8 @@ import {
   NO_MAP_ID,
   EMPTY_MAPBOX_STYLE,
   MAPBOX_MAX_PITCH,
-  MAP_LIB_OPTIONS
+  MAP_LIB_OPTIONS,
+  GLOBE_MIN_ZOOM
 } from '@kepler.gl/constants';
 
 import {getGlobeBaseLayers, getGlobeTopLayers, KeplerGlobeView} from '@kepler.gl/deckgl-layers';
@@ -1145,11 +1146,20 @@ export default function MapContainerFactory(
                 ? {
                     doubleClickZoom: !isEditorDrawingMode,
                     dragRotate: this.props.mapState.dragRotate,
-                    maxPitch: this.props.mapState.maxPitch ?? getApplicationConfig().maxPitch
+                    maxPitch: this.props.mapState.maxPitch ?? getApplicationConfig().maxPitch,
+                    // In globe mode allow zooming out further than deck.gl's default
+                    // of 0 so the whole globe can be pulled back on screen. Set on the
+                    // controller so it stays authoritative regardless of the viewState
+                    // round-trip through Redux/local context.
+                    ...(isGlobeMode ? {minZoom: GLOBE_MIN_ZOOM} : {})
                   }
                 : false
             }
-            viewState={internalViewState}
+            viewState={
+              isGlobeMode
+                ? {...internalViewState, minZoom: GLOBE_MIN_ZOOM}
+                : internalViewState
+            }
             onBeforeRender={this._onBeforeRender}
             onViewStateChange={isInteractive ? this._onViewportChange : undefined}
             {...extraDeckParams}
