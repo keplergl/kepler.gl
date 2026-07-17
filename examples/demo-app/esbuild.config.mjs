@@ -88,6 +88,9 @@ const config = {
   platform: 'browser',
   format: 'iife',
   logLevel: 'info',
+  logOverride: {
+    'unsupported-jsx-comment': 'silent'
+  },
   inject: ['src/react19-shim.js'],
   loader: {
     '.js': 'jsx',

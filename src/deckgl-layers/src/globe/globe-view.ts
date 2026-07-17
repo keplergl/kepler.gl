@@ -39,26 +39,24 @@ class ZoomToCursorGlobeController extends GlobeController {
         // Create viewport at new zoom with current center
         const zoomedViewport = (this as any).makeViewport({...viewportProps, zoom});
 
-        // Project the original lnglat to find where it appears after zoom
+        // Compute the new center that keeps `startZoomLngLat` under the cursor `pos`.
+        // GlobeViewport.panByPosition rotates the center so that the point currently
+        // shown at `startPixel` moves to `pixel`. The geo point under the cursor is
+        // currently rendered at its projected pixel, and we want it to stay at `pos`.
         const projected = zoomedViewport.project([startZoomLngLat[0], startZoomLngLat[1]]);
-
-        // Compute pixel offset from cursor position
-        const dx = projected[0] - pos[0];
-        const dy = projected[1] - pos[1];
-
-        // Use panByPosition to shift the center so the point returns to cursor
-        // panByPosition([lng, lat, zoom], targetPixel, sourcePixel)
-        // It rotates the center to move a point from sourcePixel to targetPixel
-        const centerPixel: [number, number] = [zoomedViewport.width / 2, zoomedViewport.height / 2];
-        const shiftedCenterPixel: [number, number] = [centerPixel[0] + dx, centerPixel[1] + dy];
         const newProps = zoomedViewport.panByPosition(
           [viewportProps.longitude, viewportProps.latitude, zoom],
-          centerPixel,
-          shiftedCenterPixel
+          pos,
+          projected
         );
 
+        // Only adopt the recentered longitude/latitude. We intentionally keep the
+        // explicitly-computed `zoom` instead of `newProps.zoom`: GlobeViewport.panByPosition
+        // re-derives zoom from a latitude-dependent adjustment, and applyConstraints applies
+        // the same adjustment again, double-correcting zoom on every wheel tick and causing
+        // the view to jump in/out instead of zooming smoothly.
         return (this as any)._getUpdatedState({
-          zoom: newProps.zoom ?? zoom,
+          zoom,
           longitude: newProps.longitude,
           latitude: newProps.latitude
         });

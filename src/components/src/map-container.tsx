@@ -1149,7 +1149,7 @@ export default function MapContainerFactory(
                   }
                 : false
             }
-            initialViewState={internalViewState}
+            viewState={internalViewState}
             onBeforeRender={this._onBeforeRender}
             onViewStateChange={isInteractive ? this._onViewportChange : undefined}
             {...extraDeckParams}
@@ -1250,18 +1250,35 @@ export default function MapContainerFactory(
     }, DEBOUNCE_VIEWPORT_PROPAGATE);
 
     _onViewportChange = viewport => {
-      const {viewState} = viewport;
+      const {viewState, interactionState} = viewport;
       if (this.props.isExport) {
         // Image export map shouldn't be interactive (otherwise this callback can
         // lead to inadvertent changes to the state of the main map)
         return;
       }
       const {setInternalViewState} = this.context;
-      // Defer state update to avoid React warning when deck.gl fires onViewStateChange
-      // synchronously during its render (e.g. when switching view types like MapView → GlobeView)
-      setTimeout(() => {
+      const isUserInteraction =
+        interactionState &&
+        (interactionState.isZooming ||
+          interactionState.isPanning ||
+          interactionState.isRotating ||
+          interactionState.isDragging ||
+          interactionState.inTransition);
+      if (isUserInteraction) {
+        // For interactive gestures (pan/zoom/rotate) update synchronously. Deferring
+        // here makes the controlled `viewState` fed back to deck.gl lag one frame
+        // behind the controller's internal state, which the controller then re-seeds
+        // from, producing visible jitter - most noticeable in globe mode where zoom is
+        // coupled to longitude/latitude.
         setInternalViewState(viewState, this.props.index);
-      }, 0);
+      } else {
+        // deck.gl can fire onViewStateChange synchronously during its own render
+        // (e.g. when switching view types like MapView -> GlobeView). Updating React
+        // state during render throws a warning, so defer non-interactive updates.
+        setTimeout(() => {
+          setInternalViewState(viewState, this.props.index);
+        }, 0);
+      }
       this._onViewportChangePropagateDebounced();
     };
 
