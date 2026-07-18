@@ -5,11 +5,12 @@ import {COORDINATE_SYSTEM, Layer} from '@deck.gl/core';
 import {SolidPolygonLayer, BitmapLayer} from '@deck.gl/layers';
 import {TileLayer, MVTLayer} from '@deck.gl/geo-layers';
 
-import type {GlobeConfig, Globe} from '@kepler.gl/constants';
+import type {Globe} from '@kepler.gl/constants';
 import type {RGBColor} from '@kepler.gl/types';
 
 import {getGlobeAtmosphereLayer, getGlobeAtmosphereSkyLayer} from './atmosphere-layer';
 import {getGlobeDepthDiskLayer} from './globe-depth-disk-layer';
+import {MVTLabelLayer} from './mvt-label-layer';
 
 type LayerGroup = {slug: string; filter: (layer: any) => boolean};
 
@@ -331,7 +332,8 @@ export const getGlobeBaseLayers = ({
       !isSatellite &&
       mapboxApiAccessToken &&
       new MVTLayer({
-        id: 'globe-basemap-mvt-layer',
+        // force the layer to update when the style/label config changes
+        id: `globe-basemap-mvt-layer-${mapStyleType}`,
         data: `https://a.tiles.mapbox.com/v4/mapbox.mapbox-streets-v8/{z}/{x}/{y}.vector.pbf?access_token=${mapboxApiAccessToken}`,
         minZoom: 0,
         maxZoom: 23,
@@ -344,6 +346,9 @@ export const getGlobeBaseLayers = ({
               : ['place_label', 'admin', 'water', 'road']
           }
         },
+        // Render admin/water via GeoJsonLayer and place labels via TextLayer.
+        config,
+        renderSubLayers: (props: any) => new MVTLabelLayer(props),
         getFillColor: (f: any) => {
           switch (f.properties.layerName) {
             case 'water':
