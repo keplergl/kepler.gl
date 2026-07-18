@@ -6,21 +6,23 @@
 // The following globe-specific adjustments from studio-monorepo are NOT ported
 // because they are not applicable or feasible in deck.gl 9.x:
 //
-// 1. Grid cell offset inversion (UnfoldedGridCellLayer):
-//    Studio-monorepo inverted the grid cell offset in globe mode to correct positioning.
-//    This was specific to deck.gl 8.x's GridCellLayer rendering pipeline. In deck.gl 9.x,
-//    the GridLayer uses a different GPU-based aggregation approach and the offset bug
-//    does not manifest.
-//
-// 2. Hex tile highPrecision flag:
+// 1. Hex tile highPrecision flag:
 //    Studio-monorepo forced `highPrecision: true` for H3 hexagons at low resolutions
 //    in globe mode. Kepler.gl doesn't have hex-tile layers in the same form.
 //
-// 3. MVT clipBounds disabled in globe mode:
+// 2. MVT clipBounds disabled in globe mode:
 //    Studio-monorepo's custom MVT layer skipped clipBounds/ClipExtension in globe mode.
 //    Deck.gl 9.x's MVTLayer handles globe projection natively without this workaround.
 //
 // Ported adjustments:
+// - Grid / Hexagon aggregation cells on the globe: deck.gl 9.x's GridCellLayer /
+//   HexagonCellLayer position cells in flat mercator common space and draw them with
+//   project_common_position_to_clipspace, which leaves them on the XY plane through the
+//   globe center rather than on its surface. ScaleEnhancedGridLayer /
+//   ScaleEnhancedHexagonLayer swap in a globe-aware cell subclass (see
+//   layer-utils/globe-cell-utils) that remaps each cell vertex from common space back to
+//   lng/lat and onto the sphere (equivalent to studio-monorepo's UnfoldedGridCellLayer
+//   globe offset handling, adapted to deck.gl 9.x's aggregation pipeline).
 // - Text/Label rendering with back-face culling: MVTLabelLayer renders place labels via a
 //   TextLayer whose glyph sublayer is EnhancedMultiIconLayer, which degenerates glyph
 //   vertices on the far side of the globe (dot(surfaceNormal, toCamera) < 0.1) so labels

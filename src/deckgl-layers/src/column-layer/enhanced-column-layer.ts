@@ -6,6 +6,19 @@ import {UNIT} from '@deck.gl/core';
 
 import {editShader} from '../';
 
+// deck.gl 9 / luma 9 sets custom uniforms via UBO-backed shader modules (Model has
+// no setUniforms). This module exposes the globe-mode flag to the shader.
+const globeModeUniforms = {
+  name: 'globeMode',
+  vs: `layout(std140) uniform globeModeUniforms {
+  float globeMode;
+} globeModeProps;
+`,
+  uniformTypes: {
+    globeMode: 'f32'
+  }
+} as const;
+
 function addInstanceCoverage(vs: string) {
   const addDecl = editShader(
     vs,
@@ -28,7 +41,7 @@ function addGlobeScaling(vs: string) {
     vs,
     'hexagon cell vs globe scale mod',
     'vec2 offset = (rotationMatrix * positions.xy * strokeOffsetRatio + offset) * dotRadius;',
-    `float radiusGlobeMod = u_globeMode > 0.5 ? sin((90.0 - abs(geometry.worldPosition.y)) * PI / 180.0) * PI : 1.0;
+    `float radiusGlobeMod = globeModeProps.globeMode > 0.5 ? sin((90.0 - abs(geometry.worldPosition.y)) * PI / 180.0) * PI : 1.0;
       vec2 offset = (rotationMatrix * positions.xy * strokeOffsetRatio + offset) * dotRadius * radiusGlobeMod;`
   );
 }
@@ -46,10 +59,7 @@ class EnhancedColumnLayer extends ColumnLayer<any, EnhancedColumnLayerProps> {
     return {
       ...shaders,
       vs,
-      inject: {
-        'vs:#decl': `
-          uniform float u_globeMode;`
-      }
+      modules: [...(shaders.modules || []), globeModeUniforms]
     };
   }
 
@@ -103,26 +113,26 @@ class EnhancedColumnLayer extends ColumnLayer<any, EnhancedColumnLayerProps> {
 
     if (extruded && wireframe && wireframeModel) {
       wireframeModel.shaderInputs.setProps({
-        column: {...columnProps, isStroke: true}
+        column: {...columnProps, isStroke: true},
+        globeMode: {globeMode}
       });
-      (wireframeModel as any).setUniforms({u_globeMode: globeMode});
       wireframeModel.draw(this.context.renderPass);
     }
     if (filled && fillModel) {
       fillModel.setVertexCount(fillVertexCount);
       fillModel.shaderInputs.setProps({
-        column: {...columnProps, isStroke: false}
+        column: {...columnProps, isStroke: false},
+        globeMode: {globeMode}
       });
-      (fillModel as any).setUniforms({u_globeMode: globeMode});
       fillModel.draw(this.context.renderPass);
     }
     if (!extruded && stroked && fillModel) {
       fillModel.setVertexCount((fillVertexCount * 2) / 3);
       fillModel.shaderInputs.setProps({
         column: {...columnProps, isStroke: true},
-        layer: {opacity: strokeOpacity ?? this.props.opacity}
+        layer: {opacity: strokeOpacity ?? this.props.opacity},
+        globeMode: {globeMode}
       });
-      (fillModel as any).setUniforms({u_globeMode: globeMode});
       fillModel.draw(this.context.renderPass);
       // Restore original vertex count and opacity so subsequent passes are unaffected
       fillModel.setVertexCount(fillVertexCount);
