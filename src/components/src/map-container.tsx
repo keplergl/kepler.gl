@@ -79,7 +79,8 @@ import {
   EMPTY_MAPBOX_STYLE,
   MAPBOX_MAX_PITCH,
   MAP_LIB_OPTIONS,
-  GLOBE_MIN_ZOOM
+  GLOBE_MIN_ZOOM,
+  GLOBE_MAX_ZOOM
 } from '@kepler.gl/constants';
 
 import {
@@ -1164,14 +1165,15 @@ export default function MapContainerFactory(
                     // In globe mode allow zooming out further than deck.gl's default
                     // of 0 so the whole globe can be pulled back on screen. Set on the
                     // controller so it stays authoritative regardless of the viewState
-                    // round-trip through Redux/local context.
-                    ...(isGlobeMode ? {minZoom: GLOBE_MIN_ZOOM} : {})
+                    // round-trip through Redux/local context. Cap the max zoom too so
+                    // the basemap tiles don't break down at high globe zoom.
+                    ...(isGlobeMode ? {minZoom: GLOBE_MIN_ZOOM, maxZoom: GLOBE_MAX_ZOOM} : {})
                   }
                 : false
             }
             viewState={
               isGlobeMode
-                ? {...internalViewState, minZoom: GLOBE_MIN_ZOOM}
+                ? {...internalViewState, minZoom: GLOBE_MIN_ZOOM, maxZoom: GLOBE_MAX_ZOOM}
                 : internalViewState
             }
             onBeforeRender={this._onBeforeRender}

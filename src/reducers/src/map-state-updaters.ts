@@ -16,7 +16,7 @@ import {
 } from '@kepler.gl/utils';
 import {MapStateActions, ReceiveMapConfigPayload, ActionTypes} from '@kepler.gl/actions';
 import {MapState, Bounds, Viewport} from '@kepler.gl/types';
-import {MapSplitMode, MapViewMode, DEFAULT_GLOBE_CONFIG, GLOBE_MIN_ZOOM, GLOBE_MAX_LATITUDE} from '@kepler.gl/constants';
+import {MapSplitMode, MapViewMode, DEFAULT_GLOBE_CONFIG, GLOBE_MIN_ZOOM, GLOBE_MAX_ZOOM, GLOBE_MAX_LATITUDE} from '@kepler.gl/constants';
 
 /**
  * Updaters for `mapState` reducer. Can be used in your root reducer to directly modify kepler.gl's state.
@@ -284,9 +284,11 @@ export const setMapViewModeUpdater = (
         pitch: 0,
         bearing: 0,
         // Allow zooming out further than the default so the whole globe can be
-        // pulled back on screen.
+        // pulled back on screen. Cap the max zoom so the basemap tiles stay
+        // coherent (they break down at high globe zoom in deck.gl 9.x).
         minZoom: GLOBE_MIN_ZOOM,
-        zoom: state.zoom < GLOBE_MIN_ZOOM ? GLOBE_MIN_ZOOM : state.zoom,
+        maxZoom: GLOBE_MAX_ZOOM,
+        zoom: Math.min(Math.max(state.zoom, GLOBE_MIN_ZOOM), GLOBE_MAX_ZOOM),
         mapViewMode
       };
       break;

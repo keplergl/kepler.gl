@@ -1358,6 +1358,17 @@ export enum MapViewMode {
 export const GLOBE_MIN_ZOOM = 2;
 
 /**
+ * Maximum zoom in globe mode.
+ *
+ * TODO: investigate further. Past this level the globe basemap breaks down in
+ * deck.gl 9.x: the vector basemap tileset (mapbox-streets vector tiles) stops
+ * loading / renders as empty rectangles, and there are interaction issues on
+ * zoom in and panning (the camera drifts). Capping zoom here keeps the basemap
+ * and interactions coherent until the underlying tile/controller issue is fixed.
+ */
+export const GLOBE_MAX_ZOOM = 12;
+
+/**
  * Maximum absolute center latitude allowed in globe mode. Constrains the camera
  * target to a band around the equator so the view can't be centered on the
  * poles (deck.gl's default clamps to ~85°, which lets the camera stare straight
