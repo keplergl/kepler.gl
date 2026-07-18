@@ -57,6 +57,7 @@ export type MapState = {
       waterColor: [number, number, number];
       surfaceColor: [number, number, number];
       surface: boolean;
+      backgroundColor: [number, number, number];
     };
   };
   /** The current split map mode (single, dual, swipe) */

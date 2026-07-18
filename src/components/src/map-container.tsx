@@ -82,7 +82,12 @@ import {
   GLOBE_MIN_ZOOM
 } from '@kepler.gl/constants';
 
-import {getGlobeBaseLayers, getGlobeTopLayers, KeplerGlobeView} from '@kepler.gl/deckgl-layers';
+import {
+  getGlobeBaseLayers,
+  getGlobeTopLayers,
+  getGlobeClearColor,
+  KeplerGlobeView
+} from '@kepler.gl/deckgl-layers';
 
 import {DROPPABLE_MAP_CONTAINER_TYPE} from './common/dnd-layer-items';
 // Contexts
@@ -1100,7 +1105,14 @@ export default function MapContainerFactory(
       const views = deckGlProps?.views
         ? deckGlProps?.views()
         : isGlobeMode
-          ? new KeplerGlobeView({resolution: 5})
+          ? new KeplerGlobeView({
+              resolution: 5,
+              // deck.gl >= 9 dropped the global `parameters.clearColor`; the background
+              // around the globe must be cleared per-view. `clear: true` enables it and
+              // `clearColor` is RGBA 0-255.
+              clear: true,
+              clearColor: getGlobeClearColor(mapState.globe?.config?.backgroundColor)
+            })
           : new MapView({farZMultiplier: 1.2});
 
       let allDeckGlProps = {
@@ -1110,7 +1122,7 @@ export default function MapContainerFactory(
         layers: finalDeckGlLayers,
         effects,
         parameters: isGlobeMode
-          ? {cull: true, clearColor: [0.015, 0.035, 0.065, 1.0]}
+          ? {cull: true}
           : getLayerBlendingParameters(visState.layerBlending)
       };
 

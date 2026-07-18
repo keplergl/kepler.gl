@@ -247,8 +247,19 @@ export const getBasemapColorsForStyle = (
   };
 };
 
-export function getGlobeClearColor(): [number, number, number, number] {
-  return [0.015, 0.035, 0.065, 1.0];
+/**
+ * Clear color (background around the globe) for globe mode, in RGBA 0-255 as
+ * expected by deck.gl's View `clearColor` prop (deck.gl >= 9 no longer supports
+ * the global `parameters.clearColor`; it must be set per-view with `clear: true`).
+ */
+export function getGlobeClearColor(
+  backgroundColor?: [number, number, number] | number[]
+): [number, number, number, number] {
+  if (backgroundColor) {
+    return [backgroundColor[0], backgroundColor[1], backgroundColor[2], 255];
+  }
+  // Default matches the previous hardcoded clear color [0.015, 0.035, 0.065] in 0-1 space.
+  return [4, 9, 17, 255];
 }
 
 const INVISIBLE_COLOR: [number, number, number, number] = [0, 0, 0, 0];

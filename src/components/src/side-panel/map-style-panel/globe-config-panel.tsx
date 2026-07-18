@@ -308,6 +308,22 @@ function GlobeConfigPanelFactory(
               disabled={false}
             />
           </StyledConfigRow>
+
+          {/* Background (empty space around the globe, always visible) */}
+          <StyledConfigRow>
+            <PanelLabelWrapper>
+              <LayerLabel $active={true} style={{marginLeft: '28px'}}>
+                <FormattedMessage id="mapLayers.background" />
+              </LayerLabel>
+            </PanelLabelWrapper>
+            <LayerGroupColorPicker
+              slug="globe-background"
+              color={globeConfig.backgroundColor}
+              onColorChange={(color: RGBColor) => onColorChange('backgroundColor', color)}
+              extraMarginRight={false}
+              disabled={false}
+            />
+          </StyledConfigRow>
         </PanelContent>
       </StyledGlobeConfigPanel>
     );
