@@ -66,10 +66,28 @@ class ZoomToCursorGlobeController extends GlobeController {
         return clamp(zoom, minZoom + zoomAdjustment, maxZoom + zoomAdjustment);
       }
 
+      // Zoom-to-cursor, ported verbatim from deck.gl 8.9.x MapState.zoom() +
+      // GlobeViewport.panByPosition(coords, pixel) — which is what studio-monorepo
+      // uses and where zoom-to-cursor tracks the cursor accurately over a whole
+      // gesture. deck.gl 9.x regressed this in two ways that we avoid here:
+      //   1. Its GlobeState.zoom() ignores the cursor and zooms toward the center.
+      //   2. Its GlobeViewport.panByPosition became a lossy, *linearized* 3-arg
+      //      rotation (longitude += (0.25/scale)*(startPixel-pixel), re-derives
+      //      zoom). Using it per wheel tick accumulates error, so after a long
+      //      continuous zoom the point ends up noticeably shifted from what was
+      //      originally under the cursor.
+      // The 8.9.x recenter below is an *exact absolute* translation: unproject the
+      // cursor pixel in the zoomed viewport to get the geo point currently under it,
+      // then shift the center by (anchor - thatPoint). No zoom coupling, no
+      // rotationSpeed, and it applies to zoom-in and zoom-out symmetrically, so
+      // there is no per-tick accumulated drift.
       zoom({pos, startPos, scale}: {pos: [number, number]; startPos?: [number, number]; scale: number}) {
         let {startZoom, startZoomLngLat} = (this as any).getState();
 
         if (!startZoomLngLat) {
+          // Discrete (wheel) zoom: re-derive the anchor each tick from the current
+          // view. For pinch, startZoom/startZoomLngLat are set once by zoomStart and
+          // preserved across ticks by _getUpdatedState (which spreads getState()).
           startZoom = (this as any).getViewportProps().zoom;
           startZoomLngLat = (this as any)._unproject(startPos) || (this as any)._unproject(pos);
         }
@@ -78,39 +96,28 @@ class ZoomToCursorGlobeController extends GlobeController {
         }
 
         const zoom = (this as any)._constrainZoom(startZoom + Math.log2(scale));
-        const viewportProps = (this as any).getViewportProps();
+        const zoomedViewport = (this as any).makeViewport({
+          ...(this as any).getViewportProps(),
+          zoom
+        });
 
-        // Only apply zoom-to-cursor when zooming IN (scale > 1). When zooming out
-        // the natural behavior is to pull straight back from the current center;
-        // recentering toward the cursor on every zoom-out step rotates the globe
-        // and, off the equator, causes the center to drift toward the poles.
-        if (scale <= 1) {
-          return (this as any)._getUpdatedState({zoom});
-        }
-
-        // Create viewport at new zoom with current center
-        const zoomedViewport = (this as any).makeViewport({...viewportProps, zoom});
-
-        // Compute the new center that keeps `startZoomLngLat` under the cursor `pos`.
-        // GlobeViewport.panByPosition rotates the center so that the point currently
-        // shown at `startPixel` moves to `pixel`. The geo point under the cursor is
-        // currently rendered at its projected pixel, and we want it to stay at `pos`.
-        const projected = zoomedViewport.project([startZoomLngLat[0], startZoomLngLat[1]]);
-        const newProps = zoomedViewport.panByPosition(
-          [viewportProps.longitude, viewportProps.latitude, zoom],
-          pos,
-          projected
-        );
-
-        // Only adopt the recentered longitude/latitude. We intentionally keep the
-        // explicitly-computed `zoom` instead of `newProps.zoom`: GlobeViewport.panByPosition
-        // re-derives zoom from a latitude-dependent adjustment, and applyConstraints applies
-        // the same adjustment again, double-correcting zoom on every wheel tick and causing
-        // the view to jump in/out instead of zooming smoothly.
+        // 8.9.x GlobeViewport.panByPosition(startZoomLngLat, pos):
+        //   fromPosition = viewport.unproject(pos)   // geo point now under the cursor
+        //   longitude = startZoomLngLat[0] - fromPosition[0] + viewport.longitude
+        //   latitude  = startZoomLngLat[1] - fromPosition[1] + viewport.latitude
+        const fromPosition = zoomedViewport.unproject(pos);
         return (this as any)._getUpdatedState({
           zoom,
-          longitude: newProps.longitude,
-          latitude: newProps.latitude
+          longitude: startZoomLngLat[0] - fromPosition[0] + zoomedViewport.longitude,
+          latitude: startZoomLngLat[1] - fromPosition[1] + zoomedViewport.latitude
+        });
+      }
+
+      // Clear the persisted pinch anchor at gesture end (matches 8.9.x).
+      zoomEnd() {
+        return (this as any)._getUpdatedState({
+          startZoom: null,
+          startZoomLngLat: null
         });
       }
     } as any;
