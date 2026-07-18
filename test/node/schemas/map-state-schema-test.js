@@ -4,6 +4,7 @@
 import test from 'tape';
 import cloneDeep from 'lodash/cloneDeep';
 import SchemaManager from '@kepler.gl/schemas';
+import {DEFAULT_GLOBE_CONFIG, MapViewMode} from '@kepler.gl/constants';
 import {InitialState} from 'test/helpers/mock-state';
 
 test('#mapStateSchema -> v1 -> save load mapState', t => {
@@ -29,9 +30,11 @@ test('#mapStateSchema -> v1 -> save load mapState', t => {
       'splitMapViewports',
       'maxPitch',
       'mapSplitMode',
-      'swipeComparePercentage'
+      'swipeComparePercentage',
+      'mapViewMode',
+      'globe'
     ],
-    'mapState should have all 12 entries'
+    'mapState should have all entries'
   );
 
   const expected = {
@@ -47,7 +50,12 @@ test('#mapStateSchema -> v1 -> save load mapState', t => {
     splitMapViewports: [],
     maxPitch: undefined,
     mapSplitMode: 'SINGLE_MAP',
-    swipeComparePercentage: 50
+    swipeComparePercentage: 50,
+    mapViewMode: MapViewMode.MODE_2D,
+    globe: {
+      enabled: false,
+      config: DEFAULT_GLOBE_CONFIG
+    }
   };
 
   t.deepEqual(msToSave, expected, 'save mapState should be current');
