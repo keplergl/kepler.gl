@@ -16,7 +16,7 @@ import {
 } from '@kepler.gl/utils';
 import {MapStateActions, ReceiveMapConfigPayload, ActionTypes} from '@kepler.gl/actions';
 import {MapState, Bounds, Viewport} from '@kepler.gl/types';
-import {MapSplitMode, MapViewMode, DEFAULT_GLOBE_CONFIG, GLOBE_MIN_ZOOM} from '@kepler.gl/constants';
+import {MapSplitMode, MapViewMode, DEFAULT_GLOBE_CONFIG, GLOBE_MIN_ZOOM, GLOBE_MAX_LATITUDE} from '@kepler.gl/constants';
 
 /**
  * Updaters for `mapState` reducer. Can be used in your root reducer to directly modify kepler.gl's state.
@@ -681,6 +681,15 @@ function updateViewport(originalViewport: Viewport, viewportUpdates: Viewport): 
   const isGlobe = (newViewport as any).globe?.enabled;
 
   if (isGlobe) {
+    // Keep the camera target within a latitude band around the equator so the
+    // stored viewport can't be centered on the poles (matches the globe
+    // controller's applyConstraints so geocoder/programmatic updates agree).
+    if (typeof newViewport.latitude === 'number') {
+      newViewport.latitude = Math.min(
+        GLOBE_MAX_LATITUDE,
+        Math.max(-GLOBE_MAX_LATITUDE, newViewport.latitude)
+      );
+    }
     const zoomAdjustment = Math.log2(Math.cos(((newViewport.latitude ?? 0) * Math.PI) / 180));
     if (
       typeof newViewport.minZoom === 'number' &&

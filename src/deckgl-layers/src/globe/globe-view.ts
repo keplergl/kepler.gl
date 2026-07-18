@@ -6,6 +6,7 @@ import {
   _GlobeController as GlobeController
 } from '@deck.gl/core';
 import {clamp} from '@math.gl/core';
+import {GLOBE_MAX_LATITUDE} from '@kepler.gl/constants';
 
 /**
  * Latitude-based zoom adjustment used by deck.gl's GlobeViewport, replicated
@@ -32,6 +33,21 @@ class ZoomToCursorGlobeController extends GlobeController {
 
     // Create patched GlobeState that supports zoom-to-cursor
     this.ControllerState = class PatchedGlobeState extends OriginalGlobeState {
+      // Constrain the camera target to a latitude band around the equator so the
+      // view can't be centered on the poles. deck.gl's applyConstraints clamps
+      // latitude to ~85°, which still lets the camera look straight at a pole.
+      applyConstraints(props: any) {
+        const result = (super.applyConstraints as any)(props);
+        const clampedLatitude = clamp(result.latitude, -GLOBE_MAX_LATITUDE, GLOBE_MAX_LATITUDE);
+        if (clampedLatitude !== result.latitude) {
+          // deck.gl couples zoom to latitude via zoomAdjust; when we further
+          // clamp latitude, re-apply the same delta so zoom stays consistent.
+          result.zoom += zoomAdjust(clampedLatitude) - zoomAdjust(result.latitude);
+          result.latitude = clampedLatitude;
+        }
+        return result;
+      }
+
       // deck.gl's GlobeState._constrainZoom derives a minimum zoom from `maxBounds`
       // that forces the globe to fill the viewport. That bounds-based minimum
       // (~3 for a typical window) overrides any configured `minZoom`, so the user
@@ -63,6 +79,14 @@ class ZoomToCursorGlobeController extends GlobeController {
 
         const zoom = (this as any)._constrainZoom(startZoom + Math.log2(scale));
         const viewportProps = (this as any).getViewportProps();
+
+        // Only apply zoom-to-cursor when zooming IN (scale > 1). When zooming out
+        // the natural behavior is to pull straight back from the current center;
+        // recentering toward the cursor on every zoom-out step rotates the globe
+        // and, off the equator, causes the center to drift toward the poles.
+        if (scale <= 1) {
+          return (this as any)._getUpdatedState({zoom});
+        }
 
         // Create viewport at new zoom with current center
         const zoomedViewport = (this as any).makeViewport({...viewportProps, zoom});

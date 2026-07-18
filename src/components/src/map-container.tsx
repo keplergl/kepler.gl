@@ -784,6 +784,8 @@ export default function MapContainerFactory(
 
     _annotationViewportCache: {key: string; viewport: any} | null = null;
 
+    _wasInteracting = false;
+
     _getAnnotationViewport(mapState: any, internalViewState: any) {
       const longitude = internalViewState?.longitude ?? mapState.longitude;
       const latitude = internalViewState?.latitude ?? mapState.latitude;
@@ -1274,12 +1276,20 @@ export default function MapContainerFactory(
           interactionState.isRotating ||
           interactionState.isDragging ||
           interactionState.inTransition);
-      if (isUserInteraction) {
-        // For interactive gestures (pan/zoom/rotate) update synchronously. Deferring
-        // here makes the controlled `viewState` fed back to deck.gl lag one frame
-        // behind the controller's internal state, which the controller then re-seeds
-        // from, producing visible jitter - most noticeable in globe mode where zoom is
-        // coupled to longitude/latitude.
+      // The emit that ends a gesture (panend/rotateEnd, or a fling transition
+      // ending) arrives with all interaction flags false. If we defer it, the
+      // controlled `viewState` fed back to deck lags a frame behind the
+      // controller's committed state and deck re-seeds from the stale value,
+      // making the globe visibly "jump back" to where the drag was released -
+      // most noticeable on a throw/fling release. Treat the first all-false emit
+      // right after an active gesture as part of that gesture and apply it
+      // synchronously too.
+      const isInteractionSettle = !isUserInteraction && this._wasInteracting;
+      this._wasInteracting = Boolean(isUserInteraction);
+      if (isUserInteraction || isInteractionSettle) {
+        // For interactive gestures (pan/zoom/rotate) and their end-of-gesture
+        // settle, update synchronously so the controlled `viewState` stays in
+        // lockstep with the controller and there's no stale re-seed.
         setInternalViewState(viewState, this.props.index);
       } else {
         // deck.gl can fire onViewStateChange synchronously during its own render

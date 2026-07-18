@@ -1357,6 +1357,14 @@ export enum MapViewMode {
  */
 export const GLOBE_MIN_ZOOM = 2;
 
+/**
+ * Maximum absolute center latitude allowed in globe mode. Constrains the camera
+ * target to a band around the equator so the view can't be centered on the
+ * poles (deck.gl's default clamps to ~85°, which lets the camera stare straight
+ * down at a pole). Applies symmetrically to the northern and southern hemisphere.
+ */
+export const GLOBE_MAX_LATITUDE = 75;
+
 export type GlobeConfig = {
   atmosphere: boolean;
   azimuth: boolean;
