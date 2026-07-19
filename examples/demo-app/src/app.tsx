@@ -18,7 +18,7 @@ import {
   setScreenCaptured,
   AiAssistantPanel,
   setMapBoundary
-} from '@kepler.gl/ai-assistant';
+} from './ai-assistant';
 import {panelBorderColor, theme} from '@kepler.gl/styles';
 import {ParsedConfig} from '@kepler.gl/types';
 import {getApplicationConfig} from '@kepler.gl/utils';

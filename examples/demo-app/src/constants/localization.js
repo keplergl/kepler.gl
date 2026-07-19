@@ -17,7 +17,9 @@ const en = {
   'loadRemoteMap.clickHere': 'click here',
   'loadRemoteMap.fetch': 'Fetch',
   'tooltip.hideSQLPanel': 'Hide SQL Panel',
-  'tooltip.showSQLPanel': 'Show SQL Panel'
+  'tooltip.showSQLPanel': 'Show SQL Panel',
+  'tooltip.showAiAssistantPanel': 'Show AI Assistant',
+  'tooltip.hideAiAssistantPanel': 'Hide AI Assistant'
 };
 
 export const messages = {

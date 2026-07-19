@@ -1340,8 +1340,7 @@ export const MAP_CONTROLS = keyMirror({
   mapDraw: null,
   mapLocale: null,
   effect: null,
-  annotation: null,
-  aiAssistant: null
+  annotation: null
 });
 
 export enum MapSplitMode {

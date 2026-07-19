@@ -99,11 +99,6 @@ const LIBRARY_BUNDLE_CONFIG = () => ({
           ]
         }
       },
-      // Add css loader for ai-assistant
-      {
-        test: /\.css$/,
-        use: ['style-loader', 'css-loader']
-      },
       // for compiling apache-arrow ESM module
       {
         test: /\.mjs$/,

@@ -72,7 +72,7 @@ const COMMON_CONFIG = {
         ],
         exclude: [/node_modules\/(?!(@monaco-editor|@radix-ui))/]
       },
-      // Add css loader for ai-assistant
+      // css loader
       {
         test: /\.css$/,
         use: ['style-loader', 'css-loader']

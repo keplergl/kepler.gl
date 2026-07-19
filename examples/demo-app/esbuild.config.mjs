@@ -134,7 +134,7 @@ function addAliases(externals, args) {
   const useRepoDeck = args.includes('--env.deck_src');
   const useLocalAiAssistant = args.includes('--env.ai');
 
-  // resolve ai-assistant from local dir
+  // resolve openassistant packages from local dir for source development
   if (useLocalAiAssistant) {
     resolveAlias['@openassistant/core'] = join(LIB_DIR, '../openassistant/packages/core/src');
     resolveAlias['@openassistant/ui'] = join(LIB_DIR, '../openassistant/packages/ui/src');
@@ -160,7 +160,6 @@ function addAliases(externals, args) {
     );
     resolveAlias['@openassistant/osm'] = join(LIB_DIR, '../openassistant/packages/tools/osm/src');
     resolveAlias['@openassistant/utils'] = join(LIB_DIR, '../openassistant/packages/utils/src');
-    resolveAlias['@kepler.gl/ai-assistant'] = join(SRC_DIR, 'ai-assistant/src');
   }
 
   // resolve deck.gl from local dir

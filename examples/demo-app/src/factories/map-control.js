@@ -11,7 +11,7 @@ import {
   EffectManagerFactory,
   AnnotationManagerFactory
 } from '@kepler.gl/components';
-import {AiAssistantControlFactory} from '@kepler.gl/ai-assistant';
+import {AiAssistantControlFactory} from '../ai-assistant';
 
 import {BannerMapPanel, SampleMapPanel} from '../components/map-control/map-control';
 import SqlPanelControlFactory from '../components/map-control/sql-panel-control';

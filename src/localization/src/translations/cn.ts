@@ -305,8 +305,6 @@ export default {
     disable3DMap: '禁用 3D 地图',
     DrawOnMap: '在地图上绘制',
     selectLocale: '选择语言',
-    showAiAssistantPanel: '显示 AI 助手面板',
-    hideAiAssistantPanel: '隐藏 AI 助手面板',
     hideLayerPanel: '隐藏图层面板',
     showLayerPanel: '显示图层面板',
     moveToTop: '移至图层顶部',
