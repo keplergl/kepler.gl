@@ -49,12 +49,30 @@ const SliderWrapper = styled.div<{$enabled?: boolean}>`
   ${props => (props.$enabled ? '' : disableSlider)}
 `;
 
+// Slider rows (Day/Night, Sun Azimuth) put the label and the slider side by side.
+// Give the label only the width its (short) text needs so the slider gets the
+// rest of the row, matching studio-monorepo's usable slider width. The child
+// indent is kept small (~half an eye-icon width) so the sub-row eye icon lines
+// up close to the parent (atmosphere) row like it does in studio, rather than
+// being pushed ~1.5 icon widths to the right.
+const SliderRow = styled(StyledConfigRow)`
+  align-items: center;
+
+  .side-panel-panel__label-wrapper {
+    flex: 0 0 auto;
+    padding-left: 8px;
+    white-space: nowrap;
+  }
+`;
+
 const LayerLabel = styled(PanelLabelBold)<{$active: boolean}>`
   color: ${props => (props.$active ? props.theme.textColor : props.theme.labelColor)};
 `;
 
 const ChildRow = styled(StyledConfigRow)`
-  padding-left: 20px;
+  .side-panel-panel__label-wrapper {
+    padding-left: 8px;
+  }
 `;
 
 export type GlobeConfigPanelProps = {
@@ -141,7 +159,7 @@ function GlobeConfigPanelFactory(
           </StyledConfigRow>
 
           {/* Terminator (child of atmosphere) */}
-          <ChildRow>
+          <SliderRow>
             <PanelLabelWrapper>
               <PanelHeaderAction
                 className="layer-group__visibility-toggle"
@@ -168,10 +186,10 @@ function GlobeConfigPanelFactory(
                 showInput
               />
             </SliderWrapper>
-          </ChildRow>
+          </SliderRow>
 
           {/* Sun Azimuth (child of atmosphere) */}
-          <ChildRow>
+          <SliderRow>
             <PanelLabelWrapper>
               <PanelHeaderAction
                 className="layer-group__visibility-toggle"
@@ -198,7 +216,7 @@ function GlobeConfigPanelFactory(
                 showInput
               />
             </SliderWrapper>
-          </ChildRow>
+          </SliderRow>
 
           {/* Basemap */}
           <StyledConfigRow>

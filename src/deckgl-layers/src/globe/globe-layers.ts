@@ -286,6 +286,8 @@ export const getGlobeBaseLayers = ({
   return [
     config.atmosphere ? getGlobeAtmosphereSkyLayer({config}) : null,
 
+    // Depth-only cross-section disk: writes depth at the globe's silhouette so
+    // far-side geometry (arcs/lines) is occluded by the planet.
     getGlobeDepthDiskLayer({fillColor: config.surfaceColor}),
 
     // Background surface polygon

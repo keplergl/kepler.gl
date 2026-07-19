@@ -596,12 +596,28 @@ export default function MapContainerFactory(
     // used by <StyledMap> inline style prop
     mapStyleTypeSelector = props => props.mapStyle.styleType;
     mapStyleBackgroundColorSelector = props => props.mapStyle.backgroundColor;
+    globeModeSelector = props => Boolean(props.mapState?.globe?.enabled);
+    globeBackgroundColorSelector = props => props.mapState?.globe?.config?.backgroundColor;
     styleSelector = createSelector(
       this.mapStyleTypeSelector,
       this.mapStyleBackgroundColorSelector,
-      (styleType, backgroundColor) => ({
+      this.globeModeSelector,
+      this.globeBackgroundColorSelector,
+      (styleType, backgroundColor, isGlobeMode, globeBackgroundColor) => ({
         ...MAP_STYLE.container,
-        ...(styleType === NO_MAP_ID ? {backgroundColor: rgbToHex(backgroundColor)} : {})
+        ...(styleType === NO_MAP_ID ? {backgroundColor: rgbToHex(backgroundColor)} : {}),
+        // In globe mode the deck.gl canvas is transparent (the globe View uses
+        // `clearColor: false` to avoid corrupting the picking buffer), so the
+        // background around the globe is painted here on the container instead.
+        ...(isGlobeMode
+          ? {
+              // Fall back to the default globe background when none is configured.
+              backgroundColor: rgbToHex(
+                (globeBackgroundColor as [number, number, number]) ||
+                  (getGlobeClearColor().slice(0, 3) as [number, number, number])
+              )
+            }
+          : {})
       })
     );
 
@@ -1108,11 +1124,18 @@ export default function MapContainerFactory(
         : isGlobeMode
           ? new KeplerGlobeView({
               resolution: 5,
-              // deck.gl >= 9 dropped the global `parameters.clearColor`; the background
-              // around the globe must be cleared per-view. `clear: true` enables it and
-              // `clearColor` is RGBA 0-255.
+              // The visible background around the globe is painted by the map
+              // container's CSS background (see styleSelector), NOT by a per-view
+              // color clear. deck.gl applies a View's `clearColor` in *every* pass,
+              // including the picking pass, and it forces the cleared alpha to 255
+              // (`clearColor[3] || 255`). In the picking buffer the alpha byte encodes
+              // the layer index, so a 255 clear makes deck.gl decode every pixel as a
+              // non-existent layer ("Picked non-existent layer. Is picking buffer
+              // corrupt?") on hover. `clearColor: false` skips the per-view color
+              // clear so the picking buffer keeps its 0 alpha; the canvas stays
+              // transparent and the CSS background shows through.
               clear: true,
-              clearColor: getGlobeClearColor(mapState.globe?.config?.backgroundColor)
+              clearColor: false
             })
           : new MapView({farZMultiplier: 1.2});
 

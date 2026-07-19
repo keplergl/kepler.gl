@@ -297,19 +297,31 @@ export default class LineLayer extends ArcLayer {
           id,
           updateTriggers,
           extensions: [...defaultLayerProps.extensions, brushingExtension],
-          parameters: {depthMask: false},
+          // On a globe a "line" is drawn as a flat ArcLayer: getHeight 0 keeps the
+          // geometry on the sphere surface (no raised paraboloid arc, which would
+          // otherwise pop up as spikes sticking out perpendicular to the surface).
+          // Match the ArcLayer's globe params exactly (cull:false so the ribbon's
+          // back-facing triangles aren't culled by globe mode's global cull, and
+          // otherwise deck.gl defaults: depth test on + depth write on, so the
+          // depth disk occludes segments on the far side of the globe).
+          getHeight: 0,
+          parameters: {cull: false},
           getSourceColor: data.getColor,
           widthUnits: 'pixels' as const
         }),
         ...(hoveredObject
           ? [
-              new EnhancedLineLayer({
+              new DeckArcLayer({
                 ...this.getDefaultHoverLayerProps(),
                 ...layerProps,
+                id: `${id}-hovered`,
                 data: [hoveredObject],
-                getColor: this.config.highlightColor,
+                getHeight: 0,
+                parameters: {cull: false},
+                getSourceColor: this.config.highlightColor,
                 getTargetColor: this.config.highlightColor,
-                getWidth: data.getWidth
+                getWidth: data.getWidth,
+                widthUnits: 'pixels' as const
               })
             ]
           : [])
