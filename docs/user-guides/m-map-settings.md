@@ -3,6 +3,7 @@
 <!-- TOC -->
   - [Split Maps](#split-maps)
   - [View Maps in 3D](#view-maps-in-3d)
+  - [Globe View](#globe-view)
   - [Display Legend](#display-legend)
 <!-- /TOC -->
 
@@ -37,6 +38,89 @@ View your map in 3D by clicking the 3D icon in the top right corner of your map
 - __cmd + drag__ (mac) or __ctrl + drag__ (win): rotate
 
 ![Map in 3D](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/f-map-styles-7.png "Map in 3D")
+
+
+## Globe View
+
+Switch from the flat (web-mercator) map to a 3D globe projection to view your
+data wrapped onto a sphere. Toggle Globe view from the map view mode control in
+the top right corner of the map.
+
+- __drag__: rotate the globe
+- __scroll / pinch__: zoom in and out
+
+Globe view is well suited to global-scale datasets and flows, and to
+presentation-style maps. It is built on deck.gl's globe projection and is still
+evolving, so a number of layers and interactions behave differently than in the
+flat map.
+
+### Camera and zoom constraints
+
+To keep the basemap and interactions coherent, globe view applies a few
+constraints that do not exist in the flat map:
+
+- __Zoom range is limited__ (roughly zoom `2`–`12`). You can pull the globe
+  further back than the flat map so the whole planet fits on screen, but zoom-in
+  is capped. Beyond the cap the vector basemap tiles stop loading (they render as
+  empty rectangles) and the camera can drift while panning/zooming — a known
+  deck.gl 9.x globe issue that the cap works around.
+- __The camera can't be centered on the poles.__ The center latitude is
+  constrained to a band around the equator (about ±75°) so you can't stare
+  straight down at a pole.
+- __Reset bearing/pitch__ recenters the view toward the equator.
+
+### Supported layers
+
+The following layers render correctly in globe view:
+
+- Point
+- Arc
+- Line
+- Grid
+- Hexbin (Hexagon)
+- H3 (Hexagon ID)
+- Cluster
+- Icon
+- GeoJSON / Polygon
+- 3D / Point (elevation)
+- Trip
+- Vector Tile
+- Raster Tile
+- Hex Tile
+
+### Unsupported layers
+
+These layers are hidden or disabled in globe view because their geometry does
+not project onto the sphere correctly:
+
+- __Heatmap__ — the density is rendered into a flat screen-aligned quad, which
+  cannot be draped onto the sphere.
+- __Flow__ — flow arrows are flat quads in the equatorial plane and collapse to
+  nothing when viewed edge-on on the globe.
+- __S2__
+- __3D Tiles__ (Tile3D)
+
+If a layer is unsupported, kepler.gl will indicate that it is not available in
+globe view and keep it hidden until you return to the flat map.
+
+### Known issues and limitations
+
+- __Basemap breakdown at high zoom.__ At high globe zoom the mapbox vector
+  basemap tileset can stop loading and render as empty rectangles. Zoom is capped
+  to avoid this. Satellite/raster basemaps generally hold up better at closer
+  zoom.
+- __Panning/zoom drift at high zoom.__ Near the zoom cap the camera may drift
+  while interacting. This is the primary reason for the zoom cap.
+- __Zoom-to-cursor is approximate.__ When continuously zooming from far out to
+  close in, the final center can be shifted from the point originally under the
+  cursor.
+- __Arcs and lines on the far side.__ Depending on depth handling, geometry on
+  the back of the globe may be partially visible through the sphere.
+- __Basemap differences.__ Mapbox and MapLibre basemaps can look different in
+  globe mode; some basemap styles are better tuned for the sphere than others.
+
+These limitations stem from the underlying deck.gl globe projection and are
+expected to improve as that support matures.
 
 
 ## Display Legend
