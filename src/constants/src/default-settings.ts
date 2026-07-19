@@ -1436,7 +1436,10 @@ export const GLOBE_SUPPORTED_LAYERS: Record<string, boolean> = {
   rasterTile: true,
   heatmap: false,
   s2: false,
-  tile3d: false
+  tile3d: false,
+  // Flow arrows are flat quads in common space (equatorial plane) and collapse when
+  // viewed edge-on on the globe, so the flow layer is not supported in Globe mode.
+  flow: false
 };
 
 export enum MapSplitMode {
