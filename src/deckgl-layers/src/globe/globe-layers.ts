@@ -315,6 +315,7 @@ export const getGlobeBaseLayers = ({
     // Satellite tiles
     config.basemap &&
       (isSatellite || isSatelliteStreet) &&
+      mapboxApiAccessToken &&
       new TileLayer({
         id: 'globe-satellite-tiles',
         data: [

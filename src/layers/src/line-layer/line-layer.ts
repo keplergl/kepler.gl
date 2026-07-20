@@ -306,7 +306,11 @@ export default class LineLayer extends ArcLayer {
           // depth disk occludes segments on the far side of the globe).
           getHeight: 0,
           parameters: {cull: false},
+          // A Kepler line has a single color channel; an ArcLayer interpolates
+          // between source and target colors, so feed the same color to both
+          // ends (otherwise the target end falls back to deck.gl's default).
           getSourceColor: data.getColor,
+          getTargetColor: data.getColor,
           widthUnits: 'pixels' as const
         }),
         ...(hoveredObject

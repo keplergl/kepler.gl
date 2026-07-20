@@ -21,9 +21,9 @@ interface Toggle3dButtonIcons {
 
 export type Toggle3dButtonProps = {
   dragRotate: boolean;
-  mapViewMode?: string;
+  mapViewMode?: MapViewMode;
   onTogglePerspective: () => void;
-  onSetMapViewMode?: (mode: string) => void;
+  onSetMapViewMode?: (mode: MapViewMode) => void;
   onToggleMapControl: (control: string) => void;
   actionIcons: Toggle3dButtonIcons;
   mapControls: MapControls;
@@ -73,7 +73,7 @@ function Toggle3dButtonFactory(
     );
 
     const onSelectMode = useCallback(
-      (mode: string) => {
+      (mode: MapViewMode) => {
         if (onSetMapViewMode) {
           onSetMapViewMode(mode);
         } else if (mode === MapViewMode.MODE_3D) {
