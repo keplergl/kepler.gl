@@ -10,6 +10,7 @@ import MapControlToolbarFactory from './map-control-toolbar';
 import ToolbarItem from '../common/toolbar-item';
 import {MapControls} from '@kepler.gl/types';
 import {MapViewMode} from '@kepler.gl/constants';
+import {getApplicationConfig} from '@kepler.gl/utils';
 
 Toggle3dButtonFactory.deps = [MapControlTooltipFactory, MapControlToolbarFactory];
 
@@ -89,6 +90,15 @@ function Toggle3dButtonFactory(
       return (mapControls?.toggle3d || {}).show;
     }, [mapControls]);
 
+    // Optionally hide the globe view mode option via application config.
+    const viewModeItems = useMemo(
+      () =>
+        getApplicationConfig().enableGlobeView
+          ? VIEW_MODE_ITEMS
+          : VIEW_MODE_ITEMS.filter(item => item.id !== MapViewMode.MODE_GLOBE),
+      []
+    );
+
     if (!isVisible) return null;
 
     const isActive = mapControls?.toggle3d?.active;
@@ -101,7 +111,7 @@ function Toggle3dButtonFactory(
       <div className="view-mode-controls" style={{position: 'relative'}}>
         {isActive ? (
           <MapControlToolbar $show={isActive}>
-            {VIEW_MODE_ITEMS.map(item => (
+            {viewModeItems.map(item => (
               <ToolbarItem
                 key={item.id}
                 onClick={() => onSelectMode(item.id)}
