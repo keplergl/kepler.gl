@@ -6,6 +6,15 @@ You can add an effect from the **Effects** panel in the side bar. Multiple effec
 
 > **Limitation:** Only one Light & Shadow effect and one fog effect (either Distance Fog or Surface Fog) can be active at a time.
 
+> **Combining effects with globe, swipe, and video export:** Effects work with the
+> flat map, [globe view](./m-map-settings.md#globe-view),
+> [split/swipe maps](./m-map-settings.md#split-maps), and
+> [video export](./k-save-and-export.md#export-video) individually, but using
+> several of these together (for example effects on a globe while recording a
+> video in swipe mode) has **limited support** and may not render or export
+> exactly as expected. If you run into problems, disable one of the features
+> (start by turning off effects) and try again.
+
 ---
 
 ## Table of contents

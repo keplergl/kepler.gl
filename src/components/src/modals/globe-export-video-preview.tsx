@@ -97,6 +97,7 @@ export class GlobeExportVideoPreview extends Component<GlobeExportVideoPreviewPr
           ref={ref => {
             this.deckRef.current = (ref?.deck as any) || null;
           }}
+          deviceProps={{type: 'webgl', webgl: {preserveDrawingBuffer: true}}}
           {...adapterProps}
           viewState={viewState}
           onViewStateChange={({viewState: vs}: any) => setViewState(vs)}

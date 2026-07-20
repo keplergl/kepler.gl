@@ -119,6 +119,16 @@ globe view and keep it hidden until you return to the flat map.
 - __Basemap differences.__ Mapbox and MapLibre basemaps can look different in
   globe mode; some basemap styles are better tuned for the sphere than others.
 
+> **Combining globe with swipe, video export, and effects:** Globe view,
+> [swipe/split comparison](#split-maps), [video export](./k-save-and-export.md#export-video),
+> and post-processing [effects](./effects.md) each work on their own, but their
+> combinations (for example globe + swipe + video recording with effects active
+> at the same time) have **limited support** and may not render or export
+> exactly as expected. When you hit an issue, try disabling one of the features
+> (e.g. turn off effects, exit swipe mode, or switch back to the flat map)
+> before recording. Support for these combinations is expected to improve as
+> globe support matures.
+
 These limitations stem from the underlying deck.gl globe projection and are
 expected to improve as that support matures.
 
