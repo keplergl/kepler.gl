@@ -24,6 +24,10 @@ import {GlobeExportVideoPreview} from './globe-export-video-preview';
 import SwipeExportSettings from './swipe-export-settings';
 import {getGlobeClearColor} from '@kepler.gl/deckgl-layers';
 
+// No-op for the swipe-specific settings callbacks that this single-map globe
+// exporter doesn't use (the swipe controls are hidden via `hideSwipe`).
+const noop = () => undefined;
+
 const ENCODERS = {
   gif: GifEncoder,
   webm: WebMEncoder,
@@ -103,14 +107,20 @@ const StatusText = styled.div`
   margin-top: 4px;
 `;
 
-const PlayIcon: React.FC<{style?: React.CSSProperties; onClick?: () => void}> = ({style, onClick}) => (
+const PlayIcon: React.FC<{style?: React.CSSProperties; onClick?: () => void}> = ({
+  style,
+  onClick
+}) => (
   <svg className="data-ex-icons-play" viewBox="0 0 24 24" style={style} onClick={onClick}>
     <path fill="none" d="M0 0h24v24H0z" />
     <path d="M19.376 12.416L8.777 19.482A.5.5 0 0 1 8 19.066V4.934a.5.5 0 0 1 .777-.416l10.599 7.066a.5.5 0 0 1 0 .832z" />
   </svg>
 );
 
-const StopIcon: React.FC<{style?: React.CSSProperties; onClick?: () => void}> = ({style, onClick}) => (
+const StopIcon: React.FC<{style?: React.CSSProperties; onClick?: () => void}> = ({
+  style,
+  onClick
+}) => (
   <svg className="data-ex-icons-stop" viewBox="0 0 24 24" style={style} onClick={onClick}>
     <path fill="none" d="M0 0h24v24H0z" />
     <path d="M6 5h12a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z" />
@@ -133,6 +143,9 @@ export class GlobeExportVideoPanelContainer extends Component<
   previewRef = createRef<GlobeExportVideoPreview>();
   animationFrameId: number | null = null;
   activeEncoder: any | null = null;
+  // Reused across all captured frames to avoid allocating a full-resolution
+  // canvas per frame (GC pressure/jank during a multi-second export).
+  compositeCanvas: HTMLCanvasElement | null = null;
 
   constructor(props: GlobeExportVideoPanelContainerProps) {
     super(props);
@@ -243,14 +256,18 @@ export class GlobeExportVideoPanelContainer extends Component<
 
   getFilterKeyframes() {
     const {
-      mapData: {visState: {filters}},
+      mapData: {
+        visState: {filters}
+      },
       animatableFilters
     } = this.props;
 
     const filterKeyframes = (
       Array.isArray(animatableFilters) && animatableFilters.length
         ? animatableFilters
-        : filters.filter((f: any) => f.type === 'timeRange' && f.view === FILTER_VIEW_TYPES.enlarged)
+        : filters.filter(
+            (f: any) => f.type === 'timeRange' && f.view === FILTER_VIEW_TYPES.enlarged
+          )
     ).map((f: any) => ({
       id: f.id,
       timings: [0, this.state.durationMs]
@@ -264,7 +281,9 @@ export class GlobeExportVideoPanelContainer extends Component<
 
   getTripKeyframes() {
     const {
-      mapData: {visState: {layers, animationConfig}}
+      mapData: {
+        visState: {layers, animationConfig}
+      }
     } = this.props;
 
     const animatableLayer = layers.filter(
@@ -407,9 +426,17 @@ export class GlobeExportVideoPanelContainer extends Component<
             const deckCanvas = preview.getCanvas();
             if (!deckCanvas) return;
 
-            const offscreen = document.createElement('canvas');
-            offscreen.width = width;
-            offscreen.height = height;
+            // Reuse a single offscreen canvas across frames (resized only when
+            // the output dimensions change) instead of allocating one per frame.
+            let offscreen = this.compositeCanvas;
+            if (!offscreen) {
+              offscreen = document.createElement('canvas');
+              this.compositeCanvas = offscreen;
+            }
+            if (offscreen.width !== width || offscreen.height !== height) {
+              offscreen.width = width;
+              offscreen.height = height;
+            }
             const offCtx = offscreen.getContext('2d');
             if (offCtx) {
               // deck's canvas is transparent where the globe isn't drawn
@@ -469,7 +496,7 @@ export class GlobeExportVideoPanelContainer extends Component<
   };
 
   render() {
-    const {exportVideoWidth, mapData, deckProps, mapProps, onSettingsChange} = this.props;
+    const {exportVideoWidth, mapData, deckProps} = this.props;
 
     const {
       adapter,
@@ -526,9 +553,9 @@ export class GlobeExportVideoPanelContainer extends Component<
             swipeEndPct={100}
             swipeEasing={'ease-in-out'}
             disabled={isActive}
-            onChangeStartPct={() => {}}
-            onChangeEndPct={() => {}}
-            onChangeEasing={() => {}}
+            onChangeStartPct={noop}
+            onChangeEndPct={noop}
+            onChangeEasing={noop}
             hideSwipe
           />
           <TimelineControls className="timeline-controls">

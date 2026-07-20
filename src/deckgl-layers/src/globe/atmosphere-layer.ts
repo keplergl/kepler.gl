@@ -311,7 +311,7 @@ export const getGlobeAtmosphereLayer = ({config}: {config: GlobeConfig}) => {
     config,
     coordinateOrigin: [0, 0, 0],
     coordinateSystem: COORDINATE_SYSTEM.CARTESIAN,
-    getPosition: (d: number[]) => d,
+    getPosition: ((d: number[]) => d) as any,
     getColor: [0, 0, 0],
     mesh: GLOBE_MESH_INNER,
     parameters: ATMOSPHERE_PARAMETERS
@@ -325,7 +325,7 @@ export const getGlobeAtmosphereSkyLayer = ({config}: {config: GlobeConfig}) => {
     config,
     coordinateOrigin: [0, 0, 0],
     coordinateSystem: COORDINATE_SYSTEM.CARTESIAN,
-    getPosition: (d: number[]) => d,
+    getPosition: ((d: number[]) => d) as any,
     getColor: [0, 0, 0],
     mesh: GLOBE_MESH_OUTER,
     parameters: ATMOSPHERE_SKY_PARAMETERS

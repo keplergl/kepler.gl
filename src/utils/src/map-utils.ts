@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import WebMercatorViewport from 'viewport-mercator-project';
+// @ts-ignore GlobeViewport is an experimental, underscore-prefixed deck.gl export whose named type binding isn't reliably resolvable through the package barrel under this project's module resolution. Access it off the namespace with a loose type.
 import {_GlobeViewport as GlobeViewport} from '@deck.gl/core';
 
 import {TRANSITION_DURATION} from '@kepler.gl/constants';

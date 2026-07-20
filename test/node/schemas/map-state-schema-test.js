@@ -63,3 +63,40 @@ test('#mapStateSchema -> v1 -> save load mapState', t => {
 
   t.end();
 });
+
+test('#mapStateSchema -> v1 -> save load globe-enabled mapState', t => {
+  const initialState = cloneDeep(InitialState);
+  // Enable globe with a non-default config to verify the full round-trip.
+  initialState.mapState.mapViewMode = MapViewMode.MODE_GLOBE;
+  initialState.mapState.globe = {
+    enabled: true,
+    config: {
+      ...DEFAULT_GLOBE_CONFIG,
+      atmosphere: false,
+      terminator: false,
+      labels: true,
+      basemap: false,
+      waterColor: [1, 2, 3],
+      backgroundColor: [10, 20, 30]
+    }
+  };
+
+  const savedState = SchemaManager.getConfigToSave(initialState);
+  const msToSave = savedState.config.mapState;
+  const msLoaded = SchemaManager.parseSavedConfig(savedState).mapState;
+
+  t.equal(msToSave.mapViewMode, MapViewMode.MODE_GLOBE, 'saved mapViewMode should be globe');
+  t.deepEqual(
+    msToSave.globe,
+    initialState.mapState.globe,
+    'saved globe config should match non-default config'
+  );
+  t.equal(msLoaded.mapViewMode, MapViewMode.MODE_GLOBE, 'loaded mapViewMode should be globe');
+  t.deepEqual(
+    msLoaded.globe,
+    initialState.mapState.globe,
+    'loaded globe config should round-trip non-default config'
+  );
+
+  t.end();
+});

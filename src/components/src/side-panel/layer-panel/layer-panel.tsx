@@ -8,6 +8,7 @@ import React, {
   MouseEventHandler,
   TouchEventHandler
 } from 'react';
+import {FormattedMessage} from '@kepler.gl/localization';
 import styled from 'styled-components';
 
 import {ActionHandler, MapStateActions, VisStateActions, toggleModal} from '@kepler.gl/actions';
@@ -149,9 +150,11 @@ function LayerPanelFactory(
 
       const isVisible = layerVisInSplitMap ?? config.isVisible;
       const globeWarning =
-        mapState?.globe?.enabled && isVisible && GLOBE_SUPPORTED_LAYERS[layer.type ?? ''] === false
-          ? `${layer.type} layer is not supported in Globe mode`
-          : undefined;
+        mapState?.globe?.enabled &&
+        isVisible &&
+        GLOBE_SUPPORTED_LAYERS[layer.type ?? ''] === false ? (
+          <FormattedMessage id={'layerManager.globeUnsupported'} values={{layerType: layer.type}} />
+        ) : undefined;
 
       return (
         <PanelWrapper

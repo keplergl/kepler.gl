@@ -64,7 +64,7 @@ export type LayerPanelHeaderProps = {
   layerType?: string | null;
   allowDuplicate?: boolean;
   isDragNDropEnabled?: boolean;
-  warning?: string | boolean;
+  warning?: React.ReactNode;
   labelRCGColorValues?: RGBColor | null;
   actionIcons?: {
     remove: ComponentType<Partial<BaseProps>>;

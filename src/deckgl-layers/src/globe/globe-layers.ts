@@ -102,14 +102,22 @@ function colorStringToRGB(color: string | null): RGBColor | null {
   // Handle rgb() format
   const rgbMatch = color.match(/rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)/);
   if (rgbMatch) {
-    return [parseInt(rgbMatch[1], 10), parseInt(rgbMatch[2], 10), parseInt(rgbMatch[3], 10)] as RGBColor;
+    return [
+      parseInt(rgbMatch[1], 10),
+      parseInt(rgbMatch[2], 10),
+      parseInt(rgbMatch[3], 10)
+    ] as RGBColor;
   }
 
   // Handle hex format
   const hexMatch = color.match(/^#([0-9a-f]{6})$/i);
   if (hexMatch) {
     const hex = hexMatch[1];
-    return [parseInt(hex.slice(0, 2), 16), parseInt(hex.slice(2, 4), 16), parseInt(hex.slice(4, 6), 16)] as RGBColor;
+    return [
+      parseInt(hex.slice(0, 2), 16),
+      parseInt(hex.slice(2, 4), 16),
+      parseInt(hex.slice(4, 6), 16)
+    ] as RGBColor;
   }
 
   return null;
@@ -142,8 +150,12 @@ function findAdminColor(style: any, layerGroups: LayerGroup[]): RGBColor | null 
 }
 
 function findLabelColor(style: any, layerGroups: LayerGroup[]): RGBColor | null {
-  let labelLayer = style.layers.find((lyr: any) => lyr.id === 'country-label-lg' && lyr.type === 'symbol');
-  labelLayer = labelLayer || style.layers.find((lyr: any) => lyr.id === 'country-label' && lyr.type === 'symbol');
+  let labelLayer = style.layers.find(
+    (lyr: any) => lyr.id === 'country-label-lg' && lyr.type === 'symbol'
+  );
+  labelLayer =
+    labelLayer ||
+    style.layers.find((lyr: any) => lyr.id === 'country-label' && lyr.type === 'symbol');
   labelLayer = labelLayer || findFirstLayerByGroup(style.layers, layerGroups, 'label');
   return colorStringToRGB(labelLayer?.paint?.['text-color']);
 }
@@ -159,20 +171,27 @@ export const getBasemapColors = (
   const {style: styleJson = {layers: []}, layerGroups = []} = mapStyle;
 
   return {
-    backgroundFillColor: findBackgroundColor(styleJson) ?? DEFAULT_BASEMAP_COLOR.backgroundFillColor,
-    basemapWaterFillColor: findWaterColor(styleJson, layerGroups) ?? DEFAULT_BASEMAP_COLOR.basemapWaterFillColor,
-    basemapAdminLineColor: findAdminColor(styleJson, layerGroups) ?? DEFAULT_BASEMAP_COLOR.basemapAdminLineColor,
-    basemapLabelColor: findLabelColor(styleJson, layerGroups) ?? DEFAULT_BASEMAP_COLOR.basemapLabelColor
+    backgroundFillColor:
+      findBackgroundColor(styleJson) ?? DEFAULT_BASEMAP_COLOR.backgroundFillColor,
+    basemapWaterFillColor:
+      findWaterColor(styleJson, layerGroups) ?? DEFAULT_BASEMAP_COLOR.basemapWaterFillColor,
+    basemapAdminLineColor:
+      findAdminColor(styleJson, layerGroups) ?? DEFAULT_BASEMAP_COLOR.basemapAdminLineColor,
+    basemapLabelColor:
+      findLabelColor(styleJson, layerGroups) ?? DEFAULT_BASEMAP_COLOR.basemapLabelColor
   };
 };
 
 // Predefined color schemes for well-known basemap styles
-const KNOWN_STYLE_COLORS: Record<string, {
-  backgroundFillColor: RGBColor;
-  basemapWaterFillColor: RGBColor;
-  basemapAdminLineColor: RGBColor;
-  basemapLabelColor: RGBColor;
-}> = {
+const KNOWN_STYLE_COLORS: Record<
+  string,
+  {
+    backgroundFillColor: RGBColor;
+    basemapWaterFillColor: RGBColor;
+    basemapAdminLineColor: RGBColor;
+    basemapLabelColor: RGBColor;
+  }
+> = {
   dark: {
     backgroundFillColor: [15, 15, 15],
     basemapWaterFillColor: [10, 20, 35],
@@ -295,7 +314,7 @@ export const getGlobeBaseLayers = ({
       new SolidPolygonLayer({
         id: 'globe-background',
         data: BACKGROUND_DATA,
-        getPolygon: (d: number[][]) => d,
+        getPolygon: ((d: number[][]) => d) as any,
         filled: true,
         getFillColor: config.surfaceColor as any,
         parameters: BACKGROUND_PARAMETERS
@@ -306,7 +325,7 @@ export const getGlobeBaseLayers = ({
       new SolidPolygonLayer({
         id: 'globe-background-north-pole',
         data: BACKGROUND_NORTH_POLE_DATA,
-        getPolygon: (d: number[][]) => d,
+        getPolygon: ((d: number[][]) => d) as any,
         filled: true,
         getFillColor: (config.water ? config.waterColor : config.surfaceColor) as any,
         parameters: BACKGROUND_PARAMETERS

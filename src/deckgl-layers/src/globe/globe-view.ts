@@ -1,10 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {
-  _GlobeView as DeckGlobeView,
-  _GlobeController as GlobeController
-} from '@deck.gl/core';
+// @ts-ignore _GlobeView is an experimental, underscore-prefixed deck.gl export whose named type binding isn't reliably resolvable through the package barrel under this project's module resolution. Access it off the namespace with a loose type.
+import {_GlobeView as DeckGlobeView, _GlobeController as GlobeController} from '@deck.gl/core';
 import {clamp} from '@math.gl/core';
 import {GLOBE_MAX_LATITUDE} from '@kepler.gl/constants';
 
@@ -81,7 +79,15 @@ class ZoomToCursorGlobeController extends GlobeController {
       // then shift the center by (anchor - thatPoint). No zoom coupling, no
       // rotationSpeed, and it applies to zoom-in and zoom-out symmetrically, so
       // there is no per-tick accumulated drift.
-      zoom({pos, startPos, scale}: {pos: [number, number]; startPos?: [number, number]; scale: number}) {
+      zoom({
+        pos,
+        startPos,
+        scale
+      }: {
+        pos: [number, number];
+        startPos?: [number, number];
+        scale: number;
+      }) {
         let {startZoom, startZoomLngLat} = (this as any).getState();
 
         if (!startZoomLngLat) {
@@ -174,6 +180,13 @@ class ZoomToCursorGlobeController extends GlobeController {
  * Custom GlobeView that uses zoom-to-cursor controller behavior.
  */
 export class KeplerGlobeView extends DeckGlobeView {
+  // Forward constructor props to deck.gl's GlobeView. Declared explicitly because
+  // the base class is loosely typed (see DeckGlobeView above), which would
+  // otherwise surface a parameterless constructor to callers.
+  constructor(props?: any) {
+    super(props);
+  }
+
   get ControllerType() {
     return ZoomToCursorGlobeController;
   }
