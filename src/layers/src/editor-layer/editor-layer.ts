@@ -174,7 +174,10 @@ export function getEditorLayer({
     getTentativeLineWidth: LINE_STYLE.getTentativeLineWidth,
     getTentativeFillColor: LINE_STYLE.getTentativeFillColor,
 
-    parameters: {depthTest: mapState?.globe?.enabled ?? false},
+    // Globe mode needs explicit depth testing so the editor overlay is occluded
+    // by the sphere; in flat 2D/3D keep deck.gl's default (empty parameters) so
+    // this matches the pre-globe behavior exactly.
+    parameters: mapState?.globe?.enabled ? {depthTest: true} : {},
     shadowEnabled: false,
     _subLayerProps: {
       geojson: {shadowEnabled: false},

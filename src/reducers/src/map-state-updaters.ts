@@ -216,6 +216,11 @@ export const fitBoundsUpdater = (
  * @public
  */
 export const togglePerspectiveUpdater = (state: MapState): MapState => {
+  // Only drop min/maxZoom when we're actually leaving globe mode, where those
+  // bounds are set to globe-only values. If globe was never enabled these are
+  // the app's own custom bounds and must be preserved.
+  const wasGlobeEnabled = Boolean(state.globe?.enabled);
+
   const newState = {
     ...state,
     ...{
@@ -226,9 +231,9 @@ export const togglePerspectiveUpdater = (state: MapState): MapState => {
     mapViewMode: state.dragRotate ? MapViewMode.MODE_2D : MapViewMode.MODE_3D,
     globe: {...state.globe!, enabled: false},
     // Leaving globe mode: drop globe-only zoom bounds so the flat map (and
-    // consumers of mapState such as video export) aren't left clamped.
-    minZoom: undefined,
-    maxZoom: undefined
+    // consumers of mapState such as video export) aren't left clamped. When
+    // globe was never on, keep whatever min/maxZoom the app configured.
+    ...(wasGlobeEnabled ? {minZoom: undefined, maxZoom: undefined} : {})
   };
 
   // if toggling 3d and 2d while split and unsynced
@@ -257,6 +262,10 @@ export const setMapViewModeUpdater = (
   const {mapViewMode} = action.payload;
   let nextState: MapState;
 
+  // Only clear min/maxZoom when leaving globe mode (where they hold globe-only
+  // bounds). Otherwise preserve the app's custom bounds.
+  const wasGlobeEnabled = Boolean(state.globe?.enabled);
+
   switch (mapViewMode) {
     case MapViewMode.MODE_2D:
       nextState = {
@@ -267,9 +276,8 @@ export const setMapViewModeUpdater = (
         dragRotate: false,
         // Clear the globe-only zoom bounds so the flat map (and anything that
         // reads mapState, e.g. video export) is not left with globe's
-        // min/maxZoom after leaving globe mode.
-        minZoom: undefined,
-        maxZoom: undefined,
+        // min/maxZoom after leaving globe mode. Only when globe was actually on.
+        ...(wasGlobeEnabled ? {minZoom: undefined, maxZoom: undefined} : {}),
         mapViewMode
       };
       break;
@@ -280,8 +288,7 @@ export const setMapViewModeUpdater = (
         pitch: 50,
         bearing: 24,
         dragRotate: true,
-        minZoom: undefined,
-        maxZoom: undefined,
+        ...(wasGlobeEnabled ? {minZoom: undefined, maxZoom: undefined} : {}),
         mapViewMode
       };
       break;

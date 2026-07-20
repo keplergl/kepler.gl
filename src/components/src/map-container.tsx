@@ -1306,6 +1306,17 @@ export default function MapContainerFactory(
         return;
       }
       const {setInternalViewState} = this.context;
+
+      // Flat map (2D/3D): keep the original, always-synchronous behavior. The
+      // interaction-aware timing below exists purely to fix globe-specific
+      // controlled-viewState, so it must not change the main 2D logic.
+      if (!this.props.mapState?.globe?.enabled) {
+        setInternalViewState(viewState, this.props.index);
+        this._wasInteracting = false;
+        this._onViewportChangePropagateDebounced();
+        return;
+      }
+
       const isUserInteraction =
         interactionState &&
         (interactionState.isZooming ||
